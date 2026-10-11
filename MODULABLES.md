@@ -21,10 +21,10 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 92, sur 61 composants
-- **réglages restant à faire** : 70, sur 32 composants et 47 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 96, sur 62 composants
+- **réglages restant à faire** : 65, sur 31 composants et 44 couples composant / famille
 - **dont le cœur travaille par trames** : 1
-- **réglages écartés un par un** : 32, sur 13 composants qui gardent les leurs
+- **réglages écartés un par un** : 33, sur 14 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
@@ -46,12 +46,11 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Vocoder `vocoder` : Fréq min, Fréq max, Q
 - Wah-wah `wahwah` : Résonance
 
-### temps · 10
+### temps · 9
 
 - Ampleur `ampleur` : Pré-délai
 - Compresseur multibande `compresseur-multibande` : Attaque, Relâchement
 - Delay stéréo `delay-stereo` : Temps G, Temps D
-- Ducking `ducking` : Attaque, Relâchement, Maintien
 - Écho flottant `echo-flottant` : Décroissance
 - Réverbération hachée `reverbe-hachee` : Décroissance, Maintien, Chute
 - Réverbération à réseau (FDN) `reverbe-reseau` : Retard court, Retard long, Queue
@@ -59,12 +58,11 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Réverbération velours `reverberation-velours` : Chute
 - Shimmer `shimmer` : Décroissance
 
-### dynamique · 7
+### dynamique · 6
 
 - Compresseur `compresseur` : Seuil, Ratio
 - Compresseur multibande `compresseur-multibande` : Seuil Low, Ratio Low, Seuil Mid, Ratio Mid, Seuil High, Ratio High
 - De-esser `de-esser` : Ratio
-- Ducking `ducking` : Seuil
 - Gate/Expandeur `gate-expandeur` : Seuil, Ratio
 - Limiteur `limiteur` : Seuil, Plafond
 - Réverbération hachée `reverbe-hachee` : Seuil
@@ -77,10 +75,9 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur du Doppler
 - Spatialisation stéréo `spatialisation-stereo` : Largeur
 
-### niveau · 4
+### niveau · 3
 
 - Compresseur `compresseur` : Gain
-- Ducking `ducking` : Réduction
 - Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur d'amplitude
 - Micromontage `micromontage` : Niveau
 
@@ -173,6 +170,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `instrument-fin/Largeur de zone` : elle dit l'écart entre deux notes rendues, donc COMBIEN de notes le composant rejoue : la structure de ce qu'il produit, décidée avant le rendu
 - `mosaiquage/Poids du niveau` : c'est l'importance donnée au niveau dans la RECHERCHE du grain le plus proche, lue une fois par grain et non par échantillon
 - `mosaiquage/Poids de la brillance` : idem, l'importance donnée au centre de gravité du spectre dans la même recherche
+- `ducking/Maintien` : il est lu au seul instant où le déclencheur franchit le seuil, `reste = maintien` : une courbe y serait échantillonnée à la cadence des franchissements, non à celle du son
 - `ondelettes/Force du seuil` : elle multiplie le seuil universel de Donoho, appliqué à la décomposition entière : une décision globale sur le son, non une valeur qui le parcourt
 - `montage/Gain 1` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
 - `montage/Gain 2` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
@@ -217,6 +215,10 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `decaleur-frequence` : Mélange
 - `delay-stereo` : Mix
 - `doser-effet` : Dose
+- `ducking` : Attaque
+- `ducking` : Réduction
+- `ducking` : Relâchement
+- `ducking` : Seuil
 - `echo` : Feedback
 - `echo` : Temps
 - `echo-flottant` : Mélange

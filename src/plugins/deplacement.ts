@@ -8,6 +8,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
 import { bande, doppler, hauteurApprochee, hauteurEloignee } from "../audio/deplacement";
 import { ducking } from "../audio/ducking";
 import { decoderStereo, encoderStereo, partDirectionnelle, tourner } from "../audio/ambisonique";
@@ -133,11 +134,17 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Un son s'efface devant un autre : la musique recule sous la voix, sans que la voix sorte.",
     resumeEn: "One sound steps aside for another: the music backs off under the voice, without the voice being heard.",
-    notice: "Tous écoutent le signal qu'ils traitent : ils baissent un son quand ce son est fort. Aucun ne sait baisser un son quand un autre est fort. C'est pourtant le geste le plus courant du mixage (la musique qui s'efface sous une voix, la nappe qui recule à chaque coup de grosse caisse) et il ne s'obtient par aucune combinaison des quatre.\n\nOn dit « chaîne latérale » en parlant du câblage : le signal qui commande entre par le côté, et ne sort jamais. Seule la cible est rendue.\n\nLe maintien mérite qu'on s'y arrête. Sans lui, une voix qui hésite laisse la musique remonter entre deux mots, et l'on entend un halètement. Le maintien garde l'atténuation un moment après que le déclencheur est retombé, si bien qu'une phrase parlée creuse un seul trou plutôt que douze.",
-    noticeEn: "All listen to the signal they treat: they lower a sound when that sound is loud. None can lower a sound when another is loud. Yet this is the commonest gesture in mixing (the music stepping aside under a voice, the pad backing off at each kick) and no combination of the four produces it.\n\nOne says « side chain » when speaking of the wiring: the controlling signal comes in from the side, and never comes out. Only the target is rendered.\n\nThe hold deserves attention. Without it, a hesitating voice lets the music rise between two words, and one hears a panting. The hold keeps the attenuation for a while after the trigger has fallen back, so that a spoken phrase digs one hole rather than twelve.",
+    notice: "Tous écoutent le signal qu'ils traitent : ils baissent un son quand ce son est fort. Aucun ne sait baisser un son quand un autre est fort. C'est pourtant le geste le plus courant du mixage (la musique qui s'efface sous une voix, la nappe qui recule à chaque coup de grosse caisse) et il ne s'obtient par aucune combinaison des quatre.\n\nOn dit « chaîne latérale » en parlant du câblage : le signal qui commande entre par le côté, et ne sort jamais. Seule la cible est rendue.\n\nLe maintien mérite qu'on s'y arrête. Sans lui, une voix qui hésite laisse la musique remonter entre deux mots, et l'on entend un halètement. Le maintien garde l'atténuation un moment après que le déclencheur est retombé, si bien qu'une phrase parlée creuse un seul trou plutôt que douze.\n\nQuatre réglages acceptent une courbe, chacun par son entrée : « Modulation seuil », « Modulation réduction », « Modulation attaque » et « Modulation relâchement », avec leurs bornes nommées d'après leur réglage. Le maintien, lui, n'en accepte pas : il est lu au seul instant où le déclencheur franchit le seuil.",
+    noticeEn: "All listen to the signal they treat: they lower a sound when that sound is loud. None can lower a sound when another is loud. Yet this is the commonest gesture in mixing (the music stepping aside under a voice, the pad backing off at each kick) and no combination of the four produces it.\n\nOne says « side chain » when speaking of the wiring: the controlling signal comes in from the side, and never comes out. Only the target is rendered.\n\nThe hold deserves attention. Without it, a hesitating voice lets the music rise between two words, and one hears a panting. The hold keeps the attenuation for a while after the trigger has fallen back, so that a spoken phrase digs one hole rather than twelve.\n\nFour settings accept a curve, each through its own input: « Modulation threshold », « Modulation reduction », « Modulation attack » and « Modulation release », with their bounds named after their setting. The hold does not: it is read at the single instant the trigger crosses the threshold.",
+    // LES QUATRE ARRIVENT ENSEMBLE, donc aucun ne garde « Modulation » : c'est le précédent du
+    // gate. Ils viennent APRÈS les deux entrées audio, dont les rangs ne bougent pas.
     entrees: [
       { nom: "Cible", nomEn: "Target", type: "audio" },
       { nom: "Déclencheur", nomEn: "Trigger", type: "audio" },
+      portModulation("Seuil", "Threshold", { court: false }),
+      portModulation("Réduction", "Reduction", { court: false }),
+      portModulation("Attaque", "Attack", { court: false }),
+      portModulation("Relâchement", "Release", { court: false }),
     ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
@@ -156,16 +163,26 @@ export const fiches: FicheAudio[] = ([
       { nom: "Maintien", nomEn: "Hold", type: "curseur", plage: [0, 1], pas: 0.01, defaut: 0.1, unite: "s",
         doc: "Durée pendant laquelle l'atténuation est gardée après que le déclencheur est repassé sous le seuil. C'est le réglage qui empêche le halètement entre deux mots.",
         docEn: "How long the attenuation is kept after the trigger has fallen back below the threshold. This is the setting that prevents panting between two words." },
+      // LA COURSE PAR DÉFAUT N'EST PAS LA PLAGE ENTIÈRE : elle est là pour que chacun trouve son
+      // réglage, non pour qu'une courbe la parcoure d'un bout à l'autre.
+      ...bornesModulation({ ...modulationNommee("Seuil", "Threshold", [-60, 0], "dB"), defauts: [-45, -15] }),
+      ...bornesModulation({ ...modulationNommee("Réduction", "Reduction", [0, 40], "dB"), defauts: [0, 24] }),
+      ...bornesModulation({ ...modulationNommee("Attaque", "Attack", [0.001, 0.5], "s"), defauts: [0.005, 0.2] }),
+      ...bornesModulation({ ...modulationNommee("Relâchement", "Release", [0.01, 2], "s"), defauts: [0.05, 1] }),
     ],
     async executer(ctx: any) {
       const cible = ctx.entree(0);
       const declencheur = ctx.entree(1);
       if (!(cible instanceof AudioBuffer) || !(declencheur instanceof AudioBuffer)) return sansEntree();
       const o = {
-        seuilDb: ctx.paramNombre("Seuil", -30),
-        reductionDb: ctx.paramNombre("Réduction", 12),
-        attaqueSec: ctx.paramNombre("Attaque", 0.01),
-        relachementSec: ctx.paramNombre("Relâchement", 0.25),
+        seuilDb: reglageModule(ctx, cible.length, 2, {
+          reglage: "Seuil", defaut: -30, rendu: "pourCent", noms: ["Seuil min", "Seuil max"] }),
+        reductionDb: reglageModule(ctx, cible.length, 3, {
+          reglage: "Réduction", defaut: 12, rendu: "pourCent", noms: ["Réduction min", "Réduction max"] }),
+        attaqueSec: reglageModule(ctx, cible.length, 4, {
+          reglage: "Attaque", defaut: 0.01, rendu: "pourCent", noms: ["Attaque min", "Attaque max"] }),
+        relachementSec: reglageModule(ctx, cible.length, 5, {
+          reglage: "Relâchement", defaut: 0.25, rendu: "pourCent", noms: ["Relâchement min", "Relâchement max"] }),
         maintienSec: ctx.paramNombre("Maintien", 0.1),
         frequence: cible.sampleRate,
       };

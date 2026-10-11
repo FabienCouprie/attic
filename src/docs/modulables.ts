@@ -241,6 +241,12 @@ export const ECARTES_REGLAGE: Record<string, string> = {
   "mosaiquage/Poids de la brillance":
     "idem, l'importance donnée au centre de gravité du spectre dans la même recherche",
 
+  // UNE VALEUR LUE À UN ÉVÉNEMENT, NON À CHAQUE ÉCHANTILLON. Même réserve que le Brassage, dont
+  // les réglages sont lus au démarrage de chaque segment, et que « parole vers séquence », dont la
+  // transposition s'applique une fois par mot.
+  "ducking/Maintien":
+    "il est lu au seul instant où le déclencheur franchit le seuil, `reste = maintien` : une courbe y serait échantillonnée à la cadence des franchissements, non à celle du son",
+
   // UN SEUIL QUI VAUT POUR UNE DÉCOMPOSITION ENTIÈRE.
   "ondelettes/Force du seuil":
     "elle multiplie le seuil universel de Donoho, appliqué à la décomposition entière : une décision globale sur le son, non une valeur qui le parcourt",

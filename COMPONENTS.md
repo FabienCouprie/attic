@@ -4678,12 +4678,16 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 
 *One sound steps aside for another: the music backs off under the voice, without the voice being heard.*
 
-All listen to the signal they treat: they lower a sound when that sound is loud. None can lower a sound when another is loud. Yet this is the commonest gesture in mixing (the music stepping aside under a voice, the pad backing off at each kick) and no combination of the four produces it. One says « side chain » when speaking of the wiring: the controlling signal comes in from the side, and never comes out. Only the target is rendered. The hold deserves attention. Without it, a hesitating voice lets the music rise between two words, and one hears a panting. The hold keeps the attenuation for a while after the trigger has fallen back, so that a spoken phrase digs one hole rather than twelve.
+All listen to the signal they treat: they lower a sound when that sound is loud. None can lower a sound when another is loud. Yet this is the commonest gesture in mixing (the music stepping aside under a voice, the pad backing off at each kick) and no combination of the four produces it. One says « side chain » when speaking of the wiring: the controlling signal comes in from the side, and never comes out. Only the target is rendered. The hold deserves attention. Without it, a hesitating voice lets the music rise between two words, and one hears a panting. The hold keeps the attenuation for a while after the trigger has fallen back, so that a spoken phrase digs one hole rather than twelve. Four settings accept a curve, each through its own input: « Modulation threshold », « Modulation reduction », « Modulation attack » and « Modulation release », with their bounds named after their setting. The hold does not: it is read at the single instant the trigger crosses the threshold.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Target | audio |  |
 | input | Trigger | audio |  |
+| input | Modulation threshold | curve |  |
+| input | Modulation reduction | curve |  |
+| input | Modulation attack | curve |  |
+| input | Modulation release | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4693,6 +4697,14 @@ All listen to the signal they treat: they lower a sound when that sound is loud.
 | Attack | slider | 0.01 s | 0.001 – 0.5 s, step 0.001 | Fall time. Short, the first word is cleared but one hears the dip happen; long, the start of the phrase stays buried. |
 | Release | slider | 0.25 s | 0.01 – 2 s, step 0.01 | Rise time, once the hold has elapsed. It is what makes the effect natural: too short and the music jumps back; too long and it takes a second to return. |
 | Hold | slider | 0.1 s | 0 – 1 s, step 0.01 | How long the attenuation is kept after the trigger has fallen back below the threshold. This is the setting that prevents panting between two words. |
+| Threshold min | slider | -45 dB | -60 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Threshold max | slider | -15 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Reduction min | slider | 0 dB | 0 – 40 dB, step 1 | Value of « Reduction » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Reduction max | slider | 24 dB | 0 – 40 dB, step 1 | Value of « Reduction » that the curve's one means. |
+| Attack min | slider | 0.005 s | 0.001 – 0.5 s, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Attack max | slider | 0.2 s | 0.001 – 0.5 s, step 1 | Value of « Attack » that the curve's one means. |
+| Release min | slider | 0.05 s | 0.01 – 2 s, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Release max | slider | 1 s | 0.01 – 2 s, step 1 | Value of « Release » that the curve's one means. |
 
 #### Equalizer
 
