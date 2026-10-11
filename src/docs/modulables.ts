@@ -241,11 +241,43 @@ export const ECARTES_REGLAGE: Record<string, string> = {
   "mosaiquage/Poids de la brillance":
     "idem, l'importance donnée au centre de gravité du spectre dans la même recherche",
 
+  // UNE RÉPONSE IMPULSIONNELLE EST REFAITE À CHAQUE VALEUR, et c'est la raison qui écarte déjà
+  // `reverb-fractale`, `reverbe-convolution` et `piece-lucier` en entier. Ces quatre réglages-ci
+  // décident de la durée du noyau que leur composant convolue : une courbe demanderait un noyau
+  // par échantillon, c'est-à-dire une réverbération refaite quarante-quatre mille fois par seconde.
+  "reverbe-hachee/Décroissance":
+    "elle est la durée de la réponse impulsionnelle que le composant convolue, bâtie une fois avant le rendu",
+  "shimmer/Décroissance":
+    "idem, la durée de la réponse que chaque génération convolue",
+  "reverberation/Decay":
+    "idem, le facteur de décroissance de la réponse impulsionnelle bâtie avant le rendu",
+  "reverberation-velours/Chute":
+    "idem, le temps de chute de la réponse de velours, bâtie avant le rendu",
+
+  // LES LIGNES À RETARD SONT ALLOUÉES AVANT LA BOUCLE, `retards.map((m) => new Float64Array(m))` :
+  // leur longueur est une structure de mémoire, non une valeur qui se lit.
+  "reverbe-reseau/Retard court":
+    "elle fixe la plus courte des huit lignes à retard, allouées avant la boucle ; la faire varier demanderait de réallouer le réseau à chaque échantillon",
+  "reverbe-reseau/Retard long":
+    "idem, la plus longue des huit lignes",
+
+  // LUES UNE FOIS PAR GÉNÉRATION, non par échantillon. Le shimmer empile quelques tours de
+  // réverbération transposée : ces deux réglages s'appliquent au passage d'un tour au suivant.
+  "shimmer/Rebouclage":
+    "il multiplie le gain d'un tour au suivant, `gain *= rebouclage`, soit une poignée de lectures pour tout un morceau",
+  "shimmer/Transposition":
+    "elle transpose la queue d'un tour au suivant : une valeur par génération, non par échantillon",
+
   // UNE VALEUR LUE À UN ÉVÉNEMENT, NON À CHAQUE ÉCHANTILLON. Même réserve que le Brassage, dont
   // les réglages sont lus au démarrage de chaque segment, et que « parole vers séquence », dont la
   // transposition s'applique une fois par mot.
   "ducking/Maintien":
     "il est lu au seul instant où le déclencheur franchit le seuil, `reste = maintien` : une courbe y serait échantillonnée à la cadence des franchissements, non à celle du son",
+  // LA MÊME FORME, DANS UN AUTRE COMPOSANT. Mon relevé l'avait rangé parmi les longueurs de sortie,
+  // ce qu'il est aussi ; mais la ligne qui compte est `reste = maintien`, écrite dans la même
+  // branche que celle du ducking. La décision prise pour l'un vaut donc pour l'autre.
+  "reverbe-hachee/Maintien":
+    "il est lu au seul instant où le son sec franchit le seuil, `reste = maintien`, exactement comme celui du ducking : une courbe y serait lue à la cadence des franchissements",
 
   // UN SEUIL QUI VAUT POUR UNE DÉCOMPOSITION ENTIÈRE.
   "ondelettes/Force du seuil":

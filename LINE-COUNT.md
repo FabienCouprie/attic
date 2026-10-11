@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1317 files, 232223 lines, of which 158854 are code.**
-The table lists the 183 files of 200 code lines or more, heaviest first;
-the remaining 1134 account for 155480 lines.
+**1317 files, 232346 lines, of which 158919 are code.**
+The table lists the 184 files of 200 code lines or more, heaviest first;
+the remaining 1133 account for 155080 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -66,12 +66,12 @@ the remaining 1134 account for 155480 lines.
 | src/audio/pca-neuronale.ts | 330 | 397 |  |
 | src/plugins/effets-spectral.ts | 329 | 433 |  |
 | src/audio/cercle.test.ts | 328 | 432 |  |
+| src/audio/courbe.ts | 328 | 679 |  |
 | src/plugins/tone-synths.ts | 328 | 427 |  |
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
-| src/audio/courbe.ts | 322 | 659 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
 | src/audio/batterie.ts | 318 | 390 |  |
@@ -159,6 +159,7 @@ the remaining 1134 account for 155480 lines.
 | src/vues-domaine/ArbreRythmiqueVue.tsx | 232 | 283 |  |
 | src/audio/spectral-cdp.ts | 229 | 371 |  |
 | src/core/bulles.ts | 229 | 423 |  |
+| src/plugins/modulation-cablage.test.ts | 229 | 357 |  |
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
@@ -167,7 +168,6 @@ the remaining 1134 account for 155480 lines.
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/ui/hooks/usePersistance.ts | 221 | 314 |  |
 | src/audio/palette-harmonique.ts | 220 | 258 |  |
-| src/plugins/modulation-cablage.test.ts | 220 | 346 |  |
 | src/vues-domaine/ExtraitVideo.tsx | 220 | 261 |  |
 | src/audio/cercle.ts | 219 | 496 |  |
 | src/plugins/spectral-cdp.ts | 219 | 323 |  |
@@ -183,6 +183,7 @@ the remaining 1134 account for 155480 lines.
 | src/audio/accords.ts | 210 | 343 |  |
 | src/audio/automate-cellulaire.test.ts | 209 | 233 |  |
 | src/audio/ssp.test.ts | 209 | 273 |  |
+| src/docs/modulables.ts | 209 | 492 |  |
 | src/plugins/multicanal.ts | 209 | 288 |  |
 | src/plugins/vosk-asr.test.ts | 209 | 280 |  |
 | src/audio/ecosysteme.ts | 208 | 388 |  |

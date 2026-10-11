@@ -37,7 +37,7 @@
 // 0,73 s à 18 kHz pour 0,50 demandé, l'exactitude tombant à une fréquence que personne n'écoute.
 // En résolvant à 8 kHz, le réglage annonce ce qu'on entend. C'est ce que les tests VÉRIFIENT, par
 // l'intégrale de Schroeder sur la réponse obtenue, bande par bande.
-import { valeurA } from "./courbe";
+import { valeurA, valeurMax } from "./courbe";
 import { courbeSchroeder } from "./velours";
 
 export interface OptionsFdn {
@@ -52,9 +52,9 @@ export interface OptionsFdn {
   /** Temps de réverbération dans l'aigu. Plus court que le grave dans toute salle réelle. */
   rt60Haut?: number;
   /** Fréquence à laquelle `rt60Haut` est exact, en Hz. */
-  freqRef?: number;
+  freqRef?: number | Float32Array;
   /** Queue ajoutée après le son, en secondes. Absente : le RT60 le plus long. */
-  queue?: number;
+  queue?: number | Float32Array;
   /** Largeur stéréo, de 0 (mono) à 1. Un tableau la fait varier échantillon par échantillon. */
   largeur?: number | Float32Array;
   /**
@@ -175,13 +175,25 @@ export function traiterFdn(x: Float32Array, o: OptionsFdn): { gauche: Float32Arr
   // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
   const melangeA = (i: number) => Math.min(1, Math.max(0, valeurA(o.melange ?? 0.35, i)));
   const largeurA = (i: number) => Math.min(1, Math.max(0, valeurA(o.largeur ?? 1, i)));
-  const queue = Math.max(0.05, o.queue ?? Math.max(rtBas, rtHaut));
+  // LA QUEUE SE MESURE SUR LA PLUS FORTE VALEUR QUE LE RENDU ATTEINDRA : c'est le choix déjà fait
+  // par le retard spectral pour sa traîne. Le tampon est alloué avant qu'un échantillon soit
+  // écrit, et calculer sa longueur sur le réglage pendant qu'une courbe commande donnerait deux
+  // longueurs pour un même effet.
+  const queue = Math.max(0.05, valeurMax(o.queue ?? Math.max(rtBas, rtHaut)));
   const n = x.length + Math.round(queue * sr);
 
   const retards = retardsPremiers(N, minEch, maxEch);
   const lignes = retards.map((m) => new Float64Array(m));
   const curseurs = new Int32Array(N);
-  const absorptions = retards.map((m) => coefficientsAbsorption(m, rtBas, rtHaut, sr, o.freqRef ?? 8000));
+  // LA FRÉQUENCE DE RÉFÉRENCE DÉCIDE DES COEFFICIENTS DE CHAQUE LIGNE, et ils sont calculés une
+  // fois par ligne. L'ouvrir à une courbe veut dire les refaire TOUS à chaque échantillon : huit
+  // lignes, et chaque coefficient coûte deux puissances, un cosinus et une racine. MESURÉ sur deux
+  // secondes de son à huit lignes : 19 ms sans courbe, 133 ms avec, soit SEPT fois plus lent. Le
+  // chemin du nombre garde son calcul unique, et c'est lui que prennent tous les rendus non
+  // modulés.
+  const freqRef = o.freqRef ?? 8000;
+  const absorptionsFixes = retards.map((m) => coefficientsAbsorption(m, rtBas, rtHaut, sr, valeurA(freqRef, 0)));
+  const freqCourbe = typeof freqRef === "number" ? null : freqRef;
   const etats = new Float64Array(N); // mémoire des passe-bas
 
   // Entrées et sorties : des signes alternés donnent deux voies décorrélées sans rien coûter, et
@@ -195,6 +207,10 @@ export function traiterFdn(x: Float32Array, o: OptionsFdn): { gauche: Float32Arr
 
   for (let t = 0; t < n; t++) {
     const sec = t < x.length ? x[t] : 0;
+    // Sans courbe, les coefficients sont ceux d'avant, calculés une fois : pas un bit déplacé.
+    const absorptions = freqCourbe === null
+      ? absorptionsFixes
+      : retards.map((m) => coefficientsAbsorption(m, rtBas, rtHaut, sr, valeurA(freqCourbe, t)));
     let humideG = 0, humideD = 0;
     for (let i = 0; i < N; i++) {
       const s = lignes[i][curseurs[i]];

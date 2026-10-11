@@ -21,7 +21,7 @@
 // la première transposée, et ainsi de suite jusqu'à ce que le gain de rebouclage les éteigne. Quatre
 // ou cinq suffisent ; au-delà, tout est sous le plancher d'audition.
 
-import { valeurA } from "./courbe";
+import { valeurA, valeurMax, valeurTransformee } from "./courbe";
 import { changerTonaliteVoie } from "./effets-spectral";
 import { convoluer, reponseVelours, type OptionsVelours } from "./velours";
 
@@ -50,11 +50,11 @@ export interface OptionsHachee {
   /** Durée de la queue avant hachage, en secondes. */
   decroissanceSec: number;
   /** Seuil d'ouverture, en dBFS, mesuré sur le son SEC. */
-  seuilDb: number;
+  seuilDb: number | Float32Array;
   /** Temps pendant lequel la porte reste ouverte après une attaque, en secondes. */
   maintienSec: number;
   /** Temps de fermeture, en secondes. Court, c'est le couperet ; long, c'est un fondu. */
-  chuteSec: number;
+  chuteSec: number | Float32Array;
   /** Part de réverbération dans la sortie, de 0 à 1. Un tableau la fait varier échantillon par
    * échantillon ; il traverse l'ouvrier par clonage structuré, comme les voies elles-mêmes. */
   melange: number | Float32Array;
@@ -75,16 +75,18 @@ export interface OptionsHachee {
 export function enveloppePorte(
   sec: Float32Array, o: Pick<OptionsHachee, "seuilDb" | "maintienSec" | "chuteSec" | "frequence">,
 ): Float32Array {
-  const seuil = Math.pow(10, o.seuilDb / 20);
+  // `valeurTransformee` ne calcule qu'une fois ce qui ne bouge pas : un seuil fixe garde son `pow`
+  // unique, et une chute fixe son arrondi, exactement comme avant que ces deux réglages s'ouvrent.
+  const seuilA = valeurTransformee(o.seuilDb, (v) => Math.pow(10, v / 20));
   const maintien = Math.max(1, Math.round(o.maintienSec * o.frequence));
-  const chute = Math.max(1, Math.round(o.chuteSec * o.frequence));
+  const chuteA = valeurTransformee(o.chuteSec, (v) => Math.max(1, Math.round(v * o.frequence)));
   const out = new Float32Array(sec.length);
   let reste = 0;          // échantillons de maintien restants
   let niveau = 0;
   for (let i = 0; i < sec.length; i++) {
-    if (Math.abs(sec[i]) >= seuil) { reste = maintien; niveau = 1; }
+    if (Math.abs(sec[i]) >= seuilA(i)) { reste = maintien; niveau = 1; }
     else if (reste > 0) { reste--; }
-    else if (niveau > 0) { niveau = Math.max(0, niveau - 1 / chute); }
+    else if (niveau > 0) { niveau = Math.max(0, niveau - 1 / chuteA(i)); }
     out[i] = niveau;
   }
   return out;
@@ -123,7 +125,13 @@ export function reverberationHachee(entree: Float32Array, o: OptionsHachee): Res
   // LA SORTIE DURE LE SON, PLUS LE TEMPS QUE LA PORTE MET À SE FERMER. Coupée à la longueur de
   // l'entrée, elle tranchait la queue de la dernière frappe dès que le son ne finissait pas sur un
   // silence : la porte n'avait jamais le temps de jouer son maintien et sa chute.
-  const prolongement = Math.round((Math.max(0, o.maintienSec) + Math.max(0, o.chuteSec)) * o.frequence);
+  // LA CHUTE SE MESURE SUR LA PLUS FORTE VALEUR QUE LE RENDU ATTEINDRA, et non sur le réglage :
+  // c'est le choix déjà fait par le retard spectral pour sa traîne. Calculer la longueur sur le
+  // réglage pendant qu'une courbe commande donnerait deux longueurs pour un même effet, et
+  // l'invariant de la courbe plate tomberait sur cette seule différence.
+  const prolongement = Math.round(
+    (Math.max(0, o.maintienSec) + Math.max(0, valeurMax(o.chuteSec))) * o.frequence,
+  );
   const x = new Float32Array(entree.length + prolongement);
   x.set(entree);
   const h = reponseUnitaire({
@@ -164,7 +172,7 @@ export interface OptionsShimmer {
   demiTons: number;
   /** Nombre de tours déroulés. */
   generations: number;
-  melange: number;
+  melange: number | Float32Array;
   frequence: number;
   graine?: number;
   densite?: number;
@@ -225,9 +233,12 @@ export function shimmer(x: Float32Array, o: OptionsShimmer): ResultatShimmer {
     gain *= Math.min(0.95, Math.max(0, o.rebouclage));
   }
 
-  const m = Math.min(1, Math.max(0, o.melange));
+  // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
   const out = new Float32Array(x.length);
-  for (let i = 0; i < x.length; i++) out[i] = x[i] * (1 - m) + (x[i] + somme[i]) * m;
+  for (let i = 0; i < x.length; i++) {
+    const m = Math.min(1, Math.max(0, valeurA(o.melange, i)));
+    out[i] = x[i] * (1 - m) + (x[i] + somme[i]) * m;
+  }
   const premier = niveaux[0] || 1e-12;
   return { audio: out, generationsDb: niveaux.map((n) => 20 * Math.log10(Math.max(1e-12, n) / premier)) };
 }

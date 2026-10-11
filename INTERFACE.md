@@ -417,8 +417,8 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Réunir des voix | `reunir-voix` | 240 × 162 |
 | Réverbération fractale | `reverb-fractale` | 240 × 118 |
 | Reverb Progressive | `reverb-progressive` | 240 × 118 |
-| Réverbération hachée | `reverbe-hachee` | 240 × 140 |
-| Réverbération à réseau (FDN) | `reverbe-reseau` | 240 × 162 |
+| Réverbération hachée | `reverbe-hachee` | 240 × 184 |
+| Réverbération à réseau (FDN) | `reverbe-reseau` | 240 × 206 |
 | Réverbération | `reverberation` | 240 × 140 |
 | Réverbération velours | `reverberation-velours` | 240 × 140 |
 | Ring modulator | `ring-modulator` | 240 × 140 |
@@ -444,7 +444,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Série à tous les intervalles | `serie-tous-intervalles` | 240 × 162 |
 | Sherpa ASR | `sherpa-asr` | 240 × 118 |
 | Shift formants | `shift-formants` | 240 × 118 |
-| Shimmer | `shimmer` | 240 × 118 |
+| Shimmer | `shimmer` | 240 × 140 |
 | Boucle | `simple-boucle` | 240 × 118 |
 | Sinusoïdes + bruit (SMS) | `sms-sinusoides-bruit` | 240 × 162 |
 | Chercher sous contraintes | `solveur-contraintes` | 240 × 162 |

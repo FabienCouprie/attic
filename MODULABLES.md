@@ -21,15 +21,15 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 107, sur 63 composants
-- **réglages restant à faire** : 54, sur 30 composants et 40 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 112, sur 64 composants
+- **réglages restant à faire** : 40, sur 25 composants et 30 couples composant / famille
 - **dont le cœur travaille par trames** : 1
-- **réglages écartés un par un** : 33, sur 14 composants qui gardent les leurs
+- **réglages écartés un par un** : 42, sur 19 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### frequence · 14
+### frequence · 13
 
 - Bitcrusher `bitcrusher` : Fréquence
 - Compresseur multibande `compresseur-multibande` : Fréq Low, Fréq High
@@ -40,22 +40,10 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Peignes accordés `peignes-accordes` : Résonance
 - Quadrafuzz `quadrafuzz` : Coupure 1, Coupure 2, Coupure 3
 - Résonateurs `resonateurs` : Résonance, Brillance
-- Réverbération à réseau (FDN) `reverbe-reseau` : Fréquence de l'aigu
 - Ring modulator `ring-modulator` : Fréquence
 - Trémolo harmonique `tremolo-harmonique` : Coupure
 - Vocoder `vocoder` : Fréq min, Fréq max, Q
 - Wah-wah `wahwah` : Résonance
-
-### temps · 8
-
-- Ampleur `ampleur` : Pré-délai
-- Delay stéréo `delay-stereo` : Temps G, Temps D
-- Écho flottant `echo-flottant` : Décroissance
-- Réverbération hachée `reverbe-hachee` : Décroissance, Maintien, Chute
-- Réverbération à réseau (FDN) `reverbe-reseau` : Retard court, Retard long, Queue
-- Réverbération `reverberation` : Decay
-- Réverbération velours `reverberation-velours` : Chute
-- Shimmer `shimmer` : Décroissance
 
 ### espace · 5
 
@@ -65,33 +53,35 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur du Doppler
 - Spatialisation stéréo `spatialisation-stereo` : Largeur
 
-### dynamique · 4
+### dynamique · 3
 
 - De-esser `de-esser` : Ratio
 - Gate/Expandeur `gate-expandeur` : Seuil, Ratio
 - Limiteur `limiteur` : Seuil, Plafond
-- Réverbération hachée `reverbe-hachee` : Seuil
 
-### retroaction · 3
+### temps · 3
 
-- Beat Repeat / Stutter `beat-repeat` : Feedback
-- Delay stéréo `delay-stereo` : Feedback
-- Shimmer `shimmer` : Rebouclage
-
-### hauteur · 2
-
-- Granular freeze `granular-freeze` : Pitch
-- Shimmer `shimmer` : Transposition
-
-### melange · 2
-
-- Harmonizer / Octaver `harmonizer` : Mix 1, Mix 2 · **⟨trames⟩** harmoniser (appelle harmoniserVoie), harmoniserVoie (appelle changerTonaliteVoie)
-- Shimmer `shimmer` : Mix
+- Ampleur `ampleur` : Pré-délai
+- Delay stéréo `delay-stereo` : Temps G, Temps D
+- Écho flottant `echo-flottant` : Décroissance
 
 ### niveau · 2
 
 - Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur d'amplitude
 - Micromontage `micromontage` : Niveau
+
+### retroaction · 2
+
+- Beat Repeat / Stutter `beat-repeat` : Feedback
+- Delay stéréo `delay-stereo` : Feedback
+
+### hauteur · 1
+
+- Granular freeze `granular-freeze` : Pitch
+
+### melange · 1
+
+- Harmonizer / Octaver `harmonizer` : Mix 1, Mix 2 · **⟨trames⟩** harmoniser (appelle harmoniserVoie), harmoniserVoie (appelle changerTonaliteVoie)
 
 ## Familles écartées en bloc
 
@@ -166,7 +156,16 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `instrument-fin/Largeur de zone` : elle dit l'écart entre deux notes rendues, donc COMBIEN de notes le composant rejoue : la structure de ce qu'il produit, décidée avant le rendu
 - `mosaiquage/Poids du niveau` : c'est l'importance donnée au niveau dans la RECHERCHE du grain le plus proche, lue une fois par grain et non par échantillon
 - `mosaiquage/Poids de la brillance` : idem, l'importance donnée au centre de gravité du spectre dans la même recherche
+- `reverbe-hachee/Décroissance` : elle est la durée de la réponse impulsionnelle que le composant convolue, bâtie une fois avant le rendu
+- `shimmer/Décroissance` : idem, la durée de la réponse que chaque génération convolue
+- `reverberation/Decay` : idem, le facteur de décroissance de la réponse impulsionnelle bâtie avant le rendu
+- `reverberation-velours/Chute` : idem, le temps de chute de la réponse de velours, bâtie avant le rendu
+- `reverbe-reseau/Retard court` : elle fixe la plus courte des huit lignes à retard, allouées avant la boucle ; la faire varier demanderait de réallouer le réseau à chaque échantillon
+- `reverbe-reseau/Retard long` : idem, la plus longue des huit lignes
+- `shimmer/Rebouclage` : il multiplie le gain d'un tour au suivant, `gain *= rebouclage`, soit une poignée de lectures pour tout un morceau
+- `shimmer/Transposition` : elle transpose la queue d'un tour au suivant : une valeur par génération, non par échantillon
 - `ducking/Maintien` : il est lu au seul instant où le déclencheur franchit le seuil, `reste = maintien` : une courbe y serait échantillonnée à la cadence des franchissements, non à celle du son
+- `reverbe-hachee/Maintien` : il est lu au seul instant où le son sec franchit le seuil, `reste = maintien`, exactement comme celui du ducking : une courbe y serait lue à la cadence des franchissements
 - `ondelettes/Force du seuil` : elle multiplie le seuil universel de Donoho, appliqué à la décomposition entière : une décision globale sur le son, non une valeur qui le parcourt
 - `montage/Gain 1` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
 - `montage/Gain 2` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
@@ -265,12 +264,17 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `resonateurs` : Mix
 - `retard-spectral` : Dispersion
 - `retard-spectral` : Mix
+- `reverbe-hachee` : Chute
 - `reverbe-hachee` : Mix
+- `reverbe-hachee` : Seuil
+- `reverbe-reseau` : Fréquence de l'aigu
 - `reverbe-reseau` : Largeur
 - `reverbe-reseau` : Mix
+- `reverbe-reseau` : Queue
 - `reverberation` : Mix
 - `reverberation-velours` : Mélange
 - `ring-modulator` : Mix
+- `shimmer` : Mix
 - `spatialisation-stereo` : Position
 - `spatialiseur` : Azimut
 - `spatialiseur` : Distance
