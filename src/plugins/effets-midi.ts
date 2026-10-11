@@ -422,9 +422,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "MIDI 1", nomEn: "MIDI 1", type: "midi" }, { nom: "MIDI 2", nomEn: "MIDI 2", type: "midi" }],
     sorties: [{ nom: "MIDI", type: "midi" }],
     parametres: [
-      { nom: "Chevauchement", nomEn: "Overlap", plage: [0, 30], pas: 0.1, defaut: 0, unite: "s",
-        doc: "Durée pendant laquelle le deuxième MIDI démarre avant la fin du premier. 0 = concaténation simple.",
-        docEn: "Duration for which the second MIDI starts before the first ends. 0 = simple concatenation." },
+      { nom: "Chevauchement", nomEn: "Overlap", plage: [0, 600], pas: 0.1, defaut: 0, unite: "s",
+        doc: "Durée pendant laquelle le deuxième MIDI démarre avant la fin du premier. 0 = concaténation simple. Un chevauchement plus long que le premier fichier est ramené à sa durée, les deux partant alors ensemble : seul le second se déplace, et il ne peut pas reculer avant le début.",
+        docEn: "Duration for which the second MIDI starts before the first ends. 0 = simple concatenation. An overlap longer than the first file is brought back to its duration, the two then starting together: only the second one moves, and it cannot go back before the start." },
     ],
     async executer(ctx: any) {
       const fichier1 = ctx.entree(0);

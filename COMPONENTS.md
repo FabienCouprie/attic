@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **483 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **484 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -11,7 +11,7 @@ Attic ships **483 components** in **7 categories** and **63 families**. Every na
 |---|---:|---|
 | [Inputs](#inputs) | 93 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (33) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 234 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 43 | [Analysis](#analysis-1) (19) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
+| [Visualization](#visualization) | 44 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -3843,7 +3843,7 @@ Adds silence at the beginning and/or end of the audio track. Independently set t
 
 *Places two tracks one after the other with a crossfade.*
 
-Puts two tracks end to end. The first fades out while the second fades in over an adjustable overlap. Zero overlap gives a plain concatenation.
+Puts two tracks end to end. The first fades out while the second fades in, over the duration « Overlap » gives. A zero overlap gives a plain concatenation, and the output duration is then the sum of the two. The two ramps are linear and complementary: at each instant of the overlap, what leaves the first and what enters the second make one, so that two identical signals keep their level at the join. An overlap longer than the shorter of the two tracks is brought back to that duration: one does not overlap more sound than there is. The output duration therefore never falls below that of the longer of the two.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3853,7 +3853,7 @@ Puts two tracks end to end. The first fades out while the second fades in over a
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Overlap | number | 2 s | 0 – 30 s, step 0.1 | Crossfade duration between the end of track 1 and the start of track 2. |
+| Overlap | number | 2 s | 0 – 600 s, step 0.1 | Crossfade duration between the end of track 1 and the start of track 2. An overlap longer than the shorter of the two tracks is brought back to that duration: one does not overlap more sound than there is. |
 
 #### Cut at Words
 
@@ -4261,7 +4261,7 @@ Assembles a sound from short fragments cut out of the received sources, each wit
 
 *Places two MIDI files one after another with an overlap.*
 
-Concatenates two MIDI files end-to-end. The second file starts at the end of the first (overlap = 0) or before (overlap > 0), superimposing the notes. Events from each file are preserved, including program/instrument changes. The joined file is output on the MIDI port.
+Concatenates two MIDI files end-to-end. The second file starts at the end of the first (overlap = 0) or before (overlap > 0), superimposing the notes. Only the second file moves, and it cannot go back before the start: an overlap longer than the first file is brought back to its duration, the two then starting together. Events from each file are preserved, including program/instrument changes. The joined file is output on the MIDI port.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -4271,7 +4271,7 @@ Concatenates two MIDI files end-to-end. The second file starts at the end of the
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Overlap | number | 0 s | 0 – 30 s, step 0.1 | Duration for which the second MIDI starts before the first ends. 0 = simple concatenation. |
+| Overlap | number | 0 s | 0 – 600 s, step 0.1 | Duration for which the second MIDI starts before the first ends. 0 = simple concatenation. An overlap longer than the first file is brought back to its duration, the two then starting together: only the second one moves, and it cannot go back before the start. |
 
 #### MIDI Loop
 
@@ -4512,7 +4512,7 @@ Puts a processed zone back at its original position in the full track, with a cr
 
 *Chains a sound's objects in the order of a descriptor: from darkest to brightest, from quietest to loudest.*
 
-This node chains a sound's objects in the order of a descriptor: loudness, brightness, noisiness or length. A rain of fragments sorted from darkest to brightest becomes a rise; sorted from noisiest to most tonal, a sound that clears; from longest to shortest, an acceleration. The principle is that of CataRT's navigation, reduced to one axis. The zones may arrive already described, or carry only their bounds - a hand-made selection: the node then describes them itself, and they sort the same way. Each object gets a fade in and out, so that no cut clicks. The space between two objects can be negative: they then overlap, and the chain becomes a texture. At random, the order is drawn with a seed: same seed, same order.
+This node chains a sound's objects in the order of a descriptor: loudness, brightness, noisiness, length, mass, attack or allure. Three of these orders come from Pierre Schaeffer's Traité des objets musicaux, 1966. « Mass » follows his scale, from pure sound to white noise by way of the tonic, the group and the nodal. « Allure » follows its own, from mechanical undulation to disorder, and an object that does not undulate sorts to the end. « Attack » is the quantity that orders the dynamic shape, from the most biting to the most gradual, a shape not sorting by itself: « crescendo » comes neither before nor after « impulse ». An allure needs at least four undulations to be observed, that is about one second: shorter objects carry none. A rain of fragments sorted from darkest to brightest becomes a rise; sorted from noisiest to most tonal, a sound that clears; from longest to shortest, an acceleration. The principle is that of CataRT's navigation, reduced to one axis. The zones may arrive already described, or carry only their bounds - a hand-made selection: the node then describes them itself, and they sort the same way. Each object gets a fade in and out, so that no cut clicks. The space between two objects can be negative: they then overlap, and the chain becomes a texture. At random, the order is drawn with a seed: same seed, same order.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -4522,7 +4522,7 @@ This node chains a sound's objects in the order of a descriptor: loudness, brigh
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Order | choice | Brightness | Original / Loudness / Brightness / Noise / Length / Random | The descriptor that sorts the objects. Original: the sound's own order, to apply only the spacing and fades. |
+| Order | choice | Brightness | Original / Loudness / Brightness / Noise / Length / Mass / Attack / Allure / Random | The descriptor that sorts the objects. Original: the sound's own order, to apply only the spacing and fades. |
 | Direction | choice | Ascending | Ascending / Descending | Ascending: from lowest to highest on the chosen descriptor. No effect at random. |
 | Spacing | slider | 0 ms | -2000 – 5000 ms, step 10 | Silence between two objects; negative, they overlap by that much. |
 | Fade | slider | 10 ms | 0 – 500 ms, step 1 | Fade in and out of each object. |
@@ -4645,8 +4645,8 @@ This node finds the sound objects of a recording - sounds each perceived as a wh
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Criterion | choice | Attacks | Attacks / Silences / Change of timbre | What separates two objects. Attacks: what is struck or plucked. Silences: separate events, a field recording. Change of timbre: a continuous flow, with neither attack nor silence. |
-| Sensitivity | slider | 50 % | 0 – 100 %, step 1 | Higher, more objects: smaller attacks or smaller changes of timbre are enough to make a boundary. No effect on the silence criterion, which its threshold sets. |
+| Criterion | choice | Attacks | Attacks / Silences / Change of timbre / Change of mass | What separates two objects. Attacks: what is struck or plucked. Silences: separate events, a field recording. Change of timbre: a continuous flow, with neither attack nor silence. Change of mass: where the sound occupies the field of pitches differently, a note becoming a chord or a noise. A change of level alone is not a change of mass. |
+| Sensitivity | slider | 50 % | 0 – 100 %, step 1 | Higher, more objects: smaller attacks or smaller changes of timbre or of mass are enough to make a boundary. A change must also pass an absolute floor, which the sensitivity does not lower: a sound that does not change stays a single object at any sensitivity. No effect on the silence criterion, which its threshold sets. |
 | Min length | slider | 80 ms | 20 – 5000 ms, step 10 | A shorter object is dropped, and two boundaries closer than this make only one - the sharper. It is the setting that keeps a drum roll from being cut note by note, if one wants it whole. |
 | Silence threshold | slider | -40 dB | -90 – -10 dB, step 1 | For the silence criterion: what falls below this level is a silence. No effect on the other criteria. |
 
@@ -8312,6 +8312,7 @@ Sends the sound around a torus, the product of two circles, along which it moves
 | [Morphology](#morphology) | Reports the shape of a sequence, its recurring figures, and what it shares with another. |
 | [Multitrack Viewer](#multitrack-viewer) | Draws up to six sounds one under another, on a shared time axis. |
 | [Practice Keyboard](#practice-keyboard) | Shows a MIDI file played on an 88-key keyboard, one colour per hand, and says whether it is playable. |
+| [Schaefferian Criteria](#schaefferian-criteria) | Reads a sound's mass, dynamic form and allure, in the species of the Traité des objets musicaux. |
 | [Self-Similarity Matrix](#self-similarity-matrix) | Draws a piece's form and detects its boundaries, by Foote's method. |
 | [Sequence Roll](#sequence-roll) | Draws the notes of a sequence on a continuous pitch axis, voice by voice. |
 | [Songsee Visualizer](#songsee-visualizer) | Generates an audio visualization image using the Songsee engine. |
@@ -8399,7 +8400,7 @@ Measures what the two channels do to each other, and shows it. The figure is a g
 
 *Sorts a sound's grain into three species, harmonic, compact or discontinuous, and gives its rate and depth.*
 
-Sorts the received sound's grain into three species and gives its quantities, without touching the sound, which comes out unchanged. After Pierre Schaeffer, « Traité des objets musicaux », Seuil, 1966, and its figure of grain types, page 553; and Michel Chion, « Guide des objets sonores: Pierre Schaeffer et la recherche musicale », INA-GRM and Buchet-Chastel, 1983, entry GRAIN, page 95. Schaeffer starts from the three ways a body sustains its vibration, not at all, constantly, or by repeated percussions, and draws three species of grain from them. Resonance gives the « harmonic » grain, whose quality is shimmer; friction gives the « compact » grain; iteration gives the « discontinuous » grain, whose quality is impact. The reading is taken on the sustain and not on the attack, the grain being by definition the microstructure of what holds. « Sustain » states what share of the sound is set aside at each end. Two quantities decide the species. The « Depth » of the envelope's modulation separates the sustain by repeated percussions from the two continuous ones: between two impacts the envelope falls back, during a friction or a resonance it holds. The « Harmonicity » of the carrier then separates those two. « Depth threshold » and « Harmonicity threshold » are the two borders, and they are adjustable because the grain is a perceptual criterion: the place where one stops hearing a continuous sustain has no universal value. The « Rate » is that of the dominant modulation, in hertz: it is Schaeffer's tight and loose. « Rate min » and « Rate max » bound the range it is searched in. The « Sharpness » states how far the modulation gathers around that rate, that is how definite the rate read is. This component does not name the cause of the sound, and Schaeffer makes that a principle: he observes that different causes give the same grain, and it is from there that he draws reduced listening. The species describes the perceived microstructure of the sustain, not what produced it. A sound too faint or too short for a sustain to be observed in it receives the species « none », which is preferable to a species drawn at random. The « Audio » output returns the sound unchanged. The « Grain » output gives the species, the rate, the depth, the sharpness and the harmonicity as text.
+Sorts the received sound's grain into three species and gives its quantities, without touching the sound, which comes out unchanged. After Pierre Schaeffer, « Traité des objets musicaux », Seuil, 1966, and its figure of grain types, page 553; and Michel Chion, « Guide des objets sonores: Pierre Schaeffer et la recherche musicale », INA-GRM and Buchet-Chastel, 1983, entry GRAIN, page 95. Schaeffer starts from the three ways a body sustains its vibration, not at all, constantly, or by repeated percussions, and draws three species of grain from them. Resonance gives the « harmonic » grain, whose quality is shimmer; friction gives the « compact » grain; iteration gives the « discontinuous » grain, whose quality is impact. The reading is taken on the sustain and not on the attack, the grain being by definition the microstructure of what holds. « Sustain » states what share of the sound is set aside at each end. Two quantities decide the species. The « Depth » of the envelope's modulation separates the sustain by repeated percussions from the two continuous ones: between two impacts the envelope falls back, during a friction or a resonance it holds. The « Harmonicity » of the carrier then separates those two. « Depth threshold » and « Harmonicity threshold » are the two borders, and they are adjustable because the grain is a perceptual criterion: the place where one stops hearing a continuous sustain has no universal value. The « Rate » is that of the dominant modulation, in hertz: it is Schaeffer's tight and loose. « Rate min » and « Rate max » bound the range it is searched in. The « Sharpness » states how far the modulation gathers around that rate. The « Relief » gives the height of the peak over the floor of the modulation spectrum, and « Relief threshold » states from where a rate is announced: a compact grain has none, the peak of a flat spectrum being that of the noise. A rate is further confirmed by a second reading of the envelope, at another rate of its own: a modulation of the sound is at the same place there, a trace of the carrier moves, the folding that brings it there depending on that rate. A peak this second reading does not find again is not announced. This component does not name the cause of the sound, and Schaeffer makes that a principle: he observes that different causes give the same grain, and it is from there that he draws reduced listening. The species describes the perceived microstructure of the sustain, not what produced it. Four cases receive the species « none », and the « Grain » output states which one rather than drawing a species at random: - a sound too faint or too short for a sustain to be observed in it; - a carrier too low for a grain to be measured on it, that is under 1.6 times « Rate max ». The square of a harmonic sound carries the differences between its partials, the lowest of which is its fundamental, and that one folds into the range of rates: lowering « Rate max » lowers that boundary as much; - a smooth hold, that is a harmonic sustain whose envelope does not modulate, under « Steady threshold »; - an allure, that is a continuous sustain modulation slower than « Allure threshold ». The allure is a criterion of form in Schaeffer where the grain is a criterion of matter. The « Audio » output returns the sound unchanged. The « Grain » output gives the species, the rate, the depth, the sharpness, the relief and the harmonicity as text.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8409,11 +8410,14 @@ Sorts the received sound's grain into three species and gives its quantities, wi
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Depth threshold | slider | 0.5 | 0.05 – 0.95, step 0.01 | Beyond this modulation depth, the sustain is taken for a series of percussions and the grain for discontinuous. The repository's three test sounds give 0.145 for a friction, 0.150 for a resonance and 1.000 for an iteration: the default border is set in the middle of that margin. |
+| Depth threshold | slider | 0.5 | 0.05 – 0.95, step 0.01 | Beyond this modulation depth, the sustain is taken for a series of percussions and the grain for discontinuous. A friction sits near 0.09 and a resonance near 0.11, where an iteration reaches 1.00: the default border is set in the middle of that margin. |
 | Harmonicity threshold | slider | 0.5 | 0.05 – 0.95, step 0.01 | Above this threshold, a continuous sustain is taken for a resonance and the grain for harmonic; below, for a friction and the grain for compact. |
 | Rate min | slider | 2 Hz | 1 – 50 Hz, step 1 | The slowest modulation rate searched for. Below it, one would be reading the whole sound's envelope and not its grain. |
 | Rate max | slider | 120 Hz | 20 – 300 Hz, step 5 | The fastest. It also decides the rate at which the envelope is read, which must be twice that rate. |
 | Sustain | slider | 10 % | 0 – 40 %, step 1 | The share of the sound set aside at each end. The grain is the microstructure of what holds: an attack placed in front must not move the species. |
+| Relief threshold | slider | 16 | 2 – 60, step 1 | The least relief of the peak over the floor of the modulation spectrum for the « Grain » output to state a rate. Below it, it states no rate, which is the case of a compact grain: the peak of a flat spectrum is that of the noise. A band noise sits between 3 and 6, a loose roll near 58. |
+| Steady threshold | slider | 0.045 | 0.005 – 0.2, step 0.005 | Below this modulation depth, a harmonic sustain is a smooth hold, and the « Grain » output says so in place of a species. This threshold bears on the harmonic sustain only, the compact grain holding to the noise of the matter and not to an envelope modulation. A held waveform stays under 0.04, a fast shimmer passes 0.06. |
+| Allure threshold | slider | 20 Hz | 5 – 60 Hz, step 1 | Below this rate, the modulation of a continuous sustain is an allure, and the « Grain » output states it as such. Its default value is where fluctuation strength yields to roughness, after Zwicker and Fastl, « Psychoacoustics: Facts and Models », 3rd edition, Springer, 2007. A sustain whose envelope falls back between two strikes keeps its discontinuous species and its rate at any rate, « Depth » deciding before this threshold. |
 
 #### Harmonic Analysis
 
@@ -8519,6 +8523,34 @@ Shows a MIDI file played on an eighty-eight-key keyboard, one colour per hand, w
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
+
+#### Schaefferian Criteria
+
+`criteres-schaefferiens` · Visualization → Analysis
+
+*Reads a sound's mass, dynamic form and allure, in the species of the Traité des objets musicaux.*
+
+Reads three of the received sound's seven morphological criteria and gives their species, without touching the sound, which comes out unchanged. After Pierre Schaeffer, « Traité des objets musicaux », Seuil, 1966; and Michel Chion, « Guide des objets sonores: Pierre Schaeffer et la recherche musicale », INA-GRM and Buchet-Chastel, 1983, entries masse page 141, dynamique page 83 and allure page 40. The seven criteria fall into three families: matter carries mass, harmonic timbre and grain; form carries dynamics and allure; variation carries melodic profile and mass profile. This component reads one from each family. The « Mass » states how the sound occupies the field of pitches, on the scale of the Traité, from the most tonic to the most complex: - « pure », a single partial, hence no timbre; - « tonic », one definite pitch and its timbre; - « group », several pitches one can tell apart; - « nodal », a zone of the field occupied without a definite pitch; - « white », the whole field occupied. Two quantities decide it. The « Occupancy » is the share of the field carrying energy, and « White noise threshold » is the share beyond which the mass occupies the whole field. The count of « Pitches » sorts the first three degrees, and « Pure sound occupancy » separates a lone partial from a narrow band, which has a single line too. The mass is called « varied » when the pitch moves by more than « Varied range » over the sound. The « Dynamics » is the shape of the level in time, and it is by it that the facture is read: - « impulse », an attack and nothing behind; - « held », a plateau; - « crescendo », the level rises throughout; - « decrescendo », it falls; - « delta », it rises then falls. « Impulse sustain » is the duration above half the peak below which the sound is an impulse. « Bulge threshold » decides the delta shape, and « Slope threshold » the crescendo and the decrescendo. The « Attack » is given in milliseconds, from a tenth to nine tenths of the peak. The « Allure » is the slow undulation of the sustain, in three species: - « mechanical », of unchanging period; - « living », whose period breathes, like a player's; - « disordered », whose period cannot be foreseen. « Rate min » and « Rate max » bound the band the undulation is searched in; its upper bound is where the grain's band begins. « Undulation threshold » is the depth below which there is no allure. « Mechanical irregularity » and « Living irregularity » are the two boundaries between the species, set on the relative spread of successive periods. This component does not name the cause of the sound, and Schaeffer makes that a principle: he observes that different causes give the same mass, and it is from there that he draws reduced listening. The species describe what is perceived, not what produced it. A sound too faint or too short for a criterion to be observed in it receives the species « none » for that criterion, which is preferable to a species drawn at random. The « Audio » output returns the sound unchanged. The « Criteria » output gives the three species and their quantities as text.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Criteria | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| White noise threshold | slider | 0.95 | 0.2 – 0.99, step 0.01 | The share of the field of pitches beyond which the mass is white noise rather than a nodal zone. The scale is continuous, a band closing in little by little on white noise: three hundred hertz wide occupy about half the field, one thousand five hundred occupy nine tenths, and white noise the whole of it. |
+| Pure sound occupancy | slider | 0.02 | 0.002 – 0.2, step 0.002 | The share of the field below which a single-line mass is a pure sound. Above it, it is tonic: a narrow band has a single line too, and a pure sound occupies a point of the field where a band occupies an interval. A sine stays under 0.01, a thirty hertz band sits near 0.07. |
+| Varied range | slider | 2 semitones | 0.5 – 12 semitones, step 0.5 | The pitch range beyond which the mass is called varied. It is taken on the deciles of the tracked pitch, so that an isolated reading does not trigger it and a glissando gives four fifths of its written range. |
+| Impulse sustain | slider | 120 ms | 10 – 500 ms, step 10 | The duration above half the peak below which the dynamic shape is an impulse. It is what separates an impulse from a decrescendo, both having the same slope: an impulse has no sustain at all. |
+| Bulge threshold | slider | 0.12 | 0.02 – 0.6, step 0.02 | By how much the middle third must exceed the mean of the two ends for the shape to be a delta. It comes before the slope threshold: a delta shape rises as much as it falls, so its overall slope is null like a held sound's. |
+| Slope threshold | slider | 0.15 | 0.02 – 0.6, step 0.02 | By how much the last third must depart from the first for the shape to be a crescendo or a decrescendo. Below it, it is a held sound: a plateau always has a small slope, which the reading must not take for a rise. |
+| Rate min | slider | 0.5 Hz | 0.2 – 4 Hz, step 0.1 | The slowest undulation rate searched for. Below it, one would no longer be reading an undulation of the sustain but the shape of the whole sound, which is the dynamics. The sound's duration bounds it too, an undulation being unable to be slower than it. |
+| Rate max | slider | 20 Hz | 5 – 60 Hz, step 1 | The fastest. Its default value is where fluctuation strength yields to roughness, after Zwicker and Fastl, « Psychoacoustics: Facts and Models », 3rd edition, Springer, 2007: beyond it, a modulation can no longer be followed and becomes a texture, that is, a grain. |
+| Undulation threshold | slider | 0.06 | 0.01 – 0.4, step 0.01 | The undulation depth below which there is no allure. A hold without undulation stays under a thousandth, a fifteen per cent undulation passes a tenth. |
+| Mechanical irregularity | slider | 0.02 | 0.005 – 0.2, step 0.005 | The relative spread of successive periods below which the allure is mechanical. A tremolo of unchanging period stays under 0.008 at every rate of the band, and a five per cent rate departure gives 0.035. |
+| Living irregularity | slider | 0.12 | 0.05 – 0.6, step 0.01 | The spread beyond which the allure is disordered rather than living. A ten per cent rate departure gives 0.070, a twenty per cent one 0.141, and an undulation whose every period is drawn at random from 0.18 to 0.23. |
 
 #### Self-Similarity Matrix
 

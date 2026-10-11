@@ -14,8 +14,34 @@
 // descripteurs, que les nœuds existants ignorent et que « Réordonner les objets » exploite.
 
 import { fft } from "./fft";
+import {
+  criteresSchaefferiens, degreDeMasse,
+  type EspeceAllure, type EspeceMasse, type FormeDynamique,
+} from "./criteres-schaefferiens";
 
-export type CritereDecoupage = "attaques" | "silences" | "timbre";
+export type CritereDecoupage = "attaques" | "silences" | "timbre" | "masse";
+
+/**
+ * Le champ des hauteurs où l'occupation est relevée par trame, en hertz.
+ *
+ * C'est le même que celui des critères schaefferiens, et pour la même raison : rapportée au demi de
+ * la cadence, une occupation dépendrait de la cadence du son.
+ */
+const CHAMP_MASSE_HZ = 4000;
+
+/** Sous ce rapport au sommet de la trame, un point du spectre est tenu pour vide, en décibels. */
+const PLANCHER_MASSE_DB = -40;
+
+/**
+ * La nouveauté minimale d'une frontière, en écarts perceptibles.
+ *
+ * ELLE EST ABSOLUE, et c'est ce qui manquait : `pics` ne juge que des rapports, ramenant la courbe à
+ * son propre maximum, de sorte qu'un son qui ne change pas voyait ses plus grosses ondulations de
+ * mesure devenir des sommets francs. Comme chaque descripteur est maintenant divisé par l'écart
+ * qu'on entend sur lui, la nouveauté se lit en écarts perceptibles et un plancher y a un sens : il
+ * faut qu'au moins un descripteur ait changé d'autant.
+ */
+const PLANCHER_NOUVEAUTE = 0.7;
 
 export interface ObjetSonore {
   debut: number;
@@ -26,6 +52,26 @@ export interface ObjetSonore {
   brillance: number;
   /** Platitude spectrale, de 0 (une note pure) à 1 (un bruit blanc). */
   bruit: number;
+  /**
+   * Les trois critères du Traité relevés sur l'objet, par `criteres-schaefferiens.ts`.
+   *
+   * ILS SONT RELEVÉS PAR OBJET ET NON PAR TRAME, et c'est ce qui les distingue des descripteurs
+   * ci-dessus : une masse, une forme dynamique et une allure ne se lisent que sur un objet entier.
+   *
+   * ET UN OBJET PEUT ÊTRE TROP COURT POUR CERTAINS. L'allure demande au moins quatre ondulations
+   * dans sa bande, donc environ une seconde pour une ondulation de quatre hertz : la plupart des
+   * objets d'un découpage sont plus brefs, et reçoivent alors « aucune ». C'est dit plutôt que
+   * supposé, et le tri par allure les range d'un seul côté.
+   */
+  masse: EspeceMasse;
+  /** Le degré de cette masse sur l'échelle, de 0 pour le son pur à 4 pour le bruit blanc. */
+  degreMasse: number;
+  forme: FormeDynamique;
+  /** La durée de l'attaque, en millisecondes. */
+  attaqueMs: number;
+  allure: EspeceAllure;
+  /** L'écart relatif des périodes de l'allure, ou `null` quand l'objet n'en porte pas. */
+  irregularite: number | null;
 }
 
 export interface OptionsDecoupage {
@@ -47,6 +93,10 @@ interface Trames {
   flux: Float64Array;
   centre: Float64Array;
   platitude: Float64Array;
+  /** La part du champ des hauteurs qui porte de l'énergie, de 0 à 1 : l'un des deux axes de la masse. */
+  occupation: Float64Array;
+  /** La partielle la plus forte de la trame, en hertz : l'autre axe, celui du placement de la masse. */
+  dominante: Float64Array;
 }
 
 function mono(b: AudioBuffer): Float32Array {
@@ -60,6 +110,11 @@ function trames(x: Float32Array, sr: number): Trames {
   const nb = Math.max(1, Math.floor((x.length - N) / SAUT) + 1);
   const hann = Float64Array.from({ length: N }, (_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / N));
   const rms = new Float64Array(nb), flux = new Float64Array(nb), centre = new Float64Array(nb), platitude = new Float64Array(nb);
+  const occupation = new Float64Array(nb), dominante = new Float64Array(nb);
+  // Le champ est borné en hertz, donc en rangs par la cadence ; le dernier rang utile ne bouge pas.
+  const hautChamp = Math.min(N / 2 - 1, Math.max(2, Math.floor((CHAMP_MASSE_HZ * N) / sr)));
+  const seuilVide = Math.pow(10, PLANCHER_MASSE_DB / 20);
+  const brut = new Float64Array(N / 2);
   let precedent = new Float64Array(N / 2);
   const re = new Float64Array(N), im = new Float64Array(N);
   for (let t = 0; t < nb; t++) {
@@ -70,10 +125,13 @@ function trames(x: Float32Array, sr: number): Trames {
     fft(re, im, false);
     const mag = new Float64Array(N / 2);
     let somme = 0, pondere = 0, logs = 0, df = 0;
+    let crete = 0, rangCrete = 1;
     for (let k = 1; k < N / 2; k++) {
       const m = Math.hypot(re[k], im[k]);
+      brut[k] = m;
       mag[k] = Math.log1p(10 * m);
       somme += m; pondere += m * (k * sr / N); logs += Math.log(m + 1e-12);
+      if (k <= hautChamp && m > crete) { crete = m; rangCrete = k; }
       const d = mag[k] - precedent[k];
       if (d > 0) df += d;
     }
@@ -81,9 +139,16 @@ function trames(x: Float32Array, sr: number): Trames {
     flux[t] = df;
     centre[t] = somme > 0 ? pondere / somme : 0;
     platitude[t] = somme > 0 ? Math.exp(logs / nbins) / (somme / nbins) : 0;
+    // LES DEUX AXES DE LA MASSE, relevés sur le spectre déjà calculé : combien du champ est occupé,
+    // et où est le gros de l'énergie.
+    let pleins = 0;
+    const plancher = crete * seuilVide;
+    for (let k = 1; k <= hautChamp; k++) if (brut[k] >= plancher) pleins++;
+    occupation[t] = crete > 0 ? pleins / hautChamp : 0;
+    dominante[t] = crete > 0 ? (rangCrete * sr) / N : 0;
     precedent = mag;
   }
-  return { nb, rms, flux, centre, platitude };
+  return { nb, rms, flux, centre, platitude, occupation, dominante };
 }
 
 const db = (v: number) => 20 * Math.log10(Math.max(v, 1e-9));
@@ -159,10 +224,45 @@ export function decouperEnObjets(b: AudioBuffer, o: OptionsDecoupage): ObjetSono
     } else {
       // LE TIMBRE : la distance entre ce qui précède et ce qui suit, sur trois descripteurs
       // ramenés à la même échelle. Une frontière est un instant où l'avant et l'après diffèrent.
-      const f = [Float64Array.from(tr.centre, (c) => Math.log(c + 20)), tr.platitude, Float64Array.from(tr.rms, db)];
-      const z = f.map((v) => {
+      //
+      // ET LA MASSE : la même distance, mais sur ce qui définit la masse au sens du Traité, c'est-à-
+      // dire la PART DU CHAMP DES HAUTEURS que le son occupe. Un son passe d'une masse à une autre
+      // quand son champ se remplit ou se resserre : une note qui devient un accord, un accord qui
+      // devient un bruit.
+      //
+      // UN SEUL AXE, ET LE PLACEMENT DE LA MASSE N'EN EST PAS. Un second axe a été essayé, la
+      // partielle dominante : il est faux pour deux raisons qui se rejoignent. Chez Schaeffer, une
+      // note qui en devient une autre garde sa masse, celle d'un son tonique, et ce qui change est
+      // son PROFIL MÉLODIQUE, qui est un autre critère. Et à la mesure, la partielle dominante d'un
+      // bruit saute d'une trame à l'autre, de sorte que cet axe coupait DANS le bruit : relevé sur un
+      // bruit d'une seconde suivi d'une note, il y ajoutait deux frontières à 0,18 et 0,33 s.
+      //
+      // LE COMPTE DE HAUTEURS SERAIT LE SECOND AXE LÉGITIME, et il n'est pas là faute de résolution :
+      // une raie se juge sur le relief de son voisinage, et la trame du découpage donne un pas de
+      // 43 Hz à 44,1 kHz, où un voisinage ne fait que deux points. Le nœud « Critères schaefferiens »
+      // le relève, lui, sur une transformée dont le pas est tenu à huit hertz.
+      // CHAQUE DESCRIPTEUR PORTE SON ÉCART PERCEPTIBLE, et sans lui la normalisation inventait des
+      // frontières. Elle divisait par l'écart type du descripteur sur le son entier : sur un son qui
+      // NE CHANGE PAS, cet écart type est presque nul, de sorte que la moindre ondulation de mesure
+      // ressortait à plusieurs écarts types et faisait une frontière franche. Relevé sur une tenue
+      // harmonique de deux secondes, qui ne change pas d'un bout à l'autre : le critère du timbre y
+      // trouvait ONZE objets et celui de la masse DOUZE.
+      //
+      // Le plancher est l'écart qu'on entend sur chaque grandeur : deux centièmes du champ pour une
+      // occupation ou une platitude, un demi-ton pour une fréquence, un décibel pour un niveau. La
+      // nouveauté se lit alors en « écarts perceptibles », ce qui lui donne une échelle absolue.
+      const DEMI_TON = Math.log(Math.pow(2, 1 / 12));
+      const f: [Float64Array, number][] = o.critere === "masse"
+        ? [[tr.occupation, 0.02]]
+        : [
+          [Float64Array.from(tr.centre, (c) => Math.log(c + 20)), DEMI_TON],
+          [tr.platitude, 0.02],
+          [Float64Array.from(tr.rms, db), 1],
+        ];
+      const z = f.map(([v, plancher]) => {
         const m = v.reduce((s, a) => s + a, 0) / v.length;
-        const e = Math.sqrt(v.reduce((s, a) => s + (a - m) ** 2, 0) / v.length) || 1;
+        const ecart = Math.sqrt(v.reduce((s, a) => s + (a - m) ** 2, 0) / v.length);
+        const e = Math.max(ecart, plancher);
         return Float64Array.from(v, (a) => (a - m) / e);
       });
       const L = Math.max(2, Math.round(0.15 * sr / SAUT));
@@ -178,7 +278,12 @@ export function decouperEnObjets(b: AudioBuffer, o: OptionsDecoupage): ObjetSono
       }
       demiFenetre = 4 * L;
     }
-    const p = pics(nouveaute, o.sensibilite, tramesMin, demiFenetre);
+    // ET UNE FRONTIÈRE DOIT PASSER UN PLANCHER ABSOLU, car `pics` ne juge que des RAPPORTS : il
+    // ramène la courbe à son propre maximum, de sorte qu'un son sans frontière voit ses plus grosses
+    // ondulations de mesure devenir des sommets francs. Le plancher ne vaut que pour les deux
+    // critères à nouveauté normalisée, le flux d'une attaque ayant son échelle propre.
+    const p = pics(nouveaute, o.sensibilite, tramesMin, demiFenetre)
+      .filter((t) => o.critere === "attaques" || nouveaute[t] >= PLANCHER_NOUVEAUTE);
     const debuts = o.critere === "attaques" ? p.map((t) => affinerAttaque(x, t, sr)) : p.map((t) => t * SAUT);
     // Avant la première frontière : un objet à part entière en timbre (le flux commence à zéro) ; en
     // attaques, seulement si quelque chose y sonne — sinon ce serait un objet de silence.
@@ -186,12 +291,12 @@ export function decouperEnObjets(b: AudioBuffer, o: OptionsDecoupage): ObjetSono
     const avant = debuts.length ? Math.max(0, Math.floor((debuts[0] - N) / SAUT)) : tr.nb;
     const maxRms = Math.max(maxDe(tr.rms), 1e-12);
     const sonneAvant = avant > 0 && maxDe(tr.rms, 0, avant) > 0.1 * maxRms;
-    if (o.critere === "timbre" || (debuts[0] ?? 1) > 0.02 * sr && sonneAvant || !debuts.length) debuts.unshift(0);
+    if (o.critere !== "attaques" || (debuts[0] ?? 1) > 0.02 * sr && sonneAvant || !debuts.length) debuts.unshift(0);
     for (let k = 0; k < debuts.length; k++) bornes.push([debuts[k], k + 1 < debuts.length ? debuts[k + 1] : x.length]);
   }
 
   bornes = bornes.filter(([de, a]) => (a - de) / sr * 1000 >= o.dureeMinMs);
-  return bornes.map(([de, a]) => decrire(tr, sr, de, a));
+  return bornes.map(([de, a]) => decrire(tr, x, sr, de, a));
 }
 
 /**
@@ -199,11 +304,11 @@ export function decouperEnObjets(b: AudioBuffer, o: OptionsDecoupage): ObjetSono
  * sélection faite à la main se trie comme un découpage automatique.
  */
 export function decrireZones(b: AudioBuffer, zones: { debut: number; duree: number }[]): ObjetSonore[] {
-  const sr = b.sampleRate, tr = trames(mono(b), sr);
-  return zones.map((z) => decrire(tr, sr, Math.max(0, Math.round(z.debut * sr)), Math.min(b.length, Math.round((z.debut + z.duree) * sr))));
+  const sr = b.sampleRate, x = mono(b), tr = trames(x, sr);
+  return zones.map((z) => decrire(tr, x, sr, Math.max(0, Math.round(z.debut * sr)), Math.min(b.length, Math.round((z.debut + z.duree) * sr))));
 }
 
-function decrire(tr: Trames, sr: number, de: number, a: number): ObjetSonore {
+function decrire(tr: Trames, x: Float32Array, sr: number, de: number, a: number): ObjetSonore {
   const t0 = Math.floor(de / SAUT), t1 = Math.max(t0 + 1, Math.min(tr.nb, Math.ceil((a - N) / SAUT) + 1));
   let e = 0, somme = 0, c = 0, p = 0;
   for (let t = t0; t < t1; t++) {
@@ -211,17 +316,27 @@ function decrire(tr: Trames, sr: number, de: number, a: number): ObjetSonore {
     e += w; somme += w; c += w * tr.centre[t]; p += w * tr.platitude[t];
   }
   const n = t1 - t0;
+  // Les trois critères se relèvent sur la tranche elle-même, non sur les trames : voir `ObjetSonore`.
+  const trois = criteresSchaefferiens(x.subarray(Math.max(0, de), Math.min(x.length, a)), sr);
   return {
     debut: de / sr, duree: (a - de) / sr,
     sonie: db(Math.sqrt(e / n)),
     brillance: somme > 0 ? c / somme : 0,
     bruit: somme > 0 ? p / somme : 0,
+    masse: trois.masse.espece,
+    degreMasse: degreDeMasse(trois.masse.espece),
+    forme: trois.dynamique.forme,
+    attaqueMs: trois.dynamique.attaqueMs,
+    allure: trois.allure.espece,
+    irregularite: trois.allure.espece === "aucune" ? null : trois.allure.irregularite,
   };
 }
 
 // ── Réordonner ───────────────────────────────────────────────────────────────────────────────
 
-export type CritereTri = "origine" | "sonie" | "brillance" | "bruit" | "duree" | "hasard";
+export type CritereTri =
+  | "origine" | "sonie" | "brillance" | "bruit" | "duree" | "hasard"
+  | "masse" | "attaque" | "allure";
 
 /**
  * Enchaîne les objets dans l'ordre d'un descripteur : du plus sombre au plus brillant, du plus
@@ -232,7 +347,10 @@ export type CritereTri = "origine" | "sonie" | "brillance" | "bruit" | "duree" |
  * sont séparés par un espace qui peut être négatif : ils se chevauchent alors.
  */
 export function reordonnerObjets(
-  b: AudioBuffer, objets: { debut: number; duree: number; sonie?: number; brillance?: number; bruit?: number }[],
+  b: AudioBuffer, objets: {
+    debut: number; duree: number; sonie?: number; brillance?: number; bruit?: number;
+    degreMasse?: number; attaqueMs?: number; irregularite?: number | null;
+  }[],
   o: { critere: CritereTri; decroissant: boolean; espaceMs: number; fonduMs: number; hasard?: () => number },
 ): AudioBuffer {
   const sr = b.sampleRate;
@@ -241,8 +359,23 @@ export function reordonnerObjets(
     const h = o.hasard ?? Math.random;
     for (let k = liste.length - 1; k > 0; k--) { const j = Math.floor(h() * (k + 1)); [liste[k], liste[j]] = [liste[j], liste[k]]; }
   } else if (o.critere !== "origine") {
-    const critere = o.critere as "sonie" | "brillance" | "bruit" | "duree";
-    const cle = (z: typeof liste[number]) => (critere === "duree" ? z.duree : (z[critere] ?? 0));
+    // LES TROIS CRITÈRES DU TRAITÉ DEMANDENT CHACUN UN SCALAIRE, et c'est une décision à dire : une
+    // espèce ne se trie pas, il faut la grandeur qui l'ordonne.
+    //
+    //   · la MASSE a son échelle, celle du Traité, du son pur au bruit blanc : son degré ordonne ;
+    //   · la DYNAMIQUE n'a pas d'ordre, « crescendo » ne venant ni avant ni après « impulsion » : la
+    //     grandeur qui l'ordonne est l'ATTAQUE, du plus mordant au plus progressif ;
+    //   · l'ALLURE a son échelle, de la machine au désordre : son irrégularité ordonne, et un objet
+    //     qui n'en porte pas se range d'un seul côté plutôt qu'au milieu.
+    const cle = (z: typeof liste[number]): number => {
+      switch (o.critere) {
+        case "duree": return z.duree;
+        case "masse": return z.degreMasse ?? Infinity;
+        case "attaque": return z.attaqueMs ?? Infinity;
+        case "allure": return z.irregularite ?? Infinity;
+        default: return (z[o.critere as "sonie" | "brillance" | "bruit"] ?? 0);
+      }
+    };
     liste.sort((u, v) => cle(u) - cle(v) || u.i - v.i);
   }
   if (o.decroissant && o.critere !== "hasard") liste.reverse();

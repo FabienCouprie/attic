@@ -1,12 +1,12 @@
 # AGENTS.md — travailler sur Attic
 
 Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19, TypeScript,
-469 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
+484 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
 (voir `PORTING-A-DOMAIN.md`). L'interface et les notices sont bilingues français / anglais.
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et seize gardes sur lui-même : ils s'emploient, ils
+cela un banc de mesure, une base d'empreintes et dix-neuf gardes sur lui-même : ils s'emploient, ils
 ne se réinventent pas.
 
 ---
@@ -112,9 +112,10 @@ d'autre, et n'a pas le droit d'être à moitié fait.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — seize contrats sur le dépôt lui-même : registre des réglages, graines,
+- **`src/docs/*.test.ts`** — dix-neuf contrats sur le dépôt lui-même : registre des réglages, graines,
   cœurs par trames, registre anglais, caractères de contrôle, style de documentation, classement
-  théorique, contrat de graphe, et la fraîcheur de chaque table générée.
+  théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, couverture des
+  empreintes, et la fraîcheur de chacune des cinq tables générées.
 - **`tests-e2e/empreintes.json` + `empreintes.spec.ts`** — l'empreinte du son de 71 composants
   surveillés, valeur efficace et crête à neuf décimales, plus leur message. Toute modification qui
   altère une sortie fait échouer ce test. Pour l'étendre :

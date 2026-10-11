@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1342 files, 238110 lines, of which 162171 are code.**
-The table lists the 188 files of 200 code lines or more, heaviest first;
-the remaining 1154 account for 159251 lines.
+**1346 files, 240893 lines, of which 163568 are code.**
+The table lists the 192 files of 200 code lines or more, heaviest first;
+the remaining 1154 account for 159664 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -23,7 +23,7 @@ the remaining 1154 account for 159251 lines.
 | src/docs/documentation-graphe.ts | 572 | 732 | ! |
 | src/ui/AtelierNode.tsx | 523 | 718 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
-| src/plugins/index.ts | 503 | 515 | ! |
+| src/plugins/index.ts | 505 | 517 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
@@ -31,10 +31,11 @@ the remaining 1154 account for 159251 lines.
 | src/audio/clavier-banque.test.ts | 439 | 557 | ! |
 | src/vues-domaine/FormeOnde.tsx | 408 | 484 | ! |
 | src/plugins/parole-vers-sequence.test.ts | 391 | 515 |  |
-| src/plugins/montage.ts | 390 | 542 |  |
+| src/plugins/montage.ts | 390 | 544 |  |
 | src/plugins/theorie-avancee.test.ts | 388 | 550 |  |
 | src/plugins/csound.ts | 387 | 523 |  |
 | src/plugins/finitions.test.ts | 386 | 521 |  |
+| src/audio/criteres-schaefferiens.test.ts | 384 | 564 |  |
 | src/audio/ia.ts | 382 | 466 |  |
 | src/plugins/carte-sonore-plan-cellulaire.ts | 382 | 436 |  |
 | src/plugins/effets-midi.ts | 382 | 502 |  |
@@ -50,6 +51,8 @@ the remaining 1154 account for 159251 lines.
 | src/plugins/masquage-schillinger-gammes.test.ts | 358 | 516 |  |
 | src/audio/automate-cellulaire.ts | 355 | 430 |  |
 | src/audio/modulation-melange.test.ts | 355 | 506 |  |
+| src/audio/grain-schaefferien.test.ts | 352 | 537 |  |
+| src/audio/objets-sonores.test.ts | 349 | 441 |  |
 | src/plugins/effets-temporel.ts | 348 | 478 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
 | src/plugins/modulation-cablage.test.ts | 341 | 559 |  |
@@ -90,6 +93,7 @@ the remaining 1154 account for 159251 lines.
 | src/quiz/notions-suite.ts | 310 | 319 |  |
 | src/ui/demo/useRealisateurDemo.tsx | 310 | 368 |  |
 | src/plugins/couper-aux-mots.test.ts | 308 | 381 |  |
+| src/audio/objets-sonores.ts | 307 | 493 |  |
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
 | src/vues-domaine/vues-images.tsx | 301 | 435 |  |
@@ -108,6 +112,7 @@ the remaining 1154 account for 159251 lines.
 | src/audio/sfz.ts | 287 | 467 |  |
 | src/audio/csound.ts | 286 | 577 |  |
 | src/plugins/textgen-ia.test.ts | 286 | 412 |  |
+| src/audio/criteres-schaefferiens.ts | 285 | 636 |  |
 | src/audio/oscillateur-analogique.test.ts | 285 | 394 |  |
 | src/audio/groove-box.test.ts | 281 | 331 |  |
 | src/core/bulles.test.ts | 281 | 362 |  |
@@ -131,7 +136,6 @@ the remaining 1154 account for 159251 lines.
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
 | src/quiz/sigles.ts | 253 | 278 |  |
-| src/audio/objets-sonores.ts | 252 | 360 |  |
 | src/audio/hauteur.ts | 250 | 393 |  |
 | src/audio/cercle-pulsant.ts | 249 | 543 |  |
 | src/audio/multi-reservoir.ts | 249 | 326 |  |
@@ -160,11 +164,13 @@ the remaining 1154 account for 159251 lines.
 | src/vues-domaine/ArbreRythmiqueVue.tsx | 232 | 283 |  |
 | src/audio/spectral-cdp.ts | 229 | 371 |  |
 | src/core/bulles.ts | 229 | 423 |  |
+| src/audio/midi.test.ts | 228 | 293 |  |
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
 | src/plugins/spectral-cdp.ts | 227 | 334 |  |
 | src/plugins/effets-aides.ts | 226 | 533 |  |
+| src/docs/modulables.ts | 223 | 520 |  |
 | src/audio/concret.ts | 222 | 363 |  |
 | src/audio/granulation-ecologique.test.ts | 222 | 336 |  |
 | src/audio/commun.ts | 221 | 364 |  |
@@ -174,14 +180,12 @@ the remaining 1154 account for 159251 lines.
 | src/vues-domaine/ExtraitVideo.tsx | 220 | 261 |  |
 | src/audio/cercle.ts | 219 | 496 |  |
 | src/plugins/arbre-rythmique.ts | 218 | 311 |  |
-| src/audio/objets-sonores.test.ts | 217 | 262 |  |
 | src/audio/bext.test.ts | 216 | 280 |  |
 | src/audio/particules.ts | 216 | 412 |  |
 | src/audio/quantification.ts | 216 | 413 |  |
 | src/audio/assaisonnement.test.ts | 215 | 282 |  |
 | src/audio/rotatifs.test.ts | 214 | 274 |  |
 | src/audio/synthese-features.test.ts | 213 | 272 |  |
-| src/docs/modulables.ts | 213 | 496 |  |
 | src/vues-domaine/Spectre.tsx | 213 | 246 |  |
 | src/audio/csound-orchestre.ts | 212 | 355 |  |
 | src/audio/accords.ts | 210 | 343 |  |

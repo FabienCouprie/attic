@@ -12,7 +12,7 @@
 // suite, avec la commande à lancer.
 import "node-web-audio-api/polyfill.js";
 import { it, expect } from "vitest";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { toutesLesFiches } from "../plugins";
 import "../audio/adaptateur";
@@ -45,6 +45,54 @@ it.skipIf(ecrire)("le README et package.json annoncent le nombre réel de nœuds
   const annoncesEffets = [...sources["README.md"].matchAll(/\b(\d+) effects\b/g)].map((m) => Number(m[1]));
   expect(annoncesEffets.length, "README.md : aucun nombre d'effets trouvé").toBeGreaterThan(0);
   expect(annoncesEffets, `README.md doit annoncer ${effets} effets`).toEqual(annoncesEffets.map(() => effets));
+});
+
+it.skipIf(ecrire)("AGENTS.md annonce le nombre réel de composants, et de gardes sur le dépôt", () => {
+  // AGENTS.md ANNONÇAIT 469 COMPOSANTS QUAND LE CATALOGUE EN COMPTAIT 484, et « seize gardes » quand
+  // il y en avait dix-neuf. Les deux chiffres étaient recopiés à la main et rien ne les surveillait,
+  // alors que la première règle de ce fichier est qu'une affirmation s'y mesure : il échouait donc à
+  // sa propre règle, sur la ligne qui la porte.
+  const texte = readFileSync(join(process.cwd(), "AGENTS.md"), "utf8");
+
+  // DEUX COMPTES DE COMPOSANTS Y VIVENT, et le garde les sépare plutôt que de les confondre : celui
+  // du CATALOGUE, et celui des composants SURVEILLÉS par la base d'empreintes, qui est un autre
+  // nombre et légitimement plus petit. Le second est vérifié lui aussi, contre la base elle-même.
+  // Le mot « surveillés » peut tomber sur la ligne suivante, le fichier étant replié à cent colonnes.
+  const composants = [...texte.matchAll(/\b(\d+) composants(\s+surveillés)?\b/g)]
+    .map((m) => ({ compte: Number(m[1]), surveilles: Boolean(m[2]) }));
+  const duCatalogue = composants.filter((c) => !c.surveilles).map((c) => c.compte);
+  expect(duCatalogue.length, "AGENTS.md : aucun nombre de composants du catalogue trouvé").toBeGreaterThan(0);
+  expect(duCatalogue, `AGENTS.md doit annoncer ${toutesLesFiches.length} composants`)
+    .toEqual(duCatalogue.map(() => toutesLesFiches.length));
+
+  const empreintes = JSON.parse(readFileSync(join(process.cwd(), "tests-e2e", "empreintes.json"), "utf8"));
+  const surveilles = Object.keys(empreintes.composants ?? {}).length;
+  const annoncesSurveilles = composants.filter((c) => c.surveilles).map((c) => c.compte);
+  expect(annoncesSurveilles.length, "AGENTS.md : aucun nombre de composants surveillés trouvé").toBeGreaterThan(0);
+  expect(annoncesSurveilles, `AGENTS.md doit annoncer ${surveilles} composants surveillés`)
+    .toEqual(annoncesSurveilles.map(() => surveilles));
+
+  // LE COMPTE DES GARDES EST CELUI DES FICHIERS DE `src/docs`, ce que la ligne 115 dit elle-même :
+  // « src/docs/*.test.ts — N contrats sur le dépôt lui-même ». Il est écrit en lettres, et c'est la
+  // forme que ce cas cherche : le nombre, quel que soit le mot qui le porte.
+  const combien = readdirSync(join(process.cwd(), "src", "docs")).filter((f) => f.endsWith(".test.ts")).length;
+  const EN_LETTRES: Record<number, string> = {
+    14: "quatorze", 15: "quinze", 16: "seize", 17: "dix-sept", 18: "dix-huit", 19: "dix-neuf",
+    20: "vingt", 21: "vingt et un", 22: "vingt-deux", 23: "vingt-trois", 24: "vingt-quatre",
+    25: "vingt-cinq",
+  };
+  const attendu = EN_LETTRES[combien];
+  expect(attendu, `le compte de ${combien} gardes n'a pas son écriture en lettres dans ce cas`).toBeDefined();
+  for (const quoi of ["gardes", "contrats"]) {
+    const trouves = [...texte.matchAll(new RegExp(`([\\wÀ-ÿ-]+) ${quoi} `, "g"))].map((m) => m[1]);
+    expect(trouves.length, `AGENTS.md : aucun compte de ${quoi} trouvé`).toBeGreaterThan(0);
+    // Seuls les comptes écrits en lettres de nombre comptent : « quatre contrats » est un autre
+    // sujet, celui des scripts de contrat, et il a son propre compte.
+    const comptes = trouves.filter((mot) => Object.values(EN_LETTRES).includes(mot));
+    expect(comptes.length, `AGENTS.md : aucun compte de ${quoi} écrit en lettres de nombre`).toBeGreaterThan(0);
+    expect(comptes, `AGENTS.md doit annoncer « ${attendu} ${quoi} », pour ${combien} fichiers dans src/docs`)
+      .toEqual(comptes.map(() => attendu));
+  }
 });
 
 it.skipIf(ecrire)("COMPONENTS.md correspond au registre", () => {
