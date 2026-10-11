@@ -22,14 +22,20 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **réglages déjà pilotés par une courbe** : 167, sur 69 composants
-- **réglages restant à faire** : 0, sur 0 composants et 0 couples composant / famille
-- **dont le cœur travaille par trames** : 0
+- **réglages restant à faire** : 2, sur 1 composants et 2 couples composant / famille
+- **dont le cœur travaille par trames** : 1
 - **réglages écartés un par un** : 44, sur 21 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-Rien.
+### dynamique · 1
+
+- Grain (Schaeffer) `grain-schaefferien` : Seuil d'harmonicité · **⟨trames⟩** grainSchaefferien (appelle suivreHauteur)
+
+### espace · 1
+
+- Grain (Schaeffer) `grain-schaefferien` : Seuil de profondeur · **⟨trames⟩** grainSchaefferien (appelle suivreHauteur)
 
 ## Familles écartées en bloc
 

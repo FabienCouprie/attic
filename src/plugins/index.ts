@@ -162,6 +162,7 @@ import { fiches as f_retard_spectral } from "./retard-spectral";
 import { fiches as f_retard_granulaire } from "./retard-granulaire";
 import { fiches as f_granulation_ecologique } from "./granulation-ecologique";
 import { fiches as f_vosim } from "./vosim";
+import { fiches as f_grain_schaefferien } from "./grain-schaefferien";
 import { fiches as f_bytebeat } from "./bytebeat";
 import { fiches as f_spectral_wishart } from "./spectral-wishart";
 import { fiches as f_brassage } from "./brassage";
@@ -312,6 +313,7 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_retard_granulaire,
   ...f_granulation_ecologique,
   ...f_vosim,
+  ...f_grain_schaefferien,
   ...f_bytebeat,
   ...f_spectral_wishart,
   ...f_brassage,
