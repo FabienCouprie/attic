@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1317 files, 232036 lines, of which 158761 are code.**
+**1317 files, 232083 lines, of which 158787 are code.**
 The table lists the 182 files of 200 code lines or more, heaviest first;
-the remaining 1135 account for 155702 lines.
+the remaining 1135 account for 155729 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -128,6 +128,7 @@ the remaining 1135 account for 155702 lines.
 | src/plugins/analyse.test.ts | 256 | 324 |  |
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
+| src/plugins/effets.ts | 253 | 318 |  |
 | src/quiz/sigles.ts | 253 | 278 |  |
 | src/audio/objets-sonores.ts | 252 | 360 |  |
 | src/audio/hauteur.ts | 250 | 393 |  |
@@ -138,7 +139,6 @@ the remaining 1135 account for 155702 lines.
 | src/audio/attracteurs.ts | 247 | 289 |  |
 | src/core/meta.ts | 246 | 336 |  |
 | src/audio/analyse.ts | 244 | 321 |  |
-| src/plugins/effets.ts | 244 | 303 |  |
 | src/audio/qualites-accords.test.ts | 243 | 326 |  |
 | src/audio/pghi.ts | 242 | 377 |  |
 | src/audio/reservoir.ts | 242 | 371 |  |
@@ -162,7 +162,7 @@ the remaining 1135 account for 155702 lines.
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
-| src/plugins/effets-aides.ts | 222 | 482 |  |
+| src/plugins/effets-aides.ts | 222 | 487 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/ui/hooks/usePersistance.ts | 221 | 314 |  |

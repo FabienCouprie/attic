@@ -217,15 +217,31 @@ const CAS: {
   { id: "chorus", reglage: "Profondeur", entrees: () => [son(109, 2), undefined],
     noms: ["Profondeur min", "Profondeur max"] },
   { id: "de-esser", reglage: "Largeur", entrees: () => [son(113, 2), undefined],
-    noms: ["Largeur min", "Largeur max"], siOffline: true,
+    noms: ["Largeur min", "Largeur max"], siOffline: true, rang: 2,
     // Seuil grand ouvert : sans cela, rien du signal d'essai ne dépasse et la largeur de bande ne
     // change rien, de sorte que le cas passerait sans rien éprouver.
+    reglages: { Seuil: -60, Ratio: 10 } },
+  // LES SIX CONSTANTES DE TEMPS DES SUIVEURS D'ENVELOPPE. Un seuil grand ouvert partout : une
+  // dynamique qui ne se déclenche pas rend l'entrée telle quelle, et le cas ne prouverait rien.
+  { id: "compresseur", reglage: "Attaque", entrees: () => [son(127, 2)],
+    noms: ["Attaque min", "Attaque max"], rang: 1, reglages: { Seuil: -60, Ratio: 10 } },
+  { id: "compresseur", reglage: "Relâchement", entrees: () => [son(131, 2), undefined],
+    noms: ["Relâchement min", "Relâchement max"], reglages: { Seuil: -60, Ratio: 10 } },
+  { id: "transient-shaper", reglage: "Temps attaque", entrees: () => [son(137, 2), undefined],
+    noms: ["Temps attaque min", "Temps attaque max"], rang: 2, reglages: { Attaque: 12, Sustain: -12 } },
+  { id: "transient-shaper", reglage: "Temps sustain", entrees: () => [son(139, 2), undefined, undefined],
+    noms: ["Temps sustain min", "Temps sustain max"], reglages: { Attaque: 12, Sustain: -12 } },
+  { id: "de-esser", reglage: "Attaque", entrees: () => [son(149, 2), undefined, undefined],
+    noms: ["Attaque min", "Attaque max"], rang: 3, siOffline: true,
+    reglages: { Seuil: -60, Ratio: 10 } },
+  { id: "de-esser", reglage: "Relâchement", entrees: () => [son(151, 2), undefined, undefined, undefined],
+    noms: ["Relâchement min", "Relâchement max"], siOffline: true,
     reglages: { Seuil: -60, Ratio: 10 } },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien trente ports à éprouver", () => {
-    expect(CAS).toHaveLength(30);
+  it("il y a bien trente-six ports à éprouver", () => {
+    expect(CAS).toHaveLength(36);
   });
 
   for (const cas of CAS) {

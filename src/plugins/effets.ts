@@ -79,7 +79,18 @@ export const fiches: FicheAudio[] = ([
      { parametre: "Profondeur", bornes: [0, 20], unite: "ms" }]),
   effet("compresseur", "Compresseur", "Compressor", "Compresseur feed-forward.", "Feed-forward compressor.",
     [param("Seuil", -20, "Threshold", "dB", "Niveau au-dessus duquel la compression s'active.", "Level above which compression engages.", [-60, 0], 1), param("Ratio", 4, "Ratio", "∶1", "Taux de compression.", "Compression ratio.", [1, 20], 0.5), param("Attaque", 5, "Attack", "ms", "Temps de réaction du compresseur.", "Compressor attack time.", [0, 200], 1), param("Relâchement", 100, "Release", "ms", "Temps de retour au gain normal.", "Compressor release time.", [5, 1000], 5), param("Gain", 0, "Gain", "dB", "Gain de sortie (make-up gain).", "Output makeup gain.", [-12, 24], 1)],
-    (a,seuil,ratio,att,rel,gain) => compresser(a, seuil, ratio, att, rel, gain)),
+    (a,seuil,ratio,att,rel,gain) => compresser(a, seuil, ratio, att, rel, gain),
+    undefined,
+    // LES DEUX ARRIVENT ENSEMBLE, donc aucune ne garde « Modulation » : c'est le précédent du
+    // gate, où nommer l'une et pas l'autre n'aurait rien voulu dire. Leurs `noms` donnés valent
+    // décision de les nommer toutes deux, port compris.
+    //
+    // LA COURSE PAR DÉFAUT N'EST PAS LA PLAGE ENTIÈRE : une plage de trois décades est là pour
+    // que chacun trouve son réglage, non pour qu'une courbe la parcoure d'un bout à l'autre.
+    [{ parametre: "Attaque", bornes: [0.1, 50], defauts: [0.5, 20], unite: "ms",
+       noms: ["Attaque min", "Attaque max"], nomsEn: ["Attack min", "Attack max"] },
+     { parametre: "Relâchement", bornes: [5, 500], defauts: [20, 300], unite: "ms",
+       noms: ["Relâchement min", "Relâchement max"], nomsEn: ["Release min", "Release max"] }]),
   effet("limiteur", "Limiteur", "Limiter", "Limiteur de crête pour le mastering.", "Peak limiter for mastering.",
     [param("Seuil", -3, "Threshold", "dB", "Niveau au-dessus duquel la limitation s'active.", "Level above which limiting engages.", [-40, 0], 1), param("Relâchement", 50, "Release", "ms", "Temps de retour au gain normal après un pic.", "Time to return to normal gain after a peak.", [1, 1000], 1), param("Plafond", -1, "Ceiling", "dB", "Niveau maximal de sortie.", "Maximum output level.", [-40, 0], 0.5)],
     (a, seuil, relachement, plafond) => limiter(a, seuil, relachement, plafond), undefined,
@@ -167,7 +178,9 @@ export const fiches: FicheAudio[] = ([
     [param("Attaque", 0, "Attack", "dB", "Gain appliqué à l'attaque des transitoires. Positif = plus de punch ; négatif = moins agressif.", "Gain applied to transient attacks. Positive = more punch; negative = less aggressive.", [-12, 12], 0.5), param("Sustain", 0, "Sustain", "dB", "Gain appliqué au corps/sustain. Positif = plus de tenue ; négatif = plus court.", "Gain applied to the sustain body. Positive = more sustain; negative = shorter.", [-12, 12], 0.5), param("Temps attaque", 1, "Attack time", "ms", "Temps de réaction du détecteur de transitoires. Sans effet tant qu'Attaque et Sustain sont tous deux à 0 dB : le nœud laisse alors passer le son tel quel.", "Transient detector reaction time. No effect while Attack and Sustain are both at 0 dB: the node then passes the sound through unchanged.", [0.1, 50], 0.1), param("Temps sustain", 100, "Sustain time", "ms", "Temps de réaction du détecteur de sustain. Sans effet tant qu'Attaque et Sustain sont tous deux à 0 dB.", "Sustain detector reaction time. No effect while Attack and Sustain are both at 0 dB.", [10, 500], 1)],
     (a, attaque, sustain, tAttaque, tSustain) => transientShaper(a, attaque, sustain, tAttaque, tSustain),
     undefined,
-    { parametre: "Attaque", bornes: [-12, 12], unite: "dB" }),
+    [{ parametre: "Attaque", bornes: [-12, 12], unite: "dB" },
+     { parametre: "Temps attaque", bornes: [0.1, 50], defauts: [1, 20], unite: "ms" },
+     { parametre: "Temps sustain", bornes: [10, 500], defauts: [50, 300], unite: "ms" }]),
   effet("de-esser", "De-esser", "De-esser", "Compression dynamique des sibilances.", "Dynamic sibilance compression.",
     [param("Fréquence", 7000, "Frequency", "Hz", "Fréquence centrale de la bande cible (sibilances : 5-9 kHz).", "Center frequency of the target band (sibilances: 5-9 kHz).", [2000, 12000], 100),
      param("Largeur", 2000, "Width", "Hz", "Largeur de la bande cible (Q = fréquence/largeur).", "Width of the target band (Q = frequency/width).", [200, 6000], 100),
@@ -178,7 +191,9 @@ export const fiches: FicheAudio[] = ([
     (a,freq,largeur,seuil,ratio,att,rel) => deEsser(a, freq, largeur, seuil, ratio, att, rel),
     undefined,
     [{ parametre: "Seuil", bornes: [-60, 0], unite: "dB" },
-     { parametre: "Largeur", bornes: [200, 6000], unite: "Hz" }]),
+     { parametre: "Largeur", bornes: [200, 6000], unite: "Hz" },
+     { parametre: "Attaque", bornes: [0.1, 50], defauts: [0.5, 20], unite: "ms" },
+     { parametre: "Relâchement", bornes: [5, 500], defauts: [20, 300], unite: "ms" }]),
   effet("ring-modulator", "Ring modulator", "Ring Modulator", "Modulation en anneau (multiplication par porteuse).", "Ring modulation (carrier multiplication).",
     [param("Fréquence", 200, "Frequency", "Hz", "Fréquence de la porteuse. Produit des sommes et différences de fréquences (sidebands).", "Carrier frequency. Produces sum and difference frequencies (sidebands).", [1, 8000], 1),
      param("Mix", 100, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.")],

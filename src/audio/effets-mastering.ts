@@ -63,12 +63,14 @@ export function transientShaper(
   buffer: AudioBuffer,
   attaqueDb: number | Float32Array,
   sustainDb: number,
-  tempsAttaqueMs: number,
-  tempsSustainMs: number,
+  tempsAttaqueMs: number | Float32Array,
+  tempsSustainMs: number | Float32Array,
 ): AudioBuffer {
   const sr = buffer.sampleRate;
-  const coeffAttaque = Math.exp(-1 / (Math.max(0.01, tempsAttaqueMs) / 1000 * sr));
-  const coeffSustain = Math.exp(-1 / (Math.max(0.01, tempsSustainMs) / 1000 * sr));
+  // Les deux constantes de temps acceptent une courbe. `coefficientSuiveur` est déjà l'aide du
+  // limiteur, plus haut dans ce fichier : un nombre y garde son exponentielle unique.
+  const coeffAttaque = coefficientSuiveur(tempsAttaqueMs, sr);
+  const coeffSustain = coefficientSuiveur(tempsSustainMs, sr);
   const nch = buffer.numberOfChannels;
 
   const resultat = new AudioBuffer({ numberOfChannels: nch, length: buffer.length, sampleRate: sr });
@@ -87,8 +89,10 @@ export function transientShaper(
       const a = Math.abs(src[c][i]);
       if (a > pic) pic = a;
     }
-    envAttaque = coeffAttaque * envAttaque + (1 - coeffAttaque) * pic;
-    envSustain = coeffSustain * envSustain + (1 - coeffSustain) * pic;
+    const cA = coeffAttaque(i);
+    const cS = coeffSustain(i);
+    envAttaque = cA * envAttaque + (1 - cA) * pic;
+    envSustain = cS * envSustain + (1 - cS) * pic;
 
     const maxEnv = Math.max(envAttaque, envSustain, 1e-9);
     const force = (envAttaque - envSustain) / maxEnv;
