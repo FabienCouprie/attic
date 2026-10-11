@@ -8,7 +8,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
-import { estCourbe, valeursParametre } from "../audio/courbe";
+import { estCourbe, progressionPour, valeursParametre } from "../audio/courbe";
 import { parseMidi } from "midi-file";
 import { appliquerInstrumentMidi, analyserMidi, notesVersFichierMidi, rendreSequence } from "../audio";
 import { rendreBatterieMidi } from "../audio/tone-synths";
@@ -395,7 +395,16 @@ export function effet(
           {
             min: ctx.paramNombre(nomMin, m.defauts?.[0] ?? m.bornes[0]),
             max: ctx.paramNombre(nomMax, m.defauts?.[1] ?? m.bornes[1]),
-            echelle: m.echelle,
+            // L'ÉCHELLE SE DÉDUIT DE L'UNITÉ QUAND L'APPELANT NE LA DONNE PAS, et c'est ce que
+            // `progressionPour` existe pour faire : son commentaire dit que « la bonne répartition
+            // d'un balayage s'en déduit, et n'a donc pas à être choisie à la main sur chaque effet,
+            // où elle finirait par être oubliée sur la moitié d'entre eux ». La prédiction s'est
+            // réalisée sur quatre bornes en hertz, qui balayaient en ajoutant.
+            //
+            // SEULE L'ÉCHELLE EST REPRISE, ET NON LE PAS que la même aide rend : un pas d'un cran
+            // ou plus quantifierait la sortie de la courbe, ce qui hacherait en escalier une
+            // modulation continue. Le pas que ce socle déclare est celui des CURSEURS de bornes.
+            echelle: m.echelle ?? progressionPour(m).echelle,
           },
         );
       });
