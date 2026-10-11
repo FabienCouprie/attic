@@ -4617,13 +4617,16 @@ Applies a constant gain in decibels to amplify or attenuate the whole signal.
 
 *Feed-forward compressor.*
 
-Reduces dynamics by attenuating passages above the threshold, according to the chosen ratio, attack and release. Both time constants accept a curve: « Modulation attack » takes the place of « Attack », with « Attack min » and « Attack max »; « Modulation release » takes that of « Release », with « Release min » and « Release max ».
+Reduces dynamics by attenuating passages above the threshold, according to the chosen ratio, attack and release. Both time constants accept a curve: « Modulation attack » takes the place of « Attack », with « Attack min » and « Attack max »; « Modulation release » takes that of « Release », with « Release min » and « Release max ». The threshold, the ratio and the gain accept a curve in the same way, through « Modulation threshold », « Modulation ratio » and « Modulation gain », each with its two bounds.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
-| input | Modulation | curve |  |
+| input | Modulation attack | curve |  |
 | input | Modulation release | curve |  |
+| input | Modulation threshold | curve |  |
+| input | Modulation ratio | curve |  |
+| input | Modulation gain | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4637,6 +4640,12 @@ Reduces dynamics by attenuating passages above the threshold, according to the c
 | Attack max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that the curve's one means. |
 | Release min | slider | 20 ms | 5 – 500 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Release max | slider | 300 ms | 5 – 500 ms, step 1 | Value of « Release » that the curve's one means. |
+| Threshold min | slider | -40 dB | -60 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Ratio min | slider | 1 ∶1 | 1 – 20 ∶1, step 1 | Value of « Ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Ratio » that the curve's one means. |
+| Gain min | slider | 0 dB | 0 – 24 dB, step 1 | Value of « Gain » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Gain max | slider | 12 dB | 0 – 24 dB, step 1 | Value of « Gain » that the curve's one means. |
 
 #### De-esser
 
@@ -4852,11 +4861,19 @@ Aligns the level of one sound with another. The « Reference » input gives the 
 
 *3-band compressor with independent thresholds/ratios.*
 
-Compressor split into three bands (low, mid, high). Each band is isolated by a crossover and compressed with its own threshold and ratio. Controls lows without affecting highs, or adds punch to the mids without squashing the bass.
+Compressor split into three bands (low, mid, high). Each band is isolated by a crossover and compressed with its own threshold and ratio. Controls lows without affecting highs, or adds punch to the mids without squashing the bass. The eight processing settings accept a curve, each through its own input: the three thresholds, the three ratios, then the attack and the release, which are common to all three bands. The two crossover frequencies do not.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
+| input | Modulation low threshold | curve |  |
+| input | Modulation low ratio | curve |  |
+| input | Modulation mid threshold | curve |  |
+| input | Modulation mid ratio | curve |  |
+| input | Modulation high threshold | curve |  |
+| input | Modulation high ratio | curve |  |
+| input | Modulation attack | curve |  |
+| input | Modulation release | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4871,6 +4888,22 @@ Compressor split into three bands (low, mid, high). Each band is isolated by a c
 | Release | number | 100 ms | 5 – 1000 ms, step 5 | Common release time for all bands. |
 | Low freq | number | 250 Hz | 40 – 1000 Hz, step 10 | Crossover between low and mid bands. |
 | High freq | number | 4000 Hz | 1000 – 12000 Hz, step 100 | Crossover between mid and high bands. |
+| Low threshold min | slider | -40 dB | -60 – 0 dB, step 1 | Value of « Low threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Low threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « Low threshold » that the curve's one means. |
+| Low ratio min | slider | 1 ∶1 | 1 – 20 ∶1, step 1 | Value of « Low ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Low ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Low ratio » that the curve's one means. |
+| Mid threshold min | slider | -40 dB | -60 – 0 dB, step 1 | Value of « Mid threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Mid threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « Mid threshold » that the curve's one means. |
+| Mid ratio min | slider | 1 ∶1 | 1 – 20 ∶1, step 1 | Value of « Mid ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Mid ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Mid ratio » that the curve's one means. |
+| High threshold min | slider | -40 dB | -60 – 0 dB, step 1 | Value of « High threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
+| High threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « High threshold » that the curve's one means. |
+| High ratio min | slider | 1 ∶1 | 1 – 20 ∶1, step 1 | Value of « High ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
+| High ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « High ratio » that the curve's one means. |
+| Attack min | slider | 1 ms | 0 – 200 ms, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Attack max | slider | 50 ms | 0 – 200 ms, step 1 | Value of « Attack » that the curve's one means. |
+| Release min | slider | 20 ms | 5 – 1000 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Release max | slider | 400 ms | 5 – 1000 ms, step 1 | Value of « Release » that the curve's one means. |
 
 #### Normalizer
 

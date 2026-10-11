@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1317 files, 232141 lines, of which 158817 are code.**
+**1317 files, 232223 lines, of which 158854 are code.**
 The table lists the 183 files of 200 code lines or more, heaviest first;
-the remaining 1134 account for 155471 lines.
+the remaining 1134 account for 155480 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -71,10 +71,10 @@ the remaining 1134 account for 155471 lines.
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
+| src/audio/courbe.ts | 322 | 659 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
 | src/audio/midi-vers-abc.ts | 319 | 461 |  |
 | src/audio/batterie.ts | 318 | 390 |  |
-| src/audio/courbe.ts | 318 | 640 |  |
 | src/plugins/carte-sonore-decor.ts | 318 | 341 |  |
 | src/audio/csound.test.ts | 317 | 410 |  |
 | src/audio/particules.test.ts | 316 | 416 |  |
@@ -120,6 +120,7 @@ the remaining 1134 account for 155471 lines.
 | src/audio/motifs-midi.test.ts | 270 | 339 |  |
 | src/docs/documentation-graphe.test.ts | 270 | 352 |  |
 | src/audio/demonstration-video.ts | 266 | 313 |  |
+| src/plugins/effets.ts | 266 | 338 |  |
 | src/plugins/python-processor.ts | 266 | 346 |  |
 | src/ui/dictee/commandes-dictee.test.ts | 265 | 350 |  |
 | src/audio/io.ts | 264 | 397 |  |
@@ -128,7 +129,6 @@ the remaining 1134 account for 155471 lines.
 | src/plugins/analyse.test.ts | 256 | 324 |  |
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
 | src/core/instrument-graphe.test.ts | 255 | 315 |  |
-| src/plugins/effets.ts | 253 | 318 |  |
 | src/quiz/sigles.ts | 253 | 278 |  |
 | src/audio/objets-sonores.ts | 252 | 360 |  |
 | src/audio/hauteur.ts | 250 | 393 |  |
@@ -162,11 +162,12 @@ the remaining 1134 account for 155471 lines.
 | src/audio/spectral-wishart.test.ts | 228 | 285 |  |
 | src/audio/melodie-sur-accords.test.ts | 227 | 276 |  |
 | src/plugins/julia-processor.ts | 227 | 282 |  |
-| src/plugins/effets-aides.ts | 222 | 487 |  |
+| src/plugins/effets-aides.ts | 222 | 491 |  |
 | src/audio/commun.ts | 221 | 364 |  |
 | src/core/graphe.test.ts | 221 | 308 |  |
 | src/ui/hooks/usePersistance.ts | 221 | 314 |  |
 | src/audio/palette-harmonique.ts | 220 | 258 |  |
+| src/plugins/modulation-cablage.test.ts | 220 | 346 |  |
 | src/vues-domaine/ExtraitVideo.tsx | 220 | 261 |  |
 | src/audio/cercle.ts | 219 | 496 |  |
 | src/plugins/spectral-cdp.ts | 219 | 323 |  |
@@ -196,5 +197,4 @@ the remaining 1134 account for 155471 lines.
 | src/plugins/midi-norme.test.ts | 203 | 289 |  |
 | src/audio/micromontage.test.ts | 202 | 266 |  |
 | src/core/boucle-graphe.ts | 201 | 422 |  |
-| src/plugins/modulation-cablage.test.ts | 201 | 316 |  |
 | src/audio/ondelettes.ts | 200 | 349 |  |

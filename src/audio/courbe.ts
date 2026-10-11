@@ -619,12 +619,31 @@ export const valeurA = (v: number | Float32Array, i: number): number =>
 export function coefficientSuiveur(
   ms: number | Float32Array, frequence: number,
 ): (i: number) => number {
-  const calcul = (v: number) => Math.exp(-1 / ((Math.max(0.01, v) / 1000) * frequence));
-  if (typeof ms === "number") {
-    const fixe = calcul(ms);
+  return valeurTransformee(ms, (v) => Math.exp(-1 / ((Math.max(0.01, v) / 1000) * frequence)));
+}
+
+/**
+ * Un réglage passé par un calcul, une fois s'il est fixe, à chaque échantillon s'il est une courbe.
+ *
+ * LA MÊME RÈGLE QUE `coefficientSuiveur`, DONT ELLE EST LA FORME GÉNÉRALE. Un seuil en décibels
+ * devient un rapport par `10^(dB/20)`, une réduction de même, un ratio par `1 − 1/r` : ces calculs
+ * sont chers et leur résultat ne change pas tant que le réglage ne change pas. Les écrire dans la
+ * boucle sans distinguer les deux cas fait payer au son NON MODULÉ un `pow` par échantillon qu'il
+ * ne payait pas, soit huit millions sur un morceau de trois minutes en stéréophonie.
+ *
+ * C'EST UNE FAUTE QUE J'AI COMMISE AVANT D'ÉCRIRE CECI, dans la boucle de gain du ducking : son
+ * seuil et son plancher y passaient par `Math.pow` à chaque échantillon, même sans courbe. Le
+ * résultat était juste au bit près, et c'est bien le piège : rien ne tombe, seul le temps de rendu
+ * s'allonge.
+ */
+export function valeurTransformee(
+  v: number | Float32Array, calcul: (x: number) => number,
+): (i: number) => number {
+  if (typeof v === "number") {
+    const fixe = calcul(v);
     return () => fixe;
   }
-  return (i: number) => calcul(valeurA(ms, i));
+  return (i: number) => calcul(valeurA(v, i));
 }
 
 /**

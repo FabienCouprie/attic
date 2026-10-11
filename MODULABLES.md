@@ -21,8 +21,8 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 96, sur 62 composants
-- **réglages restant à faire** : 65, sur 31 composants et 44 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 107, sur 63 composants
+- **réglages restant à faire** : 54, sur 30 composants et 40 couples composant / famille
 - **dont le cœur travaille par trames** : 1
 - **réglages écartés un par un** : 33, sur 14 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
@@ -46,10 +46,9 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Vocoder `vocoder` : Fréq min, Fréq max, Q
 - Wah-wah `wahwah` : Résonance
 
-### temps · 9
+### temps · 8
 
 - Ampleur `ampleur` : Pré-délai
-- Compresseur multibande `compresseur-multibande` : Attaque, Relâchement
 - Delay stéréo `delay-stereo` : Temps G, Temps D
 - Écho flottant `echo-flottant` : Décroissance
 - Réverbération hachée `reverbe-hachee` : Décroissance, Maintien, Chute
@@ -57,15 +56,6 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Réverbération `reverberation` : Decay
 - Réverbération velours `reverberation-velours` : Chute
 - Shimmer `shimmer` : Décroissance
-
-### dynamique · 6
-
-- Compresseur `compresseur` : Seuil, Ratio
-- Compresseur multibande `compresseur-multibande` : Seuil Low, Ratio Low, Seuil Mid, Ratio Mid, Seuil High, Ratio High
-- De-esser `de-esser` : Ratio
-- Gate/Expandeur `gate-expandeur` : Seuil, Ratio
-- Limiteur `limiteur` : Seuil, Plafond
-- Réverbération hachée `reverbe-hachee` : Seuil
 
 ### espace · 5
 
@@ -75,11 +65,12 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur du Doppler
 - Spatialisation stéréo `spatialisation-stereo` : Largeur
 
-### niveau · 3
+### dynamique · 4
 
-- Compresseur `compresseur` : Gain
-- Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur d'amplitude
-- Micromontage `micromontage` : Niveau
+- De-esser `de-esser` : Ratio
+- Gate/Expandeur `gate-expandeur` : Seuil, Ratio
+- Limiteur `limiteur` : Seuil, Plafond
+- Réverbération hachée `reverbe-hachee` : Seuil
 
 ### retroaction · 3
 
@@ -96,6 +87,11 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 
 - Harmonizer / Octaver `harmonizer` : Mix 1, Mix 2 · **⟨trames⟩** harmoniser (appelle harmoniserVoie), harmoniserVoie (appelle changerTonaliteVoie)
 - Shimmer `shimmer` : Mix
+
+### niveau · 2
+
+- Haut-parleur rotatif `haut-parleur-rotatif` : Profondeur d'amplitude
+- Micromontage `micromontage` : Niveau
 
 ## Familles écartées en bloc
 
@@ -204,7 +200,18 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `chorus` : Mix
 - `chorus` : Profondeur
 - `compresseur` : Attaque
+- `compresseur` : Gain
+- `compresseur` : Ratio
 - `compresseur` : Relâchement
+- `compresseur` : Seuil
+- `compresseur-multibande` : Attaque
+- `compresseur-multibande` : Ratio High
+- `compresseur-multibande` : Ratio Low
+- `compresseur-multibande` : Ratio Mid
+- `compresseur-multibande` : Relâchement
+- `compresseur-multibande` : Seuil High
+- `compresseur-multibande` : Seuil Low
+- `compresseur-multibande` : Seuil Mid
 - `convolution-deux-sons` : Mix
 - `creneau` : Niveau
 - `crible-harmonique` : Fondamentale

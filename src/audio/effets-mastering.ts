@@ -183,14 +183,18 @@ function soustraireBuffers(a: AudioBuffer, b: AudioBuffer): AudioBuffer {
 
 export async function compresserMultiBande(
   buffer: AudioBuffer,
-  seuilLow: number,
-  ratioLow: number,
-  seuilMid: number,
-  ratioMid: number,
-  seuilHigh: number,
-  ratioHigh: number,
-  attaqueMs: number,
-  relachementMs: number,
+  // LES HUIT PASSENT AUX TROIS COMPRESSEURS SANS RIEN DE PLUS. Ce composant n'a pas de boucle à
+  // lui : il découpe en trois bandes, appelle `compresser` sur chacune et additionne. Ouvrir ses
+  // huit réglages ne demande donc que de laisser passer ce que `compresser` accepte déjà, et la
+  // paire attaque / relâchement est commune aux trois bandes, comme sa documentation le dit.
+  seuilLow: number | Float32Array,
+  ratioLow: number | Float32Array,
+  seuilMid: number | Float32Array,
+  ratioMid: number | Float32Array,
+  seuilHigh: number | Float32Array,
+  ratioHigh: number | Float32Array,
+  attaqueMs: number | Float32Array,
+  relachementMs: number | Float32Array,
   freqLow: number,
   freqHigh: number,
 ): Promise<AudioBuffer> {
