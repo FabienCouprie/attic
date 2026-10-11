@@ -64,6 +64,13 @@
 //      180 Hz, une NOTE TENUE recevait un grain fabriqué, dont le débit était le repliement de sa
 //      propre fondamentale. `PORTEUSE_SUR_DEBIT`.
 //
+//      ET SA TRACE FAUSSAIT ENCORE LE DÉBIT au-dessus de cette frontière, là où elle ne pouvait plus
+//      fabriquer d'espèce : un peigne de modulation à 25, 30, 40 ou 60 Hz sur une porteuse de 220
+//      ressortait tout entier à 18,7 Hz. L'enveloppe est donc relevée une SECONDE fois, à une
+//      cadence haussée d'un quart, et seuls les sommets qui ne bougent pas d'une cadence à l'autre
+//      sont retenus : une modulation est dans le son, un repliement est dans la décimation.
+//      `HAUSSE_TEMOIN`.
+//
 // LES QUATRE SE DISENT, ET SÉPARÉMENT : `absence` nomme lequel des quatre cas on tient, plutôt que
 // de les confondre sous un seul « aucun » où trois défauts passaient pour un silence.
 //
@@ -217,11 +224,13 @@ const ORDRE_SUIVEUR = 4;
  * débits, et aucun filtrage ne l'en sortira. `porteuseSuffisante` donne ce seuil, et le relevé le
  * déclare au lieu de rendre un chiffre faux.
  */
-export function enveloppe(x: Float32Array, sampleRate: number): { valeurs: Float64Array; cadence: number } {
-  const cadence = 2 * DEBIT_MAX;
+export function enveloppe(
+  x: Float32Array, sampleRate: number, coupure = DEBIT_MAX,
+): { valeurs: Float64Array; cadence: number } {
+  const cadence = 2 * coupure;
   const saut = Math.max(1, Math.round(sampleRate / cadence));
-  // Le coefficient d'une cellule d'ordre un coupant à DEBIT_MAX, posé sur la cadence du son.
-  const a = 1 - Math.exp((-2 * Math.PI * DEBIT_MAX) / sampleRate);
+  // Le coefficient d'une cellule d'ordre un coupant à la coupure, posé sur la cadence du son.
+  const a = 1 - Math.exp((-2 * Math.PI * coupure) / sampleRate);
   const etats = new Float64Array(ORDRE_SUIVEUR);
   const n = Math.floor(x.length / saut);
   const valeurs = new Float64Array(Math.max(1, n));
@@ -359,6 +368,26 @@ export const residuReplie = (porteuse: number, cadence: number): number =>
 export const gainDuSuiveur = (debit: number, debitMax = DEBIT_MAX): number =>
   Math.pow(1 / Math.sqrt(1 + (debit / debitMax) ** 2), ORDRE_SUIVEUR);
 
+/**
+ * De combien la seconde enveloppe hausse sa coupure, donc sa cadence.
+ *
+ * C'EST LE DISCRIMINANT EXACT ENTRE UNE MODULATION ET UN RÉSIDU, et il a fallu deux tentatives
+ * manquées pour le trouver. Une vraie modulation de l'enveloppe est à la MÊME fréquence quelle que
+ * soit la cadence à laquelle on relève cette enveloppe : c'est une propriété du son. Un résidu de
+ * porteuse, lui, n'est pas dans l'enveloppe du tout, il y est REPLIÉ par la décimation, et la place
+ * où il retombe dépend de la cadence. Relever deux fois à deux cadences et ne garder que ce qui ne
+ * bouge pas sépare donc les deux par construction.
+ *
+ * Exemple du cas qui résistait : une porteuse harmonique de 220 Hz laisse sa plus basse trace à
+ * 18,8 Hz pour une cadence de 238,8, et à 80 Hz pour une cadence de 300. Une modulation réelle à
+ * 40 Hz est à 40 dans les deux.
+ *
+ * LE FACTEUR EST UN QUART, et il n'est pas quelconque. Il doit déplacer les images sans sortir les
+ * débits cherchés de la bande de la seconde enveloppe, dont la coupure monte d'autant ; et il ne
+ * doit pas être un rapport simple comme deux, qui replierait certaines images à la même place.
+ */
+const HAUSSE_TEMOIN = 1.25;
+
 /** Combien de multiples de la porteuse on replie dans la bande. */
 const IMAGES_DE_PORTEUSE = 4;
 
@@ -481,32 +510,55 @@ export function grainSchaefferien(
   // hauteurs voisines, jusqu'à ce que le spectre d'un choc décline. Le plus haut sommet tombe donc
   // sur n'importe lequel d'entre eux : relevé sur huit chocs par seconde, il rendait 15,9 Hz,
   // c'est-à-dire le second. Le plus bas qui atteigne sept dixièmes du maximum est le débit lui-même.
-  // ET LES TRACES DE LA PORTEUSE NE SONT PAS ÉCARTÉES DE CETTE RECHERCHE, après l'avoir été. C'est
-  // une tentative abandonnée sur sa mesure, et la trace qu'on en garde ici vaut mieux que de la
-  // refaire :
+  // ET LA TRACE DE LA PORTEUSE EST ÉCARTÉE PAR UN SECOND RELEVÉ, à une autre cadence. Deux
+  // tentatives ont manqué avant celle-là, et les trois valent d'être dites, parce qu'elles disent ce
+  // que le défaut est.
   //
-  // LE PROBLÈME EST RÉEL. Le carré d'un son harmonique porte toutes les différences entre ses
-  // partiels, qui se replient dans la bande : une porteuse de 218,75 Hz à la cadence de 238,806
-  // laisse sa plus basse trace à 20,06 Hz. Comme la recherche prend le PLUS BAS sommet franc, cette
-  // trace peut la gagner, et un peigne de modulation à 40 Hz ressortait alors à 18,7 Hz.
+  // LE PROBLÈME. Le carré d'un son harmonique porte toutes les différences entre ses partiels, qui
+  // se replient dans la bande : une porteuse de 218,75 Hz à la cadence de 238,806 laisse sa plus
+  // basse trace à 20,06 Hz. Comme la recherche prend le PLUS BAS sommet franc, cette trace peut la
+  // gagner : un peigne de modulation à 40 Hz ressortait à 18,7 Hz.
   //
-  // MAIS L'ÉCARTER COÛTE PLUS QUE LE DÉFAUT. Les images d'une porteuse sont un PEIGNE, de pas égal
-  // à sa trace la plus basse : 20,06, 40,11, 60,17, 80,22. Ce pas est du même ordre que les débits
-  // de grain qu'on cherche, de sorte que masquer les images masque les débits eux-mêmes. Relevé :
-  // sur un peigne de modulation à 40 Hz, l'exclusion écartait le vrai sommet à 40,11 Hz comme une
-  // trace, et la recherche retombait sur l'artefact.
+  // PREMIÈRE TENTATIVE, ÉCARTER LES IMAGES PAR LEUR FRÉQUENCE : elle coûte plus que le défaut. Les
+  // images d'une porteuse sont un PEIGNE de pas égal à la plus basse, 20,06, 40,11, 60,17, 80,22, et
+  // ce pas est du même ordre que les débits cherchés. Relevé : sur ce même peigne à 40 Hz,
+  // l'exclusion écartait le VRAI sommet à 40,11 Hz comme une trace.
   //
-  // CE QUI BORNE LE DÉFAUT, C'EST L'AMPLITUDE DE LA TRACE, non sa place : sur cinq harmoniques à
-  // 220 Hz, elle ne porte qu'une profondeur de 0,0274, c'est-à-dire SOUS le seuil de tenue de
-  // 0,045. Une trace de porteuse ne peut donc pas fabriquer un grain à elle seule. Elle ne peut
-  // fausser que le DÉBIT d'une modulation dont la profondeur est elle-même juste au-dessus du
-  // seuil, entre 0,045 et 0,05 environ, et cette fenêtre est ce qui reste à faire.
+  // SECONDE, LAISSER FAIRE EN BORNANT LE DÉFAUT : la trace ne peut pas FABRIQUER un grain, sa
+  // profondeur de 0,0274 sur cinq harmoniques à 220 Hz restant sous le seuil de tenue de 0,045. Mais
+  // elle fausse le débit d'une modulation dont la profondeur est juste au-dessus du seuil.
+  //
+  // CE QUI TRANCHE : UNE MODULATION NE DÉPEND PAS DE LA CADENCE, UN REPLIEMENT SI. Une vraie
+  // modulation de l'enveloppe est à la même fréquence quelle que soit la cadence à laquelle on
+  // relève cette enveloppe, parce qu'elle est dans le son. Un résidu de porteuse n'est pas dans
+  // l'enveloppe du tout : il y est replié par la décimation, et sa place dépend de la cadence. La
+  // trace de 220 Hz est à 18,8 Hz pour une cadence de 238,8 et à 80 Hz pour une cadence de 300 ; une
+  // modulation à 40 Hz est à 40 dans les deux. Le second relevé ne sert qu'à CONFIRMER, de sorte que
+  // les grandeurs publiées restent celles du premier.
+  const temoin = spectreDeModulation(
+    ...((e) => [e.valeurs, e.cadence] as const)(enveloppe(tenu, sampleRate, (o.debitMax ?? DEBIT_MAX) * HAUSSE_TEMOIN)),
+  );
+  const confirme = (hz: number): boolean => {
+    const t = Math.round(hz / temoin.parBin);
+    if (t < 1 || t >= temoin.bins.length) return false;
+    // À un point près de chaque côté, les deux spectres n'ayant pas le même pas.
+    let crete = 0;
+    for (let k = 1; k < temoin.bins.length; k++) if (temoin.bins[k] > crete) crete = temoin.bins[k];
+    for (let k = Math.max(1, t - 1); k <= Math.min(temoin.bins.length - 1, t + 1); k++) {
+      if (temoin.bins[k] >= 0.3 * crete) return true;
+    }
+    return false;
+  };
+
   let rang = sommet;
+  let confirmeUnSommet = false;
   for (let k = premier; k <= dernier; k++) {
     if (bins[k] < 0.7 * bins[sommet]) continue;
     if (k > premier && bins[k] < bins[k - 1]) continue;
     if (k < dernier && bins[k] < bins[k + 1]) continue;
+    if (!confirme(k * parBin)) continue;
     rang = k;
+    confirmeUnSommet = true;
     break;
   }
   const debitBrut = rang * parBin;
@@ -549,9 +601,12 @@ export function grainSchaefferien(
     return { ...socle, debit: debitBrut, espece: "discontinu", absence: null };
   }
 
-  // SUR UN ENTRETIEN CONTINU, LE DÉBIT N'EXISTE QUE S'IL Y A UN SOMMET. Sans relief, le « sommet »
-  // d'un spectre plat est le hasard du bruit : le frottement témoin rendait ainsi 2,80 Hz.
-  const debit = relief >= (o.seuilRelief ?? SEUIL_RELIEF) ? debitBrut : null;
+  // SUR UN ENTRETIEN CONTINU, LE DÉBIT N'EXISTE QUE S'IL Y A UN SOMMET, et deux conditions le
+  // disent. Sans RELIEF, le « sommet » d'un spectre plat est le hasard du bruit : le frottement
+  // témoin rendait ainsi 2,80 Hz. Et sans CONFIRMATION à l'autre cadence, le sommet est un
+  // repliement et non une modulation : une tenue lisse rendait ainsi 18,66 Hz, qui est la trace de
+  // sa propre porteuse.
+  const debit = relief >= (o.seuilRelief ?? SEUIL_RELIEF) && confirmeUnSommet ? debitBrut : null;
   const mesures = { ...socle, debit };
 
   const harmonique = harmonicite >= (o.seuilHarmonique ?? SEUIL_HARMONIQUE);

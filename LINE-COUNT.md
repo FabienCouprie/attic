@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1345 files, 240616 lines, of which 163406 are code.**
+**1345 files, 240747 lines, of which 163477 are code.**
 The table lists the 191 files of 200 code lines or more, heaviest first;
-the remaining 1154 account for 159754 lines.
+the remaining 1154 account for 159813 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -51,6 +51,7 @@ the remaining 1154 account for 159754 lines.
 | src/plugins/masquage-schillinger-gammes.test.ts | 358 | 516 |  |
 | src/audio/automate-cellulaire.ts | 355 | 430 |  |
 | src/audio/modulation-melange.test.ts | 355 | 506 |  |
+| src/audio/grain-schaefferien.test.ts | 352 | 537 |  |
 | src/audio/objets-sonores.test.ts | 349 | 441 |  |
 | src/plugins/effets-temporel.ts | 348 | 478 |  |
 | src/plugins/textgen.ts | 343 | 523 |  |
@@ -96,7 +97,6 @@ the remaining 1154 account for 159754 lines.
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
 | src/vues-domaine/vues-images.tsx | 301 | 435 |  |
-| src/audio/grain-schaefferien.test.ts | 300 | 465 |  |
 | src/plugins/sherpa-asr.ts | 300 | 433 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
 | src/plugins/syntheses-exotiques.ts | 299 | 406 |  |

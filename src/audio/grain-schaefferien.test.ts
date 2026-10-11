@@ -380,6 +380,78 @@ describe("le grain schaefferien", () => {
     expect(gainDuSuiveur(4), "à 4 Hz, le filtre ne touche presque rien").toBeGreaterThan(0.99);
   });
 
+  it("UNE MODULATION NE DÉPEND PAS DE LA CADENCE, UN REPLIEMENT SI, et c'est ce qui écarte la trace", () => {
+    // LE DÉFAUT RESTANT DU LOT PRÉCÉDENT, et il a fallu trois instruments pour le prendre. La trace
+    // d'une porteuse harmonique se replie dans la bande des débits, et comme la recherche prend le
+    // PLUS BAS sommet franc, elle peut la gagner : un peigne de modulation à 25, 30, 40 ou 60 Hz
+    // ressortait tout entier à 18,7 Hz, qui est le repliement de sa porteuse de 220.
+    //
+    // ÉCARTER LES IMAGES PAR LEUR FRÉQUENCE A ÉCHOUÉ : elles forment un peigne du même pas que les
+    // débits cherchés, de sorte que l'exclusion écartait le VRAI sommet à 40,11 Hz.
+    //
+    // CE QUI TRANCHE EST QU'UN REPLIEMENT SE DÉPLACE QUAND LA CADENCE CHANGE, et une modulation non.
+    // L'enveloppe est donc relevée une seconde fois à une cadence haussée d'un quart, et seuls les
+    // sommets qui ne bougent pas sont retenus.
+    const porteuse = (t: number) => {
+      let v = 0;
+      for (let h = 1; h <= 5; h++) v += Math.sin(2 * Math.PI * 220 * h * t) / h;
+      return v;
+    };
+    const peigne = (fm: number, p: number) => {
+      const n = Math.round(3 * SR);
+      return normaliser(Float32Array.from({ length: n }, (_, i) => {
+        const t = i / SR;
+        return (1 - p + p * Math.exp(-25 * ((t * fm) % 1))) * porteuse(t);
+      }));
+    };
+    for (const fm of [25, 30, 40, 60]) {
+      for (const p of [0.3, 0.45]) {
+        const m = mesure(peigne(fm, p));
+        const dit = `peigne ${fm} Hz à ${(p * 100).toFixed(0)} % : ${m.espece} / ${m.absence},`
+          + ` débit ${m.debit?.toFixed(2)}, profondeur ${m.profondeur.toFixed(4)}`;
+        expect(m.debit, dit).toBeCloseTo(fm, 0);
+      }
+    }
+  });
+
+  it("ET LA TRACE N'EST PAS UN TROU DANS LA BANDE : un vrai débit à sa place est relevé", () => {
+    // C'EST LE CONTRÔLE QUI COMPTE, et c'est lui que la première tentative ne pouvait pas passer :
+    // écarter les images par leur fréquence aurait percé un trou à 18,8 Hz, et toute modulation
+    // réelle y tombant aurait disparu. Le second relevé, lui, la confirme : elle est au même endroit
+    // aux deux cadences, la trace non.
+    const porteuse = (t: number) => {
+      let v = 0;
+      for (let h = 1; h <= 5; h++) v += Math.sin(2 * Math.PI * 220 * h * t) / h;
+      return v;
+    };
+    for (const fm of [17, 18, 19, 20, 21]) {
+      const n = Math.round(3 * SR);
+      const x = normaliser(Float32Array.from({ length: n }, (_, i) => {
+        const t = i / SR;
+        return (0.7 + 0.3 * (0.5 + 0.5 * Math.sin(2 * Math.PI * fm * t))) * porteuse(t);
+      }));
+      const m = mesure(x);
+      expect(m.debit, `${fm} Hz : ${m.espece} / ${m.absence}, débit ${m.debit?.toFixed(2)}`)
+        .toBeCloseTo(fm, 0);
+    }
+  });
+
+  it("ET UNE TENUE LISSE N'ANNONCE PLUS DE DÉBIT DU TOUT, rien ne le confirmant", () => {
+    // Elle en annonçait 18,66 Hz, qui est la trace de sa propre porteuse : un sommet que le second
+    // relevé ne retrouve pas n'est pas une modulation, et un débit sans modulation est une invention.
+    const n = Math.round(3 * SR);
+    const x = normaliser(Float32Array.from({ length: n }, (_, i) => {
+      const t = i / SR;
+      let v = 0;
+      for (let h = 1; h <= 5; h++) v += Math.sin(2 * Math.PI * 220 * h * t) / h;
+      return v;
+    }));
+    const m = mesure(x);
+    expect(m.espece).toBe("aucun");
+    expect(m.absence).toBe("tenue");
+    expect(m.debit, `débit ${m.debit}, relief ${m.relief.toFixed(0)}`).toBeNull();
+  });
+
   it("LA TRACE D'UNE PORTEUSE HARMONIQUE NE PEUT PAS FABRIQUER UN GRAIN, et c'est ce qui la borne", () => {
     // LE DÉFAUT EST RÉEL ET IL RESTE : le carré d'un son harmonique porte les différences entre ses
     // partiels, qui se replient dans la bande des débits, et la recherche du plus bas sommet franc

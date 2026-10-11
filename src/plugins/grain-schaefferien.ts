@@ -36,6 +36,8 @@ Deux grandeurs décident de l'espèce. La « Profondeur » de la modulation de l
 
 Le « Débit » est celui de la modulation dominante, en hertz : c'est le serré et le lâche de Schaeffer. « Débit min » et « Débit max » bornent l'étendue où il est cherché. La « Netteté » dit à quel point la modulation se concentre autour de ce débit. Le « Relief » donne la hauteur du sommet sur le fond du spectre de modulation, et « Seuil de relief » dit à partir d'où un débit est annoncé : un grain compact n'en a pas, le sommet d'un spectre plat étant celui du bruit.
 
+Un débit est en outre confirmé par un second relevé de l'enveloppe, à une autre cadence : une modulation du son y est à la même place, une trace de la porteuse s'y déplace, le repliement qui l'y amène dépendant de la cadence. Un sommet que ce second relevé ne retrouve pas n'est pas annoncé.
+
 Ce composant ne nomme pas la cause du son, et Schaeffer en fait un principe : il observe que des causes différentes donnent le même grain, et c'est de là qu'il tire l'écoute réduite. L'espèce décrit la microstructure perçue de l'entretien, non ce qui l'a produite.
 
 Quatre cas reçoivent l'espèce « aucun », et la sortie « Grain » dit lequel plutôt que de tirer une espèce au hasard :
@@ -57,6 +59,8 @@ The reading is taken on the sustain and not on the attack, the grain being by de
 Two quantities decide the species. The « Depth » of the envelope's modulation separates the sustain by repeated percussions from the two continuous ones: between two impacts the envelope falls back, during a friction or a resonance it holds. The « Harmonicity » of the carrier then separates those two. « Depth threshold » and « Harmonicity threshold » are the two borders, and they are adjustable because the grain is a perceptual criterion: the place where one stops hearing a continuous sustain has no universal value.
 
 The « Rate » is that of the dominant modulation, in hertz: it is Schaeffer's tight and loose. « Rate min » and « Rate max » bound the range it is searched in. The « Sharpness » states how far the modulation gathers around that rate. The « Relief » gives the height of the peak over the floor of the modulation spectrum, and « Relief threshold » states from where a rate is announced: a compact grain has none, the peak of a flat spectrum being that of the noise.
+
+A rate is further confirmed by a second reading of the envelope, at another rate of its own: a modulation of the sound is at the same place there, a trace of the carrier moves, the folding that brings it there depending on that rate. A peak this second reading does not find again is not announced.
 
 This component does not name the cause of the sound, and Schaeffer makes that a principle: he observes that different causes give the same grain, and it is from there that he draws reduced listening. The species describes the perceived microstructure of the sustain, not what produced it.
 
