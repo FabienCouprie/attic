@@ -204,6 +204,68 @@ export const ECARTES_REGLAGE: Record<string, string> = {
   // LE COMPOSANT PORTE DÉJÀ SA PROPRE VARIATION, et elle est son sujet.
   "micromontage/Panoramique":
     "le composant porte déjà « Panoramique, fin » et « Panoramique, loi », soit une valeur par fragment ; une courbe y serait lue par fragment, non par échantillon",
+
+  // CE QUI SUIT PORTE UN MOT DE FAMILLE SANS ÊTRE UNE GRANDEUR DU SON. L'élargissement du relevé,
+  // qui lit désormais les noms mot à mot, les a fait entrer tous les douze d'un coup ; chacun a été
+  // relu sur sa propre documentation avant d'être écarté, et ils sont de cinq natures.
+
+  // UNE BORNE N'EST PAS UNE GRANDEUR : elle dit ce que vaut le bout d'une course, et moduler un
+  // bout de course n'a pas de sens.
+  "suiveur-hauteur/Hauteur min":
+    "c'est une borne de la courbe que ce nœud ÉMET, sa documentation disant « ce que le zéro de la courbe veut dire » ; elle décide de l'échelle de sa sortie, non d'une grandeur qui court dans un son",
+  "suiveur-hauteur/Hauteur max":
+    "idem, pour le un de la courbe émise",
+  "micromontage/Panoramique, fin":
+    "c'est « la seconde borne, pour une rampe ou un tirage », celle de la loi que le composant applique lui-même à chaque fragment",
+  "micromontage/Transposition, fin":
+    "idem, seconde borne de la loi par fragment",
+
+  // UN CRITÈRE DE DÉTECTION OU DE DÉCOUPE DÉCIDE D'UN PARTAGE, non d'un traitement au fil du son.
+  // C'est la raison qui écarte déjà le rognage de silences et le montage de grains.
+  "decoupage-objets/Seuil de silence":
+    "il sert au critère des silences : ce qui passe dessous EST un silence, ce qui est une découpe et non un traitement",
+  "remplissage-trou/Seuil de silence":
+    "il décide quel échantillon est tenu pour manquant, en détection automatique : un critère, non une grandeur rendue",
+  "restauration-ecretage/Seuil manuel":
+    "il décide quel échantillon est tenu pour écrêté, et ne sert qu'en mode manuel : un critère de détection, dans un seul mode",
+
+  // CE QUI DÉCIDE DE LA STRUCTURE RENDUE, avant qu'un seul échantillon existe.
+  "banque-clavier/Largeur de zone":
+    "elle dit sur combien de demi-tons une zone est rééchantillonnée : c'est la construction de la banque, faite avant le rendu, et elle se compte en demi-tons et non en largeur d'image",
+  "instrument-fin/Largeur de zone":
+    "elle dit l'écart entre deux notes rendues, donc COMBIEN de notes le composant rejoue : la structure de ce qu'il produit, décidée avant le rendu",
+
+  // UN POIDS DANS UNE RECHERCHE N'EST PAS UNE GRANDEUR DU SON.
+  "mosaiquage/Poids du niveau":
+    "c'est l'importance donnée au niveau dans la RECHERCHE du grain le plus proche, lue une fois par grain et non par échantillon",
+  "mosaiquage/Poids de la brillance":
+    "idem, l'importance donnée au centre de gravité du spectre dans la même recherche",
+
+  // UN SEUIL QUI VAUT POUR UNE DÉCOMPOSITION ENTIÈRE.
+  "ondelettes/Force du seuil":
+    "elle multiplie le seuil universel de Donoho, appliqué à la décomposition entière : une décision globale sur le son, non une valeur qui le parcourt",
+
+  // LES SEIZE NIVEAUX DU MONTAGE, écartés en bloc et pour trois raisons qui tiennent ensemble.
+  // Décision de Fabien, au vu du relevé.
+  //
+  // CE SONT DE VRAIS NIVEAUX, et c'est pourquoi ils entrent légitimement dans le relevé : le
+  // critère ne se trompe pas en les voyant. Ce qui les écarte n'est pas leur nature mais la forme
+  // du composant qui les porte.
+  //
+  // 1. UN NIVEAU PAR PISTE, ET LE NOMBRE DE PISTES N'EST PAS FIXE. Le montage porte une entrée
+  //    audio par piste et s'allonge d'une piste à la demande : ouvrir « Gain k » demanderait un
+  //    port de courbe par piste, donc un nombre de ports qui bouge avec le composant.
+  // 2. IL PORTE DÉJÀ DE QUOI FAIRE BOUGER LE NIVEAU D'UNE PISTE : « Fondu entrée » et « Fondu
+  //    sortie » le façonnent dans le temps, le gain étant ce qu'ils font monter et descendre.
+  // 3. ET CE QU'UNE COURBE FERAIT ICI SE FAIT EN AMONT, sur le son avant qu'il entre dans le
+  //    montage, qui assemble des sons plutôt qu'il ne les traite.
+  //
+  // Les seize clés sont écrites d'un coup plutôt qu'à la main : la raison est la même pour toutes,
+  // et le cas des exemptions orphelines attrape le jour où le compte de pistes changerait.
+  ...Object.fromEntries(Array.from({ length: 16 }, (_, k) => [
+    `montage/Gain ${k + 1}`,
+    "c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps",
+  ])),
 };
 
 /** Les identifiants écartés, nommément ou par leur famille de palette. */
