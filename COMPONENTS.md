@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **480 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **481 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -11,7 +11,7 @@ Attic ships **480 components** in **7 categories** and **63 families**. Every na
 |---|---:|---|
 | [Inputs](#inputs) | 91 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (31) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 234 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 42 | [Analysis](#analysis-1) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
+| [Visualization](#visualization) | 43 | [Analysis](#analysis-1) (19) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -8244,6 +8244,7 @@ Sends the sound around a torus, the product of two circles, along which it moves
 | [Audio Analysis](#audio-analysis) | Analyse tempo, key, song/instrumental type. |
 | [Curve Viewer](#curve-viewer) | Draws a modulation curve and measures it, without altering it. |
 | [Goniometer](#goniometer) | Measures stereo width, phase correlation and what the mix would lose in mono. |
+| [Grain (Schaeffer)](#grain-schaeffer) | Sorts a sound's grain into three species, harmonic, compact or discontinuous, and gives its rate and depth. |
 | [Harmonic Analysis](#harmonic-analysis) | Detects the key of a song and suggests a chord progression. |
 | [Masking](#masking) | Says what one track makes inaudible in another, critical band by critical band. |
 | [Morphology](#morphology) | Reports the shape of a sequence, its recurring figures, and what it shares with another. |
@@ -8329,6 +8330,28 @@ Measures what the two channels do to each other, and shows it. The figure is a g
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Points | number | 3000 | 200 – 20000, step 100 | Number of points drawn in the figure. More points means a denser cloud, and a heavier SVG. |
+
+#### Grain (Schaeffer)
+
+`grain-schaefferien` · Visualization → Analysis
+
+*Sorts a sound's grain into three species, harmonic, compact or discontinuous, and gives its rate and depth.*
+
+Sorts the received sound's grain into three species and gives its quantities, without touching the sound, which comes out unchanged. After Pierre Schaeffer, « Traité des objets musicaux », Seuil, 1966, and its figure of grain types, page 553; and Michel Chion, « Guide des objets sonores: Pierre Schaeffer et la recherche musicale », INA-GRM and Buchet-Chastel, 1983, entry GRAIN, page 95. Schaeffer starts from the three ways a body sustains its vibration, not at all, constantly, or by repeated percussions, and draws three species of grain from them. Resonance gives the « harmonic » grain, whose quality is shimmer; friction gives the « compact » grain; iteration gives the « discontinuous » grain, whose quality is impact. The reading is taken on the sustain and not on the attack, the grain being by definition the microstructure of what holds. « Sustain » states what share of the sound is set aside at each end. Two quantities decide the species. The « Depth » of the envelope's modulation separates the sustain by repeated percussions from the two continuous ones: between two impacts the envelope falls back, during a friction or a resonance it holds. The « Harmonicity » of the carrier then separates those two. « Depth threshold » and « Harmonicity threshold » are the two borders, and they are adjustable because the grain is a perceptual criterion: the place where one stops hearing a continuous sustain has no universal value. The « Rate » is that of the dominant modulation, in hertz: it is Schaeffer's tight and loose. « Rate min » and « Rate max » bound the range it is searched in. The « Sharpness » states how far the modulation gathers around that rate, that is how definite the rate read is. This component does not name the cause of the sound, and Schaeffer makes that a principle: he observes that different causes give the same grain, and it is from there that he draws reduced listening. The species describes the perceived microstructure of the sustain, not what produced it. A sound too faint or too short for a sustain to be observed in it receives the species « none », which is preferable to a species drawn at random. The « Audio » output returns the sound unchanged. The « Grain » output gives the species, the rate, the depth, the sharpness and the harmonicity as text.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Grain | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Depth threshold | slider | 0.5 | 0.05 – 0.95, step 0.01 | Beyond this modulation depth, the sustain is taken for a series of percussions and the grain for discontinuous. The repository's three test sounds give 0.145 for a friction, 0.150 for a resonance and 1.000 for an iteration: the default border is set in the middle of that margin. |
+| Harmonicity threshold | slider | 0.5 | 0.05 – 0.95, step 0.01 | Above this threshold, a continuous sustain is taken for a resonance and the grain for harmonic; below, for a friction and the grain for compact. |
+| Rate min | slider | 2 Hz | 1 – 50 Hz, step 1 | The slowest modulation rate searched for. Below it, one would be reading the whole sound's envelope and not its grain. |
+| Rate max | slider | 120 Hz | 20 – 300 Hz, step 5 | The fastest. It also decides the rate at which the envelope is read, which must be twice that rate. |
+| Sustain | slider | 10 % | 0 – 40 %, step 1 | The share of the sound set aside at each end. The grain is the microstructure of what holds: an attack placed in front must not move the species. |
 
 #### Harmonic Analysis
 

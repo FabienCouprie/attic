@@ -61,6 +61,9 @@ const SIGLES = new Set([
   // VOSIM : le nom du systeme de synthese de Kaegi et Tempelaars, ecrit ainsi dans le titre de
   // leur article de 1978. C'est un sigle, non un mot ordinaire : la notice le cite.
   "VOSIM",
+  // INA : l'Institut national de l'audiovisuel, dont le Groupe de recherches musicales a publie le
+  // « Guide des objets sonores » de Chion. C'est le sigle de l'editeur, dans une reference.
+  "INA",
 ]);
 
 /**
