@@ -373,7 +373,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Partition Csound | `partition-csound` | 240 × 140 |
 | Paulstretch | `paulstretch` | 240 × 140 |
 | PCA neuronale | `pca-neuronale` | 240 × 118 |
-| Peignes accordés | `peignes-accordes` | 240 × 162 |
+| Peignes accordés | `peignes-accordes` | 240 × 184 |
 | Reconstruction de phase (PGHI) | `phase-pghi` | 240 × 118 |
 | Phase Vocoder Tempo | `phase-vocoder-tempo` | 240 × 118 |
 | Phase Vocoder Tonalité | `phase-vocoder-tonalite` | 240 × 118 |
@@ -410,7 +410,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Réservoir neuronal | `reservoir-musical` | 240 × 140 |
 | Réservoir textuel | `reservoir-textuel` | 240 × 118 |
 | Resonance Audio | `resonance-audio` | 240 × 118 |
-| Résonateurs | `resonateurs` | 240 × 162 |
+| Résonateurs | `resonateurs` | 240 × 206 |
 | Restauration d'écrêtage | `restauration-ecretage` | 240 × 118 |
 | Résultante (Schillinger) | `resultante-schillinger` | 240 × 162 |
 | Retard spectral | `retard-spectral` | 240 × 162 |

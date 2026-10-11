@@ -4982,13 +4982,15 @@ Adjusts overall gain to bring the signal peak to the target level, without chang
 
 *A bank of tuned resonators that any sound can set ringing: a noise becomes a chord, a scrape a bell.*
 
-This node passes a sound through a bank of tuned resonators. Each resonator keeps only its own frequency from what it receives, and goes on ringing once it is no longer excited: the input sound takes on the bank's chord. A breath becomes a held chord, a rain of clicks a shimmering harmony, a scrape a bell. The principle is that of the Reson tool of GRM Tools and of Max's resonators~. The bank plays nothing by itself: the input sound sets it ringing, and what one hears depends as much on that sound as on how the resonators are tuned. Resonance is set in seconds, the way one thinks of it: the time a resonator takes to lose 60 dB once it is no longer excited. Short, the sound keeps its grain and takes on a colour; long, it fades behind the chord it set ringing. A tail of that length is added to the output, so the resonators can be heard dying away after the sound ends. The structure says where the resonators sit above the fundamental: harmonic (1, 2, 3...), odd (1, 3, 5..., the spectrum of a clarinet or a closed pipe), bar (1; 2.756; 5.404; 8.933..., the modes of a free bar, inharmonic, metallic), or chord, from the intervals written, repeated octave after octave. The fundamental can be driven by a curve: the resonances then glide, and the input sound follows them. The output level is brought back to that of the input. The mix follows a curve too: connected to the Modulation mix input, it takes the place of the Mix setting, and the bounds Mix min and Mix max say what its zero and its one are worth.
+This node passes a sound through a bank of tuned resonators. Each resonator keeps only its own frequency from what it receives, and goes on ringing once it is no longer excited: the input sound takes on the bank's chord. A breath becomes a held chord, a rain of clicks a shimmering harmony, a scrape a bell. The principle is that of the Reson tool of GRM Tools and of Max's resonators~. The bank plays nothing by itself: the input sound sets it ringing, and what one hears depends as much on that sound as on how the resonators are tuned. Resonance is set in seconds, the way one thinks of it: the time a resonator takes to lose 60 dB once it is no longer excited. Short, the sound keeps its grain and takes on a colour; long, it fades behind the chord it set ringing. A tail of that length is added to the output, so the resonators can be heard dying away after the sound ends. The structure says where the resonators sit above the fundamental: harmonic (1, 2, 3...), odd (1, 3, 5..., the spectrum of a clarinet or a closed pipe), bar (1; 2.756; 5.404; 8.933..., the modes of a free bar, inharmonic, metallic), or chord, from the intervals written, repeated octave after octave. The fundamental can be driven by a curve: the resonances then glide, and the input sound follows them. The output level is brought back to that of the input. The mix follows a curve too: connected to the Modulation mix input, it takes the place of the Mix setting, and the bounds Mix min and Mix max say what its zero and its one are worth. The resonance and the brightness accept one as well, through the « Modulation resonance » and « Modulation brightness » inputs, each with its two bounds. The resonators tighten or spread out while they sound, and the balance between the ranks moves, without the tuning changing. The tail added after the sound is measured on the longest resonance the curve asks for, its length being fixed before the first sample is written, and the duration given in the message is the one at the start of the sound.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
 | input | Fundamental modulation | curve |  |
 | input | Modulation mix | curve |  |
+| input | Modulation resonance | curve |  |
+| input | Modulation brightness | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5004,6 +5006,10 @@ This node passes a sound through a bank of tuned resonators. Each resonator keep
 | Fundamental max | slider | 440 Hz | 20 – 4000 Hz, step 1 | Fundamental that the curve's one means. |
 | Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Resonance min | slider | 0.5 s | 0.05 – 20 s, step 0.05 | Value of « Resonance » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Resonance max | slider | 8 s | 0.05 – 20 s, step 0.05 | Value of « Resonance » that the curve's one means. |
+| Brightness min | slider | 0 % | 0 – 100 %, step 1 | Value of « Brightness » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Brightness max | slider | 100 % | 0 – 100 %, step 1 | Value of « Brightness » that the curve's one means. |
 
 #### Transient Shaper
 
@@ -5040,13 +5046,14 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 
 *Comb filters tuned to a note or a chord: the input sound rings like a string, at the note and all its harmonics.*
 
-A comb filter sends the sound round a loop whose length is the period of a note: what comes back in phase is reinforced, and the filter rings at that note and all its harmonics, like a string. Each note of the chord is a comb; the input sound sets them vibrating. A noise becomes a bowed string, a percussion a struck string, a voice a choir of sympathetic strings. Resonance is set in seconds: the time a comb takes to lose 60 dB, the same for a low note and a high one. Damping dies away the high harmonics before the fundamental, as on a real string: at zero, the sound stays bright and metallic; high, it rounds off. The combs stay in tune whatever the damping. The chord is written in semitones above the fundamental: « 0 » for a single note, « 0 7 » for a fifth, « 0 4 7 » for a major triad. The fundamental can follow a curve: the whole chord then glides, and the strings with it. A tail as long as the resonance lets the combs die away; the output level is brought back to that of the input. The mix follows a curve too: connected to the Modulation mix input, it takes the place of the Mix setting, and the bounds Mix min and Mix max say what its zero and its one are worth. After Julius O. Smith III, « Physical Audio Signal Processing », 2010, and the tuning of Karplus-Strong strings by David Jaffe and Julius O. Smith, Computer Music Journal 7(2), 1983.
+A comb filter sends the sound round a loop whose length is the period of a note: what comes back in phase is reinforced, and the filter rings at that note and all its harmonics, like a string. Each note of the chord is a comb; the input sound sets them vibrating. A noise becomes a bowed string, a percussion a struck string, a voice a choir of sympathetic strings. Resonance is set in seconds: the time a comb takes to lose 60 dB, the same for a low note and a high one. Damping dies away the high harmonics before the fundamental, as on a real string: at zero, the sound stays bright and metallic; high, it rounds off. The combs stay in tune whatever the damping. The chord is written in semitones above the fundamental: « 0 » for a single note, « 0 7 » for a fifth, « 0 4 7 » for a major triad. The fundamental can follow a curve: the whole chord then glides, and the strings with it. A tail as long as the resonance lets the combs die away; the output level is brought back to that of the input. The mix follows a curve too: connected to the Modulation mix input, it takes the place of the Mix setting, and the bounds Mix min and Mix max say what its zero and its one are worth. The resonance accepts one through the « Modulation resonance » input, with « Resonance min » and « Resonance max »: the combs tighten or spread out while they sound, without the tuning changing. The tail added after the sound is measured on the longest resonance the curve asks for, its length being fixed before the first sample is written. After Julius O. Smith III, « Physical Audio Signal Processing », 2010, and the tuning of Karplus-Strong strings by David Jaffe and Julius O. Smith, Computer Music Journal 7(2), 1983.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
 | input | Fundamental modulation | curve |  |
 | input | Modulation mix | curve |  |
+| input | Modulation resonance | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5060,6 +5067,8 @@ A comb filter sends the sound round a loop whose length is the period of a note:
 | Fundamental max | slider | 220 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that the curve's one means. |
 | Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Resonance min | slider | 0.5 s | 0.05 – 20 s, step 0.05 | Value of « Resonance » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Resonance max | slider | 8 s | 0.05 – 20 s, step 0.05 | Value of « Resonance » that the curve's one means. |
 
 ### Generation
 
