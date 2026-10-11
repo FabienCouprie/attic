@@ -23,7 +23,7 @@
 // Gardés en amplitudes et en phases, les bornes sont un simple rang à ne pas dépasser, et la
 // table se refait par une transformée inverse.
 
-import { valeurA } from "./courbe";
+import { valeurA, valeurMax, valeurTransformee } from "./courbe";
 import { fft } from "./fft";
 import { suivreHauteur } from "./hauteur";
 
@@ -200,7 +200,15 @@ export function lireTable(table: Float32Array, position: number): number {
 }
 
 export interface ReglagesTable {
-  frequence: number;
+  /**
+   * La hauteur du son produit, en hertz. Un tableau la fait varier échantillon par échantillon.
+   *
+   * ELLE SERT DEUX FOIS, ET LES DEUX USAGES NE SE LISENT PAS DE LA MÊME FAÇON. Le pas de lecture
+   * se prend par échantillon, la phase étant déjà accumulée ici. Le nombre d'harmoniques gardées,
+   * lui, se décide UNE FOIS : chaque table est bornée par une transformée inverse, et la refaire
+   * par échantillon pour toute la banque n'est pas envisageable.
+   */
+  frequence: number | Float32Array;
   duree: number;
   /** Où lire dans la banque, de 0 à 1. Un tableau la fait varier échantillon par échantillon. */
   position: number | Float32Array;
@@ -219,10 +227,17 @@ export interface ReglagesTable {
  */
 export function synthetiserTable(banque: Banque, r: ReglagesTable,
   echantillonnage: number): Float32Array {
-  const tables = banque.map((c) => cycleBorne(c, r.frequence, echantillonnage));
+  // LES HARMONIQUES SONT BORNÉES SUR LA PLUS HAUTE FRÉQUENCE QUE LA COURBE ATTEINDRA, et non sur
+  // sa valeur du moment. Le rang maximal décroît quand la fréquence monte : le borner plus bas que
+  // le sommet laisserait replier tout ce qui dépasse Nyquist au passage, et un repliement est un
+  // défaut, là où une table un peu plus sobre au grave est un compromis. C'est le précédent du
+  // retard spectral, dont la traîne se mesure sur la dispersion la plus forte.
+  const tables = banque.map((c) => cycleBorne(c, valeurMax(r.frequence), echantillonnage));
   const total = Math.max(1, Math.floor(echantillonnage * r.duree));
   const sortie = new Float32Array(total);
-  const pas = (TAILLE_TABLE * r.frequence) / echantillonnage;
+  // La phase est DÉJÀ accumulée ici, de sorte qu'un pas qui varie y est exact : la hauteur suit la
+  // fréquence demandée, et non une dérive qui croîtrait avec le temps.
+  const pasA = valeurTransformee(r.frequence, (f) => (TAILLE_TABLE * f) / echantillonnage);
   const pasLfo = r.vitesseModulation / echantillonnage;
   const ampleur = Math.max(0, Math.min(1, r.modulationPosition));
   // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non. Le balayage
@@ -243,7 +258,7 @@ export function synthetiserTable(banque: Banque, r: ReglagesTable,
     const a = lireTable(tables[bas], phase);
     sortie[i] = melange === 0 ? a : a * (1 - melange) + lireTable(tables[haut], phase) * melange;
 
-    phase += pas;
+    phase += pasA(i);
     if (phase >= TAILLE_TABLE) phase -= TAILLE_TABLE * Math.floor(phase / TAILLE_TABLE);
   }
   return sortie;

@@ -253,7 +253,7 @@ const CAS: {
   { id: "reverbe-reseau", reglage: "Largeur", entrees: () => [son(103), undefined],
     noms: ["Largeur min", "Largeur max"], rang: 2 },
   { id: "oscillateur-table-onde", reglage: "Position", entrees: () => [undefined, undefined],
-    noms: ["Position min", "Position max"] },
+    noms: ["Position min", "Position max"], rang: 2 },
   // LES TROIS PREMIÈRES SECONDES MODULATIONS BÂTIES PAR `effet()`. Ce socle n'en portait qu'une ;
   // ces trois cas sont le premier emploi de la seconde, et ils tiennent le rang qu'elle occupe.
   { id: "flanger", reglage: "Profondeur", entrees: () => [son(107, 2), undefined],
@@ -376,11 +376,16 @@ const CAS: {
     noms: ["Coupure min", "Coupure max"], regle: 512, leurre: 1024 },
   { id: "wahwah", reglage: "Résonance", entrees: () => [son(433, 2), undefined, undefined, undefined, undefined],
     noms: ["Résonance min", "Résonance max"], regle: 2, leurre: 16 },
+  { id: "ring-modulator", reglage: "Mix", entrees: () => [son(439, 2)], rang: 1 },
+  { id: "ring-modulator", reglage: "Fréquence", entrees: () => [son(443, 2), undefined],
+    noms: ["Fréquence min", "Fréquence max"], regle: 1024, leurre: 64 },
+  { id: "oscillateur-table-onde", reglage: "Fréquence", entrees: () => [undefined, undefined, undefined],
+    noms: ["Fréquence min", "Fréquence max"], regle: 256, leurre: 1024 },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien quatre-vingt-un ports à éprouver", () => {
-    expect(CAS).toHaveLength(81);
+  it("il y a bien quatre-vingt-quatre ports à éprouver", () => {
+    expect(CAS).toHaveLength(84);
   });
 
   for (const cas of CAS) {

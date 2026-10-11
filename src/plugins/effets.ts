@@ -249,7 +249,9 @@ export const fiches: FicheAudio[] = ([
     [param("Fréquence", 200, "Frequency", "Hz", "Fréquence de la porteuse. Produit des sommes et différences de fréquences (sidebands).", "Carrier frequency. Produces sum and difference frequencies (sidebands).", [1, 8000], 1),
      param("Mix", 100, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.")],
     (a,freq,mix) => ringModulator(a, freq, mix), undefined,
-    { parametre: "Mix", bornes: [0, 100], unite: "%" }),
+    [{ parametre: "Mix", bornes: [0, 100], unite: "%" },
+     { ...modulationNommee("Fréquence", "Frequency", [1, 8000], "Hz"), defauts: [50, 2000],
+       echelle: "logarithmique" }]),
   {
     id: "vocoder", nom: "Vocoder", nomEn: "Vocoder",
     univers: "Traitement", famille: "Effets",

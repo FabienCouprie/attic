@@ -20,6 +20,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { FREQUENCE_ECH, versBuffer } from "./instruments-communs";
 import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
+import { valeurA } from "../audio/courbe";
 import {
   CASES, FAMILLES, banqueDepuisSon, banqueEngendree, synthetiserTable, type FamilleId,
 } from "../audio/table-onde";
@@ -35,6 +36,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Audio", type: "audio", requis: false },
       portModulation("Volume"),
       portModulation("Position", "Position", { court: false }),
+      portModulation("Fréquence", "Frequency", { court: false }),
     ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
@@ -72,10 +74,18 @@ export const fiches: FicheAudio[] = ([
         docEn: "Output level, after the peak has been normalised. Normalisation happens first, on the whole sound: a curve therefore does not move it, it sets what comes out of it." },
       ...bornesModulation({ parametre: "Volume", parametreEn: "Volume", bornes: [0, 100], unite: "%" }),
       ...bornesModulation(modulationNommee("Position", "Position", [0, 100], "%")),
+      ...bornesModulation({
+        ...modulationNommee("Fréquence", "Frequency", [20, 4000], "Hz"), defauts: [110, 880],
+      }),
     ],
     async executer(ctx: any) {
       const cases = Math.round(ctx.paramNombre("Cases", CASES));
-      const frequence = ctx.paramNombre("Fréquence", 220);
+      const duree = ctx.paramNombre("Durée", 1.5);
+      const frequence = reglageModule(ctx, Math.round(duree * FREQUENCE_ECH), 3, {
+        reglage: "Fréquence", defaut: 220, rendu: "pourCent",
+        noms: ["Fréquence min", "Fréquence max"], bornes: [110, 880],
+        echelle: "logarithmique",
+      });
       const entree = ctx.entree(0);
 
       let banque = null;
@@ -91,8 +101,8 @@ export const fiches: FicheAudio[] = ([
 
       const signal = synthetiserTable(banque, {
         frequence,
-        duree: ctx.paramNombre("Durée", 1.5),
-        position: reglageModule(ctx, Math.round(ctx.paramNombre("Durée", 1.5) * FREQUENCE_ECH), 2, {
+        duree,
+        position: reglageModule(ctx, Math.round(duree * FREQUENCE_ECH), 2, {
           reglage: "Position", defaut: 0, noms: ["Position min", "Position max"],
         }),
         modulationPosition: ctx.paramNombre("Balayage", 0) / 100,
@@ -106,9 +116,11 @@ export const fiches: FicheAudio[] = ([
         valeurs: [versBuffer(signal, reglageModule(ctx, signal.length, 1, {
           reglage: "Volume", defaut: 80, rendu: "pourCent",
         }))],
+        // LA HAUTEUR ANNONCÉE EST CELLE DU DÉBUT DU SON quand une courbe la commande : le message
+        // rend UN chiffre, et une hauteur qui glisse en vaudrait autant qu'il y a d'instants.
         message: depuis > 0
-          ? traduire("msg.table-onde.duSon", cases, Math.round(depuis), Math.round(frequence))
-          : traduire("msg.table-onde.engendree", cases, Math.round(frequence)),
+          ? traduire("msg.table-onde.duSon", cases, Math.round(depuis), Math.round(valeurA(frequence, 0)))
+          : traduire("msg.table-onde.engendree", cases, Math.round(valeurA(frequence, 0))),
       };
     },
   },

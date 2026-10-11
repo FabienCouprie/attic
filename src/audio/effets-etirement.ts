@@ -5,6 +5,7 @@
 
 import { etirerDuree } from "./commun";
 import { valeurA } from "./courbe";
+import { cyclesAccumules } from "./lfo";
 
 export async function appliquerReverbeProgressive(
   entree: AudioBuffer,
@@ -63,9 +64,19 @@ export async function appliquerReverbeProgressive(
 
 // ---------- Ring modulator ----------
 
+/**
+ * La modulation en anneau : le son multiplié par une porteuse.
+ *
+ * LA FRÉQUENCE DE LA PORTEUSE A DEUX CHEMINS, et c'est délibéré. Le calcul direct pose la phase à
+ * `2π · f · t`, ce qui n'est juste que pour une fréquence CONSTANTE : la fréquence instantanée d'un
+ * tel sinus vaut `f(t) + t · f'(t)`, de sorte qu'une courbe y rendrait autre chose que ce qu'elle
+ * demande, et d'autant plus loin qu'on avance dans le son. Une fréquence qui varie demande donc une
+ * phase INTÉGRÉE, ce que `cyclesAccumules` fait. Sans courbe, le calcul direct est recopié tel quel
+ * pour ne pas changer un bit. C'est le partage que le trémolo et le vibrato font déjà.
+ */
 export function ringModulator(
   buffer: AudioBuffer,
-  frequence: number,
+  frequence: number | Float32Array,
   // LE MÉLANGE PEUT VARIER AU FIL DU SON, et c'est le seul changement de signature. Un nombre reste
   // un nombre : `valeurA` rend le scalaire tel quel, de sorte qu'il n'y a pas deux chemins de
   // calcul, un « modulé » et un « ordinaire », qui pourraient diverger un jour.
@@ -73,6 +84,9 @@ export function ringModulator(
 ): AudioBuffer {
   const sr = buffer.sampleRate;
   const borne = (m: number) => Math.max(0, Math.min(100, m)) / 100;
+  // Les cycles ne se calculent qu'une fois pour les deux canaux : la porteuse ne dépend pas du
+  // canal, et la refaire coûterait deux fois pour le même résultat.
+  const cycles = typeof frequence === "number" ? null : cyclesAccumules(frequence, sr);
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
     length: buffer.length,
@@ -84,7 +98,9 @@ export function ringModulator(
     const dst = resultat.getChannelData(c);
     for (let i = 0; i < src.length; i++) {
       const t = i / sr;
-      const porteuse = Math.sin(2 * Math.PI * frequence * t);
+      const porteuse = cycles
+        ? Math.sin(2 * Math.PI * (cycles[i] ?? cycles[cycles.length - 1] ?? 0))
+        : Math.sin(2 * Math.PI * (frequence as number) * t);
       const m = borne(valeurA(mix, i));
       dst[i] = src[i] * (1 - m) + src[i] * porteuse * m;
     }

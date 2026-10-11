@@ -21,21 +21,19 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 135, sur 64 composants
-- **réglages restant à faire** : 16, sur 10 composants et 10 couples composant / famille
+- **réglages déjà pilotés par une courbe** : 137, sur 64 composants
+- **réglages restant à faire** : 14, sur 8 composants et 8 couples composant / famille
 - **dont le cœur travaille par trames** : 1
 - **réglages écartés un par un** : 43, sur 20 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### frequence · 6
+### frequence · 4
 
-- Oscillateur à table d'onde `oscillateur-table-onde` : Fréquence
 - Peignes accordés `peignes-accordes` : Résonance
 - Quadrafuzz `quadrafuzz` : Coupure 1, Coupure 2, Coupure 3
 - Résonateurs `resonateurs` : Résonance, Brillance
-- Ring modulator `ring-modulator` : Fréquence
 - Vocoder `vocoder` : Fréq min, Fréq max, Q
 
 ### espace · 1
@@ -241,6 +239,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `objet-sonore` : Distance
 - `objet-sonore` : Élévation
 - `octaver` : Mix
+- `oscillateur-table-onde` : Fréquence
 - `oscillateur-table-onde` : Position
 - `oscillateur-table-onde` : Volume
 - `paulstretch` : Stretch
@@ -265,6 +264,7 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `reverbe-reseau` : Queue
 - `reverberation` : Mix
 - `reverberation-velours` : Mélange
+- `ring-modulator` : Fréquence
 - `ring-modulator` : Mix
 - `shimmer` : Mix
 - `spatialisation-stereo` : Largeur

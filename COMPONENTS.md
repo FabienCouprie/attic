@@ -1181,13 +1181,14 @@ This node returns pairs of tones a tritone apart, that is half an octave. After 
 
 *Reads a bank of cycles and scans it: the timbre travels, the pitch stays put.*
 
-Reads a bank of cycles and scans it. A bank is a series of waveforms arranged in an order; « Position » says where the reading happens, and moving from one end to the other bends the timbre continuously while the pitch stays put. Between two slots, the two are blended. « Bank » chooses the series read when no sound is connected. « Sine to sawtooth » adds the harmonics one by one, from the first slot to the last. « Sine to square » adds only the odd ranks. « Sliding harmonic » holds a single rank per slot, rising from one slot to the next, so that scanning makes a lone partial climb. « Odd towards even » keeps the odd ranks and brings in the even ones. When a sound is connected to the « Audio » input, the bank is taken from it and « Bank » has no effect. The period of the sound is detected, then as many cycles as « Slots » asks for are taken at regular intervals across its whole length; scanning the bank then amounts to travelling through the sound while holding it at a fixed pitch. A sound in which no pitch can be detected yields no bank, and the message says so. « Slots » is the number of places: few slots give a scan in clear steps, many a continuous fade. It has no effect at the two ends of the bank, the first and the last slot being the same whatever their number; at the last slot, « Sine to sawtooth » and « Odd towards even » coincide for the same reason. « Scan » is the depth of the travel of « Position » around its value, and « Scan rate » the number of return trips per second; at zero scan the position stays where it is set and the rate no longer acts. « Frequency » is the pitch of the sound produced, « Duration » its length, « Volume » the output level. A curve connected to the « Modulation volume » input takes the place of « Volume »; peak normalisation happens before it, on the whole sound, so that a curve sets what comes out of the normalisation and does not move it. The cycles are kept as harmonics and the table is rebuilt for the frequency asked, with no harmonic above half the sampling rate. « Frequency » therefore also decides how many ranks are kept: in the bass the table carries several hundred, in the treble a few. Reading between two points of the table is done by a curve passing through the four neighbouring points. The « Audio » output returns the sound. The message gives the number of slots, the reading frequency, and the detected frequency when the bank comes from a sound. A curve connected to the « Modulation position » input takes the place of « Position »: « Position min » and « Position max » then say what its zero and its one are worth. The sweep stays on top of it: the curve moves the centre around which « Sweep » walks the reading.
+Reads a bank of cycles and scans it. A bank is a series of waveforms arranged in an order; « Position » says where the reading happens, and moving from one end to the other bends the timbre continuously while the pitch stays put. Between two slots, the two are blended. « Bank » chooses the series read when no sound is connected. « Sine to sawtooth » adds the harmonics one by one, from the first slot to the last. « Sine to square » adds only the odd ranks. « Sliding harmonic » holds a single rank per slot, rising from one slot to the next, so that scanning makes a lone partial climb. « Odd towards even » keeps the odd ranks and brings in the even ones. When a sound is connected to the « Audio » input, the bank is taken from it and « Bank » has no effect. The period of the sound is detected, then as many cycles as « Slots » asks for are taken at regular intervals across its whole length; scanning the bank then amounts to travelling through the sound while holding it at a fixed pitch. A sound in which no pitch can be detected yields no bank, and the message says so. « Slots » is the number of places: few slots give a scan in clear steps, many a continuous fade. It has no effect at the two ends of the bank, the first and the last slot being the same whatever their number; at the last slot, « Sine to sawtooth » and « Odd towards even » coincide for the same reason. « Scan » is the depth of the travel of « Position » around its value, and « Scan rate » the number of return trips per second; at zero scan the position stays where it is set and the rate no longer acts. « Frequency » is the pitch of the sound produced, « Duration » its length, « Volume » the output level. A curve connected to the « Modulation volume » input takes the place of « Volume »; peak normalisation happens before it, on the whole sound, so that a curve sets what comes out of the normalisation and does not move it. The cycles are kept as harmonics and the table is rebuilt for the frequency asked, with no harmonic above half the sampling rate. « Frequency » therefore also decides how many ranks are kept: in the bass the table carries several hundred, in the treble a few. Reading between two points of the table is done by a curve passing through the four neighbouring points. The « Audio » output returns the sound. The message gives the number of slots, the reading frequency, and the detected frequency when the bank comes from a sound. A curve connected to the « Modulation position » input takes the place of « Position »: « Position min » and « Position max » then say what its zero and its one are worth. The sweep stays on top of it: the curve moves the centre around which « Sweep » walks the reading. A curve connected to the « Modulation frequency » input takes the place of « Frequency », with « Frequency min » and « Frequency max »; the travel is multiplicative, an octave being a doubling. The reading step follows it sample by sample, so the pitch glides. The number of ranks kept, on the other hand, is decided once, on the highest frequency the curve reaches: a table is bounded by an inverse transform, and redoing it at every sample for the whole bank is not feasible. The bass of a travelling curve therefore carries fewer harmonics than the same frequency set on its own, which is what keeps the treble free of folding. The frequency given in the message is the one at the start of the sound.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
 | input | Modulation volume | curve |  |
 | input | Modulation position | curve |  |
+| input | Modulation frequency | curve |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -1204,6 +1205,8 @@ Reads a bank of cycles and scans it. A bank is a series of waveforms arranged in
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. |
 | Position min | slider | 0 % | 0 – 100 %, step 1 | Value of « Position » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Position max | slider | 100 % | 0 – 100 %, step 1 | Value of « Position » that the curve's one means. |
+| Frequency min | slider | 110 Hz | 20 – 4000 Hz, step 1 | Value of « Frequency » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Frequency max | slider | 880 Hz | 20 – 4000 Hz, step 1 | Value of « Frequency » that the curve's one means. |
 
 #### Write a Counterpoint
 
@@ -3305,12 +3308,13 @@ Four-band distortion. An ordinary distortion crushes the whole spectrum together
 
 *Ring modulation (carrier multiplication).*
 
-Multiplies the signal by a sine wave (carrier), producing sidebands, the sum and difference frequencies between the signal and the carrier. At a given carrier frequency (e.g. 200 Hz), a 440 Hz note produces components at 240 and 640 Hz. Characteristic effect of telephone rings, metallic/robotic voices and alien textures. Settings: the carrier frequency (1-8000 Hz) and mix (100% = effect only).
+Multiplies the signal by a sine wave (carrier), producing sidebands, the sum and difference frequencies between the signal and the carrier. At a given carrier frequency (e.g. 200 Hz), a 440 Hz note produces components at 240 and 640 Hz. Characteristic effect of telephone rings, metallic/robotic voices and alien textures. Settings: the carrier frequency (1-8000 Hz) and mix (100% = effect only). A curve connected to the « Modulation frequency » input takes the place of « Frequency »: « Frequency min » and « Frequency max » say what its zero and its one are worth, and the travel is multiplicative, an octave being a doubling. The sidebands then move as the sound goes on. The carrier phase is integrated, so the pitch heard is the one asked for at each instant and not a value that drifts with duration.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation frequency | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3319,6 +3323,8 @@ Multiplies the signal by a sine wave (carrier), producing sidebands, the sum and
 | Mix | number | 100 % |  | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Frequency min | slider | 50 Hz | 1 – 8000 Hz, step 1 | Value of « Frequency » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Frequency max | slider | 2000 Hz | 1 – 8000 Hz, step 1 | Value of « Frequency » that the curve's one means. |
 
 #### Tape Machine
 
