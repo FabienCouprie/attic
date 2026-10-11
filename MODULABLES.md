@@ -22,20 +22,14 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **réglages déjà pilotés par une courbe** : 169, sur 70 composants
-- **réglages restant à faire** : 2, sur 1 composants et 2 couples composant / famille
-- **dont le cœur travaille par trames** : 1
-- **réglages écartés un par un** : 44, sur 21 composants qui gardent les leurs
+- **réglages restant à faire** : 0, sur 0 composants et 0 couples composant / famille
+- **dont le cœur travaille par trames** : 0
+- **réglages écartés un par un** : 49, sur 22 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
 ## Ce qui reste, par famille
 
-### dynamique · 1
-
-- Grain (Schaeffer) `grain-schaefferien` : Seuil d'harmonicité · **⟨trames⟩** grainSchaefferien (appelle suivreHauteur)
-
-### espace · 1
-
-- Grain (Schaeffer) `grain-schaefferien` : Seuil de profondeur · **⟨trames⟩** grainSchaefferien (appelle suivreHauteur)
+Rien.
 
 ## Familles écartées en bloc
 
@@ -139,6 +133,11 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `montage/Gain 14` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
 - `montage/Gain 15` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
 - `montage/Gain 16` : c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps
+- `grain-schaefferien/Seuil de profondeur` : c'est la frontière entre l'entretien par percussions répétées et les deux entretiens continus, et ce composant rend UN verdict sur le son entier : une courbe n'aurait rien à y commander, et un seuil mobile rendrait le classement indécidable
+- `grain-schaefferien/Seuil d'harmonicité` : c'est la frontière entre la résonance et le frottement, et ce composant rend UN verdict sur le son entier : une courbe n'aurait rien à y commander, et un seuil mobile rendrait le classement indécidable
+- `grain-schaefferien/Seuil de relief` : c'est la frontière à partir de laquelle un débit est annoncé plutôt que tenu pour absent, et ce composant rend UN verdict sur le son entier : une courbe n'aurait rien à y commander
+- `grain-schaefferien/Seuil de tenue` : c'est la frontière sous laquelle un entretien harmonique est une tenue lisse, donc sans grain, et ce composant rend UN verdict sur le son entier : une courbe n'aurait rien à y commander
+- `grain-schaefferien/Seuil de l'allure` : c'est la frontière entre le grain, critère de matière, et l'allure, critère de forme, et ce composant rend UN verdict sur le son entier : une courbe n'aurait rien à y commander
 
 ## Acceptent déjà une courbe
 

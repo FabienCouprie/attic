@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1342 files, 238110 lines, of which 162171 are code.**
-The table lists the 188 files of 200 code lines or more, heaviest first;
-the remaining 1154 account for 159251 lines.
+**1342 files, 238823 lines, of which 162438 are code.**
+The table lists the 189 files of 200 code lines or more, heaviest first;
+the remaining 1153 account for 159475 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -93,6 +93,7 @@ the remaining 1154 account for 159251 lines.
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
 | src/vues-domaine/vues-images.tsx | 301 | 435 |  |
+| src/audio/grain-schaefferien.test.ts | 300 | 465 |  |
 | src/plugins/sherpa-asr.ts | 300 | 433 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
 | src/plugins/syntheses-exotiques.ts | 299 | 406 |  |
@@ -165,6 +166,7 @@ the remaining 1154 account for 159251 lines.
 | src/plugins/julia-processor.ts | 227 | 282 |  |
 | src/plugins/spectral-cdp.ts | 227 | 334 |  |
 | src/plugins/effets-aides.ts | 226 | 533 |  |
+| src/docs/modulables.ts | 223 | 520 |  |
 | src/audio/concret.ts | 222 | 363 |  |
 | src/audio/granulation-ecologique.test.ts | 222 | 336 |  |
 | src/audio/commun.ts | 221 | 364 |  |
@@ -181,7 +183,6 @@ the remaining 1154 account for 159251 lines.
 | src/audio/assaisonnement.test.ts | 215 | 282 |  |
 | src/audio/rotatifs.test.ts | 214 | 274 |  |
 | src/audio/synthese-features.test.ts | 213 | 272 |  |
-| src/docs/modulables.ts | 213 | 496 |  |
 | src/vues-domaine/Spectre.tsx | 213 | 246 |  |
 | src/audio/csound-orchestre.ts | 212 | 355 |  |
 | src/audio/accords.ts | 210 | 343 |  |

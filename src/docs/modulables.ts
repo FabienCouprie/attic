@@ -308,6 +308,30 @@ export const ECARTES_REGLAGE: Record<string, string> = {
     `montage/Gain ${k + 1}`,
     "c'est le niveau d'UNE piste parmi seize, et le montage s'allonge d'une piste à la demande : il faudrait un port de courbe par piste, en nombre variable ; il porte en outre « Fondu entrée » et « Fondu sortie », qui sont sa façon de faire bouger ce niveau dans le temps",
   ])),
+
+  // LES CINQ FRONTIÈRES DU GRAIN DE SCHAEFFER, et la raison est une seule, de forme.
+  //
+  // CE COMPOSANT NE TRAITE PAS UN SON, IL LE RANGE. Il reçoit un son entier et rend UN verdict sur
+  // lui : une espèce, un débit, une profondeur. Il n'y a donc rien qu'une courbe puisse commander,
+  // puisqu'une courbe porte une valeur par échantillon et que la sortie n'en a qu'une en tout. Un
+  // seuil qui se déplacerait pendant le relevé ne déplacerait pas un son, il rendrait le verdict
+  // indécidable : on ne saurait plus par rapport à quoi le son a été rangé.
+  //
+  // ET CE N'EST PAS LA RAISON « PAR TRAMES » ORDINAIRE, qui vaut d'un cœur qui lit son réglage une
+  // fois par fenêtre et pourrait le relire. Ici le réglage n'est pas lu trop rarement : il est lu
+  // une fois parce qu'il n'y a qu'une décision. Le relevé en nomme deux d'entre eux ; les cinq sont
+  // écrits, parce qu'ils sont de même nature et que le cas des exemptions orphelines veille sur
+  // ceux que le recensement ne voit pas encore.
+  "grain-schaefferien/Seuil de profondeur":
+    "c'est la frontière entre l'entretien par percussions répétées et les deux entretiens continus, et ce composant rend UN verdict sur le son entier : une courbe n'aurait rien à y commander, et un seuil mobile rendrait le classement indécidable",
+  "grain-schaefferien/Seuil d'harmonicité":
+    "c'est la frontière entre la résonance et le frottement, et ce composant rend UN verdict sur le son entier : une courbe n'aurait rien à y commander, et un seuil mobile rendrait le classement indécidable",
+  "grain-schaefferien/Seuil de relief":
+    "c'est la frontière à partir de laquelle un débit est annoncé plutôt que tenu pour absent, et ce composant rend UN verdict sur le son entier : une courbe n'aurait rien à y commander",
+  "grain-schaefferien/Seuil de tenue":
+    "c'est la frontière sous laquelle un entretien harmonique est une tenue lisse, donc sans grain, et ce composant rend UN verdict sur le son entier : une courbe n'aurait rien à y commander",
+  "grain-schaefferien/Seuil de l'allure":
+    "c'est la frontière entre le grain, critère de matière, et l'allure, critère de forme, et ce composant rend UN verdict sur le son entier : une courbe n'aurait rien à y commander",
 };
 
 /** Les identifiants écartés, nommément ou par leur famille de palette. */
