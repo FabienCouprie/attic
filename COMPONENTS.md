@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **479 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **480 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 90 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (30) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 91 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (31) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 234 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 42 | [Analysis](#analysis-1) (18) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
@@ -469,6 +469,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Spiral of Fifths](#spiral-of-fifths) | Stacks just fifths and folds them into one octave: the path never returns to its starting point. |
 | [SSP (Koenig)](#ssp-koenig) | Composes the waveform the way one composes a piece: two lists of numbers, principles for drawing from them, and the sound is the line joining the resulting points. |
 | [Tritone Paradox](#tritone-paradox) | Two tones half an octave apart, whose direction of movement depends on who is listening. |
+| [VOSIM](#vosim) | Places a formant with a train of squared-sine pulses, with no filter at all. |
 | [Wavetable Oscillator](#wavetable-oscillator) | Reads a bank of cycles and scans it: the timbre travels, the pitch stays put. |
 | [Write a Counterpoint](#write-a-counterpoint) | Searches for a voice that makes a first-species counterpoint with the received cantus firmus. |
 
@@ -1174,6 +1175,40 @@ This node returns pairs of tones a tritone apart, that is half an octave. After 
 | Gap | slider | 0 s | 0 – 1 s, step 0.05 | The silence between the two tones of a pair. |
 | Pause | slider | 1.5 s | 0 – 4 s, step 0.1 | The silence between two pairs, for « All twelve ». It leaves time to note one's answer. |
 | Volume | slider | 70 % | 0 – 100 %, step 1 | Output level. |
+
+#### VOSIM
+
+`vosim` · Inputs → Generation
+
+*Places a formant with a train of squared-sine pulses, with no filter at all.*
+
+Generates a sound whose spectrum carries a formant, with a train of squared-sine pulses. After Werner Kaegi and Stan Tempelaars, « VOSIM, a new sound synthesis system », Journal of the Audio Engineering Society 26(6), 1978; the signal dates from 1973, at the Institute of Sonology in Utrecht. Its theoretical spectrum is treated by Stan Tempelaars, « The VOSIM Signal Spectrum », Interface 6, 1977. One period carries the requested number of pulses, each weaker than the one before it, then the silence that remains. There is no filter, no resonator and no feedback: the formant is the spectrum of the pulse itself, sampled by the train's comb. Outside the pulses, the output is exactly zero. « Fundamental » is the number of events per second, and that is the pitch heard: one event lasts its inverse. « Formant » is the inverse of one pulse's length, and that is the region of the spectrum where energy gathers. The two are set separately as long as the burst fits inside the event. « Pulses » is their number per event, and it is what gives the formant its width: the longer the burst, the narrower the peak. The burst takes the number of pulses divided by the formant, and must fit inside the event: the number is therefore bounded by the ratio of the formant to the fundamental, and what overruns is not written. The message says how many pulses were dropped for that reason. A formant lower than the fundamental lets none fit. « Decay » is the amplitude factor from one pulse to the next. At a hundred percent every pulse in the burst has the same amplitude; lower, the burst dies away within its own course, which widens the formant. « Pulse factor » is the playback rate factor from one pulse to the next. Above a hundred percent the pulses shorten along the burst and the formant rises inside the event itself; below, they lengthen and it falls. « Duration » is the rendered length, « Volume » the level of the first pulse of each burst. The burst never goes below zero, the squared sine being always positive: the train therefore carries a steady component, whose value the message gives. The « Modulation fundamental », « Modulation formant », « Modulation decay » and « Modulation volume » inputs take the place of their setting when a curve is connected, each with its two bounds; with no curve those bounds do nothing. The first two are traversed by multiplying, an octave being a doubling. Each value is read at the instant the event starts, one per event: the length of the event and that of its pulses are decided before it is written. The « Audio » output carries the sound. The message gives the number of events, the number of pulses written, the number dropped, the share of the render that is exactly zero and the steady component.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Modulation fundamental | curve |  |
+| input | Modulation formant | curve |  |
+| input | Modulation decay | curve |  |
+| input | Modulation volume | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Fundamental | slider | 110 Hz | 20 – 2000 Hz, step 1 | The number of events per second, and the pitch heard: one event lasts its inverse. |
+| Formant | slider | 1200 Hz | 50 – 8000 Hz, step 1 | The inverse of one pulse's length, and the region of the spectrum where energy gathers. It is set without moving the fundamental as long as the burst fits inside the event. |
+| Pulses | slider | 6 | 1 – 64, step 1 | Their number per event, and what gives the formant its width: the longer the burst, the narrower the peak. The number is bounded by the ratio of the formant to the fundamental, and what overruns is not written; the message says so. |
+| Decay | slider | 70 % | 0 – 100 %, step 1 | The amplitude factor from one pulse to the next. At a hundred they all have the same amplitude; lower, the burst dies away within its own course, which widens the formant. |
+| Pulse factor | slider | 100 % | 50 – 200 %, step 1 | The playback rate factor from one pulse to the next. Above a hundred the pulses shorten along the burst and the formant rises inside the event; below, they lengthen and it falls. |
+| Duration | slider | 2 s | 0.1 – 30 s, step 0.1 | The rendered length. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | The level of the first pulse of each burst. The others follow from it by the decay. |
+| Fundamental min | slider | 55 Hz | 20 – 2000 Hz, step 1 | Value of « Fundamental » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Fundamental max | slider | 880 Hz | 20 – 2000 Hz, step 1 | Value of « Fundamental » that the curve's one means. |
+| Formant min | slider | 300 Hz | 50 – 8000 Hz, step 1 | Value of « Formant » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Formant max | slider | 4000 Hz | 50 – 8000 Hz, step 1 | Value of « Formant » that the curve's one means. |
+| Decay min | slider | 0 % | 0 – 100 %, step 1 | Value of « Decay » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Decay max | slider | 100 % | 0 – 100 %, step 1 | Value of « Decay » that the curve's one means. |
+| Volume min | slider | 0 % | 0 – 100 %, step 1 | Value of « Volume » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Volume max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. |
 
 #### Wavetable Oscillator
 
