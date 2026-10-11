@@ -7,7 +7,7 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1319 files, 233355 lines, of which 159470 are code.**
+**1319 files, 233423 lines, of which 159494 are code.**
 The table lists the 186 files of 200 code lines or more, heaviest first;
 the remaining 1133 account for 155218 lines.
 
@@ -70,6 +70,7 @@ the remaining 1133 account for 155218 lines.
 | src/plugins/tone-synths.ts | 328 | 427 |  |
 | src/audio/modulation-effets.test.ts | 327 | 421 |  |
 | src/plugins/effets-spectral.test.ts | 327 | 431 |  |
+| src/plugins/modulation-cablage.test.ts | 327 | 528 |  |
 | src/audio/couleurs.ts | 326 | 357 |  |
 | src/plugins/generateurs.test.ts | 323 | 450 |  |
 | src/vues-domaine/EditeurCode.tsx | 320 | 426 |  |
@@ -90,7 +91,6 @@ the remaining 1133 account for 155218 lines.
 | src/plugins/couper-aux-mots.test.ts | 308 | 381 |  |
 | src/plugins/generateurs-echantillons.ts | 306 | 503 |  |
 | src/plugins/optionIds-retrocompat.test.ts | 304 | 419 |  |
-| src/plugins/modulation-cablage.test.ts | 303 | 460 |  |
 | src/vues-domaine/vues-images.tsx | 301 | 435 |  |
 | src/plugins/sherpa-asr.ts | 300 | 433 |  |
 | src/audio/io-profondeur.test.ts | 299 | 368 |  |
