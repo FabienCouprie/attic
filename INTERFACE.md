@@ -154,7 +154,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Barre modale | `barre-modale` | 240 × 118 |
 | Battements binauraux | `battements-binauraux` | 240 × 140 |
 | Beat Repeat / Stutter | `beat-repeat` | 240 × 162 |
-| Bitcrusher | `bitcrusher` | 240 × 140 |
+| Bitcrusher | `bitcrusher` | 240 × 162 |
 | Groove Box | `boite-groove` | 240 × 206 |
 | Boîte à rythmes | `boite-rythmes` | 240 × 140 |
 | Début de boucle collection | `boucle-collection-debut` | 240 × 118 |
@@ -305,7 +305,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Harmonie négative | `harmonie-negative` | 240 × 162 |
 | Harmonie spectrale | `harmonie-spectrale` | 240 × 162 |
 | Harmonizer / Octaver | `harmonizer` | 240 × 118 |
-| Haut-parleur rotatif | `haut-parleur-rotatif` | 240 × 184 |
+| Haut-parleur rotatif | `haut-parleur-rotatif` | 240 × 206 |
 | Illusion d'octave | `illusion-octave` | 240 × 140 |
 | Image → spectrogramme | `image-spectrogramme` | 240 × 118 |
 | Fin d'instrument | `instrument-fin` | 240 × 140 |
@@ -486,7 +486,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Transient Shaper | `transient-shaper` | 240 × 184 |
 | Transposeur/Quantiseur MIDI | `transposeur-quantiseur-midi` | 240 × 118 |
 | Tremolo | `tremolo` | 240 × 162 |
-| Trémolo harmonique | `tremolo-harmonique` | 240 × 162 |
+| Trémolo harmonique | `tremolo-harmonique` | 240 × 184 |
 | Tresse | `tresse` | 240 × 118 |
 | TTS Français | `tts-francais` | 240 × 118 |
 | Kokoro TTS | `tts-kokoro` | 240 × 118 |
@@ -504,7 +504,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Renversements et voicings | `voicings-accords` | 240 × 162 |
 | Vosk (reconnaissance vocale) | `vosk-asr` | 240 × 140 |
 | Voyelle chantée (FOF) | `voyelle-fof` | 240 × 118 |
-| Wah-wah | `wahwah` | 240 × 206 |
+| Wah-wah | `wahwah` | 240 × 228 |
 | Wavesets (Wishart) | `wavesets-wishart` | 240 × 118 |
 | Whisper (Anglais) | `whisper-en` | 240 × 118 |
 | ZCR (Meyda) | `zcr-meyda` | 240 × 140 |

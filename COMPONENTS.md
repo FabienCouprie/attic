@@ -3064,12 +3064,13 @@ Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals sync
 
 *Bit quantization + downsampling (lo-fi).*
 
-Simulates the low resolution of old D/A converters by reducing the bit depth (quantization) and sample rate (downsampling). At 8 bits, you get the 8-bit console sound; at 4 bits, the sound becomes very crunchy and aliased. Reducing the sample rate adds characteristic aliasing (spectral folding). Used for a retro, lo-fi or destructive effect. The mix controls the dry/wet balance.
+Simulates the low resolution of old D/A converters by reducing the bit depth (quantization) and sample rate (downsampling). At 8 bits, you get the 8-bit console sound; at 4 bits, the sound becomes very crunchy and aliased. Reducing the sample rate adds characteristic aliasing (spectral folding). Used for a retro, lo-fi or destructive effect. The mix controls the dry/wet balance. « Rate » sets the length of a hold: at twenty-two thousand hertz for a source at forty-four thousand, one sample in two is taken and the other repeated. A curve connected to the « Modulation rate » input takes its place, « Rate min » and « Rate max » saying what its zero and its one are worth; the travel is multiplicative, an octave being a doubling. The length asked for applies to the next hold, the holds already taken keeping theirs.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
+| input | Modulation rate | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3079,6 +3080,8 @@ Simulates the low resolution of old D/A converters by reducing the bit depth (qu
 | Mix | number | 100 % |  | Dry/wet balance. 100% = effect only. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Rate min | slider | 2000 Hz | 1000 – 44100 Hz, step 100 | Value of « Rate » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Rate max | slider | 22050 Hz | 1000 – 44100 Hz, step 100 | Value of « Rate » that the curve's one means. |
 
 #### Chopper
 
@@ -3460,7 +3463,7 @@ Transforms a voice with preset effects from a dropdown: Chipmunk (high/cartoon),
 
 *Modulated bandpass filter (wah pedal effect).*
 
-Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal effect. The center frequency oscillates between 200 Hz and 2500 Hz. Settings: • the rate (0.1 to 10 Hz) • depth (sweep range) • resonance (filter Q, high = pronounced wah) • mix. Ideal on electric guitars and keyboards. A curve connected to the « Modulation mix » input takes the place of « Mix »: « Mix min » and « Mix max » then say what its zero and its one are worth. A curve on the « Modulation depth » input likewise takes the place of « Depth », with its bounds « Depth min » and « Depth max »; it has no effect while a curve is connected to the « Modulation » input, which travels « Sweep from » to « Sweep to » itself.
+Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal effect. The center frequency oscillates between 200 Hz and 2500 Hz. Settings: • the rate (0.1 to 10 Hz) • depth (sweep range) • resonance (filter Q, high = pronounced wah) • mix. Ideal on electric guitars and keyboards. A curve connected to the « Modulation mix » input takes the place of « Mix »: « Mix min » and « Mix max » then say what its zero and its one are worth. A curve on the « Modulation depth » input likewise takes the place of « Depth », with its bounds « Depth min » and « Depth max »; it has no effect while a curve is connected to the « Modulation » input, which travels « Sweep from » to « Sweep to » itself. A curve on the « Modulation resonance » input takes the place of « Resonance », with « Resonance min » and « Resonance max »: the wah goes from gentle to pronounced while it sweeps, and it costs nothing, the filter coefficients being already rebuilt at every sample.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3469,6 +3472,7 @@ Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal
 | input | Rate modulation | curve |  |
 | input | Modulation mix | curve |  |
 | input | Modulation depth | curve |  |
+| input | Modulation resonance | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -3485,6 +3489,8 @@ Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal
 | Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 | Depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. |
+| Resonance min | slider | 1 Q | 0.5 – 20 Q, step 0.5 | Value of « Resonance » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Resonance max | slider | 15 Q | 0.5 – 20 Q, step 0.5 | Value of « Resonance » that the curve's one means. |
 
 ### Echo
 
@@ -6101,13 +6107,14 @@ This node delays one of the two channels by a few milliseconds. After Helmut Haa
 
 *Modulates lows and highs in opposition: the colour sways, the level barely moves.*
 
-Modulates lows and highs in opposition. The sound is first split into two bands by « Crossover », then the level of each band oscillates, the two oscillations running in opposite directions: when the lows are at their highest, the highs are at their lowest. The level of the sum therefore barely moves, and it is the balance of the spectrum that sways. « Rate » is the number of return trips per second between lows and highs. « Depth » is the level difference between the two bands at the peak of the oscillation: at zero, both bands keep their level and the sound comes out unchanged. « Crossover » is the frequency that separates the two bands; low, only the treble sways against the rest, high, it is the bass that stands out. « Mix » is the share of treated sound in the output, and at zero the input comes out sample for sample. The split is a fourth-order Linkwitz-Riley filter, that is two cascaded Butterworth sections on each side. Its property is that the sum of the two bands has a flat magnitude: at zero depth the sound passes through with no dip at the crossover frequency. The « Audio » output returns the treated sound, with as many channels as the input. The message recalls the rate and the crossover frequency. A curve connected to the « Modulation depth » input takes the place of « Depth »: « Depth min » and « Depth max » then say what its zero and its one are worth.
+Modulates lows and highs in opposition. The sound is first split into two bands by « Crossover », then the level of each band oscillates, the two oscillations running in opposite directions: when the lows are at their highest, the highs are at their lowest. The level of the sum therefore barely moves, and it is the balance of the spectrum that sways. « Rate » is the number of return trips per second between lows and highs. « Depth » is the level difference between the two bands at the peak of the oscillation: at zero, both bands keep their level and the sound comes out unchanged. « Crossover » is the frequency that separates the two bands; low, only the treble sways against the rest, high, it is the bass that stands out. « Mix » is the share of treated sound in the output, and at zero the input comes out sample for sample. The split is a fourth-order Linkwitz-Riley filter, that is two cascaded Butterworth sections on each side. Its property is that the sum of the two bands has a flat magnitude: at zero depth the sound passes through with no dip at the crossover frequency. The « Audio » output returns the treated sound, with as many channels as the input. The message recalls the rate and the crossover frequency. A curve connected to the « Modulation depth » input takes the place of « Depth »: « Depth min » and « Depth max » then say what its zero and its one are worth. A curve connected to the « Modulation crossover » input takes the place of « Crossover » in the same way, with « Crossover min » and « Crossover max »; the travel is multiplicative, an octave being a doubling, and the frequency reported in the message is the one at the start of the sound.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | input | Modulation | curve |  |
 | input | Modulation depth | curve |  |
+| input | Modulation crossover | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -6120,6 +6127,8 @@ Modulates lows and highs in opposition. The sound is first split into two bands 
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 | Depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. |
+| Crossover min | slider | 200 Hz | 100 – 4000 Hz, step 10 | Value of « Crossover » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Crossover max | slider | 3000 Hz | 100 – 4000 Hz, step 10 | Value of « Crossover » that the curve's one means. |
 
 #### Lucier Room
 
@@ -6209,7 +6218,7 @@ Synthesises sound grains with a single generator, set in seven species selected 
 
 *Spins lows and highs on two rotors: the path varies, and with it the pitch and the level.*
 
-Spins lows and highs on two rotors of different sizes and rates. The sound is split into two bands by « Crossover »: the highs go to the horn, the lows to the drum. Each rotor carries the source away and brings it back, which lengthens and shortens the path of the sound. The delay varies, and the pitch with it; the level varies too, the rotor facing the microphone and turning away from it in turn. « Horn rate » and « Drum rate » are the turns per second of each rotor. The horn has the wider radius and gives the larger pitch deviation. Turning the drum slower than the horn is what keeps the two bands from beating together. « Doppler depth » is the share of the path the rotors travel. The pitch deviation follows from it together with the rate, and is not set directly: at a hundred per cent and 6.7 turns per second it reaches a third of a semitone; at zero the pitch no longer moves and only the level variation remains. « Amplitude depth » is the level difference between the moment a rotor faces the microphone and the moment it turns away. « Width » is the angle between the two microphones around the axis: at a hundred per cent they are opposite and see the rotors pass half a turn apart, at zero they sit at the same place and the two channels coincide. « Mix » is the share of treated sound in the output, and at zero the input comes out sample for sample on both channels. The split is a fourth-order Linkwitz-Riley filter, whose two bands sum to a flat magnitude. The « Audio » output is always in stereo, even from a single-channel input: the rotation is what creates it, the two microphones not seeing the rotors pass at the same moment. The message recalls the horn rate and the pitch deviation that results from it. Both depths accept a curve, through « Modulation amplitude depth » and « Modulation doppler depth », each with its two bounds. The pitch deviation reported is then the one at the start of the sound.
+Spins lows and highs on two rotors of different sizes and rates. The sound is split into two bands by « Crossover »: the highs go to the horn, the lows to the drum. Each rotor carries the source away and brings it back, which lengthens and shortens the path of the sound. The delay varies, and the pitch with it; the level varies too, the rotor facing the microphone and turning away from it in turn. « Horn rate » and « Drum rate » are the turns per second of each rotor. The horn has the wider radius and gives the larger pitch deviation. Turning the drum slower than the horn is what keeps the two bands from beating together. « Doppler depth » is the share of the path the rotors travel. The pitch deviation follows from it together with the rate, and is not set directly: at a hundred per cent and 6.7 turns per second it reaches a third of a semitone; at zero the pitch no longer moves and only the level variation remains. « Amplitude depth » is the level difference between the moment a rotor faces the microphone and the moment it turns away. « Width » is the angle between the two microphones around the axis: at a hundred per cent they are opposite and see the rotors pass half a turn apart, at zero they sit at the same place and the two channels coincide. « Mix » is the share of treated sound in the output, and at zero the input comes out sample for sample on both channels. The split is a fourth-order Linkwitz-Riley filter, whose two bands sum to a flat magnitude. The « Audio » output is always in stereo, even from a single-channel input: the rotation is what creates it, the two microphones not seeing the rotors pass at the same moment. The message recalls the horn rate and the pitch deviation that results from it. Both depths and the crossover accept a curve, through « Modulation amplitude depth », « Modulation doppler depth » and « Modulation crossover », each with its two bounds. The pitch deviation reported is then the one at the start of the sound. The crossover travel is multiplicative, an octave being a doubling, and the share of the sound given to the wide rotor moves while it spins.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -6217,6 +6226,7 @@ Spins lows and highs on two rotors of different sizes and rates. The sound is sp
 | input | Modulation | curve |  |
 | input | Modulation amplitude depth | curve |  |
 | input | Modulation doppler depth | curve |  |
+| input | Modulation crossover | curve |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -6234,6 +6244,8 @@ Spins lows and highs on two rotors of different sizes and rates. The sound is sp
 | Amplitude depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Amplitude depth » that the curve's one means. |
 | Doppler depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Doppler depth » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Doppler depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Doppler depth » that the curve's one means. |
+| Crossover min | slider | 300 Hz | 200 – 2000 Hz, step 10 | Value of « Crossover » that a connected curve's zero means. With no curve, this setting does nothing. |
+| Crossover max | slider | 1600 Hz | 200 – 2000 Hz, step 10 | Value of « Crossover » that the curve's one means. |
 
 #### Sample Formula
 

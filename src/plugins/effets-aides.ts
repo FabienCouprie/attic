@@ -277,9 +277,19 @@ export function reglageModule(
      * zéro à cent secondes au lieu de la course du réglage.
      */
     bornes?: readonly [number, number];
+    /**
+     * La façon de parcourir la course : en ajoutant, ou en multipliant.
+     *
+     * `effet()` LE TRANSMETTAIT DÉJÀ, cette aide non, et c'est la même grandeur des deux côtés.
+     * Une fréquence se parcourt en multipliant, une octave étant un doublement : une course de
+     * mille à seize mille hertz parcourue en ajoutant passe les deux tiers de son temps au-dessus
+     * de six mille, là où l'oreille entend des intervalles. Les appels qui ne le donnent pas
+     * gardent la course additive qu'ils avaient.
+     */
+    echelle?: "lineaire" | "logarithmique";
   },
 ): number | Float32Array {
-  const { reglage, defaut = 100, rendu = "proportion", noms = BORNES_PAR_DEFAUT, bornes = [0, 100] } = o;
+  const { reglage, defaut = 100, rendu = "proportion", noms = BORNES_PAR_DEFAUT, bornes = [0, 100], echelle } = o;
   const facteur = rendu === "pourCent" ? 1 : 100;
   const fixe = ctx.paramNombre(reglage, defaut);
   const courbe = ctx.entree(rangPort);
@@ -287,6 +297,7 @@ export function reglageModule(
   const valeurs = valeursParametre(courbe, n, fixe, {
     min: ctx.paramNombre(noms[0], bornes[0]),
     max: ctx.paramNombre(noms[1], bornes[1]),
+    echelle,
   });
   if (facteur !== 1) for (let i = 0; i < valeurs.length; i++) valeurs[i] /= facteur;
   return valeurs;

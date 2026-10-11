@@ -244,10 +244,12 @@ const CAS: {
   // enregistré désigne par son nom.
   { id: "phaser", reglage: "Profondeur", entrees: () => [son(89, 2), undefined, undefined],
     noms: ["Profondeur min", "Profondeur max"] },
+  // CES DEUX RANGS SONT ÉCRITS POUR LA MÊME RAISON QUE CEUX DU MÉLANGE PLUS HAUT : un port de
+  // coupure ou de résonance est arrivé derrière chacun, et le rang par défaut est LE DERNIER.
   { id: "wahwah", reglage: "Profondeur", entrees: () => [son(97, 2), undefined, undefined, undefined],
-    noms: ["Profondeur min", "Profondeur max"] },
+    noms: ["Profondeur min", "Profondeur max"], rang: 4 },
   { id: "tremolo-harmonique", reglage: "Profondeur", entrees: () => [son(101, 2), undefined],
-    noms: ["Profondeur min", "Profondeur max"] },
+    noms: ["Profondeur min", "Profondeur max"], rang: 2 },
   { id: "reverbe-reseau", reglage: "Largeur", entrees: () => [son(103), undefined],
     noms: ["Largeur min", "Largeur max"], rang: 2 },
   { id: "oscillateur-table-onde", reglage: "Position", entrees: () => [undefined, undefined],
@@ -302,7 +304,7 @@ const CAS: {
   { id: "haut-parleur-rotatif", reglage: "Profondeur d'amplitude", entrees: () => [son(347, 2), undefined],
     noms: ["Profondeur d'amplitude min", "Profondeur d'amplitude max"], rang: 2 },
   { id: "haut-parleur-rotatif", reglage: "Profondeur du Doppler", entrees: () => [son(349, 2), undefined, undefined],
-    noms: ["Profondeur du Doppler min", "Profondeur du Doppler max"] },
+    noms: ["Profondeur du Doppler min", "Profondeur du Doppler max"], rang: 3 },
   { id: "ambisonique", reglage: "Ouverture", entrees: () => [son(353, 2), undefined],
     noms: ["Ouverture min", "Ouverture max"], regle: 60, leurre: 180 },
   { id: "spatialisation-stereo", reglage: "Largeur", entrees: () => [son(359, 2), undefined],
@@ -362,11 +364,23 @@ const CAS: {
   { id: "beat-repeat", reglage: "Feedback", entrees: () => [son(401, 2), undefined],
     noms: ["Feedback min", "Feedback max"], regle: 64, leurre: 16,
     reglages: { Tempo: 240, Intervalle: "1/8", Taille: "1/32" } },
+  // LA FAMILLE « FRÉQUENCE », ses coupures et ses résonances. Les unités sont des hertz et des
+  // facteurs de qualité : chaque cas choisit sa valeur et son leurre, en puissances de deux, que
+  // le flottant simple d'un tableau tient exactement.
+  { id: "bitcrusher", reglage: "Mix", entrees: () => [son(409, 2)], rang: 1 },
+  { id: "bitcrusher", reglage: "Fréquence", entrees: () => [son(419, 2), undefined],
+    noms: ["Fréquence min", "Fréquence max"], regle: 2048, leurre: 16384 },
+  { id: "tremolo-harmonique", reglage: "Coupure", entrees: () => [son(421, 2), undefined, undefined],
+    noms: ["Coupure min", "Coupure max"], regle: 512, leurre: 2048 },
+  { id: "haut-parleur-rotatif", reglage: "Coupure", entrees: () => [son(431, 2), undefined, undefined, undefined],
+    noms: ["Coupure min", "Coupure max"], regle: 512, leurre: 1024 },
+  { id: "wahwah", reglage: "Résonance", entrees: () => [son(433, 2), undefined, undefined, undefined, undefined],
+    noms: ["Résonance min", "Résonance max"], regle: 2, leurre: 16 },
 ];
 
 describe("le rang déclaré d'un port est celui que l'exécuteur lit", () => {
-  it("il y a bien soixante-seize ports à éprouver", () => {
-    expect(CAS).toHaveLength(76);
+  it("il y a bien quatre-vingt-un ports à éprouver", () => {
+    expect(CAS).toHaveLength(81);
   });
 
   for (const cas of CAS) {

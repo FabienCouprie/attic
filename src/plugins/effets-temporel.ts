@@ -29,6 +29,7 @@ export const fiches: FicheAudio[] = ([
       // au lieu de doser le mélange, et deux ports du même nom ne se distinguent pas à l'écran.
       portModulation("Mix", "Mix", { court: false }),
       portModulation("Profondeur", "Depth", { court: false }),
+      portModulation("Résonance", "Resonance", { court: false }),
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
@@ -55,6 +56,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
       ...bornesModulation(MODULATION_MIX_NOMMEE),
       ...bornesModulation(modulationNommee("Profondeur", "Depth", [0, 100], "%")),
+      ...bornesModulation({
+        ...modulationNommee("Résonance", "Resonance", [0.5, 20], "Q"), defauts: [1, 15], pas: 0.5,
+      }),
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -63,7 +67,10 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [wahwah(
         a, ctx.paramNombre("Fréquence", 2),
         reglageModule(ctx, a.length, 4, { reglage: "Profondeur", defaut: 100, rendu: "pourCent", noms: ["Profondeur min", "Profondeur max"] }),
-        ctx.paramNombre("Résonance", 5),
+        reglageModule(ctx, a.length, 5, {
+          reglage: "Résonance", defaut: 5, rendu: "pourCent",
+          noms: ["Résonance min", "Résonance max"], bornes: [1, 15],
+        }),
         reglageModule(ctx, a.length, 3, { reglage: "Mix", defaut: 100, rendu: "pourCent", noms: ["Mix min", "Mix max"] }),
         ctx.entree(1),
         { min: ctx.paramNombre("Balayage de", 200), max: ctx.paramNombre("Balayage à", 2500) },
