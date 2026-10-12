@@ -4,6 +4,16 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [5.0.2] — 2026-10-12
+
+**QUATRE DES SEPT CRITÈRES MORPHOLOGIQUES DU *TRAITÉ* SONT FAITS, ET LE CHANTIER DE L'AUTOMATION EST CLOS.** Le catalogue passe de **477 à 484 composants**. Les critères de Schaeffer entrent par quatre nœuds et par le découpage lui-même : le **grain** en trois espèces, puis la **masse**, la **dynamique** et l'**allure**, enfin branchées dans « Découpage en objets » et « Réordonner les objets ». Restent le timbre harmonique, le profil mélodique et le profil de masse.
+
+**ET LE RECENSEMENT DE L'AUTOMATION PASSE DE QUARANTE-NEUF COUPLES RESTANT À FAIRE À ZÉRO**, les réglages pilotés par une courbe allant de 49 à **169** sur 70 composants. Tout ce qui reste est écarté nommément, avec sa raison écrite.
+
+**QUATRE PISTES GRANULAIRES DE LA LITTÉRATURE** : VOSIM, le retard granulaire, la granulation écologique de Keller et Truax, et le grain de Schaeffer. **DEUX NŒUDS DE CALCUL** : le Bytebeat de Viznut, avec un analyseur écrit à la main à la précédence du C, et une table de sept suites d'entiers, chacune avec son invariant publié. **ET LE CHANTIER DU HASARD PRIVÉ EST FINI** : neuf copies du générateur restaient dans l'arbre, toutes passent désormais par `creerAleatoire`.
+
+**CINQ DÉFAUTS DU GRAIN, TROUVÉS TROIS JOURS APRÈS SA LIVRAISON, dont un qui touchait tout un registre musical** : de 110 à 180 Hz, une note tenue recevait un grain fabriqué, dont le débit était le repliement de sa propre fondamentale. Et **le découpage en objets inventait des frontières dans un son qui ne change pas** : onze objets sur une tenue de deux secondes, défaut livré en septembre. Les deux sont corrigés et tenus par des cas.
+
 ### Fixed
 - **« Jointure MIDI » PORTAIT LE MÊME PLAFOND DE TRENTE SECONDES, et il va désormais à six cents lui aussi.** Décision de Fabien après le relevé de la jointure audio. Même situation : le cœur `joindreMidi` ramenait déjà le chevauchement à la longueur du premier fichier, et aucun cas ne le prouvait.
 - **MAIS LES DEUX BORNES DIFFÈRENT POUR UNE RAISON, et uniformiser les deux nœuds aurait été une faute.** Une jointure **audio** fond les deux pistes l'une dans l'autre : recouvrir plus que la plus courte n'a pas de sens, le fondu porterait sur un son qui s'est terminé, d'où `min(durée 1, durée 2)`. Une jointure **MIDI** ne fond rien, elle **déplace** des notes : seul le second fichier bouge et il ne peut pas reculer avant le début, d'où `min(longueur du premier)`. Un second fichier plus court que le chevauchement sonne simplement tout entier pendant le premier, ce qui est un résultat légitime. Un cas écrit cette différence, pour que personne ne « corrige » l'une en l'autre.

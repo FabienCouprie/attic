@@ -1,7 +1,7 @@
 {
   "name": "attic",
   "private": true,
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "Visual node-editor for AI-powered music and sound design — 484 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
