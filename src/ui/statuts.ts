@@ -29,6 +29,15 @@ export interface EtatNoeud {
   progression?: string;
   /** Vrai quand `progression` vient du nœud lui-même, et non du moteur. */
   progressionDuNoeud: boolean;
+  /**
+   * Où en est la construction du lecteur, de 0 à 1, ou `undefined` quand il n'y en a aucune en
+   * cours.
+   *
+   * ELLE SUIT LE CALCUL AU LIEU DE L'ACCOMPAGNER, et c'est pourquoi ce n'est pas `progression`. Le
+   * résultat est déjà posé quand elle paraît : le nœud est terminé, son tampon est là, et il
+   * s'écoute déjà par le bouton pendant que son lecteur s'écrit.
+   */
+  apercu?: number;
 }
 
 /** L'état d'un nœud dont personne n'a encore rien dit. Une seule instance, partagée. */
@@ -69,12 +78,32 @@ export function surStatut(id: string, rappel: () => void): () => void {
  *
  * Rien n'est notifié si rien ne change : un moteur qui repose le même statut — ce qu'il fait à
  * chaque message de progression identique — ne doit pas provoquer de rendu.
+ *
+ * UN STATUT NEUF EFFACE LA MENTION DU LECTEUR, et c'est voulu : changer de statut veut dire qu'un
+ * autre calcul commence sur ce nœud, et le lecteur qui s'écrivait porte sur le résultat d'avant.
  */
 export function poserStatut(id: string, statut: string, progression?: string, progressionDuNoeud = false): void {
   const avant = statutDe(id);
   if (avant.statut === statut && avant.progression === progression
       && avant.progressionDuNoeud === progressionDuNoeud) return;
   etats.set(id, Object.freeze({ statut, progression, progressionDuNoeud }));
+  prevenir(id);
+}
+
+/**
+ * Poser où en est le lecteur d'un nœud, sans toucher à son statut.
+ *
+ * `undefined` retire la mention. LA FRACTION EST ARRONDIE AU CENTIÈME ICI, et non chez l'appelant :
+ * l'écriture d'un WAV appelle ceci à chaque tranche, soit trois mille six cents fois pour une heure
+ * de son, et sans cet arrondi le nœud se redessinerait autant de fois pour un chiffre identique.
+ */
+export function poserApercu(id: string, fraction: number | undefined): void {
+  const arrondie = fraction === undefined
+    ? undefined
+    : Math.round(Math.min(1, Math.max(0, fraction)) * 100) / 100;
+  const avant = statutDe(id);
+  if (avant.apercu === arrondie) return;
+  etats.set(id, Object.freeze({ ...avant, apercu: arrondie }));
   prevenir(id);
 }
 

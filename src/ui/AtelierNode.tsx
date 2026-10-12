@@ -696,6 +696,16 @@ export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
             court : une phrase entière dans un nœud de deux cent soixante pixels le déformerait. */}
         <span className="attic-node-statut-label"
           title={etatExec.statut === "erreur" ? etatExec.progression : undefined}>{statutLabel}</span>
+        {/* LE LECTEUR QUI SE FABRIQUE, DIT À CÔTÉ DU STATUT ET NON À SA PLACE. Le nœud est terminé,
+            son résultat est posé et il s'écoute déjà par le bouton ; ce qui reste à faire est
+            l'encodage du lecteur, qui dure quarante-six secondes pour une heure de son. Sans cette
+            mention l'attente était muette, et c'est ce silence qui faisait croire à un lecteur
+            perdu. */}
+        {etatExec.apercu !== undefined && (
+          <span className="attic-node-apercu" title={t("execution.lecteurEnCours")}>
+            {t("execution.lecteur")} {Math.round(etatExec.apercu * 100)} %
+          </span>
+        )}
         {typeof data.tempsExecution === "number" && (
           <span className="attic-node-temps" title={t("execution.temps")}>
             {data.tempsExecution < 1000 ? `${Math.round(data.tempsExecution)} ms` : `${(data.tempsExecution / 1000).toFixed(2)} s`}

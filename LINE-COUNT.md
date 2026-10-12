@@ -7,21 +7,21 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1346 files, 241170 lines, of which 163737 are code.**
+**1346 files, 241362 lines, of which 163851 are code.**
 The table lists the 193 files of 200 code lines or more, heaviest first;
-the remaining 1153 account for 159407 lines.
+the remaining 1153 account for 159527 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
-| src/ui/atelier.css | 1408 | 1782 | ! |
+| src/ui/atelier.css | 1412 | 1790 | ! |
 | src/ui/App.tsx | 1219 | 1643 | ! |
-| src/ui/hooks/useExecutionGraphe.ts | 727 | 1533 | ! |
+| src/ui/hooks/useExecutionGraphe.ts | 749 | 1578 | ! |
 | src/ui/Inspector.tsx | 615 | 789 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
 | src/docs/documentation-graphe.ts | 572 | 732 | ! |
-| src/ui/AtelierNode.tsx | 523 | 718 | ! |
+| src/ui/AtelierNode.tsx | 533 | 728 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
 | src/plugins/index.ts | 505 | 517 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
@@ -127,11 +127,11 @@ the remaining 1153 account for 159407 lines.
 | src/audio/multicanal.test.ts | 273 | 333 |  |
 | src/audio/motifs-midi.test.ts | 270 | 339 |  |
 | src/docs/documentation-graphe.test.ts | 270 | 352 |  |
+| src/audio/io.ts | 267 | 406 |  |
 | src/plugins/effets-cresson.ts | 267 | 359 |  |
 | src/audio/demonstration-video.ts | 266 | 313 |  |
 | src/plugins/python-processor.ts | 266 | 346 |  |
 | src/ui/dictee/commandes-dictee.test.ts | 265 | 350 |  |
-| src/audio/io.ts | 264 | 397 |  |
 | src/plugins/vexflow-notation.ts | 264 | 333 |  |
 | src/plugins/analyse.test.ts | 256 | 324 |  |
 | src/audio/harmonie-spectrale.test.ts | 255 | 344 |  |
