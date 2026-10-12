@@ -45,6 +45,16 @@ jobs:
       - name: Install NSIS
         run: |
           choco install nsis -y --no-progress
+          # ET L'INSTALLATION EST VÉRIFIÉE, PARCE QUE `choco install` SORT EN ZÉRO QUAND IL
+          # N'INSTALLE RIEN. Le 2026-10-12, le dépôt Chocolatey a rendu un 504 Gateway Timeout :
+          # le journal disait « Unable to find package 'nsis' » puis « Chocolatey installed 0/0
+          # packages », et l'étape s'est déclarée RÉUSSIE. L'échec n'est apparu que trois minutes
+          # plus tard, à l'étape Test, sous un message qui réclamait d'ajouter une étape DÉJÀ
+          # PRÉSENTE dans ce fichier. Une étape qui ne fait rien doit échouer là où elle est.
+          $makensis = 'C:\Program Files (x86)\NSIS\makensis.exe'
+          if (-not (Test-Path $makensis)) {
+            throw "NSIS n'est pas installé : $makensis est absent. Le paquet a-t-il pu être récupéré ?"
+          }
           # ET LE DOSSIER EST AJOUTÉ AU PATH À LA MAIN, parce que choco ne suffit pas ici :
           # il met à jour le PATH DE LA MACHINE, et le job tourne avec celui qu'il a capturé à son
           # démarrage. Sans cette ligne, l'installation réussit, `makensis` reste introuvable à

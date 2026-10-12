@@ -18,7 +18,7 @@
 // garde serait une intention de plus.
 import { describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -103,6 +103,35 @@ describe("le script de l'installeur", () => {
     // L'ANGLE MORT D'UN CAS QUI S'IGNORE : il ne distingue pas « pas de NSIS sur ce poste », qui
     // est normal, de « l'étape qui installe NSIS a disparu du workflow », qui vide le garde sans
     // qu'aucune suite ne rougisse. Ici, sur la machine d'intégration, son absence est une faute.
-    expect(MAKENSIS, "ajoutez l'étape « Install NSIS » à .github/workflows/ci.yml").toBeTruthy();
+    //
+    // ET LE MESSAGE NOMME LES DEUX CAUSES, parce qu'il n'en nommait qu'une et que c'était la
+    // mauvaise le jour où il a parlé. Le 2026-10-12 il a réclamé d'ajouter une étape DÉJÀ
+    // PRÉSENTE : le dépôt Chocolatey avait rendu un 504, `choco install` était sorti en zéro en
+    // n'installant rien, et l'étape s'était déclarée réussie.
+    expect(MAKENSIS, [
+      "makensis est introuvable sur la machine d'intégration, et il y a deux causes possibles :",
+      "  · l'étape « Install NSIS » a disparu de .github/workflows/ci.yml ;",
+      "  · elle y est, mais elle n'a rien installé — `choco install` sort en zéro quand le dépôt",
+      "    est injoignable. L'étape vérifie désormais le binaire ; si ce message apparaît malgré",
+      "    tout, c'est que cette vérification a été retirée.",
+    ].join("\n")).toBeTruthy();
+  });
+
+  it("ET L'ÉTAPE QUI L'INSTALLE VÉRIFIE SON BINAIRE, sans quoi elle réussit sans rien faire", () => {
+    // CE CAS GARDE LA FORME DE L'ÉTAPE, et non son effet : il tourne partout, y compris sur un
+    // poste sans NSIS, là où les deux cas ci-dessus s'en remettent à la machine d'intégration.
+    //
+    // `choco install` SORT EN ZÉRO QUAND IL N'INSTALLE RIEN, ce qui rend l'étape silencieuse sur
+    // sa propre panne : relevé le 2026-10-12, le dépôt a rendu un 504 Gateway Timeout, le journal
+    // a dit « Chocolatey installed 0/0 packages », et l'étape a réussi. L'échec n'est apparu que
+    // trois minutes plus tard, ailleurs, et sous un message qui désignait la mauvaise cause.
+    const ci = readFileSync(join(RACINE, ".github", "workflows", "ci.yml"), "utf8");
+    const etape = ci.slice(ci.indexOf("- name: Install NSIS"));
+    const corps = etape.slice(0, etape.indexOf("- name: Test"));
+    expect(corps, "l'étape « Install NSIS » est introuvable dans ci.yml").toContain("choco install nsis");
+    expect(corps, "l'étape doit vérifier que makensis.exe existe après l'installation")
+      .toMatch(/Test-Path/);
+    expect(corps, "et lever quand il est absent, sans quoi la vérification ne sert à rien")
+      .toMatch(/throw/);
   });
 });
