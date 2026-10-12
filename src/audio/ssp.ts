@@ -17,12 +17,20 @@
 // la même activité, menée sur des nombres différents. C'est pourquoi le même choix de principes est
 // offert ici pour les amplitudes, pour les durées, et pour l'ordre des sections.
 //
+// CE MODULE N'IMPORTAIT RIEN, ET IL IMPORTE MAINTENANT UNE SEULE FONCTION. `periodeDesNotes` est une
+// recherche de période sur une suite d'entiers, écrite pour le nœud des suites d'entières et sans
+// aucun rapport avec lui : la recopier ici aurait été la dixième copie d'une arithmétique, ce que le
+// chantier du hasard privé a appris à ne pas faire. Elle mériterait un foyer neutre, et le déplacer
+// touche deux nœuds qui n'ont rien demandé ; c'est signalé plutôt que glissé ici.
+//
 // L'AVERTISSEMENT QUI DOIT ACCOMPAGNER CE NŒUD. SSP a la réputation d'être impossible à diriger :
 // l'écrasante majorité des réglages rend du bruit, et Koenig lui-même a constaté que le programme
 // résistait à l'intention musicale. Un nœud qui rendrait du bruit quoi qu'on fasse serait un
 // générateur de bruit affublé d'une bibliographie. Les tests mesurent donc ce que les réglages
 // commandent VRAIMENT — et ils commandent deux choses, l'échelle de temps et la répartition des
 // amplitudes —, faute de quoi il n'y aurait pas lieu de publier ce nœud.
+
+import { periodeDesNotes } from "./suites-entieres";
 
 /** Les principes de sélection de Koenig, ceux de Projet 1 et 2 portés à l'échelle de l'onde. */
 export const PRINCIPES = [
@@ -222,6 +230,8 @@ export interface Composition {
   pointsPoses: number;
   /** Durée moyenne entre deux points, en échantillons. */
   dureeMoyenne: number;
+  /** Si la première section porte une onde périodique, et à quelle fréquence. */
+  tenue: Tenue;
 }
 
 /**
@@ -262,6 +272,66 @@ export function composer(o: OptionsComposition): Composition {
     points: segments[0].points,
     pointsPoses: tousLesPoints.length,
     dureeMoyenne: tousLesPoints.length > 0 ? sommeDurees / tousLesPoints.length : 0,
+    tenue: tenueDesPoints(segments[0].points, o.frequence),
+  };
+}
+
+export interface Tenue {
+  /** Au bout de combien de points la suite se répète, ou 0 si elle ne se répète pas. */
+  points: number;
+  /** La période de l'onde, en échantillons, ou 0. */
+  echantillons: number;
+  /** La fréquence de l'onde, en hertz, ou `null` quand l'onde n'est pas périodique. */
+  hertz: number | null;
+}
+
+/**
+ * Le son est-il TENU ou BRUITÉ, et à quelle fréquence.
+ *
+ * RELEVÉ PAR FABIEN : « il sort quelque chose qui s'apparente à du bruit blanc quel que soit le
+ * paramétrage ». La mesure a montré que ce n'était pas le cas, et surtout que la cause n'était pas
+ * celle qu'on croirait.
+ *
+ * CE N'EST PAS LA TAILLE DE L'ENSEMBLE DES DURÉES, et c'est la première hypothèse que la mesure a
+ * réfutée : à principes égaux, une onde sort de cinq ensembles de durées, des plus serrés aux plus
+ * étalés, avec une part voisée de 0,980 à 0,987.
+ *
+ * C'EST UNE CONJONCTION, ET DEUX RÉGLAGES Y ENTRENT. « Séquence » aux amplitudes est NÉCESSAIRE :
+ * sans lui l'ordre des amplitudes est rebattu à chaque passage et rien ne se répète. Il n'est
+ * SUFFISANT que si les durées ne sont pas rebattues non plus, c'est-à-dire si « Séquence » est mis
+ * aux durées aussi, ou s'il n'y a qu'une seule durée écrite, auquel cas il n'y a rien à rebattre.
+ * Sur les vingt-cinq couples de principes et les durées par défaut, UN SEUL tient ; avec une durée
+ * unique, cinq tiennent. J'avais d'abord écrit que le principe des amplitudes décidait seul, parce
+ * que tous mes cas bougeaient les deux principes ensemble ; c'est l'application qui l'a démenti, et
+ * le cas du coin mixte est maintenant permanent.
+ *
+ * ET LES DEUX DÉFAUTS DU NŒUD SONT « ALÉA », de sorte qu'à l'ouverture il ne peut pas être tenu :
+ * c'est ce qui a fait croire à un bruit quoi qu'on touche, alors que la notice envoyait vers les
+ * durées, qui commandent le REGISTRE et non la périodicité.
+ *
+ * LA PÉRIODE SE CALCULE SUR LA SUITE DES POINTS, ET NON SUR LE SON. C'est exact, gratuit, et sans
+ * plancher de fréquence : un suiveur de hauteur aurait rendu « bruité » pour une onde dont la
+ * période descend sous son plancher. La prédiction tombe d'ailleurs sur la mesure : six amplitudes
+ * en séquence sur une durée de 50 donnent 300 échantillons, soit 147,0 Hz, et le suiveur en relève
+ * 147,0 ; sur les durées par défaut, 774 échantillons, soit 57,0 Hz, et il en relève 57,0.
+ *
+ * ELLE PORTE SUR LA PREMIÈRE SECTION, celle dont le rapport donne déjà les points : c'est la
+ * périodicité LOCALE qui s'entend comme une hauteur, l'ordre des sections agissant à l'échelle de la
+ * forme.
+ */
+export function tenueDesPoints(points: readonly Point[], frequence: number): Tenue {
+  // Le couple amplitude-durée de chaque point, encodé en un seul nombre pour chercher la période de
+  // la SUITE : deux points ne se répètent que si leurs deux composantes se répètent ensemble.
+  const amplitudes = [...new Set(points.map((p) => p.amplitude))];
+  const couples = points.map((p) => amplitudes.indexOf(p.amplitude) * 1e6 + p.duree);
+  const periode = periodeDesNotes(couples);
+  if (periode === 0) return { points: 0, echantillons: 0, hertz: null };
+  let echantillons = 0;
+  for (let i = 0; i < periode; i++) echantillons += points[i].duree;
+  return {
+    points: periode,
+    echantillons,
+    hertz: echantillons > 0 ? frequence / echantillons : null,
   };
 }
 

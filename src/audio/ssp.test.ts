@@ -23,8 +23,36 @@ import {
   construireSegment, creteDb, lireEnsemble, longueurMoyenneDesPlages, masqueTendance,
   nomPrincipe, selectionner, type OptionsComposition, type Principe,
 } from "./ssp";
+import { fft } from "./fft";
+import { hauteurMediane, partVoisee, suivreHauteur } from "./hauteur";
+import { creerAleatoire } from "../core/hasard";
 
 const SR = 44100;
+
+/**
+ * Deux mesures sur le spectre : la PLATITUDE, moyenne géométrique sur arithmétique, ~0 pour une
+ * raie et ~1 pour du bruit blanc ; et le RAPPORT DU SOMMET À LA MOYENNE des rangs.
+ */
+function spectre(x: Float32Array): { platitude: number; sommetSurMoyenne: number } {
+  const N = 4096;
+  const de = Math.max(0, Math.floor((x.length - N) / 2));
+  const re = new Float64Array(N), im = new Float64Array(N);
+  for (let k = 0; k < N; k++) {
+    re[k] = (x[de + k] ?? 0) * (0.5 - 0.5 * Math.cos((2 * Math.PI * k) / N));
+  }
+  fft(re, im, false);
+  let somme = 0, logs = 0, n = 0, sommet = 0;
+  for (let k = 1; k < N / 2; k++) {
+    const m = Math.hypot(re[k], im[k]);
+    somme += m; logs += Math.log(m + 1e-12); n++;
+    if (m > sommet) sommet = m;
+  }
+  const moyenne = somme / n;
+  return {
+    platitude: moyenne > 0 ? Math.exp(logs / n) / moyenne : 0,
+    sommetSurMoyenne: moyenne > 0 ? sommet / moyenne : 0,
+  };
+}
 
 const BASE: OptionsComposition = {
   frequence: SR, duree: 2, sections: 4,
@@ -268,5 +296,144 @@ describe("les bornes", () => {
     );
     // Une durée de zéro est ramenée à un échantillon : cent points au plus, et non l'infini.
     expect(points.length).toBeLessThanOrEqual(120);
+  });
+});
+
+describe("tenu ou bruité, et ce qui en décide", () => {
+  // RELEVÉ PAR FABIEN : « il sort quelque chose qui s'apparente à du bruit blanc quel que soit le
+  // paramétrage ». Les cas de ce bloc sont la mesure qui lui a répondu, devenue permanente.
+
+  it("RIEN DE CE QUE CE NŒUD PRODUIT N'APPROCHE DU BRUIT BLANC, et c'est vrai des cinq principes", () => {
+    // LE CAS BALAIE LES CINQ PRINCIPES ET RETIENT LE PIRE, parce que le relevé porte sur « quel que
+    // soit le paramétrage » : un cas qui n'en éprouve qu'un seul ne répond pas à cela. Mon premier
+    // jet ne mesurait qu'« Aléa », à 0,1754 de platitude, et « Tendance », à 0,2794, aurait franchi
+    // le seuil de 0,25 qu'il annonçait.
+    //
+    // DEUX INSTRUMENTS, ET LE SECOND EST LE BON. La platitude sépare bien les cinq du bruit blanc,
+    // mais d'un facteur trois seulement dans le pire cas, et elle les classe À L'ENVERS : c'est un
+    // rapport de la moyenne géométrique à l'arithmétique, que le nombre de rangs presque vides
+    // commande plus que la présence d'un sommet, si bien que « Tendance » y paraît le plus bruité
+    // des cinq quand il l'est le moins. J'ai d'abord cru son spectre quasi continu, donc la mesure
+    // sans objet ; c'est faux, son efficace alternatif vaut 0,426. Le rapport du SOMMET à la
+    // moyenne des rangs, lui, dit ce qu'on cherche : du bruit blanc n'a aucun rang qui domine, et
+    // les cinq en ont un. Relevé, 3,1 pour le bruit blanc contre 36,9 pour le plus plat des cinq et
+    // 176,7 pour « Tendance ».
+    //
+    // ET LE BRUIT BLANC EST TIRÉ AVEC `creerAleatoire`, non avec un générateur écrit sur place : un
+    // congruentiel de fortune pose de vraies raies à 4000 et 8000 Hz par ses bits de poids faible,
+    // ce qui a déjà faussé un relevé de ce dépôt.
+    const hasard = creerAleatoire(12345);
+    const blanc = spectre(Float32Array.from({ length: 2 * SR }, () => hasard() * 2 - 1));
+    const releve = PRINCIPES.map((p) => ({
+      nom: p.fr,
+      ...spectre(composer({ ...BASE, principeAmplitudes: p.id, principeTemps: p.id }).son),
+    }));
+    const dit = `bruit blanc ${blanc.platitude.toFixed(4)} / ${blanc.sommetSurMoyenne.toFixed(1)} ; `
+      + releve.map((r) => `${r.nom} ${r.platitude.toFixed(4)} / ${r.sommetSurMoyenne.toFixed(1)}`).join(" ; ");
+    const pirePlatitude = Math.max(...releve.map((r) => r.platitude));
+    const pireSommet = Math.min(...releve.map((r) => r.sommetSurMoyenne));
+    expect(pirePlatitude, dit).toBeLessThan(0.45);
+    expect(blanc.platitude / pirePlatitude, dit).toBeGreaterThan(2);
+    expect(pireSommet / blanc.sommetSurMoyenne, dit).toBeGreaterThan(4);
+  });
+
+  it("LE TÉMOIN : « Séquence » SUR LES AMPLITUDES REND UNE ONDE, et la fréquence se prédit", () => {
+    // Six amplitudes parcourues dans l'ordre sur une durée fixe : l'onde se répète tous les six
+    // points, donc toutes les six fois cette durée.
+    for (const t of [25, 50, 100, 200]) {
+      const c = composer({
+        ...BASE, temps: [t], sections: 1,
+        principeAmplitudes: "sequence", principeTemps: "sequence", principeForme: "sequence",
+      });
+      const attendu = SR / (6 * t);
+      const dit = `durée ${t} : ${c.tenue.points} points, ${c.tenue.echantillons} éch.,`
+        + ` ${c.tenue.hertz?.toFixed(2)} Hz, attendu ${attendu.toFixed(2)}`;
+      expect(c.tenue.points, dit).toBe(6);
+      expect(c.tenue.echantillons, dit).toBe(6 * t);
+      expect(c.tenue.hertz, dit).toBeCloseTo(attendu, 2);
+    }
+  });
+
+  it("LE TÉMOIN NÉGATIF : LES QUATRE AUTRES PRINCIPES NE RENDENT AUCUNE ONDE", () => {
+    // SUR UNE DURÉE UNIQUE, de sorte que les durées ne puissent rien y être pour rien : l'écart
+    // entre deux points est alors fixe, et c'est bien le seul ordre des amplitudes qui manque.
+    for (const p of ["alea", "serie", "groupe", "tendance"] as Principe[]) {
+      const c = composer({
+        ...BASE, temps: [50], sections: 1,
+        principeAmplitudes: p, principeTemps: p, principeForme: "sequence",
+      });
+      expect(c.tenue.hertz, `${p} sur une durée unique : ${c.tenue.hertz} Hz`).toBeNull();
+    }
+  });
+
+  it("MAIS « SÉQUENCE » AUX AMPLITUDES NE SUFFIT PAS : LES DURÉES SONT LA SECONDE CONDITION", () => {
+    // LE CAS QUI MANQUAIT, ET QUI A CORRIGÉ UNE RÈGLE FAUSSE. Les cas voisins bougent les deux
+    // principes ENSEMBLE, si bien qu'aucun n'éprouvait le coin mixte, et j'en avais conclu que le
+    // principe des amplitudes décidait seul. L'application a rendu « bruitée » là où je l'annonçais
+    // tenue. Avec un autre principe aux durées, l'écart entre deux points est rebattu à chaque
+    // passage et la suite des couples ne se répète plus, quoi que fassent les amplitudes.
+    for (const p of ["alea", "serie", "groupe", "tendance"] as Principe[]) {
+      const plusieurs = composer({
+        ...BASE, sections: 1,
+        principeAmplitudes: "sequence", principeTemps: p, principeForme: "sequence",
+      });
+      const dit = `séquence aux amplitudes, ${p} aux durées : ${plusieurs.tenue.hertz} Hz`;
+      expect(plusieurs.tenue.hertz, dit).toBeNull();
+      // LA SEULE ÉCHAPPATOIRE : une durée unique, où il n'y a rien à rebattre. Les six amplitudes
+      // parcourues dans l'ordre sur 50 échantillons font une période de 300.
+      const une = composer({
+        ...BASE, temps: [50], sections: 1,
+        principeAmplitudes: "sequence", principeTemps: p, principeForme: "sequence",
+      });
+      expect(une.tenue.hertz as number, `une seule durée, ${p} aux durées`).toBeCloseTo(SR / 300, 2);
+    }
+    // ET LES DEUX EN « SÉQUENCE » TIENNENT, sur le même ensemble de cinq durées : six amplitudes et
+    // cinq durées se retrouvent au bout de trente points, soit six fois la somme des cinq durées.
+    const deux = composer({
+      ...BASE, sections: 1,
+      principeAmplitudes: "sequence", principeTemps: "sequence", principeForme: "sequence",
+    });
+    const dit = `${deux.tenue.points} points, ${deux.tenue.echantillons} éch., ${deux.tenue.hertz} Hz`;
+    expect(deux.tenue.points, dit).toBe(30);
+    expect(deux.tenue.echantillons, dit).toBe(774);
+    expect(deux.tenue.hertz as number, dit).toBeCloseTo(SR / 774, 2);
+  });
+
+  it("ET CE N'EST PAS LA TAILLE DE L'ENSEMBLE DES DURÉES, hypothèse que la mesure a réfutée", () => {
+    // LES DEUX PRINCIPES EN « SÉQUENCE », SEUL L'ENSEMBLE DES DURÉES CHANGE : une onde sort des
+    // cinq, des plus serrés aux plus étalés, et aucun des quatre autres principes n'en rend sur
+    // aucun. C'est donc bien l'ORDRE qui décide, et jamais le nombre de durées écrites : le cas
+    // empêche de « corriger » l'ensemble des durées pour un défaut qui n'y est pas.
+    const ensembles = [[50], [50, 100], [50, 51], [5, 9, 17, 33, 65], [48, 49, 50, 51, 52]];
+    for (const temps of ensembles) {
+      const tenu = composer({
+        ...BASE, temps, sections: 1,
+        principeAmplitudes: "sequence", principeTemps: "sequence", principeForme: "sequence",
+      });
+      expect(tenu.tenue.hertz, `séquence sur [${temps.join(", ")}]`).not.toBeNull();
+      for (const p of ["alea", "serie", "groupe", "tendance"] as Principe[]) {
+        const bruite = composer({
+          ...BASE, temps, sections: 1,
+          principeAmplitudes: p, principeTemps: p, principeForme: "sequence",
+        });
+        expect(bruite.tenue.hertz, `${p} sur [${temps.join(", ")}]`).toBeNull();
+      }
+    }
+  });
+
+  it("LA PÉRIODE PRÉDITE TOMBE SUR CELLE QUE LE SUIVEUR DE HAUTEUR RELÈVE", () => {
+    // LA PÉRIODE SE CALCULE SUR LA SUITE DES POINTS, non sur le son : c'est exact, gratuit, et sans
+    // plancher de fréquence. Ce cas est ce qui l'autorise, en confrontant le calcul à l'écoute.
+    for (const temps of [[50], [5, 9, 17, 33, 65]]) {
+      const c = composer({
+        ...BASE, temps, duree: 3, sections: 1,
+        principeAmplitudes: "sequence", principeTemps: "sequence", principeForme: "sequence",
+      });
+      const suivi = suivreHauteur(c.son, SR, { fMin: 40, fMax: 4000, cadence: 100 });
+      const dit = `[${temps.join(", ")}] : prédit ${c.tenue.hertz?.toFixed(2)} Hz,`
+        + ` relevé ${hauteurMediane(suivi).toFixed(2)} Hz à ${partVoisee(suivi).toFixed(3)} de voisé`;
+      expect(partVoisee(suivi), dit).toBeGreaterThan(0.9);
+      expect(hauteurMediane(suivi) / (c.tenue.hertz as number), dit).toBeCloseTo(1, 1);
+    }
   });
 });
