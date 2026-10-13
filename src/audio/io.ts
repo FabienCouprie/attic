@@ -116,17 +116,26 @@ interface EncodageWav {
  *
  * `souffle` est appelé après chaque tranche ; il ne rend la main que s'il le faut, selon son propre
  * délai. Sans lui, cette fonction ferait le même travail que la version directe, en plus lent.
+ *
+ * `onAvance` reçoit après chaque tranche la part écrite, de 0 à 1. CE N'EST PAS UNE COMMODITÉ : ce
+ * travail dure 2,3 s pour cinq minutes de son et 46 s pour une heure, mesuré, et il a lieu quand le
+ * calcul est déjà fini. Qui l'appelle doit pouvoir le dire.
  */
 export async function bufferVersWavBlobRespirant(
   buffer: AudioBuffer, grapheJson: string | undefined, securise: boolean, options: OptionsWav,
   souffle: { tour: () => Promise<boolean> },
+  onAvance?: (fraction: number) => void,
 ): Promise<Blob> {
   const e = preparerWav(buffer, grapheJson, securise, options);
   // Environ une seconde et demie d'audio par tranche à quarante-huit kilohertz : assez pour que le
   // coût de la découpe reste négligeable, assez peu pour qu'une tranche tienne dans une image.
   const PAS = 1 << 16;
   for (let i = 0; i < e.trames; i += PAS) {
-    e.ecrire(i, Math.min(e.trames, i + PAS));
+    const fin = Math.min(e.trames, i + PAS);
+    e.ecrire(i, fin);
+    // La part est annoncée AVANT de rendre la main, de sorte que l'image qui se peint pendant ce
+    // souffle porte déjà le chiffre de la tranche qui vient d'être écrite.
+    onAvance?.(e.trames > 0 ? fin / e.trames : 1);
     await souffle.tour();
   }
   return e.finir();

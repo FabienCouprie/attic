@@ -1209,6 +1209,14 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   background: var(--bg-badge); border: 1px solid var(--border);
   border-radius: 4px; padding: 1px 5px;
 }
+/* LE LECTEUR QUI S'ENCODE, a cote du statut. Il suit le calcul au lieu de l'accompagner : le noeud
+   est deja termine et deja ecoutable par son bouton. D'ou un ton discret, et non celui d'un travail
+   en cours qui retiendrait le resultat. Les chiffres sont tabulaires pour que le pourcentage ne
+   fasse pas tressauter la ligne a chaque tranche ecrite. */
+.attic-node-apercu {
+  margin-left: 6px;
+  font-size: 10px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
 /* L'ecart de niveau mesure sur le noeud. Discret par defaut, ambre quand la chute passe
    trois decibels : c'est le seuil a partir duquel une baisse s'entend nettement. */
 .attic-node-ecart { margin-left: 6px; font-size: 10px; opacity: 0.55; font-variant-numeric: tabular-nums; }

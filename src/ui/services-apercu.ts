@@ -32,6 +32,13 @@ export interface OptionsApercu {
   nomPourMetadonnees?: string;
   /** De quoi rendre la main entre deux tranches d'écriture, pour ne pas figer l'interface. */
   souffle: { tour: () => Promise<boolean> };
+  /**
+   * Où en est l'écriture, de 0 à 1, appelé à chaque tranche.
+   *
+   * POURQUOI LE SHELL LE DEMANDE. Écrire l'aperçu d'une heure de son prend quarante-six secondes,
+   * et le nœud a déjà dit « terminé ». Sans cela, l'attente est muette.
+   */
+  onAvance?: (fraction: number) => void;
 }
 
 /** Ce que le domaine répond au shell sur les valeurs produites. */

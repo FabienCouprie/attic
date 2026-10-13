@@ -286,6 +286,11 @@ const DICO: Record<string, Record<Langue, string>> = {
   "execution.brancheEchecSansResultat": { fr: "Branche sans résultat : {fautif}", en: "Branch with no result: {fautif}" },
   "execution.brancheEchecAucunResultat": { fr: "Aucun résultat produit", en: "No result produced" },
   "execution.temps": { fr: "Temps d'exécution", en: "Execution time" },
+  "execution.lecteur": { fr: "lecteur", en: "player" },
+  "execution.lecteurEnCours": {
+    fr: "Le calcul est fini et le résultat est là. Le lecteur s'encode ; le bouton « Écouter » le donne déjà à entendre.",
+    en: "The computation is done and the result is here. The player is being encoded; the « Listen » button already plays it.",
+  },
   "execution.ecartNiveau": { fr: "Écart de sonie entre la sortie de ce composant et la plus faible de ses entrées", en: "Loudness difference between this component's output and the quietest of its inputs" },
   "palette.titre": { fr: "Catalogue", en: "Catalog" },
   "palette.recherche": { fr: "Rechercher…", en: "Search…" },

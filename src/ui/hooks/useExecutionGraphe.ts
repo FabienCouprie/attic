@@ -24,7 +24,7 @@ import { peutReutiliserLeCache, sourceRetraitee } from "../../core/cache-executi
 import { estResultatEnErreur } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
 import { noeudRegarde, resultatRetenu } from "../../core/memoire";
-import { poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
+import { poserApercu, poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
 import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
 import { graineDuTour, resoudreGraine } from "../../core/hasard";
 import { deplierInstruments } from "../../core/instrument-graphe";
@@ -1029,6 +1029,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // entre deux clics. C'est cet indice-là qui a désigné la cause.
     const souffle = new Respiration();
     const correctifs = new Map<string, Record<string, unknown>>();
+    /**
+     * Les lecteurs restant à écrire, par nœud, remplis par `calculerCorrectifResultat`.
+     *
+     * CETTE BOUCLE NE LES ÉCRIT PLUS, et c'est tout le changement. Elle les écrivait avant de poser
+     * quoi que ce soit, et `setNodes` n'avait lieu qu'une fois les N aperçus encodés : un nœud
+     * terminé restait donc sans lecteur, sans bouton et sans message pendant la somme des
+     * encodages. Ils s'écrivent maintenant après, un par un, chacun posé dès qu'il est prêt.
+     */
+    const lecteursAEcrire = new Map<string, () => Promise<string | undefined>>();
     for (const n of noeudsRef.current) {
       const patch = await calculerCorrectifResultat(n);
       if (patch) correctifs.set(n.id, patch);
@@ -1131,6 +1140,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
           }),
           economie: economieMemoireRef?.current ?? true,
         }));
+        // LE LECTEUR NE S'ÉCRIT PLUS ICI, IL SE PROMET. Son encodage dure 2,3 s pour cinq minutes de
+        // son et 46 s pour une heure, mesuré, et il avait lieu AVANT que le résultat soit posé. Le
+        // tampon, le message et tout le reste partent donc tout de suite — le bouton « Écouter » est
+        // là immédiatement — et le lecteur les rejoint quand il est prêt.
         let url: string | undefined;
         if (audio && garderApercu) {
           if (audio === n.data.audioResultatBuffer && n.data.audioResultatUrl) {
@@ -1151,14 +1164,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
             // chemin d'exécution de tous les domaines. Les autres n'ont pas de métadonnées : leur
             // calcul parcourt la valeur entière, et un aperçu intermédiaire n'est jamais livré.
             const def = trouverDef(ficheId);
-            const blob = await servicesApercu().blobApercu(audio, {
-              grapheAEmbarquer: grapheExport,
-              securiser,
-              bits: lireProfondeurExport(),
-              nomPourMetadonnees: def?.apercuEstLeFichier ? (def.nom ?? ficheId) : undefined,
-              souffle,
+            const aEcouter = audio;
+            lecteursAEcrire.set(n.id, async () => {
+              const blob = await servicesApercu().blobApercu(aEcouter, {
+                grapheAEmbarquer: grapheExport,
+                securiser,
+                bits: lireProfondeurExport(),
+                nomPourMetadonnees: def?.apercuEstLeFichier ? (def.nom ?? ficheId) : undefined,
+                souffle,
+                onAvance: (part) => poserApercu(n.id, part),
+              });
+              return blob ? URL.createObjectURL(blob) : undefined;
             });
-            url = blob ? URL.createObjectURL(blob) : undefined;
           }
         } else if (n.data.audioResultatUrl) {
           URL.revokeObjectURL(n.data.audioResultatUrl);
@@ -1327,6 +1344,34 @@ export function useExecutionGraphe(o: OptionsExecution) {
       const statuts = membres.map((id) => statutDeNoeud(id).statut);
       if (statuts.includes("erreur")) definirStatut(n.id, "erreur");
       else if (statuts.every((s) => s === "termine")) definirStatut(n.id, "termine");
+    }
+
+    // ── LES LECTEURS, ÉCRITS APRÈS QUE TOUT EST POSÉ ─────────────────────────────────
+    //
+    // CHACUN PARAÎT DÈS QU'IL EST PRÊT, et non tous ensemble à la fin : sur une chaîne de sept
+    // nœuds audio, attendre le dernier encodage pour montrer le premier lecteur était la moitié du
+    // défaut relevé. Pendant son écriture, le nœud dit où elle en est : il est déjà terminé, son
+    // tampon est posé, il s'écoute déjà par le bouton, et c'est le lecteur qui se fabrique.
+    for (const [id, ecrire] of lecteursAEcrire) {
+      if (controller.signal.aborted) break;
+      poserApercu(id, 0);
+      try {
+        const url = await ecrire();
+        if (url) {
+          setNodes((nds) => nds.map((n) => (n.id === id
+            ? { ...n, data: { ...n.data, audioResultatUrl: url, audioResultatNom: `${n.data.ficheId}.wav` } }
+            : n)));
+        }
+      } catch (e) {
+        // UN LECTEUR QUI NE S'ÉCRIT PAS N'EMPORTE PAS LE RUN, et c'est le second intérêt de l'avoir
+        // sorti d'ici : le résultat est déjà posé, le tampon est là, et le bouton « Écouter » reste
+        // la voie d'écoute. Avant, cette exception remontait avant tout `setNodes`, et le nœud
+        // perdait jusqu'à son message.
+        console.error("[apercu] écriture du lecteur impossible", id, e);
+      } finally {
+        poserApercu(id, undefined);
+      }
+      await souffle.tour();
     }
 
     } catch (e: any) {

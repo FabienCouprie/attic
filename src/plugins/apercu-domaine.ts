@@ -53,7 +53,8 @@ export const APERCU_AUDIO: ServicesApercu = {
       referenceTemps: depart !== undefined ? Math.round(depart * ecrit.sampleRate) : 0,
     };
     return bufferVersWavBlobRespirant(
-      ecrit, o.grapheAEmbarquer, o.securiser, { bits: o.bits, ixml: description?.ixml, bext }, o.souffle);
+      ecrit, o.grapheAEmbarquer, o.securiser, { bits: o.bits, ixml: description?.ixml, bext },
+      o.souffle, o.onAvance);
   },
 
   // UN APERÇU DE LA COURBE, ET NON LA COURBE. Une courbe de quatre minutes porte quarante-huit mille
