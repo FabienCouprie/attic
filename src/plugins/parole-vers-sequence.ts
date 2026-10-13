@@ -1,4 +1,9 @@
-// plugins/parole-vers-sequence.ts — Nœud « Parole vers séquence » : un mot, une note.
+// plugins/parole-vers-sequence.ts — Nœud « Parole vers MIDI » : un mot, une note.
+//
+// LE FICHIER ET L'IDENTIFIANT GARDENT LE NOM D'AVANT, « parole-vers-sequence » : un graphe
+// enregistré nomme l'identifiant, et le changer rendrait illisibles les graphes déjà écrits. Seul
+// le nom affiché a changé, parce qu'il promettait un port de type `sequence` que ce nœud ne porte
+// pas.
 //
 // Vosk rend chaque mot avec son instant de début et son instant de fin. Ce composant met une note
 // sur chaque mot : la durée du mot donne la durée de la note, la hauteur de la voix sur cet empan
@@ -184,7 +189,11 @@ export function tableauDeSequence(
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "parole-vers-sequence", nom: "Parole vers séquence", nomEn: "Speech to Sequence",
+    // LE NOM DISAIT UN PORT QUE CE NŒUD NE PORTE PAS. Il s'appelait « Parole vers séquence » et sa
+    // sortie est de type `midi` : « séquence » est un type de port du dépôt, et le promettre
+    // envoyait chercher un branchement qui n'existe pas. Il faut « MIDI → séquence » après, comme
+    // après le transcripteur. L'IDENTIFIANT NE CHANGE PAS, lui : un graphe enregistré le nomme.
+    id: "parole-vers-sequence", nom: "Parole vers MIDI", nomEn: "Speech to MIDI",
     univers: "Traitement", famille: "Conversion",
     resume: "Met une note sur chaque mot dit : la durée du mot, la hauteur de la voix, le niveau en nuance.",
     resumeEn: "Puts a note on each spoken word: the word's duration, the voice's pitch, the level as dynamics.",

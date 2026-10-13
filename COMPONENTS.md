@@ -2546,7 +2546,7 @@ Transcribes the speech on the audio input, and returns each word with its start 
 | [Separate Voices](#separate-voices) | Recovers the lines of a sequence that mixes them, and gives each note its voice. |
 | [Sequence Filter](#sequence-filter) | Splits the notes of a sequence by pitch, duration, velocity or channel. |
 | [Simplify a Tree](#simplify-a-tree) | Reduces a rhythm tree to its shortest form, without moving a single note. |
-| [Speech to Sequence](#speech-to-sequence) | Puts a note on each spoken word: the word's duration, the voice's pitch, the level as dynamics. |
+| [Speech to MIDI](#speech-to-midi) | Puts a note on each spoken word: the word's duration, the voice's pitch, the level as dynamics. |
 | [Text → MIDI](#text--midi) | Converts a text notation (one note/chord per line) into MIDI + audio. |
 | [Voice Loop End](#voice-loop-end) | Closes a voice loop and reunites what each pass produced. |
 | [Voice Loop Start](#voice-loop-start) | Opens a loop: the graph is run once per voice, and this node returns the voice of the current pass. |
@@ -2883,7 +2883,7 @@ Reduces a rhythm tree to its shortest form and returns the notation obtained. A 
 |---|---|---|---|---|
 | Tree | text | `(4/4 (1 (1 (1 1.0)) (1 (-1 -1)) 1))` |  | The list notation, used when the input of the same name is not connected. |
 
-#### Speech to Sequence
+#### Speech to MIDI
 
 `parole-vers-sequence` · Processing → Conversion
 
