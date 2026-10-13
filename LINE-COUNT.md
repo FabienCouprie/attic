@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1346 files, 241170 lines, of which 163737 are code.**
+**1346 files, 241189 lines, of which 163737 are code.**
 The table lists the 193 files of 200 code lines or more, heaviest first;
-the remaining 1153 account for 159407 lines.
+the remaining 1153 account for 159426 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 

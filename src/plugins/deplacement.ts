@@ -228,6 +228,25 @@ export const fiches: FicheAudio[] = ([
       { nom: "Rotation", nomEn: "Rotation", type: "curseur", plage: [-360, 360], pas: 1, defaut: 180, unite: "°",
         doc: "De combien la scène tourne, dans le sens direct. À 180°, la gauche et la droite sont échangées ; à 90°, ce qui était à gauche passe devant. Sur une source mono, cet échange est inaudible, deux canaux identiques échangés restent identiques, et seul le niveau baisse ; c'est à 90° qu'une source mono se déplace, de 9,5 dB. Une courbe branchée sur l'entrée Modulation fait tourner la scène en continu, ce qui s'entend bien mieux qu'un angle fixe.",
         docEn: "How far the scene turns, counter-clockwise. At 180° left and right are swapped; at 90°, what was on the left comes to the front. On a mono source that swap is inaudible, two identical channels swapped stay identical, and only the level drops; it is at 90° that a mono source moves, by 9.5 dB. A curve connected to the Modulation input turns the scene continuously, which is far more audible than a fixed angle." },
+      // LES DEUX ANGLES QUI SUIVENT S'ARRÊTENT À UN DEMI-TOUR, et la raison n'était écrite nulle
+      // part : la Rotation porte la justification de sa course, ces deux-là n'avaient que la
+      // description de ce qu'ils font. Demandé par Fabien, qui a cru à un plafond de 180° sur la
+      // rotation elle-même.
+      //
+      // CE SONT DES ANGLES ENTRE DEUX DIRECTIONS, et non des positions : `encoderStereo` place les
+      // deux sources à ±écart/2, `decoderStereo` les deux microphones virtuels à ±ouverture/2. À
+      // 180° la paire est donc déjà à ±90°, extrême gauche et extrême droite, le plus large qu'on
+      // puisse écarter deux sources DEVANT l'auditeur. Au-delà, elles passent derrière, et un
+      // décodage de face n'y perd que du niveau.
+      //
+      // RELEVÉ SUR UNE VRAIE STÉRÉO, sans rotation, ouverture à 90°, niveau efficace de la sortie :
+      // 0,3978 à 90°, 0,3073 à 180°, 0,2808 à 200°, 0,1770 à 270°, et 0,0737 à 360°, soit 14,6 dB
+      // sous le réglage par défaut. Et la part directionnelle du champ reste à 0,99 partout :
+      // ouvrir au-delà de 180° ne gagne aucune image, cela ne fait que baisser.
+      //
+      // ET CE N'EST PAS UNE REDONDANCE, hypothèse que la mesure a réfutée. Je pensais que 200°
+      // valait 160° avec les canaux échangés ; l'écart maximal entre le G de 160° et le D de 200°
+      // vaut 0,662. Ce sont bien deux configurations différentes, et la seconde ne sert à rien.
       { nom: "Écart des sources", nomEn: "Source spread", type: "curseur", plage: [30, 180], pas: 5, defaut: 90, unite: "°",
         doc: "Angle entre les deux sources dont on reconstitue la scène. Étroit, la prise est traitée comme deux voix presque devant soi ; large, comme deux voix sur les côtés. Contrairement à ce qu'on attendrait, large n'est pas plus spectaculaire, et à l'extrême c'est le contraire : la part du champ qu'une rotation peut déplacer vaut le cosinus de la moitié de cet écart sur une prise mono, 0,71 à 90°, et zéro à 180°, où aucun angle ne change plus rien. Sur une vraie stéréo, 180° ne tourne pas l'image non plus : une rotation d'un quart de tour y rend les deux canaux identiques, mesuré ; elle écrase l'image au lieu de la faire tourner. Quatre-vingt-dix degrés est le réglage qui tourne vraiment.",
         docEn: "Angle between the two sources whose scene is reconstituted. Narrow, the take is treated as two voices almost in front; wide, as two voices at the sides. Contrary to expectation, wide is not more striking, and at the extreme it is the opposite: the share of the field a rotation can move is the cosine of half this spread on a mono take, 0.71 at 90°, and zero at 180°, where no angle changes anything any more. On a true stereo take, 180° does not turn the image either: a quarter-turn there makes the two channels identical, measured; it crushes the image instead of turning it. Ninety degrees is the setting that really turns." },
