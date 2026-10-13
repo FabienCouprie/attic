@@ -145,6 +145,28 @@ describe("l'encodage par tranches", () => {
     expect(s.compte()).toBe(5);
   });
 
+  it("IL DIT OÙ IL EN EST, une fois par tranche, et la dernière part vaut un", async () => {
+    // CE QUI DÉPEND DE CETTE PART. Le nœud qui attend son lecteur l'affiche : son calcul est fini
+    // depuis longtemps et cette écriture-ci dure 46 s pour une heure de son. Une part qui
+    // n'atteindrait pas un laisserait la mention à l'écran sur un lecteur déjà posé.
+    const parts: number[] = [];
+    await bufferVersWavBlobRespirant(
+      tampon(2, 300_000), undefined, false, { bits: 16 }, sansSouffle, (p) => parts.push(p));
+    expect(parts.length, `parts : ${parts.map((p) => p.toFixed(3)).join(", ")}`).toBe(5);
+    expect(parts[parts.length - 1]).toBe(1);
+    for (let i = 1; i < parts.length; i++) {
+      expect(parts[i], `la part ${i} doit dépasser la précédente`).toBeGreaterThan(parts[i - 1]);
+    }
+    expect(parts[0]).toBeCloseTo(65536 / 300_000, 6);
+  });
+
+  it("un tampon vide ne dit aucune part, et n'en laisse donc aucune en suspens", async () => {
+    const parts: number[] = [];
+    await bufferVersWavBlobRespirant(
+      tampon(2, 0), undefined, false, { bits: 16 }, sansSouffle, (p) => parts.push(p));
+    expect(parts).toEqual([]);
+  });
+
   it("un tampon vide ne demande aucune tranche et rend quand même un fichier lisible", async () => {
     const s = souffleur();
     const blob = await bufferVersWavBlobRespirant(tampon(2, 0), undefined, false, { bits: 16 }, s);

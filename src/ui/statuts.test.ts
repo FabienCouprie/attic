@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import {
-  ETAT_ATTENTE, poserStatut, reinitialiserStatuts, statutDe, statutsPoses, surStatut,
+  ETAT_ATTENTE, poserApercu, poserStatut, reinitialiserStatuts, statutDe, statutsPoses, surStatut,
 } from "./statuts";
 
 beforeEach(() => reinitialiserStatuts());
@@ -97,6 +97,62 @@ describe("les abonnements", () => {
     surStatut("a", suivant);
     poserStatut("a", "termine");
     expect(suivant).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("où en est le lecteur, posé à côté du statut", () => {
+  // CE QUE CE CANAL EXISTE POUR DIRE. Le calcul d'un nœud est fini, son résultat est posé, et son
+  // lecteur s'encode encore : 2,3 s pour cinq minutes de son, 46 s pour une heure, mesuré. Sans
+  // cette mention l'attente est muette, et c'est ce silence qui faisait croire à un lecteur perdu.
+
+  it("ne touche pas au statut, ni à la progression du nœud", () => {
+    poserStatut("a", "termine", "fini", true);
+    poserApercu("a", 0.4);
+    expect(statutDe("a")).toMatchObject({
+      statut: "termine", progression: "fini", progressionDuNoeud: true, apercu: 0.4,
+    });
+  });
+
+  it("ARRONDIT AU CENTIÈME, et ne prévient pas deux fois pour le même chiffre", () => {
+    // L'écriture d'un WAV appelle ceci à chaque tranche, soit trois mille six cents fois pour une
+    // heure de son : sans l'arrondi, le nœud se redessinerait autant de fois pour le même chiffre.
+    const vu = vi.fn();
+    surStatut("a", vu);
+    poserApercu("a", 0.4001);
+    expect(statutDe("a").apercu).toBe(0.4);
+    poserApercu("a", 0.4049);
+    expect(vu).toHaveBeenCalledTimes(1);
+    poserApercu("a", 0.41);
+    expect(vu).toHaveBeenCalledTimes(2);
+  });
+
+  it("borne la part entre zéro et un", () => {
+    poserApercu("a", -3);
+    expect(statutDe("a").apercu).toBe(0);
+    poserApercu("a", 12);
+    expect(statutDe("a").apercu).toBe(1);
+  });
+
+  it("se retire par `undefined`", () => {
+    poserApercu("a", 0.5);
+    poserApercu("a", undefined);
+    expect(statutDe("a").apercu).toBeUndefined();
+  });
+
+  it("UN STATUT NEUF L'EFFACE, parce qu'un autre calcul commence", () => {
+    // La mention porte sur le résultat qui vient d'être posé. Un statut neuf veut dire que ce
+    // résultat est en train d'être remplacé, et le lecteur qui s'écrivait ne le concerne plus.
+    poserStatut("a", "termine");
+    poserApercu("a", 0.7);
+    poserStatut("a", "en_cours");
+    expect(statutDe("a").apercu).toBeUndefined();
+  });
+
+  it("la référence reste stable quand la part ne change pas", () => {
+    poserApercu("a", 0.25);
+    const premier = statutDe("a");
+    poserApercu("a", 0.25);
+    expect(statutDe("a")).toBe(premier);
   });
 });
 
