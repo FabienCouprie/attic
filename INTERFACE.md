@@ -371,7 +371,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Oscillateur à table d'onde | `oscillateur-table-onde` | 240 × 184 |
 | Palette harmonique | `palette-harmonique` | 240 × 140 |
 | Paradoxe du triton | `paradoxe-triton` | 240 × 140 |
-| Parole vers séquence | `parole-vers-sequence` | 240 × 184 |
+| Parole vers MIDI | `parole-vers-sequence` | 240 × 184 |
 | Particules | `particules` | 240 × 140 |
 | Partition aléatoire Csound | `partition-aleatoire-csound` | 240 × 140 |
 | Partition Csound | `partition-csound` | 240 × 140 |
