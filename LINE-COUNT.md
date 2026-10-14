@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1346 files, 241390 lines, of which 163851 are code.**
+**1346 files, 241547 lines, of which 163934 are code.**
 The table lists the 193 files of 200 code lines or more, heaviest first;
-the remaining 1153 account for 159555 lines.
+the remaining 1153 account for 159626 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -35,14 +35,15 @@ the remaining 1153 account for 159555 lines.
 | src/plugins/theorie-avancee.test.ts | 388 | 550 |  |
 | src/plugins/csound.ts | 387 | 523 |  |
 | src/plugins/finitions.test.ts | 386 | 521 |  |
+| src/vues-domaine/LigneDeTemps.tsx | 385 | 639 |  |
 | src/audio/criteres-schaefferiens.test.ts | 384 | 564 |  |
 | src/audio/ia.ts | 382 | 466 |  |
 | src/plugins/carte-sonore-plan-cellulaire.ts | 382 | 436 |  |
 | src/plugins/effets-midi.ts | 382 | 502 |  |
 | src/plugins/spectrogramme-image.test.ts | 377 | 532 |  |
+| src/audio/montage-morceaux.test.ts | 373 | 502 |  |
 | src/plugins/syntheses-exotiques.test.ts | 372 | 542 |  |
 | src/plugins/modeles-physiques.test.ts | 368 | 550 |  |
-| src/vues-domaine/LigneDeTemps.tsx | 368 | 611 |  |
 | src/plugins/magenta.ts | 367 | 467 |  |
 | src/plugins/analyse.ts | 363 | 442 |  |
 | src/audio/soundfont.ts | 360 | 440 |  |
@@ -57,7 +58,6 @@ the remaining 1153 account for 159555 lines.
 | src/plugins/textgen.ts | 343 | 523 |  |
 | src/plugins/modulation-cablage.test.ts | 341 | 559 |  |
 | src/audio/algebre.test.ts | 338 | 411 |  |
-| src/audio/montage-morceaux.test.ts | 337 | 444 |  |
 | src/audio/clavier-banque.ts | 335 | 652 |  |
 | src/audio/continuation-spectrale.ts | 335 | 418 |  |
 | src/audio/courbe.test.ts | 335 | 422 |  |

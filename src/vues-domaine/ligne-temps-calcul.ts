@@ -21,7 +21,7 @@ export interface PisteMontage {
 }
 
 /** Une piste prête à dessiner : sa place, sa durée, ses fondus, en secondes. */
-import { dureeSonnante, type Morceau } from "../audio/montage-morceaux";
+import { dureeSonnante, gainBorne, type Morceau } from "../audio/montage-morceaux";
 
 export interface LigneMontage {
   k: number;
@@ -54,7 +54,7 @@ export interface LigneMontage {
 export const DUREE_INCONNUE = 2;
 
 /** Ce qu'une poignée de barre règle. */
-export type QuoiPoignee = "entree" | "sortie" | "duree";
+export type QuoiPoignee = "entree" | "sortie" | "duree" | "gain";
 
 /**
  * Ce qu'une barre veut dire, qui n'est pas le même selon le composant.
@@ -81,8 +81,10 @@ export interface ModeleLigne {
   cleTitre: string;
 }
 
+// LA POIGNÉE DE NIVEAU EST AU MONTAGE ET PAS À LA MAQUETTE, parce que seul le montage a un niveau
+// par barre : la légende de la maquette porte une transposition, qui se règle ailleurs.
 export const MODELE_MONTAGE: ModeleLigne = {
-  largeur: "mesuree", poignees: ["entree", "sortie"], legende: "gain",
+  largeur: "mesuree", poignees: ["entree", "sortie", "gain"], legende: "gain",
   cleVide: "montage.aucunePiste", cleTitre: "montage.ligneTemps",
 };
 
@@ -199,6 +201,7 @@ export function valeurAuRepos(quoi: Geste["quoi"], ligne: LigneMontage): number 
   if (quoi === "corps") return ligne.debut;
   if (quoi === "entree") return ligne.entree;
   if (quoi === "sortie") return ligne.sortie;
+  if (quoi === "gain") return ligne.gain;
   return ligne.duree;
 }
 
@@ -214,11 +217,17 @@ export function valeurAuRepos(quoi: Geste["quoi"], ligne: LigneMontage): number 
  * faudrait corriger ensuite.
  */
 export function valeurDuGeste(
-  geste: Geste, ds: number, ligne: LigneMontage,
+  geste: Geste, ds: number, ligne: LigneMontage, ddb = 0,
 ): { nom: string; valeur: number } {
   const rang = ligne.k + 1;
   if (geste.quoi === "corps") {
     return { nom: `Début ${rang}`, valeur: Math.round((geste.valeur0 + ds) * 100) / 100 };
+  }
+  // LE NIVEAU LIT L'ÉCART VERTICAL, en décibels, et non `ds` : c'est le seul geste qui ne parle pas
+  // de temps. Ses bornes et son pas viennent du domaine des morceaux, de sorte que ce chemin-ci et
+  // celui d'un morceau déjà posé écrivent exactement le même nombre.
+  if (geste.quoi === "gain") {
+    return { nom: `Gain ${rang}`, valeur: gainBorne(geste.valeur0 + ddb) };
   }
   // LE BORD DROIT ÉCRIT LA DURÉE, en secondes et au centième comme le début : c'est un instant de
   // la même ligne de temps, et deux précisions différentes sur une même règle se verraient. Elle ne

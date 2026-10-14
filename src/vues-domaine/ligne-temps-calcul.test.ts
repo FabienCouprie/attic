@@ -12,6 +12,7 @@
 // aurait fait passer pour une généralisation ce qui serait un changement de comportement.
 import { describe, expect, it } from "vitest";
 
+import { GAIN_MAX, GAIN_MIN } from "../audio/montage-morceaux";
 import {
   DUREE_INCONNUE, MODELE_MAQUETTE, MODELE_MONTAGE, disposerPistes, echelle, pasDeGraduation,
   valeurAuRepos, valeurDuGeste,
@@ -166,6 +167,24 @@ describe("ce qu'un geste écrit", () => {
     expect(valeurDuGeste({ piste: 0, quoi: "corps", valeur0: 2.5 }, 0, ligne()).valeur).toBe(2.5);
     expect(valeurDuGeste({ piste: 0, quoi: "entree", valeur0: 0.01 }, 0, ligne()).valeur).toBe(10);
   });
+
+  it("LE NIVEAU ÉCRIT LE RÉGLAGE DE LA PISTE, et il lit l'écart vertical", () => {
+    // LE MÊME GESTE SERT LES DEUX ÉTATS D'UNE PISTE. Sur une piste à laquelle on n'a pas touché il
+    // n'y a pas de morceau à écrire : la poignée écrit alors le RÉGLAGE, comme les trois autres
+    // gestes le font déjà. Sur une piste découpée, c'est `appliquerGeste` qui prend la main, et les
+    // deux chemins passent par les mêmes bornes.
+    const g = valeurDuGeste({ piste: 2, quoi: "gain", valeur0: 0 }, 0, ligne({ k: 2 }), -6);
+    expect(g.nom).toBe("Gain 3");
+    expect(g.valeur).toBe(-6);
+    // L'écart horizontal ne le concerne pas, et ses bornes sont celles du réglage.
+    expect(valeurDuGeste({ piste: 0, quoi: "gain", valeur0: 3 }, 99, ligne(), 0).valeur).toBe(3);
+    expect(valeurDuGeste({ piste: 0, quoi: "gain", valeur0: 0 }, 0, ligne(), -500).valeur).toBe(GAIN_MIN);
+    expect(valeurDuGeste({ piste: 0, quoi: "gain", valeur0: 0 }, 0, ligne(), 500).valeur).toBe(GAIN_MAX);
+  });
+
+  it("et la poignée de niveau lit le niveau de la barre au repos", () => {
+    expect(valeurAuRepos("gain", ligne({ gain: -7.5 }))).toBe(-7.5);
+  });
 });
 
 // ── Ce que la généralisation ajoute ────────────────────────────────────
@@ -176,8 +195,10 @@ describe("les deux modèles de barre", () => {
     expect(MODELE_MAQUETTE.largeur).toBe("reglee");
   });
 
-  it("NE PORTENT PAS LES MÊMES POIGNÉES : des fondus d'un côté, une durée de l'autre", () => {
-    expect(MODELE_MONTAGE.poignees).toEqual(["entree", "sortie"]);
+  it("NE PORTENT PAS LES MÊMES POIGNÉES : les fondus et le niveau d'un côté, une durée de l'autre", () => {
+    // LA POIGNÉE DE NIVEAU N'EST QU'AU MONTAGE, parce que seul le montage a un niveau par barre :
+    // la légende de la maquette porte une transposition, qui se règle ailleurs.
+    expect(MODELE_MONTAGE.poignees).toEqual(["entree", "sortie", "gain"]);
     expect(MODELE_MAQUETTE.poignees).toEqual(["duree"]);
   });
 });

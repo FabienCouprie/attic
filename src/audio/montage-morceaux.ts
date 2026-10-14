@@ -280,8 +280,23 @@ export function deplacerMorceau(m: Morceau, versInstant: number): Morceau {
   return { ...m, debut: versInstant };
 }
 
-/** Ce qu'un geste sur une barre règle. Les mêmes trois que la ligne de temps connaît déjà. */
-export type GesteMorceau = "corps" | "entree" | "sortie";
+/**
+ * Les bornes du niveau d'un morceau, et le pas auquel il s'écrit.
+ *
+ * ELLES SONT ICI PLUTÔT QUE DANS LA FICHE, et la fiche les lit : le geste de la ligne de temps et le
+ * curseur du réglage écrivent le MÊME nombre, et deux bornes recopiées auraient fini par diverger.
+ * Le dépôt a déjà payé cela sur douze réglages, dont la rotation ambisonique.
+ */
+export const GAIN_MIN = -60, GAIN_MAX = 12, GAIN_PAS = 0.5;
+
+/** Un niveau ramené dans ses bornes et sur son pas. Le seul endroit qui en décide. */
+export function gainBorne(db: number): number {
+  const sur = Math.round(db / GAIN_PAS) * GAIN_PAS;
+  return Math.min(GAIN_MAX, Math.max(GAIN_MIN, sur));
+}
+
+/** Ce qu'un geste sur une barre règle. */
+export type GesteMorceau = "corps" | "entree" | "sortie" | "gain";
 
 /**
  * Le morceau qu'un geste produit, à partir de celui qu'on a saisi.
@@ -293,10 +308,24 @@ export type GesteMorceau = "corps" | "entree" | "sortie";
  * LE FONDU DE SORTIE SE TIRE À REBOURS, et c'est la seule dissymétrie : sa poignée est sur le bord
  * droit, donc tirer vers la gauche l'allonge. Les fondus ne peuvent pas être négatifs ; le début,
  * lui, le peut, un montage ayant le droit de commencer avant zéro.
+ *
+ * LE NIVEAU SE TIRE VERTICALEMENT, D'OÙ DEUX ÉCARTS. Les trois autres gestes lisent un écart
+ * horizontal, en secondes ; celui-ci lit un écart vertical, en décibels, que la vue a calculé
+ * depuis ses pixels. Un seul écart aurait voulu dire deux unités selon le geste, ce qui ne se
+ * relit pas.
+ *
+ * ET IL MANQUAIT, relevé par Fabien : « j'ai l'impression que le gain de la table de montage ne
+ * fonctionne pas ». Les réglages d'une piste cessent d'agir dès qu'un morceau y est posé, ce qui
+ * est la règle du nœud ; or les trois autres avaient leur geste de remplacement sur la ligne de
+ * temps, et le niveau n'en avait aucun. Le premier geste sur une piste y figeait donc son niveau
+ * pour toujours, et rien, nulle part, ne pouvait plus l'écrire.
  */
-export function appliquerGeste(saisi: Morceau, quoi: GesteMorceau, ecartSec: number): Morceau {
+export function appliquerGeste(
+  saisi: Morceau, quoi: GesteMorceau, ecartSec: number, ecartDb = 0,
+): Morceau {
   if (quoi === "corps") return { ...saisi, debut: saisi.debut + ecartSec };
   if (quoi === "entree") return { ...saisi, entree: Math.max(0, saisi.entree + ecartSec * 1000) };
+  if (quoi === "gain") return { ...saisi, gain: gainBorne(saisi.gain + ecartDb) };
   return { ...saisi, sortie: Math.max(0, saisi.sortie - ecartSec * 1000) };
 }
 

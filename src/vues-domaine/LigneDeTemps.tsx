@@ -65,6 +65,8 @@ const ZONE_G = 44;
 
 type Prise = Geste & {
   x0: number;
+  /** L'ordonnée de la prise. Seul le geste de niveau s'en sert, étant le seul qui se tire en hauteur. */
+  y0: number;
   /** L'étendue figée pendant le geste : déplacer la dernière piste allonge le montage, et une étendue
    *  recalculée à chaque mouvement changerait le zoom, donc ferait glisser la barre sous le pointeur. */
   vue: Vue;
@@ -406,7 +408,7 @@ export function LigneDeTemps({
     // coup, les désarme partout ailleurs. `preventScroll` parce qu'un nœud vit dans un canevas qu'on
     // fait glisser : le navigateur, sinon, le ramènerait de force dans la fenêtre.
     if (m) { setSelection(m.id); boite.current?.focus({ preventScroll: true }); }
-    setPrise({ piste: l.k, quoi, x0: e.clientX, valeur0: valeurAuRepos(quoi, l), vue: totale, morceau: m });
+    setPrise({ piste: l.k, quoi, x0: e.clientX, y0: e.clientY, valeur0: valeurAuRepos(quoi, l), vue: totale, morceau: m });
   };
   const bouger = (e: React.PointerEvent) => {
     // LA TÊTE PASSE AVANT : elle se prend sur la règle, qui recouvre toute la largeur du dessin, et
@@ -422,10 +424,24 @@ export function LigneDeTemps({
     // le pointeur à la moitié de sa vitesse dès que le canevas était dézoomé. Mesuré à l'échelle
     // 0,514 : un déplacement de 100 pixels portait la piste de 2,48 s au lieu de 4,47.
     const ecart = ((e.clientX - prise.x0) / (px * echelleDuDessin())) * finesse;
-    if (prise.morceau) { setApercuM(appliquerGeste(prise.morceau, prise.quoi as never, ecart)); return; }
+    // L'ÉCART DE NIVEAU EST VERTICAL, ET VERS LE HAUT IL MONTE. Un quart de décibel par pixel
+    // d'ÉCRAN : les soixante-douze décibels de la course demandent alors deux cent quatre-vingt-huit
+    // pixels, ce qui laisse le geste précis sans le rendre interminable, et les mêmes modificateurs
+    // de finesse le divisent par dix et par cent.
+    //
+    // ET IL NE SE DIVISE PAS PAR L'ÉCHELLE, à la différence de l'écart horizontal. Les trois autres
+    // gestes doivent suivre le pointeur sur le dessin, d'où leur division ; un niveau ne suit rien,
+    // et diviser rendait sa sensibilité dépendante du zoom du canevas. Mesuré avec la division, à
+    // l'échelle 0,5 : un demi-décibel par pixel d'écran, donc le double de ce qui était voulu, et un
+    // décibel par pixel à l'échelle 0,25. Un tremblement de la main valait alors un décibel.
+    const ecartDb = (prise.y0 - e.clientY) * 0.25 * finesse;
+    if (prise.morceau) {
+      setApercuM(appliquerGeste(prise.morceau, prise.quoi as never, ecart, ecartDb));
+      return;
+    }
     const l = lignes.find((x) => x.k === prise.piste);
     if (!l) return;
-    setApercu(valeurDuGeste(prise, ecart, l));
+    setApercu(valeurDuGeste(prise, ecart, l, ecartDb));
   };
   const lacher = (e: React.PointerEvent) => {
     if (teteSaisie) {
@@ -533,6 +549,18 @@ export function LigneDeTemps({
                 <rect x={x0 + w - POIGNEE / 2} y={y} width={POIGNEE} height={h} rx={2} className="ligne-temps-poignee"
                   style={{ cursor: "ew-resize" }} onPointerDown={(e) => saisir(e, l, "duree")}>
                   <title>{t("maquette.dureeBoite")}</title>
+                </rect>
+              )}
+              {/* LE NIVEAU SE TIRE EN HAUTEUR, PAR LE BAS À DROITE. Les deux poignées de fondu sont
+                  sur le bord haut et la légende grandit depuis la gauche : ce coin-ci est le seul
+                  qui reste libre quoi que portent les fondus. Vers le haut il monte, ce qui est le
+                  sens qu'on attend d'un niveau. La barre doit être assez large pour le porter sans
+                  recouvrir ses voisines. */}
+              {modele.poignees.includes("gain") && w > 2 * POIGNEE && (
+                <rect x={x0 + w - POIGNEE - 2} y={y + h - POIGNEE + 1} width={POIGNEE} height={POIGNEE} rx={2}
+                  className="ligne-temps-poignee" style={{ cursor: "ns-resize" }}
+                  onPointerDown={(e) => saisir(e, l, "gain")}>
+                  <title>{t("montage.gainMorceau")}</title>
                 </rect>
               )}
               {w > 70 && (

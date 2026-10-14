@@ -403,6 +403,10 @@ const DICO: Record<string, Record<Langue, string>> = {
   "montage.aucunePiste": { fr: "Branchez un son sur une piste pour le voir sur la ligne de temps.", en: "Connect a sound to a track to see it on the timeline." },
   "montage.dureesInconnues": { fr: "Pointillé : durée inconnue tant que le graphe n'a pas été exécuté.", en: "Dotted: length unknown until the graph has been run." },
   "montage.fonduEntree": { fr: "Tirer pour régler le fondu d'entrée", en: "Drag to set the fade in" },
+  "montage.gainMorceau": {
+    fr: "Tirer vers le haut ou vers le bas pour régler le niveau",
+    en: "Drag up or down to set the level",
+  },
   "montage.lire": { fr: "Écouter le montage", en: "Play the montage" },
   "montage.pause": { fr: "Suspendre", en: "Pause" },
   "montage.zoom": { fr: "Zoom de la ligne de temps. La molette zoome aussi, sur l'instant visé.", en: "Timeline zoom. The wheel zooms too, on the instant under the pointer." },
