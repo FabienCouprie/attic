@@ -11,10 +11,11 @@
 // défaut du son lui-même.
 import { describe, expect, it } from "vitest";
 import {
+  GAIN_MAX, GAIN_MIN, GAIN_PAS,
   appliquerGeste, collerMorceaux, couperA, couperMorceau, deplacerMorceau, dureeSonnante,
-  etendueDesMorceaux, morceauA, morceauxAEcrire, morceauxCompletes, morceauxDepuisParametres,
-  normaliserMorceau, nouvelId,
-  remplacerMorceau, retirerMorceau, type Morceau,
+  etendueDesMorceaux, gainBorne, morceauA, morceauxAEcrire, morceauxCompletes,
+  morceauxDepuisParametres, normaliserMorceau, nouvelId,
+  remplacerMorceau, retirerMorceau, type GesteMorceau, type Morceau,
 } from "./montage-morceaux";
 
 const M = (p: Partial<Morceau> = {}): Morceau => ({
@@ -238,11 +239,68 @@ describe("l'arithmetique du geste", () => {
     expect(appliquerGeste(saisi, "corps", -12).debut).toBe(-8);
   });
 
+  it("LE NIVEAU SE TIRE EN HAUTEUR, et il lit l'ecart vertical et non l'horizontal", () => {
+    // Le seul geste qui ne parle pas de temps : son ecart est en decibels, d'ou le quatrieme
+    // argument. Un ecart horizontal ne doit donc rien changer a son niveau.
+    expect(appliquerGeste(saisi, "gain", 0, 6).gain).toBe(6);
+    expect(appliquerGeste(saisi, "gain", 99, 0).gain).toBe(0);
+    const apres = appliquerGeste(saisi, "gain", 0, -4.5);
+    expect(apres.gain).toBe(-4.5);
+    expect({ debut: apres.debut, dans: apres.dans, duree: apres.duree, entree: apres.entree, sortie: apres.sortie })
+      .toEqual({ debut: 4, dans: 1, duree: 3, entree: 20, sortie: 30 });
+  });
+
+  it("ET IL RESTE DANS LES BORNES DU REGLAGE, sur son pas", () => {
+    // Un morceau ne doit pas porter un niveau que le curseur ne saurait pas montrer : les bornes
+    // viennent du meme endroit que les siennes, et le pas aussi.
+    expect(appliquerGeste(saisi, "gain", 0, -500).gain).toBe(GAIN_MIN);
+    expect(appliquerGeste(saisi, "gain", 0, 500).gain).toBe(GAIN_MAX);
+    expect(appliquerGeste(saisi, "gain", 0, 0.24).gain).toBe(0);
+    expect(appliquerGeste(saisi, "gain", 0, 0.26).gain).toBe(GAIN_PAS);
+    expect(gainBorne(-3.3)).toBe(-3.5);
+  });
+
   it("remplacer ne touche que le morceau nomme, retirer ne retire que lui", () => {
     const liste = [M({ id: "a" }), M({ id: "b" }), M({ id: "c" })];
     expect(remplacerMorceau(liste, M({ id: "b", debut: 99 })).map((m) => m.debut)).toEqual([0, 99, 0]);
     expect(retirerMorceau(liste, "b").map((m) => m.id)).toEqual(["a", "c"]);
     expect(retirerMorceau(liste, "inconnu").length).toBe(3);
+  });
+});
+
+describe("chaque reglage de piste a son geste de remplacement sur la barre", () => {
+  // LE GARDE QUI MANQUAIT, ET LE DEFAUT QU'IL ARRETE. Les quatre reglages d'une piste cessent
+  // d'agir des qu'un morceau y est pose : c'est la regle du noeud, et elle est juste, un morceau
+  // place a la main ne devant pas bouger sous une glissiere. Mais trois seulement avaient leur
+  // geste de remplacement sur la barre ; le NIVEAU n'en avait aucun, et son gain n'etait ecrit
+  // qu'a un seul endroit de toute la chaine, la deduction depuis les reglages. Le premier geste sur
+  // une piste y figeait donc son niveau POUR TOUJOURS. Releve par Fabien : « j'ai l'impression que
+  // le gain de la table de montage ne fonctionne pas ».
+  //
+  // IL NE NOMME AUCUN CHAMP, et c'est ce qui le rend sur. Il DEDUIT les champs qui dependent d'un
+  // reglage, en comparant deux morceaux deduits de deux jeux de reglages ; puis il DEDUIT ceux
+  // qu'un geste sait ecrire, en appliquant chaque geste. Un cinquieme reglage ajoute demain sera
+  // couvert sans qu'on y pense, et un geste retire tombera ici.
+  const GESTES: GesteMorceau[] = ["corps", "entree", "sortie", "gain"];
+
+  it("TOUT CHAMP QU'UN REGLAGE DECIDE EST ECRIT PAR UN GESTE", () => {
+    const [a] = morceauxDepuisParametres([0],
+      { "Début 1": 1, "Gain 1": 0, "Fondu entrée 1": 10, "Fondu sortie 1": 10 });
+    const [b] = morceauxDepuisParametres([0],
+      { "Début 1": 7, "Gain 1": -9, "Fondu entrée 1": 300, "Fondu sortie 1": 400 });
+    const champs = Object.keys(a) as (keyof Morceau)[];
+    const parLesReglages = champs.filter((c) => a[c] !== b[c]);
+    const parLesGestes = new Set<keyof Morceau>();
+    for (const quoi of GESTES) {
+      const apres = appliquerGeste(a, quoi, 1.5, 3);
+      for (const c of champs) if (apres[c] !== a[c]) parLesGestes.add(c);
+    }
+    const orphelins = parLesReglages.filter((c) => !parLesGestes.has(c));
+    expect(orphelins, `reglables sans geste : ${orphelins.join(", ") || "aucun"}`).toEqual([]);
+    // ET LE CAS NE DOIT PAS PASSER A VIDE : sans ces deux planchers il passerait au vert en ne
+    // comparant rien, ce qui est la facon dont un garde de cette forme meurt sans qu'on le voie.
+    expect(parLesReglages.length, `champs reglables trouves : ${parLesReglages.join(", ")}`).toBe(4);
+    expect(parLesGestes.size, `champs ecrits par un geste : ${[...parLesGestes].join(", ")}`).toBe(4);
   });
 });
 
