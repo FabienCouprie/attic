@@ -622,7 +622,13 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     if (enCours !== undefined) window.clearTimeout(enCours);
     minuteursRelance.current.set(nid, window.setTimeout(() => {
       minuteursRelance.current.delete(nid);
-      lancerRef.current?.(nid);
+      // ET LA RELANCE VA VERS L'AVAL, à la différence d'un run ciblé que la personne demande.
+      //
+      // Relevé par Fabien sur le gain du montage : le nœud se recalculait bien, mais le moteur
+      // venait d'EFFACER les résultats de son aval, et un run ciblé n'embrasse que l'amont. Tout ce
+      // qui suivait restait donc à « En attente », et depuis l'aval — où l'on écoute et où l'on
+      // exporte — le réglage paraissait mort. Voir `PerimetreCible`.
+      lancerRef.current?.(nid, { versLAval: true });
     }, DELAI_RELANCE_MS));
   }, [noeudsRef, lancerRef]);
 

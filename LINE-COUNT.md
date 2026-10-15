@@ -7,17 +7,17 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1348 files, 241983 lines, of which 164144 are code.**
+**1348 files, 242079 lines, of which 164177 are code.**
 The table lists the 193 files of 200 code lines or more, heaviest first;
-the remaining 1155 account for 159969 lines.
+the remaining 1155 account for 159991 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
 | src/ui/atelier.css | 1412 | 1790 | ! |
-| src/ui/App.tsx | 1217 | 1642 | ! |
-| src/ui/hooks/useExecutionGraphe.ts | 752 | 1647 | ! |
+| src/ui/App.tsx | 1217 | 1648 | ! |
+| src/ui/hooks/useExecutionGraphe.ts | 754 | 1676 | ! |
 | src/ui/Inspector.tsx | 615 | 789 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
 | src/docs/documentation-graphe.ts | 572 | 732 | ! |
@@ -145,6 +145,7 @@ the remaining 1155 account for 159969 lines.
 | src/audio/attracteurs.ts | 247 | 289 |  |
 | src/core/meta.ts | 246 | 336 |  |
 | src/audio/analyse.ts | 244 | 321 |  |
+| src/core/graphe.test.ts | 244 | 347 |  |
 | src/audio/qualites-accords.test.ts | 243 | 326 |  |
 | src/audio/pghi.ts | 242 | 377 |  |
 | src/audio/texture-statistique.ts | 241 | 412 |  |
@@ -175,7 +176,6 @@ the remaining 1155 account for 159969 lines.
 | src/audio/concret.ts | 222 | 363 |  |
 | src/audio/granulation-ecologique.test.ts | 222 | 336 |  |
 | src/audio/commun.ts | 221 | 364 |  |
-| src/core/graphe.test.ts | 221 | 308 |  |
 | src/ui/hooks/usePersistance.ts | 221 | 314 |  |
 | src/audio/palette-harmonique.ts | 220 | 258 |  |
 | src/vues-domaine/ExtraitVideo.tsx | 220 | 261 |  |
