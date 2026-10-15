@@ -23,11 +23,17 @@ const FICHES: Record<string, { univers: string; famille: string }> = {
 };
 const info = (id: string) => FICHES[id];
 
-const n = (id: string, ficheId: string, parametres: Record<string, string | number> = {}, rendu = false): NoeudBrut =>
-  ({ id, data: { ficheId, parametres, ...(rendu ? { audioResultatMessage: "fait" } : {}) } });
+// CE QU'UN NŒUD A RENDU NE VIT PLUS DANS SES DONNÉES : le shell le lit dans un magasin à part et le
+// passe à `instantane`, comme il passait déjà le statut. Ces témoins le miment par une liste d'ids.
+const rendus = new Set<string>();
+const n = (id: string, ficheId: string, parametres: Record<string, string | number> = {}, rendu = false): NoeudBrut => {
+  if (rendu) rendus.add(id); else rendus.delete(id);
+  return { id, data: { ficheId, parametres } };
+};
 
 const atelier = (noeuds: NoeudBrut[], liens: { source: string; target: string }[] = []) =>
-  instantane(noeuds, liens, info);
+  instantane(noeuds, liens, info, undefined,
+    (id) => (rendus.has(id) ? { audioResultatMessage: "fait" } : {}));
 
 const GEN: Critere = { fiches: ["generateur-frequence"], quoi: "un générateur", quoiEn: "a generator" };
 const COMP: Critere = { fiches: ["compresseur"], quoi: "le compresseur", quoiEn: "the compressor" };

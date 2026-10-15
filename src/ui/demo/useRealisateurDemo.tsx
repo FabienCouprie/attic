@@ -17,7 +17,7 @@ import { useCallback, useEffect, useRef, useState, type MutableRefObject, type R
 
 import { langueCourante, traduire } from "../../i18n";
 import { scenarioDemo, type ActionDemo } from "./scenario";
-import { CHAMPS_RESULTAT } from "../hooks/useExecutionGraphe";
+import { effacerResultats, resultatDe } from "../resultats";
 import { registreUI } from "../registre-actif";
 
 export const EVENEMENT_FILMER = "attic:filmer-demo";
@@ -254,7 +254,9 @@ export function useRealisateurDemo(params: Params): { calque: ReactNode; enCours
         setCurseur({ ...curseurRef.current, visible: false });
       } else if (a.genre === "ecouter") {
         const n = p.noeudsRef.current.find((x) => x.id === a.id);
-        const d = n?.data ?? {};
+        // CE QU'UN RUN A PRODUIT SE LIT DANS SON MAGASIN, et non dans les données du nœud : un
+        // résultat n'y vit plus. Voir `ui/resultats.ts`.
+        const d = resultatDe(a.id) as Record<string, unknown>;
         const son = d.audioResultatBuffer instanceof AudioBuffer ? (d.audioResultatBuffer as AudioBuffer) : null;
         const visible = !!(son || d.imageResultatUrl || d.apercuCourbe || d.scriptGenere);
         if (!n || !visible) return; // rien à écouter ni à voir : on passe
@@ -292,11 +294,13 @@ export function useRealisateurDemo(params: Params): { calque: ReactNode; enCours
     try {
       // Le graphe, vierge et caché, cadré en entier : chaque nœud apparaîtra à sa place.
       p.setSel(null);
-      p.setNodes(() => autres.map((n) => {
-        const data = { ...n.data, statut: "attente" };
-        for (const c of CHAMPS_RESULTAT) delete (data as any)[c];
-        return { ...n, data, hidden: !["comment", "frame"].includes(String(n.data?.ficheId)), selected: false };
-      }));
+      // LE GRAPHE REPART VIERGE, ET UN RÉSULTAT S'EFFACE DANS SON MAGASIN. Il était retiré de
+      // `data` champ par champ ; il n'y est plus. Voir `ui/resultats.ts`.
+      effacerResultats(autres.map((n) => n.id));
+      p.setNodes(() => autres.map((n) => ({
+        ...n, data: { ...n.data, statut: "attente" },
+        hidden: !["comment", "frame"].includes(String(n.data?.ficheId)), selected: false,
+      })));
       // L'état de React arrive quelques images plus tard, et un rendu intermédiaire peut reposer
       // l'ancien : on attend que les nœuds soient VRAIMENT cachés avant de cadrer, en insistant.
       const decoratif = (n: any) => ["comment", "frame"].includes(String(n.data?.ficheId));

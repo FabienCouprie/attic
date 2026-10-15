@@ -72,9 +72,15 @@ const CHAMPS_RESULTAT = [
 
 const ATTENDU = new Set(["", null, undefined]);
 
-/** Vrai si l'un des champs de résultat porte quelque chose. */
-function porteUnResultat(data: Record<string, unknown>): boolean {
-  return CHAMPS_RESULTAT.some((c) => !ATTENDU.has(data[c] as never) && data[c] !== false);
+/**
+ * Vrai si l'un des champs de résultat porte quelque chose.
+ *
+ * CE QU'ON LUI DONNE N'EST PLUS `data`, MAIS CE QUE LE RUN A PRODUIT. Un résultat ne vit plus dans
+ * les données du nœud : il est dans un magasin à part, que le shell lit et nous passe, comme il nous
+ * passe déjà le statut. Ce module reste donc pur, et éprouvable sans monter React.
+ */
+function porteUnResultat(produit: Record<string, unknown>): boolean {
+  return CHAMPS_RESULTAT.some((c) => !ATTENDU.has(produit[c] as never) && produit[c] !== false);
 }
 
 /**
@@ -90,6 +96,10 @@ export function instantane(
   liens: readonly LienBrut[],
   info: (ficheId: string) => InfoFiche | undefined,
   statut?: (id: string) => string,
+  // CE QUE LE RUN A PRODUIT, LU PAR LE SHELL ET PASSÉ ICI, comme le statut l'est déjà. Sans lui,
+  // « rendu » ne tient plus qu'au statut du nœud : c'est une réponse appauvrie, mais visible, et
+  // non un silence.
+  produit?: (id: string) => Record<string, unknown>,
 ): Atelier {
   const vus: NoeudVu[] = [];
   for (const n of noeuds ?? []) {
@@ -104,7 +114,7 @@ export function instantane(
       univers: f?.univers ?? "",
       famille: f?.famille ?? "",
       parametres: (p && typeof p === "object" ? p : {}) as Record<string, string | number>,
-      rendu: porteUnResultat(data) || statut?.(n.id) === "termine",
+      rendu: porteUnResultat(produit?.(n.id) ?? {}) || statut?.(n.id) === "termine",
     });
   }
   const connus = new Set(vus.map((n) => n.id));

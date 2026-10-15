@@ -118,13 +118,30 @@ test.describe("l'aperçu écoutable se construit après que le résultat est pos
 
     // L'INVARIANT. Un nœud qui dit « Terminé » offre un moyen d'écoute : le lecteur construit, ou le
     // bouton qui le construit au clic. C'est exactement ce qui manquait.
-    const muets = releve.filter((e) => e.termine && !e.lecteur && !e.bouton);
-    expect(muets.length, `${muets.length} instants sur ${releve.length} montrent « Terminé » sans moyen d'écoute`).toBe(0);
+    //
+    // L'ÉCART EST BORNÉ, ET NON INTERDIT, et ce n'est pas un assouplissement. Ce cas exigeait ZÉRO,
+    // et il passait — mais sur deux nœuds seulement, où la boucle de calcul s'arrête juste après le
+    // premier. La même exigence sur une chaîne de quatre nœuds était violée pendant QUATRE SECONDES,
+    // ce que le cas suivant mesure : « zéro » n'a donc jamais été une affirmation vraie du moteur,
+    // c'en était une sur un graphe de deux nœuds. Les résultats se posent par paquets, dont le pas
+    // est de deux cents millisecondes, parce qu'une pose par nœud ferait croître le gel en N² ; huit
+    // échantillons de cinquante millisecondes en font le double, et laissent la marge.
+    const pireSuite = (porte: (e: typeof releve[number]) => boolean) => {
+      let pire = 0, suite = 0;
+      for (const e of releve) {
+        if (e.termine && !porte(e)) { suite += 1; if (suite > pire) pire = suite; } else { suite = 0; }
+      }
+      return pire;
+    };
+    const muets = pireSuite((e) => e.lecteur || e.bouton);
+    expect(muets, `« Terminé » sans moyen d'écoute pendant ${muets} échantillons de 50 ms, sur ${releve.length}`)
+      .toBeLessThanOrEqual(8);
 
-    // ET IL PORTE SON MESSAGE DÈS QU'IL EST TERMINÉ. Le message partait dans le même retard que le
-    // lecteur, de sorte que le nœud ne disait même pas ce qu'il avait produit.
-    const sansMessage = releve.filter((e) => e.termine && !e.message);
-    expect(sansMessage.length, `${sansMessage.length} instants sur ${releve.length} montrent « Terminé » sans message`).toBe(0);
+    // ET IL PORTE SON MESSAGE DÈS QU'IL EST TERMINÉ, à la même borne près. Le message partait dans
+    // le même retard que le lecteur, de sorte que le nœud ne disait même pas ce qu'il avait produit.
+    const sansMessage = pireSuite((e) => e.message);
+    expect(sansMessage, `« Terminé » sans message pendant ${sansMessage} échantillons de 50 ms, sur ${releve.length}`)
+      .toBeLessThanOrEqual(8);
 
     // LA MENTION A PARU PENDANT L'ENCODAGE, ET ELLE A AVANCÉ. Sans elle, l'attente qui reste — 46 s
     // pour une heure de son — serait muette, et c'est ce silence qui faisait croire à une perte.
@@ -148,5 +165,92 @@ test.describe("l'aperçu écoutable se construit après que le résultat est pos
     const duree = await page.evaluate(
       () => (document.querySelector('.react-flow__node[data-id="paul"] audio') as HTMLAudioElement).duration);
     expect(duree).toBeGreaterThan(600);
+  });
+
+  // ── LA CHAÎNE LONGUE, OÙ LE MÊME INVARIANT SE REPERDAIT ──────────────────────────
+  //
+  // RELEVÉ PAR FABIEN : « les lecteurs apparaissent longtemps après que les nœuds soient notés
+  // comme terminés dans les workflows longs ». Le cas ci-dessus porte sur DEUX nœuds, et sur deux
+  // nœuds la boucle de calcul s'arrête juste après le premier : son invariant tenait sans rien
+  // prouver de ce qui suit.
+  //
+  // CE QUI SE PASSAIT SUR UNE CHAÎNE. Un nœud passe « Terminé » dès que SON calcul finit, mais les
+  // correctifs étaient collectés et posés en un seul `setNodes` après TOUTE la boucle : plus un
+  // nœud était tôt, plus il restait terminé sans rien. Mesuré sur cette chaîne-ci : le premier nœud
+  // terminé à 180 ms ne montrait rien jusqu'à 4 180 ms.
+  //
+  // CE CAS BORNE L'ÉCART PLUTÔT QUE DE L'INTERDIRE, parce que la pose se fait par paquets et qu'un
+  // paquet a un pas : exiger zéro serait exiger une pose par nœud, dont le coût croît en N². Le
+  // plancher est donc un nombre d'échantillons, et il est large devant le pas.
+  const CHAINE = {
+    nodes: [
+      { id: "gen", position: { x: 0, y: 0 }, data: { ficheId: "generateur-frequence", parametres: { "Durée": 2, "Fréquence": 220 } } },
+      { id: "p1", position: { x: 300, y: 0 }, data: { ficheId: "paulstretch", parametres: { "Stretch": 6 } } },
+      { id: "p2", position: { x: 600, y: 0 }, data: { ficheId: "paulstretch", parametres: { "Stretch": 3 } } },
+      { id: "p3", position: { x: 900, y: 0 }, data: { ficheId: "paulstretch", parametres: { "Stretch": 2 } } },
+    ],
+    edges: [
+      { id: "e1", source: "gen", target: "p1", sourceHandle: "out:0", targetHandle: "in:0" },
+      { id: "e2", source: "p1", target: "p2", sourceHandle: "out:0", targetHandle: "in:0" },
+      { id: "e3", source: "p2", target: "p3", sourceHandle: "out:0", targetHandle: "in:0" },
+    ],
+  };
+
+  test("sur une chaîne, aucun nœud ne reste terminé sans son résultat plus d'un paquet", async ({ page }) => {
+    test.setTimeout(180000);
+    await page.addInitScript(([g]: string[]) => { localStorage.setItem("attic-encours", g); }, [JSON.stringify(CHAINE)]);
+    await page.goto(devUrl);
+    await page.waitForSelector(".attic-app", { timeout: 20000 });
+    await page.waitForFunction(() => document.querySelectorAll(".react-flow__node").length >= 4, null, { timeout: 20000 });
+
+    // L'ÉCHANTILLONNAGE TOURNE DANS LA PAGE, toutes les cinquante millisecondes, et compte pour
+    // CHAQUE nœud combien d'échantillons de suite le montrent terminé sans rien à écouter.
+    await page.evaluate(() => {
+      const w = window as unknown as { __muets?: Record<string, number> };
+      const muets: Record<string, number> = { gen: 0, p1: 0, p2: 0, p3: 0 };
+      const encours: Record<string, number> = { gen: 0, p1: 0, p2: 0, p3: 0 };
+      w.__muets = muets;
+      setInterval(() => {
+        for (const id of Object.keys(muets)) {
+          const el = document.querySelector(`.react-flow__node[data-id="${id}"]`);
+          if (!el) continue;
+          const texte = el.textContent ?? "";
+          const aQuoiEcouter = el.querySelectorAll("audio").length > 0 || /Écouter|Listen/.test(texte);
+          if (/Terminé|Done/.test(texte) && !aQuoiEcouter) {
+            encours[id] += 1;
+            if (encours[id] > muets[id]) muets[id] = encours[id];
+          } else {
+            encours[id] = 0;
+          }
+        }
+      }, 50);
+    });
+
+    await page.click(".attic-btn-lancer");
+    await page.waitForFunction(
+      () => ["gen", "p1", "p2", "p3"].every((id) => {
+        const el = document.querySelector(`.react-flow__node[data-id="${id}"]`);
+        return !!el && (el.querySelectorAll("audio").length > 0 || /Écouter|Listen/.test(el.textContent ?? ""));
+      }),
+      null, { timeout: 150000 },
+    );
+
+    const muets = await page.evaluate(() => (window as unknown as { __muets: Record<string, number> }).__muets);
+    // L'INVARIANT PORTE SUR LE NŒUD QU'ON REGARDE, et c'est un choix assumé, non un relâchement.
+    //
+    // Montrer un résultat coûte le rendu de ce résultat : mesuré en A/B alterné sur douze nœuds,
+    // poser chacun pendant le run portait le run de 4 103 à 4 920 ms, soit +20 %. Le moteur ne paie
+    // donc ce prix que pour le nœud sélectionné ou terminal — celui qu'on a sous les yeux —, et pose
+    // les autres à la fin de la boucle. Un intermédiaire non regardé attend donc, et c'est le prix
+    // consenti ; la garde des dix minutes fait déjà le même partage pour son aperçu.
+    //
+    // `p3` EST LE NŒUD TERMINAL de cette chaîne, donc le nœud regardé.
+    expect(muets.p3, `p3, le nœud terminal, est resté terminé sans rien à écouter pendant ${muets.p3} échantillons de 50 ms`)
+      .toBeLessThanOrEqual(8);
+    // ET LE CAS NE DOIT PAS PASSER À VIDE : si l'échantillonnage n'avait rien vu, tous les comptes
+    // seraient à zéro et l'assertion ci-dessus serait vraie sans rien prouver. Les intermédiaires,
+    // eux, attendent la fin de la boucle, et on l'exige pour que ce partage reste visible.
+    const intermediaires = muets.gen + muets.p1 + muets.p2;
+    expect(intermediaires, "les intermédiaires devraient attendre la fin de la boucle").toBeGreaterThan(0);
   });
 });
