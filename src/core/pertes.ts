@@ -62,8 +62,15 @@ export function detecterPertes(data: Record<string, unknown>): ChampPurge[] {
     // Champs commençant par _ (internes, temporaires) — non purgés, juste ignorés
     if (cle.startsWith("_") || cle.startsWith("on")) continue;
     // Champs de statut runtime (recréés à l'exécution)
-    if (["statut", "progression", "progressionDuNoeud", "audioResultatUrl", "audioResultatNom", "audioResultatMessage",
-         "audioUrl", "enregistrementUrl", "mp3Url", "scriptGenere", "midiFichierSortie",
+    //
+    // CINQ NOMS DE RÉSULTAT ONT QUITTÉ CETTE LISTE, parce qu'ils ne peuvent plus s'y présenter :
+    // `audioResultatUrl`, `audioResultatNom`, `audioResultatMessage`, `scriptGenere` et
+    // `midiFichierSortie` ne vivent plus dans `data` mais dans le magasin des résultats, hors du
+    // tableau des nœuds. Les garder ici aurait entretenu l'idée qu'un résultat traverse encore la
+    // sauvegarde. Voir `ui/resultats.ts`. `audioUrl`, `enregistrementUrl` et `mp3Url` restent :
+    // ce sont des ENTRÉES posées sur le nœud, non des résultats.
+    if (["statut", "progression", "progressionDuNoeud",
+         "audioUrl", "enregistrementUrl", "mp3Url",
          "modeleFichier", "audioFichier", "midiFichier", "imageFichier", "svgFichier",
          "svgNom", "enregistrementBlob",
          "irFichier", "pureDataFichier"].includes(cle)) {

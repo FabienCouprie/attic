@@ -8,6 +8,7 @@ import { useI18n } from "../i18n";
 import { champTexte, texteBilingue } from "./texte-bilingue";
 import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "./registre-vues";
 import { useStatut } from "./statuts";
+import { useResultat } from "./resultats";
 import { etatPorts } from "./ports-extensibles";
 import { copierTexte } from "./copier";
 import { TexteAvecLiens } from "./texteAvecLiens";
@@ -182,9 +183,16 @@ function IndicateurNiveau({ buffer }: { buffer?: AudioBuffer }) {
     let peak = 0;
     let rmsAcc = 0;
     let n = 0;
+    // CE PARCOURS EST DÉCIMÉ, et ce n'est pas une économie de confort. Il lisait TOUS les
+    // échantillons de TOUS les canaux, soit 441 000 pour cinq secondes de stéréo, et il tourne à
+    // chaque fois que le tampon change. Depuis que le résultat d'un nœud est posé pendant le run et
+    // non après, ce parcours tombe DANS le run : mesuré sur douze nœuds, 45 ms chacun, soit 550 ms
+    // sur un run de 3,6 s. Un pas d'échantillonnage l'ôte sans rien changer de lisible : un
+    // indicateur de niveau se lit au dixième de décibel près.
+    const PAS = Math.max(1, Math.floor(buffer.length / 8192));
     for (let c = 0; c < buffer.numberOfChannels; c++) {
       const data = buffer.getChannelData(c);
-      for (let i = 0; i < data.length; i++) {
+      for (let i = 0; i < data.length; i += PAS) {
         const v = Math.abs(data[i]);
         if (v > peak) peak = v;
         rmsAcc += v * v;
@@ -211,7 +219,20 @@ function IndicateurNiveau({ buffer }: { buffer?: AudioBuffer }) {
 // Renderer GÉNÉRIQUE : en-tête, documentation, ports typés et statut sont communs
 // à tous les nœuds. Les UI spécifiques à certains nœuds sont fournies par le
 // registre de vues (ui/registre-vues.ts) — aucun couplage au domaine ici.
-export function AtelierNode({ id, data, selected }: NodeProps<NoeudAtelier>) {
+export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<NoeudAtelier>) {
+  // LE RÉSULTAT DU RUN NE VIENT PLUS DU TABLEAU DES NŒUDS, pour la même raison que le statut : le
+  // poser là obligeait à remplacer ce tableau, donc à refaire passer React Flow sur les N nœuds, à
+  // 7 ms par nœud présent. Relevé sur douze nœuds de trois cents millisecondes, le run passait de
+  // 3 678 à 4 434 ms, soit +20,6 %. Ici, seul ce composant-ci est prévenu. Voir `ui/resultats.ts`.
+  //
+  // ET IL EST FUSIONNÉ DANS `data`, de sorte que le reste de ce composant et les treize vues du
+  // domaine ne changent pas d'une ligne : elles continuent de lire `data.audioResultatUrl`. Le
+  // graphe passe en premier et le résultat par-dessus, puisque c'est lui qui décrit le dernier run.
+  const resultat = useResultat(id);
+  const data = useMemo(
+    () => (Object.keys(resultat).length === 0 ? donneesDuGraphe : { ...donneesDuGraphe, ...resultat }),
+    [donneesDuGraphe, resultat],
+  ) as typeof donneesDuGraphe;
   const def = getDef(data.ficheId);
   const { t, lang } = useI18n();
   const nodeEstMeta = estMeta(data.ficheId as string);

@@ -36,7 +36,8 @@ import { tailleDefaut } from "./tailles-noeuds";
 import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
-import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES, CHAMPS_RESULTAT } from "./hooks/useExecutionGraphe";
+import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES } from "./hooks/useExecutionGraphe";
+import { resultatDe } from "./resultats";
 import { CLE_PREFERENCE, PERIODE_SAUVEGARDE_MS, lirePreference } from "./sauvegarde-auto";
 import { ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
 import { ecrireProfondeurExport, lireProfondeurExport } from "./profondeur-export";
@@ -676,16 +677,14 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     // Révoquer les object URLs de résultats générés par le nœud (pas les fichiers
     // d'entrée audioUrl/enregistrementUrl, conservés pour que l'undo reste fonctionnel).
     for (const id of idArr) {
-      const n = noeudsRef.current.find((nn) => nn.id === id);
-      if (!n) continue;
-      // LA LISTE QUI DÉCIDE EST `CHAMPS_RESULTAT`, et la valeur dit d'elle-même si elle est à
-      // révoquer. Quatre noms étaient énumérés ici, la même divergence que celle relevée dans la
-      // remise à zéro : les films du montage vidéo, de l'extrait, du muet et de la démonstration
-      // sont eux aussi des `createObjectURL`, et supprimer un de ces nœuds laissait son film en
-      // mémoire. Les fichiers d'entrée, eux, ne sont pas des résultats et restent intacts, ce qui
-      // garde l'annulation utilisable.
-      for (const champ of CHAMPS_RESULTAT) {
-        const v = (n.data as any)[champ];
+      // CE QU'IL Y A À RÉVOQUER EST DANS LE MAGASIN DES RÉSULTATS, et non dans les données du nœud :
+      // un résultat n'y vit plus. La valeur dit d'elle-même si elle est à révoquer. Quatre noms
+      // étaient un jour énumérés ici, la même divergence que celle relevée dans la remise à zéro :
+      // les films du montage vidéo, de l'extrait, du muet et de la démonstration sont eux aussi des
+      // `createObjectURL`, et supprimer un de ces nœuds laissait son film en mémoire. Les fichiers
+      // d'entrée, eux, ne sont pas des résultats et restent intacts, ce qui garde l'annulation
+      // utilisable. Voir `ui/resultats.ts`.
+      for (const v of Object.values(resultatDe(id))) {
         if (typeof v === "string" && v.startsWith("blob:")) URL.revokeObjectURL(v);
       }
     }

@@ -24,6 +24,7 @@ import { NodeResizer, useEdges, useNodes } from "@xyflow/react";
 import { useI18n } from "../i18n";
 
 import { statutDe } from "../ui/statuts";
+import { resultatDe } from "../ui/resultats";
 import { instantane, type LienBrut, type NoeudBrut } from "../parcours/atelier";
 import { examiner, tousCoches } from "../parcours/conditions";
 import { jugerCibles, mesurerCopie } from "../parcours/mesures";
@@ -63,7 +64,10 @@ export function Parcours({ id, data }: Props) {
 
   const atelier = useMemo(
     () => instantane(noeuds as unknown as NoeudBrut[], liens as unknown as LienBrut[],
-      (ficheId) => rubriques.get(ficheId), (n) => statutDe(n).statut),
+      (ficheId) => rubriques.get(ficheId), (n) => statutDe(n).statut,
+      // LE SHELL LIT LES DEUX MAGASINS ET LES PASSE : le statut d'exécution et ce que le run a
+      // produit. `src/parcours/` n'en connaît ni l'un ni l'autre, et reste éprouvable sans React.
+      (n) => resultatDe(n) as Record<string, unknown>),
     [noeuds, liens, rubriques]);
 
   const reglages = useMemo(
@@ -81,7 +85,9 @@ export function Parcours({ id, data }: Props) {
     const amont = new Set(liens.filter((l) => l.target === id).map((l) => l.source));
     for (const n of noeuds) {
       if (!amont.has(n.id)) continue;
-      const buffer = (n.data as { audioResultatBuffer?: AudioBuffer }).audioResultatBuffer;
+      // LE TAMPON D'UN NŒUD D'AMONT SE LIT DANS LE MAGASIN DES RÉSULTATS, et non dans ses données :
+      // un résultat n'y vit plus. Voir `ui/resultats.ts`.
+      const buffer = (resultatDe(n.id) as { audioResultatBuffer?: AudioBuffer }).audioResultatBuffer;
       if (buffer instanceof AudioBuffer) return buffer;
     }
     return null;

@@ -59,16 +59,30 @@ describe("la photographie du graphe", () => {
 });
 
 describe("a rendu quelque chose", () => {
+  // CE QU'UN RUN A PRODUIT NE SE LIT PLUS DANS `data`, MAIS PAR UN ACCESSEUR. Un résultat vit
+  // désormais dans un magasin à part, hors du tableau des nœuds, et le shell le passe ici comme il
+  // passait déjà le statut. Ce module reste donc pur : il ne connaît ni React, ni le magasin.
+  const produit = (par: Record<string, Record<string, unknown>>) => (id: string) => par[id] ?? {};
+
   it("se lit sur n'importe lequel des champs de résultat", () => {
     const champs = ["audioResultatBuffer", "audioResultatUrl", "audioResultatMessage", "imageResultatUrl", "scriptGenere"];
     for (const champ of champs) {
-      const a = instantane([n("g", "generateur-frequence", { [champ]: "quelque chose" })], [], info);
+      const a = instantane([n("g", "generateur-frequence")], [], info, undefined,
+        produit({ g: { [champ]: "quelque chose" } }));
       expect(a.noeuds[0].rendu, champ).toBe(true);
     }
   });
 
   it("un champ vide ne compte pas pour un résultat", () => {
-    const a = instantane([n("g", "generateur-frequence", { audioResultatMessage: "" })], [], info);
+    const a = instantane([n("g", "generateur-frequence")], [], info, undefined,
+      produit({ g: { audioResultatMessage: "" } }));
+    expect(a.noeuds[0].rendu).toBe(false);
+  });
+
+  it("ET UN RÉSULTAT POSÉ DANS `data` NE COMPTE PLUS, ce qui est le sens du déplacement", () => {
+    // Si ce cas tombait, c'est que `instantane` lirait encore les données du nœud : le magasin
+    // serait alors une seconde source, et deux sources finissent toujours par divergir.
+    const a = instantane([n("g", "generateur-frequence", { audioResultatUrl: "blob:x" })], [], info);
     expect(a.noeuds[0].rendu).toBe(false);
   });
 
