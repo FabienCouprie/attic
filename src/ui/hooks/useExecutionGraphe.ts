@@ -25,6 +25,7 @@ import { estResultatEnErreur } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
 import { noeudRegarde, resultatRetenu } from "../../core/memoire";
 import { poserApercu, poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
+import { effacerResultats, poserResultat, resultatDe } from "../resultats";
 import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
 import { graineDuTour, resoudreGraine } from "../../core/hasard";
 import { deplierInstruments } from "../../core/instrument-graphe";
@@ -309,13 +310,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // sont eux aussi des `createObjectURL`, et aucun n'y figurait — un blob par nœud et par run
     // restait donc en mémoire. La seule liste qui décide est `CHAMPS_RESULTAT`, et la valeur dit
     // d'elle-même si elle est à révoquer.
+    //
+    // ET LES URL SE CHERCHENT DANS LE MAGASIN DES RÉSULTATS, où elles vivent désormais. Les
+    // chercher encore dans `node.data` n'aurait rien trouvé, et un blob par nœud et par run serait
+    // resté en mémoire — le défaut même que le commentaire ci-dessus raconte, à l'endroit suivant.
     for (const n of noeudsRef.current) {
       if (!ids.has(n.id)) continue;
-      for (const url of urlsARevoquer(n.data as any, CLASSES, garder)) URL.revokeObjectURL(url);
+      for (const url of urlsARevoquer(resultatDe(n.id) as any, CLASSES, garder)) URL.revokeObjectURL(url);
     }
-    // L'état d'exécution vit dans son magasin : le remettre en attente ne passe plus par le
-    // tableau des nœuds (voir `ui/statuts.ts`).
+    // L'ÉTAT D'EXÉCUTION ET LE RÉSULTAT VIVENT DANS LEURS MAGASINS : les effacer ne passe plus par
+    // le tableau des nœuds. `garder` y vaut comme ici, pour qu'un réglage laisse en place ce que le
+    // run avait DÉSIGNÉ de ses entrées. Voir `ui/statuts.ts` et `ui/resultats.ts`.
     reinitialiserStatuts(ids);
+    effacerResultats(ids, garder);
     setNodes((nds) => nds.map((n) => {
       if (!ids.has(n.id)) return n;
       // LA RÈGLE EST DANS `core/cycle-de-vie.ts`, ce crochet ne fait que l'appliquer : c'est ce qui
@@ -690,6 +697,73 @@ export function useExecutionGraphe(o: OptionsExecution) {
     await respirer();
     if (controller.signal.aborted) { enCoursRef.current = false; return; }
 
+    // ── LES RÉSULTATS SE POSENT NŒUD PAR NŒUD, DÈS QU'IL A FINI ─────────────────────
+    //
+    // LE DÉFAUT, RELEVÉ PAR FABIEN : « les lecteurs apparaissent longtemps après que les nœuds
+    // soient notés comme terminés dans les workflows longs ». Un nœud passe « Terminé » dès que SON
+    // calcul finit, dans la boucle ci-dessous ; mais les correctifs étaient collectés puis posés en
+    // un seul `setNodes` APRÈS toute la boucle. Plus un nœud était tôt dans la chaîne, plus il
+    // restait longtemps terminé sans message, sans lecteur et sans bouton. Mesuré sur une chaîne de
+    // quatre nœuds : le premier était terminé à 180 ms et ne montrait rien jusqu'à 4 180 ms, soit
+    // quatre secondes de vide, et le deuxième 3,6 s. Sur un graphe de plusieurs minutes, c'est le
+    // run entier.
+    //
+    // ET POSER PAR `setNodes` AURAIT COÛTÉ LE TEMPS DU RUN. Chaque appel fait repasser React Flow
+    // sur TOUS les nœuds, à 7 ms par nœud présent : poser par paquets de deux cents millisecondes
+    // bornait la latence, mais sur douze nœuds de trois cents millisecondes chacun — donc un paquet
+    // par nœud — le run passait de 3 678 ms à 4 434, soit **+20,6 %**, mesuré, les deux
+    // distributions ne se recouvrant pas. C'est la question qu'a posée Fabien, et la réponse était
+    // oui.
+    //
+    // D'OÙ LE MAGASIN. Un résultat ne vit plus dans `node.data` : il va dans `ui/resultats.ts`, où
+    // seul le composant concerné s'y abonne. La pose est alors gratuite, et les deux coûts tombent
+    // ensemble — il n'y a plus à choisir entre la latence et le temps de run. C'est la même mesure
+    // qui avait fait sortir les statuts du tableau des nœuds ; voir `ui/statuts.ts`.
+    const souffle = new Respiration();
+    /**
+     * Les lecteurs restant à écrire, par nœud, remplis par `calculerCorrectifResultat`.
+     *
+     * LA BOUCLE NE LES ÉCRIT PAS : elle les écrivait avant de poser quoi que ce soit, et un nœud
+     * terminé restait sans rien pendant la somme des encodages. Ils s'écrivent à la fin, un par un,
+     * chacun posé dès qu'il est prêt.
+     */
+    const lecteursAEcrire = new Map<string, () => Promise<string | undefined>>();
+    const aPoser = new Set<string>();
+    /**
+     * Pose dans le magasin les correctifs des nœuds en attente.
+     *
+     * UN IDENTIFIANT QUI N'EST PAS CELUI D'UN NŒUD VISIBLE EST SAUTÉ, et c'est voulu : la boucle
+     * tourne sur le graphe APLATI, où un membre de méta s'appelle « outil1::cd ». Son méta, lui,
+     * agrège les résultats de ses internes et ne peut donc être posé qu'à la fin ; c'est la pose
+     * forcée, après la boucle, qui s'en charge.
+     */
+    const dejaPoses = new Set<string>();
+    const poserUnNoeud = async (id: string) => {
+      aPoser.delete(id);
+      const n = noeudsRef.current.find((x) => x.id === id);
+      if (!n) return;
+      const patch = await calculerCorrectifResultat(n);
+      if (patch) poserResultat(id, patch);
+      dejaPoses.add(id);
+    };
+    const poserCeQuiEstPret = async () => {
+      for (const id of [...aPoser]) await poserUnNoeud(id);
+    };
+    /**
+     * Ce nœud-ci est-il celui qu'on REGARDE : sélectionné, ou terminal.
+     *
+     * C'EST LA MÊME NOTION QUE POUR LA GARDE DES DIX MINUTES, et c'est voulu : le nœud qu'on
+     * regarde est celui dont l'aperçu mérite d'être construit, et celui dont le résultat mérite
+     * d'être montré sans attendre. Un seul endroit décide de ce qu'« être regardé » veut dire.
+     */
+    const estRegarde = (id: string) => noeudRegarde({
+      id,
+      selectionne: !!noeudsRef.current.find((x) => x.id === id)?.selected,
+      aretes: aretesRef.current,
+      dansUnMeta: (pileMetaRef?.current?.length ?? 0) > 0,
+      cacheParBulle: estCacheParBulle(tousNoeudsG, id),
+    });
+
     for (let i = 0; i < ordreFiltre.length; i++) {
       // Run annulé (reset pendant l'exécution) : arrêter d'enchaîner les nœuds
       // suivants. Le nœud éventuellement en cours au moment de l'annulation est
@@ -940,6 +1014,25 @@ export function useExecutionGraphe(o: OptionsExecution) {
         marquerMetaEnEchec(nodeId, node.data.ficheId as string);
         ajouterTemps(elapsed);
       }
+      // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER. En erreur comme en
+      // succès : un message d'erreur est un résultat, et l'attendre jusqu'au bout de la boucle
+      // laissait un nœud rouge sans sa raison.
+      aPoser.add(nodeId);
+      // SEUL LE NŒUD QU'ON REGARDE EST POSÉ PENDANT LE RUN, et les autres à la fin.
+      //
+      // POURQUOI CE PARTAGE, ET CE QU'IL COÛTE. Montrer un résultat coûte le rendu de ce résultat :
+      // mesuré en A/B alterné sur douze nœuds, poser chacun pendant le run portait le run de 4 103
+      // à 4 920 ms, soit +20 %. Ce n'est pas une inefficacité à corriger — `setNodes`, le double
+      // calcul du correctif, le souffle et le parcours du tampon par l'indicateur de niveau ont été
+      // éliminés tour à tour, et le coût est resté. C'est le prix du dessin, que l'ancien moteur ne
+      // payait pas parce qu'il dessinait tout après le dernier nœud.
+      //
+      // ON NE LE PAIE DONC QUE POUR CE QU'ON REGARDE. Le nœud sélectionné ou terminal est posé
+      // aussitôt, les autres à la fin de la boucle : le coût tombe de N nœuds à un ou deux, et l'on
+      // voit sans attendre ce que l'on avait sous les yeux. Relevé par Fabien : « les lecteurs
+      // apparaissent longtemps après que les nœuds soient notés comme terminés dans les workflows
+      // longs ».
+      if (estRegarde(nodeId)) await poserUnNoeud(nodeId);
     }
 
     // ── Mettre à jour les URL audio ──
@@ -1021,40 +1114,27 @@ export function useExecutionGraphe(o: OptionsExecution) {
       messages.set(visible, dit ? `${dit} · ${bout}` : bout);
     }
 
-    // LA PHASE DES APERÇUS RESPIRE ELLE AUSSI, relevé par Fabien sur une pièce de cinquante
-    // secondes. La boucle des nœuds rend la main entre deux nœuds depuis longtemps ; celle-ci, non,
-    // et c'est pourtant elle qui encode un WAV par nœud audio pour son petit lecteur. Sur une pièce
-    // longue, sept encodages s'enchaînaient sans une image : **un gel de 7,7 secondes d'un seul
-    // tenant**, alors que le même graphe lancé nœud par nœud ne gelait pas, le navigateur peignant
-    // entre deux clics. C'est cet indice-là qui a désigné la cause.
-    const souffle = new Respiration();
-    const correctifs = new Map<string, Record<string, unknown>>();
-    /**
-     * Les lecteurs restant à écrire, par nœud, remplis par `calculerCorrectifResultat`.
-     *
-     * CETTE BOUCLE NE LES ÉCRIT PLUS, et c'est tout le changement. Elle les écrivait avant de poser
-     * quoi que ce soit, et `setNodes` n'avait lieu qu'une fois les N aperçus encodés : un nœud
-     * terminé restait donc sans lecteur, sans bouton et sans message pendant la somme des
-     * encodages. Ils s'écrivent maintenant après, un par un, chacun posé dès qu'il est prêt.
-     */
-    const lecteursAEcrire = new Map<string, () => Promise<string | undefined>>();
+    // LA POSE FINALE, QUI NE LAISSE PERSONNE DE CÔTÉ. Les nœuds ordinaires ont déjà été posés par
+    // paquets pendant la boucle ; celle-ci reprend TOUT LE MONDE, et c'est elle qui sert :
+    //
+    //   — les métas et les bulles, qui agrègent les résultats de leurs internes et ne pouvaient
+    //     donc pas être posés plus tôt ;
+    //   — les messages complétés APRÈS la boucle, la graine tirée et la cause d'une boucle non
+    //     dépliée, qui sont rangés sous l'identifiant VISIBLE et non sous celui d'une copie. Un
+    //     nœud posé tôt a donc pu montrer son message sans son tirage de graine pendant un instant,
+    //     et cette pose-ci le corrige.
+    //
+    // ET ELLE NE REFAIT PAS LE TRAVAIL DÉJÀ FAIT. Reprendre tout le monde recalculait le correctif
+    // de chaque nœud une seconde fois, et ce n'est pas gratuit : mesuré sur douze nœuds, **540 ms**,
+    // soit quarante-cinq par nœud. Seuls repassent ici ceux qui n'ont pas encore été posés, et ceux
+    // dont le message a été complété après la boucle — la graine tirée et la cause d'une boucle non
+    // dépliée, rangées sous l'identifiant visible.
+    const aRepasser = new Set<string>([...grainesTirees.keys()]);
+    for (const p of deplie.problemes) aRepasser.add(plat.expansions.get(p.noeudId) ?? p.noeudId);
     for (const n of noeudsRef.current) {
-      const patch = await calculerCorrectifResultat(n);
-      if (patch) correctifs.set(n.id, patch);
-      await souffle.tour();
+      if (!dejaPoses.has(n.id) || aRepasser.has(n.id)) aPoser.add(n.id);
     }
-    // Un CORRECTIF de champs, appliqué sur les données VIVANTES du nœud — et non
-    // un remplacement de `data` construit depuis `noeudsRef.current`. Ce ref est en
-    // retard d'un rendu sur les statuts, que `definirStatut` vient de poser :
-    // remplacer `data` en bloc reposait donc un statut périmé, et un nœud restait
-    // affiché « en cours » alors que son calcul était fini. Défaut introduit par
-    // cette refonte, et attrapé en vérifiant dans l'app.
-    setNodes((nds) =>
-      nds.map((n) => {
-        const patch = correctifs.get(n.id);
-        return patch ? { ...n, data: { ...n.data, ...patch } } : n;
-      }),
-    );
+    await poserCeQuiEstPret();
 
     /** Champs à mettre à jour sur un nœud après le run, ou `null` s'il n'y a rien à changer. */
     async function calculerCorrectifResultat(n: any): Promise<Record<string, unknown> | null> {
@@ -1144,12 +1224,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // son et 46 s pour une heure, mesuré, et il avait lieu AVANT que le résultat soit posé. Le
         // tampon, le message et tout le reste partent donc tout de suite — le bouton « Écouter » est
         // là immédiatement — et le lecteur les rejoint quand il est prêt.
+        // CE QUE CE NŒUD PORTE DÉJÀ SE LIT DANS LE MAGASIN DES RÉSULTATS, et non dans ses données :
+        // un résultat n'y vit plus. La réutilisation d'une adresse et sa révocation ont besoin de
+        // l'état d'avant, et c'est là qu'il est.
+        const dejaLa = resultatDe(n.id) as {
+          audioResultatUrl?: string; audioResultatBuffer?: AudioBuffer;
+          imageResultatUrl?: string; imageResultatFile?: File;
+        };
         let url: string | undefined;
         if (audio && garderApercu) {
-          if (audio === n.data.audioResultatBuffer && n.data.audioResultatUrl) {
-            url = n.data.audioResultatUrl;
+          if (audio === dejaLa.audioResultatBuffer && dejaLa.audioResultatUrl) {
+            url = dejaLa.audioResultatUrl;
           } else {
-            if (n.data.audioResultatUrl) URL.revokeObjectURL(n.data.audioResultatUrl);
+            if (dejaLa.audioResultatUrl) URL.revokeObjectURL(dejaLa.audioResultatUrl);
             // LE NŒUD DÉCLARE QUE SA SORTIE PEUT SORTIR DE LA PLAGE, le shell ne tient plus la
             // liste : elle y était écrite en cinq identifiants de composants du domaine.
             const securiser = trouverDef(n.data.ficheId as string)?.sortieHorsPlagePossible === true;
@@ -1177,20 +1264,20 @@ export function useExecutionGraphe(o: OptionsExecution) {
               return blob ? URL.createObjectURL(blob) : undefined;
             });
           }
-        } else if (n.data.audioResultatUrl) {
-          URL.revokeObjectURL(n.data.audioResultatUrl);
+        } else if (dejaLa.audioResultatUrl) {
+          URL.revokeObjectURL(dejaLa.audioResultatUrl);
         }
         // Même logique pour l'image (Songsee, etc.) : réutilise l'URL si le File est identique.
         let imageUrl: string | undefined;
         if (imageFile) {
-          if (imageFile === n.data.imageResultatFile && n.data.imageResultatUrl) {
-            imageUrl = n.data.imageResultatUrl;
+          if (imageFile === dejaLa.imageResultatFile && dejaLa.imageResultatUrl) {
+            imageUrl = dejaLa.imageResultatUrl;
           } else {
-            if (n.data.imageResultatUrl) URL.revokeObjectURL(n.data.imageResultatUrl);
+            if (dejaLa.imageResultatUrl) URL.revokeObjectURL(dejaLa.imageResultatUrl);
             imageUrl = URL.createObjectURL(imageFile);
           }
-        } else if (n.data.imageResultatUrl) {
-          URL.revokeObjectURL(n.data.imageResultatUrl);
+        } else if (dejaLa.imageResultatUrl) {
+          URL.revokeObjectURL(dejaLa.imageResultatUrl);
         }
         // Pour un méta-nœud : ne marquer "terminé" que si un résultat a été produit
         if (meta) {
@@ -1242,29 +1329,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
       }
     }
 
-    // Appliquer les temps d'exécution mesurés (cumulés par nœud visible, y compris méta)
-    if (tempsParVisible.size > 0) {
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (!tempsParVisible.has(n.id)) return n;
-          const t = tempsParVisible.get(n.id)!;
-          if (n.data.tempsExecution === t) return n;
-          return { ...n, data: { ...n.data, tempsExecution: t } };
-        })
-      );
-    }
-
-    // L'ecart de niveau, pose sur le noeud comme le temps d'execution l'est.
-    if (ecartsParNoeud.size > 0) {
-      setNodes((nds) =>
-        nds.map((n) => {
-          if (!ecartsParNoeud.has(n.id)) return n;
-          const e = ecartsParNoeud.get(n.id)!;
-          if (n.data.ecartNiveau === e) return n;
-          return { ...n, data: { ...n.data, ecartNiveau: e } };
-        })
-      );
-    }
+    // LE TEMPS D'EXÉCUTION ET L'ÉCART DE NIVEAU VONT DANS LE MAGASIN comme le reste du résultat :
+    // ce sont deux comptes rendus du run, cumulés par nœud VISIBLE, méta compris. Le magasin ne
+    // prévient pas quand la valeur ne change pas, ce que les deux `setNodes` d'avant faisaient à la
+    // main en comparant le champ.
+    for (const [id, t] of tempsParVisible) poserResultat(id, { tempsExecution: t });
+    for (const [id, e] of ecartsParNoeud) poserResultat(id, { ecartNiveau: e });
 
     // Vérifier si un node a généré une spec de graphe (prompt → graphe)
     //
@@ -1358,9 +1428,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
       try {
         const url = await ecrire();
         if (url) {
-          setNodes((nds) => nds.map((n) => (n.id === id
-            ? { ...n, data: { ...n.data, audioResultatUrl: url, audioResultatNom: `${n.data.ficheId}.wav` } }
-            : n)));
+          const ficheId = noeudsRef.current.find((n) => n.id === id)?.data.ficheId;
+          poserResultat(id, { audioResultatUrl: url, audioResultatNom: `${ficheId}.wav` });
         }
       } catch (e) {
         // UN LECTEUR QUI NE S'ÉCRIT PAS N'EMPORTE PAS LE RUN, et c'est le second intérêt de l'avoir
