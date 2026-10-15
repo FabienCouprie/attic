@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   ordreTopologique, ancetres, descendants, empreinteEntrees, empreinteParametres,
-  fermeraitUnCycle, noeudsEnCycle, resoudreEntree, valeursEntrantes, placerEnDernier,
+  fermeraitUnCycle, noeudsEnCycle, perimetreCible, resoudreEntree, valeursEntrantes, placerEnDernier,
 } from "./graphe";
 import type { AreteG } from "./meta";
 
@@ -303,5 +303,44 @@ describe("le cas des zones sélectionnées", () => {
   it("changer le FICHIER de l'entrée périme toute la chaîne, elle comprise", () => {
     const aPerimer = new Set(["entree", ...descendants("entree", aretes)]);
     expect([...aPerimer].sort()).toEqual(["entree", "masque", "sel"]);
+  });
+});
+
+describe("le périmètre d'un run ciblé", () => {
+  // DEUX APPELANTS, DEUX INTENTIONS, et c'est tout le sujet de cette fonction.
+  //
+  // RELEVÉ PAR FABIEN : « j'ai l'impression que le gain de la table de montage ne fonctionne pas ».
+  // Il fonctionnait : le montage se recalculait bien, mais la relance automatique passait par le
+  // même chemin qu'un run ciblé, qui n'embrasse que l'amont. Tout ce qui suivait restait à « En
+  // attente », ses résultats venant d'être effacés, et depuis l'aval le réglage paraissait mort.
+  // Mesuré sur générateur → montage → rotation ambisonique : le niveau de l'aval ne bougeait
+  // qu'après une relance GLOBALE, où il passait de 0,5931 à 0,05931, le rapport de dix d'un −20 dB.
+  const chaine = [
+    { source: "gen", target: "mon", sourceHandle: "out:0", targetHandle: "in:0" },
+    { source: "mon", target: "av", sourceHandle: "out:0", targetHandle: "in:0" },
+    { source: "av", target: "fin", sourceHandle: "out:0", targetHandle: "in:0" },
+  ] as AreteG[];
+
+  it("UN RUN CIBLÉ DEMANDÉ N'EMBRASSE QUE L'AMONT, la cible comprise", () => {
+    // Cliquer le ▶ d'un nœud veut dire « calcule jusqu'ici » : faire tourner l'aval coûterait ce
+    // qu'on n'a pas demandé.
+    expect([...perimetreCible(["mon"], chaine)].sort()).toEqual(["gen", "mon"]);
+  });
+
+  it("ET UNE RELANCE APRÈS RÉGLAGE Y AJOUTE L'AVAL, parce qu'elle répare un effacement", () => {
+    expect([...perimetreCible(["mon"], chaine, true)].sort()).toEqual(["av", "fin", "gen", "mon"]);
+  });
+
+  it("l'aval est transitif, et non les seuls voisins immédiats", () => {
+    expect(perimetreCible(["gen"], chaine, true).has("fin"), "le dernier de la chaîne doit y être").toBe(true);
+  });
+
+  it("plusieurs cibles se réunissent, un méta en ayant autant que de sorties exposées", () => {
+    expect([...perimetreCible(["gen", "av"], chaine, true)].sort()).toEqual(["av", "fin", "gen", "mon"]);
+  });
+
+  it("un nœud seul reste seul, dans un sens comme dans l'autre", () => {
+    expect([...perimetreCible(["isole"], [] as AreteG[])]).toEqual(["isole"]);
+    expect([...perimetreCible(["isole"], [] as AreteG[], true)]).toEqual(["isole"]);
   });
 });

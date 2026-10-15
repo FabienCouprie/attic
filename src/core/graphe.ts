@@ -117,6 +117,28 @@ export function ancetres(cible: string, aretes: AreteG[]): Set<string> {
   return set;
 }
 
+/**
+ * Le périmètre d'un run CIBLÉ : les cibles, leur amont, et leur aval quand on le demande.
+ *
+ * DEUX APPELANTS, DEUX INTENTIONS, ET C'EST TOUT LE SUJET. Cliquer le ▶ d'un nœud veut dire
+ * « calcule jusqu'ici » : l'aval n'a pas été demandé. Une relance automatique après réglage, elle,
+ * n'a pas été demandée du tout — elle répare l'effacement qu'un réglage vient de causer, et doit
+ * donc refaire tout ce qui a été effacé, aval compris.
+ *
+ * LE DÉFAUT QUE CECI RÉPARE, relevé par Fabien sur le gain du montage : la relance automatique
+ * passait par le même chemin qu'un run ciblé, donc n'embrassait que l'amont. Le nœud se recalculait
+ * bien, mais tout ce qui le suivait restait à « En attente », ses résultats venant d'être effacés.
+ * Depuis l'aval — où l'on écoute et où l'on exporte — le réglage paraissait mort.
+ */
+export function perimetreCible(
+  cibles: readonly string[], aretes: AreteG[], versLAval = false,
+): Set<string> {
+  const dedans = new Set<string>();
+  for (const c of cibles) for (const a of ancetres(c, aretes)) dedans.add(a);
+  if (versLAval) for (const c of cibles) for (const d of descendants(c, aretes)) dedans.add(d);
+  return dedans;
+}
+
 // Ensemble des descendants (aval transitif) d'un nœud, le nœud de départ EXCLU.
 //
 // ATTENTION à l'asymétrie avec `ancetres`, qui inclut sa cible : ce n'est pas un

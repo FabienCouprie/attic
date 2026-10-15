@@ -11,7 +11,7 @@ import {
   ancetresBulle, aplatirGraphe, estBulle, estCacheParBulle, estSubstitution, grapheSansConteneurs,
   sortieDeBulle,
   trouverMeta,
-  ordreTopologique, placerEnDernier, ancetres, descendants, empreinteParametres, empreinteEntrees, empreinteSorties, empreinteValeursEntrantes,
+  ordreTopologique, placerEnDernier, ancetres, descendants, perimetreCible, empreinteParametres, empreinteEntrees, empreinteSorties, empreinteValeursEntrantes,
   noeudsEnCycle, resoudreEntree, valeursEntrantes, validerGraphe,
   type NoeudG, type AreteG,
 } from "../../core";
@@ -124,6 +124,19 @@ export const CHAMPS_COPIABLES = new Set(
  * AUCUN DE CES CHAMPS N'APPARTIENT À L'UTILISATEUR. Un recouvrement avec `CHAMPS_UTILISATEUR`
  * serait un fichier chargé qui s'évapore au premier lancement ; un test tient les deux disjoints.
  */
+/**
+ * Ce qu'un run CIBLÉ embrasse, au-delà du nœud visé et de son amont.
+ *
+ * DEUX APPELANTS, DEUX INTENTIONS. Cliquer le ▶ d'un nœud veut dire « calcule jusqu'ici » : l'aval
+ * n'a pas été demandé, et le faire tourner coûterait ce qu'on n'a pas demandé. Une relance
+ * automatique après réglage, elle, n'a pas été demandée du tout : elle répare l'effacement qu'un
+ * réglage vient de causer, et doit donc refaire tout ce qui a été effacé, aval compris.
+ */
+export interface PerimetreCible {
+  /** Vrai pour une relance automatique après réglage. Faux ou absent pour un run ciblé demandé. */
+  versLAval?: boolean;
+}
+
 export const CHAMPS_RESULTAT = new Set([
   "audioResultatUrl",
   "audioResultatNom",
@@ -372,7 +385,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     reinitialiserIds(ids);
   }, [reinitialiserIds]);
 
-  const lancerUnePasse = useCallback(async (noeudPrioritaireId?: string) => {
+  const lancerUnePasse = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible) => {
     // Ne pas bloquer si on lance un node individuellement (prioritaire)
     // — seul le bouton Run global (sans prioritaire) est bloqué pendant l'exécution
     if (!noeudPrioritaireId && enExecRef.current) return;
@@ -485,8 +498,24 @@ export function useExecutionGraphe(o: OptionsExecution) {
       const noeudPrio = noeudsRef.current.find((n) => n.id === priorite);
       const metaPrio = noeudPrio && trouverMeta((noeudPrio.data as { ficheId?: string }).ficheId as string);
       if (metaPrio) cibles = (metaPrio.mapSorties as { noeudInterne: string }[]).map((m) => `${priorite}::${m.noeudInterne}`);
-      const anc = new Set<string>();
-      for (const c of cibles) for (const a of ancetres(c, aretesG)) anc.add(a);
+      // LE PÉRIMÈTRE EST CALCULÉ PAR `core/graphe.ts`, pur et éprouvé à part : ce crochet ne fait
+      // que le lui demander. L'AVAL Y ENTRE QUAND C'EST UNE RELANCE APRÈS RÉGLAGE, et pas autrement.
+      //
+      // RELEVÉ PAR FABIEN : « j'ai l'impression que le gain de la table de montage ne fonctionne
+      // pas ». Il fonctionnait : le montage se recalculait bien, cache rafraîchi, mais **rien en
+      // aval n'était refait**, alors que le moteur venait d'en effacer les résultats. Mesuré sur
+      // une chaîne générateur → montage → rotation ambisonique : aussitôt le gain changé, le nœud
+      // d'aval passait à « En attente » sans lecteur, et une relance GLOBALE donnait le bon niveau,
+      // 0,05931 contre 0,5931, soit le rapport de dix attendu pour −20 dB. Le calcul était donc
+      // juste ; c'est la propagation qui manquait. Depuis l'aval — où l'on écoute, où l'on exporte
+      // — le gain paraissait mort.
+      //
+      // ET UN RUN CIBLÉ DEMANDÉ PAR LA PERSONNE N'EMBRASSE TOUJOURS QUE L'AMONT. Les deux chemins
+      // passent par ici, et leur intention diffère : cliquer le ▶ d'un nœud veut dire « calcule
+      // jusqu'ici », et y ajouter l'aval ferait tourner ce qu'on n'a pas demandé. Une relance
+      // automatique, elle, n'a pas été demandée du tout : elle répare l'effacement qu'un réglage
+      // vient de causer, et doit donc refaire tout ce qui a été effacé.
+      const anc = perimetreCible(cibles, aretesG, perimetre?.versLAval === true);
       ancPriorite = anc;
       ordreFiltre = ordonnees.filter((id) => anc.has(id));
     }
@@ -1426,7 +1455,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
    * contenu d'un méta-composant soit vu, et il se paie une fois par exécution, non une fois par
    * passe.
    */
-  const lancerBoucleValeur = useCallback(async (noeudPrioritaireId?: string) => {
+  const lancerBoucleValeur = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible) => {
     // LE PLAN SE FAIT SUR LE GRAPHE APLATI, ET NON SUR CELUI QU'ON VOIT — relevé par Fabien, qui
     // demandait si les changements faits sur les boucles valaient aussi pour les autres.
     //
@@ -1453,7 +1482,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       (id) => [...descendants(id, aretesG())],
       (id) => [...ancetres(id, aretesG())],
     );
-    if (!plan) { publierBoucles([]); return lancerUnePasse(noeudPrioritaireId); }
+    if (!plan) { publierBoucles([]); return lancerUnePasse(noeudPrioritaireId, perimetre); }
     if (plan.independantes) {
       console.warn("[attic] Deux boucles qui ne s'emboîtent pas : elles seront menées l'une dans l'autre.");
     }
@@ -1487,7 +1516,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // défauts à trouver. Relevé sur une boucle par créneau relancée deux fois de suite.
       oublierLeCorps(0);
       // La passe de découverte : chaque début y remplit ses morceaux.
-      await lancerUnePasse(noeudPrioritaireId);
+      await lancerUnePasse(noeudPrioritaireId, perimetre);
 
       // LE COMPTEUR EST DANS `boucleSequencesGlobal.ts`, AVEC SES BORNES ET SES TESTS. Une mécanique
       // dont toute la valeur est de s'arrêter ne peut pas vivre dans un composant, où aucun test de
@@ -1496,7 +1525,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       while (avancerBoucles(etats)) {
         if (arretLotRef.current || faites >= PASSES_MAX_TOTAL) break;
         oublierLeCorps(0);
-        await lancerUnePasse(noeudPrioritaireId);
+        await lancerUnePasse(noeudPrioritaireId, perimetre);
         faites++;
       }
     } finally {
@@ -1522,7 +1551,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
    * revenir en arrière aurait demandé de casser le cache, les statuts et l'annulation — ce que
    * `core/boucle-graphe.ts` disait déjà, et qui reste vrai.
    */
-  const lancer = useCallback(async (noeudPrioritaireId?: string) => {
+  const lancer = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible) => {
     arretLotRef.current = false;
     // La lecture du dossier est asynchrone, la planification ne l'est pas : on lit d'abord, puis
     // `planifierLot` — pure et testée — décide de tout le reste.
@@ -1540,7 +1569,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // Le cas courant est celui-ci, et il ne doit rien coûter : pas de lot, une passe, rien de plus.
     if (!plan) {
       publierLot(null);
-      return lancerBoucleValeur(noeudPrioritaireId);
+      return lancerBoucleValeur(noeudPrioritaireId, perimetre);
     }
     if (plan.plusieursDebuts) {
       console.warn("[attic] Deux débuts de boucle collection : chacun voudrait commander le nombre de passes.");
@@ -1566,7 +1595,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // passe, la boucle ne bouclait pas, et rien ne le disait. Les trois répétitions s'emboîtent
         // maintenant dans l'ordre où elles se lisent : le lot dehors, les boucles par passes dedans,
         // et l'exécution du graphe au fond.
-        await lancerBoucleValeur(noeudPrioritaireId);
+        await lancerBoucleValeur(noeudPrioritaireId, perimetre);
       }
     } finally {
       publierLot(null);
