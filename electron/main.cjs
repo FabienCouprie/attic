@@ -908,15 +908,30 @@ ipcMain.handle("dossier:music-projet", () => {
 });
 
 // Retourne (en le créant au besoin) le dossier de travail par défaut :
-// <projet>/work en dev, <dossier de l'exécutable>/work en version packagée.
-// C'est le répertoire par défaut des dialogues d'export/import.
+// <projet>/work en dev, <Documents>/Attic en version packagée.
+// C'est le répertoire par défaut des dialogues d'export/import, et celui où les
+// scripts Python et Julia écrivent leurs sorties.
 ipcMain.handle("dossier:travail-defaut", () => {
-  // En packagé, le dossier de l'exécutable est souvent C:\Program Files\… : y
-  // créer « work » exige les droits administrateur et échouait silencieusement,
-  // laissant les scripts Python/Julia sans nulle part où écrire leurs sorties.
-  // On tente donc l'emplacement historique, puis on se rabat sur userData.
+  // LE DOSSIER DE L'EXÉCUTABLE N'EST PLUS CANDIDAT, et c'était le premier.
+  //
+  // Relevé par Fabien : « par défaut le work se trouve à l'intérieur du programme, ce qui le range
+  // dans une installation classique dans Program Files -> attic -> work. Cela ne correspond pas aux
+  // conventions windows. » L'installeur est `perMachine`, donc une installation classique va bien
+  // dans C:\Program Files\Attic.
+  //
+  // ET LE REPLI NE SUFFISAIT PAS À RATTRAPER LA CONVENTION. Pour un utilisateur standard, créer
+  // « work » dans Program Files lève et l'on se rabattait sur userData : le résultat était correct
+  // par accident. Mais que l'application tourne UNE FOIS en élevé, et l'écriture réussit : « work »
+  // est créé dans Program Files, la sonde continue d'y réussir en élevé et d'échouer en usage
+  // normal, et il y a dès lors DEUX dossiers de travail selon le contexte d'élévation, sans que
+  // rien ne le dise.
+  //
+  // DOCUMENTS PLUTÔT QU'APPDATA, parce que le contenu appartient à la personne : des graphes
+  // exportés, des sorties de script. `%APPDATA%` est fait pour l'état qu'on ne doit pas avoir à
+  // chercher ; ici, elle doit pouvoir le trouver sans qu'on le lui dise. userData reste en repli,
+  // un profil verrouillé ou un « Documents » redirigé pouvant n'être pas inscriptible.
   const candidats = app.isPackaged
-    ? [path.join(path.dirname(app.getPath("exe")), "work"), path.join(app.getPath("userData"), "work")]
+    ? [path.join(app.getPath("documents"), "Attic"), path.join(app.getPath("userData"), "work")]
     : [path.join(path.resolve(__dirname, ".."), "work")];
   for (const dossier of candidats) {
     try {
