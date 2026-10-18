@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **486 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **487 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **486 components** in **7 categories** and **63 families**. Every na
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 86 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (6) |
+| [Other & lab](#other--lab) | 87 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -11662,6 +11662,7 @@ Gives the degrees of non-Western musical systems: Arabic maqamat, Indian ragas, 
 | Component | Summary |
 |---|---|
 | [Application Film](#application-film) | Films the application window while it builds the graph it sits in, runs it and plays each node. |
+| [Burn In Subtitles](#burn-in-subtitles) | Burns SRT subtitles into a film's picture, and returns the burnt film as MP4. |
 | [Demonstration](#demonstration) | Makes a video of the graph it sits in: each node in turn, its name, its settings, and its result played or shown. |
 | [Split Picture and Sound](#split-picture-and-sound) | Takes a film and returns two things: the picture without sound, and the decoded sound. |
 | [Subtitles (SRT)](#subtitles-srt) | Transcribes speech and cuts it into subtitles, each at the instant of its words. |
@@ -11682,6 +11683,28 @@ This node films the application window while it replays the graph it sits in. It
 |---|---|---|---|---|
 | Length per node | slider | 5 s | 1 – 60 s, step 0.5 | Listening time for each node during the tour. A shorter sound stops earlier; a node that returns neither sound nor picture is skipped. |
 | Title | text | — |  | Title shown for 3 s at the opening of the film. Empty, the film starts straight on the construction. |
+
+#### Burn In Subtitles
+
+`sous-titres-incrustes` · Other & lab → Video
+
+*Burns SRT subtitles into a film's picture, and returns the burnt film as MP4.*
+
+This component receives a film and a text in the SRT format, and returns a film whose every frame carries the subtitle of its instant. The original film's sound is carried over as is. « Size » and « Margin » are given as a share of the picture height, not in pixels: the same setting holds on a 480-line picture as on a 2160-line one. « Position » puts the text at the bottom or at the top. The block is anchored by its edge: a two-line subtitle ends at the same height as a one-line subtitle, so that the text does not jump from one line to the next. « Background » decides what detaches the text from the picture. « Outline » rings each letter in black, « Band » lays a dark rectangle behind the block, « None » leaves the text bare, readable only on a dark and quiet picture. « Bitrate » sets the re-encoded picture's bitrate, hence the file's weight. The size, frame rate and length are those of the received film. The burnt text can no longer be corrected: the SRT file stays editable, and a second run makes the film again.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Video | video |  |
+| input | SRT | text |  |
+| output | Video | video |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Size | slider | 5 % of height | 2 – 12 % of height, step 0.5 | Text size, as a share of the picture height. At five per cent, a 720-line picture carries a 36-pixel text. |
+| Margin | slider | 6 % of height | 0 – 25 % of height, step 0.5 | Distance between the text block and the picture edge, as a share of the height. |
+| Position | choice | Bottom | Bottom / Top | The edge the text block is laid against. |
+| Background | choice | Outline | Outline / Band / None | What detaches the text from the picture. A white text without outline or band disappears on a light picture. |
+| Bitrate | slider | 6 Mb/s | 1 – 20 Mb/s, step 1 | Bitrate of the re-encoded picture. It sets the file's weight: the length times the bitrate. |
 
 #### Demonstration
 

@@ -480,6 +480,12 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "sous-titres-incrustes",
+    "vue": "VueFilmProduit",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
     "id": "spectrogramme",
     "vue": "VueSpectrogramme",
     "entreeAudio": true,

@@ -31,7 +31,7 @@ import { RouleauSequence } from "./RouleauSequence";
 import { CercleRetoucheVue } from "./CercleRetoucheVue";
 import { CercleGammeVue } from "./CercleGammeVue";
 import { CercleMelodiqueVue, CercleRythmiqueVue } from "./CercleVue";
-import { VueExtraitVideo, VueFilmCercle, VueMontageVideo, VuePistesMultiples, VueVideoMuette } from "./vues-video";
+import { VueExtraitVideo, VueFilmCercle, VueFilmProduit, VueMontageVideo, VuePistesMultiples, VueVideoMuette } from "./vues-video";
 import { VueMontage } from "./vues-montage";
 import { VueFormeOnde, VueSelecteurMultiZones, VueUploadAudio, VueUploadImage, VueUploadPdf, VueUploadSvg } from "./vues-fichiers";
 import { VueExplorateur } from "./vues-explorateur";
@@ -73,6 +73,8 @@ declarerVues([
   // Le film se regarde ici ; le MP4 produit s'enregistre par le bouton de la vue elle-même.
   { correspond: parId("montage-video"), vue: VueMontageVideo, position: "avant" },
   { correspond: parId("extrait-video"), vue: VueExtraitVideo, position: "avant" },
+  // Le film gravé se regarde sur place : c'est la seule façon de voir où le texte est tombé.
+  { correspond: parId("sous-titres-incrustes"), vue: VueFilmProduit, position: "avant" },
   // Après le lecteur : le son rendu garde le lecteur commun, la vidéo muette s'enregistre en dessous.
   { correspond: parId("separer-image-son"), vue: VueVideoMuette, position: "apres" },
   // L'ONDE PORTE LE LECTEUR, donc le nœud n'en pose pas un second — relevé par Fabien : « le

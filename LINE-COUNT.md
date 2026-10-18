@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1354 files, 243044 lines, of which 164863 are code.**
-The table lists the 193 files of 200 code lines or more, heaviest first;
-the remaining 1161 account for 160952 lines.
+**1357 files, 243443 lines, of which 165152 are code.**
+The table lists the 194 files of 200 code lines or more, heaviest first;
+the remaining 1163 account for 161081 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -23,7 +23,7 @@ the remaining 1161 account for 160952 lines.
 | src/docs/documentation-graphe.ts | 572 | 732 | ! |
 | src/ui/AtelierNode.tsx | 540 | 749 | ! |
 | src/audio/cercle-pulsant.test.ts | 522 | 718 | ! |
-| src/plugins/index.ts | 509 | 521 | ! |
+| src/plugins/index.ts | 511 | 523 | ! |
 | src/audio/sfz.test.ts | 497 | 619 | ! |
 | src/core/boucle-graphe.test.ts | 465 | 588 | ! |
 | src/vues-domaine/SelecteurMultiZones.tsx | 459 | 543 | ! |
@@ -203,6 +203,7 @@ the remaining 1161 account for 160952 lines.
 | src/audio/modulation-espace.test.ts | 204 | 276 |  |
 | src/audio/musicxml-arbre.ts | 203 | 314 |  |
 | src/plugins/midi-norme.test.ts | 203 | 289 |  |
+| src/vues-domaine/vues-video.tsx | 203 | 268 |  |
 | src/audio/micromontage.test.ts | 202 | 266 |  |
 | src/core/boucle-graphe.ts | 201 | 422 |  |
 | src/audio/ondelettes.ts | 200 | 349 |  |
