@@ -9,8 +9,8 @@
       "data": {
         "ficheId": "comment",
         "parametres": {},
-        "nom": "UNE VOIX DEVIENT DE LA MUSIQUE\n\nCOMMENCER PAR CHARGER UNE PRISE DE VOIX sur « La voix ». Un projet garde le nom du fichier chargé, jamais son contenu : un exemple arrive donc toujours avec son entrée vide. Quelqu'un qui parle, qui lit un texte, qui raconte ; deux minutes suffisent.\n\nLa prise est ensuite mesurée de deux façons, et rien d'autre n'est inventé : le Suiveur de hauteur donne la mélodie de la parole, le Découpage en objets donne ses instants, et Zones vers MIDI met une note sur chaque instant, à la hauteur tenue de la syllabe.\n\nTrois voix en sortent, toutes tirées de la même prise.\n  1. La mélodie, montée d'une octave et mise sur une pentatonique mineure de La. Les bornes 49 et 79 disent ce que valent le zéro et le un de la courbe : ce sont les 70 Hz et 400 Hz du suiveur, montés de douze demi-tons.\n  2. La basse, deux octaves plus bas, quantifiée à la croche : elle donne une pulsation là où la mélodie garde le temps de la parole.\n  3. La percussion, une frappe par syllabe sur le canal 9, sans hauteur.\n\nLES DEUX NORMALISEURS TIENNENT L'ÉQUILIBRE. Un rendu MIDI et une voix enregistrée ne sortent pas au même niveau, et la somme brute des trois voix musicales monte au-dessus de la pleine échelle. La voix est ramenée à -6 dB de crête, la musique à -10 dB, et le mélange final reste sous la pleine échelle.\n\nÀ RÉGLER EN PREMIER : la Sensibilité et la Durée min du Découpage en objets décident du nombre de syllabes trouvées, donc du nombre de notes. Le Niveau des deux Normaliseurs décide de l'équilibre entre la voix et sa musique. La Hauteur min et la Hauteur max du suiveur se resserrent sur la voix employée, et les bornes de Zones vers MIDI les suivent.",
-        "nomEn": "A VOICE BECOMES MUSIC\n\nSTART BY LOADING A VOICE TAKE on « La voix ». A project keeps the name of the loaded file, never its contents: an example therefore always arrives with its input empty. Someone speaking, reading a text, telling a story; two minutes are enough.\n\nThe take is then measured in two ways, and nothing else is invented: the Pitch Follower gives the melody of the speech, the Sound Object segmentation gives its instants, and Zones to MIDI puts a note on each instant, at the held pitch of the syllable.\n\nThree voices come out, all drawn from the same take.\n  1. The melody, raised one octave and put on an A minor pentatonic. The bounds 49 and 79 say what the curve's zero and one are worth: they are the follower's 70 Hz and 400 Hz, raised twelve semitones.\n  2. The bass, two octaves lower, quantized to the eighth note: it gives a pulse where the melody keeps the time of speech.\n  3. The percussion, one hit per syllable on channel 9, without pitch.\n\nTHE TWO NORMALIZERS HOLD THE BALANCE. A MIDI render and a recorded voice do not come out at the same level, and the raw sum of the three musical voices goes above full scale. The voice is brought to -6 dB peak, the music to -10 dB, and the final mix stays below full scale.\n\nFIRST SETTINGS TO TRY: the Sensitivity and Min length of the Sound Object segmentation decide how many syllables are found, hence how many notes. The Level of the two Normalizers decides the balance between the voice and its music. The follower's Lowest and Highest pitch tighten onto the voice used, and the bounds of Zones to MIDI follow them."
+        "nom": "UNE VOIX DEVIENT DE LA MUSIQUE\n\nCOMMENCER PAR CHARGER UNE PRISE DE VOIX sur « La voix ». Un projet garde le nom du fichier chargé, jamais son contenu : un exemple arrive donc toujours avec son entrée vide. Quelqu'un qui parle, qui lit un texte, qui raconte ; deux minutes suffisent.\n\nLa prise est ensuite mesurée de deux façons, et rien d'autre n'est inventé : le Suiveur de hauteur donne la mélodie de la parole, le Découpage en objets donne ses instants, et Zones vers MIDI met une note sur chaque instant, à la hauteur tenue de la syllabe.\n\nTrois voix en sortent, toutes tirées de la même prise.\n  1. La mélodie et son canon. La mélodie est montée d'une octave et mise sur une pentatonique mineure de La ; les bornes 49 et 79 disent ce que valent le zéro et le un de la courbe, ce sont les 70 Hz et 400 Hz du suiveur montés de douze demi-tons. « Écho de notes » reprend ensuite cette mélodie une seconde et demie plus tard, à la quinte au-dessus et aux trois cinquièmes de la nuance : une seconde voix tirée de la première, qui court sur toute son étendue. Ce composant rend la mélodie ET son canon, de sorte qu'il tient la place du simple lecteur de la mélodie plutôt que de s'ajouter à lui.\n  2. La basse, deux octaves plus bas, quantifiée à la croche : elle donne une pulsation là où la mélodie garde le temps de la parole.\n  3. La percussion, une frappe par syllabe sur le canal 9, sans hauteur.\n\nLES DEUX NORMALISEURS TIENNENT L'ÉQUILIBRE. Un rendu MIDI et une voix enregistrée ne sortent pas au même niveau, et la somme brute des trois voix musicales monte au-dessus de la pleine échelle. La voix est ramenée à -6 dB de crête, la musique à -10 dB, et le mélange final reste sous la pleine échelle.\n\nET LA MUSIQUE RESPIRE AVEC LA VOIX. Une note MIDI porte sa nuance à son attaque, et rien après : un chuchotement à l'intérieur d'une note tenue ne changerait rien, et entre deux notes la musique garderait son niveau. L'énergie de la voix est donc suivie en continu, avec une inertie de 70 pour cent qui l'empêche de hoqueter entre les syllabes, et elle commande le gain de la musique. « Modulation min » dit jusqu'où la musique recule quand la voix se tait : à -10 dB elle recule sans s'effacer, à -24 dB elle disparaît presque, ce qui s'entend comme une porte.\n\nCE QUE LA MUSIQUE RECULE VRAIMENT DÉPEND AUSSI DE LA PRISE. L'écart entre les deux bornes n'est parcouru que dans la mesure où la courbe elle-même parcourt zéro à un, et le suiveur affiche sur son nœud l'étendue qu'il a trouvée. Une prise dont la courbe monte à 0,60 ne fait reculer la musique que de six dixièmes de l'écart réglé : abaisser « Modulation min » rend alors la respiration à la profondeur voulue.\n\nÀ RÉGLER EN PREMIER : la Sensibilité et la Durée min du Découpage en objets décident du nombre de syllabes trouvées, donc du nombre de notes. Le Niveau des deux Normaliseurs décide de l'équilibre entre la voix et sa musique. La Hauteur min et la Hauteur max du suiveur se resserrent sur la voix employée, et les bornes de Zones vers MIDI les suivent.",
+        "nomEn": "A VOICE BECOMES MUSIC\n\nSTART BY LOADING A VOICE TAKE on « La voix ». A project keeps the name of the loaded file, never its contents: an example therefore always arrives with its input empty. Someone speaking, reading a text, telling a story; two minutes are enough.\n\nThe take is then measured in two ways, and nothing else is invented: the Pitch Follower gives the melody of the speech, the Sound Object segmentation gives its instants, and Zones to MIDI puts a note on each instant, at the held pitch of the syllable.\n\nThree voices come out, all drawn from the same take.\n  1. The melody and its canon. The melody is raised one octave and put on an A minor pentatonic; the bounds 49 and 79 say what the curve's zero and one are worth, they are the follower's 70 Hz and 400 Hz raised twelve semitones. « Note Echo » then takes that melody up again one and a half seconds later, a fifth above and at three fifths of the dynamic: a second voice drawn from the first, running over its whole extent. This component renders the melody AND its canon, so it takes the place of the plain melody player rather than adding to it.\n  2. The bass, two octaves lower, quantized to the eighth note: it gives a pulse where the melody keeps the time of speech.\n  3. The percussion, one hit per syllable on channel 9, without pitch.\n\nTHE TWO NORMALIZERS HOLD THE BALANCE. A MIDI render and a recorded voice do not come out at the same level, and the raw sum of the three musical voices goes above full scale. The voice is brought to -6 dB peak, the music to -10 dB, and the final mix stays below full scale.\n\nAND THE MUSIC BREATHES WITH THE VOICE. A MIDI note carries its dynamic at its attack, and nothing after: a whisper inside a held note would change nothing, and between two notes the music would keep its level. The voice's energy is therefore followed continuously, with a 70 per cent inertia that keeps it from hiccuping between syllables, and it drives the music's gain. « Modulation min » says how far the music pulls back when the voice falls silent: at -10 dB it pulls back without vanishing, at -24 dB it nearly disappears, which sounds like a gate.\n\nHOW FAR THE MUSIC REALLY PULLS BACK ALSO DEPENDS ON THE TAKE. The gap between the two bounds is only travelled as far as the curve itself travels zero to one, and the follower shows on its node the range it found. A take whose curve rises to 0.60 pulls the music back by only six tenths of the set gap: lowering « Modulation min » then restores the breathing to the wanted depth.\n\nFIRST SETTINGS TO TRY: the Sensitivity and Min length of the Sound Object segmentation decide how many syllables are found, hence how many notes. The Level of the two Normalizers decides the balance between the voice and its music. The follower's Lowest and Highest pitch tighten onto the voice used, and the bounds of Zones to MIDI follow them."
       }
     },
     {
@@ -107,9 +107,17 @@
       "type": "atelier",
       "position": { "x": 1260, "y": 500 },
       "data": {
-        "ficheId": "sortie-midi",
-        "parametres": { "Synthèse": "Automatique", "Instrument": -1, "Volume": 100 },
-        "nom": "Mélodie"
+        "ficheId": "motif-echo-notes",
+        "parametres": {
+          "Répétitions": 1,
+          "Décalage": 1.5,
+          "Atténuation": 60,
+          "Transposition": 7,
+          "Tempo": 120,
+          "Synthèse": "Automatique",
+          "Volume": 100
+        },
+        "nom": "La mélodie et son canon"
       }
     },
     {
@@ -159,6 +167,26 @@
       }
     },
     {
+      "id": "energie",
+      "type": "atelier",
+      "position": { "x": 440, "y": 1080 },
+      "data": {
+        "ficheId": "suiveur-caracteristique",
+        "parametres": { "Caractéristique": "Énergie", "Inertie": 70, "Cadence": 200 },
+        "nom": "L'énergie de la voix"
+      }
+    },
+    {
+      "id": "ampliMusique",
+      "type": "atelier",
+      "position": { "x": 2320, "y": 980 },
+      "data": {
+        "ficheId": "amplificateur",
+        "parametres": { "Gain": 0, "Modulation min": -10, "Modulation max": 0 },
+        "nom": "La musique respire avec la voix"
+      }
+    },
+    {
       "id": "melangeFinal",
       "type": "atelier",
       "position": { "x": 2320, "y": 700 },
@@ -187,7 +215,10 @@
     { "id": "x3", "source": "jouerPercussion", "target": "melangeMusique", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
     { "id": "n1", "source": "melangeMusique", "target": "normMusique", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
     { "id": "f1", "source": "normVoix", "target": "melangeFinal", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
-    { "id": "f2", "source": "normMusique", "target": "melangeFinal", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e1", "source": "voix", "target": "energie", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e2", "source": "normMusique", "target": "ampliMusique", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e3", "source": "energie", "target": "ampliMusique", "sourceHandle": "out:0", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "f2", "source": "ampliMusique", "target": "melangeFinal", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
     { "id": "f3", "source": "melangeFinal", "target": "sortie", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" }
   ]
 }
