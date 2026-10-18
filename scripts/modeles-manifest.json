@@ -728,7 +728,8 @@
       "noeuds": [
         "vosk-asr",
         "parole-vers-sequence",
-        "couper-aux-mots"
+        "couper-aux-mots",
+        "sous-titres-srt"
       ],
       "octets": 42874105,
       "source": {
@@ -752,7 +753,8 @@
       "noeuds": [
         "vosk-asr",
         "parole-vers-sequence",
-        "couper-aux-mots"
+        "couper-aux-mots",
+        "sous-titres-srt"
       ],
       "octets": 41706512,
       "source": {

@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **485 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **486 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **485 components** in **7 categories** and **63 families**. Every na
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 85 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (5) |
+| [Other & lab](#other--lab) | 86 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (6) |
 
 ## How to read this catalog
 
@@ -11664,6 +11664,7 @@ Gives the degrees of non-Western musical systems: Arabic maqamat, Indian ragas, 
 | [Application Film](#application-film) | Films the application window while it builds the graph it sits in, runs it and plays each node. |
 | [Demonstration](#demonstration) | Makes a video of the graph it sits in: each node in turn, its name, its settings, and its result played or shown. |
 | [Split Picture and Sound](#split-picture-and-sound) | Takes a film and returns two things: the picture without sound, and the decoded sound. |
+| [Subtitles (SRT)](#subtitles-srt) | Transcribes speech and cuts it into subtitles, each at the instant of its words. |
 | [Video Excerpt](#video-excerpt) | Keeps a portion of a film, between two frames, with its sound, and returns it as MP4. |
 | [Video Montage](#video-montage) | Lays up to six sounds on a film, each at its own frame, and returns the scored film as MP4. |
 
@@ -11717,6 +11718,31 @@ This node takes a film and returns two things: the picture without sound, and th
 | output | Audio | audio |  |
 
 *No parameters.*
+
+#### Subtitles (SRT)
+
+`sous-titres-srt` · Other & lab → Video
+
+*Transcribes speech and cuts it into subtitles, each at the instant of its words.*
+
+This component listens to a soundtrack, recognises the speech it carries, and returns subtitles in the SRT format. Each subtitle starts at the instant of its first word and ends at that of its last. « Language » picks the recognition model; each language has its own. « Vocabulary » restricts what the engine may recognise to a list of words, which helps when the spoken text is known in advance. The cutting follows three reasons, in this order. A silence longer than « Splitting silence » ends the current subtitle: cutting where the voice stops gives a unit of meaning. Otherwise, the subtitle ends when one more word would no longer fit in « Lines per subtitle » lines of « Line width » characters. Otherwise, it ends when it reaches « Maximum length ». « Minimum length » extends the end of a subtitle too brief to be read, without ever going past the start of the next one: two subtitles that overlap stack up on screen. A word is never cut: a word longer than the line takes its whole line. The lines in excess join the last one rather than being dropped. « File name » names the file written in the working directory; the .srt extension is added when missing. The « SRT » output renders the text, and the « Path » output the path of the written file. Outside the application, the text is rendered and the file is not written.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | SRT | text |  |
+| output | Path | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Language | choice | French | French / English | The recognition model used. Each language has its own, dedicated. |
+| Vocabulary | text | — |  | Words separated by spaces or commas. When given, it restricts what the engine may recognise to those words alone. Empty, the model's whole vocabulary is used. |
+| Line width | number | 42 characters | 20 – 60 characters, step 1 | Characters per line. Past forty or so, a line crosses the image and reads badly. |
+| Lines per subtitle | number | 2 | 1 – 3, step 1 | Number of lines shown at once. The lines in excess join the last one. |
+| Maximum length | number | 6 s | 1 – 12 s, step 0.5 | Length past which the current subtitle ends, even without a silence or a lack of room. |
+| Splitting silence | number | 0.6 s | 0.1 – 2 s, step 0.05 | Silence between two words past which the subtitle ends. This is the first of the three reasons to cut. |
+| Minimum length | number | 1 s | 0.3 – 4 s, step 0.1 | Length below which a subtitle's end is pushed back, without ever reaching the start of the next one. |
+| File name | text | `subtitles.srt` |  | Name of the file written in the working directory. The .srt extension is added when missing. |
 
 #### Video Excerpt
 
