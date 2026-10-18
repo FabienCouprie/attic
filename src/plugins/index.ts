@@ -54,6 +54,7 @@ import { fiches as f_speech_to_text } from "./speech-to-text";
 import { fiches as f_sherpa_asr } from "./sherpa-asr";
 import { fiches as f_vosk_asr } from "./vosk-asr";
 import { fiches as f_parole_vers_sequence } from "./parole-vers-sequence";
+import { fiches as f_zones_vers_midi } from "./zones-vers-midi";
 import { fiches as f_couper_aux_mots } from "./couper-aux-mots";
 import { fiches as f_traduction } from "./traduction";
 import { fiches as f_prompt_graphe } from "./prompt-graphe";
@@ -426,6 +427,7 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_sherpa_asr,
   ...f_vosk_asr,
   ...f_parole_vers_sequence,
+  ...f_zones_vers_midi,
   ...f_couper_aux_mots,
   ...f_traduction,
   ...f_prompt_graphe,

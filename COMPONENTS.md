@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **484 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **485 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 93 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (33) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 234 | [Analysis](#analysis) (1) · [Conversion](#conversion) (20) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 235 | [Analysis](#analysis) (1) · [Conversion](#conversion) (21) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 44 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -2551,6 +2551,7 @@ Transcribes the speech on the audio input, and returns each word with its start 
 | [Voice Loop End](#voice-loop-end) | Closes a voice loop and reunites what each pass produced. |
 | [Voice Loop Start](#voice-loop-start) | Opens a loop: the graph is run once per voice, and this node returns the voice of the current pass. |
 | [WAV → MP3](#wav--mp3) | Converts an audio stream to downloadable MP3. |
+| [Zones → MIDI](#zones--midi) | Puts a note on each received zone, at its start and for its length. |
 
 #### ABC → MIDI
 
@@ -2979,6 +2980,34 @@ Encodes the signal into a downloadable MP3 at the chosen quality, while passing 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Quality | number | 192 kbps | 64 – 320 kbps | MP3 encoding bitrate, in kbps (higher = better quality, larger file). |
+
+#### Zones → MIDI
+
+`zones-vers-midi` · Processing → Conversion
+
+*Puts a note on each received zone, at its start and for its length.*
+
+This component writes a MIDI file from dated zones. Each zone gives one note: its start gives the note's instant, its length gives the note's length. « Pitch source » decides where the note comes from. « Pitch curve » reads it on the curve received on the « Pitch » input, along the zone; the value kept is the median of the non-zero values, the start of a zone often being an attack without pitch. « Fixed note » puts the note of the « Fixed note » setting everywhere, which also serves the zones where the curve gives no pitch. « Lowest note » and « Highest note » say what the curve's zero and one are worth. The scale between the two is in semitones. « Key » and « Scale » give the allowed degrees for the pitch read on the curve. The note of the « Fixed note » setting is not subject to them. « Velocity » decides the dynamic. « From level » takes it from the level the zone carries, from 1 at minus sixty decibels up to 127 at full scale. « Fixed » puts the value of the « Fixed velocity » setting everywhere, which also serves the zones without a level. « Channel » is the channel written into the file; channel 9 is the percussion one. « MIDI tempo » is the tempo written in: the notes keep the instants of the zones, the tempo does not move them. The « MIDI » output renders the file. The « Notes » output renders a table with one line per zone, with its start, its length, its note and its dynamic.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Zones | control |  |
+| input | Pitch | curve |  |
+| output | MIDI | MIDI |  |
+| output | Notes | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Pitch source | choice | Pitch curve | Pitch curve / Fixed note | Where each zone's note comes from. « Pitch curve » reads it on the « Pitch » input, along the zone. « Fixed note » puts the same note everywhere. |
+| Fixed note | number | 60 | 0 – 127, step 1 | The note put when the source is « Fixed note ». It also serves the zones where the curve gives no pitch. Middle C at 60, and 38 is the snare drum of channel 9. |
+| Lowest note | number | 33 | 0 – 127, step 1 | The note the received curve's zero is worth. Without effect when the source is « Fixed note ». |
+| Highest note | number | 93 | 0 – 127, step 1 | The note the received curve's one is worth. The scale between the two bounds is in semitones. Without effect when the source is « Fixed note ». |
+| Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The scale's root. Without effect in chromatic, which contains every note. |
+| Scale | choice | Chromatic | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The allowed degrees for the pitch read on the curve. The note of the « Fixed note » setting is not subject to them. |
+| Velocity | choice | From level | From level / Fixed | Where the dynamic comes from. « From level » takes it from the level the zone carries, from 1 at minus sixty decibels up to 127 at full scale. A zone without a level takes the « Fixed velocity » setting. |
+| Fixed velocity | number | 100 | 1 – 127, step 1 | The dynamic put when « Velocity » is « Fixed », and the one of the zones that carry no level. |
+| Channel | number | 0 | 0 – 15, step 1 | The channel written into the file. Channel 9 is the percussion one. |
+| MIDI tempo | number | 120 BPM | 40 – 240 BPM, step 1 | The tempo written into the file. The notes keep the instants of the zones: the tempo does not move them, it decides how a score writes them. |
 
 ### Denoising
 

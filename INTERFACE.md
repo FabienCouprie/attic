@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**484 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**485 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -515,3 +515,4 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Wavesets (Wishart) | `wavesets-wishart` | 240 × 118 |
 | Whisper (Anglais) | `whisper-en` | 240 × 118 |
 | ZCR (Meyda) | `zcr-meyda` | 240 × 140 |
+| Zones → MIDI | `zones-vers-midi` | 240 × 140 |

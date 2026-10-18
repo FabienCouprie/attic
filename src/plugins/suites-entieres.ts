@@ -160,7 +160,11 @@ The « Audio » output carries the render, the « MIDI » output the sequence as
 
       const n = Math.max(1, Math.round((notes[notes.length - 1]?.fin ?? 1) * 44100));
       const volume = reglageModule(ctx, n, 1, {
-        reglage: "Volume", defaut: 80, rendu: "pourCent",
+        // « PROPORTION » PARCE QUE C'EST CE QU'ON MULTIPLIE : la courbe branchée vient ici
+        // multiplier des échantillons, et un facteur 80 à la place de 0,80 sortait ce nœud à
+        // près de vingt décibels au-dessus de tous les autres. Le moteur de séquence, lui,
+        // attend un pourcentage, et reçoit la conversion à son seul point d'appel.
+        reglage: "Volume", defaut: 80, rendu: "proportion",
         noms: ["Volume min", "Volume max"], bornes: MOD_VOLUME.defauts,
       });
       const tempoModule = reglageModule(ctx, n, 0, {
@@ -199,15 +203,19 @@ The « Audio » output carries the render, the « MIDI » output the sequence as
         String(rapport.hauteurs), rapport.minimum, rapport.maximum,
         jouees.slice(0, 48).map((no) => no.note).join(" "));
 
-      // LE VOLUME S'APPLIQUE AU RENDU ET NON AU MOTEUR DE SÉQUENCE, et c'est ce qui le rend
-      // modulable : ce moteur ne prend qu'un nombre, de sorte qu'une courbe branchée n'y aurait
-      // agi que par sa première valeur, c'est-à-dire presque pas. Le rendu se fait donc à pleine
-      // échelle, et la courbe le multiplie échantillon par échantillon.
-      const rendu = await rendreSequence(jouees, modeRendu, 100, programme, banque);
-      for (let c = 0; c < rendu.numberOfChannels; c++) {
-        const d = rendu.getChannelData(c);
-        for (let i = 0; i < d.length; i++) d[i] *= valeurA(volume, i);
-        rendu.copyToChannel(d, c);
+      // UN NOMBRE VA AU MOTEUR, UNE COURBE S'APPLIQUE AU RENDU. Le moteur de séquence ne prend
+      // qu'un nombre : une courbe branchée n'y agirait que par sa première valeur, c'est-à-dire
+      // presque pas. Elle multiplie donc le rendu échantillon par échantillon, sur un rendu fait
+      // à pleine échelle. Un volume fixe, lui, passe par le moteur comme dans les treize autres
+      // nœuds qui l'appellent, ce qui range la sortie de ce nœud au niveau des leurs.
+      const rendu = await rendreSequence(
+        jouees, modeRendu, typeof volume === "number" ? volume * 100 : 100, programme, banque);
+      if (typeof volume !== "number") {
+        for (let c = 0; c < rendu.numberOfChannels; c++) {
+          const d = rendu.getChannelData(c);
+          for (let i = 0; i < d.length; i++) d[i] *= valeurA(volume, i);
+          rendu.copyToChannel(d, c);
+        }
       }
 
       return {
