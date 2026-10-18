@@ -28,8 +28,14 @@ export interface OptionsRendu {
   debit: number;
   /** La bande-son du film. Absente, le fichier n'a pas de piste audio. */
   audio?: AudioBuffer;
-  /** Peint l'image de l'instant `t`. C'est l'appelant qui décide de tout ce qui se voit. */
-  dessiner: (cx: OffscreenCanvasRenderingContext2D, t: number, image: number) => void;
+  /**
+   * Peint l'image de l'instant `t`. C'est l'appelant qui décide de tout ce qui se voit.
+   *
+   * ELLE PEUT ÊTRE ASYNCHRONE, et c'est ce qui permet de peindre une image qu'il faut d'abord
+   * décoder : incruster un texte sur un film existant demande d'attendre l'image source avant de
+   * dessiner par-dessus. Un dessin purement calculé, lui, ne rend rien et n'attend donc jamais.
+   */
+  dessiner: (cx: OffscreenCanvasRenderingContext2D, t: number, image: number) => void | Promise<void>;
   /** Rend la main au navigateur entre deux images. Sans lui, le rendu fige l'interface. */
   souffle?: { tour: () => Promise<boolean> };
   /** Avancement, de 0 à 1, appelé de loin en loin. */
@@ -87,7 +93,7 @@ export async function encoderFilm(o: OptionsRendu): Promise<FilmRendu> {
   for (let i = 0; i < images; i++) {
     if (o.signal?.aborted) break;
     cx.save();
-    o.dessiner(cx, i / o.cadence, i);
+    await o.dessiner(cx, i / o.cadence, i);
     cx.restore();
     await piste.add(i / o.cadence, 1 / o.cadence);
     if (o.souffle) await o.souffle.tour();

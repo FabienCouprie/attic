@@ -199,6 +199,42 @@ export function VueFilmCercle({ data }: VueProps) {
   );
 }
 
+// ── Un film produit par un nœud : le regarder, puis l'enregistrer ──
+//
+// ELLE LIT `_affichage`, ET NON DES CHAMPS POSÉS SUR LE NŒUD. C'est le canal que le contrat de
+// composant réserve à ce qu'un run a produit : une remise à zéro l'efface, un réglage changé aussi,
+// de sorte qu'un film ne reste jamais à l'écran sur un nœud redevenu « en attente ». La vue du
+// cercle, plus ancienne, lit encore des champs préfixés dans les données.
+//
+// ET LE LECTEUR COMPTE AUTANT QUE LE BOUTON : un film qu'on ne peut pas regarder sur place
+// demande d'enregistrer puis d'ouvrir ailleurs pour savoir s'il est juste.
+export function VueFilmProduit({ data }: VueProps) {
+  const { t } = useI18n();
+  const api = (window as { api?: any }).api;
+  const n = (data as unknown as { _affichage?: { url?: string; nom?: string; octets?: number } })._affichage ?? {};
+  if (!n.url) return null;
+  const nom = n.nom ?? "film.mp4";
+  return (
+    <div className="attic-vue-film-cercle" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <video src={n.url} controls className="attic-vue-film-cercle-lecteur" />
+      <div className="attic-vue-film-resultat">
+        {api?.sauvegarderBinaire ? (
+          <button className="attic-node-fichier-btn" onClick={async () => {
+            const buffer = await (await fetch(n.url!)).arrayBuffer();
+            await api.sauvegarderBinaire({ defaultPath: nom, filters: [{ name: "MP4", extensions: ["mp4"] }], buffer });
+          }}>💾 {t("film.enregistrer")}</button>
+        ) : (
+          <a className="attic-node-fichier-btn" href={n.url} download={nom}>
+            💾 {t("film.enregistrer")}
+          </a>
+        )}
+        <span>{nom}</span>
+        <span>{((n.octets ?? 0) / (1024 * 1024)).toFixed(1)} Mo</span>
+      </div>
+    </div>
+  );
+}
+
 // ── Séparer image et son : récupérer la vidéo muette ──
 //
 // SANS CE BOUTON, LA MOITIÉ IMAGE SERAIT PERDUE. Le son rendu par ce nœud reçoit le lecteur commun

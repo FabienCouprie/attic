@@ -155,12 +155,12 @@ const CONNUS = {
   // un dossier que notre téléchargeur aurait à déplier.
   "vosk-model-small-fr-0.22.tar.gz": {
     id: "vosk-fr", nom: "Vosk français (petit)", nomEn: "Vosk French (small)",
-    noeuds: ["vosk-asr", "parole-vers-sequence", "couper-aux-mots"],
+    noeuds: ["vosk-asr", "parole-vers-sequence", "couper-aux-mots", "sous-titres-srt"],
     licence: { nom: "Apache-2.0", credit: "Alpha Cephei — vosk-model-small-fr-0.22", rediffusable: true },
   },
   "vosk-model-small-en-us-0.15.tar.gz": {
     id: "vosk-en", nom: "Vosk anglais (petit)", nomEn: "Vosk English (small)",
-    noeuds: ["vosk-asr", "parole-vers-sequence", "couper-aux-mots"],
+    noeuds: ["vosk-asr", "parole-vers-sequence", "couper-aux-mots", "sous-titres-srt"],
     licence: { nom: "Apache-2.0", credit: "Alpha Cephei — vosk-model-small-en-us-0.15", rediffusable: true },
   },
 

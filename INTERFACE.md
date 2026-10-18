@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**485 composants**, dont **96** avec une vue propre et **7** sans lecteur générique.
+**487 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -104,6 +104,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Sortie MIDI | `sortie-midi` | — | VueExport | 240 × 162 | non | oui | non |
 | Sortie texte | `sortie-texte` | VueSortieTexte | — | 280 × 250 | non | oui | oui |
 | Entrée texte | `source-texte` | VueSourceTexte | — | 280 × 200 | non | oui | non |
+| Incruster les sous-titres | `sous-titres-incrustes` | VueFilmProduit | — | 240 × 140 | non | oui | non |
 | Spectrogramme | `spectrogramme` | VueSpectrogramme | — | 420 × 300 | non | oui | non |
 | Styles musicaux | `styles-musicaux` | VueStylesMusicaux | — | 300 × 320 | non | oui | non |
 | Suiveur de caractéristique | `suiveur-caracteristique` | VueCourbe | — | 240 × 140 | non | oui | non |
@@ -457,6 +458,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | SoundTouch Vitesse | `soundtouch-rate` | 240 × 118 |
 | SoundTouch Tempo | `soundtouch-tempo` | 240 × 118 |
 | SoundTouch Tonalité | `soundtouch-tonalite` | 240 × 118 |
+| Sous-titres (SRT) | `sous-titres-srt` | 240 × 140 |
 | Spatialisation stéréo | `spatialisation-stereo` | 240 × 162 |
 | Spatialiseur | `spatialiseur` | 240 × 184 |
 | Spectre visible | `spectre-visible` | 240 × 140 |
