@@ -4,6 +4,10 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Added
+
+- **« Zones → MIDI » : des zones datées deviennent des notes.** Les zones d'un enregistrement se trouvaient (découpage en objets, passage par zéro) et se consommaient pour monter, doser ou effacer ; aucune ne devenait un évènement joué, de sorte que les instants d'une parole ou d'un geste restaient mesurables sans être jouables. Le composant pose une note par zone : le début de la zone donne l'instant, sa durée donne la durée, la hauteur se lit sur la courbe reçue et le niveau de la zone donne la nuance. **La hauteur est la médiane des valeurs non nulles de la zone, et non la valeur à son début** : le début d'une zone découpée à l'attaque est un transitoire sans hauteur, et une note posée dessus serait muette une fois sur deux. Éprouvé dans l'application sur une chaîne complète, découpage en objets et suiveur de hauteur en amont : **95 notes sur 95 zones, aucune sans hauteur, aucune sans niveau**, en 4 ms. Trois réglages vérifiés à l'écran par la notation ABC en aval : la hauteur lue sur la courbe donne une tonalité déduite à 0,52 de confiance, la même chaîne contrainte sur une gamme majeure la donne à 0,90, et la note fixe sur le canal 9 écrit bien des notes de batterie.
+
 ### Fixed
 
 - **« Suites d'entiers » sortait cent fois trop fort, et c'était une unité prise pour une autre.** Le nœud demandait son Volume en pour-cent, puis multipliait chaque échantillon par ce qu'il recevait : au réglage par défaut, 80 au lieu de 0,80. Mesuré au banc, même entrée et version chargée prouvée par marqueurs, crête **24,166442871 avant et 0,241664425 après** — exactement le facteur cent. Le nœud passe désormais son Volume au moteur de séquence quand c'est un nombre, comme les treize autres nœuds qui l'appellent, et ne multiplie échantillon par échantillon que lorsqu'une courbe est branchée. Son voisin de catalogue « Série de l'infini (Nørgård) », qui a toujours passé le sien au moteur, mesure 0,241598025 sur le même banc : les deux sont au même niveau à 0,03 % près.

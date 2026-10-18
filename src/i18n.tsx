@@ -731,6 +731,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.vosk.resume": { fr: "{__VAR_0__} mots datés · {__VAR_1__}", en: "{__VAR_0__} timed words · {__VAR_1__}" },
   "msg.parole.sequence": { fr: "{__VAR_0__} notes sur {__VAR_1__} mots · {__VAR_2__} sans hauteur · {__VAR_3__}", en: "{__VAR_0__} notes from {__VAR_1__} words · {__VAR_2__} without pitch · {__VAR_3__}" },
   "msg.parole.aucunMot": { fr: "Aucun mot reconnu : il n’y a rien à mettre en notes.", en: "No word recognised: there is nothing to turn into notes." },
+  "msg.zonesMidi.notes": { fr: "{__VAR_0__} notes sur {__VAR_1__} zones · {__VAR_2__} sans hauteur · {__VAR_3__} sans niveau", en: "{__VAR_0__} notes from {__VAR_1__} zones · {__VAR_2__} without pitch · {__VAR_3__} without level" },
+  "msg.zonesMidi.aucuneZone": { fr: "Aucune zone reçue : il n’y a rien à mettre en notes.", en: "No zone received: there is nothing to turn into notes." },
   "msg.parole.aucuneHauteur": { fr: "{__VAR_0__} mots reconnus, aucun de hauteur mesurable.", en: "{__VAR_0__} words recognised, none with a measurable pitch." },
   "msg.coupe.resume": { fr: "{__VAR_0__} mots gardés sur {__VAR_1__} · {__VAR_2__} s → {__VAR_3__} s · {__VAR_4__} morceau(x)", en: "{__VAR_0__} words kept out of {__VAR_1__} · {__VAR_2__} s → {__VAR_3__} s · {__VAR_4__} piece(s)" },
   "msg.coupe.aucunMot": { fr: "Aucun mot reconnu : rien à garder, toute la prise passe au reste.", en: "No word recognised: nothing to keep, the whole take goes to the remainder." },
