@@ -8,6 +8,10 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 - **« Suites d'entiers » sortait cent fois trop fort, et c'était une unité prise pour une autre.** Le nœud demandait son Volume en pour-cent, puis multipliait chaque échantillon par ce qu'il recevait : au réglage par défaut, 80 au lieu de 0,80. Mesuré au banc, même entrée et version chargée prouvée par marqueurs, crête **24,166442871 avant et 0,241664425 après** — exactement le facteur cent. Le nœud passe désormais son Volume au moteur de séquence quand c'est un nombre, comme les treize autres nœuds qui l'appellent, et ne multiplie échantillon par échantillon que lorsqu'une courbe est branchée. Son voisin de catalogue « Série de l'infini (Nørgård) », qui a toujours passé le sien au moteur, mesure 0,241598025 sur le même banc : les deux sont au même niveau à 0,03 % près.
 
+### Security
+
+- **La règle de sécurité pour l'oreille est écrite** (`AGENTS.md`, section 4). Elle était tenue par le code depuis le début du projet et par aucune phrase : un échantillon calculé par une formule est bridé à [-0,5 ; 0,5] avant toute autre chose, le réglage « Volume » s'applique ensuite sur ce signal déjà borné, ces composants s'ouvrent à 30 %, et amplifier est un acte explicite qui demande un composant posé après écoute. S'y ajoute ce qui la rend visible : l'indicateur d'intensité en code couleur du vert au rouge sur tout nœud qui montre un lecteur, et le lecteur qui s'ouvre à `NIVEAU_ECOUTE = 0,3`.
+
 ## [5.0.3] — 2026-10-15
 
 **CETTE VERSION NE CONTIENT QUE DES CORRECTIONS, ET TOUTES RÉPONDENT À UN RELEVÉ DE FABIEN.** Sept relevés, sept causes cherchées jusqu'au bout plutôt que devinées : un SSP qui paraissait rendre du bruit quoi qu'on fasse, des lecteurs qui arrivaient longtemps après que les nœuds se disaient terminés, un gain de table de montage qui semblait mort, un dossier de travail rangé contre les conventions de Windows, un nom de nœud qui promettait un port qu'il ne portait pas, deux bornes sans raison écrite, et un chevauchement de jointure plafonné sans motif.

@@ -25,7 +25,7 @@ npx vitest run
 
 3. **Vérifier dans l'application.** Un test vert ne dit pas qu'un composant fait ce qu'il annonce.
    Lancer le serveur de développement (`npm run dev`), puis mesurer le composant par le banc
-   (section 4) ou exercer le chemin réel. Un comportement non vérifié à l'écran se dit « non
+   (section 5) ou exercer le chemin réel. Un comportement non vérifié à l'écran se dit « non
    vérifié », jamais « corrigé ».
 4. **Écrire l'entrée de CHANGELOG**, avec les chiffres relevés.
 
@@ -108,7 +108,37 @@ pendantes, identifiants en double. Ce qui demande le registre vit dans
 incomplet par nature. `exemples/` est versionné et livré : ce qui s'y trouve est montré à quelqu'un
 d'autre, et n'a pas le droit d'être à moitié fait.
 
-## 4. Les gardes exécutables, et comment s'en servir
+## 4. La règle de sécurité pour l'oreille
+
+**Une formule peut rendre 1000, et personne ne doit l'entendre.** Un composant qui calcule ses
+échantillons par une expression mathématique ne connaît pas l'échelle de ce qu'il rend : `mag *
+10000` est une formule comme une autre, et le casque de quelqu'un est au bout de la chaîne. La
+règle a été fixée au début du projet et elle tient en quatre temps, dans cet ordre.
+
+1. **L'échantillon est bridé à [-0,5 ; 0,5] avant toute autre chose.** C'est
+   `securiserAmplitude(buffer, 0.5)` de `src/audio/math-formules.ts`, que tout chemin évaluant une
+   formule doit appeler. Que l'expression rende 1000 ou `mag * 10000`, la sortie reste dans la
+   plage audio usuelle, à la moitié de la pleine échelle.
+2. **Le réglage « Volume » du composant s'applique ensuite**, sur un signal déjà borné. C'est ce
+   qui garantit que le niveau final reste sous contrôle quoi qu'on règle : le curseur multiplie
+   0,5, il ne multiplie pas 1000.
+3. **Le « Volume » de ces composants vaut 30 % par défaut.** Un composant à formule s'ouvre bas.
+4. **Amplifier est un acte explicite** : qui veut plus fort pose un composant d'amplification
+   après, ayant écouté d'abord. Le gain n'est jamais donné d'avance.
+
+**ET CE QUI SE FAIT ENTENDRE EST MESURÉ À L'ÉCRAN, par mesure de précaution.** Tout nœud qui
+montre un lecteur montre au-dessus de lui son indicateur d'intensité, en code couleur du vert au
+rouge : vert sous 0,3 de crête, ambre à partir de 0,3, rouge à partir de 0,7 (`IndicateurNiveau`
+de `src/ui/AtelierNode.tsx`). Et le lecteur s'ouvre à `NIVEAU_ECOUTE = 0,3`
+(`src/ui/niveau-ecoute.ts`), ce que le contrat de composant exige de tout ce qui se fait entendre
+depuis un nœud.
+
+**CE QUE CETTE RÈGLE NE COUVRE PAS.** Elle borne ce qui sort d'une formule, et non le niveau des
+générateurs qui n'en emploient aucune : ceux-là s'alignent par l'usage, entre 0,5 et 1,0 de crête,
+et cet alignement n'est écrit nulle part. Un composant qui sort dix fois plus fort que ses voisins
+se relève donc à l'oreille, et non par un garde.
+
+## 5. Les gardes exécutables, et comment s'en servir
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
@@ -144,7 +174,7 @@ npm run docs:components && npm run docs:lignes && npm run docs:dependances && np
 permanent, et ce test doit être **prouvé en plantant la faute** qu'il est censé attraper. Un garde
 jamais vu rouge ne garde rien.
 
-## 5. Les pièges relevés, et comment ne pas y retomber
+## 6. Les pièges relevés, et comment ne pas y retomber
 
 - **Le substitut pris pour la propriété.** `grep AudioBuffer` n'est pas « dépend du Web Audio » ;
   `rmsApres < rmsAvant` n'est pas « le bruit a été retiré ». `DEPENDANCES-AUDIO.md` dit la classe de
@@ -168,7 +198,7 @@ jamais vu rouge ne garde rien.
 - **Un diagnostic s'annonce avec l'expérience qui le réfuterait**, énoncée et exécutée dans le même
   geste.
 
-## 6. Où lire le reste
+## 7. Où lire le reste
 
 | Besoin | Fichier |
 |---|---|
