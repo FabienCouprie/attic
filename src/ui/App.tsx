@@ -26,6 +26,7 @@ import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontG
 import { useI18n, traduire, defautParametre, defautCanoniqueChoix } from "../i18n";
 
 import { idUnique } from "./ids";
+import { idsDe, oublierNoeuds } from "./oubli-noeuds";
 import { planDeGrapheEngendre } from "./graphe-engendre";
 import { useDictee } from "./dictee/useDictee";
 import type { Commande } from "./dictee/commandes-dictee";
@@ -383,6 +384,11 @@ function Atelier() {
     }
     setSel(null);
     cacheExec.current.clear();
+    // CE QUE L'ANNULATION ABANDONNE S'OUBLIE AUSSI. Les résultats et les statuts vivent hors du
+    // tableau des nœuds, et remettre un graphe d'avant les laissait en place : un nœud du graphe
+    // annulé gardait son entrée, qu'un nœud neuf portant le même identifiant retrouvait ensuite.
+    // Voir `ui/oubli-noeuds.ts`.
+    oublierNoeuds([...idsDe(prev.nodes), ...idsDe(prev.contexte?.racine?.nodes)]);
   }, [setNodes, setEdges]);
 
   // Un seul onglet wf-1. Le bouton × vide le canevas — et Ctrl+Z le rend.
@@ -407,6 +413,11 @@ function Atelier() {
     setPile([]);
     grapheRacineRef.current = null;
     setCurrentFilePath(null);
+    // LE GRAPHE EST ABANDONNÉ, DONC SES RÉSULTATS AUSSI. Sans cette ligne, un composant posé
+    // ensuite sur le canevas vide reprenait l'identifiant « noeud-1 » et, avec lui, le lecteur, le
+    // niveau et le message du workflow effacé, marqué « terminé » sans avoir tourné. Relevé par
+    // Fabien, reproduit, et explique dans `ui/oubli-noeuds.ts`.
+    oublierNoeuds([]);
   }, [setNodes, setEdges, pushHistorique, pile, currentFilePath]);
 
   // Détacher le projet de son fichier SANS toucher au canevas : l'équivalent d'un
