@@ -137,7 +137,7 @@ export const FAMILLES_GENERATION: Record<string, string[]> = {
   "Rythmes": ["boite-rythmes", "rythme-euclidien", "rythme-cantor", "metronome",
     "sequenceur-batterie-avance", "canon-pavage", "resultante-schillinger"],
   // Ce qui écrit de la musique par un modèle appris.
-  "Générateurs AI": ["musicgen", "stable-audio-3"],
+  "Générateurs AI": ["musicgen", "stable-audio-3", "planifier-chanson", "rendre-chanson"],
   // Ce qui ne sonne pas mais pilote : la sortie est une courbe, non un son. Un seul nœud à ce jour,
   // et la rubrique existe pour recevoir les suivants.
   "Contrôle": ["generateur-courbe"],

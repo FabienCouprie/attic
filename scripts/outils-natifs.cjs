@@ -79,7 +79,39 @@ function clonerEpingle(amont, dossier) {
   }
 }
 
-function construire(ids) {
+/**
+ * L'archive que l'amont publie lui-même, dépliée dans le dossier de travail.
+ *
+ * TOUS LES AMONTS NE SE COMPILENT PAS, ET CELUI QUI PUBLIE SES BINAIRES N'A PAS À L'ÊTRE. audio.cpp
+ * livre une archive par plateforme et par dos de calcul ; la recompiler demanderait le kit Vulkan et
+ * rendrait un exécutable différent du leur, donc non comparable au nôtre. On prend donc le leur,
+ * épinglé à son étiquette et vérifié par empreinte, et on le republie sur la release `assets` comme
+ * tout le reste : rien ne se télécharge chez un tiers à l'installation.
+ */
+async function recupererAmont(outil, ici, travail) {
+  const a = ici.amontAsset;
+  const base = outil.amont.depot.replace(/\.git$/, "");
+  const url = `${base}/releases/download/${a.release}/${a.nom}`;
+  console.log(`\n${outil.id} ${outil.amont.version} : récupération de ${url}`);
+  const reponse = await fetch(url);
+  if (!reponse.ok) {
+    console.error(`${outil.id} : ${reponse.status} sur ${url}`);
+    process.exit(1);
+  }
+  const archive = path.join(travail, a.nom);
+  fs.writeFileSync(archive, Buffer.from(await reponse.arrayBuffer()));
+  const empreinte = sha256(archive);
+  if (a.sha256 && empreinte !== a.sha256) {
+    console.error(`${outil.id} : empreinte amont inattendue.\n  attendue ${a.sha256}\n  reçue    ${empreinte}`);
+    process.exit(1);
+  }
+  const deplie = path.join(travail, "deplie");
+  new (require("adm-zip"))(archive).extractAllTo(deplie, true);
+  console.log(`  ${mo(fs.statSync(archive).size)} Mo, empreinte amont vérifiée`);
+  return deplie;
+}
+
+async function construire(ids) {
   const manifeste = lire();
   for (const outil of choisis(manifeste, ids)) {
     const ici = pourIci(outil);
@@ -88,20 +120,27 @@ function construire(ids) {
       continue;
     }
     const travail = fs.mkdtempSync(path.join(require("os").tmpdir(), `attic-${outil.id}-`));
-    const source = path.join(travail, outil.id);
-    console.log(`\n${outil.id} ${outil.amont.version} : clonage de ${outil.amont.depot}`);
-    clonerEpingle(outil.amont, source);
-
     const dest = path.join(RACINE, outil.destination);
     fs.mkdirSync(dest, { recursive: true });
-    for (const etape of ici.construction) {
-      console.log(`  ${etape.commande} ${etape.args.join(" ")}`);
-      executer(etape.commande, etape.args, { cwd: path.join(source, etape.dans ?? "") });
+
+    let source;
+    if (ici.amontAsset) {
+      source = await recupererAmont(outil, ici, travail);
+    } else {
+      source = path.join(travail, outil.id);
+      console.log(`\n${outil.id} ${outil.amont.version} : clonage de ${outil.amont.depot}`);
+      clonerEpingle(outil.amont, source);
+      for (const etape of ici.construction) {
+        console.log(`  ${etape.commande} ${etape.args.join(" ")}`);
+        executer(etape.commande, etape.args, { cwd: path.join(source, etape.dans ?? "") });
+      }
+      source = path.join(source, ici.produits);
     }
+
     for (const f of ici.fichiers) {
-      const de = path.join(source, ici.produits, f);
+      const de = path.join(source, f);
       if (!fs.existsSync(de)) {
-        console.error(`${outil.id} : la construction n'a pas produit ${f}`);
+        console.error(`${outil.id} : ${f} est absent de ${source}`);
         process.exit(1);
       }
       fs.copyFileSync(de, path.join(dest, path.basename(f)));

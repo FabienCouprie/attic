@@ -120,6 +120,14 @@ contextBridge.exposeInMainWorld("api", {
     return () => ipcRenderer.removeListener("acestep:progression", ecouteur);
   },
 
+  // La transcription d'un audio en MIDI, par audio.cpp. Même désabonnement, même raison.
+  muscriptorTranscrire: (options) => ipcRenderer.invoke("muscriptor:transcrire", options),
+  muscriptorProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("muscriptor:progression", ecouteur);
+    return () => ipcRenderer.removeListener("muscriptor:progression", ecouteur);
+  },
+
   majVerifier: () => ipcRenderer.invoke("maj:verifier"),
   majInfo: () => ipcRenderer.invoke("maj:info"),
   majInstallerRelancer: () => ipcRenderer.invoke("maj:installer-relancer"),

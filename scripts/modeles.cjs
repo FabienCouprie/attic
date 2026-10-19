@@ -217,6 +217,18 @@ const CONNUS = {
     licence: { nom: "MIT", credit: "ACE-Step — VAE v1.5, converti en GGUF par Serveurperso", rediffusable: true },
   },
 
+  // ── LE TRANSCRIPTEUR AUDIO VERS MIDI, sous `public/audiocpp/` ──
+  //
+  // Un seul fichier, lu par `audiocpp_cli` que `scripts/outils-manifest.json` épingle. Il porte sa
+  // propre fiche de famille : l'exécutable n'a besoin de rien d'autre que de lui, mesuré en le
+  // lançant depuis un dossier qui ne contenait que l'exécutable et ses bibliothèques.
+  "muscriptor-small-f32.gguf": {
+    id: "muscriptor", nom: "Transcription audio vers MIDI", nomEn: "Audio to MIDI transcription",
+    racine: "audiocpp", noeuds: ["transcription-midi"],
+    licence: { nom: "usage non commercial", credit: "MuScriptor — muscriptor-small, converti en GGUF par le projet audio.cpp", rediffusable: true,
+      note: "Le dépôt de conversion déclare « CC-BY-NC-4.0 » comme licence du modèle d'origine, et dit que l'usage et la rediffusion sont régis par elle. La même décision que pour les poids de Demucs s'applique : Attic est libre et non commercial, et rediffuse à ce titre ; qui les reprend reste tenu par la même limite. Aucune version quantifiée n'est publiée en amont, le F32 est le seul paquet." },
+  },
+
   // ── LES POINTS DE CONTRÔLE MAGENTA, sous `public/magenta/` et non `public/oonx/` ──
   //
   // Ils ne sont pas des ONNX, et c'est pourquoi ils ont leur racine. Ils entrent ici pour trois
