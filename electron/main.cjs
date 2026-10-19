@@ -1420,6 +1420,21 @@ ipcMain.handle("acestep:rendre", async (event, options) => {
   }
 });
 
+// ─── audio.cpp : la transcription d'un audio en MIDI ───
+const { transcrire: muscriptorTranscrire } = require("./muscriptor.cjs");
+
+ipcMain.handle("muscriptor:transcrire", async (event, options) => {
+  try {
+    const sortie = await muscriptorTranscrire(options, (ligne) => {
+      if (!event.sender.isDestroyed()) event.sender.send("muscriptor:progression", { ligne });
+    }, contexteRessources());
+    return sortie;
+  } catch (err) {
+    console.error("[attic] muscriptor:transcrire a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
 // ─── Auto-updater : configuration + IPC ───
 let infoMaj = etatNeutre();
 

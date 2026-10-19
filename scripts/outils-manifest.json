@@ -94,6 +94,47 @@
           "sha256": "f1a5c39537a6614b0791b6a432cd6f4ab333b80143685fe6a0d3bd59a422bb3f"
         }
       }
+    },
+    {
+      "id": "audiocpp",
+      "nom": "audio.cpp",
+      "role": "Moteur d'inférence audio employé par le composant « Transcription MIDI ».",
+      "amont": {
+        "depot": "https://github.com/0xShug0/audio.cpp.git",
+        "version": "v0.9.2-drama3-base-small",
+        "sousModules": false
+      },
+      "licence": {
+        "nom": "Apache-2.0",
+        "credit": "ShugoAI LLC — audio.cpp, sur ggml"
+      },
+      "destination": "bin/audiocpp",
+      "plateformes": {
+        "win32-x64": {
+          "asset": "audiocpp-v0.9.2-drama3-base-small-win32-x64-vulkan.zip",
+          "amontAsset": {
+            "release": "v0.9.2-drama3-base-small",
+            "nom": "audio-v0.9.2-drama3-base-small-bin-windows-x64-vulkan.zip",
+            "octets": 63369491,
+            "sha256": "7d002f9989357ff4196c275d06d10932b7683d0a485c37b39e0b7a69c7eb42f6"
+          },
+          "fichiers": [
+            "audiocpp_cli.exe",
+            "msvcp140.dll",
+            "msvcp140_1.dll",
+            "msvcp140_2.dll",
+            "msvcp140_atomic_wait.dll",
+            "msvcp140_codecvt_ids.dll",
+            "vcomp140.dll",
+            "vcruntime140.dll",
+            "vcruntime140_1.dll",
+            "vcruntime140_threads.dll"
+          ],
+          "url": "https://github.com/FabienCouprie/attic/releases/download/assets/audiocpp-v0.9.2-drama3-base-small-win32-x64-vulkan.zip",
+          "octets": 29232315,
+          "sha256": "dc184a70a28ac308174b02dd9b8e4ad9c32956ad23eb3a9ef766367a4351b999"
+        }
+      }
     }
   ]
 }

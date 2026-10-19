@@ -970,6 +970,28 @@
       ]
     },
     {
+      "id": "muscriptor",
+      "nom": "Transcription audio vers MIDI",
+      "nomEn": "Audio to MIDI transcription",
+      "noeuds": [
+        "transcription-midi"
+      ],
+      "octets": 411908672,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/muscriptor-small-f32.gguf",
+        "octets": 411908672,
+        "sha256": "4bff6f1c45b445e144c176434fbe27614ad6c4686e03f99ee11b17e15163fba2"
+      },
+      "fichiers": [
+        {
+          "chemin": "audiocpp/muscriptor-small-f32.gguf",
+          "octets": 411908672,
+          "sha256": "4bff6f1c45b445e144c176434fbe27614ad6c4686e03f99ee11b17e15163fba2"
+        }
+      ]
+    },
+    {
       "id": "magenta-drums-vae",
       "nom": "Batterie neuronale (MusicVAE)",
       "nomEn": "Neural drums (MusicVAE)",
