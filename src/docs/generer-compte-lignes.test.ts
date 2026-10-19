@@ -152,3 +152,90 @@ describe("la table engendrée à la demande", () => {
     expect(texte.split("\n").length).toBeGreaterThan(20);
   });
 });
+
+/**
+ * Les fichiers qui dépassaient la norme le jour où elle est devenue contraignante, avec leur poids
+ * en code ce jour-là.
+ *
+ * POURQUOI UNE DETTE PLUTÔT QU'UN REFUS SEC. Quinze fichiers dépassaient déjà les quatre cents
+ * lignes, dont trois au-delà de sept cents : exiger la norme d'un coup aurait fait échouer la suite
+ * sur du code écrit avant qu'elle ne contraigne, et la seule issue aurait été de la désactiver. Une
+ * dette nommée dit la vérité et contraint quand même.
+ *
+ * ELLE NE PEUT QUE DÉCROÎTRE, par trois règles qui ne regardent pas la même chose : un fichier
+ * absent de cette liste ne dépasse pas la norme, un fichier qui y est ne grossit plus, et celui qui
+ * redescend dans la norme en sort. La troisième est ce qui empêche la liste de pourrir : sans elle,
+ * un fichier assaini y resterait inscrit et la dette paraîtrait éternelle.
+ *
+ * LES CHIFFRES SONT CEUX DU CODE, non du poids : la norme se mesure hors documentation et
+ * traductions, et `compte-lignes.ts` dit pourquoi. Un fichier très commenté n'est pas en dette pour
+ * ses commentaires.
+ */
+const DETTE = new Map<string, number>([
+  ["src/ui/atelier.css", 1412],
+  ["src/ui/App.tsx", 1220],
+  ["src/ui/hooks/useExecutionGraphe.ts", 754],
+  ["src/ui/Inspector.tsx", 632],
+  ["src/audio/abc.ts", 589],
+  ["src/docs/documentation-graphe.ts", 572],
+  ["src/ui/AtelierNode.tsx", 565],
+  ["src/audio/cercle-pulsant.test.ts", 522],
+  ["src/plugins/index.ts", 515],
+  ["src/audio/sfz.test.ts", 497],
+  ["src/core/boucle-graphe.test.ts", 465],
+  ["src/vues-domaine/SelecteurMultiZones.tsx", 459],
+  ["src/ui/BarreOutils.tsx", 441],
+  ["src/audio/clavier-banque.test.ts", 439],
+  ["src/vues-domaine/FormeOnde.tsx", 408],
+]);
+
+describe("la norme est contraignante", () => {
+  const comptes = compterLignes(RACINE);
+  const parFichier = new Map(comptes.map((c) => [c.fichier, c.code]));
+
+  it("AUCUN FICHIER NEUF NE DÉPASSE LA NORME", () => {
+    const fautifs = comptes
+      .filter((c) => !DETTE.has(c.fichier) && c.code > NORME_MAX)
+      .map((c) => `${c.fichier} — ${c.code} lignes de code`);
+    expect(fautifs, [
+      `Ces fichiers dépassent la norme de ${NORME_MAX} lignes de code et ne sont pas dans la dette.`,
+      "Découpez-les. Les y inscrire est un aveu, pas une solution : la dette ne s'allonge pas.",
+    ].join("\n")).toEqual([]);
+  });
+
+  it("UN FICHIER EN DETTE NE GROSSIT PLUS", () => {
+    const grossis: string[] = [];
+    for (const [fichier, plafond] of DETTE) {
+      const code = parFichier.get(fichier);
+      if (code !== undefined && code > plafond) {
+        grossis.push(`${fichier} — ${code} lignes de code, contre ${plafond} inscrites`);
+      }
+    }
+    expect(grossis, [
+      "Ces fichiers dépassaient déjà la norme et viennent de grossir encore.",
+      "Relever leur plafond serait renoncer : ce qu'on ajoute à un fichier trop gros va ailleurs.",
+    ].join("\n")).toEqual([]);
+  });
+
+  it("LA DETTE NE GARDE PAS CE QUI EST RENTRÉ DANS LA NORME", () => {
+    const aRetirer: string[] = [];
+    for (const fichier of DETTE.keys()) {
+      const code = parFichier.get(fichier);
+      if (code === undefined) aRetirer.push(`${fichier} — disparu`);
+      else if (code <= NORME_MAX) aRetirer.push(`${fichier} — ${code} lignes, rentré dans la norme`);
+    }
+    expect(aRetirer, [
+      "Ces fichiers n'ont plus à figurer dans la dette : retirez-les de la liste.",
+      "C'est ce qui empêche la dette de paraître éternelle une fois qu'elle a été payée.",
+    ].join("\n")).toEqual([]);
+  });
+
+  it("dit où en est la dette, pour qu'on la voie décroître", () => {
+    const lignes = [...DETTE.values()].reduce((s, n) => s + n, 0);
+    const exces = [...DETTE.values()].reduce((s, n) => s + (n - NORME_MAX), 0);
+    console.log(`dette : ${DETTE.size} fichiers, ${lignes} lignes de code, ${exces} au-dessus de la norme`);
+    // LE NOMBRE DE FICHIERS EN DETTE NE REMONTE PAS. Ce cas tombe si l'on en ajoute un, même
+    // discrètement : la liste est le seul endroit où la dette peut croître, et elle est gardée.
+    expect(DETTE.size).toBeLessThanOrEqual(15);
+  });
+});
