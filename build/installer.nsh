@@ -65,12 +65,23 @@
   ;   its payload, app-64.7z          439,931,366 bytes   extracted to %TEMP% during install
   ;   the installed application       996,717,321 bytes   (996.7 MB / 950.5 MiB), 733 files
   ;
+  ; RE-MEASURED ON 5.0.4, and the figures moved: two engines joined the bundle, `bin/acestep` and
+  ; `bin/audiocpp`, which the song and transcription components run.
+  ;
+  ;   downloaded installer            458,938,718 bytes   (458.9 MB / 437.7 MiB)
+  ;   the installed application     1,128,232,727 bytes   (1,128.2 MB / 1,076.0 MiB), 200 files
+  ;
+  ; The file count fell from 733 to 200 because the models left `extraResources` in 5.0.3; the
+  ; footprint rose all the same, the two engines weighing more than what the count lost.
+  ;
   ; At a 1 GiB threshold a drive with exactly 1,073,741,824 bytes free PASSED the check and was
   ; then left 77,024,503 bytes — and that ignores %TEMP%. When the temporary directory sits on the
   ; install drive, which is the default C: case, the payload and the expanded application are on
   ; it at the same time: a peak of 1,436,648,687 bytes, 1.34 GiB. The check let that through.
   ;
   ; 2 GiB covers the peak with room to spare, and the division below can only express whole GiB.
+  ; On 5.0.4 that peak is 1,587,171,445 bytes, 1.48 GiB — the payload in %TEMP% plus the expanded
+  ; application — so the threshold still holds, with about half a gibibyte of margin.
   ; RE-MEASURE RATHER THAN TRUST THIS COMMENT: extract a published installer with
   ; `7z x Attic-Setup-X.Y.Z.exe`, then `7z l "$PLUGINSDIR/app-64.7z"` prints the uncompressed
   ; total on its last line. That is the installed footprint.
@@ -78,13 +89,15 @@
   ; What is embedded, and what it weighs inside the installed application — the SoundFont is the
   ; largest single item, and it stays bundled: it is what every MIDI instrument sounds through.
   ;
-  ;   resources\sf2                 148,398,306     resources\sfz                      369,972
-  ;   resources\music collection     77,857,745     resources\exemples                 105,920
-  ;   resources\magenta              76,775,321     resources\THIRD_PARTY.md            37,341
-  ;   resources\bin (songsee)         6,450,755     resources\TERMS_OF_USE.txt           1,072
+  ;   resources\sf2                 148,398,306     resources\bin\songsee            6,790,503
+  ;   resources\bin\audiocpp         86,372,504     resources\sfz                      369,972
+  ;   resources\music collection     77,857,745     resources\exemples                 127,690
+  ;   resources\magenta              76,775,321     resources\THIRD_PARTY.md            37,560
+  ;   resources\bin\acestep          44,333,654     resources\TERMS_OF_USE.txt           1,072
   ;
-  ; That is 309,996,432 bytes of bundled resources (310.0 MB / 295.6 MiB); the rest of the
-  ; 996,717,321 is Electron and the application itself. An earlier version of this comment said
+  ; That is 441,064,327 bytes of bundled resources (441.1 MB / 420.6 MiB), measured on 5.0.4
+  ; against 309,996,432 on 5.0.0; the rest of the
+  ; 1,128,232,727 is Electron and the application itself. An earlier version of this comment said
   ; "373.5 MB of sources" and listed Csound, which is not an extraResources entry, while omitting
   ; songsee, which is: it had been measured on a working copy holding three music files absent
   ; from the collection manifest and an example absent from git.
@@ -97,7 +110,7 @@
   ; IntCmp syntax: value1 value2 jump_equal jump_less jump_more
   IntCmp $5 2 ok less ok
 less:
-  MessageBox MB_OK "Insufficient disk space.$\nThis installer requires at least 2 GB of free space on drive $0:.$\nThe application takes about 950 MiB once installed, and the installer needs room to unpack it first.$\nThe AI models are downloaded later, from inside the app, and need additional space.$\nPlease free some space and run the installer again."
+  MessageBox MB_OK "Insufficient disk space.$\nThis installer requires at least 2 GB of free space on drive $0:.$\nThe application takes about 1.05 GiB once installed, and the installer needs room to unpack it first.$\nThe AI models are downloaded later, from inside the app, and need additional space.$\nPlease free some space and run the installer again."
   Abort
 
   ok:
