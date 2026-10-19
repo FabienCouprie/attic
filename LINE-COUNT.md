@@ -7,9 +7,9 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1365 files, 244800 lines, of which 166020 are code.**
-The table lists the 194 files of 200 code lines or more, heaviest first;
-the remaining 1171 account for 162355 lines.
+**1367 files, 244948 lines, of which 166096 are code.**
+The table lists the 195 files of 200 code lines or more, heaviest first;
+the remaining 1172 account for 162229 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
@@ -198,6 +198,7 @@ the remaining 1171 account for 162355 lines.
 | src/plugins/effets.test.ts | 208 | 302 |  |
 | src/plugins/boucle-creneau.test.ts | 207 | 252 |  |
 | src/plugins/cercle-transformations.test.ts | 206 | 257 |  |
+| src/plugins/chanson-locale.ts | 205 | 274 |  |
 | src/plugins/effet-parametres-midi.test.ts | 205 | 322 |  |
 | src/plugins/tonal.ts | 205 | 283 |  |
 | src/audio/modulation-espace.test.ts | 204 | 276 |  |

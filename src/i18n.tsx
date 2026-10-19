@@ -611,6 +611,10 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.aucun_r_pertoire_sp_cifi": { fr: "Aucun répertoire spécifié.", en: "No directory specified." },
   "msg.aucun_r_pertoire_de_sortie_sp_cifi": { fr: "Aucun répertoire de sortie spécifié.", en: "No output directory specified." },
   "msg.n_cessite_electron": { fr: "Nécessite Electron.", en: "Requires Electron." },
+  "msg.pont.redemarrer": {
+    fr: "Ce composant appelle une fonction que l’application en cours ne connaît pas encore. Quittez-la et relancez-la : un rechargement de fenêtre ne suffit pas.",
+    en: "This component calls a function the running application does not know yet. Quit it and start it again: reloading the window is not enough.",
+  },
   "msg.docIntrouvable": { fr: "Impossible d'ouvrir la documentation en ligne.", en: "Could not open the online documentation." },
   "msg.aucun_mp3_dans_var_0": { fr: "Aucun MP3 dans : {__VAR_0__}", en: "No MP3 in: {__VAR_0__}" },
   "msg.aucun_fichier_audio_dans_var_0": { fr: "Aucun fichier audio dans : {__VAR_0__}", en: "No audio file in: {__VAR_0__}" },
