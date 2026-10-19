@@ -82,6 +82,8 @@
     "files": [
       "dist/**/*",
       "!dist/oonx/**/*",
+      "!dist/acestep/**/*",
+      "!dist/audiocpp/**/*",
       "!dist/magenta/**/*",
       "!dist/sf2/**/*",
       "!dist/sfz/**/*",

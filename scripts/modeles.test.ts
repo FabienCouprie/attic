@@ -76,7 +76,7 @@ describe("table des modèles téléchargeables", () => {
 // Attic : elles se tiennent par un test.
 describe("le manifeste engendré", () => {
   const manifeste = JSON.parse(readFileSync(new URL("./modeles-manifest.json", import.meta.url), "utf8")) as {
-    modeles: { id: string; source: { url: string | null; sha256?: string } }[];
+    modeles: { id: string; source: { url: string | null; sha256?: string }; fichiers?: { chemin: string }[] }[];
   };
 
   it("TOUTE ENTRÉE A UNE ADRESSE, sans quoi un nœud arrive muet et personne ne le sait", () => {
@@ -122,5 +122,38 @@ describe("THIRD_PARTY.md", () => {
   it("ne crédite plus le classeur de genre au mauvais auteur, et dit son origine", () => {
     expect(texte).not.toContain("Nicklas Hansen");
     expect(texte).toContain("hubert-base-ls960");
+  });
+});
+
+describe("aucun modèle ne part dans l'installeur", () => {
+  // CE GARDE EST NÉ D'UNE CONSTRUCTION QUI N'A PAS ABOUTI. Les modèles vivent sous `public/`, et
+  // Vite recopie TOUT ce dossier dans `dist/` : sans exclusion, electron-builder les emballe. Les
+  // quatre racines d'alors étaient écartées une par une dans `build.files` ; deux racines neuves
+  // sont arrivées, `acestep` et `audiocpp`, et personne n'a pensé à les y ajouter. Mesuré :
+  // `app.asar` à 4,2 Go au lieu de 0,2, l'archive NSIS à 4 179 760 896 octets, et NSIS qui échoue
+  // sur « failed creating mmap » — son plafond de programme 32 bits. L'installeur ne se construit
+  // plus du tout.
+  //
+  // IL CHERCHE UNE FORME, NON DES NOMS : toute racine que le manifeste déclare doit être écartée.
+  // Une liste de noms aurait le même défaut que celle qu'elle remplace, et la prochaine racine
+  // passerait de la même façon.
+  const engendre = JSON.parse(readFileSync(new URL("./modeles-manifest.json", import.meta.url), "utf8")) as {
+    modeles: { fichiers?: { chemin: string }[] }[];
+  };
+  const racines = [...new Set(engendre.modeles.flatMap((m) =>
+    (m.fichiers ?? []).map((f) => f.chemin.split("/")[0])))].filter(Boolean);
+
+  it("le manifeste déclare bien des racines, sans quoi ce garde ne regarderait rien", () => {
+    expect(racines.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("CHAQUE RACINE DE MODÈLES EST ÉCARTÉE DU PAQUET", () => {
+    const fichiers = (JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"))
+      .build?.files ?? []) as string[];
+    const oubliees = racines.filter((r) => !fichiers.includes(`!dist/${r}/**/*`));
+    expect(oubliees, [
+      "Ces racines de modèles seraient emballées dans l'installeur, Vite recopiant « public/ »",
+      "dans « dist/ ». Ajouter « !dist/<racine>/**/* » à build.files de package.json.",
+    ].join("\n")).toEqual([]);
   });
 });
