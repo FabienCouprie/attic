@@ -118,7 +118,9 @@ function main() {
   // Build the renderer and main process code.
   for (const [cmd, args] of [
     ["npm", ["run", "build"]],
-    ["npm", ["run", "ensure-songsee"]],
+    // Les exécutables tiers viennent de la release « assets », épinglés et vérifiés par empreinte,
+    // et non d'un clone de l'amont fait au moment du paquetage.
+    ["npm", ["run", "outils"]],
   ]) {
     const status = runCommand(cmd, args, { NODE_OPTIONS: nodeOptions });
     if (status !== 0) cleanup(status ?? 1);

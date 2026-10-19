@@ -103,7 +103,8 @@ because it is a bundled resource an auditor will find in the installer, not beca
 
 | Binary | License | Copyright |
 |---|---|---|
-| `songsee` (CLI) | MIT | Copyright (c) Peter Steinberger / openclaw — Spectrogram/visualization CLI (https://github.com/openclaw/songsee) |
+| `songsee` (CLI) | MIT | Copyright (c) Peter Steinberger / openclaw — Spectrogram/visualization CLI (https://github.com/openclaw/songsee), pinned at v0.1.3 |
+| `acestep.cpp` (`ace-lm`, `ace-synth`, `ggml*`) | MIT | Copyright (c) ServeurpersoCom — local song generation on ggml (https://github.com/ServeurpersoCom/acestep.cpp), pinned at commit `de858d8e` |
 
 ### Csound
 

@@ -1,0 +1,99 @@
+{
+  "commentaire": "Les exécutables tiers embarqués, épinglés à une version et publiés sur la release « assets ». Écrit par scripts/outils-natifs.cjs --publier ; les versions, elles, se changent à la main.",
+  "outils": [
+    {
+      "id": "songsee",
+      "nom": "Songsee",
+      "role": "Moteur de visualisation employé par le composant « Songsee Visualizer ».",
+      "amont": {
+        "depot": "https://github.com/openclaw/songsee.git",
+        "version": "v0.1.3",
+        "sousModules": false
+      },
+      "licence": {
+        "nom": "MIT",
+        "credit": "Peter Steinberger / openclaw"
+      },
+      "destination": "bin/songsee",
+      "plateformes": {
+        "win32-x64": {
+          "asset": "songsee-v0.1.3-win32-x64.exe",
+          "produits": "cmd/songsee",
+          "construction": [
+            {
+              "commande": "go",
+              "args": [
+                "build",
+                "-o",
+                "songsee.exe",
+                "."
+              ],
+              "dans": "cmd/songsee"
+            }
+          ],
+          "fichiers": [
+            "songsee.exe"
+          ],
+          "url": "https://github.com/FabienCouprie/attic/releases/download/assets/songsee-v0.1.3-win32-x64.exe",
+          "octets": 6789120,
+          "sha256": "027a2fac6c42664caa8975ef887f2cca531fe628fb2fd21ed8dad28b82956a57"
+        }
+      }
+    },
+    {
+      "id": "acestep",
+      "nom": "acestep.cpp",
+      "role": "Génération de chanson locale : ace-lm écrit paroles et codes, ace-synth rend l'audio.",
+      "amont": {
+        "depot": "https://github.com/ServeurpersoCom/acestep.cpp.git",
+        "version": "de858d8e1a94",
+        "sousModules": true
+      },
+      "licence": {
+        "nom": "MIT",
+        "credit": "ServeurpersoCom — acestep.cpp, sur ggml"
+      },
+      "destination": "bin/acestep",
+      "plateformes": {
+        "win32-x64": {
+          "asset": "acestep-de858d8e-win32-x64-vulkan.zip",
+          "produits": "build/Release",
+          "construction": [
+            {
+              "commande": "cmake",
+              "args": [
+                "-S",
+                ".",
+                "-B",
+                "build",
+                "-G",
+                "Ninja Multi-Config",
+                "-DGGML_VULKAN=ON"
+              ]
+            },
+            {
+              "commande": "cmake",
+              "args": [
+                "--build",
+                "build",
+                "--config",
+                "Release"
+              ]
+            }
+          ],
+          "fichiers": [
+            "ace-lm.exe",
+            "ace-synth.exe",
+            "ggml.dll",
+            "ggml-base.dll",
+            "ggml-cpu.dll",
+            "ggml-vulkan.dll"
+          ],
+          "url": "https://github.com/FabienCouprie/attic/releases/download/assets/acestep-de858d8e-win32-x64-vulkan.zip",
+          "octets": 13850932,
+          "sha256": "f1a5c39537a6614b0791b6a432cd6f4ab333b80143685fe6a0d3bd59a422bb3f"
+        }
+      }
+    }
+  ]
+}

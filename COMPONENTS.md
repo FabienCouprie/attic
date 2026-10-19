@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **487 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **489 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 93 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (33) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 95 | [AI generators](#ai-generators) (2) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (35) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 235 | [Analysis](#analysis) (1) · [Conversion](#conversion) (21) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 44 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
@@ -461,7 +461,9 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Noise Generator](#noise-generator) | Generates white, pink or brownian noise. |
 | [Octave Illusion](#octave-illusion) | Two tones an octave apart alternate from one ear to the other, and one hears a single tone. |
 | [Oscillator](#oscillator) | Generates a pure waveform; the view shows the wave and its harmonics. |
+| [Plan a Song](#plan-a-song) | Writes a song's plan: its lyrics, its form and its audio codes. |
 | [Pulsar Synthesis](#pulsar-synthesis) | Fundamental and formant set independently, from short repeated bursts. |
+| [Render a Song](#render-a-song) | Renders the audio of a song plan, in 48 kHz stereo. |
 | [Rhythm Tree](#rhythm-tree) | Picks or draws a rhythm written by divisions, and the pitches that go with it. |
 | [Risset Bell](#risset-bell) | Synthesises a bell by adding inharmonic partials. |
 | [Scale Glissando](#scale-glissando) | Slides every degree of a scale onto another's, each onto the one of the same rank. |
@@ -976,6 +978,30 @@ Generates a pure waveform by additive synthesis (sum of harmonics, alias-free). 
 | Duration | number | 1.5 s | 0.2 – 5 s, step 0.1 | Duration of the generated tone. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 
+#### Plan a Song
+
+`planifier-chanson` · Inputs → Generation
+
+*Writes a song's plan: its lyrics, its form and its audio codes.*
+
+This component writes a song's plan from a description, and returns it as text. The plan carries the lyrics, the tempo, the key, the length and the audio codes the render will use. « Description » says what is wanted: a genre, an instrumentation, a character. The input of the same name receives it from another component when connected, and the setting then serves as a fallback. « Lyrics » sets the sung text. Empty, the planner writes it itself, and it may choose an instrumental piece; given, it keeps it and only settles the form, which shortens its work. « Singing language » says in which language to sing. « Length » sets the target length in seconds; at zero, the planner chooses it. « Seed » makes the plan reproducible; at minus one, every run differs. « Compute » names the device used. The « Plan » output returns the document to pass to the render, and the « Lyrics » output the sung text, which can be read and corrected before rendering.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Description | text |  |
+| input | Lyrics | text |  |
+| output | Plan | text |  |
+| output | Lyrics | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Description | text | `a calm acoustic guitar ballad, warm and slow` |  | What is wanted. The « Description » input replaces it when connected. |
+| Lyrics | text | — |  | The sung text, with its section markers in brackets. Empty, the planner writes it. |
+| Singing language | choice | French | French / English / Spanish / German / Italian / Portuguese / Japanese / Chinese | The language the voice sings in. |
+| Length | number | 60 s | 0 – 600 s, step 10 | Target length. At zero, the planner chooses, and it aims long. |
+| Seed | number | -1 | -1 – 999999, step 1 | Makes the plan reproducible. At minus one, every run differs. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+
 #### Pulsar Synthesis
 
 `pulsars-roads` · Inputs → Generation
@@ -995,6 +1021,28 @@ After Curtis Roads's pulsar synthesis ("Microsound", 2001). A pulsar is a brief 
 | Shape | choice | Sine | Sine / Square / Sawtooth | Waveform of the pulsaret. Sine gives a clean formant; square and sawtooth add higher replicas of it. |
 | Duration | number | 5 s | 0.2 – 120 s, step 0.1 | Length of the produced sound. |
 | Amplitude | slider | 80 % | 0 – 100 %, step 1 | Output level. |
+
+#### Render a Song
+
+`rendre-chanson` · Inputs → Generation
+
+*Renders the audio of a song plan, in 48 kHz stereo.*
+
+This component renders the audio of a plan written by « Plan a Song ». The plan arrives on the « Plan » input; the same plan can be rendered as many times as wanted. The « Lyrics » input replaces the plan's sung text, and nothing else: the form, the tempo, the key and the codes stay those of the planner. This is where the lyrics one has read over and corrected come back. « Denoising steps » decides the number of steps. Eight is the fast model's value; more lengthens the computation without always changing what is heard. « Shift » moves the instants at which denoising works. Three is the usual value. « Compute » names the device used. « Decoder tile » and « Overlap » decide how the audio decoding is cut up. The memory required follows the tile size, never the piece's length: a tile of one thousand and twenty-four frames asks for more than three gigabytes at once, two hundred and fifty-six ask for less than one. The overlap is what keeps a seam from being heard. The « Audio » output renders the sound, in stereo at forty-eight kilohertz.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Plan | text |  |
+| input | Lyrics | text |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Denoising steps | number | 8 | 4 – 50, step 1 | Number of denoising steps. Eight is the fast model's value. |
+| Shift | number | 3 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
+| Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
 
 #### Rhythm Tree
 

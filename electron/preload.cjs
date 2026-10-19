@@ -110,6 +110,16 @@ contextBridge.exposeInMainWorld("api", {
     return () => ipcRenderer.removeListener("modeles:progression", ecouteur);
   },
 
+  // La chanson locale. `acestepProgression` rend de quoi se désabonner, comme celle des modèles :
+  // un nœud qui se démonte sans le faire laisserait un écouteur par exécution.
+  acestepPlanifier: (options) => ipcRenderer.invoke("acestep:planifier", options),
+  acestepRendre: (options) => ipcRenderer.invoke("acestep:rendre", options),
+  acestepProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("acestep:progression", ecouteur);
+    return () => ipcRenderer.removeListener("acestep:progression", ecouteur);
+  },
+
   majVerifier: () => ipcRenderer.invoke("maj:verifier"),
   majInfo: () => ipcRenderer.invoke("maj:info"),
   majInstallerRelancer: () => ipcRenderer.invoke("maj:installer-relancer"),

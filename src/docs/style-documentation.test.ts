@@ -55,6 +55,8 @@ const SIGLES = new Set([
   "SMIL",
   // SRT : le format de sous-titres de SubRip, nom d'un format de fichier et non une insistance.
   "SRT",
+  // CUDA : l'interface de calcul de NVIDIA, nom d'un périphérique que le moteur reconnaît.
+  "CUDA",
   // EBU : l'Union europeenne de radio-television, dont la norme R 128 fixe la sonie de diffusion.
   "EBU",
   // GRAIN : le nom d'une famille de programmes du Composers Desktop Project, ecrit ainsi dans sa

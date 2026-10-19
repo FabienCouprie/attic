@@ -1391,6 +1391,35 @@ ipcMain.handle("songsee:generer", async (_event, { cheminEntree, options }) => {
   }
 });
 
+// --- IPC : la chanson locale, planifiée puis rendue ---
+//
+// L'AVANCEMENT REPART VERS LA FENÊTRE QUI A DEMANDÉ, et non vers toutes : deux nœuds qui
+// travaillent en même temps dans deux fenêtres ne doivent pas se raconter l'avancement l'un de
+// l'autre. `event.sender` est celui qui a appelé.
+const { planifier: acestepPlanifier, rendre: acestepRendre } = require("./acestep.cjs");
+
+const avancementVers = (event, phase) => (ligne) => {
+  if (!event.sender.isDestroyed()) event.sender.send("acestep:progression", { phase, ligne });
+};
+
+ipcMain.handle("acestep:planifier", async (event, options) => {
+  try {
+    return await acestepPlanifier(options, avancementVers(event, "planification"), contexteRessources());
+  } catch (err) {
+    console.error("[attic] acestep:planifier a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
+ipcMain.handle("acestep:rendre", async (event, options) => {
+  try {
+    return await acestepRendre(options, avancementVers(event, "rendu"), contexteRessources());
+  } catch (err) {
+    console.error("[attic] acestep:rendre a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
 // ─── Auto-updater : configuration + IPC ───
 let infoMaj = etatNeutre();
 
