@@ -24,6 +24,10 @@ public/magenta/
 # autres modèles, jamais versionnés.
 public/acestep/
 
+# Le GGUF de MuScriptor : 393 Mio, téléchargé depuis la release « assets » comme les autres
+# modèles, jamais versionné.
+public/audiocpp/
+
 # Piper TTS assets (copied from node_modules by postinstall)
 public/piper-tts/
 
@@ -43,6 +47,10 @@ bin/acestep/*.exe
 bin/acestep/*.dll
 bin/acestep/*.so
 bin/acestep/*.dylib
+bin/audiocpp/*.exe
+bin/audiocpp/*.dll
+bin/audiocpp/*.so
+bin/audiocpp/*.dylib
 
 # LES GRAPHES D'EXEMPLE SONT VERSIONNÉS DEPUIS LE 2026-10-08, demandé par Fabien, et c'est le
 # renversement d'une décision antérieure de lui dont la raison était écrite ici : « c'est un dossier

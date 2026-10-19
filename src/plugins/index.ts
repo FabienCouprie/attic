@@ -58,6 +58,7 @@ import { fiches as f_zones_vers_midi } from "./zones-vers-midi";
 import { fiches as f_sous_titres } from "./sous-titres";
 import { fiches as f_sous_titres_incrustes } from "./sous-titres-incrustes";
 import { fiches as f_chanson_locale } from "./chanson-locale";
+import { fiches as f_transcription_midi } from "./transcription-midi";
 import { fiches as f_couper_aux_mots } from "./couper-aux-mots";
 import { fiches as f_traduction } from "./traduction";
 import { fiches as f_prompt_graphe } from "./prompt-graphe";
@@ -434,6 +435,7 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_sous_titres,
   ...f_sous_titres_incrustes,
   ...f_chanson_locale,
+  ...f_transcription_midi,
   ...f_couper_aux_mots,
   ...f_traduction,
   ...f_prompt_graphe,

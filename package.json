@@ -2,7 +2,7 @@
   "name": "attic",
   "private": true,
   "version": "5.0.3",
-  "description": "Visual node-editor for AI-powered music and sound design — 489 nodes, local ML models, bilingual FR/EN.",
+  "description": "Visual node-editor for AI-powered music and sound design — 490 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -121,6 +121,10 @@
       {
         "from": "bin/acestep",
         "to": "bin/acestep"
+      },
+      {
+        "from": "bin/audiocpp",
+        "to": "bin/audiocpp"
       },
       {
         "from": "music collection",
