@@ -4,6 +4,16 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [5.0.4] — 2026-10-19
+
+**QUATRE COMPOSANTS NEUFS, ET TROIS D'ENTRE EUX FONT ENTRER DANS LE CATALOGUE CE QU'IL NE SAVAIT PAS FAIRE.** « Planifier une chanson » et « Rendre une chanson » chantent en local sur les poids d'ACE-Step, là où le dépôt ne portait que trente secondes d'instrumental et des modèles symboliques ; mesuré sur une RTX 2060 en Vulkan, **planification 4,6 s et rendu 12,8 s pour 29,6 s de musique chantée en français**. « Transcription MIDI » rend des notes par instrument, **une minute de musique en 11,1 s**, et le processeur rend le même fichier octet pour octet. « Sous-titres (SRT) » et « Incruster les sous-titres » mènent la parole jusque dans l'image. « Zones → MIDI » ferme le chemin qui allait des zones d'un enregistrement aux notes.
+
+**LE DÉFAUT PRINCIPAL D'UN TRANSCRIPTEUR EST RÉPARÉ, ET IL N'ÉTAIT PAS CELUI QU'ON CROYAIT.** Le tempo écrit valait 120 parce qu'un fichier MIDI doit en porter un ; mais relevé sur **1 650 attaques, elles tombent toutes sur un réseau de dix millisecondes**, et contre une grille de double-croches, à n'importe quel tempo, leur écart vaut ce que donnerait le hasard. La sortie ne portait aucune information métrique. Réancrer rend des mesures justes sans déplacer une note — **840 notes conservées, écart maximal 0,744 ms pour une borne de 0,744 ms** — et quantifier reconstruit le rythme en le disant, l'indice passant de 1,009 à 0,000 pour un déplacement moyen de 45 ms.
+
+**LES EXÉCUTABLES TIERS SONT ÉPINGLÉS, ET LA NORME DE TAILLE CONTRAINT ENFIN.** La publication clonait un dépôt amont sans étiquette ni commit ; chaque outil déclare désormais sa version, sa licence et son **SHA-256**, et le chemin a été éprouvé en effaçant tout avant de le laisser revenir. La norme des quatre cents lignes de code, écrite depuis longtemps et jamais tenue, mord par une dette de **quinze fichiers** qui ne peut que décroître.
+
+**QUATRE DÉFAUTS RELEVÉS À L'USAGE, CHACUN REPRODUIT AVANT D'ÊTRE CORRIGÉ** — un volume cent fois trop fort, un curseur qui sautait à la fin du texte, un composant qui héritait du résultat d'un graphe effacé, et un processus principal plus vieux que sa fenêtre. Chaque garde éprouvé en plantant sa faute. Et la règle de sécurité pour l'oreille, tenue par le code depuis le début du projet et par aucune phrase, est écrite.
+
 ### Added
 
 - **« Transcription MIDI » : un enregistrement devient des notes, une piste par instrument, et son tempo cesse d'être une convention.** Le catalogue savait déjà transcrire un signal en hauteurs, sur une seule piste et sans instrument ; ce composant appelle `audiocpp_cli`, épinglé au manifeste des outils, sur les poids de MuScriptor, et rend un MIDI format 1 à une piste par instrument reconnu, programmes généraux justes et batterie sur le canal 10. Mesuré sur une RTX 2060 en Vulkan : **une minute de musique transcrite en 11,1 s, RTF 0,174**, 840 notes et quatre instruments trouvés seuls, 796 Mio de mémoire de carte. Le processeur rend **le même fichier octet pour octet**, en quatorze fois plus de temps : un graphe donne les mêmes notes avec ou sans carte graphique.
