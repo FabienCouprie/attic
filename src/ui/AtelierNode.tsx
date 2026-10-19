@@ -6,6 +6,7 @@ const trouverDef = (id: string) => registreUI().trouverDef(id);
 const couleurFlux = (id: string) => registreUI().couleurFlux(id);
 import { useI18n } from "../i18n";
 import { champTexte, texteBilingue } from "./texte-bilingue";
+import { useTexteEnCours } from "./texte-en-cours";
 import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "./registre-vues";
 import { useStatut } from "./statuts";
 import { useResultat } from "./resultats";
@@ -213,6 +214,45 @@ function IndicateurNiveau({ buffer }: { buffer?: AudioBuffer }) {
       </div>
       <span className="attic-node-vu-text">{dbText}</span>
     </div>
+  );
+}
+
+/**
+ * Le texte d'une note, et le titre d'un cadre.
+ *
+ * LE TEXTE EST TENU EN LOCAL PENDANT LA FRAPPE, et c'est tout l'objet de ces deux composants. Les
+ * deux champs écrivaient dans le graphe à chaque touche et relisaient leur valeur depuis lui : une
+ * correction au milieu d'un mot envoyait le curseur à la fin dès la première frappe. La règle, sa
+ * raison et ses deux moitiés sont dans `ui/texte-en-cours.ts`.
+ */
+function TexteDeNote({ valeur, invite, onChanger }: { valeur: string; invite: string; onChanger: (v: string) => void }) {
+  const { texte, changer, onFocus, onBlur } = useTexteEnCours(valeur, onChanger);
+  return (
+    <textarea
+      className="attic-node-comment-texte nodrag"
+      value={texte}
+      onChange={(e) => changer(e.target.value)}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      placeholder={invite}
+      onPointerDown={(e) => e.stopPropagation()}
+      spellCheck={false}
+    />
+  );
+}
+
+function TitreDeCadre({ valeur, invite, onChanger }: { valeur: string; invite: string; onChanger: (v: string) => void }) {
+  const { texte, changer, onFocus, onBlur } = useTexteEnCours(valeur, onChanger);
+  return (
+    <input
+      className="attic-node-frame-titre nodrag"
+      value={texte}
+      onChange={(e) => changer(e.target.value)}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      placeholder={invite}
+      onPointerDown={(e) => e.stopPropagation()}
+    />
   );
 }
 
@@ -508,13 +548,10 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
           <span className="attic-node-comment-titre">Note</span>
           <button className="attic-node-btn-del" onClick={(e) => { e.stopPropagation(); data.onSupprimerNoeud?.(id); }}>×</button>
         </div>
-        <textarea
-          className="attic-node-comment-texte nodrag"
-          value={texte}
-          onChange={(e) => setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, [champ]: e.target.value } } : n))}
-          placeholder={t("note.ajouter")}
-          onPointerDown={(e) => e.stopPropagation()}
-          spellCheck={false}
+        <TexteDeNote
+          valeur={texte}
+          invite={t("note.ajouter")}
+          onChanger={(v) => setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, [champ]: v } } : n))}
         />
       </div>
     );
@@ -536,12 +573,10 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
       <div className={`attic-node frame ${selected ? "selected" : ""}`} style={{ background: couleur, borderColor: couleur }} ref={nodeRef}>
         <NodeResizer minWidth={160} minHeight={100} isVisible={selected} lineClassName="attic-node-frame-resize-line" handleClassName="attic-node-frame-resize-handle" />
         <div className="attic-node-frame-entete">
-          <input
-            className="attic-node-frame-titre nodrag"
-            value={titre}
-            onChange={(e) => setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, [champCadre]: e.target.value } } : n))}
-            placeholder={t("cadre.titre")}
-            onPointerDown={(e) => e.stopPropagation()}
+          <TitreDeCadre
+            valeur={titre}
+            invite={t("cadre.titre")}
+            onChanger={(v) => setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, [champCadre]: v } } : n))}
           />
           <button className="attic-node-btn-del" onClick={(e) => { e.stopPropagation(); data.onSupprimerNoeud?.(id); }}>×</button>
         </div>
