@@ -128,10 +128,18 @@ describe("configuration réelle", () => {
         modeles: { fichiers: { chemin: string }[] }[];
       }).modeles.map((m) => `public/${m.fichiers[0].chemin.split("/")[0]}`),
     );
+    // LES EXÉCUTABLES SE LISENT AU MANIFESTE, ET NON PAR LEUR NOM. Nommer « bin/songsee » ici
+    // laissait passer le suivant : un second outil embarqué aurait été réputé irrécupérable, ou
+    // pire, on aurait ajouté son nom à la main sans que rien ne vérifie qu'il est épinglé.
+    const outils = new Set(
+      (JSON.parse(readFileSync(join(__dirname, "outils-manifest.json"), "utf8")) as {
+        outils: { destination: string }[];
+      }).outils.map((o) => o.destination.replace(/\\/g, "/")),
+    );
     const recuperable = (source: string) =>
       racines.has(source)
       || (source === "music collection" && assets.includes("download-music-collection"))
-      || (source === "bin/songsee" && assets.includes("ensure-songsee"));
+      || (outils.has(source) && assets.includes("outils-natifs"));
 
     // LA SEULE EXCEPTION, NOMMÉE AVEC SA RAISON : le SoundFont n'est pas au manifeste et ne
     // voyage que dans `assets.zip`, dont le README donne la commande qui l'en tire.

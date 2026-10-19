@@ -93,7 +93,10 @@ jobs:
           node -e "const p = require('./package.json'); p.build.asar = false; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');"
           # Build with the full dev dependency tree.
           npm run build
-          npm run ensure-songsee
+          # Les exécutables tiers viennent de la release « assets », à leur version épinglée et
+          # avec leur empreinte vérifiée. La release ne clone plus aucun dépôt amont : ce qui part
+          # dans l'installeur est ce qui a été éprouvé, et non l'état d'une branche ce jour-là.
+          npm run outils
           # Chaque source de build.extraResources doit exister et avoir un contenu :
           # electron-builder n'échoue pas quand l'une manque, il avertit et continue.
           node scripts/verify-bundled-resources.cjs
