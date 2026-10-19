@@ -1,5 +1,6 @@
 // ui/Inspector.tsx — Panneau de paramètres du nœud sélectionné
 import { useState, useRef, useEffect } from "react";
+import { useTexteEnCours } from "./texte-en-cours";
 
 import { useI18n, defautParametre, uniteParametre, valeurCanoniqueChoix, defautCanoniqueChoix } from "../i18n";
 import { SaisieCouleurs } from "./SaisieCouleurs";
@@ -116,6 +117,32 @@ function ChampNombre({ p, valeur, onChanger }: {
  * SANS L'APPLICATION DE BUREAU, il n'y a pas de chemin à obtenir : un navigateur ne livre que le nom
  * du fichier choisi. Le bouton disparaît alors au lieu d'ouvrir un dialogue sans effet.
  */
+/**
+ * Un paramètre de type texte : une description, un prompt, un programme Python ou Julia.
+ *
+ * LE TEXTE EST TENU EN LOCAL PENDANT LA FRAPPE. Ce champ écrivait le réglage à chaque touche et
+ * relisait sa valeur depuis le nœud : une correction au milieu d'un mot envoyait le curseur à la
+ * fin dès la première frappe. La règle, sa raison et ses deux moitiés sont dans
+ * `ui/texte-en-cours.ts`.
+ */
+function ChampTexteLibre({ valeur, invite, onChanger }: {
+  valeur: string;
+  invite?: string;
+  onChanger: (v: string) => void;
+}) {
+  const { texte, changer, onFocus, onBlur } = useTexteEnCours(valeur, onChanger);
+  return (
+    <textarea
+      value={texte}
+      rows={2}
+      placeholder={invite}
+      onChange={(e) => changer(e.target.value)}
+      onFocus={onFocus}
+      onBlur={onBlur}
+    />
+  );
+}
+
 function ChampChemin({ p, valeur, titre, onChanger }: {
   p: { type?: string; extensions?: string[]; nom: string };
   valeur: string;
@@ -371,11 +398,10 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
               onChanger: (v) => onChangerParametre(p.nom, v),
             })
           ) : p.type === "texte" ? (
-            <textarea
-              value={String(params[p.nom] ?? defautP)}
-              rows={2}
-              placeholder={lang === "en" && p.placeholderEn ? p.placeholderEn : p.placeholder}
-              onChange={(e) => onChangerParametre(p.nom, e.target.value)}
+            <ChampTexteLibre
+              valeur={String(params[p.nom] ?? defautP)}
+              invite={lang === "en" && p.placeholderEn ? p.placeholderEn : p.placeholder}
+              onChanger={(v) => onChangerParametre(p.nom, v)}
             />
           ) : p.type === "fichier" || p.type === "dossier" ? (
             <ChampChemin p={p} valeur={String(params[p.nom] ?? defautP)} titre={t("btn.parcourir")}
