@@ -43,7 +43,7 @@ pour empêcher.
   co-signature que l'outil impose.
 - **Un commit ne contient que ce qui a été demandé.** Un nettoyage repéré en passant se signale, il
   ne se glisse pas dans le diff.
-- Les tables générées (`COMPONENTS.md`, `LINE-COUNT.md`, `DEPENDANCES-AUDIO.md`, `INTERFACE.md`,
+- Les tables générées (`COMPONENTS.md`, `DEPENDANCES-AUDIO.md`, `INTERFACE.md`,
   `MODULABLES.md`) et `tests-e2e/empreintes.json` ne peuvent être cohérentes qu'en un point de
   l'arbre : les régénérer avant de committer, et préférer un commit entier à plusieurs commits dont
   certains échoueraient à leurs propres gardes.
@@ -145,7 +145,10 @@ Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 - **`src/docs/*.test.ts`** — dix-neuf contrats sur le dépôt lui-même : registre des réglages, graines,
   cœurs par trames, registre anglais, caractères de contrôle, style de documentation, classement
   théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, couverture des
-  empreintes, et la fraîcheur de chacune des cinq tables générées.
+  empreintes, et la fraîcheur des tables générées. **La norme de taille y est contraignante** :
+  aucun fichier neuf ne dépasse quatre cents lignes de code, les quinze qui la dépassaient déjà ne
+  grossissent plus, et celui qui redescend dans la norme sort de la dette. Elle ne peut que
+  décroître, et la liste est dans `src/docs/generer-compte-lignes.test.ts`.
 - **`tests-e2e/empreintes.json` + `empreintes.spec.ts`** — l'empreinte du son de 71 composants
   surveillés, valeur efficace et crête à neuf décimales, plus leur message. Toute modification qui
   altère une sortie fait échouer ce test. Pour l'étendre :
@@ -209,7 +212,7 @@ jamais vu rouge ne garde rien.
 | Savoir ce que fait chaque composant | `COMPONENTS.md` (généré) |
 | Savoir ce qu'un module audio peut quitter le fil | `DEPENDANCES-AUDIO.md` (généré) |
 | Savoir quel composant une table partagée touche | `INTERFACE.md` (généré) |
-| Taille des fichiers, norme de 200 à 400 lignes de code | `LINE-COUNT.md` (généré) |
+| Taille des fichiers, norme de 200 à 400 lignes de code, **contraignante** | `src/docs/generer-compte-lignes.test.ts` ; `npm run docs:lignes` pour la table, engendrée à la demande et hors du dépôt |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 
 La documentation la plus dense n'est pas dans ces fichiers mais **en tête des modules** : chaque

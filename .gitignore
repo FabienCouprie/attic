@@ -181,3 +181,19 @@ LICENSE.electron.txt
 LICENSES.chromium.html
 vk_swiftshader_icd.json
 /version
+
+# LA TABLE DES LIGNES N'EST PLUS VERSIONNÉE, et c'est un renversement de décision assumé.
+
+# Elle était tenue à jour par un test, ce qui valait mieux que de la laisser vieillir en silence ;
+
+# mais toute branche qui ajoute ou retire un fichier la touche, si bien que deux branches vivantes
+
+# en même temps entraient en conflit dessus à coup sûr — trois fois dans la même journée, chacune
+
+# résolue en la régénérant, jamais à la main. Ce qu'elle mesure reste tenu par
+
+# « src/docs/generer-compte-lignes.test.ts », qui compte « src/ » à chaque passe ; seule la copie
+
+# écrite sort du dépôt. « npm run docs:lignes » l'engendre quand on veut la lire.
+
+LINE-COUNT.md
