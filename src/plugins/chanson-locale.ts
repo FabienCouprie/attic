@@ -18,6 +18,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
+import { messageEchecPont } from "./pont-electron";
 
 const LANGUES = [
   { id: "fr", fr: "Français", en: "French" },
@@ -54,6 +55,10 @@ const PARAMETRE_CALCUL = {
   doc: "Le périphérique de calcul. « Automatique » laisse le moteur prendre ce qu'il juge le meilleur, ce qui n'est pas toujours la carte graphique : une machine à deux cartes expose souvent le circuit intégré en premier, et les deux numéros sont là pour les départager. « Processeur » tourne partout, et bien plus lentement.",
   docEn: "The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly.",
 };
+
+/** Les deux canaux du processus principal, nommes une fois : on les appelle et on les reconnait. */
+const CANAL_PLANIFIER = "acestep:planifier";
+const CANAL_RENDRE = "acestep:rendre";
 
 const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknown[]) => Promise<unknown>> }).api;
 
@@ -132,16 +137,23 @@ export const fiches = ([
       await annoncerModele(ctx, "planifier-chanson", traduire("progress.chanson.modeles"));
       const debrancher = suivre(ctx);
       try {
-        const r = await pont.acestepPlanifier({
-          description: typeof entreeDescription === "string" && entreeDescription.trim()
-            ? entreeDescription : ctx.paramTexte("Description", ""),
-          paroles: typeof entreeParoles === "string" && entreeParoles.trim()
-            ? entreeParoles : ctx.paramTexte("Paroles", ""),
-          dureeSec: ctx.paramNombre("Durée", 60),
-          langue: ctx.paramTexte("Langue du chant", "fr"),
-          graine: ctx.paramNombre("Graine", -1),
-          peripherique: ctx.paramTexte("Calcul", "").trim(),
-        }) as { ok: boolean; plan?: string; journal?: string };
+        let r: { ok: boolean; plan?: string; journal?: string };
+        try {
+          r = await pont.acestepPlanifier({
+            description: typeof entreeDescription === "string" && entreeDescription.trim()
+              ? entreeDescription : ctx.paramTexte("Description", ""),
+            paroles: typeof entreeParoles === "string" && entreeParoles.trim()
+              ? entreeParoles : ctx.paramTexte("Paroles", ""),
+            dureeSec: ctx.paramNombre("Durée", 60),
+            langue: ctx.paramTexte("Langue du chant", "fr"),
+            graine: ctx.paramNombre("Graine", -1),
+            peripherique: ctx.paramTexte("Calcul", "").trim(),
+          }) as typeof r;
+        } catch (erreur) {
+          // L'APPEL LUI-MÊME PEUT ÉCHOUER, et pas seulement le travail demandé : un processus
+          // principal plus vieux que le préchargement ne porte pas le canal. Voir `pont-electron.ts`.
+          return { valeurs: [null, null], erreur: true, message: messageEchecPont(erreur, CANAL_PLANIFIER) };
+        }
         if (!r.ok || !r.plan) {
           return { valeurs: [null, null], erreur: true, message: (r.journal ?? "").slice(-240) };
         }
@@ -228,15 +240,21 @@ export const fiches = ([
       const paroles = ctx.entree(1);
       const debrancher = suivre(ctx);
       try {
-        const r = await pont.acestepRendre({
-          plan,
-          paroles: typeof paroles === "string" && paroles.trim() ? paroles : undefined,
-          pas: ctx.paramNombre("Pas de débruitage", 8),
-          shift: ctx.paramNombre("Glissement", 3),
-          peripherique: ctx.paramTexte("Calcul", "").trim(),
-          tuile: ctx.paramNombre("Tuile du décodeur", 256),
-          recouvrement: ctx.paramNombre("Recouvrement", 32),
-        }) as { ok: boolean; donnees?: Uint8Array; nom?: string; journal?: string };
+        let r: { ok: boolean; donnees?: Uint8Array; nom?: string; journal?: string };
+        try {
+          r = await pont.acestepRendre({
+            plan,
+            paroles: typeof paroles === "string" && paroles.trim() ? paroles : undefined,
+            pas: ctx.paramNombre("Pas de débruitage", 8),
+            shift: ctx.paramNombre("Glissement", 3),
+            peripherique: ctx.paramTexte("Calcul", "").trim(),
+            tuile: ctx.paramNombre("Tuile du décodeur", 256),
+            recouvrement: ctx.paramNombre("Recouvrement", 32),
+          }) as typeof r;
+        } catch (erreur) {
+          // Même cas que pour la planification : le canal peut manquer au processus principal.
+          return { valeurs: [null], erreur: true, message: messageEchecPont(erreur, CANAL_RENDRE) };
+        }
         if (!r.ok || !r.donnees) {
           return { valeurs: [null], erreur: true, message: (r.journal ?? "").slice(-240) };
         }

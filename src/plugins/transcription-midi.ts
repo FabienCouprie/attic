@@ -31,6 +31,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
+import { messageEchecPont } from "./pont-electron";
 
 /**
  * Les groupes d'instruments que le moteur reconnaît, et qui servent ici.
@@ -79,6 +80,9 @@ const CALCULS = [
   { id: "Vulkan1", fr: "Vulkan 1", en: "Vulkan 1" },
   { id: "CUDA0", fr: "CUDA 0", en: "CUDA 0" },
 ];
+
+/** Le canal du processus principal, nommé une fois : le nœud l'appelle et le reconnaît en cas d'échec. */
+const CANAL = "muscriptor:transcrire";
 
 const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknown[]) => Promise<unknown>> }).api;
 
@@ -191,6 +195,11 @@ export const fiches = ([
           instruments: ctx.paramTexte("Instruments", ""),
           calcul: ctx.paramTexte("Calcul", "").trim(),
         }) as typeof r;
+      } catch (erreur) {
+        // L'APPEL LUI-MÊME PEUT ÉCHOUER, et pas seulement le travail demandé. Le cas qui se produit
+        // est celui d'un processus principal plus vieux que le préchargement : le pont part, et
+        // personne ne répond. `pont-electron.ts` porte le pourquoi et le remède.
+        return { valeurs: [null, null, null], erreur: true, message: messageEchecPont(erreur, CANAL) };
       } finally {
         debrancher();
       }
