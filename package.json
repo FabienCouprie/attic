@@ -35,8 +35,11 @@
     "dev:electron": "concurrently -k \"vite --port 5175\" \"wait-on http://localhost:5175 && cross-env NODE_ENV=development electron .\"",
     "build": "tsc -b && vite build",
     "build:electron": "node scripts/build-electron.cjs",
-    "publish:electron": "npm run build && npm run ensure-songsee && electron-builder --win -p always -c.electronDist=node_modules/electron/dist",
-    "ensure-songsee": "node scripts/ensure-songsee.cjs",
+    "publish:electron": "npm run build && npm run outils && electron-builder --win -p always -c.electronDist=node_modules/electron/dist",
+    "outils": "node scripts/outils-natifs.cjs --telecharger",
+    "outils:construire": "node scripts/outils-natifs.cjs --construire",
+    "outils:publier": "node scripts/outils-natifs.cjs --publier",
+    "outils:verifier": "node scripts/outils-natifs.cjs --verifier",
     "preview": "vite preview",
     "docs:components": "cross-env ECRIRE_CATALOGUE=1 vitest run src/docs/generer-catalogue.test.ts",
     "docs:interface": "cross-env ECRIRE_INVENTAIRE=1 vitest run src/docs/generer-inventaire-ui.test.ts",
@@ -45,7 +48,6 @@
     "test:watch": "vitest",
     "smoke": "node scripts/smoke-test.cjs",
     "test:e2e": "playwright test",
-    "download:songsee": "node scripts/download-songsee.cjs",
     "lint": "oxlint",
     "copy-piper-assets": "node scripts/copy-piper-assets.cjs",
     "postinstall": "npm run copy-piper-assets && node scripts/download-sherpa-wasm.cjs --tolerant && node scripts/download-gtcrn.cjs --tolerant && node scripts/download-magenta.cjs --tolerant && node scripts/download-asr-models.cjs --tolerant && node scripts/download-vosk-models.cjs --tolerant",
@@ -61,7 +63,7 @@
     "modeles:generer": "node scripts/modeles.cjs --generer",
     "modeles:verifier": "node scripts/modeles.cjs --verifier",
     "modeles:telecharger": "node scripts/modeles.cjs --telecharger",
-    "assets": "node scripts/modeles.cjs --telecharger && node scripts/download-music-collection.cjs && node scripts/ensure-songsee.cjs",
+    "assets": "node scripts/modeles.cjs --telecharger && node scripts/download-music-collection.cjs && node scripts/outils-natifs.cjs --telecharger",
     "modeles:publier": "node scripts/modeles.cjs --publier",
     "docs:dependances": "cross-env ECRIRE_DEPENDANCES=1 vitest run src/docs/generer-dependances-audio.test.ts",
     "docs:modulables": "cross-env ECRIRE_MODULABLES=1 vitest run src/docs/generer-modulables.test.ts",
@@ -115,6 +117,10 @@
       {
         "from": "bin/songsee",
         "to": "bin/songsee"
+      },
+      {
+        "from": "bin/acestep",
+        "to": "bin/acestep"
       },
       {
         "from": "music collection",
