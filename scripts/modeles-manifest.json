@@ -881,6 +881,95 @@
       ]
     },
     {
+      "id": "acestep-texte",
+      "nom": "Encodeur de texte (ACE-Step)",
+      "nomEn": "Text encoder (ACE-Step)",
+      "noeuds": [
+        "planifier-chanson",
+        "rendre-chanson"
+      ],
+      "octets": 784144960,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/Qwen3-Embedding-0.6B-Q8_0.gguf",
+        "octets": 784144960,
+        "sha256": "972f23255e46adfe744a0eb9a0039f3c63988f65753b0968d776e8b27168c321"
+      },
+      "fichiers": [
+        {
+          "chemin": "acestep/Qwen3-Embedding-0.6B-Q8_0.gguf",
+          "octets": 784144960,
+          "sha256": "972f23255e46adfe744a0eb9a0039f3c63988f65753b0968d776e8b27168c321"
+        }
+      ]
+    },
+    {
+      "id": "acestep-planificateur",
+      "nom": "Planificateur de chanson (ACE-Step)",
+      "nomEn": "Song planner (ACE-Step)",
+      "noeuds": [
+        "planifier-chanson"
+      ],
+      "octets": 709846656,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/acestep-5Hz-lm-0.6B-Q8_0.gguf",
+        "octets": 709846656,
+        "sha256": "bdaf9e292d4470f31c19cafeaca1b74936a114667e3a85e5d33b65247e9908ec"
+      },
+      "fichiers": [
+        {
+          "chemin": "acestep/acestep-5Hz-lm-0.6B-Q8_0.gguf",
+          "octets": 709846656,
+          "sha256": "bdaf9e292d4470f31c19cafeaca1b74936a114667e3a85e5d33b65247e9908ec"
+        }
+      ]
+    },
+    {
+      "id": "acestep-debruiteur",
+      "nom": "Débruiteur de chanson (ACE-Step)",
+      "nomEn": "Song denoiser (ACE-Step)",
+      "noeuds": [
+        "rendre-chanson"
+      ],
+      "octets": 1970472064,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/acestep-v15-turbo-Q6_K.gguf",
+        "octets": 1970472064,
+        "sha256": "693fc82977d9af2b5569238e363c11ae9b055d464f036d51127fba4eab016693"
+      },
+      "fichiers": [
+        {
+          "chemin": "acestep/acestep-v15-turbo-Q6_K.gguf",
+          "octets": 1970472064,
+          "sha256": "693fc82977d9af2b5569238e363c11ae9b055d464f036d51127fba4eab016693"
+        }
+      ]
+    },
+    {
+      "id": "acestep-decodeur",
+      "nom": "Décodeur audio (ACE-Step)",
+      "nomEn": "Audio decoder (ACE-Step)",
+      "noeuds": [
+        "rendre-chanson"
+      ],
+      "octets": 337420928,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/vae-BF16.gguf",
+        "octets": 337420928,
+        "sha256": "0599862ac5d15cd308e1d2e368373aea6c02e25ebd1737ad4a4562a0901b0ef8"
+      },
+      "fichiers": [
+        {
+          "chemin": "acestep/vae-BF16.gguf",
+          "octets": 337420928,
+          "sha256": "0599862ac5d15cd308e1d2e368373aea6c02e25ebd1737ad4a4562a0901b0ef8"
+        }
+      ]
+    },
+    {
       "id": "magenta-drums-vae",
       "nom": "Batterie neuronale (MusicVAE)",
       "nomEn": "Neural drums (MusicVAE)",

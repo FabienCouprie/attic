@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**487 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**489 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -387,6 +387,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Tonalité progressive | `pitch-progressif` | 240 × 118 |
 | Pixeltone | `pixeltone` | 240 × 118 |
 | Placer un son sur zones | `placer-sons-zones` | 240 × 184 |
+| Planifier une chanson | `planifier-chanson` | 240 × 140 |
 | Platine | `platine` | 240 × 118 |
 | Pluck Synth | `pluck-synth` | 240 × 118 |
 | Point d'écoute | `point-ecoute` | 240 × 118 |
@@ -406,6 +407,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Simplifier un arbre | `reecrire-arbre` | 240 × 140 |
 | Réinsérer une zone | `reinserer-zone` | 240 × 162 |
 | Remplissage de trou | `remplissage-trou` | 240 × 140 |
+| Rendre une chanson | `rendre-chanson` | 240 × 140 |
 | Rendu de cercles | `rendu-cercles` | 240 × 272 |
 | Rendu d'objets | `rendu-objets` | 240 × 118 |
 | Point d'écoute séquence | `rendu-sequence` | 240 × 140 |

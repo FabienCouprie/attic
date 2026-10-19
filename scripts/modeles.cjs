@@ -183,6 +183,40 @@ const CONNUS = {
       note: "Le paquet porte ce que Transformers.js charge et rien de plus : les deux ONNX en fp32 que le worker demande explicitement, la configuration, le préprocesseur et le tokeniseur. Les variantes quantifiées du dépôt amont ne sont jamais chargées par l'application." },
   },
 
+  // ── LES POIDS D'ACE-STEP 1.5, sous `public/acestep/` ──
+  //
+  // QUATRE FICHIERS POUR DEUX NŒUDS, et ils ne sont ni des ONNX ni des points de contrôle Magenta :
+  // ce sont des GGUF, lus par les exécutables d'`acestep.cpp` que `scripts/outils-manifest.json`
+  // épingle. Le planificateur écrit les paroles et les codes, le reste rend l'audio ; les deux
+  // nœuds partagent donc les quatre, et le champ `noeuds` le dit.
+  //
+  // LE PLANIFICATEUR EST PRIS EN 0,6B ET NON EN 4B, mesuré : le 4B pèse 4,2 Go et ne tient pas à
+  // côté du débruiteur dans six gigaoctets de carte, là où ce jeu-ci passe en entier.
+  "Qwen3-Embedding-0.6B-Q8_0.gguf": {
+    id: "acestep-texte", nom: "Encodeur de texte (ACE-Step)", nomEn: "Text encoder (ACE-Step)",
+    racine: "acestep", noeuds: ["planifier-chanson", "rendre-chanson"],
+    licence: { nom: "Apache-2.0", credit: "Alibaba — Qwen3-Embedding-0.6B, converti en GGUF par Serveurperso", rediffusable: true },
+  },
+  "acestep-5Hz-lm-0.6B-Q8_0.gguf": {
+    id: "acestep-planificateur", nom: "Planificateur de chanson (ACE-Step)", nomEn: "Song planner (ACE-Step)",
+    racine: "acestep", noeuds: ["planifier-chanson"],
+    licence: { nom: "MIT", credit: "ACE-Step — acestep-5Hz-lm-0.6B, converti en GGUF par Serveurperso", rediffusable: true },
+  },
+  // LE DÉBRUITEUR EST EN Q6 ET NON EN Q8, ET C'EST GITHUB QUI TRANCHE. Un asset de release est
+  // refusé au-delà de deux gibioctets — « size must be less than 2147483648 », relevé en essayant.
+  // Le Q8 pèse 2 431 Mo et ne passe pas ; le Q6, 1 879 Mo, passe avec de la marge, et c'est la
+  // quantification la plus fidèle qui tienne dans la limite.
+  "acestep-v15-turbo-Q6_K.gguf": {
+    id: "acestep-debruiteur", nom: "Débruiteur de chanson (ACE-Step)", nomEn: "Song denoiser (ACE-Step)",
+    racine: "acestep", noeuds: ["rendre-chanson"],
+    licence: { nom: "MIT", credit: "ACE-Step — acestep-v15-turbo, converti en GGUF par Serveurperso", rediffusable: true },
+  },
+  "vae-BF16.gguf": {
+    id: "acestep-decodeur", nom: "Décodeur audio (ACE-Step)", nomEn: "Audio decoder (ACE-Step)",
+    racine: "acestep", noeuds: ["rendre-chanson"],
+    licence: { nom: "MIT", credit: "ACE-Step — VAE v1.5, converti en GGUF par Serveurperso", rediffusable: true },
+  },
+
   // ── LES POINTS DE CONTRÔLE MAGENTA, sous `public/magenta/` et non `public/oonx/` ──
   //
   // Ils ne sont pas des ONNX, et c'est pourquoi ils ont leur racine. Ils entrent ici pour trois
@@ -218,9 +252,24 @@ const CONNUS = {
   },
 };
 
+/**
+ * L'empreinte d'un fichier, lu PAR MORCEAUX et non d'un bloc.
+ *
+ * `readFileSync` refuse au-delà de deux gigaoctets — `ERR_FS_FILE_TOO_LARGE`, relevé sur le
+ * débruiteur d'ACE-Step qui en pèse 2,43. Un modèle plus gros que cette limite ne pouvait donc
+ * ni entrer au manifeste ni être vérifié, et rien ne l'annonçait avant la première tentative.
+ */
 const sha256 = (chemin) => {
   const h = crypto.createHash("sha256");
-  h.update(fs.readFileSync(chemin));
+  const MORCEAU = 64 * 1024 * 1024;
+  const tampon = Buffer.allocUnsafe(MORCEAU);
+  const fd = fs.openSync(chemin, "r");
+  try {
+    let lus = 0;
+    while ((lus = fs.readSync(fd, tampon, 0, MORCEAU, null)) > 0) h.update(tampon.subarray(0, lus));
+  } finally {
+    fs.closeSync(fd);
+  }
   return h.digest("hex");
 };
 
