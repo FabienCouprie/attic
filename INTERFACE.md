@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**489 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**490 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -492,6 +492,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Tore | `tore` | 240 × 118 |
 | Traçage spectral | `tracage-spectral` | 240 × 118 |
 | Traduction OPUS-MT | `traduction-opus` | 240 × 118 |
+| Transcription MIDI | `transcription-midi` | 240 × 162 |
 | Transfert d'enveloppe | `transfert-enveloppe` | 240 × 162 |
 | Transient Shaper | `transient-shaper` | 240 × 184 |
 | Transposeur/Quantiseur MIDI | `transposeur-quantiseur-midi` | 240 × 118 |

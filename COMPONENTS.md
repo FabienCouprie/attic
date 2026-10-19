@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **489 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **490 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 95 | [AI generators](#ai-generators) (4) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (33) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 235 | [Analysis](#analysis) (1) · [Conversion](#conversion) (21) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 236 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 44 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -2588,6 +2588,7 @@ Transcribes the speech on the audio input, and returns each word with its start 
 | [Merge Voices](#merge-voices) | Merges several sequences into one, each becoming a voice. |
 | [MIDI → Sequence](#midi--sequence) | Reads the notes of a MIDI file and returns them on the sequence flow. |
 | [MIDI Transcriber](#midi-transcriber) | Transcribes an audio signal into MIDI notes. |
+| [MIDI Transcription](#midi-transcription) | Transcribes audio into MIDI notes per instrument, with its tempo and quantization. |
 | [MP3 → WAV](#mp3--wav) | Converts an audio stream to downloadable WAV. |
 | [Quantize](#quantize) | Writes a sequence of arbitrary durations as a measured rhythm. |
 | [Rhythm on Pitches](#rhythm-on-pitches) | Lays a rhythm written by divisions on a series of pitches, and returns a sequence. |
@@ -2800,6 +2801,30 @@ Transcribes audio into MIDI notes, via monophonic pitch detection (FFT) or polyp
 | Max note | number | 96 | 21 – 127 | Highest MIDI note to detect. |
 | MIDI tempo | number | 120 BPM | 40 – 240 BPM | Tempo of the generated MIDI file. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+
+#### MIDI Transcription
+
+`transcription-midi` · Processing → Conversion
+
+*Transcribes audio into MIDI notes per instrument, with its tempo and quantization.*
+
+This component transcribes a recording into MIDI notes, one track per recognized instrument, and returns the resulting file. « Instruments » narrows the search to a single group; at « All », the engine looks for those the track contains. « Compute » names the device used. « Tempo » gives the file the tempo in beats per minute that will be written in it. At zero, the one the engine wrote is kept. Changing this setting moves no note in time: the instants stay those of the recording, and only the bars and the tempo marking change. The input of the same name receives this number from another component when connected, and the setting then serves as a fallback. « Quantization » then places each onset on the nearest subdivision of the chosen tempo, which moves it. At « None », no onset moves. « Quantize ends » applies the same grid to note ends, which otherwise keep their duration. The « MIDI » output returns the file. « Notes » returns the note listing, instrument by instrument. « Report » gives the number of notes, the instruments found, the written tempo and the alignment index of the onsets on the grid before quantization: zero when they all fall on a subdivision, one when they stray from it as much as instants taken at random would.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Tempo | control |  |
+| output | MIDI | MIDI |  |
+| output | Notes | text |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Instruments | choice | All | All / Piano / Acoustic guitar / Electric guitar / Electric bass / Double bass / Strings / Voice / Flutes / Trumpet / Organ / Synth lead / Synth pad / Drums | The instrument group searched for. At « All », the engine looks for those the track contains, and gives each one a track. |
+| Tempo | number | 0 BPM | 0 – 400 BPM, step 1 | The tempo written in the file. At zero, the one the engine wrote is kept. No note changes instant; the bars, however, follow this number. |
+| Quantization | choice | None | None / 1/4 / 1/8 / 1/16 / 1/32 / 1/8 triplet / 1/16 triplet | The grid the onsets are placed on. Each onset joins the nearest subdivision, which moves it; the report's index says how far the chosen tempo puts them from it. |
+| Quantize ends | choice | No | No / Yes | Applies the grid to note ends, which otherwise keep their duration. Without effect when « Quantization » is « None », since there is then no grid. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the notes, which are the same from one device to another. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### MP3 → WAV
 
