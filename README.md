@@ -170,7 +170,7 @@ electron/
 - [`ADDING-A-NODE.md`](ADDING-A-NODE.md) — How to add a new plugin node
 - [`REMOVING-A-NODE.md`](REMOVING-A-NODE.md) — How to safely remove one
 - [`COMPONENTS.md`](COMPONENTS.md) — Generated catalog of every node, with its ports and parameters (regenerate with `npm run docs:components`; a test fails when it no longer matches the registry)
-- [`LINE-COUNT.md`](LINE-COUNT.md) — Generated per-file line counts of `src/` (regenerate with `npm run docs:lignes`; a test fails when it no longer matches the sources)
+- `LINE-COUNT.md` — Per-file line counts of `src/`, **generated on demand and not versioned** (write it with `npm run docs:lignes`). A versioned copy was touched by every branch that added or removed a file, so two live branches conflicted on it every time; what it measures is held by `src/docs/generer-compte-lignes.test.ts`, which counts `src/` on every run
 - [`MODELES-BRUITAGE.md`](MODELES-BRUITAGE.md) — Working note on sound-effect generation: why the installed Stable Audio bundle drifts to music, what was measured, and the surveyed alternatives with their licences
 - [`COMPOSITION-ASSISTEE.md`](COMPOSITION-ASSISTEE.md) — Evaluation of hosting computer-assisted composition (OpenMusic): what already matches, the one representation that blocks the rest, and why porting is ruled out by licence
 - [`QUANTIFICATION-RYTHMIQUE.md`](QUANTIFICATION-RYTHMIQUE.md) — State of the art before writing a line of rhythm quantisation: what GTTM frames and does not solve, the Kant–RQ–qparse lineage that outputs a rhythm tree, why the recent neural work targets a different problem, and the licences

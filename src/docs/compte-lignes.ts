@@ -5,6 +5,10 @@
 // que rien ne régénère ne vaut pas mieux qu'un commentaire périmé, et il vaut moins qu'un fichier
 // absent, parce qu'on le croit.
 //
+// ET LA COPIE ÉCRITE EST SORTIE DU DÉPÔT DEPUIS. Ce module ne change pas pour autant : c'est lui
+// qui tient le décompte, et le test le rejoue sur `src/` à chaque passe. Ce qui a disparu est la
+// copie versionnée, que toute branche touchait dès qu'elle ajoutait ou retirait un fichier.
+//
 // CE QU'IL COMPTAIT, ET POURQUOI C'ÉTAIT ABSURDE. Il comptait TOUTES les lignes, vides et
 // commentaires compris, en disant que décider ce qu'est une ligne de code serait une querelle sans
 // fin. Relevé par Fabien : « compter les commentaires est absurde ». Il a raison, et pour une raison
@@ -146,7 +150,7 @@ export function compterLignes(racine: string): Compte[] {
   return comptes.sort((a, b) => b.code - a.code || a.fichier.localeCompare(b.fichier));
 }
 
-/** Le tableau versionné, tel qu'il s'écrit dans `LINE-COUNT.md`. */
+/** Le tableau tel qu'il s'écrit dans `LINE-COUNT.md`, engendré à la demande et non versionné. */
 export function tableEnTexte(comptes: Compte[]): string {
   const total = comptes.reduce((s, c) => s + c.lignes, 0);
   const totalCode = comptes.reduce((s, c) => s + c.code, 0);

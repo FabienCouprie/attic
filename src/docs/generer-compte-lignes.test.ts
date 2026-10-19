@@ -1,13 +1,21 @@
-// src/docs/generer-compte-lignes.test.ts — Le décompte versionné ne vieillit plus en silence.
+// src/docs/generer-compte-lignes.test.ts — Le décompte se tient sans copie versionnée.
 //
 // POURQUOI CE TEST. `LINE-COUNT.md` était le seul des cinq inventaires que rien ne tenait : aucun
 // script ne le régénérait, aucun test ne le relisait. Il annonçait des fichiers disparus et
 // ignorait les nouveaux. Un fichier engendré que rien ne régénère vaut moins qu'un fichier absent,
 // parce qu'on le croit.
 //
-// DEUX GARDES, comme pour les autres tables. La première refuse un fichier périmé. La seconde
-// éprouve le comptage lui-même, sur des cas construits : un fichier sans saut de ligne final compte
-// quand même sa dernière ligne, et le tri met le plus lourd en tête.
+// ET LA COPIE VERSIONNÉE EST SORTIE DU DÉPÔT, ce qui renverse une décision antérieure sans toucher
+// à ce qu'elle protégeait. La raison est mesurée : toute branche qui ajoute ou retire un fichier
+// touche cette table, si bien que deux branches vivantes en même temps entrent en conflit dessus à
+// coup sûr — trois fois dans la même journée, chacune résolue en la régénérant, jamais à la main.
+// Un conflit dont la résolution est toujours « relancer le générateur » n'apprend rien à personne.
+//
+// CE QUI EST TENU N'A PAS CHANGÉ POUR AUTANT, et c'est le point : les cas ci-dessous comptent
+// `src/` À CHAQUE PASSE, sans rien lire sur le disque. Le tri du plus lourd au plus léger, les deux
+// totaux, le nombre de fichiers hors norme et leur marque, la règle de comptage elle-même — tout
+// cela s'éprouve sur les sources, non sur une copie. Seule la copie sort. `npm run docs:lignes`
+// l'engendre quand on veut la lire, et un cas refuse qu'elle revienne sous git.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -120,19 +128,27 @@ describe("ce que le comptage retire, et ce qu'il garde", () => {
   });
 });
 
-describe("la table versionnée", () => {
-  it("elle est à jour", () => {
+describe("la table engendrée à la demande", () => {
+  it("S'ÉCRIT QUAND ON LA DEMANDE, et n'est pas versionnée le reste du temps", () => {
     const texte = tableEnTexte(compterLignes(RACINE));
     if (ecrire) {
       writeFileSync(CHEMIN, texte, "utf8");
       return;
     }
-    expect(existsSync(CHEMIN),
-      "LINE-COUNT.md est absent : lancez « npm run docs:lignes »").toBe(true);
-    expect(readFileSync(CHEMIN, "utf8").replace(/\r\n/g, "\n"), [
-      "LINE-COUNT.md ne correspond plus à src/.",
-      "C'est normal dès qu'un fichier grossit : lancez « npm run docs:lignes » et versionnez.",
-      "Ne le corrigez pas à la main.",
-    ].join("\n")).toBe(texte);
+    // LA RÈGLE A CHANGÉ DE SENS, ET CE CAS EST CE QUI L'EMPÊCHE DE REVENIR. Tant que la table était
+    // versionnée, toute branche qui ajoutait ou retirait un fichier la touchait : deux branches
+    // vivantes en même temps entraient en conflit dessus à coup sûr. Ce qu'elle mesure est tenu par
+    // les cas ci-dessus, qui comptent `src/` à chaque passe sans rien lire sur le disque ; seule la
+    // copie écrite sort du dépôt. Remettre `LINE-COUNT.md` sous git ramènerait les conflits, d'où
+    // ce cas : l'exclusion doit rester écrite, avec sa raison.
+    const exclusions = readFileSync(resolve(RACINE, ".gitignore"), "utf8");
+    expect(exclusions.split(/\r?\n/).includes("LINE-COUNT.md"),
+      "LINE-COUNT.md doit rester hors du dépôt : son exclusion a disparu de .gitignore").toBe(true);
+  });
+
+  it("rend un texte lisible sans rien lire sur le disque", () => {
+    const texte = tableEnTexte(compterLignes(RACINE));
+    expect(texte.startsWith("# File Line Count")).toBe(true);
+    expect(texte.split("\n").length).toBeGreaterThan(20);
   });
 });

@@ -43,7 +43,7 @@ pour empêcher.
   co-signature que l'outil impose.
 - **Un commit ne contient que ce qui a été demandé.** Un nettoyage repéré en passant se signale, il
   ne se glisse pas dans le diff.
-- Les tables générées (`COMPONENTS.md`, `LINE-COUNT.md`, `DEPENDANCES-AUDIO.md`, `INTERFACE.md`,
+- Les tables générées (`COMPONENTS.md`, `DEPENDANCES-AUDIO.md`, `INTERFACE.md`,
   `MODULABLES.md`) et `tests-e2e/empreintes.json` ne peuvent être cohérentes qu'en un point de
   l'arbre : les régénérer avant de committer, et préférer un commit entier à plusieurs commits dont
   certains échoueraient à leurs propres gardes.
@@ -209,7 +209,7 @@ jamais vu rouge ne garde rien.
 | Savoir ce que fait chaque composant | `COMPONENTS.md` (généré) |
 | Savoir ce qu'un module audio peut quitter le fil | `DEPENDANCES-AUDIO.md` (généré) |
 | Savoir quel composant une table partagée touche | `INTERFACE.md` (généré) |
-| Taille des fichiers, norme de 200 à 400 lignes de code | `LINE-COUNT.md` (généré) |
+| Taille des fichiers, norme de 200 à 400 lignes de code | `npm run docs:lignes` (engendré à la demande, hors du dépôt) |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 
 La documentation la plus dense n'est pas dans ces fichiers mais **en tête des modules** : chaque
