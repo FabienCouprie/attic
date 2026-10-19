@@ -14,6 +14,7 @@ import { useI18n } from "../../i18n";
 import { rechargerFichiersPersistes } from "../rechargerFichiers";
 import { filtrerAretesInvalides } from "../validerGraphe";
 import { decisionSauvegardeAuto, type DecisionSauvegarde } from "../sauvegarde-auto";
+import { idsDe, oublierNoeuds } from "../oubli-noeuds";
 
 // Typage volontairement souple (les nœuds portent un `data` à index-signature et
 // le code d'import d'origine manipulait déjà tout en `any`) : le hook est extrait
@@ -306,6 +307,12 @@ export function usePersistance(o: OptionsPersistance) {
     o.setNodes(importedNodes);
     o.setEdges(aretesValides);
     o.cacheExec.current.clear();
+    // LE GRAPHE D'AVANT EST ABANDONNÉ, DONC SES RÉSULTATS AUSSI. Les résultats et les statuts
+    // vivent hors du tableau des nœuds ; les laisser en place donnerait au graphe importé, dont
+    // les identifiants repartent de « noeud-1 », ce que le précédent avait produit. La pile et le
+    // graphe racine viennent d'être remis à zéro : seuls les nœuds importés vivent encore.
+    // Voir `ui/oubli-noeuds.ts`.
+    oublierNoeuds(idsDe(importedNodes));
     if (json.viewport && o.rfInstance) o.rfInstance.setViewport(json.viewport);
   }, [o]);
 

@@ -7,16 +7,16 @@ Regenerate with `npm run docs:lignes`; a test fails when this file no longer mat
 neither blank lines, nor comments, nor documentation (`notice`, `doc`, `resume`), nor
 translations (any field whose name ends in `En`, and translation-table entries).
 
-**1359 files, 243681 lines, of which 165286 are code.**
+**1361 files, 243886 lines, of which 165398 are code.**
 The table lists the 194 files of 200 code lines or more, heaviest first;
-the remaining 1165 account for 161258 lines.
+the remaining 1167 account for 161445 lines.
 
 **15 files exceed the 400-code-line norm** and are marked « ! ».
 
 | File | Code | Weight | |
 |---|---:|---:|---|
 | src/ui/atelier.css | 1412 | 1790 | ! |
-| src/ui/App.tsx | 1217 | 1648 | ! |
+| src/ui/App.tsx | 1220 | 1659 | ! |
 | src/ui/hooks/useExecutionGraphe.ts | 754 | 1676 | ! |
 | src/ui/Inspector.tsx | 632 | 815 | ! |
 | src/audio/abc.ts | 589 | 764 | ! |
@@ -173,10 +173,10 @@ the remaining 1165 account for 161258 lines.
 | src/plugins/spectral-cdp.ts | 227 | 334 |  |
 | src/plugins/effets-aides.ts | 226 | 533 |  |
 | src/docs/modulables.ts | 223 | 520 |  |
+| src/ui/hooks/usePersistance.ts | 223 | 321 |  |
 | src/audio/concret.ts | 222 | 363 |  |
 | src/audio/granulation-ecologique.test.ts | 222 | 336 |  |
 | src/audio/commun.ts | 221 | 364 |  |
-| src/ui/hooks/usePersistance.ts | 221 | 314 |  |
 | src/audio/palette-harmonique.ts | 220 | 258 |  |
 | src/vues-domaine/ExtraitVideo.tsx | 220 | 261 |  |
 | src/audio/cercle.ts | 219 | 496 |  |
