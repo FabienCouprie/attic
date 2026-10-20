@@ -749,6 +749,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.transcription.sans_grille": { fr: "aucune quantification", en: "no quantization" },
   "msg.chanson.plan": { fr: "plan de {__VAR_0__} s à {__VAR_1__} BPM · {__VAR_2__}", en: "plan of {__VAR_0__} s at {__VAR_1__} BPM · {__VAR_2__}" },
   "msg.chanson.aucunPlan": { fr: "Brancher un plan sur l’entrée « Plan ».", en: "Connect a plan to the « Plan » input." },
+  "msg.tts.langueRetiree": { fr: "La langue « {__VAR_0__} » n’est plus disponible : son modèle a disparu de l’amont. Choisir une autre langue.", en: "The « {__VAR_0__} » language is no longer available: its model vanished upstream. Pick another language." },
   "msg.chanson.rendu": { fr: "{__VAR_0__} s rendues · {__VAR_1__} Hz · {__VAR_2__} canaux", en: "{__VAR_0__} s rendered · {__VAR_1__} Hz · {__VAR_2__} channels" },
   "msg.incrustation.resume": { fr: "{__VAR_0__} sous-titres gravés · {__VAR_1__} images · {__VAR_2__} Mo · {__VAR_3__} s", en: "{__VAR_0__} subtitles burnt in · {__VAR_1__} frames · {__VAR_2__} MB · {__VAR_3__} s" },
   "msg.incrustation.aucunFilm": { fr: "Brancher un film sur l’entrée « Vidéo ».", en: "Connect a film to the « Video » input." },

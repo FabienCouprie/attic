@@ -18,6 +18,8 @@ included in Attic.
 | `audiobox-aesthetics.onnx` | CC-BY 4.0 (weights and most code); MIT (WavLM components derived from microsoft/unilm) | Copyright (c) Meta Platforms, Inc. — Audiobox Aesthetics (https://github.com/facebookresearch/audiobox-aesthetics), weights `facebook/audiobox-aesthetics` on Hugging Face, exported to ONNX (FP32) for Attic. Changes: the positional convolution's weight normalization is folded into a constant weight, and the output de-normalization is included in the graph; scores are unchanged (measured within 2e-5). |
 | `stable-audio-3-small-music/` | Stability AI Community License | Stability AI — Stable Audio 3 small-music (ONNX export by lsb) |
 | `stable-audio-3-small-music/onnx/encoder_q4.onnx` | Stability AI Community License | Stability AI — Stable Audio 3 small-music audio encoder (ONNX export by bgkb) |
+| `tts-speecht5/` | MIT | Copyright (c) Microsoft Corporation — SpeechT5 (`microsoft/speecht5_tts`, `microsoft/speecht5_hifigan`). ONNX export by Xenova, which declares no licence of its own. Speaker embeddings from the CMU ARCTIC corpus, Carnegie Mellon University |
+| `tts-mms/` | **weights: non-commercial use only** (CC-BY-NC 4.0) | Copyright (c) Meta Platforms, Inc. — MMS-TTS (`facebook/mms-tts`), seven languages. ONNX export by Xenova |
 
 #### Note — Demucs weights (`htdemucs_6s.onnx`, `htdemucs_fp16weights.onnx`)
 

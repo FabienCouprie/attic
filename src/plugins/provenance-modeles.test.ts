@@ -44,8 +44,15 @@ const EXCEPTIONS: Record<string, string> = {
     + "depuis storage.googleapis.com à l'exécution. Même traitement à faire que pour Magenta et les "
     + "deux nœuds de reconnaissance vocale : miroir local, entrée au manifeste, publication.",
   "tts.ts":
-    "DETTE. Les vecteurs de locuteur sont chargés depuis huggingface.co à l'exécution. Même "
-    + "traitement à faire.",
+    "DETTE PAYÉE LE 2026-10-20, et la ligne reste parce que l'adresse reste. Les deux composants "
+    + "tiraient leurs poids de huggingface.co à chaque première exécution, sans figurer au "
+    + "manifeste ; ils y sont depuis, et `tts-local.js` détourne l'amont vers le miroir local. "
+    + "L'adresse des vecteurs de locuteur est toujours écrite ici, mais c'est désormais ce que le "
+    + "relais RECONNAÎT pour la détourner, comme pour Kokoro, et non ce qu'on va chercher.",
+  "tts-local.js":
+    "PAS UNE DETTE, et c'est écrit sur place : les neuf adresses amont servent à RECONNAÎTRE les "
+    + "requêtes de la bibliothèque pour les détourner vers le miroir local. Le repli vers l'amont "
+    + "est délibéré, l'application installée n'ayant pas le miroir.",
   "kokoro-local.js":
     "PAS UNE DETTE, et c'est écrit sur place : l'adresse amont sert à RECONNAÎTRE les requêtes de "
     + "la bibliothèque pour les détourner vers le miroir local. Le repli vers l'amont est délibéré, "

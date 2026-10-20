@@ -7,6 +7,8 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
+import { annoncerModele } from "./message-modele";
+import { baseModeleLivre } from "./base-modeles";
 
 let worker: Worker | null = null;
 
@@ -43,17 +45,25 @@ const VOIX_SPEECHT5 = [
 // Langues supportées par MMS-TTS (subset — il en existe 1000+).
 // `id` = code ISO 639-1, identité canonique du paramètre « Langue » (le libellé
 // français servait auparavant de clé, donc d'identité).
-const LANGUES_MMS: { id: string; fr: string; model: string }[] = [
-  { id: "en", fr: "Anglais", model: "Xenova/mms-tts-eng" },
-  { id: "fr", fr: "Français", model: "Xenova/mms-tts-fra" },
-  { id: "es", fr: "Espagnol", model: "Xenova/mms-tts-spa" },
-  { id: "de", fr: "Allemand", model: "Xenova/mms-tts-deu" },
-  { id: "it", fr: "Italien", model: "Xenova/mms-tts-ita" },
-  { id: "pt", fr: "Portugais", model: "Xenova/mms-tts-por" },
-  { id: "nl", fr: "Néerlandais", model: "Xenova/mms-tts-nld" },
-  { id: "ro", fr: "Roumain", model: "Xenova/mms-tts-ron" },
-  { id: "pl", fr: "Polonais", model: "Xenova/mms-tts-pol" },
-  { id: "ru", fr: "Russe", model: "Xenova/mms-tts-rus" },
+//
+// TROIS LANGUES ONT ÉTÉ RETIRÉES, et ce n'est pas un choix : l'italien, le néerlandais et le
+// polonais étaient offerts dans cette liste alors que leurs dépôts amont ne répondaient plus.
+// Relevé en les interrogeant un à un : `Xenova/mms-tts-ita`, `-nld` et `-pol` rendent 401 là où
+// les sept autres rendent 200. Les choisir menait à un échec, et rien dans le dépôt ne pouvait le
+// savoir, puisque les poids étaient tirés d'un tiers à l'exécution. Ils viennent du manifeste
+// depuis, et ce qui n'y est pas n'est plus proposé.
+// LE LIBELLÉ ANGLAIS EST ICI, ET NON DANS UNE SECONDE LISTE. Il l'était, écrit à la main, et il
+// comptait toujours dix entrées quand celle-ci en a perdu trois : une option devenait injoignable,
+// et deux gardes du dépôt l'ont dit. Une liste écrite deux fois finit par ne plus être d'accord
+// avec elle-même.
+const LANGUES_MMS: { id: string; fr: string; en: string; model: string }[] = [
+  { id: "en", fr: "Anglais", en: "English", model: "Xenova/mms-tts-eng" },
+  { id: "fr", fr: "Français", en: "French", model: "Xenova/mms-tts-fra" },
+  { id: "es", fr: "Espagnol", en: "Spanish", model: "Xenova/mms-tts-spa" },
+  { id: "de", fr: "Allemand", en: "German", model: "Xenova/mms-tts-deu" },
+  { id: "pt", fr: "Portugais", en: "Portuguese", model: "Xenova/mms-tts-por" },
+  { id: "ro", fr: "Roumain", en: "Romanian", model: "Xenova/mms-tts-ron" },
+  { id: "ru", fr: "Russe", en: "Russian", model: "Xenova/mms-tts-rus" },
 ];
 
 // Accepte l'id canonique comme l'ancien libellé français (projets existants).
@@ -82,6 +92,7 @@ export const fiches: FicheAudio[] = ([
       if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.branchez_un_texte_port_bleu") };
       const voixId = ctx.paramTexte("Voix", VOIX_SPEECHT5[0].nom);
       const voix = VOIX_SPEECHT5.find((v) => v.id === voixId || v.nom === voixId || v.nomEn === voixId) ?? VOIX_SPEECHT5[0];
+      await annoncerModele(ctx, "tts-speecht5", traduire("progress.chargement_du_mod_le"));
       const w = getWorker();
       return new Promise((resolve) => {
         const requestId = makeRequestId();
@@ -100,7 +111,7 @@ export const fiches: FicheAudio[] = ([
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ text: texte, modelId: "Xenova/speecht5_tts", speakerUrl: voix.url, requestId });
+        w.postMessage({ text: texte, modelId: "Xenova/speecht5_tts", speakerUrl: voix.url, baseMiroir: baseModeleLivre("oonx"), requestId });
       });
    },
   },
@@ -114,7 +125,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Langue", nomEn: "Language", type: "choix",
         options: LANGUES_MMS.map((l) => l.fr), optionIds: LANGUES_MMS.map((l) => l.id),
-        optionsEn: ["English", "French", "Spanish", "German", "Italian", "Portuguese", "Dutch", "Romanian", "Polish", "Russian"],
+        optionsEn: LANGUES_MMS.map((l) => l.en),
         defaut: "Anglais",
         doc: "Langue du texte à synthétiser. Détermine le modèle MMS utilisé.",
         docEn: "Language of the text to synthesize. Determines which MMS model is used.", defautEn: "English" },
@@ -123,7 +134,15 @@ export const fiches: FicheAudio[] = ([
       const texte = ctx.entree(0);
       if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.branchez_un_texte_port_bleu") };
       const langue = ctx.paramTexte("Langue", "en");
-      const modelId = modeleMMS(langue) ?? LANGUES_MMS[0].model;
+      // UNE LANGUE QUI N'EST PLUS OFFERTE SE DIT, ELLE NE SE REMPLACE PAS EN SILENCE. Trois
+      // l'étaient jusqu'au 2026-10-20, leurs dépôts amont ayant disparu ; un projet enregistré sur
+      // l'une d'elles se serait mis à parler anglais sans un mot, ce qui est pire que de refuser.
+      const connue = modeleMMS(langue);
+      if (!connue) {
+        return { valeurs: [null], erreur: true, message: traduire("msg.tts.langueRetiree", langue) };
+      }
+      const modelId = connue;
+      await annoncerModele(ctx, "tts-mms", traduire("progress.chargement_du_mod_le"));
       // Libellé lisible pour le message du nœud : `langue` vaut désormais un
       // code ISO (« en »), qui n'a pas de sens à afficher tel quel.
       const langueLabel = LANGUES_MMS.find((l) => l.id === langue)?.fr ?? langue;
@@ -145,8 +164,9 @@ export const fiches: FicheAudio[] = ([
           }
         };
         w.addEventListener("message", onMessage);
-        w.postMessage({ text: texte, modelId, requestId });
+        w.postMessage({ text: texte, modelId, baseMiroir: baseModeleLivre("oonx"), requestId });
       });
    },
   },
 ] as FicheAudio[]).map(avecDoc);
+

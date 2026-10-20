@@ -59,6 +59,7 @@
     "download:audiobox-aesthetics": "node scripts/download-audiobox-aesthetics.cjs",
     "download:music-collection": "node scripts/download-music-collection.cjs",
     "download:kokoro": "node scripts/download-kokoro.cjs",
+    "download:tts": "node scripts/download-tts.cjs",
     "verify:resources": "node scripts/verify-bundled-resources.cjs",
     "modeles:generer": "node scripts/modeles.cjs --generer",
     "modeles:verifier": "node scripts/modeles.cjs --verifier",

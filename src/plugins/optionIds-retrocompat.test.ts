@@ -257,8 +257,12 @@ const CAS: Cas[] = [
   // table de correspondance distincte, indexée par le libellé français.
   { node: "tts-mms", param: "Langue", ancienneValeur: "Anglais", idAttendu: "en" },
   { node: "tts-mms", param: "Langue", ancienneValeur: "English", idAttendu: "en" },
-  { node: "tts-mms", param: "Langue", ancienneValeur: "Néerlandais", idAttendu: "nl" },
-  { node: "tts-mms", param: "Langue", ancienneValeur: "Dutch", idAttendu: "nl" },
+  // LE NÉERLANDAIS ÉTAIT ÉPROUVÉ ICI, ET IL EST PARTI AVEC L'ITALIEN ET LE POLONAIS : leurs
+  // dépôts amont rendent 401 depuis le 2026-10-20, et les offrir menait à un échec. Une option
+  // RETIRÉE n'est pas une option RENOMMÉE : ce garde existe pour qu'un libellé qui change de nom
+  // garde son identité, pas pour faire survivre un choix qui n'a plus de modèle derrière lui. Un
+  // projet enregistré sur l'une des trois le dit désormais dans son message, au lieu de parler
+  // anglais en silence.
   { node: "sherpa-asr", param: "Langue", ancienneValeur: "Auto", idAttendu: "auto" },
   { node: "sherpa-asr", param: "Langue", ancienneValeur: "Français", idAttendu: "fr" },
   { node: "sherpa-asr", param: "Langue", ancienneValeur: "Japanese", idAttendu: "ja" },

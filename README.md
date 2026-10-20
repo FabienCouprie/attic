@@ -16,7 +16,7 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 - **492 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
 - **AI integration** (Transformers.js / ONNX Runtime Web):
   - Whisper (English) — speech-to-text; Sherpa-ONNX ASR — lighter multilingual speech-to-text (99 languages, Whisper tiny). The heavier multilingual Whisper (~1.5 GB) and Whisper-translate nodes were removed in v2.0.0 in favor of Sherpa-ONNX.
-  - SpeechT5 / MMS-TTS — text-to-speech (7 voices, 10 languages)
+  - SpeechT5 / MMS-TTS — text-to-speech (7 voices, 7 languages)
   - DistilGPT-2 / Qwen2.5-0.5B — two separate local lyrics-generation nodes (Qwen2.5 is newer and multilingual)
   - OPUS-MT — translation (18 language pairs)
   - Demucs 6-stem / MDX-Net — AI source separation (drums, bass, vocals, guitar, piano, other)

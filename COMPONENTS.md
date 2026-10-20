@@ -2502,7 +2502,7 @@ Multilingual text-to-speech using Meta MMS (Massively Multilingual Speech). Conn
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Language | choice | English | English / French / Spanish / German / Italian / Portuguese / Dutch / Romanian / Polish / Russian | Language of the text to synthesize. Determines which MMS model is used. |
+| Language | choice | English | English / French / Spanish / German / Portuguese / Romanian / Russian | Language of the text to synthesize. Determines which MMS model is used. |
 
 #### Piper TTS
 

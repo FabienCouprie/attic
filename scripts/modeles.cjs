@@ -120,6 +120,29 @@ const CONNUS = {
     licence: { nom: "Stability AI Community License", credit: "Stability AI Ltd — Stable Audio 3 small-sfx ; export ONNX par lsb et bgkb", rediffusable: true,
       note: "La licence impose trois choses à qui rediffuse : joindre une copie de l'accord, garder la mention « This Stability AI Model is licensed under the Stability AI Community License, Copyright (c) Stability AI Ltd. All Rights Reserved » dans un fichier de notices, et afficher « Powered by Stability AI ». Elle réserve l'usage commercial aux organisations sous le million de dollars de revenu annuel — Attic est libre et non commercial." },
   },
+  // LES DEUX SYNTHÈSES TRANSFORMERS.JS, qui tiraient leurs poids d'un tiers à l'exécution.
+  //
+  // Elles ne figuraient NULLE PART ici : ni déclarées, ni annoncées, donc hors de portée du garde
+  // qui apparie les nœuds du manifeste à ceux qui annoncent leur téléchargement. Une installation
+  // hors réseau échouait en silence. Et trois des dix langues offertes étaient DÉJÀ MORTES sans
+  // que rien ne le sache : `Xenova/mms-tts-ita`, `-nld` et `-pol` rendent 401. Un dépôt tiers qui
+  // disparaît emporte une option de la liste sans prévenir, et c'est la seconde raison de ce
+  // miroir, au moins autant que la première.
+  //
+  // UN PAQUET PAR COMPOSANT. Prendre les sept langues de MMS pour employer SpeechT5 ferait
+  // télécharger sept cent soixante mégaoctets pour rien.
+  "tts-speecht5": {
+    id: "tts-speecht5", nom: "Synthèse vocale SpeechT5", nomEn: "SpeechT5 speech synthesis",
+    noeuds: ["tts-speecht5"], archive: true,
+    licence: { nom: "MIT", credit: "Microsoft — SpeechT5 (microsoft/speecht5_tts et speecht5_hifigan) ; export ONNX par Xenova ; voix du corpus CMU ARCTIC (Carnegie Mellon University)", rediffusable: true,
+      note: "L'EXPORT NE DÉCLARE AUCUNE LICENCE, comme celui de Whisper tiny : les poids dont il dérive sont en MIT, et une conversion de format est une œuvre dérivée des poids, de sorte que le silence de l'exportateur ne retire pas la concession de Microsoft. D'où le double crédit. Le miroir ne prend que les trois graphes fp32 que le chargeur ouvre, l'encodeur, le décodeur fusionné et le postnet : ni `decoder_model.onnx` ni `decoder_with_past_model.onnx`, qui sont les deux moitiés de ce que le fusionné porte seul." },
+  },
+  "tts-mms": {
+    id: "tts-mms", nom: "Synthèse vocale multilingue (MMS)", nomEn: "Multilingual speech synthesis (MMS)",
+    noeuds: ["tts-mms"], archive: true,
+    licence: { nom: "usage non commercial", credit: "Meta Platforms — MMS-TTS (facebook/mms-tts) ; export ONNX par Xenova", rediffusable: true,
+      note: "Les poids amont sont en CC-BY-NC 4.0. La même décision que pour les poids de Demucs et de MuScriptor s'applique : Attic est libre et non commercial, et rediffuse à ce titre ; qui les reprend reste tenu par la même limite. Sept langues, une par dépôt amont, en fp32 : c'est ce que le composant demande, et les variantes quantifiées ne sont jamais chargées." },
+  },
   "kokoro-82m": {
     id: "kokoro-82m", nom: "Synthèse vocale Kokoro", nomEn: "Kokoro speech synthesis",
     noeuds: ["tts-kokoro", "tts-francais"], archive: true,
@@ -236,6 +259,7 @@ const CONNUS = {
     licence: { nom: "usage non commercial", credit: "MuScriptor — muscriptor-small, converti en GGUF par le projet audio.cpp", rediffusable: true,
       note: "Le dépôt de conversion déclare « CC-BY-NC-4.0 » comme licence du modèle d'origine, et dit que l'usage et la rediffusion sont régis par elle. La même décision que pour les poids de Demucs s'applique : Attic est libre et non commercial, et rediffuse à ce titre ; qui les reprend reste tenu par la même limite. Aucune version quantifiée n'est publiée en amont, le F32 est le seul paquet." },
   },
+
 
   // ── LES POINTS DE CONTRÔLE MAGENTA, sous `public/magenta/` et non `public/oonx/` ──
   //
