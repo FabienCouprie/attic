@@ -36,10 +36,14 @@ function cheminBinaire(contexte) {
 }
 
 /** Le GGUF, téléchargé à la demande ou livré : `resoudreRessource` sait les deux. */
+// LE FICHIER EST DEMANDÉ, ET NON SON DOSSIER. Demander « audiocpp » rend le PREMIER dossier de ce
+// nom qui existe, et celui de l'utilisateur passe devant par construction : un dossier qui porte
+// l'un des deux modèles de cette racine faisait désigner l'autre là où il n'est pas. Ce module n'en
+// a jamais souffert, le sien y étant toujours arrivé le premier ; le cloneur de voix, si, et le
+// défaut est le même ici.
 function cheminModele(contexte) {
-  const dossier = resoudreRessource("audiocpp", contexte)
-    ?? path.resolve(__dirname, "..", "public", "audiocpp");
-  return path.join(dossier, MODELE);
+  return resoudreRessource(path.join("audiocpp", MODELE), contexte)
+    ?? path.resolve(__dirname, "..", "public", "audiocpp", MODELE);
 }
 
 function nettoyer(chemin) {
@@ -118,4 +122,6 @@ async function transcrire(options = {}, surAvancement, contexte) {
   }
 }
 
-module.exports = { transcrire, cheminBinaire, cheminModele, dosEtCarte, relevesDuJournal };
+// `lancer` SORT D'ICI POUR `chatterbox.cjs`, qui emploie le même exécutable sur une autre famille.
+// Deux copies de la lecture ligne à ligne du journal auraient fini par diverger.
+module.exports = { transcrire, cheminBinaire, cheminModele, dosEtCarte, lancer, relevesDuJournal };

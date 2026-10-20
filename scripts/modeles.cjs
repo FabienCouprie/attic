@@ -260,6 +260,23 @@ const CONNUS = {
       note: "Le dépôt de conversion déclare « CC-BY-NC-4.0 » comme licence du modèle d'origine, et dit que l'usage et la rediffusion sont régis par elle. La même décision que pour les poids de Demucs s'applique : Attic est libre et non commercial, et rediffuse à ce titre ; qui les reprend reste tenu par la même limite. Aucune version quantifiée n'est publiée en amont, le F32 est le seul paquet." },
   },
 
+  // LE CLONEUR DE VOIX, sous la même racine et lu par le même exécutable.
+  //
+  // IL N'A PAS DE VOIX À LUI, et c'est la première chose que la mesure a dite : une synthèse sans
+  // référence est refusée, « Chatterbox prepare requires speaker reference audio ». Ce n'est pas
+  // un synthétiseur à voix prédéfinies, c'est un cloneur, d'où une entrée audio obligatoire sur
+  // son nœud.
+  //
+  // LE PAQUET Q8 EST LE SEUL PUBLIABLE, et il fallait vérifier qu'il parle. Le f16 pèse
+  // 3 744 365 922 octets, soit 1,74 fois le plafond d'un asset de release ; celui-ci en pèse
+  // 2 088 399 204 et passe avec 59 084 444 octets de marge. Le paquet q8 d'OmniVoice, lui, rendait
+  // un WAV de quarante-quatre octets : la variante se mesure avant de s'épingler.
+  "chatterbox-q8_0.gguf": {
+    id: "chatterbox", nom: "Clonage de voix (Chatterbox)", nomEn: "Voice cloning (Chatterbox)",
+    racine: "audiocpp", noeuds: ["cloner-voix"],
+    licence: { nom: "MIT", credit: "Resemble AI — Chatterbox, converti en GGUF par le projet audio.cpp", rediffusable: true,
+      note: "La licence vient de la fiche amont `ResembleAI/chatterbox`, qui déclare MIT. Le dépôt de conversion déclare « other » sans préciser : c'est l'amont qui fait foi, comme pour l'export de Whisper tiny, et une conversion de format est une œuvre dérivée des poids. Seul modèle de voix du catalogue qui ne porte aucune réserve non commerciale." },
+  },
 
   // ── LES POINTS DE CONTRÔLE MAGENTA, sous `public/magenta/` et non `public/oonx/` ──
   //

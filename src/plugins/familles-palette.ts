@@ -138,7 +138,7 @@ export const FAMILLES_GENERATION: Record<string, string[]> = {
   // Ce qui engendre du son par un modèle appris, musique ou bruitage.
   "Générateurs AI": ["bruitage-ia", "planifier-chanson", "rendre-chanson",
     "ecrire-chanson", "reprendre-chanson", "retoucher-chanson", "prolonger-chanson",
-    "accompagner-voix"],
+    "accompagner-voix", "cloner-voix"],
   // Ce qui ne sonne pas mais pilote : la sortie est une courbe, non un son. Un seul nœud à ce jour,
   // et la rubrique existe pour recevoir les suivants.
   "Contrôle": ["generateur-courbe"],

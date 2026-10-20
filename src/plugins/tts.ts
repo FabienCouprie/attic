@@ -9,6 +9,7 @@ import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
 import { annoncerModele } from "./message-modele";
 import { baseModeleLivre } from "./base-modeles";
+import { fiches as clonageDeVoix } from "./cloner-voix";
 
 let worker: Worker | null = null;
 
@@ -72,7 +73,7 @@ function modeleMMS(valeur: string): string | undefined {
   return LANGUES_MMS.find((l) => l.id === v || l.fr.toLowerCase() === v)?.model;
 }
 
-export const fiches: FicheAudio[] = ([
+const synthesesVocales: FicheAudio[] = ([
   {
     id: "tts-speecht5", nom: "SpeechT5 TTS", nomEn: "SpeechT5 TTS",
     univers: "Entrées", famille: "Text to Speech",
@@ -170,3 +171,8 @@ export const fiches: FicheAudio[] = ([
   },
 ] as FicheAudio[]).map(avecDoc);
 
+// LE CLONEUR SORT PAR ICI, avec les deux synthèses dont il est le proche : il fait de la parole,
+// à partir d'une voix donnée au lieu d'une voix choisie. Le registre de `index.ts` dépasse la
+// norme de taille et n'a donc pas le droit de grossir ; ce qu'on y ajouterait va ailleurs, et
+// l'ailleurs d'une famille est sa propre entrée. Même raison que pour les sept nœuds de chanson.
+export const fiches = [...synthesesVocales, ...clonageDeVoix];

@@ -1403,6 +1403,23 @@ ipcMain.handle("muscriptor:transcrire", async (event, options) => {
   }
 });
 
+// ─── audio.cpp : le clonage d'une voix depuis un extrait ───
+//
+// MÊME EXÉCUTABLE, AUTRE FAMILLE, ET DONC AUTRE CANAL D'AVANCEMENT : les deux tâches peuvent
+// tourner en même temps, et mêler leurs lignes de journal dirait n'importe quoi sur les deux.
+const { cloner: chatterboxCloner } = require("./chatterbox.cjs");
+
+ipcMain.handle("chatterbox:cloner", async (event, options) => {
+  try {
+    return await chatterboxCloner(options, (ligne) => {
+      if (!event.sender.isDestroyed()) event.sender.send("chatterbox:progression", { ligne });
+    }, contexteRessources());
+  } catch (err) {
+    console.error("[attic] chatterbox:cloner a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
 // ─── Auto-updater : configuration + IPC ───
 let infoMaj = etatNeutre();
 

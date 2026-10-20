@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **492 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **493 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 98 | [AI generators](#ai-generators) (8) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 99 | [AI generators](#ai-generators) (9) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 236 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 44 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
@@ -42,6 +42,7 @@ An input marked **required** must be connected for the component to run. **Param
 |---|---|
 | [AI Sound Effect](#ai-sound-effect) | Generates a sound effect or an ambience from a description, and returns it at the requested level. |
 | [Back a Vocal](#back-a-vocal) | Builds an instrumental backing around an isolated vocal. |
+| [Clone a Voice](#clone-a-voice) | Makes an audio excerpt's voice say a text. |
 | [Cover a Song](#cover-a-song) | Renders a new version of an audio, following a song plan. |
 | [Extend a Song](#extend-a-song) | Adds music before or after an audio, following a song plan. |
 | [Plan a Song](#plan-a-song) | Writes a song's plan: its lyrics, its form and its audio codes. |
@@ -97,6 +98,27 @@ This component builds an instrumental backing around an isolated vocal, followin
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
+
+#### Clone a Voice
+
+`cloner-voix` · Inputs → AI generators
+
+*Makes an audio excerpt's voice say a text.*
+
+This component makes an audio excerpt's voice say a text. The « Voice » input receives the excerpt whose timbre is taken up, and the « Text » input what will be said; the setting of the same name serves when the input is not connected. The excerpt gives better results between five and twenty seconds, on a single voice, with no music or background noise. « Language » says which language to pronounce in. « Automatic » lets the model decide from the text; the others impose it, which clearly changes the pronunciation and the length of the result. « Excerpt transcript » gives the text the excerpt pronounces. It is optional: the model does without it, and it only helps when the excerpt is hard to read. « Compute » names the device used. The « Audio » output returns the speech in one channel, at twenty-four kilohertz. The message gives the length obtained and the real-time factor the engine measured.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Voice | audio |  |
+| input | Text | text |  |
+| output | Audio | audio (mono) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Text | text | `Hello, this is a voice cloning test.` |  | What will be said. The « Text » input replaces it when connected. |
+| Language | choice | Automatic | Automatic / French / English / Spanish / German / Italian / Portuguese | The pronunciation language. « Automatic » lets the model decide from the text; imposing a language clearly changes the pronunciation and the length of the result. |
+| Excerpt transcript | text | — |  | The text the excerpt pronounces. Optional: the model does without it, and it only helps when the excerpt is hard to read. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Cover a Song
 

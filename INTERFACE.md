@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**492 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**493 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -199,6 +199,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Classes de hauteurs | `classes-hauteurs` | 240 × 140 |
 | Classification de pistes | `classification-pistes` | 240 × 206 |
 | Cloche de Risset | `cloche-risset` | 240 × 118 |
+| Cloner une voix | `cloner-voix` | 240 × 140 |
 | Color Looper | `color-looper` | 240 × 140 |
 | Compresseur | `compresseur` | 240 × 228 |
 | Compresseur multibande | `compresseur-multibande` | 240 × 338 |

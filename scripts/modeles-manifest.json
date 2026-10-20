@@ -1288,6 +1288,28 @@
       ]
     },
     {
+      "id": "chatterbox",
+      "nom": "Clonage de voix (Chatterbox)",
+      "nomEn": "Voice cloning (Chatterbox)",
+      "noeuds": [
+        "cloner-voix"
+      ],
+      "octets": 2088399204,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/chatterbox-q8_0.gguf",
+        "octets": 2088399204,
+        "sha256": "45d71d8d248ba831014813bbbbba74c7d786dd9447c02090fe05c44344f69453"
+      },
+      "fichiers": [
+        {
+          "chemin": "audiocpp/chatterbox-q8_0.gguf",
+          "octets": 2088399204,
+          "sha256": "45d71d8d248ba831014813bbbbba74c7d786dd9447c02090fe05c44344f69453"
+        }
+      ]
+    },
+    {
       "id": "magenta-drums-vae",
       "nom": "Batterie neuronale (MusicVAE)",
       "nomEn": "Neural drums (MusicVAE)",

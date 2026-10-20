@@ -126,6 +126,12 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.on("muscriptor:progression", ecouteur);
     return () => ipcRenderer.removeListener("muscriptor:progression", ecouteur);
   },
+  chatterboxCloner: (options) => ipcRenderer.invoke("chatterbox:cloner", options),
+  chatterboxProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("chatterbox:progression", ecouteur);
+    return () => ipcRenderer.removeListener("chatterbox:progression", ecouteur);
+  },
 
   majVerifier: () => ipcRenderer.invoke("maj:verifier"),
   majInfo: () => ipcRenderer.invoke("maj:info"),
