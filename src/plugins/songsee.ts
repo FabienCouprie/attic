@@ -5,6 +5,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { bufferVersWavBlob } from "../audio/io";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { cheminDansTravail } from "./pont-electron";
 
 const VIZS = ["spectrogram", "mel", "chroma", "hpss", "selfsim", "loudness", "tempogram", "mfcc", "flux"];
 const PALETTES = ["classic", "magma", "inferno", "viridis", "gray", "claw"];
@@ -123,7 +124,9 @@ export const fiches: FicheAudio[] = ([
       // Écriture du buffer audio dans un WAV temporaire.
       const wavBlob = bufferVersWavBlob(audio);
       const wavBytes = new Uint8Array(await wavBlob.arrayBuffer());
-      const tempIn = `${ctx.repertoireTravail}/.songsee-in-${ctx.noeud.id}-${Date.now()}.wav`;
+      const cible = cheminDansTravail(ctx.repertoireTravail, `.songsee-in-${ctx.noeud.id}-${Date.now()}.wav`);
+      if (!cible.ok) return { valeurs: [null], erreur: true, message: cible.message };
+      const tempIn = cible.chemin;
       const ecrit = await api.ecrireFichier(tempIn, wavBytes);
       if (!ecrit) {
         return { valeurs: [null], message: traduire("msg.songsee.ecriture impossible") };
