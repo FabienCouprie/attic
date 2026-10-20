@@ -159,22 +159,53 @@ export function chargesUtiles(racineModules: string): { paquet: string; chemin: 
   return trouves;
 }
 
-describe("les charges utiles des paquets", () => {
-  const trouvees = chargesUtiles(join(RACINE, "node_modules"));
+/**
+ * Le lanceur dont l'application dépend pour démarrer, et son exécutable.
+ *
+ * POURQUOI `path.txt` NE SUFFIT PAS À LUI SEUL, et c'est ce qui a corrigé la première version de
+ * ce fichier : il ne figure PAS dans le champ `files` du paquet npm, donc il n'arrive pas avec
+ * lui. C'est `install.js` qui l'écrit, en même temps qu'il télécharge le binaire. Les deux
+ * apparaissent et disparaissent ensemble, de sorte qu'un balayage qui cherche `path.txt` ne
+ * trouve RIEN là où le binaire n'a jamais été pris, et passe à vide sur le cas même qu'il
+ * surveille. L'absence de la désignation est donc un symptôme, pas une dispense.
+ */
+const LANCEUR = join(RACINE, "node_modules", "electron");
 
-  it("PORTENT LEUR EXÉCUTABLE, sans quoi l'application ne se lance pas", () => {
-    const manquantes = trouvees.filter((c) => !c.present).map((c) => `${c.paquet} — attendu à ${c.chemin}`);
-    expect(manquantes, [
-      `Ces paquets désignent un exécutable qui n'est pas là : ${manquantes.join(", ")}.`,
+export function binaireDuLanceur(racineLanceur: string): { chemin: string | null; present: boolean } {
+  const designation = join(racineLanceur, "path.txt");
+  if (!existsSync(designation)) return { chemin: null, present: false };
+  const designe = readFileSync(designation, "utf8").trim();
+  if (!designe) return { chemin: null, present: false };
+  const chemin = join(racineLanceur, "dist", designe);
+  return { chemin, present: existsSync(chemin) && statSync(chemin).size > 0 };
+}
+
+describe("les charges utiles des paquets", () => {
+  // L'INTÉGRATION NE LANCE JAMAIS L'APPLICATION, et son `npm ci` ne prend donc pas les deux cent
+  // trente-huit mégaoctets du binaire. La publication, elle, en a besoin et le vérifie déjà par
+  // son étape « Ensure Electron binary is present », qui lance `install.js`. Ce cas-ci sert le
+  // poste de développement, où le binaire est mis de côté puis remis à chaque construction.
+  const surUnPoste = !process.env.CI;
+
+  it.skipIf(!surUnPoste)("LE LANCEUR PORTE SON EXÉCUTABLE, sans quoi l'application ne démarre pas", () => {
+    const { chemin, present } = binaireDuLanceur(LANCEUR);
+    expect(existsSync(LANCEUR), "le paquet du lanceur doit être installé").toBe(true);
+    expect(present, [
+      chemin
+        ? `Le lanceur désigne ${chemin}, qui est absent ou vide.`
+        : "Le lanceur ne désigne aucun exécutable : son `path.txt` manque, donc le binaire n'a jamais été pris.",
       "Le paquet est complet en apparence et l'application ne démarrera pas.",
-      "Pour Electron : `node node_modules/electron/install.js`.",
-    ].join("\n")).toEqual([]);
+      "Remède : `node node_modules/electron/install.js`.",
+    ].join("\n")).toBe(true);
   });
 
-  it("sont cherchées par leur convention, et il s'en trouve", () => {
-    // Sans ce cas, un balayage qui ne rendrait rien ferait passer le précédent sans rien vérifier.
-    expect(trouvees.length).toBeGreaterThan(0);
-    expect(trouvees.map((c) => c.paquet)).toContain("electron");
+  it("cherche la charge utile par sa convention, sur tout l'arbre", () => {
+    // Le balayage sert aux paquets qui adoptent la même convention. Il peut légitimement ne rien
+    // trouver, et c'est pourquoi il n'est pas ce qui garde le lanceur : les cas sur arbre
+    // synthétique, plus bas, sont ce qui prouve qu'il voit ce qu'il doit voir.
+    for (const charge of chargesUtiles(join(RACINE, "node_modules"))) {
+      expect(charge.present, `${charge.paquet} désigne ${charge.chemin}, qui est absent ou vide`).toBe(true);
+    }
   });
 
   it("comptent un fichier vide pour une charge utile absente", () => {
@@ -202,6 +233,31 @@ describe("les charges utiles des paquets", () => {
       mkdirSync(join(faux, "paquet-ordinaire"));
       writeFileSync(join(faux, "paquet-ordinaire", "package.json"), "{}");
       expect(chargesUtiles(faux)).toEqual([]);
+    } finally {
+      rmSync(faux, { recursive: true, force: true });
+    }
+  });
+
+  it("tient l'absence de désignation pour un binaire jamais pris, et non pour une dispense", () => {
+    // LE DÉFAUT QUE CE CAS EMPÊCHE, et c'est celui sur lequel la première version est tombée :
+    // `path.txt` disparaît AVEC le binaire, puisque c'est `install.js` qui écrit les deux. Un
+    // garde qui se tait quand la désignation manque se tait précisément quand il faut parler.
+    const faux = mkdtempSync(join(tmpdir(), "attic-lanceur-"));
+    try {
+      mkdirSync(join(faux, "dist"), { recursive: true });
+      expect(binaireDuLanceur(faux), "sans path.txt").toEqual({ chemin: null, present: false });
+
+      writeFileSync(join(faux, "path.txt"), "   \n");
+      expect(binaireDuLanceur(faux).present, "path.txt vide").toBe(false);
+
+      writeFileSync(join(faux, "path.txt"), "truc.exe\n");
+      expect(binaireDuLanceur(faux).present, "designe sans le fichier").toBe(false);
+
+      writeFileSync(join(faux, "dist", "truc.exe"), "");
+      expect(binaireDuLanceur(faux).present, "fichier vide").toBe(false);
+
+      writeFileSync(join(faux, "dist", "truc.exe"), "MZ");
+      expect(binaireDuLanceur(faux).present, "fichier reel").toBe(true);
     } finally {
       rmSync(faux, { recursive: true, force: true });
     }
