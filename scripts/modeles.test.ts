@@ -14,10 +14,15 @@ import { describe, expect, it } from "vitest";
 import { createRequire } from "module";
 import { readFileSync } from "fs";
 
-const CONNUS = createRequire(import.meta.url)("./modeles.cjs").CONNUS as Record<string, {
+const script = createRequire(import.meta.url)("./modeles.cjs");
+
+const CONNUS = script.CONNUS as Record<string, {
   id: string;
   licence?: { nom: string; credit: string; rediffusable: boolean; raison?: string; note?: string };
 }>;
+
+const rattrapage = script.rattrapageDUnAssetPresent as
+  (journal: string, locaux: number, distants: number | null) => { rattrapable: boolean; raison?: string };
 
 const entrees = Object.entries(CONNUS);
 
@@ -155,5 +160,43 @@ describe("aucun modèle ne part dans l'installeur", () => {
       "Ces racines de modèles seraient emballées dans l'installeur, Vite recopiant « public/ »",
       "dans « dist/ ». Ajouter « !dist/<racine>/**/* » à build.files de package.json.",
     ].join("\n")).toEqual([]);
+  });
+});
+
+// UN ENVOI RÉUSSI DOIT POUVOIR SE RATTRAPER, ET PAS N'IMPORTE LEQUEL.
+//
+// Écrit d'une perte, le 2026-10-21 : le manifeste avait oublié l'adresse de `chatterbox-q8_0.gguf`
+// alors que l'asset était sur la release, et `--publier` ne pouvait plus l'inscrire — l'adresse ne
+// s'écrivait qu'après un téléversement réussi, que `gh` refuse sur un doublon. Il a fallu écrire
+// l'adresse à la main, ce qui est exactement ce que cette commande existe pour éviter.
+//
+// LE CAS QUI COMPTE EST LE TROISIÈME. Rattraper sur le seul message « already exists » rendrait au
+// manifeste une adresse pointant vers un contenu différent du fichier local, et les installations
+// vérifieraient une empreinte qui ne correspond à rien de ce qu'elles téléchargent : précisément ce
+// que l'absence de `--clobber` protège. La taille tranche donc avant le nom.
+describe("le rattrapage d'un asset déjà présent", () => {
+  it("un échec qui ne parle pas de doublon n'est pas rattrapable", () => {
+    const r = rattrapage("HTTP 500 Internal Server Error", 1000, 1000);
+    expect(r.rattrapable).toBe(false);
+    expect(r.raison).toContain("une autre raison");
+  });
+
+  it("MÊME NOM ET MÊME TAILLE : l'adresse s'inscrit sans nouvel envoi", () => {
+    expect(rattrapage("asset under the same name already exists: [m.gguf]", 2088399204, 2088399204))
+      .toEqual({ rattrapable: true });
+  });
+
+  it("MÊME NOM ET TAILLE DIFFÉRENTE : REFUSÉ, et la raison porte les deux tailles", () => {
+    const r = rattrapage("asset under the same name already exists: [m.gguf]", 2088399204, 1234);
+    expect(r.rattrapable).toBe(false);
+    expect(r.raison).toContain("2088399204");
+    expect(r.raison).toContain("1234");
+    expect(r.raison).toContain("changer de nom");
+  });
+
+  it("annoncé présent mais introuvable sur la release : refusé plutôt que supposé", () => {
+    const r = rattrapage("asset under the same name already exists: [m.gguf]", 1000, null);
+    expect(r.rattrapable).toBe(false);
+    expect(r.raison).toContain("ne le liste pas");
   });
 });

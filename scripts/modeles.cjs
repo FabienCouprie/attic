@@ -28,6 +28,7 @@
 
 const crypto = require("crypto");
 const fs = require("fs");
+const https = require("https");
 const path = require("path");
 const { spawnSync } = require("child_process");
 // LE TUYAU DE L'APPLICATION, réemployé plutôt que récrit : il ne dépend que de modules natifs.
@@ -109,14 +110,6 @@ const CONNUS = {
     noeuds: ["separateur-ia"],
     licence: { nom: "MIT", credit: "Ultimate Vocal Remover — MDX-Net (Kuielab, Woosung Choi)", rediffusable: true },
   },
-  "stable-audio-3-small-music": {
-    id: "stable-audio-3", nom: "Stable Audio 3 (musique)", nomEn: "Stable Audio 3 (music)",
-    // Deux nœuds partagent ce paquet : la génération et la continuation, qui résout le même
-    // `stable-audio-3-small-music`. La continuation y manquait.
-    noeuds: ["stable-audio-3", "continuation-stable-audio-3"], archive: true,
-    licence: { nom: "Stability AI Community License", credit: "Stability AI Ltd — Stable Audio 3 small-music ; export ONNX par lsb et bgkb", rediffusable: true,
-      note: "La licence impose trois choses à qui rediffuse : joindre une copie de l'accord, garder la mention « This Stability AI Model is licensed under the Stability AI Community License, Copyright (c) Stability AI Ltd. All Rights Reserved » dans un fichier de notices, et afficher « Powered by Stability AI ». Elle réserve l'usage commercial aux organisations sous le million de dollars de revenu annuel — Attic est libre et non commercial." },
-  },
   // LE PAQUET DE BRUITAGE MANQUAIT ICI, relevé par Fabien. Il était au manifeste, publié, avec son
   // empreinte et son adresse — 1,49 Go, sept fichiers, attribué à « bruitage-ia » — mais absent de
   // cette table. Or `engendrer()` ne parcourt QUE cette table : une régénération du manifeste
@@ -127,6 +120,29 @@ const CONNUS = {
     noeuds: ["bruitage-ia"], archive: true,
     licence: { nom: "Stability AI Community License", credit: "Stability AI Ltd — Stable Audio 3 small-sfx ; export ONNX par lsb et bgkb", rediffusable: true,
       note: "La licence impose trois choses à qui rediffuse : joindre une copie de l'accord, garder la mention « This Stability AI Model is licensed under the Stability AI Community License, Copyright (c) Stability AI Ltd. All Rights Reserved » dans un fichier de notices, et afficher « Powered by Stability AI ». Elle réserve l'usage commercial aux organisations sous le million de dollars de revenu annuel — Attic est libre et non commercial." },
+  },
+  // LES DEUX SYNTHÈSES TRANSFORMERS.JS, qui tiraient leurs poids d'un tiers à l'exécution.
+  //
+  // Elles ne figuraient NULLE PART ici : ni déclarées, ni annoncées, donc hors de portée du garde
+  // qui apparie les nœuds du manifeste à ceux qui annoncent leur téléchargement. Une installation
+  // hors réseau échouait en silence. Et trois des dix langues offertes étaient DÉJÀ MORTES sans
+  // que rien ne le sache : `Xenova/mms-tts-ita`, `-nld` et `-pol` rendent 401. Un dépôt tiers qui
+  // disparaît emporte une option de la liste sans prévenir, et c'est la seconde raison de ce
+  // miroir, au moins autant que la première.
+  //
+  // UN PAQUET PAR COMPOSANT. Prendre les sept langues de MMS pour employer SpeechT5 ferait
+  // télécharger sept cent soixante mégaoctets pour rien.
+  "tts-speecht5": {
+    id: "tts-speecht5", nom: "Synthèse vocale SpeechT5", nomEn: "SpeechT5 speech synthesis",
+    noeuds: ["tts-speecht5"], archive: true,
+    licence: { nom: "MIT", credit: "Microsoft — SpeechT5 (microsoft/speecht5_tts et speecht5_hifigan) ; export ONNX par Xenova ; voix du corpus CMU ARCTIC (Carnegie Mellon University)", rediffusable: true,
+      note: "L'EXPORT NE DÉCLARE AUCUNE LICENCE, comme celui de Whisper tiny : les poids dont il dérive sont en MIT, et une conversion de format est une œuvre dérivée des poids, de sorte que le silence de l'exportateur ne retire pas la concession de Microsoft. D'où le double crédit. Le miroir ne prend que les trois graphes fp32 que le chargeur ouvre, l'encodeur, le décodeur fusionné et le postnet : ni `decoder_model.onnx` ni `decoder_with_past_model.onnx`, qui sont les deux moitiés de ce que le fusionné porte seul." },
+  },
+  "tts-mms": {
+    id: "tts-mms", nom: "Synthèse vocale multilingue (MMS)", nomEn: "Multilingual speech synthesis (MMS)",
+    noeuds: ["tts-mms"], archive: true,
+    licence: { nom: "usage non commercial", credit: "Meta Platforms — MMS-TTS (facebook/mms-tts) ; export ONNX par Xenova", rediffusable: true,
+      note: "Les poids amont sont en CC-BY-NC 4.0. La même décision que pour les poids de Demucs et de MuScriptor s'applique : Attic est libre et non commercial, et rediffuse à ce titre ; qui les reprend reste tenu par la même limite. Sept langues, une par dépôt amont, en fp32 : c'est ce que le composant demande, et les variantes quantifiées ne sont jamais chargées." },
   },
   "kokoro-82m": {
     id: "kokoro-82m", nom: "Synthèse vocale Kokoro", nomEn: "Kokoro speech synthesis",
@@ -243,6 +259,24 @@ const CONNUS = {
     racine: "audiocpp", noeuds: ["transcription-midi"],
     licence: { nom: "usage non commercial", credit: "MuScriptor — muscriptor-small, converti en GGUF par le projet audio.cpp", rediffusable: true,
       note: "Le dépôt de conversion déclare « CC-BY-NC-4.0 » comme licence du modèle d'origine, et dit que l'usage et la rediffusion sont régis par elle. La même décision que pour les poids de Demucs s'applique : Attic est libre et non commercial, et rediffuse à ce titre ; qui les reprend reste tenu par la même limite. Aucune version quantifiée n'est publiée en amont, le F32 est le seul paquet." },
+  },
+
+  // LE CLONEUR DE VOIX, sous la même racine et lu par le même exécutable.
+  //
+  // IL N'A PAS DE VOIX À LUI, et c'est la première chose que la mesure a dite : une synthèse sans
+  // référence est refusée, « Chatterbox prepare requires speaker reference audio ». Ce n'est pas
+  // un synthétiseur à voix prédéfinies, c'est un cloneur, d'où une entrée audio obligatoire sur
+  // son nœud.
+  //
+  // LE PAQUET Q8 EST LE SEUL PUBLIABLE, et il fallait vérifier qu'il parle. Le f16 pèse
+  // 3 744 365 922 octets, soit 1,74 fois le plafond d'un asset de release ; celui-ci en pèse
+  // 2 088 399 204 et passe avec 59 084 444 octets de marge. Le paquet q8 d'OmniVoice, lui, rendait
+  // un WAV de quarante-quatre octets : la variante se mesure avant de s'épingler.
+  "chatterbox-q8_0.gguf": {
+    id: "chatterbox", nom: "Clonage de voix (Chatterbox)", nomEn: "Voice cloning (Chatterbox)",
+    racine: "audiocpp", noeuds: ["cloner-voix"],
+    licence: { nom: "MIT", credit: "Resemble AI — Chatterbox, converti en GGUF par le projet audio.cpp", rediffusable: true,
+      note: "La licence vient de la fiche amont `ResembleAI/chatterbox`, qui déclare MIT. Le dépôt de conversion déclare « other » sans préciser : c'est l'amont qui fait foi, comme pour l'export de Whisper tiny, et une conversion de format est une œuvre dérivée des poids. Seul modèle de voix du catalogue qui ne porte aucune réserve non commerciale." },
   },
 
   // ── LES POINTS DE CONTRÔLE MAGENTA, sous `public/magenta/` et non `public/oonx/` ──
@@ -394,6 +428,107 @@ function verifier() {
   process.exitCode = ecarts === 0 ? 0 : 1;
 }
 
+/** Combien d'octets la sonde lit à la fin de l'asset distant. */
+const SONDE = 1048576;
+
+/**
+ * Que faire d'un téléversement refusé : l'adresse se rattrape, ou le modèle doit changer de nom.
+ *
+ * ÉCRIT D'UNE PERTE, le 2026-10-21. Le manifeste avait oublié l'adresse de `chatterbox-q8_0.gguf`
+ * alors que l'asset était déjà sur la release, et republier était impossible : `gh release upload`
+ * refuse un doublon — volontairement, cf. l'absence de `--clobber` plus bas — et `publier()`
+ * n'inscrivait l'adresse qu'APRÈS un téléversement réussi. Un envoi réussi dont le manifeste n'a pas
+ * gardé la trace ne pouvait donc plus se rattraper, et il a fallu écrire l'adresse à la main. C'est
+ * le contraire de ce que cette commande existe pour faire.
+ *
+ * LE RATTRAPAGE NE SE DÉCIDE PAS SUR LE SEUL MESSAGE. Un asset de même nom et de contenu différent
+ * est exactement le cas que l'absence de `--clobber` protège : inscrire son adresse ferait vérifier
+ * aux installations une empreinte qui ne correspond pas à ce qu'elles téléchargent. La taille
+ * tranche donc avant le nom, et l'appelant sonde encore la fin du fichier.
+ */
+function rattrapageDUnAssetPresent(journalErreur, octetsLocaux, octetsDistants) {
+  if (!/already exists/i.test(journalErreur || "")) {
+    return { rattrapable: false, raison: "le téléversement a échoué pour une autre raison." };
+  }
+  if (!Number.isFinite(octetsDistants)) {
+    return { rattrapable: false, raison: "l'asset est annoncé présent, et la release ne le liste pas." };
+  }
+  if (octetsDistants !== octetsLocaux) {
+    return { rattrapable: false,
+      raison: `l'asset présent pèse ${octetsDistants} octets et le fichier local ${octetsLocaux} : `
+        + "deux contenus sous un même nom. Un modèle dont le contenu change doit changer de nom." };
+  }
+  return { rattrapable: true };
+}
+
+/** La taille de l'asset tel que la release le porte, ou `null` s'il n'y est pas. */
+function octetsDeLAsset(nomAsset) {
+  const r = spawnSync("gh", ["release", "view", RELEASE, "--json", "assets"],
+    { cwd: RACINE, encoding: "utf8", shell: process.platform === "win32" });
+  if (r.status !== 0) return null;
+  try {
+    const trouve = (JSON.parse(r.stdout).assets || []).find((a) => a.name === nomAsset);
+    return trouve ? trouve.size : null;
+  } catch { return null; }
+}
+
+/**
+ * Lit une plage d'octets d'une URL, en refusant un 200.
+ *
+ * POURQUOI CE N'EST PAS `telechargerFichier`, alors que le dépôt réemploie partout le tuyau de
+ * l'application. Ce téléchargeur TOLÈRE qu'une plage revienne en 200 : il tronque et reprend le
+ * fichier entier, ce qui est juste pour lui, puisqu'il veut le fichier. Ici on veut une SONDE, et
+ * une sonde qui rapatrierait deux gigaoctets pour en vérifier un mébioctet n'en est plus une. Un
+ * 200 est donc un échec et non un repli : les deux contrats sont opposés, d'où deux fonctions.
+ */
+function sonderPlage(url, debut, longueur, profondeur = 0) {
+  return new Promise((resoudre) => {
+    if (profondeur > 5) return resoudre({ ok: false, erreur: "trop de redirections" });
+    let cible;
+    try { cible = new URL(url); } catch { return resoudre({ ok: false, erreur: `URL invalide : ${url}` }); }
+    const entetes = { "User-Agent": "Attic", Range: `bytes=${debut}-${debut + longueur - 1}` };
+    const req = https.get(cible, { headers: entetes }, (res) => {
+      // LA PLAGE TRAVERSE LA REDIRECTION, comme pour le téléchargeur : `github.com` rend un 302 sans
+      // la regarder, et c'est l'hôte final qui l'honore.
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume();
+        return resoudre(sonderPlage(new URL(res.headers.location, cible).href, debut, longueur, profondeur + 1));
+      }
+      if (res.statusCode !== 206) {
+        res.resume();
+        return resoudre({ ok: false, erreur: `HTTP ${res.statusCode} : la plage n'a pas été honorée.` });
+      }
+      const morceaux = [];
+      res.on("data", (bloc) => morceaux.push(bloc));
+      res.on("error", (e) => resoudre({ ok: false, erreur: e.message }));
+      res.on("end", () => resoudre({ ok: true, octets: Buffer.concat(morceaux) }));
+    });
+    req.on("error", (e) => resoudre({ ok: false, erreur: e.message }));
+  });
+}
+
+/**
+ * La fin de l'asset distant est-elle celle du fichier local ?
+ *
+ * CE QUE CELA PROUVE, ET CE QUE CELA NE PROUVE PAS. Joint à l'égalité des tailles, cela établit que
+ * l'envoi est allé jusqu'au bout : la panne réaliste est une coupure, et le premier envoi de
+ * Chatterbox était justement tombé sur un HTTP 408. Cela n'établit PAS l'empreinte complète, qui
+ * demanderait de rapatrier le fichier entier — `--telecharger` puis `--verifier` le font, au prix du
+ * volume. Le message le dit plutôt que de laisser croire à une vérification totale.
+ */
+async function memeFin(url, fichier, octets) {
+  const longueur = Math.min(SONDE, octets);
+  const sonde = await sonderPlage(url, octets - longueur, longueur);
+  if (!sonde.ok) return { ok: false, raison: sonde.erreur };
+  const local = Buffer.alloc(longueur);
+  const fd = fs.openSync(fichier, "r");
+  try { fs.readSync(fd, local, 0, longueur, octets - longueur); } finally { fs.closeSync(fd); }
+  const empreinte = (b) => crypto.createHash("sha256").update(b).digest("hex");
+  return empreinte(sonde.octets) === empreinte(local)
+    ? { ok: true, longueur }
+    : { ok: false, raison: `les ${longueur} derniers octets diffèrent de ceux du fichier local.` };
+}
+
 /**
  * Téléverse sur la release `assets` les modèles nommés en argument — ou tous ceux qui n'ont pas
  * encore d'adresse, si l'on n'en nomme aucun.
@@ -408,7 +543,7 @@ function verifier() {
  * n'est refusé aujourd'hui » avec « personne ne peut l'être » : le prochain modèle ajouté au
  * catalogue arrivera avec sa propre licence, et c'est à ce moment-là qu'il servira.
  */
-function publier(ids = []) {
+async function publier(ids = []) {
   const manifeste = JSON.parse(fs.readFileSync(MANIFESTE, "utf8"));
   const licenceDe = (id) => Object.values(CONNUS).find((c) => c.id === id)?.licence;
   const refuses = [];
@@ -453,10 +588,33 @@ function publier(ids = []) {
     // SANS `--clobber` : un asset publié ne se remplace pas en douce. Un modèle qui change de
     // contenu change de nom, sans quoi les installations déjà faites vérifieraient une empreinte
     // qui ne correspond plus à ce qu'elles téléchargent.
+    //
+    // L'ERREUR EST CAPTÉE, L'AVANCEMENT NON : `gh` écrit sa barre de progression sur la sortie
+    // standard, qu'on laisse passer, et son refus sur la sortie d'erreur, qu'il faut lire pour
+    // distinguer « déjà présent » d'un échec réel. Ce qui est capté est réaffiché, sans quoi
+    // l'opérateur perdrait le message au moment où il en a le plus besoin.
     const r = spawnSync("gh", ["release", "upload", RELEASE, fichier],
-      { cwd: RACINE, stdio: "inherit", shell: process.platform === "win32" });
-    if (r.status !== 0) { console.error(`échec du téléversement de ${nomAsset}`); process.exit(1); }
-    m.source = { type: m.source.type, url: `${BASE_RELEASE}/${nomAsset}`, octets, sha256: sha256(fichier) };
+      { cwd: RACINE, stdio: ["inherit", "inherit", "pipe"], encoding: "utf8",
+        shell: process.platform === "win32" });
+    const url = `${BASE_RELEASE}/${nomAsset}`;
+    if (r.status !== 0) {
+      const journal = r.stderr || "";
+      if (journal.trim()) process.stderr.write(journal.endsWith("\n") ? journal : `${journal}\n`);
+      const rattrapage = rattrapageDUnAssetPresent(journal, octets, octetsDeLAsset(nomAsset));
+      if (!rattrapage.rattrapable) {
+        console.error(`échec du téléversement de ${nomAsset} : ${rattrapage.raison}`);
+        process.exit(1);
+      }
+      const fin = await memeFin(url, fichier, octets);
+      if (!fin.ok) {
+        console.error(`échec du rattrapage de ${nomAsset} : ${fin.raison}`);
+        process.exit(1);
+      }
+      console.log(`${nomAsset} était déjà sur la release, de même taille et de même fin`
+        + ` (${fin.longueur} octets sondés) : son adresse est inscrite sans nouvel envoi.`
+        + " L'empreinte complète se vérifie par « --telecharger » puis « --verifier ».");
+    }
+    m.source = { type: m.source.type, url, octets, sha256: sha256(fichier) };
   }
   fs.writeFileSync(MANIFESTE, JSON.stringify(manifeste, null, 2) + "\n", "utf8");
   console.log(`\n${aPublier.length} modèle(s) publié(s), manifeste mis à jour.`);
@@ -544,8 +702,12 @@ async function telecharger(ids = []) {
 const arg = process.argv[2];
 if (arg === "--generer") engendrer();
 else if (arg === "--verifier") verifier();
-else if (arg === "--publier") publier(process.argv.slice(3));
-else if (arg === "--telecharger") {
+else if (arg === "--publier") {
+  publier(process.argv.slice(3)).catch((e) => {
+    console.error(String(e && e.message ? e.message : e));
+    process.exit(1);
+  });
+} else if (arg === "--telecharger") {
   telecharger(process.argv.slice(3)).catch((e) => {
     console.error(String(e && e.message ? e.message : e));
     process.exit(1);
@@ -556,4 +718,4 @@ else if (arg === "--telecharger") {
   process.exitCode = 1;
 }
 
-module.exports = { fichiersDe, CONNUS, MANIFESTE };
+module.exports = { fichiersDe, CONNUS, MANIFESTE, rattrapageDUnAssetPresent };

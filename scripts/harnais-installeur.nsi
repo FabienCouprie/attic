@@ -29,6 +29,15 @@ RequestExecutionLevel user
 
 ; `!include` se résout depuis le dossier de CE script, donc le chemin relatif suffit et l'appelant
 ; n'a rien à passer. Un garde l'accompagne : si le fichier change de place, la compilation le dit.
+; CE QUE LE MODÈLE D'ELECTRON-BUILDER DÉFINIT, ET QUE LE HARNAIS DOIT FOURNIR. `installer.nsh`
+; lit la clé de désinstallation pour proposer de retirer une ancienne installation par machine ;
+; cette clé vient de `multiUser.nsh`, que seule la construction réelle inclut. Sans ces deux
+; définitions, makensis traite la variable inconnue en erreur — ce qu'il a fait, et c'est bien le
+; harnais qui l'a dit avant la release, pas après. La valeur n'a aucune importance ici : rien ne
+; lit la base de registres pendant la compilation, c'est l'ANALYSE qu'on cherche.
+!define /ifndef UNINSTALL_APP_KEY "harnais-sans-objet"
+!define /ifndef UNINSTALL_REGISTRY_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTALL_APP_KEY}"
+
 !include "..\build\installer.nsh"
 
 Section "harnais"

@@ -3,8 +3,19 @@
 // MMS-TTS : pipeline standard.
 import { pipeline, AutoTokenizer, SpeechT5ForTextToSpeech, SpeechT5HifiGan, Tensor, env } from "@huggingface/transformers";
 import { splitText, trimSilence, mergeAudioBuffers } from "./tts-utils.js";
+import { installerMiroirTts } from "./tts-local.js";
 
 env.backends.onnx.wasm.proxy = true;
+
+// LE MIROIR EST BRANCHÉ UNE FOIS, AVANT TOUT CHARGEMENT. Sans lui, les deux composants tiraient
+// leurs poids de HuggingFace à chaque première exécution : une installation hors réseau échouait
+// en silence, et trois des dix langues offertes étaient déjà mortes sans que rien ne le sache.
+// Le miroir absent, tout repart vers l'amont comme avant.
+//
+// SA BASE VIENT DE LA PAGE, dans le message : dans un worker `self.location` est l'URL du script,
+// et l'application empaquetée sert depuis `file://`, où un chemin enraciné ne résout rien. Le
+// branchement attend donc la première demande, qui la porte.
+let miroir = null;
 
 const pipelines = new Map();
 const speechT5Cache = { tokenizer: null, model: null, vocoder: null };
@@ -30,8 +41,12 @@ const queue = [];
 let busy = false;
 
 async function processRequest(req) {
-  const { text, modelId, speakerUrl, requestId } = req;
+  const { text, modelId, speakerUrl, baseMiroir, requestId } = req;
   console.log(`[tts-worker] request modelId=${modelId} textLength=${text?.length} text="${text?.slice(0, 80)}${text?.length > 80 ? "..." : ""}"`);
+  // Le relais doit être posé avant le premier chargement : l'attendre ici coûte un tour de boucle
+  // à la première demande, et rien ensuite.
+  if (!miroir) miroir = installerMiroirTts(baseMiroir);
+  await miroir;
   try {
     const chunks = splitText(text, 120).filter((c) => c.trim());
     console.log(`[tts-worker] chunks:`, chunks.length, chunks);

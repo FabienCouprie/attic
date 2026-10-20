@@ -2,7 +2,7 @@
   "name": "attic",
   "private": true,
   "version": "5.0.4",
-  "description": "Visual node-editor for AI-powered music and sound design — 495 nodes, local ML models, bilingual FR/EN.",
+  "description": "Visual node-editor for AI-powered music and sound design — 493 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -59,6 +59,7 @@
     "download:audiobox-aesthetics": "node scripts/download-audiobox-aesthetics.cjs",
     "download:music-collection": "node scripts/download-music-collection.cjs",
     "download:kokoro": "node scripts/download-kokoro.cjs",
+    "download:tts": "node scripts/download-tts.cjs",
     "verify:resources": "node scripts/verify-bundled-resources.cjs",
     "modeles:generer": "node scripts/modeles.cjs --generer",
     "modeles:verifier": "node scripts/modeles.cjs --verifier",
@@ -158,7 +159,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "perMachine": true,
+      "perMachine": false,
       "license": "TERMS_OF_USE.txt",
       "include": "build/installer.nsh",
       "language": "1033"

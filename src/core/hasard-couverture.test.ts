@@ -23,7 +23,6 @@ const RACINE = join(__dirname, "..");
 const HORS_RENDU = new Set([
   "core/hasard.ts",                    // c'est lui qui tire la graine d'un nœud
   "plugins/legende-image.ts",
-  "plugins/musicgen.ts",
   "plugins/sherpa-asr.ts",
   "plugins/speech-to-text.ts",
   "plugins/tts-francais.ts",
@@ -51,13 +50,11 @@ const CONFORME = new Set([
   "audio/reservoir.ts",
   "plugins/bruitage-ia.ts",
   "plugins/carte-sonore.ts",
-  "plugins/continuation-stable-audio-3.ts",
   "plugins/coordonnees-sur-carte.ts",
   "plugins/couleur-suno-ia.ts",
   "plugins/galerie-exposition.ts",
   "plugins/generateur-paroles.ts",
   "plugins/pochette-svg.ts",
-  "plugins/stable-audio-3.ts",
   "plugins/texte-image.ts",
   "plugins/textgen.ts",
 ]);

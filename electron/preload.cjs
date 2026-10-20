@@ -14,7 +14,6 @@ contextBridge.exposeInMainWorld("api", {
 
   separerDemucs: (options) => ipcRenderer.invoke("demucs:separer", options),
   genererStableAudio3: (options) => ipcRenderer.invoke("stable-audio-3:generer", options),
-  continuerStableAudio3: (options) => ipcRenderer.invoke("stable-audio-3:continuer", options),
   genererImageSdxs: (options) => ipcRenderer.invoke("sdxs-image:generer", options),
   noterTrancheEsthetique: (options) => ipcRenderer.invoke("esthetique:noter-tranche", options),
   genererSongsee: (options) => ipcRenderer.invoke("songsee:generer", options),
@@ -126,6 +125,12 @@ contextBridge.exposeInMainWorld("api", {
     const ecouteur = (_e, etat) => callback(etat);
     ipcRenderer.on("muscriptor:progression", ecouteur);
     return () => ipcRenderer.removeListener("muscriptor:progression", ecouteur);
+  },
+  chatterboxCloner: (options) => ipcRenderer.invoke("chatterbox:cloner", options),
+  chatterboxProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("chatterbox:progression", ecouteur);
+    return () => ipcRenderer.removeListener("chatterbox:progression", ecouteur);
   },
 
   majVerifier: () => ipcRenderer.invoke("maj:verifier"),

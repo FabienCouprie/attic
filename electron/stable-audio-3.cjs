@@ -108,9 +108,28 @@ function loadTokenizer(modelDir) {
 // `number_conditioner`. On ne devine pas lequel on tient, ON LE DEMANDE AU GRAPHE : ses noms
 // d'entree sont la seule source sure, et un paquet renomme ou remplace ne peut pas nous tromper.
 // Voir MODELES-BRUITAGE.md pour ce qui a conduit a ce second paquet.
-async function loadSessions(modelDir) {
+/**
+ * Les fournisseurs d'exécution à essayer, dans l'ordre.
+ *
+ * MESURÉ SUR UNE RTX 2060, même paquet et mêmes réglages : le paquet de bruitage, exporté en
+ * fp16, passe de 65,0 s à 35,1 s pour dix secondes de son en allant sur la carte. Le paquet
+ * musical, exporté en int4, est refusé par DirectML à l'initialisation et reste sur le
+ * processeur, où il tient de toute façon en 18,1 s.
+ *
+ * « auto » essaie donc la carte et retombe sur le processeur, ce qui sert les deux paquets avec
+ * un seul réglage. Les deux autres choix ne replient pas : qui demande un périphérique veut
+ * savoir s'il répond, et non obtenir l'autre sans être prévenu.
+ */
+const FOURNISSEURS = {
+  auto: ["dml", "cpu"],
+  carte: ["dml"],
+  processeur: ["cpu"],
+};
+
+const fournisseursPour = (calcul) => FOURNISSEURS[calcul] ?? FOURNISSEURS.auto;
+
+async function loadSessions(modelDir, calcul) {
   const onnxDir = path.join(modelDir, "onnx");
-  const create = (name) => ort.InferenceSession.create(path.join(onnxDir, name), { executionProviders: ["cpu"] });
   const present = (name) => fs.existsSync(path.join(onnxDir, name));
   const premier = (...noms) => noms.find(present);
 
@@ -121,29 +140,53 @@ async function loadSessions(modelDir) {
   const decodeurFichier = premier("decoder_q4.onnx", "decoder_bf16.onnx", "decoder.onnx");
   if (!decodeurFichier) throw new Error(`Aucun decodeur dans ${onnxDir}`);
 
-  const sessions = {
-    textEncoder: await create(texteFichier),
-    dit: await create(ditFichier),
-    decoder: await create(decodeurFichier),
+  // TOUS LES GRAPHES SUR LE MÊME FOURNISSEUR, OU AUCUN. Un paquet dont le débruiteur tombe sur la
+  // carte et dont l'encodeur y tient donnerait un mélange qu'aucune mesure ne décrit. On ouvre
+  // donc la série entière, et un seul refus renvoie toute la série au repli.
+  const ouvrirTout = async (fournisseur) => {
+    const create = (name) =>
+      ort.InferenceSession.create(path.join(onnxDir, name), { executionProviders: [fournisseur] });
+    const sessions = {
+      textEncoder: await create(texteFichier),
+      dit: await create(ditFichier),
+      decoder: await create(decodeurFichier),
+    };
+    if (present("number_conditioner.onnx")) sessions.numberConditioner = await create("number_conditioner.onnx");
+    sessions.fournisseur = fournisseur;
+    return sessions;
   };
-  if (present("number_conditioner.onnx")) {
-    sessions.numberConditioner = await create("number_conditioner.onnx");
+
+  let sessions = null;
+  let dernierRefus = null;
+  for (const fournisseur of fournisseursPour(calcul)) {
+    try {
+      sessions = await ouvrirTout(fournisseur);
+      break;
+    } catch (erreur) {
+      // MESURÉ : le paquet musical est exporté en int4, et DirectML refuse ce graphe à
+      // l'initialisation, « Exception during initialization », 80070057. Le paquet de bruitage est
+      // en fp16 et passe. Le repli n'est donc pas une precaution de style : c'est le seul moyen
+      // qu'un meme reglage serve les deux paquets.
+      dernierRefus = erreur;
+    }
   }
-  const encodeurFichier = premier("encoder_q4.onnx", "encoder_bf16.onnx");
-  if (encodeurFichier) sessions.encoder = await create(encodeurFichier);
+  if (!sessions) throw dernierRefus ?? new Error("Aucun fournisseur de calcul n'a pu ouvrir les graphes.");
 
   // La marque du paquet, lue sur le graphe et non sur le nom du dossier.
   sessions.officiel = sessions.dit.inputNames.includes("t5_hidden");
   return sessions;
 }
 
-async function getResources(modelDir) {
-  if (cached && cached.modelDir === modelDir) {
+async function getResources(modelDir, calcul) {
+  // LE CALCUL FAIT PARTIE DE LA CLÉ, et ce n'est pas un détail : sans lui, changer le réglage
+  // rendait les sessions déjà ouvertes sur l'autre périphérique, et le réglage ne pouvait rien
+  // changer au résultat. C'est exactement le défaut « paramètre jeté » que le contrat interdit.
+  if (cached && cached.modelDir === modelDir && cached.calcul === calcul) {
     return cached;
   }
   const tokenizer = loadTokenizer(modelDir);
-  const sessions = await loadSessions(modelDir);
-  cached = { modelDir, tokenizer, sessions };
+  const sessions = await loadSessions(modelDir, calcul);
+  cached = { modelDir, calcul, tokenizer, sessions };
   return cached;
 }
 
@@ -343,13 +386,14 @@ async function generate(options) {
     steps = DEFAULT_STEPS,
     seed = Math.floor(Math.random() * 2 ** 32),
     modelDir,
+    calcul,
   } = options;
 
   if (!modelDir || !fs.existsSync(modelDir)) {
     throw new Error(`Modèle Stable Audio 3 absent (${modelDir}). Il ne vient plus avec l'installeur : prenez-le par l'icône « Récupérer les modèles IA » de la barre d'outils, ou indiquez un dossier dans le réglage « Dossier du modèle ».`);
   }
 
-  const { tokenizer, sessions } = await getResources(modelDir);
+  const { tokenizer, sessions } = await getResources(modelDir, calcul);
 
   // LA MARGE N'EXISTE QUE POUR LE PAQUET COMMUNAUTAIRE, et le paquet officiel s'en passe. Le
   // runtime de reference de Stability calcule sa toile ainsi, sans rien ajouter :
@@ -405,79 +449,4 @@ function toStereo44100(channels, sampleRate) {
   return { left, right };
 }
 
-async function decodeAudio(sessions, latent, T_lat) {
-  // `latents` dans l'export communautaire, `latent` chez Stability ; la sortie s'appelle `audio`
-  // chez l'un et autrement chez l'autre. Les deux graphes n'ayant qu'une entree et qu'une sortie,
-  // on les prend par leur rang plutot que par leur nom.
-  const decOut = await sessions.decoder.run({
-    [sessions.decoder.inputNames[0]]: makeTensor("float32", latent, [1, LATENT_CHANNELS, T_lat]),
-  });
-  return decOut[sessions.decoder.outputNames[0]].data;
-}
-
-async function encodeAudio(sessions, left, right) {
-  const N = Math.ceil(left.length / DOWNSAMPLING) * DOWNSAMPLING;
-  const audioData = new Float32Array(2 * N);
-  audioData.set(left, 0);
-  audioData.set(right, N);
-  const encoderOut = await sessions.encoder.run({
-    audio: makeTensor("float32", audioData, [1, 2, N]),
-  });
-  return { latent: encoderOut.latents.data, T_in: N / AUDIO_SAMPLES_PER_LATENT };
-}
-
-async function continueAudio(options) {
-  const {
-    audio,
-    prompt,
-    generatedSeconds = DEFAULT_GENERATED_SECONDS,
-    steps = DEFAULT_STEPS,
-    seed = Math.floor(Math.random() * 2 ** 32),
-    modelDir,
-  } = options;
-
-  if (!modelDir || !fs.existsSync(modelDir)) {
-    throw new Error(`Modèle Stable Audio 3 absent (${modelDir}). Il ne vient plus avec l'installeur : prenez-le par l'icône « Récupérer les modèles IA » de la barre d'outils, ou indiquez un dossier dans le réglage « Dossier du modèle ».`);
-  }
-  if (!audio || !audio.channels || audio.channels.length === 0) {
-    throw new Error("Audio d'entrée invalide");
-  }
-
-  const { tokenizer, sessions } = await getResources(modelDir);
-  if (!sessions.encoder) {
-    throw new Error("Encodeur audio introuvable dans le bundle (encoder_q4.onnx requis pour la continuation)");
-  }
-
-  const { left, right } = toStereo44100(audio.channels, audio.sampleRate);
-  const { latent: prefixLatent, T_in } = await encodeAudio(sessions, left, right);
-
-  const inputSeconds = left.length / SAMPLE_RATE;
-  const totalSeconds = Math.min(inputSeconds + generatedSeconds, MAX_SECONDS);
-  if (totalSeconds <= inputSeconds) {
-    throw new Error("La durée générée doit être strictement positive");
-  }
-
-  const T_lat = Math.ceil(((totalSeconds + HEADROOM_SECONDS) * SAMPLE_RATE) / DOWNSAMPLING) * 2;
-  if (T_in >= T_lat) {
-    throw new Error("La durée générée est trop courte par rapport à la piste d'entrée");
-  }
-
-  const latentScale = 0.27;
-  const localAddCond = buildInpaintConditioning(prefixLatent, T_in, T_lat, latentScale);
-
-  const result = await diffuseAndDecode(sessions, tokenizer, prompt, totalSeconds, T_lat, localAddCond, seed, steps, prefixLatent, T_in, latentScale);
-
-  // Preserve the original input exactly by copying the resampled source audio back into the
-  // decoded output prefix. The diffusion model uses the encoded latent only as conditioning, so
-  // the generated prefix is a reconstruction that may differ from the source; replacing it
-  // guarantees the original audio is untouched. The generated continuation follows from there.
-  const inputSamples = left.length;
-  for (let i = 0; i < inputSamples; i++) {
-    result.left[i] = left[i];
-    result.right[i] = right[i];
-  }
-  result.duration = inputSeconds + generatedSeconds;
-  return result;
-}
-
-module.exports = { generate, continueAudio, encodeAudio, decodeAudio };
+module.exports = { generate };

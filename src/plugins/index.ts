@@ -44,7 +44,6 @@ import { fiches as f_styles_musicaux } from "./styles-musicaux";
 import { fiches as f_emotions } from "./emotions";
 import { fiches as f_tessitures } from "./tessitures";
 import { fiches as f_generateur_script_ia } from "./generateur-script-ia";
-import { fiches as f_musicgen } from "./musicgen";
 import { fiches as f_texte_provider } from "./texte-provider";
 import { fiches as f_tts } from "./tts";
 import { fiches as f_tts_piper } from "./tts-piper";
@@ -93,8 +92,6 @@ import { fiches as f_tone_synths_fm } from "./tone-synths-fm";
 import { fiches as f_phase_vocoder } from "./phase-vocoder";
 import { fiches as f_resonance } from "./resonance";
 import { fiches as f_ddsp } from "./ddsp";
-import { fiches as f_stable_audio_3 } from "./stable-audio-3";
-import { fiches as f_continuation_stable_audio_3 } from "./continuation-stable-audio-3";
 import { fiches as f_magenta } from "./magenta";
 import { fiches as f_pure_data } from "./pure-data";
 import { fiches as f_songsee } from "./songsee";
@@ -421,7 +418,6 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_emotions,
   ...f_tessitures,
   ...f_generateur_script_ia,
-  ...f_musicgen,
   ...f_texte_provider,
   ...f_tts,
   ...f_tts_piper,
@@ -470,8 +466,6 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_phase_vocoder,
   ...f_resonance,
   ...f_ddsp,
-  ...f_stable_audio_3,
-  ...f_continuation_stable_audio_3,
   ...f_magenta,
   ...f_pure_data,
   ...f_songsee,

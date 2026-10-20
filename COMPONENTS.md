@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **495 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **493 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 100 | [AI generators](#ai-generators) (9) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (33) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 99 | [AI generators](#ai-generators) (9) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 236 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 44 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 87 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (5) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
+| [Other & lab](#other--lab) | 86 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -40,15 +40,39 @@ An input marked **required** must be connected for the component to run. **Param
 
 | Component | Summary |
 |---|---|
+| [AI Sound Effect](#ai-sound-effect) | Generates a sound effect or an ambience from a description, and returns it at the requested level. |
 | [Back a Vocal](#back-a-vocal) | Builds an instrumental backing around an isolated vocal. |
+| [Clone a Voice](#clone-a-voice) | Makes an audio excerpt's voice say a text. |
 | [Cover a Song](#cover-a-song) | Renders a new version of an audio, following a song plan. |
 | [Extend a Song](#extend-a-song) | Adds music before or after an audio, following a song plan. |
-| [MusicGen](#musicgen) | Generates music from a text prompt using Xenova/musicgen-small, an ONNX-converted version of Meta's MusicGen Small text-to-audio model, optimized to run locally in JavaScript environments via Transformers.js. |
 | [Plan a Song](#plan-a-song) | Writes a song's plan: its lyrics, its form and its audio codes. |
 | [Render a Song](#render-a-song) | Renders the audio of a song plan, in 48 kHz stereo. |
 | [Repaint a Song](#repaint-a-song) | Repaints a passage of an audio between two instants, and keeps the rest. |
-| [Stable Audio 3](#stable-audio-3) | Generates stereo music from a text prompt using Stable Audio 3 (ONNX). |
 | [Write a Song](#write-a-song) | Writes a song's complete plan from a short sentence. |
+
+#### AI Sound Effect
+
+`bruitage-ia` · Inputs → AI generators
+
+*Generates a sound effect or an ambience from a description, and returns it at the requested level.*
+
+Generates a sound from a description in words: an impact, a creak, an ambience, a crowd, a storm. The description is given in the « Prompt » setting, or arrives on the « Prompt » input, which takes priority when connected. English gives better results than French, the models having been trained on English descriptions. « Model » chooses the engine. « Stable Audio 3 (sound effects) » is the sound-effect variant of its family, a 0.6 billion parameter diffusion transformer, distinct from the music variant used by the music generation node. It is alone for now. The package weighs a gigabyte and a half and is fetched on the first run, which takes several minutes; progress appears on the models button, in the toolbar. Later runs start from disk. « Compute » chooses the device. « Automatic » tries the graphics card and falls back to the processor when it refuses the model; « Graphics card » and « Processor » impose one or the other, and report a refusal instead of using the other without warning. A ten second render at eight steps takes about thirty seconds on the card, about fifty on the processor. « Duration » is the requested length, from one second to two minutes. The model adds six seconds of internal headroom, which do not appear in the output. « Steps » is the number of denoising steps. Few steps give a rougher sound and give it faster; beyond a dozen, the gain becomes small. « Seed » fixes the random draw, which allows the same sound to be found again. At minus one, a seed is drawn at each run, and the message says which. « Output » decides the level. « Normalised » brings the peak of the sound to the requested « Peak level »; « As is » returns what the model produced, untouched. Sound effects come out of the model at a much lower level than music, hence normalisation by default. « Peak level » is the peak aimed at, in decibels below full scale. It acts only on the normalised output. The « Audio » output returns the sound in two channels, at 44,100 hertz. The message gives the length, the number of steps, the seed used and the gain applied. The model requires the desktop application: it is read from disk and computed outside the page.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Prompt | text |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Model | choice | Stable Audio 3 (sound effects) | Stable Audio 3 (sound effects) | The engine that generates the sound. Only one is wired so far. |
+| Compute | choice | Automatic | Automatic / Graphics card / Processor | The compute device. « Automatic » tries the graphics card and falls back to the processor if it refuses the model. « Graphics card » and « Processor » impose one or the other, and report a refusal rather than using the other without warning. |
+| Prompt | text | `a heavy wooden door creaking open slowly, close mic, dry …` |  | Description of the sound to generate, in English. The recording describes itself as much as the sound does: « close mic », « dry room », « field recording » steer the result as much as the subject. |
+| Duration | slider | 6 s | 1 – 120 s, step 1 | Length of the generated sound. The model adds six seconds of internal headroom. |
+| Steps | slider | 8 | 1 – 20, step 1 | Number of denoising steps. Few steps give a rougher sound, and give it faster. |
+| Seed | slider | -1 | -1 – 999999, step 1 | Random draw. At minus one, a seed is drawn at each run. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Output | choice | Normalised | Normalised / As is | « Normalised » brings the peak to the requested level. « As is » returns the model's sound untouched. |
+| Peak level | slider | -1 dBFS | -30 – 0 dBFS, step 0.5 | Peak aimed at for the normalised output, in decibels below full scale. |
 
 #### Back a Vocal
 
@@ -74,6 +98,27 @@ This component builds an instrumental backing around an isolated vocal, followin
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
+
+#### Clone a Voice
+
+`cloner-voix` · Inputs → AI generators
+
+*Makes an audio excerpt's voice say a text.*
+
+This component makes an audio excerpt's voice say a text. The « Voice » input receives the excerpt whose timbre is taken up, and the « Text » input what will be said; the setting of the same name serves when the input is not connected. The excerpt gives better results between five and twenty seconds, on a single voice, with no music or background noise. « Language » says which language to pronounce in. « Automatic » lets the model decide from the text; the others impose it, which clearly changes the pronunciation and the length of the result. « Excerpt transcript » gives the text the excerpt pronounces. It is optional: the model does without it, and it only helps when the excerpt is hard to read. « Compute » names the device used. The « Audio » output returns the speech in one channel, at twenty-four kilohertz. The message gives the length obtained and the real-time factor the engine measured.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Voice | audio |  |
+| input | Text | text |  |
+| output | Audio | audio (mono) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Text | text | `Hello, this is a voice cloning test.` |  | What will be said. The « Text » input replaces it when connected. |
+| Language | choice | Automatic | Automatic / French / English / Spanish / German / Italian / Portuguese | The pronunciation language. « Automatic » lets the model decide from the text; imposing a language clearly changes the pronunciation and the length of the result. |
+| Excerpt transcript | text | — |  | The text the excerpt pronounces. Optional: the model does without it, and it only helps when the excerpt is hard to read. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Cover a Song
 
@@ -125,25 +170,6 @@ This component adds music before or after an audio, following the song plan it r
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
-
-#### MusicGen
-
-`musicgen` · Inputs → AI generators
-
-*Generates music from a text prompt using Xenova/musicgen-small, an ONNX-converted version of Meta's MusicGen Small text-to-audio model, optimized to run locally in JavaScript environments via Transformers.js.*
-
-Generates music from a text prompt using MusicGen-small (facebook/musicgen-small, 300M parameters), run in ONNX via Transformers.js. The model auto-downloads from HuggingFace on first use (~300 MB, cached by the browser). Generation is auto-regressive (sequential) and runs in a Web Worker to avoid blocking the UI. Write a descriptive prompt in English (e.g. « A happy upbeat pop song with electric guitars »), set the duration (3-30 s) and guidance (conditioning strength). First run is slower (download + model loading). Ideally connected to an « Audio Output » node to listen to the result.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Prompt | text |  |
-| output | Audio | audio (mono) |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Prompt | text | `A happy upbeat pop song with electric guitars` |  | Text description of the music to generate (English for best results). |
-| Duration | slider | 10 s | 3 – 30 s, step 1 | Duration of the generated audio (3 to 30 seconds). Longer durations mean slower generation. |
-| Guidance scale | slider | 3 | 0 – 10, step 0.5 | Strength of adherence to the text prompt. Higher values = more faithful but less varied. |
 
 #### Plan a Song
 
@@ -216,27 +242,6 @@ This component repaints a passage of an audio between two instants, and keeps th
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
-
-#### Stable Audio 3
-
-`stable-audio-3` · Inputs → AI generators
-
-*Generates stereo music from a text prompt using Stable Audio 3 (ONNX).*
-
-Generates stereo music at 44.1 kHz from a text prompt using Stable Audio 3 small-music. The ONNX model (~640 MB) runs in the main process. Generation is slow (several minutes). The small-music model handles music only, and expects an English prompt.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Prompt | text |  |
-| output | Audio | audio (stereo) |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Prompt | text | `A rhythmic electronic loop with deep bass and crisp drums` |  | Text description of the music to generate (English for best results). |
-| Duration | slider | 10 s | 3 – 30 s, step 1 | Duration of the generated audio (seconds). The model adds 6 s of internal headroom. |
-| Steps | slider | 8 | 1 – 20, step 1 | Number of ping-pong sampler steps. 8 = quality/speed sweet spot. |
-| Seed | slider | -1 | -1 – 999999, step 1 | Random seed. -1 = random. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Model path | folder | — |  | Absolute or relative path of the Stable Audio 3 bundle (empty = bundled public/oonx/stable-audio-3-small-music). |
 
 #### Write a Song
 
@@ -617,7 +622,6 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 
 | Component | Summary |
 |---|---|
-| [AI Sound Effect](#ai-sound-effect) | Generates a sound effect or an ambience from a description, and returns it at the requested level. |
 | [All-Interval Series](#all-interval-series) | Generates a twelve-note series whose eleven intervals are all different. |
 | [Analogue Oscillator](#analogue-oscillator) | Generates a wave through the four gestures of a voltage-controlled oscillator: width, synchronisation, detuned stack, distorted phase. |
 | [Binaural Beats](#binaural-beats) | Two close pure tones, one per ear, whose heard pulsation is in neither of them. |
@@ -650,29 +654,6 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [VOSIM](#vosim) | Places a formant with a train of squared-sine pulses, with no filter at all. |
 | [Wavetable Oscillator](#wavetable-oscillator) | Reads a bank of cycles and scans it: the timbre travels, the pitch stays put. |
 | [Write a Counterpoint](#write-a-counterpoint) | Searches for a voice that makes a first-species counterpoint with the received cantus firmus. |
-
-#### AI Sound Effect
-
-`bruitage-ia` · Inputs → Generation
-
-*Generates a sound effect or an ambience from a description, and returns it at the requested level.*
-
-Generates a sound from a description in words: an impact, a creak, an ambience, a crowd, a storm. The description is given in the « Prompt » setting, or arrives on the « Prompt » input, which takes priority when connected. English gives better results than French, the models having been trained on English descriptions. « Model » chooses the engine. « Stable Audio 3 (sound effects) » is the sound-effect variant of its family, a 0.6 billion parameter diffusion transformer, distinct from the music variant used by the music generation node. It is alone for now. The package weighs a gigabyte and a half and is fetched on the first run, which takes several minutes; progress appears on the models button, in the toolbar. Later runs start from disk. A six second render at eight steps takes about fifty seconds, the computation being done on the processor. « Duration » is the requested length. The model adds six seconds of internal headroom, which do not appear in the output. « Steps » is the number of denoising steps. Few steps give a rougher sound and give it faster; beyond a dozen, the gain becomes small. « Seed » fixes the random draw, which allows the same sound to be found again. At minus one, a seed is drawn at each run, and the message says which. « Output » decides the level. « Normalised » brings the peak of the sound to the requested « Peak level »; « As is » returns what the model produced, untouched. Sound effects come out of the model at a much lower level than music, hence normalisation by default. « Peak level » is the peak aimed at, in decibels below full scale. It acts only on the normalised output. The « Audio » output returns the sound in two channels, at 44,100 hertz. The message gives the length, the number of steps, the seed used and the gain applied. The model requires the desktop application: it is read from disk and computed outside the page.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Prompt | text |  |
-| output | Audio | audio (stereo) |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Model | choice | Stable Audio 3 (sound effects) | Stable Audio 3 (sound effects) | The engine that generates the sound. Only one is wired so far. |
-| Prompt | text | `a heavy wooden door creaking open slowly, close mic, dry …` |  | Description of the sound to generate, in English. The recording describes itself as much as the sound does: « close mic », « dry room », « field recording » steer the result as much as the subject. |
-| Duration | slider | 6 s | 1 – 30 s, step 1 | Length of the generated sound. The model adds six seconds of internal headroom. |
-| Steps | slider | 8 | 1 – 20, step 1 | Number of denoising steps. Few steps give a rougher sound, and give it faster. |
-| Seed | slider | -1 | -1 – 999999, step 1 | Random draw. At minus one, a seed is drawn at each run. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Output | choice | Normalised | Normalised / As is | « Normalised » brings the peak to the requested level. « As is » returns the model's sound untouched. |
-| Peak level | slider | -1 dBFS | -30 – 0 dBFS, step 0.5 | Peak aimed at for the normalised output, in decibels below full scale. |
 
 #### All-Interval Series
 
@@ -2543,7 +2524,7 @@ Multilingual text-to-speech using Meta MMS (Massively Multilingual Speech). Conn
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Language | choice | English | English / French / Spanish / German / Italian / Portuguese / Dutch / Romanian / Polish / Russian | Language of the text to synthesize. Determines which MMS model is used. |
+| Language | choice | English | English / French / Spanish / German / Portuguese / Romanian / Russian | Language of the text to synthesize. Determines which MMS model is used. |
 
 #### Piper TTS
 
@@ -11208,7 +11189,6 @@ English speech recognition using OpenAI Whisper (base). Connect an audio signal 
 | [AR Continuation](#ar-continuation) | Extends a track by predicting each spectral frame from previous frames using a linear autoregressive model. |
 | [LSTM Continuation](#lstm-continuation) | Extends a track by a small recurrent network (LSTM) trained on the fly on its spectrogram frames. |
 | [Neural PCA](#neural-pca) | Trains a non-linear autoencoder on a track's spectrogram to filter its texture and resynthesize it. |
-| [Stable Audio 3 Continuation](#stable-audio-3-continuation) | [experimental] Extends an audio track by conditioning Stable Audio 3 small-music on its latent. Quality is limited: the int4 encoder is not perfectly aligned with the DiT. The ONNX model (~640 MB + encoder) runs in the main process. |
 | [Time Stretch (DTW)](#time-stretch-dtw) | [experimental: very questionable result] Re-stretches Track A's audio along the alignment path produced by Audio Similarity, by linear interpolation along the frame correspondence. This is not a phase vocoder: pitch drifts locally wherever the rate changes (like variable-speed playback). |
 
 #### AR Continuation
@@ -11284,27 +11264,6 @@ Neural PCA: trains a non-linear autoencoder on the input track's magnitude spect
 | Learning rate | number | 0.001 | 0.0001 – 0.01, step 0.0001 | Adam optimizer learning rate. |
 | Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track + same settings + same seed = same result. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic (depends on n_frames × n_bins). |
-
-#### Stable Audio 3 Continuation
-
-`continuation-stable-audio-3` · Other & lab → Test zone
-
-*[experimental] Extends an audio track by conditioning Stable Audio 3 small-music on its latent. Quality is limited: the int4 encoder is not perfectly aligned with the DiT. The ONNX model (~640 MB + encoder) runs in the main process.*
-
-[experimental] Extends an audio track with Stable Audio 3 small-music. The model encodes the input audio, keeps its prefix and generates the continuation via causal inpainting. Quality remains very limited: the available int4 ONNX encoder is not perfectly aligned with the DiT latent space, so the continuation may be a drone or incoherent noise. Inputs longer than 5 seconds give better results. The ONNX bundle (~640 MB + ~36 MB encoder) runs in the main process. Generation is slow (several minutes). Requires the small-music model and the encoder_q4.onnx in the same folder.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio |  |
-| input | Prompt | text |  |
-| output | Audio | audio (stereo) |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Generated duration | slider | 5 s | 1 – 30 s, step 1 | Duration of the continuation to generate, in seconds. Total duration will be input + this value. |
-| Steps | slider | 8 | 1 – 20, step 1 | Number of ping-pong sampler steps. 8 = quality/speed sweet spot. |
-| Seed | slider | -1 | -1 – 999999, step 1 | Random seed. -1 = random. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Model path | folder | — |  | Absolute or relative path of the Stable Audio 3 bundle (empty = bundled public/oonx/stable-audio-3-small-music). The audio encoder (encoder_q4.onnx) must also be present. |
 
 #### Time Stretch (DTW)
 

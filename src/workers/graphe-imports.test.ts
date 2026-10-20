@@ -69,7 +69,7 @@ const relatif = (p: string) => p.slice(RACINE.length + 1).replace(/\\/g, "/");
 /** Les workers d'Attic, tels que les plugins les créent. Sherpa vit dans `public/`, hors du graphe. */
 const WORKERS = [
   "magenta-worker.ts", "asr-worker.js", "image-to-text-worker.js", "kokoro-francais-worker.js",
-  "kokoro-tts-worker.js", "musicgen-worker.js", "opus-worker.js", "piper-tts-worker.js",
+  "kokoro-tts-worker.js", "opus-worker.js", "piper-tts-worker.js",
   "textgen-worker.js", "tts-worker.js",
 ];
 

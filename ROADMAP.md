@@ -43,7 +43,7 @@ Continuously verified state (2026-08-21, branch `release-3.0.8` — v3.1.5 plus 
 - ✅ **MIDI player** — added a MIDI output (orange port) to chain to the arpeggiator/transposer.
 
 ### Generative AI (Transformers.js + ONNX)
-- ✅ **MusicGen** — music generation from a text prompt (`Xenova/musicgen-small`, Web Worker, auto-download HuggingFace).
+- ❌ **MusicGen** — retiré en 5.0.5 : mono, trente secondes, calcul sur le processeur, et des poids tirés de HuggingFace à l'exécution sans passer par le manifeste.
 - ✅ **SpeechT5 TTS** — English speech synthesis, 7 voices (CMU Arctic embeddings).
 - ✅ **MMS-TTS Multilingual** — 10 languages (Meta MMS, one model per language).
 - ✅ **Whisper (English)** — vocal ASR transcription (`whisper-base.en`, ~75 MB).

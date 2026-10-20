@@ -122,7 +122,21 @@ $null
 test-sa3-cjs.cjs
 
 # Build scripts/output (not source)
-build/
+#
+# `build/*` AND NOT `build/`, and the difference is the whole point of the exception below. Git does
+# not descend into an excluded DIRECTORY, so a negation naming a file inside one is never even
+# consulted: measured with `git check-ignore -v --no-index build/installer.nsh`, the rule that won
+# was `build/` — the exception was dead, and had been since it was written. `build/*` excludes each
+# entry of the directory instead, which leaves git walking it, so the negation applies.
+#
+# WHAT IT COST. `build/installer.nsh` is tracked, so `git status` showed it as modified, yet
+# `git add build/installer.nsh` was REFUSED and needed `-f`. On 2026-10-21 a `git checkout --` on
+# that path during a commit split discarded the per-user install work, and nothing said so: a file
+# that cannot be staged the ordinary way leaves no trace when its changes vanish.
+#
+# `git check-ignore` WITHOUT `--no-index` DOES NOT SEE THIS: it reports a tracked path as
+# unignored whatever the rules say. `scripts/gitignore-exceptions.test.ts` holds the measurement.
+build/*
 
 # Exception: the custom NSIS installer script is source, not output.
 !build/installer.nsh
