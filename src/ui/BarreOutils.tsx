@@ -1,9 +1,10 @@
 // ui/BarreOutils.tsx
 import { useEffect, useRef, useState } from "react";
-import { useI18n } from "../i18n";
+import { useI18n, traduire } from "../i18n";
 import { etiquetteFamille, etiquetteOutil, type FamilleBarre } from "./barre-outils-groupes";
 import { favoris } from "./favoris";
 import { BoutonModeles } from "./BoutonModeles";
+import { apparenceMaj } from "./apparence-maj";
 import { EXEMPLES, nomDeLExemple } from "./exemples";
 import { demarrerLaFriction } from "./friction-pointeur";
 import { PERIODE_MESURE_MS, agregerMetriques, detailParProcessus, formaterMo, type MesureMemoire } from "./memoire-vive";
@@ -68,6 +69,17 @@ function Groupe({ famille, children, t }: {
   );
 }
 
+/** La teinte de l'icône de mise à jour, par variante. Les mêmes que pour les modèles, à côté. */
+const TEINTES_MAJ: Record<string, string | undefined> = {
+  neutre: undefined,
+  attente: "var(--text-muted)",
+  bon: "#2a9d8f",
+  offre: "#e9a13b",
+  cours: "#4c6ef5",
+  faute: "#e44",
+  muet: "var(--text-muted)",
+};
+
 export function BarreOutils(props: Props) {
   const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onOuvrirExemple, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, dictee, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
   const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
@@ -77,7 +89,6 @@ export function BarreOutils(props: Props) {
   const liens = favoris();
   const [exemplesOuverts, setExemplesOuverts] = useState(false);
   const [maj, setMaj] = useState<{ disponible: boolean; version: string; progression: number; statut: string; notes?: string } | null>(null);
-  const [verifEnCours, setVerifEnCours] = useState(false);
   const [etatAudio, setEtatAudio] = useState<string>("");
 
   // LE POINTEUR QU'ON ENTEND FROTTER. Le réglage se retient d'une session à l'autre : quelqu'un qui
@@ -116,7 +127,7 @@ export function BarreOutils(props: Props) {
   useEffect(() => {
     const api = (window as any).api;
     if (!api?.majEvenement) return;
-    api.majEvenement((info: any) => { setMaj(info); setVerifEnCours(false); });
+    api.majEvenement((info: any) => setMaj(info));
     api.majInfo?.().then((info: any) => { if (info) setMaj(info); });
     // Quand une mise à jour est téléchargée, sauvegarder les données
     if (api?.majBackupDemande) {
@@ -132,16 +143,28 @@ export function BarreOutils(props: Props) {
     }
   }, []);
 
+  const apparenceMajCourante = apparenceMaj(maj);
+
+  /** Le clic fait ce que l'état propose, et rien quand il ne propose rien. */
+  const agirMaj = () => {
+    const api = (window as any).api;
+    if (apparenceMajCourante.action === "telecharger") return void api?.majTelecharger?.();
+    if (apparenceMajCourante.action === "installer") return void api?.majInstallerRelancer?.();
+    if (apparenceMajCourante.action === "verifier") void verifierMaj();
+  };
+
   const verifierMaj = async () => {
     const api = (window as any).api;
     if (!api?.majVerifier) return;
-    setVerifEnCours(true);
-    setMaj({ disponible: false, version: "", progression: 0, statut: "verification" });
+    // UNE VÉRIFICATION N'EFFACE PAS UN TÉLÉCHARGEMENT EN COURS. Elle remettait la progression à
+    // zéro : la barre retombait visiblement au début alors que rien ne recommençait,
+    // `autoDownload` étant à faux côté processus principal. Celui-ci refuse désormais d'écraser
+    // son état — voir `peutEcraser` — et cette ligne-ci empêche le clignotement d'ici là.
+    setMaj((p) => (p?.statut === "telechargement" ? p : { disponible: false, version: "", progression: 0, statut: "verification" }));
     try {
       const result = await api.majVerifier();
       if (result) setMaj(result);
     } catch {}
-    setVerifEnCours(false);
   };
 
   useEffect(() => {
@@ -354,67 +377,26 @@ export function BarreOutils(props: Props) {
         <button className="attic-btn-icon" title={eti("doc")} aria-label={eti("doc")} onClick={async () => { const res = await (window as any).api?.ouvrirDoc?.(); if (!res?.ok) alert(t("msg.docIntrouvable")); }}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 2h5a3 3 0 013 3v9a2 2 0 00-2-2H2V2z"/><path d="M14 2h-4a3 3 0 00-3 3v9a2 2 0 012 2h5V2z"/></svg>
         </button>
-        {/* Une flèche qui descend vers un socle, et non plus une horloge : le disque de
-            l'horloge était le jumeau de celui du thème. */}
-        <button className="attic-btn-icon" title={eti("maj")} aria-label={eti("maj")} onClick={verifierMaj}
-          style={{ width: 28, height: 28 }}>
-          {verifEnCours ? (
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>…</span>
-          ) : (
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M8 2v7M5 6.5 8 9.5l3-3" /><path d="M2.5 11.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" />
-            </svg>
+        {/* L'ÉTAT DE LA MISE À JOUR VIT DANS SON ICÔNE, et non plus en toutes lettres dans la
+            rangée. Les six états s'y inséraient chacun avec sa longueur et poussaient tout ce qui
+            suit, « Lancer » compris ; réserver la place laissait un trou vide là où le metteur à
+            jour n'existe pas, c'est-à-dire en développement. Un bouton de taille fixe ne bouge
+            jamais. La règle est dans `ui/apparence-maj.ts`, et la flèche descend vers un socle :
+            le disque d'une horloge était le jumeau de celui du thème. */}
+        <button className="attic-btn-icon" title={traduire(apparenceMajCourante.cle, ...apparenceMajCourante.vars)}
+          aria-label={traduire(apparenceMajCourante.cle, ...apparenceMajCourante.vars)}
+          onClick={agirMaj} disabled={apparenceMajCourante.action === null}
+          style={{ position: "relative", width: 28, height: 28, color: TEINTES_MAJ[apparenceMajCourante.variante] }}>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M8 2v7M5 6.5 8 9.5l3-3" /><path d="M2.5 11.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" />
+          </svg>
+          {apparenceMajCourante.badge && (
+            <span style={{ position: "absolute", bottom: 0, right: 0, fontSize: 8, lineHeight: 1 }}>
+              {apparenceMajCourante.badge}
+            </span>
           )}
         </button>
         <BoutonModeles etiquette={eti("modeles")} />
-      {maj && maj.statut === "verification" && (
-        <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>
-          {t("maj.verification")}
-        </span>
-      )}
-      {maj && maj.statut === "a-jour" && (
-        <span style={{ fontSize: 11, color: "#2a9d8f", marginRight: 8, userSelect: "none" }}>
-          ✓ {t("maj.a-jour")}
-        </span>
-      )}
-      {maj && maj.statut === "erreur" && (
-        <span style={{ fontSize: 11, color: "#e44", marginRight: 8, userSelect: "none" }} title={maj.notes || ""}>
-          ✗ {t("maj.erreur")}
-        </span>
-      )}
-      {maj && maj.statut === "disponible" && (
-        <button
-          onClick={() => (window as any).api?.majTelecharger?.()}
-          style={{
-            fontSize: 11, marginRight: 8, cursor: "pointer",
-            border: "1px solid #e9b949", borderRadius: 4,
-            background: "rgba(233,185,73,0.15)", color: "#e9b949",
-            padding: "2px 8px",
-          }}
-          title={t("maj.disponible")}
-        >
-          ↓ v{maj.version}
-        </button>
-      )}
-      {maj && maj.statut === "telechargement" && (
-        <span style={{ fontSize: 11, color: "#4c6ef5", marginRight: 8, userSelect: "none" }}>
-          {t("maj.telechargement")} {maj.progression}%
-        </span>
-      )}
-      {maj && maj.statut === "pret" && (
-        <button
-          onClick={() => (window as any).api?.majInstallerRelancer?.()}
-          style={{
-            fontSize: 11, marginRight: 8, cursor: "pointer",
-            border: "1px solid #2a9d8f", borderRadius: 4,
-            background: "rgba(42,157,143,0.15)", color: "#2a9d8f",
-            padding: "2px 8px",
-          }}
-          title={t("maj.pret")}
-        >
-          ⟳ {t("maj.relancer")}
-        </button>
-      )}
       <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: 8, userSelect: "none" }}>v{__APP_VERSION__}</span>
       </Groupe>
       <span className="attic-sep" />

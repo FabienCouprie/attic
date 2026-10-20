@@ -886,7 +886,12 @@
       "nomEn": "Text encoder (ACE-Step)",
       "noeuds": [
         "planifier-chanson",
-        "rendre-chanson"
+        "ecrire-chanson",
+        "rendre-chanson",
+        "reprendre-chanson",
+        "retoucher-chanson",
+        "prolonger-chanson",
+        "accompagner-voix"
       ],
       "octets": 784144960,
       "source": {
@@ -908,7 +913,8 @@
       "nom": "Planificateur de chanson (ACE-Step)",
       "nomEn": "Song planner (ACE-Step)",
       "noeuds": [
-        "planifier-chanson"
+        "planifier-chanson",
+        "ecrire-chanson"
       ],
       "octets": 709846656,
       "source": {
@@ -930,7 +936,10 @@
       "nom": "Débruiteur de chanson (ACE-Step)",
       "nomEn": "Song denoiser (ACE-Step)",
       "noeuds": [
-        "rendre-chanson"
+        "rendre-chanson",
+        "reprendre-chanson",
+        "retoucher-chanson",
+        "prolonger-chanson"
       ],
       "octets": 1970472064,
       "source": {
@@ -948,11 +957,37 @@
       ]
     },
     {
+      "id": "acestep-debruiteur-base",
+      "nom": "Débruiteur de base (ACE-Step)",
+      "nomEn": "Base denoiser (ACE-Step)",
+      "noeuds": [
+        "accompagner-voix"
+      ],
+      "octets": 1970472000,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/acestep-v15-base-Q6_K.gguf",
+        "octets": 1970472000,
+        "sha256": "08cf80fcc73f518c9eddfdc1e0ddcb786dc04f7d260479482794f371925b0207"
+      },
+      "fichiers": [
+        {
+          "chemin": "acestep/acestep-v15-base-Q6_K.gguf",
+          "octets": 1970472000,
+          "sha256": "08cf80fcc73f518c9eddfdc1e0ddcb786dc04f7d260479482794f371925b0207"
+        }
+      ]
+    },
+    {
       "id": "acestep-decodeur",
       "nom": "Décodeur audio (ACE-Step)",
       "nomEn": "Audio decoder (ACE-Step)",
       "noeuds": [
-        "rendre-chanson"
+        "rendre-chanson",
+        "reprendre-chanson",
+        "retoucher-chanson",
+        "prolonger-chanson",
+        "accompagner-voix"
       ],
       "octets": 337420928,
       "source": {

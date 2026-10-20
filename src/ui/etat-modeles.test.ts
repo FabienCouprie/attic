@@ -73,10 +73,19 @@ describe("pendant le téléchargement", () => {
     expect(a.vars).toEqual(["Texte → image", 2, 3]);
   });
 
-  it("un clic INTERROMPT au lieu de relancer", () => {
+  it("DIT QU'UN TÉLÉCHARGEMENT TOURNE, sans décider de ce que fait le clic", () => {
+    // Le clic interrompait, et partait sans rien demander alors qu'on cliquait pour VOIR. Il ouvre
+    // maintenant le panneau dans tous les cas, et l'arrêt y est un bouton nommé : ce champ ne dit
+    // donc plus que l'état, jamais le geste.
     const a = apparenceModeles(etat(), { phase: "telechargement", fraction: 0.1 });
-    expect(a.interrompt).toBe(true);
+    expect(a.enCours).toBe(true);
     expect(a.actionnable).toBe(true);
+  });
+
+  it("et ne le dit pas quand rien ne tourne", () => {
+    expect(apparenceModeles(etat(), null).enCours).toBe(false);
+    expect(apparenceModeles(etat(), { phase: "erreur", erreur: "coupure" }).enCours).toBe(false);
+    expect(apparenceModeles(null, null).enCours).toBe(false);
   });
 
   it("n'annonce pas 100 % avant que ce soit fini", () => {
@@ -106,7 +115,7 @@ describe("quand ça a échoué", () => {
     expect(a.badge).toBe("!");
     expect(a.vars).toEqual(["HTTP 404"]);
     expect(a.actionnable).toBe(true);
-    expect(a.interrompt).toBe(false);
+    expect(a.enCours).toBe(false);
   });
 });
 

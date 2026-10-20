@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**490 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**495 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -131,6 +131,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | ▸ Entrée exposée | `__entree-frontiere` | 240 × 118 |
 | Sortie exposée ◂ | `__sortie-frontiere` | 240 × 118 |
 | ABC → MIDI | `abc-vers-midi` | 240 × 162 |
+| Accompagner une voix | `accompagner-voix` | 240 × 162 |
 | Accords joués | `accords-joues` | 240 × 162 |
 | Accords → Notation MIDI | `accords-vers-notation` | 240 × 162 |
 | Ajouter silence | `ajouter-silence` | 240 × 118 |
@@ -252,6 +253,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Écosystème (Di Scipio) | `ecosysteme` | 240 × 140 |
 | Écoute binaurale | `ecoute-binaurale` | 240 × 118 |
 | Écrans (Xenakis) | `ecrans-xenakis` | 240 × 140 |
+| Écrire une chanson | `ecrire-chanson` | 240 × 140 |
 | Édition ABC par LLM | `edition-abc-llm` | 240 × 140 |
 | Enregistreur | `enregistreur-audio` | 240 × 118 |
 | Égaliseur | `equaliseur` | 240 × 118 |
@@ -396,6 +398,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Poussière de Cantor | `poussiere-cantor` | 240 × 118 |
 | Profil de bruit | `profil-bruit` | 240 × 118 |
 | Profil mélodique | `profil-melodique` | 240 × 162 |
+| Prolonger une chanson | `prolonger-chanson` | 240 × 162 |
 | Prompt → graphe | `prompt-vers-graphe` | 240 × 118 |
 | Synthèse par pulsars | `pulsars-roads` | 240 × 118 |
 | Pulsation | `pulsation` | 240 × 162 |
@@ -407,12 +410,13 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Simplifier un arbre | `reecrire-arbre` | 240 × 140 |
 | Réinsérer une zone | `reinserer-zone` | 240 × 162 |
 | Remplissage de trou | `remplissage-trou` | 240 × 140 |
-| Rendre une chanson | `rendre-chanson` | 240 × 140 |
+| Rendre une chanson | `rendre-chanson` | 240 × 162 |
 | Rendu de cercles | `rendu-cercles` | 240 × 272 |
 | Rendu d'objets | `rendu-objets` | 240 × 118 |
 | Point d'écoute séquence | `rendu-sequence` | 240 × 140 |
 | Réordonner les objets | `reordonner-objets` | 240 × 140 |
 | Répartiteur MIDI | `repartiteur-midi` | 240 × 206 |
+| Reprendre une chanson | `reprendre-chanson` | 240 × 162 |
 | Reprise ABC | `reprise-abc` | 240 × 184 |
 | Réservoir neuronal | `reservoir-musical` | 240 × 140 |
 | Réservoir textuel | `reservoir-textuel` | 240 × 118 |
@@ -422,6 +426,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Résultante (Schillinger) | `resultante-schillinger` | 240 × 162 |
 | Retard granulaire | `retard-granulaire` | 240 × 228 |
 | Retard spectral | `retard-spectral` | 240 × 162 |
+| Retoucher une chanson | `retoucher-chanson` | 240 × 162 |
 | Réunir des voix | `reunir-voix` | 240 × 162 |
 | Réverbération fractale | `reverb-fractale` | 240 × 118 |
 | Reverb Progressive | `reverb-progressive` | 240 × 118 |

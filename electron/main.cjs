@@ -14,7 +14,7 @@ const { genererSongsee } = require("./songsee.cjs");
 const { extraireEntrees, dossierNode } = require("./extraire-node-zip.cjs");
 const { infoExecutable } = require("./executables.cjs");
 const { ecrireSauvegarde, lireSauvegarde } = require("./sauvegarde-maj.cjs");
-const { etatNeutre, etatVerification, etatApresAttente } = require("./etat-maj.cjs");
+const { etatNeutre, etatVerification, etatApresAttente, peutEcraser } = require("./etat-maj.cjs");
 const { installerSauvegardeAvantFermeture } = require("./fermeture-sauvegarde.cjs");
 const { resoudreRessource } = require("./chemins-ressources.cjs");
 const { SCHEMA: SCHEMA_MEDIA, cheminDepuisUrl, typeMedia, analyserPlage } = require("./plage-media.cjs");
@@ -1442,11 +1442,19 @@ if (autoUpdater) {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
+  // UNE VÉRIFICATION N'EFFACE PAS UN TÉLÉCHARGEMENT EN COURS, et ces deux gardes sont ce qui le
+  // tient. Relevé par Fabien : la barre retombait au début à chaque clic sur l'icône. Rien ne
+  // recommençait — `autoDownload` est à faux, une vérification ne télécharge pas — mais l'état
+  // était écrasé, ici d'abord par le statut, puis par une progression remise à zéro. Un affichage
+  // qui ment sur l'avancement d'un téléchargement de plusieurs minutes est un défaut à part
+  // entière : il fait croire à une perte qui n'a pas eu lieu.
   autoUpdater.on("checking-for-update", () => {
+    if (!peutEcraser(infoMaj)) return;
     infoMaj.statut = "verification";
     envoyerInfoMaj();
   });
   autoUpdater.on("update-available", (info) => {
+    if (!peutEcraser(infoMaj)) return;
     infoMaj = { disponible: true, version: info.version, notes: info.releaseNotes || "", progression: 0, statut: "disponible" };
     envoyerInfoMaj();
   });

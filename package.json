@@ -2,7 +2,7 @@
   "name": "attic",
   "private": true,
   "version": "5.0.4",
-  "description": "Visual node-editor for AI-powered music and sound design — 490 nodes, local ML models, bilingual FR/EN.",
+  "description": "Visual node-editor for AI-powered music and sound design — 495 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -210,7 +210,9 @@
     "react-dom": "^19.2.7",
     "resonance-audio": "^1.0.0",
     "seedrandom": "^3.0.5",
+    "sharp": "^0.35.5",
     "soundtouchjs": "^0.3.0",
+    "tar": "^7.5.22",
     "tesseract.js": "^7.0.0",
     "time-stretch": "^1.2.1",
     "tonal": "^6.4.3",

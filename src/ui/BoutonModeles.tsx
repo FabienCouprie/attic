@@ -104,8 +104,11 @@ export function BoutonModeles({ etiquette }: { etiquette: string }) {
   const cliquer = async () => {
     const api = (window as any).api;
     if (!apparence.actionnable || !api) return;
-    if (apparence.interrompt) { await api.modelesAnnuler?.(); return; }
-    if (enVol.current) return;
+    // LE CLIC N'INTERROMPT PLUS, ET C'EST UN RENVERSEMENT. Il le faisait, et le bouton le disait ;
+    // mais on clique dessus pour VOIR où ça en est, et l'interruption partait alors sans rien
+    // demander — sur un modèle de 1,7 Go, le geste coûtait cher. Relevé par Fabien. Le panneau
+    // s'ouvre donc dans tous les cas, et l'arrêt y est un bouton nommé.
+    if (enVol.current && !apparence.enCours) return;
     // Le panneau s'ouvre dans tous les cas : il montre désormais l'inventaire entier, et il a donc
     // quelque chose à dire même quand il n'y a rien à prendre.
     setPanneau((v) => !v);
@@ -159,7 +162,21 @@ export function BoutonModeles({ etiquette }: { etiquette: string }) {
         style={ancrage === "gauche" ? { left: 0, right: "auto" } : { left: "auto", right: 0 }}
         onClick={(e) => e.stopPropagation()}
       >
-        {liste.length > 0 ? (
+        {apparence.enCours ? (
+          // L'ARRÊT EST UN GESTE NOMMÉ, et il ne vit que pendant un téléchargement. Il remplace le
+          // bouton « tout prendre », qui n'aurait rien à proposer tant que le précédent tourne.
+          <button
+            className="attic-modeles-tout"
+            // LA COULEUR EST POSÉE ICI ET NON DANS LA FEUILLE DE STYLE, et c'est la norme de taille
+            // qui l'a décidé : `atelier.css` est en dette, elle ne grossit plus. Ce qu'on ajoute à
+            // un fichier trop gros va ailleurs, et une règle d'une ligne pour un seul bouton n'a
+            // pas besoin d'une classe.
+            style={{ color: COULEURS.erreur }}
+            onClick={() => { void (window as any).api?.modelesAnnuler?.(); }}
+          >
+            {traduire("modeles.interrompre")}
+          </button>
+        ) : liste.length > 0 ? (
           <button className="attic-modeles-tout" onClick={() => telecharger()}>
             {traduire("modeles.tout", liste.length, formaterOctets(liste.reduce((s, m) => s + m.octets, 0)))}
           </button>

@@ -21,6 +21,10 @@ const EXECUTABLES = { planifier: "ace-lm", rendre: "ace-synth" };
 // seconde version de cette recherche aurait cherché les GGUF là où ils ne sont plus.
 const { resoudreRessource } = require("./chemins-ressources.cjs");
 
+// CE QUE CHAQUE TÂCHE RÉCLAME EST RELEVÉ À PART, et éprouvé à part : `acestep-plan.test.ts` tient
+// la table des sept tâches du moteur et le calcul des plages, sans avoir besoin du binaire.
+const { appliquerTache, requetePlanification } = require("./acestep-plan.cjs");
+
 function cheminBinaire(quoi, contexte) {
   const nom = EXECUTABLES[quoi] + (process.platform === "win32" ? ".exe" : "");
   const trouve = resoudreRessource(path.join("bin", "acestep", nom), contexte);
@@ -71,24 +75,45 @@ function lancer(binaire, args, surLigne) {
   });
 }
 
-/** Le premier fichier produit par le rendu, quel que soit son suffixe. */
+/**
+ * Le premier fichier produit par le rendu, quel que soit son suffixe.
+ *
+ * LES AUDIO REÇUS SONT ÉCRITS DANS UN SOUS-DOSSIER, et c'est ce qui rend cette recherche sûre.
+ * Une reprise et une retouche reçoivent un audio source ; posé à côté du rendu, il serait trouvé
+ * ici — et le nœud aurait rendu son entrée inchangée, ce qui ressemble exactement à un modèle qui
+ * n'a rien fait. Le filtre ne retient que des noms de fichier audio, donc `entrees/` est exclu.
+ */
 function sortieAudio(dossier) {
   const audio = fs.readdirSync(dossier).filter((f) => /\.(wav|mp3)$/i.test(f)).sort();
   return audio.length > 0 ? path.join(dossier, audio[0]) : null;
+}
+
+/** Les deux audio que le moteur ne lit qu'en ligne de commande, jamais dans la requête. */
+const FICHIERS_AUDIO = [
+  ["audioSource", "source.wav", "--src-audio"],
+  ["audioTimbre", "timbre.wav", "--ref-audio"],
+];
+
+/** Écrit les audio reçus dans `entrees/` et rend les drapeaux qui les désignent. */
+function drapeauxAudio(options, travail) {
+  const presents = FICHIERS_AUDIO.filter(([champ]) => options[champ]);
+  if (presents.length === 0) return [];
+  const entrees = path.join(travail, "entrees");
+  fs.mkdirSync(entrees, { recursive: true });
+  const args = [];
+  for (const [champ, nom, drapeau] of presents) {
+    const chemin = path.join(entrees, nom);
+    fs.writeFileSync(chemin, Buffer.from(options[champ]));
+    args.push(drapeau, chemin);
+  }
+  return args;
 }
 
 async function planifier(options = {}, surAvancement, contexte) {
   const travail = dossierTemp();
   try {
     const requete = path.join(travail, "requete.json");
-    ecrireJson(requete, {
-      caption: options.description || "instrumental",
-      ...(options.paroles ? { lyrics: options.paroles } : {}),
-      ...(options.dureeSec ? { duration: options.dureeSec } : {}),
-      ...(options.graine >= 0 ? { seed: options.graine } : {}),
-      vocal_language: options.langue || "fr",
-      output_format: "wav16",
-    });
+    ecrireJson(requete, requetePlanification(options));
     const args = ["--models", dossierModeles(contexte), "--request", requete];
     if (options.peripherique) args.push("--device", options.peripherique);
     const { code, journal } = await lancer(cheminBinaire("planifier", contexte), args, surAvancement);
@@ -116,11 +141,20 @@ async function rendre(options = {}, surAvancement, contexte) {
     // plan — forme, tempo, tonalité, codes — est ce que le planificateur a décidé, et on ne
     // corrige ici que le texte chanté.
     if (typeof options.paroles === "string" && options.paroles.trim()) plan.lyrics = options.paroles;
-    ecrireJson(requete, plan);
+
+    // CE QUE LA TÂCHE RÉCLAME SE REFUSE AVANT DE CHARGER LE MODÈLE. Mesuré : le moteur ne
+    // s'aperçoit qu'il manque un audio source qu'après avoir chargé deux gigaoctets de poids, et
+    // refuse alors en anglais. `acestep-plan.cjs` porte le relevé de ses exigences et refuse en
+    // français ce qui se sait d'avance.
+    const prepare = appliquerTache(plan, options);
+    if (!prepare.ok) return { ok: false, journal: prepare.erreur };
+    ecrireJson(requete, prepare.plan);
+
     const args = ["--models", dossierModeles(contexte), "--request", requete];
     if (options.peripherique) args.push("--device", options.peripherique);
     if (options.tuile) args.push("--vae-chunk", String(options.tuile));
     if (options.recouvrement) args.push("--vae-overlap", String(options.recouvrement));
+    args.push(...drapeauxAudio(options, travail));
     const { code, journal } = await lancer(cheminBinaire("rendre", contexte), args, surAvancement);
     const audio = sortieAudio(travail);
     if (code !== 0 || !audio) return { ok: false, journal };
@@ -130,4 +164,4 @@ async function rendre(options = {}, surAvancement, contexte) {
   }
 }
 
-module.exports = { planifier, rendre, cheminBinaire, dossierModeles };
+module.exports = { planifier, rendre, cheminBinaire, dossierModeles, sortieAudio, drapeauxAudio };
