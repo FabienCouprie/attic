@@ -194,12 +194,16 @@ const CONNUS = {
   // côté du débruiteur dans six gigaoctets de carte, là où ce jeu-ci passe en entier.
   "Qwen3-Embedding-0.6B-Q8_0.gguf": {
     id: "acestep-texte", nom: "Encodeur de texte (ACE-Step)", nomEn: "Text encoder (ACE-Step)",
-    racine: "acestep", noeuds: ["planifier-chanson", "rendre-chanson"],
+    racine: "acestep", noeuds: [
+      "planifier-chanson", "ecrire-chanson",
+      "rendre-chanson", "reprendre-chanson", "retoucher-chanson", "prolonger-chanson",
+      "accompagner-voix",
+    ],
     licence: { nom: "Apache-2.0", credit: "Alibaba — Qwen3-Embedding-0.6B, converti en GGUF par Serveurperso", rediffusable: true },
   },
   "acestep-5Hz-lm-0.6B-Q8_0.gguf": {
     id: "acestep-planificateur", nom: "Planificateur de chanson (ACE-Step)", nomEn: "Song planner (ACE-Step)",
-    racine: "acestep", noeuds: ["planifier-chanson"],
+    racine: "acestep", noeuds: ["planifier-chanson", "ecrire-chanson"],
     licence: { nom: "MIT", credit: "ACE-Step — acestep-5Hz-lm-0.6B, converti en GGUF par Serveurperso", rediffusable: true },
   },
   // LE DÉBRUITEUR EST EN Q6 ET NON EN Q8, ET C'EST GITHUB QUI TRANCHE. Un asset de release est
@@ -208,12 +212,24 @@ const CONNUS = {
   // quantification la plus fidèle qui tienne dans la limite.
   "acestep-v15-turbo-Q6_K.gguf": {
     id: "acestep-debruiteur", nom: "Débruiteur de chanson (ACE-Step)", nomEn: "Song denoiser (ACE-Step)",
-    racine: "acestep", noeuds: ["rendre-chanson"],
+    racine: "acestep", noeuds: ["rendre-chanson", "reprendre-chanson", "retoucher-chanson", "prolonger-chanson"],
     licence: { nom: "MIT", credit: "ACE-Step — acestep-v15-turbo, converti en GGUF par Serveurperso", rediffusable: true },
+  },
+  // LE MODÈLE DE BASE EST UN SECOND DÉBRUITEUR, et il n'est pris que par le nœud qui en a besoin.
+  // Le rapide ne sait pas accompagner une voix : le moteur avertit lui-même que sa sortie sur ces
+  // tâches est incohérente, et la mesure le confirme. Celui-ci pèse exactement le même poids, à
+  // soixante-quatre octets près, pour cinquante pas de débruitage au lieu de huit.
+  "acestep-v15-base-Q6_K.gguf": {
+    id: "acestep-debruiteur-base", nom: "Débruiteur de base (ACE-Step)", nomEn: "Base denoiser (ACE-Step)",
+    racine: "acestep", noeuds: ["accompagner-voix"],
+    licence: { nom: "MIT", credit: "ACE-Step — acestep-v15-base, converti en GGUF par Serveurperso", rediffusable: true },
   },
   "vae-BF16.gguf": {
     id: "acestep-decodeur", nom: "Décodeur audio (ACE-Step)", nomEn: "Audio decoder (ACE-Step)",
-    racine: "acestep", noeuds: ["rendre-chanson"],
+    racine: "acestep", noeuds: [
+      "rendre-chanson", "reprendre-chanson", "retoucher-chanson", "prolonger-chanson",
+      "accompagner-voix",
+    ],
     licence: { nom: "MIT", credit: "ACE-Step — VAE v1.5, converti en GGUF par Serveurperso", rediffusable: true },
   },
 

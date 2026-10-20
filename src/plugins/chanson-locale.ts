@@ -19,58 +19,13 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
+import {
+  CANAL_PLANIFIER, CANAL_RENDRE, LANGUES, PARAMETRE_CALCUL, PARAMETRES_RENDU, api, octetsWav, suivre,
+} from "./chanson-aides";
+import { fiches as variantes } from "./chanson-variantes";
+import { fiches as accompagnement } from "./chanson-accompagnement";
 
-const LANGUES = [
-  { id: "fr", fr: "Français", en: "French" },
-  { id: "en", fr: "Anglais", en: "English" },
-  { id: "es", fr: "Espagnol", en: "Spanish" },
-  { id: "de", fr: "Allemand", en: "German" },
-  { id: "it", fr: "Italien", en: "Italian" },
-  { id: "pt", fr: "Portugais", en: "Portuguese" },
-  { id: "ja", fr: "Japonais", en: "Japanese" },
-  { id: "zh", fr: "Chinois", en: "Chinese" },
-];
-
-/**
- * Le réglage du périphérique, partagé par les deux nœuds : même liste, même sens.
- *
- * UNE LISTE ET NON UN CHAMP LIBRE. Le contrat des réglages le dit : dès qu'on peut mettre une
- * glissière, une liste déroulante ou un sélecteur, il faut le faire, et le champ libre n'est
- * légitime que pour ce qui n'est pas une valeur. Les périphériques sont une poignée de noms que
- * le moteur reconnaît ; ils se choisissent, ils ne s'écrivent pas.
- */
-const CALCULS = [
-  { id: "", fr: "Automatique", en: "Automatic" },
-  { id: "CPU", fr: "Processeur", en: "Processor" },
-  { id: "Vulkan0", fr: "Vulkan 0", en: "Vulkan 0" },
-  { id: "Vulkan1", fr: "Vulkan 1", en: "Vulkan 1" },
-  { id: "CUDA0", fr: "CUDA 0", en: "CUDA 0" },
-];
-
-const PARAMETRE_CALCUL = {
-  nom: "Calcul", nomEn: "Compute", type: "choix" as const,
-  options: CALCULS.map((c) => c.fr), optionsEn: CALCULS.map((c) => c.en),
-  optionIds: CALCULS.map((c) => c.id),
-  defaut: "Automatique", defautEn: "Automatic",
-  doc: "Le périphérique de calcul. « Automatique » laisse le moteur prendre ce qu'il juge le meilleur, ce qui n'est pas toujours la carte graphique : une machine à deux cartes expose souvent le circuit intégré en premier, et les deux numéros sont là pour les départager. « Processeur » tourne partout, et bien plus lentement.",
-  docEn: "The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly.",
-};
-
-/** Les deux canaux du processus principal, nommes une fois : on les appelle et on les reconnait. */
-const CANAL_PLANIFIER = "acestep:planifier";
-const CANAL_RENDRE = "acestep:rendre";
-
-const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknown[]) => Promise<unknown>> }).api;
-
-/** Branche l'avancement du moteur sur celui du nœud, et rend de quoi se débrancher. */
-function suivre(ctx: { onProgress?: (m: string) => void }) {
-  const pont = api()?.acestepProgression as unknown as
-    ((cb: (e: { phase: string; ligne: string }) => void) => () => void) | undefined;
-  if (!pont) return () => { /* hors application : rien à suivre */ };
-  return pont(({ ligne }) => ctx.onProgress?.(ligne));
-}
-
-export const fiches = ([
+const locales = ([
   {
     id: "planifier-chanson", nom: "Planifier une chanson", nomEn: "Plan a Song",
     univers: "Entrées", famille: "Génération",
@@ -80,19 +35,22 @@ export const fiches = ([
       + "porte les paroles, le tempo, la tonalité, la durée et les codes audio que le rendu emploiera.\n\n"
       + "« Description » dit ce qu'on veut entendre : un genre, une instrumentation, un caractère. L'entrée du "
       + "même nom la reçoit d'un autre composant quand elle est branchée, et le réglage sert alors de repli.\n\n"
-      + "« Paroles » fixe le texte chanté. Vide, le planificateur l'écrit lui-même, et il peut choisir une pièce "
-      + "instrumentale ; fourni, il le garde et se contente de la forme, ce qui raccourcit son travail.\n\n"
-      + "« Langue du chant » dit en quelle langue chanter. « Durée » fixe la longueur visée en secondes ; à zéro, "
-      + "le planificateur la choisit. « Graine » rend le plan reproductible ; à moins un, chaque exécution diffère.\n\n"
+      + "« Paroles » fixe le texte chanté. Vide, le planificateur l'écrit lui-même : le texte dépend alors de "
+      + "« Graine », il peut être une pièce instrumentale, et il ne suit pas toujours la langue demandée. Fourni, "
+      + "il le garde mot pour mot et se contente de la forme, ce qui raccourcit son travail.\n\n"
+      + "« Langue du chant » dit en quelle langue chanter, parmi les dix que le modèle tient le mieux. « Durée » "
+      + "fixe la longueur visée en secondes ; à zéro, le planificateur la choisit. « Graine » rend le plan "
+      + "reproductible ; à moins un, chaque exécution diffère.\n\n"
       + "« Calcul » nomme le périphérique employé. La sortie « Plan » rend le document à passer au rendu, et la "
       + "sortie « Paroles » le texte chanté, qui se lit et se corrige avant de rendre.",
     noticeEn: "This component writes a song's plan from a description, and returns it as text. The plan carries the "
       + "lyrics, the tempo, the key, the length and the audio codes the render will use.\n\n"
       + "« Description » says what is wanted: a genre, an instrumentation, a character. The input of the same name "
       + "receives it from another component when connected, and the setting then serves as a fallback.\n\n"
-      + "« Lyrics » sets the sung text. Empty, the planner writes it itself, and it may choose an instrumental "
-      + "piece; given, it keeps it and only settles the form, which shortens its work.\n\n"
-      + "« Singing language » says in which language to sing. « Length » sets the target length in seconds; at zero, "
+      + "« Lyrics » sets the sung text. Empty, the planner writes it itself: the text then depends on « Seed », it "
+      + "may be an instrumental piece, and it does not always follow the requested language. Given, it keeps it "
+      + "word for word and only settles the form, which shortens its work.\n\n"
+      + "« Singing language » says in which language to sing, among the ten the model holds best. « Length » sets the target length in seconds; at zero, "
       + "the planner chooses it. « Seed » makes the plan reproducible; at minus one, every run differs.\n\n"
       + "« Compute » names the device used. The « Plan » output returns the document to pass to the render, and the "
       + "« Lyrics » output the sung text, which can be read and corrected before rendering.",
@@ -117,14 +75,14 @@ export const fiches = ([
       { nom: "Langue du chant", nomEn: "Singing language", type: "choix",
         options: LANGUES.map((l) => l.fr), optionsEn: LANGUES.map((l) => l.en),
         optionIds: LANGUES.map((l) => l.id), defaut: "Français", defautEn: "French",
-        doc: "La langue dans laquelle la voix chante.",
-        docEn: "The language the voice sings in." },
+        doc: "La langue dans laquelle la voix chante. Les dix proposées sont celles que le modèle tient le mieux ; il en connaît davantage, moins bien chantées. Quand « Paroles » est vide, le texte écrit ne suit pas toujours cette langue.",
+        docEn: "The language the voice sings in. The ten offered are those the model holds best; it knows more, less well sung. When « Lyrics » is empty, the written text does not always follow this language." },
       { nom: "Durée", nomEn: "Length", type: "nombre", plage: [0, 600], pas: 10, defaut: 60, unite: "s",
         doc: "Longueur visée. À zéro, le planificateur choisit, et il voit large.",
         docEn: "Target length. At zero, the planner chooses, and it aims long." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [-1, 999999], pas: 1, defaut: -1,
-        doc: "Rend le plan reproductible. À moins un, chaque exécution diffère.",
-        docEn: "Makes the plan reproducible. At minus one, every run differs." },
+        doc: "Rend le plan reproductible. À moins un, chaque exécution diffère. Quand « Paroles » est vide, elle décide aussi du texte écrit, qui ne suit pas toujours la langue demandée : donner les paroles est le seul moyen de fixer ce qui sera chanté.",
+        docEn: "Makes the plan reproducible. At minus one, every run differs. When « Lyrics » is empty, it also decides the written text, which does not always follow the requested language: giving the lyrics is the only way to settle what will be sung." },
       PARAMETRE_CALCUL,
     ],
     async executer(ctx: any) {
@@ -179,6 +137,8 @@ export const fiches = ([
       + "L'entrée « Paroles » remplace le texte chanté du plan, et rien d'autre : la forme, le tempo, la "
       + "tonalité et les codes restent ceux du planificateur. C'est par là que reviennent les paroles qu'on "
       + "a relues et corrigées.\n\n"
+      + "L'entrée « Timbre » reçoit un audio dont la couleur sonore est reprise : le moteur en encode le "
+      + "timbre et l'applique au rendu. La forme, les paroles et la durée restent celles du plan.\n\n"
       + "« Pas de débruitage » décide du nombre d'étapes. Huit est la valeur du modèle rapide ; davantage "
       + "allonge le calcul sans toujours changer ce qu'on entend.\n\n"
       + "« Glissement » déplace les instants auxquels le débruitage travaille. Trois est la valeur usuelle.\n\n"
@@ -193,6 +153,8 @@ export const fiches = ([
       + "The « Lyrics » input replaces the plan's sung text, and nothing else: the form, the tempo, the key "
       + "and the codes stay those of the planner. This is where the lyrics one has read over and corrected "
       + "come back.\n\n"
+      + "The « Timbre » input receives an audio whose tone colour is taken up: the engine encodes its timbre "
+      + "and applies it to the render. The form, the lyrics and the length stay those of the plan.\n\n"
       + "« Denoising steps » decides the number of steps. Eight is the fast model's value; more lengthens the "
       + "computation without always changing what is heard.\n\n"
       + "« Shift » moves the instants at which denoising works. Three is the usual value.\n\n"
@@ -208,25 +170,13 @@ export const fiches = ([
       // des deux nœuds : sans cette entrée, la sortie « Paroles » du planificateur ne menait nulle
       // part et le plan ne se corrigeait qu'en le réécrivant à la main.
       { nom: "Paroles", nomEn: "Lyrics", type: "texte", requis: false },
+      // LE TIMBRE EST INDÉPENDANT DE LA TÂCHE : le moteur l'encode à part et ne le lit qu'en
+      // ligne de commande, d'où un port et non un champ du plan. `electron/acestep-plan.cjs`
+      // porte le relevé de ce partage.
+      { nom: "Timbre", nomEn: "Timbre", type: "audio", requis: false },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    parametres: [
-      { nom: "Pas de débruitage", nomEn: "Denoising steps", type: "nombre", plage: [4, 50], pas: 1, defaut: 8,
-        doc: "Nombre d'étapes de débruitage. Huit est la valeur du modèle rapide.",
-        docEn: "Number of denoising steps. Eight is the fast model's value." },
-      { nom: "Glissement", nomEn: "Shift", type: "nombre", plage: [0.5, 6], pas: 0.5, defaut: 3,
-        doc: "Déplace les instants auxquels le débruitage travaille.",
-        docEn: "Moves the instants at which denoising works." },
-      PARAMETRE_CALCUL,
-      { nom: "Tuile du décodeur", nomEn: "Decoder tile", type: "nombre", plage: [64, 1024], pas: 64, defaut: 256,
-        unite: "trames", uniteEn: "frames",
-        doc: "Trames latentes décodées d'un bloc, à vingt-cinq par seconde. La mémoire demandée suit cette taille, et non la durée du morceau.",
-        docEn: "Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length." },
-      { nom: "Recouvrement", nomEn: "Overlap", type: "nombre", plage: [0, 128], pas: 8, defaut: 32,
-        unite: "trames", uniteEn: "frames",
-        doc: "Trames décodées en plus de part et d'autre de chaque tuile, et jetées ensuite. C'est ce qui empêche une jointure de s'entendre.",
-        docEn: "Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard." },
-    ],
+    parametres: [...PARAMETRES_RENDU],
     async executer(ctx: any) {
       const pont = api();
       if (!pont?.acestepRendre) {
@@ -238,6 +188,7 @@ export const fiches = ([
       }
       await annoncerModele(ctx, "rendre-chanson", traduire("progress.chanson.modeles"));
       const paroles = ctx.entree(1);
+      const timbre = await octetsWav(ctx.entree(2));
       const debrancher = suivre(ctx);
       try {
         let r: { ok: boolean; donnees?: Uint8Array; nom?: string; journal?: string };
@@ -245,6 +196,7 @@ export const fiches = ([
           r = await pont.acestepRendre({
             plan,
             paroles: typeof paroles === "string" && paroles.trim() ? paroles : undefined,
+            audioTimbre: timbre,
             pas: ctx.paramNombre("Pas de débruitage", 8),
             shift: ctx.paramNombre("Glissement", 3),
             peripherique: ctx.paramTexte("Calcul", "").trim(),
@@ -271,3 +223,9 @@ export const fiches = ([
     },
   },
 ] as FicheAudio[]).map(avecDoc);
+
+// LA FAMILLE ENTIÈRE SORT PAR ICI, les sept nœuds d'ACE-Step ensemble : les deux de ce fichier,
+// les quatre de `chanson-variantes.ts` et celui de `chanson-accompagnement.ts`, qui tire un
+// second débruiteur. Le registre de `index.ts` dépasse la norme de taille et n'a donc pas le droit
+// de grossir ; ce qu'on y ajouterait va ailleurs, et l'ailleurs d'une famille est sa propre entrée.
+export const fiches = [...locales, ...variantes, ...accompagnement];
