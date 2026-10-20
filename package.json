@@ -159,7 +159,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "perMachine": true,
+      "perMachine": false,
       "license": "TERMS_OF_USE.txt",
       "include": "build/installer.nsh",
       "language": "1033"

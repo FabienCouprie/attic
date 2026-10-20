@@ -45,8 +45,45 @@
   ${ETIQUETTE}_ok:
 !macroend
 
+; AN OLDER PER-MACHINE INSTALL IS OFFERED FOR REMOVAL, because leaving it would leave TWO.
+;
+; Attic installed per-machine until 5.0.4, under "Program Files", and that is why every downloaded
+; model went to the user's AppData: "Program Files" grants write access only to TrustedInstaller,
+; SYSTEM and Administrators — measured on the installed 5.0.4, where BUILTIN\Users has no write
+; entry at all. From 5.0.5 the install is per-user, so the application folder is writable and the
+; models live beside it.
+;
+; THE TWO INSTALLS DO NOT KNOW EACH OTHER. The per-machine one registers under HKLM and the
+; per-user one under HKCU, each with its own uninstaller; electron-builder's updater follows the
+; one it was installed by. Upgrading across the change therefore leaves the old copy in place,
+; still listed in "Apps & features", still holding a gigabyte of files, and a later update could
+; follow either. This is a known electron-builder behaviour, not a local defect.
+;
+; WE OFFER, WE DO NOT DECIDE. Removing an application the user did not ask us to touch is not ours
+; to do silently, and its uninstaller needs elevation it may not get. The answer is theirs, and
+; declining is a valid answer: the install proceeds either way.
+!macro atticAncienneParMachine
+  ReadRegStr $0 HKLM "${UNINSTALL_REGISTRY_KEY}" "UninstallString"
+  StrCmp $0 "" ancienne_absente
+  ReadRegStr $1 HKLM "${UNINSTALL_REGISTRY_KEY}" "DisplayName"
+  MessageBox MB_YESNO|MB_ICONQUESTION \
+    "An older all-users installation is still on this machine:$\n$\n    $1$\n$\nAttic now installs for the current user only, so the two would sit side by side: both listed in Apps & features, both holding their own copy of the files.$\n$\nRun its uninstaller first?$\n$\nChoosing No installs anyway and leaves the old one untouched." \
+    IDNO ancienne_absente
+  ; The string is run EXACTLY as Windows would run it, quotes and `/allusers` included. We do not
+  ; append `_?=`: that switch names the directory to uninstall from, and the old one is not ours
+  ; to guess — the registry's InstallLocation is empty on the 5.0.4 install we measured.
+  ;
+  ; An NSIS uninstaller copies itself to %TEMP% and returns at once, so this wait is shorter than
+  ; the removal. That is harmless here and it is why no synchronisation is claimed: the old
+  ; directory and the new one are different, so nothing races over the same files.
+  ExecWait '$0'
+  ancienne_absente:
+!macroend
+
 !macro customInit
   !insertmacro atticRefuserArbreDeSources "init" "Attic will not install here.$\n$\n$INSTDIR looks like a source checkout: it holds a .git, package.json, src or node_modules.$\n$\nThe uninstaller deletes everything in its install directory, and an update runs it without asking. Installing here would put a working tree one update away from being erased.$\n$\nChoose an empty directory, or the default one."
+
+  !insertmacro atticAncienneParMachine
 
   ; Check free disk space on the drive that will hold $INSTDIR.
   ; GetDiskFreeSpaceEx returns three 64-bit values and a boolean return code.
