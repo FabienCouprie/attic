@@ -15,11 +15,12 @@
 import { describe, expect, it } from "vitest";
 import { createRequire } from "node:module";
 
-const { etatNeutre, etatVerification, etatApresVerification, etatApresAttente } =
+const { etatNeutre, etatVerification, etatApresVerification, etatApresAttente, peutEcraser } =
   createRequire(import.meta.url)("./etat-maj.cjs") as {
     etatNeutre: () => any; etatVerification: () => any;
     etatApresVerification: (r: unknown) => any;
     etatApresAttente: (courant: unknown, r: unknown) => any;
+    peutEcraser: (etat: unknown) => boolean;
   };
 
 /** Ce que rend `checkForUpdates` quand la vérification aboutit : `updateInfo` est TOUJOURS là. */
@@ -70,5 +71,25 @@ describe("ce que les écouteurs ont déjà posé", () => {
   it("et une vérification qui commence efface ce que la précédente avait conclu", () => {
     // Sans cela, le bouton orange d'une vérification précédente resterait pendant la suivante.
     expect(etatVerification()).toEqual({ disponible: false, version: "", notes: "", progression: 0, statut: "verification" });
+  });
+});
+
+describe("une vérification n'efface pas un téléchargement en cours", () => {
+  // Relevé par Fabien : la barre retombait au début à chaque clic sur l'icône. Rien ne
+  // recommençait, `autoDownload` étant à faux ; l'état était seulement écrasé. Un affichage qui
+  // ment sur l'avancement fait croire à une perte qui n'a pas eu lieu.
+  it("REFUSE D'ÉCRASER PENDANT UN TÉLÉCHARGEMENT", () => {
+    expect(peutEcraser({ ...etatNeutre(), statut: "telechargement", progression: 42 })).toBe(false);
+  });
+
+  it("et laisse écraser dans tous les autres états", () => {
+    for (const statut of ["", "verification", "a-jour", "disponible", "pret", "erreur"]) {
+      expect(peutEcraser({ ...etatNeutre(), statut }), statut).toBe(true);
+    }
+  });
+
+  it("ne tombe pas sur un état absent, qu'un démarrage peut présenter", () => {
+    expect(peutEcraser(null)).toBe(true);
+    expect(peutEcraser(undefined)).toBe(true);
   });
 });

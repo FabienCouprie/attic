@@ -4,7 +4,15 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Added
+
 ### Fixed
+
+### Changed
+
+### Fixed
+
+- **Le clic sur l'icône des modèles interrompait sans rien demander, et la barre de mise à jour retombait à zéro pour rien.** Deux défauts relevés dans la même phrase par Fabien, et ils n'avaient pas la même nature. **Le premier était réel** : un clic pendant un téléchargement l'arrêtait — c'était voulu, et écrit dans le bouton — alors qu'on clique dessus pour **voir où ça en est**. Le panneau s'ouvre désormais dans tous les cas, et l'arrêt y est un bouton nommé, en rouge, qui dit ce qu'il garde. **Le second était un mensonge d'affichage** : vérifier les mises à jour remettait la progression à zéro et le statut à « vérification » alors que **rien ne recommençait**, `autoDownload` étant à faux côté processus principal. L'état était écrasé à deux endroits, d'abord par le statut puis par une progression remise à zéro ; une règle commune, `peutEcraser`, refuse l'écrasement pendant un téléchargement, et le rendu ne vide plus son propre compteur non plus. Un affichage qui ment sur l'avancement d'un téléchargement de plusieurs minutes fait croire à une perte qui n'a pas eu lieu. Chacune des deux règles éprouvée en plantant sa faute.
 
 - **Un téléchargement interrompu repartait de zéro, et une seconde d'inattention coûtait tout.** Relevé par Fabien : cliquer sur l'icône pendant un téléchargement le relançait depuis le début. Le clic interrompt, et c'est voulu — c'est écrit dans le bouton — mais ce qui était déjà pris était **perdu en entier** : le `.partiel` était effacé à l'abandon et aucune requête ne portait d'en-tête `Range`. Sur le plus gros modèle, 1,7 Go, un clic malheureux ou une coupure réseau rendait tout à reprendre. Le partiel survit désormais, la requête suivante demande la suite, et c'est l'appelant qui l'efface si l'empreinte ne tombe pas juste — un partiel corrompu ne peut donc pas s'installer dans la durée. **Mesuré avant d'écrire une ligne**, sur un asset de release : GitHub rend **`206` et `accept-ranges: bytes`**, et un fichier pris en deux morceaux par plages est **octet pour octet celui du manifeste**. Puis éprouvé de bout en bout contre le vrai serveur, redirection comprise : coupure à **1 995 221 octets**, reprise, **6 789 120 octets** et l'empreinte du manifeste. **Deux pièges sont sortis de la mesure**, et chacun a son cas : c'est l'hôte final qui honore la plage, jamais `github.com`, de sorte qu'un en-tête perdu dans la redirection rendrait un `200` avec le fichier entier, qu'on ajouterait au partiel — fichier du double, empreinte fausse, découverte après coup seulement ; et une plage demandée qui revient en `200` fait repartir de zéro en tronquant, plutôt que d'ajouter. L'empreinte se lit maintenant **sur le disque** une fois le fichier achevé, ce qui vérifie ce qui est vraiment là et évite de réamorcer un calcul au fil de l'eau.
 

@@ -38,6 +38,19 @@ function etatVerification() {
 }
 
 /**
+ * Une vérification peut-elle écraser l'état en cours ?
+ *
+ * PAS PENDANT UN TÉLÉCHARGEMENT, et c'est le seul cas. Relevé par Fabien : la barre retombait au
+ * début à chaque clic sur l'icône. Rien ne recommençait — `autoDownload` est à faux, une
+ * vérification ne télécharge pas — mais l'état était écrasé, d'abord par le statut puis par une
+ * progression remise à zéro. Un affichage qui ment sur l'avancement d'un téléchargement de
+ * plusieurs minutes fait croire à une perte qui n'a pas eu lieu.
+ */
+function peutEcraser(etat) {
+  return etat?.statut !== "telechargement";
+}
+
+/**
  * Ce qu'il faut conclure quand `checkForUpdates` a abouti sans qu'aucun événement n'ait tranché.
  *
  * `resultat.updateInfo` NE RÉPOND PAS À LA QUESTION : il décrit la dernière version publiée, et il
@@ -67,4 +80,4 @@ function etatApresAttente(courant, resultat) {
     : etatApresVerification(resultat);
 }
 
-module.exports = { etatNeutre, etatVerification, etatApresVerification, etatApresAttente };
+module.exports = { etatNeutre, etatVerification, etatApresVerification, etatApresAttente, peutEcraser };

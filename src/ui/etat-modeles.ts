@@ -116,8 +116,16 @@ export interface ApparenceModeles {
   vars: (string | number)[];
   /** Un clic fait-il quelque chose ? Faux tant qu'on ne sait pas ce qu'il y a. */
   actionnable: boolean;
-  /** Un clic pendant un téléchargement l'interrompt, il ne le relance pas. */
-  interrompt: boolean;
+  /**
+   * Un téléchargement est en cours.
+   *
+   * LE CLIC N'INTERROMPT PLUS, et c'est un renversement. Il le faisait, et le bouton le disait ;
+   * mais on clique dessus pour VOIR où ça en est, et l'interruption partait alors sans rien
+   * demander. Relevé par Fabien. Le clic ouvre donc le panneau dans tous les cas, et l'arrêt y
+   * devient un geste nommé. Ce champ ne décide plus de ce que fait le clic : il dit seulement
+   * qu'il y a quelque chose à arrêter.
+   */
+  enCours: boolean;
 }
 
 /**
@@ -152,20 +160,20 @@ export function apparenceModeles(
       cle: progression.phase === "extraction" ? "modeles.extraction" : "modeles.encours",
       vars: [progression.nom ?? progression.modele ?? "", (progression.fait ?? 0) + 1, progression.nombre ?? 1],
       actionnable: true,
-      interrompt: true,
+      enCours: true,
     };
   }
   if (progression?.phase === "erreur") {
     return {
       variante: "erreur", badge: "!",
       cle: "modeles.erreur", vars: [progression.erreur ?? ""],
-      actionnable: true, interrompt: false,
+      actionnable: true, enCours: false,
     };
   }
   if (!etat) {
     // Tant que l'inventaire n'est pas revenu, ne rien promettre : un bouton qui paraît prêt et ne
     // fait rien au clic est pire qu'un bouton visiblement en attente.
-    return { variante: "inconnu", badge: null, cle: "modeles.verification", vars: [], actionnable: false, interrompt: false };
+    return { variante: "inconnu", badge: null, cle: "modeles.verification", vars: [], actionnable: false, enCours: false };
   }
 
   const nombreAPrendre = etat.manquants.length;
@@ -180,18 +188,18 @@ export function apparenceModeles(
         // — ce que ce cas faisait, pour ne pas promettre un téléchargement impossible — cachait
         // tout l'inventaire dès qu'UN modèle manquait d'adresse, c'est-à-dire exactement quand on
         // veut voir lequel. La ligne du modèle sans source est inerte, et elle dit pourquoi.
-        actionnable: true, interrompt: false,
+        actionnable: true, enCours: false,
       };
     }
     return {
       variante: "complet", badge: null,
       cle: "modeles.complets", vars: [etat.total],
-      actionnable: true, interrompt: false,
+      actionnable: true, enCours: false,
     };
   }
   return {
     variante: "manquants", badge: String(nombreAPrendre),
     cle: "modeles.manquants", vars: [nombreAPrendre, formaterOctets(etat.octetsAPrendre)],
-    actionnable: true, interrompt: false,
+    actionnable: true, enCours: false,
   };
 }
