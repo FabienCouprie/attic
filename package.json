@@ -220,7 +220,7 @@
     "tone": "^14.9.17",
     "typescript": "~6.0.2",
     "vexflow": "^4.2.5",
-    "vite": "^8.1.1",
+    "vite": "^8.3.4",
     "vitest": "^5.0.0",
     "wait-on": "^8.0.3",
     "wavesurfer.js": "^7.12.11"
