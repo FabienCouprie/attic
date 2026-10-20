@@ -35,7 +35,7 @@ const HORS_LEXIQUE_FR: ReadonlySet<string> = new Set([
   // Noms propres et auteurs
   "mandelbrot", "schillinger", "scipio", "xenakis", "risset", "lucier", "wishart", "gendyn",
   "nancarrow", "nørgård", "möbius", "tonnetz", "meyda", "songsee", "pixeltone", "colorsynth",
-  "kokoro", "musicgen", "ollama", "vexflow", "soundtouch", "paulstretch", "csound", "vosk",
+  "kokoro", "ollama", "vexflow", "soundtouch", "paulstretch", "csound", "vosk",
   "quadrafuzz", "bitcrusher", "speecht5", "distilgpt", "qwen2", "wavesets", "pulsars",
   // Sigles
   "zcr", "stn", "pghi", "fdn", "sfz", "lufs", "adsr", "dtw", "lstm", "ddsp", "fof", "mp3",

@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**495 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**492 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -204,7 +204,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Compresseur multibande | `compresseur-multibande` | 240 × 338 |
 | Continuation AR | `continuation-spectrale-ar` | 240 × 118 |
 | Continuation LSTM | `continuation-spectrale-lstm` | 240 × 118 |
-| Continuation Stable Audio 3 | `continuation-stable-audio-3` | 240 × 140 |
 | Continuum hauteur ↔ rythme | `continuum-stockhausen` | 240 × 118 |
 | Contraintes ABC | `contraintes-abc` | 240 × 140 |
 | Contrepoint d'espèces | `contrepoint-especes` | 240 × 118 |
@@ -361,7 +360,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Répéter et tourner | `motif-repeter-tourner` | 240 × 140 |
 | Rétrograde et palindrome | `motif-retrograde` | 240 × 140 |
 | Multi-réservoirs | `multi-reservoirs` | 280 × 540 |
-| MusicGen | `musicgen` | 240 × 118 |
 | MusicXML | `musicxml` | 240 × 162 |
 | Paroles multilingues (IA) | `nllb-paroles` | 240 × 118 |
 | Normaliseur | `normaliseur` | 240 × 118 |
@@ -476,7 +474,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Spirale des quintes | `spirale-quintes` | 240 × 140 |
 | Spirale spatiale | `spirale-spatiale` | 240 × 118 |
 | SSP (Koenig) | `ssp-koenig` | 240 × 140 |
-| Stable Audio 3 | `stable-audio-3` | 240 × 118 |
 | Sinus + transitoires + bruit (STN) | `stn-sinus-transitoires-bruit` | 240 × 162 |
 | Suites d'entiers | `suites-entieres` | 240 × 162 |
 | Suiveur de hauteur | `suiveur-hauteur` | 240 × 162 |

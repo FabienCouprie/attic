@@ -59,6 +59,11 @@ Required attributions:
 
 #### Note — Stable Audio 3 (`stable-audio-3-small-music/`)
 
+> **Depuis 5.0.5, ce paquet n'est plus référencé par le manifeste** : les deux nœuds qui
+> l'employaient, la génération musicale et sa continuation, ont été retirés. L'asset reste publié
+> sur la release `assets` et n'est plus téléchargé par l'application. Le paquet de bruitage,
+> `stable-audio-3-small-sfx/`, relève de la même licence et reste employé.
+
 This Stability AI Model is licensed under the Stability AI Community License, Copyright © Stability
 AI Ltd. All Rights Reserved.
 

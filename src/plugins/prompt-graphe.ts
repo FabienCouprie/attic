@@ -74,7 +74,6 @@ const ALIAS_MANUELS: { ficheId: string; mots: string[]; category: Category }[] =
   { ficheId: "jointure-midi", mots: ["jointure midi", "midi join", "concaténer midi", "concatenate midi", "joindre midi", "join midi"], category: "effet" },
   { ficheId: "boucle-midi", mots: ["boucle midi", "midi loop", "répéter midi", "repeat midi", "loop midi"], category: "effet" },
   { ficheId: "point-ecoute-midi", mots: ["point écoute midi", "midi listening", "écoute midi"], category: "sortie" },
-  { ficheId: "musicgen", mots: ["musicgen", "ia music", "ai music", "text to music"], category: "source" },
   { ficheId: "source-texte", mots: ["entrée texte", "text input", "source texte", "text source"], category: "source" },
   { ficheId: "generateur-paroles", mots: ["générateur de paroles", "lyrics generator", "paroles", "lyrics"], category: "source" },
   { ficheId: "delay-stereo", mots: ["delay", "echo", "écho", "répétition"], category: "effet" },

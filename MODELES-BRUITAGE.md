@@ -214,11 +214,17 @@ ramènerait à un export.
 
 À vérifier avant de chercher ailleurs, faute de quoi on recense un modèle qu'on possède.
 
+> **Note de 5.0.5.** Ce qui suit a été écrit quand `musicgen` et la génération musicale de Stable
+> Audio figuraient au catalogue. Les deux en ont été retirés depuis, ainsi que la continuation :
+> `musicgen` pour son mono, ses trente secondes, son calcul sur le processeur et ses poids tirés de
+> HuggingFace sans passer par le manifeste ; Stable Audio musical parce que la génération de
+> chanson par ACE-Step fait mieux et plus vite. **Seul le bruitage reste**, sur le paquet
+> `-small-sfx`, et il a gagné un réglage de périphérique. Les raisonnements ci-dessous qui
+> s'appuient sur la présence de l'un ou l'autre gardent leur logique et ont perdu leur prémisse.
+
 | nœud | modèle | comment il tourne |
 | --- | --- | --- |
-| `musicgen` | `Xenova/musicgen-small`, CC-BY-NC | ONNX par Transformers.js, dans un Web Worker, téléchargé au premier usage |
-| `stable-audio-3` | `stable-audio-3-small-music`, Stability Community | ONNX int4 par `onnxruntime-node`, dans le processus principal |
-| `bruitage-ia` | le même paquet que ci-dessus | idem, avec d'autres défauts et une sortie mise à niveau |
+| `bruitage-ia` | `stable-audio-3-small-sfx`, Stability Community | ONNX fp16 par `onnxruntime-node`, dans le processus principal, sur la carte ou le processeur |
 | `tts-kokoro`, `tts-piper`, `tts-mms`, `tts-speecht5`, `tts-francais` | synthèse vocale | ONNX, workers dédiés |
 
 **AudioGen n'est pas de ceux-là**, contrairement à ce qu'on pourrait croire : c'est `musicgen` qui

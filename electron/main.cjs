@@ -7,7 +7,7 @@ const { execSync, execFile } = require("child_process");
 const { Readable } = require("stream");
 const { URL: UrlModele } = require("url");
 const { separerDemucs } = require("./demucs.cjs");
-const { generate: genererStableAudio3, continueAudio: continuerStableAudio3 } = require("./stable-audio-3.cjs");
+const { generate: genererStableAudio3 } = require("./stable-audio-3.cjs");
 const { generate: genererSdxsImage } = require("./sdxs-image.cjs");
 const { noterTranche: noterTrancheEsthetique, FICHIER_MODELE: MODELE_ESTHETIQUE } = require("./esthetique.cjs");
 const { genererSongsee } = require("./songsee.cjs");
@@ -582,7 +582,7 @@ ipcMain.handle("demucs:separer", async (_event, options) => {
 // --- IPC : Stable Audio 3 text-to-audio (process principal, onnxruntime-node) ---
 ipcMain.handle("stable-audio-3:generer", async (evenement, options) => {
   try {
-    const { prompt, seconds, steps, seed, modelPath: cheminExplicite, paquet } = options;
+    const { prompt, seconds, steps, seed, modelPath: cheminExplicite, paquet, calcul } = options;
     // DEUX PAQUETS SOUS LE MÊME MOTEUR. « music » est celui du nœud musical, « sfx » celui du
     // bruitage. Le renderer nomme celui qu'il veut, il n'écrit pas de chemin : les racines
     // possibles ne sont connues que d'ici, et elles changent entre le développement et l'installé.
@@ -619,7 +619,7 @@ ipcMain.handle("stable-audio-3:generer", async (evenement, options) => {
       // le défaut qu'on répare ici. Mieux vaut dire ce qui manque que sonner faux sans prévenir.
       return { ok: false, erreur: `Paquet « ${cible} » introuvable, même après téléchargement.` };
     }
-    const result = await genererStableAudio3({ prompt, seconds, steps, seed, modelDir });
+    const result = await genererStableAudio3({ prompt, seconds, steps, seed, modelDir, calcul });
     // LE PAQUET EMPLOYÉ REMONTE AVEC LE SON, et le nœud l'affiche. Fabien a écouté un rendu du
     // modèle musical alors que le réglage annonçait celui de bruitage : le processus principal
     // n'avait pas été relancé, donc il ignorait encore le nom du paquet demandé. L'interface
@@ -628,38 +628,6 @@ ipcMain.handle("stable-audio-3:generer", async (evenement, options) => {
     return { ok: true, ...result, paquet: cible };
   } catch (err) {
     console.error("[attic] stable-audio-3:generer erreur:", err);
-    return { ok: false, erreur: String(err && err.message ? err.message : err) };
-  }
-});
-
-// --- IPC : Stable Audio 3 continuation audio (inpainting causale) ---
-ipcMain.handle("stable-audio-3:continuer", async (_event, options) => {
-  try {
-    const { audio, prompt, generatedSeconds, steps, seed, modelPath: cheminExplicite } = options;
-    let modelDir = cheminExplicite;
-    if (!modelDir) {
-      // MÊME CORRECTION QUE POUR LA GÉNÉRATION, qui l'avait reçue sans que la continuation la
-      // reçoive : la liste de candidats ignorait le dossier inscriptible, de sorte qu'un paquet
-      // pris par la barre d'outils marchait pour l'une et pas pour l'autre.
-      modelDir = resoudreRessource(path.join("oonx", "stable-audio-3-small-music"), contexteRessources());
-    } else {
-      modelDir = resoudreRessource(modelDir, contexteRessources());
-    }
-    if (!modelDir || !fs.existsSync(modelDir)) {
-      return { ok: false, erreur: `Bundle Stable Audio 3 introuvable : ${modelDir}` };
-    }
-    const channels = (audio?.channels || []).map((c) => (c instanceof Float32Array ? c : Float32Array.from(c)));
-    const result = await continuerStableAudio3({
-      audio: { channels, sampleRate: audio.sampleRate || 44100 },
-      prompt,
-      generatedSeconds,
-      steps,
-      seed,
-      modelDir,
-    });
-    return { ok: true, ...result };
-  } catch (err) {
-    console.error("[attic] stable-audio-3:continuer erreur:", err);
     return { ok: false, erreur: String(err && err.message ? err.message : err) };
   }
 });

@@ -1,7 +1,7 @@
 # Attic
 
 > **A visual node-editor for AI-powered music & sound design.**  
-> 495 nodes · local ML models · bilingual FR/EN · one-click workflows.
+> 492 nodes · local ML models · bilingual FR/EN · one-click workflows.
 
 [![GitHub release](https://img.shields.io/github/v/release/FabienCouprie/attic)](https://github.com/FabienCouprie/attic/releases)
 [![License](https://img.shields.io/github/license/FabienCouprie/attic)](LICENSE)
@@ -13,9 +13,8 @@ Build audio processing graphs by connecting plugin nodes on a canvas, then execu
 
 ## Features
 
-- **495 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
+- **492 plugin nodes** — effects, generators, AI models, collections, separation, visualization, color↔sound, math-formula synthesis (see [`COMPONENTS.md`](COMPONENTS.md), regenerate with `npm run docs:components`)
 - **AI integration** (Transformers.js / ONNX Runtime Web):
-  - MusicGen — text-to-music generation
   - Whisper (English) — speech-to-text; Sherpa-ONNX ASR — lighter multilingual speech-to-text (99 languages, Whisper tiny). The heavier multilingual Whisper (~1.5 GB) and Whisper-translate nodes were removed in v2.0.0 in favor of Sherpa-ONNX.
   - SpeechT5 / MMS-TTS — text-to-speech (7 voices, 10 languages)
   - DistilGPT-2 / Qwen2.5-0.5B — two separate local lyrics-generation nodes (Qwen2.5 is newer and multilingual)
@@ -151,9 +150,9 @@ SDXS-512 (`texte-image` node) is fetched on demand like every other model (648.9
 src/
   core/          # Framework (registry, DAG, types, metacomponents)
   audio/         # Audio domain (DSP, effects, generators, MIDI, FFT)
-  plugins/       # Plugin node definitions (495 nodes)
+  plugins/       # Plugin node definitions (492 nodes)
   ui/            # React UI (canvas, inspector, views, hooks)
-  workers/       # Web Workers (AI inference: ASR, TTS, MusicGen, OPUS-MT)
+  workers/       # Web Workers (AI inference: ASR, TTS, OPUS-MT)
   i18n.tsx       # Bilingual FR/EN
 electron/
   main.cjs       # Main process (IPC, Python detection, CSP, auto-updater)
@@ -214,7 +213,7 @@ The demo **`music collection`** — opened by default by the Music player, Sound
 
 MIT — see [LICENSE](LICENSE)
 
-Powered by Stability AI — the "Text to music" node runs Stable Audio 3 small-music, licensed under
+Powered by Stability AI — the "AI Sound Effect" node runs Stable Audio 3 small-sfx, licensed under
 the [Stability AI Community License](https://stability.ai/community-license-agreement). Model
 licences and required attributions are listed in [THIRD_PARTY.md](THIRD_PARTY.md); note that the
 Demucs weights are provided for scientific, non-commercial use only

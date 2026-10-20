@@ -109,8 +109,7 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
  *
  * Ce qui n'est pas ici reste dans « Génération » : les sources élémentaires (oscillateur, bruit,
  * fréquence, courbe), les modèles de synthèse qui ne sont pas des instruments (pulsars,
- * caractéristiques, SSP), les générateurs par apprentissage (MusicGen, Stable Audio) et la théorie
- * harmonique.
+ * caractéristiques, SSP) et la théorie harmonique.
  */
 export const FAMILLES_GENERATION: Record<string, string[]> = {
   // Les instruments joués par le graphe, un timbre chacun.
@@ -136,8 +135,8 @@ export const FAMILLES_GENERATION: Record<string, string[]> = {
   // Tout ce qui produit une figure rythmique, quelle qu'en soit la mécanique.
   "Rythmes": ["boite-rythmes", "rythme-euclidien", "rythme-cantor", "metronome",
     "sequenceur-batterie-avance", "canon-pavage", "resultante-schillinger"],
-  // Ce qui écrit de la musique par un modèle appris.
-  "Générateurs AI": ["musicgen", "stable-audio-3", "planifier-chanson", "rendre-chanson",
+  // Ce qui engendre du son par un modèle appris, musique ou bruitage.
+  "Générateurs AI": ["bruitage-ia", "planifier-chanson", "rendre-chanson",
     "ecrire-chanson", "reprendre-chanson", "retoucher-chanson", "prolonger-chanson",
     "accompagner-voix"],
   // Ce qui ne sonne pas mais pilote : la sortie est une courbe, non un son. Un seul nœud à ce jour,

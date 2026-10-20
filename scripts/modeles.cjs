@@ -109,14 +109,6 @@ const CONNUS = {
     noeuds: ["separateur-ia"],
     licence: { nom: "MIT", credit: "Ultimate Vocal Remover — MDX-Net (Kuielab, Woosung Choi)", rediffusable: true },
   },
-  "stable-audio-3-small-music": {
-    id: "stable-audio-3", nom: "Stable Audio 3 (musique)", nomEn: "Stable Audio 3 (music)",
-    // Deux nœuds partagent ce paquet : la génération et la continuation, qui résout le même
-    // `stable-audio-3-small-music`. La continuation y manquait.
-    noeuds: ["stable-audio-3", "continuation-stable-audio-3"], archive: true,
-    licence: { nom: "Stability AI Community License", credit: "Stability AI Ltd — Stable Audio 3 small-music ; export ONNX par lsb et bgkb", rediffusable: true,
-      note: "La licence impose trois choses à qui rediffuse : joindre une copie de l'accord, garder la mention « This Stability AI Model is licensed under the Stability AI Community License, Copyright (c) Stability AI Ltd. All Rights Reserved » dans un fichier de notices, et afficher « Powered by Stability AI ». Elle réserve l'usage commercial aux organisations sous le million de dollars de revenu annuel — Attic est libre et non commercial." },
-  },
   // LE PAQUET DE BRUITAGE MANQUAIT ICI, relevé par Fabien. Il était au manifeste, publié, avec son
   // empreinte et son adresse — 1,49 Go, sept fichiers, attribué à « bruitage-ia » — mais absent de
   // cette table. Or `engendrer()` ne parcourt QUE cette table : une régénération du manifeste

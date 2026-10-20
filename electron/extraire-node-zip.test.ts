@@ -115,7 +115,7 @@ describe("validation de l'identifiant de nœud", () => {
   // `manifest.id` vient du .zip et sert à construire un chemin. Il alimente
   // TROIS gestionnaires, dont `node:supprimer` qui fait rmSync en récursif.
   it("accepte les identifiants du catalogue et des nœuds installés", () => {
-    for (const id of ["generateur-bruit", "stable-audio-3", "couleur-suno-ia",
+    for (const id of ["generateur-bruit", "bruitage-ia", "couleur-suno-ia",
                       "test-export", "piece-lucier", "a", "A1", "mon.noeud_v2"]) {
       expect(identifiantNodeValide(id), id).toBe(true);
     }
