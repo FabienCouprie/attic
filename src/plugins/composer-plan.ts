@@ -58,9 +58,17 @@ export function tonaliteNormalisee(brute: string): string {
 /**
  * Le plan, tel que `rendre-chanson` le lira.
  *
- * LES CHAMPS VIDES NE S'ÉCRIVENT PAS. Un `lyrics` vide ferait chanter du silence annoncé, et une
- * graine négative est la convention du dépôt pour « au hasard » : l'écrire ferait une graine posée.
- * Le plan n'a donc que ce qu'on lui a donné, comme celui du planificateur.
+ * LES CHAMPS VIDES NE S'ÉCRIVENT PAS. Un `lyrics` vide ferait chanter du silence annoncé, et un
+ * tempo nul ferait un plan qui impose zéro battement par minute. Le plan n'a donc que ce qu'on lui
+ * a donné.
+ *
+ * LA BRANCHE DE LA GRAINE NÉGATIVE NE SERT PAS DANS L'APPLICATION, et c'est une chose à savoir
+ * avant de la croire morte ou de l'enlever. Le moteur résout les graines AU CENTRE, avant d'appeler
+ * l'exécuteur : `resoudreGraine` remplace toute valeur inférieure ou égale à zéro par une graine
+ * tirée, qu'il reporte ensuite sur le nœud. Un `-1` n'arrive donc jamais ici par cette voie, et le
+ * plan porte toujours sa graine, ce que la documentation du réglage dit. La branche reste pour un
+ * appel direct, et parce qu'un plan portant `seed: -1` serait accepté par le moteur sans être
+ * reproductible.
  */
 export function planDepuis(champs: {
   description: string; paroles: string; tempo: number; tonalite: string;
@@ -87,44 +95,42 @@ export const fiches = ([
     univers: "Entrées", famille: "Génération",
     resume: "Assemble un plan de chanson à partir de pièces mesurées sur un audio ou écrites à la main.",
     resumeEn: "Assembles a song plan from pieces measured on an audio or written by hand.",
-    notice: "Ce composant écrit un plan de chanson, le même document que « Planifier une chanson » rend, mais "
-      + "à partir de pièces qu'on lui donne. Chaque pièce arrive par une entrée ou, à défaut, par le réglage "
-      + "du même nom.\n\n"
-      + "C'est ainsi qu'un audio devient un plan. Brancher « Décrire un audio » sur « Description », "
-      + "« Détecteur de tempo » sur « Tempo », « Analyse harmonique » sur « Tonalité », et une "
-      + "reconnaissance de parole sur « Paroles » : le plan qui sort se branche sur « Rendre une chanson ».\n\n"
-      + "Ce que le plan ne porte pas, et ce que cela change. Le planificateur écrit aussi des codes audio, "
-      + "cinq par seconde, qui portent la musique elle-même ; rien ne sait les tirer d'un son, et ce "
-      + "composant n'en écrit donc aucun. Mesuré en rendant deux fois le même plan, avec ses codes et sans : "
-      + "les deux rendus ne corrèlent qu'à 0,066, c'est-à-dire qu'ils n'ont rien de commun. Un plan sans "
-      + "codes fait donc une pièce neuve, dans la forme du morceau reçu, et non une reconstitution. Pour "
-      + "refaire une version d'un morceau existant, c'est « Reprendre une chanson » qu'il faut.\n\n"
-      + "En contrepartie, « Durée » décide vraiment : sans codes, la longueur demandée est tenue à "
-      + "l'échantillon. Avec eux, c'est leur nombre qui l'impose.\n\n"
-      + "« Tonalité » accepte la forme que rend « Analyse harmonique », confiance comprise : « G major (87%) » "
-      + "est lu comme « G major ». « Tempo » à zéro laisse le champ absent du plan. « Graine » à moins un "
-      + "laisse le rendu libre ; posée, elle rend le rendu reproductible. « Signature » est le nombre de temps "
-      + "par mesure.\n\n"
-      + "La sortie « Plan » rend le document en texte, lisible et corrigeable avant d'être rendu.",
-    noticeEn: "This component writes a song plan, the same document « Plan a Song » returns, but from pieces "
-      + "it is given. Each piece arrives through an input or, failing that, through the setting of the same "
-      + "name.\n\n"
-      + "This is how an audio becomes a plan. Connect « Describe an Audio » to « Description », « Tempo "
-      + "Detector » to « Tempo », « Harmonic Analysis » to « Key », and a speech recognition to « Lyrics »: "
-      + "the plan that comes out connects to « Render a Song ».\n\n"
-      + "What the plan does not carry, and what that changes. The planner also writes audio codes, five per "
-      + "second, which carry the music itself; nothing can extract them from a sound, so this component "
-      + "writes none. Measured by rendering the same plan twice, with its codes and without: the two results "
-      + "correlate at only 0.066, that is, they have nothing in common. A plan without codes therefore makes "
-      + "a new piece, in the shape of the received track, not a reconstruction. To make a version of an "
-      + "existing track, use « Cover a Song ».\n\n"
-      + "In exchange, « Length » really decides: without codes, the requested length is held to the sample. "
-      + "With them, their count imposes it.\n\n"
-      + "« Key » accepts the form « Harmonic Analysis » returns, confidence included: « G major (87%) » is "
-      + "read as « G major ». « Tempo » at zero leaves the field out of the plan. « Seed » at minus one "
-      + "leaves the render free; set, it makes the render reproducible. « Time signature » is the number of "
-      + "beats per bar.\n\n"
-      + "The « Plan » output returns the document as text, readable and correctable before being rendered.",
+    notice: "Ce composant écrit en texte le plan d'une chanson : sa description, ses paroles, son tempo, sa "
+      + "tonalité, sa durée, sa langue de chant et sa signature. Chaque valeur arrive par l'entrée du même "
+      + "nom ; à défaut, le réglage du même nom sert.\n\n"
+      + "Le plan écrit ne porte aucun code audio. La durée demandée est donc tenue à l'échantillon, et le "
+      + "contenu musical suit la description au lieu d'être déjà fixé.\n\n"
+      + "« Description » dit ce qu'on veut entendre : un genre, une instrumentation, un caractère. Vide, le "
+      + "plan porte « instrumental ».\n\n"
+      + "« Paroles » fixe le texte chanté, avec ses marques de partie entre crochets. Vide, le champ est "
+      + "absent du plan et le rendu est instrumental.\n\n"
+      + "« Tempo » fixe le nombre de battements par minute. À zéro, le champ est absent du plan.\n\n"
+      + "« Tonalité » s'écrit sous la forme « G major » ou « A minor ». Une mention entre parenthèses à la "
+      + "fin, telle qu'un pourcentage de confiance, est retirée. Vide, le champ est absent du plan.\n\n"
+      + "« Durée » fixe la longueur visée en secondes. « Langue du chant » dit en quelle langue chanter. "
+      + "« Signature » donne le nombre de temps par mesure.\n\n"
+      + "« Graine » rend le rendu reproductible. À moins un, le moteur en tire une à chaque exécution et "
+      + "l'inscrit dans le plan ; celle qui a servi est donnée dans le message.\n\n"
+      + "La sortie « Plan » rend le document en texte, qui se lit et se corrige avant d'être rendu. Le "
+      + "message donne le tempo et la tonalité inscrits, ainsi que la durée visée.",
+    noticeEn: "This component writes a song's plan as text: its description, its lyrics, its tempo, its key, "
+      + "its length, its singing language and its time signature. Each value arrives through the input of "
+      + "the same name; failing that, the setting of the same name serves.\n\n"
+      + "The written plan carries no audio code. The requested length is therefore held to the sample, and "
+      + "the musical content follows the description instead of being already settled.\n\n"
+      + "« Description » says what is wanted: a genre, an instrumentation, a character. Empty, the plan "
+      + "carries « instrumental ».\n\n"
+      + "« Lyrics » sets the sung text, with its section markers in brackets. Empty, the field is absent "
+      + "from the plan and the render is instrumental.\n\n"
+      + "« Tempo » sets the number of beats per minute. At zero, the field is absent from the plan.\n\n"
+      + "« Key » is written as « G major » or « A minor ». A mention in parentheses at the end, such as a "
+      + "confidence percentage, is removed. Empty, the field is absent from the plan.\n\n"
+      + "« Length » sets the target length in seconds. « Singing language » says which language to sing in. "
+      + "« Time signature » gives the number of beats per bar.\n\n"
+      + "« Seed » makes the render reproducible. At minus one, the engine draws one at each run and writes "
+      + "it into the plan; the one that served is given in the message.\n\n"
+      + "The « Plan » output returns the document as text, which is read and corrected before being "
+      + "rendered. The message gives the tempo and key written in, as well as the target length.",
     entrees: [
       { nom: "Description", nomEn: "Description", type: "texte", requis: false },
       { nom: "Paroles", nomEn: "Lyrics", type: "texte", requis: false },
@@ -148,8 +154,8 @@ export const fiches = ([
         doc: "Le tempo écrit dans le plan. À zéro, le champ est absent et le moteur décide. L'entrée « Tempo » le remplace quand elle est branchée.",
         docEn: "The tempo written into the plan. At zero, the field is absent and the engine decides. The « Tempo » input replaces it when connected." },
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C major", defautEn: "C major",
-        doc: "La tonalité, sous la forme « G major » ou « A minor ». La forme que rend « Analyse harmonique », confiance comprise, est acceptée. Vide, le champ est absent du plan.",
-        docEn: "The key, as « G major » or « A minor ». The form « Harmonic Analysis » returns, confidence included, is accepted. Empty, the field is absent from the plan." },
+        doc: "La tonalité, sous la forme « G major » ou « A minor ». Une mention entre parenthèses à la fin, telle qu'un pourcentage de confiance, est retirée avant l'écriture. Vide, le champ est absent du plan. L'entrée « Tonalité » la remplace quand elle est branchée.",
+        docEn: "The key, as « G major » or « A minor ». A mention in parentheses at the end, such as a confidence percentage, is removed before writing. Empty, the field is absent from the plan. The « Key » input replaces it when connected." },
       { nom: "Durée", nomEn: "Length", type: "nombre", plage: [5, 600], pas: 5, defaut: 60, unite: "s",
         doc: "Longueur visée. Ce plan ne portant pas de codes audio, elle est tenue à l'échantillon.",
         docEn: "Target length. As this plan carries no audio codes, it is held to the sample." },
@@ -164,8 +170,8 @@ export const fiches = ([
         doc: "Le nombre de temps par mesure, écrit dans le plan.",
         docEn: "The number of beats per bar, written into the plan." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [-1, 999999], pas: 1, defaut: -1,
-        doc: "Rend le rendu reproductible. À moins un, chaque exécution diffère et le champ est absent du plan.",
-        docEn: "Makes the render reproducible. At minus one, every run differs and the field is absent from the plan." },
+        doc: "Rend le rendu reproductible. À moins un, le moteur en tire une à chaque exécution et l'inscrit dans le plan : les rendus diffèrent, et celle qui a servi est lisible dans le message, de sorte qu'un résultat réussi peut être refait.",
+        docEn: "Makes the render reproducible. At minus one, the engine draws one at each run and writes it into the plan: the renders differ, and the one that served is readable in the message, so a successful result can be made again." },
     ],
     async executer(ctx: any) {
       const entreeDescription = ctx.entree(0);
@@ -188,9 +194,21 @@ export const fiches = ([
         graine: ctx.paramNombre("Graine", -1),
       });
 
+      // LE MESSAGE DIT CE QUE LE PLAN PORTE, et non seulement qu'il a été écrit. Relevé par Fabien,
+      // qui demandait comment s'assurer que le réglage « Tempo » agit : la sortie est un document
+      // que le nœud n'affiche pas, de sorte que rien ne distinguait un tempo venu du port d'un
+      // tempo venu du réglage, ni un champ écrit d'un champ omis. Les deux valeurs qui peuvent
+      // arriver par un port sont donc relues DANS LE PLAN, après assemblage, et non recopiées des
+      // réglages — sans quoi le message dirait ce qu'on a demandé plutôt que ce qui est écrit.
+      const ecrit = JSON.parse(plan);
+      const resume = [
+        ecrit.bpm ? `${ecrit.bpm} BPM` : traduire("msg.composerPlan.sansTempo"),
+        ecrit.keyscale || traduire("msg.composerPlan.sansTonalite"),
+      ].join(" · ");
+
       return {
         valeurs: [plan],
-        message: traduire("msg.composerPlan.rendu", String(ctx.paramNombre("Durée", 60))),
+        message: traduire("msg.composerPlan.rendu", resume, String(ecrit.duration)),
       };
     },
   },

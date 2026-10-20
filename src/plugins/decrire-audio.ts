@@ -79,33 +79,26 @@ export const fiches = ([
     univers: "Visualisation", famille: "Analyse",
     resume: "Dit en mots ce qu'on entend : instruments, sources, lieu, présence d'une voix.",
     resumeEn: "Says in words what is heard: instruments, sources, place, presence of a voice.",
-    notice: "Ce composant écoute un audio et le décrit en mots, parmi cinq cent vingt-sept classes de sons : "
+    notice: "Ce composant nomme les sons présents dans un audio, parmi cinq cent vingt-sept classes : "
       + "instruments, voix, sources naturelles, machines, lieux.\n\n"
-      + "La sortie « Description » rend une liste de mots séparés par des virgules, prête à être branchée "
-      + "sur la « Description » d'un plan de chanson. La sortie « Étiquettes » rend le relevé complet, avec "
-      + "le score de chacune, qui se lit pour juger de ce que le composant a cru entendre. La sortie "
-      + "« Audio » rend le son reçu tel quel, pour continuer la chaîne.\n\n"
-      + "« Nombre d'étiquettes » dit combien en demander ; « Seuil » écarte celles dont le score est trop "
-      + "faible, et à zéro il n'écarte rien. « Calcul » nomme le périphérique employé.\n\n"
-      + "Ce qu'il sait, et ce qu'il ne sait pas. Les instruments, les sources, le lieu et la présence d'une "
-      + "voix sont justes à la mesure. Le genre musical ne l'est pas : un morceau de blues est ressorti "
-      + "« ambient music » puis « new-age music ». Pour le genre, employer le « Classificateur de genre ».\n\n"
-      + "Quand la première étiquette est « Music », elle est retirée de la description : elle domine tout "
-      + "sur un morceau et n'apprend rien à un modèle qui engendre de la musique. Elle reste visible dans "
-      + "les étiquettes.",
-    noticeEn: "This component listens to an audio and describes it in words, among five hundred and twenty-seven "
-      + "sound classes: instruments, voices, natural sources, machines, places.\n\n"
-      + "The « Description » output returns a comma-separated list of words, ready to be connected to a song "
-      + "plan's « Description ». The « Labels » output returns the full reading, with each score, which is "
-      + "read to judge what the component believed it heard. The « Audio » output returns the received sound "
-      + "as it is, to continue the chain.\n\n"
-      + "« Label count » says how many to ask for; « Threshold » discards those whose score is too low, and "
-      + "at zero it discards nothing. « Compute » names the device used.\n\n"
-      + "What it knows, and what it does not. Instruments, sources, place and the presence of a voice are "
-      + "correct when measured. Musical genre is not: a blues track came out as « ambient music » then "
-      + "« new-age music ». For genre, use the « Genre Classifier ».\n\n"
-      + "When the first label is « Music », it is removed from the description: it dominates everything on a "
-      + "music track and teaches nothing to a model that generates music. It stays visible in the labels.",
+      + "« Nombre d'étiquettes » dit combien de classes demander. « Seuil » écarte les étiquettes dont le "
+      + "score est inférieur ; à zéro, aucune n'est écartée. « Calcul » nomme le périphérique employé.\n\n"
+      + "La sortie « Audio » rend le son reçu. La sortie « Description » rend les étiquettes retenues en "
+      + "minuscules, séparées par des virgules ; l'étiquette « Music » en est retirée lorsqu'elle vient en "
+      + "tête, celle-ci dominant alors toutes les autres sur un morceau. La sortie « Étiquettes » rend le "
+      + "relevé complet, une par ligne, avec son score en pour cent.\n\n"
+      + "Les étiquettes portent sur les instruments, les sources sonores, le lieu et la présence d'une voix. "
+      + "Le genre musical n'en fait pas partie.",
+    noticeEn: "This component names the sounds present in an audio, among five hundred and twenty-seven "
+      + "classes: instruments, voices, natural sources, machines, places.\n\n"
+      + "« Label count » says how many classes to ask for. « Threshold » discards the labels whose score is "
+      + "lower; at zero, none is discarded. « Compute » names the device used.\n\n"
+      + "The « Audio » output returns the received sound. The « Description » output returns the kept labels "
+      + "in lower case, separated by commas; the « Music » label is removed from it when it comes first, as "
+      + "it then dominates all the others on a music track. The « Labels » output returns the full reading, "
+      + "one per line, with its score as a percentage.\n\n"
+      + "The labels cover instruments, sound sources, place and the presence of a voice. Musical genre is "
+      + "not among them.",
     entrees: [{ nom: "Audio", type: "audio", requis: true }],
     sorties: [
       { nom: "Audio", type: "audio" },
@@ -114,11 +107,11 @@ export const fiches = ([
     ],
     parametres: [
       { nom: "Nombre d'étiquettes", nomEn: "Label count", type: "nombre", plage: [1, 20], pas: 1, defaut: 10,
-        doc: "Combien d'étiquettes demander au modèle. Vérifié jusqu'à vingt.",
-        docEn: "How many labels to ask the model for. Verified up to twenty." },
+        doc: "Combien d'étiquettes demander au modèle, de la mieux notée à la moins bien notée.",
+        docEn: "How many labels to ask the model for, from the best scored to the least well scored." },
       { nom: "Seuil", nomEn: "Threshold", type: "nombre", plage: [0, 50], pas: 1, defaut: 0, unite: "%",
-        doc: "Score minimal pour qu'une étiquette soit gardée. À zéro, toutes sont gardées. Relevé à la mesure : les étiquettes justes au-delà de la troisième tombent souvent sous un pour cent, de sorte qu'un seuil élevé écarte des mots exacts.",
-        docEn: "Minimum score for a label to be kept. At zero, all are kept. Measured: correct labels beyond the third often fall under one per cent, so a high threshold discards exact words." },
+        doc: "Score minimal pour qu'une étiquette soit gardée. À zéro, toutes sont gardées. Les scores décroissent vite : au-delà de la troisième étiquette ils passent souvent sous un pour cent, de sorte qu'un seuil élevé écarte aussi des étiquettes justes.",
+        docEn: "Minimum score for a label to be kept. At zero, all are kept. Scores fall quickly: beyond the third label they often go under one per cent, so a high threshold also discards correct labels." },
       PARAMETRE_CALCUL,
     ],
     async executer(ctx: any) {
