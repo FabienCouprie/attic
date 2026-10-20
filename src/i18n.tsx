@@ -508,6 +508,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "maj.disponibleClic": { fr: "Mise à jour {__VAR_0__} disponible — cliquez pour la prendre", en: "Update {__VAR_0__} available — click to take it" },
   "maj.telechargementEnCours": { fr: "Téléchargement de la mise à jour — {__VAR_0__} %", en: "Downloading the update — {__VAR_0__}%" },
   "maj.pretClic": { fr: "Mise à jour {__VAR_0__} prête — cliquez pour relancer et l'installer", en: "Update {__VAR_0__} ready — click to restart and install it" },
+  "maj.indisponible": { fr: "Les mises à jour ne sont pas disponibles ici : elles ne fonctionnent que dans une version installée.", en: "Updates are not available here: they only work in an installed build." },
   "modeles.verification": { fr: "Inventaire des modèles en cours…", en: "Taking stock of the models…" },
   "modeles.complets": { fr: "Les {__VAR_0__} modèles IA sont présents. Cliquez pour les voir, et reprendre un fichier abîmé.", en: "All {__VAR_0__} AI models are present. Click to see them, and to take a damaged file again." },
   "modeles.manquants": { fr: "{__VAR_0__} modèle(s) IA à télécharger — {__VAR_1__}. Cliquez pour les prendre, l'un après l'autre.", en: "{__VAR_0__} AI model(s) to download — {__VAR_1__}. Click to fetch them, one after another." },
