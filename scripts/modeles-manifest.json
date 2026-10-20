@@ -1310,6 +1310,28 @@
       ]
     },
     {
+      "id": "ced",
+      "nom": "Étiquetage des sons (CED)",
+      "nomEn": "Sound tagging (CED)",
+      "noeuds": [
+        "decrire-audio"
+      ],
+      "octets": 342964768,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/ced-base-f32.gguf",
+        "octets": 342964768,
+        "sha256": "2d7911647683bde8f58aa21818b8eec68bb651998a1f25debea23c20013eb10a"
+      },
+      "fichiers": [
+        {
+          "chemin": "audiocpp/ced-base-f32.gguf",
+          "octets": 342964768,
+          "sha256": "2d7911647683bde8f58aa21818b8eec68bb651998a1f25debea23c20013eb10a"
+        }
+      ]
+    },
+    {
       "id": "magenta-drums-vae",
       "nom": "Batterie neuronale (MusicVAE)",
       "nomEn": "Neural drums (MusicVAE)",

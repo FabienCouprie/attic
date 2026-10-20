@@ -1420,6 +1420,19 @@ ipcMain.handle("chatterbox:cloner", async (event, options) => {
   }
 });
 
+const { etiqueter: cedEtiqueter } = require("./ced.cjs");
+
+ipcMain.handle("ced:etiqueter", async (event, options) => {
+  try {
+    return await cedEtiqueter(options, (ligne) => {
+      if (!event.sender.isDestroyed()) event.sender.send("ced:progression", { ligne });
+    }, contexteRessources());
+  } catch (err) {
+    console.error("[attic] ced:etiqueter a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
 // ─── Auto-updater : configuration + IPC ───
 let infoMaj = etatNeutre();
 

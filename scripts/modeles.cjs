@@ -279,6 +279,32 @@ const CONNUS = {
       note: "La licence vient de la fiche amont `ResembleAI/chatterbox`, qui déclare MIT. Le dépôt de conversion déclare « other » sans préciser : c'est l'amont qui fait foi, comme pour l'export de Whisper tiny, et une conversion de format est une œuvre dérivée des poids. Seul modèle de voix du catalogue qui ne porte aucune réserve non commerciale." },
   },
 
+  // L'ÉTIQUETEUR DE SONS, troisième modèle sous cette racine et lu par le même exécutable.
+  //
+  // CHOISI CONTRE AUDIO FLAMINGO, ET LA MESURE EST SANS APPEL. Pour décrire un audio en mots,
+  // audio.cpp ne sert que deux familles d'étiquetage, `ced` et `ast_audioset`, et deux familles de
+  // compréhension, `audioflamingo3` et `audio-flamingo-next`. Les Flamingo font huit milliards de
+  // paramètres : le plus petit paquet utile pèse 5 459 592 448 octets, soit 2,54 fois le plafond
+  // d'un asset de release, et 5 206,6 Mio de poids sur une carte de 6 144 Mio. Ils sont de surcroît
+  // sous NVIDIA OneWay Noncommercial. Celui-ci pèse 342 964 768 octets, tient dans la mémoire vive
+  // et porte Apache-2.0 : aucune réserve, ni commerciale ni scientifique.
+  //
+  // LE PAQUET « BASE » ET NON « TINY », et c'est un choix de justesse plutôt que de taille. L'amont
+  // publie quatre variantes, de 22 130 464 à 342 964 768 octets ; la plus grande a été éprouvée sur
+  // quatre témoins dont trois à réponse connue, et c'est elle qui est épinglée. Les trois autres
+  // n'ont pas été mesurées, donc rien n'est affirmé d'elles.
+  //
+  // CE QU'IL SAIT ET CE QU'IL NE SAIT PAS, relevé le 2026-10-21 : les instruments, les sources, le
+  // lieu et la présence d'une voix sont justes ; le GENRE ne l'est pas — un morceau de blues est
+  // sorti « Ambient music » puis « New-age music ». Le genre reste donc au classeur dédié, et la
+  // notice du nœud le dit plutôt que de laisser croire le contraire.
+  "ced-base-f32.gguf": {
+    id: "ced", nom: "Étiquetage des sons (CED)", nomEn: "Sound tagging (CED)",
+    racine: "audiocpp", noeuds: ["decrire-audio"],
+    licence: { nom: "Apache-2.0", credit: "CED — Consistent Ensemble Distillation, converti en GGUF par le projet audio.cpp", rediffusable: true,
+      note: "Le dépôt de conversion déclare Apache-2.0 pour cette famille. Les cinq cent vingt-sept classes sont celles d'AudioSet, dont l'ontologie est publiée par Google sous CC-BY-4.0 ; seuls les noms de classes en viennent, aucun de ses enregistrements. Aucune réserve non commerciale, ce qui en fait, avec Chatterbox, le second modèle du catalogue entièrement libre d'usage." },
+  },
+
   // ── LES POINTS DE CONTRÔLE MAGENTA, sous `public/magenta/` et non `public/oonx/` ──
   //
   // Ils ne sont pas des ONNX, et c'est pourquoi ils ont leur racine. Ils entrent ici pour trois

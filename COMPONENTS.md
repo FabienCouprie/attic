@@ -3,15 +3,15 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **493 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **495 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 99 | [AI generators](#ai-generators) (9) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 100 | [AI generators](#ai-generators) (10) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 236 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 44 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
+| [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -43,6 +43,7 @@ An input marked **required** must be connected for the component to run. **Param
 | [AI Sound Effect](#ai-sound-effect) | Generates a sound effect or an ambience from a description, and returns it at the requested level. |
 | [Back a Vocal](#back-a-vocal) | Builds an instrumental backing around an isolated vocal. |
 | [Clone a Voice](#clone-a-voice) | Makes an audio excerpt's voice say a text. |
+| [Compose a Plan](#compose-a-plan) | Assembles a song plan from pieces measured on an audio or written by hand. |
 | [Cover a Song](#cover-a-song) | Renders a new version of an audio, following a song plan. |
 | [Extend a Song](#extend-a-song) | Adds music before or after an audio, following a song plan. |
 | [Plan a Song](#plan-a-song) | Writes a song's plan: its lyrics, its form and its audio codes. |
@@ -119,6 +120,33 @@ This component makes an audio excerpt's voice say a text. The « Voice » input 
 | Language | choice | Automatic | Automatic / French / English / Spanish / German / Italian / Portuguese | The pronunciation language. « Automatic » lets the model decide from the text; imposing a language clearly changes the pronunciation and the length of the result. |
 | Excerpt transcript | text | — |  | The text the excerpt pronounces. Optional: the model does without it, and it only helps when the excerpt is hard to read. |
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+
+#### Compose a Plan
+
+`composer-plan` · Inputs → AI generators
+
+*Assembles a song plan from pieces measured on an audio or written by hand.*
+
+This component writes a song plan, the same document « Plan a Song » returns, but from pieces it is given. Each piece arrives through an input or, failing that, through the setting of the same name. This is how an audio becomes a plan. Connect « Describe an Audio » to « Description », « Tempo Detector » to « Tempo », « Harmonic Analysis » to « Key », and a speech recognition to « Lyrics »: the plan that comes out connects to « Render a Song ». What the plan does not carry, and what that changes. The planner also writes audio codes, five per second, which carry the music itself; nothing can extract them from a sound, so this component writes none. Measured by rendering the same plan twice, with its codes and without: the two results correlate at only 0.066, that is, they have nothing in common. A plan without codes therefore makes a new piece, in the shape of the received track, not a reconstruction. To make a version of an existing track, use « Cover a Song ». In exchange, « Length » really decides: without codes, the requested length is held to the sample. With them, their count imposes it. « Key » accepts the form « Harmonic Analysis » returns, confidence included: « G major (87%) » is read as « G major ». « Tempo » at zero leaves the field out of the plan. « Seed » at minus one leaves the render free; set, it makes the render reproducible. « Time signature » is the number of beats per bar. The « Plan » output returns the document as text, readable and correctable before being rendered.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Description | text |  |
+| input | Lyrics | text |  |
+| input | Tempo | control |  |
+| input | Key | text |  |
+| output | Plan | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Description | text | `a calm acoustic guitar ballad, warm and slow` |  | What is wanted. The « Description » input replaces it when connected. |
+| Lyrics | text | — |  | The sung text, with its section markers in brackets. Empty, the field is absent from the plan and the render is instrumental. |
+| Tempo | number | 120 BPM | 0 – 240 BPM, step 1 | The tempo written into the plan. At zero, the field is absent and the engine decides. The « Tempo » input replaces it when connected. |
+| Key | text | `C major` |  | The key, as « G major » or « A minor ». The form « Harmonic Analysis » returns, confidence included, is accepted. Empty, the field is absent from the plan. |
+| Length | number | 60 s | 5 – 600 s, step 5 | Target length. As this plan carries no audio codes, it is held to the sample. |
+| Singing language | choice | French | French / English / Spanish / German / Italian / Portuguese / Russian / Japanese / Korean / Chinese | The language the voice sings in. The ten offered are those the model holds best. |
+| Time signature | choice | 4 | 2 / 3 / 4 / 6 | The number of beats per bar, written into the plan. |
+| Seed | number | -1 | -1 – 999999, step 1 | Makes the render reproducible. At minus one, every run differs and the field is absent from the plan. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Cover a Song
 
@@ -8935,6 +8963,7 @@ Displays the waveform of the received signal, with wheel zoom, and passes it thr
 | [Aesthetic Comparison](#aesthetic-comparison) | Compares two versions of a sound on the four aesthetic axes: one mix against another, a sound before and after processing. |
 | [Aesthetic Score](#aesthetic-score) | Scores a sound on four axes (enjoyment, usefulness, complexity, production quality) with each axis' curve over time. |
 | [ColorSynth](#colorsynth) | Derives a color palette from the audio spectrum (see the timbre). |
+| [Describe an Audio](#describe-an-audio) | Says in words what is heard: instruments, sources, place, presence of a voice. |
 | [Emotional Analysis](#emotional-analysis) | Associates an emotion with a track from its music alone (tempo, mode, energy, timbre), no text or lyrics analyzed. |
 | [Genre Classifier](#genre-classifier) | Identifies the musical genre of a song via AI or heuristics. |
 | [Roughness](#roughness) | Measures a sound's sensory dissonance over time, after Plomp and Levelt's model. |
@@ -8986,6 +9015,27 @@ The inverse of the « Color Combination » node: listens to the audio signal and
 | output | Audio | audio |  |
 
 *No parameters.*
+
+#### Describe an Audio
+
+`decrire-audio` · Visualization → Descriptors
+
+*Says in words what is heard: instruments, sources, place, presence of a voice.*
+
+This component listens to an audio and describes it in words, among five hundred and twenty-seven sound classes: instruments, voices, natural sources, machines, places. The « Description » output returns a comma-separated list of words, ready to be connected to a song plan's « Description ». The « Labels » output returns the full reading, with each score, which is read to judge what the component believed it heard. The « Audio » output returns the received sound as it is, to continue the chain. « Label count » says how many to ask for; « Threshold » discards those whose score is too low, and at zero it discards nothing. « Compute » names the device used. What it knows, and what it does not. Instruments, sources, place and the presence of a voice are correct when measured. Musical genre is not: a blues track came out as « ambient music » then « new-age music ». For genre, use the « Genre Classifier ». When the first label is « Music », it is removed from the description: it dominates everything on a music track and teaches nothing to a model that generates music. It stays visible in the labels.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio | required |
+| output | Audio | audio |  |
+| output | Description | text |  |
+| output | Labels | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Label count | number | 10 | 1 – 20, step 1 | How many labels to ask the model for. Verified up to twenty. |
+| Threshold | number | 0 % | 0 – 50 %, step 1 | Minimum score for a label to be kept. At zero, all are kept. Measured: correct labels beyond the third often fall under one per cent, so a high threshold discards exact words. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Emotional Analysis
 

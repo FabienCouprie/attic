@@ -24,6 +24,7 @@ import {
 } from "./chanson-aides";
 import { fiches as variantes } from "./chanson-variantes";
 import { fiches as accompagnement } from "./chanson-accompagnement";
+import { fiches as compositionDePlan } from "./composer-plan";
 
 const locales = ([
   {
@@ -228,4 +229,4 @@ const locales = ([
 // les quatre de `chanson-variantes.ts` et celui de `chanson-accompagnement.ts`, qui tire un
 // second débruiteur. Le registre de `index.ts` dépasse la norme de taille et n'a donc pas le droit
 // de grossir ; ce qu'on y ajouterait va ailleurs, et l'ailleurs d'une famille est sa propre entrée.
-export const fiches = [...locales, ...variantes, ...accompagnement];
+export const fiches = [...locales, ...variantes, ...accompagnement, ...compositionDePlan];

@@ -133,6 +133,14 @@ contextBridge.exposeInMainWorld("api", {
     return () => ipcRenderer.removeListener("chatterbox:progression", ecouteur);
   },
 
+  // L'étiquetage d'un audio par CED, cinq cent vingt-sept classes d'AudioSet. Même désabonnement.
+  cedEtiqueter: (options) => ipcRenderer.invoke("ced:etiqueter", options),
+  cedProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("ced:progression", ecouteur);
+    return () => ipcRenderer.removeListener("ced:progression", ecouteur);
+  },
+
   majVerifier: () => ipcRenderer.invoke("maj:verifier"),
   majInfo: () => ipcRenderer.invoke("maj:info"),
   majInstallerRelancer: () => ipcRenderer.invoke("maj:installer-relancer"),

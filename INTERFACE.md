@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**493 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**495 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -201,6 +201,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Cloche de Risset | `cloche-risset` | 240 × 118 |
 | Cloner une voix | `cloner-voix` | 240 × 140 |
 | Color Looper | `color-looper` | 240 × 140 |
+| Composer un plan | `composer-plan` | 240 × 184 |
 | Compresseur | `compresseur` | 240 × 228 |
 | Compresseur multibande | `compresseur-multibande` | 240 × 338 |
 | Continuation AR | `continuation-spectrale-ar` | 240 × 118 |
@@ -233,6 +234,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Décomposition atomique | `decomposition-atomique` | 240 × 184 |
 | Découpage en objets | `decoupage-objets` | 240 × 162 |
 | Découpe aléatoire | `decoupe-aleatoire` | 240 × 118 |
+| Décrire un audio | `decrire-audio` | 240 × 162 |
 | Delay stéréo | `delay-stereo` | 240 × 206 |
 | Déphasage de Reich | `dephasage-reich` | 240 × 118 |
 | Déréverbération | `dereverberation` | 240 × 118 |
