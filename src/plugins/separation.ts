@@ -5,8 +5,9 @@ import { traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
 import { lireModeleEmbarque } from "../modele-embarque";
+import { fiches as isolationDeVoix } from "./isoler-voix";
 
-export const fiches: FicheAudio[] = ([
+const separateurSixPistes: FicheAudio[] = ([
   {
     id: "separateur-ia", nom: "Séparateur IA", nomEn: "AI Separator", univers: "Traitement", famille: "Effets",
     resume: "Sépare les sources audio via IA (Demucs 4/6 stems, MDX-Net).",
@@ -97,3 +98,9 @@ export const fiches: FicheAudio[] = ([
    },
  },
 ] as FicheAudio[]).map(avecDoc);
+
+// LE SÉPARATEUR DE VOIX SORT PAR ICI, avec celui à six pistes dont il est le proche : tous deux
+// défont un mélange par un modèle appris. Le registre de `index.ts` dépasse la norme de taille et
+// n'a donc pas le droit de grossir ; ce qu'on y ajouterait va ailleurs, et l'ailleurs d'une famille
+// est sa propre entrée.
+export const fiches = [...separateurSixPistes, ...isolationDeVoix];

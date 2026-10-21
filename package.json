@@ -2,7 +2,7 @@
   "name": "attic",
   "private": true,
   "version": "5.0.4",
-  "description": "Visual node-editor for AI-powered music and sound design — 495 nodes, local ML models, bilingual FR/EN.",
+  "description": "Visual node-editor for AI-powered music and sound design — 496 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -48,6 +48,7 @@
     "test:watch": "vitest",
     "smoke": "node scripts/smoke-test.cjs",
     "test:e2e": "playwright test",
+    "test:electron": "playwright test tests-e2e/pont-electron-vivant.spec.ts",
     "lint": "oxlint",
     "copy-piper-assets": "node scripts/copy-piper-assets.cjs",
     "postinstall": "npm run copy-piper-assets && node scripts/download-sherpa-wasm.cjs --tolerant && node scripts/download-gtcrn.cjs --tolerant && node scripts/download-magenta.cjs --tolerant && node scripts/download-asr-models.cjs --tolerant && node scripts/download-vosk-models.cjs --tolerant",

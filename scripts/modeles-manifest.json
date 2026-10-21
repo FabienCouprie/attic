@@ -1332,6 +1332,28 @@
       ]
     },
     {
+      "id": "mel-band-roformer",
+      "nom": "Séparation voix et accompagnement (Mel-Band RoFormer)",
+      "nomEn": "Vocal and backing separation (Mel-Band RoFormer)",
+      "noeuds": [
+        "isoler-voix"
+      ],
+      "octets": 456514816,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/mel-band-roformer-f16.gguf",
+        "octets": 456514816,
+        "sha256": "cbdf174dc716615dcd304678f67fc1d2ac6286fbc647e72837b5a6d447a07add"
+      },
+      "fichiers": [
+        {
+          "chemin": "audiocpp/mel-band-roformer-f16.gguf",
+          "octets": 456514816,
+          "sha256": "cbdf174dc716615dcd304678f67fc1d2ac6286fbc647e72837b5a6d447a07add"
+        }
+      ]
+    },
+    {
       "id": "magenta-drums-vae",
       "nom": "Batterie neuronale (MusicVAE)",
       "nomEn": "Neural drums (MusicVAE)",

@@ -2,10 +2,10 @@
 // Tonal : MIT licence — ajouté dans THIRD_PARTY.md.
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { Chord, Scale, Note, Progression } from "tonal";
-import { estimerTonalite, detecterAccords } from "../audio/accords";
+import { estimerTonalite, detecterAccords, accordsVersTexte } from "../audio/accords";
 import { PARAMETRE_CLE } from "../audio/cles";
 import {
   accordsDepuisRomains, modeDepuisTonalite, normaliserRomains, type ModeProgression,
@@ -272,7 +272,16 @@ export const fiches: FicheAudio[] = ([
       let prog = progressionSuggest(tonalite.type);
       if (style === "Jazz") prog = mineur ? "ii V i" : "ii V I";
       if (style === "Blues") prog = mineur ? "i i i i iv iv i i v iv i v" : "I I I I IV IV I I V IV I V";
-      const accordsTexte = accords.map((a) => `${a.nomEn} (${a.duree.toFixed(1)}s)`).join("\n");
+      // LA MISE EN TEXTE VIENT DU DOMAINE, et non d'une ligne écrite ici. `accordsVersTexte` est
+      // ce que le détecteur d'accords emploie déjà : deux mises en forme de la même donnée avaient
+      // commencé à diverger.
+      //
+      // DEUX CHOSES CHANGENT, ET PAS CELLE QU'ON CROIT. Les noms de notes ne sont pas traduits
+      // d'une langue à l'autre : la fiche d'un accord porte « 0:00 F maj7 » et « 0:00 Fmaj7 », qui
+      // ne diffèrent que par la CONVENTION D'ÉCRITURE, l'espace entre la fondamentale et la nature.
+      // La ligne d'avant prenait toujours la forme anglaise, même sous une interface française. Et
+      // elle taisait la confiance, que celle-ci donne.
+      const accordsTexte = accordsVersTexte(accords, langueCourante());
       return {
         valeurs: [`${tonalite.nom} (${Math.round(tonalite.confiance * 100)}%)`, prog, accordsTexte],
         message: traduire("msg.tonalit_var_0_var_1_accord_s_d_tect_s", tonalite.nom, accords.length),

@@ -235,10 +235,22 @@ describe("lecteur-analyse : il affiche ce qu'on lui branche", () => {
 });
 
 describe("detecteur-accords : la fenêtre d'analyse agit", () => {
+  // LA PROGRESSION DOIT POUVOIR QUITTER LE NŒUD, et c'est ce que ce cas tient. Elle était calculée
+  // puis versée dans le seul message : visible, et inutilisable par le composant d'après. Ce
+  // détecteur était le seul de sa famille dans ce cas.
+  it("IL REND SA PROGRESSION PAR UN PORT, et pas seulement dans son message", async () => {
+    const res = await lancer("detecteur-accords", [sonEssai(2)]);
+    expect(res.valeurs).toHaveLength(2);
+    expect(typeof res.valeurs[1], "la seconde sortie porte le texte des accords").toBe("string");
+    expect((res.valeurs[1] as string).length).toBeGreaterThan(0);
+  });
+
   it("il rend le son et un message, même quand il ne trouve rien", async () => {
     const res = await lancer("detecteur-accords", [sonEssai(2)]);
-    expect(res.valeurs).toHaveLength(1);
     expect((res.message ?? "").length).toBeGreaterThan(0);
+    // RIEN TROUVÉ EST UNE RÉPONSE : la sortie porte alors la phrase qui le dit, de sorte qu'un
+    // composant branché en aval reçoive quelque chose de lisible plutôt que rien.
+    expect(res.valeurs[1]).not.toBeNull();
   });
 
   it("« Fenêtre d'analyse » change ce qui est détecté", async () => {

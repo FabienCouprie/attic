@@ -301,8 +301,42 @@ const CONNUS = {
   "ced-base-f32.gguf": {
     id: "ced", nom: "Étiquetage des sons (CED)", nomEn: "Sound tagging (CED)",
     racine: "audiocpp", noeuds: ["decrire-audio"],
-    licence: { nom: "Apache-2.0", credit: "CED — Consistent Ensemble Distillation, converti en GGUF par le projet audio.cpp", rediffusable: true,
-      note: "Le dépôt de conversion déclare Apache-2.0 pour cette famille. Les cinq cent vingt-sept classes sont celles d'AudioSet, dont l'ontologie est publiée par Google sous CC-BY-4.0 ; seuls les noms de classes en viennent, aucun de ses enregistrements. Aucune réserve non commerciale, ce qui en fait, avec Chatterbox, le second modèle du catalogue entièrement libre d'usage." },
+    licence: { nom: "Apache-2.0", credit: "CED — Consistent Ensemble Distillation, poids `mispeech`, convertis en GGUF par le projet audio.cpp", rediffusable: true,
+      note: "La table de licences d'audio.cpp donne Apache-2.0 pour ces points de contrôle, usage commercial compris, et précise que le DÉPÔT D'ENTRAÎNEMENT amont est en GPL-3.0 : c'est la licence du point de contrôle qui s'applique aux poids, non celle du code qui les a produits. Les cinq cent vingt-sept classes sont celles d'AudioSet, dont l'ontologie est publiée par Google sous CC-BY-4.0 ; seuls les noms de classes en viennent, aucun de ses enregistrements." },
+  },
+
+  // LE SÉPARATEUR DE VOIX, quatrième modèle de cette racine.
+  //
+  // LE PAQUET F16 ET NON LE Q8, et c'est une mesure qui l'impose. Le q8_0 rend deux pistes
+  // IDENTIQUES, à −2,22 dB de niveau et 18 Hz de centroïde spectral : du rebut, et silencieusement,
+  // puisque l'exécutable sort en zéro. Soupçonné d'abord d'un témoin mono, il rendait le même rebut
+  // en stéréo. Le f16 rend deux signaux distincts et plausibles. C'est le second paquet quantifié
+  // de cette famille d'outils pris en défaut, après celui d'OmniVoice qui rendait un WAV de
+  // quarante-quatre octets : une variante se mesure avant de s'épingler.
+  //
+  // MESURÉ CONTRE NOTRE SÉPARATEUR, sur un témoin construit dont les deux sources sont connues :
+  // vingt secondes d'instrumental à −17,45 dB et une voix parlée à −27, mélangées en stéréo. Contre
+  // la voix vraie, rapport signal sur distorsion de 1,24 dB contre 0,30 pour htdemucs à six pistes,
+  // là où le seul mélange remis à l'échelle en vaut 0,72 : celui-ci bat le fait de ne rien faire,
+  // l'autre tombe en dessous. Quatre fois mieux sur ce seul travail, sept fois plus lent.
+  //
+  // L'ÉCART DE NIVEAU ENTRE LES DEUX SOURCES EST LE RÉGLAGE DÉCISIF DU BANC. Un premier témoin les
+  // posait au MÊME niveau et y plaçait les deux séparateurs sous la ligne du mélange brut, ce qui
+  // est impossible pour une séparation qui fonctionne. La cause est arithmétique et non matérielle :
+  // deux sources décorrélées mélangées à niveau égal laissent au seul mélange environ trois
+  // décibels contre chacune, vérifié sur deux couples indépendants.
+  //
+  // CE QUE LA PROVENANCE ÉTABLIT, ET CE QU'ELLE N'ÉTABLIT PAS. La table de licences d'audio.cpp
+  // donne MIT et l'usage commercial, en nommant pour poids d'origine `mlx-community/mel-roformer-
+  // mlx`, qui déclare MIT lui aussi. Les deux maillons concordent donc. Mais la fiche de ce second
+  // dépôt est VIDE : aucun point de contrôle d'entraînement n'est nommé, et l'attribution s'arrête
+  // là. C'est moins qu'un amont identifié, plus qu'une licence absente.
+  "mel-band-roformer-f16.gguf": {
+    id: "mel-band-roformer", nom: "Séparation voix et accompagnement (Mel-Band RoFormer)",
+    nomEn: "Vocal and backing separation (Mel-Band RoFormer)",
+    racine: "audiocpp", noeuds: ["isoler-voix"],
+    licence: { nom: "MIT", credit: "Mel-Band RoFormer, poids `mlx-community/mel-roformer-mlx`, convertis en GGUF par le projet audio.cpp", rediffusable: true,
+      note: "La table de licences d'audio.cpp donne MIT et l'usage commercial pour cette famille, en désignant `mlx-community/mel-roformer-mlx` comme poids d'origine ; ce dépôt déclare MIT à son tour. Les deux maillons concordent. À noter cependant que la fiche du second est vide : aucun point de contrôle d'entraînement n'est nommé, de sorte que l'attribution s'arrête à ces deux publications et ne remonte pas jusqu'à qui a entraîné le modèle. Le paquet f16 est épinglé plutôt que le q8_0, que la mesure a trouvé cassé." },
   },
 
   // ── LES POINTS DE CONTRÔLE MAGENTA, sous `public/magenta/` et non `public/oonx/` ──

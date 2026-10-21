@@ -974,6 +974,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.composerPlan.rendu": { fr: "Plan composé · {__VAR_0__} · {__VAR_1__} s visées, sans codes audio", en: "Plan composed · {__VAR_0__} · {__VAR_1__} s targeted, with no audio codes" },
   "msg.composerPlan.sansTempo": { fr: "tempo libre", en: "free tempo" },
   "msg.composerPlan.sansTonalite": { fr: "sans tonalité", en: "no key" },
+  "msg.separerVoix.rendu": { fr: "Voix et accompagnement séparés · temps réel ×{__VAR_0__}", en: "Voice and backing separated · real time ×{__VAR_0__}" },
   "msg.decrire.rendu": { fr: "{__VAR_0__} étiquette(s) · temps réel ×{__VAR_1__}", en: "{__VAR_0__} label(s) · real time ×{__VAR_1__}" },
   "msg.travail.promesse": { fr: "Le répertoire de travail n'a pas été attendu : une promesse est arrivée là où un chemin était attendu. Rien n'est écrit, plutôt que d'écrire dans un dossier au nom absurde.", en: "The working directory was not awaited: a promise arrived where a path was expected. Nothing is written, rather than writing into a directory with a nonsensical name." },
   "msg.travail.absent": { fr: "Répertoire de travail non résolu : rien n'est écrit.", en: "Working directory not resolved: nothing is written." },
