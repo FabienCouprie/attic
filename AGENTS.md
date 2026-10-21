@@ -48,7 +48,7 @@ pour empêcher.
   l'arbre : les régénérer avant de committer, et préférer un commit entier à plusieurs commits dont
   certains échoueraient à leurs propres gardes.
 
-## 3. Les quatre contrats
+## 3. Les cinq contrats
 
 Ils sont vérifiés automatiquement sous Claude Code, par les hooks déclarés dans
 `.claude/settings.json`. **Un autre harnais ne les déclenchera pas : ils s'appliquent quand même.**
@@ -107,6 +107,27 @@ pendantes, identifiants en double. Ce qui demande le registre vit dans
 `presets/` n'est pas versionné : c'est là qu'on travaille, et un graphe en cours de câblage y est
 incomplet par nature. `exemples/` est versionné et livré : ce qui s'y trouve est montré à quelqu'un
 d'autre, et n'a pas le droit d'être à moitié fait.
+
+### `scripts/contrat-poussee.mjs` — ce qu'une poussée laisse derrière elle
+
+**Après chaque `git push`, vérifier que la branche de base a bien reçu les commits.** Une pull
+request fusionnée pendant que la poussée tourne prend la branche à l'état où elle était : les
+commits qui arrivent restent sur une branche dont la pull request est close, et **rien ne
+l'annonce** — la poussée réussit, la branche distante est à jour, et c'est la ligne principale qui
+ne les a pas.
+
+Le signe à lire : parmi les commits que la base a et que la tête n'a pas, une fusion dont le
+**second parent est un ancêtre de la tête**. Cette fusion a pris la branche en vol, et tout ce qui
+suit le point pris est dehors.
+
+```bash
+git fetch origin && git rev-list --merges --parents HEAD..origin/master
+```
+
+**La sortie** : repartir d'une branche neuve sur la base à jour, y reporter les commits par
+`git cherry-pick`, pousser cette branche et ouvrir une pull request pour elle. La même condition
+couvre la règle voisine : **une branche neuve après chaque fusion**, un commit ajouté sur une
+branche déjà fusionnée n'étant dans aucune pull request.
 
 ## 4. La règle de sécurité pour l'oreille
 
