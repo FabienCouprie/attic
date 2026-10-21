@@ -1,0 +1,109 @@
+{
+  "nodes": [
+    {
+      "id": "noeud-1",
+      "type": "atelier",
+      "position": {
+        "x": 241.50159664400763,
+        "y": -443.350487722764
+      },
+      "width": 240,
+      "height": 217,
+      "data": {
+        "ficheId": "planifier-chanson",
+        "parametres": {
+          "Description": "a calm acoustic guitar ballad, warm and slow",
+          "Paroles": "",
+          "Langue du chant": "fr",
+          "Durée": 60,
+          "Graine": 245282,
+          "Calcul": ""
+        }
+      }
+    },
+    {
+      "id": "noeud-2",
+      "type": "atelier",
+      "position": {
+        "x": 563.253061708174,
+        "y": -589.6927890952365
+      },
+      "width": 240,
+      "height": 155,
+      "data": {
+        "ficheId": "rendre-chanson",
+        "parametres": {
+          "Pas de débruitage": 8,
+          "Glissement": 3,
+          "Calcul": "",
+          "Tuile du décodeur": 256,
+          "Recouvrement": 32
+        }
+      }
+    },
+    {
+      "id": "noeud-3",
+      "type": "atelier",
+      "position": {
+        "x": -102.99840335599237,
+        "y": -451.350487722764
+      },
+      "width": 280,
+      "height": 200,
+      "data": {
+        "ficheId": "source-texte",
+        "parametres": {
+          "Texte": "Instrumental, 95 BPM, meditative, hypnagogen, dreamy, reverb, synthesizer, mellotron, variation each 16 bars"
+        }
+      }
+    },
+    {
+      "id": "noeud-4",
+      "type": "atelier",
+      "position": {
+        "x": -53.94446477097813,
+        "y": -740.3548220308786
+      },
+      "width": 287,
+      "height": 219,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "GÉNÉRER UNE PISTE AUDIO\n\n« Source texte » porte la description de ce qu'on veut entendre et l'envoie à « Planifier une chanson », qui en écrit le plan : les paroles, le tempo, la tonalité et les codes audio. « Rendre une chanson » lit ce plan et rend le son, en 48 kHz stéréo.\n\nCE QUE LA DESCRIPTION DOIT DIRE. Un genre, une instrumentation, un caractère, un tempo, une époque, séparés par des virgules, en anglais. Par exemple : french pop, upbeat synthpop, bright female vocals, 120 bpm, energetic, 2020s.\n\nLA GRAINE REND LE PLAN REPRODUCTIBLE. À graine égale, la même description rend le même plan, mot pour mot ; à moins un, chaque exécution en écrit un autre.\n\n« Paroles » laissé vide, le planificateur écrit lui-même le texte chanté, qui ne suit pas toujours la langue demandée. Rempli, il le garde tel quel.",
+        "nomEn": "GENERATING AN AUDIO TRACK\n\n« Text source » carries the description of what is wanted and sends it to « Plan a Song », which writes its plan: the lyrics, the tempo, the key and the audio codes. « Render a Song » reads that plan and returns the sound, in 48 kHz stereo.\n\nWHAT THE DESCRIPTION SHOULD SAY. A genre, an instrumentation, a character, a tempo, a period, separated by commas, in English. For instance: french pop, upbeat synthpop, bright female vocals, 120 bpm, energetic, 2020s.\n\nTHE SEED MAKES THE PLAN REPRODUCIBLE. With an equal seed, the same description returns the same plan, word for word; at minus one, every run writes another.\n\nWith « Lyrics » left empty, the planner writes the sung text itself, which does not always follow the requested language. Filled in, it keeps it as it is."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-noeud-1-noeud-2-1792434477939",
+      "source": "noeud-1",
+      "target": "noeud-2",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#36a2eb",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-noeud-3-noeud-1-1792434494699",
+      "source": "noeud-3",
+      "target": "noeud-1",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#36a2eb",
+        "strokeWidth": 2.5
+      }
+    }
+  ],
+  "metas": [],
+  "viewport": {
+    "x": 0,
+    "y": 0,
+    "zoom": 1
+  }
+}

@@ -1,0 +1,209 @@
+{
+  "nodes": [
+    {
+      "id": "noeud-1",
+      "type": "atelier",
+      "position": {
+        "x": 122.5,
+        "y": 224
+      },
+      "width": 240,
+      "height": 232,
+      "data": {
+        "ficheId": "entree-audio",
+        "parametres": {}
+      }
+    },
+    {
+      "id": "noeud-2",
+      "type": "atelier",
+      "position": {
+        "x": 450.49999999999994,
+        "y": -4.500000000000011
+      },
+      "width": 240,
+      "height": 175,
+      "data": {
+        "ficheId": "transcripteur-midi",
+        "parametres": {
+          "Méthode": "mono",
+          "Seuil onset": 10,
+          "Note minimale": 36,
+          "Note maximale": 96,
+          "Tempo du fichier MIDI": 120,
+          "Instrument": 0
+        }
+      }
+    },
+    {
+      "id": "noeud-3",
+      "type": "atelier",
+      "position": {
+        "x": 781.5,
+        "y": 302
+      },
+      "width": 240,
+      "height": 177,
+      "data": {
+        "ficheId": "transcription-midi",
+        "parametres": {
+          "Instruments": "",
+          "Tempo": 0,
+          "Quantification": "none",
+          "Quantifier les fins": "no",
+          "Calcul": ""
+        }
+      }
+    },
+    {
+      "id": "noeud-4",
+      "type": "atelier",
+      "position": {
+        "x": 483,
+        "y": 302
+      },
+      "width": 240,
+      "height": 269,
+      "data": {
+        "ficheId": "detecteur-tempo",
+        "parametres": {
+          "Correction d'octave": "plage",
+          "Plage basse": 80,
+          "Plage haute": 160
+        }
+      }
+    },
+    {
+      "id": "noeud-5",
+      "type": "atelier",
+      "position": {
+        "x": 775.5,
+        "y": -23.000000000000004
+      },
+      "width": 240,
+      "height": 217,
+      "data": {
+        "ficheId": "point-ecoute-midi",
+        "parametres": {
+          "Synthèse": "auto",
+          "Instrument": -1,
+          "Volume": 80
+        }
+      }
+    },
+    {
+      "id": "noeud-6",
+      "type": "atelier",
+      "position": {
+        "x": 1099.7233033797768,
+        "y": 243.03725858279685
+      },
+      "width": 240,
+      "height": 217,
+      "data": {
+        "ficheId": "point-ecoute-midi",
+        "parametres": {
+          "Synthèse": "auto",
+          "Instrument": -1,
+          "Volume": 80
+        }
+      }
+    },
+    {
+      "id": "noeud-7",
+      "type": "atelier",
+      "position": {
+        "x": -36.500000000000234,
+        "y": -243.50000000000003
+      },
+      "width": 348,
+      "height": 135,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "TRANSCRIRE UN AUDIO EN MIDI, PAR DEUX CHEMINS\n\n« Entrée audio » reçoit le son à transcrire. Aucun fichier n'est porté par l'exemple : il est à choisir.\n\nLA BRANCHE DU HAUT SUIT LA MÉLODIE. « Transcripteur MIDI » en méthode « mono » ne lit qu'une voix à la fois et rend la ligne principale, que « Point d'écoute MIDI » joue. « Seuil onset », « Note minimale » et « Note maximale » bornent ce qu'il accepte.\n\nLA BRANCHE DU BAS RELÈVE L'ORCHESTRATION. « Détecteur de tempo » estime la vitesse et la passe à « Transcription MIDI », qui écrit toutes les voix qu'il entend ; son « Tempo » à zéro laisse celui du port décider. Le second « Point d'écoute MIDI » rend le résultat.\n\nLES DEUX LECTURES NE VISENT PAS LA MÊME CHOSE. La première donne une ligne à rejouer, la seconde un relevé de ce qui sonne.",
+        "nomEn": "TRANSCRIBING AN AUDIO INTO MIDI, BY TWO PATHS\n\n« Audio input » receives the sound to transcribe. The example carries no file: one is to be chosen.\n\nTHE UPPER BRANCH FOLLOWS THE MELODY. « MIDI Transcriber » in « mono » method reads only one voice at a time and returns the main line, which « MIDI Listening Point » plays. « Onset threshold », « Lowest note » and « Highest note » bound what it accepts.\n\nTHE LOWER BRANCH READS THE ORCHESTRATION. « Tempo Detector » estimates the speed and passes it to « MIDI Transcription », which writes every voice it hears; its « Tempo » at zero lets the port's one decide. The second « MIDI Listening Point » returns the result.\n\nTHE TWO READINGS DO NOT AIM AT THE SAME THING. The first gives a line to play again, the second a reading of what sounds."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-noeud-1-noeud-2-1792433666483",
+      "source": "noeud-1",
+      "target": "noeud-2",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-noeud-1-noeud-4-1792433719242",
+      "source": "noeud-1",
+      "target": "noeud-4",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-noeud-4-noeud-3-1792433721874",
+      "source": "noeud-4",
+      "target": "noeud-3",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-noeud-4-noeud-3-1792433724919",
+      "source": "noeud-4",
+      "target": "noeud-3",
+      "sourceHandle": "out:1",
+      "targetHandle": "in:1",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#e8590c",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-noeud-2-noeud-5-1792433793594",
+      "source": "noeud-2",
+      "target": "noeud-5",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#e9a13b",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-noeud-3-noeud-6-1792433815878",
+      "source": "noeud-3",
+      "target": "noeud-6",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#e9a13b",
+        "strokeWidth": 2.5
+      }
+    }
+  ],
+  "metas": [],
+  "viewport": {
+    "x": 211.12924746912392,
+    "y": 287.5116442424178,
+    "zoom": 0.5743491774985177
+  }
+}
