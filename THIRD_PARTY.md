@@ -19,6 +19,7 @@ included in Attic.
 | `stable-audio-3-small-music/` | Stability AI Community License | Stability AI — Stable Audio 3 small-music (ONNX export by lsb) |
 | `stable-audio-3-small-music/onnx/encoder_q4.onnx` | Stability AI Community License | Stability AI — Stable Audio 3 small-music audio encoder (ONNX export by bgkb) |
 | `audiocpp/chatterbox-q8_0.gguf` | MIT | Copyright (c) Resemble AI — Chatterbox (`ResembleAI/chatterbox`). GGUF conversion by the audio.cpp project, whose repository declares no licence of its own |
+| `audiocpp/ced-base-f32.gguf` | Apache-2.0 | CED — Consistent Ensemble Distillation audio tagger. GGUF conversion published by the audio.cpp project (`audio-cpp/audio.cpp-gguf`, `CED-GGUF/`), which declares Apache-2.0 for this family. Its five hundred and twenty-seven class names come from the AudioSet ontology, published by Google under CC-BY-4.0; none of AudioSet's recordings are included |
 | `tts-speecht5/` | MIT | Copyright (c) Microsoft Corporation — SpeechT5 (`microsoft/speecht5_tts`, `microsoft/speecht5_hifigan`). ONNX export by Xenova, which declares no licence of its own. Speaker embeddings from the CMU ARCTIC corpus, Carnegie Mellon University |
 | `tts-mms/` | **weights: non-commercial use only** (CC-BY-NC 4.0) | Copyright (c) Meta Platforms, Inc. — MMS-TTS (`facebook/mms-tts`), seven languages. ONNX export by Xenova |
 

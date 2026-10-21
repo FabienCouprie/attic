@@ -10,6 +10,7 @@
 // de rendre le chemin écrit. Ce qui les sépare tient à l'extension et au poids.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { cheminDansTravail } from "./pont-electron";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
@@ -57,7 +58,9 @@ export const fiches: FicheAudio[] = ([
       }
 
       const nomFinal = nomAvecExtension(ctx.paramTexte("Nom", "film.mp4"), film.type);
-      const chemin = `${ctx.repertoireTravail}/${nomFinal}`;
+      const cible = cheminDansTravail(ctx.repertoireTravail, nomFinal);
+      if (!cible.ok) return { valeurs: [null], erreur: true, message: cible.message };
+      const chemin = cible.chemin;
       const octets = new Uint8Array(await film.arrayBuffer());
       const ecrit = await api.ecrireFichier(chemin, octets);
       if (!ecrit) {

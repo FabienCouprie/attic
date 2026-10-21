@@ -3,15 +3,15 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **493 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **495 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 99 | [AI generators](#ai-generators) (9) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 100 | [AI generators](#ai-generators) (10) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 236 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (19) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 44 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (7) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
+| [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
@@ -43,6 +43,7 @@ An input marked **required** must be connected for the component to run. **Param
 | [AI Sound Effect](#ai-sound-effect) | Generates a sound effect or an ambience from a description, and returns it at the requested level. |
 | [Back a Vocal](#back-a-vocal) | Builds an instrumental backing around an isolated vocal. |
 | [Clone a Voice](#clone-a-voice) | Makes an audio excerpt's voice say a text. |
+| [Compose a Plan](#compose-a-plan) | Assembles a song plan from pieces measured on an audio or written by hand. |
 | [Cover a Song](#cover-a-song) | Renders a new version of an audio, following a song plan. |
 | [Extend a Song](#extend-a-song) | Adds music before or after an audio, following a song plan. |
 | [Plan a Song](#plan-a-song) | Writes a song's plan: its lyrics, its form and its audio codes. |
@@ -92,9 +93,9 @@ This component builds an instrumental backing around an isolated vocal, followin
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Instruments | choice | Full band | Full band / Drums and bass / Orchestra / Electronic | The line-up built around the vocal. The four tell apart the better the higher « Guidance » is. |
-| Guidance | slider | 7.5 | 1 – 10, step 0.5 | How much weight the plan's description carries. At the lowest, the backing stays close to the received vocal; higher up, it moves away and follows the description. |
 | Denoising steps | number | 50 | 4 – 50, step 1 | Number of denoising steps. Fifty is this model's value. |
 | Shift | number | 1 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. One is this model's value. |
+| Guidance | slider | 7.5 | 1 – 10, step 0.5 | How much weight the plan's description carries. At the lowest, the backing stays close to the received vocal; higher up, it moves away and follows the description. |
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
@@ -120,13 +121,40 @@ This component makes an audio excerpt's voice say a text. The « Voice » input 
 | Excerpt transcript | text | — |  | The text the excerpt pronounces. Optional: the model does without it, and it only helps when the excerpt is hard to read. |
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
+#### Compose a Plan
+
+`composer-plan` · Inputs → AI generators
+
+*Assembles a song plan from pieces measured on an audio or written by hand.*
+
+This component writes a song's plan as text: its description, its lyrics, its tempo, its key, its length, its singing language and its time signature. Each value arrives through the input of the same name; failing that, the setting of the same name serves. The written plan carries no audio code. The requested length is therefore held to the sample, and the musical content follows the description instead of being already settled. « Description » says what is wanted: a genre, an instrumentation, a character. Empty, the plan carries « instrumental ». « Lyrics » sets the sung text, with its section markers in brackets. Empty, the field is absent from the plan and the render is instrumental. « Tempo » sets the number of beats per minute. At zero, the field is absent from the plan. « Key » is written as « G major » or « A minor ». A mention in parentheses at the end, such as a confidence percentage, is removed. Empty, the field is absent from the plan. « Length » sets the target length in seconds. « Singing language » says which language to sing in. « Time signature » gives the number of beats per bar. « Seed » makes the render reproducible. At minus one, the engine draws one at each run and writes it into the plan; the one that served is given in the message. The « Plan » output returns the document as text, which is read and corrected before being rendered. The message gives the tempo and key written in, as well as the target length.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Description | text |  |
+| input | Lyrics | text |  |
+| input | Tempo | control |  |
+| input | Key | text |  |
+| output | Plan | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Description | text | `a calm acoustic guitar ballad, warm and slow` |  | What is wanted. The « Description » input replaces it when connected. |
+| Lyrics | text | — |  | The sung text, with its section markers in brackets. Empty, the field is absent from the plan and the render is instrumental. |
+| Tempo | number | 120 BPM | 0 – 240 BPM, step 1 | The tempo written into the plan. At zero, the field is absent and the engine decides. The « Tempo » input replaces it when connected. |
+| Key | text | `C major` |  | The key, as « G major » or « A minor ». A mention in parentheses at the end, such as a confidence percentage, is removed before writing. Empty, the field is absent from the plan. The « Key » input replaces it when connected. |
+| Length | number | 60 s | 5 – 600 s, step 5 | Target length. As this plan carries no audio codes, it is held to the sample. |
+| Singing language | choice | French | French / English / Spanish / German / Italian / Portuguese / Russian / Japanese / Korean / Chinese | The language the voice sings in. The ten offered are those the model holds best. |
+| Time signature | choice | 4 | 2 / 3 / 4 / 6 | The number of beats per bar, written into the plan. |
+| Seed | number | -1 | -1 – 999999, step 1 | Makes the render reproducible. At minus one, the engine draws one at each run and writes it into the plan: the renders differ, and the one that served is readable in the message, so a successful result can be made again. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
 #### Cover a Song
 
 `reprendre-chanson` · Inputs → AI generators
 
 *Renders a new version of an audio, following a song plan.*
 
-This component renders a new version of an audio, following the song plan it receives. The « Plan » input receives the plan, and the « Audio » input the sound the version is drawn from. The « Timbre » input receives an audio whose tone colour is taken up; it is optional. « Strength » sets how closely the render follows the received audio. At one, the render comes as close as it can; lower, it departs from it. « Noise » sets the noise mixed into the received audio before the render. « Code quantization » decides how the audio codes drawn from the received audio are treated. « With » quantizes them, « Without » keeps them continuous. « Denoising steps » decides the number of steps. More lengthens the computation without always changing what is heard. « Shift » moves the instants at which denoising works. « Compute » names the device used. « Decoder tile » and « Overlap » decide how the audio decoding is cut up. The memory required follows the tile size, never the piece's length. The overlap is what keeps a seam from being heard. The « Audio » output returns the sound, in stereo at forty-eight kilohertz.
+This component renders a new version of an audio, following the song plan it receives. The « Plan » input receives the plan, and the « Audio » input the sound the version is drawn from. The « Timbre » input receives an audio whose tone colour is taken up; it is optional. « Strength » sets how closely the render follows the received audio. At one, the render comes as close as it can; lower, it departs from it. « Noise » sets the noise mixed into the received audio before the render. « Code quantization » decides how the audio codes drawn from the received audio are treated. « With » quantizes them, « Without » keeps them continuous. « Denoising steps » decides the number of steps. More lengthens the computation without always changing what is heard. « Shift » moves the instants at which denoising works. « Guidance » decides how much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio. « Compute » names the device used. « Decoder tile » and « Overlap » decide how the audio decoding is cut up. The memory required follows the tile size, never the piece's length. The overlap is what keeps a seam from being heard. The « Audio » output returns the sound, in stereo at forty-eight kilohertz.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -142,6 +170,7 @@ This component renders a new version of an audio, following the song plan it rec
 | Code quantization | choice | With | With / Without | How the audio codes drawn from the received audio are treated. « With » quantizes them, « Without » keeps them continuous. |
 | Denoising steps | number | 8 | 4 – 50, step 1 | Number of denoising steps. Eight is the fast model's value. |
 | Shift | number | 3 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. |
+| Guidance | slider | 7.5 | 0 – 20, step 0.5 | How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio. |
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
@@ -152,7 +181,7 @@ This component renders a new version of an audio, following the song plan it rec
 
 *Adds music before or after an audio, following a song plan.*
 
-This component adds music before or after an audio, following the song plan it receives. The « Plan » input receives the plan, and the « Audio » input the sound to extend. The « Timbre » input receives an audio whose tone colour is taken up; it is optional. « Side » chooses where the music is added. « Before » puts it ahead of the received sound, « After » puts it next. « Added length » sets in seconds the length added. The output lasts that of the received sound plus this length. « Denoising steps » decides the number of steps. More lengthens the computation without always changing what is heard. « Shift » moves the instants at which denoising works. « Compute » names the device used. « Decoder tile » and « Overlap » decide how the audio decoding is cut up. The memory required follows the tile size, never the piece's length. The overlap is what keeps a seam from being heard. The « Audio » output returns the sound, in stereo at forty-eight kilohertz.
+This component adds music before or after an audio, following the song plan it receives. The « Plan » input receives the plan, and the « Audio » input the sound to extend. The « Timbre » input receives an audio whose tone colour is taken up; it is optional. « Side » chooses where the music is added. « Before » puts it ahead of the received sound, « After » puts it next. « Added length » sets in seconds the length added. The output lasts that of the received sound plus this length. « Denoising steps » decides the number of steps. More lengthens the computation without always changing what is heard. « Shift » moves the instants at which denoising works. « Guidance » decides how much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio. « Compute » names the device used. « Decoder tile » and « Overlap » decide how the audio decoding is cut up. The memory required follows the tile size, never the piece's length. The overlap is what keeps a seam from being heard. The « Audio » output returns the sound, in stereo at forty-eight kilohertz.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -167,6 +196,7 @@ This component adds music before or after an audio, following the song plan it r
 | Added length | number | 8 s | 1 – 300 s, step 1 | Length added to the received sound. |
 | Denoising steps | number | 8 | 4 – 50, step 1 | Number of denoising steps. Eight is the fast model's value. |
 | Shift | number | 3 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. |
+| Guidance | slider | 7.5 | 0 – 20, step 0.5 | How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio. |
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
@@ -214,6 +244,7 @@ This component renders the audio of a plan written by « Plan a Song ». The pla
 |---|---|---|---|---|
 | Denoising steps | number | 8 | 4 – 50, step 1 | Number of denoising steps. Eight is the fast model's value. |
 | Shift | number | 3 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. |
+| Guidance | slider | 7.5 | 0 – 20, step 0.5 | How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio. |
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
@@ -224,7 +255,7 @@ This component renders the audio of a plan written by « Plan a Song ». The pla
 
 *Repaints a passage of an audio between two instants, and keeps the rest.*
 
-This component repaints a passage of an audio between two instants, and keeps the rest as it is. The « Plan » input receives the song plan, and the « Audio » input the sound to repaint. The « Timbre » input receives an audio whose tone colour is taken up; it is optional. « Start » and « End » set in seconds the bounds of the repainted passage. The end must be after the start; otherwise the component reports it and returns nothing. « Denoising steps » decides the number of steps. More lengthens the computation without always changing what is heard. « Shift » moves the instants at which denoising works. « Compute » names the device used. « Decoder tile » and « Overlap » decide how the audio decoding is cut up. The memory required follows the tile size, never the piece's length. The overlap is what keeps a seam from being heard. The « Audio » output returns the whole sound, with the repainted passage in place, in stereo at forty-eight kilohertz.
+This component repaints a passage of an audio between two instants, and keeps the rest as it is. The « Plan » input receives the song plan, and the « Audio » input the sound to repaint. The « Timbre » input receives an audio whose tone colour is taken up; it is optional. « Start » and « End » set in seconds the bounds of the repainted passage. The end must be after the start; otherwise the component reports it and returns nothing. « Denoising steps » decides the number of steps. More lengthens the computation without always changing what is heard. « Shift » moves the instants at which denoising works. « Guidance » decides how much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio. « Compute » names the device used. « Decoder tile » and « Overlap » decide how the audio decoding is cut up. The memory required follows the tile size, never the piece's length. The overlap is what keeps a seam from being heard. The « Audio » output returns the whole sound, with the repainted passage in place, in stereo at forty-eight kilohertz.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -239,6 +270,7 @@ This component repaints a passage of an audio between two instants, and keeps th
 | End | number | 8 s | 0 – 600 s, step 0.5 | Instant at which the repainted passage ends. It must be after « Start ». |
 | Denoising steps | number | 8 | 4 – 50, step 1 | Number of denoising steps. Eight is the fast model's value. |
 | Shift | number | 3 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. |
+| Guidance | slider | 7.5 | 0 – 20, step 0.5 | How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio. |
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
@@ -8935,6 +8967,7 @@ Displays the waveform of the received signal, with wheel zoom, and passes it thr
 | [Aesthetic Comparison](#aesthetic-comparison) | Compares two versions of a sound on the four aesthetic axes: one mix against another, a sound before and after processing. |
 | [Aesthetic Score](#aesthetic-score) | Scores a sound on four axes (enjoyment, usefulness, complexity, production quality) with each axis' curve over time. |
 | [ColorSynth](#colorsynth) | Derives a color palette from the audio spectrum (see the timbre). |
+| [Describe an Audio](#describe-an-audio) | Says in words what is heard: instruments, sources, place, presence of a voice. |
 | [Emotional Analysis](#emotional-analysis) | Associates an emotion with a track from its music alone (tempo, mode, energy, timbre), no text or lyrics analyzed. |
 | [Genre Classifier](#genre-classifier) | Identifies the musical genre of a song via AI or heuristics. |
 | [Roughness](#roughness) | Measures a sound's sensory dissonance over time, after Plomp and Levelt's model. |
@@ -8986,6 +9019,27 @@ The inverse of the « Color Combination » node: listens to the audio signal and
 | output | Audio | audio |  |
 
 *No parameters.*
+
+#### Describe an Audio
+
+`decrire-audio` · Visualization → Descriptors
+
+*Says in words what is heard: instruments, sources, place, presence of a voice.*
+
+This component names the sounds present in an audio, among five hundred and twenty-seven classes: instruments, voices, natural sources, machines, places. « Label count » says how many classes to ask for. « Threshold » discards the labels whose score is lower; at zero, none is discarded. « Compute » names the device used. The « Audio » output returns the received sound. The « Description » output returns the kept labels in lower case, separated by commas; the « Music » label is removed from it when it comes first, as it then dominates all the others on a music track. The « Labels » output returns the full reading, one per line, with its score as a percentage. The labels cover instruments, sound sources, place and the presence of a voice. Musical genre is not among them.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio | required |
+| output | Audio | audio |  |
+| output | Description | text |  |
+| output | Labels | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Label count | number | 10 | 1 – 20, step 1 | How many labels to ask the model for, from the best scored to the least well scored. |
+| Threshold | number | 0 % | 0 – 50 %, step 1 | Minimum score for a label to be kept. At zero, all are kept. Scores fall quickly: beyond the third label they often go under one per cent, so a high threshold also discards correct labels. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Emotional Analysis
 

@@ -1,0 +1,126 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": -40, "y": -300 },
+      "width": 420,
+      "height": 260,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UNE PISTE DEVIENT UNE CHANSON\n\nUn morceau est relevé sur quatre points, et ce relevé devient le plan d'une chanson neuve.\n\n« Entrée audio » reçoit le morceau. Aucun fichier n'est porté par l'exemple : il est à choisir.\n\nQUATRE LECTURES PARTENT DU MÊME SON. « Détecteur de tempo » estime la vitesse et la rend sur son port « Tempo » ; sa « Correction d'octave » replie le résultat dans 80 à 160 battements par minute, ce qui double un morceau lent. « Analyse harmonique » rend la tonalité, confiance comprise, que « Composer un plan » nettoie. « Décrire un audio » nomme les sons entendus et rend la description. « Vosk » transcrit ce qui est chanté ; sur du chant, le petit modèle rend un texte approché.\n\n« COMPOSER UN PLAN » LES RASSEMBLE. Chaque valeur arrive par l'entrée du même nom, et le réglage sert pour celles qui ne sont pas branchées. « Durée » fixe la longueur, tenue à l'échantillon, ce plan ne portant pas de codes audio.\n\nLE RENDU FAIT UNE PIÈCE NEUVE, dans la forme du morceau relevé, et non une version de celui-ci. Mesuré sur un morceau de la collection, le rendu corrèle à moins de trois millièmes avec sa source.\n\nTROIS MODÈLES SONT TÉLÉCHARGÉS À LA PREMIÈRE EXÉCUTION : l'étiqueteur de sons, le modèle de reconnaissance vocale et les deux poids de la chanson.",
+        "nomEn": "A TRACK BECOMES A SONG\n\nA track is read on four points, and that reading becomes the plan of a new song.\n\n« Audio input » receives the track. The example carries no file: one is to be chosen.\n\nFOUR READINGS START FROM THE SAME SOUND. « Tempo Detector » estimates the speed and returns it on its « Tempo » port; its « Octave correction » folds the result into 80 to 160 beats per minute, which doubles a slow track. « Harmonic Analysis » returns the key, confidence included, which « Compose a Plan » cleans up. « Describe an Audio » names the sounds heard and returns the description. « Vosk » transcribes what is sung; on singing, the small model returns an approximate text.\n\n« COMPOSE A PLAN » GATHERS THEM. Each value arrives through the input of the same name, and the setting serves for those that are not connected. « Length » sets the length, held to the sample, as this plan carries no audio codes.\n\nTHE RENDER MAKES A NEW PIECE, in the shape of the track that was read, and not a version of it. Measured on a track from the collection, the render correlates at less than three thousandths with its source.\n\nTHREE MODELS ARE DOWNLOADED ON FIRST RUN: the sound tagger, the speech recognition model and the two song weights."
+      }
+    },
+    {
+      "id": "source",
+      "type": "atelier",
+      "position": { "x": 0, "y": 40 },
+      "width": 240,
+      "height": 232,
+      "data": { "ficheId": "entree-audio", "parametres": {} }
+    },
+    {
+      "id": "tempo",
+      "type": "atelier",
+      "position": { "x": 340, "y": -140 },
+      "width": 240,
+      "height": 269,
+      "data": {
+        "ficheId": "detecteur-tempo",
+        "parametres": { "Correction d'octave": "plage", "Plage basse": 80, "Plage haute": 160 }
+      }
+    },
+    {
+      "id": "harmonie",
+      "type": "atelier",
+      "position": { "x": 340, "y": 180 },
+      "width": 240,
+      "height": 200,
+      "data": { "ficheId": "tonal-analyse", "parametres": { "Style": "Pop" } }
+    },
+    {
+      "id": "decrire",
+      "type": "atelier",
+      "position": { "x": 340, "y": 420 },
+      "width": 240,
+      "height": 240,
+      "data": {
+        "ficheId": "decrire-audio",
+        "parametres": { "Nombre d'étiquettes": 10, "Seuil": 0, "Calcul": "" }
+      }
+    },
+    {
+      "id": "paroles",
+      "type": "atelier",
+      "position": { "x": 340, "y": 700 },
+      "width": 240,
+      "height": 220,
+      "data": {
+        "ficheId": "vosk-asr",
+        "parametres": { "Langue": "fr", "Vocabulaire": "" }
+      }
+    },
+    {
+      "id": "plan",
+      "type": "atelier",
+      "position": { "x": 700, "y": 200 },
+      "width": 260,
+      "height": 340,
+      "data": {
+        "ficheId": "composer-plan",
+        "parametres": {
+          "Description": "a calm acoustic guitar ballad, warm and slow",
+          "Paroles": "",
+          "Tempo": 120,
+          "Tonalité": "C major",
+          "Durée": 60,
+          "Langue du chant": "fr",
+          "Signature": "4",
+          "Graine": -1
+        }
+      }
+    },
+    {
+      "id": "rendu",
+      "type": "atelier",
+      "position": { "x": 1060, "y": 240 },
+      "width": 240,
+      "height": 200,
+      "data": {
+        "ficheId": "rendre-chanson",
+        "parametres": {
+          "Pas de débruitage": 8,
+          "Glissement": 3,
+          "Guidage": 7.5,
+          "Calcul": "",
+          "Tuile du décodeur": 256,
+          "Recouvrement": 32
+        }
+      }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": { "x": 1400, "y": 260 },
+      "width": 240,
+      "height": 160,
+      "data": { "ficheId": "sortie-audio", "parametres": { "Volume": 100 } }
+    }
+  ],
+  "edges": [
+    { "id": "e-source-tempo", "source": "source", "target": "tempo", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-source-harmonie", "source": "source", "target": "harmonie", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-source-decrire", "source": "source", "target": "decrire", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-source-paroles", "source": "source", "target": "paroles", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-decrire-plan", "source": "decrire", "target": "plan", "sourceHandle": "out:1", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-paroles-plan", "source": "paroles", "target": "plan", "sourceHandle": "out:0", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-tempo-plan", "source": "tempo", "target": "plan", "sourceHandle": "out:1", "targetHandle": "in:2", "type": "arete-personnalisee" },
+    { "id": "e-harmonie-plan", "source": "harmonie", "target": "plan", "sourceHandle": "out:0", "targetHandle": "in:3", "type": "arete-personnalisee" },
+    { "id": "e-plan-rendu", "source": "plan", "target": "rendu", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-rendu-ecoute", "source": "rendu", "target": "ecoute", "sourceHandle": "out:0", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 0, "y": 0, "zoom": 0.6 }
+}

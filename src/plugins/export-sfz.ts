@@ -12,6 +12,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio/io";
+import { cheminDansTravail } from "./pont-electron";
 import { nomEchantillon, versSfz, type Banque } from "../audio/clavier-banque";
 
 /** Retire l'extension d'un nom de fichier, pour en tirer le nom du dossier d'échantillons. */
@@ -45,12 +46,16 @@ export const fiches: FicheAudio[] = ([
       const nom = ctx.paramTexte("Nom", "banque.sfz");
       const nomSfz = /\.sfz$/i.test(nom) ? nom : `${nom}.sfz`;
       const dossier = sansExtension(nomSfz);
-      const base = ctx.repertoireTravail;
       // Sans dossier de travail, le chemin serait RELATIF : les fichiers partiraient là où le
       // processus se trouve, et le nœud annoncerait « écrit » sans qu'on puisse les retrouver.
       // Constaté en vérifiant : dix-neuf fichiers écrits quelque part, introuvables sur deux
       // racines de disque. Mieux vaut ne rien écrire et le dire.
-      if (!base) return { valeurs: [null], message: traduire("msg.sfz.sansDossier") };
+      //
+      // LE TEST SUR LA SEULE FAUSSETÉ NE SUFFISAIT PAS, et c'est ce qui a changé : une promesse est
+      // VRAIE, donc elle passait ce garde et s'interpolait en « [object Promise] ». Le refus porte
+      // désormais sur la forme, par `cheminDansTravail`, comme partout ailleurs.
+      const cibleSfz = cheminDansTravail(ctx.repertoireTravail, nomSfz);
+      if (!cibleSfz.ok) return { valeurs: [null], message: cibleSfz.message };
 
       // Les échantillons d'abord : si l'un d'eux échoue, le SFZ qu'on écrirait ensuite renverrait
       // vers un fichier absent, et l'échantillonneur se tairait sans dire pourquoi.
@@ -58,8 +63,9 @@ export const fiches: FicheAudio[] = ([
       for (const zone of banque.zones) {
         const blob = bufferVersWavBlob(zone.audio);
         const bytes = new Uint8Array(await blob.arrayBuffer());
-        const chemin = `${base}/${dossier}/${nomEchantillon(zone)}`;
-        const ok = await api.ecrireFichier(chemin, bytes);
+        const cibleEch = cheminDansTravail(ctx.repertoireTravail, `${dossier}/${nomEchantillon(zone)}`);
+        if (!cibleEch.ok) return { valeurs: [null], message: cibleEch.message };
+        const ok = await api.ecrireFichier(cibleEch.chemin, bytes);
         if (!ok) {
           return { valeurs: [null], message: traduire("msg.sfz.echec", nomEchantillon(zone)) };
         }
@@ -72,7 +78,7 @@ export const fiches: FicheAudio[] = ([
         relachement: ctx.paramNombre("Relâchement", 300) / 1000,
         nom: dossier,
       });
-      const cheminSfz = `${base}/${nomSfz}`;
+      const cheminSfz = cibleSfz.chemin;
       const ok = await api.ecrireFichier(cheminSfz, new TextEncoder().encode(texte));
       if (!ok) return { valeurs: [null], message: traduire("msg.sfz.echec", nomSfz) };
 

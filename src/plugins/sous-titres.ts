@@ -13,6 +13,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
+import { cheminDansTravail } from "./pont-electron";
 import { MODELES, chargerModele, transcrire, versMono, vers16k } from "./vosk-asr";
 import { decouperEnSousTitres, versSrt } from "../audio/sous-titres";
 
@@ -131,7 +132,11 @@ export const fiches = ([
       if (!api?.ecrireFichier) {
         return { valeurs: [srt, null], message: traduire("msg.sousTitres.sansFichier", ...compte) };
       }
-      const chemin = `${ctx.repertoireTravail}/${nom}`;
+      // LE TEXTE SURVIT AU REFUS D'ÉCRIRE : il est déjà calculé, et le perdre pour un répertoire
+      // non résolu priverait de la seule chose que ce composant produit sans disque.
+      const cible = cheminDansTravail(ctx.repertoireTravail, nom);
+      if (!cible.ok) return { valeurs: [srt, null], message: cible.message };
+      const chemin = cible.chemin;
       const ecrit = await api.ecrireFichier(chemin, srt);
       if (!ecrit) {
         return { valeurs: [srt, null], message: traduire("msg.sousTitres.ecritureImpossible", nom) };

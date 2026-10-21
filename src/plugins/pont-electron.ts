@@ -50,3 +50,39 @@ export function messageEchecPont(erreur: unknown, canal: string): string {
   const message = texteErreur(erreur);
   return canalAbsent(message, canal) ? traduire("msg.pont.redemarrer") : message;
 }
+
+/**
+ * Un chemin dans le répertoire de travail, ou un refus.
+ *
+ * ÉCRIT D'UN DÉBRIS TROUVÉ DANS LE DÉPÔT, le 2026-10-21 : un dossier nommé `[object Promise]` à la
+ * racine, portant neuf fichiers de zéro octet — `python_input_*.wav` et `python_output_*.mid` —
+ * datés du 8 octobre. `obtenirRepertoireTravail` est un `ipcRenderer.invoke`, donc une promesse ;
+ * employée sans `await`, elle s'interpole en cette chaîne, et le nœud ÉCRIT dans un dossier au nom
+ * absurde au lieu d'échouer. Les deux nœuds de script s'en gardaient déjà, chacun de son côté et
+ * sans mot commun ; les six autres nœuds qui écrivent dans ce répertoire ne s'en gardaient pas.
+ *
+ * ET LE DÉBRIS ÉTAIT INVISIBLE, ce qui est la moitié du défaut. `git status` ne le rapportait pas,
+ * et la raison est la plus simple : ces neuf fichiers étaient SUIVIS, ajoutés par le commit initial
+ * `e677234`, et un fichier suivi que personne ne modifie n'apparaît nulle part. Ni dans `git status`,
+ * ni dans `git ls-files --others`, où je les ai cherchés en vain avant de penser à `git ls-files`
+ * tout court. Les crochets du nom n'y étaient pour rien — un dossier d'essai `[essai crochets]` est
+ * bien rapporté — et aucune règle d'exclusion ne les visait. Le dossier a donc vécu dans le dépôt
+ * depuis le premier jour, et la faute qui l'a créé est antérieure à son historique.
+ *
+ * LE REFUS PORTE SUR LA FORME, non sur la chaîne « [object Promise] ». `undefined` donnerait
+ * `undefined/sortie.wav`, `null` donnerait `null/sortie.wav`, et une chaîne vide écrirait à la
+ * racine du processus : un seul garde pour les quatre, puisque la faute est une seule — un chemin
+ * fabriqué à partir de ce qui n'est pas un chemin.
+ */
+export function cheminDansTravail(base: unknown, nom: string):
+  { ok: true; chemin: string } | { ok: false; message: string } {
+  const estPromesse = typeof base === "object" && base !== null
+    && typeof (base as { then?: unknown }).then === "function";
+  if (estPromesse) return { ok: false, message: traduire("msg.travail.promesse") };
+  if (typeof base !== "string") return { ok: false, message: traduire("msg.travail.absent") };
+  // La barre finale est retirée pour que le chemin rendu n'en porte jamais deux : le répertoire
+  // vient d'un dialogue système, qui en met une sous Windows et pas sous les autres.
+  const propre = base.trim().replace(/[\\/]+$/, "");
+  if (!propre) return { ok: false, message: traduire("msg.travail.absent") };
+  return { ok: true, chemin: `${propre}/${nom}` };
+}

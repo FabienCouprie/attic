@@ -20,10 +20,11 @@ import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import {
-  CANAL_PLANIFIER, CANAL_RENDRE, LANGUES, PARAMETRE_CALCUL, PARAMETRES_RENDU, api, octetsWav, suivre,
+  CANAL_PLANIFIER, CANAL_RENDRE, LANGUES, PARAMETRE_CALCUL, PARAMETRES_RENDU, api, guidageDe, octetsWav, suivre,
 } from "./chanson-aides";
 import { fiches as variantes } from "./chanson-variantes";
 import { fiches as accompagnement } from "./chanson-accompagnement";
+import { fiches as compositionDePlan } from "./composer-plan";
 
 const locales = ([
   {
@@ -176,6 +177,11 @@ const locales = ([
       { nom: "Timbre", nomEn: "Timbre", type: "audio", requis: false },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
+    // LE GUIDAGE EST DANS LA LISTE PARTAGÉE, À 7,5, et ce composant n'a donc rien à surcharger :
+    // les quatre rendus partent de la même valeur, par décision du propriétaire. C'est ici que la
+    // mesure la soutient le mieux, ce composant n'ayant pas d'audio source : le guidage n'y arbitre
+    // qu'entre le rendu et la description, et 7,5 sort plus fort et plus ouvert dans l'aigu que le
+    // défaut du moteur. `chanson-aides.ts` porte ce que cela coûte aux trois autres.
     parametres: [...PARAMETRES_RENDU],
     async executer(ctx: any) {
       const pont = api();
@@ -202,6 +208,7 @@ const locales = ([
             peripherique: ctx.paramTexte("Calcul", "").trim(),
             tuile: ctx.paramNombre("Tuile du décodeur", 256),
             recouvrement: ctx.paramNombre("Recouvrement", 32),
+            ...guidageDe(ctx),
           }) as typeof r;
         } catch (erreur) {
           // Même cas que pour la planification : le canal peut manquer au processus principal.
@@ -228,4 +235,4 @@ const locales = ([
 // les quatre de `chanson-variantes.ts` et celui de `chanson-accompagnement.ts`, qui tire un
 // second débruiteur. Le registre de `index.ts` dépasse la norme de taille et n'a donc pas le droit
 // de grossir ; ce qu'on y ajouterait va ailleurs, et l'ailleurs d'une famille est sa propre entrée.
-export const fiches = [...locales, ...variantes, ...accompagnement];
+export const fiches = [...locales, ...variantes, ...accompagnement, ...compositionDePlan];

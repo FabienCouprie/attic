@@ -91,10 +91,16 @@ export const fiches = ([
         defaut: FORMATIONS[0].fr, defautEn: FORMATIONS[0].en,
         doc: "La formation construite autour de la voix. Les quatre se distinguent d'autant mieux que « Guidage » est haut.",
         docEn: "The line-up built around the vocal. The four tell apart the better the higher « Guidance » is." },
-      { nom: "Guidage", nomEn: "Guidance", type: "curseur", plage: [1, 10], pas: 0.5, defaut: 7.5,
-        doc: "Poids de la description du plan. Au plus bas, l'accompagnement reste proche de la voix reçue ; en montant, il s'en éloigne et suit la description.",
-        docEn: "How much weight the plan's description carries. At the lowest, the backing stays close to the received vocal; higher up, it moves away and follows the description." },
       ...parametresRenduAvec({
+        // LE GUIDAGE VIENT DÉSORMAIS DE LA LISTE PARTAGÉE, avec ici sa propre plage et son propre
+        // défaut : zéro, qui ailleurs laisse le moteur décider, n'a pas de sens pour cette tâche.
+        // Mesuré : à 1,0 la sortie corrèle encore à 0,964 avec la voix reçue, c'est-à-dire qu'elle
+        // ne construit rien. La plage part donc de 1 et le défaut est 7,5.
+        "Guidage": {
+          plage: [1, 10], defaut: 7.5,
+          doc: "Poids de la description du plan. Au plus bas, l'accompagnement reste proche de la voix reçue ; en montant, il s'en éloigne et suit la description.",
+          docEn: "How much weight the plan's description carries. At the lowest, the backing stays close to the received vocal; higher up, it moves away and follows the description.",
+        },
         "Pas de débruitage": {
           defaut: 50,
           doc: "Nombre d'étapes de débruitage. Cinquante est la valeur du modèle employé ici.",
@@ -115,7 +121,8 @@ export const fiches = ([
         // fichier de modèle doublerait ce savoir, et les deux finiraient par diverger.
         tache: "complete",
         piste: c.paramTexte("Instruments", DEFAUT) || DEFAUT,
-        guidage: c.paramNombre("Guidage", 7.5),
+        // LE GUIDAGE N'EST PLUS PASSÉ ICI : la lecture commune s'en charge, et sa plage part de 1
+        // sur ce composant, donc il est toujours transmis.
       }));
     },
   },

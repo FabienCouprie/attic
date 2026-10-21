@@ -14,6 +14,7 @@ import { traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
 import { canauxDe } from "../audio/geometrie-sonore";
+import { fiches as descripteurDeSons } from "./decrire-audio";
 import {
   AXES_ESTHETIQUES, preparerTranches, agregerTranches, scoresDepuisSortie, pointsFaibles,
   ecartsEsthetiques, formaterHorodatage, type AnalyseEsthetique, type ScoresEsthetiques, type TrancheNotee,
@@ -92,7 +93,7 @@ function rapportComparaison(a: AnalyseEsthetique, b: AnalyseEsthetique): string 
 
 const apiFenetre = (): ApiEsthetique => ((globalThis as { window?: { api?: ApiEsthetique } }).window?.api ?? {});
 
-export const fiches: FicheAudio[] = ([
+const scoreEsthetique: FicheAudio[] = ([
   {
     id: "score-esthetique", nom: "Score esthétique", nomEn: "Aesthetic Score",
     univers: "Visualisation", famille: "Analyse",
@@ -150,3 +151,11 @@ export const fiches: FicheAudio[] = ([
     },
   },
 ] as FicheAudio[]).map(avecDoc);
+
+// LE DESCRIPTEUR DE SONS SORT PAR ICI, avec le scoreur esthétique dont il est le proche : tous deux
+// décrivent un audio par un modèle appris au lieu de le transformer. Le registre de `index.ts`
+// dépasse la norme de taille et n'a donc pas le droit de grossir ; ce qu'on y ajouterait va
+// ailleurs, et l'ailleurs d'une famille est sa propre entrée. Même raison que pour le cloneur de
+// voix et les sept nœuds de chanson. `analyse.ts`, le voisin le plus naturel, est à 441 lignes et
+// n'avait pas la place.
+export const fiches = [...scoreEsthetique, ...descripteurDeSons];

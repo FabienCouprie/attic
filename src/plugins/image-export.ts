@@ -4,6 +4,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { cheminDansTravail } from "./pont-electron";
 
 function extensionParMime(mime: string) {
   if (mime === "image/png") return "png";
@@ -51,7 +52,9 @@ export const fiches: FicheAudio[] = ([
 
       const nom = ctx.paramTexte("Nom", "export.png");
       const nomFinal = nomAvecExtension(nom, image.type);
-      const chemin = `${ctx.repertoireTravail}/${nomFinal}`;
+      const cible = cheminDansTravail(ctx.repertoireTravail, nomFinal);
+      if (!cible.ok) return { valeurs: [null], erreur: true, message: cible.message };
+      const chemin = cible.chemin;
 
       const bytes = new Uint8Array(await image.arrayBuffer());
       const ecrit = await api.ecrireFichier(chemin, bytes);
