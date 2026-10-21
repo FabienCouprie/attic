@@ -112,10 +112,19 @@ export function dispositions(
 /**
  * CONDUITE DES VOIX : chaque accord prend la disposition la plus proche du précédent.
  *
- * Le premier accord est laissé tel quel — c'est lui qui fixe le registre, et le déplacer
- * reviendrait à décider du registre à la place de celui qui a écrit l'accord. La suite est
- * gloutonne : on choisit à chaque pas le moindre mouvement, sans revenir sur les choix
- * passés. Une recherche globale ferait parfois mieux d'un demi-ton, pour un coût
+ * Le premier accord fixe le registre, et se compare donc à LUI-MÊME : la disposition la
+ * plus proche de ce qui était écrit est ce qui était écrit, tant que cela tient dans les
+ * bornes. Déplacer ce premier accord sans raison reviendrait à décider du registre à la
+ * place de celui qui l'a écrit.
+ *
+ * MAIS UNE BORNE EST UNE CONSIGNE, et elle passe devant le registre écrit. Le premier
+ * accord était auparavant rendu tel quel sans être confronté aux bornes : à plafond 60,
+ * l'accord écrit 60/64/67 sortait sept demi-tons au-dessus du plafond demandé, et le
+ * réglage ne tenait sa promesse que pour les accords suivants. Il prend maintenant, comme
+ * eux, la disposition la plus proche parmi celles qui tiennent.
+ *
+ * La suite est gloutonne : on choisit à chaque pas le moindre mouvement, sans revenir sur
+ * les choix passés. Une recherche globale ferait parfois mieux d'un demi-ton, pour un coût
  * exponentiel et un résultat qu'on n'entendrait pas.
  *
  * `avecRenversements` à faux ne déplace les accords que par OCTAVES entières : la
@@ -128,21 +137,21 @@ export function conduireVoix(
   const sortie: number[][] = [];
   let precedent: number[] | null = null;
   for (const accord of suite) {
-    if (!precedent) {
-      const premier = trie(accord);
-      sortie.push(premier);
-      precedent = premier;
-      continue;
-    }
+    const ecrit = trie(accord);
     const candidats = dispositions(accord, graveMin, aiguMax, avecRenversements);
+    // Aucune disposition ne tient entre les bornes : rendre l'accord tel quel dit la vérité,
+    // le replier de force mentirait sur son harmonie.
     if (candidats.length === 0) {
-      sortie.push(trie(accord));
-      precedent = trie(accord);
+      sortie.push(ecrit);
+      precedent = ecrit;
       continue;
     }
+    // LE REPÈRE DU PREMIER ACCORD EST L'ACCORD ÉCRIT : s'il tient, il est candidat à coût nul
+    // et se rend donc inchangé ; s'il dépasse, la borne tranche.
+    const repere = precedent ?? ecrit;
     let meilleur = candidats[0], cout = Infinity;
     for (const c of candidats) {
-      const m = mouvementTotal(precedent, c);
+      const m = mouvementTotal(repere, c);
       if (m < cout) { cout = m; meilleur = c; }
     }
     sortie.push(meilleur);
