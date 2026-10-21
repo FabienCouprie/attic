@@ -96,7 +96,18 @@ function passeStereo(buffer: AudioBuffer, params: SoundTouchParams): AudioBuffer
     totalFrames += frames;
   }
 
+  // UN SON TROP COURT NE REND AUCUNE TRAME, et il faut le DIRE. L'extracteur travaille par blocs de
+  // 4 096 trames et n'en rend aucune tant qu'il n'en a pas assez : mesuré, rien ne sort en dessous
+  // de 8 192 échantillons d'entrée, quel que soit le tempo — 7 168 ne rend rien, 8 192 rend tout.
+  // Le tampon de sortie était alors construit avec une longueur nulle, et c'est le constructeur qui
+  // levait, en anglais et sans rapport : « Invalid length: 0 is less than or equal to minimum bound ».
+  // Quatre composants faisaient remonter cette phrase à l'usager.
   const finalLen = Math.min(totalFrames, targetFrames);
+  if (finalLen <= 0) {
+    throw new Error(
+      `Le son est trop court pour cette transformation : ${buffer.length} échantillons reçus, `
+      + `et l'algorithme n'en rend aucun en dessous de 8192, soit 0,17 seconde à 48 kHz.`);
+  }
   const out = new AudioBuffer({ numberOfChannels: channels, length: finalLen, sampleRate: sr });
   const left = new Float32Array(finalLen);
   const right = new Float32Array(finalLen);
