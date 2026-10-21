@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**495 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**496 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -320,6 +320,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Fin d'instrument | `instrument-fin` | 240 × 140 |
 | Lecture inversée | `inverseur-audio` | 240 × 118 |
 | Inversion de polarité | `inversion-polarite` | 240 × 118 |
+| Isoler la voix | `isoler-voix` | 240 × 140 |
 | Jointure audio | `jointure-audio` | 240 × 140 |
 | Jointure MIDI | `jointure-midi` | 240 × 140 |
 | L-système | `l-systeme` | 240 × 162 |

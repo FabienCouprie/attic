@@ -141,6 +141,15 @@ contextBridge.exposeInMainWorld("api", {
     return () => ipcRenderer.removeListener("ced:progression", ecouteur);
   },
 
+  // La séparation d'une voix et de son accompagnement. Elle rend DEUX pistes, là où les trois
+  // autres familles du même exécutable n'en rendent qu'une. Même désabonnement.
+  roformerSeparer: (options) => ipcRenderer.invoke("roformer:separer", options),
+  roformerProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("roformer:progression", ecouteur);
+    return () => ipcRenderer.removeListener("roformer:progression", ecouteur);
+  },
+
   majVerifier: () => ipcRenderer.invoke("maj:verifier"),
   majInfo: () => ipcRenderer.invoke("maj:info"),
   majInstallerRelancer: () => ipcRenderer.invoke("maj:installer-relancer"),

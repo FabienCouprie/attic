@@ -1433,6 +1433,19 @@ ipcMain.handle("ced:etiqueter", async (event, options) => {
   }
 });
 
+const { separer: roformerSeparer } = require("./roformer.cjs");
+
+ipcMain.handle("roformer:separer", async (event, options) => {
+  try {
+    return await roformerSeparer(options, (ligne) => {
+      if (!event.sender.isDestroyed()) event.sender.send("roformer:progression", { ligne });
+    }, contexteRessources());
+  } catch (err) {
+    console.error("[attic] roformer:separer a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
 // ─── Auto-updater : configuration + IPC ───
 let infoMaj = etatNeutre();
 
