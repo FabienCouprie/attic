@@ -29,6 +29,7 @@ import { dirname, join } from "path";
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BUILD = join(RACINE, "dist", "index.html");
 const MODELE_CED = join(RACINE, "public", "audiocpp", "ced-base-f32.gguf");
+const MODELE_ROFORMER = join(RACINE, "public", "audiocpp", "mel-band-roformer-f16.gguf");
 
 /**
  * La source la plus récemment modifiée du projet, pour la comparer à l'âge du build.
@@ -269,6 +270,65 @@ test.describe("un composant à modèle, de bout en bout", () => {
       const compte = Number(/(\d+)\s*(?:étiquette|label)/i.exec(rendu)?.[1] ?? 0);
       expect(compte, `le moteur doit rendre des étiquettes, message lu : « ${rendu.replace(/\n/g, " | ")} »`)
         .toBeGreaterThan(0);
+    } finally {
+      await app.close();
+    }
+  });
+});
+
+// LE SECOND COMPOSANT À MODÈLE, ET IL EXERCE DEUX CHOSES QUE LE PREMIER N'EXERCE PAS.
+//
+// DEUX PISTES AU RETOUR. Les trois autres familles de cet exécutable rendent un seul fichier ;
+// celle-ci en dépose plusieurs dans un dossier, et `--out` y est refusé en clair au profit de
+// `--out-dir`. Le chemin du retour est donc différent : on lit un DOSSIER, et deux décodages
+// suivent au lieu d'un.
+//
+// ET UN ALLER-RETOUR DE FRÉQUENCE. Le modèle exige quarante-quatre mille cent hertz et refuse net
+// les quarante-huit mille où travaille le reste du dépôt : le composant rééchantillonne à l'aller
+// et ramène les deux pistes à la fréquence reçue. Rien ne vérifiait que cette traversée tient dans
+// l'application, où l'audio vient d'un contexte réel et non d'un tampon fabriqué.
+test.describe("le séparateur, de bout en bout", () => {
+  test.skip(!existsSync(BUILD), "Aucun build : lancer « npm run build » avant cette épreuve.");
+  test.skip(!existsSync(MODELE_ROFORMER), "Modèle RoFormer absent : le récupérer depuis le panneau des modèles.");
+  test.setTimeout(300000);
+
+  test("« ISOLER LA VOIX » TRAVERSE LE PONT ET REND SES DEUX PISTES", async () => {
+    const app = await lancer();
+
+    try {
+      const page = await app.firstWindow();
+      await page.waitForLoadState("domcontentloaded");
+
+      await page.evaluate(() => {
+        const graphe = {
+          nodes: [
+            { id: "src", position: { x: 0, y: 0 },
+              data: { ficheId: "metronome", parametres: { "Tempo": 120, "Durée": 6 } } },
+            { id: "sep", position: { x: 360, y: 0 },
+              data: { ficheId: "isoler-voix", parametres: { "Calcul": "" } } },
+          ],
+          edges: [{ id: "e1", source: "src", target: "sep", sourceHandle: "out:0", targetHandle: "in:0" }],
+        };
+        localStorage.setItem("attic-encours", JSON.stringify(graphe));
+      });
+      await page.reload();
+      await page.waitForSelector(".attic-app", { timeout: 60000 });
+      await page.locator('[data-id="sep"]').waitFor({ timeout: 60000 });
+
+      await page.getByRole("button", { name: /Lancer/ }).click();
+
+      // LE MOTIF EXIGE LE FACTEUR DE TEMPS RÉEL, et non le mot « Voix » : celui-ci est aussi le nom
+      // d'une SORTIE, affiché dès que le nœud est posé. La leçon est celle de l'épreuve voisine, où
+      // l'attente se satisfaisait d'un nom de port et lisait le nœud en plein travail.
+      const noeud = page.locator('[data-id="sep"]');
+      await expect(noeud).toContainText(/temps réel|real time/i, { timeout: 240000 });
+
+      const rendu = await noeud.innerText();
+      expect(rendu, "le pont doit répondre, et non manquer").not.toMatch(/nécessite Electron|requires Electron/i);
+      expect(rendu, "le modèle doit être trouvé").not.toMatch(/Modèle absent|Model missing/i);
+      // UNE PISTE MANQUANTE EST RAPPORTÉE PAR SON NOM, et l'adaptateur refuse alors : c'est le
+      // seul cas où le dossier de sortie répond à moitié.
+      expect(rendu, "aucune piste ne doit manquer").not.toMatch(/Piste « \w+ » absente/i);
     } finally {
       await app.close();
     }
