@@ -34,7 +34,8 @@ const MULTIPLICATEUR = /1103515245/;
  * L'EN-TÊTE DE CE FICHIER ANNONÇAIT L'ANGLE MORT, et le 2026-10-22 il s'est avéré peuplé : un
  * balayage par la forme a rendu **trois** générateurs distincts là où la règle n'en voyait qu'un.
  * Celui de la bibliothèque C, celui de Numerical Recipes — `s * 1664525 + 1013904223` dans huit
- * modules — et un MINSTD, `s * 16807 % 2147483647`, dans l'automate cellulaire.
+ * modules, et quatre de plus sous la forme `Math.imul` — et un MINSTD, `s * 16807 % 2147483647`,
+ * dans l'automate cellulaire.
  *
  * LES DEUX AUTRES NE PERDENT RIEN, ET C'EST MESURÉ et non déduit : vingt mille tirages rendent
  * 20 000 valeurs distinctes pour Numerical Recipes comme pour le générateur commun, contre
@@ -45,8 +46,16 @@ const MULTIPLICATEUR = /1103515245/;
  * Le motif cherche une variable réaffectée à elle-même multipliée par une grande constante, ce qui
  * est la mécanique même d'un générateur congruentiel. `creerAleatoire` ne la porte pas : il ajoute
  * puis mêle par `Math.imul`, sans jamais multiplier son état par un littéral.
+ *
+ * ET LE MOTIF A DÛ ÊTRE ÉLARGI UNE SECONDE FOIS, le jour même. Sa première écriture ne cherchait
+ * que la multiplication écrite en clair, `g = (g * 1664525 + …)`. Quatre modules l'écrivent avec
+ * `Math.imul`, qui est la bonne façon de multiplier sur 32 bits — ils ne débordent donc pas, mais
+ * ce sont bien des générateurs privés, et le motif ne les voyait pas. Deux angles morts d'affilée
+ * sur la même règle : une forme se vérifie en comptant ce qu'elle trouve CONTRE ce que la
+ * constante trouve, et non en la relisant.
  */
-const FORME_CONGRUENTIELLE = /\b([A-Za-z_$][\w$]*)\s*=\s*\(?\s*\1\s*\*\s*\d{4,}/;
+const FORME_CONGRUENTIELLE =
+  /\b([A-Za-z_$][\w$]*)\s*=\s*\(?\s*(?:\1\s*\*\s*\d{4,}|Math\.imul\(\s*\1\s*,\s*\d{4,}\s*\))/;
 
 function sources(dossier = "src", out: string[] = []): string[] {
   for (const e of readdirSync(dossier, { withFileTypes: true })) {
@@ -65,18 +74,10 @@ function sources(dossier = "src", out: string[] = []): string[] {
  * Fabien de décider quand. Une entrée ne s'y ajoute pas ; elle s'en retire.
  */
 const A_CORRIGER = new Set<string>([
-  "src/audio/ampleur.ts",
-  "src/audio/brassage.ts",
-  "src/audio/cercle-film.ts",
-  "src/audio/courbe.ts",
-  "src/audio/deplacement.ts",
-  "src/audio/gendyn.ts",
-  "src/audio/kit-batterie.ts",
-  "src/audio/synthese-features.ts",
-  "src/audio/texture-statistique.ts",
-  "src/audio/velours.ts",
-  "src/audio/wishart.ts",
-  "src/plugins/instrument-graphe.ts",
+  // VIDE DEPUIS LE 2026-10-22, SUR DÉCISION DE FABIEN. Les douze modules sont passés à
+  // `creerAleatoire`. Le coût était connu et assumé : chacun rend une pièce différente à graine
+  // égale, puisque c'est la suite de nombres elle-même qui change. Le gain l'est aussi, et il est
+  // mesuré — 20 000 valeurs distinctes sur 20 000 au lieu de 14 469.
 ]);
 
 /**
@@ -92,11 +93,29 @@ const RECENSES = new Set<string>([
   "src/audio/automate-cellulaire.ts",
   "src/audio/continuation-spectrale.ts",
   "src/audio/ecosysteme.ts",
+  "src/audio/fondamentale-manquante.ts",
   "src/audio/mandelbrot.ts",
   "src/audio/pca-neuronale.ts",
+  "src/audio/platine.ts",
   "src/audio/reverb-fractal.ts",
   "src/audio/spectrogramme-fractal.ts",
   "src/audio/ssp.ts",
+  "src/audio/ubiquite.ts",
+  "src/audio/vague.ts",
+]);
+
+/**
+ * Ce qui porte la forme sans être un générateur, et pourquoi.
+ *
+ * Une empreinte FNV-1a multiplie son état par un nombre premier à chaque caractère : la mécanique
+ * est celle d'un congruentiel et la forme ne peut pas les distinguer. Mais elle ne TIRE rien — elle
+ * REND un identifiant en nombre, toujours le même pour la même chaîne, et c'est tout son intérêt.
+ * L'état y reçoit d'ailleurs une donnée du dehors à chaque tour, ce qu'un générateur ne fait jamais.
+ * Les deux s'en servent pour donner sa graine à chaque question.
+ */
+const EMPREINTES = new Set<string>([
+  "src/quiz/catalogue.ts",
+  "src/quiz/tour.ts",
 ]);
 
 describe("aucun générateur écrit à la main", () => {
@@ -121,9 +140,12 @@ describe("aucun générateur écrit à la main", () => {
     ].join("\n")).toEqual([]);
   });
 
-  it("ET AUCUNE ENTRÉE DE LA TABLE N'A VIEILLI : une ligne inutile masquerait le retour du défaut", () => {
+  it("ET LA TABLE EST VIDE, CE QUI EST LE BUT ATTEINT : plus un seul module ne porte la copie", () => {
+    // Le cas ne disparaît pas avec la table : il dit l'état, et il tombera le jour où une entrée
+    // réapparaîtrait sans que personne ne l'ait voulu.
     const perimes = [...A_CORRIGER].filter((f) => !fautifs.includes(f));
     expect(perimes, "à retirer de A_CORRIGER : ces modules n'en portent plus").toEqual([]);
+    expect(fautifs, "plus aucune source ne porte le multiplicateur fautif").toEqual([]);
   });
 
   it("LE GÉNÉRATEUR COMMUN NE DÉBORDE PAS, et c'est toute la différence", () => {
@@ -147,7 +169,7 @@ describe("aucun générateur écrit à la main", () => {
     const parLaForme = sources()
       .filter((f) => FORME_CONGRUENTIELLE.test(readFileSync(f, "utf8")))
       .map((f) => f.replace(/\\/g, "/"));
-    const inattendus = parLaForme.filter((f) => !A_CORRIGER.has(f) && !RECENSES.has(f));
+    const inattendus = parLaForme.filter((f) => !A_CORRIGER.has(f) && !RECENSES.has(f) && !EMPREINTES.has(f));
     expect(inattendus, [
       "Un module écrit son propre générateur congruentiel.",
       "Le dépôt en a UN, `creerAleatoire` de `core/hasard.ts`, et sa convention de graine va avec.",
@@ -160,6 +182,7 @@ describe("aucun générateur écrit à la main", () => {
     expect(FORME_CONGRUENTIELLE.test("g = (g * 1103515245 + 12345) & 0x7fffffff")).toBe(true);
     expect(FORME_CONGRUENTIELLE.test("s = (s * 1664525 + 1013904223) >>> 0")).toBe(true);
     expect(FORME_CONGRUENTIELLE.test("(s = (s * 16807) % 2147483647)")).toBe(true);
+    expect(FORME_CONGRUENTIELLE.test("g = (Math.imul(g, 1664525) + 1013904223) >>> 0")).toBe(true);
     // Le générateur commun AJOUTE son décalage au lieu de multiplier son état : c'est ce qui le
     // distingue, et le motif ne le prend donc pas. Sa constante n'est pas écrite ici, le garde
     // voisin de `docs/hasard-commun.test.ts` la réservant à `core/hasard.ts` — il m'a attrapé.
@@ -176,6 +199,8 @@ describe("aucun générateur écrit à la main", () => {
       .map((f) => f.replace(/\\/g, "/"));
     const perimes = [...RECENSES].filter((f) => !parLaForme.includes(f));
     expect(perimes, "à retirer de RECENSES : ces modules n'écrivent plus de générateur").toEqual([]);
+    const sansEmpreinte = [...EMPREINTES].filter((f) => !parLaForme.includes(f));
+    expect(sansEmpreinte, "à retirer de EMPREINTES : ces modules ne portent plus la forme").toEqual([]);
   });
 
   it("ET `Math.random` RESTE UNE SOURCE INJECTÉE, jamais un appel au milieu d'un calcul", () => {

@@ -19,6 +19,7 @@ import type { Pulsation } from "./cercle-pulsant";
 import { couleurVersCamelot } from "./cercle-pulsant";
 import { FIGURES, melangerFigures, pointsSuperforme, type Superforme } from "./superforme";
 import { styleNomme } from "./styles-film";
+import { creerAleatoire } from "../core/hasard";
 
 export interface OptionsFilm {
   /** Durée du film, en secondes. */
@@ -94,8 +95,7 @@ export function enveloppe(depuis: number, creux: number): number {
 
 /** Un tirage reproductible, pour que deux rendus du même film donnent la même image. */
 const tirage = (graine: number) => {
-  let g = (graine | 0) || 1;
-  return () => { g = (g * 1103515245 + 12345) & 0x7fffffff; return g / 0x7fffffff; };
+  return creerAleatoire(graine);
 };
 
 /**
@@ -171,8 +171,7 @@ export function dessinerImage(
   style = "Style 5", palette: readonly string[] = [],
 ): void {
   const main = styleNomme(style);
-  let g = 12345;
-  const alea = () => { g = (g * 1103515245 + 12345) & 0x7fffffff; return g / 0x7fffffff; };
+  const alea = creerAleatoire(12345);
   const centre = { x: largeur / 2, y: hauteur / 2 };
   const rayonMax = Math.min(largeur, hauteur) * 0.42;
 

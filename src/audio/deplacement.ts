@@ -15,6 +15,8 @@
 // formule : la hauteur mesurée à l'arrivée est celle que la physique impose, y compris pendant le
 // passage où elle bascule.
 
+import { creerAleatoire } from "../core/hasard";
+
 /**
  * Lecture à retard variable, par interpolation linéaire.
  *
@@ -215,8 +217,7 @@ export function saturerBande(v: number, attaque: number): number {
 export function bande(x: Float32Array, o: OptionsBande): Float32Array {
   const n = x.length;
   const y = lireAvecRetard(x, retardsBande(n, o));
-  let g = (o.graine | 0) || 1;
-  const alea = () => { g = (g * 1103515245 + 12345) & 0x7fffffff; return g / 0x7fffffff; };
+  const alea = creerAleatoire(o.graine);
 
   // Les décrochages : des creux courts, avec un fondu, sinon on entendrait des clics.
   const creux = new Float32Array(n).fill(1);

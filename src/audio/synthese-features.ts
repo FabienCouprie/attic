@@ -22,6 +22,8 @@
 // disent « le timbre bouge de tant » sans dire comment. On fait osciller l'enveloppe jusqu'à
 // approcher la variance visée, ce qui choisit une trajectoire parmi une infinité.
 
+import { creerAleatoire } from "../core/hasard";
+
 /** L'échelle mel, dans la forme usuelle — celle des bancs de filtres. */
 export const melDepuisHz = (hz: number) => 1127 * Math.log(1 + Math.max(0, hz) / 700);
 export const hzDepuisMel = (mel: number) => 700 * (Math.exp(mel / 1127) - 1);
@@ -162,8 +164,7 @@ export interface OptionsSynthese {
 
 /** Générateur reproductible : une graine donnée rejoue le même son. */
 function tirage(graine: number): () => number {
-  let g = (graine | 0) || 1;
-  return () => { g = (g * 1103515245 + 12345) & 0x7fffffff; return g / 0x7fffffff; };
+  return creerAleatoire(graine);
 }
 
 /**

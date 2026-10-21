@@ -26,6 +26,7 @@
 // ses propres unités.
 
 import { fft } from "./fft";
+import { creerAleatoire } from "../core/hasard";
 
 /** Cadence par défaut des courbes, en valeurs par seconde. */
 export const CADENCE = 200;
@@ -474,8 +475,7 @@ export function engendrer(o: OptionsGenerateur): Courbe {
   if (loi) return { valeurs: tracerLoi(n, loi), cadence };
   const v = new Float32Array(n);
   const f = o.frequence ?? 0.5;
-  let g = ((o.graine ?? 1) | 0) || 1;
-  const alea = () => { g = (g * 1103515245 + 12345) & 0x7fffffff; return g / 0x7fffffff; };
+  const alea = creerAleatoire(o.graine ?? 1);
   let x = 0.4;
   const r = o.r ?? 3.9;
   let marche = 0.5;

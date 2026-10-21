@@ -20,6 +20,8 @@
 // du procédé, pas un défaut de l'implémentation, et Wishart en fait d'ailleurs
 // un usage délibéré.
 
+import { creerAleatoire } from "../core/hasard";
+
 export type OperationWaveset = "repetition" | "omission" | "inversion" | "melange" | "egalisation";
 
 export interface OptionsWaveset {
@@ -51,11 +53,7 @@ export function decouperWavesets(canal: Float32Array): number[] {
 
 /** Générateur déterministe : un mélange doit se reproduire à l'identique. */
 function alea(graine: number): () => number {
-  let etat = (graine | 0) || 1;
-  return () => {
-    etat = (etat * 1103515245 + 12345) & 0x7fffffff;
-    return etat / 0x7fffffff;
-  };
+  return creerAleatoire(graine);
 }
 
 export function transformerWavesets(buffer: AudioBuffer, options: OptionsWaveset): AudioBuffer {
