@@ -24,17 +24,25 @@
  *
  * Le note-off d'abord referme l'ancienne note à sa durée, le note-on relance ensuite :
  * les deux notes existent, et l'attaque se réentend à chaque accord.
+ *
+ * UN NOTE-ON DE VÉLOCITÉ NULLE EST UN NOTE-OFF, et il se range comme tel. C'est la convention du
+ * protocole, pas un cas rare : elle existe pour que le statut courant n'ait pas à changer entre deux
+ * notes. Rangé comme un note-on, il passerait APRÈS le note-on qui relance la même hauteur au même
+ * tick, et refermerait la note qui vient de s'ouvrir — exactement le défaut que ce classement
+ * existe pour empêcher, par une autre porte. La règle était déjà écrite dans
+ * `midi-quantification.ts`, où elle avait été trouvée une première fois ; elle vit ici désormais,
+ * et ce qui la connaissait la reçoit sans la redire.
  */
-function rangEvenement(type: string): number {
-  if (type === "noteOn") return 2;
+function rangEvenement(type: string, velocity?: number): number {
+  if (type === "noteOn") return velocity === 0 ? 1 : 2;
   if (type === "noteOff") return 1;
   return 0; // setTempo, timeSignature, controller, programChange : avant les notes.
 }
 
 /** Comparateur d'événements MIDI absolus : par tick, puis par rang dans le tick. */
 export function comparerEvenementsMidi(
-  a: { tick: number; type: string },
-  b: { tick: number; type: string },
+  a: { tick: number; type: string; velocity?: number },
+  b: { tick: number; type: string; velocity?: number },
 ): number {
-  return a.tick - b.tick || rangEvenement(a.type) - rangEvenement(b.type);
+  return a.tick - b.tick || rangEvenement(a.type, a.velocity) - rangEvenement(b.type, b.velocity);
 }

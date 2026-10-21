@@ -68,11 +68,11 @@ jobs:
       # LE HARNAIS ELECTRON TOURNE ICI, SINON IL NE TOURNE NULLE PART.
       #
       # `npm run test` est la suite unitaire ; elle s'exécute sans jamais lancer l'application, et
-      # `window.api` n'y existe pas. Les quatre cas de `tests-e2e/pont-electron-vivant.spec.ts`
-      # lancent la VRAIE application sur `dist/index.html` : le préchargement, les soixante-deux
-      # canaux du pont, le schéma `attic-res:` et un composant à modèle de bout en bout. Sans cette
-      # étape ils ne s'exécuteraient que lorsqu'on y pense, et c'est précisément ce que l'étape NSIS
-      # ci-dessus existe pour éviter.
+      # `window.api` n'y existe pas. Les cas de `tests-e2e/pont-electron-vivant.spec.ts` lancent la
+      # VRAIE application sur `dist/index.html` : l'âge du build, le préchargement, les soixante-deux
+      # canaux du pont, le schéma `attic-res:` et deux composants à modèle de bout en bout. Sans
+      # cette étape ils ne s'exécuteraient que lorsqu'on y pense, et c'est précisément ce que l'étape
+      # NSIS ci-dessus existe pour éviter.
       #
       # LE BINAIRE EST ASSURÉ D'ABORD, pour la même raison que dans le workflow de release : il peut
       # manquer quand `node_modules` revient du cache sans que le script d'installation du paquet
@@ -87,10 +87,16 @@ jobs:
             throw "Le binaire d'Electron est absent : $electron. Le téléchargement a-t-il abouti ?"
           }
 
-      # DEUX DES QUATRE CAS S'IGNORENT ICI, ET C'EST ASSUMÉ. Celui du schéma `attic-res:` demande le
-      # paquet Whisper, celui du composant à modèle demande l'étiqueteur CED : sept cent quatre-vingt
-      # mégaoctets à récupérer à chaque passe, pour des modèles que l'application télécharge elle-
-      # même. Les deux autres ne demandent rien et couvrent le pont, qui est ce qui casse. Chacun
-      # dit la raison de son abandon plutôt que de se taire.
+      # CE QUI S'IGNORE ICI, C'EST EXACTEMENT LES GGUF D'`audio.cpp`, et c'est assumé. Le
+      # `postinstall` ramène tolérément les familles ONNX, Sherpa et Magenta, le paquet Whisper avec
+      # elles : le cas du schéma `attic-res:` tourne donc ici, puisque `npm ci` lui a déjà posé son
+      # fichier. Rien en revanche ne ramène les modèles d'`audio.cpp`, que seul le panneau des
+      # modèles va chercher, et les deux cas qui en dépendent s'ignorent : l'étiqueteur CED pèse
+      # 343 Mo et le séparateur RoFormer 457 Mo, soit 800 Mo (762 Mio) par passe. Chacun dit la
+      # raison de son abandon plutôt que de se taire.
+      #
+      # RELEVÉ SUR LA PASSE DU 2026-10-21, et non supposé : « 3 passed, 1 skipped (17.7s) » sur le
+      # coureur Windows, l'ignoré étant l'étiqueteur. J'avais annoncé deux abandons en comptant
+      # Whisper parmi les modèles absents, faute d'avoir lu le `postinstall` qui le ramène.
       - name: Electron end-to-end
         run: npm run test:electron

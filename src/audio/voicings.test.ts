@@ -148,6 +148,28 @@ describe("conduite des voix", () => {
     }
   });
 
+  it("Y COMPRIS LE PREMIER, dont le registre écrit ne passe pas devant une borne demandée", () => {
+    // LE CAS QUE LE PRÉCÉDENT NE POSAIT PAS : sa progression commence dans les bornes, de sorte que
+    // le premier accord n'y était jamais confronté. À plafond 60, l'accord écrit 60/64/67 dépasse de
+    // sept demi-tons, et il sortait tel quel.
+    const premier = conduireVoix([[60, 64, 67], [65, 69, 72]], 36, 60)[0];
+    expect(premier[premier.length - 1], `premier accord rendu : ${premier}`).toBeLessThanOrEqual(60);
+    expect(classes(premier), "et son harmonie ne change pas").toEqual(classes([60, 64, 67]));
+    // La disposition la plus proche de ce qui était écrit, et non la plus basse possible : le
+    // premier renversement descendu d'une octave, sommet pile sur le plafond.
+    expect(premier).toEqual([52, 55, 60]);
+  });
+
+  it("et sans renversement il ne descend que par octaves entières", () => {
+    const premier = conduireVoix([[60, 64, 67], [65, 69, 72]], 36, 60, false)[0];
+    expect(premier).toEqual([48, 52, 55]);
+  });
+
+  it("mais un accord plus large que les bornes sort tel quel, faute de disposition", () => {
+    // Rien ne tient entre 50 et 60 : le rendre tel quel dit la vérité, le replier mentirait.
+    expect(conduireVoix([[36, 96], [40, 90]], 50, 60)[0]).toEqual([36, 96]);
+  });
+
   it("supporte une suite vide et un accord d'une seule note", () => {
     expect(conduireVoix([])).toEqual([]);
     // Une note seule suit la même règle : le sol du dessous est à cinq demi-tons de do,

@@ -72,15 +72,17 @@ export async function transposerQuantifierMidi(
         }
       }
 
-      // Un note-on de vélocité nulle vaut un note-off : il doit être rangé comme tel.
-      const typeReel = (evt: any) =>
-        evt.type === "noteOn" && evt.velocity === 0 ? "noteOff" : evt.type;
+      // Un note-on de vélocité nulle vaut un note-off : `comparerEvenementsMidi` le range comme tel
+      // dès lors qu'on lui passe la vélocité, et la règle vit maintenant là-bas plutôt qu'ici.
       // `endOfTrack` reste le dernier événement quoi qu'il arrive : son rang le ferait passer avant
       // un note-off de même tick, et la piste finirait avant sa dernière note.
       const fin = eventsAbsolus.filter((ea) => ea.evt.type === "endOfTrack");
       const corps = eventsAbsolus.filter((ea) => ea.evt.type !== "endOfTrack");
       corps.sort((a, b) =>
-        comparerEvenementsMidi({ tick: a.tick, type: typeReel(a.evt) }, { tick: b.tick, type: typeReel(b.evt) }),
+        comparerEvenementsMidi(
+          { tick: a.tick, type: a.evt.type, velocity: (a.evt as any).velocity },
+          { tick: b.tick, type: b.evt.type, velocity: (b.evt as any).velocity },
+        ),
       );
       const ordonnes = [...corps, ...fin];
       let prevTick = 0;
