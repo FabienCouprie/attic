@@ -83,15 +83,31 @@ export const PARAMETRES_RENDU = [
   // que du bruit : 2 866, 3 007, 2 686 et 2 821 Hz pour 8, 16, 32 et 50 pas, soit quatre fois le
   // temps pour rien. C'est donc ici que se règle le son, et non là.
   //
-  // ZÉRO NE POSE RIEN, et c'est ce qui rend l'ajout sans effet sur les graphes déjà enregistrés :
-  // le champ reste absent de la requête et le moteur décide, exactement comme avant. La même
-  // convention que « Tempo » à zéro et « Graine » à moins un.
+  // ZÉRO NE POSE RIEN : le champ reste absent de la requête et le moteur décide seul. La même
+  // convention que « Tempo » à zéro et « Graine » à moins un. Ce n'est plus le défaut, mais c'est
+  // la valeur à poser pour retrouver le comportement d'avant ce réglage.
+  //
+  // LE DÉFAUT EST 7,5 SUR LES QUATRE RENDUS, par décision du propriétaire, et cela CHANGE LE SON
+  // DES GRAPHES DÉJÀ ENREGISTRÉS : un projet écrit avant ce réglage ne porte pas la clé, donc il
+  // retombe ici.
+  //
+  // CE QU'IL COÛTE AUX TROIS RENDUS QUI PARTENT D'UN AUDIO, mesuré sur une reprise de dix secondes
+  // après que la décision a été prise, et qui mérite d'être relu avant de la reconduire :
+  //
+  //   sans guidage   corrélation à la source 0,2099   centroïde 4 995 Hz   15,96 % au-dessus de 10 kHz
+  //   à 7,5          corrélation à la source 0,1408   centroïde 4 461 Hz   13,82 %
+  //
+  // DEUX CHOSES À EN TIRER. La reprise perd un tiers de sa ressemblance à ce qu'on lui demande de
+  // reprendre, ce qui était la réserve posée. Et elle devient MOINS brillante, c'est-à-dire
+  // l'inverse de ce que le guidage fait sur une génération sans source, où il monte l'aigu : le
+  // raisonnement qui vaut pour « Rendre une chanson » ne se transporte donc pas tel quel ici.
+  // Poser zéro sur ces trois composants rend le comportement d'avant.
   //
   // CE QUE LA MESURE NE DIT PAS : qu'un guidage haut sonne MIEUX. Elle dit qu'il monte le niveau et
   // l'aigu ; en diffusion, le prix habituel en est la saturation et les artefacts, et cela s'écoute.
-  { nom: "Guidage", nomEn: "Guidance", type: "curseur" as const, plage: [0, 20], pas: 0.5, defaut: 0,
-    doc: "Poids de la description du plan dans le rendu. À zéro, le champ n'est pas posé et le moteur décide, ce qui est le comportement d'origine. En montant, le rendu suit la description de plus près : le niveau et l'aigu augmentent, et le risque d'artefacts avec eux.",
-    docEn: "How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides, which is the original behaviour. Higher up, the render follows the description more closely: level and treble rise, and the risk of artefacts with them." },
+  { nom: "Guidage", nomEn: "Guidance", type: "curseur" as const, plage: [0, 20], pas: 0.5, defaut: 7.5,
+    doc: "Poids de la description du plan dans le rendu. À zéro, le champ n'est pas posé et le moteur décide seul. En montant, le rendu suit la description de plus près, et le risque d'artefacts croît avec elle. Sur un rendu qui part d'une entrée « Audio », monter le guidage éloigne aussi le résultat de cet audio.",
+    docEn: "How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio." },
   PARAMETRE_CALCUL,
   { nom: "Tuile du décodeur", nomEn: "Decoder tile", type: "nombre" as const, plage: [64, 1024], pas: 64, defaut: 256,
     unite: "trames", uniteEn: "frames",
@@ -163,8 +179,9 @@ export const NOTICE_RENDU_FR =
   + "changer ce qu'on entend.\n\n"
   + "« Glissement » déplace les instants auxquels le débruitage travaille.\n\n"
   + "« Guidage » décide du poids que la description du plan porte dans le rendu. À zéro, le champ "
-  + "n'est pas posé et le moteur décide. En montant, le rendu suit la description de plus près : le "
-  + "niveau et l'aigu augmentent, et le risque d'artefacts avec eux.\n\n"
+  + "n'est pas posé et le moteur décide seul. En montant, le rendu suit la description de plus "
+  + "près, et le risque d'artefacts croît avec elle. Sur un rendu qui part d'une entrée « Audio », "
+  + "monter le guidage éloigne aussi le résultat de cet audio.\n\n"
   + "« Calcul » nomme le périphérique employé.\n\n"
   + "« Tuile du décodeur » et « Recouvrement » décident du découpage du décodage audio. La mémoire "
   + "demandée suit la taille de la tuile, jamais la durée du morceau. Le recouvrement est ce qui "
@@ -175,8 +192,9 @@ export const NOTICE_RENDU_EN =
   + "changing what is heard.\n\n"
   + "« Shift » moves the instants at which denoising works.\n\n"
   + "« Guidance » decides how much weight the plan's description carries in the render. At zero, "
-  + "the field is not set and the engine decides. Higher up, the render follows the description "
-  + "more closely: level and treble rise, and the risk of artefacts with them.\n\n"
+  + "the field is not set and the engine decides on its own. Higher up, the render follows the "
+  + "description more closely, and the risk of artefacts grows with it. On a render that starts "
+  + "from an « Audio » input, raising the guidance also moves the result away from that audio.\n\n"
   + "« Compute » names the device used.\n\n"
   + "« Decoder tile » and « Overlap » decide how the audio decoding is cut up. The memory required "
   + "follows the tile size, never the piece's length. The overlap is what keeps a seam from being "

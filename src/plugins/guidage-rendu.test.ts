@@ -32,36 +32,41 @@ describe("guidageDe", () => {
     expect(guidageDe(ctx(0.5))).toEqual({ guidage: 0.5 });
   });
 
-  it("la liste partagée porte le réglage, et son défaut est le zéro qui ne transmet rien", () => {
-    const g = PARAMETRES_RENDU.find((p) => p.nom === "Guidage");
+  it("la liste partagée porte le réglage, et le zéro reste atteignable", () => {
+    const g = PARAMETRES_RENDU.find((p) => p.nom === "Guidage") as { plage?: number[] } | undefined;
     expect(g, "« Guidage » doit être dans PARAMETRES_RENDU").toBeDefined();
-    expect(g!.defaut).toBe(0);
+    // LE ZÉRO DOIT RESTER DANS LA PLAGE, même s'il n'est plus le défaut : c'est la seule valeur qui
+    // retrouve le comportement d'avant ce réglage, et une plage qui partirait de 0,5 la rendrait
+    // injoignable sans que rien ne le dise.
+    expect(g!.plage?.[0]).toBe(0);
   });
 });
 
-// LES DÉFAUTS NE SONT PAS LES MÊMES D'UN RENDU À L'AUTRE, et ce n'est pas un oubli : ce que le
-// guidage arbitre change avec la tâche. « Rendre une chanson » n'a pas d'audio source, donc il
-// n'arbitre qu'entre le rendu et la description, et 7,5 y est posé. Les trois rendus qui partent
-// d'un audio existant arbitrent AUSSI contre cet audio : une reprise poussée s'éloignerait de ce
-// qu'on lui demande de reprendre, donc ils gardent zéro, qui laisse le moteur décider.
+// LES CINQ RENDUS PARTENT DE 7,5, par décision du propriétaire, et ce cas est là pour que la
+// décision se VOIE plutôt que de se découvrir à l'oreille le jour où quelqu'un la change.
+//
+// CE QU'ELLE COÛTE AUX TROIS QUI PARTENT D'UN AUDIO est mesuré et écrit dans `chanson-aides.ts` :
+// sur une reprise, la corrélation avec l'audio source tombe de 0,2099 à 0,1408, et le rendu devient
+// MOINS brillant, 4 995 Hz de centroïde contre 4 461. Le raisonnement qui soutient 7,5 sur un rendu
+// sans source ne se transporte donc pas tel quel ici. Poser zéro sur ces composants rend le
+// comportement d'avant ce réglage.
 describe("le défaut du guidage, rendu par rendu", () => {
   const defautDe = (id: string) => {
     const f = toutesLesFiches.find((x) => x.id === id) as { parametres?: { nom: string; defaut?: unknown }[] };
     return f?.parametres?.find((p) => p.nom === "Guidage")?.defaut;
   };
 
-  it("« Rendre une chanson » part à 7,5", () => {
-    expect(defautDe("rendre-chanson")).toBe(7.5);
-  });
-
-  it("LES TROIS RENDUS QUI PARTENT D'UN AUDIO GARDENT ZÉRO", () => {
-    for (const id of ["reprendre-chanson", "retoucher-chanson", "prolonger-chanson"]) {
-      expect(defautDe(id), id).toBe(0);
+  it("LES CINQ RENDUS PARTENT DE 7,5", () => {
+    for (const id of ["rendre-chanson", "reprendre-chanson", "retoucher-chanson",
+      "prolonger-chanson", "accompagner-voix"]) {
+      expect(defautDe(id), id).toBe(7.5);
     }
   });
 
-  it("« Accompagner une voix » garde le sien, que la mesure a fixé", () => {
-    expect(defautDe("accompagner-voix")).toBe(7.5);
+  it("celui qui part d'une voix garde sa plage propre, où zéro n'a pas de sens", () => {
+    const f = toutesLesFiches.find((x) => x.id === "accompagner-voix") as
+      { parametres?: { nom: string; plage?: number[] }[] };
+    expect(f.parametres?.find((p) => p.nom === "Guidage")?.plage).toEqual([1, 10]);
   });
 });
 
