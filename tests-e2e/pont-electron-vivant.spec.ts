@@ -38,6 +38,11 @@ const MODELE_CED = join(RACINE, "public", "audiocpp", "ced-base-f32.gguf");
  * la seconde épreuve de ce fichier sur un nœud qui n'existait pas encore dedans, et le symptôme
  * n'était pas lisible : le composant s'affichait sous son identifiant brut, suivi d'« Erreur ».
  * Un harnais qui éprouve silencieusement une AUTRE application que celle qu'on écrit ne vaut rien.
+ *
+ * SEUL `src/` EST REGARDÉ, ET C'EST UNE CORRECTION. La comparaison incluait d'abord `electron/`, et
+ * le cas s'est mis à exiger une reconstruction après une retouche dans ce dossier : à tort, car
+ * `dist/` est bâti depuis `src/` seul. Les fichiers du processus principal sont lus EN DIRECT sur
+ * le disque à chaque lancement, donc ils sont toujours à jour et ne peuvent pas périmer l'artefact.
  */
 function sourceLaPlusRecente(dossiers: string[]): number {
   let recente = 0;
@@ -79,7 +84,7 @@ test.describe("l'artefact que ces épreuves lancent", () => {
 
   test("LE BUILD EST À JOUR, sans quoi tout ce qui suit éprouve une autre application", () => {
     const build = statSync(BUILD).mtimeMs;
-    const source = sourceLaPlusRecente([join(RACINE, "src"), join(RACINE, "electron")]);
+    const source = sourceLaPlusRecente([join(RACINE, "src")]);
     const retard = Math.round((source - build) / 60000);
     expect(source <= build, [
       `« dist/index.html » a ${retard} minute(s) de retard sur la source la plus récente.`,
@@ -133,6 +138,67 @@ test.describe("le pont, dans l'application qui tourne", () => {
       });
       expect(typeof repertoire, "l'aller-retour doit rendre un chemin").toBe("string");
       expect((repertoire as string).length).toBeGreaterThan(0);
+    } finally {
+      await app.close();
+    }
+  });
+});
+
+// LA CLASSE DE DÉFAUT QUI A COÛTÉ LA v3.1.4, et que seul ce harnais peut atteindre. Un chemin de
+// modèle se résout d'une façon en développement, où Vite sert la racine, et d'une autre une fois la
+// page chargée depuis `file://`, où un `fetch` enraciné pointe vers la racine du DISQUE. Le worker
+// Sherpa fonctionnait et ne trouvait plus rien une fois empaqueté ; `chemins-ressources.cjs` porte
+// ce récit, et `base-modeles.ts` la réponse : sous `file:`, on passe par le schéma `attic-res:`.
+//
+// RIEN NE VÉRIFIAIT QUE CETTE RÉPONSE TIENT. Le calcul de la base est une fonction pure, qu'un cas
+// unitaire peut lire ; que le schéma soit enregistré, que le dossier soit déclaré servi, et qu'un
+// fichier en ressorte, ne se voit que dans l'application qui tourne.
+//
+// LE CONTENU EST EXIGÉ, PAS SEULEMENT LE CODE DE RETOUR : un protocole qui répondrait par une page
+// d'erreur rendrait un 200 honorable, et c'est le piège déjà rencontré sur le miroir des modèles,
+// où un chemin inconnu rendait 200 avec du `text/html`.
+test.describe("les modèles livrés, sous le protocole de l'application empaquetée", () => {
+  test.skip(!existsSync(BUILD), "Aucun build : lancer « npm run build » avant cette épreuve.");
+  test.skip(!existsSync(join(RACINE, "public", "oonx", "whisper-base-en", "config.json")),
+    "Paquet Whisper absent : le récupérer depuis le panneau des modèles.");
+  test.setTimeout(120000);
+
+  test("LA BASE SE RÉSOUT EN « attic-res: » ET UN FICHIER EN SORT VRAIMENT", async () => {
+    const app = await lancer();
+
+    try {
+      const page = await app.firstWindow();
+      await page.waitForLoadState("domcontentloaded");
+
+      // LA PAGE VIENT BIEN DE `file:`, sans quoi cette épreuve ne prouverait rien : c'est la
+      // condition même du défaut qu'elle garde.
+      expect(await page.evaluate(() => location.protocol),
+        "hors `file:`, cette épreuve ne garde rien").toBe("file:");
+
+      const releve = await page.evaluate(async () => {
+        const base = `attic-res://oonx/whisper-base-en`;
+        const r = await fetch(`${base}/config.json`);
+        const texte = await r.text();
+        let lisible = false;
+        try { lisible = typeof JSON.parse(texte) === "object"; } catch { lisible = false; }
+        return { base, ok: r.ok, statut: r.status, octets: texte.length, lisible };
+      });
+
+      expect(releve.ok, `le schéma doit servir le fichier, statut reçu ${releve.statut}`).toBe(true);
+      expect(releve.octets, "un fichier vide vaudrait un fichier absent").toBeGreaterThan(0);
+      expect(releve.lisible, "le protocole doit rendre le fichier, et non une page d'erreur").toBe(true);
+
+      // ET CE QU'IL NE SERT PAS DOIT ÊTRE REFUSÉ : la liste des dossiers servis est ce qui rend ce
+      // schéma sûr, et un refus qui n'en serait pas un l'ouvrirait sur tout le disque.
+      const interdit = await page.evaluate(async () => {
+        try {
+          const r = await fetch("attic-res://ailleurs/secret.txt");
+          return { refuse: !r.ok, statut: r.status };
+        } catch {
+          return { refuse: true, statut: 0 };
+        }
+      });
+      expect(interdit.refuse, "un dossier non déclaré doit être refusé").toBe(true);
     } finally {
       await app.close();
     }
