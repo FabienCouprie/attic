@@ -67,6 +67,31 @@ export const PARAMETRES_RENDU = [
   { nom: "Glissement", nomEn: "Shift", type: "nombre" as const, plage: [0.5, 6], pas: 0.5, defaut: 3,
     doc: "Déplace les instants auxquels le débruitage travaille.",
     docEn: "Moves the instants at which denoising works." },
+  // LE SEUL RÉGLAGE DONT L'EFFET SUR LE SON EST NET, et il n'était offert que par un nœud sur six.
+  // Le moteur lit `guidance_scale` et `acestep-plan.cjs` sait l'écrire depuis l'origine ; seul
+  // « Accompagner une voix » le passait, de sorte que les cinq autres rendus tournaient sur le
+  // défaut du moteur sans que personne puisse y toucher.
+  //
+  // MESURÉ SUR UN MÊME PLAN, MÊME GRAINE, dix secondes, sur une RTX 2060 :
+  //
+  //   non posé   −23,62 dB   centroïde 2 626 Hz   6,64 % de l'énergie au-dessus de 10 kHz
+  //   3          −22,20 dB   centroïde 2 375 Hz   5,92 %
+  //   7,5        −21,67 dB   centroïde 2 684 Hz   7,60 %
+  //   15         −19,81 dB   centroïde 2 866 Hz   10,37 %
+  //
+  // La tendance est monotone de 3 à 15, là où le même banc sur « Pas de débruitage » ne donnait
+  // que du bruit : 2 866, 3 007, 2 686 et 2 821 Hz pour 8, 16, 32 et 50 pas, soit quatre fois le
+  // temps pour rien. C'est donc ici que se règle le son, et non là.
+  //
+  // ZÉRO NE POSE RIEN, et c'est ce qui rend l'ajout sans effet sur les graphes déjà enregistrés :
+  // le champ reste absent de la requête et le moteur décide, exactement comme avant. La même
+  // convention que « Tempo » à zéro et « Graine » à moins un.
+  //
+  // CE QUE LA MESURE NE DIT PAS : qu'un guidage haut sonne MIEUX. Elle dit qu'il monte le niveau et
+  // l'aigu ; en diffusion, le prix habituel en est la saturation et les artefacts, et cela s'écoute.
+  { nom: "Guidage", nomEn: "Guidance", type: "curseur" as const, plage: [0, 20], pas: 0.5, defaut: 0,
+    doc: "Poids de la description du plan dans le rendu. À zéro, le champ n'est pas posé et le moteur décide, ce qui est le comportement d'origine. En montant, le rendu suit la description de plus près : le niveau et l'aigu augmentent, et le risque d'artefacts avec eux.",
+    docEn: "How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides, which is the original behaviour. Higher up, the render follows the description more closely: level and treble rise, and the risk of artefacts with them." },
   PARAMETRE_CALCUL,
   { nom: "Tuile du décodeur", nomEn: "Decoder tile", type: "nombre" as const, plage: [64, 1024], pas: 64, defaut: 256,
     unite: "trames", uniteEn: "frames",
@@ -105,6 +130,19 @@ export function suivre(ctx: { onProgress?: (m: string) => void }) {
   return pont(({ ligne }) => ctx.onProgress?.(ligne));
 }
 
+/**
+ * Le guidage à passer au moteur, ou rien.
+ *
+ * ZÉRO NE SE TRANSMET PAS, et c'est ce qui rend ce réglage sans effet sur les graphes déjà
+ * enregistrés : `appliquerTache` n'écrit `guidance_scale` que sur un nombre fini, donc un champ
+ * absent laisse le moteur décider, comme avant que ce réglage existe. Un zéro transmis serait au
+ * contraire un guidage NUL, c'est-à-dire un rendu qui n'écoute plus du tout sa description.
+ */
+export function guidageDe(ctx: { paramNombre: (nom: string, repli: number) => number }) {
+  const g = ctx.paramNombre("Guidage", 0);
+  return Number.isFinite(g) && g > 0 ? { guidage: g } : {};
+}
+
 /** Les mêmes réglages de rendu, avec d'autres valeurs par défaut quand le modèle n'est pas le même. */
 export function parametresRenduAvec(remplacements: Record<string, Record<string, unknown>>) {
   return PARAMETRES_RENDU.map((p) => (remplacements[p.nom] ? { ...p, ...remplacements[p.nom] } : p));
@@ -124,6 +162,9 @@ export const NOTICE_RENDU_FR =
   "« Pas de débruitage » décide du nombre d'étapes. Davantage allonge le calcul sans toujours "
   + "changer ce qu'on entend.\n\n"
   + "« Glissement » déplace les instants auxquels le débruitage travaille.\n\n"
+  + "« Guidage » décide du poids que la description du plan porte dans le rendu. À zéro, le champ "
+  + "n'est pas posé et le moteur décide. En montant, le rendu suit la description de plus près : le "
+  + "niveau et l'aigu augmentent, et le risque d'artefacts avec eux.\n\n"
   + "« Calcul » nomme le périphérique employé.\n\n"
   + "« Tuile du décodeur » et « Recouvrement » décident du découpage du décodage audio. La mémoire "
   + "demandée suit la taille de la tuile, jamais la durée du morceau. Le recouvrement est ce qui "
@@ -133,6 +174,9 @@ export const NOTICE_RENDU_EN =
   "« Denoising steps » decides the number of steps. More lengthens the computation without always "
   + "changing what is heard.\n\n"
   + "« Shift » moves the instants at which denoising works.\n\n"
+  + "« Guidance » decides how much weight the plan's description carries in the render. At zero, "
+  + "the field is not set and the engine decides. Higher up, the render follows the description "
+  + "more closely: level and treble rise, and the risk of artefacts with them.\n\n"
   + "« Compute » names the device used.\n\n"
   + "« Decoder tile » and « Overlap » decide how the audio decoding is cut up. The memory required "
   + "follows the tile size, never the piece's length. The overlap is what keeps a seam from being "
@@ -189,6 +233,7 @@ export async function rendreSurAudio(
         peripherique: ctx.paramTexte("Calcul", "").trim(),
         tuile: ctx.paramNombre("Tuile du décodeur", 256),
         recouvrement: ctx.paramNombre("Recouvrement", 32),
+        ...guidageDe(ctx),
         ...supplements(ctx, source),
       }) as typeof r;
     } catch (erreur) {

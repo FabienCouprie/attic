@@ -20,7 +20,7 @@ import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import {
-  CANAL_PLANIFIER, CANAL_RENDRE, LANGUES, PARAMETRE_CALCUL, PARAMETRES_RENDU, api, octetsWav, suivre,
+  CANAL_PLANIFIER, CANAL_RENDRE, LANGUES, PARAMETRE_CALCUL, PARAMETRES_RENDU, api, guidageDe, octetsWav, suivre,
 } from "./chanson-aides";
 import { fiches as variantes } from "./chanson-variantes";
 import { fiches as accompagnement } from "./chanson-accompagnement";
@@ -203,6 +203,7 @@ const locales = ([
             peripherique: ctx.paramTexte("Calcul", "").trim(),
             tuile: ctx.paramNombre("Tuile du décodeur", 256),
             recouvrement: ctx.paramNombre("Recouvrement", 32),
+            ...guidageDe(ctx),
           }) as typeof r;
         } catch (erreur) {
           // Même cas que pour la planification : le canal peut manquer au processus principal.
