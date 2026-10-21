@@ -244,7 +244,7 @@ This component renders the audio of a plan written by « Plan a Song ». The pla
 |---|---|---|---|---|
 | Denoising steps | number | 8 | 4 – 50, step 1 | Number of denoising steps. Eight is the fast model's value. |
 | Shift | number | 3 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. |
-| Guidance | slider | 0 | 0 – 20, step 0.5 | How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides, which is the original behaviour. Higher up, the render follows the description more closely: level and treble rise, and the risk of artefacts with them. |
+| Guidance | slider | 7.5 | 0 – 20, step 0.5 | How much weight the plan's description carries in the render. Higher up, the render follows the description more closely: level and treble rise, and the risk of artefacts with them. At zero, the field is not set and the engine decides on its own. |
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |

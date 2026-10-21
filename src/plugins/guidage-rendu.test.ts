@@ -39,6 +39,32 @@ describe("guidageDe", () => {
   });
 });
 
+// LES DÉFAUTS NE SONT PAS LES MÊMES D'UN RENDU À L'AUTRE, et ce n'est pas un oubli : ce que le
+// guidage arbitre change avec la tâche. « Rendre une chanson » n'a pas d'audio source, donc il
+// n'arbitre qu'entre le rendu et la description, et 7,5 y est posé. Les trois rendus qui partent
+// d'un audio existant arbitrent AUSSI contre cet audio : une reprise poussée s'éloignerait de ce
+// qu'on lui demande de reprendre, donc ils gardent zéro, qui laisse le moteur décider.
+describe("le défaut du guidage, rendu par rendu", () => {
+  const defautDe = (id: string) => {
+    const f = toutesLesFiches.find((x) => x.id === id) as { parametres?: { nom: string; defaut?: unknown }[] };
+    return f?.parametres?.find((p) => p.nom === "Guidage")?.defaut;
+  };
+
+  it("« Rendre une chanson » part à 7,5", () => {
+    expect(defautDe("rendre-chanson")).toBe(7.5);
+  });
+
+  it("LES TROIS RENDUS QUI PARTENT D'UN AUDIO GARDENT ZÉRO", () => {
+    for (const id of ["reprendre-chanson", "retoucher-chanson", "prolonger-chanson"]) {
+      expect(defautDe(id), id).toBe(0);
+    }
+  });
+
+  it("« Accompagner une voix » garde le sien, que la mesure a fixé", () => {
+    expect(defautDe("accompagner-voix")).toBe(7.5);
+  });
+});
+
 describe("les paramètres d'un composant", () => {
   const avecParametres = toutesLesFiches.filter((f) => Array.isArray((f as { parametres?: unknown[] }).parametres)
     && ((f as { parametres: unknown[] }).parametres.length > 0));

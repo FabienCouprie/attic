@@ -93,6 +93,7 @@
         "parametres": {
           "Pas de débruitage": 8,
           "Glissement": 3,
+          "Guidage": 7.5,
           "Calcul": "",
           "Tuile du décodeur": 256,
           "Recouvrement": 32

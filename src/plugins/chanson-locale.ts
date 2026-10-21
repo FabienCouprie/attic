@@ -20,7 +20,7 @@ import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import {
-  CANAL_PLANIFIER, CANAL_RENDRE, LANGUES, PARAMETRE_CALCUL, PARAMETRES_RENDU, api, guidageDe, octetsWav, suivre,
+  CANAL_PLANIFIER, CANAL_RENDRE, LANGUES, PARAMETRE_CALCUL, api, guidageDe, octetsWav, parametresRenduAvec, suivre,
 } from "./chanson-aides";
 import { fiches as variantes } from "./chanson-variantes";
 import { fiches as accompagnement } from "./chanson-accompagnement";
@@ -177,7 +177,22 @@ const locales = ([
       { nom: "Timbre", nomEn: "Timbre", type: "audio", requis: false },
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    parametres: [...PARAMETRES_RENDU],
+    // LE GUIDAGE EST POSÉ ICI, ET SEULEMENT ICI parmi les quatre rendus. Ce composant n'a pas
+    // d'audio source : le guidage n'y arbitre qu'entre le rendu et la description du plan, et la
+    // mesure donne 7,5 plus fort et plus ouvert dans l'aigu que le défaut du moteur. Les trois
+    // rendus qui partent d'un audio existant gardent zéro, car le guidage y arbitre aussi contre
+    // CET audio : une reprise poussée à 7,5 s'éloignerait de ce qu'on lui demande de reprendre.
+    //
+    // CELA CHANGE LE SON DES GRAPHES DÉJÀ ENREGISTRÉS, et c'est assumé. Un projet écrit avant ce
+    // réglage ne porte pas la clé, donc il retombe sur ce défaut. Un projet enregistré depuis la
+    // porte et garde sa valeur.
+    parametres: parametresRenduAvec({
+      "Guidage": {
+        defaut: 7.5,
+        doc: "Poids de la description du plan dans le rendu. En montant, le rendu suit la description de plus près : le niveau et l'aigu augmentent, et le risque d'artefacts avec eux. À zéro, le champ n'est pas posé et le moteur décide seul.",
+        docEn: "How much weight the plan's description carries in the render. Higher up, the render follows the description more closely: level and treble rise, and the risk of artefacts with them. At zero, the field is not set and the engine decides on its own.",
+      },
+    }),
     async executer(ctx: any) {
       const pont = api();
       if (!pont?.acestepRendre) {
