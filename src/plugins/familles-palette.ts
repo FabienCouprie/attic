@@ -82,7 +82,7 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
     "morphing-spectral", "tracage-spectral", "crible-harmonique", "glissando-interieur",
     "decaleur-frequence", "griffin-lim", "phase-pghi", "remplissage-trou",
     "sms-sinusoides-bruit", "stn-sinus-transitoires-bruit", "separation-harmonique-percussive",
-    "separateur-ia", "ondelettes", "decomposition-atomique",
+    "separateur-ia", "isoler-voix", "ondelettes", "decomposition-atomique",
   ],
   // Malmener la forme d onde, ou la faire respirer.
   "Distorsion et modulation": [
