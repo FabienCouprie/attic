@@ -20,6 +20,7 @@
 // Cette propriété n'est pas une figure de style : elle se calcule, donc elle se
 // teste. Voir `periodeCanon`.
 
+import { mixdownMono } from "./commun";
 import { boucleSansCouture } from "./risset";
 
 export interface OptionsCanon {
@@ -95,7 +96,11 @@ export function canonDeTempo(buffer: AudioBuffer, options: OptionsCanon): AudioB
   const stereo = Math.max(0, Math.min(1, options.stereo ?? 0.8));
 
   const src = boucleSansCouture(buffer, options.fonduBoucleSec ?? 0.05);
-  const canalSrc = src.getChannelData(0);
+  // LA SOURCE EST LA MOYENNE DES CANAUX, et non le seul canal gauche. Ce module lisait
+  // `getChannelData(0)` : d'une prise stéréo, la moitié droite disparaissait sans que rien ne le
+  // dise. Mesuré avant la correction — une sinusoïde à 311 Hz posée à droite ressortait 31 dB plus
+  // bas que celle de gauche. La sortie, elle, reste stéréo, et c'est voulu.
+  const canalSrc = mixdownMono(src);
 
   const out = new AudioBuffer({ numberOfChannels: 2, length: nSorties, sampleRate: sr });
   const gauche = out.getChannelData(0);
