@@ -82,6 +82,37 @@ export function creerFenetreHann(taille: number): Float64Array {
  * plusieurs analyses spectrales/temporelles qui ne travaillent que sur un
  * signal mono (chroma, MFCC, centroïde...).
  */
+/**
+ * Remplace par zéro tout échantillon non fini, et rend la liste des canaux qui en portaient.
+ *
+ * POURQUOI CETTE FONCTION EXISTE. Un NaN dans un tampon audio est le pire des défauts silencieux :
+ * il ne se voit pas, il ne s'entend pas là où il est né, et il contamine TOUT ce qui l'additionne
+ * ensuite — un seul échantillon suffit à rendre muette une somme de six canaux. Le relevé du
+ * 2026-10-21 en a trouvé dans la sortie de la continuation spectrale, dont le modèle diverge
+ * parfois pendant l'entraînement.
+ *
+ * ELLE N'EXPLIQUE RIEN, ELLE CONSTATE. Un composant qui l'emploie doit DIRE ce qu'elle a trouvé,
+ * en nommant les canaux : étouffer la trace rendrait le défaut invisible une seconde fois.
+ *
+ * Le tampon est modifié EN PLACE : `getChannelData` rend une vue sur les données du canal, et non
+ * une copie, de sorte qu'écrire dans le tableau écrit dans le tampon. Un `copyToChannel` pour
+ * reposer la ligne a été écrit puis retiré — défaut planté, aucun cas n'a bougé, parce qu'il ne
+ * faisait que recopier la vue sur elle-même. C'est l'appelant qui vient de fabriquer ce tampon ;
+ * rien d'autre ne le tient encore.
+ */
+export function assainirNonFinis(buffer: AudioBuffer): number[] {
+  const touches: number[] = [];
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const x = buffer.getChannelData(c);
+    let vu = false;
+    for (let i = 0; i < x.length; i++) {
+      if (!Number.isFinite(x[i])) { x[i] = 0; vu = true; }
+    }
+    if (vu) touches.push(c);
+  }
+  return touches;
+}
+
 export function mixdownMono(buffer: AudioBuffer): Float32Array {
   const mono = new Float32Array(buffer.length);
   for (let c = 0; c < buffer.numberOfChannels; c++) {
