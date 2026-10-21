@@ -9150,6 +9150,7 @@ Analyzes the audio signal and detects the chord progression over time. For each 
 |---|---|---|---|
 | input | Audio | audio |  |
 | output | Audio | audio |  |
+| output | Chords | text |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|

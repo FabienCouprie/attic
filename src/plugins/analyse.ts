@@ -418,7 +418,14 @@ export const fiches: FicheAudio[] = ([
     resume: "Détecte la progression d'accords dans le signal audio.",
     resumeEn: "Detects the chord progression in the audio signal.",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Audio", type: "audio" }],
+    // LA PROGRESSION SORT PAR UN PORT, ET NON PLUS SEULEMENT PAR LE MESSAGE. Ce composant était le
+    // SEUL détecteur de sa famille dont la trouvaille ne pouvait pas quitter le nœud : l'analyse
+    // audio, l'analyse émotionnelle, le classeur de genre, le détecteur de tempo et le goniomètre
+    // rendent tous la leur. Elle était calculée, écrite dans le message, et perdue là.
+    sorties: [
+      { nom: "Audio", type: "audio" },
+      { nom: "Accords", nomEn: "Chords", type: "texte" },
+    ],
     parametres: [
       { nom: "Fenêtre d'analyse", nomEn: "Analysis window", plage: [0.1, 5], pas: 0.1, defaut: 0.5, unite: "s",
         doc: "Durée de chaque fenêtre d'analyse. Plus courte = plus précis temporellement mais moins stable ; plus longue = plus stable mais moins détaillé.",
@@ -426,16 +433,22 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e_audio") };
       const langue = langueCourante();
       const fenetre = ctx.paramNombre("Fenêtre d'analyse", 0.5);
       ctx.onProgress(traduire("progress.analyse_harmonique"));
       const accords = detecterAccords(audio, fenetre, (p) => ctx.onProgress(traduire("progress.analyse_var_0", p)));
-      if (accords.length === 0) return { valeurs: [audio], message: langue === "en" ? "No chords detected." : "Aucun accord détecté." };
       const texte = accordsVersTexte(accords, langue);
+      // AUCUN ACCORD N'EST UNE RÉPONSE, non une panne : la sortie porte alors la phrase que
+      // `accordsVersTexte` rend pour ce cas, de sorte qu'un composant branché en aval reçoive
+      // quelque chose de lisible plutôt que rien.
+      if (accords.length === 0) return { valeurs: [audio, texte], message: texte };
       const fr = langue === "fr";
       const resume = `${accords.length} ${fr ? "accords" : "chords"} · ${accords.map((a: any) => a.nomEn.split(" ").pop()).filter((v: string, i: number, arr: string[]) => arr.indexOf(v) === i).slice(0, 5).join(" → ")}`;
-      return { valeurs: [audio], message: traduire("msg.var_0_var_1", texte, resume) };
+      // LE MESSAGE GARDE LE RÉSUMÉ, ET LUI SEUL. Il portait la liste entière, une ligne par accord
+      // avec sa durée et sa confiance ; c'est ce que la sortie rend maintenant, et un message long
+      // de cinquante lignes n'est pas un message.
+      return { valeurs: [audio, texte], message: resume };
    },
  },
 ] as FicheAudio[]).map(avecDoc);
