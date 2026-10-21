@@ -64,3 +64,33 @@ jobs:
 
       - name: Test
         run: npm run test
+
+      # LE HARNAIS ELECTRON TOURNE ICI, SINON IL NE TOURNE NULLE PART.
+      #
+      # `npm run test` est la suite unitaire ; elle s'exécute sans jamais lancer l'application, et
+      # `window.api` n'y existe pas. Les quatre cas de `tests-e2e/pont-electron-vivant.spec.ts`
+      # lancent la VRAIE application sur `dist/index.html` : le préchargement, les soixante-deux
+      # canaux du pont, le schéma `attic-res:` et un composant à modèle de bout en bout. Sans cette
+      # étape ils ne s'exécuteraient que lorsqu'on y pense, et c'est précisément ce que l'étape NSIS
+      # ci-dessus existe pour éviter.
+      #
+      # LE BINAIRE EST ASSURÉ D'ABORD, pour la même raison que dans le workflow de release : il peut
+      # manquer quand `node_modules` revient du cache sans que le script d'installation du paquet
+      # Electron ait tourné. Et la vérification suit, parce qu'une étape qui ne fait rien doit
+      # échouer là où elle est : c'est la leçon du 2026-10-12, où `choco install` a rendu zéro
+      # paquet en sortant en zéro.
+      - name: Ensure Electron binary is present
+        run: |
+          node node_modules/electron/install.js
+          $electron = 'node_modules\electron\dist\electron.exe'
+          if (-not (Test-Path $electron)) {
+            throw "Le binaire d'Electron est absent : $electron. Le téléchargement a-t-il abouti ?"
+          }
+
+      # DEUX DES QUATRE CAS S'IGNORENT ICI, ET C'EST ASSUMÉ. Celui du schéma `attic-res:` demande le
+      # paquet Whisper, celui du composant à modèle demande l'étiqueteur CED : sept cent quatre-vingt
+      # mégaoctets à récupérer à chaque passe, pour des modèles que l'application télécharge elle-
+      # même. Les deux autres ne demandent rien et couvrent le pont, qui est ce qui casse. Chacun
+      # dit la raison de son abandon plutôt que de se taire.
+      - name: Electron end-to-end
+        run: npm run test:electron
