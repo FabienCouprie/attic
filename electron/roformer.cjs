@@ -16,6 +16,19 @@
 // LE PAQUET F16 ET NON LE Q8. Mesuré : le q8_0 rend deux pistes identiques, à −2,22 dB et 18 Hz de
 // centroïde, c'est-à-dire du rebut, et l'exécutable sort pourtant en zéro. Le f16 rend deux
 // signaux distincts. C'est pourquoi le nom du fichier est écrit ici plutôt que deviné.
+//
+// SEIZE BITS SUFFISENT, ET LA QUESTION EST FERMÉE. `--out-format` accepte `pcm24` et `float32`, et
+// l'idée est tentante : une piste séparée sort bien plus bas que le mélange dont elle vient, donc
+// elle paraît mériter plus de résolution. Mesuré en écrivant les mêmes pistes dans les deux
+// formats, l'écart entre elles est exactement le plancher de quantification :
+//
+//   la voix            signal −37,72 dB   écart −106,96 dB   rapport 69,2 dB
+//   l'accompagnement   signal −21,28 dB   écart −105,96 dB   rapport 84,7 dB
+//
+// Et l'autre faute possible, l'écrêtage, n'a pas lieu : les crêtes valent −16,26 et −3,33 dB, aucun
+// échantillon ne touche le plafond, et les crêtes des deux formats s'accordent à quatre décimales.
+// Même constat sur la voix du cloneur, crête à −8,37 dB. Le flottant doublerait la charge qui
+// traverse le pont pour un gain que rien ne mesure.
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
