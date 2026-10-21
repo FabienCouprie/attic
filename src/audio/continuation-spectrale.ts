@@ -4,7 +4,7 @@
 // - LSTM (petit réseau récurrent) : un "LLM de taille réduite" entraîné à la
 //   volée sur les frames spectrales.
 // Chaque canal est traité indépendamment, puis les canaux sont re-assemblés.
-import { creerFenetreHann } from "./commun";
+import { assainirNonFinis, creerFenetreHann } from "./commun";
 // L'analyse et la synthèse par trames vivent à côté : elles ne dépendent que de la transformée, et
 // ne savent rien du réseau qui décide de la suite.
 import {
@@ -412,6 +412,18 @@ export async function appliquerContinuationSpectrale(
   tf.dispose();
 
   const dureeGenereeS = (nGenFrames * hop) / sr;
-  const message = `Continuation spectrale ${mode.toUpperCase()} · +${nGenFrames} frames (~${dureeGenereeS.toFixed(2)} s)`;
+  // L'ENTRAÎNEMENT DIVERGE PARFOIS, et il le faisait en silence. Relevé le 2026-10-21 : la sortie
+  // portait des NaN sur deux canaux d'un tampon à six, le tampon ayant par ailleurs la bonne forme
+  // et la bonne longueur — donc rien en aval ne pouvait s'en apercevoir, et une somme de canaux
+  // serait devenue muette d'un bout à l'autre. La divergence n'est pas reproductible à paramètres
+  // égaux : elle n'a pas reparu en trente tirages hors du banc, graines et activations variées.
+  // Faute de pouvoir la provoquer, on garde la SORTIE : aucun NaN ne quitte ce module, et le
+  // message nomme les canaux qui en portaient plutôt que de taire l'incident.
+  const divergents = assainirNonFinis(resultat);
+  const message = `Continuation spectrale ${mode.toUpperCase()} · +${nGenFrames} frames (~${dureeGenereeS.toFixed(2)} s)`
+    + (divergents.length > 0
+      ? ` · prédiction divergée sur ${divergents.length === 1 ? "le canal" : "les canaux"} `
+        + `${divergents.map((c) => c + 1).join(", ")}, leur prolongation est muette`
+      : "");
   return { audio: resultat, message, nGenFrames, hop, sr, mode, epochs, dureeGenereeS };
 }
