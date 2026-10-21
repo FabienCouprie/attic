@@ -4,7 +4,7 @@
 // de calcul n'a ete retouchee au passage.
 
 import { parseMidi, writeMidi } from "midi-file";
-import { comparerEvenementsMidi } from "./midi-ordre";
+import { resoudreRecouvrements } from "./midi-recouvrement";
 import { analyserMidi } from "./midi";
 import type { NoteEvenement } from "./midi-sequence";
 
@@ -155,10 +155,12 @@ export async function arpegerMidi(
     lignes.push({ tick: Math.max(tickDebut + 1, tickFin), type: "noteOff", channel: 0, noteNumber: n.note, velocity: 0 });
   }
 
-  lignes.sort(comparerEvenementsMidi);
+  // LA DURÉE DE NOTE PEUT DÉPASSER LE PAS DE L'ARPÈGE, et un motif qui revient sur la même hauteur
+  // la rejouait alors avant de l'avoir relâchée. Voir `midi-recouvrement.ts`.
+  const ordonnees = resoudreRecouvrements(lignes);
   let tickCourant = 0;
   const events: { deltaTime: number; type: string; [key: string]: any }[] = [];
-  for (const l of lignes) {
+  for (const l of ordonnees) {
     const { tick, ...rest } = l;
     events.push({ deltaTime: tick - tickCourant, ...rest });
     tickCourant = tick;

@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 91 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 198 · transposable tel quel
+- **pur** : 199 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -205,6 +205,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | midi-montage.ts | rendu | OfflineAudioContext |
 | midi-ordre.ts | pur | — |
 | midi-quantification.ts | pur | — |
+| midi-recouvrement.ts | pur | — |
 | midi-sequence.ts | rendu | OfflineAudioContext |
 | midi-soundfont.ts | rendu | OfflineAudioContext |
 | midi-vers-abc.ts | pur | — |

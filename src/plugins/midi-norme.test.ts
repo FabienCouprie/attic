@@ -201,8 +201,10 @@ const RECOUVREMENT = ["hauteur deja ouverte", "note-off orphelin"];
  * autre travail que celui-ci.
  */
 const TOLERES: Record<string, string[]> = {
-  "arpegiateur-midi": RECOUVREMENT,
-  "boite-groove": RECOUVREMENT,
+  // VIDE DEPUIS LE 2026-10-21, et c'est le but atteint : plus aucun émetteur ne sort de la norme.
+  // Le recouvrement de même hauteur est levé à l'écriture par `audio/midi-recouvrement.ts`, qui
+  // referme la note ouverte à l'instant où la même hauteur se rejoue. Le premier cas de ce fichier
+  // exige donc maintenant ZÉRO manquement sur tous les émetteurs, sans exception nommée.
 };
 
 /** Le plancher d'émetteurs réellement éprouvés. Voir l'en-tête : un test qui n'exerce plus rien

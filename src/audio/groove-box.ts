@@ -4,7 +4,7 @@
 // aux notes de l'accord courant pour rester consonante.
 
 import { writeMidi } from "midi-file";
-import { comparerEvenementsMidi } from "./midi";
+import { resoudreRecouvrements } from "./midi-recouvrement";
 import { genererReservoirMusical, type ConfigReservoir, type NoteGeneree } from "./reservoir";
 import type { NoteMidi } from "./note";
 import {
@@ -233,15 +233,17 @@ function genererNotesBatterie(config: ConfigGrooveBox): NoteGroove[] {
 // même où elle s'ouvrait : durée nulle, donc silence. Un accord tenu jusqu'au suivant est
 // dans ce cas dès que deux degrés consécutifs partagent une note — et toujours, en blues,
 // dont la progression est I–I–I–I.
+//
+// ET LA MÊME HAUTEUR REJOUÉE AVANT D'ÊTRE RELÂCHÉE EST LEVÉE ICI, pour les deux écrivains de ce
+// fichier à la fois : le réservoir mélodique rend des notes dont la durée dépasse le pas, si bien
+// qu'une hauteur répétée se recouvrait elle-même. Voir `midi-recouvrement.ts`.
 function trierPiste(events: any[]): any[] {
-  events.sort((a, b) =>
-    comparerEvenementsMidi({ tick: a.deltaTime, type: a.type }, { tick: b.deltaTime, type: b.type }),
-  );
+  const resolus = resoudreRecouvrements(events.map((e) => ({ ...e, tick: e.deltaTime })));
   let tick = 0;
   const sorted: any[] = [];
-  for (const e of events) {
-    sorted.push({ ...e, deltaTime: e.deltaTime - tick });
-    tick = e.deltaTime;
+  for (const { tick: absolu, deltaTime: _ignore, ...reste } of resolus) {
+    sorted.push({ ...reste, deltaTime: absolu - tick });
+    tick = absolu;
   }
   sorted.push({ deltaTime: 0, type: "endOfTrack" });
   return sorted;
