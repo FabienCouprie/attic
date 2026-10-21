@@ -315,9 +315,16 @@ const CONNUS = {
   // quarante-quatre octets : une variante se mesure avant de s'épingler.
   //
   // MESURÉ CONTRE NOTRE SÉPARATEUR, sur un témoin construit dont les deux sources sont connues :
-  // vingt secondes d'instrumental et une annonce parlée, chacun à −18 dB, mélangés en stéréo. Sur
-  // la voix, rapport signal sur distorsion de 3,60 dB contre 0,72 pour htdemucs à six pistes, et
-  // corrélation 0,751 contre 0,390. Cinq fois mieux sur ce seul travail, sept fois plus lent.
+  // vingt secondes d'instrumental à −17,45 dB et une voix parlée à −27, mélangées en stéréo. Contre
+  // la voix vraie, rapport signal sur distorsion de 1,24 dB contre 0,30 pour htdemucs à six pistes,
+  // là où le seul mélange remis à l'échelle en vaut 0,72 : celui-ci bat le fait de ne rien faire,
+  // l'autre tombe en dessous. Quatre fois mieux sur ce seul travail, sept fois plus lent.
+  //
+  // L'ÉCART DE NIVEAU ENTRE LES DEUX SOURCES EST LE RÉGLAGE DÉCISIF DU BANC. Un premier témoin les
+  // posait au MÊME niveau et y plaçait les deux séparateurs sous la ligne du mélange brut, ce qui
+  // est impossible pour une séparation qui fonctionne. La cause est arithmétique et non matérielle :
+  // deux sources décorrélées mélangées à niveau égal laissent au seul mélange environ trois
+  // décibels contre chacune, vérifié sur deux couples indépendants.
   //
   // CE QUE LA PROVENANCE ÉTABLIT, ET CE QU'ELLE N'ÉTABLIT PAS. La table de licences d'audio.cpp
   // donne MIT et l'usage commercial, en nommant pour poids d'origine `mlx-community/mel-roformer-

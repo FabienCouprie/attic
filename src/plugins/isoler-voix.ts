@@ -5,19 +5,24 @@
 // travail. Les remplacer l'un par l'autre perdrait quatre sorties.
 //
 // MESURÉ SUR UN TÉMOIN CONSTRUIT, dont les deux sources sont connues : vingt secondes
-// d'instrumental et une annonce parlée, chacun à −18 dB, mélangés en stéréo à 44,1 kHz.
+// d'instrumental à −17,45 dB et une voix parlée à −27, soit neuf décibels et demi plus bas,
+// mélangées en stéréo à 44,1 kHz. Les trois lectures sont faites contre la voix VRAIE.
 //
-//   la voix retrouvée        corrélation 0,7508   signal sur distorsion 3,60 dB
-//   celle de l'autre         corrélation 0,3896   signal sur distorsion 0,72 dB
-//   l'accompagnement         corrélation 0,5932   signal sur distorsion 1,88 dB
-//   le mélange brut, voix    corrélation 0,7659   signal sur distorsion 3,84 dB
+//   la voix retrouvée ici          corrélation 0,4985   signal sur distorsion 1,24 dB
+//   celle du séparateur à six      corrélation 0,2594   signal sur distorsion 0,30 dB
+//   le mélange brut, sans rien     corrélation 0,3913   signal sur distorsion 0,72 dB
 //
-// CINQ FOIS MIEUX SUR LA VOIX, pour sept fois le temps de calcul : facteur de temps réel 0,78
-// contre 0,11. Et une limite du banc, qui doit se lire avec : sur la VOIX, les deux séparateurs
-// restent sous la ligne du mélange brut. Une annonce parlée est pleine de silences, et la
-// normaliser au niveau d'une musique dense la rend très forte quand elle parle, de sorte que le
-// mélange explique déjà bien la voix. Le côté accompagnement est le plus sain des deux, et là
-// la séparation bat la ligne de base.
+// CE QUI SE LIT DANS CES TROIS LIGNES : celui-ci BAT le fait de ne rien faire, l'autre tombe en
+// dessous. Quatre fois mieux, pour sept fois le temps de calcul, facteur de temps réel 0,78 contre
+// 0,11.
+//
+// L'ÉCART DE NEUF DÉCIBELS N'EST PAS UN DÉTAIL DU BANC, C'EN EST LE RÉGLAGE DÉCISIF. Un premier
+// témoin posait les deux sources au MÊME niveau, et les deux séparateurs y tombaient sous la ligne
+// du mélange brut, ce qui est impossible pour une séparation qui fonctionne. La cause est
+// arithmétique : deux sources décorrélées mélangées à niveau égal laissent au seul mélange, remis à
+// l'échelle, environ trois décibels contre chacune. Vérifié sur deux couples de sources
+// indépendants, 3,84 et 1,24 dB pour l'un, 3,15 et 2,76 pour l'autre. Dans un morceau, une voix
+// soliste se tient sous le mélange, et c'est là que la séparation a quelque chose à gagner.
 //
 // QUARANTE-QUATRE MILLE CENT HERTZ SONT EXIGÉS par le modèle, qui refuse net les 48 kHz où
 // travaille le reste du dépôt. Le rééchantillonnage se fait ici, à l'aller et au retour, parce que
