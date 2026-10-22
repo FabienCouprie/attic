@@ -18,6 +18,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { NOTE_MAX, NOTE_MIN, apparierRendus, racinesInstrument } from "../core/instrument-graphe";
+import { creerAleatoire } from "../core/hasard";
 import { banqueDepuisRendus, rendreNotes, type Banque } from "../audio/clavier-banque";
 
 const TICKS_NOIRE = 480;
@@ -48,7 +49,9 @@ function exciter(
   const d = audio.getChannelData(0);
   const f = hertz(note);
   const fondu = Math.min(Math.round(0.005 * sampleRate), Math.floor(n / 2));
-  let graine = note * 2654435761;
+  // Le bruit de cette forme d'onde tire sur le générateur du dépôt, semé par la note : deux rendus
+  // de la même note se ressemblent, deux notes différentes ne se ressemblent pas.
+  const bruit = creerAleatoire(note * 2654435761);
   for (let i = 0; i < n; i++) {
     const phase = (f * i) / sampleRate;
     const p = phase - Math.floor(phase);
@@ -62,8 +65,7 @@ function exciter(
         v = p < 1 / sampleRate * f * 2 ? 1 : 0;
         break;
       case "bruit":
-        graine = (graine * 1103515245 + 12345) & 0x7fffffff;
-        v = graine / 0x3fffffff - 1;
+        v = bruit() * 2 - 1;
         break;
       default: v = Math.sin(2 * Math.PI * p);
     }

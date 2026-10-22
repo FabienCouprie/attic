@@ -17,6 +17,8 @@
 // Journal of the Acoustical Society of America 34(9), 1962, p. 1418-1424, en font la mesure. Le
 // réglage « Décalage » le reproduit.
 
+import { creerAleatoire } from "../core/hasard";
+
 /** Un partiel présent dans le son : son rang, sa fréquence et son amplitude. */
 export interface Partiel {
   rang: number;
@@ -97,11 +99,11 @@ export function echantillonsDuComplexe(
 
   // Un bruit reproductible : le masque doit être le même d'une écoute à l'autre, sans quoi deux
   // épreuves ne se compareraient pas.
-  let graine = Math.max(1, Math.floor(o.graine)) >>> 0;
-  const suivant = () => {
-    graine = (Math.imul(graine, 1664525) + 1013904223) >>> 0;
-    return graine / 4294967296 - 0.5;
-  };
+  // LE TIRAGE EST CENTRÉ, de −0,5 à 0,5 : c'est une déviation qu'on ajoute, et non une probabilité.
+  // Le générateur du dépôt rend de 0 à 1, d'où le décalage, qui était jusqu'ici dans le corps de la
+  // copie locale.
+  const alea = creerAleatoire(Math.max(1, Math.floor(o.graine)));
+  const suivant = () => alea() - 0.5;
   const a = Math.exp((-2 * Math.PI * Math.max(1, o.coupure)) / sr);
   let bas = 0;
   const partMasque = Math.max(0, Math.min(1, o.masque));

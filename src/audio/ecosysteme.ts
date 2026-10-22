@@ -25,6 +25,7 @@
 // test le vérifie à niveau égalisé, faute de quoi le nœud ne serait qu'un compresseur bavard.
 
 /** Un instant de la vie du système, relevé une fois par période de contrôle. */
+import { creerAleatoire } from "../core/hasard";
 export interface Point {
   secondes: number;
   /** Niveau de sa propre voix, en décibels : ce que l'homéostat régule. */
@@ -92,11 +93,7 @@ const enDb = (energie: number): number =>
 
 /** Un générateur à graine : sans lui, aucun des tests de régime n'aurait de sens. */
 function alea(graine: number): () => number {
-  let e = (graine >>> 0) || 1;
-  return () => {
-    e = (e * 1664525 + 1013904223) >>> 0;
-    return e / 4294967296;
-  };
+  return creerAleatoire(graine);
 }
 
 const fenetreHann = (n: number): Float32Array => {
@@ -239,7 +236,12 @@ export function vivre(monde: Float32Array, o: OptionsEcosysteme): Resultat {
       vivants.push({
         debut: debutPeriode + Math.floor(r() * (fin - debutPeriode)),
         longueur: longueurGrain,
-        lecture: (curseur - retard + tailleMemoire * 2) % tailleMemoire,
+        // UN MODULO QUI NE PEUT PAS RENDRE DE NÉGATIF, et ce n'est pas de la prudence. Le `+ deux
+        // fois la taille` ne suffit pas : un grain peut être plus long que la mémoire elle-même
+        // quand « Mémoire » est au plancher — à 44 100 Hz, la mémoire fait alors 2 205 échantillons
+        // et le grain peut en demander 5 292. Le retard dépasse alors le rattrapage, l'index passe
+        // sous zéro, `memoire[-882]` vaut `undefined`, et la somme part en NaN d'un bout à l'autre.
+        lecture: ((curseur - retard) % tailleMemoire + tailleMemoire) % tailleMemoire,
         // Le gain d'un grain porte la poussée et le couplage : c'est par lui que la boucle se
         // referme, et à couplage nul le système n'entend plus que le monde.
         gain: poussee * couplage * (0.5 + 0.5 * r()),

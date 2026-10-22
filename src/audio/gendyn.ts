@@ -19,6 +19,8 @@
 // saturent, les durées deviennent absurdes, et le son meurt. Réfléchies, les
 // valeurs restent bornées à jamais tout en continuant de se promener.
 
+import { creerAleatoire } from "../core/hasard";
+
 export interface OptionsGendyn {
   dureeSec: number;
   sampleRate: number;
@@ -60,11 +62,7 @@ export function miroir(valeur: number, min: number, max: number): number {
 
 /** Générateur déterministe : une même graine doit rendre exactement le même son. */
 function alea(graine: number): () => number {
-  let etat = (graine | 0) || 1;
-  return () => {
-    etat = (etat * 1103515245 + 12345) & 0x7fffffff;
-    return etat / 0x7fffffff;
-  };
+  return creerAleatoire(graine);
 }
 
 export function gendyn(options: OptionsGendyn): AudioBuffer {

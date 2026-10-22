@@ -50,6 +50,7 @@ function passeTout(x: Float32Array, coefficient: number, sortie: Float32Array): 
 }
 
 import { valeurA } from "./courbe";
+import { creerAleatoire } from "../core/hasard";
 
 export interface OptionsUbiquite {
   /**
@@ -67,11 +68,7 @@ export interface OptionsUbiquite {
 
 /** Le tirage des coefficients : reproductible, sans quoi deux rendus ne se compareraient pas. */
 function tirage(graine: number): () => number {
-  let g = Math.max(1, Math.floor(graine)) >>> 0;
-  return () => {
-    g = (Math.imul(g, 1664525) + 1013904223) >>> 0;
-    return g / 4294967296;
-  };
+  return creerAleatoire(graine);
 }
 
 /**

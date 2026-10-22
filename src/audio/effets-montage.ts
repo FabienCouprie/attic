@@ -7,7 +7,12 @@ import { type PositionZone } from "./commun";
 // est plafonné à la moitié de l'extrait pour que montée et descente ne se
 // chevauchent pas (sur une zone plus courte que 2× le fondu demandé).
 export function extraireZone(buffer: AudioBuffer, debutSec: number, dureeSec: number, fonduMs = 0): AudioBuffer {
-  const debutEch = Math.max(0, Math.min(buffer.length, Math.floor(debutSec * buffer.sampleRate)));
+  // LE DÉBUT S'ARRÊTE AU DERNIER ÉCHANTILLON, ET NON À LA LONGUEUR. Borné à `buffer.length`, un
+  // début posé au-delà de la fin du son laissait zéro échantillon à lire : la longueur était alors
+  // forcée à 1 par le `Math.max` de la ligne suivante, et la boucle allait chercher `src[longueur]`,
+  // c'est-à-dire `undefined`. La multiplication rendait NaN, un par canal. Relevé le 2026-10-22 en
+  // poussant chaque réglage numérique du catalogue à ses deux bornes : seul cas sur 1 926 essais.
+  const debutEch = Math.max(0, Math.min(buffer.length - 1, Math.floor(debutSec * buffer.sampleRate)));
   const longueur = Math.max(1, Math.min(buffer.length - debutEch, Math.floor(dureeSec * buffer.sampleRate)));
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,

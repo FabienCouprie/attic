@@ -10,6 +10,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
 import { bande, doppler, hauteurApprochee, hauteurEloignee } from "../audio/deplacement";
+import { mixdownMono } from "../audio/commun";
 import { ducking } from "../audio/ducking";
 import { decoderStereo, encoderStereo, partDirectionnelle, tourner } from "../audio/ambisonique";
 import { mesurerStereo } from "../audio/stereo-correlation";
@@ -55,7 +56,11 @@ export const fiches: FicheAudio[] = ([
         attenuer: ctx.paramTexte("Atténuation", "oui") !== "non",
         frequence: e.sampleRate,
       };
-      const [g, d] = doppler(voie(e, 0), o);
+      // LA SOURCE QUI PASSE EST UN POINT, donc elle se somme : `voie(e, 0)` ne lisait que le canal
+      // gauche, et d'une prise stéréo la moitié droite disparaissait sans que rien ne le dise.
+      // Mesuré avant la correction : une sinusoïde à 311 Hz posée à droite ressortait 40 dB plus
+      // bas que celle de gauche. La sortie reste stéréo : c'est le déplacement dans le champ.
+      const [g, d] = doppler(mixdownMono(e), o);
       const out = new AudioBuffer({ numberOfChannels: 2, length: e.length, sampleRate: e.sampleRate });
       out.getChannelData(0).set(g);
       out.getChannelData(1).set(d);

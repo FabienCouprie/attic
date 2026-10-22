@@ -61,13 +61,13 @@ export const fiches: FicheAudio[] = ([
       },
       {
         nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1, unite: "",
-        doc: "Graine pour l'initialisation des poids. Même piste + mêmes réglages + même graine = même résultat.",
-        docEn: "Seed for weight initialization. Same track + same settings + same seed = same result.",
+        doc: "Graine pour l'initialisation des poids et le mêlage des trames. Même piste, mêmes réglages et même graine rendent le même résultat tant que l'entraînement va jusqu'au bout. S'il s'arrête sur « Budget », le point d'arrêt dépend de la machine et deux passes diffèrent ; le message le dit alors.",
+        docEn: "Seed for weight initialization and frame shuffling. Same track, same settings and same seed give the same result as long as training runs to its end. If it stops on « Budget », the stopping point depends on the machine and two passes differ; the message says so when that happens.",
       },
       {
         nom: "Budget", nomEn: "Budget", type: "nombre", plage: [0, 300000], pas: 1000, defaut: 0, unite: "ms",
-        doc: "Budget temps d'entraînement en millisecondes. 0 = automatique (dépend de n_frames × n_bins).",
-        docEn: "Training time budget in milliseconds. 0 = automatic (depends on n_frames × n_bins).",
+        doc: "Budget temps d'entraînement en millisecondes. 0 = automatique (dépend de n_frames × n_bins). Un budget qui interrompt l'entraînement rend le résultat non reproductible, le point d'arrêt dépendant de la machine ; voir « Graine ».",
+        docEn: "Training time budget in milliseconds. 0 = automatic (depends on n_frames × n_bins). A budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ».",
       },
     ],
     async executer(ctx: any) {

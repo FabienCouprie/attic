@@ -20,6 +20,7 @@
 // secondes, cela survient au bout de L/e secondes — et le motif entier
 // recommence.
 
+import { mixdownMono } from "./commun";
 import { boucleSansCouture } from "./risset";
 
 export interface OptionsDephasage {
@@ -92,7 +93,11 @@ export function dephasage(buffer: AudioBuffer, options: OptionsDephasage): Audio
   // et un clic à chaque tour se retrouverait à un endroit différent dans chaque
   // voix — donc audible en permanence plutôt qu'une fois par tour.
   const src = boucleSansCouture(buffer, options.fonduBoucleSec ?? 0.05);
-  const canalSrc = src.getChannelData(0);
+  // LA SOURCE EST LA MOYENNE DES CANAUX, et non le seul canal gauche. Ce module lisait
+  // `getChannelData(0)` : d'une prise stéréo, la moitié droite disparaissait sans que rien ne le
+  // dise. Mesuré avant la correction — une sinusoïde à 311 Hz posée à droite ressortait 57 dB plus
+  // bas que celle de gauche, c'est-à-dire absente. La sortie, elle, reste stéréo, et c'est voulu.
+  const canalSrc = mixdownMono(src);
 
   // Toujours stéréo : le déphasage s'entend surtout quand les voix occupent des
   // places différentes. En mono, les motifs composites restent audibles mais la

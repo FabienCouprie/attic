@@ -25,13 +25,11 @@
 // position : elle change la CADENCE À LAQUELLE le grain est relu. Les deux sont indépendantes, et
 // c'est exactement ce qu'un lecteur de bande ne sait pas faire.
 
+import { creerAleatoire } from "../core/hasard";
+
 /** Générateur pseudo-aléatoire reproductible : une graine donnée rejoue le même brassage. */
 function tirage(graine: number): () => number {
-  let g = (graine | 0) || 1;
-  return () => {
-    g = (g * 1103515245 + 12345) & 0x7fffffff;
-    return g / 0x7fffffff;
-  };
+  return creerAleatoire(graine);
 }
 
 export interface OptionsBrassage {

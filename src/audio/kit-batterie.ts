@@ -19,6 +19,7 @@
 import { bufferVersWavBlob } from "./io";
 import { NOTES_PERCUSSION_GM } from "./batterie-midi";
 import { rendreSequenceurBatterieAvance } from "./batterie";
+import { creerAleatoire } from "../core/hasard";
 
 /** Où le kit est posé, en chemin RELATIF — le seul que le main sache résoudre des deux côtés. */
 export const DOSSIER_KIT_EMBARQUE = "./sfz/kit-attic";
@@ -130,12 +131,9 @@ export async function rendreVoixKit(voix: VoixKit, graine = 42): Promise<AudioBu
   const NB_PAS = 16;
   const grille = Array.from({ length: VOIX_KIT.length }, () => new Array(NB_PAS).fill(0));
   grille[voix.piste][0] = 9;
-  let etat = graine >>> 0;
-  const hasard = () => {
-    // Le même générateur que les nœuds à graine fixe : le kit doit être reproductible au bit près.
-    etat = (etat * 1103515245 + 12345) & 0x7fffffff;
-    return etat / 0x7fffffff;
-  };
+  // Le même générateur que les nœuds à graine fixe : le kit doit être reproductible au bit près,
+  // et c'est maintenant celui du dépôt plutôt qu'une copie qui perdait ses bits de poids faible.
+  const hasard = creerAleatoire(graine);
   const brut = await rendreSequenceurBatterieAvance(grille, 120, NB_PAS, 0, 1, 100, hasard);
   const plafond = Math.round(voix.duree * brut.sampleRate);
   return rogner(brut, Math.min(plafond, Math.max(1, finUtile(brut))));

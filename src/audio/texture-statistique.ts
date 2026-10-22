@@ -31,6 +31,7 @@
 //     mesure — `distanceStatistiques` le rend.
 
 import { fft } from "./fft";
+import { creerAleatoire } from "../core/hasard";
 
 /** Nombre de bandes cochléaires par défaut : l'article en emploie une trentaine. */
 const BANDES_DEFAUT = 28;
@@ -248,11 +249,7 @@ export function distanceStatistiques(a: StatistiquesTexture, b: StatistiquesText
 
 /** Générateur reproductible : deux synthèses de même graine donnent le même son. */
 function hasard(graine: number): () => number {
-  let g = (graine | 0) || 1;
-  return () => {
-    g = (g * 1103515245 + 12345) & 0x7fffffff;
-    return g / 0x7fffffff;
-  };
+  return creerAleatoire(graine);
 }
 
 /**

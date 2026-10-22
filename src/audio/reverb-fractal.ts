@@ -3,6 +3,7 @@
 // placée selon une subdivision auto-similaire, créant une texture réverbérante
 // irrégulière et dense.
 
+import { creerAleatoire } from "../core/hasard";
 export interface OptionsReverbFractal {
   decay: number; // secondes
   preDelay: number; // ms
@@ -22,12 +23,7 @@ interface Reflexion {
 }
 
 function creerRng(graine: number) {
-  let s = graine >>> 0;
-  if (s === 0) s = 123456789;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
+  return creerAleatoire(graine);
 }
 
 function poussiereCantor(

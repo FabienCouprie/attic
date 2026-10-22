@@ -30,6 +30,8 @@
 // seules les réflexions AJOUTÉES diffèrent d'un canal à l'autre. C'est aussi ce qui est vrai
 // physiquement : le son direct vous parvient une fois, la pièce le renvoie deux fois différemment.
 
+import { creerAleatoire } from "../core/hasard";
+
 /** Une réflexion : quand elle arrive, de quel signe, et avec quelle force. */
 export interface Reflexion {
   /** Position en échantillons depuis le début du son. */
@@ -68,8 +70,7 @@ export interface OptionsAmpleur {
 }
 
 function tirage(graine: number): () => number {
-  let g = (graine | 0) || 1;
-  return () => { g = (g * 1103515245 + 12345) & 0x7fffffff; return g / 0x7fffffff; };
+  return creerAleatoire(graine);
 }
 
 /**

@@ -210,10 +210,16 @@ describe("les bornes", () => {
     }
   });
 
-  it("les cas limites rendent un son plutôt qu'une erreur", () => {
+  // ET PLUSIEURS GRAINES, SANS QUOI LE CAS PASSE PAR CHANCE. Mesuré le 2026-10-22 : à mémoire
+  // nulle, ce cas rendait **145 373 échantillons non finis sur 176 400** à la graine 1, 175 575 à
+  // la graine 2, 20 463 à la 3 — et zéro à la graine 7, la seule qu'il éprouvait. Un grain plus
+  // long que la mémoire faisait passer l'index de lecture sous zéro ; `memoire[-882]` vaut
+  // `undefined`, et la somme partait en NaN. Une seule graine ne suffit pas à éprouver une
+  // propriété qui dépend du tirage.
+  it("les cas limites rendent un son plutôt qu'une erreur, quelle que soit la graine", () => {
     for (const o of [
       { ...BASE, duree: 0 },
-      { ...BASE, memoireS: 0 },
+      ...[7, 1, 2, 3, 99].map((graine) => ({ ...BASE, memoireS: 0, graine })),
       { ...BASE, densiteMax: 0 },
       { ...BASE, reactivite: 0 },
       { ...BASE, graine: 0 },

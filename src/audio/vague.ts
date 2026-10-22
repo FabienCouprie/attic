@@ -18,6 +18,7 @@
 // un son qui va et vient sans jamais s'approcher.
 
 import { valeurA } from "./courbe";
+import { creerAleatoire } from "../core/hasard";
 
 /** Les deux façons dont une vague se brise. */
 export type Rupture = "deferlante" | "progressive";
@@ -56,11 +57,7 @@ export function formeDeLaVague(u: number, montee: number, rupture: Rupture): num
 
 /** Le tirage de l'irrégularité : reproductible, sans quoi deux rendus ne se compareraient pas. */
 function tirage(graine: number): () => number {
-  let g = Math.max(1, Math.floor(graine)) >>> 0;
-  return () => {
-    g = (Math.imul(g, 1664525) + 1013904223) >>> 0;
-    return g / 4294967296;
-  };
+  return creerAleatoire(graine);
 }
 
 /**

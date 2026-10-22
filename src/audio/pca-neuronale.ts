@@ -2,6 +2,7 @@
 // spectrogramme d'une piste pour en filtrer/reconstruire la texture.
 import { fft } from "./fft";
 import { creerFenetreHann } from "./commun";
+import { creerAleatoire } from "../core/hasard";
 
 interface FrameSpectrale {
   start: number;
@@ -112,11 +113,7 @@ function taillesGeometriques(inputDim: number, latentDim: number, couchesCachees
 }
 
 function rngGraine(seed: number): () => number {
-  let s = (seed >>> 0) || 1;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 0xffffffff;
-  };
+  return creerAleatoire(seed);
 }
 
 function initialiserPoidsGlorot(tf: any, model: any, seed: number) {
@@ -317,9 +314,44 @@ export async function appliquerPcaNeuronale(
 
   const baseMse = mseBaseline(matrix, totalFrames, nbBins);
 
+  // LES TRAMES SONT MÊLÉES AVANT L'ENTRAÎNEMENT, ET LE MÊLAGE EST SEMÉ.
+  //
+  // La matrice range les trames canal par canal : tout le canal gauche, puis tout le droit.
+  // `model.fit` recevait `shuffle: false`, de sorte que l'autoencodeur voyait d'abord un canal
+  // entier, puis l'autre — et comme l'entraînement s'arrête au budget de temps, il s'arrêtait
+  // toujours en plein milieu de cette lecture ordonnée. LE RÉSULTAT DÉPENDAIT DONC DU CANAL QUI
+  // VENAIT EN PREMIER. Mesuré, reproductible à l'identique sur deux passes : un son posé à gauche
+  // ressortait 4,8 dB sous son entrée, le MÊME son posé à droite 123,8 dB en dessous, c'est-à-dire
+  // le silence.
+  //
+  // MÊLER AVEC `shuffle: true` AURAIT MARCHÉ ET COÛTÉ LA REPRODUCTIBILITÉ : TensorFlow tire alors
+  // sur son propre hasard, que la graine du composant ne commande pas, et deux exécutions de mêmes
+  // réglages ne rendraient plus le même son. Mesuré : avec `shuffle: true`, deux passes de même
+  // graine s'écartent de 0,66 en amplitude ; avec le mêlage semé, elles se répondent au bit près.
+  // Le mêlage se fait donc ici, par la graine, et la reconstruction retrouve chaque trame par
+  // `rangMele`.
+  //
+  // CELA NE REND PAS LE COMPOSANT REPRODUCTIBLE POUR AUTANT, et il faut le dire : l'entraînement
+  // s'arrête sur un BUDGET DE TEMPS, qui ne tombe pas au même endroit d'une exécution à l'autre.
+  // Budget hors d'atteinte, deux passes de même graine sont identiques ; budget de trois secondes,
+  // elles s'écartent de 1,23. La graine commande ce qui se commande ; l'horloge fait le reste, et
+  // le message l'annonce par « arrêté par budget temps ».
+  const tirage = rngGraine(seed ^ 0x9e3779b9);
+  const ordre = Array.from({ length: totalFrames }, (_, i) => i);
+  for (let k = totalFrames - 1; k > 0; k--) {
+    const j = Math.floor(tirage() * (k + 1));
+    [ordre[k], ordre[j]] = [ordre[j], ordre[k]];
+  }
+  const rangMele = new Int32Array(totalFrames);
+  const mele = new Float32Array(matrix.length);
+  for (let k = 0; k < totalFrames; k++) {
+    rangMele[ordre[k]] = k;
+    mele.set(matrix.subarray(ordre[k] * nbBins, (ordre[k] + 1) * nbBins), k * nbBins);
+  }
+
   // 3. Autoencodeur
   const model = construireAutoEncodeur(tf, nbBins, latentDim, hiddenLayers, activation, seed, learningRate);
-  const xTensor = tf.tensor2d(matrix, [totalFrames, nbBins]);
+  const xTensor = tf.tensor2d(mele, [totalFrames, nbBins]);
   const budget = budgetMs > 0 ? budgetMs : budgetAutoMs(totalFrames, nbBins);
   const startTime = Date.now();
   let lastLoss = Infinity;
@@ -365,7 +397,9 @@ export async function appliquerPcaNeuronale(
   for (let c = 0; c < nCh; c++) {
     const frames: FrameSpectrale[] = [];
     for (let f = 0; f < nFrames; f++) {
-      const offsetGlobal = (c * nFrames + f) * nbBins;
+      // La reconstruction suit le mêlage : la trame « canal c, rang f » a été entraînée au rang
+      // `rangMele`, et c'est là qu'il faut aller la chercher dans la sortie du modèle.
+      const offsetGlobal = rangMele[c * nFrames + f] * nbBins;
       const mag = new Float64Array(nbBins);
       for (let b = 0; b < nbBins; b++) {
         // Borné à 6 dB au-dessus du plus fort niveau analysé : les magnitudes se reconstruisent en

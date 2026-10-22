@@ -11286,8 +11286,8 @@ Extends an audio track by predicting the continuation of its spectrogram. A line
 | History | number | 4 frames | 1 – 32 frames, step 1 | Number of past frames used to predict the next frame. Larger = more context (but heavier to train). |
 | Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. Time budget may stop earlier. |
 | Learning rate | number | 0.001 | 0.0001 – 0.01, step 0.0001 | Adam optimizer learning rate. |
-| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track + same settings + same seed = same result. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track, same settings and same seed give the same result as long as training runs to its end. If it stops on « Budget », the stopping point depends on the machine and two passes differ; the message says so when that happens. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic. A budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ». |
 
 #### LSTM Continuation
 
@@ -11310,8 +11310,8 @@ Extends an audio track with a small recurrent network (LSTM) trained on the fly 
 | History | number | 4 frames | 1 – 32 frames, step 1 | Number of past frames used to predict the next frame. Larger = more context (but heavier to train). |
 | Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. Time budget may stop earlier. |
 | Learning rate | number | 0.001 | 0.0001 – 0.01, step 0.0001 | Adam optimizer learning rate. |
-| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track + same settings + same seed = same result. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic. |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track, same settings and same seed give the same result as long as training runs to its end. If it stops on « Budget », the stopping point depends on the machine and two passes differ; the message says so when that happens. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic. A budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ». |
 | Hidden units | number | 128 | 16 – 512, step 16 | Number of hidden units in the LSTM layer. Larger = more context memory (but slower). |
 
 #### Neural PCA
@@ -11336,8 +11336,8 @@ Neural PCA: trains a non-linear autoencoder on the input track's magnitude spect
 | Activation | choice | ReLU | ReLU / Tanh | Hidden layer activation function. |
 | Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. Time budget may stop earlier. |
 | Learning rate | number | 0.001 | 0.0001 – 0.01, step 0.0001 | Adam optimizer learning rate. |
-| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track + same settings + same seed = same result. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic (depends on n_frames × n_bins). |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization and frame shuffling. Same track, same settings and same seed give the same result as long as training runs to its end. If it stops on « Budget », the stopping point depends on the machine and two passes differ; the message says so when that happens. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic (depends on n_frames × n_bins). A budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ». |
 
 #### Time Stretch (DTW)
 

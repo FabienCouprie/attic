@@ -30,6 +30,7 @@
 
 import { valeurA } from "./courbe";
 import { fft } from "./fft";
+import { creerAleatoire } from "../core/hasard";
 
 export type ProfilDecroissance = "exponentielle" | "lineaire" | "gonflement" | "couplee";
 
@@ -56,11 +57,7 @@ export interface OptionsVelours {
 
 /** Générateur reproductible : deux réponses de même graine sont identiques. */
 function hasard(graine: number): () => number {
-  let g = (graine | 0) || 1;
-  return () => {
-    g = (g * 1103515245 + 12345) & 0x7fffffff;
-    return g / 0x7fffffff;
-  };
+  return creerAleatoire(graine);
 }
 
 export interface SequenceVelours {
