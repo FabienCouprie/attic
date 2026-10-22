@@ -589,6 +589,10 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.branchez_audio_profil_n_ud_profil_de_bruit": { fr: "Branchez audio + profil (composant Profil de bruit).", en: "Connect audio + profile (node Noise profile)." },
   "msg.profil_bruit_trop_faible": { fr: "Profil de bruit quasi vide (zone trop silencieuse/courte).", en: "Noise profile almost empty (zone too silent/short)." },
   "msg.reduction_bruit_profil_trop_faible": { fr: "Réduction désactivée : profil de bruit vide.", en: "Noise reduction disabled: empty noise profile." },
+  "msg.extraire_zone_debut_hors_du_son": {
+    fr: "Début à {0} s, pour un son qui dure {1} s : la zone commence après la fin.",
+    en: "Start at {0} s, for a sound lasting {1} s: the zone begins after the end.",
+  },
   "msg.r_verb_ration_convolution_ir_var_0_s": { fr: "Réverbération à convolution (IR : {__VAR_0__} s)", en: "Convolution reverb (IR: {__VAR_0__} s)" },
   "msg.aucun_fichier_midi_en_entr_e": { fr: "Aucun fichier MIDI en entrée.", en: "No MIDI file at input." },
   "msg.arp_ge_var_0_var_1_var_2_oct": { fr: "Arpège {__VAR_0__} · {__VAR_1__} · {__VAR_2__} oct.", en: "Arpeggio {__VAR_0__} · {__VAR_1__} · {__VAR_2__} oct." },

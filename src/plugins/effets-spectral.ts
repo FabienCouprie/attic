@@ -259,6 +259,14 @@ export const fiches: FicheAudio[] = ([
       // ce soit (extraireZone n'avait d'ailleurs pas d'argument correspondant).
       const fondu = ctx.paramNombre("Fondu", 5);
       const zone = { debut, duree };
+      // UN DÉBUT POSÉ APRÈS LA FIN DU SON NE SE DEVINE PAS À L'ÉCOUTE : la sortie ne dure alors
+      // qu'un échantillon, et rien ne disait pourquoi. Le composant le dit.
+      if (debut >= a.duration) {
+        return {
+          valeurs: [extraireZone(a, debut, duree, fondu), zone],
+          message: traduire("msg.extraire_zone_debut_hors_du_son", debut.toFixed(2), a.duration.toFixed(2)),
+        };
+      }
       return { valeurs: [extraireZone(a, debut, duree, fondu), zone] };
    },
   },
