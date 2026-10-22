@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **496 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **497 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 100 | [AI generators](#ai-generators) (10) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 237 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (20) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (20) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 238 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (20) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -6326,6 +6326,7 @@ After Trevor Wishart's "Audible Design" (1994). The sound is cut not into fixed-
 | [Haas Effect](#haas-effect) | One channel delayed by a few milliseconds: the image moves to the side that arrives first. |
 | [Harmonic Tremolo](#harmonic-tremolo) | Modulates lows and highs in opposition: the colour sways, the level barely moves. |
 | [Lucier Room](#lucier-room) | Feeds the sound back into the same room until only its resonances remain. |
+| [Match a Reference](#match-a-reference) | Gives the sound the level, colour, width and peak of another sound. |
 | [Melody over Chords](#melody-over-chords) | Searches for a melody over a received chord progression, under constraints set one at a time. |
 | [Particles](#particles) | One generator for seven species of particle: grains, pulsars, glissons, trainlets, grainlets, and the granulation of a connected sound; on a grid, or locked to its period. |
 | [Rotary Speaker](#rotary-speaker) | Spins lows and highs on two rotors: the path varies, and with it the pitch and the level. |
@@ -6618,6 +6619,30 @@ After Alvin Lucier's "I Am Sitting in a Room" (1969), whose principle is to reco
 | Pre-delay | number | 10 ms | 0 – 200 ms, step 1 | Delay before the first reflections. It accumulates from pass to pass: a high value combined with many iterations pushes the sound later, possibly out of the frame. |
 | Damping | number | 30 % | 0 – 100 %, step 1 | Absorption of highs by air and materials. |
 | Seed | number | 42 | 0 – 999999, step 1 | Seed for the room. It deserves to be fixed here more than anywhere else: the room is the subject of the piece, and twenty passes through a different room each time would never give the same result twice. Changing it means recording in another room. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Match a Reference
+
+`apparier-reference` · Processing → Other effects
+
+*Gives the sound the level, colour, width and peak of another sound.*
+
+Brings a sound closer to another taken as a model, on four measured quantities: the RMS level, the frequency response, the stereo width and the peak. The sound to process connects to the « Audio » input, the model to the « Reference » input. Both must share the same sampling rate; otherwise the node says so and stops. « Level », « Spectrum », « Width » and « Peak » decide what is copied. Each applies separately: one can take a record's colour without taking its level. « Maximum correction » bounds the amount applied to each frequency band. A sound that stops at ten kilohertz, compared with a model that reaches eighteen, asks in the treble for a gain nothing can supply: there is nothing to amplify but the floor. The bound stops that request, and the message gives what share of the spectrum hit it. A high share signals a model out of the processed sound's reach. « Bands per octave » sets how fine the correction is. Three bands follow the general colour; twelve follow the detail, down to copying the model's own resonances. « Transform size » sets the analysis resolution: large, it tells low frequencies apart; small, it follows fast changes better. The frequency correction is zero phase: no band is delayed with respect to another. A mono input does not widen, its side being zero. The message gives the applied level, the extreme corrections, the bounded share of the spectrum, the width before and after, and the peak obtained.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| input | Reference | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Level | choice | Yes | Yes / No | Copy the reference's RMS level. |
+| Spectrum | choice | Yes | Yes / No | Copy the reference's frequency response, with zero phase. |
+| Width | choice | Yes | Yes / No | Copy the reference's stereo width, measured as the side to mid ratio. No effect on a mono input. |
+| Peak | choice | Yes | Yes / No | Align the peak on the reference's, once the rest is applied. The message gives what that alignment cost in level. |
+| Maximum correction | slider | 12 dB | 1 – 24 dB, step 1 | Largest amount applied to a frequency band, in either direction. Low, the correction stays a tint; high, it copies the reference more closely and amplifies the floor accordingly where the processed sound has nothing. The message gives what share of the spectrum hit this bound. |
+| Bands per octave | slider | 3 | 1 – 12, step 1 | How fine the correction is. Three bands follow the general colour; twelve follow the detail, down to the reference's own resonances. |
+| Transform size | choice | 4096 | 512 / 1024 / 2048 / 4096 | Analysis resolution. Large, it tells low frequencies apart; small, it follows fast changes better. |
 
 #### Melody over Chords
 
