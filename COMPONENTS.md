@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **497 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **499 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 100 | [AI generators](#ai-generators) (10) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 238 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (37) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (20) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 240 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (20) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -4025,6 +4025,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | Component | Summary |
 |---|---|
 | [Add Silence](#add-silence) | Adds silence at the beginning and/or end of the track. |
+| [Align text to speech](#align-text-to-speech) | Dates each word of a given text on the recording that speaks it, and cuts out the requested word range. |
 | [Audio Join](#audio-join) | Places two tracks one after the other with a crossfade. |
 | [Cut at Words](#cut-at-words) | Edits a take at the boundaries of the recognised words, and not at a level threshold. |
 | [Ecological Granulation](#ecological-granulation) | Lays a sound's grains along a physical event model: a bounce, a flow or a scrape. |
@@ -4060,6 +4061,7 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | [Sound Object Segmentation](#sound-object-segmentation) | Finds the sound objects of a recording (by attacks, silences or changes of timbre) and describes them. |
 | [Track Aligner](#track-aligner) | Aligns a track to a reference length (silence or fade). |
 | [Trim Silence](#trim-silence) | Removes silence at the start and end of a take, and in the middle if asked. |
+| [Who speaks when](#who-speaks-when) | Splits a recording into speaker turns, says who speaks and what is said, and isolates one speaker. |
 | [Zone Mask](#zone-mask) | Depending on the option, mutes the selected zones or keeps only them. |
 
 #### Add Silence
@@ -4079,6 +4081,32 @@ Adds silence at the beginning and/or end of the audio track. Independently set t
 |---|---|---|---|---|
 | Before | number | 1 s | 0 – 240 s, step 0.1 | Silence added at the beginning of the track (in seconds). |
 | After | number | 1 s | 0 – 240 s, step 0.1 | Silence added at the end of the track (in seconds). |
+
+#### Align text to speech
+
+`aligner-texte` · Processing → Editing
+
+*Dates each word of a given text on the recording that speaks it, and cuts out the requested word range.*
+
+This component receives a recording and the text spoken in it, and says where each word falls. It recognizes nothing: the words come from the « Text » input, so that it cannot invent one. When the text is already at hand, this is more accurate than recognition. « From word » and « To word » designate the word range to cut out, by their rank in the text, the first word having rank one. At zero, « To word » goes to the last. A starting rank beyond the last word returns a silent sound rather than the whole sound, and the report says so. « Margin » widens the cut on each side. The returned instants fall on an eighty-millisecond clock: a margin of that order avoids clipping an onset or a word ending. « Editing » decides where what is kept sits. At « Keep the place », the output is as long as the input and all the rest is silenced. At « Join end to end », the kept words are placed one after another. « Fade » softens both edges of the cut. Words that follow one another are joined before the fade, so that a word sequence receives only one fade at each of its ends, and not one per word. « Language » must be that of the text, among the eleven the engine knows. « Compute » names the device used. The « Audio » output returns the cut sound. « Words » gives one line per word, with its rank and its interval. « Report » gives the number of words placed, the interval of the cut and its duration. The engine's resolution is eighty milliseconds: the returned instants are all multiples of it, and nothing finer is obtained from it.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Text | text |  |
+| output | Audio | audio |  |
+| output | Words | text |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| From word | number | 1 | 1 – 10000, step 1 | The rank of the first word to keep, the first word of the text having rank one. The « Words » output gives those ranks, so that one can read which to ask for. |
+| To word | number | 0 | 0 – 10000, step 1 | The rank of the last word to keep, that rank included. At zero, the cut goes to the last word of the text. A rank below the start returns a silent sound. |
+| Margin | number | 40 ms | 0 – 500 ms, step 5 | What is added on each side of the cut. The engine's instants fall on an eighty-millisecond clock, and a margin of that order avoids clipping an onset. |
+| Editing | choice | Keep the place | Keep the place / Join end to end | Where to place what is kept. « Keep the place » silences the rest without moving anything, so that the result overlays the original. « Join end to end » puts the cut at the start and shortens the output. |
+| Fade | number | 10 ms | 0 – 200 ms, step 1 | The fade length at both edges of the cut. At zero, the cut is abrupt and may click. Since words that follow one another are joined first, a word sequence receives only one fade at each end. |
+| Language | choice | French | French / English / German / Spanish / Italian / Portuguese / Russian / Chinese / Cantonese / Japanese / Korean | The language of the text, among the eleven the engine knows. A language that does not match the text degrades the placement without refusing the work. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the instants found. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Audio Join
 
@@ -4931,6 +4959,29 @@ Trims the silences of a recording, at the edges or throughout. The threshold is 
 | Margin | slider | 50 ms | 0 – 500 ms, step 5 | What is given back on either side. Without a margin the attack is truncated and a click is heard: the first sample above the threshold already arrives after the rise began. |
 | Scope | choice | Edges | Edges / Everywhere | At the edges, the middle is untouched: a silence between two phrases is part of the playing. Everywhere, long enough inner silences are removed too; that is speech editing, and it changes the music. |
 | Minimum length | slider | 0.5 s | 0.1 – 5 s, step 0.1 | In Everywhere mode: the length from which an inner silence is removed. Below it, it is kept. |
+
+#### Who speaks when
+
+`qui-parle-quand` · Processing → Editing
+
+*Splits a recording into speaker turns, says who speaks and what is said, and isolates one speaker.*
+
+This component splits a recording into speaker turns. For each turn it gives the interval, the speaker and the spoken text, and it returns the sound reduced to the requested speaker. « Speaker » chooses who to keep. At « All », the sound comes out unchanged and only the text outputs inform. Speakers are numbered in the order they start speaking; those numbers hold from one end of the file to the other, and not from one file to the next. « Editing » decides where what is kept sits. At « Keep the place », the output is as long as the input and all the rest is silenced: the instants do not move, which allows the result to be set against the original. At « Join end to end », the turns are placed one after another and the output shortens. « Fade » softens both edges of each kept turn. The bounds the engine gives land within a few tenths of a second, and a short fade keeps a cut from sounding like a click. The engine reads the language by itself, across more than fifty. There is therefore no language setting, and a recording that changes language along the way is transcribed as it is spoken. « Compute » names the device used. The « Audio » output returns the kept sound. « Turns » gives one line per turn, with its interval, its speaker and its text. « Transcript » gives the text alone, in order. « Report » gives the number of turns, the number of speakers found and the share of the duration the chosen speaker occupies.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Turns | text |  |
+| output | Transcript | text |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Speaker | choice | All | All / The first / The second / The third / The fourth | The speaker to keep in the returned sound, by order of appearance. At « All », the sound comes out unchanged and only the texts inform. A rank the recording does not contain returns a silent sound, and the report says so. |
+| Editing | choice | Keep the place | Keep the place / Join end to end | Where to place what is kept. « Keep the place » silences the rest without moving anything, so that the result overlays the original. « Join end to end » puts the turns one after another, which shortens the output accordingly. Without effect when « Speaker » is « All », since the sound then comes out whole and there is nothing to remove. |
+| Fade | number | 10 ms | 0 – 200 ms, step 1 | The fade length at both edges of each kept turn. At zero, the cut is abrupt and may click. A fade longer than half a turn is brought back to that half. Without effect when « Speaker » is « All », since no cut is made. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the turns found. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Zone Mask
 

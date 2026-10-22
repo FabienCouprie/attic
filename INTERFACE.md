@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**497 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**499 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -136,6 +136,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Accords → Notation MIDI | `accords-vers-notation` | 240 × 162 |
 | Ajouter silence | `ajouter-silence` | 240 × 118 |
 | Similarité audio | `alignement-dtw` | 240 × 140 |
+| Aligner un texte sur la parole | `aligner-texte` | 240 × 162 |
 | Aligneur de piste | `aligneur-piste` | 240 × 140 |
 | Rotation ambisonique | `ambisonique` | 240 × 162 |
 | Ampleur | `ampleur` | 240 × 140 |
@@ -407,6 +408,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Pulsation | `pulsation` | 240 × 162 |
 | Quadrafuzz | `quadrafuzz` | 240 × 206 |
 | Quantifier | `quantifier-rythme` | 240 × 184 |
+| Qui parle quand | `qui-parle-quand` | 240 × 184 |
 | Qwen2.5-0.5B | `qwen2.5-lyrics` | 240 × 118 |
 | Recaler le niveau | `recaler-niveau` | 240 × 140 |
 | Réduction de bruit | `reduction-bruit` | 240 × 140 |

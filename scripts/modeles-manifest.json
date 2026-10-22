@@ -1310,6 +1310,50 @@
       ]
     },
     {
+      "id": "parole-diarisation",
+      "nom": "Qui parle quand (MOSS)",
+      "nomEn": "Who speaks when (MOSS)",
+      "noeuds": [
+        "qui-parle-quand"
+      ],
+      "octets": 758293216,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/moss-transcribe-diarize-q4_k.gguf",
+        "octets": 758293216,
+        "sha256": "4e3020379ff592bbb22a4e3d47a7cd6709951cc5d451c561b69df955b5f0a220"
+      },
+      "fichiers": [
+        {
+          "chemin": "audiocpp/moss-transcribe-diarize-q4_k.gguf",
+          "octets": 758293216,
+          "sha256": "4e3020379ff592bbb22a4e3d47a7cd6709951cc5d451c561b69df955b5f0a220"
+        }
+      ]
+    },
+    {
+      "id": "parole-alignement",
+      "nom": "Aligner un texte sur la parole (Qwen3)",
+      "nomEn": "Align text to speech (Qwen3)",
+      "noeuds": [
+        "aligner-texte"
+      ],
+      "octets": 1129969856,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/qwen3-forced-aligner-0.6b-q8_0.gguf",
+        "octets": 1129969856,
+        "sha256": "bf4fec616f77a20d89a649cd1c97bda269644eeb3cf906d1f7488a52d71f7cb2"
+      },
+      "fichiers": [
+        {
+          "chemin": "audiocpp/qwen3-forced-aligner-0.6b-q8_0.gguf",
+          "octets": 1129969856,
+          "sha256": "bf4fec616f77a20d89a649cd1c97bda269644eeb3cf906d1f7488a52d71f7cb2"
+        }
+      ]
+    },
+    {
       "id": "ced",
       "nom": "Étiquetage des sons (CED)",
       "nomEn": "Sound tagging (CED)",
