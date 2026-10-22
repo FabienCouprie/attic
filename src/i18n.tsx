@@ -589,9 +589,27 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.branchez_audio_profil_n_ud_profil_de_bruit": { fr: "Branchez audio + profil (composant Profil de bruit).", en: "Connect audio + profile (node Noise profile)." },
   "msg.profil_bruit_trop_faible": { fr: "Profil de bruit quasi vide (zone trop silencieuse/courte).", en: "Noise profile almost empty (zone too silent/short)." },
   "msg.reduction_bruit_profil_trop_faible": { fr: "Réduction désactivée : profil de bruit vide.", en: "Noise reduction disabled: empty noise profile." },
+  "msg.apparier.sans_reference": {
+    fr: "Brancher un son sur l'entrée « Référence ».",
+    en: "Connect a sound to the « Reference » input.",
+  },
+  "msg.apparier.niveau": { fr: "niveau {__VAR_0__} dB", en: "level {__VAR_0__} dB" },
+  "msg.apparier.spectre": {
+    fr: "spectre {__VAR_0__} à {__VAR_1__} dB",
+    en: "spectrum {__VAR_0__} to {__VAR_1__} dB",
+  },
+  "msg.apparier.largeur": {
+    fr: "largeur {__VAR_0__} vers {__VAR_1__}",
+    en: "width {__VAR_0__} to {__VAR_1__}",
+  },
+  "msg.apparier.crete": { fr: "crête {__VAR_0__} dB", en: "peak {__VAR_0__} dB" },
+  "msg.apparier.bornee": {
+    fr: "{__VAR_0__} % du spectre borné : référence hors de portée",
+    en: "{__VAR_0__}% of the spectrum bounded: reference out of reach",
+  },
   "msg.extraire_zone_debut_hors_du_son": {
-    fr: "Début à {0} s, pour un son qui dure {1} s : la zone commence après la fin.",
-    en: "Start at {0} s, for a sound lasting {1} s: the zone begins after the end.",
+    fr: "Début à {__VAR_0__} s, pour un son qui dure {__VAR_1__} s : la zone commence après la fin.",
+    en: "Start at {__VAR_0__} s, for a sound lasting {__VAR_1__} s: the zone begins after the end.",
   },
   "msg.r_verb_ration_convolution_ir_var_0_s": { fr: "Réverbération à convolution (IR : {__VAR_0__} s)", en: "Convolution reverb (IR: {__VAR_0__} s)" },
   "msg.aucun_fichier_midi_en_entr_e": { fr: "Aucun fichier MIDI en entrée.", en: "No MIDI file at input." },

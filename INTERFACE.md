@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**496 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**497 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -144,6 +144,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Analyse émotionnelle | `analyse-emotionnelle` | 240 × 140 |
 | Analyse rythmique | `analyse-rythme` | 240 × 118 |
 | Anneau de Möbius | `anneau-moebius` | 240 × 118 |
+| Apparier sur une référence | `apparier-reference` | 240 × 140 |
 | Arc-en-ciel acoustique | `arc-en-ciel-acoustique` | 240 × 162 |
 | Arpège flocon de Koch | `arpege-koch` | 240 × 140 |
 | Arpège spectral | `arpege-spectral` | 240 × 118 |
