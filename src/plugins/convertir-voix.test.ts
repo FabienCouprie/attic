@@ -11,8 +11,9 @@
 import { describe, expect, it } from "vitest";
 import { createRequire } from "module";
 
-const { convertir } = createRequire(import.meta.url)("../../electron/chatterbox.cjs") as {
+const { convertir, cloner } = createRequire(import.meta.url)("../../electron/chatterbox.cjs") as {
   convertir: (o: { source?: Uint8Array; cible?: Uint8Array }) => Promise<{ ok: boolean; journal?: string }>;
+  cloner: (o: { voix?: Uint8Array; texte?: string }) => Promise<{ ok: boolean; journal?: string }>;
 };
 
 const QUELQUES_OCTETS = new Uint8Array([1, 2, 3, 4]);
@@ -49,5 +50,22 @@ describe("ce que le pont refuse avant de charger le modèle", () => {
     expect(sansSource.journal).not.toBe(sansCible.journal);
     sansModele(sansSource.journal);
     sansModele(sansCible.journal);
+  });
+
+  it("ET LE CLONAGE, QUI PARTAGE CE MODÈLE, SUIT LE MÊME ORDRE", async () => {
+    // LES TROIS PONTS DE CETTE FAMILLE DOIVENT S'ACCORDER. Deux avaient été corrigés et le
+    // troisième gardait l'ordre inverse : avec le modèle absent, « Cloner une voix » répondait
+    // « Modèle absent » à qui n'avait rien branché, là où « brancher une voix » est le message
+    // utile. Laisser un pont sur trois avec l'ancien ordre, c'est la divergence que le dépôt
+    // reproche partout ailleurs.
+    const sansVoix = await cloner({ texte: "bonjour" });
+    expect(sansVoix.ok).toBe(false);
+    expect(sansVoix.journal).toContain("Voix");
+    sansModele(sansVoix.journal);
+
+    const sansTexte = await cloner({ voix: QUELQUES_OCTETS });
+    expect(sansTexte.ok).toBe(false);
+    expect(sansTexte.journal).toMatch(/texte/i);
+    sansModele(sansTexte.journal);
   });
 });

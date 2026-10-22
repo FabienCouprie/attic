@@ -56,11 +56,14 @@ function nettoyer(chemin) {
 async function cloner(options = {}, surAvancement, contexte) {
   const travail = fs.mkdtempSync(path.join(os.tmpdir(), "attic-chatterbox-"));
   try {
-    const modele = cheminModele(contexte);
-    if (!fs.existsSync(modele)) return { ok: false, journal: `Modèle absent : ${modele}` };
+    // MÊME ORDRE QUE LA CONVERSION, POUR LA MÊME RAISON : un refus d'entrée doit se prononcer que
+    // les deux giga-octets de poids soient sur le disque ou non. C'est aussi le message le plus
+    // utile — « brancher une voix » plutôt que « modèle absent » quand les deux manquent.
     if (!options.voix) return { ok: false, journal: "Brancher un audio de référence sur l'entrée « Voix »." };
     const texte = typeof options.texte === "string" ? options.texte.trim() : "";
     if (!texte) return { ok: false, journal: "Donner le texte à dire." };
+    const modele = cheminModele(contexte);
+    if (!fs.existsSync(modele)) return { ok: false, journal: `Modèle absent : ${modele}` };
 
     // LA RÉFÉRENCE VA DANS UN SOUS-DOSSIER, pour la même raison que l'audio source d'ACE-Step :
     // la sortie est cherchée par son nom dans le dossier de travail, et une entrée posée à côté
