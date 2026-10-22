@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **500 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **501 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 100 | [AI generators](#ai-generators) (10) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 241 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (20) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 242 | [Analysis](#analysis) (1) · [Conversion](#conversion) (23) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (20) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -2723,6 +2723,7 @@ Transcribes the speech on the audio input, and returns each word with its start 
 | [ABC → MIDI](#abc--midi) | Reads a score in ABC notation (melody, chord symbols, repeats, several voices) and renders it to MIDI and audio. |
 | [ABC Cover](#abc-cover) | Covers an ABC score in another style: same melody, same chords, with an accompaniment and a bass, ballad, pop, waltz, march, bossa nova. |
 | [Chords → MIDI Notation](#chords--midi-notation) | Converts Harmonic Analysis output into the notation expected by Text → MIDI. |
+| [Convert a voice](#convert-a-voice) | Keeps the words and intonation of a recording, and gives it the timbre of another voice. |
 | [Extract Voice](#extract-voice) | Returns a single voice of a polyphony, as an ordinary sequence. |
 | [Formula on Sequence](#formula-on-sequence) | Applies a written rule to each note, and keeps only those meeting a condition. |
 | [Melodic Profile](#melodic-profile) | Gives a sequence the profile of a curve, and also returns the profile it had. |
@@ -2817,6 +2818,25 @@ Translates Harmonic Analysis output into notation playable by Text → MIDI. « 
 | Octave | number | 3 | 1 – 6, step 1 | Octave of the root note of the generated chords. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Tempo written at the top of the notation. Also used to convert the analysis durations from seconds into beats. |
 | Duration per chord | number | 1 beats | 0.25 – 8 beats, step 0.25 | Duration given to each chord when the source provides none (Progression case). |
+
+#### Convert a voice
+
+`convertir-voix` · Processing → Conversion
+
+*Keeps the words and intonation of a recording, and gives it the timbre of another voice.*
+
+This component keeps what is said and has it said by another voice. The « Audio » input carries the recording whose words, rhythm and intonation are kept; the « Target voice » input carries an excerpt of the voice whose timbre is taken. This is not the voice cloner, which starts from written text and has it spoken. Here no text is given: the speech already exists, and only its timbre changes. The target voice need not say the same thing, nor anything in particular: a few seconds of clear speech is enough, and it is their timbre that is taken. A noisy or very short excerpt gives a looser imitation. « Seed » fixes the draw: with the same seed and the same inputs, the result is the same. Changing it gives another take of the same conversion. « Compute » names the device used. The output returns the converted speech, of the same length as the input. The component works on speech and not on singing: the two models of the upstream catalog that can convert singing exceed the size a publication accepts, and are therefore not deliverable.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Target voice | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Seed | number | 42 | 0 – 999999, step 1 | The seed of the draw. With the same seed and the same inputs, the result is the same; changing it gives another take of the same conversion. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Extract Voice
 

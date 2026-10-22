@@ -274,7 +274,9 @@ const CONNUS = {
   // un WAV de quarante-quatre octets : la variante se mesure avant de s'épingler.
   "chatterbox-q8_0.gguf": {
     id: "chatterbox", nom: "Clonage de voix (Chatterbox)", nomEn: "Voice cloning (Chatterbox)",
-    racine: "audiocpp", noeuds: ["cloner-voix"],
+    // DEUX NŒUDS POUR UN SEUL MODÈLE, et c'est la fiche de famille qui le permet : elle déclare
+    // `tts`, `clone` ET `vc`. « Convertir une voix » n'a donc rien coûté de plus que son code.
+    racine: "audiocpp", noeuds: ["cloner-voix", "convertir-voix"],
     licence: { nom: "MIT", credit: "Resemble AI — Chatterbox, converti en GGUF par le projet audio.cpp", rediffusable: true,
       note: "La licence vient de la fiche amont `ResembleAI/chatterbox`, qui déclare MIT. Le dépôt de conversion déclare « other » sans préciser : c'est l'amont qui fait foi, comme pour l'export de Whisper tiny, et une conversion de format est une œuvre dérivée des poids. Seul modèle de voix du catalogue qui ne porte aucune réserve non commerciale." },
   },

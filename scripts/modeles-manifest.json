@@ -1292,7 +1292,8 @@
       "nom": "Clonage de voix (Chatterbox)",
       "nomEn": "Voice cloning (Chatterbox)",
       "noeuds": [
-        "cloner-voix"
+        "cloner-voix",
+        "convertir-voix"
       ],
       "octets": 2088399204,
       "source": {
