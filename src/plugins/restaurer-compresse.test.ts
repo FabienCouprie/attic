@@ -52,12 +52,19 @@ describe("la cadence que le moteur exige", () => {
     expect(r.journal).toContain("48000");
     expect(r.journal, "le message doit être celui du dépôt, non celui du moteur en anglais")
       .toMatch(/n'accepte que du/);
+    // ET CE REFUS NE DÉPEND PAS DU MODÈLE, ce qui est la propriété que ce cas a appris à exiger.
+    // Écrit d'abord sans elle, il passait en local par la seule présence du fichier de poids et
+    // tombait en intégration continue, où aucun modèle d'`audio.cpp` n'est présent : il y recevait
+    // « Modèle absent » là où il attendait la cadence. Le pont vérifie désormais ce qui ne demande
+    // rien avant ce qui demande deux giga-octets.
+    expect(r.journal, "un refus d'entrée ne doit pas dépendre du modèle").not.toMatch(/Modèle absent/);
   });
 
   it("et il le dit aussi quand ce ne sont pas des octets de WAV", async () => {
     const r = await restaurer({ audio: new Uint8Array(Buffer.from("ceci n'est pas un fichier audio")) });
     expect(r.ok).toBe(false);
     expect(r.journal).toMatch(/cadence illisible/);
+    expect(r.journal, "un refus d'entrée ne doit pas dépendre du modèle").not.toMatch(/Modèle absent/);
   });
 });
 

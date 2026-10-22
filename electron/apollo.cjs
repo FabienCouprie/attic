@@ -49,9 +49,11 @@ function nettoyer(chemin) {
 async function restaurer(options = {}, surAvancement, contexte) {
   const travail = fs.mkdtempSync(path.join(os.tmpdir(), "attic-apollo-"));
   try {
-    const modele = cheminModele(contexte);
-    if (!fs.existsSync(modele)) return { ok: false, journal: `Modèle absent : ${modele}` };
-
+    // CE QUI NE DEMANDE RIEN SE VÉRIFIE D'ABORD, et ce n'est pas qu'une question d'ordre : un refus
+    // d'entrée doit se prononcer que le modèle soit sur le disque ou non. L'ordre inverse a fait
+    // tomber l'intégration continue, où aucun modèle d'`audio.cpp` n'est présent : les deux cas du
+    // pont y recevaient « Modèle absent » là où ils attendaient la cadence, et passaient en local
+    // par la seule présence du fichier. Un garde qui ne tient que sur ma machine n'en est pas un.
     const cadence = cadenceWav(options.audio);
     if (cadence !== CADENCE_EXIGEE) {
       return {
@@ -60,6 +62,9 @@ async function restaurer(options = {}, surAvancement, contexte) {
           + `${cadence === null ? "une cadence illisible" : `${cadence} Hz`}.`,
       };
     }
+
+    const modele = cheminModele(contexte);
+    if (!fs.existsSync(modele)) return { ok: false, journal: `Modèle absent : ${modele}` };
 
     const entree = path.join(travail, "entree.wav");
     fs.writeFileSync(entree, Buffer.from(options.audio));
