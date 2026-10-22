@@ -4,6 +4,8 @@
 // de calcul n'a ete retouchee au passage.
 
 import { etirerDuree } from "./commun";
+import { CANAUX_CONVOLUEUR } from "./effets-reverbe";
+import { traiterParPaires } from "./multicanal";
 import { valeurA } from "./courbe";
 import { cyclesAccumules } from "./lfo";
 
@@ -15,6 +17,13 @@ export async function appliquerReverbeProgressive(
   dureeFadeSec: number,
   hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
+  // MÊME LIMITE QUE L'AUTRE RÉVERBÉRATION À CONVOLUTION, et elle jetait de la même façon : le
+  // moteur n'accepte une réponse impulsionnelle qu'à un, deux ou quatre canaux, et celle-ci était
+  // fabriquée avec le nombre de canaux de l'entrée. `CANAUX_CONVOLUEUR` porte la mesure.
+  if (!CANAUX_CONVOLUEUR.includes(entree.numberOfChannels)) {
+    return traiterParPaires(entree, (p) => appliquerReverbeProgressive(
+      p, taillePct, debutPct, finPct, dureeFadeSec, hasard));
+  }
   const dureeImpulsion = 0.5 + (Math.max(0, Math.min(100, taillePct)) / 100) * 3;
   const coda = dureeImpulsion + 1;
   const sr = entree.sampleRate;
