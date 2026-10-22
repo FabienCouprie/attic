@@ -489,6 +489,29 @@ export function rendreObjets(objets: readonly ObjetSonore[], d: Disposition): Fl
 }
 
 /**
+ * Le nom d'un nombre de canaux, dans la langue demandée.
+ *
+ * POURQUOI CETTE PIÈCE EXISTE. Trois endroits du dépôt nommaient un nombre de canaux, chacun à sa
+ * façon, et deux se trompaient. « Fiche technique » écrivait `canaux >= 2 ? "stéréo" : "mono"` :
+ * **un son 5.1 y était annoncé « stéréo »**, relevé le 2026-10-22 dans l'application, sur la
+ * sortie à six canaux d'un spatialiseur. Et le rapport d'orchestre Csound écrivait
+ * `canaux === 2 ? "stéréo" : "mono"`, qui aurait annoncé « mono » pour un six canaux — faute
+ * latente seulement, son type n'admettant que un ou deux, et c'est pourquoi il n'est pas touché.
+ *
+ * LE COMPTE EST DIT TEL QUEL AU-DELÀ DE DEUX, et non traduit en nom de disposition : six canaux
+ * peuvent être un 5.1, un 6.0 ou un hexagone, et seule l'étiquette du tampon le dit. Inventer la
+ * disposition d'après le compte serait affirmer ce qu'on ne sait pas.
+ *
+ * Le troisième endroit, l'historique de codage d'un fichier, garde son vocabulaire — `mono`,
+ * `stereo`, `6ch` — parce que c'est une norme de fichier et non une phrase lue par quelqu'un.
+ */
+export function nommerCanaux(canaux: number, en = false): string {
+  if (canaux <= 1) return "mono";
+  if (canaux === 2) return en ? "stereo" : "stéréo";
+  return `${canaux} ${en ? "channels" : "canaux"}`;
+}
+
+/**
  * Un traitement qui ne sait travailler qu'à deux voies, appliqué à n'importe quel nombre de canaux.
  *
  * POURQUOI CETTE PIÈCE EXISTE. Trois bibliothèques du dépôt ne comptent pas au-delà de deux voies,

@@ -12,8 +12,8 @@ import { describe, expect, it } from "vitest";
 import {
   DISPOSITIONS, anneau, decoder, degreACN, dispositionDe, dispositionParId, etiqueter,
   gainsPourDirection, harmoniques, heriterDisposition, matriceDecodage, nombreDeCanaux,
-  normaliserAzimut, rendreObjets, replierEnStereo, spatialiser, sphereVirtuelle, vbapPlan, versMono,
-  type ObjetSonore,
+  nommerCanaux, normaliserAzimut, rendreObjets, replierEnStereo, spatialiser, sphereVirtuelle,
+  vbapPlan, versMono, type ObjetSonore,
 } from "./multicanal";
 
 const somme2 = (v: number[]) => v.reduce((s, x) => s + x * x, 0);
@@ -329,4 +329,42 @@ describe("le repliement stéréo de l'aperçu", () => {
   });
 
   void SR;
+});
+
+// NOMMER UN NOMBRE DE CANAUX, et les deux fautes relevées le 2026-10-22, chacune dans son sens.
+//
+// « Fiche technique » écrivait `canaux >= 2 ? « stéréo » : « mono »` : la sortie 5.1 d'un
+// spatialiseur, six canaux, y était annoncée « 3 s · stéréo ». Relevé dans l'application, la fiche
+// branchée juste derrière le spatialiseur. Et le rapport d'orchestre Csound écrivait
+// `canaux === 2 ? « stéréo » : « mono »`, qui aurait dit « mono » d'un six canaux — faute latente
+// seulement, son type n'admettant que un ou deux, ce que ce type dit désormais lui-même.
+describe("nommer un nombre de canaux", () => {
+  it("dit mono, stéréo, puis le compte tel quel", () => {
+    expect(nommerCanaux(1)).toBe("mono");
+    expect(nommerCanaux(2)).toBe("stéréo");
+    expect(nommerCanaux(2, true)).toBe("stereo");
+    expect(nommerCanaux(6)).toBe("6 canaux");
+    expect(nommerCanaux(6, true)).toBe("6 channels");
+  });
+
+  it("NE DIT JAMAIS « STÉRÉO » NI « MONO » AU-DELÀ DE DEUX CANAUX", () => {
+    for (const canaux of [3, 4, 5, 6, 8, 12, 16]) {
+      const nom = nommerCanaux(canaux);
+      expect(nom, `${canaux} canaux`).not.toMatch(/stéréo|stereo|mono/);
+      expect(nom, `${canaux} canaux`).toContain(String(canaux));
+    }
+  });
+
+  it("LE COMPTE EST DIT, ET NON UNE DISPOSITION DEVINÉE", () => {
+    // Six canaux peuvent être un 5.1, un 6.0 ou un hexagone, et seule l'étiquette du tampon le
+    // dit. Les nommer « 5.1 » d'après le compte serait affirmer ce qu'on ne sait pas.
+    for (const d of DISPOSITIONS.filter((x) => nombreDeCanaux(x) > 2)) {
+      expect(nommerCanaux(nombreDeCanaux(d))).not.toBe(d.fr);
+    }
+  });
+
+  it("un compte absurde ne rend pas une phrase absurde", () => {
+    expect(nommerCanaux(0)).toBe("mono");
+    expect(nommerCanaux(-3)).toBe("mono");
+  });
 });

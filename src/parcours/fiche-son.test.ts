@@ -147,6 +147,22 @@ describe("le résumé d'une ligne", () => {
     expect(r).toContain("440,2 Hz (A4)");
   });
 
+  it("N'APPELLE PAS « STÉRÉO » UN SON QUI A PLUS DE DEUX CANAUX", () => {
+    // LE DÉFAUT QUE CE CAS A TROUVÉ, relevé dans l'application le 2026-10-22 : le résumé était
+    // écrit `canaux >= 2 ? "stéréo" : "mono"`, et la sortie 5.1 d'un spatialiseur — six canaux,
+    // la fiche branchée juste derrière — était annoncée « 3 s · stéréo ». Un relevé dont le métier
+    // est de dire la vérité sur un tampon ne peut pas se tromper de disposition.
+    //
+    // LE COMPTE EST DIT TEL QUEL, et non traduit en « 5.1 » : six canaux peuvent être un 5.1, un
+    // 6.0 ou un hexagone, et seule l'étiquette du tampon le dit.
+    for (const [canaux, attendu] of [[1, "mono"], [2, "stéréo"], [6, "6 canaux"], [12, "12 canaux"]] as const) {
+      const r = resumeSon({ ...MESURE, canaux }, false);
+      expect(r, `${canaux} canaux`).toContain(attendu);
+      if (canaux > 2) expect(r, `${canaux} canaux`).not.toContain("stéréo");
+    }
+    expect(resumeSon({ ...MESURE, canaux: 6 }, true)).toContain("6 channels");
+  });
+
   it("ne parle pas de corrélation sur un mono, ni de hauteur sur du bruit", () => {
     expect(resumeSon(mono(), false)).toContain("mono");
     expect(resumeSon(mono(), false)).not.toContain("r ");
