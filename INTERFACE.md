@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**499 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**500 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -428,6 +428,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Resonance Audio | `resonance-audio` | 240 × 118 |
 | Résonateurs | `resonateurs` | 240 × 206 |
 | Restauration d'écrêtage | `restauration-ecretage` | 240 × 118 |
+| Restaurer un son compressé | `restaurer-compresse` | 240 × 140 |
 | Résultante (Schillinger) | `resultante-schillinger` | 240 × 162 |
 | Retard granulaire | `retard-granulaire` | 240 × 228 |
 | Retard spectral | `retard-spectral` | 240 × 162 |

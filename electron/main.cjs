@@ -1420,6 +1420,20 @@ ipcMain.handle("chatterbox:cloner", async (event, options) => {
   }
 });
 
+// ─── audio.cpp : la restauration d'un son abîmé par la compression ───
+const { restaurer: apolloRestaurer } = require("./apollo.cjs");
+
+ipcMain.handle("apollo:restaurer", async (event, options) => {
+  try {
+    return await apolloRestaurer(options, (ligne) => {
+      if (!event.sender.isDestroyed()) event.sender.send("apollo:progression", { ligne });
+    }, contexteRessources());
+  } catch (err) {
+    console.error("[attic] apollo:restaurer a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
 // ─── audio.cpp : qui parle quand, et où tombe chaque mot ───
 //
 // DEUX CANAUX ET NON UN, pour la raison écrite juste au-dessus : la diarisation d'un entretien et

@@ -1310,6 +1310,28 @@
       ]
     },
     {
+      "id": "apollo",
+      "nom": "Restauration de son compressé (Apollo)",
+      "nomEn": "Compressed audio restoration (Apollo)",
+      "noeuds": [
+        "restaurer-compresse"
+      ],
+      "octets": 66398592,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/apollo-orig.gguf",
+        "octets": 66398592,
+        "sha256": "41ee9eb6c5c265f126c1baaa3aca94d506dd604f4750f6da46d3cec00310df00"
+      },
+      "fichiers": [
+        {
+          "chemin": "audiocpp/apollo-orig.gguf",
+          "octets": 66398592,
+          "sha256": "41ee9eb6c5c265f126c1baaa3aca94d506dd604f4750f6da46d3cec00310df00"
+        }
+      ]
+    },
+    {
       "id": "parole-diarisation",
       "nom": "Qui parle quand (MOSS)",
       "nomEn": "Who speaks when (MOSS)",

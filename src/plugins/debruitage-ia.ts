@@ -19,6 +19,7 @@ import {
   debruiterParTrames, planchecherDeBruit, GTCRN_BINS, GTCRN_SAMPLE_RATE,
 } from "../audio/gtcrn";
 import { lireModeleEmbarque } from "../modele-embarque";
+import { fiches as fichesRestauration } from "./restaurer-compresse";
 
 const rmsGlobal = (a: Float32Array) => {
   let s = 0;
@@ -155,4 +156,11 @@ export const fiches: FicheAudio[] = ([
       };
     },
   },
+  // « RESTAURER UN SON COMPRESSÉ » EST VERSÉ ICI, et non dans `plugins/index.ts`, parce que la
+  // norme de taille l'exige : l'index est en dette — plus de cinq cents lignes pour une liste
+  // écrite à la main — et le garde de `generer-compte-lignes.test.ts` refuse qu'un fichier en dette
+  // grossisse encore. « Ce qu'on ajoute à un fichier trop gros va ailleurs », dit son message. Le
+  // composant est de cette famille, « Traitement → Débruitage », donc c'est ici son ailleurs, et
+  // l'index le prend sans une ligne de plus par le `...f_debruitage_ia` qu'il porte déjà.
+  ...(fichesRestauration as FicheAudio[]),
 ] as FicheAudio[]).map(avecDoc);
