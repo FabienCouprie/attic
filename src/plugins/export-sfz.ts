@@ -15,6 +15,7 @@ import { bufferVersWavBlob } from "../audio/io";
 import { cheminDansTravail } from "./pont-electron";
 import { nomEchantillon, versSfz, type Banque } from "../audio/clavier-banque";
 
+import { enMo } from "../core/octets";
 /** Retire l'extension d'un nom de fichier, pour en tirer le nom du dossier d'échantillons. */
 const sansExtension = (nom: string): string => nom.replace(/\.[^./\\]*$/, "");
 
@@ -84,7 +85,7 @@ export const fiches: FicheAudio[] = ([
 
       return {
         valeurs: [cheminSfz],
-        message: traduire("msg.sfz.ecrit", nomSfz, String(ecrits), (octets / 1048576).toFixed(1)),
+        message: traduire("msg.sfz.ecrit", nomSfz, String(ecrits), enMo(octets).toFixed(1)),
       };
     },
   },

@@ -4,7 +4,29 @@
 // de calcul n'a ete retouchee au passage.
 
 import { poserParam } from "./automation";
+import { traiterParPaires } from "./multicanal";
 
+/**
+ * Les nombres de canaux qu'un convolueur accepte pour sa réponse impulsionnelle.
+ *
+ * MESURÉ, ET NON LU DANS LA SPÉCIFICATION. Le 2026-10-22, un à huit canaux donnés à la
+ * réverbération : un, deux et quatre passent et ressortent tous leurs canaux remplis ; trois, cinq,
+ * six et huit jettent « the convolution buffer must consist of 1, 2 or 4 channels ». C'est l'erreur
+ * brute du moteur audio, en anglais, là où le composant voisin « Convolution de deux sons » refuse
+ * la même limite dans les mots du dépôt. Et six est la disposition 5.1, que le reste du dépôt
+ * porte : l'impulsion était fabriquée avec le nombre de canaux de l'entrée, donc un 5.1 ne
+ * pouvait pas traverser.
+ */
+export const CANAUX_CONVOLUEUR = [1, 2, 4];
+
+/**
+ * La réverbération d'un son à n'importe quel nombre de canaux.
+ *
+ * Un, deux et quatre canaux passent par le chemin d'origine, au bit près : les empreintes
+ * enregistrées du dépôt en dépendent. Les autres sont traités PAR PAIRES, comme les trois nœuds
+ * SoundTouch le font depuis le 2026-10-21 et pour la même raison — une bibliothèque qui ne sait
+ * pas compter au-delà de deux voies ne doit pas pour autant faire tomber un 5.1.
+ */
 export async function appliquerReverberation(
   entree: AudioBuffer,
   taille: number,
@@ -12,6 +34,9 @@ export async function appliquerReverberation(
   mix: number | Float32Array,
   hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
+  if (!CANAUX_CONVOLUEUR.includes(entree.numberOfChannels)) {
+    return traiterParPaires(entree, (p) => appliquerReverberation(p, taille, decaySec, mix, hasard));
+  }
   const dureeImpulsion = 0.2 + (Math.max(0, Math.min(100, taille)) / 100) * 6;
   const facteurDecay = Math.max(0.5, Math.min(8, decaySec));
   const coda = dureeImpulsion + 1;

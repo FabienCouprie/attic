@@ -616,6 +616,18 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
     fr: "{__VAR_0__} % du spectre borné : référence hors de portée",
     en: "{__VAR_0__}% of the spectrum bounded: reference out of reach",
   },
+  "msg.apollo.dosage": {
+    fr: "{__VAR_0__} % du rendu dans le son final",
+    en: "{__VAR_0__}% of the result in the final sound",
+  },
+  "msg.apollo.cadence": {
+    fr: "traité à {__VAR_0__} Hz, ramené à {__VAR_1__} Hz",
+    en: "processed at {__VAR_0__} Hz, returned to {__VAR_1__} Hz",
+  },
+  "msg.apollo.vitesse": {
+    fr: "facteur de temps réel {__VAR_0__}",
+    en: "real-time factor {__VAR_0__}",
+  },
   "msg.parole.tours": { fr: "{__VAR_0__} tours de parole", en: "{__VAR_0__} speaker turns" },
   "msg.parole.locuteurs": { fr: "{__VAR_0__} locuteurs", en: "{__VAR_0__} speakers" },
   "msg.parole.tous_gardes": { fr: "tous gardés", en: "all kept" },
@@ -799,6 +811,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.parole.aucunMot": { fr: "Aucun mot reconnu : il n’y a rien à mettre en notes.", en: "No word recognised: there is nothing to turn into notes." },
   "progress.chanson.modeles": { fr: "Chargement des modèles de chanson…", en: "Loading the song models…" },
   "progress.transcription.modele": { fr: "Chargement du modèle de transcription…", en: "Loading the transcription model…" },
+  "progress.apollo.modele": { fr: "Chargement du modèle de restauration…", en: "Loading the restoration model…" },
   "progress.parole.modele_diarisation": { fr: "Chargement du modèle de diarisation…", en: "Loading the diarization model…" },
   "progress.parole.modele_alignement": { fr: "Chargement du modèle d'alignement…", en: "Loading the alignment model…" },
   "msg.transcription.tempo": { fr: "tempo écrit", en: "written tempo" },

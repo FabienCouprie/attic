@@ -11,6 +11,7 @@ import { PistesMultiples, type PisteVue } from "./PistesMultiples";
 import { MontageVideo, type InfosFilm } from "./MontageVideo";
 import type { ColonneVue } from "./montage-video-geometrie";
 import { ExtraitVideo } from "./ExtraitVideo";
+import { enMo } from "../core/octets";
 import { urlMedia } from "./url-media";
 import type { VueProps } from "../ui/registre-vues";
 
@@ -193,7 +194,7 @@ export function VueFilmCercle({ data }: VueProps) {
           </a>
         )}
         <span>{nom}</span>
-        <span>{((n._filmOctets ?? 0) / (1024 * 1024)).toFixed(1)} Mo</span>
+        <span>{enMo(n._filmOctets ?? 0).toFixed(1)} Mo</span>
       </div>
     </div>
   );
@@ -229,7 +230,7 @@ export function VueFilmProduit({ data }: VueProps) {
           </a>
         )}
         <span>{nom}</span>
-        <span>{((n.octets ?? 0) / (1024 * 1024)).toFixed(1)} Mo</span>
+        <span>{enMo(n.octets ?? 0).toFixed(1)} Mo</span>
       </div>
     </div>
   );
@@ -259,7 +260,7 @@ export function VueVideoMuette({ data }: VueProps) {
         </a>
       )}
       <span>{nom}</span>
-      <span>{((n.octets ?? 0) / (1024 * 1024)).toFixed(1)} Mo</span>
+      <span>{enMo(n.octets ?? 0).toFixed(1)} Mo</span>
     </div>
   );
 }

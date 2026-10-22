@@ -50,7 +50,10 @@ const BRUT = `https://huggingface.co/${MODEL_ID}/resolve/main`;
 const POIDS = "onnx/model_quantized.onnx";
 const retenu = (nom) => nom === POIDS || nom.startsWith("voices/") || /^[a-z_]+\.json$/.test(nom);
 
-const mo = (octets) => (octets / 1048576).toFixed(1);
+// « Mo » designe un million d'octets : le diviseur etait 1 048 576, donc des mebioctets
+// portant le mot megaoctet, 4,9 % sous la verite. `src/core/octets.ts` porte le meme
+// calcul pour l'application.
+const mo = (octets) => (octets / 1000000).toFixed(1);
 
 /** La liste amont, avec la taille de chaque fichier : c'est elle qui dit ce qui est complet. */
 async function listeAmont() {

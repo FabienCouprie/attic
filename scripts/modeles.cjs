@@ -279,6 +279,31 @@ const CONNUS = {
       note: "La licence vient de la fiche amont `ResembleAI/chatterbox`, qui déclare MIT. Le dépôt de conversion déclare « other » sans préciser : c'est l'amont qui fait foi, comme pour l'export de Whisper tiny, et une conversion de format est une œuvre dérivée des poids. Seul modèle de voix du catalogue qui ne porte aucune réserve non commerciale." },
   },
 
+  // ── LA RESTAURATION D'UN SON COMPRESSÉ, sous la même racine et lue par le même exécutable ──
+  //
+  // CE QU'IL FAIT ET CE QU'IL NE FAIT PAS, mesuré le 2026-10-22 avant de l'épingler. Sur un dommage
+  // de codec fabriqué — les magnitudes d'une transformée à court terme quantifiées bande par bande,
+  // le budget se resserrant vers l'aigu —, la distance log-spectrale à l'original passe de 0,4329 à
+  // 0,3389. LE TÉMOIN DE CONTRÔLE EST CE QUI REND CE CHIFFRE LISIBLE : passer l'ORIGINAL par Apollo
+  // donne 0,3233, c'est-à-dire qu'il imprime sa propre couleur à n'importe quel signal. Du dommage
+  // au-dessus de ce plancher il efface donc 86 %.
+  //
+  // IL N'ÉTEND PAS LA BANDE, et c'était l'erreur à ne pas commettre en l'épinglant : sur une coupe
+  // franche à 8 kHz il remet 0,0092 % de l'énergie là où 1,0837 % manquent, soit moins d'un pour
+  // cent du trou. « Band-sequence » dans sa fiche nomme son architecture, pas une extension de
+  // bande. Le seul extenseur du catalogue amont, `universr`, échoue hors CUDA.
+  //
+  // SA ROUTE N'A AUCUNE IMPORTANCE, contrairement à `universr` : processeur et carte rendent le
+  // même son à la quatrième décimale, et son journal ne porte aucun avertissement. 66 398 592
+  // octets, facteur de temps réel 0,195 en mono et 0,398 en stéréo sur une RTX 2060, 33,3 sur le
+  // processeur.
+  "apollo-orig.gguf": {
+    id: "apollo", nom: "Restauration de son compressé (Apollo)", nomEn: "Compressed audio restoration (Apollo)",
+    racine: "audiocpp", noeuds: ["restaurer-compresse"],
+    licence: { nom: "CC-BY-SA-4.0", credit: "Apollo — JusperLee, converti en GGUF par le projet audio.cpp", rediffusable: true,
+      note: "La fiche amont `JusperLee/Apollo` déclare CC-BY-SA-4.0 : la rediffusion est permise avec attribution, et un travail dérivé des poids reste sous la même licence. Aucune réserve non commerciale, contrairement aux poids de MuScriptor, et aucune réserve de rediffusion, contrairement à `sortformer_diar` et `mms_forced_aligner`. Le code d'Attic reste sous MIT : le fichier de poids voyage à côté sous sa propre licence, avec son crédit." },
+  },
+
   // ── LA DIARISATION ET L'ALIGNEMENT FORCÉ, sous la même racine et lus par le même exécutable ──
   //
   // CE QUE LA DIARISATION FAIT, et ce qui la distingue d'une reconnaissance : elle découpe un
@@ -449,7 +474,12 @@ function fichiersDe(racine, prefixe = "") {
   return out;
 }
 
-const mo = (octets) => (octets / 1048576).toFixed(1);
+// « Mo » DÉSIGNE UN MILLION D'OCTETS, et ce diviseur était 1 048 576 : les tailles annoncées
+// étaient donc des mébioctets portant le mot mégaoctet, 4,9 % en dessous de la vérité. Le dépôt a
+// déjà payé cette confusion deux fois sur la taille de l'installeur. `src/core/octets.ts` porte le
+// même calcul pour l'application ; ce script ne peut pas l'importer, étant en CommonJS hors de la
+// compilation, d'où le diviseur écrit ici avec sa raison.
+const mo = (octets) => (octets / 1000000).toFixed(1);
 
 function engendrer() {
   const ancien = fs.existsSync(MANIFESTE) ? JSON.parse(fs.readFileSync(MANIFESTE, "utf8")) : { modeles: [] };

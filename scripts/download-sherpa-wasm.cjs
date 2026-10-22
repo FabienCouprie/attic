@@ -66,7 +66,10 @@ async function telecharger(nom) {
   }
 
   fs.writeFileSync(path.join(DEST_DIR, nom), octets);
-  const mo = (octets.length / 1048576).toFixed(1);
+  // « Mo » designe un million d'octets : le diviseur etait 1 048 576, donc des mebioctets
+// portant le mot megaoctet, 4,9 % sous la verite. `src/core/octets.ts` porte le meme
+// calcul pour l'application.
+const mo = (octets.length / 1000000).toFixed(1);
   console.log(`[sherpa-wasm] ${nom} — ${mo} Mo, empreinte vérifiée`);
 }
 

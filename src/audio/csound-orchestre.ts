@@ -234,7 +234,12 @@ export interface LigneOrchestre {
 export interface RapportOrchestre {
   instruments: LigneOrchestre[];
   tables: string[];
-  canaux: number;
+  // UN OU DEUX, ET LE TYPE LE DIT MAINTENANT. `rapportOrchestreLisible` nomme ce compte par
+  // `canaux === 2 ? « stéréo » : « mono »`, ce qui annoncerait « mono » pour un six canaux. La
+  // valeur est bornée depuis toujours — les options l'admettent en `1 | 2` et le corps la ramène
+  // à l'un des deux —, mais `number` laissait cette justesse au hasard. Le nommage général d'un
+  // nombre de canaux est dans `multicanal.ts`, pour les endroits qui ne sont pas bornés.
+  canaux: 1 | 2;
 }
 
 /**

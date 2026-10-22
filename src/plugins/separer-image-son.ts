@@ -18,8 +18,8 @@ import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { ecrireSansSon, ouvrirVideo, sonDuFilm } from "../audio/video-sortie";
 
+import { enMo } from "../core/octets";
 const en = () => langueCourante() === "en";
-const MEGA = 1024 * 1024;
 
 export const fiches: FicheAudio[] = ([
   {
@@ -77,7 +77,7 @@ export const fiches: FicheAudio[] = ([
         valeurs: [fichier, son],
         affichage,
         message: `${video.dureeSec.toFixed(1)} s · ${video.largeur}x${video.hauteur} · `
-          + `${(blob.size / MEGA).toFixed(1)} Mo · ${sonDit}`,
+          + `${enMo(blob.size).toFixed(1)} Mo · ${sonDit}`,
       };
     },
   },

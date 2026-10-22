@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NodeResizer } from "@xyflow/react";
 import { useI18n } from "../i18n";
 import { calerSource, courbeDeGain, gainLineaire } from "../audio/apercu-video";
+import { enMo } from "../core/octets";
 import {
   formatTemps, imageApresDeplacement, imageDepuisSecondesCalee, rectDeBande, secondesDepuisX,
   type BandeVue, type ColonneVue,
@@ -50,7 +51,6 @@ export interface MontageVideoProps {
   onMesurer?: () => void;
 }
 
-const MEGA = 1024 * 1024;
 
 const MARGE_GAUCHE = 24;
 const HAUTEUR_BANDE = 26;
@@ -397,7 +397,7 @@ export function MontageVideo(p: MontageVideoProps) {
               </a>
             )}
             <span>{p.resultat.nom}</span>
-            <span>{(p.resultat.octets / MEGA).toFixed(1)} Mo</span>
+            <span>{enMo(p.resultat.octets).toFixed(1)} Mo</span>
           </div>
         )}
       </div>

@@ -16,8 +16,8 @@ import { EXTENSIONS_VIDEO, extensionLisible } from "../audio/video-montage";
 import { ecrireExtrait, ouvrirFilmParPlages, ouvrirVideo } from "../audio/video-sortie";
 import { formatDuree, plageExtrait } from "../audio/video-extrait";
 
+import { enMo } from "../core/octets";
 const en = () => langueCourante() === "en";
-const MEGA = 1024 * 1024;
 
 export const fiches: FicheAudio[] = ([
   {
@@ -129,7 +129,7 @@ export const fiches: FicheAudio[] = ([
         designe,
         message: `${plage.images} ${en() ? "frames" : "images"} · ${en() ? "asked" : "demandé"} ${formatDuree(demandee)} · `
           + `${en() ? "produced" : "produit"} ${produite} · ${video.cadence.toFixed(2)} ${en() ? "fps" : "im/s"} · `
-          + `${son} · ${(blob.size / MEGA).toFixed(1)} Mo`,
+          + `${son} · ${enMo(blob.size).toFixed(1)} Mo`,
       };
     },
   },

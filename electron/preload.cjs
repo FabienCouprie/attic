@@ -133,6 +133,14 @@ contextBridge.exposeInMainWorld("api", {
     return () => ipcRenderer.removeListener("chatterbox:progression", ecouteur);
   },
 
+  // La restauration d'un son abîmé par la compression. Même désabonnement, même raison.
+  apolloRestaurer: (options) => ipcRenderer.invoke("apollo:restaurer", options),
+  apolloProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("apollo:progression", ecouteur);
+    return () => ipcRenderer.removeListener("apollo:progression", ecouteur);
+  },
+
   // La parole : qui parle quand, et où tombe chaque mot. Deux modèles, un seul exécutable, et
   // deux canaux d'avancement distincts pour que deux tâches lancées ensemble ne mêlent pas leurs
   // lignes de journal.

@@ -14,6 +14,7 @@ import { cheminDansTravail } from "./pont-electron";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
+import { enMo } from "../core/octets";
 const en = () => langueCourante() === "en";
 
 /** Les conteneurs qu'un film peut porter ici. Le MP4 est le défaut, et ce qu'un lecteur ouvre partout. */
@@ -70,7 +71,7 @@ export const fiches: FicheAudio[] = ([
         };
       }
 
-      const mo = (octets.byteLength / 1048576).toFixed(1);
+      const mo = enMo(octets.byteLength).toFixed(1);
       return {
         valeurs: [chemin],
         message: en() ? `${nomFinal} · ${mo} MB written` : `${nomFinal} · ${mo} Mo écrits`,

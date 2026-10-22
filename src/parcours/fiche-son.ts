@@ -22,6 +22,7 @@
 // laisseraient croire à une mesure alors qu'ils ne font que répéter « il n'y a qu'un canal ». De
 // même, sans hauteur tenue, la fiche le dit en un mot plutôt que d'aligner des cents sur du bruit.
 
+import { nommerCanaux } from "../audio/multicanal";
 import { verdictStereo } from "../audio/stereo-correlation";
 import { chiffre } from "./conditions";
 import type { MesureCopie } from "./mesures";
@@ -161,7 +162,7 @@ export function resumeSon(m: MesureCopie, en: boolean, diffusion = "aucune"): st
   const c = (v: number) => chiffre(v, en);
   const morceaux = [
     `${c(m.dureeSec)} s`,
-    m.canaux >= 2 ? (en ? "stereo" : "stéréo") : "mono",
+    nommerCanaux(m.canaux, en),
     `${c(m.lufs)} LUFS`,
     `${c(m.vraiPicDb)} dBTP`,
   ];

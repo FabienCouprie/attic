@@ -487,3 +487,66 @@ export function rendreObjets(objets: readonly ObjetSonore[], d: Disposition): Fl
   }
   return out;
 }
+
+/**
+ * Le nom d'un nombre de canaux, dans la langue demandée.
+ *
+ * POURQUOI CETTE PIÈCE EXISTE. Trois endroits du dépôt nommaient un nombre de canaux, chacun à sa
+ * façon, et deux se trompaient. « Fiche technique » écrivait `canaux >= 2 ? "stéréo" : "mono"` :
+ * **un son 5.1 y était annoncé « stéréo »**, relevé le 2026-10-22 dans l'application, sur la
+ * sortie à six canaux d'un spatialiseur. Et le rapport d'orchestre Csound écrivait
+ * `canaux === 2 ? "stéréo" : "mono"`, qui aurait annoncé « mono » pour un six canaux — faute
+ * latente seulement, son type n'admettant que un ou deux, et c'est pourquoi il n'est pas touché.
+ *
+ * LE COMPTE EST DIT TEL QUEL AU-DELÀ DE DEUX, et non traduit en nom de disposition : six canaux
+ * peuvent être un 5.1, un 6.0 ou un hexagone, et seule l'étiquette du tampon le dit. Inventer la
+ * disposition d'après le compte serait affirmer ce qu'on ne sait pas.
+ *
+ * Le troisième endroit, l'historique de codage d'un fichier, garde son vocabulaire — `mono`,
+ * `stereo`, `6ch` — parce que c'est une norme de fichier et non une phrase lue par quelqu'un.
+ */
+export function nommerCanaux(canaux: number, en = false): string {
+  if (canaux <= 1) return "mono";
+  if (canaux === 2) return en ? "stereo" : "stéréo";
+  return `${canaux} ${en ? "channels" : "canaux"}`;
+}
+
+/**
+ * Un traitement qui ne sait travailler qu'à deux voies, appliqué à n'importe quel nombre de canaux.
+ *
+ * POURQUOI CETTE PIÈCE EXISTE. Trois bibliothèques du dépôt ne comptent pas au-delà de deux voies,
+ * et chacune se trompait à sa façon : les trois nœuds SoundTouch allouaient le nombre de canaux
+ * reçu et n'en remplissaient que deux, laissant quatre canaux MUETS dans un 5.1 ; les deux
+ * réverbérations à convolution fabriquaient leur réponse impulsionnelle avec le nombre de canaux
+ * de l'entrée, et le moteur audio jetait « the convolution buffer must consist of 1, 2 or 4
+ * channels » — en anglais, sur une disposition que le reste du dépôt porte.
+ *
+ * LES DEUX FAUTES SONT LA MÊME, vue de deux endroits, et l'écrire trois fois les aurait fait
+ * diverger. Les canaux sont donc appariés ici, une fois : un canal impair en fin de liste se
+ * double pour former sa paire, et seule sa première voie est reprise au retour.
+ *
+ * LA LONGUEUR COMMUNE EST LA PLUS COURTE. Les paires rendent la même longueur dans tous les cas
+ * mesurés, mais rien ne le garantit, et un canal plus long que les autres les désaligne tous.
+ */
+export async function traiterParPaires(
+  entree: AudioBuffer,
+  traiter: (paire: AudioBuffer) => Promise<AudioBuffer> | AudioBuffer,
+): Promise<AudioBuffer> {
+  const canaux = entree.numberOfChannels;
+  const sr = entree.sampleRate;
+  const paires: AudioBuffer[] = [];
+  for (let c = 0; c < canaux; c += 2) {
+    const d = Math.min(c + 1, canaux - 1);
+    const p = new AudioBuffer({ numberOfChannels: 2, length: entree.length, sampleRate: sr });
+    p.copyToChannel(entree.getChannelData(c), 0);
+    p.copyToChannel(entree.getChannelData(d), 1);
+    paires.push(await traiter(p));
+  }
+  const longueur = Math.min(...paires.map((p) => p.length));
+  const sortie = new AudioBuffer({ numberOfChannels: canaux, length: longueur, sampleRate: sr });
+  for (let c = 0; c < canaux; c++) {
+    sortie.copyToChannel(paires[c >> 1].getChannelData(c % 2).slice(0, longueur), c);
+  }
+  return sortie;
+}
+

@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **499 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **500 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 100 | [AI generators](#ai-generators) (10) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 240 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (6) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (20) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 241 | [Analysis](#analysis) (1) · [Conversion](#conversion) (22) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (20) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -3233,6 +3233,7 @@ This component writes a MIDI file from dated zones. Each zone gives one note: it
 | [Dereverb](#dereverb) | Reverb attenuation. |
 | [Noise Profile](#noise-profile) | Captures the spectral profile of a noise. |
 | [Noise Reduction](#noise-reduction) | Spectral noise subtraction. |
+| [Restore compressed audio](#restore-compressed-audio) | Repairs the artifacts a low-bitrate encoding leaves in a recording. |
 
 #### AI Denoise
 
@@ -3348,6 +3349,26 @@ Subtracts background noise from the signal using a noise profile captured on a s
 | Floor | number | 1 % | 0 – 100 %, step 1 | (Spectral mode) Minimum power kept, as a percentage of the noisy signal's. It bounds the reduction: at 1 %, the output goes no more than 20 decibels below the noisy signal, which keeps the residual noise from shimmering. This setting holds the reduction back without commanding it; Reduction sets it. |
 | Notches | number | 50 | 1 – 100, step 1 | (Notches mode) Maximum number of notch filters applied. Increase if the hum has many harmonics. |
 | Q | number | 10 | 1 – 50, step 1 | (Notches mode) Notch filter selectivity. Higher Q = narrower removed band. For close harmonics, leave Q = 10. |
+
+#### Restore compressed audio
+
+`restaurer-compresse` · Processing → Denoising
+
+*Repairs the artifacts a low-bitrate encoding leaves in a recording.*
+
+This component repairs what a low-bitrate encoding has damaged: the grain, the hiss and the blur a heavily compressed file leaves behind. It does not give back the missing band. Measured on a track cut sharply at 8 kHz, it puts back less than one percent of the absent energy: a sound whose treble has gone will not find it here. What it repairs are the artifacts of the band that remains. « Amount » blends the result with the received sound. At one hundred percent the sound is entirely the engine's, which imprints its own colour even on a healthy sound; lower, one takes part of the repair while keeping the rest of the original. This is the setting to lower when the result seems smoothed. « Chunk » splits long files. At zero the file goes through in one pass, which gives the best result and asks the most memory. A chunk of a few tens of seconds allows a whole piece to be processed on a small card; chunks overlap and crossfade, so the seams are not heard. « Compute » names the device used. The engine works at 44 100 Hz and accepts nothing else: the sound is brought there and returned to its original rate, with its duration unchanged.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Amount | slider | 100 % | 0 – 100 %, step 1 | The share of the result in the final sound. At one hundred, the sound is entirely the engine's, which imprints its colour even on a healthy sound. At zero, the received sound comes out unchanged and the engine runs for nothing. |
+| Chunk | number | 0 s | 0 – 120 s, step 1 | The duration of the chunks processed separately. At zero, the file goes through in one pass: better result, more memory. Chunks overlap by one second and crossfade. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the returned sound, measured identical to the fourth decimal between processor and card. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 ### Distortion and modulation
 
