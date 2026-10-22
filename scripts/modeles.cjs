@@ -449,7 +449,12 @@ function fichiersDe(racine, prefixe = "") {
   return out;
 }
 
-const mo = (octets) => (octets / 1048576).toFixed(1);
+// « Mo » DÉSIGNE UN MILLION D'OCTETS, et ce diviseur était 1 048 576 : les tailles annoncées
+// étaient donc des mébioctets portant le mot mégaoctet, 4,9 % en dessous de la vérité. Le dépôt a
+// déjà payé cette confusion deux fois sur la taille de l'installeur. `src/core/octets.ts` porte le
+// même calcul pour l'application ; ce script ne peut pas l'importer, étant en CommonJS hors de la
+// compilation, d'où le diviseur écrit ici avec sa raison.
+const mo = (octets) => (octets / 1000000).toFixed(1);
 
 function engendrer() {
   const ancien = fs.existsSync(MANIFESTE) ? JSON.parse(fs.readFileSync(MANIFESTE, "utf8")) : { modeles: [] };

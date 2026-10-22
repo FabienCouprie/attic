@@ -27,7 +27,7 @@ const FICHIERS = [
   { url: `${HF}/NOTICE`, dest: "NOTICE" },
 ];
 
-const mo = (n) => `${(n / 2 ** 20).toFixed(1)} Mo`;
+const mo = (n) => `${(n / 1000000).toFixed(1)} Mo`;
 
 async function telecharger(url, dest) {
   const complet = path.join(CIBLE, dest);

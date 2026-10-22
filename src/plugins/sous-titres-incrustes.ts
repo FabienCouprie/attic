@@ -23,8 +23,8 @@ import { dessinerSousTitre, type StyleSousTitre } from "../audio/sous-titres-ima
 import { ouvrirVideo, sonDuFilm } from "../audio/video-sortie";
 import { encoderFilm, nombreDImages } from "../audio/video-rendu";
 
-const MEGA = 1048576;
 
+import { enMo } from "../core/octets";
 export const fiches = ([
   {
     id: "sous-titres-incrustes", nom: "Incruster les sous-titres", nomEn: "Burn In Subtitles",
@@ -140,7 +140,7 @@ export const fiches = ([
         valeurs: [fichier],
         affichage: { url: URL.createObjectURL(rendu.blob), nom, octets: rendu.blob.size },
         message: traduire("msg.incrustation.resume",
-          String(sous.length), String(rendu.images), (rendu.blob.size / MEGA).toFixed(1),
+          String(sous.length), String(rendu.images), enMo(rendu.blob.size).toFixed(1),
           (rendu.msTotal / 1000).toFixed(1)),
       };
     },

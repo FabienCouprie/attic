@@ -25,6 +25,7 @@ import { paletteDepuisPrompt } from "./pochette-palettes";
 import { creerAleatoire } from "../core/hasard";
 import { encoderFilm, nombreDImages } from "../audio/video-rendu";
 
+import { enMo } from "../core/octets";
 const en = () => langueCourante() === "en";
 
 /** Les définitions offertes, et leur hauteur. Le seizième-neuvième, partout. */
@@ -189,7 +190,7 @@ export const fiches: FicheAudio[] = ([
       donnees._filmNom = nomFilm;
       donnees._filmOctets = rendu.blob.size;
 
-      const mo = (rendu.blob.size / 1048576).toFixed(1);
+      const mo = enMo(rendu.blob.size).toFixed(1);
       return {
         valeurs: [new File([rendu.blob], nomFilm, { type: "video/mp4" })],
         message: en()

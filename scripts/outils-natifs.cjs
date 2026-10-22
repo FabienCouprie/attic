@@ -37,7 +37,10 @@ const BASE_RELEASE = "https://github.com/FabienCouprie/attic/releases/download/a
 /** La plateforme telle que le manifeste la nomme. */
 const PLATEFORME = `${process.platform}-${process.arch}`;
 
-const mo = (o) => (o / 1048576).toFixed(1);
+// « Mo » designe un million d'octets : le diviseur etait 1 048 576, donc des mebioctets
+// portant le mot megaoctet, 4,9 % sous la verite. `src/core/octets.ts` porte le meme
+// calcul pour l'application.
+const mo = (o) => (o / 1000000).toFixed(1);
 const sha256 = (fichier) =>
   crypto.createHash("sha256").update(fs.readFileSync(fichier)).digest("hex");
 

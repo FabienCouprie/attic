@@ -84,7 +84,10 @@ const PAQUETS = {
   },
 };
 
-const mo = (octets) => (octets / 1048576).toFixed(1);
+// « Mo » designe un million d'octets : le diviseur etait 1 048 576, donc des mebioctets
+// portant le mot megaoctet, 4,9 % sous la verite. `src/core/octets.ts` porte le meme
+// calcul pour l'application.
+const mo = (octets) => (octets / 1000000).toFixed(1);
 
 /**
  * Un `fetch` qui abandonne plutôt que de rester suspendu.

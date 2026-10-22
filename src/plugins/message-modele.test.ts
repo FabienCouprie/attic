@@ -108,15 +108,18 @@ describe("le texte affiche", () => {
   });
 
   it("ajoute la note, avec la taille, quand le modele manque", () => {
+    // LES DEUX TAILLES SONT CELLES DE VRAIS PAQUETS, et leur annonce a changé de valeur sans que
+    // le fichier change : « Mo » et « Go » désignent des puissances de dix, et `formaterOctets`
+    // divisait par des puissances de deux. 1 879 048 192 octets font 1,9 Go et non 1,8.
     const t = texteAvecModele("Génération du son…", etat([paquet("p", ["n"], 1_879_048_192, false)]), "n");
     expect(t).toContain("Génération du son…");
-    expect(t).toContain("1,8 Go");
+    expect(t).toContain("1,9 Go");
   });
 
   it("rend la note seule quand le nœud ne dit rien de lui-meme", () => {
     const t = texteAvecModele("", etat([paquet("p", ["n"], 34_603_008, false)]), "n");
     expect(t.startsWith(" ")).toBe(false);
-    expect(t).toContain("33 Mo");
+    expect(t).toContain("35 Mo");
   });
 
   it("ne rend rien du tout quand le nœud se tait et que le modele est la", () => {

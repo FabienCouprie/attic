@@ -12,6 +12,7 @@ import { I18nProvider } from "./i18n";
 import { ErreurBoundary } from "./ui/ErreurBoundary";
 import App from "./ui/App";
 
+import { enMo } from "./core/octets";
 // Demande le stockage persistant : empêche l'éviction (sous pression disque) du
 // cache de modèles IA — les fichiers HuggingFace stockés en Cache Storage. Ainsi
 // un modèle n'est téléchargé qu'une fois ; les runs suivants relisent le disque.
@@ -25,7 +26,7 @@ if (navigator.storage?.persist) {
       // persistent-storage) ou autre chose.
       const persiste = await navigator.storage.persisted?.().catch(() => undefined);
       const est = await navigator.storage.estimate?.().catch(() => undefined);
-      const mo = (n?: number) => n == null ? "?" : `${Math.round(n / 1048576)} Mo`;
+      const mo = (n?: number) => n == null ? "?" : `${Math.round(enMo(n))} Mo`;
       console.log(`[attic] Stockage persistant : ${accorde ? "accordé" : "refusé"} (persisted=${persiste}) — usage ${mo(est?.usage)} / quota ${mo(est?.quota)}`);
     })
     .catch(() => { /* API indisponible : on ignore, le cache reste best-effort */ });

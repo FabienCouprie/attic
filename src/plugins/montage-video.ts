@@ -22,11 +22,11 @@ import { ajusterALaVideo, EXTENSIONS_VIDEO, extensionLisible, plansDepuisPistes,
 import { ecrireMp4, ouvrirFilmParPlages, sonDuFilm } from "../audio/video-sortie";
 import { creteDeColonnes, enveloppeDeTampon } from "../audio/pistes-visu";
 
+import { enMo } from "../core/octets";
 /** Six, comme le visualiseur : au-delà, on ne suit plus ce qu'on a posé. */
 export const PISTES_VIDEO = 6;
 
 const en = () => langueCourante() === "en";
-const MEGA = 1024 * 1024;
 
 export const fiches: FicheAudio[] = ([
   {
@@ -166,13 +166,13 @@ export const fiches: FicheAudio[] = ([
       const affichage = { url: URL.createObjectURL(blob), nom: fichier.name, octets: blob.size };
       // Les octets du film n'entrent pas dans ce compte : ils n'ont jamais été tenus. Restent le
       // mélange et le fichier produit.
-      const retenu = (melange.length * melange.numberOfChannels * 4 + blob.size) / MEGA;
+      const retenu = enMo(melange.length * melange.numberOfChannels * 4 + blob.size);
       return {
         valeurs: [fichier],
         affichage,
         designe,
         message: `${pistes.length} ${en() ? "tracks" : "pistes"} · ${video.dureeSec.toFixed(1)} s · `
-          + `${video.cadence.toFixed(2)} ${en() ? "fps" : "im/s"} · ${(blob.size / MEGA).toFixed(0)} Mo · `
+          + `${video.cadence.toFixed(2)} ${en() ? "fps" : "im/s"} · ${enMo(blob.size).toFixed(0)} Mo · `
           + `${en() ? "held" : "retenu"} ${retenu.toFixed(0)} Mo`,
       };
     },

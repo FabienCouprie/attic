@@ -13,9 +13,13 @@ const etat = (o: Partial<Parameters<typeof apparenceModeles>[0] & object> = {}) 
 
 describe("le poids affiché", () => {
   it("se lit en mégaoctets, et en gigaoctets au-delà de mille", () => {
-    expect(formaterOctets(352084)).toBe("344 Ko");
-    expect(formaterOctets(28.3 * 1048576)).toBe("28 Mo");
-    expect(formaterOctets(1171.8 * 1048576)).toBe("1,1 Go");
+    // LES ATTENDUS ÉTAIENT DES MÉBIOCTETS PORTANT LE MOT MÉGAOCTET, et ces trois lignes le
+    // disaient en multipliant par 1 048 576 pour obtenir des « Mo ». « Mo » désigne un million
+    // d'octets : 352 084 octets font 352 kilooctets et non 344, et le calcul est désormais dans
+    // `core/octets.ts`, écrit une seule fois pour tout le dépôt.
+    expect(formaterOctets(352_084)).toBe("352 Ko");
+    expect(formaterOctets(28.3e6)).toBe("28 Mo");
+    expect(formaterOctets(1.1718e9)).toBe("1,2 Go");
   });
 
   it("n'annonce jamais « 0 Ko » pour un fichier qui existe", () => {
@@ -37,11 +41,11 @@ describe("quand tout est là", () => {
 
 describe("quand il en manque", () => {
   it("compte les modèles et annonce le poids à prendre", () => {
-    const a = apparenceModeles(etat({ complets: 4, manquants: ["a", "b", "c"], octetsAPrendre: 1171.8 * 1048576 }), null);
+    const a = apparenceModeles(etat({ complets: 4, manquants: ["a", "b", "c"], octetsAPrendre: 1.2288e9 }), null);
     expect(a.variante).toBe("manquants");
     expect(a.badge).toBe("3");
     expect(a.cle).toBe("modeles.manquants");
-    expect(a.vars).toEqual([3, "1,1 Go"]);
+    expect(a.vars).toEqual([3, "1,2 Go"]);
     expect(a.actionnable).toBe(true);
   });
 

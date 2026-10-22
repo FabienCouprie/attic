@@ -134,12 +134,11 @@ export interface ApparenceModeles {
  * « 1172 Mo » se lit mal quand il s'agit de décider si on lance le téléchargement maintenant ;
  * « 1,1 Go » se compare à ce qu'on sait de sa connexion.
  */
-export function formaterOctets(octets: number): string {
-  const mo = octets / 1048576;
-  if (mo < 1) return `${Math.max(1, Math.round(octets / 1024))} Ko`;
-  if (mo < 1024) return `${Math.round(mo)} Mo`;
-  return `${(mo / 1024).toFixed(1).replace(".", ",")} Go`;
-}
+// LE CALCUL EST SORTI DANS `core/octets.ts`, où il n'est plus écrit qu'une fois : il l'était neuf
+// fois dans le dépôt, et les neuf divisaient par 1 048 576 en écrivant « Mo ». Il est réexporté
+// ici parce que trois modules l'importent de cette adresse.
+import { formaterOctets } from "../core/octets";
+export { formaterOctets };
 
 /** Le pourcentage affiché : entier, jamais 100 % avant la fin. */
 function pourcent(fraction: number): string {

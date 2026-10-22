@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NodeResizer } from "@xyflow/react";
+import { enMo } from "../core/octets";
 import { useI18n } from "../i18n";
 import {
   formatTemps, imageDepuisSecondesCalee, rectDeBande, secondesDepuisX,
@@ -28,7 +29,6 @@ export interface ExtraitVideoProps {
   onMesurer?: () => void;
 }
 
-const MEGA = 1024 * 1024;
 const MARGE_GAUCHE = 24;
 const HAUTEUR_AXE = 14;
 /** La zone de prise d'un bord, de part et d'autre du trait. */
@@ -251,7 +251,7 @@ export function ExtraitVideo(p: ExtraitVideoProps) {
               </a>
             )}
             <span>{p.resultat.nom}</span>
-            <span>{(p.resultat.octets / MEGA).toFixed(1)} Mo</span>
+            <span>{enMo(p.resultat.octets).toFixed(1)} Mo</span>
           </div>
         )}
       </div>
