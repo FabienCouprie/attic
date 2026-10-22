@@ -1420,6 +1420,35 @@ ipcMain.handle("chatterbox:cloner", async (event, options) => {
   }
 });
 
+// ─── audio.cpp : qui parle quand, et où tombe chaque mot ───
+//
+// DEUX CANAUX ET NON UN, pour la raison écrite juste au-dessus : la diarisation d'un entretien et
+// l'alignement d'un texte peuvent tourner côte à côte, et un seul canal d'avancement mêlerait
+// leurs lignes.
+const { diariser: paroleDiariser, aligner: paroleAligner } = require("./parole.cjs");
+
+ipcMain.handle("parole:diariser", async (event, options) => {
+  try {
+    return await paroleDiariser(options, (ligne) => {
+      if (!event.sender.isDestroyed()) event.sender.send("parole:diarisation-progression", { ligne });
+    }, contexteRessources());
+  } catch (err) {
+    console.error("[attic] parole:diariser a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
+ipcMain.handle("parole:aligner", async (event, options) => {
+  try {
+    return await paroleAligner(options, (ligne) => {
+      if (!event.sender.isDestroyed()) event.sender.send("parole:alignement-progression", { ligne });
+    }, contexteRessources());
+  } catch (err) {
+    console.error("[attic] parole:aligner a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
 const { etiqueter: cedEtiqueter } = require("./ced.cjs");
 
 ipcMain.handle("ced:etiqueter", async (event, options) => {

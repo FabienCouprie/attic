@@ -616,6 +616,31 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
     fr: "{__VAR_0__} % du spectre borné : référence hors de portée",
     en: "{__VAR_0__}% of the spectrum bounded: reference out of reach",
   },
+  "msg.parole.tours": { fr: "{__VAR_0__} tours de parole", en: "{__VAR_0__} speaker turns" },
+  "msg.parole.locuteurs": { fr: "{__VAR_0__} locuteurs", en: "{__VAR_0__} speakers" },
+  "msg.parole.tous_gardes": { fr: "tous gardés", en: "all kept" },
+  "msg.parole.rang_absent": {
+    fr: "aucun locuteur de rang {__VAR_0__} dans cet enregistrement",
+    en: "no speaker of rank {__VAR_0__} in this recording",
+  },
+  "msg.parole.part": {
+    fr: "{__VAR_0__} occupe {__VAR_1__} % de la durée",
+    en: "{__VAR_0__} takes {__VAR_1__}% of the duration",
+  },
+  "msg.aligner.sans_texte": {
+    fr: "Brancher le texte prononcé sur l'entrée « Texte ».",
+    en: "Connect the spoken text to the « Text » input.",
+  },
+  "msg.aligner.mots": { fr: "{__VAR_0__} mots placés", en: "{__VAR_0__} words placed" },
+  "msg.aligner.tranche": {
+    fr: "{__VAR_0__} mots gardés, de « {__VAR_1__} » à « {__VAR_2__} », de {__VAR_3__} à {__VAR_4__} s",
+    en: "{__VAR_0__} words kept, from « {__VAR_1__} » to « {__VAR_2__} », from {__VAR_3__} to {__VAR_4__} s",
+  },
+  "msg.aligner.tranche_vide": {
+    fr: "aucun mot au rang {__VAR_0__} : le texte en compte {__VAR_1__}",
+    en: "no word at rank {__VAR_0__}: the text has {__VAR_1__}",
+  },
+  "msg.aligner.duree": { fr: "{__VAR_0__} s rendus", en: "{__VAR_0__} s returned" },
   "msg.extraire_zone_debut_hors_du_son": {
     fr: "Début à {__VAR_0__} s, pour un son qui dure {__VAR_1__} s : la zone commence après la fin.",
     en: "Start at {__VAR_0__} s, for a sound lasting {__VAR_1__} s: the zone begins after the end.",
@@ -774,6 +799,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.parole.aucunMot": { fr: "Aucun mot reconnu : il n’y a rien à mettre en notes.", en: "No word recognised: there is nothing to turn into notes." },
   "progress.chanson.modeles": { fr: "Chargement des modèles de chanson…", en: "Loading the song models…" },
   "progress.transcription.modele": { fr: "Chargement du modèle de transcription…", en: "Loading the transcription model…" },
+  "progress.parole.modele_diarisation": { fr: "Chargement du modèle de diarisation…", en: "Loading the diarization model…" },
+  "progress.parole.modele_alignement": { fr: "Chargement du modèle d'alignement…", en: "Loading the alignment model…" },
   "msg.transcription.tempo": { fr: "tempo écrit", en: "written tempo" },
   "msg.transcription.alignement": { fr: "alignement", en: "alignment" },
   "msg.transcription.grille": { fr: "grille", en: "grid" },

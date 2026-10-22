@@ -279,6 +279,47 @@ const CONNUS = {
       note: "La licence vient de la fiche amont `ResembleAI/chatterbox`, qui déclare MIT. Le dépôt de conversion déclare « other » sans préciser : c'est l'amont qui fait foi, comme pour l'export de Whisper tiny, et une conversion de format est une œuvre dérivée des poids. Seul modèle de voix du catalogue qui ne porte aucune réserve non commerciale." },
   },
 
+  // ── LA DIARISATION ET L'ALIGNEMENT FORCÉ, sous la même racine et lus par le même exécutable ──
+  //
+  // CE QUE LA DIARISATION FAIT, et ce qui la distingue d'une reconnaissance : elle découpe un
+  // enregistrement en tours de parole et dit lequel revient au même locuteur. Celle-ci rend AUSSI
+  // le texte de chaque tour, ce qui en fait un seul outil là où il en faudrait deux.
+  //
+  // CELLE DE NVIDIA EST MEILLEURE SUR LES EXTRAITS COURTS ET NE PEUT PAS ÊTRE REDIFFUSÉE. Mesuré
+  // le 2026-10-22 sur un témoin de quatre tours dont les bascules sont connues : `sortformer_diar`
+  // les trouve toutes à quatre-vingts millisecondes près pour 176 Mo et un facteur de temps réel de
+  // 0,018, soit trois fois moins de poids et six fois plus vite que celle-ci. Mais sa fiche dit
+  // « governed by the NVIDIA Open Model License and is local-use only until redistribution approval »,
+  // et elle plafonne à VINGT SECONDES hors du fil — « request exceeds fixed graph capacity » dès
+  // 20,05 s, que ni `graph_arena_mb` ni `--mode streaming` ne relèvent. Celle-ci a tourné sur
+  // 178,4 s d'un coup, en rendant quarante-huit segments et EXACTEMENT deux locuteurs.
+  //
+  // LE PAQUET Q4 ET NON LE Q8, puisque c'est celui qui a été éprouvé : 758 293 216 octets contre
+  // 1 132 Mo, et le bf16 est exclu d'office, la carte ne le faisant pas.
+  "moss-transcribe-diarize-q4_k.gguf": {
+    id: "parole-diarisation", nom: "Qui parle quand (MOSS)", nomEn: "Who speaks when (MOSS)",
+    racine: "audiocpp", noeuds: ["qui-parle-quand"],
+    licence: { nom: "Apache-2.0", credit: "OpenMOSS — MOSS-Transcribe-Diarize, converti en GGUF par le projet audio.cpp", rediffusable: true,
+      note: "La fiche amont `OpenMOSS-Team/MOSS-Transcribe-Diarize` déclare Apache-2.0, et la fiche de famille d'audio.cpp ne porte aucune réserve de rediffusion, contrairement à celles de `sortformer_diar` et de `mms_forced_aligner`." },
+  },
+
+  // L'ALIGNEMENT FORCÉ PLACE UN TEXTE QU'ON CONNAÎT, et c'est pour cela qu'il est plus juste qu'une
+  // reconnaissance : les mots ne sont pas devinés, seulement datés.
+  //
+  // CELUI DE META A ÉTÉ ÉCARTÉ SUR SA PROPRE FICHE, qui dit deux choses rédhibitoires : sa
+  // normalisation de texte ne couvre que le néerlandais et l'anglais en écriture latine, et
+  // « Checkpoint license: CC-BY-NC-4.0 ; no public redistribution is approved ». Celui-ci couvre
+  // onze langues dont le français, et porte Apache-2.0.
+  //
+  // SA RÉSOLUTION EST DE QUATRE-VINGTS MILLISECONDES, mesurée : tous les instants rendus sont des
+  // multiples de 0,08 s. C'est la borne de ce qu'on peut en attendre, et la notice du nœud le dit.
+  "qwen3-forced-aligner-0.6b-q8_0.gguf": {
+    id: "parole-alignement", nom: "Aligner un texte sur la parole (Qwen3)", nomEn: "Align text to speech (Qwen3)",
+    racine: "audiocpp", noeuds: ["aligner-texte"],
+    licence: { nom: "Apache-2.0", credit: "Qwen — Qwen3-ForcedAligner-0.6B, converti en GGUF par le projet audio.cpp", rediffusable: true,
+      note: "La fiche amont `Qwen/Qwen3-ForcedAligner-0.6B` déclare Apache-2.0. Le paquet q8 pèse 1 129 969 856 octets et passe sous le plafond d'un asset de release avec 1 017 513 792 octets de marge." },
+  },
+
   // L'ÉTIQUETEUR DE SONS, troisième modèle sous cette racine et lu par le même exécutable.
   //
   // CHOISI CONTRE AUDIO FLAMINGO, ET LA MESURE EST SANS APPEL. Pour décrire un audio en mots,

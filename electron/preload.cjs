@@ -133,6 +133,22 @@ contextBridge.exposeInMainWorld("api", {
     return () => ipcRenderer.removeListener("chatterbox:progression", ecouteur);
   },
 
+  // La parole : qui parle quand, et où tombe chaque mot. Deux modèles, un seul exécutable, et
+  // deux canaux d'avancement distincts pour que deux tâches lancées ensemble ne mêlent pas leurs
+  // lignes de journal.
+  paroleDiariser: (options) => ipcRenderer.invoke("parole:diariser", options),
+  paroleDiarisationProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("parole:diarisation-progression", ecouteur);
+    return () => ipcRenderer.removeListener("parole:diarisation-progression", ecouteur);
+  },
+  paroleAligner: (options) => ipcRenderer.invoke("parole:aligner", options),
+  paroleAlignementProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("parole:alignement-progression", ecouteur);
+    return () => ipcRenderer.removeListener("parole:alignement-progression", ecouteur);
+  },
+
   // L'étiquetage d'un audio par CED, cinq cent vingt-sept classes d'AudioSet. Même désabonnement.
   cedEtiqueter: (options) => ipcRenderer.invoke("ced:etiqueter", options),
   cedProgression: (callback) => {
