@@ -18,6 +18,7 @@
 // que le réglage parcourt.
 
 /** Les trois vitesses, en tours par minute. */
+import { creerAleatoire } from "../core/hasard";
 export const VITESSES = [33 + 1 / 3, 45, 78];
 
 /** La fréquence de rotation, en hertz : un tour de disque. */
@@ -41,11 +42,7 @@ export interface OptionsPlatine {
 
 /** Le tirage : reproductible, un disque devant sonner deux fois de la même façon. */
 function tirage(graine: number): () => number {
-  let g = Math.max(1, Math.floor(graine)) >>> 0;
-  return () => {
-    g = (Math.imul(g, 1664525) + 1013904223) >>> 0;
-    return g / 4294967296;
-  };
+  return creerAleatoire(graine);
 }
 
 /** La coupure du ronflement, en hertz : le moteur et le palier ne montent pas au-dessus. */

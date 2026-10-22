@@ -4,6 +4,7 @@
 
 import { fft } from "./fft";
 import { creerFenetreHann } from "./commun";
+import { creerAleatoire } from "../core/hasard";
 
 export interface OptionsSpectrogrammeFractal {
   duree: number; // secondes
@@ -19,12 +20,7 @@ export interface OptionsSpectrogrammeFractal {
 }
 
 function creerRng(graine: number) {
-  let s = graine >>> 0;
-  if (s === 0) s = 123456789;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
+  return creerAleatoire(graine);
 }
 
 function hashNoise(rng: () => number, x: number, y: number): number {

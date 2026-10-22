@@ -8,6 +8,7 @@ import { rendreSequence } from "./midi-sequence";
 import { DEMI_TONS_CLE } from "./commun";
 import { degresGammeMelodie } from "./generation-melodie";
 import { caractereTimbre } from "./timbres";
+import { creerAleatoire } from "../core/hasard";
 
 export type ModeMandelbrot = "escape" | "dwell" | "octave";
 
@@ -37,12 +38,7 @@ export interface OptionsMandelbrot {
 }
 
 function creerRng(graine: number) {
-  let s = graine >>> 0;
-  if (s === 0) s = 123456789;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
+  return creerAleatoire(graine);
 }
 
 export function itererMandelbrot(cx: number, cy: number, maxIter: number): number {

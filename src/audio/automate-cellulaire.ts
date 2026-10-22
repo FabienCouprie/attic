@@ -10,6 +10,7 @@ import {
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence, type NoteEvenement } from "./midi-sequence";
 import { degresGammeMelodie } from "./generation-melodie";
+import { creerAleatoire } from "../core/hasard";
 
 const REGLES_1D_NOMS: Record<number, string> = {
   18: "18",
@@ -93,9 +94,7 @@ function snapperNote(midi: number, degres: number[]): number {
 }
 
 function randomSeed(seed: number): () => number {
-  let s = seed % 2147483647;
-  if (s <= 0) s += 2147483646;
-  return () => (s = (s * 16807) % 2147483647) / 2147483647;
+  return creerAleatoire(seed);
 }
 
 function appliquerRegle1D(ligne: number[], regle: number): number[] {

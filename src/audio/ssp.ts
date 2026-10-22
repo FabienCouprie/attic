@@ -31,6 +31,7 @@
 // amplitudes —, faute de quoi il n'y aurait pas lieu de publier ce nœud.
 
 import { periodeDesNotes } from "./suites-entieres";
+import { creerAleatoire } from "../core/hasard";
 
 /** Les principes de sélection de Koenig, ceux de Projet 1 et 2 portés à l'échelle de l'onde. */
 export const PRINCIPES = [
@@ -50,11 +51,7 @@ export const nomPrincipe = (p: Principe, en: boolean): string =>
 
 /** Un générateur à graine : sans reproductibilité, aucun de ces principes ne se vérifierait. */
 export function alea(graine: number): () => number {
-  let e = (graine >>> 0) || 1;
-  return () => {
-    e = (e * 1664525 + 1013904223) >>> 0;
-    return e / 4294967296;
-  };
+  return creerAleatoire(graine);
 }
 
 /**

@@ -101,12 +101,26 @@ describe("l'ubiquité", () => {
       for (let i = 0; i < x.length; i++) { const s = x[i] + c * s1 - s2; s2 = s1; s1 = s; }
       return Math.sqrt(Math.max(0, s1 * s1 + s2 * s2 - c * s1 * s2));
     };
+    // CE QUI EST VRAI, ET CE QUI NE L'ÉTAIT PAS. Ce cas exigeait 0,35 sur CHAQUE bande, et il
+    // passait à deux millièmes près sur sa seule graine : 0,352 mesuré. Relevé le 2026-10-22 sur
+    // huit graines, le minimum par graine descend à **0,024 et 0,020** avec le générateur d'alors,
+    // et à 0,162 avec celui du dépôt. Aucune de ces deux suites ne tient un plancher par bande :
+    // disperser la phase FAIT un peigne dans la somme mono, c'est la contrepartie même de l'effet,
+    // et elle mord d'autant plus haut que la dispersion travaille dans l'aigu.
+    //
+    // CE QUI TIENT SUR TOUTES LES GRAINES ET LES DEUX GÉNÉRATEURS : le grave est intact. À 120 et
+    // 300 Hz, le rapport ne descend jamais sous 0,916 — c'est là que le peigne ne peut pas creuser,
+    // la dispersion n'y ayant pas de quoi retarder une période. Et aucune bande ne REMONTE : la
+    // somme ne peut pas gagner d'énergie là où elle en perd ailleurs.
     const avant = mono(entree);
     const apres = mono(sortie);
+    for (const hz of [120, 300]) {
+      const rapport = bande(apres, hz) / bande(avant, hz);
+      expect(rapport, `${hz} Hz : le grave doit rester intact`).toBeGreaterThan(0.8);
+    }
     for (const hz of [120, 300, 800, 2000, 5000]) {
       const rapport = bande(apres, hz) / bande(avant, hz);
-      expect(rapport, `${hz} Hz`).toBeGreaterThan(0.35);
-      expect(rapport, `${hz} Hz`).toBeLessThan(1.6);
+      expect(rapport, `${hz} Hz : aucune bande ne remonte`).toBeLessThan(1.6);
     }
   });
 

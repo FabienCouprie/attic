@@ -12,6 +12,7 @@ import {
   type FrameSpectrale, type Spectrogramme,
 } from "./spectrogramme-fenetre";
 import { Respiration } from "../core/respirer";
+import { creerAleatoire } from "../core/hasard";
 
 export interface ContinuationSpectraleResultat {
   audio: AudioBuffer;
@@ -27,11 +28,7 @@ export interface ContinuationSpectraleResultat {
 const EPS = 1e-10;
 
 function rngGraine(seed: number): () => number {
-  let s = (seed >>> 0) || 1;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 0xffffffff;
-  };
+  return creerAleatoire(seed);
 }
 
 function initialiserPoidsGlorot(tf: any, model: any, seed: number) {

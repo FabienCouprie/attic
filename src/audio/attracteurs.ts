@@ -7,6 +7,7 @@ import { respirer } from "../core/respirer";
 // L'image et le son vivent à côté : ce module ne connaît que des points et leurs bornes. Le sens
 // inverse n'est qu'un `import type`, effacé à la compilation, donc rien ne circule à l'exécution.
 import { fileDepuisCanvas, rendreHistogrammeSurCanvas, sonifierPoints } from "./attracteurs-image-et-son";
+import { creerAleatoire } from "../core/hasard";
 
 export type TypeAttracteur = "lorenz" | "rossler" | "henon" | "ikeda" | "barnsley" | "sierpinski";
 
@@ -48,12 +49,7 @@ export interface ResultatAttracteur {
 
 // Générateur congruentiel linéaire simple et déterministe.
 function creerRng(graine: number) {
-  let s = graine >>> 0;
-  if (s === 0) s = 123456789;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 4294967296;
-  };
+  return creerAleatoire(graine);
 }
 
 export interface Point3D { x: number; y: number; z: number; }

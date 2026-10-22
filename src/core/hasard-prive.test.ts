@@ -89,19 +89,10 @@ const A_CORRIGER = new Set<string>([
  * test. Une entrée s'en retire quand le module passe au générateur commun.
  */
 const RECENSES = new Set<string>([
-  "src/audio/attracteurs.ts",
-  "src/audio/automate-cellulaire.ts",
-  "src/audio/continuation-spectrale.ts",
-  "src/audio/ecosysteme.ts",
-  "src/audio/fondamentale-manquante.ts",
-  "src/audio/mandelbrot.ts",
-  "src/audio/pca-neuronale.ts",
-  "src/audio/platine.ts",
-  "src/audio/reverb-fractal.ts",
-  "src/audio/spectrogramme-fractal.ts",
-  "src/audio/ssp.ts",
-  "src/audio/ubiquite.ts",
-  "src/audio/vague.ts",
+  // VIDE DEPUIS LE 2026-10-22, SUR DÉCISION DE FABIEN. Les treize modules sont passés eux aussi à
+  // `creerAleatoire`, bien que leurs tirages fussent sains : le dépôt a UN générateur, et une
+  // convention de graine qui va avec. Le coût est le même que pour les douze autres — chacun rend
+  // une pièce différente à graine égale.
 ]);
 
 /**

@@ -2,6 +2,7 @@
 // spectrogramme d'une piste pour en filtrer/reconstruire la texture.
 import { fft } from "./fft";
 import { creerFenetreHann } from "./commun";
+import { creerAleatoire } from "../core/hasard";
 
 interface FrameSpectrale {
   start: number;
@@ -112,11 +113,7 @@ function taillesGeometriques(inputDim: number, latentDim: number, couchesCachees
 }
 
 function rngGraine(seed: number): () => number {
-  let s = (seed >>> 0) || 1;
-  return () => {
-    s = (s * 1664525 + 1013904223) >>> 0;
-    return s / 0xffffffff;
-  };
+  return creerAleatoire(seed);
 }
 
 function initialiserPoidsGlorot(tf: any, model: any, seed: number) {
