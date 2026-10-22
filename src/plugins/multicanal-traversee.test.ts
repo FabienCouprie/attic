@@ -64,6 +64,22 @@ async function executer(fiche: { id: string }, canaux = 6): Promise<unknown[]> {
   for (const p of def.parametres ?? []) {
     params[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p as never) : p.defaut;
     if (p.nom === "Graine" && p.defaut === 0) params[p.nom] = 4242;
+    // TOUT RÉGLAGE EN SECONDES EST BORNÉ COMME L'ENTRÉE L'EST, et c'est ce qui fait tenir ce banc
+    // dans un temps raisonnable. Le banc choisit déjà une entrée d'une demi-seconde ; laisser un
+    // réglage de SORTIE à son défaut d'usage mettait son coût à la main d'un choix d'interface.
+    // Mesuré le 2026-10-22 : « Durée générée » valant 5 s par défaut, les deux continuations
+    // spectrales faisaient générer dix fois ce qu'on leur donnait à lire, et coûtaient à elles
+    // seules 180,4 s des 257,9 s de la passe. Ramenées au plus court que leur plage accepte, la
+    // passe tombe à 138,8 s — et les CENT QUATRE-VINGT-CINQ composants éprouvés le restent tous,
+    // puisque c'est la durée produite qui change, non la liste de ce qui passe.
+    //
+    // LA FORME EST CHERCHÉE, NON UN NOM : l'unité « s » dit qu'un réglage est une durée, donc un
+    // composant neuf qui en porte une sera borné sans qu'on y pense. Nommer les deux coupables
+    // aurait laissé le troisième arriver sans garde.
+    const q = p as { unite?: string; plage?: [number, number] };
+    if (q.unite === "s" && Array.isArray(q.plage)) {
+      params[p.nom] = Math.max(q.plage[0], Math.min(q.plage[1], DUREE));
+    }
   }
   const ent = (def.entrees ?? []).map((p) => entreeSynthetique(p, canaux));
   const r = await def.executer({
