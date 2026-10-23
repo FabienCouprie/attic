@@ -75,7 +75,7 @@ import { describe, expect, it } from "vitest";
 import { parseMidi } from "midi-file";
 import { NB_BANDES } from "../audio/masquage";
 import { GAMMES } from "../audio/gammes-monde";
-import { CANAL_PERCUSSION, PERCUSSIONS_CHOIX } from "../audio/batterie-midi";
+import { CANAL_PERCUSSION, PERCUSSIONS_CHOIX, PERCUSSIONS_JOUABLES } from "../audio/batterie-midi";
 import { fiches } from "./masquage-schillinger-gammes";
 
 const SR = 44100;
@@ -334,8 +334,8 @@ describe("résultante de Schillinger", () => {
       const r = await lancer("resultante-schillinger", [], { "Percussion": choix });
       return (await frappes(r.valeurs[1] as File)).frappes[0].note;
     };
-    // Chacun des huit choix écrit sa propre note, puisque chacun a sa propre voix au rendu.
-    for (const p of PERCUSSIONS_CHOIX) expect(await note(String(p.note)), p.fr).toBe(p.note);
+    // Chacun des treize choix écrit sa propre note, puisque chacun a sa propre voix au rendu.
+    for (const p of PERCUSSIONS_JOUABLES) expect(await note(String(p.note)), p.fr).toBe(p.note);
     expect(await note("une percussion qui n'existe pas")).toBe(38);
   });
 
@@ -508,8 +508,10 @@ describe("déclarations", () => {
     const options = (id: string, nom: string) => fiche(id).parametres.find((p) => p.nom === nom);
     expect(options("gammes-monde", "Gamme")?.optionIds).toEqual(GAMMES.map((g) => g.id));
     expect(options("gammes-monde", "Gamme")?.options).toEqual(GAMMES.map((g) => g.nom));
+    // LA TABLE N'EST PLUS CELLE DES HUIT PISTES DE LA BOÎTE À RYTHMES : un composant qui ne choisit
+    // qu'une percussion n'a pas sa grille pour borne, et il héritait pourtant de ce nombre.
     const percu = options("resultante-schillinger", "Percussion");
-    expect(percu?.optionIds).toEqual(PERCUSSIONS_CHOIX.map((p) => String(p.note)));
-    expect(percu?.options).toEqual(PERCUSSIONS_CHOIX.map((p) => p.fr));
+    expect(percu?.optionIds).toEqual(PERCUSSIONS_JOUABLES.map((p) => String(p.note)));
+    expect(percu?.options).toEqual(PERCUSSIONS_JOUABLES.map((p) => p.fr));
   });
 });

@@ -60,6 +60,51 @@ export const PERCUSSIONS_CHOIX: readonly { note: number; fr: string; en: string 
   { note: 50, fr: "Tom aigu", en: "High tom" },
 ];
 
+/**
+ * Toutes les percussions que le synthétiseur sait rendre, pour un réglage qui n'en choisit QU'UNE.
+ *
+ * POURQUOI UNE SECONDE TABLE, ET POURQUOI ELLE EST PLUS LONGUE. Les huit ci-dessus sont les PISTES
+ * de la boîte à rythmes, et leur nombre est celui de sa grille : un cas les épingle aux huit notes
+ * du séquenceur, dans le même ordre. Un composant qui ne choisit qu'une percussion n'a pas cette
+ * contrainte, et il héritait pourtant de cette borne. Treize notes ont leur propre voix dans
+ * `percussions-placement.ts`, et les offrir n'oblige la boîte à rythmes à rien.
+ *
+ * ET ELLE RÉPARE UNE COLLISION DE LIBELLÉ. « Rythme euclidien » recopiait sa propre liste à la main,
+ * où « Tom grave » désignait la note 41 quand elle désigne la 45 ici, et « Tom aigu » la 48 quand
+ * elle désigne la 50. Le même mot à l'écran, deux notes selon le composant. Les noms du General MIDI
+ * distinguent ces quatre toms, et ce sont ceux-là : 41 tom basse, 45 tom grave, 47 tom médium,
+ * 48 tom médium aigu, 50 tom aigu.
+ *
+ * LE CHARLEY À PÉDALE, 44, N'Y EST PAS : il partage sa voix avec le charley fermé, de sorte que
+ * l'offrir donnerait deux noms pour un seul son.
+ */
+export const PERCUSSIONS_JOUABLES: readonly { note: number; fr: string; en: string }[] = [
+  { note: 36, fr: "Grosse caisse", en: "Kick" },
+  { note: 38, fr: "Caisse claire", en: "Snare" },
+  { note: 39, fr: "Clap", en: "Clap" },
+  { note: 42, fr: "Charley fermé", en: "Closed hi-hat" },
+  { note: 46, fr: "Charley ouvert", en: "Open hi-hat" },
+  { note: 49, fr: "Cymbale crash", en: "Crash cymbal" },
+  { note: 41, fr: "Tom basse", en: "Low floor tom" },
+  { note: 45, fr: "Tom grave", en: "Low tom" },
+  { note: 47, fr: "Tom médium", en: "Low-mid tom" },
+  { note: 48, fr: "Tom médium aigu", en: "Hi-mid tom" },
+  { note: 50, fr: "Tom aigu", en: "High tom" },
+  { note: 56, fr: "Cloche", en: "Cowbell" },
+  { note: 75, fr: "Clave", en: "Claves" },
+];
+
+/** Le réglage à choix d'une percussion : identifiants numériques, libellés dans les deux langues. */
+export function choixPercussion(table = PERCUSSIONS_JOUABLES): {
+  options: string[]; optionsEn: string[]; optionIds: string[];
+} {
+  return {
+    options: table.map((p) => p.fr),
+    optionsEn: table.map((p) => p.en),
+    optionIds: table.map((p) => String(p.note)),
+  };
+}
+
 /** Le canal de percussion du General MIDI, tel qu'il est écrit dans les octets (10 pour qui le lit). */
 export const CANAL_PERCUSSION = 9;
 

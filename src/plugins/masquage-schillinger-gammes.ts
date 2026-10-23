@@ -9,7 +9,7 @@ import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { NB_BANDES, bandesCritiques, bark, masquageParBande, proportionMasquee } from "../audio/masquage";
 import { analyserResultante } from "../audio/schillinger";
-import { CANAL_PERCUSSION, PERCUSSIONS_CHOIX } from "../audio/batterie-midi";
+import { CANAL_PERCUSSION, choixPercussion } from "../audio/batterie-midi";
 import { GAMMES, degresInjouables, ecartAuTempere, frequences, gammeParId, intervalles } from "../audio/gammes-monde";
 import { analyser, modules, TAILLE_TRAME } from "../audio/spectral-wishart";
 
@@ -151,8 +151,7 @@ export const fiches: FicheAudio[] = ([
       // le synthétiseur ne sait pas rendre, qui se jouaient alors en grosse caisse sans le dire. Les
       // huit percussions offertes sont celles qui ont chacune leur voix, ce qu'un test tient.
       { nom: "Percussion", nomEn: "Drum", type: "choix",
-        options: PERCUSSIONS_CHOIX.map((p) => p.fr), optionsEn: PERCUSSIONS_CHOIX.map((p) => p.en),
-        optionIds: PERCUSSIONS_CHOIX.map((p) => String(p.note)),
+        ...choixPercussion(),
         defaut: "Caisse claire", defautEn: "Snare",
         doc: "La percussion qui marque chaque frappe, sur le canal de batterie du General MIDI. Les huit choix ont chacun leur propre sonorité au rendu.",
         docEn: "The drum that marks each onset, on the General MIDI drum channel. The eight choices each have their own sound when rendered." },

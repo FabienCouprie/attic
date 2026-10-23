@@ -9,7 +9,7 @@
 // bascule offrirait donc, dans un de ses deux états, des réglages sans effet.
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { PERCUSSIONS_CHOIX } from "../audio/batterie-midi";
+import { choixPercussion } from "../audio/batterie-midi";
 import {
   FONDAMENTALES, POSITIONS_MAX, RYTHMES_CANONIQUES, RYTHME_LIBRE, enSuite, hauteursDuCercle,
   motifDuRythme, motifNomme, type Cercle, type Repartition,
@@ -102,8 +102,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Une suite de zéros et de uns, un par place du cercle. Sa longueur donne le nombre de places. Le dessin l'écrit à chaque clic, et il se saisit aussi à la main. Il ne sert que lorsque « Rythme » est sur « Libre ».",
         docEn: "A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free »." },
       { nom: "Percussion", nomEn: "Drum", type: "choix",
-        options: PERCUSSIONS_CHOIX.map((p) => p.fr), optionsEn: PERCUSSIONS_CHOIX.map((p) => p.en),
-        optionIds: PERCUSSIONS_CHOIX.map((p) => String(p.note)),
+        ...choixPercussion(),
         defaut: "Grosse caisse", defautEn: "Kick",
         doc: "Le son de toutes les attaques du cercle. Un cercle rythmique n'en porte qu'un ; pour en mêler plusieurs, poser plusieurs cercles.",
         docEn: "The sound of every onset of the circle. A rhythm circle carries only one; to mix several, place several circles." },

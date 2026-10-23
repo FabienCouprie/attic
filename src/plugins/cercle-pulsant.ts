@@ -11,7 +11,7 @@ import {
   type ModeAccords, type ModeDuCercle, type OptionsCercle,
 } from "../audio/cercle-pulsant";
 import { camelotToAccord } from "../audio/camelot";
-import { CANAL_PERCUSSION, PERCUSSIONS_CHOIX } from "../audio/batterie-midi";
+import { CANAL_PERCUSSION, PERCUSSIONS_JOUABLES, choixPercussion } from "../audio/batterie-midi";
 import { GAMMES } from "../audio/gammes";
 import { QUALITES } from "../audio/qualites-accords";
 import { echantillonsDeBattements } from "../audio/pulsation";
@@ -186,9 +186,8 @@ The animation is displayed in the node and is not available on an output port. I
         doc: "Le temps que met un battement à s'éteindre. N'agit qu'en mode Pulsation.",
         docEn: "The time a beat takes to die away. Acts in Pulse mode only." },
       { nom: "Percussion", nomEn: "Percussion", type: "choix",
-        options: PERCUSSIONS_CHOIX.map((p) => p.fr), optionsEn: PERCUSSIONS_CHOIX.map((p) => p.en),
-        optionIds: PERCUSSIONS_CHOIX.map((p) => String(p.note)),
-        defaut: PERCUSSIONS_CHOIX[0].fr, defautEn: PERCUSSIONS_CHOIX[0].en,
+        ...choixPercussion(),
+        defaut: "Grosse caisse", defautEn: "Kick",
         doc: "La voix de batterie frappée à chaque pulsation audible. N'agit qu'en mode Rythme.",
         docEn: "The drum voice struck at each audible pulse. Acts in Rhythm mode only." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
@@ -319,8 +318,8 @@ The animation is displayed in the node and is not available on an output port. I
         midi = battements.length ? notesVersFichierMidi(battements, tempo, 0, banc, prog) : null;
         sonnantes = frappes.length;
       } else if (modeDuCercle === "rythme") {
-        const voix = Math.round(Number(ctx.paramTexte("Percussion", String(PERCUSSIONS_CHOIX[0].note))))
-          || PERCUSSIONS_CHOIX[0].note;
+        const voix = Math.round(Number(ctx.paramTexte("Percussion", String(PERCUSSIONS_JOUABLES[0].note))))
+          || PERCUSSIONS_JOUABLES[0].note;
         // LE CANAL FAIT LA PERCUSSION, ici comme dans le fichier écrit : le rendu partage les notes
         // sur le canal dix et les envoie au synthétiseur de batterie.
         const coups = frappes.map((f, i) => ({

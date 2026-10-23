@@ -1960,7 +1960,7 @@ Spreads N onsets as evenly as possible over M steps, using Bjorklund's algorithm
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed, in beats per minute. |
 | Step length | choice | Eighth | Quarter / Eighth / Sixteenth / Eighth triplet | Rhythmic value of one step of the cycle. |
 | Repeats | number | 4 | 1 – 32, step 1 | How many times the cycle is played. |
-| Drum | choice | Kick | Kick / Snare / Closed hi-hat / Open hi-hat / Clave / Cowbell / Low tom / High tom | Drum note played (channel 9). Stack several nodes on different drums to build a polyrhythm. |
+| Drum | choice | Kick | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | Drum note played on the percussion channel. Several nodes set on different drums make a polyrhythm. |
 | Velocity | number | 90 | 1 – 127, step 1 | Strength of the onsets. |
 | Accent | number | 20 | 0 – 40, step 1 | Extra velocity on the first step of each cycle, so the cycle's start can be heard. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
@@ -2004,7 +2004,7 @@ Generates a rhythmic pattern by superposing two regular pulses, and returns it a
 | Pulse A | slider | 3 | 1 – 16, step 1 | Period of the first pulse, in beats. With 3 and 2 one gets the system's basic figure. |
 | Pulse B | slider | 2 | 1 – 16, step 1 | Period of the second. Take it coprime with the first: otherwise the pattern repeats inside the cycle, and the node will say so. |
 | Tempo | slider | 120 bpm | 30 – 300 bpm, step 1 | Beat speed, for the rendered MIDI. |
-| Drum | choice | Snare | Kick / Snare / Closed hi-hat / Open hi-hat / Clap / Crash cymbal / Low tom / High tom | The drum that marks each onset, on the General MIDI drum channel. The eight choices each have their own sound when rendered. |
+| Drum | choice | Snare | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The drum that marks each onset, on the General MIDI drum channel. The eight choices each have their own sound when rendered. |
 | Volume | slider | 80 % | 0 – 100 %, step 1 | Level of the rendered sound. No effect on the MIDI, whose dynamics are written into the notes. |
 
 #### Tiling Canon
@@ -2186,7 +2186,7 @@ Produces an animation (a circle that pulses, changing size and colour) and the c
 | Silence threshold | slider | 45 % | 0 – 90 %, step 1 | Size below which the pulse does not sound: it is then drawn and silent. The radius never falls below one hundred minus the breathing, so a threshold lower than that cuts nothing. At 65 % breathing, a threshold under 35 % has no effect. |
 | Beat frequency | slider | 60 Hz | 30 – 400 Hz, step 1 | The pitch of the dull tone that marks each strike. Acts in Pulse mode only. |
 | Beat length | slider | 120 ms | 10 – 600 ms, step 5 | The time a beat takes to die away. Acts in Pulse mode only. |
-| Percussion | choice | Kick | Kick / Snare / Closed hi-hat / Open hi-hat / Clap / Crash cymbal / Low tom / High tom | The drum voice struck at each audible pulse. Acts in Rhythm mode only. |
+| Percussion | choice | Kick | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The drum voice struck at each audible pulse. Acts in Rhythm mode only. |
 | Scale | choice | From the wheel | From the wheel / Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | The scale the melody takes its degrees from. From the wheel: saturation picks major or minor. A named scale applies throughout, the position then giving only the tonic. Acts in Melody and chords mode only. |
 | Chord quality | choice | From the wheel | From the wheel / Major / Minor / Diminished / Augmented / Suspended 2nd / Suspended 4th / Dominant 7th / Major 7th / Minor 7th / Half-diminished / Diminished 7th / Minor major 7th / Sixth / Minor sixth / Dominant 7th suspended 4th / Dominant 9th / Major 9th / Minor 9th / Added 9th / Eleventh / Major 9th sharp 11th / Minor 11th / Dominant 13th / Major 13th / Minor 13th / Dominant 7th sharp 9th / Dominant 7th flat 9th / Dominant 7th flat 5th / Dominant 7th sharp 5th / Dominant 7th flat 5th flat 9th / Dominant 7th sharp 5th flat 9th / Dominant 7th flat 5th sharp 9th / Dominant 7th sharp 5th sharp 9th | The quality of the chords laid on each position. From the wheel: the major or minor triad of the ring. A named quality applies throughout, the position then giving only the root. Acts in Melody and chords mode only. |
 | Chords | choice | Held | Held / Struck / None | The tonic triad of each position travelled, an octave below the melody. Held: one chord per key, kept until the next modulation. Struck: the same chord replayed at every audible pulse. A position travelled while the circle is contracted does not sound. |
@@ -10280,7 +10280,7 @@ Returns the circle of the positions the received pattern leaves free. The comple
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Drum | choice | Snare | Kick / Snare / Closed hi-hat / Open hi-hat / Clap / Crash cymbal / Low tom / High tom | The sound of the complement of a percussion circle. No effect on a melody, whose notes follow from the fundamental. |
+| Drum | choice | Snare | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The sound of the complement of a percussion circle. No effect on a melody, whose notes follow from the fundamental. |
 
 #### Circle Editor
 
@@ -10484,7 +10484,7 @@ Places the onsets of a rhythm on a circle whose positions are evenly spread, and
 |---|---|---|---|---|
 | Rhythm | choice | Free | Free / Tresillo / Son / Shiko / Soukous / Rumba / Bossa nova / Gahu / Samba / Fume-fume / Bembé / Steve Reich | A traditional rhythm to lay in one go, or « Free » for the one you write yourself. Clicking a position sets this back to « Free » and keeps what was laid. |
 | Pattern | text | `1001001000101000` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free ». |
-| Drum | choice | Kick | Kick / Snare / Closed hi-hat / Open hi-hat / Clap / Crash cymbal / Low tom / High tom | The sound of every onset of the circle. A rhythm circle carries only one; to mix several, place several circles. |
+| Drum | choice | Kick | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The sound of every onset of the circle. A rhythm circle carries only one; to mix several, place several circles. |
 
 #### Rotate Circle
 

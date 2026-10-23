@@ -7,7 +7,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { genererBoiteRythmes, notesVersFichierMidi, rendreSequence, genererRythmeCantor, genererGrilleCantor, grilleBoiteRythmes, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE } from "../audio";
-import { CANAL_PERCUSSION, frappesDePistesBooleennes, notesDepuisFrappes } from "../audio/batterie-midi";
+import { CANAL_PERCUSSION, choixPercussion, frappesDePistesBooleennes, notesDepuisFrappes } from "../audio/batterie-midi";
 import { rendreBatterieMidi } from "../audio/tone-synths";
 import { motifEnTexte, motifEuclidien, nomTraditionnel, notesEuclidiennes } from "../audio/euclidien";
 import { EXEMPLES, interpreter, lireRegles, reecrire } from "../audio/lsysteme";
@@ -157,12 +157,13 @@ export const fiches: FicheAudio[] = ([
       { nom: "Répétitions", nomEn: "Repeats", type: "nombre", plage: [1, 32], pas: 1, defaut: 4,
         doc: "Nombre de fois que le cycle est joué.", docEn: "How many times the cycle is played." },
       { nom: "Percussion", nomEn: "Drum", type: "choix",
-        options: ["Grosse caisse", "Caisse claire", "Charley fermé", "Charley ouvert", "Clave", "Cloche", "Tom grave", "Tom aigu"],
-        optionsEn: ["Kick", "Snare", "Closed hi-hat", "Open hi-hat", "Clave", "Cowbell", "Low tom", "High tom"],
-        optionIds: ["36", "38", "42", "46", "75", "56", "41", "48"],
+        // CETTE LISTE ÉTAIT ÉCRITE À LA MAIN, ET ELLE ENTRAIT EN COLLISION AVEC LA TABLE COMMUNE :
+        // « Tom grave » y désignait la note 41 quand la table désigne la 45, et « Tom aigu » la 48
+        // quand la table désigne la 50. Le même mot à l'écran, deux notes selon le composant.
+        ...choixPercussion(),
         defaut: "Grosse caisse", defautEn: "Kick",
-        doc: "Note de percussion jouée (canal 9). Superposez plusieurs composants sur des percussions différentes pour obtenir une polyrythmie.",
-        docEn: "Drum note played (channel 9). Stack several nodes on different drums to build a polyrhythm." },
+        doc: "Note de percussion jouée sur le canal de percussion. Plusieurs composants posés sur des percussions différentes font une polyrythmie.",
+        docEn: "Drum note played on the percussion channel. Several nodes set on different drums make a polyrhythm." },
       { nom: "Vélocité", nomEn: "Velocity", type: "nombre", plage: [1, 127], pas: 1, defaut: 90,
         doc: "Force des frappes.", docEn: "Strength of the onsets." },
       { nom: "Accent", nomEn: "Accent", type: "nombre", plage: [0, 40], pas: 1, defaut: 20,
