@@ -299,8 +299,23 @@ const DOMAINES: Domaine[] = [
     // plus un oui ou non. Le seuil vaut donc deux et le domaine se referme sur l'exactitude.
     membre: (x) => ["oui", "non", "yes", "no"].includes(x),
     seuil: 2,
-    formesAssumees: 6,
-    remede: "déclarer une paire centrale, dans chacun des deux ordres, puisque l'ordre d'un composant est enregistré",
+    canonique: (id) => (id === "yes" ? "oui" : id === "no" ? "non" : id),
+    // DE SIX À TROIS, et les trois qui restent sont irréductibles.
+    //
+    // LES DEUX ORDRES EN FONT DEUX, et ce n'est pas une divergence à corriger : la valeur d'un
+    // réglage enregistrée dans un projet se résout PAR LA POSITION, donc retourner une liste
+    // ferait qu'un projet rouvert répondrait le contraire de ce qu'il disait. Vingt-trois réglages
+    // offrent « Oui » d'abord, treize « Non » d'abord, et chacun a son défaut en tête.
+    //
+    // LA TROISIÈME EST UN INTERRUPTEUR, qui s'écrit « Off » et « On » en anglais plutôt que
+    // « No » et « Yes ». Ses identifiants viennent de la table comme les autres ; seuls ses
+    // libellés anglais sont les siens, et c'est ce que la langue demande pour une lecture en
+    // boucle ou une lecture aléatoire.
+    //
+    // CE QUI EST PAYÉ : cinq réglages posaient `yes` et `no` quand trente et un posaient `oui` et
+    // `non`, et deux d'entre eux affichaient « oui » et « non » en minuscules.
+    formesAssumees: 3,
+    remede: "offrir `choixOuiNon` de `core/oui-non.ts`, dans l'ordre qui est celui du composant",
   },
 
   // ── LES DOMAINES INSCRITS LE 2026-10-23, APRÈS LE RELEVÉ DES 503 COMPOSANTS ─────────────────
@@ -577,8 +592,10 @@ describe("un concept, des formes déclarées", () => {
     // la même table privée du sinus, pour un moteur dont la branche sinusoïdale manquait.
     // PUIS DE CINQUANTE ET UN À CINQUANTE, par la valeur de note : deux grilles de quantification
     // ne faisaient deux formes que par l'écriture française du triolet.
+    // PUIS DE CINQUANTE À QUARANTE-SEPT, par le oui ou non : six formes sur trente-huit réglages,
+    // dont trois ne tenaient qu'à cinq composants qui posaient `yes` et `no` dans les projets.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(50);
+      .toBe(47);
   });
 });

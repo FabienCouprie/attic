@@ -15,6 +15,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { detecterFormat, entreeVerovio, optionsGravure, pageDemandee, type FormatNotation } from "../audio/verovio";
+import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 
@@ -62,8 +63,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Échelle", nomEn: "Scale", type: "curseur", plage: [10, 200], pas: 5, defaut: 40, unite: "%",
         doc: "Taille de la gravure. Petite, la partition tient en entier dans le composant ; grande, elle se lit.",
         docEn: "Size of the engraving. Small, the score fits whole in the node; large, it can be read." },
-      { nom: "Déroulé", nomEn: "Unrolled", type: "choix", options: ["Non", "Oui"], optionsEn: ["No", "Yes"],
-        optionIds: ["non", "oui"], defaut: "Non", defautEn: "No",
+      { nom: "Déroulé", nomEn: "Unrolled", type: "choix", ...choixOuiNon("non"), defaut: "Non", defautEn: "No",
         doc: "Toute la pièce sur un seul système, aussi long qu'il faut, au lieu de pages.",
         docEn: "The whole piece on a single system, as long as needed, instead of pages." },
       { nom: "Page", nomEn: "Page", type: "nombre", plage: [1, 200], pas: 1, defaut: 1,

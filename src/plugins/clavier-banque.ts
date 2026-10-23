@@ -17,6 +17,7 @@ import {
   type MethodeBanque, type OptionsLotBanque, type PrepareBanque, type ZoneBrute,
 } from "../audio/clavier-banque-lot";
 import { parLot } from "./hors-lot";
+import { choixOuiNon } from "../core/oui-non";
 
 /** La note MIDI la plus proche d'une fréquence. */
 const noteDepuisHertz = (hz: number): number =>
@@ -73,7 +74,7 @@ export const fiches: FicheAudio[] = ([
       // sa fin ; le relire en boucle tant que la touche est tenue le fait recommencer, ce qui n'a
       // de sens que pour une matière tenue. Le maintien reste à portée d'un clic pour qui le veut.
       { nom: "Boucle de maintien", nomEn: "Sustain loop", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Non", defautEn: "No",
         doc: "Pose dans chaque zone une boucle relue tant que la touche est tenue. À « Non », une touche tenue joue l'échantillon jusqu'à sa fin, puis se tait : le son garde son début, sa matière et sa fin. À « Oui », il se maintient tant que la touche est enfoncée ; le raccord est fondu, faute de quoi chaque tour laisserait un clic, l'onde ne revenant pas à la même phase.",
         docEn: "Places in each zone a loop replayed while the key is held. At « No », a held key plays the sample through to its end, then falls silent: the sound keeps its beginning, its substance and its end. At « Yes », it holds as long as the key is down; the join is crossfaded, failing which each turn would leave a click, the wave not returning to the same phase." },

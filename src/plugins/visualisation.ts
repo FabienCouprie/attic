@@ -9,6 +9,7 @@ import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
 import { choixFenetre } from "../audio/fenetres-analyse";
+import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 
 // LES QUATRE FORMES D'ONDE VIENNENT DE `audio/timbres.ts`. Elles étaient déclarées trois fois dans
 // ce fichier : les libellés français dans `options`, les anglais dans `optionsEn`, et une troisième
@@ -159,9 +160,11 @@ export const fiches: FicheAudio[] = ([
       { nom: "Écoute", nomEn: "Listen", type: "choix", options: ["A", "B"], defaut: "A",
         doc: "Quelle entrée est envoyée en sortie et écoutée. Si l'entrée choisie n'est pas connectée, l'autre est envoyée en sortie.",
         docEn: "Which input is sent to the output and heard. If the chosen input is not connected, the other one is sent to the output.", optionsEn: ["A", "B"], defautEn: "A" },
-      { nom: "Aligner les niveaux", nomEn: "Match levels", type: "choix", options: ["Oui", "Non"], optionIds: ["yes", "no"], defaut: "Oui",
+      // SES IDENTIFIANTS ÉTAIENT `yes` ET `no`, seuls du parc avec ceux de deux autres composants.
+      { nom: "Aligner les niveaux", nomEn: "Match levels", type: "choix", ...choixOuiNon(),
+        optionsHeritees: LIBELLES_HERITES_OUI_NON, defaut: "Oui", defautEn: "Yes",
         doc: "Ramène le signal écouté au même niveau crête, pour une comparaison honnête (le plus fort paraît sinon « meilleur »).",
-        docEn: "Brings the heard signal to the same peak level, for a fair comparison (the louder one otherwise seems « better »).", optionsEn: ["Yes", "No"], defautEn: "Yes" },
+        docEn: "Brings the heard signal to the same peak level, for a fair comparison (the louder one otherwise seems « better »)." },
     ],
     async executer(ctx: any) {
       const a = ctx.entree(0), b = ctx.entree(1);
@@ -169,7 +172,7 @@ export const fiches: FicheAudio[] = ([
       const B = b instanceof AudioBuffer ? b : null;
       if (!A && !B) return { valeurs: [null], message: traduire("msg.connectez_a_et_ou_b") };
       const sel = ctx.paramTexte("Écoute", "A");
-      const align = ctx.paramTexte("Aligner les niveaux", "yes") === "yes";
+      const align = estOui(ctx.paramTexte("Aligner les niveaux", "oui"));
       // CE QUI EST ANNONCÉ EST CE QUI EST ENTENDU. Quand l'entrée demandée est absente, l'autre
       // prend le relais — c'est voulu, un seul câble suffit pour se servir du nœud — mais le
       // message annonçait tout de même CELLE QU'ON AVAIT DEMANDÉE : « Écoute A » pendant que B

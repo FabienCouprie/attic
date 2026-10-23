@@ -26,6 +26,7 @@ import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { CIBLES_DIFFUSION, ficheSon, resumeSon } from "../parcours/fiche-son";
 import { mesurerCopieHorsFil } from "./mesure-hors-fil";
+import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -47,7 +48,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Ajoute un verdict de conformité à la fiche. Les valeurs sont celles des usages : −14 LUFS pour les plateformes de diffusion, −16 pour le balado, −23 pour la radio et la télévision selon EBU R 128, avec un plafond de vrai pic à −1 dBTP dans les trois cas. Le verdict est rendu par la même fonction que les épreuves du composant « Parcours », si bien que les deux ne peuvent pas se contredire.",
         docEn: "Adds a compliance verdict to the sheet. The values are the ones in use: -14 LUFS for streaming platforms, -16 for podcasts, -23 for radio and television under EBU R 128, with a true-peak ceiling of -1 dBTP in all three cases. The verdict is produced by the same function as the « Journey » node's trials, so the two cannot contradict each other." },
       { nom: "Analyse de hauteur", nomEn: "Pitch analysis", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
         doc: "La hauteur et la justesse demandent un suivi pYIN : une transformée par trame, bornée aux huit premières secondes du son. C'est négligeable sur une prise, sensible sur une collection de deux cents fichiers, et sans objet sur de la percussion, qui n'a pas de hauteur à trouver. Débranchée, la rubrique Hauteur disparaît de la fiche.",
         docEn: "Pitch and tuning need a pYIN track: one transform per frame, bounded to the sound's first eight seconds. That is negligible on a take, noticeable over a collection of two hundred files, and moot on percussion, which has no pitch to find. Switched off, the Pitch section disappears from the sheet." },

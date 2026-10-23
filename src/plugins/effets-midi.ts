@@ -19,6 +19,7 @@ import { apprendre, engendrer, statistiques, tableEnTexte } from "../audio/marko
 
 import { effet, simple, canalDominant, notesDuMidi, rendreMotif, PARAMETRES_RENDU_MOTIF, SORTIES_MOTIF } from "./effets-aides";
 import { LIBELLES_HERITES_VALEURS, choixValeurs } from "../audio/valeurs-note";
+import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 
 // LA GRILLE DU TRANSPOSEUR, sans sa sentinelle « Aucune » qui n'est pas une valeur de note : elle
 // dit qu'il n'y a pas de grille. L'ordre est celui qu'elle avait, un projet enregistré s'y
@@ -102,7 +103,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Part des événements retirés. Le tirage se fait par événement et non par note : un accord part entier ou reste entier.",
         docEn: "Share of events removed. The draw is per event, not per note: a chord leaves whole or stays whole." },
       { nom: "Garder les temps", nomEn: "Keep beats", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["non", "oui"],
+        ...choixOuiNon("non"),
         defaut: "Oui", defautEn: "Yes",
         doc: "Épargne les événements qui tombent sur un temps. Une trame éclaircie entièrement au hasard perd sa pulsation ; on veut souvent l'alléger sans la dissoudre.",
         docEn: "Spares the events that land on a beat. A texture thinned purely at random loses its pulse; one often wants to lighten it without dissolving it." },
@@ -147,7 +148,7 @@ export const fiches: FicheAudio[] = ([
         doc: "« Rétrograde » ne rend que le motif à l'envers. « Aller-retour » met le motif puis son rétrograde à la suite, ce qui donne un palindrome. « Retour-aller » commence par le rétrograde, ce qui fait entendre le motif d'origine comme une résolution.",
         docEn: "« Retrograde » outputs the reversed pattern only. « There and back » puts the pattern then its retrograde one after the other, giving a palindrome. « Back and there » starts with the retrograde, which makes the original pattern sound like a resolution." },
       { nom: "Rejouer la charnière", nomEn: "Repeat the hinge", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["non", "oui"],
+        ...choixOuiNon("non"),
         defaut: "Non", defautEn: "No",
         doc: "Sort de l'événement du retournement. Do-ré-mi suivi de son rétrograde donne do-ré-mi-mi-ré-do, où le mi est joué deux fois ; le palindrome qu'on écrit en musique est do-ré-mi-ré-do, avec un seul mi au sommet. La répétition marque le retournement, son absence le rend fluide. Sans effet en mode « Rétrograde ».",
         docEn: "What becomes of the turning event. C-D-E followed by its retrograde gives C-D-E-E-D-C, where the E is played twice; the palindrome one writes in music is C-D-E-D-C, with a single E at the top. Repeating marks the turn, dropping it makes it flow. No effect in « Retrograde » mode." },
@@ -346,7 +347,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Grille de quantification des départs de notes. Aligner les notes sur la grille rythmique choisie.",
         docEn: "Quantization grid for note onsets. Snaps notes to the chosen rhythmic grid.", defautEn: "1/16" },
       { nom: "Quantifier fins", nomEn: "Quantize ends", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["no", "yes"],
+        ...choixOuiNon("non"), optionsHeritees: LIBELLES_HERITES_OUI_NON,
         defaut: "Non",
         doc: "Si « Oui », les fins de notes sont aussi alignées sur la grille (peut raccourcir/allonger les notes).",
         docEn: "If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes).", defautEn: "No" },
@@ -358,7 +359,7 @@ export const fiches: FicheAudio[] = ([
       if (!(fichier instanceof File)) return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const demiTons = Math.round(ctx.paramNombre("Transposition", 0));
       const grille = ctx.paramTexte("Quantisation", "1/16");
-      const quantifierFin = ctx.paramTexte("Quantifier fins", "no") === "yes";
+      const quantifierFin = estOui(ctx.paramTexte("Quantifier fins", "non"));
       const nouvFichier = await appliquerInstrumentMidi(
         await transposerQuantifierMidi(fichier, demiTons, grille, quantifierFin),
         ctx.paramNombre("Instrument", 0),

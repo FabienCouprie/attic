@@ -33,6 +33,7 @@ import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { valeurNote } from "../audio/valeurs-note";
+import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 
 /**
  * Les groupes d'instruments que le moteur reconnaît, et qui servent ici.
@@ -168,7 +169,7 @@ export const fiches = ([
         doc: "La grille sur laquelle poser les attaques. Chaque attaque rejoint la subdivision la plus proche, ce qui la déplace ; l'indice du rapport dit de combien le tempo retenu les en écarte.",
         docEn: "The grid the onsets are placed on. Each onset joins the nearest subdivision, which moves it; the report's index says how far the chosen tempo puts them from it." },
       { nom: "Quantifier les fins", nomEn: "Quantize ends", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["no", "yes"],
+        ...choixOuiNon("non"), optionsHeritees: LIBELLES_HERITES_OUI_NON,
         defaut: "Non", defautEn: "No",
         doc: "Applique la grille aux fins de notes, qui restent sinon à leur durée. Sans effet quand « Quantification » vaut « Aucune », puisqu'il n'y a alors pas de grille.",
         docEn: "Applies the grid to note ends, which otherwise keep their duration. Without effect when « Quantization » is « None », since there is then no grid." },
@@ -235,7 +236,7 @@ export const fiches = ([
       let fichier = new File([octets as unknown as BlobPart], "transcription.mid", { type: "audio/midi" });
       if (grille !== "none") {
         fichier = await transposerQuantifierMidi(
-          fichier, 0, grille, ctx.paramTexte("Quantifier les fins", "no") === "yes");
+          fichier, 0, grille, estOui(ctx.paramTexte("Quantifier les fins", "non")));
       }
 
       const trouves = instrumentsTrouves(r.evenements ?? "");

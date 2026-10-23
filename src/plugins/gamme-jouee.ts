@@ -26,6 +26,7 @@ import {
   decoderInstrumentSF2,
 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
+import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 
@@ -119,7 +120,7 @@ The « Notation » output writes the run as text, one note per line with its oct
         doc: "Le chemin. L'aller-retour monte puis redescend sans rejouer son sommet.",
         docEn: "The path. The round trip goes up then back down without replaying its summit." },
       { nom: "Tonique finale", nomEn: "Closing tonic", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
         doc: "Fermer le parcours sur l'octave de la tonique. À couper pour enchaîner deux parcours, où elle ferait une note doublée.",
         docEn: "End the run on the tonic's octave. Drop it to chain two runs, where it would make a doubled note." },

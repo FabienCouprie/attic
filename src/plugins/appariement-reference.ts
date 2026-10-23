@@ -7,6 +7,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { apparierSurReference } from "../audio/appariement-reference";
 import { choixFenetre } from "../audio/fenetres-analyse";
+import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -22,20 +23,16 @@ export const fiches: FicheAudio[] = ([
     ],
     sorties: [{ nom: "Audio", nomEn: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
-      { nom: "Niveau", nomEn: "Level", type: "choix", options: ["Oui", "Non"], optionsEn: ["Yes", "No"],
-        optionIds: ["oui", "non"], defaut: "Oui", defautEn: "Yes",
+      { nom: "Niveau", nomEn: "Level", type: "choix", ...choixOuiNon(), defaut: "Oui", defautEn: "Yes",
         doc: "Recopier le niveau efficace de la référence.",
         docEn: "Copy the reference's RMS level." },
-      { nom: "Spectre", nomEn: "Spectrum", type: "choix", options: ["Oui", "Non"], optionsEn: ["Yes", "No"],
-        optionIds: ["oui", "non"], defaut: "Oui", defautEn: "Yes",
+      { nom: "Spectre", nomEn: "Spectrum", type: "choix", ...choixOuiNon(), defaut: "Oui", defautEn: "Yes",
         doc: "Recopier la réponse en fréquence de la référence, à phase nulle.",
         docEn: "Copy the reference's frequency response, with zero phase." },
-      { nom: "Largeur", nomEn: "Width", type: "choix", options: ["Oui", "Non"], optionsEn: ["Yes", "No"],
-        optionIds: ["oui", "non"], defaut: "Oui", defautEn: "Yes",
+      { nom: "Largeur", nomEn: "Width", type: "choix", ...choixOuiNon(), defaut: "Oui", defautEn: "Yes",
         doc: "Recopier la largeur stéréo de la référence, mesurée en rapport du côté au milieu. Sans effet sur une entrée mono.",
         docEn: "Copy the reference's stereo width, measured as the side to mid ratio. No effect on a mono input." },
-      { nom: "Crête", nomEn: "Peak", type: "choix", options: ["Oui", "Non"], optionsEn: ["Yes", "No"],
-        optionIds: ["oui", "non"], defaut: "Oui", defautEn: "Yes",
+      { nom: "Crête", nomEn: "Peak", type: "choix", ...choixOuiNon(), defaut: "Oui", defautEn: "Yes",
         doc: "Aligner la crête sur celle de la référence, une fois le reste appliqué. Le message dit ce que cet alignement a coûté au niveau.",
         docEn: "Align the peak on the reference's, once the rest is applied. The message gives what that alignment cost in level." },
       { nom: "Correction maximale", nomEn: "Maximum correction", type: "curseur", plage: [1, 24], pas: 1, defaut: 12, unite: "dB",

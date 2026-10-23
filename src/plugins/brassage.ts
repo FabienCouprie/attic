@@ -10,6 +10,7 @@ import { avecDoc } from "./notices";
 import { brasser } from "../audio/brassage";
 import { transfererEnveloppe } from "../audio/enveloppe-transfert";
 import { estCourbe, valeursParametre } from "../audio/courbe";
+import { choixOuiNon } from "../core/oui-non";
 
 const sansEntree = () => ({ valeurs: [null], message: traduire("msg.aucune_entr_e") });
 
@@ -94,8 +95,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Résolution", nomEn: "Resolution", type: "curseur", plage: [1, 300], pas: 1, defaut: 10, unite: "ms",
         doc: "Finesse du contour suivi. C'est le seul réglage qui change vraiment la nature du résultat : à 5 millisecondes on transfère presque la forme d'onde, et le grain du modèle passe avec ; à 200, on ne garde que ses grandes respirations et la phrase seulement.",
         docEn: "How finely the contour is followed. It is the only setting that really changes the nature of the result: at 5 milliseconds one transfers almost the waveform, and the model's grain comes with it; at 200, only its large breaths remain, the phrase alone." },
-      { nom: "Aplatir", nomEn: "Flatten", type: "choix", options: ["Oui", "Non"], optionsEn: ["Yes", "No"],
-        optionIds: ["oui", "non"], defaut: "Oui", defautEn: "Yes",
+      { nom: "Aplatir", nomEn: "Flatten", type: "choix", ...choixOuiNon(), defaut: "Oui", defautEn: "Yes",
         doc: "Effacer le contour propre de la cible avant d'imposer celui du modèle. À « Non », on obtient le produit des deux contours, ce qui est parfois voulu mais n'est pas un transfert.",
         docEn: "Erase the target's own contour before imposing the model's. At « No » one gets the product of the two contours, which is sometimes wanted but is not a transfer." },
       { nom: "Plancher", nomEn: "Floor", type: "curseur", plage: [-80, -20], pas: 1, defaut: -60, unite: "dB",

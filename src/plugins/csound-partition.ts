@@ -13,6 +13,7 @@ import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { analyserMidi } from "../audio/midi";
 import { estCourbe, type Courbe } from "../audio/courbe";
+import { choixOuiNon } from "../core/oui-non";
 import {
   construirePartition, rapportLisible, type ChampP, type Convention, type NoteAvecCanal,
 } from "../audio/csound-partition";
@@ -64,7 +65,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Numéro du premier instrument, le `1` de `i1`. C'est celui que l'orchestre doit définir par `instr 1`.",
         docEn: "Number of the first instrument, the `1` in `i1`. It is the one the orchestra must define with `instr 1`." },
       { nom: "Un instrument par canal", nomEn: "One instrument per channel", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["non", "oui"],
+        ...choixOuiNon("non"),
         defaut: "Non", defautEn: "No",
         doc: "Oui : chaque canal MIDI présent reçoit son propre numéro d'instrument, à la suite du précédent. Un fichier sur les canaux 1, 2 et 10 donne les instruments 1, 2 et 3, et non 1, 2 et 10, parce qu'un orchestre numérote ses instruments à la suite. C'est ce qui permet de jouer un arrangement complet avec plusieurs instruments Csound, et la sortie Rapport dit la correspondance. Non : tout part sur le même numéro.",
         docEn: "Yes: each MIDI channel present gets its own instrument number, following the previous one. A file on channels 1, 2 and 10 yields instruments 1, 2 and 3, not 1, 2 and 10, because an orchestra numbers its instruments consecutively. This is what lets a whole arrangement be played by several Csound instruments, and the Report output states the mapping. NO: everything goes to the same number." },

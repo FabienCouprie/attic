@@ -17,6 +17,7 @@ import {
   GAIN_MAX, GAIN_MIN, GAIN_PAS, morceauxCompletes, normaliserMorceau, type Morceau,
 } from "../audio/montage-morceaux";
 import { decalagesDepuisDeparts, departDe, poserDepart } from "../audio/depart-bwf";
+import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 const PISTES = 16;
@@ -146,7 +147,7 @@ export const fiches: FicheAudio[] = ([
       // touché, ce sont les morceaux qui font foi, et ce calage avec eux. Le dire ici évite qu'on
       // cherche pourquoi il « ne marche plus » après un premier geste sur la ligne de temps.
       { nom: "Caler sur l'heure d'enregistrement", nomEn: "Align on recording time", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Non", defautEn: "No",
         doc: "Décale les pistes de l'écart réel entre leurs heures d'enregistrement, lues dans le bloc BWF de leurs fichiers. La plus ancienne donne l'origine. Sans effet tant que moins de deux pistes portent une heure, et dès qu'un morceau a été déplacé à la main.",
         docEn: "Offsets the tracks by the real gap between their recording times, read from the BWF chunk of their files. The oldest one gives the origin. No effect while fewer than two tracks carry a time, or once a clip has been moved by hand." },

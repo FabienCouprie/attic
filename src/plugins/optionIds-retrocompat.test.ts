@@ -161,6 +161,24 @@ const CAS: Cas[] = [
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "minor pentatonic", idAttendu: "pentatonique-mineure" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "chromatic", idAttendu: "chromatique" },
 
+  // Les cinq réglages qui posaient `yes` et `no` dans les projets, quand trente et un posaient
+  // `oui` et `non`. Deux d'entre eux affichaient « oui » et « non » en minuscules, et un
+  // troisième n'avait pas de liste anglaise du tout.
+  { node: "transposeur-quantiseur-midi", param: "Quantifier fins", ancienneValeur: "yes", idAttendu: "oui" },
+  { node: "transposeur-quantiseur-midi", param: "Quantifier fins", ancienneValeur: "no", idAttendu: "non" },
+  { node: "transcription-midi", param: "Quantifier les fins", ancienneValeur: "yes", idAttendu: "oui" },
+  { node: "transcription-midi", param: "Quantifier les fins", ancienneValeur: "no", idAttendu: "non" },
+  { node: "pure-data", param: "Bang démarrage", ancienneValeur: "yes", idAttendu: "oui" },
+  { node: "pure-data", param: "Bang démarrage", ancienneValeur: "oui", idAttendu: "oui" },
+  { node: "pure-data", param: "Ignorer objets GUI", ancienneValeur: "no", idAttendu: "non" },
+  { node: "pure-data", param: "Ignorer objets GUI", ancienneValeur: "non", idAttendu: "non" },
+  { node: "comparateur-ab", param: "Aligner les niveaux", ancienneValeur: "yes", idAttendu: "oui" },
+  { node: "comparateur-ab", param: "Aligner les niveaux", ancienneValeur: "no", idAttendu: "non" },
+  // ET L'INTERRUPTEUR, dont les libellés anglais sont « Off » et « On » : un projet enregistré
+  // sous cette forme doit se relire comme les autres.
+  { node: "collection-lecteur-musique", param: "Lecture aléatoire", ancienneValeur: "Off", idAttendu: "non" },
+  { node: "collection-lecteur-musique", param: "Lecture en boucle", ancienneValeur: "On", idAttendu: "oui" },
+
   // Les deux grilles de valeurs de note — le triolet s'écrivait en toutes lettres, comme
   // IDENTIFIANT chez l'arpégiateur et comme LIBELLÉ FRANÇAIS chez le transposeur. « triplet » est
   // le mot anglais ; les listes françaises disent « de triolet » désormais.

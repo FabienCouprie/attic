@@ -6,6 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { recaler, type MesureRecalage } from "../audio/recaler-niveau";
+import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 
@@ -36,7 +37,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Valeur absolue que le gain ne dépassera pas. Un son presque silencieux demanderait sans cela quarante décibels, et ne rendrait que son bruit de fond amplifié.",
         docEn: "Absolute value the gain will not exceed. Without it, a nearly silent sound would ask for forty decibels and return only its amplified noise floor." },
       { nom: "Plafonner la crête", nomEn: "Cap the peak", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
         doc: "Réduire le gain si la crête obtenue dépassait le plafond. Le niveau visé n'est alors pas atteint, et le message le dit.",
         docEn: "Reduce the gain if the resulting peak would exceed the ceiling. The target level is then not reached, and the message says so." },

@@ -2,6 +2,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -53,23 +54,23 @@ export const fiches: FicheAudio[] = ([
         nom: "Bang démarrage",
         nomEn: "Bang on start",
         type: "choix",
-        options: ["oui", "non"],
-        optionsEn: ["yes", "no"],
-        optionIds: ["yes", "no"],
-        defaut: "oui",
+        // SES IDENTIFIANTS ÉTAIENT `yes` ET `no`, et ses libellés français des minuscules : deux
+        // vocabulaires pour deux valeurs, quand trente et un réglages posaient `oui` et `non`.
+        ...choixOuiNon(),
+        optionsHeritees: LIBELLES_HERITES_OUI_NON,
+        defaut: "Oui",
         doc: "Envoie un bang à l'objet [loadbang] au démarrage de l'audio.",
-        docEn: "Send a bang to the [loadbang] object when audio starts.", defautEn: "yes",
+        docEn: "Send a bang to the [loadbang] object when audio starts.", defautEn: "Yes",
       },
       {
         nom: "Ignorer objets GUI",
         nomEn: "Ignore GUI objects",
         type: "choix",
-        options: ["oui", "non"],
-        optionsEn: ["yes", "no"],
-        optionIds: ["yes", "no"],
-        defaut: "non",
+        ...choixOuiNon("non"),
+        optionsHeritees: LIBELLES_HERITES_OUI_NON,
+        defaut: "Non",
         doc: "Supprime les objets graphiques (boutons, sliders, curseurs, tableaux…) du patch avant exécution. Certains patches desktop utilisent ces objets pour l'interface mais ils ne sont pas supportés par libpd en mode headless.",
-        docEn: "Removes graphical objects (buttons, sliders, faders, arrays…) from the patch before execution. Some desktop patches use these for the UI but they are not supported by libpd in headless mode.", defautEn: "no",
+        docEn: "Removes graphical objects (buttons, sliders, faders, arrays…) from the patch before execution. Some desktop patches use these for the UI but they are not supported by libpd in headless mode.", defautEn: "No",
       },
       {
         nom: "Patch",
@@ -94,8 +95,8 @@ export const fiches: FicheAudio[] = ([
       const packages = ctx.paramTexte("Bibliothèques", "vanilla");
       const duree = ctx.paramNombre("Durée", 1);
       const outputChannels = ctx.paramNombre("Canaux sortie", 2);
-      const bangOnStart = ctx.paramTexte("Bang démarrage", "yes") === "yes";
-      const ignorerGUI = ctx.paramTexte("Ignorer objets GUI", "no") === "yes";
+      const bangOnStart = estOui(ctx.paramTexte("Bang démarrage", "oui"));
+      const ignorerGUI = estOui(ctx.paramTexte("Ignorer objets GUI", "non"));
 
       const sampleRate = 44100;
       const length = Math.max(1, Math.round(duree * sampleRate));

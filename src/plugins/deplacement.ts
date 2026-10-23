@@ -15,6 +15,7 @@ import { ducking } from "../audio/ducking";
 import { decoderStereo, encoderStereo, partDirectionnelle, tourner } from "../audio/ambisonique";
 import { mesurerStereo } from "../audio/stereo-correlation";
 import { valeursParametre } from "../audio/courbe";
+import { choixOuiNon } from "../core/oui-non";
 
 const sansEntree = () => ({ valeurs: [null], message: traduire("msg.aucune_entr_e") });
 
@@ -41,8 +42,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Célérité", nomEn: "Speed of sound", type: "curseur", plage: [200, 500], pas: 1, defaut: 343, unite: "m/s",
         doc: "Célérité du son. 343 m/s à 20 °C au niveau de la mer ; 331 à zéro degré, 1480 dans l'eau. La baisser exagère l'effet sans changer sa forme, ce qui est une façon commode de l'entendre mieux.",
         docEn: "Speed of sound. 343 m/s at 20 °C at sea level; 331 at zero degrees, 1480 in water. Lowering it exaggerates the effect without changing its shape, which is a handy way of hearing it better." },
-      { nom: "Atténuation", nomEn: "Attenuation", type: "choix", options: ["Oui", "Non"], optionsEn: ["Yes", "No"],
-        optionIds: ["oui", "non"], defaut: "Oui", defautEn: "Yes",
+      { nom: "Atténuation", nomEn: "Attenuation", type: "choix", ...choixOuiNon(), defaut: "Oui", defautEn: "Yes",
         doc: "Appliquer la baisse de niveau en un sur la distance. Sans elle, on garde le décalage de hauteur et le déplacement dans le champ, mais la source semble rester aussi proche, ce qui est parfois exactement ce qu'on veut.",
         docEn: "Apply the one-over-distance level drop. Without it, one keeps the pitch shift and the movement across the field, but the source seems to stay as close, which is sometimes exactly what one wants." },
     ],

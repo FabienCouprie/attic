@@ -13,6 +13,7 @@ import { avecDoc } from "./notices";
 import { dureeSequence, estSequence, type Sequence } from "../audio/sequence";
 import { poserMaquette, type Bloc } from "../audio/maquette";
 import { compterVoix } from "../audio/voix";
+import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 
@@ -52,7 +53,7 @@ export const fiches: FicheAudio[] = ([
           docEn: `Shift of box ${k + 1}'s pitches, in semitones.` },
       ]).flat(),
       { nom: "Une voix par boîte", nomEn: "One voice per box", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
         doc: "Donne à chaque boîte son propre numéro de voix, ce qui grave autant de portées qu'il y a de boîtes.",
         docEn: "Gives each box its own voice number, which engraves as many staves as there are boxes." },

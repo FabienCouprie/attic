@@ -9,6 +9,7 @@ import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { ecartParFamille, lireCible, synthetiser } from "../audio/synthese-features";
 import { extraireVecteurFeatures } from "../audio/features-piste";
+import { choixOuiNon } from "../core/oui-non";
 
 /** Relit le JSON rendu par « Caractéristiques de piste ». */
 export function lireVecteurJson(texte: unknown): { vecteur: number[]; etiquettes: string[] } | null {
@@ -50,8 +51,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 5,
         doc: "Graine de l'ordre des notes. Les proportions du chroma ne changent pas avec elle ; elles sont réparties exactement, seul l'ordre change. Une même graine rejoue le même son.",
         docEn: "Seed for the note order. The chroma proportions do not change with it, they are allocated exactly, only the order does. The same seed replays the same sound." },
-      { nom: "Vérifier", nomEn: "Verify", type: "choix", options: ["Oui", "Non"], optionsEn: ["Yes", "No"],
-        optionIds: ["oui", "non"], defaut: "Oui", defautEn: "Yes",
+      { nom: "Vérifier", nomEn: "Verify", type: "choix", ...choixOuiNon(), defaut: "Oui", defautEn: "Yes",
         doc: "Remesurer le son produit et afficher l'écart famille par famille. C'est la seule preuve que le composant s'approche de quelque chose, et cela double son temps de calcul. « Non » ne rend que le son.",
         docEn: "Re-measure the sound produced and show the deviation family by family. It is the only proof the node comes close to anything, and it doubles the computation time. « No » returns the sound only." },
     ],
