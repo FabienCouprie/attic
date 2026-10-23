@@ -616,6 +616,18 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
     fr: "{__VAR_0__} % du spectre borné : référence hors de portée",
     en: "{__VAR_0__}% of the spectrum bounded: reference out of reach",
   },
+  "msg.dater.mots": { fr: "{__VAR_0__} mots datés", en: "{__VAR_0__} words dated" },
+  "msg.dater.couverte": {
+    fr: "parole de {__VAR_0__} s sur {__VAR_1__} s de son",
+    en: "{__VAR_0__} s of speech over {__VAR_1__} s of sound",
+  },
+  "msg.dater.debit": { fr: "{__VAR_0__} mots par minute", en: "{__VAR_0__} words per minute" },
+  "msg.dater.mot_court": { fr: "mots", en: "words" },
+  "msg.dater.parMinute": { fr: "mots/min", en: "words/min" },
+  "msg.dater.rienEntendu": {
+    fr: "Aucun mot reconnu : il n'y a peut-être pas de parole dans ce son.",
+    en: "No word recognized: there may be no speech in this sound.",
+  },
   "msg.convertirVoix.sansCible": {
     fr: "Brancher un extrait de la voix à imiter sur l'entrée « Voix cible ».",
     en: "Connect an excerpt of the voice to imitate to the « Target voice » input.",
@@ -820,6 +832,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "progress.chanson.modeles": { fr: "Chargement des modèles de chanson…", en: "Loading the song models…" },
   "progress.transcription.modele": { fr: "Chargement du modèle de transcription…", en: "Loading the transcription model…" },
   "progress.apollo.modele": { fr: "Chargement du modèle de restauration…", en: "Loading the restoration model…" },
+  "progress.parakeet.modele": { fr: "Chargement du modèle de reconnaissance…", en: "Loading the recognition model…" },
   "progress.parole.modele_diarisation": { fr: "Chargement du modèle de diarisation…", en: "Loading the diarization model…" },
   "progress.parole.modele_alignement": { fr: "Chargement du modèle d'alignement…", en: "Loading the alignment model…" },
   "msg.transcription.tempo": { fr: "tempo écrit", en: "written tempo" },

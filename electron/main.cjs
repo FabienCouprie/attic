@@ -1434,6 +1434,20 @@ ipcMain.handle("chatterbox:cloner", async (event, options) => {
   }
 });
 
+// ─── audio.cpp : les mots d'un enregistrement, et l'instant de chacun ───
+const { transcrire: parakeetTranscrire } = require("./parakeet.cjs");
+
+ipcMain.handle("parakeet:transcrire", async (event, options) => {
+  try {
+    return await parakeetTranscrire(options, (ligne) => {
+      if (!event.sender.isDestroyed()) event.sender.send("parakeet:progression", { ligne });
+    }, contexteRessources());
+  } catch (err) {
+    console.error("[attic] parakeet:transcrire a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
 // ─── audio.cpp : la restauration d'un son abîmé par la compression ───
 const { restaurer: apolloRestaurer } = require("./apollo.cjs");
 

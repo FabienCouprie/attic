@@ -20,6 +20,7 @@ import { dureeSequence, estSequence, type Sequence } from "../audio/sequence";
 import { compterVoix, extraireVoix, reunirVoix, voixDe } from "../audio/voix";
 import { nomNote } from "../audio/nom-note";
 import { fiches as fichesConversionVoix } from "./convertir-voix";
+import { fiches as fichesDaterLesMots } from "./dater-les-mots";
 
 const en = () => langueCourante() === "en";
 
@@ -127,4 +128,10 @@ export const fiches: FicheAudio[] = ([
   // fichier trop gros va ailleurs », dit son message. Ce module porte les composants de voix, donc
   // c'est ici son ailleurs, et l'index le prend sans une ligne de plus.
   ...(fichesConversionVoix as FicheAudio[]),
+  // « DATER LES MOTS » EST VERSÉ ICI POUR LA MÊME RAISON, et il a d'abord été mis ailleurs : dans
+  // `sherpa-asr.ts`, dont il partage la famille. Mais le cas de ce module exige qu'il n'expose
+  // QU'UN nœud — « exposes a single Sherpa ASR node » — parce que ce fichier EST le nœud Sherpa.
+  // L'hôte d'un composant versé doit donc être un module que rien n'épingle, et celui-ci porte
+  // déjà les composants de voix.
+  ...(fichesDaterLesMots as FicheAudio[]),
 ] as FicheAudio[]).map(avecDoc);
