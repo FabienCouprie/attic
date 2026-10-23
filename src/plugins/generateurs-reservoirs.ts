@@ -13,6 +13,7 @@ import { hasardDuNoeud } from "../core";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 import { LIBELLES_HERITES_GAMMES, gammesParIds } from "../audio/gammes";
+import { choixValeurs } from "../audio/valeurs-note";
 
 // LES DEUX LISTES VIENNENT DE LA TABLE, DANS L'ORDRE QUI ÉTAIT LE LEUR. Leurs identifiants étaient
 // « pentatonique majeur » et « pentatonique mineur », sans accord et avec une espace : des ALIAS,
@@ -67,7 +68,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Octave de départ (les notes peuvent monter sur 2 octaves).", docEn: "Starting octave (notes can span 2 octaves above)." },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
-      { nom: "Résolution", nomEn: "Resolution", type: "choix", options: ["1/4","1/8","1/16"], optionsEn: ["1/4","1/8","1/16"], defaut: "1/8",
+      { nom: "Résolution", nomEn: "Resolution", type: "choix", ...choixValeurs(["1/4", "1/8", "1/16"]), defaut: "1/8",
         doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
         doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
@@ -166,7 +167,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Gamme utilisée pour mapper les activations vers des notes.", docEn: "Scale used to map activations to notes." },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
-      { nom: "Résolution", nomEn: "Resolution", type: "choix", options: ["1/4","1/8","1/16"], optionsEn: ["1/4","1/8","1/16"], defaut: "1/8",
+      { nom: "Résolution", nomEn: "Resolution", type: "choix", ...choixValeurs(["1/4", "1/8", "1/16"]), defaut: "1/8",
         doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
         doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },

@@ -257,12 +257,20 @@ const DOMAINES: Domaine[] = [
     sentinelles: [
       { valeur: "none", raison: "« Aucune » : pas de grille, les instants restent ceux du jeu" },
     ],
-    // DE QUATRE À SEPT, et les trois qui apparaissent sont la divergence même de ce domaine : le
-    // TRIOLET s'écrit « 1/8t » ici et « 1/8 triplet » là, et le prédicat d'avant, écrit
-    // `/^1\/\d+$/`, ne voyait ni l'un ni l'autre. Un garde qui ne voit pas la divergence qu'il
-    // existe pour signaler ne sert à rien.
-    formesAssumees: 7,
-    remede: "déclarer une liste centrale des valeurs de note",
+    // DE QUATRE À SEPT, PUIS À SIX. Les trois formes qui étaient apparues sont la divergence même
+    // de ce domaine : le TRIOLET s'écrivait « 1/8t » ici et « 1/8 triplet » là, et le prédicat
+    // d'avant, écrit `/^1\/\d+$/`, ne voyait ni l'un ni l'autre. Un garde qui ne voit pas la
+    // divergence qu'il existe pour signaler ne sert à rien.
+    //
+    // CELLE DU TRIOLET EST PAYÉE : les deux grilles de quantification ne faisaient deux formes que
+    // par leur libellé français, « 1/8 triplet » chez l'une et « 1/8 de triolet » chez l'autre, et
+    // le premier est un mot ANGLAIS dans une liste française. Elles n'en font plus qu'une.
+    //
+    // LES SIX QUI RESTENT SONT DES SOUS-ENSEMBLES, et chacun est la grille de son composant : six
+    // valeurs pour l'intervalle du « beat repeat », cinq pour sa taille et dans l'autre sens,
+    // quatre pour la quantification d'une partition, trois pour la résolution d'un réservoir.
+    formesAssumees: 6,
+    remede: "offrir `choixValeurs` de `audio/valeurs-note.ts`",
   },
   {
     nom: "forme d'onde",
@@ -567,8 +575,10 @@ describe("un concept, des formes déclarées", () => {
     // il couvre dix-huit domaines au lieu de huit. C'est là que la comparaison repart.
     // PUIS DE CINQUANTE-DEUX À CINQUANTE ET UN, par le caractère de timbre : la forme en trop était
     // la même table privée du sinus, pour un moteur dont la branche sinusoïdale manquait.
+    // PUIS DE CINQUANTE ET UN À CINQUANTE, par la valeur de note : deux grilles de quantification
+    // ne faisaient deux formes que par l'écriture française du triolet.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(51);
+      .toBe(50);
   });
 });

@@ -32,6 +32,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
+import { valeurNote } from "../audio/valeurs-note";
 
 /**
  * Les groupes d'instruments que le moteur reconnaît, et qui servent ici.
@@ -63,14 +64,18 @@ const INSTRUMENTS = [
  * table des grilles est partagée, et inventer ici une seconde écriture des mêmes valeurs ferait
  * tomber en silence sur « aucune grille ».
  */
+// LES NOMS VIENNENT DE LA TABLE COMMUNE, `audio/valeurs-note.ts` ; LE NOMBRE DE DIVISIONS RESTE
+// ICI, parce qu'il n'est pas une propriété de la valeur mais de ce qu'on divise : cette grille
+// divise un TEMPS, et « Aucune » y vaut quatre, c'est-à-dire la grille la plus fine du moteur.
+const DIVISIONS: Record<string, number> = {
+  none: 4, "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8, "1/8t": 3, "1/16t": 6,
+};
 const GRILLES = [
-  { id: "none", fr: "Aucune", en: "None", divisions: 4 },
-  { id: "1/4", fr: "1/4", en: "1/4", divisions: 1 },
-  { id: "1/8", fr: "1/8", en: "1/8", divisions: 2 },
-  { id: "1/16", fr: "1/16", en: "1/16", divisions: 4 },
-  { id: "1/32", fr: "1/32", en: "1/32", divisions: 8 },
-  { id: "1/8t", fr: "1/8 de triolet", en: "1/8 triplet", divisions: 3 },
-  { id: "1/16t", fr: "1/16 de triolet", en: "1/16 triplet", divisions: 6 },
+  { id: "none", fr: "Aucune", en: "None", divisions: DIVISIONS.none },
+  ...["1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"].map((id) => {
+    const v = valeurNote(id)!;
+    return { id: v.id, fr: v.fr, en: v.en, divisions: DIVISIONS[v.id] };
+  }),
 ];
 
 const CALCULS = [

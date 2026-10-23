@@ -10,6 +10,7 @@ import { Chord } from "tonal";
 import { parseMidi } from "midi-file";
 import { analyserMidi } from "../audio/midi";
 import { GRILLES_NOTATION, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, midiVersNotationEasyScore } from "./vexflow-notation";
+import { choixValeurs } from "../audio/valeurs-note";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -183,8 +184,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Tempo utilisé pour convertir les durées MIDI en notation. 0 = détecter depuis le fichier MIDI.", docEn: "Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file." },
       { nom: "Canal", nomEn: "Channel", type: "nombre", plage: [-1, 15], pas: 1, defaut: -1, unite: "-1 = tous", uniteEn: "-1 = all",
         doc: "Canal MIDI à afficher (-1 pour tous les canaux).", docEn: "MIDI channel to display (-1 for all channels)." },
-      { nom: "Quantification", nomEn: "Quantization", type: "choix", options: ["1/4", "1/8", "1/16", "1/32"], defaut: "1/16",
-        doc: "Résolution de la grille de quantification.", docEn: "Quantization grid resolution.", optionsEn: ["1/4", "1/8", "1/16", "1/32"], defautEn: "1/16" },
+      { nom: "Quantification", nomEn: "Quantization", type: "choix", ...choixValeurs(["1/4", "1/8", "1/16", "1/32"]), defaut: "1/16",
+        doc: "Résolution de la grille de quantification.", docEn: "Quantization grid resolution.", defautEn: "1/16" },
       { nom: "Clé", nomEn: "Clef", type: "choix", options: ["treble", "bass", "alto", "tenor"], optionsEn: ["treble", "bass", "alto", "tenor"], defaut: "treble",
         doc: "Clé de la portée.", docEn: "Staff clef.", defautEn: "treble" },
       { nom: "Largeur", nomEn: "Width", plage: [200, 2000], pas: 10, defaut: 800, unite: "px",

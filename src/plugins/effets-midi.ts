@@ -18,6 +18,12 @@ import { TEMPERAMENTS, noteTemperee, tableEcarts, temperament } from "../audio/t
 import { apprendre, engendrer, statistiques, tableEnTexte } from "../audio/markov";
 
 import { effet, simple, canalDominant, notesDuMidi, rendreMotif, PARAMETRES_RENDU_MOTIF, SORTIES_MOTIF } from "./effets-aides";
+import { LIBELLES_HERITES_VALEURS, choixValeurs } from "../audio/valeurs-note";
+
+// LA GRILLE DU TRANSPOSEUR, sans sa sentinelle « Aucune » qui n'est pas une valeur de note : elle
+// dit qu'il n'y a pas de grille. L'ordre est celui qu'elle avait, un projet enregistré s'y
+// résolvant par la position.
+const VALEURS_QUANTIFICATION = ["1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"];
 
 export const fiches: FicheAudio[] = ([
   {
@@ -329,10 +335,13 @@ export const fiches: FicheAudio[] = ([
       { nom: "Transposition", nomEn: "Transpose", plage: [-24, 24], pas: 1, defaut: 0, unite: " ½-ton", uniteEn: "st",
         doc: "Transposition en demi-tons (−24 à +24). 0 = aucune transposition.",
         docEn: "Transposition in semitones (−24 to +24). 0 = no transposition." },
+      // LA SENTINELLE RESTE À CE COMPOSANT, les valeurs viennent de la table. « Aucune » n'est pas
+      // une valeur de note : elle dit qu'il n'y a pas de grille, et les instants restent ceux du jeu.
       { nom: "Quantisation", nomEn: "Quantization", type: "choix",
-        options: ["Aucune", "1/4", "1/8", "1/16", "1/32", "1/8 triplet", "1/16 triplet"],
-        optionsEn: ["None", "1/4", "1/8", "1/16", "1/32", "1/8 triplet", "1/16 triplet"],
-        optionIds: ["none", "1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"],
+        options: ["Aucune", ...choixValeurs(VALEURS_QUANTIFICATION).options],
+        optionsEn: ["None", ...choixValeurs(VALEURS_QUANTIFICATION).optionsEn],
+        optionIds: ["none", ...choixValeurs(VALEURS_QUANTIFICATION).optionIds],
+        optionsHeritees: LIBELLES_HERITES_VALEURS,
         defaut: "1/16",
         doc: "Grille de quantification des départs de notes. Aligner les notes sur la grille rythmique choisie.",
         docEn: "Quantization grid for note onsets. Snaps notes to the chosen rhythmic grid.", defautEn: "1/16" },
@@ -380,9 +389,11 @@ export const fiches: FicheAudio[] = ([
         defaut: "Droit",
         doc: "Motif de répétition intra-accord (1=note basse, 2=médium, 3=haute). « Droit » = joue les notes dans l'ordre de la direction.",
         docEn: "Intra-chord repetition pattern (1=low note, 2=mid, 3=high). « Straight » = plays notes in the direction order.", defautEn: "Straight" },
+      // SES IDENTIFIANTS ÉTAIENT SES LIBELLÉS, dont « 1/8 triplet », un mot anglais dans une liste
+      // française. Les anciennes valeurs se relisent par `LIBELLES_HERITES_VALEURS`.
       { nom: "Vitesse", nomEn: "Speed", type: "choix",
-        options: ["1/8", "1/16", "1/32", "1/8 triplet", "1/16 triplet"],
-        optionsEn: ["1/8", "1/16", "1/32", "1/8 triplet", "1/16 triplet"],
+        ...choixValeurs(["1/8", "1/16", "1/32", "1/8t", "1/16t"]),
+        optionsHeritees: LIBELLES_HERITES_VALEURS,
         defaut: "1/16",
         doc: "Vitesse de l'arpège (division du temps).",
         docEn: "Arpeggio speed (time division).", defautEn: "1/16" },

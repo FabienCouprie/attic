@@ -161,6 +161,16 @@ const CAS: Cas[] = [
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "minor pentatonic", idAttendu: "pentatonique-mineure" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "chromatic", idAttendu: "chromatique" },
 
+  // Les deux grilles de valeurs de note — le triolet s'écrivait en toutes lettres, comme
+  // IDENTIFIANT chez l'arpégiateur et comme LIBELLÉ FRANÇAIS chez le transposeur. « triplet » est
+  // le mot anglais ; les listes françaises disent « de triolet » désormais.
+  { node: "arpegiateur-midi", param: "Vitesse", ancienneValeur: "1/8 triplet", idAttendu: "1/8t" },
+  { node: "arpegiateur-midi", param: "Vitesse", ancienneValeur: "1/16 triplet", idAttendu: "1/16t" },
+  { node: "arpegiateur-midi", param: "Vitesse", ancienneValeur: "1/16", idAttendu: "1/16" },
+  { node: "transposeur-quantiseur-midi", param: "Quantisation", ancienneValeur: "1/8 triplet", idAttendu: "1/8t" },
+  { node: "transposeur-quantiseur-midi", param: "Quantisation", ancienneValeur: "1/16 triplet", idAttendu: "1/16t" },
+  { node: "transposeur-quantiseur-midi", param: "Quantisation", ancienneValeur: "Aucune", idAttendu: "none" },
+
   // Les quatre composants de la famille du contrepoint — Gamme : leurs identifiants étaient
   // `majeure`, `mineure`, `mineure-harmonique`, `penta-majeure` et `penta-mineure`, des ALIAS de la
   // table. Ils sont désormais déclarés dans `IDS_HERITES_CORRECTION`, et c'est ce qui permet de leur
