@@ -46,7 +46,7 @@ function son(secondes = 2): AudioBuffer {
   return b;
 }
 
-async function executer(id: string, reglages: Record<string, unknown> = {}) {
+async function executer(id: string, reglages: Record<string, unknown> = {}, secondes = 2) {
   const def = registre.trouverDef(id) as never as {
     parametres?: { nom: string; type?: string; defaut?: unknown }[];
     entrees?: { type: string }[];
@@ -58,7 +58,7 @@ async function executer(id: string, reglages: Record<string, unknown> = {}) {
     params[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p as never) : p.defaut;
   }
   Object.assign(params, reglages);
-  const ent = (def.entrees ?? []).map((p) => (p.type === "audio" ? son() : null));
+  const ent = (def.entrees ?? []).map((p) => (p.type === "audio" ? son(secondes) : null));
   const ctx = {
     noeud: { id: "t", data: { parametres: params } }, runtime: null, repertoireTravail: "",
     entree: (i: number) => ent[i] ?? null, entrees: () => ent,
@@ -72,8 +72,8 @@ async function executer(id: string, reglages: Record<string, unknown> = {}) {
   return def.executer(ctx);
 }
 
-/** Le plus long moment où le fil n'a pas rendu la main, et la durée totale, en millisecondes. */
-async function pireGel(travail: () => Promise<unknown>): Promise<{ pire: number; total: number }> {
+/** Le plus long moment où le fil n'a pas rendu la main, la durée totale, et ce que le travail rend. */
+async function pireGel(travail: () => Promise<unknown>): Promise<{ pire: number; total: number; rendu: unknown }> {
   let dernier = Date.now();
   let pire = 0;
   // Vingt millisecondes : plus court que le délai de respiration, donc chaque respiration est vue.
@@ -83,14 +83,15 @@ async function pireGel(travail: () => Promise<unknown>): Promise<{ pire: number;
     dernier = t;
   }, 20);
   const debut = Date.now();
+  let rendu: unknown;
   try {
-    await travail();
+    rendu = await travail();
   } finally {
     clearInterval(minuteur);
   }
   const t = Date.now();
   pire = Math.max(pire, t - dernier);
-  return { pire, total: t - debut };
+  return { pire, total: t - debut, rendu };
 }
 
 /** Au-delà, la fenêtre est perçue figée assez longtemps pour que cela se remarque. */
@@ -137,19 +138,53 @@ const CAS: { id: string; reglages?: Record<string, unknown>; quoi: string }[] = 
   { id: "reverbe-reseau", quoi: "reseau de retards" },
 ];
 
+/**
+ * L'ENTRÉE EST COURTE POUR CE QUI N'EST PLUS MESURÉ, et cette durée est liée au statut du cas.
+ *
+ * Un cas de `HORS_MESURE` ne tient plus qu'une chose, que le nœud RÉPOND ; il n'a donc pas besoin
+ * des deux secondes qui donnent au blocage le temps de se voir. Et il en a d'autant moins besoin
+ * que c'est la longueur de l'entrée qui faisait son prix : mesuré, la continuation autorégressive
+ * coûte 30,5 s sur deux secondes de son, 21,3 s sur une, et 12,9 s sur une demie, en rendant son
+ * audio dans les trois cas. Ses réglages, eux, ne la bougent presque pas : du plus cher au plus
+ * maigre, de 30,5 s à 26,4 s.
+ *
+ * LE LIEN EST AU STATUT ET NON AU NOM DU NŒUD, pour que la mesure revienne d'elle-même : le jour où
+ * l'un d'eux sortira de `HORS_MESURE`, il retrouvera ses deux secondes sans qu'on y pense.
+ */
+const ENTREE_COURTE_S = 0.5;
+
 describe("les nœuds rendent la main pendant qu'ils calculent", () => {
   for (const cas of CAS) {
     it(`${cas.id} ne tient pas le fil (${cas.quoi})`, async () => {
-      const { pire, total } = await pireGel(() => executer(cas.id, cas.reglages));
-      const raison = HORS_MESURE[cas.id];
+      const raisonDuCas = HORS_MESURE[cas.id];
+      const secondes = raisonDuCas ? ENTREE_COURTE_S : 2;
+      const { pire, total, rendu } = await pireGel(() => executer(cas.id, cas.reglages, secondes));
+      const raison = raisonDuCas;
       if (raison) {
-        // Hors de portée de la mesure, mais pas hors de portée du test : on tient au moins que le
-        // nœud RÉPOND, sans quoi l'entrée de cette table masquerait un nœud devenu muet ou cassé.
-        expect(total, `${cas.id} n'a rien calcule`).toBeGreaterThan(0);
+        // HORS DE PORTÉE DE LA MESURE, MAIS PAS HORS DE PORTÉE DU TEST : on tient que le nœud
+        // RÉPOND, sans quoi l'entrée de cette table masquerait un nœud devenu muet ou cassé.
+        //
+        // ET CELA NE SE TENAIT PAS. La seule chose exigée était que la durée totale dépasse zéro,
+        // ce qui est vrai de n'importe quel appel, même d'un nœud qui rend `null` ou qui jette son
+        // erreur dans son message. Un nœud muet passait donc, et l'entrée de cette table le
+        // couvrait exactement comme son commentaire disait vouloir l'éviter. Ce qui est exigé
+        // désormais, c'est du SON : les quatre nœuds de cette table rendent un tampon audio.
+        const valeurs = (rendu as { valeurs?: unknown[] } | null)?.valeurs;
+        expect(Array.isArray(valeurs), `${cas.id} n'a rien rendu du tout`).toBe(true);
+        expect(
+          (valeurs ?? []).some((v) => v instanceof AudioBuffer),
+          `${cas.id} n'a rendu aucun son en ${total} ms, alors que sa raison d'être ici est d'en rendre : ${raison}`,
+        ).toBe(true);
         return;
       }
       // Le total sert à lire le pire : un pire égal au total veut dire « aucune respiration ».
       expect(pire, `pire gel ${pire} ms sur ${total} ms de calcul`).toBeLessThan(GEL_MAX_MS);
-    }, 120000);
+      // LE DÉLAI DU CAS EST GÉNÉREUX POUR LA MÊME RAISON QUE LE SEUIL, et il ne l'était pas assez.
+      // Il valait cent vingt secondes quand le cas le plus cher en coûtait trente : la passe
+      // complète lance un travailleur par fichier, et sous cette charge le même calcul a mis
+      // 124,6 s, c'est-à-dire quatre fois son prix au calme. Le cas est tombé sur son DÉLAI, pas
+      // sur sa mesure, et un échec de délai ne dit rien du code. Le plus cher coûte désormais
+      // treize secondes : cinq minutes absorbent plus de vingt fois la charge.
+    }, 300000);
   }
 });
