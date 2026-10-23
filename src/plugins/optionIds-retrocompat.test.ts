@@ -161,6 +161,17 @@ const CAS: Cas[] = [
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "minor pentatonic", idAttendu: "pentatonique-mineure" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "chromatic", idAttendu: "chromatique" },
 
+  // L'arpège de Koch — Accord : ses cinq identifiants étaient ses libellés français, quand le
+  // reste du parc désigne une qualité par `maj`, `m`, `dim`. Ce sont des alias de la table, donc
+  // les intervalles étaient justes ; c'est l'identifiant posé dans le projet qui divergeait.
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Majeur", idAttendu: "maj" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Mineur", idAttendu: "m" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Augmenté", idAttendu: "aug" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Diminué", idAttendu: "dim" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Sus4", idAttendu: "sus4" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Major", idAttendu: "maj" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Diminished", idAttendu: "dim" },
+
   // Les cinq réglages qui posaient `yes` et `no` dans les projets, quand trente et un posaient
   // `oui` et `non`. Deux d'entre eux affichaient « oui » et « non » en minuscules, et un
   // troisième n'avait pas de liste anglaise du tout.
@@ -365,7 +376,8 @@ const CAS: Cas[] = [
   { node: "generateur-frequence", param: "Forme", ancienneValeur: "saw", idAttendu: "sawtooth" },
   { node: "generateur-frequence", param: "Forme", ancienneValeur: "Scie", idAttendu: "sawtooth" },
   { node: "reservoir-musical", param: "Timbre", ancienneValeur: "Scie", idAttendu: "sawtooth" },
-  { node: "arpege-koch", param: "Accord", ancienneValeur: "Augmented", idAttendu: "Augmenté" },
+  // L'IDENTIFIANT DE CE RÉGLAGE EST PASSÉ AU VOCABULAIRE DU DÉPÔT : son bloc est plus haut, avec
+  // les cinq anciennes écritures françaises et les deux anglaises.
   { node: "arpege-koch", param: "Direction", ancienneValeur: "outward", idAttendu: "extérieure" },
   { node: "attracteur-ifs", param: "Attracteur", ancienneValeur: "Rossler", idAttendu: "Rössler" },
   { node: "attracteur-ifs", param: "Attracteur", ancienneValeur: "Sierpinski", idAttendu: "Sierpiński" },

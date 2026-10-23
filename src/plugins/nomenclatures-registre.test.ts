@@ -161,7 +161,9 @@ const DOMAINES: Domaine[] = [
     ],
     canonique: (id) => qualiteDe(id)?.id,
     anciennesEcritures: [
-      { ou: "arpege-koch·Accord", raison: "les noms français de la table de Koch, enregistrés dans les projets" },
+      // L'ÉCRITURE DE KOCH EST PAYÉE : ses cinq identifiants étaient ses libellés français, et ils
+      // sont désormais ceux du dépôt. Sa FORME reste comptée, parce qu'il n'offre que cinq triades
+      // là où les autres en offrent trente-trois, et ce sous-ensemble est la borne de son flocon.
       // CELUI-CI N'ÉTAIT PAS VISIBLE AVANT LA RÉPARATION DU GARDE : sa liste porte deux valeurs
       // hors domaine, « Cantus firmus » et « Personnalisé », ce qui suffisait à la faire
       // disparaître entièrement du relevé.

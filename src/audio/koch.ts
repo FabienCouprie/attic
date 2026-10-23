@@ -8,7 +8,16 @@ import { degresGammeMelodie } from "./generation-melodie";
 import { caractereOuSinus } from "./timbres";
 import { intervallesDaccord } from "./qualites-accords";
 
-export type AccordKoch = "Majeur" | "Mineur" | "Augmenté" | "Diminué" | "Sus4";
+/**
+ * L'accord du triangle de base, par son identifiant de `qualites-accords.ts`.
+ *
+ * LE TYPE PORTAIT LES NOMS FRANÇAIS, et c'était l'écriture de ce composant seul : le reste du parc
+ * désigne une qualité par `maj`, `m`, `dim`. Les deux s'écrivent ici parce qu'un projet enregistré
+ * porte l'ancienne, et parce que la table commune les lit toutes les deux en alias.
+ */
+export type AccordKoch =
+  | "maj" | "m" | "aug" | "dim" | "sus4"
+  | "Majeur" | "Mineur" | "Augmenté" | "Diminué" | "Sus4";
 export type DirectionKoch = "alternée" | "extérieure" | "intérieure";
 
 export interface OptionsArpegeKoch {
@@ -35,16 +44,11 @@ export interface OptionsArpegeKoch {
 /** Profondeur maximale : au-delà, le cycle de la voix la plus lente dépasserait la demi-heure. */
 export const PROFONDEUR_MAX = 5;
 
-// LES INTERVALLES VIENNENT DE LA TABLE COMMUNE, `qualites-accords.ts`. Les clés restent les noms
-// français que le réglage du composant offre, et la table les connaît en alias : un projet
-// enregistré retrouve donc son accord.
-const INTERVALLES_ACCORD: Record<AccordKoch, number[]> = {
-  Majeur: intervallesDaccord("Majeur"),
-  Mineur: intervallesDaccord("Mineur"),
-  Augmenté: intervallesDaccord("Augmenté"),
-  Diminué: intervallesDaccord("Diminué"),
-  Sus4: intervallesDaccord("Sus4"),
-};
+// LA TABLE PRIVÉE A DISPARU, ET SON REPLI AVEC ELLE. Elle redisait cinq entrées de
+// `qualites-accords.ts` sous les noms français de ce composant, et sa lecture retombait en silence
+// sur le majeur pour une clé qu'elle n'avait pas : les identifiants du réglage passés aux
+// identifiants du dépôt, les quatre autres accords seraient devenus majeurs sans que rien ne le
+// dise. `intervallesDaccord` lit l'identifiant comme l'ancien nom français, qui en est l'alias.
 
 export function snapperNote(midi: number, degresGamme: number[]): number {
   const pc = ((Math.round(midi) % 12) + 12) % 12;
@@ -108,7 +112,7 @@ export function genererNotesKoch(options: OptionsArpegeKoch) {
   const lier = (options.notesRepetees ?? "liees") === "liees";
   const degresGamme = degresGammeMelodie(gamme);
   const decalageCle = DEMI_TONS_CLE[cle] ?? 0;
-  const intervalles = INTERVALLES_ACCORD[accord] ?? INTERVALLES_ACCORD["Majeur"];
+  const intervalles = intervallesDaccord(accord);
   const fondamentale = (octave + 1) * 12 + decalageCle;
   const notesAccord = intervalles.map((interval) => fondamentale + interval);
 
