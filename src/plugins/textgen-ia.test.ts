@@ -30,6 +30,7 @@
 //   différentes, et trois d'entre elles rendent tout de même l'anglais plutôt que rien.
 import { describe, expect, it, beforeEach } from "vitest";
 import { readFileSync } from "node:fs";
+import { libelleLangue } from "../core/langues";
 
 /**
  * Un double de worker, qui n'est que ce que `CibleWorker` demande.
@@ -376,10 +377,16 @@ describe("ce que les fiches déclarent, et ce que la source doit tenir", () => {
   });
 
   it("CHAQUE LANGUE A AUSSI SON LIBELLÉ LISIBLE, sinon le message affiche un code", () => {
+    // CE CAS LISAIT LA SOURCE, et il lit maintenant la table. Les noms de langue étaient écrits
+    // deux fois dans ce fichier, dans la liste du réglage et dans une table de libellés pour le
+    // message, et six fois dans le dépôt ; ils sont désormais dans `core/langues.ts`. Chercher le
+    // texte d'une table disparue ne dirait plus rien, alors que la propriété voulue, elle, tient :
+    // tout code offert a un nom, et ce nom n'est pas le code.
     const p = (fiche("nllb-paroles").parametres ?? []).find((x) => x.nom === "Langue cible")!;
-    const labels = SOURCE.slice(SOURCE.indexOf("LABELS_LANGUES"), SOURCE.indexOf("LABELS_LANGUES") + 400);
     for (const code of (p.optionIds ?? []).map(String)) {
-      expect(labels, `« ${code} » n'a pas de libellé lisible`).toMatch(new RegExp(`\\b${code}:`));
+      const nom = libelleLangue(code);
+      expect(nom, `« ${code} » n'a pas de libellé lisible`).not.toBe(code);
+      expect(nom.length, `« ${code} »`).toBeGreaterThan(1);
     }
   });
 

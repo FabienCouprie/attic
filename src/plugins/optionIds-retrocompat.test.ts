@@ -263,7 +263,10 @@ const CAS: Cas[] = [
   // garde son identité, pas pour faire survivre un choix qui n'a plus de modèle derrière lui. Un
   // projet enregistré sur l'une des trois le dit désormais dans son message, au lieu de parler
   // anglais en silence.
-  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Auto", idAttendu: "auto" },
+  // L'IDENTIFIANT DE L'AUTOMATIQUE ÉTAIT « auto » ICI ET LA CHAÎNE VIDE PARTOUT AILLEURS ; c'est la
+  // chaîne vide qui est la convention du dépôt, et les deux anciens libellés doivent se relire.
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Auto", idAttendu: "" },
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "auto", idAttendu: "" },
   { node: "sherpa-asr", param: "Langue", ancienneValeur: "Français", idAttendu: "fr" },
   { node: "sherpa-asr", param: "Langue", ancienneValeur: "Japanese", idAttendu: "ja" },
   { node: "sherpa-asr", param: "Langue", ancienneValeur: "Coréen", idAttendu: "ko" },

@@ -9,6 +9,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
 import { creerAleatoire } from "../core/hasard";
+import { choixLangues, libelleLangue } from "../core/langues";
 
 let worker: Worker | null = null;
 
@@ -416,9 +417,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a song about the sea and freedom:\n",
         doc: "Prompt d'amorçage (en anglais pour de meilleurs résultats).", docEn: "Seed prompt (English for best results).", defautEn: "Write a song about the sea and freedom:\n" },
       { nom: "Langue cible", nomEn: "Target language", type: "choix",
-        options: ["Français", "Espagnol", "Allemand", "Italien", "Portugais", "Russe", "Japonais", "Chinois", "Arabe", "Hindi"],
-        optionIds: ["fr", "es", "de", "it", "pt", "ru", "ja", "zh", "ar", "hi"],
-        optionsEn: ["French", "Spanish", "German", "Italian", "Portuguese", "Russian", "Japanese", "Chinese", "Arabic", "Hindi"],
+        ...choixLangues(["fr", "es", "de", "it", "pt", "ru", "ja", "zh", "ar", "hi"]),
         defaut: "Français",
         doc: "Langue de traduction. Les paroles sont générées en anglais puis traduites.", docEn: "Translation language. Lyrics are generated in English then translated.", defautEn: "French" },
       { nom: "Longueur", nomEn: "Length", plage: [30, 200], pas: 10, defaut: 80, unite: " tokens",
@@ -434,11 +433,9 @@ export const fiches: FicheAudio[] = ([
       const langueCible = ctx.paramTexte("Langue cible", "fr");
       // Libellé lisible pour les messages : `langueCible` vaut désormais un code
       // ISO (« fr »), qu'il n'y a pas de sens à afficher tel quel.
-      const LABELS_LANGUES: Record<string, string> = {
-        fr: "Français", es: "Espagnol", de: "Allemand", it: "Italien", pt: "Portugais",
-        ru: "Russe", ja: "Japonais", zh: "Chinois", ar: "Arabe", hi: "Hindi",
-      };
-      const langueLabel = LABELS_LANGUES[langueCible] ?? langueCible;
+      // LES NOMS NE SONT PLUS ECRITS ICI : ils l'etaient deux fois dans ce seul fichier, dans
+      // la liste du reglage et dans cette table, et six fois dans le depot.
+      const langueLabel = libelleLangue(langueCible);
       const maxTokens = ctx.paramNombre("Longueur", 80);
       const temperature = ctx.paramNombre("Créativité", 0.9);
       const w = getWorker();

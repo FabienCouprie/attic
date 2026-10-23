@@ -15,6 +15,7 @@ import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { MODELES, chargerModele, transcrire, versMono, vers16k, type MotVosk } from "./vosk-asr";
 import { appliquerRognage, type Segment } from "../audio/silences";
+import { choixLangues } from "../core/langues";
 
 /**
  * La forme sous laquelle deux mots se comparent : minuscules, accents retirés.
@@ -130,8 +131,7 @@ export const fiches: FicheAudio[] = ([
     sortieNullePermise: true,
     parametres: [
       { nom: "Langue", nomEn: "Language", type: "choix",
-        options: ["Français", "Anglais"], optionsEn: ["French", "English"],
-        optionIds: ["fr", "en"], defaut: "Français", defautEn: "French",
+        ...choixLangues(["fr", "en"]), defaut: "Français", defautEn: "French",
         doc: "Le modèle de reconnaissance employé. Chaque langue a le sien, dédié.",
         docEn: "The recognition model used. Each language has its own, dedicated." },
       { nom: "Vocabulaire", nomEn: "Vocabulary", type: "texte", defaut: "", defautEn: "",

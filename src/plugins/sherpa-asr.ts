@@ -13,25 +13,18 @@ import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
 import { baseModeleLivre } from "./base-modeles";
 import { annoncerModele } from "./message-modele";
+import { LANGUE_AUTO, choixLangues } from "../core/langues";
 
 const MODEL_DIR = "/sherpa-asr-model";
 
-const LANGUES: Record<string, string> = {
-  "Auto": "",
-  "Anglais": "en",
-  "Français": "fr",
-  "Espagnol": "es",
-  "Allemand": "de",
-  "Italien": "it",
-  "Portugais": "pt",
-  "Néerlandais": "nl",
-  "Russe": "ru",
-  "Japonais": "ja",
-  "Chinois": "zh",
-  "Arabe": "ar",
-  "Hindi": "hi",
-  "Coréen": "ko",
-};
+/**
+ * Les treize langues du modele, et l'automatique.
+ *
+ * LA TABLE ETAIT ECRITE A L'ENVERS, du nom vers le code, ce qui en faisait la seule du depot a
+ * porter les noms comme CLES. Les noms viennent desormais de `core/langues.ts` ; ne restent ici
+ * que les codes, qui sont la borne de ce modele.
+ */
+const LANGUES = [LANGUE_AUTO, "en", "fr", "es", "de", "it", "pt", "nl", "ru", "ja", "zh", "ar", "hi", "ko"];
 
 let worker: Worker | null = null;
 let currentConfigHash: string | null = null;
@@ -338,16 +331,13 @@ export const fiches: FicheAudio[] = ([
         nom: "Langue",
         nomEn: "Language",
         type: "choix",
-        options: Object.keys(LANGUES),
-        // Ids canoniques = codes ISO 639-1, c'est-à-dire les valeurs mêmes de
-        // LANGUES (« auto » pour l'entrée sans code). Le libellé français n'est
-        // donc plus l'identité du paramètre.
-        optionIds: Object.values(LANGUES).map((c) => c || "auto"),
-        optionsEn: ["Auto", "English", "French", "Spanish", "German", "Italian", "Portuguese", "Dutch", "Russian", "Japanese", "Chinese", "Arabic", "Hindi", "Korean"],
-        defaut: "Auto",
-        defautEn: "Auto",
-        doc: "Langue du discours à transcrire. « Auto » laisse Whisper détecter la langue. Le modèle est multilingue (99 langues).",
-        docEn: "Language of the speech to transcribe. « Auto » lets Whisper detect the language. The model is multilingual (99 languages).",
+        // L'IDENTIFIANT DE L'AUTOMATIQUE EST LA CHAINE VIDE, et il valait « auto » : c'est la
+        // convention du depot, et les deux anciens libelles se relisent.
+        ...choixLangues(LANGUES),
+        defaut: "Automatique",
+        defautEn: "Automatic",
+        doc: "Langue du discours à transcrire. « Automatique » laisse Whisper détecter la langue. Le modèle est multilingue (99 langues).",
+        docEn: "Language of the speech to transcribe. « Automatic » lets Whisper detect the language. The model is multilingual (99 languages).",
       },
       {
         nom: "Qualité resampling",

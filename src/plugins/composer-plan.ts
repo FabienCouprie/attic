@@ -36,6 +36,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { LANGUES } from "./chanson-aides";
+import { choixLangues, libelleLangue } from "../core/langues";
 
 /** Les signatures que le moteur reçoit. Le champ est une CHAÎNE dans le plan, non un nombre. */
 const SIGNATURES = ["2", "3", "4", "6"];
@@ -160,8 +161,7 @@ export const fiches = ([
         doc: "Longueur visée. Ce plan ne portant pas de codes audio, elle est tenue à l'échantillon.",
         docEn: "Target length. As this plan carries no audio codes, it is held to the sample." },
       { nom: "Langue du chant", nomEn: "Singing language", type: "choix",
-        options: LANGUES.map((l) => l.fr), optionsEn: LANGUES.map((l) => l.en),
-        optionIds: LANGUES.map((l) => l.id), defaut: "Français", defautEn: "French",
+        ...choixLangues(LANGUES), defaut: "Français", defautEn: "French",
         doc: "La langue dans laquelle la voix chante. Les dix proposées sont celles que le modèle tient le mieux.",
         docEn: "The language the voice sings in. The ten offered are those the model holds best." },
       { nom: "Signature", nomEn: "Time signature", type: "choix",

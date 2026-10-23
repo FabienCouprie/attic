@@ -17,18 +17,7 @@ import { messageEchecPont } from "./pont-electron";
  * langues que le modèle annonce pour les paroles : dix sont données comme les mieux chantées, et
  * ce sont celles-là. Au-delà, le chant se dégrade sans que rien ne prévienne.
  */
-export const LANGUES = [
-  { id: "fr", fr: "Français", en: "French" },
-  { id: "en", fr: "Anglais", en: "English" },
-  { id: "es", fr: "Espagnol", en: "Spanish" },
-  { id: "de", fr: "Allemand", en: "German" },
-  { id: "it", fr: "Italien", en: "Italian" },
-  { id: "pt", fr: "Portugais", en: "Portuguese" },
-  { id: "ru", fr: "Russe", en: "Russian" },
-  { id: "ja", fr: "Japonais", en: "Japanese" },
-  { id: "ko", fr: "Coréen", en: "Korean" },
-  { id: "zh", fr: "Chinois", en: "Chinese" },
-];
+export const LANGUES = ["fr", "en", "es", "de", "it", "pt", "ru", "ja", "ko", "zh"];
 
 /**
  * Le réglage du périphérique, partagé par les six nœuds : même liste, même sens.

@@ -122,7 +122,12 @@ describe("le relais des deux synthèses", () => {
 
 describe("les langues offertes et les langues miroitées", () => {
   it("SE CORRESPONDENT EXACTEMENT, sans liste écrite deux fois à la main", () => {
-    const offertes = [...lire("src/plugins/tts.ts").matchAll(/model: "Xenova\/mms-tts-([a-z]{3})"/g)]
+    // L'ANCRE EST LE DEUX-POINTS D'UNE ENTRÉE DE TABLE, et elle l'était déjà : l'en-tête du
+    // composant NOMME les trois langues retirées, « `Xenova/mms-tts-ita`, `-nld` et `-pol` », pour
+    // dire pourquoi elles sont parties. Chercher dans tout le fichier les reprendrait. Le motif a
+    // suivi la forme de la table, qui ne porte plus les noms de langue depuis qu'ils viennent de
+    // `core/langues.ts` : elle associe le code au dépôt, et rien d'autre.
+    const offertes = [...lire("src/plugins/tts.ts").matchAll(/: "Xenova\/mms-tts-([a-z]{3})"/g)]
       .map((m) => m[1]).sort();
     const miroitees = PAQUETS.flatMap((p) => p.depots)
       .filter((d) => d.startsWith("Xenova/mms-tts-"))

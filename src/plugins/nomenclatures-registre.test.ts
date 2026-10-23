@@ -340,7 +340,6 @@ const DOMAINES: Domaine[] = [
     membre: (x) => ["fr", "en", "de", "es", "it", "pt", "ru", "zh", "yue", "ja", "ko", "nl", "ar", "hi", "ro"].includes(x),
     sentinelles: [
       { valeur: "", raison: "« Automatique » : le moteur reconnaît la langue seul" },
-      { valeur: "auto", raison: "« Automatique » écrit en clair, dans les composants qui l'écrivent ainsi" },
     ],
     // SIX FORMES, ET LEUR DIVERGENCE EST EN PARTIE LÉGITIME : chaque composant est borné par les
     // langues que SON modèle tient, et chacun l'écrit en commentaire. Ce qui ne l'est pas, c'est que
