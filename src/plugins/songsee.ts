@@ -5,6 +5,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { bufferVersWavBlob } from "../audio/io";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { choixFormats, formatImage } from "../core/formats-image";
 import { cheminDansTravail } from "./pont-electron";
 
 const VIZS = ["spectrogram", "mel", "chroma", "hpss", "selfsim", "loudness", "tempogram", "mfcc", "flux"];
@@ -68,8 +69,8 @@ export const fiches: FicheAudio[] = ([
         nom: "Format",
         nomEn: "Format",
         type: "choix",
-        options: ["JPEG", "PNG"],
-        optionsEn: ["JPEG", "PNG"],
+        // L'ORDRE EST CELUI DE CE COMPOSANT, dont le JPEG est le défaut, et il est enregistré.
+        ...choixFormats(["jpeg", "png"]),
         defaut: "JPEG",
         defautEn: "JPEG",
         doc: "Format de l'image de sortie.",
@@ -113,7 +114,7 @@ export const fiches: FicheAudio[] = ([
       const palette = ctx.paramTexte("Palette", "classic");
       const width = Math.round(ctx.paramNombre("Largeur", 1920));
       const height = Math.round(ctx.paramNombre("Hauteur", 1080));
-      const format = ctx.paramTexte("Format", "JPEG").toLowerCase();
+      const format = formatImage(ctx.paramTexte("Format", "jpeg"))?.id ?? "jpeg";
       const start = ctx.paramNombre("Début", 0);
       const duration = ctx.paramNombre("Durée", 0);
 

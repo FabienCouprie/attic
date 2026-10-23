@@ -10,6 +10,7 @@ import { genererMusiqueFractale, notesVersFichierMidi, rendreSequence, appliquer
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 import { PARAMETRE_CLE } from "../audio/cles";
+import { choixFormats, formatImage } from "../core/formats-image";
 
 /**
  * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
@@ -181,7 +182,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Rugosité", nomEn: "Roughness", type: "nombre", plage: [0, 1], pas: 0.05, defaut: 0.5, doc: "Influence des hautes fréquences du bruit (0 = lisse, 1 = rugueux).", docEn: "Influence of high-frequency noise (0 = smooth, 1 = rough)." },
       { nom: "Échelle", nomEn: "Scale", type: "choix", options: ["Logarithmique", "Linéaire"], optionsEn: ["Logarithmic", "Linear"], optionIds: ["logarithmic", "linear"], defaut: "Logarithmique", defautEn: "Logarithmic", doc: "Distribution verticale des fréquences dans l'image.", docEn: "Vertical distribution of frequencies in the image." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42, doc: "Graine pour reproduire la même texture fractale.", docEn: "Seed to reproduce the same fractal texture." },
-      { nom: "Format", nomEn: "Format", type: "choix", options: ["PNG", "JPEG"], defaut: "PNG", optionsEn: ["PNG", "JPEG"], defautEn: "PNG", doc: "Format de l'image de sortie.", docEn: "Output image format." },
+      // SANS `optionIds`, LE LIBELLÉ ÉTAIT L'IDENTIFIANT ENREGISTRÉ, et il divergeait d'un
+      // composant à l'autre jusque dans son ordre.
+      { nom: "Format", nomEn: "Format", type: "choix", ...choixFormats(["png", "jpeg"]), defaut: "PNG", defautEn: "PNG", doc: "Format de l'image de sortie.", docEn: "Output image format." },
     ],
     async executer(ctx: any) {
       const fftSize = parseInt(ctx.paramTexte("FFT", "2048"), 10);
@@ -193,8 +196,8 @@ export const fiches: FicheAudio[] = ([
         forme: ctx.paramTexte("Échelle", "logarithmic") as any,
         graine: ctx.paramNombre("Graine", 42),
       });
-      const fmt = ctx.paramTexte("Format", "PNG");
-      if (image && fmt === "JPEG") {
+      const fmt = formatImage(ctx.paramTexte("Format", "png"))?.id ?? "png";
+      if (image && fmt === "jpeg") {
         // Convert PNG to JPEG by re-encoding via canvas.
         const url = URL.createObjectURL(image);
         const img = new Image();
@@ -228,7 +231,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Exposition", nomEn: "Exposure", type: "nombre", plage: [0.1, 5], pas: 0.1, defaut: 1.5, doc: "Facteur d'exposition pour accentuer ou atténuer la densité de points.", docEn: "Exposure factor to emphasize or attenuate point density." },
       { nom: "Gamma", nomEn: "Gamma", type: "nombre", plage: [0.1, 3], pas: 0.1, defaut: 1, doc: "Correction gamma de l'image.", docEn: "Gamma correction of the image." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42, doc: "Graine pour les conditions initiales aléatoires de l'IFS.", docEn: "Seed for random initial conditions of the IFS." },
-      { nom: "Format", nomEn: "Format", type: "choix", options: ["PNG", "JPEG"], optionsEn: ["PNG", "JPEG"], defaut: "PNG", defautEn: "PNG", doc: "Format du fichier image de sortie.", docEn: "Output image file format." },
+      { nom: "Format", nomEn: "Format", type: "choix", ...choixFormats(["png", "jpeg"]), defaut: "PNG", defautEn: "PNG", doc: "Format du fichier image de sortie.", docEn: "Output image file format." },
       { nom: "Durée audio", nomEn: "Audio duration", type: "nombre", plage: [1, 30], pas: 0.5, defaut: 4, unite: "s", doc: "Durée du son généré depuis la trajectoire.", docEn: "Duration of the sound generated from the trajectory." },
       { nom: "Fréquence base", nomEn: "Base frequency", type: "nombre", plage: [20, 2000], pas: 1, defaut: 220, unite: "Hz", doc: "Fréquence de base pour la sonification des coordonnées X/Y.", docEn: "Base frequency for sonifying the X/Y coordinates." },
       { nom: "Plage hauteur", nomEn: "Pitch range", type: "nombre", plage: [0, 48], pas: 1, defaut: 24, unite: "demi-tons", uniteEn: "semitones", doc: "Étendue en demi-tons de la modulation de hauteur audio.", docEn: "Pitch range in semitones of the audio pitch modulation." },
@@ -262,7 +265,7 @@ export const fiches: FicheAudio[] = ([
           decimation: Math.max(1, Math.round(ctx.paramNombre("Décimation audio", 1))),
           volume: ctx.paramNombre("Volume audio", 80),
         },
-        ctx.paramTexte("Format", "PNG").toLowerCase() as any
+        (formatImage(ctx.paramTexte("Format", "png"))?.id ?? "png") as any
       );
       return {
         valeurs: [image, audio],

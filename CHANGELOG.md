@@ -92,6 +92,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **Les deux formats d'image s'écrivaient de quatre façons, et aucun identifiant n'était commun, pas même pour le PNG que les quatre composants savent écrire.** Trois n'avaient **pas d'`optionIds` du tout**, de sorte que le libellé majuscule était l'identifiant enregistré : deux écrivaient « PNG,JPEG » et un « JPEG,PNG », donc l'ordre divergeait aussi, et l'ordre s'enregistre. Le quatrième écrivait « png » en minuscules, qui n'est pas « PNG ». Un même projet gardait ainsi deux valeurs pour le même format.
+
+  - **Les identifiants sont ceux du type MIME**, sans le préfixe : c'est la seule écriture qui ne soit pas un choix arbitraire, et c'est déjà celle que le binaire de visualisation attend sur sa ligne de commande. La table porte aussi le type MIME et l'extension, et **l'extension n'est pas l'identifiant** : le JPEG s'identifie « jpeg » et s'écrit « .jpg ».
+  - **L'ordre reste celui de chaque composant**, parce qu'il décide du défaut affiché et qu'il est enregistré : celui dont le JPEG est le défaut le garde en tête.
+  - **Le garde dit que personne n'offre un libellé comme identifiant**, défaut replanté et attrapé en nommant le composant et la valeur ; et un format inconnu fait échouer la construction du réglage au chargement, plutôt que de passer.
+
 - **Le registre des nomenclatures était aveugle à onze formes, par deux mécaniques de son propre prédicat.** Il garde huit domaines en déclarant, pour chacun, le nombre de listes distinctes que le dépôt assume ; une de plus est une liste écrite à la main, une de moins est une dette remboursée, et le cas échoue dans les deux sens. Mais il reconnaissait un réglage par un `ids.every(...)`, c'est-à-dire par un ET sur **tous** ses identifiants.
 
   - **Une sentinelle en tête d'une liste faisait disparaître la liste entière.** « Selon la roue » dans la gamme du cercle pulsant rendait ses vingt-cinq gammes invisibles d'un coup ; « Du fichier » dans la métrique de MIDI vers ABC, ses trente signatures ; « Impulsion » et « Bruit » dans l'excitateur de Frontière de note, ses quatre ondes ; « Aucune » dans la quantification, ses valeurs de note ; et la treizième entrée du paradoxe du triton, ses douze classes.
