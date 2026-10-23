@@ -23,8 +23,13 @@ export const fiches: FicheAudio[] = ([
         nom: "Position",
         nomEn: "Position",
         type: "choix",
-        options: ["Gauche", "Centre", "Droite"], optionIds: ["Gauche","Centre","Droite"],
+        // LES IDENTIFIANTS ÉTAIENT LES LIBELLÉS FRANÇAIS CAPITALISÉS, et c'est ce que les projets
+        // ont enregistré ; l'exécuteur compensait en minusculant puis en cherchant la sous-chaîne
+        // française ou anglaise. Ils sont en minuscules désormais, comme partout ailleurs, et les
+        // anciens restent lus.
+        options: ["Gauche", "Centre", "Droite"], optionIds: ["gauche", "centre", "droite"],
         optionsEn: ["Left", "Center", "Right"],
+        optionsHeritees: { Gauche: "gauche", Centre: "centre", Droite: "droite" },
         defaut: "Centre",
         defautEn: "Center",
         doc: "Position panoramique : tout à gauche, au centre, ou tout à droite.",

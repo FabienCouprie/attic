@@ -330,8 +330,12 @@ const CAS: Cas[] = [
   { node: "vexflow-tab", param: "Accordage", ancienneValeur: "Ukulele", idAttendu: "Ukulélé" },
   { node: "ddsp-tone-transfer", param: "Instrument", ancienneValeur: "Tenor saxophone", idAttendu: "Saxophone ténor" },
   { node: "palette-harmonique", param: "Ordre", ancienneValeur: "Brightness", idAttendu: "Luminosité" },
-  { node: "hard-panner", param: "Position", ancienneValeur: "Left", idAttendu: "Gauche" },
-  { node: "hard-panner", param: "Position", ancienneValeur: "Center", idAttendu: "Centre" },
+  // LES IDENTIFIANTS DU PANORAMIQUE ÉTAIENT SES LIBELLÉS FRANÇAIS CAPITALISÉS ; ils sont en
+  // minuscules désormais, comme partout ailleurs, et les trois anciens doivent se relire.
+  { node: "hard-panner", param: "Position", ancienneValeur: "Left", idAttendu: "gauche" },
+  { node: "hard-panner", param: "Position", ancienneValeur: "Center", idAttendu: "centre" },
+  { node: "hard-panner", param: "Position", ancienneValeur: "Gauche", idAttendu: "gauche" },
+  { node: "hard-panner", param: "Position", ancienneValeur: "Droite", idAttendu: "droite" },
   { node: "automate-cellulaire", param: "Règle", ancienneValeur: "Custom", idAttendu: "Personnalisée" },
   { node: "automate-cellulaire", param: "Mode voix", ancienneValeur: "Polyphony", idAttendu: "Polyphonie" },
   { node: "automate-cellulaire", param: "Mapping", ancienneValeur: "Pitch + velocity", idAttendu: "Hauteur + vélocité" },

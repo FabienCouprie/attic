@@ -33,6 +33,11 @@ import { gammeDe } from "../audio/gammes";
 import { gammeParId as gammeMondeDe } from "../audio/gammes-monde";
 import { qualiteDe } from "../audio/qualites-accords";
 import { demiTonDeCle } from "../audio/cles";
+import { PROGRESSIONS_GENRE } from "../audio/generation";
+import { PERCUSSIONS_JOUABLES } from "../audio/batterie-midi";
+import { DISPOSITIONS } from "../audio/multicanal";
+import { PATRONS_RYTHME } from "../audio/generation-patrons";
+import { formatImage } from "../core/formats-image";
 
 /**
  * Un réglage à choix, avec les identifiants qu'un projet enregistrera ET les libellés qu'il montre.
@@ -276,10 +281,150 @@ const DOMAINES: Domaine[] = [
     formesAssumees: 6,
     remede: "déclarer une paire centrale, dans chacun des deux ordres, puisque l'ordre d'un composant est enregistré",
   },
+
+  // ── LES DOMAINES INSCRITS LE 2026-10-23, APRÈS LE RELEVÉ DES 503 COMPOSANTS ─────────────────
+  //
+  // Le relevé a trouvé cinquante et un concepts partagés par au moins deux composants, dont
+  // trente-quatre divergents, quand le registre n'en déclarait que huit. Ceux qui suivent sont les
+  // divergents qui passent les trois tests du haut de ce fichier ; ceux qui ne les passent pas sont
+  // inscrits plus bas, avec la raison de leur refus, pour qu'on ne les réexamine pas.
+
+  {
+    nom: "genre",
+    membre: (x) => PROGRESSIONS_GENRE[x] !== undefined,
+    sentinelles: [
+      { valeur: "custom", raison: "« Personnalisé » : la progression est saisie dans le champ d'à côté" },
+    ],
+    canonique: (id) => (PROGRESSIONS_GENRE[id] ? id : undefined),
+    formesAssumees: 2,
+    remede: "offrir `GENRES_ACCORDS` de `plugins/generateurs-aides.ts`, ou sa coupe sans la progression personnalisée",
+  },
+  {
+    nom: "format d'image",
+    membre: (x) => formatImage(x) !== undefined,
+    seuil: 2,
+    canonique: (id) => formatImage(id)?.id,
+    formesAssumees: 3,
+    remede: "offrir `choixFormats` de `core/formats-image.ts`",
+  },
+  {
+    nom: "percussion",
+    membre: (x) => PERCUSSIONS_JOUABLES.some((p) => String(p.note) === x),
+    // UNE SEULE FORME, et elle vient d'être unifiée : « Rythme euclidien » recopiait sa liste à la
+    // main, où « Tom grave » désignait une autre note que dans la table commune.
+    formesAssumees: 1,
+    remede: "offrir `choixPercussion` de `audio/batterie-midi.ts`",
+  },
+  {
+    nom: "moteur de synthèse",
+    membre: (x) => ["auto", "fm", "soundfont"].includes(x),
+    seuil: 2,
+    formesAssumees: 2,
+    remede: "étaler `PARAMETRE_SYNTHESE` de `plugins/soundfontGlobal.ts`, ou sa variante sans « Automatique »",
+  },
+  {
+    nom: "disposition de haut-parleurs",
+    membre: (x) => DISPOSITIONS.some((d) => d.id === x),
+    formesAssumees: 2,
+    remede: "offrir `choixDisposition` de `plugins/multicanal.ts`",
+  },
+  {
+    nom: "langue",
+    // LA LISTE EST CELLE DES CODES QUE LE DÉPÔT OFFRE, et non une forme à deux lettres : « do » et
+    // « la » sont des notes, « en » et « es » des langues, et rien dans la forme ne les sépare.
+    membre: (x) => ["fr", "en", "de", "es", "it", "pt", "ru", "zh", "yue", "ja", "ko", "nl", "ar", "hi", "ro"].includes(x),
+    sentinelles: [
+      { valeur: "", raison: "« Automatique » : le moteur reconnaît la langue seul" },
+      { valeur: "auto", raison: "« Automatique » écrit en clair, dans les composants qui l'écrivent ainsi" },
+    ],
+    // SIX FORMES, ET LEUR DIVERGENCE EST EN PARTIE LÉGITIME : chaque composant est borné par les
+    // langues que SON modèle tient, et chacun l'écrit en commentaire. Ce qui ne l'est pas, c'est que
+    // les noms de langue soient recopiés dans six tables à la main, où une orthographe peut dériver
+    // sans que rien ne le dise.
+    formesAssumees: 6,
+    remede: "déclarer une table centrale des noms de langue, chaque composant n'offrant que les codes que SON modèle tient",
+  },
+  {
+    nom: "caractère de timbre",
+    membre: (x) => ["douce", "brillante", "percutante", "pur"].includes(x),
+    formesAssumees: 2,
+    remede: "déclarer une liste centrale des caractères, et dire pourquoi un composant n'en offre qu'une part",
+  },
+  {
+    nom: "position stéréo",
+    membre: (x) => ["gauche", "centre", "droite"].includes(x.toLowerCase()),
+    seuil: 2,
+    canonique: (id) => (id === id.toLowerCase() ? id : undefined),
+    // TROIS FORMES, ET DEUX SONT LÉGITIMES : trois composants ne désignent pas une position mais
+    // une OREILLE ou un CANAL, dont il n'existe que deux, et un centre n'y aurait pas de sens ; la
+    // borne est écrite à côté de chacun. La troisième est la position à trois valeurs. Ce qui a été
+    // réparé, c'est la capitalisation : un composant avait pour identifiants ses libellés français.
+    formesAssumees: 3,
+    remede: "déclarer une liste centrale des positions, en minuscules comme partout ailleurs",
+  },
+  {
+    nom: "patron rythmique",
+    membre: (x) => PATRONS_RYTHME[x] !== undefined,
+    formesAssumees: 2,
+    remede: "offrir `optionsPatrons` de `audio/patrons-rythme.ts`, avec la métrique qui restreint",
+  },
+  {
+    nom: "extension d'accord",
+    membre: (x) => ["aucune", "septieme", "sixte", "idiomatique"].includes(x),
+    seuil: 2,
+    // LES DEUX FORMES SONT BORNÉES PAR L'ALGORITHME, et la borne est écrite à côté de chacune :
+    // l'un ajoute la septième à CHAQUE accord, l'autre là où le genre la place. Les anciennes
+    // valeurs du second sont lues comme « idiomatique ».
+    formesAssumees: 2,
+    remede: "déclarer une liste centrale des extensions, et dire pourquoi un composant n'en offre qu'une part",
+  },
+];
+
+/**
+ * Les concepts partagés qui ont été EXAMINÉS et qui ne sont pas des domaines, avec la raison.
+ *
+ * POURQUOI LES INSCRIRE PLUTÔT QUE LES TAIRE. Le relevé du 2026-10-23 a trouvé trente-quatre
+ * concepts partagés divergents sur les 503 composants. Dix-huit sont gardés plus haut ; ceux-ci ont
+ * été ouverts un par un et écartés, le plus souvent au troisième test : le mot est le même et la
+ * chose ne l'est pas. Sans cette liste, le prochain relevé les retrouvera et refera le travail,
+ * ou pire, « unifiera » deux vocabulaires qui n'ont en commun qu'une homonymie.
+ */
+const EXAMINES_ET_ECARTES: { ou: string; raison: string }[] = [
+  { ou: "generateur-pochette·Palette", raison: "« magma » nomme trois couleurs lues par position ici et six arrêts interpolés dans l'attracteur : deux jeux de couleurs sous un même nom" },
+  { ou: "attracteur-ifs·Palette", raison: "l'autre moitié de la même homonymie, six arrêts le long d'un scalaire de densité" },
+  { ou: "styles-musicaux·Catégorie", raison: "onze genres musicaux ; « Rock » n'est pas une catégorie d'émotion" },
+  { ou: "emotions·Catégorie", raison: "huit familles d'émotions ; « Joie » n'est pas un style musical" },
+  { ou: "clavier-sfz·Source", raison: "les voies d'approvisionnement propres au nœud, donc ses propres ports" },
+  { ou: "banque-sfz·Source", raison: "l'autre moitié : ce nœud n'a pas d'entrée, il ne peut pas offrir « Banque entrante »" },
+  { ou: "montage-grains·Opération", raison: "« garder » y veut dire un grain sur deux, et dans les ondelettes une part des coefficients : faux ami" },
+  { ou: "ondelettes·Opération", raison: "l'autre moitié du faux ami ; des coefficients n'existent pas hors de la transformée" },
+  { ou: "tresse·Brins", raison: "un nombre de bandes de fréquence, que seule la forme de petits entiers rapproche d'une signature" },
+  { ou: "qui-parle-quand·Locuteur", raison: "un rang de locuteur, de un à quatre" },
+  { ou: "composer-plan·Signature", raison: "un nombre de temps par mesure, écrit comme une chaîne dans le plan" },
+  { ou: "midi-vers-abc·Grille", raison: "un nombre de subdivisions par temps" },
+  { ou: "carte-sonore·Style", raison: "quatre dispositions de carte ; « voronoi » n'est pas un style de pochette" },
+  { ou: "generateur-pochette·Style", raison: "douze styles graphiques ; « bauhaus » n'est pas une disposition de carte" },
+  { ou: "reprise-abc·Style", raison: "six motifs d'accompagnement, bornés par la métrique" },
+  { ou: "tonal-analyse·Style", raison: "trois idiomes de progression ; « Pop » y est I-V-vi-IV et non un accord par temps" },
+  { ou: "spirale-logarithmique·Rapport par tour", raison: "un facteur de FRÉQUENCE : « quinte » et « octave » n'ont pas de sens comme facteurs de distance" },
+  { ou: "spirale-spatiale·Rapport par tour", raison: "un facteur de DISTANCE : « quadruple » n'est pas un nom d'intervalle" },
+  { ou: "generateur-courbe·Forme", raison: "quatorze courbes de modulation dont onze n'ont rien d'une onde, parmi lesquelles cinq lois de probabilité" },
+  { ou: "ddsp-tone-transfer·Instrument", raison: "les quatre points de contrôle publiés du modèle ; il n'existe pas de checkpoint de clarinette" },
+  { ou: "vent-guide-onde·Instrument", raison: "trois modèles physiques de tuyau ; un violon n'a pas de tuyau" },
 ];
 
 describe("un concept, des formes déclarées", () => {
   const tous = choix();
+
+  it("CHAQUE CONCEPT ÉCARTÉ EXISTE ENCORE, sans quoi sa raison ne garde plus rien", () => {
+    // Un réglage renommé ou retiré laisserait ici une raison orpheline, qui couvrirait un autre
+    // réglage portant un jour le même nom.
+    const offerts = new Set(tous.map((c) => c.ou));
+    const orphelins = EXAMINES_ET_ECARTES
+      .filter((e) => !offerts.has(e.ou))
+      .map((e) => `${e.ou} : ce réglage n'existe plus, retirer la ligne`);
+    expect(orphelins).toEqual([]);
+  });
 
   it("LE REGISTRE EST LU, sans quoi tous les cas passeraient à vide", () => {
     expect(toutesLesFiches.length).toBeGreaterThan(400);
@@ -405,6 +550,6 @@ describe("un concept, des formes déclarées", () => {
     // il couvre dix-huit domaines au lieu de huit. C'est là que la comparaison repart.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(38);
+      .toBe(53);
   });
 });
