@@ -6,8 +6,9 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { midiVersAbc } from "../audio/midi-vers-abc";
+import { SIGNATURES } from "../audio/signatures";
 
-const METRIQUES = ["fichier", "2/4", "3/4", "4/4", "5/4", "6/8", "7/8", "9/8", "12/8"];
+const METRIQUES = ["fichier", ...SIGNATURES];
 const GRILLES: Record<string, "auto" | number> = { auto: "auto", "2": 2, "4": 4, "8": 8, "3": 3, "6": 6, "12": 12 };
 
 export const fiches: FicheAudio[] = ([
@@ -23,8 +24,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Métrique", nomEn: "Meter", type: "choix",
-        options: ["Du fichier", "2/4", "3/4", "4/4", "5/4", "6/8", "7/8", "9/8", "12/8"],
-        optionsEn: ["From file", "2/4", "3/4", "4/4", "5/4", "6/8", "7/8", "9/8", "12/8"],
+        options: ["Du fichier", ...SIGNATURES],
+        optionsEn: ["From file", ...SIGNATURES],
         optionIds: METRIQUES, defaut: "Du fichier", defautEn: "From file",
         doc: "Où placer les barres. Attention : les composants écrivent tous « 4/4 » dans leurs fichiers, même pour une valse, « Du fichier » donne donc presque toujours 4/4. La métrique se donne à la main ; elle n'est pas devinée, parce qu'une métrique mal devinée donne une partition illisible sans le dire.",
         docEn: "Where to put the bar lines. Note: the nodes all write « 4/4 » into their files, even for a waltz, « From file » therefore almost always gives 4/4. Settings: the real meter by hand; it is not guessed, because a wrongly guessed meter gives an unreadable score without saying so." },

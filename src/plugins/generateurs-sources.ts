@@ -18,6 +18,7 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
  */
 import { noteVersFrequence, FORMES_FREQ } from "./generateurs-aides";
 import { PARAMETRE_CLE } from "../audio/cles";
+import { SIGNATURES, clicsDeMesure, dureeUnite, lireSignature, tempsParMesure } from "../audio/signatures";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -255,8 +256,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
       { nom: "Signature", nomEn: "Time signature", type: "choix",
-        options: ["4/4", "3/4", "2/4", "6/8", "5/4", "7/8"], defaut: "4/4",
-        doc: "Signature rythmique. Le premier temps de chaque mesure est accentué.", docEn: "Time signature. The first beat of each bar is accented.", optionsEn: ["4/4", "3/4", "2/4", "6/8", "5/4", "7/8"], defautEn: "4/4" },
+        options: [...SIGNATURES], optionsEn: [...SIGNATURES], defaut: "4/4", defautEn: "4/4",
+        doc: "Signature rythmique. Le premier temps de chaque mesure porte le clic le plus fort. Dans une mesure composée, c'est-à-dire une mesure dont les unités se groupent par trois comme 6/8, 9/8 ou 12/8, chaque temps porte un clic moyen et les unités qui tombent à l'intérieur d'un temps portent un clic faible : 9/8 s'entend en trois temps et non en neuf. Les signatures irrégulières sont groupées en plaçant les groupes de trois en tête, 7/8 valant 3+2+2. Le tempo compte les noires : une croche dure la moitié d'un battement et une blanche le double.",
+        docEn: "Time signature. The first beat of each bar carries the strongest click. In a compound signature, that is, a bar whose units group by three such as 6/8, 9/8 or 12/8, each beat carries a medium click and the units falling inside a beat carry a soft click: 9/8 is heard in three beats and not in nine. Irregular signatures are grouped with the groups of three first, 7/8 being 3+2+2. The tempo counts quarter notes: an eighth note lasts half a beat and a half note twice one." },
       { nom: "Durée", nomEn: "Duration", plage: [1, 60], pas: 1, defaut: 10, unite: "s",
         doc: "Durée totale du métronome.", docEn: "Total duration of the metronome." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix",
@@ -274,11 +276,15 @@ export const fiches: FicheAudio[] = ([
       const sr = 44100;
       const vol = Math.max(0, Math.min(1, volume / 100));
 
-      const [num, den] = sig.split("/").map((n: string) => parseInt(n, 10));
-      const beatSec = 60 / tempo;
-      const beatSecUnit = den === 8 ? beatSec / 2 : beatSec;
-      const beatsParMesure = den === 8 ? num : num;
-      const intervalle = beatSecUnit;
+      // LA SIGNATURE EST LUE PAR SA FORME, et ce qui ne se lit pas retombe sur quatre temps : un
+      // graphe sauvegardé avec une valeur qui n'est plus offerte doit continuer de sonner.
+      const { num, den } = lireSignature(sig) ?? { num: 4, den: 4 };
+      const intervalle = dureeUnite(tempo, den) ?? 60 / 120;
+      // LES CLICS D'UNE MESURE PORTENT LEUR RANG, ce qui est tout l'objet du groupement : en 9/8
+      // il y a trois temps de trois croches, donc un clic fort, deux faibles, un moyen, deux
+      // faibles, un moyen, deux faibles.
+      const clics = clicsDeMesure(num, den);
+      const unitesParMesure = Math.max(1, clics.length);
 
       const len = Math.max(1, Math.floor(duree * sr));
       const buf = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
@@ -287,10 +293,15 @@ export const fiches: FicheAudio[] = ([
       // souhaite le régler.
       const hasardClic = creerAleatoire(1);
 
-      function ecrireClic(pos: number, accent: boolean) {
-        const amp = accent ? vol * 0.9 : vol * 0.5;
+      // TROIS RANGS, ET LES DEUX PREMIERS GARDENT LEURS VALEURS : une mesure simple n'a pas de
+      // subdivision, donc son clic sonne exactement comme avant que le troisième rang existe.
+      const AMPLEURS = [0.9, 0.5, 0.28];
+      const AIGUS = { beep: [1500, 1000, 750], woodblock: [800, 600, 450] } as const;
+
+      function ecrireClic(pos: number, niveau: 0 | 1 | 2) {
+        const amp = vol * AMPLEURS[niveau];
         if (timbre === "beep") {
-          const freq = accent ? 1500 : 1000;
+          const freq = AIGUS.beep[niveau];
           const dureeClic = 0.02;
           const n = Math.floor(dureeClic * sr);
           for (let i = 0; i < n && pos + i < len; i++) {
@@ -301,7 +312,7 @@ export const fiches: FicheAudio[] = ([
             buf.getChannelData(1)[pos + i] += s;
           }
         } else if (timbre === "woodblock") {
-          const freq = accent ? 800 : 600;
+          const freq = AIGUS.woodblock[niveau];
           const dureeClic = 0.05;
           const n = Math.floor(dureeClic * sr);
           for (let i = 0; i < n && pos + i < len; i++) {
@@ -325,18 +336,23 @@ export const fiches: FicheAudio[] = ([
         }
       }
 
-      let beat = 0;
+      // LE RANG SE PREND SUR LE COMPTE D'UNITÉS, ET NON SUR CELUI DES TEMPS : les deux existent
+      // désormais côte à côte, et 7/8 porte sept unités pour trois temps. Prendre le mauvais des
+      // deux resterait dans les bornes du tableau et sonnerait une autre mesure.
+      let nbUnites = 0;
       for (let t = 0; t < duree; t += intervalle) {
         const pos = Math.floor(t * sr);
         if (pos >= len) break;
-        const accent = beat % beatsParMesure === 0;
-        ecrireClic(pos, accent);
-        beat++;
+        ecrireClic(pos, clics[nbUnites % unitesParMesure].niveau);
+        nbUnites++;
       }
 
-      const nbBeats = beat;
-      const nbMesures = Math.floor(nbBeats / beatsParMesure);
-      return { valeurs: [buf], message: traduire("msg.var_0_bpm_var_1_var_2_mesure_s_var_3_temps", tempo, sig, nbMesures, nbBeats) };
+      const nbMesures = Math.floor(nbUnites / unitesParMesure);
+      const nbTemps = nbMesures * tempsParMesure(num, den);
+      return {
+        valeurs: [buf],
+        message: traduire("msg.metronome.releve", tempo, sig, nbMesures, nbTemps, nbUnites),
+      };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

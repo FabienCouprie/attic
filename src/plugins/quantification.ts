@@ -18,17 +18,18 @@ import { quantifier } from "../audio/quantification";
 import { dureeSequence, estSequence, type Sequence } from "../audio/sequence";
 import { poserArbre } from "../audio/voix";
 import { nomNote } from "../audio/nom-note";
+import { SIGNATURES, lireSignature } from "../audio/signatures";
 
 const en = () => langueCourante() === "en";
 
-const METRIQUES = ["2/4", "3/4", "4/4", "5/4", "6/8", "7/8", "12/8"];
+const METRIQUES = [...SIGNATURES];
 const DIVISIONS_DEFAUT = "2 3 4 5 6 7";
 /** Combien d'écritures sont classées, donc parmi combien « Solution » choisit. */
 const COMBIEN = 5;
 
 function lireMetrique(texte: string): [number, number] {
-  const m = /^(\d+)\/(\d+)$/.exec(texte.trim());
-  return m ? [Number(m[1]), Number(m[2])] : [4, 4];
+  const lue = lireSignature(texte);
+  return lue ? [lue.num, lue.den] : [4, 4];
 }
 
 export const fiches: FicheAudio[] = ([

@@ -11,6 +11,7 @@ import { parseMidi } from "midi-file";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
+import { SIGNATURES } from "../audio/signatures";
 
 /**
  * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
@@ -101,7 +102,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { ...PARAMETRE_CLE },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
-      { nom:"Signature temporelle", nomEn:"Time signature", type:"choix", options:["4/4","3/4","6/8"], defaut:"4/4", optionsEn: ["4/4","3/4","6/8"], defautEn: "4/4" },
+      { nom:"Signature temporelle", nomEn:"Time signature", type:"choix", options:[...SIGNATURES], optionsEn: [...SIGNATURES], defaut:"4/4", defautEn: "4/4" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:100, unite:"BPM" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,32], pas:1, defaut:4 },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
