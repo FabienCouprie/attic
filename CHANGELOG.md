@@ -92,6 +92,14 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **La gravure MusicXML nommait les valeurs de note faux dès qu'on lui demandait une grille plus grossière, et sa longueur de mesure s'arrondissait.** Les deux défauts avaient été signalés sans être touchés lors du chantier des nomenclatures ; les voici mesurés et réparés.
+
+  - **Une noire s'appelait « eighth », et à la plus grossière des grilles « 16th ».** `<divisions>` dit combien d'unités valent une noire et suit le réglage « Quantification », quatre, deux ou une ; mais la table des noms de valeur était écrite pour quatre. La durée restait juste **par rapport aux divisions**, donc chaque mesure se remplissait et rien ne criait : c'est le NOM, c'est-à-dire la tête de note que le logiciel de notation affiche, qui était faux d'un facteur deux ou quatre. La grille réelle est désormais passée à la fonction qui nomme.
+  - **Une mesure qui ne fait pas un nombre entier de noires voyait ses barres déplacées.** 3/8 vaut une noire et demie : à la grille de la noire, la longueur de mesure valait 1,5 et s'arrondissait à 2. La grille descend maintenant au moins à l'unité du dénominateur, et le réglage ne fait que la demander plus fine encore.
+  - **Et cela débloque ce que le défaut interdisait.** La gravure n'offrait que **dix-sept signatures sur trente**, filtrées sur « la mesure fait un nombre entier de noires » ; elle offre les trente. La dette de nomenclature du domaine « métrique » tombe donc de trois formes à deux, et le total du dépôt de 53 à 52.
+  - **Le second graveur, celui qui part d'un arbre rythmique, est immun** : il calcule ses divisions par le plus petit commun multiple des dénominateurs et nomme la valeur depuis la fraction écrite. Il n'a pas été touché.
+  - **Vérifié dans l'application sur un fichier gravé en 9/8**, métrique jusque-là impossible : `<beats>9</beats>`, grille affinée de une à **deux divisions** par noire puisque la signature l'exige, **quatorze mesures toutes exactement à neuf unités**, et des noms de valeur justes. Les deux défauts replantés font tomber leur cas.
+
 - **Les trente-quatre concepts partagés divergents sont désormais tous traités : dix-huit gardés au registre, vingt et un examinés et écartés par écrit.** Le relevé des 503 composants en avait trouvé trente-quatre quand huit seulement étaient déclarés.
 
   - **Dix domaines de plus sont gardés** : le genre, le format d'image, la percussion, le moteur de synthèse, la disposition de haut-parleurs, la langue, le caractère de timbre, la position stéréo, le patron rythmique et l'extension d'accord. Chacun déclare ce qui en relève, son seuil, ses sentinelles et le nombre de formes que le dépôt assume. **Trois comptes que j'avais prédits étaient faux**, et c'est le registre qui les a dits : la percussion n'a qu'une forme depuis sa réparation, la langue six et non sept, la position stéréo trois et non deux.

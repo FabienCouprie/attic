@@ -68,10 +68,16 @@ const VALEURS: { divisions: number; nom: string; points: number }[] = [
 
 /**
  * Le nom de valeur le plus proche pour une durée donnée, en unités de division.
- * `divisionsParNoire` vaut 4 dans cette écriture : l'unité est la double-croche.
+ *
+ * LA TABLE CI-DESSUS EST ÉCRITE EN DOUBLES-CROCHES, quatre par noire, et c'est pourquoi la grille
+ * réelle doit être dite. Elle ne l'était pas : `<divisions>` suit le réglage de quantification et
+ * vaut quatre, deux ou une, de sorte qu'à la croche une noire s'appelait « eighth » et à la noire
+ * « 16th ». La durée restait juste par rapport aux divisions, donc la mesure se remplissait et rien
+ * ne criait ; c'est le NOM, c'est-à-dire la tête de note affichée par le logiciel qui lit, qui
+ * était faux.
  */
-export function valeurNote(dureeUnites: number): { nom: string; points: number } {
-  const d = Math.max(1, Math.round(dureeUnites));
+export function valeurNote(dureeUnites: number, unitesParNoire = 4): { nom: string; points: number } {
+  const d = Math.max(1, Math.round((dureeUnites * 4) / Math.max(1, unitesParNoire)));
   const exacte = VALEURS.find((v) => v.divisions === d);
   if (exacte) return { nom: exacte.nom, points: exacte.points };
   // Pas de valeur exacte : on prend la plus grande qui tienne, le reste étant déjà
@@ -126,12 +132,18 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
   const tempo = options.tempo ?? 120;
   const quantification = options.quantification ?? 16;
   const [numerateur, denominateur] = options.metrique ?? [4, 4];
-  const unitesParNoire = Math.max(1, Math.round(quantification / 4));
+  // LA MÉTRIQUE AFFINE LA GRILLE QUAND IL LE FAUT, et c'est la réparation d'un arrondi. Une mesure
+  // doit tomber sur un nombre ENTIER d'unités : 3/8 vaut une noire et demie, donc à la noire la
+  // longueur de mesure valait 1,5 et s'arrondissait à 2, ce qui déplaçait les barres sans que rien
+  // ne le dise. La grille descend donc au moins à l'unité du dénominateur, et le réglage de
+  // quantification ne fait que la demander plus fine encore.
+  const grille = Math.max(quantification, denominateur);
+  const unitesParNoire = Math.max(1, Math.round(grille / 4));
   // MusicXML compte les durées en « divisions » par noire : c'est notre unité.
   const divisions = unitesParNoire;
-  const unitesParMesure = Math.max(1, Math.round((numerateur * 4 / denominateur) * unitesParNoire));
+  const unitesParMesure = ((numerateur * 4) / denominateur) * unitesParNoire;
 
-  const evenements = evenementsDepuisNotes(notes, tempo, quantification);
+  const evenements = evenementsDepuisNotes(notes, tempo, grille);
   const fin = evenements.reduce((m, e) => Math.max(m, e.debut + e.duree), 0);
   const nbMesures = Math.max(1, Math.ceil(fin / unitesParMesure));
 
@@ -164,17 +176,17 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
     const dansLaMesure = evenements.filter((e) => e.debut >= debutMesure && e.debut < debutMesure + unitesParMesure);
     for (const e of dansLaMesure) {
       if (e.debut > curseur) {
-        lignes.push(...ecrireSilence(e.debut - curseur));
+        lignes.push(...ecrireSilence(e.debut - curseur, unitesParNoire));
         curseur = e.debut;
       }
       // Une note ne déborde pas de la mesure : on la tronque, faute de pouvoir la lier.
       const duree = Math.min(e.duree, debutMesure + unitesParMesure - curseur);
       if (duree <= 0) continue;
-      e.notes.forEach((n, i) => lignes.push(...ecrireNote(n, duree, i > 0)));
+      e.notes.forEach((n, i) => lignes.push(...ecrireNote(n, duree, i > 0, unitesParNoire)));
       curseur += duree;
     }
     if (curseur < debutMesure + unitesParMesure) {
-      lignes.push(...ecrireSilence(debutMesure + unitesParMesure - curseur));
+      lignes.push(...ecrireSilence(debutMesure + unitesParMesure - curseur, unitesParNoire));
     }
     lignes.push('    </measure>');
   }
@@ -184,9 +196,9 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
   return lignes.join("\n");
 }
 
-function ecrireNote(noteMidi: number, duree: number, estAccord: boolean): string[] {
+function ecrireNote(noteMidi: number, duree: number, estAccord: boolean, unitesParNoire: number): string[] {
   const { pas, alter, octave } = nomMusicXML(noteMidi);
-  const { nom, points } = valeurNote(duree);
+  const { nom, points } = valeurNote(duree, unitesParNoire);
   const out = ["      <note>"];
   if (estAccord) out.push("        <chord/>");
   out.push("        <pitch>");
@@ -201,8 +213,8 @@ function ecrireNote(noteMidi: number, duree: number, estAccord: boolean): string
   return out;
 }
 
-function ecrireSilence(duree: number): string[] {
-  const { nom, points } = valeurNote(duree);
+function ecrireSilence(duree: number, unitesParNoire: number): string[] {
+  const { nom, points } = valeurNote(duree, unitesParNoire);
   const out = ["      <note>", "        <rest/>", `        <duration>${duree}</duration>`, `        <type>${nom}</type>`];
   for (let i = 0; i < points; i++) out.push("        <dot/>");
   out.push("      </note>");

@@ -230,7 +230,12 @@ const DOMAINES: Domaine[] = [
     //
     // PUIS DE DEUX À TROIS : la troisième est la même liste précédée de « Du fichier », dont la
     // sentinelle faisait disparaître les trente signatures du relevé.
-    formesAssumees: 3,
+    //
+    // PUIS DE TROIS À DEUX, et cette fois par une réparation qui n'avait rien d'une nomenclature :
+    // la gravure MusicXML n'offrait que dix-sept signatures sur trente, parce que SA LONGUEUR DE
+    // MESURE S'ARRONDISSAIT. Sa grille descend désormais à l'unité du dénominateur, donc elle offre
+    // la table entière et son sous-ensemble disparaît.
+    formesAssumees: 2,
     remede: "déclarer une liste centrale des signatures",
   },
   {
@@ -550,6 +555,6 @@ describe("un concept, des formes déclarées", () => {
     // il couvre dix-huit domaines au lieu de huit. C'est là que la comparaison repart.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(53);
+      .toBe(52);
   });
 });

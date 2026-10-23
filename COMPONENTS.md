@@ -9549,7 +9549,7 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 |---|---|---|---|---|
 | Title | text | `Attic` |  | Title written into the score. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | Tempo used to turn seconds into note values. A wrong tempo does not change the pitches, but gives wrong durations. |
-| Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 4/8 / 6/8 / 8/8 / 10/8 / 12/8 / 14/8 / 12/16 | Time signature of the score. It decides how bars are cut. Time signatures whose bar is not a whole number of quarter notes are not offered, the writing grid being counted in quarter notes. |
+| Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | Time signature of the score. It decides how bars are cut. A time signature whose unit is shorter than the value asked for in « Quantization » refines the writing grid accordingly, a bar having to fall on a whole number of units. |
 | Quantization | choice | Sixteenth | Sixteenth / Eighth / Quarter | Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance. |
 
 #### VexFlow Chord Chart
