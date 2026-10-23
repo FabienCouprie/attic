@@ -83,7 +83,11 @@ describe("la table des tailles de fenêtre", () => {
     const lignes = texte.split("\n");
     for (let i = 0; i < lignes.length; i++) {
       const fenetre = lignes.slice(i, i + 4).join("\n");
-      for (const [, dedans] of fenetre.matchAll(/\[((?:\s*"[^"]*"\s*,?)+)\]/g)) {
+      // LE MOTIF EST DÉTERMINISTE, ET CE N'EST PAS UN DÉTAIL DE STYLE. Écrit « une suite d'éléments
+      // suivis d'une virgule facultative », il laissait deux façons de découper la même entrée, et
+      // le retour arrière y devenait exponentiel sur une liste longue sans crochet fermant. Ici
+      // chaque élément suivant EXIGE sa virgule, de sorte qu'il n'y a qu'un découpage possible.
+      for (const [, dedans] of fenetre.matchAll(/\[\s*("[^"]*"(?:\s*,\s*"[^"]*")*)\s*\]/g)) {
         const membres = [...dedans.matchAll(/"([^"]*)"/g)].map((m) => m[1]);
         if (membres.length < 3) continue;
         if (!membres.every((m) => tailles.has(m))) continue;
