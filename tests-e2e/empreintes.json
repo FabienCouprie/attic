@@ -35,9 +35,9 @@
     },
     "texture-statistique": {
       "empreintes": [
-        "0.390867573/0.899999976"
+        "0.395472263/0.899999976"
       ],
-      "message": "10.0 s · 20 bandes · écart aux statistiques 57 %"
+      "message": "10.0 s · 20 bandes · écart aux statistiques 60 %"
     },
     "correction-hauteur": {
       "empreintes": [
@@ -48,9 +48,9 @@
     },
     "shimmer": {
       "empreintes": [
-        "0.264298468/0.732867956"
+        "0.258201321/0.654836416"
       ],
-      "message": "générations : 0 · -5 · -8 · -12 dB"
+      "message": "générations : 0 · -5 · -14 · -17 dB"
     },
     "suiveur-hauteur": {
       "empreintes": [
@@ -118,6 +118,12 @@
         null
       ],
       "message": "94.9 % effacés · 6 étages\n« durée »"
+    },
+    "granulation-spectrale": {
+      "empreintes": [
+        "0.315883045/0.655340075"
+      ],
+      "message": "96 spectres, 100 % intégrés"
     },
     "formule-spectrale": {
       "empreintes": [
@@ -188,21 +194,21 @@
     },
     "ecosysteme": {
       "empreintes": [
-        "0.115402765/0.944496632",
+        "0.116484010/0.988313615",
         null
       ],
-      "message": "balancier · -19.5 dB · 78/s\n« durée »"
+      "message": "balancier · -18.2 dB · 102/s\n« durée »"
     },
     "reverberation-velours": {
       "empreintes": [
-        "0.187605411/0.435002595",
-        "0.039676359/1.000000000"
+        "0.192057231/0.457058430",
+        "0.039646118/1.000000000"
       ],
       "message": "queue de 2.0 s · 1500 impulsions/s · 35 % mouillé"
     },
     "reverbe-hachee": {
       "empreintes": [
-        "0.237460386/0.620308995"
+        "0.255077242/0.635368228"
       ],
       "message": "traînée 0.21 s → 0.21 s"
     },
@@ -298,7 +304,7 @@
     },
     "reverb-fractale": {
       "empreintes": [
-        "0.091138042/0.302265465"
+        "0.091095325/0.303592592"
       ],
       "message": null
     },
@@ -401,7 +407,7 @@
     },
     "doppler": {
       "empreintes": [
-        "0.104128717/0.296310097"
+        "0.074497701/0.297340333"
       ],
       "message": "un la 440 s'entend 482 Hz en approchant, 405 Hz en s'éloignant"
     },

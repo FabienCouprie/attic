@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **503 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **504 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 100 | [AI generators](#ai-generators) (10) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 242 | [Analysis](#analysis) (1) · [Conversion](#conversion) (23) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (20) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 243 | [Analysis](#analysis) (1) · [Conversion](#conversion) (23) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -7453,6 +7453,7 @@ Late reverberation whose tail takes whatever shape one wants. After Vesa Valimak
 | [Spectral Blur](#spectral-blur) | Averages the spectrum over neighbouring moments: the sound spreads out in time without changing duration. |
 | [Spectral Formula](#spectral-formula) | Modifies the signal spectrum by mathematical expressions on magnitude and phase. |
 | [Spectral Freeze](#spectral-freeze) | Holds one moment's spectrum for all that follows: a stillness, not a loop. |
+| [Spectral granulation](#spectral-granulation) | Granulates a sound in the frequency domain: each grain keeps only its magnitude spectrum, and is rewritten at another size. |
 | [Spectral Morphing](#spectral-morphing) | Travels from one sound to another through the spectrum: in the middle, a timbre that did not exist. |
 | [Spectral Tracing](#spectral-tracing) | Keeps only the loudest partials of each moment: a complex sound becomes a few interweaving lines. |
 | [Wavelets](#wavelets) | Analyses the sound with wavelets (short window in the treble, long in the bass) and keeps only the coefficients that carry something. |
@@ -7804,6 +7805,35 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | Moment | slider | 50 % | 0 – 100 %, step 1 | Where the freeze begins, as a proportion of the duration. What precedes passes through unchanged; from there on, that moment's spectrum is held to the end. |
 | Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
+
+#### Spectral granulation
+
+`granulation-spectrale` · Processing → Spectrum
+
+*Granulates a sound in the frequency domain: each grain keeps only its magnitude spectrum, and is rewritten at another size.*
+
+This node granulates a sound in the frequency domain. After Stefano Fasciani, « Spectral Granular Synthesis », Proceedings of the International Computer Music Conference, Daegu, 2018, pp. 99-103. Each grain is taken from the incoming sound, windowed, transformed, and only its magnitude spectrum is kept: the phase is discarded. The spectra obtained are laid one after another, then the phase of the whole is reconstructed in one pass and the sound returns to the time domain. « Read grain » is the length of the piece taken from the incoming sound. « Written grain » is the length its spectrum is rewritten at; the two are independent, and that is what sets this node apart: the spectrum is interpolated or decimated to fit the new width, keeping its shape. Enlarging adds an amplitude modulation, heard as further material. « Overlap » is the share of a written grain that the next one covers. It decides how many spectra are superposed, hence the thickness of the texture. « Window » is the envelope of the read grain, and it acts on the width of the lines in the kept spectrum. « Extraction » decides where each grain comes from. « Fixed » always reads at the same place, given by « Position ». « Sequential » starts at « Position » and moves at « Speed », counted in shares of the sound per second, negative to go backwards. « Random » takes each grain anywhere. « Spread » adds a random offset around the reading point. « Spectrum shift » rotates the bands of each grain's spectrum onto themselves: what leaves through the treble comes back through the bass, so nothing is lost. « Phase » chooses how the phase is recovered. PGHI integrates it from the gradient, Griffin-Lim searches it by passes whose number « Passes » gives, and « Zero » leaves it at zero, which yields an impulsive material. « Seed » fixes the randomness: two runs with the same seed return the same sound. The « Audio » output returns the granulated sound. The message gives the number of spectra laid and the share of the spectrogram PGHI could integrate.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Length | slider | 4 s | 0.5 – 30 s, step 0.5 | Length of the returned sound. It does not depend on the length of the incoming sound: as many spectra are laid as it takes to fill it. |
+| Read grain | choice | 2048 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Length of the piece taken from the incoming sound, in samples. Short, it takes a moment and little frequency detail; long, it takes a colour and loses the moment. |
+| Written grain | choice | 2048 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Length the grain's spectrum is rewritten at, in samples. Smaller than « Read grain », it tightens the spectral shape; larger, it spreads it and adds an amplitude modulation. |
+| Overlap | slider | 75 % | 0 – 95 %, step 5 | Share of a written grain covered by the next one. It decides how many spectra are superposed, hence the thickness of the texture and the number of grains read. |
+| Window | choice | Hann | Hann / Hamming / Blackman | Envelope of the read grain. Hann and Blackman fall to zero at the edges, Blackman more gently; Hamming stops at eight hundredths, which narrows the main lobe and raises the neighbouring ones. |
+| Extraction | choice | Sequential | Fixed / Sequential / Random | Where each grain comes from. Fixed always reads at the same place, sequential travels through the sound, random takes it anywhere. |
+| Position | slider | 0 % | 0 – 100 %, step 1 | Reading point in the incoming sound, as a share of its length. In sequential extraction, it is the starting point. |
+| Speed | slider | 1 | -4 – 4, step 0.1 | Speed of the travel, in shares of the incoming sound per second of output; negative, it goes backwards. Only acts in sequential extraction, the other two travelling nowhere. |
+| Spread | slider | 0 % | 0 – 50 %, step 1 | Random offset around the reading point, as a share of the incoming sound. At zero, reading happens exactly where the other settings place it. |
+| Spectrum shift | slider | 0 % | -100 – 100 %, step 1 | Rotation of each grain's spectral bands, as a share of the half band. What leaves through the treble comes back through the bass, so the energy is kept whole. |
+| Phase | choice | PGHI | PGHI / Griffin-Lim / Zero | How the phase is recovered. PGHI integrates it from the gradient in one pass, Griffin-Lim searches it by passes, and Zero leaves it at zero, which aligns every band and yields an impulsive material. |
+| Passes | slider | 8 | 1 – 32, step 1 | Number of Griffin-Lim passes. Only acts when the phase is searched by Griffin-Lim; PGHI does not iterate, and a zero phase has nothing to search. |
+| Seed | slider | 0 | 0 – 999999, step 1 | Fixes the randomness of extraction and spread. Two runs with the same seed return the same sound. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Spectral Morphing
 
