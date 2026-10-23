@@ -501,7 +501,7 @@ Builds a piece by recursively applying an interval motif over several depth leve
 | Tempo | number | 80 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key. It moves everything without changing the gaps between degrees. |
 | Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to pick notes (major, minor, pentatonic…). |
-| Timbre | choice | Soft | Soft / Bright / Percussive | Tone color of the synthesis (soft, bright, percussive). |
+| Timbre | choice | Soft | Sine / Soft / Bright / Percussive | Character of the FM synthesis. Sine: renders only the pitch asked for, with no added partial. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -3420,7 +3420,7 @@ This component repairs what a low-bitrate encoding has damaged: the grain, the h
 
 *Captures and repeats a short segment at rhythmic intervals (stutter effect).*
 
-Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals synchronized to the tempo and repeats it several times with decay. Creates stutter, glitch and rhythmic repeat effects typical of electronic productions. Parameters: Tempo, Capture interval, Segment size, Repeats, Feedback and Mix. A curve connected to the Modulation input takes Mix's place: « Modulation min » and « Modulation max » say what its zero and its one are worth. « Feedback » is the attenuation of each repeat, and a curve connected to the « Modulation feedback » input takes its place, « Feedback min » and « Feedback max » saying what its zero and its one are worth. The repeats of one capture then die away faster or slower depending on where in the sound they fall. The first repeat of each capture keeps its level whatever is asked, the attenuation counting from the second.
+Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals synchronized to the tempo and repeats it several times with decay. Creates stutter, glitch and rhythmic repeat effects typical of electronic productions. Parameters: Tempo, Capture interval, Segment size, Repeats, Feedback and Mix. « Size » stays shorter than « Interval »: a segment as long as the interval gives back the original sound. A curve connected to the Modulation input takes Mix's place: « Modulation min » and « Modulation max » say what its zero and its one are worth. « Feedback » is the attenuation of each repeat, and a curve connected to the « Modulation feedback » input takes its place, « Feedback min » and « Feedback max » saying what its zero and its one are worth. The repeats of one capture then die away faster or slower depending on where in the sound they fall. The first repeat of each capture keeps its level whatever is asked, the attenuation counting from the second.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3433,7 +3433,7 @@ Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals sync
 |---|---|---|---|---|
 | Tempo | slider | 120 BPM | 40 – 240 BPM, step 1 | Tempo used to synchronize intervals and segments. |
 | Interval | choice | 1/4 | 1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 1/32 | Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, etc. |
-| Size | choice | 1/16 | 1/32 / 1/16 / 1/8 / 1/4 / 1/2 | Length of the captured and repeated segment. |
+| Size | choice | 1/16 | 1/32 / 1/16 / 1/8 / 1/4 / 1/2 | Length of the captured and repeated segment. It stays shorter than the interval: a segment as long as the interval gives back the original sound. |
 | Repeats | slider | 4 | 1 – 8, step 1 | Number of times the captured segment is repeated at each interval. |
 | Feedback | slider | 40 % | 0 – 95 %, step 1 | Attenuation of each repeat (0% = constant volume, 95% = fast decay). |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |

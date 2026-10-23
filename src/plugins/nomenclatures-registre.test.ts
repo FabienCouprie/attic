@@ -351,8 +351,13 @@ const DOMAINES: Domaine[] = [
   {
     nom: "caractère de timbre",
     membre: (x) => ["douce", "brillante", "percutante", "pur"].includes(x),
-    formesAssumees: 2,
-    remede: "déclarer une liste centrale des caractères, et dire pourquoi un composant n'en offre qu'une part",
+    // UNE SEULE FORME, et la seconde n'était pas une liste écrite à la main : c'était la même
+    // table, privée du sinus par un sous-ensemble dérivé. La raison en était écrite, et elle était
+    // vraie de la table des formes d'oscillateur du moteur fractal, qui n'en déclarait que trois ;
+    // elle ne l'était pas de l'oscillateur, dont l'API porte le type « sine ». La branche posée, la
+    // part devient sans objet et les quatre réglages offrent la même liste de quatre.
+    formesAssumees: 1,
+    remede: "offrir `CARACTERES_CHOIX` de `audio/timbres.ts`",
   },
   {
     nom: "position stéréo",
@@ -552,8 +557,10 @@ describe("un concept, des formes déclarées", () => {
     // composants a trouvé cinquante et un concepts partagés, dont trente-quatre divergents, quand
     // huit seulement étaient déclarés. Ce chiffre ne mesure donc pas la même chose qu'avant lui :
     // il couvre dix-huit domaines au lieu de huit. C'est là que la comparaison repart.
+    // PUIS DE CINQUANTE-DEUX À CINQUANTE ET UN, par le caractère de timbre : la forme en trop était
+    // la même table privée du sinus, pour un moteur dont la branche sinusoïdale manquait.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(52);
+      .toBe(51);
   });
 });

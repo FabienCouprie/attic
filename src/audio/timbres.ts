@@ -112,17 +112,8 @@ export function libelleCaractere(valeur: string, en = false): string {
   return en ? CARACTERES_CHOIX.en[rang] : CARACTERES_CHOIX.fr[rang];
 }
 
-/**
- * Les trois caractères qui MODULENT, sans le sinus pur.
- *
- * POUR UN MOTEUR QUI N'A PAS DE BRANCHE SINUSOÏDALE. La musique fractale associe chaque caractère à
- * un type d'oscillateur, triangle, dent de scie ou carré, et n'en a pas pour une sinusoïde : lui
- * offrir le sinus rendrait un triangle, c'est-à-dire le défaut, sans que rien ne le dise. Le
- * sous-ensemble est DÉRIVÉ de la table ci-dessus et non réécrit, de sorte qu'un caractère ajoutée
- * là arrive ici.
- */
-export const CARACTERES_MODULANTS: { ids: CaractereTimbreId[]; fr: string[]; en: string[] } = {
-  ids: CARACTERES_CHOIX.ids.filter((x): x is CaractereTimbreId => x !== "pur"),
-  fr: CARACTERES_CHOIX.fr.filter((_, i) => CARACTERES_CHOIX.ids[i] !== "pur"),
-  en: CARACTERES_CHOIX.en.filter((_, i) => CARACTERES_CHOIX.ids[i] !== "pur"),
-};
+// IL N'Y A PLUS DE SOUS-ENSEMBLE SANS LE SINUS. Un `CARACTERES_MODULANTS` a vécu ici, dérivé de la
+// table ci-dessus, pour un moteur qui associait chaque caractère à un type d'oscillateur et n'en
+// avait pas pour une sinusoïde. La branche existe désormais dans `generation-fractale.ts`, donc les
+// quatre réglages à caractère offrent la même liste de quatre, et un sous-ensemble dont personne ne
+// se sert serait une invitation à écarter le sinus sans raison.

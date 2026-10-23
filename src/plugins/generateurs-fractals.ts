@@ -11,7 +11,7 @@ import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INST
 import { avecDoc } from "./notices";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { choixFormats, formatImage } from "../core/formats-image";
-import { CARACTERES_CHOIX, CARACTERES_MODULANTS } from "../audio/timbres";
+import { CARACTERES_CHOIX } from "../audio/timbres";
 
 /**
  * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
@@ -33,9 +33,9 @@ export const fiches: FicheAudio[] = ([
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:80, unite:"BPM" },
       { ...PARAMETRE_CLE },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
-      // LE SINUS N'EST PAS OFFERT ICI, et la raison est dans le moteur : il associe chaque
-      // caractère à un type d'oscillateur et n'en a pas pour une sinusoïde.
-      { nom:"Timbre", nomEn:"Timbre", type:"choix", options: CARACTERES_MODULANTS.fr, optionIds: CARACTERES_MODULANTS.ids, optionsEn: CARACTERES_MODULANTS.en, defaut:"Douce", defautEn: "Soft" },
+      { nom:"Timbre", nomEn:"Timbre", type:"choix", options: CARACTERES_CHOIX.fr, optionIds: CARACTERES_CHOIX.ids, optionsEn: CARACTERES_CHOIX.en, defaut:"Douce", defautEn: "Soft",
+        doc: "Caractère de la synthèse FM. Sinus : ne rend que la hauteur demandée, sans partiel ajouté. Douce : proche d'un sinus, attaque adoucie. Brillante : riche en harmoniques. Percutante : attaque sèche et note qui retombe vite. Sans effet en SoundFont, où l'instrument choisi fait le timbre.",
+        docEn: "Character of the FM synthesis. Sine: renders only the pitch asked for, with no added partial. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre." },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
       { ...PARAMETRE_SYNTHESE,        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },

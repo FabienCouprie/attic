@@ -132,4 +132,35 @@ describe("beatRepeat", () => {
     // Le deuxième quart contient les répétitions plus faibles (gains 0.4, 0.16, 0.064), donc RMS plus faible.
     expect(rmsSecondQuarter).toBeLessThan(rmsFirstQuarter);
   });
+
+  it("UN SEGMENT AUSSI LONG QUE SON INTERVALLE EST INERTE, et c'est ce qui borne la liste", () => {
+    // LE RELEVÉ DES NOMENCLATURES LAISSAIT CE POINT INDÉCIS : « Intervalle » offre 1/1 et « Taille »
+    // s'arrête à 1/2, sans qu'aucune raison soit écrite à côté. La mesure tranche, et contre ce que
+    // je croyais : le calcul n'exclut pas la mesure entière, mais l'effet DEVIENT INERTE dès que la
+    // taille atteint l'intervalle. Le segment est capturé au début de l'intervalle, et sa répétition
+    // est bornée par cet intervalle ; les premiers échantillons du segment sont donc exactement ceux
+    // qu'ils remplacent, et la sortie égale l'entrée. Offrir 1/1 sur la taille ajouterait une valeur
+    // inerte pour TOUS les intervalles offerts, ce que le contrat de composant interdit.
+    const buffer = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: 4 * SR, sampleRate: SR });
+    // Une rampe plutôt qu'un continu : la répétition d'un segment constant ne se verrait pas.
+    for (let i = 0; i < buffer.length; i++) buffer.getChannelData(0)[i] = i / buffer.length;
+    const ecartAvecEntree = (sortie: AudioBuffer) => {
+      let e = 0;
+      for (let i = 0; i < buffer.length; i++) {
+        e = Math.max(e, Math.abs(sortie.getChannelData(0)[i] - buffer.getChannelData(0)[i]));
+      }
+      return e;
+    };
+
+    // Taille égale à l'intervalle, puis plus longue que lui : inerte dans les deux cas.
+    expect(ecartAvecEntree(beatRepeat(buffer, 60, 1, 1, 2, 40, 100)), "1/1 sur 1/1").toBe(0);
+    expect(ecartAvecEntree(beatRepeat(buffer, 60, 4, 1, 2, 40, 100)), "1/1 sur 1/4").toBe(0);
+    expect(ecartAvecEntree(beatRepeat(buffer, 60, 2, 2, 4, 40, 100)), "1/2 sur 1/2").toBe(0);
+
+    // Taille plus courte que l'intervalle : là, l'effet s'entend.
+    expect(ecartAvecEntree(beatRepeat(buffer, 60, 1, 2, 4, 40, 100)), "1/2 sur 1/1")
+      .toBeGreaterThan(0.05);
+    expect(ecartAvecEntree(beatRepeat(buffer, 60, 4, 16, 4, 40, 100)), "1/16 sur 1/4")
+      .toBeGreaterThan(0.05);
+  });
 });

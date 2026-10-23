@@ -263,8 +263,14 @@ export const fiches: FicheAudio[] = ([
         doc: "Tempo utilisé pour synchroniser les intervalles et les segments.", docEn: "Tempo used to synchronize intervals and segments." },
       { nom: "Intervalle", nomEn: "Interval", type: "choix", options: ["1/1", "1/2", "1/4", "1/8", "1/16", "1/32"], optionsEn: ["1/1", "1/2", "1/4", "1/8", "1/16", "1/32"], defaut: "1/4",
         doc: "Intervalle entre deux captures. 1/4 = une capture par temps, 1/8 = une capture par demi-temps, etc.", docEn: "Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, etc." },
+      // LA LISTE S'ARRÊTE À 1/2, ET POUR UNE RAISON MESURÉE. Le segment est capturé au début de
+      // l'intervalle et sa répétition est bornée par lui ; dès que la taille atteint l'intervalle,
+      // les échantillons écrits sont exactement ceux qu'ils remplacent et la sortie égale l'entrée.
+      // Offrir 1/1 ici ajouterait donc une valeur inerte pour tous les intervalles offerts.
+      // `audio/effets-temporel.test.ts` tient la mesure, `beat-repeat-taille.test.ts` tient la borne.
       { nom: "Taille", nomEn: "Size", type: "choix", options: ["1/32", "1/16", "1/8", "1/4", "1/2"], optionsEn: ["1/32", "1/16", "1/8", "1/4", "1/2"], defaut: "1/16",
-        doc: "Longueur du segment capturé et répété.", docEn: "Length of the captured and repeated segment." },
+        doc: "Longueur du segment capturé et répété. Elle reste plus courte que l'intervalle : un segment aussi long que lui redonne le son d'origine.",
+        docEn: "Length of the captured and repeated segment. It stays shorter than the interval: a segment as long as the interval gives back the original sound." },
       { nom: "Répétitions", nomEn: "Repeats", type: "curseur", plage: [1, 8], pas: 1, defaut: 4,
         doc: "Nombre de répétitions du segment capturé à chaque intervalle.", docEn: "Number of times the captured segment is repeated at each interval." },
       { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
