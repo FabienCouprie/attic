@@ -139,6 +139,14 @@ contextBridge.exposeInMainWorld("api", {
     return () => ipcRenderer.removeListener("chatterbox:progression", ecouteur);
   },
 
+  // Les mots d'un enregistrement et l'instant de chacun. Même désabonnement, même raison.
+  parakeetTranscrire: (options) => ipcRenderer.invoke("parakeet:transcrire", options),
+  parakeetProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("parakeet:progression", ecouteur);
+    return () => ipcRenderer.removeListener("parakeet:progression", ecouteur);
+  },
+
   // La restauration d'un son abîmé par la compression. Même désabonnement, même raison.
   apolloRestaurer: (options) => ipcRenderer.invoke("apollo:restaurer", options),
   apolloProgression: (callback) => {

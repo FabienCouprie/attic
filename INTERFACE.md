@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**501 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**502 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -227,6 +227,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Instrument Csound | `csound-instrument` | 240 × 140 |
 | Instruments Csound | `csound-instruments-physiques` | 240 × 140 |
 | Spectral Csound | `csound-spectral` | 240 × 140 |
+| Dater les mots | `dater-les-mots` | 240 × 162 |
 | DDSP Tone Transfer | `ddsp-tone-transfer` | 240 × 118 |
 | De-esser | `de-esser` | 240 × 250 |
 | Débruitage IA | `debruitage-ia` | 240 × 118 |

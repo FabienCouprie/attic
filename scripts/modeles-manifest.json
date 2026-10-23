@@ -1311,6 +1311,28 @@
       ]
     },
     {
+      "id": "parakeet",
+      "nom": "Reconnaissance horodatée (Parakeet)",
+      "nomEn": "Timestamped recognition (Parakeet)",
+      "noeuds": [
+        "dater-les-mots"
+      ],
+      "octets": 915735760,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/parakeet-tdt-0.6b-v3-q8_0.gguf",
+        "octets": 915735760,
+        "sha256": "6fa498f10f8cb606f041aa9512733cfee842a932359b00b0c45b9b723c4f4f4b"
+      },
+      "fichiers": [
+        {
+          "chemin": "audiocpp/parakeet-tdt-0.6b-v3-q8_0.gguf",
+          "octets": 915735760,
+          "sha256": "6fa498f10f8cb606f041aa9512733cfee842a932359b00b0c45b9b723c4f4f4b"
+        }
+      ]
+    },
+    {
       "id": "apollo",
       "nom": "Restauration de son compressé (Apollo)",
       "nomEn": "Compressed audio restoration (Apollo)",

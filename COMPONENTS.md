@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **501 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **502 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **501 components** in **7 categories** and **63 families**. Every na
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 86 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (2) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
+| [Other & lab](#other--lab) | 87 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (3) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -11334,8 +11334,28 @@ Places a sound source in space, and returns it in the chosen layout. A sound com
 
 | Component | Summary |
 |---|---|
+| [Date the words](#date-the-words) | Transcribes a recording and gives the instant of each word, without being given the text. |
 | [Sherpa ASR](#sherpa-asr) | Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). |
 | [Whisper (English)](#whisper-english) | English speech recognition (OpenAI Whisper base). |
+
+#### Date the words
+
+`dater-les-mots` · Other & lab → Speech to Text
+
+*Transcribes a recording and gives the instant of each word, without being given the text.*
+
+This component listens to a recording and returns two things: what is said, and when each word is said. No text is given to it. That is what distinguishes it from « Align text to speech », which places words supplied to it. The two complement each other: this one's « Transcript » output connects to the other's « Text » input, which can then cut out the desired word range. The language is recognized by itself, among twenty-five. There is therefore no language setting, and a recording that changes language along the way is transcribed as it is spoken. « Compute » names the device used. It is the only setting: the engine's other options were tried and set aside, either because they require a package it does not ship, or because they change nothing, or because they lose words. The « Transcript » output returns the text. « Words » gives one line per word, with its rank and its interval. « Report » gives the number of words, the duration covered and the rate in words per minute. The resolution is eighty milliseconds: the returned instants are all multiples of it, and nothing finer is obtained. It is the same as the aligner's, and the two engines were compared on one sound without ever differing by more than two of those steps.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Transcript | text |  |
+| output | Words | text |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the words found. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Sherpa ASR
 

@@ -281,6 +281,35 @@ const CONNUS = {
       note: "La licence vient de la fiche amont `ResembleAI/chatterbox`, qui déclare MIT. Le dépôt de conversion déclare « other » sans préciser : c'est l'amont qui fait foi, comme pour l'export de Whisper tiny, et une conversion de format est une œuvre dérivée des poids. Seul modèle de voix du catalogue qui ne porte aucune réserve non commerciale." },
   },
 
+  // ── LA RECONNAISSANCE QUI DATE CHAQUE MOT, sous la même racine et lue par le même exécutable ──
+  //
+  // CE QU'IL APPORTE QUE LE DÉPÔT N'AVAIT PAS : des instants PAR MOT sans qu'on donne le texte.
+  // L'aligneur Qwen3 exige la transcription, et la diarisation MOSS ne rend que des instants par
+  // segment.
+  //
+  // MESURÉ CONTRE UN SECOND MOTEUR, ce qui vaut mieux qu'un seuil choisi par moi. Sur un témoin
+  // dont j'avais écrit le texte, ses quinze mots et ceux de l'aligneur s'accordent quinze sur
+  // quinze, écart de début moyen 0,075 s — et TOUS les écarts sont des multiples de 0,080 s, les
+  // deux moteurs quantifiant sur la même horloge. Sur 178,4 s il rend 480 mots, exactement le
+  // compte que la construction du témoin prévoit. Facteur de temps réel 0,0175 sur une RTX 2060,
+  // soit cinquante-sept fois le temps réel : le plus rapide des moteurs de parole du catalogue.
+  //
+  // LE Q8 ET NON LE F16 : 915 735 760 octets contre 1 255 386 336, et c'est le q8 qui a été éprouvé.
+  // SON EMPREINTE EST LA PLUS GROSSE DU CATALOGUE — 8 335 Mo sur 178 s de son, devant MOSS à 3 941
+  // et Apollo à 3 065 — et c'est à savoir sur une petite carte.
+  //
+  // SON STATUT EST `community` ET NON `supported`, ce qui était l'inconnue : c'est le premier de ce
+  // statut que le dépôt éprouve, et il a tenu sur tous les points. Deux familles `supported`
+  // rendent aussi des instants par mot et couvrent plus de langues — `crisperwhisper` 99 et
+  // `qwen3_asr` 31 — mais elles n'ont pas été mesurées, et la licence de la première reste à
+  // établir. Elles sont le prochain pas, non une raison d'attendre.
+  "parakeet-tdt-0.6b-v3-q8_0.gguf": {
+    id: "parakeet", nom: "Reconnaissance horodatée (Parakeet)", nomEn: "Timestamped recognition (Parakeet)",
+    racine: "audiocpp", noeuds: ["dater-les-mots"],
+    licence: { nom: "CC-BY-4.0", credit: "NVIDIA — Parakeet-TDT 0.6B v3, converti en GGUF par le projet audio.cpp", rediffusable: true,
+      note: "La fiche amont `nvidia/parakeet-tdt-0.6b-v3` déclare CC-BY-4.0 : rediffusion permise avec attribution, aucune réserve commerciale. C'est ce qui le distingue de `sortformer_diar`, l'autre modèle NVIDIA du catalogue, dont la fiche dit « governed by the NVIDIA Open Model License and is local-use only until redistribution approval » et qui a dû être écarté pour cela." },
+  },
+
   // ── LA RESTAURATION D'UN SON COMPRESSÉ, sous la même racine et lue par le même exécutable ──
   //
   // CE QU'IL FAIT ET CE QU'IL NE FAIT PAS, mesuré le 2026-10-22 avant de l'épingler. Sur un dommage
