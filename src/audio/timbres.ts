@@ -73,3 +73,56 @@ const CARACTERES: Record<string, CaractereTimbreId> = {
 export function caractereTimbre(valeur: string): CaractereTimbreId {
   return CARACTERES[String(valeur).trim().toLowerCase()] ?? "douce";
 }
+
+/**
+ * Le caractère d'un timbre de synthèse locale, le sinus pur compris.
+ *
+ * POURQUOI UNE SECONDE FONCTION, ET NON UNE QUATRIÈME ENTRÉE DANS LA PREMIÈRE. `caractereTimbre`
+ * rend un `CaractereTimbreId`, c'est-à-dire l'un des trois caractères qui MODULENT, et plusieurs
+ * appelants s'appuient sur ce type. Le sinus pur n'en est pas un : il ne module rien, il ne rend
+ * que la hauteur demandée, et le moteur de rendu le traite à part depuis toujours.
+ *
+ * ET LE REPLI SILENCIEUX ÉTAIT LE DÉFAUT. Deux composants passaient leur réglage par
+ * `caractereTimbre` avant de le donner au moteur, qui accepte pourtant « pur » : la valeur tombait
+ * donc sur « douce » sans que rien ne le dise. Ils ne pouvaient pas offrir le sinus, non par une
+ * borne de leur moteur, mais par le type de la fonction qu'ils appelaient.
+ */
+export function caractereOuSinus(valeur: string): CaractereTimbreId | "pur" {
+  const v = String(valeur).trim().toLowerCase();
+  if (v === "pur" || v === "sinus" || v === "sine") return "pur";
+  return CARACTERES[v] ?? "douce";
+}
+
+/**
+ * Les caractères de timbre offerts par la synthèse locale, avec leurs libellés.
+ *
+ * LE SINUS PUR EST EN TÊTE, comme dans le composant qui l'offrait déjà seul, et c'est son ordre qui
+ * est reprise ici pour que les trois listes n'en fassent qu'une.
+ */
+export const CARACTERES_CHOIX: { ids: (CaractereTimbreId | "pur")[]; fr: string[]; en: string[] } = {
+  ids: ["pur", "douce", "brillante", "percutante"],
+  fr: ["Sinus", "Douce", "Brillante", "Percutante"],
+  en: ["Sine", "Soft", "Bright", "Percussive"],
+};
+
+/** Le libellé d'un caractère, dans la langue demandée, ou la valeur telle quelle si elle est inconnue. */
+export function libelleCaractere(valeur: string, en = false): string {
+  const rang = CARACTERES_CHOIX.ids.indexOf(caractereOuSinus(valeur));
+  if (rang < 0) return valeur;
+  return en ? CARACTERES_CHOIX.en[rang] : CARACTERES_CHOIX.fr[rang];
+}
+
+/**
+ * Les trois caractères qui MODULENT, sans le sinus pur.
+ *
+ * POUR UN MOTEUR QUI N'A PAS DE BRANCHE SINUSOÏDALE. La musique fractale associe chaque caractère à
+ * un type d'oscillateur, triangle, dent de scie ou carré, et n'en a pas pour une sinusoïde : lui
+ * offrir le sinus rendrait un triangle, c'est-à-dire le défaut, sans que rien ne le dise. Le
+ * sous-ensemble est DÉRIVÉ de la table ci-dessus et non réécrit, de sorte qu'un caractère ajoutée
+ * là arrive ici.
+ */
+export const CARACTERES_MODULANTS: { ids: CaractereTimbreId[]; fr: string[]; en: string[] } = {
+  ids: CARACTERES_CHOIX.ids.filter((x): x is CaractereTimbreId => x !== "pur"),
+  fr: CARACTERES_CHOIX.fr.filter((_, i) => CARACTERES_CHOIX.ids[i] !== "pur"),
+  en: CARACTERES_CHOIX.en.filter((_, i) => CARACTERES_CHOIX.ids[i] !== "pur"),
+};

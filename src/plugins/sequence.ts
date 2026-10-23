@@ -19,17 +19,14 @@ import { avecDoc } from "./notices";
 import { notesVersFichierMidi, rendreSequence } from "../audio";
 import { compterMicrotons, dureeSequence, estSequence } from "../audio/sequence";
 import { estFrappe } from "../audio/sequence-percussion";
+import { CARACTERES_CHOIX, libelleCaractere } from "../audio/timbres";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 
 const en = () => langueCourante() === "en";
 
-/** Les timbres de la synthèse locale. « Sinus » ne module pas, donc il rend la hauteur seule. */
-const TIMBRES = [
-  { id: "pur", nom: "Sinus", nomEn: "Sine" },
-  { id: "douce", nom: "Douce", nomEn: "Soft" },
-  { id: "brillante", nom: "Brillante", nomEn: "Bright" },
-  { id: "percutante", nom: "Percutante", nomEn: "Percussive" },
-] as const;
+// LES TIMBRES DE LA SYNTHÈSE LOCALE ONT QUITTÉ CE FICHIER pour `audio/timbres.ts`. Ce composant
+// était le seul à offrir « Sinus », et deux autres ne pouvaient pas le faire : ils passaient leur
+// réglage par une fonction dont le type de retour l'excluait. La table est commune aux trois.
 
 /**
  * Le nom du preset que la SoundFont va réellement employer.
@@ -85,8 +82,8 @@ export const fiches: FicheAudio[] = ([
       // objet, qui se résolvait silencieusement au programme 0.
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Timbre", nomEn: "Timbre", type: "choix",
-        options: TIMBRES.map((t) => t.nom), optionsEn: TIMBRES.map((t) => t.nomEn),
-        optionIds: TIMBRES.map((t) => t.id),
+        options: CARACTERES_CHOIX.fr, optionsEn: CARACTERES_CHOIX.en,
+        optionIds: CARACTERES_CHOIX.ids,
         defaut: "Sinus", defautEn: "Sine",
         doc: "Le timbre de chaque note en synthèse locale. « Sinus » ne rend que la hauteur demandée ; les trois autres modulent et ajoutent leurs propres partiels.",
         docEn: "The timbre of each note in local synthesis. « Sine » renders only the pitch asked for; the other three modulate and add partials of their own." },
@@ -129,7 +126,7 @@ export const fiches: FicheAudio[] = ([
       // rendu. Deux écoutes ont été perdues à chercher dans le calcul un défaut qui venait de là.
       const moteur = modeRendu === "SoundFont"
         ? `SoundFont · ${presetSf2(programme, banque)}`
-        : (TIMBRES.find((t) => t.id === timbre) ?? TIMBRES[0])[en() ? "nomEn" : "nom"];
+        : libelleCaractere(timbre, en());
       // LA BATTERIE N'EST PAS RENDUE PAR LE MOTEUR ANNONCÉ, et le message le dit : sans cela, un
       // rythme qui ne réagit à aucun réglage de timbre passerait pour un défaut du timbre.
       const frappes = entree.notes.filter(estFrappe).length;

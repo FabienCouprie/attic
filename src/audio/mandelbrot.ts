@@ -7,7 +7,7 @@ import { notesVersFichierMidi, appliquerInstrumentMidi } from "./midi-ecriture";
 import { rendreSequence } from "./midi-sequence";
 import { DEMI_TONS_CLE } from "./commun";
 import { degresGammeMelodie } from "./generation-melodie";
-import { caractereTimbre } from "./timbres";
+import { caractereOuSinus } from "./timbres";
 import { creerAleatoire } from "../core/hasard";
 
 export type ModeMandelbrot = "escape" | "dwell" | "octave";
@@ -154,6 +154,6 @@ export async function genererMusiqueMandelbrot(
   const midiFile = await appliquerInstrumentMidi(notesVersFichierMidi(notes, options.tempo), options.instrument ?? 0);
   const useSf2 = modeSynthese === "SoundFont" || (modeSynthese === "Automatique" && (globalThis as any).__attic_sf2__);
   const mode: "FM/Oscillateurs" | "SoundFont" = useSf2 ? "SoundFont" : "FM/Oscillateurs";
-  const audio = await rendreSequence(notes, mode, options.volume, options.instrument ?? 0, options.banque ?? 0, caractereTimbre(options.timbre));
+  const audio = await rendreSequence(notes, mode, options.volume, options.instrument ?? 0, options.banque ?? 0, caractereOuSinus(options.timbre));
   return { audio, notes, midiFile };
 }
