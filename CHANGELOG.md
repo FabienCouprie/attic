@@ -92,6 +92,8 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **La pochette ne savait écrire que du PNG, et son absence de JPEG n'était bornée par rien.** Son rastériseur est un canevas dont le type MIME était **codé en dur**, exactement le mécanisme par lequel deux autres composants produisent déjà du JPEG. Le format est désormais un argument, et le réglage « Format » offre les trois : SVG, PNG, JPEG. **Le fond est peint en blanc avant le dessin quand le format est le JPEG**, qui n'a pas de transparence : sans cela, une pochette à fond transparent ressortirait sur du noir. **Vérifié dans l'application par les octets d'en-tête du fichier rendu** : `ff d8 ff e0` pour un fichier nommé `.jpg` et déclaré `image/jpeg`, `89 50 4e 47` pour le PNG, `<svg` pour le SVG, le JPEG pesant huit fois moins que le PNG de la même pochette.
+
 - **Les deux formats d'image s'écrivaient de quatre façons, et aucun identifiant n'était commun, pas même pour le PNG que les quatre composants savent écrire.** Trois n'avaient **pas d'`optionIds` du tout**, de sorte que le libellé majuscule était l'identifiant enregistré : deux écrivaient « PNG,JPEG » et un « JPEG,PNG », donc l'ordre divergeait aussi, et l'ordre s'enregistre. Le quatrième écrivait « png » en minuscules, qui n'est pas « PNG ». Un même projet gardait ainsi deux valeurs pour le même format.
 
   - **Les identifiants sont ceux du type MIME**, sans le préfixe : c'est la seule écriture qui ne soit pas un choix arbitraire, et c'est déjà celle que le binaire de visualisation attend sur sa ligne de commande. La table porte aussi le type MIME et l'extension, et **l'extension n'est pas l'identifiant** : le JPEG s'identifie « jpeg » et s'écrit « .jpg ».

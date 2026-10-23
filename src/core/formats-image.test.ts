@@ -86,4 +86,10 @@ describe("ce que les composants offrent", () => {
     expect(fautifs).toEqual([]);
   });
 
+  it("LA POCHETTE SERT LES TROIS FORMATS, JPEG COMPRIS", () => {
+    // Son absence n'était bornée par rien : son rastériseur est le même canevas que celui qui
+    // produit déjà du JPEG ailleurs, et son type MIME y était simplement codé en dur.
+    const pochette = reglagesDeFormat().find((r) => r.ou === "generateur-pochette·Format");
+    expect(pochette?.ids).toEqual(["svg", "png", "jpeg"]);
+  });
 });

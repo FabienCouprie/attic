@@ -10107,7 +10107,7 @@ Generates procedural album cover art in SVG, offline, instant, no GPU or downloa
 | Typography | choice | Sans-serif | Sans-serif / Serif / Mono / Condensed / Bold / Script | Title font style. |
 | Width | number | 512 | 128 – 2048, step 1 | SVG image width in pixels. |
 | Height | number | 512 | 128 – 2048, step 1 | SVG image height in pixels. |
-| Format | choice | SVG | SVG / PNG | SVG: native vector format, scales losslessly (preferred). PNG: raster image rendered at Width × Height, for uses that cannot read vector files. |
+| Format | choice | SVG | SVG / PNG / JPEG | SVG: native vector format, scales losslessly, to be preferred. PNG: raster image rendered at Width × Height, for uses that cannot read vector files. JPEG: lossy raster image on a white background, that format having no transparency. |
 | Seed | number | 0 | 0 – 999999, step 1 | Random seed (0 = new each run). Same seed = same cover. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Exhibition Gallery
