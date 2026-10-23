@@ -22,8 +22,8 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **réglages déjà pilotés par une courbe** : 169, sur 70 composants
-- **réglages restant à faire** : 5, sur 2 composants et 2 couples composant / famille
-- **dont le cœur travaille par trames** : 1
+- **réglages restant à faire** : 7, sur 3 composants et 3 couples composant / famille
+- **dont le cœur travaille par trames** : 2
 - **réglages écartés un par un** : 49, sur 22 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
 
@@ -33,6 +33,10 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 
 - Critères schaefferiens `criteres-schaefferiens` : Seuil du bruit blanc, Seuil de bombement, Seuil de pente, Seuil d'ondulation · **⟨trames⟩** criteresSchaefferiens (appelle masse)
 - Décrire un audio `decrire-audio` : Seuil
+
+### espace · 1
+
+- Granulation spectrale `granulation-spectrale` : Position, Dispersion · **⟨trames⟩** granulationSpectraleVoie (appelle granulerSpectre)
 
 ## Familles écartées en bloc
 

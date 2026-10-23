@@ -53,9 +53,13 @@ const SURVEILLES: {
   { id: "stn-sinus-transitoires-bruit", worker: "stn-worker.ts" },
   { id: "sms-sinusoides-bruit", worker: "sms-worker.ts" },
   { id: "decomposition-atomique", worker: "atomes-worker.ts" },
-  { id: "texture-statistique", worker: "texture-worker.ts" },
+  // LA GRAINE EST ÉPINGLÉE ICI, ET NON LAISSÉE AU DÉFAUT DE LA FICHE. Ces composants tirent au
+  // hasard, et leur défaut de graine se trouve non nul, donc leur rendu est reproductible ; mais
+  // ce défaut appartient à la fiche, et le changer déplacerait leur empreinte sans que personne
+  // ne l'ait voulu. Épinglée au banc, la valeur dit ce qu'on mesure.
+  { id: "texture-statistique", worker: "texture-worker.ts", parametres: { "Graine": 1 } },
   { id: "correction-hauteur", worker: "correction-hauteur-worker.ts" },
-  { id: "shimmer", worker: "shimmer-worker.ts" },
+  { id: "shimmer", worker: "shimmer-worker.ts", parametres: { "Graine": 1 } },
   { id: "suiveur-hauteur", worker: "hauteur-worker.ts" },
   // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
   // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
@@ -88,6 +92,10 @@ const SURVEILLES: {
   // composant qui fabrique son tampon.
   { id: "vitesse-variable", worker: "vitesse-worker.ts" },
   { id: "ondelettes", worker: "ondelettes-worker.ts" },
+  // LA DURÉE EST RAMENÉE À UNE SECONDE, et c'est la seule chose qu'on règle ici : la
+  // reconstruction de phase parcourt tout le spectrogramme, et quatre secondes au réglage par
+  // défaut feraient de ce composant le plus lent du banc sans rien prouver de plus.
+  { id: "granulation-spectrale", worker: "granulation-spectrale-worker.ts", parametres: { "Durée": 1, "Graine": 1 } },
   // Quatre des cinq mises en forme du Composers' Desktop Project, qui partagent un worker comme
   // celles de Wishart. « Peignes accordés » ne passe pas par ce passage-là.
   { id: "formule-spectrale", worker: "formule-spectrale-worker.ts" },
@@ -105,8 +113,8 @@ const SURVEILLES: {
   // un journal en plus de leur son, et ils figeaient tout autant — 248, 228, 203 et 154
   // millisecondes sans qu'un seul message passe.
   { id: "gout-du-son", worker: "gout-worker.ts" },
-  { id: "ecosysteme", worker: "ecosysteme-worker.ts" },
-  { id: "reverberation-velours", worker: "velours-worker.ts" },
+  { id: "ecosysteme", worker: "ecosysteme-worker.ts", parametres: { "Graine": 7 } },
+  { id: "reverberation-velours", worker: "velours-worker.ts", parametres: { "Graine": 1 } },
   { id: "reverbe-hachee", worker: "hachee-worker.ts" },
   // TROISIÈME LOT : LES GÉNÉRATEURS. Ceux-là n'ont aucune entrée audio, donc aucun canal à
   // découper, et leur calcul ne se coupe pas en tâches indépendantes — une phase s'accumule d'un

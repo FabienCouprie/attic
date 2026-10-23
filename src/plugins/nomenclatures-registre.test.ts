@@ -238,8 +238,8 @@ const DOMAINES: Domaine[] = [
     // main, et viennent désormais de `audio/fenetres-analyse.ts`. Un garde de SOURCE le tient,
     // comme pour les signatures et les langues, puisque le registre ne voit pas deux listes
     // identiques écrites deux fois.
-    formesAssumees: 10,
-    pourquoi: "six sous-ensembles, de 256 à 8192, chacun borné par son algorithme et portant sa raison dans la documentation de son propre réglage ; trois formes de plus ne tiennent qu'aux LIBELLÉS, « Ordinaire (2048) » nommant la taille du MILIEU de sa liste, que nulle table centrale ne peut produire",
+    formesAssumees: 11,
+    pourquoi: "six sous-ensembles, de 256 à 8192, chacun borné par son algorithme et portant sa raison dans la documentation de son propre réglage ; la table ENTIÈRE, que la granulation spectrale offre deux fois parce qu'aucun algorithme ne la borne, le grain lu et le grain écrit s'y choisissant librement ; et trois formes qui ne tiennent qu'aux LIBELLÉS, « Ordinaire (2048) » nommant la taille du MILIEU de sa liste, que nulle table centrale ne peut produire",
     remede: "offrir `choixFenetre` de `audio/fenetres-analyse.ts`, et dire pourquoi un composant en offre une part",
   },
   {
@@ -653,8 +653,11 @@ describe("un concept, des formes déclarées", () => {
     // ne faisaient deux formes que par l'écriture française du triolet.
     // PUIS DE CINQUANTE À QUARANTE-SEPT, par le oui ou non : six formes sur trente-huit réglages,
     // dont trois ne tenaient qu'à cinq composants qui posaient `yes` et `no` dans les projets.
+    // PUIS DE QUARANTE-SEPT À QUARANTE-HUIT, ET LA MONTÉE EST LÉGITIME : la granulation spectrale
+    // offre la table ENTIÈRE des tailles de fenêtre, qu'aucun de ses deux réglages ne borne. Une
+    // forme de plus qui vient de la table commune n'est pas une liste écrite à la main.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(47);
+      .toBe(48);
   });
 });

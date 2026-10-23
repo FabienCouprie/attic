@@ -34,10 +34,21 @@ export interface Atome {
   echelle: number;
   /** Premier échantillon de l'atome. */
   debut: number;
+  /** La fréquence au DÉBUT de l'atome. Elle n'en est la fréquence entière que si la dérive est nulle. */
   frequenceHz: number;
   /** Coefficient de projection, signe compris. */
   poids: number;
   phase: number;
+  /**
+   * La dérive de fréquence, en hertz par seconde. Zéro pour un atome de Gabor.
+   *
+   * C'EST CE QUI FAIT D'UN ATOME UN CHIRPLET, d'après Steve Mann et Simon Haykin, « The chirplet
+   * transform : a generalization of Gabor's logon transform », Vision Interface, 1991. Un atome de
+   * Gabor tient une fréquence fixe pendant toute sa fenêtre ; un glissando n'en est donc jamais
+   * fait d'un seul, mais d'un escalier de petits atomes constants qui l'approchent par paliers.
+   * Une dérive le décrit d'un seul atome.
+   */
+  derive: number;
 }
 
 export interface OptionsDecomposition {
@@ -46,6 +57,16 @@ export interface OptionsDecomposition {
   atomes: number;
   /** Longueurs de fenêtre, en échantillons. Plusieurs échelles font tout l'intérêt. */
   echelles: readonly number[];
+  /**
+   * Les dérives candidates, en hertz par seconde. Par défaut la seule dérive nulle, qui redonne
+   * exactement le dictionnaire de Gabor.
+   *
+   * LE DICTIONNAIRE EST MULTIPLIÉ PAR LEUR NOMBRE, et c'est le prix du chirplet : pour chaque
+   * dérive il faut DÉCHIRPER la trame, c'est-à-dire la multiplier par la conjuguée de la dérive,
+   * avant de la transformer. Une dérive candidate est donc une transformée de plus par trame et
+   * par échelle.
+   */
+  derives?: readonly number[];
 }
 
 export interface Decomposition {
@@ -85,18 +106,34 @@ function meilleureCase(re: Float64Array, im: Float64Array): { bin: number; modul
   return { bin, module: Math.sqrt(meilleur), phase: Math.atan2(im[bin], re[bin]) };
 }
 
-/** Écrit l'atome dans `sortie`, et rend son énergie. */
+/**
+ * Écrit l'atome dans `sortie`, et rend son énergie.
+ *
+ * `beta` est la dérive en radians par échantillon au carré : la phase y gagne un terme en i²,
+ * donc la fréquence instantanée un terme linéaire. À zéro, l'atome est celui de Gabor, et le
+ * calcul est rigoureusement celui d'avant.
+ */
 function poserAtome(
-  sortie: Float64Array, echelle: number, debut: number, omega: number, phase: number, fenetre: Float64Array,
+  sortie: Float64Array, echelle: number, debut: number, omega: number, phase: number,
+  fenetre: Float64Array, beta = 0,
 ): number {
   let norme = 0;
   for (let i = 0; i < echelle; i++) {
-    const v = fenetre[i] * Math.cos(omega * i + phase);
+    const v = fenetre[i] * Math.cos(omega * i + (beta / 2) * i * i + phase);
     sortie[i] = v;
     norme += v * v;
   }
   return norme;
 }
+
+/**
+ * La dérive en hertz par seconde, convertie en radians par échantillon au carré.
+ *
+ * La fréquence instantanée d'un atome vaut `(omega + beta·i) / 2π · fs`. Pour qu'elle monte de
+ * `d` hertz en une seconde, soit en `fs` échantillons, il faut `beta·fs / 2π · fs = d`.
+ */
+const betaDeDerive = (deriveHzParS: number, frequence: number) =>
+  (2 * Math.PI * deriveHzParS) / (frequence * frequence);
 
 /**
  * La poursuite adaptative, atome par atome.
@@ -125,6 +162,11 @@ export function decomposer(x: Float32Array, o: OptionsDecomposition): Decomposit
     };
   }
 
+  // LES DÉRIVES CANDIDATES, ramenées en radians par échantillon au carré une fois pour toutes.
+  // La dérive nulle est toujours là : sans elle, un son tenu n'aurait aucun atome qui lui aille.
+  const derivesHz = [...new Set([0, ...(o.derives ?? [])])].sort((a, b) => a - b);
+  const betas = derivesHz.map((d) => betaDeDerive(d, o.frequence));
+
   // Pour chaque échelle : sa fenêtre, ses trames, et le meilleur candidat de chacune.
   const par = echelles.map((echelle) => {
     const pas = echelle / 4;
@@ -133,7 +175,7 @@ export function decomposer(x: Float32Array, o: OptionsDecomposition): Decomposit
       echelle,
       pas,
       fenetre: fenetreHann(echelle),
-      candidats: new Array(trames).fill(null) as ({ bin: number; module: number; phase: number } | null)[],
+      candidats: new Array(trames).fill(null) as ({ bin: number; module: number; phase: number; rang: number } | null)[],
       sale: new Array(trames).fill(true) as boolean[],
     };
   });
@@ -142,19 +184,36 @@ export function decomposer(x: Float32Array, o: OptionsDecomposition): Decomposit
   const im = new Float64Array(Math.max(...echelles));
   const atome = new Float64Array(Math.max(...echelles));
 
-  /** Recalcule les candidats marqués sales d'une échelle. */
+  /**
+   * Recalcule les candidats marqués sales d'une échelle, en essayant chaque dérive.
+   *
+   * LE DÉCHIRPAGE EST LA SEULE FAÇON DE CHERCHER UNE DÉRIVE PAR UNE TRANSFORMÉE. Une transformée
+   * ne sait voir que des fréquences fixes ; on multiplie donc la trame par la conjuguée de la
+   * dérive essayée, ce qui redresse un glissando de cette pente en une raie unique, puis on
+   * cherche la raie comme avant. À dérive nulle la partie imaginaire reste nulle et le calcul est
+   * exactement celui du dictionnaire de Gabor.
+   */
   const rafraichir = (e: typeof par[number]) => {
     for (let t = 0; t < e.candidats.length; t++) {
       if (!e.sale[t]) continue;
       const debut = Math.round(t * e.pas);
       const vue = re.subarray(0, e.echelle);
       const vueIm = im.subarray(0, e.echelle);
-      for (let i = 0; i < e.echelle; i++) {
-        vue[i] = (debut + i < longueur ? residu[debut + i] : 0) * e.fenetre[i];
-        vueIm[i] = 0;
+      let meilleur: { bin: number; module: number; phase: number; rang: number } | null = null;
+      for (let r = 0; r < betas.length; r++) {
+        const beta = betas[r];
+        for (let i = 0; i < e.echelle; i++) {
+          const v = (debut + i < longueur ? residu[debut + i] : 0) * e.fenetre[i];
+          if (beta === 0) { vue[i] = v; vueIm[i] = 0; continue; }
+          const a = -(beta / 2) * i * i;
+          vue[i] = v * Math.cos(a);
+          vueIm[i] = v * Math.sin(a);
+        }
+        fft(vue, vueIm, false);
+        const c = meilleureCase(vue, vueIm);
+        if (!meilleur || c.module > meilleur.module) meilleur = { ...c, rang: r };
       }
-      fft(vue, vueIm, false);
-      e.candidats[t] = meilleureCase(vue, vueIm);
+      e.candidats[t] = meilleur;
       e.sale[t] = false;
     }
   };
@@ -178,8 +237,9 @@ export function decomposer(x: Float32Array, o: OptionsDecomposition): Decomposit
     const c = e.candidats[meilleur.trame]!;
     const debut = Math.round(meilleur.trame * e.pas);
     const omega = (2 * Math.PI * c.bin) / e.echelle;
+    const beta = betas[c.rang];
     const vue = atome.subarray(0, e.echelle);
-    const norme = poserAtome(vue, e.echelle, debut, omega, c.phase, e.fenetre);
+    const norme = poserAtome(vue, e.echelle, debut, omega, c.phase, e.fenetre, beta);
     if (norme <= 0) break;
 
     // LA PROJECTION EST EXACTE, calculée dans le temps : le coefficient de la transformée n'est
@@ -199,6 +259,7 @@ export function decomposer(x: Float32Array, o: OptionsDecomposition): Decomposit
       frequenceHz: (c.bin * o.frequence) / e.echelle,
       poids,
       phase: c.phase,
+      derive: derivesHz[c.rang],
     });
 
     // Seules les trames que l'atome touche sont à recalculer, à toutes les échelles.

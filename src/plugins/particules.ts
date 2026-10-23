@@ -17,6 +17,9 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+// LE NŒUD VOISIN EST GREFFÉ ICI, ET NON AU BARIL : `plugins/index.ts` est en dette de taille, et
+// un fichier en dette ne grossit plus. La granulation spectrale est de la même lignée, le grain.
+import { fiches as fichesGranulationSpectrale } from "./granulation-spectrale";
 import { construireCsd, rendreCsd, premiereErreur, type EntreeFichier } from "../audio/csound";
 import {
   ESPECES, EST_ESPECE, especeTenable, graineParticules, orchestreParticules, partitionParticules,
@@ -149,4 +152,4 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [r.audio, r.messages.join("\n")], message: lignes.join("\n") };
     },
   },
-] as FicheAudio[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc).concat(fichesGranulationSpectrale);
