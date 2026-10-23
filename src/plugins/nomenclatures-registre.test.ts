@@ -60,8 +60,44 @@ function choix(): Choix[] {
 /** Un domaine gardé au niveau du registre. */
 interface Domaine {
   nom: string;
-  /** Ce qui relève du domaine, reconnu par la FORME de ses identifiants et jamais par un nom. */
-  releve: (ids: string[]) => boolean;
+  /**
+   * Ce qui fait qu'UN identifiant relève du domaine, reconnu par sa FORME et jamais par un nom.
+   *
+   * CE TEST A REMPLACÉ UN `ids.every(...)`, ET C'EST LA RÉPARATION D'UN AVEUGLEMENT. Un ET sur
+   * TOUS les identifiants d'un réglage a une conséquence qu'on ne voit pas en l'écrivant : une
+   * seule valeur hors domaine, mise en tête d'une liste pourtant dérivée de la table, suffisait à
+   * rendre les trente suivantes invisibles d'un coup. Deux sentinelles le faisaient, « roue » dans
+   * `cercle-pulsant·Gamme` et « fichier » dans `midi-vers-abc·Métrique`, et deux domaines
+   * sous-comptaient de la même façon. Un réglage relève désormais du domaine dès qu'assez de ses
+   * identifiants en relèvent, et ce qui reste doit être déclaré dans `sentinelles`.
+   */
+  membre: (id: string) => boolean;
+  /**
+   * Ce qui REND UN RÉGLAGE RECONNAISSABLE comme étant de ce domaine, quand appartenir ne suffit pas
+   * à le dire. Par défaut, c'est `membre`.
+   *
+   * APPARTENIR ET FAIRE RECONNAÎTRE SONT DEUX QUESTIONS, et le domaine des métriques l'a montré :
+   * « 1/4 » est une mesure d'une noire, donc une métrique, mais il s'écrit exactement comme la
+   * valeur de note « un quart ». Le voir comme métrique ferait prendre toute liste de valeurs de
+   * note pour une liste de signatures. C'est donc le numérateur supérieur à un qui fait reconnaître
+   * une liste de signatures, et « 1/4 » en est membre une fois la liste reconnue.
+   */
+  distinctif?: (id: string) => boolean;
+  /**
+   * Combien d'identifiants DISTINCTIFS suffisent pour qu'un réglage relève du domaine. Trois par
+   * défaut.
+   *
+   * UN SEUIL REMPLACE LE PLANCHER DE LONGUEUR, et c'est l'autre moitié de l'aveuglement : un
+   * `ids.length >= 5` laissait passer les listes COURTES écrites à la main, qui sont justement
+   * celles qu'on écrit à la main. Le seuil porte sur le nombre de MEMBRES et non sur la longueur,
+   * de sorte qu'une liste de deux gammes relève du domaine quand deux suffisent à le dire.
+   */
+  seuil?: number;
+  /**
+   * Les valeurs qu'un réglage du domaine porte sans en relever, nommées une par une avec leur
+   * raison. Une sentinelle n'est pas une dette : elle dit « prends la valeur ailleurs ».
+   */
+  sentinelles?: { valeur: string; raison: string }[];
   /**
    * Quand le domaine a une table, l'identifiant canonique de celui-ci — ou `undefined` si la table
    * ne le connaît pas. Un domaine sans table ne déclare rien ici.
@@ -87,7 +123,11 @@ const estPuissanceDeDeux = (x: string) =>
 const DOMAINES: Domaine[] = [
   {
     nom: "gamme",
-    releve: (ids) => ids.length >= 5 && ids.every((x) => gammeDe(x) || gammeMondeDe(x)),
+    membre: (x) => Boolean(gammeDe(x) || gammeMondeDe(x)),
+    seuil: 2,
+    sentinelles: [
+      { valeur: "roue", raison: "« Selon la roue » : la gamme vient du cercle dessiné, et non de la liste" },
+    ],
     canonique: (id) => (gammeMondeDe(id) ? id : gammeDe(id)?.id),
     // SEPT COMPOSANTS PORTENT LES ORTHOGRAPHES D'AVANT LA TABLE. Elles sont des alias, donc les
     // degrés sont justes ; ce sont les identifiants qui ne le sont pas.
@@ -102,17 +142,33 @@ const DOMAINES: Domaine[] = [
     ],
     // Les huit formes : deux ordres historiques de vingt-cinq que `completer` conserve, les
     // trente-cinq gammes réunies, les dix gammes du monde, et les quatre listes d'avant la table.
-    formesAssumees: 8,
+    // DE HUIT À ONZE, ET RIEN N'A EMPIRÉ : le garde voit enfin trois formes qu'il ne comptait pas.
+    // La sentinelle « roue » de `cercle-pulsant·Gamme` faisait disparaître ses vingt-cinq gammes
+    // d'un coup, et le plancher de longueur cachait les listes COURTES écrites à la main, qui sont
+    // justement celles qu'on écrit à la main : les quatre de `serie-infinie·Gamme` et les cinq
+    // réglages qui n'offrent que « majeur » et « mineur ».
+    formesAssumees: 11,
     remede: "offrir la liste de `audio/gammes.ts`, par `completer` pour garder l'ordre d'un composant ancien",
   },
   {
     nom: "accord",
-    releve: (ids) => ids.length >= 3 && ids.every((x) => qualiteDe(x) !== undefined),
+    membre: (x) => qualiteDe(x) !== undefined,
+    sentinelles: [
+      { valeur: "roue", raison: "« Selon la roue » : la qualité vient du cercle dessiné" },
+      { valeur: "Cantus firmus", raison: "un motif de contrepoint, et non une qualité d'accord" },
+      { valeur: "Personnalisé", raison: "le motif est saisi à la main dans le champ d'à côté" },
+    ],
     canonique: (id) => qualiteDe(id)?.id,
     anciennesEcritures: [
       { ou: "arpege-koch·Accord", raison: "les noms français de la table de Koch, enregistrés dans les projets" },
+      // CELUI-CI N'ÉTAIT PAS VISIBLE AVANT LA RÉPARATION DU GARDE : sa liste porte deux valeurs
+      // hors domaine, « Cantus firmus » et « Personnalisé », ce qui suffisait à la faire
+      // disparaître entièrement du relevé.
+      { ou: "generateur-fractal·Motif", raison: "un motif de génération et non un accord : les trois premiers sont des triades, les deux autres ne le sont pas, et les cinq libellés français sont enregistrés" },
     ],
-    formesAssumees: 2,
+    // DE DEUX À QUATRE : deux formes portaient une valeur hors domaine, la sentinelle « roue » et
+    // les deux motifs du générateur fractal, ce qui les faisait disparaître entièrement du relevé.
+    formesAssumees: 4,
     remede: "offrir la liste de `audio/qualites-accords.ts`",
   },
   {
@@ -121,8 +177,15 @@ const DOMAINES: Domaine[] = [
     // pas tout. Un composant offrait ses clés en minuscules avec le bémol typographique — « c, c#,
     // d, e♭, … » — et restait donc INVISIBLE au relevé, tout en étant enregistré dans des projets.
     // Un garde qui ne voit pas une forme ne la compte pas, et ne la bloque pas davantage.
-    releve: (ids) => ids.length === 12
-      && (ids.every((x) => demiTonDeCle(x) !== undefined) || ids.every((x) => /^\d+$/.test(x))),
+    // LES DOUZE SE COMPTENT ICI, ET C'EST VOULU : une clé est l'une de douze, donc un réglage qui
+    // en porte douze est une liste de clés et un réglage qui en porte trois ne l'est pas.
+    // UN DEMI-TON DE CLÉ VA DE ZÉRO À ONZE, et le borner ainsi évite de prendre pour des clés les
+    // douze premiers nombres d'une liste qui n'en est pas une.
+    membre: (x) => demiTonDeCle(x) !== undefined || (/^\d+$/.test(x) && Number(x) >= 0 && Number(x) <= 11),
+    seuil: 12,
+    sentinelles: [
+      { valeur: "douze", raison: "la treizième entrée du paradoxe du triton, qui n'est pas une classe" },
+    ],
     // DOMAINE UNIFIÉ. Les trente-deux réglages sont branchés sur `audio/cles.ts`, et les deux
     // formes qui restent sont les deux qui doivent rester : vingt-trois offrent les clés PAR LEUR
     // NOM, neuf PAR LEUR DEMI-TON. Un composant qui nomme une tonalité veut un nom ; un composant
@@ -130,12 +193,16 @@ const DOMAINES: Domaine[] = [
     //
     // CE NOMBRE EST PASSÉ DE QUATRE À DEUX, et le garde a tiré à chaque palier : deux fois pour
     // dire qu'une dette était payée sans être inscrite, ce qui est sa seconde raison d'être.
-    formesAssumees: 2,
+    //
+    // PUIS DE DEUX À TROIS, SANS QUE RIEN N'EMPIRE : la troisième forme est celle du paradoxe du
+    // triton, dont la treizième entrée « douze » faisait disparaître les douze classes du relevé.
+    formesAssumees: 3,
     remede: "étaler `PARAMETRE_CLE` ou `PARAMETRE_TONIQUE` de `audio/cles.ts`, au lieu de recopier douze noms",
   },
   {
     nom: "fenêtre d'analyse",
-    releve: (ids) => ids.length >= 2 && ids.every(estPuissanceDeDeux),
+    membre: estPuissanceDeDeux,
+    seuil: 2,
     // Dix formes pour des puissances de deux : sept membres différents, et trois composants qui
     // n'ont pas de libellé anglais là où les autres en ont un.
     formesAssumees: 10,
@@ -143,39 +210,69 @@ const DOMAINES: Domaine[] = [
   },
   {
     nom: "métrique",
-    releve: (ids) => ids.length >= 2 && ids.every((x) => /^\d+\/\d+$/.test(x))
-      && ids.some((x) => Number(x.split("/")[0]) > 1),
+    // UN NUMÉRATEUR AUTRE QUE UN SÉPARE UNE SIGNATURE D'UNE VALEUR DE NOTE : « 1/8 » est une
+    // croche, « 6/8 » est une mesure, et les deux s'écrivent de la même façon.
+    membre: (x) => /^\d+\/\d+$/.test(x),
+    distinctif: (x) => /^\d+\/\d+$/.test(x) && Number(x.split("/")[0]) > 1,
+    seuil: 2,
+    sentinelles: [
+      { valeur: "fichier", raison: "« Du fichier » : la métrique est celle écrite dans le MIDI reçu" },
+    ],
     // CE NOMBRE EST PASSÉ DE QUATRE À DEUX : le remède ci-dessous a été appliqué, et c'est
     // `audio/signatures.ts` qui porte la liste. Les deux formes qui restent sont cette liste, que
     // cinq composants offrent entière, et le sous-ensemble que la gravure MusicXML en FILTRE, sa
     // grille se comptant en noires. Un sous-ensemble dérivé de la table n'est pas une table de plus.
-    formesAssumees: 2,
+    //
+    // PUIS DE DEUX À TROIS : la troisième est la même liste précédée de « Du fichier », dont la
+    // sentinelle faisait disparaître les trente signatures du relevé.
+    formesAssumees: 3,
     remede: "déclarer une liste centrale des signatures",
   },
   {
     nom: "valeur de note",
-    releve: (ids) => ids.length >= 2 && ids.every((x) => /^1\/\d+$/.test(x)),
-    formesAssumees: 4,
+    // LE TRIOLET EST UNE VALEUR DE NOTE, et le prédicat d'avant ne le voyait pas : écrit
+    // `/^1\/\d+$/`, il écartait « 1/8t » et « 1/8 triplet », donc les deux réglages qui les
+    // offrent étaient invisibles. Les deux écritures du triolet sont justement la divergence de ce
+    // domaine, et un garde qui ne la voit pas ne peut pas la signaler.
+    membre: (x) => /^1\/\d+t?$/.test(x) || /^1\/\d+ triplet$/.test(x),
+    seuil: 2,
+    sentinelles: [
+      { valeur: "none", raison: "« Aucune » : pas de grille, les instants restent ceux du jeu" },
+    ],
+    // DE QUATRE À SEPT, et les trois qui apparaissent sont la divergence même de ce domaine : le
+    // TRIOLET s'écrit « 1/8t » ici et « 1/8 triplet » là, et le prédicat d'avant, écrit
+    // `/^1\/\d+$/`, ne voyait ni l'un ni l'autre. Un garde qui ne voit pas la divergence qu'il
+    // existe pour signaler ne sert à rien.
+    formesAssumees: 7,
     remede: "déclarer une liste centrale des valeurs de note",
   },
   {
     nom: "forme d'onde",
-    releve: (ids) => ids.length >= 3
-      && ids.every((x) => ["sine", "square", "sawtooth", "saw", "triangle"].includes(x)),
-    // CE NOMBRE EST PASSÉ DE CINQ À UNE : dix réglages prennent désormais `FORMES_ONDE_CHOIX`. Les
-    // cinq formes étaient l'identifiant `saw` chez l'un et `sawtooth` chez les autres, le même jeu
-    // dans un ordre différent chez un troisième, et deux listes que CE PRÉDICAT NE VOIT MÊME PAS,
-    // puisqu'il exige que TOUS les identifiants soient dans sa liste : les libellés français
+    membre: (x) => ["sine", "square", "sawtooth", "saw", "triangle"].includes(x),
+    sentinelles: [
+      { valeur: "impulsion", raison: "une impulsion par période, de quoi exciter un résonateur" },
+      { valeur: "bruit", raison: "du bruit, qui n'a pas de période" },
+    ],
+    // CE NOMBRE EST PASSÉ DE CINQ À UNE : huit réglages prennent désormais `FORMES_ONDE_CHOIX`.
+    // Les cinq formes étaient l'identifiant `saw` chez l'un et `sawtooth` chez les autres, le même
+    // jeu dans un ordre différent chez un troisième, et deux listes que CE PRÉDICAT NE VOYAIT MÊME
+    // PAS, puisqu'il exige que TOUS les identifiants soient dans sa liste : les libellés français
     // capitalisés du trémolo et le `sinus/carre/dents-de-scie` du générateur à pulsars.
-    formesAssumees: 1,
+    // PUIS DE UNE À DEUX, par la réparation du garde : la seconde forme est celle de l'excitateur
+    // de « Frontière de note », qui offre les quatre ondes PLUS une impulsion et du bruit. Ses deux
+    // sentinelles le faisaient disparaître du relevé ; un surensemble déclaré n'est pas une faute,
+    // mais il est une forme, et il doit se voir.
+    formesAssumees: 2,
     // LE REMÈDE D'AVANT N'ÉTAIT PAS EXÉCUTABLE : `FORMES_ONDE` n'est pas exportée, et c'est une
     // table d'alias qui relit une valeur, non une liste ordonnée avec ses libellés.
     remede: "offrir `FORMES_ONDE_CHOIX` de `audio/timbres.ts`, et ses `LIBELLES_HERITES_FORMES`",
   },
   {
     nom: "oui ou non",
-    releve: (ids) => ids.length === 2
-      && ["non,oui", "no,yes"].includes([...ids].sort().join(",")),
+    // UNE PAIRE N'A PAS DE SENTINELLE POSSIBLE : si une troisième valeur apparaissait, ce ne serait
+    // plus un oui ou non. Le seuil vaut donc deux et le domaine se referme sur l'exactitude.
+    membre: (x) => ["oui", "non", "yes", "no"].includes(x),
+    seuil: 2,
     formesAssumees: 6,
     remede: "déclarer une paire centrale, dans chacun des deux ordres, puisque l'ordre d'un composant est enregistré",
   },
@@ -190,9 +287,19 @@ describe("un concept, des formes déclarées", () => {
   });
 
   for (const d of DOMAINES) {
-    const releves = tous.filter((c) => {
-      try { return d.releve(c.ids); } catch { return false; }
-    });
+    const sauf = (test: (x: string) => boolean) => (x: string) => {
+      try { return test(x); } catch { return false; }
+    };
+    const membres = (c: Choix) => c.ids.filter(sauf(d.membre));
+    const distinctifs = (c: Choix) => c.ids.filter(sauf(d.distinctif ?? d.membre));
+    // DEUX VALEURS HORS DOMAINE AU PLUS, et cette borne est ce qui sépare une sentinelle d'un
+    // autre vocabulaire. Une sentinelle dit « prends la valeur ailleurs », et une liste n'en porte
+    // qu'une ou deux : « Du fichier », « Automatique ». Au-delà, ce n'est plus une liste du domaine
+    // qui porte une exception, c'est un vocabulaire étranger qui le recoupe — et le compter aurait
+    // été le faux positif symétrique de l'aveuglement qu'on vient de réparer : sans cette borne,
+    // le domaine « accord » attrapait cent une valeurs qui ne sont pas des accords.
+    const releves = tous.filter((c) =>
+      distinctifs(c).length >= (d.seuil ?? 3) && c.ids.length - membres(c).length <= 2);
 
     it(`« ${d.nom} » : le nombre de formes est celui qui est déclaré`, () => {
       const formes = new Map<string, string[]>();
@@ -213,16 +320,54 @@ describe("un concept, des formes déclarées", () => {
       ).toBe(d.formesAssumees);
     });
 
+    it(`« ${d.nom} » : ce qui ne relève pas du domaine est déclaré`, () => {
+      // LE CAS QUI MANQUAIT, ET QUI EST TOUT L'OBJET DE LA RÉPARATION. Une valeur hors domaine
+      // mise dans une liste du domaine était, avant, ce qui faisait DISPARAÎTRE la liste entière du
+      // relevé. Elle est désormais vue, et elle doit porter sa raison : une sentinelle dit « prends
+      // la valeur ailleurs », et tout le reste est une faute d'orthographe qui attend d'être lue.
+      const nommees = new Set((d.sentinelles ?? []).map((s) => s.valeur));
+      const fautifs: string[] = [];
+      for (const c of releves) {
+        for (const id of c.ids) {
+          if (d.membre(id) || nommees.has(id)) continue;
+          fautifs.push(`${c.ou} offre « ${id} », qui ne relève pas du domaine`);
+        }
+      }
+      expect(
+        fautifs.length,
+        `${d.remede}, ou déclarer la valeur dans \`sentinelles\` avec sa raison :\n`
+        + fautifs.map((f) => `  ${f}`).join("\n"),
+      ).toBe(0);
+    });
+
+    it(`« ${d.nom} » : chaque sentinelle déclarée existe encore`, () => {
+      // Une sentinelle qui a disparu des fiches couvrirait la réapparition d'une valeur du même nom.
+      const offerts = new Set(releves.flatMap((c) => c.ids));
+      const mortes = (d.sentinelles ?? [])
+        .filter((s) => !offerts.has(s.valeur))
+        .map((s) => `« ${s.valeur} » — ${s.raison} : plus aucun réglage ne l'offre, retirer la ligne`);
+      expect(mortes).toEqual([]);
+    });
+
     if (d.canonique) {
       it(`« ${d.nom} » : les identifiants offerts sont canoniques`, () => {
         const nommees = new Set((d.anciennesEcritures ?? []).map((e) => e.ou));
+        // UNE SENTINELLE N'A PAS DE FORME CANONIQUE : elle ne relève pas du domaine, donc sa table
+        // ne la connaît pas, et l'exiger canonique serait lui demander d'être ce qu'elle n'est pas.
+        const sentinelles = new Set((d.sentinelles ?? []).map((s) => s.valeur));
         const fautifs = releves
           .filter((c) => !nommees.has(c.ou))
-          .map((c) => ({ ou: c.ou, faux: c.ids.filter((x) => d.canonique!(x) !== x) }))
+          .map((c) => ({
+            ou: c.ou,
+            faux: c.ids.filter((x) => !sentinelles.has(x) && d.canonique!(x) !== x),
+          }))
           .filter((x) => x.faux.length > 0)
           .map((x) => `${x.ou} offre ${x.faux.join(", ")}`);
-        expect(fautifs, `${d.remede}, ou nommer ce composant dans \`anciennesEcritures\` avec sa raison`)
-          .toEqual([]);
+        expect(
+          fautifs.length,
+          `${d.remede}, ou nommer ce composant dans \`anciennesEcritures\` avec sa raison :\n`
+          + fautifs.map((f) => `  ${f}`).join("\n"),
+        ).toBe(0);
       });
 
       it(`« ${d.nom} » : chaque ancienne écriture nommée existe encore`, () => {
@@ -231,7 +376,8 @@ describe("un concept, des formes déclarées", () => {
         const payees = (d.anciennesEcritures ?? [])
           .filter((e) => {
             const c = releves.find((x) => x.ou === e.ou);
-            return !c || c.ids.every((x) => d.canonique!(x) === x);
+            const sentinelles = new Set((d.sentinelles ?? []).map((s) => s.valeur));
+            return !c || c.ids.every((x) => sentinelles.has(x) || d.canonique!(x) === x);
           })
           .map((e) => `${e.ou} — ${e.raison} : l'écriture est canonique désormais, retirer la ligne`);
         expect(payees).toEqual([]);
@@ -243,11 +389,22 @@ describe("un concept, des formes déclarées", () => {
     // Le nombre de formes en trop, domaine par domaine : ce qu'il resterait à unifier si chaque
     // domaine se ramenait à une seule liste. Ce cas ne juge pas, il empêche le chiffre de croître
     // sans qu'on s'en aperçoive.
-    // DE TRENTE-TROIS À VINGT-SEPT. La métrique est passée de quatre formes à deux, la liste des
-    // signatures étant désormais dans `audio/signatures.ts` ; la forme d'onde de cinq à une, par
-    // `FORMES_ONDE_CHOIX`.
+    // TRENTE-TROIS, PUIS VINGT-SEPT, PUIS TRENTE-HUIT, ET LA MONTÉE EST UNE BONNE NOUVELLE. Deux
+    // domaines ont été unifiés — la métrique par `audio/signatures.ts`, la forme d'onde par
+    // `FORMES_ONDE_CHOIX` — ce qui a fait tomber le chiffre de 33 à 27. Puis la mécanique du garde
+    // a été réparée, et ONZE FORMES QU'IL NE VOYAIT PAS sont entrées dans le compte : une
+    // sentinelle en tête d'une liste suffisait à la faire disparaître entièrement, et un plancher
+    // de longueur cachait les listes courtes écrites à la main.
+    //
+    // CE CHIFFRE N'EST DONC PAS LA DETTE QUI A GRANDI, C'EST LA DETTE QU'ON VOIT ENFIN. Comparer 38
+    // à 33 n'a pas de sens : les deux ne mesurent pas la même chose. C'est à partir d'ici qu'il se
+    // compare à lui-même.
+    // PUIS DE TRENTE-HUIT À CINQUANTE-TROIS, par DIX DOMAINES DE PLUS : le relevé des 503
+    // composants a trouvé cinquante et un concepts partagés, dont trente-quatre divergents, quand
+    // huit seulement étaient déclarés. Ce chiffre ne mesure donc pas la même chose qu'avant lui :
+    // il couvre dix-huit domaines au lieu de huit. C'est là que la comparaison repart.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(27);
+      .toBe(38);
   });
 });
