@@ -134,17 +134,13 @@ const DOMAINES: Domaine[] = [
       { valeur: "roue", raison: "« Selon la roue » : la gamme vient du cercle dessiné, et non de la liste" },
     ],
     canonique: (id) => (gammeMondeDe(id) ? id : gammeDe(id)?.id),
-    // SEPT COMPOSANTS PORTENT LES ORTHOGRAPHES D'AVANT LA TABLE. Elles sont des alias, donc les
-    // degrés sont justes ; ce sont les identifiants qui ne le sont pas.
-    anciennesEcritures: [
-      { ou: "reservoir-musical·Gamme", raison: "« pentatonique majeur » sans accord, enregistré dans les projets" },
-      { ou: "multi-reservoirs·Gamme", raison: "« pentatonique majeur » sans accord, enregistré dans les projets" },
-      { ou: "sequenceur-melodique·Gamme", raison: "« pentatonique majeur » sans accord, enregistré dans les projets" },
-      { ou: "arbre-rythmique·Gamme", raison: "« majeure » et « penta-majeure », les orthographes de la famille du contrepoint" },
-      { ou: "evolution-melodie·Gamme", raison: "« majeure » et « penta-majeure », les orthographes de la famille du contrepoint" },
-      { ou: "solveur-contraintes·Gamme", raison: "« majeure » et « penta-majeure », les orthographes de la famille du contrepoint" },
-      { ou: "correction-hauteur·Gamme", raison: "« majeure » et « penta-majeure », et `audio/correction-hauteur.ts` porte la raison écrite à côté de la liste" },
-    ],
+    // LES SEPT ORTHOGRAPHES D'AVANT LA TABLE SONT PAYÉES, et la liste est vide pour cette raison.
+    // Elles étaient des alias, donc les degrés étaient justes ; ce sont les identifiants qui ne
+    // l'étaient pas, et un projet les enregistrait. Ce qui tenait la dette ouverte n'était pas le
+    // calcul mais la RELECTURE : tant que rien ne déclarait ces valeurs, les changer aurait fait
+    // retomber un graphe rouvert sur la gamme par défaut. `optionsHeritees` les déclare, et
+    // `optionIds-retrocompat.test.ts` tient la porte, cas par cas, pour chacun des sept.
+    anciennesEcritures: [],
     // Les huit formes : deux ordres historiques de vingt-cinq que `completer` conserve, les
     // trente-cinq gammes réunies, les dix gammes du monde, et les quatre listes d'avant la table.
     // DE HUIT À ONZE, ET RIEN N'A EMPIRÉ : le garde voit enfin trois formes qu'il ne comptait pas.

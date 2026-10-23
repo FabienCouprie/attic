@@ -5,7 +5,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import {
-  corrigerHauteur, courbeDeCorrection, degresDe, GAMMES_CORRECTION,
+  corrigerHauteur, courbeDeCorrection, degresDe, GAMMES_CORRECTION, IDS_HERITES_CORRECTION,
   type OptionsCorrection, type ResultatCorrection,
 } from "../audio/correction-hauteur";
 import { parCanal } from "./hors-fil";
@@ -31,7 +31,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "The scale's root. Without effect in chromatic, which contains every note." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
         options: GAMMES_CORRECTION.map((g) => g.fr), optionsEn: GAMMES_CORRECTION.map((g) => g.en),
-        optionIds: GAMMES_CORRECTION.map((g) => g.id), defaut: "Chromatique", defautEn: "Chromatic",
+        optionIds: GAMMES_CORRECTION.map((g) => g.id), optionsHeritees: IDS_HERITES_CORRECTION, defaut: "Chromatique", defautEn: "Chromatic",
         doc: "Les degrés permis. Plus une gamme en a, moins la correction déplace les notes : la chromatique rend juste, la pentatonique impose une couleur et s'entend comme un effet.",
         docEn: "The allowed degrees. The more a scale has, the less the correction moves the notes: chromatic restores tuning, pentatonic imposes a colour and is heard as an effect." },
       { nom: "Force", nomEn: "Strength", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",

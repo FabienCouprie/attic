@@ -1745,7 +1745,7 @@ Puts four neural reservoirs into a network, each with a distinct musical role: m
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
-| Scale | choice | major | major / minor / major pentatonic / minor pentatonic / blues | Scale used to map activations to notes. |
+| Scale | choice | Major | Major / Natural minor / Major pentatonic / Minor pentatonic / Blues | Scale used to map activations to notes. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
 | Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 | Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth. |
 | Bars | number | 4 | 1 – 64, step 1 | Number of bars to generate. |
@@ -1817,7 +1817,7 @@ Generates emergent melody via random neural networks (Reservoir Computing), insp
 | Memory | number | 30 % | 0 – 100 %, step 1 | Leaking rate. High = long memory, slowly evolving patterns; low = brief reactions. |
 | Spectral radius | number | 90 % | 50 – 150 %, step 1 | Network spectral radius. &lt;100% = stable (converges); >100% = chaotic (diverges). 90% = melodic sweet spot. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
-| Scale | choice | major | major / minor / major pentatonic / minor pentatonic / blues / chromatic | Scale used to map network activations to notes. |
+| Scale | choice | Major | Major / Natural minor / Major pentatonic / Minor pentatonic / Blues / Chromatic | Scale used to map network activations to notes. |
 | Octave | number | 4 | 2 – 6, step 1 | Starting octave (notes can span 2 octaves above). |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
 | Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 | Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth. |
@@ -2302,7 +2302,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | Bars | number | 2 | 1 – 8, step 1 | Number of pattern repetitions. |
 | Volume | number | 85 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
-| Scale | choice | major | major / minor / major pentatonic / minor pentatonic / blues | Scale used for the available notes in the grid. |
+| Scale | choice | Major | Major / Natural minor / Major pentatonic / Minor pentatonic / Blues | Scale used for the available notes in the grid. |
 | Octave | number | 3 | 2 – 6, step 1 | Starting octave (rows span about 2 octaves above). |
 | Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. Sine = pure ; Square = 8-bit/retro ; Sawtooth = rich in harmonics ; Triangle = soft. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |

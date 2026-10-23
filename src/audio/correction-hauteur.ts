@@ -29,7 +29,7 @@
 
 import { suivreHauteur } from "./hauteur";
 import type { Courbe } from "./courbe";
-import { degresDeGamme } from "./gammes";
+import { degresDeGamme, gammeDe } from "./gammes";
 
 export interface OptionsCorrection {
   /** Les classes de hauteur permises, de 0 (do) à 11. */
@@ -68,27 +68,48 @@ const MIDI = (hz: number) => 69 + 12 * Math.log2(Math.max(1e-6, hz) / 440);
  * rendre juste ; la pentatonique impose une couleur, et s'entend comme un effet.
  */
 /**
+ * Les orthographes que ces quatre composants ont portées comme IDENTIFIANTS.
+ *
+ * ELLES RESTENT LISIBLES, MAIS NE S'ÉCRIVENT PLUS. Cette famille écrivait `majeure` là où le reste
+ * du dépôt écrit `majeur`, et `penta-majeure` là où les autres écrivent `pentatonique-majeure`.
+ * La raison écrite ici était qu'un projet enregistré portait ces valeurs, et qu'en changer ferait
+ * retomber un graphe rouvert sur la gamme par défaut. Elle valait tant que rien ne les DÉCLARAIT :
+ * `optionsHeritees` le fait, et `valeurCanoniqueChoix` la consulte avant toute ressemblance.
+ */
+export const IDS_HERITES_CORRECTION: Record<string, string> = {
+  "majeure": "majeur",
+  "mineure": "mineur",
+  "mineure-harmonique": "mineur-harmonique",
+  "penta-majeure": "pentatonique-majeure",
+  "penta-mineure": "pentatonique-mineure",
+};
+
+/**
  * Les gammes sur lesquelles une hauteur se recale.
  *
- * SES IDENTIFIANTS SONT LES SIENS, ET ILS RESTENT. Ce composant écrit `majeure` là où le reste du
- * dépôt écrit `majeur`, et `penta-majeure` là où les autres écrivent `pentatonique-majeure` : ces
- * orthographes sont enregistrées dans les projets, et les changer ferait qu'un graphe rouvert
- * retomberait sur la gamme par défaut. Ce sont des alias dans `audio/gammes.ts`, donc les DEGRÉS
- * viennent de la table commune sans que rien ne bouge ici.
+ * SES IDENTIFIANTS SONT CEUX DU DÉPÔT. Les siens sont au-dessus, en anciennes écritures ; les
+ * DEGRÉS viennent de la table commune, comme avant.
  */
 export const GAMMES_CORRECTION: { id: string; fr: string; en: string; degres: number[] }[] = ([
   ["chromatique", "Chromatique", "Chromatic"],
-  ["majeure", "Majeure", "Major"],
-  ["mineure", "Mineure naturelle", "Natural minor"],
-  ["mineure-harmonique", "Mineure harmonique", "Harmonic minor"],
-  ["penta-majeure", "Pentatonique majeure", "Major pentatonic"],
-  ["penta-mineure", "Pentatonique mineure", "Minor pentatonic"],
+  ["majeur", "Majeure", "Major"],
+  ["mineur", "Mineure naturelle", "Natural minor"],
+  ["mineur-harmonique", "Mineure harmonique", "Harmonic minor"],
+  ["pentatonique-majeure", "Pentatonique majeure", "Major pentatonic"],
+  ["pentatonique-mineure", "Pentatonique mineure", "Minor pentatonic"],
   ["blues", "Blues", "Blues"],
 ] as const).map(([id, fr, en]) => ({ id, fr, en, degres: degresDeGamme(id) }));
 
-/** Les degrés d'une gamme transposés sur une tonique, en classes de hauteur. */
+/**
+ * Les degrés d'une gamme transposés sur une tonique, en classes de hauteur.
+ *
+ * L'ANCIENNE ÉCRITURE SE LIT ENCORE ICI. La conversion des valeurs enregistrées se fait à la
+ * lecture du réglage ; ce lecteur-ci peut être appelé avec une valeur qui n'y est pas passée, et
+ * un identifiant qu'il ne reconnaît pas tomberait sur la chromatique sans que rien ne le dise.
+ */
 export function degresDe(idGamme: string, tonique: number): number[] {
-  const g = GAMMES_CORRECTION.find((x) => x.id === idGamme) ?? GAMMES_CORRECTION[0];
+  const canonique = IDS_HERITES_CORRECTION[idGamme] ?? gammeDe(idGamme)?.id ?? idGamme;
+  const g = GAMMES_CORRECTION.find((x) => x.id === canonique) ?? GAMMES_CORRECTION[0];
   return g.degres.map((d) => (((d + tonique) % 12) + 12) % 12);
 }
 

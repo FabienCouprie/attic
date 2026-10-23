@@ -16,6 +16,15 @@ import {
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
+import { LIBELLES_HERITES_GAMMES, gammesParIds } from "../audio/gammes";
+
+// LA LISTE VIENT DE LA TABLE, DANS L'ORDRE QUI ÉTAIT LE SIEN. Ses identifiants étaient
+// « pentatonique majeur » et « pentatonique mineur », sans accord et avec une espace : des ALIAS,
+// donc les degrés étaient justes, mais un projet enregistrait une orthographe que le reste du parc
+// n'écrit pas. L'ordre ne bouge pas, puisqu'un projet ancien se résout par la position.
+const GAMMES_SEQUENCEUR = gammesParIds([
+  "majeur", "mineur", "pentatonique-majeure", "pentatonique-mineure", "blues",
+]);
 
 // Motif par défaut du séquenceur avancé (16 pas, 8 pistes) : kick temps, snare 2/4,
 // charley fermé en croches, le reste muet.
@@ -80,9 +89,11 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 85, unite: "%" },
       { ...PARAMETRE_CLE,
         doc: "Note fondamentale (tonique) de la gamme.", docEn: "Root note (tonic) of the scale." },
-      { nom: "Gamme", nomEn: "Scale", type: "choix", options: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues"], defaut: "majeur",
-        optionIds: ["majeur","mineur","pentatonique majeur","pentatonique mineur","blues"],
-        doc: "Gamme utilisée pour choisir les notes disponibles dans la grille.", docEn: "Scale used for the available notes in the grid.", optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues"], defautEn: "major" },
+      { nom: "Gamme", nomEn: "Scale", type: "choix",
+        options: GAMMES_SEQUENCEUR.map((g) => g.fr), optionIds: GAMMES_SEQUENCEUR.map((g) => g.id),
+        optionsEn: GAMMES_SEQUENCEUR.map((g) => g.en), optionsHeritees: LIBELLES_HERITES_GAMMES,
+        defaut: "Majeur", defautEn: "Major",
+        doc: "Gamme utilisée pour choisir les notes disponibles dans la grille.", docEn: "Scale used for the available notes in the grid." },
       { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 3,
         doc: "Octave de départ (les rangées montent d'environ 2 octaves au-dessus).", docEn: "Starting octave (rows span about 2 octaves above)." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: FORMES_ONDE_CHOIX.fr, optionIds: FORMES_ONDE_CHOIX.ids, optionsEn: FORMES_ONDE_CHOIX.en, optionsHeritees: LIBELLES_HERITES_FORMES, defaut: "Triangle",

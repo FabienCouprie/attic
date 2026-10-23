@@ -132,28 +132,50 @@ const CAS: Cas[] = [
 
   // Séquenceur mélodique / Multi-réservoirs — Gamme : 5 anciennes options
   // (pas de chromatique).
+  // LES DEUX PENTATONIQUES ÉTAIENT LEURS IDENTIFIANTS, et elles ne le sont plus : « pentatonique
+  // majeur », sans accord et avec une espace, était un ALIAS de la table, donc les degrés étaient
+  // justes et seul l'identifiant enregistré divergeait du reste du parc. Ces quatre cas sont ceux
+  // qui tiennent la porte ouverte pour un projet d'alors.
   ...(["sequenceur-melodique", "multi-reservoirs"] as const).flatMap((node) => [
     { node, param: "Gamme", ancienneValeur: "majeur", idAttendu: "majeur" },
     { node, param: "Gamme", ancienneValeur: "mineur", idAttendu: "mineur" },
-    { node, param: "Gamme", ancienneValeur: "pentatonique majeur", idAttendu: "pentatonique majeur" },
-    { node, param: "Gamme", ancienneValeur: "pentatonique mineur", idAttendu: "pentatonique mineur" },
+    { node, param: "Gamme", ancienneValeur: "pentatonique majeur", idAttendu: "pentatonique-majeure" },
+    { node, param: "Gamme", ancienneValeur: "pentatonique mineur", idAttendu: "pentatonique-mineure" },
     { node, param: "Gamme", ancienneValeur: "blues", idAttendu: "blues" },
     { node, param: "Gamme", ancienneValeur: "major", idAttendu: "majeur" },
     { node, param: "Gamme", ancienneValeur: "minor", idAttendu: "mineur" },
-    { node, param: "Gamme", ancienneValeur: "major pentatonic", idAttendu: "pentatonique majeur" },
-    { node, param: "Gamme", ancienneValeur: "minor pentatonic", idAttendu: "pentatonique mineur" },
+    { node, param: "Gamme", ancienneValeur: "major pentatonic", idAttendu: "pentatonique-majeure" },
+    { node, param: "Gamme", ancienneValeur: "minor pentatonic", idAttendu: "pentatonique-mineure" },
   ]),
 
   // Réservoir neuronal — Gamme : 6 anciennes options (avec chromatique).
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "majeur", idAttendu: "majeur" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "mineur", idAttendu: "mineur" },
-  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "pentatonique majeur", idAttendu: "pentatonique majeur" },
-  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "pentatonique mineur", idAttendu: "pentatonique mineur" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "pentatonique majeur", idAttendu: "pentatonique-majeure" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "pentatonique mineur", idAttendu: "pentatonique-mineure" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "blues", idAttendu: "blues" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "chromatique", idAttendu: "chromatique" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "major", idAttendu: "majeur" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "minor", idAttendu: "mineur" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "major pentatonic", idAttendu: "pentatonique-majeure" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "minor pentatonic", idAttendu: "pentatonique-mineure" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "chromatic", idAttendu: "chromatique" },
+
+  // Les quatre composants de la famille du contrepoint — Gamme : leurs identifiants étaient
+  // `majeure`, `mineure`, `mineure-harmonique`, `penta-majeure` et `penta-mineure`, des ALIAS de la
+  // table. Ils sont désormais déclarés dans `IDS_HERITES_CORRECTION`, et c'est ce qui permet de leur
+  // donner les identifiants du dépôt sans qu'un projet d'alors change de gamme.
+  ...(["arbre-rythmique", "evolution-melodie", "solveur-contraintes", "correction-hauteur"] as const).flatMap((node) => [
+    { node, param: "Gamme", ancienneValeur: "majeure", idAttendu: "majeur" },
+    { node, param: "Gamme", ancienneValeur: "mineure", idAttendu: "mineur" },
+    { node, param: "Gamme", ancienneValeur: "mineure-harmonique", idAttendu: "mineur-harmonique" },
+    { node, param: "Gamme", ancienneValeur: "penta-majeure", idAttendu: "pentatonique-majeure" },
+    { node, param: "Gamme", ancienneValeur: "penta-mineure", idAttendu: "pentatonique-mineure" },
+    { node, param: "Gamme", ancienneValeur: "chromatique", idAttendu: "chromatique" },
+    { node, param: "Gamme", ancienneValeur: "blues", idAttendu: "blues" },
+    { node, param: "Gamme", ancienneValeur: "Majeure", idAttendu: "majeur" },
+    { node, param: "Gamme", ancienneValeur: "Major", idAttendu: "majeur" },
+  ]),
 
   // « Synthèse » — paramètre partagé (PARAMETRE_SYNTHESE, soundfontGlobal.ts),
   // déclaré à l'identique sur une vingtaine de nœuds. Les projets enregistrés
