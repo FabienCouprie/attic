@@ -41,6 +41,14 @@ export const fiches: FicheAudio[] = ([
         optionIds: ECHELLES.map((e) => e.id), defaut: "Les trois", defautEn: "All three",
         doc: "Les durées de fenêtre où chercher. Courtes, les atomes décrivent bien les attaques et mal les notes tenues ; longues, l'inverse. « Les trois » laisse la méthode choisir pour chaque trait, ce qui est tout l'intérêt d'un dictionnaire de Gabor, et un test vérifie qu'un clic prend bien une fenêtre courte là où une note tenue en prend une longue.",
         docEn: "The window durations to search in. Short, the atoms describe attacks well and held notes badly; long, the other way round. « All three » lets the method choose for each stroke, which is the whole point of a Gabor dictionary, and a test checks that a click does take a short window where a held note takes a long one." },
+      // LE CHIRPLET EST L'ATOME DE GABOR AVEC UNE DIMENSION DE PLUS, et c'est pourquoi il entre ici
+      // plutôt que dans un composant à part : la poursuite est la même, seul le dictionnaire gagne
+      // un axe. À « Aucune », le calcul est rigoureusement celui d'avant.
+      { nom: "Dérive", nomEn: "Chirp", type: "choix",
+        options: ["Aucune", "Douce", "Moyenne", "Forte"], optionsEn: ["None", "Gentle", "Medium", "Strong"],
+        optionIds: ["aucune", "douce", "moyenne", "forte"], defaut: "Aucune", defautEn: "None",
+        doc: "La pente de fréquence qu'un atome peut porter, en hertz par seconde. À « Aucune », chaque atome tient une fréquence fixe et un glissando est approché par un escalier de petits atomes constants. Les trois autres ouvrent des pentes de plus en plus raides, jusqu'à ±900, ±3 600 et ±14 400 hertz par seconde, et un glissando se décrit alors d'un seul atome. Le calcul coûte une transformée de plus par pente offerte.",
+        docEn: "The frequency slope an atom may carry, in hertz per second. At « None », each atom holds a fixed frequency and a glissando is approached by a staircase of small constant atoms. The other three open steeper and steeper slopes, up to ±900, ±3,600 and ±14,400 hertz per second, and a glissando is then described by a single atom. The computation costs one further transform per slope offered." },
     ],
     async executer(ctx: any) {
       const en = langueCourante() === "en";
@@ -52,6 +60,15 @@ export const fiches: FicheAudio[] = ([
       const choix = ctx.paramTexte("Échelles", "trois");
       const echelles = echellesEnEchantillons(EST_ECHELLE(choix) ? choix : "trois", frequence);
       const voulus = Math.max(1, Math.round(ctx.paramNombre("Atomes", 200)));
+      // LES PENTES SONT SYMÉTRIQUES ET LA NULLE EST TOUJOURS LÀ : un son tenu doit pouvoir garder
+      // un atome sans dérive, et un glissando descendant être décrit comme un montant.
+      const PENTES: Record<string, number[]> = {
+        aucune: [0],
+        douce: [-900, -450, 0, 450, 900],
+        moyenne: [-3600, -1800, 0, 1800, 3600],
+        forte: [-14400, -7200, 0, 7200, 14400],
+      };
+      const derives = PENTES[ctx.paramTexte("Dérive", "aucune")] ?? PENTES.aucune;
 
       const debut = performance.now();
       const esquisses: Float32Array[] = [];
@@ -61,7 +78,7 @@ export const fiches: FicheAudio[] = ([
       let rapportDb = 0;
       const voies = Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c));
       const parVoie = await parCanal<OptionsDecomposition, Decomposition>(
-        voies, { frequence, atomes: voulus, echelles },
+        voies, { frequence, atomes: voulus, echelles, derives },
         {
           creerWorker: () => new Worker(new URL("../workers/atomes-worker.ts", import.meta.url), { type: "module" }),
           calcul: decomposer,
@@ -124,6 +141,11 @@ export const fiches: FicheAudio[] = ([
         valeurs: [buffer(esquisses), buffer(residus), lignes.join("\n"), sequence],
         message: [
           `${atomes.length} ${en ? "atoms" : "atomes"} · ${partExpliquee.toFixed(1)} % ${en ? "explained" : "expliqués"} · ${rapportDb.toFixed(1)} dB`,
+          // LE COMPTE DES ATOMES QUI DÉRIVENT EST CE QUI REND LE RÉGLAGE LISIBLE : sans lui, on ne
+          // saurait pas si la pente offerte a servi, ni combien de traits du son en ont eu besoin.
+          ...(derives.length > 1
+            ? [`${atomes.filter((a) => a.derive !== 0).length} ${en ? "atoms carry a chirp" : "atomes dérivent"}`]
+            : []),
           `${notes.length} ${en ? "notes" : "notes"}${ecartees > 0 ? ` · ${ecartees} ${en ? "outside the 128 semitones" : "hors des 128 demi-tons"}` : ""} · ${Math.round(millisecondes)} ms`,
         ].join("\n"),
       };

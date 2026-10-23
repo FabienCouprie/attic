@@ -7502,6 +7502,7 @@ After Stephane Mallat and Zhifeng Zhang, « Matching pursuits with time-frequenc
 |---|---|---|---|---|
 | Atoms | slider | 200 | 1 – 2000, step 1 | How many grains describe the sound. It is the sketch's number of strokes, and the only setting that really matters: at ten, you hear what is nearly enough to recognise the sound; at a few hundred, it comes back. Computation cost is proportional to it. |
 | Scales | choice | All three | Short (5 ms) / Medium (45 ms) / Long (185 ms) / All three | The window durations to search in. Short, the atoms describe attacks well and held notes badly; long, the other way round. « All three » lets the method choose for each stroke, which is the whole point of a Gabor dictionary, and a test checks that a click does take a short window where a held note takes a long one. |
+| Chirp | choice | None | None / Gentle / Medium / Strong | The frequency slope an atom may carry, in hertz per second. At « None », each atom holds a fixed frequency and a glissando is approached by a staircase of small constant atoms. The other three open steeper and steeper slopes, up to ±900, ±3,600 and ±14,400 hertz per second, and a glissando is then described by a single atom. The computation costs one further transform per slope offered. |
 
 #### Audio Inpainting
 

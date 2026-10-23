@@ -120,6 +120,89 @@ describe("la poursuite adaptative", () => {
   });
 });
 
+/** Un glissando linéaire : la fréquence monte de `de` à `vers` sur toute la durée. */
+function glissando(n: number, de: number, vers: number, amplitude = 0.5): Float32Array {
+  const x = vide(n);
+  const pente = (vers - de) / (n / SR);
+  for (let i = 0; i < n; i++) {
+    const t = i / SR;
+    x[i] = amplitude * Math.sin(2 * Math.PI * (de * t + (pente / 2) * t * t));
+  }
+  return x;
+}
+
+describe("le chirplet, l'atome qui dérive", () => {
+  // D'après Steve Mann et Simon Haykin, « The chirplet transform : a generalization of Gabor's
+  // logon transform », Vision Interface, 1991.
+  //
+  // CE QUE CES CAS TIENNENT, ET QUE LE RESTE DU FICHIER NE PEUT PAS TENIR. Un atome de Gabor garde
+  // une fréquence fixe pendant toute sa fenêtre, de sorte qu'un glissando n'en est jamais fait
+  // d'un seul : il est approché par un ESCALIER de petits atomes constants. Une dérive le décrit
+  // d'un seul atome, et c'est à cela qu'on la mesure.
+
+  it("SANS DÉRIVE, RIEN NE CHANGE : le dictionnaire reste exactement celui de Gabor", () => {
+    // LE CAS LE PLUS IMPORTANT DES QUATRE. Cette dimension s'ajoute à un nœud qui existe, dont le
+    // rendu est épinglé dans la base d'empreintes : la dérive nulle doit redonner le calcul
+    // d'avant au bit près, sans quoi le chirplet déplacerait un composant qu'il ne vise pas.
+    const x = glissando(SR, 200, 2000);
+    const sans = decomposer(x, { frequence: SR, atomes: 12, echelles: ECHELLES });
+    const nul = decomposer(x, { frequence: SR, atomes: 12, echelles: ECHELLES, derives: [0] });
+    expect(nul.atomes.map((a) => [a.echelle, a.debut, a.frequenceHz, a.poids]))
+      .toEqual(sans.atomes.map((a) => [a.echelle, a.debut, a.frequenceHz, a.poids]));
+    expect([...nul.esquisse]).toEqual([...sans.esquisse]);
+    for (const a of sans.atomes) expect(a.derive).toBe(0);
+  });
+
+  it("UN GLISSANDO SE DÉCRIT MIEUX AVEC LA DÉRIVE, et c'est la mesure qui le dit", () => {
+    const x = glissando(SR, 200, 2000);
+    const gabor = decomposer(x, { frequence: SR, atomes: 12, echelles: ECHELLES });
+    const chirp = decomposer(x, {
+      frequence: SR, atomes: 12, echelles: ECHELLES,
+      derives: [-3600, -1800, 0, 1800, 3600],
+    });
+    expect(chirp.partExpliqueePc, "à nombre d'atomes égal, la dérive doit expliquer davantage")
+      .toBeGreaterThan(gabor.partExpliqueePc);
+  });
+
+  it("ET LES ATOMES RETENUS PORTENT UNE DÉRIVE, du bon signe", () => {
+    // LE GLISSANDO MONTE, donc les atomes qui le décrivent doivent dériver vers le haut. Sans ce
+    // cas, un dictionnaire qui choisirait ses dérives au hasard expliquerait aussi un peu plus.
+    const chirp = decomposer(glissando(SR, 200, 2000), {
+      frequence: SR, atomes: 10, echelles: ECHELLES,
+      derives: [-3600, -1800, 0, 1800, 3600],
+    });
+    const derivants = chirp.atomes.filter((a) => a.derive !== 0);
+    expect(derivants.length, "aucun atome n'a pris de dérive").toBeGreaterThan(0);
+    expect(derivants.filter((a) => a.derive > 0).length, "un glissando montant appelle des dérives positives")
+      .toBeGreaterThan(derivants.length / 2);
+  });
+
+  it("UN SON TENU GARDE LA DÉRIVE NULLE, même quand elle est offerte", () => {
+    // LA SYMÉTRIE DU CAS PRÉCÉDENT, et elle compte : un dictionnaire qui prendrait une dérive sur
+    // n'importe quoi ne décrirait plus rien, il bougerait seulement.
+    const chirp = decomposer(tenue(SR, 440), {
+      frequence: SR, atomes: 8, echelles: ECHELLES,
+      derives: [-3600, -1800, 0, 1800, 3600],
+    });
+    const nuls = chirp.atomes.filter((a) => a.derive === 0).length;
+    expect(nuls, "une sinusoïde tenue ne dérive pas").toBeGreaterThan(chirp.atomes.length / 2);
+  });
+
+  it("la décroissance de l'énergie tient aussi avec les dérives", () => {
+    // LA GARANTIE DE MALLAT ET ZHANG NE DOIT PAS SE PERDRE EN CHEMIN : un atome mal posé ferait
+    // remonter le résidu, et c'est le piège que tout ce fichier existe pour arrêter.
+    const x = glissando(SR, 300, 1500);
+    let precedent = Infinity;
+    for (const n of [1, 2, 4, 8, 16]) {
+      const r = decomposer(x, { frequence: SR, atomes: n, echelles: ECHELLES, derives: [-1800, 0, 1800] });
+      let e = 0;
+      for (const v of r.residu) e += v * v;
+      expect(e, `${n} atomes`).toBeLessThanOrEqual(precedent + 1e-9);
+      precedent = e;
+    }
+  });
+});
+
 describe("les échelles proposées", () => {
   it("se traduisent en puissances de deux, dans l'ordre", () => {
     const trois = echellesEnEchantillons("trois", SR);
@@ -134,9 +217,9 @@ describe("les échelles proposées", () => {
 
   it("la répartition dit où le son se décrit le mieux", () => {
     const atomes: Atome[] = [
-      { echelle: 512, debut: 0, frequenceHz: 100, poids: 1, phase: 0 },
-      { echelle: 8192, debut: 0, frequenceHz: 100, poids: 1, phase: 0 },
-      { echelle: 8192, debut: 0, frequenceHz: 100, poids: 1, phase: 0 },
+      { echelle: 512, debut: 0, frequenceHz: 100, poids: 1, phase: 0, derive: 0 },
+      { echelle: 8192, debut: 0, frequenceHz: 100, poids: 1, phase: 0, derive: 0 },
+      { echelle: 8192, debut: 0, frequenceHz: 100, poids: 1, phase: 0, derive: 0 },
     ];
     expect([...repartition(atomes).entries()].sort()).toEqual([[512, 1], [8192, 2]]);
   });
@@ -147,7 +230,7 @@ describe("les atomes rendus comme des notes", () => {
   // être juste au sens musical, et non seulement bien typé : un instant en secondes, une durée qui
   // est la fenêtre, une hauteur qui garde sa virgule, et une nuance qui veuille dire quelque chose.
   const atome = (o: Partial<Atome>): Atome =>
-    ({ echelle: 2048, debut: 0, frequenceHz: 440, poids: 1, phase: 0, ...o });
+    ({ echelle: 2048, debut: 0, frequenceHz: 440, poids: 1, phase: 0, derive: 0, ...o });
 
   it("L'INSTANT ET LA DURÉE VIENNENT DE LA FENÊTRE, en secondes", () => {
     const { notes } = atomesEnNotes([atome({ debut: 44100, echelle: 4410 })], SR);
