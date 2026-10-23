@@ -33,6 +33,7 @@ import { PARAMETRE_CLE, demiTonDeCle } from "../audio/cles";
 import { noteMidiDeFrequence } from "../audio/commun";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import type { Note } from "../audio/note";
+import { choixLangues } from "../core/langues";
 
 /**
  * Les réglages du suivi de hauteur, taillés pour la parole et mesurés sur elle.
@@ -208,8 +209,7 @@ export const fiches: FicheAudio[] = ([
     sortieNullePermise: true,
     parametres: [
       { nom: "Langue", nomEn: "Language", type: "choix",
-        options: ["Français", "Anglais"], optionsEn: ["French", "English"],
-        optionIds: ["fr", "en"], defaut: "Français", defautEn: "French",
+        ...choixLangues(["fr", "en"]), defaut: "Français", defautEn: "French",
         doc: "Le modèle de reconnaissance employé. Chaque langue a le sien, dédié.",
         docEn: "The recognition model used. Each language has its own, dedicated." },
       { nom: "Vocabulaire", nomEn: "Vocabulary", type: "texte", defaut: "", defautEn: "",

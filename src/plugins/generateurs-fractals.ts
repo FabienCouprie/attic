@@ -10,6 +10,8 @@ import { genererMusiqueFractale, notesVersFichierMidi, rendreSequence, appliquer
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 import { PARAMETRE_CLE } from "../audio/cles";
+import { choixFormats, formatImage } from "../core/formats-image";
+import { CARACTERES_CHOIX } from "../audio/timbres";
 
 /**
  * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
@@ -31,7 +33,9 @@ export const fiches: FicheAudio[] = ([
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:80, unite:"BPM" },
       { ...PARAMETRE_CLE },
       { nom:"Gamme", nomEn:"Scale", type:"choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut:"Majeur", defautEn: "Major" },
-      { nom:"Timbre", nomEn:"Timbre", type:"choix", options:["Douce","Brillante","Percutante"], optionIds: ["douce","brillante","percutante"], defaut:"Douce", optionsEn: ["Soft", "Bright", "Percussive"], defautEn: "Soft" },
+      { nom:"Timbre", nomEn:"Timbre", type:"choix", options: CARACTERES_CHOIX.fr, optionIds: CARACTERES_CHOIX.ids, optionsEn: CARACTERES_CHOIX.en, defaut:"Douce", defautEn: "Soft",
+        doc: "Caractère de la synthèse FM. Sinus : ne rend que la hauteur demandée, sans partiel ajouté. Douce : proche d'un sinus, attaque adoucie. Brillante : riche en harmoniques. Percutante : attaque sèche et note qui retombe vite. Sans effet en SoundFont, où l'instrument choisi fait le timbre.",
+        docEn: "Character of the FM synthesis. Sine: renders only the pitch asked for, with no added partial. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre." },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
       { ...PARAMETRE_SYNTHESE,        doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
@@ -83,7 +87,15 @@ export const fiches: FicheAudio[] = ([
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 6], pas: 1, defaut: 4, doc: "Octave de la note la plus grave de la plage. 4 : Do4, la note MIDI 60.", docEn: "Octave of the lowest note of the range. 4: C4, MIDI note 60." },
       { nom: "Sensibilité", nomEn: "Sensitivity", type: "nombre", plage: [0.1, 5], pas: 0.1, defaut: 1, doc: "Largeur de la plage de hauteurs. À 1, deux octaves de la gamme ; à 0,5, une seule ; à 2, quatre. Le nombre d'itérations y est réparti sur une échelle logarithmique, si bien qu'aucune note ne se bloque en haut du clavier.", docEn: "Width of the pitch range. At 1, two octaves of the scale; at 0.5, one; at 2, four. The iteration count is spread over it on a logarithmic scale, so that no note gets stuck at the top of the keyboard." },
       { nom: "Intérieur", nomEn: "Inside", type: "choix", options: ["Silence", "Tonique grave"], optionsEn: ["Silence", "Low tonic"], optionIds: ["silence", "tonique"], defaut: "Silence", defautEn: "Silence", doc: "Ce que deviennent les points de l'ensemble lui-même, qui ne divergent jamais, le noir de l'image. Silence : ils se taisent, et le bord de la fractale fait le rythme. Tonique grave : ils tiennent la tonique une octave sous la plage.", docEn: "What becomes of the points of the set itself, which never diverge - the black of the image. Silence: they fall silent, and the edge of the fractal makes the rhythm. Low tonic: they hold the tonic one octave below the range." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], optionIds: ["douce","brillante","percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Caractère de la synthèse FM. Douce : proche d'un sinus, attaque adoucie. Brillante : riche en harmoniques. Percutante : attaque sèche et note qui retombe vite. Sans effet en SoundFont, où l'instrument choisi fait le timbre.", docEn: "Character of the FM synthesis. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre." },
+      // LE SINUS PUR ENTRE ICI, et son absence n'etait bornee par rien : le moteur de rendu
+      // l'accepte depuis toujours, mais ce composant passait son reglage par une fonction dont le
+      // type de retour l'excluait, de sorte que la valeur tombait sur « Douce » sans que rien ne le
+      // dise. La liste vient desormais de la table commune.
+      { nom: "Timbre", nomEn: "Timbre", type: "choix",
+        options: CARACTERES_CHOIX.fr, optionsEn: CARACTERES_CHOIX.en, optionIds: CARACTERES_CHOIX.ids,
+        defaut: "Douce", defautEn: "Soft",
+        doc: "Caractère de la synthèse FM. Sinus : ne rend que la hauteur demandée, sans partiel ajouté. Douce : proche d'un sinus, attaque adoucie. Brillante : riche en harmoniques. Percutante : attaque sèche et note qui retombe vite. Sans effet en SoundFont, où l'instrument choisi fait le timbre.",
+        docEn: "Character of the FM synthesis. Sine: renders only the pitch asked for, with no added partial. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0,100], defaut: 80, unite: "%", doc: "Volume de sortie de l'audio.", docEn: "Output volume of the audio." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42, doc: "Graine pour la répartition pseudo-aléatoire des points d'échantillonnage.", docEn: "Seed for the pseudo-random distribution of sampling points." },
       { ...PARAMETRE_SYNTHESE,
@@ -140,7 +152,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Répétitions", nomEn: "Repeats", type: "nombre", plage: [1, 16], pas: 1, defaut: 1, doc: "Nombre de cycles complets du flocon. Un cycle dure 4^profondeur doubles-croches au tempo choisi.", docEn: "Number of complete cycles of the snowflake. A cycle lasts 4^depth sixteenths at the chosen tempo." },
       { nom: "Articulation", nomEn: "Articulation", type: "curseur", plage: [10, 100], pas: 1, defaut: 85, unite: "%", doc: "Part du pas de chaque note qui sonne. 100 % : legato ; 30 % : piqué. Elle s'applique à chaque voix selon sa vitesse, si bien que la voix lente tient ses notes quatre et seize fois plus longtemps.", docEn: "Share of each note's step that sounds. 100%: legato; 30%: staccato. It applies to each voice at its own speed, so the slow voice holds its notes four and sixteen times longer." },
       { nom: "Notes répétées", nomEn: "Repeated notes", type: "choix", options: ["Liées", "Rejouées"], optionsEn: ["Tied", "Replayed"], optionIds: ["liees", "rejouees"], defaut: "Liées", defautEn: "Tied", doc: "Ramenées sur la gamme, deux positions voisines tombent parfois sur la même note. Liées : elles n'en font qu'une, plus longue ; rejouées : la note est frappée à nouveau.", docEn: "Once brought onto the scale, two neighbouring positions sometimes land on the same note. Tied: they make a single, longer note; replayed: the note is struck again." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Douce","Brillante","Percutante"], optionIds: ["douce","brillante","percutante"], defaut: "Douce", optionsEn: ["Soft","Bright","Percussive"], defautEn: "Soft", doc: "Caractère de la synthèse FM. Douce : proche d\'un sinus, attaque adoucie. Brillante : riche en harmoniques. Percutante : attaque sèche et note qui retombe vite. Sans effet en SoundFont, où l\'instrument choisi fait le timbre.", docEn: "Character of the FM synthesis. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre." },
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: CARACTERES_CHOIX.fr, optionsEn: CARACTERES_CHOIX.en, optionIds: CARACTERES_CHOIX.ids, defaut: "Douce", defautEn: "Soft", doc: "Caractère de la synthèse FM. Sinus : ne rend que la hauteur demandée, sans partiel ajouté. Douce : proche d\'un sinus, attaque adoucie. Brillante : riche en harmoniques. Percutante : attaque sèche et note qui retombe vite. Sans effet en SoundFont, où l\'instrument choisi fait le timbre.", docEn: "Character of the FM synthesis. Sine: renders only the pitch asked for, with no added partial. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0,100], defaut: 80, unite: "%", doc: "Volume de sortie de l'audio.", docEn: "Output volume of the audio." },
       { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
@@ -181,7 +193,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Rugosité", nomEn: "Roughness", type: "nombre", plage: [0, 1], pas: 0.05, defaut: 0.5, doc: "Influence des hautes fréquences du bruit (0 = lisse, 1 = rugueux).", docEn: "Influence of high-frequency noise (0 = smooth, 1 = rough)." },
       { nom: "Échelle", nomEn: "Scale", type: "choix", options: ["Logarithmique", "Linéaire"], optionsEn: ["Logarithmic", "Linear"], optionIds: ["logarithmic", "linear"], defaut: "Logarithmique", defautEn: "Logarithmic", doc: "Distribution verticale des fréquences dans l'image.", docEn: "Vertical distribution of frequencies in the image." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42, doc: "Graine pour reproduire la même texture fractale.", docEn: "Seed to reproduce the same fractal texture." },
-      { nom: "Format", nomEn: "Format", type: "choix", options: ["PNG", "JPEG"], defaut: "PNG", optionsEn: ["PNG", "JPEG"], defautEn: "PNG", doc: "Format de l'image de sortie.", docEn: "Output image format." },
+      // SANS `optionIds`, LE LIBELLÉ ÉTAIT L'IDENTIFIANT ENREGISTRÉ, et il divergeait d'un
+      // composant à l'autre jusque dans son ordre.
+      { nom: "Format", nomEn: "Format", type: "choix", ...choixFormats(["png", "jpeg"]), defaut: "PNG", defautEn: "PNG", doc: "Format de l'image de sortie.", docEn: "Output image format." },
     ],
     async executer(ctx: any) {
       const fftSize = parseInt(ctx.paramTexte("FFT", "2048"), 10);
@@ -193,8 +207,8 @@ export const fiches: FicheAudio[] = ([
         forme: ctx.paramTexte("Échelle", "logarithmic") as any,
         graine: ctx.paramNombre("Graine", 42),
       });
-      const fmt = ctx.paramTexte("Format", "PNG");
-      if (image && fmt === "JPEG") {
+      const fmt = formatImage(ctx.paramTexte("Format", "png"))?.id ?? "png";
+      if (image && fmt === "jpeg") {
         // Convert PNG to JPEG by re-encoding via canvas.
         const url = URL.createObjectURL(image);
         const img = new Image();
@@ -228,7 +242,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Exposition", nomEn: "Exposure", type: "nombre", plage: [0.1, 5], pas: 0.1, defaut: 1.5, doc: "Facteur d'exposition pour accentuer ou atténuer la densité de points.", docEn: "Exposure factor to emphasize or attenuate point density." },
       { nom: "Gamma", nomEn: "Gamma", type: "nombre", plage: [0.1, 3], pas: 0.1, defaut: 1, doc: "Correction gamma de l'image.", docEn: "Gamma correction of the image." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42, doc: "Graine pour les conditions initiales aléatoires de l'IFS.", docEn: "Seed for random initial conditions of the IFS." },
-      { nom: "Format", nomEn: "Format", type: "choix", options: ["PNG", "JPEG"], optionsEn: ["PNG", "JPEG"], defaut: "PNG", defautEn: "PNG", doc: "Format du fichier image de sortie.", docEn: "Output image file format." },
+      { nom: "Format", nomEn: "Format", type: "choix", ...choixFormats(["png", "jpeg"]), defaut: "PNG", defautEn: "PNG", doc: "Format du fichier image de sortie.", docEn: "Output image file format." },
       { nom: "Durée audio", nomEn: "Audio duration", type: "nombre", plage: [1, 30], pas: 0.5, defaut: 4, unite: "s", doc: "Durée du son généré depuis la trajectoire.", docEn: "Duration of the sound generated from the trajectory." },
       { nom: "Fréquence base", nomEn: "Base frequency", type: "nombre", plage: [20, 2000], pas: 1, defaut: 220, unite: "Hz", doc: "Fréquence de base pour la sonification des coordonnées X/Y.", docEn: "Base frequency for sonifying the X/Y coordinates." },
       { nom: "Plage hauteur", nomEn: "Pitch range", type: "nombre", plage: [0, 48], pas: 1, defaut: 24, unite: "demi-tons", uniteEn: "semitones", doc: "Étendue en demi-tons de la modulation de hauteur audio.", docEn: "Pitch range in semitones of the audio pitch modulation." },
@@ -262,7 +276,7 @@ export const fiches: FicheAudio[] = ([
           decimation: Math.max(1, Math.round(ctx.paramNombre("Décimation audio", 1))),
           volume: ctx.paramNombre("Volume audio", 80),
         },
-        ctx.paramTexte("Format", "PNG").toLowerCase() as any
+        (formatImage(ctx.paramTexte("Format", "png"))?.id ?? "png") as any
       );
       return {
         valeurs: [image, audio],

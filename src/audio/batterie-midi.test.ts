@@ -9,7 +9,8 @@
 // l'une des deux change, le test tombe.
 import { describe, expect, it } from "vitest";
 import {
-  CANAL_PERCUSSION, DUREE_NOTE_MAX, NOTES_PERCUSSION_GM, NUANCE_MAX, PERCUSSIONS_CHOIX, dureeDuPas,
+  CANAL_PERCUSSION, DUREE_NOTE_MAX, NOTES_PERCUSSION_GM, NUANCE_MAX, PERCUSSIONS_CHOIX,
+  PERCUSSIONS_JOUABLES, choixPercussion, dureeDuPas,
   frappesDeGrilleVelocite, frappesDePistesBooleennes, instantDuPas, notesDepuisFrappes,
   velociteMidiDepuisNuance,
 } from "./batterie-midi";
@@ -39,6 +40,53 @@ describe("les percussions offertes au choix", () => {
   it("aucune n'est nommée deux fois, dans aucune des deux langues", () => {
     expect(new Set(PERCUSSIONS_CHOIX.map((p) => p.fr)).size).toBe(PERCUSSIONS_CHOIX.length);
     expect(new Set(PERCUSSIONS_CHOIX.map((p) => p.en)).size).toBe(PERCUSSIONS_CHOIX.length);
+  });
+});
+
+describe("les percussions sonnables, pour un réglage qui n'en choisit qu'une", () => {
+  const voixDe = (note: number) => declenchementsPour(note).map((d) => d.voix).join("+");
+
+  it("CHACUNE A SA PROPRE VOIX, comme les huit pistes", () => {
+    const voixDuKick = voixDe(36);
+    for (const p of PERCUSSIONS_JOUABLES) {
+      if (p.note === 36) continue;
+      expect(voixDe(p.note), `${p.fr} (${p.note})`).not.toBe(voixDuKick);
+    }
+  });
+
+  it("ELLE CONTIENT LES HUIT PISTES, et davantage", () => {
+    // La boîte à rythmes garde sa grille de huit ; ce qui n'en choisit qu'une n'a pas cette borne.
+    const notes = PERCUSSIONS_JOUABLES.map((p) => p.note);
+    for (const note of NOTES_PERCUSSION_GM) expect(notes, String(note)).toContain(note);
+    expect(notes.length).toBeGreaterThan(NOTES_PERCUSSION_GM.length);
+  });
+
+  it("UN NOM NE DÉSIGNE QU'UNE NOTE, et c'est la collision qui est réparée", () => {
+    // « Tom grave » désignait la note 41 dans une liste écrite à la main et la 45 dans la table
+    // commune, « Tom aigu » la 48 et la 50 : le même mot à l'écran, deux notes selon le composant.
+    // Les quatre toms du General MIDI portent désormais quatre noms distincts.
+    expect(new Set(PERCUSSIONS_JOUABLES.map((p) => p.fr)).size).toBe(PERCUSSIONS_JOUABLES.length);
+    expect(new Set(PERCUSSIONS_JOUABLES.map((p) => p.en)).size).toBe(PERCUSSIONS_JOUABLES.length);
+    const nomDe = (note: number) => PERCUSSIONS_JOUABLES.find((p) => p.note === note)?.fr;
+    expect(nomDe(41)).toBe("Tom basse");
+    expect(nomDe(45)).toBe("Tom grave");
+    expect(nomDe(48)).toBe("Tom médium aigu");
+    expect(nomDe(50)).toBe("Tom aigu");
+  });
+
+  it("ET UN NOM PARTAGÉ AVEC LA TABLE DES PISTES DÉSIGNE LA MÊME NOTE", () => {
+    // C'est la propriété qui était fausse : deux tables, deux sens pour un mot.
+    for (const piste of PERCUSSIONS_CHOIX) {
+      const meme = PERCUSSIONS_JOUABLES.find((p) => p.fr === piste.fr);
+      expect(meme?.note, `« ${piste.fr} »`).toBe(piste.note);
+    }
+  });
+
+  it("et le réglage rend des identifiants numériques, indépendants de la langue", () => {
+    const r = choixPercussion();
+    expect(r.optionIds).toEqual(PERCUSSIONS_JOUABLES.map((p) => String(p.note)));
+    expect(r.options).toHaveLength(r.optionIds.length);
+    expect(r.optionsEn).toHaveLength(r.optionIds.length);
   });
 });
 

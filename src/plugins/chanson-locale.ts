@@ -25,6 +25,7 @@ import {
 import { fiches as variantes } from "./chanson-variantes";
 import { fiches as accompagnement } from "./chanson-accompagnement";
 import { fiches as compositionDePlan } from "./composer-plan";
+import { choixLangues, libelleLangue } from "../core/langues";
 
 const locales = ([
   {
@@ -74,8 +75,7 @@ const locales = ([
         doc: "Le texte chanté, avec ses marques de partie entre crochets. Vide, le planificateur l'écrit.",
         docEn: "The sung text, with its section markers in brackets. Empty, the planner writes it." },
       { nom: "Langue du chant", nomEn: "Singing language", type: "choix",
-        options: LANGUES.map((l) => l.fr), optionsEn: LANGUES.map((l) => l.en),
-        optionIds: LANGUES.map((l) => l.id), defaut: "Français", defautEn: "French",
+        ...choixLangues(LANGUES), defaut: "Français", defautEn: "French",
         doc: "La langue dans laquelle la voix chante. Les dix proposées sont celles que le modèle tient le mieux ; il en connaît davantage, moins bien chantées. Quand « Paroles » est vide, le texte écrit ne suit pas toujours cette langue.",
         docEn: "The language the voice sings in. The ten offered are those the model holds best; it knows more, less well sung. When « Lyrics » is empty, the written text does not always follow this language." },
       { nom: "Durée", nomEn: "Length", type: "nombre", plage: [0, 600], pas: 10, defaut: 60, unite: "s",

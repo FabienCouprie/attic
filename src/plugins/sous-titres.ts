@@ -16,6 +16,7 @@ import { annoncerModele } from "./message-modele";
 import { cheminDansTravail } from "./pont-electron";
 import { MODELES, chargerModele, transcrire, versMono, vers16k } from "./vosk-asr";
 import { decouperEnSousTitres, versSrt } from "../audio/sous-titres";
+import { choixLangues } from "../core/langues";
 
 export const fiches = ([
   {
@@ -63,8 +64,7 @@ export const fiches = ([
     sortieNullePermise: true,
     parametres: [
       { nom: "Langue", nomEn: "Language", type: "choix",
-        options: ["Français", "Anglais"], optionsEn: ["French", "English"],
-        optionIds: ["fr", "en"], defaut: "Français", defautEn: "French",
+        ...choixLangues(["fr", "en"]), defaut: "Français", defautEn: "French",
         doc: "Le modèle de reconnaissance employé. Chaque langue a le sien, dédié.",
         docEn: "The recognition model used. Each language has its own, dedicated." },
       { nom: "Vocabulaire", nomEn: "Vocabulary", type: "texte", defaut: "", defautEn: "",

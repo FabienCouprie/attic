@@ -16,7 +16,8 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
  * Accepte les altérations #/♯ et b/♭, ignore la casse et les espaces blancs.
  * Retourne null si la note est invalide.
  */
-import { noteVersFrequence, FORMES_FREQ } from "./generateurs-aides";
+import { noteVersFrequence } from "./generateurs-aides";
+import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { SIGNATURES, clicsDeMesure, dureeUnite, lireSignature, tempsParMesure } from "../audio/signatures";
 
@@ -154,9 +155,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "A4",
         doc: "Note musicale (utilisé si « Saisie » = Note). Format : lettre + altération + octave, ex. C4, F#5, Bb3.",
         docEn: "Musical note (used when « Input » = Note). Format: letter + accidental + octave, e.g. A4, C#5, Bb3.", defautEn: "A4" },
-      { nom: "Forme", nomEn: "Waveform", type: "choix", options: ["Sinus", "Carré", "Scie", "Triangle"], optionsEn: ["Sine", "Square", "Saw", "Triangle"], optionIds: FORMES_FREQ.ids, defaut: "Sinus",
-        doc: "Forme d'onde. Sinus = pur (une seule fréquence) ; Carré = harmoniques impaires ; Scie = toutes les harmoniques ; Triangle = harmoniques impaires douces.",
-        docEn: "Waveform. Sine = pure (single frequency); Square = odd harmonics; Saw = all harmonics; Triangle = soft odd harmonics.", defautEn: "Sine" },
+      { nom: "Forme", nomEn: "Waveform", type: "choix", options: FORMES_ONDE_CHOIX.fr, optionsEn: FORMES_ONDE_CHOIX.en, optionIds: FORMES_ONDE_CHOIX.ids, optionsHeritees: LIBELLES_HERITES_FORMES, defaut: "Sinus",
+        doc: "Forme d'onde. Sinus = pur, une seule fréquence ; Carré = harmoniques impaires ; Dent de scie = toutes les harmoniques ; Triangle = harmoniques impaires douces.",
+        docEn: "Waveform. Sine = pure, a single frequency; Square = odd harmonics; Sawtooth = all harmonics; Triangle = soft odd harmonics.", defautEn: "Sine" },
       { nom: "Durée", nomEn: "Duration", plage: [0.1, 30], pas: 0.1, defaut: 2, unite: "s",
         doc: "Durée du signal généré.", docEn: "Duration of the generated signal." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
@@ -182,7 +183,10 @@ export const fiches: FicheAudio[] = ([
       const len = Math.max(1, Math.floor(duree * sr));
       const buf = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
       const vol = Math.max(0, Math.min(1, volume / 100)) * 0.7;
-      const typeOsc: OscillatorType = forme === "square" ? "square" : forme === "saw" ? "sawtooth" : forme === "triangle" ? "triangle" : "sine";
+      // LA TABLE D'ALIAS TRADUIT, ET NON UNE CHAÎNE DE TERNAIRES : elle reconnaît l'identifiant
+      // canonique, les libellés d'autrefois et l'ancien `saw` de ce composant, qui était justement
+      // la raison de la traduction à la main.
+      const typeOsc: OscillatorType = formeOndeDepuisTimbre(forme) ?? "sine";
 
       for (let ch = 0; ch < 2; ch++) {
         const d = buf.getChannelData(ch);
@@ -203,7 +207,8 @@ export const fiches: FicheAudio[] = ([
       }
 
       const noteAff = enModeNote ? ctx.paramTexte("Note", "A4") : `${freq.toFixed(1)} Hz`;
-      const labelForme = (langueCourante() === "en" ? FORMES_FREQ.en : FORMES_FREQ.fr)[FORMES_FREQ.ids.indexOf(forme)] ?? forme;
+      const libelles = langueCourante() === "en" ? FORMES_ONDE_CHOIX.en : FORMES_ONDE_CHOIX.fr;
+      const labelForme = libelles[FORMES_ONDE_CHOIX.ids.indexOf(typeOsc)] ?? forme;
       return { valeurs: [buf], message: traduire("msg.var_0_var_1_var_2_s", noteAff, labelForme, duree.toFixed(1)) };
     },
   },

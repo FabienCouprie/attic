@@ -7,6 +7,20 @@ import { comparerEvenementsMidi } from "./midi";
 import { writeMidi } from "midi-file";
 import { completer, degresDeGamme } from "./gammes";
 
+/**
+ * Le genre canonique d'une valeur enregistrée, ou `null` si elle ne nomme aucun genre connu.
+ *
+ * UN PROJET PEUT PORTER « hip-hop », et c'est pour cela que cette fonction existe : « Générateur
+ * musical » écrivait ses identifiants à la main avec un trait d'union, quand la clé de la table
+ * est « hiphop ». La valeur tombait donc sur le repli « pop » sans que rien ne le dise, et un
+ * projet enregistré avant la réparation la porte encore. Les séparateurs sont ôtés plutôt
+ * qu'énumérés, de sorte que « hip hop », « hip_hop » et « Hip-Hop » se lisent aussi.
+ */
+export function normaliserGenre(valeur: string): string | null {
+  const nu = String(valeur).trim().toLowerCase().replace(/[\s_-]+/g, "");
+  return Object.keys(PROGRESSIONS_GENRE).find((cle) => cle === nu) ?? null;
+}
+
 export const PROGRESSIONS_GENRE: Record<string, number[][]> = {
   rock: [[0, 4, 5], [0, 4, 0, 5], [0, 5, 3, 4]],
   pop: [[0, 5, 3, 4], [0, 4, 5, 4], [0, 3, 5, 4]],
@@ -130,7 +144,7 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
     cfg[clef] = val;
   }
 
-  const genre = cfg["genre"] || "pop";
+  const genre = normaliserGenre(cfg["genre"] || "pop") ?? "pop";
   const tempo = Math.max(40, Math.min(240, parseInt(cfg["tempo"] || "120")));
   const cleNom = cfg["cle"] || cfg["key"] || "C";
   const gammeNom = (cfg["gamme"] || cfg["scale"] || "majeur").toLowerCase();

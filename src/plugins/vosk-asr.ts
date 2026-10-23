@@ -31,6 +31,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { baseModeleLivre } from "./base-modeles";
 import { annoncerModele } from "./message-modele";
+import { choixLangues } from "../core/langues";
 
 /** Les modèles livrés, et le fichier de chacun sous `oonx/`. */
 export const MODELES: Record<string, { fichier: string; id: string }> = {
@@ -226,8 +227,7 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Langue", nomEn: "Language", type: "choix",
-        options: ["Français", "Anglais"], optionsEn: ["French", "English"],
-        optionIds: ["fr", "en"], defaut: "Français", defautEn: "French",
+        ...choixLangues(["fr", "en"]), defaut: "Français", defautEn: "French",
         doc: "Le modèle employé. Chaque langue a le sien, dédié : un modèle français n'est pas un modèle multilingue réglé sur le français, et il le montre.",
         docEn: "The model used. Each language has its own, dedicated: a French model is not a multilingual model set to French, and it shows." },
       { nom: "Vocabulaire", nomEn: "Vocabulary", type: "texte", defaut: "", defautEn: "",

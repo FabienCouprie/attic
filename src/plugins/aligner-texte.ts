@@ -22,6 +22,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
+import { choixLangues } from "../core/langues";
 
 const CALCULS = [
   { id: "", fr: "Automatique", en: "Automatic" },
@@ -31,20 +32,13 @@ const CALCULS = [
   { id: "CUDA0", fr: "CUDA 0", en: "CUDA 0" },
 ];
 
-/** Les onze langues que le moteur déclare. Une langue hors de cette liste serait refusée par lui. */
-const LANGUES = [
-  { id: "fr", fr: "Français", en: "French" },
-  { id: "en", fr: "Anglais", en: "English" },
-  { id: "de", fr: "Allemand", en: "German" },
-  { id: "es", fr: "Espagnol", en: "Spanish" },
-  { id: "it", fr: "Italien", en: "Italian" },
-  { id: "pt", fr: "Portugais", en: "Portuguese" },
-  { id: "ru", fr: "Russe", en: "Russian" },
-  { id: "zh", fr: "Chinois", en: "Chinese" },
-  { id: "yue", fr: "Cantonais", en: "Cantonese" },
-  { id: "ja", fr: "Japonais", en: "Japanese" },
-  { id: "ko", fr: "Coréen", en: "Korean" },
-];
+/**
+ * Les onze langues que le moteur déclare. Une langue hors de cette liste serait refusée par lui.
+ *
+ * LES CODES SONT ICI, LES NOMS DANS `core/langues.ts` : la borne est propre à ce moteur et doit
+ * rester sous ses yeux, le nom d'une langue ne l'est pas et s'écrivait dans six tables.
+ */
+const LANGUES = ["fr", "en", "de", "es", "it", "pt", "ru", "zh", "yue", "ja", "ko"];
 
 const MONTAGES = [
   { id: "place", fr: "Garder la place", en: "Keep the place" },
@@ -133,8 +127,7 @@ export const fiches = ([
         doc: "La durée du fondu aux deux bords de la découpe. À zéro, la coupe est franche et peut claquer. Les mots qui se suivent étant recollés d'abord, une suite de mots ne reçoit qu'un fondu à chaque extrémité.",
         docEn: "The fade length at both edges of the cut. At zero, the cut is abrupt and may click. Since words that follow one another are joined first, a word sequence receives only one fade at each end." },
       { nom: "Langue", nomEn: "Language", type: "choix",
-        options: LANGUES.map((l) => l.fr), optionsEn: LANGUES.map((l) => l.en),
-        optionIds: LANGUES.map((l) => l.id), defaut: "Français", defautEn: "French",
+        ...choixLangues(LANGUES), defaut: "Français", defautEn: "French",
         doc: "La langue du texte, parmi les onze que le moteur connaît. Une langue qui ne correspond pas au texte dégrade le placement sans refuser le travail.",
         docEn: "The language of the text, among the eleven the engine knows. A language that does not match the text degrades the placement without refusing the work." },
       { nom: "Calcul", nomEn: "Compute", type: "choix",

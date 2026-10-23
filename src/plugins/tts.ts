@@ -10,6 +10,7 @@ import { installerGardeWorker } from "./garde-worker";
 import { annoncerModele } from "./message-modele";
 import { baseModeleLivre } from "./base-modeles";
 import { fiches as clonageDeVoix } from "./cloner-voix";
+import { choixLangues, codeLangue, libelleLangue } from "../core/langues";
 
 let worker: Worker | null = null;
 
@@ -57,20 +58,26 @@ const VOIX_SPEECHT5 = [
 // comptait toujours dix entrées quand celle-ci en a perdu trois : une option devenait injoignable,
 // et deux gardes du dépôt l'ont dit. Une liste écrite deux fois finit par ne plus être d'accord
 // avec elle-même.
-const LANGUES_MMS: { id: string; fr: string; en: string; model: string }[] = [
-  { id: "en", fr: "Anglais", en: "English", model: "Xenova/mms-tts-eng" },
-  { id: "fr", fr: "Français", en: "French", model: "Xenova/mms-tts-fra" },
-  { id: "es", fr: "Espagnol", en: "Spanish", model: "Xenova/mms-tts-spa" },
-  { id: "de", fr: "Allemand", en: "German", model: "Xenova/mms-tts-deu" },
-  { id: "pt", fr: "Portugais", en: "Portuguese", model: "Xenova/mms-tts-por" },
-  { id: "ro", fr: "Roumain", en: "Romanian", model: "Xenova/mms-tts-ron" },
-  { id: "ru", fr: "Russe", en: "Russian", model: "Xenova/mms-tts-rus" },
-];
+/**
+ * Le modele publie pour chaque langue : ce qui est PROPRE a ce moteur, et sa borne.
+ *
+ * Les noms de langue, eux, viennent de `core/langues.ts` : ils etaient ecrits ici comme dans cinq
+ * autres tables.
+ */
+const MODELES_MMS: Record<string, string> = {
+  en: "Xenova/mms-tts-eng",
+  fr: "Xenova/mms-tts-fra",
+  es: "Xenova/mms-tts-spa",
+  de: "Xenova/mms-tts-deu",
+  pt: "Xenova/mms-tts-por",
+  ro: "Xenova/mms-tts-ron",
+  ru: "Xenova/mms-tts-rus",
+};
 
 // Accepte l'id canonique comme l'ancien libellé français (projets existants).
 function modeleMMS(valeur: string): string | undefined {
   const v = String(valeur).trim().toLowerCase();
-  return LANGUES_MMS.find((l) => l.id === v || l.fr.toLowerCase() === v)?.model;
+  return MODELES_MMS[codeLangue(v)];
 }
 
 const synthesesVocales: FicheAudio[] = ([
@@ -125,8 +132,7 @@ const synthesesVocales: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Langue", nomEn: "Language", type: "choix",
-        options: LANGUES_MMS.map((l) => l.fr), optionIds: LANGUES_MMS.map((l) => l.id),
-        optionsEn: LANGUES_MMS.map((l) => l.en),
+        ...choixLangues(Object.keys(MODELES_MMS)),
         defaut: "Anglais",
         doc: "Langue du texte à synthétiser. Détermine le modèle MMS utilisé.",
         docEn: "Language of the text to synthesize. Determines which MMS model is used.", defautEn: "English" },
@@ -146,7 +152,7 @@ const synthesesVocales: FicheAudio[] = ([
       await annoncerModele(ctx, "tts-mms", traduire("progress.chargement_du_mod_le"));
       // Libellé lisible pour le message du nœud : `langue` vaut désormais un
       // code ISO (« en »), qui n'a pas de sens à afficher tel quel.
-      const langueLabel = LANGUES_MMS.find((l) => l.id === langue)?.fr ?? langue;
+      const langueLabel = libelleLangue(langue);
       const w = getWorker();
       return new Promise((resolve) => {
         const requestId = makeRequestId();

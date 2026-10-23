@@ -15,7 +15,7 @@
 // sur une courbe.
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { PERCUSSIONS_CHOIX } from "../audio/batterie-midi";
+import { choixPercussion } from "../audio/batterie-midi";
 import {
   complementaire, enSuite, inverserIntervalles, inverserOrdre, permuterEtiquettes, reflechir,
   tourner, type Cercle,
@@ -214,8 +214,7 @@ export const fiches: FicheAudio[] = ([
     sorties: SORTIE_CERCLE,
     parametres: [
       { nom: "Percussion", nomEn: "Drum", type: "choix",
-        options: PERCUSSIONS_CHOIX.map((p) => p.fr), optionsEn: PERCUSSIONS_CHOIX.map((p) => p.en),
-        optionIds: PERCUSSIONS_CHOIX.map((p) => String(p.note)),
+        ...choixPercussion(),
         defaut: "Caisse claire", defautEn: "Snare",
         doc: "Le son du complémentaire d'un cercle de percussion. Sans effet sur une mélodie, dont les notes se déduisent de la fondamentale.",
         docEn: "The sound of the complement of a percussion circle. No effect on a melody, whose notes follow from the fundamental." },

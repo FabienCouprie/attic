@@ -150,3 +150,49 @@ describe("partition écrite", () => {
     expect(total).toBe(12); // trois noires de quatre unités
   });
 });
+
+describe("la grille d'écriture, et ce qu'elle change au nom des valeurs", () => {
+  const noire = (note: number, debut: number) => ({ note, debut, fin: debut + 0.5 });
+  /** Le premier `<type>` écrit, c'est-à-dire la valeur affichée par le logiciel qui lit. */
+  const premierType = (x: string) => x.match(/<type>([a-z0-9]+)<\/type>/)?.[1];
+  const divisions = (x: string) => Number(x.match(/<divisions>(\d+)<\/divisions>/)?.[1]);
+
+  it("UNE NOIRE S'APPELLE UNE NOIRE, QUELLE QUE SOIT LA GRILLE", () => {
+    // LE DÉFAUT QUE CE CAS ARRÊTE. `<divisions>` dit combien d'unités valent une noire, et il suit
+    // le réglage de quantification : quatre, deux ou une. Mais la table des noms de valeur était
+    // écrite pour quatre, de sorte qu'à la croche une noire s'appelait « eighth » et à la noire
+    // « 16th ». La durée restait juste par rapport aux divisions, donc la mesure se remplissait et
+    // rien ne criait ; c'est le NOM, c'est-à-dire la tête de note affichée, qui était faux.
+    for (const [quantification, attendu] of [[16, 4], [8, 2], [4, 1]] as const) {
+      const x = notesVersMusicXML([noire(60, 0)], { tempo: 120, quantification });
+      expect(divisions(x), `quantification ${quantification}`).toBe(attendu);
+      expect(premierType(x), `quantification ${quantification}`).toBe("quarter");
+    }
+  });
+
+  it("et une croche aussi, là où la grille la permet", () => {
+    const croche = { note: 60, debut: 0, fin: 0.25 };
+    for (const quantification of [16, 8]) {
+      const x = notesVersMusicXML([croche], { tempo: 120, quantification });
+      expect(premierType(x), `quantification ${quantification}`).toBe("eighth");
+    }
+  });
+
+  it("LA MESURE FAIT SON COMPTE EXACT, et non un compte arrondi", () => {
+    // Le second défaut : la longueur de mesure se calculait par un arrondi, de sorte qu'une
+    // métrique dont la mesure ne tombe pas juste sur la grille donnait des barres déplacées sans
+    // que rien ne le dise. 3/8 vaut une noire et demie : à la noire, cela ne tombe pas.
+    for (const [metrique, quantification] of [[[3, 8], 4], [[9, 8], 8], [[7, 8], 4]] as const) {
+      const x = notesVersMusicXML([noire(60, 0)], { tempo: 120, metrique: metrique as [number, number], quantification });
+      const d = divisions(x);
+      const attendu = (metrique[0] * 4 / metrique[1]) * d;
+      expect(Number.isInteger(attendu), `${metrique[0]}/${metrique[1]} à ${d} par noire`).toBe(true);
+      for (const mesure of x.split("<measure ").slice(1)) {
+        const total = mesure.split("<note>").slice(1)
+          .filter((b) => !b.includes("<chord/>"))
+          .reduce((s, b) => s + Number(b.match(/<duration>(\d+)<\/duration>/)?.[1] ?? 0), 0);
+        expect(total, `${metrique[0]}/${metrique[1]} : mesure de ${total} au lieu de ${attendu}`).toBe(attendu);
+      }
+    }
+  });
+});

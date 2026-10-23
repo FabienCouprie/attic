@@ -263,7 +263,10 @@ const CAS: Cas[] = [
   // garde son identité, pas pour faire survivre un choix qui n'a plus de modèle derrière lui. Un
   // projet enregistré sur l'une des trois le dit désormais dans son message, au lieu de parler
   // anglais en silence.
-  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Auto", idAttendu: "auto" },
+  // L'IDENTIFIANT DE L'AUTOMATIQUE ÉTAIT « auto » ICI ET LA CHAÎNE VIDE PARTOUT AILLEURS ; c'est la
+  // chaîne vide qui est la convention du dépôt, et les deux anciens libellés doivent se relire.
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "Auto", idAttendu: "" },
+  { node: "sherpa-asr", param: "Langue", ancienneValeur: "auto", idAttendu: "" },
   { node: "sherpa-asr", param: "Langue", ancienneValeur: "Français", idAttendu: "fr" },
   { node: "sherpa-asr", param: "Langue", ancienneValeur: "Japanese", idAttendu: "ja" },
   { node: "sherpa-asr", param: "Langue", ancienneValeur: "Coréen", idAttendu: "ko" },
@@ -303,7 +306,15 @@ const CAS: Cas[] = [
   { node: "generateur-bruit", param: "Type", ancienneValeur: "Brownian", idAttendu: "Brownien" },
   { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "Random", idAttendu: "Aléatoire" },
   { node: "arpegiateur-midi", param: "Motif", ancienneValeur: "Straight", idAttendu: "Droit" },
-  { node: "tremolo", param: "Forme", ancienneValeur: "Sine", idAttendu: "Sinus" },
+  // LES IDENTIFIANTS DU TRÉMOLO ÉTAIENT SES LIBELLÉS FRANÇAIS CAPITALISÉS, « Sinus » et « Carré ».
+  // Ils sont canoniques désormais, et les quatre anciens doivent se relire.
+  { node: "tremolo", param: "Forme", ancienneValeur: "Sine", idAttendu: "sine" },
+  { node: "tremolo", param: "Forme", ancienneValeur: "Sinus", idAttendu: "sine" },
+  { node: "tremolo", param: "Forme", ancienneValeur: "Carré", idAttendu: "square" },
+  { node: "tremolo", param: "Forme", ancienneValeur: "Sawtooth", idAttendu: "sawtooth" },
+  { node: "generateur-frequence", param: "Forme", ancienneValeur: "saw", idAttendu: "sawtooth" },
+  { node: "generateur-frequence", param: "Forme", ancienneValeur: "Scie", idAttendu: "sawtooth" },
+  { node: "reservoir-musical", param: "Timbre", ancienneValeur: "Scie", idAttendu: "sawtooth" },
   { node: "arpege-koch", param: "Accord", ancienneValeur: "Augmented", idAttendu: "Augmenté" },
   { node: "arpege-koch", param: "Direction", ancienneValeur: "outward", idAttendu: "extérieure" },
   { node: "attracteur-ifs", param: "Attracteur", ancienneValeur: "Rossler", idAttendu: "Rössler" },
@@ -312,13 +323,22 @@ const CAS: Cas[] = [
   { node: "boite-rythmes", param: "Patron", ancienneValeur: "Waltz", idAttendu: "Valse" },
   { node: "generateur-fractal", param: "Motif", ancienneValeur: "Custom", idAttendu: "Personnalisé" },
   { node: "generateur-musical", param: "Genre", ancienneValeur: "classic", idAttendu: "classique" },
+  // CES DEUX-LÀ RÉPARENT UN DÉFAUT, et non seulement un renommage : « hip-hop » était l'identifiant
+  // ENREGISTRÉ par ce composant, et il ne nommait aucune progression, de sorte que ce genre rendait
+  // celle de pop. Un projet qui le porte doit désormais retrouver « hiphop ».
+  { node: "generateur-musical", param: "Genre", ancienneValeur: "hip-hop", idAttendu: "hiphop" },
+  { node: "generateur-musical", param: "Genre", ancienneValeur: "hip hop", idAttendu: "hiphop" },
   { node: "generateur-musical", param: "Instrument 2", ancienneValeur: "Fretless bass", idAttendu: "Basse fretless" },
   { node: "gestion-nodes", param: "Action", ancienneValeur: "Export", idAttendu: "Exporter" },
   { node: "vexflow-tab", param: "Accordage", ancienneValeur: "Ukulele", idAttendu: "Ukulélé" },
   { node: "ddsp-tone-transfer", param: "Instrument", ancienneValeur: "Tenor saxophone", idAttendu: "Saxophone ténor" },
   { node: "palette-harmonique", param: "Ordre", ancienneValeur: "Brightness", idAttendu: "Luminosité" },
-  { node: "hard-panner", param: "Position", ancienneValeur: "Left", idAttendu: "Gauche" },
-  { node: "hard-panner", param: "Position", ancienneValeur: "Center", idAttendu: "Centre" },
+  // LES IDENTIFIANTS DU PANORAMIQUE ÉTAIENT SES LIBELLÉS FRANÇAIS CAPITALISÉS ; ils sont en
+  // minuscules désormais, comme partout ailleurs, et les trois anciens doivent se relire.
+  { node: "hard-panner", param: "Position", ancienneValeur: "Left", idAttendu: "gauche" },
+  { node: "hard-panner", param: "Position", ancienneValeur: "Center", idAttendu: "centre" },
+  { node: "hard-panner", param: "Position", ancienneValeur: "Gauche", idAttendu: "gauche" },
+  { node: "hard-panner", param: "Position", ancienneValeur: "Droite", idAttendu: "droite" },
   { node: "automate-cellulaire", param: "Règle", ancienneValeur: "Custom", idAttendu: "Personnalisée" },
   { node: "automate-cellulaire", param: "Mode voix", ancienneValeur: "Polyphony", idAttendu: "Polyphonie" },
   { node: "automate-cellulaire", param: "Mapping", ancienneValeur: "Pitch + velocity", idAttendu: "Hauteur + vélocité" },

@@ -16,6 +16,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
+import { choixLangues } from "../core/langues";
 import {
   CANAL_PLANIFIER, ENTREES_SOURCE, LANGUES, NOTICE_RENDU_EN, NOTICE_RENDU_FR, NOTICE_TIMBRE_EN,
   NOTICE_TIMBRE_FR, PARAMETRE_CALCUL, PARAMETRES_RENDU, SORTIE_AUDIO, SORTIE_NOTICE_EN,
@@ -197,8 +198,7 @@ export const fiches = ([
         doc: "Ce qu'on veut entendre, en quelques mots. L'entrée « Phrase » la remplace quand elle est branchée.",
         docEn: "What is wanted, in a few words. The « Sentence » input replaces it when connected." },
       { nom: "Langue du chant", nomEn: "Singing language", type: "choix",
-        options: LANGUES.map((l) => l.fr), optionsEn: LANGUES.map((l) => l.en),
-        optionIds: LANGUES.map((l) => l.id), defaut: "Français", defautEn: "French",
+        ...choixLangues(LANGUES), defaut: "Français", defautEn: "French",
         doc: "La langue dans laquelle la voix chante. Les dix proposées sont celles que le modèle tient le mieux.",
         docEn: "The language the voice sings in. The ten offered are those the model holds best." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [-1, 999999], pas: 1, defaut: -1,

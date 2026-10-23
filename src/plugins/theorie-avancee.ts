@@ -311,7 +311,11 @@ export const fiches: FicheAudio[] = ([
       { nom: "Gamme", nomEn: "Scale", type: "choix",
         options: ["Majeure", "Mineure", "Pentatonique", "Chromatique"],
         optionsEn: ["Major", "Minor", "Pentatonic", "Chromatic"],
-        optionIds: ["majeure", "mineure", "pentatonique", "chromatique"],
+        // LES IDENTIFIANTS SONT CEUX DE `audio/gammes.ts`, et ils ne l'étaient pas : cette liste de
+        // quatre était écrite à la main avec des alias, et le plancher de longueur du registre des
+        // nomenclatures la laissait passer, puisqu'il ne regardait que les listes de cinq et plus.
+        optionIds: ["majeur", "mineur", "pentatonique-majeure", "chromatique"],
+        optionsHeritees: { majeure: "majeur", mineure: "mineur", pentatonique: "pentatonique-majeure" },
         defaut: "Majeure", defautEn: "Major",
         doc: "La gamme employée en lecture par degrés.", docEn: "The scale used when reading by degrees." },
       { nom: "Durée d'une note", nomEn: "Note length", type: "nombre", plage: [0.05, 2], pas: 0.05, defaut: 0.25, unite: "s",
@@ -324,7 +328,7 @@ export const fiches: FicheAudio[] = ([
       const tonique = (parseInt(ctx.paramTexte("Tonique", "0"), 10) || 0)
         + (Math.round(ctx.paramNombre("Octave", 4)) + 1) * 12;
       const mode = ctx.paramTexte("Lecture", "demi-tons") as ModeHauteur;
-      const gamme = degresDeGamme(ctx.paramTexte("Gamme", "majeure"), "majeur");
+      const gamme = degresDeGamme(ctx.paramTexte("Gamme", "majeur"), "majeur");
       const duree = ctx.paramNombre("Durée d'une note", 0.25);
 
       const notes: NoteSimple[] = [];

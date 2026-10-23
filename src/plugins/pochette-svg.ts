@@ -5,6 +5,7 @@
 
 import { PALETTES_PRESET, clamp, cleanBorder, cleanFont, cleanPreset, cleanStyle, paletteDepuisPrompt, pick, randInt, randRange, shapeOpacity } from "./pochette-palettes";
 import { creerAleatoire } from "../core/hasard";
+import { FORMATS_IMAGE, type FormatImage } from "../core/formats-image";
 
 function polygonPoints(cx: number, cy: number, r: number, sides: number, rng: () => number): string {
   const points: string[] = [];
@@ -370,6 +371,9 @@ export async function rasteriserPochettePNG(
   largeur: number,
   hauteur: number,
   nomBase: string,
+  // LE FORMAT MATRICIEL EST UN ARGUMENT, et il était codé en dur. Le même <canvas> sait écrire du
+  // JPEG, de sorte que n'offrir que le PNG n'était borné par rien.
+  format: FormatImage = FORMATS_IMAGE[0],
 ): Promise<File> {
   if (typeof document === "undefined" || typeof Image === "undefined") {
     throw new Error("Rastérisation PNG indisponible hors navigateur");
@@ -390,10 +394,17 @@ export async function rasteriserPochettePNG(
     canvas.height = hauteur;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Contexte 2D indisponible");
+    // LE JPEG N'A PAS DE TRANSPARENCE, donc le fond est peint AVANT le dessin : sans cela, un SVG
+    // à fond transparent ressortirait sur du noir, que personne n'a demandé.
+    if (format.id === "jpeg") {
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, largeur, hauteur);
+    }
     ctx.drawImage(img, 0, 0, largeur, hauteur);
-    const blobPng = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-    if (!blobPng) throw new Error("Encodage PNG échoué");
-    return new File([blobPng], `${nomBase}.png`, { type: "image/png" });
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, format.mime, format.id === "jpeg" ? 0.92 : undefined));
+    if (!blob) throw new Error(`Encodage ${format.fr} échoué`);
+    return new File([blob], `${nomBase}.${format.extension}`, { type: format.mime });
   } finally {
     URL.revokeObjectURL(url);
   }

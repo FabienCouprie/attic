@@ -19,6 +19,7 @@ import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { octetsWav, PARAMETRE_CALCUL } from "./chanson-aides";
+import { LANGUE_AUTO, choixLangues } from "../core/langues";
 
 const CANAL = "chatterbox:cloner";
 
@@ -39,15 +40,7 @@ function suivre(ctx: { onProgress?: (m: string) => void }) {
  * valider. « Automatique » laisse le modèle décider, ce qu'il fait seul et plutôt bien ; les
  * autres se transmettent telles quelles.
  */
-const LANGUES = [
-  { id: "", fr: "Automatique", en: "Automatic" },
-  { id: "fr", fr: "Français", en: "French" },
-  { id: "en", fr: "Anglais", en: "English" },
-  { id: "es", fr: "Espagnol", en: "Spanish" },
-  { id: "de", fr: "Allemand", en: "German" },
-  { id: "it", fr: "Italien", en: "Italian" },
-  { id: "pt", fr: "Portugais", en: "Portuguese" },
-];
+const LANGUES = [LANGUE_AUTO, "fr", "en", "es", "de", "it", "pt"];
 
 export const fiches = ([
   {
@@ -92,8 +85,7 @@ export const fiches = ([
         doc: "Ce qui sera dit. L'entrée « Texte » le remplace quand elle est branchée.",
         docEn: "What will be said. The « Text » input replaces it when connected." },
       { nom: "Langue", nomEn: "Language", type: "choix",
-        options: LANGUES.map((l) => l.fr), optionsEn: LANGUES.map((l) => l.en),
-        optionIds: LANGUES.map((l) => l.id),
+        ...choixLangues(LANGUES),
         defaut: "Automatique", defautEn: "Automatic",
         doc: "La langue de prononciation. « Automatique » laisse le modèle décider d'après le texte ; imposer une langue change nettement la prononciation et la longueur du rendu.",
         docEn: "The pronunciation language. « Automatic » lets the model decide from the text; imposing a language clearly changes the pronunciation and the length of the result." },

@@ -501,7 +501,7 @@ Builds a piece by recursively applying an interval motif over several depth leve
 | Tempo | number | 80 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key. It moves everything without changing the gaps between degrees. |
 | Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to pick notes (major, minor, pentatonic…). |
-| Timbre | choice | Soft | Soft / Bright / Percussive | Tone color of the synthesis (soft, bright, percussive). |
+| Timbre | choice | Soft | Sine / Soft / Bright / Percussive | Character of the FM synthesis. Sine: renders only the pitch asked for, with no added partial. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -583,7 +583,7 @@ Three voices play three levels of the same Koch snowflake. Each starts from one 
 | Repeats | number | 1 | 1 – 16, step 1 | Number of complete cycles of the snowflake. A cycle lasts 4^depth sixteenths at the chosen tempo. |
 | Articulation | slider | 85 % | 10 – 100 %, step 1 | Share of each note's step that sounds. 100%: legato; 30%: staccato. It applies to each voice at its own speed, so the slow voice holds its notes four and sixteen times longer. |
 | Repeated notes | choice | Tied | Tied / Replayed | Once brought onto the scale, two neighbouring positions sometimes land on the same note. Tied: they make a single, longer note; replayed: the note is struck again. |
-| Timbre | choice | Soft | Soft / Bright / Percussive | Character of the FM synthesis. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre. |
+| Timbre | choice | Soft | Sine / Soft / Bright / Percussive | Character of the FM synthesis. Sine: renders only the pitch asked for, with no added partial. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre. |
 | Volume | number | 80 % | 0 – 100 % | Output volume of the audio. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -644,7 +644,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | Octave | number | 4 | 1 – 6, step 1 | Octave of the lowest note of the range. 4: C4, MIDI note 60. |
 | Sensitivity | number | 1 | 0.1 – 5, step 0.1 | Width of the pitch range. At 1, two octaves of the scale; at 0.5, one; at 2, four. The iteration count is spread over it on a logarithmic scale, so that no note gets stuck at the top of the keyboard. |
 | Inside | choice | Silence | Silence / Low tonic | What becomes of the points of the set itself, which never diverge - the black of the image. Silence: they fall silent, and the edge of the fractal makes the rhythm. Low tonic: they hold the tonic one octave below the range. |
-| Timbre | choice | Soft | Soft / Bright / Percussive | Character of the FM synthesis. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre. |
+| Timbre | choice | Soft | Sine / Soft / Bright / Percussive | Character of the FM synthesis. Sine: renders only the pitch asked for, with no added partial. Soft: close to a sine, softened attack. Bright: rich in harmonics. Percussive: dry attack and a note that falls away fast. No effect with SoundFont, where the chosen instrument sets the timbre. |
 | Volume | number | 80 % | 0 – 100 % | Output volume of the audio. |
 | Seed | number | 42 | 0 – 999999, step 1 | Seed for the pseudo-random distribution of sampling points. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
@@ -969,7 +969,7 @@ Generates a pure tone at a precise frequency. Two input modes: in Hertz (20-2000
 | Input | choice | Frequency (Hz) | Frequency (Hz) / Note | Input mode: in Hz (e.g. 440) or as a musical note (e.g. A4, C#5). |
 | Frequency | number | 440 Hz | 20 – 20000 Hz, step 1 | Frequency in Hertz (used when « Input » = Frequency). 440 = reference A4. |
 | Note | text | `A4` |  | Musical note (used when « Input » = Note). Format: letter + accidental + octave, e.g. A4, C#5, Bb3. |
-| Waveform | choice | Sine | Sine / Square / Saw / Triangle | Waveform. Sine = pure (single frequency); Square = odd harmonics; Saw = all harmonics; Triangle = soft odd harmonics. |
+| Waveform | choice | Sine | Sine / Square / Sawtooth / Triangle | Waveform. Sine = pure, a single frequency; Square = odd harmonics; Sawtooth = all harmonics; Triangle = soft odd harmonics. |
 | Duration | number | 2 s | 0.1 – 30 s, step 0.1 | Duration of the generated signal. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 
@@ -1171,7 +1171,7 @@ Generates a pure waveform by additive synthesis (sum of harmonics, alias-free). 
 
 *Fundamental and formant set independently, from short repeated bursts.*
 
-After Curtis Roads's pulsar synthesis ("Microsound", 2001). A pulsar is a brief waveform, the pulsaret, followed by silence, the whole thing repeated. Two durations describe it: the repetition period, whose inverse gives the fundamental you hear, and the pulsaret duration, whose inverse gives the formant position, that is, the region of the spectrum where energy concentrates. The two are independent: the note drops an octave without the formant moving, and the formant moves without the note changing. No acoustic instrument allows this, and neither does classic granulation, whose time grid and grain content stay tied together. The silence between pulsars is not incidental: it is what makes the decoupling possible. When the pulsaret duration reaches the period (that is, when the formant drops to the fundamental) pulsars touch and the process dissolves into a continuous waveform; the node caps there, which is a constraint of the model rather than a limitation of the implementation.
+After Curtis Roads's pulsar synthesis ("Microsound", 2001). A pulsar is a brief waveform, the pulsaret, followed by silence, the whole thing repeated. Two durations describe it: the repetition period, whose inverse gives the fundamental you hear, and the pulsaret duration, whose inverse gives the formant position, that is, the region of the spectrum where energy concentrates. The two are independent: the note drops an octave without the formant moving, and the formant moves without the note changing. No acoustic instrument allows this, and neither does classic granulation, whose time grid and grain content stay tied together. The silence between pulsars is not incidental: it is what makes the decoupling possible. When the pulsaret duration reaches the period (that is, when the formant drops to the fundamental) pulsars touch and the process dissolves into a continuous waveform; the node caps there, which is a constraint of the model rather than a limitation of the implementation. « Shape » selects the pulsaret waveform among Sine, Square, Sawtooth and Triangle. Sine gives a clean formant; the other three add higher replicas of it.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -1181,7 +1181,7 @@ After Curtis Roads's pulsar synthesis ("Microsound", 2001). A pulsar is a brief 
 |---|---|---|---|---|
 | Fundamental | number | 110 Hz | 20 – 2000 Hz, step 1 | Number of pulsars per second, hence the note you hear. It is set without touching the formant. |
 | Formant | number | 1100 Hz | 50 – 8000 Hz, step 10 | Region of the spectrum where energy concentrates, equal to the inverse of the pulsaret duration. It is set without touching the note. Brought down to the fundamental it saturates: pulsars touch and the sound becomes continuous again. |
-| Shape | choice | Sine | Sine / Square / Sawtooth | Waveform of the pulsaret. Sine gives a clean formant; square and sawtooth add higher replicas of it. |
+| Shape | choice | Sine | Sine / Square / Sawtooth / Triangle | Waveform of the pulsaret. Sine gives a clean formant; square, sawtooth and triangle add higher replicas of it. |
 | Duration | number | 5 s | 0.2 – 120 s, step 0.1 | Length of the produced sound. |
 | Amplitude | slider | 80 % | 0 – 100 %, step 1 | Output level. |
 
@@ -1749,7 +1749,7 @@ Puts four neural reservoirs into a network, each with a distinct musical role: m
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
 | Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 | Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth. |
 | Bars | number | 4 | 1 – 64, step 1 | Number of bars to generate. |
-| Timbre | choice | Triangle | Sine / Square / Saw / Triangle | Synthesis waveform. |
+| Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 | Seed | number | 0 | 0 – 999999, step 1 | Random seed (0 = new network each run). A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Mel. neurons | number | 15 | 5 – 40, step 1 | Melody reservoir neurons. |
@@ -1787,7 +1787,7 @@ Script: genre=pop, tempo=120, cle=C, gamme=majeur, duree=30
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Genre | choice | pop | pop / rock / jazz / blues / classic / electro / hip hop / reggae / ambient | Musical style, which guides the harmonic and rhythmic choices. |
+| Genre | choice | Pop | Pop / Rock / Jazz / Blues / Classical / Electronic / Hip-hop / Reggae / Ambient | Musical style, which guides the harmonic and rhythmic choices. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key. It moves everything without changing the gaps between degrees. |
 | Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | Scale the piece is built on. |
 | Tempo | number | 120 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
@@ -1822,7 +1822,7 @@ Generates emergent melody via random neural networks (Reservoir Computing), insp
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
 | Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 | Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth. |
 | Bars | number | 4 | 1 – 64, step 1 | Number of bars to generate. |
-| Timbre | choice | Triangle | Sine / Square / Saw / Triangle | Synthesis waveform. |
+| Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. |
 | Density | number | 70 % | 0 – 100 %, step 1 | Probability of producing a note at each step. High = dense melody; low = sparse melody. |
 | Repetition | number | 25 % | 0 – 100 %, step 1 | Tendency to repeat the previous note. High = catchy patterns; low = continuous variation. |
 | Silence | number | 10 % | 0 – 50 %, step 1 | Probability of silence at each step. Creates breathing room in the melody. |
@@ -1960,7 +1960,7 @@ Spreads N onsets as evenly as possible over M steps, using Bjorklund's algorithm
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed, in beats per minute. |
 | Step length | choice | Eighth | Quarter / Eighth / Sixteenth / Eighth triplet | Rhythmic value of one step of the cycle. |
 | Repeats | number | 4 | 1 – 32, step 1 | How many times the cycle is played. |
-| Drum | choice | Kick | Kick / Snare / Closed hi-hat / Open hi-hat / Clave / Cowbell / Low tom / High tom | Drum note played (channel 9). Stack several nodes on different drums to build a polyrhythm. |
+| Drum | choice | Kick | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | Drum note played on the percussion channel. Several nodes set on different drums make a polyrhythm. |
 | Velocity | number | 90 | 1 – 127, step 1 | Strength of the onsets. |
 | Accent | number | 20 | 0 – 40, step 1 | Extra velocity on the first step of each cycle, so the cycle's start can be heard. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume. |
@@ -2004,7 +2004,7 @@ Generates a rhythmic pattern by superposing two regular pulses, and returns it a
 | Pulse A | slider | 3 | 1 – 16, step 1 | Period of the first pulse, in beats. With 3 and 2 one gets the system's basic figure. |
 | Pulse B | slider | 2 | 1 – 16, step 1 | Period of the second. Take it coprime with the first: otherwise the pattern repeats inside the cycle, and the node will say so. |
 | Tempo | slider | 120 bpm | 30 – 300 bpm, step 1 | Beat speed, for the rendered MIDI. |
-| Drum | choice | Snare | Kick / Snare / Closed hi-hat / Open hi-hat / Clap / Crash cymbal / Low tom / High tom | The drum that marks each onset, on the General MIDI drum channel. The eight choices each have their own sound when rendered. |
+| Drum | choice | Snare | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The drum that marks each onset, on the General MIDI drum channel. The eight choices each have their own sound when rendered. |
 | Volume | slider | 80 % | 0 – 100 %, step 1 | Level of the rendered sound. No effect on the MIDI, whose dynamics are written into the notes. |
 
 #### Tiling Canon
@@ -2186,7 +2186,7 @@ Produces an animation (a circle that pulses, changing size and colour) and the c
 | Silence threshold | slider | 45 % | 0 – 90 %, step 1 | Size below which the pulse does not sound: it is then drawn and silent. The radius never falls below one hundred minus the breathing, so a threshold lower than that cuts nothing. At 65 % breathing, a threshold under 35 % has no effect. |
 | Beat frequency | slider | 60 Hz | 30 – 400 Hz, step 1 | The pitch of the dull tone that marks each strike. Acts in Pulse mode only. |
 | Beat length | slider | 120 ms | 10 – 600 ms, step 5 | The time a beat takes to die away. Acts in Pulse mode only. |
-| Percussion | choice | Kick | Kick / Snare / Closed hi-hat / Open hi-hat / Clap / Crash cymbal / Low tom / High tom | The drum voice struck at each audible pulse. Acts in Rhythm mode only. |
+| Percussion | choice | Kick | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The drum voice struck at each audible pulse. Acts in Rhythm mode only. |
 | Scale | choice | From the wheel | From the wheel / Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | The scale the melody takes its degrees from. From the wheel: saturation picks major or minor. A named scale applies throughout, the position then giving only the tonic. Acts in Melody and chords mode only. |
 | Chord quality | choice | From the wheel | From the wheel / Major / Minor / Diminished / Augmented / Suspended 2nd / Suspended 4th / Dominant 7th / Major 7th / Minor 7th / Half-diminished / Diminished 7th / Minor major 7th / Sixth / Minor sixth / Dominant 7th suspended 4th / Dominant 9th / Major 9th / Minor 9th / Added 9th / Eleventh / Major 9th sharp 11th / Minor 11th / Dominant 13th / Major 13th / Minor 13th / Dominant 7th sharp 9th / Dominant 7th flat 9th / Dominant 7th flat 5th / Dominant 7th sharp 5th / Dominant 7th flat 5th flat 9th / Dominant 7th sharp 5th flat 9th / Dominant 7th flat 5th sharp 9th / Dominant 7th sharp 5th sharp 9th | The quality of the chords laid on each position. From the wheel: the major or minor triad of the ring. A named quality applies throughout, the position then giving only the root. Acts in Melody and chords mode only. |
 | Chords | choice | Held | Held / Struck / None | The tonic triad of each position travelled, an octave below the melody. Held: one chord per key, kept until the next modulation. Struck: the same chord replayed at every audible pulse. A position travelled while the circle is contracted does not sound. |
@@ -2304,7 +2304,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
 | Scale | choice | major | major / minor / major pentatonic / minor pentatonic / blues | Scale used for the available notes in the grid. |
 | Octave | number | 3 | 2 – 6, step 1 | Starting octave (rows span about 2 octaves above). |
-| Timbre | choice | Triangle | Triangle / Square / Saw / Sine | Synthesis waveform. Triangle = soft ; Square = 8-bit/retro ; Saw = rich/harmonic ; Sine = pure. |
+| Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. Sine = pure ; Square = 8-bit/retro ; Sawtooth = rich in harmonics ; Triangle = soft. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Pattern | text | `0000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « \| ». |
@@ -2431,7 +2431,7 @@ Generates a polyphonic chord using Tone.js PolySynth. Each voice uses a simple o
 | Notes | text | `C4,E4,G4` |  | Chord notes, comma-separated (e.g. C4,E4,G4). |
 | Note duration | number | 0.5 s | 0.05 – 5 s, step 0.05 | Duration each note is held before release. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
-| Waveform | choice | triangle | sine / square / sawtooth / triangle | Oscillator waveform. |
+| Waveform | choice | Triangle | Sine / Square / Sawtooth / Triangle | Oscillator waveform. |
 | Attack | number | 0.01 s | 0 – 1 s, step 0.001 | Envelope attack time (0 = instantaneous). |
 | Decay | number | 0.1 s | 0 – 2 s, step 0.01 | Envelope decay time to the sustain level. |
 | Sustain | number | 0.3 level | 0 – 1 level, step 0.01 | Envelope sustain level (0 = silence, 1 = maximum). |
@@ -3420,7 +3420,7 @@ This component repairs what a low-bitrate encoding has damaged: the grain, the h
 
 *Captures and repeats a short segment at rhythmic intervals (stutter effect).*
 
-Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals synchronized to the tempo and repeats it several times with decay. Creates stutter, glitch and rhythmic repeat effects typical of electronic productions. Parameters: Tempo, Capture interval, Segment size, Repeats, Feedback and Mix. A curve connected to the Modulation input takes Mix's place: « Modulation min » and « Modulation max » say what its zero and its one are worth. « Feedback » is the attenuation of each repeat, and a curve connected to the « Modulation feedback » input takes its place, « Feedback min » and « Feedback max » saying what its zero and its one are worth. The repeats of one capture then die away faster or slower depending on where in the sound they fall. The first repeat of each capture keeps its level whatever is asked, the attenuation counting from the second.
+Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals synchronized to the tempo and repeats it several times with decay. Creates stutter, glitch and rhythmic repeat effects typical of electronic productions. Parameters: Tempo, Capture interval, Segment size, Repeats, Feedback and Mix. « Size » stays shorter than « Interval »: a segment as long as the interval gives back the original sound. A curve connected to the Modulation input takes Mix's place: « Modulation min » and « Modulation max » say what its zero and its one are worth. « Feedback » is the attenuation of each repeat, and a curve connected to the « Modulation feedback » input takes its place, « Feedback min » and « Feedback max » saying what its zero and its one are worth. The repeats of one capture then die away faster or slower depending on where in the sound they fall. The first repeat of each capture keeps its level whatever is asked, the attenuation counting from the second.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3433,7 +3433,7 @@ Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals sync
 |---|---|---|---|---|
 | Tempo | slider | 120 BPM | 40 – 240 BPM, step 1 | Tempo used to synchronize intervals and segments. |
 | Interval | choice | 1/4 | 1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 1/32 | Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, etc. |
-| Size | choice | 1/16 | 1/32 / 1/16 / 1/8 / 1/4 / 1/2 | Length of the captured and repeated segment. |
+| Size | choice | 1/16 | 1/32 / 1/16 / 1/8 / 1/4 / 1/2 | Length of the captured and repeated segment. It stays shorter than the interval: a segment as long as the interval gives back the original sound. |
 | Repeats | slider | 4 | 1 – 8, step 1 | Number of times the captured segment is repeated at each interval. |
 | Feedback | slider | 40 % | 0 – 95 %, step 1 | Attenuation of each repeat (0% = constant volume, 95% = fast decay). |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
@@ -3763,7 +3763,7 @@ Amplitude modulation: varies the volume periodically. Settings: • the rate (vi
 | Depth | slider | 50 % | 0 – 100 %, step 1 | Modulation depth (0% = no effect, 100% = volume fully cut). A curve connected to the Modulation input takes over: that is how one gets a tremolo whose depth follows a logistic sequence, without needing a separate node for it. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Depth that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Depth that the curve's one means. |
-| Shape | choice | Sine | Sine / Square / Triangle / Sawtooth | LFO waveform shape. |
+| Shape | choice | Sine | Sine / Square / Sawtooth / Triangle | LFO waveform shape. |
 
 #### Two-Sound Convolution
 
@@ -9549,7 +9549,7 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 |---|---|---|---|---|
 | Title | text | `Attic` |  | Title written into the score. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | Tempo used to turn seconds into note values. A wrong tempo does not change the pitches, but gives wrong durations. |
-| Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 4/8 / 6/8 / 8/8 / 10/8 / 12/8 / 14/8 / 12/16 | Time signature of the score. It decides how bars are cut. Time signatures whose bar is not a whole number of quarter notes are not offered, the writing grid being counted in quarter notes. |
+| Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | Time signature of the score. It decides how bars are cut. A time signature whose unit is shorter than the value asked for in « Quantization » refines the writing grid accordingly, a bar having to fall on a whole number of units. |
 | Quantization | choice | Sixteenth | Sixteenth / Eighth / Quarter | Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance. |
 
 #### VexFlow Chord Chart
@@ -10107,7 +10107,7 @@ Generates procedural album cover art in SVG, offline, instant, no GPU or downloa
 | Typography | choice | Sans-serif | Sans-serif / Serif / Mono / Condensed / Bold / Script | Title font style. |
 | Width | number | 512 | 128 – 2048, step 1 | SVG image width in pixels. |
 | Height | number | 512 | 128 – 2048, step 1 | SVG image height in pixels. |
-| Format | choice | SVG | SVG / PNG | SVG: native vector format, scales losslessly (preferred). PNG: raster image rendered at Width × Height, for uses that cannot read vector files. |
+| Format | choice | SVG | SVG / PNG / JPEG | SVG: native vector format, scales losslessly, to be preferred. PNG: raster image rendered at Width × Height, for uses that cannot read vector files. JPEG: lossy raster image on a white background, that format having no transparency. |
 | Seed | number | 0 | 0 – 999999, step 1 | Random seed (0 = new each run). Same seed = same cover. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Exhibition Gallery
@@ -10280,7 +10280,7 @@ Returns the circle of the positions the received pattern leaves free. The comple
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Drum | choice | Snare | Kick / Snare / Closed hi-hat / Open hi-hat / Clap / Crash cymbal / Low tom / High tom | The sound of the complement of a percussion circle. No effect on a melody, whose notes follow from the fundamental. |
+| Drum | choice | Snare | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The sound of the complement of a percussion circle. No effect on a melody, whose notes follow from the fundamental. |
 
 #### Circle Editor
 
@@ -10484,7 +10484,7 @@ Places the onsets of a rhythm on a circle whose positions are evenly spread, and
 |---|---|---|---|---|
 | Rhythm | choice | Free | Free / Tresillo / Son / Shiko / Soukous / Rumba / Bossa nova / Gahu / Samba / Fume-fume / Bembé / Steve Reich | A traditional rhythm to lay in one go, or « Free » for the one you write yourself. Clicking a position sets this back to « Free » and keeps what was laid. |
 | Pattern | text | `1001001000101000` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free ». |
-| Drum | choice | Kick | Kick / Snare / Closed hi-hat / Open hi-hat / Clap / Crash cymbal / Low tom / High tom | The sound of every onset of the circle. A rhythm circle carries only one; to mix several, place several circles. |
+| Drum | choice | Kick | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The sound of every onset of the circle. A rhythm circle carries only one; to mix several, place several circles. |
 
 #### Rotate Circle
 
@@ -11373,7 +11373,7 @@ Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). Connect au
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Language | choice | Auto | Auto / English / French / Spanish / German / Italian / Portuguese / Dutch / Russian / Japanese / Chinese / Arabic / Hindi / Korean | Language of the speech to transcribe. « Auto » lets Whisper detect the language. The model is multilingual (99 languages). |
+| Language | choice | Automatic | Automatic / English / French / Spanish / German / Italian / Portuguese / Dutch / Russian / Japanese / Chinese / Arabic / Hindi / Korean | Language of the speech to transcribe. « Automatic » lets Whisper detect the language. The model is multilingual (99 languages). |
 | Resampling quality | choice | High (Web Audio) | High (Web Audio) / Standard (linear) | Settings: the resampling quality to 16 kHz. « High » uses Web Audio API (better quality) with automatic fallback to linear interpolation if needed. « Standard » keeps the original fast linear interpolation. |
 | Model cache | choice | Auto (kept across sessions) | Auto (kept across sessions) / Clear and re-download | Manage the offline cache of the ONNX model. « Auto » keeps the downloaded model across sessions (IndexedDB). « Clear and re-download » deletes the cache and forces a fresh download. |
 

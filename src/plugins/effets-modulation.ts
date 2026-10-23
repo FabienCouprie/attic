@@ -12,6 +12,7 @@ import { valeursParametre } from "../audio/courbe";
 
 import { CADENCE } from "../audio/courbe";
 import { bornesModulation, effet, modulationNommee, portModulation, reglageModule } from "./effets-aides";
+import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -100,8 +101,11 @@ export const fiches: FicheAudio[] = ([
         docEn: "Depth that a connected curve's zero means. With no curve, this setting does nothing." },
       { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Profondeur que vaut le un de la courbe.", docEn: "Depth that the curve's one means." },
-      { nom: "Forme", nomEn: "Shape", type: "choix", options: ["Sinus", "Carré", "Triangle", "Sawtooth"], optionIds: ["Sinus","Carré","Triangle","Sawtooth"],
-        optionsEn: ["Sine", "Square", "Triangle", "Sawtooth"], defaut: "Sinus",
+      // SES IDENTIFIANTS ÉTAIENT SES LIBELLÉS FRANÇAIS CAPITALISÉS, dont « Sawtooth », qui n'est
+      // pas un mot français et qui était pourtant offert en français. Ils sont canoniques
+      // désormais, et les anciens restent lus.
+      { nom: "Forme", nomEn: "Shape", type: "choix", options: FORMES_ONDE_CHOIX.fr, optionIds: FORMES_ONDE_CHOIX.ids,
+        optionsEn: FORMES_ONDE_CHOIX.en, optionsHeritees: LIBELLES_HERITES_FORMES, defaut: "Sinus",
         doc: "Forme de l'onde de modulation.", docEn: "LFO waveform shape.", defautEn: "Sine" },
     ],
     async executer(ctx: any) {

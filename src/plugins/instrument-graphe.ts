@@ -20,6 +20,7 @@ import { avecDoc } from "./notices";
 import { NOTE_MAX, NOTE_MIN, apparierRendus, racinesInstrument } from "../core/instrument-graphe";
 import { creerAleatoire } from "../core/hasard";
 import { banqueDepuisRendus, rendreNotes, type Banque } from "../audio/clavier-banque";
+import { LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
 
 const TICKS_NOIRE = 480;
 const hertz = (note: number) => 440 * Math.pow(2, (note - 69) / 12);
@@ -56,9 +57,12 @@ function exciter(
     const phase = (f * i) / sampleRate;
     const p = phase - Math.floor(phase);
     let v: number;
-    switch (forme) {
-      case "carre": v = p < 0.5 ? 1 : -1; break;
-      case "scie": v = 2 * p - 1; break;
+    // LES QUATRE ONDES PASSENT PAR LA TABLE D'ALIAS, ce qui laisse lire les anciens identifiants
+    // de ce composant, `sinus / scie / carre`. L'impulsion et le bruit lui sont propres : aucune
+    // table commune ne les porte, et ils gardent donc leur nom.
+    switch (formeOndeDepuisTimbre(forme) ?? forme) {
+      case "square": v = p < 0.5 ? 1 : -1; break;
+      case "sawtooth": v = 2 * p - 1; break;
       case "triangle": v = 4 * Math.abs(p - 0.5) - 1; break;
       case "impulsion":
         // Une impulsion par période : de quoi exciter un résonateur, comme une corde pincée.
@@ -96,7 +100,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Forme", nomEn: "Waveform", type: "choix",
         options: ["Sinus", "Dent de scie", "Carré", "Triangle", "Impulsion", "Bruit"],
         optionsEn: ["Sine", "Sawtooth", "Square", "Triangle", "Impulse", "Noise"],
-        optionIds: ["sinus", "scie", "carre", "triangle", "impulsion", "bruit"],
+        // LES QUATRE ONDES PRENNENT LEUR IDENTIFIANT CANONIQUE ; l'impulsion et le bruit sont
+        // propres à cet excitateur et gardent le leur.
+        optionIds: ["sine", "sawtooth", "square", "triangle", "impulsion", "bruit"],
+        optionsHeritees: { ...LIBELLES_HERITES_FORMES, scie: "sawtooth", sinus: "sine", carre: "square" },
         defaut: "Dent de scie", defautEn: "Sawtooth",
         doc: "Forme de l'excitation rendue sur la sortie Audio. La dent de scie contient tous les harmoniques, ce qui donne au filtre de quoi travailler ; l'impulsion excite un résonateur comme une corde pincée ; le bruit sert aux sons soufflés et aux percussions. La sortie MIDI et la sortie Hauteur ne dépendent pas de ce réglage.",
         docEn: "Shape of the excitation on the Audio output. The sawtooth holds every harmonic, giving a filter something to work with; the impulse excites a resonator like a plucked string; Noise serves breathy sounds and percussion. The MIDI and Pitch outputs do not depend on this setting." },
@@ -114,7 +121,7 @@ export const fiches: FicheAudio[] = ([
       const note = Math.round(ctx.paramNombre("Note", 60));
       const duree = ctx.paramNombre("Durée", 1.5);
       const audio = exciter(
-        note, ctx.paramTexte("Forme", "scie"), duree,
+        note, ctx.paramTexte("Forme", "sawtooth"), duree,
         ctx.paramNombre("Volume", 60) / 100, 44100,
       );
       const midi = midiUneNote(note, Math.round(ctx.paramNombre("Vélocité", 100)), duree);

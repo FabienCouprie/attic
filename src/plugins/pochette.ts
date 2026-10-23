@@ -7,6 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { genererPochetteFile, genererPochetteSVG, rasteriserPochettePNG } from "./pochette-svg";
+import { FORMATS_IMAGE, choixFormats, formatImage } from "../core/formats-image";
 
 export { genererPochetteSVG };
 
@@ -65,10 +66,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Hauteur", nomEn: "Height", type: "nombre", plage: [128, 2048], pas: 1, defaut: 512,
         doc: "Hauteur de l'image SVG en pixels.", docEn: "SVG image height in pixels." },
       { nom: "Format", nomEn: "Format", type: "choix",
-        options: ["SVG", "PNG"], optionsEn: ["SVG", "PNG"], optionIds: ["svg", "png"],
+        ...choixFormats(["svg", "png", "jpeg"]),
         defaut: "SVG", defautEn: "SVG",
-        doc: "SVG : format natif, vectoriel, redimensionnable sans perte (à privilégier). PNG : image matricielle rendue à la taille Largeur × Hauteur, pour les usages qui ne lisent pas le vectoriel.",
-        docEn: "SVG: native vector format, scales losslessly (preferred). PNG: raster image rendered at Width × Height, for uses that cannot read vector files." },
+        doc: "SVG : format natif, vectoriel, redimensionnable sans perte, à privilégier. PNG : image matricielle rendue à la taille Largeur × Hauteur, pour les usages qui ne lisent pas le vectoriel. JPEG : image matricielle compressée avec perte, à fond blanc, ce format n'ayant pas de transparence.",
+        docEn: "SVG: native vector format, scales losslessly, to be preferred. PNG: raster image rendered at Width × Height, for uses that cannot read vector files. JPEG: lossy raster image on a white background, that format having no transparency." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvelle à chaque exécution). Même graine = même pochette.",
         docEn: "Random seed (0 = new each run). Same seed = same cover." },
@@ -92,9 +93,9 @@ export const fiches: FicheAudio[] = ([
         complexite, bordure, typographie,
         largeur, hauteur, graine,
       };
-      const format = ctx.paramTexte("Format", "svg");
+      const format = formatImage(ctx.paramTexte("Format", "svg")) ?? FORMATS_IMAGE[2];
       let fichier = genererPochetteFile(optionsPochette);
-      if (format === "png") {
+      if (format.id !== "svg") {
         // Le SVG reste la source de vérité : le PNG en est une rastérisation à
         // la taille demandée, pas une génération distincte — même graine, même
         // visuel. En cas d'échec (contexte sans canvas), on signale clairement
@@ -102,7 +103,7 @@ export const fiches: FicheAudio[] = ([
         try {
           fichier = await rasteriserPochettePNG(
             genererPochetteSVG(optionsPochette), largeur, hauteur,
-            fichier.name.replace(/\.svg$/i, ""),
+            fichier.name.replace(/\.svg$/i, ""), format,
           );
         } catch (e: any) {
           return { valeurs: [null], erreur: true,

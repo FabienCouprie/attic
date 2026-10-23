@@ -7,22 +7,18 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
 
-// LES QUATRE FORMES D'ONDE, DÉCLARÉES UNE SEULE FOIS. Elles l'étaient trois : les libellés
-// français dans `options`, les anglais dans `optionsEn`, et une troisième copie — française — dans
-// l'exécuteur, qui servait à nommer la forme dans le message. C'est cette troisième copie qui
-// faisait annoncer « Sinus · 220 Hz · 1 harmonic(s) » à une interface en anglais. La fiche lit
-// cette table, l'exécuteur la relit, et il n'y a plus d'endroit où les deux puissent diverger.
-const FORMES = [
-  { id: "sine", fr: "Sinus", en: "Sine" },
-  { id: "square", fr: "Carré", en: "Square" },
-  { id: "sawtooth", fr: "Dent de scie", en: "Sawtooth" },
-  { id: "triangle", fr: "Triangle", en: "Triangle" },
-] as const;
-
+// LES QUATRE FORMES D'ONDE VIENNENT DE `audio/timbres.ts`. Elles étaient déclarées trois fois dans
+// ce fichier : les libellés français dans `options`, les anglais dans `optionsEn`, et une troisième
+// copie, française, dans l'exécuteur, qui servait à nommer la forme dans le message. C'est cette
+// troisième copie qui faisait annoncer « Sinus · 220 Hz · 1 harmonic(s) » à une interface en
+// anglais. Elles ont ensuite été réunies ici, puis dans la table commune, où dix autres composants
+// les prennent désormais : il n'y a plus un seul endroit où deux listes puissent diverger.
 const libelleForme = (id: string): string => {
-  const f = FORMES.find((x) => x.id === id);
-  return f ? (langueCourante() === "en" ? f.en : f.fr) : id;
+  const rang = FORMES_ONDE_CHOIX.ids.indexOf(formeOndeDepuisTimbre(id) ?? ("" as never));
+  if (rang < 0) return id;
+  return langueCourante() === "en" ? FORMES_ONDE_CHOIX.en[rang] : FORMES_ONDE_CHOIX.fr[rang];
 };
 
 export const fiches: FicheAudio[] = ([
@@ -95,8 +91,8 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       {
         nom: "Forme", nomEn: "Waveform", type: "choix",
-        options: FORMES.map((f) => f.fr), optionsEn: FORMES.map((f) => f.en),
-        optionIds: FORMES.map((f) => f.id), defaut: "Sinus",
+        options: FORMES_ONDE_CHOIX.fr, optionsEn: FORMES_ONDE_CHOIX.en,
+        optionIds: FORMES_ONDE_CHOIX.ids, optionsHeritees: LIBELLES_HERITES_FORMES, defaut: "Sinus",
         doc: "Forme d'onde. Sinus = une seule fréquence. Carré/Triangle = harmoniques impaires. Dent de scie = toutes les harmoniques.",
         docEn: "Waveform. Sine = a single frequency. Square/Triangle = odd harmonics. Sawtooth = all harmonics.", defautEn: "Sine",
      },

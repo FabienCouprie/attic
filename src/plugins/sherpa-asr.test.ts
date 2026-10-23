@@ -20,7 +20,10 @@ describe("sherpa-asr", () => {
     const langue = fiches[0].parametres?.find((p) => p.nom === "Langue");
     expect(langue).toBeDefined();
     expect(langue?.type).toBe("choix");
-    expect(langue?.defaut).toBe("Auto");
+    // LE LIBELLÉ EST « Automatique » DEPUIS QUE LES NOMS VIENNENT DE LA TABLE COMMUNE : ce composant
+    // écrivait « Auto » là où les plus récents écrivent « Automatique », et son identifiant était
+    // « auto » là où la convention du dépôt est la chaîne vide. Les deux anciens se relisent.
+    expect(langue?.defaut).toBe("Automatique");
     expect(langue?.options).toContain("Russe");
     expect(langue?.options).toContain("Français");
   });

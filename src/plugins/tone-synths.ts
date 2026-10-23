@@ -8,6 +8,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { genererMembraneSynth, genererMetalSynth, genererPolySynth } from "../audio/tone-synths";
 import { avecDoc } from "./notices";
+import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 
 
 export const fiches: FicheAudio[] = ([
@@ -329,8 +330,13 @@ export const fiches: FicheAudio[] = ([
         nom: "Forme d'onde",
         nomEn: "Waveform",
         type: "choix",
-        options: ["sine", "square", "sawtooth", "triangle"],
-        optionsEn: ["sine", "square", "sawtooth", "triangle"],
+        // LES LIBELLÉS FRANÇAIS MANQUAIENT : ce réglage montrait « sine, square, sawtooth » à un
+        // lecteur français. Les identifiants, eux, ne changent pas, puisque ce sont déjà ceux de
+        // la table commune et ceux que Tone.js attend.
+        options: FORMES_ONDE_CHOIX.fr,
+        optionsEn: FORMES_ONDE_CHOIX.en,
+        optionIds: FORMES_ONDE_CHOIX.ids,
+        optionsHeritees: LIBELLES_HERITES_FORMES,
         defaut: "triangle",
         doc: "Forme d'onde des oscillateurs.",
         docEn: "Oscillator waveform.", defautEn: "triangle",

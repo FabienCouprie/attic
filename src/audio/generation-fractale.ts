@@ -5,7 +5,7 @@
 
 import { type NoteEvenement } from "./midi-sequence";
 import { DEMI_TONS_CLE, frequenceDeNoteMidi } from "./commun";
-import { caractereTimbre, type CaractereTimbreId } from "./timbres";
+import { caractereOuSinus, type CaractereTimbreId } from "./timbres";
 import { degresGammeMelodie } from "./generation-melodie";
 import { GAMMES_ACCORDS, degresGammeAccords } from "./generation";
 import { CANTUS_FIRMUS, intervallesDaccord } from "./qualites-accords";
@@ -73,9 +73,14 @@ export async function genererMusiqueFractale(
   const notes: NoteEvenement[] = [];
 
   // Comparaisons sur l'id canonique (et non plus sur le libellé français brut) :
-  // `caractereTimbre` accepte l'id, l'ancien libellé FR et l'ancien libellé EN.
-  const caractere = caractereTimbre(timbre);
-  const formesOsc: Record<CaractereTimbreId, OscillatorType> = { douce: "triangle", brillante: "sawtooth", percutante: "square" };
+  // `caractereOuSinus` accepte l'id, l'ancien libellé FR et l'ancien libellé EN.
+  //
+  // LA SINUSOÏDE EST LA QUATRIÈME FORME, et non un cas à part. L'oscillateur de l'API en a un type,
+  // « sine » ; la seule chose qui manquait était la branche qui le nomme. L'enveloppe, elle, ne
+  // change pas avec elle : le caractère nomme un TIMBRE, et le sinus pur se définit par l'absence
+  // de partiel ajouté, non par une attaque ou une retombée particulières.
+  const caractere = caractereOuSinus(timbre);
+  const formesOsc: Record<CaractereTimbreId | "pur", OscillatorType> = { pur: "sine", douce: "triangle", brillante: "sawtooth", percutante: "square" };
   const typeOsc = formesOsc[caractere];
   const attaque = caractere === "percutante" ? 0.001 : 0.005;
   const relache = caractere === "douce" ? 0.15 : 0.04;

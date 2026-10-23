@@ -7,6 +7,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { PROFONDEUR_MAX, genererNotesKoch, subdiviserKoch, snapperNote, type OptionsArpegeKoch } from "./koch";
 import { rendreSequence } from "./midi-sequence";
+import { caractereOuSinus } from "./timbres";
 
 const BASE: OptionsArpegeKoch = {
   cle: "C", gamme: "chromatique", octave: 4, accord: "Majeur", profondeur: 3, direction: "alternée",
@@ -115,5 +116,31 @@ describe("le timbre de la synthèse FM", () => {
     const sans = (await rendreSequence(notes, "FM/Oscillateurs", 80, 0, 0)).getChannelData(0);
     const brillante = (await rendreSequence(notes, "FM/Oscillateurs", 80, 0, 0, "brillante")).getChannelData(0);
     expect(sans.every((v, i) => v === brillante[i])).toBe(true);
+  });
+
+  it("LE SINUS PUR SE DISTINGUE DES TROIS AUTRES, et il est maintenant atteignable", async () => {
+    // CE QUE CE CAS ARRÊTE. Le moteur de rendu accepte « pur » depuis toujours, mais ce composant
+    // passait son réglage par une fonction dont le type de retour l'excluait, avec repli silencieux
+    // sur « douce » : le sinus n'était donc pas offert, et l'aurait-il été, il aurait rendu « douce ».
+    // Offrir une valeur qui ne change rien est précisément ce que le contrat de composant interdit.
+    const crete = (x: Float32Array) => { let m = 0; for (const v of x) m = Math.max(m, Math.abs(v)); return m; };
+    const pur = (await rendreSequence(notes, "FM/Oscillateurs", 80, 0, 0, "pur")).getChannelData(0);
+    expect(crete(pur), "le sinus doit rendre du son").toBeGreaterThan(0.01);
+    for (const autre of ["douce", "brillante", "percutante"] as const) {
+      const x = (await rendreSequence(notes, "FM/Oscillateurs", 80, 0, 0, autre)).getChannelData(0);
+      let ecart = 0;
+      for (let i = 0; i < pur.length; i++) ecart = Math.max(ecart, Math.abs(pur[i] - x[i]));
+      expect(ecart, `« pur » rend le même son que « ${autre} »`).toBeGreaterThan(0.05);
+    }
+  });
+
+  it("ET LE LECTEUR LE RECONNAÎT SOUS SES TROIS ÉCRITURES", () => {
+    expect(caractereOuSinus("pur")).toBe("pur");
+    expect(caractereOuSinus("Sinus")).toBe("pur");
+    expect(caractereOuSinus("Sine")).toBe("pur");
+    // Les trois autres passent comme avant, et ce qui n'est rien tombe sur « douce ».
+    expect(caractereOuSinus("brillante")).toBe("brillante");
+    expect(caractereOuSinus("Bright")).toBe("brillante");
+    expect(caractereOuSinus("n'importe quoi")).toBe("douce");
   });
 });
