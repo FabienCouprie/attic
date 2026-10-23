@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **502 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **503 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **502 components** in **7 categories** and **63 families**. Every na
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 87 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (3) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
+| [Other & lab](#other--lab) | 88 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (4) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -1203,7 +1203,7 @@ Produces a rhythm written by successive divisions, and a series of pitches of th
 | Source | choice | Catalogue | Catalogue / Draw / Drawing | Catalogue runs through the listed trees; Draw generates one at random. |
 | Number | number | 0 | 0 – 339, step 1 | The catalogue tree returned. Beyond the last, the count starts again at the first. |
 | Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The drawn tree, in list notation. The drawing writes it here, and a tree from elsewhere can be pasted into it. Used when the source is Drawing. |
-| Time signature | choice | 4/4 | 2/4 / 3/4 / 4/4 / 5/4 / 6/8 / 7/8 / 12/8 | The measure used. |
+| Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | The measure used. |
 | Measures | number | 1 | 1 – 8, step 1 | How many measures are generated in a row. No effect on the catalogue. |
 | Slots | number | 4 | 1 – 8, step 1 | The number of divisions at the top of each drawn measure. |
 | Depth | number | 1 | 0 – 3, step 1 | The division levels allowed. At zero, no division. |
@@ -1848,7 +1848,7 @@ Composes a random melody in the chosen key and scale, over the given number of b
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The key. It moves everything without changing the gaps between degrees. |
 | Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to pick notes (major, minor, pentatonic…). |
-| Time signature | choice | 4/4 | 4/4 / 3/4 / 6/8 | Time signature (4/4, 3/4, 6/8…). |
+| Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | Time signature (4/4, 3/4, 6/8…). |
 | Tempo | number | 100 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
 | Bars | number | 4 | 1 – 32, step 1 | Number of bars to generate. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
@@ -1971,7 +1971,7 @@ Spreads N onsets as evenly as possible over M steps, using Bjorklund's algorithm
 
 *Generates a steady metronome click at a given tempo.*
 
-Generates a metronome audio signal: a steady click at a given tempo (40-240 BPM), with time signature (4/4, 3/4, 2/4, 6/8, 5/4, 7/8). The first beat of each bar is accented (louder and higher). Three timbres: Click (short transient, noise), Woodblock (woody resonance) and Beep (brief sine). Useful for practice, setting a reference tempo or generating a click track for recording.
+Generates a steady metronome click, one per unit of the time signature, and returns the audio obtained. « Tempo » is the speed in beats per minute. It counts quarter notes: in 6/8, 9/8 or 12/8 the unit is the eighth note and lasts half a beat; in 2/2, 3/2 or 4/2 the unit is the half note and lasts twice one. « Time signature » sets the bar. The first beat of each bar carries the strongest click. In a compound signature, that is, a bar whose units group by three, each beat carries a medium click and the units falling inside a beat carry a soft click: 9/8 counts nine clicks and three beats. In a simple signature, every unit is a beat and there is no soft click. Irregular signatures are grouped with the groups of three first, 7/8 being 3+2+2. « Duration » is the total length of the signal. « Timbre » selects the click sound: Click is a short noise transient, Woodblock a woody resonance, Beep a brief sine. All three distinguish the three click ranks by level, and the last two also by pitch. « Volume » sets the level of the strongest click; the two other ranks stay proportional to it. The « Audio » output carries the signal in stereo. The message gives the tempo, the time signature, the number of bars, the number of beats and the number of clicks.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -1980,7 +1980,7 @@ Generates a metronome audio signal: a steady click at a given tempo (40-240 BPM)
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
-| Time signature | choice | 4/4 | 4/4 / 3/4 / 2/4 / 6/8 / 5/4 / 7/8 | Time signature. The first beat of each bar is accented. |
+| Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | Time signature. The first beat of each bar carries the strongest click. In a compound signature, that is, a bar whose units group by three such as 6/8, 9/8 or 12/8, each beat carries a medium click and the units falling inside a beat carry a soft click: 9/8 is heard in three beats and not in nine. Irregular signatures are grouped with the groups of three first, 7/8 being 3+2+2. The tempo counts quarter notes: an eighth note lasts half a beat and a half note twice one. |
 | Duration | number | 10 s | 1 – 60 s, step 1 | Total duration of the metronome. |
 | Timbre | choice | Click | Click / Woodblock / Beep | Click sound. Click = short transient; Woodblock = woody resonance; Beep = brief sine. |
 | Volume | number | 90 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
@@ -3021,7 +3021,7 @@ Writes a sequence of arbitrary durations as a measured rhythm, and returns the t
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Time signature | choice | 4/4 | 2/4 / 3/4 / 4/4 / 5/4 / 6/8 / 7/8 / 12/8 | The measure the result is written in. |
+| Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | The measure the result is written in. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The length of a quarter note. A tempo carried by the received sequence takes precedence. |
 | Trade-off | number | 50 % | 0 – 100 %, step 1 | The share given to readability against fidelity. At zero the writing is exact and busy; at one hundred, simple and approximate. |
 | Depth | number | 2 | 1 – 3, step 1 | The division levels allowed below the first split of the measure. |
@@ -9501,7 +9501,7 @@ Writes a MIDI file in ABC notation, so that a melody produced here (Groove Box, 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Meter | choice | From file | From file / 2/4 / 3/4 / 4/4 / 5/4 / 6/8 / 7/8 / 9/8 / 12/8 | Where to put the bar lines. Note: the nodes all write « 4/4 » into their files, even for a waltz, « From file » therefore almost always gives 4/4. Settings: the real meter by hand; it is not guessed, because a wrongly guessed meter gives an unreadable score without saying so. |
+| Meter | choice | From file | From file / 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | Where to put the bar lines. Note: the nodes all write « 4/4 » into their files, even for a waltz, « From file » therefore almost always gives 4/4. Settings: the real meter by hand; it is not guessed, because a wrongly guessed meter gives an unreadable score without saying so. |
 | Key | text | `Auto` |  | « Auto » infers it from the notes (Krumhansl's method, the same as the harmonic analysis on audio). Reliable on harmony only: measured on the Groove Box, right 24 times out of 24 on the chord part, 4 out of 24 on the melody alone, 0 out of 24 on the bass alone, and the displayed confidence does not reveal the error. A single line is therefore flagged: the key is then imposed by hand, as an ABC K: field (« G », « Am », « Ddor », « Bb »…). It sets the key signature, hence the spelling: F sharp or G flat. |
 | Grid | choice | Automatic | Automatic / Eighths (1/8) / Sixteenths (1/16) / 32nds (1/32) / Eighth triplets / Sixteenth triplets / Sixteenths and triplets | Grid the notes are snapped to. Automatic: the coarsest one on which every note falls exactly, if any, a generated MIDI then does not move by a single tick, otherwise sixteenths. On captured or humanised playing, notes are moved and the message counts them. |
 | Overlaps | choice | Separate voices (exact) | Separate voices (exact) / Shorten into one line | What to do with a note still sounding when the next one starts. Separate voices: it goes into an extra voice, and the score read back gives exactly the same notes. Shorten: it is cut at the next attack, so a legato melody stays on a single line, more readable, and easier for a language model to edit, but the length of the cut notes is lost. Chords are never cut. The Groove Box melody, whose same-pitch notes overlap, comes out on two voices in the first mode and one in the second. |
@@ -9549,7 +9549,7 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 |---|---|---|---|---|
 | Title | text | `Attic` |  | Title written into the score. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | Tempo used to turn seconds into note values. A wrong tempo does not change the pitches, but gives wrong durations. |
-| Time signature | choice | 4/4 | 4/4 / 3/4 / 2/4 / 6/8 | Time signature of the score. It decides how bars are cut. |
+| Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 4/8 / 6/8 / 8/8 / 10/8 / 12/8 / 14/8 / 12/16 | Time signature of the score. It decides how bars are cut. Time signatures whose bar is not a whole number of quarter notes are not offered, the writing grid being counted in quarter notes. |
 | Quantization | choice | Sixteenth | Sixteenth / Eighth / Quarter | Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance. |
 
 #### VexFlow Chord Chart
@@ -11336,6 +11336,7 @@ Places a sound source in space, and returns it in the chosen layout. A sound com
 |---|---|
 | [Date the words](#date-the-words) | Transcribes a recording and gives the instant of each word, without being given the text. |
 | [Sherpa ASR](#sherpa-asr) | Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). |
+| [Transcribe](#transcribe) | Transcribes a recording, with an engine more faithful on short, clean excerpts. |
 | [Whisper (English)](#whisper-english) | English speech recognition (OpenAI Whisper base). |
 
 #### Date the words
@@ -11375,6 +11376,24 @@ Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). Connect au
 | Language | choice | Auto | Auto / English / French / Spanish / German / Italian / Portuguese / Dutch / Russian / Japanese / Chinese / Arabic / Hindi / Korean | Language of the speech to transcribe. « Auto » lets Whisper detect the language. The model is multilingual (99 languages). |
 | Resampling quality | choice | High (Web Audio) | High (Web Audio) / Standard (linear) | Settings: the resampling quality to 16 kHz. « High » uses Web Audio API (better quality) with automatic fallback to linear interpolation if needed. « Standard » keeps the original fast linear interpolation. |
 | Model cache | choice | Auto (kept across sessions) | Auto (kept across sessions) / Clear and re-download | Manage the offline cache of the ONNX model. « Auto » keeps the downloaded model across sessions (IndexedDB). « Clear and re-download » deletes the cache and forces a fresh download. |
+
+#### Transcribe
+
+`transcrire` · Other & lab → Speech to Text
+
+*Transcribes a recording, with an engine more faithful on short, clean excerpts.*
+
+This component listens to a recording and returns what is said. The language is recognized by itself, among thirty-one. The catalog holds another one, « Date the words », and neither is better everywhere. This one is more faithful on short, clean excerpts, and it asks half the memory. The other is three times faster, safer on long recordings, and it alone gives the instant of each word. To obtain instants with this one, its output connects to the « Text » input of « Align text to speech », which computes them. That is exactly what its engine would do internally, for the same result and without a second model to fetch. « Compute » names the device used. It is the only setting: its engine also accepts a language, but forcing one changes nothing in what it returns, tried on two witnesses and three languages. The « Transcript » output returns the text. « Report » gives the number of words, the duration of the sound and the real-time factor the engine measured itself.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Transcript | text |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the returned text. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Whisper (English)
 

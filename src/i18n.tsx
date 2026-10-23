@@ -616,6 +616,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
     fr: "{__VAR_0__} % du spectre borné : référence hors de portée",
     en: "{__VAR_0__}% of the spectrum bounded: reference out of reach",
   },
+  "msg.transcrire.mots": { fr: "{__VAR_0__} mots transcrits", en: "{__VAR_0__} words transcribed" },
+  "msg.transcrire.duree": { fr: "{__VAR_0__} s de son", en: "{__VAR_0__} s of sound" },
   "msg.dater.mots": { fr: "{__VAR_0__} mots datés", en: "{__VAR_0__} words dated" },
   "msg.dater.couverte": {
     fr: "parole de {__VAR_0__} s sur {__VAR_1__} s de son",
@@ -1043,7 +1045,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.note_invalide_var_0_format_a4_c_5_bb3": { fr: "Note invalide : {__VAR_0__} (format : A4, C#5, Bb3)", en: "Invalid note: {__VAR_0__} (format: A4, C#5, Bb3)" },
   "msg.var_0_var_1_var_2_s": { fr: "{__VAR_0__} · {__VAR_1__} · {__VAR_2__}s", en: "{__VAR_0__} · {__VAR_1__} · {__VAR_2__}s" },
   "msg.var_0_var_1_s": { fr: "{__VAR_0__} · {__VAR_1__}s", en: "{__VAR_0__} · {__VAR_1__}s" },
-  "msg.var_0_bpm_var_1_var_2_mesure_s_var_3_temps": { fr: "{__VAR_0__} BPM · {__VAR_1__} · {__VAR_2__} mesure(s) · {__VAR_3__} temps", en: "{__VAR_0__} BPM · {__VAR_1__} · {__VAR_2__} measure(s) · {__VAR_3__} time" },
+  "msg.metronome.releve": { fr: "{__VAR_0__} BPM · {__VAR_1__} · {__VAR_2__} mesure(s) · {__VAR_3__} temps · {__VAR_4__} clics", en: "{__VAR_0__} BPM · {__VAR_1__} · {__VAR_2__} bar(s) · {__VAR_3__} beats · {__VAR_4__} clicks" },
   "msg.var_0_neurones_var_1_notes_graine_var_2_var_3_mes": { fr: "{__VAR_0__} neurones · {__VAR_1__} notes · graine {__VAR_2__} · {__VAR_3__} mes.", en: "{__VAR_0__} neurons · {__VAR_1__} notes · seed {__VAR_2__} · {__VAR_3__} bars" },
   "msg.var_0_graine_var_1": { fr: "{__VAR_0__} · graine {__VAR_1__}", en: "{__VAR_0__} · seed {__VAR_1__}" },
   "msg.branchez_un_source_midi": { fr: "Branchez un source MIDI.", en: "Connect a MIDI source." },

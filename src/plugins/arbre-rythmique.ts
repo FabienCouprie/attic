@@ -25,12 +25,13 @@ import { estSequence, type Sequence } from "../audio/sequence";
 import { poserArbre } from "../audio/voix";
 import { nomNote } from "../audio/nom-note";
 import { PARAMETRE_CLE, demiTonDeCle } from "../audio/cles";
+import { SIGNATURES, lireSignature } from "../audio/signatures";
 
 const en = () => langueCourante() === "en";
 
 const ARBRE_DEFAUT = "(4/4 (1 (1 (1 1 1)) 1 1))";
 
-const METRIQUES = ["2/4", "3/4", "4/4", "5/4", "6/8", "7/8", "12/8"];
+const METRIQUES = [...SIGNATURES];
 const SOURCES = [
   { id: "catalogue", nom: "Catalogue", nomEn: "Catalogue" },
   { id: "tirage", nom: "Tirage", nomEn: "Draw" },
@@ -43,8 +44,8 @@ function lireHauteurs(texte: string): number[] {
 }
 
 function lireMetrique(texte: string): [number, number] {
-  const m = /^(\d+)\/(\d+)$/.exec(texte.trim());
-  return m ? [Number(m[1]), Number(m[2])] : [4, 4];
+  const lue = lireSignature(texte);
+  return lue ? [lue.num, lue.den] : [4, 4];
 }
 
 export const fiches: FicheAudio[] = ([

@@ -1434,6 +1434,20 @@ ipcMain.handle("chatterbox:cloner", async (event, options) => {
   }
 });
 
+// ─── audio.cpp : transcrire, par un second moteur que le premier ne remplace pas ───
+const { transcrire: qwen3Transcrire } = require("./qwen3-asr.cjs");
+
+ipcMain.handle("qwen3asr:transcrire", async (event, options) => {
+  try {
+    return await qwen3Transcrire(options, (ligne) => {
+      if (!event.sender.isDestroyed()) event.sender.send("qwen3asr:progression", { ligne });
+    }, contexteRessources());
+  } catch (err) {
+    console.error("[attic] qwen3asr:transcrire a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
 // ─── audio.cpp : les mots d'un enregistrement, et l'instant de chacun ───
 const { transcrire: parakeetTranscrire } = require("./parakeet.cjs");
 

@@ -21,6 +21,7 @@ import { compterVoix, extraireVoix, reunirVoix, voixDe } from "../audio/voix";
 import { nomNote } from "../audio/nom-note";
 import { fiches as fichesConversionVoix } from "./convertir-voix";
 import { fiches as fichesDaterLesMots } from "./dater-les-mots";
+import { fiches as fichesTranscrire } from "./transcrire";
 
 const en = () => langueCourante() === "en";
 
@@ -134,4 +135,6 @@ export const fiches: FicheAudio[] = ([
   // L'hôte d'un composant versé doit donc être un module que rien n'épingle, et celui-ci porte
   // déjà les composants de voix.
   ...(fichesDaterLesMots as FicheAudio[]),
+  // « TRANSCRIRE » SUIT LE MÊME CHEMIN, pour la même raison de norme de taille.
+  ...(fichesTranscrire as FicheAudio[]),
 ] as FicheAudio[]).map(avecDoc);

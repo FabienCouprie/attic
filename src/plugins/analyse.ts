@@ -10,6 +10,21 @@ import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { genererSvgGoniometre, mesurerStereo, pointsGoniometre, verdictStereo } from "../audio/stereo-correlation";
 import { candidatsOctave, fiabiliteTempo, ramenerDansPlage } from "../audio/tempo-octave";
 import { notesVersMusicXML } from "../audio/musicxml";
+import { SIGNATURES, lireSignature } from "../audio/signatures";
+
+/**
+ * Les métriques que la gravure MusicXML écrit juste.
+ *
+ * SA GRILLE SE COMPTE EN NOIRES, et une mesure qui ne fait pas un nombre entier de noires n'y
+ * tombe pas : 9/8 vaut quatre noires et demie, que la plus grossière des trois grilles offertes ne
+ * sait pas couper, et la longueur de mesure serait arrondie en silence. Le sous-ensemble est donc
+ * FILTRÉ depuis la table commune et non réécrit à la main, de sorte qu'une signature ajoutée à la
+ * table arrive ici dès qu'elle y tombe juste.
+ */
+const METRIQUES = SIGNATURES.filter((texte) => {
+  const s = lireSignature(texte)!;
+  return (s.num * 4) % s.den === 0;
+});
 import { estSequence } from "../audio/sequence";
 import { arbreDe, voixDe } from "../audio/voix";
 
@@ -87,10 +102,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Tempo servant à convertir les secondes en valeurs de note. Un tempo faux ne change pas les hauteurs, mais donne des durées fausses.",
         docEn: "Tempo used to turn seconds into note values. A wrong tempo does not change the pitches, but gives wrong durations." },
       { nom: "Métrique", nomEn: "Time signature", type: "choix",
-        options: ["4/4", "3/4", "2/4", "6/8"], optionsEn: ["4/4", "3/4", "2/4", "6/8"],
-        optionIds: ["4/4", "3/4", "2/4", "6/8"], defaut: "4/4", defautEn: "4/4",
-        doc: "Métrique de la partition. Elle décide du découpage en mesures.",
-        docEn: "Time signature of the score. It decides how bars are cut." },
+        options: [...METRIQUES], optionsEn: [...METRIQUES],
+        optionIds: [...METRIQUES], defaut: "4/4", defautEn: "4/4",
+        doc: "Métrique de la partition. Elle décide du découpage en mesures. Les métriques dont la mesure ne fait pas un nombre entier de noires ne sont pas proposées, la grille d'écriture se comptant en noires.",
+        docEn: "Time signature of the score. It decides how bars are cut. Time signatures whose bar is not a whole number of quarter notes are not offered, the writing grid being counted in quarter notes." },
       { nom: "Quantification", nomEn: "Quantization", type: "choix",
         options: ["Double-croche", "Croche", "Noire"], optionsEn: ["Sixteenth", "Eighth", "Quarter"],
         optionIds: ["16", "8", "4"], defaut: "Double-croche", defautEn: "Sixteenth",

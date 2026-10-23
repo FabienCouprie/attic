@@ -145,7 +145,11 @@ const DOMAINES: Domaine[] = [
     nom: "métrique",
     releve: (ids) => ids.length >= 2 && ids.every((x) => /^\d+\/\d+$/.test(x))
       && ids.some((x) => Number(x.split("/")[0]) > 1),
-    formesAssumees: 4,
+    // CE NOMBRE EST PASSÉ DE QUATRE À DEUX : le remède ci-dessous a été appliqué, et c'est
+    // `audio/signatures.ts` qui porte la liste. Les deux formes qui restent sont cette liste, que
+    // cinq composants offrent entière, et le sous-ensemble que la gravure MusicXML en FILTRE, sa
+    // grille se comptant en noires. Un sous-ensemble dérivé de la table n'est pas une table de plus.
+    formesAssumees: 2,
     remede: "déclarer une liste centrale des signatures",
   },
   {
@@ -232,8 +236,10 @@ describe("un concept, des formes déclarées", () => {
     // Le nombre de formes en trop, domaine par domaine : ce qu'il resterait à unifier si chaque
     // domaine se ramenait à une seule liste. Ce cas ne juge pas, il empêche le chiffre de croître
     // sans qu'on s'en aperçoive.
+    // DE TRENTE-TROIS À TRENTE ET UN : la métrique est passée de quatre formes à deux, la liste
+    // des signatures étant désormais dans `audio/signatures.ts`.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(33);
+      .toBe(31);
   });
 });

@@ -281,6 +281,29 @@ const CONNUS = {
       note: "La licence vient de la fiche amont `ResembleAI/chatterbox`, qui déclare MIT. Le dépôt de conversion déclare « other » sans préciser : c'est l'amont qui fait foi, comme pour l'export de Whisper tiny, et une conversion de format est une œuvre dérivée des poids. Seul modèle de voix du catalogue qui ne porte aucune réserve non commerciale." },
   },
 
+  // ── LE SECOND MOTEUR DE TRANSCRIPTION, sous la même racine et lu par le même exécutable ──
+  //
+  // AUCUN DES DEUX NE DOMINE L'AUTRE, et c'est la mesure du 2026-10-23 qui les sépare, sur des
+  // témoins dont j'avais écrit le texte. Celui-ci gagne sur le court et le net : il rend la phrase
+  // française EXACTEMENT telle qu'écrite là où Parakeet ajoute une virgule, et garde « river bank »
+  // en deux mots quand l'autre les soude. Son empreinte est moitié moindre — 2 821 Mo contre 6 434
+  // sur un extrait court, 3 946 contre 8 335 sur 178 s. Parakeet gagne sur le long et le rapide :
+  // facteur de temps réel 0,018 contre 0,059, et il rend les soixante-quatre occurrences de phrase
+  // du témoin long quand celui-ci en laisse tomber une.
+  //
+  // IL NE SERT PAS L'HORODATAGE, ET C'EST MESURÉ. Sa fiche annonce `word_timestamps`, mais la
+  // capacité passe par l'aligneur Qwen3 lancé après la transcription — celui que ce même manifeste
+  // porte déjà. Ses instants et ceux de l'aligneur sont identiques À L'ÉCHANTILLON, écart
+  // exactement nul sur quinze mots : les demander coûterait 1 129 969 856 octets de plus pour un
+  // résultat que le dépôt compose en branchant deux nœuds. Le paquet 1.7B, lui, est hors de portée
+  // à 2 473 017 600 octets, au-delà du plafond d'un asset de release.
+  "qwen3-asr-0.6b-q8_0.gguf": {
+    id: "qwen3-asr", nom: "Transcription (Qwen3 ASR)", nomEn: "Transcription (Qwen3 ASR)",
+    racine: "audiocpp", noeuds: ["transcrire"],
+    licence: { nom: "Apache-2.0", credit: "Qwen — Qwen3-ASR-0.6B, converti en GGUF par le projet audio.cpp", rediffusable: true,
+      note: "La fiche amont `Qwen/Qwen3-ASR-0.6B` déclare Apache-2.0, sans réserve. C'est ce qui l'a fait préférer à `crisperwhisper`, qui couvre quatre-vingt-dix-neuf langues mais dont la licence des poids — « nyra health Non-Commercial Research License » — dit que l'usage non commercial « does not include any production or operational deployment », et restreint jusqu'aux sorties produites. Livrer un modèle dans une application est précisément un déploiement : aucune réserve écrite n'aurait pu le couvrir." },
+  },
+
   // ── LA RECONNAISSANCE QUI DATE CHAQUE MOT, sous la même racine et lue par le même exécutable ──
   //
   // CE QU'IL APPORTE QUE LE DÉPÔT N'AVAIT PAS : des instants PAR MOT sans qu'on donne le texte.
