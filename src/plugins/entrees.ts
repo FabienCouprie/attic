@@ -11,6 +11,7 @@ import { completer } from "../audio/gammes";
 const GAMMES_GENERATEUR = completer(["majeur", "mineur"]);
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { PARAMETRE_CLE } from "../audio/cles";
+import { GENRES_SANS_PERSONNALISE, LIBELLES_HERITES_GENRES } from "./generateurs-aides";
 
 const entrees: FicheAudio[] = [
   {
@@ -151,7 +152,13 @@ const entrees: FicheAudio[] = [
       { nom: "MIDI 3", nomEn: "MIDI 3", type: "midi" },
     ],
     parametres: [
-      { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient"], optionIds: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient"], defaut: "pop", optionsEn: ["pop", "rock", "jazz", "blues", "classic", "electro", "hip hop", "reggae", "ambient"], defautEn: "pop" },
+      // LA TABLE COMMUNE PLUTÔT QUE NEUF IDENTIFIANTS À LA MAIN : écrits ici, ils portaient
+      // « hip-hop » quand la clé de `PROGRESSIONS_GENRE` est « hiphop », et ce genre rendait donc
+      // la progression de pop sans qu'aucun message ne le dise.
+      { nom: "Genre", nomEn: "Genre", type: "choix",
+        options: GENRES_SANS_PERSONNALISE.fr, optionsEn: GENRES_SANS_PERSONNALISE.en,
+        optionIds: GENRES_SANS_PERSONNALISE.ids, optionsHeritees: LIBELLES_HERITES_GENRES,
+        defaut: "pop", defautEn: "Pop" },
       { ...PARAMETRE_CLE },
       // LES GAMMES VIENNENT DE LA TABLE, comme partout ailleurs. Ce composant n'en proposait que
       // deux, écrites en clair dans sa fiche, quand la boîte à groove en offrait onze : relevé par

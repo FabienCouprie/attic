@@ -312,6 +312,11 @@ const CAS: Cas[] = [
   { node: "boite-rythmes", param: "Patron", ancienneValeur: "Waltz", idAttendu: "Valse" },
   { node: "generateur-fractal", param: "Motif", ancienneValeur: "Custom", idAttendu: "Personnalisé" },
   { node: "generateur-musical", param: "Genre", ancienneValeur: "classic", idAttendu: "classique" },
+  // CES DEUX-LÀ RÉPARENT UN DÉFAUT, et non seulement un renommage : « hip-hop » était l'identifiant
+  // ENREGISTRÉ par ce composant, et il ne nommait aucune progression, de sorte que ce genre rendait
+  // celle de pop. Un projet qui le porte doit désormais retrouver « hiphop ».
+  { node: "generateur-musical", param: "Genre", ancienneValeur: "hip-hop", idAttendu: "hiphop" },
+  { node: "generateur-musical", param: "Genre", ancienneValeur: "hip hop", idAttendu: "hiphop" },
   { node: "generateur-musical", param: "Instrument 2", ancienneValeur: "Fretless bass", idAttendu: "Basse fretless" },
   { node: "gestion-nodes", param: "Action", ancienneValeur: "Export", idAttendu: "Exporter" },
   { node: "vexflow-tab", param: "Accordage", ancienneValeur: "Ukulele", idAttendu: "Ukulélé" },

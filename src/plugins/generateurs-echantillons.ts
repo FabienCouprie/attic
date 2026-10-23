@@ -19,7 +19,7 @@ import { avecDoc } from "./notices";
  * Accepte les altérations #/♯ et b/♭, ignore la casse et les espaces blancs.
  * Retourne null si la note est invalide.
  */
-import { GENRES_ACCORDS_IDS, GAMMES_ACCORDS_IDS } from "./generateurs-aides";
+import { GENRES_ACCORDS, GAMMES_ACCORDS_IDS } from "./generateurs-aides";
 import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
 import { PARAMETRE_CLE } from "../audio/cles";
 
@@ -98,9 +98,9 @@ export const fiches: FicheAudio[] = ([
         nom: "Genre",
         nomEn: "Genre",
         type: "choix",
-        options: ["pop","rock","jazz","blues","classique","electro","hiphop","reggae","ambient","personnalisé"],
-        optionsEn: ["Pop","Rock","Jazz","Blues","Classical","Electronic","Hip-hop","Reggae","Ambient","Custom"],
-        optionIds: GENRES_ACCORDS_IDS,
+        options: GENRES_ACCORDS.fr,
+        optionsEn: GENRES_ACCORDS.en,
+        optionIds: GENRES_ACCORDS.ids,
         defaut: "pop",
         defautEn: "pop",
         doc: "Style déterminant la progression d'accords. « Personnalisé » ouvre la saisie de la progression.",

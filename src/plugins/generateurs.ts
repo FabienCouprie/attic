@@ -18,7 +18,7 @@ import { SIGNATURES } from "../audio/signatures";
  * Accepte les altérations #/♯ et b/♭, ignore la casse et les espaces blancs.
  * Retourne null si la note est invalide.
  */
-import { GENRES_ACCORDS_IDS, GAMMES_ACCORDS_IDS } from "./generateurs-aides";
+import { GENRES_ACCORDS, GAMMES_ACCORDS_IDS } from "./generateurs-aides";
 import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
 import { PARAMETRE_CLE } from "../audio/cles";
 
@@ -47,7 +47,7 @@ export const fiches: FicheAudio[] = ([
         optionsHeritees: LIBELLES_HERITES_GAMMES,
         doc: "Gamme employée pour construire les accords. Les sept modes, les trois mineures, les deux pentatoniques, le vocabulaire du jazz avec le blues, l'altérée, les deux dominantes et la bebop, les symétriques avec la gamme par tons, les deux diminuées et l'augmentée, les gammes à seconde augmentée et les deux pentatoniques japonaises, et la chromatique.",
         docEn: "Scale used to build the chords. The seven modes, the three minors, the two pentatonics, the jazz vocabulary with blues, altered, the two dominants and bebop, the symmetric ones with whole tone, the two diminished and augmented, the augmented-second scales and the two Japanese pentatonics, and chromatic." },
-      { nom: "Genre", nomEn: "Genre", type: "choix", options: ["pop","rock","jazz","blues","classique","electro","hip-hop","reggae","ambient","personnalisé"], optionsEn: ["Pop","Rock","Jazz","Blues","Classical","Electronic","Hip-hop","Reggae","Ambient","Custom"], optionIds: GENRES_ACCORDS_IDS, defaut: "pop",
+      { nom: "Genre", nomEn: "Genre", type: "choix", options: GENRES_ACCORDS.fr, optionsEn: GENRES_ACCORDS.en, optionIds: GENRES_ACCORDS.ids, defaut: "pop",
         doc: "Style déterminant la progression d'accords. « Personnalisé » ouvre la saisie d'une progression ci-dessous.",
         docEn: "Style determines the chord progression. Settings: « Custom » to enter your own progression below.", defautEn: "pop" },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I-IV-V-I",
