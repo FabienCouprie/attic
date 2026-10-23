@@ -15,6 +15,7 @@
 // tourne déjà dans les graphes de quelqu'un ne doit pas changer d'un bit.
 
 import { estCourbe, progressionPour, valeursParametre } from "./courbe";
+import { formeOndeDepuisTimbre } from "./timbres";
 
 /** Les bornes d'une fréquence modulée : ce que valent le zéro et le un de la courbe, en hertz. */
 export interface BornesFrequence { min: number; max: number }
@@ -51,8 +52,14 @@ export function cyclesAccumules(frequences: Float32Array, sr: number): Float64Ar
  * trémolo, où `freq * t` est remplacé par u : même forme d'onde, même point de départ.
  */
 export function formeLfo(forme: string, u: number): number {
-  if (forme === "Carré" || forme === "Square") return Math.sin(2 * Math.PI * u) >= 0 ? 1 : -1;
-  if (forme === "Triangle") return 2 * Math.abs(2 * (u - Math.floor(u + 0.5))) - 1;
-  if (forme === "Sawtooth") return 2 * (u - Math.floor(u)) - 1;
-  return Math.sin(2 * Math.PI * u);
+  // LA TABLE D'ALIAS RECONNAÎT, ET NON UNE COMPARAISON DE LIBELLÉS. Ce réglage avait pour
+  // identifiants ses libellés français capitalisés, « Sinus » et « Carré », de sorte que cette
+  // fonction les comparait tels quels ; elle acceptait au passage « Square » mais pas « square ».
+  // L'identifiant est désormais canonique, et les libellés d'autrefois restent lus.
+  switch (formeOndeDepuisTimbre(forme)) {
+    case "square": return Math.sin(2 * Math.PI * u) >= 0 ? 1 : -1;
+    case "triangle": return 2 * Math.abs(2 * (u - Math.floor(u + 0.5))) - 1;
+    case "sawtooth": return 2 * (u - Math.floor(u)) - 1;
+    default: return Math.sin(2 * Math.PI * u);
+  }
 }

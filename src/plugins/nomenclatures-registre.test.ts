@@ -162,8 +162,15 @@ const DOMAINES: Domaine[] = [
     nom: "forme d'onde",
     releve: (ids) => ids.length >= 3
       && ids.every((x) => ["sine", "square", "sawtooth", "saw", "triangle"].includes(x)),
-    formesAssumees: 5,
-    remede: "offrir `FORMES_ONDE` de `audio/timbres.ts`",
+    // CE NOMBRE EST PASSÉ DE CINQ À UNE : dix réglages prennent désormais `FORMES_ONDE_CHOIX`. Les
+    // cinq formes étaient l'identifiant `saw` chez l'un et `sawtooth` chez les autres, le même jeu
+    // dans un ordre différent chez un troisième, et deux listes que CE PRÉDICAT NE VOIT MÊME PAS,
+    // puisqu'il exige que TOUS les identifiants soient dans sa liste : les libellés français
+    // capitalisés du trémolo et le `sinus/carre/dents-de-scie` du générateur à pulsars.
+    formesAssumees: 1,
+    // LE REMÈDE D'AVANT N'ÉTAIT PAS EXÉCUTABLE : `FORMES_ONDE` n'est pas exportée, et c'est une
+    // table d'alias qui relit une valeur, non une liste ordonnée avec ses libellés.
+    remede: "offrir `FORMES_ONDE_CHOIX` de `audio/timbres.ts`, et ses `LIBELLES_HERITES_FORMES`",
   },
   {
     nom: "oui ou non",
@@ -236,10 +243,11 @@ describe("un concept, des formes déclarées", () => {
     // Le nombre de formes en trop, domaine par domaine : ce qu'il resterait à unifier si chaque
     // domaine se ramenait à une seule liste. Ce cas ne juge pas, il empêche le chiffre de croître
     // sans qu'on s'en aperçoive.
-    // DE TRENTE-TROIS À TRENTE ET UN : la métrique est passée de quatre formes à deux, la liste
-    // des signatures étant désormais dans `audio/signatures.ts`.
+    // DE TRENTE-TROIS À VINGT-SEPT. La métrique est passée de quatre formes à deux, la liste des
+    // signatures étant désormais dans `audio/signatures.ts` ; la forme d'onde de cinq à une, par
+    // `FORMES_ONDE_CHOIX`.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(31);
+      .toBe(27);
   });
 });

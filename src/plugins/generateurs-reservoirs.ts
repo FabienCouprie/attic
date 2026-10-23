@@ -11,6 +11,7 @@ import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INST
 import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
 import { PARAMETRE_CLE } from "../audio/cles";
+import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 
 /**
  * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
@@ -55,7 +56,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
         doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Sinus","Carré","Scie","Triangle"], optionIds: ["sine","square","sawtooth","triangle"], optionsEn: ["Sine","Square","Saw","Triangle"], defaut: "Triangle",
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: FORMES_ONDE_CHOIX.fr, optionIds: FORMES_ONDE_CHOIX.ids, optionsEn: FORMES_ONDE_CHOIX.en, optionsHeritees: LIBELLES_HERITES_FORMES, defaut: "Triangle",
         doc: "Forme d'onde de la synthèse.", docEn: "Synthesis waveform.", defautEn: "Triangle" },
       { nom: "Densité", nomEn: "Density", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
         doc: "Probabilité de produire une note à chaque pas. Élevée = mélodie dense ; faible = mélodie éparse.", docEn: "Probability of producing a note at each step. High = dense melody; low = sparse melody." },
@@ -151,7 +152,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
       { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
         doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Sinus","Carré","Scie","Triangle"], optionIds: ["sine","square","sawtooth","triangle"], optionsEn: ["Sine","Square","Saw","Triangle"], defaut: "Triangle",
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: FORMES_ONDE_CHOIX.fr, optionIds: FORMES_ONDE_CHOIX.ids, optionsEn: FORMES_ONDE_CHOIX.en, optionsHeritees: LIBELLES_HERITES_FORMES, defaut: "Triangle",
         doc: "Forme d'onde de la synthèse.", docEn: "Synthesis waveform.", defautEn: "Triangle" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
       { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0,

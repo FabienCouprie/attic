@@ -15,6 +15,7 @@ import {
 } from "../audio";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { PARAMETRE_CLE } from "../audio/cles";
+import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 
 // Motif par défaut du séquenceur avancé (16 pas, 8 pistes) : kick temps, snare 2/4,
 // charley fermé en croches, le reste muet.
@@ -84,8 +85,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Gamme utilisée pour choisir les notes disponibles dans la grille.", docEn: "Scale used for the available notes in the grid.", optionsEn: ["major", "minor", "major pentatonic", "minor pentatonic", "blues"], defautEn: "major" },
       { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 3,
         doc: "Octave de départ (les rangées montent d'environ 2 octaves au-dessus).", docEn: "Starting octave (rows span about 2 octaves above)." },
-      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: ["Triangle","Carré","Scie","Sinus"], optionIds: ["triangle","square","sawtooth","sine"], optionsEn: ["Triangle","Square","Saw","Sine"], defaut: "Triangle",
-        doc: "Forme d'onde de la synthèse. Triangle = doux ; Carré = 8-bit/retro ; Scie = riche/harmonique ; Sinus = pur.", docEn: "Synthesis waveform. Triangle = soft ; Square = 8-bit/retro ; Saw = rich/harmonic ; Sine = pure.", defautEn: "Triangle" },
+      { nom: "Timbre", nomEn: "Timbre", type: "choix", options: FORMES_ONDE_CHOIX.fr, optionIds: FORMES_ONDE_CHOIX.ids, optionsEn: FORMES_ONDE_CHOIX.en, optionsHeritees: LIBELLES_HERITES_FORMES, defaut: "Triangle",
+        doc: "Forme d'onde de la synthèse. Sinus = pur ; Carré = 8-bit/retro ; Dent de scie = riche en harmoniques ; Triangle = doux.", docEn: "Synthesis waveform. Sine = pure ; Square = 8-bit/retro ; Sawtooth = rich in harmonics ; Triangle = soft.", defautEn: "Triangle" },
       { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },

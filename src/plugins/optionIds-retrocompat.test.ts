@@ -303,7 +303,15 @@ const CAS: Cas[] = [
   { node: "generateur-bruit", param: "Type", ancienneValeur: "Brownian", idAttendu: "Brownien" },
   { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "Random", idAttendu: "Aléatoire" },
   { node: "arpegiateur-midi", param: "Motif", ancienneValeur: "Straight", idAttendu: "Droit" },
-  { node: "tremolo", param: "Forme", ancienneValeur: "Sine", idAttendu: "Sinus" },
+  // LES IDENTIFIANTS DU TRÉMOLO ÉTAIENT SES LIBELLÉS FRANÇAIS CAPITALISÉS, « Sinus » et « Carré ».
+  // Ils sont canoniques désormais, et les quatre anciens doivent se relire.
+  { node: "tremolo", param: "Forme", ancienneValeur: "Sine", idAttendu: "sine" },
+  { node: "tremolo", param: "Forme", ancienneValeur: "Sinus", idAttendu: "sine" },
+  { node: "tremolo", param: "Forme", ancienneValeur: "Carré", idAttendu: "square" },
+  { node: "tremolo", param: "Forme", ancienneValeur: "Sawtooth", idAttendu: "sawtooth" },
+  { node: "generateur-frequence", param: "Forme", ancienneValeur: "saw", idAttendu: "sawtooth" },
+  { node: "generateur-frequence", param: "Forme", ancienneValeur: "Scie", idAttendu: "sawtooth" },
+  { node: "reservoir-musical", param: "Timbre", ancienneValeur: "Scie", idAttendu: "sawtooth" },
   { node: "arpege-koch", param: "Accord", ancienneValeur: "Augmented", idAttendu: "Augmenté" },
   { node: "arpege-koch", param: "Direction", ancienneValeur: "outward", idAttendu: "extérieure" },
   { node: "attracteur-ifs", param: "Attracteur", ancienneValeur: "Rossler", idAttendu: "Rössler" },

@@ -969,7 +969,7 @@ Generates a pure tone at a precise frequency. Two input modes: in Hertz (20-2000
 | Input | choice | Frequency (Hz) | Frequency (Hz) / Note | Input mode: in Hz (e.g. 440) or as a musical note (e.g. A4, C#5). |
 | Frequency | number | 440 Hz | 20 – 20000 Hz, step 1 | Frequency in Hertz (used when « Input » = Frequency). 440 = reference A4. |
 | Note | text | `A4` |  | Musical note (used when « Input » = Note). Format: letter + accidental + octave, e.g. A4, C#5, Bb3. |
-| Waveform | choice | Sine | Sine / Square / Saw / Triangle | Waveform. Sine = pure (single frequency); Square = odd harmonics; Saw = all harmonics; Triangle = soft odd harmonics. |
+| Waveform | choice | Sine | Sine / Square / Sawtooth / Triangle | Waveform. Sine = pure, a single frequency; Square = odd harmonics; Sawtooth = all harmonics; Triangle = soft odd harmonics. |
 | Duration | number | 2 s | 0.1 – 30 s, step 0.1 | Duration of the generated signal. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 
@@ -1171,7 +1171,7 @@ Generates a pure waveform by additive synthesis (sum of harmonics, alias-free). 
 
 *Fundamental and formant set independently, from short repeated bursts.*
 
-After Curtis Roads's pulsar synthesis ("Microsound", 2001). A pulsar is a brief waveform, the pulsaret, followed by silence, the whole thing repeated. Two durations describe it: the repetition period, whose inverse gives the fundamental you hear, and the pulsaret duration, whose inverse gives the formant position, that is, the region of the spectrum where energy concentrates. The two are independent: the note drops an octave without the formant moving, and the formant moves without the note changing. No acoustic instrument allows this, and neither does classic granulation, whose time grid and grain content stay tied together. The silence between pulsars is not incidental: it is what makes the decoupling possible. When the pulsaret duration reaches the period (that is, when the formant drops to the fundamental) pulsars touch and the process dissolves into a continuous waveform; the node caps there, which is a constraint of the model rather than a limitation of the implementation.
+After Curtis Roads's pulsar synthesis ("Microsound", 2001). A pulsar is a brief waveform, the pulsaret, followed by silence, the whole thing repeated. Two durations describe it: the repetition period, whose inverse gives the fundamental you hear, and the pulsaret duration, whose inverse gives the formant position, that is, the region of the spectrum where energy concentrates. The two are independent: the note drops an octave without the formant moving, and the formant moves without the note changing. No acoustic instrument allows this, and neither does classic granulation, whose time grid and grain content stay tied together. The silence between pulsars is not incidental: it is what makes the decoupling possible. When the pulsaret duration reaches the period (that is, when the formant drops to the fundamental) pulsars touch and the process dissolves into a continuous waveform; the node caps there, which is a constraint of the model rather than a limitation of the implementation. « Shape » selects the pulsaret waveform among Sine, Square, Sawtooth and Triangle. Sine gives a clean formant; the other three add higher replicas of it.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -1181,7 +1181,7 @@ After Curtis Roads's pulsar synthesis ("Microsound", 2001). A pulsar is a brief 
 |---|---|---|---|---|
 | Fundamental | number | 110 Hz | 20 – 2000 Hz, step 1 | Number of pulsars per second, hence the note you hear. It is set without touching the formant. |
 | Formant | number | 1100 Hz | 50 – 8000 Hz, step 10 | Region of the spectrum where energy concentrates, equal to the inverse of the pulsaret duration. It is set without touching the note. Brought down to the fundamental it saturates: pulsars touch and the sound becomes continuous again. |
-| Shape | choice | Sine | Sine / Square / Sawtooth | Waveform of the pulsaret. Sine gives a clean formant; square and sawtooth add higher replicas of it. |
+| Shape | choice | Sine | Sine / Square / Sawtooth / Triangle | Waveform of the pulsaret. Sine gives a clean formant; square, sawtooth and triangle add higher replicas of it. |
 | Duration | number | 5 s | 0.2 – 120 s, step 0.1 | Length of the produced sound. |
 | Amplitude | slider | 80 % | 0 – 100 %, step 1 | Output level. |
 
@@ -1749,7 +1749,7 @@ Puts four neural reservoirs into a network, each with a distinct musical role: m
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
 | Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 | Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth. |
 | Bars | number | 4 | 1 – 64, step 1 | Number of bars to generate. |
-| Timbre | choice | Triangle | Sine / Square / Saw / Triangle | Synthesis waveform. |
+| Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 | Seed | number | 0 | 0 – 999999, step 1 | Random seed (0 = new network each run). A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Mel. neurons | number | 15 | 5 – 40, step 1 | Melody reservoir neurons. |
@@ -1822,7 +1822,7 @@ Generates emergent melody via random neural networks (Reservoir Computing), insp
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
 | Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 | Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth. |
 | Bars | number | 4 | 1 – 64, step 1 | Number of bars to generate. |
-| Timbre | choice | Triangle | Sine / Square / Saw / Triangle | Synthesis waveform. |
+| Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. |
 | Density | number | 70 % | 0 – 100 %, step 1 | Probability of producing a note at each step. High = dense melody; low = sparse melody. |
 | Repetition | number | 25 % | 0 – 100 %, step 1 | Tendency to repeat the previous note. High = catchy patterns; low = continuous variation. |
 | Silence | number | 10 % | 0 – 50 %, step 1 | Probability of silence at each step. Creates breathing room in the melody. |
@@ -2304,7 +2304,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
 | Scale | choice | major | major / minor / major pentatonic / minor pentatonic / blues | Scale used for the available notes in the grid. |
 | Octave | number | 3 | 2 – 6, step 1 | Starting octave (rows span about 2 octaves above). |
-| Timbre | choice | Triangle | Triangle / Square / Saw / Sine | Synthesis waveform. Triangle = soft ; Square = 8-bit/retro ; Saw = rich/harmonic ; Sine = pure. |
+| Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. Sine = pure ; Square = 8-bit/retro ; Sawtooth = rich in harmonics ; Triangle = soft. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Pattern | text | `0000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « \| ». |
@@ -2431,7 +2431,7 @@ Generates a polyphonic chord using Tone.js PolySynth. Each voice uses a simple o
 | Notes | text | `C4,E4,G4` |  | Chord notes, comma-separated (e.g. C4,E4,G4). |
 | Note duration | number | 0.5 s | 0.05 – 5 s, step 0.05 | Duration each note is held before release. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
-| Waveform | choice | triangle | sine / square / sawtooth / triangle | Oscillator waveform. |
+| Waveform | choice | Triangle | Sine / Square / Sawtooth / Triangle | Oscillator waveform. |
 | Attack | number | 0.01 s | 0 – 1 s, step 0.001 | Envelope attack time (0 = instantaneous). |
 | Decay | number | 0.1 s | 0 – 2 s, step 0.01 | Envelope decay time to the sustain level. |
 | Sustain | number | 0.3 level | 0 – 1 level, step 0.01 | Envelope sustain level (0 = silence, 1 = maximum). |
@@ -3763,7 +3763,7 @@ Amplitude modulation: varies the volume periodically. Settings: • the rate (vi
 | Depth | slider | 50 % | 0 – 100 %, step 1 | Modulation depth (0% = no effect, 100% = volume fully cut). A curve connected to the Modulation input takes over: that is how one gets a tremolo whose depth follows a logistic sequence, without needing a separate node for it. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Depth that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Depth that the curve's one means. |
-| Shape | choice | Sine | Sine / Square / Triangle / Sawtooth | LFO waveform shape. |
+| Shape | choice | Sine | Sine / Square / Sawtooth / Triangle | LFO waveform shape. |
 
 #### Two-Sound Convolution
 

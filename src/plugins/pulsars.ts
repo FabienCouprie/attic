@@ -4,6 +4,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -12,8 +13,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Entrées", famille: "Génération",
     resume: "Fondamentale et formant réglés séparément, par brèves impulsions répétées.",
     resumeEn: "Fundamental and formant set independently, from short repeated bursts.",
-    notice: "D'après la synthèse par pulsars de Curtis Roads (« Microsound », 2001). Un pulsar est une brève forme d'onde, le pulsaret, suivie de silence, le tout répété. Deux durées le décrivent : la période de répétition, dont l'inverse donne la fondamentale entendue, et la durée DU pulsaret, dont l'inverse donne la position du formant, c'est-à-dire la région du spectre où l'énergie se concentre. Ces deux grandeurs sont indépendantes : la note descend d'une octave sans que le formant bouge, et le formant se déplace sans que la note change. Aucun instrument acoustique ne le permet, et une granulation classique non plus, sa grille temporelle et le contenu de ses grains restant liés. Le silence entre pulsars rend ce découplage possible. Quand la durée du pulsaret atteint la période, c'est-à-dire quand le formant descend jusqu'à la fondamentale, les pulsars se touchent et le procédé se dissout en une forme d'onde continue ; le composant plafonne là, ce qui est une contrainte du modèle et non une limite de l'implémentation.",
-    noticeEn: "After Curtis Roads's pulsar synthesis (\"Microsound\", 2001). A pulsar is a brief waveform, the pulsaret, followed by silence, the whole thing repeated. Two durations describe it: the repetition period, whose inverse gives the fundamental you hear, and the pulsaret duration, whose inverse gives the formant position, that is, the region of the spectrum where energy concentrates. The two are independent: the note drops an octave without the formant moving, and the formant moves without the note changing. No acoustic instrument allows this, and neither does classic granulation, whose time grid and grain content stay tied together. The silence between pulsars is not incidental: it is what makes the decoupling possible. When the pulsaret duration reaches the period (that is, when the formant drops to the fundamental) pulsars touch and the process dissolves into a continuous waveform; the node caps there, which is a constraint of the model rather than a limitation of the implementation.",
+    notice: "D'après la synthèse par pulsars de Curtis Roads (« Microsound », 2001). Un pulsar est une brève forme d'onde, le pulsaret, suivie de silence, le tout répété. Deux durées le décrivent : la période de répétition, dont l'inverse donne la fondamentale entendue, et la durée DU pulsaret, dont l'inverse donne la position du formant, c'est-à-dire la région du spectre où l'énergie se concentre. Ces deux grandeurs sont indépendantes : la note descend d'une octave sans que le formant bouge, et le formant se déplace sans que la note change. Aucun instrument acoustique ne le permet, et une granulation classique non plus, sa grille temporelle et le contenu de ses grains restant liés. Le silence entre pulsars rend ce découplage possible. Quand la durée du pulsaret atteint la période, c'est-à-dire quand le formant descend jusqu'à la fondamentale, les pulsars se touchent et le procédé se dissout en une forme d'onde continue ; le composant plafonne là, ce qui est une contrainte du modèle et non une limite de l'implémentation.\n\n« Forme » choisit l'onde du pulsaret parmi Sinus, Carré, Dent de scie et Triangle. Le sinus donne un formant net ; les trois autres en ajoutent des répliques plus aiguës.",
+    noticeEn: "After Curtis Roads's pulsar synthesis (\"Microsound\", 2001). A pulsar is a brief waveform, the pulsaret, followed by silence, the whole thing repeated. Two durations describe it: the repetition period, whose inverse gives the fundamental you hear, and the pulsaret duration, whose inverse gives the formant position, that is, the region of the spectrum where energy concentrates. The two are independent: the note drops an octave without the formant moving, and the formant moves without the note changing. No acoustic instrument allows this, and neither does classic granulation, whose time grid and grain content stay tied together. The silence between pulsars is not incidental: it is what makes the decoupling possible. When the pulsaret duration reaches the period (that is, when the formant drops to the fundamental) pulsars touch and the process dissolves into a continuous waveform; the node caps there, which is a constraint of the model rather than a limitation of the implementation.\n\n« Shape » selects the pulsaret waveform among Sine, Square, Sawtooth and Triangle. Sine gives a clean formant; the other three add higher replicas of it.",
     entrees: [],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
@@ -23,12 +24,15 @@ export const fiches: FicheAudio[] = ([
       { nom: "Formant", nomEn: "Formant", type: "nombre", plage: [50, 8000], pas: 10, defaut: 1100, unite: "Hz",
         doc: "Région du spectre où l'énergie se concentre, égale à l'inverse de la durée du pulsaret. Elle se règle sans toucher à la note. Descendue jusqu'à la fondamentale, elle sature : les pulsars se touchent et le son redevient continu.",
         docEn: "Region of the spectrum where energy concentrates, equal to the inverse of the pulsaret duration. It is set without touching the note. Brought down to the fundamental it saturates: pulsars touch and the sound becomes continuous again." },
+      // CE COMPOSANT AVAIT SON VOCABULAIRE PROPRE, `sinus / carre / dents-de-scie`, qu'aucune
+      // autre table du dépôt ne connaissait. Il prend la table commune, ce qui lui ajoute le
+      // triangle au passage, et les anciens identifiants restent lus.
       { nom: "Forme", nomEn: "Shape", type: "choix",
-        options: ["Sinus", "Carré", "Dents de scie"], optionsEn: ["Sine", "Square", "Sawtooth"],
-        optionIds: ["sinus", "carre", "dents-de-scie"],
-        defaut: "sinus", defautEn: "sinus",
-        doc: "Forme d'onde du pulsaret. Le sinus donne un formant net ; le carré et les dents de scie en ajoutent des répliques plus aiguës.",
-        docEn: "Waveform of the pulsaret. Sine gives a clean formant; square and sawtooth add higher replicas of it." },
+        options: FORMES_ONDE_CHOIX.fr, optionsEn: FORMES_ONDE_CHOIX.en,
+        optionIds: FORMES_ONDE_CHOIX.ids, optionsHeritees: LIBELLES_HERITES_FORMES,
+        defaut: "Sinus", defautEn: "Sine",
+        doc: "Forme d'onde du pulsaret. Le sinus donne un formant net ; le carré, la dent de scie et le triangle en ajoutent des répliques plus aiguës.",
+        docEn: "Waveform of the pulsaret. Sine gives a clean formant; square, sawtooth and triangle add higher replicas of it." },
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.2, 120], pas: 0.1, defaut: 5, unite: "s",
         doc: "Durée du son produit.", docEn: "Length of the produced sound." },
       { nom: "Amplitude", nomEn: "Amplitude", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",

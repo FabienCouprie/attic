@@ -25,7 +25,10 @@ export function noteVersFrequence(note: string): number | null {
   return frequenceDeNoteMidi(midi);
 }
 
-export const FORMES_FREQ = { ids: ["sine", "square", "saw", "triangle"], fr: ["Sinus", "Carré", "Scie", "Triangle"], en: ["Sine", "Square", "Saw", "Triangle"] };
+// LA TABLE DES FORMES D'ONDE A QUITTÉ CE FICHIER pour `audio/timbres.ts`, où vit déjà la table
+// d'alias qui relit une valeur enregistrée. Celle qui était ici portait l'identifiant `saw` quand
+// les dix autres composants écrivaient `sawtooth`, et son exécuteur traduisait l'un en l'autre à la
+// main.
 
 /**
  * Le genre, avec ses libellés : identifiants canoniques, français, anglais.

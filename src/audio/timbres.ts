@@ -16,8 +16,47 @@ const FORMES_ONDE: Record<string, FormeOndeId> = {
   sine: "sine", square: "square", sawtooth: "sawtooth", triangle: "triangle",
   // anciens libellés français
   sinus: "sine", "carré": "square", carre: "square", scie: "sawtooth",
+  "dent de scie": "sawtooth", "dents de scie": "sawtooth", "dents-de-scie": "sawtooth",
   // ancien libellé anglais spécifique (les autres coïncident avec les ids)
   saw: "sawtooth",
+};
+
+/**
+ * Les quatre formes d'onde offertes, dans l'ordre, avec leurs libellés.
+ *
+ * ONZE COMPOSANTS LES OFFRAIENT ET CINQ ORTHOGRAPHES COEXISTAIENT : l'identifiant `saw` chez l'un
+ * et `sawtooth` chez les autres, le même jeu dans un ORDRE différent chez un troisième, les
+ * libellés français capitalisés EN GUISE D'IDENTIFIANTS chez un quatrième — dont « Sawtooth », non
+ * traduit, offert en français — et `sinus/carre/dents-de-scie` chez un cinquième, inconnus de la
+ * table d'alias ci-dessus. Un composant montrait même ses libellés anglais à un lecteur français.
+ *
+ * LES LIBELLÉS SONT ICI AUTANT QUE LES IDENTIFIANTS, parce qu'un libellé se voit, et qu'il
+ * s'enregistre aussi dès qu'un composant n'a pas d'`optionIds`. Le français de `sawtooth` est
+ * « Dent de scie », au singulier comme l'outil.
+ *
+ * ELLE NE REMPLACE PAS LA TABLE D'ALIAS, qui reconnaît une valeur venue d'un projet ; celle-ci dit
+ * ce qui est OFFERT, et dans quel ordre.
+ */
+export const FORMES_ONDE_CHOIX: { ids: FormeOndeId[]; fr: string[]; en: string[] } = {
+  ids: ["sine", "square", "sawtooth", "triangle"],
+  fr: ["Sinus", "Carré", "Dent de scie", "Triangle"],
+  en: ["Sine", "Square", "Sawtooth", "Triangle"],
+};
+
+/**
+ * Les libellés que les listes de formes d'onde ont portés avant cette table.
+ *
+ * Déclarés plutôt que devinés, pour qu'un projet enregistré retrouve sa forme. La tolérance de
+ * casse du moteur de choix ne suffit pas ici : « Scie » n'est pas « Dent de scie » à une majuscule
+ * près, et « dents-de-scie » non plus.
+ */
+export const LIBELLES_HERITES_FORMES: Record<string, string> = {
+  // Le libellé court, français et anglais, de quatre composants.
+  "Scie": "sawtooth", "Saw": "sawtooth", "saw": "sawtooth",
+  // Les libellés français capitalisés qui servaient d'identifiants au trémolo.
+  "Sinus": "sine", "Carré": "square", "Triangle": "triangle", "Sawtooth": "sawtooth",
+  // Le vocabulaire propre du générateur à pulsars.
+  "sinus": "sine", "carre": "square", "dents-de-scie": "sawtooth", "Dents de scie": "sawtooth",
 };
 
 export function formeOndeDepuisTimbre(valeur: string): FormeOndeId | undefined {

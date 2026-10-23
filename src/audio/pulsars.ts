@@ -19,6 +19,8 @@
 // continue. Le rapport des deux — le « cycle de service » — est donc borné, et
 // c'est une contrainte du modèle, pas une limitation d'implémentation.
 
+import { formeOndeDepuisTimbre } from "./timbres";
+
 export interface OptionsPulsars {
   dureeSec: number;
   sampleRate: number;
@@ -26,8 +28,14 @@ export interface OptionsPulsars {
   fondamentaleHz: number;
   /** Position du formant, en Hz : l'inverse de la durée du pulsaret. */
   formantHz: number;
-  /** Forme du pulsaret. */
-  forme?: "sinus" | "carre" | "dents-de-scie";
+  /**
+   * Forme du pulsaret.
+   *
+   * LES IDENTIFIANTS SONT CEUX DE LA TABLE COMMUNE, et ils ne l'étaient pas : ce module avait son
+   * vocabulaire propre, `sinus / carre / dents-de-scie`, qu'aucune autre table ne connaissait. Un
+   * projet enregistré le porte encore, et c'est la table d'alias qui le relit.
+   */
+  forme?: string;
   /** Amplitude, de 0 à 1. */
   amplitude?: number;
 }
@@ -57,9 +65,12 @@ export function cycleDeService(fondamentaleHz: number, formantHz: number): numbe
 }
 
 function echantillonPulsaret(phase: number, forme: string): number {
-  switch (forme) {
-    case "carre": return phase < 0.5 ? 1 : -1;
-    case "dents-de-scie": return 2 * phase - 1;
+  switch (formeOndeDepuisTimbre(forme)) {
+    case "square": return phase < 0.5 ? 1 : -1;
+    case "sawtooth": return 2 * phase - 1;
+    // LE TRIANGLE N'ÉTAIT PAS OFFERT PAR CE MODULE, et il l'est maintenant qu'il prend la table
+    // commune : trois formes sur quatre auraient laissé un pulsaret muet sur la quatrième.
+    case "triangle": return 2 * Math.abs(2 * (phase - Math.floor(phase + 0.5))) - 1;
     default: return Math.sin(2 * Math.PI * phase);
   }
 }
