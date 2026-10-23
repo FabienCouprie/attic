@@ -6,6 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { apparierSurReference } from "../audio/appariement-reference";
+import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -47,8 +48,7 @@ export const fiches: FicheAudio[] = ([
       // concept : le garde des nomenclatures compte les formes de « fenêtre d'analyse », et une
       // liste neuve en aurait fait une onzième.
       { nom: "Taille de la transformée", nomEn: "Transform size", type: "choix",
-        options: ["512", "1024", "2048", "4096"], optionsEn: ["512", "1024", "2048", "4096"],
-        optionIds: ["512", "1024", "2048", "4096"], defaut: "4096", defautEn: "4096",
+        ...choixFenetre([512, 1024, 2048, 4096]), defaut: "4096", defautEn: "4096",
         doc: "Résolution de l'analyse. Grande, elle distingue les graves ; petite, elle suit mieux les changements rapides.",
         docEn: "Analysis resolution. Large, it tells low frequencies apart; small, it follows fast changes better." },
     ],

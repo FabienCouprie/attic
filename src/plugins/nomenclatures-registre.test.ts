@@ -204,10 +204,22 @@ const DOMAINES: Domaine[] = [
     nom: "fenêtre d'analyse",
     membre: estPuissanceDeDeux,
     seuil: 2,
-    // Dix formes pour des puissances de deux : sept membres différents, et trois composants qui
-    // n'ont pas de libellé anglais là où les autres en ont un.
+    // DIX FORMES, ET AUCUNE N'EST UNE DETTE : CHACUNE A ÉTÉ EXAMINÉE. Six sous-ensembles, de 256 à
+    // 8192, portent chacun leur raison dans la documentation de leur propre réglage : « elle doit
+    // être longue, il faut du temps pour constater qu'une fréquence dure » contre « elle doit être
+    // courte » pour les deux passes de la décomposition STN, « 2048 est le compromis de l'article »
+    // pour la séparation harmonique, « sans effet sur l'étirement » pour la transformée de Csound.
+    // Trois formes ne diffèrent que par les LIBELLÉS : « Ordinaire (2048) » nomme la taille du
+    // MILIEU de sa propre liste, et le milieu de l'une n'est pas celui de l'autre, de sorte qu'une
+    // table centrale ne peut pas les produire. Et l'absence de liste anglaise sur deux réglages est
+    // une décision écrite à côté d'eux, des tailles de fenêtre ne se traduisant pas.
+    //
+    // CE QUI RESTAIT EST PAYÉ : les listes elles-mêmes venaient de vingt et une écritures à la
+    // main, et viennent désormais de `audio/fenetres-analyse.ts`. Un garde de SOURCE le tient,
+    // comme pour les signatures et les langues, puisque le registre ne voit pas deux listes
+    // identiques écrites deux fois.
     formesAssumees: 10,
-    remede: "déclarer une liste centrale des tailles de fenêtre, et dire pourquoi un composant en offre une part",
+    remede: "offrir `choixFenetre` de `audio/fenetres-analyse.ts`, et dire pourquoi un composant en offre une part",
   },
   {
     nom: "métrique",
