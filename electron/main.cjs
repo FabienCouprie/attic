@@ -1407,7 +1407,21 @@ ipcMain.handle("muscriptor:transcrire", async (event, options) => {
 //
 // MÊME EXÉCUTABLE, AUTRE FAMILLE, ET DONC AUTRE CANAL D'AVANCEMENT : les deux tâches peuvent
 // tourner en même temps, et mêler leurs lignes de journal dirait n'importe quoi sur les deux.
-const { cloner: chatterboxCloner } = require("./chatterbox.cjs");
+// MÊME MODULE, DEUX TÂCHES : le clonage fait dire un texte à une voix, la conversion garde les
+// mots d'un enregistrement et lui donne un autre timbre. Même modèle, donc deux canaux d'avancement
+// distincts, les deux pouvant tourner en même temps.
+const { cloner: chatterboxCloner, convertir: chatterboxConvertir } = require("./chatterbox.cjs");
+
+ipcMain.handle("chatterbox:convertir", async (event, options) => {
+  try {
+    return await chatterboxConvertir(options, (ligne) => {
+      if (!event.sender.isDestroyed()) event.sender.send("chatterbox:conversion-progression", { ligne });
+    }, contexteRessources());
+  } catch (err) {
+    console.error("[attic] chatterbox:convertir a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
 
 ipcMain.handle("chatterbox:cloner", async (event, options) => {
   try {

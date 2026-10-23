@@ -210,6 +210,48 @@ describe("ce que le contrat doit laisser passer", () => {
     expect(code, `la fusion n'est pas la mienne, et le garde a dit : ${dit}`).toBe(0);
   });
 
+  it("UNE BRANCHE PARTIE DU SOMMET D'UNE AUTRE, QUI A ENSUITE FUSIONNÉ", () => {
+    // LE FAUX POSITIF DU 2026-10-23, et c'est le cas le plus délicat de ce fichier. J'avais empilé
+    // un lot sur le sommet d'une branche dont la pull request a fusionné ensuite. La configuration
+    // est alors INDISCERNABLE DE LA FAUTE par la topologie : la base porte une fusion dont le
+    // second parent est un ancêtre de ma tête, et mes commits suivent ce point.
+    //
+    // Le cas voisin, « la fusion du lot de quelqu'un d'autre », ne couvrait pas celui-là : il part
+    // d'AVANT la fusion, donc le sommet fusionné n'est pas un ancêtre de ma tête et la topologie
+    // suffit. Ici il l'est, et seul le NOM dans le message de fusion sépare les deux.
+    const { clone, g } = monter();
+    g("checkout", "--quiet", "-b", "travaux/autre");
+    const sommet = commit(g, "le lot d'un autre");
+    g("checkout", "--quiet", "master");
+    g("merge", "--quiet", "--no-ff", "--no-gpg-sign",
+      "-m", "Merge pull request #7 from moi/travaux/autre", sommet);
+    g("push", "--quiet", "origin", "master");
+
+    // Ma branche part du SOMMET fusionné, et non d'avant lui.
+    g("checkout", "--quiet", "-b", "travaux/moi", sommet);
+    commit(g, "mon lot, empile sur le sommet d'un autre");
+
+    const { code, dit } = juger(clone);
+    expect(code, `la fusion nomme « travaux/autre », pas la mienne, et le garde a dit : ${dit}`).toBe(0);
+  });
+
+  it("mais un message de fusion illisible laisse l'alerte, par prudence", () => {
+    // Une fausse alerte coûte une vérification ; un commit perdu a coûté un composant entier. Quand
+    // le nom ne se lit pas, le contrat parle.
+    const { clone, g } = monter();
+    g("checkout", "--quiet", "-b", "travaux/moi");
+    const sommet = commit(g, "mon lot");
+    g("checkout", "--quiet", "master");
+    g("merge", "--quiet", "--no-ff", "--no-gpg-sign", "-m", "fusion sans nom de branche", sommet);
+    g("push", "--quiet", "origin", "master");
+    g("checkout", "--quiet", "travaux/moi");
+    commit(g, "ce qui est arrive apres la prise");
+
+    const { code, dit } = juger(clone);
+    expect(code, `le nom ne se lit pas, donc le garde doit parler : ${dit}`).toBe(2);
+    expect(dit).toContain("ce qui est arrive apres la prise");
+  });
+
   it("une commande qui ne pousse pas n'est pas son affaire, même en pleine faute", () => {
     const { clone, g } = monter();
     g("checkout", "--quiet", "-b", "travaux/essai");

@@ -56,11 +56,14 @@ function nettoyer(chemin) {
 async function cloner(options = {}, surAvancement, contexte) {
   const travail = fs.mkdtempSync(path.join(os.tmpdir(), "attic-chatterbox-"));
   try {
-    const modele = cheminModele(contexte);
-    if (!fs.existsSync(modele)) return { ok: false, journal: `Modèle absent : ${modele}` };
+    // MÊME ORDRE QUE LA CONVERSION, POUR LA MÊME RAISON : un refus d'entrée doit se prononcer que
+    // les deux giga-octets de poids soient sur le disque ou non. C'est aussi le message le plus
+    // utile — « brancher une voix » plutôt que « modèle absent » quand les deux manquent.
     if (!options.voix) return { ok: false, journal: "Brancher un audio de référence sur l'entrée « Voix »." };
     const texte = typeof options.texte === "string" ? options.texte.trim() : "";
     if (!texte) return { ok: false, journal: "Donner le texte à dire." };
+    const modele = cheminModele(contexte);
+    if (!fs.existsSync(modele)) return { ok: false, journal: `Modèle absent : ${modele}` };
 
     // LA RÉFÉRENCE VA DANS UN SOUS-DOSSIER, pour la même raison que l'audio source d'ACE-Step :
     // la sortie est cherchée par son nom dans le dossier de travail, et une entrée posée à côté
@@ -89,4 +92,60 @@ async function cloner(options = {}, surAvancement, contexte) {
   }
 }
 
-module.exports = { cloner, cheminModele };
+/**
+ * Convertit une voix en une autre : les mots de la source, le timbre de la cible.
+ *
+ * LE MÊME MODÈLE QUE LE CLONAGE, ET C'EST TOUT L'INTÉRÊT. Sa fiche déclare trois tâches — `tts`,
+ * `clone` et `vc` — et le GGUF est déjà livré pour « Cloner une voix ». La conversion de voix
+ * n'a donc coûté aucun téléchargement, aucune licence de plus et aucune publication : 2 088 399 204
+ * octets déjà sur la release, sous MIT.
+ *
+ * DEUX DRAPEAUX ET NON UN, contrairement au clonage : `--audio` porte la source, celle dont on
+ * garde les mots, et `--target-voice` la cible, celle dont on prend le timbre. C'est l'inverse de
+ * l'habitude du dépôt, où `--voice-ref` désigne la voix à imiter ; ici `--voice-ref` ne sert pas.
+ *
+ * MESURÉ LE 2026-10-23 SUR UN COUPLE DONT JE CONNAISSAIS L'ÉCART. Deux voix séparées de 0,4357
+ * d'écart de timbre : le rendu tombe à **0,0343 de la cible** et reste à 0,3116 de la source, donc
+ * il prend le timbre demandé presque entièrement. Et les mots sont ceux de la SOURCE, mot pour mot
+ * selon la transcription, alors que la cible prononçait une autre phrase — ce qui rend la mesure
+ * sans ambiguïté. Facteur de temps réel 0,566 sur une RTX 2060, durée conservée, 24 kHz mono.
+ */
+async function convertir(options = {}, surAvancement, contexte) {
+  const travail = fs.mkdtempSync(path.join(os.tmpdir(), "attic-chatterbox-vc-"));
+  try {
+    // LES DEUX ENTRÉES SE VÉRIFIENT AVANT LE MODÈLE, et l'ordre compte : un refus d'entrée doit se
+    // prononcer que les deux giga-octets de poids soient sur le disque ou non. L'ordre inverse a
+    // fait tomber l'intégration continue sur le pont voisin, où aucun modèle n'est présent.
+    if (!options.source) return { ok: false, journal: "Brancher un audio sur l'entrée « Audio »." };
+    if (!options.cible) return { ok: false, journal: "Brancher un audio sur l'entrée « Voix cible »." };
+    const modele = cheminModele(contexte);
+    if (!fs.existsSync(modele)) return { ok: false, journal: `Modèle absent : ${modele}` };
+
+    // MÊME RAISON QUE POUR LE CLONAGE : les entrées vont dans un sous-dossier, la sortie étant
+    // cherchée par son nom dans le dossier de travail.
+    const entrees = path.join(travail, "entrees");
+    fs.mkdirSync(entrees, { recursive: true });
+    const source = path.join(entrees, "source.wav");
+    const cible = path.join(entrees, "cible.wav");
+    fs.writeFileSync(source, Buffer.from(options.source));
+    fs.writeFileSync(cible, Buffer.from(options.cible));
+    const sortie = path.join(travail, "converti.wav");
+
+    const { backend, device } = dosEtCarte(options.calcul);
+    const args = [
+      "--task", "vc", "--family", "chatterbox", "--model", modele,
+      "--backend", backend,
+      ...(device === undefined ? [] : ["--device", device]),
+      "--audio", source, "--target-voice", cible, "--out", sortie, "--metrics",
+    ];
+    if (options.graine !== undefined) args.push("--request-option", `seed=${options.graine}`);
+
+    const { code, journal } = await lancer(cheminBinaire(contexte), args, surAvancement);
+    if (code !== 0 || !fs.existsSync(sortie)) return { ok: false, journal };
+    return { ok: true, donnees: fs.readFileSync(sortie), releves: relevesDuJournal(journal), journal };
+  } finally {
+    nettoyer(travail);
+  }
+}
+
+module.exports = { cloner, convertir, cheminModele };

@@ -91,15 +91,41 @@ export function priseEnVol(git, tete, ref) {
 
   const candidats = [];
   for (const ligne of lignes.split("\n")) {
-    const [, , second] = ligne.trim().split(/\s+/);
+    const [fusion, , second] = ligne.trim().split(/\s+/);
     if (!second) continue;
-    if (estAncetre(git, second, tete)) candidats.push(second);
+    // LA FUSION EST GARDÉE AVEC LE POINT PRIS : c'est dans son message que se lit le nom de la
+    // branche qu'elle a prise, et ce nom est la seule chose qui sépare la faute d'un empilement.
+    if (estAncetre(git, second, tete)) candidats.push({ fusion, prise: second });
   }
   if (candidats.length === 0) return null;
 
   // PLUSIEURS PRISES POSSIBLES : garder la PLUS ANCIENNE, qui laisse dehors le plus de commits.
   // `rev-list` rend du plus récent au plus ancien, donc c'est la dernière retenue.
   return candidats[candidats.length - 1];
+}
+
+/**
+ * La branche que cette fusion a prise, lue dans son message, ou `null` si on ne sait pas.
+ *
+ * POURQUOI LE NOM, ET NON LA TOPOLOGIE. Le 2026-10-23 ce contrat a crié sur un état parfaitement
+ * sain, et c'était ma faute : une branche partie du SOMMET d'une autre branche, laquelle a ensuite
+ * fusionné. La configuration est alors indiscernable de la faute — la base porte une fusion dont le
+ * second parent est un ancêtre de ma tête, et mes commits suivent ce point. La différence n'est pas
+ * dans le graphe, elle est dans le NOM : cette fusion a pris une AUTRE branche, dont je me suis
+ * servi comme base, et mes commits ont leur propre pull request qui les attend.
+ *
+ * LE CAS VOISIN QUI EXISTAIT DÉJÀ ne couvrait pas celui-là : il partait d'AVANT la fusion, donc le
+ * sommet fusionné n'était pas un ancêtre de ma tête et la topologie suffisait à se taire.
+ *
+ * ON RESTE CONSERVATEUR : un message dont on ne sait rien tirer laisse l'alerte. Une fausse alerte
+ * coûte une vérification ; un commit perdu a coûté un composant entier.
+ */
+export function brancheFusionnee(git, fusion) {
+  const sujet = git(["log", "-1", "--format=%s", fusion]) || "";
+  const pr = /Merge pull request #\d+ from [^/\s]+\/(\S+)/.exec(sujet);
+  if (pr) return pr[1];
+  const simple = /Merge branch '([^']+)'/.exec(sujet);
+  return simple ? simple[1] : null;
 }
 
 /** Ce que le contrat a à dire, ou `null` s'il doit se taire. */
@@ -109,14 +135,22 @@ export function releve(git, base) {
   const ref = `origin/${base}`;
   if (git(["rev-parse", "--verify", "--quiet", ref]) === null) return null;
 
-  const prise = priseEnVol(git, tete, ref);
-  if (!prise) return null;
+  const enVol = priseEnVol(git, tete, ref);
+  if (!enVol) return null;
+  const { fusion, prise } = enVol;
+
+  const branche = git(["rev-parse", "--abbrev-ref", "HEAD"]) || "(tête détachée)";
+  // CETTE FUSION A-T-ELLE PRIS MA BRANCHE, OU UNE AUTRE ? Si elle nomme une autre branche, je suis
+  // simplement parti de son sommet : mes commits ne sont pas orphelins, ils attendent leur propre
+  // pull request. Lire ce nom est ce qui manquait au contrat le 2026-10-23, où il a crié sur un
+  // état sain. Un nom illisible laisse l'alerte, par prudence.
+  const brancheDeLaFusion = brancheFusionnee(git, fusion);
+  if (brancheDeLaFusion !== null && brancheDeLaFusion !== branche) return null;
 
   const orphelins = (git(["log", "--format=%h %s", `${prise}..${tete}`]) || "")
     .split("\n").filter((l) => l.length > 0);
   if (orphelins.length === 0) return null;
 
-  const branche = git(["rev-parse", "--abbrev-ref", "HEAD"]) || "(tête détachée)";
   return { prise: prise.slice(0, 7), base, branche, orphelins };
 }
 

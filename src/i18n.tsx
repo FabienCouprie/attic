@@ -616,6 +616,14 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
     fr: "{__VAR_0__} % du spectre borné : référence hors de portée",
     en: "{__VAR_0__}% of the spectrum bounded: reference out of reach",
   },
+  "msg.convertirVoix.sansCible": {
+    fr: "Brancher un extrait de la voix à imiter sur l'entrée « Voix cible ».",
+    en: "Connect an excerpt of the voice to imitate to the « Target voice » input.",
+  },
+  "msg.convertirVoix.fait": {
+    fr: "{__VAR_0__} s convertis · facteur de temps réel {__VAR_1__}",
+    en: "{__VAR_0__} s converted · real-time factor {__VAR_1__}",
+  },
   "msg.apollo.dosage": {
     fr: "{__VAR_0__} % du rendu dans le son final",
     en: "{__VAR_0__}% of the result in the final sound",

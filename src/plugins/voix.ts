@@ -19,6 +19,7 @@ import { avecDoc } from "./notices";
 import { dureeSequence, estSequence, type Sequence } from "../audio/sequence";
 import { compterVoix, extraireVoix, reunirVoix, voixDe } from "../audio/voix";
 import { nomNote } from "../audio/nom-note";
+import { fiches as fichesConversionVoix } from "./convertir-voix";
 
 const en = () => langueCourante() === "en";
 
@@ -120,4 +121,10 @@ export const fiches: FicheAudio[] = ([
       };
     },
   },
+  // « CONVERTIR UNE VOIX » EST VERSÉ ICI, et non dans `plugins/index.ts`, parce que la norme de
+  // taille l'exige : l'index est en dette — plus de cinq cents lignes pour une liste écrite à la
+  // main — et son garde refuse qu'un fichier en dette grossisse encore. « Ce qu'on ajoute à un
+  // fichier trop gros va ailleurs », dit son message. Ce module porte les composants de voix, donc
+  // c'est ici son ailleurs, et l'index le prend sans une ligne de plus.
+  ...(fichesConversionVoix as FicheAudio[]),
 ] as FicheAudio[]).map(avecDoc);
