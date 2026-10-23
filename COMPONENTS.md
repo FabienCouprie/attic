@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **502 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **503 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **502 components** in **7 categories** and **63 families**. Every na
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 87 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (3) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
+| [Other & lab](#other--lab) | 88 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (4) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -11336,6 +11336,7 @@ Places a sound source in space, and returns it in the chosen layout. A sound com
 |---|---|
 | [Date the words](#date-the-words) | Transcribes a recording and gives the instant of each word, without being given the text. |
 | [Sherpa ASR](#sherpa-asr) | Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). |
+| [Transcribe](#transcribe) | Transcribes a recording, with an engine more faithful on short, clean excerpts. |
 | [Whisper (English)](#whisper-english) | English speech recognition (OpenAI Whisper base). |
 
 #### Date the words
@@ -11375,6 +11376,24 @@ Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). Connect au
 | Language | choice | Auto | Auto / English / French / Spanish / German / Italian / Portuguese / Dutch / Russian / Japanese / Chinese / Arabic / Hindi / Korean | Language of the speech to transcribe. « Auto » lets Whisper detect the language. The model is multilingual (99 languages). |
 | Resampling quality | choice | High (Web Audio) | High (Web Audio) / Standard (linear) | Settings: the resampling quality to 16 kHz. « High » uses Web Audio API (better quality) with automatic fallback to linear interpolation if needed. « Standard » keeps the original fast linear interpolation. |
 | Model cache | choice | Auto (kept across sessions) | Auto (kept across sessions) / Clear and re-download | Manage the offline cache of the ONNX model. « Auto » keeps the downloaded model across sessions (IndexedDB). « Clear and re-download » deletes the cache and forces a fresh download. |
+
+#### Transcribe
+
+`transcrire` · Other & lab → Speech to Text
+
+*Transcribes a recording, with an engine more faithful on short, clean excerpts.*
+
+This component listens to a recording and returns what is said. The language is recognized by itself, among thirty-one. The catalog holds another one, « Date the words », and neither is better everywhere. This one is more faithful on short, clean excerpts, and it asks half the memory. The other is three times faster, safer on long recordings, and it alone gives the instant of each word. To obtain instants with this one, its output connects to the « Text » input of « Align text to speech », which computes them. That is exactly what its engine would do internally, for the same result and without a second model to fetch. « Compute » names the device used. It is the only setting: its engine also accepts a language, but forcing one changes nothing in what it returns, tried on two witnesses and three languages. The « Transcript » output returns the text. « Report » gives the number of words, the duration of the sound and the real-time factor the engine measured itself.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Transcript | text |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the returned text. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Whisper (English)
 

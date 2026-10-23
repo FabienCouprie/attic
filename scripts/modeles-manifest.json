@@ -1311,6 +1311,28 @@
       ]
     },
     {
+      "id": "qwen3-asr",
+      "nom": "Transcription (Qwen3 ASR)",
+      "nomEn": "Transcription (Qwen3 ASR)",
+      "noeuds": [
+        "transcrire"
+      ],
+      "octets": 1151279968,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/qwen3-asr-0.6b-q8_0.gguf",
+        "octets": 1151279968,
+        "sha256": "5c53bbb9a6b2ade85c16c290c560658ca18b78a23c323378528f1f945683fcbe"
+      },
+      "fichiers": [
+        {
+          "chemin": "audiocpp/qwen3-asr-0.6b-q8_0.gguf",
+          "octets": 1151279968,
+          "sha256": "5c53bbb9a6b2ade85c16c290c560658ca18b78a23c323378528f1f945683fcbe"
+        }
+      ]
+    },
+    {
       "id": "parakeet",
       "nom": "Reconnaissance horodatée (Parakeet)",
       "nomEn": "Timestamped recognition (Parakeet)",

@@ -616,6 +616,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
     fr: "{__VAR_0__} % du spectre borné : référence hors de portée",
     en: "{__VAR_0__}% of the spectrum bounded: reference out of reach",
   },
+  "msg.transcrire.mots": { fr: "{__VAR_0__} mots transcrits", en: "{__VAR_0__} words transcribed" },
+  "msg.transcrire.duree": { fr: "{__VAR_0__} s de son", en: "{__VAR_0__} s of sound" },
   "msg.dater.mots": { fr: "{__VAR_0__} mots datés", en: "{__VAR_0__} words dated" },
   "msg.dater.couverte": {
     fr: "parole de {__VAR_0__} s sur {__VAR_1__} s de son",

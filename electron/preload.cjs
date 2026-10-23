@@ -139,6 +139,14 @@ contextBridge.exposeInMainWorld("api", {
     return () => ipcRenderer.removeListener("chatterbox:progression", ecouteur);
   },
 
+  // La transcription par le second moteur. Même désabonnement, même raison.
+  qwen3AsrTranscrire: (options) => ipcRenderer.invoke("qwen3asr:transcrire", options),
+  qwen3AsrProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("qwen3asr:progression", ecouteur);
+    return () => ipcRenderer.removeListener("qwen3asr:progression", ecouteur);
+  },
+
   // Les mots d'un enregistrement et l'instant de chacun. Même désabonnement, même raison.
   parakeetTranscrire: (options) => ipcRenderer.invoke("parakeet:transcrire", options),
   parakeetProgression: (callback) => {
