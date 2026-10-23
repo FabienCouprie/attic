@@ -13,6 +13,7 @@ import { GAMMES_REUNIES, degresDUneOctave, estTemperee } from "../audio/gammes-r
 import { langueCourante } from "../i18n";
 import { libelleFondamentale } from "./cercle";
 import { avecDoc } from "./notices";
+import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 
@@ -82,7 +83,7 @@ The « Circle » output carries the positions and their pitches, with no duratio
         doc: "Ce que vaut un tour. Les douze demi-tons dessinent la forme de la gamme, et ne valent que pour une gamme comptée en demi-tons.",
         docEn: "What a turn is worth. Twelve semitones draws the shape of the scale, and only holds for a scale counted in semitones." },
       { nom: "Octave de fermeture", nomEn: "Closing octave", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["non", "oui"],
+        ...choixOuiNon("non"),
         defaut: "Non", defautEn: "No",
         doc: "Garder le degré qui atteint l'octave. À garder pour le gamelan, dont l'octave est étirée.",
         docEn: "Keep the degree that reaches the octave. Keep it for the gamelan, whose octave is stretched." },

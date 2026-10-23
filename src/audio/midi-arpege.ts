@@ -54,9 +54,12 @@ export async function arpegerMidi(
     }
   }
 
-  // Vitesse : divisions par beat.
+  // Vitesse : divisions par beat. LE NOMBRE EST PROPRE À CE CALCUL, et non à la valeur de note :
+  // ici c'est un TEMPS qu'on divise, ailleurs une mesure. Les deux écritures du triolet sont lues,
+  // l'identifiant de la table commune et le libellé que ce composant portait avant elle.
   const vitesses: Record<string, number> = {
-    "1/8": 2, "1/16": 4, "1/32": 8, "1/8 triplet": 3, "1/16 triplet": 6,
+    "1/8": 2, "1/16": 4, "1/32": 8,
+    "1/8t": 3, "1/16t": 6, "1/8 triplet": 3, "1/16 triplet": 6,
   };
   const divisions = vitesses[vitesseNom] ?? 4;
   const dureeStep = 60 / (divisions * 2); // en secondes (à 120 BPM de référence)

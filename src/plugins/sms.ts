@@ -12,6 +12,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { traiterVoie, type OptionsVoieSms, type VoieSms } from "../audio/sms";
 import { parCanal } from "./hors-fil";
+import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -46,8 +47,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre de pics gardés par trame, les plus forts d'abord.",
         docEn: "Number of peaks kept per frame, strongest first." },
       { nom: "Fenêtre", nomEn: "Window", type: "choix",
-        options: ["1024", "2048", "4096"], optionsEn: ["1024", "2048", "4096"],
-        optionIds: ["1024", "2048", "4096"], defaut: "2048", defautEn: "2048",
+        ...choixFenetre([1024, 2048, 4096]), defaut: "2048", defautEn: "2048",
         doc: "Taille de la transformée. Grande, deux partiels voisins se distinguent mieux mais les attaques s'étalent ; petite, l'inverse.",
         docEn: "Transform size. Large separates neighbouring partials better but smears attacks; small does the opposite." },
     ],

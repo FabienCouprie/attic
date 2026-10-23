@@ -16,6 +16,7 @@ import { GAMMES } from "../audio/gammes";
 import { QUALITES } from "../audio/qualites-accords";
 import { echantillonsDeBattements } from "../audio/pulsation";
 import { estSequence } from "../audio/sequence";
+import { choixOuiNon } from "../core/oui-non";
 import {
   sf2Chargee, normaliserModeSynthèse, decoderInstrumentSF2,
   PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2,
@@ -212,8 +213,7 @@ The animation is displayed in the node and is not available on an output port. I
       { nom: "Nuance des accords", nomEn: "Chord dynamic", type: "curseur", plage: [0, 100], pas: 1, defaut: 55, unite: "%",
         doc: "Force de frappe des accords. La mélodie va de 50 à 120 sur la même échelle : au-delà de ces valeurs, l'harmonie passe devant elle.",
         docEn: "Striking force of the chords. The melody runs from 50 to 120 on the same scale: beyond those values the harmony moves in front of it." },
-      { nom: "Échos", nomEn: "Echoes", type: "choix", options: ["Oui", "Non"], optionsEn: ["Yes", "No"],
-        optionIds: ["oui", "non"], defaut: "Oui", defautEn: "Yes",
+      { nom: "Échos", nomEn: "Echoes", type: "choix", ...choixOuiNon(), defaut: "Oui", defautEn: "Yes",
         doc: "Laisser un anneau s'ouvrir et s'effacer à chaque frappe audible, sur la durée de la note.",
         docEn: "Let a ring open and fade at each audible stroke, over the length of the note." },
       { nom: "Taille", nomEn: "Size", type: "curseur", plage: [200, 1200], pas: 20, defaut: 600, unite: "px",

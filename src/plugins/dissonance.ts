@@ -6,6 +6,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { choixFenetre } from "../audio/fenetres-analyse";
 import {
   courbeDissonance, creux, partielsDepuisModules, rapportProche, rugositeParTrame,
   timbreEtire, timbreHarmonique, type Partiel,
@@ -133,7 +134,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Finesse", nomEn: "Resolution", type: "choix",
         options: ["Fine en temps (1024)", "Ordinaire (2048)", "Fine en fréquence (4096)"],
         optionsEn: ["Sharp in time (1024)", "Ordinary (2048)", "Sharp in frequency (4096)"],
-        optionIds: ["1024", "2048", "4096"], defaut: "Ordinaire (2048)", defautEn: "Ordinary (2048)",
+        // LES LIBELLÉS RESTENT LES SIENS, et les identifiants viennent de la table : « Ordinaire »
+        // nomme la taille du milieu de CETTE liste, ce qu'une table centrale ne peut pas produire.
+        optionIds: choixFenetre([1024, 2048, 4096]).optionIds,
+        defaut: "Ordinaire (2048)", defautEn: "Ordinary (2048)",
         doc: "Taille de la fenêtre d'analyse. Une fenêtre longue sépare mieux les partiels voisins, donc mesure mieux la rugosité d'un accord tenu ; une fenêtre courte suit mieux un passage qui bouge.",
         docEn: "Analysis window size. A long window separates neighbouring partials better, hence measures a held chord's roughness better; a short one follows a moving passage better." },
     ],

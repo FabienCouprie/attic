@@ -15,6 +15,7 @@ import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { parseMidi } from "midi-file";
 import { analyserMidi } from "../audio";
+import { choixFenetre } from "../audio/fenetres-analyse";
 import {
   construireCsd, messagesUtiles, orchestreLit, partitionDepuisNotes, rendreCsd, sourcePartition,
   texteBranche,
@@ -477,7 +478,7 @@ endin`,
         doc: "Transposition, employée par l'étirement seul : elle change la hauteur sans toucher à la durée, ce qui est tout l'intérêt d'un étirement à phase verrouillée.",
         docEn: "Transposition, used by the stretch only: it changes the pitch without touching the duration, which is the whole point of a phase-locked stretch." },
       { nom: "Fenêtre", nomEn: "Window", type: "choix",
-        options: ["512", "1024", "2048"], optionsEn: ["512", "1024", "2048"], optionIds: ["512", "1024", "2048"],
+        ...choixFenetre([512, 1024, 2048]),
         defaut: "1024", defautEn: "1024",
         doc: "Taille de la transformée. Grande, la résolution fréquentielle est fine et les transitoires s'étalent ; petite, l'inverse. 1024 est le compromis usuel. Sans effet sur l'étirement (mincer), qui ne passe pas par cette analyse.",
         docEn: "Transform size. Large gives fine frequency resolution and smeared transients; small the opposite. 1024 is the usual compromise." },

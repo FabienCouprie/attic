@@ -26,6 +26,7 @@ import { refleterNotes, tableReflets, type ModeReflet } from "../audio/harmonie-
 import type { Note } from "../audio/note";
 import { estSequence, type Sequence } from "../audio/sequence";
 import { poserArbre } from "../audio/voix";
+import { choixOuiNon } from "../core/oui-non";
 import {
   accords, conduireVoix, remplacerHauteurs, renverser, voicing, type TypeVoicing,
 } from "../audio/voicings";
@@ -344,7 +345,7 @@ export const fiches: FicheAudio[] = ([
         doc: "La répartition des voix. « Ouvert » monte une note sur deux d'une octave. Les « drop » descendent d'une octave la deuxième ou la troisième voix en partant du haut : c'est l'écriture de la guitare jazz et des quatre cuivres, et elle demande au moins quatre notes.",
         docEn: "How the voices are spread. « Open » raises every other note by an octave. The « drop » voicings lower the second or third voice from the top by an octave: this is the writing of jazz guitar and four-part brass, and it needs at least four notes." },
       { nom: "Conduite des voix", nomEn: "Voice leading", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["non", "oui"],
+        ...choixOuiNon("non"),
         defaut: "Oui", defautEn: "Yes",
         doc: "Cherche pour chaque accord le registre qui bouge le moins de voix depuis le précédent. La disposition choisie plus haut est gardée telle quelle : la conduite ne déplace les accords que par octaves entières.",
         docEn: "Finds, for each chord, the register that moves the fewest voices from the previous one. The voicing chosen above is kept as is: the leading only shifts chords by whole octaves." },

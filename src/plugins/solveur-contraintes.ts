@@ -20,7 +20,7 @@ import type { Sequence } from "../audio/sequence";
 import { domaineHauteurs, resoudre } from "../audio/contraintes";
 import { compilerRegles, type RegleEcrite } from "../audio/contraintes-ecrites";
 import { evoluer, objectifContraintes } from "../audio/evolution";
-import { GAMMES_CORRECTION, degresDe } from "../audio/correction-hauteur";
+import { GAMMES_CORRECTION, IDS_HERITES_CORRECTION, degresDe } from "../audio/correction-hauteur";
 import { nomNote } from "../audio/nom-note";
 
 const en = () => langueCourante() === "en";
@@ -64,7 +64,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Une sixième règle.", docEn: "A sixth rule." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
         options: GAMMES_CORRECTION.map((g) => g.fr), optionsEn: GAMMES_CORRECTION.map((g) => g.en),
-        optionIds: GAMMES_CORRECTION.map((g) => g.id), defaut: "Majeure", defautEn: "Major",
+        optionIds: GAMMES_CORRECTION.map((g) => g.id), optionsHeritees: IDS_HERITES_CORRECTION, defaut: "Majeure", defautEn: "Major",
         doc: "Les degrés auxquels les hauteurs sont restreintes.",
         docEn: "The degrees the pitches are restricted to." },
       { ...PARAMETRE_CLE, nom: "Tonique", nomEn: "Tonic",
@@ -92,7 +92,7 @@ export const fiches: FicheAudio[] = ([
       const combien = Math.round(ctx.paramNombre("Longueur", 12));
       const domaine = domaineHauteurs(
         ctx.paramNombre("Grave", 55), ctx.paramNombre("Aigu", 79),
-        degresDe(ctx.paramTexte("Gamme", "majeure"), demiTonDeCle(ctx.paramTexte("Tonique", "C")) ?? 0),
+        degresDe(ctx.paramTexte("Gamme", "majeur"), demiTonDeCle(ctx.paramTexte("Tonique", "C")) ?? 0),
       );
       if (domaine.length === 0) {
         return {

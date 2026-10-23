@@ -132,28 +132,89 @@ const CAS: Cas[] = [
 
   // Séquenceur mélodique / Multi-réservoirs — Gamme : 5 anciennes options
   // (pas de chromatique).
+  // LES DEUX PENTATONIQUES ÉTAIENT LEURS IDENTIFIANTS, et elles ne le sont plus : « pentatonique
+  // majeur », sans accord et avec une espace, était un ALIAS de la table, donc les degrés étaient
+  // justes et seul l'identifiant enregistré divergeait du reste du parc. Ces quatre cas sont ceux
+  // qui tiennent la porte ouverte pour un projet d'alors.
   ...(["sequenceur-melodique", "multi-reservoirs"] as const).flatMap((node) => [
     { node, param: "Gamme", ancienneValeur: "majeur", idAttendu: "majeur" },
     { node, param: "Gamme", ancienneValeur: "mineur", idAttendu: "mineur" },
-    { node, param: "Gamme", ancienneValeur: "pentatonique majeur", idAttendu: "pentatonique majeur" },
-    { node, param: "Gamme", ancienneValeur: "pentatonique mineur", idAttendu: "pentatonique mineur" },
+    { node, param: "Gamme", ancienneValeur: "pentatonique majeur", idAttendu: "pentatonique-majeure" },
+    { node, param: "Gamme", ancienneValeur: "pentatonique mineur", idAttendu: "pentatonique-mineure" },
     { node, param: "Gamme", ancienneValeur: "blues", idAttendu: "blues" },
     { node, param: "Gamme", ancienneValeur: "major", idAttendu: "majeur" },
     { node, param: "Gamme", ancienneValeur: "minor", idAttendu: "mineur" },
-    { node, param: "Gamme", ancienneValeur: "major pentatonic", idAttendu: "pentatonique majeur" },
-    { node, param: "Gamme", ancienneValeur: "minor pentatonic", idAttendu: "pentatonique mineur" },
+    { node, param: "Gamme", ancienneValeur: "major pentatonic", idAttendu: "pentatonique-majeure" },
+    { node, param: "Gamme", ancienneValeur: "minor pentatonic", idAttendu: "pentatonique-mineure" },
   ]),
 
   // Réservoir neuronal — Gamme : 6 anciennes options (avec chromatique).
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "majeur", idAttendu: "majeur" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "mineur", idAttendu: "mineur" },
-  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "pentatonique majeur", idAttendu: "pentatonique majeur" },
-  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "pentatonique mineur", idAttendu: "pentatonique mineur" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "pentatonique majeur", idAttendu: "pentatonique-majeure" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "pentatonique mineur", idAttendu: "pentatonique-mineure" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "blues", idAttendu: "blues" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "chromatique", idAttendu: "chromatique" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "major", idAttendu: "majeur" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "minor", idAttendu: "mineur" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "major pentatonic", idAttendu: "pentatonique-majeure" },
+  { node: "reservoir-musical", param: "Gamme", ancienneValeur: "minor pentatonic", idAttendu: "pentatonique-mineure" },
   { node: "reservoir-musical", param: "Gamme", ancienneValeur: "chromatic", idAttendu: "chromatique" },
+
+  // L'arpège de Koch — Accord : ses cinq identifiants étaient ses libellés français, quand le
+  // reste du parc désigne une qualité par `maj`, `m`, `dim`. Ce sont des alias de la table, donc
+  // les intervalles étaient justes ; c'est l'identifiant posé dans le projet qui divergeait.
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Majeur", idAttendu: "maj" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Mineur", idAttendu: "m" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Augmenté", idAttendu: "aug" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Diminué", idAttendu: "dim" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Sus4", idAttendu: "sus4" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Major", idAttendu: "maj" },
+  { node: "arpege-koch", param: "Accord", ancienneValeur: "Diminished", idAttendu: "dim" },
+
+  // Les cinq réglages qui posaient `yes` et `no` dans les projets, quand trente et un posaient
+  // `oui` et `non`. Deux d'entre eux affichaient « oui » et « non » en minuscules, et un
+  // troisième n'avait pas de liste anglaise du tout.
+  { node: "transposeur-quantiseur-midi", param: "Quantifier fins", ancienneValeur: "yes", idAttendu: "oui" },
+  { node: "transposeur-quantiseur-midi", param: "Quantifier fins", ancienneValeur: "no", idAttendu: "non" },
+  { node: "transcription-midi", param: "Quantifier les fins", ancienneValeur: "yes", idAttendu: "oui" },
+  { node: "transcription-midi", param: "Quantifier les fins", ancienneValeur: "no", idAttendu: "non" },
+  { node: "pure-data", param: "Bang démarrage", ancienneValeur: "yes", idAttendu: "oui" },
+  { node: "pure-data", param: "Bang démarrage", ancienneValeur: "oui", idAttendu: "oui" },
+  { node: "pure-data", param: "Ignorer objets GUI", ancienneValeur: "no", idAttendu: "non" },
+  { node: "pure-data", param: "Ignorer objets GUI", ancienneValeur: "non", idAttendu: "non" },
+  { node: "comparateur-ab", param: "Aligner les niveaux", ancienneValeur: "yes", idAttendu: "oui" },
+  { node: "comparateur-ab", param: "Aligner les niveaux", ancienneValeur: "no", idAttendu: "non" },
+  // ET L'INTERRUPTEUR, dont les libellés anglais sont « Off » et « On » : un projet enregistré
+  // sous cette forme doit se relire comme les autres.
+  { node: "collection-lecteur-musique", param: "Lecture aléatoire", ancienneValeur: "Off", idAttendu: "non" },
+  { node: "collection-lecteur-musique", param: "Lecture en boucle", ancienneValeur: "On", idAttendu: "oui" },
+
+  // Les deux grilles de valeurs de note — le triolet s'écrivait en toutes lettres, comme
+  // IDENTIFIANT chez l'arpégiateur et comme LIBELLÉ FRANÇAIS chez le transposeur. « triplet » est
+  // le mot anglais ; les listes françaises disent « de triolet » désormais.
+  { node: "arpegiateur-midi", param: "Vitesse", ancienneValeur: "1/8 triplet", idAttendu: "1/8t" },
+  { node: "arpegiateur-midi", param: "Vitesse", ancienneValeur: "1/16 triplet", idAttendu: "1/16t" },
+  { node: "arpegiateur-midi", param: "Vitesse", ancienneValeur: "1/16", idAttendu: "1/16" },
+  { node: "transposeur-quantiseur-midi", param: "Quantisation", ancienneValeur: "1/8 triplet", idAttendu: "1/8t" },
+  { node: "transposeur-quantiseur-midi", param: "Quantisation", ancienneValeur: "1/16 triplet", idAttendu: "1/16t" },
+  { node: "transposeur-quantiseur-midi", param: "Quantisation", ancienneValeur: "Aucune", idAttendu: "none" },
+
+  // Les quatre composants de la famille du contrepoint — Gamme : leurs identifiants étaient
+  // `majeure`, `mineure`, `mineure-harmonique`, `penta-majeure` et `penta-mineure`, des ALIAS de la
+  // table. Ils sont désormais déclarés dans `IDS_HERITES_CORRECTION`, et c'est ce qui permet de leur
+  // donner les identifiants du dépôt sans qu'un projet d'alors change de gamme.
+  ...(["arbre-rythmique", "evolution-melodie", "solveur-contraintes", "correction-hauteur"] as const).flatMap((node) => [
+    { node, param: "Gamme", ancienneValeur: "majeure", idAttendu: "majeur" },
+    { node, param: "Gamme", ancienneValeur: "mineure", idAttendu: "mineur" },
+    { node, param: "Gamme", ancienneValeur: "mineure-harmonique", idAttendu: "mineur-harmonique" },
+    { node, param: "Gamme", ancienneValeur: "penta-majeure", idAttendu: "pentatonique-majeure" },
+    { node, param: "Gamme", ancienneValeur: "penta-mineure", idAttendu: "pentatonique-mineure" },
+    { node, param: "Gamme", ancienneValeur: "chromatique", idAttendu: "chromatique" },
+    { node, param: "Gamme", ancienneValeur: "blues", idAttendu: "blues" },
+    { node, param: "Gamme", ancienneValeur: "Majeure", idAttendu: "majeur" },
+    { node, param: "Gamme", ancienneValeur: "Major", idAttendu: "majeur" },
+  ]),
 
   // « Synthèse » — paramètre partagé (PARAMETRE_SYNTHESE, soundfontGlobal.ts),
   // déclaré à l'identique sur une vingtaine de nœuds. Les projets enregistrés
@@ -315,7 +376,8 @@ const CAS: Cas[] = [
   { node: "generateur-frequence", param: "Forme", ancienneValeur: "saw", idAttendu: "sawtooth" },
   { node: "generateur-frequence", param: "Forme", ancienneValeur: "Scie", idAttendu: "sawtooth" },
   { node: "reservoir-musical", param: "Timbre", ancienneValeur: "Scie", idAttendu: "sawtooth" },
-  { node: "arpege-koch", param: "Accord", ancienneValeur: "Augmented", idAttendu: "Augmenté" },
+  // L'IDENTIFIANT DE CE RÉGLAGE EST PASSÉ AU VOCABULAIRE DU DÉPÔT : son bloc est plus haut, avec
+  // les cinq anciennes écritures françaises et les deux anglaises.
   { node: "arpege-koch", param: "Direction", ancienneValeur: "outward", idAttendu: "extérieure" },
   { node: "attracteur-ifs", param: "Attracteur", ancienneValeur: "Rossler", idAttendu: "Rössler" },
   { node: "attracteur-ifs", param: "Attracteur", ancienneValeur: "Sierpinski", idAttendu: "Sierpiński" },

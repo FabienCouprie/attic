@@ -20,7 +20,7 @@ import { avecDoc } from "./notices";
 import { creerAleatoire } from "../core";
 import { derouler, dureeArbre, ecrireArbre, lireArbre } from "../audio/arbre-rythmique";
 import { catalogueArbres, engendrerArbre, engendrerHauteurs } from "../audio/arbres-catalogue";
-import { GAMMES_CORRECTION, degresDe } from "../audio/correction-hauteur";
+import { GAMMES_CORRECTION, IDS_HERITES_CORRECTION, degresDe } from "../audio/correction-hauteur";
 import { estSequence, type Sequence } from "../audio/sequence";
 import { poserArbre } from "../audio/voix";
 import { nomNote } from "../audio/nom-note";
@@ -103,7 +103,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Fixes the draw. The same seed gives the same rhythm and the same pitches." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
         options: GAMMES_CORRECTION.map((g) => g.fr), optionsEn: GAMMES_CORRECTION.map((g) => g.en),
-        optionIds: GAMMES_CORRECTION.map((g) => g.id), defaut: "Majeure", defautEn: "Major",
+        optionIds: GAMMES_CORRECTION.map((g) => g.id), optionsHeritees: IDS_HERITES_CORRECTION, defaut: "Majeure", defautEn: "Major",
         doc: "Les degrés auxquels les hauteurs sont restreintes.",
         docEn: "The degrees the pitches are restricted to." },
       { ...PARAMETRE_CLE, nom: "Tonique", nomEn: "Tonic",
@@ -168,7 +168,7 @@ export const fiches: FicheAudio[] = ([
         haute: ctx.paramNombre("Aigu", 79),
         // `demiTonDeCle` ACCEPTE TOUTE ORTHOGRAPHE, là où `NOMS.indexOf` résolvait par position et
         // ne connaissait qu'une liste : un projet enregistré sous « Mi♭ » y rendait moins un.
-        degres: degresDe(ctx.paramTexte("Gamme", "majeure"), demiTonDeCle(ctx.paramTexte("Tonique", "C")) ?? 0),
+        degres: degresDe(ctx.paramTexte("Gamme", "majeur"), demiTonDeCle(ctx.paramTexte("Tonique", "C")) ?? 0),
         ecartMax: ctx.paramNombre("Écart maximal", 7),
       }, hasard);
 

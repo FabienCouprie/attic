@@ -3,6 +3,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { appliquerPcaNeuronale } from "../audio/pca-neuronale";
+import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -18,9 +19,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       {
         nom: "FFT", nomEn: "FFT", type: "choix",
-        options: ["512", "1024", "2048", "4096"],
-        optionsEn: ["512", "1024", "2048", "4096"],
-        optionIds: ["512", "1024", "2048", "4096"],
+        ...choixFenetre([512, 1024, 2048, 4096]),
         defaut: "2048", defautEn: "2048",
         doc: "Taille de la fenêtre FFT (puissance de 2). Détermine le nombre de bins fréquentiels.",
         docEn: "FFT window size (power of 2). Determines the number of frequency bins.",

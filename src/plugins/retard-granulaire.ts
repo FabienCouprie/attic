@@ -15,6 +15,7 @@ import { bornesModulation, modulationNommee, portModulation, reglageModule } fro
 import { estCourbe } from "../audio/courbe";
 import { FENETRES, type Fenetre } from "../audio/micromontage";
 import { retardGranulaire, retardMaximal, toursAudibles } from "../audio/retard-granulaire";
+import { choixOuiNon } from "../core/oui-non";
 
 const FENETRES_FR = ["Gaussienne", "Trapèze", "Expodec", "Rexpodec"];
 const FENETRES_EN = ["Gaussian", "Trapezoid", "Expodec", "Rexpodec"];
@@ -103,7 +104,7 @@ The « Modulation time », « Modulation scatter », « Modulation transposition
         doc: "La part de ce qui sort des grains qui retourne dans la ligne, et y est granulé de nouveau.",
         docEn: "The share of what comes out of the grains that goes back into the line, to be granulated again." },
       { nom: "Gel", nomEn: "Freeze", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["non", "oui"],
+        ...choixOuiNon("non"),
         defaut: "Non", defautEn: "No",
         doc: "Arrête l'alimentation de la ligne dès qu'elle a été remplie une fois. Les grains n'y lisent plus que ce qu'elle tient, qui tourne en boucle.",
         docEn: "Stops feeding the line as soon as it has been filled once. The grains then read only what it holds, which loops." },

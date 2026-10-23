@@ -13,6 +13,7 @@ import {
   traiterVoie, type OptionsVoieTexture, type ResultatTexture,
 } from "../audio/texture-statistique";
 import { parCanal } from "./hors-fil";
+import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -32,7 +33,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre de bandes cochléaires, espacées comme l'oreille les entend, serrées dans le grave, larges dans l'aigu. Plus il y en a, plus la couleur du modèle est suivie de près, et plus le calcul est long : le coût des corrélations croît avec leur carré.",
         docEn: "Number of cochlear bands, spaced as the ear hears them, narrow in the bass, wide in the treble. The more there are, the more closely the model's colour is followed, and the longer the computation: the cost of the correlations grows with their square." },
       { nom: "Corrélations", nomEn: "Correlations", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
         doc: "Imposer aussi les corrélations entre bandes, et pas seulement la distribution de chacune. C'est le résultat central de l'article : les bandes prises isolément ne font pas une texture reconnaissable. Mesuré ici sur une pluie de synthèse, l'écart statistique au modèle passe de 40 % à 31 % quand on les impose. Mettre « Non » sert surtout à entendre la différence.",
         docEn: "Also impose the correlations between bands, not merely each band's distribution. This is the paper's central result: bands taken in isolation do not make a recognisable texture. Measured here on a synthetic rain, the statistical distance to the model falls from 40 % to 31 % when they are imposed. Setting « No » mostly serves to hear the difference." },

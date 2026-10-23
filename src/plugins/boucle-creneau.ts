@@ -23,6 +23,7 @@ import { avecDoc } from "./notices";
 import { dureeSequence, estSequence, type InfoVoix, type Sequence } from "../audio/sequence";
 import { poserMaquette, type Bloc } from "../audio/maquette";
 import { deployer, lireChamp } from "../audio/matrice-parametres";
+import { choixOuiNon } from "../core/oui-non";
 import {
   boucleDeLaFin, boucleDuDebut, decouvrirPour, FICHE_CRENEAU_DEBUT, FICHE_CRENEAU_FIN, morceauPour, recolterPour,
 } from "./boucleSequencesGlobal";
@@ -101,12 +102,12 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Séquence", nomEn: "Sequence", type: "sequence" }],
     parametres: [
       { nom: "Plier", nomEn: "Fold", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
         doc: "Étire ou resserre ce que la passe rend pour qu'il occupe exactement la durée de son créneau.",
         docEn: "Stretches or compresses what the pass returns so that it occupies exactly the length of its slot." },
       { nom: "Une voix par créneau", nomEn: "One voice per slot", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["non", "oui"],
+        ...choixOuiNon("non"),
         defaut: "Non", defautEn: "No",
         doc: "Donne à chaque passe son propre numéro de voix, ce qui grave autant de portées qu'il y a de créneaux.",
         docEn: "Gives each pass its own voice number, which engraves as many staves as there are slots." },

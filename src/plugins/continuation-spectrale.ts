@@ -4,6 +4,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { appliquerContinuationSpectrale, type ContinuationSpectraleResultat } from "../audio/continuation-spectrale";
+import { choixFenetre } from "../audio/fenetres-analyse";
 
 const PARAMETRES_COMMUNS = [
   {
@@ -14,9 +15,7 @@ const PARAMETRES_COMMUNS = [
   },
   {
     nom: "FFT", nomEn: "FFT", type: "choix",
-    options: ["512", "1024", "2048", "4096"],
-    optionsEn: ["512", "1024", "2048", "4096"],
-    optionIds: ["512", "1024", "2048", "4096"],
+    ...choixFenetre([512, 1024, 2048, 4096]),
     defaut: "2048", defautEn: "2048",
     doc: "Taille de la fenêtre FFT. Détermine la résolution fréquentielle et le nombre de bins.",
     docEn: "FFT window size. Determines frequency resolution and number of bins.",

@@ -21,6 +21,7 @@ import { NOTE_MAX, NOTE_MIN, apparierRendus, racinesInstrument } from "../core/i
 import { creerAleatoire } from "../core/hasard";
 import { banqueDepuisRendus, rendreNotes, type Banque } from "../audio/clavier-banque";
 import { LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
+import { choixOuiNon } from "../core/oui-non";
 
 const TICKS_NOIRE = 480;
 const hertz = (note: number) => 440 * Math.pow(2, (note - 69) / 12);
@@ -157,7 +158,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Note haute", nomEn: "Highest key", type: "curseur", plage: [21, 108], pas: 1, defaut: 108,
         doc: "Dernière touche couverte. 108 = Do8.", docEn: "Last key covered. 108 = C8." },
       { nom: "Boucle de maintien", nomEn: "Sustain loop", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
         doc: "Pose dans chaque zone une boucle relue tant que la touche est tenue. Utile si l'excitation est courte et que l'on veut des notes tenues.",
         docEn: "Places in each zone a loop replayed while the key is held. Useful if the excitation is short and held notes are wanted." },

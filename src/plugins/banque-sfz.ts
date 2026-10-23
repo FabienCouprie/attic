@@ -20,6 +20,7 @@ import { rendreNotes, type Banque } from "../audio/clavier-banque";
 import { chargerSfz, dossierDe } from "../audio/sfz";
 import { CHEMIN_KIT_EMBARQUE } from "../audio/kit-batterie";
 import { decodeurElectron } from "./clavier-sfz";
+import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -44,7 +45,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Comment la banque se joue. Automatique : le fichier tranche lui-même, des régions d'une seule touche, ou un `pitch_keytrack=0`, désignent un kit. Hauteurs : une touche est une hauteur ; la zone la plus proche est rééchantillonnée, et aucune touche ne reste muette. Kit : une touche est un son ; rien n'est transposé, et une touche sans son ne joue rien. Imposer « Hauteurs » sur un kit fait jouer la grosse caisse un demi-ton plus haut sur la touche 37 ; c'est parfois l'effet qu'on cherche, mais il vaut mieux le savoir.",
         docEn: "How the bank plays. Automatic: the file decides, single-key regions, or a `pitch_keytrack=0`, mark a kit. Pitched: a key is a pitch; the nearest zone is resampled and no key stays silent. Kit: a key is a sound; nothing is transposed, and a key with no sound plays nothing. Forcing « Pitched » on a kit makes key 37 play the kick a semitone higher, sometimes that is the effect you want, but better to know it." },
       { nom: "Aperçu", nomEn: "Preview", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
         doc: "Rend un aperçu audio : une note par touche de la banque, l'une après l'autre, et non une par zone, sans quoi une banque à couches ferait entendre trois fois la même note. S'il y a des couches de vélocité, un escalier de nuances suit, sur une seule touche, de la plus douce à la plus forte : c'est la seule façon d'entendre ce qu'elles apportent.",
         docEn: "Renders an audio preview: one note per key of the bank, one after another, not one per zone, otherwise a layered bank would sound the same note three times. If there are velocity layers, a staircase of dynamics follows on a single key, from softest to loudest: the only way to hear what they bring." },

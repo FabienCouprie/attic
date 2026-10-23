@@ -14,6 +14,7 @@ import { installerGardeWorker } from "./garde-worker";
 // controle Magenta sont au manifeste, donc l'installeur allege peut ne pas les avoir, et le
 // composant doit le dire puis proposer de les prendre plutot que d'echouer sans raison lisible.
 import { annoncerModele } from "./message-modele";
+import { choixValeurs } from "../audio/valeurs-note";
 
 let worker: Worker | null = null;
 const pending: { resolve: (v: any) => void; reject: (e: any) => void; ctx: any }[] = [];
@@ -151,8 +152,7 @@ export const fiches: FicheAudio[] = ([
      },
       {
         nom: "Quantification", nomEn: "Quantization", type: "choix",
-        options: ["1/4", "1/8", "1/16", "1/32"],
-        optionsEn: ["1/4", "1/8", "1/16", "1/32"],
+        ...choixValeurs(["1/4", "1/8", "1/16", "1/32"]),
         defaut: "1/16",
         doc: "Résolution de quantification de la mélodie d’entrée avant continuation.",
         docEn: "Quantization resolution applied to the input melody before continuation.", defautEn: "1/16"
@@ -271,8 +271,7 @@ export const fiches: FicheAudio[] = ([
      },
       {
         nom: "Quantification", nomEn: "Quantization", type: "choix",
-        options: ["1/4", "1/8", "1/16", "1/32"],
-        optionsEn: ["1/4", "1/8", "1/16", "1/32"],
+        ...choixValeurs(["1/4", "1/8", "1/16", "1/32"]),
         defaut: "1/16",
         doc: "Résolution de quantification du seed MIDI avant génération.",
         docEn: "Quantization resolution applied to the MIDI seed before generation.", defautEn: "1/16"
@@ -434,8 +433,7 @@ export const fiches: FicheAudio[] = ([
      },
       {
         nom: "Quantification", nomEn: "Quantization", type: "choix",
-        options: ["1/4", "1/8", "1/16", "1/32"],
-        optionsEn: ["1/4", "1/8", "1/16", "1/32"],
+        ...choixValeurs(["1/4", "1/8", "1/16", "1/32"]),
         defaut: "1/16",
         doc: "Résolution de quantification du pattern d’entrée.",
         docEn: "Quantization resolution of the input pattern.", defautEn: "1/16"

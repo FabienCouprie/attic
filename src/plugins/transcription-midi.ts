@@ -32,6 +32,8 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
+import { valeurNote } from "../audio/valeurs-note";
+import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 
 /**
  * Les groupes d'instruments que le moteur reconnaît, et qui servent ici.
@@ -63,14 +65,18 @@ const INSTRUMENTS = [
  * table des grilles est partagée, et inventer ici une seconde écriture des mêmes valeurs ferait
  * tomber en silence sur « aucune grille ».
  */
+// LES NOMS VIENNENT DE LA TABLE COMMUNE, `audio/valeurs-note.ts` ; LE NOMBRE DE DIVISIONS RESTE
+// ICI, parce qu'il n'est pas une propriété de la valeur mais de ce qu'on divise : cette grille
+// divise un TEMPS, et « Aucune » y vaut quatre, c'est-à-dire la grille la plus fine du moteur.
+const DIVISIONS: Record<string, number> = {
+  none: 4, "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8, "1/8t": 3, "1/16t": 6,
+};
 const GRILLES = [
-  { id: "none", fr: "Aucune", en: "None", divisions: 4 },
-  { id: "1/4", fr: "1/4", en: "1/4", divisions: 1 },
-  { id: "1/8", fr: "1/8", en: "1/8", divisions: 2 },
-  { id: "1/16", fr: "1/16", en: "1/16", divisions: 4 },
-  { id: "1/32", fr: "1/32", en: "1/32", divisions: 8 },
-  { id: "1/8t", fr: "1/8 de triolet", en: "1/8 triplet", divisions: 3 },
-  { id: "1/16t", fr: "1/16 de triolet", en: "1/16 triplet", divisions: 6 },
+  { id: "none", fr: "Aucune", en: "None", divisions: DIVISIONS.none },
+  ...["1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"].map((id) => {
+    const v = valeurNote(id)!;
+    return { id: v.id, fr: v.fr, en: v.en, divisions: DIVISIONS[v.id] };
+  }),
 ];
 
 const CALCULS = [
@@ -163,7 +169,7 @@ export const fiches = ([
         doc: "La grille sur laquelle poser les attaques. Chaque attaque rejoint la subdivision la plus proche, ce qui la déplace ; l'indice du rapport dit de combien le tempo retenu les en écarte.",
         docEn: "The grid the onsets are placed on. Each onset joins the nearest subdivision, which moves it; the report's index says how far the chosen tempo puts them from it." },
       { nom: "Quantifier les fins", nomEn: "Quantize ends", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["no", "yes"],
+        ...choixOuiNon("non"), optionsHeritees: LIBELLES_HERITES_OUI_NON,
         defaut: "Non", defautEn: "No",
         doc: "Applique la grille aux fins de notes, qui restent sinon à leur durée. Sans effet quand « Quantification » vaut « Aucune », puisqu'il n'y a alors pas de grille.",
         docEn: "Applies the grid to note ends, which otherwise keep their duration. Without effect when « Quantization » is « None », since there is then no grid." },
@@ -230,7 +236,7 @@ export const fiches = ([
       let fichier = new File([octets as unknown as BlobPart], "transcription.mid", { type: "audio/midi" });
       if (grille !== "none") {
         fichier = await transposerQuantifierMidi(
-          fichier, 0, grille, ctx.paramTexte("Quantifier les fins", "no") === "yes");
+          fichier, 0, grille, estOui(ctx.paramTexte("Quantifier les fins", "non")));
       }
 
       const trouves = instrumentsTrouves(r.evenements ?? "");

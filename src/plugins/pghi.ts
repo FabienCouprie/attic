@@ -8,6 +8,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { reconstruire, type OptionsReconstruction, type Reconstruction } from "../audio/pghi";
 import { parCanal } from "./hors-fil";
+import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -19,8 +20,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Fenêtre", nomEn: "Window", type: "choix",
-        options: ["512", "1024", "2048", "4096"], optionsEn: ["512", "1024", "2048", "4096"],
-        optionIds: ["512", "1024", "2048", "4096"], defaut: "1024", defautEn: "1024",
+        ...choixFenetre([512, 1024, 2048, 4096]), defaut: "1024", defautEn: "1024",
         doc: "Taille de la transformée. La fenêtre est gaussienne et non de Hann comme ailleurs : c'est la seule pour laquelle la relation entre phase et magnitude est exacte, et c'est cette relation qui fait tout l'algorithme.",
         docEn: "Transform size. The window is gaussian rather than the Hann used elsewhere: it is the only one for which the relation between phase and magnitude is exact, and that relation is the whole algorithm." },
       { nom: "Affinage", nomEn: "Refinement", type: "curseur", plage: [0, 60], pas: 1, defaut: 10, unite: " tours",

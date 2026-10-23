@@ -12,6 +12,7 @@ import { estSequence, type Sequence } from "../audio/sequence";
 import { nomNote } from "../audio/nom-note";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 
@@ -85,7 +86,7 @@ When no line satisfies every rule, the « Melody » output is empty and the repo
         doc: "Divise la durée de chaque accord en autant de places. Une seule ne laisse que des appuis.",
         docEn: "Divides each chord's duration into that many positions. One leaves only strong beats." },
       { nom: "Notes de l'accord sur les appuis", nomEn: "Chord tones on strong beats", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
         doc: "Restreint la première place de chaque accord aux sons de l'accord. Les autres places reçoivent toute la gamme.",
         docEn: "Restricts the first position of each chord to the sounds of the chord. The other positions receive the whole scale." },
@@ -100,7 +101,7 @@ When no line satisfies every rule, the « Melody » output is empty and the repo
         doc: "Combien de fois au plus une même hauteur se répète de suite. À zéro, aucune borne.",
         docEn: "How many times at most one pitch repeats in a row. At zero, no bound." },
       { nom: "Sommet unique", nomEn: "Single peak", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
         doc: "Exige que la note la plus aiguë ne paraisse qu'une fois.",
         docEn: "Requires that the highest note appear only once." },

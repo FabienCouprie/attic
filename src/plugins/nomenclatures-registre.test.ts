@@ -119,6 +119,21 @@ interface Domaine {
   anciennesEcritures?: { ou: string; raison: string }[];
   /** Le nombre de formes distinctes que le dépôt assume. La mesure de ce qui reste à unifier. */
   formesAssumees: number;
+  /**
+   * POURQUOI CE DOMAINE EN ASSUME PLUS D'UNE, en une phrase, et c'est un champ et non un
+   * commentaire exprès.
+   *
+   * UN NOMBRE SEUL NE DIT PAS S'IL EST DÛ OU MÉRITÉ. Le registre chiffrait ce qui restait à
+   * unifier, et rien n'obligeait à dire pourquoi une forme restait là : un chiffre pouvait monter
+   * d'un cran sans qu'aucune phrase ne l'explique, et la relecture suivante repartait de zéro. La
+   * moitié des domaines portait sa raison en commentaire, l'autre non.
+   *
+   * ET LA DISTINCTION QUE CE CHAMP FORCE EST CELLE QUI COMPTE : un SOUS-ENSEMBLE borné par un
+   * algorithme, un ORDRE que la relecture d'un projet fige, et une ORTHOGRAPHE qui diverge sans
+   * raison ne sont pas la même chose, bien qu'ils comptent tous pour une forme. Les deux premiers
+   * ne se paient pas ; le troisième si.
+   */
+  pourquoi?: string;
   remede: string;
 }
 
@@ -134,17 +149,13 @@ const DOMAINES: Domaine[] = [
       { valeur: "roue", raison: "« Selon la roue » : la gamme vient du cercle dessiné, et non de la liste" },
     ],
     canonique: (id) => (gammeMondeDe(id) ? id : gammeDe(id)?.id),
-    // SEPT COMPOSANTS PORTENT LES ORTHOGRAPHES D'AVANT LA TABLE. Elles sont des alias, donc les
-    // degrés sont justes ; ce sont les identifiants qui ne le sont pas.
-    anciennesEcritures: [
-      { ou: "reservoir-musical·Gamme", raison: "« pentatonique majeur » sans accord, enregistré dans les projets" },
-      { ou: "multi-reservoirs·Gamme", raison: "« pentatonique majeur » sans accord, enregistré dans les projets" },
-      { ou: "sequenceur-melodique·Gamme", raison: "« pentatonique majeur » sans accord, enregistré dans les projets" },
-      { ou: "arbre-rythmique·Gamme", raison: "« majeure » et « penta-majeure », les orthographes de la famille du contrepoint" },
-      { ou: "evolution-melodie·Gamme", raison: "« majeure » et « penta-majeure », les orthographes de la famille du contrepoint" },
-      { ou: "solveur-contraintes·Gamme", raison: "« majeure » et « penta-majeure », les orthographes de la famille du contrepoint" },
-      { ou: "correction-hauteur·Gamme", raison: "« majeure » et « penta-majeure », et `audio/correction-hauteur.ts` porte la raison écrite à côté de la liste" },
-    ],
+    // LES SEPT ORTHOGRAPHES D'AVANT LA TABLE SONT PAYÉES, et la liste est vide pour cette raison.
+    // Elles étaient des alias, donc les degrés étaient justes ; ce sont les identifiants qui ne
+    // l'étaient pas, et un projet les enregistrait. Ce qui tenait la dette ouverte n'était pas le
+    // calcul mais la RELECTURE : tant que rien ne déclarait ces valeurs, les changer aurait fait
+    // retomber un graphe rouvert sur la gamme par défaut. `optionsHeritees` les déclare, et
+    // `optionIds-retrocompat.test.ts` tient la porte, cas par cas, pour chacun des sept.
+    anciennesEcritures: [],
     // Les huit formes : deux ordres historiques de vingt-cinq que `completer` conserve, les
     // trente-cinq gammes réunies, les dix gammes du monde, et les quatre listes d'avant la table.
     // DE HUIT À ONZE, ET RIEN N'A EMPIRÉ : le garde voit enfin trois formes qu'il ne comptait pas.
@@ -153,6 +164,7 @@ const DOMAINES: Domaine[] = [
     // justement celles qu'on écrit à la main : les quatre de `serie-infinie·Gamme` et les cinq
     // réglages qui n'offrent que « majeur » et « mineur ».
     formesAssumees: 11,
+    pourquoi: "quatre formes portent les MÊMES vingt-cinq gammes dans quatre ordres, que `completer` fige parce qu'un projet se résout par la position ; les autres sont des sous-ensembles bornés, deux gammes pour la notation tonale, dix gammes du monde, et les trente-cinq réunies",
     remede: "offrir la liste de `audio/gammes.ts`, par `completer` pour garder l'ordre d'un composant ancien",
   },
   {
@@ -165,7 +177,9 @@ const DOMAINES: Domaine[] = [
     ],
     canonique: (id) => qualiteDe(id)?.id,
     anciennesEcritures: [
-      { ou: "arpege-koch·Accord", raison: "les noms français de la table de Koch, enregistrés dans les projets" },
+      // L'ÉCRITURE DE KOCH EST PAYÉE : ses cinq identifiants étaient ses libellés français, et ils
+      // sont désormais ceux du dépôt. Sa FORME reste comptée, parce qu'il n'offre que cinq triades
+      // là où les autres en offrent trente-trois, et ce sous-ensemble est la borne de son flocon.
       // CELUI-CI N'ÉTAIT PAS VISIBLE AVANT LA RÉPARATION DU GARDE : sa liste porte deux valeurs
       // hors domaine, « Cantus firmus » et « Personnalisé », ce qui suffisait à la faire
       // disparaître entièrement du relevé.
@@ -174,6 +188,7 @@ const DOMAINES: Domaine[] = [
     // DE DEUX À QUATRE : deux formes portaient une valeur hors domaine, la sentinelle « roue » et
     // les deux motifs du générateur fractal, ce qui les faisait disparaître entièrement du relevé.
     formesAssumees: 4,
+    pourquoi: "trois sous-ensembles bornés par leur composant, les cinq triades du flocon de Koch, les cinq motifs du générateur fractal dont deux n'en sont pas, et la liste entière précédée de sa sentinelle « roue »",
     remede: "offrir la liste de `audio/qualites-accords.ts`",
   },
   {
@@ -202,16 +217,30 @@ const DOMAINES: Domaine[] = [
     // PUIS DE DEUX À TROIS, SANS QUE RIEN N'EMPIRE : la troisième forme est celle du paradoxe du
     // triton, dont la treizième entrée « douze » faisait disparaître les douze classes du relevé.
     formesAssumees: 3,
+    pourquoi: "deux variantes du même réglage partagé, le nom de note pour qui nomme et le demi-ton pour qui compte, et la table des classes de hauteur du paradoxe du triton, qui écrit ses cinq touches noires en dièse parce qu'une classe n'appartient à aucune tonalité",
     remede: "étaler `PARAMETRE_CLE` ou `PARAMETRE_TONIQUE` de `audio/cles.ts`, au lieu de recopier douze noms",
   },
   {
     nom: "fenêtre d'analyse",
     membre: estPuissanceDeDeux,
     seuil: 2,
-    // Dix formes pour des puissances de deux : sept membres différents, et trois composants qui
-    // n'ont pas de libellé anglais là où les autres en ont un.
+    // DIX FORMES, ET AUCUNE N'EST UNE DETTE : CHACUNE A ÉTÉ EXAMINÉE. Six sous-ensembles, de 256 à
+    // 8192, portent chacun leur raison dans la documentation de leur propre réglage : « elle doit
+    // être longue, il faut du temps pour constater qu'une fréquence dure » contre « elle doit être
+    // courte » pour les deux passes de la décomposition STN, « 2048 est le compromis de l'article »
+    // pour la séparation harmonique, « sans effet sur l'étirement » pour la transformée de Csound.
+    // Trois formes ne diffèrent que par les LIBELLÉS : « Ordinaire (2048) » nomme la taille du
+    // MILIEU de sa propre liste, et le milieu de l'une n'est pas celui de l'autre, de sorte qu'une
+    // table centrale ne peut pas les produire. Et l'absence de liste anglaise sur deux réglages est
+    // une décision écrite à côté d'eux, des tailles de fenêtre ne se traduisant pas.
+    //
+    // CE QUI RESTAIT EST PAYÉ : les listes elles-mêmes venaient de vingt et une écritures à la
+    // main, et viennent désormais de `audio/fenetres-analyse.ts`. Un garde de SOURCE le tient,
+    // comme pour les signatures et les langues, puisque le registre ne voit pas deux listes
+    // identiques écrites deux fois.
     formesAssumees: 10,
-    remede: "déclarer une liste centrale des tailles de fenêtre, et dire pourquoi un composant en offre une part",
+    pourquoi: "six sous-ensembles, de 256 à 8192, chacun borné par son algorithme et portant sa raison dans la documentation de son propre réglage ; trois formes de plus ne tiennent qu'aux LIBELLÉS, « Ordinaire (2048) » nommant la taille du MILIEU de sa liste, que nulle table centrale ne peut produire",
+    remede: "offrir `choixFenetre` de `audio/fenetres-analyse.ts`, et dire pourquoi un composant en offre une part",
   },
   {
     nom: "métrique",
@@ -236,6 +265,7 @@ const DOMAINES: Domaine[] = [
     // MESURE S'ARRONDISSAIT. Sa grille descend désormais à l'unité du dénominateur, donc elle offre
     // la table entière et son sous-ensemble disparaît.
     formesAssumees: 2,
+    pourquoi: "la liste entière de `audio/signatures.ts`, et le sous-ensemble que la gravure MusicXML en FILTRE, sa grille se comptant en noires ; un sous-ensemble dérivé de la table n'est pas une table de plus",
     remede: "déclarer une liste centrale des signatures",
   },
   {
@@ -249,12 +279,21 @@ const DOMAINES: Domaine[] = [
     sentinelles: [
       { valeur: "none", raison: "« Aucune » : pas de grille, les instants restent ceux du jeu" },
     ],
-    // DE QUATRE À SEPT, et les trois qui apparaissent sont la divergence même de ce domaine : le
-    // TRIOLET s'écrit « 1/8t » ici et « 1/8 triplet » là, et le prédicat d'avant, écrit
-    // `/^1\/\d+$/`, ne voyait ni l'un ni l'autre. Un garde qui ne voit pas la divergence qu'il
-    // existe pour signaler ne sert à rien.
-    formesAssumees: 7,
-    remede: "déclarer une liste centrale des valeurs de note",
+    // DE QUATRE À SEPT, PUIS À SIX. Les trois formes qui étaient apparues sont la divergence même
+    // de ce domaine : le TRIOLET s'écrivait « 1/8t » ici et « 1/8 triplet » là, et le prédicat
+    // d'avant, écrit `/^1\/\d+$/`, ne voyait ni l'un ni l'autre. Un garde qui ne voit pas la
+    // divergence qu'il existe pour signaler ne sert à rien.
+    //
+    // CELLE DU TRIOLET EST PAYÉE : les deux grilles de quantification ne faisaient deux formes que
+    // par leur libellé français, « 1/8 triplet » chez l'une et « 1/8 de triolet » chez l'autre, et
+    // le premier est un mot ANGLAIS dans une liste française. Elles n'en font plus qu'une.
+    //
+    // LES SIX QUI RESTENT SONT DES SOUS-ENSEMBLES, et chacun est la grille de son composant : six
+    // valeurs pour l'intervalle du « beat repeat », cinq pour sa taille et dans l'autre sens,
+    // quatre pour la quantification d'une partition, trois pour la résolution d'un réservoir.
+    formesAssumees: 6,
+    pourquoi: "six sous-ensembles, chacun étant la grille de son composant : six valeurs pour l'intervalle du « beat repeat », cinq pour sa taille et dans l'autre sens, quatre pour la quantification d'une partition, trois pour la résolution d'un réservoir",
+    remede: "offrir `choixValeurs` de `audio/valeurs-note.ts`",
   },
   {
     nom: "forme d'onde",
@@ -275,6 +314,7 @@ const DOMAINES: Domaine[] = [
     formesAssumees: 2,
     // LE REMÈDE D'AVANT N'ÉTAIT PAS EXÉCUTABLE : `FORMES_ONDE` n'est pas exportée, et c'est une
     // table d'alias qui relit une valeur, non une liste ordonnée avec ses libellés.
+    pourquoi: "la liste des quatre formes, et celle de l'excitateur d'un résonateur, qui ajoute l'impulsion et le bruit : une impulsion par période n'est pas une onde, et du bruit n'a pas de période",
     remede: "offrir `FORMES_ONDE_CHOIX` de `audio/timbres.ts`, et ses `LIBELLES_HERITES_FORMES`",
   },
   {
@@ -283,8 +323,24 @@ const DOMAINES: Domaine[] = [
     // plus un oui ou non. Le seuil vaut donc deux et le domaine se referme sur l'exactitude.
     membre: (x) => ["oui", "non", "yes", "no"].includes(x),
     seuil: 2,
-    formesAssumees: 6,
-    remede: "déclarer une paire centrale, dans chacun des deux ordres, puisque l'ordre d'un composant est enregistré",
+    canonique: (id) => (id === "yes" ? "oui" : id === "no" ? "non" : id),
+    // DE SIX À TROIS, et les trois qui restent sont irréductibles.
+    //
+    // LES DEUX ORDRES EN FONT DEUX, et ce n'est pas une divergence à corriger : la valeur d'un
+    // réglage enregistrée dans un projet se résout PAR LA POSITION, donc retourner une liste
+    // ferait qu'un projet rouvert répondrait le contraire de ce qu'il disait. Vingt-trois réglages
+    // offrent « Oui » d'abord, treize « Non » d'abord, et chacun a son défaut en tête.
+    //
+    // LA TROISIÈME EST UN INTERRUPTEUR, qui s'écrit « Off » et « On » en anglais plutôt que
+    // « No » et « Yes ». Ses identifiants viennent de la table comme les autres ; seuls ses
+    // libellés anglais sont les siens, et c'est ce que la langue demande pour une lecture en
+    // boucle ou une lecture aléatoire.
+    //
+    // CE QUI EST PAYÉ : cinq réglages posaient `yes` et `no` quand trente et un posaient `oui` et
+    // `non`, et deux d'entre eux affichaient « oui » et « non » en minuscules.
+    formesAssumees: 3,
+    pourquoi: "les deux ORDRES, que la relecture d'un projet fige puisqu'une valeur s'y résout par la position, et un interrupteur dont les libellés anglais sont « Off » et « On » plutôt que « No » et « Yes »",
+    remede: "offrir `choixOuiNon` de `core/oui-non.ts`, dans l'ordre qui est celui du composant",
   },
 
   // ── LES DOMAINES INSCRITS LE 2026-10-23, APRÈS LE RELEVÉ DES 503 COMPOSANTS ─────────────────
@@ -302,6 +358,7 @@ const DOMAINES: Domaine[] = [
     ],
     canonique: (id) => (PROGRESSIONS_GENRE[id] ? id : undefined),
     formesAssumees: 2,
+    pourquoi: "la liste entière, et sa coupe sans « personnalisé » chez le composant qui n'offre pas de progression saisie à la main : une entrée qui ouvre un champ voisin n'a pas de sens là où ce champ n'existe pas",
     remede: "offrir `GENRES_ACCORDS` de `plugins/generateurs-aides.ts`, ou sa coupe sans la progression personnalisée",
   },
   {
@@ -310,6 +367,7 @@ const DOMAINES: Domaine[] = [
     seuil: 2,
     canonique: (id) => formatImage(id)?.id,
     formesAssumees: 3,
+    pourquoi: "le couple PNG et JPEG, le même couple dans l'ORDRE INVERSE chez un composant dont le défaut est le JPEG, et la liste de trois du générateur de pochette, qui dessine en SVG et peut donc rendre le SVG lui-même",
     remede: "offrir `choixFormats` de `core/formats-image.ts`",
   },
   {
@@ -325,12 +383,14 @@ const DOMAINES: Domaine[] = [
     membre: (x) => ["auto", "fm", "soundfont"].includes(x),
     seuil: 2,
     formesAssumees: 2,
+    pourquoi: "les trois moteurs, et la variante partagée sans « Automatique » pour les composants dont le rendu local est le défaut : choisir automatiquement n'a pas de sens là où aucune banque n'est attendue",
     remede: "étaler `PARAMETRE_SYNTHESE` de `plugins/soundfontGlobal.ts`, ou sa variante sans « Automatique »",
   },
   {
     nom: "disposition de haut-parleurs",
     membre: (x) => DISPOSITIONS.some((d) => d.id === x),
     formesAssumees: 2,
+    pourquoi: "la liste entière, et le sous-ensemble du décodeur ambisonique, qui filtre `famille !== \"ambisonie\"` parce qu'une « Salle » est la disposition de haut-parleurs vers laquelle on décode : décoder vers un format ambisonique ne décoderait rien",
     remede: "offrir `choixDisposition` de `plugins/multicanal.ts`",
   },
   {
@@ -346,6 +406,7 @@ const DOMAINES: Domaine[] = [
     // les noms de langue soient recopiés dans six tables à la main, où une orthographe peut dériver
     // sans que rien ne le dise.
     formesAssumees: 6,
+    pourquoi: "chaque composant est borné par les langues que SON modèle tient, et chacun l'écrit à côté de sa liste ; les NOMS, eux, viennent d'une table unique depuis que six d'entre eux les recopiaient",
     remede: "déclarer une table centrale des noms de langue, chaque composant n'offrant que les codes que SON modèle tient",
   },
   {
@@ -369,12 +430,14 @@ const DOMAINES: Domaine[] = [
     // borne est écrite à côté de chacun. La troisième est la position à trois valeurs. Ce qui a été
     // réparé, c'est la capitalisation : un composant avait pour identifiants ses libellés français.
     formesAssumees: 3,
+    pourquoi: "trois composants ne désignent pas une position mais une OREILLE ou un CANAL, dont il n'existe que deux et où un centre n'aurait pas de sens ; la troisième forme est la position à trois valeurs",
     remede: "déclarer une liste centrale des positions, en minuscules comme partout ailleurs",
   },
   {
     nom: "patron rythmique",
     membre: (x) => PATRONS_RYTHME[x] !== undefined,
     formesAssumees: 2,
+    pourquoi: "les deux listes sortent du même `optionsPatrons`, l'une entière et l'autre filtrée sur « 4/4 » : une boîte à groove en quatre temps ne peut pas offrir une valse ni un boléro, qui comptent en trois",
     remede: "offrir `optionsPatrons` de `audio/patrons-rythme.ts`, avec la métrique qui restreint",
   },
   {
@@ -385,6 +448,7 @@ const DOMAINES: Domaine[] = [
     // l'un ajoute la septième à CHAQUE accord, l'autre là où le genre la place. Les anciennes
     // valeurs du second sont lues comme « idiomatique ».
     formesAssumees: 2,
+    pourquoi: "les deux formes sont bornées par l'algorithme, et la borne est écrite à côté de chacune : l'un ajoute la septième à CHAQUE accord, l'autre là où le genre la place",
     remede: "déclarer une liste centrale des extensions, et dire pourquoi un composant n'en offre qu'une part",
   },
 ];
@@ -539,6 +603,32 @@ describe("un concept, des formes déclarées", () => {
     }
   }
 
+  it("CHAQUE FORME ASSUMÉE PORTE SA RAISON, sans quoi le chiffre ne dit pas s'il est dû ou mérité", () => {
+    // LE CHAMP EXISTE POUR CETTE PROPRIÉTÉ, ET ELLE EST LA CONCLUSION DU CHANTIER. Les dix-huit
+    // domaines ont été examinés un par un, et le relevé a montré que la plupart des formes qui
+    // restent ne sont PAS une dette : ce sont des sous-ensembles bornés par un algorithme, ou des
+    // ordres que la relecture d'un projet fige. Un chiffre seul ne distingue pas ces trois-là d'une
+    // orthographe qui diverge sans raison, et c'est pourtant la seule distinction qui décide s'il
+    // faut payer. Un domaine qui assume plus d'une forme doit donc dire laquelle il assume.
+    const muets = DOMAINES
+      .filter((d) => d.formesAssumees > 1 && (d.pourquoi ?? "").trim().length < 40)
+      .map((d) => `« ${d.nom} » assume ${d.formesAssumees} formes sans dire pourquoi`);
+    expect(
+      muets,
+      "écrire `pourquoi` : un SOUS-ENSEMBLE borné, un ORDRE que la relecture fige, ou une ORTHOGRAPHE qui diverge, "
+      + "qui est la seule des trois à se payer :\n" + muets.join("\n"),
+    ).toEqual([]);
+  });
+
+  it("et un domaine qui n'en assume qu'une n'a rien à expliquer", () => {
+    // LA SYMÉTRIE COMPTE : une raison écrite à côté d'un domaine unifié serait une raison morte,
+    // et elle couvrirait la réapparition d'une seconde forme au même endroit.
+    const bavards = DOMAINES
+      .filter((d) => d.formesAssumees === 1 && (d.pourquoi ?? "").trim().length > 0)
+      .map((d) => `« ${d.nom} » n'assume qu'une forme : retirer son \`pourquoi\``);
+    expect(bavards).toEqual([]);
+  });
+
   it("LA DETTE EST CHIFFRÉE, et c'est elle qu'on vient lire", () => {
     // Le nombre de formes en trop, domaine par domaine : ce qu'il resterait à unifier si chaque
     // domaine se ramenait à une seule liste. Ce cas ne juge pas, il empêche le chiffre de croître
@@ -559,8 +649,12 @@ describe("un concept, des formes déclarées", () => {
     // il couvre dix-huit domaines au lieu de huit. C'est là que la comparaison repart.
     // PUIS DE CINQUANTE-DEUX À CINQUANTE ET UN, par le caractère de timbre : la forme en trop était
     // la même table privée du sinus, pour un moteur dont la branche sinusoïdale manquait.
+    // PUIS DE CINQUANTE ET UN À CINQUANTE, par la valeur de note : deux grilles de quantification
+    // ne faisaient deux formes que par l'écriture française du triolet.
+    // PUIS DE CINQUANTE À QUARANTE-SEPT, par le oui ou non : six formes sur trente-huit réglages,
+    // dont trois ne tenaient qu'à cinq composants qui posaient `yes` et `no` dans les projets.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(51);
+      .toBe(47);
   });
 });

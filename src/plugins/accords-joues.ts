@@ -28,6 +28,7 @@ import {
   decoderInstrumentSF2,
 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
+import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 
@@ -178,7 +179,7 @@ The « Notation » output writes the chord as text, one onset per line and simul
         doc: "L'ordre des notes. Sans effet sur un accord plaqué, dont les notes partent ensemble.",
         docEn: "The order of the notes. Has no effect on a struck chord, whose notes start together." },
       { nom: "Fondamentale finale", nomEn: "Closing root", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["non", "oui"],
+        ...choixOuiNon("non"),
         defaut: "Non", defautEn: "No",
         doc: "Ajoute la fondamentale une octave au-dessus. Elle ferme un arpège, et double la basse d'un accord plaqué.",
         docEn: "Adds the root one octave above. It closes an arpeggio, and doubles a struck chord's bass." },

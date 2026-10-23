@@ -6,6 +6,7 @@ import { avecDoc } from "./notices";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { decoderSansReechantillonner } from "../audio/frequence-source";
 import { decrire } from "../audio/metadonnees";
+import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -162,9 +163,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Dossier contenant les fichiers WAV/MP3 à écouter.", docEn: "Folder containing WAV/MP3 files to play." },
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], defaut: 80, unite: "%",
         doc: "Volume du lecteur.", docEn: "Player volume." },
-      { nom: "Lecture aléatoire", nomEn: "Shuffle", type: "choix", options: ["Non", "Oui"], optionsEn: ["Off", "On"], optionIds: ["non","oui"], defaut: "Non", defautEn: "Off",
+      { nom: "Lecture aléatoire", nomEn: "Shuffle", type: "choix", ...choixOuiNon("non"), optionsEn: ["Off", "On"], defaut: "Non", defautEn: "Off",
         doc: "Joue les pistes dans un ordre aléatoire.", docEn: "Play tracks in random order." },
-      { nom: "Lecture en boucle", nomEn: "Loop", type: "choix", options: ["Non", "Oui"], optionsEn: ["Off", "On"], optionIds: ["non","oui"], defaut: "Non", defautEn: "Off",
+      { nom: "Lecture en boucle", nomEn: "Loop", type: "choix", ...choixOuiNon("non"), optionsEn: ["Off", "On"], defaut: "Non", defautEn: "Off",
         doc: "Répète la playlist en boucle.", docEn: "Repeat the playlist in a loop." },
       { nom: "Piste", nomEn: "Track", type: "texte", defaut: "", defautEn: "", hidden: true,
         doc: "Nom du fichier actuellement sélectionné (réservé à l'interface).", docEn: "Name of the currently selected file (reserved for the UI)." },

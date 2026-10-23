@@ -83,7 +83,7 @@ export const EXERCICES_COMPOSITION: Exercice[] = [
     indiceEn: "A chromatic scale accepts all twelve semitones: it fixes flaws without ever changing a note. A major scale also pulls foreign notes back in.",
     lecon: "La correction rejoue les périodes du son à un autre espacement — c'est le recollement synchrone, et il garde les formants, si bien qu'une voix corrigée ne prend pas l'accent de l'écureuil. Sa limite est géométrique et écrite dans la notice : au-delà de quatre demi-tons, deux copies d'un même grain s'annulent, et à l'octave la raie dominante tombe à un centième du niveau d'entrée.",
     leconEn: "Correction replays the sound's periods at a different spacing — that is synchronous overlap-add, and it keeps the formants, so a corrected voice does not take on a chipmunk accent. Its limit is geometric and written in the notice: beyond four semitones, two copies of one grain cancel, and at the octave the dominant line falls to a hundredth of the input level.",
-    condition: { sorte: "present", critere: { fiches: ["correction-hauteur"], parametre: { nom: "Gamme", nomEn: "Scale", vaut: "majeure" }, rendu: true, quoi: "la correction de hauteur", quoiEn: "the Pitch Correction" } },
+    condition: { sorte: "present", critere: { fiches: ["correction-hauteur"], parametre: { nom: "Gamme", nomEn: "Scale", vaut: "majeur" }, rendu: true, quoi: "la correction de hauteur", quoiEn: "the Pitch Correction" } },
   },
   {
     id: "transposer-sans-accelerer", chapitre: "hauteur",
@@ -193,7 +193,7 @@ export const EXERCICES_COMPOSITION: Exercice[] = [
     indiceEn: "The grid is clicked straight in the node. Each row is a degree of the chosen scale, and not a semitone.",
     lecon: "Une pentatonique n'a aucun demi-ton : aucune de ses notes ne frotte contre une autre, et c'est pourquoi n'importe quelle suite de pas y sonne juste. Ce n'est pas de la chance mais de la géométrie — en retirant les deux degrés qui portaient les frottements de la gamme majeure, on retire aussi la possibilité de se tromper. D'où son usage dans tous les instruments pour débutants.",
     leconEn: "A pentatonic has no semitone at all: none of its notes rubs against another, which is why any sequence of steps sounds right in it. That is not luck but geometry — by removing the two degrees that carried the major scale's rubbing, you also remove the chance of going wrong. Hence its use in every beginner's instrument.",
-    condition: { sorte: "present", critere: { fiches: ["sequenceur-melodique"], parametre: { nom: "Gamme", nomEn: "Scale", vaut: "pentatonique mineur" }, rendu: true, quoi: "le séquenceur mélodique", quoiEn: "the Melodic Sequencer" } },
+    condition: { sorte: "present", critere: { fiches: ["sequenceur-melodique"], parametre: { nom: "Gamme", nomEn: "Scale", vaut: "pentatonique-mineure" }, rendu: true, quoi: "le séquenceur mélodique", quoiEn: "the Melodic Sequencer" } },
   },
   {
     id: "arpeger-des-accords", chapitre: "musique",

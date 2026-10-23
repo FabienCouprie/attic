@@ -18,6 +18,7 @@ import { dureeSequence, estSequence, type Sequence } from "../audio/sequence";
 import { reunirVoix } from "../audio/voix";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 
@@ -53,7 +54,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le temps de repos ajouté entre deux séquences. À zéro, elles se touchent.",
         docEn: "The rest added between two sequences. At zero they touch." },
       { nom: "Une voix par séquence", nomEn: "One voice per sequence", type: "choix",
-        options: ["Non", "Oui"], optionsEn: ["No", "Yes"], optionIds: ["non", "oui"],
+        ...choixOuiNon("non"),
         defaut: "Non", defautEn: "No",
         doc: "Donne à chaque entrée son propre numéro de voix, ce qui grave autant de portées qu'il y a d'entrées.",
         docEn: "Gives each input its own voice number, which engraves as many staves as there are inputs." },

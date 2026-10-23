@@ -10,6 +10,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { choixFenetre } from "../audio/fenetres-analyse";
 import { estCourbe, valeurA, valeursParametre } from "../audio/courbe";
 import { TAILLE_TRAME, wishartVoie, type OptionsWishart } from "../audio/spectral-wishart";
 import { parCanal } from "./hors-fil";
@@ -19,7 +20,9 @@ const FINESSE = {
   nom: "Finesse", nomEn: "Resolution", type: "choix" as const,
   options: ["Fine en temps (1024)", "Ordinaire (2048)", "Fine en fréquence (4096)", "Très fine (8192)"],
   optionsEn: ["Sharp in time (1024)", "Ordinary (2048)", "Sharp in frequency (4096)", "Very sharp (8192)"],
-  optionIds: ["1024", "2048", "4096", "8192"],
+  // LES LIBELLÉS RESTENT LES SIENS, et les identifiants viennent de la table : « Ordinaire » nomme
+  // la taille du milieu de CETTE liste, ce qu'une table centrale ne peut pas produire.
+  optionIds: choixFenetre([1024, 2048, 4096, 8192]).optionIds,
   defaut: "Ordinaire (2048)", defautEn: "Ordinary (2048)",
   doc: "Taille de la fenêtre d'analyse, en échantillons. Le choix est un arbitrage, et il n'a pas de bonne réponse : une fenêtre courte situe bien les instants et distingue mal les fréquences voisines ; une fenêtre longue fait l'inverse. À 44 100 Hz, 1024 échantillons voient 23 ms et séparent 43 Hz ; 8192 voient 186 ms et séparent 5 Hz. Sur une voix ou une percussion, prenez court ; sur une nappe ou un accord à démêler, prenez long.",
   docEn: "Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long.",

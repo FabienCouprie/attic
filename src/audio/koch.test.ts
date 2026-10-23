@@ -96,6 +96,34 @@ describe("trois niveaux du même flocon", () => {
     for (const n of extreme) { expect(n.note).toBeGreaterThanOrEqual(0); expect(n.note).toBeLessThanOrEqual(127); }
   });
 
+  it("LES CINQ ACCORDS OFFERTS DONNENT CINQ TRIANGLES DIFFÉRENTS, sous l'identifiant du dépôt", () => {
+    // CE QUE CE CAS ARRÊTE. Ce composant tenait une table privée de cinq entrées, sous SES noms
+    // français, et sa lecture retombait en silence sur le majeur pour une clé qu'elle n'avait pas.
+    // Les identifiants du réglage passés à ceux du dépôt, `maj`, `m`, `aug`, `dim` et `sus4`,
+    // quatre accords sur cinq seraient devenus majeurs sans que rien ne le dise.
+    const rendus = new Map<string, string>();
+    for (const id of ["maj", "m", "aug", "dim", "sus4"] as const) {
+      rendus.set(id, JSON.stringify(genererNotesKoch({ ...BASE, accord: id }).notes.map((n) => n.note)));
+    }
+    const ids = [...rendus.keys()];
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        expect(rendus.get(ids[i]), `« ${ids[i]} » et « ${ids[j]} » donnent les mêmes notes`)
+          .not.toBe(rendus.get(ids[j]));
+      }
+    }
+  });
+
+  it("ET L'ANCIENNE ÉCRITURE FRANÇAISE DONNE LE MÊME TRIANGLE QUE SON IDENTIFIANT", () => {
+    // Un projet enregistré avant le changement porte « Majeur » ; il doit sonner comme « maj ».
+    for (const [ancienne, id] of [["Majeur", "maj"], ["Mineur", "m"], ["Augmenté", "aug"], ["Diminué", "dim"], ["Sus4", "sus4"]] as const) {
+      expect(
+        JSON.stringify(genererNotesKoch({ ...BASE, accord: ancienne }).notes),
+        `« ${ancienne} » ne rend plus ce que rend « ${id} »`,
+      ).toBe(JSON.stringify(genererNotesKoch({ ...BASE, accord: id }).notes));
+    }
+  });
+
   it("snapperNote ramène sur la gamme", () => {
     const majeur = [0, 2, 4, 5, 7, 9, 11];
     expect([60, 61, 62, 63, 64].map((m) => snapperNote(m, majeur))).toEqual([60, 60, 62, 62, 64]);

@@ -8,6 +8,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { separerStn, type ReglagesStn, type ResultatStn } from "../audio/stn";
 import { parCanal } from "./hors-fil";
+import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -27,13 +28,11 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Fenêtre sinus", nomEn: "Sines window", type: "choix",
-        options: ["2048", "4096", "8192"], optionsEn: ["2048", "4096", "8192"],
-        optionIds: ["2048", "4096", "8192"], defaut: "4096", defautEn: "4096",
+        ...choixFenetre([2048, 4096, 8192]), defaut: "4096", defautEn: "4096",
         doc: "Fenêtre de la première passe. Elle doit être longue : il faut du temps pour constater qu'une fréquence dure. Trop courte, les partielles ne se distinguent plus du reste.",
         docEn: "Window of the first pass. It must be long: it takes time to establish that a frequency lasts. Too short, and partials no longer stand out from the rest." },
       { nom: "Fenêtre transitoires", nomEn: "Transients window", type: "choix",
-        options: ["256", "512", "1024"], optionsEn: ["256", "512", "1024"],
-        optionIds: ["256", "512", "1024"], defaut: "512", defautEn: "512",
+        ...choixFenetre([256, 512, 1024]), defaut: "512", defautEn: "512",
         doc: "Fenêtre de la seconde passe. Elle doit être courte : sur une fenêtre longue, une attaque est déjà diluée dans les dizaines de millisecondes qui l'entourent. C'est la raison d'être des deux passes : une seule analyse ne peut pas voir les deux à la fois.",
         docEn: "Window of the second pass. It must be short: in a long window an attack is already diluted into the tens of milliseconds around it. This is why there are two passes, a single analysis cannot see both at once." },
       { nom: "Filtre temporel", nomEn: "Time filter", type: "curseur", plage: [3, 51], pas: 2, defaut: 17,

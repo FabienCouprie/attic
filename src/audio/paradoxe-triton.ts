@@ -132,6 +132,19 @@ export function echantillonsDeLaPaire(o: OptionsPaire): Float32Array {
   return x;
 }
 
-/** Les noms des douze classes, dans l'ordre où on les compte. */
+/**
+ * Les noms des douze classes, dans l'ordre où on les compte.
+ *
+ * ELLES NE VIENNENT PAS DE `audio/cles.ts`, ET LA RAISON EST MUSICALE. Cette table-là écrit trois
+ * des cinq touches noires en bémol, « Mi♭ » et « Si♭ », parce qu'une CLÉ se nomme selon la
+ * tonalité où elle sert. Ici il n'y a pas de tonalité : une classe de hauteur n'appartient à
+ * aucune gamme, le son n'ayant pas d'octave, et la convention de l'expérience de Deutsch est le
+ * dièse pour les cinq. Nommer « Mi♭ » une classe qui n'est pas dans un contexte de mi bémol
+ * majeur reviendrait à lui prêter une fonction qu'elle n'a pas.
+ *
+ * LA SEULE CHOSE QU'IL NE FAUT PAS FAIRE est de les nommer autrement d'un endroit à l'autre de ce
+ * composant : la sortie « Rapport » emploie la même table, de sorte qu'une réponse notée par
+ * l'auditeur désigne la classe que le réglage a offerte.
+ */
 export const NOMS_DE_CLASSE = ["Do", "Do♯", "Ré", "Ré♯", "Mi", "Fa", "Fa♯", "Sol", "Sol♯", "La", "La♯", "Si"];
 export const NOMS_DE_CLASSE_EN = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];

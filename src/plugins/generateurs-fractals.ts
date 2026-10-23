@@ -5,13 +5,15 @@
 
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
+import { qualiteDe } from "../audio/qualites-accords";
 import { genererMusiqueFractale, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, rendreAttracteurImageEtAudio, normaliserTypeAttracteur, genererMusiqueMandelbrot, genererArpegeKoch, rendreSpectrogrammeFractal, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { choixFormats, formatImage } from "../core/formats-image";
 import { CARACTERES_CHOIX } from "../audio/timbres";
+import { choixFenetre } from "../audio/fenetres-analyse";
 
 /**
  * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
@@ -144,7 +146,15 @@ export const fiches: FicheAudio[] = ([
       { ...PARAMETRE_CLE, doc: "Note de référence (tonique) de l'accord de base.", docEn: "Reference note (tonic) of the base chord." },
       { nom: "Gamme", nomEn: "Scale", type: "choix", options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS, defaut: "Majeur", defautEn: "Major", doc: "Gamme utilisée pour quantiser les notes de l'arpège.", docEn: "Scale used to quantize the arpeggio notes." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 6], pas: 1, defaut: 4, doc: "Octave de base de l'accord.", docEn: "Base octave of the chord." },
-      { nom: "Accord", nomEn: "Chord", type: "choix", options: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], optionIds: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], defaut: "Majeur", optionsEn: ["Major","Minor","Augmented","Diminished","Sus4"], defautEn: "Major", doc: "Type de triade formant le triangle de base du flocon.", docEn: "Triad type forming the base triangle of the snowflake." },
+      // SES IDENTIFIANTS ÉTAIENT SES LIBELLÉS FRANÇAIS, quand le reste du parc désigne une qualité
+      // par `maj`, `m`, `dim`. Ce sont des alias de la table, donc les intervalles étaient justes ;
+      // c'est l'identifiant posé dans le projet qui divergeait, et `optionsHeritees` le relit.
+      { nom: "Accord", nomEn: "Chord", type: "choix",
+        options: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], optionIds: ["maj","m","aug","dim","sus4"],
+        optionsEn: ["Major","Minor","Augmented","Diminished","Sus4"],
+        optionsHeritees: { Majeur: "maj", Mineur: "m", Augmenté: "aug", Diminué: "dim", Sus4: "sus4" },
+        defaut: "Majeur", defautEn: "Major",
+        doc: "Type de triade formant le triangle de base du flocon.", docEn: "Triad type forming the base triangle of the snowflake." },
       { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [1, 5], pas: 1, defaut: 3, doc: "Nombre de subdivisions de la voix la plus rapide ; les deux autres en ont une et deux de moins. Chaque niveau quadruple la longueur du cycle : 4 doubles-croches à 1, 64 à 3, 1 024 à 5.", docEn: "Number of subdivisions of the fastest voice; the other two have one and two fewer. Each level multiplies the cycle length by four: 4 sixteenths at 1, 64 at 3, 1024 at 5." },
       { nom: "Direction", nomEn: "Direction", type: "choix", options: ["alternée","extérieure","intérieure"], optionIds: ["alternée","extérieure","intérieure"], defaut: "alternée", optionsEn: ["alternating","outward","inward"], defautEn: "alternating", doc: "Sens des pics de Koch sur chaque voix.", docEn: "Direction of the Koch peaks on each voice." },
       { nom: "Hauteur", nomEn: "Height", type: "nombre", plage: [1, 24], pas: 1, defaut: 9, unite: "demi-tons", uniteEn: "semitones", doc: "Hauteur du premier pic, en demi-tons ; chaque niveau suivant en pose de trois fois plus petits. Un pic plus petit qu'un degré de la gamme ne s'entend plus : à 9 demi-tons, trois niveaux restent audibles (9, 3 et 1) ; pour une profondeur 4, montez vers 18 ou 24.", docEn: "Height of the first peak, in semitones; each following level sets peaks three times smaller. A peak smaller than one scale step is no longer heard: at 9 semitones, three levels stay audible (9, 3 and 1); for depth 4, go up towards 18 or 24." },
@@ -178,7 +188,11 @@ export const fiches: FicheAudio[] = ([
         instrument,
         banque,
       }, normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique")));
-      return { valeurs: [audio, midiFile], message: `Koch · ${ctx.paramTexte("Accord", "Majeur")} · ${audio.duration.toFixed(1)} s` };
+      // LE MESSAGE DIT LE LIBELLÉ, ET NON L'IDENTIFIANT : le réglage pose désormais `maj` dans le
+      // projet, et « Koch · maj » ne nomme rien pour qui lit.
+      const qualite = qualiteDe(ctx.paramTexte("Accord", "maj"));
+      const nomAccord = qualite ? (langueCourante() === "en" ? qualite.en : qualite.fr) : ctx.paramTexte("Accord", "maj");
+      return { valeurs: [audio, midiFile], message: `Koch · ${nomAccord} · ${audio.duration.toFixed(1)} s` };
     },
   },
   {
@@ -188,7 +202,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Image", type: "image" }, { nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.5, 30], pas: 0.5, defaut: 4, unite: "s", doc: "Durée totale du son et de l'image générés.", docEn: "Total duration of the generated sound and image." },
-      { nom: "FFT", nomEn: "FFT", type: "choix", options: ["512", "1024", "2048", "4096"], defaut: "2048", optionsEn: ["512", "1024", "2048", "4096"], defautEn: "2048", doc: "Taille de la fenêtre FFT : plus grand = meilleure résolution fréquentielle, moins bonne temporelle.", docEn: "FFT window size: larger = finer frequency resolution, coarser time resolution." },
+      { nom: "FFT", nomEn: "FFT", type: "choix", ...choixFenetre([512, 1024, 2048, 4096]), defaut: "2048", defautEn: "2048", doc: "Taille de la fenêtre FFT : plus grand = meilleure résolution fréquentielle, moins bonne temporelle.", docEn: "FFT window size: larger = finer frequency resolution, coarser time resolution." },
       { nom: "Octaves", nomEn: "Octaves", type: "nombre", plage: [1, 8], pas: 1, defaut: 4, doc: "Nombre d'octaves de bruit fractal.", docEn: "Number of fractal noise octaves." },
       { nom: "Rugosité", nomEn: "Roughness", type: "nombre", plage: [0, 1], pas: 0.05, defaut: 0.5, doc: "Influence des hautes fréquences du bruit (0 = lisse, 1 = rugueux).", docEn: "Influence of high-frequency noise (0 = smooth, 1 = rough)." },
       { nom: "Échelle", nomEn: "Scale", type: "choix", options: ["Logarithmique", "Linéaire"], optionsEn: ["Logarithmic", "Linear"], optionIds: ["logarithmic", "linear"], defaut: "Logarithmique", defautEn: "Logarithmic", doc: "Distribution verticale des fréquences dans l'image.", docEn: "Vertical distribution of frequencies in the image." },

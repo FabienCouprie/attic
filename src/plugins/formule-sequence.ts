@@ -14,6 +14,7 @@ import { dureeSequence, estSequence, type Sequence } from "../audio/sequence";
 import { appliquerFormules, CHAMPS, type ChampFormule } from "../audio/formule-sequence";
 import { poserArbre } from "../audio/voix";
 import { nomNote } from "../audio/nom-note";
+import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 
@@ -48,7 +49,7 @@ export const fiches: FicheAudio[] = ([
         doc: "La note n'est gardée que si cette expression est vraie. Éprouvée sur la note reçue, avant les formules.",
         docEn: "The note is kept only if this expression is true. Tested on the received note, before the formulas." },
       { nom: "Trier", nomEn: "Sort", type: "choix",
-        options: ["Oui", "Non"], optionsEn: ["Yes", "No"], optionIds: ["oui", "non"],
+        ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
         doc: "Remet les notes dans l'ordre des départs, qu'une formule sur le début a pu défaire.",
         docEn: "Puts the notes back in order of onset, which a formula on the onset may have undone." },
