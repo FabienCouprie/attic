@@ -59,7 +59,7 @@ export const fiches: FicheAudio[] = ([
       // durée, et c'est une désignation des ENTRÉES, qu'un réglage ne périme pas.
       const designe = { pistes };
       if (pistes.length === 0) {
-        return { valeurs: [], message: en() ? "No track connected." : "Aucune piste branchée." };
+        return { valeurs: [], erreur: true, message: en() ? "No track connected." : "Aucune piste branchée." };
       }
       const duree = Math.max(...pistes.map((p) => p.dureeSec));
       return {

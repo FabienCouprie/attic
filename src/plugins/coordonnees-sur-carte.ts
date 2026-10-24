@@ -83,7 +83,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const api = (window as any).api;
-      if (!api?.ecrireFichier) return { valeurs: [], message: traduire("msg.n_cessite_electron") };
+      if (!api?.ecrireFichier) return { valeurs: [], erreur: true, message: traduire("msg.n_cessite_electron") };
 
       const coordonnees = parserJson<CoordEntree>(ctx.entree(1));
       if (!coordonnees || coordonnees.length === 0) {
@@ -94,7 +94,7 @@ export const fiches: FicheAudio[] = ([
       if (rapportBrut) for (const r of rapportBrut) groupeParChemin.set(r.chemin, r.groupe);
 
       const sortie = ctx.paramTexte("Dossier sortie", "").replace(/^[/\\]+|[/\\]+$/g, "");
-      if (!sortie) return { valeurs: [], message: traduire("msg.aucun_r_pertoire_de_sortie_sp_cifi") };
+      if (!sortie) return { valeurs: [], erreur: true, message: traduire("msg.aucun_r_pertoire_de_sortie_sp_cifi") };
 
       const titre = ctx.paramTexte("Titre", "Coordonnées sur carte");
       const styleId = ctx.paramTexte("Style", "ville");

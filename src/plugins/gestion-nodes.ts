@@ -58,9 +58,9 @@ export const fiches: FicheAudio[] = ([
       if (action === "Exporter") {
         const selection = ctx.paramTexte("Node à exporter", "");
         const nodeId = selection.split(" — ")[0].trim();
-        if (!nodeId || nodeId === "(aucun") return { valeurs: [], message: traduire("msg.lancez_une_premi_re_fois_pour_peupler_la_liste_puis_s_lectio") };
+        if (!nodeId || nodeId === "(aucun") return { valeurs: [], erreur: true, message: traduire("msg.lancez_une_premi_re_fois_pour_peupler_la_liste_puis_s_lectio") };
         const nodeDef = registre!.trouverDef(nodeId);
-        if (!nodeDef) return { valeurs: [], message: traduire("msg.node_var_0_introuvable", nodeId) };
+        if (!nodeDef) return { valeurs: [], erreur: true, message: traduire("msg.node_var_0_introuvable", nodeId) };
 
         // Construire le manifest
         const manifest = {
@@ -109,7 +109,7 @@ export const fiches: FicheAudio[] = ([
         }
 
         if (!api?.sauvegarderNodeZip || !api?.exporterNodeZip) {
-          return { valeurs: [], message: traduire("msg.mode_web_l_export_zip_n_cessite_electron_node_var_0_var_1_d_", nodeId, manifest.dependencies.length, manifest.dependencies.join(", ") || "aucune") };
+          return { valeurs: [], erreur: true, message: traduire("msg.mode_web_l_export_zip_n_cessite_electron_node_var_0_var_1_d_", nodeId, manifest.dependencies.length, manifest.dependencies.join(", ") || "aucune") };
         }
 
         ctx.onProgress(traduire("progress.g_n_ration_du_zip"));
@@ -138,7 +138,7 @@ export const fiches: FicheAudio[] = ([
       } else {
         // Importer
         if (!api?.importerNodeZip) {
-          return { valeurs: [], message: traduire("msg.l_import_n_cessite_electron") };
+          return { valeurs: [], erreur: true, message: traduire("msg.l_import_n_cessite_electron") };
         }
 
         // Sélectionner le fichier zip via dialogue Electron

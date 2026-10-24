@@ -26,6 +26,16 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **Dix-sept chemins d'échec annonçaient « Terminé », sur sept composants, et un banc permanent ferme la campagne.** La règle du moteur est écrite dans `estResultatEnErreur` : un composant est en erreur s'il pose `erreur`, **ou** si toutes ses valeurs sont nulles alors qu'il déclare des sorties. **Un composant sans sortie échappe donc au second filet** et ne peut se signaler que par le premier ; sept l'omettaient.
+
+  - **Les sept, et leurs chemins** : « Carte sonore » (4), « Galerie d'exposition » (4), « Coordonnées sur carte » (2), « Gestion des nodes » (4), « Rouleau de séquence », « Visualiseur multipiste », « Démonstration ». Absence d'Electron, répertoire non indiqué, aucun fichier trouvé, aucune piste branchée : tous annonçaient une réussite. **La même absence d'Electron s'affichait « Erreur » sur « Export SVG » et « Terminé » ici.**
+  - **Et c'était un oubli, pas une décision** : « Coordonnées sur carte » pose bien `erreur` sur son troisième chemin, « aucune coordonnée reçue », et l'omettait sur les deux autres.
+  - **Trois retours ne sont pas touchés**, et c'est écrit : « Export annulé » et « Import annulé » disent qu'un utilisateur a refermé une boîte de dialogue. Rien n'a échoué.
+  - **Le banc permanent** — `plugins/texte-etranger.test.ts` — donne à chacune des **42 entrées texte qui attendent un format** un texte qui n'en est pas un, et exige qu'aucun composant n'annonce une réussite. **Son verdict est celui du moteur**, `estResultatEnErreur` étant la fonction même que l'exécution appelle, et non une approximation. Il tourne en 3,8 secondes.
+  - **Le texte de sonde est une vraie notation**, celle de « Texte → MIDI », et c'est voulu : un charabia serait refusé par tout le monde sans rien prouver, là où celui-ci est lisible par **un** composant et étranger à tous les autres. C'est exactement le piège que la campagne a trouvé cinq fois.
+  - **Deux acceptations sont déclarées avec leur raison** : « Texte → MIDI », dont c'est le format, et « Début de boucle sur un plan », qui laisse passer le plan quand il manque une fin de boucle. Toute autre acceptation fait tomber le cas, et **le compte des entrées éprouvées est tenu lui aussi** : un banc qui n'éprouverait plus rien passerait en silence.
+  - **Deux défauts plantés** : un `erreur` retiré d'un des dix-sept chemins, et « Accord » rendu à son ancienne chaîne « Accord inconnu ». Le banc tombe dans les deux cas.
+
 - **« Rythme sur hauteurs » fabriquait des hauteurs à partir de n'importe quel texte.** Son lecteur jette en silence ce qu'il ne sait pas lire, et sa condition d'entrée demandait seulement qu'**il en reste une** : « Tempo 90 / C4+E4+G4 2.000 » donnait `[NaN, 90, NaN, 2]`, puis `[90, 2]` après filtrage. Le nœud jouait un **fa dièse 6 sorti du nombre 90**, en annonçant « entrée Hauteurs » comme s'il avait lu une liste, et ce texte l'emportait sur l'entrée « Séquence » comme sur le réglage.
 
   - **Témoin monté à côté pour le voir** : la même mesure, nourrie des vraies hauteurs du nœud voisin, donnait un si 4. Deux notes différentes pour la même phrase, et rien à l'écran pour dire laquelle était lue.

@@ -40,7 +40,7 @@ export const fiches: FicheAudio[] = ([
       if (!estSequence(recue)) {
         // RIEN N'EST DÉSIGNÉ, ET NON LE DESSIN PRÉCÉDENT LAISSÉ TEL QUEL : sans cela, débrancher une
         // entrée laisserait la séquence d'avant affichée comme si elle décrivait encore quelque chose.
-        return { valeurs: [], message: en() ? "No sequence at the input." : "Aucune séquence à l'entrée." };
+        return { valeurs: [], erreur: true, message: en() ? "No sequence at the input." : "Aucune séquence à l'entrée." };
       }
       // La vue le lit par le canal déclaré : seule l'exécution connaît la séquence branchée, et
       // c'est une désignation de l'ENTRÉE, qu'un réglage ne périme pas.

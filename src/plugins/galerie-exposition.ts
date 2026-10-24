@@ -166,16 +166,16 @@ export const fiches: FicheAudio[] = ([
       const sortieDir = ctx.paramTexte("Répertoire de sortie", "");
       const graine = ctx.paramNombre("Graine visuelle", 0) || Math.floor(Math.random() * 99999) + 1;
 
-      if (!repertoire) return { valeurs: [], message: traduire("msg.aucun_r_pertoire_mp3_sp_cifi") };
-      if (!sortieDir) return { valeurs: [], message: traduire("msg.aucun_r_pertoire_de_sortie_sp_cifi") };
+      if (!repertoire) return { valeurs: [], erreur: true, message: traduire("msg.aucun_r_pertoire_mp3_sp_cifi") };
+      if (!sortieDir) return { valeurs: [], erreur: true, message: traduire("msg.aucun_r_pertoire_de_sortie_sp_cifi") };
 
       const api = (window as any).api;
-      if (!api?.lireDossier) return { valeurs: [], message: traduire("msg.n_cessite_electron") };
+      if (!api?.lireDossier) return { valeurs: [], erreur: true, message: traduire("msg.n_cessite_electron") };
 
       ctx.onProgress(traduire("progress.lecture_du_r_pertoire"));
       let fichiers: { nom: string; chemin: string }[] = (await api.lireDossier(repertoire)) ?? [];
       fichiers = fichiers.filter((f: any) => f.nom.toLowerCase().endsWith(".mp3"));
-      if (fichiers.length === 0) return { valeurs: [], message: traduire("msg.aucun_mp3_dans_var_0", repertoire) };
+      if (fichiers.length === 0) return { valeurs: [], erreur: true, message: traduire("msg.aucun_mp3_dans_var_0", repertoire) };
 
       // L'ordre d'accrochage se décide sur les fichiers, avant que les URL ne soient construites :
       // c'est l'index de la piste qui donne sa pochette procédurale, et il doit suivre l'accrochage.
