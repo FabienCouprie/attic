@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**504 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**505 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -170,6 +170,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Fin de boucle B | `boucle-graphe-fin-b` | 240 × 118 |
 | Fin de boucle C | `boucle-graphe-fin-c` | 240 × 118 |
 | Boucle MIDI | `boucle-midi` | 240 × 118 |
+| Début de boucle sur un plan | `boucle-plan-debut` | 240 × 118 |
 | Début de boucle par voix | `boucle-voix-debut` | 240 × 140 |
 | Fin de boucle par voix | `boucle-voix-fin` | 240 × 140 |
 | Bouteille de Klein | `bouteille-klein` | 240 × 118 |

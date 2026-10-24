@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **504 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **505 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 100 | [AI generators](#ai-generators) (10) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 101 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 243 | [Analysis](#analysis) (1) · [Conversion](#conversion) (23) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
@@ -47,6 +47,7 @@ An input marked **required** must be connected for the component to run. **Param
 | [Cover a Song](#cover-a-song) | Renders a new version of an audio, following a song plan. |
 | [Extend a Song](#extend-a-song) | Adds music before or after an audio, following a song plan. |
 | [Plan a Song](#plan-a-song) | Writes a song's plan: its lyrics, its form and its audio codes. |
+| [Plan Loop Start](#plan-loop-start) | Marks the start of a graph loop carrying a plan: what follows is replayed N times, with one seed per pass. |
 | [Render a Song](#render-a-song) | Renders the audio of a song plan, in 48 kHz stereo. |
 | [Repaint a Song](#repaint-a-song) | Repaints a passage of an audio between two instants, and keeps the rest. |
 | [Write a Song](#write-a-song) | Writes a song's complete plan from a short sentence. |
@@ -224,6 +225,24 @@ This component writes a song's plan from a description, and returns it as text. 
 | Length | number | 60 s | 0 – 600 s, step 10 | Target length. At zero, the planner chooses, and it aims long. |
 | Seed | number | -1 | -1 – 999999, step 1 | Makes the plan reproducible. At minus one, every run differs. When « Lyrics » is empty, it also decides the written text, which does not always follow the requested language: giving the lyrics is the only way to settle what will be sung. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+
+#### Plan Loop Start
+
+`boucle-plan-debut` · Inputs → AI generators
+
+*Marks the start of a graph loop carrying a plan: what follows is replayed N times, with one seed per pass.*
+
+This node opens a graph loop on a text, and a song's plan is what it is for. The chain between it and a « Loop End » is played as many times as « Passes » asks, and the plan received crosses every pass unchanged. Every pass starts again from the plan received, and not from what the previous pass produced: the passes are independent, and what tells them apart therefore comes from the seeds alone. « Passes » sets the number of runs. « Seeds » says what becomes of the « Seed » settings of the chain's nodes: « Identical » gives them the same one at every pass, hence the same result; « One per pass » gives each a different one, which returns sections that follow the same plan without repeating. The « Plan » input receives the text to turn. The output of the same name returns it as it is at every pass. The loop closes on « Loop End A », which puts the passes end to end, « B », which keeps only the last, or « C », which stacks them. Those ends receive audio: the chain must therefore return a sound from the plan.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Plan | text |  |
+| output | Plan | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Passes | number | 3 | 1 – no ceiling, step 1 | How many times the chain between this node and the « Loop End » is played. The plan received is the same at every pass; what changes from one pass to the next comes from the « Seeds » setting. |
+| Seeds | choice | One per pass | Identical / One per pass | What becomes of the « Seed » settings of the chain's nodes. « One per pass » gives each pass a different one: the plan stays the same and the rendering changes, which yields sections of one piece. « Identical » gives them all the same, and the passes resemble each other. |
 
 #### Render a Song
 

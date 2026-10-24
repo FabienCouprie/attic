@@ -4,7 +4,8 @@
 // topologique. Une boucle est un cycle, et un cycle n'a pas d'ordre topologique. Plutôt
 // que d'apprendre au moteur à revenir en arrière — ce qui demanderait de casser le cache,
 // les statuts et l'annulation —, on déplie : les nœuds entre le début et la fin de boucle
-// sont recopiés n fois, chaque copie recevant le résultat de la précédente.
+// sont recopiés n fois, chaque copie recevant le résultat de la précédente — sauf si le début de
+// boucle redonne au contraire son entrée à chaque tour, ce que `reboucleSurLeTourPrecedent` tranche.
 //
 // C'est exactement la sémantique demandée. Si la chaîne interne transpose d'un demi-ton,
 // la deuxième copie transpose le résultat déjà transposé : au deuxième tour, deux
@@ -18,6 +19,47 @@ import { ancetres, descendants } from "./graphe";
 import type { AreteG, NoeudG } from "./meta";
 
 export const FICHE_DEBUT = "boucle-graphe-debut";
+
+/**
+ * Le début d'une boucle qui fait tourner un PLAN, et non un son.
+ *
+ * POURQUOI UN SECOND DÉBUT PLUTÔT QU'UN PORT DE PLUS SUR CELUI-CI. Le type d'un port n'est pas
+ * réglable : un début qui porterait l'audio ET le texte aurait quatre ports dont deux toujours
+ * vides, et le graphe ne dirait plus ce qui circule. Deux débuts, deux lectures évidentes.
+ *
+ * ET LE DÉROULÉ N'EST PAS LE MÊME, ce qu'une première version de ce nœud avait manqué. La boucle
+ * audio REBOUCLE : le tour k part du résultat du tour k−1, de sorte qu'une chaîne qui transpose d'un
+ * demi-ton en monte de n au n-ième tour. Un plan ne se compose pas ainsi — ce qu'on en veut est n
+ * sections tirées du MÊME descriptif, à graine changeante. Chaque tour repart donc de l'entrée du
+ * début, comme le fait déjà toute source extérieure au ventre.
+ *
+ * MESURÉ DANS L'APPLICATION, et c'est ce qui a corrigé la première version : branché sur le
+ * rebouclage, le deuxième tour recevait l'audio du premier sur une entrée texte, et la fin de boucle
+ * annonçait « Entrée en erreur : d#1::tm » quand le premier tour, lui, était vert.
+ */
+export const FICHE_DEBUT_PLAN = "boucle-plan-debut";
+
+export const FICHES_DEBUT: readonly string[] = [FICHE_DEBUT, FICHE_DEBUT_PLAN];
+
+const DEBUTS = new Set(FICHES_DEBUT);
+
+/** Ce nœud ouvre-t-il une boucle de graphe, quel que soit ce qu'elle fait circuler ? */
+export const estDebutDeBoucle = (ficheId: string | undefined): boolean => DEBUTS.has(ficheId ?? "");
+
+/**
+ * Les débuts qui REBOUCLENT sur le tour précédent, par opposition à ceux qui redonnent leur entrée.
+ *
+ * C'EST LA SEULE CHOSE QUI SÉPARE LES DEUX SORTES DE DÉBUT, et elle ne pouvait pas être un réglage
+ * du nœud audio : ce qu'un plan demande n'est pas une variante du rebouclage, c'en est le contraire,
+ * et un graphe doit dire depuis le canevas lequel des deux déroulés il décrit. C'est aussi pourquoi
+ * la liste est ici, dans le dépliage, et non dans la fiche : le moteur nomme les identifiants dont
+ * il dépend, il ne lit pas les fiches.
+ */
+const REBOUCLENT = new Set<string>([FICHE_DEBUT]);
+
+/** Les tours partent-ils du résultat du précédent, ou tous de l'entrée du début ? */
+export const reboucleSurLeTourPrecedent = (ficheId: string | undefined): boolean =>
+  REBOUCLENT.has(ficheId ?? "");
 
 // Trois fins de boucle, et UN SEUL dépliage. Ce qui les sépare n'est pas la façon de
 // répéter la chaîne — elle est identique — mais ce que chacune fait des n résultats une
@@ -178,7 +220,7 @@ const nombreDeTours = (n: NoeudG): number => {
  */
 export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepliage {
   const fins = noeuds.filter((n) => estFinDeBoucle(n.data.ficheId));
-  const debuts = noeuds.filter((n) => n.data.ficheId === FICHE_DEBUT);
+  const debuts = noeuds.filter((n) => estDebutDeBoucle(n.data.ficheId));
   if (fins.length === 0 && debuts.length === 0) {
     return { noeuds, aretes, origines: new Map(), problemes: [], depliees: [], toursDesCopies: new Map() };
   }
@@ -213,7 +255,7 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
   for (const fin of ordreDesFins) {
     const enAmont = ancetres(fin.id, courantE);
     const debutsAmont = [...enAmont].filter(
-      (id) => courantN.find((n) => n.id === id)?.data.ficheId === FICHE_DEBUT && !debutsTraites.has(id),
+      (id) => estDebutDeBoucle(courantN.find((n) => n.id === id)?.data.ficheId) && !debutsTraites.has(id),
     );
     if (debutsAmont.length === 0) { problemes.push({ noeudId: fin.id, code: "fin-sans-debut" }); continue; }
 
@@ -236,7 +278,7 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
     // l'est pas, c'est une boucle qu'on n'a pas su déplier, et dont les copies seraient fausses.
     const restants = interieur.filter((id) => {
       const f = courantN.find((n) => n.id === id)?.data.ficheId;
-      if (f !== FICHE_DEBUT && !estFinDeBoucle(f)) return false;
+      if (!estDebutDeBoucle(f) && !estFinDeBoucle(f)) return false;
       // ON REMONTE À L'ORIGINE, et il le faut dès le troisième niveau : la fin d'une boucle déjà
       // dépliée est elle-même recopiée par celle qui l'englobe, sous un identifiant neuf que rien
       // ne reconnaîtrait. `origines` dit de quel nœud visible une copie descend, et c'est ce nœud
@@ -374,28 +416,22 @@ function deplierUne(
       nouvellesA.push({ ...a, id: `${a.id}#${k}`, target: idCopie(k, a.target) });
     }
     for (const a of duDebutVersInterieur) {
-      if (k === 0) {
-        // Premier tour : ce qui entrait dans le début de boucle entre dans la chaîne.
-        for (const e of entreesDuDebut) {
-          nouvellesA.push({
-            ...a,
-            id: `${a.id}#0<${e.id}`,
-            source: e.source,
-            sourceHandle: e.sourceHandle,
-            target: idCopie(0, a.target),
-          });
-        }
-      } else {
-        // Tours suivants : le résultat du tour précédent revient au début.
-        for (const r of versLaFin) {
-          nouvellesA.push({
-            ...a,
-            id: `${a.id}#${k}<${r.id}`,
-            source: idCopie(k - 1, r.source),
-            sourceHandle: r.sourceHandle,
-            target: idCopie(k, a.target),
-          });
-        }
+      // D'OÙ PART CE TOUR-CI. Le premier part toujours de ce qui entrait dans le début de boucle.
+      // Les suivants dépendent de la sorte de début : une boucle qui REBOUCLE leur donne le
+      // résultat du tour précédent — c'est elle qui compose, un demi-ton par tour devenant n
+      // demi-tons au n-ième —, et une boucle qui ne reboucle pas leur redonne la même entrée, ce
+      // qui rend n tours INDÉPENDANTS du même descriptif.
+      const reprises = k === 0 || !reboucleSurLeTourPrecedent(debut.data.ficheId)
+        ? entreesDuDebut.map((e) => ({ ref: e.id, source: e.source, sourceHandle: e.sourceHandle }))
+        : versLaFin.map((r) => ({ ref: r.id, source: idCopie(k - 1, r.source), sourceHandle: r.sourceHandle }));
+      for (const s of reprises) {
+        nouvellesA.push({
+          ...a,
+          id: `${a.id}#${k}<${s.ref}`,
+          source: s.source,
+          sourceHandle: s.sourceHandle,
+          target: idCopie(k, a.target),
+        });
       }
     }
     for (const a of versLaFin) {
