@@ -215,7 +215,7 @@ export const fiches: FicheAudio[] = ([
         return {
           valeurs: [null, rapport(r, en, remarques)],
           erreur: true,
-          message: r.erreur ?? traduire("msg.csound.rien"),
+          message: r.erreur ? traduire("msg.csound.refus_var_0", r.erreur) : traduire("msg.csound.rien"),
         };
       }
       return {
@@ -284,7 +284,7 @@ export const fiches: FicheAudio[] = ([
       });
       const r = await rendreCsd(csd);
       if (!r.audio) {
-        return { valeurs: [null, rapport(r, en)], erreur: true, message: r.erreur ?? traduire("msg.csound.rien") };
+        return { valeurs: [null, rapport(r, en)], erreur: true, message: r.erreur ? traduire("msg.csound.refus_var_0", r.erreur) : traduire("msg.csound.rien") };
       }
       return {
         valeurs: [auVolume(r.audio, ctx.paramNombre("Volume", 80)), rapport(r, en)],
@@ -373,7 +373,7 @@ endin`,
         return {
           valeurs: [null, rapport(r, en, muettes.remarques)],
           erreur: true,
-          message: r.erreur ?? traduire("msg.csound.rien"),
+          message: r.erreur ? traduire("msg.csound.refus_var_0", r.erreur) : traduire("msg.csound.rien"),
         };
       }
       return {
@@ -443,7 +443,7 @@ endin`,
       }
       const r = await rendreCsd(construireCsd({ orchestre, partition, graine: 1 }));
       if (!r.audio) {
-        return { valeurs: [null, rapport(r, en)], erreur: true, message: r.erreur ?? traduire("msg.csound.rien") };
+        return { valeurs: [null, rapport(r, en)], erreur: true, message: r.erreur ? traduire("msg.csound.refus_var_0", r.erreur) : traduire("msg.csound.rien") };
       }
       return {
         valeurs: [auVolume(r.audio, ctx.paramNombre("Volume", 80)), rapport(r, en)],
@@ -512,7 +512,7 @@ endin`,
       const partition = [tablesSpectral(o), `i1 0 ${duree.toFixed(3)}`, "e"].filter(Boolean).join("\n");
       const r = await rendreCsd(construireCsd({ orchestre, partition, graine: 1 }), entrees);
       if (!r.audio) {
-        return { valeurs: [null, rapport(r, en)], erreur: true, message: r.erreur ?? traduire("msg.csound.rien") };
+        return { valeurs: [null, rapport(r, en)], erreur: true, message: r.erreur ? traduire("msg.csound.refus_var_0", r.erreur) : traduire("msg.csound.rien") };
       }
       return {
         valeurs: [auVolume(r.audio, ctx.paramNombre("Volume", 80)), rapport(r, en)],

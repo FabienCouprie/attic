@@ -334,6 +334,13 @@ describe("quand Csound ne rend rien, les cinq le disent", () => {
       expect(res.valeurs[0], "pas de son").toBeNull();
       expect(res.valeurs[1], "mais un rapport, pour qu'on sache pourquoi").toBeTruthy();
       expect(String(res.message)).toContain("compilation");
+      // ET LE MESSAGE DU COMPILATEUR EST ENCADRÉ, non servi tel quel. MESURÉ dans l'application :
+      // le nœud affichait « error: syntax error, unexpected INTEGER_TOKEN (token "90") », qui ne
+      // dit pas QUI refuse ni QUOI. Le texte du compilateur reste — il nomme le jeton, et c'est
+      // précieux —, mais derrière une phrase qui dit ce qui s'est passé.
+      expect(String(res.message), `${id} : le refus doit être nommé`).toMatch(/Csound|refus/i);
+      expect(String(res.message).startsWith("erreur de compilation"),
+        `${id} : le message brut ne doit plus commencer la phrase`).toBe(false);
     });
   }
 });
