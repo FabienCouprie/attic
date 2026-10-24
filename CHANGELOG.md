@@ -26,6 +26,14 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **« Rythme sur hauteurs » fabriquait des hauteurs à partir de n'importe quel texte.** Son lecteur jette en silence ce qu'il ne sait pas lire, et sa condition d'entrée demandait seulement qu'**il en reste une** : « Tempo 90 / C4+E4+G4 2.000 » donnait `[NaN, 90, NaN, 2]`, puis `[90, 2]` après filtrage. Le nœud jouait un **fa dièse 6 sorti du nombre 90**, en annonçant « entrée Hauteurs » comme s'il avait lu une liste, et ce texte l'emportait sur l'entrée « Séquence » comme sur le réglage.
+
+  - **Témoin monté à côté pour le voir** : la même mesure, nourrie des vraies hauteurs du nœud voisin, donnait un si 4. Deux notes différentes pour la même phrase, et rien à l'écran pour dire laquelle était lue.
+  - **Écarter une valeur hors de 0–127 est sain, jeter un mot ne l'est pas.** Les deux sont désormais nommés : une hauteur hors de portée perdue en silence coûte une note tout autant.
+  - **Une chaîne vide passe toujours à la source suivante** — l'ordre « Hauteurs, puis Séquence, puis réglage » est documenté dans la notice, et un contrôle ne doit pas le changer : une entrée branchée mais vide est une absence, pas une faute. Un cas le tient.
+  - **Dernière trouvaille de la campagne** menée sur les 45 entrées texte qui attendent un format, et cinquième défaut de la même famille : un échec dit dans la valeur plutôt que dans le statut.
+  - **« Lecteur d'analyse » a été éprouvé et n'est pas en faute** : son exécuteur laisse passer l'audio et affiche le texte reçu comme message. C'est un lecteur, et n'importe quel texte y est légitime.
+
 - **Un texte étranger entrait dans le plan d'une chanson, et partait vers le modèle de rendu.** Branché sur l'entrée « Tonalité » de « Composer un plan », il ressortait **tel quel dans le document** — `"keyscale": "Tempo 90\nC4+E4+G4 2.000"` — pour un statut « Terminé ». Le nœud violait la forme que sa propre documentation fixe : « G major » ou « A minor ».
 
   - **La seconde moitié de la campagne** menée sur les 45 entrées texte qui attendent un format. Après les trois nœuds de théorie, celle-ci en a éprouvé une vingtaine de plus et trouvé ce défaut-ci, plus grave que les précédents parce qu'il **se propage** : le plan part ensuite vers un modèle sur GPU, qui recevait une tonalité sur deux lignes. `tonaliteNormalisee` ne retirait qu'un parenthésage ; elle ne disait pas si ce qui restait était une tonalité. **La chaîne vide reste licite**, le champ étant alors absent du plan, comme la documentation l'annonce.
