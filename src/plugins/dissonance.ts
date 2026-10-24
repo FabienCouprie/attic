@@ -4,6 +4,12 @@
 // Scale », 1998). La logique est dans `audio/dissonance.ts`, testée ; ce fichier n'est que la prise.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import {
+  accordageDepuisCents, decrireAccordage, degresParPeriode, hauteurDuDegre, rangsDemandes,
+  type Accordage,
+} from "../audio/accordage";
+import type { Note } from "../audio/note";
+import type { Sequence } from "../audio/sequence";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { choixFenetre } from "../audio/fenetres-analyse";
@@ -37,12 +43,16 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Théorie",
     resume: "Trouve la gamme qu'un timbre appelle : les creux de sa courbe de dissonance sont ses intervalles.",
     resumeEn: "Finds the scale a timbre calls for: the dips of its dissonance curve are its intervals.",
-    notice: "Trace la courbe de dissonance d'un timbre et en déduit la gamme qu'il appelle. D'après William Sethares, « Local consonance and the relationship between timbre and scale », Journal of the Acoustical Society of America 94(3), 1993, repris dans « Tuning, Timbre, Spectrum, Scale » (1998).\n\nLa thèse de Sethares : la consonance ne tient pas à des intervalles fixés d'avance, mais à l'accord entre le spectre d'un son et la gamme qu'on lui applique.\n\nLe procédé. On fait sonner le timbre contre lui-même transposé, pour tous les intervalles d'une octave, et l'on mesure à chaque fois la rugosité de l'ensemble. Là où la courbe creuse, le timbre supporte l'intervalle ; ailleurs, ses partiels battent. Les creux sont donc sa gamme.\n\nPour un son harmonique, les creux tombent sur l'octave, la quinte à 702 cents, la quarte à 498, les tierces à 386 et 316. L'intonation juste n'est pas un choix culturel ; c'est la conséquence d'un spectre harmonique.\n\nEt réciproquement. Un timbre dont les partiels ne sont pas des multiples entiers appelle une autre gamme, dont l'octave même peut ne plus être à 1200 cents. L'exemple que Sethares développe est le gamelan : les métallophones ont des spectres inharmoniques, et les gammes slendro et pelog les suivent. Sur un enregistrement de cloche, de plaque ou de voix, la gamme qui sort n'a aucune raison d'être la nôtre.",
-    noticeEn: "Draws a timbre's dissonance curve and derives the scale it calls for. After William Sethares, « Local consonance and the relationship between timbre and scale », Journal of the Acoustical Society of America 94(3), 1993, taken up in « Tuning, Timbre, Spectrum, Scale » (1998).\n\nSethares' thesis: consonance does not rest on intervals fixed in advance, but on the agreement between a sound's spectrum and the scale applied to it.\n\nThe procedure. The timbre is sounded against a transposed copy of itself, at every interval within an octave, and the roughness of the whole is measured each time. Where the curve dips, the timbre supports that interval; elsewhere its partials beat. The dips are therefore its scale.\n\nFor a harmonic sound the dips fall on the octave, the fifth at 702 cents, the fourth at 498, the thirds at 386 and 316. Just intonation is not a cultural choice; it is the consequence of a harmonic spectrum.\n\nAnd conversely. A timbre whose partials are not whole multiples calls for another scale, whose very octave may no longer sit at 1200 cents. The example Sethares develops is the gamelan: metallophones have inharmonic spectra, and the slendro and pelog scales follow them. On a recording of a bell, a plate or a voice, the scale that comes out has no reason to be ours.",
+    notice: "Trace la courbe de dissonance d'un timbre et en déduit la gamme qu'il appelle. D'après William Sethares, « Local consonance and the relationship between timbre and scale », Journal of the Acoustical Society of America 94(3), 1993, repris dans « Tuning, Timbre, Spectrum, Scale » (1998).\n\nLa thèse de Sethares : la consonance ne tient pas à des intervalles fixés d'avance, mais à l'accord entre le spectre d'un son et la gamme qu'on lui applique.\n\nLe procédé. On fait sonner le timbre contre lui-même transposé, pour tous les intervalles d'une octave, et l'on mesure à chaque fois la rugosité de l'ensemble. Là où la courbe creuse, le timbre supporte l'intervalle ; ailleurs, ses partiels battent. Les creux sont donc sa gamme.\n\nPour un son harmonique, les creux tombent sur l'octave, la quinte à 702 cents, la quarte à 498, les tierces à 386 et 316. L'intonation juste n'est pas un choix culturel ; c'est la conséquence d'un spectre harmonique.\n\nEt réciproquement. Un timbre dont les partiels ne sont pas des multiples entiers appelle une autre gamme, dont l'octave même peut ne plus être à 1200 cents. L'exemple que Sethares développe est le gamelan : les métallophones ont des spectres inharmoniques, et les gammes slendro et pelog les suivent. Sur un enregistrement de cloche, de plaque ou de voix, la gamme qui sort n'a aucune raison d'être la nôtre.\n\nLa sortie « Gamme » rend les creux en cents, avec le rapport simple le plus proche de chacun quand il en existe un à moins de dix-huit cents.\n\nLa sortie « Courbe » rend la courbe de dissonance retournée : un creux y devient un sommet, de sorte qu'une modulation prise sur elle monte là où le timbre est consonant.\n\nLa sortie « Accordage » rend la même gamme en échelle de hauteurs. Le plus grand creux en est la période, et les creux inférieurs en sont les degrés. Quand l'unisson est le seul creux, aucune période n'est trouvée et cette sortie est vide ; le message indique ce cas.",
+    noticeEn: "Draws a timbre's dissonance curve and derives the scale it calls for. After William Sethares, « Local consonance and the relationship between timbre and scale », Journal of the Acoustical Society of America 94(3), 1993, taken up in « Tuning, Timbre, Spectrum, Scale » (1998).\n\nSethares' thesis: consonance does not rest on intervals fixed in advance, but on the agreement between a sound's spectrum and the scale applied to it.\n\nThe procedure. The timbre is sounded against a transposed copy of itself, at every interval within an octave, and the roughness of the whole is measured each time. Where the curve dips, the timbre supports that interval; elsewhere its partials beat. The dips are therefore its scale.\n\nFor a harmonic sound the dips fall on the octave, the fifth at 702 cents, the fourth at 498, the thirds at 386 and 316. Just intonation is not a cultural choice; it is the consequence of a harmonic spectrum.\n\nAnd conversely. A timbre whose partials are not whole multiples calls for another scale, whose very octave may no longer sit at 1200 cents. The example Sethares develops is the gamelan: metallophones have inharmonic spectra, and the slendro and pelog scales follow them. On a recording of a bell, a plate or a voice, the scale that comes out has no reason to be ours.\n\nThe « Scale » output returns the dips in cents, each with the nearest simple ratio when one exists within eighteen cents.\n\nThe « Curve » output returns the dissonance curve inverted: a dip becomes a peak, so that a modulation taken from it rises where the timbre is consonant.\n\nThe « Tuning » output returns the same scale as a pitch scale. The largest dip is its period, and the smaller dips are its degrees. When the unison is the only dip, no period is found and this output is empty; the message states that case.",
     entrees: [{ nom: "Audio", type: "audio", requis: false }],
+    // LA TROISIÈME SORTIE EST CELLE QUI FERME LA CHAÎNE. « Gamme » rend un texte qu'on LIT ; ce
+    // nœud trouvait donc la gamme d'un timbre sans que rien ne puisse la JOUER. « Accordage » porte
+    // les mêmes creux en objet, et un composant qui le reçoit en tire des hauteurs.
     sorties: [
       { nom: "Gamme", nomEn: "Scale", type: "texte" },
       { nom: "Courbe", nomEn: "Curve", type: "courbe" },
+      { nom: "Accordage", nomEn: "Tuning", type: "accordage" },
     ],
     parametres: [
       { nom: "Timbre", nomEn: "Timbre", type: "choix",
@@ -84,7 +94,7 @@ export const fiches: FicheAudio[] = ([
         partiels = partielsDuSon(entree.getChannelData(0), entree.sampleRate, TAILLE_TRAME, combien);
         origine = en ? "measured from the sound" : "mesuré sur le son";
       }
-      if (partiels.length < 2) return { valeurs: [null, null], message: traduire("msg.dissonance.tropPeu") };
+      if (partiels.length < 2) return { valeurs: [null, null, null], message: traduire("msg.dissonance.tropPeu") };
 
       const points = courbeDissonance(partiels, Math.round(ctx.paramNombre("Étendue", 1300)), 1);
       const trouves = creux(points, ctx.paramNombre("Profondeur", 0.005));
@@ -102,6 +112,19 @@ export const fiches: FicheAudio[] = ([
         trouves.length === 0 ? `  ${en ? "no dip at this depth" : "aucun creux à cette profondeur"}` : "",
       ].filter((l) => l !== "");
 
+      // LE PLUS GRAND CREUX TIENT LA PÉRIODE, et c'est la thèse de Sethares prise au mot : c'est
+      // l'intervalle auquel le timbre s'accorde le mieux avec lui-même. Pour un son harmonique,
+      // l'octave à 1200 cents ; pour le même étiré de 2,1, les 1249 cents que la notice annonce.
+      // Les creux d'en dessous sont alors les degrés, et celui-là n'en est pas un : c'est la tonique
+      // du tour suivant, et `accordageDepuisCents` le retire pour cette raison.
+      //
+      // IL FAUT DONC AU MOINS DEUX CREUX. Avec l'unisson seul, on n'a trouvé aucune période, et un
+      // accordage d'un seul degré ne voudrait rien dire : la sortie reste vide et le message le dit,
+      // plutôt que de livrer une règle qui n'en est pas une.
+      const periode = trouves.length > 1 ? trouves[trouves.length - 1].cents : 0;
+      const accordage = periode > 0
+        ? accordageDepuisCents(trouves.map((p) => p.cents), periode, 60, origine)
+        : null;
       return {
         valeurs: [
           lignes.join("\n"),
@@ -109,9 +132,13 @@ export const fiches: FicheAudio[] = ([
           // modulation branchée dessus monte là où le timbre est consonant, ce qui est le sens
           // dans lequel on veut s'en servir.
           { valeurs: Float32Array.from(rapports, (v) => 1 - v / max), cadence: 200 },
+          accordage,
         ],
-        message: traduire("msg.dissonance.creux",
-          String(trouves.length), trouves.map((p) => p.cents).slice(0, 6).join(", ")),
+        message: `${traduire("msg.dissonance.creux",
+          String(trouves.length), trouves.map((p) => p.cents).slice(0, 6).join(", "))} · ${
+          accordage
+            ? decrireAccordage(accordage, en)
+            : (en ? "no period found: widen the range" : "aucune période trouvée : élargissez l'étendue")}`,
       };
     },
   },
@@ -171,6 +198,69 @@ export const fiches: FicheAudio[] = ([
           { valeurs: Float32Array.from(valeurs, (v) => (max > 0 ? v / max : 0)), cadence: e.sampleRate / saut },
         ],
         message: traduire("msg.rugosite.resume", chiffre(moyenne), chiffre(max), instant.toFixed(2)),
+      };
+    },
+  },
+  // LE CONSOMMATEUR DU FLUX `accordage`, et il vit ici parce qu'il joue ce que la courbe ci-dessus
+  // trouve. Il ne calcule aucun son : il rend une `sequence`, dont le rendu existant porte les
+  // hauteurs fractionnaires jusqu'au haut-parleur.
+  {
+    id: "accordage-notes", nom: "Accordage → notes", nomEn: "Tuning → Notes",
+    // TRAITEMENT ET CONVERSION, ET C'EST LE GARDE DE CLASSEMENT QUI L'A DIT. Rangé d'abord dans
+    // « Théorie » par voisinage avec la courbe de dissonance, il en a été sorti par la règle que
+    // `docs/classement-theorie.test.ts` écrit : une entrée qui n'est pas du texte et une sortie
+    // sonore font un traitement, non un outil d'analyse. « Théorie » tient ce qui RAISONNE sur la
+    // musique et rend du texte ; ce composant rend des notes qu'on entend.
+    univers: "Traitement", famille: "Conversion",
+    resume: "Rend en notes les degrés d'un accordage reçu, hauteurs fractionnaires comprises.",
+    resumeEn: "Returns the degrees of a received tuning as notes, fractional pitches included.",
+    notice: "Rend en notes les degrés de l'accordage reçu sur son entrée. Les hauteurs sont fractionnaires : un degré qui ne tombe pas sur un demi-ton tempéré sort tel quel, et le rendu de séquence le joue à sa hauteur.\n\nLe réglage « Degrés » donne les rangs à jouer, séparés par des espaces. Un rang peut franchir la période : dans un accordage à douze degrés, le rang 12 est la tonique du tour suivant, et le rang -1 est le dernier degré du tour précédent. Laissé vide, ce réglage joue un tour complet dans l'ordre croissant.\n\nLe réglage « Durée » donne la durée de chaque note, en secondes. Les notes se suivent sans recouvrement, donc cette durée est aussi leur écart.\n\nLe réglage « Tonique » donne la hauteur du degré zéro, en numéro de note MIDI, le do central valant 60. Elle remplace celle que l'accordage porte.\n\nLa sortie « Séquence » rend les notes. La sortie « Texte » décrit l'accordage reçu : son nombre de degrés, sa période quand elle n'est pas l'octave, et son origine quand elle est connue.",
+    noticeEn: "Returns the degrees of the tuning received on its input as notes. Pitches are fractional: a degree that does not fall on a tempered semitone comes out as it is, and the sequence renderer plays it at that pitch.\n\nThe « Degrees » setting gives the ranks to play, separated by spaces. A rank may cross the period: in a tuning of twelve degrees, rank 12 is the tonic of the next turn, and rank -1 is the last degree of the previous one. Left empty, this setting plays one full turn in ascending order.\n\nThe « Duration » setting gives each note's length, in seconds. The notes follow one another without overlap, so this length is also the gap between them.\n\nThe « Tonic » setting gives the pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries.\n\nThe « Sequence » output returns the notes. The « Text » output describes the received tuning: its number of degrees, its period when it is not the octave, and its origin when that is known.",
+    entrees: [{ nom: "Accordage", nomEn: "Tuning", type: "accordage" }],
+    sorties: [
+      { nom: "Séquence", nomEn: "Sequence", type: "sequence" },
+      { nom: "Texte", nomEn: "Text", type: "texte" },
+    ],
+    parametres: [
+      { nom: "Degrés", nomEn: "Degrees", type: "texte", defaut: "",
+        doc: "Les rangs de degrés à jouer, séparés par des espaces. Un rang peut franchir la période, et un rang négatif descend sous la tonique. Vide, un tour complet est joué dans l'ordre croissant.",
+        docEn: "The degree ranks to play, separated by spaces. A rank may cross the period, and a negative rank descends below the tonic. Empty, one full turn is played in ascending order." },
+      { nom: "Durée", nomEn: "Duration", type: "curseur", plage: [0.05, 4], pas: 0.05, defaut: 0.5, unite: "s",
+        doc: "La durée de chaque note. Les notes se suivent sans recouvrement, donc cette durée est aussi leur écart.",
+        docEn: "Each note's length. The notes follow one another without overlap, so this length is also the gap between them." },
+      { nom: "Tonique", nomEn: "Tonic", type: "curseur", plage: [24, 96], pas: 1, defaut: 60,
+        doc: "La hauteur du degré zéro, en numéro de note MIDI, le do central valant 60. Elle remplace celle que l'accordage porte.",
+        docEn: "The pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries." },
+    ],
+    async executer(ctx: any) {
+      const en = langueCourante() === "en";
+      const recu = ctx.entree(0) as Accordage | null;
+      if (!recu || !Array.isArray(recu.degres) || recu.degres.length === 0) {
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_entr_e") };
+      }
+      // LA TONIQUE DU RÉGLAGE REMPLACE CELLE QUE L'ACCORDAGE PORTE : la même échelle se joue depuis
+      // n'importe quelle hauteur, et un producteur n'a pas à deviner où l'on veut l'entendre.
+      const accordage: Accordage = { ...recu, reference: ctx.paramNombre("Tonique", 60) };
+      const duree = ctx.paramNombre("Durée", 0.5);
+      const rangs = rangsDemandes(ctx.paramTexte("Degrés", ""), degresParPeriode(accordage));
+      if (rangs.length === 0) {
+        return {
+          valeurs: [null, null], erreur: true,
+          message: en
+            ? "« Degrees » holds no readable rank: whole numbers separated by spaces are expected."
+            : "« Degrés » ne porte aucun rang lisible : des nombres séparés par des espaces sont attendus.",
+        };
+      }
+      const notes: Note[] = rangs.map((rang, i) => ({
+        note: hauteurDuDegre(accordage, rang),
+        velocite: 100, debut: i * duree, fin: (i + 1) * duree,
+      }));
+      const sequence: Sequence = { notes, tempo: 120, titre: decrireAccordage(accordage, en) };
+      const horsTempere = notes.filter((n) => Math.abs(n.note - Math.round(n.note)) > 1e-6).length;
+      return {
+        valeurs: [sequence, decrireAccordage(accordage, en)],
+        message: `${notes.length} notes · ${decrireAccordage(accordage, en)} · `
+          + `${horsTempere} ${en ? "off the keyboard" : "hors du clavier"}`,
       };
     },
   },

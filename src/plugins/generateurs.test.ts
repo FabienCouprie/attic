@@ -7,6 +7,7 @@ import { registre } from "../audio/adaptateur";
 import { analyserMidi } from "../audio/midi";
 import { joindreMidi } from "../audio/midi-montage";
 import { parseMidi } from "midi-file";
+import { estResultatEnErreur } from "../core/execution";
 
 function ctx(sequenceNotes: any[]) {
   return {
@@ -307,6 +308,30 @@ describe("generateurs plugin", () => {
     expect(res.valeurs.length).toBe(2);
     expect(res.valeurs[0]).toBeNull();
     expect(res.valeurs[1]).toBeNull();
+    // ET CE N'EST PAS UNE ERREUR, ce qui manquait : posé sur le canevas puis lancé, le nœud
+    // affichait « Erreur · Aucune séquence. » avant que personne n'ait touché une touche. Le filet
+    // du moteur lit « tout nul sur un nœud à sorties », et le drapeau déclaré est ce qui le désarme.
+    expect(f.sortieNullePermise).toBe(true);
+    expect(estResultatEnErreur(f as never, res as never)).toBe(false);
+  });
+
+  it("Clavier mélodie : une synthèse qui échoue reste une erreur, elle", async () => {
+    const f = registre.trouverDef("clavier-melodie")!;
+    // UN MODE DE SYNTHÈSE QUI N'A PAS DE QUOI RENDRE : « SoundFont » sans fichier SF2 chargé lève
+    // dans `rendreSequence`, et l'exécuteur rattrape en rendant deux sorties nulles. Depuis que la
+    // nullité ne suffit plus à signaler l'échec, c'est le `erreur: true` de ce chemin qui le dit.
+    const res = await f.executer({
+      entree: () => null,
+      entrees: () => [],
+      paramTexte: (nom: string, def: string) => ({ Synthèse: "SoundFont" } as Record<string, string>)[nom] ?? def,
+      paramNombre: (nom: string, def: number) => ({ Instrument: 0, Tempo: 120, Volume: 80 } as Record<string, number>)[nom] ?? def,
+      onProgress: () => {},
+      noeud: { data: { sequenceNotes: [{ note: 60, velocite: 100, debut: 0, fin: 0.3 }] } },
+      runtime: null,
+    } as any);
+    expect(res.valeurs).toEqual([null, null]);
+    expect((res as { erreur?: boolean }).erreur, "le chemin d'échec doit se déclarer lui-même").toBe(true);
+    expect(estResultatEnErreur(f as never, res as never)).toBe(true);
   });
 
   it("Générateur de fréquence : forme Square fonctionne avec id canonique", async () => {

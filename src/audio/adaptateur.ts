@@ -101,6 +101,29 @@ export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
   // porterait les sept mêmes réglages d'échelle, à accorder à la main d'un bout à l'autre. Voir
   // `audio/spectrogramme-mel.ts`.
   registre.enregistrerTypeFlux({ id: "spectrogramme", couleur: "#2f9e44", forme: "carre", libelle: "Spectrogramme" });
+  // JAUNE FRANC ET POINT EN LOSANGE, les deux choisis par la mesure.
+  //
+  // LA COULEUR : la palette ne portait AUCUN jaune pur — l'ambre du MIDI, les deux oranges, et plus
+  // rien entre eux et le vert. Mesuré comme les trois précédentes, #f2d600 est à 37,7 ΔE de sa plus
+  // proche voisine, l'ambre du MIDI, là où le seuil du garde est à 18. C'est la deuxième plus grande
+  // marge de la palette.
+  //
+  // ET LA DISTANCE AU FOND DU CANEVAS A COMPTÉ AUTANT, parce que Fabien l'a déjà relevée pour le
+  // cercle : « un câble d'un pixel et demi de large ne montre pas sa couleur ». Sur le #0f0b17 du
+  // canevas, ce jaune est à 123,3 ΔE — plus clair que tout ce que la palette porte, le vert tilleul
+  // de l'objet compris. Le marine qui gagnait sur le premier critère, à 39,3, n'était qu'à 53,3 du
+  // fond, soit plus sombre que la plus sombre des quatorze : il a été écarté pour cela.
+  //
+  // LE LOSANGE est la troisième forme, et la dernière libre. Un accordage n'est ni du son ni une
+  // courbe : c'est une RÈGLE qu'on applique à des hauteurs, et rien d'autre ne s'y branche. La forme
+  // le dit d'un coup d'œil, comme le carré dit qu'un spectrogramme ne s'entend pas.
+  //
+  // « ACCORDAGE » ET NON « ACCORD », ET LE MOT A ÉTÉ PESÉ. `accord` est pris deux fois dans ce
+  // dépôt — l'empilement de notes de `audio/accords.ts` et de « Grille d'accords », et le désaccord
+  // en cents d'une zone d'échantillonneur, `zone.accord`. Un port « Accord » voisin d'une « Grille
+  // d'accords » aurait été à relire deux fois. « Accordage » est le mot du facteur d'instruments, et
+  // il est libre ici à une occurrence près, l'étiquette d'une tablature, qui désigne la même chose.
+  registre.enregistrerTypeFlux({ id: "accordage", couleur: "#f2d600", forme: "losange", libelle: "Accordage" });
 
 // Enregistrer toutes les fiches de plugins
 for (const fiche of toutesLesFiches) {

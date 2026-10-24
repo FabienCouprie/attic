@@ -103,6 +103,29 @@ export async function rendreSequence(
   return rendreHauteurs(notes, mode, volume, instrument, banque, caractere, duree);
 }
 
+/**
+ * Le gain d'une note, de sa vélocité et du volume du nœud.
+ *
+ * POURQUOI CETTE FORMULE SORT DE LA BOUCLE QUI L'EMPLOYAIT. Elle décide du niveau du son RENDU, et
+ * un clavier jouable doit sonner comme ce qu'il rendra : c'est la règle que `vues-domaine/
+ * clavier-son.ts` énonce, et que la synthèse interne d'un clavier ne tenait pas. Sa touche sonnait à
+ * un niveau ÉCRIT EN DUR, qui ignorait « Volume » comme la vélocité de la frappe, quand la même
+ * touche jouée au SoundFont passait par ici et les suivait. Recopier la formule la ferait dériver ;
+ * la nommer une fois fait que le jeu en direct et le rendu ne peuvent plus diverger.
+ *
+ * LE VOLUME EST BORNÉ ICI, comme il l'était dans la boucle : un réglage hors bornes vient d'un
+ * graphe enregistré à la main, et il ne doit pas produire un gain négatif ni supérieur à l'échelle.
+ *
+ * LA VÉLOCITÉ, ELLE, NE L'EST PAS, ET C'EST VOULU. La borner serait un changement de comportement
+ * du RENDU, que `tests-e2e/empreintes.json` surveille pour soixante-douze composants : une
+ * vélocité hors de l'octet déplacerait leur son, et le garde le dirait. La formule extraite rend
+ * donc exactement ce que la boucle rendait, au bit près.
+ */
+export function gainDeNote(velocite: number, volumePourCent: number): number {
+  const vol = Math.max(0, Math.min(1, volumePourCent / 100));
+  return (velocite / 127) * vol * 0.4;
+}
+
 /** La synthèse des hauteurs seules, telle qu'elle a toujours été, la durée étant déjà décidée. */
 async function rendreHauteurs(
   notes: NoteEvenement[],
@@ -113,8 +136,6 @@ async function rendreHauteurs(
   caractere: CaractereTimbreId | "pur" | undefined,
   duree: number,
 ): Promise<AudioBuffer> {
-  const vol = Math.max(0, Math.min(1, volume / 100));
-
   if (mode === "SoundFont") {
     const sf2Global = sf2Chargee();
     if (!sf2Global) {
@@ -141,7 +162,7 @@ async function rendreHauteurs(
     const dureeNote = n.fin - n.debut;
     if (dureeNote <= 0.001) continue;
     const freq = 440 * 2 ** ((n.note - 69) / 12);
-    const gain = (n.velocite / 127) * vol * 0.4;
+    const gain = gainDeNote(n.velocite, volume);
     // Le caractère du timbre, s'il est demandé ; sans lui, le réglage d'origine, inchangé.
     const { ratio, idxMod, a, d, sVal, r } = CARACTERES_FM[caractere ?? "origine"];
     const debutEch = Math.floor(n.debut * srInterne);
