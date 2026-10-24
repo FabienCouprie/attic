@@ -195,6 +195,57 @@ interface Ligne {
 }
 
 /**
+ * Les composants dont le rendu n'est pas reproductible au bit près d'une machine à l'autre, et la
+ * tolérance RELATIVE déclarée pour chacun.
+ *
+ * POURQUOI CETTE LISTE EXISTE, ET ELLE N'A QU'UNE ENTRÉE. Mise en intégration continue, cette base a
+ * tenu pour soixante et onze composants sur soixante-douze. Le soixante-douzième a dérivé :
+ *
+ *   particules : ["0.148725542/0.299995363"] → ["0.148697419/0.299998105"]
+ *
+ * Soit 1,9 × 10⁻⁴ en relatif sur la valeur efficace et 9 × 10⁻⁶ sur la crête. « Particules » est LE
+ * SEUL des soixante-douze à rendre son son par CSOUND, en WebAssembly, et ce rendu n'est pas
+ * identique au bit près d'un processeur à l'autre. La base, elle, a été enregistrée sur une seule
+ * machine.
+ *
+ * POURQUOI UNE TOLÉRANCE PLUTÔT QU'UN RETRAIT. Retirer « Particules » de la surveillance rendrait la
+ * base verte en cessant de regarder un composant, ce qui est le contraire de ce qu'on veut. La
+ * tolérance garde la surveillance et nomme ce qu'elle laisse passer.
+ *
+ * POURQUOI UN MILLIÈME, ET CE QU'IL ATTRAPE ENCORE. Cinq fois la dérive mesurée, ce qui laisse de la
+ * marge sans rien céder d'utile : un changement de niveau d'un DIXIÈME DE DÉCIBEL vaut déjà 1,2 %,
+ * soit douze fois cette tolérance. Un changement de longueur, de contenu ou de niveau reste donc
+ * attrapé ; seul l'arrondi d'un processeur passe.
+ *
+ * ET LE MESSAGE RESTE COMPARÉ AU CARACTÈRE PRÈS, pour tous : « Grains · 60 grains/s · 3.97 s » vient
+ * de la partition, non de l'arithmétique du rendu.
+ */
+const TOLERANCES: Record<string, number> = { particules: 1e-3 };
+
+/**
+ * Deux empreintes disent-elles la même chose, à la tolérance déclarée pour ce composant près ?
+ *
+ * Sans tolérance déclarée, la comparaison reste CARACTÈRE POUR CARACTÈRE : c'est le cas des
+ * soixante et onze autres, et il ne faut pas que cette porte s'ouvre pour eux.
+ */
+function memeEmpreinte(id: string, attendues: (string | null)[], obtenues: (string | null)[]): boolean {
+  const tol = TOLERANCES[id];
+  if (tol === undefined) return JSON.stringify(attendues) === JSON.stringify(obtenues);
+  if (attendues.length !== obtenues.length) return false;
+  return attendues.every((a, i) => {
+    const b = obtenues[i];
+    if (a === b) return true;
+    if (typeof a !== "string" || typeof b !== "string") return false;
+    const na = a.split("/").map(Number);
+    const nb = b.split("/").map(Number);
+    // Une empreinte qui n'est pas une paire de nombres — une courbe, un spectrogramme — se compare
+    // telle quelle : la tolérance ne s'applique qu'à ce qu'elle sait lire.
+    if (na.length !== nb.length || [...na, ...nb].some(Number.isNaN)) return false;
+    return na.every((v, k) => Math.abs(v - nb[k]) <= tol * Math.max(Math.abs(v), 1e-9));
+  });
+}
+
+/**
  * Le message, débarrassé de ce qui ne peut pas être comparé.
  *
  * UN TEMPS DE CALCUL NE SE COMPARE PAS. La décomposition atomique annonce sa durée dans son message,
@@ -240,8 +291,9 @@ test("les empreintes des composants surveillés n'ont pas changé", async ({ pag
 
     const attendue = attendues[s.id];
     if (!attendue) { ecarts.push(`${s.id} : absent de la base`); continue; }
-    if (JSON.stringify(attendue.empreintes) !== JSON.stringify(ligne.empreintes)) {
-      ecarts.push(`${s.id} : ${JSON.stringify(attendue.empreintes)} → ${JSON.stringify(ligne.empreintes)}`);
+    if (!memeEmpreinte(s.id, attendue.empreintes, ligne.empreintes)) {
+      const tol = TOLERANCES[s.id] === undefined ? "" : ` (tolérance ${TOLERANCES[s.id]})`;
+      ecarts.push(`${s.id}${tol} : ${JSON.stringify(attendue.empreintes)} → ${JSON.stringify(ligne.empreintes)}`);
     } else if (attendue.message !== ligne.message) {
       ecarts.push(`${s.id} : message « ${attendue.message} » → « ${ligne.message} »`);
     }
