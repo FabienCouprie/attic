@@ -53,12 +53,33 @@ const BLOCS_MAX = 10_000;
  * fichiers virtuel, et rien du côté de l'appelant ne distingue un rendu perdu d'un rendu réussi
  * avant d'avoir lu le fichier.
  *
- * Mesuré sur quarante rendus identiques : quatre pertes, et les quatre rattrapées à la PREMIÈRE
- * reprise, jamais deux de suite. Les pertes sont donc indépendantes, et trois tentatives
- * ramènent le risque d'un rendu sur dix à un sur mille. Une reprise ne coûte que sur l'échec,
- * et le son est déjà écrit : il ne se réécrit pas.
+ * « JAMAIS DEUX DE SUITE » ÉTAIT FAUX, et c'est ce qui a fait monter ce nombre de trois à cinq.
+ *
+ * La première mesure portait sur quarante rendus : quatre pertes, toutes rattrapées à la première
+ * reprise, d'où la conclusion que les pertes étaient indépendantes et que trois tentatives
+ * ramenaient un rendu sur dix à un sur mille. Remesuré le 2026-10-24 sur CENT VINGT rendus, les
+ * reprises rendues visibles dans la console :
+ *
+ *   9 pertes sur 129 tentatives                    7 % par tentative — le « un sur dix » tient
+ *   7 rendus sur 120 perdent au moins une fois     5,8 %
+ *   2 de ces 7 perdent une SECONDE fois            29 %, et non les ~7 % de l'indépendance
+ *
+ * Les pertes sont donc CORRÉLÉES : une instance qui vient d'en perdre une est quatre fois plus
+ * susceptible d'en perdre une seconde. Avec ce conditionnel, trois tentatives laissent passer un
+ * rendu sur deux cents — et non un sur mille. Cinq le ramènent à un sur deux mille quatre cents.
+ *
+ * UNE REPRISE NE COÛTE QUE SUR L'ÉCHEC, et le son est déjà écrit : il ne se réécrit pas. Monter ce
+ * nombre n'a donc pas de prix sur les quatre-vingt-quatorze pour cent de rendus qui aboutissent du
+ * premier coup.
+ *
+ * ET LA REPRISE COUVRE AUSSI LA PARTITION QUI NE SE TERMINE PAS, ce qui N'EST PAS ÉPROUVÉ et doit
+ * être lu comme tel. `sansFin` sortait de la boucle, de sorte que les reprises ne protégeaient que
+ * du mode ci-dessus. Ce second mode a été vu deux fois sur quatre-vingts rendus, puis zéro fois sur
+ * cent vingt : environ un pour cent, trop rare pour qu'une reprise ait pu être observée en train de
+ * le rattraper. La reprise est gardée parce qu'elle ne coûte rien et que le mode existe, non parce
+ * qu'une mesure l'a validée.
  */
-const TENTATIVES = 3;
+const TENTATIVES = 5;
 
 export interface OptionsCsd {
   orchestre: string;
@@ -511,8 +532,24 @@ async function rendreCsdSansFile(
       // Pas d'effacement des entrées : `unlink()` résout sans effacer (voir `nomDuContenu`), et
       // les fichiers n'ont plus besoin de disparaître puisqu'un nom ne désigne qu'un contenu.
 
-      if (sansFin || octets.length > 128) break;
-      messages.push(`(tentative ${essai} perdue : ${octets.length} octets écrits)`);
+      // LA REPRISE COUVRE AUSSI LA PARTITION QUI NE SE TERMINE PAS, et c'est ce qui manquait.
+      //
+      // `sansFin` SORTAIT de la boucle : les trois tentatives ne protégeaient donc que de la perte à
+      // quatre-vingts octets. Or c'est l'autre mode qui se produit — mesuré sur « Particules » avec
+      // ses réglages par défaut, donc une partition IDENTIQUE à chaque rendu : une perte sur
+      // quarante au repos, une sur quarante sous charge, et les deux fois `sansFin`. Une partition
+      // qui se termine trente-neuf fois sur quarante n'est pas une partition sans fin.
+      if (!sansFin && octets.length > 128) break;
+      const perdue = sansFin
+        ? `tentative ${essai} perdue : ${blocs} blocs sans fin de partition`
+        : `tentative ${essai} perdue : ${octets.length} octets écrits`;
+      messages.push(`(${perdue})`);
+      // ET LA PERTE LAISSE UNE TRACE DANS LA CONSOLE, parce qu'elle est invisible autrement. Les
+      // messages partent sur une sortie du composant, que l'appelant ne lit pas toujours : un rendu
+      // repris se présente comme un rendu réussi, et l'on ne sait pas que le moteur a bégayé. C'est
+      // ce qui a rendu la mesure de ce défaut si longue — le banc d'empreintes ne voyait que les
+      // échecs définitifs, jamais les reprises qui les évitaient.
+      console.warn(`[csound] ${perdue}`);
     }
 
     if (sansFin) {
