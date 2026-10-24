@@ -8,7 +8,8 @@ import { Chord, Scale, Note, Progression } from "tonal";
 import { estimerTonalite, detecterAccords, accordsVersTexte } from "../audio/accords";
 import { PARAMETRE_CLE } from "../audio/cles";
 import {
-  accordsDepuisRomains, modeDepuisTonalite, normaliserRomains, type ModeProgression,
+  accordsDepuisRomains, accordsInconnus, modeDepuisTonalite, normaliserRomains, toniqueDepuisTonalite,
+  type ModeProgression,
 } from "../audio/theorie-romains";
 
 function parserNotes(texte: string): string[] {
@@ -80,10 +81,24 @@ export const fiches: FicheAudio[] = ([
       const notesTexte = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Notes", "C E G");
       const notes = parserNotes(notesTexte);
-      if (notes.length === 0) return { valeurs: [null], message: traduire("msg.aucune_note_fournie") };
+      // L'ÉCHEC SE DIT DANS LE STATUT, ET NON DANS LA VALEUR.
+      //
+      // Ce nœud émettait la chaîne « Accord inconnu » SUR SA SORTIE et annonçait « Terminé » : un
+      // nœud en aval recevait ce texte comme s'il était un nom d'accord. La chaîne n'était même pas
+      // traduite, puisqu'elle était écrite en dur. Le chemin voisin, « aucune note fournie »,
+      // rendait lui aussi un statut vert.
+      //
+      // MESURÉ : nourri du format de « Texte → MIDI », le nœud affichait « Accord inconnu » en vert.
+      if (notes.length === 0) {
+        return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_fournie") };
+      }
       const detectes = Chord.detect(notes);
-      const symbole = detectes.length > 0 ? detectes[0] : null;
-      const resultat = symbole ? (Chord.get(symbole).name || symbole) : "Accord inconnu";
+      if (detectes.length === 0) {
+        return { valeurs: [null], erreur: true,
+          message: traduire("msg.tonal.accord_inconnu_var_0", notes.slice(0, 4).join(" ")) };
+      }
+      const symbole = detectes[0];
+      const resultat = Chord.get(symbole).name || symbole;
       return { valeurs: [resultat], message: resultat };
    },
  },
@@ -162,12 +177,29 @@ export const fiches: FicheAudio[] = ([
       const entree = ctx.entree(0);
       const tonic = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Tonalité", "C");
+      // LA TONIQUE EST LUE DANS LE LIBELLÉ, ET CONTRÔLÉE AVANT D'ÊTRE EMPLOYÉE.
+      //
+      // DEUX DÉFAUTS TENAIENT ICI, ET LE SECOND EST LE PLUS GÊNANT. Le premier : un texte étranger
+      // donnait des fondamentales VIDES et le nœud rendait « m » entouré d'espaces, en annonçant
+      // « Terminé ». Le second : même un libellé PARFAITEMENT LISIBLE, « A minor », rendait ces
+      // mêmes blancs, parce que la chaîne entière partait vers Tonal, qui attend une note SEULE.
+      // `toniqueDepuisTonalite` existe pour cela depuis longtemps, et sa documentation décrit mot
+      // pour mot ce défaut ; ce nœud ne l'appelait pas. Le mode, lui, est déjà lu par
+      // `gammeDemandee`, qui reçoit l'entrée telle quelle.
+      //
+      // MESURÉ : le premier défaut sur le format de « Texte → MIDI », le second sur « A minor »,
+      // trouvé par le témoin positif après la réparation du premier.
+      const tonique = toniqueDepuisTonalite(tonic);
+      if (!tonique) {
+        return { valeurs: [null], erreur: true,
+          message: traduire("msg.tonal.tonique_illisible_var_0", tonic.slice(0, 40)) };
+      }
       const progTexte = ctx.paramTexte("Progression", "I V vi IV");
       const numerals = progTexte.split(/\s+/).filter((n: string) => n.length > 0);
       // `accordsDepuisRomains` : sans lui, « vi » produisait un accord MAJEUR et
       // les degrés III, VI, VII d'un mode mineur gardaient la fondamentale du
       // mode majeur.
-      const accords = accordsDepuisRomains(tonic, numerals, gammeDemandee(ctx, entree));
+      const accords = accordsDepuisRomains(tonique, numerals, gammeDemandee(ctx, entree));
       const resultat = accords.join(" ");
       return { valeurs: [resultat], message: resultat };
    },
@@ -225,6 +257,19 @@ export const fiches: FicheAudio[] = ([
       if (accords.length === 0 || accords.some((a: string) => !a)) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.progression_invalide") };
       }
+      // UN SYMBOLE QU'AUCUN ACCORD NE RECONNAÎT EST REFUSÉ EN LE NOMMANT.
+      //
+      // LE GARDE DU DESSUS NE VOYAIT QUE LES CHAÎNES VIDES, et un jeton étranger n'est pas vide : il
+      // passait, puis `accordVersNotation` le jetait en silence par un `if (ligne)`. MESURÉ : nourri
+      // de « Tempo 90 / C4+E4+G4 2.000 », ce nœud annonçait « 4 accords » et n'en écrivait AUCUN —
+      // sa notation ne contenait que son en-tête `TEMPO 120`, et sa liste d'accords renvoyait les
+      // jetons étrangers tels quels. Le compte du message venait de l'ENTRÉE, et non de ce qui avait
+      // été écrit.
+      const inconnus = accordsInconnus(accords);
+      if (inconnus.length > 0) {
+        return { valeurs: [null, null], erreur: true,
+          message: traduire("msg.accords_inconnus_var_0", inconnus.slice(0, 3).join(" ")) };
+      }
 
       const lignes: string[] = [`TEMPO ${tempo}`];
       if (mode === "arpeggio") {
@@ -241,6 +286,12 @@ export const fiches: FicheAudio[] = ([
         }
       }
 
+      // ET LE COMPTE EST CELUI DE CE QUI A ÉTÉ ÉCRIT, non celui de l'entrée. Ce garde-ci ne peut
+      // plus tomber par un symbole inconnu, qui est refusé plus haut ; il reste pour qu'une ligne
+      // perdue pour une autre raison ne puisse pas se cacher derrière un compte venu d'ailleurs.
+      if (lignes.length === 1) {
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.progression_invalide") };
+      }
       const notation = lignes.join("\n");
       const listeAccords = accords.join(" ");
       return { valeurs: [notation, listeAccords], message: traduire("msg.var_0_accords_var_1_var_2_bpm", accords.length, mode, tempo) };

@@ -9,8 +9,9 @@ import { avecDoc } from "./notices";
 import { Chord } from "tonal";
 import { parseMidi } from "midi-file";
 import { analyserMidi } from "../audio/midi";
-import { GRILLES_NOTATION, accordsInconnus, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
+import { GRILLES_NOTATION, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
 import { choixValeurs } from "../audio/valeurs-note";
+import { accordsInconnus } from "../audio/theorie-romains";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -162,7 +163,7 @@ export const fiches: FicheAudio[] = ([
       const inconnus = accordsInconnus(accords);
       if (inconnus.length > 0) {
         return { valeurs: [null, null], erreur: true,
-          message: traduire("msg.vexflow.accords_inconnus_var_0", inconnus.slice(0, 3).join(" ")) };
+          message: traduire("msg.accords_inconnus_var_0", inconnus.slice(0, 3).join(" ")) };
       }
       const mpl = Math.round(ctx.paramNombre("Mesures par ligne", 4));
       const w = ctx.paramNombre("Largeur", 500);

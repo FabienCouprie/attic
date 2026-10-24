@@ -177,4 +177,80 @@ describe("nœuds Tonal", () => {
       spy.mockRestore();
     }
   });
+
+  // ── Un échec se dit dans le STATUT, et non dans la valeur ──
+  //
+  // LES TROIS DÉFAUTS QUE CES CAS ARRÊTENT, MESURÉS DANS L'APPLICATION sur un même texte étranger,
+  // celui que « Texte → MIDI » lit : « Tempo 90 » puis « C4+E4+G4 2.000 ». Les trois nœuds
+  // annonçaient « Terminé ». L'accord émettait la chaîne « Accord inconnu » SUR SA SORTIE, écrite en
+  // dur et donc jamais traduite ; la progression rendait un « m » et des espaces ; et la grille
+  // annonçait « 4 accords » en n'en écrivant aucun, son compte venant de l'entrée et non de ce
+  // qu'elle avait écrit.
+
+  const ETRANGER = "Tempo 90\nC4+E4+G4 2.000";
+
+  it("L'ACCORD REFUSE DES NOTES DONT AUCUN ACCORD NE SORT, au lieu d'émettre « Accord inconnu »", async () => {
+    const f = trouver("tonal-accord")!;
+    const res = await f.executer(ctxSimple(ETRANGER) as any);
+    expect(res.erreur).toBe(true);
+    expect(res.valeurs[0]).toBe(null);
+    expect(res.message, "les notes reçues doivent être nommées").toContain("Tempo");
+    expect(res.message, "et la forme attendue aussi").toContain("C E G");
+  });
+
+  it("et il nomme toujours l'accord quand il en trouve un", async () => {
+    const f = trouver("tonal-accord")!;
+    const res = await f.executer(ctxSimple("C E G") as any);
+    expect(res.erreur).toBeFalsy();
+    expect(res.valeurs[0]).toContain("major");
+  });
+
+  it("LA PROGRESSION REFUSE UNE TONIQUE ILLISIBLE, au lieu de rendre des blancs", async () => {
+    const f = trouver("tonal-progression")!;
+    const res = await f.executer(ctxSimple(ETRANGER) as any);
+    expect(res.erreur).toBe(true);
+    expect(res.valeurs[0]).toBe(null);
+    expect(res.message).toContain("Tempo");
+  });
+
+  it("et elle développe toujours ses degrés sur une tonique lisible", async () => {
+    const f = trouver("tonal-progression")!;
+    const res = await f.executer(ctxSimple("C") as any);
+    expect(res.erreur).toBeFalsy();
+    expect(res.valeurs[0]).toBe("C G Am F");
+  });
+
+  it("UN LIBELLÉ COMPLET EST LU, et ne rend plus des blancs", async () => {
+    // LE SECOND DÉFAUT, TROUVÉ PAR LE TÉMOIN POSITIF après la réparation du premier. « A minor » est
+    // parfaitement lisible, et le nœud rendait pourtant « m » entouré d'espaces : la chaîne ENTIÈRE
+    // partait vers Tonal, qui attend une note SEULE. `toniqueDepuisTonalite` existe pour cela, et sa
+    // propre documentation décrit ce défaut mot pour mot ; ce nœud ne l'appelait pas.
+    const f = trouver("tonal-progression")!;
+    const res = await f.executer(ctxSimple("A minor") as any);
+    expect(res.erreur).toBeFalsy();
+    const sortie = String(res.valeurs[0]);
+    expect(sortie.trim().length, "la sortie ne doit pas être des blancs").toBeGreaterThan(3);
+    expect(sortie.split(" ").length, "un accord par degré").toBe(4);
+    expect(sortie.startsWith("A"), sortie).toBe(true);
+  });
+
+  it("LA GRILLE REFUSE UN SYMBOLE INCONNU, au lieu d'en annoncer quatre et de n'en écrire aucun", async () => {
+    const f = trouver("tonal-grille")!;
+    const res = await f.executer(ctxSimple(ETRANGER) as any);
+    expect(res.erreur).toBe(true);
+    expect(res.valeurs).toEqual([null, null]);
+    expect(res.message).toContain("Tempo");
+    expect(res.message).toContain("C Am F G");
+  });
+
+  it("et sa notation porte autant d'accords que son message en annonce", async () => {
+    // LE COMPTE VENAIT DE L'ENTRÉE : ce cas le confronte à ce qui a été ÉCRIT.
+    const f = trouver("tonal-grille")!;
+    const res = await f.executer(ctxSimple("C Am F G") as any);
+    expect(res.erreur).toBeFalsy();
+    const lignes = String(res.valeurs[0]).split("\n");
+    expect(lignes[0]).toMatch(/^TEMPO /);
+    expect(lignes.length - 1, "une ligne par accord, en plus de l'en-tête").toBe(4);
+    expect(res.message).toContain("4");
+  });
 });

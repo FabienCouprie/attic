@@ -102,20 +102,9 @@ export function jetonsSansCordeFret(texte: string): string[] {
   });
 }
 
-/**
- * Les symboles qu'aucun accord ne reconnaît.
- *
- * LE REFUS ÉTAIT À UN CHAMP DE DISTANCE, et c'est ce que la mesure a montré. `genererGrille` écrivait
- * `Chord.get(a).symbol ?? a` : Tonal rend la CHAÎNE VIDE pour un symbole inconnu, et `??` ne se
- * déclenche pas sur une chaîne vide, seulement sur `null`. La note de texte était donc vide, les
- * portées suffisaient à rendre le SVG non vide, et le garde « aucun accord valide » ne voyait rien à
- * refuser. MESURÉ dans l'application : quatre-vingts éléments dessinés et PAS UN SEUL `<text>`, pour
- * un statut « Terminé ». Mesuré hors de l'application, Tonal le disait déjà lui-même :
- * `Chord.get("Tempo")` rend `{ symbol: "", empty: true }`.
- */
-export function accordsInconnus(accords: readonly string[]): string[] {
-  return accords.filter((a) => Chord.get(a).empty);
-}
+// `accordsInconnus` VIVAIT ICI et habite désormais `audio/theorie-romains.ts` : trois composants de
+// théorie posaient la même question, et deux lecteurs d'un même symbole ne doivent pas se répondre
+// différemment. La gravure l'importe de là plutôt que d'en garder une copie.
 
 function parseTokenNote(token: string): { notes: string; duree: string; rest: boolean } {
   // Découpe un token de la forme "note/duree" ou "note/duree/r".

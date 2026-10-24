@@ -2,7 +2,8 @@
 // plugins/vexflow.test.ts — Vérification des nœuds de notation VexFlow.
 import { describe, it, expect, beforeAll } from "vitest";
 import { fiches } from "./vexflow";
-import { accordsInconnus, jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
+import { jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
+import { accordsInconnus } from "../audio/theorie-romains";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 
 function trouver(id: string) {
