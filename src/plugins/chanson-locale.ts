@@ -58,11 +58,11 @@ const locales = ([
       + "« Lyrics » output the sung text, which can be read and corrected before rendering.",
     entrees: [
       { nom: "Description", nomEn: "Description", type: "texte", requis: false },
-      { nom: "Paroles", nomEn: "Lyrics", type: "texte", requis: false },
+      { nom: "Paroles", nomEn: "Lyrics", type: "texte", sousType: "paroles", requis: false },
     ],
     sorties: [
-      { nom: "Plan", nomEn: "Plan", type: "texte" },
-      { nom: "Paroles", nomEn: "Lyrics", type: "texte" },
+      { nom: "Plan", nomEn: "Plan", type: "texte", sousType: "plan" },
+      { nom: "Paroles", nomEn: "Lyrics", type: "texte", sousType: "paroles" },
     ],
     parametres: [
       { nom: "Description", nomEn: "Description", type: "texte",
@@ -166,11 +166,11 @@ const locales = ([
       + "keeps a seam from being heard.\n\n"
       + "The « Audio » output renders the sound, in stereo at forty-eight kilohertz.",
     entrees: [
-      { nom: "Plan", nomEn: "Plan", type: "texte" },
+      { nom: "Plan", nomEn: "Plan", type: "texte", sousType: "plan" },
       // LES PAROLES CORRIGÉES REVIENNENT PAR ICI, et c'est ce qui donne son sens à la séparation
       // des deux nœuds : sans cette entrée, la sortie « Paroles » du planificateur ne menait nulle
       // part et le plan ne se corrigeait qu'en le réécrivant à la main.
-      { nom: "Paroles", nomEn: "Lyrics", type: "texte", requis: false },
+      { nom: "Paroles", nomEn: "Lyrics", type: "texte", sousType: "paroles", requis: false },
       // LE TIMBRE EST INDÉPENDANT DE LA TÂCHE : le moteur l'encode à part et ne le lit qu'en
       // ligne de commande, d'où un port et non un champ du plan. `electron/acestep-plan.cjs`
       // porte le relevé de ce partage.

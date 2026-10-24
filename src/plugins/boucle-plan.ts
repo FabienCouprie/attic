@@ -45,8 +45,8 @@ export const fiches: FicheAudio[] = ([
       + "« Passes » sets the number of runs. « Seeds » says what becomes of the « Seed » settings of the chain's nodes: « Identical » gives them the same one at every pass, hence the same result; « One per pass » gives each a different one, which returns sections that follow the same plan without repeating.\n\n"
       + "The « Plan » input receives the text to turn. The output of the same name returns it as it is at every pass.\n\n"
       + "The loop closes on « Loop End A », which puts the passes end to end, « B », which keeps only the last, or « C », which stacks them. Those ends receive audio: the chain must therefore return a sound from the plan.",
-    entrees: [{ nom: "Plan", nomEn: "Plan", type: "texte", requis: false }],
-    sorties: [{ nom: "Plan", nomEn: "Plan", type: "texte" }],
+    entrees: [{ nom: "Plan", nomEn: "Plan", type: "texte", sousType: "plan", requis: false }],
+    sorties: [{ nom: "Plan", nomEn: "Plan", type: "texte", sousType: "plan" }],
     parametres: [
       // LES DEUX RÉGLAGES SONT CEUX DU DÉBUT DE BOUCLE SUR L'AUDIO, à la lettre près de leurs noms :
       // le déplieur les lit PAR LEUR NOM, « Tours » et « Graines », et non par l'identifiant du

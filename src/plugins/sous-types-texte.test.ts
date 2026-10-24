@@ -11,6 +11,8 @@
 //      passe pas. Un graphe enregistré avant cette règle garde donc ses câbles, et rien ne les lui
 //      retire à l'ouverture. Sans cette asymétrie, resserrer une règle effacerait du travail.
 import "node-web-audio-api/polyfill.js";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { registre } from "../audio/adaptateur";
@@ -43,17 +45,31 @@ describe("les contenus du flux texte", () => {
     expect(intrus, "ces ports déclarent un contenu que leur nom ne dit pas").toEqual([]);
   });
 
-  it("les trois contenus sont posés, et leur compte est celui du relevé", () => {
+  it("les cinq contenus sont posés, et leur compte est celui du relevé", () => {
     const ports = portsTexte().filter((p) => p.sousType);
     const compte = (st: string, sens: "entrees" | "sorties") =>
       ports.filter((p) => p.sousType === st && p.sens === sens).length;
     // Relevé sur les 271 ports texte du catalogue. Un chiffre qui bouge dit qu'un port est né ou
     // mort, et c'est exactement ce qu'on veut voir passer dans un diff.
+    expect([compte("plan", "sorties"), compte("plan", "entrees")]).toEqual([5, 6]);
     expect([compte("notation", "sorties"), compte("notation", "entrees")]).toEqual([4, 3]);
     expect([compte("abc", "sorties"), compte("abc", "entrees")]).toEqual([3, 3]);
+    expect([compte("paroles", "sorties"), compte("paroles", "entrees")]).toEqual([2, 3]);
     // PROMPT N'A AUCUN PRODUCTEUR, et il compte quand même : il refuse ce qui VA vers lui.
     expect([compte("prompt", "sorties"), compte("prompt", "entrees")]).toEqual([0, 7]);
-    expect(ports.length).toBe(20);
+    expect(ports.length).toBe(36);
+  });
+
+  // ─── Le cas fondateur ───
+  it("UN PLAN DE CHANSON NE SE POSE PLUS SUR UNE ENTRÉE DE NOTATION", () => {
+    // C'est le câble qui a ouvert tout ce chantier : « Prompt → graphe » rend un plan, « Texte →
+    // MIDI » attend une notation. Le câble était licite, les couleurs s'accordaient, et le
+    // résultat valait zéro note.
+    expect(registre.fluxCompatibles("texte", "texte", "plan", "notation")).toBe(false);
+    // Et les deux contenus qui voyagent ensemble ne s'échangent pas non plus : « Rendre la
+    // chanson » reçoit le plan et les paroles l'un sous l'autre.
+    expect(registre.fluxCompatibles("texte", "texte", "paroles", "plan")).toBe(false);
+    expect(registre.fluxCompatibles("texte", "texte", "plan", "plan")).toBe(true);
   });
 
   it("deux contenus déclarés et différents ne vont pas ensemble", () => {
@@ -82,6 +98,31 @@ describe("les contenus du flux texte", () => {
   it("et le transport prime : deux types qui ne vont pas ensemble ne vont pas ensemble", () => {
     expect(registre.fluxCompatibles("texte", "audio", "notation", undefined)).toBe(false);
     expect(registre.fluxCompatibles("audio", "texte")).toBe(false);
+  });
+
+  it("AUCUN EXEMPLE LIVRÉ NE PORTE UN CÂBLE QUE CETTE RÈGLE REFUSERAIT", () => {
+    // LE REFUS NE S'APPLIQUE PAS À LA LECTURE, donc un exemple fautif ne casserait rien : il
+    // dirait seulement qu'on livre comme modèle un branchement qu'on refuse d'écrire. C'est la
+    // raison de ce cas, et il vaut pour tout contenu qu'on ajouterait demain.
+    const fiches = new Map((toutesLesFiches as any[]).map((f) => [f.id, f]));
+    const fautifs: string[] = [];
+    let aretesTexte = 0;
+    for (const nom of readdirSync("exemples").filter((n) => n.endsWith(".json"))) {
+      const g = JSON.parse(readFileSync(join("exemples", nom), "utf8"));
+      const parId = new Map((g.nodes ?? []).map((n: any) => [n.id, n.data?.ficheId]));
+      for (const a of g.edges ?? []) {
+        const ps = fiches.get(parId.get(a.source))?.sorties?.[Number(String(a.sourceHandle).replace("out:", ""))];
+        const pe = fiches.get(parId.get(a.target))?.entrees?.[Number(String(a.targetHandle).replace("in:", ""))];
+        if (ps?.type !== "texte" || pe?.type !== "texte") continue;
+        aretesTexte++;
+        if (!contenusTexteCompatibles(ps.sousType, pe.sousType)) {
+          fautifs.push(`${nom} : ${a.id} (${ps.sousType} → ${pe.sousType})`);
+        }
+      }
+    }
+    expect(fautifs).toEqual([]);
+    // Le garde ne vaut que s'il regarde quelque chose : les exemples portent bien des câbles texte.
+    expect(aretesTexte).toBeGreaterThan(10);
   });
 
   it("les autres flux ne déclarent aucune règle de contenu, et acceptent donc tout", () => {

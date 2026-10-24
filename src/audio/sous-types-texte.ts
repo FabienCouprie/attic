@@ -14,19 +14,23 @@
 // Un nom rend la faute VISIBLE ; il ne la rend pas REFUSABLE. Cette table transforme trois de ces
 // noms en sous-types, que la pose d'une arête consulte.
 //
-// RELEVÉ QUI A DÉCIDÉ DES TROIS, sur les 271 ports texte du catalogue :
+// RELEVÉ, sur les 271 ports texte du catalogue :
 //
+//   plan       5 sorties, 6 entrées     le plan d'une chanson, et c'est lui le cas fondateur
 //   notation   4 sorties, 3 entrées     la gamme jouée, les accords joués, la grille, la conversion
 //   abc        3 sorties, 3 entrées     un format d'écriture entier, qui se relit lui-même
+//   paroles    2 sorties, 3 entrées     le texte chanté, qui voyage à côté du plan
 //   prompt     0 sortie,  7 entrées     une invite de modèle, qu'aucun port ne produit encore
 //
 // PROMPT N'A AUCUN PRODUCTEUR, ET IL COMPTE QUAND MÊME. Un sous-type sans sortie ne refuse rien qui
 // vienne de lui, mais il refuse ce qui VA vers lui : une notation ou un ABC posés sur l'invite d'un
 // modèle sont une faute, et c'en est une fréquente. Un contenu peut donc n'être qu'une destination.
 //
-// DEUX AUTRES SONT PRÊTS ET NE SONT PAS PRIS : `plan`, 5 sorties et 6 entrées, qui porte le cas
-// fondateur, et `paroles`, 2 et 3. Ils ne sont pas ici parce qu'ils n'ont pas été demandés, et
-// les ajouter ne demandera qu'une ligne chacune.
+// ET LE PLAN FERME LE CAS QUI A OUVERT CE CHANTIER. « Prompt → graphe » rend un plan, « Texte →
+// MIDI » attend une notation : le câble était licite et le résultat valait zéro note. Il se refuse
+// désormais sous la souris. Les deux contenus qui voyagent ensemble, le plan et les paroles, sont
+// aussi ceux qu'on échange le plus facilement : « Rendre la chanson » les reçoit l'un sous l'autre,
+// et rien ne disait lequel allait où.
 
 /**
  * Les contenus déclarés, et le nom de port qui les désigne à l'écran.
@@ -36,8 +40,10 @@
  * les deux dériveraient, et c'est exactement ce qui est arrivé aux libellés de réglage.
  */
 export const CONTENUS_TEXTE: Record<string, { nom: string; nomEn: string }> = {
+  plan: { nom: "Plan", nomEn: "Plan" },
   notation: { nom: "Notation", nomEn: "Notation" },
   abc: { nom: "ABC", nomEn: "ABC" },
+  paroles: { nom: "Paroles", nomEn: "Lyrics" },
   prompt: { nom: "Prompt", nomEn: "Prompt" },
 };
 

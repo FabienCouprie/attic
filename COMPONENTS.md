@@ -86,7 +86,7 @@ This component builds an instrumental backing around an isolated vocal, followin
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
+| input | Plan | text (plan) |  |
 | input | Audio | audio |  |
 | input | Timbre | audio |  |
 | output | Audio | audio (stereo) |  |
@@ -133,10 +133,10 @@ This component writes a song's plan as text: its description, its lyrics, its te
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Description | text |  |
-| input | Lyrics | text |  |
+| input | Lyrics | text (paroles) |  |
 | input | Tempo | control |  |
 | input | Key | text |  |
-| output | Plan | text |  |
+| output | Plan | text (plan) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -159,7 +159,7 @@ This component renders a new version of an audio, following the song plan it rec
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
+| input | Plan | text (plan) |  |
 | input | Audio | audio |  |
 | input | Timbre | audio |  |
 | output | Audio | audio (stereo) |  |
@@ -186,7 +186,7 @@ This component adds music before or after an audio, following the song plan it r
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
+| input | Plan | text (plan) |  |
 | input | Audio | audio |  |
 | input | Timbre | audio |  |
 | output | Audio | audio (stereo) |  |
@@ -213,9 +213,9 @@ This component writes a song's plan from a description, and returns it as text. 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Description | text |  |
-| input | Lyrics | text |  |
-| output | Plan | text |  |
-| output | Lyrics | text |  |
+| input | Lyrics | text (paroles) |  |
+| output | Plan | text (plan) |  |
+| output | Lyrics | text (paroles) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -236,8 +236,8 @@ This node opens a graph loop on a text, and a song's plan is what it is for. The
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
-| output | Plan | text |  |
+| input | Plan | text (plan) |  |
+| output | Plan | text (plan) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -254,8 +254,8 @@ This component renders the audio of a plan written by « Plan a Song ». The pla
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
-| input | Lyrics | text |  |
+| input | Plan | text (plan) |  |
+| input | Lyrics | text (paroles) |  |
 | input | Timbre | audio |  |
 | output | Audio | audio (stereo) |  |
 
@@ -278,7 +278,7 @@ This component repaints a passage of an audio between two instants, and keeps th
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
+| input | Plan | text (plan) |  |
 | input | Audio | audio |  |
 | input | Timbre | audio |  |
 | output | Audio | audio (stereo) |  |
@@ -305,8 +305,8 @@ This component writes a song's complete plan from a short sentence, and returns 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Sentence | text |  |
-| output | Plan | text |  |
-| output | Lyrics | text |  |
+| output | Plan | text (plan) |  |
+| output | Lyrics | text (paroles) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -2155,7 +2155,7 @@ This node takes the four intensities of a tasting and returns an accompanying mu
 |---|---|---|---|
 | output | Audio | audio |  |
 | output | MIDI | MIDI |  |
-| output | Plan | text |  |
+| output | Plan | text (plan) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|

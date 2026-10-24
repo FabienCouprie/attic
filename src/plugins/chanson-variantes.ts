@@ -189,8 +189,8 @@ export const fiches = ([
       { nom: "Phrase", nomEn: "Sentence", type: "texte", requis: false },
     ],
     sorties: [
-      { nom: "Plan", nomEn: "Plan", type: "texte" },
-      { nom: "Paroles", nomEn: "Lyrics", type: "texte" },
+      { nom: "Plan", nomEn: "Plan", type: "texte", sousType: "plan" },
+      { nom: "Paroles", nomEn: "Lyrics", type: "texte", sousType: "paroles" },
     ],
     parametres: [
       { nom: "Phrase", nomEn: "Sentence", type: "texte",
