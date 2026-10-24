@@ -100,3 +100,50 @@ jobs:
       # Whisper parmi les modèles absents, faute d'avoir lu le `postinstall` qui le ramène.
       - name: Electron end-to-end
         run: npm run test:electron
+
+      # LES EMPREINTES TOURNENT ICI, ET NULLE PART AILLEURS.
+      #
+      # `tests-e2e/empreintes.json` certifie que le son d'un composant n'a pas changé : deux nombres
+      # par sortie, valeur efficace et crête, pour 72 composants et 38 workers de calcul. C'est le
+      # seul garde du dépôt qui regarde l'EFFET du code et non sa forme, et il ne sert à rien s'il ne
+      # se rejoue pas. SA BASE A DÉRIVÉ TROIS SEMAINES sans que rien ne le dise, parce que la CI ne
+      # lançait qu'un des 43 specs de bout en bout et que celui-ci n'en était pas.
+      #
+      # POURQUOI CELUI-LÀ ET PAS LA PASSE ENTIÈRE, mesuré et non supposé : la passe complète coûte
+      # 21,4 min pour 124 cas, celui-ci 2,4 min à lui seul. C'est le meilleur rapport du dossier, et
+      # c'est sa dérive qui a déjà coûté. Mettre en CI une passe de 21 min la ferait désactiver.
+      #
+      # LE NAVIGATEUR EST INSTALLÉ ICI, ET VÉRIFIÉ. L'étape Electron ci-dessus n'en a jamais eu
+      # besoin : elle lance le binaire d'Electron, posé juste avant. Ce spec-ci pilote un VRAI
+      # Chromium, que `npm ci` ne ramène pas. Et l'installation se vérifie, parce qu'une étape qui ne
+      # fait rien doit échouer là où elle est : c'est la leçon du 2026-10-12.
+      #
+      # LE SERVEUR DE DÉVELOPPEMENT, LUI, EST AMORCÉ PAR LE SPEC sur son propre port, comme le font
+      # trente-deux autres specs du dossier, et relâché à la fin. Rien à démarrer ici.
+      #
+      # ET RIEN À PRÉ-ASSEMBLER ICI NON PLUS, ce qui a demandé de réparer autre chose d'abord. Cette
+      # étape a été écrite, mesurée ROUGE, et retenue : sur un serveur froid, Vite découvrait
+      # trente-une dépendances en servant le graphe et FORÇAIT UN RECHARGEMENT de la page en pleine
+      # mesure — deux rouges sur quatre passes précédées d'une compilation, ce qui est exactement
+      # l'ordre des étapes ci-dessus. `optimizeDeps.include` les déclare désormais toutes les
+      # quarante, de sorte que le pré-assemblage a lieu AU DÉMARRAGE du serveur. Trois passes vertes
+      # dans la condition qui en donnait deux rouges.
+      #
+      # LA DURÉE EST BORNÉE : un serveur qui ne répond pas ferait autrement tourner le coureur
+      # jusqu'au plafond du dépôt.
+      - name: Empreintes des composants
+        timeout-minutes: 20
+        run: |
+          npx playwright install chromium
+          if ($LASTEXITCODE -ne 0) {
+            throw "L'installation de Chromium a échoué (code $LASTEXITCODE)."
+          }
+          # ET LE CONTRÔLE NE PORTE QUE SUR LE CHEMIN PAR DÉFAUT. `PLAYWRIGHT_BROWSERS_PATH` n'est
+          # pas posé ici, mais le jour où il le serait, un contrôle écrit en dur sur LOCALAPPDATA
+          # échouerait alors que tout va bien. Un garde qui crie à tort finit désarmé.
+          if (-not $env:PLAYWRIGHT_BROWSERS_PATH) {
+            if (-not (Test-Path (Join-Path $env:LOCALAPPDATA 'ms-playwright\chromium-*'))) {
+              throw "Chromium est absent : aucun dossier chromium-* sous $env:LOCALAPPDATA\ms-playwright. Le téléchargement a-t-il abouti ?"
+            }
+          }
+          npm run test:empreintes

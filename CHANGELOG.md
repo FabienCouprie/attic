@@ -111,6 +111,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **La base d'empreintes se rejoue à chaque passe d'intégration continue, sinon elle ne se rejoue nulle part.** `tests-e2e/empreintes.json` certifie que le son d'un composant n'a pas changé — deux nombres par sortie, valeur efficace et crête, pour **72 composants et 38 workers de calcul**. C'est le seul garde du dépôt qui regarde l'**effet** du code et non sa forme, et **sa base a dérivé trois semaines** sans que rien ne le dise : la CI ne lançait qu'un des 43 specs de bout en bout, et celui-ci n'en était pas.
+
+  - **Pourquoi celui-là et pas la passe entière, mesuré et non supposé** : la passe complète coûte **21,4 min** pour 124 cas, celui-ci **2,2 à 2,4 min** à lui seul. Mettre en CI une passe de vingt minutes la ferait désactiver.
+  - **Le navigateur est installé là, et vérifié.** L'étape Electron voisine n'en a jamais eu besoin : elle lance le binaire d'Electron, posé juste avant. Ce spec-ci pilote un vrai Chromium, que `npm ci` ne ramène pas. Le contrôle de présence ne porte que sur le chemin par défaut : un garde écrit en dur sur `LOCALAPPDATA` crierait à tort le jour où `PLAYWRIGHT_BROWSERS_PATH` serait posé, et un garde qui crie à tort finit désarmé.
+  - **Elle a été écrite, mesurée ROUGE, et retenue.** Sur un serveur froid, Vite découvrait trente-une dépendances en servant le graphe et forçait un rechargement de la page en pleine mesure — deux rouges sur quatre passes précédées d'une compilation, ce qui est exactement l'ordre des étapes de ce workflow. Elle ne part qu'une fois `optimizeDeps.include` réparé, et le commentaire de l'étape garde la trace de ce détour.
+  - **La durée est bornée à vingt minutes** : un serveur qui ne répondrait pas ferait autrement tourner le coureur jusqu'au plafond du dépôt.
+
 - **Les cinq graveurs rendent aussi leur SVG en fichier, et une partition gravée peut enfin être sauvegardée.** « Export SVG » écrit un fichier, et son entrée est donc de type **image** ; « Portée VexFlow », « Tablature VexFlow », « Grille d'accords VexFlow », « Partition VexFlow » et « Partition gravée » ne rendaient qu'une **chaîne**. Graver une partition et en sauvegarder le SVG était impossible dans un seul graphe, et l'application refusait le câble : « connexion illégale : texte → image ».
 
   - **Le trou a été trouvé par un nom, et c'est tout l'intérêt du relevé.** En mesurant les noms de port qui portent plusieurs types de flux, « SVG » est apparu sur cinq sorties en **texte** et deux ports en **image** — la sortie de « Partition MIDI » et l'entrée de l'export. Huit des neuf noms ambigus se sont révélés légitimes : la même idée dans deux porteurs, ou deux sens sans rapport. Le neuvième était un vrai trou.
