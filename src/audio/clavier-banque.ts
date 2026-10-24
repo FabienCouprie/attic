@@ -599,6 +599,20 @@ export function versSfz(banque: Banque, o: OptionsSfz): string {
     if (zone.suiviVelocite !== undefined && zone.suiviVelocite !== 100) {
       lignes.push(`amp_veltrack=${Math.round(zone.suiviVelocite)}`);
     }
+    // LE DÉSACCORD S'ÉCRIT, ET IL SE PERDAIT. Le lecteur comprend `tune` et le range dans
+    // `zone.accord` ; la lecture l'applique, `parametresLecture` le portant dans son rapport ; et
+    // l'écriture le jetait. Un SFZ microtonal lu, entendu juste, puis exporté ressortait tempéré,
+    // sans que rien ne le dise puisque le fichier reste valide.
+    //
+    // LES CENTS S'ÉCRIVENT TELS QUELS, FRACTIONS COMPRISES. Un tempérament à dix-neuf degrés place
+    // ses degrés à 63,16 cents les uns des autres : arrondir coûterait jusqu'à un demi-cent par
+    // degré, et c'est précisément ce qu'un instrument microtonal ne doit pas perdre.
+    //
+    // ET UNE ZONE JUSTE N'ÉCRIT RIEN : `tune=0` est le défaut du format, et l'écrire sur chaque
+    // région alourdirait le fichier d'une ligne qui ne dit rien, comme pour les bornes de vélocité.
+    if (zone.accord !== undefined && zone.accord !== 0) {
+      lignes.push(`tune=${zone.accord}`);
+    }
     if (zone.boucle) {
       lignes.push("loop_mode=loop_sustain");
       lignes.push(`loop_start=${zone.boucle.debut} loop_end=${zone.boucle.fin}`);

@@ -26,6 +26,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **Un SFZ microtonal lu, entendu juste, puis exporté ressortait tempéré.** Le désaccord d'une zone traversait deux étages sur trois : le lecteur comprend `tune` et le range dans `zone.accord`, la lecture l'applique — `2^(demi-tons/12 + accord/1200)` —, et **l'écriture le jetait**. Rien ne le signalait, le fichier produit restant parfaitement valide. « Export SFZ » écrit désormais le `tune` de chaque zone qui en porte un.
+
+  - **Les cents gardent leurs fractions.** Un tempérament à dix-neuf degrés place les siens à 63,16 cents d'écart : arrondir coûterait jusqu'à un demi-cent par degré, et c'est précisément ce qu'un instrument microtonal ne doit pas perdre.
+  - **Une zone juste n'écrit rien**, `tune=0` étant le défaut du format, comme les bornes de vélocité que ce même écrivain omet déjà quand elles sont celles du format.
+  - **Le cas relit sa propre sortie**, par l'analyseur du dépôt, et compare les cents zone par zone. Vérifier la chaîne écrite dirait seulement qu'on a écrit quelque chose ; la relire dit qu'on a écrit la bonne chose, et dans l'unité que le lecteur attend. Le défaut a été planté rouge **avant** d'être réparé, puis replanté après : il fait tomber deux cas sur quatre, et laisse verts les deux qui ne le regardent pas.
+  - **Ce qui n'est pas vérifié, et qui est dit** : l'écriture sur disque demande Electron, que le serveur de développement n'a pas. Le format est prouvé par l'aller-retour en mémoire, non par un fichier posé.
+
 - **Quatre specs attendaient qu'un serveur tourne déjà, et c'était celui de Fabien.** `barre-stable`, `depot-palette`, `kokoro-provenance` et `mesure-hors-fil` n'amorçaient **rien** : ils lisaient `process.env.DEV_URL || "http://localhost:5175"` et se contentaient de ce qu'ils trouvaient. Ils ne pouvaient donc pas entrer en intégration continue, et sur le poste de développement ils mesuraient **sur le serveur de travail en cours**. Ils passent par `serveurDeVerification`, comme les trente-trois autres.
 
   - **Mesuré avant de les toucher, puis après** : dix cas verts en **36 s** sur un serveur partagé, dix cas verts en **46,5 s** chacun sur le sien. Le prix est de **dix secondes et demie**, soit quatre allumages à froid.
