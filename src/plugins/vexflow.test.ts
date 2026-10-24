@@ -148,6 +148,35 @@ describe("nœuds VexFlow", () => {
     expect(res.message).toContain("C Am F G");
   });
 
+  it("LES CINQ GRAVEURS RENDENT AUSSI LEUR SVG EN FICHIER, et l'export peut donc les lire", async () => {
+    // LE TROU QUE CE CAS FERME, MESURÉ DANS L'APPLICATION. « Export SVG » écrit un fichier et son
+    // entrée est de type image ; ces nœuds ne rendaient qu'une chaîne. Graver une partition et en
+    // sauvegarder le SVG était impossible dans un seul graphe : « connexion illégale : texte →
+    // image ». DÉFAUT REPLANTÉ en retirant la seconde sortie d'un des quatre : ce cas le nomme.
+    for (const id of ["vexflow-portee", "vexflow-tab", "vexflow-grille", "vexflow-partition"]) {
+      const f = trouver(id)!;
+      expect(f.sorties.map((s: any) => s.type), id).toEqual(["texte", "image"]);
+      const res = await f.executer(ctxSimple(null) as any);
+      expect(typeof res.valeurs[0], id).toBe("string");
+      const fichier = res.valeurs[1] as File;
+      expect(fichier, id).toBeInstanceOf(File);
+      expect(fichier.type, id).toBe("image/svg+xml");
+      expect(fichier.name.endsWith(".svg"), id).toBe(true);
+      // LE FICHIER PORTE LE MÊME SVG QUE LA CHAÎNE, et non une seconde gravure : c'est la même
+      // image dans deux porteurs, ce que les deux ports disent en portant le même nom.
+      expect(await fichier.text(), id).toBe(res.valeurs[0]);
+    }
+  });
+
+  it("et un refus rend DEUX valeurs nulles, une par sortie déclarée", async () => {
+    // SANS CE CAS, UN REFUS LAISSERAIT LA SECONDE SORTIE INDÉFINIE plutôt que nulle, et un nœud en
+    // aval recevrait `undefined` au lieu de rien.
+    const f = trouver("vexflow-portee")!;
+    const res = await f.executer(ctxSimple("Tempo 90\nC4+E4+G4 2.000") as any);
+    expect(res.erreur).toBe(true);
+    expect(res.valeurs).toEqual([null, null]);
+  });
+
   it("les deux reconnaisseurs laissent passer ce qui est valide", () => {
     // SANS CES DEUX-CI, UN REFUS QUI REFUSE TOUT PASSERAIT : les cas de succès ci-dessus tournent
     // sur les valeurs par défaut, et c'est l'entrée BRANCHÉE que ces refus interceptent.

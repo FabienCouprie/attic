@@ -101,6 +101,23 @@ describe("les noms de port", () => {
     ].join("\n")).toEqual([]);
   });
 
+  it("LES CINQ GRAVEURS DÉCLARENT LA MÊME PAIRE DE SORTIES « SVG », texte puis fichier", () => {
+    // CE CAS COUVRE « PARTITION GRAVÉE », que rien n'exécute : son graveur demande le module WASM de
+    // Verovio, et la forme de sa fiche est justement ce que ce lot change. Les quatre autres sont
+    // exécutés dans `vexflow.test.ts`.
+    //
+    // L'ORDRE EST TENU, ET IL COMPTE : un graphe enregistré désigne un port par son INDICE, donc la
+    // sortie texte reste la première. Inverser la paire déplacerait tous les câbles existants.
+    for (const id of ["partition-verovio", "vexflow-portee", "vexflow-tab", "vexflow-grille", "vexflow-partition"]) {
+      const f = (toutesLesFiches as any[]).find((x) => x.id === id);
+      expect(f, id).toBeDefined();
+      expect(f.sorties.map((s: any) => `${s.nom}:${s.type}`), id).toEqual(["SVG:texte", "SVG:image"]);
+    }
+    // Et celui qui savait déjà alimenter l'export garde sa sortie unique.
+    const midi = (toutesLesFiches as any[]).find((x) => x.id === "vexflow-midi");
+    expect(midi.sorties.map((s: any) => `${s.nom}:${s.type}`)).toEqual(["SVG:image"]);
+  });
+
   it("et chaque divergence déclarée porte une raison écrite", () => {
     for (const [id, raison] of Object.entries(DIVERGENCES_DECLAREES)) {
       expect(raison.length, id).toBeGreaterThan(40);
