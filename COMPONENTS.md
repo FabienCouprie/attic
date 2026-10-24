@@ -1635,7 +1635,7 @@ Carries the played note into an instrument chain. This is the boundary: everythi
 
 *Plays a keyboard-recorded sequence and also exports a MIDI file.*
 
-Replays a sequence of notes recorded on the block's virtual keyboard and synthesizes it to audio. The keyboard has 88 keys, from A0 to C8, and scrolls; black keys play from their upper part, white keys below. The computer keyboard plays too (the zxcvbnm row for white keys, sdghj for black ones) and the up and down arrows change octave.
+Replays a sequence of notes recorded on the block's virtual keyboard and synthesizes it to audio. The keyboard has 88 keys, from A0 to C8, and scrolls; black keys play from their upper part, white keys below. The computer keyboard plays too: the bottom row gives the white keys and the middle row the black ones, at the places a piano gives them. On a US keyboard that reads z x c v b n m for the white keys and s d g h j for the black ones; the position is what counts, not the printed letter. The up and down arrows change octave.
 
 | Port | Name | Type | |
 |---|---|---|---|

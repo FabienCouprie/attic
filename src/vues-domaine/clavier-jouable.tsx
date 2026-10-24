@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReactFlow, useStore } from "@xyflow/react";
 import { clavierDoitJouer } from "./clavier-physique";
+import { octaveDeplacee, pasDOctave, tableDeFrappe } from "./clavier-frappe";
 import { NOTE_MAX, NOTE_MIN, disposition, largeurBlanchePour, nomNote, noteALaPosition } from "./clavier-disposition";
 
 import type { Note } from "../audio/note";
@@ -183,14 +184,10 @@ export function useClavierJouable(id: string, presseur: Presseur) {
   }
 
   const [octaveClavier, setOctaveClavier] = useState(4);
-  const keyMap = useMemo(() => {
-    const m = new Map<string, number>(), blancs = "zxcvbnm", noirs = "sdghj";
-    const notesBlanches = [0, 2, 4, 5, 7, 9, 11], notesNoires = [1, 3, 6, 8, 10];
-    const base = octaveClavier * 12;
-    for (let i = 0; i < blancs.length; i++) m.set(blancs[i].toUpperCase(), base + notesBlanches[i]);
-    for (let i = 0; i < noirs.length; i++) m.set(noirs[i].toUpperCase(), base + notesNoires[i]);
-    return m;
-  }, [octaveClavier]);
+  // LA TABLE DÉSIGNE DES POSITIONS, et elle vit dans `clavier-frappe.ts` avec la mesure qui l'a
+  // imposée : écrite en caractères et lue sur `e.key`, elle ne jouait plus que cinq blanches sur
+  // sept dès que la disposition n'était pas américaine.
+  const keyMap = useMemo(() => tableDeFrappe(octaveClavier), [octaveClavier]);
   // LE CLAVIER PHYSIQUE N'ÉCOUTE QUE POUR LE NŒUD SÉLECTIONNÉ.
   //
   // L'écoute était posée sur `window` sans condition, dès que la vue était montée — or React Flow
@@ -204,16 +201,18 @@ export function useClavierJouable(id: string, presseur: Presseur) {
     if (!selectionne) return;
     function onKD(e: KeyboardEvent) {
       if (e.repeat || !clavierDoitJouer({ selectionne: true, cible: e.target })) return;
-      if (e.key === "ArrowUp" || e.key === "=") { setOctaveClavier((o) => Math.min(o + 1, 7)); return; }
-      if (e.key === "ArrowDown" || e.key === "-") { setOctaveClavier((o) => Math.max(o - 1, 2)); return; }
+      // L'octave se lit au CARACTÈRE — « + » et « − » sont des signes, lus là où ils sont imprimés —
+      // quand la note se lit à la POSITION. Les deux règles vivent dans `clavier-frappe.ts`.
+      const pas = pasDOctave(e.key);
+      if (pas !== 0) { setOctaveClavier((o) => octaveDeplacee(o, pas)); return; }
       // Le garde contre la relance a déménagé dans `presser`, qui le tient pour tous les chemins.
-      const note = keyMap.get(e.key.toUpperCase());
+      const note = keyMap.get(e.code);
       if (note !== undefined) presser(note);
     }
     function onKU(e: KeyboardEvent) {
       // Le relâchement n'est PAS conditionné à la cible : une touche enfoncée sur le clavier puis
       // relâchée après un clic ailleurs doit s'éteindre, sinon la note reste tenue pour toujours.
-      const note = keyMap.get(e.key.toUpperCase());
+      const note = keyMap.get(e.code);
       if (note !== undefined) relacher(note);
     }
     window.addEventListener("keydown", onKD);

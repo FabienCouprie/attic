@@ -26,6 +26,22 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **Le clavier de l'ordinateur ne jouait plus que cinq blanches sur sept, et le do était deux rangées trop haut.** La table des touches jouables désignait des **caractères** — `zxcvbnm` pour les blanches, `sdghj` pour les noires — et les lisait sur `e.key`, qui rend ce que la **disposition active** imprime sur la touche, non la touche elle-même. Sur un clavier français, la géométrie des deux rangées — tout ce qui fait qu'un clavier de frappe imite un piano — était défaite.
+
+  - **Mesurée avant d'être réparée**, par `navigator.keyboard.getLayoutMap()` puis touche par touche dans l'application : `KeyZ → « w »`, `KeyM → « , »`, `KeyA → « q »`. Ce que les trois rangées jouaient alors :
+
+    ```
+    rangée du bas      ·  D3  E3  F3  G3  A3  ·            cinq blanches sur sept
+    rangée du milieu   ·  C#3 D#3 ·  F#3 G#3 A#3 ·  ·  B3  le si, au milieu des noires
+    rangée du haut     ·  C3  ·   ·  ·   ·                 le do, deux rangées trop haut
+    ```
+
+    Les cinq noires, elles, tombaient juste, les deux dispositions partageant leurs positions : le défaut ne se voyait donc pas comme une translation, mais comme un clavier troué.
+  - **La note est une position, l'octave est un caractère.** Ce que la main cherche sous un doigt est un endroit, et `e.code` le nomme sans dépendre de la disposition. Les raccourcis d'octave restent lus sur `e.key` : « + » et « − » sont des **signes**, lus là où l'utilisateur les voit imprimés. Vérifié à l'écran, les quatre marchent, dont le « − » qu'un clavier français place sur une autre touche.
+  - **Les deux claviers jouables sont réparés d'un coup**, la table vivant dans le crochet qu'ils partagent. « Clavier mélodie » a été éprouvé à l'écran ; pour « Clavier SFZ », le partage est lu dans le code et non mesuré.
+  - **Le cas unitaire ne pouvait pas suffire, et c'est la leçon du lot d'avant.** Une table juste ne dit rien de ce que le nœud en lit : le crochet pouvait garder `e.key` et laisser tous les cas verts. Un cas du harnais Electron — le seul que l'intégration continue lance — envoie donc les frappes **telles qu'un clavier français les envoie**, position et caractère ensemble, et exige que la rangée du bas joue do ré mi fa sol la si. Défaut replanté **avec reconstruction** : il tombe sur la première frappe, celle du do.
+  - **Et l'étiquette du nœud promettait trois flèches** — « ←↑→ » — quand seules la haute et la basse déplacent l'octave, rien n'étant écouté à gauche ni à droite. Elle en annonce deux.
+
 - **Un SFZ microtonal lu, entendu juste, puis exporté ressortait tempéré.** Le désaccord d'une zone traversait deux étages sur trois : le lecteur comprend `tune` et le range dans `zone.accord`, la lecture l'applique — `2^(demi-tons/12 + accord/1200)` —, et **l'écriture le jetait**. Rien ne le signalait, le fichier produit restant parfaitement valide. « Export SFZ » écrit désormais le `tune` de chaque zone qui en porte un.
 
   - **Les cents gardent leurs fractions.** Un tempérament à dix-neuf degrés place les siens à 63,16 cents d'écart : arrondir coûterait jusqu'à un demi-cent par degré, et c'est précisément ce qu'un instrument microtonal ne doit pas perdre.

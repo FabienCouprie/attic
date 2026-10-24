@@ -425,3 +425,84 @@ test.describe("l'export SFZ écrit sur le disque", () => {
     }
   });
 });
+
+// ═══ LE CLAVIER DE FRAPPE JOUE UNE POSITION, NON UN CARACTÈRE ═══
+//
+// CE QU'AUCUNE ÉPREUVE EN MÉMOIRE NE PEUT DIRE. `vues-domaine/clavier-frappe.test.ts` prouve que la
+// table associe des positions à des notes. Il ne prouve rien de ce que le NŒUD lit : le crochet
+// pouvait parfaitement garder `e.key.toUpperCase()` et laisser tous ces cas verts, qui est
+// exactement le piège du lot précédent — les épreuves et le composant ne passant pas par le même
+// code. Entre « la table est juste » et « la touche joue juste » il reste l'écoute du clavier.
+//
+// LE COUPLE DE FRAPPES ÉPROUVÉ EST CELUI D'UN CLAVIER FRANÇAIS, relevé par
+// `navigator.keyboard.getLayoutMap()` : la touche en bas à gauche y envoie `code: "KeyZ"` avec
+// `key: "w"`, et celle de la rangée du haut `code: "KeyW"` avec `key: "z"`. Les deux moitiés
+// comptent — la première doit jouer le do, la seconde ne doit rien jouer. Un retour au caractère
+// les échange, donc chacune tombe sur l'autre.
+
+test.describe("le clavier de l'ordinateur fait sonner le nœud", () => {
+  test.skip(!existsSync(BUILD), "Aucun build : lancer « npm run build » avant cette épreuve.");
+  test.setTimeout(180_000);
+
+  test("UNE TOUCHE ENVOYÉE AVEC SA POSITION JOUE LA NOTE DE CETTE POSITION", async () => {
+    const app = await lancer();
+    try {
+      const page = await app.firstWindow();
+      await page.waitForLoadState("domcontentloaded");
+      await page.evaluate(() => {
+        localStorage.setItem("attic-encours", JSON.stringify({
+          nodes: [{ id: "cla", position: { x: 40, y: 40 },
+            data: { ficheId: "clavier-melodie", parametres: {} } }],
+          edges: [],
+        }));
+      });
+      await page.reload();
+      await page.waitForSelector(".attic-app", { timeout: 60000 });
+      const noeud = page.locator('[data-id="cla"]');
+      await noeud.waitFor({ timeout: 60000 });
+      // Les quatre-vingt-huit touches sont dessinées avant qu'on frappe : sans cela, l'absence
+      // d'une touche allumée ne distinguerait pas « pas jouée » de « pas encore là ».
+      await expect(noeud.locator(".clavier-blanche")).toHaveCount(52, { timeout: 60000 });
+
+      // LE NŒUD DOIT ÊTRE SÉLECTIONNÉ, c'est la règle de `clavier-physique.ts`. On clique son
+      // en-tête et non son corps : un clic sur le clavier jouerait une note au passage.
+      await noeud.locator(".attic-node-entete").click();
+      await expect(noeud).toHaveClass(/selected/, { timeout: 10000 });
+
+      /** Une frappe telle qu'un clavier français l'envoie : la position, et le caractère imprimé. */
+      const frapper = (code: string, key: string, type: "keydown" | "keyup") =>
+        page.evaluate(([c, k, t]) => {
+          window.dispatchEvent(new KeyboardEvent(t, { code: c, key: k, bubbles: true }));
+        }, [code, key, type] as const);
+
+      // La touche en bas à gauche — lue « w » sur un clavier français — est le do.
+      await frapper("KeyZ", "w", "keydown");
+      await expect(noeud.locator('.clavier-blanche.enfoncee[data-pitch="C3"]'))
+        .toHaveCount(1, { timeout: 10000 });
+      await frapper("KeyZ", "w", "keyup");
+      await expect(noeud.locator(".clavier-blanche.enfoncee")).toHaveCount(0, { timeout: 10000 });
+
+      // Et la touche de la rangée du haut — lue « z » — ne joue rien : le do n'est pas là.
+      await frapper("KeyW", "z", "keydown");
+      await page.waitForTimeout(400);
+      await expect(noeud.locator(".clavier-blanche.enfoncee, .clavier-noire.enfoncee"))
+        .toHaveCount(0);
+      await frapper("KeyW", "z", "keyup");
+
+      // Les sept blanches de la rangée du bas, dans l'ordre : c'est la gamme, et c'est la
+      // GÉOMÉTRIE des deux rangées que le défaut avait défaite.
+      const rangee = [
+        ["KeyZ", "w", "C3"], ["KeyX", "x", "D3"], ["KeyC", "c", "E3"], ["KeyV", "v", "F3"],
+        ["KeyB", "b", "G3"], ["KeyN", "n", "A3"], ["KeyM", ",", "B3"],
+      ] as const;
+      for (const [code, key, hauteur] of rangee) {
+        await frapper(code, key, "keydown");
+        await expect(noeud.locator(`.clavier-blanche.enfoncee[data-pitch="${hauteur}"]`),
+          `la position ${code} doit jouer ${hauteur}`).toHaveCount(1, { timeout: 10000 });
+        await frapper(code, key, "keyup");
+      }
+    } finally {
+      await app.close();
+    }
+  });
+});

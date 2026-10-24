@@ -120,7 +120,9 @@ export function ClavierMelodie({ id, data }: VueProps) {
         <button onClick={rejouer} disabled={seq.length === 0 || clavier.enReg}>▶ {t("clavier.rejouer")}</button>
         <button onClick={clavier.effacer}>🗑 {t("clavier.effacer")}</button>
         <span className="clavier-nb">{seq.length} {t("clavier.notes")}</span>
-        <span className="clavier-octave">←↑→ {nomNote(clavier.octaveClavier * 12)}–{nomNote(clavier.octaveClavier * 12 + 11)}</span>
+        {/* LES DEUX FLÈCHES QUI AGISSENT, ET PAS UNE DE PLUS : l'étiquette annonçait « ←↑→ » quand
+            seules la haute et la basse déplacent l'octave. Rien n'est écouté à gauche ni à droite. */}
+        <span className="clavier-octave">↑↓ {nomNote(clavier.octaveClavier * 12)}–{nomNote(clavier.octaveClavier * 12 + 11)}</span>
       </div>
       <TouchesClavier clavier={clavier} />
     </div>
@@ -271,7 +273,9 @@ export function ClavierSfz({ id, data }: VueProps) {
         )}
         {!progres && !etat && <span className="clavier-nb">{t("clavier.sfz.rien")}</span>}
         {erreur && <span className="clavier-nb" style={{ color: "#e06c75" }}>{erreur}</span>}
-        <span className="clavier-octave">←↑→ {nomNote(clavier.octaveClavier * 12)}–{nomNote(clavier.octaveClavier * 12 + 11)}</span>
+        {/* LES DEUX FLÈCHES QUI AGISSENT, ET PAS UNE DE PLUS : l'étiquette annonçait « ←↑→ » quand
+            seules la haute et la basse déplacent l'octave. Rien n'est écouté à gauche ni à droite. */}
+        <span className="clavier-octave">↑↓ {nomNote(clavier.octaveClavier * 12)}–{nomNote(clavier.octaveClavier * 12 + 11)}</span>
       </div>
       <TouchesClavier clavier={clavier} />
     </div>
