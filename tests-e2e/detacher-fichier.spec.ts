@@ -4,49 +4,9 @@
 // le seul bouton qui oubliait le fichier vidait aussi le canevas. Ce test tient les deux
 // moitiés de la promesse — le nom s'en va, les nœuds restent — et l'annulation par Ctrl+Z.
 import { test, expect } from "@playwright/test";
-import { spawn } from "child_process";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-let devServer: ReturnType<typeof spawn> | null = null;
-let devUrl = process.env.DEV_URL || "http://localhost:5179";
-
-async function waitForServer(url: string, retries = 60): Promise<void> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch(url);
-      if (res.ok) return;
-    } catch { /* ignore */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Dev server did not start at ${url}`);
-}
-
-test.beforeAll(async () => {
-  // Démarrer Vite dépasse largement le délai par défaut d'un hook (30 s).
-  test.setTimeout(180_000);
-  if (process.env.DEV_URL) {
-    await waitForServer(devUrl);
-    return;
-  }
-  const port = 5179;
-  devUrl = `http://localhost:${port}`;
-  devServer = spawn("cmd", ["/c", "npm", "run", "dev", "--", "--port", String(port)], { cwd: process.cwd(), stdio: "pipe" });
-  let log = "";
-  devServer.stdout?.on("data", (d) => { log += d.toString(); });
-  devServer.stderr?.on("data", (d) => { log += d.toString(); });
-  for (let i = 0; i < 80; i++) {
-    if (log.includes(`http://localhost:${port}`)) break;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  await waitForServer(devUrl);
-});
-
-test.afterAll(async () => {
-  if (devServer) {
-    devServer.kill("SIGTERM");
-    await new Promise((r) => setTimeout(r, 1000));
-    if (devServer.exitCode === null) devServer.kill("SIGKILL");
-  }
-});
+const devUrl = serveurDeVerification(5210);
 
 test.describe("détacher le projet de son fichier", () => {
   test("le × retire le nom du fichier, garde le canevas, et Ctrl+Z rattache", async ({ page }) => {

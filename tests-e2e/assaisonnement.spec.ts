@@ -7,41 +7,9 @@
 //
 // Un port différent de celui de Fabien (5175), dont le serveur ne doit pas être touché.
 import { test, expect } from "@playwright/test";
-import { spawn } from "child_process";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-let devServer: ReturnType<typeof spawn> | null = null;
-let devUrl = process.env.DEV_URL || "http://localhost:5192";
-
-async function waitForServer(url: string, retries = 120): Promise<void> {
-  for (let i = 0; i < retries; i++) {
-    try { const res = await fetch(url); if (res.ok) return; } catch { /* pas encore la */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Dev server did not start at ${url}`);
-}
-
-test.beforeAll(async () => {
-  if (process.env.DEV_URL) { await waitForServer(devUrl); return; }
-  const port = 5192;
-  devUrl = `http://localhost:${port}`;
-  devServer = spawn("cmd", ["/c", "npm", "run", "dev", "--", "--port", String(port)], { cwd: process.cwd(), stdio: "pipe" });
-  let log = "";
-  devServer.stdout?.on("data", (d) => { log += d.toString(); });
-  devServer.stderr?.on("data", (d) => { log += d.toString(); });
-  for (let i = 0; i < 160; i++) {
-    if (log.includes(`http://localhost:${port}`)) break;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  await waitForServer(devUrl);
-});
-
-test.afterAll(async () => {
-  if (devServer) {
-    devServer.kill("SIGTERM");
-    await new Promise((r) => setTimeout(r, 1000));
-    if (devServer.exitCode === null) devServer.kill("SIGKILL");
-  }
-});
+const devUrl = serveurDeVerification(5202);
 
 /** Un son tenu, ni très haut ni très bas : de la place pour bouger dans les deux sens. */
 const GEN = { ficheId: "generateur-frequence", parametres: { "Durée": 3, "Fréquence": 330 } };

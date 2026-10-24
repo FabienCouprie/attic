@@ -27,8 +27,12 @@ import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 
 import { DUREE_SEC, FREQUENCE, mesurerComposant } from "./banc-mesure";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-const devUrl = process.env.DEV_URL || "http://localhost:5175";
+// CE FICHIER N'AMORÇAIT PAS SON SERVEUR : il attendait qu'un serveur tourne déjà sur 5175, celui de
+// Fabien. C'est pour cela qu'il ne pouvait pas entrer en intégration continue, et pour cela que sa
+// base d'empreintes a pu DÉRIVER TROIS SEMAINES sans que rien ne le dise.
+const devUrl = serveurDeVerification(5211);
 // Ce fichier est chargé comme module ES : __dirname n'y existe pas.
 const ICI = dirname(fileURLToPath(import.meta.url));
 const CHEMIN = resolve(ICI, "empreintes.json");
@@ -222,8 +226,13 @@ test("les empreintes des composants surveillés n'ont pas changé", async ({ pag
     expect(m.erreur, `${s.id} a échoué : ${m.erreur}`).toBeNull();
     // Une sortie audio est exigée : un composant qui n'en rend plus est un changement en soi, et
     // sans cette garde il passerait pour « conforme » avec une liste d'empreintes vide.
+    //
+    // ET L'ÉCHEC PORTE LE MESSAGE DU COMPOSANT. `m.erreur` ci-dessus ne dit que ce qui a été LEVÉ :
+    // un composant qui se déclare en erreur par son champ `erreur` passe au travers, et ce cas
+    // annonçait alors « ne rend aucune sortie » pour un refus qui, lui, savait pourquoi. Mesuré sur
+    // `particules`, qui rend par Csound : l'échec ne nommait pas Csound.
     expect(m.empreintes.some((e) => e !== null),
-      `${s.id} ne rend aucune sortie dont on sache prendre l'empreinte`).toBe(true);
+      `${s.id} ne rend aucune sortie dont on sache prendre l'empreinte — il dit : « ${m.message} »`).toBe(true);
 
     const ligne: Ligne = { empreintes: m.empreintes, message: messageComparable(m.message) };
     obtenues[s.id] = ligne;

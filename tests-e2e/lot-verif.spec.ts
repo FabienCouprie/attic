@@ -7,41 +7,9 @@
 // `src/plugins/lotGlobal.test.ts`. Electron est remplace par un faux qui rend trois sons de
 // frequences differentes et enregistre les ecritures.
 import { test, expect } from "@playwright/test";
-import { spawn } from "child_process";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-let devServer: ReturnType<typeof spawn> | null = null;
-let devUrl = process.env.DEV_URL || "http://localhost:5175";
-
-async function waitForServer(url: string, retries = 120): Promise<void> {
-  for (let i = 0; i < retries; i++) {
-    try { const res = await fetch(url); if (res.ok) return; } catch { /* pas encore la */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Dev server did not start at ${url}`);
-}
-
-test.beforeAll(async () => {
-  if (process.env.DEV_URL) { await waitForServer(devUrl); return; }
-  const port = 5175;
-  devUrl = `http://localhost:${port}`;
-  devServer = spawn("cmd", ["/c", "npm", "run", "dev", "--", "--port", String(port)], { cwd: process.cwd(), stdio: "pipe" });
-  let log = "";
-  devServer.stdout?.on("data", (d) => { log += d.toString(); });
-  devServer.stderr?.on("data", (d) => { log += d.toString(); });
-  for (let i = 0; i < 160; i++) {
-    if (log.includes(`http://localhost:${port}`)) break;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  await waitForServer(devUrl);
-});
-
-test.afterAll(async () => {
-  if (devServer) {
-    devServer.kill("SIGTERM");
-    await new Promise((r) => setTimeout(r, 1000));
-    if (devServer.exitCode === null) devServer.kill("SIGKILL");
-  }
-});
+const devUrl = serveurDeVerification(5217);
 
 // Un WAV mono d une demi-seconde, fabrique dans la page : c est ce que le faux Electron rendra
 // pour chaque "fichier" du dossier. Chaque fichier porte une frequence differente, de sorte qu on
