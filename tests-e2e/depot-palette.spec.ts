@@ -19,8 +19,9 @@
 // serait mise à décaler aussi en hauteur. Un calcul de dépôt ne doit rien devoir à la mise en page,
 // et c'est ce que ce test tient.
 import { expect, test } from "@playwright/test";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-const devUrl = process.env.DEV_URL || "http://localhost:5175";
+const devUrl = serveurDeVerification(5234);
 
 test("un composant déposé se pose exactement sous le pointeur", async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 900 });

@@ -15,8 +15,9 @@
 // sa largeur plancher tient les quatre libellés, si bien que le même réglage empêche le saut qui se
 // produisait à chaque lancement.
 import { expect, test } from "@playwright/test";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-const devUrl = process.env.DEV_URL || "http://localhost:5175";
+const devUrl = serveurDeVerification(5233);
 
 interface Boite { x: number; y: number; w: number; h: number }
 

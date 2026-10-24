@@ -16,8 +16,9 @@
 // champs de la mesure à ceux de la version en fil. Un écart d'un seul cent ferait échouer ce test, et
 // c'est exactement la faute que les deux notices affirment impossible.
 import { expect, test } from "@playwright/test";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-const devUrl = process.env.DEV_URL || "http://localhost:5175";
+const devUrl = serveurDeVerification(5236);
 
 test("les seize champs de la mesure sont les mêmes dans un ouvrier et dans le fil", async ({ page }) => {
   test.setTimeout(180_000);
