@@ -254,7 +254,7 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Texte",
     resume: "Génère du texte par IA (DistilGPT-2, anglais).",
     resumeEn: "Generates text via AI (DistilGPT-2, English).",
-    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte" }],
+    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte", sousType: "prompt" }],
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a creative text about love and rain:\n",
@@ -361,7 +361,7 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Texte",
     resume: "Génère du texte par IA avec le modèle Qwen2.5-0.5B (multilingue).",
     resumeEn: "Generates text via AI using the Qwen2.5-0.5B model (multilingual).",
-    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte" }],
+    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte", sousType: "prompt" }],
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a creative text about love and rain:",
@@ -411,7 +411,7 @@ export const fiches: FicheAudio[] = ([
     univers: "Autres", famille: "Texte",
     resume: "Génère des paroles en anglais via DistilGPT-2 puis les traduit dans la langue choisie.",
     resumeEn: "Generates lyrics in English via DistilGPT-2 then translates them to the chosen language.",
-    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte" }],
+    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte", sousType: "prompt" }],
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "Write a song about the sea and freedom:\n",

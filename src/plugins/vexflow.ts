@@ -19,7 +19,7 @@ export const fiches: FicheAudio[] = ([
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une portée de notation musicale à partir d'une notation texte.",
     resumeEn: "Displays a musical staff from a text notation.",
-    entrees: [{ nom: "Notation", type: "texte", requis: false }],
+    entrees: [{ nom: "Notation", type: "texte", sousType: "notation", requis: false }],
     // DEUX SORTIES POUR UN MÊME SVG, ET LE MÊME NOM POUR LES DEUX. Les quatre graveurs de ce
     // fichier portent la même paire, et la raison vaut pour les quatre.
     //

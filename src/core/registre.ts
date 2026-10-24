@@ -31,7 +31,14 @@ export interface Registre<TV, TR> {
   couleurFlux(id: string): string;
   /** La forme du point d'un port, qui distingue deux types là où la couleur ne suffit plus. */
   formeFlux(id: string): FormePort;
-  fluxCompatibles(sourceId: string, cibleId: string): boolean;
+  /**
+   * Deux ports vont-ils ensemble ? Les sous-types sont facultatifs : sans eux, c'est la règle de
+   * transport seule, celle qu'un graphe déjà enregistré a connue en naissant.
+   */
+  fluxCompatibles(
+    sourceId: string, cibleId: string,
+    sousTypeSource?: string, sousTypeCible?: string,
+  ): boolean;
 }
 
 const ALIAS: Record<string, string> = {
@@ -137,10 +144,24 @@ export function creerRegistre<TV, TR>(): Registre<TV, TR> {
     return typesFlux.get(id)?.forme ?? "rond";
   }
 
-  function fluxCompatibles(sourceId: string, cibleId: string): boolean {
+  /**
+   * Deux ports vont-ils ensemble ?
+   *
+   * LES SOUS-TYPES SONT FACULTATIFS, ET C'EST LA MOITIÉ DE LA DÉCISION. Un appelant qui ne les
+   * passe pas obtient exactement la règle d'avant : c'est ainsi que la validation d'un graphe
+   * DÉJÀ ENREGISTRÉ continue d'accepter ce qu'elle acceptait, pendant que la pose d'une arête
+   * NEUVE, elle, les passe et se fait refuser. Un contenu mal branché se refuse au geste ; il ne
+   * s'efface pas sous les doigts de qui rouvre son graphe.
+   */
+  function fluxCompatibles(
+    sourceId: string, cibleId: string,
+    sousTypeSource?: string, sousTypeCible?: string,
+  ): boolean {
     const t = typesFlux.get(sourceId);
-    if (t?.compatible) return t.compatible(cibleId);
-    return sourceId === cibleId;
+    const transport = t?.compatible ? t.compatible(cibleId) : sourceId === cibleId;
+    if (!transport) return false;
+    // La règle est celle du type SOURCE, comme `compatible` : c'est lui qui sait ce qu'il émet.
+    return t?.sousTypesCompatibles ? t.sousTypesCompatibles(sousTypeSource, sousTypeCible) : true;
   }
 
   return { enregistrer, trouverDef, trouverPlugin, tousLesPlugins, tousLesInscrits, desenregistrer,

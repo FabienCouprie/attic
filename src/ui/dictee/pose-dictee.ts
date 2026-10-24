@@ -126,13 +126,16 @@ export interface PortsDictes {
 export function premierLienCompatible(
   depart: PortsDictes | undefined,
   arrivee: PortsDictes | undefined,
-  compatibles: (sortie: string, entree: string) => boolean,
+  // LE PRÉDICAT REÇOIT LES PORTS ENTIERS, ET NON LEURS SEULS TYPES. Un contenu de texte se lit sur
+  // le sous-type : donner le type seul ferait proposer à la voix un câble que la souris refuse, et
+  // c'est précisément l'écart que ce fichier a déjà payé une fois.
+  compatibles: (sortie: { type: string; sousType?: string }, entree: { type: string; sousType?: string }) => boolean,
 ): { sortie: number; entree: number } | null {
   const sorties = depart?.sorties ?? [];
   const entrees = arrivee?.entrees ?? [];
   for (let s = 0; s < sorties.length; s++) {
     for (let e = 0; e < entrees.length; e++) {
-      if (compatibles(sorties[s].type, entrees[e].type)) return { sortie: s, entree: e };
+      if (compatibles(sorties[s], entrees[e])) return { sortie: s, entree: e };
     }
   }
   return null;

@@ -143,7 +143,7 @@ The « Notation » output writes the chord as text, one onset per line and simul
     sorties: [
       { nom: "Audio", type: "audio" },
       { nom: "MIDI", type: "midi" },
-      { nom: "Notation", nomEn: "Notation", type: "texte" },
+      { nom: "Notation", nomEn: "Notation", type: "texte", sousType: "notation" },
     ],
     parametres: [
       { nom: "Accord", nomEn: "Chord", type: "choix",

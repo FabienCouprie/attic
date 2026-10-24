@@ -94,7 +94,7 @@ The « Notation » output writes the run as text, one note per line with its oct
     sorties: [
       { nom: "Audio", type: "audio" },
       { nom: "MIDI", type: "midi" },
-      { nom: "Notation", nomEn: "Notation", type: "texte" },
+      { nom: "Notation", nomEn: "Notation", type: "texte", sousType: "notation" },
     ],
     parametres: [
       { nom: "Gamme", nomEn: "Scale", type: "choix",

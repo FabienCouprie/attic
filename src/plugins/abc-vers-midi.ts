@@ -27,7 +27,7 @@ export const fiches: FicheAudio[] = ([
     // alors que son réglage de repli s'appelle « ABC », et que deux autres nœuds — reprise et
     // édition — nomment « ABC » le port par lequel ils reçoivent la même chose. Un seul contenu
     // portait donc deux noms, ce qui est la faute que le relevé des sous-types de texte a mesurée.
-    entrees: [{ nom: "ABC", nomEn: "ABC", type: "texte", requis: false }],
+    entrees: [{ nom: "ABC", nomEn: "ABC", type: "texte", sousType: "abc", requis: false }],
     sorties: [
       { nom: "Audio", type: "audio" },
       { nom: "MIDI", type: "midi" },

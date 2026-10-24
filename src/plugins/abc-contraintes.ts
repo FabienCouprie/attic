@@ -84,11 +84,11 @@ export const fiches: FicheAudio[] = ([
     resume: "Retouche une partition ABC avec un modèle local Ollama (nouveaux accords, ou nouvelles hauteurs sur le même rythme) sans qu'il puisse casser ce qui doit rester fixe.",
     resumeEn: "Edits an ABC score with a local Ollama model (new chords, or new pitches on the same rhythm) without it being able to break what must stay fixed.",
     entrees: [
-      { nom: "ABC", type: "texte", requis: true },
+      { nom: "ABC", type: "texte", sousType: "abc", requis: true },
       { nom: "Consigne", nomEn: "Instruction", type: "texte", requis: false },
     ],
     sorties: [
-      { nom: "ABC", type: "texte" },
+      { nom: "ABC", type: "texte", sousType: "abc" },
       { nom: "Rapport", nomEn: "Report", type: "texte" },
     ],
     parametres: [

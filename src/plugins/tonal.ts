@@ -210,7 +210,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Génère un accompagnement complet au format texte-vers-midi.",
     resumeEn: "Generates a full accompaniment in text-to-MIDI format.",
     entrees: [{ nom: "Progression", type: "texte", requis: false }],
-    sorties: [{ nom: "Notation", type: "texte" }, { nom: "Accords", nomEn: "Chords", type: "texte" }],
+    sorties: [{ nom: "Notation", type: "texte", sousType: "notation" }, { nom: "Accords", nomEn: "Chords", type: "texte" }],
     parametres: [
       { ...PARAMETRE_CLE, nom: "Tonalité",
         doc: "Tonique de la grille. Le mode se choisit dans « Gamme » ; l'entrée Progression, si elle nomme une tonalité, l'emporte sur le réglage.",

@@ -14,6 +14,7 @@ import { configurerRegistreGestion } from "../plugins/gestion-nodes";
 import { configurerRegistreQuiz } from "../plugins/quiz";
 import { toutesLesFiches } from "../plugins";
 import type { ValeurAudio, RuntimeAudio } from "./types-domaine";
+import { contenusTexteCompatibles } from "./sous-types-texte";
 
 export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
 
@@ -26,7 +27,13 @@ export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
   registre.enregistrerTypeFlux({ id: "frontiere", couleur: "#8a8f98", libelle: "Port exposé" });
   registre.enregistrerTypeFlux({ id: "midi", couleur: "#e9a13b", libelle: "MIDI" });
   registre.enregistrerTypeFlux({ id: "controle", couleur: "#e8590c", libelle: "Contrôle" });
-  registre.enregistrerTypeFlux({ id: "texte", couleur: "#36a2eb", libelle: "Texte" });
+  // LE TEXTE PORTE DES CONTENUS, et c'est le seul flux qui en déclare : une notation, un ABC et un
+  // prompt sont tous du texte, et les brancher l'un sur l'autre ne veut rien dire. La règle vit
+  // dans `sous-types-texte.ts`, avec le relevé qui a décidé des trois.
+  registre.enregistrerTypeFlux({
+    id: "texte", couleur: "#36a2eb", libelle: "Texte",
+    sousTypesCompatibles: contenusTexteCompatibles,
+  });
   registre.enregistrerTypeFlux({ id: "fichier", couleur: "#999", libelle: "Fichier" });
   registre.enregistrerTypeFlux({ id: "image", couleur: "#d63384", libelle: "Image" });
   registre.enregistrerTypeFlux({ id: "courbe", couleur: "#b06fe0", libelle: "Courbe" });

@@ -41,7 +41,7 @@ export const fiches: FicheAudio[] = ([
     famille: "Image",
     resume: "Génère une image 512×512 à partir d’un prompt texte via SDXS-512 (ONNX, 1 pas, local).",
     resumeEn: "Generates a 512×512 image from a text prompt using SDXS-512 (ONNX, 1 step, local).",
-    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte", requis: false }],
+    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte", sousType: "prompt", requis: false }],
     sorties: [{ nom: "Image", type: "image" }],
     parametres: [
       {

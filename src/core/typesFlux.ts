@@ -26,4 +26,17 @@ export interface TypeFlux {
   forme?: FormePort;
   libelle?: string;
   compatible?: (cibleId: string) => boolean;
+  /**
+   * Deux SOUS-TYPES de ce flux vont-ils ensemble ? Sans règle déclarée, ils vont tous ensemble.
+   *
+   * POURQUOI LE CŒUR N'EN SAIT RIEN DE PLUS. `PortDef.sousType` est une chaîne que le domaine
+   * remplit ; le cœur ne l'a jamais lue, et il ne la lit toujours pas. Ce qu'il tient ici est un
+   * emplacement pour la règle, que le domaine fournit en fermeture : le vocabulaire reste chez
+   * lui, comme la couleur et la forme.
+   *
+   * UN TYPE DE TRANSPORT NE DIT PAS LE CONTENU, et c'est ce que cet emplacement répare. Un plan de
+   * chanson, une notation, un prompt et une transcription sont tous du « texte » : le graphe
+   * autorisait les trente combinaisons, et six voulaient dire quelque chose.
+   */
+  sousTypesCompatibles?: (sousTypeSource: string | undefined, sousTypeCible: string | undefined) => boolean;
 }

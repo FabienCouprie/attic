@@ -78,7 +78,7 @@ export const fiches: FicheAudio[] = ([
     // son INDICE — « in:0 » —, et aucun code du dépôt ne cherche un port par son nom. Un réglage,
     // lui, se lit par son nom dans `noeud.data.parametres[nom]` : c'est pourquoi le réglage de repli
     // garde le sien.
-    entrees: [{ nom: "Notation", nomEn: "Notation", type: "texte", requis: false }],
+    entrees: [{ nom: "Notation", nomEn: "Notation", type: "texte", sousType: "notation", requis: false }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom: "Notation", nomEn: "Notation", type: "texte", defaut: EXEMPLE,
