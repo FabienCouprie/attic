@@ -104,19 +104,50 @@ export function nomDePaquet(specifieur: string): string | null {
   return NOM_NPM.test(nom) ? nom : null;
 }
 
-/** Tous les paquets qu'une source importe, par quelque forme que ce soit. */
-export function paquetsImportes(source: string): string[] {
+/**
+ * Les spécificateurs de paquet qu'une source importe, TELS QU'ILS SONT ÉCRITS.
+ *
+ * Le sous-chemin est gardé — `tonal/note` et non `tonal` —, parce que l'optimiseur de dépendances
+ * de Vite travaille par spécificateur : pré-assembler `tonal` ne couvre pas `tonal/note`, qu'il
+ * découvrirait alors en servant le graphe.
+ *
+ * ET LA QUESTION DE VITE EST GARDÉE AUSSI. `?url`, `?worker`, `?raw` changent la nature de l'import :
+ * ce n'est plus un module mais une adresse ou un texte, et l'optimiseur n'y touche jamais. La
+ * retirer faisait prendre `libpd-wasm/assets/libpd-worklet.js?url` pour un module à pré-assembler.
+ */
+export function specificateursImportes(source: string): string[] {
   const { code, chaines } = decouper(source);
   const vus = new Set<string>();
   for (const motif of MOTIFS) {
     for (const m of code.matchAll(motif)) {
       const rang = Number(m[1].replaceAll(MARQUE, ""));
       if (!Number.isInteger(rang) || chaines[rang] === undefined) continue;
-      const nom = nomDePaquet(chaines[rang]);
-      if (nom) vus.add(nom);
+      const brut = chaines[rang];
+      if (nomDePaquet(brut)) vus.add(brut);
     }
   }
   return [...vus].sort();
+}
+
+/** Les extensions qu'un module JavaScript porte. Le reste est un actif, servi tel quel. */
+const EXT_MODULE = new Set([".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".json"]);
+
+/**
+ * Un spécificateur que l'optimiseur de dépendances peut pré-assembler.
+ *
+ * CE QUI N'EN EST PAS, et qui l'a fait crier à tort : une CSS (`@xyflow/react/dist/style.css`), et
+ * tout import portant une question de Vite — quatre `?url` de worklets dans `pure-data.ts`. Ni l'une
+ * ni les autres ne passent par l'optimiseur, et les déclarer n'aurait rien voulu dire.
+ */
+export function estModule(spec: string): boolean {
+  if (spec.includes("?")) return false;
+  const ext = /\.[A-Za-z0-9]+$/.exec(spec)?.[0].toLowerCase();
+  return !ext || EXT_MODULE.has(ext);
+}
+
+/** Tous les paquets qu'une source importe, par quelque forme que ce soit. */
+export function paquetsImportes(source: string): string[] {
+  return [...new Set(specificateursImportes(source).map((s) => nomDePaquet(s) as string))].sort();
 }
 
 function fichiersDe(dossier: string, vus: string[] = []): string[] {
@@ -144,11 +175,16 @@ const DECLAREES = new Set([
 
 /** Chaque paquet importé, et les fichiers qui l'importent. */
 const PAR_PAQUET = new Map<string, string[]>();
+/** Le même relevé, au spécificateur près : c'est l'unité de l'optimiseur de dépendances. */
+const PAR_SPEC = new Map<string, string[]>();
 for (const fichier of SOURCES) {
-  for (const nom of paquetsImportes(readFileSync(fichier, "utf8"))) {
-    const ou = PAR_PAQUET.get(nom) ?? [];
-    ou.push(relative(RACINE, fichier).replace(/\\/g, "/"));
-    PAR_PAQUET.set(nom, ou);
+  const source = readFileSync(fichier, "utf8");
+  const ou = relative(RACINE, fichier).replace(/\\/g, "/");
+  for (const nom of paquetsImportes(source)) {
+    PAR_PAQUET.set(nom, [...(PAR_PAQUET.get(nom) ?? []), ou]);
+  }
+  for (const spec of specificateursImportes(source)) {
+    PAR_SPEC.set(spec, [...(PAR_SPEC.get(spec) ?? []), ou]);
   }
 }
 
@@ -163,6 +199,50 @@ describe("les imports et les déclarations", () => {
       orphelins.join("\n"),
       "Ils ne marchent que parce qu'une dépendance indirecte les a hissés à la racine de",
       "node_modules. Le jour où elle cesse d'en dépendre, le code tombe. Les déclarer.",
+    ].join("\n")).toEqual([]);
+  });
+
+  // UN PAQUET NON DÉCLARÉ À L'OPTIMISEUR FAIT RECHARGER LA PAGE EN PLEINE MESURE.
+  //
+  // `optimizeDeps.include` en déclarait NEUF là où l'optimiseur en pré-assemble QUARANTE. Les
+  // trente et une autres, le serveur de développement les découvrait EN SERVANT le graphe, et une
+  // découverte en route lui fait forcer un rechargement complet : `Forced re-optimization of
+  // dependencies`. Mesuré le 2026-10-24 sur onze passes à serveur froid — quatre vertes au repos,
+  // DEUX ROUGES SUR QUATRE après une compilation, trois vertes sur trois les dépendances
+  // pré-assemblées d'avance. L'échec se lisait « Execution context was destroyed, most likely
+  // because of a navigation », ou bien un composant ressortait sans son.
+  //
+  // LA RÈGLE PORTE SUR LE CLIENT SEUL. `electron/`, `scripts/` et `tests-e2e/` ne passent pas par
+  // le serveur de développement, et les `.test.ts` de `src/` non plus : ils n'entrent pas dans le
+  // graphe que Vite sert. Un paquet qu'eux seuls importent n'a rien à déclarer ici.
+  //
+  // DÉCLARER, C'EST L'UN OU L'AUTRE. `exclude` compte autant qu'`include` : des paquets y sont
+  // exclus avec leur raison mesurée — pré-assemblé, `@csound/browser` empêche l'application de
+  // démarrer, et `vosk-browser` ne pose plus son global. Ce qui compte est qu'un choix ait été fait.
+  //
+  // ET LA RÈGLE PORTE SUR LE SPÉCIFICATEUR, NON SUR LE PAQUET. C'est l'unité de l'optimiseur :
+  // pré-assembler `react` ne couvre pas `react/jsx-runtime`. Écrite au paquet, la règle laissait
+  // passer un défaut planté — retirer `"react"` d'`include` ne la faisait pas tomber, puisque
+  // `react/jsx-runtime` s'y ramenait. `exclude`, lui, se lit au PAQUET : exclure un paquet exclut
+  // tous ses sous-chemins.
+  it("DÉCLARE À L'OPTIMISEUR TOUT CE QUE LE CLIENT IMPORTE, sans quoi Vite recharge la page", async () => {
+    const { audioOptimizeDeps } = await import("../src/audio/build-plugins");
+    const inclus = new Set((audioOptimizeDeps.include as string[]).map((s) => s.split("?")[0]));
+    const exclus = new Set((audioOptimizeDeps.exclude as string[]).map((s) => nomDePaquet(s) ?? s));
+    const duClient = (f: string) => f.startsWith("src/") && !/\.test\.tsx?$/.test(f);
+    const absents: string[] = [];
+    for (const [spec, ou] of PAR_SPEC) {
+      if (!ou.some(duClient) || !estModule(spec)) continue;
+      if (inclus.has(spec) || exclus.has(nomDePaquet(spec) ?? spec)) continue;
+      absents.push(`${spec} — importé par ${ou.filter(duClient).slice(0, 3).join(", ")}`);
+    }
+    absents.sort();
+    expect(absents, [
+      "Ceci est importé par le client sans être déclaré à l'optimiseur de dépendances :",
+      absents.join("\n"),
+      "Vite le découvrira en servant le graphe et FORCERA UN RECHARGEMENT de la page, ce qui casse",
+      "toute mesure en cours. L'ajouter à `include` dans `src/audio/build-plugins.ts`, ou le paquet",
+      "à `exclude` avec la raison mesurée de ne pas le pré-assembler.",
     ].join("\n")).toEqual([]);
   });
 
@@ -223,5 +303,28 @@ describe("les imports et les déclarations", () => {
   it("garde le paquet quand Vite ajoute sa question au spécificateur", () => {
     expect(nomDePaquet("mon-worker?worker")).toBe("mon-worker");
     expect(nomDePaquet("un-paquet/fichier.wasm?url")).toBe("un-paquet");
+  });
+
+  it("rend le spécificateur entier, sous-chemin et question comprises", () => {
+    // Sans le sous-chemin, la règle de l'optimiseur ne verrait pas qu'un import profond manque ;
+    // sans la question, elle prendrait un actif pour un module.
+    const source = [
+      'import a from "tonal/note";',
+      'import b from "libpd-wasm/assets/w.js?url";',
+      'import "@xyflow/react/dist/style.css";',
+    ].join("\n");
+    expect(specificateursImportes(source))
+      .toEqual(["@xyflow/react/dist/style.css", "libpd-wasm/assets/w.js?url", "tonal/note"]);
+  });
+
+  it("NE PREND POUR UN MODULE NI UN ACTIF NI UN IMPORT À QUESTION", () => {
+    // Les cinq premiers faux signalements de la règle de l'optimiseur étaient exactement ceux-là.
+    expect(estModule("tonal")).toBe(true);
+    expect(estModule("lamejs/src/js/Lame.js")).toBe(true);
+    expect(estModule("@magenta/music/esm/protobuf")).toBe(true);
+    expect(estModule("@xyflow/react/dist/style.css")).toBe(false);
+    expect(estModule("libpd-wasm/assets/libpd-worklet.js?url")).toBe(false);
+    expect(estModule("mon-worker?worker")).toBe(false);
+    expect(estModule("un-paquet/fichier.wasm")).toBe(false);
   });
 });
