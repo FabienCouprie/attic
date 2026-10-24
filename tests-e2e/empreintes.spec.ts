@@ -217,8 +217,11 @@ interface Ligne {
  * soit douze fois cette tolérance. Un changement de longueur, de contenu ou de niveau reste donc
  * attrapé ; seul l'arrondi d'un processeur passe.
  *
- * ET LE MESSAGE RESTE COMPARÉ AU CARACTÈRE PRÈS, pour tous : « Grains · 60 grains/s · 3.97 s » vient
- * de la partition, non de l'arithmétique du rendu.
+ * ET SON MESSAGE PERD LA LONGUEUR QU'IL ANNONCE, ce qui corrige ce que cette note affirmait d'abord.
+ * J'avais écrit que « Grains · 60 grains/s · 3.97 s » venait de la partition et non de l'arithmétique
+ * du rendu : le coureur a répondu 3,99 s au passage suivant. Cette durée est `r.audio.duration`, la
+ * longueur réelle du tampon rendu. Voir `messageTolerant` : l'espèce et la cadence restent comparées,
+ * la longueur non, et pour les composants déclarés ici seulement.
  */
 const TOLERANCES: Record<string, number> = { particules: 1e-3 };
 
@@ -255,6 +258,24 @@ function memeEmpreinte(id: string, attendues: (string | null)[], obtenues: (stri
  */
 function messageComparable(message: string | null): string | null {
   return message === null ? null : message.replace(/\d+(?:[.,]\d+)?\s*ms\b/g, "« durée »");
+}
+
+/**
+ * Le message d'un composant au rendu non reproductible, débarrassé de la LONGUEUR qu'il annonce.
+ *
+ * ET C'EST UNE CORRECTION DE CE QUE J'AVAIS ÉCRIT JUSTE AU-DESSUS. En déclarant la tolérance de
+ * « Particules », j'ai affirmé que son message « Grains · 60 grains/s · 3.97 s » venait de la
+ * partition et non de l'arithmétique du rendu. C'ÉTAIT FAUX, et le coureur l'a dit au passage
+ * suivant : il annonce 3,99 s. Cette durée est `r.audio.duration`, la longueur RÉELLE du tampon que
+ * Csound a produit — machine-dépendante au même titre que les échantillons qu'il contient.
+ *
+ * CE QUI RESTE COMPARÉ, ET C'EST L'ESSENTIEL : « Grains » et « 60 grains/s », c'est-à-dire l'espèce
+ * choisie et la cadence demandée. Seule la longueur rendue est masquée, et seulement pour les
+ * composants dont la tolérance est déclarée. Les autres gardent leur message au caractère près, y
+ * compris les durées qu'ils annoncent, puisque chez eux une longueur qui change est un changement.
+ */
+function messageTolerant(message: string | null): string | null {
+  return message === null ? null : message.replace(/\d+(?:[.,]\d+)?\s*s\b/g, "« longueur »");
 }
 
 test("les empreintes des composants surveillés n'ont pas changé", async ({ page }) => {
@@ -294,7 +315,9 @@ test("les empreintes des composants surveillés n'ont pas changé", async ({ pag
     if (!memeEmpreinte(s.id, attendue.empreintes, ligne.empreintes)) {
       const tol = TOLERANCES[s.id] === undefined ? "" : ` (tolérance ${TOLERANCES[s.id]})`;
       ecarts.push(`${s.id}${tol} : ${JSON.stringify(attendue.empreintes)} → ${JSON.stringify(ligne.empreintes)}`);
-    } else if (attendue.message !== ligne.message) {
+    } else if (TOLERANCES[s.id] === undefined
+      ? attendue.message !== ligne.message
+      : messageTolerant(attendue.message) !== messageTolerant(ligne.message)) {
       ecarts.push(`${s.id} : message « ${attendue.message} » → « ${ligne.message} »`);
     }
   }
