@@ -11,6 +11,9 @@ import { avecDoc } from "./notices";
 import { valeursParametre } from "../audio/courbe";
 import { enveloppeDeZones } from "../audio/dosage";
 import { creerAleatoire } from "../core";
+// LE DÉBUT DE BOUCLE SUR UN PLAN EST GREFFÉ ICI, ET NON AU BARIL : `plugins/index.ts` est en dette
+// de taille et ne grossit plus. Sa place est auprès des trois autres bouts de boucle.
+import { fiches as fichesBouclePlan } from "./boucle-plan";
 
 function zonesValides(z: any) {
   return (Array.isArray(z) ? z : []).filter((x: any) => x && typeof x.debut === "number" && typeof x.duree === "number");
@@ -540,4 +543,4 @@ export const fiches: FicheAudio[] = ([
       };
    },
   },
-] as FicheAudio[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc).concat(fichesBouclePlan);
