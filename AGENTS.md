@@ -234,6 +234,8 @@ jamais vu rouge ne garde rien.
 | Savoir ce qu'un module audio peut quitter le fil | `DEPENDANCES-AUDIO.md` (généré) |
 | Savoir quel composant une table partagée touche | `INTERFACE.md` (généré) |
 | Taille des fichiers, norme de 200 à 400 lignes de code, **contraignante** | `src/docs/generer-compte-lignes.test.ts` ; `npm run docs:lignes` pour la table, engendrée à la demande et hors du dépôt |
+| Lire le catalogue en **données** plutôt qu'en prose | `npm run decrire` écrit `DESCRIPTION.json` : ports, contenus, réglages et leurs bornes, sans les notices, engendré à la demande et hors du dépôt |
+| Relire un graphe **écrit à la main** avant de le lancer | `GRAPHE=chemin.json npm run valider` : contenus mal branchés, fiches inconnues, entrées obligatoires en l'air |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 
 La documentation la plus dense n'est pas dans ces fichiers mais **en tête des modules** : chaque
