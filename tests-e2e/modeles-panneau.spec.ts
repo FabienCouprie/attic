@@ -104,7 +104,11 @@ test.describe("panneau des modèles IA", () => {
       .toEqual(["↓", "↓", "↓", "—", "✓"]);
     // Les poids sont dits avant de cliquer, et celui qui n'a pas d'adresse est signalé à part.
     const poids = await page.locator(".attic-modeles-ligne .attic-modeles-poids").allTextContents();
-    expect(poids[0]).toMatch(/686 (Mo|MB)/); // le poids est dit avant de cliquer
+    // 719 000 000 OCTETS FONT 719 Mo, ET 686 Mio. Ce cas attendait « 686 Mo » : c'était le
+    // mébioctet sous le libellé du mégaoctet, l'erreur que `core/octets.ts` a retirée de neuf
+    // endroits à la fois, dont ce panneau. L'application a raison, et ce cas gardait l'ancien
+    // défaut — il serait passé au rouge le jour de la correction si quelqu'un l'avait lancé.
+    expect(poids[0]).toMatch(/719 (Mo|MB)/); // le poids est dit avant de cliquer
     await expect(page.locator(".attic-modeles-vide")).toContainText(/1/);
     await expect(page.locator(".attic-modeles-tout")).toContainText(/3/);
 

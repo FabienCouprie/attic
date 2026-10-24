@@ -69,7 +69,11 @@ async function entreesDuCatalogue(page: import("@playwright/test").Page) {
 // Lettres propres au français : le relevé du garde-fou `anglais-registre.test.ts`, qui
 // montre que l'anglais technique de ces fiches n'en emploie pas — hormis quelques noms
 // propres, dont le tréma reste le même en anglais, et qui sont retirés avant le test.
-const TOLERES = /\b(?:möbius|rössler)\b/gi;
+// ET UN TITRE D'OUVRAGE SE CITE DANS SA LANGUE, ce qu'une prose anglaise fait sans cesser d'être
+// anglaise. « Critères schaefferiens » renvoie au « Traité des objets musicaux » de Pierre
+// Schaeffer, dont le titre n'a pas d'édition anglaise à citer. Le détecteur ne voyait que son accent
+// et comptait l'infobulle pour une notice non traduite : c'est lui qui se trompait, pas elle.
+const TOLERES = /\b(?:möbius|rössler|traité des objets musicaux)\b/gi;
 const ACCENTS = /[àâäçéèêëîïôöùûüÿœæ]/i;
 const enFrancais = (texte: string) => ACCENTS.test(texte.replace(TOLERES, ""));
 

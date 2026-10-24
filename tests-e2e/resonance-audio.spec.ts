@@ -50,7 +50,11 @@ test.describe("Resonance Audio effect", () => {
     await page.waitForSelector(".attic-app", { timeout: 10000 });
     const result = await page.evaluate(async () => {
       try {
-        const { appliquerResonanceAudio } = await import("/src/audio/effets-spectral.ts");
+        // LE MODULE A ÉTÉ SCINDÉ, ET CET IMPORT N'AVAIT PAS SUIVI. La fonction vit dans
+        // `effets-espace.ts` ; le spec la cherchait dans `effets-spectral.ts`, et l'erreur
+        // « appliquerResonanceAudio is not a function » était capturée dans `result.error` sans
+        // jamais être affichée, l'assertion portant sur `result.ok`.
+        const { appliquerResonanceAudio } = await import("/src/audio/effets-espace.ts");
         const length = 44100;
         const sampleRate = 44100;
         const freq = 440;
