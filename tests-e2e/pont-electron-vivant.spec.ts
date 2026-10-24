@@ -22,7 +22,8 @@
 // besoin d'aucun serveur. Sans build, l'épreuve s'ignore en le disant : un harnais qui échouerait
 // faute d'artefact apprendrait seulement qu'on n'a pas construit.
 import { test, expect, _electron as electron, type ElectronApplication } from "@playwright/test";
-import { existsSync, readFileSync, readdirSync, statSync } from "fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
@@ -331,6 +332,96 @@ test.describe("le séparateur, de bout en bout", () => {
       expect(rendu, "aucune piste ne doit manquer").not.toMatch(/Piste « \w+ » absente/i);
     } finally {
       await app.close();
+    }
+  });
+});
+
+// ═══ L'EXPORT SFZ POSE UN FICHIER, ET IL GARDE LE DÉSACCORD ═══
+//
+// CE QUE LES ÉPREUVES EN MÉMOIRE NE PEUVENT PAS FAIRE. `audio/sfz-aller-retour.test.ts` prouve que
+// `versSfz` écrit le `tune` d'une zone et que l'analyseur du dépôt le relit. Il ne prouve rien du
+// FICHIER : « Export SFZ » refuse d'emblée hors Electron, sa première ligne cherchant
+// `window.api.ecrireFichier`. Entre « la chaîne est juste » et « le fichier posé est juste », il
+// reste l'écriture, l'encodage des échantillons et la construction du chemin de travail.
+//
+// LE PARCOURS ÉPROUVÉ EST CELUI D'UN UTILISATEUR : importer un SFZ désaccordé, le ré-exporter. C'est
+// aussi le seul chemin par lequel une banque d'Attic porte aujourd'hui un désaccord, les siennes
+// étant justes par construction.
+//
+// CE QUI RESTE HORS DE PORTÉE, ET QUI N'EST PAS PRÉTENDU : qu'un échantillonneur tiers joue le
+// fichier juste. Aucune épreuve ne le dira ; il faut le charger dans sfizz ou Sforzando et écouter.
+
+/** Un WAV minuscule et valide : seize bits, un canal, quarante-quatre mille cent hertz. */
+function wavMinimal(echantillons = 512): Buffer {
+  const octetsSon = echantillons * 2;
+  const b = Buffer.alloc(44 + octetsSon);
+  b.write("RIFF", 0); b.writeUInt32LE(36 + octetsSon, 4); b.write("WAVE", 8);
+  b.write("fmt ", 12); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22);
+  b.writeUInt32LE(44100, 24); b.writeUInt32LE(88200, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34);
+  b.write("data", 36); b.writeUInt32LE(octetsSon, 40);
+  // Une sinusoïde plutôt que du silence : un décodeur peut écarter un fichier vide, et une zone
+  // muette ne prouverait pas que l'échantillon a fait l'aller-retour.
+  for (let i = 0; i < echantillons; i++) {
+    b.writeInt16LE(Math.round(Math.sin((2 * Math.PI * 220 * i) / 44100) * 12000), 44 + i * 2);
+  }
+  return b;
+}
+
+test.describe("l'export SFZ écrit sur le disque", () => {
+  test.skip(!existsSync(BUILD), "Aucun build : lancer « npm run build » avant cette épreuve.");
+  test.setTimeout(180_000);
+
+  test("UN SFZ DÉSACCORDÉ IMPORTÉ PUIS RÉ-EXPORTÉ GARDE SON `tune` DANS LE FICHIER", async () => {
+    const travail = mkdtempSync(join(tmpdir(), "attic-sfz-"));
+    const entree = join(travail, "entree.sfz");
+    writeFileSync(join(travail, "la.wav"), wavMinimal());
+    // Un désaccord de vingt-cinq cents, soit un quart de demi-ton : assez pour qu'un arrondi à
+    // l'entier le garde, et impossible à obtenir par hasard.
+    writeFileSync(entree, [
+      "<region>", "sample=la.wav", "lokey=56 hikey=58 pitch_keycenter=57", "tune=-25", "",
+    ].join("\n"));
+
+    const app = await lancer();
+    try {
+      const page = await app.firstWindow();
+      await page.waitForLoadState("domcontentloaded");
+      await page.evaluate(([dossier, sfz]) => {
+        // LE RÉPERTOIRE DE TRAVAIL EST SEMÉ, et sans lui l'export refuse : il vient normalement
+        // d'une boîte de dialogue système, qu'une épreuve ne pilote pas.
+        localStorage.setItem("attic-repertoire", dossier);
+        localStorage.setItem("attic-encours", JSON.stringify({
+          nodes: [
+            { id: "b", position: { x: 0, y: 0 },
+              // `sfzChemin` est posé sur la donnée du nœud, là où le bouton 📂 l'écrit.
+              data: { ficheId: "banque-sfz", parametres: { "Source": "Fichier SFZ" }, sfzChemin: sfz } },
+            { id: "x", position: { x: 380, y: 0 },
+              data: { ficheId: "export-sfz", parametres: { "Nom": "sortie.sfz" } } },
+          ],
+          edges: [{ id: "e1", source: "b", target: "x", sourceHandle: "out:0", targetHandle: "in:0" }],
+        }));
+      }, [travail, entree]);
+      await page.reload();
+      await page.waitForSelector(".attic-app", { timeout: 60000 });
+      await page.locator('[data-id="x"]').waitFor({ timeout: 60000 });
+      await page.getByRole("button", { name: /Lancer/ }).click();
+
+      const ecrit = join(travail, "sortie.sfz");
+      await expect.poll(() => existsSync(ecrit), { timeout: 90000, message: "le fichier doit être posé" })
+        .toBe(true);
+
+      const rendu = await page.locator('[data-id="x"]').innerText();
+      expect(rendu, "l'export ne doit pas manquer le pont").not.toMatch(/nécessite Electron|requires Electron/i);
+
+      const texte = readFileSync(ecrit, "utf8");
+      // LE DÉSACCORD A TRAVERSÉ : lecture du fichier d'entrée, construction de la banque, écriture.
+      expect(texte, "le fichier posé doit porter le désaccord").toMatch(/tune=-25\b/);
+      // Et les échantillons sont là, à côté : un SFZ dont les sons manquent ne se joue pas.
+      const dossierEch = join(travail, "sortie");
+      expect(existsSync(dossierEch), "le dossier des échantillons doit exister").toBe(true);
+      expect(readdirSync(dossierEch).filter((f) => f.endsWith(".wav")).length).toBeGreaterThan(0);
+    } finally {
+      await app.close();
+      rmSync(travail, { recursive: true, force: true });
     }
   });
 });
