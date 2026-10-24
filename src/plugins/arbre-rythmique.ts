@@ -15,7 +15,7 @@
 // premier étage se recense, au-delà il faut tirer sous surveillance.
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { langueCourante } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { creerAleatoire } from "../core";
 import { derouler, dureeArbre, ecrireArbre, lireArbre } from "../audio/arbre-rythmique";
@@ -41,6 +41,25 @@ const SOURCES = [
 /** Lit une suite de hauteurs écrite à la main : « 60 62 64 » ou « 60, 62, 64 ». */
 function lireHauteurs(texte: string): number[] {
   return texte.split(/[\s,;]+/).map(Number).filter((n) => Number.isFinite(n) && n >= 0 && n <= 127);
+}
+
+/**
+ * Les jetons d'une suite de hauteurs qui ne sont PAS un numéro MIDI.
+ *
+ * POURQUOI CE RELEVÉ EXISTE. Le filtre ci-dessus jette en silence ce qu'il ne sait pas lire, de
+ * sorte qu'un texte étranger se changeait en hauteurs sans que rien ne le dise. MESURÉ dans
+ * l'application sur le format de « Texte → MIDI » : « Tempo 90 / C4+E4+G4 2.000 » donnait
+ * `[NaN, 90, NaN, 2]`, puis `[90, 2]` après filtrage — le nœud jouait un fa dièse 6 sorti du
+ * nombre 90, en annonçant « entrée Hauteurs » comme s'il avait lu une liste.
+ *
+ * ÉCARTER UNE VALEUR HORS DE 0–127 EST SAIN, JETER UN MOT NE L'EST PAS : les deux sont nommés ici,
+ * car une hauteur hors de portée perdue en silence coûte une note tout autant.
+ */
+function jetonsNonHauteurs(texte: string): string[] {
+  return texte.split(/[\s,;]+/).filter(Boolean).filter((jeton) => {
+    const n = Number(jeton);
+    return !Number.isFinite(n) || n < 0 || n > 127;
+  });
 }
 
 function lireMetrique(texte: string): [number, number] {
@@ -243,7 +262,20 @@ export const fiches: FicheAudio[] = ([
       const sequenceEntree = ctx.entree(2);
       let hauteurs: number[];
       let provenance: string;
-      if (typeof hauteursTexte === "string" && lireHauteurs(hauteursTexte).length > 0) {
+      // UNE ENTRÉE BRANCHÉE ET NON VIDE DOIT ÊTRE UNE SUITE DE HAUTEURS, ou elle est refusée en
+      // nommant ce qui ne l'est pas. La condition d'avant demandait seulement qu'IL EN RESTE UNE
+      // après filtrage : un texte étranger portant deux nombres de rencontre l'emportait alors sur
+      // la séquence et sur le réglage, et le message annonçait « entrée Hauteurs » comme s'il avait
+      // lu une liste.
+      //
+      // UNE CHAÎNE VIDE PASSE TOUJOURS À LA SOURCE SUIVANTE : l'ordre « Hauteurs, puis Séquence,
+      // puis réglage » est documenté dans la notice, et un contrôle ne doit pas le changer.
+      if (typeof hauteursTexte === "string" && hauteursTexte.trim()) {
+        const fautifs = jetonsNonHauteurs(hauteursTexte);
+        if (fautifs.length > 0) {
+          return { valeurs: [null, null], erreur: true,
+            message: traduire("msg.hauteurs_non_lues_var_0", fautifs.slice(0, 3).join(" ")) };
+        }
         hauteurs = lireHauteurs(hauteursTexte);
         provenance = en() ? "pitches input" : "entrée Hauteurs";
       } else if (estSequence(sequenceEntree) && sequenceEntree.notes.length > 0) {

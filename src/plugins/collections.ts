@@ -20,13 +20,13 @@ export const fiches: FicheAudio[] = ([
       { nom: "Qualité", nomEn: "Quality", plage: [64,320], defaut: 192, unite: "kbps" },
     ],
     async executer(ctx: any) {
-      if (!(window as any).api) return { valeurs:[null], message:traduire("msg.electron_requis") };
+      if (!(window as any).api) return { valeurs:[null], erreur: true, message:traduire("msg.electron_requis") };
       const dIn = ctx.paramTexte("Dossier entrée","");
       const dOut = ctx.paramTexte("Dossier sortie","");
-      if (!dIn || !dOut) return { valeurs:[null], message:traduire("msg.configurez_les_dossiers") };
+      if (!dIn || !dOut) return { valeurs:[null], erreur: true, message:traduire("msg.configurez_les_dossiers") };
       const fichiers = await (window as any).api.lireDossier(dIn);
       const cibles = (fichiers || []).filter((f:any) => [".wav",".wave",".ogg"].includes(f.chemin.slice(f.chemin.lastIndexOf(".")).toLowerCase()));
-      if (!cibles.length) return { valeurs:[null], message:traduire("msg.aucun_wav_ogg_trouv") };
+      if (!cibles.length) return { valeurs:[null], erreur: true, message:traduire("msg.aucun_wav_ogg_trouv") };
       const qualite = ctx.paramNombre("Qualité",192);
       let ok = 0, err = 0;
       const errs: string[] = [];
@@ -62,13 +62,13 @@ export const fiches: FicheAudio[] = ([
       { nom: "Dossier sortie", nomEn: "Output folder", type: "dossier", defaut: "", defautEn: "" },
     ],
     async executer(ctx: any) {
-      if (!(window as any).api) return { valeurs:[null], message:traduire("msg.electron_requis") };
+      if (!(window as any).api) return { valeurs:[null], erreur: true, message:traduire("msg.electron_requis") };
       const dIn = ctx.paramTexte("Dossier entrée","");
       const dOut = ctx.paramTexte("Dossier sortie","");
-      if (!dIn || !dOut) return { valeurs:[null], message:traduire("msg.configurez_les_dossiers") };
+      if (!dIn || !dOut) return { valeurs:[null], erreur: true, message:traduire("msg.configurez_les_dossiers") };
       const fichiers = await (window as any).api.lireDossier(dIn);
       const cibles = (fichiers || []).filter((f:any) => f.chemin.toLowerCase().endsWith(".mp3"));
-      if (!cibles.length) return { valeurs:[null], message:traduire("msg.aucun_mp3_trouv") };
+      if (!cibles.length) return { valeurs:[null], erreur: true, message:traduire("msg.aucun_mp3_trouv") };
       let ok = 0, err = 0;
       const errs: string[] = [];
       for (const f of cibles) {
@@ -112,13 +112,13 @@ export const fiches: FicheAudio[] = ([
       { nom: "Qualité", nomEn: "Quality", plage: [64,320], defaut: 192, unite: "kbps" },
     ],
     async executer(ctx: any) {
-      if (!(window as any).api) return { valeurs:[null], message:traduire("msg.electron_requis") };
+      if (!(window as any).api) return { valeurs:[null], erreur: true, message:traduire("msg.electron_requis") };
       const dIn = ctx.paramTexte("Dossier entrée","");
       const dOut = ctx.paramTexte("Dossier sortie","");
-      if (!dIn || !dOut) return { valeurs:[null], message:traduire("msg.configurez_les_dossiers") };
+      if (!dIn || !dOut) return { valeurs:[null], erreur: true, message:traduire("msg.configurez_les_dossiers") };
       const fichiers = await (window as any).api.lireDossier(dIn);
       const cibles = (fichiers || []).filter((f:any) => [".mid",".midi"].includes(f.chemin.slice(f.chemin.lastIndexOf(".")).toLowerCase()));
-      if (!cibles.length) return { valeurs:[null], message:traduire("msg.aucun_mid_trouv") };
+      if (!cibles.length) return { valeurs:[null], erreur: true, message:traduire("msg.aucun_mid_trouv") };
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse","Automatique"));
       const modeRendu: "FM/Oscillateurs"|"SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const vol = ctx.paramNombre("Volume",80);
@@ -171,9 +171,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Nom du fichier actuellement sélectionné (réservé à l'interface).", docEn: "Name of the currently selected file (reserved for the UI)." },
     ],
     async executer(ctx: any) {
-      if (!(window as any).api) return { valeurs: [null], message: traduire("msg.electron_requis") };
+      if (!(window as any).api) return { valeurs: [null], erreur: true, message: traduire("msg.electron_requis") };
       const chemin = ctx.paramTexte("Chemin", "music collection").replace(/^[/\\]+|[/\\]+$/g, "");
-      if (!chemin) return { valeurs: [null], message: traduire("msg.configurez_les_dossiers") };
+      if (!chemin) return { valeurs: [null], erreur: true, message: traduire("msg.configurez_les_dossiers") };
       return { valeurs: [null], message: traduire("msg.lecteur_musique") };
     },
   },

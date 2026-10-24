@@ -106,6 +106,33 @@ describe("accords-vers-notation", () => {
   });
 });
 
+describe("accords-vers-notation — une tonalité absente et une tonalité illisible ne se disent pas pareil", () => {
+  // LE DÉFAUT, MESURÉ DANS L'APPLICATION. Le message unique affirmait que l'entrée Tonalité
+  // MANQUAIT, y compris quand elle était branchée et portait un texte que la lecture n'avait pas su
+  // interpréter : le refus était juste, son motif était faux, et il envoyait chercher un câble déjà
+  // posé.
+  it("dit qu'elle manque quand elle manque", async () => {
+    const res = await fiche.executer(ctxDe([null, "I V vi IV", null], { Source: "progression" }));
+    expect(res.valeurs[0]).toBe(null);
+    expect(res.message).toContain("exige");
+  });
+
+  it("ET LA NOMME QUAND ELLE EST LÀ SANS SE LAISSER LIRE", async () => {
+    const res = await fiche.executer(
+      ctxDe([null, "I V vi IV", "Tempo 90"], { Source: "progression" }));
+    expect(res.valeurs[0]).toBe(null);
+    expect(res.message, "le texte reçu doit être nommé").toContain("Tempo 90");
+    expect(res.message, "et il ne doit plus dire que l'entrée manque").not.toContain("exige");
+  });
+
+  it("et développe toujours les degrés sur une tonalité lisible", async () => {
+    const res = await fiche.executer(
+      ctxDe([null, "I V vi IV", "C major"], { Source: "progression", Tempo: 120, Octave: 3 }));
+    expect(res.valeurs[0]).not.toBe(null);
+    expect(String(res.valeurs[0]).split("\n")).toHaveLength(5);
+  });
+});
+
 describe("accords-vers-notation — tolérance de format", () => {
   it("accepte aussi une ligne sans horodatage", async () => {
     const res = await fiche.executer(ctxDe(["Cmaj (1.0s)"], { Tempo: 120, Octave: 3 }) as any);

@@ -37,6 +37,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { LANGUES } from "./chanson-aides";
 import { choixLangues, libelleLangue } from "../core/langues";
+import { toniqueDepuisTonalite } from "../audio/theorie-romains";
 
 /** Les signatures que le moteur reçoit. Le champ est une CHAÎNE dans le plan, non un nombre. */
 const SIGNATURES = ["2", "3", "4", "6"];
@@ -181,6 +182,24 @@ export const fiches = ([
 
       const texteOu = (valeur: unknown, repli: string) =>
         typeof valeur === "string" && valeur.trim() ? valeur : repli;
+
+      // LA TONALITÉ EST CONTRÔLÉE AVANT D'ÊTRE ÉCRITE DANS LE PLAN.
+      //
+      // `tonaliteNormalisee` ne retire qu'un parenthésage ; elle ne dit pas si ce qui reste est une
+      // tonalité. MESURÉ : un texte étranger branché sur l'entrée ressortait TEL QUEL dans le
+      // document — `"keyscale": "Tempo 90\nC4+E4+G4 2.000"` — pour un statut « Terminé ». Le plan
+      // part ensuite vers un modèle de rendu, qui recevait donc une tonalité sur deux lignes.
+      //
+      // ET CE NŒUD VIOLAIT LE CONTRAT QU'IL ANNONCE, sa propre documentation fixant la forme :
+      // « G major » ou « A minor ».
+      //
+      // LA CHAÎNE VIDE RESTE LICITE : le champ est alors absent du plan, ce que la documentation
+      // dit aussi. Seul un texte non vide et illisible est refusé.
+      const tonalite = tonaliteNormalisee(texteOu(entreeTonalite, ctx.paramTexte("Tonalité", "")));
+      if (tonalite && !toniqueDepuisTonalite(tonalite)) {
+        return { valeurs: [null], erreur: true,
+          message: traduire("msg.tonal.tonique_illisible_var_0", tonalite.slice(0, 40)) };
+      }
 
       const plan = planDepuis({
         description: texteOu(entreeDescription, ctx.paramTexte("Description", "")),

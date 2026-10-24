@@ -132,7 +132,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Title shown for 3 s at the opening of the film. Empty, the film starts straight on the construction." },
     ],
     async executer() {
-      return { valeurs: [], message: en() ? "Use « Film the application »." : "Utiliser « Filmer l'application »." };
+      return { valeurs: [], erreur: true, message: en() ? "Use « Film the application »." : "Utiliser « Filmer l'application »." };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

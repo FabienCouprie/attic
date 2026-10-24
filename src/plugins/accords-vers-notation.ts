@@ -111,9 +111,18 @@ export const fiches: FicheAudio[] = ([
         if (typeof progression !== "string" || !progression.trim()) {
           return { valeurs: [null], message: traduire("msg.accords_notation.progression_absente") };
         }
-        const tonique = toniqueDepuisTonalite(typeof tonaliteTexte === "string" ? tonaliteTexte : "");
-        if (!tonique) {
+        // ABSENTE OU ILLISIBLE NE SE DISENT PAS DE LA MÊME FAÇON. Le message unique affirmait que
+        // l'entrée Tonalité manquait, y compris quand elle était BRANCHÉE et portait un texte que
+        // la lecture n'avait pas su interpréter : le refus était juste, son motif était faux, et il
+        // envoyait chercher un câble déjà posé.
+        const brute = typeof tonaliteTexte === "string" ? tonaliteTexte.trim() : "";
+        if (!brute) {
           return { valeurs: [null], message: traduire("msg.accords_notation.tonalite_absente") };
+        }
+        const tonique = toniqueDepuisTonalite(brute);
+        if (!tonique) {
+          return { valeurs: [null],
+            message: traduire("msg.tonal.tonique_illisible_var_0", brute.slice(0, 40)) };
         }
         // Les chiffres romains n'ont de sens que rapportés à une tonique ET à un
         // mode : c'est pourquoi cette source exige l'entrée Tonalité, dont on lit

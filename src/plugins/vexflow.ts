@@ -9,8 +9,9 @@ import { avecDoc } from "./notices";
 import { Chord } from "tonal";
 import { parseMidi } from "midi-file";
 import { analyserMidi } from "../audio/midi";
-import { GRILLES_NOTATION, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, midiVersNotationEasyScore } from "./vexflow-notation";
+import { GRILLES_NOTATION, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
 import { choixValeurs } from "../audio/valeurs-note";
+import { accordsInconnus } from "../audio/theorie-romains";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -19,7 +20,26 @@ export const fiches: FicheAudio[] = ([
     resume: "Affiche une portée de notation musicale à partir d'une notation texte.",
     resumeEn: "Displays a musical staff from a text notation.",
     entrees: [{ nom: "Notation", type: "texte", requis: false }],
-    sorties: [{ nom: "SVG", type: "texte" }],
+    // DEUX SORTIES POUR UN MÊME SVG, ET LE MÊME NOM POUR LES DEUX. Les quatre graveurs de ce
+    // fichier portent la même paire, et la raison vaut pour les quatre.
+    //
+    // POURQUOI LA SECONDE. « Export SVG » écrit un FICHIER, et son entrée est donc de type image ;
+    // ces nœuds ne rendaient qu'une chaîne. Graver une partition et en sauvegarder le SVG était
+    // impossible dans un seul graphe : l'application refusait le câble, « connexion illégale :
+    // texte → image ». Seule « Partition MIDI », plus bas, savait alimenter l'export — son SVG
+    // était déjà un fichier, et c'est son précédent que l'on suit.
+    //
+    // ET DEUX NOMS, PARCE QUE LE DÉPÔT L'EXIGE — ce que j'ai appris en le cassant. J'avais nommé
+    // les deux « SVG », au motif que c'est le même contenu dans deux porteurs, comme « Mélodie »
+    // est MIDI ou séquence. Le contrat de réglages refuse l'homonymie de ports sur une même fiche,
+    // et sa raison est écrite : l'inspecteur annonce un réglage modulable en NOMMANT le port où la
+    // courbe doit aller, et la notice répète ce nom ; avec deux ports homonymes, la phrase ne
+    // désigne plus rien. J'avais mesuré qu'aucune fiche ne le faisait, sans chercher si quelque
+    // chose l'interdisait.
+    //
+    // L'AJOUT EST EN FIN DE LISTE, et il le faut : un graphe enregistré désigne un port par son
+    // INDICE, et insérer avant aurait décalé la sortie texte de tous les projets existants.
+    sorties: [{ nom: "SVG", type: "texte" }, { nom: "Fichier SVG", nomEn: "SVG file", type: "image" }],
     parametres: [
       { nom: "Notation", nomEn: "Notation", type: "texte", defaut: "C4/q D4/8 E4/8 F4/q G4/q",
         doc: "Notes à afficher. Format : note/octave/durée (ex : C4/q, D4/8, F#4/q, C4+E4+G4/q).",
@@ -35,16 +55,26 @@ export const fiches: FicheAudio[] = ([
       const entree = ctx.entree(0);
       const notation = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Notation", "C4/q D4/8 E4/8 F4/q G4/q");
+      // CE QUI N'EST PAS CETTE NOTATION EST REFUSE EN LE NOMMANT, et non rendu a la bibliotheque.
+      // Mesure : les quatre sorties nommees « Notation » du catalogue ecrivent le format de
+      // « Texte -> MIDI », ou la duree est un jeton a part ; branchees ici, elles ne donnaient pas
+      // un refus mais l'erreur brute de VexFlow, qui ne dit ni ce qui etait attendu ni quoi
+      // brancher. Le message, lui, nomme les jetons fautifs ET la forme attendue.
+      const sansDuree = jetonsSansDuree(notation);
+      if (sansDuree.length > 0) {
+        return { valeurs: [null, null], erreur: true,
+          message: traduire("msg.vexflow.notation_sans_duree_var_0", sansDuree.slice(0, 3).join(" ")) };
+      }
       const clef = ctx.paramTexte("Clé", "treble");
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);
       const svg = genererPortee(notation, clef, w, h);
-      if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
+      if (!svg) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_note_valide") };
       // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
       // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
       // sortie SVG etait donc inexploitable en aval, et le moteur marquait le
       // noeud « Erreur » alors que la portee s'affichait correctement.
-      return { valeurs: [svg], message: svg };
+      return { valeurs: [svg, new File([svg], "portee.svg", { type: "image/svg+xml" })], message: svg };
    },
  },
   {
@@ -53,7 +83,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Affiche une tablature à partir d'une notation texte.",
     resumeEn: "Displays a tablature from a text notation.",
     entrees: [{ nom: "Tablature", type: "texte", requis: false }],
-    sorties: [{ nom: "SVG", type: "texte" }],
+    sorties: [{ nom: "SVG", type: "texte" }, { nom: "Fichier SVG", nomEn: "SVG file", type: "image" }],
     parametres: [
       { nom: "Tablature", nomEn: "Tablature", type: "texte", defaut: "6-3/q 5-0/q 5-2/q 4-0/q 5-3/q",
         doc: "Tablature à afficher. Format : corde-fret/durée (ex : 6-3/q = corde 6, fret 3, noire).",
@@ -69,15 +99,23 @@ export const fiches: FicheAudio[] = ([
       const entree = ctx.entree(0);
       const tabText = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Tablature", "6-3/q 5-0/q 5-2/q 4-0/q 5-3/q");
+      // CE QUI N'EST PAS UNE CORDE ET UNE FRETTE EST REFUSE EN LE NOMMANT. Mesure : nourri du format
+      // de « Texte -> MIDI », ce noeud annoncait « Termine » et gravait quatre « NaN » sur la portee,
+      // parce que `parseInt` d'un mot rend NaN et que personne ne regardait le resultat.
+      const sansCordeFret = jetonsSansCordeFret(tabText);
+      if (sansCordeFret.length > 0) {
+        return { valeurs: [null, null], erreur: true,
+          message: traduire("msg.vexflow.tablature_sans_corde_fret_var_0", sansCordeFret.slice(0, 3).join(" ")) };
+      }
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);
       const svg = genererTab(tabText, ctx.paramTexte("Accordage", "Guitare standard"), w, h);
-      if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
+      if (!svg) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_note_valide") };
       // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
       // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
       // sortie SVG etait donc inexploitable en aval, et le moteur marquait le
       // noeud « Erreur » alors que la portee s'affichait correctement.
-      return { valeurs: [svg], message: svg };
+      return { valeurs: [svg, new File([svg], "tablature.svg", { type: "image/svg+xml" })], message: svg };
    },
  },
   {
@@ -86,7 +124,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Affiche une grille d'accords à partir d'une liste de symboles.",
     resumeEn: "Displays a chord chart from a list of symbols.",
     entrees: [{ nom: "Accords", nomEn: "Chords", type: "texte", requis: false }],
-    sorties: [{ nom: "SVG", type: "texte" }],
+    sorties: [{ nom: "SVG", type: "texte" }, { nom: "Fichier SVG", nomEn: "SVG file", type: "image" }],
     parametres: [
       { nom: "Accords", nomEn: "Chords", type: "texte", defaut: "C Am F G",
         doc: "Accords à afficher, séparés par des espaces. Accepte aussi une progression en chiffres romains si une tonalité est renseignée.",
@@ -117,16 +155,26 @@ export const fiches: FicheAudio[] = ([
       const accords = romains
         ? accordsPourPartition(tonic, ctx.paramTexte("Gamme", "majeur"), tokens)
         : tokens;
+      // UN SYMBOLE QU'AUCUN ACCORD NE RECONNAIT EST REFUSE EN LE NOMMANT. Mesure : nourri du format
+      // de « Texte -> MIDI », ce noeud annoncait « Termine » et dessinait quatre-vingts elements sans
+      // un seul texte — des mesures vides. Tonal le disait deja par `empty`, que personne ne lisait.
+      // LE CONTROLE EST APRES LA LECTURE DES CHIFFRES ROMAINS, et il le faut : ce sont les symboles
+      // FINALEMENT graves qu'il s'agit de reconnaitre, pas les degres ecrits.
+      const inconnus = accordsInconnus(accords);
+      if (inconnus.length > 0) {
+        return { valeurs: [null, null], erreur: true,
+          message: traduire("msg.accords_inconnus_var_0", inconnus.slice(0, 3).join(" ")) };
+      }
       const mpl = Math.round(ctx.paramNombre("Mesures par ligne", 4));
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 200);
       const svg = genererGrille(accords, mpl, w, h);
-      if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_accord_valide") };
+      if (!svg) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucun_accord_valide") };
       // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
       // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
       // sortie SVG etait donc inexploitable en aval, et le moteur marquait le
       // noeud « Erreur » alors que la portee s'affichait correctement.
-      return { valeurs: [svg], message: svg };
+      return { valeurs: [svg, new File([svg], "grille.svg", { type: "image/svg+xml" })], message: svg };
    },
  },
   {
@@ -135,7 +183,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Affiche une partition simple à partir d'une progression d'accords.",
     resumeEn: "Displays a simple score from a chord progression.",
     entrees: [{ nom: "Progression", type: "texte", requis: false }],
-    sorties: [{ nom: "SVG", type: "texte" }],
+    sorties: [{ nom: "SVG", type: "texte" }, { nom: "Fichier SVG", nomEn: "SVG file", type: "image" }],
     parametres: [
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         doc: "Progression en chiffres romains ou en symboles d'accords (ex : C Am F G).",
@@ -164,12 +212,12 @@ export const fiches: FicheAudio[] = ([
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);
       const svg = genererPartition(progression, tonic, ctx.paramTexte("Gamme", "majeur"), clef, w, h);
-      if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_progression_valide") };
+      if (!svg) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_progression_valide") };
       // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
       // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
       // sortie SVG etait donc inexploitable en aval, et le moteur marquait le
       // noeud « Erreur » alors que la portee s'affichait correctement.
-      return { valeurs: [svg], message: svg };
+      return { valeurs: [svg, new File([svg], "partition.svg", { type: "image/svg+xml" })], message: svg };
     },
   },
   {

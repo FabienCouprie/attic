@@ -4,7 +4,24 @@
 // puissent l'importer via "../audio/..." sans créer de dépendance croisée
 // entre fichiers de plugins — même raison que GAMMES_MELODIE_* dans
 // audio/generation.ts.
-import { Progression, RomanNumeral } from "tonal";
+import { Chord, Progression, RomanNumeral } from "tonal";
+
+/**
+ * Les symboles qu'aucun accord ne reconnaît.
+ *
+ * POURQUOI ICI, ET NON DANS LE FICHIER QUI S'EN SERT. Trois composants de gravure et trois
+ * composants de théorie posent la même question, et deux lecteurs d'un même symbole ne doivent pas
+ * se répondre différemment. Ce module est déjà le domicile partagé des chiffres romains, pour la
+ * raison écrite ci-dessus.
+ *
+ * ET LA RÉPONSE VIENT DE TONAL, qui la donnait déjà sans que personne ne la lise. Le code écrivait
+ * `Chord.get(a).symbol ?? a` : Tonal rend la CHAÎNE VIDE pour un symbole inconnu, et `??` ne se
+ * déclenche pas dessus, seulement sur `null`. MESURÉ : `Chord.get("Tempo")` rend
+ * `{ symbol: "", empty: true }`. Le refus était à un champ de distance.
+ */
+export function accordsInconnus(accords: readonly string[]): string[] {
+  return accords.filter((a) => Chord.get(a).empty);
+}
 
 /**
  * Tonal LIT la casse d'un chiffre romain (`RomanNumeral.get("vi").major` vaut

@@ -4,41 +4,9 @@
 // chargé à la demande par le nœud. La reconnaissance du format et les options sont testées à part
 // (src/audio/verovio.test.ts) ; ici on vérifie qu'une notation entre et qu'une portée sort.
 import { test, expect } from "@playwright/test";
-import { spawn } from "child_process";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-let devServer: ReturnType<typeof spawn> | null = null;
-let devUrl = process.env.DEV_URL || "http://localhost:5175";
-
-async function waitForServer(url: string, retries = 120): Promise<void> {
-  for (let i = 0; i < retries; i++) {
-    try { const res = await fetch(url); if (res.ok) return; } catch { /* pas encore la */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Dev server did not start at ${url}`);
-}
-
-test.beforeAll(async () => {
-  if (process.env.DEV_URL) { await waitForServer(devUrl); return; }
-  const port = 5175;
-  devUrl = `http://localhost:${port}`;
-  devServer = spawn("cmd", ["/c", "npm", "run", "dev", "--", "--port", String(port)], { cwd: process.cwd(), stdio: "pipe" });
-  let log = "";
-  devServer.stdout?.on("data", (d) => { log += d.toString(); });
-  devServer.stderr?.on("data", (d) => { log += d.toString(); });
-  for (let i = 0; i < 160; i++) {
-    if (log.includes(`http://localhost:${port}`)) break;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  await waitForServer(devUrl);
-});
-
-test.afterAll(async () => {
-  if (devServer) {
-    devServer.kill("SIGTERM");
-    await new Promise((r) => setTimeout(r, 1000));
-    if (devServer.exitCode === null) devServer.kill("SIGKILL");
-  }
-});
+const devUrl = serveurDeVerification(5231);
 
 const MUSICXML = `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="3.1"><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>

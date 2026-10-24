@@ -49,21 +49,66 @@ function noteEasyScore(note: string): string {
   return normalise(notes[0]);
 }
 
-function parseTokenNote(token: string): { notes: string; duree: string; rest: boolean } {
-  // Découpe un token de la forme "note/duree" ou "note/duree/r".
-  // La partie note peut contenir un accord entre parenthèses (ex: (C4 E4 G4)/q)
-  // sans être coupée sur la barre de fraction.
+/**
+ * L'indice de la barre qui sépare les notes de leur durée, ou −1 quand le jeton n'en porte pas.
+ *
+ * LA RECHERCHE IGNORE CE QUI EST ENTRE PARENTHÈSES, un accord s'écrivant « (C4 E4 G4)/q ». Elle est
+ * partagée parce que deux lecteurs du même jeton ne doivent pas se répondre différemment : celui qui
+ * l'analyse, et celui qui dit si le texte est bien dans cette notation.
+ */
+function barreDeDuree(token: string): number {
   let profondeur = 0;
-  let barre = -1;
   for (let i = 0; i < token.length; i++) {
     const c = token[i];
     if (c === "(") profondeur++;
     else if (c === ")") profondeur--;
-    else if (c === "/" && profondeur === 0) {
-      barre = i;
-      break;
-    }
+    else if (c === "/" && profondeur === 0) return i;
   }
+  return -1;
+}
+
+/**
+ * Les jetons qui NE PORTENT PAS LEUR DURÉE, et qui disent donc que ce texte n'est pas cette notation.
+ *
+ * POURQUOI UN RELEVÉ DE JETONS PLUTÔT QU'UN OUI OU NON. Un jeton sans barre reçoit une noire par
+ * défaut, juste en dessous : un texte étranger traverse donc l'analyse en se changeant en notes
+ * plausibles, et c'est la bibliothèque qui s'arrête ensuite, sur une voix incomplète dont le message
+ * ne dit rien à personne. MESURÉ : les quatre sorties nommées « Notation » du catalogue écrivent
+ * toutes le format de « Texte → MIDI », où la durée est un jeton À PART — « Tempo 90 »,
+ * « C4+E4+G4 2.000 ». Nommer les jetons fautifs dit à la fois que le format n'est pas le bon, et
+ * lequel il est.
+ */
+export function jetonsSansDuree(texte: string): string[] {
+  return tokenizeNotation(texte).filter((t) => barreDeDuree(t) === -1);
+}
+
+/**
+ * Les jetons de tablature dont la corde ou la frette n'est PAS UN NOMBRE.
+ *
+ * LA MÊME FAUTE QUE CI-DESSUS, dans l'autre notation. `genererTab` découpait « corde-fret » et
+ * passait les deux morceaux à `parseInt` sans jamais regarder le résultat : « Tempo » donnait une
+ * corde NaN et une frette NaN, et la note était dessinée telle quelle. MESURÉ dans l'application sur
+ * le format de « Texte → MIDI » : le nœud annonçait « Terminé » et gravait QUATRE « NaN » sur la
+ * portée. Le garde qui comptait les notes ne pouvait rien voir, un jeton produisant toujours une
+ * note — valide ou non.
+ *
+ * LA DURÉE N'EST PAS EXIGÉE ICI, à la différence de la portée : un jeton de tablature sans barre
+ * vaut une noire par défaut, et ce défaut-là est documenté dans la notice.
+ */
+export function jetonsSansCordeFret(texte: string): string[] {
+  return texte.split(/\s+/).filter(Boolean).filter((tok) => {
+    const [corde, fret] = tok.split("/")[0].split("-");
+    return !Number.isInteger(Number.parseInt(corde, 10)) || !Number.isInteger(Number.parseInt(fret, 10));
+  });
+}
+
+// `accordsInconnus` VIVAIT ICI et habite désormais `audio/theorie-romains.ts` : trois composants de
+// théorie posaient la même question, et deux lecteurs d'un même symbole ne doivent pas se répondre
+// différemment. La gravure l'importe de là plutôt que d'en garder une copie.
+
+function parseTokenNote(token: string): { notes: string; duree: string; rest: boolean } {
+  // Découpe un token de la forme "note/duree" ou "note/duree/r".
+  const barre = barreDeDuree(token);
   if (barre === -1) return { notes: token, duree: "q", rest: false };
   const notes = token.slice(0, barre);
   const reste = token.slice(barre + 1).split("/");
@@ -248,20 +293,35 @@ export function genererPortee(notation: string, clef: string, largeur: number, h
   const { div } = creerRenderer(largeur, hauteur);
   div.id = "vex-" + Math.random().toString(36).slice(2);
   document.body.appendChild(div);
-  const vf = new Factory({ renderer: { elementId: div.id, width: largeur, height: hauteur } });
-  const score = vf.EasyScore();
-  const { notes: notesStr, totalQuarts } = notationEasyScore(notation);
-  if (!notesStr) return "";
-  const beats = Math.max(4, Math.ceil(totalQuarts / 4) * 4);
-  score.set({ time: `${beats}/4` });
-  const system = vf.System();
-  system.addStave({
-    voices: [score.voice(score.notes(notesStr, { stem: "up" }))],
-  }).addClef(clef).addTimeSignature(`${beats}/4`);
-  vf.draw();
-  const svg = extraireSvgRendu(div);
-  div.remove();
-  return svg;
+  // LE RENDU EST ENVELOPPÉ, ET LE RETRAIT DU DIV GARANTI.
+  //
+  // VexFlow LÈVE lorsqu'une voix n'emplit pas sa mesure, et cette erreur remontait telle quelle
+  // jusqu'au statut du nœud : « [RuntimeError] IncompleteVoice: Voice does not have enough notes »,
+  // qui ne dit ni ce qui était attendu, ni quoi brancher. Une notation que la bibliothèque refuse
+  // vaut une notation vide : la fiche sait déjà dire ce refus-là, dans les deux langues. La cause,
+  // elle, reste lisible dans la console — c'est là qu'elle a été trouvée.
+  //
+  // ET LE `finally` FERME UNE FUITE au passage, sur les mêmes lignes : la sortie anticipée d'une
+  // notation vide laissait le div dans le document, et la levée aussi.
+  try {
+    const vf = new Factory({ renderer: { elementId: div.id, width: largeur, height: hauteur } });
+    const score = vf.EasyScore();
+    const { notes: notesStr, totalQuarts } = notationEasyScore(notation);
+    if (!notesStr) return "";
+    const beats = Math.max(4, Math.ceil(totalQuarts / 4) * 4);
+    score.set({ time: `${beats}/4` });
+    const system = vf.System();
+    system.addStave({
+      voices: [score.voice(score.notes(notesStr, { stem: "up" }))],
+    }).addClef(clef).addTimeSignature(`${beats}/4`);
+    vf.draw();
+    return extraireSvgRendu(div);
+  } catch (e) {
+    console.warn("[vexflow] notation refusée par la bibliothèque :", e);
+    return "";
+  } finally {
+    div.remove();
+  }
 }
 
 export function genererTab(tabText: string, accordage: string, largeur: number, hauteur: number): string {

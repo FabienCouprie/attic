@@ -6,45 +6,22 @@
 //
 // Un port différent de celui de Fabien (5175), dont le serveur ne doit pas être touché.
 import { test, expect } from "@playwright/test";
-import { spawn } from "child_process";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-let devServer: ReturnType<typeof spawn> | null = null;
-let devUrl = process.env.DEV_URL || "http://localhost:5192";
+const devUrl = serveurDeVerification(5208);
 
-async function waitForServer(url: string, retries = 120): Promise<void> {
-  for (let i = 0; i < retries; i++) {
-    try { const res = await fetch(url); if (res.ok) return; } catch { /* pas encore la */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Dev server did not start at ${url}`);
-}
-
-test.beforeAll(async () => {
-  if (process.env.DEV_URL) { await waitForServer(devUrl); return; }
-  const port = 5192;
-  devUrl = `http://localhost:${port}`;
-  devServer = spawn("cmd", ["/c", "npm", "run", "dev", "--", "--port", String(port)], { cwd: process.cwd(), stdio: "pipe" });
-  let log = "";
-  devServer.stdout?.on("data", (d) => { log += d.toString(); });
-  devServer.stderr?.on("data", (d) => { log += d.toString(); });
-  for (let i = 0; i < 160; i++) {
-    if (log.includes(`http://localhost:${port}`)) break;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  await waitForServer(devUrl);
-});
-
-test.afterAll(async () => {
-  if (devServer) {
-    devServer.kill("SIGTERM");
-    await new Promise((r) => setTimeout(r, 1000));
-    if (devServer.exitCode === null) devServer.kill("SIGKILL");
-  }
-});
-
-/** Les quatre parts lues sur les barres d'un nœud, goût par goût. */
+/**
+ * Les quatre parts lues sur les barres d'un nœud, goût par goût.
+ *
+ * LE DERNIER BLOC, ET NON TOUTES LES LIGNES. « Accord mets-musique » en affiche désormais DEUX :
+ * « Dégustation réglée », le profil demandé, puis « Mesuré sur la musique », ce que l'analyse trouve
+ * dans son propre rendu. Les deux portent la même classe `attic-gout` et quatre lignes chacun ; lire
+ * les huit d'un coup ne tombait juste que par accident, `Object.fromEntries` gardant la DERNIÈRE
+ * occurrence de chaque nom. Le bloc mesuré est le dernier, et c'est lui qu'on veut.
+ */
 const parts = (page: any, id: string) => page.evaluate((n: string) => {
-  const lignes = [...document.querySelectorAll(`.react-flow__node[data-id="${n}"] .attic-gout-ligne`)];
+  const blocs = [...document.querySelectorAll(`.react-flow__node[data-id="${n}"] .attic-gout`)];
+  const lignes = [...(blocs[blocs.length - 1]?.querySelectorAll(".attic-gout-ligne") ?? [])];
   return Object.fromEntries(lignes.map((l) => [
     l.querySelector(".attic-gout-nom")?.textContent ?? "",
     parseInt(l.querySelector(".attic-gout-part")?.textContent ?? "0", 10),
@@ -56,8 +33,20 @@ async function lancer(page: any, graphe: unknown, attendus: string[]) {
   await page.goto(devUrl);
   await page.waitForSelector(".attic-app", { timeout: 20000 });
   await page.click(".attic-btn-lancer");
+  // LA MESURE EST FAITE QUAND LE NŒUD A ABOUTI ET QUE SON DERNIER BLOC PORTE SES QUATRE GOÛTS.
+  //
+  // Compter TOUTES les lignes de goût du nœud ne marche plus : « Accord mets-musique » en affiche
+  // huit, quatre par bloc, et la condition `=== 4` n'était donc jamais vraie — cent quatre-vingts
+  // secondes d'attente pour rien. Compter le dernier bloc seul ne suffirait pas davantage : le bloc
+  // du profil DEMANDÉ existe avant l'exécution, et l'attente se terminerait trop tôt. Le statut du
+  // nœud tranche, et il ne dépend d'aucune langue.
   await page.waitForFunction(
-    (ids: string[]) => ids.every((id) => document.querySelectorAll(`.react-flow__node[data-id="${id}"] .attic-gout-ligne`).length === 4),
+    (ids: string[]) => ids.every((id) => {
+      const n = document.querySelector(`.react-flow__node[data-id="${id}"]`);
+      if (!n || !n.querySelector(".attic-node.termine")) return false;
+      const blocs = [...n.querySelectorAll(".attic-gout")];
+      return (blocs[blocs.length - 1]?.querySelectorAll(".attic-gout-ligne").length ?? 0) === 4;
+    }),
     attendus, { timeout: 180000 },
   );
 }
@@ -99,7 +88,7 @@ test.describe("accord mets-musique", () => {
 });
 
 test.describe("parfum → motif", () => {
-  test("un agrume se mesure plus aigu et plus acide qu'un musc", async ({ page }) => {
+  test("un agrume se mesure plus clair qu'un musc, et le musc plus sombre", async ({ page }) => {
     test.setTimeout(300000);
     const parfum = (id: string, mot: string, y: number) =>
       ({ id, position: { x: 0, y }, data: { ficheId: "parfum-motif", parametres: { "Parfum": mot, "Durée": 6 } } });
@@ -117,9 +106,19 @@ test.describe("parfum → motif", () => {
     const musc = await parts(page, "g-musc");
     console.log("citron :", JSON.stringify(citron));
     console.log("musc   :", JSON.stringify(musc));
-    // L'axe que l'article établit : les agrumes vers l'aigu, le musc vers le grave — donc, dans
-    // l'espace des goûts, l'un vers l'acide et l'autre vers l'amer.
-    expect(citron["acide"]).toBeGreaterThan(musc["acide"]);
+    // L'AXE QUE L'ARTICLE ÉTABLIT : les agrumes vers l'aigu, le musc vers le grave.
+    //
+    // CE CAS EN TIRAIT UNE CONSÉQUENCE QUI NE SUIT PAS. Il demandait que l'agrume soit plus ACIDE
+    // que le musc, « donc » ; or l'acide n'est pas l'aigu. La table de `audio/gout.ts` le dit :
+    // l'acide y vaut hauteur 0,9 MAIS AUSSI consonance 0,15 et vitesse 0,85 — il lui faut une
+    // dissonance et une rapidité que le motif du citron n'a pas. Un motif aigu et CONSONANT tombe
+    // donc sous le sucré, par cette table même. Mesuré : citron acide 11 %, musc acide 11 % — à
+    // égalité, et sans rapport avec l'axe.
+    //
+    // L'AXE SE LIT AILLEURS, ET IL SE LIT FRANCHEMENT. Le citron mesure sucré 64 % et amer 9 % ; le
+    // musc, amer 43 % et sucré 27 %. L'un est clair, l'autre sombre, ce que l'article dit, et ce
+    // que ces deux assertions tiennent avec de la marge.
+    expect(citron["sucré"]).toBeGreaterThan(musc["sucré"]);
     expect(musc["amer"]).toBeGreaterThan(citron["amer"]);
 
     // Le registre visé et le registre mesuré figurent tous deux dans le rapport du nœud.

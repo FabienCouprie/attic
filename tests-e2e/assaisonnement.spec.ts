@@ -7,41 +7,9 @@
 //
 // Un port différent de celui de Fabien (5175), dont le serveur ne doit pas être touché.
 import { test, expect } from "@playwright/test";
-import { spawn } from "child_process";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-let devServer: ReturnType<typeof spawn> | null = null;
-let devUrl = process.env.DEV_URL || "http://localhost:5192";
-
-async function waitForServer(url: string, retries = 120): Promise<void> {
-  for (let i = 0; i < retries; i++) {
-    try { const res = await fetch(url); if (res.ok) return; } catch { /* pas encore la */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Dev server did not start at ${url}`);
-}
-
-test.beforeAll(async () => {
-  if (process.env.DEV_URL) { await waitForServer(devUrl); return; }
-  const port = 5192;
-  devUrl = `http://localhost:${port}`;
-  devServer = spawn("cmd", ["/c", "npm", "run", "dev", "--", "--port", String(port)], { cwd: process.cwd(), stdio: "pipe" });
-  let log = "";
-  devServer.stdout?.on("data", (d) => { log += d.toString(); });
-  devServer.stderr?.on("data", (d) => { log += d.toString(); });
-  for (let i = 0; i < 160; i++) {
-    if (log.includes(`http://localhost:${port}`)) break;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  await waitForServer(devUrl);
-});
-
-test.afterAll(async () => {
-  if (devServer) {
-    devServer.kill("SIGTERM");
-    await new Promise((r) => setTimeout(r, 1000));
-    if (devServer.exitCode === null) devServer.kill("SIGKILL");
-  }
-});
+const devUrl = serveurDeVerification(5202);
 
 /** Un son tenu, ni très haut ni très bas : de la place pour bouger dans les deux sens. */
 const GEN = { ficheId: "generateur-frequence", parametres: { "Durée": 3, "Fréquence": 330 } };
@@ -50,9 +18,14 @@ const GRAPHE = {
   nodes: [
     { id: "gen", position: { x: 0, y: 200 }, data: GEN },
     { id: "temoin", position: { x: 320, y: 0 }, data: { ficheId: "gout-du-son", parametres: {} } },
-    { id: "ass-acide", position: { x: 320, y: 200 }, data: { ficheId: "assaisonnement-sonore", parametres: { "Goût": "Acide", "Dose": 100 } } },
+    // LE RÉGLAGE « GOÛT » N'EXISTE PLUS, ET N'A JAMAIS EXISTÉ SOUS CE NOM ICI : le nœud porte QUATRE
+    // curseurs, un par goût, et une dose. Le régler par un nom inconnu ne faisait rien dire à
+    // personne — `paramTexte` rendait le défaut, et les deux branches produisaient le MÊME son,
+    // « sucré 100 % », mesuré identique à 88/7/3/2 par les deux nœuds de goût. D'où l'échec : ce qui
+    // devait monter vers l'acide ne montait nulle part.
+    { id: "ass-acide", position: { x: 320, y: 200 }, data: { ficheId: "assaisonnement-sonore", parametres: { "Sucré": 0, "Acide": 100, "Amer": 0, "Salé": 0, "Dose": 100 } } },
     { id: "gout-acide", position: { x: 640, y: 200 }, data: { ficheId: "gout-du-son", parametres: {} } },
-    { id: "ass-amer", position: { x: 320, y: 400 }, data: { ficheId: "assaisonnement-sonore", parametres: { "Goût": "Amer", "Dose": 100 } } },
+    { id: "ass-amer", position: { x: 320, y: 400 }, data: { ficheId: "assaisonnement-sonore", parametres: { "Sucré": 0, "Acide": 0, "Amer": 100, "Salé": 0, "Dose": 100 } } },
     { id: "gout-amer", position: { x: 640, y: 400 }, data: { ficheId: "gout-du-son", parametres: {} } },
   ],
   edges: [
@@ -107,10 +80,19 @@ test.describe("assaisonnement sonore", () => {
     const msgAcide = await message("ass-acide");
     console.log("message acide :", msgAcide);
     // Le bloc du message porte aussi le bouton de copie (⧉) : on ne l'ancre donc pas au début.
-    expect(msgAcide).toMatch(/acide \d+ % → \d+ %$/);
-    const [avant, apres] = [...msgAcide.matchAll(/(\d+) %/g)].map((m) => Number(m[1]));
-    expect(apres).toBeGreaterThan(avant);
-    expect(apres).toBe(versAcide["acide"]); // la même mesure que celle du nœud d'à côté
+    // LE NŒUD NE DIT PLUS UNE PART AVANT ET APRÈS, MAIS UNE DISTANCE. Il écrivait « acide N % →
+    // M % » ; il écrit « acide 100 % · distance 1,37 → 0,99 », c'est-à-dire ce qu'on lui a demandé,
+    // puis de combien le son s'est RAPPROCHÉ du goût vise dans l'espace des quatre. Le cas garde son
+    // intention — le nœud dit de combien il a déplacé le son, et il dit vrai — en la portant sur la
+    // grandeur qu'il annonce désormais.
+    expect(msgAcide).toMatch(/acide 100 % · distance [\d,]+ → [\d,]+$/);
+    const [avant, apres] = [...msgAcide.matchAll(/([\d,]+) → ([\d,]+)/g)][0]
+      .slice(1).map((x) => Number(x.replace(",", ".")));
+    // LA DISTANCE DIMINUE : c'est le sens du geste, et c'est ce qu'il faut vérifier. Une part qui
+    // monte ne dirait rien d'un assaisonnement qui aurait rapproché le son d'un AUTRE goût.
+    expect(apres).toBeLessThan(avant);
+    // Et le nœud d'à côté voit le même déplacement : l'acide a bien monté chez lui.
+    expect(versAcide["acide"]).toBeGreaterThan(temoin["acide"]);
   });
 
   test("à dose nulle, le son ressort où il était", async ({ page }) => {

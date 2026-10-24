@@ -10,7 +10,7 @@
 // dont la mesure a montré qu'il ne construit rien sur cette tâche. Et celui de la tonalité, parce
 // que le nœud voisin rend `G major (87%)` là où le moteur attend `G major`.
 import { describe, expect, it } from "vitest";
-import { planDepuis, tonaliteNormalisee } from "./composer-plan";
+import { fiches, planDepuis, tonaliteNormalisee } from "./composer-plan";
 
 const champs = {
   description: "acoustic guitar, strum", paroles: "", tempo: 96, tonalite: "G major",
@@ -96,5 +96,45 @@ describe("planDepuis", () => {
   it("le document est un JSON lisible, ce que le nœud de rendu exige", () => {
     expect(() => JSON.parse(planDepuis(champs))).not.toThrow();
     expect(planDepuis(champs)).toContain("\n");
+  });
+
+  // ── La tonalité est contrôlée avant d'être écrite ──
+  //
+  // LE DÉFAUT, MESURÉ DANS L'APPLICATION. `tonaliteNormalisee` ne retire qu'un parenthésage ; elle
+  // ne dit pas si ce qui reste est une tonalité. Un texte étranger branché sur l'entrée ressortait
+  // TEL QUEL dans le document — `"keyscale": "Tempo 90\nC4+E4+G4 2.000"` — pour un statut
+  // « Terminé », et ce plan part ensuite vers un modèle de rendu. Le nœud violait ainsi la forme
+  // que sa propre documentation fixe : « G major » ou « A minor ».
+
+  const ctxTonalite = (valeur: string | null) => ({
+    entree: (i: number) => (i === 3 ? valeur : null),
+    paramTexte: (_nom: string, defaut: string) => defaut,
+    paramNombre: (_nom: string, defaut: number) => defaut,
+  });
+
+  const noeud = () => fiches.find((f) => f.id === "composer-plan")!;
+
+  it("REFUSE UNE TONALITÉ ILLISIBLE au lieu de l'écrire dans le plan", async () => {
+    const res = await noeud().executer(ctxTonalite("Tempo 90\nC4+E4+G4 2.000") as any);
+    expect(res.erreur).toBe(true);
+    expect(res.valeurs[0]).toBe(null);
+    expect(res.message, "la tonalité reçue doit être nommée").toContain("Tempo");
+    expect(res.message, "et la forme attendue aussi").toContain("A minor");
+  });
+
+  it("et laisse passer celles qui se lisent, parenthèse comprise", async () => {
+    for (const bonne of ["G major", "A minor", "F# minor (73%)", "C"]) {
+      const res = await noeud().executer(ctxTonalite(bonne) as any);
+      expect(res.erreur, bonne).toBeFalsy();
+      expect(JSON.parse(String(res.valeurs[0])).keyscale, bonne).toBeTruthy();
+    }
+  });
+
+  it("UNE TONALITÉ VIDE RESTE LICITE, et le champ est alors absent du plan", async () => {
+    // LA DOCUMENTATION LE DIT : « Vide, le champ est absent du plan. » Le contrôle ne doit pas
+    // transformer une absence en refus.
+    const res = await noeud().executer(ctxTonalite(null) as any);
+    expect(res.erreur).toBeFalsy();
+    expect(JSON.parse(String(res.valeurs[0])).keyscale).toBeUndefined();
   });
 });

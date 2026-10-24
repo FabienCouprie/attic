@@ -107,3 +107,44 @@ describe("le son rendu dure-t-il ce que dure l'arbre", () => {
     });
   }
 });
+
+// ── Une suite de hauteurs doit en être une ──
+//
+// LE DÉFAUT, MESURÉ DANS L'APPLICATION. `lireHauteurs` jette en silence ce qu'il ne sait pas lire,
+// et la condition d'entrée demandait seulement qu'il EN RESTE UNE. Nourri du format de
+// « Texte → MIDI », le nœud tirait « 90 » et « 2.000 » de « Tempo 90 / C4+E4+G4 2.000 », jouait un
+// fa dièse 6 sorti du nombre 90, et annonçait « entrée Hauteurs » comme s'il avait lu une liste.
+// Témoin monté à côté : avec les vraies hauteurs du nœud voisin, la même mesure donnait un si 4.
+describe("rythme-sur-hauteurs : l'entrée Hauteurs", () => {
+  const ARBRE = "(4/4 (1 1 1 1))";
+
+  it("REFUSE UN TEXTE QUI N'EST PAS UNE SUITE DE HAUTEURS, en nommant les jetons fautifs", async () => {
+    const res = await rythme.executer(
+      contexte([ARBRE, "Tempo 90\nC4+E4+G4 2.000", null], { Tempo: 120 }) as any);
+    expect(res.erreur).toBe(true);
+    expect(res.valeurs).toEqual([null, null]);
+    expect(res.message, "le jeton fautif doit être nommé").toContain("Tempo");
+    expect(res.message, "et la forme attendue aussi").toContain("60 62 64");
+  });
+
+  it("et nomme aussi une hauteur hors de portée, au lieu de la perdre", async () => {
+    const res = await rythme.executer(contexte([ARBRE, "60 62 200", null], { Tempo: 120 }) as any);
+    expect(res.erreur).toBe(true);
+    expect(res.message).toContain("200");
+  });
+
+  it("laisse passer une vraie suite, et la joue dans l'ordre donné", async () => {
+    const res = await rythme.executer(contexte([ARBRE, "60 62 64 65", null], { Tempo: 120 }) as any);
+    expect(res.erreur).toBeFalsy();
+    expect((res.valeurs[0] as any).notes.map((n: any) => n.note)).toEqual([60, 62, 64, 65]);
+  });
+
+  it("ET UNE CHAÎNE VIDE PASSE À LA SOURCE SUIVANTE, ce que la notice promet", async () => {
+    // L'ORDRE EST DOCUMENTÉ — Hauteurs, puis Séquence, puis réglage — et un contrôle ne doit pas
+    // le changer : une entrée branchée mais vide n'est pas une faute, c'est une absence.
+    const res = await rythme.executer(
+      contexte([ARBRE, "   ", null], { Tempo: 120, Hauteurs: "72 74" }) as any);
+    expect(res.erreur).toBeFalsy();
+    expect((res.valeurs[0] as any).notes.map((n: any) => n.note)).toEqual([72, 74, 72, 74]);
+  });
+});

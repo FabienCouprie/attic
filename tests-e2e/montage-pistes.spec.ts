@@ -5,41 +5,9 @@
 // est testée dans src/ui/ports-extensibles.test.ts ; ici on vérifie qu'elle tient à l'écran, et
 // qu'un montage à cinq pistes rend bien le mélange des cinq.
 import { test, expect } from "@playwright/test";
-import { spawn } from "child_process";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-let devServer: ReturnType<typeof spawn> | null = null;
-let devUrl = process.env.DEV_URL || "http://localhost:5175";
-
-async function waitForServer(url: string, retries = 120): Promise<void> {
-  for (let i = 0; i < retries; i++) {
-    try { const res = await fetch(url); if (res.ok) return; } catch { /* pas encore la */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Dev server did not start at ${url}`);
-}
-
-test.beforeAll(async () => {
-  if (process.env.DEV_URL) { await waitForServer(devUrl); return; }
-  const port = 5175;
-  devUrl = `http://localhost:${port}`;
-  devServer = spawn("cmd", ["/c", "npm", "run", "dev", "--", "--port", String(port)], { cwd: process.cwd(), stdio: "pipe" });
-  let log = "";
-  devServer.stdout?.on("data", (d) => { log += d.toString(); });
-  devServer.stderr?.on("data", (d) => { log += d.toString(); });
-  for (let i = 0; i < 160; i++) {
-    if (log.includes(`http://localhost:${port}`)) break;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  await waitForServer(devUrl);
-});
-
-test.afterAll(async () => {
-  if (devServer) {
-    devServer.kill("SIGTERM");
-    await new Promise((r) => setTimeout(r, 1000));
-    if (devServer.exitCode === null) devServer.kill("SIGKILL");
-  }
-});
+const devUrl = serveurDeVerification(5223);
 
 /** Un graphe : deux sources branchées sur les pistes 1 et 5 d'un montage. */
 const GRAPHE = {
@@ -47,10 +15,16 @@ const GRAPHE = {
     { id: "m", position: { x: 700, y: 0 }, data: { ficheId: "montage", parametres: { "Début 1": 0, "Début 5": 1 } } },
     { id: "a", position: { x: 0, y: 0 }, data: { ficheId: "arpege-koch", parametres: {} } },
     { id: "b", position: { x: 0, y: 400 }, data: { ficheId: "generateur-fractal", parametres: {} } },
+    // LE SON SE MESURE EN AVAL, ET NON SUR LE MONTAGE LUI-MÊME. Sa vue est une LIGNE DE TEMPS, avec
+    // son propre transport : elle ne rend aucun élément `audio`, et ce cas attendait donc deux
+    // minutes un `src` qui ne viendrait jamais. Le montage produit bien son son — vérifié dans
+    // l'application, « 2 morceaux · 2 pistes · 11,64 s » — et « Sortie audio » l'expose.
+    { id: "s", position: { x: 1100, y: 0 }, data: { ficheId: "sortie-audio", parametres: {} } },
   ],
   edges: [
     { id: "e1", source: "a", target: "m", sourceHandle: "out:0", targetHandle: "in:0" },
     { id: "e5", source: "b", target: "m", sourceHandle: "out:0", targetHandle: "in:4" },
+    { id: "es", source: "m", target: "s", sourceHandle: "out:0", targetHandle: "in:0" },
   ],
 };
 
@@ -72,12 +46,12 @@ test.describe("montage : des pistes à la demande", () => {
     await page.addInitScript(([g]: string[]) => { localStorage.setItem("attic-encours", g); }, [JSON.stringify(GRAPHE)]);
     await page.goto(devUrl);
     await page.waitForSelector(".attic-app", { timeout: 20000 });
-    await page.waitForFunction(() => document.querySelectorAll(".react-flow__node").length >= 3, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelectorAll(".react-flow__node").length >= 4, { timeout: 15000 });
 
     // Le câble de la piste 5 impose cinq pistes, et interdit de raccourcir.
     const depart = await page.evaluate(etat);
     expect(depart).toMatchObject({ pistes: 5, compteur: "5", moinsDesactive: true, plusDesactive: false, derniere: "Piste 5" });
-    expect(await page.evaluate(() => document.querySelectorAll(".react-flow__edges .react-flow__edge").length)).toBe(2);
+    expect(await page.evaluate(() => document.querySelectorAll(".react-flow__edges .react-flow__edge").length)).toBe(3);
 
     // Le « + » allonge le nœud jusqu'à seize, puis s'éteint.
     for (let i = 0; i < 20; i++) {
@@ -104,14 +78,14 @@ test.describe("montage : des pistes à la demande", () => {
       await page.waitForTimeout(80);
     }
     expect(await page.evaluate(etat)).toMatchObject({ pistes: 5, compteur: "5", moinsDesactive: true });
-    // Les deux câbles sont toujours là : rien n'a été débranché dans le dos.
-    expect(await page.evaluate(() => document.querySelectorAll(".react-flow__edges .react-flow__edge").length)).toBe(2);
+    // Les trois câbles sont toujours là : rien n'a été débranché dans le dos.
+    expect(await page.evaluate(() => document.querySelectorAll(".react-flow__edges .react-flow__edge").length)).toBe(3);
 
     // Et le montage mélange bien les deux pistes, celle du haut et la cinquième.
     await page.keyboard.press(" ");
-    await page.waitForFunction(() => !!(document.querySelector('.react-flow__node[data-id="m"] audio') as HTMLAudioElement | null)?.src, null, { timeout: 120000 });
+    await page.waitForFunction(() => !!(document.querySelector('.react-flow__node[data-id="s"] audio') as HTMLAudioElement | null)?.src, null, { timeout: 120000 });
     const r = await page.evaluate(async () => {
-      const el = document.querySelector('.react-flow__node[data-id="m"] audio') as HTMLAudioElement;
+      const el = document.querySelector('.react-flow__node[data-id="s"] audio') as HTMLAudioElement;
       const b = await new OfflineAudioContext(1, 1, 44100).decodeAudioData(await (await fetch(el.src)).arrayBuffer());
       const x = b.getChannelData(0);
       const crete = (a: number, z: number) => {

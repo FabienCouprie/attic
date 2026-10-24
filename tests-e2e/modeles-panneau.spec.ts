@@ -5,41 +5,9 @@
 // figé —, et l'on vérifie ce que l'utilisateur voit et ce qu'un clic demande vraiment. La règle
 // qui décide du contenu de la liste est testée à part (src/ui/etat-modeles.test.ts).
 import { test, expect } from "@playwright/test";
-import { spawn } from "child_process";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-let devServer: ReturnType<typeof spawn> | null = null;
-let devUrl = process.env.DEV_URL || "http://localhost:5175";
-
-async function waitForServer(url: string, retries = 120): Promise<void> {
-  for (let i = 0; i < retries; i++) {
-    try { const res = await fetch(url); if (res.ok) return; } catch { /* pas encore la */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Dev server did not start at ${url}`);
-}
-
-test.beforeAll(async () => {
-  if (process.env.DEV_URL) { await waitForServer(devUrl); return; }
-  const port = 5175;
-  devUrl = `http://localhost:${port}`;
-  devServer = spawn("cmd", ["/c", "npm", "run", "dev", "--", "--port", String(port)], { cwd: process.cwd(), stdio: "pipe" });
-  let log = "";
-  devServer.stdout?.on("data", (d) => { log += d.toString(); });
-  devServer.stderr?.on("data", (d) => { log += d.toString(); });
-  for (let i = 0; i < 160; i++) {
-    if (log.includes(`http://localhost:${port}`)) break;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  await waitForServer(devUrl);
-});
-
-test.afterAll(async () => {
-  if (devServer) {
-    devServer.kill("SIGTERM");
-    await new Promise((r) => setTimeout(r, 1000));
-    if (devServer.exitCode === null) devServer.kill("SIGKILL");
-  }
-});
+const devUrl = serveurDeVerification(5221);
 
 /** Un inventaire où il manque les deux gros modèles, un petit à moitié, et un sans adresse. */
 const FAUSSE_API = () => {
@@ -104,7 +72,11 @@ test.describe("panneau des modèles IA", () => {
       .toEqual(["↓", "↓", "↓", "—", "✓"]);
     // Les poids sont dits avant de cliquer, et celui qui n'a pas d'adresse est signalé à part.
     const poids = await page.locator(".attic-modeles-ligne .attic-modeles-poids").allTextContents();
-    expect(poids[0]).toMatch(/686 (Mo|MB)/); // le poids est dit avant de cliquer
+    // 719 000 000 OCTETS FONT 719 Mo, ET 686 Mio. Ce cas attendait « 686 Mo » : c'était le
+    // mébioctet sous le libellé du mégaoctet, l'erreur que `core/octets.ts` a retirée de neuf
+    // endroits à la fois, dont ce panneau. L'application a raison, et ce cas gardait l'ancien
+    // défaut — il serait passé au rouge le jour de la correction si quelqu'un l'avait lancé.
+    expect(poids[0]).toMatch(/719 (Mo|MB)/); // le poids est dit avant de cliquer
     await expect(page.locator(".attic-modeles-vide")).toContainText(/1/);
     await expect(page.locator(".attic-modeles-tout")).toContainText(/3/);
 

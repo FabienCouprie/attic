@@ -47,7 +47,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const api = (window as any).api;
-      if (!api?.lireDossier || !api?.ecrireFichier) return { valeurs: [], message: traduire("msg.n_cessite_electron") };
+      if (!api?.lireDossier || !api?.ecrireFichier) return { valeurs: [], erreur: true, message: traduire("msg.n_cessite_electron") };
 
       const chemin = ctx.paramTexte("Chemin", "music collection").replace(/^[/\\]+|[/\\]+$/g, "");
       const sortie = ctx.paramTexte("Dossier sortie", "").replace(/^[/\\]+|[/\\]+$/g, "");
@@ -63,8 +63,8 @@ export const fiches: FicheAudio[] = ([
       const graineParam = ctx.paramNombre("Graine", 0);
       const graine = graineParam > 0 ? graineParam : Math.floor(Math.random() * 99999) + 1;
 
-      if (!chemin) return { valeurs: [], message: traduire("msg.aucun_r_pertoire_sp_cifi") };
-      if (!sortie) return { valeurs: [], message: traduire("msg.aucun_r_pertoire_de_sortie_sp_cifi") };
+      if (!chemin) return { valeurs: [], erreur: true, message: traduire("msg.aucun_r_pertoire_sp_cifi") };
+      if (!sortie) return { valeurs: [], erreur: true, message: traduire("msg.aucun_r_pertoire_de_sortie_sp_cifi") };
 
       ctx.onProgress(traduire("progress.lecture_du_r_pertoire"));
       let fichiers: { nom: string; chemin: string }[] = (await api.lireDossier(chemin)) ?? [];
@@ -72,7 +72,7 @@ export const fiches: FicheAudio[] = ([
         const ext = f.nom.slice(f.nom.lastIndexOf(".")).toLowerCase();
         return EXTENSIONS_AUDIO.includes(ext);
       });
-      if (fichiers.length === 0) return { valeurs: [], message: traduire("msg.aucun_fichier_audio_dans_var_0", chemin) };
+      if (fichiers.length === 0) return { valeurs: [], erreur: true, message: traduire("msg.aucun_fichier_audio_dans_var_0", chemin) };
 
       const maxPoints = Math.min(400, fichiers.length);
       const selection = shuffle(fichiers, creerAleatoire(graine)).slice(0, maxPoints);

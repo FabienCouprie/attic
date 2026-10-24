@@ -466,7 +466,7 @@ export const fiches: FicheAudio[] = ([
     // bloquait l'exécution du nœud utilisé seul — cassant précisément l'usage
     // que le paramètre Prompt existe pour permettre. Bug préexistant, non lié
     // à l'ajout du mode Ollama, mais découvert et corrigé en le vérifiant.
-    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte", requis: false }],
+    entrees: [{ nom: "Prompt", nomEn: "Prompt", type: "texte", requis: false }],
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [
       { nom: "Prompt", nomEn: "Prompt", type: "texte", defaut: "delay stéréo avec feedback sur une réverbération hall, puis compresseur et sortie audio",

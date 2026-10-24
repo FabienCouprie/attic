@@ -27,8 +27,12 @@ import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 
 import { DUREE_SEC, FREQUENCE, mesurerComposant } from "./banc-mesure";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-const devUrl = process.env.DEV_URL || "http://localhost:5175";
+// CE FICHIER N'AMORÇAIT PAS SON SERVEUR : il attendait qu'un serveur tourne déjà sur 5175, celui de
+// Fabien. C'est pour cela qu'il ne pouvait pas entrer en intégration continue, et pour cela que sa
+// base d'empreintes a pu DÉRIVER TROIS SEMAINES sans que rien ne le dise.
+const devUrl = serveurDeVerification(5211);
 // Ce fichier est chargé comme module ES : __dirname n'y existe pas.
 const ICI = dirname(fileURLToPath(import.meta.url));
 const CHEMIN = resolve(ICI, "empreintes.json");
@@ -191,6 +195,60 @@ interface Ligne {
 }
 
 /**
+ * Les composants dont le rendu n'est pas reproductible au bit près d'une machine à l'autre, et la
+ * tolérance RELATIVE déclarée pour chacun.
+ *
+ * POURQUOI CETTE LISTE EXISTE, ET ELLE N'A QU'UNE ENTRÉE. Mise en intégration continue, cette base a
+ * tenu pour soixante et onze composants sur soixante-douze. Le soixante-douzième a dérivé :
+ *
+ *   particules : ["0.148725542/0.299995363"] → ["0.148697419/0.299998105"]
+ *
+ * Soit 1,9 × 10⁻⁴ en relatif sur la valeur efficace et 9 × 10⁻⁶ sur la crête. « Particules » est LE
+ * SEUL des soixante-douze à rendre son son par CSOUND, en WebAssembly, et ce rendu n'est pas
+ * identique au bit près d'un processeur à l'autre. La base, elle, a été enregistrée sur une seule
+ * machine.
+ *
+ * POURQUOI UNE TOLÉRANCE PLUTÔT QU'UN RETRAIT. Retirer « Particules » de la surveillance rendrait la
+ * base verte en cessant de regarder un composant, ce qui est le contraire de ce qu'on veut. La
+ * tolérance garde la surveillance et nomme ce qu'elle laisse passer.
+ *
+ * POURQUOI UN MILLIÈME, ET CE QU'IL ATTRAPE ENCORE. Cinq fois la dérive mesurée, ce qui laisse de la
+ * marge sans rien céder d'utile : un changement de niveau d'un DIXIÈME DE DÉCIBEL vaut déjà 1,2 %,
+ * soit douze fois cette tolérance. Un changement de longueur, de contenu ou de niveau reste donc
+ * attrapé ; seul l'arrondi d'un processeur passe.
+ *
+ * ET SON MESSAGE PERD LA LONGUEUR QU'IL ANNONCE, ce qui corrige ce que cette note affirmait d'abord.
+ * J'avais écrit que « Grains · 60 grains/s · 3.97 s » venait de la partition et non de l'arithmétique
+ * du rendu : le coureur a répondu 3,99 s au passage suivant. Cette durée est `r.audio.duration`, la
+ * longueur réelle du tampon rendu. Voir `messageTolerant` : l'espèce et la cadence restent comparées,
+ * la longueur non, et pour les composants déclarés ici seulement.
+ */
+const TOLERANCES: Record<string, number> = { particules: 1e-3 };
+
+/**
+ * Deux empreintes disent-elles la même chose, à la tolérance déclarée pour ce composant près ?
+ *
+ * Sans tolérance déclarée, la comparaison reste CARACTÈRE POUR CARACTÈRE : c'est le cas des
+ * soixante et onze autres, et il ne faut pas que cette porte s'ouvre pour eux.
+ */
+function memeEmpreinte(id: string, attendues: (string | null)[], obtenues: (string | null)[]): boolean {
+  const tol = TOLERANCES[id];
+  if (tol === undefined) return JSON.stringify(attendues) === JSON.stringify(obtenues);
+  if (attendues.length !== obtenues.length) return false;
+  return attendues.every((a, i) => {
+    const b = obtenues[i];
+    if (a === b) return true;
+    if (typeof a !== "string" || typeof b !== "string") return false;
+    const na = a.split("/").map(Number);
+    const nb = b.split("/").map(Number);
+    // Une empreinte qui n'est pas une paire de nombres — une courbe, un spectrogramme — se compare
+    // telle quelle : la tolérance ne s'applique qu'à ce qu'elle sait lire.
+    if (na.length !== nb.length || [...na, ...nb].some(Number.isNaN)) return false;
+    return na.every((v, k) => Math.abs(v - nb[k]) <= tol * Math.max(Math.abs(v), 1e-9));
+  });
+}
+
+/**
  * Le message, débarrassé de ce qui ne peut pas être comparé.
  *
  * UN TEMPS DE CALCUL NE SE COMPARE PAS. La décomposition atomique annonce sa durée dans son message,
@@ -200,6 +258,24 @@ interface Ligne {
  */
 function messageComparable(message: string | null): string | null {
   return message === null ? null : message.replace(/\d+(?:[.,]\d+)?\s*ms\b/g, "« durée »");
+}
+
+/**
+ * Le message d'un composant au rendu non reproductible, débarrassé de la LONGUEUR qu'il annonce.
+ *
+ * ET C'EST UNE CORRECTION DE CE QUE J'AVAIS ÉCRIT JUSTE AU-DESSUS. En déclarant la tolérance de
+ * « Particules », j'ai affirmé que son message « Grains · 60 grains/s · 3.97 s » venait de la
+ * partition et non de l'arithmétique du rendu. C'ÉTAIT FAUX, et le coureur l'a dit au passage
+ * suivant : il annonce 3,99 s. Cette durée est `r.audio.duration`, la longueur RÉELLE du tampon que
+ * Csound a produit — machine-dépendante au même titre que les échantillons qu'il contient.
+ *
+ * CE QUI RESTE COMPARÉ, ET C'EST L'ESSENTIEL : « Grains » et « 60 grains/s », c'est-à-dire l'espèce
+ * choisie et la cadence demandée. Seule la longueur rendue est masquée, et seulement pour les
+ * composants dont la tolérance est déclarée. Les autres gardent leur message au caractère près, y
+ * compris les durées qu'ils annoncent, puisque chez eux une longueur qui change est un changement.
+ */
+function messageTolerant(message: string | null): string | null {
+  return message === null ? null : message.replace(/\d+(?:[.,]\d+)?\s*s\b/g, "« longueur »");
 }
 
 test("les empreintes des composants surveillés n'ont pas changé", async ({ page }) => {
@@ -222,8 +298,13 @@ test("les empreintes des composants surveillés n'ont pas changé", async ({ pag
     expect(m.erreur, `${s.id} a échoué : ${m.erreur}`).toBeNull();
     // Une sortie audio est exigée : un composant qui n'en rend plus est un changement en soi, et
     // sans cette garde il passerait pour « conforme » avec une liste d'empreintes vide.
+    //
+    // ET L'ÉCHEC PORTE LE MESSAGE DU COMPOSANT. `m.erreur` ci-dessus ne dit que ce qui a été LEVÉ :
+    // un composant qui se déclare en erreur par son champ `erreur` passe au travers, et ce cas
+    // annonçait alors « ne rend aucune sortie » pour un refus qui, lui, savait pourquoi. Mesuré sur
+    // `particules`, qui rend par Csound : l'échec ne nommait pas Csound.
     expect(m.empreintes.some((e) => e !== null),
-      `${s.id} ne rend aucune sortie dont on sache prendre l'empreinte`).toBe(true);
+      `${s.id} ne rend aucune sortie dont on sache prendre l'empreinte — il dit : « ${m.message} »`).toBe(true);
 
     const ligne: Ligne = { empreintes: m.empreintes, message: messageComparable(m.message) };
     obtenues[s.id] = ligne;
@@ -231,9 +312,12 @@ test("les empreintes des composants surveillés n'ont pas changé", async ({ pag
 
     const attendue = attendues[s.id];
     if (!attendue) { ecarts.push(`${s.id} : absent de la base`); continue; }
-    if (JSON.stringify(attendue.empreintes) !== JSON.stringify(ligne.empreintes)) {
-      ecarts.push(`${s.id} : ${JSON.stringify(attendue.empreintes)} → ${JSON.stringify(ligne.empreintes)}`);
-    } else if (attendue.message !== ligne.message) {
+    if (!memeEmpreinte(s.id, attendue.empreintes, ligne.empreintes)) {
+      const tol = TOLERANCES[s.id] === undefined ? "" : ` (tolérance ${TOLERANCES[s.id]})`;
+      ecarts.push(`${s.id}${tol} : ${JSON.stringify(attendue.empreintes)} → ${JSON.stringify(ligne.empreintes)}`);
+    } else if (TOLERANCES[s.id] === undefined
+      ? attendue.message !== ligne.message
+      : messageTolerant(attendue.message) !== messageTolerant(ligne.message)) {
       ecarts.push(`${s.id} : message « ${attendue.message} » → « ${ligne.message} »`);
     }
   }

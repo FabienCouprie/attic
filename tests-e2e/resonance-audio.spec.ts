@@ -1,48 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { spawn } from "child_process";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-let devServer: ReturnType<typeof spawn> | null = null;
-let devUrl = process.env.DEV_URL || "http://localhost:5175";
-
-async function waitForServer(url: string, retries = 60): Promise<void> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch(url);
-      if (res.ok) return;
-    } catch { /* ignore */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Dev server did not start at ${url}`);
-}
-
-test.beforeAll(async () => {
-  if (process.env.DEV_URL) {
-    await waitForServer(devUrl);
-    return;
-  }
-  const port = 5175;
-  devUrl = `http://localhost:${port}`;
-  devServer = spawn("cmd", ["/c", "npm", "run", "dev", "--", "--port", String(port)], {
-    cwd: process.cwd(),
-    stdio: "pipe",
-  });
-  let log = "";
-  devServer.stdout?.on("data", (d) => { log += d.toString(); });
-  devServer.stderr?.on("data", (d) => { log += d.toString(); });
-  for (let i = 0; i < 80; i++) {
-    if (log.includes(`http://localhost:${port}`)) break;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  await waitForServer(devUrl);
-});
-
-test.afterAll(async () => {
-  if (devServer) {
-    devServer.kill("SIGTERM");
-    await new Promise((r) => setTimeout(r, 1000));
-    if (devServer.exitCode === null) devServer.kill("SIGKILL");
-  }
-});
+const devUrl = serveurDeVerification(5228);
 
 test.describe("Resonance Audio effect", () => {
   test("appliquerResonanceAudio renders a non-silent stereo buffer", async ({ page }) => {
@@ -50,7 +9,11 @@ test.describe("Resonance Audio effect", () => {
     await page.waitForSelector(".attic-app", { timeout: 10000 });
     const result = await page.evaluate(async () => {
       try {
-        const { appliquerResonanceAudio } = await import("/src/audio/effets-spectral.ts");
+        // LE MODULE A ÉTÉ SCINDÉ, ET CET IMPORT N'AVAIT PAS SUIVI. La fonction vit dans
+        // `effets-espace.ts` ; le spec la cherchait dans `effets-spectral.ts`, et l'erreur
+        // « appliquerResonanceAudio is not a function » était capturée dans `result.error` sans
+        // jamais être affichée, l'assertion portant sur `result.ok`.
+        const { appliquerResonanceAudio } = await import("/src/audio/effets-espace.ts");
         const length = 44100;
         const sampleRate = 44100;
         const freq = 440;

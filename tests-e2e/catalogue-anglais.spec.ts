@@ -6,48 +6,9 @@
 // projection sont testées à part (`src/ui/libelles-fiche.test.ts`) ; ce test-ci vérifie
 // le point d'appel, que la suite unitaire ne couvre pas — elle n'inclut pas les `.tsx`.
 import { test, expect } from "@playwright/test";
-import { spawn } from "child_process";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-let devServer: ReturnType<typeof spawn> | null = null;
-let devUrl = process.env.DEV_URL || "http://localhost:5181";
-
-async function waitForServer(url: string, retries = 60): Promise<void> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch(url);
-      if (res.ok) return;
-    } catch { /* ignore */ }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`Dev server did not start at ${url}`);
-}
-
-test.beforeAll(async () => {
-  test.setTimeout(180_000);
-  if (process.env.DEV_URL) {
-    await waitForServer(devUrl);
-    return;
-  }
-  const port = 5181;
-  devUrl = `http://localhost:${port}`;
-  devServer = spawn("cmd", ["/c", "npm", "run", "dev", "--", "--port", String(port)], { cwd: process.cwd(), stdio: "pipe" });
-  let log = "";
-  devServer.stdout?.on("data", (d) => { log += d.toString(); });
-  devServer.stderr?.on("data", (d) => { log += d.toString(); });
-  for (let i = 0; i < 80; i++) {
-    if (log.includes(`http://localhost:${port}`)) break;
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  await waitForServer(devUrl);
-});
-
-test.afterAll(async () => {
-  if (devServer) {
-    devServer.kill("SIGTERM");
-    await new Promise((r) => setTimeout(r, 1000));
-    if (devServer.exitCode === null) devServer.kill("SIGKILL");
-  }
-});
+const devUrl = serveurDeVerification(5206);
 
 /** Déplie tout le catalogue et relève chaque nom d'entrée avec son infobulle. */
 async function entreesDuCatalogue(page: import("@playwright/test").Page) {
@@ -69,7 +30,11 @@ async function entreesDuCatalogue(page: import("@playwright/test").Page) {
 // Lettres propres au français : le relevé du garde-fou `anglais-registre.test.ts`, qui
 // montre que l'anglais technique de ces fiches n'en emploie pas — hormis quelques noms
 // propres, dont le tréma reste le même en anglais, et qui sont retirés avant le test.
-const TOLERES = /\b(?:möbius|rössler)\b/gi;
+// ET UN TITRE D'OUVRAGE SE CITE DANS SA LANGUE, ce qu'une prose anglaise fait sans cesser d'être
+// anglaise. « Critères schaefferiens » renvoie au « Traité des objets musicaux » de Pierre
+// Schaeffer, dont le titre n'a pas d'édition anglaise à citer. Le détecteur ne voyait que son accent
+// et comptait l'infobulle pour une notice non traduite : c'est lui qui se trompait, pas elle.
+const TOLERES = /\b(?:möbius|rössler|traité des objets musicaux)\b/gi;
 const ACCENTS = /[àâäçéèêëîïôöùûüÿœæ]/i;
 const enFrancais = (texte: string) => ACCENTS.test(texte.replace(TOLERES, ""));
 

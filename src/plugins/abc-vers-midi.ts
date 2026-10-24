@@ -23,7 +23,11 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Conversion",
     resume: "Lit une partition en notation ABC (mélodie, accords chiffrés, reprises, plusieurs voix) et la rend en MIDI et en audio.",
     resumeEn: "Reads a score in ABC notation (melody, chord symbols, repeats, several voices) and renders it to MIDI and audio.",
-    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte", requis: false }],
+    // LE PORT PORTE LE NOM DE CE QU'IL REÇOIT, comme pour « Texte → MIDI ». Il s'appelait « Texte »
+    // alors que son réglage de repli s'appelle « ABC », et que deux autres nœuds — reprise et
+    // édition — nomment « ABC » le port par lequel ils reçoivent la même chose. Un seul contenu
+    // portait donc deux noms, ce qui est la faute que le relevé des sous-types de texte a mesurée.
+    entrees: [{ nom: "ABC", nomEn: "ABC", type: "texte", requis: false }],
     sorties: [
       { nom: "Audio", type: "audio" },
       { nom: "MIDI", type: "midi" },

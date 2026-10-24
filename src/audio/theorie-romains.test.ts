@@ -8,6 +8,27 @@
 // soit la bonne tonique suivie de trois accords du mode majeur. C'est ce second
 // défaut que ce fichier verrouille.
 import { describe, it, expect } from "vitest";
+import { accordsInconnus } from "./theorie-romains";
+
+describe("les symboles d'accord inconnus", () => {
+  // POURQUOI CETTE FONCTION HABITE ICI. Trois composants de gravure et trois de théorie posent la
+  // même question, et deux lecteurs d'un même symbole ne doivent pas se répondre différemment. Elle
+  // a d'abord été écrite dans `plugins/vexflow-notation.ts`, puis déménagée auprès des chiffres
+  // romains, qui sont déjà ce domicile partagé.
+  it("rend ce qu'aucun accord ne reconnaît, et rien d'autre", () => {
+    expect(accordsInconnus(["C", "Am", "F", "G"])).toEqual([]);
+    expect(accordsInconnus(["Cmaj7", "F#m7b5", "Bb13"])).toEqual([]);
+    expect(accordsInconnus(["Tempo", "90", "C4+E4+G4", "2.000"]))
+      .toEqual(["Tempo", "90", "C4+E4+G4", "2.000"]);
+  });
+
+  it("et c'est Tonal qui le dit, par un champ que personne ne lisait", () => {
+    // LE DÉFAUT D'ORIGINE : le code écrivait `Chord.get(a).symbol ?? a`, or le symbole d'un accord
+    // inconnu est la CHAÎNE VIDE, sur laquelle `??` ne se déclenche pas. Le repli n'était donc
+    // jamais pris, et un symbole étranger traversait sans rien dire.
+    expect(accordsInconnus([""]), "une chaîne vide n'est pas un accord").toEqual([""]);
+  });
+});
 import { Chord, Progression } from "tonal";
 import {
   romainsSelonMode, accordsDepuisRomains, modeDepuisTonalite, normaliserRomains,
