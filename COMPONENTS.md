@@ -62,7 +62,7 @@ Generates a sound from a description in words: an impact, a creak, an ambience, 
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Prompt | text |  |
+| input | Prompt | text (prompt) |  |
 | output | Audio | audio (stereo) |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -86,7 +86,7 @@ This component builds an instrumental backing around an isolated vocal, followin
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
+| input | Plan | text (plan) |  |
 | input | Audio | audio |  |
 | input | Timbre | audio |  |
 | output | Audio | audio (stereo) |  |
@@ -133,10 +133,10 @@ This component writes a song's plan as text: its description, its lyrics, its te
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Description | text |  |
-| input | Lyrics | text |  |
+| input | Lyrics | text (paroles) |  |
 | input | Tempo | control |  |
 | input | Key | text |  |
-| output | Plan | text |  |
+| output | Plan | text (plan) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -159,7 +159,7 @@ This component renders a new version of an audio, following the song plan it rec
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
+| input | Plan | text (plan) |  |
 | input | Audio | audio |  |
 | input | Timbre | audio |  |
 | output | Audio | audio (stereo) |  |
@@ -186,7 +186,7 @@ This component adds music before or after an audio, following the song plan it r
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
+| input | Plan | text (plan) |  |
 | input | Audio | audio |  |
 | input | Timbre | audio |  |
 | output | Audio | audio (stereo) |  |
@@ -213,9 +213,9 @@ This component writes a song's plan from a description, and returns it as text. 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Description | text |  |
-| input | Lyrics | text |  |
-| output | Plan | text |  |
-| output | Lyrics | text |  |
+| input | Lyrics | text (paroles) |  |
+| output | Plan | text (plan) |  |
+| output | Lyrics | text (paroles) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -236,8 +236,8 @@ This node opens a graph loop on a text, and a song's plan is what it is for. The
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
-| output | Plan | text |  |
+| input | Plan | text (plan) |  |
+| output | Plan | text (plan) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -254,8 +254,8 @@ This component renders the audio of a plan written by « Plan a Song ». The pla
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
-| input | Lyrics | text |  |
+| input | Plan | text (plan) |  |
+| input | Lyrics | text (paroles) |  |
 | input | Timbre | audio |  |
 | output | Audio | audio (stereo) |  |
 
@@ -278,7 +278,7 @@ This component repaints a passage of an audio between two instants, and keeps th
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Plan | text |  |
+| input | Plan | text (plan) |  |
 | input | Audio | audio |  |
 | input | Timbre | audio |  |
 | output | Audio | audio (stereo) |  |
@@ -305,8 +305,8 @@ This component writes a song's complete plan from a short sentence, and returns 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Sentence | text |  |
-| output | Plan | text |  |
-| output | Lyrics | text |  |
+| output | Plan | text (plan) |  |
+| output | Lyrics | text (paroles) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -875,7 +875,7 @@ Returns the notes of a chord as dated notes, from the chosen root. The MIDI outp
 |---|---|---|---|
 | output | Audio | audio |  |
 | output | MIDI | MIDI |  |
-| output | Notation | text |  |
+| output | Notation | text (notation) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -1296,7 +1296,7 @@ Returns the degrees of a scale as dated notes, one by one, from the tonic of the
 |---|---|---|---|
 | output | Audio | audio |  |
 | output | MIDI | MIDI |  |
-| output | Notation | text |  |
+| output | Notation | text (notation) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -1589,7 +1589,7 @@ Generates a 512×512 image from a text prompt using SDXS-512 (1-step distilled U
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Prompt | text |  |
+| input | Prompt | text (prompt) |  |
 | output | Image | image |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2155,7 +2155,7 @@ This node takes the four intensities of a tasting and returns an accompanying mu
 |---|---|---|---|
 | output | Audio | audio |  |
 | output | MIDI | MIDI |  |
-| output | Plan | text |  |
+| output | Plan | text (plan) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -2796,7 +2796,7 @@ Reads a score in ABC notation and renders it to MIDI and audio. ABC is a standar
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | ABC | text |  |
+| input | ABC | text (abc) |  |
 | output | Audio | audio |  |
 | output | MIDI | MIDI |  |
 | output | Key | text |  |
@@ -2822,10 +2822,10 @@ Covers an ABC score in another style: melody and chord symbols stay those of the
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | ABC | text | required |
+| input | ABC | text (abc) | required |
 | output | Audio | audio |  |
 | output | MIDI | MIDI |  |
-| output | ABC | text |  |
+| output | ABC | text (abc) |  |
 | output | Report | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -2851,7 +2851,7 @@ Translates Harmonic Analysis output into notation playable by Text → MIDI. « 
 | input | Key | text |  |
 | input | Progression | text |  |
 | input | Detected chords | text |  |
-| output | Notation | text |  |
+| output | Notation | text (notation) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -3195,7 +3195,7 @@ Renders a simple text notation into a MIDI file and synthesized audio. One line 
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Notation | text |  |
+| input | Notation | text (notation) |  |
 | output | Audio | audio |  |
 | output | MIDI | MIDI |  |
 
@@ -5647,7 +5647,7 @@ Generates a full accompaniment in text-to-MIDI format. Connect its « Notation �
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Progression | text |  |
-| output | Notation | text |  |
+| output | Notation | text (notation) |  |
 | output | Chords | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -9569,7 +9569,7 @@ This node engraves a score from a notation text, and returns one page as SVG. Fo
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Notation | text |  |
+| input | Notation | text (notation) |  |
 | output | SVG | text |  |
 | output | SVG file | image |  |
 
@@ -9593,7 +9593,7 @@ Writes a MIDI file in ABC notation, so that a melody produced here (Groove Box, 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | MIDI | MIDI | required |
-| output | ABC | text |  |
+| output | ABC | text (abc) |  |
 | output | Key | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -9705,7 +9705,7 @@ Generates a musical staff (SVG) from a text notation. Format: note/octave/durati
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Notation | text |  |
+| input | Notation | text (notation) |  |
 | output | SVG | text |  |
 | output | SVG file | image |  |
 
@@ -11643,9 +11643,9 @@ Edits an ABC score with a local language model (Ollama), in a way that prevents 
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | ABC | text | required |
+| input | ABC | text (abc) | required |
 | input | Instruction | text |  |
-| output | ABC | text |  |
+| output | ABC | text (abc) |  |
 | output | Report | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -11691,7 +11691,7 @@ Generates text via AI using DistilGPT-2 (Transformers.js, ONNX). Connect a « Te
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Prompt | text |  |
+| input | Prompt | text (prompt) |  |
 | output | Text | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -11801,7 +11801,7 @@ Generates multilingual lyrics via AI in two steps: (1) DistilGPT-2 generates lyr
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Prompt | text |  |
+| input | Prompt | text (prompt) |  |
 | output | Text | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -11838,7 +11838,7 @@ Queries a local Ollama server (port 11434). Install Ollama (ollama.com), run « 
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Prompt | text |  |
+| input | Prompt | text (prompt) |  |
 | output | Text | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -11876,7 +11876,7 @@ Generates a node graph on the canvas from a natural language prompt. Enter a des
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Prompt | text |  |
+| input | Prompt | text (prompt) |  |
 | output | Text | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -11896,7 +11896,7 @@ Generates text via AI using the Qwen2.5-0.5B model (Transformers.js, ONNX). Conn
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Prompt | text |  |
+| input | Prompt | text (prompt) |  |
 | output | Text | text |  |
 
 | Parameter | Type | Default | Values | Description |

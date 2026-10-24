@@ -28,10 +28,16 @@ export function validerArete(source: any, target: any, edge: Edge | Connection):
   const si = indexHandle(edge.sourceHandle);
   const ti = indexHandle(edge.targetHandle);
   if (si === null || ti === null) return false;
-  const typeS = defS.sorties[si]?.type;
-  const typeT = defT.entrees[ti]?.type;
+  const portS = defS.sorties[si];
+  const portT = defT.entrees[ti];
+  const typeS = portS?.type;
+  const typeT = portT?.type;
   if (!typeS || !typeT) return false;
-  return registreUI().fluxCompatibles(typeS, typeT);
+  // LES SOUS-TYPES SONT PASSÉS ICI, ET NULLE PART AILLEURS. Poser une arête est un geste : on peut
+  // le refuser sans rien détruire. La validation d'un graphe à l'exécution, elle, appelle la même
+  // fonction SANS eux, et accepte donc ce qu'elle a toujours accepté : un graphe enregistré avant
+  // cette règle garde ses câbles, et `filtrerAretesInvalides` ne lui en retire aucun.
+  return registreUI().fluxCompatibles(typeS, typeT, portS?.sousType, portT?.sousType);
 }
 
 export function filtrerAretesInvalides(nodes: any[], edges: Edge[]): Edge[] {

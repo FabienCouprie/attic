@@ -171,7 +171,7 @@ function lienDicte(nodes: any[], source: string, target: string):
 { sourceHandle: string; targetHandle: string; type: "arete-personnalisee"; style: { stroke: string; strokeWidth: number } } | null {
   const paire = premierLienCompatible(
     portsDe(nodes, source), portsDe(nodes, target),
-    (s, e) => registreUI().fluxCompatibles(s, e),
+    (s, e) => registreUI().fluxCompatibles(s.type, e.type, s.sousType, e.sousType),
   );
   if (!paire) return null;
   const sourceHandle = `out:${paire.sortie}`;
@@ -551,7 +551,7 @@ function Atelier() {
         const cbs = callbacksNoeud();
         const plan = planDeGrapheEngendre(spec, noeudsRef.current, `${nodeId}-${Date.now()}`,
           (s, c) => premierLienCompatible(portsDeFiche(s), portsDeFiche(c),
-            (a, b) => registreUI().fluxCompatibles(a, b)));
+            (a, b) => registreUI().fluxCompatibles(a.type, b.type, a.sousType, b.sousType)));
         for (const c of plan.cycles) {
           console.warn(`[attic] Prompt → graphe : arête ${c.source} → ${c.target} écartée, elle refermerait un cycle.`);
         }

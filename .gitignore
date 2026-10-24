@@ -211,3 +211,17 @@ vk_swiftshader_icd.json
 # écrite sort du dépôt. « npm run docs:lignes » l'engendre quand on veut la lire.
 
 LINE-COUNT.md
+
+# LA DESCRIPTION EN DONNEES SORT DU DEPOT POUR LA MEME RAISON, et elle pese huit cent cinq kilo-
+
+# octets : toute branche qui touche un port ou un reglage la reecrirait entierement. Ce qu'elle
+
+# projette est tenu par « src/docs/verbes.test.ts », qui la relit sur le registre vivant a chaque
+
+# passe ; seule la copie ecrite sort du depot. « npm run decrire » l'engendre quand on en veut une.
+
+DESCRIPTION.json
+
+# Le rapport d'un graphe relu par « npm run valider » : une sortie de travail, pas un livrable.
+
+VALIDATION.txt

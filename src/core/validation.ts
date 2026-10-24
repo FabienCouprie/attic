@@ -73,11 +73,41 @@ interface DefPourValidation {
   sorties: import("./types").PortDef[];
 }
 
+/**
+ * La même validation, mais aussi SÉVÈRE QUE LA POSE D'UNE ARÊTE.
+ *
+ * TROIS SÉVÉRITÉS, ET ELLES NE SE CONFONDENT PAS :
+ *
+ *   lire un graphe enregistré   le transport seul, par `validerGraphe` ci-dessous
+ *   poser une arête             le transport ET le contenu, par `ui/validerGraphe.ts`
+ *   ÉCRIRE un graphe            le transport et le contenu, et c'est cette fonction
+ *
+ * POURQUOI LA TROISIÈME EXISTE. Un graphe écrit à la main, ou par un agent, n'a jamais rencontré la
+ * souris : rien ne lui a refusé le câble qui n'a pas de sens, et la validation de lecture est
+ * volontairement permissive pour ne retirer aucun câble à qui rouvre son travail. Entre les deux,
+ * personne ne relisait un graphe AVANT de le lancer. C'est ce que fait celle-ci.
+ */
+export function validerAssemblage(
+  noeuds: NoeudG[],
+  aretes: AreteG[],
+  getDef: (ficheId: string) => DefPourValidation | undefined,
+  fluxCompatibles: (sourceId: string, cibleId: string, sousTypeSource?: string, sousTypeCible?: string) => boolean,
+): ResultatValidationGraphe {
+  return validerGraphe(noeuds, aretes, getDef, (s, c) => fluxCompatibles(s, c), fluxCompatibles);
+}
+
 export function validerGraphe(
   noeuds: NoeudG[],
   aretes: AreteG[],
   getDef: (ficheId: string) => DefPourValidation | undefined,
   fluxCompatibles: (sourceId: string, cibleId: string) => boolean,
+  /**
+   * La règle SÉVÈRE, quand il y en a une : elle reçoit les sous-types en plus des types.
+   *
+   * ELLE EST FACULTATIVE, ET C'EST TOUTE LA SÛRETÉ DU DISPOSITIF. Sans elle, cette fonction est
+   * exactement ce qu'elle a toujours été, et la lecture d'un graphe enregistré n'y perd rien.
+   */
+  avecContenu?: (sourceId: string, cibleId: string, sousTypeSource?: string, sousTypeCible?: string) => boolean,
 ): ResultatValidationGraphe {
   const aretesInvalides: AreteG[] = [];
   const noeudsAffectes = new Map<string, string[]>();
@@ -108,9 +138,18 @@ export function validerGraphe(
     const typeCible = defCible.entrees[ti]?.type;
     if (!typeSource || !typeCible) continue;
 
-    if (!fluxCompatibles(typeSource, typeCible)) {
+    const sousTypeSource = defSource.sorties[si]?.sousType;
+    const sousTypeCible = defCible.entrees[ti]?.sousType;
+    const va = avecContenu
+      ? avecContenu(typeSource, typeCible, sousTypeSource, sousTypeCible)
+      : fluxCompatibles(typeSource, typeCible);
+    if (!va) {
       aretesInvalides.push(ar);
-      const msg = `connexion illégale : ${typeSource} → ${typeCible} (${ar.source} → ${ar.target})`;
+      // LE MESSAGE NOMME LE CONTENU QUAND C'EST LUI QUI REFUSE, sans quoi « texte → texte » serait
+      // le seul mot d'un refus incompréhensible.
+      const dit = (t: string, st?: string) => (st ? `${t}:${st}` : t);
+      const msg = `connexion illégale : ${dit(typeSource, avecContenu && sousTypeSource)} → `
+        + `${dit(typeCible, avecContenu && sousTypeCible)} (${ar.source} → ${ar.target})`;
       const existant = noeudsAffectes.get(ar.target) ?? [];
       existant.push(msg);
       noeudsAffectes.set(ar.target, existant);

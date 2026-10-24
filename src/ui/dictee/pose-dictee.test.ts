@@ -102,7 +102,8 @@ describe("le nœud qu'un nom désigne", () => {
 describe("le premier lien compatible", () => {
   const p = (...types: string[]) => types.map((type) => ({ type }));
   // La compatibilité du dépôt, réduite à ce que ces cas en demandent : même type, et rien d'autre.
-  const memeType = (s: string, e: string) => s === e;
+  // LE PRÉDICAT REÇOIT LES PORTS, depuis que le contenu d'un texte se lit sur leur sous-type.
+  const memeType = (s: { type: string }, e: { type: string }) => s.type === e.type;
 
   it("PREND LE PORT AUDIO D'UN RENDU DE SÉQUENCE, qui n'est jamais le premier", () => {
     // C'est le cas qui rendait la chaîne la plus naturelle indictable. `sortie-audio.ts` ajoute

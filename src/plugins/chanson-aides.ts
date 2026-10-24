@@ -153,9 +153,17 @@ export function parametresRenduAvec(remplacements: Record<string, Record<string,
   return PARAMETRES_RENDU.map((p) => (remplacements[p.nom] ? { ...p, ...remplacements[p.nom] } : p));
 }
 
-/** Les trois entrées que tout rendu partant d'un audio existant partage. */
+/**
+ * Les trois entrées que tout rendu partant d'un audio existant partage.
+ *
+ * QUATRE FICHES LES PARTAGENT, et c'est ce qui a fait manquer le sous-type du plan au premier
+ * passage : la déclaration ne vit dans aucun tableau `entrees`, elle est posée ici et reprise par
+ * « Reprendre la chanson », « Retoucher la chanson », « Prolonger la chanson » et « Accompagner une
+ * voix ». Le garde de `plugins/sous-types-texte.test.ts` lit le REGISTRE, pas la source : il les a
+ * nommées toutes les quatre.
+ */
 export const ENTREES_SOURCE = [
-  { nom: "Plan", nomEn: "Plan", type: "texte" as const },
+  { nom: "Plan", nomEn: "Plan", type: "texte" as const, sousType: "plan" as const },
   { nom: "Audio", nomEn: "Audio", type: "audio" as const },
   { nom: "Timbre", nomEn: "Timbre", type: "audio" as const, requis: false },
 ];

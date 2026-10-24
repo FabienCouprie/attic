@@ -16,11 +16,11 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Conversion",
     resume: "Reprend une partition ABC dans un autre style : même mélodie, mêmes accords, avec un accompagnement et une basse, ballade, pop, valse, marche, bossa nova.",
     resumeEn: "Covers an ABC score in another style: same melody, same chords, with an accompaniment and a bass, ballad, pop, waltz, march, bossa nova.",
-    entrees: [{ nom: "ABC", type: "texte", requis: true }],
+    entrees: [{ nom: "ABC", type: "texte", sousType: "abc", requis: true }],
     sorties: [
       { nom: "Audio", type: "audio" },
       { nom: "MIDI", type: "midi" },
-      { nom: "ABC", type: "texte" },
+      { nom: "ABC", type: "texte", sousType: "abc" },
       { nom: "Rapport", nomEn: "Report", type: "texte" },
     ],
     parametres: [

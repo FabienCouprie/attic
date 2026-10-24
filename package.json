@@ -70,7 +70,9 @@
     "modeles:publier": "node scripts/modeles.cjs --publier",
     "docs:dependances": "cross-env ECRIRE_DEPENDANCES=1 vitest run src/docs/generer-dependances-audio.test.ts",
     "docs:modulables": "cross-env ECRIRE_MODULABLES=1 vitest run src/docs/generer-modulables.test.ts",
-    "docs:lignes": "cross-env ECRIRE_LIGNES=1 vitest run src/docs/generer-compte-lignes.test.ts"
+    "docs:lignes": "cross-env ECRIRE_LIGNES=1 vitest run src/docs/generer-compte-lignes.test.ts",
+    "decrire": "cross-env ECRIRE_DESCRIPTION=1 vitest run src/plugins/verbes.test.ts",
+    "valider": "vitest run src/plugins/verbes.test.ts"
   },
   "build": {
     "appId": "com.attic.audio",

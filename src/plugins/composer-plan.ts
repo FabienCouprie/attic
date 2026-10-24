@@ -135,13 +135,13 @@ export const fiches = ([
       + "rendered. The message gives the tempo and key written in, as well as the target length.",
     entrees: [
       { nom: "Description", nomEn: "Description", type: "texte", requis: false },
-      { nom: "Paroles", nomEn: "Lyrics", type: "texte", requis: false },
+      { nom: "Paroles", nomEn: "Lyrics", type: "texte", sousType: "paroles", requis: false },
       // LE TEMPO ARRIVE EN NOMBRE SUR UN PORT DE CONTRÔLE, comme pour « Transcription MIDI » : un
       // détecteur en rend un, et le recopier à la main serait une occasion de se tromper.
       { nom: "Tempo", nomEn: "Tempo", type: "controle", requis: false },
       { nom: "Tonalité", nomEn: "Key", type: "texte", requis: false },
     ],
-    sorties: [{ nom: "Plan", nomEn: "Plan", type: "texte" }],
+    sorties: [{ nom: "Plan", nomEn: "Plan", type: "texte", sousType: "plan" }],
     parametres: [
       { nom: "Description", nomEn: "Description", type: "texte",
         defaut: "a calm acoustic guitar ballad, warm and slow",

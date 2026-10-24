@@ -29,7 +29,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [
       { nom: "Audio", nomEn: "Audio", type: "audio" },
       { nom: "MIDI", nomEn: "MIDI", type: "midi" },
-      { nom: "Plan", nomEn: "Plan", type: "texte" },
+      { nom: "Plan", nomEn: "Plan", type: "texte", sousType: "plan" },
     ],
     parametres: [
       { nom: "Sucré", nomEn: "Sweet", type: "curseur", plage: [0, 100], pas: 1, defaut: 70, unite: "%",

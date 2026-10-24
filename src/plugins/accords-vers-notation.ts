@@ -73,7 +73,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Progression", nomEn: "Progression", type: "texte", requis: false },
       { nom: "Accords détectés", nomEn: "Detected chords", type: "texte", requis: false },
     ],
-    sorties: [{ nom: "Notation", nomEn: "Notation", type: "texte" }],
+    sorties: [{ nom: "Notation", nomEn: "Notation", type: "texte", sousType: "notation" }],
     parametres: [
       { nom: "Source", nomEn: "Source", type: "choix",
         options: ["Accords détectés", "Progression"], optionsEn: ["Detected chords", "Progression"],

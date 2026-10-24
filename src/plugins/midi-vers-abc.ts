@@ -19,7 +19,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Writes a MIDI file in ABC notation: a text score, readable and editable by a language model.",
     entrees: [{ nom: "MIDI", type: "midi", requis: true }],
     sorties: [
-      { nom: "ABC", type: "texte" },
+      { nom: "ABC", type: "texte", sousType: "abc" },
       { nom: "Tonalité", nomEn: "Key", type: "texte" },
     ],
     parametres: [
