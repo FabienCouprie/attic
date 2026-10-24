@@ -13,8 +13,9 @@
 // comportement d'origine doit rester intact. Le test se passe donc quand le miroir est absent, au
 // lieu d'échouer sur une machine qui ne l'a pas.
 import { expect, test } from "@playwright/test";
+import { serveurDeVerification } from "./serveur-de-developpement";
 
-const devUrl = process.env.DEV_URL || "http://localhost:5175";
+const devUrl = serveurDeVerification(5235);
 const MIROIR = "/oonx/kokoro-82m/onnx-community/Kokoro-82M-v1.0-ONNX/";
 
 const CAS = [

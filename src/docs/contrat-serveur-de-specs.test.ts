@@ -57,6 +57,31 @@ describe("le serveur des specs de bout en bout", () => {
     ].join("\n")).toEqual([]);
   });
 
+  // ET AUCUN SPEC NE NOMME SON SERVEUR, ce qui est le second tour de cette règle.
+  //
+  // Quatre specs n'amorçaient rien du tout : `barre-stable`, `depot-palette`, `kokoro-provenance` et
+  // `mesure-hors-fil` lisaient `process.env.DEV_URL || "http://localhost:5175"` et attendaient qu'un
+  // serveur tourne déjà — celui de Fabien. Ils ne pouvaient donc pas entrer en intégration continue,
+  // et sur son poste ils mesuraient sur SON serveur. La règle du dessus ne les voyait pas : ils
+  // n'amorçaient pas vite, ils ne faisaient rien.
+  //
+  // MESURÉ AVANT DE LES TOUCHER, puis après : dix cas verts sur un serveur partagé, dix cas verts
+  // chacun sur le sien, pour dix secondes de plus — le prix de quatre allumages à froid. Les
+  // quarante-trois specs du dossier se répartissent maintenant en trente-sept qui passent par l'aide
+  // et six qui lancent Electron, et aucun ne nomme une adresse.
+  it("AUCUN SPEC NE NOMME SON SERVEUR : ni `DEV_URL`, ni une adresse en dur", () => {
+    const coupables = specs.filter((nom) => {
+      const source = readFileSync(resolve(DOSSIER, nom), "utf8");
+      return /DEV_URL/.test(source) || /localhost:\d/.test(source);
+    });
+    expect(coupables, [
+      "Ces specs nomment eux-mêmes leur serveur au lieu de le demander à l'aide.",
+      "Un spec qui attend qu'un serveur tourne déjà ne peut pas entrer en intégration continue, et",
+      "sur un poste de développement il mesure sur le serveur de quelqu'un d'autre.",
+      "`serveurDeVerification` est le seul endroit où `DEV_URL` se lit.",
+    ].join("\n")).toEqual([]);
+  });
+
   it("DEUX SPECS NE PARTAGENT PAS UN PORT", () => {
     const ports = portsDemandes();
     const parPort = new Map<number, string[]>();
