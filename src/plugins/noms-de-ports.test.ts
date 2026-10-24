@@ -42,13 +42,26 @@ const DIVERGENCES_DECLAREES: Record<string, string> = {
     "Le réglage n'est pas le repli du port : l'entrée reçoit la donnée à traiter, et le réglage porte le programme qui la traite.",
   "tonal-progression":
     "Le réglage n'est pas le repli du port : l'entrée reçoit la tonique, et le réglage la suite de degrés.",
-  "gpt2-paroles":
-    "DETTE. Le port EST le repli du réglage « Prompt » — l'exécuteur écrit `ctx.entree(0) || ctx.paramTexte(\"Prompt\")` —, et deux autres nœuds nomment déjà « Prompt » le port par lequel ils reçoivent la même chose. À payer avec la famille du prompt, qui n'est pas celle de la notation.",
-  "nllb-paroles":
-    "DETTE. Même faute que « DistilGPT-2 », et même remède : le port est le repli de « Prompt », et le nom existe déjà ailleurs.",
-  "qwen2.5-lyrics":
-    "DETTE. Troisième de la famille du prompt, et celle que le catalogue engendré ne montrait pas : son identifiant porte un point, que le relevé lisait mal. Le registre vivant, lui, la rend.",
 };
+
+/**
+ * Les noms de contenu CANONIQUES, et la règle qu'ils imposent.
+ *
+ * QUAND UNE FICHE PORTE UN RÉGLAGE TEXTE DE CE NOM ET QU'ELLE A UNE ENTRÉE TEXTE, c'est ce nom que
+ * l'entrée doit porter : le réglage est le repli du port, et le contenu a déjà un nom dans le
+ * catalogue. Une fiche SANS entrée texte est hors de cette règle — son prompt ne se branche pas, il
+ * se saisit, et « Pochette » comme « Film du cercle » sont dans ce cas.
+ *
+ * POURQUOI CETTE SECONDE RÈGLE EXISTE, ET C'EST UNE MESURE QUI L'A IMPOSÉE. Celle du dessus ne
+ * regarde que les fiches à UNE entrée texte et UN réglage texte : elle avait donc attrapé trois des
+ * cinq nœuds de la famille du prompt, et laissé passer « LLM Ollama » et « Prompt → graphe », qui
+ * portent DEUX réglages texte — le prompt et le modèle. Un garde qui ne tient que le cas simple
+ * laisse la faute s'installer là où la fiche est un peu plus fournie.
+ *
+ * TROIS NOMS SEULEMENT, et ils ne sont pas choisis : ce sont ceux que le relevé des sous-types de
+ * texte a mesurés. La liste se complétera au fil de ce qu'on mesure, jamais par symétrie.
+ */
+const NOMS_CANONIQUES: readonly string[] = ["Prompt", "Notation", "ABC"];
 
 const nomsTexte = (ports: readonly { nom: string; type?: string }[] | undefined) =>
   (ports ?? []).filter((p) => p.type === "texte").map((p) => p.nom);
@@ -67,6 +80,25 @@ describe("les noms de port", () => {
       "Soit le port est mal nommé — il doit dire CE QU'IL REÇOIT, et non son type —,",
       "soit le réglage n'est pas ce repli, et la fiche le déclare ici avec sa raison.",
     ].join("\n")).toEqual(Object.keys(DIVERGENCES_DECLAREES).sort());
+  });
+
+  it("UN CONTENU QUI A DÉJÀ UN NOM LE PORTE DES DEUX CÔTÉS, réglage et port", () => {
+    // DÉFAUT REPLANTÉ en rendant son ancien port « Texte » à l'un des cinq nœuds du prompt : ce cas
+    // le nomme. Sur « LLM Ollama » et « Prompt → graphe », il est le SEUL à tomber — la règle du
+    // dessus ne les regarde pas, puisqu'ils portent deux réglages texte.
+    const fautifs: string[] = [];
+    for (const f of toutesLesFiches as any[]) {
+      const entrees = nomsTexte(f.entrees);
+      if (entrees.length === 0) continue;
+      for (const canon of nomsTexte(f.parametres).filter((n) => NOMS_CANONIQUES.includes(n))) {
+        if (!entrees.includes(canon)) fautifs.push(`${f.id} : réglage « ${canon} », entrées [${entrees.join(", ")}]`);
+      }
+    }
+    expect(fautifs, [
+      "Une fiche porte un réglage texte dont le nom est celui d'un contenu déjà nommé",
+      "dans le catalogue, mais son entrée texte porte un autre nom.",
+      "Le réglage est le repli du port : les deux disent la même chose, ils portent le même nom.",
+    ].join("\n")).toEqual([]);
   });
 
   it("et chaque divergence déclarée porte une raison écrite", () => {

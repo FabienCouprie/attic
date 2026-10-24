@@ -11640,7 +11640,7 @@ Generates text via AI using DistilGPT-2 (Transformers.js, ONNX). Connect a « Te
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Text | text |  |
+| input | Prompt | text |  |
 | output | Text | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -11750,7 +11750,7 @@ Generates multilingual lyrics via AI in two steps: (1) DistilGPT-2 generates lyr
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Text | text |  |
+| input | Prompt | text |  |
 | output | Text | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -11787,7 +11787,7 @@ Queries a local Ollama server (port 11434). Install Ollama (ollama.com), run « 
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Text | text |  |
+| input | Prompt | text |  |
 | output | Text | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -11825,7 +11825,7 @@ Generates a node graph on the canvas from a natural language prompt. Enter a des
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Text | text |  |
+| input | Prompt | text |  |
 | output | Text | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -11845,7 +11845,7 @@ Generates text via AI using the Qwen2.5-0.5B model (Transformers.js, ONNX). Conn
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Text | text |  |
+| input | Prompt | text |  |
 | output | Text | text |  |
 
 | Parameter | Type | Default | Values | Description |
