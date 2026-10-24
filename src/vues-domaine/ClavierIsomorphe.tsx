@@ -18,9 +18,10 @@ import { NodeResizer } from "@xyflow/react";
 import { useI18n, traduire, valeurCanoniqueChoix } from "../i18n";
 import { accordageEgal, degresParPeriode, decrireAccordage, type Accordage } from "../audio/accordage";
 import { nomNote } from "../audio/nom-note";
-import { rendreSequence } from "../audio/midi-sequence";
+import { gainDeNote, rendreSequence } from "../audio/midi-sequence";
 import { reseau, sautDeRangee, tableDuReseau, RANGEES } from "../audio/clavier-isomorphe";
 import { useClavierJouable } from "./clavier-jouable";
+import { ecouterTampon } from "../ui/niveau-ecoute";
 import type { VueProps } from "../ui/registre-vues";
 
 /** De combien de tours on peut s'éloigner de la tonique, de part et d'autre. */
@@ -75,20 +76,24 @@ export function ClavierIsomorphe({ id, data, def }: VueProps) {
   // ─── Le son d'une touche : la synthèse interne, continue par construction ───
   const ctxRef = useRef<AudioContext | null>(null);
   function getCtx() { if (!ctxRef.current) ctxRef.current = new AudioContext(); return ctxRef.current; }
-  const volume = Math.max(0, Math.min(100, Number(params?.["Volume"] ?? 80) || 0)) / 100;
-  const volumeRef = useRef(volume);
-  volumeRef.current = volume;
+  const volumeRef = useRef(80);
+  volumeRef.current = Number(params?.["Volume"] ?? 80);
 
   const clavier = useClavierJouable(id, (note, velocite) => {
+    // LE NIVEAU EST CELUI DU RENDU, par la formule que `audio/midi-sequence.ts` emploie pour la
+    // sortie « Audio » : ce qu'on entend en jouant est ce que le nœud rendra. Un facteur écrit ici
+    // aurait fait du jeu en direct une approximation de sa propre sortie.
+    const niveau = gainDeNote(velocite, volumeRef.current);
+    if (niveau <= 0) return { arreter: () => {} };
     const ctx = getCtx();
     const osc = ctx.createOscillator(), gain = ctx.createGain();
     osc.type = "triangle";
     // LA HAUTEUR EST FRACTIONNAIRE, et c'est tout l'objet : la conversion est continue, donc un
     // degré qui ne tombe pas sur un demi-ton sonne à sa place et non à celle du demi-ton voisin.
     osc.frequency.value = 440 * 2 ** ((note - 69) / 12);
-    const niveau = 0.12 * (velocite / 127) * volumeRef.current;
     gain.gain.setValueAtTime(niveau, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+    // La descente garde sa forme, deux décades, quel que soit le niveau de départ.
+    gain.gain.exponentialRampToValueAtTime(niveau * 0.01, ctx.currentTime + 1.2);
     osc.connect(gain).connect(ctx.destination);
     osc.start(); osc.stop(ctx.currentTime + 1.4);
     return { arreter: () => { try { osc.stop(); } catch { /* une voix déjà morte */ } } };
@@ -99,20 +104,17 @@ export function ClavierIsomorphe({ id, data, def }: VueProps) {
     }, []),
   });
 
-  // LE NIVEAU EST CELUI DU RÉGLAGE DÉCLARÉ, et c'est l'exception écrite de `ui/niveau-ecoute.ts` :
-  // « Volume » est visible, documenté, et il gouverne ce qui s'entend sous les doigts comme ce que
-  // la sortie « Audio » rendra. Poser `NIVEAU_ECOUTE` par-dessus ferait dire deux choses à un même
-  // réglage, et ce qu'on entend en jouant ne serait plus ce qui sort.
+  // CE BOUTON EST UN LECTEUR, ET J'AVAIS LU L'EXCEPTION À L'ENVERS. J'avais écrit ici que
+  // « Volume » suffisait, étant un réglage déclaré. L'exception de `ui/niveau-ecoute.ts` vise un
+  // lecteur dont le niveau EST le réglage d'écoute ; « Volume » règle le niveau du son PRODUIT, celui
+  // que la sortie « Audio » porte aussi. Les deux se superposent donc, comme le `volume` d'un élément
+  // audio se superpose au fichier qu'il joue : le rendu garde son niveau, l'écoute a le sien.
   async function rejouer() {
     const notes = clavier.seqRef.current.filter((s) => s.fin > s.debut);
     if (notes.length === 0) return;
     try {
       const buf = await rendreSequence(notes, "FM/Oscillateurs", Number(params?.["Volume"] ?? 80));
-      const ctx = getCtx();
-      const source = ctx.createBufferSource();
-      source.buffer = buf;
-      source.connect(ctx.destination);
-      source.start();
+      ecouterTampon(getCtx(), buf);
     } catch (e) {
       console.error("[attic] Clavier isomorphe : rejeu impossible", e);
     }

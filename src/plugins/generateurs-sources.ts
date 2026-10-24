@@ -37,6 +37,13 @@ export const fiches: FicheAudio[] = ([
       { nom:"Tempo", nomEn:"Tempo", type:"curseur", plage:[40,240], defaut:120, unite:"BPM" },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
     ],
+    // UN CLAVIER OÙ RIEN N'A ENCORE ÉTÉ JOUÉ N'EST PAS EN ERREUR, et il le disait : posé sur le
+    // canevas puis lancé, le nœud affichait « Erreur · Aucune séquence. » avant que personne n'ait
+    // touché une touche. Le filet du moteur lit « tout nul sur un nœud à sorties », et ce drapeau
+    // est ce qui le désarme. LE CHEMIN D'ÉCHEC, LUI, SE DÉCLARE MAINTENANT : son `erreur: true`
+    // n'était pas nécessaire tant que la nullité suffisait à le signaler, et le serait devenu
+    // silencieux sans lui.
+    sortieNullePermise: true,
     async executer(ctx: any) {
       console.log("[attic] Clavier mélodie : exécution démarrée");
       const notes = ctx.noeud.data.sequenceNotes as NoteEvenement[] | undefined;
@@ -53,7 +60,11 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [buf, midiFile] };
       } catch (e: any) {
         console.error("[attic] Clavier mélodie : erreur", e);
-        return { valeurs:[null, null], message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
+        // `erreur: true` EXPLICITE, depuis que la nullité ne suffit plus à signaler l'échec : le
+        // drapeau `sortieNullePermise` désarme le filet du moteur pour le cas légitime, donc celui-ci
+        // doit le dire lui-même. Sans cette ligne, une synthèse qui échoue passerait pour un clavier
+        // au repos.
+        return { valeurs:[null, null], erreur: true, message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
       }
     },
   },

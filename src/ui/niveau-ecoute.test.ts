@@ -98,6 +98,60 @@ describe("le niveau d'écoute d'un composant", () => {
     }
   });
 
+  // ─── Le garde qui manquait, et les trois boutons qui lui ont échappé ───
+  //
+  // LES DEUX CAS PRÉCÉDENTS NE REGARDENT QUE LES BALISES `<audio>` ET LA LECTURE VIVE DU MONTAGE.
+  // Or un bouton « Rejouer » ne passe par aucune balise : il monte trois lignes de Web Audio et
+  // branche sa source sur la destination. TROIS d'entre eux y échappaient, un par clavier jouable,
+  // chacun ouvrant à la pleine puissance de son rendu. Ils passent désormais par `ecouterTampon`.
+  //
+  // LA FORME EST CE QUI SE MESURE : une ligne qui atteint la destination doit nommer un gain sur
+  // elle-même, ou passer par le point d'entrée commun. Les trois exceptions ci-dessous portent leur
+  // raison, et deux d'entre elles ne sont pas des lecteurs.
+  // L'EXCEPTION EST UN COMPTE, ET NON UN NOM DE FICHIER. Exempter un fichier entier aurait couvert
+  // les deux boutons « Rejouer » qui vivent justement dans celui des claviers, à côté de la touche
+  // jouée : leurs lignes sont de la même forme, et rien ne les distingue à la lecture. Le compte,
+  // lui, bouge dès qu'une ligne s'ajoute, et le cas la nomme alors par son fichier.
+  const DESTINATION_SANS_GAIN = new Map([
+    ["src\\vues-domaine\\hooks\\useLectureVive.ts", { combien: 1,
+      raison: "le gain d'écoute du Montage, nommé « g » dans sa fabrique : son fichier est tenu par le cas de la lecture vive, juste en dessous" }],
+    ["src\\ui\\demo\\useRealisateurDemo.tsx", { combien: 1,
+      raison: "la visite guidée, qui n'est pas un lecteur de nœud : elle joue ses propres sons de démonstration, et son niveau est celui de la démonstration" }],
+    ["src\\vues-domaine\\vues-claviers.tsx", { combien: 1,
+      raison: "la touche jouée au SoundFont, qui est l'INSTRUMENT et non un lecteur : son niveau est celui que le rendu du nœud aura, ce qui est la règle de clavier-son.ts" }],
+  ]);
+
+  /** Les lignes d'un fichier qui atteignent une destination sans nommer de gain. */
+  const sansGain = (texte: string) => texte.split("\n").filter((ligne) =>
+    /\.connect\(\s*\w+\.destination\s*\)/.test(ligne)
+    // Un gain nommé sur la ligne, ou le point d'entrée commun : les deux formes légitimes.
+    && !/\bgain\b|createGain|ecouterTampon/.test(ligne));
+
+  it("AUCUN SON NE REJOINT LA DESTINATION SANS GAIN, et trois boutons le faisaient", () => {
+    const fautifs: string[] = [];
+    for (const { f, texte } of sources) {
+      const lignes = sansGain(texte);
+      const permis = DESTINATION_SANS_GAIN.get(f)?.combien ?? 0;
+      if (lignes.length > permis) {
+        fautifs.push(`${f} : ${lignes.length} ligne(s) sans gain pour ${permis} permise(s) · `
+          + lignes.map((l) => l.trim().slice(0, 48)).join(" | "));
+      }
+    }
+    expect(fautifs, "jouer par « ecouterTampon », ou poser un gain nommé sur la ligne").toEqual([]);
+  });
+
+  it("et chacune des trois exceptions porte sa raison, et son compte est exact", () => {
+    for (const [f, { combien, raison }] of DESTINATION_SANS_GAIN) {
+      const trouve = sources.find((s) => s.f === f);
+      expect(trouve, `${f} n'existe plus : retirer l'exception`).toBeTruthy();
+      expect(raison.length, `${f} : écrire pourquoi cette ligne n'a pas de gain`).toBeGreaterThan(40);
+      // UNE EXCEPTION QUI N'A PLUS D'OBJET EST UNE DÉROGATION OUVERTE : si la ligne disparaît, le
+      // compte permis doit disparaître avec elle, sans quoi il couvrirait la suivante en silence.
+      expect(sansGain(trouve!.texte).length, `${f} : le compte permis n'est plus celui du fichier`)
+        .toBe(combien);
+    }
+  });
+
   it("VAUT AUSSI POUR UNE ÉCOUTE MONTÉE EN DIRECT, qui est un lecteur comme un autre", () => {
     // Le graphe vivant du Montage ne passe pas par un élément audio : sans cette assertion, le seul
     // lecteur du dépôt qui ne soit pas une balise échapperait aux deux cas ci-dessus.

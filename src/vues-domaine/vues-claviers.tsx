@@ -10,13 +10,14 @@ import { useI18n, traduire } from "../i18n";
 import { nomNote } from "./clavier-disposition";
 import { TouchesClavier, useClavierJouable } from "./clavier-jouable";
 import { useStatut } from "../ui/statuts";
+import { ecouterTampon } from "../ui/niveau-ecoute";
 import { parametresLecture, rendreNotes, voixPourNote, type Banque } from "../audio/clavier-banque";
 import { chargerSfz, dossierDe } from "../audio/sfz";
 import { banqueVive, oublierBanque } from "../audio/banques-vives";
 import { decodeurElectron } from "../plugins/clavier-sfz";
 import { DUREE_NOTE_LIVE, instrumentClavier, modeRenduClavier, volumeClavier } from "./clavier-son";
 import { sf2Chargee } from "../plugins/soundfontGlobal";
-import { rendreSequence } from "../audio/midi-sequence";
+import { gainDeNote, rendreSequence } from "../audio/midi-sequence";
 import { ClavierApprentissage as VueClavierApprentissage } from "./ClavierApprentissage";
 import { INSTRUMENTS_ORCHESTRE } from "../audio/csound-orchestre";
 import type { VueProps } from "../ui/registre-vues";
@@ -48,12 +49,26 @@ export function ClavierMelodie({ id, data }: VueProps) {
       volume: volumeClavier(params),
     };
   }
-  /** La synthese interne, inchangee : immediate, et toujours disponible. */
-  function jouerFM(note: number, ctx: AudioContext) {
+  /**
+   * La synthese interne : immediate, et toujours disponible.
+   *
+   * SON NIVEAU EST CELUI DU RENDU, et il etait ECRIT EN DUR. Un 0,12 fixe ignorait « Volume » comme
+   * la velocite de la frappe, quand la meme touche jouee au SoundFont passait par `rendreSequence`
+   * et les suivait tous deux. C'est l'inverse de la regle que `clavier-son.ts` enonce pour
+   * lui-meme : ce qu'on entend en jouant est ce que le noeud rendra. La formule vit desormais dans
+   * `audio/midi-sequence.ts`, ou le rendu la lit aussi.
+   */
+  function jouerFM(note: number, velocite: number, ctx: AudioContext, r: ReturnType<typeof reglages>) {
+    const niveau = gainDeNote(velocite, r.volume);
+    // A volume nul, rien : une rampe exponentielle refuse de partir de zero, et le silence est de
+    // toute facon ce que ce reglage demande.
+    if (niveau <= 0) return { arreter: () => {} };
     const osc = ctx.createOscillator(), gain = ctx.createGain();
     osc.type = "triangle"; osc.frequency.value = 440 * 2 ** ((note - 69) / 12);
-    gain.gain.setValueAtTime(0.12, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(niveau, ctx.currentTime);
+    // La descente garde sa forme, deux decades, quel que soit le niveau de depart : une cible
+    // ecrite en dur remonterait au-dessus du depart sur un volume faible.
+    gain.gain.exponentialRampToValueAtTime(niveau * 0.01, ctx.currentTime + 0.3);
     osc.connect(gain).connect(ctx.destination);
     osc.start(); osc.stop(ctx.currentTime + 0.5);
     return { arreter: () => { try { osc.stop(); } catch {} } };
@@ -63,13 +78,15 @@ export function ClavierMelodie({ id, data }: VueProps) {
    * l'audio du noeud. Le rendu est asynchrone : si la touche est relachee avant qu'il
    * arrive, on n'emet rien plutot que de faire sonner une note deja finie.
    */
-  function jouerSoundFont(note: number, ctx: AudioContext, r: ReturnType<typeof reglages>) {
+  function jouerSoundFont(note: number, velocite: number, ctx: AudioContext, r: ReturnType<typeof reglages>) {
     let source: AudioBufferSourceNode | null = null;
     let annule = false;
     void (async () => {
       try {
+        // LA VELOCITE EST CELLE DE LA FRAPPE, et elle valait CENT quoi qu'on joue : le rythme de
+        // frappe decide de la nuance partout ailleurs dans le depot, et il etait jete ici.
         const buf = await rendreSequence(
-          [{ note, velocite: 100, debut: 0, fin: DUREE_NOTE_LIVE }],
+          [{ note, velocite, debut: 0, fin: DUREE_NOTE_LIVE }],
           "SoundFont", r.volume, r.instrument.programme, r.instrument.banque,
         );
         if (annule) return;
@@ -79,14 +96,16 @@ export function ClavierMelodie({ id, data }: VueProps) {
         source.start();
       } catch (e) {
         console.error("[attic] Clavier : rendu SoundFont impossible, retour a la synthese interne", e);
-        if (!annule) jouerFM(note, ctx);
+        if (!annule) jouerFM(note, velocite, ctx, r);
       }
     })();
     return { arreter: () => { annule = true; try { source?.stop(); } catch {} } };
   }
-  const clavier = useClavierJouable(id, (note) => {
+  const clavier = useClavierJouable(id, (note, velocite) => {
     const ctx = getCtx(), r = reglages();
-    return r.mode === "SoundFont" ? jouerSoundFont(note, ctx, r) : jouerFM(note, ctx);
+    return r.mode === "SoundFont"
+      ? jouerSoundFont(note, velocite, ctx, r)
+      : jouerFM(note, velocite, ctx, r);
   });
   useEffect(() => () => { ctxRef.current?.close(); ctxRef.current = null; }, []);
   /**
@@ -102,10 +121,9 @@ export function ClavierMelodie({ id, data }: VueProps) {
     const r = reglages();
     try {
       const buf = await rendreSequence(notes, r.mode, r.volume, r.instrument.programme, r.instrument.banque);
-      const source = ctx.createBufferSource();
-      source.buffer = buf;
-      source.connect(ctx.destination);
-      source.start();
+      // AU NIVEAU D'ÉCOUTE, qui manquait : ce bouton branchait sa source sur la destination, donc
+      // ouvrait à la pleine puissance de son rendu. Le son rendu, lui, ne change pas.
+      ecouterTampon(ctx, buf);
     } catch (e) {
       console.error("[attic] Clavier : rejeu impossible", e);
     }
@@ -245,11 +263,9 @@ export function ClavierSfz({ id, data }: VueProps) {
       relachement: Number(params?.["Relâchement"] ?? 150) / 1000,
       fonduBoucle: Number(params?.["Fondu de boucle"] ?? 20) / 1000,
     });
-    const ctx = getCtx();
-    const source = ctx.createBufferSource();
-    source.buffer = buf;
-    source.connect(ctx.destination);
-    source.start();
+    // AU NIVEAU D'ÉCOUTE, comme le « Rejouer » voisin : le niveau du rendu reste celui de
+    // « Volume », et le confort d'écoute se pose par-dessus.
+    ecouterTampon(getCtx(), buf);
   }
 
   const seq = clavier.seq;
