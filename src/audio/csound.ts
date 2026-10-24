@@ -552,11 +552,27 @@ async function rendreCsdSansFile(
       console.warn(`[csound] ${perdue}`);
     }
 
+    // CE MESSAGE N'ACCUSE PLUS LA PARTITION SEULE, et il dit combien de fois il a essayé.
+    //
+    // Il disait « la partition ne se termine pas : vérifiez qu'elle finit par « e » » après UNE
+    // SEULE tentative — `sansFin` sortait alors de la boucle. Or le moteur a ce défaut aussi :
+    // mesuré sur « Particules » avec ses réglages par défaut, donc une partition IDENTIQUE à chaque
+    // rendu, le plafond a été atteint deux fois sur quatre-vingts. Une partition qui se termine
+    // trente-neuf fois sur quarante n'est pas une partition sans fin, et le message envoyait
+    // chercher au mauvais endroit.
+    //
+    // CE QUE LE COMPTE DES TENTATIVES APPREND AU LECTEUR. Y arriver demande maintenant que les cinq
+    // tapent le plafond. Pour une partition réellement infinie, c'est ce qui arrive à coup sûr ;
+    // pour le défaut du moteur, il faudrait cinq pertes consécutives. Le message donne donc les
+    // deux pistes dans cet ordre, et renvoie aux traces de la console, qui disent si le moteur a
+    // bégayé aux tentatives précédentes.
     if (sansFin) {
       return {
         ...vide,
-        erreur: "la partition ne se termine pas : vérifiez qu'elle finit par « e » et qu'aucune"
-          + " durée n'est infinie",
+        erreur: `la partition n'a pas atteint son terme : les ${TENTATIVES} tentatives ont toutes`
+          + ` tapé le plafond de ${BLOCS_MAX} blocs. Si elle est de votre main, vérifiez qu'elle`
+          + " finit par « e » et qu'aucune durée n'est infinie. Sinon, le moteur a le même défaut :"
+          + " voyez les traces « [csound] tentative … perdue » dans la console.",
         blocs,
         ms: performance.now() - debut,
       };
