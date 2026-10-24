@@ -183,6 +183,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **Un exemple livré, « Un son projeté en microtonal », qui fait tenir la chaîne entière dans un graphe.** Une cloche de « Metal Synth » donne son spectre inharmonique, « Courbe de dissonance » en tire l'échelle qu'il appelle, et deux claviers la jouent : « Clavier isomorphe » la synthétise sous les doigts, « Étaler sur le clavier » y projette le son lui-même, degré par degré.
+
+  - **Les chiffres de sa note sont ceux qu'il produit**, relevés dans l'application sur le graphe livré : partiels mesurés à 3204, 3467, 4136, 4755, 8159 et 9116 Hz ; **treize creux**, de 137 à 1282 cents ; **une période de 1282 cents**, soit quatre-vingt-deux cents au-dessus de l'octave, et une quinte à **684 cents** au lieu de 702. Douze des treize degrés sont hors du clavier tempéré.
+  - **La dérive des toniques se voit sur le réseau**, et c'est ce que cet exemple montre le mieux : les cases marquées de la couleur de l'accordage se lisent **do4**, puis **do dièse 5 moins 18 cents**, puis **ré6 moins 36 cents**. Une période plus large que l'octave s'écarte du clavier tempéré d'autant à chaque tour, et le nom écrit sur la case le dit.
+  - **Le relevé de « Partiels » est mesuré et écrit dans la note** : six partiels donnent treize degrés, huit en donnent dix-huit, dix en donnent vingt et un. Six ont été retenus, qui donnent l'échelle la plus lisible et l'écart à l'octave le plus franc.
+  - **La note d'origine est déclarée à la main**, et le réglage le demande : la hauteur d'un son inharmonique ne se mesure pas. Les deux sorties audio font entendre le résultat sans toucher un clavier, l'échelle en cinq secondes deux et l'aperçu de la banque en sept secondes six.
+
 - **« Clavier isomorphe » : un réseau de touches qui joue n'importe quel accordage, et la chaîne du microtonal se referme sur un instrument.** La géométrie d'un piano, cinq noires contre sept blanches, **est** l'encodage de douze degrés par octave : elle ne se paramètre pas, et c'est pourquoi une échelle à dix ou à dix-neuf degrés n'avait aucune touche où se poser. Un réseau, lui, ne suppose aucun nombre de degrés : une case vers la droite ajoute un degré, une rangée vers le haut en ajoute un nombre fixe, et tout intervalle garde la même forme sous les doigts.
 
   - **Le contrôleur est le clavier de l'ordinateur**, ses quatre rangées donnant **41 cases**. Une souris n'a qu'un pointeur, là où la forme de doigts est la raison d'être de l'isomorphisme. Chaque case porte la lettre de la touche qui la joue, lue sur la disposition en service par `navigator.keyboard.getLayoutMap()` : sur un clavier français les chiffres s'y lisent `& é " ' ( - è _ ç à`, et ce sont les positions qui décident.

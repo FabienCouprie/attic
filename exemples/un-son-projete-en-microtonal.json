@@ -1,0 +1,106 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 60, "y": -860 },
+      "width": 1240,
+      "height": 800,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UN SON PROJETÉ EN MICROTONAL\n\nUn son donne l'échelle qu'il appelle, et deux claviers la jouent : l'un la synthétise, l'autre y projette le son lui-même.\n\n1. « Metal Synth » fait une cloche de trois secondes sur un do3. Ses partiels ne sont pas des multiples entiers, et c'est tout ce qui compte ici : mesurés sur ce son, ils tombent à 3204, 3467, 4136, 4755, 8159 et 9116 Hz.\n\n2. « Courbe de dissonance », d'après Sethares, fait sonner ce timbre contre lui-même à tous les intervalles et mesure la rugosité de chaque rencontre. Les creux de la courbe sont sa gamme. Sur six partiels, treize creux : 137, 192, 241, 306, 442, 547, 684, 815, 935, 1013, 1127, 1176 et 1282 cents. « Sortie texte » les affiche avec le rapport simple le plus proche de chacun.\n\n3. LA PÉRIODE N'EST PAS L'OCTAVE. Le plus grand creux tombe à 1282 cents, quatre-vingt-deux cents au-dessus de l'octave : cette cloche se referme sur elle-même plus haut qu'un piano. Sa quinte, elle, est à 684 cents, dix-huit cents sous la quinte juste.\n\n4. « Clavier isomorphe » reçoit cette échelle et la met sous les doigts. Quarante et une cases, une par touche des quatre rangées de lettres et de chiffres : une case vers la droite ajoute un degré, une rangée vers le haut en ajoute sept, la quinte la plus proche dans cette échelle. Les trente et un degrés du réseau couvrent deux périodes et deux dixièmes.\n\nLA DÉRIVE DES TONIQUES SE VOIT SUR LE RÉSEAU. Les cases marquées de la couleur de l'accordage sont les toniques : la première est un do4 juste, la deuxième un do dièse 5 moins dix-huit cents, la troisième un ré6 moins trente-six cents. Chaque tour s'écarte du clavier tempéré de quatre-vingt-deux cents de plus, et le nom écrit sur la case le dit.\n\n5. « Accordage → notes » joue les treize degrés dans l'ordre, cinq secondes et deux dixièmes, et douze des treize sont hors du clavier tempéré. C'est l'échelle qu'on entend sans rien jouer.\n\n6. « Étaler sur le clavier » projette LE SON LUI-MÊME sur ces degrés. Son réglage « Compter en » est sur les degrés de l'accordage, et chaque touche reçoit alors sa propre région avec son désaccord en cents. Vingt-cinq touches, du do3 au do5, donnent vingt-cinq zones, soit vingt-cinq degrés. « Clavier SFZ » reçoit la banque et se joue.\n\nLA NOTE D'ORIGINE EST DÉCLARÉE À LA MAIN, do3, et le réglage le demande : la hauteur d'un son inharmonique ne se mesure pas, un suiveur de hauteur n'a rien à y trouver.\n\nLES DEUX SORTIES AUDIO font entendre le résultat sans toucher un clavier : l'échelle en synthèse sinus, et l'aperçu de la banque, sept secondes et six dixièmes.\n\nÀ ESSAYER. « Resonance » et « Harmonicity » déplacent les partiels de la cloche, donc son échelle, donc sa période : les deux claviers suivent sans qu'on recâble rien. Et « Partiels » décide de la finesse du relevé : six donnent treize degrés, huit en donnent dix-huit, dix en donnent vingt et un.",
+        "nomEn": "A SOUND PROJECTED IN MICROTONAL\n\nA sound gives the scale it calls for, and two keyboards play it: one synthesizes it, the other projects the sound itself onto it.\n\n1. « Metal Synth » makes a three-second bell on a C3. Its partials are not whole multiples, which is the whole point here: measured on this sound, they fall at 3204, 3467, 4136, 4755, 8159 and 9116 Hz.\n\n2. « Dissonance Curve », after Sethares, sounds this timbre against itself at every interval and measures the roughness of each meeting. The curve's dips are its scale. On six partials, thirteen dips: 137, 192, 241, 306, 442, 547, 684, 815, 935, 1013, 1127, 1176 and 1282 cents. « Text Output » shows them with the nearest simple ratio to each.\n\n3. THE PERIOD IS NOT THE OCTAVE. The largest dip falls at 1282 cents, eighty-two cents above the octave: this bell closes on itself higher than a piano does. Its fifth sits at 684 cents, eighteen cents below the just fifth.\n\n4. « Isomorphic Keyboard » receives this scale and puts it under the fingers. Forty-one cells, one per key of the four rows of letters and digits: one cell to the right adds one degree, one row upwards adds seven, the nearest fifth within this scale. The lattice's thirty-one degrees cover two periods and two tenths.\n\nTHE TONICS DRIFT, AND IT SHOWS ON THE LATTICE. The cells marked in the tuning's colour are the tonics: the first is a true C4, the second a C#5 minus eighteen cents, the third a D6 minus thirty-six cents. Each turn departs from the tempered keyboard by another eighty-two cents, and the name written on the cell says so.\n\n5. « Tuning → Notes » plays the thirteen degrees in order, five seconds and two tenths, and twelve of the thirteen are off the tempered keyboard. This is the scale heard without playing anything.\n\n6. « Spread Across Keyboard » projects THE SOUND ITSELF onto those degrees. Its « Count in » setting is on the degrees of the tuning, and each key then gets its own region with its own detune in cents. Twenty-five keys, from C3 to C5, give twenty-five zones, hence twenty-five degrees. « SFZ Keyboard » receives the bank and plays.\n\nTHE SOURCE NOTE IS DECLARED BY HAND, C3, and the setting asks for it: an inharmonic sound has no measurable pitch, and a pitch follower has nothing to find in it.\n\nTHE TWO AUDIO OUTPUTS play the result without touching a keyboard: the scale in sine synthesis, and the bank's preview, seven seconds and six tenths.\n\nWORTH TRYING. « Resonance » and « Harmonicity » move the bell's partials, hence its scale, hence its period: both keyboards follow with nothing rewired. And « Partials » decides how fine the reading is: six give thirteen degrees, eight give eighteen, ten give twenty-one."
+      }
+    },
+    {
+      "id": "cloche",
+      "type": "atelier",
+      "position": { "x": 60, "y": 360 },
+      "data": {
+        "ficheId": "metal-synth",
+        "parametres": {
+          "Note": "C3",
+          "Durée": 3,
+          "Volume": 70,
+          "Harmonicity": 5.1,
+          "Modulation index": 32,
+          "Resonance": 900,
+          "Octaves": 1.5
+        }
+      }
+    },
+    {
+      "id": "dissonance",
+      "type": "atelier",
+      "position": { "x": 700, "y": 360 },
+      "data": { "ficheId": "courbe-dissonance", "parametres": { "Timbre": "mesure", "Partiels": 6 } }
+    },
+    {
+      "id": "cents",
+      "type": "atelier",
+      "position": { "x": 700, "y": 880 },
+      "data": { "ficheId": "sortie-texte", "parametres": {} }
+    },
+    {
+      "id": "iso",
+      "type": "atelier",
+      "position": { "x": 1400, "y": 20 },
+      "data": {
+        "ficheId": "clavier-isomorphe",
+        "parametres": { "Degrés par période": 12, "Saut de rangée": "quinte", "Tonique": 60, "Volume": 80 }
+      }
+    },
+    {
+      "id": "echelle",
+      "type": "atelier",
+      "position": { "x": 1400, "y": 460 },
+      "data": { "ficheId": "accordage-notes", "parametres": { "Degrés": "", "Durée": 0.4, "Tonique": 60 } }
+    },
+    {
+      "id": "ecoute-echelle",
+      "type": "atelier",
+      "position": { "x": 2100, "y": 460 },
+      "data": { "ficheId": "sortie-audio", "parametres": {} }
+    },
+    {
+      "id": "etale",
+      "type": "atelier",
+      "position": { "x": 1400, "y": 860 },
+      "data": {
+        "ficheId": "banque-clavier",
+        "parametres": {
+          "Compter en": "degres",
+          "Note d'origine": "manuel",
+          "Note manuelle": 48,
+          "Largeur de zone": 2,
+          "Note basse": 48,
+          "Note haute": 72
+        }
+      }
+    },
+    {
+      "id": "jouer",
+      "type": "atelier",
+      "position": { "x": 2100, "y": 860 },
+      "data": { "ficheId": "clavier-sfz", "parametres": { "Source": "entree", "Volume": 80 } }
+    },
+    {
+      "id": "ecoute-banque",
+      "type": "atelier",
+      "position": { "x": 1400, "y": 1340 },
+      "data": { "ficheId": "sortie-audio", "parametres": {} }
+    }
+  ],
+  "edges": [
+    { "id": "e-cloche-dissonance", "source": "cloche", "sourceHandle": "out:0", "target": "dissonance", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-cloche-etale", "source": "cloche", "sourceHandle": "out:0", "target": "etale", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-dissonance-cents", "source": "dissonance", "sourceHandle": "out:0", "target": "cents", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-dissonance-iso", "source": "dissonance", "sourceHandle": "out:2", "target": "iso", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-dissonance-echelle", "source": "dissonance", "sourceHandle": "out:2", "target": "echelle", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-dissonance-etale", "source": "dissonance", "sourceHandle": "out:2", "target": "etale", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e-echelle-ecoute", "source": "echelle", "sourceHandle": "out:2", "target": "ecoute-echelle", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-etale-jouer", "source": "etale", "sourceHandle": "out:0", "target": "jouer", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e-etale-ecoute", "source": "etale", "sourceHandle": "out:1", "target": "ecoute-banque", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ]
+}
