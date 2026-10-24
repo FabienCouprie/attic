@@ -2,7 +2,7 @@
 // plugins/vexflow.test.ts — Vérification des nœuds de notation VexFlow.
 import { describe, it, expect, beforeAll } from "vitest";
 import { fiches } from "./vexflow";
-import { jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
+import { accordsInconnus, jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 
 function trouver(id: string) {
@@ -122,6 +122,39 @@ describe("nœuds VexFlow", () => {
     expect(res.erreur).toBe(true);
     expect(res.message).not.toContain("IncompleteVoice");
     expect(res.message).not.toContain("RuntimeError");
+  });
+
+  it("LA TABLATURE REFUSE AU LIEU DE GRAVER « NaN »", async () => {
+    // LE DÉFAUT, MESURÉ DANS L'APPLICATION. Nourri du même texte étranger, ce nœud annonçait
+    // « Terminé » et gravait QUATRE « NaN » sur la portée : `parseInt` d'un mot rend NaN, et
+    // personne ne regardait le résultat. Le garde qui comptait les notes ne pouvait rien voir, un
+    // jeton produisant toujours une note.
+    const f = trouver("vexflow-tab")!;
+    const res = await f.executer(ctxSimple("Tempo 90\nC4+E4+G4 2.000") as any);
+    expect(res.erreur).toBe(true);
+    expect(res.message, "le jeton fautif doit être nommé").toContain("Tempo");
+    expect(res.message, "et la forme attendue aussi").toContain("6-3/q");
+    expect(res.message).not.toContain("NaN");
+  });
+
+  it("ET LA GRILLE REFUSE AU LIEU DE DESSINER DES MESURES VIDES", async () => {
+    // MÊME MESURE : quatre-vingts éléments dessinés, pas un seul texte, et « Terminé ». Tonal rend
+    // la CHAÎNE VIDE pour un symbole inconnu, et `?? ` ne se déclenche pas dessus ; les portées
+    // suffisaient à rendre le SVG non vide, donc le garde « aucun accord valide » ne voyait rien.
+    const f = trouver("vexflow-grille")!;
+    const res = await f.executer(ctxSimple("Tempo 90\nC4+E4+G4 2.000") as any);
+    expect(res.erreur).toBe(true);
+    expect(res.message).toContain("Tempo");
+    expect(res.message).toContain("C Am F G");
+  });
+
+  it("les deux reconnaisseurs laissent passer ce qui est valide", () => {
+    // SANS CES DEUX-CI, UN REFUS QUI REFUSE TOUT PASSERAIT : les cas de succès ci-dessus tournent
+    // sur les valeurs par défaut, et c'est l'entrée BRANCHÉE que ces refus interceptent.
+    expect(jetonsSansCordeFret("6-3/q 5-0/q 5-2/q 4-0/q 5-3/q")).toEqual([]);
+    expect(jetonsSansCordeFret("Tempo 90 2.000")).toEqual(["Tempo", "90", "2.000"]);
+    expect(accordsInconnus(["C", "Am", "F", "G"])).toEqual([]);
+    expect(accordsInconnus(["Tempo", "90", "C4+E4+G4"])).toEqual(["Tempo", "90", "C4+E4+G4"]);
   });
 
   it("jetonsSansDuree ne se trompe pas sur un accord entre parenthèses", () => {

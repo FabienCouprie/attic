@@ -64,7 +64,21 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Converts a text notation (one note/chord per line) into MIDI + audio.",
     notice: "Rend une notation texte simple en fichier MIDI et en audio synthétisé. Une ligne = « note octave durée [vélocité] », ex. « C4 0.5 » ou « C4+E4+G4 1 » (accord), « rest 0.5 » pour un silence, « Tempo 120 » en tête. Le texte vient de l'entrée (port bleu) ou du paramètre. Idéal branché après un composant IA (Ollama, GPT-2) à qui l'on demande ce format.",
     noticeEn: "Renders a simple text notation into a MIDI file and synthesized audio. One line = « note octave duration [velocity] », e.g. « C4 0.5 » or « C4+E4+G4 1 » (chord), « rest 0.5 » for a rest, « Tempo 120 » at the top. Text comes from the input (blue port) or the parameter. Ideal after an AI node (Ollama, GPT-2) prompted to output this format.",
-    entrees: [{ nom: "Texte", nomEn: "Text", type: "texte", requis: false }],
+    // LE PORT PORTE LE NOM DE CE QU'IL REÇOIT, et non celui de son type.
+    //
+    // IL S'APPELAIT « TEXTE » ALORS QUE SON PROPRE RÉGLAGE DE REPLI S'APPELLE « NOTATION » : le nœud
+    // se contredisait d'une ligne à l'autre. Et quatre sorties du catalogue nommées « Notation » —
+    // accords joués, gamme jouée, accords vers notation, grille d'accords — écrivent PRÉCISÉMENT ce
+    // format, sans qu'aucun nom ne les relie à la seule entrée qui les attend.
+    //
+    // MESURÉ : un plan de chanson branché sur « Texte » était accepté et rendait zéro note. Le câble
+    // était licite, les couleurs de port s'accordaient, et rien dans le graphe ne pouvait le dire.
+    //
+    // LE RENOMMAGE NE COÛTE RIEN, et c'est mesuré aussi : un graphe enregistré désigne un port par
+    // son INDICE — « in:0 » —, et aucun code du dépôt ne cherche un port par son nom. Un réglage,
+    // lui, se lit par son nom dans `noeud.data.parametres[nom]` : c'est pourquoi le réglage de repli
+    // garde le sien.
+    entrees: [{ nom: "Notation", nomEn: "Notation", type: "texte", requis: false }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom: "Notation", nomEn: "Notation", type: "texte", defaut: EXEMPLE,

@@ -2773,7 +2773,7 @@ Reads a score in ABC notation and renders it to MIDI and audio. ABC is a standar
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Text | text |  |
+| input | ABC | text |  |
 | output | Audio | audio |  |
 | output | MIDI | MIDI |  |
 | output | Key | text |  |
@@ -3172,7 +3172,7 @@ Renders a simple text notation into a MIDI file and synthesized audio. One line 
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Text | text |  |
+| input | Notation | text |  |
 | output | Audio | audio |  |
 | output | MIDI | MIDI |  |
 

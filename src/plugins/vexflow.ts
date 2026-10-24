@@ -9,7 +9,7 @@ import { avecDoc } from "./notices";
 import { Chord } from "tonal";
 import { parseMidi } from "midi-file";
 import { analyserMidi } from "../audio/midi";
-import { GRILLES_NOTATION, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
+import { GRILLES_NOTATION, accordsInconnus, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
 import { choixValeurs } from "../audio/valeurs-note";
 
 export const fiches: FicheAudio[] = ([
@@ -79,6 +79,14 @@ export const fiches: FicheAudio[] = ([
       const entree = ctx.entree(0);
       const tabText = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Tablature", "6-3/q 5-0/q 5-2/q 4-0/q 5-3/q");
+      // CE QUI N'EST PAS UNE CORDE ET UNE FRETTE EST REFUSE EN LE NOMMANT. Mesure : nourri du format
+      // de « Texte -> MIDI », ce noeud annoncait « Termine » et gravait quatre « NaN » sur la portee,
+      // parce que `parseInt` d'un mot rend NaN et que personne ne regardait le resultat.
+      const sansCordeFret = jetonsSansCordeFret(tabText);
+      if (sansCordeFret.length > 0) {
+        return { valeurs: [null], erreur: true,
+          message: traduire("msg.vexflow.tablature_sans_corde_fret_var_0", sansCordeFret.slice(0, 3).join(" ")) };
+      }
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);
       const svg = genererTab(tabText, ctx.paramTexte("Accordage", "Guitare standard"), w, h);
@@ -127,6 +135,16 @@ export const fiches: FicheAudio[] = ([
       const accords = romains
         ? accordsPourPartition(tonic, ctx.paramTexte("Gamme", "majeur"), tokens)
         : tokens;
+      // UN SYMBOLE QU'AUCUN ACCORD NE RECONNAIT EST REFUSE EN LE NOMMANT. Mesure : nourri du format
+      // de « Texte -> MIDI », ce noeud annoncait « Termine » et dessinait quatre-vingts elements sans
+      // un seul texte — des mesures vides. Tonal le disait deja par `empty`, que personne ne lisait.
+      // LE CONTROLE EST APRES LA LECTURE DES CHIFFRES ROMAINS, et il le faut : ce sont les symboles
+      // FINALEMENT graves qu'il s'agit de reconnaitre, pas les degres ecrits.
+      const inconnus = accordsInconnus(accords);
+      if (inconnus.length > 0) {
+        return { valeurs: [null], erreur: true,
+          message: traduire("msg.vexflow.accords_inconnus_var_0", inconnus.slice(0, 3).join(" ")) };
+      }
       const mpl = Math.round(ctx.paramNombre("Mesures par ligne", 4));
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 200);

@@ -82,6 +82,41 @@ export function jetonsSansDuree(texte: string): string[] {
   return tokenizeNotation(texte).filter((t) => barreDeDuree(t) === -1);
 }
 
+/**
+ * Les jetons de tablature dont la corde ou la frette n'est PAS UN NOMBRE.
+ *
+ * LA MÊME FAUTE QUE CI-DESSUS, dans l'autre notation. `genererTab` découpait « corde-fret » et
+ * passait les deux morceaux à `parseInt` sans jamais regarder le résultat : « Tempo » donnait une
+ * corde NaN et une frette NaN, et la note était dessinée telle quelle. MESURÉ dans l'application sur
+ * le format de « Texte → MIDI » : le nœud annonçait « Terminé » et gravait QUATRE « NaN » sur la
+ * portée. Le garde qui comptait les notes ne pouvait rien voir, un jeton produisant toujours une
+ * note — valide ou non.
+ *
+ * LA DURÉE N'EST PAS EXIGÉE ICI, à la différence de la portée : un jeton de tablature sans barre
+ * vaut une noire par défaut, et ce défaut-là est documenté dans la notice.
+ */
+export function jetonsSansCordeFret(texte: string): string[] {
+  return texte.split(/\s+/).filter(Boolean).filter((tok) => {
+    const [corde, fret] = tok.split("/")[0].split("-");
+    return !Number.isInteger(Number.parseInt(corde, 10)) || !Number.isInteger(Number.parseInt(fret, 10));
+  });
+}
+
+/**
+ * Les symboles qu'aucun accord ne reconnaît.
+ *
+ * LE REFUS ÉTAIT À UN CHAMP DE DISTANCE, et c'est ce que la mesure a montré. `genererGrille` écrivait
+ * `Chord.get(a).symbol ?? a` : Tonal rend la CHAÎNE VIDE pour un symbole inconnu, et `??` ne se
+ * déclenche pas sur une chaîne vide, seulement sur `null`. La note de texte était donc vide, les
+ * portées suffisaient à rendre le SVG non vide, et le garde « aucun accord valide » ne voyait rien à
+ * refuser. MESURÉ dans l'application : quatre-vingts éléments dessinés et PAS UN SEUL `<text>`, pour
+ * un statut « Terminé ». Mesuré hors de l'application, Tonal le disait déjà lui-même :
+ * `Chord.get("Tempo")` rend `{ symbol: "", empty: true }`.
+ */
+export function accordsInconnus(accords: readonly string[]): string[] {
+  return accords.filter((a) => Chord.get(a).empty);
+}
+
 function parseTokenNote(token: string): { notes: string; duree: string; rest: boolean } {
   // Découpe un token de la forme "note/duree" ou "note/duree/r".
   const barre = barreDeDuree(token);
