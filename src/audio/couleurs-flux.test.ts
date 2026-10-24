@@ -38,7 +38,34 @@ export function ecartCouleur(a: string, b: string): number {
 /** En dessous, deux tuyaux se confondent d'un coup d'œil — mesuré sur le défaut constaté. */
 const ECART_MINIMAL = 18;
 
-const TYPES = ["audio", "midi", "controle", "texte", "fichier", "image", "courbe", "banque"];
+/**
+ * Tous les types déclarés, LUS AU REGISTRE et non recopiés.
+ *
+ * LA LISTE ÉCRITE À LA MAIN NE VOYAIT QUE HUIT TYPES SUR QUINZE. Elle portait « audio », « midi »,
+ * « controle », « texte », « fichier », « image », « courbe » et « banque », c'est-à-dire la palette
+ * du jour où ce garde a été écrit. Les sept suivants — l'objet, la vidéo, la séquence, le cercle, le
+ * spectrogramme, le port exposé et l'accordage — sont arrivés sans y entrer, et le garde qui existait
+ * pour empêcher deux teintes de se confondre ne les regardait pas. Lue au registre, la liste ne peut
+ * plus vieillir.
+ */
+const TYPES = registre.tousTypesFlux().map((t) => t.id);
+
+/**
+ * Les paires dont la proximité est assumée, avec sa raison.
+ *
+ * `frontiere` et `fichier` sont à 6,7 ΔE, soit moins que le couple qui a fait écrire ce garde
+ * (l'ambre de la banque contre celui du MIDI, à 11,9). Ce sont DEUX GRIS, et chacun l'est pour une
+ * raison écrite : un nœud-frontière n'a pas de type à lui, donc sa teinte est neutre ; un fichier
+ * n'a pas de nature sonore, donc la sienne aussi. Les rapprocher est le prix de ces deux choix.
+ *
+ * ET ILS NE SE RENCONTRENT PAS SUR UN MÊME NŒUD : un port exposé n'existe qu'à l'intérieur d'un
+ * méta-composant, où il tient la place d'un port qui sera d'un autre type. La confusion que ce garde
+ * empêche est celle de deux tuyaux voisins ; celle-là n'a pas de voisinage.
+ */
+const PROXIMITES_ASSUMEES: readonly (readonly [string, string])[] = [["frontiere", "fichier"]];
+
+const assumee = (a: string, b: string): boolean =>
+  PROXIMITES_ASSUMEES.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
 
 describe("les couleurs des types de flux", () => {
   it("la conversion en Lab est juste sur des repères connus", () => {
@@ -64,7 +91,7 @@ describe("les couleurs des types de flux", () => {
     for (let i = 0; i < couleurs.length; i++) {
       for (let j = i + 1; j < couleurs.length; j++) {
         const ecart = ecartCouleur(couleurs[i][1], couleurs[j][1]);
-        if (ecart < ECART_MINIMAL) {
+        if (ecart < ECART_MINIMAL && !assumee(couleurs[i][0], couleurs[j][0])) {
           trop.push(`${couleurs[i][0]} (${couleurs[i][1]}) / ${couleurs[j][0]} (${couleurs[j][1]}) : ΔE ${ecart.toFixed(1)}`);
         }
       }

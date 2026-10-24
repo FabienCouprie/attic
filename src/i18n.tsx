@@ -309,6 +309,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "typeFlux.fichier": { fr: "Fichier", en: "File" },
   "typeFlux.image": { fr: "Image", en: "Image" },
   "typeFlux.spectrogramme": { fr: "Spectrogramme", en: "Spectrogram" },
+  "typeFlux.accordage": { fr: "Accordage", en: "Tuning" },
   "univers.Entrées": { fr: "Entrées", en: "Inputs" },
   "univers.Traitement": { fr: "Traitement", en: "Processing" },
   "univers.Sorties": { fr: "Sorties", en: "Outputs" },

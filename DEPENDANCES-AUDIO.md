@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 93 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 203 · transposable tel quel
+- **pur** : 204 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -19,6 +19,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | abc.ts | pur | — |
 | accord-gamme.ts | pur | — |
 | accord-mets.ts | pur | — |
+| accordage.ts | pur | — |
 | accords-sequencer.ts | recipient | AudioBuffer |
 | accords.ts | recipient | AudioBuffer |
 | adaptateur.ts | recipient | AudioBuffer |
