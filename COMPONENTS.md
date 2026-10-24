@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **506 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **507 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 101 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (4) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 102 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 244 | [Analysis](#analysis) (1) · [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
@@ -1603,6 +1603,7 @@ Generates a 512×512 image from a text prompt using SDXS-512 (1-step distilled U
 | Component | Summary |
 |---|---|
 | [Instrument Note](#instrument-note) | Carries the played note into an instrument chain: audio excitation, one-note MIDI, and the pitch as a curve. |
+| [Isomorphic Keyboard](#isomorphic-keyboard) | Plays a tuning's degrees from the computer keyboard, as a lattice. |
 | [Melody Keyboard](#melody-keyboard) | Plays a keyboard-recorded sequence and also exports a MIDI file. |
 | [SFZ Bank](#sfz-bank) | Loads an SFZ sample bank (the built-in drum kit, or a file from disk) with no keyboard. |
 | [SFZ Keyboard](#sfz-keyboard) | Plays an SFZ bank, a file from disk or a bank from the graph, on an 88-key keyboard, and records what you play. |
@@ -1628,6 +1629,27 @@ Carries the played note into an instrument chain. This is the boundary: everythi
 | Duration | slider | 1.5 s | 0.1 – 8 s, step 0.1 | Length of the excitation, hence of each sample in the bank. It decides the instrument's weight: eighteen zones of a second and a half come to about two megabytes. |
 | Volume | slider | 60 % | 0 – 100 %, step 1 | Level of the excitation. Keep it low if the chain resonates: a high-resonance filter can multiply the level tenfold. |
 | Velocity | slider | 100 | 1 – 127, step 1 | Velocity written into the MIDI output, for the nodes that take it into account. |
+
+#### Isomorphic Keyboard
+
+`clavier-isomorphe` · Inputs → Keyboards
+
+*Plays a tuning's degrees from the computer keyboard, as a lattice.*
+
+Plays a tuning's degrees from the computer keyboard. The four rows of letters and digits form a lattice of forty-one cells: one cell to the right adds one degree, one row upwards adds the number « Row step » names. The same interval therefore keeps the same shape under the fingers, at any pitch and in any tuning. The « Tuning » input carries the scale to play. The lattice is built on it as soon as the graph has been run once. With no input connected, it is built on the equal temperament « Degrees per period » gives, and the node writes beside the lattice which source it comes from. « Row step » names an interval and not a number of degrees: the nearest fifth is seven degrees in a twelve-degree temperament, eleven in a nineteen-degree one, eighteen in a thirty-one-degree one. The « one degree » option makes the rows continue the columns, and the lattice then runs along the scale instead of stacking it. « Tonic » gives the pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries. The bottom left cell plays it, and every cell of the same degree is marked in the tuning's colour. « Volume » sets the level of what sounds under the fingers as well as that of the « Audio » output. The up and down arrows move the lattice by one period, by at most three turns either way. Each cell carries the letter of the key that plays it, read from the keyboard layout in use, its degree within the period, and the pitch played with its deviation from the tempered semitone when there is one. The key's position decides, not the letter printed on it. The ⏺ button opens recording, ⏹ closes it, ▶ replays what was recorded and 🗑 clears it. Velocity comes from the striking rhythm: playing fast sounds louder. The « Sequence » output returns the recorded notes, fractional pitches included. The « Audio » output renders them with the internal synthesis, whose pitch-to-frequency conversion is continuous. No MIDI output is offered: a MIDI file carries pitch in a whole byte, where a fractional degree would be rounded.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Tuning | accordage |  |
+| output | Sequence | sequence |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Degrees per period | slider | 12 | 2 – 72, step 1 | The number of degrees of the equal temperament the lattice is built on when no tuning is connected. With a tuning connected, this setting has no effect: the received scale replaces it entirely. |
+| Row step | choice | the nearest fifth | the nearest fifth / the nearest fourth / the nearest major third / one degree | The interval a row adds. It is sought within the received tuning, so the same choice is seven degrees in a twelve-degree temperament and eleven in a nineteen-degree one. The fifth is the axis of generalized keyboards since Bosanquet: a row of fifths puts the degrees of one harmony within reach. The « one degree » option makes the rows continue the columns. |
+| Tonic | slider | 60 | 24 – 96, step 1 | The pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries, and the bottom left cell plays it. |
+| Volume | slider | 80 % | 0 – 100 %, step 1 | The level of what sounds under the fingers, and that of the « Audio » output. |
 
 #### Melody Keyboard
 

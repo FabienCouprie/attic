@@ -5,10 +5,14 @@
 // « avant » et « après » veulent dire, comment on en trouve une — et la liste ci-dessous, qui nomme
 // des identifiants de composants AUDIO, avec les modules de vues qui vont avec.
 //
-// LE COMPTE SE LIT SUR LE FICHIER, et nulle part ailleurs : **81 entrées**, nommant 85 identifiants
-// de composants — un composant peut porter plusieurs identifiants, par alias —, et **21 modules de
-// vues** importés ci-dessous. Ces chiffres sont ceux de ce fichier-ci : ils ne sont pas recopiés dans
-// une seconde liste, parce qu'une liste recopiée vieillit.
+// LE COMPTE SE LIT SUR LE FICHIER, et nulle part ailleurs : **84 entrées**, nommant 87 identifiants
+// de composants par `parId` — un composant peut porter plusieurs identifiants, par alias —, et
+// **22 modules de vues** importés ci-dessous. Ces chiffres sont ceux de ce fichier-ci : ils ne sont
+// pas recopiés dans une seconde liste, parce qu'une liste recopiée vieillit.
+//
+// ET CELUI-CI AVAIT VIEILLI QUAND MÊME : il annonçait 81 entrées et 85 identifiants là où le fichier
+// en portait 83 et 86. Un compte écrit en prose n'est pas tenu par le fichier dont il parle, et rien
+// ici ne le relit. C'est relevé, non réparé : le garde qui le tiendrait reste à écrire.
 //
 // Le shell importait ce fichier pour sa mécanique et recevait le domaine avec : `AtelierNode`
 // chargeait les vingt-et-un modules, et un domaine d'images aurait hérité d'un registre parlant de
@@ -39,6 +43,7 @@ import { VueLecteurMusique } from "./vues-lecteur";
 import { VueTranscription, VueUploadIR, VueUploadMidi, VueUploadOnnx, VueUploadPd } from "./vues-midi";
 import { VueCollections, VueExport } from "./vues-collections";
 import { ClavierMelodie, ClavierSfz, VueApprentissage, VueBanqueSfz, VueOrchestreCsound } from "./vues-claviers";
+import { ClavierIsomorphe } from "./ClavierIsomorphe";
 import { VueADSR, VueComparateurAB, VueDetecteurAccords, VueEmotions, VueGenerateurScriptIA, VueNomsInstruments, VueOscillo, VueReponseFiltre, VueSequenceurAccords, VueSequenceurBatterieAvance, VueSequenceurMelodique, VueSpectre, VueSpectrogramme, VueStylesMusicaux, VueTessituresVoix } from "./vues-analyse";
 import { VueGestionNodes, VueJuliaProcessor, VuePythonProcessor } from "./vues-code";
 import { VueAnimationSvg, VueAttracteurIFS, VueColorSynth, VueComparaisonEsth, VueCouleurSunoIA, VueEsthetique, VueAccordMets, VueGalerieExposition, VueGout, VueGravure, VueImageDepuisAudio, VuePochette, VueRenduImage, VueTraceCourbe, VueVexFlow, VueVuMetre } from "./vues-images";
@@ -151,6 +156,7 @@ declarerVues([
   { correspond: parId("collection-lecteur-musique"), vue: VueLecteurMusique, position: "apres" },
   { correspond: parId("sortie-audio", "sortie-midi", "convertisseur-audio", "convertisseur-mp3-wav"), vue: VueExport, position: "apres" },
   { correspond: parId("clavier-melodie"), vue: ClavierMelodie, position: "apres" },
+  { correspond: parId("clavier-isomorphe"), vue: ClavierIsomorphe, position: "apres" },
   { correspond: parId("clavier-sfz"), vue: ClavierSfz, position: "apres" },
   { correspond: parId("banque-sfz"), vue: VueBanqueSfz, position: "apres" },
   { correspond: parId("orchestre-csound"), vue: VueOrchestreCsound, position: "apres" },

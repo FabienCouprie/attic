@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**506 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**507 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -39,6 +39,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Cercle rythmique | `cercle-rythmique` | CercleRythmiqueVue | — | 320 × 400 | non | oui | non |
 | Classificateur de genre | `classificateur-genre` | VueUploadOnnx | — | 380 × 300 | non | oui | non |
 | Clavier d'apprentissage | `clavier-apprentissage` | — | VueApprentissage | 660 × 380 | non | oui | non |
+| Clavier isomorphe | `clavier-isomorphe` | — | ClavierIsomorphe | 640 × 300 | non | oui | non |
 | Clavier mélodie | `clavier-melodie` | — | ClavierMelodie | 660 × 260 | non | oui | non |
 | Clavier SFZ | `clavier-sfz` | — | ClavierSfz | 660 × 300 | non | oui | non |
 | Lecteur musique | `collection-lecteur-musique` | — | VueLecteurMusique | 380 × 320 | non | oui | non |

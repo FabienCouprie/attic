@@ -29,7 +29,23 @@ export interface VoixVivante {
 /** Ce que l'appelant fournit : faire sonner une note, et rendre de quoi l'éteindre. */
 export type Presseur = (note: number, velocite: number) => VoixVivante;
 
-export function useClavierJouable(id: string, presseur: Presseur) {
+/**
+ * Ce qu'un clavier à la géométrie DIFFÉRENTE substitue, et rien de plus.
+ *
+ * POURQUOI DEUX FONCTIONS SUFFISENT. « Clavier isomorphe » ne dessine pas des touches de piano mais
+ * un réseau de cases, et ses rangées ne se déplacent pas d'une octave mais d'une période. Tout le
+ * reste lui est commun : la table des voix, la vélocité tirée du rythme de frappe, l'enregistrement,
+ * l'extinction au démontage, la règle du nœud sélectionné. Recopier cela recopierait ses
+ * corrections, et chacune a coûté une mesure dans l'application.
+ */
+export interface OptionsFrappe {
+  /** La note sous cette position physique, ou `null`. Par défaut, les deux rangées du piano. */
+  noteSousLaTouche?: (code: string) => number | null;
+  /** Ce qu'un signe d'octave déplace. Par défaut, l'octave du clavier de frappe. */
+  deplacer?: (pas: number) => void;
+}
+
+export function useClavierJouable(id: string, presseur: Presseur, o: OptionsFrappe = {}) {
   const contRef = useRef<HTMLDivElement>(null), touchesRef = useRef<HTMLDivElement>(null);
   const [hauteurTouches, setHauteurTouches] = useState(90);
   // LA LARGEUR EST MESUREE AU MEME TITRE QUE LA HAUTEUR, et c'est elle qui decide de la taille des
@@ -197,6 +213,13 @@ export function useClavierJouable(id: string, presseur: Presseur) {
   const selectionne = useStore(
     useCallback((etat: any) => Boolean(etat.nodeLookup.get(id)?.selected), [id]),
   );
+  // CE QUI SONNE SOUS CHAQUE TOUCHE TENUE, par position.
+  //
+  // Le relâchement cherchait sa note dans la table COURANTE. Déplacer l'octave — ou, sur un clavier
+  // isomorphe, la période — pendant qu'une touche est enfoncée change cette table : le `keyup`
+  // demandait alors d'éteindre une note qui n'avait jamais sonné, et celle qui sonnait restait
+  // tenue. La table des touches tenues dit ce qui a été pressé, et c'est elle qu'on relâche.
+  const tenuesRef = useRef<Map<string, number>>(new Map());
   useEffect(() => {
     if (!selectionne) return;
     function onKD(e: KeyboardEvent) {
@@ -204,16 +227,23 @@ export function useClavierJouable(id: string, presseur: Presseur) {
       // L'octave se lit au CARACTÈRE — « + » et « − » sont des signes, lus là où ils sont imprimés —
       // quand la note se lit à la POSITION. Les deux règles vivent dans `clavier-frappe.ts`.
       const pas = pasDOctave(e.key);
-      if (pas !== 0) { setOctaveClavier((o) => octaveDeplacee(o, pas)); return; }
+      if (pas !== 0) {
+        if (o.deplacer) o.deplacer(pas); else setOctaveClavier((x) => octaveDeplacee(x, pas));
+        return;
+      }
       // Le garde contre la relance a déménagé dans `presser`, qui le tient pour tous les chemins.
-      const note = keyMap.get(e.code);
-      if (note !== undefined) presser(note);
+      const note = o.noteSousLaTouche ? o.noteSousLaTouche(e.code) : keyMap.get(e.code);
+      if (note === undefined || note === null) return;
+      tenuesRef.current.set(e.code, note);
+      presser(note);
     }
     function onKU(e: KeyboardEvent) {
       // Le relâchement n'est PAS conditionné à la cible : une touche enfoncée sur le clavier puis
       // relâchée après un clic ailleurs doit s'éteindre, sinon la note reste tenue pour toujours.
-      const note = keyMap.get(e.code);
-      if (note !== undefined) relacher(note);
+      const note = tenuesRef.current.get(e.code);
+      if (note === undefined) return;
+      tenuesRef.current.delete(e.code);
+      relacher(note);
     }
     window.addEventListener("keydown", onKD);
     window.addEventListener("keyup", onKU);
@@ -223,8 +253,9 @@ export function useClavierJouable(id: string, presseur: Presseur) {
       // Désélectionner pendant qu'une touche est enfoncée laisserait la note sonner sans personne
       // pour la relâcher : on éteint tout ce qui sonne en partant.
       for (const note of [...activesRef.current.keys()]) relacher(note);
+      tenuesRef.current.clear();
     };
-  }, [keyMap, presser, relacher, selectionne]);
+  }, [keyMap, presser, relacher, selectionne, o.noteSousLaTouche, o.deplacer]);
 
   return {
     contRef, touchesRef, dispo, hauteurTouches,

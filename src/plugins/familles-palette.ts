@@ -116,7 +116,7 @@ export const FAMILLES_GENERATION: Record<string, string[]> = {
   // Les instruments joués par le graphe, un timbre chacun.
   "Synthétiseurs": ["fm-synth", "membrane-synth", "metal-synth", "pluck-synth", "poly-synth"],
   // Ce qui se joue en posant des notes.
-  "Claviers": ["clavier-melodie", "clavier-sfz", "frontiere-note", "banque-sfz"],
+  "Claviers": ["clavier-melodie", "clavier-isomorphe", "clavier-sfz", "frontiere-note", "banque-sfz"],
   // L'autosimilarité géométrique, et elle seule. Un L-système réécrit une chaîne, la série de Nørgård
   // se déduit de proche en proche : ni l'un ni l'autre ne fabrique une fractale, et ils rejoignent
   // les autres générateurs. Les rythmes autosimilaires sont rangés avec les rythmes — c'est par là
