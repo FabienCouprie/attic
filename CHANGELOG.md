@@ -26,6 +26,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **Onze chemins de plus, dans les Collections, et un second banc qui tient la maille.** Lancer à vide chacune des fiches **sans sortie** a trouvé quatre composants que la campagne du texte ne pouvait pas voir, faute d'entrée texte : « Conversion WAV→MP3 », « Conversion MP3→WAV », « Conversion MIDI→MP3 » et « Lecteur de musique » annonçaient **« Terminé »** sur « Electron requis », sur un dossier non configuré et sur un dossier vide. Ils rendaient bien `[null]`, mais déclarent `sorties: []` : le filet du moteur ne pouvait pas les rattraper.
+
+  - **Le second banc** — `plugins/sans-sortie.test.ts` — lance chaque fiche sans sortie **à vide**, sans entrée et sur ses réglages par défaut, et exige qu'elle se déclare en erreur : à vide, aucune ne peut avoir travaillé, donc celle qui annoncerait une réussite mentirait forcément. Une seule dérogation est déclarée, la frontière d'un méta-composant, qui ne calcule rien.
+  - **Les deux bancs se complètent sans se recouvrir** : le premier éprouve ce qu'un composant fait d'un texte qui n'est pas son format, le second ce qu'il dit quand il n'a rien fait. Ensemble, ils tiennent les **vingt-huit** chemins corrigés.
+  - **Deux défauts plantés de plus**, un `erreur` retiré d'une Collection et un d'un composant sans sortie : le banc tombe dans les deux cas.
+
 - **Dix-sept chemins d'échec annonçaient « Terminé », sur sept composants, et un banc permanent ferme la campagne.** La règle du moteur est écrite dans `estResultatEnErreur` : un composant est en erreur s'il pose `erreur`, **ou** si toutes ses valeurs sont nulles alors qu'il déclare des sorties. **Un composant sans sortie échappe donc au second filet** et ne peut se signaler que par le premier ; sept l'omettaient.
 
   - **Les sept, et leurs chemins** : « Carte sonore » (4), « Galerie d'exposition » (4), « Coordonnées sur carte » (2), « Gestion des nodes » (4), « Rouleau de séquence », « Visualiseur multipiste », « Démonstration ». Absence d'Electron, répertoire non indiqué, aucun fichier trouvé, aucune piste branchée : tous annonçaient une réussite. **La même absence d'Electron s'affichait « Erreur » sur « Export SVG » et « Terminé » ici.**
