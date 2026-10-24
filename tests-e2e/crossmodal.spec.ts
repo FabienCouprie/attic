@@ -42,9 +42,18 @@ test.afterAll(async () => {
   }
 });
 
-/** Les quatre parts lues sur les barres d'un nœud, goût par goût. */
+/**
+ * Les quatre parts lues sur les barres d'un nœud, goût par goût.
+ *
+ * LE DERNIER BLOC, ET NON TOUTES LES LIGNES. « Accord mets-musique » en affiche désormais DEUX :
+ * « Dégustation réglée », le profil demandé, puis « Mesuré sur la musique », ce que l'analyse trouve
+ * dans son propre rendu. Les deux portent la même classe `attic-gout` et quatre lignes chacun ; lire
+ * les huit d'un coup ne tombait juste que par accident, `Object.fromEntries` gardant la DERNIÈRE
+ * occurrence de chaque nom. Le bloc mesuré est le dernier, et c'est lui qu'on veut.
+ */
 const parts = (page: any, id: string) => page.evaluate((n: string) => {
-  const lignes = [...document.querySelectorAll(`.react-flow__node[data-id="${n}"] .attic-gout-ligne`)];
+  const blocs = [...document.querySelectorAll(`.react-flow__node[data-id="${n}"] .attic-gout`)];
+  const lignes = [...(blocs[blocs.length - 1]?.querySelectorAll(".attic-gout-ligne") ?? [])];
   return Object.fromEntries(lignes.map((l) => [
     l.querySelector(".attic-gout-nom")?.textContent ?? "",
     parseInt(l.querySelector(".attic-gout-part")?.textContent ?? "0", 10),
@@ -56,8 +65,20 @@ async function lancer(page: any, graphe: unknown, attendus: string[]) {
   await page.goto(devUrl);
   await page.waitForSelector(".attic-app", { timeout: 20000 });
   await page.click(".attic-btn-lancer");
+  // LA MESURE EST FAITE QUAND LE NŒUD A ABOUTI ET QUE SON DERNIER BLOC PORTE SES QUATRE GOÛTS.
+  //
+  // Compter TOUTES les lignes de goût du nœud ne marche plus : « Accord mets-musique » en affiche
+  // huit, quatre par bloc, et la condition `=== 4` n'était donc jamais vraie — cent quatre-vingts
+  // secondes d'attente pour rien. Compter le dernier bloc seul ne suffirait pas davantage : le bloc
+  // du profil DEMANDÉ existe avant l'exécution, et l'attente se terminerait trop tôt. Le statut du
+  // nœud tranche, et il ne dépend d'aucune langue.
   await page.waitForFunction(
-    (ids: string[]) => ids.every((id) => document.querySelectorAll(`.react-flow__node[data-id="${id}"] .attic-gout-ligne`).length === 4),
+    (ids: string[]) => ids.every((id) => {
+      const n = document.querySelector(`.react-flow__node[data-id="${id}"]`);
+      if (!n || !n.querySelector(".attic-node.termine")) return false;
+      const blocs = [...n.querySelectorAll(".attic-gout")];
+      return (blocs[blocs.length - 1]?.querySelectorAll(".attic-gout-ligne").length ?? 0) === 4;
+    }),
     attendus, { timeout: 180000 },
   );
 }
