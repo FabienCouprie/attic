@@ -4,13 +4,15 @@
 
 import { parseMidi } from "midi-file";
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
+import { hauteurDuDegre, type Accordage } from "../audio/accordage";
 import { avecDoc } from "./notices";
 import { analyserMidi } from "../audio/midi";
 import { hauteurMediane, suivreHauteur } from "../audio/hauteur";
 import {
   NOTE_DO8, NOTE_LA0, appliquerPanoramique, choisirZone, ecartDeZone, planZones,
   rendreNotes, type Banque, type NoteJouee, type Zone,
+  decouperEnTouches,
 } from "../audio/clavier-banque";
 import {
   preparerBanque, zoneDuLot,
@@ -36,12 +38,27 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Fait d'un son une banque d'échantillons jouable sur les 88 touches, par zones.",
     resumeEn: "Turns one sound into a sample bank playable across the 88 keys, in zones.",
-    entrees: [{ nom: "Audio", type: "audio" }],
+    entrees: [
+      { nom: "Audio", type: "audio" },
+      { nom: "Accordage", nomEn: "Tuning", type: "accordage", requis: false },
+    ],
     sorties: [
       { nom: "Banque", nomEn: "Bank", type: "banque" },
       { nom: "Aperçu", nomEn: "Preview", type: "audio" },
     ],
     parametres: [
+      // L'UNITÉ EST UN RÉGLAGE ET NON UN LIBELLÉ, DEMANDÉ PAR FABIEN. « Largeur de zone » se compte
+      // en demi-tons ou en degrés selon ce choix, et une unité attachée au nombre dirait faux dans
+      // l'un des deux cas. Portée par le choix, elle ne peut mentir : aucune n'est collée au
+      // curseur, et elle se lit une ligne au-dessus.
+      //
+      // ET « DEMI-TONS » EST LE DÉFAUT, ce qui rend le changement additif : un graphe enregistré
+      // avant ce réglage garde exactement le sens qu'il avait.
+      { nom: "Compter en", nomEn: "Count in", type: "choix",
+        options: ["demi-tons", "degrés de l'accordage"], optionsEn: ["semitones", "degrees of the tuning"],
+        optionIds: ["demi-tons", "degres"], defaut: "demi-tons", defautEn: "semitones",
+        doc: "L'unité dans laquelle « Largeur de zone » se compte, et ce que joue une touche. En demi-tons, chaque touche joue un demi-ton et les zones sont larges. En degrés, chaque touche joue un degré de l'accordage reçu sur l'entrée « Accordage », et chaque touche reçoit sa propre région avec son désaccord ; les 88 touches couvrent alors 88 degrés, soit moins d'octaves dès que l'accordage en compte plus de douze par période. Sans accordage branché, le choix « degrés de l'accordage » n'a rien à quoi se rapporter et le composant le dit.",
+        docEn: "The unit in which « Zone width » counts, and what a key plays. In semitones, each key plays a semitone and zones are wide. In degrees, each key plays a degree of the tuning received on the « Tuning » input, and each key gets its own region with its own detune; the 88 keys then cover 88 degrees, hence fewer octaves as soon as the tuning counts more than twelve per period. With no tuning connected, « degrees of the tuning » has nothing to refer to and the node says so." },
       { nom: "Note d'origine", nomEn: "Source note", type: "choix",
         options: ["Automatique", "Manuelle"], optionsEn: ["Automatic", "Manual"],
         optionIds: ["auto", "manuel"], defaut: "Automatique", defautEn: "Automatic",
@@ -51,9 +68,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Note MIDI correspondant à la hauteur du son (60 = do central). Ne sert qu'en mode manuel : utile pour un son non harmonique, dont la hauteur ne se mesure pas.",
         docEn: "MIDI note matching the sound's pitch (60 = middle C). Only used in manual mode: useful for an inharmonic sound, whose pitch cannot be measured." },
       { nom: "Largeur de zone", nomEn: "Zone width", type: "curseur", plage: [1, 6], pas: 1, defaut: 2,
-        unite: " demi-tons", uniteEn: " semitones",
-        doc: "De combien de demi-tons une zone est rééchantillonnée, au plus, de part et d'autre de sa racine. C'est LE réglage de qualité : la pratique des bibliothèques d'échantillons ne dépasse pas deux ou trois demi-tons, la « règle de la tierce mineure ». À ±2, il faut dix-huit ou dix-neuf zones pour 88 touches et la durée d'une note ne varie que de 12 % à l'intérieur d'une zone ; à ±6, une zone par octave, et l'on entend le découpage.",
-        docEn: "By how many semitones a zone is resampled at most, either side of its root. This is the quality setting: sample-library practice does not exceed two or three semitones, the « minor third rule ». At ±2, eighteen or nineteen zones cover the 88 keys and a note's duration varies by only 12 % within a zone; at ±6, one zone per octave, and the seams are audible." },
+        doc: "De combien une zone est rééchantillonnée, au plus, de part et d'autre de sa racine, dans l'unité que « Compter en » donne. C'est LE réglage de qualité : la pratique des bibliothèques d'échantillons ne dépasse pas deux ou trois demi-tons, la « règle de la tierce mineure ». À ±2, il faut dix-huit ou dix-neuf échantillons pour 88 touches et la durée d'une note ne varie que de 12 % à l'intérieur d'une zone ; à ±6, un échantillon par octave, et l'on entend le découpage.",
+        docEn: "By how much a zone is resampled at most, either side of its root, in the unit given by « Count in ». This is the quality setting: sample-library practice does not exceed two or three semitones, the « minor third rule ». At ±2, eighteen or nineteen samples cover the 88 keys and a note's duration varies by only 12 % within a zone; at ±6, one sample per octave, and the seams are audible." },
       { nom: "Transposition", nomEn: "Transposition", type: "choix",
         options: ["Durée constante", "Magnétophone", "Attaque préservée"],
         optionsEn: ["Constant duration", "Tape", "Attack preserved"],
@@ -100,6 +116,21 @@ export const fiches: FicheAudio[] = ([
         if (mesuree > 0) racine = noteDepuisHertz(mesuree);
       }
       const largeur = Math.round(ctx.paramNombre("Largeur de zone", 2));
+      // EN DEGRÉS SANS ACCORDAGE, LE COMPOSANT REFUSE AU LIEU DE RETOMBER EN DEMI-TONS. Un repli
+      // silencieux ramènerait le piège que le réglage explicite existe pour fermer : le même
+      // « Largeur de zone » voudrait dire deux choses selon ce qui est branché, sans rien à l'écran.
+      const enDegres = ctx.paramTexte("Compter en", "demi-tons") === "degres";
+      const accordage = ctx.entree(1) as Accordage | null;
+      if (enDegres && (!accordage || !Array.isArray(accordage.degres) || accordage.degres.length === 0)) {
+        return {
+          valeurs: [null, null], erreur: true,
+          message: langueCourante() === "en"
+            ? "« Count in » is set to degrees, and no tuning is connected to the « Tuning » input."
+            : "« Compter en » demande des degrés, et aucun accordage n'est branché sur l'entrée « Accordage ».",
+        };
+      }
+      const accorde = enDegres ? accordage! : undefined;
+      const tonique = accorde ? Math.round(accorde.reference) : 0;
       const noteBasse = Math.round(ctx.paramNombre("Note basse", NOTE_LA0));
       const noteHaute = Math.max(noteBasse + 1, Math.round(ctx.paramNombre("Note haute", NOTE_DO8)));
       const methode = ctx.paramTexte("Transposition", "duree");
@@ -120,7 +151,12 @@ export const fiches: FicheAudio[] = ([
         boucleDebut: ctx.paramNombre("Début de boucle", 50) / 100,
         boucleLongueur: ctx.paramNombre("Longueur de boucle", 2),
       };
-      const plan = planZones(noteBasse, noteHaute, largeur, racine);
+      // LA HAUTEUR VISÉE EST POSÉE SUR LE PLAN, et c'est l'ouvrier qui la lira : sur un clavier
+      // accordé autrement, la racine est une TOUCHE et le degré qu'elle porte sonne ailleurs. Elle
+      // ne change pas la justesse, le désaccord par touche rattrapant l'écart quel qu'il soit ;
+      // elle garde le rééchantillonnage court.
+      const plan = planZones(noteBasse, noteHaute, largeur, racine)
+        .map((p) => (accorde ? { ...p, hauteur: hauteurDuDegre(accorde, p.racine - tonique) } : p));
       const brutes = await parLot<OptionsLotBanque, PrepareBanque, ZoneBrute>(plan.length, reglages, {
         creerWorker: () => new Worker(new URL("../workers/banque-worker.ts", import.meta.url), { type: "module" }),
         preparer: preparerBanque,
@@ -128,12 +164,16 @@ export const fiches: FicheAudio[] = ([
         surProgres: (faits, total) => ctx.onProgress?.(traduire("msg.banque.zone", String(faits), String(total))),
       });
       const banque: Banque = {
-        zones: brutes.map((z) => {
+        // LE DÉCOUPAGE EN TOUCHES EST LE MÊME CODE QUE CELUI DU CHEMIN EN FIL, `decouperEnTouches` :
+        // le calcul se répartit sur des ouvriers, pas la règle qui le découpe. Sans accordage, la
+        // fonction rend la zone telle quelle et rien ne change.
+        zones: brutes.flatMap((z) => {
           const audio = new AudioBuffer({
             numberOfChannels: z.voies.length, length: Math.max(1, z.voies[0].length), sampleRate: sr,
           });
           for (let c = 0; c < z.voies.length; c++) audio.copyToChannel(new Float32Array(z.voies[c]), c);
-          return { racine: z.racine, basse: z.basse, haute: z.haute, audio, ...(z.boucle ? { boucle: z.boucle } : {}) };
+          const large = { racine: z.racine, basse: z.basse, haute: z.haute, audio, ...(z.boucle ? { boucle: z.boucle } : {}) };
+          return decouperEnTouches(large, accorde, tonique);
         }),
         racineSource: racine, largeur, noteBasse, noteHaute,
       };

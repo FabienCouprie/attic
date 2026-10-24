@@ -5860,14 +5860,16 @@ Turns one sound into a sample bank playable across the 88 keys. The problem, in 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Tuning | accordage |  |
 | output | Bank | bank |  |
 | output | Preview | audio |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
+| Count in | choice | semitones | semitones / degrees of the tuning | The unit in which « Zone width » counts, and what a key plays. In semitones, each key plays a semitone and zones are wide. In degrees, each key plays a degree of the tuning received on the « Tuning » input, and each key gets its own region with its own detune; the 88 keys then cover 88 degrees, hence fewer octaves as soon as the tuning counts more than twelve per period. With no tuning connected, « degrees of the tuning » has nothing to refer to and the node says so. |
 | Source note | choice | Automatic | Automatic / Manual | In automatic mode the sound's pitch is measured by the pitch follower, no need to declare it, and it will be right. It is also what anchors the zone grid, so that at least one zone plays the sound with no transposition at all. |
 | Manual note | slider | 60 | 21 – 108, step 1 | MIDI note matching the sound's pitch (60 = middle C). Only used in manual mode: useful for an inharmonic sound, whose pitch cannot be measured. |
-| Zone width | slider | 2  semitones | 1 – 6  semitones, step 1 | By how many semitones a zone is resampled at most, either side of its root. This is the quality setting: sample-library practice does not exceed two or three semitones, the « minor third rule ». At ±2, eighteen or nineteen zones cover the 88 keys and a note's duration varies by only 12 % within a zone; at ±6, one zone per octave, and the seams are audible. |
+| Zone width | slider | 2 | 1 – 6, step 1 | By how much a zone is resampled at most, either side of its root, in the unit given by « Count in ». This is the quality setting: sample-library practice does not exceed two or three semitones, the « minor third rule ». At ±2, eighteen or nineteen samples cover the 88 keys and a note's duration varies by only 12 % within a zone; at ±6, one sample per octave, and the seams are audible. |
 | Transposition | choice | Constant duration | Constant duration / Tape / Attack preserved | How each zone is built. Constant duration: phase vocoder, pitch changes, duration stays, which is what intervals of up to four octaves require. Tape: resampling, like speeding up a tape, duration follows pitch, the « chipmunk » effect one usually wants to avoid, though sometimes it is the point. Attack preserved: the sound is first split into sines, transients and noise, only the first two are transposed, and the transients are put back untouched, the attack neither smears nor turns into a click. |
 | Lowest key | slider | 21 | 21 – 108, step 1 | First key covered. 21 = A0, the lowest of an 88-key piano. |
 | Highest key | slider | 108 | 21 – 108, step 1 | Last key covered. 108 = C8, the highest. |
