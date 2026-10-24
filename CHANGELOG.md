@@ -26,6 +26,8 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **Vite avertissait à chaque démarrage et à chaque passe, et son avertissement annonçait une rupture.** `vite.config.ts` importait `./src/audio/build-plugins` **sans extension**, ce que le chargeur de configuration natif ne sait pas résoudre : « Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version ». L'extension est écrite, et le journal se réduit désormais à son `ready in 258 ms`. Un avertissement qui s'affiche toujours finit par ne plus se lire, et celui-ci disait qu'une version à venir cesserait de charger la configuration du dépôt. `tsconfig.node.json`, qui couvre ce fichier, portait déjà `allowImportingTsExtensions` : rien d'autre n'a bougé.
+
 - **Une clé de traduction déclarée que rien n'employait.** `favs.titre` (« Banque de son » / « Sound bank ») vivait dans `i18n.tsx` sans qu'aucun code ne la lise : le menu des favoris est une liste d'ancres, et son bouton porte déjà `barre.favoris` (« Ouvrir une banque de sons »). Retirée.
 
   - **Le relevé qui va avec**, sur les **1 373 clés déclarées** : 1 227 employées littéralement, **138 que l'on ne peut pas trancher** — les familles construites dynamiquement, `favs.`, `famille.`, `criteres.masse.` et douze autres, dont un membre n'apparaît jamais écrit en entier —, et **huit mortes pour de bon**, vérifiées une par une jusqu'à leur nom de base : `btn.cadre`, `btn.commentaire`, `maj.relancer`, `montage.finesse`, `msg.regex_invalide_var_0`, `msg.sfz.sansDossier`, `msg.texte_modifie_var_0_var_1`, `msg.texte_remplacements_var_0`.

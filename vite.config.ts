@@ -1,6 +1,11 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-import { audioBuildPlugins, audioOptimizeDeps, audioResolveAliases } from './src/audio/build-plugins'
+// L'EXTENSION EST ÉCRITE, ET C'EST VITE QUI LA DEMANDE. Sans elle, il avertissait à chaque
+// démarrage et à chaque passe : « Your Vite config uses features that are unsupported by
+// `configLoader: 'native'`, which is planned to become the default ». Un avertissement qui
+// s'affiche toujours finit par ne plus se lire, et celui-ci annonçait une rupture à terme.
+// `tsconfig.node.json`, qui couvre ce fichier, porte déjà `allowImportingTsExtensions`.
+import { audioBuildPlugins, audioOptimizeDeps, audioResolveAliases } from './src/audio/build-plugins.ts'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
