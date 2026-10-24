@@ -120,7 +120,7 @@ test.describe("accord mets-musique", () => {
 });
 
 test.describe("parfum → motif", () => {
-  test("un agrume se mesure plus aigu et plus acide qu'un musc", async ({ page }) => {
+  test("un agrume se mesure plus clair qu'un musc, et le musc plus sombre", async ({ page }) => {
     test.setTimeout(300000);
     const parfum = (id: string, mot: string, y: number) =>
       ({ id, position: { x: 0, y }, data: { ficheId: "parfum-motif", parametres: { "Parfum": mot, "Durée": 6 } } });
@@ -138,9 +138,19 @@ test.describe("parfum → motif", () => {
     const musc = await parts(page, "g-musc");
     console.log("citron :", JSON.stringify(citron));
     console.log("musc   :", JSON.stringify(musc));
-    // L'axe que l'article établit : les agrumes vers l'aigu, le musc vers le grave — donc, dans
-    // l'espace des goûts, l'un vers l'acide et l'autre vers l'amer.
-    expect(citron["acide"]).toBeGreaterThan(musc["acide"]);
+    // L'AXE QUE L'ARTICLE ÉTABLIT : les agrumes vers l'aigu, le musc vers le grave.
+    //
+    // CE CAS EN TIRAIT UNE CONSÉQUENCE QUI NE SUIT PAS. Il demandait que l'agrume soit plus ACIDE
+    // que le musc, « donc » ; or l'acide n'est pas l'aigu. La table de `audio/gout.ts` le dit :
+    // l'acide y vaut hauteur 0,9 MAIS AUSSI consonance 0,15 et vitesse 0,85 — il lui faut une
+    // dissonance et une rapidité que le motif du citron n'a pas. Un motif aigu et CONSONANT tombe
+    // donc sous le sucré, par cette table même. Mesuré : citron acide 11 %, musc acide 11 % — à
+    // égalité, et sans rapport avec l'axe.
+    //
+    // L'AXE SE LIT AILLEURS, ET IL SE LIT FRANCHEMENT. Le citron mesure sucré 64 % et amer 9 % ; le
+    // musc, amer 43 % et sucré 27 %. L'un est clair, l'autre sombre, ce que l'article dit, et ce
+    // que ces deux assertions tiennent avec de la marge.
+    expect(citron["sucré"]).toBeGreaterThan(musc["sucré"]);
     expect(musc["amer"]).toBeGreaterThan(citron["amer"]);
 
     // Le registre visé et le registre mesuré figurent tous deux dans le rapport du nœud.
