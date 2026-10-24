@@ -17,6 +17,9 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
  * Retourne null si la note est invalide.
  */
 import { noteVersFrequence } from "./generateurs-aides";
+import { accordageEgal, decrireAccordage, type Accordage } from "../audio/accordage";
+import { CASES, etendue, sautDeRangee } from "../audio/clavier-isomorphe";
+import type { Sequence } from "../audio/sequence";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { SIGNATURES, clicsDeMesure, dureeUnite, lireSignature, tempsParMesure } from "../audio/signatures";
@@ -34,6 +37,13 @@ export const fiches: FicheAudio[] = ([
       { nom:"Tempo", nomEn:"Tempo", type:"curseur", plage:[40,240], defaut:120, unite:"BPM" },
       { nom:"Volume", nomEn:"Volume", plage:[0,100], defaut:80, unite:"%" },
     ],
+    // UN CLAVIER OÙ RIEN N'A ENCORE ÉTÉ JOUÉ N'EST PAS EN ERREUR, et il le disait : posé sur le
+    // canevas puis lancé, le nœud affichait « Erreur · Aucune séquence. » avant que personne n'ait
+    // touché une touche. Le filet du moteur lit « tout nul sur un nœud à sorties », et ce drapeau
+    // est ce qui le désarme. LE CHEMIN D'ÉCHEC, LUI, SE DÉCLARE MAINTENANT : son `erreur: true`
+    // n'était pas nécessaire tant que la nullité suffisait à le signaler, et le serait devenu
+    // silencieux sans lui.
+    sortieNullePermise: true,
     async executer(ctx: any) {
       console.log("[attic] Clavier mélodie : exécution démarrée");
       const notes = ctx.noeud.data.sequenceNotes as NoteEvenement[] | undefined;
@@ -50,8 +60,81 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [buf, midiFile] };
       } catch (e: any) {
         console.error("[attic] Clavier mélodie : erreur", e);
-        return { valeurs:[null, null], message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
+        // `erreur: true` EXPLICITE, depuis que la nullité ne suffit plus à signaler l'échec : le
+        // drapeau `sortieNullePermise` désarme le filet du moteur pour le cas légitime, donc celui-ci
+        // doit le dire lui-même. Sans cette ligne, une synthèse qui échoue passerait pour un clavier
+        // au repos.
+        return { valeurs:[null, null], erreur: true, message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
       }
+    },
+  },
+  {
+    id: "clavier-isomorphe", nom: "Clavier isomorphe", nomEn: "Isomorphic Keyboard",
+    univers: "Entrées", famille: "Génération",
+    resume: "Joue les degrés d'un accordage au clavier de l'ordinateur, en réseau.",
+    resumeEn: "Plays a tuning's degrees from the computer keyboard, as a lattice.",
+    notice: "Joue les degrés d'un accordage au clavier de l'ordinateur. Les quatre rangées de lettres et de chiffres forment un réseau de quarante et une cases : une case vers la droite ajoute un degré, une rangée vers le haut en ajoute le nombre que « Saut de rangée » désigne. Un même intervalle garde ainsi la même forme sous les doigts, à n'importe quelle hauteur et dans n'importe quel accordage.\n\nL'entrée « Accordage » porte l'échelle à jouer. Le réseau se construit sur elle dès que le graphe a été lancé une fois. Sans entrée branchée, il se construit sur le tempérament égal que « Degrés par période » donne, et le message du nœud nomme alors cette source.\n\n« Saut de rangée » désigne un intervalle et non un nombre de degrés : la quinte la plus proche vaut sept degrés dans un tempérament à douze, onze dans un tempérament à dix-neuf, dix-huit dans un tempérament à trente et un. L'option « un degré » fait des rangées la suite des colonnes, et le réseau couvre alors l'échelle degré par degré.\n\n« Tonique » donne la hauteur du degré zéro, en numéro de note MIDI, le do central valant 60. Elle remplace celle que l'accordage porte. La case en bas à gauche la joue, et toutes les cases du même degré sont marquées de la couleur de l'accordage.\n\n« Volume » règle le niveau de ce qui s'entend sous les doigts comme celui de la sortie « Audio ».\n\nLes flèches haut et bas déplacent le réseau d'une période, de trois tours au plus de part et d'autre. Chaque case porte la lettre de la touche qui la joue, lue sur la disposition de clavier en service, son degré dans la période, et la hauteur jouée avec son écart au demi-ton tempéré quand il y en a un. La position de la touche décide, non la lettre imprimée dessus.\n\nLe bouton ⏺ ouvre l'enregistrement, ⏹ le ferme, ▶ rejoue ce qui a été enregistré et 🗑 l'efface. La vélocité vient du rythme de frappe : jouer vite fait sonner plus fort.\n\nLa sortie « Séquence » rend les notes enregistrées, hauteurs fractionnaires comprises. La sortie « Audio » les rend en synthèse interne, dont la conversion en fréquence est continue. Aucune sortie MIDI n'est offerte : un fichier MIDI porte la hauteur sur un octet entier, où un degré fractionnaire serait arrondi.",
+    noticeEn: "Plays a tuning's degrees from the computer keyboard. The four rows of letters and digits form a lattice of forty-one cells: one cell to the right adds one degree, one row upwards adds the number « Row step » names. The same interval therefore keeps the same shape under the fingers, at any pitch and in any tuning.\n\nThe « Tuning » input carries the scale to play. The lattice is built on it as soon as the graph has been run once. With no input connected, it is built on the equal temperament « Degrees per period » gives, and the node writes beside the lattice which source it comes from.\n\n« Row step » names an interval and not a number of degrees: the nearest fifth is seven degrees in a twelve-degree temperament, eleven in a nineteen-degree one, eighteen in a thirty-one-degree one. The « one degree » option makes the rows continue the columns, and the lattice then runs along the scale instead of stacking it.\n\n« Tonic » gives the pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries. The bottom left cell plays it, and every cell of the same degree is marked in the tuning's colour.\n\n« Volume » sets the level of what sounds under the fingers as well as that of the « Audio » output.\n\nThe up and down arrows move the lattice by one period, by at most three turns either way. Each cell carries the letter of the key that plays it, read from the keyboard layout in use, its degree within the period, and the pitch played with its deviation from the tempered semitone when there is one. The key's position decides, not the letter printed on it.\n\nThe ⏺ button opens recording, ⏹ closes it, ▶ replays what was recorded and 🗑 clears it. Velocity comes from the striking rhythm: playing fast sounds louder.\n\nThe « Sequence » output returns the recorded notes, fractional pitches included. The « Audio » output renders them with the internal synthesis, whose pitch-to-frequency conversion is continuous. No MIDI output is offered: a MIDI file carries pitch in a whole byte, where a fractional degree would be rounded.",
+    entrees: [{ nom: "Accordage", nomEn: "Tuning", type: "accordage" }],
+    sorties: [
+      { nom: "Séquence", nomEn: "Sequence", type: "sequence" },
+      { nom: "Audio", nomEn: "Audio", type: "audio" },
+    ],
+    // DEUX SORTIES NULLES SONT UN RÉSULTAT VALIDE ICI, et c'est ce que ce drapeau déclare. Le travail
+    // d'un run sur ce composant est de porter l'accordage reçu jusqu'au réseau ; tant que rien n'a
+    // été joué, il n'y a aucune note à rendre. Sans le drapeau, le filet du moteur lit « tout nul
+    // sur un nœud à sorties » et affiche « Erreur » sur un clavier prêt à jouer, ce qui est faux.
+    sortieNullePermise: true,
+    parametres: [
+      { nom: "Degrés par période", nomEn: "Degrees per period", type: "curseur", plage: [2, 72], pas: 1, defaut: 12,
+        doc: "Le nombre de degrés du tempérament égal sur lequel le réseau se construit quand aucun accordage n'est branché. Avec un accordage branché, ce réglage n'agit pas : l'échelle reçue le remplace entièrement.",
+        docEn: "The number of degrees of the equal temperament the lattice is built on when no tuning is connected. With a tuning connected, this setting has no effect: the received scale replaces it entirely." },
+      { nom: "Saut de rangée", nomEn: "Row step", type: "choix",
+        options: ["la quinte la plus proche", "la quarte la plus proche", "la tierce majeure la plus proche", "un degré"],
+        optionsEn: ["the nearest fifth", "the nearest fourth", "the nearest major third", "one degree"],
+        optionIds: ["quinte", "quarte", "tierce", "degre"],
+        defaut: "la quinte la plus proche", defautEn: "the nearest fifth",
+        doc: "L'intervalle qu'une rangée ajoute. Il se cherche dans l'accordage reçu, de sorte que le même choix vaut sept degrés dans un tempérament à douze et onze dans un tempérament à dix-neuf. La quinte est l'axe des claviers généralisés depuis Bosanquet : une rangée de quintes place côte à côte les degrés d'une même harmonie. L'option « un degré » fait des rangées la suite des colonnes.",
+        docEn: "The interval a row adds. It is sought within the received tuning, so the same choice is seven degrees in a twelve-degree temperament and eleven in a nineteen-degree one. The fifth is the axis of generalized keyboards since Bosanquet: a row of fifths puts the degrees of one harmony within reach. The « one degree » option makes the rows continue the columns." },
+      { nom: "Tonique", nomEn: "Tonic", type: "curseur", plage: [24, 96], pas: 1, defaut: 60,
+        doc: "La hauteur du degré zéro, en numéro de note MIDI, le do central valant 60. Elle remplace celle que l'accordage porte, et la case en bas à gauche la joue.",
+        docEn: "The pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries, and the bottom left cell plays it." },
+      { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
+        doc: "Le niveau de ce qui s'entend sous les doigts, et celui de la sortie « Audio ».",
+        docEn: "The level of what sounds under the fingers, and that of the « Audio » output." },
+    ],
+    async executer(ctx: any) {
+      const en = langueCourante() === "en";
+      // L'ACCORDAGE REÇU, OU LE REPLI DÉCLARÉ. Le repli n'est pas un silence : le nœud dit de quelle
+      // source son réseau vient, de sorte qu'un réseau à douze degrés faute d'entrée branchée ne se
+      // confonde pas avec un réseau à douze degrés demandé.
+      const recu = ctx.entree(0) as Accordage | null;
+      const branche = Boolean(recu && Array.isArray(recu.degres) && recu.degres.length > 0);
+      const base = branche ? recu! : accordageEgal(Math.round(ctx.paramNombre("Degrés par période", 12)));
+      const accordage: Accordage = { ...base, reference: ctx.paramNombre("Tonique", 60) };
+      const saut = sautDeRangee(accordage, ctx.paramTexte("Saut de rangée", "quinte"));
+      const port = etendue(accordage, saut);
+      const source = branche
+        ? decrireAccordage(accordage, en)
+        : `${decrireAccordage(accordage, en)} (${traduire("iso.repli")})`;
+      // LE RÉSEAU EST RENDU PAR `designe`, le canal de ce qu'un run a désigné de ses entrées : il
+      // survit donc à un changement de réglage, puisque régler ce composant ne touche pas à
+      // l'accordage qu'il a reçu. La vue n'a aucun autre moyen de connaître une entrée.
+      const designe = { accordage };
+      const notes = ctx.noeud.data.sequenceNotes as NoteEvenement[] | undefined;
+      if (!notes || !Array.isArray(notes) || notes.length === 0) {
+        return {
+          valeurs: [null, null], designe,
+          message: traduire("msg.iso.prete", String(CASES), String(saut),
+            String(port.degres), port.periodes.toFixed(1), source),
+        };
+      }
+      const sequence: Sequence = { notes, tempo: 120, titre: decrireAccordage(accordage, en) };
+      const buf = await rendreSequence(notes, "FM/Oscillateurs", ctx.paramNombre("Volume", 80));
+      return {
+        valeurs: [sequence, buf], designe,
+        message: traduire("msg.iso.jouee", String(notes.length), String(CASES), String(saut), source),
+      };
     },
   },
   {

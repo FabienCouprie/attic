@@ -31,3 +31,26 @@ export const NIVEAU_ECOUTE = 0.3;
 export function ouvrirAuNiveauDEcoute(e: { currentTarget: HTMLAudioElement | HTMLVideoElement }): void {
   e.currentTarget.volume = NIVEAU_ECOUTE;
 }
+
+/**
+ * Joue un tampon déjà rendu, au niveau d'écoute, et rend la source pour pouvoir l'arrêter.
+ *
+ * POURQUOI CE SECOND POINT D'ENTRÉE. Un bouton « Rejouer » ne passe par aucun élément audio : il
+ * monte un graphe Web Audio, trois lignes, et branche sa source sur la destination. Les deux cas qui
+ * tenaient la règle ne regardaient que les balises `<audio>` et la lecture vive du Montage, si bien
+ * que TROIS boutons « Rejouer » y échappaient, un par clavier jouable, chacun ouvrant à la pleine
+ * puissance de son rendu.
+ *
+ * ET CE N'EST PAS LE NIVEAU DU SON RENDU QUI CHANGE : celui-là reste ce que le réglage « Volume » du
+ * nœud en a fait, et le fichier produit ne bouge pas d'un décibel. Ce gain-ci est le confort
+ * d'écoute, posé par-dessus, comme le `volume` d'un élément audio l'est par-dessus un fichier.
+ */
+export function ecouterTampon(ctx: BaseAudioContext, tampon: AudioBuffer): AudioBufferSourceNode {
+  const source = ctx.createBufferSource();
+  source.buffer = tampon;
+  const gain = ctx.createGain();
+  gain.gain.value = NIVEAU_ECOUTE;
+  source.connect(gain).connect(ctx.destination);
+  source.start();
+  return source;
+}

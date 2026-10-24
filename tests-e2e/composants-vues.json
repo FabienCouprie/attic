@@ -90,6 +90,12 @@
     "entreeRequiseAutre": true
   },
   {
+    "id": "clavier-isomorphe",
+    "vue": "ClavierIsomorphe",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
     "id": "clavier-melodie",
     "vue": "ClavierMelodie",
     "entreeAudio": false,

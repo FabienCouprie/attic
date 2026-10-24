@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**505 composants**, dont **97** avec une vue propre et **7** sans lecteur générique.
+**507 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -39,6 +39,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Cercle rythmique | `cercle-rythmique` | CercleRythmiqueVue | — | 320 × 400 | non | oui | non |
 | Classificateur de genre | `classificateur-genre` | VueUploadOnnx | — | 380 × 300 | non | oui | non |
 | Clavier d'apprentissage | `clavier-apprentissage` | — | VueApprentissage | 660 × 380 | non | oui | non |
+| Clavier isomorphe | `clavier-isomorphe` | — | ClavierIsomorphe | 640 × 300 | non | oui | non |
 | Clavier mélodie | `clavier-melodie` | — | ClavierMelodie | 660 × 260 | non | oui | non |
 | Clavier SFZ | `clavier-sfz` | — | ClavierSfz | 660 × 300 | non | oui | non |
 | Lecteur musique | `collection-lecteur-musique` | — | VueLecteurMusique | 380 × 320 | non | oui | non |
@@ -132,6 +133,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Sortie exposée ◂ | `__sortie-frontiere` | 240 × 118 |
 | ABC → MIDI | `abc-vers-midi` | 240 × 162 |
 | Accompagner une voix | `accompagner-voix` | 240 × 162 |
+| Accordage → notes | `accordage-notes` | 240 × 162 |
 | Accords joués | `accords-joues` | 240 × 162 |
 | Accords → Notation MIDI | `accords-vers-notation` | 240 × 162 |
 | Ajouter silence | `ajouter-silence` | 240 × 118 |
@@ -218,7 +220,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Correction de hauteur | `correction-hauteur` | 240 × 140 |
 | Couleur RGB | `couleur-rgb` | 240 × 118 |
 | Couper aux mots | `couper-aux-mots` | 240 × 162 |
-| Courbe de dissonance | `courbe-dissonance` | 240 × 140 |
+| Courbe de dissonance | `courbe-dissonance` | 240 × 162 |
 | Créneau | `creneau` | 240 × 162 |
 | Crible harmonique | `crible-harmonique` | 240 × 140 |
 | Crible (Xenakis) | `crible-xenakis` | 240 × 118 |

@@ -22,7 +22,8 @@
 // besoin d'aucun serveur. Sans build, l'épreuve s'ignore en le disant : un harnais qui échouerait
 // faute d'artefact apprendrait seulement qu'on n'a pas construit.
 import { test, expect, _electron as electron, type ElectronApplication } from "@playwright/test";
-import { existsSync, readFileSync, readdirSync, statSync } from "fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
@@ -329,6 +330,177 @@ test.describe("le séparateur, de bout en bout", () => {
       // UNE PISTE MANQUANTE EST RAPPORTÉE PAR SON NOM, et l'adaptateur refuse alors : c'est le
       // seul cas où le dossier de sortie répond à moitié.
       expect(rendu, "aucune piste ne doit manquer").not.toMatch(/Piste « \w+ » absente/i);
+    } finally {
+      await app.close();
+    }
+  });
+});
+
+// ═══ L'EXPORT SFZ POSE UN FICHIER, ET IL GARDE LE DÉSACCORD ═══
+//
+// CE QUE LES ÉPREUVES EN MÉMOIRE NE PEUVENT PAS FAIRE. `audio/sfz-aller-retour.test.ts` prouve que
+// `versSfz` écrit le `tune` d'une zone et que l'analyseur du dépôt le relit. Il ne prouve rien du
+// FICHIER : « Export SFZ » refuse d'emblée hors Electron, sa première ligne cherchant
+// `window.api.ecrireFichier`. Entre « la chaîne est juste » et « le fichier posé est juste », il
+// reste l'écriture, l'encodage des échantillons et la construction du chemin de travail.
+//
+// LE PARCOURS ÉPROUVÉ EST CELUI D'UN UTILISATEUR : importer un SFZ désaccordé, le ré-exporter. C'est
+// aussi le seul chemin par lequel une banque d'Attic porte aujourd'hui un désaccord, les siennes
+// étant justes par construction.
+//
+// CE QUI RESTE HORS DE PORTÉE, ET QUI N'EST PAS PRÉTENDU : qu'un échantillonneur tiers joue le
+// fichier juste. Aucune épreuve ne le dira ; il faut le charger dans sfizz ou Sforzando et écouter.
+
+/** Un WAV minuscule et valide : seize bits, un canal, quarante-quatre mille cent hertz. */
+function wavMinimal(echantillons = 512): Buffer {
+  const octetsSon = echantillons * 2;
+  const b = Buffer.alloc(44 + octetsSon);
+  b.write("RIFF", 0); b.writeUInt32LE(36 + octetsSon, 4); b.write("WAVE", 8);
+  b.write("fmt ", 12); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22);
+  b.writeUInt32LE(44100, 24); b.writeUInt32LE(88200, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34);
+  b.write("data", 36); b.writeUInt32LE(octetsSon, 40);
+  // Une sinusoïde plutôt que du silence : un décodeur peut écarter un fichier vide, et une zone
+  // muette ne prouverait pas que l'échantillon a fait l'aller-retour.
+  for (let i = 0; i < echantillons; i++) {
+    b.writeInt16LE(Math.round(Math.sin((2 * Math.PI * 220 * i) / 44100) * 12000), 44 + i * 2);
+  }
+  return b;
+}
+
+test.describe("l'export SFZ écrit sur le disque", () => {
+  test.skip(!existsSync(BUILD), "Aucun build : lancer « npm run build » avant cette épreuve.");
+  test.setTimeout(180_000);
+
+  test("UN SFZ DÉSACCORDÉ IMPORTÉ PUIS RÉ-EXPORTÉ GARDE SON `tune` DANS LE FICHIER", async () => {
+    const travail = mkdtempSync(join(tmpdir(), "attic-sfz-"));
+    const entree = join(travail, "entree.sfz");
+    writeFileSync(join(travail, "la.wav"), wavMinimal());
+    // Un désaccord de vingt-cinq cents, soit un quart de demi-ton : assez pour qu'un arrondi à
+    // l'entier le garde, et impossible à obtenir par hasard.
+    writeFileSync(entree, [
+      "<region>", "sample=la.wav", "lokey=56 hikey=58 pitch_keycenter=57", "tune=-25", "",
+    ].join("\n"));
+
+    const app = await lancer();
+    try {
+      const page = await app.firstWindow();
+      await page.waitForLoadState("domcontentloaded");
+      await page.evaluate(([dossier, sfz]) => {
+        // LE RÉPERTOIRE DE TRAVAIL EST SEMÉ, et sans lui l'export refuse : il vient normalement
+        // d'une boîte de dialogue système, qu'une épreuve ne pilote pas.
+        localStorage.setItem("attic-repertoire", dossier);
+        localStorage.setItem("attic-encours", JSON.stringify({
+          nodes: [
+            { id: "b", position: { x: 0, y: 0 },
+              // `sfzChemin` est posé sur la donnée du nœud, là où le bouton 📂 l'écrit.
+              data: { ficheId: "banque-sfz", parametres: { "Source": "Fichier SFZ" }, sfzChemin: sfz } },
+            { id: "x", position: { x: 380, y: 0 },
+              data: { ficheId: "export-sfz", parametres: { "Nom": "sortie.sfz" } } },
+          ],
+          edges: [{ id: "e1", source: "b", target: "x", sourceHandle: "out:0", targetHandle: "in:0" }],
+        }));
+      }, [travail, entree]);
+      await page.reload();
+      await page.waitForSelector(".attic-app", { timeout: 60000 });
+      await page.locator('[data-id="x"]').waitFor({ timeout: 60000 });
+      await page.getByRole("button", { name: /Lancer/ }).click();
+
+      const ecrit = join(travail, "sortie.sfz");
+      await expect.poll(() => existsSync(ecrit), { timeout: 90000, message: "le fichier doit être posé" })
+        .toBe(true);
+
+      const rendu = await page.locator('[data-id="x"]').innerText();
+      expect(rendu, "l'export ne doit pas manquer le pont").not.toMatch(/nécessite Electron|requires Electron/i);
+
+      const texte = readFileSync(ecrit, "utf8");
+      // LE DÉSACCORD A TRAVERSÉ : lecture du fichier d'entrée, construction de la banque, écriture.
+      expect(texte, "le fichier posé doit porter le désaccord").toMatch(/tune=-25\b/);
+      // Et les échantillons sont là, à côté : un SFZ dont les sons manquent ne se joue pas.
+      const dossierEch = join(travail, "sortie");
+      expect(existsSync(dossierEch), "le dossier des échantillons doit exister").toBe(true);
+      expect(readdirSync(dossierEch).filter((f) => f.endsWith(".wav")).length).toBeGreaterThan(0);
+    } finally {
+      await app.close();
+      rmSync(travail, { recursive: true, force: true });
+    }
+  });
+});
+
+// ═══ LE CLAVIER DE FRAPPE JOUE UNE POSITION, NON UN CARACTÈRE ═══
+//
+// CE QU'AUCUNE ÉPREUVE EN MÉMOIRE NE PEUT DIRE. `vues-domaine/clavier-frappe.test.ts` prouve que la
+// table associe des positions à des notes. Il ne prouve rien de ce que le NŒUD lit : le crochet
+// pouvait parfaitement garder `e.key.toUpperCase()` et laisser tous ces cas verts, qui est
+// exactement le piège du lot précédent — les épreuves et le composant ne passant pas par le même
+// code. Entre « la table est juste » et « la touche joue juste » il reste l'écoute du clavier.
+//
+// LE COUPLE DE FRAPPES ÉPROUVÉ EST CELUI D'UN CLAVIER FRANÇAIS, relevé par
+// `navigator.keyboard.getLayoutMap()` : la touche en bas à gauche y envoie `code: "KeyZ"` avec
+// `key: "w"`, et celle de la rangée du haut `code: "KeyW"` avec `key: "z"`. Les deux moitiés
+// comptent — la première doit jouer le do, la seconde ne doit rien jouer. Un retour au caractère
+// les échange, donc chacune tombe sur l'autre.
+
+test.describe("le clavier de l'ordinateur fait sonner le nœud", () => {
+  test.skip(!existsSync(BUILD), "Aucun build : lancer « npm run build » avant cette épreuve.");
+  test.setTimeout(180_000);
+
+  test("UNE TOUCHE ENVOYÉE AVEC SA POSITION JOUE LA NOTE DE CETTE POSITION", async () => {
+    const app = await lancer();
+    try {
+      const page = await app.firstWindow();
+      await page.waitForLoadState("domcontentloaded");
+      await page.evaluate(() => {
+        localStorage.setItem("attic-encours", JSON.stringify({
+          nodes: [{ id: "cla", position: { x: 40, y: 40 },
+            data: { ficheId: "clavier-melodie", parametres: {} } }],
+          edges: [],
+        }));
+      });
+      await page.reload();
+      await page.waitForSelector(".attic-app", { timeout: 60000 });
+      const noeud = page.locator('[data-id="cla"]');
+      await noeud.waitFor({ timeout: 60000 });
+      // Les quatre-vingt-huit touches sont dessinées avant qu'on frappe : sans cela, l'absence
+      // d'une touche allumée ne distinguerait pas « pas jouée » de « pas encore là ».
+      await expect(noeud.locator(".clavier-blanche")).toHaveCount(52, { timeout: 60000 });
+
+      // LE NŒUD DOIT ÊTRE SÉLECTIONNÉ, c'est la règle de `clavier-physique.ts`. On clique son
+      // en-tête et non son corps : un clic sur le clavier jouerait une note au passage.
+      await noeud.locator(".attic-node-entete").click();
+      await expect(noeud).toHaveClass(/selected/, { timeout: 10000 });
+
+      /** Une frappe telle qu'un clavier français l'envoie : la position, et le caractère imprimé. */
+      const frapper = (code: string, key: string, type: "keydown" | "keyup") =>
+        page.evaluate(([c, k, t]) => {
+          window.dispatchEvent(new KeyboardEvent(t, { code: c, key: k, bubbles: true }));
+        }, [code, key, type] as const);
+
+      // La touche en bas à gauche — lue « w » sur un clavier français — est le do.
+      await frapper("KeyZ", "w", "keydown");
+      await expect(noeud.locator('.clavier-blanche.enfoncee[data-pitch="C3"]'))
+        .toHaveCount(1, { timeout: 10000 });
+      await frapper("KeyZ", "w", "keyup");
+      await expect(noeud.locator(".clavier-blanche.enfoncee")).toHaveCount(0, { timeout: 10000 });
+
+      // Et la touche de la rangée du haut — lue « z » — ne joue rien : le do n'est pas là.
+      await frapper("KeyW", "z", "keydown");
+      await page.waitForTimeout(400);
+      await expect(noeud.locator(".clavier-blanche.enfoncee, .clavier-noire.enfoncee"))
+        .toHaveCount(0);
+      await frapper("KeyW", "z", "keyup");
+
+      // Les sept blanches de la rangée du bas, dans l'ordre : c'est la gamme, et c'est la
+      // GÉOMÉTRIE des deux rangées que le défaut avait défaite.
+      const rangee = [
+        ["KeyZ", "w", "C3"], ["KeyX", "x", "D3"], ["KeyC", "c", "E3"], ["KeyV", "v", "F3"],
+        ["KeyB", "b", "G3"], ["KeyN", "n", "A3"], ["KeyM", ",", "B3"],
+      ] as const;
+      for (const [code, key, hauteur] of rangee) {
+        await frapper(code, key, "keydown");
+        await expect(noeud.locator(`.clavier-blanche.enfoncee[data-pitch="${hauteur}"]`),
+          `la position ${code} doit jouer ${hauteur}`).toHaveCount(1, { timeout: 10000 });
+        await frapper(code, key, "keyup");
+      }
     } finally {
       await app.close();
     }

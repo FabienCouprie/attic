@@ -20,6 +20,10 @@ export function tailleDefaut(def: FicheUI): { width: number; height: number } {
   if (def.id === "clavier-sfz") return { width: 660, height: 300 };
   // La pluie de notes prend la moitie de la hauteur, d'ou un noeud plus haut que les deux autres.
   if (def.id === "clavier-apprentissage") return { width: 660, height: 380 };
+  // Le reseau isomorphe n'a pas de touches a dessiner mais QUARANTE ET UNE CASES EN QUATRE RANGEES,
+  // chacune portant trois lignes : sa lettre, son degre et sa hauteur. La largeur se partage entre
+  // onze cases au plus, et la hauteur entre quatre rangees plus la barre des commandes.
+  if (def.id === "clavier-isomorphe") return { width: 640, height: 300 };
   // La liste a cocher des instruments : onze lignes et leurs intitules de famille.
   // L'arbre se deplie en largeur : une mesure a trois etages ne se lit pas dans 260 pixels.
   if (def.id === "arbre-rythmique") return { width: 620, height: 280 };

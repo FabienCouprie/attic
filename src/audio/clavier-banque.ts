@@ -31,6 +31,7 @@
 // troncature et fondu — et non par rééchantillonnage, qui changerait la hauteur.
 import { changerTonalite } from "./effets-spectral";
 
+import { hauteurDuDegre, type Accordage } from "./accordage";
 import type { Note } from "./note";
 /** La0, première touche d'un piano. */
 export const NOTE_LA0 = 21;
@@ -43,6 +44,13 @@ export interface PlanZone {
   /** Première et dernière touche couvertes, incluses. */
   basse: number;
   haute: number;
+  /**
+   * La hauteur à laquelle l'échantillon de cette zone doit sonner, quand ce n'est pas sa racine.
+   *
+   * Sert au clavier accordé autrement : la racine est une TOUCHE, et la hauteur du degré qu'elle
+   * porte n'est pas ce nombre. Absente, l'échantillon sonne à sa racine, comme il l'a toujours fait.
+   */
+  hauteur?: number;
 }
 
 /** Les deux bornes d'une boucle de maintien, en échantillons de la zone. */
@@ -70,6 +78,14 @@ export interface Zone extends PlanZone {
    * C'est ce que le format SFZ écrit `pitch_keytrack=0`, et ce que déclarent la plupart des kits.
    */
   suitLaTouche?: boolean;
+  /**
+   * Cents par touche, quand la zone ne suit pas le clavier tempéré.
+   *
+   * ABSENT VEUT DIRE CENT, c'est-à-dire le demi-tempéré, et le calcul prend alors le chemin qu'il a
+   * toujours pris. Présent, il dit un tempérament égal autre : 63,16 pour dix-neuf degrés par
+   * octave, 38,71 pour trente et un. Un SFZ le déclare par `pitch_keytrack`.
+   */
+  centsParTouche?: number;
   /**
    * Plage de vélocité de la zone, incluse — sa COUCHE.
    *
@@ -146,11 +162,67 @@ export function planZones(
   return plan;
 }
 
+/**
+ * Découpe une zone large en UNE RÉGION PAR TOUCHE, chacune avec son désaccord en cents.
+ *
+ * POURQUOI CE DÉCOUPAGE EXISTE. Un échantillonneur interpole en demi-tons À L'INTÉRIEUR d'une
+ * région : une région large ne peut donc pas porter une échelle dont les degrés ne sont pas
+ * également espacés. `pitch_keytrack` dit un tempérament ÉGAL en un seul nombre, et rien d'autre —
+ * or les maqamat, les ragas et la gamme qu'un timbre appelle sont inégaux. Chaque touche reçoit donc
+ * sa région, et plusieurs partagent le même échantillon : c'est la forme d'un instrument microtonal
+ * SFZ, `lokey=K hikey=K pitch_keycenter=R tune=…`.
+ *
+ * CE QUE LE DÉSACCORD RATTRAPE. L'échantillonneur jouera la touche à la hauteur de la racine plus
+ * `touche − racine` demi-tons ; on veut la hauteur du degré. L'écart entre les deux, en cents, est
+ * ce que la région déclare. En tempérament ordinaire il est nul partout, et aucune région n'en porte.
+ *
+ * ET LA HAUTEUR DONNÉE À LA RACINE NE CHANGE PAS LA JUSTESSE, mesuré en plantant le défaut : elle
+ * s'annule dans le calcul, le désaccord rattrapant l'écart quel qu'il soit. Elle décide seulement de
+ * la TAILLE des désaccords, donc de la distance de rééchantillonnage. Mal choisie, ils atteignent
+ * 1 768 cents au bout d'un clavier à dix-neuf degrés, contre moins de 150 bien choisie.
+ */
+export function decouperEnTouches(zone: Zone, a: Accordage | undefined, tonique: number): Zone[] {
+  if (!a) return [zone];
+  const hauteurRacine = hauteurDuDegre(a, zone.racine - tonique);
+  const regions: Zone[] = [];
+  for (let touche = zone.basse; touche <= zone.haute; touche++) {
+    const cents = (hauteurDuDegre(a, touche - tonique) - hauteurRacine - (touche - zone.racine)) * 100;
+    const region: Zone = { ...zone, basse: touche, haute: touche };
+    if (Math.abs(cents) > 1e-9) region.accord = cents; else delete region.accord;
+    regions.push(region);
+  }
+  return regions;
+}
+
 export interface OptionsBanque {
   racineSource: number;
   noteBasse?: number;
   noteHaute?: number;
   largeur?: number;
+  /**
+   * L'accordage à poser sur le clavier, quand on ne l'étale pas en demi-tons.
+   *
+   * CE QUE SA PRÉSENCE CHANGE, ET POURQUOI C'EST UNE AUTRE BANQUE. Chaque touche joue alors un
+   * DEGRÉ, et non plus un demi-ton : la touche `K` sonne à `hauteurDuDegre(accordage, K − tonique)`.
+   * Comme un échantillonneur interpole en demi-tons À L'INTÉRIEUR d'une région, une région large ne
+   * peut pas porter une échelle inégale ; chaque touche reçoit donc LA SIENNE, avec son désaccord en
+   * cents, plusieurs partageant le même échantillon. C'est la forme d'un instrument microtonal SFZ,
+   * et c'est ce que `tune` et `pitch_keycenter` savent écrire.
+   *
+   * CE QUE CELA COÛTE : les quatre-vingt-huit touches ne couvrent plus sept octaves mais
+   * `88 / degrés par période`. Le nombre d'ÉCHANTILLONS ne bouge pas, c'est l'étendue qui se
+   * rétrécit.
+   *
+   * ABSENT, RIEN NE CHANGE : le chemin est exactement celui qu'il était, zone large et désaccord nul.
+   */
+  accordage?: Accordage;
+  /**
+   * La touche qui porte le degré zéro, quand un accordage est posé.
+   *
+   * Par défaut la référence de l'accordage arrondie : une échelle ne dit pas où elle se pose, et
+   * `hauteurDuDegre` compte ses rangs depuis ce point.
+   */
+  toniqueTouche?: number;
   /**
    * Comment transposer vers chaque racine. Par défaut le vocodeur de phase d'Attic, qui garde la
    * durée ; injectable pour que les tests éprouvent la logique de zones sans dépendre du procédé.
@@ -220,20 +292,36 @@ export function construireBanque(source: AudioBuffer, o: OptionsBanque): Banque 
   const suivi = Math.min(1, Math.max(0, o.suiviTouche ?? 0.5));
   const plan = planZones(noteBasse, noteHaute, largeur, o.racineSource);
 
-  const zones: Zone[] = plan.map((p) => {
-    const demiTons = p.racine - o.racineSource;
+  // L'ACCORDAGE CHANGE LA HAUTEUR DE CHAQUE RACINE, ET DÉCOUPE CHAQUE ZONE EN TOUCHES. Absent, les
+  // deux lignes qui suivent rendent la touche elle-même et la zone entière : le chemin est alors
+  // celui qu'il a toujours été, et la base d'empreintes le vérifie.
+  const a = o.accordage;
+  const tonique = o.toniqueTouche ?? (a ? Math.round(a.reference) : 0);
+  const hauteurDe = (touche: number): number => (a ? hauteurDuDegre(a, touche - tonique) : touche);
+
+  const zones: Zone[] = [];
+  for (const p of plan) {
+    const hauteurRacine = hauteurDe(p.racine);
+    const demiTons = hauteurRacine - o.racineSource;
     let audio = transposer(source, demiTons);
     if (suivi > 0 && demiTons !== 0) {
       // Plus aigu, plus court : la durée est divisée par deux à l'octave quand le suivi vaut un.
       const facteur = Math.pow(2, (-suivi * demiTons) / 12);
       if (facteur < 1) audio = tronquer(audio, audio.length * facteur, audio.sampleRate * 0.01);
     }
-    const zone: Zone = { ...p, audio };
-    if (o.boucle) {
-      zone.boucle = bornesDeBoucle(audio, o);
+    // La boucle se calcule UNE FOIS par échantillon, et non par touche : les régions d'une même
+    // racine partagent le tampon, donc elles partagent ses bornes.
+    const boucle = o.boucle ? bornesDeBoucle(audio, o) : undefined;
+    if (!a) {
+      const zone: Zone = { ...p, audio };
+      if (boucle) zone.boucle = boucle;
+      zones.push(zone);
+      continue;
     }
-    return zone;
-  });
+    const large: Zone = { ...p, audio };
+    if (boucle) large.boucle = boucle;
+    zones.push(...decouperEnTouches(large, a, tonique));
+  }
   return { zones, racineSource: o.racineSource, largeur, noteBasse, noteHaute };
 }
 
@@ -340,9 +428,20 @@ export function voixPourNote(
   // Une zone qui ne suit pas la touche garde sa vitesse : seul son désaccord éventuel s'applique.
   const demiTons = zone.suitLaTouche === false ? 0 : note - zone.racine;
   const conversion = srSortie && srSortie > 0 ? zone.audio.sampleRate / srSortie : 1;
+  // LE CHEMIN ORDINAIRE RESTE CELUI QU'IL ÉTAIT, `demiTons / 12`, et la raison est plus étroite que
+  // je ne l'ai d'abord écrite. Mesuré sur les deux cent cinquante-cinq écarts ENTIERS de la gamme
+  // MIDI : `d / 12` et `d * 100 / 1200` rendent le MÊME double, et le même rapport — zéro écart. Le
+  // danger n'apparaît que sur certains écarts fractionnaires, un tiers de demi-ton par exemple, et
+  // une hauteur fractionnaire en entrée est précisément ce que le microtonal apporte. La forme
+  // littérale est donc gardée par prudence mesurée, non par nécessité démontrée.
+  //
+  // Le chemin en cents n'est pris que par une zone qui déclare un autre tempérament.
+  const exposant = zone.centsParTouche === undefined
+    ? demiTons / 12
+    : (demiTons * zone.centsParTouche) / 1200;
   return {
     zone,
-    ratio: conversion * Math.pow(2, demiTons / 12 + (zone.accord ?? 0) / 1200),
+    ratio: conversion * Math.pow(2, exposant + (zone.accord ?? 0) / 1200),
     gain: Math.min(1, Math.max(0, volume)) * gainVelocite(velocite, zone.suiviVelocite) * (zone.gain ?? 1),
   };
 }
@@ -598,6 +697,20 @@ export function versSfz(banque: Banque, o: OptionsSfz): string {
     }
     if (zone.suiviVelocite !== undefined && zone.suiviVelocite !== 100) {
       lignes.push(`amp_veltrack=${Math.round(zone.suiviVelocite)}`);
+    }
+    // LE DÉSACCORD S'ÉCRIT, ET IL SE PERDAIT. Le lecteur comprend `tune` et le range dans
+    // `zone.accord` ; la lecture l'applique, `parametresLecture` le portant dans son rapport ; et
+    // l'écriture le jetait. Un SFZ microtonal lu, entendu juste, puis exporté ressortait tempéré,
+    // sans que rien ne le dise puisque le fichier reste valide.
+    //
+    // LES CENTS S'ÉCRIVENT TELS QUELS, FRACTIONS COMPRISES. Un tempérament à dix-neuf degrés place
+    // ses degrés à 63,16 cents les uns des autres : arrondir coûterait jusqu'à un demi-cent par
+    // degré, et c'est précisément ce qu'un instrument microtonal ne doit pas perdre.
+    //
+    // ET UNE ZONE JUSTE N'ÉCRIT RIEN : `tune=0` est le défaut du format, et l'écrire sur chaque
+    // région alourdirait le fichier d'une ligne qui ne dit rien, comme pour les bornes de vélocité.
+    if (zone.accord !== undefined && zone.accord !== 0) {
+      lignes.push(`tune=${zone.accord}`);
     }
     if (zone.boucle) {
       lignes.push("loop_mode=loop_sustain");

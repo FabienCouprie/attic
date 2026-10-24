@@ -75,6 +75,31 @@
 .clavier-legende .pastille-gauche { background: #2a9d8f; }
 .clavier-legende .pastille-droite { background: #4c6ef5; }
 
+/* ── Clavier isomorphe ──
+   Une grille droite, et non une photographie du clavier : les rangées d'un clavier physique sont
+   décalées d'un quart de touche, et les reproduire placerait chaque case entre deux cases de la
+   rangée du dessus — une forme vue à l'écran ne serait plus l'intervalle qu'elle a l'air d'être.
+   C'est la LETTRE de chaque case qui fait le pont avec les doigts, pas la géométrie. */
+.iso-reseau {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 6px; flex: 1 1 auto; overflow: auto; min-height: 120px;
+}
+.iso-rangee { display: flex; gap: 3px; }
+.iso-case {
+  flex: 1 1 0; min-width: 26px; padding: 3px 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--bg-surface-alt); border: 1px solid var(--border);
+  border-radius: 4px; cursor: pointer; color: var(--text-title);
+}
+.iso-case:hover { background: var(--bg-btn-hover); }
+/* La tonique porte la couleur du flux d'accordage, celle qui relie ce clavier à ce qui l'accorde. */
+.iso-case.tonique { border-color: #f2d600; background: rgba(242, 214, 0, 0.14); }
+.iso-case.sonne { background: #e44; color: #fff; border-color: #e44; }
+.iso-lettre { font-size: 13px; font-weight: 600; text-transform: uppercase; line-height: 1.15; }
+.iso-degre { font-size: 9px; color: var(--text-tertiary); line-height: 1.15; }
+.iso-hauteur { font-size: 9px; color: var(--text-secondary); line-height: 1.15; font-variant-numeric: tabular-nums; }
+.iso-case.sonne .iso-degre, .iso-case.sonne .iso-hauteur { color: #fff; }
+
 /* La pluie de notes : un fond sombre dans lequel les barres colorées descendent vers leur
    propre touche. Elle est dans le même conteneur défilant que le clavier, donc au même repère. */
 .clavier-pluie {

@@ -100,7 +100,10 @@ function bornesVoie(longueur: number, frequence: number, o: OptionsLotBanque): B
  */
 export function zoneDuLot(indice: number, o: OptionsLotBanque, p: PrepareBanque): ZoneBrute {
   const place = p.plan[indice];
-  const demiTons = place.racine - o.racineSource;
+  // LA HAUTEUR VISÉE PRIME SUR LA RACINE, quand le plan en déclare une : la racine est une TOUCHE,
+  // et sur un clavier accordé autrement le degré qu'elle porte sonne ailleurs. Absente, rien ne
+  // change et l'échantillon sonne à sa racine.
+  const demiTons = (place.hauteur ?? place.racine) - o.racineSource;
 
   let voies: Float32Array[];
   if (demiTons === 0 && o.methode !== "bande") {
