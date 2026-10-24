@@ -186,9 +186,12 @@ export const fiches: FicheAudio[] = ([
       );
       return {
         valeurs: [banque, apercu],
+        // L'UNITÉ SUIT LE RÉGLAGE, et elle était écrite en dur dans le message : « demi-tons » y
+        // paraissait même quand on comptait en degrés. Vu dans l'application, pas en test.
         message: traduire("msg.banque.faite",
-          String(banque.zones.length), String(largeur), String(racine),
-          mesuree > 0 ? mesuree.toFixed(1) : "—"),
+          String(banque.zones.length), String(largeur),
+          traduire(enDegres ? "msg.banque.unite.degres" : "msg.banque.unite.demiTons"),
+          String(racine), mesuree > 0 ? mesuree.toFixed(1) : "—"),
       };
     },
   },

@@ -777,7 +777,12 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.instrument.partielle": { fr: "{__VAR_0__} rendus sur {__VAR_1__} attendus · notes manquantes : {__VAR_2__} — le composant fautif de la chaîne est en rouge", en: "{__VAR_0__} renders out of {__VAR_1__} expected · missing notes: {__VAR_2__} — the failing node of the chain is shown in red" },
   "msg.instrument.nonDeplie": { fr: "La chaîne n'a pas été dépliée : {__VAR_0__} entrée(s) pour {__VAR_1__} notes attendues. Il faut UN « Note d'instrument » en amont de ce composant, au moins un composant entre les deux, et rien d'étranger à la chaîne branché ici.", en: "The chain was not unrolled: {__VAR_0__} input(s) for {__VAR_1__} expected notes. You need ONE « Instrument Note » upstream of this node, at least one node between the two, and nothing outside the chain wired here." },
   "msg.instrument.sansNote": { fr: "Aucun rendu : branchez « Note d'instrument » en amont, et une chaîne entre les deux.", en: "No render: connect « Instrument Note » upstream, and a chain between the two." },
-  "msg.banque.faite": { fr: "{__VAR_0__} zones · ±{__VAR_1__} demi-tons · racine {__VAR_2__} ({__VAR_3__} Hz)", en: "{__VAR_0__} zones · ±{__VAR_1__} semitones · root {__VAR_2__} ({__VAR_3__} Hz)" },
+  // L'UNITÉ EST UNE VARIABLE, ET ELLE ÉTAIT ÉCRITE EN DUR. Le composant compte en demi-tons ou en
+  // degrés selon son réglage « Compter en » ; le message annonçait « demi-tons » dans les deux cas,
+  // et disait donc faux dès qu'un accordage était branché. Vu dans l'application, pas en test.
+  "msg.banque.faite": { fr: "{__VAR_0__} zones · ±{__VAR_1__} {__VAR_2__} · racine {__VAR_3__} ({__VAR_4__} Hz)", en: "{__VAR_0__} zones · ±{__VAR_1__} {__VAR_2__} · root {__VAR_3__} ({__VAR_4__} Hz)" },
+  "msg.banque.unite.demiTons": { fr: "demi-tons", en: "semitones" },
+  "msg.banque.unite.degres": { fr: "degrés", en: "degrees" },
   "msg.banque.jouee": { fr: "{__VAR_0__} notes · {__VAR_1__} zones · écart max {__VAR_2__} demi-tons", en: "{__VAR_0__} notes · {__VAR_1__} zones · max shift {__VAR_2__} semitones" },
   "msg.banque.couchesJouees": { fr: "{__VAR_0__} couches touchées sur {__VAR_1__}", en: "{__VAR_0__} layers used out of {__VAR_1__}" },
   "msg.banque.ignorees": { fr: "{__VAR_0__} hors plage", en: "{__VAR_0__} out of range" },
