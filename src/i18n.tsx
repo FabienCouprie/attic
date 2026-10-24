@@ -487,7 +487,6 @@ const DICO: Record<string, Record<Langue, string>> = {
   "demoApp.captureRefusee": { fr: "La capture de la fenêtre n'a pas pu démarrer.", en: "Window capture could not start." },
   "demoApp.redemarrer": { fr: "redémarrez Attic : la capture de fenêtre vient d'être ajoutée au processus principal", en: "restart Attic: window capture has just been added to the main process" },
   "export.avantLancer": { fr: "Lancez l'exécution pour générer le résultat.", en: "Run the workflow to generate the result." },
-  "favs.titre": { fr: "Banque de son", en: "Sound bank" },
   "favs.sonotheque": { fr: "Sonothèque", en: "Sound library" },
   "favs.pixabay": { fr: "Pixabay", en: "Pixabay" },
   "favs.signature": { fr: "Signature Sounds (CC0)", en: "Signature Sounds (CC0)" },

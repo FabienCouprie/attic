@@ -26,6 +26,11 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **Une clé de traduction déclarée que rien n'employait.** `favs.titre` (« Banque de son » / « Sound bank ») vivait dans `i18n.tsx` sans qu'aucun code ne la lise : le menu des favoris est une liste d'ancres, et son bouton porte déjà `barre.favoris` (« Ouvrir une banque de sons »). Retirée.
+
+  - **Le relevé qui va avec**, sur les **1 373 clés déclarées** : 1 227 employées littéralement, **138 que l'on ne peut pas trancher** — les familles construites dynamiquement, `favs.`, `famille.`, `criteres.masse.` et douze autres, dont un membre n'apparaît jamais écrit en entier —, et **huit mortes pour de bon**, vérifiées une par une jusqu'à leur nom de base : `btn.cadre`, `btn.commentaire`, `maj.relancer`, `montage.finesse`, `msg.regex_invalide_var_0`, `msg.sfz.sansDossier`, `msg.texte_modifie_var_0_var_1`, `msg.texte_remplacements_var_0`.
+  - **`favs.titre` n'était pas dans ces huit** : une famille dynamique la couvrait, et c'est la lecture de `FAVORIS_SON` — où aucune entrée ne se nomme `titre` — qui l'a tranchée. Les huit autres sont **signalées et non retirées** : `btn.cadre` et `btn.commentaire` sont des doublons de `barre.cadre` et `barre.commentaire`, restés après le passage de la barre d'outils aux clés `barre.*`, et les outils, eux, vont bien.
+
 - **L'optimiseur de dépendances en connaissait neuf sur quarante, et le serveur rechargeait la page en pleine mesure.** `optimizeDeps.include` déclarait **9** dépendances là où Vite en pré-assemble **40**. Les trente et une autres, il les découvrait **en servant** le graphe de modules — et une découverte en route lui fait forcer un rechargement complet : `[vite] (client) Forced re-optimization of dependencies`. La liste passe à 40, celles que l'optimiseur a lui-même énumérées.
 
   - **Ce que cela cassait, et comment c'est apparu.** La passe des empreintes ouvre la page puis importe `/src/plugins/index.ts`, le plus gros graphe du dépôt, dans un `page.evaluate`. Quand le rechargement tombe **pendant** cet appel, Playwright rend « Execution context was destroyed, most likely because of a navigation » ; quand il tombe **entre** deux mesures, un composant ressort sans son — c'est ainsi que « Particules » a été accusé à tort.
