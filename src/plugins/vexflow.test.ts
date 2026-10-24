@@ -2,7 +2,7 @@
 // plugins/vexflow.test.ts — Vérification des nœuds de notation VexFlow.
 import { describe, it, expect, beforeAll } from "vitest";
 import { fiches } from "./vexflow";
-import { midiVersNotationEasyScore } from "./vexflow-notation";
+import { jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 
 function trouver(id: string) {
@@ -92,6 +92,43 @@ describe("nœuds VexFlow", () => {
     const f = trouver("vexflow-partition")!;
     const res = await f.executer(ctxSimple(null) as any);
     expect(res.message).toContain("<svg");
+  });
+
+  // ── Ce que la bibliothèque ne doit plus dire à l'utilisateur ──
+  //
+  // LE DÉFAUT, MESURÉ DANS L'APPLICATION AVANT D'ÊTRE ÉCRIT ICI. Les quatre sorties nommées
+  // « Notation » du catalogue — accords joués, gamme jouée, accords vers notation et grille
+  // d'accords — écrivent toutes le format de « Texte → MIDI », où la durée est un jeton à part.
+  // Branchées sur ces deux nœuds, elles donnaient « [RuntimeError] IncompleteVoice: Voice does not
+  // have enough notes. », huit fois sur huit, au lieu d'un refus. Un jeton sans barre de fraction
+  // recevait une noire par défaut : le texte étranger traversait l'analyse en se changeant en notes
+  // plausibles, et c'est VexFlow qui s'arrêtait ensuite.
+
+  it("REFUSE la notation de « Texte → MIDI » en nommant le jeton fautif", async () => {
+    const f = trouver("vexflow-portee")!;
+    const res = await f.executer(ctxSimple("Tempo 90\nC4+E4+G4 2.000") as any);
+    expect(res.erreur).toBe(true);
+    expect(res.message, "le jeton fautif doit être nommé").toContain("Tempo");
+    expect(res.message, "et la forme attendue aussi").toContain("C4/q");
+    expect(res.message).not.toContain("IncompleteVoice");
+  });
+
+  it("et la partition refuse la même sans laisser fuir l'erreur de la bibliothèque", async () => {
+    // CELLE-CI N'A PAS DE RECONNAISSEUR : sa progression se lit en accords, et c'est
+    // `genererPortee` qui la refuse en bout de course. Le cas tient donc l'autre moitié de la
+    // réparation — l'enveloppe du rendu — et non le reconnaisseur.
+    const f = trouver("vexflow-partition")!;
+    const res = await f.executer(ctxSimple("Tempo 90\nC4+E4+G4 2.000") as any);
+    expect(res.erreur).toBe(true);
+    expect(res.message).not.toContain("IncompleteVoice");
+    expect(res.message).not.toContain("RuntimeError");
+  });
+
+  it("jetonsSansDuree ne se trompe pas sur un accord entre parenthèses", () => {
+    // LA BARRE SE CHERCHE HORS DES PARENTHÈSES, et c'est pourquoi la recherche est partagée avec
+    // l'analyseur : deux lecteurs du même jeton ne doivent pas se répondre différemment.
+    expect(jetonsSansDuree("C4/q (C4 E4 G4)/h B4/q/r")).toEqual([]);
+    expect(jetonsSansDuree("Tempo 90 C4+E4+G4 2.000")).toEqual(["Tempo", "90", "C4+E4+G4", "2.000"]);
   });
 
   it("midiVersNotationEasyScore convertit une mélodie simple", () => {

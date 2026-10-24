@@ -9,7 +9,7 @@ import { avecDoc } from "./notices";
 import { Chord } from "tonal";
 import { parseMidi } from "midi-file";
 import { analyserMidi } from "../audio/midi";
-import { GRILLES_NOTATION, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, midiVersNotationEasyScore } from "./vexflow-notation";
+import { GRILLES_NOTATION, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
 import { choixValeurs } from "../audio/valeurs-note";
 
 export const fiches: FicheAudio[] = ([
@@ -35,6 +35,16 @@ export const fiches: FicheAudio[] = ([
       const entree = ctx.entree(0);
       const notation = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Notation", "C4/q D4/8 E4/8 F4/q G4/q");
+      // CE QUI N'EST PAS CETTE NOTATION EST REFUSE EN LE NOMMANT, et non rendu a la bibliotheque.
+      // Mesure : les quatre sorties nommees « Notation » du catalogue ecrivent le format de
+      // « Texte -> MIDI », ou la duree est un jeton a part ; branchees ici, elles ne donnaient pas
+      // un refus mais l'erreur brute de VexFlow, qui ne dit ni ce qui etait attendu ni quoi
+      // brancher. Le message, lui, nomme les jetons fautifs ET la forme attendue.
+      const sansDuree = jetonsSansDuree(notation);
+      if (sansDuree.length > 0) {
+        return { valeurs: [null], erreur: true,
+          message: traduire("msg.vexflow.notation_sans_duree_var_0", sansDuree.slice(0, 3).join(" ")) };
+      }
       const clef = ctx.paramTexte("Clé", "treble");
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);

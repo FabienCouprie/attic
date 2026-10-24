@@ -1395,6 +1395,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.erreur_tts_var_0": { fr: "Erreur TTS : {__VAR_0__}", en: "TTS error: {__VAR_0__}" },
   "msg.mms_tts_var_0_var_1_var_2": { fr: "MMS-TTS · {__VAR_0__} · {__VAR_1__}{__VAR_2__}", en: "MMS-TTS · {__VAR_0__} · {__VAR_1__}{__VAR_2__}" },
   "msg.aucune_note_valide": { fr: "Aucune note valide.", en: "No valid notes." },
+  "msg.vexflow.notation_sans_duree_var_0": { fr: "Notation non reconnue : « {__VAR_0__} » ne porte pas de durée. Attendu note/octave/durée, par exemple « C4/q D4/8 E4/8 F4/q G4/q » — les durées sont w, h, q, 8, 16, 32, et un accord s'écrit « C4+E4+G4/q ».", en: "Notation not recognised: « {__VAR_0__} » carries no duration. Expected note/octave/duration, for example « C4/q D4/8 E4/8 F4/q G4/q » — durations are w, h, q, 8, 16, 32, and a chord is written « C4+E4+G4/q »." },
   "msg.aucun_accord_valide": { fr: "Aucun accord valide.", en: "No valid chord." },
   "msg.aucune_progression_valide": { fr: "Aucune progression valide.", en: "No valid progression." },
   "msg.var_0_var_1_hz_var_2_harmonique_s": { fr: "{__VAR_0__} · {__VAR_1__} Hz · {__VAR_2__} harmonique(s)", en: "{__VAR_0__} · {__VAR_1__} Hz · {__VAR_2__} harmonic(s)" },

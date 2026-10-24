@@ -4,6 +4,18 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+
+- **VexFlow ne jette plus l'erreur de sa bibliothèque à la figure de l'utilisateur.** « Portée VexFlow » et « Partition VexFlow » annonçaient `[RuntimeError] IncompleteVoice: Voice does not have enough notes.` — un message qui ne dit ni ce qui était attendu, ni quoi brancher. Relevé en vérifiant les huit paires de ports nommés « Notation » du catalogue : **huit échecs sur huit**, et huit fois cette phrase-là.
+
+  - **La cause est un défaut silencieux de l'analyseur** : un jeton sans barre de fraction recevait une **noire par défaut**. Un texte étranger traversait donc l'analyse en se changeant en notes plausibles, le garde « aucune note valide » ne voyait rien à refuser, et c'est VexFlow qui s'arrêtait plus loin, sur une voix qui n'emplissait pas sa mesure.
+  - **Les quatre sorties nommées « Notation » du catalogue écrivent le format de « Texte → MIDI »**, où la durée est un jeton à part : `Tempo 90` / `C4+E4+G4 2.000`. Mesuré sur les quatre — accords joués, gamme jouée, accords vers notation, grille d'accords —, elles sont unanimes. Les deux entrées du même nom, elles, attendent autre chose : ABC, MusicXML, MEI ou Humdrum pour Verovio, et `C4/q D4/8` pour VexFlow.
+  - **Le refus nomme maintenant les jetons fautifs ET la forme attendue** : « Notation non reconnue : « Tempo 90 C4+E4+G4 » ne porte pas de durée. Attendu note/octave/durée, par exemple « C4/q D4/8 E4/8 F4/q G4/q » — les durées sont w, h, q, 8, 16, 32, et un accord s'écrit « C4+E4+G4/q ». » C'est la forme que Verovio tenait déjà, et qui manquait ici.
+  - **La recherche de la barre de durée est désormais partagée** entre l'analyseur et le reconnaisseur, parce que deux lecteurs du même jeton ne doivent pas se répondre différemment. Elle ignore ce qui est entre parenthèses, un accord s'écrivant `(C4 E4 G4)/q`, et un cas le tient.
+  - **Le rendu est enveloppé, et le retrait du div garanti.** « Partition VexFlow » n'a pas de reconnaisseur — sa progression se lit en accords —, et c'est le rendu lui-même qui la refuse en bout de course. Une notation que la bibliothèque refuse vaut désormais une notation vide, ce que la fiche sait déjà dire ; la cause reste lisible dans la console, avec sa pile, là où elle a été trouvée. Le `finally` ferme au passage une **fuite de nœud DOM** : la sortie anticipée d'une notation vide laissait son div dans le document, et la levée aussi.
+  - **Deux défauts plantés, un par moitié** : en désarmant le reconnaisseur, le cas de la portée tombe seul ; en laissant la levée repasser, celui de la partition tombe seul. Témoin positif relancé dans l'application : les quatre nœuds VexFlow rendent leur SVG sur une notation valide.
+  - **Signalé, non réparé** : fed du même texte étranger, « Tablature VexFlow » et « Grille d'accords VexFlow » annoncent « Terminé » et gravent les jetons comme s'ils étaient des notes et des accords. Ils ne jettent pas d'erreur brute — ce lot ne les touche donc pas —, mais ils rendent un résultat faux en silence, ce qui est l'autre moitié du même problème.
+
 ### Added
 
 - **« Début de boucle sur un plan » : une boucle de graphe qui fait tourner un texte, et non un son.** Cinq cent cinq composants. Les deux composants qui écrivent un plan de chanson — « Planifier une chanson » et « Composer un plan » — portent une « Graine », mais une exécution ne les appelle qu'une fois : un morceau fait de plusieurs sections tirées du MÊME descriptif ne pouvait pas s'obtenir d'un seul graphe. Il fallait poser autant de chaînes que de sections et leur donner des graines à la main.
