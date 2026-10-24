@@ -9519,13 +9519,13 @@ Compares an original ABC score with an edited version, and says whether what had
 
 *Engraves an ABC, MusicXML, MEI or Humdrum notation into an SVG score, to music-publishing rules.*
 
-This node engraves a score from a notation text, and returns one page as SVG. Four notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML, the exchange format of score editors; MEI, its scholarly counterpart; and Humdrum, that of analysis corpora. The format is recognised from the shape of the text; the setting lets you impose it when recognition gets it wrong. The engraving follows publishing rules: spacing proportional to duration, beams, stems and accidentals placed, staves aligned. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed, to read it in one go. The empty bottom of the page is cut off: a three-bar score does not return a full page of white. A long piece spans several pages: the « Page » setting says which one to render, and the message gives their number. The two « SVG » outputs return the same engraved score: the first as text, the second as a file. The score is also shown in the node.
+This node engraves a score from a notation text, and returns one page as SVG. Four notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML, the exchange format of score editors; MEI, its scholarly counterpart; and Humdrum, that of analysis corpora. The format is recognised from the shape of the text; the setting lets you impose it when recognition gets it wrong. The engraving follows publishing rules: spacing proportional to duration, beams, stems and accidentals placed, staves aligned. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed, to read it in one go. The empty bottom of the page is cut off: a three-bar score does not return a full page of white. A long piece spans several pages: the « Page » setting says which one to render, and the message gives their number. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file. The score is also shown in the node.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Notation | text |  |
 | output | SVG | text |  |
-| output | SVG | image |  |
+| output | SVG file | image |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -9609,13 +9609,13 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 
 *Displays a chord chart from a list of symbols.*
 
-Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The two « SVG » outputs return the same engraved chart: the first as text, the second as a file.
+Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Chords | text |  |
 | output | SVG | text |  |
-| output | SVG | image |  |
+| output | SVG file | image |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -9632,13 +9632,13 @@ Generates a chord chart (SVG) from a list of chord symbols or a roman numeral pr
 
 *Displays a simple score from a chord progression.*
 
-Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G). Chords are displayed as block chords on the staff. The two « SVG » outputs return the same engraved score: the first as text, the second as a file.
+Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G). Chords are displayed as block chords on the staff. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Progression | text |  |
 | output | SVG | text |  |
-| output | SVG | image |  |
+| output | SVG file | image |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -9655,13 +9655,13 @@ Generates a simple score (SVG) from a chord progression. Accepts roman numerals 
 
 *Displays a musical staff from a text notation.*
 
-Generates a musical staff (SVG) from a text notation. Format: note/octave/duration, e.g. « C4/q D4/8 E4/8 F4/q G4/q ». Durations are w, h, q, 8, 16, 32. Chords use +: « C4+E4+G4/q ». The staff is shown in the node. The two « SVG » outputs return the same engraved staff: the first as text, the second as a file.
+Generates a musical staff (SVG) from a text notation. Format: note/octave/duration, e.g. « C4/q D4/8 E4/8 F4/q G4/q ». Durations are w, h, q, 8, 16, 32. Chords use +: « C4+E4+G4/q ». The staff is shown in the node. The « SVG » output returns the engraved staff as text, and the « SVG file » output returns the same staff as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Notation | text |  |
 | output | SVG | text |  |
-| output | SVG | image |  |
+| output | SVG file | image |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -9676,13 +9676,13 @@ Generates a musical staff (SVG) from a text notation. Format: note/octave/durati
 
 *Displays a tablature from a text notation.*
 
-Generates a tablature (SVG) from a string-fret text notation. Format: « string-fret/duration », e.g. « 6-3/q 5-0/q 5-2/q 4-0/q 5-3/q ». The « Tuning » parameter sets the title (guitar, ukulele, bass). The two « SVG » outputs return the same engraved tablature: the first as text, the second as a file.
+Generates a tablature (SVG) from a string-fret text notation. Format: « string-fret/duration », e.g. « 6-3/q 5-0/q 5-2/q 4-0/q 5-3/q ». The « Tuning » parameter sets the title (guitar, ukulele, bass). The « SVG » output returns the engraved tablature as text, and the « SVG file » output returns the same tablature as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Tablature | text |  |
 | output | SVG | text |  |
-| output | SVG | image |  |
+| output | SVG file | image |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|

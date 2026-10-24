@@ -28,15 +28,17 @@ export const fiches: FicheAudio[] = ([
     // texte → image ». Seule « Partition MIDI », plus bas, savait alimenter l'export — son SVG
     // était déjà un fichier, et c'est son précédent que l'on suit.
     //
-    // ET LE MÊME NOM, PARCE QUE C'EST LE MÊME CONTENU dans deux porteurs. Le catalogue garde déjà
-    // un seul nom pour une idée portée de deux façons : « Mélodie » est MIDI ou séquence,
-    // « Batterie » audio ou MIDI, « Accords » texte, séquence ou MIDI. Donner un second nom au
-    // fichier recréerait la faute que les lots précédents ont retirée — un contenu, deux noms. Les
-    // deux ports se distinguent par leur type, leur couleur et leur infobulle.
+    // ET DEUX NOMS, PARCE QUE LE DÉPÔT L'EXIGE — ce que j'ai appris en le cassant. J'avais nommé
+    // les deux « SVG », au motif que c'est le même contenu dans deux porteurs, comme « Mélodie »
+    // est MIDI ou séquence. Le contrat de réglages refuse l'homonymie de ports sur une même fiche,
+    // et sa raison est écrite : l'inspecteur annonce un réglage modulable en NOMMANT le port où la
+    // courbe doit aller, et la notice répète ce nom ; avec deux ports homonymes, la phrase ne
+    // désigne plus rien. J'avais mesuré qu'aucune fiche ne le faisait, sans chercher si quelque
+    // chose l'interdisait.
     //
     // L'AJOUT EST EN FIN DE LISTE, et il le faut : un graphe enregistré désigne un port par son
     // INDICE, et insérer avant aurait décalé la sortie texte de tous les projets existants.
-    sorties: [{ nom: "SVG", type: "texte" }, { nom: "SVG", type: "image" }],
+    sorties: [{ nom: "SVG", type: "texte" }, { nom: "Fichier SVG", nomEn: "SVG file", type: "image" }],
     parametres: [
       { nom: "Notation", nomEn: "Notation", type: "texte", defaut: "C4/q D4/8 E4/8 F4/q G4/q",
         doc: "Notes à afficher. Format : note/octave/durée (ex : C4/q, D4/8, F#4/q, C4+E4+G4/q).",
@@ -80,7 +82,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Affiche une tablature à partir d'une notation texte.",
     resumeEn: "Displays a tablature from a text notation.",
     entrees: [{ nom: "Tablature", type: "texte", requis: false }],
-    sorties: [{ nom: "SVG", type: "texte" }, { nom: "SVG", type: "image" }],
+    sorties: [{ nom: "SVG", type: "texte" }, { nom: "Fichier SVG", nomEn: "SVG file", type: "image" }],
     parametres: [
       { nom: "Tablature", nomEn: "Tablature", type: "texte", defaut: "6-3/q 5-0/q 5-2/q 4-0/q 5-3/q",
         doc: "Tablature à afficher. Format : corde-fret/durée (ex : 6-3/q = corde 6, fret 3, noire).",
@@ -121,7 +123,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Affiche une grille d'accords à partir d'une liste de symboles.",
     resumeEn: "Displays a chord chart from a list of symbols.",
     entrees: [{ nom: "Accords", nomEn: "Chords", type: "texte", requis: false }],
-    sorties: [{ nom: "SVG", type: "texte" }, { nom: "SVG", type: "image" }],
+    sorties: [{ nom: "SVG", type: "texte" }, { nom: "Fichier SVG", nomEn: "SVG file", type: "image" }],
     parametres: [
       { nom: "Accords", nomEn: "Chords", type: "texte", defaut: "C Am F G",
         doc: "Accords à afficher, séparés par des espaces. Accepte aussi une progression en chiffres romains si une tonalité est renseignée.",
@@ -180,7 +182,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Affiche une partition simple à partir d'une progression d'accords.",
     resumeEn: "Displays a simple score from a chord progression.",
     entrees: [{ nom: "Progression", type: "texte", requis: false }],
-    sorties: [{ nom: "SVG", type: "texte" }, { nom: "SVG", type: "image" }],
+    sorties: [{ nom: "SVG", type: "texte" }, { nom: "Fichier SVG", nomEn: "SVG file", type: "image" }],
     parametres: [
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         doc: "Progression en chiffres romains ou en symboles d'accords (ex : C Am F G).",

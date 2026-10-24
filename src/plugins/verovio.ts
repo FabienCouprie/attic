@@ -44,8 +44,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Visualisation", famille: "Notation",
     resume: "Grave une notation ABC, MusicXML, MEI ou Humdrum en partition SVG, aux règles d'un éditeur de musique.",
     resumeEn: "Engraves an ABC, MusicXML, MEI or Humdrum notation into an SVG score, to music-publishing rules.",
-    notice: "Ce composant grave une partition à partir d'un texte de notation, et rend une page en SVG.\n\nQuatre notations sont lues : ABC, reconnaissable à ses champs d'en-tête (X:, M:, K:) ; MusicXML, le format d'échange des éditeurs de partition ; MEI, son équivalent savant ; et Humdrum, celui des corpus d'analyse. Le format est reconnu à la forme du texte ; le réglage permet de l'imposer quand la reconnaissance se trompe.\n\nLa gravure suit les règles d'un éditeur : espacement proportionnel à la durée, ligatures, hampes et altérations placées, portées alignées. La largeur de page et l'échelle décident de ce qui tient sur une ligne ; « Déroulé » met toute la pièce sur un seul système, aussi long qu'il faut, pour la lire d'un trait. Le bas de page vide est coupé : une partition de trois mesures ne rend pas une page entière de blanc.\n\nUne pièce longue tient sur plusieurs pages : le réglage « Page » dit laquelle rendre, et le message indique combien il y en a.\n\nLes deux sorties « SVG » rendent la même partition gravée : la première en texte, la seconde en fichier. La partition s'affiche aussi dans le composant.",
-    noticeEn: "This node engraves a score from a notation text, and returns one page as SVG.\n\nFour notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML, the exchange format of score editors; MEI, its scholarly counterpart; and Humdrum, that of analysis corpora. The format is recognised from the shape of the text; the setting lets you impose it when recognition gets it wrong.\n\nThe engraving follows publishing rules: spacing proportional to duration, beams, stems and accidentals placed, staves aligned. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed, to read it in one go. The empty bottom of the page is cut off: a three-bar score does not return a full page of white.\n\nA long piece spans several pages: the « Page » setting says which one to render, and the message gives their number.\n\nThe two « SVG » outputs return the same engraved score: the first as text, the second as a file. The score is also shown in the node.",
+    notice: "Ce composant grave une partition à partir d'un texte de notation, et rend une page en SVG.\n\nQuatre notations sont lues : ABC, reconnaissable à ses champs d'en-tête (X:, M:, K:) ; MusicXML, le format d'échange des éditeurs de partition ; MEI, son équivalent savant ; et Humdrum, celui des corpus d'analyse. Le format est reconnu à la forme du texte ; le réglage permet de l'imposer quand la reconnaissance se trompe.\n\nLa gravure suit les règles d'un éditeur : espacement proportionnel à la durée, ligatures, hampes et altérations placées, portées alignées. La largeur de page et l'échelle décident de ce qui tient sur une ligne ; « Déroulé » met toute la pièce sur un seul système, aussi long qu'il faut, pour la lire d'un trait. Le bas de page vide est coupé : une partition de trois mesures ne rend pas une page entière de blanc.\n\nUne pièce longue tient sur plusieurs pages : le réglage « Page » dit laquelle rendre, et le message indique combien il y en a.\n\nLa sortie « SVG » rend la partition gravée en texte, et la sortie « Fichier SVG » la même partition en fichier. La partition s'affiche aussi dans le composant.",
+    noticeEn: "This node engraves a score from a notation text, and returns one page as SVG.\n\nFour notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML, the exchange format of score editors; MEI, its scholarly counterpart; and Humdrum, that of analysis corpora. The format is recognised from the shape of the text; the setting lets you impose it when recognition gets it wrong.\n\nThe engraving follows publishing rules: spacing proportional to duration, beams, stems and accidentals placed, staves aligned. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed, to read it in one go. The empty bottom of the page is cut off: a three-bar score does not return a full page of white.\n\nA long piece spans several pages: the « Page » setting says which one to render, and the message gives their number.\n\nThe « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file. The score is also shown in the node.",
     entrees: [{ nom: "Notation", nomEn: "Notation", type: "texte", requis: false }],
     // DEUX SORTIES POUR UN MÊME SVG, ET LE MÊME NOM POUR LES DEUX.
     //
@@ -55,17 +55,16 @@ export const fiches: FicheAudio[] = ([
     // texte → image ». Seule « Partition MIDI » savait alimenter l'export, son SVG étant déjà un
     // fichier — c'est son précédent que l'on suit ici.
     //
-    // ET LE MÊME NOM, PARCE QUE C'EST LE MÊME CONTENU dans deux porteurs. Le catalogue garde déjà
-    // un seul nom pour une idée portée de deux façons : « Mélodie » est MIDI ou séquence,
-    // « Batterie » audio ou MIDI, « Accords » texte, séquence ou MIDI. Donner un second nom au
-    // fichier recréerait la faute que les lots précédents ont retirée — un contenu, deux noms.
-    // Les deux ports se distinguent par leur type, leur couleur et leur infobulle.
+    // ET DEUX NOMS, PARCE QUE LE DÉPÔT L'EXIGE. Le contrat de réglages refuse l'homonymie de ports
+    // sur une même fiche : l'inspecteur annonce un réglage modulable en NOMMANT le port où la
+    // courbe doit aller, et avec deux ports homonymes la phrase ne désigne plus rien. Les quatre
+    // graveurs de `vexflow.ts` portent la même paire, et le commentaire y est au complet.
     //
     // L'AJOUT EST EN FIN DE LISTE, et il le faut : un graphe enregistré désigne un port par son
     // INDICE, et insérer avant aurait décalé la sortie texte de tous les projets existants.
     sorties: [
       { nom: "SVG", nomEn: "SVG", type: "texte" },
-      { nom: "SVG", nomEn: "SVG", type: "image" },
+      { nom: "Fichier SVG", nomEn: "SVG file", type: "image" },
     ],
     parametres: [
       { nom: "Notation", nomEn: "Notation", type: "texte", defaut: EXEMPLE, defautEn: EXEMPLE,
