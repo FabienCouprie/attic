@@ -55,6 +55,18 @@ export interface RegionSfz {
    * quelle que soit la touche. La valeur normale est 100 — cent cents par demi-ton.
    */
   suitLaTouche: boolean;
+  /**
+   * `pitch_keytrack` en CENTS PAR TOUCHE, et non plus en « oui ou non ».
+   *
+   * LA VALEUR SE PERDAIT, ET C'EST UN TEMPÉRAMENT QUI SE PERDAIT AVEC ELLE. Ce champ n'était lu que
+   * pour savoir s'il valait zéro : `pitch_keytrack=63` et `pitch_keytrack=100` entraient donc
+   * pareil, en « suit la touche ». Or 1200 / 19 = 63,16, et c'est ainsi qu'un instrument microtonal
+   * à DIX-NEUF DEGRÉS ÉGAUX se déclare en SFZ — un seul opcode pour toute l'échelle.
+   *
+   * `suitLaTouche` reste, et vaut `centsParTouche !== 0` : les appelants qui ne demandent qu'un
+   * oui ou non n'ont rien à changer, et le chemin du tempérament ordinaire reste celui qu'il était.
+   */
+  centsParTouche: number;
 }
 
 export interface Probleme {
@@ -238,6 +250,7 @@ export function analyserSfz(texte: string): Sfz {
         volume: nombre(h.get("volume"), 0),
         accord: nombre(h.get("tune") ?? h.get("pitch"), 0),
         suitLaTouche: nombre(h.get("pitch_keytrack"), 100) !== 0,
+        centsParTouche: nombre(h.get("pitch_keytrack"), 100),
         suiviVelocite: Math.max(0, Math.min(100, nombre(h.get("amp_veltrack"), 100))),
       });
       const rel = h.get("ampeg_release");
@@ -364,6 +377,11 @@ export function banqueDepuisSfz(
       audio,
     };
     if (r.accord !== 0) zone.accord = r.accord;
+    // LE TEMPÉRAMENT DE LA RÉGION SUIT, et seulement quand il n'est pas celui du clavier ordinaire.
+    // Posé partout, ce champ ferait passer chaque zone par le chemin de calcul en cents, dont le
+    // résultat est le même à un bit près mais pas au même bit : la base d'empreintes surveille ce
+    // composant, et elle le verrait.
+    if (r.centsParTouche !== 100 && r.centsParTouche !== 0) zone.centsParTouche = r.centsParTouche;
     if (r.volume !== 0) zone.gain = Math.pow(10, r.volume / 20);
     // Les bornes de vélocité ne sont posées que si elles disent quelque chose : une région pleine
     // plage reste une zone sans couche, et se comporte exactement comme avant.

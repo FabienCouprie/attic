@@ -71,6 +71,14 @@ export interface Zone extends PlanZone {
    */
   suitLaTouche?: boolean;
   /**
+   * Cents par touche, quand la zone ne suit pas le clavier tempéré.
+   *
+   * ABSENT VEUT DIRE CENT, c'est-à-dire le demi-tempéré, et le calcul prend alors le chemin qu'il a
+   * toujours pris. Présent, il dit un tempérament égal autre : 63,16 pour dix-neuf degrés par
+   * octave, 38,71 pour trente et un. Un SFZ le déclare par `pitch_keytrack`.
+   */
+  centsParTouche?: number;
+  /**
    * Plage de vélocité de la zone, incluse — sa COUCHE.
    *
    * Un piano échantillonné sérieusement a trois à huit enregistrements par touche : joué doucement,
@@ -340,9 +348,20 @@ export function voixPourNote(
   // Une zone qui ne suit pas la touche garde sa vitesse : seul son désaccord éventuel s'applique.
   const demiTons = zone.suitLaTouche === false ? 0 : note - zone.racine;
   const conversion = srSortie && srSortie > 0 ? zone.audio.sampleRate / srSortie : 1;
+  // LE CHEMIN ORDINAIRE RESTE CELUI QU'IL ÉTAIT, `demiTons / 12`, et la raison est plus étroite que
+  // je ne l'ai d'abord écrite. Mesuré sur les deux cent cinquante-cinq écarts ENTIERS de la gamme
+  // MIDI : `d / 12` et `d * 100 / 1200` rendent le MÊME double, et le même rapport — zéro écart. Le
+  // danger n'apparaît que sur certains écarts fractionnaires, un tiers de demi-ton par exemple, et
+  // une hauteur fractionnaire en entrée est précisément ce que le microtonal apporte. La forme
+  // littérale est donc gardée par prudence mesurée, non par nécessité démontrée.
+  //
+  // Le chemin en cents n'est pris que par une zone qui déclare un autre tempérament.
+  const exposant = zone.centsParTouche === undefined
+    ? demiTons / 12
+    : (demiTons * zone.centsParTouche) / 1200;
   return {
     zone,
-    ratio: conversion * Math.pow(2, demiTons / 12 + (zone.accord ?? 0) / 1200),
+    ratio: conversion * Math.pow(2, exposant + (zone.accord ?? 0) / 1200),
     gain: Math.min(1, Math.max(0, volume)) * gainVelocite(velocite, zone.suiviVelocite) * (zone.gain ?? 1),
   };
 }
