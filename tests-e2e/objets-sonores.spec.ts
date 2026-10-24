@@ -99,14 +99,19 @@ test.describe("objets sonores et montage", () => {
         n("a", "metronome", 0, 0, { "Durée": 2 }),
         n("b", "metronome", 0, 300, { "Durée": 3 }),
         n("mon", "montage", 360, 0, { "Début 1": 0, "Début 2": 5.5 }),
+        // LA DURÉE SE MESURE EN AVAL, ET NON SUR LE MONTAGE LUI-MÊME. Sa vue est une LIGNE DE
+        // TEMPS, avec son propre transport : elle ne rend aucun élément `audio`, et ce cas
+        // attendait donc quatre-vingt-dix secondes un `src` qui ne viendrait jamais. Le montage
+        // produit bien son son — « Sortie audio » le reçoit et l'expose.
+        n("out", "sortie-audio", 720, 0),
       ],
-      edges: [e("a", "mon", 0, 0), e("b", "mon", 0, 1)],
-    }, "mon");
+      edges: [e("a", "mon", 0, 0), e("b", "mon", 0, 1), e("mon", "out", 0, 0)],
+    }, "out");
     console.log(JSON.stringify(r, null, 1));
     expect(r.mon.erreur).toBe(false);
     expect(r.mon.texte).toMatch(/2\spistes/);
     // La seconde piste commence à 5,5 s et dure 3 s : 8,5 s en tout.
-    expect(Math.abs(r.mon.duree! - 8.5)).toBeLessThan(0.02);
+    expect(Math.abs(r.out.duree! - 8.5)).toBeLessThan(0.02);
   });
 
   test("LA LIGNE DE TEMPS MONTRE LES PISTES À LEUR PLACE, ET SE RÈGLE À LA SOURIS", async ({ page }) => {
@@ -118,9 +123,11 @@ test.describe("objets sonores et montage", () => {
         n("a", "metronome", 0, 0, { "Durée": 2 }),
         n("b", "metronome", 0, 300, { "Durée": 3 }),
         n("mon", "montage", 360, 0, { "Début 1": 0, "Début 2": 5.5, "Fondu entrée 2": 200 }),
+        // Même raison que ci-dessus : on attend l'audio en aval, le montage n'en rendant pas.
+        n("out", "sortie-audio", 720, 0),
       ],
-      edges: [e("a", "mon", 0, 0), e("b", "mon", 0, 1)],
-    }, "mon");
+      edges: [e("a", "mon", 0, 0), e("b", "mon", 0, 1), e("mon", "out", 0, 0)],
+    }, "out");
     await page.evaluate(() => {
       const nd = document.querySelector('.react-flow__node[data-id="mon"]') as HTMLElement;
       const r = nd.getBoundingClientRect();
