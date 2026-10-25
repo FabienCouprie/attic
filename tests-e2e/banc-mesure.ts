@@ -138,6 +138,12 @@ export async function mesurerComposant(
       }
     }
 
+    // LES VALEURS D'ESSAI DES AUTRES TYPES viennent du domaine, où un cas les tient et où un autre
+    // refuse qu'un type de flux neuf arrive sans valeur ni raison écrite. Le SON, lui, reste ici :
+    // son générateur congruentiel est ce que `core/hasard-prive.test.ts` interdit dans `src/`, et
+    // le remplacer déplacerait les soixante-douze empreintes sans qu'un composant ait changé.
+    const ve = await import("/src/audio/valeurs-essai.ts");
+
     const reglages = parametres as Record<string, string | number>;
     const rangs = entreesAudio as number[];
 
@@ -153,9 +159,23 @@ export async function mesurerComposant(
       const p = { ...(mel as any).PARAMETRES_RIFFUSION, echantillonnage: frequence };
       spectre = { canaux: [(sm as any).melDepuisSignal(buf.getChannelData(0), p)], parametres: p };
     }
+    // CHAQUE RANG REÇOIT CE QUE SON PORT DÉCLARE, et non un tampon audio quel que soit le port.
+    //
+    // CE QUE CELA DÉBLOQUE, ET C'EST UN CHIFFRE QUI L'A RÉCLAMÉ. Sur les 367 composants qui rendent
+    // de l'audio, soixante exigent d'abord autre chose : une séquence, un MIDI, un texte, un
+    // accordage, une banque. Nourris d'un `AudioBuffer`, ils rendaient un REFUS — le banc mesurait
+    // alors le refus, c'est-à-dire rien, et aucun des trois verbes ne pouvait les atteindre.
+    //
+    // LE SOUS-TYPE COMPTE AUSSI : une notation, un ABC et une invite de modèle sont trois textes
+    // différents, et quatre composants sur cinq refusent celui des autres.
+    //
+    // Un type sans valeur d'essai garde le son, qui est ce que ce banc a toujours donné.
     const pourRang = (i: number) => {
       if (!rangs.includes(i)) return null;
-      return (fiche.entrees || [])[i]?.type === "spectrogramme" ? spectre : buf;
+      const port = (fiche.entrees || [])[i];
+      if (port?.type === "spectrogramme") return spectre;
+      const v = (ve as any).valeurDEssai(port?.type, port?.sousType, { source: buf });
+      return v ?? buf;
     };
 
     const ctx = {
