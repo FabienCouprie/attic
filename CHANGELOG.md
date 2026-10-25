@@ -6,6 +6,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **Le garde du son des exemples ne disait pas ce qu'il ne tient pas, alors que son en-tête le promettait.** « Mieux vaut un garde qui dit ce qu'il ne tient pas qu'un garde qui crie au loup » — et il ne le disait pas : un exemple déclaré **variable** n'est ni dans les comparés, qui exigent une empreinte de référence, ni dans les neufs, qui l'écartent explicitement. **Il sortait de la passe sans une ligne.** On lisait treize « identique » en croyant tenir tous les exemples, quand six sont hors de portée ou non surveillés.
+
+  - **Chaque passe énumère désormais ce qui n'est pas tenu**, avec sa raison et sa mesure : les sons variables, les exemples qui attendent un fichier de l'utilisateur, et ceux qu'un défaut connu écarte.
+  - **Décision de Fabien le 2026-10-25 : `ton-glisse-en-trompette-etiree` ne sera pas semé.** Le réseau DDSP y varie de **2,9 % en valeur efficace et 9,9 % en crête**, l'étireur de **12 % en valeur efficace** ; ni paulstretch ni le DDSP n'exposent de graine. Le prix est écrit dans le fichier : le son de cet exemple n'est pas surveillé, et une régression qui s'y produirait passerait inaperçue. C'est le seul des treize dans ce cas.
+  - **Il reste dans la passe plutôt que dans la liste des écartés**, ce qui est la conséquence utile de la décision : l'établissement le rejoue, donc le jour où quelqu'un sèmerait ces deux générateurs, il se remettrait **seul** sous surveillance. L'écarter l'en sortirait pour toujours.
+  - **Un relevé qui compte sur un ensemble et énumère sur un autre dit faux dès qu'on le restreint** : un premier jet annonçait « 1 exemple sur 1 » sous `EXEMPLE=un-son-projete-en-microtonal` en nommant un exemple que la passe n'avait pas regardé.
+
 - **Un nœud dont le worker meurt dit enfin pourquoi, et ce n'était pas un message vide : c'était le mot « error ».** Le garde-fou des workers rapportait `String(e.type)` faute de message — c'est-à-dire **le nom de l'événement** présenté comme une cause. L'infobulle du nœud rouge affichait donc « error », cinq lettres d'anglais, sur un nœud dont rien ne disait ce qui avait échoué.
 
   - **Ce que le navigateur dit d'un worker mort, mesuré dans Chromium sur quatre morts** plutôt que supposé : un **module dont l'import échoue ne donne RIEN** — ni `message`, ni `filename`, ni `lineno`, ni `error` —, un `importScripts` raté donne « Uncaught SyntaxError… », et une exception à l'exécution donne « Uncaught Error: … » avec son fichier et sa ligne. **Le premier cas est celui d'Attic**, tous ses workers étant des modules.
