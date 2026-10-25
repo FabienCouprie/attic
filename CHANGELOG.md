@@ -4,6 +4,20 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+
+- **Un nœud dont le worker meurt dit enfin pourquoi, et ce n'était pas un message vide : c'était le mot « error ».** Le garde-fou des workers rapportait `String(e.type)` faute de message — c'est-à-dire **le nom de l'événement** présenté comme une cause. L'infobulle du nœud rouge affichait donc « error », cinq lettres d'anglais, sur un nœud dont rien ne disait ce qui avait échoué.
+
+  - **Ce que le navigateur dit d'un worker mort, mesuré dans Chromium sur quatre morts** plutôt que supposé : un **module dont l'import échoue ne donne RIEN** — ni `message`, ni `filename`, ni `lineno`, ni `error` —, un `importScripts` raté donne « Uncaught SyntaxError… », et une exception à l'exécution donne « Uncaught Error: … » avec son fichier et sa ligne. **Le premier cas est celui d'Attic**, tous ses workers étant des modules.
+  - **Le correctif ne peut donc pas inventer la cause qu'il n'a pas** : il dit le **fait** de la mort — « son worker est mort avant de répondre, et le navigateur n'en donne pas la cause » — et **n'invite pas à regarder la console**, puisqu'il est mesuré qu'elle n'en dit pas plus. Quand le navigateur donne un message, c'est celui-là qui part, avec son fichier réduit à son dernier segment et sa ligne : une URL de développement ou un `blob:` mangerait l'infobulle sans rien apprendre.
+  - **Éprouvé dans l'application**, sur un graphe de trois nœuds dont le worker du glissando avait reçu un import introuvable : « error » avant, la phrase entière après. **Six cas neufs** tiennent la règle, dont un qui refuse explicitement que le mot « error » revienne et un qui refuse qu'on renvoie à la console ; défaut planté, deux tombent.
+
+- **Et le défaut le plus grave était dans l'instrument qui venait de le révéler.** `exécuter` annonçait « sans message » sur les nœuds en erreur. L'application met la cause d'une erreur dans l'**infobulle du libellé de statut** — décision écrite dans `AtelierNode.tsx`, « le message va dans l'infobulle plutôt que dans le libellé, qui doit rester court » — et le pilote ne lisait que `.attic-node-message`, qui porte le **résultat** d'un run réussi.
+
+  - **Relevé dans la base du son des exemples : huit entrées sur dix étaient des identifiants nus** — `clavier`, `ecoute`, `extrait`, `jouer`, `phase`, `selecteur`, `stretch`, `noeud-2` — quand chacun portait « Entrée en erreur : … ». La base dit maintenant la **chaîne de propagation** : `cri` → `stretch` → `phase` → `selecteur` → `extrait` → `clavier` → `ecoute` et `jouer`.
+  - **Les deux entrées de la base ont été reportées à la main, entrée par entrée.** Rétablir la base entière aurait re-basé au passage les 62 empreintes de son, ce que le garde interdit sans avoir écouté. Vérifié : seuls les deux relevés de causes changent, **aucun chiffre de son ne bouge**, et les treize exemples repassent « identique ».
+  - **C'est ce défaut qui m'a fait partir réparer la mauvaise chose** : un instrument qui tait la cause fait diagnostiquer autre chose. Un cas neuf tient désormais les **deux moitiés** — l'application met la cause là, le pilote la lit là — parce que déplacer l'une sans l'autre rend le pilote muet **sans rien casser**. Planté de chaque côté séparément : il tombe des deux.
+
 ### Changed
 
 - **`exécuter`, le sixième verbe : un graphe entier est lancé, et l'on entend ce qu'il rend.** Les cinq verbes précédents ne voient qu'un composant **isolé** sur un banc, ou un registre. Aucun ne regardait un graphe **câblé** en train de tourner — et c'est là que vivent les défauts qu'aucun composant seul ne porte : les cent trente cents de « Étaler sur le clavier » naissaient de la **rencontre** de deux chemins de construction de banque dont chacun, pris seul, était juste.

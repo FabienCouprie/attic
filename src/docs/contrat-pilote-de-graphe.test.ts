@@ -139,6 +139,38 @@ describe("le pilote de graphe", () => {
     ].join("\n")).toEqual([...statuts].sort());
   });
 
+  // ET CE CAS-CI VIENT D'UNE CÉCITÉ QUI M'A COÛTÉ UN FAUX DIAGNOSTIC.
+  //
+  // L'application pose la cause d'une erreur dans l'INFOBULLE du libellé de statut, et non dans le
+  // message du nœud — décision écrite dans `AtelierNode.tsx` : « le message va dans l'infobulle
+  // plutôt que dans le libellé, qui doit rester court ». Le pilote ne lisait que
+  // `.attic-node-message`, qui porte le RÉSULTAT d'un run réussi.
+  //
+  // CE QUE CELA A PRODUIT : un rapport annonçant « sans message » sur un nœud dont la cause était
+  // lisible à côté, et huit entrées sur dix réduites à des identifiants nus dans la base du son.
+  // Parti réparer un message vide, j'ai mesuré qu'il ne l'était pas : il valait « error ».
+  //
+  // LES DEUX MOITIÉS DOIVENT DONC SE TENIR : l'application met la cause là, et le pilote la lit là.
+  // Déplacer l'une sans l'autre rend le pilote muet SANS RIEN CASSER, ce qui est la pire espèce.
+  it("LA CAUSE D'UNE ERREUR SE LIT LÀ OÙ L'APPLICATION LA MET", () => {
+    const noeud = codeSeul(source(NOEUD));
+    // L'élément qui porte le libellé de statut, et son infobulle.
+    const libelle = /<span className="attic-node-statut-label"([^>]*)>/.exec(noeud)?.[1];
+    expect(libelle, [
+      "`AtelierNode.tsx` ne porte plus un `<span className=\"attic-node-statut-label\">`.",
+      "C'est l'élément dont l'infobulle dit POURQUOI un nœud est en erreur ; le pilote l'y lit.",
+    ].join("\n")).toBeTruthy();
+    expect(libelle, "son infobulle doit porter la cause, et seulement quand le nœud est en erreur")
+      .toMatch(/title=\{[^}]*"erreur"/);
+
+    const pilote = codeSeul(source(PILOTE));
+    expect(pilote, [
+      "Le pilote ne lit plus l'infobulle du libellé de statut.",
+      "Il annoncerait « sans cause déclarée » sur chaque nœud en erreur, sans qu'une ligne ne casse.",
+    ].join("\n")).toContain(".attic-node-statut-label");
+    expect(pilote, "et il la lit par `getAttribute(\"title\")`").toMatch(/getAttribute\("title"\)/);
+  });
+
   it("ET SES APPELANTS PASSENT PAR LUI : aucun ne garde son propre pilotage", () => {
     const appelants = readdirSync(DOSSIER)
       .filter((f) => f.endsWith(".spec.ts"))

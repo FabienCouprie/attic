@@ -229,11 +229,19 @@ async function jouer(page: import("@playwright/test").Page, fichier: string): Pr
     return lecteurs;
   }) as Record<string, MesureLecteur>;
 
-  // L'ERREUR PORTE SON MESSAGE, et non son seul identifiant : un relevé qui dirait « six nœuds en
+  // L'ERREUR PORTE SA CAUSE, et non son seul identifiant : un relevé qui dirait « six nœuds en
   // erreur » obligerait à rejouer l'exemple pour savoir lequel et pourquoi.
+  //
+  // ET C'EST LA CAUSE QU'ON LIT, non le message du nœud. La base portait huit identifiants nus sur
+  // dix — `clavier`, `ecoute`, `extrait`, `jouer`, `phase`, `selecteur`, `stretch`, `noeud-2` —
+  // parce qu'un nœud en erreur n'a pas de message de résultat : il a une cause, et elle est
+  // ailleurs dans la page.
   const erreurs = (await etatDesNoeuds(page))
     .filter((n) => n.statut === "erreur")
-    .map((n) => (n.message ? `${n.id} : ${n.message.slice(0, 90)}` : n.id))
+    .map((n) => {
+      const dit = n.cause ?? n.message;
+      return dit ? `${n.id} : ${dit.slice(0, 90)}` : n.id;
+    })
     .sort();
   return { lecteurs, erreurs };
 }

@@ -16,6 +16,31 @@
 // Les demandes en vol sont suivies en interceptant `postMessage`, d'où les `requestId` sont lus : les
 // appelants filtrent les messages sur cet identifiant, et un message sans le bon `requestId` serait
 // ignoré — le garde-fou n'aurait rien gardé.
+//
+// ═══ CE QUE LE NAVIGATEUR DIT D'UN WORKER MORT, MESURÉ ET NON SUPPOSÉ ═══
+//
+// Relevé le 2026-10-25 dans Chromium, sur quatre morts différentes, en lisant tous les champs de
+// l'événement `error` :
+//
+//   module, import introuvable ........ RIEN. Ni `message`, ni `filename`, ni `lineno`, ni `error`.
+//   classique, importScripts raté ..... « Uncaught SyntaxError: Failed to execute 'importScripts'… »
+//   exception à l'exécution, module ... « Uncaught Error: une vraie cause » + fichier + ligne
+//   exception à l'exécution, classique  « Uncaught Error: une vraie cause » + fichier + ligne
+//
+// LE PREMIER CAS EST CELUI D'ATTIC, tous ses workers étant des modules : quand l'un ne se charge
+// pas, LE NAVIGATEUR NE DIT RIEN DU TOUT, et la console non plus — vérifié, rien ne s'y ajoute.
+// Il n'y a donc aucune cause à rapporter, seulement le FAIT de la mort, et il faut le dire ainsi.
+//
+// CE QUE CE MODULE FAISAIT, ET C'ÉTAIT LA FAUTE : `e.message || String(e.type ?? "error")`. Faute
+// de message, il rapportait le TYPE DE L'ÉVÉNEMENT comme s'il était une cause, et le nœud affichait
+// « error » en infobulle — un mot anglais qui ne dit rien, sur un nœud rouge dont on ne savait pas
+// pourquoi il l'était. Mesuré sur un graphe de trois nœuds dont le worker du glissando avait reçu un
+// import introuvable : « error », et rien d'autre, nulle part.
+//
+// IL NE PEUT PAS INVENTER LA CAUSE QU'IL N'A PAS. Il dit ce qu'il sait — le worker est mort avant de
+// répondre —, et il n'invite pas à regarder la console, puisqu'il est mesuré qu'elle n'en dit pas
+// plus. Quand le navigateur donne un message, c'est celui-là qui part, avec son fichier et sa ligne.
+import { traduire } from "../i18n";
 
 /** Clé interne pour les appelants qui ne numérotent pas leurs demandes (un worker, une demande). */
 const SANS_ID = "\x00sans-id";
@@ -24,6 +49,26 @@ const SANS_ID = "\x00sans-id";
 function evenementMessage(donnees: unknown): Event {
   if (typeof MessageEvent !== "undefined") return new MessageEvent("message", { data: donnees });
   return { type: "message", data: donnees } as unknown as Event;
+}
+
+/**
+ * Ce que l'on peut dire de la mort d'un worker, à partir de ce que l'événement porte VRAIMENT.
+ *
+ * TROIS CHAMPS SONT LUS, ET AUCUN N'EST SUPPOSÉ PRÉSENT. Quand le navigateur donne un message, il
+ * part tel quel, suivi du fichier et de la ligne quand il les donne aussi : c'est le cas d'une
+ * exception levée dans le worker, et c'est alors la cause exacte. Quand il ne donne rien — un
+ * module dont l'import échoue, le cas d'Attic —, on dit le fait de la mort et rien de plus.
+ *
+ * LE NOM DU FICHIER EST RÉDUIT À SON DERNIER SEGMENT : un `blob:` ou une URL de développement avec
+ * ses paramètres de requête occupe toute l'infobulle sans rien apprendre.
+ */
+export function raisonDeLaMort(e: unknown): string {
+  const ev = e as { message?: unknown; filename?: unknown; lineno?: unknown } | null;
+  const message = typeof ev?.message === "string" ? ev.message.trim() : "";
+  if (!message) return traduire("msg.worker_mort_sans_cause");
+  const fichier = typeof ev?.filename === "string" ? ev.filename.split(/[/\\]/).pop() ?? "" : "";
+  const ligne = typeof ev?.lineno === "number" && ev.lineno > 0 ? `:${ev.lineno}` : "";
+  return fichier ? `${message} (${fichier}${ligne})` : message;
 }
 
 /**
@@ -79,10 +124,10 @@ export function installerGardeWorker<T extends CibleWorker>(w: T, surMort?: (rai
   };
 
   w.addEventListener("error", (e: any) => {
-    mourir(e?.message || String(e?.type ?? "error"));
+    mourir(raisonDeLaMort(e));
   });
   w.addEventListener("messageerror", () => {
-    mourir("message illisible");
+    mourir(traduire("msg.worker_message_illisible"));
   });
 
   return w;

@@ -692,6 +692,17 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.bwf.depart": { fr: "Départ BWF {__VAR_0__} · {__VAR_1__}", en: "BWF start {__VAR_0__} · {__VAR_1__}" },
   "msg.erreur_chargement_svg": { fr: "Impossible de charger le SVG.", en: "Unable to load the SVG." },
   "msg.erreur_canvas": { fr: "Canvas 2D indisponible.", en: "Canvas 2D unavailable." },
+  // UN WORKER MODULE QUI NE SE CHARGE PAS NE DIT RIEN, mesuré : l'événement `error` n'a ni message,
+  // ni fichier, ni ligne, et la console n'en dit pas plus. Ce message dit donc le FAIT de la mort,
+  // sans inviter à chercher ailleurs une cause qui n'existe nulle part.
+  "msg.worker_mort_sans_cause": {
+    fr: "Le calcul hors du fil s'est arrêté net : son worker est mort avant de répondre, et le navigateur n'en donne pas la cause.",
+    en: "The off-thread computation stopped dead: its worker died before answering, and the browser gives no cause.",
+  },
+  "msg.worker_message_illisible": {
+    fr: "Le worker a renvoyé un message illisible : une valeur non transférable l'a fait échouer au passage.",
+    en: "The worker returned an unreadable message: a non-transferable value failed to cross.",
+  },
   "msg.erreur_conversion_png": { fr: "Conversion PNG échouée.", en: "PNG conversion failed." },
   "msg.graphe_embarqu_d_tect_var_0_nodes_var_1_connexions": { fr: "Graphe embarqué détecté ! {__VAR_0__} composants · {__VAR_1__} connexions", en: "Onboard graph detected! {__VAR_0__} nodes · {__VAR_1__} connections" },
   "msg.aucun_enregistrement": { fr: "Aucun enregistrement.", en: "No recording." },

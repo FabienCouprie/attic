@@ -9,7 +9,7 @@
 // n'existe pas sous Node. Le dialogue simulé est exactement celui des douze enveloppes d'Attic —
 // écouteur filtrant sur `requestId`, message `done` ou `error`.
 import { describe, expect, it, vi } from "vitest";
-import { installerGardeWorker, type CibleWorker } from "./garde-worker";
+import { installerGardeWorker, raisonDeLaMort, type CibleWorker } from "./garde-worker";
 
 class FauxWorker implements CibleWorker {
   ecouteurs = new Map<string, ((e: any) => void)[]>();
@@ -147,5 +147,61 @@ describe("le garde-fou d'un worker", () => {
     expect(w.postes).toEqual([{ message: { type: "go", requestId: "r1" }, transfert: [octets] }]);
     w.postMessage({ type: "go2" });
     expect(w.postes[1]).toEqual({ message: { type: "go2" }, transfert: undefined });
+  });
+});
+
+// ═══ CE QUE LA MORT RACONTE, ET CE QU'ELLE N'A PAS LE DROIT DE RACONTER ═══
+//
+// CES CAS VIENNENT D'UNE MESURE, ET ILS GARDENT CETTE MESURE. Relevé le 2026-10-25 dans Chromium :
+// un worker MODULE dont l'import échoue émet un événement `error` SANS message, sans fichier et
+// sans ligne, et la console n'en dit pas plus. Tous les workers d'Attic sont des modules.
+//
+// LE GARDE-FOU RAPPORTAIT ALORS `String(e.type)`, soit le mot « error », comme s'il était une
+// cause. Mesuré dans l'application sur un graphe de trois nœuds : l'infobulle du nœud rouge disait
+// « error », et rien d'autre nulle part. Un mot anglais de cinq lettres, sur un nœud dont on ne
+// pouvait pas savoir pourquoi il avait échoué.
+describe("ce que le garde-fou dit de la mort", () => {
+  it("NE RAPPORTE PLUS LE TYPE DE L'ÉVÉNEMENT quand le navigateur ne dit rien", async () => {
+    const w = installerGardeWorker(new FauxWorker());
+    const d = demander(w, "r1");
+    // L'événement exact d'un module qui ne se charge pas : le type, et c'est tout.
+    w.dispatchEvent({ type: "error" });
+    const raison = (await d.promesse).msg as string;
+    expect(raison, "« error » est le NOM DE L'ÉVÉNEMENT, pas une cause").not.toBe("error");
+    expect(raison.length, "une cause se lit en une phrase").toBeGreaterThan(30);
+    expect(raison, "elle doit dire le FAIT de la mort, qui est tout ce que l'on sait")
+      .toContain("mort avant de répondre");
+  });
+
+  it("ET N'INVENTE PAS DE CAUSE : il ne renvoie pas à la console, qui n'en dit pas plus", async () => {
+    // Mesuré : rien ne s'ajoute à la console quand un worker module échoue à se charger. Un message
+    // qui y renverrait enverrait chercher une cause qui n'existe nulle part.
+    const w = installerGardeWorker(new FauxWorker());
+    const d = demander(w, "r1");
+    w.dispatchEvent({ type: "error" });
+    expect((await d.promesse).msg as string).not.toMatch(/console/i);
+  });
+
+  it("quand le navigateur DONNE un message, il part avec son fichier et sa ligne", () => {
+    expect(raisonDeLaMort({
+      type: "error", message: "Uncaught Error: une vraie cause",
+      filename: "http://localhost:5191/src/workers/glissando-worker.ts?worker_file", lineno: 42,
+    })).toBe("Uncaught Error: une vraie cause (glissando-worker.ts?worker_file:42)");
+  });
+
+  it("et le fichier est réduit à son dernier segment, sinon il mange l'infobulle", () => {
+    // Une URL de développement ou un `blob:` occupe toute la largeur sans rien apprendre.
+    expect(raisonDeLaMort({ message: "boum", filename: "blob:http://localhost:5191/d0401d1d-ed54" }))
+      .toBe("boum (d0401d1d-ed54)");
+    expect(raisonDeLaMort({ message: "boum", filename: "", lineno: 0 })).toBe("boum");
+    expect(raisonDeLaMort({ message: "  boum  " })).toBe("boum");
+  });
+
+  it("un message vide est traité comme une absence, et non comme un message", () => {
+    // `e.message` vaut la chaîne vide sur certaines morts : la rapporter telle quelle rendrait un
+    // nœud rouge et MUET, ce qui est le défaut d'origine sous une autre forme.
+    expect(raisonDeLaMort({ message: "" })).toContain("mort avant de répondre");
+    expect(raisonDeLaMort({ message: "   " })).toContain("mort avant de répondre");
+    expect(raisonDeLaMort(null)).toContain("mort avant de répondre");
   });
 });
