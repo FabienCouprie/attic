@@ -17,7 +17,7 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
  * Retourne null si la note est invalide.
  */
 import { noteVersFrequence } from "./generateurs-aides";
-import { accordageEgal, decrireAccordage, type Accordage } from "../audio/accordage";
+import { accordageEgal, decrireAccordage, degrePlusProche, type Accordage } from "../audio/accordage";
 import { rendreNotes, type Banque } from "../audio/clavier-banque";
 import { deposerBanque } from "../audio/banques-vives";
 import { CASES, etendue, sautDeRangee } from "../audio/clavier-isomorphe";
@@ -154,8 +154,15 @@ export const fiches: FicheAudio[] = ([
       // la banque branchée rend l'audio comme elle sonne sous les doigts, par la fonction même que
       // « Clavier SFZ » emploie. Sans banque, la synthèse interne, qui est continue en hauteur.
       const volume = ctx.paramNombre("Volume", 80);
+      // ET PAR LA MÊME ADRESSE QUE LES DOIGTS. Une banque accordée attend un NUMÉRO DE TOUCHE : les
+      // notes enregistrées portent la hauteur fractionnaire du degré, et la lui donner telle quelle
+      // ajouterait son écart au tempérament une seconde fois. `degrePlusProche` rend le rang, qui
+      // est exact puisque ces hauteurs viennent du même accordage.
+      const pourLaBanque = (ns: NoteEvenement[]) => (!banque?.accordee ? ns : ns.map((n) => ({
+        ...n, note: banque.accordee!.tonique + degrePlusProche(accordage, n.note).rang,
+      })));
       const buf = avecBanque
-        ? rendreNotes(notes as never, banque!, { volume: volume / 100 })
+        ? rendreNotes(pourLaBanque(notes) as never, banque!, { volume: volume / 100 })
         : await rendreSequence(notes, "FM/Oscillateurs", volume);
       return {
         valeurs: [sequence, buf], designe,

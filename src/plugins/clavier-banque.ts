@@ -5,7 +5,7 @@
 import { parseMidi } from "midi-file";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
-import { hauteurDuDegre, type Accordage } from "../audio/accordage";
+import { degresParPeriode, type Accordage } from "../audio/accordage";
 import { avecDoc } from "./notices";
 import { analyserMidi } from "../audio/midi";
 import { hauteurMediane, suivreHauteur } from "../audio/hauteur";
@@ -150,14 +150,15 @@ export const fiches: FicheAudio[] = ([
         boucle: ctx.paramTexte("Boucle de maintien", "oui") !== "non",
         boucleDebut: ctx.paramNombre("Début de boucle", 50) / 100,
         boucleLongueur: ctx.paramNombre("Longueur de boucle", 2),
+        // L'ACCORDAGE VOYAGE, ET NON LA HAUTEUR QU'IL DICTE. Ces deux lignes portaient un plan
+        // construit ici, avec sa `hauteur` par zone ; mais `preparerBanque` REFAIT le plan de
+        // l'autre côté, et seul le nombre de zones franchit la frontière. La hauteur était donc
+        // calculée puis jetée, et chaque échantillon sonnait à la hauteur tempérée de sa racine :
+        // jusqu'à cent trente cents d'écart, mesurés au haut-parleur.
+        ...(accorde ? { accordage: accorde, toniqueTouche: tonique } : {}),
       };
-      // LA HAUTEUR VISÉE EST POSÉE SUR LE PLAN, et c'est l'ouvrier qui la lira : sur un clavier
-      // accordé autrement, la racine est une TOUCHE et le degré qu'elle porte sonne ailleurs. Elle
-      // ne change pas la justesse, le désaccord par touche rattrapant l'écart quel qu'il soit ;
-      // elle garde le rééchantillonnage court.
-      const plan = planZones(noteBasse, noteHaute, largeur, racine)
-        .map((p) => (accorde ? { ...p, hauteur: hauteurDuDegre(accorde, p.racine - tonique) } : p));
-      const brutes = await parLot<OptionsLotBanque, PrepareBanque, ZoneBrute>(plan.length, reglages, {
+      const nbZones = planZones(noteBasse, noteHaute, largeur, racine).length;
+      const brutes = await parLot<OptionsLotBanque, PrepareBanque, ZoneBrute>(nbZones, reglages, {
         creerWorker: () => new Worker(new URL("../workers/banque-worker.ts", import.meta.url), { type: "module" }),
         preparer: preparerBanque,
         calcul: zoneDuLot,
@@ -172,11 +173,21 @@ export const fiches: FicheAudio[] = ([
             numberOfChannels: z.voies.length, length: Math.max(1, z.voies[0].length), sampleRate: sr,
           });
           for (let c = 0; c < z.voies.length; c++) audio.copyToChannel(new Float32Array(z.voies[c]), c);
-          const large = { racine: z.racine, basse: z.basse, haute: z.haute, audio, ...(z.boucle ? { boucle: z.boucle } : {}) };
+          // `hauteur` SUIT JUSQU'À LA ZONE, comme sur le chemin en fil : c'est elle qui permettra
+          // à un clavier d'écrire sur sa touche la hauteur qu'elle fait entendre, et non le nom du
+          // demi-ton tempéré qu'elle occupe. Absente sans accordage, et rien ne change.
+          const large = { racine: z.racine, basse: z.basse, haute: z.haute, audio,
+            ...(z.hauteur !== undefined ? { hauteur: z.hauteur } : {}),
+            ...(z.boucle ? { boucle: z.boucle } : {}) };
           return decouperEnTouches(large, accorde, tonique);
         }),
         racineSource: racine, largeur, noteBasse, noteHaute,
-      };
+        // LA BANQUE DIT QU'ELLE EST ACCORDÉE, ET CE CHEMIN L'AVAIT OUBLIÉ. Le composant assemble sa
+        // banque LUI-MÊME après le passage par les ouvriers : `construireBanque` n'est pas appelée
+        // ici, et la déclaration posée là-bas n'arrivait donc jamais jusqu'au clavier isomorphe,
+        // qui adressait alors la banque par la hauteur et doublait l'écart. C'est la seconde fois
+        // que les deux chemins de construction de ce composant divergent.
+        ...(accorde ? { accordee: { tonique, degres: degresParPeriode(accorde) } } : {}),      };
 
       // L'aperçu : la racine de chaque zone, l'une après l'autre. De quoi ENTENDRE la banque sans
       // brancher un clavier, et voir si une zone sonne autrement que ses voisines.

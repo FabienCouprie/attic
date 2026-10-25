@@ -62,6 +62,9 @@ export function ClavierIsomorphe({ id, data, def }: VueProps) {
     [accordage, saut, tour],
   );
   const table = useMemo(() => tableDuReseau(cases), [cases]);
+  // LE RANG D'UNE HAUTEUR, pour adresser une banque déjà accordée par sa TOUCHE. Les hauteurs d'un
+  // réseau sont strictement croissantes avec le rang, donc aucune clé ne s'écrase.
+  const rangParHauteur = useMemo(() => new Map(cases.map((c) => [c.note, c.rang])), [cases]);
 
   // ─── Les lettres de la disposition de l'utilisateur ───
   const [lettres, setLettres] = useState<Map<string, string>>(new Map());
@@ -101,13 +104,21 @@ export function ClavierIsomorphe({ id, data, def }: VueProps) {
     // `2^((hauteur − racine)/12)`, qui est continu. Un degré qui ne tombe pas sur un demi-ton sonne
     // donc à sa place, avec le timbre de l'échantillon et non celui d'un oscillateur.
     //
-    // LA BANQUE DOIT ÊTRE ÉTALÉE EN DEMI-TONS, et c'est le piège de ce branchement. En degrés,
-    // « Étaler sur le clavier » pose sur chaque touche un désaccord valant l'écart du degré au
-    // demi-ton ; la hauteur demandée ici le porte DÉJÀ, et `voixPourNote` ajouterait le désaccord
-    // de la zone une seconde fois. Le mode degrés sert à fabriquer un instrument SFZ jouable sur un
-    // clavier de piano, pas à nourrir ce réseau.
+    // UNE BANQUE ACCORDÉE S'ADRESSE PAR TOUCHE, UNE AUTRE PAR HAUTEUR, et la banque le déclare.
+    //
+    // En degrés, « Étaler sur le clavier » pose sur chaque touche le désaccord qui la mène à son
+    // degré : demander la hauteur du degré ajouterait l'écart une seconde fois. Mesuré dans
+    // l'application avant cette distinction : quarante-cinq cents trop bas, puis quatre-vingt-seize
+    // trop haut, tous les nœuds annonçant « Terminé ».
+    //
+    // On lui demande donc sa TOUCHE, `tonique + rang`, et son désaccord fait le reste. Une banque en
+    // demi-tons, qui ne déclare rien, reçoit la hauteur fractionnaire et la rééchantillonne.
     if (banque) {
-      const voix = voixPourNote(banque, note, velocite, volumeRef.current / 100);
+      const rang = rangParHauteur.get(note);
+      const adresse = banque.accordee && rang !== undefined
+        ? banque.accordee.tonique + rang
+        : note;
+      const voix = voixPourNote(banque, adresse, velocite, volumeRef.current / 100);
       if (!voix) return { arreter: () => {} };
       const p = parametresLecture(voix);
       const ctx = getCtx();
