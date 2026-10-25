@@ -68,7 +68,21 @@ export interface Mesure {
    * entré : une réverbération sur un son qu'on n'a jamais entendu sec ne dit rien. Il part donc
    * avec, une fois, sous le rang −1.
    */
-  wavs: { rang: number; base64: string; secondes: number; crete: number }[];
+  wavs: {
+    rang: number; base64: string;
+    /** La durée du FICHIER, donc ce qu'on entend : bornée quand une borne est demandée. */
+    secondes: number;
+    /**
+     * La durée que le composant a vraiment rendue, bornée ou non.
+     *
+     * LES DEUX SONT NÉCESSAIRES DÈS QU'UNE BORNE EXISTE. Un clip tronqué qui n'annoncerait que sa
+     * durée de fichier ferait croire qu'un composant rend six secondes quand il en rend
+     * cinquante-quatre — et c'est exactement l'étiquette fausse que j'avais d'abord écrite dans le
+     * catalogue, en promettant la durée rendue et en reportant la durée coupée.
+     */
+    secondesRendues: number;
+    crete: number;
+  }[];
   erreur: string | null;
 }
 
@@ -105,11 +119,47 @@ export async function mesurerComposant(
      * qui rende ce pour quoi ce logiciel existe. Le banc tenait déjà le son ; il le jetait.
      */
     wav?: boolean;
+    /**
+     * Un son de référence à la place du son d'essai, en WAV encodé en base64.
+     *
+     * POURQUOI LE BANC DOIT POUVOIR EN RECEVOIR UN, ET POURQUOI CE N'EST PAS LE SIEN. Le son
+     * d'essai est fait pour MESURER : trois secondes de deux sinus et d'un filet de bruit, le même
+     * à la neuvième décimale depuis l'origine, et c'est sur lui que reposent les soixante-douze
+     * empreintes. Un catalogue qu'on ÉCOUTE demande autre chose — une réverbération sur deux sinus
+     * ne dit rien à l'oreille. Les deux sons coexistent donc, chacun pour son office, et le son
+     * d'essai reste le défaut : aucune empreinte ne bouge.
+     *
+     * IL EST RÉÉCHANTILLONNÉ À LA FRÉQUENCE DU BANC quand il n'y est pas, pour que tout le
+     * catalogue soit à un seul taux. Sans cela, un composant qui hérite du taux de son entrée
+     * rendrait un clip à 24 kHz pendant qu'un composant qui impose le sien en rendrait un à 48, et
+     * deux clips voisins ne se compareraient plus. Le rééchantillonnage n'invente rien : il ne
+     * remonte pas le plafond du contenu.
+     */
+    sourceWav?: string;
+    /**
+     * La durée maximale de chaque WAV rendu, en secondes.
+     *
+     * UNE SORTIE NE FAIT PAS LA DURÉE DE SON ENTRÉE : mesuré sur `canon-de-proportions`, deux
+     * secondes à l'entrée donnaient des aperçus de cinquante-quatre. Sans borne, un catalogue de
+     * trois cent soixante-sept clips est de taille indéterminée.
+     */
+    wavMaxSec?: number;
+    /**
+     * La profondeur des WAV rendus, en bits. Seize par défaut, comme l'encodeur du dépôt.
+     *
+     * RELEVÉ EN LE VÉRIFIANT, ET C'ÉTAIT UN DÉFAUT : le catalogue devait être en trente-deux bits
+     * flottants, et ses premiers fichiers sortaient en seize bits entiers. `bufferVersWavBlob`
+     * prend seize par défaut, et la préférence de l'utilisateur ne vit que dans la localStorage,
+     * vide dans une page neuve. La profondeur se demande donc, elle ne se devine pas.
+     *
+     * LE DÉFAUT RESTE SEIZE pour qu'`écouter` et les soixante-douze empreintes ne bougent pas.
+     */
+    wavBits?: 16 | 24 | 32;
   } = {},
 ): Promise<Mesure> {
   await page.goto(url);
   await page.waitForSelector(".attic-app", { timeout: 15000 });
-  return await page.evaluate(async ([id, marqueurs, parametres, frequence, dureeSec, entreesAudio, veutDescripteurs, veutWav]) => {
+  return await page.evaluate(async ([id, marqueurs, parametres, frequence, dureeSec, entreesAudio, veutDescripteurs, veutWav, sourceWav, wavMaxSec, wavBits]) => {
     const idx = await import("/src/plugins/index.ts");
     // La canonisation du moteur réel, importée plutôt que réécrite : une seconde version dériverait.
     const { defautCanoniqueChoix } = await import("/src/i18n.tsx");
@@ -125,7 +175,7 @@ export async function mesurerComposant(
 
     // Entrée déterministe : un générateur congruentiel, jamais Math.random.
     const n = Math.round(frequence * dureeSec);
-    const buf = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: frequence });
+    let buf = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: frequence });
     for (let c = 0; c < 2; c++) {
       const d = buf.getChannelData(c);
       let x = 12345 + c;
@@ -135,6 +185,30 @@ export async function mesurerComposant(
         d[i] = 0.35 * Math.sin(2 * Math.PI * (220 + c) * t)
              + 0.15 * Math.sin(2 * Math.PI * 660 * t)
              + (x / 0x7fffffff - 0.5) * 0.06;
+      }
+    }
+
+    // UN SON DE RÉFÉRENCE PREND LA PLACE DU SON D'ESSAI, quand on en fournit un. Le défaut reste le
+    // son d'essai : c'est ce qui garantit qu'aucune des soixante-douze empreintes ne bouge.
+    if (sourceWav) {
+      // `tamponDepuisWav` ET NON `decodeAudioData`, qui rééchantillonne en silence au taux du
+      // contexte : on veut d'abord les échantillons EXACTS du fichier, puis décider nous-mêmes.
+      const ew = await import("/src/audio/empreinte-wav.ts");
+      const brut = (ew as any).tamponDepuisWav(
+        Uint8Array.from(atob(sourceWav as string), (ch: string) => ch.charCodeAt(0)).buffer);
+      if (brut.sampleRate === frequence) {
+        buf = brut;
+      } else {
+        // LE RÉÉCHANTILLONNAGE PASSE PAR UN RENDU HORS LIGNE, la machinerie du navigateur, plutôt
+        // que par une interpolation écrite ici : un rééchantillonneur maison serait un second
+        // algorithme à éprouver, pour un gain nul.
+        const cible = Math.round(brut.duration * frequence);
+        const hl = new OfflineAudioContext(brut.numberOfChannels, cible, frequence);
+        const src = hl.createBufferSource();
+        src.buffer = brut;
+        src.connect(hl.destination);
+        src.start();
+        buf = await hl.startRendering();
       }
     }
 
@@ -306,8 +380,26 @@ export async function mesurerComposant(
     const wavs: any[] = [];
     if (veutWav) {
       const io = await import("/src/audio/io.ts");
-      const enBase64 = async (b: AudioBuffer) => {
-        const octets = new Uint8Array(await (io as any).bufferVersWavBlob(b).arrayBuffer());
+      // LA BORNE SE POSE AVANT L'ENCODAGE, et elle rend la DURÉE RÉELLE dans `secondes` : un clip
+      // tronqué qui s'annoncerait entier ferait croire qu'un composant rend six secondes quand il
+      // en rend cinquante-quatre. Le relevé dit donc ce qu'on entend, et le message du nœud, lui,
+      // continue de dire ce que le composant a vraiment produit.
+      const borner = (b: AudioBuffer): AudioBuffer => {
+        const max = wavMaxSec as number;
+        if (!max || b.duration <= max) return b;
+        const trames = Math.round(max * b.sampleRate);
+        const coupe = new AudioBuffer({
+          numberOfChannels: b.numberOfChannels, length: trames, sampleRate: b.sampleRate,
+        });
+        for (let c = 0; c < b.numberOfChannels; c++) {
+          coupe.getChannelData(c).set(b.getChannelData(c).subarray(0, trames));
+        }
+        return coupe;
+      };
+      const enBase64 = async (brut: AudioBuffer) => {
+        const b = borner(brut);
+        const octets = new Uint8Array(
+          await (io as any).bufferVersWavBlob(b, undefined, false, { bits: wavBits }).arrayBuffer());
         let s = "";
         for (let i = 0; i < octets.length; i += 0x8000) {
           s += String.fromCharCode.apply(null, octets.subarray(i, i + 0x8000) as any);
@@ -317,7 +409,7 @@ export async function mesurerComposant(
           const d = b.getChannelData(c);
           for (let i = 0; i < d.length; i++) crete = Math.max(crete, Math.abs(d[i]));
         }
-        return { base64: btoa(s), secondes: b.duration, crete };
+        return { base64: btoa(s), secondes: b.duration, secondesRendues: brut.duration, crete };
       };
       // LE SON D'ESSAI PORTE LE RANG −1 : on ne juge pas un effet sans entendre ce qui y est entré.
       wavs.push({ rang: -1, ...(await enBase64(buf)) });
@@ -337,5 +429,6 @@ export async function mesurerComposant(
       empreintes, descripteurs, wavs, erreur,
     };
   }, [ficheId, options.marqueurs ?? [], options.parametres ?? {}, FREQUENCE, DUREE_SEC,
-      options.entreesAudio ?? [0], options.descripteurs ?? false, options.wav ?? false] as const);
+      options.entreesAudio ?? [0], options.descripteurs ?? false, options.wav ?? false,
+      options.sourceWav ?? "", options.wavMaxSec ?? 0, options.wavBits ?? 16] as const);
 }

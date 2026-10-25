@@ -259,6 +259,29 @@ GRAPHE=exemples/canon-de-proportions.json npm run executer
   presser Lancer, savoir quand le run est fini et quand les aperçus se sont posés : trois
   corrections y sont écrites, chacune payée d'une mesure fausse. `empreintes-exemples.spec.ts`
   l'emploie aussi, et c'est tout ce qui les sépare.
+- **Entendre tout le catalogue d'un coup**, parce que savoir ce que fait un composant qu'on n'a
+  jamais employé demandait encore de le poser, de le câbler et de le lancer — cinq cents fois ce
+  geste. Un clip par sortie audio, tous sur **le même son**, et ce son seul sous `_reference.wav` :
+
+```bash
+CATALOGUE=1 npm run catalogue
+CATALOGUE=1 COMPOSANTS=reverbe-hachee,distorsion npm run catalogue
+```
+
+  **Quatre décisions le définissent, et elles sont de Fabien.** Le son de référence est un fichier
+  versionné, `tests-e2e/son-de-reference.wav`, et **non** le son d'essai du banc : celui-ci est fait
+  pour mesurer, et une réverbération sur deux sinus ne dit rien à l'oreille. Les clips sont en
+  **32 bits flottants**, bornés à **six secondes** — une sortie ne fait pas la durée de son entrée,
+  mesuré : deux secondes à l'entrée de `paulstretch` en rendent 16,043 — et le son est rééchantillonné
+  à 48 kHz pour que deux clips voisins se comparent. **Le relevé dit toujours les deux durées**,
+  celle qu'on entend et celle qui a été rendue.
+
+  **Ce son plafonne à 12 kHz**, étant échantillonné à 24 kHz : aucun composant qui agit dans l'octave
+  du haut ne montrera quoi que ce soit ici. C'est le périmètre du catalogue, et il est écrit.
+
+  **Ce n'est pas un garde** : il ne tombe que si l'instrument est cassé, aucun clip produit. Un
+  composant qui demande un modèle absent ou l'application de bureau n'est pas une faute ; le relevé
+  le dit, nœud par nœud, dans `CATALOGUE/catalogue.json`.
 - **Régénérer les tables** après toute modification qui les concerne :
 
 ```bash
@@ -311,6 +334,7 @@ jamais vu rouge ne garde rien.
 | Choisir **entre des composants** qui couvrent le même besoin | `FAMILLE=nom npm run comparer` : ce qui les sépare et de combien, mesuré sur le même son d'essai — jamais écrit à la main |
 | **Entendre** ce qu'un composant ou une famille produit | `COMPOSANT=id npm run ecouter`, ou `FAMILLE=nom` : des WAV dans `ECOUTE/`, le son d'essai sec avec eux |
 | **Lancer un graphe entier** et entendre ce qu'il rend | `GRAPHE=nom npm run executer` : l'état et le message de chaque nœud, le WAV de chaque aperçu dans `EXECUTION/` — le seul verbe qui voie des composants **câblés ensemble** |
+| **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie audio des 367 composants, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 
 La documentation la plus dense n'est pas dans ces fichiers mais **en tête des modules** : chaque

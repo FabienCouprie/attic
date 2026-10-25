@@ -22,6 +22,7 @@ import { calculerProfilBruit } from "./effets-bruit";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { type ObjetSonore } from "./multicanal";
 import { imageDEssai } from "./png-essai";
+import { videoDEssai } from "./video-essai";
 import { CONTENUS_CONTROLE } from "./sous-types-controle";
 import { CONTENUS_TEXTE } from "./sous-types-texte";
 import { estSequence, type Sequence } from "./sequence";
@@ -185,12 +186,13 @@ export const SANS_VALEUR_DESSAI: Record<string, string> = {
   // En fabriquer une au hasard ferait mesurer un refus plutôt qu'un traitement.
   // qui l'analyse : il est donc monte par l'appelant, qui seul le connait.
   spectrogramme: "se fabrique a partir du son d'essai, au parametrage de l'appelant",
-  // LA RAISON ECRITE D'ABORD ETAIT FAUSSE : j'avais note « une video d'essai pese trop ». Le poids
-  // n'est pas l'obstacle — seize pixels de cote n'en pesent aucun. L'obstacle est qu'un conteneur
-  // video valide ne s'ecrit pas a la main comme un PNG : il demande un encodeur, et `separer-image-
-  // son` LIT vraiment le fichier, repondant « aucune image dans ce fichier » sur un flux mal forme.
-  // Un PNG tient en trois morceaux et un flux zlib stocke ; un MP4 ou un WebM, non.
-  video: "un conteneur video valide demande un encodeur ; il ne s'ecrit pas a la main comme un PNG",
+  // LA VIDEO A QUITTE CETTE LISTE LE 2026-10-25, et les deux raisons que j'y avais ecrites etaient
+  // fausses l'une apres l'autre. « Une video d'essai pese trop » : non, soixante-quatre pixels de
+  // cote n'en pesent aucun. Puis « un conteneur video demande un encodeur, qu'on n'a pas » : on en
+  // a un, et depuis toujours — LE NAVIGATEUR. `MediaRecorder` encode en VP8 sans rien ajouter au
+  // depot. Le film est donc fabrique une fois, puis enregistre en base64 dans `video-essai.ts`,
+  // parce qu'un encodeur de navigateur n'existe pas sous node et qu'une valeur d'essai se fabrique
+  // des DEUX cotes. Voir l'en-tete de ce fichier-la pour la procedure exacte.
   fichier: "un chemin sur le disque, qui n'a pas de sens hors d'une machine",
   cercle: "une figure produite par un composant de visualisation, jamais attendue en entree",
   courbe: "aucun composant qui rend de l'audio n'en exige une",
@@ -212,6 +214,7 @@ export function valeurDEssai(type: string, sousType?: string, o: OptionsEssai = 
     case "banque": return o.source ? banqueDEssai(o.source) : null;
     case "controle": return controleDEssai(sousType, o.source);
     case "image": return imageDEssai();
+    case "video": return videoDEssai();
     case "objet": return o.source ? objetDEssai(o.source) : null;
     default: return null;
   }
