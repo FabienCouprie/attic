@@ -32,6 +32,40 @@ const quatre = (dv: DataView, o: number): string =>
   String.fromCharCode(dv.getUint8(o), dv.getUint8(o + 1), dv.getUint8(o + 2), dv.getUint8(o + 3));
 
 /**
+ * Les deux morceaux qui comptent, trouvés en PARCOURANT et non en sautant à un décalage.
+ *
+ * EXTRAIT PLUTÔT QUE RECOPIÉ le jour où un second lecteur en a eu besoin. Ce parcours porte une
+ * correction qu'un second exemplaire aurait perdue : la taille déclarée de `data` est bornée par ce
+ * qui reste du fichier, parce qu'un WAV tronqué déclare encore sa taille d'origine et que la lire
+ * ferait sortir du tampon au lieu de dire qu'il manque du son.
+ */
+function morceauxDuWav(dv: DataView, longueur: number): {
+  fmt: { format: number; canaux: number; taux: number; bits: number };
+  data: { debut: number; taille: number };
+} {
+  let o = 12;
+  let fmt: { format: number; canaux: number; taux: number; bits: number } | null = null;
+  let data: { debut: number; taille: number } | null = null;
+  while (o + 8 <= longueur) {
+    const nom = quatre(dv, o);
+    const taille = dv.getUint32(o + 4, true);
+    if (nom === "fmt ") {
+      fmt = {
+        format: dv.getUint16(o + 8, true), canaux: dv.getUint16(o + 10, true),
+        taux: dv.getUint32(o + 12, true), bits: dv.getUint16(o + 22, true),
+      };
+    } else if (nom === "data") {
+      data = { debut: o + 8, taille: Math.min(taille, longueur - o - 8) };
+      break;
+    }
+    o += 8 + taille + (taille % 2);
+  }
+  if (!fmt || !data) throw new Error("WAV incomplet : morceau « fmt » ou « data » introuvable");
+  if (fmt.canaux <= 0 || fmt.bits <= 0) throw new Error(`WAV illisible : ${fmt.canaux} canaux, ${fmt.bits} bits`);
+  return { fmt, data };
+}
+
+/**
  * Lit un WAV PCM — seize, vingt-quatre ou trente-deux bits, entier ou flottant.
  *
  * LES VINGT-QUATRE BITS NE SONT PAS UNE OPTION : c'est la profondeur que l'application exporte par
@@ -43,27 +77,7 @@ export function lireWav(octets: ArrayBuffer): MesureWav {
   if (octets.byteLength < 12 || quatre(dv, 0) !== "RIFF" || quatre(dv, 8) !== "WAVE") {
     throw new Error("ce n'est pas un WAV : en-tête RIFF/WAVE absent");
   }
-  let o = 12;
-  let fmt: { format: number; canaux: number; taux: number; bits: number } | null = null;
-  let data: { debut: number; taille: number } | null = null;
-  while (o + 8 <= octets.byteLength) {
-    const nom = quatre(dv, o);
-    const taille = dv.getUint32(o + 4, true);
-    if (nom === "fmt ") {
-      fmt = {
-        format: dv.getUint16(o + 8, true), canaux: dv.getUint16(o + 10, true),
-        taux: dv.getUint32(o + 12, true), bits: dv.getUint16(o + 22, true),
-      };
-    } else if (nom === "data") {
-      // LA TAILLE DÉCLARÉE EST BORNÉE PAR CE QUI RESTE : un fichier tronqué déclare encore sa
-      // taille d'origine, et la lire ferait sortir du tampon au lieu de dire qu'il manque du son.
-      data = { debut: o + 8, taille: Math.min(taille, octets.byteLength - o - 8) };
-      break;
-    }
-    o += 8 + taille + (taille % 2);
-  }
-  if (!fmt || !data) throw new Error("WAV incomplet : morceau « fmt » ou « data » introuvable");
-  if (fmt.canaux <= 0 || fmt.bits <= 0) throw new Error(`WAV illisible : ${fmt.canaux} canaux, ${fmt.bits} bits`);
+  const { fmt, data } = morceauxDuWav(dv, octets.byteLength);
 
   const octetsParEchantillon = fmt.bits / 8;
   const n = Math.floor(data.taille / octetsParEchantillon);
@@ -79,6 +93,56 @@ export function lireWav(octets: ArrayBuffer): MesureWav {
     ...fmt, trames: Math.floor(n / fmt.canaux),
     rms: n > 0 ? Math.sqrt(somme / n) : 0, crete,
   };
+}
+
+/** Un niveau par tranche de temps : l'instant où elle commence, et son niveau en dBFS. */
+export interface Tranche {
+  secondes: number;
+  /** La valeur efficace de la tranche, en dBFS. `-Infinity` sur une tranche strictement nulle. */
+  db: number;
+}
+
+/**
+ * Le niveau d'un WAV TRANCHE PAR TRANCHE, et c'est la seule façon honnête de mesurer une évolution.
+ *
+ * ÉCRIT DE DEUX ERREURS EN SENS CONTRAIRE, le 2026-10-25, en cherchant ce que retirait vraiment la
+ * déréverbération. Les deux portaient sur une valeur efficace calculée d'un bloc :
+ *
+ *   UNE FENÊTRE PLEINE DE SILENCE REND UN GRAND NOMBRE QUI NE VEUT RIEN DIRE. Mesurée « de deux à
+ *   six secondes » sur un fichier qui n'en portait que trois et demie, l'atténuation annonçait
+ *   38 dB — en atténuant du silence numérique.
+ *
+ *   ET UNE FENÊTRE SUR UNE RÉGION DÉCROISSANTE EST DOMINÉE PAR SON INSTANT LE PLUS FORT, donc elle
+ *   ne voit pas ce qu'on retire à la fin. La même mesure, recadrée sur le début de la queue,
+ *   annonçait moins d'un demi-décibel.
+ *
+ * Les deux chiffres étaient faux, et de part et d'autre de la vérité : par tranches d'une
+ * demi-seconde, la réalité était -18,8 dB puis -24,0 dB dans la région qui s'entend, pour deux
+ * dixièmes sur le son direct. AUCUN NOMBRE UNIQUE NE POUVAIT LE DIRE.
+ *
+ * LES CANAUX SONT SOMMÉS comme `lireWav` les somme, pour qu'un niveau de tranche et une empreinte
+ * parlent de la même chose.
+ */
+export function niveauxParTranche(octets: ArrayBuffer, secondesParTranche = 0.5): Tranche[] {
+  if (!(secondesParTranche > 0)) throw new Error("une tranche dure plus que zéro seconde");
+  const m = lireWav(octets);
+  const dv = new DataView(octets);
+  const { data } = morceauxDuWav(dv, octets.byteLength);
+  const pas = m.bits / 8;
+  const lire = lecteurDEchantillon(m.format, m.bits);
+  const parTranche = Math.max(1, Math.round(secondesParTranche * m.taux));
+  const out: Tranche[] = [];
+  for (let t = 0; t < m.trames; t += parTranche) {
+    const fin = Math.min(m.trames, t + parTranche);
+    let somme = 0, n = 0;
+    for (let i = t * m.canaux; i < fin * m.canaux; i++) {
+      const v = lire(dv, data.debut + i * pas);
+      somme += v * v; n++;
+    }
+    const rms = n > 0 ? Math.sqrt(somme / n) : 0;
+    out.push({ secondes: t / m.taux, db: rms > 0 ? 20 * Math.log10(rms) : -Infinity });
+  }
+  return out;
 }
 
 /** Comment un échantillon se lit, selon la profondeur. Une seule fois, pour les deux lecteurs. */

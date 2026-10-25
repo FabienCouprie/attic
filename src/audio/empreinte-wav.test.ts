@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
 
 import { calculerCentroidSpectralMeyda } from "./analyse-descripteurs";
 import { bufferVersWavBlob } from "./io";
-import { empreinteWav, lireWav, tamponDepuisWav } from "./empreinte-wav";
+import { empreinteWav, lireWav, niveauxParTranche, tamponDepuisWav } from "./empreinte-wav";
 
 const SR = 48000;
 
@@ -144,5 +144,64 @@ describe("relire un WAV ecrit par le depot", () => {
   it("UN FICHIER QUI N'EST PAS UN WAV se refuse au lieu de rendre un chiffre", async () => {
     const faux = new TextEncoder().encode("ceci n'est pas un fichier audio du tout").buffer;
     expect(() => lireWav(faux)).toThrow(/RIFF/);
+  });
+});
+
+// ═══ LE NIVEAU PAR TRANCHES, ET CE QU'AUCUN NOMBRE UNIQUE NE PEUT DIRE ═══
+//
+// Ces cas viennent de deux mesures fausses EN SENS CONTRAIRE, le 2026-10-25, sur la dereverberation.
+// Une valeur efficace calculee d'un bloc annoncait 38 dB d'attenuation — en moyennant du silence
+// numerique — puis moins d'un demi-decibel quand on la recadrait sur le debut d'une queue
+// decroissante, ou l'instant le plus fort domine tout. La verite, par tranches, etait entre les
+// deux. Un signal qui EVOLUE ne se mesure donc pas d'un seul chiffre.
+describe("le niveau par tranches", () => {
+  /** Un signal en MARCHES de niveau connu : une seconde a chaque gain, dans l'ordre donne. */
+  function marches(gains: number[], secondes = 1): AudioBuffer {
+    const n = Math.round(SR * secondes);
+    const b = new AudioBuffer({ numberOfChannels: 1, length: n * gains.length, sampleRate: SR });
+    const d = b.getChannelData(0);
+    for (let m = 0; m < gains.length; m++) {
+      for (let i = 0; i < n; i++) {
+        d[m * n + i] = gains[m] * Math.sin((2 * Math.PI * 220 * (m * n + i)) / SR);
+      }
+    }
+    return b;
+  }
+
+  it("SUIT LES MARCHES D'UN SIGNAL, là où une valeur efficace les moyenne", async () => {
+    // Trois secondes : pleine echelle, puis -20 dB, puis le silence. Une seule valeur efficace
+    // rendrait un chiffre intermediaire qui ne decrit aucune des trois.
+    const b = marches([0.5, 0.05, 0]);
+    const t = niveauxParTranche(await octetsDe(b, 32), 1);
+    expect(t).toHaveLength(3);
+    expect(t[0].secondes).toBe(0);
+    expect(t[1].secondes).toBe(1);
+    // 0,5 en crete sur un sinus vaut 0,3536 d'efficace, soit -9,03 dBFS.
+    expect(t[0].db).toBeCloseTo(-9.03, 1);
+    expect(t[1].db - t[0].db, "la seconde marche est vingt decibels sous la premiere")
+      .toBeCloseTo(-20, 1);
+    expect(t[2].db, "une tranche strictement nulle n'a pas de niveau").toBe(-Infinity);
+  });
+
+  it("ET LA DERNIÈRE TRANCHE PEUT ÊTRE PLUS COURTE, sans que son niveau s'en trouve faussé", async () => {
+    // Une tranche partielle se mesure sur ce qu'elle contient : la completer de zeros la ferait
+    // paraitre plus faible qu'elle n'est, ce qui est exactement l'erreur du silence moyenne.
+    const b = marches([0.5], 1.25);
+    const t = niveauxParTranche(await octetsDe(b, 32), 1);
+    expect(t).toHaveLength(2);
+    expect(t[1].secondes).toBe(1);
+    expect(t[1].db, "le quart de seconde restant est au meme niveau").toBeCloseTo(t[0].db, 1);
+  });
+
+  it("la taille de tranche est libre, et le compte suit", async () => {
+    const octets = await octetsDe(marches([0.5, 0.5]), 32);
+    expect(niveauxParTranche(octets, 0.5)).toHaveLength(4);
+    expect(niveauxParTranche(octets, 2)).toHaveLength(1);
+  });
+
+  it("et une tranche de durée nulle se refuse, au lieu de boucler sans fin", async () => {
+    const octets = await octetsDe(marches([0.5]), 32);
+    expect(() => niveauxParTranche(octets, 0)).toThrow(/plus que zéro/);
+    expect(() => niveauxParTranche(octets, -1)).toThrow(/plus que zéro/);
   });
 });

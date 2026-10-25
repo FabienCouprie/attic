@@ -255,3 +255,7 @@ CATALOGUE/
 # ici : 194 Mio qui se refont d'une commande a partir de CATALOGUE/.
 
 catalogue-sonore-*.zip
+
+# Les clips rendus par « npm run varier », pour la meme raison que les autres : un son se rejoue.
+
+VARIATION/

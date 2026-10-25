@@ -4,6 +4,18 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Added
+
+- **`varier`, le septième verbe : ce qui est intéressant n'est pas un son mais une différence entre au moins deux.** C'est Fabien qui l'a formulé, et c'est par ce trou qu'un défaut est passé. `comparer` et `écouter` savent mettre côte à côte N composants **différents** sur la même entrée — mais leur `PARAMETRES` est un seul jeu de réglages appliqué à **tous** les membres. Un composant à trois valeurs d'un même curseur leur était hors d'atteinte, et « Déréverbération » y a caché un réglage presque inerte pendant toute sa vie : il a fallu qu'on le **sente**, puis qu'un graphe de dix nœuds soit écrit à la main pour le voir.
+
+  - **`COMPOSANT=id REGLAGE=nom VALEURS=a,b,c npm run varier`** rend un clip par valeur, le son d'entrée avec, et un **tableau par tranches** : une ligne par demi-seconde, une colonne par valeur, plus celle de l'entrée. L'entrée est une colonne et non seulement un fichier à côté, parce qu'une différence demande au moins deux termes.
+  - **Deux relevés qu'il ne faut pas confondre** : ce que le composant **fait**, écart le plus grand à l'entrée, et ce que le réglage **change**, écart à la première valeur. Sur la déréverbération les deux réponses diffèrent — le réglage déplace la queue de trente décibels, et le composant ne touche pas au son direct.
+  - **Éprouvé sur le défaut qui l'a motivé** : il retrouve seul, en treize secondes, ce que le graphe à la main avait montré. Mémoire 5, 10, 20 sur une vraie réverbération donnent **−4,4 / −25,5 / −36,4 dB** d'écart à l'entrée, pour **un dixième** de décibel sur le son direct.
+  - **UN RÉGLAGE INERTE EST DÉCLARÉ**, et c'est le défaut qu'on vient de payer. Mais il faut **deux statistiques** pour l'affirmer : un premier jet annonçait « rien ne change » en ne regardant que l'énergie par tranche, alors que la crête passait de 0,284 à 0,340 — **1,6 dB** — sous l'effet d'un traitement spectral qui redessine la forme d'onde sans toucher à l'énergie. Quand seule la crête bouge, le relevé le dit au lieu de l'affirmer nulle.
+  - **LE RÉSUMÉ NE CHERCHE QUE DANS CE QUI S'ENTEND**, soixante décibels sous la tranche la plus forte de l'entrée. Sans cette borne il annonçait le même **« −40 dB »** pour trois réglages différents, dans la seule tranche inaudible du fichier — l'entrée y est à −214 dBFS. **Troisième fois de la journée qu'un nombre unique pris sur un signal qui décroît dit faux**, et la troisième correction va dans le même sens.
+  - **La mesure par tranches vit dans `audio/empreinte-wav.ts`**, avec quatre cas, et non dans le `page.evaluate` qui s'en sert. Le parcours des morceaux d'un WAV a été **extrait** plutôt que recopié pour le second lecteur — il porte une correction qu'un second exemplaire aurait perdue, la taille de `data` bornée par ce qui reste d'un fichier tronqué. Les onze cas existants le confirment ; défaut planté sur la tranche unique, trois des quatre neufs tombent.
+  - **Et une variation n'est visible que sur une matière que le composant peut travailler.** Sur le son de référence, qui est sec, faire varier une déréverbération ne montre rien — même limite que les 89 composants muets du catalogue. `SON=` est là pour cela, et le relevé le dit quand il ne trouve aucune différence.
+
 ### Fixed
 
 - **« Sampler personnalisé » levait sur un échantillon qui n'a jamais existé, et le catalogue l'a trouvé.** Seule erreur des 367 composants parcourus : `Cannot read properties of null (reading 'decodeAudioData')`. Trois couches, et le message d'erreur accusait la dernière.
