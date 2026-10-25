@@ -61,6 +61,14 @@ export interface Mesure {
    * aurait été dans un `page.evaluate`, donc hors d'atteinte de tout garde.
    */
   descripteurs: Descripteurs | null;
+  /**
+   * Chaque sortie audio, encodée en WAV, quand on la demande — et le son d'essai avec.
+   *
+   * POURQUOI LE SON D'ESSAI EN FAIT PARTIE. On ne juge pas un effet sans entendre ce qui y est
+   * entré : une réverbération sur un son qu'on n'a jamais entendu sec ne dit rien. Il part donc
+   * avec, une fois, sous le rang −1.
+   */
+  wavs: { rang: number; base64: string; secondes: number; crete: number }[];
   erreur: string | null;
 }
 
@@ -90,18 +98,25 @@ export async function mesurerComposant(
      * d'empreintes, elle, n'en a pas besoin et ne doit pas ralentir pour eux.
      */
     descripteurs?: boolean;
+    /**
+     * Encoder les sorties audio en WAV, pour les ÉCOUTER.
+     *
+     * Le verbe `écouter` est le seul des cinq qui rende autre chose qu'un texte, et c'est le seul
+     * qui rende ce pour quoi ce logiciel existe. Le banc tenait déjà le son ; il le jetait.
+     */
+    wav?: boolean;
   } = {},
 ): Promise<Mesure> {
   await page.goto(url);
   await page.waitForSelector(".attic-app", { timeout: 15000 });
-  return await page.evaluate(async ([id, marqueurs, parametres, frequence, dureeSec, entreesAudio, veutDescripteurs]) => {
+  return await page.evaluate(async ([id, marqueurs, parametres, frequence, dureeSec, entreesAudio, veutDescripteurs, veutWav]) => {
     const idx = await import("/src/plugins/index.ts");
     // La canonisation du moteur réel, importée plutôt que réécrite : une seconde version dériverait.
     const { defautCanoniqueChoix } = await import("/src/i18n.tsx");
     const fiche = (idx as any).toutesLesFiches.find((f: any) => f.id === id);
     if (!fiche) {
       return { version: {}, ms: 0, gelMs: null, messages: 0, message: null, empreintes: [],
-        descripteurs: null, erreur: `fiche « ${id} » absente du registre` };
+        descripteurs: null, wavs: [], erreur: `fiche « ${id} » absente du registre` };
     }
 
     const source = String(fiche.executer);
@@ -262,14 +277,45 @@ export async function mesurerComposant(
       }
     }
 
+    // ─── LE SON, ENCODÉ POUR QU'ON L'ENTENDE ───
+    //
+    // L'encodeur est celui du dépôt, `bufferVersWavBlob` : écrire un second en-tête WAV ici serait
+    // la faute que ce dépôt répare le plus souvent. Le base64 se fait PAR TRANCHES, sans quoi
+    // `String.fromCharCode(...octets)` fait déborder la pile dès le mégaoctet — une sortie de trois
+    // secondes en seize bits stéréo en pèse 1,15.
+    const wavs: any[] = [];
+    if (veutWav) {
+      const io = await import("/src/audio/io.ts");
+      const enBase64 = async (b: AudioBuffer) => {
+        const octets = new Uint8Array(await (io as any).bufferVersWavBlob(b).arrayBuffer());
+        let s = "";
+        for (let i = 0; i < octets.length; i += 0x8000) {
+          s += String.fromCharCode.apply(null, octets.subarray(i, i + 0x8000) as any);
+        }
+        let crete = 0;
+        for (let c = 0; c < b.numberOfChannels; c++) {
+          const d = b.getChannelData(c);
+          for (let i = 0; i < d.length; i++) crete = Math.max(crete, Math.abs(d[i]));
+        }
+        return { base64: btoa(s), secondes: b.duration, crete };
+      };
+      // LE SON D'ESSAI PORTE LE RANG −1 : on ne juge pas un effet sans entendre ce qui y est entré.
+      wavs.push({ rang: -1, ...(await enBase64(buf)) });
+      const valeurs = (resultat && resultat.valeurs) || [];
+      for (let rang = 0; rang < valeurs.length; rang++) {
+        const v = valeurs[rang];
+        if (v instanceof AudioBuffer && v.length > 0) wavs.push({ rang, ...(await enBase64(v)) });
+      }
+    }
+
     return {
       version, ms,
       // Zéro message : le gel a duré toute l'exécution, ce qui n'est pas « aucun gel ».
       gelMs: instants.length === 0 ? null : Math.round(plusLong),
       messages: instants.length,
       message: resultat && typeof resultat.message === "string" ? resultat.message : null,
-      empreintes, descripteurs, erreur,
+      empreintes, descripteurs, wavs, erreur,
     };
   }, [ficheId, options.marqueurs ?? [], options.parametres ?? {}, FREQUENCE, DUREE_SEC,
-      options.entreesAudio ?? [0], options.descripteurs ?? false] as const);
+      options.entreesAudio ?? [0], options.descripteurs ?? false, options.wav ?? false] as const);
 }
