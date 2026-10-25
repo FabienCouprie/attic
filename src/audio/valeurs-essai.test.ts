@@ -13,6 +13,7 @@ import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { registre } from "./adaptateur";
+import { estObjet } from "./multicanal";
 import { estSequence } from "./sequence";
 import {
   CONTENUS_FABRIQUES, CONTENUS_PAR_TYPE, SANS_VALEUR_DESSAI,
@@ -119,6 +120,35 @@ describe("les valeurs d'essai", () => {
   it("ET UN PROFIL SANS SON NE SE DEVINE PAS : il se calcule ou il n'existe pas", () => {
     expect(valeurDEssai("controle", "profil")).toBeNull();
     expect(valeurDEssai("controle", undefined, { source: son() })).toBeNull();
+  });
+
+  it("L'IMAGE est un FICHIER, ce que ses trois consommateurs verifient", async () => {
+    // `dessin-sonore` fait `instanceof File` : un `Blob` ou un `Uint8Array` seraient refuses, et
+    // le banc mesurerait un refus. Le PNG lui-meme est relu octet par octet dans `png-essai.test`.
+    const f = valeurDEssai("image") as File;
+    expect(f).toBeInstanceOf(File);
+    expect(f.type).toBe("image/png");
+    expect((await f.arrayBuffer()).byteLength).toBeGreaterThan(100);
+  });
+
+  it("L'OBJET EST UN OBJET, ET NON UNE LISTE : le port est dynamique", () => {
+    // LA FORME A ETE CORRIGEE PAR LA MESURE. Un premier jet rendait `[objet]`, et `rendu-objets`
+    // repondait « Aucun objet branche » : son port est `dynamique`, il attend UN objet par rang et
+    // fait `ctx.entrees().filter(estObjet)`. Un tableau dans un rang ne passe pas ce filtre.
+    const o = valeurDEssai("objet", undefined, { source: son() });
+    expect(Array.isArray(o), "un objet par rang, pas une liste dans un rang").toBe(false);
+    expect(estObjet(o), "le predicat du domaine doit l'accepter").toBe(true);
+    const obj = o as { son: Float32Array; frequence: number; trajectoire: { azimut: Float32Array } };
+    expect(obj.son).toBeInstanceOf(Float32Array);
+    expect(obj.frequence).toBe(48000);
+    // La trajectoire tourne : un azimut constant ne montrerait rien d'un composant qui spatialise.
+    expect(obj.trajectoire.azimut.length).toBeGreaterThan(1);
+    expect(obj.trajectoire.azimut[obj.trajectoire.azimut.length - 1])
+      .toBeGreaterThan(obj.trajectoire.azimut[0]);
+  });
+
+  it("ET UN OBJET SANS SON NE SE DEVINE PAS", () => {
+    expect(valeurDEssai("objet")).toBeNull();
   });
 
   it("UNE BANQUE SANS SON NE SE FABRIQUE PAS, et le dire vaut mieux qu'en rendre une vide", () => {

@@ -20,6 +20,8 @@ import { accordageEgal, type Accordage } from "./accordage";
 import { construireBanque, type Banque } from "./clavier-banque";
 import { calculerProfilBruit } from "./effets-bruit";
 import { notesVersFichierMidi } from "./midi-ecriture";
+import { type ObjetSonore } from "./multicanal";
+import { imageDEssai } from "./png-essai";
 import { CONTENUS_CONTROLE } from "./sous-types-controle";
 import { CONTENUS_TEXTE } from "./sous-types-texte";
 import { estSequence, type Sequence } from "./sequence";
@@ -144,6 +146,31 @@ export function controleDEssai(sousType: string | undefined, source?: AudioBuffe
 }
 
 /**
+ * Un objet sonore d'essai : le son d'essai posé sur une trajectoire qui tourne.
+ *
+ * LA FORME EST CELLE QUE `estObjet` VÉRIFIE — `genre: "objet-sonore"`, un son MONO, sa fréquence et
+ * sa trajectoire. Le marqueur `genre` n'est pas décoratif : c'est lui, et lui seul, qui distingue
+ * un objet d'un autre objet du domaine, et l'oublier ferait répondre « aucun objet branché ».
+ *
+ * LA TRAJECTOIRE TOURNE PLUTÔT QU'ELLE NE SE FIGE. Un azimut constant ne montre rien d'un composant
+ * qui spatialise : il rendrait le même gain du début à la fin, et l'on ne saurait pas s'il a lu la
+ * trajectoire ou s'il l'a ignorée.
+ */
+export function objetDEssai(source: AudioBuffer): ObjetSonore {
+  const mono = source.getChannelData(0);
+  const n = Math.max(2, Math.floor(mono.length / 64));
+  const azimut = new Float32Array(n);
+  for (let i = 0; i < n; i++) azimut[i] = (i / (n - 1)) * 2 * Math.PI;
+  return {
+    genre: "objet-sonore",
+    son: new Float32Array(mono),
+    frequence: source.sampleRate,
+    trajectoire: { azimut, elevation: 0, distance: 1 },
+    nom: "objet d'essai",
+  };
+}
+
+/**
  * Les types de flux pour lesquels ce module ne fabrique RIEN, et pourquoi.
  *
  * LA LISTE EST AUSSI UNE DÉCISION, et elle est tenue par un cas : un type de flux neuf doit soit
@@ -158,9 +185,12 @@ export const SANS_VALEUR_DESSAI: Record<string, string> = {
   // En fabriquer une au hasard ferait mesurer un refus plutôt qu'un traitement.
   // qui l'analyse : il est donc monte par l'appelant, qui seul le connait.
   spectrogramme: "se fabrique a partir du son d'essai, au parametrage de l'appelant",
-  image: "trois composants ; une image d'essai demande de choisir ce qu'elle represente",
-  video: "un seul composant, et une video d'essai pese trop pour etre fabriquee a chaque mesure",
-  objet: "un seul composant, et la forme n'est pas decrite ailleurs que chez lui",
+  // LA RAISON ECRITE D'ABORD ETAIT FAUSSE : j'avais note « une video d'essai pese trop ». Le poids
+  // n'est pas l'obstacle — seize pixels de cote n'en pesent aucun. L'obstacle est qu'un conteneur
+  // video valide ne s'ecrit pas a la main comme un PNG : il demande un encodeur, et `separer-image-
+  // son` LIT vraiment le fichier, repondant « aucune image dans ce fichier » sur un flux mal forme.
+  // Un PNG tient en trois morceaux et un flux zlib stocke ; un MP4 ou un WebM, non.
+  video: "un conteneur video valide demande un encodeur ; il ne s'ecrit pas a la main comme un PNG",
   fichier: "un chemin sur le disque, qui n'a pas de sens hors d'une machine",
   cercle: "une figure produite par un composant de visualisation, jamais attendue en entree",
   courbe: "aucun composant qui rend de l'audio n'en exige une",
@@ -181,6 +211,8 @@ export function valeurDEssai(type: string, sousType?: string, o: OptionsEssai = 
     case "accordage": return accordageDEssai();
     case "banque": return o.source ? banqueDEssai(o.source) : null;
     case "controle": return controleDEssai(sousType, o.source);
+    case "image": return imageDEssai();
+    case "objet": return o.source ? objetDEssai(o.source) : null;
     default: return null;
   }
 }
