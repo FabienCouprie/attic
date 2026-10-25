@@ -6,7 +6,7 @@ Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et vingt gardes sur lui-même : ils s'emploient, ils
+cela un banc de mesure, une base d'empreintes et vingt et un gardes sur lui-même : ils s'emploient, ils
 ne se réinventent pas.
 
 ---
@@ -163,10 +163,11 @@ se relève donc à l'oreille, et non par un garde.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — vingt contrats sur le dépôt lui-même : registre des réglages, graines,
+- **`src/docs/*.test.ts`** — vingt et un contrats sur le dépôt lui-même : registre des réglages, graines,
   cœurs par trames, registre anglais, caractères de contrôle, style de documentation, classement
   théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, couverture des
-  empreintes, le serveur des specs de bout en bout, et la fraîcheur des tables générées. **La norme de taille y est contraignante** :
+  empreintes, le serveur des specs de bout en bout, le classement des écarts d'une famille comparée,
+  et la fraîcheur des tables générées. **La norme de taille y est contraignante** :
   aucun fichier neuf ne dépasse quatre cents lignes de code, les quinze qui la dépassaient déjà ne
   grossissent plus, et celui qui redescend dans la norme sort de la dette. Elle ne peut que
   décroître, et la liste est dans `src/docs/generer-compte-lignes.test.ts`.
@@ -196,6 +197,20 @@ COMPOSANT=echo-ping-pong npm run mesurer
   Il rend la durée, le gel du fil, le message du nœud et l'empreinte de chaque sortie, et son code de
   sortie vaut un si le composant lève. `PARAMETRES` prend un objet JSON de réglages, `MARQUEURS` une
   liste de motifs à chercher dans la source exécutée, `ENTREES` les rangs d'entrée à nourrir.
+- **Comparer une famille** plutôt que de l'affirmer. Devant huit réverbérations, la question n'est
+  pas ce que fait chacune mais **laquelle, et pourquoi pas une autre** — et cette réponse n'est dans
+  aucun fichier : le registre dit les ports et les réglages, il ne dit pas que l'une allonge le son
+  trois fois et l'autre pas du tout. Elle se **mesure**, sur le même banc et le même son d'essai :
+
+```bash
+FAMILLE=Réverbération npm run comparer
+COMPOSANTS=echo,echo-ping-pong,delay-stereo npm run comparer
+```
+
+  Il rend ce qui les sépare — durée rendue, couleur, écart à l'entrée, largeur stéréo, masse et forme
+  schaefferiennes, coût — classé par ce que chaque axe dépasse de son propre seuil, puis ce qu'elles
+  ont en commun. **Ne jamais écrire cette comparaison à la main** : une seconde description tenue à
+  côté du dépôt vieillit sans que rien ne le dise, et c'est la faute que ce dépôt paie le plus cher.
 - **Régénérer les tables** après toute modification qui les concerne :
 
 ```bash
@@ -245,6 +260,7 @@ jamais vu rouge ne garde rien.
 | Lire le catalogue en **données** plutôt qu'en prose | `npm run decrire` écrit `DESCRIPTION.json` : ports, contenus, réglages et leurs bornes, sans les notices, engendré à la demande et hors du dépôt |
 | Relire un graphe **écrit à la main** avant de le lancer | `GRAPHE=chemin.json npm run valider` : contenus mal branchés, fiches inconnues, entrées obligatoires en l'air |
 | Mesurer **un composant** sans improviser de script | `COMPOSANT=id npm run mesurer` : durée, gel du fil, message, empreinte de chaque sortie, par le banc et ses cinq précautions |
+| Choisir **entre des composants** qui couvrent le même besoin | `FAMILLE=nom npm run comparer` : ce qui les sépare et de combien, mesuré sur le même son d'essai — jamais écrit à la main |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 
 La documentation la plus dense n'est pas dans ces fichiers mais **en tête des modules** : chaque

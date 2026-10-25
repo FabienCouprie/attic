@@ -32,6 +32,10 @@
 
 import type { Page } from "@playwright/test";
 
+import type { Descripteurs } from "../src/audio/descripteurs-comparaison";
+
+export type { Descripteurs };
+
 /** La fréquence et la durée de l'entrée d'essai. Changer l'une invalide toutes les empreintes. */
 export const FREQUENCE = 48000;
 export const DUREE_SEC = 3;
@@ -50,6 +54,13 @@ export interface Mesure {
   message: string | null;
   /** Une empreinte par sortie audio, « rms/crête », neuf décimales ; `null` pour les autres. */
   empreintes: (string | null)[];
+  /**
+   * Les descripteurs de la première sortie audio, quand on les demande.
+   *
+   * Leur calcul vit dans `src/audio/descripteurs-comparaison.ts`, avec ses cas : écrit ici, il
+   * aurait été dans un `page.evaluate`, donc hors d'atteinte de tout garde.
+   */
+  descripteurs: Descripteurs | null;
   erreur: string | null;
 }
 
@@ -72,18 +83,25 @@ export async function mesurerComposant(
      * les composants à seconde entrée facultative, dont les empreintes sont déjà enregistrées.
      */
     entreesAudio?: number[];
+    /**
+     * Relever en plus les descripteurs de la première sortie audio.
+     *
+     * Ils coûtent une analyse spectrale de plus par mesure, et ne servent qu'à COMPARER : la base
+     * d'empreintes, elle, n'en a pas besoin et ne doit pas ralentir pour eux.
+     */
+    descripteurs?: boolean;
   } = {},
 ): Promise<Mesure> {
   await page.goto(url);
   await page.waitForSelector(".attic-app", { timeout: 15000 });
-  return await page.evaluate(async ([id, marqueurs, parametres, frequence, dureeSec, entreesAudio]) => {
+  return await page.evaluate(async ([id, marqueurs, parametres, frequence, dureeSec, entreesAudio, veutDescripteurs]) => {
     const idx = await import("/src/plugins/index.ts");
     // La canonisation du moteur réel, importée plutôt que réécrite : une seconde version dériverait.
     const { defautCanoniqueChoix } = await import("/src/i18n.tsx");
     const fiche = (idx as any).toutesLesFiches.find((f: any) => f.id === id);
     if (!fiche) {
       return { version: {}, ms: 0, gelMs: null, messages: 0, message: null, empreintes: [],
-        erreur: `fiche « ${id} » absente du registre` };
+        descripteurs: null, erreur: `fiche « ${id} » absente du registre` };
     }
 
     const source = String(fiche.executer);
@@ -223,14 +241,35 @@ export async function mesurerComposant(
       return null;
     });
 
+    // LES DESCRIPTEURS, SUR LA PREMIÈRE SORTIE AUDIO SEULEMENT. Un composant à deux sorties audio
+    // n'a pas « deux timbres » à comparer : il en a un, et des variantes. Les relever sur toutes
+    // rendrait un tableau que personne ne lit, et il faudrait choisir laquelle compte — ce qui est
+    // exactement la décision qu'on veut éviter de prendre à la place de celui qui mesure.
+    let descripteurs: any = null;
+    const premiere = ((resultat && resultat.valeurs) || []).find((v: any) => v instanceof AudioBuffer);
+    if (veutDescripteurs && premiere) {
+      try {
+        // LE CALCUL N'EST PAS ICI, ET C'EST VOULU : écrit dans ce `page.evaluate`, il aurait été
+        // hors d'atteinte de tout cas. Un canal confondu ou une entrée et une sortie échangées
+        // auraient rendu le même beau tableau. Il vit donc dans un module du domaine, éprouvé par
+        // des cas à réponse connue, et le banc ne fait que l'appeler.
+        const dc = await import("/src/audio/descripteurs-comparaison.ts");
+        descripteurs = (dc as any).descripteursComparaison(premiere as AudioBuffer, buf);
+      } catch (e) {
+        // UN DESCRIPTEUR QUI LÈVE NE DOIT PAS FAIRE PASSER LE COMPOSANT POUR FAUTIF : la mesure du
+        // composant, elle, a réussi, et c'est elle que la base d'empreintes surveille.
+        descripteurs = { erreurDescripteurs: String((e as Error)?.message ?? e).slice(0, 120) };
+      }
+    }
+
     return {
       version, ms,
       // Zéro message : le gel a duré toute l'exécution, ce qui n'est pas « aucun gel ».
       gelMs: instants.length === 0 ? null : Math.round(plusLong),
       messages: instants.length,
       message: resultat && typeof resultat.message === "string" ? resultat.message : null,
-      empreintes, erreur,
+      empreintes, descripteurs, erreur,
     };
   }, [ficheId, options.marqueurs ?? [], options.parametres ?? {}, FREQUENCE, DUREE_SEC,
-      options.entreesAudio ?? [0]] as const);
+      options.entreesAudio ?? [0], options.descripteurs ?? false] as const);
 }
