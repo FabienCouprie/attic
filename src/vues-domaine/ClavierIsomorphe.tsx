@@ -19,6 +19,8 @@ import { useI18n, traduire, valeurCanoniqueChoix } from "../i18n";
 import { accordageEgal, degresParPeriode, decrireAccordage, type Accordage } from "../audio/accordage";
 import { nomNote } from "../audio/nom-note";
 import { gainDeNote, rendreSequence } from "../audio/midi-sequence";
+import { parametresLecture, voixPourNote, type Banque } from "../audio/clavier-banque";
+import { banqueVive } from "../audio/banques-vives";
 import { reseau, sautDeRangee, tableDuReseau, RANGEES } from "../audio/clavier-isomorphe";
 import { useClavierJouable } from "./clavier-jouable";
 import { ecouterTampon } from "../ui/niveau-ecoute";
@@ -79,7 +81,56 @@ export function ClavierIsomorphe({ id, data, def }: VueProps) {
   const volumeRef = useRef(80);
   volumeRef.current = Number(params?.["Volume"] ?? 80);
 
+  // LA BANQUE REÇUE, QUAND IL Y EN A UNE. Elle vit dans le cache des banques vives, où l'exécution
+  // la dépose : c'est un objet de plusieurs mégaoctets qui ne tient pas dans les données du nœud.
+  // Il faut donc avoir lancé le graphe une fois, comme pour « Clavier SFZ ».
+  const [banque, setBanque] = useState<Banque | null>(null);
+  useEffect(() => {
+    const voir = () => {
+      const vive = banqueVive(id);
+      setBanque((avant) => (vive?.banque ?? null) !== avant ? (vive?.banque ?? null) : avant);
+    };
+    voir();
+    const minuteur = setInterval(voir, 1000);
+    return () => clearInterval(minuteur);
+  }, [id]);
+
   const clavier = useClavierJouable(id, (note, velocite) => {
+    // LE SON ÉTALÉ SUR LE RÉSEAU, ET C'EST TOUT L'OBJET DE L'ENTRÉE « BANQUE ». La case demande sa
+    // propre hauteur, FRACTIONNAIRE, et `voixPourNote` la sert : son rééchantillonnage calcule
+    // `2^((hauteur − racine)/12)`, qui est continu. Un degré qui ne tombe pas sur un demi-ton sonne
+    // donc à sa place, avec le timbre de l'échantillon et non celui d'un oscillateur.
+    //
+    // LA BANQUE DOIT ÊTRE ÉTALÉE EN DEMI-TONS, et c'est le piège de ce branchement. En degrés,
+    // « Étaler sur le clavier » pose sur chaque touche un désaccord valant l'écart du degré au
+    // demi-ton ; la hauteur demandée ici le porte DÉJÀ, et `voixPourNote` ajouterait le désaccord
+    // de la zone une seconde fois. Le mode degrés sert à fabriquer un instrument SFZ jouable sur un
+    // clavier de piano, pas à nourrir ce réseau.
+    if (banque) {
+      const voix = voixPourNote(banque, note, velocite, volumeRef.current / 100);
+      if (!voix) return { arreter: () => {} };
+      const p = parametresLecture(voix);
+      const ctx = getCtx();
+      const source = ctx.createBufferSource();
+      source.buffer = p.audio;
+      source.playbackRate.value = p.vitesse;
+      if (p.boucle) { source.loop = true; source.loopStart = p.boucleDebut; source.loopEnd = p.boucleFin; }
+      const gain = ctx.createGain();
+      gain.gain.value = p.gain;
+      source.connect(gain).connect(ctx.destination);
+      source.start();
+      return {
+        arreter: () => {
+          // Un relâchement en douceur, comme sur « Clavier SFZ » : couper net laisserait un clic.
+          try {
+            const fin = ctx.currentTime + 0.15;
+            gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.0001, fin);
+            source.stop(fin + 0.01);
+          } catch { try { source.stop(); } catch { /* une voix déjà morte */ } }
+        },
+      };
+    }
     // LE NIVEAU EST CELUI DU RENDU, par la formule que `audio/midi-sequence.ts` emploie pour la
     // sortie « Audio » : ce qu'on entend en jouant est ce que le nœud rendra. Un facteur écrit ici
     // aurait fait du jeu en direct une approximation de sa propre sortie.

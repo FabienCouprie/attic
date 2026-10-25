@@ -109,9 +109,12 @@ describe("la fiche du clavier isomorphe", () => {
     expect(res.message).toContain("2");
   });
 
-  it("la fiche déclare une entrée d'accordage et deux sorties, sans MIDI", async () => {
+  it("la fiche déclare l'accordage, puis la banque, et deux sorties sans MIDI", async () => {
     const def = fiche();
-    expect(def.entrees.map((e) => e.type)).toEqual(["accordage"]);
+    // L'ORDRE EST LE CONTRAT : un graphe enregistré désigne un port par son RANG, et la banque est
+    // arrivée après. L'intervertir rebrancherait chaque arête d'un cran.
+    expect(def.entrees.map((e) => e.type)).toEqual(["accordage", "banque"]);
+    expect(def.entrees[1].requis, "la banque est facultative : ce clavier sonne sans").toBe(false);
     // AUCUNE SORTIE MIDI : un fichier MIDI porte la hauteur sur un octet entier, où un degré
     // fractionnaire serait arrondi. C'est écrit dans la notice, et tenu ici.
     expect(def.sorties.map((s) => s.type)).toEqual(["sequence", "audio"]);
