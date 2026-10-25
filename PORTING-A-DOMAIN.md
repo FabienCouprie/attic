@@ -402,22 +402,32 @@ qui ne soit pas mécanique est `ui/hooks/useExecutionGraphe.ts` : ses deux pilot
 de passes ne sont pas des fonctions sur des valeurs mais des **fonctionnalités
 que le moteur pilote**. Les sortir demande de reprendre sa structure de boucle.
 
-> **Ce que ce garde ne regarde pas, et vous le saurez avant lui.** Il compte le
-> sens shell → domaine. **Le sens inverse n'est ni mesuré ni épinglé** : relevé le
+> **Le sens inverse est compté lui aussi, mais pas de la même façon.** Relevé le
 > 2026-10-25, **trente-deux** fichiers du domaine importent le shell. Quatre sont
 > les **dépôts** eux-mêmes — `audio/favoris.ts`, `plugins/apercu-domaine.ts`,
 > `plugins/orchestration-domaine.ts` et `vues-domaine/vues.tsx` —, et trois des
 > quatre ne prennent qu'un **type**. Vingt-six sont des vues qui emploient un
 > lecteur, un badge de statut ou un bouton de copie : bon sens de dépendance
-> (§6.c). **Restent deux exécuteurs qui lisent l'interface** —
-> `plugins/boucle-collection.ts` y prend une profondeur d'export,
-> `plugins/message-modele.ts` un état de téléchargement — et le résultat du
-> composant dépend alors de ce que l'écran affiche.
+> (§6.c), et **aucune règle ne les gêne**.
 >
-> **Ce chiffre a doublé depuis le relevé précédent** (dix-sept), le domaine ayant
-> gagné des vues ; la part qui pose problème, elle, est passée de trois à deux.
-> C'est exactement ce qu'un chiffre tenu à la main ne dit pas tout seul, et la
-> raison pour laquelle il porte ici sa date.
+> **Ce qui est épinglé est la seule part qui pose problème : un EXÉCUTEUR qui lit
+> l'interface.** `AUCUN EXÉCUTEUR NEUF NE LIT L'INTERFACE` refuse qu'un fichier du
+> domaine, hors des vues, prenne une **valeur** au shell — le résultat du composant
+> dépendrait alors de ce que l'écran affiche, donc ne se calculerait plus sans
+> interface. Deux dettes y sont inscrites avec leur raison :
+> `plugins/boucle-collection.ts`, qui y prend une profondeur d'export, et
+> `plugins/message-modele.ts`, un état de téléchargement.
+>
+> **La définition est mécanique et n'exempte aucun fichier par son nom** : les
+> dépôts en sortent parce qu'ils ne prennent qu'un type, non parce qu'on les a
+> écartés. Un second cas tient le revers — **une vue a le droit de prendre au
+> shell** —, sans quoi la règle serait un interdit général déguisé.
+>
+> **Pourquoi ce garde existe, et c'est ce document qui l'a réclamé.** Il portait
+> ces chiffres à la main : dix-sept, puis trente-deux sans que personne ne le
+> sache, pendant que la part qui pose problème descendait de trois à deux. Un
+> chiffre écrit dans un document **est** une liste tenue à la main. Le nombre total
+> reste écrit ici, et vieillira ; celui qui compte, non.
 >
 > **Et ce garde a été aveugle quatre fois**, chaque fois parce qu'il décrivait un
 > CHEMIN et qu'un chemin change : il ne balayait que `src/ui/`, il ne connaissait

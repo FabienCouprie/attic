@@ -21,7 +21,7 @@
 // ci-dessous est l'état du jour, et le test refuse qu'elle grandisse. Elle doit rétrécir à mesure que
 // l'isolation avance ; chaque retrait se lit dans son diff. Il n'encode aucun jugement sur ce qui
 // mérite d'être couplé — ce jugement vieillirait, le compte non.
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -70,10 +70,9 @@ const DOSSIERS_DU_DOMAINE = ["audio", "plugins", "vues-domaine", "workers", "par
  * qu'on imagine laisse passer celle qu'on n'imagine pas. Un import d'effet de bord n'est jamais un
  * import de type.
  */
-function importsDomaine(src: string): { cible: string; typeSeul: boolean }[] {
+function importsVers(src: string, dossiers: readonly string[]): { cible: string; typeSeul: boolean }[] {
   const out: { cible: string; typeSeul: boolean }[] = [];
-  const dossiers = DOSSIERS_DU_DOMAINE.join("|");
-  const cible = String.raw`(?:\.{1,2}\/)+(?:${dossiers})(?:\/[^"]*)?`;
+  const cible = String.raw`(?:\.{1,2}\/)+(?:${dossiers.join("|")})(?:\/[^"]*)?`;
   const motif = new RegExp(
     String.raw`^[ \t]*(?:import|export)[ \t]+(type[ \t]+)?([^;]*?)from[ \t]+"(${cible})"`,
     "gm",
@@ -87,6 +86,15 @@ function importsDomaine(src: string): { cible: string; typeSeul: boolean }[] {
   for (const m of src.matchAll(effetDeBord)) out.push({ cible: m[1], typeSeul: false });
   return out;
 }
+
+/**
+ * Les imports d'un fichier du shell vers le domaine.
+ *
+ * LE SENS INVERSE EMPLOIE LE MÊME LECTEUR, et c'est tout l'objet de ce paramétrage : les quatre
+ * cécités de ce fichier portaient sur les FORMES d'import — le chemin qui remonte, l'effet de bord
+ * sans `from`, le type seul. Écrire un second lecteur pour l'autre sens les rejouerait toutes.
+ */
+const importsDomaine = (src: string) => importsVers(src, DOSSIERS_DU_DOMAINE);
 
 const chemin = (f: string) => relative(RACINE, f).replace(/\\/g, "/");
 
@@ -380,5 +388,57 @@ describe("la frontière entre le cœur, le shell et le domaine", () => {
     expect(avecTypeSeul.length,
       "aucun fichier n'importe plus que des types : la distinction ne s'éprouve plus")
       .toBeGreaterThan(0);
+  });
+
+  // ─── LE SENS INVERSE : ce que le domaine prend au shell ───
+  //
+  // LA RÈGLE N'EST PAS « LE DOMAINE N'IMPORTE RIEN DU SHELL », qui serait absurde : une vue de nœud
+  // est du React, et employer un lecteur ou un badge de statut est le BON sens de dépendance — un
+  // domaine qui disparaît emporte ses vues, un shell qui nomme un domaine ne peut plus en accueillir
+  // d'autre. C'est pourquoi les cas ci-dessus ne comptent qu'un seul des deux sens.
+  //
+  // CE QUI MÉRITE D'Y REGARDER À DEUX FOIS EST AILLEURS : un EXÉCUTEUR qui lit l'interface. Le
+  // résultat du composant devient alors fonction de ce que l'écran affiche — donc difficile à
+  // éprouver, et impossible à calculer sans interface. `PORTING-A-DOMAIN.md` le disait déjà, en
+  // donnant un chiffre que RIEN NE TENAIT : il était passé de dix-sept à trente-deux sans que
+  // personne ne le sache, pendant que la part qui pose problème descendait de trois à deux. Un
+  // chiffre écrit dans un document est une liste tenue à la main, et ce fichier existe précisément
+  // parce qu'une telle liste vieillit.
+  //
+  // LA DÉFINITION EST MÉCANIQUE, et n'exclut aucun fichier par son nom : un fichier du domaine, HORS
+  // des vues, qui prend une VALEUR au shell. Les dépôts qui remplissent les six poteaux n'en sont
+  // pas — ils ne prennent qu'un type —, et c'est la règle qui les écarte, non une exemption.
+  const EXECUTEURS_QUI_LISENT_LE_SHELL = [
+    // Une profondeur d'export lue sur l'interface : ce que le composant rend dépend d'un réglage
+    // de l'écran.
+    "plugins/boucle-collection.ts",
+    // Un état de téléchargement de modèles, et son formatage d'octets.
+    "plugins/message-modele.ts",
+  ];
+
+  it("AUCUN EXÉCUTEUR NEUF NE LIT L'INTERFACE", () => {
+    const fautifs = DOSSIERS_DU_DOMAINE
+      .filter((d) => d !== "vues-domaine")
+      .map((d) => join(RACINE, d))
+      .filter((d) => existsSync(d))
+      .flatMap((d) => sources(d))
+      .filter((f) => importsVers(readFileSync(f, "utf8"), ["ui"]).some((i) => !i.typeSeul))
+      .map(chemin)
+      .sort();
+    expect(fautifs, [
+      "Un fichier du domaine qui n'est pas une vue prend une VALEUR au shell.",
+      "Son résultat dépend alors de ce que l'écran affiche : il ne se calcule plus sans interface,",
+      "et il ne s'éprouve qu'en montant une interface autour de lui.",
+      "Si la dette est assumée, l'inscrire ici AVEC SA RAISON, comme les deux qui y sont.",
+    ].join("\n")).toEqual([...EXECUTEURS_QUI_LISENT_LE_SHELL].sort());
+  });
+
+  it("ET UNE VUE A LE DROIT DE PRENDRE AU SHELL, sans quoi la règle ci-dessus n'en serait pas une", () => {
+    // TÉMOIN : si les vues tombaient sous la même règle, le cas précédent serait un interdit général
+    // déguisé, et il refuserait le sens de dépendance que ce dépôt a choisi.
+    const vues = sources(join(RACINE, "vues-domaine"))
+      .filter((f) => importsVers(readFileSync(f, "utf8"), ["ui"]).some((i) => !i.typeSeul));
+    expect(vues.length, "aucune vue ne prend au shell : la règle ne distingue plus rien")
+      .toBeGreaterThan(10);
   });
 });
