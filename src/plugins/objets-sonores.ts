@@ -48,7 +48,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],
     sorties: [
       { nom: "Audio", nomEn: "Audio", type: "audio" },
-      { nom: "Zones", nomEn: "Zones", type: "controle" },
+      { nom: "Zones", nomEn: "Zones", type: "controle", sousType: "zones" },
       { nom: "Rapport", nomEn: "Report", type: "texte" },
     ],
     parametres: [
@@ -88,7 +88,7 @@ export const fiches: FicheAudio[] = ([
     noticeEn: "This node chains a sound's objects in the order of a descriptor: loudness, brightness, noisiness, length, mass, attack or allure.\n\nThree of these orders come from Pierre Schaeffer's Traité des objets musicaux, 1966. « Mass » follows his scale, from pure sound to white noise by way of the tonic, the group and the nodal. « Allure » follows its own, from mechanical undulation to disorder, and an object that does not undulate sorts to the end. « Attack » is the quantity that orders the dynamic shape, from the most biting to the most gradual, a shape not sorting by itself: « crescendo » comes neither before nor after « impulse ».\n\nAn allure needs at least four undulations to be observed, that is about one second: shorter objects carry none. A rain of fragments sorted from darkest to brightest becomes a rise; sorted from noisiest to most tonal, a sound that clears; from longest to shortest, an acceleration. The principle is that of CataRT's navigation, reduced to one axis.\n\nThe zones may arrive already described, or carry only their bounds - a hand-made selection: the node then describes them itself, and they sort the same way.\n\nEach object gets a fade in and out, so that no cut clicks. The space between two objects can be negative: they then overlap, and the chain becomes a texture. At random, the order is drawn with a seed: same seed, same order.",
     entrees: [
       { nom: "Audio", nomEn: "Audio", type: "audio" },
-      { nom: "Zones", nomEn: "Zones", type: "controle" },
+      { nom: "Zones", nomEn: "Zones", type: "controle", sousType: "zones" },
     ],
     sorties: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],
     parametres: [

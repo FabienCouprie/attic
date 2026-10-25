@@ -125,11 +125,15 @@ describe("les contenus du flux texte", () => {
     expect(aretesTexte).toBeGreaterThan(10);
   });
 
-  it("les autres flux ne déclarent aucune règle de contenu, et acceptent donc tout", () => {
+  it("SEULS LES FLUX À CONTENUS déclarent une règle, et les autres acceptent toujours tout", () => {
     // L'audio porte `stereo` et `mono` depuis toujours ; les brancher l'un sur l'autre est licite,
-    // et ce cas dit que cette règle-ci ne l'a pas changé.
+    // et ce cas dit que ces règles-ci ne l'ont pas changé.
     expect(registre.fluxCompatibles("audio", "audio", "stereo", "mono")).toBe(true);
-    const avecRegle = registre.tousTypesFlux().filter((t) => t.sousTypesCompatibles).map((t) => t.id);
-    expect(avecRegle).toEqual(["texte"]);
+    // DEUX FLUX EN PORTENT UNE, ET LE SECOND EST ARRIVÉ APRÈS. Ce cas affirmait « seul le texte »
+    // tant que le texte était seul ; `controle` l'a rendu faux le jour où il a reçu ses quatre
+    // contenus, et le reformuler valait mieux que de le retirer : ce qu'il tient n'est pas « un
+    // seul flux », c'est qu'AUCUN AUTRE n'en gagne une sans qu'on le remarque.
+    const avecRegle = registre.tousTypesFlux().filter((t) => t.sousTypesCompatibles).map((t) => t.id).sort();
+    expect(avecRegle).toEqual(["controle", "texte"]);
   });
 });

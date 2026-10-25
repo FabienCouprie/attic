@@ -134,7 +134,7 @@ This component writes a song's plan as text: its description, its lyrics, its te
 |---|---|---|---|
 | input | Description | text |  |
 | input | Lyrics | text (paroles) |  |
-| input | Tempo | control |  |
+| input | Tempo | control (tempo) |  |
 | input | Key | text |  |
 | output | Plan | text (plan) |  |
 
@@ -3017,7 +3017,7 @@ This component transcribes a recording into MIDI notes, one track per recognized
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
-| input | Tempo | control |  |
+| input | Tempo | control (tempo) |  |
 | output | MIDI | MIDI |  |
 | output | Notes | text |  |
 | output | Report | text |  |
@@ -3042,7 +3042,7 @@ Makes the signal available as a downloadable WAV, while passing it through on th
 |---|---|---|---|
 | input | Audio | audio |  |
 | output | Audio | audio |  |
-| output | Duration | control |  |
+| output | Duration | control (duree) |  |
 
 *No parameters.*
 
@@ -3273,7 +3273,7 @@ Encodes the signal into a downloadable MP3 at the chosen quality, while passing 
 |---|---|---|---|
 | input | Audio | audio |  |
 | output | Audio | audio |  |
-| output | Duration | control |  |
+| output | Duration | control (duree) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -3289,7 +3289,7 @@ This component writes a MIDI file from dated zones. Each zone gives one note: it
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Zones | control |  |
+| input | Zones | control (zones) |  |
 | input | Pitch | curve |  |
 | output | MIDI | MIDI |  |
 | output | Notes | text |  |
@@ -3408,7 +3408,7 @@ Analyses a noise-only passage and produces a spectral profile, to feed into « N
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
-| output | Profile | control |  |
+| output | Profile | control (profil) |  |
 
 *No parameters.*
 
@@ -3423,7 +3423,7 @@ Subtracts background noise from the signal using a noise profile captured on a s
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
-| input | Profile | control |  |
+| input | Profile | control (profil) |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4310,7 +4310,7 @@ Blends a sound and its treated version, in a proportion that varies over time. T
 |---|---|---|---|
 | input | Dry | audio |  |
 | input | Treated | audio |  |
-| input | Zones | control |  |
+| input | Zones | control (zones) |  |
 | input | Curve | curve |  |
 | output | Audio | audio |  |
 
@@ -4337,7 +4337,7 @@ Produces a start=0 / duration=length position usable by nodes that accept a cont
 |---|---|---|---|
 | input | Audio | audio |  |
 | output | Audio | audio |  |
-| output | Duration | control |  |
+| output | Duration | control (duree) |  |
 
 *No parameters.*
 
@@ -4353,7 +4353,7 @@ Cuts out a portion of the track from a start and a duration, with a slight fade 
 |---|---|---|---|
 | input | Audio | audio (stereo) |  |
 | output | Audio | audio (stereo) |  |
-| output | Zone | control |  |
+| output | Zone | control (zones) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -4372,9 +4372,9 @@ Cuts and joins the zones chosen in the « Multi-Zone Selector ». Connect the se
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
-| input | Zones | control |  |
+| input | Zones | control (zones) |  |
 | output | Audio | audio |  |
-| output | Zones | control |  |
+| output | Zones | control (zones) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -4815,8 +4815,8 @@ Displays the waveform and lets you select several zones (drag then « Add »). T
 |---|---|---|---|
 | input | Audio | audio |  |
 | output | Audio | audio |  |
-| output | Zones | control |  |
-| output | Duration | control |  |
+| output | Zones | control (zones) |  |
+| output | Duration | control (duree) |  |
 
 *No parameters.*
 
@@ -4857,8 +4857,8 @@ Inserts a copy of the sound received on the « Sound » input at the center of e
 |---|---|---|---|
 | input | Sound | audio |  |
 | input | Track | audio |  |
-| input | Zones | control |  |
-| input | Duration | control |  |
+| input | Zones | control (zones) |  |
+| input | Duration | control (duree) |  |
 | output | Audio | audio |  |
 
 *No parameters.*
@@ -4875,7 +4875,7 @@ Puts a processed zone back at its original position in the full track, with a cr
 |---|---|---|---|
 | input | Track | audio |  |
 | input | Processed zone | audio |  |
-| input | Zone | control |  |
+| input | Zone | control (zones) |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4893,7 +4893,7 @@ This node chains a sound's objects in the order of a descriptor: loudness, brigh
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
-| input | Zones | control |  |
+| input | Zones | control (zones) |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -4995,8 +4995,8 @@ Moves each boundary of the received zones to the nearest zero crossing of the wa
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
-| input | Zones | control |  |
-| output | Zones | control |  |
+| input | Zones | control (zones) |  |
+| output | Zones | control (zones) |  |
 | output | Analysis | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5016,7 +5016,7 @@ This node finds the sound objects of a recording - sounds each perceived as a wh
 |---|---|---|---|
 | input | Audio | audio |  |
 | output | Audio | audio |  |
-| output | Zones | control |  |
+| output | Zones | control (zones) |  |
 | output | Report | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -5099,7 +5099,7 @@ Applies the zone list (from the « Multi-Zone Selector ») as a mask on the audi
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
-| input | Zones | control |  |
+| input | Zones | control (zones) |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -7581,7 +7581,7 @@ Rebuilds a missing passage by continuing the sound's own resonance from both sid
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
-| input | Zones | control |  |
+| input | Zones | control (zones) |  |
 | output | Audio | audio |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -9189,7 +9189,7 @@ Displays the waveform of the received signal, with wheel zoom, and passes it thr
 |---|---|---|---|
 | input | Audio | audio |  |
 | output | Audio | audio |  |
-| output | Duration | control |  |
+| output | Duration | control (duree) |  |
 
 *No parameters.*
 
@@ -9407,7 +9407,7 @@ Estimates a recording's tempo and outputs it as a value, connectable to another 
 |---|---|---|---|
 | input | Audio | audio |  |
 | output | Audio | audio |  |
-| output | Tempo | control |  |
+| output | Tempo | control (tempo) |  |
 | output | Report | text |  |
 
 | Parameter | Type | Default | Values | Description |
@@ -9884,7 +9884,7 @@ Final output: plays the received signal, applies the volume and enables export. 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
-| output | Duration | control |  |
+| output | Duration | control (duree) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
@@ -9938,7 +9938,7 @@ Receives a MIDI file, synthesizes it to audio (FM or SoundFont) and passes along
 | input | MIDI | MIDI |  |
 | output | Audio | audio |  |
 | output | MIDI | MIDI |  |
-| output | Duration | control |  |
+| output | Duration | control (duree) |  |
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|

@@ -147,7 +147,7 @@ export const fiches = ([
       + "stray from it as much as instants taken at random would.",
     entrees: [
       { nom: "Audio", nomEn: "Audio", type: "audio" },
-      { nom: "Tempo", nomEn: "Tempo", type: "controle", requis: false },
+      { nom: "Tempo", nomEn: "Tempo", type: "controle", requis: false, sousType: "tempo" },
     ],
     sorties: [
       { nom: "MIDI", nomEn: "MIDI", type: "midi" },

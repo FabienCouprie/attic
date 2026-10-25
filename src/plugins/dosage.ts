@@ -31,7 +31,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Sec", nomEn: "Dry", type: "audio" },
       { nom: "Traité", nomEn: "Treated", type: "audio" },
-      { nom: "Zones", nomEn: "Zones", type: "controle", requis: false },
+      { nom: "Zones", nomEn: "Zones", type: "controle", requis: false, sousType: "zones" },
       { nom: "Courbe", nomEn: "Curve", type: "courbe", requis: false, module: "Dose" },
     ],
     sorties: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],

@@ -18,7 +18,9 @@
 
 import { accordageEgal, type Accordage } from "./accordage";
 import { construireBanque, type Banque } from "./clavier-banque";
+import { calculerProfilBruit } from "./effets-bruit";
 import { notesVersFichierMidi } from "./midi-ecriture";
+import { CONTENUS_CONTROLE } from "./sous-types-controle";
 import { CONTENUS_TEXTE } from "./sous-types-texte";
 import { estSequence, type Sequence } from "./sequence";
 
@@ -108,6 +110,40 @@ export function banqueDEssai(source: AudioBuffer): Banque {
 }
 
 /**
+ * Une valeur de contrôle, selon le CONTENU que le port déclare.
+ *
+ * LE TYPE `controle` PORTE QUATRE CHOSES, et c'est pourquoi il a fallu lui donner des contenus
+ * avant de pouvoir le nourrir : une seule valeur ne peut pas être à la fois un `Float32Array` et un
+ * tableau de zones. Vingt-sept ports les portent désormais.
+ *
+ * LES FORMES SONT CELLES DE LEURS CONSOMMATEURS, lues et non supposées : une zone est
+ * `{ debut, duree }` — ce que `zonesValides` vérifie dans `plugins/montage.ts` —, une durée est la
+ * même chose avec une seule entrée, ce que « Sortie audio » rend déjà. Et le profil n'est pas
+ * fabriqué du tout : il est CALCULÉ sur le son d'essai par `calculerProfilBruit`, la fonction du
+ * dépôt. Inventer sa taille aurait été inventer un nombre de bandes.
+ */
+export function controleDEssai(sousType: string | undefined, source?: AudioBuffer): unknown {
+  const secondes = source?.duration ?? 3;
+  switch (sousType) {
+    case "zones":
+      // Deux zones franches, à l'intérieur du son, avec du son entre elles : une seule ne
+      // montrerait pas qu'un composant sait les traiter l'une après l'autre.
+      return [
+        { debut: secondes * 0.1, duree: secondes * 0.2 },
+        { debut: secondes * 0.5, duree: secondes * 0.25 },
+      ];
+    case "duree":
+      return { debut: 0, duree: secondes };
+    case "tempo":
+      return 120;
+    case "profil":
+      return source ? calculerProfilBruit(source) : null;
+    default:
+      return null;
+  }
+}
+
+/**
  * Les types de flux pour lesquels ce module ne fabrique RIEN, et pourquoi.
  *
  * LA LISTE EST AUSSI UNE DÉCISION, et elle est tenue par un cas : un type de flux neuf doit soit
@@ -120,8 +156,6 @@ export const SANS_VALEUR_DESSAI: Record<string, string> = {
   audio: "le son d'essai appartient au banc, qui le tient deterministe depuis l'origine",
   // Une forme qui dépend du composant qui la produit : un profil de bruit, une zone, une enveloppe.
   // En fabriquer une au hasard ferait mesurer un refus plutôt qu'un traitement.
-  controle: "la forme varie d'un producteur a l'autre ; six composants attendent d'etre nourris",
-  // Un spectrogramme d'essai se fabrique a partir du son d'essai, mais au parametrage du composant
   // qui l'analyse : il est donc monte par l'appelant, qui seul le connait.
   spectrogramme: "se fabrique a partir du son d'essai, au parametrage de l'appelant",
   image: "trois composants ; une image d'essai demande de choisir ce qu'elle represente",
@@ -146,9 +180,23 @@ export function valeurDEssai(type: string, sousType?: string, o: OptionsEssai = 
     case "texte": return texteDEssai(sousType);
     case "accordage": return accordageDEssai();
     case "banque": return o.source ? banqueDEssai(o.source) : null;
+    case "controle": return controleDEssai(sousType, o.source);
     default: return null;
   }
 }
 
 /** Les contenus de texte déclarés par le domaine, pour qu'un cas puisse les confronter un à un. */
 export const CONTENUS_FABRIQUES: readonly string[] = Object.keys(CONTENUS_TEXTE);
+
+/**
+ * Les types de flux qui portent des CONTENUS, et lesquels.
+ *
+ * UN TYPE À CONTENUS NE SE NOURRIT PAS SANS SON CONTENU, et `controle` l'a montré : une valeur par
+ * défaut nourrirait trois de ses quatre ports avec la mauvaise forme — un tableau de zones là où
+ * l'on attend un `Float32Array`. Le dire ici permet au garde de couverture de demander à chaque
+ * type ce qu'il sait rendre, au lieu de l'interroger sans contenu et de conclure qu'il ne rend rien.
+ */
+export const CONTENUS_PAR_TYPE: Record<string, readonly string[]> = {
+  texte: Object.keys(CONTENUS_TEXTE),
+  controle: Object.keys(CONTENUS_CONTROLE),
+};

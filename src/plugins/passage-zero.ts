@@ -27,10 +27,10 @@ export const fiches: FicheAudio[] = ([
     noticeEn: `Moves each boundary of the received zones to the nearest zero crossing of the waveform, and returns the zones thus snapped.\n\nCutting a waveform anywhere but at zero leaves a step: the sample is at seven tenths and then, all at once, nothing. A step contains every frequency, and that is what is heard as a click. Moving the cut by a few samples is enough to remove it.\n\nThe direction of the slope matters as much as the zero. Laying both ends of a splice on a zero removes the step but not the corner: a waveform that was rising and starts falling makes an angle, and an angle is heard. When every boundary is snapped to a rising zero, any end joins any other without having to choose which ones go together.\n\n« Search » is the greatest distance a boundary may move, in milliseconds. A boundary with no crossing within that radius stays where it is, and the report counts it.\n\n« Slope » chooses the direction of the crossing. « Rising » is the setting that makes every splice compatible with every other; « Either » takes the nearest zero whatever its direction, which moves less but leaves angles possible.\n\nThe search is made on the sum of the channels. Two uncorrelated channels do not cross zero at the same instant, and no instant then suits both perfectly: the report gives what remains on the worst one, before and after, so that the limit is visible.\n\nA zone that snapping would turn inside out, its start passing after its end, is dropped rather than returned reversed.\n\nThe « Zones » output carries the snapped zones, in the form the montage nodes expect. The « Analysis » output gives the number of boundaries, how many were snapped, how many found no crossing, the mean and greatest displacement, and the step remaining before and after.`,
     entrees: [
       { nom: "Audio", nomEn: "Audio", type: "audio" },
-      { nom: "Zones", nomEn: "Zones", type: "controle" },
+      { nom: "Zones", nomEn: "Zones", type: "controle", sousType: "zones" },
     ],
     sorties: [
-      { nom: "Zones", nomEn: "Zones", type: "controle" },
+      { nom: "Zones", nomEn: "Zones", type: "controle", sousType: "zones" },
       { nom: "Analyse", nomEn: "Analysis", type: "texte" },
     ],
     parametres: [

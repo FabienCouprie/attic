@@ -138,7 +138,7 @@ export const fiches = ([
       { nom: "Paroles", nomEn: "Lyrics", type: "texte", sousType: "paroles", requis: false },
       // LE TEMPO ARRIVE EN NOMBRE SUR UN PORT DE CONTRÔLE, comme pour « Transcription MIDI » : un
       // détecteur en rend un, et le recopier à la main serait une occasion de se tromper.
-      { nom: "Tempo", nomEn: "Tempo", type: "controle", requis: false },
+      { nom: "Tempo", nomEn: "Tempo", type: "controle", requis: false, sousType: "tempo" },
       { nom: "Tonalité", nomEn: "Key", type: "texte", requis: false },
     ],
     sorties: [{ nom: "Plan", nomEn: "Plan", type: "texte", sousType: "plan" }],

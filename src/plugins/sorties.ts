@@ -15,7 +15,7 @@ export const fiches: FicheAudio[] = ([
     // bloc de métadonnées iXML.
     apercuEstLeFichier: true,
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Durée", nomEn: "Duration", type: "controle" }],
+    sorties: [{ nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }],
     parametres: [
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 100, unite: "%" },
     ],
@@ -38,7 +38,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Reçoit un fichier MIDI, le synthétise en audio et le transmet.",
     resumeEn: "Receives a MIDI file, synthesizes it to audio and passes it along.",
     entrees: [{ nom: "MIDI", type: "midi" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Durée", nomEn: "Duration", type: "controle" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }, { nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }],
     parametres: [
       { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",

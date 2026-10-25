@@ -159,7 +159,7 @@ export const fiches: FicheAudio[] = ([
   {
     id: "reinserer-zone", nom: "Réinsérer une zone", univers: "Traitement", famille: "Montage",
     resume: "Réinsère une zone traitée dans la piste originale.",
-    entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }, { nom: "Zone traitée", nomEn: "Processed zone", type: "audio" }, { nom: "Zone", nomEn: "Zone", type: "controle" }],
+    entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }, { nom: "Zone traitée", nomEn: "Processed zone", type: "audio" }, { nom: "Zone", nomEn: "Zone", type: "controle", sousType: "zones" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [{ nom:"Fondu", plage:[0,100], defaut:15, unite:"ms", nomEn: "Fade" }],
     async executer(ctx: any) {
@@ -206,7 +206,7 @@ export const fiches: FicheAudio[] = ([
     id: "selecteur-multi-zones", nom: "Sélecteur multi-zones", nomEn: "Multi-Zone Selector", univers: "Traitement", famille: "Montage",
     resume: "Sélectionne plusieurs zones audio et les transmet en liste.",
     resumeEn: "Selects multiple audio zones and passes them as a list.",
-    entrees: [{ nom: "Audio", type: "audio" }], sorties: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle" }, { nom: "Durée", nomEn: "Duration", type: "controle" }],
+    entrees: [{ nom: "Audio", type: "audio" }], sorties: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle", sousType: "zones" }, { nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }],
     parametres: [],
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null,null,null] };
@@ -217,7 +217,7 @@ export const fiches: FicheAudio[] = ([
     id: "masque-zones", nom: "Masque de zones", nomEn: "Zone Mask", univers: "Traitement", famille: "Montage",
     resume: "Selon l'option, supprime le son sur les zones sélectionnées ou ne conserve qu'elles.",
     resumeEn: "Depending on the option, mutes the selected zones or keeps only them.",
-    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle" }],
+    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle", sousType: "zones" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Action", nomEn: "Action", type: "choix",
@@ -270,8 +270,8 @@ export const fiches: FicheAudio[] = ([
     entrees: [
       { nom: "Son", nomEn: "Sound", type: "audio" },
       { nom: "Piste", nomEn: "Track", type: "audio", requis: false },
-      { nom: "Zones", nomEn: "Zones", type: "controle" },
-      { nom: "Durée", nomEn: "Duration", type: "controle", requis: false },
+      { nom: "Zones", nomEn: "Zones", type: "controle", sousType: "zones" },
+      { nom: "Durée", nomEn: "Duration", type: "controle", requis: false, sousType: "duree" },
     ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
@@ -471,7 +471,7 @@ export const fiches: FicheAudio[] = ([
     notice: "Produit une position début=0 / durée=longueur utilisable par les blocs qui acceptent une entrée de contrôle.",
     noticeEn: "Produces a start=0 / duration=length position usable by nodes that accept a control input.",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }],
     parametres: [],
     async executer(ctx: any) {
       const a = ctx.entree(0);
@@ -488,8 +488,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Montage",
     resume: "Découpe et concatène les zones choisies dans le sélecteur multi-zones.",
     resumeEn: "Cuts and concatenates the zones chosen in the multi-zone selector.",
-    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle" }],
+    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle", sousType: "zones" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle", sousType: "zones" }],
     parametres: [
       { nom: "Mode", nomEn: "Mode", type: "choix",
         options: ["Zones sélectionnées", "Zones non sélectionnées"], optionsEn: ["Selected zones", "Unselected zones"], optionIds: ["selected", "unselected"], defaut: "Zones sélectionnées",

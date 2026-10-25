@@ -14,6 +14,7 @@ import { configurerRegistreGestion } from "../plugins/gestion-nodes";
 import { configurerRegistreQuiz } from "../plugins/quiz";
 import { toutesLesFiches } from "../plugins";
 import type { ValeurAudio, RuntimeAudio } from "./types-domaine";
+import { contenusControleCompatibles } from "./sous-types-controle";
 import { contenusTexteCompatibles } from "./sous-types-texte";
 
 export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
@@ -26,7 +27,14 @@ export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
   // en vert quoi qu'on y branche : on croyait y lire un type, et c'était toujours le même.
   registre.enregistrerTypeFlux({ id: "frontiere", couleur: "#8a8f98", libelle: "Port exposé" });
   registre.enregistrerTypeFlux({ id: "midi", couleur: "#e9a13b", libelle: "MIDI" });
-  registre.enregistrerTypeFlux({ id: "controle", couleur: "#e8590c", libelle: "Contrôle" });
+  // LE CONTRÔLE PORTE DES CONTENUS LUI AUSSI, et pour la même raison que le texte : ses vingt-six
+  // ports transportent une durée, des zones, un tempo ou un profil de bruit, et brancher un tempo
+  // sur une entrée de zones était licite. La règle vit dans `sous-types-controle.ts`, avec le
+  // relevé qui a décidé des quatre.
+  registre.enregistrerTypeFlux({
+    id: "controle", couleur: "#e8590c", libelle: "Contrôle",
+    sousTypesCompatibles: contenusControleCompatibles,
+  });
   // LE TEXTE PORTE DES CONTENUS, et c'est le seul flux qui en déclare : une notation, un ABC et un
   // prompt sont tous du texte, et les brancher l'un sur l'autre ne veut rien dire. La règle vit
   // dans `sous-types-texte.ts`, avec le relevé qui a décidé des trois.

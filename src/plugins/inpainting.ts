@@ -29,7 +29,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Rebuilds a missing passage by continuing the sound's own resonance from both sides.",
     entrees: [
       { nom: "Audio", type: "audio" },
-      { nom: "Zones", nomEn: "Zones", type: "controle", requis: false },
+      { nom: "Zones", nomEn: "Zones", type: "controle", requis: false, sousType: "zones" },
     ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
