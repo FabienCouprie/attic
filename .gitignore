@@ -225,3 +225,7 @@ DESCRIPTION.json
 # Le rapport d'un graphe relu par « npm run valider » : une sortie de travail, pas un livrable.
 
 VALIDATION.txt
+
+# La mesure d'un composant rendue par « npm run mesurer », pour la meme raison.
+
+MESURE.txt
