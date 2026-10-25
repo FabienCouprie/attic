@@ -234,3 +234,9 @@ MESURE.txt
 # rejoue, donc elle ne se garde pas — un exemplaire sur le disque vieillirait sans rien dire.
 
 COMPARAISON.txt
+
+# Les sons rendus par « npm run ecouter ». Un son se rejoue, donc il ne se garde pas : un fichier
+# survivant a une passe serait ecoute comme s'il venait d'etre rendu, et rien dans le son ne dirait
+# sa date.
+
+ECOUTE/

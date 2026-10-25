@@ -211,6 +211,17 @@ COMPOSANTS=echo,echo-ping-pong,delay-stereo npm run comparer
   schaefferiennes, coût — classé par ce que chaque axe dépasse de son propre seuil, puis ce qu'elles
   ont en commun. **Ne jamais écrire cette comparaison à la main** : une seconde description tenue à
   côté du dépôt vieillit sans que rien ne le dise, et c'est la faute que ce dépôt paie le plus cher.
+- **Écouter**, parce que ce logiciel produit des sons et non des graphes. Les quatre verbes
+  précédents rendent du texte ; celui-ci rend des WAV, sur le même son d'essai déterministe :
+
+```bash
+COMPOSANT=reverbe-hachee npm run ecouter
+FAMILLE=Écho npm run ecouter
+```
+
+  Les fichiers vont dans `ECOUTE/`, une sortie audio par fichier, **toujours suffixée de son rang** —
+  sans quoi un composant à deux sorties en écraserait une sans rien dire. Le son d'essai part avec,
+  sous `_entree.wav` : on ne juge pas un effet sans entendre ce qui y est entré.
 - **Régénérer les tables** après toute modification qui les concerne :
 
 ```bash
@@ -261,6 +272,7 @@ jamais vu rouge ne garde rien.
 | Relire un graphe **écrit à la main** avant de le lancer | `GRAPHE=chemin.json npm run valider` : contenus mal branchés, fiches inconnues, entrées obligatoires en l'air |
 | Mesurer **un composant** sans improviser de script | `COMPOSANT=id npm run mesurer` : durée, gel du fil, message, empreinte de chaque sortie, par le banc et ses cinq précautions |
 | Choisir **entre des composants** qui couvrent le même besoin | `FAMILLE=nom npm run comparer` : ce qui les sépare et de combien, mesuré sur le même son d'essai — jamais écrit à la main |
+| **Entendre** ce qu'un composant ou une famille produit | `COMPOSANT=id npm run ecouter`, ou `FAMILLE=nom` : des WAV dans `ECOUTE/`, le son d'essai sec avec eux |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 
 La documentation la plus dense n'est pas dans ces fichiers mais **en tête des modules** : chaque
