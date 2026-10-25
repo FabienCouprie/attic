@@ -31,7 +31,7 @@
 // troncature et fondu — et non par rééchantillonnage, qui changerait la hauteur.
 import { changerTonalite } from "./effets-spectral";
 
-import { hauteurDuDegre, type Accordage } from "./accordage";
+import { degresParPeriode, hauteurDuDegre, type Accordage } from "./accordage";
 import type { Note } from "./note";
 /** La0, première touche d'un piano. */
 export const NOTE_LA0 = 21;
@@ -134,6 +134,28 @@ export interface Banque {
    * qu'il a été enregistré, sans rééchantillonnage.
    */
   kit?: boolean;
+  /**
+   * L'ACCORDAGE DÉJÀ APPLIQUÉ AUX ZONES, et la touche qui porte son degré zéro.
+   *
+   * POURQUOI UNE BANQUE DOIT LE DÉCLARER, et c'est un défaut relevé par Fabien sur l'exemple livré.
+   * En mode degrés, chaque touche reçoit sa région avec le désaccord qui la mène à son degré : la
+   * banque est DÉJÀ accordée. Qui l'adresse par un NUMÉRO DE TOUCHE obtient la bonne hauteur. Qui
+   * l'adresse par une HAUTEUR calculée depuis le même accordage ajoute l'écart une seconde fois, et
+   * rien ne le lui dit.
+   *
+   * MESURÉ DANS L'APPLICATION, sur trois cases du clavier isomorphe nourri d'une banque en degrés :
+   * quarante-cinq cents trop bas, puis quatre-vingt-seize trop haut deux fois. Tous les nœuds
+   * annonçaient « Terminé ».
+   *
+   * UNE BANQUE EN DEMI-TONS NE PORTE PAS CE CHAMP, et c'est ainsi qu'on les distingue : elle se
+   * laisse adresser par la hauteur, puisqu'elle ne sait rien d'une échelle.
+   */
+  accordee?: {
+    /** La touche dont le degré est zéro. */
+    tonique: number;
+    /** Combien de degrés par période, pour que le destinataire puisse le dire. */
+    degres: number;
+  };
 }
 
 /**
@@ -318,11 +340,20 @@ export function construireBanque(source: AudioBuffer, o: OptionsBanque): Banque 
       zones.push(zone);
       continue;
     }
-    const large: Zone = { ...p, audio };
+    // LA ZONE GARDE LA HAUTEUR DE SON ÉCHANTILLON, et c'est ce qui rend la banque capable de dire
+    // à quelle hauteur une touche sonne. Sans elle, `racine` est une TOUCHE et rien dans la banque
+    // ne permet de remonter à une hauteur : un clavier écrivait alors sur sa touche le nom du
+    // demi-ton tempéré, pendant qu'elle faisait entendre son degré.
+    const large: Zone = { ...p, audio, hauteur: hauteurRacine };
     if (boucle) large.boucle = boucle;
     zones.push(...decouperEnTouches(large, a, tonique));
   }
-  return { zones, racineSource: o.racineSource, largeur, noteBasse, noteHaute };
+  // LA BANQUE DIT QU'ELLE EST ACCORDÉE, ce qui évite à son destinataire de le deviner. Sans accordage
+  // le champ est absent, et la banque reste ce qu'elle a toujours été.
+  return {
+    zones, racineSource: o.racineSource, largeur, noteBasse, noteHaute,
+    ...(a ? { accordee: { tonique, degres: degresParPeriode(a) } } : {}),
+  };
 }
 
 /**
@@ -444,6 +475,28 @@ export function voixPourNote(
     ratio: conversion * Math.pow(2, exposant + (zone.accord ?? 0) / 1200),
     gain: Math.min(1, Math.max(0, volume)) * gainVelocite(velocite, zone.suiviVelocite) * (zone.gain ?? 1),
   };
+}
+
+/**
+ * À QUELLE HAUTEUR UNE TOUCHE SONNE, d'après la banque elle-même. `null` si aucune zone ne la sert.
+ *
+ * POURQUOI CETTE FONCTION EXISTE. Une banque étalée en degrés fait sonner la touche 65 à `E4+42`, et
+ * « Clavier SFZ » écrivait pourtant `F4` sur cette touche : le nom du demi-ton tempéré, c'est-à-dire
+ * l'identité de la touche et non la hauteur qu'elle produit. Les deux se défendent séparément ; côte
+ * à côte, le réseau isomorphe nommant des HAUTEURS et le piano des TOUCHES, ils disaient deux choses
+ * différentes du même son. Relevé par Fabien.
+ *
+ * LE CALCUL NE REFAIT RIEN : il part de `voixPourNote`, donc du rapport que le haut-parleur reçoit
+ * vraiment, et le rapporte à la hauteur de l'échantillon de la zone. Une étiquette qui se calculerait
+ * à côté pourrait dériver du son ; celle-ci en descend.
+ *
+ * SANS ACCORDAGE, `hauteur` est absente et la base est la racine : la touche rend son propre
+ * demi-ton, exactement comme avant.
+ */
+export function hauteurJouee(banque: Banque, note: number, velocite = 100): number | null {
+  const voix = voixPourNote(banque, note, velocite);
+  if (!voix) return null;
+  return (voix.zone.hauteur ?? voix.zone.racine) + 12 * Math.log2(voix.ratio);
 }
 
 /** Ce qu'il faut poser sur un `AudioBufferSourceNode` pour jouer une note en direct. */

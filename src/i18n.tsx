@@ -788,8 +788,12 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   // « repli » dit que l'accordage affiché vient du réglage et non d'une entrée branchée.
   "iso.tour": { fr: "tour {__VAR_0__}", en: "turn {__VAR_0__}" },
   "iso.repli": { fr: "réglage, aucune entrée branchée", en: "setting, no input connected" },
-  "msg.iso.jouee": { fr: "{__VAR_0__} notes · {__VAR_1__} cases · saut {__VAR_2__} degrés · {__VAR_3__}", en: "{__VAR_0__} notes · {__VAR_1__} cells · step {__VAR_2__} degrees · {__VAR_3__}" },
-  "msg.iso.prete": { fr: "{__VAR_0__} cases · saut {__VAR_1__} degrés · {__VAR_2__} degrés sous les doigts, soit {__VAR_3__} périodes · {__VAR_4__}", en: "{__VAR_0__} cells · step {__VAR_1__} degrees · {__VAR_2__} degrees under the fingers, i.e. {__VAR_3__} periods · {__VAR_4__}" },
+  "msg.iso.jouee": { fr: "{__VAR_0__} notes · {__VAR_1__} cases · saut {__VAR_2__} degrés · {__VAR_3__} · {__VAR_4__}", en: "{__VAR_0__} notes · {__VAR_1__} cells · step {__VAR_2__} degrees · {__VAR_3__} · {__VAR_4__}" },
+  // LE TIMBRE EST UNE VARIABLE, pour la raison qui a déjà coûté une correction sur « Étaler sur le
+  // clavier » : un message qui écrit en dur ce que le nœud fait dit faux dès qu'il fait autre chose.
+  "msg.iso.banque": { fr: "banque reçue, {__VAR_0__} zones", en: "bank received, {__VAR_0__} zones" },
+  "msg.iso.synthese": { fr: "synthèse interne", en: "internal synthesis" },
+  "msg.iso.prete": { fr: "{__VAR_0__} cases · saut {__VAR_1__} degrés · {__VAR_2__} degrés sous les doigts, soit {__VAR_3__} périodes · {__VAR_4__} · {__VAR_5__}", en: "{__VAR_0__} cells · step {__VAR_1__} degrees · {__VAR_2__} degrees under the fingers, i.e. {__VAR_3__} periods · {__VAR_4__} · {__VAR_5__}" },
   "msg.banque.couchesJouees": { fr: "{__VAR_0__} couches touchées sur {__VAR_1__}", en: "{__VAR_0__} layers used out of {__VAR_1__}" },
   "msg.banque.ignorees": { fr: "{__VAR_0__} hors plage", en: "{__VAR_0__} out of range" },
   "msg.banque.muettes": { fr: "{__VAR_0__} sans son dans le kit", en: "{__VAR_0__} with no sound in the kit" },
