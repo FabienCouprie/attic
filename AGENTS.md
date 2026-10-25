@@ -297,6 +297,32 @@ sha256sum catalogue-sonore-2026-10-25.zip   # 6aa1fc8233d19a664644e70a27e1eb9d3b
   catalogue régénéré change donc de nom, et l'ancien reste téléchargeable tel qu'il a été entendu.
   Le relevé de ce catalogue-ci : les **367 composants qui rendent de l'audio**, **288 clips**, zéro
   erreur, 89 sans sortie audio.
+- **Faire varier un réglage**, parce que **ce qui est intéressant n'est pas un son mais une
+  différence entre au moins deux**. C'est Fabien qui l'a formulé, et c'est par ce trou qu'un défaut
+  est passé : `comparer` et `écouter` savent mettre côte à côte N composants **différents**, mais
+  leur `PARAMETRES` est un seul jeu appliqué à **tous** les membres. Un composant à trois valeurs
+  d'un même curseur leur était hors d'atteinte — et « Déréverbération » y a caché un réglage presque
+  inerte pendant toute sa vie.
+
+```bash
+COMPOSANT=dereverberation REGLAGE=Mémoire VALEURS=5,10,20 npm run varier
+COMPOSANT=distorsion REGLAGE=Drive VALEURS=0,25,50,75,100 npm run varier
+COMPOSANT=dereverberation REGLAGE=Mémoire VALEURS=5,20 SON=un/son/reverbere.wav npm run varier
+```
+
+  **Il rend un tableau par tranches** — une ligne par demi-seconde, une colonne par valeur, plus
+  celle de l'entrée — et **deux relevés qu'il ne faut pas confondre** : ce que le composant *fait*,
+  écart le plus grand à l'entrée, et ce que le réglage *change*, écart à la première valeur. Un
+  réglage qui ne bouge ni l'énergie ni la crête de plus d'un demi-décibel est **déclaré inerte**.
+
+  **LE RÉSUMÉ NE CHERCHE QUE DANS CE QUI S'ENTEND**, soixante décibels sous la tranche la plus forte
+  de l'entrée. Sans cette borne il annonçait le même « −40 dB » pour trois réglages différents, dans
+  la seule tranche inaudible du fichier : c'est la troisième fois que ce dépôt paie un nombre unique
+  pris sur un signal qui décroît.
+
+  **Et une variation n'est visible que sur une matière que le composant peut travailler.** Sur le
+  son de référence, qui est sec, faire varier une déréverbération ne montre rien. `SON=` est là pour
+  cela.
 - **Régénérer les tables** après toute modification qui les concerne :
 
 ```bash
@@ -350,6 +376,7 @@ jamais vu rouge ne garde rien.
 | **Entendre** ce qu'un composant ou une famille produit | `COMPOSANT=id npm run ecouter`, ou `FAMILLE=nom` : des WAV dans `ECOUTE/`, le son d'essai sec avec eux |
 | **Lancer un graphe entier** et entendre ce qu'il rend | `GRAPHE=nom npm run executer` : l'état et le message de chaque nœud, le WAV de chaque aperçu dans `EXECUTION/` — le seul verbe qui voie des composants **câblés ensemble** |
 | **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie des 367 composants qui rendent de l'audio, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
+| Savoir **ce qu'un réglage change**, et non ce qu'il vaut | `COMPOSANT=id REGLAGE=nom VALEURS=a,b,c npm run varier` : un clip par valeur, un tableau par tranches avec la colonne de l'entrée, et le réglage déclaré **inerte** s'il ne bouge ni l'énergie ni la crête |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 
 La documentation la plus dense n'est pas dans ces fichiers mais **en tête des modules** : chaque
