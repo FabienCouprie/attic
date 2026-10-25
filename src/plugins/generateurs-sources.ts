@@ -6,7 +6,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
-import { decoderFichier, decoderBlob, rendreAvecEchantillon, genererBruit, genererAudioFormule, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE, type NoteEvenement } from "../audio";
+import { decoderFichier, rendreAvecEchantillon, genererBruit, genererAudioFormule, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE, type NoteEvenement } from "../audio";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 import { creerAleatoire, hasardDuNoeud } from "../core";
@@ -187,17 +187,30 @@ export const fiches: FicheAudio[] = ([
         docEn:"Seed for the melody. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same melody." },
     ],
     async executer(ctx: any) {
+      // SANS FICHIER DÉPOSÉ, CE COMPOSANT N'A RIEN À JOUER, ET IL LE DIT.
+      //
+      // IL ALLAIT CHERCHER `/soundbank/waterdrop.mp3`, QUI N'A JAMAIS EXISTÉ — vérifié sur toute
+      // l'histoire du dépôt, et c'était la seule référence à ce dossier dans tout le code. Le repli
+      // était donc mort depuis l'origine, et il échouait de la pire façon : le serveur de
+      // développement répond 200 avec sa page d'index pour un chemin inconnu, de sorte que `rep.ok`
+      // était VRAI, le blob était du HTML, et le décodage levait « Unable to decode audio data ».
+      //
+      // Relevé en cataloguant les 367 composants : c'était la SEULE erreur de toute la passe, et
+      // elle accusait le décodeur pour un fichier absent. `rep.ok` ne suffit jamais derrière un
+      // repli d'application à page unique.
       const f = ctx.noeud.data.audioFichier as File|undefined;
+      if (!f) return { valeurs:[null], message:traduire("msg.glissez_un_fichier_audio_sur_le_node") };
       let sample: AudioBuffer;
-      let dureeAuto: number | null = null;
-      if (f) {
+      try {
         sample = await decoderFichier(f, ctx.runtime);
-        dureeAuto = sample.duration;
-      } else {
-        const rep = await fetch("/soundbank/waterdrop.mp3");
-        if (rep.ok) { sample = await decoderBlob(await rep.blob(), ctx.runtime); dureeAuto = sample.duration; }
-        else { return { valeurs:[null], message:traduire("msg.glissez_un_fichier_audio_sur_le_node") }; }
+      } catch (e: any) {
+        // UN FICHIER QUI N'EST PAS DE L'AUDIO DIT POURQUOI. Sans ce filet, déposer un texte ou une
+        // image rendait le même « Unable to decode audio data » que le repli mort : un message du
+        // décodeur, qui ne nomme ni le fichier ni ce qu'on attendait de lui.
+        return { valeurs:[null], message: traduire("msg.fichier_audio_illisible", f.name,
+          String(e?.message ?? e).slice(0, 80)) };
       }
+      const dureeAuto: number | null = sample.duration;
       const cle = ctx.paramTexte("Clé","Do");
       const gamme = ctx.paramTexte("Gamme","Majeur");
       const tempo = ctx.paramNombre("Tempo",100);
