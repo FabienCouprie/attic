@@ -43,6 +43,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 
+import { etatDesNoeuds, semerEtLancer } from "./pilote-graphe";
 import { serveurDeVerification } from "./serveur-de-developpement";
 
 const devUrl = serveurDeVerification(5240);
@@ -51,9 +52,6 @@ const RACINE = resolve(ICI, "..");
 const CHEMIN = resolve(ICI, "empreintes-exemples.json");
 const ecrire = process.env.ECRIRE_EMPREINTES_EXEMPLES === "1";
 const SEUL = process.env.EXEMPLE ?? "";
-
-/** Au-delà, on considère que l'exemple ne finira pas : un graphe bloqué ne bloque pas la passe. */
-const DELAI_RUN_MS = 180_000;
 
 /**
  * L'écart relatif toléré sur le NIVEAU, et il est mesuré, non choisi.
@@ -193,54 +191,20 @@ function ecartsEntre(avant: Empreinte, apres: Empreinte, quoi: string, facteur =
 /**
  * Joue un exemple et rend l'empreinte de chaque aperçu audio.
  *
+ * LE PILOTAGE N'EST PAS ÉCRIT ICI, et c'est voulu : semer, lancer, attendre la fin et attendre que
+ * les aperçus se posent vit dans `pilote-graphe.ts`, que le verbe `exécuter` emploie aussi. Les
+ * trois corrections qu'il porte ont chacune coûté une mesure fausse ; un second exemplaire les
+ * aurait perdues une à une. Ne reste ici que ce qui est propre à ce garde : la MESURE.
+ *
  * LE LECTEUR DE WAV S'IMPORTE DANS LA PAGE, comme le banc importe les siens. Un premier jet lisait
  * le SOURCE du module pour le passer à `new Function` : c'est du TypeScript, que le navigateur ne
  * parse pas, et la passe s'est arrêtée sur « Unexpected identifier 'MesureWav' ».
- *
- * ET LE CLIC EST UN VRAI CLIC, celui de Playwright. Un `b.click()` écrit dans la page n'est pas un
- * geste utilisateur : un contexte audio peut rester suspendu, et l'on mesurerait le silence d'un
- * graphe qui n'a jamais eu le droit de sonner.
  */
 async function jouer(page: import("@playwright/test").Page, fichier: string): Promise<Empreinte> {
   const graphe = readFileSync(join(RACINE, "exemples", fichier), "utf8");
-  await page.goto(devUrl);
-  await page.waitForSelector(".attic-app", { timeout: 15000 });
-  await page.evaluate((g) => {
-    localStorage.setItem("attic-encours", g);
-    // LA PROFONDEUR D'EXPORT EST ÉPINGLÉE, et c'est une PRÉFÉRENCE UTILISATEUR qu'on ne peut pas
-    // laisser décider d'une empreinte : le même aperçu en seize et en vingt-quatre bits donne deux
-    // chiffres. Trente-deux bits FLOTTANTS n'arrondit rien, l'empreinte porte donc sur le tampon
-    // rendu et non sur sa quantification.
-    localStorage.setItem("attic-profondeur-export", "32");
-  }, graphe);
-  await page.reload();
-  await page.waitForSelector(".attic-app", { timeout: 15000 });
-  await page.waitForTimeout(2500);
+  await semerEtLancer(page, devUrl, graphe, { profondeurExport: 32 });
 
-  await page.locator('button[title*="Lancer"]').first().click({ timeout: 15000 });
-
-  // UN RUN EST FINI QUAND PLUS AUCUN NŒUD N'EST EN ATTENTE NI EN COURS. Attendre une durée fixe
-  // mesurerait un graphe à moitié calculé sur les exemples longs ; c'est l'ÉTAT qui dit la fin.
-  await page.waitForFunction(() => {
-    const puces = document.querySelectorAll(".attic-node-statut-puce");
-    if (puces.length === 0) return false;
-    return document.querySelectorAll(".attic-node-statut-puce.en-cours").length === 0
-      && document.querySelectorAll(".attic-node-statut-puce.attente").length === 0;
-  }, undefined, { timeout: DELAI_RUN_MS });
-
-  // LES APERÇUS SE POSENT APRÈS LE STATUT, ET PAS TOUS ENSEMBLE. Une attente fixe d'une seconde et
-  // demie a relevé SIX lecteurs sur `canon-de-proportions` à une passe et HUIT à la suivante : le
-  // nombre d'empreintes dépendait de l'horloge. On attend qu'il CESSE DE BOUGER, ce qui s'arrête
-  // tout seul quand il n'y en a aucun.
-  await page.waitForFunction(() => {
-    const n = document.querySelectorAll("[data-id] audio[src]").length;
-    const w = window as unknown as { __nb?: number; __stable?: number };
-    if (w.__nb === n) w.__stable = (w.__stable ?? 0) + 1;
-    else { w.__nb = n; w.__stable = 0; }
-    return (w.__stable ?? 0) >= 6;
-  }, undefined, { timeout: 120_000, polling: 500 });
-
-  return await page.evaluate(async () => {
+  const lecteurs = await page.evaluate(async () => {
     const { lireWav, tamponDepuisWav } = await import("/src/audio/empreinte-wav.ts") as unknown as {
       lireWav: (o: ArrayBuffer) => { rms: number; crete: number; trames: number; canaux: number; taux: number };
       tamponDepuisWav: (o: ArrayBuffer) => AudioBuffer;
@@ -262,18 +226,16 @@ async function jouer(page: import("@playwright/test").Page, fichier: string): Pr
         lecteurs[id] = { rms: -1, crete: -1, trames: -1, canaux: -1, taux: -1, centroide: -1 };
       }
     }
-    // L'ERREUR PORTE SON MESSAGE, et non son seul identifiant : un relevé qui dirait « six nœuds en
-    // erreur » obligerait à rejouer l'exemple pour savoir lequel et pourquoi.
-    const erreurs = Array.from(document.querySelectorAll(".attic-node-statut-puce.erreur"))
-      .map((p) => {
-        const n = p.closest("[data-id]") as HTMLElement | null;
-        const id = n?.dataset.id ?? "?";
-        const msg = n?.querySelector(".attic-node-message")?.textContent?.replace(/^⧉/, "").trim();
-        return msg ? `${id} : ${msg.slice(0, 90)}` : id;
-      })
-      .sort();
-    return { lecteurs, erreurs };
-  }) as Empreinte;
+    return lecteurs;
+  }) as Record<string, MesureLecteur>;
+
+  // L'ERREUR PORTE SON MESSAGE, et non son seul identifiant : un relevé qui dirait « six nœuds en
+  // erreur » obligerait à rejouer l'exemple pour savoir lequel et pourquoi.
+  const erreurs = (await etatDesNoeuds(page))
+    .filter((n) => n.statut === "erreur")
+    .map((n) => (n.message ? `${n.id} : ${n.message.slice(0, 90)}` : n.id))
+    .sort();
+  return { lecteurs, erreurs };
 }
 
 test.describe("le son que rendent les exemples", () => {
