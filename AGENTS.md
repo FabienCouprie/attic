@@ -323,6 +323,20 @@ COMPOSANT=dereverberation REGLAGE=Mémoire VALEURS=5,20 SON=un/son/reverbere.wav
   **Et une variation n'est visible que sur une matière que le composant peut travailler.** Sur le
   son de référence, qui est sec, faire varier une déréverbération ne montre rien. `SON=` est là pour
   cela.
+- **Vérifier qu'une graine tient**, parce qu'un contrat structurel ne mesure pas le son.
+  `src/docs/contrat-graines.test.ts` tient huit cas — rôle déclaré, plage, idempotence du moteur —
+  et **aucun ne lance le composant**. C'est par là que « Boîte à groove » est passée : déclaration
+  juste, message annonçant « graine 4242 », et deux sons différents.
+
+```bash
+npm run graines
+COMPOSANTS=boite-groove,markov-midi npm run graines
+```
+
+  Il lance chaque composant à graine fixée **deux fois** et compare ce qu'il entend. La liste vient
+  du rôle `graine: true` au **registre**, jamais du libellé, et la valeur est ramenée dans la plage
+  du réglage. Relevé : **88 composants à graine, 59 comparés sur le son, zéro infidèle**, en 14,6 min.
+  Un composant sans sortie audio ou qui lève est **distingué** d'une graine infidèle.
 - **Régénérer les tables** après toute modification qui les concerne :
 
 ```bash
@@ -377,6 +391,7 @@ jamais vu rouge ne garde rien.
 | **Lancer un graphe entier** et entendre ce qu'il rend | `GRAPHE=nom npm run executer` : l'état et le message de chaque nœud, le WAV de chaque aperçu dans `EXECUTION/` — le seul verbe qui voie des composants **câblés ensemble** |
 | **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie des 367 composants qui rendent de l'audio, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
 | Savoir **ce qu'un réglage change**, et non ce qu'il vaut | `COMPOSANT=id REGLAGE=nom VALEURS=a,b,c npm run varier` : un clip par valeur, un tableau par tranches avec la colonne de l'entrée, et le réglage déclaré **inerte** s'il ne bouge ni l'énergie ni la crête |
+| Vérifier qu'une **graine déclarée tient**, sur le son | `npm run graines` : chaque composant à graine lancé deux fois à la même graine, empreintes comparées — le contrat structurel des graines ne regarde pas le son |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 
 La documentation la plus dense n'est pas dans ces fichiers mais **en tête des modules** : chaque
