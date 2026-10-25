@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useI18n, traduire } from "../i18n";
 import { etiquetteFamille, etiquetteOutil, type FamilleBarre } from "./barre-outils-groupes";
+import { estUnChampDeSaisie } from "./champ-de-saisie";
 import { favoris } from "./favoris";
 import { BoutonModeles } from "./BoutonModeles";
 import { apparenceMaj } from "./apparence-maj";
@@ -169,8 +170,7 @@ export function BarreOutils(props: Props) {
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable)) return;
+      if (estUnChampDeSaisie(e.target)) return;
       const ctrl = e.ctrlKey || e.metaKey;
       if (ctrl && e.key === "s" && !e.shiftKey) { e.preventDefault(); onSauvegarder(); }
       if (ctrl && e.shiftKey && e.key.toLowerCase() === "s") { e.preventDefault(); onExporter(); }

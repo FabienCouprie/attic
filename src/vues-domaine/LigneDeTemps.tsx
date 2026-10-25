@@ -31,6 +31,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n";
+import { estUnChampDeSaisie } from "../ui/champ-de-saisie";
 import { useAxeTemps } from "./hooks/useAxeTemps";
 import { useLectureVive } from "./hooks/useLectureVive";
 import { curseurDefilement, fractionDepuisZoom, zoomDepuisFraction } from "./axe-temps";
@@ -257,9 +258,7 @@ export function LigneDeTemps({
       // aussitôt d'intercepter. Voir la note en tête de fichier.
       const el = boite.current;
       if (!el || !el.contains(document.activeElement)) return;
-      const cible = e.target as HTMLElement | null;
-      if (cible && (cible.tagName === "INPUT" || cible.tagName === "TEXTAREA"
-        || cible.tagName === "SELECT" || cible.isContentEditable)) return;
+      if (estUnChampDeSaisie(e.target)) return;
       const choisi = ms.find((m) => m.id === sel) ?? null;
       const mod = e.ctrlKey || e.metaKey;
       const pris = () => { e.preventDefault(); e.stopImmediatePropagation(); };
