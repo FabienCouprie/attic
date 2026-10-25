@@ -2,6 +2,58 @@
 //
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
+//
+// ═══ CE QUE LA DEREVERBERATION FAIT VRAIMENT, MESURE LE 2026-10-25 ═══
+//
+// FABIEN A SENTI QU'ELLE NE FONCTIONNAIT PAS. Eprouvee par `executer` sur un graphe de dix noeuds —
+// une source, une reverberation, et la dereverberation a 0 %, 60 % et 100 % cote a cote — les trois
+// reglages rendaient la MEME crete.
+//
+// LE RELEVE SE FAIT PAR TRANCHES, ET C'EST CE QUI L'A RENDU HONNETE. Un premier chiffre, pris sur
+// une fenetre « de deux a six secondes », annoncait -38 dB de queue retires : il etait FAUX, parce
+// que ce fichier ne porte que trois secondes et demie de son et que le reste est du silence
+// numerique. Mesurer une attenuation sur du silence rend un grand nombre qui ne veut rien dire.
+//
+// PROFIL REEL PAR DEMI-SECONDE, sur la reverberation du depot (2 s de source) :
+//
+//   tranche      entree    memoire 5 s   memoire 20 s
+//   0  - 0,5 s   -25,5       -25,6         -25,7      ← le son DIRECT, intact dans les deux cas
+//   0,5 -  1 s   -38,5       -44,8         -57,3      ← -6,3 dB contre -18,8 dB
+//   1  - 1,5 s   -42,3       -45,8         -66,3      ← -3,5 dB contre -24,0 dB
+//   1,5 -  2 s   -47,0       -49,0         -78,3
+//   2  - 2,5 s   -54,0       -56,5         -92,1
+//   3,5 s et +   silence numerique
+//
+// L'ALGORITHME EST BON : dans la region qui s'entend, il retire dix-neuf a vingt-quatre decibels de
+// reverberation en ne touchant au son direct que de DEUX DIXIEMES. Ce qui l'etouffait est
+// `memoireSec`, le temps sur lequel le PIC de reference decroit : a cinq secondes il tombe de douze
+// decibels par seconde, soit a peu pres aussi vite que la queue qu'il doit mesurer. Le pic suit donc
+// la queue dans sa chute, le rapport ne descend jamais sous le seuil, et le portillon reste ferme.
+//
+// ET LE SEUIL NE COMPTE PRESQUE PAS, mesure : 50, 70 ou 90 donnent le meme ordre de grandeur des que
+// la memoire est longue. Il reste donc code en dur, parce qu'un reglage inerte est pire que pas de
+// reglage du tout.
+//
+// MAIS PORTER LE DEFAUT A VINGT SECONDES NE SE FAIT PAS, et c'est la mesure qui l'a arrete. Sur un
+// signal SEC ou un passage faible VOULU suit un passage fort, a -34 dB de lui :
+//
+//   memoire 5 s ..... -3,41 dB sur le passage faible
+//   memoire 10 s .... -31,85 dB
+//   memoire 20 s .... -40,02 dB
+//
+// UNE MEMOIRE LONGUE EFFACE UN PIANISSIMO QUI SUIT UN FORTISSIMO. C'est le meme mecanisme que la
+// dereverberation elle-meme : le portillon ne sait pas distinguer une queue d'un son faible voulu,
+// il ne connait que « bien plus faible que le pic recent ». Force et innocuite sont donc le MEME
+// bouton, et le compromis ne peut etre tranche que par celui qui connait la matiere.
+//
+// LE DEFAUT RESTE DONC A CINQ SECONDES — aucun graphe deja enregistre ne change de son — et la
+// memoire devient un REGLAGE, avec son danger ecrit dans la notice.
+//
+// ET UNE QUEUE SYNTHETIQUE NE REMPLACE PAS UNE VRAIE, mesure aussi : un bruit blanc qui decroit ne
+// se fait presque pas portillonner, parce qu'il remplit des bandes que la source n'a jamais
+// excitees — dans celles-la le pic n'a jamais ete haut, le rapport vaut un, et rien ne se ferme. Le
+// portillon travaille bande par bande contre l'historique de CETTE bande : une queue doit donc
+// vivre dans les bandes de la source pour etre reconnue.
 
 import { fft } from "./fft";
 import { valeurA } from "./courbe";
@@ -54,7 +106,14 @@ export function dererverberer(
         let gain = 1;
         if (rapport < seuilReel) {
           const facteur = Math.max(0, rapport / seuilReel);
-          gain = Math.max(PLANCHER, Math.pow(facteur, forceReelle * 2 + 0.5));
+          // L'EXPOSANT PART DE ZERO, ET LE « + 0.5 » QUI Y ETAIT ETAIT UN DEFAUT. A force nulle il
+          // valait un demi, donc le gain valait la RACINE du rapport — jamais un. Un reglage a zero
+          // atteignait ainsi 0,78 dB de la queue, mesure : il doit etre un passe-droit exact.
+          //
+          // DEUX VINGT-CINQUIEMES PLUTOT QUE DEUX, pour que le maximum soit INCHANGE : l'ancienne
+          // forme valait 2 × 1 + 0,5 = 2,5 a force pleine, la nouvelle 2,5 × 1. Seule l'origine
+          // bouge, et c'est elle seule qui etait fausse.
+          gain = Math.max(PLANCHER, Math.pow(facteur, forceReelle * 2.5));
         }
 
         const phase = Math.atan2(im[b], re[b]);

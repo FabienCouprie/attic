@@ -386,8 +386,19 @@ export const fiches: FicheAudio[] = ([
     undefined,
     { parametre: "Seuil", bornes: [1, 50], unite: "×" }),
   effet("dereverberation", "Déréverbération", "Dereverb", "Atténuation de la réverbération.", "Reverb attenuation.",
-    [param("Réduction", 60, "Reduction", "%", "Force de l'atténuation de la réverb.", "Reverb reduction strength.")],
-    (a,r) => dererverberer(a, r)),
+    [param("Réduction", 60, "Reduction", "%", "Force de l'atténuation de la réverb.", "Reverb reduction strength."),
+     // LA MÉMOIRE DÉCIDE DE TOUT, ET ELLE ÉTAIT CODÉE EN DUR. Mesuré par tranches sur la
+     // réverbération du dépôt, dans la région qui s'entend : à cinq secondes la queue ne tombe que
+     // de 3 à 6 dB, à vingt secondes de 19 à 24 dB, et le son direct ne bouge que de deux dixièmes.
+     // Mais une mémoire longue efface aussi un passage faible VOULU qui suit un passage fort —
+     // 40 dB à vingt secondes sur un signal sec. Force et innocuité sont le même bouton : il
+     // revient donc à qui connaît la matière. Le défaut reste cinq secondes, de sorte qu'aucun
+     // graphe déjà enregistré ne change de son — vérifié, l'empreinte de ce composant est inchangée.
+     param("Mémoire", 5, "Memory", "s",
+       "Durée sur laquelle le niveau de référence est gardé en mémoire. Courte (2 à 5 s), la réverbération n'est presque pas retirée mais rien d'autre n'est touché. Longue (15 à 30 s), la queue tombe de plusieurs dizaines de décibels — au prix d'un passage faible qui suit un passage fort, que le traitement prend alors pour une queue et efface.",
+       "Duration over which the reference level is remembered. Short (2 to 5 s), reverberation is barely removed but nothing else is touched. Long (15 to 30 s), the tail drops by tens of decibels — at the cost of a quiet passage following a loud one, which the processing then takes for a tail and erases.",
+       [1, 60], 0.5)],
+    (a,r,m) => dererverberer(a, r, 50, m)),
   effet("changement-tempo", "Changement de tempo", "Tempo Change", "Time-stretch via vocodeur de phase.", "Time-stretch via phase vocoder.",
     [param("Tempo (%)", 100, "Tempo (%)", "%", "Tempo cible. 100=normal, 50=moitié, 200=double.", "Target tempo. 100=normal, 50=half, 200=double.", [25, 400], 5), param("Fenêtre", 50, "Window", "ms", "Taille de la fenêtre d'analyse, ramenée à la puissance de deux d'échantillons la plus proche. Courte (10 à 30 ms), les attaques restent nettes mais les sons graves se brouillent ; longue (80 à 200 ms), les sons tenus restent lisses mais les attaques s'étalent.", "Analysis window size, rounded to the nearest power of two in samples. Short (10 to 30 ms), attacks stay sharp but low sounds blur; long (80 to 200 ms), held sounds stay smooth but attacks smear.", [5, 400], 5)],
     (a,t,f) => changerTempo(a, t, f)),
