@@ -229,3 +229,8 @@ VALIDATION.txt
 # La mesure d'un composant rendue par « npm run mesurer », pour la meme raison.
 
 MESURE.txt
+
+# La comparaison d'une famille rendue par « npm run comparer », pour la meme raison : elle se
+# rejoue, donc elle ne se garde pas — un exemplaire sur le disque vieillirait sans rien dire.
+
+COMPARAISON.txt

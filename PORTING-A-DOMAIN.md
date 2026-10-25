@@ -135,6 +135,42 @@ registre.enregistrerTypeFlux({
 });
 ```
 
+### Le contenu d'un port, quand le type ne suffit plus
+
+Un type de flux dit le **transport**. Il arrive qu'il ne dise pas assez : dans le
+domaine audio, une notation `C4 0.5`, un ABC, un prompt de modèle et un plan de
+chanson sont tous du `texte`, et le graphe autorisait donc toutes les
+combinaisons — relier « Prompt → graphe », qui rend un plan, à « Texte → MIDI »,
+qui attend une notation, était licite, aux couleurs accordées, et rendait zéro
+note. Un port déclare donc, en plus de son type, un `sousType` :
+
+```ts
+registre.enregistrerTypeFlux({
+  id: "texte", couleur: "#9775fa", libelle: "Texte",
+  // Deux contenus DÉCLARÉS et différents se refusent ; un contenu absent passe partout.
+  sousTypesCompatibles: (source, cible) => !source || !cible || source === cible,
+});
+
+// puis, sur la fiche :
+entrees: [{ nom: "Notation", type: "texte", sousType: "notation" }],
+```
+
+**Le cœur ne lit jamais ce que `sousType` contient.** C'est une chaîne que le
+domaine interprète, exactement comme la couleur et la forme : ce que le cœur a
+gagné est un **emplacement** pour la règle, que le domaine fournit en fermeture.
+
+> **LE REFUS EST AU GESTE, ET JAMAIS À LA LECTURE, et c'est l'asymétrie qui rend
+> le resserrement sûr.** `registre.fluxCompatibles(source, cible, sousTypeSource,
+> sousTypeCible)` prend les deux derniers en **facultatifs** : la pose d'une arête
+> à la souris les passe et se fait refuser, la relecture d'un graphe déjà
+> enregistré ne les passe pas et accepte ce qu'elle a toujours accepté.
+> **Resserrer une règle ne doit pas effacer du travail déjà fait.** Si vous posez
+> une telle règle, le cas à écrire n'est pas sur la règle elle-même — il passerait
+> au vert en cassant l'asymétrie — mais sur ses **deux appelants**.
+
+Un contenu peut n'être qu'une **destination** : dans le catalogue audio, `prompt`
+n'a aucun producteur et compte quand même, parce qu'il refuse ce qui va vers lui.
+
 Les types de flux vivent **dans la fermeture du registre**, pas dans un `Map`
 global. Deux domaines peuvent déclarer un type homonyme (`"nombre"` existe dans
 le domaine nombre *et* pourrait exister chez vous) sans collision — c'est
@@ -267,6 +303,31 @@ ligne de code supplémentaire.
 **Import de nœuds** — `installerNode` / `chargerNodesInstalles` : des nœuds
 livrés en `.zip` et installés à chaud.
 
+### Les quatre verbes de pilotage — ce que vous n'héritez pas
+
+Le dépôt se pilote de l'extérieur par quatre commandes : `npm run decrire`
+projette le catalogue en données, `GRAPHE=… npm run valider` relit un graphe écrit
+à la main, `COMPOSANT=… npm run mesurer` passe un composant au banc, et
+`FAMILLE=… npm run comparer` dit ce qui sépare des composants interchangeables.
+
+**Les quatre appartiennent au domaine audio, et aucun ne vous est donné.**
+`plugins/description.ts` et `plugins/assemblage.ts` importent
+`audio/adaptateur` ; le banc nourrit les composants d'un **son** d'essai et ses
+descripteurs sont des descripteurs sonores. Vous en écrirez d'autres.
+
+Ce qui se reprend est leur **forme**, et elle vaut d'être copiée :
+
+- `validerAssemblage` est dans le cœur : la moitié dure de `valider` est gratuite.
+- Un guichet **se tait** quand on ne lui désigne rien, et traverse donc une passe
+  complète sans la déranger.
+- Son **code de sortie porte le verdict**, sans quoi aucun script ne peut s'en
+  servir, et son message dit si c'est le composant ou le dépôt qui est en cause.
+- `décrire`, `valider` et `mesurer` **projettent** une vérité qui existe déjà.
+  `comparer` est le seul dont la réponse n'est nulle part dans la source — et
+  c'est précisément celui qu'il est tentant d'écrire à la main. **Ne le faites
+  pas** : une seconde description tenue à côté du dépôt vieillit sans que rien ne
+  le dise, et c'est la faute que ce dépôt a payée le plus souvent.
+
 ---
 
 ## 6. Brancher l'UI — par la racine de composition
@@ -341,13 +402,32 @@ qui ne soit pas mécanique est `ui/hooks/useExecutionGraphe.ts` : ses deux pilot
 de passes ne sont pas des fonctions sur des valeurs mais des **fonctionnalités
 que le moteur pilote**. Les sortir demande de reprendre sa structure de boucle.
 
-> **Ce que ce garde ne regarde pas, et vous le saurez avant lui.** Il compte le
-> sens shell → domaine. **Le sens inverse n'est ni mesuré ni épinglé** : dix-sept
-> fichiers du domaine importent le shell, dont quinze hors des six poteaux. La
-> plupart est légitime — une vue de domaine qui emploie un lecteur ou un badge de
-> statut est dans le bon sens de dépendance (§6.c). Quatre le sont moins, dont
-> trois **exécuteurs** qui lisent un état de l'interface : le résultat du
-> composant dépend alors de ce que l'écran affiche.
+> **Le sens inverse est compté lui aussi, mais pas de la même façon.** Relevé le
+> 2026-10-25, **trente-deux** fichiers du domaine importent le shell. Quatre sont
+> les **dépôts** eux-mêmes — `audio/favoris.ts`, `plugins/apercu-domaine.ts`,
+> `plugins/orchestration-domaine.ts` et `vues-domaine/vues.tsx` —, et trois des
+> quatre ne prennent qu'un **type**. Vingt-six sont des vues qui emploient un
+> lecteur, un badge de statut ou un bouton de copie : bon sens de dépendance
+> (§6.c), et **aucune règle ne les gêne**.
+>
+> **Ce qui est épinglé est la seule part qui pose problème : un EXÉCUTEUR qui lit
+> l'interface.** `AUCUN EXÉCUTEUR NEUF NE LIT L'INTERFACE` refuse qu'un fichier du
+> domaine, hors des vues, prenne une **valeur** au shell — le résultat du composant
+> dépendrait alors de ce que l'écran affiche, donc ne se calculerait plus sans
+> interface. Deux dettes y sont inscrites avec leur raison :
+> `plugins/boucle-collection.ts`, qui y prend une profondeur d'export, et
+> `plugins/message-modele.ts`, un état de téléchargement.
+>
+> **La définition est mécanique et n'exempte aucun fichier par son nom** : les
+> dépôts en sortent parce qu'ils ne prennent qu'un type, non parce qu'on les a
+> écartés. Un second cas tient le revers — **une vue a le droit de prendre au
+> shell** —, sans quoi la règle serait un interdit général déguisé.
+>
+> **Pourquoi ce garde existe, et c'est ce document qui l'a réclamé.** Il portait
+> ces chiffres à la main : dix-sept, puis trente-deux sans que personne ne le
+> sache, pendant que la part qui pose problème descendait de trois à deux. Un
+> chiffre écrit dans un document **est** une liste tenue à la main. Le nombre total
+> reste écrit ici, et vieillira ; celui qui compte, non.
 >
 > **Et ce garde a été aveugle quatre fois**, chaque fois parce qu'il décrivait un
 > CHEMIN et qu'un chemin change : il ne balayait que `src/ui/`, il ne connaissait
@@ -391,10 +471,12 @@ difficile à tester et impossible à exécuter sans interface.
 
 **Les traductions sont le quatrième locataire, et ce document les oubliait.**
 `src/i18n.tsx` n'est ni le cœur, ni le shell, ni un domaine : c'est le mécanisme
-des deux langues. **Deux cent soixante-dix-neuf des six cent quatre-vingt-douze
-fichiers du domaine audio l'importent**, soit deux sur cinq, les notices et les
-libellés de paramètres étant bilingues. Votre domaine fera de même. Le mécanisme
-se réutilise tel quel ; les textes sont à vous.
+des deux langues. **Trois cent quatorze des sept cent soixante et un fichiers du
+domaine audio l'importent** — relevé le 2026-10-25, tests exclus —, soit un peu
+plus de deux sur cinq, les notices et les libellés de paramètres étant bilingues.
+La proportion n'a pas bougé depuis le relevé précédent (279 sur 692) ; le domaine,
+lui, a grossi de dix pour cent. Votre domaine fera de même. Le mécanisme se
+réutilise tel quel ; les textes sont à vous.
 
 ### Vues spécifiques à un nœud
 

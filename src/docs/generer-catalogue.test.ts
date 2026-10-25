@@ -83,12 +83,20 @@ it.skipIf(ecrire)("AGENTS.md annonce le nombre réel de composants, et de gardes
   };
   const attendu = EN_LETTRES[combien];
   expect(attendu, `le compte de ${combien} gardes n'a pas son écriture en lettres dans ce cas`).toBeDefined();
+  // CE CAS S'EST CONTREDIT LUI-MÊME EN FRANCHISSANT VINGT ET UN. Sa table portait bien « vingt et
+  // un », mais son motif ne capturait QU'UN SEUL MOT avant « gardes » : il lisait « un », qui n'est
+  // l'écriture d'aucun de ses nombres, et il refusait le compte juste en annonçant qu'aucun compte
+  // n'était écrit en lettres. Les seules écritures en plusieurs mots du français — vingt et un,
+  // trente et un — tombaient donc toutes. Le motif est maintenant bâti sur la TABLE elle-même,
+  // de sorte qu'un nombre qu'elle sait écrire est un nombre qu'elle sait relire.
+  const ECRITURES = Object.values(EN_LETTRES);
   for (const quoi of ["gardes", "contrats"]) {
     const trouves = [...texte.matchAll(new RegExp(`([\\wÀ-ÿ-]+) ${quoi} `, "g"))].map((m) => m[1]);
     expect(trouves.length, `AGENTS.md : aucun compte de ${quoi} trouvé`).toBeGreaterThan(0);
     // Seuls les comptes écrits en lettres de nombre comptent : « quatre contrats » est un autre
     // sujet, celui des scripts de contrat, et il a son propre compte.
-    const comptes = trouves.filter((mot) => Object.values(EN_LETTRES).includes(mot));
+    const comptes = [...texte.matchAll(new RegExp(`\\b(${ECRITURES.join("|")}) ${quoi} `, "g"))]
+      .map((m) => m[1]);
     expect(comptes.length, `AGENTS.md : aucun compte de ${quoi} écrit en lettres de nombre`).toBeGreaterThan(0);
     expect(comptes, `AGENTS.md doit annoncer « ${attendu} ${quoi} », pour ${combien} fichiers dans src/docs`)
       .toEqual(comptes.map(() => attendu));
