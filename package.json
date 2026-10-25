@@ -77,6 +77,7 @@
     "comparer": "playwright test tests-e2e/comparer.spec.ts",
     "ecouter": "playwright test tests-e2e/ecouter.spec.ts",
     "executer": "playwright test tests-e2e/executer.spec.ts",
+    "catalogue": "playwright test tests-e2e/catalogue-sonore.spec.ts",
     "test:empreintes-exemples": "playwright test tests-e2e/empreintes-exemples.spec.ts"
   },
   "build": {

@@ -54,23 +54,40 @@ it.skipIf(ecrire)("AGENTS.md annonce le nombre réel de composants, et de gardes
   // sa propre règle, sur la ligne qui la porte.
   const texte = readFileSync(join(process.cwd(), "AGENTS.md"), "utf8");
 
-  // DEUX COMPTES DE COMPOSANTS Y VIVENT, et le garde les sépare plutôt que de les confondre : celui
-  // du CATALOGUE, et celui des composants SURVEILLÉS par la base d'empreintes, qui est un autre
-  // nombre et légitimement plus petit. Le second est vérifié lui aussi, contre la base elle-même.
-  // Le mot « surveillés » peut tomber sur la ligne suivante, le fichier étant replié à cent colonnes.
-  const composants = [...texte.matchAll(/\b(\d+) composants(\s+surveillés)?\b/g)]
-    .map((m) => ({ compte: Number(m[1]), surveilles: Boolean(m[2]) }));
-  const duCatalogue = composants.filter((c) => !c.surveilles).map((c) => c.compte);
+  // TROIS COMPTES DE COMPOSANTS Y VIVENT, et le garde les sépare plutôt que de les confondre :
+  // celui du CATALOGUE, celui des composants SURVEILLÉS par la base d'empreintes, et celui des
+  // composants QUI RENDENT DE L'AUDIO — trois nombres légitimement différents, chacun vérifié
+  // contre sa propre source. Le qualificatif peut tomber sur la ligne suivante, le fichier étant
+  // replié à cent colonnes, d'où les `\s+`.
+  //
+  // LE TROISIÈME EST ARRIVÉ AVEC LE CATALOGUE SONORE, et son absence a fait rougir une intégration
+  // continue : « les 367 composants » était lu comme un compte du catalogue, donc comparé à 507. Un
+  // garde qui ne connaît qu'une sorte de nombre force à ne plus en écrire d'autre, ou à mentir.
+  const composants = [...texte.matchAll(
+    /\b(\d+) composants(\s+surveillés|\s+qui\s+rendent\s+de\s+l'audio)?\b/g)]
+    .map((m) => ({ compte: Number(m[1]), qualificatif: (m[2] ?? "").replace(/\s+/g, " ").trim() }));
+  const duCatalogue = composants.filter((c) => c.qualificatif === "").map((c) => c.compte);
   expect(duCatalogue.length, "AGENTS.md : aucun nombre de composants du catalogue trouvé").toBeGreaterThan(0);
   expect(duCatalogue, `AGENTS.md doit annoncer ${toutesLesFiches.length} composants`)
     .toEqual(duCatalogue.map(() => toutesLesFiches.length));
 
   const empreintes = JSON.parse(readFileSync(join(process.cwd(), "tests-e2e", "empreintes.json"), "utf8"));
   const surveilles = Object.keys(empreintes.composants ?? {}).length;
-  const annoncesSurveilles = composants.filter((c) => c.surveilles).map((c) => c.compte);
+  const annoncesSurveilles = composants.filter((c) => c.qualificatif === "surveillés").map((c) => c.compte);
   expect(annoncesSurveilles.length, "AGENTS.md : aucun nombre de composants surveillés trouvé").toBeGreaterThan(0);
   expect(annoncesSurveilles, `AGENTS.md doit annoncer ${surveilles} composants surveillés`)
     .toEqual(annoncesSurveilles.map(() => surveilles));
+
+  // ET CELUI DES COMPOSANTS QUI RENDENT DE L'AUDIO, compté sur le REGISTRE et non sur une liste :
+  // c'est la portée du catalogue sonore, et des six verbes du pilote.
+  const rendentDeLAudio = toutesLesFiches
+    .filter((f) => (f.sorties ?? []).some((s) => s.type === "audio")).length;
+  const annoncesAudio = composants
+    .filter((c) => c.qualificatif === "qui rendent de l'audio").map((c) => c.compte);
+  expect(annoncesAudio.length,
+    "AGENTS.md : aucun nombre de composants qui rendent de l'audio trouvé").toBeGreaterThan(0);
+  expect(annoncesAudio, `AGENTS.md doit annoncer ${rendentDeLAudio} composants qui rendent de l'audio`)
+    .toEqual(annoncesAudio.map(() => rendentDeLAudio));
 
   // LE COMPTE DES GARDES EST CELUI DES FICHIERS DE `src/docs`, ce que la ligne 115 dit elle-même :
   // « src/docs/*.test.ts — N contrats sur le dépôt lui-même ». Il est écrit en lettres, et c'est la

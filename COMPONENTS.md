@@ -3386,7 +3386,7 @@ Rebuilds the clipped peaks of a saturated sound. After Srdan Kitic, Nancy Bertin
 
 *Reverb attenuation.*
 
-Attenuates the reverberation of a recording via spectral processing, tightening an overly reverberant sound.
+Attenuates the reverberation of a recording via spectral processing, tightening an overly reverberant sound. The processing compares, frequency band by frequency band, the current level to a reference level held in memory: whatever is far below that reference is taken for reverberation and lowered. « Reduction » sets the strength of that lowering. At zero, the sound comes out untouched. « Memory » is the duration over which the reference level is held, and it is what decides the effect. Short, two to five seconds, the reference falls almost as fast as the reverberation it is meant to measure: the tail is only reduced by two or three decibels, and nothing else is touched. Long, fifteen to thirty seconds, the reference stays high while the sound decays and the tail drops by some twenty decibels, without the direct sound moving. A long memory costs one thing, and it must be known before setting it: the processing does not distinguish a reverberation tail from a quiet wanted sound. A soft passage following a loud one is also far below the reference, and it is lowered in the same way. On a recording with marked level contrasts, a short memory is the safe setting.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3396,6 +3396,7 @@ Attenuates the reverberation of a recording via spectral processing, tightening 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Reduction | number | 60 % |  | Reverb reduction strength. |
+| Memory | number | 5 s | 1 – 60 s, step 0.5 | Duration over which the reference level is remembered. Short (2 to 5 s), reverberation is barely removed but nothing else is touched. Long (15 to 30 s), the tail drops by tens of decibels — at the cost of a quiet passage following a loud one, which the processing then takes for a tail and erases. |
 
 #### Noise Profile
 

@@ -317,6 +317,117 @@ describe("dererverberer", () => {
   });
 });
 
+// ═══ CE QUE LE CAS DU DESSUS NE VOYAIT PAS, ET C'EST POURQUOI IL ÉTAIT VERT ═══
+//
+// IL MESURE SUR UNE SECONDE DE SIGNAL, RT60 ≈ 1,15 s. Sur une queue aussi courte et aussi rapide,
+// la mémoire du pic — cinq secondes, soit douze décibels par seconde — est LENTE par rapport à elle :
+// le pic reste haut, le rapport s'effondre, et le portillon s'ouvre. Le cas passe, et il dit vrai de
+// ce qu'il mesure.
+//
+// MAIS UNE VRAIE RÉVERBÉRATION EST PLUS LONGUE, et c'est là que tout change. Fabien a senti que le
+// composant ne faisait rien ; éprouvé par `executer` sur la réverbération du dépôt — 2 s de source,
+// 4,2 s de queue —, le relevé a donné 2,12 dB au réglage par défaut et 2,74 dB à fond. Inaudible.
+//
+// UN GARDE QUI MESURE LA MAUVAISE MATIÈRE EST VERT PENDANT QUE LE COMPOSANT EST INUTILISABLE. Les
+// cas qui suivent mesurent donc sur une queue de plusieurs secondes, celle qui vit dans les vrais
+// enregistrements, et ils pinglent le compromis plutôt qu'un seul chiffre.
+describe("dererverberer, sur une queue longue", () => {
+  /**
+   * Deux secondes de son, puis le MÊME son qui décroît de 60 dB en trois secondes.
+   *
+   * DEUX PROPRIÉTÉS SONT NÉCESSAIRES, et deux signaux d'essai ont été écartés avant celui-ci.
+   *
+   * LA QUEUE VIT DANS LES BANDES DE LA SOURCE. Un bruit blanc qui décroît ne se fait presque pas
+   * portillonner — mesuré : moins d'un décibel —, parce qu'il remplit des bandes que la source n'a
+   * jamais excitées, où le pic n'a jamais été haut. Le portillon travaille bande par bande contre
+   * l'historique de CETTE bande.
+   *
+   * ET ELLE DÉCROÎT LENTEMENT, sur trois secondes. Une queue qui tombe en une seconde et demie ne
+   * laisse pas le temps au portillon de s'ouvrir là où l'on mesure.
+   */
+  function reverbere(): AudioBuffer {
+    const n = Math.round(5 * SR), nd = Math.round(2 * SR);
+    const e = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const d = e.getChannelData(0);
+    let x = 12345;
+    for (let i = 0; i < n; i++) {
+      const t = i / SR;
+      x = (x * 1103515245 + 12345) & 0x7fffffff;
+      const corps = 0.3 * Math.sin(2 * Math.PI * 220 * t) + 0.02 * (x / 0x7fffffff - 0.5);
+      d[i] = i < nd ? corps : corps * Math.pow(10, (-60 * (t - 2) / 3) / 20);
+    }
+    return e;
+  }
+
+  /**
+   * Le niveau d'une TRANCHE, et c'est la seule façon honnête de mesurer ceci.
+   *
+   * UNE VALEUR EFFICACE SUR UNE RÉGION DÉCROISSANTE EST DOMINÉE PAR SON INSTANT LE PLUS FORT : elle
+   * ne voit donc pas ce qui arrive à la fin de la queue, qui est précisément ce qu'on retire. Deux
+   * de mes relevés s'y sont perdus, en sens contraires — l'un annonçait −38 dB parce que sa fenêtre
+   * était pleine de silence numérique, l'autre moins d'un demi parce que sa fenêtre commençait sur
+   * le plus fort de la queue.
+   */
+  const tranche = (b: AudioBuffer, t0: number, t1: number) =>
+    20 * Math.log10(Math.max(1e-12, rms(b, Math.round(t0 * SR), Math.round(t1 * SR))));
+
+  it("À FORCE NULLE, C'EST UN PASSE-DROIT EXACT — et ce ne l'était pas", () => {
+    // L'EXPOSANT VALAIT `forceReelle * 2 + 0.5`, donc un demi à force nulle : le gain était la
+    // RACINE du rapport, jamais un. Mesuré sur la vraie réverbération du dépôt : 0,78 dB retirés
+    // par un réglage à zéro. Un curseur à zéro doit laisser le son intact, sur toute sa durée.
+    const e = reverbere();
+    const s = restauration.dererverberer(e, 0);
+    for (const [a, b] of [[0, 0.5], [2, 2.5], [3, 3.5], [3.5, 4], [4, 4.5]]) {
+      expect(Math.abs(tranche(s, a, b) - tranche(e, a, b)),
+        `la tranche ${a}–${b} s doit être intacte à force nulle`).toBeLessThan(0.1);
+    }
+  });
+
+  it("LA MÉMOIRE DÉCIDE DE L'EFFET, et le défaut n'en retire presque rien", () => {
+    // CE N'EST PAS UN OUBLI MAIS UN COMPROMIS, et les deux bornes sont ici pour qu'on ne déplace
+    // pas le défaut sans voir ce qu'on gagne. Voir le cas suivant pour ce qu'on y perd.
+    const e = reverbere();
+    const court = restauration.dererverberer(e, 100, 50, 5);
+    const long = restauration.dererverberer(e, 100, 50, 20);
+    const dCourt = tranche(court, 3, 3.5) - tranche(e, 3, 3.5);
+    const dLong = tranche(long, 3, 3.5) - tranche(e, 3, 3.5);
+    expect(dCourt, "à cinq secondes de mémoire, la queue tient (mesuré −1,5 dB)").toBeGreaterThan(-5);
+    expect(dLong, "à vingt, elle tombe d'une vingtaine de décibels (mesuré −23,9)").toBeLessThan(-15);
+
+    // ET LE SON DIRECT NE BOUGE PAS, ce qui est tout l'intérêt : une atténuation qui emporterait le
+    // direct avec la queue serait un simple baisseur de volume.
+    for (const o of [court, long]) {
+      expect(Math.abs(tranche(o, 0, 0.5) - tranche(e, 0, 0.5)),
+        "le son direct reste intact").toBeLessThan(0.5);
+    }
+  });
+
+  it("ET UNE MÉMOIRE LONGUE EFFACE UN PASSAGE FAIBLE VOULU : c'est le prix, il est mesuré", () => {
+    // LE PORTILLON NE DISTINGUE PAS UNE QUEUE D'UN SON FAIBLE VOULU : il ne connaît que « bien plus
+    // faible que le pic récent ». Ce cas tient le danger, pour que personne ne relève le défaut de
+    // mémoire sans le faire tomber. Signal SEC : deux secondes fortes, une de silence, deux à
+    // −34 dB — aucune réverbération à retirer.
+    const n = Math.round(5 * SR);
+    const e = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const d = e.getChannelData(0);
+    for (let i = 0; i < n; i++) {
+      const t = i / SR;
+      const a = t < 2 ? 0.5 : t < 3 ? 0 : 0.5 * Math.pow(10, -34 / 20);
+      d[i] = a * Math.sin(2 * Math.PI * 220 * t);
+    }
+    // La zone faible est à niveau CONSTANT, donc une tranche unique suffit : c'est la décroissance
+    // qui obligeait à découper, non la mesure elle-même.
+    const niveau = (b: AudioBuffer) =>
+      20 * Math.log10(Math.max(1e-12, rms(b, Math.round(3.2 * SR), n)));
+    const avant = niveau(e);
+    const court = niveau(restauration.dererverberer(e, 100, 50, 5)) - avant;
+    const long = niveau(restauration.dererverberer(e, 100, 50, 20)) - avant;
+    expect(court, "à cinq secondes, le passage faible survit à peu près").toBeGreaterThan(-6);
+    expect(long, "à vingt, il est effacé — et c'est pour cela que le défaut reste court")
+      .toBeLessThan(-20);
+  });
+});
+
 describe("harmoniser", () => {
   it("ajoute une voix à l'intervalle demandé", () => {
     const e = sinus(440, 0.5, 0.5);

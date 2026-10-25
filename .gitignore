@@ -244,3 +244,9 @@ ECOUTE/
 # Les sons rendus par « npm run executer », pour la meme raison, et son rapport avec eux.
 
 EXECUTION/
+
+# Le catalogue sonore des 367 composants, rendu par « npm run catalogue » : plusieurs centaines de
+# megaoctets qui se refont d'une commande. Le son de reference, lui, EST versionne (tests-e2e), sans
+# quoi deux catalogues ne porteraient pas sur la meme matiere.
+
+CATALOGUE/
