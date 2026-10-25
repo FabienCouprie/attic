@@ -66,7 +66,7 @@ export const fiches = ([
       + "The « MIDI » output renders the file. The « Notes » output renders a table with one line per zone, "
       + "with its start, its length, its note and its dynamic.",
     entrees: [
-      { nom: "Zones", nomEn: "Zones", type: "controle" },
+      { nom: "Zones", nomEn: "Zones", type: "controle", sousType: "zones" },
       { nom: "Hauteur", nomEn: "Pitch", type: "courbe", requis: false },
     ],
     sorties: [

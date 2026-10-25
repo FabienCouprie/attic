@@ -243,7 +243,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Extrait une portion avec fondu et renvoie l'objet Zone.",
     resumeEn: "Extracts a portion with fade and returns the Zone object.",
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
-    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }, { nom: "Zone", nomEn: "Zone", type: "controle" }],
+    sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }, { nom: "Zone", nomEn: "Zone", type: "controle", sousType: "zones" }],
     parametres: [
       { nom: "Début", nomEn: "Start", plage: [0, 600], pas: 0.1, defaut: 0, unite: "s", doc: "Début de la zone à extraire.", docEn: "Start of the extracted zone." },
       { nom: "Durée", nomEn: "Duration", plage: [0.1, 600], pas: 0.1, defaut: 5, unite: "s", doc: "Durée de la zone extraite.", docEn: "Duration of the extracted zone." },
@@ -274,7 +274,7 @@ export const fiches: FicheAudio[] = ([
     id: "reduction-bruit", nom: "Réduction de bruit", nomEn: "Noise Reduction", univers: "Traitement", famille: "Effets",
     resume: "Soustraction spectrale du bruit.",
     resumeEn: "Spectral noise subtraction.",
-    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Profil", nomEn: "Profile", type: "controle" }],
+    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Profil", nomEn: "Profile", type: "controle", sousType: "profil" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Spectral", "Notches"], optionsEn: ["Spectral", "Notches"], optionIds: ["spectral", "notches"], defaut: "Spectral",
@@ -313,7 +313,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Capture le profil spectral d'un bruit.",
     resumeEn: "Captures the spectral profile of a noise.",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Profil", nomEn: "Profile", type: "controle" }],
+    sorties: [{ nom: "Profil", nomEn: "Profile", type: "controle", sousType: "profil" }],
     parametres: [],
     async executer(ctx: any) {
       const audio = ctx.entree(0);

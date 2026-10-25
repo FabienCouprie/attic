@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
 import { registre } from "./adaptateur";
 import { estSequence } from "./sequence";
 import {
-  CONTENUS_FABRIQUES, SANS_VALEUR_DESSAI,
+  CONTENUS_FABRIQUES, CONTENUS_PAR_TYPE, SANS_VALEUR_DESSAI,
   banqueDEssai, midiDEssai, sequenceDEssai, texteDEssai, valeurDEssai,
 } from "./valeurs-essai";
 
@@ -83,6 +83,44 @@ describe("les valeurs d'essai", () => {
     expect(a.degres[0]).toBe(0);
   });
 
+  it("LE CONTROLE depend de son CONTENU : une zone n'est pas un profil", () => {
+    // UNE SEULE VALEUR NE PEUT PAS ETRE LES QUATRE. C'est pourquoi le type `controle` a recu des
+    // contenus avant de pouvoir etre nourri : `reduction-bruit` verifie `instanceof Float32Array`,
+    // `zonesValides` verifie `{ debut, duree }`. Une valeur par defaut en contenterait un sur
+    // quatre, et les trois autres mesureraient un refus.
+    const s = son();
+    const zones = valeurDEssai("controle", "zones", { source: s }) as { debut: number; duree: number }[];
+    expect(Array.isArray(zones)).toBe(true);
+    for (const z of zones) {
+      // LA FORME EST CELLE DE `zonesValides`, LUE DANS `plugins/montage.ts` : `{ debut, duree }`,
+      // et non `{ debut, fin }` comme je l'avais d'abord suppose.
+      expect(typeof z.debut).toBe("number");
+      expect(typeof z.duree).toBe("number");
+      expect(z.debut + z.duree).toBeLessThanOrEqual(s.duration);
+    }
+    expect(zones.length, "deux zones, pour qu'un traitement les enchaine").toBe(2);
+    expect(zones[1].debut, "et elles ne se chevauchent pas")
+      .toBeGreaterThanOrEqual(zones[0].debut + zones[0].duree);
+
+    const duree = valeurDEssai("controle", "duree", { source: s }) as { debut: number; duree: number };
+    expect(duree.debut).toBe(0);
+    expect(duree.duree).toBeCloseTo(s.duration, 6);
+
+    expect(valeurDEssai("controle", "tempo")).toBe(120);
+
+    const profil = valeurDEssai("controle", "profil", { source: s });
+    expect(profil, "`reduction-bruit` verifie instanceof Float32Array").toBeInstanceOf(Float32Array);
+    const p = profil as Float32Array;
+    // Le composant refuse un profil dont l'energie moyenne tombe sous 1e-6 : celui-ci est CALCULE
+    // sur le son d'essai par la fonction du depot, non fabrique a la main.
+    expect(p.reduce((a, b) => a + b, 0) / p.length).toBeGreaterThan(1e-6);
+  });
+
+  it("ET UN PROFIL SANS SON NE SE DEVINE PAS : il se calcule ou il n'existe pas", () => {
+    expect(valeurDEssai("controle", "profil")).toBeNull();
+    expect(valeurDEssai("controle", undefined, { source: son() })).toBeNull();
+  });
+
   it("UNE BANQUE SANS SON NE SE FABRIQUE PAS, et le dire vaut mieux qu'en rendre une vide", () => {
     expect(valeurDEssai("banque")).toBeNull();
     expect(valeurDEssai("banque", undefined, { source: son() })).not.toBeNull();
@@ -93,8 +131,15 @@ describe("la couverture des types de flux", () => {
   it("CHAQUE TYPE ENREGISTRE est nourri, ou declare sans valeur avec sa raison", () => {
     const types = registre.tousTypesFlux().map((t) => t.id).sort();
     expect(types.length, "le registre doit porter ses types").toBeGreaterThan(10);
-    const oublies = types.filter((t) =>
-      valeurDEssai(t, undefined, { source: son() }) === null && !(t in SANS_VALEUR_DESSAI));
+    // UN TYPE A CONTENUS SE DEMANDE AVEC SON CONTENU. Interroger `controle` sans contenu rend
+    // `null` a dessein : une valeur par defaut nourrirait trois de ses quatre ports avec la
+    // mauvaise forme. Le garde lui demande donc ce qu'il sait rendre.
+    const nourri = (t: string) => {
+      const o = { source: son() };
+      if (valeurDEssai(t, undefined, o) !== null) return true;
+      return (CONTENUS_PAR_TYPE[t] ?? []).some((c) => valeurDEssai(t, c, o) !== null);
+    };
+    const oublies = types.filter((t) => !nourri(t) && !(t in SANS_VALEUR_DESSAI));
     expect(oublies, [
       "Ces types de flux n'ont ni valeur d'essai ni raison declaree.",
       "Un composant qui en attend un sort de la portee de `mesurer`, `comparer` et `ecouter`,",

@@ -11,7 +11,7 @@ export const fiches: FicheAudio[] = ([
     id: "visualiseur-forme-onde", nom: "Visualiseur", nomEn: "Waveform Viewer", univers: "Visualisation", famille: "Analyse",
     resume: "Affiche la forme d'onde du signal avec zoom et barre de défilement.",
     resumeEn: "Displays the waveform with zoom and scrollbar.",
-    entrees: [{ nom: "Audio", type: "audio" }], sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle" }], parametres: [],
+    entrees: [{ nom: "Audio", type: "audio" }], sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }], parametres: [],
     async executer(ctx: any) {
       const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null, null] };
       return { valeurs:[a, { debut: 0, duree: a.duration }] };
@@ -22,7 +22,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Convertit un flux audio en MP3 téléchargeable.",
     resumeEn: "Converts an audio stream to downloadable MP3.",
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }],
     parametres: [
       { nom: "Qualité", nomEn: "Quality", plage: [64,320], defaut: 192, unite: "kbps" },
     ],
@@ -58,7 +58,7 @@ export const fiches: FicheAudio[] = ([
     // bloc de métadonnées iXML.
     apercuEstLeFichier: true,
     entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle" }],
+    sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }],
     parametres: [],
     async executer(ctx: any) {
       const a = ctx.entree(0);
