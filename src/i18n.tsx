@@ -10,6 +10,13 @@ const DICO: Record<string, Record<Langue, string>> = {
   "app.title": { fr: "Attic", en: "Attic" },
   "btn.lancer": { fr: "Lancer", en: "Run" },
   "persistance.importInvalide": { fr: "Fichier invalide : ce n'est pas un workflow Attic (JSON illisible).", en: "Invalid file: not an Attic workflow (unreadable JSON)." },
+  // LE RAPPORT DE CHARGEMENT. Ces pertes ne laissaient qu'un `console.warn`, que personne ne lit —
+  // et sous Windows la console du processus principal d'Electron n'apparaît même pas.
+  "chargement.titre": { fr: "Ce fichier s'est ouvert, mais une partie n'a pas pu être reprise :", en: "This file opened, but some of it could not be restored:" },
+  "chargement.formatFutur": { fr: "Il a été écrit au format {v}, et cette version d'Attic lit le format {n} : ce qu'elle ne connaît pas est perdu. Enregistrer par-dessus l'effacerait définitivement.", en: "It was written in format {v}, and this version of Attic reads format {n}: whatever it does not know is lost. Saving over it would erase that for good." },
+  "chargement.fichesInconnues": { fr: "{nb} composant(s) dont la fiche n'existe pas dans cette version — sans ports ni réglages, et leurs câbles sont retirés :", en: "{nb} node(s) whose definition does not exist in this version — no ports, no settings, and their cables are removed:" },
+  "chargement.reglagesPerdus": { fr: "{nb} réglage(s) enregistré(s) que leur composant ne déclare plus : la valeur par défaut s'applique à la place.", en: "{nb} saved setting(s) their node no longer declares: the default value applies instead." },
+  "chargement.aretesRejetees": { fr: "{nb} câble(s) retiré(s), faute d'un port à chaque bout :", en: "{nb} cable(s) removed, for want of a port at each end:" },
   "persistance.importSansNoeuds": { fr: "Ce fichier ne contient aucun composant sur le canevas (seulement {nb} méta-composant(s) de catalogue) — le canevas restera vide, ce n'est pas un échec d'import.", en: "This file has no canvas nodes (only {nb} catalog meta-component(s)) — the canvas will stay empty, this isn't an import failure." },
   "persistance.metasNonRestaures": { fr: "{nb} méta-composant(s) n'ont pas pu être réaffichés dans le catalogue : ils utilisent un ou plusieurs blocs qui n'existent plus dans cette version d'Attic. Ils restent en mémoire (rien n'est supprimé) et réapparaîtront si ces blocs reviennent.", en: "{nb} meta-component(s) could not be shown in the catalog: they use one or more blocks that no longer exist in this version of Attic. They remain in storage (nothing is deleted) and will reappear if those blocks come back." },
   "btn.parcourir": { fr: "Parcourir", en: "Browse" },
