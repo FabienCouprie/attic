@@ -1045,6 +1045,12 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.aucune_note": { fr: "Le fichier MIDI ne contient aucune note.", en: "The MIDI file contains no notes." },
   "msg.euclidien.aucune_frappe": { fr: "Aucune frappe : montez le nombre de frappes.", en: "No onsets: raise the number of onsets." },
   "msg.glissez_un_fichier_audio_sur_le_node": { fr: "Glissez un fichier audio sur le composant.", en: "Drag an audio file onto the node." },
+  // UN DÉCODAGE QUI ÉCHOUE NOMME LE FICHIER, sans quoi le message est celui du décodeur et ne dit
+  // ni ce qu'on lui a donné ni ce qu'on en attendait. Relevé sur un repli mort qui rendait du HTML.
+  "msg.fichier_audio_illisible": {
+    fr: "« {__VAR_0__} » n'a pas pu être décodé comme audio : {__VAR_1__}",
+    en: "« {__VAR_0__} » could not be decoded as audio: {__VAR_1__}",
+  },
   "msg.erreur_synth_se_var_0": { fr: "Erreur synthèse : {__VAR_0__}", en: "Synthesis error: {__VAR_0__}" },
   "msg.erreur_rendu_var_0": { fr: "Erreur rendu : {__VAR_0__}", en: "Render error: {__VAR_0__}" },
   "msg.ok_var_0_notes_var_1_s": { fr: "OK — {__VAR_0__} notes, {__VAR_1__}s", en: "OK — {__VAR_0__} notes, {__VAR_1__}s" },
