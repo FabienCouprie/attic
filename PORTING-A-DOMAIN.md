@@ -303,14 +303,16 @@ ligne de code supplémentaire.
 **Import de nœuds** — `installerNode` / `chargerNodesInstalles` : des nœuds
 livrés en `.zip` et installés à chaud.
 
-### Les quatre verbes de pilotage — ce que vous n'héritez pas
+### Les six verbes de pilotage — ce que vous n'héritez pas
 
-Le dépôt se pilote de l'extérieur par quatre commandes : `npm run decrire`
+Le dépôt se pilote de l'extérieur par six commandes : `npm run decrire`
 projette le catalogue en données, `GRAPHE=… npm run valider` relit un graphe écrit
-à la main, `COMPOSANT=… npm run mesurer` passe un composant au banc, et
-`FAMILLE=… npm run comparer` dit ce qui sépare des composants interchangeables.
+à la main, `COMPOSANT=… npm run mesurer` passe un composant au banc,
+`FAMILLE=… npm run comparer` dit ce qui sépare des composants interchangeables,
+`COMPOSANT=… npm run ecouter` en rend le **son**, et `GRAPHE=… npm run executer`
+lance un graphe **câblé** et rend ce que chaque nœud fait entendre.
 
-**Les quatre appartiennent au domaine audio, et aucun ne vous est donné.**
+**Les six appartiennent au domaine audio, et aucun ne vous est donné.**
 `plugins/description.ts` et `plugins/assemblage.ts` importent
 `audio/adaptateur` ; le banc nourrit les composants d'un **son** d'essai et ses
 descripteurs sont des descripteurs sonores. Vous en écrirez d'autres.
@@ -327,6 +329,15 @@ Ce qui se reprend est leur **forme**, et elle vaut d'être copiée :
   c'est précisément celui qu'il est tentant d'écrire à la main. **Ne le faites
   pas** : une seconde description tenue à côté du dépôt vieillit sans que rien ne
   le dise, et c'est la faute que ce dépôt a payée le plus souvent.
+- **Cinq des six ne voient qu'un composant isolé, ou un registre.** `exécuter`
+  est le seul qui regarde des composants **câblés ensemble**, et c'est là que
+  vivent les défauts qu'aucun composant seul ne porte : celui des cent trente
+  cents naissait de la rencontre de deux chemins dont chacun, pris seul, était
+  juste. Si vous n'en reprenez qu'un, reprenez celui-là.
+- **Le pilotage d'un graphe se met en commun** (`tests-e2e/pilote-graphe.ts`) :
+  semer, lancer, savoir quand c'est fini, relire les aperçus. Trois corrections y
+  sont écrites, chacune payée d'une mesure fausse, et deux appelants s'en
+  servent. Un second exemplaire les aurait perdues une à une.
 
 ---
 

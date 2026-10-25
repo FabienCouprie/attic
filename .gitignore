@@ -240,3 +240,7 @@ COMPARAISON.txt
 # sa date.
 
 ECOUTE/
+
+# Les sons rendus par « npm run executer », pour la meme raison, et son rapport avec eux.
+
+EXECUTION/

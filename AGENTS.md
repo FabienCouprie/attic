@@ -6,7 +6,7 @@ Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et vingt et un gardes sur lui-même : ils s'emploient, ils
+cela un banc de mesure, une base d'empreintes et vingt-deux gardes sur lui-même : ils s'emploient, ils
 ne se réinventent pas.
 
 ---
@@ -163,11 +163,11 @@ se relève donc à l'oreille, et non par un garde.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — vingt et un contrats sur le dépôt lui-même : registre des réglages, graines,
+- **`src/docs/*.test.ts`** — vingt-deux contrats sur le dépôt lui-même : registre des réglages, graines,
   cœurs par trames, registre anglais, caractères de contrôle, style de documentation, classement
   théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, couverture des
-  empreintes, le serveur des specs de bout en bout, le classement des écarts d'une famille comparée,
-  et la fraîcheur des tables générées. **La norme de taille y est contraignante** :
+  empreintes, le serveur des specs de bout en bout, le pilote d'un graphe entier, le classement des
+  écarts d'une famille comparée, et la fraîcheur des tables générées. **La norme de taille y est contraignante** :
   aucun fichier neuf ne dépasse quatre cents lignes de code, les quinze qui la dépassaient déjà ne
   grossissent plus, et celui qui redescend dans la norme sort de la dette. Elle ne peut que
   décroître, et la liste est dans `src/docs/generer-compte-lignes.test.ts`.
@@ -240,6 +240,25 @@ FAMILLE=Écho npm run ecouter
   Les fichiers vont dans `ECOUTE/`, une sortie audio par fichier, **toujours suffixée de son rang** —
   sans quoi un composant à deux sorties en écraserait une sans rien dire. Le son d'essai part avec,
   sous `_entree.wav` : on ne juge pas un effet sans entendre ce qui y est entré.
+- **Exécuter un graphe entier**, parce que les cinq verbes précédents ne voient qu'un composant
+  **isolé** sur un banc, ou un registre. Un défaut né de la **rencontre** de deux composants n'est
+  visible que d'ici — et le défaut des cent trente cents de « Étaler sur le clavier » en était un :
+  deux chemins de construction de banque dont chacun, pris seul, était juste.
+
+```bash
+GRAPHE=un-son-projete-en-microtonal npm run executer
+GRAPHE=exemples/canon-de-proportions.json npm run executer
+```
+
+  Il rend l'état et le message de **chaque** nœud — pas seulement de ceux qui ont levé, car un nœud
+  « Terminé » qui ne fait rien entendre est le symptôme d'un câble oublié — puis écrit dans
+  `EXECUTION/<graphe>/` le WAV de chaque aperçu, suffixé de son rang, avec son rapport. Son code de
+  sortie vaut un si un nœud a levé, jamais sur ce qu'on a entendu : exécuter n'est pas juger.
+
+  **Le pilotage est dans `tests-e2e/pilote-graphe.ts`, et ne se recopie pas.** Semer un graphe,
+  presser Lancer, savoir quand le run est fini et quand les aperçus se sont posés : trois
+  corrections y sont écrites, chacune payée d'une mesure fausse. `empreintes-exemples.spec.ts`
+  l'emploie aussi, et c'est tout ce qui les sépare.
 - **Régénérer les tables** après toute modification qui les concerne :
 
 ```bash
@@ -291,6 +310,7 @@ jamais vu rouge ne garde rien.
 | Mesurer **un composant** sans improviser de script | `COMPOSANT=id npm run mesurer` : durée, gel du fil, message, empreinte de chaque sortie, par le banc et ses cinq précautions |
 | Choisir **entre des composants** qui couvrent le même besoin | `FAMILLE=nom npm run comparer` : ce qui les sépare et de combien, mesuré sur le même son d'essai — jamais écrit à la main |
 | **Entendre** ce qu'un composant ou une famille produit | `COMPOSANT=id npm run ecouter`, ou `FAMILLE=nom` : des WAV dans `ECOUTE/`, le son d'essai sec avec eux |
+| **Lancer un graphe entier** et entendre ce qu'il rend | `GRAPHE=nom npm run executer` : l'état et le message de chaque nœud, le WAV de chaque aperçu dans `EXECUTION/` — le seul verbe qui voie des composants **câblés ensemble** |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 
 La documentation la plus dense n'est pas dans ces fichiers mais **en tête des modules** : chaque
