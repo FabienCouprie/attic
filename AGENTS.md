@@ -282,6 +282,21 @@ CATALOGUE=1 COMPOSANTS=reverbe-hachee,distorsion npm run catalogue
   **Ce n'est pas un garde** : il ne tombe que si l'instrument est cassé, aucun clip produit. Un
   composant qui demande un modèle absent ou l'application de bureau n'est pas une faute ; le relevé
   le dit, nœud par nœud, dans `CATALOGUE/catalogue.json`.
+
+  **Le dernier catalogue rendu vit sur la release `assets`**, plutôt que dans git : 312 Mo de clips,
+  194 Mio compressés. Il se récupère sans le refabriquer, ce qui coûte vingt-deux minutes :
+
+```bash
+gh release download assets -p catalogue-sonore-2026-10-25.zip
+sha256sum catalogue-sonore-2026-10-25.zip   # 6aa1fc8233d19a664644e70a27e1eb9d3b4b9959c7e5871128b05ee97853f5c4
+```
+
+  **SON NOM PORTE SA DATE, ET C'EST LA RÈGLE DU DÉPÔT QUI LE VEUT** : `gh release upload` est lancé
+  sans `--clobber`, de sorte qu'un asset de même nom au contenu différent est refusé — les
+  installations vérifient une empreinte, et deux contenus sous un seul nom la feraient mentir. Un
+  catalogue régénéré change donc de nom, et l'ancien reste téléchargeable tel qu'il a été entendu.
+  Le relevé de ce catalogue-ci : les **367 composants qui rendent de l'audio**, **288 clips**, zéro
+  erreur, 89 sans sortie audio.
 - **Régénérer les tables** après toute modification qui les concerne :
 
 ```bash
