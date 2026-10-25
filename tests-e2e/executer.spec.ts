@@ -171,9 +171,14 @@ test.describe("executer", () => {
       const quoi = sons.length
         ? sons.map((s) => `${s.nom} (${s.secondes.toFixed(2)} s, crete ${s.crete.toFixed(3)})`).join(", ")
         : entendus.has(e.id) ? "(apercu illisible)" : "—";
+      // LA CAUSE PASSE AVANT LE RÉSULTAT sur un nœud en erreur, et les deux s'affichent quand les
+      // deux existent : un nœud peut avoir produit quelque chose à un run précédent et échouer à
+      // celui-ci. Ne montrer que le résultat disait « sans message » sur un nœud dont la cause
+      // était lisible à côté.
+      const dits = [e.statut === "erreur" ? e.cause : null, e.message].filter(Boolean) as string[];
       lignes.push(`${e.statut === "erreur" ? "ERREUR " : "       "}${e.id.padEnd(22)} ${f.padEnd(26)} ${quoi}`
-        + (e.message ? `\n           ${e.message.slice(0, 110)}` : ""));
-      if (e.statut === "erreur") fautifs.push(`${e.id} (${f}) : ${e.message ?? "sans message"}`);
+        + dits.map((d) => `\n           ${d.slice(0, 160)}`).join(""));
+      if (e.statut === "erreur") fautifs.push(`${e.id} (${f}) : ${e.cause ?? e.message ?? "sans cause déclarée"}`);
     }
     lignes.push("", `${fichiers.length} fichier(s) ecrit(s) dans ${racine}/`);
     if (fautifs.length) lignes.push("", "EN ERREUR :", ...fautifs.map((x) => `  ${x}`));

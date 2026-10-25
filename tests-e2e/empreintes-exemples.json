@@ -321,7 +321,7 @@
       "lecteurs": {},
       "erreurs": [
         "noeud-1 : Nécessite Electron.",
-        "noeud-2"
+        "noeud-2 : Entrée en erreur : noeud-1"
       ]
     },
     "groove-etire-et-tourne.json": {
@@ -425,14 +425,14 @@
     "un-cri-etale-sur-le-clavier.json": {
       "lecteurs": {},
       "erreurs": [
-        "clavier",
+        "clavier : Entrée en erreur : extrait",
         "cri : Ce composant demande l'application de bureau.",
-        "ecoute",
-        "extrait",
-        "jouer",
-        "phase",
-        "selecteur",
-        "stretch"
+        "ecoute : Entrée en erreur : clavier",
+        "extrait : Entrée en erreur : selecteur",
+        "jouer : Entrée en erreur : clavier",
+        "phase : Entrée en erreur : stretch",
+        "selecteur : Entrée en erreur : phase",
+        "stretch : Entrée en erreur : cri"
       ]
     },
     "un-son-projete-en-microtonal.json": {

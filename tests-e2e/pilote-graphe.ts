@@ -27,7 +27,23 @@ export const DELAI_RUN_MS = 180_000;
 export interface EtatNoeud {
   id: string;
   statut: "termine" | "erreur" | "en-cours" | "attente";
+  /** Ce que le nœud a PRODUIT et affiche : « Metal C3 — 3.00s ». Rien à voir avec une erreur. */
   message: string | null;
+  /**
+   * POURQUOI le nœud est en erreur, et ce champ manquait.
+   *
+   * L'application met la cause d'une erreur DANS L'INFOBULLE du libellé de statut, et non dans le
+   * message du nœud — décision écrite dans `AtelierNode.tsx` : « le message va dans l'infobulle
+   * plutôt que dans le libellé, qui doit rester court ». Un premier jet de ce pilote ne lisait que
+   * `.attic-node-message`, qui porte le RÉSULTAT d'un run réussi : il annonçait donc « sans
+   * message » sur un nœud dont la cause était là, à côté, lisible.
+   *
+   * CE QUE CELA COÛTAIT, relevé dans la base du son des exemples : HUIT ENTRÉES SUR DIX étaient des
+   * identifiants nus — `clavier`, `ecoute`, `extrait`, `jouer`, `phase`, `selecteur`, `stretch`,
+   * `noeud-2` — alors que chacun portait « Entrée en erreur : … ». Un instrument qui tait la cause
+   * fait diagnostiquer autre chose : j'ai failli réparer un message vide qui ne l'était pas.
+   */
+  cause: string | null;
 }
 
 export interface OptionsPilote {
@@ -77,21 +93,23 @@ export async function semerEtLancer(
 }
 
 /**
- * L'état de chaque nœud après un run, avec son message.
+ * L'état de chaque nœud après un run : son statut, ce qu'il a produit, et pourquoi il a échoué.
  *
- * LE MESSAGE EN FAIT PARTIE, et non le seul statut : un relevé qui dirait « six nœuds en erreur »
- * obligerait à rejouer le graphe pour savoir lequel et pourquoi.
+ * LES TROIS SONT NÉCESSAIRES, et le statut seul ne suffit pas : un relevé qui dirait « six nœuds en
+ * erreur » obligerait à rejouer le graphe pour savoir lesquels et pourquoi. LE RÉSULTAT ET LA CAUSE
+ * SONT DEUX CHOSES, posées par l'application à deux endroits différents — voir `EtatNoeud.cause`.
  */
 export async function etatDesNoeuds(page: Page): Promise<EtatNoeud[]> {
   return await page.evaluate(() => {
-    const out: { id: string; statut: string; message: string | null }[] = [];
+    const out: { id: string; statut: string; message: string | null; cause: string | null }[] = [];
     for (const n of Array.from(document.querySelectorAll("[data-id]")) as HTMLElement[]) {
       const id = n.dataset.id;
       const puce = n.querySelector(".attic-node-statut-puce");
       if (!id || !puce) continue;
       const statut = ["termine", "erreur", "en-cours", "attente"].find((c) => puce.classList.contains(c)) ?? "attente";
       const message = n.querySelector(".attic-node-message")?.textContent?.replace(/^⧉/, "").trim() ?? null;
-      out.push({ id, statut, message: message || null });
+      const cause = n.querySelector(".attic-node-statut-label")?.getAttribute("title")?.trim() ?? null;
+      out.push({ id, statut, message: message || null, cause: cause || null });
     }
     return out;
   }) as EtatNoeud[];

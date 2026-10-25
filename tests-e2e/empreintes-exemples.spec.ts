@@ -130,6 +130,20 @@ const ATTEND_UN_FICHIER = "entree-audio";
  * passes du banc. Sa génération MIDI était bien semée ; son rendu de batterie ne l'était pas, Tone
  * tirant au hasard le décalage de départ de chaque frappe dans son tampon de bruit. La graine va
  * désormais jusque-là, et les trois passes rendent `0.171573496` au neuvième chiffre.
+ *
+ * ET ELLE RESTE VIDE ALORS QU'UN EXEMPLE EST BIEN VARIABLE, parce que ce sont deux choses. Cette
+ * liste ÉCARTE de la passe ; `variables`, dans la base, est ce que l'établissement DÉCOUVRE en
+ * jouant trois fois. `ton-glisse-en-trompette-etiree` y figure, avec sa mesure — le réseau DDSP
+ * varie de 2,9 % en valeur efficace et de 9,9 % en crête, l'étireur de 12 % en valeur efficace.
+ *
+ * NE PAS LE SEMER EST UNE DÉCISION DE FABIEN, prise le 2026-10-25, et non un oubli. Le prix en est
+ * écrit : le son de cet exemple n'est pas surveillé, et une régression qui s'y produirait passerait
+ * inaperçue. C'est le seul des treize dans ce cas.
+ *
+ * ET IL RESTE DANS LA PASSE PLUTÔT QUE DANS CETTE LISTE, ce qui est la conséquence utile de la
+ * décision : l'établissement le rejoue, donc le jour où quelqu'un sèmerait paulstretch et le réseau
+ * DDSP, il se remettrait SEUL sous surveillance. L'écarter ici l'en sortirait pour toujours, et il
+ * faudrait qu'un humain s'en souvienne.
  */
 const SON_NON_REPRODUCTIBLE: Record<string, string> = {};
 
@@ -229,11 +243,19 @@ async function jouer(page: import("@playwright/test").Page, fichier: string): Pr
     return lecteurs;
   }) as Record<string, MesureLecteur>;
 
-  // L'ERREUR PORTE SON MESSAGE, et non son seul identifiant : un relevé qui dirait « six nœuds en
+  // L'ERREUR PORTE SA CAUSE, et non son seul identifiant : un relevé qui dirait « six nœuds en
   // erreur » obligerait à rejouer l'exemple pour savoir lequel et pourquoi.
+  //
+  // ET C'EST LA CAUSE QU'ON LIT, non le message du nœud. La base portait huit identifiants nus sur
+  // dix — `clavier`, `ecoute`, `extrait`, `jouer`, `phase`, `selecteur`, `stretch`, `noeud-2` —
+  // parce qu'un nœud en erreur n'a pas de message de résultat : il a une cause, et elle est
+  // ailleurs dans la page.
   const erreurs = (await etatDesNoeuds(page))
     .filter((n) => n.statut === "erreur")
-    .map((n) => (n.message ? `${n.id} : ${n.message.slice(0, 90)}` : n.id))
+    .map((n) => {
+      const dit = n.cause ?? n.message;
+      return dit ? `${n.id} : ${dit.slice(0, 90)}` : n.id;
+    })
     .sort();
   return { lecteurs, erreurs };
 }
@@ -294,6 +316,36 @@ test.describe("le son que rendent les exemples", () => {
       const e = ecartsEntre(base[f], apres, f);
       ecarts.push(...e);
       console.log(`${f.padEnd(42)} ${e.length === 0 ? "identique" : `${e.length} ÉCART(S)`}`);
+    }
+
+    // CE QUE CE GARDE NE TIENT PAS, DIT À CHAQUE PASSE ET NON SEULEMENT DANS SA BASE.
+    //
+    // L'EN-TÊTE DE CE FICHIER PROMETTAIT DÉJÀ « mieux vaut un garde qui dit ce qu'il ne tient pas
+    // qu'un garde qui crie au loup » — ET IL NE LE DISAIT PAS. Un exemple variable n'est ni dans
+    // `aComparer`, qui demande une empreinte de référence, ni dans `neufs`, qui l'écarte
+    // explicitement : il sortait de la passe SANS UNE LIGNE. On lisait treize « identique » en
+    // croyant tenir tous les exemples, alors que six sont hors de portée ou non surveillés.
+    //
+    // La décision de ne pas réparer un son variable rend donc ce relevé nécessaire : un trou décidé
+    // doit être un trou VISIBLE, sans quoi la décision se perd et le garde paraît complet.
+    // ET IL NE PORTE QUE SUR LE LOT DE CETTE PASSE. Un premier jet listait toute la base en comptant
+    // sur le lot filtré : `EXEMPLE=un-son-projete-en-microtonal` annonçait « 1 exemple sur 1 » en
+    // nommant un exemple que la passe n'avait pas regardé. Un relevé qui compte sur un ensemble et
+    // énumère sur un autre dit faux dès qu'on le restreint.
+    const dansCettePasse = (f: string) => tous.includes(f);
+    const nonTenus = [
+      ...Object.entries(fichier.variables ?? {}).filter(([f]) => dansCettePasse(f)).map(([f, m]) =>
+        `${f.padEnd(42)} NON SURVEILLÉ · son variable · ${m.replace(/\s+/g, " ").slice(0, 110)}`),
+      ...horsDePortee.map((f) =>
+        `${f.padEnd(42)} hors de portée · attend un fichier de l'utilisateur`),
+      ...Object.entries(SON_NON_REPRODUCTIBLE).filter(([f]) => dansCettePasse(f))
+        .map(([f, r]) => `${f.padEnd(42)} ÉCARTÉ · ${r}`),
+    ];
+    if (nonTenus.length > 0) {
+      console.log([
+        "", `CE QUE CE GARDE NE TIENT PAS — ${nonTenus.length} exemple(s) sur ${tous.length} :`,
+        ...nonTenus, "",
+      ].join("\n"));
     }
 
     expect(neufs, [
