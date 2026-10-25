@@ -4,6 +4,17 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+
+- **Copier, couper, coller et annuler mouraient dès qu'on avait touché le champ de recherche de la palette — et ce n'est pas une régression, c'est un piège latent depuis le commit initial.** Fabien l'a signalé en disant que ce n'était pas la première fois ; la raison est là : le garde qui détourne les raccourcis d'un champ de saisie **et** le champ de recherche datent tous deux de `e677234`. Rien n'a changé, et rien n'a jamais permis de sortir du champ.
+
+  - **Le parcours qui le déclenche est parfaitement naturel** : les composants de la palette se **glissent**, ils ne se cliquent pas. On clique le champ de recherche, on tape, on glisse le composant sur le canevas — et **un glisser ne retire pas le focus d'un champ**. L'utilisateur vient donc de poser un nœud, et Ctrl+Z ne l'annule pas.
+  - **Mesuré avant correctif**, focus posé dans `.palette-recherche` : Ctrl+V laisse trois nœuds sur trois, Ctrl+Z en laisse trois aussi. **Morts, pas lents.**
+  - **Le garde n'est pas en cause et il reste** : Ctrl+C dans une zone de texte doit copier le **texte**, et non les nœuds sélectionnés derrière. Ce qui manquait est la **sortie** : Échap quitte le champ, et **glisser un composant rend le focus au canevas** — l'instant précis où l'on cesse de taper pour manipuler des nœuds. Échap est traité dans la palette et non globalement, parce que les menus, le renommage d'un méta et les éditeurs de code s'en servent déjà pour se fermer.
+  - **ET LA RÈGLE CESSAIT D'EXISTER EN TROIS EXEMPLAIRES.** `App.tsx`, `BarreOutils.tsx` et `LigneDeTemps.tsx` écrivaient chacun leur version de « est-ce un champ de saisie ». Elles étaient encore identiques au mot près — donc pas divergentes, mais trois endroits à tenir en phase, ce qui est la forme du défaut que ce dépôt paie le plus souvent. Elles vivent dans `ui/champ-de-saisie.ts`, avec **sept cas** ; défaut planté en retirant `isContentEditable`, le cas tombe.
+  - **Vérifié dans l'application, le scénario entier** : deux nœuds, un sélectionné, Ctrl+C puis Ctrl+V donnent trois nœuds ; focus posé dans la palette ; un glisser rend le focus au corps ; **Ctrl+Z ramène à deux**. Et le glisser transporte toujours sa fiche — le relâchement du focus avant `setData` ne l'a pas cassé.
+  - **J'AI FAILLI LIVRER UN FAUX DIAGNOSTIC, et c'était mon instrument.** Mon premier relevé disait « le nœud ne se sélectionne plus au clic », et je partais réparer la sélection. Un clic du volet navigateur est en pixels de **capture**, non en pixels CSS, et le volet met les pixels à l'échelle : mon clic ne touchait pas le nœud. Avec des événements envoyés sur l'élément, la sélection fonctionne parfaitement.
+
 ### Added
 
 - **`varier`, le septième verbe : ce qui est intéressant n'est pas un son mais une différence entre au moins deux.** C'est Fabien qui l'a formulé, et c'est par ce trou qu'un défaut est passé. `comparer` et `écouter` savent mettre côte à côte N composants **différents** sur la même entrée — mais leur `PARAMETRES` est un seul jeu de réglages appliqué à **tous** les membres. Un composant à trois valeurs d'un même curseur leur était hors d'atteinte, et « Déréverbération » y a caché un réglage presque inerte pendant toute sa vie : il a fallu qu'on le **sente**, puis qu'un graphe de dix nœuds soit écrit à la main pour le voir.

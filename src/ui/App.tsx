@@ -44,6 +44,7 @@ import { ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
 import { ecrireProfondeurExport, lireProfondeurExport } from "./profondeur-export";
 import type { ProfondeurExport } from "../audio/io";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
+import { estUnChampDeSaisie, quitterLeChamp } from "./champ-de-saisie";
 import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "./historique";
 import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
 import { libererGlissement, relachementManque } from "./liberer-glissement";
@@ -863,9 +864,9 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   // ── Copier / Coller (Ctrl+C / Ctrl+V) ──
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // Ne pas intercepter si on tape dans un champ (textarea, input, select)
-      const target = e.target as HTMLElement;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable)) return;
+      // Ne pas intercepter si on tape dans un champ : Ctrl+C doit y copier le TEXTE, et non les
+      // nœuds sélectionnés derrière. La règle vit dans `champ-de-saisie.ts`, en un seul endroit.
+      if (estUnChampDeSaisie(e.target)) return;
 
       if ((e.ctrlKey || e.metaKey) && e.key === "c") {
         const selection = noeudsRef.current.filter((n) => (n as { selected?: boolean }).selected);

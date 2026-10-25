@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../i18n";
 
 import type { FicheUI } from "./registre-actif";
+import { quitterLeChamp } from "./champ-de-saisie";
 import { filtrerFiches } from "./recherche-palette";
 import { grouperFiches } from "./ordre-palette";
 import { nomFiche, resumeFiche } from "./libelles-fiche";
@@ -120,7 +121,15 @@ export function Palette({ plugins, onSupprimerMeta, ouverte = true, onToggle }: 
             <span>{t("palette.titre")}</span>
             <button className="palette-toggle" title={t("palette.replier")} onClick={onToggle} aria-label={t("palette.replier")}>‹</button>
           </div>
-          <input className="palette-recherche" placeholder={t("palette.recherche")} value={q} onChange={(e) => setQ(e.target.value)} />
+          {/* ÉCHAP QUITTE LE CHAMP, et c'est la seule sortie au clavier qu'il y avait jamais eu.
+              Tant que le focus y reste, les quatre raccourcis du canevas — copier, couper, coller,
+              annuler — sont morts, parce qu'ils se détournent de tout champ de saisie : mesuré,
+              Ctrl+V et Ctrl+Z ne changeaient RIEN. Le garde est juste, c'est la sortie qui
+              manquait. Échap est traité ICI plutôt que globalement, parce que les menus, le
+              renommage d'un méta et les éditeurs de code s'en servent déjà pour se fermer. */}
+          <input className="palette-recherche" placeholder={t("palette.recherche")} value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Escape") quitterLeChamp(e.currentTarget); }} />
           <div className="palette-arbre">
             {groupes.map((g) => (
               <div key={g.univers} className="palette-univers">
@@ -144,7 +153,13 @@ export function Palette({ plugins, onSupprimerMeta, ouverte = true, onToggle }: 
                       </div>
                       {ouvert(cle) && fg.defs.map((def) => (
                         <div key={def.id} className="palette-composant" draggable style={{ cursor: "grab" }}
-                          onDragStart={(e) => { e.dataTransfer.setData("application/attic-fiche-id", def.id); e.dataTransfer.effectAllowed = "move"; }}
+                          // GLISSER UN COMPOSANT REND LE FOCUS AU CANEVAS, et c'est la réparation du
+                          // parcours réel : les composants se GLISSENT, ils ne se cliquent pas. On
+                          // clique le champ de recherche, on tape, on glisse — et un glisser ne
+                          // retire pas le focus d'un champ. L'utilisateur venait donc de poser un
+                          // nœud, et Ctrl+Z ne l'annulait pas. C'est exactement l'instant où il
+                          // cesse de taper et recommence à manipuler des nœuds.
+                          onDragStart={(e) => { quitterLeChamp(); e.dataTransfer.setData("application/attic-fiche-id", def.id); e.dataTransfer.effectAllowed = "move"; }}
                           // `title` est parti : l'infobulle du système doublait celle-ci,
                           // une seconde plus tard. `aria-label` garde le résumé pour qui
                           // lit la palette autrement qu'à l'œil.
