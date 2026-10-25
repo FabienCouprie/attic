@@ -145,6 +145,14 @@ for (const fiche of toutesLesFiches) {
   registre.enregistrer(fiche);
 }
 
+// ET FIGER CE SOCLE, ICI ET NULLE PART AILLEURS. C'est le seul endroit où `enregistrer()` est
+// appelé pour le domaine ; l'instant qui suit cette boucle est donc exactement celui où « natif »
+// a un sens. Tout ce qui s'inscrira ensuite — un nœud installé depuis un `.zip` partagé, un
+// méta-composant porté par un projet reçu — ne pourra plus prendre la place d'un de ces
+// identifiants. Relevé le 2026-10-25 : `enregistrer` les remplaçait en silence, de sorte qu'un
+// composant reçu pouvait garder le nom, l'icône et la place d'un composant du socle.
+registre.figerLesNatifs();
+
 // Configurer les modules du cœur avec ce registre.
 //
 // LES DEUX PREMIERS NE CONNAISSENT PLUS LE DOMAINE, et le transtypage le dit. `metastore` et

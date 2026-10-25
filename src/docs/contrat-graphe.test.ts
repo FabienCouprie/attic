@@ -12,15 +12,25 @@
 // libre, et une poignée qui désigne un port inexistant. Les deux se glissent dans un graphe écrit à
 // la main sans que rien ne les signale, et se paient à l'ouverture.
 //
-// IL NE PORTE QUE SUR LES GRAPHES D'EXEMPLE, ceux dont le nom finit par « -exemple.json ». Un
-// graphe en cours de construction est momentanément incomplet par nature, et l'application
-// enregistre le travail en cours dans le même dossier : le contrôler reviendrait à reprocher de ne
-// pas avoir fini. La convention de nommage est à la charge de qui livre l'exemple.
+// CE QU'IL REGARDE, ET LA RÈGLE N'EST PAS LA MÊME PARTOUT — `estExemple` le dit en une ligne. Dans
+// `exemples/`, TOUT fichier `.json` est contrôlé, sous-dossiers compris. Ailleurs — à la racine,
+// dans `presets/`, dans `tests-e2e/` — seuls ceux dont le nom finit par « -exemple.json » le sont :
+// un graphe en cours de construction est momentanément incomplet par nature, et l'application
+// enregistre le travail en cours dans ces dossiers ; le contrôler reviendrait à reprocher de ne pas
+// avoir fini.
 //
-// NI `presets/` NI `exemples/` NE SONT VERSIONNÉS. Sur un dépôt fraîchement cloné ce test ne
-// trouvera rien et passera : c'est voulu, il garde ce qu'il y a là où l'on travaille. Les deux
-// dossiers gardent pourtant des rôles distincts, et le contrôle reste entier sur `exemples/` : ce
-// qui s'y trouve part dans l'installeur, donc est montré à quelqu'un d'autre.
+// DEUX PHRASES ÉTAIENT FAUSSES ICI, relevées le 2026-10-25 par une revue critique du dépôt.
+//
+// L'une disait que ce contrat « ne porte que sur les graphes dont le nom finit par -exemple.json ».
+// Aucun des dix-neuf exemples versionnés ne porte ce suffixe, ce qui laissait croire que ce garde
+// ne regardait RIEN — alors que son code les prend tous.
+//
+// L'autre disait « NI `presets/` NI `exemples/` NE SONT VERSIONNÉS ». `exemples/` l'est : dix-neuf
+// fichiers suivis par git. Seul `presets/` ne l'est pas, et c'est pour lui que la tolérance au
+// dossier absent existe — sur un dépôt fraîchement cloné, `presets/` n'y est pas et ce test passe.
+//
+// LE CONTRÔLE EST DONC ENTIER SUR `exemples/`, et il doit l'être : ce qui s'y trouve part dans
+// l'installeur, donc est montré à quelqu'un d'autre.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { existsSync, readdirSync, readFileSync } from "node:fs";

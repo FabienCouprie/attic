@@ -1,11 +1,65 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu, shell, session, desktopCapturer, protocol } = require("electron");
 const path = require("path");
+
+// ═══ LES DIALOGUES FONT NAÎTRE LES RACINES, ET EUX SEULS ═══
+//
+// C'est la seule capacité que le rendu peut faire naître : il demande un dialogue, l'utilisateur
+// désigne un endroit, et cet endroit devient autorisé. Un chemin simplement NOMMÉ par le rendu
+// n'autorise rien — c'est tout l'objet du bornage décidé le 2026-10-25.
+//
+// ENVELOPPÉS UNE FOIS PLUTÔT QU'À DIX APPELS : dix sites à ne pas oublier seraient dix occasions
+// d'en oublier un, et un seul oubli rouvrirait la porte sans que rien ne le dise.
+// ET CE QU'UN DIALOGUE ACCORDE SURVIT À LA FERMETURE, mesuré sur deux chemins du code : le dossier
+// de travail choisi est gardé dans `attic-repertoire` côté rendu, et les six écrivains à paramètre
+// « Dossier de sortie » gardent le leur DANS LE PROJET. Dans les deux cas, le lancement suivant
+// n'ouvre aucun dialogue — une racine qui ne durerait qu'une session casserait l'ouverture d'un
+// projet en silence.
+async function showSaveDialogSuivi(...args) {
+  const r = await dialog.showSaveDialog(...args);
+  if (!r.canceled && r.filePath) accorderRacineDuFichier(r.filePath);
+  return r;
+}
+async function showOpenDialogSuivi(...args) {
+  const r = await dialog.showOpenDialog(...args);
+  // UN DIALOGUE DE DOSSIER REND LE DOSSIER, un dialogue de fichier rend un fichier : la racine
+  // n'est pas la même, et la confondre autoriserait le parent du dossier choisi.
+  const estDossier = (args[1]?.properties || []).includes("openDirectory");
+  if (!r.canceled) {
+    for (const p of r.filePaths || []) {
+      if (estDossier) accorderRacine(p); else accorderRacineDuFichier(p);
+    }
+  }
+  return r;
+}
 const fs = require("fs");
 const https = require("https");
 const http = require("http");
 const { execSync, execFile } = require("child_process");
 const { Readable } = require("stream");
 const { URL: UrlModele } = require("url");
+const { ouvertureAutorisee, ecritureAutorisee, armerJournal, inscrireChemin, inscrireCanal } = require("./chemin-sur.cjs");
+
+// ═══ LE RELEVÉ DE TOUS LES CANAUX, QUAND IL EST DEMANDÉ ═══
+//
+// POSÉ ICI, AVANT TOUT `ipcMain.handle`, et il le faut : les gestionnaires s'enregistrent au
+// chargement du module, donc un emballage posé plus bas n'en verrait aucun.
+//
+// POURQUOI IL EXISTE. J'avais donné une liste de gestes censés passer par les canaux de fichier,
+// DÉDUITE des modules qui nomment le pont dans leur source. Les gestes faits, le journal est resté
+// vide : savoir qu'un module mentionne `api.ecrireFichier` ne dit pas quel geste l'appelle, ni même
+// s'il est appelé. Plutôt qu'une quatrième liste devinée, on relève TOUS les canaux et le journal
+// dit ce qui s'allume.
+if (process.env.ATTIC_JOURNAL_CHEMINS === "1") {
+  const handleBrut = ipcMain.handle.bind(ipcMain);
+  ipcMain.handle = (canal, traitement) => handleBrut(canal, async (...args) => {
+    inscrireCanal(canal);
+    return traitement(...args);
+  });
+}
+const {
+  declarerRacine, verdictRacine, racinesConnues,
+  accorderRacine, accorderRacineDuFichier, memoriserLesAccords, declarerRacinesDeLEnvironnement, racinesStrictes,
+} = require("./capacites-chemins.cjs");
 const { separerDemucs } = require("./demucs.cjs");
 const { generate: genererStableAudio3 } = require("./stable-audio-3.cjs");
 const { generate: genererSdxsImage } = require("./sdxs-image.cjs");
@@ -313,11 +367,18 @@ ipcMain.handle("capture:ma-fenetre", (event) => {
 // --- IPC : enregistrer un fichier (dialogue + écriture) ---
 ipcMain.handle("fichier:sauvegarder", async (_event, options) => {
   const { defaultPath, filters, data } = options;
-  const resultat = await dialog.showSaveDialog(fenetre, {
+  const resultat = await showSaveDialogSuivi(fenetre, {
     defaultPath: defaultPath || undefined,
     filters: filters || [{ name: "Tous", extensions: ["*"] }],
   });
   if (resultat.canceled || !resultat.filePath) return null;
+  // SÛR PAR CONSTRUCTION — la capacité est mintée et consommée dans le même geste —, MAIS LA RÈGLE
+  // D'EXTENSION S'APPLIQUE QUAND MÊME : un appelant peut proposer `piege.bat` en `defaultPath`, et
+  // l'on enregistre sans toujours lire le nom. Le relevé note la destination, ce qui apprend aussi
+  // les dossiers où l'on enregistre vraiment.
+  const vS = ecritureAutorisee(resultat.filePath);
+  inscrireChemin("sauvegarder", resultat.filePath, vS.ok, true);
+  if (!vS.ok) { console.error(`[attic] fichier:sauvegarder REFUSE: ${resultat.filePath} — ${vS.raison}`); return null; }
   fs.writeFileSync(resultat.filePath, data, "utf-8");
   return resultat.filePath;
 });
@@ -325,7 +386,7 @@ ipcMain.handle("fichier:sauvegarder", async (_event, options) => {
 // --- IPC : ouvrir un fichier binaire (dialogue + lecture brute) ---
 ipcMain.handle("fichier:ouvrir-binaire", async (_event, options) => {
   const { defaultPath, filters } = options;
-  const resultat = await dialog.showOpenDialog(fenetre, {
+  const resultat = await showOpenDialogSuivi(fenetre, {
     defaultPath: defaultPath || undefined,
     filters: filters || [{ name: "Tous", extensions: ["*"] }],
     properties: ["openFile"],
@@ -355,7 +416,7 @@ ipcMain.handle("exemples:dossier", () => (fs.existsSync(dossierExemples()) ? dos
 
 ipcMain.handle("fichier:ouvrir", async (_event, options) => {
   const { defaultPath, filters } = options;
-  const resultat = await dialog.showOpenDialog(fenetre, {
+  const resultat = await showOpenDialogSuivi(fenetre, {
     defaultPath: defaultPath || undefined,
     filters: filters || [{ name: "Tous", extensions: ["*"] }],
     properties: ["openFile"],
@@ -372,7 +433,7 @@ ipcMain.handle("fichier:ouvrir", async (_event, options) => {
 // et en texte cela n'aurait aucun sens. Un paramètre de type « fichier » ne veut que le chemin.
 ipcMain.handle("fichier:choisir", async (_event, options) => {
   const { defaultPath, filters, title } = options ?? {};
-  const resultat = await dialog.showOpenDialog(fenetre, {
+  const resultat = await showOpenDialogSuivi(fenetre, {
     title: title || undefined,
     defaultPath: defaultPath || undefined,
     filters: filters?.length ? filters : [{ name: "Tous", extensions: ["*"] }],
@@ -385,11 +446,15 @@ ipcMain.handle("fichier:choisir", async (_event, options) => {
 // --- IPC : sauvegarder un fichier binaire (audio WAV) ---
 ipcMain.handle("fichier:sauvegarder-binaire", async (_event, options) => {
   const { defaultPath, filters, buffer } = options;
-  const resultat = await dialog.showSaveDialog(fenetre, {
+  const resultat = await showSaveDialogSuivi(fenetre, {
     defaultPath: defaultPath || undefined,
     filters: filters || [{ name: "Tous", extensions: ["*"] }],
   });
   if (resultat.canceled || !resultat.filePath) return null;
+  // Même règle que la sauvegarde texte, et pour la même raison.
+  const vB = ecritureAutorisee(resultat.filePath);
+  inscrireChemin("sauvegarder-binaire", resultat.filePath, vB.ok, true);
+  if (!vB.ok) { console.error(`[attic] fichier:sauvegarder-binaire REFUSE: ${resultat.filePath} — ${vB.raison}`); return null; }
   const buf = Buffer.from(buffer);
   fs.writeFileSync(resultat.filePath, buf);
   return resultat.filePath;
@@ -397,7 +462,7 @@ ipcMain.handle("fichier:sauvegarder-binaire", async (_event, options) => {
 
 // --- IPC : choisir un dossier ---
 ipcMain.handle("dossier:choisir", async () => {
-  const resultat = await dialog.showOpenDialog(fenetre, {
+  const resultat = await showOpenDialogSuivi(fenetre, {
     properties: ["openDirectory"],
   });
   if (resultat.canceled || resultat.filePaths.length === 0) return null;
@@ -452,6 +517,24 @@ ipcMain.handle("fichier:lire-audio", async (_event, cheminFichier) => {
 
 // --- IPC : écrire un fichier binaire à un chemin donné (sans dialogue) ---
 ipcMain.handle("fichier:ecrire", async (_event, { chemin, buffer }) => {
+  // LE PREMIER MAILLON DE LA CHAINE EST COUPE ICI. Ce pont ecrivait a n'importe quel chemin en
+  // creant les dossiers, sans une ligne de validation ; combine a `fichier:ouvrir-chemin`, « ecrire
+  // un script puis l'ouvrir » etait complet a partir d'un fichier recu. La regle vit dans
+  // `chemin-sur.cjs`, et elle distingue ce qui s'ecrit de ce qui s'ouvre : un `.py` legitime se
+  // materialise ici et se lance par un interpreteur declare, jamais par le systeme.
+  const verdict = ecritureAutorisee(chemin);
+  // ET LE BORNAGE PAR RACINES, dont la sanction est ÉTEINTE le temps du relevé : hors racine, on
+  // inscrit et l'on passe. `ATTIC_RACINES_STRICTES=1` la rallume. Quinze fichiers écrivent par ce
+  // pont et leurs chemins viennent de dossiers choisis, parfois dans une session antérieure :
+  // refuser d'emblée casserait des fonctions en silence.
+  const racine = verdict.ok ? verdictRacine(chemin) : { ok: false, sousRacine: false };
+  inscrireChemin("ecrire", chemin, verdict.ok && racine.ok, racine.sousRacine);
+  if (!verdict.ok || !racine.ok) {
+    const pourquoi = verdict.raison || racine.raison;
+    console.error(`[attic] fichier:ecrire REFUSE: ${chemin} — ${pourquoi}`);
+    if (racine.raison) console.error(`[attic] racines déclarées : ${racinesConnues().join(", ") || "aucune"}`);
+    return null;
+  }
   try {
     const dir = path.dirname(chemin);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -467,6 +550,20 @@ ipcMain.handle("fichier:ecrire", async (_event, { chemin, buffer }) => {
 
 // --- IPC : copier un fichier binaire d'un chemin à un autre ---
 ipcMain.handle("fichier:copier", async (_event, { source, cible }) => {
+  // CE CANAL ÉTAIT UN CONTOURNEMENT COMPLET DE LA BARRIÈRE D'ÉCRITURE, et je l'avais manqué :
+  // j'avais borné `fichier:ecrire` en annonçant « le premier maillon est coupé », alors que `copier`
+  // écrit lui aussi à une CIBLE ARBITRAIRE, en créant les dossiers. Copier un exécutable déjà
+  // présent vers un dossier de démarrage n'a besoin de rien d'autre.
+  //
+  // Relevé en comptant les écritures directes du processus principal : il y en a DIX, et la barrière
+  // n'en couvrait qu'UNE. C'est la cible qui est contrôlée, la source n'étant que lue.
+  const verdictC = ecritureAutorisee(cible);
+  const racineC = verdictC.ok ? verdictRacine(cible) : { ok: false, sousRacine: false };
+  inscrireChemin("copier", cible, verdictC.ok && racineC.ok, racineC.sousRacine);
+  if (!verdictC.ok || !racineC.ok) {
+    console.error(`[attic] fichier:copier REFUSE: ${cible} — ${verdictC.raison || racineC.raison}`);
+    return null;
+  }
   try {
     const dir = path.dirname(cible);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -479,6 +576,20 @@ ipcMain.handle("fichier:copier", async (_event, { source, cible }) => {
 
 // --- IPC : ouvrir un chemin dans l'application par défaut (navigateur pour .html) ---
 ipcMain.handle("fichier:ouvrir-chemin", async (_event, chemin) => {
+  // LE REFUS EST ICI, DU COTE PRIVILEGIE, et non dans l'interface : un controle pose dans le
+  // rendu se contourne, puisque c'est precisement le rendu qu'un noeud installe habite. La regle
+  // et sa raison vivent dans `chemin-sur.cjs`, avec ses cas.
+  const verdict = ouvertureAutorisee(chemin);
+  const racineO = verdict.ok ? verdictRacine(chemin) : { ok: false, sousRacine: false };
+  inscrireChemin("ouvrir", chemin, verdict.ok && racineO.ok, racineO.sousRacine);
+  if (verdict.ok && !racineO.ok) {
+    console.error(`[attic] fichier:ouvrir-chemin REFUSE: ${chemin} — ${racineO.raison}`);
+    return { ok: false, erreur: racineO.raison };
+  }
+  if (!verdict.ok) {
+    console.error(`[attic] fichier:ouvrir-chemin REFUSE: ${chemin} — ${verdict.raison}`);
+    return { ok: false, erreur: verdict.raison };
+  }
   try {
     const resultat = await shell.openPath(chemin);
     return { ok: resultat === "", erreur: resultat || undefined };
@@ -879,7 +990,7 @@ ipcMain.handle("dossier:music-projet", () => {
 // <projet>/work en dev, <Documents>/Attic en version packagée.
 // C'est le répertoire par défaut des dialogues d'export/import, et celui où les
 // scripts Python et Julia écrivent leurs sorties.
-ipcMain.handle("dossier:travail-defaut", () => {
+function dossierDeTravailParDefaut() {
   // LE DOSSIER DE L'EXÉCUTABLE N'EST PLUS CANDIDAT, et c'était le premier.
   //
   // Relevé par Fabien : « par défaut le work se trouve à l'intérieur du programme, ce qui le range
@@ -911,12 +1022,28 @@ ipcMain.handle("dossier:travail-defaut", () => {
       const temoin = path.join(dossier, `.attic-sonde-${Date.now()}`);
       fs.writeFileSync(temoin, "");
       fs.unlinkSync(temoin);
+      // LE DOSSIER DE TRAVAIL EST UNE RACINE, et il l'est LÉGITIMEMENT SANS DIALOGUE : c'est le
+      // côté privilégié qui le choisit, dans la liste de candidats ci-dessus, et non le rendu qui
+      // le nomme. Un nœud installé ne peut donc pas s'en fabriquer une.
+      //
+      // RELEVÉ PAR LA MESURE, le 2026-10-25 : le premier journal de Fabien portait une écriture,
+      // `E:/attic/work/export.svg`, marquée HORS RACINE. Elle était pourtant parfaitement
+      // légitime — c'est là que l'application est faite pour écrire. Sans cette déclaration, la
+      // sanction rallumée aurait cassé tous les exports, ce qui est exactement la raison pour
+      // laquelle elle est restée éteinte le temps du relevé.
+      declarerRacine(dossier);
       return dossier;
     } catch { /* candidat suivant */ }
   }
   console.error("[attic] Aucun répertoire de travail inscriptible parmi :", candidats);
   return null;
-});
+}
+
+// LE CALCUL EST SÉPARÉ DU CANAL, et il le fallait : la racine ne doit pas dépendre d'un APPEL DU
+// RENDU. `src/ui/App.tsx` ne demande ce dossier que si son réglage `attic-repertoire` est vide ;
+// pour qui emploie Attic depuis une semaine, le canal ne s'allume donc plus jamais, et la racine
+// n'était déclarée que chez un utilisateur neuf. Elle l'est maintenant au démarrage.
+ipcMain.handle("dossier:travail-defaut", () => dossierDeTravailParDefaut());
 
 ipcMain.handle("nouvelle-fenetre", async () => {
   creerFenetre();
@@ -1023,7 +1150,7 @@ ipcMain.handle("node:supprimer", async (_event, nodeId) => {
 
 // --- IPC : Sauvegarde du fichier (dialogue) ---
 ipcMain.handle("node:sauvegarder-zip", async (_event, { defaultPath }) => {
-  const resultat = await dialog.showSaveDialog(fenetre, {
+  const resultat = await showSaveDialogSuivi(fenetre, {
     defaultPath: defaultPath || "node.zip",
     filters: [{ name: "ZIP", extensions: ["zip"] }],
   });
@@ -1033,7 +1160,7 @@ ipcMain.handle("node:sauvegarder-zip", async (_event, { defaultPath }) => {
 
 // --- IPC : Sélectionner un fichier zip pour import ---
 ipcMain.handle("node:selectionner-zip", async () => {
-  const resultat = await dialog.showOpenDialog(fenetre, {
+  const resultat = await showOpenDialogSuivi(fenetre, {
     title: "Sélectionner un node .zip",
     filters: [{ name: "ZIP", extensions: ["zip"] }],
     properties: ["openFile"],
@@ -1066,7 +1193,7 @@ ipcMain.handle("python:definir-chemin", async (_event, chemin) => {
 
 // --- IPC : Choisir l'exécutable Python via dialogue ---
 ipcMain.handle("python:choisir-executable", async () => {
-  const resultat = await dialog.showOpenDialog(fenetre, {
+  const resultat = await showOpenDialogSuivi(fenetre, {
     title: "Sélectionner l'exécutable Python",
     filters: process.platform === "win32"
       ? [{ name: "Python", extensions: ["exe"] }, { name: "Tous", extensions: ["*"] }]
@@ -1142,7 +1269,7 @@ ipcMain.handle("julia:definir-chemin", async (_event, chemin) => {
 });
 
 ipcMain.handle("julia:choisir-executable", async () => {
-  const resultat = await dialog.showOpenDialog(fenetre, {
+  const resultat = await showOpenDialogSuivi(fenetre, {
     title: "Sélectionner l'exécutable Julia",
     filters: [{ name: "Julia", extensions: ["exe"] }],
     properties: ["openFile"],
@@ -1665,6 +1792,38 @@ ipcMain.on("maj:restaurer-backup-sync", (event) => {
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
+
+  // LE RELEVÉ DES DESTINATIONS, s'il est demandé par `ATTIC_JOURNAL_CHEMINS=1`. Il sert à DÉRIVER
+  // les racines autorisées du pont au lieu de les deviner : quinze fichiers écrivent par là, et
+  // leurs chemins viennent de dossiers choisis, parfois dans une session antérieure. Sans mesure,
+  // poser les racines casserait des fonctions en silence.
+  const journal = armerJournal(app.getPath("userData"));
+  if (journal) console.log(`[attic] journal des chemins ARMÉ : ${journal}`);
+
+  // ═══ LES RACINES DU PONT, DÉRIVÉES DE LA MESURE ═══
+  //
+  // DÉCLARÉES ICI, ET NON AU PREMIER APPEL DU RENDU. C'est la leçon du relevé de Fabien : son
+  // journal portait une écriture vers `E:/attic/work/export.svg`, marquée HORS RACINE alors que
+  // c'est l'endroit même où l'application est faite d'écrire. La cause n'était pas le dossier mais
+  // le MOMENT : la racine naissait dans le gestionnaire `dossier:travail-defaut`, que l'interface
+  // n'appelle que si son réglage est vide.
+  //
+  // QUATRE SOURCES, et chacune est mintée par ce côté-ci :
+  //   · le dossier de travail, calculé ci-dessus dans une liste de candidats que le rendu ne nomme pas ;
+  //   · `userData`, qui est à l'application ;
+  //   · les accords relus, que des dialogues ont fait naître dans des sessions antérieures ;
+  //   · `ATTIC_RACINES`, si le propriétaire en déclare.
+  //
+  // ET LE DOSSIER TEMPORAIRE N'EN EST PAS, quoi qu'il serait commode de le croire : AUCUNE des
+  // destinations relevées n'y mène, et il est partagé avec toutes les autres applications de la
+  // machine. Une racine que la mesure ne demande pas est une permission devinée.
+  declarerRacine(app.getPath("userData"));
+  dossierDeTravailParDefaut();
+  const accords = memoriserLesAccords(path.join(app.getPath("userData"), "racines-accordees.json"));
+  const deLEnv = declarerRacinesDeLEnvironnement();
+  console.log(`[attic] racines du pont : ${racinesConnues().length}`
+    + ` (${accords.length} accordée(s) relue(s), ${deLEnv.length} par ATTIC_RACINES)`
+    + (racinesStrictes() ? " · SANCTION ARMÉE" : " · sanction éteinte, hors racine est inscrit et passe"));
 
   // Configuration globale de la session (une seule fois, indépendamment du nombre
   // de fenêtres) pour éviter les handlers en double et les CSP multiples.

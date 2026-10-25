@@ -33,6 +33,8 @@
   "scripts": {
     "dev": "vite",
     "dev:electron": "concurrently -k \"vite --port 5175\" \"wait-on http://localhost:5175 && cross-env NODE_ENV=development electron .\"",
+    "dev:electron:journal": "concurrently -k \"vite --port 5175\" \"wait-on http://localhost:5175 && cross-env NODE_ENV=development ATTIC_JOURNAL_CHEMINS=1 electron .\"",
+    "electron:journal": "cross-env ATTIC_JOURNAL_CHEMINS=1 ATTIC_SANS_MAJ=1 electron .",
     "build": "tsc -b && vite build",
     "build:electron": "node scripts/build-electron.cjs",
     "publish:electron": "npm run build && npm run outils && electron-builder --win -p always -c.electronDist=node_modules/electron/dist",
@@ -80,6 +82,7 @@
     "catalogue": "playwright test tests-e2e/catalogue-sonore.spec.ts",
     "varier": "playwright test tests-e2e/varier.spec.ts",
     "graines": "playwright test tests-e2e/graines-tenues.spec.ts",
+    "racines": "node scripts/racines-du-journal.cjs",
     "test:empreintes-exemples": "playwright test tests-e2e/empreintes-exemples.spec.ts"
   },
   "build": {

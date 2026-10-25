@@ -12,6 +12,19 @@ import { valider } from "./validation";
 
 export interface Registre<TV, TR> {
   enregistrer(def: PluginDef<TV, TR>): void;
+  /**
+   * Fige ce qui est inscrit à cet instant : plus rien ne pourra en remplacer un identifiant.
+   *
+   * POURQUOI, ET LE TROU ÉTAIT RÉEL. `enregistrer` remplaçait en silence un plugin de même
+   * identifiant. Un nœud installé depuis un `.zip` partagé, ou un méta-composant porté par un
+   * projet reçu, pouvait donc prendre la place d'un composant NATIF — garder son nom, son icône et
+   * sa place dans la palette, et faire autre chose. Relevé le 2026-10-25 par une revue critique.
+   *
+   * LE REMPLACEMENT RESTE PERMIS POUR CE QUI N'EST PAS FIGÉ, et il le faut : c'est ainsi qu'un
+   * méta-composant se réenregistre quand on le modifie, et qu'un nœud installé se recharge à chaud.
+   * Seul le socle du domaine est protégé, et il l'est à l'instant où il a fini de s'inscrire.
+   */
+  figerLesNatifs(): void;
   trouverDef(id: string): PluginDef<TV, TR> | undefined;
   trouverPlugin(id: string): FonctionPlugin<TV, TR> | undefined;
   /** Le CATALOGUE : ce qui peut être choisi. Une fiche `horsCatalogue` n'y figure pas. */
@@ -71,6 +84,8 @@ function resoudre(id: string): string {
 export function creerRegistre<TV, TR>(): Registre<TV, TR> {
   const plugins: PluginDef<TV, TR>[] = [];
   const parId = new Map<string, PluginDef<TV, TR>>();
+  /** Les identifiants du socle, figés une fois le domaine inscrit. Voir `figerLesNatifs`. */
+  const natifs = new Set<string>();
   const typesFlux = new Map<string, TypeFlux>();
 
   function enregistrer(def: PluginDef<TV, TR>): void {
@@ -81,6 +96,13 @@ export function creerRegistre<TV, TR>(): Registre<TV, TR> {
     }
     const existant = parId.get(def.id);
     if (existant) {
+      // UN IDENTIFIANT NATIF NE SE REMPLACE PAS. Sans ce refus, un nœud installé depuis un `.zip`
+      // partagé — ou un méta-composant porté par un projet reçu — prenait la place d'un composant
+      // du socle : son nom, son icône, sa place dans la palette, et un autre code derrière.
+      if (natifs.has(def.id)) {
+        console.error(`[attic] Plugin « ${def.id} » : un composant natif ne se remplace pas — non enregistré.`);
+        return;
+      }
       const idx = plugins.indexOf(existant);
       if (idx >= 0) plugins[idx] = def;
       parId.set(def.id, def);
@@ -164,6 +186,16 @@ export function creerRegistre<TV, TR>(): Registre<TV, TR> {
     return t?.sousTypesCompatibles ? t.sousTypesCompatibles(sousTypeSource, sousTypeCible) : true;
   }
 
-  return { enregistrer, trouverDef, trouverPlugin, tousLesPlugins, tousLesInscrits, desenregistrer,
+  /**
+   * Fige les identifiants inscrits à cet instant.
+   *
+   * IDEMPOTENTE, et appelable plusieurs fois : le domaine peut s'inscrire en plusieurs morceaux, et
+   * un second appel n'élargit l'ensemble qu'à ce qui est arrivé entre les deux.
+   */
+  function figerLesNatifs(): void {
+    for (const id of parId.keys()) natifs.add(id);
+  }
+
+  return { enregistrer, figerLesNatifs, trouverDef, trouverPlugin, tousLesPlugins, tousLesInscrits, desenregistrer,
     enregistrerTypeFlux, typeFlux, tousTypesFlux, couleurFlux, formeFlux, fluxCompatibles };
 }

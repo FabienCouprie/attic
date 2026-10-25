@@ -6,7 +6,7 @@ Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et vingt-deux gardes sur lui-même : ils s'emploient, ils
+cela un banc de mesure, une base d'empreintes et vingt-trois gardes sur lui-même : ils s'emploient, ils
 ne se réinventent pas.
 
 ---
@@ -163,11 +163,12 @@ se relève donc à l'oreille, et non par un garde.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — vingt-deux contrats sur le dépôt lui-même : registre des réglages, graines,
+- **`src/docs/*.test.ts`** — vingt-trois contrats sur le dépôt lui-même : registre des réglages, graines,
   cœurs par trames, registre anglais, caractères de contrôle, style de documentation, classement
   théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, couverture des
-  empreintes, le serveur des specs de bout en bout, le pilote d'un graphe entier, le classement des
-  écarts d'une famille comparée, et la fraîcheur des tables générées. **La norme de taille y est contraignante** :
+  empreintes, le serveur des specs de bout en bout, le pilote d'un graphe entier, **le socle figé —
+  qu'aucun composant reçu ne prenne la place d'un natif** —, le classement des écarts d'une famille
+  comparée, et la fraîcheur des tables générées. **La norme de taille y est contraignante** :
   aucun fichier neuf ne dépasse quatre cents lignes de code, les quinze qui la dépassaient déjà ne
   grossissent plus, et celui qui redescend dans la norme sort de la dette. Elle ne peut que
   décroître, et la liste est dans `src/docs/generer-compte-lignes.test.ts`.
