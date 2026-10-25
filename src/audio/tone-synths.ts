@@ -1,6 +1,7 @@
 // audio/tone-synths.ts — Synthetiseurs instrumentaux propulses par Tone.js.
 // Rendu offline : aucune sortie haut-parleur, production directe d'AudioBuffer.
 
+import { creerAleatoire } from "../core/hasard";
 import { plafonnerCrete } from "./commun";
 import { Note } from "tonal";
 import {
@@ -264,6 +265,19 @@ export interface OptionsDrumSynth {
   notes: { note: number; velocite: number; debut: number; fin: number }[];
   volume: number;
   sampleRate?: number;
+  /**
+   * La graine du bruit des percussions. Absente, le rendu est celui qu'il a toujours été.
+   *
+   * POURQUOI UNE BATTERIE A BESOIN D'UNE GRAINE. Tone fabrique son bruit avec `Math.random`, et
+   * surtout il démarre chaque frappe à un DÉCALAGE TIRÉ AU HASARD dans ce bruit —
+   * `_source.start(temps, Math.random() * (buffer.duration - 0.001))`. Une caisse claire n'est donc
+   * jamais deux fois la même, et aucun réglage du composant ne pouvait y changer quoi que ce soit.
+   *
+   * CE QUE CELA COÛTAIT, MESURÉ : « Boîte à groove » annonce « graine 4242 » dans son propre message
+   * et rendait `0.172357839` puis `0.170609203` sur deux passes du banc. Le composant déclarait une
+   * graine qu'il n'honorait pas, et le garde du son des exemples a dû l'écarter pour cette raison.
+   */
+  graine?: number;
 }
 
 /**
@@ -386,8 +400,45 @@ export const NIVEAUX_PERCUSSION: Readonly<Record<string, number>> = Object.freez
  * Groove Box 537 s pour 150 s de musique. Voir audio/percussions-placement.ts
  * pour la mesure complète et ce que la recopie suppose.
  */
+/**
+ * Mélange une graine et le nom d'un échantillon en une graine propre à cet échantillon.
+ *
+ * CHAQUE FRAPPE REPART D'UN POINT CONNU, et c'est ce qui rend la substitution sûre. Si l'on semait
+ * une seule fois pour toute la batterie, le rendu dépendrait de l'ORDRE dans lequel les voix sont
+ * rendues et du nombre de nombres que Tone consomme pour chacune — deux choses qu'une mise à jour
+ * de Tone changerait sans prévenir. Ici, la caisse claire a sa suite, le charleston la sienne.
+ */
+function graineDEchantillon(graine: number, cle: string): number {
+  let h = graine >>> 0;
+  for (let i = 0; i < cle.length; i++) h = (Math.imul(h ^ cle.charCodeAt(i), 0x01000193) >>> 0);
+  return h >>> 0;
+}
+
+/**
+ * Rend un échantillon en substituant le hasard de Tone, quand une graine est donnée.
+ *
+ * LA SUBSTITUTION D'UNE GLOBALE SE JUSTIFIE ICI, ET SA FENÊTRE EST ÉTROITE. Tone consomme son
+ * hasard DANS LE RAPPEL SYNCHRONE de `Offline` — la fabrication du tampon de bruit et le choix du
+ * décalage de départ s'y font tous les deux —, et non pendant l'attente du rendu. Aucun autre code
+ * ne peut donc s'intercaler et consommer la suite à notre place.
+ *
+ * ET LE SON NE CHANGE PAS. On garde l'algorithme de Tone, on lui donne seulement une suite
+ * reproductible. Refaire le bruit nous-mêmes aurait changé le timbre de toutes les batteries du
+ * catalogue pour réparer leur reproductibilité, ce qui est un bien mauvais marché.
+ */
+export async function avecHasardSeme<T>(graine: number | undefined, cle: string, faire: () => Promise<T>): Promise<T> {
+  if (graine === undefined) return await faire();
+  const vrai = Math.random;
+  Math.random = creerAleatoire(graineDEchantillon(graine, cle));
+  try {
+    return await faire();
+  } finally {
+    Math.random = vrai;
+  }
+}
+
 export async function rendreBatterieMidi(opts: OptionsDrumSynth): Promise<AudioBuffer> {
-  const { notes, volume, sampleRate = 44100 } = opts;
+  const { notes, volume, sampleRate = 44100, graine } = opts;
 
   const dureeTotale = notes.length > 0
     ? Math.max(0.5, Math.max(...notes.map((n) => n.fin)) + 0.5)
@@ -408,7 +459,7 @@ export async function rendreBatterieMidi(opts: OptionsDrumSynth): Promise<AudioB
       // Inutile de rendre une queue plus longue que le morceau : l'ancien rendu
       // coupait les sons au bout du tampon, la recopie fait de même.
       const duree = Math.min(dureeTotale, secondesDeclenchement(d.duree) + def.queue);
-      const rendu = await Offline(
+      const rendu = await avecHasardSeme(graine, `${d.voix}|${d.duree}|${d.hauteur}`, () => Offline(
         () => {
           // Vélocité 1 et volume 0 dB : les deux sont des gains exacts, la
           // recopie applique le produit. Vérifié dans l'app avant d'y compter.
@@ -422,7 +473,7 @@ export async function rendreBatterieMidi(opts: OptionsDrumSynth): Promise<AudioB
         duree,
         2,
         sampleRate,
-      );
+      ));
       const buf = audioBufferDepuisTone(rendu);
       // COPIE, et non la vue rendue par `getChannelData` : l'échantillon survit
       // au tampon de Tone, qui est libéré à la sortie de cette itération. Sous

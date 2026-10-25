@@ -181,6 +181,24 @@ DEV_URL=http://localhost:5175 ECRIRE_EMPREINTES=1 npx playwright test tests-e2e/
 
   **Relire le diff avant de committer** : une empreinte qui change est soit un progrès voulu, soit
   exactement le défaut que ce fichier existe pour attraper.
+- **`tests-e2e/empreintes-exemples.json` + `empreintes-exemples.spec.ts`** — l'empreinte du son que
+  rend **chaque exemple livré**, chaîne entière, un relevé par aperçu audio. Là où la base
+  précédente surveille des composants **isolés** nourris d'un son d'essai, celle-ci surveille ce
+  qu'on **entend** en ouvrant un exemple et en pressant Lancer : un défaut né de la rencontre de
+  deux composants n'est visible que d'ici. C'est ce qui manquait le jour où « Étaler sur le
+  clavier » a rendu cent trente cents de faux avec tous les nœuds au vert.
+
+```bash
+npm run test:empreintes-exemples
+EXEMPLE=un-son-projete-en-microtonal npm run test:empreintes-exemples
+ECRIRE_EMPREINTES_EXEMPLES=1 npm run test:empreintes-exemples
+```
+
+  Il **mesure son propre bruit** avant de surveiller : l'établissement joue chaque exemple trois
+  fois et déclare *variable* ce qui ne se reproduit pas. La comparaison tolère un pour cent sur la
+  valeur efficace et cinq sur la crête — une crête est **un seul échantillon sur des millions**,
+  donc la statistique la plus fragile du relevé. Les exemples qui attendent un fichier de
+  l'utilisateur sont hors de portée, mécaniquement.
 - **`src/docs/couverture-empreintes.test.ts`** — refuse qu'un worker de calcul existe sans être
   réclamé par un composant surveillé, et exige que tout dialogue de worker soit inscrit dans la
   liste qu'il consulte. Sortir un calcul du fil force donc à étendre la surveillance.
