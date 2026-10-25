@@ -1759,7 +1759,7 @@ Generates a complete loop: deterministic chord progression (style or custom Roma
 | Density | number | 70 % | 0 – 100 %, step 1 | Probability of producing a melodic note at each step. |
 | Repetition | number | 25 % | 0 – 100 %, step 1 | Tendency to repeat the previous melodic note. |
 | Silence | number | 10 % | 0 – 50 %, step 1 | Probability of melodic silence at each step. |
-| Seed | number | 0 | 0 – 999999, step 1 | Reservoir seed (0 = random each run). Same seed = same melody. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed of the melodic reservoir and of the percussion noise. The same seed renders the same sound, note for note and hit for hit. At zero, a seed is drawn on each run, and the node's message states the one it used. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | General volume for melodic and harmonic parts. |
 | Drum volume | number | 100 % | 0 – 200 %, step 1 | Drum volume, relative to the melodic parts. The two buses are levelled separately before being summed: the melodic parts to a 0.80 peak, the drums to 0.50 at 100%. The melody's level therefore no longer depends on the drums, the whole mix used to be scaled down to the drum hits' peak, and the melodic parts came out 9 dB lower with drums at 100 than at 0. Above 100 the drums dominate; at 0 they are gone. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. Drums always use the internal drum synth. |

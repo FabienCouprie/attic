@@ -70,6 +70,30 @@ const CONFORME = new Set([
 //    au sort sans paramètre, plutôt que de passer inaperçu.
 const SANS_GRAINE = new Set<string>([]);
 
+// 4. La substitution BORNÉE de `Math.random`, le temps d'un rendu, puis restaurée.
+//
+//    POURQUOI CETTE CATÉGORIE EXISTE, ET CE QU'ELLE A COÛTÉ DE NE PAS EXISTER. « Boîte à groove »
+//    annonçait « graine 4242 » dans son propre message et rendait deux sons différents sur deux
+//    passes du banc : 0,172357839 puis 0,170609203. Sa génération MIDI était bien semée ; son rendu
+//    de batterie ne l'était pas. La cause, instrumentée dans l'application : **441 001 appels à
+//    `Math.random` pendant un seul rendu**, tous dans Tone — 441 000 pour remplir le tampon de bruit
+//    blanc, et un pour choisir le décalage de départ de la frappe dans ce tampon. Tone n'expose
+//    aucune graine, et ses voix à bruit sont la caisse claire et le clap.
+//
+//    LES DEUX AUTRES VOIES ONT ÉTÉ PESÉES. Réécrire ces deux voix avec notre propre bruit respectait
+//    ce garde sans exception, mais déplaçait toutes les empreintes d'un rendu contenant une batterie
+//    pour un changement que personne n'entend, un bruit blanc valant statistiquement n'importe quel
+//    autre. Laisser le défaut gardait un composant qui ment sur son propre message.
+//
+//    CE QUI REND L'EXCEPTION TENABLE, et sans quoi elle ne serait qu'une tolérance : la fenêtre est
+//    SYNCHRONE — Tone consomme son hasard dans le rappel de `Offline`, non pendant l'attente du
+//    rendu —, chaque échantillon REPART d'une graine propre, et la restauration est exigée
+//    structurellement ci-dessous ET éprouvée sur le chemin d'exception par
+//    `audio/hasard-borne.test.ts`.
+const SUBSTITUTION_BORNEE = new Set<string>([
+  "audio/tone-synths.ts",
+]);
+
 function fichiersSource(dossier: string, acc: string[] = []): string[] {
   for (const entree of readdirSync(dossier)) {
     const chemin = join(dossier, entree);
@@ -95,7 +119,7 @@ function lignesAvecMathRandom(): Map<string, string[]> {
 
 describe("couverture des graines", () => {
   it("aucun fichier n'appelle Math.random() en dehors de l'inventaire", () => {
-    const connus = new Set([...HORS_RENDU, ...CONFORME, ...SANS_GRAINE]);
+    const connus = new Set([...HORS_RENDU, ...CONFORME, ...SANS_GRAINE, ...SUBSTITUTION_BORNEE]);
     const inattendus = [...lignesAvecMathRandom().keys()].filter((f) => !connus.has(f)).sort();
     expect(inattendus, [
       "Ces fichiers appellent Math.random() sans figurer dans l'inventaire.",
@@ -141,8 +165,26 @@ describe("couverture des graines", () => {
     // détourner le hasard des autres.
     const coupables = fichiersSource(RACINE)
       .filter((c) => /Math\.random\s*=/.test(readFileSync(c, "utf8")))
-      .map((c) => relative(RACINE, c).split(sep).join("/"));
+      .map((c) => relative(RACINE, c).split(sep).join("/"))
+      .filter((f) => !SUBSTITUTION_BORNEE.has(f));
     expect(coupables).toEqual([]);
+  });
+
+  it("une substitution déclarée bornée RESTAURE dans un finally", () => {
+    // CE QUI SÉPARE UNE SUBSTITUTION BORNÉE D'UN DÉTOURNEMENT est la restauration, et c'est
+    // exactement ce que le fichier fautif d'origine n'avait pas. L'inscrire dans un inventaire ne
+    // suffit donc pas : on l'exige dans le texte. Le comportement, lui, est éprouvé sur le chemin
+    // d'exception par `audio/hasard-borne.test.ts` — une forme ne prouve pas un comportement, mais
+    // elle attrape la relecture distraite qui déplacerait l'affectation hors du `try`.
+    const sansFilet: string[] = [];
+    for (const f of SUBSTITUTION_BORNEE) {
+      const source = readFileSync(join(RACINE, f), "utf8");
+      if (!/finally\s*\{[^}]*Math\.random\s*=/.test(source)) sansFilet.push(f);
+    }
+    expect(sansFilet, [
+      "Un fichier déclaré « substitution bornée » ne restaure pas Math.random dans un finally.",
+      "Sans restauration garantie, une exception laisse toute l'application sur le générateur semé.",
+    ].join("\n")).toEqual([]);
   });
 
   it("les modules DSP migrés acceptent une source de hasard", () => {

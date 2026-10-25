@@ -1,0 +1,590 @@
+{
+  "profondeurExport": 32,
+  "toleranceEfficace": 0.01,
+  "toleranceCrete": 0.01,
+  "toleranceCentroideDemiTons": 0.1,
+  "horsDePortee": {
+    "audio-vers-midi.json": "attend un fichier de l'utilisateur par « entree-audio »",
+    "une-chanson-a-l-envers-et-salee.json": "attend un fichier de l'utilisateur par « entree-audio »",
+    "une-chanson-elargie.json": "attend un fichier de l'utilisateur par « entree-audio »",
+    "une-piste-devient-une-chanson.json": "attend un fichier de l'utilisateur par « entree-audio »",
+    "une-voix-devient-de-la-musique.json": "attend un fichier de l'utilisateur par « entree-audio »"
+  },
+  "defautsConnus": {},
+  "variables": {
+    "ton-glisse-en-trompette-etiree.json": "ton-glisse-en-trompette-etiree.json · ddsp  (2.918 % d'efficace, 9.938 % de crête, 0.301 demi-ton de couleur)\n    avant : 0.000205/0.005732 · 2230.3 Hz · 192000 trames · 1ch · 48000 Hz\n    après : 0.000212/0.006365 · 2191.8 Hz · 192000 trames · 1ch · 48000 Hz | ton-glisse-en-trompette-etiree.json · stretch  (11.965 % d'efficace, 0.000 % de crête, 0.199 demi-ton de couleur)\n    avant : 0.052575/0.707946 · 2271.0 Hz · 770048 trames · 1ch · 48000 Hz\n    après : 0.059721/0.707946 · 2245.1 Hz · 77004"
+  },
+  "exemples": {
+    "canon-de-proportions.json": {
+      "lecteurs": {
+        "ecoute": {
+          "rms": 0.07160718577145848,
+          "crete": 0.4967013895511627,
+          "trames": 2205000,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 230.73547409623237
+        },
+        "zones": {
+          "rms": 0.07160718577145848,
+          "crete": 0.4967013895511627,
+          "trames": 2205000,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 230.73547409623237
+        },
+        "masque": {
+          "rms": 0.02205784054404054,
+          "crete": 0.3640034794807434,
+          "trames": 2205000,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 315.5013197451931
+        },
+        "reverbe": {
+          "rms": 0.0162431711040047,
+          "crete": 0.24354296922683716,
+          "trames": 2381400,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 266.6700031286324
+        },
+        "retour": {
+          "rms": 0.06466522896708549,
+          "crete": 0.9695620536804199,
+          "trames": 2381400,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 266.6702780811968
+        },
+        "dosage": {
+          "rms": 0.08147305395007208,
+          "crete": 0.822073757648468,
+          "trames": 2381400,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 241.09794279267265
+        },
+        "onde": {
+          "rms": 0.08147305395007208,
+          "crete": 0.822073757648468,
+          "trames": 2381400,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 241.09794279267265
+        },
+        "fiche": {
+          "rms": 0.08147305395007208,
+          "crete": 0.822073757648468,
+          "trames": 2381400,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 241.09794279267265
+        }
+      },
+      "erreurs": []
+    },
+    "cercle-des-gammes.json": {
+      "lecteurs": {
+        "ecoute": {
+          "rms": 0.17391848184950626,
+          "crete": 0.5038090944290161,
+          "trames": 220500,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 368.04159966306634
+        }
+      },
+      "erreurs": []
+    },
+    "compositeur-sur-une-pulsion.json": {
+      "lecteurs": {
+        "pulsion": {
+          "rms": 0.025362327070868804,
+          "crete": 0.36358562111854553,
+          "trames": 1058400,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 738.198255456192
+        },
+        "accords": {
+          "rms": 0.04110814239714826,
+          "crete": 0.27948662638664246,
+          "trames": 1058400,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1527.4242993611801
+        },
+        "ecoute": {
+          "rms": 0.03854458228956324,
+          "crete": 0.27755242586135864,
+          "trames": 1058399,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 568.8581981428258
+        },
+        "ampli": {
+          "rms": 0.08202152532043784,
+          "crete": 0.5576491355895996,
+          "trames": 1058400,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1527.4242974867996
+        },
+        "mix": {
+          "rms": 0.09270961080048729,
+          "crete": 0.6616144776344299,
+          "trames": 1058400,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1386.2050272089718
+        }
+      },
+      "erreurs": []
+    },
+    "deux-effets-deux-passages.json": {
+      "lecteurs": {
+        "source": {
+          "rms": 0.13932899246747055,
+          "crete": 0.28318989276885986,
+          "trames": 176400,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 4232.592633198994
+        },
+        "zones1": {
+          "rms": 0.13932899246747055,
+          "crete": 0.28318989276885986,
+          "trames": 176400,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 4232.592633198994
+        },
+        "zones2": {
+          "rms": 0.13932899246747055,
+          "crete": 0.28318989276885986,
+          "trames": 176400,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 4232.592633198994
+        },
+        "passe-bas": {
+          "rms": 0.13677781977779063,
+          "crete": 0.20588402450084686,
+          "trames": 176400,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 333.4251295309903
+        },
+        "dosage1": {
+          "rms": 0.13829232360669544,
+          "crete": 0.28318989276885986,
+          "trames": 176400,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 3235.192266764085
+        },
+        "passe-haut": {
+          "rms": 0.039160938600282545,
+          "crete": 0.4158574640750885,
+          "trames": 176400,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 5441.063317530849
+        },
+        "dosage2": {
+          "rms": 0.12033632803062473,
+          "crete": 0.4158574640750885,
+          "trames": 176400,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 3921.548599665219
+        },
+        "vue": {
+          "rms": 0.12033632803062473,
+          "crete": 0.4158574640750885,
+          "trames": 176400,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 3921.548599665219
+        }
+      },
+      "erreurs": []
+    },
+    "deux-sons-deux-roles.json": {
+      "lecteurs": {
+        "sonAccords": {
+          "rms": 0.2819534592541024,
+          "crete": 0.49000000953674316,
+          "trames": 88200,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 562.3846605643386
+        },
+        "banqueAccords": {
+          "rms": 0.16511595224207762,
+          "crete": 0.3148917853832245,
+          "trames": 110250,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1791.7497318461205
+        },
+        "jouerAccords": {
+          "rms": 0.14361980569868926,
+          "crete": 0.5011789798736572,
+          "trames": 154350,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 807.4499957459767
+        },
+        "sonMelodie": {
+          "rms": 0.10551977728343062,
+          "crete": 0.7200000286102295,
+          "trames": 66150,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 261.5810198657407
+        },
+        "banqueMelodie": {
+          "rms": 0.1615836288246198,
+          "crete": 0.4535454213619232,
+          "trames": 110250,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1341.5567169611566
+        },
+        "jouerMelodie": {
+          "rms": 0.09597105866263254,
+          "crete": 0.4625149965286255,
+          "trames": 143325,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 538.3450180011541
+        },
+        "melange": {
+          "rms": 0.16735168766542402,
+          "crete": 0.6213159561157227,
+          "trames": 154350,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 764.9249647250435
+        },
+        "sortie": {
+          "rms": 0.16735168766542402,
+          "crete": 0.6213159561157227,
+          "trames": 154350,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 764.9249647250435
+        }
+      },
+      "erreurs": []
+    },
+    "gammes-au-clavier.json": {
+      "lecteurs": {
+        "do-majeur": {
+          "rms": 0.01998449811903144,
+          "crete": 0.09038587659597397,
+          "trames": 360818,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1880.6407710107121
+        },
+        "la-mineur": {
+          "rms": 0.020913146666738436,
+          "crete": 0.09038587659597397,
+          "trames": 360818,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1770.0429257524788
+        },
+        "diminuee": {
+          "rms": 0.01914311208640679,
+          "crete": 0.09038587659597397,
+          "trames": 216491,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1954.3642868471686
+        },
+        "clavier": {
+          "rms": 0.0201591274484162,
+          "crete": 0.09038587659597397,
+          "trames": 938127,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1856.1535798717318
+        }
+      },
+      "erreurs": []
+    },
+    "generer-une-piste-audio.json": {
+      "lecteurs": {},
+      "erreurs": [
+        "noeud-1 : Nécessite Electron.",
+        "noeud-2"
+      ]
+    },
+    "groove-etire-et-tourne.json": {
+      "lecteurs": {
+        "groove": {
+          "rms": 0.1898987966000055,
+          "crete": 0.9322088956832886,
+          "trames": 396199,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 3099.8833542477782
+        },
+        "stretch": {
+          "rms": 0.10840441516219039,
+          "crete": 0.7079457640647888,
+          "trames": 3170304,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 4722.421989956324
+        },
+        "phaser": {
+          "rms": 0.09772279106377163,
+          "crete": 0.6344397068023682,
+          "trames": 3170304,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 5195.959922467665
+        },
+        "ambi": {
+          "rms": 0.04886139653164437,
+          "crete": 0.3172198235988617,
+          "trames": 3170304,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 5195.959913761334
+        },
+        "reverb": {
+          "rms": 0.04110968932876762,
+          "crete": 0.23440101742744446,
+          "trames": 3297312,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 3671.7433819001744
+        },
+        "ecoute": {
+          "rms": 0.04110968932876762,
+          "crete": 0.23440101742744446,
+          "trames": 3297312,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 3671.7433819001744
+        }
+      },
+      "erreurs": []
+    },
+    "patch-openmusic.json": {
+      "lecteurs": {
+        "rendu1": {
+          "rms": 0.048109088840922944,
+          "crete": 0.09921017289161682,
+          "trames": 352800,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 749.8864887480898
+        },
+        "serielles": {
+          "rms": 0.022114334595783824,
+          "crete": 0.09038587659597397,
+          "trames": 878252,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 2014.1830737647617
+        },
+        "temper": {
+          "rms": 0.019300576000292467,
+          "crete": 0.08865827322006226,
+          "trames": 878234,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 2055.8403200286575
+        },
+        "canon": {
+          "rms": 0.023083189568845922,
+          "crete": 0.08920790255069733,
+          "trames": 792477,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 2001.1981687823309
+        },
+        "ecoute": {
+          "rms": 0.07199221249364358,
+          "crete": 0.3040107190608978,
+          "trames": 1409868,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 348.3361737008906
+        }
+      },
+      "erreurs": []
+    },
+    "un-cri-etale-sur-le-clavier.json": {
+      "lecteurs": {},
+      "erreurs": [
+        "clavier",
+        "cri : Ce composant demande l'application de bureau.",
+        "ecoute",
+        "extrait",
+        "jouer",
+        "phase",
+        "selecteur",
+        "stretch"
+      ]
+    },
+    "un-son-projete-en-microtonal.json": {
+      "lecteurs": {
+        "cloche": {
+          "rms": 0.031171743322327507,
+          "crete": 0.6930000185966492,
+          "trames": 144000,
+          "canaux": 2,
+          "taux": 48000,
+          "centroide": 9219.947390105683
+        },
+        "echelle": {
+          "rms": 0.1508169863295677,
+          "crete": 0.25195756554603577,
+          "trames": 229320,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 377.0828946153843
+        },
+        "ecoute-echelle": {
+          "rms": 0.1508169863295677,
+          "crete": 0.25195756554603577,
+          "trames": 229320,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 377.0828946153843
+        },
+        "etale": {
+          "rms": 0.05101671145375362,
+          "crete": 0.4092382788658142,
+          "trames": 710400,
+          "canaux": 2,
+          "taux": 48000,
+          "centroide": 12382.416955041594
+        },
+        "ecoute-banque": {
+          "rms": 0.05101671145375362,
+          "crete": 0.4092382788658142,
+          "trames": 710400,
+          "canaux": 2,
+          "taux": 48000,
+          "centroide": 12382.416955041594
+        }
+      },
+      "erreurs": []
+    },
+    "un-synthe-et-sa-bulle-d-effets.json": {
+      "lecteurs": {
+        "synth": {
+          "rms": 0.04583004437327083,
+          "crete": 0.2745440900325775,
+          "trames": 66150,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 582.5245806630053
+        },
+        "bulle-effets": {
+          "rms": 0.019119091974576962,
+          "crete": 0.22812800109386444,
+          "trames": 507150,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 672.7811877562369
+        },
+        "ecoute": {
+          "rms": 0.019119091974576962,
+          "crete": 0.22812800109386444,
+          "trames": 507150,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 672.7811877562369
+        }
+      },
+      "erreurs": []
+    },
+    "une-partition-pour-deux-timbres.json": {
+      "lecteurs": {
+        "partition": {
+          "rms": 0.02537480552390154,
+          "crete": 0.21776525676250458,
+          "trames": 705600,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1414.8986167841979
+        },
+        "sonMelodie": {
+          "rms": 0.10551977728343062,
+          "crete": 0.7200000286102295,
+          "trames": 66150,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 261.5810198657407
+        },
+        "banqueMelodie": {
+          "rms": 0.1615836288246198,
+          "crete": 0.4535454213619232,
+          "trames": 110250,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1341.5567169611566
+        },
+        "sonAccords": {
+          "rms": 0.2819534592541024,
+          "crete": 0.49000000953674316,
+          "trames": 88200,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 562.3846605643386
+        },
+        "banqueAccords": {
+          "rms": 0.16511595224207762,
+          "crete": 0.3148917853832245,
+          "trames": 110250,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 1791.7497318461205
+        },
+        "jouerMelodie": {
+          "rms": 0.056210152967015696,
+          "crete": 0.34135332703590393,
+          "trames": 716625,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 391.57269891364024
+        },
+        "jouerAccords": {
+          "rms": 0.14034021980810998,
+          "crete": 0.599982500076294,
+          "trames": 723241,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 862.5196608040675
+        },
+        "melange": {
+          "rms": 0.1434946812286821,
+          "crete": 0.7556009888648987,
+          "trames": 723242,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 858.9855936518161
+        },
+        "sortie": {
+          "rms": 0.1434946812286821,
+          "crete": 0.7556009888648987,
+          "trames": 723242,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 858.9855936518161
+        }
+      },
+      "erreurs": []
+    }
+  }
+}

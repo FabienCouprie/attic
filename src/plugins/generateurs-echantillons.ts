@@ -267,8 +267,8 @@ export const fiches: FicheAudio[] = ([
         plage: [0, 999999],
         pas: 1,
         defaut: 0,
-        doc: "Graine du réservoir (0 = aléatoire à chaque exécution). Même graine = même mélodie.",
-        docEn: "Reservoir seed (0 = random each run). Same seed = same melody.",
+        doc: "Graine du réservoir mélodique et du bruit des percussions. Une même graine rend le même son, note pour note et frappe pour frappe. À zéro, une graine est tirée à chaque exécution, et le message du nœud indique celle qui a servi.",
+        docEn: "Seed of the melodic reservoir and of the percussion noise. The same seed renders the same sound, note for note and hit for hit. At zero, a seed is drawn on each run, and the node's message states the one it used.",
       },
       {
         nom: "Volume",
@@ -450,7 +450,14 @@ export const fiches: FicheAudio[] = ([
       const drums = batterieAuSoundFont ? [] : notesMidi
         .filter((n) => n.canal === 9)
         .map((n) => ({ note: n.note, velocite: n.velocite, debut: n.debut, fin: n.fin }));
-      const drumBuf = await rendreBatterieMidi({ notes: drums, volume: volumeBatterie, sampleRate });
+      // LA GRAINE VA JUSQU'AU BRUIT DES PERCUSSIONS, et c'est ce qui manquait pour que ce composant
+      // tienne la promesse de son propre message. Il annonçait « graine 4242 » et rendait deux sons
+      // différents sur deux passes : sa génération MIDI était bien semée, son rendu de batterie ne
+      // l'était pas. `graineUtilisee` est celle qu'il a VRAIMENT employée, le zéro du réglage valant
+      // « une nouvelle à chaque exécution ».
+      const drumBuf = await rendreBatterieMidi({
+        notes: drums, volume: volumeBatterie, sampleRate, graine: graineUtilisee,
+      });
 
       const dureeMix = Math.max(dureeTotale, drumBuf.duration, melodicBuf.duration, 0.5);
       const master = new AudioBuffer({

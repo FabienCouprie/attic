@@ -75,7 +75,8 @@
     "valider": "vitest run src/plugins/verbes.test.ts",
     "mesurer": "playwright test tests-e2e/mesurer.spec.ts",
     "comparer": "playwright test tests-e2e/comparer.spec.ts",
-    "ecouter": "playwright test tests-e2e/ecouter.spec.ts"
+    "ecouter": "playwright test tests-e2e/ecouter.spec.ts",
+    "test:empreintes-exemples": "playwright test tests-e2e/empreintes-exemples.spec.ts"
   },
   "build": {
     "appId": "com.attic.audio",
