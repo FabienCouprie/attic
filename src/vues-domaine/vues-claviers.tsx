@@ -8,7 +8,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useReactFlow, NodeResizer } from "@xyflow/react";
 import { useI18n, traduire } from "../i18n";
 import { nomNote } from "./clavier-disposition";
-import { TouchesClavier, useClavierJouable } from "./clavier-jouable";
+import { TouchesClavier, nomDeTouche, useClavierJouable } from "./clavier-jouable";
 import { useStatut } from "../ui/statuts";
 import { ecouterTampon } from "../ui/niveau-ecoute";
 import { parametresLecture, rendreNotes, voixPourNote, type Banque } from "../audio/clavier-banque";
@@ -284,16 +284,23 @@ export function ClavierSfz({ id, data }: VueProps) {
         {progres && <span className="clavier-nb">{progres}</span>}
         {!progres && etat && (
           <span className="clavier-nb" data-zones={etat.zones}>
-            🎹 {etat.nom} — {traduire("clavier.sfz.zones", String(etat.zones), nomNote(etat.basse), nomNote(etat.haute))}
+            {/* L'ÉTENDUE SE DIT EN HAUTEURS, comme les touches : sur une banque accordée, « de do4
+                à do8 » annoncerait un compas que personne n'entend. */}
+            🎹 {etat.nom} — {traduire("clavier.sfz.zones", String(etat.zones),
+              nomDeTouche(banqueRef.current, etat.basse), nomDeTouche(banqueRef.current, etat.haute))}
           </span>
         )}
         {!progres && !etat && <span className="clavier-nb">{t("clavier.sfz.rien")}</span>}
         {erreur && <span className="clavier-nb" style={{ color: "#e06c75" }}>{erreur}</span>}
         {/* LES DEUX FLÈCHES QUI AGISSENT, ET PAS UNE DE PLUS : l'étiquette annonçait « ←↑→ » quand
-            seules la haute et la basse déplacent l'octave. Rien n'est écouté à gauche ni à droite. */}
+            seules la haute et la basse déplacent l'octave. Rien n'est écouté à gauche ni à droite.
+
+            ET CES DEUX NOMS RESTENT TEMPÉRÉS, VOLONTAIREMENT : ils disent QUELLES TOUCHES les
+            lettres du clavier de l'ordinateur atteignent, non à quelle hauteur elles sonnent. C'est
+            une adresse sur le piano, et le déplacement s'y compte en douze touches. */}
         <span className="clavier-octave">↑↓ {nomNote(clavier.octaveClavier * 12)}–{nomNote(clavier.octaveClavier * 12 + 11)}</span>
       </div>
-      <TouchesClavier clavier={clavier} />
+      <TouchesClavier clavier={clavier} banque={banqueRef.current} />
     </div>
   );
 }

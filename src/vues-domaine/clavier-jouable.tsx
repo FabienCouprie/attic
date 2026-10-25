@@ -15,6 +15,7 @@ import { useReactFlow, useStore } from "@xyflow/react";
 import { clavierDoitJouer } from "./clavier-physique";
 import { octaveDeplacee, pasDOctave, tableDeFrappe } from "./clavier-frappe";
 import { NOTE_MAX, NOTE_MIN, disposition, largeurBlanchePour, nomNote, noteALaPosition } from "./clavier-disposition";
+import { hauteurJouee, type Banque } from "../audio/clavier-banque";
 
 import type { Note } from "../audio/note";
 export const PROPORTION_NOIRE = 0.62;
@@ -268,14 +269,61 @@ export function useClavierJouable(id: string, presseur: Presseur, o: OptionsFrap
 }
 
 /**
+ * LE NOM D'UNE TOUCHE EST CELUI DE LA HAUTEUR QU'ELLE FAIT ENTENDRE.
+ *
+ * Sur un clavier ordinaire les deux coïncident, et la question ne se pose pas. Une banque étalée en
+ * DEGRÉS fait sonner la touche 65 à `E4+42`, et ce clavier écrivait pourtant `F4` : le nom du
+ * demi-ton qu'elle OCCUPE. Relevé par Fabien, côte à côte avec le réseau isomorphe qui nomme des
+ * hauteurs — mesurés, les deux claviers sonnaient à 0,000 cent l'un de l'autre, seuls leurs noms
+ * divergeaient.
+ *
+ * LE NOM DESCEND DU SON : `hauteurJouee` part du rapport que le haut-parleur reçoit, et non d'un
+ * calcul parallèle qui pourrait en dériver. Sans banque accordée, la touche rend son demi-ton.
+ */
+export function nomDeTouche(banque: Banque | null | undefined, note: number): string {
+  if (!banque?.accordee) return nomNote(note);
+  const h = hauteurJouee(banque, note);
+  return h === null ? nomNote(note) : nomNote(h);
+}
+
+/**
+ * Quelles touches portent leur nom à l'écran : les TONIQUES d'une banque accordée, les do sinon.
+ *
+ * Un repère tous les douze demi-tons n'a plus de sens quand la période n'est pas l'octave ni le
+ * nombre de degrés douze : il tomberait au hasard dans l'échelle.
+ */
+export function estUnRepere(banque: Banque | null | undefined, note: number): boolean {
+  const a = banque?.accordee;
+  if (!a || a.degres <= 0) return ((note % 12) + 12) % 12 === 0;
+  return (((note - a.tonique) % a.degres) + a.degres) % a.degres === 0;
+}
+
+/**
  * Les touches, telles qu'on les voit et telles qu'on les joue.
  *
  * Chaque touche est un vrai bouton, portant sa hauteur et son etat enfonce : on
  * peut la lire, la cibler au clavier, et la designer dans un test. Le pointeur,
  * lui, est traite sur le conteneur pour que le glissando fonctionne.
  */
-export function TouchesClavier({ clavier }: { clavier: ReturnType<typeof useClavierJouable> }) {
+export function TouchesClavier({ clavier, banque }: {
+  clavier: ReturnType<typeof useClavierJouable>;
+  /**
+   * La banque que ce clavier joue, quand il en a une.
+   *
+   * ELLE NE SERT QU'À NOMMER, et c'est un seul argument plutôt que deux fonctions recopiées par
+   * chaque vue : la règle vit dans `nomDeTouche` et `estUnRepere`, au même endroit pour tout le
+   * monde. Absente, le clavier est tempéré et rien ne change.
+   */
+  banque?: Banque | null;
+}) {
   const { dispo, hauteurTouches, touches, touchesRef } = clavier;
+  const nommer = (note: number) => nomDeTouche(banque, note);
+  const etiqueter = (note: number) => estUnRepere(banque, note);
+  // LA MARQUE DE TONIQUE N'EXISTE QUE SUR UNE BANQUE ACCORDÉE. Un clavier tempéré garderait sinon
+  // sept do peints en jaune, ce que personne n'a demandé ; et sur une banque accordée la tonique
+  // peut tomber sur une touche NOIRE, trop étroite pour porter un nom — la couleur est alors sa
+  // seule marque, comme la case tonique du réseau isomorphe.
+  const estTonique = (note: number) => Boolean(banque?.accordee) && estUnRepere(banque, note);
   return (
     <div className="clavier-touches"
       ref={touchesRef}
@@ -290,16 +338,16 @@ export function TouchesClavier({ clavier }: { clavier: ReturnType<typeof useClav
         style={{ width: dispo.largeurTotale, position: "relative", height: hauteurTouches }}>
         {dispo.blanches.map((b) => (
           <button key={b.note} type="button" tabIndex={-1}
-            className={"clavier-blanche" + (touches.has(b.note) ? " enfoncee" : "")}
-            data-note={b.note} data-pitch={nomNote(b.note)} aria-pressed={touches.has(b.note)}
+            className={"clavier-blanche" + (estTonique(b.note) ? " tonique" : "") + (touches.has(b.note) ? " enfoncee" : "")}
+            data-note={b.note} data-pitch={nommer(b.note)} aria-pressed={touches.has(b.note)}
             style={{ position: "absolute", left: b.x, width: b.largeur - 1, height: hauteurTouches, top: 0 }}>
-            {b.note % 12 === 0 && <span className="clavier-etiquette">{nomNote(b.note)}</span>}
+            {etiqueter(b.note) && <span className="clavier-etiquette">{nommer(b.note)}</span>}
           </button>
         ))}
         {dispo.noires.map((k) => (
           <button key={k.note} type="button" tabIndex={-1}
-            className={"clavier-noire" + (touches.has(k.note) ? " enfoncee" : "")}
-            data-note={k.note} data-pitch={nomNote(k.note)} aria-pressed={touches.has(k.note)}
+            className={"clavier-noire" + (estTonique(k.note) ? " tonique" : "") + (touches.has(k.note) ? " enfoncee" : "")}
+            data-note={k.note} data-pitch={nommer(k.note)} aria-pressed={touches.has(k.note)}
             style={{ position: "absolute", left: k.x, width: k.largeur, height: Math.round(hauteurTouches * PROPORTION_NOIRE), top: 0 }} />
         ))}
       </div>

@@ -17,7 +17,9 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
  * Retourne null si la note est invalide.
  */
 import { noteVersFrequence } from "./generateurs-aides";
-import { accordageEgal, decrireAccordage, type Accordage } from "../audio/accordage";
+import { accordageEgal, decrireAccordage, degrePlusProche, type Accordage } from "../audio/accordage";
+import { rendreNotes, type Banque } from "../audio/clavier-banque";
+import { deposerBanque } from "../audio/banques-vives";
 import { CASES, etendue, sautDeRangee } from "../audio/clavier-isomorphe";
 import type { Sequence } from "../audio/sequence";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
@@ -73,9 +75,18 @@ export const fiches: FicheAudio[] = ([
     univers: "Entrées", famille: "Génération",
     resume: "Joue les degrés d'un accordage au clavier de l'ordinateur, en réseau.",
     resumeEn: "Plays a tuning's degrees from the computer keyboard, as a lattice.",
-    notice: "Joue les degrés d'un accordage au clavier de l'ordinateur. Les quatre rangées de lettres et de chiffres forment un réseau de quarante et une cases : une case vers la droite ajoute un degré, une rangée vers le haut en ajoute le nombre que « Saut de rangée » désigne. Un même intervalle garde ainsi la même forme sous les doigts, à n'importe quelle hauteur et dans n'importe quel accordage.\n\nL'entrée « Accordage » porte l'échelle à jouer. Le réseau se construit sur elle dès que le graphe a été lancé une fois. Sans entrée branchée, il se construit sur le tempérament égal que « Degrés par période » donne, et le message du nœud nomme alors cette source.\n\n« Saut de rangée » désigne un intervalle et non un nombre de degrés : la quinte la plus proche vaut sept degrés dans un tempérament à douze, onze dans un tempérament à dix-neuf, dix-huit dans un tempérament à trente et un. L'option « un degré » fait des rangées la suite des colonnes, et le réseau couvre alors l'échelle degré par degré.\n\n« Tonique » donne la hauteur du degré zéro, en numéro de note MIDI, le do central valant 60. Elle remplace celle que l'accordage porte. La case en bas à gauche la joue, et toutes les cases du même degré sont marquées de la couleur de l'accordage.\n\n« Volume » règle le niveau de ce qui s'entend sous les doigts comme celui de la sortie « Audio ».\n\nLes flèches haut et bas déplacent le réseau d'une période, de trois tours au plus de part et d'autre. Chaque case porte la lettre de la touche qui la joue, lue sur la disposition de clavier en service, son degré dans la période, et la hauteur jouée avec son écart au demi-ton tempéré quand il y en a un. La position de la touche décide, non la lettre imprimée dessus.\n\nLe bouton ⏺ ouvre l'enregistrement, ⏹ le ferme, ▶ rejoue ce qui a été enregistré et 🗑 l'efface. La vélocité vient du rythme de frappe : jouer vite fait sonner plus fort.\n\nLa sortie « Séquence » rend les notes enregistrées, hauteurs fractionnaires comprises. La sortie « Audio » les rend en synthèse interne, dont la conversion en fréquence est continue. Aucune sortie MIDI n'est offerte : un fichier MIDI porte la hauteur sur un octet entier, où un degré fractionnaire serait arrondi.",
-    noticeEn: "Plays a tuning's degrees from the computer keyboard. The four rows of letters and digits form a lattice of forty-one cells: one cell to the right adds one degree, one row upwards adds the number « Row step » names. The same interval therefore keeps the same shape under the fingers, at any pitch and in any tuning.\n\nThe « Tuning » input carries the scale to play. The lattice is built on it as soon as the graph has been run once. With no input connected, it is built on the equal temperament « Degrees per period » gives, and the node writes beside the lattice which source it comes from.\n\n« Row step » names an interval and not a number of degrees: the nearest fifth is seven degrees in a twelve-degree temperament, eleven in a nineteen-degree one, eighteen in a thirty-one-degree one. The « one degree » option makes the rows continue the columns, and the lattice then runs along the scale instead of stacking it.\n\n« Tonic » gives the pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries. The bottom left cell plays it, and every cell of the same degree is marked in the tuning's colour.\n\n« Volume » sets the level of what sounds under the fingers as well as that of the « Audio » output.\n\nThe up and down arrows move the lattice by one period, by at most three turns either way. Each cell carries the letter of the key that plays it, read from the keyboard layout in use, its degree within the period, and the pitch played with its deviation from the tempered semitone when there is one. The key's position decides, not the letter printed on it.\n\nThe ⏺ button opens recording, ⏹ closes it, ▶ replays what was recorded and 🗑 clears it. Velocity comes from the striking rhythm: playing fast sounds louder.\n\nThe « Sequence » output returns the recorded notes, fractional pitches included. The « Audio » output renders them with the internal synthesis, whose pitch-to-frequency conversion is continuous. No MIDI output is offered: a MIDI file carries pitch in a whole byte, where a fractional degree would be rounded.",
-    entrees: [{ nom: "Accordage", nomEn: "Tuning", type: "accordage" }],
+    notice: "Joue les degrés d'un accordage au clavier de l'ordinateur. Les quatre rangées de lettres et de chiffres forment un réseau de quarante et une cases : une case vers la droite ajoute un degré, une rangée vers le haut en ajoute le nombre que « Saut de rangée » désigne. Un même intervalle garde ainsi la même forme sous les doigts, à n'importe quelle hauteur et dans n'importe quel accordage.\n\nL'entrée « Accordage » porte l'échelle à jouer. Le réseau se construit sur elle dès que le graphe a été lancé une fois. Sans entrée branchée, il se construit sur le tempérament égal que « Degrés par période » donne, et le message du nœud nomme alors cette source.\n\nL'entrée « Banque » porte le son à étaler sur le réseau. Branchée, chaque case joue l'échantillon à sa propre hauteur au lieu de la synthèse interne, et la sortie « Audio » le rend de la même façon ; le message du nœud dit laquelle des deux sonne. La banque arrive de « Étaler sur le clavier » ou de « Clavier SFZ », et le graphe doit avoir été lancé une fois pour que les cases aient de quoi jouer.\n\nCette banque se construit en demi-tons. Le réglage « Compter en » de « Étaler sur le clavier » pose, en degrés, un désaccord par touche que la hauteur d'une case porte déjà : les deux s'ajouteraient. Le mode degrés sert à écrire un instrument SFZ jouable sur un clavier de piano.\n\n« Saut de rangée » désigne un intervalle et non un nombre de degrés : la quinte la plus proche vaut sept degrés dans un tempérament à douze, onze dans un tempérament à dix-neuf, dix-huit dans un tempérament à trente et un. L'option « un degré » fait des rangées la suite des colonnes, et le réseau couvre alors l'échelle degré par degré.\n\n« Tonique » donne la hauteur du degré zéro, en numéro de note MIDI, le do central valant 60. Elle remplace celle que l'accordage porte. La case en bas à gauche la joue, et toutes les cases du même degré sont marquées de la couleur de l'accordage.\n\n« Volume » règle le niveau de ce qui s'entend sous les doigts comme celui de la sortie « Audio ».\n\nLes flèches haut et bas déplacent le réseau d'une période, de trois tours au plus de part et d'autre. Chaque case porte la lettre de la touche qui la joue, lue sur la disposition de clavier en service, son degré dans la période, et la hauteur jouée avec son écart au demi-ton tempéré quand il y en a un. La position de la touche décide, non la lettre imprimée dessus.\n\nLe bouton ⏺ ouvre l'enregistrement, ⏹ le ferme, ▶ rejoue ce qui a été enregistré et 🗑 l'efface. La vélocité vient du rythme de frappe : jouer vite fait sonner plus fort.\n\nLa sortie « Séquence » rend les notes enregistrées, hauteurs fractionnaires comprises. La sortie « Audio » les rend en synthèse interne, dont la conversion en fréquence est continue. Aucune sortie MIDI n'est offerte : un fichier MIDI porte la hauteur sur un octet entier, où un degré fractionnaire serait arrondi.",
+    noticeEn: "Plays a tuning's degrees from the computer keyboard. The four rows of letters and digits form a lattice of forty-one cells: one cell to the right adds one degree, one row upwards adds the number « Row step » names. The same interval therefore keeps the same shape under the fingers, at any pitch and in any tuning.\n\nThe « Tuning » input carries the scale to play. The lattice is built on it as soon as the graph has been run once. With no input connected, it is built on the equal temperament « Degrees per period » gives, and the node writes beside the lattice which source it comes from.\n\nThe « Bank » input carries the sound to spread across the lattice. Connected, each cell plays the sample at its own pitch instead of the internal synthesis, and the « Audio » output renders it the same way; the node's message says which of the two sounds. The bank comes from « Spread Across Keyboard » or « SFZ Keyboard », and the graph must have been run once for the cells to have something to play.\n\nThat bank is built in semitones. The « Count in » setting of « Spread Across Keyboard » lays, in degrees, a per-key detune that a cell's pitch already carries: the two would add up. Degree mode is for writing an SFZ instrument playable on a piano keyboard.\n\n« Row step » names an interval and not a number of degrees: the nearest fifth is seven degrees in a twelve-degree temperament, eleven in a nineteen-degree one, eighteen in a thirty-one-degree one. The « one degree » option makes the rows continue the columns, and the lattice then runs along the scale instead of stacking it.\n\n« Tonic » gives the pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries. The bottom left cell plays it, and every cell of the same degree is marked in the tuning's colour.\n\n« Volume » sets the level of what sounds under the fingers as well as that of the « Audio » output.\n\nThe up and down arrows move the lattice by one period, by at most three turns either way. Each cell carries the letter of the key that plays it, read from the keyboard layout in use, its degree within the period, and the pitch played with its deviation from the tempered semitone when there is one. The key's position decides, not the letter printed on it.\n\nThe ⏺ button opens recording, ⏹ closes it, ▶ replays what was recorded and 🗑 clears it. Velocity comes from the striking rhythm: playing fast sounds louder.\n\nThe « Sequence » output returns the recorded notes, fractional pitches included. The « Audio » output renders them with the internal synthesis, whose pitch-to-frequency conversion is continuous. No MIDI output is offered: a MIDI file carries pitch in a whole byte, where a fractional degree would be rounded.",
+    entrees: [
+      { nom: "Accordage", nomEn: "Tuning", type: "accordage" },
+      // LE PORT EST AJOUTÉ EN DERNIER, toujours : les graphes enregistrés désignent un port par son
+      // RANG, et glisser celui-ci avant l'accordage rebrancherait chaque arête d'un cran.
+      //
+      // ET IL EST FACULTATIF, parce que ce clavier sait sonner sans. Branché, chaque case joue
+      // l'échantillon à SA hauteur au lieu de la synthèse interne : c'est le son étalé sur le
+      // réseau, et non sur les quatre-vingt-huit touches d'un piano.
+      { nom: "Banque", nomEn: "Bank", type: "banque", requis: false },
+    ],
     sorties: [
       { nom: "Séquence", nomEn: "Sequence", type: "sequence" },
       { nom: "Audio", nomEn: "Audio", type: "audio" },
@@ -121,19 +132,41 @@ export const fiches: FicheAudio[] = ([
       // survit donc à un changement de réglage, puisque régler ce composant ne touche pas à
       // l'accordage qu'il a reçu. La vue n'a aucun autre moyen de connaître une entrée.
       const designe = { accordage };
+      // LA BANQUE PASSE PAR LE CACHE DES BANQUES VIVES, et non par `designe` : c'est un objet
+      // VIVANT de plusieurs mégaoctets, dix-neuf tampons audio, et `banques-vives.ts` existe
+      // précisément pour qu'une vue puisse jouer ce que l'exécution vient de calculer.
+      const banque = ctx.entree(1) as Banque | null;
+      const avecBanque = Boolean(banque && banque.zones?.length);
+      if (avecBanque) deposerBanque(ctx.noeud.id, banque!);
+      const timbre = avecBanque
+        ? traduire("msg.iso.banque", String(banque!.zones.length))
+        : traduire("msg.iso.synthese");
       const notes = ctx.noeud.data.sequenceNotes as NoteEvenement[] | undefined;
       if (!notes || !Array.isArray(notes) || notes.length === 0) {
         return {
           valeurs: [null, null], designe,
           message: traduire("msg.iso.prete", String(CASES), String(saut),
-            String(port.degres), port.periodes.toFixed(1), source),
+            String(port.degres), port.periodes.toFixed(1), source, timbre),
         };
       }
       const sequence: Sequence = { notes, tempo: 120, titre: decrireAccordage(accordage, en) };
-      const buf = await rendreSequence(notes, "FM/Oscillateurs", ctx.paramNombre("Volume", 80));
+      // CE QU'ON ENTEND EN JOUANT EST CE QUE LE NŒUD REND, et c'est la règle de `clavier-son.ts` :
+      // la banque branchée rend l'audio comme elle sonne sous les doigts, par la fonction même que
+      // « Clavier SFZ » emploie. Sans banque, la synthèse interne, qui est continue en hauteur.
+      const volume = ctx.paramNombre("Volume", 80);
+      // ET PAR LA MÊME ADRESSE QUE LES DOIGTS. Une banque accordée attend un NUMÉRO DE TOUCHE : les
+      // notes enregistrées portent la hauteur fractionnaire du degré, et la lui donner telle quelle
+      // ajouterait son écart au tempérament une seconde fois. `degrePlusProche` rend le rang, qui
+      // est exact puisque ces hauteurs viennent du même accordage.
+      const pourLaBanque = (ns: NoteEvenement[]) => (!banque?.accordee ? ns : ns.map((n) => ({
+        ...n, note: banque.accordee!.tonique + degrePlusProche(accordage, n.note).rang,
+      })));
+      const buf = avecBanque
+        ? rendreNotes(pourLaBanque(notes) as never, banque!, { volume: volume / 100 })
+        : await rendreSequence(notes, "FM/Oscillateurs", volume);
       return {
         valeurs: [sequence, buf], designe,
-        message: traduire("msg.iso.jouee", String(notes.length), String(CASES), String(saut), source),
+        message: traduire("msg.iso.jouee", String(notes.length), String(CASES), String(saut), source, timbre),
       };
     },
   },

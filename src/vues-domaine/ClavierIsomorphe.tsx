@@ -19,6 +19,8 @@ import { useI18n, traduire, valeurCanoniqueChoix } from "../i18n";
 import { accordageEgal, degresParPeriode, decrireAccordage, type Accordage } from "../audio/accordage";
 import { nomNote } from "../audio/nom-note";
 import { gainDeNote, rendreSequence } from "../audio/midi-sequence";
+import { parametresLecture, voixPourNote, type Banque } from "../audio/clavier-banque";
+import { banqueVive } from "../audio/banques-vives";
 import { reseau, sautDeRangee, tableDuReseau, RANGEES } from "../audio/clavier-isomorphe";
 import { useClavierJouable } from "./clavier-jouable";
 import { ecouterTampon } from "../ui/niveau-ecoute";
@@ -60,6 +62,9 @@ export function ClavierIsomorphe({ id, data, def }: VueProps) {
     [accordage, saut, tour],
   );
   const table = useMemo(() => tableDuReseau(cases), [cases]);
+  // LE RANG D'UNE HAUTEUR, pour adresser une banque déjà accordée par sa TOUCHE. Les hauteurs d'un
+  // réseau sont strictement croissantes avec le rang, donc aucune clé ne s'écrase.
+  const rangParHauteur = useMemo(() => new Map(cases.map((c) => [c.note, c.rang])), [cases]);
 
   // ─── Les lettres de la disposition de l'utilisateur ───
   const [lettres, setLettres] = useState<Map<string, string>>(new Map());
@@ -79,7 +84,64 @@ export function ClavierIsomorphe({ id, data, def }: VueProps) {
   const volumeRef = useRef(80);
   volumeRef.current = Number(params?.["Volume"] ?? 80);
 
+  // LA BANQUE REÇUE, QUAND IL Y EN A UNE. Elle vit dans le cache des banques vives, où l'exécution
+  // la dépose : c'est un objet de plusieurs mégaoctets qui ne tient pas dans les données du nœud.
+  // Il faut donc avoir lancé le graphe une fois, comme pour « Clavier SFZ ».
+  const [banque, setBanque] = useState<Banque | null>(null);
+  useEffect(() => {
+    const voir = () => {
+      const vive = banqueVive(id);
+      setBanque((avant) => (vive?.banque ?? null) !== avant ? (vive?.banque ?? null) : avant);
+    };
+    voir();
+    const minuteur = setInterval(voir, 1000);
+    return () => clearInterval(minuteur);
+  }, [id]);
+
   const clavier = useClavierJouable(id, (note, velocite) => {
+    // LE SON ÉTALÉ SUR LE RÉSEAU, ET C'EST TOUT L'OBJET DE L'ENTRÉE « BANQUE ». La case demande sa
+    // propre hauteur, FRACTIONNAIRE, et `voixPourNote` la sert : son rééchantillonnage calcule
+    // `2^((hauteur − racine)/12)`, qui est continu. Un degré qui ne tombe pas sur un demi-ton sonne
+    // donc à sa place, avec le timbre de l'échantillon et non celui d'un oscillateur.
+    //
+    // UNE BANQUE ACCORDÉE S'ADRESSE PAR TOUCHE, UNE AUTRE PAR HAUTEUR, et la banque le déclare.
+    //
+    // En degrés, « Étaler sur le clavier » pose sur chaque touche le désaccord qui la mène à son
+    // degré : demander la hauteur du degré ajouterait l'écart une seconde fois. Mesuré dans
+    // l'application avant cette distinction : quarante-cinq cents trop bas, puis quatre-vingt-seize
+    // trop haut, tous les nœuds annonçant « Terminé ».
+    //
+    // On lui demande donc sa TOUCHE, `tonique + rang`, et son désaccord fait le reste. Une banque en
+    // demi-tons, qui ne déclare rien, reçoit la hauteur fractionnaire et la rééchantillonne.
+    if (banque) {
+      const rang = rangParHauteur.get(note);
+      const adresse = banque.accordee && rang !== undefined
+        ? banque.accordee.tonique + rang
+        : note;
+      const voix = voixPourNote(banque, adresse, velocite, volumeRef.current / 100);
+      if (!voix) return { arreter: () => {} };
+      const p = parametresLecture(voix);
+      const ctx = getCtx();
+      const source = ctx.createBufferSource();
+      source.buffer = p.audio;
+      source.playbackRate.value = p.vitesse;
+      if (p.boucle) { source.loop = true; source.loopStart = p.boucleDebut; source.loopEnd = p.boucleFin; }
+      const gain = ctx.createGain();
+      gain.gain.value = p.gain;
+      source.connect(gain).connect(ctx.destination);
+      source.start();
+      return {
+        arreter: () => {
+          // Un relâchement en douceur, comme sur « Clavier SFZ » : couper net laisserait un clic.
+          try {
+            const fin = ctx.currentTime + 0.15;
+            gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.0001, fin);
+            source.stop(fin + 0.01);
+          } catch { try { source.stop(); } catch { /* une voix déjà morte */ } }
+        },
+      };
+    }
     // LE NIVEAU EST CELUI DU RENDU, par la formule que `audio/midi-sequence.ts` emploie pour la
     // sortie « Audio » : ce qu'on entend en jouant est ce que le nœud rendra. Un facteur écrit ici
     // aurait fait du jeu en direct une approximation de sa propre sortie.

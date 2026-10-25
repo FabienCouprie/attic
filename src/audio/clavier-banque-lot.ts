@@ -10,6 +10,7 @@
 // voies sont des tableaux, la fréquence d'échantillonnage voyage à côté, et c'est le composant qui
 // refait les tampons une fois les zones revenues.
 
+import { hauteurDuDegre, type Accordage } from "./accordage";
 import { changerTonaliteVoie } from "./effets-spectral";
 import { separerStn } from "./stn";
 import { planZones, type Boucle, type PlanZone } from "./clavier-banque";
@@ -31,6 +32,27 @@ export interface OptionsLotBanque {
   boucle: boolean;
   boucleDebut: number;
   boucleLongueur: number;
+  /**
+   * L'accordage à poser sur le clavier, les mêmes deux champs que `OptionsBanque`.
+   *
+   * POURQUOI ILS DOIVENT VOYAGER, ET CE QU'IL A COÛTÉ DE L'OUBLIER. `preparerBanque` REFAIT le plan
+   * de l'autre côté de la frontière : un plan construit par l'appelant n'arrive jamais ici, seul le
+   * NOMBRE de zones le fait. Le composant calculait donc sa `hauteur` par zone, et la jetait.
+   * `zoneDuLot` lisait `place.hauteur ?? place.racine` sur un plan où `hauteur` était toujours
+   * absente, et chaque échantillon sonnait à la hauteur TEMPÉRÉE de sa racine pendant que le
+   * désaccord de chaque touche se comptait depuis la hauteur de son DEGRÉ. Les deux ne s'accordent
+   * pas, et toute la zone se décale de leur différence.
+   *
+   * MESURÉ DANS L'APPLICATION, au haut-parleur, sur l'exemple microtonal : zéro cent sur la zone de
+   * la tonique, puis +58, −13, +26, +34, +42 et **+130 cents** — plus d'un demi-ton —, chaque palier
+   * valant exactement `racine − hauteurDuDegre(racine)`. Les noms écrits sur le réseau isomorphe
+   * étaient justes ; c'est le son qui ne les suivait pas.
+   *
+   * Absents, rien ne change : le plan reste tempéré, comme il l'a toujours été.
+   */
+  accordage?: Accordage;
+  /** La touche qui porte le degré zéro. Par défaut la référence de l'accordage, arrondie. */
+  toniqueTouche?: number;
 }
 
 /** Une zone, telle qu'elle revient d'un ouvrier : des tableaux, et sa place sur le clavier. */
@@ -53,7 +75,14 @@ export interface PrepareBanque {
 }
 
 export function preparerBanque(o: OptionsLotBanque): PrepareBanque {
-  const plan = planZones(o.noteBasse, o.noteHaute, o.largeur, o.racineSource);
+  // LE PLAN SE CONSTRUIT ICI, DONC L'ACCORDAGE DOIT Y ÊTRE : c'est la règle de `construireBanque`,
+  // la même ligne, parce qu'un clavier accordé autrement fait sonner la racine à la hauteur de son
+  // DEGRÉ et non à la sienne. Le composant ne peut pas la poser à notre place : seul le nombre de
+  // zones franchit cette frontière.
+  const a = o.accordage;
+  const tonique = o.toniqueTouche ?? (a ? Math.round(a.reference) : 0);
+  const brut = planZones(o.noteBasse, o.noteHaute, o.largeur, o.racineSource);
+  const plan = a ? brut.map((p) => ({ ...p, hauteur: hauteurDuDegre(a, p.racine - tonique) })) : brut;
   if (o.methode !== "attaque") return { plan };
   const parties = o.voies.map((v) => separerStn(v));
   return {
