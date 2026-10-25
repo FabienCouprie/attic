@@ -187,7 +187,15 @@ DEV_URL=http://localhost:5175 ECRIRE_EMPREINTES=1 npx playwright test tests-e2e/
   écrites en tête de fichier : prouver la version chargée, un composant par page neuve, mesurer le
   gel par `MessageChannel` (zéro message signifie un gel **total**, non l'absence de gel), une
   entrée déterministe, et canoniser les choix comme le moteur le fait. **Ne pas improviser un script
-  de mesure : employer ce banc.**
+  de mesure : employer ce banc**, par le guichet qui le rend joignable sur un seul composant :
+
+```bash
+COMPOSANT=echo-ping-pong npm run mesurer
+```
+
+  Il rend la durée, le gel du fil, le message du nœud et l'empreinte de chaque sortie, et son code de
+  sortie vaut un si le composant lève. `PARAMETRES` prend un objet JSON de réglages, `MARQUEURS` une
+  liste de motifs à chercher dans la source exécutée, `ENTREES` les rangs d'entrée à nourrir.
 - **Régénérer les tables** après toute modification qui les concerne :
 
 ```bash
@@ -236,6 +244,7 @@ jamais vu rouge ne garde rien.
 | Taille des fichiers, norme de 200 à 400 lignes de code, **contraignante** | `src/docs/generer-compte-lignes.test.ts` ; `npm run docs:lignes` pour la table, engendrée à la demande et hors du dépôt |
 | Lire le catalogue en **données** plutôt qu'en prose | `npm run decrire` écrit `DESCRIPTION.json` : ports, contenus, réglages et leurs bornes, sans les notices, engendré à la demande et hors du dépôt |
 | Relire un graphe **écrit à la main** avant de le lancer | `GRAPHE=chemin.json npm run valider` : contenus mal branchés, fiches inconnues, entrées obligatoires en l'air |
+| Mesurer **un composant** sans improviser de script | `COMPOSANT=id npm run mesurer` : durée, gel du fil, message, empreinte de chaque sortie, par le banc et ses cinq précautions |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 
 La documentation la plus dense n'est pas dans ces fichiers mais **en tête des modules** : chaque

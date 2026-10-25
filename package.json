@@ -72,7 +72,8 @@
     "docs:modulables": "cross-env ECRIRE_MODULABLES=1 vitest run src/docs/generer-modulables.test.ts",
     "docs:lignes": "cross-env ECRIRE_LIGNES=1 vitest run src/docs/generer-compte-lignes.test.ts",
     "decrire": "cross-env ECRIRE_DESCRIPTION=1 vitest run src/plugins/verbes.test.ts",
-    "valider": "vitest run src/plugins/verbes.test.ts"
+    "valider": "vitest run src/plugins/verbes.test.ts",
+    "mesurer": "playwright test tests-e2e/mesurer.spec.ts"
   },
   "build": {
     "appId": "com.attic.audio",

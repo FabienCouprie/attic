@@ -197,6 +197,14 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **Un troisième verbe, `mesurer`, et le banc de mesure devient enfin joignable.** `AGENTS.md` écrivait déjà, à propos de `tests-e2e/banc-mesure.ts` : « **Ne pas improviser un script de mesure : employer ce banc.** » Or le banc n'avait **qu'un seul appelant**, `empreintes.spec.ts`, qui est un cas unique parcourant les soixante-douze composants surveillés et **comparant** leurs empreintes à une base. Rien ne permettait de mesurer **un** composant et de lire ce qu'il fait : la consigne existait sans le moyen de la suivre.
+
+  - **`COMPOSANT=echo-ping-pong npm run mesurer`** rend la durée, le gel du fil, le nombre de messages passés, le message du nœud et l'empreinte de chaque sortie. Mesuré : **39 ms et 14 ms de gel** pour l'écho ping-pong, **218 ms et 26 ms de gel** pour la réverbération à convolution, qui annonce au passage son IR de 2,4 s.
+  - **Les cinq précautions du banc viennent avec**, et elles sont nées de trois mesures fausses que j'avais publiées : la version chargée prouvée par des marqueurs, un composant par page neuve, le gel mesuré par `MessageChannel` — **zéro message veut dire un gel total, non l'absence de gel** —, une entrée déterministe, et les choix canonisés comme le moteur le fait. `PARAMETRES`, `MARQUEURS` et `ENTREES` règlent le reste.
+  - **Le code de sortie porte le verdict**, comme pour `valider` : une fiche inconnue ou un composant qui lève font échouer la passe, et le message dit que c'est le **composant** qui est en cause, non le dépôt.
+  - **Sans composant désigné, le guichet se tait** : le cas s'ignore, et une passe de bout en bout complète n'est pas dérangée.
+  - **Ce qu'il ne fait pas, et qui est écrit** : il mesure un composant nourri d'un son d'essai, pas un graphe câblé. Exécuter un graphe entier reste à faire.
+
 - **Deux verbes pour piloter le catalogue de l'extérieur : `décrire` et `valider`.** Le pilotage externe existait depuis longtemps sans être nommé, et il se réécrivait de zéro à chaque fois : **745 graphes semés à la main** dans le navigateur sur les cinq transcriptions de ce projet, 5 334 appels de JavaScript, et aucun tenu par un garde. Ces deux-là sont du Node pur, sans dépendance nouvelle.
 
   - **`npm run decrire` projette le registre vivant en données** : 507 composants, **1 496 ports** avec leur contenu, **2 914 réglages** avec leurs bornes, et les quinze flux avec les contenus que chacun distingue. **540 Ko compacts contre 1 301 Ko pour `COMPONENTS.md`**, les notices en moins : elles en pèsent l'essentiel et ne disent pas ce qui se branche.
