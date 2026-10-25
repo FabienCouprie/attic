@@ -252,9 +252,29 @@ export async function mesurerComposant(
       return v ?? buf;
     };
 
+    // LE RUNTIME EST UN VRAI CONTEXTE, ET IL ÉTAIT NUL — ce qui faisait lever un composant.
+    //
+    // Relevé le 2026-10-25 en cataloguant les 367 : « Sampler personnalisé » rendait « Cannot read
+    // properties of null (reading 'decodeAudioData') », seule erreur de toute la passe. Le composant
+    // n'y était pour rien : faute de fichier déposé, il se replie sur un échantillon embarqué et le
+    // décode — c'est le SEUL des seize qui passent `ctx.runtime` à un décodeur qui atteigne
+    // vraiment ce décodeur, les quinze autres sortant plus tôt faute de fichier ou d'API Electron.
+    //
+    // IL EST ÉPINGLÉ À 44 100 Hz, ET CE N'EST PAS LE TAUX DU BANC. Vingt fichiers lisent
+    // `ctx.runtime?.sampleRate ?? 44100` : avec un runtime nul ils rendaient tous à 44 100, et
+    // c'est à ce taux que les soixante-douze empreintes ont été enregistrées. Un contexte à 48 000
+    // les déplacerait TOUTES sans qu'un composant ait changé. À 44 100, chaque lecteur reçoit
+    // exactement ce que le repli lui donnait, et rien ne bouge.
+    //
+    // CE QUE CELA LAISSE EN SUSPENS, et qui mérite d'être écrit : l'application, elle, tourne au
+    // taux de la machine, 48 000 le plus souvent. Les empreintes de ces vingt fichiers mesurent
+    // donc un taux que l'utilisateur n'entend pas. Le corriger demanderait de rétablir la base
+    // après avoir écouté, ce qui n'est pas une décision d'instrument.
+    const runtime = new OfflineAudioContext(2, 1, 44100);
+
     const ctx = {
       noeud: { id: "banc", data: { ficheId: id, parametres: reglages } },
-      runtime: null, repertoireTravail: null,
+      runtime, repertoireTravail: null,
       entree: (i: number) => pourRang(i),
       entrees: () => rangs.map((i) => pourRang(i)),
       paramNombre: (nom: string, def: number) => {
