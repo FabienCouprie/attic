@@ -63,8 +63,15 @@ it.skipIf(ecrire)("AGENTS.md annonce le nombre réel de composants, et de gardes
   // LE TROISIÈME EST ARRIVÉ AVEC LE CATALOGUE SONORE, et son absence a fait rougir une intégration
   // continue : « les 367 composants » était lu comme un compte du catalogue, donc comparé à 507. Un
   // garde qui ne connaît qu'une sorte de nombre force à ne plus en écrire d'autre, ou à mentir.
+  //
+  // LE QUATRIÈME EST ARRIVÉ LE MÊME JOUR, avec le garde des graines, et c'est la troisième fois que
+  // ce cas attrapait la même forme en une journée. LA LEÇON EST DANS LA FORME DE LA RÈGLE : un
+  // compte NU doit valoir le total, et tout compte QUALIFIÉ doit déclarer sa source ci-dessous.
+  // Ajouter une sorte de nombre coûte une ligne ; l'oublier fait rougir l'intégration continue, ce
+  // qui est le bon ordre des choses — mieux vaut un garde qui réclame une ligne qu'un dépôt où l'on
+  // n'ose plus écrire un nombre.
   const composants = [...texte.matchAll(
-    /\b(\d+) composants(\s+surveillés|\s+qui\s+rendent\s+de\s+l'audio)?\b/g)]
+    /\b(\d+) composants(\s+surveillés|\s+qui\s+rendent\s+de\s+l'audio|\s+à\s+graine)?\b/g)]
     .map((m) => ({ compte: Number(m[1]), qualificatif: (m[2] ?? "").replace(/\s+/g, " ").trim() }));
   const duCatalogue = composants.filter((c) => c.qualificatif === "").map((c) => c.compte);
   expect(duCatalogue.length, "AGENTS.md : aucun nombre de composants du catalogue trouvé").toBeGreaterThan(0);
@@ -88,6 +95,16 @@ it.skipIf(ecrire)("AGENTS.md annonce le nombre réel de composants, et de gardes
     "AGENTS.md : aucun nombre de composants qui rendent de l'audio trouvé").toBeGreaterThan(0);
   expect(annoncesAudio, `AGENTS.md doit annoncer ${rendentDeLAudio} composants qui rendent de l'audio`)
     .toEqual(annoncesAudio.map(() => rendentDeLAudio));
+
+  // ET CELUI DES COMPOSANTS À GRAINE, compté sur le RÔLE `graine: true` du registre et non sur le
+  // libellé du réglage. C'est la portée du garde des graines — et le compte où j'avais cité un
+  // `grep` sur les fichiers, 73, là où le registre en porte 88.
+  const aGraine = toutesLesFiches
+    .filter((f) => (f.parametres ?? []).some((p) => (p as { graine?: true }).graine === true)).length;
+  const annoncesGraine = composants.filter((c) => c.qualificatif === "à graine").map((c) => c.compte);
+  expect(annoncesGraine.length, "AGENTS.md : aucun nombre de composants à graine trouvé").toBeGreaterThan(0);
+  expect(annoncesGraine, `AGENTS.md doit annoncer ${aGraine} composants à graine`)
+    .toEqual(annoncesGraine.map(() => aGraine));
 
   // LE COMPTE DES GARDES EST CELUI DES FICHIERS DE `src/docs`, ce que la ligne 115 dit elle-même :
   // « src/docs/*.test.ts — N contrats sur le dépôt lui-même ». Il est écrit en lettres, et c'est la

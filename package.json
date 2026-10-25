@@ -79,6 +79,7 @@
     "executer": "playwright test tests-e2e/executer.spec.ts",
     "catalogue": "playwright test tests-e2e/catalogue-sonore.spec.ts",
     "varier": "playwright test tests-e2e/varier.spec.ts",
+    "graines": "playwright test tests-e2e/graines-tenues.spec.ts",
     "test:empreintes-exemples": "playwright test tests-e2e/empreintes-exemples.spec.ts"
   },
   "build": {
