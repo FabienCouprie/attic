@@ -1101,6 +1101,10 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.chec_export_var_0": { fr: "✗ Échec export : {__VAR_0__}", en: "Export failure: {__VAR_0__}" },
   "msg.l_import_n_cessite_electron": { fr: "L'import nécessite Electron.", en: "The import requires Electron." },
   "msg.import_annul": { fr: "Import annulé.", en: "Import cancelled." },
+  "msg.import_sans_autorisation": {
+    fr: "Import refusé : « Exécution » est sur « Refuser ». Un composant importé s'exécute avec les droits de l'application. Mettre « Exécution » sur « Autoriser » pour le lui accorder.",
+    en: "Import refused: « Execution » is set to « Refuse ». An imported component runs with the application's rights. Set « Execution » to « Authorise » to grant them.",
+  },
   "msg.chec_import_var_0": { fr: "✗ Échec import : {__VAR_0__}", en: "Import failure: {__VAR_0__}" },
   "msg.node_var_0_install_var_1_var_2_var_3_var_4_d_pendance_s_var_": { fr: "✓ Composant « {__VAR_0__} » installé\n{__VAR_1__} · {__VAR_2__}/{__VAR_3__}\n📦 {__VAR_4__} dépendance(s) : {__VAR_5__}", en: "✓ Node \"{__VAR_0__}\" installed\n{__VAR_1__} · {__VAR_2__}/{__VAR_3__}\n📦 {__VAR_4__} dependency(s): {__VAR_5__}" },
   "msg.var_0_instruments_var_1": { fr: "{__VAR_0__} instruments{__VAR_1__}", en: "{__VAR_0__} instruments{__VAR_1__}" },

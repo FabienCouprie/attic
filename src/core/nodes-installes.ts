@@ -1,6 +1,33 @@
 // core/nodes-installes.ts — Registre des nodes installés dynamiquement (.zip).
 // Persiste en localStorage (manifest + code) et sur disque (assets binaires via Electron).
 // Au démarrage, recharge les nodes installés et les enregistre comme plugins.
+//
+// ═══ DEUX CHANGEMENTS DU 2026-10-27, ET CE QU'ILS FERMENT ═══
+//
+// Relevé par une revue critique : « un nœud .zip s'exécute toujours dès son import, par
+// `new Function`, dans le contexte principal ». Vrai, et PIRE QUE CELA : `chargerNodesInstalles()`
+// est appelé au chargement du module par `ui/App.tsx`, avant même que React ne rende. Le code d'un
+// nœud installé tournait donc À CHAQUE LANCEMENT, sans aucune action de personne.
+//
+//   1. PLUS RIEN NE S'ÉVALUE AU DÉMARRAGE. Une fiche se déclare par son manifeste — nom, ports,
+//      réglages —, et le CODE n'est nécessaire qu'à l'exécution. Il n'est donc évalué qu'au premier
+//      run du nœud, une seule fois. Un nœud installé qu'on ne lance jamais ne tourne jamais.
+//   2. ET IL FAUT UN CONSENTEMENT ÉCRIT. Un nœud reçu s'exécute avec les droits de celui qui
+//      l'ouvre ; il ne peut pas le faire sans qu'on le lui ait accordé. L'autorisation se donne au
+//      moment de l'import, par un réglage déclaré du Gestionnaire de composants, et voyage avec le
+//      nœud. Les nœuds installés AVANT ce lot n'en ont pas : ils se déclarent, et refusent de
+//      tourner tant qu'on ne les a pas réimportés.
+//
+// ═══ CE QUE CELA NE FAIT PAS, ET IL FAUT LE DIRE ═══
+//
+// AUCUNE ISOLATION N'EST AJOUTÉE. Une fois le consentement donné et le nœud lancé, son code tourne
+// toujours dans la portée globale du rendu, avec `window`, `localStorage` et `window.api` à portée
+// — `core/node-essai.test.ts` le MESURE, et continuera de le mesurer. Le `unsafe-eval` de la CSP
+// existe pour ce `new Function` et ne tombera qu'avec lui.
+//
+// CE QUI RESTE À FAIRE est donc entier : évaluer ce code dans un Worker sans accès au pont, et
+// donner des capacités à l'IPC. Ce lot ne le remplace pas ; il retire seulement l'exécution
+// automatique, qui n'avait demandé l'avis de personne.
 
 import type { Registre } from "./registre";
 import { servicesDomaine } from "./services-domaine";
@@ -30,7 +57,20 @@ interface NodeInstalle {
   notice?: { fr: string; en: string };
   noticeText?: string;
   noticeTextEn?: string;
+  /**
+   * La date à laquelle on a accordé à ce nœud de s'exécuter avec nos droits.
+   *
+   * ABSENTE, LE NŒUD NE TOURNE PAS. C'est la seule forme qui distingue un nœud installé avant ce
+   * lot d'un nœud autorisé : un drapeau booléen par défaut faux aurait dit la même chose, une date
+   * dit EN PLUS quand on l'a accordé, ce qu'on veut savoir en relisant un poste.
+   */
+  consenti?: string;
 }
+
+/** Le refus qu'un nœud sans consentement rend, dans les deux langues. */
+const SANS_CONSENTEMENT = "Ce composant installé n'a pas reçu l'autorisation de s'exécuter. "
+  + "Le réimporter en mettant « Exécution » sur « Autoriser ». — This installed component has not "
+  + "been authorised to run. Re-import it with « Execution » set to « Authorise ».";
 
 // Stockage en mémoire
 const nodesInstalles = new Map<string, NodeInstalle>();
@@ -62,10 +102,15 @@ export function chargerNodesInstalles(): number {
   } catch { return 0; }
 }
 
-// Enregistrer un node installé comme plugin dynamique
-function enregistrerNodeDynamique(node: NodeInstalle): void {
+/**
+ * Évalue le code d'un nœud installé, et rend sa fonction. Appelé AU PREMIER RUN, jamais avant.
+ *
+ * ON NE PEUT PAS ÉVALUER PLUS TARD QUE CELA : le code est ce que le nœud fait, et il faut bien
+ * l'avoir pour le faire. Ce qu'on a gagné est que le moment soit CHOISI — un nœud qu'on ne lance
+ * pas ne s'évalue pas, et aucun ne s'évalue au démarrage.
+ */
+function evaluerLeCode(node: NodeInstalle): ((ctx: unknown) => unknown) | string {
   const m = node.manifest;
-  console.log(`[attic] Installation du node « ${m.id} »…`);
   let fn: any;
   try {
     const moduleObj = { exports: null as any };
@@ -101,9 +146,10 @@ function enregistrerNodeDynamique(node: NodeInstalle): void {
     // en coupe désormais le dernier maillon en refusant d'ouvrir un exécutable — mais cela NE FERME
     // PAS le trou : l'écriture reste sans bornes, et un nœud installé garde l'accès au pont.
     //
-    // CE QU'IL FAUDRAIT : évaluer ce code dans un Worker sans accès au pont, donner des capacités à
-    // l'IPC — un chemin ne serait valide que venu d'un dialogue ou d'un dossier déclaré — et
-    // demander une confirmation avant la première exécution d'un fichier reçu.
+    // CE QU'IL FAUDRAIT ENCORE : évaluer ce code dans un Worker sans accès au pont, et donner des
+    // capacités à l'IPC — un chemin ne serait valide que venu d'un dialogue ou d'un dossier
+    // déclaré. Le consentement et l'évaluation paresseuse, livrés le 2026-10-27, retirent
+    // l'exécution AUTOMATIQUE ; ils ne remplacent pas ce travail-là.
     const wrappedFn = new Function("module", "exports", "attic", `
       "use strict";
       ${node.executerCode}
@@ -114,14 +160,40 @@ function enregistrerNodeDynamique(node: NodeInstalle): void {
   } catch (err) {
     console.error(`[attic] Node « ${m.id} » : ERREUR évaluation code`, err);
     console.error(`[attic] Code (100 premiers chars):`, node.executerCode.substring(0, 100));
-    return;
+    return `Le code du composant « ${m.id} » n'a pas pu être évalué : ${String((err as Error)?.message ?? err)}`;
   }
 
   if (typeof fn !== "function") {
     console.error(`[attic] Node « ${m.id} » : module.exports n'est pas une fonction (type=${typeof fn})`);
-    return;
+    return `Le composant « ${m.id} » n'exporte pas une fonction (${typeof fn}).`;
   }
+  return fn as (ctx: unknown) => unknown;
+}
 
+/**
+ * L'exécuteur d'un nœud installé : il demande le consentement, puis évalue UNE FOIS.
+ *
+ * LE REFUS EST UN RÉSULTAT, PAS UNE EXCEPTION. Un nœud sans consentement n'est pas en panne : il
+ * attend une décision, et le dire dans son message est la seule façon que la personne l'apprenne.
+ */
+function executeurParesseux(node: NodeInstalle): (ctx: unknown) => unknown {
+  let fn: ((ctx: unknown) => unknown) | null = null;
+  let refus: string | null = null;
+  return (ctx: unknown) => {
+    if (!node.consenti) return { valeurs: [], erreur: true, message: SANS_CONSENTEMENT };
+    if (!fn && !refus) {
+      const issue = evaluerLeCode(node);
+      if (typeof issue === "string") refus = issue; else fn = issue;
+    }
+    if (refus) return { valeurs: [], erreur: true, message: refus };
+    return fn!(ctx);
+  };
+}
+
+// Enregistrer un node installé comme plugin dynamique
+function enregistrerNodeDynamique(node: NodeInstalle): void {
+  const m = node.manifest;
+  console.log(`[attic] Déclaration du node « ${m.id} »…`);
   const def: PluginDef<unknown, unknown> = {
     id: m.id,
     nom: m.nom,
@@ -135,7 +207,8 @@ function enregistrerNodeDynamique(node: NodeInstalle): void {
     entrees: m.entrees,
     sorties: m.sorties,
     parametres: m.parametres,
-    executer: fn,
+    // L'EXÉCUTEUR EST PARESSEUX : la fiche se déclare sans que le code soit lu.
+    executer: executeurParesseux(node) as PluginDef<unknown, unknown>["executer"],
   };
 
   if (!registre) { console.error("[attic] nodes-installes : registre non configuré"); return; }

@@ -11103,7 +11103,7 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 
 *Exports a node as .zip or imports a node from a .zip.*
 
-Exports an existing node as a .zip archive or imports a node from a .zip. To export: enter the node ID, the system extracts the manifest, executer code, notice and detects dependencies, then generates a .zip. To import: select a .zip, the system decompresses, checks dependencies and installs the node in the catalog. Installed nodes are persisted and survive restarts.
+Exports an existing node as a .zip archive or imports a node from a .zip. To export: enter the node ID, the system extracts the manifest, executer code, notice and detects dependencies, then generates a .zip. To import: select a .zip, the system decompresses, checks dependencies and installs the node in the catalog. « Execution » grants the imported node the right to run: an imported node runs with the application's rights, and the import is refused while this setting is on « Refuse ». The authorisation is stored with the node; its code is read only on the first run. Installed nodes are persisted and survive restarts.
 
 *No ports.*
 
@@ -11111,6 +11111,7 @@ Exports an existing node as a .zip archive or imports a node from a .zip. To exp
 |---|---|---|---|---|
 | Action | choice | Export | Export / Import | Export = create a .zip of an existing node. Import = install a node from a .zip. |
 | Node to export | choice |  |  | The node to export is taken from the 5 most recently created. The list updates on each run. |
+| Execution | choice | Refuse | Refuse / Authorise | Grants the imported component the right to run. An imported component runs with the application's rights: it reads, writes and deletes files, and reaches the network. « Refuse » refuses the import. The authorisation is stored with the component, and conditions each of its runs. |
 
 ### Learning
 
