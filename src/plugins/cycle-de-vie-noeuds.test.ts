@@ -118,6 +118,56 @@ describe("les transitions d'un nœud, sur toutes les fiches", () => {
     expect(fautives, "une URL non révoquée tient un blob en mémoire par nœud et par run").toEqual([]);
   });
 
+  // ═══ ET L'ON REGARDE DEDANS, CE QUI MANQUAIT ═══
+  //
+  // Relevé le 2026-10-26 : le nettoyage ne lisait que le PREMIER NIVEAU, or le canal d'affichage
+  // est un OBJET. Cinq composants y déposent une URL de film — « Incruster les sous-titres »,
+  // « Extraire une vidéo », « Montage vidéo », « Séparer image et son », « Démonstration » — et
+  // aucune n'était révoquée.
+  describe("une URL posée DANS le canal d'affichage", () => {
+    const resultat = (affichage: unknown) => ({ _affichage: affichage });
+
+    it("EST RÉCOLTÉE, là où le premier niveau seul ne la voyait pas", () => {
+      expect(urlsARevoquer(resultat({ url: "blob:http://localhost/film", octets: 12 }), CLASSES))
+        .toEqual(["blob:http://localhost/film"]);
+    });
+
+    it("QUEL QUE SOIT LE NOM DE SA CLÉ, et c'est ce qui condamne l'autre réparation", () => {
+      // Quatre composants écrivent `url`, le cinquième `videoUrl`. Une liste de noms aurait oublié
+      // le cinquième, exactement comme les quatre noms énumérés à la main en avaient oublié quatre.
+      expect(urlsARevoquer(resultat({ videoUrl: "blob:http://localhost/demo" }), CLASSES))
+        .toEqual(["blob:http://localhost/demo"]);
+    });
+
+    it("et une liste d'objets est parcourue", () => {
+      expect(urlsARevoquer(resultat([{ url: "blob:a" }, { url: "blob:b" }]), CLASSES))
+        .toEqual(["blob:a", "blob:b"]);
+    });
+
+    it("MAIS UN TAMPON N'EST PAS PARCOURU : ce serait payer le contenu du son qu'on efface", () => {
+      // `Object.values` sur un `Float32Array` rend ses millions de nombres un par un. Le cas le
+      // mesure : un million d'échantillons doit se traverser en un clin d'œil, et ne rien rendre.
+      const debut = Date.now();
+      const urls = urlsARevoquer(resultat({ son: new Float32Array(1_000_000), url: "blob:c" }), CLASSES);
+      expect(urls).toEqual(["blob:c"]);
+      expect(Date.now() - debut, "parcourir le tampon se verrait ici").toBeLessThan(200);
+    });
+
+    it("et la descente est BORNÉE à trois objets traversés, ce qui se dit plutôt que de se découvrir", () => {
+      // Le canal d'affichage demande UN niveau, une liste d'objets plats en demande DEUX ; trois
+      // laissent donc une marge. Au-delà, on ne récolte plus — une borne vaut mieux qu'un parcours
+      // qui suivrait un cycle sans fin dans un état qu'on n'a pas écrit.
+      expect(urlsARevoquer(resultat({ a: { b: "blob:atteint" } }), CLASSES)).toEqual(["blob:atteint"]);
+      expect(urlsARevoquer(resultat({ a: { b: { c: "blob:limite" } } }), CLASSES)).toEqual(["blob:limite"]);
+      expect(urlsARevoquer(resultat({ a: { b: { c: { d: "blob:trop" } } } }), CLASSES)).toEqual([]);
+    });
+
+    it("ET CE QU'UN RÉGLAGE GARDE RESTE GARDÉ, jusque dans ce que le canal contient", () => {
+      const etat = { _designe: { url: "blob:http://localhost/garde" } };
+      expect(urlsARevoquer(etat, CLASSES, CHAMPS_GARDES_AU_REGLAGE)).toEqual([]);
+    });
+  });
+
   it("UN RÉGLAGE NE RÉVOQUE PAS CE QU'IL GARDE", () => {
     // Une URL gardée puis révoquée serait pire qu'une fuite : la vue montrerait une source morte.
     const etat = { ...etatApresUnRun(fiches[0] as never), _designe: "blob:http://localhost/garde" };
