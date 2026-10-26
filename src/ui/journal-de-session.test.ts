@@ -130,6 +130,71 @@ describe("le journal de session", () => {
     expect(j.ecritures()).toBe(3);
   });
 
+  // ═══ ON N'ÉCRASE QUE CE QU'ON A ÉCRIT SOI-MÊME ═══
+  //
+  // CE GARDE VIENT D'UNE CI ROUGE, et le mécanisme est réel. Un cas de `pont-electron-vivant`
+  // POSE un en-cours depuis la page puis recharge ; `pagehide` déclenchait le vidage, qui écrivait
+  // le graphe courant PAR-DESSUS la semence. Le même mécanisme vaut dans l'application : une
+  // seconde fenêtre écraserait la session de la première en se fermant.
+  describe("devant un en-cours venu d'ailleurs", () => {
+    function bacAvecAutrui(autrui: () => boolean) {
+      const h = horloge();
+      let ecrits = 0;
+      const j = creerJournalDeSession({
+        ecrire: () => { ecrits += 1; return true; },
+        ecritPourAutrui: autrui,
+        differer: h.differer, annulerDifferé: h.annulerDifferé,
+      });
+      return { h, j, lu: () => ecrits };
+    }
+
+    it("N'ÉCRIT PAS, et le compte le dit", () => {
+      const { h, j, lu } = bacAvecAutrui(() => true);
+      j.armer();
+      j.noter();
+      h.avancer();
+      expect(lu(), "rien n'est écrit par-dessus l'autre").toBe(0);
+      expect(j.ecritures()).toBe(0);
+      expect(j.ecartees(), "et l'écart est compté, non tu").toBe(1);
+    });
+
+    it("et le vidage de fermeture ne l'écrase pas davantage", () => {
+      const { j, lu } = bacAvecAutrui(() => true);
+      j.armer();
+      j.noter();
+      j.vider();
+      expect(lu()).toBe(0);
+      expect(j.ecartees()).toBe(1);
+    });
+
+    it("MAIS IL ÉCRIT QUAND L'EN-COURS EST LE SIEN, sans quoi il ne servirait plus à rien", () => {
+      const { h, j, lu } = bacAvecAutrui(() => false);
+      j.armer();
+      j.noter();
+      h.avancer();
+      expect(lu()).toBe(1);
+      expect(j.ecartees()).toBe(0);
+    });
+
+    it("et l'instant du dernier changement est celui qu'on lui donne à comparer", () => {
+      // Le garde reçoit l'instant de NOTRE dernier changement : c'est lui qui distingue « écrit
+      // avant nous », qu'on peut écraser, de « écrit après », qu'on ne peut pas.
+      const vus: number[] = [];
+      const h = horloge();
+      const j = creerJournalDeSession({
+        ecrire: () => true,
+        ecritPourAutrui: (depuis) => { vus.push(depuis); return false; },
+        differer: h.differer, annulerDifferé: h.annulerDifferé,
+      });
+      j.armer();
+      const avant = Date.now();
+      j.noter();
+      h.avancer();
+      expect(vus.length).toBe(1);
+      expect(vus[0]).toBeGreaterThanOrEqual(avant);
+    });
+  });
+
   it("LE DÉLAI EST CELUI QU'ON DEMANDE, et son défaut est déclaré", () => {
     const { h, j } = bac(40);
     j.armer();

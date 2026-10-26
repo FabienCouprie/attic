@@ -262,7 +262,23 @@ export function usePersistance(o: OptionsPersistance) {
   const memoriserEncoursRef = useRef(memoriserEncours);
   memoriserEncoursRef.current = memoriserEncours;
   const journalRef = useRef<JournalDeSession | null>(null);
-  if (!journalRef.current) journalRef.current = creerJournalDeSession({ ecrire: () => memoriserEncoursRef.current() });
+  if (!journalRef.current) {
+    journalRef.current = creerJournalDeSession({
+      ecrire: () => memoriserEncoursRef.current(),
+      // ON N'ÉCRASE QUE CE QU'ON A ÉCRIT SOI-MÊME, et le module dit pourquoi : une seconde fenêtre,
+      // ou une page qui pose un en-cours puis recharge, se faisait écraser par le vidage de
+      // fermeture. Une date postérieure à notre dernier changement vient d'ailleurs ; une ABSENCE
+      // de date aussi, puisque `memoriserEncours` en pose toujours une.
+      ecritPourAutrui: (depuis) => {
+        try {
+          const brut = localStorage.getItem("attic-encours");
+          if (!brut) return false;
+          const quand = Date.parse((JSON.parse(brut) as { date?: string }).date ?? "");
+          return !Number.isFinite(quand) || quand > depuis;
+        } catch { return false; }
+      },
+    });
+  }
   const journal = journalRef.current;
 
   useEffect(() => {

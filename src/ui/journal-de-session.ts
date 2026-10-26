@@ -62,11 +62,34 @@ export interface JournalDeSession {
   enAttente(): boolean;
   /** Combien d'écritures ont eu lieu. Pour les cas, et pour un relevé. */
   ecritures(): number;
+  /** Combien ont été ÉCARTÉES pour ne pas écraser ce qu'un autre avait écrit. */
+  ecartees(): number;
 }
 
 export interface ReglagesJournal {
   /** Écrit l'en-cours. Rend `false` si l'écriture a échoué — un quota dépassé, par exemple. */
   ecrire: () => boolean;
+  /**
+   * Quelqu'un d'AUTRE a-t-il écrit l'en-cours depuis notre dernier changement ? `depuis` est
+   * l'instant de ce changement.
+   *
+   * ═══ POURQUOI CE GARDE EXISTE, ET IL VIENT D'UNE CI ROUGE ═══
+   *
+   * Ce journal a cassé un cas de `pont-electron-vivant.spec.ts` au premier passage, et le mécanisme
+   * est réel, pas un artefact de test. Ce cas-là POSE un en-cours depuis la page, puis recharge :
+   *
+   *     localStorage.setItem("attic-encours", …)   ← la semence
+   *     page.reload()                              ← `pagehide` part
+   *
+   * Le vidage de fermeture écrivait alors le graphe COURANT par-dessus la semence, et le nœud
+   * attendu n'arrivait jamais. Le même mécanisme vaut dans l'application : une SECONDE FENÊTRE —
+   * `nouvelle-fenetre` existe — écraserait la session de la première en se fermant.
+   *
+   * LA RÈGLE EST DONC : on n'écrase que ce qu'on a écrit soi-même. Un en-cours dont la date est
+   * postérieure à notre dernier changement vient d'ailleurs ; un en-cours SANS date aussi, puisque
+   * nous en posons toujours une.
+   */
+  ecritPourAutrui?: (depuis: number) => boolean;
   /**
    * Combien de millisecondes de calme avant d'écrire.
    *
@@ -96,9 +119,14 @@ export function creerJournalDeSession(r: ReglagesJournal): JournalDeSession {
   let arme = false;
   let jeton: unknown = null;
   let compte = 0;
+  let ecartes = 0;
+  /** L'instant de notre dernier changement, pour ne pas écraser ce qu'un autre a écrit après. */
+  let dernierNote = 0;
 
   const ecrireMaintenant = () => {
     jeton = null;
+    // ON N'ÉCRASE QUE CE QU'ON A ÉCRIT SOI-MÊME : voir `ecritPourAutrui`.
+    if (r.ecritPourAutrui?.(dernierNote)) { ecartes += 1; return; }
     if (r.ecrire()) compte += 1;
   };
 
@@ -108,6 +136,7 @@ export function creerJournalDeSession(r: ReglagesJournal): JournalDeSession {
 
     noter() {
       if (!arme) return;
+      dernierNote = Date.now();
       // ON REPOUSSE L'ÉCHÉANCE à chaque changement : c'est ce qui fait qu'un geste continu — un
       // nœud qu'on déplace — n'écrit qu'une fois, à la fin.
       if (jeton !== null) annulerDifferé(jeton);
@@ -128,5 +157,6 @@ export function creerJournalDeSession(r: ReglagesJournal): JournalDeSession {
 
     enAttente: () => jeton !== null,
     ecritures: () => compte,
+    ecartees: () => ecartes,
   };
 }
