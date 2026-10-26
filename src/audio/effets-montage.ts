@@ -134,7 +134,23 @@ export function reinsererZone(
 export async function melangerPistes(entrees: AudioBuffer[], niveauDb: number): Promise<AudioBuffer> {
   const canaux = Math.max(...entrees.map((e) => e.numberOfChannels), 1);
   const dureeMax = Math.max(...entrees.map((e) => e.duration));
-  const frequence = entrees[0].sampleRate;
+  // ═══ LA FRÉQUENCE DE SORTIE NE DÉPEND PLUS DE L'ORDRE DES CÂBLES ═══
+  //
+  // ELLE VALAIT `entrees[0].sampleRate`, et c'était le défaut relevé au point 5 d'une revue du
+  // dépôt : « `melangerPistes` prend la fréquence de la première entrée, c'est-à-dire de l'ordre de
+  // création des câbles. Réordonner deux câbles change la fréquence de sortie. » Vrai, et le
+  // mécanisme est pire que l'énoncé — les ports de ce composant sont DYNAMIQUES, de sorte que le
+  // premier port EST le premier câble posé. Débrancher puis rebrancher dans l'autre ordre changeait
+  // donc le fichier rendu, sans que rien ne le dise.
+  //
+  // LA PLUS HAUTE, ET NON LA PLUS BASSE. Choisir la plus basse décimerait toute entrée plus fine, et
+  // ce qui passe au-dessus de son Nyquist est perdu pour de bon. La plus haute n'interpole que les
+  // entrées plus grossières, sans rien retirer de ce qu'elles portent. C'est la règle d'un mélangeur
+  // qui ne détruit pas ce qu'on lui donne.
+  //
+  // ET SUR DES ENTRÉES DE MÊME FRÉQUENCE — le cas ordinaire — ELLE REND EXACTEMENT CE QU'ELLE RENDAIT :
+  // le maximum d'une liste constante est cette constante. Aucun graphe existant ne change de son.
+  const frequence = Math.max(...entrees.map((e) => e.sampleRate));
   const offline = new OfflineAudioContext(canaux, Math.ceil(dureeMax * frequence), frequence);
 
   const gainSortie = offline.createGain();

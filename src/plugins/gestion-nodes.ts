@@ -73,9 +73,19 @@ export const fiches: FicheAudio[] = ([
           resumeEn: nodeDef.resumeEn,
           entrees: nodeDef.entrees,
           sorties: nodeDef.sorties,
+          // LA RAISON D'UNE INERTIE VOYAGE, LE PRÉDICAT NON. Les deux textes sont du contenu et
+          // doivent suivre le node exporté, dans les deux langues — un garde l'exige pour tout champ
+          // anglais, et il m'a reprise. `inerte` est une FONCTION : elle ne traverse pas un manifeste
+          // JSON, et un node reçu ne déclare donc pas d'inertie conditionnelle. C'est voulu — un
+          // prédicat venu d'un fichier reçu serait du code exécuté sur l'état d'un nœud.
+          //
+          // ET CE COMMENTAIRE EST AU-DESSUS DE LA RECOPIE, non dedans : le garde ne lit que les
+          // quatre cents premiers caractères du bloc, et cinq lignes de note y auraient poussé le
+          // champ hors de sa fenêtre. Il aurait alors crié sur un manifeste correct.
           parametres: nodeDef.parametres.map((p: any) => ({
             nom: p.nom, nomEn: p.nomEn, type: p.type, options: p.options, optionsEn: p.optionsEn,
             plage: p.plage, pas: p.pas, defaut: p.defaut, defautEn: p.defautEn, unite: p.unite, uniteEn: p.uniteEn, doc: p.doc, docEn: p.docEn,
+            inerteRaison: p.inerteRaison, inerteRaisonEn: p.inerteRaisonEn,
             placeholder: p.placeholder, placeholderEn: p.placeholderEn, graine: p.graine,
           })),
           dependencies: [] as string[],

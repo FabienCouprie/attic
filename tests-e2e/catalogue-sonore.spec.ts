@@ -93,6 +93,8 @@ interface Entree {
   message: string | null;
   erreur: string | null;
   ms: number;
+  /** Les valeurs rendues qui ne correspondent pas au type de leur port. Voir `core/types-au-port.ts`. */
+  ecartsType: { rang: number; port: string; attendu: string; recu: string }[];
 }
 
 test.describe("catalogue", () => {
@@ -146,6 +148,10 @@ test.describe("catalogue", () => {
       const e: Entree = {
         id: f.id, nom: f.nom, famille: f.famille, univers: f.univers,
         clips: [], message: m.message, erreur: m.erreur, ms: Math.round(m.ms),
+        // CE QUE LE COMPOSANT PROMET SUR SES PORTS, ET CE QU IL REND. Le catalogue est le site a
+        // plus haute valeur pour cette question : il parcourt les composants UN PAR UN, la ou le
+        // moteur ne voit que ceux posés dans un graphe. Point 6 d une revue du dépôt.
+        ecartsType: m.ecartsType,
       };
       for (const w of m.wavs) {
         // LE RANG −1 EST LE SON DE RÉFÉRENCE, et il s'écrit UNE SEULE FOIS : le banc le rend à
@@ -194,6 +200,10 @@ test.describe("catalogue", () => {
       clips: clipsEcrits,
       muets: muets.map((e) => e.id),
       enErreur: Object.fromEntries(fautifs.map((e) => [e.id, e.erreur])),
+      // CE QUI MENT SUR SON PORT, par composant. Une liste vide est le relevé qu'on espère, et elle
+      // vaut comme mesure : elle dit que les prédicats déclarés ne crient sur personne.
+      ecartsDeType: Object.fromEntries(entrees.filter((e) => e.ecartsType?.length)
+        .map((e) => [e.id, e.ecartsType])),
       entrees,
     };
     writeFileSync(join(DOSSIER, "catalogue.json"), `${JSON.stringify(manifeste, null, 2)}\n`, "utf8");

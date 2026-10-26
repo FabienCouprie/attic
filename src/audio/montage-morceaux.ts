@@ -68,19 +68,38 @@ export function dureeSonnante(m: Morceau, dureeSource: number): number {
  * comme avant. Rien n'est réécrit sur le disque tant que l'on ne touche à rien : un projet ancien
  * qu'on rouvre sans y toucher reste lisible par une version ancienne.
  */
+/**
+ * Les quatre clés de réglage d'une piste, écrites UNE SEULE FOIS.
+ *
+ * POURQUOI CETTE FONCTION EXISTE. Ces quatre libellés étaient écrits à trois endroits : la fiche qui
+ * les déclare, la lecture qui en déduit les morceaux, et désormais l'écriture qui y retourne. Les
+ * réglages sont indexés par leur LIBELLÉ — c'est tout l'objet du point 2 de la revue critique — et
+ * trois copies d'un libellé indexé est la forme exacte du défaut qui a coûté trois mois et demi au
+ * méta-composant du synthétiseur : une clé qui ne correspond à rien ne lève pas, elle se tait.
+ */
+export function clesDePiste(k: number): { debut: string; gain: string; entree: string; sortie: string } {
+  return {
+    debut: `Début ${k + 1}`, gain: `Gain ${k + 1}`,
+    entree: `Fondu entrée ${k + 1}`, sortie: `Fondu sortie ${k + 1}`,
+  };
+}
+
 export function morceauxDepuisParametres(
   branchees: readonly number[], params: ParametresMontage,
 ): Morceau[] {
-  return [...branchees].sort((a, b) => a - b).map((k) => ({
-    id: `p${k}`,
-    piste: k,
-    debut: nombre(params, `Début ${k + 1}`, k * 2),
-    dans: 0,
-    duree: 0,
-    gain: nombre(params, `Gain ${k + 1}`, 0),
-    entree: nombre(params, `Fondu entrée ${k + 1}`, 10),
-    sortie: nombre(params, `Fondu sortie ${k + 1}`, 10),
-  }));
+  return [...branchees].sort((a, b) => a - b).map((k) => {
+    const c = clesDePiste(k);
+    return {
+      id: `p${k}`,
+      piste: k,
+      debut: nombre(params, c.debut, k * 2),
+      dans: 0,
+      duree: 0,
+      gain: nombre(params, c.gain, 0),
+      entree: nombre(params, c.entree, 10),
+      sortie: nombre(params, c.sortie, 10),
+    };
+  });
 }
 
 /**
@@ -128,6 +147,33 @@ export interface EcritureMontage {
   morceaux: Morceau[];
   /** Les pistes que l'on a vidées de tous leurs morceaux, et qui ne doivent donc pas se redéduire. */
   videes: number[];
+  /**
+   * Les RÉGLAGES à poser, quand une piste reste descriptible par eux.
+   *
+   * ═══ POURQUOI CECI EXISTE, ET C'EST LE RELEVÉ LE PLUS NET DE FABIEN ═══
+   *
+   * « Il n'y a aucun lien entre les éléments graphiques (fondu), le déplacement des barres et leur
+   * équivalent dans l'inspecteur. Par exemple si je déplace la barre de la première piste vers la
+   * droite, il n'y a aucune modification équivalente de la glissière Début 1. Cela ne fonctionne
+   * donc pas. »
+   *
+   * IL A RAISON, ET C'ÉTAIT LA CAUSE DE TOUTE LA FAMILLE. Le composant tenait DEUX sources de vérité
+   * pour les mêmes quatre nombres — les réglages et les morceaux — avec un interrupteur par piste :
+   * « les réglages agissent jusqu'à ce qu'un morceau soit posé sur cette piste ». Tirer une barre
+   * basculait la piste dans l'autre régime, en silence, et la glissière devenait morte sans que rien
+   * ne le dise. Quatre défauts en sont sortis, chacun un désaccord sur qui gagne.
+   *
+   * LA BARRE ET LA GLISSIÈRE SONT MAINTENANT DEUX VUES DU MÊME NOMBRE. Un geste sur une piste qui
+   * reste DESCRIPTIBLE par ses quatre réglages écrit ces réglages, et non un morceau : déplacer la
+   * barre déplace « Début 1 », tirer la poignée de niveau déplace « Gain 1 ». Aucun interrupteur ne
+   * bascule, et il n'y a plus qu'une source.
+   *
+   * CE QUI RESTE UN MORCEAU, ET IL LE FAUT : une piste COUPÉE en plusieurs, ou ROGNÉE — un morceau
+   * qui ne commence pas au début de son son, ou qui n'en joue qu'une part. Quatre nombres ne peuvent
+   * pas décrire trois morceaux, et aucun réglage ne porte « dans » ni « durée ». Là, le découpage
+   * fait foi, et c'est une limite de la forme, non un choix.
+   */
+  reglages: Record<string, number>;
 }
 
 /** Deux morceaux font-ils entendre la même chose ? Leur nom ne compte pas, il ne sert qu'à se retrouver. */
@@ -171,9 +217,23 @@ export function morceauxAEcrire(
     else parPiste.set(m.piste, [m]);
   }
   const out: Morceau[] = [];
+  const reglages: Record<string, number> = {};
+  const brancheesSet = new Set(branchees);
   for (const [piste, liste] of parPiste) {
     const derive = derives.get(piste);
     if (derive && liste.length === 1 && memeMorceau(liste[0], derive)) continue;
+    // UNE PISTE ENCORE DESCRIPTIBLE PAR SES RÉGLAGES Y RETOURNE, au lieu de basculer dans l'autre
+    // régime : un seul morceau, qui commence au début de son son et le joue tout entier. C'est le
+    // cas d'un montage qu'on n'a pas découpé, c'est-à-dire le cas courant.
+    const seul = liste.length === 1 ? liste[0] : null;
+    if (seul && brancheesSet.has(piste) && seul.dans === 0 && seul.duree === 0) {
+      const c = clesDePiste(piste);
+      reglages[c.debut] = seul.debut;
+      reglages[c.gain] = seul.gain;
+      reglages[c.entree] = seul.entree;
+      reglages[c.sortie] = seul.sortie;
+      continue;
+    }
     out.push(...liste);
   }
   // UNE PISTE BRANCHÉE ABSENTE DE CE QU'ON AFFICHE A ÉTÉ VIDÉE, et il n'y a pas d'autre cas : la
@@ -185,7 +245,29 @@ export function morceauxAEcrire(
     ...branchees.filter((k) => !presentes.has(k)),
     ...videesAvant.filter((k) => !encore.has(k)),
   ].sort((a, b) => a - b);
-  return { morceaux: out.sort((a, b) => a.piste - b.piste || a.debut - b.debut), videes };
+  return { morceaux: out.sort((a, b) => a.piste - b.piste || a.debut - b.debut), videes, reglages };
+}
+
+/**
+ * Cette piste est-elle MENÉE PAR SON DÉCOUPAGE, et non plus par ses quatre réglages ?
+ *
+ * ═══ POURQUOI CETTE QUESTION DOIT ÊTRE POSABLE DE L'EXTÉRIEUR ═══
+ *
+ * Depuis que la barre et la glissière sont le même nombre, il ne reste qu'un cas où les quatre
+ * réglages d'une piste ne la décrivent plus : elle est COUPÉE en plusieurs morceaux, ou ROGNÉE.
+ * Quatre nombres ne décrivent pas trois morceaux, et aucun réglage ne porte « dans » ni « durée ».
+ *
+ * MAIS RIEN NE LE DISAIT À L'ÉCRAN, et c'est la cinquième manifestation du même défaut : une
+ * glissière qui a cessé d'agir restait vive, acceptait une valeur, et cette valeur n'allait nulle
+ * part. Le contrat de composant du dépôt l'exige depuis toujours — « un réglage légitimement inerte
+ * porte sa raison écrite à côté de lui » —, et ces quatre la portaient derrière un bouton « ? ».
+ *
+ * Décision de Fabien le 2026-10-26 : griser la glissière avec sa raison. La fiche s'en sert pour
+ * déclarer l'inertie, et l'inspecteur la grise sans rien savoir du montage.
+ */
+export function pisteFigee(data: Record<string, unknown> | undefined, piste: number): boolean {
+  const poses = (data as { morceaux?: readonly Morceau[] } | undefined)?.morceaux;
+  return Array.isArray(poses) && poses.some((m) => m?.piste === piste);
 }
 
 /** Un identifiant qu'aucun morceau ne porte encore. */
@@ -286,8 +368,21 @@ export function deplacerMorceau(m: Morceau, versInstant: number): Morceau {
  * ELLES SONT ICI PLUTÔT QUE DANS LA FICHE, et la fiche les lit : le geste de la ligne de temps et le
  * curseur du réglage écrivent le MÊME nombre, et deux bornes recopiées auraient fini par diverger.
  * Le dépôt a déjà payé cela sur douze réglages, dont la rotation ambisonique.
+ *
+ * ═══ ELLES SONT SYMÉTRIQUES, ET ELLES NE L'ÉTAIENT PAS ═══
+ *
+ * Relevé par Fabien le 2026-10-26 : « les barres de gain dans l'inspecteur sont trop fortement
+ * déséquilibrées : −60 dB et +12 dB. −30 dB et +30 dB est mieux. » Il a raison, et la raison est
+ * dans le geste : une glissière dont le zéro tombe aux cinq sixièmes de sa course ne se règle pas
+ * — on cherche l'unité au lieu de la trouver au milieu, et les trois quarts de la course servent à
+ * descendre vers un silence qu'on n'emploie jamais.
+ *
+ * ±30 dB EST CE QUE LE GESTE DEMANDE : le zéro au centre, un facteur mille de part et d'autre, ce
+ * qui couvre tout ce qu'on fait en mélangeant. Perdre la course de −60 à −30 ne coûte rien
+ * d'atteignable : une piste qu'on veut taire se débranche ou se vide, et −30 dB est déjà un
+ * trentième de l'amplitude.
  */
-export const GAIN_MIN = -60, GAIN_MAX = 12, GAIN_PAS = 0.5;
+export const GAIN_MIN = -30, GAIN_MAX = 30, GAIN_PAS = 0.5;
 
 /** Un niveau ramené dans ses bornes et sur son pas. Le seul endroit qui en décide. */
 export function gainBorne(db: number): number {

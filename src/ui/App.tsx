@@ -502,18 +502,13 @@ function Atelier() {
               // sans ports et ses arêtes perdues : la panne silencieuse relevée au relevé des risques.
               bulle: n.data.bulle,
               bulleOuverte: n.data.bulleOuverte,
-              onSupprimerNoeud: cbs.onSupprimerNoeud,
-              onReinitialiser: cbs.onReinitialiser,
-              onDefinirPrioritaire: cbs.onDefinirPrioritaire,
-              onChargerAudio: cbs.onChargerAudio,
-              onChargerMidi: cbs.onChargerMidi,
-              onChargerImage: cbs.onChargerImage,
-              onChargerSvg: cbs.onChargerSvg,
-              onChargerPdf: cbs.onChargerPdf,
-              onChangerEnregistrement: cbs.onChangerEnregistrement,
-              onChangerParametre: cbs.onChangerParametre,
-              onChangerZones: cbs.onChangerZones,
-              onChargerIR: cbs.onChargerIR,
+              // TOUS LES GESTES, ET NON UNE LISTE RECOPIÉE. Douze noms étaient énumérés ici, et
+              // douze autres à la génération d'un graphe : trois écritures du même savoir, dont
+              // deux silencieuses. Un geste neuf ajouté au seul `callbacksNoeud` manquait donc aux
+              // nœuds RESTAURÉS — le même geste marchait sur un nœud posé à la main et pas sur le
+              // même nœud rouvert depuis un fichier, ce qui est la pire panne à chercher.
+              // Les trois listes étaient identiques, vérifié nom par nom avant de les réunir.
+              ...cbs,
             },
           };
         });
@@ -583,18 +578,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
             width, height,
             data: {
               ficheId: specNode.ficheId, parametres, statut: "attente",
-              onSupprimerNoeud: cbs.onSupprimerNoeud,
-              onReinitialiser: cbs.onReinitialiser,
-              onDefinirPrioritaire: cbs.onDefinirPrioritaire,
-              onChargerAudio: cbs.onChargerAudio,
-              onChargerMidi: cbs.onChargerMidi,
-              onChargerImage: cbs.onChargerImage,
-              onChargerSvg: cbs.onChargerSvg,
-              onChargerPdf: cbs.onChargerPdf,
-              onChangerEnregistrement: cbs.onChangerEnregistrement,
-              onChangerParametre: cbs.onChangerParametre,
-              onChangerZones: cbs.onChangerZones,
-              onChargerIR: cbs.onChargerIR,
+              ...cbs,
             },
           };
         });
@@ -659,18 +643,36 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
    *
    * Rend les réglages obtenus, dont l'inspecteur a besoin pour se mettre à jour lui-même.
    */
+  /**
+   * CE QU'IL FAUT FAIRE QUAND CE QUE LE NŒUD DOIT CALCULER A CHANGÉ. Une seule écriture, et deux
+   * appelants : un réglage changé, et un découpage posé sur une ligne de temps.
+   *
+   * LES TROIS GESTES SONT INDISSOCIABLES, et c'est leur séparation qui a fait tous les défauts de
+   * cette famille. Purger l'entrée de cache, sans quoi le moteur resservirait le résultat d'avant.
+   * Périmer l'aval EN GARDANT ce que le nœud a désigné de ses entrées, sans quoi le graphe vivant du
+   * Montage n'a plus rien à jouer. Et relancer vers l'aval, sans quoi le changement n'est entendu
+   * qu'au prochain run déclenché par autre chose — c'est-à-dire jamais, du point de vue de qui
+   * vient de tirer une barre.
+   *
+   * LE CONTRAT DE CYCLE DE VIE L'EXIGE, et il m'a reprise : un premier jet recopiait ces trois lignes
+   * dans le geste du découpage, et `cycle-de-vie-noeuds.test.ts` est tombé en disant « un seul
+   * appelant pour changer un réglage ». Deux implémentations d'une transition finissent toujours par
+   * se séparer — c'est écrit juste au-dessus, et je venais de le refaire.
+   */
+  const perimerEtRelancer = useCallback((nid: string) => {
+    cacheExec.current.delete(nid);
+    reinitialiserPourReglage(nid);
+    relancerApresReglage(nid);
+  }, [cacheExec, reinitialiserPourReglage, relancerApresReglage]);
+
   const changerReglage = useCallback((nid: string, nom: string, val: number | string) => {
     const noeud = noeudsRef.current.find((n) => n.id === nid);
     if (!noeud) return null;
-    cacheExec.current.delete(nid);
     const suite = reglagesApresChangement(String(noeud.data.ficheId), noeud.data.parametres, nom, val);
     setNodes((nds) => nds.map((n) => (n.id === nid ? { ...n, data: { ...n.data, parametres: suite } } : n)));
-    // UN RÉGLAGE N'EFFACE PAS CE QUE LE NŒUD A DÉSIGNÉ DE SES ENTRÉES : sans quoi le graphe vivant
-    // du Montage n'a plus rien à jouer et s'arrête. L'aval, lui, est effacé entièrement.
-    reinitialiserPourReglage(nid);
-    relancerApresReglage(nid);
+    perimerEtRelancer(nid);
     return suite;
-  }, [noeudsRef, cacheExec, setNodes, reinitialiserPourReglage, relancerApresReglage]);
+  }, [noeudsRef, setNodes, perimerEtRelancer]);
 
   useEffect(() => () => {
     for (const id of minuteursRelance.current.values()) window.clearTimeout(id);
@@ -780,8 +782,15 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     // Le `cacheExec.delete` reste nécessaire pour le nœud lui-même :
     // `zonesSelectionnees` ne figure pas dans `empreinteParametres`.
     onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); reinitialiserAval(nid); },
+    // UN GESTE SUR UNE LIGNE DE TEMPS PASSE PAR LA MÊME PORTE QU'UN RÉGLAGE, et c'est la correction
+    // du 2026-10-26. La vue écrivait son découpage par un `setNodes` nu : rien ne purgeait le cache,
+    // rien ne périmait l'aval, rien ne relançait. Le morceau déplacé n'était donc entendu qu'au
+    // PROCHAIN run déclenché par autre chose — et comme un réglage de cette piste est éteint par le
+    // morceau qu'on vient d'y poser, tirer une barre puis tirer la glissière donnait l'impression
+    // que RIEN ne fonctionnait. Relevé par Fabien, trois fois dans cette famille.
+    onChangerDecoupe: (nid: string, decoupe: Record<string, unknown>) => { setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, ...decoupe } } : n)); perimerEtRelancer(nid); },
     onChargerIR: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n)); reinitialiserNoeud(nid); },
-  }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef]);
+  }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef, perimerEtRelancer]);
   callbacksNoeudRef.current = callbacksNoeud;
 
   // ── Ajouter / Supprimer ──

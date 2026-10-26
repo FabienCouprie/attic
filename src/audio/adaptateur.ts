@@ -6,7 +6,7 @@
 //
 // C'est le SEUL endroit où `enregistrer()` est appelé. Importer un module de
 // plugin n'a plus d'effet de bord — les fiches sont exportées, pas enregistrées.
-import { creerRegistre, type Registre } from "../core";
+import { creerRegistre, ecartsDeType, type Registre } from "../core";
 import { configurerRegistre as configurerRegistreMeta } from "../core/metastore";
 import { configurerServicesDomaine } from "../core/services-domaine";
 import { configurerRegistreNodes } from "../core/nodes-installes";
@@ -16,11 +16,40 @@ import { toutesLesFiches } from "../plugins";
 import type { ValeurAudio, RuntimeAudio } from "./types-domaine";
 import { contenusControleCompatibles } from "./sous-types-controle";
 import { contenusTexteCompatibles } from "./sous-types-texte";
+// ═══ CE QU'UNE VALEUR DOIT ÊTRE POUR CIRCULER SUR SON PORT ═══
+//
+// Point 6 d'une revue du dépôt : rien ne vérifiait, à l'exécution, qu'une valeur correspond au type
+// de son port. Un composant qui déclare une sortie audio pouvait rendre n'importe quoi.
+//
+// CES PRÉDICATS NE SONT PAS ÉCRITS POUR L'OCCASION : le domaine les avait déjà, et s'en servait.
+// `estCourbe` décide si une courbe se dessine, `estObjet` si un objet se rend, `estSequence` si des
+// notes se lisent, `estCercle` si un cercle s'affiche. Les réemployer donne UNE source de vérité par
+// type ; en écrire d'autres ici aurait fait deux définitions qui auraient fini par se séparer.
+import { estCourbe } from "./courbe";
+import { estObjet } from "./multicanal";
+import { estCercle } from "./cercle";
+import { estSequence } from "./sequence";
 
 export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
 
+// LE REGISTRE EST JOIGNABLE DEPUIS LA PAGE, pour les épreuves de bout en bout et pour elles seules.
+// C'est ce qui permet à `tests-e2e/types-au-port.spec.ts` de DÉSARMER un prédicat et de vérifier que
+// la console se met à parler : sans cela, le silence du garde ne prouverait rien — un moteur qui
+// n'appellerait pas la vérification rendrait exactement le même vide.
+//
+// ET LA RÈGLE AVEC LUI, plutôt que recopiée dans le banc. Le banc tourne DANS LA PAGE, par
+// `page.evaluate`, et ne peut donc pas importer un module : sans ce point d'accès, il aurait fallu
+// réécrire chez lui les cinq lignes de `ecartsDeType`. Deux écritures d'une règle finissent toujours
+// par se séparer — c'est ce que ce dépôt répète, et il l'a payé assez souvent.
+if (typeof window !== "undefined") {
+  const g = window as unknown as { __attic_registre__?: unknown; __attic_ecarts_de_type__?: unknown };
+  g.__attic_registre__ = registre;
+  g.__attic_ecarts_de_type__ = ecartsDeType;
+}
+
 // Types de flux du domaine audio (dans le registre, pas dans un global)
-  registre.enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f", libelle: "Audio" });
+  registre.enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f", libelle: "Audio",
+    estDuType: (v) => typeof AudioBuffer !== "undefined" && v instanceof AudioBuffer });
   // GRIS NEUTRE, PARCE QU'UN NŒUD-FRONTIÈRE N'A PAS DE TYPE À LUI. Il marque, à l'intérieur d'un
   // méta-composant, l'endroit où un port sera exposé ; ce port prend le type du port interne auquel
   // la frontière se relie. Ses deux blocs étaient déclarés « audio », si bien qu'ils s'affichaient
@@ -41,10 +70,27 @@ export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
   registre.enregistrerTypeFlux({
     id: "texte", couleur: "#36a2eb", libelle: "Texte",
     sousTypesCompatibles: contenusTexteCompatibles,
+    estDuType: (v) => typeof v === "string",
   });
+  // ═══ LES TYPES QUI NE DÉCLARENT PAS DE PRÉDICAT, ET POURQUOI CHACUN ═══
+  //
+  // LE SILENCE EST LE DÉFAUT, et il est volontaire : un prédicat FAUX crierait sur des composants
+  // corrects, on apprendrait à ne plus le lire, et le jour où il dirait vrai personne ne
+  // l'entendrait. On n'en déclare donc un qu'après avoir MESURÉ ce qui circule.
+  //
+  //   · `frontiere` n'a pas de type à lui — il prend celui du port auquel il se relie —, et
+  //     `types-au-port.ts` l'écarte explicitement pour cette raison.
+  //   · `controle` transporte vingt-six contenus différents : une durée, des zones, un tempo, un
+  //     profil de bruit. C'est `sous-types-controle.ts` qui les départage, par SOUS-TYPE ; un
+  //     prédicat unique sur le type ne pourrait que tout accepter.
+  //   · `fichier`, `image`, `midi`, `video` portent des `File`, des `Blob`, parfois un tableau
+  //     d'octets selon le producteur. Les quatre demandent un relevé avant d'être déclarés : c'est
+  //     exactement là qu'un prédicat trop serré ferait du bruit.
+  //   · `banque`, `accordage` et `spectrogramme` n'ont pas de prédicat dans le domaine aujourd'hui,
+  //     et je n'en écris pas au jugé.
   registre.enregistrerTypeFlux({ id: "fichier", couleur: "#999", libelle: "Fichier" });
   registre.enregistrerTypeFlux({ id: "image", couleur: "#d63384", libelle: "Image" });
-  registre.enregistrerTypeFlux({ id: "courbe", couleur: "#b06fe0", libelle: "Courbe" });
+  registre.enregistrerTypeFlux({ id: "courbe", couleur: "#b06fe0", libelle: "Courbe", estDuType: estCourbe });
   // ORANGE FRANC, et non plus l'ambre #c99a2e : mesurée dans Lab, sa distance au MIDI (#e9a13b)
   // n'était que de 11,9 ΔE — deux tuyaux qu'on ne distingue pas d'un coup d'œil, et c'est ce qui a
   // été remonté. Celle-ci en est à 22,3 tout en restant à 24,2 du « Contrôle » (#e8590c), l'autre
@@ -53,7 +99,7 @@ export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
   // VERT TILLEUL, la seule teinte que la palette n'occupait pas encore : un objet sonore n'est pas de
   // l'audio — il porte un son ET sa trajectoire, sans salle —, et il ne doit pouvoir se brancher que
   // sur un rendu d'objets. Un type distinct l'impose ; le teinter comme l'audio inviterait à l'erreur.
-  registre.enregistrerTypeFlux({ id: "objet", couleur: "#82c91e", libelle: "Objet" });
+  registre.enregistrerTypeFlux({ id: "objet", couleur: "#82c91e", libelle: "Objet", estDuType: estObjet });
   // CORAIL CLAIR, choisi par la mesure et non au jugé : sa distance en Lab à la couleur la plus
   // proche de la palette, le rose de l'image (#d63384), est de 40,5 ΔE, et toutes les autres sont
   // au-delà. C'était le meilleur des treize candidats essayés, le suivant étant à 38,7. Un film
@@ -75,7 +121,7 @@ export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
   // ports Csound portent déjà ce nom pour un texte au format `sco`, et deux ports homonymes de
   // deux couleurs se seraient côtoyés dans la palette. Le mot promettait en outre une notation,
   // quand ce flux n'est qu'un convoi d'événements.
-  registre.enregistrerTypeFlux({ id: "sequence", couleur: "#8b5a2b", libelle: "Séquence" });
+  registre.enregistrerTypeFlux({ id: "sequence", couleur: "#8b5a2b", libelle: "Séquence", estDuType: estSequence });
   // BLANC, DEMANDÉ PAR FABIEN, et il a raison : le bleu électrique qu'il remplaçait était à 93,5 ΔE
   // du fond du canevas sur le papier, mais un câble d'un pixel et demi de large ne montre pas sa
   // couleur comme un aplat, et du bleu sur du bleu nuit ne ressortait pas à l'œil.
@@ -92,7 +138,7 @@ export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
   // un cercle n'a que des places et un nombre de places. C'est ce qui permet de le tourner, de le
   // réfléchir et d'en prendre le complémentaire, toutes opérations qui perdent leur sens dès
   // qu'une attaque est datée. Voir `audio/cercle.ts`.
-  registre.enregistrerTypeFlux({ id: "cercle", couleur: "#ffffff", libelle: "Cercle" });
+  registre.enregistrerTypeFlux({ id: "cercle", couleur: "#ffffff", libelle: "Cercle", estDuType: estCercle });
   // LE PREMIER TYPE QUI SE DISTINGUE PAR SA FORME ET NON PAR SA COULEUR, relevé par Fabien : « les
   // ports spectrogrammes et les ports sons sont de la même couleur, très proche pour un œil humain
   // serait plus exact ; nous manquons déjà de couleur, je recommanderais tout simplement de changer

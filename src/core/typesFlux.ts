@@ -39,4 +39,17 @@ export interface TypeFlux {
    * autorisait les trente combinaisons, et six voulaient dire quelque chose.
    */
   sousTypesCompatibles?: (sousTypeSource: string | undefined, sousTypeCible: string | undefined) => boolean;
+  /**
+   * Cette valeur est-elle bien de ce type ? Point 6 d'une revue du dépôt, le 2026-10-25 : « rien ne
+   * vérifie, à l'exécution, qu'une valeur correspond au type de son port ».
+   *
+   * LES DEUX RÈGLES CI-DESSUS PORTENT SUR DES PORTS, celle-ci sur un CONTENU. Un composant qui
+   * déclare une sortie audio pouvait rendre n'importe quoi, et l'aval s'en apercevait — ou pas.
+   *
+   * ELLE EST FACULTATIVE, ET LE SILENCE EST LE DÉFAUT. Un prédicat FAUX est pire que pas de
+   * prédicat : il crierait sur des composants corrects, on apprendrait à ne plus le lire, et le jour
+   * où il dirait vrai personne ne l'entendrait. Chacun se déclare donc après avoir MESURÉ ce qui
+   * circule vraiment sur ce type. Voir `core/types-au-port.ts`.
+   */
+  estDuType?: (valeur: unknown) => boolean;
 }

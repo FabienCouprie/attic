@@ -81,6 +81,26 @@ export interface ServicesApercu {
    * il effacerait au passage l'étiquette « 7.1.4 » que son entrée portait.
    */
   heriterDesEntrees(sorties: readonly unknown[], entrees: readonly unknown[]): void;
+
+  /**
+   * Les fréquences qui se mêlent sur les entrées de ce nœud, s'il y en a plusieurs.
+   *
+   * ═══ UN RECENSEMENT, ET NON UNE CONVERSION ═══
+   *
+   * Point 5 d'une revue du dépôt : « aucune fréquence d'échantillonnage commune au graphe ». Trois
+   * régimes coexistent — les générateurs à 44 100 en dur, le décodage figé à 48 000, et les fichiers
+   * à leur propre fréquence —, et la conversion se fait implicitement, partout où un
+   * `OfflineAudioContext` s'en mêle, par le rééchantillonneur du navigateur.
+   *
+   * CE QUI SE DÉCIDE ICI EST DE MESURER AVANT DE CONVERTIR. Convertir à l'entrée de chaque nœud
+   * changerait ce que rend TOUT graphe déjà enregistré, et l'on ne sait pas encore sur combien
+   * d'arêtes cela arrive vraiment. Le relevé le dira ; d'ici là, rien n'est touché.
+   *
+   * ELLE REND LES FRÉQUENCES DISTINCTES, dans l'ordre, et une liste de moins de deux éléments
+   * signifie qu'il n'y a rien à signaler. Ce que « fréquence » veut dire appartient au domaine : le
+   * shell ne sait que l'endroit où la question se pose.
+   */
+  frequencesMelees(entrees: readonly unknown[]): number[];
 }
 
 const NEUTRES: ServicesApercu = {
@@ -91,6 +111,8 @@ const NEUTRES: ServicesApercu = {
   apercuCourbe: () => undefined,
   ecartNiveau: () => undefined,
   heriterDesEntrees: () => {},
+  // Sans domaine, aucune valeur ne porte de fréquence : il n’y a rien à mêler.
+  frequencesMelees: () => [],
 };
 
 let services: ServicesApercu = NEUTRES;

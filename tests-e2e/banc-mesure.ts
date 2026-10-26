@@ -84,6 +84,8 @@ export interface Mesure {
     crete: number;
   }[];
   erreur: string | null;
+  /** Les valeurs rendues qui ne correspondent pas au type de leur port. Voir `core/types-au-port.ts`. */
+  ecartsType: { rang: number; port: string; attendu: string; recu: string }[];
 }
 
 /**
@@ -166,7 +168,7 @@ export async function mesurerComposant(
     const fiche = (idx as any).toutesLesFiches.find((f: any) => f.id === id);
     if (!fiche) {
       return { version: {}, ms: 0, gelMs: null, messages: 0, message: null, empreintes: [],
-        descripteurs: null, wavs: [], erreur: `fiche « ${id} » absente du registre` };
+        descripteurs: null, wavs: [], ecartsType: [], erreur: `fiche « ${id} » absente du registre` };
     }
 
     const source = String(fiche.executer);
@@ -314,6 +316,21 @@ export async function mesurerComposant(
     } catch (e) {
       erreur = String((e as Error)?.message ?? e).slice(0, 120);
     }
+    // ═══ CE QUE LE COMPOSANT REND EST-IL DU TYPE QU'IL PROMET ? ═══
+    //
+    // Point 6 d'une revue du dépôt. LE BANC EST LE SITE À PLUS HAUTE VALEUR pour cette question : le
+    // moteur ne voit que les composants posés dans un graphe, le banc les parcourt UN PAR UN — et
+    // `npm run catalogue` en exerce trois cent soixante-sept.
+    //
+    // LA RÈGLE N'EST PAS RECOPIÉE ICI. Le banc tourne dans la page et ne peut pas importer un
+    // module ; l'adaptateur expose donc `ecartsDeType` sur la fenêtre, et c'est la même règle, aux
+    // mêmes prédicats, que celle que le moteur applique. Deux écritures auraient fini par se séparer.
+    const verifier = (window as any).__attic_ecarts_de_type__;
+    const reg = (window as any).__attic_registre__;
+    const ecartsType: { rang: number; port: string; attendu: string; recu: string }[] =
+      verifier && reg && resultat
+        ? verifier(fiche.sorties ?? [], resultat.valeurs, (t: string) => reg.typeFlux(t))
+        : [];
     const ms = Math.round(performance.now() - debut);
     actif = false;
 
@@ -446,7 +463,7 @@ export async function mesurerComposant(
       gelMs: instants.length === 0 ? null : Math.round(plusLong),
       messages: instants.length,
       message: resultat && typeof resultat.message === "string" ? resultat.message : null,
-      empreintes, descripteurs, wavs, erreur,
+      empreintes, descripteurs, wavs, erreur, ecartsType,
     };
   }, [ficheId, options.marqueurs ?? [], options.parametres ?? {}, FREQUENCE, DUREE_SEC,
       options.entreesAudio ?? [0], options.descripteurs ?? false, options.wav ?? false,

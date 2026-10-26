@@ -12,7 +12,7 @@ import {
   sortieDeBulle,
   trouverMeta,
   ordreTopologique, placerEnDernier, ancetres, descendants, perimetreCible, empreinteParametres, empreinteEntrees, empreinteSorties, empreinteValeursEntrantes,
-  noeudsEnCycle, resoudreEntree, valeursEntrantes, validerGraphe,
+  noeudsEnCycle, resoudreEntree, valeursEntrantes, validerGraphe, signalerEcartsDeType,
   type NoeudG, type AreteG,
 } from "../../core";
 
@@ -867,8 +867,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
         { hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree },
       );
 
-      console.log(`[cache] ${nodeId}(${node.data.ficheId}) sourceReprocessee=${sourceReprocessee} jamaisCache=${jamaisCache} hit=${cacheIdentique} hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree} cached=${entreeCache ? { hp: entreeCache.hashParams, he: entreeCache.hashEntree, hv: entreeCache.hashValeursEntree } : null}`);
-
+      // UN JOURNAL DE HUIT VALEURS PAR NŒUD ET PAR RUN A ÉTÉ RETIRÉ D'ICI, et c'est le second du
+      // genre. Il interpolait `sourceReprocessee`, `jamaisCache`, le verdict et quatre empreintes —
+      // y compris un objet littéral, donc une sérialisation — pour chaque nœud de chaque run, et
+      // rien ne le lisait : ni un cas, ni un script, ni un garde. La décision du cache, elle, est
+      // éprouvée dans `core/cache-execution.ts`, avec ses cas et le prix de sa règle écrit.
+      //
+      // CE QU'IL A PAYÉ : le recensement des fréquences, plus bas. Le fichier est à son plafond de
+      // dette, et la règle du dépôt est que ce qu'on y ajoute doit y être payé — ce journal valait
+      // moins qu'une mesure, comme « [cache store] » avant lui.
       if (cacheIdentique) {
         resultats.set(nodeId, entreeCache.valeurs);
         if (entreeCache.message) messages.set(nodeId, entreeCache.message);
@@ -1028,6 +1035,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // mesure ; le shell ne sait que l'endroit où la question se pose.
         const ecart = servicesApercu().ecartNiveau(res.valeurs as unknown[], entrantes());
         if (ecart !== undefined) ecartsParNoeud.set(nodeId, ecart);
+        // ET LES FRÉQUENCES QUI SE MÊLENT SUR SES ENTRÉES, recensées et non converties — point 5
+        // d'une revue du dépôt. Trois régimes coexistent dans le catalogue, et la conversion se fait
+        // implicitement, par le rééchantillonneur du navigateur. Convertir ici changerait ce que
+        // rend tout graphe déjà enregistré : on mesure d'abord sur combien d'arêtes cela arrive.
+        const melees = servicesApercu().frequencesMelees(entrantes()); if (melees.length) console.warn(`[frequence] ${nodeId}(${node.data.ficheId}) reçoit ${melees.join(" et ")} Hz : une conversion implicite a lieu`);
         if (res.message) messages.set(nodeId, res.message);
         if (res.affichage) affichageParNoeud.set(nodeId, res.affichage);
         if (res.designe) designeParNoeud.set(nodeId, res.designe);
@@ -1060,7 +1072,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
           // sans lui, le câblage aval de tous entrerait dans la clé pour la raison d'un seul.
           if (!jeton?.perime()) cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties, tempsExecution: elapsed });
           else console.warn(`[cache] resultat perime ecarte : ${nodeId} (generation ${jeton.generation})`);
-          console.log(`[cache store] ${nodeId}(${node.data.ficheId}) hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree}`);
+          // ═══ CE QUE LE COMPOSANT REND EST-IL DU TYPE QU'IL PROMET ? ═══
+          //
+          // Point 6 d'une revue du dépôt : rien ne le vérifiait, et un composant qui déclare une
+          // sortie audio pouvait rendre n'importe quoi. Le prédicat vit sur le TYPE DE FLUX, que le
+          // domaine déclare ; le moteur ne fait que poser la question. Il RAPPORTE et ne refuse
+          // pas : un écart est un défaut du composant, et refuser casserait le graphe de quelqu'un
+          // qui n'y peut rien. Voir `core/types-au-port.ts`.
+          //
+          // CETTE LIGNE REMPLACE UN `console.log` QUE PERSONNE NE LISAIT — « [cache store] » et ses
+          // quatre empreintes, interpolées pour chaque nœud de chaque run. Le fichier est à son
+          // plafond de dette : ce qu'on y ajoute doit y être payé, et une vérification valait mieux
+          // qu'un journal. Elle coûte d'ailleurs moins : un `instanceof` au lieu d'une chaîne.
+          signalerEcartsDeType(nodeId, String(node.data.ficheId), defRes?.sorties ?? [], res.valeurs, (t) => registreUI().typeFlux(t));
           poserStatut(nodeId, "termine");
           ajouterTemps(elapsed);
         }

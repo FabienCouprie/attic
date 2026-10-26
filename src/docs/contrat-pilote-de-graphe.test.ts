@@ -175,8 +175,19 @@ describe("le pilote de graphe", () => {
     const appelants = readdirSync(DOSSIER)
       .filter((f) => f.endsWith(".spec.ts"))
       .filter((f) => /from "\.\/pilote-graphe"/.test(source(resolve(DOSSIER, f))));
-    expect(appelants.sort(), "les deux verbes qui lancent un graphe entier")
-      .toEqual(["empreintes-exemples.spec.ts", "executer.spec.ts"]);
+    // LA LISTE EST FIGÉE, et c'est ce qui force un appelant neuf à se déclarer. Cinq aujourd'hui :
+    // les deux verbes qui lancent un graphe entier, le garde des gains de piste du montage, celui
+    // des types aux ports, et celui du mélange de deux fréquences. Les trois derniers ont besoin du
+    // même pilotage — semer, lancer, attendre la fin, relire ce que la page dit — pour mesurer par
+    // le chemin de l'interface, là où le banc appelle l'exécuteur directement.
+    //
+    // ET LE DERNIER A FAIT NAÎTRE `avantDeLancer` PLUTÔT QU'UN PILOTAGE À LUI : il doit poser deux
+    // fichiers par le bouton du nœud, ce qui ne peut se faire qu'entre le rechargement et le clic.
+    // C'est exactement le cas que ce garde-ci existe pour empêcher de résoudre à part.
+    expect(appelants.sort(), "les appelants déclarés du pilote")
+      .toEqual(["empreintes-exemples.spec.ts", "executer.spec.ts",
+        "melange-frequences-dans-application.spec.ts", "montage-gains-pistes.spec.ts",
+        "types-au-port.spec.ts"]);
     const coupables = appelants.filter((f) => {
       const code = codeSeul(source(resolve(DOSSIER, f)));
       return code.includes("statut-puce") || code.includes("waitForFunction");
