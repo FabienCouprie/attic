@@ -43,14 +43,37 @@ test.describe("les types aux ports", () => {
 
   test("AUCUN EXEMPLE LIVRE NE REND UNE VALEUR DU MAUVAIS TYPE", async ({ page }) => {
     const ecarts: string[] = [];
-    page.on("console", (m) => { if (m.text().startsWith("[type] ")) ecarts.push(m.text()); });
+    // ═══ ET LE RECENSEMENT DES FRÉQUENCES PASSE PAR LE MÊME GUICHET — point 5 de la revue ═══
+    //
+    // Le moteur signale un nœud qui reçoit des valeurs à des fréquences DIFFÉRENTES, c'est-à-dire
+    // une conversion implicite faite par le rééchantillonneur du navigateur. Il ne convertit rien :
+    // on mesure d'abord sur combien d'arêtes cela arrive, parce que convertir changerait ce que rend
+    // tout graphe déjà enregistré.
+    //
+    // CE QUE CE RELEVÉ VAUT, ET CE QU'IL NE VAUT PAS. Il rend ZÉRO sur ces trois graphes, et c'est
+    // un vrai zéro POUR EUX : toutes leurs branches naissent de générateurs, qui rendent tous à
+    // 44 100 Hz — bytebeat compris, vérifié. La seule source à 48 000 est le DÉCODAGE d'un fichier,
+    // `contexteDecodage` étant figé là pour ne pas dépendre de la carte son, et décoder exige
+    // Electron. Ce relevé ne dira donc rien tant qu'un fichier n'entre pas dans un graphe.
+    //
+    // ET LE MOTEUR APPELLE BIEN CE RECENSEMENT, ce qu'un zéro ne prouverait pas tout seul : défaut
+    // planté dans `plugins/apercu-domaine.ts` pour qu'il réponde toujours, **treize nœuds** ont été
+    // signalés sur `canon-de-proportions`, chacun nommant son composant et ses deux fréquences.
+    // C'est la paire que ce dépôt exige — un relevé muet, et la preuve qu'il pouvait parler.
+    const frequences = new Set<string>();
+    page.on("console", (m) => {
+      const t = m.text();
+      if (t.startsWith("[type] ")) ecarts.push(t);
+      if (t.startsWith("[frequence] ")) frequences.add(t);
+    });
 
     for (const nom of EXEMPLES) {
       const graphe = readFileSync(join(RACINE, "exemples", nom), "utf8");
       await semerEtLancer(page, devUrl, graphe, { profondeurExport: 32 });
-      console.log(`${nom} · ${ecarts.length} écart(s) cumulé(s)`);
+      console.log(`${nom} · ${ecarts.length} écart(s) de type · ${frequences.size} nœud(s) qui mêlent des fréquences`);
     }
 
+    for (const f of frequences) console.log(`  ${f}`);
     for (const e of ecarts) console.log(`  ${e}`);
     expect(ecarts, [
       "",

@@ -32,10 +32,19 @@ describe("le mélangeur, face à deux fréquences d'échantillonnage", () => {
     // la fréquence de la première piste : c'est bien 48 kHz ici.
     const seule = await melangerPistes([ton(440, 48000)], 0);
     expect(Math.abs(cents(hauteurDe(seule), 440))).toBeLessThan(20);
-    // Et maintenant l'inverse : la première piste est à 44,1 kHz, la seconde à 48 kHz. Le rendu se
-    // fait donc à 44,1 kHz, et c'est la seconde qui doit être convertie.
+    // ═══ LE RENDU SE FAIT À LA PLUS HAUTE, ET NON À CELLE DE LA PREMIÈRE PISTE ═══
+    //
+    // CETTE ASSERTION DISAIT 44 100, et c'était le mécanisme d'avant : le mélangeur prenait
+    // `entrees[0].sampleRate`. Relevé au point 5 d'une revue du dépôt, le 2026-10-25, et le
+    // mécanisme était pire que l'énoncé — les ports de ce composant sont DYNAMIQUES, de sorte que le
+    // premier port est le premier câble posé. Débrancher deux entrées et les rebrancher dans l'autre
+    // ordre changeait le fichier rendu.
+    //
+    // CE QUE CE CAS GARDE N'A PAS CHANGÉ POUR AUTANT, et c'est pourquoi il reste ici : son objet est
+    // que les pistes de l'autre fréquence soient CONVERTIES JUSTE, quelle que soit celle du rendu.
+    // C'est maintenant la piste à 44,1 kHz qui est convertie, et le relevé porte sur elle.
     const melange = await melangerPistes([ton(440, 44100), ton(880, 48000)], 0);
-    expect(melange.sampleRate).toBe(44100);
+    expect(melange.sampleRate, "la plus haute des entrées, et non l'ordre des câbles").toBe(48000);
     // Deux hauteurs sonnent en même temps : un suiveur de hauteur n'en rendrait qu'une. On mesure
     // donc l'énergie aux fréquences attendues, par Goertzel.
     const energie = (hz: number) => {
@@ -45,10 +54,13 @@ describe("le mélangeur, face à deux fréquences d'échantillonnage", () => {
       for (let i = 0; i < d.length; i++) { const s0 = d[i] + coef * s1 - s2; s2 = s1; s1 = s0; }
       return Math.sqrt(Math.max(0, s1 * s1 + s2 * s2 - coef * s1 * s2)) / d.length;
     };
-    // 880 Hz doit dominer 808,5 Hz — la hauteur qu'aurait la piste si elle n'était PAS convertie
-    // (880 × 44100/48000). C'est exactement le défaut mesuré dans la banque aux zones mélangées.
+    // 440 Hz DOIT DOMINER 404,25 Hz — la hauteur qu'aurait la piste à 44,1 kHz si ses échantillons
+    // étaient lus tels quels à 48 kHz (440 × 44100/48000), soit 147 cents trop bas. C'est exactement
+    // le défaut mesuré dans la banque aux zones mélangées, et le témoin a changé de côté avec la
+    // règle : avant, c'était la piste à 48 kHz qu'on convertissait, et on guettait 808,5 Hz.
+    expect(energie(440)).toBeGreaterThan(energie(404.25) * 4);
+    // Et la piste déjà à la fréquence du rendu traverse sans être touchée.
     expect(energie(880)).toBeGreaterThan(energie(808.5) * 4);
-    expect(energie(440)).toBeGreaterThan(energie(808.5) * 4);
   }, 30000);
 
   it("rend la durée de la piste la plus longue, quelles que soient les fréquences", async () => {

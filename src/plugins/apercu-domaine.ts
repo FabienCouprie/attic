@@ -91,4 +91,33 @@ export const APERCU_AUDIO: ServicesApercu = {
     // rien ne le dise. Voir `audio/depart-bwf.ts` : dans le doute, l'heure est perdue.
     heriterDepart([...sorties], [...entrees]);
   },
+
+  /**
+   * Les fréquences distinctes qui arrivent sur les entrées d'un nœud.
+   *
+   * ═══ POURQUOI C'EST LE DOMAINE QUI RÉPOND ═══
+   *
+   * Une fréquence d'échantillonnage est une notion audio ; le shell ne doit pas savoir ce qu'est un
+   * tampon ni où il porte sa fréquence. Il sait seulement l'ENDROIT où la question se pose — le seul
+   * point du moteur où les entrées et les sorties d'un nœud sont ensemble sous la main.
+   *
+   * CE QU'ELLE MESURE, ET CE QU'ELLE NE FAIT PAS. Elle dit qu'un nœud reçoit des valeurs à des
+   * fréquences différentes, c'est-à-dire qu'une conversion implicite va avoir lieu, faite par le
+   * rééchantillonneur du navigateur dans l'`OfflineAudioContext` du composant. Elle ne convertit
+   * rien : convertir changerait ce que rend tout graphe déjà enregistré, et l'on veut d'abord savoir
+   * sur combien d'arêtes cela arrive.
+   *
+   * L'ORDRE EST CELUI DES ENTRÉES, non trié : savoir laquelle des deux arrive la première est
+   * exactement ce qui manquait pour comprendre le défaut du mélangeur, dont la sortie suivait le
+   * premier câble posé.
+   */
+  frequencesMelees: (entrees) => {
+    const vues: number[] = [];
+    for (const v of entrees) {
+      if (!estTampon(v)) continue;
+      const f = (v as AudioBuffer).sampleRate;
+      if (Number.isFinite(f) && !vues.includes(f)) vues.push(f);
+    }
+    return vues.length > 1 ? vues : [];
+  },
 };

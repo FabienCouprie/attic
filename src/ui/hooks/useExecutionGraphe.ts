@@ -867,8 +867,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
         { hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree },
       );
 
-      console.log(`[cache] ${nodeId}(${node.data.ficheId}) sourceReprocessee=${sourceReprocessee} jamaisCache=${jamaisCache} hit=${cacheIdentique} hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree} cached=${entreeCache ? { hp: entreeCache.hashParams, he: entreeCache.hashEntree, hv: entreeCache.hashValeursEntree } : null}`);
-
+      // UN JOURNAL DE HUIT VALEURS PAR NŒUD ET PAR RUN A ÉTÉ RETIRÉ D'ICI, et c'est le second du
+      // genre. Il interpolait `sourceReprocessee`, `jamaisCache`, le verdict et quatre empreintes —
+      // y compris un objet littéral, donc une sérialisation — pour chaque nœud de chaque run, et
+      // rien ne le lisait : ni un cas, ni un script, ni un garde. La décision du cache, elle, est
+      // éprouvée dans `core/cache-execution.ts`, avec ses cas et le prix de sa règle écrit.
+      //
+      // CE QU'IL A PAYÉ : le recensement des fréquences, plus bas. Le fichier est à son plafond de
+      // dette, et la règle du dépôt est que ce qu'on y ajoute doit y être payé — ce journal valait
+      // moins qu'une mesure, comme « [cache store] » avant lui.
       if (cacheIdentique) {
         resultats.set(nodeId, entreeCache.valeurs);
         if (entreeCache.message) messages.set(nodeId, entreeCache.message);
@@ -1028,6 +1035,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // mesure ; le shell ne sait que l'endroit où la question se pose.
         const ecart = servicesApercu().ecartNiveau(res.valeurs as unknown[], entrantes());
         if (ecart !== undefined) ecartsParNoeud.set(nodeId, ecart);
+        // ET LES FRÉQUENCES QUI SE MÊLENT SUR SES ENTRÉES, recensées et non converties — point 5
+        // d'une revue du dépôt. Trois régimes coexistent dans le catalogue, et la conversion se fait
+        // implicitement, par le rééchantillonneur du navigateur. Convertir ici changerait ce que
+        // rend tout graphe déjà enregistré : on mesure d'abord sur combien d'arêtes cela arrive.
+        const melees = servicesApercu().frequencesMelees(entrantes()); if (melees.length) console.warn(`[frequence] ${nodeId}(${node.data.ficheId}) reçoit ${melees.join(" et ")} Hz : une conversion implicite a lieu`);
         if (res.message) messages.set(nodeId, res.message);
         if (res.affichage) affichageParNoeud.set(nodeId, res.affichage);
         if (res.designe) designeParNoeud.set(nodeId, res.designe);

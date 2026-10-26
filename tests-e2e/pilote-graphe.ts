@@ -56,6 +56,19 @@ export interface OptionsPilote {
    */
   profondeurExport?: 16 | 24 | 32;
   delaiRunMs?: number;
+  /**
+   * Ce qu'il y a à faire une fois le graphe POSÉ et AVANT qu'on lance.
+   *
+   * POURQUOI CE CRÉNEAU EXISTE. Un graphe ne se sème pas toujours entier : un nœud d'entrée audio
+   * attend un `File`, qui ne traverse pas le JSON de l'en-cours. Il faut donc le poser par le
+   * bouton du nœud, entre le rechargement et le clic sur Lancer — et c'est le seul instant où ce
+   * n'est possible ni avant ni après.
+   *
+   * ET IL N'Y EN A QU'UN, plutôt qu'un pilotage de plus dans le spec qui en a besoin. Le contrat
+   * `docs/contrat-pilote-de-graphe.test.ts` l'exige : un appelant qui garde son propre pilotage est
+   * la façon dont la divergence revient — une correction posée dans l'un, l'autre garde le défaut.
+   */
+  avantDeLancer?: (page: Page) => Promise<void>;
 }
 
 /**
@@ -73,6 +86,8 @@ export async function semerEtLancer(
   await page.reload();
   await page.waitForSelector(".attic-app", { timeout: 15000 });
   await page.waitForTimeout(2500);
+
+  if (o.avantDeLancer) await o.avantDeLancer(page);
 
   await page.locator('button[title*="Lancer"]').first().click({ timeout: 15000 });
 
