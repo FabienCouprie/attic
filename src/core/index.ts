@@ -26,6 +26,9 @@ export { detecterPertes, formaterRapportPertes } from "./pertes";
 // `pertes.ts` dit ce que l'ÉCRITURE d'un fichier a détruit — les champs non sérialisables.
 // `format-projet.ts` dit ce que sa LECTURE a perdu, et de quel format il vient. Deux sujets voisins
 // de nom et distincts de fond : le premier regarde un nœud en mémoire, le second un fichier.
+// CE QU'UNE VALEUR DOIT ÊTRE POUR CIRCULER SUR SON PORT. Le prédicat vit sur le type de flux, que
+// le domaine déclare ; le cœur ne fait que poser la question et rapporter l'écart.
+export { ecartsDeType, signalerEcartsDeType, genreDe, type EcartDeType } from "./types-au-port";
 export { FORMAT_PROJET, versionDuProjet, venuDuFutur, perteAuChargementVide,
   rienDePerduAuChargement, rapportDuChargement, type PerteAuChargement } from "./format-projet";
 export type { ChampPurge } from "./pertes";

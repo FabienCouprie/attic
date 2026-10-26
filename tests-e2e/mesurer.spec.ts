@@ -54,6 +54,12 @@ function enTexte(id: string, m: Awaited<ReturnType<typeof mesurerComposant>>): s
     lignes.push(`  marqueur « ${marqueur} » : ${trouve ? "présent" : "ABSENT"}`);
   }
   if (m.erreur) lignes.push(`  ERREUR         : ${m.erreur}`);
+  // CE QUE LE COMPOSANT PROMET SUR SES PORTS, et ce qu'il rend. Point 6 d'une revue du dépôt : rien
+  // ne le vérifiait, et une sortie déclarée « audio » pouvait rendre n'importe quoi. Le banc le
+  // relève sur chaque passe, par la règle même qu'applique le moteur.
+  for (const e of m.ecartsType ?? []) {
+    lignes.push(`  ÉCART DE TYPE  : sortie ${e.rang} « ${e.port} » promet « ${e.attendu} », rend ${e.recu}`);
+  }
   return lignes.join("\n");
 }
 

@@ -175,12 +175,14 @@ describe("le pilote de graphe", () => {
     const appelants = readdirSync(DOSSIER)
       .filter((f) => f.endsWith(".spec.ts"))
       .filter((f) => /from "\.\/pilote-graphe"/.test(source(resolve(DOSSIER, f))));
-    // LA LISTE EST FIGÉE, et c'est ce qui force un appelant neuf à se déclarer. Trois aujourd'hui :
-    // les deux verbes qui lancent un graphe entier, et le garde des gains de piste du montage, qui
-    // a besoin du même pilotage — semer, lancer, attendre la fin, relire les aperçus — pour mesurer
-    // un réglage par le chemin de l'interface plutôt que par le banc.
+    // LA LISTE EST FIGÉE, et c'est ce qui force un appelant neuf à se déclarer. Quatre aujourd'hui :
+    // les deux verbes qui lancent un graphe entier, le garde des gains de piste du montage, et celui
+    // des types aux ports. Les deux derniers ont besoin du même pilotage — semer, lancer, attendre
+    // la fin, relire ce que la page dit — pour mesurer par le chemin de l'interface, là où le banc
+    // appelle l'exécuteur directement.
     expect(appelants.sort(), "les appelants déclarés du pilote")
-      .toEqual(["empreintes-exemples.spec.ts", "executer.spec.ts", "montage-gains-pistes.spec.ts"]);
+      .toEqual(["empreintes-exemples.spec.ts", "executer.spec.ts", "montage-gains-pistes.spec.ts",
+        "types-au-port.spec.ts"]);
     const coupables = appelants.filter((f) => {
       const code = codeSeul(source(resolve(DOSSIER, f)));
       return code.includes("statut-puce") || code.includes("waitForFunction");

@@ -4,6 +4,17 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Added
+
+- **Une valeur rendue est désormais confrontée au type de son port, à l'exécution.** Point 6 de la revue critique, et il était vrai sans nuance : `core/validation.ts` regardait la **déclaration** d'une fiche — identifiant, nom, résumé, `executer` est bien une fonction —, et **rien ne regardait une valeur**. `estDuType` n'existait nulle part : un `TypeFlux` portait une couleur, une forme, un libellé et deux règles de compatibilité de **ports**, aucune de **contenu**. Un composant qui déclare une sortie audio pouvait rendre n'importe quoi.
+
+  - **LES PRÉDICATS NE SONT PAS ÉCRITS POUR L'OCCASION, et c'est ce qui les rend fiables.** Le domaine les avait déjà et s'en servait : `estCourbe` décide si une courbe se dessine, `estObjet` si un objet se rend, `estSequence` si des notes se lisent, `estCercle` si un cercle s'affiche. Les réemployer donne **une** source de vérité par type ; en écrire d'autres aurait fait deux définitions qui se seraient séparées. **Six des treize** types de flux en déclarent un.
+  - **ET SEPT N'EN DÉCLARENT PAS, chacun pour une raison écrite.** Le silence est le défaut voulu : **un prédicat faux est pire que pas de prédicat** — il crierait sur des composants corrects, on apprendrait à ne plus le lire, et le jour où il dirait vrai personne ne l'entendrait. `frontiere` n'a pas de type à lui ; `controle` transporte vingt-six contenus que seuls ses sous-types départagent ; `fichier`, `image`, `midi` et `video` demandent un relevé avant d'être déclarés.
+  - **IL RAPPORTE, IL NE REFUSE PAS.** Un écart est un défaut du composant, pas de l'utilisateur : refuser le résultat casserait le graphe de quelqu'un qui n'y peut rien. Le message nomme les trois choses qu'il faut pour chercher — le nœud, son composant, son port — puis la promesse et le reçu.
+  - **LE BANC EST LE SITE À PLUS HAUTE VALEUR**, et il l'a reçu aussi : le moteur ne voit que les composants posés dans un graphe, le banc les parcourt **un par un**, et `npm run catalogue` en exerce 367. La règle n'y est pas recopiée — le banc tourne dans la page et ne peut pas importer un module, donc l'adaptateur l'y expose. Deux écritures d'une règle finissent toujours par se séparer.
+  - **ET `useExecutionGraphe.ts` N'A PAS GROSSI D'UNE LIGNE** — 754 avant, 754 après. La vérification remplace un `console.log` que **personne ne lisait** : « [cache store] » et ses quatre empreintes, interpolées en chaîne pour chaque nœud de chaque run. Elle coûte d'ailleurs moins qu'elle — un `instanceof` au lieu d'une chaîne.
+  - **MESURÉ DES DEUX CÔTÉS, parce qu'un silence ne prouve rien seul.** Trois exemples livrés, variés en types : **zéro écart** — les prédicats ne crient sur personne. Puis le prédicat de l'audio **désarmé depuis la page**, sur le registre vivant : **trois lignes** paraissent, nommant nœud, composant et port. Un garde qui se tait, et la preuve qu'il pouvait parler. Même paire au banc, par le verbe `mesurer`.
+
 ### Fixed
 
 - **UNE GLISSIÈRE QUI A CESSÉ D'AGIR EST DÉSORMAIS GRISÉE, ET DIT POURQUOI SANS QU'ON CLIQUE.** Décision de Fabien, et c'est la cinquième manifestation du même défaut. Depuis que la barre et la glissière sont le même nombre, il ne reste qu'un cas où les quatre réglages d'une piste ne la décrivent plus : elle est **coupée** en plusieurs morceaux, ou **rognée**. Mais rien ne le disait à l'écran — la glissière restait vive, acceptait une valeur, et cette valeur n'allait nulle part.

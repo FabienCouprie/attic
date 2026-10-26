@@ -12,7 +12,7 @@ import {
   sortieDeBulle,
   trouverMeta,
   ordreTopologique, placerEnDernier, ancetres, descendants, perimetreCible, empreinteParametres, empreinteEntrees, empreinteSorties, empreinteValeursEntrantes,
-  noeudsEnCycle, resoudreEntree, valeursEntrantes, validerGraphe,
+  noeudsEnCycle, resoudreEntree, valeursEntrantes, validerGraphe, signalerEcartsDeType,
   type NoeudG, type AreteG,
 } from "../../core";
 
@@ -1060,7 +1060,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
           // sans lui, le câblage aval de tous entrerait dans la clé pour la raison d'un seul.
           if (!jeton?.perime()) cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties, tempsExecution: elapsed });
           else console.warn(`[cache] resultat perime ecarte : ${nodeId} (generation ${jeton.generation})`);
-          console.log(`[cache store] ${nodeId}(${node.data.ficheId}) hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree}`);
+          // ═══ CE QUE LE COMPOSANT REND EST-IL DU TYPE QU'IL PROMET ? ═══
+          //
+          // Point 6 d'une revue du dépôt : rien ne le vérifiait, et un composant qui déclare une
+          // sortie audio pouvait rendre n'importe quoi. Le prédicat vit sur le TYPE DE FLUX, que le
+          // domaine déclare ; le moteur ne fait que poser la question. Il RAPPORTE et ne refuse
+          // pas : un écart est un défaut du composant, et refuser casserait le graphe de quelqu'un
+          // qui n'y peut rien. Voir `core/types-au-port.ts`.
+          //
+          // CETTE LIGNE REMPLACE UN `console.log` QUE PERSONNE NE LISAIT — « [cache store] » et ses
+          // quatre empreintes, interpolées pour chaque nœud de chaque run. Le fichier est à son
+          // plafond de dette : ce qu'on y ajoute doit y être payé, et une vérification valait mieux
+          // qu'un journal. Elle coûte d'ailleurs moins : un `instanceof` au lieu d'une chaîne.
+          signalerEcartsDeType(nodeId, String(node.data.ficheId), defRes?.sorties ?? [], res.valeurs, (t) => registreUI().typeFlux(t));
           poserStatut(nodeId, "termine");
           ajouterTemps(elapsed);
         }
