@@ -35,7 +35,7 @@ import { servicesOrchestration } from "../services-orchestration";
 // CE QUE LE SHELL DEMANDE AU DOMAINE SUR LES VALEURS PRODUITES. Six fonctions audio étaient
 // importées ici, sur le chemin d'exécution de tous les domaines, et `AudioBuffer` nommé à trois
 // endroits. Les questions sont désormais posées, et le domaine y répond (cf. ui/services-apercu.ts).
-import { servicesApercu } from "../services-apercu";
+import { servicesApercu, type ApercuRefaisable } from "../services-apercu";
 import { apresEffacement, champsAReporter, urlsARevoquer, type ClassesDeChamps } from "../../core/cycle-de-vie";
 import type { DemandeAuMoteur } from "../../core/types";
 import { CHAMPS_DE_SAISIE, CHAMPS_MEDIA } from "../../core/saisies";
@@ -803,9 +803,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (patch) poserResultat(id, patch);
       dejaPoses.add(id);
     };
-    const poserCeQuiEstPret = async () => {
-      for (const id of [...aPoser]) await poserUnNoeud(id);
-    };
+    const poserCeQuiEstPret = async () => { for (const id of [...aPoser]) await poserUnNoeud(id); };
     /**
      * Ce nœud-ci est-il celui qu'on REGARDE : sélectionné, ou terminal.
      *
@@ -1334,12 +1332,23 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // l'état d'avant, et c'est là qu'il est.
         const dejaLa = resultatDe(n.id) as {
           audioResultatUrl?: string; audioResultatBuffer?: AudioBuffer;
+          audioResultatRefaisable?: ApercuRefaisable;
           imageResultatUrl?: string; imageResultatFile?: File;
         };
-        let url: string | undefined;
+        const bitsVoulus = lireProfondeurExport();
+        let url: string | undefined, refaisable: ApercuRefaisable | undefined;
         if (audio && garderApercu) {
-          if (audio === dejaLa.audioResultatBuffer && dejaLa.audioResultatUrl) {
-            url = dejaLa.audioResultatUrl;
+          // LA PROFONDEUR ENTRE DANS LA CONDITION DE RÉUTILISATION, et c'est un défaut mesuré :
+          // l'adresse était gardée tant que le tampon était le même OBJET — bonne idée, elle évite
+          // de démonter le lecteur à chaque run —, mais elle ne regardait pas à quelle profondeur
+          // l'aperçu avait été écrit. Le sélecteur de profondeur était donc inopérant même en
+          // relançant. Voir `ui/refaire-apercus.ts`, qui porte le relevé.
+          if (audio === dejaLa.audioResultatBuffer && dejaLa.audioResultatUrl
+            && dejaLa.audioResultatRefaisable?.bits === bitsVoulus) {
+            // L'ADRESSE EST GARDÉE, DONC SON COMPAGNON AUSSI. Le correctif rendu plus bas pose TOUS
+            // les champs, si bien que l'omettre ici l'effacerait : l'aperçu deviendrait
+            // irréécrivable, et le sélecteur de profondeur inopérant sur ce nœud-là seulement.
+            url = dejaLa.audioResultatUrl; refaisable = dejaLa.audioResultatRefaisable;
           } else {
             if (dejaLa.audioResultatUrl) URL.revokeObjectURL(dejaLa.audioResultatUrl);
             // LE NŒUD DÉCLARE QUE SA SORTIE PEUT SORTIR DE LA PLAGE, le shell ne tient plus la
@@ -1357,13 +1366,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
             // calcul parcourt la valeur entière, et un aperçu intermédiaire n'est jamais livré.
             const def = trouverDef(ficheId);
             const aEcouter = audio;
+            // CE QU'IL FAUDRAIT POUR LE RÉÉCRIRE EST DÉPOSÉ À CÔTÉ, et c'est nécessaire : ni le
+            // graphe embarqué — qui vient du canal `moteur` de cette exécution — ni le nom pour les
+            // métadonnées ne se redérivent d'un nœud. `ui/refaire-apercus.ts` les relit pour
+            // refaire l'aperçu à une autre profondeur sans rejouer le nœud.
+            refaisable = { bits: bitsVoulus, reecriture: { securiser, grapheAEmbarquer: grapheExport,
+              nomPourMetadonnees: def?.apercuEstLeFichier ? (def.nom ?? ficheId) : undefined } };
             lecteursAEcrire.set(n.id, async () => {
               const blob = await servicesApercu().blobApercu(aEcouter, {
-                grapheAEmbarquer: grapheExport,
-                securiser,
-                bits: lireProfondeurExport(),
-                nomPourMetadonnees: def?.apercuEstLeFichier ? (def.nom ?? ficheId) : undefined,
-                souffle,
+                ...refaisable!.reecriture, bits: bitsVoulus, souffle,
                 onAvance: (part) => poserApercu(n.id, part),
               });
               return blob ? URL.createObjectURL(blob) : undefined;
@@ -1419,6 +1430,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           audioResultatUrl: url ?? undefined,
           audioResultatNom: url ? `${n.data.ficheId}.wav` : undefined,
           audioResultatBuffer: membreReplie ? undefined : (audio ?? undefined),
+          audioResultatRefaisable: refaisable,
           audioResultatMessage: messages.get(n.id) ?? (meta && audio ? t("execution.termine") : undefined),
           scriptGenere: texte ?? undefined,
           apercuCourbe,

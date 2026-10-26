@@ -4,6 +4,27 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+
+- **LE SÉLECTEUR DE PROFONDEUR D'EXPORT ÉTAIT INOPÉRANT, ET MÊME EN RELANÇANT.** Question de Fabien, née du voisinage des deux sélecteurs dans la barre — l'un en hertz, l'autre en bits : « y a-t-il un lien entre eux ? ». Il y en avait un, et il était de la pire espèce. Relevé dans l'application sur un générateur d'une seconde :
+
+  | geste | ce que l'aperçu devenait |
+  |---|---|
+  | rendu, défaut 24 bits | **24 bits** · 44 100 Hz · 264 644 octets |
+  | sélecteur à 32 bits, sans relancer | 24 bits · 44 100 Hz |
+  | **sélecteur à 32 bits, puis Lancer** | **24 bits** · 44 100 Hz ← inopérant |
+  | et ensuite fréquence à 48 kHz, puis Lancer | 32 bits · 48 000 Hz |
+
+  - **LES 32 BITS N'APPARAISSAIENT QUE PAR ACCIDENT**, quand le changement de **fréquence** faisait manquer le cache. Deux mécanismes se cumulaient : le nœud n'était pas rejoué, et surtout l'adresse de l'aperçu est **réutilisée tant que le tampon est le même objet** — bonne idée, elle évite de démonter le lecteur à chaque run, mais elle ne regardait pas à quelle profondeur l'aperçu avait été écrit.
+  - **ET LE MÊME BLOB EST LE FICHIER SAUVEGARDÉ**, ce que `profondeur-export.ts` dit en en-tête : changer la profondeur puis enregistrer écrivait l'ancienne, sans qu'une ligne ne le signale.
+  - **LA LIMITE ÉTAIT ÉCRITE, ET TENUE POUR VOULUE** : « elle ne prend effet qu'au prochain lancement ». La mesure l'a démentie — elle ne prenait effet **ni** au prochain lancement.
+  - **L'APERÇU SEUL EST REFAIT, ET SURTOUT PAS LA CLÉ DE CACHE.** La fréquence de travail y entre, et c'est juste : elle change ce que les nœuds **calculent**. La profondeur ne change que l'**écriture** — la mettre dans la clé ferait recalculer une heure de son pour passer de 24 à 32 bits. C'est le piège qu'un remède symétrique aurait tendu, et c'est la distinction de leur **nature** : la fréquence est une propriété du projet, enregistrée dans son fichier ; la profondeur est une préférence de la personne, dans son stockage local. Côte à côte, les deux sélecteurs paraissent symétriques et ne le sont pas.
+  - **CE QU'IL FAUT POUR RÉÉCRIRE EST DÉPOSÉ À CÔTÉ DE L'ADRESSE**, et c'est nécessaire : ni le graphe embarqué — qui vient du canal `moteur` de l'exécution — ni le nom pour les métadonnées ne se redérivent d'un nœud. Refaire sans eux rendrait un fichier qui s'ouvre, qui s'écoute, et qui a **perdu** le graphe qu'il portait : pire que de ne rien refaire, puisque personne ne s'en apercevrait. Un cas le garde.
+  - **AUCUN GARDE NE L'ATTRAPAIT, et la raison est instructive** : toutes les épreuves posent `attic-profondeur-export` **avant** le premier lancement. Elles éprouvaient la valeur, jamais son **changement**.
+  - **ET LES DEUX FICHIERS EN DETTE ONT MAIGRI AU LIEU DE GROSSIR.** Réparer demandait d'ajouter du code à `App.tsx`, déjà à son plafond. Or son état de profondeur ne servait qu'à **afficher** le sélecteur — une seconde copie d'une valeur qui vit dans `profondeur-export.ts`, descendue en prop à travers les deux plus gros fichiers du dépôt. Le sélecteur extrait s'abonne au module, comme son voisin de fréquence : **`App.tsx` 1202 → 1193**, **`BarreOutils.tsx` 441 → 408**, les deux plafonds abaissés d'autant.
+  - **MESURÉ DANS L'APPLICATION : 32 bits sans relancer**, 264 644 → 352 858 octets, fréquence inchangée. Et la fréquence, elle, attend toujours un run — le cas tient les **deux** comportements côte à côte pour que la distinction ne se perde pas. Défaut planté sur chacun : cinq cas unitaires, et le cas de bout en bout tombe quand on désarme la réécriture.
+  - **MON PREMIER INSTRUMENT ÉTAIT FAUX**, et il accusait le code : il guettait le changement d'**adresse** de l'aperçu, en relevant l'adresse de départ **après** avoir changé le sélecteur — la comparaison ne pouvait jamais devenir vraie. Il interroge désormais la profondeur du fichier, qui est exactement ce que le cas affirme.
+
 ### Added
 
 - **UN PROJET DÉCLARE SA FRÉQUENCE DE TRAVAIL, ET TOUT LE GRAPHE S'Y TIENT.** Point 5 de la revue, en entier. Il annonçait « aucune fréquence d'échantillonnage commune au graphe » ; le mécanisme était pire que l'énoncé, et c'est la mesure qui l'a dit.

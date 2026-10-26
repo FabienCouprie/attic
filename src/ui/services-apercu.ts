@@ -16,6 +16,19 @@
 // pastille d'écart, pas de croquis de courbe. Le graphe s'exécute, les valeurs circulent, et le
 // canevas ne montre que ce qu'un nœud rend de lui-même. Rien ne casse.
 
+/**
+ * Ce qu'un aperçu a besoin de savoir pour être RÉÉCRIT à l'identique, la profondeur près.
+ *
+ * NI L'UN NI L'AUTRE NE SE REDÉRIVE D'UN NŒUD : le graphe embarqué vient du canal `moteur` de son
+ * exécution, le nom pour les métadonnées de sa fiche. Le moteur les dépose donc à côté de l'adresse
+ * de l'aperçu, et `ui/refaire-apercus.ts` les relit. Refaire sans eux produirait un fichier qui a
+ * perdu son graphe embarqué — c'est-à-dire pire que de ne rien refaire.
+ */
+export interface ApercuRefaisable {
+  bits: OptionsApercu["bits"];
+  reecriture: Pick<OptionsApercu, "securiser" | "grapheAEmbarquer" | "nomPourMetadonnees">;
+}
+
 /** Ce qu'il faut pour fabriquer l'aperçu d'une valeur. */
 export interface OptionsApercu {
   /** Un graphe à embarquer dans le fichier produit, si le nœud l'a demandé. */

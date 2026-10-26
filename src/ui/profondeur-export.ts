@@ -52,6 +52,8 @@ export function lireProfondeurExport(stockage?: Pick<Storage, "getItem">): Profo
   }
 }
 
+const ecoutes = new Set<() => void>();
+
 /** Écrit la préférence. Un stockage indisponible ne doit pas empêcher le choix d'agir. */
 export function ecrireProfondeurExport(bits: ProfondeurExport, stockage?: Pick<Storage, "setItem">): void {
   try {
@@ -60,4 +62,15 @@ export function ecrireProfondeurExport(bits: ProfondeurExport, stockage?: Pick<S
   } catch {
     // Mode privé, stockage bloqué : le choix vaut pour la session, et c'est tout.
   }
+  // LA VALEUR N'EST PLUS RECOPIÉE DANS UN ÉTAT DE REACT. Elle vit ici, et le sélecteur s'y abonne —
+  // comme celui de la fréquence de travail à son module. Une seconde copie descendue en prop à
+  // travers `App.tsx` et `BarreOutils.tsx` faisait vivre le même réglage à deux endroits, ce qui
+  // est le défaut qui a coûté quatre relevés à la table de montage.
+  for (const e of [...ecoutes]) e();
+}
+
+/** S'abonner au changement. Rend de quoi se désabonner — la forme qu'attend `useSyncExternalStore`. */
+export function sAbonnerALaProfondeur(ecoute: () => void): () => void {
+  ecoutes.add(ecoute);
+  return () => { ecoutes.delete(ecoute); };
 }

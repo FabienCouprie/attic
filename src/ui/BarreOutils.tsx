@@ -9,9 +9,8 @@ import { apparenceMaj } from "./apparence-maj";
 import { EXEMPLES, nomDeLExemple } from "./exemples";
 import { demarrerLaFriction } from "./friction-pointeur";
 import { PERIODE_MESURE_MS, agregerMetriques, detailParProcessus, formaterMo, type MesureMemoire } from "./memoire-vive";
-import { PROFONDEURS } from "./profondeur-export";
+import { SelecteurProfondeurExport } from "./SelecteurProfondeurExport";
 import { SelecteurFrequenceDeTravail } from "./SelecteurFrequenceDeTravail";
-import type { ProfondeurExport } from "../audio/io";
 
 interface Props {
   theme: string; setTheme: (t: "violet" | "black") => void;
@@ -37,8 +36,6 @@ interface Props {
   economieMemoire: boolean;
   onBasculerEconomieMemoire: () => void;
   /** Profondeur des fichiers ecrits : selecteur voisin, meme groupe. */
-  profondeurExport: ProfondeurExport;
-  onChangerProfondeurExport: (bits: ProfondeurExport) => void;
   onAjouterCommentaire: () => void;
   onAjouterCadre: () => void;
   /** La dictée : son état, et le geste qui l'ouvre ou la ferme. */
@@ -83,7 +80,7 @@ const TEINTES_MAJ: Record<string, string | undefined> = {
 };
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onOuvrirExemple, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, dictee, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire, profondeurExport, onChangerProfondeurExport } = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onOuvrirExemple, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, dictee, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire} = props;
   const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
@@ -266,14 +263,7 @@ export function BarreOutils(props: Props) {
             écoutable et de fichier sauvegardé. Le sélecteur de fréquence ne prend aucun prop :
             il lit `audio/frequence-de-travail.ts`, qui porte la valeur. */}
         <SelecteurFrequenceDeTravail />
-        <select className="attic-profondeur-export" value={profondeurExport}
-          title={t("barre.profondeurExport.titre")}
-          aria-label={t("barre.profondeurExport.titre")}
-          onChange={(e) => onChangerProfondeurExport(Number(e.target.value) as ProfondeurExport)}>
-          {PROFONDEURS.map((p) => (
-            <option key={p.valeur} value={p.valeur}>{lang === "en" ? p.en : p.fr}</option>
-          ))}
-        </select>
+        <SelecteurProfondeurExport />
         {nomFichier && (
           <span className="attic-nom-fichier" title={currentFilePath ?? undefined}>
             {nomFichier}
