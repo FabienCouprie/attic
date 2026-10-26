@@ -58,14 +58,50 @@ export type Politique =
   /** Elle demande l'arrêt de l'exécution en cours et passe devant. */
   | "passer-devant";
 
+/**
+ * Ce qui permet à deux demandes en attente de n'en faire qu'une, au lieu que l'une chasse l'autre.
+ *
+ * ═══ LE DÉFAUT, RELEVÉ LE 2026-10-26 ═══
+ *
+ * La file n'en tient qu'une, et la plus récente gagnait. Une RELANCE AUTOMATIQUE vers l'aval —
+ * celle qui répare ce qu'un changement de réglage vient d'effacer — était donc écartée par un ▶
+ * cliqué juste après, et l'aval restait « En attente », c'est-à-dire le défaut même que la relance
+ * existait pour réparer. Elle était écartée EN SILENCE : `ecarter` résout sur `undefined`, que
+ * l'appelant ne distingue pas de « rien à faire ».
+ *
+ * DEUX DEMANDES DE MÊME CIBLE SE FONDENT, et leurs portées s'unissent : l'aval est refait dès que
+ * l'une des deux le demande. Les deux appelants reçoivent le résultat du run fondu.
+ *
+ * ═══ ET DEUX CIBLES DIFFÉRENTES NE SE FONDENT PAS, ce qui est une décision ═══
+ *
+ * La revue proposait l'union de toutes les portées. Pour deux nœuds différents, cette union
+ * n'existe pas : le seul run qui les couvre tous les deux est le run GLOBAL. L'escalade ferait
+ * tourner tout le graphe là où personne ne l'a demandé — pendant une séparation de plusieurs
+ * minutes, le remède coûterait plus cher que le mal. Deux cibles différentes gardent donc la règle
+ * d'avant, « finalement, ceci ».
+ */
+export interface Fusion<T> {
+  /** Deux demandes de même clé se fondent. Deux clés différentes ne se fondent pas. */
+  cle: string;
+  /** Ce que cette demande couvre, au-delà de sa clé. Opaque à l'ordonnanceur. */
+  portee: unknown;
+  /** La portée qui couvre les deux. */
+  union: (ancienne: unknown, neuve: unknown) => unknown;
+  /** Bâtit la tâche qui couvre la portée fondue. */
+  refaire: (portee: unknown) => (jeton: JetonDeRun) => Promise<T>;
+}
+
 export interface Ordonnanceur {
   /**
    * Demande une exécution. Rend ce que la tâche rend, ou `undefined` si la demande a été écartée.
    *
    * UNE DEMANDE ÉCARTÉE REND `undefined` ET NE LÈVE PAS : être passé devant n'est pas une erreur, et
    * un appelant qui l'apprendrait par une exception devrait l'attraper pour ne rien en faire.
+   *
+   * `fusion` dit comment cette demande se fond avec une demande en attente de même clé. Sans elle,
+   * la demande chasse celle qui attendait, comme avant.
    */
-  demander<T>(tache: (jeton: JetonDeRun) => Promise<T>): Promise<T | undefined>;
+  demander<T>(tache: (jeton: JetonDeRun) => Promise<T>, fusion?: Fusion<T>): Promise<T | undefined>;
   /** Une exécution tourne-t-elle, en ce moment ? */
   enCours(): boolean;
   /** Combien de demandes attendent leur tour. */
@@ -84,6 +120,9 @@ export interface Reglages {
    * POURQUOI UNE BORNE, ET POURQUOI C'EST LA PLUS ANCIENNE QUI TOMBE. Cinq clics pendant un run de
    * trois minutes ne veulent pas dire « rejoue cinq fois » : ils veulent dire « finalement, ceci ».
    * Une file sans borne rejouerait une suite de demandes que personne n'attend plus.
+   *
+   * LA FUSION PASSE AVANT. Deux demandes de même cible n'en font qu'une et ne remplissent donc pas
+   * la file : la borne ne tranche qu'entre des demandes qui visent des choses différentes.
    */
   enAttenteMax?: number;
   /** Appelé pour demander l'arrêt de l'exécution en cours, en politique « passer-devant ». */
@@ -91,8 +130,15 @@ export interface Reglages {
 }
 
 interface EnAttente {
-  lancer: () => void;
-  ecarter: () => void;
+  /** La clé de fusion, absente pour une demande qui ne se fond pas. */
+  cle?: string;
+  /** La portée courante, fondue au fil des demandes qui s'y ajoutent. */
+  portee?: unknown;
+  fusion?: Fusion<unknown>;
+  tache: (jeton: JetonDeRun) => Promise<unknown>;
+  /** UN RUN FONDU RÉPOND À TOUS CEUX QU'IL COUVRE : chaque demande garde son dénouement. */
+  resoudre: ((valeur: unknown) => void)[];
+  rejeter: ((erreur: unknown) => void)[];
 }
 
 /**
@@ -144,9 +190,20 @@ export function creerOrdonnanceur(reglages: Reglages = {}): Ordonnanceur {
     perime: () => generation !== generationCourante,
   });
 
+  function lancerEntree(e: EnAttente): void {
+    executer(e.tache).then(
+      (v) => { for (const r of e.resoudre) r(v); },
+      (err) => { for (const r of e.rejeter) r(err); },
+    );
+  }
+
+  function ecarterEntree(e: EnAttente): void {
+    for (const r of e.resoudre) r(undefined);
+  }
+
   function suivant(): void {
     const prochain = file.shift();
-    if (prochain) prochain.lancer();
+    if (prochain) lancerEntree(prochain);
   }
 
   async function executer<T>(tache: (jeton: JetonDeRun) => Promise<T>): Promise<T> {
@@ -166,7 +223,7 @@ export function creerOrdonnanceur(reglages: Reglages = {}): Ordonnanceur {
   }
 
   return {
-    demander<T>(tache: (jeton: JetonDeRun) => Promise<T>): Promise<T | undefined> {
+    demander<T>(tache: (jeton: JetonDeRun) => Promise<T>, fusion?: Fusion<T>): Promise<T | undefined> {
       if (!courantTourne) return executer(tache);
 
       if (politique === "passer-devant") {
@@ -177,14 +234,31 @@ export function creerOrdonnanceur(reglages: Reglages = {}): Ordonnanceur {
       }
 
       return new Promise<T | undefined>((resoudre, rejeter) => {
+        const prendre = resoudre as (valeur: unknown) => void;
+
+        // LA FUSION PASSE AVANT LA BORNE : une demande qui se fond ne fait pas grandir la file, donc
+        // elle ne peut en faire tomber aucune. C'est tout l'objet de ce chemin.
+        const jumelle = fusion && file.find((e) => e.cle !== undefined && e.cle === fusion.cle && e.fusion);
+        if (fusion && jumelle) {
+          jumelle.portee = fusion.union(jumelle.portee, fusion.portee);
+          jumelle.tache = (jumelle.fusion as Fusion<unknown>).refaire(jumelle.portee);
+          jumelle.resoudre.push(prendre);
+          jumelle.rejeter.push(rejeter);
+          return;
+        }
+
         const entree: EnAttente = {
-          lancer: () => { executer(tache).then(resoudre, rejeter); },
-          ecarter: () => resoudre(undefined),
+          cle: fusion?.cle,
+          portee: fusion?.portee,
+          fusion: fusion as Fusion<unknown> | undefined,
+          tache,
+          resoudre: [prendre],
+          rejeter: [rejeter],
         };
         file.push(entree);
         while (file.length > enAttenteMax) {
           const tombee = file.shift();
-          tombee?.ecarter();
+          if (tombee) ecarterEntree(tombee);
         }
       });
     },
@@ -196,9 +270,44 @@ export function creerOrdonnanceur(reglages: Reglages = {}): Ordonnanceur {
       // ON COPIE AVANT DE VIDER : `ecarter` résout une promesse, et un appelant qui redemanderait
       // aussitôt pousserait dans la file qu'on est en train de parcourir.
       const ecartees = file.splice(0, file.length);
-      for (const e of ecartees) e.ecarter();
+      for (const e of ecartees) ecarterEntree(e);
       return n;
     },
+  };
+}
+
+/** Ce qu'un run ciblé embrasse. Même forme que `PerimetreCible`, sans l'importer. */
+export interface PorteeDeLot {
+  versLAval?: boolean;
+}
+
+/**
+ * La fusion des demandes du moteur : même nœud visé, et l'aval dès que l'une des deux le demande.
+ *
+ * ELLE VIT ICI ET NON CHEZ L'APPELANT, pour la raison qui vaut déjà pour `useOrdonnanceurDeRuns` :
+ * `ui/hooks/useExecutionGraphe.ts` est en dette de taille, et ce qu'on ajoute à un fichier trop gros
+ * va ailleurs. L'appelant n'en écrit toujours qu'une ligne.
+ *
+ * LES AUTRES CHAMPS D'UNE PORTÉE SUIVENT LA PLUS RÉCENTE, faute de règle qui vaille pour eux ;
+ * `versLAval` est le seul dont l'union a un sens, et c'est le seul qui existe aujourd'hui.
+ */
+export function fusionDeLot<T>(
+  noeud: string | undefined,
+  perimetre: PorteeDeLot | undefined,
+  lancerLeLot: (n: string | undefined, p: PorteeDeLot | undefined, j: JetonDeRun) => Promise<T>,
+): Fusion<T> {
+  return {
+    // UN RUN GLOBAL EST SA PROPRE CIBLE : deux ▶ globaux se fondent, ce qu'ils faisaient déjà en
+    // se chassant l'un l'autre, mais sans perdre l'aval que l'un des deux demanderait.
+    cle: noeud ?? "*",
+    portee: perimetre,
+    union: (a, b) => {
+      const x = a as PorteeDeLot | undefined;
+      const y = b as PorteeDeLot | undefined;
+      if (!x && !y) return undefined;
+      return { ...(x ?? {}), ...(y ?? {}), versLAval: !!(x?.versLAval || y?.versLAval) };
+    },
+    refaire: (portee) => (jeton) => lancerLeLot(noeud, portee as PorteeDeLot | undefined, jeton),
   };
 }
 

@@ -4,6 +4,16 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+
+- **LA FILE DE L'ORDONNANCEUR JETAIT UNE DEMANDE EN SILENCE, et c'était justement celle qui réparait.** Relevé par une revue critique du 2026-10-26. La file n'en tient qu'une et la plus récente gagnait : une **relance automatique vers l'aval** — celle qui refait ce qu'un changement de réglage vient d'effacer — était écartée par un **▶ cliqué juste après**, et l'aval restait « En attente », c'est-à-dire le défaut même que la relance existait pour réparer. Le commit qui avait créé cette file reprochait à l'ancien verrou de jeter les demandes en silence.
+
+  - **ÉCARTÉE SANS UN MOT, au sens strict** : `ecarter` résout sur `undefined`, que l'appelant ne distingue pas de « rien à faire ».
+  - **DEUX DEMANDES DE MÊME CIBLE N'EN FONT PLUS QU'UNE**, et leurs portées s'unissent : l'aval est refait dès que l'une des deux le demande, et les deux appelants reçoivent le résultat du run fondu. Une demande fondue ne fait pas grandir la file, donc elle n'en fait tomber aucune.
+  - **MAIS DEUX CIBLES DIFFÉRENTES NE SE FONDENT PAS, et c'est une décision contre la lettre de la revue**, qui proposait l'union de toutes les portées. Pour deux nœuds différents, cette union n'existe pas : le seul run qui les couvre tous les deux est le **run global**. L'escalade ferait tourner tout le graphe là où personne ne l'a demandé — pendant une séparation de plusieurs minutes, le remède coûterait plus cher que le mal. Elles gardent donc la règle d'avant.
+  - **TROIS CAS, ET LE DÉFAUT PLANTÉ TOMBE SUR LE BON** : que la fusion ne trouve jamais sa jumelle — le comportement d'avant — et les deux cas de fusion tombent, celui des cibles différentes restant vert puisqu'il décrit ce que la fusion ne change pas.
+  - **LA FUSION VIT DANS LE MODULE DE L'ORDONNANCEUR**, et non chez l'appelant : `useExecutionGraphe.ts` est en dette de taille, et il n'écrit toujours qu'une ligne.
+
 ### Added
 
 - **« TEXTE → IMAGE » GAGNE LE RÉGLAGE « CALCUL », ET LES DEUX NŒUDS QUI NE PEUVENT PAS L'AVOIR DISENT ENFIN POURQUOI.** Suite du relevé de Fabien. La fusion des huit déclarations réglait la forme ; restait le fond — pourquoi les plus anciens n'ont pas ce réglage. **La réponse ne se devine pas, elle se mesure**, et elle n'est pas la même pour les trois.

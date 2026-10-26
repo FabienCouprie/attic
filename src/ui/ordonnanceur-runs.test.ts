@@ -13,7 +13,10 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { creerOrdonnanceur, creteDeSimultanees, oublierLaCrete, type JetonDeRun } from "./ordonnanceur-runs";
+import {
+  creerOrdonnanceur, creteDeSimultanees, fusionDeLot, oublierLaCrete,
+  type JetonDeRun, type PorteeDeLot,
+} from "./ordonnanceur-runs";
 
 /** Une tâche qu'on retient, pour tenir deux demandes en vol en même temps. */
 function tacheRetenue(nom: string, journal: string[]) {
@@ -136,6 +139,92 @@ describe("l'ordonnanceur d'exécutions", () => {
     expect(await pb).toBeUndefined();
     expect(await pc).toBeUndefined();
     expect(journal, "ni « b » ni « c » n'ont tourné").toEqual(["a:debut:1", "a:fin:1"]);
+  });
+
+  // ═══ LA FUSION DES DEMANDES EN ATTENTE ═══
+  //
+  // Relevé le 2026-10-26 : la file n'en tenait qu'une, et la plus récente gagnait. Une relance
+  // automatique vers l'aval — celle qui répare ce qu'un changement de réglage vient d'effacer —
+  // était donc écartée par un ▶ cliqué juste après, et l'aval restait « En attente », c'est-à-dire
+  // le défaut même que la relance existait pour réparer.
+  describe("la fusion des demandes", () => {
+    /** Le lanceur du moteur, réduit à ce qui se mesure : ce qu'on lui demande de couvrir. */
+    const lanceur = (journal: string[], vus: (PorteeDeLot | undefined)[]) =>
+      async (_noeud: string | undefined, portee: PorteeDeLot | undefined, _jeton?: JetonDeRun) => {
+        journal.push("lot");
+        vus.push(portee);
+        return "lot";
+      };
+
+    it("FOND DEUX DEMANDES DE MÊME CIBLE, et l'aval survit au ▶ qui le suit", async () => {
+      const journal: string[] = [];
+      const vus: (PorteeDeLot | undefined)[] = [];
+      const o = creerOrdonnanceur();
+      const lot = lanceur(journal, vus);
+      const a = tacheRetenue("a", journal);
+      const pa = o.demander(a.executer);
+      await souffler();
+
+      // La relance automatique après réglage : elle demande l'aval.
+      const pRelance = o.demander((j) => lot("n1", { versLAval: true }, j),
+        fusionDeLot("n1", { versLAval: true }, lot));
+      // Le ▶ du même nœud, cliqué juste après : il ne demande pas l'aval.
+      const pClic = o.demander((j) => lot("n1", undefined, j), fusionDeLot("n1", undefined, lot));
+
+      expect(o.enAttente(), "une demande fondue ne fait pas grandir la file").toBe(1);
+      a.relacher();
+      await pa;
+      expect(await pRelance, "la relance n'est plus écartée en silence").toBe("lot");
+      expect(await pClic, "et le clic reçoit le même résultat").toBe("lot");
+      expect(journal.filter((x) => x === "lot").length, "un seul run, et non deux").toBe(1);
+      expect(vus, "L'AVAL DEMANDÉ PAR LA RELANCE A SURVÉCU au clic qui ne le demandait pas")
+        .toEqual([{ versLAval: true }]);
+    });
+
+    it("et deux cibles différentes ne se fondent pas : la plus ancienne tombe, comme avant", async () => {
+      // L'union de deux nœuds n'existe pas : le seul run qui les couvre tous deux est le run
+      // GLOBAL, et l'escalade ferait tourner tout le graphe là où personne ne l'a demandé.
+      const journal: string[] = [];
+      const vus: (PorteeDeLot | undefined)[] = [];
+      const o = creerOrdonnanceur();
+      const lot = lanceur(journal, vus);
+      const a = tacheRetenue("a", journal);
+      const pa = o.demander(a.executer);
+      await souffler();
+
+      const p1 = o.demander((j) => lot("n1", undefined, j), fusionDeLot("n1", undefined, lot));
+      const p2 = o.demander((j) => lot("n2", undefined, j), fusionDeLot("n2", undefined, lot));
+
+      expect(o.enAttente(), "elles ne se fondent pas, donc la borne tranche").toBe(1);
+      a.relacher();
+      await pa;
+      expect(await p1, "la plus ancienne est écartée, comme avant").toBeUndefined();
+      expect(await p2).toBe("lot");
+      expect(journal.filter((x) => x === "lot").length, "un seul run a eu lieu").toBe(1);
+    });
+
+    it("ET DEUX RUNS GLOBAUX SE FONDENT AUSSI, l'aval de l'un servant à l'autre", async () => {
+      // Un run global n'a pas de nœud visé ; il est sa propre cible, et deux d'entre eux se
+      // fondaient déjà en se chassant — mais en perdant l'aval que l'un des deux demandait.
+      const journal: string[] = [];
+      const vus: (PorteeDeLot | undefined)[] = [];
+      const o = creerOrdonnanceur();
+      const lot = lanceur(journal, vus);
+      const a = tacheRetenue("a", journal);
+      const pa = o.demander(a.executer);
+      await souffler();
+
+      const p1 = o.demander((j) => lot(undefined, { versLAval: true }, j),
+        fusionDeLot(undefined, { versLAval: true }, lot));
+      const p2 = o.demander((j) => lot(undefined, undefined, j),
+        fusionDeLot(undefined, undefined, lot));
+
+      a.relacher();
+      await pa;
+      expect(await p1).toBe("lot");
+      expect(await p2).toBe("lot");
+      expect(vus).toEqual([{ versLAval: true }]);
+    });
   });
 
   // ═══ LA POLITIQUE, QUI EST UNE QUESTION D'USAGE ET NON DE MÉCANIQUE ═══

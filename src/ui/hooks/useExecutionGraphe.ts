@@ -40,7 +40,7 @@ import { apresEffacement, champsAReporter, urlsARevoquer, type ClassesDeChamps }
 import type { DemandeAuMoteur } from "../../core/types";
 import { CHAMPS_DE_SAISIE, CHAMPS_MEDIA } from "../../core/saisies";
 import { lireProfondeurExport } from "../profondeur-export";
-import { useOrdonnanceurDeRuns, type JetonDeRun } from "../ordonnanceur-runs";
+import { fusionDeLot, useOrdonnanceurDeRuns, type JetonDeRun } from "../ordonnanceur-runs";
 // LES DEUX PILOTES DE PASSES RESTENT ICI, et c'est un choix écrit : les généraliser demande de
 // réécrire les deux boucles imbriquées, qui portent l'oubli de cache par passe et l'ordre
 // d'emboîtement du lot autour des boucles — deux corrections durement acquises, qu'aucun test
@@ -1769,7 +1769,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
    * ET IL N'Y A PAS DE SECOND MÉCANISME. Le garde qui vivait dans `lancerUnePasse` a été retiré :
    * deux verrous dont l'un jette la demande en silence valent moins qu'un seul qui la garde.
    */
-  const lancer = useCallback((p?: string, perimetre?: PerimetreCible) => ordonnanceur.demander((j) => lancerLeLot(p, perimetre, j)), [ordonnanceur, lancerLeLot]);
+  const lancer = useCallback((p?: string, perimetre?: PerimetreCible) => ordonnanceur.demander((j) => lancerLeLot(p, perimetre, j), fusionDeLot(p, perimetre, lancerLeLot)), [ordonnanceur, lancerLeLot]);
 
   return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout };
 }
