@@ -30,18 +30,62 @@ export interface ClassesDeChamps {
 export type EtatNoeud = Record<string, unknown>;
 
 /**
+ * Jusqu'où l'on descend dans une valeur composée.
+ *
+ * C'EST LE NOMBRE D'OBJETS TRAVERSÉS, non la position de la chaîne : une URL trouvée au niveau
+ * atteint est récoltée. Le canal d'affichage demande UN niveau, une liste d'objets plats en
+ * demande DEUX ; trois laissent donc une marge. Une borne vaut mieux qu'un parcours complet, qui
+ * suivrait un cycle sans fin dans un état qu'on n'a pas écrit.
+ */
+const PROFONDEUR = 3;
+
+/**
+ * Récolte les URL d'objet d'une valeur, en descendant dans ce qui en contient.
+ *
+ * ON NE PARCOURT PAS LES TAMPONS. `Object.values` sur un `Float32Array` rend ses millions de
+ * nombres un par un : la récolte coûterait le contenu du son qu'on efface. Les vues de tampon sont
+ * donc écartées d'emblée, et elles ne portent de toute façon aucune URL.
+ */
+function recolter(v: unknown, urls: string[], profondeur = 0): void {
+  if (typeof v === "string") {
+    if (v.startsWith("blob:")) urls.push(v);
+    return;
+  }
+  if (!v || typeof v !== "object" || profondeur >= PROFONDEUR) return;
+  if (ArrayBuffer.isView(v) || v instanceof ArrayBuffer) return;
+  if (Array.isArray(v)) {
+    for (const e of v) recolter(e, urls, profondeur + 1);
+    return;
+  }
+  for (const e of Object.values(v as Record<string, unknown>)) recolter(e, urls, profondeur + 1);
+}
+
+/**
  * Les URL d'objet qu'une transition rend orphelines, et qu'il faut donc révoquer.
  *
  * ON REGARDE LA VALEUR, ET NON UNE LISTE DE NOMS. Quatre noms étaient énumérés à la main dans le
  * moteur, et quatre films produits ailleurs n'y figuraient pas : un blob par nœud et par run restait
  * en mémoire. Une valeur qui commence par `blob:` est une URL d'objet, quel que soit son champ.
+ *
+ * ═══ ET ON REGARDE DEDANS, CE QUI MANQUAIT ═══
+ *
+ * Relevé par une revue critique du 2026-10-26 : le nettoyage ne lisait que le PREMIER NIVEAU. Or le
+ * canal d'affichage est un OBJET, et cinq composants y déposent une URL — « Incruster les
+ * sous-titres », « Extraire une vidéo », « Montage vidéo », « Séparer image et son » et
+ * « Démonstration ». Aucune n'était révoquée, et ce sont des vidéos.
+ *
+ * LE NOM DE LA CLÉ NE POUVAIT PAS SERVIR, et c'est ce qui condamne l'autre réparation possible :
+ * quatre d'entre eux écrivent `url`, le cinquième `videoUrl`. Une liste de noms aurait oublié le
+ * cinquième, exactement comme les quatre noms énumérés à la main en avaient oublié quatre.
+ *
+ * TROIS D'ENTRE EUX RÉVOQUAIENT LA PRÉCÉDENTE eux-mêmes, de sorte qu'un run ne gardait qu'un film
+ * de trop. Mais la DERNIÈRE ne partait jamais : ni à la remise à zéro, ni à l'effacement du nœud.
  */
 export function urlsARevoquer(etat: EtatNoeud, classes: ClassesDeChamps, garder?: ReadonlySet<string>): string[] {
   const urls: string[] = [];
   for (const champ of classes.resultat) {
     if (garder?.has(champ)) continue;
-    const v = etat[champ];
-    if (typeof v === "string" && v.startsWith("blob:")) urls.push(v);
+    recolter(etat[champ], urls);
   }
   return urls;
 }

@@ -6,6 +6,14 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **CINQ FILMS RESTAIENT EN MÉMOIRE PAR NŒUD, parce que le nettoyage ne lisait que le premier niveau.** Point 8 d'une revue critique du 2026-10-26. Le canal d'affichage est un **objet**, et `urlsARevoquer` ne retenait qu'une valeur de type chaîne : l'URL qu'il porte n'était donc jamais révoquée, ni à la remise à zéro, ni à l'effacement du nœud.
+
+  - **CINQ COMPOSANTS Y DÉPOSENT UN FILM** — « Incruster les sous-titres », « Extraire une vidéo », « Montage vidéo », « Séparer image et son » et « Démonstration ». Trois d'entre eux révoquaient la **précédente** eux-mêmes, de sorte qu'un run ne gardait qu'un film de trop ; mais la **dernière** ne partait jamais.
+  - **LE NOM DE LA CLÉ NE POUVAIT PAS SERVIR, et c'est ce qui condamne l'autre réparation possible** : quatre d'entre eux écrivent `url`, le cinquième `videoUrl`. Une liste de noms aurait oublié le cinquième — exactement comme les quatre noms énumérés à la main dans le moteur en avaient oublié quatre, ce que l'en-tête de ce module racontait déjà. **On regarde la valeur, et maintenant on regarde dedans.**
+  - **UN TAMPON N'EST PAS PARCOURU, et un cas le mesure** : `Object.values` sur un `Float32Array` rend ses millions de nombres un par un, de sorte que la récolte coûterait le contenu du son qu'on efface. Un million d'échantillons doit se traverser en moins de 200 ms et ne rien rendre.
+  - **LA DESCENTE EST BORNÉE À TROIS OBJETS TRAVERSÉS**, et le cas le dit plutôt que de le laisser découvrir : le canal d'affichage en demande un, une liste d'objets plats en demande deux. Une borne vaut mieux qu'un parcours qui suivrait un cycle sans fin dans un état qu'on n'a pas écrit.
+  - **SIX CAS NEUFS, et le défaut planté tombe sur cinq d'entre eux** — la borne mise à zéro, c'est-à-dire l'état d'avant. Le sixième reste vert : il affirme que ce qu'un réglage garde n'est pas récolté, jusque dans ce que le canal contient.
+
 - **L'INVARIANT DE FRÉQUENCE NE VOYAIT QUE LE PREMIER NIVEAU, ET LE SON ÉTAIT JUSTE QUAND MÊME.** Point C d'une revue critique du 2026-10-26, qui demandait de mesurer avant d'affirmer. Mesuré, donc — et la mesure corrige la revue.
 
   - **LE TROU EST RÉEL** : le garde des fréquences mêlées ne regardait que les tampons posés **directement** dans les valeurs. Or deux flux portent leur son à l'intérieur — une **banque** porte un tampon par zone, un **objet sonore** porte ses échantillons bruts avec sa fréquence à côté —, et aucun des deux n'est un `AudioBuffer`.
