@@ -4,6 +4,24 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Changed
+
+- **LE SÉPARATEUR DE CANAUX REND UN CANAL PAR SORTIE, ET SES SORTIES S'OUVRENT À LA DEMANDE.** Demande de Fabien, qui cherchait un composant séparant un stéréo en deux monos. Il existait ; il ne connaissait que la stéréo, et c'est en le mesurant que le défaut a paru.
+
+  - **SUR UN SIX CANAUX, IL EN JETAIT QUATRE SANS UN MOT** : son message disait « Gauche + Droite · 44100 Hz ». Et ce n'était pas théorique — le sous-type `stereo` de son port d'entrée est **décoratif**, le type de flux `audio` ne déclarant aucune règle de sous-types, contrairement au texte et au contrôle qui ont chacun la leur. N'importe quel audio se branche sur n'importe quel port audio, et ce dépôt produit du 5.1, du 7.1.4, des anneaux de seize et de l'ambisonie d'ordre trois.
+  - **SEIZE SORTIES, parce que c'est le plus grand nombre de canaux qu'une disposition de ce dépôt déclare.** S'arrêter à huit aurait reproduit le défaut un cran plus loin. Six était jusqu'ici le maximum du catalogue.
+  - **LES SORTIES SONT NUMÉROTÉES, parce qu'un port ne peut pas mentir.** Elles s'appelaient « Gauche » et « Droite ». Un port est statique : son nom ne peut pas suivre la disposition de ce qui arrive, et le canal un d'un champ ambisonique est W, l'omnidirectionnel. La correspondance est donc dans le **message**, écrit à l'exécution : « 5.1 · 6 canaux · 1=L 2=R 3=C 4=LFE 5=Ls 6=Rs ». Les câbles déjà posés survivent, une arête retenant `out:0`, un **index** et non un nom.
+  - **SEULES LES SORTIES BRANCHÉES SONT CALCULÉES.** Les seize canaux d'un son de trois minutes font un demi-gigaoctet. Un appelant qui ne peut pas dire ce qui est câblé reçoit tout : c'est l'inverse du choix d'une sortie d'appoint chère, parce qu'ici rendre le vide serait une panne muette.
+  - **ET CE QUI EST LAISSÉ DE CÔTÉ SE DIT** : au-delà de la seizième sortie, le message annonce le nombre de canaux ignorés. C'était tout l'objet de la reprise.
+
+- **ET LA RÈGLE DES PORTS EXTENSIBLES VAUT DÉSORMAIS DES DEUX CÔTÉS DU NŒUD.** Fabien demandait un nombre de sorties qui suive ce qui arrive. **Ce n'est pas possible par détection, et la raison est structurelle** : les ports doivent exister **avant** le run pour qu'on puisse les câbler, et le nombre de canaux ne se connaît qu'**après**. Un nœud dont les ports suivraient un résultat verrait ses sorties n'apparaître qu'au deuxième lancement, et un fichier 5.1 remplacé par un stéréo **effacerait quatre câbles en silence**, `validerGraphe.ts` retirant les arêtes dont la poignée n'existe plus.
+
+  - **LE DÉPÔT AVAIT DÉJÀ LA BONNE RÉPONSE, pour les entrées.** `ui/ports-extensibles.ts` : la fiche déclare le maximum, chaque nœud n'en dessine que ce qu'il emploie, et **le compte ne descend jamais sous le dernier port branché**. Le calcul ne nommait aucun côté ; seuls son en-tête et son câblage parlaient d'entrées. Les sorties le suivent maintenant, avec les mêmes boutons et la même règle du bas.
+  - **LE SÉPARATEUR NAÎT DONC AVEC DEUX SORTIES SUR SEIZE**, et revient à **240 × 140** au lieu de 240 × 448. Mesuré dans l'application : 2 sorties dessinées, le « + » en ouvre une troisième, le « − » la referme, et il **se refuse** quand une sortie câblée se trouve au-dessus du compte demandé. Défaut planté : 16 sorties et 469 px de haut.
+  - **LES DEUX COLONNES DE PORTS SONT MAINTENANT LE MÊME COMPOSANT**, employé deux fois. Elles étaient écrites en entier dans `AtelierNode.tsx` et ne différaient que par le côté, le sens de la poignée et l'ordre du libellé : une correction faite sur l'une ne valait que pour elle. C'est aussi ce qui a payé la dette de taille du fichier.
+  - **TROIS NŒUDS NAISSAIENT DÉJÀ TROP HAUTS, et personne ne l'avait vu** : « Jointure de cercles », « Rendu de cercles » et « Jointure de séquences » recevaient 272 pixels pour montrer deux entrées sur huit. La taille de naissance suit désormais ce qui sera **dessiné**, et ils passent à 140. Un garde neuf tient la règle.
+  - **ET LE RÉGLAGE ÉTAIT PERDU À LA SAUVEGARDE.** `portsVisibles` ne figurait pas dans les champs écrits : les ports ouverts à la main revenaient refermés. La règle du bas ramenait ceux qui portent un câble, mais les emplacements libres qu'on avait ouverts pour brancher étaient perdus, et le nœud rouvert ne ressemblait plus à celui qu'on avait quitté. Les deux comptes voyagent maintenant avec le projet.
+
 ### Fixed
 
 - **LE SÉLECTEUR DE PROFONDEUR D'EXPORT ÉTAIT INOPÉRANT, ET MÊME EN RELANÇANT.** Question de Fabien, née du voisinage des deux sélecteurs dans la barre — l'un en hertz, l'autre en bits : « y a-t-il un lien entre eux ? ». Il y en avait un, et il était de la pire espèce. Relevé dans l'application sur un générateur d'une seconde :

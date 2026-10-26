@@ -93,8 +93,7 @@ describe("la fréquence de travail", () => {
       "audio/frequence-source.ts": "les listes de fréquences valides d'un en-tête MP3 et AAC",
       "audio/io.ts": "l'encodeur MP3 n'accepte que 32 000, 44 100 et 48 000 : une contrainte de format",
       "audio/clavier-banque.ts": "le repli quand une banque ne dit pas la fréquence de ses zones",
-      "audio/csound-opcodes.ts": "un commentaire nommant un fichier de données, « hrtf-44100-left.dat »",
-      "audio/memoire-audio.ts": "un calcul de poids donné en exemple dans un commentaire",
+      "audio/memoire-audio.ts": "les défauts de deux calculs de poids, que l'appelant renseigne",
       "audio/midi-soundfont.ts": "une ligne de journal, et le repli d'un échantillon SF2 sans taux",
       "plugins/effets.ts": "la PLAGE d'un réglage : la fréquence simulée d'un casseur de bits",
       "plugins/isoler-voix.ts": "la fréquence qu'EXIGE un modèle, et elle ne se négocie pas",
@@ -104,8 +103,15 @@ describe("la fréquence de travail", () => {
       "plugins/spectrogramme-image.ts": "un réglage à choix de l'utilisateur, dont 44 100 est le défaut",
       "vues-domaine/generation-code.ts": "le défaut d'une variable d'environnement, dans du code Python et Julia donné en exemple",
     };
+    // LES COMMENTAIRES SONT RETIRÉS, ET C'EST UNE CORRECTION : ce garde lisait le texte BRUT, si
+    // bien qu'un commentaire citant « 44100 Hz » pour raconter un défaut réparé le faisait crier
+    // sur un fichier correct. Relevé sur `plugins/separateur-canaux.ts`, dont l'en-tête cite
+    // l'ancien message du composant. C'est la faute dont son voisin, dix lignes plus haut, se
+    // méfie explicitement — et elle était ici.
+    //
+    // LES NOTICES RESTENT COUVERTES : ce sont des chaînes de caractères, donc du code.
     const presents = sources(RACINE)
-      .filter((p) => /\b44100\b/.test(readFileSync(p, "utf8")))
+      .filter((p) => /\b44100\b/.test(codeSeul(readFileSync(p, "utf8"))))
       .map((p) => relative(RACINE, p).replace(/\\/g, "/"))
       .sort();
     expect(presents.filter((f) => !(f in RAISONS)), [

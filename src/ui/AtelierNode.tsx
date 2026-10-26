@@ -11,6 +11,7 @@ import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "./re
 import { useStatut } from "./statuts";
 import { useResultat } from "./resultats";
 import { etatPorts } from "./ports-extensibles";
+import { ColonnePorts } from "./ColonnePorts";
 import { copierTexte } from "./copier";
 import { TexteAvecLiens } from "./texteAvecLiens";
 import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
@@ -354,12 +355,28 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
   const compteDePorts = `${def?.entrees.length ?? 0}/${def?.sorties.length ?? 0}`;
   useEffect(() => { updateNodeInternals(id); }, [compteDePorts, id, updateNodeInternals]);
 
-  const reglerPortsVisibles = useCallback((n: number) => {
-    setNodes((nds) => nds.map((x) => (x.id === id ? { ...x, data: { ...x.data, portsVisibles: n } } : x)));
+  // LES SORTIES SUIVENT LA MÊME RÈGLE, et c'est le séparateur de canaux qui l'a demandée : il
+  // déclare les seize canaux de la plus grande disposition de ce dépôt, et un stéréo n'en emploie
+  // deux. Sans cela le nœud naîtrait haut de quatre cent quarante-huit pixels pour en montrer
+  // quatorze vides. La règle du bas vaut des deux côtés : un câble ne disparaît jamais.
+  const connexionsSorties = useNodeConnections({ handleType: "source", id });
+  const portsSortie = useMemo(() => etatPorts(
+    def?.sorties.length ?? 0,
+    def?.sortiesExtensibles,
+    typeof data.portsVisiblesSortie === "number" ? data.portsVisiblesSortie : undefined,
+    connexionsSorties.map((c) => Number(String(c.sourceHandle ?? "out:0").split(":")[1])).filter(Number.isFinite),
+  ), [def, data.portsVisiblesSortie, connexionsSorties]);
+  useEffect(() => { updateNodeInternals(id); }, [portsSortie.visibles, id, updateNodeInternals]);
+
+  const reglerVisibles = useCallback((champ: string, n: number) => {
+    setNodes((nds) => nds.map((x) => (x.id === id ? { ...x, data: { ...x.data, [champ]: n } } : x)));
     // ReactFlow mémorise la position des poignées : sans cela, les câbles restent accrochés là où
     // les ports étaient avant que le nœud ne change de taille.
     queueMicrotask(() => updateNodeInternals(id));
   }, [id, setNodes, updateNodeInternals]);
+  const reglerPortsVisibles = useCallback((n: number) => reglerVisibles("portsVisibles", n), [reglerVisibles]);
+  const reglerPortsVisiblesSortie = useCallback((n: number) => reglerVisibles("portsVisiblesSortie", n), [reglerVisibles]);
+
 
   const supprimerAretesHandle = useCallback((handleId: string) => {
     const aretes = getEdges().filter(
@@ -367,6 +384,9 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
     );
     if (aretes.length) { deleteElements({ edges: aretes }); queueMicrotask(() => updateNodeInternals(id)); }
   }, [getEdges, deleteElements, updateNodeInternals, id]);
+
+  /** Ce que les deux colonnes de ports partagent : tout sauf le côté, les ports et leur compte. */
+  const communPorts = { lang, survolPort, setSurvolPort, supprimerAretesHandle, couleurFlux, stylePort, t };
 
   // Remesure forcée des ports dès que l'ensemble des connexions du nœud change.
   //
@@ -693,53 +713,15 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
 
       {/* ── Ports — zone réservée en bas du nœud ── */}
       <div className="attic-node-ports">
-        <div className="attic-node-ports-col">
-          {(!def?.entrees.length) && <div className="attic-node-port-vide">—</div>}
-          {def?.entrees.slice(0, ports.visibles).map((p, i) => {
-            const hid = `in:${i}`;
-            const c = couleurFlux(p.type);
-            const libelleType = registreUI().typeFlux(p.type)?.libelle ?? p.type;
-            return (
-              <div key={hid} className="attic-node-port" onMouseEnter={() => setSurvolPort(hid)} onMouseLeave={() => setSurvolPort(null)}>
-                <Handle type="target" position={Position.Left} id={hid}
-                  title={libelleType}
-                  style={stylePort(registreUI().formeFlux(p.type), c)} />
-                <span className="attic-node-port-label">{lang === "en" && p.nomEn ? p.nomEn : p.nom}</span>
-                {survolPort === hid && (
-                  <button className="attic-node-port-del" onClick={(e) => { e.stopPropagation(); supprimerAretesHandle(hid); }}>×</button>
-                )}
-              </div>
-            );
-          })}
-          {def?.entreesExtensibles && (
-            <div className="attic-node-ports-plus nodrag">
-              <button disabled={!ports.peutRetirer} title={t("ports.retirer")}
-                onClick={(e) => { e.stopPropagation(); reglerPortsVisibles(ports.visibles - 1); }}>−</button>
-              <span>{ports.visibles}</span>
-              <button disabled={!ports.peutAjouter} title={t("ports.ajouter")}
-                onClick={(e) => { e.stopPropagation(); reglerPortsVisibles(ports.visibles + 1); }}>+</button>
-            </div>
-          )}
-        </div>
-        <div className="attic-node-ports-col right">
-          {(!def?.sorties.length) && <div className="attic-node-port-vide">—</div>}
-          {def?.sorties.map((p, i) => {
-            const hid = `out:${i}`;
-            const c = couleurFlux(p.type);
-            const libelleType = registreUI().typeFlux(p.type)?.libelle ?? p.type;
-            return (
-              <div key={hid} className="attic-node-port sortie" onMouseEnter={() => setSurvolPort(hid)} onMouseLeave={() => setSurvolPort(null)}>
-                <span className="attic-node-port-label">{lang === "en" && p.nomEn ? p.nomEn : p.nom}</span>
-                {survolPort === hid && (
-                  <button className="attic-node-port-del" onClick={(e) => { e.stopPropagation(); supprimerAretesHandle(hid); }}>×</button>
-                )}
-                <Handle type="source" position={Position.Right} id={hid}
-                  title={libelleType}
-                  style={stylePort(registreUI().formeFlux(p.type), c)} />
-              </div>
-            );
-          })}
-        </div>
+        {/* LES DEUX COLONNES SONT LE MÊME COMPOSANT, employé deux fois. Elles étaient écrites en
+            entier ici et ne différaient que par le côté, le sens de la poignée et l'ordre du
+            libellé : une correction faite sur l'une ne valait que pour elle. Voir `ColonnePorts`. */}
+        <ColonnePorts cote="entree" ports={def?.entrees ?? []} etat={ports}
+          extensible={!!def?.entreesExtensibles} reglerVisibles={reglerPortsVisibles}
+          {...communPorts} />
+        <ColonnePorts cote="sortie" ports={def?.sorties ?? []} etat={portsSortie}
+          extensible={!!def?.sortiesExtensibles} reglerVisibles={reglerPortsVisiblesSortie}
+          {...communPorts} />
       </div>
 
       {/* Statut */}
