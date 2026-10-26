@@ -5,6 +5,7 @@
 import { fft } from "./fft";
 import { creerFenetreHann } from "./commun";
 import { creerAleatoire } from "../core/hasard";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export interface OptionsSpectrogrammeFractal {
   duree: number; // secondes
@@ -154,7 +155,7 @@ export function synthetiserDepuisSpectrogramme(
 export async function rendreSpectrogrammeFractal(
   options: OptionsSpectrogrammeFractal,
 ): Promise<{ audio: AudioBuffer; image?: File }> {
-  const sr = options.sampleRate ?? 44100;
+  const sr = options.sampleRate ?? frequenceDeTravail();
   const fftSize = options.fftSize ?? 2048;
   const overlap = Math.max(0, Math.min(0.9, options.overlap ?? 0.75));
   const duree = Math.max(0.1, Math.min(60, options.duree));

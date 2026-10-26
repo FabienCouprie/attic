@@ -175,6 +175,20 @@ function sourcesRacine(): string[] {
  * et `ui/dictee/pose-dictee.ts` ne connaissent ni l'audio ni le moteur, et portent l'essentiel des
  * décisions. Un autre domaine garde donc la dictée entière et ne réécrit que ce fichier-ci.
  */
+/*
+ * ET LE SÉLECTEUR DE FRÉQUENCE DE TRAVAIL, ajouté avec le réglage du même nom.
+ *
+ *   `ui/SelecteurFrequenceDeTravail.tsx`   les quatre fréquences, leurs libellés et leurs notes
+ *
+ * LE COUPLAGE EST CELUI DU RÉGLAGE LUI-MÊME : une fréquence d'échantillonnage est une notion audio,
+ * et un domaine de texte ou d'images n'aurait pas ce menu du tout. Il est ramassé dans un composant
+ * de dix-huit lignes, et c'est ce qui compte — `ui/BarreOutils.tsx` n'en sait rien, elle pose une
+ * balise ; un autre domaine retire ce fichier et cette ligne, et garde la barre entière.
+ *
+ * ET CE QUI POUVAIT ÊTRE DÉCOUPLÉ L'A ÉTÉ : `ui/hooks/usePersistance.ts` écrit ce réglage dans le
+ * fichier de projet sans savoir ce qu'il écrit, en le demandant par `core/services-domaine.ts`.
+ * C'est ce garde-ci qui l'a exigé, et il avait raison : la sauvegarde n'a pas à connaître l'audio.
+ */
 const COUPLES_ATTENDUS = [
   "docs/catalogue-markdown.ts",
   "docs/inventaire-ui.ts",
@@ -183,6 +197,7 @@ const COUPLES_ATTENDUS = [
   "ui/AtelierNode.tsx",
   "ui/dictee/useDictee.ts",
   "ui/Inspector.tsx",
+  "ui/SelecteurFrequenceDeTravail.tsx",
   "ui/hooks/useExecutionGraphe.ts",
   "ui/ordre-palette.ts",
 ];

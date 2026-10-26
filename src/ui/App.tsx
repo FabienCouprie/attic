@@ -69,6 +69,7 @@ import "../audio/adaptateur";
 import { chargerMetasLocaux, sauvegarderMetasLocaux } from "./metasLocaux";
 import { installerMetasExemples } from "../plugins/meta-exemples";
 import { setGrapheRef } from "../audio/graphe-embarque";
+import { servicesDomaine } from "../core/services-domaine";
 import { chargerNodesInstalles } from "../core";
 import { PanneauInspecteur } from "./PanneauInspecteur";
 import { registreUI } from "./registre-actif";
@@ -520,9 +521,10 @@ function Atelier() {
         await rechargerFichiersPersistes(nodesRestaures);
         setNodes(nodesRestaures);
         setEdges(edgesValides);
-        if (data.viewport && rfInstance) {
-          queueMicrotask(() => rfInstance.setViewport(data.viewport));
-        }
+        // Les réglages de domaine de l'en-cours, comme le cadrage : une séance reprise rend ce
+        // qu'elle rendait. Côté audio, sa fréquence de travail ; un en-cours sans elle vaut 44 100.
+        servicesDomaine().appliquerReglagesDeProjet(data);
+        if (data.viewport && rfInstance) queueMicrotask(() => rfInstance.setViewport(data.viewport));
     } catch (e) {
       console.warn("[attic] Restauration de l'en-cours échouée", e);
     }

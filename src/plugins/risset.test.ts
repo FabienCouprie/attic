@@ -1,6 +1,7 @@
 // plugins/risset.test.ts — Câblage du nœud : les paramètres de l'inspecteur
 // doivent réellement atteindre le moteur. Le DSP lui-même est couvert par
 // audio/risset.test.ts.
+import { publierFrequenceDeTravail } from "../audio/frequence-de-travail";
 import { describe, it, expect } from "vitest";
 import "node-web-audio-api/polyfill.js";
 import { registre } from "../audio/adaptateur";
@@ -118,11 +119,20 @@ describe("nœud Cloche de Risset", () => {
     expect(res.valeurs[0]).toBeInstanceOf(AudioBuffer);
   });
 
-  it("génère à la fréquence d'échantillonnage du graphe, pas à une valeur figée", async () => {
-    // Le nœud lisait `ctx.sampleRate`, absent du contexte : il retombait
-    // silencieusement sur 44 100 quelle que soit la carte son.
-    const res = await ficheCloche.executer(ctxCloche({ "Durée": 1 }, 48000));
-    expect((res.valeurs[0] as AudioBuffer).sampleRate).toBe(48000);
+  it("GÉNÈRE À LA FRÉQUENCE DE TRAVAIL DU PROJET, ET NON À CELLE DE LA CARTE SON", async () => {
+    // CE CAS EXIGEAIT `ctx.runtime.sampleRate`, la fréquence du matériel, et son objet reste le
+    // même : une fréquence DÉCLARÉE atteint le générateur, une valeur figée serait le défaut. Seule
+    // la source change — c'est le projet qui déclare, et son fichier qui l'emporte. Mesuré : sur une
+    // carte à 48 kHz, `un-son-projete-en-microtonal` rendait à deux fréquences à la fois.
+    try {
+      publierFrequenceDeTravail(48000);
+      // LA CARTE EST POSÉE À 22 050 EN MÊME TEMPS : sans cela, le cas passerait encore si l'on
+      // remettait la lecture du matériel.
+      const res = await ficheCloche.executer(ctxCloche({ "Durée": 1 }, 22050));
+      expect((res.valeurs[0] as AudioBuffer).sampleRate).toBe(48000);
+    } finally {
+      publierFrequenceDeTravail(44100);
+    }
   });
 
   it("la Durée pilote la longueur produite", async () => {

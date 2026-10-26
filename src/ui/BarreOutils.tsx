@@ -10,6 +10,7 @@ import { EXEMPLES, nomDeLExemple } from "./exemples";
 import { demarrerLaFriction } from "./friction-pointeur";
 import { PERIODE_MESURE_MS, agregerMetriques, detailParProcessus, formaterMo, type MesureMemoire } from "./memoire-vive";
 import { PROFONDEURS } from "./profondeur-export";
+import { SelecteurFrequenceDeTravail } from "./SelecteurFrequenceDeTravail";
 import type { ProfondeurExport } from "../audio/io";
 
 interface Props {
@@ -259,9 +260,12 @@ export function BarreOutils(props: Props) {
             {!economieMemoire && <path d="M2.5 13.5 13.5 2.5" />}
           </svg>
         </button>
-        {/* La profondeur des fichiers écrits. Voisine de la barrette de mémoire parce qu'elle en
-            commande une part : le même blob sert d'aperçu écoutable et de fichier sauvegardé, si
-            bien que monter la profondeur augmente d'autant la mémoire retenue. */}
+        {/* La fréquence de travail du projet, puis la profondeur des fichiers écrits : les deux
+            formats de ce que le logiciel rend, côte à côte. La profondeur est voisine de la
+            barrette de mémoire parce qu'elle en commande une part — le même blob sert d'aperçu
+            écoutable et de fichier sauvegardé. Le sélecteur de fréquence ne prend aucun prop :
+            il lit `audio/frequence-de-travail.ts`, qui porte la valeur. */}
+        <SelecteurFrequenceDeTravail />
         <select className="attic-profondeur-export" value={profondeurExport}
           title={t("barre.profondeurExport.titre")}
           aria-label={t("barre.profondeurExport.titre")}

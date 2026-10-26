@@ -63,7 +63,7 @@ describe("la reponse d'un biquad", () => {
   });
 
   it("elle reste finie sur tout le spectre, jusqu'a Nyquist", () => {
-    for (const f of [1, 20, 1000, SR / 2 - 1]) {
+    for (const f of [1, 20, 1000, SR() / 2 - 1]) {
       expect(Number.isFinite(reponseDb("Coupe-bande", 1000, 12, f)), `${f} Hz`).toBe(true);
     }
   });

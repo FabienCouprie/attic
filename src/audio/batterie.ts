@@ -16,6 +16,7 @@
 // est encodée comme le motif binaire : `nRows` lignes séparées par « | », mais
 // chaque pas est un chiffre 0–9.
 import { plafonnerCrete } from "./commun";
+import { frequenceDeTravail } from "./frequence-de-travail";
 /** Combien de pistes avait l'ancien séquenceur binaire : kick, snare, charley fermé, ouvert, clap. */
 export const PISTES_MOTIF_BINAIRE = 5;
 /**
@@ -73,7 +74,7 @@ export async function rendreSequenceurBatterieAvance(
   volume: number,
   hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
-  const sr = 44100;
+  const sr = frequenceDeTravail();
   const stepDur = ((60 / Math.max(1, tempo)) * 4) / Math.max(1, nbPas);
   const totalPas = Math.max(1, mesures) * nbPas;
   const duree = totalPas * stepDur + 0.8;
@@ -288,7 +289,7 @@ export async function genererRythmeCantor(
   swing: number = 0,
   hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
-  const sr = 44100;
+  const sr = frequenceDeTravail();
   const pasParMesure = 64;
   const totalPas = mesures * pasParMesure;
   const dureePas = (60 / Math.max(1, tempo)) * (4 / pasParMesure);

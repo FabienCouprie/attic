@@ -3,6 +3,7 @@
 
 import { plafonnerCrete } from "./commun";
 import { frequenceDepuisValeur } from "./commun";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export interface OptionsCouleurRGB {
   r: number;
@@ -18,7 +19,7 @@ export interface OptionsCouleurRGB {
 }
 
 export function genererCouleurRGBAudio(options: OptionsCouleurRGB): AudioBuffer {
-  const sr = options.sampleRate ?? 44100;
+  const sr = options.sampleRate ?? frequenceDeTravail();
   const length = Math.max(1, Math.round(options.duree * sr));
   const channels = options.canaux === 1 ? 1 : 2;
   const buffer = new AudioBuffer({ numberOfChannels: channels, length, sampleRate: sr });

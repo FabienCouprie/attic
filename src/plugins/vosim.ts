@@ -15,6 +15,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
 import { impulsionsQuiTiennent, vosim } from "../audio/vosim";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 /** Les quatre réglages qu'une courbe vient piloter, dans l'ordre de leurs ports. */
 const MOD_FONDAMENTALE = { ...modulationNommee("Fondamentale", "Fundamental", [20, 2000], "Hz"), echelle: "logarithmique" as const, defauts: [55, 880] as [number, number] };
@@ -105,7 +106,7 @@ The « Audio » output carries the sound. The message gives the number of events
       ...bornesModulation(MOD_VOLUME),
     ],
     async executer(ctx: any) {
-      const sr = 44100;
+      const sr = frequenceDeTravail();
       const dureeSec = ctx.paramNombre("Durée", 2);
       const n = Math.max(1, Math.round(dureeSec * sr));
 

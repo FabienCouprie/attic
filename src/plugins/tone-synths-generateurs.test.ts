@@ -72,6 +72,7 @@
 //   forme d'onde inconnue, étaient déclarées. Le nœud refuse désormais et dit quoi faire.
 // @ts-ignore
 if (typeof globalThis.isSecureContext === "undefined") globalThis.isSecureContext = true;
+import { publierFrequenceDeTravail } from "../audio/frequence-de-travail";
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { fiches } from "./tone-synths";
@@ -235,10 +236,32 @@ describe("membrane synth", () => {
     expect(String(r.message)).toContain("MembraneSynth");
   });
 
-  it("suit la fréquence d'échantillonnage du moteur, et retombe sur 44 100 sans elle", async () => {
+  it("SUIT LA FRÉQUENCE DE TRAVAIL DU PROJET, ET LA CARTE SON N'A PLUS VOIX AU CHAPITRE", async () => {
+    // ═══ CE CAS DISAIT « la fréquence d'échantillonnage DU MOTEUR », ET LE MOTEUR VOULAIT DIRE LA
+    //     CARTE SON ═══
+    //
+    // Il exigeait `ctx.runtime.sampleRate`, c'est-à-dire la fréquence du matériel. SON OBJET RESTE
+    // LE MÊME — une fréquence DÉCLARÉE atteint le générateur, et une valeur figée serait le défaut
+    // qu'il garde —, mais la source a changé : c'est le projet qui la déclare, et il l'enregistre
+    // dans son fichier. Mesuré avant le changement : sur une carte à 48 kHz, deux des cinq graphes
+    // livrés rendaient à deux fréquences à la fois, et le même fichier rendait un autre son selon
+    // la machine. Voir `audio/frequence-de-travail.ts`.
+    //
+    // 22 050 N'EST PLUS UNE FRÉQUENCE DE TRAVAIL : il n'y en a que quatre, et
+    // `publierFrequenceDeTravail` refuse ce qui n'est pas dans la liste plutôt que de le corriger
+    // en silence. Le passer ne prouverait donc rien.
     const base = { "Durée": 0.3, "Decay": 0.1, "Release": 0.1 };
-    expect((await rendre("membrane-synth", base, 22050)).sampleRate).toBe(22050);
-    expect((await rendre("membrane-synth", base, 48000)).sampleRate).toBe(48000);
+    try {
+      publierFrequenceDeTravail(96000);
+      expect((await rendre("membrane-synth", base)).sampleRate).toBe(96000);
+      publierFrequenceDeTravail(48000);
+      expect((await rendre("membrane-synth", base)).sampleRate).toBe(48000);
+      // ET LA CARTE SON EST POSÉE À 22 050 PENDANT CE TEMPS : le rendu doit rester à 48 000. Sans
+      // cette ligne, le cas passerait encore si l'on remettait `ctx.runtime.sampleRate`.
+      expect((await rendre("membrane-synth", base, 22050)).sampleRate).toBe(48000);
+    } finally {
+      publierFrequenceDeTravail(44100);
+    }
     expect((await rendre("membrane-synth", base)).sampleRate).toBe(44100);
   });
 });

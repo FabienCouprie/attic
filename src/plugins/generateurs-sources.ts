@@ -25,6 +25,7 @@ import type { Sequence } from "../audio/sequence";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { SIGNATURES, clicsDeMesure, dureeUnite, lireSignature, tempsParMesure } from "../audio/signatures";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -308,7 +309,7 @@ export const fiches: FicheAudio[] = ([
       const forme = ctx.paramTexte("Forme", "sine");
       const duree = ctx.paramNombre("Durée", 2);
       const volume = ctx.paramNombre("Volume", 80);
-      const sr = 44100;
+      const sr = frequenceDeTravail();
       const len = Math.max(1, Math.floor(duree * sr));
       const buf = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
       const vol = Math.max(0, Math.min(1, volume / 100)) * 0.7;
@@ -365,7 +366,7 @@ export const fiches: FicheAudio[] = ([
       const channels = ctx.paramTexte("Canaux", "stereo") === "mono" ? 1 : 2;
       const volume = ctx.paramNombre("Volume", 30);
       try {
-        const buf = genererAudioFormule(formule, duree, 44100, channels);
+        const buf = genererAudioFormule(formule, duree, frequenceDeTravail(), channels);
         const vol = Math.max(0, Math.min(1, volume / 100));
         if (vol !== 1) {
           for (let c = 0; c < buf.numberOfChannels; c++) {
@@ -407,7 +408,7 @@ export const fiches: FicheAudio[] = ([
       const duree = ctx.paramNombre("Durée", 10);
       const timbre = ctx.paramTexte("Timbre", "click");
       const volume = ctx.paramNombre("Volume", 90);
-      const sr = 44100;
+      const sr = frequenceDeTravail();
       const vol = Math.max(0, Math.min(1, volume / 100));
 
       // LA SIGNATURE EST LUE PAR SA FORME, et ce qui ne se lit pas retombe sur quatre temps : un

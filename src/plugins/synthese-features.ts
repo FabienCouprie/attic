@@ -10,6 +10,7 @@ import { avecDoc } from "./notices";
 import { ecartParFamille, lireCible, synthetiser } from "../audio/synthese-features";
 import { extraireVecteurFeatures } from "../audio/features-piste";
 import { choixOuiNon } from "../core/oui-non";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 /** Relit le JSON rendu par « Caractéristiques de piste ». */
 export function lireVecteurJson(texte: unknown): { vecteur: number[]; etiquettes: string[] } | null {
@@ -61,7 +62,7 @@ export const fiches: FicheAudio[] = ([
       if (!lu) return { valeurs: [null, null], message: traduire("msg.syntheseFeatures.sansVecteur") };
 
       const cible = lireCible(lu.vecteur, lu.etiquettes);
-      const frequence = 44100;
+      const frequence = frequenceDeTravail();
       const son = synthetiser(cible, {
         dureeSec: ctx.paramNombre("Durée", 8),
         frequence,

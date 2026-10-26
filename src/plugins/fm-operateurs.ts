@@ -105,7 +105,7 @@ export const fiches: FicheAudio[] = ([
         algorithme,
         operateurs,
         retroaction: ctx.paramNombre("Rétroaction", 0) / 100,
-      }, FREQUENCE_ECH);
+      }, FREQUENCE_ECH());
 
       const algo = algorithmeDe(algorithme);
       return {

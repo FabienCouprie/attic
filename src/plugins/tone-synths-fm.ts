@@ -5,6 +5,7 @@
 
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { langueCourante, traduire } from "../i18n";
 import { genererModulationSynth, genererPluckSynth, rendreBatterieMidi } from "../audio/tone-synths";
 import { analyserMidi } from "../audio/midi";
@@ -153,7 +154,7 @@ export const fiches: FicheAudio[] = ([
           decay,
           sustain,
           release,
-          sampleRate: ctx.runtime?.sampleRate ?? 44100,
+          sampleRate: frequenceDeTravail(),
         });
         return {
           valeurs: [buffer],
@@ -269,7 +270,7 @@ export const fiches: FicheAudio[] = ([
           dampening,
           resonance,
           release,
-          sampleRate: ctx.runtime?.sampleRate ?? 44100,
+          sampleRate: frequenceDeTravail(),
         });
         return {
           valeurs: [buffer],
@@ -336,7 +337,7 @@ export const fiches: FicheAudio[] = ([
         const buffer = await rendreBatterieMidi({
           notes: notesFiltrees,
           volume,
-          sampleRate: ctx.runtime?.sampleRate ?? 44100,
+          sampleRate: frequenceDeTravail(),
         });
         return {
           valeurs: [buffer, fichier],

@@ -625,7 +625,7 @@ body { font-family: system-ui, -apple-system, sans-serif; }
 
 /* La profondeur des fichiers écrits. Discret comme une bascule voisine, et non comme un réglage
    qu'on vient chercher : c'est une décision qu'on prend une fois. */
-.attic-profondeur-export {
+.attic-profondeur-export, .attic-frequence-travail {
   font-size: 11px; color: var(--text-secondary); cursor: pointer;
   padding: 2px 4px; margin-left: 2px; border-radius: 4px;
   background: var(--bg-surface-alt); border: 1px solid var(--border);
@@ -637,7 +637,7 @@ body { font-family: system-ui, -apple-system, sans-serif; }
      long des deux. */
   width: 112px;
 }
-.attic-profondeur-export:hover { color: var(--text-title); }
+.attic-profondeur-export:hover, .attic-frequence-travail:hover { color: var(--text-title); }
 
 /* ── Canevas ── */
 .attic-canevas { position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0; }

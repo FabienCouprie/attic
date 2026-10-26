@@ -85,22 +85,42 @@ export interface ServicesApercu {
   /**
    * Les fréquences qui se mêlent sur les entrées de ce nœud, s'il y en a plusieurs.
    *
-   * ═══ UN RECENSEMENT, ET NON UNE CONVERSION ═══
+   * ═══ UN RECENSEMENT D'ABORD, UN GARDE D'INVARIANT ENSUITE ═══
    *
-   * Point 5 d'une revue du dépôt : « aucune fréquence d'échantillonnage commune au graphe ». Trois
-   * régimes coexistent — les générateurs à 44 100 en dur, le décodage figé à 48 000, et les fichiers
-   * à leur propre fréquence —, et la conversion se fait implicitement, partout où un
-   * `OfflineAudioContext` s'en mêle, par le rééchantillonneur du navigateur.
+   * Point 5 d'une revue du dépôt : « aucune fréquence d'échantillonnage commune au graphe ». Elle a
+   * d'abord servi à MESURER AVANT DE CONVERTIR, et le relevé a dit ce qu'il fallait savoir : sur une
+   * carte à 48 kHz, deux des cinq graphes livrés rendaient à deux fréquences à la fois.
    *
-   * CE QUI SE DÉCIDE ICI EST DE MESURER AVANT DE CONVERTIR. Convertir à l'entrée de chaque nœud
-   * changerait ce que rend TOUT graphe déjà enregistré, et l'on ne sait pas encore sur combien
-   * d'arêtes cela arrive vraiment. Le relevé le dira ; d'ici là, rien n'est touché.
+   * MAINTENANT QUE `porterALaFrequenceDeTravail` EXISTE, ELLE NE DOIT PLUS JAMAIS RIEN RENDRE : tout
+   * ce qui circule sur une arête est à la fréquence du projet, donc aucun nœud ne peut plus recevoir
+   * deux fréquences. Si elle parle, c'est que la conversion n'a pas eu lieu — et c'est devenu sa
+   * vraie valeur : elle est le garde de l'invariant, et non plus un compteur.
    *
    * ELLE REND LES FRÉQUENCES DISTINCTES, dans l'ordre, et une liste de moins de deux éléments
    * signifie qu'il n'y a rien à signaler. Ce que « fréquence » veut dire appartient au domaine : le
    * shell ne sait que l'endroit où la question se pose.
    */
   frequencesMelees(entrees: readonly unknown[]): number[];
+
+  /**
+   * Les valeurs d'un nœud, portées à la fréquence de travail du projet.
+   *
+   * ═══ L'INVARIANT DU GRAPHE, ET IL TIENT EN UNE PHRASE ═══
+   *
+   * Tout ce qui circule sur une arête est à la fréquence du projet. Le moteur le demande à la SORTIE
+   * de chaque nœud, et non à l'entrée : une valeur lue par trois nœuds serait sinon convertie trois
+   * fois, et son aperçu — celui qu'on écoute et qu'on enregistre — ne serait à la bonne fréquence
+   * sur aucun des trois.
+   *
+   * CE QUE LE DOMAINE DÉCIDE ICI, et que le shell ne peut pas savoir : ce qu'est une fréquence, quel
+   * rééchantillonneur l'applique, et laquelle est celle du projet. Le shell ne sait que l'endroit où
+   * la question se pose — le seul point où les sorties d'un nœud sont sous la main avant d'être
+   * posées dans les résultats.
+   *
+   * ELLE REND LE MÊME TABLEAU quand il n'y a rien à faire, ce qui est le cas ordinaire : un graphe
+   * entier à la fréquence du projet ne paie pas un échantillon.
+   */
+  porterALaFrequenceDeTravail(valeurs: readonly unknown[]): Promise<unknown[]>;
 }
 
 const NEUTRES: ServicesApercu = {
@@ -111,8 +131,10 @@ const NEUTRES: ServicesApercu = {
   apercuCourbe: () => undefined,
   ecartNiveau: () => undefined,
   heriterDesEntrees: () => {},
-  // Sans domaine, aucune valeur ne porte de fréquence : il n’y a rien à mêler.
+  // Sans domaine, aucune valeur ne porte de fréquence : il n’y a rien à mêler, ni à convertir. Et
+  // le tableau est rendu TEL QUEL — un domaine neutre ne doit pas perdre les valeurs du graphe.
   frequencesMelees: () => [],
+  porterALaFrequenceDeTravail: async (valeurs) => [...valeurs],
 };
 
 let services: ServicesApercu = NEUTRES;

@@ -52,6 +52,29 @@ export interface ServicesDomaine {
    * Le cœur fournit de son côté ce qui vient du langage, sans DOM ni stockage.
    */
   globalesInstallees: Record<string, unknown>;
+
+  /**
+   * Les réglages du domaine qui appartiennent au FICHIER DE PROJET, et non à l'utilisateur.
+   *
+   * ═══ POURQUOI LE CŒUR POSE LA QUESTION PLUTÔT QUE DE LIRE LA VALEUR ═══
+   *
+   * Le domaine audio a une fréquence de travail : tout ce qui est généré l'est à cette fréquence, et
+   * tout ce qui entre y est converti. Elle doit voyager dans le fichier, sans quoi le même projet
+   * rendrait un autre son demain, ou sur une autre machine — c'est le défaut que ce réglage répare.
+   *
+   * MAIS CE N'EST PAS UN RÉGLAGE DU CŒUR, et la sauvegarde ne doit pas le savoir. Un domaine de
+   * texte ou d'images n'a pas de fréquence d'échantillonnage ; un autre aurait ses propres réglages
+   * de projet. Le cœur demande donc « qu'as-tu à écrire » et « voilà ce qui était écrit », et
+   * `ui/hooks/usePersistance.ts` reste ignorant du domaine — ce qu'un garde exige, parce que changer
+   * de domaine est un but du projet.
+   *
+   * LE DÉFAUT EST NEUTRE : aucun réglage à écrire, rien à appliquer. Le format de projet n'en porte
+   * alors aucune clé, et un fichier écrit sans domaine se relit sans domaine.
+   */
+  reglagesDeProjet(): Record<string, unknown>;
+
+  /** Les réglages lus dans un fichier de projet. Un fichier qui n'en porte pas vaut les défauts. */
+  appliquerReglagesDeProjet(json: Record<string, unknown>): void;
 }
 
 const NEUTRES: ServicesDomaine = {
@@ -59,6 +82,8 @@ const NEUTRES: ServicesDomaine = {
   nomDeType: () => null,
   typesNonSerialisables: [],
   globalesInstallees: {},
+  reglagesDeProjet: () => ({}),
+  appliquerReglagesDeProjet: () => {},
 };
 
 let services: ServicesDomaine = NEUTRES;

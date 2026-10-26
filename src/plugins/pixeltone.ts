@@ -5,6 +5,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { sonifierImage } from "../audio";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -126,7 +127,7 @@ export const fiches: FicheAudio[] = ([
             vert,
             bleu,
             balayage,
-            sampleRate: 44100,
+            sampleRate: frequenceDeTravail(),
             volume: ctx.paramNombre("Volume", 80),
             canaux,
           },

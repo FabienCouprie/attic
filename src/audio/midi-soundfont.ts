@@ -7,6 +7,7 @@ import type { StructureSF2 } from "./soundfont";
 import { chercherZonesInstrument } from "./soundfont";
 import type { NoteEvenement } from "./midi-sequence";
 import { echantillonCubique } from "./interpolation";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export function rendreAvecSF2(
   sf: StructureSF2,
@@ -16,12 +17,12 @@ export function rendreAvecSF2(
   banque = 0,
 ): AudioBuffer {
   if (notes.length === 0) {
-    const ctx = new OfflineAudioContext(2, 22050, 44100);
+    const ctx = new OfflineAudioContext(2, 22050, frequenceDeTravail());
     return ctx.startRendering() as unknown as AudioBuffer;
   }
 
   const duree = Math.max(notes.reduce((m, n) => Math.max(m, n.fin), 0), 0.5);
-  const sr = 44100;
+  const sr = frequenceDeTravail();
   const length = Math.ceil(duree * sr);
   const resultat = new AudioBuffer({ numberOfChannels: 2, length, sampleRate: sr });
   const gauche = resultat.getChannelData(0);

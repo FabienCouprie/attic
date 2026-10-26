@@ -3,6 +3,7 @@
 // la fréquence de la lumière dans le domaine audible par divisions d'octaves.
 
 import { rgbToHsl } from "./couleurs";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export interface OptionsSpectreVisible {
   r: number;
@@ -39,7 +40,7 @@ export function midiDepuisFrequence(frequence: number): number {
 }
 
 export function genererSpectreVisibleAudio(options: OptionsSpectreVisible): AudioBuffer {
-  const sr = options.sampleRate ?? 44100;
+  const sr = options.sampleRate ?? frequenceDeTravail();
   const length = Math.max(1, Math.round(options.duree * sr));
   const channels = options.canaux === 1 ? 1 : 2;
   const buffer = new AudioBuffer({ numberOfChannels: channels, length, sampleRate: sr });

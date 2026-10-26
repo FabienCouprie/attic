@@ -12,6 +12,7 @@
 
 import { CANAL_PERCUSSION } from "./batterie-midi";
 import type { Note } from "./note";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 /**
  * La réserve appliquée à la batterie d'une séquence, la même que la synthèse des hauteurs se garde.
@@ -75,7 +76,7 @@ export function melangerTampons(a: AudioBuffer, b: AudioBuffer, duree: number): 
 }
 
 /** Un silence de la durée voulue, quand une séquence n'a que de la batterie. */
-export function tamponSilencieux(duree: number, sampleRate = 44100): AudioBuffer {
+export function tamponSilencieux(duree: number, sampleRate = frequenceDeTravail()): AudioBuffer {
   return new AudioBuffer({
     numberOfChannels: 2, length: Math.ceil(duree * sampleRate), sampleRate,
   });

@@ -12,6 +12,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
 import { FormuleInvalide, bytebeat } from "../audio/bytebeat";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 const VIZNUT = "t*(((t>>12)|(t>>8))&(63&(t>>4)))";
 
@@ -86,7 +87,7 @@ The « Audio » output carries the sound. The message gives the number of bytes 
       ...bornesModulation(MOD_VOLUME),
     ],
     async executer(ctx: any) {
-      const sr = 44100;
+      const sr = frequenceDeTravail();
       const dureeSec = ctx.paramNombre("Durée", 8);
       const n = Math.max(1, Math.round(dureeSec * sr));
       const formule = ctx.paramTexte("Formule", VIZNUT);

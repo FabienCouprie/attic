@@ -5,12 +5,13 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import {
   classeAuTriton, echantillonsDeLaPaire, NOMS_DE_CLASSE, NOMS_DE_CLASSE_EN,
 } from "../audio/paradoxe-triton";
 
 const en = () => langueCourante() === "en";
-const SR = 44100;
+const SR = () => frequenceDeTravail();
 
 export const fiches: FicheAudio[] = ([
   {
@@ -64,13 +65,13 @@ export const fiches: FicheAudio[] = ([
         duree: ctx.paramNombre("Durée", 0.5),
         silence: ctx.paramNombre("Silence", 0),
         niveau: Math.max(0, Math.min(1, ctx.paramNombre("Volume", 70) / 100)),
-        sampleRate: SR,
+        sampleRate: SR(),
       };
-      const pause = Math.round(ctx.paramNombre("Pause", 1.5) * SR);
+      const pause = Math.round(ctx.paramNombre("Pause", 1.5) * SR());
 
       const paires = classes.map((classe) => echantillonsDeLaPaire({ ...commun, classe }));
       const total = paires.reduce((s, p) => s + p.length, 0) + pause * Math.max(0, paires.length - 1);
-      const sortie = new AudioBuffer({ numberOfChannels: 1, length: Math.max(1, total), sampleRate: SR });
+      const sortie = new AudioBuffer({ numberOfChannels: 1, length: Math.max(1, total), sampleRate: SR() });
       const d = sortie.getChannelData(0);
       let ou = 0;
       for (const p of paires) {
@@ -89,8 +90,8 @@ export const fiches: FicheAudio[] = ([
       return {
         valeurs: [sortie, [entete, "", ...lignes].join("\n")],
         message: en()
-          ? `${paires.length} pairs · ${(sortie.length / SR).toFixed(2)} s`
-          : `${paires.length} paires · ${(sortie.length / SR).toFixed(2).replace(".", ",")} s`,
+          ? `${paires.length} pairs · ${(sortie.length / SR()).toFixed(2)} s`
+          : `${paires.length} paires · ${(sortie.length / SR()).toFixed(2).replace(".", ",")} s`,
       };
     },
   },

@@ -13,6 +13,7 @@
 import { formeOndeDepuisTimbre } from "./timbres";
 import { degresDeGamme } from "./gammes";
 import { creerAleatoire } from "../core/hasard";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export interface ConfigReservoir {
   taille: number;          // nombre de neurones (10-50)
@@ -295,7 +296,7 @@ export function rendreReservoirAudio(
   notes: NoteGeneree[],
   config: ConfigReservoir,
 ): AudioBuffer {
-  const sr = 44100;
+  const sr = frequenceDeTravail();
   const dureeTotale = notes.length > 0
     ? Math.max(...notes.map((n) => n.debut + n.duree)) + 0.3
     : 1;

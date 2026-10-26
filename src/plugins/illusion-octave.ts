@@ -5,12 +5,13 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import {
   echantillonsDichotiques, pasDeLaSequence, perceptsDuModele,
 } from "../audio/illusion-octave";
 
 const en = () => langueCourante() === "en";
-const SR = 44100;
+const SR = () => frequenceDeTravail();
 
 /** Un nombre écrit dans la langue courante, virgule ou point selon le cas. */
 const hz = (v: number) => (en() ? v.toFixed(1) : v.toFixed(1).replace(".", ","));
@@ -63,13 +64,13 @@ export const fiches: FicheAudio[] = ([
         dureeDunTon: ctx.paramNombre("Durée d'un ton", 250) / 1000,
         fondu: ctx.paramNombre("Fondu", 5) / 1000,
         niveau: Math.max(0, Math.min(1, ctx.paramNombre("Volume", 70) / 100)),
-        sampleRate: SR,
+        sampleRate: SR(),
       });
 
       // DEUX CANAUX, ET C'EST LE STIMULUS ENTIER : ramené à un seul, il ne resterait qu'un accord
       // d'octave immobile, le même à tous les pas.
       const sortie = new AudioBuffer({
-        numberOfChannels: 2, length: Math.max(1, gauche.length), sampleRate: SR,
+        numberOfChannels: 2, length: Math.max(1, gauche.length), sampleRate: SR(),
       });
       sortie.getChannelData(0).set(gauche);
       sortie.getChannelData(1).set(droite);
@@ -122,8 +123,8 @@ export const fiches: FicheAudio[] = ([
       return {
         valeurs: [sortie, rapport.join("\n")],
         message: en()
-          ? `${plan.length} steps · ${(sortie.length / SR).toFixed(2)} s · ${hz(grave)} and ${hz(aigu)} Hz, ${demiTons} semitones`
-          : `${plan.length} pas · ${(sortie.length / SR).toFixed(2).replace(".", ",")} s · ${hz(grave)} et ${hz(aigu)} Hz, ${demiTons} demi-tons`,
+          ? `${plan.length} steps · ${(sortie.length / SR()).toFixed(2)} s · ${hz(grave)} and ${hz(aigu)} Hz, ${demiTons} semitones`
+          : `${plan.length} pas · ${(sortie.length / SR()).toFixed(2).replace(".", ",")} s · ${hz(grave)} et ${hz(aigu)} Hz, ${demiTons} demi-tons`,
       };
     },
   },

@@ -81,7 +81,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const cases = Math.round(ctx.paramNombre("Cases", CASES));
       const duree = ctx.paramNombre("Durée", 1.5);
-      const frequence = reglageModule(ctx, Math.round(duree * FREQUENCE_ECH), 3, {
+      const frequence = reglageModule(ctx, Math.round(duree * FREQUENCE_ECH()), 3, {
         reglage: "Fréquence", defaut: 220, rendu: "pourCent",
         noms: ["Fréquence min", "Fréquence max"], bornes: [110, 880],
         echelle: "logarithmique",
@@ -102,12 +102,12 @@ export const fiches: FicheAudio[] = ([
       const signal = synthetiserTable(banque, {
         frequence,
         duree,
-        position: reglageModule(ctx, Math.round(duree * FREQUENCE_ECH), 2, {
+        position: reglageModule(ctx, Math.round(duree * FREQUENCE_ECH()), 2, {
           reglage: "Position", defaut: 0, noms: ["Position min", "Position max"],
         }),
         modulationPosition: ctx.paramNombre("Balayage", 0) / 100,
         vitesseModulation: ctx.paramNombre("Vitesse de balayage", 0.3),
-      }, FREQUENCE_ECH);
+      }, FREQUENCE_ECH());
 
       return {
         // `versBuffer` ATTEND DES POUR CENT et divise lui-même : diviser ici aussi sortait cent

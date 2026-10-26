@@ -8,6 +8,7 @@ import type { NoteEvenement } from "./midi-sequence";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence } from "./midi-sequence";
 import { degresGammeAccords, degreAccordProche, degreSeptiemeProche, traduireCle } from "./generation";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export const NB_DEGRES_ACCORDS = 7;
 const EXTENSIONS_ACCORDS = ["aucune", "septieme", "sixte"] as const;
@@ -212,7 +213,7 @@ export async function rendreSequenceurAccords(
 ): Promise<{ audio: AudioBuffer; notes: NoteEvenement[] }> {
   const notes = genererNotesSequenceurAccords(grille, cle, gamme, mode, tempo, nbPas, swing, mesures, octave);
   const audioBrut = await rendreSequence(notes, modeAudio, volume, instrument, banque);
-  const sr = 44100;
+  const sr = frequenceDeTravail();
   const stepDur = ((60 / Math.max(1, tempo)) * 4) / Math.max(1, nbPas);
   const totalPas = Math.max(1, mesures) * nbPas;
   const barLen = Math.round(totalPas * stepDur * sr);

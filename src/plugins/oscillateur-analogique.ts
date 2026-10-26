@@ -135,7 +135,7 @@ export const fiches: FicheAudio[] = ([
         desaccord: ctx.paramNombre("Désaccord", 12),
         sync,
         distorsion: ctx.paramNombre("Distorsion", 50) / 100,
-      }, FREQUENCE_ECH, SUR_ECHANTILLONNAGE);
+      }, FREQUENCE_ECH(), SUR_ECHANTILLONNAGE);
 
       // `versBuffer` ATTEND DES POUR CENT et divise lui-même : diviser ici aussi sortait cent
       // fois trop bas, soit quarante décibels.

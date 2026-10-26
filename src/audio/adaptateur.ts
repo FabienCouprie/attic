@@ -14,6 +14,7 @@ import { configurerRegistreGestion } from "../plugins/gestion-nodes";
 import { configurerRegistreQuiz } from "../plugins/quiz";
 import { toutesLesFiches } from "../plugins";
 import type { ValeurAudio, RuntimeAudio } from "./types-domaine";
+import { frequenceDeTravail, frequenceDuProjet, publierFrequenceDeTravail } from "./frequence-de-travail";
 import { contenusControleCompatibles } from "./sous-types-controle";
 import { contenusTexteCompatibles } from "./sous-types-texte";
 // ═══ CE QU'UNE VALEUR DOIT ÊTRE POUR CIRCULER SUR SON PORT ═══
@@ -231,5 +232,11 @@ configurerServicesDomaine({
   typesNonSerialisables: ["AudioBuffer"],
   // Un node installé à chaud est du code audio : il lui faut de quoi fabriquer un tampon.
   globalesInstallees: { AudioBuffer: (typeof AudioBuffer !== "undefined" ? AudioBuffer : undefined) },
+  // LA FRÉQUENCE DE TRAVAIL APPARTIENT AU FICHIER DE PROJET, et c'est le seul réglage de domaine qui
+  // y voyage aujourd'hui. Sans cela le même projet rendrait un autre son demain, ou sur une autre
+  // machine — mesuré, deux des cinq graphes livrés rendaient à deux fréquences selon la carte son.
+  // La sauvegarde, elle, n'a pas à savoir ce qu'est une fréquence : voir `core/services-domaine.ts`.
+  reglagesDeProjet: () => ({ frequenceDeTravail: frequenceDeTravail() }),
+  appliquerReglagesDeProjet: (json) => publierFrequenceDeTravail(frequenceDuProjet(json)),
 });
 

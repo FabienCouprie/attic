@@ -36,6 +36,13 @@ const EXEMPLES = [
   "un-synthe-et-sa-bulle-d-effets.json",
   "canon-de-proportions.json",
   "une-voix-devient-de-la-musique.json",
+  // LES DEUX DERNIERS SONT LÀ POUR LE RELEVÉ DES FRÉQUENCES, et ils y manquaient. Douze composants
+  // — les trois Risset, les six synthétiseurs de Tone, le crible, les écrans et le GENDYN de
+  // Xenakis, les pulsars de Roads — génèrent à `ctx.runtime.sampleRate`, c'est-à-dire À LA
+  // FRÉQUENCE DE LA CARTE SON. Les trois graphes au-dessus n'en emploient aucun : c'est la seconde
+  // raison pour laquelle le relevé se taisait, et la première était l'absence de fichier.
+  "ton-glisse-en-trompette-etiree.json",
+  "un-son-projete-en-microtonal.json",
 ];
 
 test.describe("les types aux ports", () => {
@@ -43,23 +50,26 @@ test.describe("les types aux ports", () => {
 
   test("AUCUN EXEMPLE LIVRE NE REND UNE VALEUR DU MAUVAIS TYPE", async ({ page }) => {
     const ecarts: string[] = [];
-    // ═══ ET LE RECENSEMENT DES FRÉQUENCES PASSE PAR LE MÊME GUICHET — point 5 de la revue ═══
+    // ═══ ET LE GARDE DES FRÉQUENCES PASSE PAR LE MÊME GUICHET — point 5 de la revue ═══
     //
-    // Le moteur signale un nœud qui reçoit des valeurs à des fréquences DIFFÉRENTES, c'est-à-dire
-    // une conversion implicite faite par le rééchantillonneur du navigateur. Il ne convertit rien :
-    // on mesure d'abord sur combien d'arêtes cela arrive, parce que convertir changerait ce que rend
-    // tout graphe déjà enregistré.
+    // IL A CHANGÉ DE NATURE EN COURS DE CHANTIER, et c'est écrit ici parce que son silence ne se lit
+    // pas de la même façon avant et après. Il a d'abord été un RECENSEMENT : mesurer sur combien
+    // d'arêtes une conversion implicite avait lieu, avant de convertir quoi que ce soit.
     //
-    // CE QUE CE RELEVÉ VAUT, ET CE QU'IL NE VAUT PAS. Il rend ZÉRO sur ces trois graphes, et c'est
-    // un vrai zéro POUR EUX : toutes leurs branches naissent de générateurs, qui rendent tous à
-    // 44 100 Hz — bytebeat compris, vérifié. La seule source à 48 000 est le DÉCODAGE d'un fichier,
-    // `contexteDecodage` étant figé là pour ne pas dépendre de la carte son, et décoder exige
-    // Electron. Ce relevé ne dira donc rien tant qu'un fichier n'entre pas dans un graphe.
+    // MAINTENANT LE MOTEUR CONVERTIT : il porte les sorties de chaque nœud à la fréquence du projet
+    // avant de les poser dans les résultats. Aucun nœud ne peut donc plus recevoir deux fréquences,
+    // et ce garde NE DOIT PLUS JAMAIS PARLER. S'il parle, l'invariant est rompu.
     //
-    // ET LE MOTEUR APPELLE BIEN CE RECENSEMENT, ce qu'un zéro ne prouverait pas tout seul : défaut
-    // planté dans `plugins/apercu-domaine.ts` pour qu'il réponde toujours, **treize nœuds** ont été
+    // CE QU'IL NE VOIT PAS, ET IL FAUT LE SAVOIR : un graphe ENTIER décalé. Il guette un nœud qui
+    // reçoit DEUX fréquences, or le défaut mesuré du point 5 était autre — douze composants
+    // généraient à la fréquence de la CARTE SON, chaque nœud n'en recevant qu'une, et deux des cinq
+    // graphes ci-dessous rendaient à deux fréquences à la fois sans qu'une seule ligne paraisse.
+    // C'est `frequence-de-travail-dans-application.spec.ts` qui lit les fichiers rendus et le voit.
+    //
+    // ET LE MOTEUR APPELLE BIEN CE GARDE, ce qu'un zéro ne prouverait pas tout seul : défaut planté
+    // dans `plugins/apercu-domaine.ts` pour qu'il réponde toujours, **treize nœuds** ont été
     // signalés sur `canon-de-proportions`, chacun nommant son composant et ses deux fréquences.
-    // C'est la paire que ce dépôt exige — un relevé muet, et la preuve qu'il pouvait parler.
+    // C'est la paire que ce dépôt exige — un garde muet, et la preuve qu'il pouvait parler.
     const frequences = new Set<string>();
     page.on("console", (m) => {
       const t = m.text();
@@ -72,6 +82,9 @@ test.describe("les types aux ports", () => {
       await semerEtLancer(page, devUrl, graphe, { profondeurExport: 32 });
       console.log(`${nom} · ${ecarts.length} écart(s) de type · ${frequences.size} nœud(s) qui mêlent des fréquences`);
     }
+    // LA FRÉQUENCE DE LA CARTE SON EST RELEVÉE, parce que c'est elle qui décide de ce que douze
+    // composants génèrent : le relevé ci-dessus ne s'interprète pas sans elle.
+    console.log(`carte son · ${await page.evaluate(() => new AudioContext().sampleRate)} Hz`);
 
     for (const f of frequences) console.log(`  ${f}`);
     for (const e of ecarts) console.log(`  ${e}`);

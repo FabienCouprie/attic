@@ -30,8 +30,15 @@
 import { bufferVersWavBlob } from "./io";
 
 import type { Note } from "./note";
-/** Fréquence d'échantillonnage d'Attic. Csound rend à celle de la carte, on ramène ici. */
-export const FREQUENCE_ECH = 44100;
+import { frequenceDeTravail } from "./frequence-de-travail";
+/**
+ * La frequence a laquelle on RAMENE ce que Csound a rendu.
+ *
+ * Csound rend a celle de la carte son et ignore tout `sr` ecrit dans l'orchestre ; c'est donc
+ * ici que la conversion a lieu, par `decodeAudioData`. ELLE SUIT LE PROJET depuis le point 5 :
+ * elle valait 44 100 en dur, de sorte qu'un projet declare a 48 kHz recevait du 44,1.
+ */
+export const FREQUENCE_ECH = () => frequenceDeTravail();
 
 /**
  * Garde-fou : un orchestre qui ne s'arrête jamais ne doit pas figer le graphe.
@@ -590,7 +597,7 @@ async function rendreCsdSansFile(
     }
 
     // Décodage DANS un contexte à 44 100 Hz : c'est lui qui fait la conversion de taux.
-    const decodeur = new OfflineAudioContext(1, 1, FREQUENCE_ECH);
+    const decodeur = new OfflineAudioContext(1, 1, FREQUENCE_ECH());
     const audio = await decodeur.decodeAudioData(
       octets.buffer.slice(octets.byteOffset, octets.byteOffset + octets.byteLength) as ArrayBuffer,
     );

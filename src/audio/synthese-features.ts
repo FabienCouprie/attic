@@ -23,6 +23,7 @@
 // approcher la variance visée, ce qui choisit une trajectoire parmi une infinité.
 
 import { creerAleatoire } from "../core/hasard";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 /** L'échelle mel, dans la forme usuelle — celle des bancs de filtres. */
 export const melDepuisHz = (hz: number) => 1127 * Math.log(1 + Math.max(0, hz) / 700);
@@ -104,7 +105,7 @@ export function centroideProduit(
  */
 export function alphaPourCentroide(
   cible: number, f0: number, nPartiels: number,
-  enveloppe?: Float64Array, frequence = 44100,
+  enveloppe?: Float64Array, frequence = frequenceDeTravail(),
 ): number {
   const mesurer = (alpha: number) => (enveloppe
     ? centroideProduit(f0, nPartiels, alpha, enveloppe, frequence)

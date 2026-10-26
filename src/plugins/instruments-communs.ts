@@ -9,7 +9,8 @@ import { analyserMidi } from "../audio";
 import { valeurA } from "../audio/courbe";
 
 import type { Note } from "../audio/note";
-export const FREQUENCE_ECH = 44100;
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
+export const FREQUENCE_ECH = () => frequenceDeTravail();
 
 export type NoteJouee = Note;
 
@@ -39,7 +40,7 @@ export function lireNote(texte: string, defaut = 57): number {
 
 /** Ajoute un signal mono dans un mélange, à l'instant demandé. */
 export function melanger(cible: Float32Array, source: Float32Array, debut: number): void {
-  const depart = Math.max(0, Math.floor(debut * FREQUENCE_ECH));
+  const depart = Math.max(0, Math.floor(debut * FREQUENCE_ECH()));
   const n = Math.min(source.length, cible.length - depart);
   for (let i = 0; i < n; i++) cible[depart + i] += source[i];
 }
@@ -55,7 +56,7 @@ export function versBuffer(mono: Float32Array, volume: number | Float32Array): A
   for (let i = 0; i < mono.length; i++) crete = Math.max(crete, Math.abs(mono[i]));
   const gNorm = crete > 0.001 ? 0.9 / crete : 1;
   const buffer = new AudioBuffer({
-    numberOfChannels: 2, length: Math.max(1, mono.length), sampleRate: FREQUENCE_ECH,
+    numberOfChannels: 2, length: Math.max(1, mono.length), sampleRate: FREQUENCE_ECH(),
   });
   const gauche = buffer.getChannelData(0), droite = buffer.getChannelData(1);
   // DEUX BOUCLES, ET C'EST DÉLIBÉRÉ. Le chemin du nombre garde son produit unique `gNorm × volume`,

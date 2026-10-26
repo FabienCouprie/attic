@@ -4,6 +4,7 @@
 import { creerAleatoire } from "../core/hasard";
 import { plafonnerCrete } from "./commun";
 import { Note } from "tonal";
+import { frequenceDeTravail } from "./frequence-de-travail";
 import {
   cleEchantillon, echantillonsRequis, placerPercussions, secondesDeclenchement,
   type Echantillon,
@@ -52,7 +53,7 @@ export async function genererMembraneSynth(opts: OptionsMembraneSynth): Promise<
     octaves = 4,
     decay = 0.4,
     release = 1.4,
-    sampleRate = 44100,
+    sampleRate = frequenceDeTravail(),
   } = opts;
 
   const { MembraneSynth, Offline } = await import("tone");
@@ -111,7 +112,7 @@ export async function genererPolySynth(opts: OptionsPolySynth): Promise<AudioBuf
     decay = 0.1,
     sustain = 0.3,
     release = 1,
-    sampleRate = 44100,
+    sampleRate = frequenceDeTravail(),
   } = opts;
 
   const { PolySynth, Synth, Offline } = await import("tone");
@@ -177,7 +178,7 @@ export async function genererModulationSynth(opts: OptionsModulationSynth): Prom
     decay = 0.1,
     sustain = 0.3,
     release = 0.5,
-    sampleRate = 44100,
+    sampleRate = frequenceDeTravail(),
   } = opts;
 
   const { FMSynth, AMSynth, Offline } = await import("tone");
@@ -228,7 +229,7 @@ export async function genererPluckSynth(opts: OptionsPluckSynth): Promise<AudioB
     dampening = 4000,
     resonance = 0.7,
     release = 1,
-    sampleRate = 44100,
+    sampleRate = frequenceDeTravail(),
   } = opts;
 
   const { Offline, Noise, Delay, Filter, Gain } = await import("tone");
@@ -438,7 +439,7 @@ export async function avecHasardSeme<T>(graine: number | undefined, cle: string,
 }
 
 export async function rendreBatterieMidi(opts: OptionsDrumSynth): Promise<AudioBuffer> {
-  const { notes, volume, sampleRate = 44100, graine } = opts;
+  const { notes, volume, sampleRate = frequenceDeTravail(), graine } = opts;
 
   const dureeTotale = notes.length > 0
     ? Math.max(0.5, Math.max(...notes.map((n) => n.fin)) + 0.5)
@@ -516,7 +517,7 @@ export async function genererMetalSynth(opts: OptionsMetalSynth): Promise<AudioB
     attack = 0.001,
     decay = 1.4,
     release = 0.2,
-    sampleRate = 44100,
+    sampleRate = frequenceDeTravail(),
   } = opts;
 
   const { MetalSynth, Offline } = await import("tone");

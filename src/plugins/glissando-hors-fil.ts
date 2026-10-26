@@ -14,7 +14,7 @@ export async function glissandoHorsFil(o: OptionsSonGlissando): Promise<AudioBuf
     calcul: sonDuGlissando,
   });
   const tampon = new AudioBuffer({
-    numberOfChannels: 1, length: Math.max(1, echantillons.length), sampleRate: SR_GLISSANDO,
+    numberOfChannels: 1, length: Math.max(1, echantillons.length), sampleRate: SR_GLISSANDO(),
   });
   // `copyToChannel` et non `getChannelData().set` : le tableau revenu d'un ouvrier n'est pas celui
   // du tampon, et une plate-forme où `getChannelData` rend une copie perdrait l'écriture.

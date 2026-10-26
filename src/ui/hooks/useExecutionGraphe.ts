@@ -24,6 +24,7 @@ import { peutReutiliserLeCache, sourceRetraitee } from "../../core/cache-executi
 import { estResultatEnErreur } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
 import { noeudRegarde, resultatRetenu } from "../../core/memoire";
+import { servicesDomaine } from "../../core/services-domaine";
 import { poserApercu, poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
 import { effacerResultats, poserResultat, resultatDe } from "../resultats";
 import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
@@ -843,11 +844,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
         continue;
       }
       const node = nds.find((n) => n.id === nodeId);
-      if (!node) {
- continue; }
+      if (!node) continue;
 
       const sourceReprocessee = sourceRetraitee(nodeId, aretes, traitesCeRun);
-      const hashParams = empreinteParametres(node.data);
+      // LES RÉGLAGES DE PROJET DU DOMAINE ENTRENT DANS LA CLÉ, et c'est un défaut évité de peu :
+      // changer la fréquence de travail d'un projet ne relançait rien, et le lancement suivant
+      // reposait les tampons du cache — à l'ancienne fréquence. Le réglage aurait paru inopérant au
+      // deuxième run, ce qui est la pire espèce de panne. Le moteur ne sait pas ce qu'il hache : il
+      // demande au domaine, par `core/services-domaine.ts`.
+      const hashParams = empreinteParametres(node.data) + JSON.stringify(servicesDomaine().reglagesDeProjet());
       const monHashEntree = empreinteEntrees(nodeId, aretesG);
       // LE CÂBLAGE AVAL ENTRE DANS LA CLÉ depuis qu'un nœud peut savoir si une de ses sorties est
       // branchée : ce qu'il rend en dépend. Voir `empreinteSorties`.
@@ -1023,23 +1028,30 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // ne pas écraser l'état déjà remis à « attente » par le reset avec un
         // résultat/statut « terminé » ou « erreur » périmé.
         if (controller.signal.aborted) break;
-        resultats.set(nodeId, res.valeurs as ValeurTransportee[]);
+        // ═══ L'INVARIANT : TOUT CE QUI CIRCULE SUR UNE ARÊTE EST À LA FRÉQUENCE DU PROJET ═══
+        //
+        // Point 5 d'une revue du dépôt. À LA SORTIE ET NON À L'ENTRÉE : une valeur lue par trois
+        // nœuds serait sinon convertie trois fois, et son aperçu — celui qu'on écoute et qu'on
+        // enregistre — ne serait à la bonne fréquence sur aucun des trois. Le domaine décide de
+        // tout : ce qu'est une fréquence, laquelle est celle du projet, quel rééchantillonneur
+        // l'applique. Gratuit dans le cas ordinaire, où il rend le même tableau.
+        const valeurs = await servicesApercu().porterALaFrequenceDeTravail(res.valeurs as unknown[]);
+        resultats.set(nodeId, valeurs as ValeurTransportee[]);
         // CE QUE LES SORTIES HÉRITENT DES ENTRÉES, et que le calcul ne reproduit pas : côté audio,
         // la disposition des canaux. C'est ici, et seulement ici, que les entrées et les sorties
         // sont toutes deux sous la main — d'où la question posée depuis ce point du moteur.
-        const entrantes = () =>
-          valeursEntrantes<ValeurTransportee>(nodeId, aretesG, resultats) as unknown[];
-        servicesApercu().heriterDesEntrees(res.valeurs as unknown[], entrantes());
+        const entrantes = () => valeursEntrantes<ValeurTransportee>(nodeId, aretesG, resultats) as unknown[];
+        servicesApercu().heriterDesEntrees(valeurs, entrantes());
         // DE COMBIEN CE NŒUD A CHANGÉ LE NIVEAU DE CE QU'IL A REÇU, porté sur le nœud à côté du
         // temps d'exécution. Ce que « niveau » veut dire appartient au domaine, et c'est lui qui
         // mesure ; le shell ne sait que l'endroit où la question se pose.
-        const ecart = servicesApercu().ecartNiveau(res.valeurs as unknown[], entrantes());
+        const ecart = servicesApercu().ecartNiveau(valeurs, entrantes());
         if (ecart !== undefined) ecartsParNoeud.set(nodeId, ecart);
-        // ET LES FRÉQUENCES QUI SE MÊLENT SUR SES ENTRÉES, recensées et non converties — point 5
-        // d'une revue du dépôt. Trois régimes coexistent dans le catalogue, et la conversion se fait
-        // implicitement, par le rééchantillonneur du navigateur. Convertir ici changerait ce que
-        // rend tout graphe déjà enregistré : on mesure d'abord sur combien d'arêtes cela arrive.
-        const melees = servicesApercu().frequencesMelees(entrantes()); if (melees.length) console.warn(`[frequence] ${nodeId}(${node.data.ficheId}) reçoit ${melees.join(" et ")} Hz : une conversion implicite a lieu`);
+        // ET LE GARDE DE L'INVARIANT : ce recensement a d'abord servi à mesurer avant de convertir,
+        // il ne doit désormais PLUS JAMAIS PARLER — toute valeur posée dans les résultats est à la
+        // fréquence du projet, donc aucun nœud n'en reçoit deux. S'il parle, la conversion n'a pas
+        // eu lieu, et c'est l'unique symptôme qu'on en aurait.
+        const melees = servicesApercu().frequencesMelees(entrantes()); if (melees.length) console.warn(`[frequence] ${nodeId}(${node.data.ficheId}) reçoit ${melees.join(" et ")} Hz : la conversion du moteur n'a pas eu lieu`);
         if (res.message) messages.set(nodeId, res.message);
         if (res.affichage) affichageParNoeud.set(nodeId, res.affichage);
         if (res.designe) designeParNoeud.set(nodeId, res.designe);
@@ -1070,7 +1082,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
           // d'un graphe qui tourne maintenant.
           // `consulteSorties` est ce que le nœud vient de DEMANDER, et non ce qu'une fiche déclare :
           // sans lui, le câblage aval de tous entrerait dans la clé pour la raison d'un seul.
-          if (!jeton?.perime()) cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties, tempsExecution: elapsed });
+          // LE CACHE GARDE LES VALEURS CONVERTIES, et non celles que le composant a rendues : un
+          // coup de cache les repose telles quelles dans les résultats, et garder les brutes aurait
+          // rompu l'invariant de fréquence sur tout nœud rejoué depuis le cache — c'est-à-dire la
+          // plupart, et seulement au deuxième run. Le genre de défaut qu'on ne reproduit jamais.
+          if (!jeton?.perime()) cacheExec.current.set(nodeId, { valeurs: valeurs as ValeurTransportee[], message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties, tempsExecution: elapsed });
           else console.warn(`[cache] resultat perime ecarte : ${nodeId} (generation ${jeton.generation})`);
           // ═══ CE QUE LE COMPOSANT REND EST-IL DU TYPE QU'IL PROMET ? ═══
           //
@@ -1084,7 +1100,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           // quatre empreintes, interpolées pour chaque nœud de chaque run. Le fichier est à son
           // plafond de dette : ce qu'on y ajoute doit y être payé, et une vérification valait mieux
           // qu'un journal. Elle coûte d'ailleurs moins : un `instanceof` au lieu d'une chaîne.
-          signalerEcartsDeType(nodeId, String(node.data.ficheId), defRes?.sorties ?? [], res.valeurs, (t) => registreUI().typeFlux(t));
+          signalerEcartsDeType(nodeId, String(node.data.ficheId), defRes?.sorties ?? [], valeurs, (t) => registreUI().typeFlux(t));
           poserStatut(nodeId, "termine");
           ajouterTemps(elapsed);
         }

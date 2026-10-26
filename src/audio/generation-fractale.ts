@@ -9,6 +9,7 @@ import { caractereOuSinus, type CaractereTimbreId } from "./timbres";
 import { degresGammeMelodie } from "./generation-melodie";
 import { GAMMES_ACCORDS, degresGammeAccords } from "./generation";
 import { CANTUS_FIRMUS, intervallesDaccord } from "./qualites-accords";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 // LES MOTIFS VIENNENT DES TABLES COMMUNES, `qualites-accords.ts` pour les trois accords et
 // `gammes.ts` pour le cantus firmus, qui est la gamme majeure et non un accord. Les clés restent
@@ -51,7 +52,7 @@ export async function genererMusiqueFractale(
   gamme: string,
   timbre: string
 ): Promise<{ audio: AudioBuffer; notes: NoteEvenement[] }> {
-  const sampleRate = 44100;
+  const sampleRate = frequenceDeTravail();
   const pMax = Math.min(profondeur, 6);
   const motif = typeMotif === "Personnalisé"
     ? intervallesPerso.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n))

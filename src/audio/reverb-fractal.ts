@@ -4,6 +4,7 @@
 // irrégulière et dense.
 
 import { creerAleatoire } from "../core/hasard";
+import { frequenceDeTravail } from "./frequence-de-travail";
 export interface OptionsReverbFractal {
   decay: number; // secondes
   preDelay: number; // ms
@@ -56,7 +57,7 @@ function poussiereCantor(
 }
 
 export function genererIRFractal(options: OptionsReverbFractal): AudioBuffer {
-  const sr = options.sampleRate ?? 44100;
+  const sr = options.sampleRate ?? frequenceDeTravail();
   const channels = Math.max(1, Math.min(2, options.channels ?? 2));
   const decay = Math.max(0.1, Math.min(20, options.decay));
   const preDelay = Math.max(0, Math.round((options.preDelay / 1000) * sr));
