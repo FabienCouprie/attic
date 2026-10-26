@@ -12,12 +12,23 @@
 // « Ecrire un script puis l'ouvrir » etait donc un enchainement complet, a partir d'un simple
 // fichier recu. Cette barriere en coupe le dernier maillon.
 //
-// UNE LISTE DE REFUS ET NON UNE LISTE D'AUTORISATION, et c'est un choix proportionne qu'il faut
-// dire. Une liste d'autorisation serait plus forte ; elle risquerait de casser un usage legitime
-// qu'on ne connait pas, puisque ce pont est ouvert a tout le code du domaine. Mesure avant
-// d'ecrire : les TROIS appelants legitimes d'`ouvrirChemin` ouvrent un `.html` genere — les vues
-// cartes et images. Aucun n'ouvre un executable. Passer a une liste d'autorisation reste possible,
-// et c'est une decision du proprietaire.
+// ═══ UNE LISTE D'AUTORISATION, ET C'EST UNE DECISION PRISE LE 2026-10-26 ═══
+//
+// CE FICHIER A PORTE UNE LISTE DE REFUS, et disait pourquoi : elle risquait moins de casser un
+// usage legitime qu'on ne connaissait pas. Mais une liste de refus est une course perdue — il y
+// manquait `.dll`, `.cpl`, `.msc` et `.chm`, releves par une revue, et personne ne peut jurer que
+// la liste est complete. Une liste d'autorisation, elle, se verifie : ce qui n'y est pas est
+// refuse, et un refus se lit.
+//
+// MESURE AVANT DE LA RESSERRER, et c'est ce qui la rend sans risque. `shell.openPath` n'a QU'UN
+// SITE D'APPEL dans le pont, et TROIS appelants y menent — `vues-cartes.tsx` deux fois et
+// `vues-images.tsx` une fois. Les trois passent un `htmlPath`, et les trois sources qui
+// l'ecrivent — `carte-sonore.ts`, `coordonnees-sur-carte.ts`, `galerie-exposition.ts` — produisent
+// toutes `${dossierSortie}/index.html`. L'autorisation est donc exactement `.html`.
+//
+// ELLE N'EST PAS GENEREUSE D'UN POUCE, et c'est voulu : `.htm` n'y est pas, parce que rien n'en
+// produit. Le jour ou un besoin neuf se presentera, c'est le refus qui le dira — et l'elargir sera
+// une ligne, apres la meme mesure.
 //
 // CE QUE CETTE BARRIERE NE FAIT PAS : fermer le point 1. Le pont garde `fichier:ecrire` sans bornes,
 // un noeud installe garde l'acces a `window`, et un composant peut encore ecraser un identifiant
@@ -54,10 +65,19 @@ function extensionDe(chemin) {
 }
 
 /**
+ * Ce que `shell.openPath` a le droit d'ouvrir. Tout le reste est refuse.
+ *
+ * UN SEUL ELEMENT, ET C'EST MESURE : les trois appelants du pont ouvrent un `index.html` que
+ * l'application vient d'ecrire. Y ajouter une extension demande la meme mesure, pas une intuition.
+ */
+const OUVRABLES = new Set([".html"]);
+
+/**
  * Ce chemin peut-il etre ouvert par le systeme ?
  *
  * REND LA RAISON ET NON UN SEUL BOOLEEN : un refus muet enverrait chercher la panne ailleurs, et
- * c'est exactement ce que ce depot reproche a ses propres messages d'erreur.
+ * c'est exactement ce que ce depot reproche a ses propres messages d'erreur. Le refus NOMME ce qui
+ * est permis, pour que celui qui le lit sache quoi faire.
  */
 function ouvertureAutorisee(chemin) {
   const texte = String(chemin ?? "");
@@ -65,8 +85,9 @@ function ouvertureAutorisee(chemin) {
   // UN NOM AVEC DES ESPACES DE FIN PASSE POUR AUTRE CHOSE SOUS WINDOWS : « x.bat » et « x.bat »
   // suivi d'un espace designent le meme fichier, et l'extension lue naivement differe.
   const ext = extensionDe(texte.replace(/[\s.]+$/, ""));
-  if (EXECUTABLES.has(ext)) {
-    return { ok: false, raison: `ouvrir un « ${ext} » lancerait un programme` };
+  if (!OUVRABLES.has(ext)) {
+    const dit = ext || "sans extension";
+    return { ok: false, raison: `ouvrir un « ${dit} » n'est pas prevu : seuls ${[...OUVRABLES].join(", ")} le sont` };
   }
   return { ok: true };
 }
