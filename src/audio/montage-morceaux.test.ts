@@ -416,19 +416,44 @@ describe("ce qu'un geste ECRIT, et ce qu'il laisse sous ses reglages", () => {
     expect(relu.find((m) => m.piste === 2)!.gain).toBe(-18);
   });
 
-  it("ET SEULE LA PISTE TOUCHEE EST ECRITE", () => {
+  it("ET LE GESTE ECRIT LES REGLAGES DE LA PISTE TOUCHEE, et d'elle seule", () => {
+    // ═══ LA REGLE A CHANGE LE 2026-10-26, SUR UN RELEVE DE FABIEN ═══
+    //
+    // « Il n'y a aucun lien entre les elements graphiques, le deplacement des barres et leur
+    // equivalent dans l'inspecteur. Par exemple si je deplace la barre de la premiere piste vers la
+    // droite, il n'y a aucune modification equivalente de la glissiere Debut 1. »
+    //
+    // Un geste sur une piste encore DESCRIPTIBLE par ses quatre reglages ecrit donc ces reglages, et
+    // non un morceau : la barre et la glissiere sont deux vues du meme nombre.
     const vus = morceauxCompletes([], branchees, params);
     const e = apresGeste(vus, { ...vus[0], debut: 5 });
-    expect(e.morceaux.map((m) => m.piste)).toEqual([0]);
-    expect(e.morceaux[0].debut).toBe(5);
+    expect(e.reglages["Début 1"], "la glissiere suit la barre").toBe(5);
+    expect(e.morceaux, "et aucun morceau n'est fige : la piste reste sous ses reglages").toEqual([]);
     expect(e.videes).toEqual([]);
+    // ET D'ELLE SEULE : les trois autres cles d'une autre piste n'y sont pas.
+    expect(Object.keys(e.reglages).sort())
+      .toEqual(["Début 1", "Fondu entrée 1", "Fondu sortie 1", "Gain 1"]);
   });
 
-  it("ET LA PISTE TOUCHEE, ELLE, NE SUIT PLUS SES REGLAGES : c'est la regle de la notice", () => {
+  it("ET LA PISTE TOUCHEE SUIT ENCORE SES REGLAGES, puisque le geste les a ecrits", () => {
+    // L'ANCIENNE REGLE DISAIT LE CONTRAIRE, et c'est ce que Fabien a releve comme « cela ne
+    // fonctionne donc pas » : la piste basculait dans l'autre regime, en silence, et sa glissiere
+    // devenait morte. Il n'y a plus qu'une source de verite tant que la piste est descriptible.
     const vus = morceauxCompletes([], branchees, params);
     const e = apresGeste(vus, { ...vus[0], debut: 5 });
-    const relu = morceauxCompletes(e.morceaux, branchees, { ...params, "Début 1": 99 }, e.videes);
-    expect(relu.find((m) => m.piste === 0)!.debut).toBe(5);
+    const apres = { ...params, ...e.reglages };
+    const relu = morceauxCompletes(e.morceaux, branchees, apres, e.videes);
+    expect(relu.find((m) => m.piste === 0)!.debut, "la barre est la ou le geste l'a mise").toBe(5);
+    // Et la glissiere reprend la main : la bouger deplace la barre.
+    const encore = morceauxCompletes(e.morceaux, branchees, { ...apres, "Début 1": 99 }, e.videes);
+    expect(encore.find((m) => m.piste === 0)!.debut).toBe(99);
+  });
+
+  it("MAIS UNE PISTE ROGNEE RESTE UN MORCEAU : quatre reglages ne portent ni « dans » ni « duree »", () => {
+    const vus = morceauxCompletes([], branchees, params);
+    const e = apresGeste(vus, { ...vus[0], debut: 5, dans: 1 });
+    expect(e.morceaux.map((m) => m.piste), "la piste rognee se fige").toEqual([0]);
+    expect(e.reglages, "et aucun reglage ne pretend la decrire").toEqual({});
   });
 
   it("ET UNE PISTE QUI PORTE DEUX MORCEAUX S'ECRIT ENTIERE", () => {
@@ -446,7 +471,7 @@ describe("ce qu'un geste ECRIT, et ce qu'il laisse sous ses reglages", () => {
   it("ET UNE LISTE ENCORE ENTIEREMENT SOUS SES REGLAGES NE S'ECRIT PAS DU TOUT", () => {
     // Un geste repris a son point de depart, ou une simple selection : rien n'a bouge, rien ne se fige.
     const vus = morceauxCompletes([], branchees, params);
-    expect(morceauxAEcrire(vus, branchees, params)).toEqual({ morceaux: [], videes: [] });
+    expect(morceauxAEcrire(vus, branchees, params)).toEqual({ morceaux: [], videes: [], reglages: {} });
   });
 });
 
@@ -485,7 +510,10 @@ describe("une piste videe reste vide", () => {
     const colle = [...morceauxCompletes(e.morceaux, branchees, params, e.videes), M({ id: "colle", piste: 2, debut: 1 })];
     const e2 = morceauxAEcrire(colle, branchees, params, e.videes);
     expect(e2.videes).toEqual([]);
-    expect(e2.morceaux.map((m) => m.piste)).toEqual([2]);
+    // Le morceau colle est seul sur sa piste et joue tout son son : la piste revient donc sous ses
+    // reglages, qui portent desormais ce que le geste a pose.
+    expect(e2.morceaux).toEqual([]);
+    expect(e2.reglages["Début 3"]).toBe(1);
   });
 
   it("ET UNE PISTE VIDEE PUIS DEBRANCHEE GARDE SON ETAT", () => {

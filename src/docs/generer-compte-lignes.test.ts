@@ -173,7 +173,7 @@ describe("la table engendrée à la demande", () => {
  */
 const DETTE = new Map<string, number>([
   ["src/ui/atelier.css", 1412],
-  ["src/ui/App.tsx", 1220],
+  ["src/ui/App.tsx", 1202],
   ["src/ui/hooks/useExecutionGraphe.ts", 754],
   ["src/ui/Inspector.tsx", 632],
   ["src/audio/abc.ts", 589],

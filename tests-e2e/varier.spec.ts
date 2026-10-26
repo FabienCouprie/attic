@@ -216,10 +216,32 @@ test.describe("varier", () => {
       // LE PLANCHER EST À SOIXANTE DÉCIBELS SOUS LA TRANCHE LA PLUS FORTE DE L'ENTRÉE, et ce n'est
       // pas un seuil de confort : c'est l'étendue dynamique conventionnelle au-delà de laquelle un
       // écart ne s'entend plus dans le contexte de ce son.
+      // ═══ ET LE PLANCHER SE PREND SUR CE QUI SORT AUSSI, PAS SEULEMENT SUR L'ENTRÉE ═══
+      //
+      // DEUXIÈME CORRECTION, le 2026-10-26, et celle-ci faisait DÉCLARER MORT UN RÉGLAGE QUI AGIT.
+      //
+      // Un composant qui ASSEMBLE place du son là où l'entrée n'en avait pas. Le « Montage » met sa
+      // piste k à `k × 2` secondes : sur un son de référence d'une seconde et demie, tout ce qui
+      // vient de la piste 2 tombe dans des tranches où l'entrée est du silence. Le plancher, calculé
+      // sur l'entrée seule, les écartait TOUTES — et le résumé annonçait « Gain 2 est inerte » alors
+      // que sa propre table, juste au-dessus, montrait −37,1 dB contre −57,1 dB, c'est-à-dire les
+      // vingt décibels demandés, exactement. Même chose pour « Fondu entrée 2 ».
+      //
+      // C'est un instrument qui dit le contraire de ce qu'il mesure, sur toute une famille de
+      // composants : le montage, les retards, les boucles, les réverbérations à longue queue.
+      //
+      // ON PREND DONC LE PLUS FORT DE TOUT CE QU'ON A ENTENDU — l'entrée et chaque variante —, et
+      // l'audibilité d'une tranche se juge sur la plus forte de ses valeurs. Une tranche reste donc
+      // dans le relevé dès que QUELQUE CHOSE y sonne.
       const PLANCHER_DB = 60;
-      const plusFort = Math.max(...tranchesEntree.filter(Number.isFinite), -Infinity);
-      const audible = (i: number) => Number.isFinite(tranchesEntree[i])
-        && tranchesEntree[i] >= plusFort - PLANCHER_DB;
+      const toutesLesTranches = [tranchesEntree, ...sonores.map((v) => v.tranches)];
+      const plusFort = Math.max(...toutesLesTranches.flat().filter(Number.isFinite), -Infinity);
+      const leMieuxEn = (i: number) => Math.max(...toutesLesTranches
+        .map((t) => t[i]).filter(Number.isFinite), -Infinity);
+      const audible = (i: number) => {
+        const niveau = leMieuxEn(i);
+        return Number.isFinite(niveau) && niveau >= plusFort - PLANCHER_DB;
+      };
 
       // DEUX QUESTIONS, DEUX RELEVÉS, et les confondre est précisément l'erreur à éviter.
       const plusGrandEcart = (a: number[], b: number[]) => {
@@ -232,7 +254,7 @@ test.describe("varier", () => {
       };
       const derniereAudible = [...Array(nbTranches).keys()].filter(audible).pop() ?? 0;
       lignes.push("", `ce qui s'entend va jusqu'à ${(derniereAudible * TRANCHE).toFixed(1)} s`
-        + ` — soixante décibels sous la tranche la plus forte de l'entrée (${db(plusFort)} dB).`,
+        + ` — soixante décibels sous la tranche la plus forte entendue, entrée ou variante (${db(plusFort)} dB).`,
         "Les écarts ci-dessous ne sont cherchés que là.",
         "", "CE QUE LE COMPOSANT FAIT, écart le plus grand à l'entrée :");
       for (const v of sonores) {

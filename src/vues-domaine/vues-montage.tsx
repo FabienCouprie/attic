@@ -9,14 +9,16 @@
 //
 // `porteLecteur: true` DANS LE REGISTRE fait taire le lecteur générique du nœud : deux jeux de
 // commandes pour un même son se contrediraient, et la tête de lecture ne saurait plus lequel suivre.
-import { NodeResizer, useNodeConnections, useReactFlow } from "@xyflow/react";
+import { NodeResizer, useNodeConnections } from "@xyflow/react";
 import { LigneDeTemps, type PisteMontage } from "./LigneDeTemps";
 import { MODELE_MAQUETTE, MODELE_MONTAGE } from "./ligne-temps-calcul";
 import { morceauxAEcrire, morceauxCompletes, type Morceau } from "../audio/montage-morceaux";
 import type { VueProps } from "../ui/registre-vues";
 
 export function VueMontage({ id, data }: VueProps) {
-  const { setNodes } = useReactFlow();
+  // `useReactFlow().setNodes` N'EST PLUS ICI, et c'est le fond de la correction : une vue n'écrit
+  // plus elle-même dans le graphe. Elle demande, et la porte unique fait les trois gestes qu'un
+  // réglage fait — purge du cache, péremption de l'aval, relance.
   // Les rangs branchés, lus comme le nœud les lit : c'est la poignée qui porte le numéro du port.
   const entrees = useNodeConnections({ handleType: "target", id });
   const branchees = [...new Set(
@@ -41,6 +43,14 @@ export function VueMontage({ id, data }: VueProps) {
       notes?: Record<number, { debut: number; duree: number; note: number }[]>;
     };
     onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
+    /**
+     * Pose un découpage sur le nœud, PAR LA MÊME PORTE QU'UN RÉGLAGE.
+     *
+     * C'est-à-dire : purge l'entrée de cache, périme l'aval en gardant ce que le nœud a désigné de
+     * ses entrées — sans quoi le graphe vivant du montage n'aurait plus rien à jouer —, et déclenche
+     * la relance automatique vers l'aval. Un `setNodes` nu ne faisait aucune des trois.
+     */
+    onChangerDecoupe?: (id: string, decoupe: Record<string, unknown>) => void;
     /** Les morceaux posés, quand le nœud en porte. Absents sur un graphe enregistré avant eux. */
     morceaux?: Morceau[];
     /** Les pistes que l'on a vidées : elles ne se redéduisent pas de leurs réglages. */
@@ -66,11 +76,40 @@ export function VueMontage({ id, data }: VueProps) {
   // elle la rend complétée : écrire telle quelle ferait de toutes les pistes des pistes découpées au
   // premier geste sur l'une d'elles, et leurs quatre réglages cesseraient d'agir d'un coup. Voir
   // `morceauxAEcrire`.
-  const ecrireMorceaux = (ms: Morceau[]) => setNodes((nds) => nds.map((n) => {
-    if (n.id !== id) return n;
+  //
+  // ═══ ET L'ÉCRITURE PASSE PAR LA MÊME PORTE QU'UN RÉGLAGE ═══
+  //
+  // ELLE SE FAISAIT PAR UN `setNodes` NU, et c'était la cause du relevé du 2026-10-26 : « de nouveau
+  // les gains et fondus des pistes qui ne sont pas les premières sont totalement inopérants ».
+  //
+  // Le commentaire ci-dessus pariait sur l'empreinte de cache — elle regarde bien `morceaux`, c'est
+  // vérifié —, mais une empreinte qui change ne LANCE rien. Il ne se purgeait aucun cache, ne se
+  // périmait aucun aval, ne se relançait rien : le morceau déplacé n'était entendu qu'au prochain
+  // run déclenché par AUTRE CHOSE.
+  //
+  // CE QUE CELA DONNAIT À L'USAGE, et c'est exactement ce que Fabien décrit. Tirer une barre : rien
+  // ne change. Tirer ensuite la glissière de cette piste : elle est éteinte, puisqu'un morceau y est
+  // désormais posé — mais son changement, lui, déclenche une relance, qui rend enfin le morceau
+  // déplacé. On voit donc le son changer d'une façon qui n'a rien à voir avec la glissière qu'on
+  // vient de tirer. Et sur la première piste, jamais découpée, la glissière marche. D'où « tout sauf
+  // la première piste ne fonctionne pas ».
+  //
+  // ET LES RÉGLAGES SUIVENT LE GESTE, ce qui est la seconde moitié de la correction. Une piste qui
+  // reste descriptible par ses quatre réglages les reçoit : déplacer la barre déplace « Début 1 »,
+  // tirer la poignée de niveau déplace « Gain 1 ». L'inspecteur montre donc ce que la ligne de temps
+  // fait, et il n'y a plus deux sources de vérité à départager. Relevé par Fabien : « il n'y a aucun
+  // lien entre les éléments graphiques et leur équivalent dans l'inspecteur ».
+  const ecrireMorceaux = (ms: Morceau[]) => {
     const ecriture = morceauxAEcrire(ms, branchees, d.parametres ?? {}, d.pistesVidees ?? []);
-    return { ...n, data: { ...n.data, morceaux: ecriture.morceaux, pistesVidees: ecriture.videes } };
-  }));
+    d.onChangerDecoupe?.(id, {
+      morceaux: ecriture.morceaux,
+      pistesVidees: ecriture.videes,
+      // LES RÉGLAGES SE FUSIONNENT, ils ne se remplacent pas : le nœud en porte d'autres que ceux
+      // des pistes — le calage sur l'heure d'enregistrement, par exemple.
+      ...(Object.keys(ecriture.reglages).length
+        ? { parametres: { ...(d.parametres ?? {}), ...ecriture.reglages } } : {}),
+    });
+  };
 
   return (
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()}>

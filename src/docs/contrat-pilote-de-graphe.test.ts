@@ -175,8 +175,12 @@ describe("le pilote de graphe", () => {
     const appelants = readdirSync(DOSSIER)
       .filter((f) => f.endsWith(".spec.ts"))
       .filter((f) => /from "\.\/pilote-graphe"/.test(source(resolve(DOSSIER, f))));
-    expect(appelants.sort(), "les deux verbes qui lancent un graphe entier")
-      .toEqual(["empreintes-exemples.spec.ts", "executer.spec.ts"]);
+    // LA LISTE EST FIGÉE, et c'est ce qui force un appelant neuf à se déclarer. Trois aujourd'hui :
+    // les deux verbes qui lancent un graphe entier, et le garde des gains de piste du montage, qui
+    // a besoin du même pilotage — semer, lancer, attendre la fin, relire les aperçus — pour mesurer
+    // un réglage par le chemin de l'interface plutôt que par le banc.
+    expect(appelants.sort(), "les appelants déclarés du pilote")
+      .toEqual(["empreintes-exemples.spec.ts", "executer.spec.ts", "montage-gains-pistes.spec.ts"]);
     const coupables = appelants.filter((f) => {
       const code = codeSeul(source(resolve(DOSSIER, f)));
       return code.includes("statut-puce") || code.includes("waitForFunction");
