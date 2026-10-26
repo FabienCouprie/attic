@@ -35,7 +35,7 @@ const fiches = () => registre.tousLesPlugins()
  * monter, et c'est précisément ce qu'on veut voir — sans ce chiffre, la dictée perdrait des
  * composants sans que rien ne le dise, ce qui est exactement ce qui s'est passé.
  */
-const INDICIBLES = 140;
+const INDICIBLES = 0;
 
 describe("les noms parlés du catalogue", () => {
   it("UN NOM PARLÉ DÉCLARÉ DOIT LUI-MÊME SE PRONONCER, sans quoi il ne sert à rien", () => {

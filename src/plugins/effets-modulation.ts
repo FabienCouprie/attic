@@ -16,7 +16,7 @@ import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "shift-formants", nom: "Shift formants", nomEn: "Formant Shift",
+    id: "shift-formants", nomDicte: "déplacement des timbres", nom: "Shift formants", nomEn: "Formant Shift",
     univers: "Traitement", famille: "Effets",
     resume: "Décalage formantique par LPC, change hauteur et timbre indépendamment (conversion vocale).",
     resumeEn: "Formant shifting via LPC: change pitch and timbre independently (voice conversion).",
@@ -76,7 +76,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "tremolo", nom: "Tremolo", nomEn: "Tremolo", univers: "Traitement", famille: "Effets",
+    id: "tremolo", nomDicte: "variation de volume", nom: "Tremolo", nomEn: "Tremolo", univers: "Traitement", famille: "Effets",
     memoire: "flux", // dst[i] = src[i] * gain
     resume: "Modulation d'amplitude (variations de volume périodiques).",
     resumeEn: "Amplitude modulation (periodic volume variations).",

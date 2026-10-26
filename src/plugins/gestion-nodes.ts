@@ -25,7 +25,7 @@ function getPluginsRecents(): string[] {
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "gestion-nodes", nom: "Gestionnaire de nodes", nomEn: "Node Manager",
+    id: "gestion-nodes", nomDicte: "gestionnaire de composants", nom: "Gestionnaire de nodes", nomEn: "Node Manager",
     univers: "Autres", famille: "Installation",
     resume: "Exporte un composant en .zip ou importe un composant depuis un .zip.",
     resumeEn: "Exports a node as .zip or imports a node from a .zip.",

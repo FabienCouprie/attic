@@ -46,7 +46,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "morphing-spectral", nom: "Morphing spectral", nomEn: "Spectral Morphing",
+    id: "morphing-spectral", nomDicte: "fondu de timbres", nom: "Morphing spectral", nomEn: "Spectral Morphing",
     univers: "Traitement", famille: "Effets",
     resume: "Passe d'un son à un autre par le spectre : au milieu, un timbre qui n'existait pas.",
     resumeEn: "Travels from one sound to another through the spectrum: in the middle, a timbre that did not exist.",

@@ -15,7 +15,7 @@ import { accordsInconnus } from "../audio/theorie-romains";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "vexflow-portee", nom: "Portée VexFlow", nomEn: "VexFlow Staff",
+    id: "vexflow-portee", nomDicte: "portée gravée", nom: "Portée VexFlow", nomEn: "VexFlow Staff",
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une portée de notation musicale à partir d'une notation texte.",
     resumeEn: "Displays a musical staff from a text notation.",
@@ -78,7 +78,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "vexflow-tab", nom: "Tablature VexFlow", nomEn: "VexFlow Tab",
+    id: "vexflow-tab", nomDicte: "tablature gravée", nom: "Tablature VexFlow", nomEn: "VexFlow Tab",
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une tablature à partir d'une notation texte.",
     resumeEn: "Displays a tablature from a text notation.",
@@ -119,7 +119,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "vexflow-grille", nom: "Grille d'accords VexFlow", nomEn: "VexFlow Chord Chart",
+    id: "vexflow-grille", nomDicte: "grille d accords gravée", nom: "Grille d'accords VexFlow", nomEn: "VexFlow Chord Chart",
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une grille d'accords à partir d'une liste de symboles.",
     resumeEn: "Displays a chord chart from a list of symbols.",
@@ -178,7 +178,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "vexflow-partition", nom: "Partition VexFlow", nomEn: "VexFlow Score",
+    id: "vexflow-partition", nomDicte: "partition dessinée", nom: "Partition VexFlow", nomEn: "VexFlow Score",
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une partition simple à partir d'une progression d'accords.",
     resumeEn: "Displays a simple score from a chord progression.",

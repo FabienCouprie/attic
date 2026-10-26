@@ -250,7 +250,7 @@ function genererTexteReservoir(
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "gpt2-paroles", nom: "DistilGPT-2", nomEn: "DistilGPT-2",
+    id: "gpt2-paroles", nomDicte: "paroles inventées", nom: "DistilGPT-2", nomEn: "DistilGPT-2",
     univers: "Autres", famille: "Texte",
     resume: "Génère du texte par IA (DistilGPT-2, anglais).",
     resumeEn: "Generates text via AI (DistilGPT-2, English).",
@@ -357,7 +357,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "qwen2.5-lyrics", nom: "Qwen2.5-0.5B", nomEn: "Qwen2.5-0.5B",
+    id: "qwen2.5-lyrics", nomDicte: "paroles de chanson", nom: "Qwen2.5-0.5B", nomEn: "Qwen2.5-0.5B",
     univers: "Autres", famille: "Texte",
     resume: "Génère du texte par IA avec le modèle Qwen2.5-0.5B (multilingue).",
     resumeEn: "Generates text via AI using the Qwen2.5-0.5B model (multilingual).",

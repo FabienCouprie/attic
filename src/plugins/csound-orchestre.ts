@@ -17,7 +17,7 @@ const DEFAUT = "wgbow,foscil";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "orchestre-csound", nom: "Orchestre Csound", nomEn: "Csound Orchestra",
+    id: "orchestre-csound", nomDicte: "orchestre programmé", nom: "Orchestre Csound", nomEn: "Csound Orchestra",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Compose un orchestre Csound en cochant plusieurs instruments, et rend une partition d'essai jouable qui les fait sonner chacun à son tour.",
     resumeEn: "Composes a Csound orchestra by ticking several instruments, and outputs a playable test score that sounds each one in turn.",

@@ -48,7 +48,7 @@ const banqueValide = (b: unknown): b is Banque =>
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "clavier-sfz", nom: "Clavier SFZ", nomEn: "SFZ Keyboard",
+    id: "clavier-sfz", nomDicte: "clavier de banque", nom: "Clavier SFZ", nomEn: "SFZ Keyboard",
     univers: "Entrées", famille: "Génération",
     resume: "Joue une banque SFZ, fichier du disque ou banque du graphe, sur un clavier de 88 touches, et enregistre ce qu'on joue.",
     resumeEn: "Plays an SFZ bank, a file from disk or a bank from the graph, on an 88-key keyboard, and records what you play.",

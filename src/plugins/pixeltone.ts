@@ -9,7 +9,7 @@ import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "pixeltone",
+    id: "pixeltone", nomDicte: "image en points sonores",
     nom: "Pixeltone",
     nomEn: "Pixeltone",
     univers: "Autres",

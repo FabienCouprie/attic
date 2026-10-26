@@ -34,7 +34,7 @@ const SELON_LA_ROUE = "roue";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "cercle-pulsant", nom: "Cercle pulsant", nomEn: "Pulsing Circle",
+    id: "cercle-pulsant", nomDicte: "cercle qui bat", nom: "Cercle pulsant", nomEn: "Pulsing Circle",
     univers: "Entrées", famille: "Génération",
     resume: "Une animation et un son tirés de la même suite de pulsations : un battement sourd, un rythme frappé ou une mélodie et ses accords, la couleur donnant la tonalité.",
     resumeEn: "An animation and a sound drawn from the same series of pulses: a dull beat, a struck rhythm or a melody and its chords, colour giving the key.",

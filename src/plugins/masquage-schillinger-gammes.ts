@@ -120,7 +120,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "resultante-schillinger", nom: "Résultante (Schillinger)", nomEn: "Resultant (Schillinger)",
+    id: "resultante-schillinger", nomDicte: "résultante de deux pulsations", nom: "Résultante (Schillinger)", nomEn: "Resultant (Schillinger)",
     univers: "Entrées", famille: "Génération",
     resume: "Le rythme qui naît de la superposition de deux pulsations régulières.",
     resumeEn: "The rhythm that arises from superposing two regular pulses.",

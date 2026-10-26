@@ -9,7 +9,7 @@ import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "crible-xenakis", nom: "Crible (Xenakis)", nomEn: "Sieve (Xenakis)",
+    id: "crible-xenakis", nomDicte: "crible", nom: "Crible (Xenakis)", nomEn: "Sieve (Xenakis)",
     // Générateur sans entrée : sa place est parmi les sources.
     univers: "Entrées", famille: "Génération",
     resume: "Fabrique une échelle et un rythme par arithmétique modulaire.",

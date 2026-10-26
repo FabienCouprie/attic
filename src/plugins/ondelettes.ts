@@ -19,7 +19,7 @@ import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "ondelettes", nom: "Ondelettes", nomEn: "Wavelets",
+    id: "ondelettes", nomDicte: "petites ondes", nom: "Ondelettes", nomEn: "Wavelets",
     univers: "Traitement", famille: "Effets",
     resume: "Analyse le son par ondelettes (fenêtre courte dans l'aigu, longue dans le grave) et n'en garde que les coefficients qui portent quelque chose.",
     resumeEn: "Analyses the sound with wavelets (short window in the treble, long in the bass) and keeps only the coefficients that carry something.",

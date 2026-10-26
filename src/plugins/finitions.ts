@@ -100,7 +100,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "shimmer", nom: "Shimmer", nomEn: "Shimmer",
+    id: "shimmer", nomDicte: "réverbération scintillante", nom: "Shimmer", nomEn: "Shimmer",
     univers: "Traitement", famille: "Effets",
     resume: "Une réverbération dont la queue monte d'une octave à chaque tour, et s'éloigne en montant.",
     resumeEn: "A reverb whose tail rises an octave at each pass, receding as it climbs.",

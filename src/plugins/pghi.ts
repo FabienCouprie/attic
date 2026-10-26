@@ -12,7 +12,7 @@ import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "phase-pghi", nom: "Reconstruction de phase (PGHI)", nomEn: "Phase Reconstruction (PGHI)",
+    id: "phase-pghi", nomDicte: "reconstruction de phase", nom: "Reconstruction de phase (PGHI)", nomEn: "Phase Reconstruction (PGHI)",
     univers: "Traitement", famille: "Effets",
     resume: "Reconstruit un son à partir des seules magnitudes de son spectrogramme, sans itérer : la phase se lit dans le gradient de la magnitude.",
     resumeEn: "Rebuilds a sound from its spectrogram magnitudes alone, without iterating: the phase is read from the magnitude's gradient.",

@@ -10,7 +10,7 @@ import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "collection-vers-mp3", nom: "Conversion WAV→MP3", nomEn: "WAV→MP3 conversion", univers: "Collections", famille: "Conversion",
+    id: "collection-vers-mp3", nomDicte: "collection en fichier compressé", nom: "Conversion WAV→MP3", nomEn: "WAV→MP3 conversion", univers: "Collections", famille: "Conversion",
     resume: "Convertit un dossier de fichiers audio en MP3.",
     resumeEn: "Converts a folder of audio files to MP3.",
     entrees: [], sorties: [],
@@ -53,7 +53,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "collection-mp3-vers-wav", nom: "Conversion MP3→WAV", nomEn: "MP3→WAV conversion", univers: "Collections", famille: "Conversion",
+    id: "collection-mp3-vers-wav", nomDicte: "collection en fichier brut", nom: "Conversion MP3→WAV", nomEn: "MP3→WAV conversion", univers: "Collections", famille: "Conversion",
     resume: "Convertit un dossier de MP3 en WAV.",
     resumeEn: "Converts a folder of MP3 files to WAV.",
     entrees: [], sorties: [],
@@ -97,7 +97,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "collection-midi-vers-mp3", nom: "Conversion MIDI→MP3", nomEn: "MIDI→MP3 conversion", univers: "Collections", famille: "Conversion",
+    id: "collection-midi-vers-mp3", nomDicte: "collection de notes en fichier compressé", nom: "Conversion MIDI→MP3", nomEn: "MIDI→MP3 conversion", univers: "Collections", famille: "Conversion",
     resume: "Convertit un dossier de fichiers MIDI en MP3.",
     resumeEn: "Converts a folder of MIDI files to MP3.",
     entrees: [], sorties: [],

@@ -170,7 +170,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "pluck-synth",
+    id: "pluck-synth", nomDicte: "corde pincée",
     nom: "Pluck Synth",
     nomEn: "Pluck Synth",
     univers: "Entrées",

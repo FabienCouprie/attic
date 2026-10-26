@@ -10,7 +10,7 @@ import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "glissando-risset", nom: "Glissando de Risset", nomEn: "Risset Glissando",
+    id: "glissando-risset", nomDicte: "glissement sans fin", nom: "Glissando de Risset", nomEn: "Risset Glissando",
     univers: "Traitement", famille: "Effets",
     resume: "Transforme un son en hauteur qui descend (ou monte) sans fin.",
     resumeEn: "Turns a sound into a pitch that falls (or rises) endlessly.",
@@ -76,7 +76,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "rythme-risset", nom: "Rythme de Risset", nomEn: "Risset Rhythm",
+    id: "rythme-risset", nomDicte: "rythme sans fin", nom: "Rythme de Risset", nomEn: "Risset Rhythm",
     univers: "Traitement", famille: "Effets",
     resume: "Transforme une boucle en pulsation qui accélère (ou ralentit) sans fin.",
     resumeEn: "Turns a loop into a pulse that speeds up (or slows down) endlessly.",
@@ -131,7 +131,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "cloche-risset", nom: "Cloche de Risset", nomEn: "Risset Bell",
+    id: "cloche-risset", nomDicte: "cloche inharmonique", nom: "Cloche de Risset", nomEn: "Risset Bell",
     // « Entrées » et non « Traitement » : ce nœud n'a aucune entrée, il produit
     // un son de toutes pièces. Sa place est parmi les sources, avec les autres
     // générateurs.

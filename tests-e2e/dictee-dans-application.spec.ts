@@ -170,6 +170,61 @@ test.describe("la dictée, dans l'application", () => {
       "le nom parlé de l'une ne doit pas prendre la place de l'autre").toEqual(["reverberation"]);
   });
 
+  test("ET LES NOMS PARLES DU CATALOGUE ATTEIGNENT LEUR COMPOSANT", async ({ page }) => {
+    // ═══ QUATRE FAMILLES, POUR QUE LE RELEVÉ NE SE RÉDUISE PAS À UNE ═══
+    //
+    // Un mot anglais, un sigle, une marque et un terme technique : ce sont les quatre raisons pour
+    // lesquelles 140 composants étaient indicibles, et chacune se vérifie ici sur un cas.
+    await canevasVide(page);
+    for (const [phrase, attendu] of [
+      ["effet de balayage", "flanger"],
+      ["enveloppe en quatre temps", "enveloppe-adsr"],
+      ["orchestre programmé", "orchestre-csound"],
+      ["image du spectre", "spectrogramme"],
+    ]) {
+      const r = await dicter(page, phrase);
+      console.log(`« ${phrase} » -> ${r.commandes.map((c) => `${c.quoi}:${c.ficheId ?? ""}`).join(" ") || "(rien)"}`);
+      expect(r.commandes.map((c) => c.ficheId).filter(Boolean), [
+        "",
+        `« ${phrase} » NE POSE PAS « ${attendu} ».`,
+        "",
+        "Son nom parlé est déclaré sur sa fiche par `nomDicte`, et `nomsDeDictee` doit le retenir à",
+        "la place du nom quand celui-ci porte un mot absent du lexique du moteur vocal.",
+        "",
+      ].join("\n")).toEqual([attendu]);
+    }
+  });
+
+  test("ET L INFOBULLE DIT LE NOM PARLE, puisqu on ne peut pas le deviner", async ({ page }) => {
+    // ═══ L'AUTRE MOITIÉ DU PROBLÈME, ET ELLE EST D'INTERFACE ═══
+    //
+    // 140 composants se disent autrement qu'ils ne s'écrivent : « Flanger » se dit « effet de
+    // balayage ». Sans le montrer quelque part, personne ne peut le deviner.
+    //
+    // ET CE N'EST PAS DANS LA NOTICE, parce que son propre contrat proscrit « la recette et
+    // l'adresse au lecteur ». Ce serait en outre une SECONDE ÉCRITURE du champ de la fiche, dans
+    // deux langues, qui pourrait en diverger. L'infobulle, elle, est GÉNÉRÉE depuis la fiche, et
+    // c'est l'endroit où l'on demande « qu'est-ce que ce composant ».
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await canevasVide(page);
+    await page.locator(".palette-recherche").fill("Flanger", { timeout: 15_000 });
+    await page.waitForTimeout(900);
+    await page.locator(".palette-composant").filter({ hasText: "Flanger" }).first()
+      .hover({ timeout: 15_000 });
+    await page.waitForTimeout(1200);
+    const bulle = (await page.locator(".attic-infobulle").innerText()).replace(/\n/g, " | ");
+    console.log(`infobulle : ${bulle}`);
+    expect(bulle, [
+      "",
+      "L'INFOBULLE NE DIT PAS SOUS QUEL NOM CE COMPOSANT SE DICTE.",
+      "",
+      "Il porte un `nomDicte` parce que son nom ne se prononce pas, et rien d'autre à l'écran ne le",
+      "montre : sans cette ligne, la dictée a un vocabulaire que personne ne peut découvrir.",
+      "",
+    ].join("\n")).toContain("effet de balayage");
+    expect(bulle, "et le nom affiché reste celui qu'on lit").toContain("Flanger");
+  });
+
   test("ET UN MOT QUI N EST PAS DU CATALOGUE NE POSE RIEN", async ({ page }) => {
     // La reconnaissance est à vocabulaire fermé, mais la couture reçoit du texte libre : c'est donc
     // le découpage qui doit refuser, et non poser un composant au hasard.

@@ -188,7 +188,7 @@ print(f"Processed: {len(audio)} samples, {channels} channels")
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "python-processor", nom: "Python Processor", nomEn: "Python Processor",
+    id: "python-processor", nomDicte: "programme python", nom: "Python Processor", nomEn: "Python Processor",
     univers: "Autres", famille: "Génération",
     resume: "Éditeur de code Python avec coloration syntaxique pour traiter l'audio.",
     resumeEn: "Python code editor with syntax highlighting for audio processing.",

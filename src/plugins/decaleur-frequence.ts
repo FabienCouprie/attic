@@ -14,7 +14,7 @@ import { estCourbe, valeurA, valeursParametre } from "../audio/courbe";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "decaleur-frequence", nom: "Décaleur de fréquence", nomEn: "Frequency Shifter",
+    id: "decaleur-frequence", nomDicte: "décalage de fréquence", nom: "Décaleur de fréquence", nomEn: "Frequency Shifter",
     univers: "Traitement", famille: "Effets",
     resume: "Ajoute le même nombre de hertz à toutes les fréquences : le son cesse d'être harmonique et devient cloche.",
     resumeEn: "Adds the same number of hertz to every frequency: the sound stops being harmonic and turns bell-like.",

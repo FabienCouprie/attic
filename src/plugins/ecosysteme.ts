@@ -25,7 +25,7 @@ import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "ecosysteme", nom: "Écosystème (Di Scipio)", nomEn: "Ecosystem (Di Scipio)",
+    id: "ecosysteme", nomDicte: "écosystème sonore", nom: "Écosystème (Di Scipio)", nomEn: "Ecosystem (Di Scipio)",
     univers: "Traitement", famille: "Effets",
     resume: "Un système qui s'écoute, règle lui-même sa densité et ses grains d'après ce qu'il entend, et cherche son propre équilibre. On ne règle pas le résultat, on règle le couplage.",
     resumeEn: "A system that listens to itself, sets its own density and grains from what it hears, and seeks its own balance. You do not set the result, you set the coupling.",

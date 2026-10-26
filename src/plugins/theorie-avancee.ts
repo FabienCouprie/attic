@@ -74,7 +74,7 @@ function lireTriade(texte: string, defaut: Triade): Triade {
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "tonnetz", nom: "Tonnetz", nomEn: "Tonnetz",
+    id: "tonnetz", nomDicte: "réseau de hauteurs", nom: "Tonnetz", nomEn: "Tonnetz",
     univers: "Traitement", famille: "Effets",
     resume: "Enchaîne les accords par les trois transformations néo-riemanniennes P, L et R, qui ne déplacent qu'une voix.",
     resumeEn: "Chains chords through the three neo-Riemannian transformations P, L and R, each moving a single voice.",
@@ -282,7 +282,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "serie-infinie", nom: "Série de l'infini (Nørgård)", nomEn: "Infinity Series (Nørgård)",
+    id: "serie-infinie", nomDicte: "série de l infini", nom: "Série de l'infini (Nørgård)", nomEn: "Infinity Series (Nørgård)",
     univers: "Entrées", famille: "Génération",
     resume: "Engendre la suite auto-similaire de Per Nørgård, et ses voix plus lentes qui forment un canon exact.",
     resumeEn: "Generates Per Nørgård's self-similar sequence, and its slower voices which form an exact canon.",

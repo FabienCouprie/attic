@@ -100,7 +100,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "arpege-spectral", nom: "Arpège spectral", nomEn: "Spectral Arpeggio",
+    id: "arpege-spectral", nomDicte: "notes du spectre une à une", nom: "Arpège spectral", nomEn: "Spectral Arpeggio",
     univers: "Traitement", famille: "Effets",
     resume: "Une bande étroite parcourt le spectre et ne laisse sonner que les partiels qu'elle touche : un son tenu s'égrène partiel par partiel.",
     resumeEn: "A narrow band sweeps the spectrum and lets only the partials it touches sound: a held sound is picked out partial by partial.",

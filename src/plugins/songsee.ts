@@ -13,7 +13,7 @@ const PALETTES = ["classic", "magma", "inferno", "viridis", "gray", "claw"];
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "visualisation-songsee",
+    id: "visualisation-songsee", nomDicte: "vue du morceau",
     nom: "Visualisation Songsee",
     nomEn: "Songsee Visualizer",
     univers: "Visualisation",

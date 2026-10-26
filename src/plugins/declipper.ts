@@ -12,7 +12,7 @@ import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "restauration-ecretage", nom: "Restauration d'écrêtage", nomEn: "Declipper",
+    id: "restauration-ecretage", nomDicte: "réparer les crêtes coupées", nom: "Restauration d'écrêtage", nomEn: "Declipper",
     univers: "Traitement", famille: "Effets",
     resume: "Reconstruit les sommets coupés d'un son écrêté, en cherchant le signal le plus simple qui rende compte de ce qui reste.",
     resumeEn: "Rebuilds the clipped peaks of a saturated sound, by looking for the simplest signal that accounts for what is left.",

@@ -7,7 +7,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
-import { avecDoc } from "./notices";
+import { avecDoc, avecNomDicte } from "./notices";
 import { estCourbe, progressionPour, valeurA, valeursParametre } from "../audio/courbe";
 import { creerAleatoire } from "../core";
 import { appliquerFiltre, reduireBruit, reduireBruitNotches, calculerProfilBruit, equaliser, inverserAudio, inverserPolarite, echangerCanaux, extraireCentreCote, appliquerFondu, extraireZone, appliquerPaulstretch, appliquerFormuleEchantillons, ajusterLargeurStereo, granularFreeze } from "../audio";
@@ -20,7 +20,7 @@ import { effet, param, simple } from "./effets-aides";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "paulstretch", nom: "Paulstretch", nomEn: "Paulstretch", univers: "Traitement", famille: "Effets",
+    id: "paulstretch", nomDicte: "étirement extrême", nom: "Paulstretch", nomEn: "Paulstretch", univers: "Traitement", famille: "Effets",
     resume: "Étirement extrême par randomisation des phases (stéréo).",
     resumeEn: "Extreme phase-randomization time-stretch (stereo).",
     entrees: [
@@ -449,4 +449,4 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [r], message: traduire("msg.r_verb_ration_convolution_ir_var_0_s", irBuffer.duration.toFixed(1)) };
    },
  },
-] as FicheAudio[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc).map(avecNomDicte({ "granular-freeze": "gel du son" }));

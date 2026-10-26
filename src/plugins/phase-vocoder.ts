@@ -38,7 +38,7 @@ function appliquerPitchShift(buffer: AudioBuffer, semitones: number): AudioBuffe
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "phase-vocoder-tempo", nom: "Phase Vocoder Tempo", nomEn: "Phase Vocoder Tempo",
+    id: "phase-vocoder-tempo", nomDicte: "tempo par la phase", nom: "Phase Vocoder Tempo", nomEn: "Phase Vocoder Tempo",
     univers: "Traitement", famille: "Effets",
     resume: "Change le tempo par phase vocoder (fréquentiel), avec détection de transitoires.",
     resumeEn: "Changes tempo via phase vocoder (frequency-domain), with transient detection.",
@@ -60,7 +60,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "phase-vocoder-tonalite", nom: "Phase Vocoder Tonalité", nomEn: "Phase Vocoder Pitch",
+    id: "phase-vocoder-tonalite", nomDicte: "tonalité par la phase", nom: "Phase Vocoder Tonalité", nomEn: "Phase Vocoder Pitch",
     univers: "Traitement", famille: "Effets",
     resume: "Transpose la hauteur par phase vocoder (fréquentiel), sans modifier la durée.",
     resumeEn: "Transposes pitch via phase vocoder (frequency-domain), without changing duration.",

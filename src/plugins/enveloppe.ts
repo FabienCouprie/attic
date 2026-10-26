@@ -7,7 +7,7 @@ import { appliquerADSR } from "../audio";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "enveloppe-adsr", nom: "Enveloppe ADSR", nomEn: "ADSR Envelope",
+    id: "enveloppe-adsr", nomDicte: "enveloppe en quatre temps", nom: "Enveloppe ADSR", nomEn: "ADSR Envelope",
     univers: "Traitement", famille: "Effets",
     resume: "Modèle le volume du son dans le temps (attaque, déclin, maintien, relâchement).",
     resumeEn: "Shapes the sound's volume over time (attack, decay, sustain, release).",

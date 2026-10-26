@@ -75,7 +75,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "convolution-deux-sons", nom: "Convolution de deux sons", nomEn: "Two-Sound Convolution",
+    id: "convolution-deux-sons", nomDicte: "empreinte de deux sons", nom: "Convolution de deux sons", nomEn: "Two-Sound Convolution",
     univers: "Traitement", famille: "Effets",
     resume: "Fait sonner un son par un autre : seules leurs fréquences communes survivent, et leurs durées s'additionnent.",
     resumeEn: "Makes one sound ring through another: only their shared frequencies survive, and their durations add up.",
@@ -119,7 +119,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "resonateurs", nom: "Résonateurs", nomEn: "Resonators",
+    id: "resonateurs", nomDicte: "corps résonants", nom: "Résonateurs", nomEn: "Resonators",
     univers: "Traitement", famille: "Effets",
     memoire: "flux", // filtres récursifs, état dans deux scalaires par résonateur
     resume: "Un banc de résonateurs accordés, que n'importe quel son fait sonner : un bruit devient un accord, un frottement une cloche.",

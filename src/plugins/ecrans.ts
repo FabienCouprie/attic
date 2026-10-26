@@ -22,7 +22,7 @@ import {
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "ecrans-xenakis", nom: "Écrans (Xenakis)", nomEn: "Screens (Xenakis)",
+    id: "ecrans-xenakis", nomDicte: "écrans", nom: "Écrans (Xenakis)", nomEn: "Screens (Xenakis)",
     univers: "Entrées", famille: "Génération",
     resume: "Un quadrillage de fréquences et d'intensités dont chaque case tire ses grains, et des écrans qui s'enchaînent par une chaîne de Markov.",
     resumeEn: "A grid of frequencies and intensities where each cell draws its own grains, and screens that follow one another through a Markov chain.",

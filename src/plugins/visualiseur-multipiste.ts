@@ -30,7 +30,7 @@ const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "visualiseur-multipiste", nom: "Visualiseur multipiste", nomEn: "Multitrack Viewer",
+    id: "visualiseur-multipiste", nomDicte: "visualiseur de pistes", nom: "Visualiseur multipiste", nomEn: "Multitrack Viewer",
     univers: "Visualisation", famille: "Analyse",
     resume: "Dessine jusqu'à six sons l'un sous l'autre, sur un axe du temps commun.",
     resumeEn: "Draws up to six sounds one under another, on a shared time axis.",

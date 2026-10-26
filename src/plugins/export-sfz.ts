@@ -21,7 +21,7 @@ const sansExtension = (nom: string): string => nom.replace(/\.[^./\\]*$/, "");
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "export-sfz", nom: "Export SFZ", nomEn: "SFZ Export",
+    id: "export-sfz", nomDicte: "écrire la banque", nom: "Export SFZ", nomEn: "SFZ Export",
     univers: "Sorties", famille: "Export",
     resume: "Écrit une banque de clavier au format SFZ : un fichier texte et ses échantillons, lisibles par n'importe quel échantillonneur.",
     resumeEn: "Writes a keyboard bank as SFZ: a text file and its samples, readable by any sampler.",

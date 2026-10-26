@@ -165,7 +165,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "octaver", nom: "Octaver", nomEn: "Octaver", univers: "Traitement", famille: "Effets",
+    id: "octaver", nomDicte: "ajout d octave", nom: "Octaver", nomEn: "Octaver", univers: "Traitement", famille: "Effets",
     memoire: "flux", // redresseur, etat dans trois scalaires
     resume: "Ajoute une octave supérieure et/ou inférieure.",
     resumeEn: "Adds an upper and/or lower octave.",
@@ -253,7 +253,7 @@ export const fiches: FicheAudio[] = ([
    },
   },
   {
-    id: "beat-repeat", nom: "Beat Repeat / Stutter", nomEn: "Beat Repeat / Stutter", univers: "Traitement", famille: "Effets",
+    id: "beat-repeat", nomDicte: "répétition de mesure", nom: "Beat Repeat / Stutter", nomEn: "Beat Repeat / Stutter", univers: "Traitement", famille: "Effets",
     resume: "Capture et répète un court segment à intervalles rythmiques (effet stutter).",
     resumeEn: "Captures and repeats a short segment at rhythmic intervals (stutter effect).",
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }, portModulation("Mix"),

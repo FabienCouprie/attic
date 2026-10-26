@@ -28,7 +28,7 @@ const FS = () => FREQUENCE_ECH();
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "secoueurs", nom: "Secoueurs", nomEn: "Shakers",
+    id: "secoueurs", nomDicte: "instruments secoués", nom: "Secoueurs", nomEn: "Shakers",
     univers: "Traitement", famille: "Effets",
     resume: "Percussions secouées (maracas, cabasa, tambourin, grelots) par modèle stochastique de particules.",
     resumeEn: "Shaken percussion (maracas, cabasa, tambourine, sleigh bells) from a stochastic particle model.",

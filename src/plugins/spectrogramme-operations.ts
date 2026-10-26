@@ -34,7 +34,7 @@ function apresDecalage(s: SpectrogrammeMel, hz: number, bandes: number): number 
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "flou-spectrogramme", nom: "Flou du spectrogramme", nomEn: "Spectrogram Blur",
+    id: "flou-spectrogramme", nomDicte: "flou de l image du spectre", nom: "Flou du spectrogramme", nomEn: "Spectrogram Blur",
     univers: "Traitement", famille: "Mels",
     resume: "Étale un spectrogramme dans le temps et dans la fréquence, par une gaussienne.",
     resumeEn: "Spreads a spectrogram in time and in frequency, by a Gaussian.",

@@ -110,7 +110,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "ubiquite", nom: "Ubiquité", nomEn: "Ubiquity",
+    id: "ubiquite", nomDicte: "présence partout", nom: "Ubiquité", nomEn: "Ubiquity",
     univers: "Traitement", famille: "Effets",
     resume: "Une source qu'on ne peut plus situer, ou qu'on situe mieux que nature.",
     resumeEn: "A source that can no longer be located, or located better than life.",

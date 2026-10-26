@@ -66,7 +66,7 @@ function isVoixKokoro(v: string): v is VoixKokoro {
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "tts-kokoro",
+    id: "tts-kokoro", nomDicte: "voix parlée naturelle",
     nom: "Kokoro TTS",
     nomEn: "Kokoro TTS",
     univers: "Entrées",

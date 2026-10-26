@@ -27,6 +27,28 @@ export interface ContenuInfobulle {
   resume: string;
   entrees: PortInfobulle[];
   sorties: PortInfobulle[];
+  /**
+   * Le nom sous lequel ce composant se DIT, quand il diffère de celui qu'on lit.
+   *
+   * ═══ POURQUOI ICI, ET PAS DANS LA NOTICE ═══
+   *
+   * 140 composants portent un nom que le moteur vocal ne sait pas prononcer, et se disent donc
+   * autrement : « Flanger » se dit « effet de balayage ». Sans le montrer quelque part, on ne peut
+   * pas le deviner.
+   *
+   * LA NOTICE EST LE MAUVAIS ENDROIT, et c'est son propre contrat qui le dit : il proscrit « la
+   * recette et l'adresse au lecteur ». « Dites X pour poser ce composant » en est une. Et ce serait
+   * une SECONDE ÉCRITURE du champ de la fiche, dans deux langues, qui pourrait en diverger.
+   *
+   * L'INFOBULLE EST L'ENDROIT OÙ L'ON DEMANDE « qu'est-ce que ce composant ». Elle est générée
+   * depuis la fiche, donc une seule écriture ; elle paraît au survol dans la palette comme sur le
+   * nœud ; et elle ne porte cette ligne que lorsqu'il y a quelque chose à dire.
+   *
+   * ELLE NE DÉPEND PAS DE LA LANGUE DE L'INTERFACE, mais de celle du MOTEUR VOCAL. Le lexique
+   * anglais n'a aucun manque relevé : un nom parlé n'existe qu'en français, et c'est pourquoi ce
+   * champ ne se traduit pas.
+   */
+  seDit?: string;
 }
 
 /** De quoi habiller un port : la couleur et la forme de son flux, et le nom de son type. */
@@ -56,6 +78,7 @@ export function contenuInfobulle(def: FicheUI, lang: string, types: SourceTypes)
     resume: resumeFiche(def, lang),
     entrees: (def.entrees ?? []).map((p) => port(p as Port, lang, types)),
     sorties: (def.sorties ?? []).map((p) => port(p as Port, lang, types)),
+    seDit: def.nomDicte,
   };
 }
 

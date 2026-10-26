@@ -57,7 +57,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "spectrogramme", nom: "Spectrogramme", nomEn: "Spectrogram",
+    id: "spectrogramme", nomDicte: "image du spectre", nom: "Spectrogramme", nomEn: "Spectrogram",
     univers: "Visualisation", famille: "Analyse",
     resume: "Affiche l'évolution du spectre dans le temps (temps × fréquence × intensité).",
     resumeEn: "Shows how the spectrum evolves over time (time × frequency × intensity).",
@@ -206,7 +206,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "vu-metre", nom: "VU-mètre / LUFS", nomEn: "VU-meter / LUFS",
+    id: "vu-metre", nomDicte: "aiguille de niveau", nom: "VU-mètre / LUFS", nomEn: "VU-meter / LUFS",
     univers: "Visualisation", famille: "Analyse",
     resume: "Mesure et affiche les niveaux audio : RMS, peak, true peak, LUFS.",
     resumeEn: "Measures and displays audio levels: RMS, peak, true peak, LUFS.",
@@ -223,7 +223,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "colorsynth", nom: "ColorSynth", nomEn: "ColorSynth",
+    id: "colorsynth", nomDicte: "synthèse par couleurs", nom: "ColorSynth", nomEn: "ColorSynth",
     univers: "Visualisation", famille: "Analyse",
     resume: "Déduit une palette de couleurs depuis le spectre audio (voir le timbre).",
     resumeEn: "Derives a color palette from the audio spectrum (see the timbre).",

@@ -135,7 +135,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "ducking", nom: "Ducking", nomEn: "Ducking",
+    id: "ducking", nomDicte: "baisser sous la voix", nom: "Ducking", nomEn: "Ducking",
     univers: "Traitement", famille: "Effets",
     resume: "Un son s'efface devant un autre : la musique recule sous la voix, sans que la voix sorte.",
     resumeEn: "One sound steps aside for another: the music backs off under the voice, without the voice being heard.",
@@ -212,7 +212,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "ambisonique", nom: "Rotation ambisonique", nomEn: "Ambisonic Rotation",
+    id: "ambisonique", nomDicte: "rotation du champ", nom: "Rotation ambisonique", nomEn: "Ambisonic Rotation",
     univers: "Traitement", famille: "Effets",
     resume: "Encode la prise en champ sonore, le fait tourner autour de l'auditeur, et le redescend en stéréo.",
     resumeEn: "Encodes the take as a sound field, turns it around the listener, and brings it back down to stereo.",

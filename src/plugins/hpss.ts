@@ -14,7 +14,7 @@ import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "separation-harmonique-percussive",
+    id: "separation-harmonique-percussive", nomDicte: "séparer tenue et frappe",
     nom: "Séparation harmonique / percussive", nomEn: "Harmonic/Percussive Separation",
     univers: "Traitement", famille: "Effets",
     resume: "Sépare ce qui tient de ce qui claque, par filtre médian sur le spectrogramme (Fitzgerald, DAFx-10).",

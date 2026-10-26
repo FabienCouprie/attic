@@ -40,7 +40,7 @@ function cote(suffixeFr: string, suffixeEn: string, gamme: number, octaveDefaut:
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "glissando-de-gamme", nom: "Glissando de gamme", nomEn: "Scale Glissando",
+    id: "glissando-de-gamme", nomDicte: "glissement de gamme", nom: "Glissando de gamme", nomEn: "Scale Glissando",
     univers: "Entrées", famille: "Génération",
     resume: "Fait glisser tous les degrés d'une gamme vers ceux d'une autre, chacun vers celui de même rang.",
     resumeEn: "Slides every degree of a scale onto another's, each onto the one of the same rank.",

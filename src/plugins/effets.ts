@@ -8,13 +8,37 @@
 import { normaliserSonie } from "../audio/normalisation-sonie";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
-import { avecDoc } from "./notices";
+import { avecDoc, avecNomDicte } from "./notices";
 import { creerAleatoire } from "../core";
 import { appliquerDelay, appliquerReverberation, appliquerDistorsion, appliquerFlanger, appliquerChorus, compresser, normaliser, supprimerClics, dererverberer, changerTempo, changerTonalite, changerTonaliteVoie, glissandoTonalite, glissandoTonaliteVoie, bitcrusher, gateExpandeur, deEsser, ringModulator, reverberationFractale, limiter, transientShaper, compresserMultiBande, exciter, harmoniser, harmoniserVoie, type OptionsHarmoniser, type OptionsGlissando, vocoder } from "../audio";
 import { quadrafuzz } from "../audio/quadrafuzz";
 
 import { valeurA } from "../audio/courbe";
 import { MODULATION_MIX, bornesModulation, effet, modulationNommee, reglageModule, param, portModulation } from "./effets-aides";
+
+/**
+ * Les noms sous lesquels ces effets se DISENT, pour ceux dont le nom ne se prononce pas.
+ *
+ * Douze d'entre eux portent un mot que le lexique du moteur vocal n'a pas — « flanger »,
+ * « vocoder », « expandeur », « multibande » — et étaient donc hors de portée de la dictée. Ils
+ * sont rassemblés ici plutôt que dispersés dans les appels, dont la signature est positionnelle.
+ * Voir `core/types.ts`, qui porte la règle, et `plugins/lexique-vosk.ts`, la liste des manquants.
+ */
+const NOMS_PARLES: Readonly<Record<string, string>> = {
+  "bitcrusher": "réducteur de bits",
+  "quadrafuzz": "saturation par bandes",
+  "exciter": "brillance",
+  "flanger": "effet de balayage",
+  "compresseur-multibande": "compresseur par bandes",
+  "gate-expandeur": "porte de bruit",
+  "transient-shaper": "forme de l attaque",
+  "de-esser": "atténuateur de sifflement",
+  "ring-modulator": "modulation en anneau",
+  "vocoder": "voix synthétique",
+  "dereverberation": "retirer la réverbération",
+  "glissando-tonalite": "glissement de tonalité",
+  "harmonizer": "doubleur d octave",
+};
 
 export const fiches: FicheAudio[] = ([
   effet("delay-stereo", "Delay stéréo", "Stereo Delay", "Delay indépendant gauche/droite.", "Independent left/right delay.",
@@ -172,7 +196,7 @@ export const fiches: FicheAudio[] = ([
      { parametre: "Fréq Low", bornes: [40, 1000], defauts: [80, 600], unite: "Hz" },
      { parametre: "Fréq High", bornes: [1000, 12000], defauts: [2000, 8000], unite: "Hz" }]),
   {
-    id: "gate-expandeur", nom: "Gate/Expandeur", nomEn: "Gate/Expander",
+    id: "gate-expandeur", nomDicte: "porte de bruit", nom: "Gate/Expandeur", nomEn: "Gate/Expander",
     memoire: "flux", // enveloppe recursive, un seul scalaire
     univers: "Traitement", famille: "Effets",
     resume: "Gate ou expandeur dynamique (coupe ou atténue le signal sous un seuil).",
@@ -274,7 +298,7 @@ export const fiches: FicheAudio[] = ([
      { ...modulationNommee("Fréquence", "Frequency", [1, 8000], "Hz"), defauts: [50, 2000],
        echelle: "logarithmique" }]),
   {
-    id: "vocoder", nom: "Vocoder", nomEn: "Vocoder",
+    id: "vocoder", nomDicte: "voix synthétique", nom: "Vocoder", nomEn: "Vocoder",
     univers: "Traitement", famille: "Effets",
     resume: "Vocoder filterbank : modulateur + porteuse → effet robot.",
     resumeEn: "Filterbank vocoder: modulator + carrier → robot voice effect.",
@@ -341,7 +365,7 @@ export const fiches: FicheAudio[] = ([
   // DEUX MODES, ET LE SECOND MANQUAIT DEPUIS LE DÉBUT. Attic MESURAIT la sonie — le VU-mètre rend
   // des LUFS — sans savoir y amener un son : normaliser à la crête est la réponse d'avant 2015.
   {
-    id: "normaliseur", nom: "Normaliseur", nomEn: "Normalizer",
+    id: "normaliseur", nomDicte: "mise à niveau", nom: "Normaliseur", nomEn: "Normalizer",
     univers: "Traitement", famille: "Effets",
     resume: "Amène le son à un niveau cible, en crête ou en sonie (LUFS).",
     resumeEn: "Brings the sound to a target level, by peak or by loudness (LUFS).",
@@ -438,4 +462,4 @@ export const fiches: FicheAudio[] = ([
     // des bornes « Modulation min » à côté de « Mix 2 min » ne dirait pas laquelle borne quoi.
     [modulationNommee("Mix 1", "Mix 1", [0, 100], "%"),
      modulationNommee("Mix 2", "Mix 2", [0, 100], "%")]),
-] as FicheAudio[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc).map(avecNomDicte(NOMS_PARLES));
