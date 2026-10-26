@@ -1585,7 +1585,7 @@ Loads an SVG file from the inspector and rasterizes it to a PNG image at the cho
 
 *Generates a 512×512 image from a text prompt using SDXS-512 (ONNX, 1 step, local).*
 
-Generates a 512×512 image from a text prompt using SDXS-512 (1-step distilled UNet + TAESD decoder, int8-quantized, ~680 MB). Runs in the main process, CPU only, ~10 s/image. The model is bundled with the app. A personal bundle is given by the “Model path” parameter. The model expects an English prompt.
+Generates a 512×512 image from a text prompt using SDXS-512 (1-step distilled UNet + TAESD decoder, int8-quantized, ~680 MB). Runs in the main process. The “Compute” parameter picks the device: about 7.6 s per image on the graphics card against 11.9 s on the processor, the first image costing 18.8 s more while the driver compiles. The model is fetched from the models panel. A personal bundle is given by the “Model path” parameter. The model expects an English prompt.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -1597,6 +1597,7 @@ Generates a 512×512 image from a text prompt using SDXS-512 (1-step distilled U
 | Prompt | text | `a red apple on a wooden table, photo` |  | Text description of the image to generate (English for best results). |
 | Seed | slider | -1 | -1 – 999999, step 1 | Random seed. -1 = random. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Model path | folder | — |  | Folder of the SDXS-512 bundle (empty = bundled model in resources/oonx/sdxs-512-texte-image). |
+| Compute | choice | Automatic | Automatic / Graphics card / Processor | The compute device. On the machine where it was measured, the graphics card renders the image in two thirds of the processor's time; the first image costs some twenty seconds more, while the driver compiles. « Automatic » tries the graphics card and falls back to the processor if it refuses the model. « Graphics card » and « Processor » impose one or the other, and report a refusal rather than using the other without warning. |
 
 ### Keyboards
 

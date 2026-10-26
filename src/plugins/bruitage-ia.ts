@@ -32,6 +32,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
+import { parametreCalculDirectML } from "./parametre-calcul";
 
 const en = () => langueCourante() === "en";
 
@@ -98,23 +99,12 @@ export const fiches: FicheAudio[] = ([
         defaut: MOTEURS[0].nom, defautEn: MOTEURS[0].nomEn,
         doc: "Le moteur qui engendre le son. Un seul est câblé à ce jour.",
         docEn: "The engine that generates the sound. Only one is wired so far." },
-      // CE VOCABULAIRE N'EST PAS CELUI DE `parametre-calcul.ts`, ET IL NE PEUT PAS L'ÊTRE. Les
-      // dix-huit nœuds du pont ACE-Step et sherpa choisissent entre `CPU`, `Vulkan0`, `Vulkan1` et
-      // `CUDA0` ; Stable Audio 3 tourne sous DIRECTML et ne connaît que `auto`, `carte` et
-      // `processeur` — voir la table des fournisseurs d'`electron/stable-audio-3.cjs`.
-      //
-      // LEUR DONNER LA MÊME LISTE RENDRAIT TROIS OPTIONS SUR CINQ INERTES, et sans un mot :
-      // `FOURNISSEURS[calcul] ?? FOURNISSEURS.auto` retombe sur « auto » pour tout identifiant
-      // qu'il ne connaît pas. Un réglage qui paraît marcher et ne fait rien est exactement ce que
-      // le contrat de composant interdit. L'exception est inscrite dans
-      // `plugins/parametre-calcul.test.ts`, qui refuse qu'on l'« homogénéise » par mégarde.
-      { nom: "Calcul", nomEn: "Compute", type: "choix",
-        options: ["Automatique", "Carte graphique", "Processeur"],
-        optionsEn: ["Automatic", "Graphics card", "Processor"],
-        optionIds: ["auto", "carte", "processeur"],
-        defaut: "Automatique", defautEn: "Automatic",
-        doc: "Le périphérique de calcul. « Automatique » essaie la carte graphique et retombe sur le processeur si elle refuse le modèle. « Carte graphique » et « Processeur » imposent l'un ou l'autre, et signalent un refus plutôt que d'employer l'autre sans prévenir.",
-        docEn: "The compute device. « Automatic » tries the graphics card and falls back to the processor if it refuses the model. « Graphics card » and « Processor » impose one or the other, and report a refusal rather than using the other without warning." },
+      // LE VOCABULAIRE DE DIRECTML, ET NON CELUI DU PONT : Stable Audio 3 tourne sous
+      // `onnxruntime-node`, qui n'expose que le processeur et la carte. Lui donner `Vulkan0` ou
+      // `CUDA0` rendrait trois options inertes, `electron/stable-audio-3.cjs` retombant sur
+      // « auto » pour tout identifiant inconnu. Les deux vocabulaires sont déclarés une fois
+      // chacun dans `plugins/parametre-calcul.ts`.
+      parametreCalculDirectML(),
       { nom: "Prompt", nomEn: "Prompt", type: "texte",
         defaut: PROMPT_DEFAUT, defautEn: PROMPT_DEFAUT,
         doc: "Description du son à engendrer, en anglais. La prise de son se décrit comme le son lui-même : « close mic », « dry room », « field recording » orientent le rendu autant que le sujet.",

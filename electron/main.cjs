@@ -768,7 +768,7 @@ ipcMain.handle("esthetique:noter-tranche", async (_event, options) => {
 // via extraResources. L'utilisateur peut aussi fournir un chemin explicite.
 ipcMain.handle("sdxs-image:generer", async (_event, options) => {
   try {
-    const { prompt, seed, modelPath: cheminExplicite } = options;
+    const { prompt, seed, modelPath: cheminExplicite, calcul } = options;
     let modelDir = cheminExplicite;
     if (!modelDir) {
       const cible = "sdxs-512-texte-image";
@@ -784,7 +784,7 @@ ipcMain.handle("sdxs-image:generer", async (_event, options) => {
     if (!modelDir || !fs.existsSync(modelDir)) {
       return { ok: false, erreur: `Bundle SDXS-512 introuvable : ${modelDir}` };
     }
-    const result = await genererSdxsImage({ prompt, seed, modelDir });
+    const result = await genererSdxsImage({ prompt, seed, modelDir, calcul });
     return { ok: true, rgba: result.rgba, width: result.width, height: result.height, seed: result.seed };
   } catch (err) {
     console.error("[attic] sdxs-image:generer erreur:", err);

@@ -46,21 +46,66 @@ function loadTokenizer(modelDir) {
   return new Tokenizer(tokenizerJSON, tokenizerConfig);
 }
 
-async function loadSessions(modelDir) {
+/**
+ * Les fournisseurs essayés pour chaque choix, et pourquoi « auto » seul replie.
+ *
+ * MESURÉ LE 2026-10-26 SUR UNE RTX 2060, graphe par graphe, trois exécutions chacun :
+ *
+ *   unet_int8          11,3 s au processeur,  6,88 s sur la carte   (1,64 fois plus rapide)
+ *   text_encoder_int8  0,115 s                0,354 s              (trois fois plus LENT)
+ *   vae_decoder        0,470 s                0,407 s
+ *
+ * Soit, pour une image, environ 11,9 s contre 7,6 s. La première exécution sur la carte coûte
+ * 18,8 s, le temps que DirectML compile ; les suivantes sont stables.
+ *
+ * TOUS LES GRAPHES SUR LE MÊME FOURNISSEUR, OU AUCUN, comme pour Stable Audio 3 : un paquet dont
+ * l'unet tombe sur la carte et dont l'encodeur y tient donnerait un mélange qu'aucune mesure ne
+ * décrit. Les chiffres ci-dessus disent qu'un partage ferait gagner 0,24 s de plus — assez peu
+ * pour ne pas payer cette complication, et la mesure est là si l'on change d'avis.
+ */
+const FOURNISSEURS = {
+  auto: ["dml", "cpu"],
+  carte: ["dml"],
+  processeur: ["cpu"],
+};
+
+const fournisseursPour = (calcul) => FOURNISSEURS[calcul] ?? FOURNISSEURS.auto;
+
+async function loadSessions(modelDir, calcul) {
   const onnxDir = path.join(modelDir, "onnx");
-  const create = (name) => ort.InferenceSession.create(path.join(onnxDir, name), { executionProviders: ["cpu"] });
-  return {
-    textEncoder: await create("text_encoder_int8.onnx"),
-    unet: await create("unet_int8.onnx"),
-    vaeDecoder: await create("vae_decoder.onnx"),
+  const ouvrirTout = async (fournisseur) => {
+    const create = (name) =>
+      ort.InferenceSession.create(path.join(onnxDir, name), { executionProviders: [fournisseur] });
+    return {
+      textEncoder: await create("text_encoder_int8.onnx"),
+      unet: await create("unet_int8.onnx"),
+      vaeDecoder: await create("vae_decoder.onnx"),
+      fournisseur,
+    };
   };
+
+  let sessions = null;
+  let dernierRefus = null;
+  for (const fournisseur of fournisseursPour(calcul)) {
+    try {
+      sessions = await ouvrirTout(fournisseur);
+      break;
+    } catch (erreur) {
+      dernierRefus = erreur;
+    }
+  }
+  if (!sessions) throw dernierRefus ?? new Error("Aucun fournisseur de calcul n'a pu ouvrir les graphes.");
+  return sessions;
 }
 
-async function getResources(modelDir) {
-  if (cached && cached.modelDir === modelDir) return cached;
+async function getResources(modelDir, calcul) {
+  // LE PÉRIPHÉRIQUE ENTRE DANS LA CLÉ DU CACHE. Sans lui, en changer rendrait les sessions déjà
+  // ouvertes sur l'autre, et le réglage ne pourrait rien changer au résultat — c'est le défaut
+  // exact que le contrat de composant interdit, et que « Bruitage IA » a déjà payé.
+  if (cached && cached.modelDir === modelDir && cached.calcul === calcul) return cached;
   const tokenizer = loadTokenizer(modelDir);
-  const sessions = await loadSessions(modelDir);
-  cached = { modelDir, tokenizer, sessions };
+  const sessions = await loadSessions(modelDir, calcul);
+  cached = { modelDir, calcul, tokenizer, sessions };
   return cached;
 }
 
@@ -90,13 +135,13 @@ function chwToRgba(raw, size) {
 }
 
 async function generate(options) {
-  const { prompt, seed = Math.floor(Math.random() * 2 ** 32), modelDir, onProgress } = options;
+  const { prompt, seed = Math.floor(Math.random() * 2 ** 32), modelDir, onProgress, calcul = "auto" } = options;
 
   if (!modelDir || !fs.existsSync(modelDir)) {
     throw new Error(`Modèle introuvable : ${modelDir}`);
   }
 
-  const { tokenizer, sessions } = await getResources(modelDir);
+  const { tokenizer, sessions } = await getResources(modelDir, calcul);
 
   onProgress?.("encodage du prompt");
   const ids = tokenize(tokenizer, prompt);

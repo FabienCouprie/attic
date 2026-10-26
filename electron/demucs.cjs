@@ -17,6 +17,22 @@ const cacheSessions = new Map();
 async function obtenirSession(modelePath) {
   const existante = cacheSessions.get(modelePath);
   if (existante) return existante;
+  // LE PROCESSEUR N'EST PAS UN OUBLI, ET CE N'EST PAS FAUTE DE CARTE. `onnxruntime-node` livre
+  // `DirectML.dll` sur Windows, et `stable-audio-3.cjs` s'en sert pour de bon — 52,1 s contre
+  // 29,5 s sur une RTX 2060. Ce graphe-ci a été mesuré le 2026-10-26 sur la même machine :
+  //
+  //   DirectML OUVRE le graphe en 6,2 s (six stems) et 6,3 s (fp16), puis la première tranche
+  //   RETIRE LE PÉRIPHÉRIQUE — `887A0005`, DXGI_ERROR_DEVICE_REMOVED, depuis
+  //   `DmlCommandRecorder.cpp`. Les deux graphes tombent de la même façon, chacun mesuré dans un
+  //   PROCESSUS NEUF : un périphérique retiré empoisonne le processus, et un premier jet qui les
+  //   enchaînait accusait le second à tort.
+  //
+  // ET LA TRANCHE NE PEUT PAS ÊTRE RÉDUITE pour soulager la carte : la longueur d'entrée est
+  // FIXE. À 44 100 comme à 10 000 échantillons, les deux fournisseurs refusent — « Got invalid
+  // dimensions for input: mix ». Il n'y a donc pas de découpage qui rendrait la carte utilisable.
+  //
+  // OFFRIR UN RÉGLAGE « CALCUL » ICI DONNERAIT UNE OPTION QUI CASSE L'EXÉCUTION, ce qui est pire
+  // qu'un curseur inerte. Le processeur tient la tranche en 3,45 s (six stems) et 3,40 s (fp16).
   const session = await ort.InferenceSession.create(modelePath, {
     executionProviders: ["cpu"],
     graphOptimizationLevel: "all",

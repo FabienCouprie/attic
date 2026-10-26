@@ -26,6 +26,13 @@ const sessions = new Map();
 async function obtenirSession(cheminModele) {
   let session = sessions.get(cheminModele);
   if (!session) {
+    // LE PROCESSEUR EST MESURÉ, NON SUPPOSÉ. `onnxruntime-node` livre `DirectML.dll` sur Windows
+    // et `stable-audio-3.cjs` s'en sert ; ce graphe-ci ne s'y exécute pas. Mesuré le 2026-10-26
+    // sur une RTX 2060 : DirectML OUVRE le modèle en 0,9 s, puis l'exécution tombe sur
+    // `node_Reshape_2052` avec `8007023E`. Le processeur rend la tranche en 0,66 s.
+    //
+    // UN RÉGLAGE « CALCUL » OFFRIRAIT DONC UNE OPTION QUI ÉCHOUE, et le contrat de composant
+    // refuse déjà le réglage qui ne peut rien changer ; celui-là serait pire.
     session = ort.InferenceSession.create(cheminModele, { executionProviders: ["cpu"], graphOptimizationLevel: "all" });
     sessions.set(cheminModele, session);
     // Une création échouée ne doit pas rester en cache : la suivante réessaie.
