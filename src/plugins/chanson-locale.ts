@@ -20,8 +20,9 @@ import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import {
-  CANAL_PLANIFIER, CANAL_RENDRE, LANGUES, PARAMETRE_CALCUL, PARAMETRES_RENDU, api, guidageDe, octetsWav, suivre,
+  CANAL_PLANIFIER, CANAL_RENDRE, LANGUES, PARAMETRES_RENDU, api, guidageDe, octetsWav, suivre,
 } from "./chanson-aides";
+import { PARAMETRE_CALCUL } from "./parametre-calcul";
 import { fiches as variantes } from "./chanson-variantes";
 import { fiches as accompagnement } from "./chanson-accompagnement";
 import { fiches as compositionDePlan } from "./composer-plan";

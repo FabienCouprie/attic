@@ -18,7 +18,8 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
-import { octetsWav, PARAMETRE_CALCUL } from "./chanson-aides";
+import { octetsWav } from "./chanson-aides";
+import { PARAMETRE_CALCUL } from "./parametre-calcul";
 import { LANGUE_AUTO, choixLangues } from "../core/langues";
 
 const CANAL = "chatterbox:cloner";

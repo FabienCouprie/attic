@@ -23,14 +23,7 @@ import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { resamplerVers16k } from "./sherpa-asr";
-
-const CALCULS = [
-  { id: "", fr: "Automatique", en: "Automatic" },
-  { id: "CPU", fr: "Processeur", en: "Processor" },
-  { id: "Vulkan0", fr: "Vulkan 0", en: "Vulkan 0" },
-  { id: "Vulkan1", fr: "Vulkan 1", en: "Vulkan 1" },
-  { id: "CUDA0", fr: "CUDA 0", en: "CUDA 0" },
-];
+import { parametreCalcul } from "./parametre-calcul";
 
 /** Les locuteurs qu'on peut demander : tous, ou l'un des quatre que le moteur distingue. */
 const LOCUTEURS = [
@@ -128,11 +121,9 @@ export const fiches = ([
       { nom: "Fondu", nomEn: "Fade", type: "nombre", plage: [0, 200], pas: 1, defaut: 10, unite: "ms",
         doc: "La durée du fondu aux deux bords de chaque tour gardé. À zéro, la coupe est franche et peut claquer. Un fondu plus long que la moitié d'un tour est ramené à cette moitié. Sans effet quand « Locuteur » vaut « Tous », puisqu'aucune coupe n'est faite.",
         docEn: "The fade length at both edges of each kept turn. At zero, the cut is abrupt and may click. A fade longer than half a turn is brought back to that half. Without effect when « Speaker » is « All », since no cut is made." },
-      { nom: "Calcul", nomEn: "Compute", type: "choix",
-        options: CALCULS.map((c) => c.fr), optionsEn: CALCULS.map((c) => c.en),
-        optionIds: CALCULS.map((c) => c.id), defaut: "Automatique", defautEn: "Automatic",
-        doc: "Le périphérique de calcul. Il change le temps de calcul et non les tours trouvés. « Automatique » laisse le moteur prendre ce qu'il juge le meilleur, ce qui n'est pas toujours la carte graphique : une machine à deux cartes expose souvent le circuit intégré en premier, et les deux numéros sont là pour les départager. « Processeur » tourne partout, et bien plus lentement.",
-        docEn: "The compute device. It changes the compute time and not the turns found. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly." },
+      parametreCalcul(
+        "Il change le temps de calcul et non les tours trouvés.",
+        "It changes the compute time and not the turns found."),
     ],
     async executer(ctx: any) {
       const pont = api();

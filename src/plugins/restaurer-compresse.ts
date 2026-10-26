@@ -29,14 +29,7 @@ import { aLaFrequence, FREQUENCE_MODELE } from "./isoler-voix";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
-
-const CALCULS = [
-  { id: "", fr: "Automatique", en: "Automatic" },
-  { id: "CPU", fr: "Processeur", en: "Processor" },
-  { id: "Vulkan0", fr: "Vulkan 0", en: "Vulkan 0" },
-  { id: "Vulkan1", fr: "Vulkan 1", en: "Vulkan 1" },
-  { id: "CUDA0", fr: "CUDA 0", en: "CUDA 0" },
-];
+import { parametreCalcul } from "./parametre-calcul";
 
 const CANAL = "apollo:restaurer";
 
@@ -122,11 +115,9 @@ export const fiches = ([
       { nom: "Tranche", nomEn: "Chunk", type: "nombre", plage: [0, 120], pas: 1, defaut: 0, unite: "s",
         doc: "La durée des tranches traitées séparément. À zéro, le fichier passe d'un seul coup : meilleur résultat, plus de mémoire. Les tranches se recouvrent d'une seconde et se fondent.",
         docEn: "The duration of the chunks processed separately. At zero, the file goes through in one pass: better result, more memory. Chunks overlap by one second and crossfade." },
-      { nom: "Calcul", nomEn: "Compute", type: "choix",
-        options: CALCULS.map((c) => c.fr), optionsEn: CALCULS.map((c) => c.en),
-        optionIds: CALCULS.map((c) => c.id), defaut: "Automatique", defautEn: "Automatic",
-        doc: "Le périphérique de calcul. Il change le temps de calcul et non le son rendu, mesuré identique à la quatrième décimale entre le processeur et la carte. « Automatique » laisse le moteur prendre ce qu'il juge le meilleur, ce qui n'est pas toujours la carte graphique : une machine à deux cartes expose souvent le circuit intégré en premier, et les deux numéros sont là pour les départager. « Processeur » tourne partout, et bien plus lentement.",
-        docEn: "The compute device. It changes the compute time and not the returned sound, measured identical to the fourth decimal between processor and card. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly." },
+      parametreCalcul(
+        "Il change le temps de calcul et non le son rendu, mesuré identique à la quatrième décimale entre le processeur et la carte.",
+        "It changes the compute time and not the returned sound, measured identical to the fourth decimal between processor and card."),
     ],
     async executer(ctx: any) {
       const pont = api();

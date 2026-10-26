@@ -19,9 +19,10 @@ import { messageEchecPont } from "./pont-electron";
 import { choixLangues } from "../core/langues";
 import {
   CANAL_PLANIFIER, ENTREES_SOURCE, LANGUES, NOTICE_RENDU_EN, NOTICE_RENDU_FR, NOTICE_TIMBRE_EN,
-  NOTICE_TIMBRE_FR, PARAMETRE_CALCUL, PARAMETRES_RENDU, SORTIE_AUDIO, SORTIE_NOTICE_EN,
+  NOTICE_TIMBRE_FR, PARAMETRES_RENDU, SORTIE_AUDIO, SORTIE_NOTICE_EN,
   SORTIE_NOTICE_FR, api, rendreSurAudio, suivre,
 } from "./chanson-aides";
+import { PARAMETRE_CALCUL } from "./parametre-calcul";
 
 export const fiches = ([
   {
