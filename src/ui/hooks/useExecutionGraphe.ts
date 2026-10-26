@@ -41,6 +41,7 @@ import type { DemandeAuMoteur } from "../../core/types";
 import { CHAMPS_DE_SAISIE, CHAMPS_MEDIA } from "../../core/saisies";
 import { lireProfondeurExport } from "../profondeur-export";
 import { fusionDeLot, useOrdonnanceurDeRuns, type JetonDeRun } from "../ordonnanceur-runs";
+import { ErreurAnnulation } from "../../core/annulation";
 // LES DEUX PILOTES DE PASSES RESTENT ICI, et c'est un choix écrit : les généraliser demande de
 // réécrire les deux boucles imbriquées, qui portent l'oubli de cache par passe et l'ordre
 // d'emboîtement du lot autour des boucles — deux corrections durement acquises, qu'aucun test
@@ -1008,17 +1009,15 @@ export function useExecutionGraphe(o: OptionsExecution) {
             // `parametres` (ancien workflow, JSON écrit à la main) et faisait
             // échouer le nœud sur « Couleur 1 inconnue : Blue » — alors que
             // l'inspecteur, lui, affichait bien « Bleu ». Cf. defautCanoniqueChoix.
-            const defautEff = pDef ? pDef.defaut : defaut;
-            return pDef ? String(valeurCanoniqueChoix(pDef, defautEff)) : defaut;
+            return pDef ? String(valeurCanoniqueChoix(pDef, pDef.defaut)) : defaut;
           },
-          // Ignorer un onProgress qui arrive après annulation : la piste déjà en
-          // vol au moment du reset (son await ne vérifie pas `signal` en plein
-          // milieu) peut encore appeler onProgress une dernière fois une fois
-          // résolue — sans cette garde, ce message réaffiche « en cours » par
-          // dessus l'état « attente » que le reset vient de poser, sans plus
-          // jamais être corrigé (l'application du résultat final est, elle,
-          // déjà court-circuitée par la garde juste après cet appel).
-          onProgress: (msg: string) => { if (!controller.signal.aborted) poserStatut(nodeId, "en_cours", msg, true); },
+          // UN onProgress APRÈS ANNULATION LÈVE, et c'est ce qui rend 74 exécuteurs
+          // interruptibles d'un seul geste : deux seulement lisaient `signal.aborted`.
+          // Il ignorait auparavant l'appel, ce qui réglait le symptôme — un « en cours »
+          // réaffiché par dessus l'« attente » que le reset venait de poser — sans arrêter
+          // le travail. Le `catch` de cette boucle reconnaît déjà le cas : il sort sans
+          // marquer le nœud en erreur. Voir `core/annulation.ts`.
+          onProgress: (msg: string) => { if (controller.signal.aborted) throw new ErreurAnnulation(); poserStatut(nodeId, "en_cours", msg, true); },
           signal: controller.signal,
         });
         // Le nœud a été réinitialisé pendant que sa promesse était en vol (le
