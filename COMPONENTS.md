@@ -7998,7 +7998,7 @@ The sound is cut into blocks a few tens of milliseconds long, and each block is 
 | [Auto-pan](#auto-pan) | Automatic left/right sweep (animated panning). |
 | [Bass Mono](#bass-mono) | Collapses the bass of both channels below a crossover, and leaves the treble untouched. |
 | [Center/Side Extract](#centerside-extract) | Separates stereo center from sides. |
-| [Channel Splitter](#channel-splitter) | Splits a stereo signal into two mono outputs (left and right). |
+| [Channel Splitter](#channel-splitter) | Splits a sound into one channel per output, up to sixteen. On a stereo signal, output 1 is left and 2 is right. |
 | [Doppler](#doppler) | A source going past: the pitch rises as it approaches, tips over at the closest point, and falls as it recedes. |
 | [Hard panner](#hard-panner) | Switches the sound fully to the left, center, or right. |
 | [Merge to Stereo](#merge-to-stereo) | Joins two mono takes into one stereo: the first on the left, the second on the right. |
@@ -8128,15 +8128,29 @@ Separates the center component (mono, common to both channels) from the side com
 
 `separateur-canaux` · Processing → Stereo
 
-*Splits a stereo signal into two mono outputs (left and right).*
+*Splits a sound into one channel per output, up to sixteen. On a stereo signal, output 1 is left and 2 is right.*
 
-Splits a stereo signal into two distinct mono outputs: the 'Left' output contains only the left channel (L), the 'Right' output only the right channel (R). If the input is already mono, both outputs receive the same signal.
+This node returns each channel of the sound it receives on an output of its own, in mono. Outputs are numbered in the channel order of the incoming sound. On a stereo signal, « Channel 1 » carries the left and « Channel 2 » the right. On 5.1 the order is that of the format: left, right, centre, subwoofer, left surround, right surround. On an ambisonic field the order is that of the AmbiX components, the first of which is the omnidirectional one. The node's message gives the mapping, the number of channels received and the rate. It names each channel when the sound's layout is declared, and reports how many channels it leaves aside beyond the sixteenth output. Outputs beyond the number of channels received stay empty. A mono sound fills « Channel 1 » only, a stereo signal the first two. Only outputs connected to another node are computed. The sixteen channels of a three-minute sound amount to half a gigabyte of memory; the node produces only what is used. A sound whose layout is not declared is split according to its channel count. The layout cannot be deduced from it: four channels match quadraphony as well as first-order ambisonics.
 
 | Port | Name | Type | |
 |---|---|---|---|
-| input | Audio | audio (stereo) |  |
-| output | Left | audio (mono) |  |
-| output | Right | audio (mono) |  |
+| input | Audio | audio |  |
+| output | Channel 1 | audio (mono) |  |
+| output | Channel 2 | audio (mono) |  |
+| output | Channel 3 | audio (mono) |  |
+| output | Channel 4 | audio (mono) |  |
+| output | Channel 5 | audio (mono) |  |
+| output | Channel 6 | audio (mono) |  |
+| output | Channel 7 | audio (mono) |  |
+| output | Channel 8 | audio (mono) |  |
+| output | Channel 9 | audio (mono) |  |
+| output | Channel 10 | audio (mono) |  |
+| output | Channel 11 | audio (mono) |  |
+| output | Channel 12 | audio (mono) |  |
+| output | Channel 13 | audio (mono) |  |
+| output | Channel 14 | audio (mono) |  |
+| output | Channel 15 | audio (mono) |  |
+| output | Channel 16 | audio (mono) |  |
 
 *No parameters.*
 

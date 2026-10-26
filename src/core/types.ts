@@ -391,6 +391,13 @@ export interface PluginDef<TValeur, TRuntime> {
   // moteur, lui, les voit toutes — c'est un fait d'affichage (cf. ui/ports-extensibles.ts).
   entreesExtensibles?: { min: number; defaut: number };
 
+  // Les SORTIES de ce nœud s'affichent de même, et pour la même raison. Un séparateur de canaux
+  // déclare les seize que la plus grande disposition de ce dépôt compte ; un stéréo n'en emploie
+  // deux. Sans cela le nœud naîtrait haut de quatre cent quarante-huit pixels pour en montrer
+  // quatorze vides. Même règle du bas : le compte ne descend jamais sous la dernière sortie
+  // branchée, un câble ne devant pas disparaître parce qu'on a raccourci le nœud.
+  sortiesExtensibles?: { min: number; defaut: number };
+
   // Le nœud passe après tous les autres nœuds du run, et un run lancé depuis lui porte sur le
   // graphe entier. Pour un nœud qui rend compte du travail de tout le graphe (cf.
   // plugins/grapheGlobal.ts) sans en recevoir de valeur par une arête. Défaut : false.

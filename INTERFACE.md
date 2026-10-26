@@ -192,7 +192,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Fin de boucle par cercle | `cercle-boucle-fin` | 240 × 118 |
 | Complémentaire d'un cercle | `cercle-complementaire` | 240 × 118 |
 | Inverser une mélodie | `cercle-inverser` | 240 × 118 |
-| Jointure de cercles | `cercle-jointure` | 240 × 272 |
+| Jointure de cercles | `cercle-jointure` | 240 × 140 |
 | Mélangeur de cercles | `cercle-melangeur` | 240 × 118 |
 | Miroir d'un cercle | `cercle-miroir` | 240 × 118 |
 | Permuter les notes | `cercle-permuter` | 240 × 118 |
@@ -422,7 +422,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Réinsérer une zone | `reinserer-zone` | 240 × 162 |
 | Remplissage de trou | `remplissage-trou` | 240 × 140 |
 | Rendre une chanson | `rendre-chanson` | 240 × 162 |
-| Rendu de cercles | `rendu-cercles` | 240 × 272 |
+| Rendu de cercles | `rendu-cercles` | 240 × 140 |
 | Rendu d'objets | `rendu-objets` | 240 × 118 |
 | Point d'écoute séquence | `rendu-sequence` | 240 × 140 |
 | Réordonner les objets | `reordonner-objets` | 240 × 140 |
@@ -461,7 +461,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Séparateur canaux | `separateur-canaux` | 240 × 140 |
 | Séparation harmonique / percussive | `separation-harmonique-percussive` | 240 × 140 |
 | Séparer les voix | `separer-voix` | 240 × 162 |
-| Jointure de séquences | `sequence-jointure` | 240 × 272 |
+| Jointure de séquences | `sequence-jointure` | 240 × 140 |
 | Mélangeur de séquences | `sequence-melangeur` | 240 × 140 |
 | Jouer une séquence sur une banque | `sequence-sur-banque` | 240 × 162 |
 | Opérations sérielles | `serie-dodecaphonique` | 240 × 162 |

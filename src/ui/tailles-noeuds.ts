@@ -8,7 +8,15 @@ import type { FicheUI } from "./registre-actif";
 // taille se voie dans un diff plutot que de se decouvrir a l'ecran.
 
 export function tailleDefaut(def: FicheUI): { width: number; height: number } {
-  const nbPorts = Math.max(def.entrees.length, def.sorties.length, 1);
+  // LE COMPTE QUI DÉCIDE DE LA HAUTEUR EST CELUI QUI SERA DESSINÉ, et non celui que la fiche
+  // déclare. Un nœud extensible montre son `defaut` à la naissance : le séparateur de canaux
+  // déclare seize sorties et n'en dessine deux, et la règle le faisait naître haut de 448 pixels
+  // pour en montrer quatorze vides. Voir `ui/ports-extensibles.ts`.
+  const nbPorts = Math.max(
+    def.entreesExtensibles?.defaut ?? def.entrees.length,
+    def.sortiesExtensibles?.defaut ?? def.sorties.length,
+    1,
+  );
   const nbParams = def.parametres.length;
   let w = 260;
   // LES TROIS CLAVIERS NAISSENT ASSEZ LARGES POUR MONTRER LEURS QUATRE-VINGT-HUIT TOUCHES, demande
