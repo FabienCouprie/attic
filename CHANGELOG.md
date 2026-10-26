@@ -4,7 +4,23 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+
+- **LA DICTÉE A ÉTÉ LANCÉE POUR DE BON, ET LA RÉSERVE ÉCRITE AVEC LES 140 NOMS ÉTAIT JUSTE : LE MOTEUR JETAIT ONZE MOTS, DONT TROIS DE CES NOMS-LÀ.** L'entrée ci-dessous le disait noir sur blanc — « ces 140 noms sont vérifiés contre la liste des mots **connus** manquants, qui est incomplète par construction […] le seul instrument qui tranche est la console du navigateur, dictée lancée ». Elle l'a été ; voici ce qu'elle a dit.
+
+  - **ONZE MOTS JETÉS À LA CONSTRUCTION DE LA GRAMMAIRE** : `apparier`, `atténuateur`, `bytebeat`, `granulaire`, `granulation`, `inharmonique`, `isomorphe`, `résonants`, `schaefferiens`, `trémolo`, `vosim`. Ils rejoignent `HORS_LEXIQUE_FR`, qui portait 115 mots relevés plus tôt.
+  - **TROIS ÉTAIENT DANS MES PROPRES NOMS PARLÉS**, écrits et vérifiés le même jour : « atténuateur de sifflement » pour le De-esser, « corps résonants » pour les Résonateurs, « cloche inharmonique » pour la Cloche de Risset. **Ils ne se prononçaient pas davantage que les noms qu'ils remplaçaient** — trois composants réparés sur le papier, muets en vrai. Un nom parlé vérifié contre une liste incomplète peut être silencieusement inutile, et c'est exactement ce que la réserve annonçait. Ils se disent maintenant « réducteur de sifflement », « caisses de résonance » et « cloche sans fin ».
+  - **LES HUIT AUTRES MOTS ÉTAIENT DANS LA GRAMMAIRE DEPUIS TOUJOURS, ET NEUF COMPOSANTS Y ENTRAIENT AMPUTÉS** : Clavier isomorphe, Retard granulaire, Granulation écologique, Granulation spectrale, VOSIM, Critères schaefferiens, Bytebeat, Apparier sur une référence, Trémolo harmonique. C'est le défaut même que `lexique-vosk.ts` existe pour empêcher — il reste du nom ce que le lexique sait dire, et ce reste concurrence un nom bien réel. Les neuf sont nommés : « clavier en réseau », « retard par grains », « grains écologiques », « grains du spectre », « synthèse de voyelle », « critères de l'objet sonore », « musique par formule », « caler sur une référence », « variation de volume harmonique ».
+  - **ET LE MOTEUR SE TAIT MAINTENANT : ZÉRO MOT JETÉ.** La grammaire entière se prononce, ce qui n'avait jamais été vrai ni vérifiable.
+
 ### Added
+
+- **UN GARDE LANCE LA DICTÉE ET REFUSE QU'UN SEUL MOT SOIT JETÉ**, parce que c'est le seul instrument qui puisse le vérifier. La liste des mots manquants se fait en lisant la console, donc tout garde unitaire qui s'y fie hérite de ses trous ; celui-ci part du moteur.
+
+  - **`npm run test:lexique-dictee`** — il allume un navigateur avec un micro simulé, démarre la dictée, laisse bâtir la grammaire et relève chaque ligne « Ignoring word missing in vocabulary ». Il n'est pas dans la passe ordinaire : chargement du modèle compris, il tient en **1,6 minute**.
+  - **LES AVERTISSEMENTS SORTENT DU WORKER de `vosk-browser`**, non du fil principal, de sorte qu'un `page.on("console")` ne les voit pas. Il s'attache donc à toutes les cibles par CDP — c'est ce détail qui rendait le relevé impossible à la main.
+  - **IL PROUVE QUE LE MODÈLE A ÉTÉ CHARGÉ AVANT DE CONCLURE**, et c'est la pièce qui l'empêche d'être un vert qui ne prouve rien : **le silence d'un moteur qui n'a pas démarré ressemble trait pour trait à celui d'une grammaire parfaite.**
+  - **DEUX DÉFAUTS PLANTÉS, chacun sur son message.** Un mot retiré de la liste : il tombe en nommant `vosim`. Le démarrage de la dictée supprimé : il tombe en disant que le modèle n'a pas été chargé, là où sans ce témoin il aurait été vert.
 
 - **UNE FICHE PEUT DÉCLARER LE NOM SOUS LEQUEL ELLE SE DIT, et deux réverbérations redeviennent dictables.** Relevé par Fabien : « la dictée ne peut pas différencier les types de réverbération ; réverbération à convolution n'est jamais détectée. » Vrai, et la cause n'était pas le découpage, qui trie bien du plus long au plus court : **le composant n'était pas dans la liste du tout.**
 

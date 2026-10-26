@@ -29,7 +29,7 @@ const MOD_MELANGE = { ...modulationNommee("Mélange", "Mix", [0, 100], "%"), def
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "retard-granulaire", nom: "Retard granulaire", nomEn: "Granular Delay",
+    id: "retard-granulaire", nomDicte: "retard par grains", nom: "Retard granulaire", nomEn: "Granular Delay",
     univers: "Traitement", famille: "Effets",
     resume: "Retarde le son et le rend par grains ; ce qui sort retourne dans la ligne et s'y regranule.",
     resumeEn: "Delays the sound and returns it as grains; what comes out goes back into the line and is granulated again.",

@@ -32,7 +32,7 @@ const NOMS_PARLES: Readonly<Record<string, string>> = {
   "compresseur-multibande": "compresseur par bandes",
   "gate-expandeur": "porte de bruit",
   "transient-shaper": "forme de l attaque",
-  "de-esser": "atténuateur de sifflement",
+  "de-esser": "réducteur de sifflement",
   "ring-modulator": "modulation en anneau",
   "vocoder": "voix synthétique",
   "dereverberation": "retirer la réverbération",

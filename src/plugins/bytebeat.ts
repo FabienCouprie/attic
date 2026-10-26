@@ -22,7 +22,7 @@ const MOD_VOLUME = { ...modulationNommee("Volume", "Volume", [0, 100], "%"), def
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "bytebeat", nom: "Bytebeat", nomEn: "Bytebeat",
+    id: "bytebeat", nomDicte: "musique par formule", nom: "Bytebeat", nomEn: "Bytebeat",
     univers: "Entrées", famille: "Génération",
     resume: "Calcule un octet par échantillon à partir d'une formule entière sur le compteur du temps.",
     resumeEn: "Computes one byte per sample from an integer formula on the time counter.",

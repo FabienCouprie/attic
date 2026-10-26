@@ -131,7 +131,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "cloche-risset", nomDicte: "cloche inharmonique", nom: "Cloche de Risset", nomEn: "Risset Bell",
+    id: "cloche-risset", nomDicte: "cloche sans fin", nom: "Cloche de Risset", nomEn: "Risset Bell",
     // « Entrées » et non « Traitement » : ce nœud n'a aucune entrée, il produit
     // un son de toutes pièces. Sa place est parmi les sources, avec les autres
     // générateurs.

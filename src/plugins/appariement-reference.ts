@@ -11,7 +11,7 @@ import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "apparier-reference", nom: "Apparier sur une référence", nomEn: "Match a Reference",
+    id: "apparier-reference", nomDicte: "caler sur une référence", nom: "Apparier sur une référence", nomEn: "Match a Reference",
     univers: "Traitement", famille: "Effets",
     resume: "Donne au son le niveau, la couleur, la largeur et la crête d'un autre son.",
     resumeEn: "Gives the sound the level, colour, width and peak of another sound.",

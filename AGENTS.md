@@ -202,6 +202,25 @@ ECRIRE_EMPREINTES_EXEMPLES=1 npm run test:empreintes-exemples
   valeur efficace et cinq sur la crête — une crête est **un seul échantillon sur des millions**,
   donc la statistique la plus fragile du relevé. Les exemples qui attendent un fichier de
   l'utilisateur sont hors de portée, mécaniquement.
+- **`tests-e2e/lexique-dictee.spec.ts`** — le **seul** instrument qui puisse vérifier que le moteur
+  vocal sait prononcer la grammaire qu'on lui donne. `plugins/lexique-vosk.ts` tient la liste des
+  mots que le modèle français n'a pas, et cette liste est **incomplète par construction** : elle se
+  fait en lançant la dictée et en relevant chaque ligne « Ignoring word missing in vocabulary ».
+  Tout garde unitaire qui s'y fie l'est donc aussi. Ce spec lance la dictée pour de bon, avec un
+  micro simulé, et refuse qu'un seul mot soit jeté.
+
+```bash
+npm run test:lexique-dictee
+```
+
+  **Ce que son absence a coûté, le 2026-10-26** : cent quarante noms parlés écrits et vérifiés
+  contre la liste, puis la dictée lancée en rend **onze** mots manquants — dont **trois employés
+  dans ces noms-là**. « atténuateur », « inharmonique » et « résonants » ne se prononçaient pas
+  davantage que les mots qu'ils remplaçaient : trois composants réparés sur le papier, muets en
+  vrai. Les huit autres entraient amputés dans la grammaire depuis toujours. Il **prouve que le
+  modèle a été chargé** avant de conclure : le silence d'un moteur qui n'a pas démarré ressemble
+  trait pour trait à celui d'une grammaire parfaite. Les avertissements sortent du **worker** de
+  `vosk-browser` et non du fil principal, d'où l'attache CDP à toutes les cibles.
 - **`src/docs/couverture-empreintes.test.ts`** — refuse qu'un worker de calcul existe sans être
   réclamé par un composant surveillé, et exige que tout dialogue de worker soit inscrit dans la
   liste qu'il consulte. Sortir un calcul du fil force donc à étendre la surveillance.

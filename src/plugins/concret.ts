@@ -119,7 +119,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "resonateurs", nomDicte: "corps résonants", nom: "Résonateurs", nomEn: "Resonators",
+    id: "resonateurs", nomDicte: "caisses de résonance", nom: "Résonateurs", nomEn: "Resonators",
     univers: "Traitement", famille: "Effets",
     memoire: "flux", // filtres récursifs, état dans deux scalaires par résonateur
     resume: "Un banc de résonateurs accordés, que n'importe quel son fait sonner : un bruit devient un accord, un frottement une cloche.",

@@ -34,7 +34,7 @@ function versTampon(canaux: Float32Array[], echantillonnage: number): AudioBuffe
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "tremolo-harmonique", nom: "Trémolo harmonique", nomEn: "Harmonic Tremolo",
+    id: "tremolo-harmonique", nomDicte: "variation de volume harmonique", nom: "Trémolo harmonique", nomEn: "Harmonic Tremolo",
     univers: "Traitement", famille: "Effets",
     // flux : deux biquads par bande, état dans quatre scalaires, et aucun regard en avant.
     memoire: "flux",

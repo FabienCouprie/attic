@@ -25,7 +25,7 @@ const MOD_VOLUME = { ...modulationNommee("Volume", "Volume", [0, 100], "%"), def
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "vosim", nom: "VOSIM", nomEn: "VOSIM",
+    id: "vosim", nomDicte: "synthèse de voyelle", nom: "VOSIM", nomEn: "VOSIM",
     univers: "Entrées", famille: "Génération",
     resume: "Place un formant par un train d'impulsions en sinus carré, sans aucun filtre.",
     resumeEn: "Places a formant with a train of squared-sine pulses, with no filter at all.",
