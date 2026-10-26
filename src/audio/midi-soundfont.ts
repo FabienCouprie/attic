@@ -6,6 +6,7 @@
 import type { StructureSF2 } from "./soundfont";
 import { chercherZonesInstrument } from "./soundfont";
 import type { NoteEvenement } from "./midi-sequence";
+import { echantillonCubique } from "./interpolation";
 
 export function rendreAvecSF2(
   sf: StructureSF2,
@@ -78,29 +79,44 @@ export function rendreAvecSF2(
         if (posSortie >= length) break;
 
         let srcPos = j * ratio;
-        let srcIdx: number;
-        let frac: number;
 
-        if (boucleActive && longueurBoucle > 0 && srcPos >= debutBoucle + longueurBoucle) {
-          const posBoucle = ((srcPos - debutBoucle) % longueurBoucle);
-          srcPos = debutBoucle + posBoucle;
-        }
+        // ON BOUCLE AVANT DE LIRE, comme avant : la position revient dans la boucle, puis on lit
+        // autour d'elle. `dansLaBoucle` retient qu'on y est, et ce drapeau compte — voir plus bas.
+        const dansLaBoucle = boucleActive && longueurBoucle > 0
+          && srcPos >= debutBoucle + longueurBoucle;
+        if (dansLaBoucle) srcPos = debutBoucle + ((srcPos - debutBoucle) % longueurBoucle);
 
-        srcIdx = srcDebut + Math.floor(srcPos);
-        frac = srcPos - Math.floor(srcPos);
-
-        if (!boucleActive && srcIdx + 1 >= srcDebut + srcLen) {
+        if (!boucleActive && srcDebut + Math.floor(srcPos) + 1 >= srcDebut + srcLen) {
           break;
         }
 
-        let idx2 = srcIdx + 1;
-        if (boucleActive && longueurBoucle > 0 && idx2 >= srcDebut + finBoucle) {
-          idx2 = srcDebut + debutBoucle + ((idx2 - srcDebut - finBoucle) % longueurBoucle);
-        }
-        if (idx2 >= srcDebut + srcLen) {
-          idx2 = srcDebut + srcLen - 1;
-        }
-        const g = donnees[srcIdx] * (1 - frac) + donnees[idx2] * frac;
+        // ═══ CUBIQUE, ET NON PLUS LINÉAIRE, SUR UN SON QUI BOUCLE ═══
+        //
+        // Ce chemin TRANSPOSE une note d'une banque SF2 : l'interpolateur décide de ce qu'on entend,
+        // et il était linéaire. Ce que cela coûtait est mesuré dans `interpolation.test.ts` : vingt
+        // décibels de parasites de plus qu'un cubique, 33,7 dB contre 55,8 sur une octave vers le bas.
+        //
+        // ET LE NOYAU LIT PAR UN ACCESSEUR, ce qui est la seule façon de le faire boucler. Il regarde
+        // DEUX points de part et d'autre, là où le linéaire n'en regardait qu'un : les quatre doivent
+        // suivre la boucle, sans quoi l'on entendrait un clic à chaque tour — précisément le défaut
+        // que quatre points sont censés éviter.
+        //
+        // LES DEUX SENS DU REBOUCLAGE, ET ILS NE SONT PAS SYMÉTRIQUES. Vers l'avant, un index qui
+        // dépasse la fin de la boucle revient à son début : c'est ce que l'ancien code faisait déjà
+        // pour son unique voisin. Vers l'arrière, un index antérieur au début de la boucle revient à
+        // sa FIN — mais seulement si l'on tourne déjà : pendant l'attaque, les échantillons d'avant
+        // sont les vrais, et les reboucler ferait entendre la fin de la boucle avant son début.
+        const lire = (i: number) => {
+          let rel = i - srcDebut;
+          if (boucleActive && longueurBoucle > 0) {
+            if (rel >= finBoucle) rel = debutBoucle + ((rel - finBoucle) % longueurBoucle);
+            else if (rel < debutBoucle && dansLaBoucle) {
+              rel = finBoucle - ((debutBoucle - rel) % longueurBoucle);
+            }
+          }
+          return donnees[srcDebut + Math.min(srcLen - 1, Math.max(0, rel))];
+        };
+        const g = echantillonCubique(lire, srcDebut + srcPos);
         const fadeOut = j >= fadeOutStart ? Math.max(0, (nbEchantJoues - j) / releaseSamples) : 1;
         const mono = (g / 32768) * gain * fadeOut;
         gauche[posSortie] += mono * gainGauche;

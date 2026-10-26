@@ -1,5 +1,6 @@
 // audio/commun.ts — Extrait de l'ancien monolithe DSP.
 import { fft } from "./fft";
+import { echantillonCubique } from "./interpolation";
 
 // Noms français ET anglais comme clés directement : évite d'avoir besoin
 // d'optionIds sur chaque paramètre "Clé" pour retrouver la bonne tonique
@@ -289,23 +290,12 @@ export function reechantillonnerVoie(
   src: Float32Array, ratio: number, longueurCible: number,
 ): Float32Array {
   const dst = new Float32Array(longueurCible);
-  for (let i = 0; i < longueurCible; i++) {
-    const positionSource = i * ratio;
-    const idx = Math.floor(positionSource);
-    const frac = positionSource - idx;
-    // Interpolation cubique Catmull-Rom (4 points)
-    const p0 = idx - 1 >= 0 ? src[idx - 1] : 0;
-    const p1 = idx < src.length ? src[idx] : 0;
-    const p2 = idx + 1 < src.length ? src[idx + 1] : 0;
-    const p3 = idx + 2 < src.length ? src[idx + 2] : 0;
-    const t = frac;
-    const t2 = t * t;
-    const t3 = t2 * t;
-    dst[i] = p1
-           + 0.5 * (p2 - p0) * t
-           + (p0 - 2.5 * p1 + 2 * p2 - 0.5 * p3) * t2
-           + (-0.5 * p0 + 1.5 * p1 - 1.5 * p2 + 0.5 * p3) * t3;
-  }
+  // LE NOYAU VIT DANS `audio/interpolation.ts`, EXTRAIT PLUTÔT QUE RECOPIÉ. La formule
+  // Catmull-Rom était écrite ici, et deux chemins de lecture d'échantillon s'en passaient — ils
+  // interpolaient en linéaire, à vingt décibels de parasites de plus. Une seule écriture, et les
+  // trois s'en servent. Les bords rendent zéro, comme ici depuis toujours.
+  const lire = (i: number) => (i >= 0 && i < src.length ? src[i] : 0);
+  for (let i = 0; i < longueurCible; i++) dst[i] = echantillonCubique(lire, i * ratio);
   return dst;
 }
 
