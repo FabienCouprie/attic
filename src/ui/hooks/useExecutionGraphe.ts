@@ -39,6 +39,7 @@ import { apresEffacement, champsAReporter, urlsARevoquer, type ClassesDeChamps }
 import type { DemandeAuMoteur } from "../../core/types";
 import { CHAMPS_DE_SAISIE, CHAMPS_MEDIA } from "../../core/saisies";
 import { lireProfondeurExport } from "../profondeur-export";
+import { useOrdonnanceurDeRuns, type JetonDeRun } from "../ordonnanceur-runs";
 // LES DEUX PILOTES DE PASSES RESTENT ICI, et c'est un choix écrit : les généraliser demande de
 // réécrire les deux boucles imbriquées, qui portent l'oubli de cache par passe et l'ordre
 // d'emboîtement du lot autour des boucles — deux corrections durement acquises, qu'aucun test
@@ -251,12 +252,29 @@ export function useExecutionGraphe(o: OptionsExecution) {
 
   // Annulation d'un run en cours : un seul AbortController pour tout `lancer()`
   // (le moteur exécute les nœuds en séquence dans une seule boucle — pas de
-  // granularité par nœud). `enCoursRef` existe séparément de `enExecRef` (qui
-  // ne suit QUE les runs globaux, pas un run ciblé sur un seul nœud
-  // prioritaire) : sans lui, réinitialiser pendant un run ciblé ne détecterait
-  // aucune exécution en cours et n'annulerait rien.
-  const enCoursRef = useRef(false);
+  // granularité par nœud). Savoir qu'une exécution tourne — y compris un run
+  // CIBLÉ, qu'`enExecRef` ne suit pas — est désormais l'affaire de
+  // l'ordonnanceur, qui le compte au lieu de le déclarer.
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // ═══ UNE EXÉCUTION À LA FOIS, ET C'EST L'ORDONNANCEUR QUI LE TIENT ═══
+  //
+  // RELEVÉ PAR UNE REVUE DU DÉPÔT, point 3 : « Deux runs peuvent se chevaucher. Seul le run global
+  // est verrouillé. » Vérifié sur les quatre affirmations : le garde ne couvrait que le run global,
+  // de sorte que le bouton ▶ d'un nœud en lançait un second sans condition ; `abortControllerRef`
+  // était écrasé, donc « Arrêter » n'arrêtait plus que le dernier ; un drapeau booléen `enCoursRef`
+  // était remis à faux par le premier run qui finissait ; et les deux écrivaient dans le même
+  // `cacheExec`.
+  //
+  // LA SÉRIALISATION FERME LES TROIS PREMIERS PAR CONSTRUCTION : il n'y a jamais deux contrôleurs,
+  // jamais deux runs à compter. Le jeton ferme le quatrième, pour la queue asynchrone d'un composant
+  // qui ne consulte pas son signal. Voir `ui/ordonnanceur-runs.ts`.
+  //
+  // ET `enCoursRef` A DISPARU AVEC LUI. Ce booléen existait parce qu'`enExecRef` ne suit que les
+  // runs GLOBAUX : il fallait savoir qu'un run ciblé tournait pour l'annuler. L'ordonnanceur le sait
+  // mieux — il compte ce qui tourne au lieu de le déclarer —, et deux sources de vérité sur « est-ce
+  // que ça tourne » sont exactement ce que ce point de revue reprochait.
+  const ordonnanceur = useOrdonnanceurDeRuns();
 
   /**
    * Arrêter l'exécution en cours, sans rien effacer.
@@ -278,10 +296,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
 
   const arreter = useCallback(() => {
     arretLotRef.current = true;
-    if (!enCoursRef.current) return false;
-    abortControllerRef.current?.abort();
-    return true;
-  }, []);
+    // LA FILE SE VIDE AUSSI, et c'est le second défaut qu'« Arrêter » portait : une demande en
+    // attente aurait démarré juste après l'arrêt, et le bouton aurait paru ne rien faire.
+    const ecartees = ordonnanceur.viderLaFile() > 0;
+    if (ordonnanceur.enCours()) { abortControllerRef.current?.abort(); return true; }
+    return ecartees;
+  }, [ordonnanceur]);
 
   async function obtenirAudio() {
     if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
@@ -311,7 +331,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // en cours de calcul (ex. extraction de features piste par piste sur une
     // grosse collection) continue en arrière-plan et écrase l'état qu'on vient
     // de réinitialiser dès son prochain onProgress ou sa fin d'exécution.
-    if (enCoursRef.current) abortControllerRef.current?.abort();
+    if (ordonnanceur.enCours()) abortControllerRef.current?.abort();
     // Les révocations AVANT `setNodes`, et non dans son updater : celui-ci doit
     // être pur. Double-invoqué par StrictMode, il révoquait deux fois — sans
     // conséquence ici, la révocation étant idempotente — mais c'est le même motif
@@ -392,10 +412,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
     reinitialiserIds(ids);
   }, [reinitialiserIds]);
 
-  const lancerUnePasse = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible) => {
-    // Ne pas bloquer si on lance un node individuellement (prioritaire)
-    // — seul le bouton Run global (sans prioritaire) est bloqué pendant l'exécution
-    if (!noeudPrioritaireId && enExecRef.current) return;
+  const lancerUnePasse = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun) => {
+    // ═══ LE GARDE ANTI-CHEVAUCHEMENT A QUITTÉ CET ENDROIT ═══
+    //
+    // Il s'écrivait `if (!noeudPrioritaireId && enExecRef.current) return;` et il avait DEUX
+    // défauts, relevés par une revue du dépôt. Il ne couvrait que le run global, de sorte que le
+    // bouton ▶ d'un nœud lançait un second run sans aucune condition — deux runs sur le même
+    // `cacheExec`. Et quand il mordait, il ABANDONNAIT LA DEMANDE SANS UN MOT : ouvrir un exemple
+    // pendant un run, ce que `App.tsx` fait tout seul par un `setTimeout`, ne le lançait pas.
+    //
+    // La sérialisation est tenue par l'ordonnanceur, en amont de `lancer`, qui met la demande en
+    // file au lieu de la jeter. Le laisser ici en plus ferait un second mécanisme capable d'avaler
+    // une demande en silence, ce qui est précisément le défaut qu'on vient de retirer.
     if (noeudsRef.current.length === 0) return;
     const estGlobal = !noeudPrioritaireId;
     if (estGlobal) {
@@ -406,7 +434,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
     const controller = new AbortController();
     abortControllerRef.current = controller;
-    enCoursRef.current = true;
     try {
     console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.size}`);
     // LES ARÊTES DE SUBSTITUTION NE CALCULENT PAS. Replier une bulle cache les arêtes qui la
@@ -724,7 +751,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // temps, le clic sur « Lancer » n'a encore produit aucun retour à l'écran — l'application
     // paraît n'avoir rien entendu. Une image ici, et le lancement se voit.
     await respirer();
-    if (controller.signal.aborted) { enCoursRef.current = false; return; }
+    if (controller.signal.aborted) return;
 
     // ── LES RÉSULTATS SE POSENT NŒUD PAR NŒUD, DÈS QU'IL A FINI ─────────────────────
     //
@@ -1021,9 +1048,18 @@ export function useExecutionGraphe(o: OptionsExecution) {
           ajouterTemps(performance.now() - start);
         } else {
           const elapsed = performance.now() - start;
+          // ═══ UNE EXÉCUTION PÉRIMÉE N'ÉCRIT PLUS DANS LE CACHE ═══
+          //
+          // C'est la seule écriture du cache de tout le moteur, et c'est donc le seul endroit où ce
+          // jeton compte. La sérialisation empêche deux runs de tourner ensemble ; ce qu'elle ne peut
+          // pas empêcher, c'est qu'un composant lance son propre travail asynchrone sans consulter
+          // son signal — « continue en arrière-plan et écrase l'état qu'on vient de réinitialiser »,
+          // ce que `reinitialiserIds` dit déjà de lui. Son résultat arriverait alors dans le cache
+          // d'un graphe qui tourne maintenant.
           // `consulteSorties` est ce que le nœud vient de DEMANDER, et non ce qu'une fiche déclare :
           // sans lui, le câblage aval de tous entrerait dans la clé pour la raison d'un seul.
-          cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties, tempsExecution: elapsed });
+          if (!jeton?.perime()) cacheExec.current.set(nodeId, { valeurs: res.valeurs, message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties, tempsExecution: elapsed });
+          else console.warn(`[cache] resultat perime ecarte : ${nodeId} (generation ${jeton.generation})`);
           console.log(`[cache store] ${nodeId}(${node.data.ficheId}) hashParams=${hashParams} hashEntree=${monHashEntree} hashValeursEntree=${hashValeursEntree}`);
           poserStatut(nodeId, "termine");
           ajouterTemps(elapsed);
@@ -1475,7 +1511,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
     } catch (e: any) {
       console.error("lancer error", e);
     } finally {
-      enCoursRef.current = false;
       if (abortControllerRef.current === controller) abortControllerRef.current = null;
       // Le nœud qui tournait à l'instant de l'arrêt garde le statut « en cours » : la
       // boucle sort par un `break` sans jamais statuer sur lui. Une réinitialisation
@@ -1524,7 +1559,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
    * contenu d'un méta-composant soit vu, et il se paie une fois par exécution, non une fois par
    * passe.
    */
-  const lancerBoucleValeur = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible) => {
+  const lancerBoucleValeur = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun) => {
     // LE PLAN SE FAIT SUR LE GRAPHE APLATI, ET NON SUR CELUI QU'ON VOIT — relevé par Fabien, qui
     // demandait si les changements faits sur les boucles valaient aussi pour les autres.
     //
@@ -1551,7 +1586,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       (id) => [...descendants(id, aretesG())],
       (id) => [...ancetres(id, aretesG())],
     );
-    if (!plan) { publierBoucles([]); return lancerUnePasse(noeudPrioritaireId, perimetre); }
+    if (!plan) { publierBoucles([]); return lancerUnePasse(noeudPrioritaireId, perimetre, jeton); }
     if (plan.independantes) {
       console.warn("[attic] Deux boucles qui ne s'emboîtent pas : elles seront menées l'une dans l'autre.");
     }
@@ -1585,7 +1620,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // défauts à trouver. Relevé sur une boucle par créneau relancée deux fois de suite.
       oublierLeCorps(0);
       // La passe de découverte : chaque début y remplit ses morceaux.
-      await lancerUnePasse(noeudPrioritaireId, perimetre);
+      await lancerUnePasse(noeudPrioritaireId, perimetre, jeton);
 
       // LE COMPTEUR EST DANS `boucleSequencesGlobal.ts`, AVEC SES BORNES ET SES TESTS. Une mécanique
       // dont toute la valeur est de s'arrêter ne peut pas vivre dans un composant, où aucun test de
@@ -1594,7 +1629,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       while (avancerBoucles(etats)) {
         if (arretLotRef.current || faites >= PASSES_MAX_TOTAL) break;
         oublierLeCorps(0);
-        await lancerUnePasse(noeudPrioritaireId, perimetre);
+        await lancerUnePasse(noeudPrioritaireId, perimetre, jeton);
         faites++;
       }
     } finally {
@@ -1620,7 +1655,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
    * revenir en arrière aurait demandé de casser le cache, les statuts et l'annulation — ce que
    * `core/boucle-graphe.ts` disait déjà, et qui reste vrai.
    */
-  const lancer = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible) => {
+  const lancerLeLot = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun) => {
     arretLotRef.current = false;
     // La lecture du dossier est asynchrone, la planification ne l'est pas : on lit d'abord, puis
     // `planifierLot` — pure et testée — décide de tout le reste.
@@ -1638,7 +1673,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // Le cas courant est celui-ci, et il ne doit rien coûter : pas de lot, une passe, rien de plus.
     if (!plan) {
       publierLot(null);
-      return lancerBoucleValeur(noeudPrioritaireId, perimetre);
+      return lancerBoucleValeur(noeudPrioritaireId, perimetre, jeton);
     }
     if (plan.plusieursDebuts) {
       console.warn("[attic] Deux débuts de boucle collection : chacun voudrait commander le nombre de passes.");
@@ -1664,12 +1699,25 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // passe, la boucle ne bouclait pas, et rien ne le disait. Les trois répétitions s'emboîtent
         // maintenant dans l'ordre où elles se lisent : le lot dehors, les boucles par passes dedans,
         // et l'exécution du graphe au fond.
-        await lancerBoucleValeur(noeudPrioritaireId, perimetre);
+        await lancerBoucleValeur(noeudPrioritaireId, perimetre, jeton);
       }
     } finally {
       publierLot(null);
     }
   }, [lancerBoucleValeur]);
+
+  /**
+   * LA SEULE PORTE D'ENTRÉE, et elle passe par l'ordonnanceur.
+   *
+   * CE QUI CHANGE POUR L'APPELANT : rien, sauf qu'une demande faite pendant qu'une exécution tourne
+   * ATTEND SON TOUR au lieu de tourner en même temps — ou d'être jetée sans un mot, ce qui était le
+   * cas du run global. Le ▶ d'un nœud cliqué pendant un run n'ouvre donc plus un second run sur le
+   * même cache ; il se met en file, et « Arrêter » vide cette file.
+   *
+   * ET IL N'Y A PAS DE SECOND MÉCANISME. Le garde qui vivait dans `lancerUnePasse` a été retiré :
+   * deux verrous dont l'un jette la demande en silence valent moins qu'un seul qui la garde.
+   */
+  const lancer = useCallback((p?: string, perimetre?: PerimetreCible) => ordonnanceur.demander((j) => lancerLeLot(p, perimetre, j)), [ordonnanceur, lancerLeLot]);
 
   return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout };
 }

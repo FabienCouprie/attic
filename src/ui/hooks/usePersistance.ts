@@ -6,8 +6,12 @@ import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
   estSubstitution, metasEmployes, tousLesMetas, enregistrerMeta,
-  type AreteG, type MetaComposant, type NoeudG,
+  FORMAT_PROJET, versionDuProjet, perteAuChargementVide, rienDePerduAuChargement, rapportDuChargement,
+  type AreteG, type MetaComposant, type NoeudG, type PerteAuChargement,
 } from "../../core";
+import { registreUI } from "../registre-actif";
+import { pertesDesNoeuds } from "../pertes-chargement";
+import { creerJournalDeSession, type JournalDeSession } from "../journal-de-session";
 import { serialiserMeta } from "../metasLocaux";
 import { detecterPertes, formaterRapportPertes } from "../../core/pertes";
 import { useI18n } from "../../i18n";
@@ -119,7 +123,13 @@ export function usePersistance(o: OptionsPersistance) {
     // enregistré dans la palette de qui l'ouvrait. La bibliothèque, elle, reste entière dans
     // `attic-metas` ; c'est le fichier de projet, et lui seul, qui se restreint.
     const metas = metasEmployes(racine.nodes as unknown as NoeudG[], tousLesMetas()).map(serialiserMeta);
-    const json = JSON.stringify({ nodes: cleanNodes, edges: cleanEdges, metas, viewport: o.rfInstance?.getViewport() }, null, 2);
+    // LE NUMÉRO DE FORMAT, EN PREMIER DANS LE FICHIER, et c'est la seule place qui vaille : on le
+    // lit alors sans dérouler le reste. Il vaut 1, qui est le format de TOUS les fichiers écrits
+    // jusqu'ici — leur donner un numéro ne les change pas, cela les nomme. Voir `core/format-projet`.
+    const json = JSON.stringify({
+      formatVersion: FORMAT_PROJET,
+      nodes: cleanNodes, edges: cleanEdges, metas, viewport: o.rfInstance?.getViewport(),
+    }, null, 2);
 
     const encours = {
       // `bulle` et `replie` ici AUSSI : la reprise de session lit cet objet, et une bulle absente de
@@ -234,6 +244,67 @@ export function usePersistance(o: OptionsPersistance) {
     }
   }, [buildExportData]);
 
+  // ═══ LE JOURNAL DE SESSION : LE TRAVAIL EN COURS SURVIT À UNE FERMETURE ═══
+  //
+  // RELEVÉ PAR UNE REVUE DU DÉPÔT, point 9, et vérifié plus grave que décrit. `memoriserEncours`
+  // ci-dessus n'était appelé QUE par le bouton « Recharger » ; il n'y avait ni `beforeunload`, ni
+  // `pagehide`, ni minuteur, et côté Electron `window-all-closed` appelle `app.quit()` sans rien
+  // demander au rendu. Ce n'était donc pas seulement un plantage : fermer la fenêtre proprement
+  // perdait tout depuis le dernier enregistrement manuel.
+  //
+  // LA RÈGLE QUI PROTÈGE LA SESSION VIT DANS `ui/journal-de-session.ts`, avec ses neuf cas, et c'est
+  // celle de l'ARMEMENT : la restauration de `attic-encours` se fait dans un effet ASYNCHRONE, donc
+  // le graphe est vide au montage. Un journal qui écrirait au premier changement remplacerait la
+  // session par du vide. Il ne s'arme donc que sur un graphe non vide.
+  // `memoriserEncours` change d'identité à chaque rendu ; le journal, lui, est créé une seule fois.
+  // Sans cette indirection, il écrirait avec la version de `buildExportData` du premier rendu —
+  // c'est-à-dire avec le graphe d'alors.
+  const memoriserEncoursRef = useRef(memoriserEncours);
+  memoriserEncoursRef.current = memoriserEncours;
+  const journalRef = useRef<JournalDeSession | null>(null);
+  if (!journalRef.current) {
+    journalRef.current = creerJournalDeSession({
+      ecrire: () => memoriserEncoursRef.current(),
+      // ON N'ÉCRASE QUE CE QU'ON A ÉCRIT SOI-MÊME, et le module dit pourquoi : une seconde fenêtre,
+      // ou une page qui pose un en-cours puis recharge, se faisait écraser par le vidage de
+      // fermeture. Une date postérieure à notre dernier changement vient d'ailleurs ; une ABSENCE
+      // de date aussi, puisque `memoriserEncours` en pose toujours une.
+      ecritPourAutrui: (depuis) => {
+        try {
+          const brut = localStorage.getItem("attic-encours");
+          if (!brut) return false;
+          const quand = Date.parse((JSON.parse(brut) as { date?: string }).date ?? "");
+          return !Number.isFinite(quand) || quand > depuis;
+        } catch { return false; }
+      },
+    });
+  }
+  const journal = journalRef.current;
+
+  useEffect(() => {
+    const vide = (o.grapheRacineRef.current?.nodes ?? o.nodes).length === 0;
+    if (!journal.estArme()) {
+      // RIEN À PERDRE SUR UN CANEVAS VIDE, et tout à perdre si l'on écrit avant la restauration.
+      if (vide) return;
+      journal.armer();
+    }
+    journal.noter();
+  }, [o.nodes, o.edges, o.grapheRacineRef, journal]);
+
+  useEffect(() => {
+    // LES DEUX ÉVÉNEMENTS, et non un seul. `beforeunload` ne part pas toujours quand le processus
+    // principal détruit la fenêtre ; `pagehide` est le plus fiable des deux. Vider deux fois ne
+    // coûte rien : la seconde ne trouve plus rien en attente.
+    const vider = () => journal.vider();
+    window.addEventListener("beforeunload", vider);
+    window.addEventListener("pagehide", vider);
+    return () => {
+      window.removeEventListener("beforeunload", vider);
+      window.removeEventListener("pagehide", vider);
+      journal.annuler();
+    };
+  }, [journal]);
+
   const exporter = useCallback(() => sauvegarder(true), [sauvegarder]);
 
   const importer = useCallback(async (f?: File) => {
@@ -303,7 +374,25 @@ export function usePersistance(o: OptionsPersistance) {
     // mais le chemin est sauvé dans le paramètre "Chemin".
     await rechargerFichiersPersistes(importedNodes);
 
-    const aretesValides = filtrerAretesInvalides(importedNodes, json.edges || []);
+    // ═══ CE QUE LE CHARGEMENT A PERDU SE DIT, au lieu de n'être qu'un `console.warn` ═══
+    //
+    // RELEVÉ PAR UNE REVUE DU DÉPÔT : « Toutes les pertes au chargement ne laissent qu'un
+    // console.warn : fiche inconnue, arête rejetée, fichier introuvable sur une autre machine. »
+    // Vérifié, et vrai — et une ligne de console n'est lue par personne, d'autant moins sous
+    // Windows où celle du processus principal d'Electron n'apparaît pas.
+    const perte: PerteAuChargement = perteAuChargementVide();
+    const versionLue = versionDuProjet(json);
+    if (versionLue > FORMAT_PROJET) perte.formatFutur = versionLue;
+    // LE CALCUL VIT DANS `ui/pertes-chargement.ts`, où il s'éprouve : c'est lui qui peut se tromper,
+    // trois exemptions valant trois occasions de déclarer perdu ce qui ne l'est pas.
+    const { fiches, reglages } = pertesDesNoeuds(
+      importedNodes,
+      (ficheId) => registreUI().trouverDef(ficheId),
+      new Set((json.metas || []).map((m: any) => String(m?.id ?? ""))),
+    );
+    perte.fiches.push(...fiches);
+    perte.reglages.push(...reglages);
+    const aretesValides = filtrerAretesInvalides(importedNodes, json.edges || [], perte.aretes);
     o.setNodes(importedNodes);
     o.setEdges(aretesValides);
     o.cacheExec.current.clear();
@@ -314,6 +403,19 @@ export function usePersistance(o: OptionsPersistance) {
     // Voir `ui/oubli-noeuds.ts`.
     oublierNoeuds(idsDe(importedNodes));
     if (json.viewport && o.rfInstance) o.rfInstance.setViewport(json.viewport);
+
+    // LE RAPPORT PARAÎT APRÈS QUE LE GRAPHE EST POSÉ, et non avant : ce qui s'est ouvert est à
+    // l'écran derrière le message, et l'on peut donc rapprocher les deux.
+    if (!rienDePerduAuChargement(perte)) {
+      const detail = rapportDuChargement(perte, {
+        format: (v) => t("chargement.formatFutur").replace("{v}", String(v)).replace("{n}", String(FORMAT_PROJET)),
+        fiches: (n) => t("chargement.fichesInconnues").replace("{nb}", String(n)),
+        reglages: (n) => t("chargement.reglagesPerdus").replace("{nb}", String(n)),
+        aretes: (n) => t("chargement.aretesRejetees").replace("{nb}", String(n)),
+      });
+      console.warn(`[attic] chargement : pertes\n${detail}`);
+      if (typeof alert !== "undefined") alert(`${t("chargement.titre")}\n\n${detail}`);
+    }
   }, [o]);
 
   return { sauvegarder, sauvegarderAuto, exporter, importer, memoriserEncours };

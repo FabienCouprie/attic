@@ -23,6 +23,11 @@ export { valider, validerGraphe } from "./validation";
 export type { ResultatValidationGraphe } from "./validation";
 export { creerAleatoire, hasardDuNoeud } from "./hasard";
 export { detecterPertes, formaterRapportPertes } from "./pertes";
+// `pertes.ts` dit ce que l'ÉCRITURE d'un fichier a détruit — les champs non sérialisables.
+// `format-projet.ts` dit ce que sa LECTURE a perdu, et de quel format il vient. Deux sujets voisins
+// de nom et distincts de fond : le premier regarde un nœud en mémoire, le second un fichier.
+export { FORMAT_PROJET, versionDuProjet, venuDuFutur, perteAuChargementVide,
+  rienDePerduAuChargement, rapportDuChargement, type PerteAuChargement } from "./format-projet";
 export type { ChampPurge } from "./pertes";
 export { estResultatEnErreur } from "./execution";
 // `TypeValeur` NE FIGURE PLUS ICI : l'union des valeurs d'un domaine est déclarée par ce domaine,

@@ -27,9 +27,16 @@ const SOURCE = readFileSync(resolve(__dirname, "main.cjs"), "utf8");
  * `accessSync` n'est pas employé contient le mot `accessSync`, et l'interdiction tombait dessus.
  */
 function gestionnaire(): string {
-  const debut = SOURCE.indexOf('ipcMain.handle("dossier:travail-defaut"');
-  expect(debut, "le gestionnaire du dossier de travail a disparu").toBeGreaterThan(-1);
-  const fin = SOURCE.indexOf("ipcMain.handle(", debut + 20);
+  // LE CALCUL A QUITTÉ LE CANAL, le 2026-10-25, et ce garde a dû suivre. La racine du pont ne
+  // devait plus dépendre d'un appel du rendu : `src/ui/App.tsx` ne demande `dossier:travail-defaut`
+  // que si son réglage est vide, de sorte que chez un utilisateur installé le canal ne s'allumait
+  // plus jamais. Le processus principal calcule donc ce dossier au démarrage, et le canal ne fait
+  // plus que rendre le résultat.
+  //
+  // CE QUI SE MESURE EST INCHANGÉ : la FORME de la décision, là où elle se prend.
+  const debut = SOURCE.indexOf("function dossierDeTravailParDefaut(");
+  expect(debut, "la fonction qui décide du dossier de travail a disparu").toBeGreaterThan(-1);
+  const fin = SOURCE.indexOf("ipcMain.handle(", debut);
   const corps = SOURCE.slice(debut, fin > debut ? fin : undefined);
   return corps.split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
 }

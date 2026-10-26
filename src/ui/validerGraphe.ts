@@ -40,7 +40,15 @@ export function validerArete(source: any, target: any, edge: Edge | Connection):
   return registreUI().fluxCompatibles(typeS, typeT, portS?.sousType, portT?.sousType);
 }
 
-export function filtrerAretesInvalides(nodes: any[], edges: Edge[]): Edge[] {
+/**
+ * Les arêtes qui mènent encore quelque part. `rejetees`, s'il est donné, reçoit les autres.
+ *
+ * LE COLLECTEUR EST OPTIONNEL PARCE QUE LE CHEMIN DE DÉCISION DOIT RESTER UNIQUE. Une seconde
+ * fonction qui recalculerait la liste des rejets finirait par divergir de celle qui filtre, et le
+ * rapport dirait alors autre chose que ce qui s'est produit. Un `console.warn` n'était pas lu — sous
+ * Windows la console du processus principal d'Electron n'apparaît même pas.
+ */
+export function filtrerAretesInvalides(nodes: any[], edges: Edge[], collecteur?: string[]): Edge[] {
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
   const valides: Edge[] = [];
   const rejetees: string[] = [];
@@ -80,6 +88,7 @@ export function filtrerAretesInvalides(nodes: any[], edges: Edge[]): Edge[] {
   }
   if (rejetees.length) {
     console.warn(`[attic] ${rejetees.length} arête(s) cassée(s) ignorée(s) à la restauration : ${rejetees.join(", ")}`);
+    collecteur?.push(...rejetees);
   }
   return valides;
 }

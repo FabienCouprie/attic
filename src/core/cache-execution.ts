@@ -50,6 +50,65 @@
 // se serait oubliée au premier composant ajouté, et l'oubli aurait servi un résultat périmé en
 // silence — la faute exactement inverse, et la plus grave des deux.
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+// LE PLAFOND EN OCTETS QU'ON VIENT POSER ICI NE LIBÉRERAIT RIEN. RELEVÉ LE 2026-10-26.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════
+//
+// Une revue critique du dépôt, point 4, proposait d'ajouter à ce cache « un plafond de mémoire en
+// octets, que `octetsTampon` sait déjà calculer ». C'est l'endroit où l'on viendrait l'écrire, et
+// c'est pourquoi la mesure est consignée ici plutôt que dans un rapport qu'on ne relira pas.
+//
+// CE CACHE NE RETIENT RIEN QUE LE MAGASIN DES RÉSULTATS NE RETIENNE DÉJÀ. Il garde, sous l'identifiant
+// d'un nœud, les `valeurs` que son exécuteur a rendues — c'est-à-dire LES MÊMES OBJETS que
+// `poserResultat` dépose dans `ui/resultats.ts` sous `audioResultatBuffer`. Deux détenteurs, un seul
+// tampon : le lâcher d'un côté ne rend pas un octet. Le moteur le dit déjà de l'autre côté — « un
+// tampon qui reste accroché aux données du nœud n'est pas libéré parce que le cache l'a lâché ».
+//
+// ET IL EST PURGÉ PAR LES DEUX GESTES QUI FONT DISPARAÎTRE UN RÉSULTAT. `reinitialiserIds` supprime
+// l'entrée du nœud remis à zéro, et `supprimerNoeud` passe par lui : le cache ne garde donc pas les
+// tampons de nœuds qui n'existent plus. Une écriture remplace l'entrée précédente, donc n'empile pas
+// deux générations du même nœud. Ce cache contient exactement les résultats courants des nœuds
+// présents — ni plus, ni autre chose.
+//
+// LES CHIFFRES, pour qu'on ne les redérive pas. Sur un graphe de quatre nœuds mesuré par `executer`
+// — deux sorties de 11,5 s et une de 1,5 s, stéréo 44 100 Hz —, ce cache pèse **8,24 Mio**, et
+// **0 Mio de plus** que ce que l'écran retient déjà. Un tampon d'une heure en stéréo pèse 1,18 Gio ;
+// dix minutes, 202 Mio. Un plafond les évincerait du cache sans les libérer, et la seule conséquence
+// serait un recalcul.
+//
+// CE QUI RETIENT VRAIMENT DE LA MÉMOIRE EST AILLEURS, et le dépôt le mesure déjà : l'aperçu écoutable,
+// une seconde copie détenue par le processus navigateur, que la bascule d'économie de mémoire est là
+// pour rattraper (`audio/memoire-audio.ts`, et son relevé de 209 Mo sur deux aperçus de 109 Mo).
+//
+// ET LES INSTANTANÉS DE L'ANNULATION NE RETIENNENT PAS LES TAMPONS DE RÉSULTAT. La même revue
+// l'affirmait des cinquante instantanés de Ctrl+Z. Ils copient `nodes` et `edges` ; un résultat ne vit
+// pas sur les données d'un nœud — « ni sauvegardé, ni exporté, ni annulable », dit `ui/resultats.ts`.
+// Ce qu'ils gardent par référence, ce sont les MÉDIAS D'ENTRÉE, et c'est délibéré : sans eux, Ctrl+Z
+// rendait un « Entrée audio » sans son fichier.
+//
+// ═══ CE QUE L'EMPREINTE DE DÉRIVATION PROPOSÉE AJOUTERAIT, ET CE QU'ELLE NE PEUT PAS ═══
+//
+// La même revue proposait d'identifier chaque valeur par un hachage de sa fiche, de la version de sa
+// fiche, de ses réglages canoniques, de sa graine résolue et des empreintes de ses entrées. Deux de
+// ses quatre bénéfices tiennent, un est étroit, et un est FAUX :
+//
+//   · TIENT — elle survit aux renommages : un nœud copié-collé reçoit `noeud-N+1` et ne retrouve donc
+//     aucune entrée ; aplatir un méta préfixe les identifiants par `<idDuMéta>::`, donc en change.
+//     Les deux coûtent du TEMPS et jamais de la justesse.
+//   · TIENT — elle permet un cache SUR DISQUE, et c'est le seul gain structurel. Mais elle exige une
+//     VERSION DE FICHE, qui n'existe pas : sans elle, un résultat calculé par une version du code
+//     serait resservi à la suivante.
+//   · ÉTROIT — « stopper la propagation quand un nœud rejoué rend la même chose » ne vaut que pour un
+//     nœud rejoué pour une AUTRE raison que `jamaisCache`.
+//   · FAUX pour les nœuds `jamaisCache`, qui sont précisément ceux qui commandent la propagation. Un
+//     tel nœud l'est parce que son résultat dépend de quelque chose QU'AUCUNE EMPREINTE NE REGARDE :
+//     un fichier du disque, le graphe entier. Son hachage de dérivation serait donc INCHANGÉ pendant
+//     que son contenu change, et s'y fier servirait un son périmé en silence — la faute exacte que la
+//     propagation existe pour empêcher.
+//
+// UNE EMPREINTE DE DÉRIVATION DOIT DONC EXCLURE TOUT NŒUD DONT LA FERMETURE AMONT N'EST PAS CACHABLE.
+// C'est faisable, et c'est la condition que « Build Systems à la carte » appelle la constructivité.
+
 /** Les quatre empreintes d'un composant pour un run. */
 export interface EmpreintesDuRun {
   /** Ses réglages. */

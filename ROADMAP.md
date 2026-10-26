@@ -101,11 +101,13 @@ architecture items did not.
 ### Architecture (from the risk-table review, 2026-07-17) — still open
 Neither item below has moved. Both are prerequisites for a clean second
 domain in the UI (see `PORTING-A-DOMAIN.md`).
-- **UI shell decoupling ("item 3")** — `App.tsx`, `AtelierNode.tsx`,
-  `useExecutionGraphe.ts`, `useMetaComposants.ts` and `metasLocaux.ts` still
-  import `registre` directly from `audio/adaptateur` (verified 2026-08-03,
-  same 5 files). No `ui/registre-actif.ts` injection point exists yet. See
-  PORTING-A-DOMAIN.md §6.a.
+- ~~**UI shell decoupling ("item 3")**~~ — **done, and this entry had drifted.** Re-verified
+  2026-10-25 after a critical review flagged it: `ui/registre-actif.ts` **exists**, and none of the
+  five files named here imports `registre` from `audio/adaptateur` any more. `AtelierNode.tsx`,
+  `useExecutionGraphe.ts`, `useMetaComposants.ts` and `metasLocaux.ts` go through `registre-actif`
+  only; `App.tsx` goes through it too and keeps `import "../audio/adaptateur"` for its **side
+  effect** alone — registering the domain — which is the injection the design calls for, not a
+  direct dependency on the registry. See PORTING-A-DOMAIN.md §6.a.
 - **Domain-provided result materialisation** — `useExecutionGraphe.ts` still
   does `instanceof AudioBuffer` / `instanceof File` and calls
   `bufferVersWavBlob` directly to build node display state (verified

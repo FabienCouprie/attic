@@ -84,7 +84,26 @@ function enregistrerNodeDynamique(node: NodeInstalle): void {
       atob: (typeof atob !== "undefined" ? atob : undefined),
       Math, Date, JSON, parseInt, parseFloat, isNaN, console,
     };
-    // Sans window — le code installé n'a pas accès au DOM/localStorage
+    // ATTENTION : CE CODE N'EST PAS DANS UN BAC À SABLE, et le commentaire qui était ici disait le
+    // contraire — « Sans window — le code installé n'a pas accès au DOM/localStorage ». C'était faux,
+    // et un commentaire faux sur une propriété de sécurité est pire que pas de commentaire : il
+    // arrête celui qui serait venu regarder.
+    //
+    // `new Function` NE CRÉE AUCUNE ISOLATION. Seuls ses paramètres — `module`, `exports`, `attic` —
+    // masquent les noms correspondants ; le corps s'exécute dans la portée GLOBALE. `window`,
+    // `globalThis`, `document`, `localStorage` et `window.api` y sont tous joignables. La table
+    // `atticCtx` ci-dessus est une COMMODITÉ, pas une barrière : elle met des outils sous la main,
+    // elle n'en retire aucun.
+    //
+    // CE QUE CELA VAUT, mesuré le 2026-10-25 : le pont expose `fichier:ecrire`, qui écrit à
+    // n'importe quel chemin sans validation, et `fichier:ouvrir-chemin`. « Écrire un script puis
+    // l'ouvrir » était un enchaînement complet à partir d'un fichier reçu. `electron/chemin-sur.cjs`
+    // en coupe désormais le dernier maillon en refusant d'ouvrir un exécutable — mais cela NE FERME
+    // PAS le trou : l'écriture reste sans bornes, et un nœud installé garde l'accès au pont.
+    //
+    // CE QU'IL FAUDRAIT : évaluer ce code dans un Worker sans accès au pont, donner des capacités à
+    // l'IPC — un chemin ne serait valide que venu d'un dialogue ou d'un dossier déclaré — et
+    // demander une confirmation avant la première exécution d'un fichier reçu.
     const wrappedFn = new Function("module", "exports", "attic", `
       "use strict";
       ${node.executerCode}
