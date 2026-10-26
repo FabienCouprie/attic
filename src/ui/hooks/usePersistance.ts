@@ -11,7 +11,7 @@ import {
 } from "../../core";
 import { servicesDomaine } from "../../core/services-domaine";
 import { registreUI } from "../registre-actif";
-import { pertesDesNoeuds } from "../pertes-chargement";
+import { pertesDesNoeuds, traduireNomsHerites } from "../pertes-chargement";
 import { creerJournalDeSession, type JournalDeSession } from "../journal-de-session";
 import { serialiserMeta } from "../metasLocaux";
 import { detecterPertes, formaterRapportPertes } from "../../core/pertes";
@@ -402,6 +402,9 @@ export function usePersistance(o: OptionsPersistance) {
     servicesDomaine().appliquerReglagesDeProjet(json as Record<string, unknown>);
     // LE CALCUL VIT DANS `ui/pertes-chargement.ts`, où il s'éprouve : c'est lui qui peut se tromper,
     // trois exemptions valant trois occasions de déclarer perdu ce qui ne l'est pas.
+    // ET LA TRADUCTION PASSE AVANT LE RAPPORT : un réglage renommé que la fiche sait retrouver
+    // n'est plus une perte, et l'annoncer comme telle enverrait chercher ce qui vient de revenir.
+    traduireNomsHerites(importedNodes, (ficheId) => registreUI().trouverDef(ficheId));
     const { fiches, reglages } = pertesDesNoeuds(
       importedNodes,
       (ficheId) => registreUI().trouverDef(ficheId),

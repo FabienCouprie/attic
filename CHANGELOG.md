@@ -4,6 +4,16 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Added
+
+- **UN RÉGLAGE RENOMMÉ PEUT DÉSORMAIS RETROUVER SA VALEUR, au lieu d'être seulement signalé perdu.** Dernier reste du point 2 d'une revue critique. Un projet n'enregistre pas ses réglages par un identifiant stable mais par leur **libellé** : renommer un réglage rendait injoignable la valeur d'un fichier déjà écrit, qui retombait en silence sur le défaut. Le chargement le signalait depuis le 2026-10-25 ; il le **récupère** maintenant, quand la fiche déclare l'ancien nom dans `nomsHerites`.
+
+  - **L'AUTRE RÉPARATION RESTE ÉCARTÉE, ET LA MESURE TIENT TOUJOURS** : re-clé-er le catalogue sur des identifiants stables toucherait **1983 réglages** et invaliderait tout projet enregistré sur le disque de quelqu'un, qui ne porte que des libellés. Ce champ ne demande aucun changement de clé — il ne coûte que la ligne du renommage qui l'a rendu nécessaire.
+  - **LA TRADUCTION PASSE AVANT LE RAPPORT**, et c'est tout l'objet de leur ordre : un réglage retrouvé n'est plus une perte, et l'annoncer comme telle enverrait chercher ce qui vient de revenir.
+  - **TROIS RÈGLES, CHACUNE POUR UN DÉFAUT QU'ELLE EMPÊCHE.** Un nom vivant ne se fait pas voler — si le fichier porte déjà le nom d'aujourd'hui, la valeur héritée est écartée, car l'écraser ferait **reculer** le réglage, un défaut muet et le pire des deux. Un nom hérité qui est aussi un nom vivant est ignoré. Et le premier déclarant l'emporte, pour que deux prétendants ne dépendent pas de l'ordre d'itération d'un objet.
+  - **ET LE CATALOGUE N'EN DÉCLARE AUCUN AUJOURD'HUI, CE QUI EST DIT PLUTÔT QUE TU.** Le mécanisme précède son premier usage : `contrat-cles-de-reglage.test.ts` avait mesuré **zéro clé orpheline** sur les 19 graphes livrés, donc aucun renommage passé n'est à rattraper. Un garde qui surveille un ensemble vide ne prouve rien tant qu'il ne le dit pas — un cas inscrit donc le chiffre, pour que le jour où il monte soit un jour où l'on regarde.
+  - **ONZE CAS**, dont huit sur le comportement, éprouvés sur des fiches d'essai. Deux défauts plantés sur de vraies fiches : un héritage qui réclame un nom en service, et deux réglages qui se disputent le même ancien nom — le garde nomme la fiche et les deux réglages.
+
 ### Fixed
 
 - **UN ARRÊT DEMANDÉ ARRÊTE ENFIN, ET SOIXANTE-QUATORZE EXÉCUTEURS LE DEVIENNENT D'UN SEUL GESTE.** Point 7 de deux revues critiques : « l'annulation n'atteint presque aucun composant ». Mesuré, et c'est pire que l'impression — **sur 478 exécuteurs, DEUX** lisent `signal.aborted` pour s'arrêter, « Algèbre musicale » et « Esthétique » ; huit fichiers transmettent le signal à un sous-traitant qui l'honore, et tout le reste continuait jusqu'au bout.

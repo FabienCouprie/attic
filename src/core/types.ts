@@ -234,6 +234,26 @@ export interface ParametreDef {
    * pour la même option.
    */
   optionsHeritees?: Record<string, string>;
+  /**
+   * Les noms que CE RÉGLAGE a portés autrefois, sous lesquels un projet enregistré le cherche.
+   *
+   * ═══ POURQUOI IL FAUT CE CHAMP, ET POURQUOI IL N'Y EN A PAS D'AUTRE MOYEN ═══
+   *
+   * Un projet n'enregistre pas les réglages par un identifiant stable mais par leur LIBELLÉ.
+   * Renommer un réglage rend donc injoignable la valeur d'un fichier déjà écrit : le projet
+   * rouvert retombe en silence sur le défaut. Le chargement le SIGNALE depuis le 2026-10-25, ce
+   * qui était déjà mieux que rien — mais il ne le récupérait pas.
+   *
+   * LA SEULE AUTRE RÉPARATION A ÉTÉ MESURÉE ET ÉCARTÉE : re-clé-er le catalogue sur des
+   * identifiants stables toucherait 1983 réglages et invaliderait tout projet enregistré sur le
+   * disque de quelqu'un, qui ne porte que des libellés. Ce champ ne demande, lui, aucun
+   * changement de clé : il traduit l'ancien nom au chargement, et ne coûte que la ligne du
+   * renommage qui l'a rendu nécessaire. Voir `ui/pertes-chargement.ts`.
+   *
+   * UN NOM HÉRITÉ NE PEUT PAS ÊTRE CELUI D'UN RÉGLAGE VIVANT de la même fiche : il volerait sa
+   * valeur. `src/plugins/noms-herites.test.ts` le refuse.
+   */
+  nomsHerites?: string[];
   plage?: [number, number];
   pas?: number;
   defaut: string | number;
