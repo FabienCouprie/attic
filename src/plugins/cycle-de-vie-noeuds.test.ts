@@ -207,4 +207,36 @@ describe("les deux canaux déclarés ne viennent que de l'exécuteur ou du cache
     expect(moteur.match(/for \(const cle of Object\.keys\(d\)\)/g) ?? [],
       "plus aucun balayage des champs `_` à la main dans le moteur").toEqual([]);
   });
+
+  // ═══ ET LE CACHE EST PURGÉ PAR LES DEUX GESTES QUI FONT DISPARAÎTRE UN RÉSULTAT ═══
+  //
+  // POURQUOI CES DEUX CAS EXISTENT, ET C'EST UNE AFFIRMATION À TENIR. Une revue critique du dépôt
+  // proposait de poser un plafond en octets sur le cache d'exécution. Mesuré le 2026-10-26 : il ne
+  // libérerait RIEN, le cache gardant les MÊMES objets que le magasin des résultats — deux
+  // détenteurs, un seul tampon. L'en-tête de `core/cache-execution.ts` porte le relevé.
+  //
+  // MAIS CE RELEVÉ REPOSE SUR UNE PROPRIÉTÉ, et une affirmation sans garde devient fausse en
+  // silence : le cache ne contient que les résultats COURANTS des nœuds PRÉSENTS. Si la remise à
+  // zéro ou la suppression cessaient de le purger, il retiendrait les tampons de nœuds qui
+  // n'existent plus — une fuite vraie, celle-là, et invisible.
+  it("UNE REMISE À ZÉRO PURGE L'ENTRÉE DE CACHE, sans quoi le cache survivrait au résultat", () => {
+    const moteur = readFileSync(join("src", "ui", "hooks", "useExecutionGraphe.ts"), "utf8");
+    const debut = moteur.indexOf("const reinitialiserIds");
+    expect(debut, "`reinitialiserIds` a disparu du moteur").toBeGreaterThan(-1);
+    const corps = moteur.slice(debut, moteur.indexOf("const reinitialiser", debut + 30));
+    expect(corps, "la remise à zéro doit supprimer l'entrée de cache des nœuds visés")
+      .toMatch(/cacheExec\.current\.delete\(/);
+  });
+
+  it("ET SUPPRIMER UN NŒUD AUSSI, en passant par la remise à zéro", () => {
+    // La suppression ne touche pas au cache elle-même : elle appelle `reinitialiserNoeud`, qui y
+    // mène. C'est ce chemin-là que ce cas garde — le couper laisserait le tampon d'un nœud effacé
+    // du canevas retenu par le cache jusqu'à la fin de la session.
+    const app = readFileSync(join("src", "ui", "App.tsx"), "utf8");
+    const debut = app.indexOf("const supprimerNoeud = useCallback");
+    expect(debut, "`supprimerNoeud` a disparu").toBeGreaterThan(-1);
+    const corps = app.slice(debut, app.indexOf("}, [", debut));
+    expect(corps, "supprimer un nœud doit passer par la remise à zéro, qui purge le cache")
+      .toMatch(/reinitialiserNoeud\(/);
+  });
 });
