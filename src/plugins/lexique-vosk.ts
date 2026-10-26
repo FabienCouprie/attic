@@ -55,6 +55,19 @@ const HORS_LEXIQUE_FR: ReadonlySet<string> = new Set([
   "mosaïquage", "secoueurs", "sérielles", "interpoler",
   // Chiffres isolés, laissés par la normalisation des noms qui en portent
   "0", "2", "3", "5", "5b",
+  // ═══ ONZE MOTS RELEVÉS LE 2026-10-26, EN LANÇANT LA DICTÉE ET EN LISANT LA CONSOLE ═══
+  //
+  // C'est la méthode que cet en-tête décrit, suivie pour de bon : modèle chargé, grammaire bâtie,
+  // et le moteur écrit sa ligne par mot jeté. Elle a confirmé que cette liste était incomplète, ce
+  // qu'elle annonçait, ET QUE TROIS DES NOMS PARLÉS ÉCRITS LE MÊME JOUR étaient inutiles :
+  // « atténuateur », « inharmonique » et « résonants » ne se prononcent pas davantage que les mots
+  // qu'ils remplaçaient. Un nom parlé vérifié contre une liste incomplète peut être muet, et seule
+  // la console le dit.
+  //
+  // LES HUIT AUTRES ÉTAIENT DANS LA GRAMMAIRE DEPUIS TOUJOURS, et y entraient amputés : c'est le
+  // défaut que cette liste existe pour empêcher, et il durait sur neuf composants.
+  "apparier", "atténuateur", "bytebeat", "granulaire", "granulation", "inharmonique",
+  "isomorphe", "résonants", "schaefferiens", "trémolo", "vosim",
 ]);
 
 /**

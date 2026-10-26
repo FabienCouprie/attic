@@ -395,6 +395,23 @@ const CONVENTION_GRAINE = {
   en: "A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again.",
 };
 
+/**
+ * Pose les noms parlés d'une table sur les fiches qu'elle désigne.
+ *
+ * POURQUOI UNE TABLE ET NON UN CHAMP SUR CHAQUE FICHE. Seize fiches naissent d'une FABRIQUE —
+ * `effet(...)` et les descripteurs Meyda — dont la signature est positionnelle : y ajouter un
+ * paramètre de plus ferait une liste que plus personne ne lit. Les autres le déclarent sur
+ * elles-mêmes, ce qui reste la forme ordinaire.
+ *
+ * ET RASSEMBLER CES SEIZE NOMS SE RELIT MIEUX : un nom parlé est une décision de nomenclature, et
+ * les voir ensemble est ce qu'on veut quand on les revoit.
+ */
+export const avecNomDicte = (table: Readonly<Record<string, string>>) =>
+  (def: FicheAudio): FicheAudio => {
+    if (table[def.id] && !def.nomDicte) def.nomDicte = table[def.id];
+    return def;
+  };
+
 export function avecDoc(def: FicheAudio): FicheAudio {
   const n = NOTICES[def.id];
   if (n && !def.notice) { def.notice = n.fr; def.noticeEn = n.en; }

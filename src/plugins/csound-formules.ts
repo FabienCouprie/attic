@@ -14,7 +14,7 @@ import { FORMULES, partitionFormule, texteFormule, trouverFormule } from "../aud
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "formules-csound", nom: "Formules Csound", nomEn: "Csound Formulas",
+    id: "formules-csound", nomDicte: "formules programmées", nom: "Formules Csound", nomEn: "Csound Formulas",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Huit orchestres complets au choix (FM, soustractive, granulaire, bus de réverbération) chacun avec sa partition d'essai.",
     resumeEn: "Eight complete orchestras to choose from (FM, subtractive, granular, reverb bus) each with its own test score.",

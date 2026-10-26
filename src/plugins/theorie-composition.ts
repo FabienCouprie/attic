@@ -135,7 +135,7 @@ function rapportAnalyse(a: Analyse, titre: string): string {
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "serie-dodecaphonique", nom: "Opérations sérielles", nomEn: "Serial Operations",
+    id: "serie-dodecaphonique", nomDicte: "opérations de série", nom: "Opérations sérielles", nomEn: "Serial Operations",
     univers: "Traitement", famille: "Effets",
     resume: "Joue les quatre formes d'une série (originale, rétrograde, inversion, rétrograde de l'inversion) et écrit sa matrice.",
     resumeEn: "Plays a row's four forms (original, retrograde, inversion, retrograde inversion) and writes its matrix.",
@@ -321,7 +321,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "voicings-accords", nom: "Renversements et voicings", nomEn: "Inversions and Voicings",
+    id: "voicings-accords", nomDicte: "renversements d'accords", nom: "Renversements et voicings", nomEn: "Inversions and Voicings",
     univers: "Traitement", famille: "Effets",
     resume: "Renverse, écarte et enchaîne les accords en bougeant le moins de voix possible.",
     resumeEn: "Inverts, spreads and chains chords while moving as few voices as possible.",

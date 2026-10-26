@@ -132,7 +132,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "rythme-euclidien", nom: "Rythme euclidien", nomEn: "Euclidean Rhythm", univers: "Entrées", famille: "Génération",
+    id: "rythme-euclidien", nomDicte: "rythme réparti", nom: "Rythme euclidien", nomEn: "Euclidean Rhythm", univers: "Entrées", famille: "Génération",
     resume: "Répartit N frappes le plus régulièrement possible sur M pas (algorithme de Bjorklund).",
     resumeEn: "Spreads N onsets as evenly as possible over M steps (Bjorklund's algorithm).",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", nomEn: "MIDI", type: "midi" }],

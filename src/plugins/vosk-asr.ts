@@ -216,7 +216,7 @@ export function tableauDesMots(mots: MotVosk[], en: boolean): string {
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "vosk-asr", nom: "Vosk (reconnaissance vocale)", nomEn: "Vosk (speech recognition)",
+    id: "vosk-asr", nomDicte: "reconnaissance vocale", nom: "Vosk (reconnaissance vocale)", nomEn: "Vosk (speech recognition)",
     univers: "Traitement", famille: "Analyse",
     resume: "Transcrit la parole, et rend chaque mot avec son instant et sa confiance.",
     resumeEn: "Transcribes speech, and returns each word with its instant and confidence.",

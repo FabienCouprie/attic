@@ -72,7 +72,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "clavier-isomorphe", nom: "Clavier isomorphe", nomEn: "Isomorphic Keyboard",
+    id: "clavier-isomorphe", nomDicte: "clavier en réseau", nom: "Clavier isomorphe", nomEn: "Isomorphic Keyboard",
     univers: "Entrées", famille: "Génération",
     resume: "Joue les degrés d'un accordage au clavier de l'ordinateur, en réseau.",
     resumeEn: "Plays a tuning's degrees from the computer keyboard, as a lattice.",

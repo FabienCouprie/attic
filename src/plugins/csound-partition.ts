@@ -42,7 +42,7 @@ const champ = (nom: string, nomEn: string, defaut: ChampP, doc: string, docEn: s
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "partition-csound", nom: "Partition Csound", nomEn: "Csound Score",
+    id: "partition-csound", nomDicte: "partition programmée", nom: "Partition Csound", nomEn: "Csound Score",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Traduit un MIDI en partition Csound : une note par ligne, avec le choix de la convention de hauteur et des p-fields.",
     resumeEn: "Translates MIDI into a Csound score: one note per line, with a choice of pitch convention and p-fields.",

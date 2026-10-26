@@ -133,7 +133,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "motif-retrograde", nom: "Rétrograde et palindrome", nomEn: "Retrograde and Palindrome",
+    id: "motif-retrograde", nomDicte: "motif à l'envers", nom: "Rétrograde et palindrome", nomEn: "Retrograde and Palindrome",
     univers: "Traitement", famille: "Effets",
     resume: "Joue un motif à l'envers, ou en aller-retour.",
     resumeEn: "Plays a pattern backwards, or there and back.",
@@ -326,7 +326,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "transposeur-quantiseur-midi", nom: "Transposeur/Quantiseur MIDI", nomEn: "MIDI Transposer/Quantizer",
+    id: "transposeur-quantiseur-midi", nomDicte: "transposition et calage", nom: "Transposeur/Quantiseur MIDI", nomEn: "MIDI Transposer/Quantizer",
     univers: "Traitement", famille: "Effets",
     resume: "Transpose et/ou quantifie un fichier MIDI.",
     resumeEn: "Transposes and/or quantizes a MIDI file.",
@@ -371,7 +371,7 @@ export const fiches: FicheAudio[] = ([
    },
   },
   {
-    id: "arpegiateur-midi", nom: "Arpégiateur MIDI", nomEn: "MIDI Arpeggiator",
+    id: "arpegiateur-midi", nomDicte: "notes en cascade", nom: "Arpégiateur MIDI", nomEn: "MIDI Arpeggiator",
     univers: "Traitement", famille: "Effets",
     resume: "Arpège les accords d'un fichier MIDI selon un motif et une direction.",
     resumeEn: "Arpeggiates chords from a MIDI file according to a pattern and direction.",
@@ -476,7 +476,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "aligneur-piste", nom: "Aligneur de piste", nomEn: "Track Aligner",
+    id: "aligneur-piste", nomDicte: "alignement de piste", nom: "Aligneur de piste", nomEn: "Track Aligner",
     univers: "Traitement", famille: "Montage",
     // AUCUN LECTEUR ICI. L'aperçu joue la PREMIÈRE sortie audio, et celle-ci est « Référence »,
     // c'est-à-dire l'entrée rendue telle quelle : le lecteur proposait d'écouter ce qu'on venait de

@@ -29,7 +29,7 @@ const FS = () => FREQUENCE_ECH();
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "synthese-scanning", nom: "Synthèse par scanning", nomEn: "Scanned Synthesis",
+    id: "synthese-scanning", nomDicte: "synthèse par balayage", nom: "Synthèse par scanning", nomEn: "Scanned Synthesis",
     univers: "Traitement", famille: "Effets",
     resume: "Lit la forme d'un objet mécanique en mouvement lent comme une table d'onde : le timbre évolue sans fin, la note reste juste.",
     resumeEn: "Reads the shape of a slowly moving mechanical object as a wavetable: the timbre evolves endlessly while the note stays in tune.",
@@ -224,7 +224,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "voyelle-fof", nom: "Voyelle chantée (FOF)", nomEn: "Sung Vowel (FOF)",
+    id: "voyelle-fof", nomDicte: "voyelle chantée", nom: "Voyelle chantée (FOF)", nomEn: "Sung Vowel (FOF)",
     univers: "Traitement", famille: "Effets",
     resume: "Synthétise une voyelle par ses formants, d'après la table de Peterson et Barney : la hauteur et le timbre ne se touchent pas.",
     resumeEn: "Synthesises a vowel from its formants, after Peterson and Barney's table: pitch and timbre never touch.",
@@ -315,7 +315,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "mosaiquage", nom: "Mosaïquage par corpus", nomEn: "Corpus Mosaicing",
+    id: "mosaiquage", nomDicte: "mosaïque par corpus", nom: "Mosaïquage par corpus", nomEn: "Corpus Mosaicing",
     univers: "Traitement", famille: "Effets",
     resume: "Reconstruit un son avec les grains d'un autre : la forme de la cible, la matière du corpus.",
     resumeEn: "Rebuilds one sound from another's grains: the target's shape, the corpus's material.",

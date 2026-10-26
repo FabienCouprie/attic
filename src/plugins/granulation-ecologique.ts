@@ -27,7 +27,7 @@ const MOD_NIVEAU = { ...modulationNommee("Niveau", "Level", [0, 100], "%"), defa
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "granulation-ecologique", nom: "Granulation écologique", nomEn: "Ecological Granulation",
+    id: "granulation-ecologique", nomDicte: "grains écologiques", nom: "Granulation écologique", nomEn: "Ecological Granulation",
     univers: "Traitement", famille: "Montage",
     resume: "Pose les grains d'un son selon un modèle d'événement physique : un rebond, un écoulement ou un frottement.",
     resumeEn: "Lays a sound's grains along a physical event model: a bounce, a flow or a scrape.",

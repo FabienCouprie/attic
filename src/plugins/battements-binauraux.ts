@@ -19,7 +19,7 @@ const nb = (v: number, d = 1) => (en() ? v.toFixed(d) : v.toFixed(d).replace("."
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "battements-binauraux", nom: "Battements binauraux", nomEn: "Binaural Beats",
+    id: "battements-binauraux", nomDicte: "battements entre les oreilles", nom: "Battements binauraux", nomEn: "Binaural Beats",
     univers: "Entrées", famille: "Génération",
     resume: "Deux sons purs voisins, un par oreille, dont la pulsation entendue n'est dans aucun des deux.",
     resumeEn: "Two close pure tones, one per ear, whose heard pulsation is in neither of them.",

@@ -69,7 +69,7 @@ function trio(
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "micromontage",
+    id: "micromontage", nomDicte: "montage très fin",
     nom: "Micromontage", nomEn: "Micromontage",
     univers: "Traitement", famille: "Montage",
     resume: "Assemble un son à partir de milliers de fragments, chacun découpé et posé à sa place.",

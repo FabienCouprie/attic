@@ -128,7 +128,7 @@ function auVolume(audio: AudioBuffer, volume: number): AudioBuffer {
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "csound", nom: "Csound", nomEn: "Csound",
+    id: "csound", nomDicte: "langage sonore", nom: "Csound", nomEn: "Csound",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Exécute un orchestre et une partition Csound, et rend l'audio produit.",
     resumeEn: "Runs a Csound orchestra and score, and outputs the audio produced.",
@@ -231,7 +231,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "csound-instrument", nom: "Instrument Csound", nomEn: "Csound Instrument",
+    id: "csound-instrument", nomDicte: "instrument programmé", nom: "Instrument Csound", nomEn: "Csound Instrument",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Joue un MIDI avec un orchestre Csound : chaque note devient un événement de partition.",
     resumeEn: "Plays a MIDI file with a Csound orchestra: each note becomes a score event.",
@@ -294,7 +294,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "csound-effet", nom: "Effet Csound", nomEn: "Csound Effect",
+    id: "csound-effet", nomDicte: "effet programmé", nom: "Effet Csound", nomEn: "Csound Effect",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Traite un ou deux sons par un orchestre Csound.",
     resumeEn: "Processes one or two sounds through a Csound orchestra.",
@@ -385,7 +385,7 @@ endin`,
     },
   },
   {
-    id: "csound-instruments-physiques", nom: "Instruments Csound", nomEn: "Csound Instruments",
+    id: "csound-instruments-physiques", nomDicte: "instruments programmés", nom: "Instruments Csound", nomEn: "Csound Instruments",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Les instruments de Perry Cook tels que Csound les porte : corde frottée, clarinette, flûte, cuivre, corde pincée, formants.",
     resumeEn: "Perry Cook's instruments as Csound carries them: bowed string, clarinet, flute, brass, plucked string, formants.",
@@ -452,7 +452,7 @@ endin`,
     },
   },
   {
-    id: "csound-spectral", nom: "Spectral Csound", nomEn: "Csound Spectral",
+    id: "csound-spectral", nomDicte: "spectral programmé", nom: "Spectral Csound", nomEn: "Csound Spectral",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Morphing spectral, vocodeur et étirement à phase verrouillée, par les opcodes de flux spectral de Csound.",
     resumeEn: "Spectral morphing, vocoder and phase-locked stretching, through Csound's streaming spectral opcodes.",

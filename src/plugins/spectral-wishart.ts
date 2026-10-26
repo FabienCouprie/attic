@@ -161,7 +161,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "glissando-interieur", nom: "Glissando intérieur", nomEn: "Inner Glissando",
+    id: "glissando-interieur", nomDicte: "glissement intérieur", nom: "Glissando intérieur", nomEn: "Inner Glissando",
     univers: "Traitement", famille: "Effets",
     resume: "Garde l'enveloppe de formants du son et met dessous un glissando sans fin : l'illusion de Risset, habillée d'un timbre réel.",
     resumeEn: "Keeps the sound's formant envelope and puts an endless glissando underneath: Risset's illusion, dressed in a real timbre.",

@@ -98,6 +98,16 @@ export const fiches: FicheAudio[] = ([
         defaut: MOTEURS[0].nom, defautEn: MOTEURS[0].nomEn,
         doc: "Le moteur qui engendre le son. Un seul est câblé à ce jour.",
         docEn: "The engine that generates the sound. Only one is wired so far." },
+      // CE VOCABULAIRE N'EST PAS CELUI DE `parametre-calcul.ts`, ET IL NE PEUT PAS L'ÊTRE. Les
+      // dix-huit nœuds du pont ACE-Step et sherpa choisissent entre `CPU`, `Vulkan0`, `Vulkan1` et
+      // `CUDA0` ; Stable Audio 3 tourne sous DIRECTML et ne connaît que `auto`, `carte` et
+      // `processeur` — voir la table des fournisseurs d'`electron/stable-audio-3.cjs`.
+      //
+      // LEUR DONNER LA MÊME LISTE RENDRAIT TROIS OPTIONS SUR CINQ INERTES, et sans un mot :
+      // `FOURNISSEURS[calcul] ?? FOURNISSEURS.auto` retombe sur « auto » pour tout identifiant
+      // qu'il ne connaît pas. Un réglage qui paraît marcher et ne fait rien est exactement ce que
+      // le contrat de composant interdit. L'exception est inscrite dans
+      // `plugins/parametre-calcul.test.ts`, qui refuse qu'on l'« homogénéise » par mégarde.
       { nom: "Calcul", nomEn: "Compute", type: "choix",
         options: ["Automatique", "Carte graphique", "Processeur"],
         optionsEn: ["Automatic", "Graphics card", "Processor"],

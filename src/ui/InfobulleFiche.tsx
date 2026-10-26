@@ -53,6 +53,11 @@ export function InfobulleFiche({ contenu, cible }: { contenu: ContenuInfobulle; 
     >
       <div className="attic-infobulle-nom">{contenu.nom}</div>
       {contenu.resume && <div className="attic-infobulle-resume">{contenu.resume}</div>}
+      {/* CE QU'IL FAUT DIRE POUR LE POSER À LA VOIX, et seulement quand ce n'est pas son nom. Voir
+          `infobulle-fiche.ts`, qui porte la raison pour laquelle ce n'est pas dans la notice. */}
+      {contenu.seDit && (
+        <div className="attic-infobulle-resume">{`${t("infobulle.seDit")} « ${contenu.seDit} »`}</div>
+      )}
       <div className="attic-infobulle-ports">
         {colonne(t("infobulle.entrees"), contenu.entrees, "entrees")}
         {colonne(t("infobulle.sorties"), contenu.sorties, "sorties")}

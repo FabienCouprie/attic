@@ -26,7 +26,7 @@ import {
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "criteres-schaefferiens", nom: "Critères schaefferiens", nomEn: "Schaefferian Criteria",
+    id: "criteres-schaefferiens", nomDicte: "critères de l'objet sonore", nom: "Critères schaefferiens", nomEn: "Schaefferian Criteria",
     univers: "Visualisation", famille: "Analyse",
     resume: "Relève la masse, la forme dynamique et l'allure d'un son, dans les espèces du Traité des objets musicaux.",
     resumeEn: "Reads a sound's mass, dynamic form and allure, in the species of the Traité des objets musicaux.",

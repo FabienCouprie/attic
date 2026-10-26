@@ -82,7 +82,7 @@ function modeleMMS(valeur: string): string | undefined {
 
 const synthesesVocales: FicheAudio[] = ([
   {
-    id: "tts-speecht5", nom: "SpeechT5 TTS", nomEn: "SpeechT5 TTS",
+    id: "tts-speecht5", nomDicte: "voix parlée de synthèse", nom: "SpeechT5 TTS", nomEn: "SpeechT5 TTS",
     univers: "Entrées", famille: "Text to Speech",
     resume: "Synthèse vocale haute qualité (Microsoft SpeechT5, anglais).",
     resumeEn: "High-quality text-to-speech (Microsoft SpeechT5, English).",

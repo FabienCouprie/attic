@@ -34,6 +34,7 @@ import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { valeurNote } from "../audio/valeurs-note";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
+import { parametreCalcul } from "./parametre-calcul";
 
 /**
  * Les groupes d'instruments que le moteur reconnaît, et qui servent ici.
@@ -77,14 +78,6 @@ const GRILLES = [
     const v = valeurNote(id)!;
     return { id: v.id, fr: v.fr, en: v.en, divisions: DIVISIONS[v.id] };
   }),
-];
-
-const CALCULS = [
-  { id: "", fr: "Automatique", en: "Automatic" },
-  { id: "CPU", fr: "Processeur", en: "Processor" },
-  { id: "Vulkan0", fr: "Vulkan 0", en: "Vulkan 0" },
-  { id: "Vulkan1", fr: "Vulkan 1", en: "Vulkan 1" },
-  { id: "CUDA0", fr: "CUDA 0", en: "CUDA 0" },
 ];
 
 /** Le canal du processus principal, nommé une fois : le nœud l'appelle et le reconnaît en cas d'échec. */
@@ -173,11 +166,9 @@ export const fiches = ([
         defaut: "Non", defautEn: "No",
         doc: "Applique la grille aux fins de notes, qui restent sinon à leur durée. Sans effet quand « Quantification » vaut « Aucune », puisqu'il n'y a alors pas de grille.",
         docEn: "Applies the grid to note ends, which otherwise keep their duration. Without effect when « Quantization » is « None », since there is then no grid." },
-      { nom: "Calcul", nomEn: "Compute", type: "choix",
-        options: CALCULS.map((c) => c.fr), optionsEn: CALCULS.map((c) => c.en),
-        optionIds: CALCULS.map((c) => c.id), defaut: "Automatique", defautEn: "Automatic",
-        doc: "Le périphérique de calcul. Il change le temps de calcul et non les notes, qui sont les mêmes d'un périphérique à l'autre. « Automatique » laisse le moteur prendre ce qu'il juge le meilleur, ce qui n'est pas toujours la carte graphique : une machine à deux cartes expose souvent le circuit intégré en premier, et les deux numéros sont là pour les départager. « Processeur » tourne partout, et bien plus lentement.",
-        docEn: "The compute device. It changes the compute time and not the notes, which are the same from one device to another. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly." },
+      parametreCalcul(
+        "Il change le temps de calcul et non les notes, qui sont les mêmes d'un périphérique à l'autre.",
+        "It changes the compute time and not the notes, which are the same from one device to another."),
     ],
     async executer(ctx: any) {
       const pont = api();

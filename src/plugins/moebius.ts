@@ -10,7 +10,7 @@ import { rendreMoebius, planMoebius, DUREE_SORTIE_MAX_SEC, type FaceMoebius } fr
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "anneau-moebius", nom: "Anneau de Möbius", nomEn: "Möbius Strip",
+    id: "anneau-moebius", nomDicte: "anneau retourné", nom: "Anneau de Möbius", nomEn: "Möbius Strip",
     univers: "Traitement", famille: "Effets",
     resume: "Fait parcourir au son un anneau de Möbius : un tour le passe sur l'autre face, deux tours le ramènent.",
     resumeEn: "Sends the sound around a Möbius strip: one lap takes it to the other side, two laps bring it back.",

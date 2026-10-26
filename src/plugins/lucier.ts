@@ -9,7 +9,7 @@ import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "piece-lucier", nom: "Pièce de Lucier", nomEn: "Lucier Room",
+    id: "piece-lucier", nomDicte: "pièce de la salle", nom: "Pièce de Lucier", nomEn: "Lucier Room",
     univers: "Traitement", famille: "Effets",
     resume: "Réinjecte le son dans la même pièce jusqu'à ne laisser que ses résonances.",
     resumeEn: "Feeds the sound back into the same room until only its resonances remain.",

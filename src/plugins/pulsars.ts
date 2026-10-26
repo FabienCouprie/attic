@@ -9,7 +9,7 @@ import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "pulsars-roads", nom: "Synthèse par pulsars", nomEn: "Pulsar Synthesis",
+    id: "pulsars-roads", nomDicte: "synthèse par impulsions", nom: "Synthèse par pulsars", nomEn: "Pulsar Synthesis",
     // Générateur sans entrée : sa place est parmi les sources.
     univers: "Entrées", famille: "Génération",
     resume: "Fondamentale et formant réglés séparément, par brèves impulsions répétées.",

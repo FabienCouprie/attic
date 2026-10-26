@@ -71,7 +71,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "mappeur-mandelbrot", nom: "Mappeur Mandelbrot", nomEn: "Mandelbrot Mapper", univers: "Entrées", famille: "Génération",
+    id: "mappeur-mandelbrot", nomDicte: "carte fractale", nom: "Mappeur Mandelbrot", nomEn: "Mandelbrot Mapper", univers: "Entrées", famille: "Génération",
     resume: "Parcourt une vue de l'ensemble de Mandelbrot et fait de chaque point une note : le nombre d'itérations avant divergence donne la hauteur.",
     resumeEn: "Scans a view of the Mandelbrot set and turns each point into a note: the number of iterations before divergence sets the pitch.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
@@ -138,7 +138,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "arpege-koch", nom: "Arpège flocon de Koch", nomEn: "Koch Snowflake Arpeggiator", univers: "Entrées", famille: "Génération",
+    id: "arpege-koch", nomDicte: "flocon de notes", nom: "Arpège flocon de Koch", nomEn: "Koch Snowflake Arpeggiator", univers: "Entrées", famille: "Génération",
     resume: "Trois voix qui jouent trois niveaux du même flocon de Koch, à trois vitesses : le motif et ses réductions entendus ensemble.",
     resumeEn: "Three voices playing three levels of the same Koch snowflake at three speeds: the pattern and its reductions heard together.",
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
@@ -196,7 +196,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "spectrogramme-fractal", nom: "Spectrogramme fractal", nomEn: "Fractal Spectrogram", univers: "Entrées", famille: "Génération",
+    id: "spectrogramme-fractal", nomDicte: "image fractale du spectre", nom: "Spectrogramme fractal", nomEn: "Fractal Spectrogram", univers: "Entrées", famille: "Génération",
     resume: "Génère un spectrogramme fractal et son audio associé.",
     resumeEn: "Generates a fractal spectrogram and its associated audio.",
     entrees: [], sorties: [{ nom: "Image", type: "image" }, { nom: "Audio", type: "audio" }],
@@ -242,7 +242,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "attracteur-ifs", nom: "Attracteur / IFS", nomEn: "Attractor / IFS", univers: "Entrées", famille: "Génération",
+    id: "attracteur-ifs", nomDicte: "forme chaotique", nom: "Attracteur / IFS", nomEn: "Attractor / IFS", univers: "Entrées", famille: "Génération",
     resume: "Rend un attracteur chaotique ou un IFS en image + audio.",
     resumeEn: "Renders a chaotic attractor or IFS as image + audio.",
     entrees: [], sorties: [{ nom: "Image", type: "image" }, { nom: "Audio", type: "audio" }],

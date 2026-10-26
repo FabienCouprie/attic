@@ -81,7 +81,7 @@ async function appliquerDDSP(buffer: AudioBuffer, instrument: string, customUrl:
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "ddsp-tone-transfer", nom: "DDSP Tone Transfer", nomEn: "DDSP Tone Transfer",
+    id: "ddsp-tone-transfer", nomDicte: "transfert de timbre", nom: "DDSP Tone Transfer", nomEn: "DDSP Tone Transfer",
     univers: "Traitement", famille: "Effets",
     resume: "Transfère le timbre d’un audio vers un instrument par modèle DDSP (violon, flûte, saxophone, trompette).",
     resumeEn: "Transfers the timbre of an audio clip to an instrument via a DDSP model (violin, flute, saxophone, trumpet).",

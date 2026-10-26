@@ -98,7 +98,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "reordonner-objets", nom: "Réordonner les objets", nomEn: "Reorder Objects",
+    id: "reordonner-objets", nomDicte: "remettre les objets en ordre", nom: "Réordonner les objets", nomEn: "Reorder Objects",
     univers: "Traitement", famille: "Montage",
     resume: "Enchaîne les objets d'un son dans l'ordre d'un descripteur : du plus sombre au plus brillant, du plus calme au plus fort.",
     resumeEn: "Chains a sound's objects in the order of a descriptor: from darkest to brightest, from quietest to loudest.",

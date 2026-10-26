@@ -43,7 +43,7 @@ function cote(suffixeFr: string, suffixeEn: string, octaveDefaut: number) {
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "glissando-harmonique", nom: "Glissando harmonique", nomEn: "Harmonic Glissando",
+    id: "glissando-harmonique", nomDicte: "glissement harmonique", nom: "Glissando harmonique", nomEn: "Harmonic Glissando",
     univers: "Entrées", famille: "Génération",
     resume: "Fait glisser un accord entier vers un autre, chaque voix rejoignant la sienne sans jamais se poser.",
     resumeEn: "Slides a whole chord into another, each voice joining its own without ever settling.",

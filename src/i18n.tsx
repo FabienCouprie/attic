@@ -309,6 +309,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   // flux. Le registre ne porte que le libellé français (`enregistrerTypeFlux`) ; un type
   // venu d'un plugin, absent d'ici, garde le sien.
   "infobulle.entrees": { fr: "Entrées", en: "Inputs" },
+  "infobulle.seDit": { fr: "À la dictée, se dit :", en: "Dictation name (French):" },
   "infobulle.sorties": { fr: "Sorties", en: "Outputs" },
   "typeFlux.audio": { fr: "Audio", en: "Audio" },
   "typeFlux.midi": { fr: "MIDI", en: "MIDI" },

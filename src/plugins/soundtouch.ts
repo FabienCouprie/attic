@@ -132,7 +132,7 @@ function passeStereo(buffer: AudioBuffer, params: SoundTouchParams): AudioBuffer
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "soundtouch-tempo", nom: "SoundTouch Tempo", nomEn: "SoundTouch Tempo",
+    id: "soundtouch-tempo", nomDicte: "changer le tempo", nom: "SoundTouch Tempo", nomEn: "SoundTouch Tempo",
     univers: "Traitement", famille: "Effets",
     resume: "Change le tempo en préservant la hauteur (time-stretch de qualité).",
     resumeEn: "Changes tempo while preserving pitch (quality time-stretch).",
@@ -153,7 +153,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "soundtouch-tonalite", nom: "SoundTouch Tonalité", nomEn: "SoundTouch Pitch",
+    id: "soundtouch-tonalite", nomDicte: "changer la tonalité", nom: "SoundTouch Tonalité", nomEn: "SoundTouch Pitch",
     univers: "Traitement", famille: "Effets",
     resume: "Change la hauteur en préservant la durée (pitch-shift de qualité).",
     resumeEn: "Changes pitch while preserving duration (quality pitch-shift).",
@@ -174,7 +174,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "soundtouch-rate", nom: "SoundTouch Vitesse", nomEn: "SoundTouch Rate",
+    id: "soundtouch-rate", nomDicte: "changer la vitesse", nom: "SoundTouch Vitesse", nomEn: "SoundTouch Rate",
     univers: "Traitement", famille: "Effets",
     resume: "Change la vitesse de lecture (tempo + hauteur), comme un lecteur.",
     resumeEn: "Changes playback rate (tempo + pitch together), like a tape player.",

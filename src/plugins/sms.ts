@@ -16,7 +16,7 @@ import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "sms-sinusoides-bruit", nom: "Sinusoïdes + bruit (SMS)", nomEn: "Sinusoids + Noise (SMS)",
+    id: "sms-sinusoides-bruit", nomDicte: "partiels et bruit", nom: "Sinusoïdes + bruit (SMS)", nomEn: "Sinusoids + Noise (SMS)",
     univers: "Traitement", famille: "Effets",
     resume: "Suit les partiels d'un son et met le reste à part : transposer l'harmonie sans toucher au souffle.",
     resumeEn: "Tracks a sound's partials and sets the rest aside: transpose the harmony without touching the breath.",

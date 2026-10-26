@@ -48,7 +48,7 @@ async function resamplerMono(buffer: AudioBuffer, sampleRate: number): Promise<A
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "debruitage-ia", nom: "Débruitage IA", nomEn: "AI Denoise",
+    id: "debruitage-ia", nomDicte: "retirer le bruit", nom: "Débruitage IA", nomEn: "AI Denoise",
     univers: "Traitement", famille: "Effets",
     resume: "Débruite la parole avec le modèle GTCRN, sans profil de bruit à fournir.",
     resumeEn: "Denoises speech with the GTCRN model, with no noise profile to provide.",

@@ -11,7 +11,7 @@ import { PARAMETRE_CLE } from "../audio/cles";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "color-looper",
+    id: "color-looper", nomDicte: "boucle de couleurs",
     nom: "Color Looper",
     nomEn: "Color Looper",
     // Une source : il ne reçoit rien et rend du son. Sa place est parmi les entrées, et non

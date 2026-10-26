@@ -24,7 +24,7 @@ import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "banque-sfz", nom: "Banque SFZ", nomEn: "SFZ Bank",
+    id: "banque-sfz", nomDicte: "banque d'échantillons", nom: "Banque SFZ", nomEn: "SFZ Bank",
     univers: "Entrées", famille: "Audio",
     resume: "Charge une banque d'échantillons SFZ (le kit de batterie intégré, ou un fichier du disque) sans clavier.",
     resumeEn: "Loads an SFZ sample bank (the built-in drum kit, or a file from disk) with no keyboard.",

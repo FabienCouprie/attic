@@ -144,7 +144,7 @@ println("Processed: $(size(audio, 1)) samples, $channels channels")
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "julia-processor", nom: "Julia Processor", nomEn: "Julia Processor",
+    id: "julia-processor", nomDicte: "programme julia", nom: "Julia Processor", nomEn: "Julia Processor",
     univers: "Autres", famille: "Génération",
     resume: "Éditeur de code Julia avec coloration syntaxique pour traiter l'audio.",
     resumeEn: "Julia code editor with syntax highlighting for audio processing.",

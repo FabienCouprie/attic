@@ -175,7 +175,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "cercle-permuter",
+    id: "cercle-permuter", nomDicte: "tourner les notes du cercle",
     nom: "Permuter les notes", nomEn: "Permute Notes",
     univers: "Autres", famille: "Circle",
     resume: "Mélange les notes entre les places du cercle, le rythme ne bougeant pas.",

@@ -26,14 +26,7 @@ import { octetsWav } from "./chanson-aides";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
-
-const CALCULS = [
-  { id: "", fr: "Automatique", en: "Automatic" },
-  { id: "CPU", fr: "Processeur", en: "Processor" },
-  { id: "Vulkan0", fr: "Vulkan 0", en: "Vulkan 0" },
-  { id: "Vulkan1", fr: "Vulkan 1", en: "Vulkan 1" },
-  { id: "CUDA0", fr: "CUDA 0", en: "CUDA 0" },
-];
+import { parametreCalcul } from "./parametre-calcul";
 
 const CANAL = "chatterbox:convertir";
 
@@ -90,11 +83,9 @@ export const fiches = ([
       { nom: "Graine", nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42, graine: true,
         doc: "La graine du tirage. À graine égale et entrées égales, le rendu est le même ; la changer donne une autre prise de la même conversion.",
         docEn: "The seed of the draw. With the same seed and the same inputs, the result is the same; changing it gives another take of the same conversion." },
-      { nom: "Calcul", nomEn: "Compute", type: "choix",
-        options: CALCULS.map((c) => c.fr), optionsEn: CALCULS.map((c) => c.en),
-        optionIds: CALCULS.map((c) => c.id), defaut: "Automatique", defautEn: "Automatic",
-        doc: "Le périphérique de calcul. Il change le temps de calcul. « Automatique » laisse le moteur prendre ce qu'il juge le meilleur, ce qui n'est pas toujours la carte graphique : une machine à deux cartes expose souvent le circuit intégré en premier, et les deux numéros sont là pour les départager. « Processeur » tourne partout, et bien plus lentement.",
-        docEn: "The compute device. It changes the compute time. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly." },
+      parametreCalcul(
+        "Il change le temps de calcul.",
+        "It changes the compute time."),
     ],
     async executer(ctx: any) {
       const pont = api();

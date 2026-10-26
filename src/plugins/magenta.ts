@@ -301,7 +301,7 @@ export const fiches: FicheAudio[] = ([
      },
   },
   {
-    id: "magenta-interpoler-midi",
+    id: "magenta-interpoler-midi", nomDicte: "mélange de deux mélodies",
     nom: "Magenta Interpoler MIDI",
     nomEn: "Magenta Interpolate MIDI",
     univers: "Autres",

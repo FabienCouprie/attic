@@ -23,14 +23,7 @@ import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { choixLangues } from "../core/langues";
-
-const CALCULS = [
-  { id: "", fr: "Automatique", en: "Automatic" },
-  { id: "CPU", fr: "Processeur", en: "Processor" },
-  { id: "Vulkan0", fr: "Vulkan 0", en: "Vulkan 0" },
-  { id: "Vulkan1", fr: "Vulkan 1", en: "Vulkan 1" },
-  { id: "CUDA0", fr: "CUDA 0", en: "CUDA 0" },
-];
+import { parametreCalcul } from "./parametre-calcul";
 
 /**
  * Les onze langues que le moteur déclare. Une langue hors de cette liste serait refusée par lui.
@@ -130,11 +123,9 @@ export const fiches = ([
         ...choixLangues(LANGUES), defaut: "Français", defautEn: "French",
         doc: "La langue du texte, parmi les onze que le moteur connaît. Une langue qui ne correspond pas au texte dégrade le placement sans refuser le travail.",
         docEn: "The language of the text, among the eleven the engine knows. A language that does not match the text degrades the placement without refusing the work." },
-      { nom: "Calcul", nomEn: "Compute", type: "choix",
-        options: CALCULS.map((c) => c.fr), optionsEn: CALCULS.map((c) => c.en),
-        optionIds: CALCULS.map((c) => c.id), defaut: "Automatique", defautEn: "Automatic",
-        doc: "Le périphérique de calcul. Il change le temps de calcul et non les instants trouvés. « Automatique » laisse le moteur prendre ce qu'il juge le meilleur, ce qui n'est pas toujours la carte graphique : une machine à deux cartes expose souvent le circuit intégré en premier, et les deux numéros sont là pour les départager. « Processeur » tourne partout, et bien plus lentement.",
-        docEn: "The compute device. It changes the compute time and not the instants found. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly." },
+      parametreCalcul(
+        "Il change le temps de calcul et non les instants trouvés.",
+        "It changes the compute time and not the instants found."),
     ],
     async executer(ctx: any) {
       const pont = api();

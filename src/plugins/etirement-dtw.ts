@@ -15,7 +15,7 @@ import { SAUT_TRAME_CHROMAGRAMME } from "../audio/analyse";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "etirement-dtw", nom: "Étirement temporel (DTW)", nomEn: "Time Stretch (DTW)",
+    id: "etirement-dtw", nomDicte: "étirement temporel", nom: "Étirement temporel (DTW)", nomEn: "Time Stretch (DTW)",
     univers: "Autres", famille: "Test zone",
     resume: "[expérimental : résultat très discutable] Réétire l'audio de la Piste A le long du chemin d'alignement produit par Similarité audio, par interpolation linéaire le long de la correspondance de trames. Ce n'est pas un vocodeur de phase : la hauteur dérive localement partout où le débit change (comme une lecture à vitesse variable).",
     resumeEn: "[experimental: very questionable result] Re-stretches Track A's audio along the alignment path produced by Audio Similarity, by linear interpolation along the frame correspondence. This is not a phase vocoder: pitch drifts locally wherever the rate changes (like variable-speed playback).",

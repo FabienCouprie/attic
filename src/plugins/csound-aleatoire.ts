@@ -19,7 +19,7 @@ import { composerAleatoire, statsLisibles, type Loi, type Repartition } from "..
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "partition-aleatoire-csound", nom: "Partition aléatoire Csound", nomEn: "Random Csound Score",
+    id: "partition-aleatoire-csound", nomDicte: "partition programmée au hasard", nom: "Partition aléatoire Csound", nomEn: "Random Csound Score",
     // Avec les autres nœuds Csound, et non dans « Génération » : ce qu'il produit n'est pas de
     // l'audio mais une partition, qui ne se branche que sur un nœud Csound. Le chercher là où il
     // sert est plus utile que le ranger par ce qu'il fait.

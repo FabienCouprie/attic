@@ -112,7 +112,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "continuation-spectrale-lstm",
+    id: "continuation-spectrale-lstm", nomDicte: "continuation du spectre",
     nom: "Continuation LSTM",
     nomEn: "LSTM Continuation",
     univers: "Autres",

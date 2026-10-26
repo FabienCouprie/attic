@@ -19,7 +19,7 @@ const RAPPORTS: Record<string, number> = {
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "canon-nancarrow", nom: "Canon de tempo (Nancarrow)", nomEn: "Tempo Canon (Nancarrow)",
+    id: "canon-nancarrow", nomDicte: "canon de tempo", nom: "Canon de tempo (Nancarrow)", nomEn: "Tempo Canon (Nancarrow)",
     univers: "Traitement", famille: "Effets",
     resume: "Superpose un motif à lui-même dans un rapport de tempo fixe.",
     resumeEn: "Layers a pattern against itself at a fixed tempo ratio.",

@@ -18,7 +18,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "convertisseur-audio", nom: "WAV → MP3", nomEn: "WAV → MP3", univers: "Traitement", famille: "Conversion",
+    id: "convertisseur-audio", nomDicte: "convertir en fichier compressé", nom: "WAV → MP3", nomEn: "WAV → MP3", univers: "Traitement", famille: "Conversion",
     resume: "Convertit un flux audio en MP3 téléchargeable.",
     resumeEn: "Converts an audio stream to downloadable MP3.",
     entrees: [{ nom: "Audio", type: "audio" }],
@@ -51,7 +51,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "convertisseur-mp3-wav", nom: "MP3 → WAV", nomEn: "MP3 → WAV", univers: "Traitement", famille: "Conversion",
+    id: "convertisseur-mp3-wav", nomDicte: "convertir en fichier brut", nom: "MP3 → WAV", nomEn: "MP3 → WAV", univers: "Traitement", famille: "Conversion",
     resume: "Convertit un flux audio en WAV téléchargeable.",
     resumeEn: "Converts an audio stream to downloadable WAV.",
     // Ce que ce nœud fait entendre est ce que son bouton enregistre : le fichier porte donc son

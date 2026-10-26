@@ -103,7 +103,7 @@ function fichierDepuisPixels(rgba: Uint8ClampedArray, largeur: number, hauteur: 
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "son-spectrogramme", nom: "Son → spectrogramme", nomEn: "Sound to spectrogram",
+    id: "son-spectrogramme", nomDicte: "son vers image du spectre", nom: "Son → spectrogramme", nomEn: "Sound to spectrogram",
     univers: "Traitement", famille: "Mels",
     resume: "Analyse un son en spectrogramme de mels, au paramétrage de Riffusion.",
     resumeEn: "Analyses a sound into a mel spectrogram, with Riffusion's parameters.",
@@ -141,7 +141,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "spectrogramme-son", nom: "Spectrogramme → son", nomEn: "Spectrogram to sound",
+    id: "spectrogramme-son", nomDicte: "image du spectre vers son", nom: "Spectrogramme → son", nomEn: "Spectrogram to sound",
     univers: "Traitement", famille: "Mels",
     resume: "Rend le son que porte un spectrogramme de mels, la phase estimée par Griffin-Lim.",
     resumeEn: "Returns the sound a mel spectrogram carries, with the phase estimated by Griffin-Lim.",
@@ -200,7 +200,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "spectrogramme-image", nom: "Spectrogramme → image", nomEn: "Spectrogram to image",
+    id: "spectrogramme-image", nomDicte: "image du spectre vers dessin", nom: "Spectrogramme → image", nomEn: "Spectrogram to image",
     univers: "Traitement", famille: "Mels",
     resume: "Écrit un spectrogramme de mels en image, à la convention de Riffusion.",
     resumeEn: "Writes a mel spectrogram as an image, with Riffusion's convention.",
@@ -222,7 +222,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "image-spectrogramme", nom: "Image → spectrogramme", nomEn: "Image to spectrogram",
+    id: "image-spectrogramme", nomDicte: "dessin vers image du spectre", nom: "Image → spectrogramme", nomEn: "Image to spectrogram",
     univers: "Traitement", famille: "Mels",
     resume: "Relit une image comme un spectrogramme de mels, à la convention de Riffusion.",
     resumeEn: "Reads an image back as a mel spectrogram, with Riffusion's convention.",

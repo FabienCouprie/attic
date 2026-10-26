@@ -26,7 +26,7 @@ const TAILLES = [256, 512, 1024, 2048, 4096, 8192];
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "granulation-spectrale", nom: "Granulation spectrale", nomEn: "Spectral granulation",
+    id: "granulation-spectrale", nomDicte: "grains du spectre", nom: "Granulation spectrale", nomEn: "Spectral granulation",
     univers: "Traitement", famille: "Effets",
     resume: "Granule un son dans le domaine des fréquences : chaque grain ne garde que son spectre d'amplitude, et se réécrit à une autre taille.",
     resumeEn: "Granulates a sound in the frequency domain: each grain keeps only its magnitude spectrum, and is rewritten at another size.",

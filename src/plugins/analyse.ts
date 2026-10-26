@@ -1,7 +1,7 @@
 // plugins/analyse.ts — Nœuds d'analyse
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { avecDoc } from "./notices";
+import { avecDoc, avecNomDicte } from "./notices";
 import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, analyserEmotion, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
 import { langueCourante, traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
@@ -74,7 +74,7 @@ export const fiches: FicheAudio[] = ([
    }, nomEn: "Audio Analysis", resumeEn: "Analyse tempo, key, song/instrumental type.",
  },
   {
-    id: "musicxml", nom: "MusicXML", nomEn: "MusicXML", univers: "Visualisation", famille: "Analyse",
+    id: "musicxml", nomDicte: "partition en fichier", nom: "MusicXML", nomEn: "MusicXML", univers: "Visualisation", famille: "Analyse",
     resume: "Convertit un MIDI en partition MusicXML, le format que lisent MuseScore, Finale et Sibelius.",
     resumeEn: "Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read.",
     // UNE SECONDE ENTRÉE, APRÈS LA PREMIÈRE ET NON À SA PLACE : les arêtes enregistrées visent le
@@ -245,7 +245,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "goniometre", nom: "Goniomètre", nomEn: "Goniometer", univers: "Visualisation", famille: "Analyse",
+    id: "goniometre", nomDicte: "image de la stéréo", nom: "Goniomètre", nomEn: "Goniometer", univers: "Visualisation", famille: "Analyse",
     resume: "Mesure la largeur stéréo, la corrélation de phase et ce que le mix perdrait en mono.",
     resumeEn: "Measures stereo width, phase correlation and what the mix would lose in mono.",
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
@@ -366,7 +366,7 @@ export const fiches: FicheAudio[] = ([
     "Computes the spectral rolloff frequency using Meyda.",
     "Rolloff", "Rolloff", calculerRolloffSpectralMeyda),
   {
-    id: "transcripteur-midi", nom: "Transcripteur MIDI", nomEn: "MIDI Transcriber", univers: "Traitement", famille: "Conversion",
+    id: "transcripteur-midi", nomDicte: "relevé des notes", nom: "Transcripteur MIDI", nomEn: "MIDI Transcriber", univers: "Traitement", famille: "Conversion",
     resume: "Transcrit un signal audio en notes MIDI.",
     resumeEn: "Transcribes an audio signal into MIDI notes.",
     noticeEn: "Transcribes an audio signal into MIDI notes. FFT mono or Basic Pitch ONNX polyphonic.",
@@ -462,4 +462,12 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [audio, texte], message: resume };
    },
  },
-] as FicheAudio[]).map(avecDoc);
+  // LES QUATRE DESCRIPTEURS MEYDA SE DISENT AUTREMENT : « Meyda » est une marque, et « centroïde »,
+  // « zcr » et « rolloff » manquent au lexique du moteur vocal. Ils naissent d'une fabrique, d'où
+  // cette table plutôt qu'un champ sur chacun. Voir `core/types.ts`.
+] as FicheAudio[]).map(avecDoc).map(avecNomDicte({
+  "centroide-spectral": "centre du spectre",
+  "rms-meyda": "niveau efficace",
+  "zcr-meyda": "passages par zéro",
+  "rolloff-spectral-meyda": "limite du spectre",
+}));

@@ -35,7 +35,7 @@ const fiches = () => registre.tousLesPlugins()
  * monter, et c'est précisément ce qu'on veut voir — sans ce chiffre, la dictée perdrait des
  * composants sans que rien ne le dise, ce qui est exactement ce qui s'est passé.
  */
-const INDICIBLES = 140;
+const INDICIBLES = 0;
 
 describe("les noms parlés du catalogue", () => {
   it("UN NOM PARLÉ DÉCLARÉ DOIT LUI-MÊME SE PRONONCER, sans quoi il ne sert à rien", () => {
@@ -88,6 +88,33 @@ describe("les noms parlés du catalogue", () => {
       .filter((d) => d.nomDicte && estDicible(normaliserPourDictee(d.nom), false))
       .map((d) => `${d.id} : « ${d.nom} » se dit déjà, « ${d.nomDicte} » ne servira jamais`);
     expect(inutiles).toEqual([]);
+  });
+
+  it("ET IL S'ÉCRIT EN FRANÇAIS, PARCE QUE L'INFOBULLE LE MONTRE TEL QUEL", () => {
+    // ═══ POURQUOI CETTE RÈGLE A DÛ ÊTRE ÉCRITE : TREIZE NOMS L'ENFREIGNAIENT ═══
+    //
+    // `normaliserPourDictee` efface toute ponctuation, de sorte que « critères de l'objet sonore »
+    // et « critères de l objet sonore » sont LE MÊME MOT pour la reconnaissance. Rien ne poussait
+    // donc à écrire l'apostrophe, et treize noms ne l'avaient pas.
+    //
+    // MAIS L'INFOBULLE AFFICHE LA VALEUR BRUTE — « À la dictée, se dit : … » —, et le survol
+    // montrait donc « forme de l attaque ». Un nom parlé est LU autant qu'il est DIT, et la forme
+    // qui sert à reconnaître n'est pas celle qui se montre.
+    const ELIDES = new Set([
+      "l", "d", "j", "m", "n", "s", "t", "c",
+      "qu", "jusqu", "lorsqu", "puisqu", "quoiqu", "presqu", "aujourd",
+    ]);
+    const fautifs = fiches()
+      .filter((d) => d.nomDicte?.toLowerCase().split(" ").some((mot) => ELIDES.has(mot)))
+      .map((d) => `${d.id} « ${d.nomDicte} »`);
+    expect(fautifs, [
+      "",
+      "UN NOM PARLÉ PORTE UNE ÉLISION SANS SON APOSTROPHE.",
+      "",
+      "La reconnaissance n'y voit rien, la normalisation effaçant la ponctuation. Mais l'infobulle",
+      "affiche la valeur telle quelle, et l'utilisateur lit « forme de l attaque ».",
+      "",
+    ].join("\n")).toEqual([]);
   });
 
   it("LE NOMBRE DE COMPOSANTS INDICIBLES NE REMONTE PAS", () => {

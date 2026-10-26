@@ -71,7 +71,7 @@ export async function ollamaModeles(): Promise<RepModelesOllama> {
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "ollama-llm", nom: "LLM Ollama", nomEn: "Ollama LLM",
+    id: "ollama-llm", nomDicte: "modèle de langue local", nom: "LLM Ollama", nomEn: "Ollama LLM",
     univers: "Autres", famille: "Texte",
     resume: "Génère du texte via un modèle local Ollama (Llama, Qwen, Mistral…).",
     resumeEn: "Generates text via a local Ollama model (Llama, Qwen, Mistral…).",

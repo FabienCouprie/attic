@@ -12,7 +12,7 @@ import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "stn-sinus-transitoires-bruit",
+    id: "stn-sinus-transitoires-bruit", nomDicte: "partiels attaques et bruit",
     nom: "Sinus + transitoires + bruit (STN)", nomEn: "Sines + Transients + Noise (STN)",
     univers: "Traitement", famille: "Effets",
     resume: "Sépare un son en trois matières (ce qui tient, ce qui claque, ce qui souffle) sans rien perdre.",

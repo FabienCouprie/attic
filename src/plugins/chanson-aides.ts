@@ -7,6 +7,7 @@
 // l'ordre d'évaluation des modules. Les pièces communes n'ont donc aucune dépendance sur les
 // fiches, et les deux fichiers de fiches en dépendent tous les deux.
 import { traduire } from "../i18n";
+import { PARAMETRE_CALCUL } from "./parametre-calcul";
 import { messageEchecPont } from "./pont-electron";
 
 /**
@@ -18,31 +19,6 @@ import { messageEchecPont } from "./pont-electron";
  * ce sont celles-là. Au-delà, le chant se dégrade sans que rien ne prévienne.
  */
 export const LANGUES = ["fr", "en", "es", "de", "it", "pt", "ru", "ja", "ko", "zh"];
-
-/**
- * Le réglage du périphérique, partagé par les six nœuds : même liste, même sens.
- *
- * UNE LISTE ET NON UN CHAMP LIBRE. Le contrat des réglages le dit : dès qu'on peut mettre une
- * glissière, une liste déroulante ou un sélecteur, il faut le faire, et le champ libre n'est
- * légitime que pour ce qui n'est pas une valeur. Les périphériques sont une poignée de noms que
- * le moteur reconnaît ; ils se choisissent, ils ne s'écrivent pas.
- */
-const CALCULS = [
-  { id: "", fr: "Automatique", en: "Automatic" },
-  { id: "CPU", fr: "Processeur", en: "Processor" },
-  { id: "Vulkan0", fr: "Vulkan 0", en: "Vulkan 0" },
-  { id: "Vulkan1", fr: "Vulkan 1", en: "Vulkan 1" },
-  { id: "CUDA0", fr: "CUDA 0", en: "CUDA 0" },
-];
-
-export const PARAMETRE_CALCUL = {
-  nom: "Calcul", nomEn: "Compute", type: "choix" as const,
-  options: CALCULS.map((c) => c.fr), optionsEn: CALCULS.map((c) => c.en),
-  optionIds: CALCULS.map((c) => c.id),
-  defaut: "Automatique", defautEn: "Automatic",
-  doc: "Le périphérique de calcul. « Automatique » laisse le moteur prendre ce qu'il juge le meilleur, ce qui n'est pas toujours la carte graphique : une machine à deux cartes expose souvent le circuit intégré en premier, et les deux numéros sont là pour les départager. « Processeur » tourne partout, et bien plus lentement.",
-  docEn: "The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly.",
-};
 
 /**
  * Les réglages que tout rendu partage : le débruitage, le périphérique et le découpage du

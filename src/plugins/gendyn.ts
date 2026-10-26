@@ -8,7 +8,7 @@ import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "gendyn-xenakis", nom: "GENDYN (Xenakis)", nomEn: "GENDYN (Xenakis)",
+    id: "gendyn-xenakis", nomDicte: "synthèse stochastique", nom: "GENDYN (Xenakis)", nomEn: "GENDYN (Xenakis)",
     // Générateur sans entrée : sa place est parmi les sources.
     univers: "Entrées", famille: "Génération",
     resume: "Synthèse stochastique : la forme d'onde est une marche aléatoire bornée.",

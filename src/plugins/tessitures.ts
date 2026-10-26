@@ -84,7 +84,7 @@ export function construireListeTessitures(
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "tessitures-voix", nom: "Tessitures de voix", nomEn: "Vocal Ranges",
+    id: "tessitures-voix", nomDicte: "étendues de voix", nom: "Tessitures de voix", nomEn: "Vocal Ranges",
     univers: "Autres", famille: "Texte",
     resume: "Émet en texte une collection de tessitures vocales (hommes, femmes, enfants).",
     resumeEn: "Outputs a collection of vocal ranges as text (men, women, children).",
