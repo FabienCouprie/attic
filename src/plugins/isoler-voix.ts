@@ -35,6 +35,7 @@ import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { octetsWav } from "./chanson-aides";
 import { PARAMETRE_CALCUL } from "./parametre-calcul";
+import { relayerProgression } from "./progression-pont";
 
 const CANAL = "roformer:separer";
 
@@ -44,10 +45,7 @@ export const FREQUENCE_MODELE = 44100;
 const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknown[]) => Promise<unknown>> }).api;
 
 function suivre(ctx: { onProgress?: (m: string) => void }) {
-  const pont = api()?.roformerProgression as unknown as
-    ((cb: (e: { ligne: string }) => void) => () => void) | undefined;
-  if (!pont) return () => { /* hors application : rien à suivre */ };
-  return pont(({ ligne }) => ctx.onProgress?.(ligne));
+  return relayerProgression(ctx, api()?.roformerProgression);
 }
 
 /**

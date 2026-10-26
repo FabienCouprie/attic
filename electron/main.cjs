@@ -1491,6 +1491,12 @@ ipcMain.handle("fichier:lire-texte", async (_event, cheminRelatif) => {
 // et `julia:executer` y ecrivent leurs scripts, et les noeuds y suppriment leurs fichiers de
 // travail. Armer sans l'avoir declare casserait ces suppressions-la, en silence.
 ipcMain.handle("fichier:supprimer", async (_event, chemin) => {
+  const racine = verdictRacine(chemin);
+  inscrireChemin("supprimer", chemin, racine.ok, racine.sousRacine);
+  if (!racine.ok) {
+    console.error(`[attic] fichier:supprimer REFUSE: ${chemin} — ${racine.raison}`);
+    return false;
+  }
   try {
     if (fs.existsSync(chemin)) fs.unlinkSync(chemin);
     return true;

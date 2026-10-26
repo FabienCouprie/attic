@@ -390,10 +390,38 @@ describe("les sites qui frappent une racine, dans le processus principal", () =>
     }
   });
 
+  it("TOUT CANAL QUI REÇOIT UN CHEMIN DU RENDU LE PÈSE ET L'INSCRIT", () => {
+    // ═══ LE GARDE QUI MANQUAIT, ET CE QU'IL A COÛTÉ ═══
+    //
+    // Relevé par une revue le 2026-10-26 : « `fichier:supprimer` n'a aucune garde. Il supprime
+    // n'importe quel fichier que l'utilisateur a le droit de supprimer, et il n'est soumis ni à la
+    // règle des racines, ni au journal des chemins. » Vrai : un `fs.unlinkSync` sans une ligne de
+    // validation, pendant que ses trois voisins pesaient le leur.
+    //
+    // LE BORNAGE AVAIT ÉTÉ POSÉ CANAL PAR CANAL, et rien ne disait lesquels devaient l'avoir. Un
+    // canal oublié ne se voyait donc pas — et le prochain ne se verrait pas davantage.
+    for (const canal of ["fichier:ecrire", "fichier:copier", "fichier:ouvrir-chemin", "fichier:supprimer"]) {
+      const debut = MAIN.indexOf(`ipcMain.handle("${canal}"`);
+      expect(debut, `le canal ${canal} a disparu`).toBeGreaterThan(-1);
+      const fin = MAIN.indexOf("ipcMain.handle(", debut + 20);
+      const corps = MAIN.slice(debut, fin > debut ? fin : undefined);
+      expect(corps, [
+        "",
+        `LE CANAL « ${canal} » NE PÈSE PAS LE CHEMIN QU'IL REÇOIT.`,
+        "",
+        "Il doit consulter `verdictRacine` : c'est ce qui borne l'endroit, et la seule chose qui",
+        "vaille pour une suppression, où l'extension ne protège personne.",
+        "",
+      ].join("\n")).toMatch(/\bverdictRacine\b/);
+      expect(corps, `${canal} doit s'inscrire au journal, sans quoi le relevé des racines l'ignore`)
+        .toMatch(/\binscrireChemin\b/);
+    }
+  });
+
   it("et AUCUN n'est posé dans un gestionnaire qui reçoit un chemin du rendu", () => {
-    // Les trois canaux qui reçoivent un chemin nommé par le rendu. Un `declarerRacine` dans leur
+    // Les quatre canaux qui reçoivent un chemin nommé par le rendu. Un `declarerRacine` dans leur
     // corps autoriserait le chemin qu'ils sont chargés de vérifier.
-    for (const canal of ["fichier:ecrire", "fichier:copier", "fichier:ouvrir-chemin"]) {
+    for (const canal of ["fichier:ecrire", "fichier:copier", "fichier:ouvrir-chemin", "fichier:supprimer"]) {
       const debut = MAIN.indexOf(`ipcMain.handle("${canal}"`);
       expect(debut, `le canal ${canal} a disparu`).toBeGreaterThan(-1);
       const fin = MAIN.indexOf("ipcMain.handle(", debut + 20);
