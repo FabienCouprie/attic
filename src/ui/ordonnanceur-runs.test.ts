@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  creerOrdonnanceur, creteDeSimultanees, fusionDeLot, oublierLaCrete,
+  creerOrdonnanceur, creteDeSimultanees, fusionDeLot, oublierLaCrete, REGLAGES_DU_MOTEUR,
   type JetonDeRun, type PorteeDeLot,
 } from "./ordonnanceur-runs";
 
@@ -181,12 +181,17 @@ describe("l'ordonnanceur d'exécutions", () => {
         .toEqual([{ versLAval: true }]);
     });
 
-    it("et deux cibles différentes ne se fondent pas : la plus ancienne tombe, comme avant", async () => {
-      // L'union de deux nœuds n'existe pas : le seul run qui les couvre tous deux est le run
-      // GLOBAL, et l'escalade ferait tourner tout le graphe là où personne ne l'a demandé.
+    it("et deux cibles différentes ne se fondent pas : elles attendent chacune leur tour", async () => {
+      // ═══ CE CAS DISAIT L'INVERSE, ET C'EST LA REVUE QUI A EU RAISON ═══
+      //
+      // Il affirmait que la plus ancienne tombait, au motif que l'union de deux nœuds n'existe pas
+      // — le seul run qui les couvre tous deux est le run GLOBAL. C'était vrai de l'UNION, et
+      // faux comme conclusion : la réponse n'est ni l'union ni le rejet, mais la FILE. Avec les
+      // réglages du moteur, les deux cibles se rejouent l'une après l'autre, et l'amont commun
+      // n'est calculé qu'une fois grâce au cache.
       const journal: string[] = [];
       const vus: (PorteeDeLot | undefined)[] = [];
-      const o = creerOrdonnanceur();
+      const o = creerOrdonnanceur(REGLAGES_DU_MOTEUR);
       const lot = lanceur(journal, vus);
       const a = tacheRetenue("a", journal);
       const pa = o.demander(a.executer);
@@ -195,12 +200,55 @@ describe("l'ordonnanceur d'exécutions", () => {
       const p1 = o.demander((j) => lot("n1", undefined, j), fusionDeLot("n1", undefined, lot));
       const p2 = o.demander((j) => lot("n2", undefined, j), fusionDeLot("n2", undefined, lot));
 
-      expect(o.enAttente(), "elles ne se fondent pas, donc la borne tranche").toBe(1);
+      expect(o.enAttente(), "elles ne se fondent pas : deux intentions, deux places").toBe(2);
+      a.relacher();
+      expect(await pa).toBe("a");
+      expect(await p1, "la plus ancienne n'est plus écartée").toBe("lot");
+      expect(await p2).toBe("lot");
+      expect(journal.filter((x) => x === "lot").length, "les deux ont tourné").toBe(2);
+    });
+
+    it("MAIS LA BORNE N'A PAS DISPARU : au-delà de quatre cibles, la plus ancienne tombe", async () => {
+      // Elle a cessé de valoir UN, elle n'a pas cessé d'exister : une rafale ne doit pas rejouer
+      // indéfiniment ce que plus personne n'attend.
+      const journal: string[] = [];
+      const vus: (PorteeDeLot | undefined)[] = [];
+      const o = creerOrdonnanceur(REGLAGES_DU_MOTEUR);
+      const lot = lanceur(journal, vus);
+      const a = tacheRetenue("a", journal);
+      const pa = o.demander(a.executer);
+      await souffler();
+
+      const demandes = ["n1", "n2", "n3", "n4", "n5"].map((n) =>
+        o.demander((j) => lot(n, undefined, j), fusionDeLot(n, undefined, lot)));
+      expect(o.enAttente(), "quatre au plus").toBe(4);
       a.relacher();
       await pa;
-      expect(await p1, "la plus ancienne est écartée, comme avant").toBeUndefined();
-      expect(await p2).toBe("lot");
-      expect(journal.filter((x) => x === "lot").length, "un seul run a eu lieu").toBe(1);
+      expect(await demandes[0], "la plus ancienne est tombée").toBeUndefined();
+      for (const p of demandes.slice(1)) expect(await p).toBe("lot");
+      expect(journal.filter((x) => x === "lot").length).toBe(4);
+    });
+
+    it("ET L'ORDRE D'ARRIVÉE EST TENU : la relance en attente passe avant le clic qui l'a suivie", async () => {
+      const journal: string[] = [];
+      const vus: (PorteeDeLot | undefined)[] = [];
+      const o = creerOrdonnanceur(REGLAGES_DU_MOTEUR);
+      const lot = async (noeud: string | undefined, _p: PorteeDeLot | undefined, _j?: JetonDeRun) => {
+        journal.push(String(noeud));
+        return "lot";
+      };
+      void vus;
+      const a = tacheRetenue("a", journal);
+      const pa = o.demander(a.executer);
+      await souffler();
+
+      o.demander((j) => lot("n1", undefined, j), fusionDeLot("n1", undefined, lot));
+      o.demander((j) => lot("n2", undefined, j), fusionDeLot("n2", undefined, lot));
+      a.relacher();
+      await pa;
+      await souffler();
+      await souffler();
+      expect(journal.filter((x) => x === "n1" || x === "n2")).toEqual(["n1", "n2"]);
     });
 
     it("ET DEUX RUNS GLOBAUX SE FONDENT AUSSI, l'aval de l'un servant à l'autre", async () => {

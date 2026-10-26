@@ -4,6 +4,16 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+
+- **DEUX CIBLES DIFFÉRENTES NE SE CHASSENT PLUS : ELLES ATTENDENT CHACUNE LEUR TOUR.** Reprise du point A après une contre-proposition de la revue, et **elle avait raison contre moi**. La fusion des demandes de même cible, livrée la veille, laissait vivre la moitié du défaut : une relance automatique en attente sur X était toujours écartée par un ▶ cliqué sur Y.
+
+  - **MON ARGUMENT ÉTAIT JUSTE ET MA CONCLUSION FAUSSE.** L'union de deux nœuds différents n'existe pas — le seul run qui les couvre tous deux est le run **global**, et l'escalade ferait tourner tout le graphe là où personne ne l'a demandé. Mais la réponse n'est ni l'union ni le rejet : c'est la **file**. J'avais envisagé cette forme, puis je l'avais simplifiée au lieu de la peser.
+  - **ET LA SECONDE PASSE EST PEU COÛTEUSE, ce que j'ai vérifié plutôt que cru.** Un nœud dont les paramètres, les entrées, le câblage aval et les valeurs entrantes n'ont pas changé est **sauté entièrement**, son résultat et ses deux canaux d'affichage restitués du cache. L'amont commun à deux cibles n'est donc calculé qu'une fois. **Sauf les nœuds `jamaisCache`**, qui se rejouent parce que leur résultat dépend de ce qu'aucune empreinte ne voit : c'est le seul cas où la file coûte vraiment deux fois, et il fallait le dire.
+  - **LA BORNE N'A PAS DISPARU, elle a cessé de valoir un** : quatre cibles distinctes peuvent attendre, et au-delà la plus ancienne tombe comme avant. L'argument qui justifiait un — « cinq clics ne veulent pas dire rejoue cinq fois » — ne vaut que pour des intentions **répétées**, et c'est la fusion qui les absorbe désormais. **Quatre est un jugement et non une mesure**, et il est écrit comme tel : une relance automatique plus trois clics délibérés est déjà plus qu'un utilisateur attentif n'en produit pendant un run.
+  - **UN CAS DISAIT L'INVERSE ET A CHANGÉ**, ce qui se dit : il affirmait que la plus ancienne tombait, au motif que l'union n'existe pas. Le motif était vrai, la conclusion non.
+  - **TROIS CAS NEUFS**, dont l'ordre d'arrivée — la relance en attente passe avant le clic qui l'a suivie. Défaut planté : la borne remise à un, et les trois tombent.
+
 ### Changed
 
 - **L'OUVERTURE DE FICHIER PASSE D'UNE LISTE DE REFUS À UNE LISTE D'AUTORISATION, et c'est une décision de Fabien.** `chemin-sur.cjs` la désignait lui-même comme en attente : « passer à une liste d'autorisation reste possible, et c'est une décision du propriétaire ».

@@ -72,13 +72,16 @@ export type Politique =
  * DEUX DEMANDES DE MÊME CIBLE SE FONDENT, et leurs portées s'unissent : l'aval est refait dès que
  * l'une des deux le demande. Les deux appelants reçoivent le résultat du run fondu.
  *
- * ═══ ET DEUX CIBLES DIFFÉRENTES NE SE FONDENT PAS, ce qui est une décision ═══
+ * ═══ ET DEUX CIBLES DIFFÉRENTES NE SE FONDENT PAS : ELLES ATTENDENT CHACUNE SON TOUR ═══
  *
- * La revue proposait l'union de toutes les portées. Pour deux nœuds différents, cette union
- * n'existe pas : le seul run qui les couvre tous les deux est le run GLOBAL. L'escalade ferait
- * tourner tout le graphe là où personne ne l'a demandé — pendant une séparation de plusieurs
- * minutes, le remède coûterait plus cher que le mal. Deux cibles différentes gardent donc la règle
- * d'avant, « finalement, ceci ».
+ * La revue proposait d'abord l'union de toutes les portées. Pour deux nœuds différents, cette
+ * union n'existe pas : le seul run qui les couvre tous les deux est le run GLOBAL, et l'escalade
+ * ferait tourner tout le graphe là où personne ne l'a demandé.
+ *
+ * LA RÉPONSE N'EST DONC NI L'UNION NI LE REJET, mais la FILE : deux cibles distinctes se rejouent
+ * l'une après l'autre. C'est la contre-proposition de la revue, et elle est juste — j'avais
+ * envisagé cette forme puis je l'avais simplifiée au lieu de la peser, ce qui laissait vivre le
+ * défaut qu'on croyait fermer. Voir `REGLAGES_DU_MOTEUR`, qui porte la borne et son prix.
  */
 export interface Fusion<T> {
   /** Deux demandes de même clé se fondent. Deux clés différentes ne se fondent pas. */
@@ -326,11 +329,30 @@ export function fusionDeLot<T>(
  * « passer-devant » — le ▶ d'un nœud interrompt le run global pour passer — est écrite et éprouvée
  * juste au-dessus ; c'est un mot à changer, pas une mécanique à écrire.
  *
- * UNE SEULE DEMANDE ATTEND À LA FOIS. Cinq clics pendant un run de trois minutes ne veulent pas dire
- * « rejoue cinq fois ».
+ * ═══ QUATRE CIBLES DISTINCTES PEUVENT ATTENDRE, ET CE CHIFFRE A UNE HISTOIRE ═══
+ *
+ * IL VALAIT UN, ET C'ÉTAIT TROP PEU. Avec la fusion, cinq clics sur le MÊME nœud ne font qu'une
+ * demande : l'argument qui justifiait la borne à un — « cinq clics ne veulent pas dire rejoue cinq
+ * fois, ils veulent dire finalement, ceci » — ne vaut que pour des intentions RÉPÉTÉES, et c'est
+ * la fusion qui les absorbe désormais. Deux cibles différentes sont deux intentions différentes,
+ * et en jeter une restait le défaut qu'on croyait avoir fermé : une relance automatique sur X
+ * était toujours écartée par un ▶ cliqué sur Y.
+ *
+ * ET LA SECONDE PASSE EST PEU COÛTEUSE, ce qui est la mesure qui rend cette file tenable. Un nœud
+ * dont les paramètres, les entrées, le câblage aval et les valeurs entrantes n'ont pas changé est
+ * SAUTÉ, son résultat et ses deux canaux restitués du cache — voir `core/cache-execution.ts`.
+ * L'amont commun à deux cibles n'est donc calculé qu'une fois. **Sauf les nœuds `jamaisCache`**,
+ * qui se rejouent parce que leur résultat dépend de ce qu'aucune empreinte ne voit ; c'est le seul
+ * cas où la file coûte vraiment deux fois.
+ *
+ * POURQUOI QUATRE, ET C'EST UN JUGEMENT ET NON UNE MESURE. Une relance automatique plus trois
+ * clics délibérés est déjà plus qu'un utilisateur attentif n'en produit pendant un run. Au-delà,
+ * la plus ancienne tombe, comme avant — la borne n'a pas disparu, elle a cessé de valoir un.
  */
+export const REGLAGES_DU_MOTEUR: Reglages = { politique: "attendre", enAttenteMax: 4 };
+
 export function useOrdonnanceurDeRuns(): Ordonnanceur {
   const ref = useRef<Ordonnanceur | null>(null);
-  if (!ref.current) ref.current = creerOrdonnanceur({ politique: "attendre", enAttenteMax: 1 });
+  if (!ref.current) ref.current = creerOrdonnanceur(REGLAGES_DU_MOTEUR);
   return ref.current;
 }
