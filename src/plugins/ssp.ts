@@ -15,6 +15,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import {
   AMPLITUDES_DEFAUT, EST_PRINCIPE, PRINCIPES, TEMPS_DEFAUT,
   centroideHz, composer, creteDb, lireEnsemble, nomPrincipe, type Principe,
@@ -78,7 +79,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const en = langueCourante() === "en";
-      const frequence = 44100;
+      const frequence = frequenceDeTravail();
       const principe = (nom: string, defaut: Principe): Principe => {
         const choix = ctx.paramTexte(nom, defaut);
         return EST_PRINCIPE(choix) ? choix : defaut;

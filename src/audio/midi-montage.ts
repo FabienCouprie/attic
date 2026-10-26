@@ -9,6 +9,7 @@ import { traduire } from "../i18n";
 import { analyserMidi } from "./midi";
 import { normaliserBuffer, rendreAvecSF2 } from "./midi-soundfont";
 import { bpmInitial, evenementsAbsolus } from "./midi-ecriture";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export async function joindreMidi(
   fichier1: File,
@@ -114,11 +115,11 @@ export async function rendreMidiDepuisBytes(
   const { notes, dureeTotale, canauxInstrument } = analyserMidi(midi);
 
   if (notes.length === 0) {
-    const ctx = new OfflineAudioContext(2, Math.ceil(0.5 * 44100), 44100);
+    const ctx = new OfflineAudioContext(2, Math.ceil(0.5 * frequenceDeTravail()), frequenceDeTravail());
     return ctx.startRendering();
   }
 
-  const sr = 44100;
+  const sr = frequenceDeTravail();
   const duree = Math.max(dureeTotale, 0.5);
   const vol = Math.max(0, Math.min(1, volume / 100));
 
@@ -128,7 +129,7 @@ export async function rendreMidiDepuisBytes(
       throw new Error(traduire("msg.sf2.non.charge"));
     }
     console.log(`[attic] rendreMidiDepuisBytes utilise SF2 global : ${sf2Global.nom} (${sf2Global.presets.length} presets, ${sf2Global.instruments.length} instruments, ${sf2Global.echantillons.length} échantillons)`);
-    const sr = 44100;
+    const sr = frequenceDeTravail();
     const duree = Math.max(dureeTotale, 0.5);
     const master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(duree * sr), sampleRate: sr });
       const canaux = [...new Set(notes.map((n) => n.canal))].sort((a, b) => a - b);

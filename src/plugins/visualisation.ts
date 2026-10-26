@@ -10,6 +10,7 @@ import { avecDoc } from "./notices";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
 import { choixFenetre } from "../audio/fenetres-analyse";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 // LES QUATRE FORMES D'ONDE VIENNENT DE `audio/timbres.ts`. Elles étaient déclarées trois fois dans
 // ce fichier : les libellés français dans `options`, les anglais dans `optionsEn`, et une troisième
@@ -109,7 +110,7 @@ export const fiches: FicheAudio[] = ([
       const freq = ctx.paramNombre("Fréquence", 220);
       const duree = ctx.paramNombre("Durée", 1.5);
       const vol = ctx.paramNombre("Volume", 80) / 100;
-      const sr = 44100;
+      const sr = frequenceDeTravail();
       const len = Math.max(1, Math.floor(sr * duree));
       const buf = new AudioBuffer({ numberOfChannels: 1, length: len, sampleRate: sr });
       const d = buf.getChannelData(0);

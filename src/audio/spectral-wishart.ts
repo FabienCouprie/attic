@@ -24,6 +24,7 @@
 // sans qu'on sache pourquoi.
 import { fft } from "./fft";
 import { creerFenetreHann, type TrameFFT } from "./commun";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 /** Taille de trame par défaut : 2048 échantillons, soit 46 ms à 44 100 Hz. */
 export const TAILLE_TRAME = 2048;
@@ -82,7 +83,7 @@ export function wishartVoie(x: Float32Array, o: OptionsWishart): Float32Array {
   } else {
     misEnForme = glissandoInterieur(trames, {
       vitesse: o.vitesse ?? 0.5, octaves: o.octaves ?? 6, lissage: o.lissage ?? 20,
-      taille, saut, frequence: o.frequence ?? 44100,
+      taille, saut, frequence: o.frequence ?? frequenceDeTravail(),
     });
   }
 

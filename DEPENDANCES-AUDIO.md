@@ -7,9 +7,9 @@ l'interface. Le critère est le RENDU, pas la mention d'`AudioBuffer` : un modul
 que comme récipient fige le fil et devient transposable dès qu'on en extrait un cœur par voie.
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
-- **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
+- **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 96 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 210 · transposable tel quel
+- **pur** : 212 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -86,6 +86,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | contraintes.ts | pur | — |
 | contrepoint-solveur.ts | pur | — |
 | contrepoint.ts | pur | — |
+| convertir-frequence.ts | rendu | OfflineAudioContext |
 | convolution.ts | rendu | OfflineAudioContext |
 | correction-hauteur.ts | pur | — |
 | couleur-rgb.ts | recipient | AudioBuffer |
@@ -153,6 +154,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | fondamentale-manquante.ts | pur | — |
 | formants.ts | recipient | AudioBuffer |
 | formule-sequence.ts | pur | — |
+| frequence-de-travail.ts | pur | — |
 | frequence-source.ts | rendu | OfflineAudioContext |
 | gammes-monde.ts | pur | — |
 | gammes-reunies.ts | pur | — |
@@ -205,6 +207,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | melodie-sur-accords.ts | pur | — |
 | melodie.ts | rendu | OfflineAudioContext |
 | memoire-audio.ts | recipient | AudioBuffer |
+| mesure-raie.ts | pur | — |
 | metadonnees.ts | pur | — |
 | micromontage.ts | pur | — |
 | midi-arpege.ts | pur | — |

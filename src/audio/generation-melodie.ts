@@ -7,6 +7,7 @@ import { type NoteEvenement } from "./midi-sequence";
 import { DEMI_TONS_CLE, frequenceDeNoteMidi } from "./commun";
 import { degresGammeAccords } from "./generation";
 import { completer, degresDeGamme } from "./gammes";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export function degresGammeMelodie(id: string): number[] {
   // LES DEGRÉS VIENNENT DE LA TABLE COMMUNE, `gammes.ts`. Ils étaient écrits ici à la main, sous un
@@ -53,7 +54,7 @@ export async function genererMelodieAleatoire(
   const dureeBattement = dureeNoire * (4 / uniteBattement);
   const nbBattements = Math.max(1, tempsParMesure) * Math.max(1, nbMesures);
 
-  const sampleRate = 44100;
+  const sampleRate = frequenceDeTravail();
   const dureeTotale = nbBattements * dureeBattement + 1;
   const offline = new OfflineAudioContext(2, Math.ceil(dureeTotale * sampleRate), sampleRate);
   const notes: NoteEvenement[] = [];

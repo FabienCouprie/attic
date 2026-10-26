@@ -9,9 +9,10 @@ import {
   echantillonsDuComplexe, echantillonsDuSinus, hauteurPrediteDuResidu, partielsDuComplexe,
 } from "../audio/fondamentale-manquante";
 import { fondamentaleVirtuelle } from "../audio/harmonie-spectrale";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 const en = () => langueCourante() === "en";
-const SR = 44100;
+const SR = () => frequenceDeTravail();
 
 export const fiches: FicheAudio[] = ([
   {
@@ -75,16 +76,16 @@ export const fiches: FicheAudio[] = ([
         // La coupure se pose sous le premier partiel : le bruit couvre la région du fondamental
         // absent sans noyer les partiels qui portent le résidu.
         coupure: Math.max(20, partiels[0].frequence * 0.8),
-        sampleRate: SR, graine: 1,
+        sampleRate: SR(), graine: 1,
       });
 
       const avecSinus = String(ctx.paramTexte("Comparaison", "sinus")) === "sinus";
       const sinus = avecSinus
-        ? echantillonsDuSinus(o.fondamentale, duree, niveau, SR)
+        ? echantillonsDuSinus(o.fondamentale, duree, niveau, SR())
         : new Float32Array(0);
-      const creux = avecSinus ? Math.round(0.4 * SR) : 0;
+      const creux = avecSinus ? Math.round(0.4 * SR()) : 0;
       const sortie = new AudioBuffer({
-        numberOfChannels: 1, length: sinus.length + creux + complexe.length, sampleRate: SR,
+        numberOfChannels: 1, length: sinus.length + creux + complexe.length, sampleRate: SR(),
       });
       const d = sortie.getChannelData(0);
       if (avecSinus) d.set(sinus, 0);

@@ -9,6 +9,7 @@ import {
   FORMAT_PROJET, versionDuProjet, perteAuChargementVide, rienDePerduAuChargement, rapportDuChargement,
   type AreteG, type MetaComposant, type NoeudG, type PerteAuChargement,
 } from "../../core";
+import { servicesDomaine } from "../../core/services-domaine";
 import { registreUI } from "../registre-actif";
 import { pertesDesNoeuds } from "../pertes-chargement";
 import { creerJournalDeSession, type JournalDeSession } from "../journal-de-session";
@@ -126,8 +127,13 @@ export function usePersistance(o: OptionsPersistance) {
     // LE NUMÉRO DE FORMAT, EN PREMIER DANS LE FICHIER, et c'est la seule place qui vaille : on le
     // lit alors sans dérouler le reste. Il vaut 1, qui est le format de TOUS les fichiers écrits
     // jusqu'ici — leur donner un numéro ne les change pas, cela les nomme. Voir `core/format-projet`.
+    // ET LES RÉGLAGES DU DOMAINE VOYAGENT AVEC LE PROJET — côté audio, sa fréquence de travail.
+    // Sans cela le réglage ne vaudrait que pour la session : un fichier rouvert ailleurs, ou demain,
+    // rendrait un autre son, et c'est exactement le défaut qu'il répare. CE FICHIER NE SAIT PAS CE
+    // QU'IL ÉCRIT, et c'est voulu : il demande au domaine ce qu'il a à mettre dans le fichier, par
+    // `core/services-domaine.ts`. Un garde l'exige — changer de domaine est un but du projet.
     const json = JSON.stringify({
-      formatVersion: FORMAT_PROJET,
+      formatVersion: FORMAT_PROJET, ...servicesDomaine().reglagesDeProjet(),
       nodes: cleanNodes, edges: cleanEdges, metas, viewport: o.rfInstance?.getViewport(),
     }, null, 2);
 
@@ -138,6 +144,7 @@ export function usePersistance(o: OptionsPersistance) {
       nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, morceaux: n.data.morceaux, pistesVidees: n.data.pistesVidees, nom: n.data.nom, nomEn: n.data.nomEn, couleur: n.data.couleur, bulle: n.data.bulle, bulleOuverte: n.data.bulleOuverte } })),
       edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
       viewport: o.rfInstance?.getViewport(),
+      ...servicesDomaine().reglagesDeProjet(),
       date: new Date().toISOString(),
     };
 
@@ -383,6 +390,10 @@ export function usePersistance(o: OptionsPersistance) {
     const perte: PerteAuChargement = perteAuChargementVide();
     const versionLue = versionDuProjet(json);
     if (versionLue > FORMAT_PROJET) perte.formatFutur = versionLue;
+    // LES RÉGLAGES DE DOMAINE DU FICHIER DEVIENNENT CEUX DE LA SÉANCE. Côté audio, sa fréquence de
+    // travail : un fichier qui n'en déclare pas vaut 44 100 Hz — ce que ses générateurs écrivaient
+    // en dur —, et c'est pourquoi ouvrir un ancien projet ne change rien à ce qu'il rend.
+    servicesDomaine().appliquerReglagesDeProjet(json as Record<string, unknown>);
     // LE CALCUL VIT DANS `ui/pertes-chargement.ts`, où il s'éprouve : c'est lui qui peut se tromper,
     // trois exemptions valant trois occasions de déclarer perdu ce qui ne l'est pas.
     const { fiches, reglages } = pertesDesNoeuds(

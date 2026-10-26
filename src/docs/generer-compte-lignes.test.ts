@@ -173,7 +173,7 @@ describe("la table engendrée à la demande", () => {
  */
 const DETTE = new Map<string, number>([
   ["src/ui/atelier.css", 1412],
-  ["src/ui/App.tsx", 1202],
+  ["src/ui/App.tsx", 1193],
   ["src/ui/hooks/useExecutionGraphe.ts", 754],
   ["src/ui/Inspector.tsx", 632],
   ["src/audio/abc.ts", 589],
@@ -184,7 +184,7 @@ const DETTE = new Map<string, number>([
   ["src/audio/sfz.test.ts", 497],
   ["src/core/boucle-graphe.test.ts", 465],
   ["src/vues-domaine/SelecteurMultiZones.tsx", 459],
-  ["src/ui/BarreOutils.tsx", 441],
+  ["src/ui/BarreOutils.tsx", 408],
   ["src/audio/clavier-banque.test.ts", 439],
   ["src/vues-domaine/FormeOnde.tsx", 408],
 ]);

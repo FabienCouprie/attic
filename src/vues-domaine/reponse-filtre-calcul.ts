@@ -16,8 +16,20 @@
 // une par instant. Dessiner celle du milieu serait aussi faux que celle du repos ; dessiner les
 // bornes de ce qu'il traverse dit la vérité de ce qu'on entend, et se lit d'un coup d'œil.
 
-/** La fréquence d'échantillonnage sur laquelle la réponse est calculée. */
-export const SR = 44100;
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
+
+/**
+ * La fréquence d'échantillonnage sur laquelle la réponse est calculée.
+ *
+ * ELLE SUIT LE PROJET, ET C'EST UN DÉFAUT RÉPARÉ DE PEU. Elle valait 44 100 en dur, et la réponse
+ * d'un biquad RBJ DÉPEND de la fréquence : à 96 kHz, cette vue aurait dessiné une courbe que le
+ * filtre n'a pas, et borné son axe à 22 050 Hz là où le filtre va jusqu'à 48 000. C'est la même
+ * faute que celle que cette vue a déjà corrigée une fois — montrer une réponse qui n'existe pas.
+ *
+ * ET C'EST LA LISTE GELÉE DE `docs/contrat-frequence-de-travail.test.ts` QUI L'A TROUVÉE, non ma
+ * passe : elle cherchait « sampleRate » et « const sr », et ce fichier écrit « SR ».
+ */
+export const SR = () => frequenceDeTravail();
 
 /** Les quatre types, tels que le réglage « Type » les nomme. */
 export type TypeFiltre = "Passe-bas" | "Passe-haut" | "Passe-bande" | "Coupe-bande";
@@ -29,14 +41,14 @@ export type TypeFiltre = "Passe-bas" | "Passe-haut" | "Passe-bande" | "Coupe-ban
  * coefficients ». `a0` est normalisé à un, et la réponse se lit sur le cercle unité.
  */
 export function reponseDb(type: string, f0: number, Q: number, f: number): number {
-  const w0 = (2 * Math.PI * f0) / SR, cw = Math.cos(w0), sw = Math.sin(w0), alpha = sw / (2 * Q);
+  const w0 = (2 * Math.PI * f0) / SR(), cw = Math.cos(w0), sw = Math.sin(w0), alpha = sw / (2 * Q);
   let b0: number, b1: number, b2: number, a0: number, a1: number, a2: number;
   if (type === "Passe-haut") { b0 = (1 + cw) / 2; b1 = -(1 + cw); b2 = (1 + cw) / 2; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; }
   else if (type === "Passe-bande") { b0 = alpha; b1 = 0; b2 = -alpha; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; }
   else if (type === "Coupe-bande") { b0 = 1; b1 = -2 * cw; b2 = 1; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; }
   else { b0 = (1 - cw) / 2; b1 = 1 - cw; b2 = (1 - cw) / 2; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; } // Passe-bas
   b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
-  const w = (2 * Math.PI * f) / SR, c1 = Math.cos(w), s1 = Math.sin(w), c2 = Math.cos(2 * w), s2 = Math.sin(2 * w);
+  const w = (2 * Math.PI * f) / SR(), c1 = Math.cos(w), s1 = Math.sin(w), c2 = Math.cos(2 * w), s2 = Math.sin(2 * w);
   const nRe = b0 + b1 * c1 + b2 * c2, nIm = -(b1 * s1 + b2 * s2);
   const dRe = 1 + a1 * c1 + a2 * c2, dIm = -(a1 * s1 + a2 * s2);
   return 20 * Math.log10(Math.hypot(nRe, nIm) / Math.hypot(dRe, dIm) + 1e-9);

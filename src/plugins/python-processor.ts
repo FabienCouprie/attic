@@ -9,6 +9,7 @@ import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio";
 import { securiserAmplitude } from "../audio/math-formules";
 import { decoderSansReechantillonner } from "../audio/frequence-source";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 // Coloration syntaxique Python (highlight simple par tokens)
 const PYTHON_KEYWORDS = new Set([
@@ -268,7 +269,7 @@ export const fiches: FicheAudio[] = ([
         code,
         inputs,
         outputPath,
-        sampleRate: audio instanceof AudioBuffer ? audio.sampleRate : 44100,
+        sampleRate: audio instanceof AudioBuffer ? audio.sampleRate : frequenceDeTravail(),
         channels: audio instanceof AudioBuffer ? audio.numberOfChannels : 2,
         timeout: timeout * 1000,
         env: {
@@ -276,7 +277,7 @@ export const fiches: FicheAudio[] = ([
           ATTIC_OUTPUT_MIDI: outputMidiPath,
           ATTIC_OUTPUT_TEXT: outputTextPath,
           ATTIC_TEXT_INPUT: inputText || "",
-          ATTIC_SAMPLE_RATE: String(audio instanceof AudioBuffer ? audio.sampleRate : 44100),
+          ATTIC_SAMPLE_RATE: String(audio instanceof AudioBuffer ? audio.sampleRate : frequenceDeTravail()),
           ATTIC_CHANNELS: String(audio instanceof AudioBuffer ? audio.numberOfChannels : 2),
        },
       });

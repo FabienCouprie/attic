@@ -27,6 +27,7 @@
 // celui qu'on écrit.
 
 import { nomNote, type Alteration } from "./nom-note";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 /** Une voix du glissement : d'où elle part, où elle va, et dans lequel des deux agrégats elle est. */
 export interface VoixDeGlissando {
@@ -182,7 +183,7 @@ export function echantillonsDuGlissando(
 }
 
 /** La fréquence d'échantillonnage du rendu. */
-export const SR_GLISSANDO = 44100;
+export const SR_GLISSANDO = () => frequenceDeTravail();
 
 /** Tout ce qu'un glissement demande, en un seul objet sérialisable : c'est tout ce qu'un ouvrier reçoit. */
 export interface OptionsSonGlissando extends Omit<OptionsGlissando, "sampleRate"> {
@@ -206,7 +207,7 @@ export interface OptionsSonGlissando extends Omit<OptionsGlissando, "sampleRate"
  * lieu de le recopier : il cherche les tableaux typés que porte un objet.
  */
 export function sonDuGlissando(o: OptionsSonGlissando): { echantillons: Float32Array } {
-  return { echantillons: echantillonsDuGlissando(o.voix, { ...o, sampleRate: SR_GLISSANDO }) };
+  return { echantillons: echantillonsDuGlissando(o.voix, { ...o, sampleRate: SR_GLISSANDO() }) };
 }
 
 /** Le glissement rendu en son, monophonique. */
@@ -214,9 +215,9 @@ export function tamponDuGlissando(
   voix: readonly VoixDeGlissando[],
   o: Omit<OptionsGlissando, "sampleRate">,
 ): AudioBuffer {
-  const x = echantillonsDuGlissando(voix, { ...o, sampleRate: SR_GLISSANDO });
-  const ctx = new OfflineAudioContext(1, x.length, SR_GLISSANDO);
-  const tampon = ctx.createBuffer(1, x.length, SR_GLISSANDO);
+  const x = echantillonsDuGlissando(voix, { ...o, sampleRate: SR_GLISSANDO() });
+  const ctx = new OfflineAudioContext(1, x.length, SR_GLISSANDO());
+  const tampon = ctx.createBuffer(1, x.length, SR_GLISSANDO());
   tampon.getChannelData(0).set(x);
   return tampon;
 }

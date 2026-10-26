@@ -22,7 +22,9 @@ import { SECOUEURS, secoueur, secoussesRegulieres, synthetiserSecoueur, type Sec
 import { synthetiserVent, type Vent } from "../audio/guides-onde";
 import { BARRES, barre, synthetiserBarre } from "../audio/barre-modale";
 
-const FS = FREQUENCE_ECH;
+// UNE FONCTION ET NON UNE CONSTANTE : `const FS = FREQUENCE_ECH` gelait la valeur à l'import, de
+// sorte qu'ouvrir un projet à 48 kHz après le chargement du module n'y changeait rien.
+const FS = () => FREQUENCE_ECH();
 
 export const fiches: FicheAudio[] = ([
   {
@@ -71,7 +73,7 @@ export const fiches: FicheAudio[] = ([
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const choisi = secoueur(ctx.paramTexte("Instrument", "maracas"));
       const { signal, collisions } = synthetiserSecoueur({
-        secoueur: choisi, duree, secousses, frequenceEch: FS,
+        secoueur: choisi, duree, secousses, frequenceEch: FS(),
         particules: particules > 0 ? particules : undefined,
       }, aleatoire);
       return {
@@ -118,7 +120,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const instrument = ctx.paramTexte("Instrument", "clarinette") as Vent;
       const commun = {
-        instrument, frequenceEch: FS,
+        instrument, frequenceEch: FS(),
         pression: ctx.paramNombre("Pression", 80) / 100,
         souffle: ctx.paramNombre("Souffle", 5) / 100,
         vibrato: ctx.paramNombre("Vibrato", 10) / 100,
@@ -148,7 +150,7 @@ export const fiches: FicheAudio[] = ([
       // Une ligne : chaque note est un souffle à part, et les queues se superposent —
       // c'est ce qui donne le legato d'un instrument réel.
       const fin = Math.max(...notes.map((n) => n.fin)) + 0.3;
-      const melange = new Float32Array(Math.ceil(fin * FS));
+      const melange = new Float32Array(Math.ceil(fin * FS()));
       let parlantes = 0;
       for (const n of notes) {
         const duree = Math.max(0.08, n.fin - n.debut) + 0.15;
@@ -214,7 +216,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx: any) {
       const choisie = barre(ctx.paramTexte("Instrument", "marimba"));
       const commun = {
-        barre: choisie, frequenceEch: FS,
+        barre: choisie, frequenceEch: FS(),
         durete: ctx.paramNombre("Dureté du maillet", 50) / 100,
         amortissement: ctx.paramNombre("Amortissement", 0) / 100,
         tremolo: ctx.paramNombre("Trémolo", 0) / 100,
@@ -235,7 +237,7 @@ export const fiches: FicheAudio[] = ([
       // et c'est ce qui fait le halo d'un vibraphone.
       const queue = Math.max(...choisie.modes.map((m) => m.duree));
       const fin = Math.max(...notes.map((n) => n.debut)) + queue + 0.2;
-      const melange = new Float32Array(Math.ceil(fin * FS));
+      const melange = new Float32Array(Math.ceil(fin * FS()));
       for (const n of notes) {
         const signal = synthetiserBarre({
           ...commun,

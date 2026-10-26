@@ -4,6 +4,7 @@
 // via canvas et l'audio par synthèse directe d'ondes sinusoïdales.
 
 import { frequenceDepuisValeur } from "./commun";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export interface OptionsPixeltone {
   /** Durée en secondes attribuée à chaque pixel. */
@@ -91,7 +92,7 @@ export function sonifierDepuisPixels(
   pixels: PixelBuffer,
   options: OptionsPixeltone,
 ): AudioBuffer {
-  const sr = options.sampleRate ?? 44100;
+  const sr = options.sampleRate ?? frequenceDeTravail();
   const dureePixel = Math.max(0.001, options.dureePixel);
   const echantillonsParPixel = Math.max(1, Math.round(dureePixel * sr));
   const nbPixels = pixels.width * pixels.height;

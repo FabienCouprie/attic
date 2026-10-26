@@ -26,6 +26,7 @@
 // qui s'élargit avec l'indice, et c'est exactement ce qu'un suréchantillonnage traite.
 
 import { decimer, noyauDecimation } from "./oscillateur-analogique";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export const OPERATEURS = 6;
 /** Le facteur de suréchantillonnage du calcul. */
@@ -165,7 +166,7 @@ export function ondeFm(r: ReglagesFm, echantillonnage: number): Float32Array {
 }
 
 /** L'onde calculée haut, redescendue à la cadence de sortie. */
-export function synthetiserFm(r: ReglagesFm, echantillonnageSortie = 44100,
+export function synthetiserFm(r: ReglagesFm, echantillonnageSortie = frequenceDeTravail(),
   facteur = SUR_ECHANTILLONNAGE_FM): Float32Array {
   const haut = ondeFm(r, echantillonnageSortie * facteur);
   if (facteur === 1) return haut;

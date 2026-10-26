@@ -15,11 +15,12 @@ import {
 import { estSequence, type Sequence } from "../audio/sequence";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 const en = () => langueCourante() === "en";
 
 /** La fréquence d'échantillonnage du rendu. */
-const SR = 44100;
+const SR = () => frequenceDeTravail();
 
 /** La hauteur en demi-tons d'une fréquence, pour que le seuil se règle en hertz. */
 const hauteurDe = (hertz: number) => 69 + 12 * Math.log2(Math.max(1, hertz) / 440);
@@ -126,10 +127,10 @@ The irregularity is zero on a perfect grid and one when the intervals' standard 
         longueur,
         niveau: ctx.paramNombre("Volume", 80) / 100,
         duree,
-        sampleRate: SR,
+        sampleRate: SR(),
       });
-      const ctxOff = new OfflineAudioContext(1, x.length, SR);
-      const audio = ctxOff.createBuffer(1, x.length, SR);
+      const ctxOff = new OfflineAudioContext(1, x.length, SR());
+      const audio = ctxOff.createBuffer(1, x.length, SR());
       audio.getChannelData(0).set(x);
 
       // LA PULSATION SORT AUSSI COMME SÉQUENCE, toutes ses notes à la même hauteur : c'est ce qui

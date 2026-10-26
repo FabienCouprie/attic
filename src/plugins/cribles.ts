@@ -3,6 +3,7 @@
 // Voir audio/cribles.ts pour le principe.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
@@ -62,7 +63,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.crible_sans_resultat") };
       }
 
-      const sr = ctx.runtime?.sampleRate ?? 44100;
+      // La fréquence du PROJET, et non celle de la carte son : voir `audio/frequence-de-travail.ts`.
+      const sr = frequenceDeTravail();
       const lecture = ctx.paramTexte("Lecture", "les-deux");
       const noteBase = ctx.paramNombre("Note de base", 48);
       const subdivision = ctx.paramNombre("Subdivision", 120) / 1000;

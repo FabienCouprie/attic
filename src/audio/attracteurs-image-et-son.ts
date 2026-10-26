@@ -10,8 +10,9 @@
 // blocs sont déplacés tels quels. Les inventaires engendrés depuis le registre en font la preuve,
 // `COMPONENTS.md` et `MODULABLES.md` restant identiques à l'octet.
 import type { BoundingBox, OptionsAudio, Point3D } from "./attracteurs";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
-const SAMPLE_RATE = 44100;
+const SAMPLE_RATE = () => frequenceDeTravail();
 
 const PALETTES: Record<string, string[]> = {
   classic: ["#000033", "#0000ff", "#00ffff", "#ffff00", "#ff0000", "#ffffff"],
@@ -160,9 +161,9 @@ export function sonifierPoints(
     volume,
   } = options;
 
-  const nbEchantillons = Math.max(1, Math.floor(duree * SAMPLE_RATE));
-  const ctx = new OfflineAudioContext(2, nbEchantillons, SAMPLE_RATE);
-  const buffer = ctx.createBuffer(2, nbEchantillons, SAMPLE_RATE);
+  const nbEchantillons = Math.max(1, Math.floor(duree * SAMPLE_RATE()));
+  const ctx = new OfflineAudioContext(2, nbEchantillons, SAMPLE_RATE());
+  const buffer = ctx.createBuffer(2, nbEchantillons, SAMPLE_RATE());
   const gauche = buffer.getChannelData(0);
   const droite = buffer.getChannelData(1);
 
@@ -189,8 +190,8 @@ export function sonifierPoints(
     const freqD = frequenceBase * 2 ** ((ny - 0.5) * plageDemiTons / 12);
     const amp = vol * (0.3 + 0.7 * nz);
 
-    const incG = (freqG / SAMPLE_RATE) * 2 * Math.PI;
-    const incD = (freqD / SAMPLE_RATE) * 2 * Math.PI;
+    const incG = (freqG / SAMPLE_RATE()) * 2 * Math.PI;
+    const incD = (freqD / SAMPLE_RATE()) * 2 * Math.PI;
     phaseG += incG;
     phaseD += incD;
     gauche[i] = Math.sin(phaseG) * amp;
@@ -198,7 +199,7 @@ export function sonifierPoints(
   }
 
   // Petit fondu d'entrée/sortie pour éviter les clics.
-  const fade = Math.min(nbEchantillons, Math.floor(SAMPLE_RATE * 0.01));
+  const fade = Math.min(nbEchantillons, Math.floor(SAMPLE_RATE() * 0.01));
   for (let i = 0; i < fade; i++) {
     const f = i / fade;
     gauche[i] *= f;

@@ -2,6 +2,7 @@
 // réglés indépendamment. Voir audio/pulsars.ts pour le principe.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
@@ -44,7 +45,8 @@ export const fiches: FicheAudio[] = ([
       const formantHz = ctx.paramNombre("Formant", 1100);
       const out = pulsars({
         dureeSec: ctx.paramNombre("Durée", 5),
-        sampleRate: ctx.runtime?.sampleRate ?? 44100,
+        // La fréquence du PROJET, et non celle de la carte : voir `audio/frequence-de-travail.ts`.
+        sampleRate: frequenceDeTravail(),
         fondamentaleHz, formantHz,
         forme: ctx.paramTexte("Forme", "sinus") as any,
         amplitude: ctx.paramNombre("Amplitude", 80) / 100,

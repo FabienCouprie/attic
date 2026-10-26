@@ -41,8 +41,6 @@ import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES } from "./hook
 import { resultatDe } from "./resultats";
 import { CLE_PREFERENCE, PERIODE_SAUVEGARDE_MS, lirePreference } from "./sauvegarde-auto";
 import { ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
-import { ecrireProfondeurExport, lireProfondeurExport } from "./profondeur-export";
-import type { ProfondeurExport } from "../audio/io";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
 import { estUnChampDeSaisie, quitterLeChamp } from "./champ-de-saisie";
 import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "./historique";
@@ -69,6 +67,7 @@ import "../audio/adaptateur";
 import { chargerMetasLocaux, sauvegarderMetasLocaux } from "./metasLocaux";
 import { installerMetasExemples } from "../plugins/meta-exemples";
 import { setGrapheRef } from "../audio/graphe-embarque";
+import { servicesDomaine } from "../core/services-domaine";
 import { chargerNodesInstalles } from "../core";
 import { PanneauInspecteur } from "./PanneauInspecteur";
 import { registreUI } from "./registre-actif";
@@ -231,13 +230,12 @@ function Atelier() {
   // rien en deçà de dix minutes ; au-delà, elle décide si les nœuds intermédiaires reçoivent
   // leur aperçu écoutable ou le bouton qui le construit à la demande.
   const [economieMemoire, setEconomieMemoire] = useState(() => lireEconomieMemoire());
-  // La profondeur des fichiers ecrits. Elle ne prend effet qu au prochain lancement : le blob
-  // est construit pendant l execution, et les apercus deja en memoire gardent la leur.
-  const [profondeurExport, setProfondeurExport] = useState<ProfondeurExport>(() => lireProfondeurExport());
-  const changerProfondeurExport = useCallback((bits: ProfondeurExport) => {
-    ecrireProfondeurExport(bits);
-    setProfondeurExport(bits);
-  }, []);
+  // LA PROFONDEUR DES FICHIERS ÉCRITS N'EST PLUS ICI, et ce qui était écrit à sa place disait la
+  // limite en la tenant pour voulue : « elle ne prend effet qu'au prochain lancement ». Mesuré,
+  // c'était pire — elle ne prenait effet NI au prochain lancement, l'adresse de l'aperçu étant
+  // gardée tant que le tampon est le même objet. Le réglage vit dans `ui/profondeur-export.ts`,
+  // son sélecteur s'y abonne, et changer de valeur refait les aperçus sans rejouer un seul nœud :
+  // voir `ui/SelecteurProfondeurExport.tsx` et `ui/refaire-apercus.ts`.
   const basculerEconomieMemoire = useCallback(() => {
     setEconomieMemoire((prev) => {
       const suivant = !prev;
@@ -520,9 +518,10 @@ function Atelier() {
         await rechargerFichiersPersistes(nodesRestaures);
         setNodes(nodesRestaures);
         setEdges(edgesValides);
-        if (data.viewport && rfInstance) {
-          queueMicrotask(() => rfInstance.setViewport(data.viewport));
-        }
+        // Les réglages de domaine de l'en-cours, comme le cadrage : une séance reprise rend ce
+        // qu'elle rendait. Côté audio, sa fréquence de travail ; un en-cours sans elle vaut 44 100.
+        servicesDomaine().appliquerReglagesDeProjet(data);
+        if (data.viewport && rfInstance) queueMicrotask(() => rfInstance.setViewport(data.viewport));
     } catch (e) {
       console.warn("[attic] Restauration de l'en-cours échouée", e);
     }
@@ -1530,8 +1529,6 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         onBasculerSauvegardeAuto={basculerSauvegardeAuto}
         economieMemoire={economieMemoire}
         onBasculerEconomieMemoire={basculerEconomieMemoire}
-        profondeurExport={profondeurExport}
-        onChangerProfondeurExport={changerProfondeurExport}
         onImporter={importer}
         onOuvrirExemple={ouvrirExemple}
       />

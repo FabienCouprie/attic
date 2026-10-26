@@ -41,6 +41,8 @@
 // son, ce dont le banc d'empreintes a besoin.
 
 /** Les trois formes, qui ne se ramènent pas l'une à l'autre. */
+import { frequenceDeTravail } from "./frequence-de-travail";
+
 export type FormeVco = "sawtooth" | "impulsion" | "phase";
 
 export interface ReglagesVco {
@@ -203,7 +205,7 @@ export function ondeVco(r: ReglagesVco, echantillonnage: number): Float32Array {
  * un pour que le continu traverse à son niveau, ce qui laisse la mesure du continu dire ce
  * que la forme fabrique et non ce que le filtre a ajouté.
  */
-export function noyauDecimation(facteur: number, coupure = COUPURE, echantillonnageSortie = 44100): Float64Array {
+export function noyauDecimation(facteur: number, coupure = COUPURE, echantillonnageSortie = frequenceDeTravail()): Float64Array {
   const longueur = 32 * facteur + 1;
   const milieu = (longueur - 1) / 2;
   const coupureNormalisee = coupure / (echantillonnageSortie * facteur);
@@ -257,7 +259,7 @@ export function retirerLeContinu(signal: Float32Array): number {
 }
 
 /** L'onde calculée haut, redescendue, et débarrassée de son continu. */
-export function synthetiserVco(r: ReglagesVco, echantillonnageSortie = 44100,
+export function synthetiserVco(r: ReglagesVco, echantillonnageSortie = frequenceDeTravail(),
   facteur = SUR_ECHANTILLONNAGE): ResultatVco {
   const haut = ondeVco(r, echantillonnageSortie * facteur);
   const noyau = noyauDecimation(facteur, COUPURE, echantillonnageSortie);

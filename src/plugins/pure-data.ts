@@ -3,6 +3,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -98,7 +99,7 @@ export const fiches: FicheAudio[] = ([
       const bangOnStart = estOui(ctx.paramTexte("Bang démarrage", "oui"));
       const ignorerGUI = estOui(ctx.paramTexte("Ignorer objets GUI", "non"));
 
-      const sampleRate = 44100;
+      const sampleRate = frequenceDeTravail();
       const length = Math.max(1, Math.round(duree * sampleRate));
       const buffer = new AudioBuffer({ length, numberOfChannels: 1, sampleRate });
 

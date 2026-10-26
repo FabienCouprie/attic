@@ -26,6 +26,8 @@
  * Le nom de Slaney désigne aussi, chez torchaudio, une normalisation des filtres par leur aire,
  * `norm="slaney"`. La référence emploie `norm=None`, et `bancMel` ne normalise donc pas non plus.
  */
+import { frequenceDeTravail } from "./frequence-de-travail";
+
 export function hzVersMel(hz: number): number {
   return 2595 * Math.log10(1 + hz / 700);
 }
@@ -60,7 +62,7 @@ export interface ParametresMel {
 
 /** Le paramétrage de Riffusion, valeur pour valeur. Une image de 512 cases de large fait 5,12 s. */
 export const PARAMETRES_RIFFUSION: ParametresMel = {
-  echantillonnage: 44100,
+  echantillonnage: frequenceDeTravail(),
   pasMs: 10,
   fenetreMs: 100,
   bourrageMs: 400,

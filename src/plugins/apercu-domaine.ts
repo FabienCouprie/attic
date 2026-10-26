@@ -10,7 +10,9 @@
 
 import { bufferVersWavBlobRespirant } from "../audio";
 import { echantillonnerPourApercu, estCourbe } from "../audio/courbe";
+import { convertirVersFrequence } from "../audio/convertir-frequence";
 import { ecartNiveau } from "../audio/ecart-niveau";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { decrire } from "../audio/metadonnees";
 import { apercuUtileAudio } from "../audio/memoire-audio";
 import { departDe, heriterDepart } from "../audio/depart-bwf";
@@ -119,5 +121,32 @@ export const APERCU_AUDIO: ServicesApercu = {
       if (Number.isFinite(f) && !vues.includes(f)) vues.push(f);
     }
     return vues.length > 1 ? vues : [];
+  },
+
+  /**
+   * Les sorties d'un nœud, portées à la fréquence de travail du projet.
+   *
+   * LE TABLEAU EST RENDU TEL QUEL QUAND RIEN N'EST À FAIRE, et c'est le cas ordinaire : un graphe
+   * entier à la fréquence du projet ne paie pas un échantillon, pas même une copie de tableau.
+   * C'est ce qui permet de poser cet appel sur CHAQUE nœud de CHAQUE run sans y penser.
+   *
+   * UNE CONVERSION QUI ÉCHOUE LAISSE LA VALEUR PASSER. Le contraire ferait tomber un run entier sur
+   * un tampon dégénéré, et la cause serait à chercher dans le moteur ; le garde des fréquences
+   * mêlées dira, lui, que l'invariant est rompu.
+   */
+  porterALaFrequenceDeTravail: async (valeurs) => {
+    const frequence = frequenceDeTravail();
+    if (!valeurs.some((v) => estTampon(v) && v.sampleRate !== frequence)) return valeurs as unknown[];
+    const portees: unknown[] = [];
+    for (const v of valeurs) {
+      if (!estTampon(v) || v.sampleRate === frequence) { portees.push(v); continue; }
+      try {
+        portees.push(await convertirVersFrequence(v, frequence));
+      } catch (e) {
+        console.warn("[frequence] conversion impossible, valeur laissée telle quelle", e);
+        portees.push(v);
+      }
+    }
+    return portees;
   },
 };

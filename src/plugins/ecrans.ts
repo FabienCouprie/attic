@@ -13,6 +13,7 @@
 // ligne par case, et l'on compare ce qu'on lit à ce qu'on entend.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
@@ -75,7 +76,8 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const en = langueCourante() === "en";
-      const frequence = ctx.runtime?.sampleRate ?? 44100;
+      // La fréquence du PROJET, et non celle de la carte son : voir `audio/frequence-de-travail.ts`.
+      const frequence = frequenceDeTravail();
       const dureeSec = ctx.paramNombre("Durée", 8);
       const dureeEcranSec = ctx.paramNombre("Durée d'un écran", 100) / 1000;
       const frequenceMinHz = ctx.paramNombre("Fréquence min", 100);

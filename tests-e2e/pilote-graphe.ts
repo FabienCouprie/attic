@@ -89,6 +89,23 @@ export async function semerEtLancer(
 
   if (o.avantDeLancer) await o.avantDeLancer(page);
 
+  await relancerEtAttendre(page, o);
+}
+
+/**
+ * Presser Lancer sur le graphe DÉJÀ POSÉ, et rendre la main quand tout est calculé et affiché.
+ *
+ * POURQUOI CE VERBE EXISTE À PART. `semerEtLancer` resème avant de lancer, et un cas qui veut
+ * éprouver l'effet d'un RÉGLAGE doit relancer SANS resemer — sans quoi il mesure un graphe neuf et
+ * non l'effet du réglage. C'est aussi le seul chemin par lequel le CACHE est en jeu : un réglage
+ * dont la valeur n'entre pas dans la clé de cache paraît agir au premier run et plus au second, ce
+ * qui est la pire espèce de panne. Voir `frequence-de-travail-dans-application.spec.ts`, qui le
+ * garde — il a d'ailleurs trouvé ce défaut en naissant.
+ *
+ * ET LES TROIS CORRECTIONS DE L'EN-TÊTE VOYAGENT AVEC, puisque c'est le même corps : le clic est un
+ * vrai clic, un run est fini quand l'état le dit, et les aperçus se posent après le statut.
+ */
+export async function relancerEtAttendre(page: Page, o: OptionsPilote = {}): Promise<void> {
   await page.locator('button[title*="Lancer"]').first().click({ timeout: 15000 });
 
   await page.waitForFunction(() => {

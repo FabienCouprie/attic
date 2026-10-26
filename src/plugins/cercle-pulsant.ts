@@ -17,13 +17,14 @@ import { QUALITES } from "../audio/qualites-accords";
 import { echantillonsDeBattements } from "../audio/pulsation";
 import { estSequence } from "../audio/sequence";
 import { choixOuiNon } from "../core/oui-non";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import {
   sf2Chargee, normaliserModeSynthèse, decoderInstrumentSF2,
   PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2,
 } from "./soundfontGlobal";
 
 /** La fréquence d'échantillonnage du battement rendu, la même que celle du composant Pulsation. */
-const SR = 44100;
+const SR = () => frequenceDeTravail();
 
 /** La hauteur en demi-tons d'une fréquence : la même conversion que dans `plugins/pulsation.ts`. */
 const hauteurDe = (hertz: number) => 69 + 12 * Math.log2(Math.max(1, hertz) / 440);
@@ -303,10 +304,10 @@ The animation is displayed in the node and is not available on an output port. I
         const frequence = ctx.paramNombre("Fréquence du battement", 60);
         const longueur = ctx.paramNombre("Longueur du battement", 120) / 1000;
         const x = echantillonsDeBattements(frappes, {
-          frequence, longueur, niveau: volume / 100, duree: o.dureeSec, sampleRate: SR,
+          frequence, longueur, niveau: volume / 100, duree: o.dureeSec, sampleRate: SR(),
         });
-        const ctxOff = new OfflineAudioContext(1, Math.max(1, x.length), SR);
-        audio = ctxOff.createBuffer(1, Math.max(1, x.length), SR);
+        const ctxOff = new OfflineAudioContext(1, Math.max(1, x.length), SR());
+        audio = ctxOff.createBuffer(1, Math.max(1, x.length), SR());
         audio.getChannelData(0).set(x);
         // Les frappes sortent aussi en MIDI, toutes à la même hauteur : c'est ce qui permet de les
         // écrire en rythme mesuré, où seules les durées comptent.

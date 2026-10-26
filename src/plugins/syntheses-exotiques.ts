@@ -23,7 +23,9 @@ import {
   apparier, assembler, decrireGrains, rapporter, type Grain,
 } from "../audio/concatenatif";
 
-const FS = FREQUENCE_ECH;
+// UNE FONCTION ET NON UNE CONSTANTE : `const FS = FREQUENCE_ECH` gelait la valeur à l'import, de
+// sorte qu'ouvrir un projet à 48 kHz après le chargement du module n'y changeait rien.
+const FS = () => FREQUENCE_ECH();
 
 export const fiches: FicheAudio[] = ([
   {
@@ -69,7 +71,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx: any) {
       const commun = {
-        frequenceEch: FS,
+        frequenceEch: FS(),
         masses: Math.round(ctx.paramNombre("Masses", 64)),
         cadence: ctx.paramNombre("Cadence", 800),
         tension: ctx.paramNombre("Tension", 50) / 100,
@@ -98,7 +100,7 @@ export const fiches: FicheAudio[] = ([
         };
       }
       const fin = Math.max(...notes.map((n) => n.fin)) + 0.3;
-      const melange = new Float32Array(Math.ceil(fin * FS));
+      const melange = new Float32Array(Math.ceil(fin * FS()));
       let pasTotal = 0;
       for (const n of notes) {
         const { signal, pas } = synthetiserScanning({
@@ -182,7 +184,7 @@ export const fiches: FicheAudio[] = ([
       }
       const commun = {
         terrain, orbite: ctx.paramTexte("Orbite", "cercle") as Orbite,
-        frequenceEch: FS,
+        frequenceEch: FS(),
         rayon: ctx.paramNombre("Rayon", 80) / 100,
         aplatissement: ctx.paramNombre("Aplatissement", 50) / 100,
         rapportX: Math.round(ctx.paramNombre("Rapport X", 3)),
@@ -203,7 +205,7 @@ export const fiches: FicheAudio[] = ([
         };
       }
       const fin = Math.max(...notes.map((n) => n.fin)) + 0.2;
-      const melange = new Float32Array(Math.ceil(fin * FS));
+      const melange = new Float32Array(Math.ceil(fin * FS()));
       let relief = 0;
       for (const n of notes) {
         const r = synthetiserTerrain({
@@ -276,7 +278,7 @@ export const fiches: FicheAudio[] = ([
       const niveauDe = (velocite: number) => 1 - sensibilite * (1 - Math.max(0, Math.min(127, velocite)) / 127);
       const commun = {
         voyelle: laVoyelle(ctx.paramTexte("Voyelle", "a")),
-        frequenceEch: FS,
+        frequenceEch: FS(),
         attaque: ctx.paramNombre("Attaque", 3) / 1000,
         facteurLargeur: ctx.paramNombre("Largeur des formants", 100) / 100,
         decalageFormants: ctx.paramNombre("Taille du conduit", 0),
@@ -296,7 +298,7 @@ export const fiches: FicheAudio[] = ([
         };
       }
       const fin = Math.max(...notes.map((n) => n.fin)) + 0.2;
-      const melange = new Float32Array(Math.ceil(fin * FS));
+      const melange = new Float32Array(Math.ceil(fin * FS()));
       let total = 0;
       for (const n of notes) {
         const { signal, bouffees } = synthetiserFof({
@@ -362,7 +364,7 @@ export const fiches: FicheAudio[] = ([
         for (let i = 0; i < b.length; i++) m[i] = (g[i] + d[i]) / 2;
         return m;
       };
-      const taille = Math.max(64, Math.round((ctx.paramNombre("Taille des grains", 40) / 1000) * FS));
+      const taille = Math.max(64, Math.round((ctx.paramNombre("Taille des grains", 40) / 1000) * FS()));
       const pas = Math.max(32, Math.round(taille / 2));
       // Sans courbe branchée, le volume reste un nombre et `versBuffer` garde son chemin exact.
       const modulationVolume = ctx.entree(2);
@@ -373,8 +375,8 @@ export const fiches: FicheAudio[] = ([
         : ctx.paramNombre("Volume", 80);
       const fftReelle = (re: Float64Array, im: Float64Array) => fft(re, im, false);
       const signalCible = mono(cible), signalCorpus = mono(corpus);
-      const grainsCible: Grain[] = decrireGrains(signalCible, FS, taille, pas, fftReelle);
-      const grainsCorpus: Grain[] = decrireGrains(signalCorpus, FS, taille, pas, fftReelle);
+      const grainsCible: Grain[] = decrireGrains(signalCible, FS(), taille, pas, fftReelle);
+      const grainsCorpus: Grain[] = decrireGrains(signalCorpus, FS(), taille, pas, fftReelle);
       if (grainsCible.length === 0 || grainsCorpus.length === 0) {
         return { valeurs: [null, null], message: traduire("msg.mosaique.tropCourt") };
       }

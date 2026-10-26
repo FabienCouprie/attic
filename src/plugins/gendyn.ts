@@ -2,6 +2,7 @@
 // une marche aléatoire bornée. Voir audio/gendyn.ts pour le principe.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
@@ -45,7 +46,8 @@ export const fiches: FicheAudio[] = ([
       const dureeMaxMs = ctx.paramNombre("Segment max", 4);
       const out = gendyn({
         dureeSec: ctx.paramNombre("Durée", 10),
-        sampleRate: ctx.runtime?.sampleRate ?? 44100,
+        // La fréquence du PROJET, et non celle de la carte : voir `audio/frequence-de-travail.ts`.
+        sampleRate: frequenceDeTravail(),
         points, dureeMinMs, dureeMaxMs,
         pasTemps: ctx.paramNombre("Pas temps", 10) / 100,
         pasAmplitude: ctx.paramNombre("Pas amplitude", 10) / 100,

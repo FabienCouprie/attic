@@ -1,6 +1,8 @@
 // audio/bruit.ts — Générateurs de bruit (blanc / rose / brownien).
 // Blanc = spectre plat ; Rose = −3 dB/octave (Paul Kellet) ; Brownien = −6 dB/
 // octave (marche aléatoire à fuite). Chaque canal a un bruit indépendant (stéréo).
+import { frequenceDeTravail } from "./frequence-de-travail";
+
 export function genererBruit(
   type: string, dureeSec: number, volume: number,
   // Source du hasard. Le nœud passe le générateur issu de son paramètre
@@ -9,7 +11,7 @@ export function genererBruit(
   // vaut pour un appelant qui n'a pas de graine à offrir.
   hasard: () => number = Math.random,
 ): AudioBuffer {
-  const sr = 44100;
+  const sr = frequenceDeTravail();
   const len = Math.max(1, Math.floor(dureeSec * sr));
   const buf = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
   const vol = Math.max(0, Math.min(1, volume / 100));

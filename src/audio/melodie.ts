@@ -7,6 +7,7 @@
 import type { NoteEvenement } from "./midi-sequence";
 import { formeOndeDepuisTimbre } from "./timbres";
 import { degresDeGamme } from "./gammes";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export const NB_RANGEES_MELO = 13; // ~2 octaves de la gamme + 1 note
 
@@ -79,7 +80,7 @@ export async function rendreSequenceurMelodique(
   mesures: number,
   volume: number,
 ): Promise<{ audio: AudioBuffer; notes: NoteEvenement[] }> {
-  const sr = 44100;
+  const sr = frequenceDeTravail();
   const stepDur = ((60 / Math.max(1, tempo)) * 4) / Math.max(1, nbPas);
   const totalPas = Math.max(1, mesures) * nbPas;
   const duree = totalPas * stepDur + 0.5;

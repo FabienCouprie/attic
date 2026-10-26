@@ -23,6 +23,7 @@ import {
   recaman, suiteDeNorgard, syracuse, thueMorse, type Suite,
 } from "../audio/suites-entieres";
 import { terme as termeNorgard } from "../audio/norgard";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 const SUITES_FR = ["Fibonacci", "Décimales de pi", "Syracuse", "Nombres premiers", "Thue-Morse", "Recamán", "Suite de l'infini"];
 const SUITES_EN = ["Fibonacci", "Digits of pi", "Collatz", "Prime numbers", "Thue-Morse", "Recamán", "Infinity series"];
@@ -158,7 +159,7 @@ The « Audio » output carries the render, the « MIDI » output the sequence as
         noireSec: 60 / Math.max(1, tempo),
       });
 
-      const n = Math.max(1, Math.round((notes[notes.length - 1]?.fin ?? 1) * 44100));
+      const n = Math.max(1, Math.round((notes[notes.length - 1]?.fin ?? 1) * frequenceDeTravail()));
       const volume = reglageModule(ctx, n, 1, {
         // « PROPORTION » PARCE QUE C'EST CE QU'ON MULTIPLIE : la courbe branchée vient ici
         // multiplier des échantillons, et un facteur 80 à la place de 0,80 sortait ce nœud à
@@ -189,7 +190,7 @@ The « Audio » output carries the render, the « MIDI » output the sequence as
         let t = 0;
         return notes.map((no) => {
           const crans = (no.fin - no.debut) / noire;
-          const i = Math.min(tempoModule.length - 1, Math.max(0, Math.round(no.debut * 44100)));
+          const i = Math.min(tempoModule.length - 1, Math.max(0, Math.round(no.debut * frequenceDeTravail())));
           const d = crans * (60 / Math.max(1, tempoModule[i]));
           const sortie = { ...no, debut: t, fin: t + d };
           t += d;

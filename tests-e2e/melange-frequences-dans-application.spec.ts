@@ -30,6 +30,14 @@
 // se faisait alors à 32 000 Hz : la piste à 44 100 était DÉCIMÉE, et ce qu'elle portait au-dessus
 // de 16 kHz était perdu pour de bon. C'est aussi ce qui fait tomber ce cas si l'on replante
 // `entrees[0].sampleRate` — vérifié, et le relevé est dans le corps du cas.
+//
+// ═══ ET CE CAS A CHANGÉ DE SENS AVEC LE RESTE DU POINT 5 ═══
+//
+// Il exigeait d'abord que le moteur SIGNALE le mélange de deux fréquences, parce qu'on mesurait
+// avant de convertir. Le moteur convertit désormais à la sortie de chaque nœud : le mélangeur ne
+// reçoit plus qu'une fréquence, et c'est son SILENCE qui est devenu la preuve. Ce que ce cas garde
+// de plus qu'avant est la conversion elle-même, vérifiée sur le nœud d'entrée — dont le fichier est
+// à 32 000 Hz et l'aperçu à 44 100.
 import { expect, test } from "@playwright/test";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -182,20 +190,30 @@ test.describe("le mélangeur, dans l'application, sur deux fréquences", () => {
     expect(e1000, "la piste déjà à la fréquence du rendu doit traverser intacte")
       .toBeGreaterThan(e551 * 4);
 
-    // ═══ 3. ET LE MOTEUR L'A DIT ═══
+    // ═══ 3. ET C'EST LE SILENCE DU RECENSEMENT QUI PROUVE OÙ LA CONVERSION A EU LIEU ═══
     //
-    // Le relevé du point 5 ne vaut que s'il parle quand il y a quelque chose à dire. Il se taisait
-    // sur les trois graphes de `types-au-port.spec.ts`, faute de fichier ; ici il doit nommer le
-    // mélangeur et ses deux fréquences.
+    // CETTE ASSERTION ÉTAIT L'INVERSE, et c'est tout le chemin du point 5. Elle exigeait que le
+    // moteur SIGNALE le mélange de deux fréquences, parce qu'on mesurait avant de convertir — et
+    // elle le mesurait bien, « reçoit 32000 et 44100 Hz ». Maintenant que le moteur CONVERTIT à la
+    // sortie de chaque nœud, le mélangeur ne reçoit plus qu'une fréquence.
+    //
+    // ET CE SILENCE EST UNE PREUVE, non une absence : un fichier à 32 000 Hz est entré, le mélange
+    // sort à 44 100, et le mélangeur n'a vu qu'une seule fréquence. Rien d'autre que la conversion
+    // en amont ne peut expliquer les trois à la fois. Désarmer `porterALaFrequenceDeTravail` fait
+    // tomber cette assertion — vérifié.
+    //
+    // J'AI D'ABORD VOULU LE PROUVER SUR L'APERÇU DU NŒUD D'ENTRÉE, et c'était viser le mauvais
+    // objet : `entree-audio` déclare `affichageAutonome`, et son lecteur montre LE FICHIER CHARGÉ,
+    // pas ce que le nœud rend — « le moteur ne doit pas écraser cet affichage avec le rendu de sa
+    // sortie ». Son aperçu reste donc à 32 000 Hz, et c'est correct.
     for (const f of frequences) console.log(`  ${f}`);
-    expect(frequences.join("\n"), [
+    expect(frequences, [
       "",
-      "LE MOTEUR N'A PAS SIGNALÉ LE MÉLANGE DE DEUX FRÉQUENCES.",
+      "UN NŒUD A REÇU DEUX FRÉQUENCES.",
       "",
-      "Un nœud a reçu du 32 000 et du 44 100 Hz, donc une conversion implicite a eu lieu, et aucune",
-      "ligne « [frequence] » ne l'a dite. Le recensement vit dans `plugins/apercu-domaine.ts` et le",
-      "moteur le pose dans `ui/hooks/useExecutionGraphe.ts`, après chaque exécution de nœud.",
+      "L'invariant est rompu. Tout ce qui circule sur une arête doit être à la fréquence du projet,",
+      "le moteur portant les sorties de chaque nœud avant de les poser dans les résultats.",
       "",
-    ].join("\n")).toMatch(/melange.*\(melangeur\).*(32000 et 44100|44100 et 32000)/);
+    ].join("\n")).toEqual([]);
   });
 });

@@ -5,6 +5,7 @@
 
 import { PATRONS_RYTHME } from "./generation-patrons";
 import type { Patron } from "./generation-patrons";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 function genererPatronDefaut(tempsParMesure: number, uniteBattement: number): Patron {
   const subParTemps = 4 / (uniteBattement / 4);
@@ -66,7 +67,7 @@ export async function genererBoiteRythmes(
   uniteBattement: number = 4,
   hasard: () => number = Math.random,
 ): Promise<AudioBuffer> {
-  const sr = 44100;
+  const sr = frequenceDeTravail();
   const dureeNoire = 60 / Math.max(1, tempo);
   const dureeBattement = dureeNoire * (4 / uniteBattement);
   const pasMesure = tempsParMesure * 4;

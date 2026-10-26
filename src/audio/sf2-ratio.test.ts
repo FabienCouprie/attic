@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { AudioBuffer, OfflineAudioContext } from "node-web-audio-api";
 import { rendreAvecSF2 } from "./midi-soundfont";
+import { raieSurParasites } from "./mesure-raie";
 
 // Provide Web Audio globals for the renderer
 globalThis.AudioBuffer = AudioBuffer as any;
@@ -156,21 +157,8 @@ describe("rendreAvecSF2 sample rate", () => {
 // boucle, qui est le risque qu'un noyau à quatre points introduit — il regarde deux points de part
 // et d'autre là où le linéaire n'en regardait qu'un.
 describe("ce que la transposition d'un SF2 fabrique", () => {
-  /** Le rapport, en décibels, entre la raie attendue et tout le reste. Même mesure qu'`interpolation`. */
-  function raieSurParasites(ch: Float32Array, rang: number, n: number): number {
-    let signal = 0, reste = 0;
-    for (let k = 1; k < n >> 1; k++) {
-      let a = 0, b = 0;
-      for (let i = 0; i < n; i++) {
-        const w = (-2 * Math.PI * k * i) / n;
-        a += ch[i] * Math.cos(w);
-        b += ch[i] * Math.sin(w);
-      }
-      const p = a * a + b * b;
-      if (k === rang) signal += p; else reste += p;
-    }
-    return 10 * Math.log10(signal / Math.max(reste, 1e-30));
-  }
+  // LA MESURE EST CELLE D'`audio/mesure-raie.ts`, et non plus une copie. Le commentaire qui était
+  // ici disait « même mesure qu'`interpolation` », ce qui était l'aveu d'une seconde écriture.
 
   it("UNE NOTE TRANSPOSEE D UNE OCTAVE VERS LE BAS SORT PROPRE", () => {
     // La fréquence de sortie tombe sur un rang exact de l'analyse : sans cela, c'est la fuite de la

@@ -5,6 +5,7 @@
 
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
 import { genererMembraneSynth, genererMetalSynth, genererPolySynth } from "../audio/tone-synths";
 import { avecDoc } from "./notices";
@@ -115,7 +116,7 @@ export const fiches: FicheAudio[] = ([
           octaves,
           decay,
           release,
-          sampleRate: ctx.runtime?.sampleRate ?? 44100,
+          sampleRate: frequenceDeTravail(),
         });
         return {
           valeurs: [buffer],
@@ -270,7 +271,7 @@ export const fiches: FicheAudio[] = ([
           attack,
           decay,
           release,
-          sampleRate: ctx.runtime?.sampleRate ?? 44100,
+          sampleRate: frequenceDeTravail(),
         });
         return {
           valeurs: [buffer],
@@ -414,7 +415,7 @@ export const fiches: FicheAudio[] = ([
           decay,
           sustain,
           release,
-          sampleRate: ctx.runtime?.sampleRate ?? 44100,
+          sampleRate: frequenceDeTravail(),
         });
         return {
           valeurs: [buffer],

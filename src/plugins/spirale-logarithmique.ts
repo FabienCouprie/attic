@@ -10,6 +10,7 @@ import {
   type OptionsSonSpirale, type SonSpirale,
 } from "../audio/spirale-logarithmique";
 import { parUneFois } from "./hors-lot";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 /** Les rapports qui ont un nom. « Libre » laisse le curseur décider. */
 const RAPPORTS: Record<string, number | null> = {
@@ -65,7 +66,7 @@ export const fiches: FicheAudio[] = ([
       const en = langueCourante() === "en";
       const choix = ctx.paramTexte("Rapport par tour", "or");
       const rapport = rapportValide(RAPPORTS[choix] ?? ctx.paramNombre("Rapport libre", 1.62));
-      const sr = 44100;
+      const sr = frequenceDeTravail();
       const o: OptionsSonSpirale = {
         fondamentale: ctx.paramNombre("Fondamentale", 55),
         rapport,

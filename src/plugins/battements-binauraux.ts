@@ -9,9 +9,10 @@ import {
   frequencesDuCouple, rendreBinaural, type OptionsRendu, type RenduBinaural,
 } from "../audio/battements-binauraux";
 import { parUneFois } from "./hors-lot";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 const en = () => langueCourante() === "en";
-const SR = 44100;
+const SR = () => frequenceDeTravail();
 
 /** Un nombre écrit dans la langue courante, virgule ou point selon le cas. */
 const nb = (v: number, d = 1) => (en() ? v.toFixed(d) : v.toFixed(d).replace(".", ","));
@@ -67,7 +68,7 @@ export const fiches: FicheAudio[] = ([
         duree: ctx.paramNombre("Durée", 30),
         fondu: ctx.paramNombre("Fondu", 200) / 1000,
         niveau: Math.max(0, Math.min(1, ctx.paramNombre("Volume", 60) / 100)),
-        sampleRate: SR,
+        sampleRate: SR(),
       }, {
         creerWorker: () => new Worker(new URL("../workers/binaural-worker.ts", import.meta.url), { type: "module" }),
         calcul: rendreBinaural,
@@ -77,7 +78,7 @@ export const fiches: FicheAudio[] = ([
       // DEUX CANAUX, ET C'EST LE STIMULUS ENTIER dans la présentation par oreille : ramené à un
       // seul, il ne resterait que le battement acoustique, qui est l'autre phénomène.
       const sortie = new AudioBuffer({
-        numberOfChannels: 2, length: Math.max(1, gauche.length), sampleRate: SR,
+        numberOfChannels: 2, length: Math.max(1, gauche.length), sampleRate: SR(),
       });
       // `copyToChannel` et non `getChannelData().set` : les tableaux reviennent d'un ouvrier.
       sortie.copyToChannel(new Float32Array(gauche), 0);
@@ -139,8 +140,8 @@ export const fiches: FicheAudio[] = ([
       return {
         valeurs: [sortie, rapport.join("\n")],
         message: en()
-          ? `${nb(basse)} and ${nb(haute)} Hz · beat ${nb(battement)} Hz · ${nb(sortie.length / SR, 2)} s`
-          : `${nb(basse)} et ${nb(haute)} Hz · battement ${nb(battement)} Hz · ${nb(sortie.length / SR, 2)} s`,
+          ? `${nb(basse)} and ${nb(haute)} Hz · beat ${nb(battement)} Hz · ${nb(sortie.length / SR(), 2)} s`
+          : `${nb(basse)} et ${nb(haute)} Hz · battement ${nb(battement)} Hz · ${nb(sortie.length / SR(), 2)} s`,
       };
     },
   },

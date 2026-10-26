@@ -12,6 +12,7 @@ const GAMMES_GENERATEUR = completer(["majeur", "mineur"]);
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { GENRES_SANS_PERSONNALISE, LIBELLES_HERITES_GENRES } from "./generateurs-aides";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 const entrees: FicheAudio[] = [
   {
@@ -200,7 +201,7 @@ const entrees: FicheAudio[] = [
         const { parseMidi } = await import("midi-file");
         const parsed = parseMidi(midiBytes);
         const { notes, dureeTotale, canauxInstrument } = analyserMidi(parsed);
-        const sr = 44100;
+        const sr = frequenceDeTravail();
         const dTot = Math.max(dureeTotale, 0.5);
         const master = new AudioBuffer({ numberOfChannels: 2, length: Math.ceil(dTot * sr), sampleRate: sr });
         for (const canal of [0,1,2]) {

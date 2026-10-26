@@ -41,7 +41,7 @@ export function ReponseFiltre({ type, cutoff, q, plageCoupure, plageQ }: Props) 
     cx.clearRect(0, 0, largeur, hauteur);
     cx.fillStyle = "#0d1117"; cx.fillRect(0, 0, largeur, hauteur);
 
-    const fMin = 20, fMax = SR / 2;
+    const fMin = 20, fMax = SR() / 2;
     const freqToX = (f: number) => ((Math.log10(f) - Math.log10(fMin)) / (Math.log10(fMax) - Math.log10(fMin))) * largeur;
     const xToFreq = (x: number) => Math.pow(10, Math.log10(fMin) + (x / largeur) * (Math.log10(fMax) - Math.log10(fMin)));
     const dbToY = (db: number) => hauteur - ((db - DB_BAS) / (DB_HAUT - DB_BAS)) * hauteur;

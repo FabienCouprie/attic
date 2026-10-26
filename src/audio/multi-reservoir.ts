@@ -11,6 +11,7 @@ import { creerAleatoire } from "../core/hasard";
 import { decoderInstrumentSF2 } from "../plugins/soundfontGlobal";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { formeOndeDepuisTimbre } from "./timbres";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export interface ConfigMultiReservoir {
   cle: string;
@@ -68,7 +69,7 @@ export interface MultiReservoirResult {
 
 export function genererMultiReservoir(config: ConfigMultiReservoir): MultiReservoirResult {
   const graineBase = config.graine > 0 ? config.graine : Math.floor(Math.random() * 99999) + 1;
-  const sr = 44100;
+  const sr = frequenceDeTravail();
   const stepDur = (60 / config.tempo) / config.pasParBeat;
   const totalPas = config.mesures * 4 * config.pasParBeat;
 

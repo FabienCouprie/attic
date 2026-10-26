@@ -22,6 +22,7 @@ import { creerAleatoire } from "../core/hasard";
 import { banqueDepuisRendus, rendreNotes, type Banque } from "../audio/clavier-banque";
 import { LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
 import { choixOuiNon } from "../core/oui-non";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 const TICKS_NOIRE = 480;
 const hertz = (note: number) => 440 * Math.pow(2, (note - 69) / 12);
@@ -123,7 +124,7 @@ export const fiches: FicheAudio[] = ([
       const duree = ctx.paramNombre("Durée", 1.5);
       const audio = exciter(
         note, ctx.paramTexte("Forme", "sawtooth"), duree,
-        ctx.paramNombre("Volume", 60) / 100, 44100,
+        ctx.paramNombre("Volume", 60) / 100, frequenceDeTravail(),
       );
       const midi = midiUneNote(note, Math.round(ctx.paramNombre("Vélocité", 100)), duree);
       // La hauteur en courbe : normalisée sur l'étendue du clavier, en échelle logarithmique comme

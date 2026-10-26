@@ -21,6 +21,7 @@ import { SIGNATURES } from "../audio/signatures";
 import { GENRES_ACCORDS, GAMMES_ACCORDS_IDS } from "./generateurs-aides";
 import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
 import { PARAMETRE_CLE } from "../audio/cles";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -70,7 +71,7 @@ export const fiches: FicheAudio[] = ([
       const sf2 = sf2Chargee();
       if (sf2) {
         const { notes, canauxInstrument } = analyserMidi(parseMidi(midiBytes));
-        const sr = 44100, dTot = notes.reduce((m:number,n:any)=>Math.max(m,n.fin),0)+1;
+        const sr = frequenceDeTravail(), dTot = notes.reduce((m:number,n:any)=>Math.max(m,n.fin),0)+1;
         const master = new AudioBuffer({numberOfChannels:2,length:Math.ceil(dTot*sr),sampleRate:sr});
         for (const canal of [0,1]) {
           const nc = notes.filter((n:any)=>n.canal===canal);

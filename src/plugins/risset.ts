@@ -4,6 +4,7 @@
 // fin. Voir audio/risset.ts pour le principe et la dualité qui les relie.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
@@ -164,14 +165,15 @@ export const fiches: FicheAudio[] = ([
       const dureeSec = ctx.paramNombre("Durée", 8);
       const partiels = ctx.paramNombre("Partiels", 11);
       const inharmonicite = ctx.paramNombre("Inharmonicité", 100) / 100;
-      // `ctx.runtime` est l'AudioContext du graphe : on génère à SA fréquence
-      // d'échantillonnage, comme le fait déjà le nœud de batterie. Une première
-      // version lisait `ctx.sampleRate`, qui n'existe pas sur ce contexte :
-      // elle retombait toujours sur 44 100 en donnant l'illusion de lire une
-      // valeur réelle. Le son n'en était pas désaccordé pour autant — un buffer
-      // est rééchantillonné à la lecture, pas joué plus vite — mais cela
-      // imposait une conversion inutile sur une carte à 48 kHz.
-      const sampleRate = ctx.runtime?.sampleRate ?? 44100;
+      // ON GÉNÈRE À LA FRÉQUENCE DU PROJET, et plus à celle de la carte son.
+      //
+      // CE QUI ÉTAIT ÉCRIT ICI avait un raisonnement juste pour une ÉCOUTE et faux pour un PROJET :
+      // « on génère à la fréquence de l'AudioContext, cela évite une conversion inutile sur une
+      // carte à 48 kHz ». Vrai à la lecture — mais la fréquence d'un livrable est celle du projet,
+      // pas celle de l'auditeur. Mesuré : sur une carte à 48 kHz, le graphe livré
+      // `un-son-projete-en-microtonal` rendait ses nœuds à DEUX fréquences à la fois, et le même
+      // fichier rendait un autre son sur une autre machine. Voir `audio/frequence-de-travail.ts`.
+      const sampleRate = frequenceDeTravail();
       const out = clocheRisset({
         frequenceHz, dureeSec, sampleRate, partiels, inharmonicite,
         battement: ctx.paramNombre("Battement", 100) / 100,

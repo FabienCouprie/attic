@@ -10,6 +10,7 @@ import type { Note } from "./note";
 import { melangerTampons, RESERVE_BATTERIE, separerPercussions, tamponSilencieux } from "./sequence-percussion";
 import { rendreAvecSF2 } from "./midi-soundfont";
 import { sansRecouvrementDeHauteur } from "./recouvrement-hauteur";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 export type NoteEvenement = Note;
 
@@ -71,7 +72,7 @@ export async function rendreSequence(
   dureeMin?: number,
 ): Promise<AudioBuffer> {
   if (notes.length === 0) {
-    const ctx = new OfflineAudioContext(2, Math.ceil(0.5 * 44100), 44100);
+    const ctx = new OfflineAudioContext(2, Math.ceil(0.5 * frequenceDeTravail()), frequenceDeTravail());
     return ctx.startRendering();
   }
   // LE RENDU JOUE CE QUE LE FICHIER DIRA, et c'est la seule façon de supprimer l'écart relevé par le
@@ -152,7 +153,7 @@ async function rendreHauteurs(
   }
 
   // FM mode avec suréchantillonnage 2× pour anti-aliasing
-  const srInterne = 88200;
+  const srInterne = 2 * frequenceDeTravail();
   const length = Math.ceil(duree * srInterne);
   const buffer = new AudioBuffer({ numberOfChannels: 2, length, sampleRate: srInterne });
   const gauche = buffer.getChannelData(0);
@@ -183,8 +184,10 @@ async function rendreHauteurs(
     }
   }
 
-  // Downsamping : 88200 → 44100 par moyenne de 2 échantillons consécutifs
-  const srFinal = 44100;
+  // Decimation par deux, par moyenne de deux echantillons : le rendu interne est au DOUBLE
+  // de la frequence du projet, et non a 88 200 Hz en dur. Un projet a 96 kHz rend donc en
+  // interne a 192 kHz, et la moyenne de deux reste une moyenne de deux.
+  const srFinal = frequenceDeTravail();
   const lengthFinal = Math.ceil(duree * srFinal);
   const bufferFinal = new AudioBuffer({ numberOfChannels: 2, length: lengthFinal, sampleRate: srFinal });
   const gFinal = bufferFinal.getChannelData(0);

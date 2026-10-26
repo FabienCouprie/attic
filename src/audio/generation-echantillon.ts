@@ -5,6 +5,7 @@
 
 import { type NoteEvenement } from "./midi-sequence";
 import { echantillonCubique } from "./interpolation";
+import { frequenceDeTravail } from "./frequence-de-travail";
 
 // ── Lecteur MIDI ────────────────────────────────────────────────────────────
 
@@ -16,7 +17,7 @@ export function rendreAvecEchantillon(
   noteReference: number,
 ): AudioBuffer {
   if (notes.length === 0 || echantillon.length === 0) {
-    const ctx = new OfflineAudioContext(2, 22050, 44100);
+    const ctx = new OfflineAudioContext(2, 22050, frequenceDeTravail());
     return ctx.startRendering() as unknown as AudioBuffer;
   }
 

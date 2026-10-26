@@ -16,6 +16,7 @@
 // domine, et aucun interpolateur n'y peut rien sans un filtre AVANT la décimation.
 import { describe, expect, it } from "vitest";
 import { echantillonCubique, echantillonLineaire } from "./interpolation";
+import { raieSurParasites as raieDuSignal } from "./mesure-raie";
 
 const SR = 44100;
 
@@ -46,33 +47,11 @@ const N = 2048;
 /**
  * Le rapport, en décibels, entre la raie attendue et tout le reste.
  *
- * ═══ LA FRÉQUENCE DE SORTIE TOMBE SUR UN RANG EXACT, ET C'EST TOUT CE QUI REND CECI MESURABLE ═══
- *
- * MON PREMIER JET FENÊTRAIT EN HANN et écartait trois rangs de part et d'autre. Il annonçait
- * **46,9 dB en linéaire et 47,0 en cubique** : un gain de 0,1 dB, c'est-à-dire rien. C'était faux, et
- * le nombre le disait — les deux interpolateurs touchaient LE MÊME PLAFOND, donc ce plafond n'était
- * pas le leur. C'était la fuite de ma propre fenêtre que je mesurais.
- *
- * Quand la fréquence de sortie vaut exactement `k × SR / N`, le signal boucle sur la fenêtre : une
- * transformée sans fenêtrage ne fuit alors sur aucun autre rang, et tout ce qui n'est pas au rang `k`
- * est bel et bien fabriqué par l'interpolation. On choisit donc la fréquence de SORTIE d'abord, et
- * l'on en déduit celle de la source.
+ * LA MESURE VIT DANS `audio/mesure-raie.ts`, et son en-tête porte la leçon qui l'a faite : un
+ * premier jet de CE fichier fenêtrait en Hann et annonçait 0,1 dB de gain — le plafond de sa propre
+ * fenêtre. Deux autres cas la demandaient ; elle en avait deux copies, elle n'en a plus qu'une.
  */
-function raieSurParasites(y: Float32Array, rangRaie: number): number {
-  const rangs = N >> 1;
-  let signal = 0, reste = 0;
-  for (let k = 1; k < rangs; k++) {
-    let a = 0, b = 0;
-    for (let i = 0; i < N; i++) {
-      const w = (-2 * Math.PI * k * i) / N;
-      a += y[i] * Math.cos(w);
-      b += y[i] * Math.sin(w);
-    }
-    const p = a * a + b * b;
-    if (k === rangRaie) signal += p; else reste += p;
-  }
-  return 10 * Math.log10(signal / Math.max(reste, 1e-30));
-}
+const raieSurParasites = (y: Float32Array, rangRaie: number) => raieDuSignal(y, rangRaie, N);
 
 describe("ce que l'interpolation fabrique de parasites", () => {
   /**

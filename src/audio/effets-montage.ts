@@ -1,5 +1,6 @@
 // audio/effets-montage.ts — Effets (issus du découpage de effets.ts).
 import { type PositionZone } from "./commun";
+import { convertirVersFrequence } from "./convertir-frequence";
 
 // `fonduMs` applique un fondu linéaire en entrée ET en sortie de l'extrait.
 // C'est ce qui évite le clic à la coupe : trancher au milieu d'une période
@@ -43,21 +44,13 @@ export function extraireZone(buffer: AudioBuffer, debutSec: number, dureeSec: nu
 // secondes. Les chevauchements s'additionnent, les débordements sont coupés aux
 // bords.
 
-async function resamplerVers(
-  buffer: AudioBuffer,
-  sampleRate: number,
-  numberOfChannels: number,
-): Promise<AudioBuffer> {
-  if (buffer.sampleRate === sampleRate && buffer.numberOfChannels === numberOfChannels) {
-    return buffer;
-  }
-  const offline = new OfflineAudioContext(numberOfChannels, Math.ceil(buffer.duration * sampleRate), sampleRate);
-  const source = offline.createBufferSource();
-  source.buffer = buffer;
-  source.connect(offline.destination);
-  source.start(0);
-  return offline.startRendering();
-}
+// LA CONVERSION EST CELLE D'`audio/convertir-frequence.ts`, et ce fichier en portait une copie.
+// Elle passait par un `OfflineAudioContext`, dont le rééchantillonnage est une interpolation
+// LINÉAIRE — mesuré à 62,26 dB dans Chromium contre 89,3 pour le module partagé, et sans filtre
+// avant décimation, ce qui repliait de cent un décibels de plus. Un montage qui mélange des pistes
+// de fréquences différentes était donc le pire endroit du dépôt pour cette copie.
+const resamplerVers = (buffer: AudioBuffer, sampleRate: number, numberOfChannels: number) =>
+  convertirVersFrequence(buffer, sampleRate, numberOfChannels);
 
 export async function placerSonSurZones(
   son: AudioBuffer,
