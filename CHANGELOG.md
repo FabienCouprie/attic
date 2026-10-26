@@ -6,6 +6,17 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **L'INVARIANT DE FRÉQUENCE NE VOYAIT QUE LE PREMIER NIVEAU, ET LE SON ÉTAIT JUSTE QUAND MÊME.** Point C d'une revue critique du 2026-10-26, qui demandait de mesurer avant d'affirmer. Mesuré, donc — et la mesure corrige la revue.
+
+  - **LE TROU EST RÉEL** : le garde des fréquences mêlées ne regardait que les tampons posés **directement** dans les valeurs. Or deux flux portent leur son à l'intérieur — une **banque** porte un tampon par zone, un **objet sonore** porte ses échantillons bruts avec sa fréquence à côté —, et aucun des deux n'est un `AudioBuffer`.
+  - **MAIS LE SON NE SOUFFRE PAS, et c'est mesuré** : une banque bâtie sur un sinus de 440 Hz enregistré à 48 kHz, jouée dans un projet à 44 100, sort à **440,00 Hz — zéro cent**. `rendreNotes` rend à la fréquence de la **banque** et `voixPourNote` en tient compte dans son rapport ; la sortie étant un tampon de premier niveau, le moteur la porte, et la hauteur reste à zéro cent après portage.
+  - **CE QU'ON ENTENDRAIT SI LA CHAÎNE N'ÉTAIT PAS CONSCIENTE : 404,25 Hz, soit 146,7 cents** — plus d'un demi-ton. C'est la mesure de ce que le garde protège, et non d'un défaut constaté.
+  - **LE GARDE S'ÉTEND, LA CONVERSION NON, ET C'EST UNE DÉCISION.** Convertir les tampons d'un conteneur changerait ce que rend tout graphe déjà enregistré, et ne réparerait rien puisque chaque rendu est déjà conscient de la fréquence de son conteneur. Le jour où un nœud mêlerait le son d'un conteneur à du son au rythme du projet, ce qui manquerait est de le **savoir**, pas de l'avoir converti en silence.
+  - **VÉRIFIÉ AUSSI QU'AUCUN NŒUD NE LE FAIT AUJOURD'HUI** : le seul moyen qu'une banque à fréquence étrangère entre dans un graphe est la lecture d'un SFZ, et ses trois consommateurs rendent tous à la fréquence de la banque.
+  - **CINQ CAS NEUFS, et le garde cherche la FORME** — des zones pour une banque, un genre pour un objet —, de sorte qu'un objet quelconque portant un nombre nommé `frequence` reste ignoré. Défaut planté : les deux conteneurs cessent d'être reconnus, et les quatre cas qui les nomment tombent, le cinquième restant vert puisqu'il affirme qu'on ne voit rien.
+
+### Fixed
+
 - **LA FILE DE L'ORDONNANCEUR JETAIT UNE DEMANDE EN SILENCE, et c'était justement celle qui réparait.** Relevé par une revue critique du 2026-10-26. La file n'en tient qu'une et la plus récente gagnait : une **relance automatique vers l'aval** — celle qui refait ce qu'un changement de réglage vient d'effacer — était écartée par un **▶ cliqué juste après**, et l'aval restait « En attente », c'est-à-dire le défaut même que la relance existait pour réparer. Le commit qui avait créé cette file reprochait à l'ancien verrou de jeter les demandes en silence.
 
   - **ÉCARTÉE SANS UN MOT, au sens strict** : `ecarter` résout sur `undefined`, que l'appelant ne distingue pas de « rien à faire ».
