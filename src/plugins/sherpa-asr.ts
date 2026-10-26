@@ -14,6 +14,7 @@ import { installerGardeWorker } from "./garde-worker";
 import { baseModeleLivre } from "./base-modeles";
 import { annoncerModele } from "./message-modele";
 import { LANGUE_AUTO, choixLangues } from "../core/langues";
+import { estAnnulation } from "../core/annulation";
 
 const MODEL_DIR = "/sherpa-asr-model";
 
@@ -402,6 +403,8 @@ export const fiches: FicheAudio[] = ([
           message: text ? `${text.slice(0, 60)}${text.length > 60 ? "…" : ""}` : traduire("msg.sherpa_asr.vide"),
         };
       } catch (e: any) {
+        // Une annulation n'est pas un échec de ce composant. Voir `core/annulation.ts`.
+        if (estAnnulation(e)) throw e;
         console.error("[sherpa-asr]", e);
         return {
           valeurs: [null],

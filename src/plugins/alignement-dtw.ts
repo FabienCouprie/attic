@@ -13,6 +13,7 @@ import { avecDoc } from "./notices";
 import { calculerDTW } from "../audio/algebre-alignement";
 import { chromagrammeParTrame } from "../audio/analyse";
 import { extraitCentre, decalageExtraitCentre, mixdownMono } from "../audio/commun";
+import { estAnnulation } from "../core/annulation";
 
 // DTW reste en O(n·m) EN TEMPS (inhérent à l'algorithme), mais plus en
 // mémoire depuis le calcul par damiers de calculerDTW (voir audio/algebre.ts) —
@@ -65,6 +66,9 @@ export const fiches: FicheAudio[] = ([
           onProgress: (fraction) => ctx.onProgress(traduire("progress.calcul_dtw_pourcent_var_0", Math.round(fraction * 100))),
         });
       } catch (e: any) {
+        // UNE ANNULATION N'EST PAS UN ÉCHEC DE CE COMPOSANT : la changer en erreur de nœud ferait
+        // chercher une panne là où l'on a seulement demandé l'arrêt. Voir `core/annulation.ts`.
+        if (estAnnulation(e)) throw e;
         return { valeurs: [null, null], erreur: true, message: e?.message ?? String(e) };
       }
 

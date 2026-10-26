@@ -6,6 +6,17 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **UN ARRÊT DEMANDÉ ARRÊTE ENFIN, ET SOIXANTE-QUATORZE EXÉCUTEURS LE DEVIENNENT D'UN SEUL GESTE.** Point 7 de deux revues critiques : « l'annulation n'atteint presque aucun composant ». Mesuré, et c'est pire que l'impression — **sur 478 exécuteurs, DEUX** lisent `signal.aborted` pour s'arrêter, « Algèbre musicale » et « Esthétique » ; huit fichiers transmettent le signal à un sous-traitant qui l'honore, et tout le reste continuait jusqu'au bout.
+
+  - **ET LE PRIX AVAIT MONTÉ** depuis que l'ordonnanceur sérialise les runs : en politique « attendre », un ▶ patiente la fin de celui qui tourne, et une séparation dure des minutes. La politique « passer-devant » existait mais ne pouvait rien, faute de composants qui écoutent.
+  - **LE LEVIER EST `onProgress`**, que 86 appels traversent déjà : il **lève** désormais une fois le run annulé, au lieu d'ignorer l'appel. Il l'ignorait auparavant, ce qui réglait un symptôme — un « en cours » réaffiché par dessus l'« attente » posée par le reset — sans arrêter le travail.
+  - **LE MOTEUR N'A RIEN EU À APPRENDRE** : son `catch` faisait déjà `if (controller.signal.aborted) break;`, c'est-à-dire sortir sans marquer le nœud en erreur. Le changement tient en une ligne.
+  - **LA MESURE A ÉCARTÉ LA CRAINTE QUI RETENAIT CE CHANGEMENT.** Sur les 82 appels : **72 hors de tout `try`**, 3 dans un `try` qui relance ce qui n'est pas son erreur propre, **7 dans un `try` qui rendrait une erreur de nœud** — et **zéro avalé en silence**. Aucun composant ne pouvait donc poursuivre sans rien dire. Les sept sont réparés, dans quatre fichiers, sur le modèle qu'`esthetique.ts` employait déjà.
+  - **UNE MARQUE ET NON `instanceof`** : deux copies d'un module donnent deux classes, et `instanceof` ment alors sans bruit — un défaut qui ne se montre qu'au paquetage.
+  - **LA MESURE DEVIENT UN GARDE**, pour qu'un composant neuf ne rouvre pas le trou : aucun `catch` ne peut changer une annulation en erreur de nœud, et un plancher sur le nombre d'appels éprouvés empêche le garde de passer au vert à vide. Défaut planté : la relance retirée d'`ocr.ts`, et il le nomme à la ligne près.
+  - **VÉRIFIÉ DANS L'APPLICATION** que la levée ne se déclenche pas à tort : l'exemple « Un synthé, et sa bulle d'effets » s'exécute entier, quatre nœuds « Terminé », aucune erreur.
+  - **ET LA LIGNE D'IMPORT A ÉTÉ PAYÉE PLUTÔT QUE LE PLAFOND RELEVÉ.** `useExecutionGraphe.ts` est en dette de taille, et son garde l'a refusée à une ligne près. Elle est rendue par une simplification réelle du repli de `paramTexte` : `const defautEff = pDef ? pDef.defaut : defaut` n'était lu que dans la branche où `pDef` est vrai, de sorte que sa condition y était morte.
+
 - **CINQ FILMS RESTAIENT EN MÉMOIRE PAR NŒUD, parce que le nettoyage ne lisait que le premier niveau.** Point 8 d'une revue critique du 2026-10-26. Le canal d'affichage est un **objet**, et `urlsARevoquer` ne retenait qu'une valeur de type chaîne : l'URL qu'il porte n'était donc jamais révoquée, ni à la remise à zéro, ni à l'effacement du nœud.
 
   - **CINQ COMPOSANTS Y DÉPOSENT UN FILM** — « Incruster les sous-titres », « Extraire une vidéo », « Montage vidéo », « Séparer image et son » et « Démonstration ». Trois d'entre eux révoquaient la **précédente** eux-mêmes, de sorte qu'un run ne gardait qu'un film de trop ; mais la **dernière** ne partait jamais.

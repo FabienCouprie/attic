@@ -4,6 +4,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { createWorker, PSM } from "tesseract.js";
+import { estAnnulation } from "../core/annulation";
 
 async function ocrImage(fichier: File, langues: string, onProgress: (msg: string) => void): Promise<string> {
   const codes = languesToArray(langues);
@@ -82,6 +83,8 @@ const ocrPlugins: FicheAudio[] = [
           message: texte ? `${texte.length} caractères` : traduire("msg.ocr.vide"),
         };
       } catch (e: any) {
+        // Une annulation n'est pas un échec de ce composant. Voir `core/annulation.ts`.
+        if (estAnnulation(e)) throw e;
         console.error("[ocr]", e);
         const detail = e?.message || String(e);
         return {

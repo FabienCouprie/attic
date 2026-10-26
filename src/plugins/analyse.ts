@@ -23,6 +23,7 @@ import { SIGNATURES } from "../audio/signatures";
 const METRIQUES = [...SIGNATURES];
 import { estSequence } from "../audio/sequence";
 import { arbreDe, voixDe } from "../audio/voix";
+import { estAnnulation } from "../core/annulation";
 
 function noeudMeyda(
   id: string,
@@ -408,6 +409,8 @@ export const fiches: FicheAudio[] = ([
           notes = await transcrirePolyphonique(audio, seuil, noteMin, noteMax, (p) =>
             ctx.onProgress(traduire("progress.transcription_pourcent_var_0", p)), modele);
         } catch (e: any) {
+          // Une annulation n'est pas un échec de ce composant. Voir `core/annulation.ts`.
+          if (estAnnulation(e)) throw e;
           // NE PAS retomber silencieusement sur le FFT monophonique : c'est ce
           // que faisait l'ancien code, si bien qu'un modèle indisponible donnait
           // un résultat mono (inadapté à un mix) présenté comme polyphonique,
