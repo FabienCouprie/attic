@@ -9,6 +9,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
+import { parametreCalculDirectML } from "./parametre-calcul";
 
 function fileDepuisRgba(rgba: ArrayLike<number>, width: number, height: number, nom: string): Promise<File> {
   return new Promise((resolve, reject) => {
@@ -59,6 +60,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Dossier du bundle SDXS-512 (vide = modèle embarqué dans resources/oonx/sdxs-512-texte-image).",
         docEn: "Folder of the SDXS-512 bundle (empty = bundled model in resources/oonx/sdxs-512-texte-image).", defautEn: "",
       },
+      parametreCalculDirectML(
+        "Sur la machine où il a été mesuré, la carte graphique rend l'image en deux tiers du temps du processeur ; la première image coûte une vingtaine de secondes de plus, le temps que le pilote compile.",
+        "On the machine where it was measured, the graphics card renders the image in two thirds of the processor's time; the first image costs some twenty seconds more, while the driver compiles.",
+      ),
     ],
     async executer(ctx: any) {
       const api = typeof window !== "undefined" ? (window as any).api : null;
@@ -77,7 +82,10 @@ export const fiches: FicheAudio[] = ([
       await annoncerModele(ctx, "texte-image", traduire("progress.g_n_ration_image_en_cours"));
 
       try {
-        const rep = await api.genererImageSdxs({ prompt, seed, modelPath });
+        const rep = await api.genererImageSdxs({
+          prompt, seed, modelPath,
+          calcul: ctx.paramTexte("Calcul", "auto") || "auto",
+        });
         if (!rep?.ok) {
           const messageErreur = rep?.erreur ?? "inconnue";
           const estIntrouvable = typeof messageErreur === "string" && messageErreur.includes("introuvable");

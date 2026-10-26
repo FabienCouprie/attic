@@ -76,3 +76,41 @@ export const parametreCalcul = (invariance?: string, invarianceEn?: string) => (
 
 /** Le réglage sans phrase d'invariance, pour les nœuds qui n'en déclarent pas. */
 export const PARAMETRE_CALCUL = parametreCalcul();
+
+// ═══ LE SECOND VOCABULAIRE : DIRECTML, ET IL EST DÉCLARÉ ICI POUR LA MÊME RAISON ═══
+//
+// Les nœuds qui tournent sous `onnxruntime-node` ne choisissent pas entre Vulkan et CUDA mais
+// entre le processeur et la carte, DirectML n'exposant qu'elle. Deux nœuds l'emploient, et ils
+// l'écrivaient chacun de leur côté — la même duplication que celle du pont, en plus petit.
+//
+// « AUTOMATIQUE » REPLIE, LES DEUX AUTRES NON, et ce n'est pas un détail de style : le paquet
+// musical de Stable Audio est exporté en int4, que DirectML refuse à l'initialisation avec
+// `80070057`. Qui demande un périphérique veut savoir s'il répond, et non obtenir l'autre sans
+// être prévenu.
+
+const CALCULS_DML = [
+  { id: "auto", fr: "Automatique", en: "Automatic" },
+  { id: "carte", fr: "Carte graphique", en: "Graphics card" },
+  { id: "processeur", fr: "Processeur", en: "Processor" },
+];
+
+/** Les identifiants DirectML, pour le garde. */
+export const IDS_CALCUL_DML: readonly string[] = CALCULS_DML.map((c) => c.id);
+
+const DML_FR = "« Automatique » essaie la carte graphique et retombe sur le processeur si elle"
+  + " refuse le modèle. « Carte graphique » et « Processeur » imposent l'un ou l'autre, et"
+  + " signalent un refus plutôt que d'employer l'autre sans prévenir.";
+
+const DML_EN = "« Automatic » tries the graphics card and falls back to the processor if it"
+  + " refuses the model. « Graphics card » and « Processor » impose one or the other, and report"
+  + " a refusal rather than using the other without warning.";
+
+/** Le réglage de périphérique d'un nœud qui tourne sous `onnxruntime-node`. */
+export const parametreCalculDirectML = (mesure?: string, mesureEn?: string) => ({
+  nom: "Calcul", nomEn: "Compute", type: "choix" as const,
+  options: CALCULS_DML.map((c) => c.fr), optionsEn: CALCULS_DML.map((c) => c.en),
+  optionIds: CALCULS_DML.map((c) => c.id),
+  defaut: "Automatique", defautEn: "Automatic",
+  doc: `Le périphérique de calcul.${mesure ? ` ${mesure}` : ""} ${DML_FR}`,
+  docEn: `The compute device.${mesureEn ? ` ${mesureEn}` : ""} ${DML_EN}`,
+});

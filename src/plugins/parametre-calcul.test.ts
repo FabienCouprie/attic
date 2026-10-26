@@ -25,7 +25,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { IDS_CALCUL } from "./parametre-calcul";
+import { IDS_CALCUL, IDS_CALCUL_DML } from "./parametre-calcul";
 import { registre } from "../audio/adaptateur";
 import "../composition";
 
@@ -33,14 +33,17 @@ const ICI = dirname(fileURLToPath(import.meta.url));
 const MODULE = "parametre-calcul.ts";
 
 /**
- * Les nœuds dont le réglage « Calcul » ne peut pas porter ces identifiants-là, et pourquoi.
+ * Les nœuds qui tournent sous `onnxruntime-node`, et portent donc le vocabulaire de DirectML.
  *
- * UNE EXCEPTION SANS RAISON ÉCRITE N'EST PAS UNE EXCEPTION, c'est un oubli qu'on a cessé de voir.
+ * UN NŒUD INSCRIT ICI SANS RAISON N'EST PAS UNE EXCEPTION, c'est un oubli qu'on a cessé de voir.
  */
-const AUTRES_MOTEURS: Readonly<Record<string, string>> = {
-  "bruitage-ia": "Stable Audio 3 tourne sous DirectML et non sous Vulkan ou CUDA : "
-    + "`electron/stable-audio-3.cjs` ne connaît que `auto`, `carte` et `processeur`, et retombe "
-    + "sur `auto` pour tout autre identifiant — trois options sur cinq seraient inertes.",
+const SOUS_DIRECTML: Readonly<Record<string, string>> = {
+  "bruitage-ia": "Stable Audio 3 tourne sous `onnxruntime-node`, qui n'expose que le processeur "
+    + "et la carte : `electron/stable-audio-3.cjs` ne connaît que `auto`, `carte` et "
+    + "`processeur`, et retombe sur `auto` pour tout autre identifiant.",
+  "texte-image": "SDXS-512 tourne sous `onnxruntime-node`. Mesuré le 2026-10-26 sur une RTX "
+    + "2060 : l'unet rend en 6,88 s sur la carte contre 11,3 s au processeur, soit environ 7,6 s "
+    + "par image contre 11,9 s.",
 };
 
 const fiches = () => registre.tousLesPlugins()
@@ -52,42 +55,48 @@ const reglagesCalcul = () => fiches().flatMap((d) => {
 });
 
 describe("le réglage de périphérique", () => {
-  it("N'EST DÉCLARÉ QU'À UN SEUL ENDROIT, pour qu'un périphérique neuf s'écrive une fois", () => {
-    // ON CHERCHE LA FORME ET NON LE NOM : `id: "Vulkan0"` n'apparaît que dans une liste de
-    // périphériques, là où le mot seul se trouve aussi dans une phrase qui le raconte. Le dépôt a
-    // déjà payé deux fois un garde qui criait sur le commentaire d'un fichier.
+  it("NE SE DÉCLARE QU'À UN SEUL ENDROIT, pour qu'un périphérique neuf s'écrive une fois", () => {
+    // ON CHERCHE LA FORME ET NON LE NOM. La déclaration d'un réglage commence toujours par son
+    // nom dans les deux langues ; le mot « Calcul » seul, lui, se trouve dans toutes les phrases
+    // qui parlent de temps de calcul. Le dépôt a déjà payé deux fois un garde qui criait sur le
+    // commentaire d'un fichier.
     const copies = sources(ICI)
       .filter((p) => !p.endsWith(MODULE))
-      .filter((p) => /id:\s*"(Vulkan0|Vulkan1|CUDA0)"/.test(readFileSync(p, "utf8")))
+      .filter((p) => /nom:\s*"Calcul",\s*nomEn:\s*"Compute"/.test(readFileSync(p, "utf8")))
       .map((p) => relative(ICI, p).replace(/\\/g, "/"));
     expect(copies, [
       "",
-      "UNE SECONDE LISTE DE PÉRIPHÉRIQUES EST APPARUE.",
+      "LE RÉGLAGE DE PÉRIPHÉRIQUE EST DÉCLARÉ AILLEURS QUE DANS SON MODULE.",
       "",
-      `Elle doit vivre dans \`plugins/${MODULE}\` et nulle part ailleurs : deux listes finissent`,
-      "toujours par diverger, et c'est le nœud oublié qui n'offrira pas le périphérique neuf.",
+      `Il doit vivre dans \`plugins/${MODULE}\` et nulle part ailleurs : deux déclarations`,
+      "finissent toujours par diverger, et c'est le nœud oublié qui n'offrira pas le périphérique",
+      "neuf. Huit copies y étaient le 2026-10-26, identiques identifiant pour identifiant.",
       "",
-      "Employer `parametreCalcul(invariance, invarianceEn)`, qui prend la phrase propre au nœud.",
+      "Employer `parametreCalcul(...)` pour un nœud du pont, `parametreCalculDirectML(...)` pour",
+      "un nœud qui tourne sous `onnxruntime-node` ; chacun prend la phrase propre au nœud.",
       "",
     ].join("\n")).toEqual([]);
   });
 
-  it("ET TOUT RÉGLAGE « CALCUL » PORTE CES IDENTIFIANTS, sauf exception écrite", () => {
+  it("ET TOUT RÉGLAGE « CALCUL » PORTE LE VOCABULAIRE DE SON MOTEUR, qui est déclaré", () => {
     // UN IDENTIFIANT QUE LE MOTEUR NE CONNAÎT PAS NE REFUSE PAS : il retombe sur son défaut. Le
     // réglage paraît donc marcher et ne fait rien, ce que le contrat de composant interdit.
     const fautifs = reglagesCalcul()
-      .filter((r) => !AUTRES_MOTEURS[r.id])
-      .filter((r) => r.ids.join("|") !== IDS_CALCUL.join("|"))
+      .filter((r) => {
+        const attendu = SOUS_DIRECTML[r.id] ? IDS_CALCUL_DML : IDS_CALCUL;
+        return r.ids.join("|") !== attendu.join("|");
+      })
       .map((r) => `${r.id} : ${r.ids.join(" ") || "(aucun)"}`);
     expect(fautifs, [
       "",
-      "UN RÉGLAGE « CALCUL » PORTE D'AUTRES IDENTIFIANTS QUE CEUX DU PONT.",
+      "UN RÉGLAGE « CALCUL » PORTE D'AUTRES IDENTIFIANTS QUE CEUX DE SON MOTEUR.",
       "",
-      "Attendus : " + IDS_CALCUL.map((i) => i || "(vide)").join(" "),
+      "Le pont attend : " + IDS_CALCUL.map((i) => i || "(vide)").join(" "),
+      "DirectML attend : " + IDS_CALCUL_DML.join(" "),
       "",
-      "Si le nœud parle à un AUTRE moteur, l'inscrire dans `AUTRES_MOTEURS` avec la raison : un",
-      "identifiant inconnu ne fait pas échouer le moteur, il le fait retomber sur son défaut, et",
-      "le réglage devient un curseur qui ne peut rien changer.",
+      "Un nœud qui tourne sous `onnxruntime-node` s'inscrit dans `SOUS_DIRECTML` avec sa raison.",
+      "Un identifiant inconnu ne fait pas échouer le moteur, il le fait retomber sur son défaut,",
+      "et le réglage devient un curseur qui ne peut rien changer.",
       "",
     ].join("\n")).toEqual([]);
   });
@@ -96,12 +105,12 @@ describe("le réglage de périphérique", () => {
     // Une exception qui ne désigne plus rien décrit un état disparu, et couvrirait un vrai défaut
     // le jour où l'identifiant serait repris.
     const portent = new Set(reglagesCalcul().map((r) => r.id));
-    const perimees = Object.keys(AUTRES_MOTEURS).filter((id) => !portent.has(id));
+    const perimees = Object.keys(SOUS_DIRECTML).filter((id) => !portent.has(id));
     expect(perimees, [
       "",
       "UNE EXCEPTION NE DÉSIGNE PLUS DE NŒUD PORTANT UN RÉGLAGE « CALCUL ».",
       "",
-      "La retirer d'`AUTRES_MOTEURS` : une liste qu'on ne réduit pas finit par décrire un état qui",
+      "La retirer de `SOUS_DIRECTML` : une liste qu'on ne réduit pas finit par décrire un état qui",
       "n'existe plus, et par couvrir le défaut qu'elle était censée excepter.",
       "",
     ].join("\n")).toEqual([]);

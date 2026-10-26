@@ -4,6 +4,28 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Added
+
+- **« TEXTE → IMAGE » GAGNE LE RÉGLAGE « CALCUL », ET LES DEUX NŒUDS QUI NE PEUVENT PAS L'AVOIR DISENT ENFIN POURQUOI.** Suite du relevé de Fabien. La fusion des huit déclarations réglait la forme ; restait le fond — pourquoi les plus anciens n'ont pas ce réglage. **La réponse ne se devine pas, elle se mesure**, et elle n'est pas la même pour les trois.
+
+  - **QUATRE NŒUDS TOURNENT SOUS `onnxruntime-node`, LE MÊME BINAIRE, ET UN SEUL LUI DEMANDAIT LA CARTE.** `stable-audio-3.cjs` emploie DirectML depuis longtemps ; `demucs.cjs`, `esthetique.cjs` et `sdxs-image.cjs` écrivaient `["cpu"]` **sans un mot d'explication**. C'est ce silence qui faisait passer un choix mesuré pour un oubli.
+  - **MESURÉ LE 2026-10-26 SUR UNE RTX 2060, chaque cas dans un PROCESSUS NEUF** — un périphérique retiré empoisonne le processus, et un premier jet qui les enchaînait a accusé le second à tort.
+
+    | graphe | processeur | DirectML |
+    |---|---|---|
+    | `unet_int8` (SDXS) | 11,3 s | **6,88 s** |
+    | `text_encoder_int8` (SDXS) | 0,115 s | 0,354 s |
+    | `vae_decoder` (SDXS) | 0,470 s | 0,407 s |
+    | `htdemucs_6s` | 3,45 s / tranche | **ouvre, puis `887A0005`** — périphérique retiré |
+    | `htdemucs_fp16` | 3,40 s / tranche | **ouvre, puis `887A0005`** |
+    | `audiobox-aesthetics` | 0,66 s / tranche | **ouvre, puis `8007023E`** sur `node_Reshape_2052` |
+
+  - **DONC UN SEUL DES TROIS MÉRITE LE RÉGLAGE, et il le reçoit** : « Texte → image » passe d'environ **11,9 s à 7,6 s par image**, la première coûtant 18,8 s de plus le temps que le pilote compile. Le périphérique **entre dans la clé du cache de sessions** — sans cela, en changer laisserait les sessions ouvertes sur l'autre et le réglage ne pourrait rien changer, défaut que « Bruitage IA » avait déjà payé.
+  - **ET LES DEUX AUTRES NE LE PEUVENT PAS, ce qui est écrit à côté de leur `["cpu"]`.** DirectML **ouvre** leurs graphes puis échoue à l'exécution : leur offrir « Carte graphique » donnerait une option qui **casse le travail**, pire qu'un curseur inerte. Pour Demucs, **la tranche ne peut pas être réduite** pour soulager la carte : la longueur d'entrée est fixe, et à 44 100 comme à 10 000 échantillons les deux fournisseurs refusent.
+  - **LE GARDE DE STYLE A REFUSÉ LA RÉFÉRENCE DE LA CARTE dans la documentation du réglage**, et il avait raison : une documentation d'inspecteur ne hausse pas la voix, et un chiffre pris sur une machine n'en décrit aucune autre. Elle dit donc le rapport — deux tiers du temps du processeur — et la mesure absolue reste là où elle vaut, dans le code et ici.
+  - **ET LA NOTICE DE CE NŒUD PORTAIT DEUX AFFIRMATIONS FAUSSES**, trouvées en la mettant à jour : « CPU uniquement », que ce lot corrige, et « le modèle est embarqué avec l'application », que le passage à un installeur sans ONNX avait défait sans que la notice suive. Elle dit maintenant que le modèle se récupère par le panneau.
+  - **LE VOCABULAIRE DE DIRECTML EST DÉSORMAIS DÉCLARÉ UNE FOIS**, à côté de celui du pont. Deux moteurs, deux listes, chacune écrite au même endroit — et le garde ne dit plus « une seule liste » mais **« le réglage ne se déclare qu'à un seul endroit »**, ce qui couvre les deux. Un nœud sous `onnxruntime-node` s'inscrit avec sa raison mesurée.
+
 ### Changed
 
 - **LE RÉGLAGE DE PÉRIPHÉRIQUE N'EST PLUS ÉCRIT QU'UNE FOIS, ET LA SEULE DIVERGENCE QUI RESTE EST DÉSORMAIS JUSTIFIÉE.** Relevé par Fabien : « certains nœuds fonctionnant avec des modèles IA ont un paramètre Calcul, les plus anciens non ; une homogénéisation serait souhaitable ». Vrai sur la forme, et faux sur le fond — les deux méritaient d'être écrits.
