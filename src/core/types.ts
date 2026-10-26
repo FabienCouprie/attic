@@ -324,6 +324,26 @@ export interface PluginDef<TValeur, TRuntime> {
   id: string;
   nom: string;
   nomEn?: string;
+  /**
+   * Le nom sous lequel ce composant se DIT, quand le sien ne se prononce pas.
+   *
+   * ═══ POURQUOI UN SECOND NOM, ET POURQUOI IL NE PEUT PAS SE DÉDUIRE ═══
+   *
+   * Le moteur de reconnaissance a un lexique fermé, et 142 des 504 composants portent un mot qu'il
+   * n'a pas : un sigle, une marque, un terme technique. Leur nom n'est pas refusé par la grammaire,
+   * il y est AMPUTÉ du mot manquant, et le reste concurrence un vrai nom — « réverbération à »
+   * contre « réverbération ». Ils sont donc écartés de la dictée, et deviennent indicibles.
+   *
+   * ET L'AMPUTATION NE PEUT PAS SERVIR D'ALIAS, c'est mesuré : « Réverbération à convolution (IR) »
+   * donnerait « réverbération à ir », « Arpégiateur MIDI » et « Transposeur/Quantiseur MIDI »
+   * donneraient tous deux « midi », et « Centroïde spectral » et « Rolloff spectral » tous deux
+   * « spectral ». Un nom parlé est une décision de nomenclature, pas un calcul.
+   *
+   * IL NE S'AJOUTE PAS AU NOM, IL LE REMPLACE quand celui-ci ne se dit pas. La grammaire se paie :
+   * porter la liste de 472 à 864 entrées fait passer la reconnaissance de 1,8 à 5,0 secondes.
+   */
+  nomDicte?: string;
+  nomDicteEn?: string;
   univers: string;
   famille: string;
   resume: string;

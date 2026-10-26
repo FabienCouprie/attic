@@ -13,6 +13,9 @@ import { valeurA, valeurMax } from "../audio/courbe";
 export const fiches: FicheAudio[] = ([
   {
     id: "reverbe-reseau", nom: "Réverbération à réseau (FDN)", nomEn: "Feedback Delay Network Reverb",
+    // « fdn » MANQUE AU LEXIQUE DU MOTEUR VOCAL, et le sigle n'est qu'une glose : le nom parlé est
+    // le nom lui-même, sans lui. Voir `core/types.ts`, qui porte la règle.
+    nomDicte: "réverbération à réseau",
     univers: "Traitement", famille: "Effets",
     resume: "Une réverbération dont le temps de décroissance se règle séparément dans le grave et dans l'aigu, ce que fait toute vraie salle.",
     resumeEn: "A reverb whose decay time is set separately for the low and the high end, as every real room behaves.",

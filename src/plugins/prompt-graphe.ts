@@ -233,22 +233,38 @@ const sansAccents = (s: string): string => s.toLowerCase().normalize("NFD").repl
  * « réverbération à convolution » y devient « réverbération à », qui concurrence un composant bien
  * réel. Voir `lexique-vosk.ts`, qui porte la liste mesurée et la façon de la refaire.
  */
+/** Un nom tel que la dictée le compare : minuscules, sans ponctuation, espaces repliés. */
+export const normaliserPourDictee = (s: string): string =>
+  s.toLowerCase().replace(/[^\p{L}\p{N} ]+/gu, " ").replace(/\s+/g, " ").trim();
+
+/** Le nom parlé d'une fiche dans la langue demandée, normalisé, ou la chaîne vide. */
+const parle = (fr: string | undefined, en2: string | undefined, en: boolean): string =>
+  normaliserPourDictee(((en && en2) || fr) ?? "");
+
 export async function nomsDeDictee(en = false): Promise<{ ficheId: string; nom: string }[]> {
   const registre = await obtenirRegistre();
   const vus = new Set<string>();
   const out: { ficheId: string; nom: string }[] = [];
   for (const d of registre.tousLesPlugins()) {
     if (d.id.startsWith("__") || d.id.startsWith("frontiere")) continue;
-    const nom = ((en && d.nomEn) || d.nom).toLowerCase()
-      .replace(/[^\p{L}\p{N} ]+/gu, " ").replace(/\s+/g, " ").trim();
+    const nom = normaliserPourDictee((en && d.nomEn) || d.nom);
     // DEUX COMPOSANTS DE MÊME NOM NE SE DISTINGUENT PAS À LA VOIX : le premier l'emporte, et le
     // second ne vient pas s'ajouter à la liste, où il doublerait un mot sans rien désigner de plus.
-    if (!nom || vus.has(nom)) continue;
+    if (!nom) continue;
     // ET UN NOM QUE LE MOTEUR NE SAIT PAS PRONONCER N'Y ENTRE PAS DU TOUT : il n'est pas refusé
     // par la grammaire, il y est amputé du mot manquant, et le reste concurrence un vrai nom.
-    if (!estDicible(nom, en)) continue;
-    vus.add(nom);
-    out.push({ ficheId: d.id, nom });
+    //
+    // SAUF SI LA FICHE EN DÉCLARE UN AUTRE. Un `nomDicte` est le nom sous lequel le composant se
+    // DIT, pour ceux dont le nom porte un sigle, une marque ou un terme que le lexique n'a pas. Il
+    // REMPLACE le nom et ne s'y ajoute pas : la grammaire se paie — 472 à 864 entrées font passer
+    // la reconnaissance de 1,8 à 5,0 secondes. Voir `core/types.ts`, qui porte la décision.
+    const dicte = parle(d.nomDicte, d.nomDicteEn, en);
+    const retenu = estDicible(nom, en) ? nom : (dicte && estDicible(dicte, en) ? dicte : "");
+    // DEUX COMPOSANTS DE MÊME NOM PARLÉ NE SE DISTINGUENT PAS DAVANTAGE : la règle du premier venu
+    // vaut pour l'alias comme pour le nom, et un garde refuse qu'un alias double un nom existant.
+    if (!retenu || vus.has(retenu)) continue;
+    vus.add(retenu);
+    out.push({ ficheId: d.id, nom: retenu });
   }
   return out;
 }
