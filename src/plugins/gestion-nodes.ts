@@ -42,6 +42,12 @@ export const fiches: FicheAudio[] = ([
         defaut: "",
         doc: "Réglages : le composant à exporter parmi les 5 derniers créés. La liste se met à jour à chaque exécution.",
         docEn: "The node to export is taken from the 5 most recently created. The list updates on each run.", defautEn: "" },
+      { nom: "Exécution", nomEn: "Execution", type: "choix",
+        options: ["Refuser", "Autoriser"], optionIds: ["Refuser", "Autoriser"],
+        optionsEn: ["Refuse", "Authorise"],
+        defaut: "Refuser", defautEn: "Refuse",
+        doc: "Accorde au composant importé le droit de s'exécuter. Un composant importé s'exécute avec les droits de l'application : il lit, écrit et supprime des fichiers, et joint le réseau. « Refuser » refuse l'import. L'autorisation est enregistrée avec le composant, et conditionne chacune de ses exécutions.",
+        docEn: "Grants the imported component the right to run. An imported component runs with the application's rights: it reads, writes and deletes files, and reaches the network. « Refuse » refuses the import. The authorisation is stored with the component, and conditions each of its runs." },
     ],
     async executer(ctx: any) {
       const action = ctx.paramTexte("Action", "Exporter");
@@ -171,6 +177,14 @@ export const fiches: FicheAudio[] = ([
 
         if (!zipPath) return { valeurs: [], message: traduire("msg.import_annul") };
 
+        // L'AUTORISATION SE DONNE AVANT DE DÉPLIER, et elle se donne par un réglage déclaré plutôt
+        // que par une boîte de dialogue : elle est alors visible, documentée, et enregistrée avec
+        // le graphe. Un nœud importé s'exécute avec les droits de l'application ; il ne peut pas
+        // les recevoir sans qu'on les lui ait accordés. Voir `core/nodes-installes.ts`.
+        if (ctx.paramTexte("Exécution", "Refuser") !== "Autoriser") {
+          return { valeurs: [], erreur: true, message: traduire("msg.import_sans_autorisation") };
+        }
+
         ctx.onProgress(traduire("progress.d_compression_du_zip"));
         const res = await api.importerNodeZip(zipPath);
         if (!res?.ok) return { valeurs: [], message: traduire("msg.chec_import_var_0", res?.erreur || "erreur inconnue") };
@@ -183,6 +197,7 @@ export const fiches: FicheAudio[] = ([
           notice: res.notice,
           noticeText: res.notice?.fr,
           noticeTextEn: res.notice?.en,
+          consenti: new Date().toISOString(),
         });
 
         // LA PALETTE SE RELIT PAR LE CANAL DU MOTEUR, et rien ne reste sur le nœud.

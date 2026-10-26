@@ -19,9 +19,15 @@ import { SONDE_ENVIRONNEMENT } from "./node-essai";
 /**
  * Evalue le code d'un noeud comme `charger()` le fait, et rend ce que la sonde a vu.
  *
- * C'EST LA MEME MECANIQUE, volontairement recopiee ici et nulle part ailleurs : si `nodes-installes`
- * change de mecanique, ce cas ne le verra pas tout seul, et c'est pourquoi il y a aussi un cas qui
- * tient la FORME de l'appel dans `nodes-installes.ts`.
+ * C'EST LA MEME MECANIQUE, volontairement recopiee ici : ces cas mesurent ce qu'un code evalue
+ * ATTEINT, et non quand il l'est.
+ *
+ * CE QUI TIENT LA COPIE A L'ORIGINAL EST `nodes-installes.test.ts`, et il a longtemps manque. Cet
+ * en-tete affirmait qu'« il y a aussi un cas qui tient la FORME de l'appel dans
+ * `nodes-installes.ts` » : IL N'EXISTAIT PAS. C'est la faute meme que ce dossier denonce, une
+ * affirmation sur une propriete de securite que personne n'avait eprouvee. Le cas existe depuis le
+ * 2026-10-27, et il tient le COMPORTEMENT plutot que la forme : quand le code s'evalue, et sous
+ * quelle condition.
  */
 async function sonder(contexteAttic: Record<string, unknown>) {
   const moduleObj = { exports: null as unknown as (c: unknown) => Promise<{ valeurs: string[] }> };
