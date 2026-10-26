@@ -19,10 +19,24 @@ const { EXECUTABLES, extensionDe, ouvertureAutorisee, ecritureAutorisee,
 
 describe("ce que l'ouverture refuse", () => {
   it("REFUSE CE QUI S'EXECUTE, et dit pourquoi", () => {
+    // LE MOTIF A CHANGE AVEC LA REGLE, et c'est la seule chose qui a change ici. La barriere etait
+    // une liste de REFUS, et son message disait « lancerait un programme » ; elle est devenue une
+    // liste d'AUTORISATION, et le refus nomme desormais ce qui est permis. Les executables sont
+    // toujours refuses — et ils le sont maintenant comme tout le reste, sans avoir ete prevus.
     for (const nom of ["x.bat", "C:/tmp/x.cmd", "/home/x.sh", "a.exe", "r.ps1", "s.vbs", "i.msi"]) {
       const v = ouvertureAutorisee(nom);
       expect(v.ok, nom).toBe(false);
-      expect(v.raison, "un refus muet enverrait chercher la panne ailleurs").toMatch(/lancerait/);
+      expect(v.raison, "un refus muet enverrait chercher la panne ailleurs").toMatch(/n'est pas prevu/);
+    }
+  });
+
+  it("ET CE QUI MANQUAIT A LA LISTE DE REFUS EST REFUSE SANS AVOIR ETE PREVU", () => {
+    // VOILA POURQUOI LA LISTE A CHANGE DE SENS. Une revue a releve que `.dll`, `.cpl`, `.msc` et
+    // `.chm` manquaient a la liste de refus — et personne ne peut jurer qu'il n'en manque plus.
+    // Une liste d'autorisation n'a pas ce defaut : ce qui n'y est pas est refuse.
+    for (const nom of ["a.dll", "b.cpl", "c.msc", "d.chm", "e.scf", "f.inf", "g.settingcontent-ms",
+      "h.appref-ms", "i.application", "j.iso", "k.vhd"]) {
+      expect(ouvertureAutorisee(nom).ok, nom).toBe(false);
     }
   });
 
@@ -45,10 +59,23 @@ describe("ce que l'ouverture refuse", () => {
   });
 
   it("LAISSE PASSER CE QUE L'APPLICATION OUVRE VRAIMENT, mesure avant d'ecrire la regle", () => {
-    // Les TROIS appelants legitimes d'`ouvrirChemin` ouvrent un `.html` genere : les vues cartes et
-    // images. Une barriere qui les casserait serait une barriere qu'on retirerait.
-    for (const nom of ["C:/tmp/carte.html", "/tmp/vue.html", "son.wav", "projet.json", "note.txt"]) {
+    // Les TROIS appelants legitimes d'`ouvrirChemin` ouvrent un `index.html` genere — les vues
+    // cartes et images —, et les trois sources qui l'ecrivent produisent toutes
+    // `${dossierSortie}/index.html`. Une barriere qui les casserait serait une barriere qu'on
+    // retirerait.
+    for (const nom of ["C:/tmp/carte.html", "/tmp/vue.html", "D:/sortie/index.HTML"]) {
       expect(ouvertureAutorisee(nom).ok, nom).toBe(true);
+    }
+  });
+
+  it("ET CE QUI PASSAIT FAUTE D'AVOIR ETE REFUSE NE PASSE PLUS", () => {
+    // CE CAS ENCODAIT L'ANCIENNE REGLE : un `.wav`, un `.json`, un `.txt` passaient, non parce
+    // qu'un appelant les ouvrait, mais parce qu'aucune liste ne les refusait. Aucun des trois
+    // appelants ne les demande, et les ouvrir lance le programme associe de la machine.
+    for (const nom of ["son.wav", "projet.json", "note.txt", "image.png", "dossier"]) {
+      const v = ouvertureAutorisee(nom);
+      expect(v.ok, nom).toBe(false);
+      expect(v.raison, "le refus nomme ce qui est permis").toMatch(/\.html/);
     }
   });
 

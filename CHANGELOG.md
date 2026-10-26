@@ -4,6 +4,18 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Changed
+
+- **L'OUVERTURE DE FICHIER PASSE D'UNE LISTE DE REFUS À UNE LISTE D'AUTORISATION, et c'est une décision de Fabien.** `chemin-sur.cjs` la désignait lui-même comme en attente : « passer à une liste d'autorisation reste possible, et c'est une décision du propriétaire ».
+
+  - **CE QUI L'A TRANCHÉE** : une revue critique a relevé qu'il manquait `.dll`, `.cpl`, `.msc` et `.chm` à la liste de refus — et personne ne peut jurer qu'il n'en manque plus. Une liste de refus est une course perdue ; une liste d'autorisation se vérifie, puisque ce qui n'y est pas est refusé.
+  - **MESURÉ AVANT DE RESSERRER, et c'est ce qui la rend sans risque.** `shell.openPath` n'a **qu'un site d'appel** dans le pont, et **trois appelants** y mènent — `vues-cartes.tsx` deux fois, `vues-images.tsx` une fois. Les trois passent un `htmlPath`, et les trois sources qui l'écrivent — carte sonore, coordonnées sur carte, galerie d'exposition — produisent toutes `${dossierSortie}/index.html`. L'autorisation est donc exactement **`.html`**.
+  - **ELLE N'EST PAS GÉNÉREUSE D'UN POUCE** : `.htm` n'y est pas, parce que rien n'en produit. Le jour où un besoin neuf se présentera, c'est le refus qui le dira — et l'élargir sera une ligne, après la même mesure.
+  - **ET LE REFUS NOMME CE QUI EST PERMIS**, pour que celui qui le lit sache quoi faire, au lieu d'apprendre seulement qu'on lui dit non.
+  - **DEUX CAS ENCODAIENT L'ANCIENNE RÈGLE ET ONT CHANGÉ, ce qui se dit** : l'un attendait le mot « lancerait » dans le refus, l'autre affirmait qu'un `.wav`, un `.json` et un `.txt` passent. Ils passaient non parce qu'un appelant les ouvrait, mais parce qu'aucune liste ne les refusait — et les ouvrir lance le programme associé de la machine. Deux cas neufs prennent leur place : l'un vérifie que les quatre extensions oubliées sont refusées **sans avoir été prévues**, l'autre que ce qui passait faute de refus ne passe plus.
+  - **DÉFAUT PLANTÉ** : la liste élargie à `.bat`. Trois cas tombent — dont ceux des espaces de fin et de la casse, ce qui montre que toute la famille dépend bien de cette liste.
+  - **CE QUE CELA NE FERME PAS**, et il faut le redire : le pont garde `fichier:ecrire` sans bornes tant que la sanction par racines n'est pas armée, un nœud installé garde l'accès à `window`, et rien ne demande confirmation avant la première exécution d'un fichier reçu.
+
 ### Added
 
 - **UN RÉGLAGE RENOMMÉ PEUT DÉSORMAIS RETROUVER SA VALEUR, au lieu d'être seulement signalé perdu.** Dernier reste du point 2 d'une revue critique. Un projet n'enregistre pas ses réglages par un identifiant stable mais par leur **libellé** : renommer un réglage rendait injoignable la valeur d'un fichier déjà écrit, qui retombait en silence sur le défaut. Le chargement le signalait depuis le 2026-10-25 ; il le **récupère** maintenant, quand la fiche déclare l'ancien nom dans `nomsHerites`.
