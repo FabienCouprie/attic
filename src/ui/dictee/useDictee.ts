@@ -60,6 +60,33 @@ type Reconnaisseur = {
 };
 
 /**
+ * Le catalogue que la dictée peut nommer, et la ressemblance qui rattrape ce que l'exact perd.
+ *
+ * UNE SEULE ÉCRITURE, ET C'EST NÉCESSAIRE : le micro et la couture d'épreuve passent tous deux par
+ * ici. Deux montages du catalogue finiraient par se séparer, et l'épreuve exercerait alors une
+ * interprétation qui n'est pas celle qu'on parle.
+ *
+ * LA RESSEMBLANCE NE TIRE QUE RAREMENT À VOCABULAIRE FERMÉ, et il faut le dire. La grammaire ne
+ * laissant sortir que des mots du catalogue, l'appariement exact les prend presque toujours :
+ * relevé sur les trois lectures fermées, la ressemblance ne change aucune des trois, « spectre
+ * gamme » désignant exactement le composant « Gamme » avant qu'elle n'ait son tour. Elle rattrape
+ * ce qui reste, un mot qui n'est qu'un morceau d'un nom plus long, et elle sera à sa place le jour
+ * où le vocabulaire s'ouvrira : c'est là qu'elle est mesurée utile, trois noms techniques retrouvés
+ * sur trois que l'exact perdait.
+ */
+async function preparerInterpretation(langue: "fr" | "en"): Promise<{ noms: NomDicte[]; flou: ApparieurFlou }> {
+  const noms: NomDicte[] = await nomsDeDictee(langue === "en");
+  const catalogue = noms.map((n) => ({ id: n.ficheId, nom: n.nom }));
+  return {
+    noms,
+    flou: (fenetre) => {
+      const r = apparierFlou(fenetre, catalogue);
+      return r.length > 0 ? { ficheId: r[0].id, score: r[0].score } : null;
+    },
+  };
+}
+
+/**
  * L'écoute, et les gestes qu'elle rend.
  *
  * `surCommandes` est appelé à chaque résultat tranché par le moteur, avec les gestes de ce
@@ -91,6 +118,35 @@ export function useDictee(
     setPartiel("");
     setAvis("");
   }, []);
+
+  // ═══ LA DICTÉE, SANS LE MICRO, POUR QU'UNE ÉPREUVE EXERCE LA VRAIE CHAÎNE ═══
+  //
+  // CE QUI N'ÉTAIT ÉPROUVÉ NULLE PART. La grammaire a ses cas, les règles de placement les leurs,
+  // et l'application les siens depuis qu'elle est sortie d'`App.tsx`. Mais leur COMPOSITION ne
+  // l'était pas : que le catalogue passé au découpage soit celui du registre vivant, que la langue
+  // suive celle de l'interface, que l'apparieur soit monté sur ce catalogue-là. Ce sont exactement
+  // les défauts qu'un cas unitaire ne voit pas — ce dépôt en a mesuré un ce mois-ci, un garde vert
+  // parce qu'il n'importait que l'adaptateur et recevait des réponses neutres.
+  //
+  // ELLE PREND DU TEXTE, ce qui est précisément ce que le micro produit : le modèle acoustique et
+  // le flux audio sont les deux seules choses qu'elle saute, et ce sont les deux seules qu'une
+  // épreuve ne peut pas fournir. Tout le reste est le chemin que l'on parle.
+  //
+  // ELLE MODIFIE LE GRAPHE, et c'est assumé. C'est le même pouvoir qu'a le micro, et le registre
+  // vivant est déjà exposé de la même façon — `types-au-port.spec.ts` y désarme un prédicat depuis
+  // la page. Cette application est de bureau, et la couture ne crée aucun chemin qu'un micro
+  // branché n'ouvrirait pas.
+  useEffect(() => {
+    const fenetre = window as unknown as { __attic_dictee__?: (texte: string) => Promise<unknown> };
+    fenetre.__attic_dictee__ = async (texte: string) => {
+      const { noms, flou } = await preparerInterpretation(langue);
+      const commandes = interpreterDictee(texte, noms, langue, flou);
+      const avis = commandesRef.current(commandes) || "";
+      setAvis(avis);
+      return { commandes, avis };
+    };
+    return () => { delete fenetre.__attic_dictee__; };
+  }, [langue]);
   // Le mot d'arrêt est reconnu dans un écouteur posé avant que `arreter` ne soit à portée : la
   // référence est là pour que le même geste serve au bouton et à la voix.
   const arreterRef = useRef(arreter);
@@ -103,21 +159,7 @@ export function useDictee(
     let ctx: AudioContext | null = null;
     let rec: Reconnaisseur | null = null;
     try {
-      const noms: NomDicte[] = await nomsDeDictee(langue === "en");
-      // LA RESSEMBLANCE EST MONTÉE ICI, et passée au découpage, qui n'en connaît que la forme.
-      //
-      // ELLE NE TIRE QUE RAREMENT À VOCABULAIRE FERMÉ, et il faut le dire. La grammaire ne laissant
-      // sortir que des mots du catalogue, l'appariement exact les prend presque toujours : relevé
-      // sur les trois lectures fermées, la ressemblance ne change aucune des trois, « spectre
-      // gamme » désignant exactement le composant « Gamme » avant qu'elle n'ait son tour. Elle
-      // rattrape ce qui reste, un mot qui n'est qu'un morceau d'un nom plus long, et elle sera à sa
-      // place le jour où le vocabulaire s'ouvrira : c'est là qu'elle est mesurée utile, trois noms
-      // techniques retrouvés sur trois que l'exact perdait.
-      const catalogue = noms.map((n) => ({ id: n.ficheId, nom: n.nom }));
-      const flou: ApparieurFlou = (fenetre) => {
-        const r = apparierFlou(fenetre, catalogue);
-        return r.length > 0 ? { ficheId: r[0].id, score: r[0].score } : null;
-      };
+      const { noms, flou } = await preparerInterpretation(langue);
       const modele = await chargerModele((MODELES[langue] ?? MODELES.fr).fichier);
       flux = await navigator.mediaDevices.getUserMedia({ audio: true });
       // LE CONTEXTE EST OUVERT À LA FRÉQUENCE DU MOTEUR : le navigateur rééchantillonne lui-même,

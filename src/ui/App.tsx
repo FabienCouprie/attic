@@ -30,9 +30,9 @@ import { idsDe, oublierNoeuds } from "./oubli-noeuds";
 import { planDeGrapheEngendre } from "./graphe-engendre";
 import { useDictee } from "./dictee/useDictee";
 import type { Commande } from "./dictee/commandes-dictee";
-import { dernierDeFiche, noeudCourant, planInsertion, positionSuivante, premierLienCompatible,
-  type AreteDeDictee, type NoeudPose, type PortsDictes } from "./dictee/pose-dictee";
-import type { Position as PositionDictee } from "./dictee/commandes-dictee";
+import { premierLienCompatible, type AreteDeDictee, type NoeudPose, type PortsDictes }
+  from "./dictee/pose-dictee";
+import { appliquerCommandes, type LotDicte, type OutilsDeDictee } from "./dictee/appliquer-commandes";
 import { tailleDefaut } from "./tailles-noeuds";
 import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
 import { usePersistance } from "./hooks/usePersistance";
@@ -793,33 +793,42 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   callbacksNoeudRef.current = callbacksNoeud;
 
   // ── Ajouter / Supprimer ──
-  const ajouterNoeud = useCallback((ficheId: string, pos?: { x: number; y: number }) => {
+  /**
+   * Le nœud que le canevas pose pour cette fiche, à cette place — et il n'y a plus qu'une écriture.
+   *
+   * ELLE ÉTAIT ÉCRITE DEUX FOIS, et les deux calculaient la même chose dans le même ordre : ici
+   * pour la palette et les boutons de frontière, et dans l'application d'une dictée, qui ne
+   * l'appelait pas. Le commentaire ci-dessous n'existait que d'un côté ; si cette règle changeait,
+   * un seul des deux chemins aurait suivi.
+   */
+  const fabriquerNoeud = useCallback((
+    ficheId: string, position: { x: number; y: number }, noeuds: readonly { id: string }[],
+  ) => {
     const def = trouverDef(ficheId);
-    if (!def) return;
-    const position = pos ?? { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
+    if (!def) return null;
     const parametres: Record<string, number | string> = {};
     for (const p of def.parametres) {
-      // Tout paramètre « choix » passe par la forme canonique (indépendante de la
-// langue), y compris SANS optionIds : la valeur stockée doit correspondre à
-// l'`<option value>` du menu, qui reste le terme français. Restreindre ce
-// traitement aux seuls optionIds créait, en anglais, des nœuds dont le
-// paramètre valait par ex. "Center" — absent du menu (donc affiché comme
-// « Left ») et refusé par l'exécution.
-parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParametre(p, lang);
+      // Tout paramètre « choix » passe par la forme canonique (indépendante de la langue), y
+      // compris SANS optionIds : la valeur stockée doit correspondre à l'`<option value>` du menu,
+      // qui reste le terme français. Restreindre ce traitement aux seuls optionIds créait, en
+      // anglais, des nœuds dont le paramètre valait par ex. "Center" — absent du menu (donc
+      // affiché comme « Left ») et refusé par l'exécution.
+      parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParametre(p, lang);
     }
     const { width, height } = tailleDefaut(def);
-    setNodes((nds) => [...nds, {
-      id: idUnique(nds),
-      type: "atelier",
-      position,
-      width,
-      height,
-      data: {
-        ficheId, parametres, statut: "attente",
-        ...callbacksNoeud(),
-      },
-    }]);
-  }, [setNodes, setEdges, reinitialiserNoeud, setPrioritaire, callbacksNoeud]);
+    return {
+      id: idUnique(noeuds as { id: string }[]), type: "atelier" as const, position, width, height,
+      data: { ficheId, parametres, statut: "attente", ...callbacksNoeud() },
+    };
+  }, [lang, callbacksNoeud]);
+
+  const ajouterNoeud = useCallback((ficheId: string, pos?: { x: number; y: number }) => {
+    const position = pos ?? { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
+    setNodes((nds) => {
+      const noeud = fabriquerNoeud(ficheId, position, nds);
+      return noeud ? [...nds, noeud as unknown as (typeof nds)[number]] : nds;
+    });
+  }, [setNodes, fabriquerNoeud]);
 
   const ajouterCommentaire = useCallback(() => {
     setPendingAdd("comment");
@@ -1257,153 +1266,79 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
    * et quel nœud un nom désigne. Elles se trompent sans rien lever, et sont éprouvées là-bas.
    */
   const dernierDicteRef = useRef<string | null>(null);
+
+  /** Ce que l'applicateur ne sait pas faire seul, et que le canevas lui prête. */
+  const outilsDeDictee = useCallback((): OutilsDeDictee<NoeudPose> => ({
+    nomDeFiche: (ficheId) => trouverDef(ficheId)?.nom ?? ficheId,
+    existe: (ficheId) => !!trouverDef(ficheId),
+    fabriquerNoeud: (ficheId, position, noeuds) =>
+      fabriquerNoeud(ficheId, position, noeuds) as unknown as NoeudPose | null,
+    lienDicte: (noeuds, source, target) => lienDicte(noeuds as unknown as any[], source, target),
+    fermeraitUnCycle: (de, vers, aretes) =>
+      fermeraitUnCycle(de, vers, (aretes as unknown as AreteG[]).filter((a) => !estSubstitution(a))),
+    traduire,
+  }), [trouverDef, fabriquerNoeud]);
+
+  /**
+   * Verse un lot dicté sur le canevas, et c'est le seul geste de React de tout ce chemin.
+   *
+   * LES ARÊTES DÉTOURNÉES NE SONT NI AJOUTÉES NI RETIRÉES : elles changent de bout. C'est ce qui
+   * fait qu'une insertion ALLONGE une chaîne au lieu d'en dériver une branche.
+   */
+  const verserLotDicte = useCallback((lot: LotDicte<NoeudPose>) => {
+    if (!lot.nouveaux.length && !lot.aretes.length && !lot.aDetourner.length) return;
+    pushHistorique();
+    setNodes((nds) => [...nds, ...(lot.nouveaux as unknown as (typeof nds))]);
+    setEdges((eds) => [
+      ...eds.map((e) => {
+        const det = lot.aDetourner.find((x) => x.id === e.id);
+        if (!det) return e;
+        return det.ou === "apres" ? { ...e, source: det.vers } : { ...e, target: det.vers };
+      }),
+      ...(lot.aretes as unknown as Edge[]),
+    ]);
+  }, [pushHistorique, setNodes, setEdges]);
+
   const appliquerDictee = useCallback((commandes: Commande[]) => {
-    let noeuds = [...noeudsRef.current];
-    const nouveaux: typeof noeuds = [];
-    const aretes: Edge[] = [];
-    /** Les arêtes DÉJÀ sur le canevas dont une insertion change un bout. */
-    const aDetourner: { id: string; vers: string; ou: "apres" | "avant" }[] = [];
-    let dernier = dernierDicteRef.current;
-
-    /** Le nom lisible d'une fiche, comme le refus de référence l'écrit déjà juste en dessous. */
-    const nomDeFiche = (ficheId: string) => trouverDef(ficheId)?.nom ?? ficheId;
-    /** « X est posé, mais rien ne le relie à Y » : le nœud reste, le câble non, et on le dit. */
-    const avisSansLien = (pose: string, autre: string) =>
-      traduire("dictee.sansLien", nomDeFiche(pose), nomDeFiche(autre));
-
-    const poser = (ficheId: string, parallele: boolean, ou?: PositionDictee): string | undefined => {
-      const def = trouverDef(ficheId);
-      if (!def) return `Composant inconnu : ${ficheId}`;
-      // UNE RÉFÉRENCE DÉSIGNE, ELLE NE CRÉE PAS : si elle ne désigne rien, on ne pose rien et on le
-      // dit. Poser quand même, sans le lien demandé, ferait passer un refus pour une réussite.
-      const reference = ou
-        ? dernierDeFiche(noeuds as unknown as NoeudPose[], ou.refFicheId)
-        : undefined;
-      if (ou && !reference) {
-        const nom = trouverDef(ou.refFicheId)?.nom ?? ou.refFicheId;
-        return `${t("dictee.referenceAbsente")} ${nom}`;
-      }
-      const courant = reference
-        ?? noeudCourant(noeuds as unknown as NoeudPose[], sel?.id ?? null, dernier);
-      const position = positionSuivante(courant, noeuds as unknown as NoeudPose[], parallele);
-      const parametres: Record<string, number | string> = {};
-      for (const p of def.parametres) {
-        parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParametre(p, lang);
-      }
-      const { width, height } = tailleDefaut(def);
-      const id = idUnique(noeuds);
-      const noeud = {
-        id, type: "atelier" as const, position, width, height,
-        data: { ficheId, parametres, statut: "attente", ...callbacksNoeud() },
-      } as unknown as (typeof noeuds)[number];
-      noeuds = [...noeuds, noeud];
-      nouveaux.push(noeud);
-      if (reference && ou) {
-        // INSÉRER, ET NON DÉRIVER : ce qui partait de la référence part désormais du nouveau nœud,
-        // de sorte que le son y PASSE. Les redirections portent sur les arêtes déjà posées comme
-        // sur celles du canevas, la copie de travail valant pour les deux.
-        const toutes = [...aretesRef.current, ...aretes] as unknown as AreteDeDictee[];
-        const { aRediriger, lien } = planInsertion(toutes, reference.id, id, ou.ou);
-        const ports = lienDicte(noeuds, lien.source, lien.target);
-        // POSÉ SANS ÊTRE RELIÉ, ET DIT. Rediriger ce qui part de la référence vers un nœud qui ne
-        // peut rien en recevoir COUPERAIT la chaîne au lieu de l'allonger : l'insertion entière est
-        // donc abandonnée, redirections comprises, et le nœud reste sur le canevas, libre.
-        if (!ports) { dernier = id; return avisSansLien(ficheId, ou.refFicheId); }
-        for (const a of aretes) {
-          if (!aRediriger.includes(a.id)) continue;
-          if (ou.ou === "apres") a.source = id; else a.target = id;
-        }
-        aDetourner.push(...aRediriger.filter((x) => !aretes.some((a) => a.id === x))
-          .map((x) => ({ id: x, vers: id, ou: ou.ou })));
-        aretes.push({
-          id: `e-dictee-${id}-${Date.now()}`, source: lien.source, target: lien.target, ...ports,
-        });
-      } else if (courant && !parallele) {
-        // ENCHAÎNÉ SUR LE COURANT, sauf « en parallèle » : c'est ce qui dispense de dire le lien.
-        const ports = lienDicte(noeuds, courant.id, id);
-        if (!ports) { dernier = id; return avisSansLien(ficheId, courant.data?.ficheId as string); }
-        aretes.push({
-          id: `e-dictee-${id}-${Date.now()}`, source: courant.id, target: id, ...ports,
-        });
-      }
-      dernier = id;
-      return undefined;
-    };
-
-    const relier = (deFiche: string, versFiche: string): string | undefined => {
-      const de = dernierDeFiche(noeuds as unknown as NoeudPose[], deFiche);
-      const vers = dernierDeFiche(noeuds as unknown as NoeudPose[], versFiche);
-      if (!de || !vers || de.id === vers.id) return undefined;
-      // Le même refus qu'à la souris : une arête qui referme un cycle rend muette une branche.
-      const deja = [...aretesRef.current, ...aretes] as unknown as AreteG[];
-      if (fermeraitUnCycle(de.id, vers.id, deja.filter((a) => !estSubstitution(a)))) {
-        console.warn(`[attic] Dictée : ${de.id} → ${vers.id} refermerait un cycle.`);
-        return undefined;
-      }
-      // ICI RIEN N'EST POSÉ : « relier X à Y » ne crée aucun nœud, donc le refus porte sur le seul
-      // câble, et il se dit autrement que celui d'un composant posé sans branchement.
-      const ports = lienDicte(noeuds, de.id, vers.id);
-      if (!ports) return traduire("dictee.lienImpossible", nomDeFiche(deFiche), nomDeFiche(versFiche));
-      aretes.push({
-        id: `e-dictee-${de.id}-${vers.id}-${Date.now()}`, source: de.id, target: vers.id, ...ports,
-      });
-      return undefined;
-    };
-
-    const verser = () => {
-      if (nouveaux.length === 0 && aretes.length === 0 && aDetourner.length === 0) return;
-      pushHistorique();
-      const n = [...nouveaux]; const a = [...aretes]; const d = [...aDetourner];
-      nouveaux.length = 0; aretes.length = 0; aDetourner.length = 0;
-      setNodes((nds) => [...nds, ...n]);
-      setEdges((eds) => [
-        // Les arêtes détournées ne sont ni ajoutées ni retirées : elles changent de bout.
-        ...eds.map((e) => {
-          const det = d.find((x) => x.id === e.id);
-          if (!det) return e;
-          return det.ou === "apres" ? { ...e, source: det.vers } : { ...e, target: det.vers };
-        }),
-        ...a,
-      ]);
-    };
-
+    // LE CALCUL EST DANS `dictee/appliquer-commandes.ts`, ET IL EST PUR. Ce qui reste ici est ce
+    // qu'il ne peut pas faire : verser dans React, defaire, et commander la seance.
+    //
+    // LA BOUCLE EXISTE A CAUSE D'« ANNULER », seule commande qui ne se calcule pas d'avance :
+    // elle verse ce qui attend, DEFAIT, puis repart de l'etat obtenu, que l'applicateur ne peut
+    // pas prevoir puisque l'historique ne lui appartient pas. Il s'arrete donc la en disant ce
+    // qu'il reste a faire, et l'on redemande.
+    const outils = outilsDeDictee();
+    let reste: Commande[] = commandes;
+    const seance = { lancer: false, arreter: false, recentrer: false };
     let avis: string | undefined;
-    // LES TROIS GESTES DE SÉANCE SONT RETENUS, NON FAITS SUR-LE-CHAMP : « pose un compresseur et
-    // lance » doit lancer un graphe qui PORTE le compresseur, et celui-ci n'y est qu'une fois
-    // versé. Les faire dans la boucle les ferait porter sur le graphe d'avant.
-    let aLancer = false;
-    let aArreter = false;
-    let aRecentrer = false;
-    for (const c of commandes) {
-      if (c.quoi === "poser") avis = poser(c.ficheId, c.parallele, c.position) ?? avis;
-      else if (c.quoi === "relier") avis = relier(c.de, c.vers) ?? avis;
-      else if (c.quoi === "lancer") aLancer = true;
-      else if (c.quoi === "arreterExecution") aArreter = true;
-      else if (c.quoi === "recentrer") aRecentrer = true;
-      else if (c.quoi === "annuler") {
-        // Ce qui est en attente part d'abord : annuler doit défaire l'état visible, pas un autre.
-        verser();
-        undo();
-        noeuds = [...noeudsRef.current];
-        dernier = null;
-      }
+    for (let garde = 0; reste.length && garde < 64; garde++) {
+      const suite = appliquerCommandes(reste, {
+        noeuds: noeudsRef.current as unknown as NoeudPose[],
+        aretes: aretesRef.current as unknown as AreteDeDictee[],
+        selectionId: sel?.id ?? null, dernier: dernierDicteRef.current,
+      }, outils);
+      verserLotDicte(suite.lot);
+      dernierDicteRef.current = suite.lot.dernier;
+      avis = suite.lot.avis ?? avis;
+      seance.lancer ||= suite.seance.lancer;
+      seance.arreter ||= suite.seance.arreter;
+      seance.recentrer ||= suite.seance.recentrer;
+      reste = suite.reste;
+      if (suite.annulerEnsuite) { undo(); dernierDicteRef.current = null; }
     }
-    verser();
-    dernierDicteRef.current = dernier;
 
-    // L'ARRÊT PASSE DEVANT : si les deux sont dits, c'est le dernier état voulu qui compte, et
-    // relancer après avoir arrêté est ce que la phrase demande dans cet ordre.
-    if (aArreter) arreter();
-    if (aLancer) {
-      // LE LANCEMENT ATTEND LE RENDU. Les nœuds viennent d'être posés par un `setNodes`, et le
-      // moteur lit le graphe rendu : lancer dans le même tour exécuterait celui d'avant.
+    // L'ARRET PASSE DEVANT : si les deux sont dits, c'est le dernier etat voulu qui compte, et
+    // relancer apres avoir arrete est ce que la phrase demande dans cet ordre.
+    if (seance.arreter) arreter();
+    if (seance.lancer) {
+      // LE LANCEMENT ATTEND LE RENDU. Les noeuds viennent d'etre poses par un `setNodes`, et le
+      // moteur lit le graphe rendu : lancer dans le meme tour executerait celui d'avant.
       setTimeout(() => { void lancer().then(() => rfInstance?.fitView?.({ duration: 200, padding: 0.2 })); }, 80);
-    } else if (aRecentrer) {
+    } else if (seance.recentrer) {
       rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
     }
     return avis;
-  }, [sel, lang, trouverDef, callbacksNoeud, pushHistorique, setNodes, setEdges, undo,
-    lancer, arreter, rfInstance]);
+  }, [sel, outilsDeDictee, verserLotDicte, undo, lancer, arreter, rfInstance]);
 
   const dictee = useDictee(lang === "en" ? "en" : "fr", appliquerDictee);
 

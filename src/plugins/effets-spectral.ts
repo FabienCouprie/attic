@@ -389,7 +389,12 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "reverbe-convolution", nom: "Réverbération à convolution (IR)", nomEn: "Convolution Reverb (IR)", univers: "Traitement", famille: "Effets",
+    id: "reverbe-convolution", nom: "Réverbération à convolution (IR)", nomEn: "Convolution Reverb (IR)",
+    // « convolution » MANQUE AU LEXIQUE DU MOTEUR VOCAL, et ce composant était donc indicible.
+    // « réponse » le dit sans le mot qui manque, et sans amputer : « réverbération à » toute seule
+    // concurrencerait « Réverbération ». Voir `core/types.ts`, qui porte la règle.
+    nomDicte: "réverbération à réponse",
+    univers: "Traitement", famille: "Effets",
     resume: "Réverbération à convolution avec IR synthétique (paramétrable) ou fichier IR externe.",
     resumeEn: "Convolution reverb with synthetic IR (adjustable) or external IR file.",
     entrees: [{ nom: "Audio", type: "audio" }],
