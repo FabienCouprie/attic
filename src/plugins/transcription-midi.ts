@@ -35,6 +35,7 @@ import { messageEchecPont } from "./pont-electron";
 import { valeurNote } from "../audio/valeurs-note";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 import { parametreCalcul } from "./parametre-calcul";
+import { relayerProgression } from "./progression-pont";
 
 /**
  * Les groupes d'instruments que le moteur reconnaît, et qui servent ici.
@@ -87,10 +88,7 @@ const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknow
 
 /** Branche l'avancement du moteur sur celui du nœud, et rend de quoi se débrancher. */
 function suivre(ctx: { onProgress?: (m: string) => void }) {
-  const pont = api()?.muscriptorProgression as unknown as
-    ((cb: (e: { ligne: string }) => void) => () => void) | undefined;
-  if (!pont) return () => { /* hors application : rien à suivre */ };
-  return pont(({ ligne }) => ctx.onProgress?.(ligne));
+  return relayerProgression(ctx, api()?.muscriptorProgression);
 }
 
 /** Les instruments trouvés et leur compte, depuis les événements que le moteur rend en texte. */

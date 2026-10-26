@@ -35,6 +35,7 @@ import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { parametreCalcul } from "./parametre-calcul";
+import { relayerProgression } from "./progression-pont";
 
 const CANAL = "parakeet:transcrire";
 
@@ -42,10 +43,7 @@ const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknow
 
 /** Branche l'avancement du moteur sur celui du nœud, et rend de quoi se débrancher. */
 function suivre(ctx: { onProgress?: (m: string) => void }) {
-  const pont = api()?.parakeetProgression as unknown as
-    ((cb: (e: { ligne: string }) => void) => () => void) | undefined;
-  if (!pont) return () => { /* hors application : rien à suivre */ };
-  return pont(({ ligne }) => ctx.onProgress?.(ligne));
+  return relayerProgression(ctx, api()?.parakeetProgression);
 }
 
 /** Le débit de parole, en mots par minute, ou `null` si la mesure n'a pas de sens. */

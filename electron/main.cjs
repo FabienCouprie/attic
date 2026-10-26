@@ -38,6 +38,7 @@ const { execSync, execFile } = require("child_process");
 const { Readable } = require("stream");
 const { URL: UrlModele } = require("url");
 const { ouvertureAutorisee, ecritureAutorisee, armerJournal, inscrireChemin, inscrireCanal } = require("./chemin-sur.cjs");
+const { HOTES_TELECHARGEMENT, hoteDeTelechargementAutorise } = require("./hotes-telechargement.cjs");
 
 // ═══ LE RELEVÉ DE TOUS LES CANAUX, QUAND IL EST DEMANDÉ ═══
 //
@@ -520,8 +521,9 @@ ipcMain.handle("fichier:ecrire", async (_event, { chemin, buffer }) => {
   // LE PREMIER MAILLON DE LA CHAINE EST COUPE ICI. Ce pont ecrivait a n'importe quel chemin en
   // creant les dossiers, sans une ligne de validation ; combine a `fichier:ouvrir-chemin`, « ecrire
   // un script puis l'ouvrir » etait complet a partir d'un fichier recu. La regle vit dans
-  // `chemin-sur.cjs`, et elle distingue ce qui s'ecrit de ce qui s'ouvre : un `.py` legitime se
-  // materialise ici et se lance par un interpreteur declare, jamais par le systeme.
+  // `chemin-sur.cjs`. ELLE NE DISTINGUE PLUS CE QUI S'ECRIT DE CE QUI S'OUVRE : l'exemption des
+  // interpretes a ete retiree le 2026-10-26, sa justification etant fausse — `python:executer` et
+  // `julia:executer` materialisent eux-memes leurs scripts, et ne passent jamais par ce pont.
   const verdict = ecritureAutorisee(chemin);
   // ET LE BORNAGE PAR RACINES, dont la sanction est ÉTEINTE le temps du relevé : hors racine, on
   // inscrit et l'on passe. `ATTIC_RACINES_STRICTES=1` la rallume. Quinze fichiers écrivent par ce
@@ -797,6 +799,13 @@ function telechargerRedirections(url, profondeur = 0) {
   return new Promise((resolve) => {
     if (profondeur > 5) {
       return resolve({ erreur: "Trop de redirections" });
+    }
+    // LA VERIFICATION EST ICI ET NON CHEZ L'APPELANT, donc CHAQUE REDIRECTION y repasse : une
+    // liste qui ne regarderait que la premiere adresse se contournerait par un hote autorise qui
+    // renvoie ailleurs, ce qui est la forme la plus courante du detournement.
+    if (!hoteDeTelechargementAutorise(url)) {
+      console.error(`[attic] telecharger:url REFUSE: ${url.protocol}//${url.hostname}`);
+      return resolve({ erreur: `hote refuse : ${url.hostname} (seuls ${HOTES_TELECHARGEMENT.join(", ")} sont servis, en HTTPS)` });
     }
     const mod = url.protocol === "https:" ? https : http;
     const req = mod.get(url, { headers: { "User-Agent": "Attic/1.0" } }, (res) => {
@@ -1466,7 +1475,28 @@ ipcMain.handle("fichier:lire-texte", async (_event, cheminRelatif) => {
 });
 
 // --- IPC : Supprimer un fichier ---
+// ═══ LA SUPPRESSION PASSE PAR LES MEMES RACINES QUE L'ECRITURE, DEPUIS LE 2026-10-26 ═══
+//
+// Releve par une revue critique : « `fichier:supprimer` n'a aucune garde. Il supprime n'importe
+// quel fichier que l'utilisateur a le droit de supprimer, et il n'est soumis ni a la regle des
+// racines, ni au journal des chemins. Le bornage porte sur l'ecriture et l'ouverture, pas sur la
+// suppression ; meme armee, la sanction ne le couvrirait pas. » Verifie, et vrai : un
+// `fs.unlinkSync` sans une ligne de validation.
+//
+// L'EXTENSION NE DECIDE DE RIEN ICI, et c'est la difference avec l'ecriture. Refuser de supprimer
+// un `.exe` ne protegerait personne : ce qui se perd dans une suppression, c'est le fichier de
+// quelqu'un, et c'est l'ENDROIT qui le dit. Le verdict de racine est donc le seul garde qui vaille.
+//
+// ET IL FAUDRA QUE LE DOSSIER TEMPORAIRE SOIT UNE RACINE AVANT D'ARMER LA SANCTION : `python:executer`
+// et `julia:executer` y ecrivent leurs scripts, et les noeuds y suppriment leurs fichiers de
+// travail. Armer sans l'avoir declare casserait ces suppressions-la, en silence.
 ipcMain.handle("fichier:supprimer", async (_event, chemin) => {
+  const racine = verdictRacine(chemin);
+  inscrireChemin("supprimer", chemin, racine.ok, racine.sousRacine);
+  if (!racine.ok) {
+    console.error(`[attic] fichier:supprimer REFUSE: ${chemin} — ${racine.raison}`);
+    return false;
+  }
   try {
     if (fs.existsSync(chemin)) fs.unlinkSync(chemin);
     return true;

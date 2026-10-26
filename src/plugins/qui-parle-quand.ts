@@ -24,6 +24,7 @@ import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { resamplerVers16k } from "./sherpa-asr";
 import { parametreCalcul } from "./parametre-calcul";
+import { relayerProgression } from "./progression-pont";
 
 /** Les locuteurs qu'on peut demander : tous, ou l'un des quatre que le moteur distingue. */
 const LOCUTEURS = [
@@ -45,10 +46,7 @@ const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknow
 
 /** Branche l'avancement du moteur sur celui du nœud, et rend de quoi se débrancher. */
 function suivre(ctx: { onProgress?: (m: string) => void }) {
-  const pont = api()?.paroleDiarisationProgression as unknown as
-    ((cb: (e: { ligne: string }) => void) => () => void) | undefined;
-  if (!pont) return () => { /* hors application : rien à suivre */ };
-  return pont(({ ligne }) => ctx.onProgress?.(ligne));
+  return relayerProgression(ctx, api()?.paroleDiarisationProgression);
 }
 
 /** Le son réduit à ce que le moteur accepte : mono, seize kilohertz, en octets de WAV. */

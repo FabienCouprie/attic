@@ -21,6 +21,7 @@ import { messageEchecPont } from "./pont-electron";
 import { octetsWav } from "./chanson-aides";
 import { PARAMETRE_CALCUL } from "./parametre-calcul";
 import { LANGUE_AUTO, choixLangues } from "../core/langues";
+import { relayerProgression } from "./progression-pont";
 
 const CANAL = "chatterbox:cloner";
 
@@ -28,10 +29,7 @@ const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknow
 
 /** Branche l'avancement du moteur sur celui du nœud, et rend de quoi se débrancher. */
 function suivre(ctx: { onProgress?: (m: string) => void }) {
-  const pont = api()?.chatterboxProgression as unknown as
-    ((cb: (e: { ligne: string }) => void) => () => void) | undefined;
-  if (!pont) return () => { /* hors application : rien à suivre */ };
-  return pont(({ ligne }) => ctx.onProgress?.(ligne));
+  return relayerProgression(ctx, api()?.chatterboxProgression);
 }
 
 /**
