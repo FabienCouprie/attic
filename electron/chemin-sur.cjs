@@ -99,13 +99,24 @@ function ouvertureAutorisee(chemin) {
  * autrement — un raccourci depose dans le dossier de demarrage de Windows s'execute a la session
  * suivante sans que personne ne l'ouvre. Interdire l'ECRITURE coupe donc plus haut.
  *
- * LA LISTE N'EST PAS CELLE DE L'OUVERTURE, et la difference est mesuree. `python-processor` et
- * `julia-processor` materialisent de vrais scripts, et les lancent par un interpreteur declare —
- * jamais par `shell.openPath`. Un `.py` doit donc pouvoir s'ECRIRE alors qu'il ne doit pas
- * s'OUVRIR. Releve avant d'ecrire la regle : sur les quinze fichiers qui ecrivent par le pont,
- * AUCUN ne produit une extension executable de Windows.
+ * ═══ L'EXEMPTION DES INTERPRETES A ETE RETIREE LE 2026-10-26, ET SA JUSTIFICATION ETAIT FAUSSE ═══
+ *
+ * Ce fichier exemptait `.py`, `.jl`, `.sh` et leurs pareils, au motif ecrit ici meme que
+ * « `python-processor` et `julia-processor` materialisent de vrais scripts ». Ils en materialisent,
+ * mais PAS PAR CE PONT : `python:executer` et `julia:executer` ecrivent eux-memes leur script par
+ * `fs.writeFileSync` dans le dossier temporaire, et ne passent jamais par `fichier:ecrire`.
+ *
+ * ET CE N'ETAIT PAS UNE JUSTIFICATION DEVENUE OBSOLETE : le script temporaire date du commit
+ * INITIAL, l'exemption est arrivee bien plus tard. Elle etait fausse au moment ou on l'a ecrite.
+ *
+ * CE QU'ELLE LAISSAIT PASSER, releve par une revue : un `.py` deposable n'importe ou, y compris
+ * dans le dossier de demarrage de Windows, ou il s'execute a la session suivante si Python y est
+ * associe. La sanction par racines, qui bornerait l'endroit, est eteinte le temps du releve — c'est
+ * donc l'extension qui doit trancher.
+ *
+ * RELEVE AVANT DE LA RETIRER : les ecritures du pont ne produisent que `.html`, `.md`, des `.wav`,
+ * des `.mid` et des chemins choisis au dialogue. Aucune ne produit un script d'interprete.
  */
-const INTERPRETES = new Set([".py", ".jl", ".rb", ".pl", ".sh", ".csh", ".zsh", ".command", ".app", ".jar"]);
 
 /**
  * Ce chemin peut-il etre ecrit par le pont ?
@@ -117,7 +128,7 @@ function ecritureAutorisee(chemin) {
   const texte = String(chemin ?? "");
   if (!texte.trim()) return { ok: false, raison: "chemin vide" };
   const ext = extensionDe(texte.replace(/[\s.]+$/, ""));
-  if (EXECUTABLES.has(ext) && !INTERPRETES.has(ext)) {
+  if (EXECUTABLES.has(ext)) {
     return { ok: false, raison: `ecrire un « ${ext} » deposerait un programme executable` };
   }
   return { ok: true };
@@ -223,6 +234,6 @@ function inscrireCanal(canal) {
 }
 
 module.exports = {
-  EXECUTABLES, INTERPRETES, extensionDe, ouvertureAutorisee, ecritureAutorisee,
+  EXECUTABLES, OUVRABLES, extensionDe, ouvertureAutorisee, ecritureAutorisee,
   armerJournal, inscrireChemin, inscrireCanal,
 };

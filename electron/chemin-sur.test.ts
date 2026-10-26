@@ -100,13 +100,20 @@ describe("ce que l'ecriture refuse", () => {
     }
   });
 
-  it("MAIS LAISSE ECRIRE UN SCRIPT D'INTERPRETEUR, et la difference est mesuree", () => {
-    // `python-processor` et `julia-processor` materialisent de vrais scripts et les lancent par un
-    // interpreteur declare, jamais par `shell.openPath`. Un `.py` doit donc pouvoir s'ECRIRE alors
-    // qu'il ne doit pas s'OUVRIR — c'est pourquoi les deux listes ne sont pas la meme.
-    for (const nom of ["travail.py", "travail.jl", "x.sh"]) {
-      expect(ecritureAutorisee(nom).ok, nom).toBe(true);
-      expect(ouvertureAutorisee(nom).ok, `${nom} ne doit pas s'ouvrir`).toBe(false);
+  it("ET UN SCRIPT D'INTERPRETEUR NON PLUS, depuis que sa justification a ete verifiee", () => {
+    // ═══ CE CAS AFFIRMAIT LE CONTRAIRE, ET IL AVAIT TORT ═══
+    //
+    // Il disait : « python-processor et julia-processor materialisent de vrais scripts, donc un
+    // .py doit pouvoir s'ECRIRE ». Ils en materialisent, mais PAS PAR CE PONT — `python:executer`
+    // et `julia:executer` ecrivent eux-memes leur script dans le dossier temporaire, et ne passent
+    // jamais par `fichier:ecrire`. Le script temporaire date du commit INITIAL, l'exemption est
+    // arrivee bien plus tard : elle etait fausse quand on l'a ecrite.
+    //
+    // CE QU'ELLE LAISSAIT PASSER : un `.py` deposable dans le dossier de demarrage de Windows, ou
+    // il s'execute a la session suivante. Aucune ecriture du pont ne produit un tel fichier.
+    for (const nom of ["travail.py", "travail.jl", "x.sh", "y.rb", "z.jar"]) {
+      expect(ecritureAutorisee(nom).ok, nom).toBe(false);
+      expect(ouvertureAutorisee(nom).ok, `${nom} ne doit pas s'ouvrir non plus`).toBe(false);
     }
   });
 
