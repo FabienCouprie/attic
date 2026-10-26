@@ -4,6 +4,17 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+
+- **Fermer l'application sans fichier ouvert perdait tout depuis le dernier enregistrement manuel — et pas seulement en cas de plantage.** Point 9 de la revue critique, vérifié **plus grave que décrit**. Quatre mesures : `decisionSauvegardeAuto` rend « sans-fichier » dès que le chemin courant est absent ; `memoriserEncours()`, qui écrit l'en-cours relu au démarrage, n'était appelé **que par le bouton « Recharger »** ; il n'y avait ni `beforeunload`, ni `pagehide`, ni minuteur ; et côté Electron, `window-all-closed` appelle `app.quit()` sans rien demander au rendu. Une heure de travail sans fichier ouvert partait entière, **même en fermant proprement**.
+
+  - **Ce qui manquait n'était pas la restauration.** `attic-encours` est relu au démarrage et le graphe revient : tout le mécanisme était là, et personne ne l'alimentait. `ui/journal-de-session.ts` l'alimente — après chaque changement du graphe, une fois les changements calmés, et à la fermeture pour ce qui attendait encore.
+  - **LA RÈGLE QUI PROTÈGE LA SESSION EST L'ARMEMENT, et sans elle cette fonctionnalité DÉTRUIT du travail.** `App.tsx` restaure l'en-cours dans un effet **asynchrone** : au montage, le graphe est vide et se remplit ensuite. Un journal qui écrirait au premier changement écrirait `{ nodes: [] }` **par-dessus la session qu'il est censé sauver**. Il ne s'arme donc que sur un graphe non vide. Défaut planté — armement inconditionnel — : l'en-cours ressort à **`noeuds: 0`**, et deux cas tombent.
+  - **Un geste continu n'écrit qu'une fois.** Déplacer un nœud produit une dizaine de changements par seconde ; l'échéance se repousse à chaque changement, de sorte qu'un geste coûte une écriture et non dix.
+  - **Éprouvé dans l'application, trois cas.** Un nœud déplacé sans aucun enregistrement : l'en-cours passe de `x=120` à `x=104,64`, et le rechargement le rend à cette place. Une fermeture **dans** le délai : `pagehide` rattrape le geste — sans lui, la position reste à 120. Et un démarrage sans geste laisse l'en-cours **intact**.
+  - **ET J'AI FAILLI ACCUSER LE JOURNAL À LA PLACE DE MON INSTRUMENT.** Le premier jet saisissait le nœud en son CENTRE : la transformée restait `translate(120px, 120px)` avant comme après — le corps d'un nœud porte des éléments `nodrag` qui arrêtent l'événement de pointeur. Le cas vérifie maintenant que le geste a porté **avant** de conclure quoi que ce soit sur l'écriture.
+  - **Le coût est mesuré, le délai est un choix**, et les deux ne se confondent pas : **323 octets et 0,005 ms** pour sérialiser et stocker un graphe d'un nœud, le plus gros graphe livré faisant 14 Ko pour 17 nœuds. Le coût ne commande donc pas le délai ; c'est le geste qui le commande, et 1500 ms est le temps au bout duquel on le tient pour fini. Cinq défauts plantés, cinq chutes.
+
 ### Changed
 
 - **Le plafond en octets qu'on allait poser sur le cache d'exécution ne libérerait RIEN, et la mesure est consignée là où quelqu'un viendrait l'écrire.** Point 4 de la revue critique — « le plus structurant » selon elle. Les cinq affirmations ont été vérifiées ; **deux sont à corriger**, et ce sont justement les deux qui portaient un coût mémoire.

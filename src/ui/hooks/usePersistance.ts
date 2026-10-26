@@ -11,6 +11,7 @@ import {
 } from "../../core";
 import { registreUI } from "../registre-actif";
 import { pertesDesNoeuds } from "../pertes-chargement";
+import { creerJournalDeSession, type JournalDeSession } from "../journal-de-session";
 import { serialiserMeta } from "../metasLocaux";
 import { detecterPertes, formaterRapportPertes } from "../../core/pertes";
 import { useI18n } from "../../i18n";
@@ -242,6 +243,51 @@ export function usePersistance(o: OptionsPersistance) {
       return false;
     }
   }, [buildExportData]);
+
+  // ═══ LE JOURNAL DE SESSION : LE TRAVAIL EN COURS SURVIT À UNE FERMETURE ═══
+  //
+  // RELEVÉ PAR UNE REVUE DU DÉPÔT, point 9, et vérifié plus grave que décrit. `memoriserEncours`
+  // ci-dessus n'était appelé QUE par le bouton « Recharger » ; il n'y avait ni `beforeunload`, ni
+  // `pagehide`, ni minuteur, et côté Electron `window-all-closed` appelle `app.quit()` sans rien
+  // demander au rendu. Ce n'était donc pas seulement un plantage : fermer la fenêtre proprement
+  // perdait tout depuis le dernier enregistrement manuel.
+  //
+  // LA RÈGLE QUI PROTÈGE LA SESSION VIT DANS `ui/journal-de-session.ts`, avec ses neuf cas, et c'est
+  // celle de l'ARMEMENT : la restauration de `attic-encours` se fait dans un effet ASYNCHRONE, donc
+  // le graphe est vide au montage. Un journal qui écrirait au premier changement remplacerait la
+  // session par du vide. Il ne s'arme donc que sur un graphe non vide.
+  // `memoriserEncours` change d'identité à chaque rendu ; le journal, lui, est créé une seule fois.
+  // Sans cette indirection, il écrirait avec la version de `buildExportData` du premier rendu —
+  // c'est-à-dire avec le graphe d'alors.
+  const memoriserEncoursRef = useRef(memoriserEncours);
+  memoriserEncoursRef.current = memoriserEncours;
+  const journalRef = useRef<JournalDeSession | null>(null);
+  if (!journalRef.current) journalRef.current = creerJournalDeSession({ ecrire: () => memoriserEncoursRef.current() });
+  const journal = journalRef.current;
+
+  useEffect(() => {
+    const vide = (o.grapheRacineRef.current?.nodes ?? o.nodes).length === 0;
+    if (!journal.estArme()) {
+      // RIEN À PERDRE SUR UN CANEVAS VIDE, et tout à perdre si l'on écrit avant la restauration.
+      if (vide) return;
+      journal.armer();
+    }
+    journal.noter();
+  }, [o.nodes, o.edges, o.grapheRacineRef, journal]);
+
+  useEffect(() => {
+    // LES DEUX ÉVÉNEMENTS, et non un seul. `beforeunload` ne part pas toujours quand le processus
+    // principal détruit la fenêtre ; `pagehide` est le plus fiable des deux. Vider deux fois ne
+    // coûte rien : la seconde ne trouve plus rien en attente.
+    const vider = () => journal.vider();
+    window.addEventListener("beforeunload", vider);
+    window.addEventListener("pagehide", vider);
+    return () => {
+      window.removeEventListener("beforeunload", vider);
+      window.removeEventListener("pagehide", vider);
+      journal.annuler();
+    };
+  }, [journal]);
 
   const exporter = useCallback(() => sauvegarder(true), [sauvegarder]);
 
