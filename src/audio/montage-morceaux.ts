@@ -248,6 +248,28 @@ export function morceauxAEcrire(
   return { morceaux: out.sort((a, b) => a.piste - b.piste || a.debut - b.debut), videes, reglages };
 }
 
+/**
+ * Cette piste est-elle MENÉE PAR SON DÉCOUPAGE, et non plus par ses quatre réglages ?
+ *
+ * ═══ POURQUOI CETTE QUESTION DOIT ÊTRE POSABLE DE L'EXTÉRIEUR ═══
+ *
+ * Depuis que la barre et la glissière sont le même nombre, il ne reste qu'un cas où les quatre
+ * réglages d'une piste ne la décrivent plus : elle est COUPÉE en plusieurs morceaux, ou ROGNÉE.
+ * Quatre nombres ne décrivent pas trois morceaux, et aucun réglage ne porte « dans » ni « durée ».
+ *
+ * MAIS RIEN NE LE DISAIT À L'ÉCRAN, et c'est la cinquième manifestation du même défaut : une
+ * glissière qui a cessé d'agir restait vive, acceptait une valeur, et cette valeur n'allait nulle
+ * part. Le contrat de composant du dépôt l'exige depuis toujours — « un réglage légitimement inerte
+ * porte sa raison écrite à côté de lui » —, et ces quatre la portaient derrière un bouton « ? ».
+ *
+ * Décision de Fabien le 2026-10-26 : griser la glissière avec sa raison. La fiche s'en sert pour
+ * déclarer l'inertie, et l'inspecteur la grise sans rien savoir du montage.
+ */
+export function pisteFigee(data: Record<string, unknown> | undefined, piste: number): boolean {
+  const poses = (data as { morceaux?: readonly Morceau[] } | undefined)?.morceaux;
+  return Array.isArray(poses) && poses.some((m) => m?.piste === piste);
+}
+
 /** Un identifiant qu'aucun morceau ne porte encore. */
 export function nouvelId(existants: readonly Morceau[], graine = "m"): string {
   const pris = new Set(existants.map((m) => m.id));

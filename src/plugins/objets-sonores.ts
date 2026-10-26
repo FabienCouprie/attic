@@ -14,13 +14,31 @@ import {
   type CritereDecoupage, type CritereTri, type ObjetSonore, type Plan,
 } from "../audio/objets-sonores";
 import {
-  GAIN_MAX, GAIN_MIN, GAIN_PAS, morceauxCompletes, normaliserMorceau, type Morceau,
+  GAIN_MAX, GAIN_MIN, GAIN_PAS, morceauxCompletes, normaliserMorceau, pisteFigee, type Morceau,
 } from "../audio/montage-morceaux";
 import { decalagesDepuisDeparts, departDe, poserDepart } from "../audio/depart-bwf";
 import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 const PISTES = 16;
+
+/**
+ * Ce que les quatre réglages d'une piste déclarent de leur propre inertie.
+ *
+ * ÉCRIT UNE FOIS POUR LES QUATRE, et la raison est la même pour toutes : depuis que la barre et la
+ * glissière sont le même nombre, il ne reste qu'un cas où ces réglages ne décrivent plus leur piste
+ * — elle est coupée en plusieurs morceaux, ou rognée. Quatre nombres ne décrivent pas trois
+ * morceaux, et aucun réglage ne porte « dans » ni « durée ».
+ *
+ * Décision de Fabien le 2026-10-26, après quatre relevés sur cette famille : griser la glissière
+ * avec sa raison, plutôt que la masquer. Une glissière absente laisse chercher ; une glissière grise
+ * qui dit pourquoi répond.
+ */
+const inertieDePiste = (k: number) => ({
+  inerte: (data: Record<string, unknown>) => pisteFigee(data, k),
+  inerteRaison: `La piste ${k + 1} est découpée : c'est la barre sur la ligne de temps qui la mène, et ce réglage ne la décrit plus. Il reprend la main si la piste redevient un seul morceau joué en entier.`,
+  inerteRaisonEn: `Track ${k + 1} is cut: the bar on the timeline drives it, and this setting no longer describes it. It takes over again once the track is a single clip played whole.`,
+});
 
 /** Le rapport lisible d'un découpage : un objet par ligne, ses bornes et ce qu'on en entend. */
 export function rapportObjets(objets: ObjetSonore[], anglais: boolean): string {
@@ -156,16 +174,21 @@ export const fiches: FicheAudio[] = ([
       // et personne ne lit la notice en tirant une glissière qui ne fait rien. Le contrat de
       // composant du dépôt l'exige : un réglage légitimement inerte porte sa raison à côté de lui.
       // Relevé par Fabien sur le niveau, le seul des quatre dont le geste de remplacement manquait.
-      { nom: `Début ${k + 1}`, nomEn: `Start ${k + 1}`, type: "nombre", plage: [-600, 3600], pas: 0.01, defaut: k * 2, unite: "s", port: k,
+      { nom: `Début ${k + 1}`, nomEn: `Start ${k + 1}`, type: "nombre", plage: [-600, 3600], pas: 0.01, defaut: k * 2, unite: "s", port: k, ...inertieDePiste(k),
         doc: `Instant où commence la piste ${k + 1}. Négatif : le son est rogné d'autant. Ce réglage cesse d'agir sur cette piste dès qu'un morceau y est posé sur la ligne de temps ; c'est alors le glissement de la barre qui place le morceau.`,
         docEn: `Instant at which track ${k + 1} starts. Negative: the sound is trimmed by that much. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the bar is then dragged to place the clip.` },
+      // LES QUATRE PORTENT MAINTENANT LEUR INERTIE, et non plus seulement sa mention dans leur doc.
+      // Depuis que la barre et la glissière sont le même nombre, il ne reste qu'un cas où ces
+      // réglages ne décrivent plus leur piste : elle est coupée en plusieurs morceaux, ou rognée.
+      // L'inspecteur grise alors la glissière et montre la raison, sans rien savoir du montage.
       { nom: `Gain ${k + 1}`, nomEn: `Gain ${k + 1}`, type: "curseur", plage: [GAIN_MIN, GAIN_MAX], pas: GAIN_PAS, defaut: 0, unite: "dB", port: k,
+        ...inertieDePiste(k),
         doc: `Niveau de la piste ${k + 1}. Ce réglage cesse d'agir sur cette piste dès qu'un morceau y est posé sur la ligne de temps ; c'est alors la poignée de niveau, en bas à droite de la barre, qui se tire vers le haut ou vers le bas.`,
         docEn: `Level of track ${k + 1}. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the level handle, at the bar's bottom right, is then dragged up or down.` },
-      { nom: `Fondu entrée ${k + 1}`, nomEn: `Fade in ${k + 1}`, type: "nombre", plage: [0, 60000], pas: 1, defaut: 10, unite: "ms", port: k,
+      { nom: `Fondu entrée ${k + 1}`, nomEn: `Fade in ${k + 1}`, type: "nombre", plage: [0, 60000], pas: 1, defaut: 10, unite: "ms", port: k, ...inertieDePiste(k),
         doc: `Durée du fondu d'entrée de la piste ${k + 1}. Quelques millisecondes évitent un clic ; plusieurs secondes font paraître le son. Ce réglage cesse d'agir sur cette piste dès qu'un morceau y est posé sur la ligne de temps ; c'est alors la poignée du coin gauche de la barre.`,
         docEn: `Length of track ${k + 1}'s fade in. A few milliseconds avoid a click; several seconds make the sound emerge. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the handle at the bar's left corner takes over.` },
-      { nom: `Fondu sortie ${k + 1}`, nomEn: `Fade out ${k + 1}`, type: "nombre", plage: [0, 60000], pas: 1, defaut: 10, unite: "ms", port: k,
+      { nom: `Fondu sortie ${k + 1}`, nomEn: `Fade out ${k + 1}`, type: "nombre", plage: [0, 60000], pas: 1, defaut: 10, unite: "ms", port: k, ...inertieDePiste(k),
         doc: `Durée du fondu de sortie de la piste ${k + 1}. Ce réglage cesse d'agir sur cette piste dès qu'un morceau y est posé sur la ligne de temps ; c'est alors la poignée du coin droit de la barre.`,
         docEn: `Length of track ${k + 1}'s fade out. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the handle at the bar's right corner takes over.` },
     ])).flat(),

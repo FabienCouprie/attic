@@ -17,7 +17,11 @@ const TYPES = readFileSync(join(__dirname, "..", "core", "types.ts"), "utf8");
 
 describe("export d'un node en .zip", () => {
   it("recopie tous les champs anglais des paramètres décrits par le cœur", () => {
-    const bloc = SOURCE.split("parametres: nodeDef.parametres.map")[1]?.slice(0, 400) ?? "";
+    // LA FENÊTRE EXISTE POUR NE PAS TROUVER LE CHAMP AILLEURS DANS LE FICHIER, et sa taille n'a pas
+    // d'autre sens. Elle valait quatre cents caractères, dimensionnés sur les champs d'alors : au
+    // champ suivant — `inerteRaisonEn`, le 2026-10-26 — elle a coupé `placeholderEn` et le garde a
+    // crié sur un manifeste correct. Elle est désormais assez large pour la recopie entière.
+    const bloc = SOURCE.split("parametres: nodeDef.parametres.map")[1]?.slice(0, 1200) ?? "";
     expect(bloc, "la recopie des paramètres est introuvable").not.toBe("");
     const champsAnglais = [...TYPES.split("export interface ParametreDef")[1].split("}")[0]
       .matchAll(/(\w+En)\?:/g)].map((m) => m[1]);

@@ -336,8 +336,17 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
         // son nœud. Le port se retrouve par le réglage qu'il déclare piloter.
         const portModule = (def.entrees as any[] | undefined)?.find((e) => e.module === p.nom);
         const docFiche = lang === "en" && p.docEn ? p.docEn : p.doc;
-        const annonce = () => t("inspecteur.modulation.annonce")
-          .replace("{__VAR_0__}", portModule ? nomP(portModule) : t("inspecteur.modulation.port"));
+        // CE RÉGLAGE A-T-IL CESSÉ D'AGIR, ET POURQUOI ? La question est posée au DOMAINE, qui la
+        // déclare sur son paramètre ; le shell n'en sait rien et se contente de griser. Le contrat
+        // de composant l'exigeait depuis toujours — « un réglage légitimement inerte porte sa raison
+        // écrite à côté de lui » —, et les quatre réglages d'une piste de montage la portaient
+        // derrière un bouton « ? », que personne n'ouvre en tirant une glissière qui ne fait rien.
+        // ET LA RAISON S'OUVRE D'ELLE-MÊME, puisqu'elle doit se lire SANS CLIQUER : elle passe par le
+        // paragraphe de documentation déjà là, dont la condition s'élargit à `inerte`. Il a son style
+        // et sa place, et `atelier.css` est en dette — elle ne grossit plus. Un commentaire JSX, lui,
+        // compte comme du code pour le compteur de lignes : c'est pourquoi cette note est ici.
+        const inerte = p.inerte?.(noeud.data as Record<string, unknown>) ? ((lang === "en" && p.inerteRaisonEn ? p.inerteRaisonEn : p.inerteRaison) ?? "") : "";
+        const annonce = () => t("inspecteur.modulation.annonce").replace("{__VAR_0__}", portModule ? nomP(portModule) : t("inspecteur.modulation.port"));
         const docP = groupeBornes
           ? [docFiche, moduleMaintenant ? t("inspecteur.modulation.aide") : annonce()]
             .filter(Boolean).join(" ")
@@ -368,7 +377,7 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
             )}
             {docP && <button className="inspecteur-doc-btn" onClick={() => toggleDoc(p.nom)}>?</button>}
           </div>
-          {isOpen && docP && <p className="inspecteur-param-doc"><TexteAvecLiens texte={docP} /></p>}
+          {(isOpen || inerte) && (inerte || docP) && <p className="inspecteur-param-doc"><TexteAvecLiens texte={inerte || docP || ""} /></p>}
           {p.type === "choix" && p.options ? (
             (() => {
               const defautCanonique = defautCanoniqueChoix(p);
@@ -416,7 +425,12 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
             <PlageModulation p={p} libelle={nomP(p)} bornes={groupeBornes!} params={params} lang={lang}
               onChanger={onChangerParametre} />
           ) : (
-            <div className="inspecteur-range">
+            // LA GLISSIÈRE EST GRISÉE ET NE RÉPOND PLUS quand le réglage a cessé d'agir. Le style
+            // est posé ici plutôt que dans la feuille, et c'est la norme de taille qui l'a décidé :
+            // `atelier.css` est en dette, elle ne grossit plus. `pointerEvents` compte autant que
+            // l'opacité : une glissière éteinte qui accepte encore une valeur écrit un nombre que
+            // personne ne lira, ce qui est le défaut qu'on vient de passer quatre relevés à trouver.
+            <div className="inspecteur-range" style={inerte ? { opacity: 0.4, pointerEvents: "none" } : undefined}>
               {sansPlafond(p) ? null : estUniteMultiplicative(p.unite) ? (
                 <input type="range"
                   min={Math.log10(Math.max(1, (p.plage ?? [0,100])[0]))}

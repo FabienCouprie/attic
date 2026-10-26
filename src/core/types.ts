@@ -276,6 +276,24 @@ export interface ParametreDef {
    */
   port?: number;
   /**
+   * Ce réglage a-t-il CESSÉ D'AGIR, dans l'état où le nœud se trouve ?
+   *
+   * ═══ POURQUOI CECI EXISTE, ET LE CONTRAT DE COMPOSANT L'EXIGEAIT DÉJÀ ═══
+   *
+   * « Un réglage légitimement inerte porte sa raison écrite à côté de lui. » Les quatre réglages
+   * d'une piste de montage la portaient — derrière un bouton « ? », que personne n'ouvre en tirant
+   * une glissière qui ne fait rien. Il a fallu quatre relevés de Fabien pour que la cause remonte,
+   * et le dernier était « cela ne fonctionne donc pas ».
+   *
+   * LA QUESTION EST POSÉE AU DOMAINE, et le shell n'en sait rien : il reçoit une réponse et grise.
+   * Une liste déclarée dans l'inspecteur aurait nommé un composant du domaine dans le shell, ce que
+   * la frontière interdit, et aurait vieilli au premier composant ajouté.
+   */
+  inerte?: (data: Record<string, unknown>) => boolean;
+  /** Pourquoi il a cessé d'agir, et ce qui le remplace. Lisible SANS CLIQUER. */
+  inerteRaison?: string;
+  inerteRaisonEn?: string;
+  /**
    * Ce réglage est une GRAINE d'aléa, et le moteur la résout avant que le composant ne la lise.
    *
    * POURQUOI LE DÉCLARER AU LIEU DE LE DEVINER — relevé par Fabien : « il y a un excès de

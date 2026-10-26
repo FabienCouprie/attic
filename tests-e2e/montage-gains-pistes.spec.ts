@@ -83,6 +83,65 @@ async function valeurDansInspecteur(page: import("@playwright/test").Page, libel
 test.describe("les gains de piste du montage", () => {
   test.setTimeout(240_000);
 
+  test("UNE GLISSIERE QUI A CESSE D AGIR EST GRISEE, ET DIT POURQUOI SANS QU ON CLIQUE", async ({ page }) => {
+    // ═══ LA CINQUIÈME MANIFESTATION DU MÊME DÉFAUT, ET LA DÉCISION DE FABIEN ═══
+    //
+    // Depuis que la barre et la glissière sont le même nombre, il ne reste qu'un cas où les quatre
+    // réglages d'une piste ne la décrivent plus : elle est COUPÉE en plusieurs morceaux, ou ROGNÉE.
+    // Quatre nombres ne décrivent pas trois morceaux.
+    //
+    // MAIS RIEN NE LE DISAIT À L'ÉCRAN : la glissière restait vive, acceptait une valeur, et cette
+    // valeur n'allait nulle part. Le contrat de composant l'exigeait depuis toujours — « un réglage
+    // légitimement inerte porte sa raison écrite à côté de lui » —, et ces quatre la portaient
+    // derrière un bouton « ? », que personne n'ouvre en tirant une glissière qui ne fait rien.
+    //
+    // Décision de Fabien : griser la glissière avec sa raison.
+    const coupe = JSON.parse(GRAPHE);
+    coupe.nodes[2].data.morceaux = [
+      { id: "a", piste: 1, debut: 2, dans: 0, duree: 0.7, gain: 0, entree: 10, sortie: 10 },
+      { id: "b", piste: 1, debut: 2.8, dans: 0.7, duree: 0, gain: 0, entree: 10, sortie: 10 },
+    ];
+    await semerEtLancer(page, devUrl, JSON.stringify(coupe), { profondeurExport: 32 });
+    await page.locator('.react-flow__node:has-text("Montage")').first().click();
+    await page.waitForTimeout(800);
+
+    /** L'opacité du contrôle d'un réglage, et la raison affichée sous son libellé. */
+    const etat = (libelle: string) => page
+      .locator(`.inspecteur-param:has(label:text-is("${libelle}"))`).first()
+      .evaluate((e) => ({
+        opacite: (e.querySelector(".inspecteur-range") as HTMLElement | null)?.style.opacity ?? "",
+        gestes: (e.querySelector(".inspecteur-range") as HTMLElement | null)?.style.pointerEvents ?? "",
+        raison: (e.querySelector(".inspecteur-param-doc") as HTMLElement | null)?.textContent ?? "",
+      }));
+
+    const p2 = await etat("Gain 2");
+    const p1 = await etat("Gain 1");
+    console.log(`piste 2 (coupée) : opacité=${p2.opacite} gestes=${p2.gestes} · raison=« ${p2.raison.slice(0, 60)}… »`);
+    console.log(`piste 1 (entière) : opacité=${p1.opacite || "(aucune)"} · raison=« ${p1.raison} »`);
+
+    expect(Number(p2.opacite), [
+      "",
+      "LA GLISSIÈRE D'UNE PISTE COUPÉE N'EST PAS GRISÉE.",
+      "",
+      "Elle a cessé d'agir : la fiche le déclare par `inerte`, et l'inspecteur doit le montrer.",
+      "Une glissière vive qui n'agit plus accepte une valeur que personne ne lira — c'est le défaut",
+      "qu'il a fallu quatre relevés pour trouver.",
+      "",
+    ].join("\n")).toBeLessThan(1);
+    expect(p2.gestes, "et elle ne doit plus accepter de geste").toBe("none");
+    expect(p2.raison, [
+      "",
+      "LA RAISON N'EST PAS LISIBLE SANS CLIQUER.",
+      "",
+      "C'est tout l'objet de la décision : la raison s'ouvre d'elle-même quand le réglage est inerte.",
+      "",
+    ].join("\n")).toMatch(/découpée|cut/i);
+
+    // ET LA PISTE ENTIÈRE N'EST PAS TOUCHÉE : aucun grisé, aucune raison imposée.
+    expect(p1.opacite, "une piste entière garde sa glissière vive").toBe("");
+    expect(p1.raison, "et aucune raison ne s'impose à elle").toBe("");
+  });
+
   test("DEPLACER UNE BARRE DEPLACE SA GLISSIERE : la barre et le reglage sont le MEME nombre", async ({ page }) => {
     // ═══ LE RELEVÉ DE FABIEN, MOT POUR MOT ═══
     //
