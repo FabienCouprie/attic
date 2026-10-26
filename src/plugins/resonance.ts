@@ -26,7 +26,7 @@ const MATERIALS = [
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "resonance-audio", nomDicte: "son dans l espace",
+    id: "resonance-audio", nomDicte: "son dans l'espace",
     nom: "Resonance Audio",
     nomEn: "Resonance Audio",
     univers: "Traitement",

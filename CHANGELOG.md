@@ -13,6 +13,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - **LES HUIT AUTRES MOTS ÉTAIENT DANS LA GRAMMAIRE DEPUIS TOUJOURS, ET NEUF COMPOSANTS Y ENTRAIENT AMPUTÉS** : Clavier isomorphe, Retard granulaire, Granulation écologique, Granulation spectrale, VOSIM, Critères schaefferiens, Bytebeat, Apparier sur une référence, Trémolo harmonique. C'est le défaut même que `lexique-vosk.ts` existe pour empêcher — il reste du nom ce que le lexique sait dire, et ce reste concurrence un nom bien réel. Les neuf sont nommés : « clavier en réseau », « retard par grains », « grains écologiques », « grains du spectre », « synthèse de voyelle », « critères de l'objet sonore », « musique par formule », « caler sur une référence », « variation de volume harmonique ».
   - **ET LE MOTEUR SE TAIT MAINTENANT : ZÉRO MOT JETÉ.** La grammaire entière se prononce, ce qui n'avait jamais été vrai ni vérifiable.
 
+- **TREIZE NOMS PARLÉS ÉTAIENT ÉCRITS SANS LEUR APOSTROPHE, ET L'INFOBULLE LES MONTRAIT TELS QUELS.** Le survol affichait « forme de l **attaque** », « critères de l **objet** sonore », « banque d **échantillons** », « motif à l **envers** », « paquets d **ondes** », « série de l **infini** ».
+
+  - **LA CAUSE EST QUE RIEN NE POUSSAIT À L'ÉCRIRE** : `normaliserPourDictee` efface toute ponctuation, donc « l'objet » et « l objet » sont **le même mot** pour la reconnaissance. La valeur avait été écrite sous sa forme normalisée, celle qui sert à comparer — et c'est l'autre forme, la brute, que l'interface montre. **Un nom parlé est lu autant qu'il est dit.**
+  - **LA RECONNAISSANCE NE CHANGE PAS D'UN IOTA**, par construction : l'apostrophe est effacée avant toute comparaison. Seul l'affichage est réparé. Vérifié en relançant la dictée après coup : **zéro mot jeté**, comme avant.
+  - **ONZE SUR LES FICHES ET DEUX DANS LA TABLE DE LA FABRIQUE**, et ce sont ces deux-là qui ont corrigé mon propre relevé : un premier compte, fait sur les seules déclarations `nomDicte:`, en annonçait douze. Les noms que `effets.ts` pose sur ses fiches construites n'y étaient pas.
+  - **UN GARDE REFUSE DÉSORMAIS UNE ÉLISION NUE** — `l`, `d`, `qu`, `jusqu`, `aujourd` et les autres, isolés entre deux espaces —, puisqu'aucun mot français d'une seule lettre n'existe hors « à » et « y ». Défaut planté : l'apostrophe de « forme de l'attaque » retirée, il tombe en nommant `transient-shaper`.
+
 ### Added
 
 - **UN GARDE LANCE LA DICTÉE ET REFUSE QU'UN SEUL MOT SOIT JETÉ**, parce que c'est le seul instrument qui puisse le vérifier. La liste des mots manquants se fait en lisant la console, donc tout garde unitaire qui s'y fie hérite de ses trous ; celui-ci part du moteur.

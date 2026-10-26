@@ -321,7 +321,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "voicings-accords", nomDicte: "renversements d accords", nom: "Renversements et voicings", nomEn: "Inversions and Voicings",
+    id: "voicings-accords", nomDicte: "renversements d'accords", nom: "Renversements et voicings", nomEn: "Inversions and Voicings",
     univers: "Traitement", famille: "Effets",
     resume: "Renverse, écarte et enchaîne les accords en bougeant le moins de voix possible.",
     resumeEn: "Inverts, spreads and chains chords while moving as few voices as possible.",

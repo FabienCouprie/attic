@@ -282,7 +282,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "serie-infinie", nomDicte: "série de l infini", nom: "Série de l'infini (Nørgård)", nomEn: "Infinity Series (Nørgård)",
+    id: "serie-infinie", nomDicte: "série de l'infini", nom: "Série de l'infini (Nørgård)", nomEn: "Infinity Series (Nørgård)",
     univers: "Entrées", famille: "Génération",
     resume: "Engendre la suite auto-similaire de Per Nørgård, et ses voix plus lentes qui forment un canon exact.",
     resumeEn: "Generates Per Nørgård's self-similar sequence, and its slower voices which form an exact canon.",

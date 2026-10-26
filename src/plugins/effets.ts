@@ -31,13 +31,13 @@ const NOMS_PARLES: Readonly<Record<string, string>> = {
   "flanger": "effet de balayage",
   "compresseur-multibande": "compresseur par bandes",
   "gate-expandeur": "porte de bruit",
-  "transient-shaper": "forme de l attaque",
+  "transient-shaper": "forme de l'attaque",
   "de-esser": "réducteur de sifflement",
   "ring-modulator": "modulation en anneau",
   "vocoder": "voix synthétique",
   "dereverberation": "retirer la réverbération",
   "glissando-tonalite": "glissement de tonalité",
-  "harmonizer": "doubleur d octave",
+  "harmonizer": "doubleur d'octave",
 };
 
 export const fiches: FicheAudio[] = ([

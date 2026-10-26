@@ -119,7 +119,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "vexflow-grille", nomDicte: "grille d accords gravée", nom: "Grille d'accords VexFlow", nomEn: "VexFlow Chord Chart",
+    id: "vexflow-grille", nomDicte: "grille d'accords gravée", nom: "Grille d'accords VexFlow", nomEn: "VexFlow Chord Chart",
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une grille d'accords à partir d'une liste de symboles.",
     resumeEn: "Displays a chord chart from a list of symbols.",

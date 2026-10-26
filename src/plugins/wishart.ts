@@ -7,7 +7,7 @@ import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
   {
-    id: "wavesets-wishart", nomDicte: "paquets d ondes", nom: "Wavesets (Wishart)", nomEn: "Wavesets (Wishart)",
+    id: "wavesets-wishart", nomDicte: "paquets d'ondes", nom: "Wavesets (Wishart)", nomEn: "Wavesets (Wishart)",
     univers: "Traitement", famille: "Effets",
     resume: "Découpe le son aux passages par zéro et rejoue les segments autrement.",
     resumeEn: "Cuts the sound at zero crossings and replays the segments differently.",

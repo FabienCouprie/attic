@@ -133,7 +133,7 @@ export const fiches: FicheAudio[] = ([
     },
   },
   {
-    id: "motif-retrograde", nomDicte: "motif à l envers", nom: "Rétrograde et palindrome", nomEn: "Retrograde and Palindrome",
+    id: "motif-retrograde", nomDicte: "motif à l'envers", nom: "Rétrograde et palindrome", nomEn: "Retrograde and Palindrome",
     univers: "Traitement", famille: "Effets",
     resume: "Joue un motif à l'envers, ou en aller-retour.",
     resumeEn: "Plays a pattern backwards, or there and back.",

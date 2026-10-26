@@ -165,7 +165,7 @@ export const fiches: FicheAudio[] = ([
    },
  },
   {
-    id: "octaver", nomDicte: "ajout d octave", nom: "Octaver", nomEn: "Octaver", univers: "Traitement", famille: "Effets",
+    id: "octaver", nomDicte: "ajout d'octave", nom: "Octaver", nomEn: "Octaver", univers: "Traitement", famille: "Effets",
     memoire: "flux", // redresseur, etat dans trois scalaires
     resume: "Ajoute une octave supérieure et/ou inférieure.",
     resumeEn: "Adds an upper and/or lower octave.",
