@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  public/cadre-noeud.html — La page du cadre isolé où s'exécute le code d'un nœud installé.
+
+  ELLE A SA PROPRE ADRESSE, ET C'EST POUR AVOIR SA PROPRE POLITIQUE. Elle vivait en chaîne dans
+  `src/ui/bac-a-sable-noeud.ts`, posée par `srcdoc` ; or un document `srcdoc` HÉRITE de la politique
+  de son parent, si bien qu'ôter `unsafe-eval` au document l'aurait ôté au cadre, et cassé tous les
+  nœuds installés. Servie depuis un fichier, elle reçoit la politique que `electron/politique-
+  securite.cjs` lui réserve, la seule qui permette `new Function`. Relevé le 2026-10-27.
+
+  Le cadre est ouvert avec `sandbox="allow-scripts"` et sans `allow-same-origin` : son origine est
+  opaque, il n'atteint ni le parent ni le pont. Ce qu'il évalue est le code autorisé à l'installation.
+-->
+</head>
+<body>
+<script>
+"use strict";
+var fn = null, arret = null;
+function repondre(m) { parent.postMessage(m, "*"); }
+
+// LA TABLE « attic » SE BATIT ICI, ET NE TRAVERSE PAS. Elle portait des CONSTRUCTEURS -- le
+// domaine y mettait AudioBuffer --, et une fonction ne se clone pas : la poster levait
+// DataCloneError. Elle n'avait de toute facon aucune raison de voyager, ces noms etant des
+// globales du cadre comme ils l'etaient de la page.
+function globalesDuCadre() {
+  return {
+    AudioBuffer: typeof AudioBuffer !== "undefined" ? AudioBuffer : undefined,
+    OfflineAudioContext: typeof OfflineAudioContext !== "undefined" ? OfflineAudioContext : undefined,
+    fetch: typeof fetch !== "undefined" ? fetch : undefined,
+    URL: typeof URL !== "undefined" ? URL : undefined,
+    TextEncoder: typeof TextEncoder !== "undefined" ? TextEncoder : undefined,
+    TextDecoder: typeof TextDecoder !== "undefined" ? TextDecoder : undefined,
+    btoa: typeof btoa !== "undefined" ? btoa : undefined,
+    atob: typeof atob !== "undefined" ? atob : undefined,
+    Math: Math, Date: Date, JSON: JSON,
+    parseInt: parseInt, parseFloat: parseFloat, isNaN: isNaN, console: console,
+  };
+}
+window.addEventListener("message", async function (e) {
+  // LE CADRE N'OBEIT QU'A SON PARENT, L'APPLICATION. Releve par CodeQL sur la pull request #228,
+  // et eprouve avant d'etre repare : un cadre joint ses freres par `parent.frames[i]`, meme d'une
+  // origine opaque, si bien que le noeud installe A posait son code dans le cadre du noeud B. Un
+  // message venu d'ailleurs que du parent est ignore. Voir `tests-e2e/bac-a-sable-noeud.spec.ts`.
+  if (e.source !== parent) return;
+  var d = e.data || {};
+  if (d.type === "arreter") { if (arret) arret.abort(); return; }
+  if (d.type === "poser") {
+    // ET LE CODE NE SE POSE QU'UNE FOIS : l'application ne le pose qu'une fois par cadre, et en
+    // ouvre un autre pour un code nouveau. Une seconde pose n'a donc aucune raison d'etre.
+    if (fn) { repondre({ id: d.id, type: "erreur", message: "code deja pose dans ce cadre" }); return; }
+    try {
+      var mod = { exports: null };
+      var f = new Function("module", "exports", "attic", '"use strict";\n' + d.code);
+      f(mod, mod.exports, globalesDuCadre());
+      if (typeof mod.exports !== "function") throw new Error("le module n'exporte pas une fonction (" + (typeof mod.exports) + ")");
+      fn = mod.exports;
+      repondre({ id: d.id, type: "pose" });
+    } catch (err) { repondre({ id: d.id, type: "erreur", message: String(err && err.message || err) }); }
+    return;
+  }
+  if (d.type === "executer") {
+    if (!fn) { repondre({ id: d.id, type: "erreur", message: "aucun code posé" }); return; }
+    arret = new AbortController();
+    var c = d.contexte;
+    var ctx = {
+      noeud: c.noeud,
+      repertoireTravail: c.repertoireTravail,
+      reglagesDeProjet: c.reglagesDeProjet,
+      entree: function (i) { return c.entrees[i]; },
+      entrees: function () { return c.entrees; },
+      sortieBranchee: function (i) { return !!c.sortiesBranchees[i]; },
+      paramNombre: function (n, defaut) { var v = c.parametres[n]; return typeof v === "number" ? v : Number(v) || defaut; },
+      paramTexte: function (n, defaut) { var v = c.parametres[n]; return v === undefined || v === null ? defaut : String(v); },
+      onProgress: function (m) { repondre({ id: d.id, type: "progres", message: String(m) }); },
+      signal: arret.signal,
+    };
+    try {
+      var r = await fn(ctx);
+      repondre({ id: d.id, type: "fini", resultat: r || {} });
+    } catch (err) { repondre({ id: d.id, type: "erreur", message: String(err && err.message || err) }); }
+  }
+});
+repondre({ type: "pret" });
+</script>
+</body>
+</html>

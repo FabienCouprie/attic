@@ -10,7 +10,7 @@
 
 import { bufferVersWavBlobRespirant } from "../audio";
 import { echantillonnerPourApercu, estCourbe } from "../audio/courbe";
-import { convertirVersFrequence } from "../audio/convertir-frequence";
+import { convertirVersFrequence, reechantillonnerCanal, type PorterCanal } from "../audio/convertir-frequence";
 import { ecartNiveau } from "../audio/ecart-niveau";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { decrire } from "../audio/metadonnees";
@@ -19,6 +19,21 @@ import { departDe, heriterDepart } from "../audio/depart-bwf";
 import { heriterDisposition } from "../audio/multicanal";
 import { tamponPourApercu } from "../audio/multicanal-ecoute";
 import type { ServicesApercu } from "../ui/services-apercu";
+import { parUneFois } from "./hors-lot";
+
+/**
+ * Un canal porté à une autre fréquence dans un travailleur à lui : les canaux d'un son tournent donc
+ * de front, et le fil de l'interface ne calcule rien.
+ *
+ * LA CONVERSION GELAIT L'INTERFACE, signalé par Fabien le 2026-10-27 sur Entrée audio et
+ * Explorateur musique. Toute descente passe par un passe-bas de 191 coefficients, 19,5 ms par
+ * seconde de son et par canal dans V8 ; quatorze des quinze pistes de la collection sont à 48 kHz,
+ * et un projet travaille par défaut à 44,1. Le même son est rendu : c'est le même calcul, déplacé.
+ */
+const porterHorsDuFil: PorterCanal = (x, depart, arrivee) => parUneFois({ x, depart, arrivee }, {
+  creerWorker: () => new Worker(new URL("../workers/frequence-worker.ts", import.meta.url), { type: "module" }),
+  calcul: (o) => reechantillonnerCanal(o.x, o.depart, o.arrivee),
+});
 
 /** Un tampon, ou rien. Le seul endroit du domaine qui ait à le demander au shell. */
 const estTampon = (v: unknown): v is AudioBuffer =>
@@ -169,6 +184,8 @@ export const APERCU_AUDIO: ServicesApercu = {
    * UNE CONVERSION QUI ÉCHOUE LAISSE LA VALEUR PASSER. Le contraire ferait tomber un run entier sur
    * un tampon dégénéré, et la cause serait à chercher dans le moteur ; le garde des fréquences
    * mêlées dira, lui, que l'invariant est rompu.
+   *
+   * ET LE CALCUL A LIEU HORS DU FIL, un travailleur par canal : voir `porterHorsDuFil`.
    */
   porterALaFrequenceDeTravail: async (valeurs) => {
     const frequence = frequenceDeTravail();
@@ -177,7 +194,7 @@ export const APERCU_AUDIO: ServicesApercu = {
     for (const v of valeurs) {
       if (!estTampon(v) || v.sampleRate === frequence) { portees.push(v); continue; }
       try {
-        portees.push(await convertirVersFrequence(v, frequence));
+        portees.push(await convertirVersFrequence(v, frequence, v.numberOfChannels, porterHorsDuFil));
       } catch (e) {
         console.warn("[frequence] conversion impossible, valeur laissée telle quelle", e);
         portees.push(v);

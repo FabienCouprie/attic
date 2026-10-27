@@ -37,6 +37,19 @@ const SOCLES = ['from "./servir-par-canal"', 'from "./servir-par-lot"'];
  * LES DEUX SOCLES SONT CHERCHÉS. Un socle ajouté sans être inscrit ici rendrait ses workers
  * invisibles au garde, ce qui est précisément le trou que ce fichier ferme.
  */
+/**
+ * Les workers qui servent le MOTEUR et non un composant, avec la spec qui en tient le son.
+ *
+ * LE BANC DES EMPREINTES APPELLE UN COMPOSANT SEUL, sans moteur : il ne traverse jamais ces
+ * workers, et inscrire l'un d'eux au nom d'un composant ferait un garde vert qui ne prouve rien.
+ * La preuve est donc faite dans l'application, par la spec nommée : le moteur convertit par ses
+ * workers, le calcul dans le fil convertit le même son, et pas un échantillon ne doit différer.
+ * Elle a été vue rouge sur un millième ajouté au premier échantillon du worker.
+ */
+const DU_MOTEUR: Record<string, string> = {
+  "frequence-worker.ts": "gel-de-conversion-dans-application.spec.ts",
+};
+
 function workersDeCalcul(): string[] {
   return readdirSync(WORKERS)
     .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"))
@@ -50,7 +63,11 @@ function workersDeCalcul(): string[] {
 describe("la couverture de la base d'empreintes", () => {
   it("CHAQUE WORKER DE CALCUL EST RÉCLAMÉ par un composant surveillé", () => {
     const spec = readFileSync(SPEC, "utf8");
-    const orphelins = workersDeCalcul().filter((w) => !spec.includes(w));
+    const reclamePar = (w: string) => {
+      const autre = DU_MOTEUR[w];
+      return autre !== undefined && readFileSync(resolve(RACINE, "tests-e2e", autre), "utf8").includes(w);
+    };
+    const orphelins = workersDeCalcul().filter((w) => !spec.includes(w) && !reclamePar(w));
     expect(orphelins, [
       "Un calcul a été déplacé hors du fil sans que son composant rejoigne la base d'empreintes.",
       "Ajoutez-le à SURVEILLES dans tests-e2e/empreintes.spec.ts, avec le nom de son worker,",
@@ -79,6 +96,8 @@ describe("la couverture de la base d'empreintes", () => {
     const presents = new Set(readdirSync(WORKERS));
     expect(reclames.filter((w) => !presents.has(w)),
       "Un worker réclamé par la base d'empreintes a disparu.").toEqual([]);
+    expect(Object.keys(DU_MOTEUR).filter((w) => !presents.has(w)),
+      "Un worker du moteur inscrit dans ce garde a disparu.").toEqual([]);
   });
 
   it("la base d'empreintes existe et couvre tous les composants surveillés", () => {

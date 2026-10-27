@@ -89,7 +89,12 @@ export interface ServicesDomaine {
    * REND LA VALEUR TELLE QUELLE quand elle traverse déjà, et `null` quand elle ne peut pas
    * traverser du tout : l'appelant le dit alors au lieu de laisser le cadre échouer sans raison.
    */
-  versTransport(valeur: unknown): { ok: true; valeur: unknown } | { ok: false; pourquoi: string };
+  versTransport(valeur: unknown):
+    | { ok: true; valeur: unknown; transferables?: ArrayBuffer[] }
+    | { ok: false; pourquoi: string };
+  // `transferables` NOMME LES MÉMOIRES QUE LA TRADUCTION VIENT DE FABRIQUER, et elles seules. Les
+  // transférer évite au cadre une seconde copie ; transférer une mémoire que l'appelant tient encore
+  // la viderait de son côté. Une valeur passée telle quelle n'en déclare donc jamais.
 
   /** L'inverse : ce qui revient du cadre, rendu au domaine. */
   depuisTransport(valeur: unknown): unknown;

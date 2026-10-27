@@ -62,12 +62,17 @@ function sourceLaPlusRecente(dossiers: string[]): number {
 }
 
 /** Lance l'application comme un utilisateur la lance, et non en mode développement. */
-function lancer(): Promise<ElectronApplication> {
+function lancer(racines?: string): Promise<ElectronApplication> {
   return electron.launch({
     args: [RACINE],
     // NI MODE DÉVELOPPEMENT NI MISE À JOUR : l'un chercherait un serveur, l'autre sortirait sur le
     // réseau au démarrage. L'épreuve doit tenir sur une machine hors ligne.
-    env: { ...process.env, NODE_ENV: "test", ATTIC_SANS_MAJ: "1" },
+    //
+    // ET LE DOSSIER JETABLE D'UNE ÉPREUVE SE DÉCLARE COMME RACINE, par `ATTIC_RACINES`, la voie du
+    // propriétaire : la sanction est armée depuis le 2026-10-27, et un dossier de travail semé par
+    // `localStorage` ne vient d'aucun dialogue. Éteindre la sanction pour l'épreuve aurait éprouvé
+    // une autre application que celle qu'on livre.
+    env: { ...process.env, NODE_ENV: "test", ATTIC_SANS_MAJ: "1", ...(racines ? { ATTIC_RACINES: racines } : {}) },
   });
 }
 
@@ -381,7 +386,7 @@ test.describe("l'export SFZ écrit sur le disque", () => {
       "<region>", "sample=la.wav", "lokey=56 hikey=58 pitch_keycenter=57", "tune=-25", "",
     ].join("\n"));
 
-    const app = await lancer();
+    const app = await lancer(travail);
     try {
       const page = await app.firstWindow();
       await page.waitForLoadState("domcontentloaded");

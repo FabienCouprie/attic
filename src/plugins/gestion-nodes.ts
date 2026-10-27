@@ -46,8 +46,8 @@ export const fiches: FicheAudio[] = ([
         options: ["Refuser", "Autoriser"], optionIds: ["Refuser", "Autoriser"],
         optionsEn: ["Refuse", "Authorise"],
         defaut: "Refuser", defautEn: "Refuse",
-        doc: "Accorde au composant importé le droit de s'exécuter. Un composant importé s'exécute avec les droits de l'application : il lit, écrit et supprime des fichiers, et joint le réseau. « Refuser » refuse l'import. L'autorisation est enregistrée avec le composant, et conditionne chacune de ses exécutions.",
-        docEn: "Grants the imported component the right to run. An imported component runs with the application's rights: it reads, writes and deletes files, and reaches the network. « Refuse » refuses the import. The authorisation is stored with the component, and conditions each of its runs." },
+        doc: "Accorde au composant importé le droit de s'exécuter. Son code s'exécute dans un cadre isolé : il ne lit, n'écrit ni ne supprime aucun fichier, et ne joint que les adresses réseau que l'application autorise. « Refuser » refuse l'import. Avec « Autoriser », l'import montre avant l'installation le nom, les ports, les réglages et l'empreinte SHA-256 du code, et n'installe qu'après confirmation. L'autorisation est enregistrée avec le composant, et conditionne chacune de ses exécutions.",
+        docEn: "Grants the imported component the right to run. Its code runs in an isolated frame: it reads, writes and deletes no file, and reaches only the network addresses the application allows. « Refuse » refuses the import. With « Authorise », the import shows the name, ports, settings and SHA-256 fingerprint of the code before installing, and installs only once confirmed. The authorisation is stored with the component, and conditions each of its runs." },
     ],
     async executer(ctx: any) {
       const action = ctx.paramTexte("Action", "Exporter");
@@ -187,6 +187,9 @@ export const fiches: FicheAudio[] = ([
 
         ctx.onProgress(traduire("progress.d_compression_du_zip"));
         const res = await api.importerNodeZip(zipPath);
+        // UN REFUS À LA CONFIRMATION N'EST PAS UNE PANNE : la personne a lu ce qui allait s'installer,
+        // et a dit non.
+        if (res?.annule) return { valeurs: [], message: traduire("msg.import_annul") };
         if (!res?.ok) return { valeurs: [], message: traduire("msg.chec_import_var_0", res?.erreur || "erreur inconnue") };
 
         // Installer le node

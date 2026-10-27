@@ -11,15 +11,10 @@
 // donnerait un chiffre faux sans que rien ne le signale. Le worker rend les résultats canal par
 // canal, tels quels.
 
-/** Les tampons à transférer plutôt qu'à recopier : tout tableau typé que porte un résultat. */
-function tamponsDe(resultat: unknown): ArrayBuffer[] {
-  if (!resultat || typeof resultat !== "object") return [];
-  const out: ArrayBuffer[] = [];
-  for (const v of Object.values(resultat as Record<string, unknown>)) {
-    if (ArrayBuffer.isView(v)) out.push(v.buffer as ArrayBuffer);
-  }
-  return out;
-}
+// LA LISTE DE TRANSFERT EST PARTAGÉE AVEC `servir-par-lot`. Ce module en tenait une copie, qui ne
+// connaissait pas un résultat qui EST un tableau typé : `Object.values` en énumérait les
+// échantillons sans rien y trouver, et le résultat repartait recopié.
+import { listeDeTransfert } from "./liste-de-transfert";
 
 /**
  * Installe le dialogue sur `self`, en déléguant le calcul d'un canal à `calcul`.
@@ -39,9 +34,8 @@ export function servirParCanal<O, R>(
         self.postMessage({ type: "progress", requestId, canal: c + 1, canaux: voies.length });
         resultats.push(calcul(voies[c], reglages as O, c));
       }
-      const transfert = resultats.flatMap(tamponsDe);
       self.postMessage({ type: "done", requestId, resultats },
-        transfert as unknown as WindowPostMessageOptions);
+        listeDeTransfert(resultats) as unknown as WindowPostMessageOptions);
     } catch (err) {
       self.postMessage({ type: "error", requestId, msg: String((err as Error)?.message ?? err) });
     }

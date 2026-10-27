@@ -51,18 +51,25 @@
 // CE QUE CELA COUTE, ET IL FAUT L'ASSUMER : un dossier designe une fois reste inscriptible
 // ensuite. C'est pourquoi le nombre d'accords gardes est BORNE — au-dela, le plus ancien tombe.
 //
-// ═══ ET POURQUOI CE N'EST PAS ENCORE UN REFUS ═══
+// ═══ LA SANCTION EST ARMEE PAR DEFAUT DEPUIS LE 2026-10-27 ═══
 //
-// Mesure avant d'y toucher : QUINZE fichiers ecrivent par ce pont, et leurs chemins viennent de
-// dossiers choisis — parfois dans une session anterieure, par un reglage persiste. Refuser d'emblee
-// casserait des fonctions EN SILENCE, ce qui est la faute que ce depot paie le plus souvent.
+// ELLE A ETE ETEINTE LE TEMPS D'UN RELEVE, et pour une raison mesuree : quinze fichiers ecrivent par
+// ce pont, et refuser d'emblee aurait casse des fonctions EN SILENCE. Le silence etait le vrai
+// danger, et c'est lui qui a ete leve avant d'armer :
 //
-// Le mecanisme est donc entier et sa SANCTION est eteinte : hors racine, on INSCRIT au journal et
-// l'on passe. `ATTIC_RACINES_STRICTES=1` la rallume. Le journal devient ainsi un effet de bord de
-// l'usage normal, au lieu d'une corvee separee — et les racines manquantes se lisent par
-// `npm run racines`.
+//   · DIX ECRITURES IGNORAIENT LEUR REFUS, dont les deux sauvegardes de projet. Elles le disent
+//     desormais — `ecrireOuLever` de `src/plugins/pont-electron.ts`, et un garde,
+//     `src/docs/contrat-ecritures-refusees.test.ts`, refuse qu'une nouvelle le jette.
+//   · UN PROJET OUVERT PAR DEPOT n'a pas de racine : Ctrl+S refuse, et ouvre alors le dialogue
+//     d'enregistrement prerempli, qui accorde la racine d'un appui sur Entree.
+//   · UN DOSSIER CHOISI AVANT CETTE VERSION — dossier de travail, « Dossier de sortie » d'un
+//     projet — n'a pas de racine non plus, les accords n'etant memorises que depuis peu. Le refus
+//     le dit en nommant le geste qui repare : choisir a nouveau le dossier par son bouton, dont le
+//     dialogue accorde la racine. AUCUNE BOITE MODALE AU DEMARRAGE : elle bloquerait l'application,
+//     et toute epreuve qui la lance sur un profil reel.
 //
-// LE JOUR OU LE RELEVE SERA COMPLET, il n'y aura qu'un drapeau a renverser.
+// `ATTIC_RACINES_STRICTES=0` eteint la sanction pour un diagnostic : hors racine, on inscrit au
+// journal et l'on passe. Les racines manquantes se lisent alors par `npm run racines`.
 
 const fs = require("node:fs");
 const path = require("node:path");
@@ -229,9 +236,9 @@ function sousUneRacine(chemin) {
   return false;
 }
 
-/** La sanction est-elle rallumee ? Eteinte par defaut, le temps du releve. */
+/** La sanction est-elle armee ? Oui par defaut ; `ATTIC_RACINES_STRICTES=0` l'eteint pour un diagnostic. */
 function racinesStrictes() {
-  return process.env.ATTIC_RACINES_STRICTES === "1";
+  return process.env.ATTIC_RACINES_STRICTES !== "0";
 }
 
 /**

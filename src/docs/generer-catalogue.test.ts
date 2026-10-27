@@ -113,7 +113,8 @@ it.skipIf(ecrire)("AGENTS.md annonce le nombre réel de composants, et de gardes
   const EN_LETTRES: Record<number, string> = {
     14: "quatorze", 15: "quinze", 16: "seize", 17: "dix-sept", 18: "dix-huit", 19: "dix-neuf",
     20: "vingt", 21: "vingt et un", 22: "vingt-deux", 23: "vingt-trois", 24: "vingt-quatre",
-    25: "vingt-cinq",
+    25: "vingt-cinq", 26: "vingt-six", 27: "vingt-sept", 28: "vingt-huit", 29: "vingt-neuf",
+    30: "trente", 31: "trente et un",
   };
   const attendu = EN_LETTRES[combien];
   expect(attendu, `le compte de ${combien} gardes n'a pas son écriture en lettres dans ce cas`).toBeDefined();

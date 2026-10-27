@@ -18,14 +18,13 @@
 // Le code d'un nœud s'y évalue, lit ses réglages, fabrique son contexte audio et rend son son ;
 // et de l'intérieur, atteindre le pont lève.
 //
-// ═══ CE QUE CE LOT NE FAIT PAS ENCORE, ET IL FAUT LE DIRE ═══
+// ═══ ET LA PAGE DU CADRE A SA PROPRE ADRESSE, DONC SA PROPRE POLITIQUE ═══
 //
-// LE `unsafe-eval` DE LA CSP NE TOMBE PAS ICI. Le cadre est créé par `srcdoc`, et un document de
-// schéma local HÉRITE de la politique de son parent : il a donc le `unsafe-eval` du document, et
-// l'ôter au document le lui ôterait aussi. Pour l'ôter d'un côté seulement, il faudra servir cette
-// page depuis une URL à elle et poser une CSP PAR DESTINATION dans `electron/main.cjs`, dont le
-// gestionnaire applique aujourd'hui la même constante à toutes les réponses. C'est le second pas,
-// et ce module ne le remplace pas : il apporte l'ISOLATION, pas encore la politique.
+// Elle était posée par `srcdoc`, et un document `srcdoc` HÉRITE de la politique de son parent :
+// ôter `unsafe-eval` au document l'aurait ôté au cadre. Elle vit désormais dans
+// `public/cadre-noeud.html`, servie à côté de `index.html`, et `electron/politique-securite.cjs` lui
+// réserve la seule politique qui permette `new Function`. Le document, lui, ne l'a plus. Relevé le
+// 2026-10-27.
 
 import { configurerBacDExecution } from "../core/nodes-installes";
 
@@ -60,79 +59,17 @@ export interface BacASable {
     contexte: Record<string, unknown>,
     surProgres: (m: string) => void,
     signal?: AbortSignal,
+    transferables?: ArrayBuffer[],
   ): Promise<Record<string, unknown>>;
   /** Ferme le cadre d'un nœud. Le suivant en rouvrira un. */
   oublier(cleNoeud: string): void;
 }
 
 /**
- * La page du cadre.
- *
- * ELLE EST ÉCRITE ICI EN TOUTES LETTRES plutôt que servie d'un fichier, et c'est ce qui la rend
- * lisible d'un seul regard : ce qui tourne dans le bac se lit à côté de ce qui le pilote. Le jour
- * où il faudra sa propre CSP, c'est cette chaîne qui deviendra un fichier.
+ * L'adresse de la page du cadre, relative au document : `public/` est servi à la racine en
+ * développement, et recopié à côté de `index.html` dans le build.
  */
-const PAGE = `<!doctype html><html><head><meta charset="utf-8"></head><body><script>
-"use strict";
-var fn = null, arret = null;
-function repondre(m) { parent.postMessage(m, "*"); }
-
-// LA TABLE « attic » SE BATIT ICI, ET NE TRAVERSE PAS. Elle portait des CONSTRUCTEURS -- le
-// domaine y mettait AudioBuffer --, et une fonction ne se clone pas : la poster levait
-// DataCloneError. Elle n'avait de toute facon aucune raison de voyager, ces noms etant des
-// globales du cadre comme ils l'etaient de la page.
-function globalesDuCadre() {
-  return {
-    AudioBuffer: typeof AudioBuffer !== "undefined" ? AudioBuffer : undefined,
-    OfflineAudioContext: typeof OfflineAudioContext !== "undefined" ? OfflineAudioContext : undefined,
-    fetch: typeof fetch !== "undefined" ? fetch : undefined,
-    URL: typeof URL !== "undefined" ? URL : undefined,
-    TextEncoder: typeof TextEncoder !== "undefined" ? TextEncoder : undefined,
-    TextDecoder: typeof TextDecoder !== "undefined" ? TextDecoder : undefined,
-    btoa: typeof btoa !== "undefined" ? btoa : undefined,
-    atob: typeof atob !== "undefined" ? atob : undefined,
-    Math: Math, Date: Date, JSON: JSON,
-    parseInt: parseInt, parseFloat: parseFloat, isNaN: isNaN, console: console,
-  };
-}
-window.addEventListener("message", async function (e) {
-  var d = e.data || {};
-  if (d.type === "arreter") { if (arret) arret.abort(); return; }
-  if (d.type === "poser") {
-    try {
-      var mod = { exports: null };
-      var f = new Function("module", "exports", "attic", '"use strict";\\n' + d.code);
-      f(mod, mod.exports, globalesDuCadre());
-      if (typeof mod.exports !== "function") throw new Error("le module n'exporte pas une fonction (" + (typeof mod.exports) + ")");
-      fn = mod.exports;
-      repondre({ id: d.id, type: "pose" });
-    } catch (err) { repondre({ id: d.id, type: "erreur", message: String(err && err.message || err) }); }
-    return;
-  }
-  if (d.type === "executer") {
-    if (!fn) { repondre({ id: d.id, type: "erreur", message: "aucun code posé" }); return; }
-    arret = new AbortController();
-    var c = d.contexte;
-    var ctx = {
-      noeud: c.noeud,
-      repertoireTravail: c.repertoireTravail,
-      reglagesDeProjet: c.reglagesDeProjet,
-      entree: function (i) { return c.entrees[i]; },
-      entrees: function () { return c.entrees; },
-      sortieBranchee: function (i) { return !!c.sortiesBranchees[i]; },
-      paramNombre: function (n, defaut) { var v = c.parametres[n]; return typeof v === "number" ? v : Number(v) || defaut; },
-      paramTexte: function (n, defaut) { var v = c.parametres[n]; return v === undefined || v === null ? defaut : String(v); },
-      onProgress: function (m) { repondre({ id: d.id, type: "progres", message: String(m) }); },
-      signal: arret.signal,
-    };
-    try {
-      var r = await fn(ctx);
-      repondre({ id: d.id, type: "fini", resultat: r || {} });
-    } catch (err) { repondre({ id: d.id, type: "erreur", message: String(err && err.message || err) }); }
-  }
-});
-repondre({ type: "pret" });
-<\/script></body></html>`;
+const PAGE_CADRE = "cadre-noeud.html";
 
 interface EnVol {
   resoudre: (v: Record<string, unknown>) => void;
@@ -157,7 +94,7 @@ function ouvrirCadre(cle: string): Cadre {
   frame.setAttribute("sandbox", "allow-scripts");
   frame.setAttribute("aria-hidden", "true");
   frame.style.display = "none";
-  frame.srcdoc = PAGE;
+  frame.src = new URL(PAGE_CADRE, document.baseURI).href;
 
   const cadre: Cadre = { frame, pret: null as never, pose: null, enVol: new Map() };
   cadre.pret = new Promise<void>((resoudre) => {
@@ -181,17 +118,23 @@ function ouvrirCadre(cle: string): Cadre {
   return cadre;
 }
 
-function poster(cadre: Cadre, message: Record<string, unknown>, vol?: EnVol): Promise<Record<string, unknown>> {
+function poster(
+  cadre: Cadre, message: Record<string, unknown>, vol?: EnVol, transferables: ArrayBuffer[] = [],
+): Promise<Record<string, unknown>> {
   const id = ++compteur;
   return new Promise((resoudre, rejeter) => {
     cadre.enVol.set(id, vol ?? { resoudre, rejeter, surProgres: () => {} });
     if (vol) { vol.resoudre = resoudre; vol.rejeter = rejeter; }
-    cadre.frame.contentWindow?.postMessage({ ...message, id }, "*");
+    // LES MÉMOIRES NOMMÉES SONT TRANSFÉRÉES ET NON CLONÉES. Ce sont celles que le domaine vient de
+    // fabriquer pour la traversée, et personne d'autre ne les tient. AU RETOUR, RIEN N'EST
+    // TRANSFÉRÉ : le code d'un nœud peut garder ses tableaux d'un run à l'autre, et les détacher
+    // les lui viderait.
+    cadre.frame.contentWindow?.postMessage({ ...message, id }, "*", transferables);
   });
 }
 
 export const BAC_A_SABLE: BacASable = {
-  async executer(cleNoeud, code, contexte, surProgres, signal) {
+  async executer(cleNoeud, code, contexte, surProgres, signal, transferables) {
     const cadre = cadres.get(cleNoeud) ?? ouvrirCadre(cleNoeud);
     await cadre.pret;
 
@@ -205,7 +148,7 @@ export const BAC_A_SABLE: BacASable = {
     signal?.addEventListener("abort", surArret, { once: true });
     try {
       return await poster(cadre, { type: "executer", contexte },
-        { resoudre: () => {}, rejeter: () => {}, surProgres });
+        { resoudre: () => {}, rejeter: () => {}, surProgres }, transferables);
     } finally {
       signal?.removeEventListener("abort", surArret);
     }

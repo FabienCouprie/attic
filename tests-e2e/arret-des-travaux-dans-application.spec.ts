@@ -52,24 +52,37 @@ test.describe("l'arrêt d'un travail, dans l'application qui tourne", () => {
       // est le même que celui dont `main.cjs` se sert, donc le MÊME exemplaire du registre — et
       // c'est ce qui compte : un second exemplaire aurait son propre `Set`, vide, et l'épreuve
       // aurait mesuré un registre que le canal ne touche pas.
-      const lance = await app.evaluate(async ({ app: electronApp }) => {
+      //
+      // DEUX TRAVAUX, ET C'EST LE SECOND QUI COMPTE AUTANT QUE LE PREMIER. Relevé par une revue le
+      // 2026-10-27 : toutes les fenêtres partagent ce processus, et « Arrêter » tuait tout. Le
+      // premier travail est lancé AU NOM DE LA FENÊTRE, comme un gestionnaire le fait ; le second au
+      // nom d'une autre fenêtre, qui n'existe pas ici mais dont l'identifiant suffit. L'arrêt doit
+      // tuer le premier, et laisser vivre le second.
+      const lance = await app.evaluate(async ({ app: electronApp, BrowserWindow }) => {
         const prendre = (process.mainModule as { require: (m: string) => unknown }).require;
         const chemin = (prendre("path") as { join: (...p: string[]) => string })
           .join(electronApp.getAppPath(), "electron", "travaux.cjs");
         const registre = prendre(chemin) as {
           lancerTravail: (b: string, a: string[], l: (x: string) => void) => Promise<unknown>;
-          travauxEnCours: () => number;
+          travauxEnCours: (p?: number) => number;
+          avecProprietaire: <T>(p: number, fn: () => T) => T;
+          annulerLesTravaux: (p?: number) => number;
         };
+        const fenetre = BrowserWindow.getAllWindows()[0].webContents.id;
+        const autre = fenetre + 1000;
+        const DORT = ["-e", "setTimeout(() => process.exit(0), 60000)"];
         const etat = (globalThis as Record<string, unknown>);
-        etat.__attic_promesse__ = registre.lancerTravail(
-          process.execPath,
-          ["-e", "setTimeout(() => process.exit(0), 60000)"],
-          () => {},
-        ).then((r: unknown) => { etat.__attic_fini__ = r; return r; });
+        etat.__attic_promesse__ = registre.avecProprietaire(fenetre,
+          () => registre.lancerTravail(process.execPath, DORT, () => {}))
+          .then((r: unknown) => { etat.__attic_fini__ = r; return r; });
+        etat.__attic_autre__ = registre.avecProprietaire(autre,
+          () => registre.lancerTravail(process.execPath, DORT, () => {}));
         etat.__attic_registre__ = registre;
-        return { enCours: registre.travauxEnCours() };
+        etat.__attic_autre_id__ = autre;
+        return { enCours: registre.travauxEnCours(fenetre), autre: registre.travauxEnCours(autre) };
       });
       expect(lance.enCours, "le travail doit être inscrit dès son lancement").toBe(1);
+      expect(lance.autre, "le travail de l'autre fenêtre doit être inscrit").toBe(1);
 
       // ── 2. Le rendu demande l'arrêt, par le pont et par le canal, comme un nœud le ferait ──
       const reponse = await page.evaluate(async () => {
@@ -92,10 +105,18 @@ test.describe("l'arrêt d'un travail, dans l'application qui tourne", () => {
           etat.__attic_promesse__ as Promise<unknown>,
           new Promise((r) => setTimeout(() => r("TROP LONG"), 15000)),
         ]);
-        const registre = etat.__attic_registre__ as { travauxEnCours: () => number };
-        return { resultat, enCours: registre.travauxEnCours() };
+        const registre = etat.__attic_registre__ as {
+          travauxEnCours: (p?: number) => number; annulerLesTravaux: (p?: number) => number;
+        };
+        const autre = etat.__attic_autre_id__ as number;
+        const autreVivant = registre.travauxEnCours(autre);
+        // On range derrière soi : le travail de l'autre fenêtre ne doit pas dormir une minute.
+        registre.annulerLesTravaux(autre);
+        await (etat.__attic_autre__ as Promise<unknown>);
+        return { resultat, enCours: registre.travauxEnCours(), autreVivant };
       });
       expect(apres.resultat, "la promesse du travail tué n'est pas revenue").not.toBe("TROP LONG");
+      expect(apres.autreVivant, "« Arrêter » dans une fenêtre a tué le travail d'une autre").toBe(1);
       expect(apres.enCours, "un mort reste au registre").toBe(0);
     } finally {
       await app.close();

@@ -9,6 +9,7 @@ import { bufferVersWavBlob } from "../audio";
 import { securiserAmplitude } from "../audio/math-formules";
 import { decoderSansReechantillonner } from "../audio/frequence-source";
 import { arreterLesTravauxAuSignal } from "./arret-des-travaux";
+import { ecrireOuLever } from "./pont-electron";
 
 const JULIA_KEYWORDS = new Set([
   "function", "return", "if", "elseif", "else", "for", "while", "in", "!", "&&", "||",
@@ -192,14 +193,18 @@ export const fiches: FicheAudio[] = ([
         const blob = bufferVersWavBlob(audio);
         const arrayBuf = await blob.arrayBuffer();
         inputPath = `${tmpDir}/julia_input_${Date.now()}.wav`;
-        await api.ecrireFichier(inputPath, new Uint8Array(arrayBuf));
+        // UN REFUS ARRÊTE LE NŒUD, pour la même raison que chez Python : le script tournerait sans
+        // son fichier d'entrée.
+        try { await ecrireOuLever(api, inputPath, new Uint8Array(arrayBuf)); }
+        catch (e) { return { valeurs: [null, null, null], erreur: true, message: String((e as Error).message) }; }
       }
 
       let midiPath: string | null = null;
       if (midi instanceof File) {
         midiPath = `${tmpDir}/julia_input_${Date.now()}.mid`;
         const midiBuf = new Uint8Array(await midi.arrayBuffer());
-        await api.ecrireFichier(midiPath, midiBuf);
+        try { await ecrireOuLever(api, midiPath, midiBuf); }
+        catch (e) { return { valeurs: [null, null, null], erreur: true, message: String((e as Error).message) }; }
       }
 
       let inputText: string | null = null;
@@ -213,6 +218,9 @@ export const fiches: FicheAudio[] = ([
 
       // MÊME RAISON QUE POUR PYTHON : un script lancé est un processus enfant, et « Arrêter » doit
       // l'atteindre. Voir `arret-des-travaux.ts`.
+      // LE SCRIPT LIVRÉ PAR DÉFAUT EST CELUI DE L'APPLICATION : il s'inscrit sans question. Tout
+      // autre script inconnu est montré avant de s'exécuter. Voir `electron/scripts-autorises.cjs`.
+      if (code === CODE_DEFAUT || code === CODE_DEFAUT_EN) await api.scriptsEcritIci?.(code);
       const lacherLesTravaux = arreterLesTravauxAuSignal(ctx.signal);
       const result = await api.juliaExecuter({
         code,
@@ -234,6 +242,7 @@ export const fiches: FicheAudio[] = ([
       if (inputPath) { try { await api.supprimerFichier(inputPath); } catch {} }
       if (midiPath) { try { await api.supprimerFichier(midiPath); } catch {} }
 
+      if (result.refuse) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.script_refuse") };
       if (!result.ok) {
         const pyInfo = result.python ? `\nJulia: ${result.python}` : "";
         return { valeurs: [null, null, null], erreur: true, message: traduire("msg.erreur_julia_var_0_var_1", result.erreur || result.stderr || "inconnue", pyInfo) };

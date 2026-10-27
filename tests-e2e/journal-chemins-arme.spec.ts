@@ -114,10 +114,15 @@ test.describe("le relevé des chemins", () => {
         "servira jamais, quoi que l'utilisateur fasse dans l'application.", "",
       ].join("\n")).toBeGreaterThan(0);
       // LE DOSSIER TEMPORAIRE N'EST PAS UNE RACINE, et c'est délibéré : aucune destination relevée
-      // n'y mène, et il est partagé avec toutes les autres applications de la machine. L'écriture
-      // passe donc par TOLÉRANCE, la sanction étant éteinte, et le journal le dit.
-      expect(ecritures.at(-1), "hors racine pendant le relevé : accepté par tolérance, et noté")
-        .toMatchObject({ quoi: "ecrire", accepte: true, sousRacine: false });
+      // n'y mène, et il est partagé avec toutes les autres applications de la machine. La sanction
+      // étant ARMÉE PAR DÉFAUT depuis le 2026-10-27, l'écriture est REFUSÉE — le pont rend `null`,
+      // aucun fichier n'apparaît —, et le journal le note. Ce cas attendait auparavant qu'elle passe
+      // par tolérance ; c'est l'état d'avant l'armement, qui s'obtient désormais par
+      // `ATTIC_RACINES_STRICTES=0`.
+      expect(ecritures.at(-1), "hors racine : refusé par la sanction armée, et noté")
+        .toMatchObject({ quoi: "ecrire", accepte: false, sousRacine: false });
+      expect(ecrit, "le pont a écrit hors racine : la sanction n'est pas armée par défaut").toBeNull();
+      expect(existsSync(dansTemp), "un fichier est apparu hors racine").toBe(false);
       rmSync(dansTemp, { force: true });
 
       // ET LE DOSSIER DE TRAVAIL EST UNE RACINE, lui. C'est la leçon du premier relevé réel : il

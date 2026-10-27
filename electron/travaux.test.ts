@@ -21,7 +21,7 @@
 import { describe, expect, it } from "vitest";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { lancerTravail, inscrireTravail, annulerLesTravaux, travauxEnCours } = require("./travaux.cjs");
+const { lancerTravail, inscrireTravail, annulerLesTravaux, travauxEnCours, avecProprietaire } = require("./travaux.cjs");
 
 /** Un Node qui dort, et qui ne s arretera donc que si on le tue. */
 const DORT = ["-e", "setTimeout(() => process.exit(0), 60000)"];
@@ -104,5 +104,90 @@ describe("le registre des travaux", () => {
     const retirer = inscrireTravail(undefined);
     expect(travauxEnCours()).toBe(avant);
     expect(() => retirer()).not.toThrow();
+  });
+});
+
+/** Le processus `pid` vit-il encore ? `kill(pid, 0)` n envoie rien, il demande seulement. */
+function vivant(pid: number): boolean {
+  try { process.kill(pid, 0); return true; } catch { return false; }
+}
+
+/** Attend que `pid` soit mort, jusqu a `delaiMs`. `taskkill` est asynchrone. */
+async function attendreLaMort(pid: number, delaiMs = 10000): Promise<boolean> {
+  const fin = Date.now() + delaiMs;
+  while (Date.now() < fin) {
+    if (!vivant(pid)) return true;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  return !vivant(pid);
+}
+
+describe("l annulation vise la fenetre qui la demande", () => {
+  // ═══ LE DEFAUT, RELEVE PAR UNE REVUE LE 2026-10-27 ═══
+  //
+  // `annulerLesTravaux` tuait TOUT le registre. Les fenetres partagent le processus principal :
+  // « Arreter » dans l une tuait la separation en cours dans l autre.
+
+  it("N ATTEINT QUE LES ENFANTS DE SA FENETRE, et laisse vivre ceux de l autre", async () => {
+    const avant = travauxEnCours();
+    const dansUn = avecProprietaire(1, () => lancerTravail(process.execPath, DORT, () => {}));
+    const dansDeux = avecProprietaire(2, () => lancerTravail(process.execPath, DORT, () => {}));
+    expect(travauxEnCours(1)).toBe(1);
+    expect(travauxEnCours(2)).toBe(1);
+
+    expect(annulerLesTravaux(1), "la fenetre 1 n a pas tue son propre travail").toBe(1);
+    await dansUn;
+    expect(travauxEnCours(2), "la fenetre 1 a tue le travail de la fenetre 2").toBe(1);
+
+    expect(annulerLesTravaux(2)).toBe(1);
+    await dansDeux;
+    expect(travauxEnCours()).toBe(avant);
+  });
+
+  it("LE PROPRIETAIRE SUIT LES PROMESSES, jusqu a un `spawn` lance apres un `await`", async () => {
+    // C est la forme reelle : un gestionnaire attend un fichier, puis lance le binaire.
+    const travail = avecProprietaire(7, async () => {
+      await new Promise((r) => setTimeout(r, 20));
+      return lancerTravail(process.execPath, DORT, () => {});
+    });
+    await new Promise((r) => setTimeout(r, 60));
+    expect(travauxEnCours(7), "le contexte s est perdu a travers l attente").toBe(1);
+    expect(annulerLesTravaux(7)).toBe(1);
+    await travail;
+    expect(travauxEnCours(7)).toBe(0);
+  });
+
+  it("UN ENFANT SANS PROPRIETAIRE n est atteint que par une annulation sans proprietaire", async () => {
+    const orphelin = lancerTravail(process.execPath, DORT, () => {});
+    expect(annulerLesTravaux(3), "une fenetre a tue un travail qui n etait pas le sien").toBe(0);
+    expect(annulerLesTravaux()).toBe(1);
+    await orphelin;
+  });
+
+  it("L ARBRE ENTIER TOMBE : le petit-enfant ne survit pas a son parent", async () => {
+    // Un Node qui engendre un Node dormeur, en dit le pid, et dort lui aussi. Sous Windows,
+    // `kill()` seul laissait ce petit-enfant vivant.
+    //
+    // LE PETIT-ENFANT EST DETACHE, ET SANS CELA LE CAS NE PROUVAIT RIEN. Premier jet vert AVEC LE
+    // DEFAUT PLANTE (`kill()` seul) : sous Windows, libuv range les enfants d un Node dans un objet
+    // de travail qui les tue a la mort de ce Node. Un temoin Node meurt donc quoi qu on fasse, la
+    // ou un sous-processus lance par Python, qui n a pas cet objet, survit. `detached` le sort de
+    // l objet, et le rend semblable au cas reel.
+    const PARENT = ["-e",
+      "const c = require('child_process').spawn(process.execPath, ['-e', 'setTimeout(() => {}, 60000)'], { stdio: 'ignore', detached: true });"
+      + " console.log('PID ' + c.pid); setTimeout(() => {}, 60000);"];
+    let pidPetitEnfant = 0;
+    let signaler: () => void = () => {};
+    const annonce = new Promise<void>((r) => { signaler = r; });
+    const travail = avecProprietaire(9, () => lancerTravail(process.execPath, PARENT, (l: string) => {
+      const m = /^PID (\d+)$/.exec(l);
+      if (m) { pidPetitEnfant = Number(m[1]); signaler(); }
+    }));
+    await annonce;
+    expect(vivant(pidPetitEnfant), "le petit-enfant n a pas demarre : le cas ne prouverait rien").toBe(true);
+
+    expect(annulerLesTravaux(9)).toBe(1);
+    await travail;
+    expect(await attendreLaMort(pidPetitEnfant), "le petit-enfant a survecu a l arret").toBe(true);
   });
 });

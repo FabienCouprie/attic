@@ -7,6 +7,7 @@ import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INST
 import { decoderSansReechantillonner } from "../audio/frequence-source";
 import { decrire } from "../audio/metadonnees";
 import { choixOuiNon } from "../core/oui-non";
+import { ecrireOuLever } from "./pont-electron";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -42,7 +43,8 @@ export const fiches: FicheAudio[] = ([
           const blob = await bufferVersMp3Blob(buf, qualite, undefined,
             decrire(buf, { noeud: "Conversion WAV → MP3", source: f.nom, nomFichier: nomSortie }));
           const arr = await blob.arrayBuffer();
-          await (window as any).api.ecrireFichier(dOut.replace(/\\$/,"")+"\\"+nomSortie, arr);
+          // UN REFUS LÈVE, et le `catch` le compte parmi les erreurs au lieu de l'annoncer écrit.
+          await ecrireOuLever((window as any).api, dOut.replace(/\\$/,"")+"\\"+nomSortie, arr);
           ok++;
         } catch (e: any) {
           err++;
@@ -85,7 +87,8 @@ export const fiches: FicheAudio[] = ([
           const { ixml } = decrire(buf, { noeud: "Conversion MP3 → WAV", source: f.nom, nomFichier: nomSortie }, 16);
           const blob = bufferVersWavBlob(buf, undefined, false, { ixml });
           const arr = await blob.arrayBuffer();
-          await (window as any).api.ecrireFichier(dOut.replace(/\\$/,"")+"\\"+nomSortie, arr);
+          // UN REFUS LÈVE, et le `catch` le compte parmi les erreurs au lieu de l'annoncer écrit.
+          await ecrireOuLever((window as any).api, dOut.replace(/\\$/,"")+"\\"+nomSortie, arr);
           ok++;
         } catch (e: any) {
           err++;
@@ -139,7 +142,8 @@ export const fiches: FicheAudio[] = ([
           const blob = await bufferVersMp3Blob(buf, qualite, undefined,
             decrire(buf, { noeud: "Conversion MIDI → MP3", source: f.nom, nomFichier: nomSortie }));
           const arr = await blob.arrayBuffer();
-          await (window as any).api.ecrireFichier(dOut.replace(/\\$/,"")+"\\"+nomSortie, arr);
+          // UN REFUS LÈVE, et le `catch` le compte parmi les erreurs au lieu de l'annoncer écrit.
+          await ecrireOuLever((window as any).api, dOut.replace(/\\$/,"")+"\\"+nomSortie, arr);
           ok++;
         } catch (e: any) {
           err++;

@@ -134,6 +134,11 @@ export function reechantillonnerCanal(
   return y;
 }
 
+/** Le calcul d'un canal, dans le fil ou hors de lui. Il reçoit une copie, qu'il peut garder. */
+export type PorterCanal = (
+  x: Float32Array, depart: number, arrivee: number,
+) => Float32Array<ArrayBuffer> | Promise<Float32Array<ArrayBuffer>>;
+
 /**
  * Le son, porté à `frequence` — et le MÊME OBJET quand il y est déjà.
  *
@@ -146,24 +151,27 @@ export function reechantillonnerCanal(
  * APRÈS la fréquence, et par `OfflineAudioContext` : le mélange de canaux n'a pas de question de
  * qualité, ses règles sont écrites dans la spécification, et le tampon y arrive déjà à la bonne
  * fréquence — donc rien n'y est rééchantillonné en linéaire.
+ *
+ * `porter` calcule UN canal, et c'est par lui que le moteur sort ce calcul du fil de l'interface :
+ * voir `porterALaFrequenceDeTravail` dans `plugins/apercu-domaine.ts`. Le travailleur ne peut pas
+ * être créé ICI, parce qu'il importe ce module pour `reechantillonnerCanal` : Vite refuse un
+ * travailleur qui se crée lui-même. Sans `porter`, le calcul a lieu dans le fil, comme en test.
  */
 export async function convertirVersFrequence(
   buffer: AudioBuffer, frequence: number, canaux = buffer.numberOfChannels,
+  porter: PorterCanal = reechantillonnerCanal,
 ): Promise<AudioBuffer> {
   if (buffer.sampleRate === frequence && buffer.numberOfChannels === canaux) return buffer;
   if (buffer.length < 1) return buffer;
 
   let porte = buffer;
   if (buffer.sampleRate !== frequence) {
-    const canal0 = reechantillonnerCanal(buffer.getChannelData(0).slice(), buffer.sampleRate, frequence);
+    const voies = await Promise.all(Array.from({ length: buffer.numberOfChannels },
+      (_, c) => porter(buffer.getChannelData(c).slice(), buffer.sampleRate, frequence)));
     porte = new AudioBuffer({
-      numberOfChannels: buffer.numberOfChannels, length: canal0.length, sampleRate: frequence,
+      numberOfChannels: buffer.numberOfChannels, length: voies[0].length, sampleRate: frequence,
     });
-    porte.copyToChannel(canal0, 0);
-    for (let c = 1; c < buffer.numberOfChannels; c++) {
-      porte.copyToChannel(
-        reechantillonnerCanal(buffer.getChannelData(c).slice(), buffer.sampleRate, frequence), c);
-    }
+    voies.forEach((voie, c) => porte.copyToChannel(voie, c));
   }
   if (porte.numberOfChannels === canaux) return porte;
 

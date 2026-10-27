@@ -63,6 +63,9 @@ contextBridge.exposeInMainWorld("api", {
   selectionnerNodeZip: () => ipcRenderer.invoke("node:selectionner-zip"),
   pythonInfo: () => ipcRenderer.invoke("python:info"),
   pythonExecuter: (options) => ipcRenderer.invoke("python:executer", options),
+  // Un script écrit dans l'éditeur du nœud s'inscrit parmi les scripts autorisés. Voir
+  // `electron/scripts-autorises.cjs`.
+  scriptsEcritIci: (code) => ipcRenderer.invoke("scripts:ecrit-ici", code),
   pythonDefinirChemin: (chemin) => ipcRenderer.invoke("python:definir-chemin", chemin),
   pythonChoisirExecutable: () => ipcRenderer.invoke("python:choisir-executable"),
 

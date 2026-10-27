@@ -253,7 +253,13 @@ configurerServicesDomaine({
     if (typeof AudioBuffer !== "undefined" && valeur instanceof AudioBuffer) {
       const canaux: Float32Array[] = [];
       for (let c = 0; c < valeur.numberOfChannels; c++) canaux.push(new Float32Array(valeur.getChannelData(c)));
-      return { ok: true, valeur: { __audio: true, canaux, frequence: valeur.sampleRate } };
+      // CES CANAUX SONT DES COPIES NEUVES, et c'est ce qui permet de les TRANSFÉRER : le tampon
+      // d'origine garde sa mémoire, et le cadre reçoit celle-ci sans la recopier. Une heure de
+      // stéréo pèse 1,27 Go, et le clonage en faisait une seconde copie à chaque run.
+      return {
+        ok: true, valeur: { __audio: true, canaux, frequence: valeur.sampleRate },
+        transferables: canaux.map((c) => c.buffer as ArrayBuffer),
+      };
     }
     if (valeur === null || valeur === undefined) return { ok: true, valeur };
     const t = typeof valeur;

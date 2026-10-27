@@ -4,6 +4,7 @@
 
 import fs from "fs";
 import path from "path";
+import { FICHIER_TRAVAILLEUR_VOSK, separerTravailleurVosk } from "./vosk-travailleur.ts";
 
 // Alias de résolution spécifique au domaine audio.
 export const audioResolveAliases: any[] = [
@@ -20,6 +21,11 @@ export const audioResolveAliases: any[] = [
   // « Failed to resolve import "@csound/browser" ». On pointe donc l'entrée réelle, comme
   // pour @magenta/music juste au-dessus.
   { find: /^@csound\/browser$/, replacement: path.resolve(process.cwd(), 'node_modules/@csound/browser/dist/csound.js') },
+  // `ndarray` ET `ndarray-resample` NE SONT PAS CONSTRUITS : ils fabriquent du code par
+  // `new Function` dès l'import, ce qui exigeait `unsafe-eval` dans la CSP du document, et Magenta
+  // ne les appelle que sous Safari. Voir `src/audio/ndarray-inerte.ts`.
+  { find: /^ndarray$/, replacement: path.resolve(process.cwd(), 'src/audio/ndarray-inerte.ts') },
+  { find: /^ndarray-resample$/, replacement: path.resolve(process.cwd(), 'src/audio/ndarray-inerte.ts') },
 ];
 
 /**
@@ -56,7 +62,40 @@ function motifsDuPaquetage(): string[] {
   }
 }
 
+/**
+ * `resonance-audio` FABRIQUAIT UNE FONCTION VIDE PAR LE CONSTRUCTEUR `Function`.
+ *
+ * Relevé le 2026-10-27 en passant tout le catalogue sous la politique stricte du document, qui n'a
+ * plus `unsafe-eval` : `this._rejectHandler = new Function();` lève `EvalError` — une politique
+ * stricte refuse le constructeur même sans corps —, et le chargeur des réponses impulsionnelles de
+ * la bibliothèque tombait avec lui. `function () {}` en est l'exact équivalent. Une seule
+ * occurrence dans `resonance-audio@1.0.0` ; si elle disparaît, la substitution LÈVE, pour qu'on
+ * relise la bibliothèque au lieu de la croire réparée.
+ */
+export function sansConstructeurFunction(code: string): string {
+  const avant = "this._rejectHandler = new Function();";
+  if (!code.includes(avant)) {
+    throw new Error("resonance-audio : la ligne `this._rejectHandler = new Function();` a disparu — relire la bibliothèque");
+  }
+  return code.split(avant).join("this._rejectHandler = function () {};");
+}
+
+/** Le motif du fichier de `resonance-audio`, tel que le résolvent la construction et l'optimiseur. */
+const FICHIER_RESONANCE = /resonance-audio[\\/]build[\\/]resonance-audio\.js$/;
+
+/** La même substitution, sous la forme d'un plugin : pour la construction et pour l'optimiseur. */
+function pluginResonanceSansEval(): any {
+  return {
+    name: "attic-resonance-sans-eval",
+    transform(code: string, id: string) {
+      if (!FICHIER_RESONANCE.test(id.split("?")[0])) return null;
+      return { code: sansConstructeurFunction(code), map: null };
+    },
+  };
+}
+
 export const audioBuildPlugins: any[] = [
+  pluginResonanceSansEval(),
   {
     name: "attic-sans-les-ressources-que-le-paquet-jette",
     apply: "build",
@@ -71,7 +110,46 @@ export const audioBuildPlugins: any[] = [
       }
     },
   },
+  pluginTravailleurVosk(),
 ];
+
+/**
+ * LE WORKER DE VOSK SORT DE SON BLOB, pour recevoir sa propre politique de sécurité au lieu
+ * d'hériter celle du document, qui n'a plus `unsafe-eval`. Voir `src/audio/vosk-travailleur.ts`.
+ *
+ * La transformation vaut en développement comme au build : `vosk-browser` est exclu du
+ * pré-assemblage (voir plus bas), donc il traverse les plugins. Le fichier du worker est ÉMIS au
+ * build, et SERVI par le serveur en développement.
+ */
+function pluginTravailleurVosk(): any {
+  let commande = "serve";
+  return {
+    name: "attic-travailleur-vosk-separe",
+    enforce: "pre",
+    configResolved(config: any) { commande = config.command; },
+    transform(this: any, code: string, id: string) {
+      if (!/vosk-browser[\\/]dist[\\/]vosk\.js$/.test(id.split("?")[0])) return null;
+      const separe = separerTravailleurVosk(code);
+      // UNE FORME INATTENDUE ARRÊTE LA CONSTRUCTION : la laisser passer rendrait un Vosk dont le
+      // worker hérite la politique stricte du document, donc qui ne démarre pas — en silence.
+      if (!separe) this.error("vosk-browser ne fabrique plus son worker comme attendu : voir src/audio/vosk-travailleur.ts");
+      if (commande === "build") {
+        this.emitFile({ type: "asset", fileName: FICHIER_TRAVAILLEUR_VOSK, source: Buffer.from(separe!.travailleur, "utf8") });
+      }
+      return { code: separe!.code, map: null };
+    },
+    configureServer(server: any) {
+      server.middlewares.use((req: any, res: any, next: any) => {
+        if ((req.url ?? "").split("?")[0] !== `/${FICHIER_TRAVAILLEUR_VOSK}`) return next();
+        const source = fs.readFileSync(path.resolve(process.cwd(), "node_modules/vosk-browser/dist/vosk.js"), "utf8");
+        const separe = separerTravailleurVosk(source);
+        if (!separe) { res.statusCode = 500; res.end("vosk-browser : forme du worker inattendue"); return; }
+        res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+        res.end(separe.travailleur);
+      });
+    },
+  };
+}
 
 export const audioOptimizeDeps: any = {
   // _audio_backup ne doit pas être optimisé.
@@ -121,6 +199,9 @@ export const audioOptimizeDeps: any = {
   // `@magenta/music/esm/protobuf`, `lamejs/src/js/Lame.js` —, l'optimiseur travaillant par
   // spécificateur et non par paquet. `src/docs/contrat-dependances-prebundlees.test.ts` refuse qu'un
   // paquet importé par les sources ne soit ni déclaré ici ni exclu ci-dessus.
+  // `resonance-audio` EST PRÉ-ASSEMBLÉ, et l'optimiseur n'applique pas les plugins de la
+  // construction : la même substitution lui est donc donnée ici. Voir `sansConstructeurFunction`.
+  rolldownOptions: { plugins: [pluginResonanceSansEval()] },
   include: [
     "@firecrawl/pdf-inspector-wasm",
     "@magenta/music",
@@ -142,8 +223,8 @@ export const audioOptimizeDeps: any = {
     "mediabunny",
     "meyda",
     "midi-file",
-    "ndarray",
-    "ndarray-resample",
+    // `ndarray` et `ndarray-resample` n'y sont plus : ils sont remplacés par
+    // `src/audio/ndarray-inerte.ts`, qui n'est pas un paquet à pré-assembler.
     "onnxruntime-web",
     "protobufjs",
     "react",

@@ -11,20 +11,7 @@
 // Une méthode de transposition décompose le son source avant de transposer quoi que ce soit : la
 // refaire à chaque tâche la paierait dix-neuf fois.
 
-/** Les tampons à transférer plutôt qu'à recopier : tout tableau typé que porte un résultat. */
-function tamponsDe(resultat: unknown): ArrayBuffer[] {
-  if (!resultat || typeof resultat !== "object") return [];
-  // UN RÉSULTAT QUI EST LUI-MÊME UN TABLEAU TYPÉ, et c'était un piège : `Object.values` sur un
-  // `Float32Array` de quatre cent mille échantillons en fabrique un tableau de quatre cent mille
-  // nombres, pour ne rien trouver à transférer ensuite. Ici il n'y a qu'un tampon, et c'est lui.
-  if (ArrayBuffer.isView(resultat)) return [resultat.buffer as ArrayBuffer];
-  const out: ArrayBuffer[] = [];
-  for (const v of Object.values(resultat as Record<string, unknown>)) {
-    if (ArrayBuffer.isView(v)) out.push(v.buffer as ArrayBuffer);
-    else if (Array.isArray(v)) for (const e of v) if (ArrayBuffer.isView(e)) out.push(e.buffer as ArrayBuffer);
-  }
-  return out;
-}
+import { listeDeTransfert } from "./liste-de-transfert";
 
 /**
  * Installe le dialogue sur `self` : une préparation par lot, puis une tâche après l'autre.
@@ -46,7 +33,7 @@ export function servirParLot<O, C, R>(
         self.postMessage({ type: "progress", faits: resultats.length, total: taches.length });
       }
       self.postMessage({ type: "done", taches, resultats },
-        resultats.flatMap(tamponsDe) as unknown as WindowPostMessageOptions);
+        listeDeTransfert(resultats) as unknown as WindowPostMessageOptions);
     } catch (err) {
       self.postMessage({ type: "error", msg: String((err as Error)?.message ?? err) });
     }

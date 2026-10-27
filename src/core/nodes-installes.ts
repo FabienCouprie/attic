@@ -95,6 +95,7 @@ export interface BacDExecution {
     contexte: Record<string, unknown>,
     surProgres: (m: string) => void,
     signal?: AbortSignal,
+    transferables?: ArrayBuffer[],
   ): Promise<Record<string, unknown>>;
 }
 
@@ -154,18 +155,24 @@ interface ContexteMoteur {
  * CE QUI NE TRAVERSE PAS SE DIT, et c'est le domaine qui en juge : une entrée qu'il refuse rend un
  * message nommant son type, au lieu de laisser le cadre échouer sur un clonage sans raison.
  */
-function versLeBac(node: NodeInstalle, ctx: ContexteMoteur): { ok: true; contexte: Record<string, unknown> } | { ok: false; message: string } {
+function versLeBac(node: NodeInstalle, ctx: ContexteMoteur):
+  | { ok: true; contexte: Record<string, unknown>; transferables: ArrayBuffer[] }
+  | { ok: false; message: string } {
   const d = servicesDomaine();
   const entrees: unknown[] = [];
+  // UN ENSEMBLE ET NON UNE LISTE : `postMessage` refuse une mémoire nommée deux fois.
+  const transferables = new Set<ArrayBuffer>();
   for (const [i, v] of (ctx.entrees?.() ?? []).entries()) {
     const t = d.versTransport(v);
     if (!t.ok) {
       return { ok: false, message: `L'entrée ${i + 1} est un « ${t.pourquoi} », qui ne peut pas traverser la frontière du cadre isolé.` };
     }
     entrees.push(t.valeur);
+    for (const m of t.transferables ?? []) transferables.add(m);
   }
   return {
     ok: true,
+    transferables: [...transferables],
     contexte: {
       noeud: { id: ctx.noeud?.id ?? node.manifest.id, data: ctx.noeud?.data ?? {} },
       repertoireTravail: ctx.repertoireTravail ?? "",
@@ -195,7 +202,7 @@ function executeurParesseux(node: NodeInstalle): (ctx: unknown) => unknown {
     try {
       const rendu = await bac.executer(
         node.manifest.id, node.executerCode, mise.contexte,
-        (m) => ctx.onProgress?.(m), ctx.signal,
+        (m) => ctx.onProgress?.(m), ctx.signal, mise.transferables,
       );
       const d = servicesDomaine();
       const valeurs = Array.isArray(rendu.valeurs) ? rendu.valeurs.map((v) => d.depuisTransport(v)) : [];

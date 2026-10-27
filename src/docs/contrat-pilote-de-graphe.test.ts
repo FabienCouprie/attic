@@ -186,7 +186,7 @@ describe("le pilote de graphe", () => {
     // C'est exactement le cas que ce garde-ci existe pour empêcher de résoudre à part.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["empreintes-exemples.spec.ts", "executer.spec.ts",
-        "frequence-de-travail-dans-application.spec.ts",
+        "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "montage-gains-pistes.spec.ts",
         "profondeur-dans-application.spec.ts", "sorties-extensibles-dans-application.spec.ts",
         "types-au-port.spec.ts"]);
