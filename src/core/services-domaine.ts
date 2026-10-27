@@ -75,6 +75,24 @@ export interface ServicesDomaine {
 
   /** Les réglages lus dans un fichier de projet. Un fichier qui n'en porte pas vaut les défauts. */
   appliquerReglagesDeProjet(json: Record<string, unknown>): void;
+
+  /**
+   * Une valeur du domaine, mise en forme pour traverser une frontière de message.
+   *
+   * ═══ POURQUOI LE CŒUR DEMANDE PLUTÔT QUE DE SAVOIR ═══
+   *
+   * Un nœud installé s'exécute désormais dans un CADRE ISOLÉ — origine opaque, sans pont. Ce qui y
+   * entre et en sort passe par `postMessage`, qui ne sait cloner qu'un sous-ensemble du langage :
+   * un `AudioBuffer` n'en fait pas partie, ses canaux si. Traduire l'un en l'autre est une
+   * connaissance du DOMAINE, et le cœur n'a pas à l'avoir.
+   *
+   * REND LA VALEUR TELLE QUELLE quand elle traverse déjà, et `null` quand elle ne peut pas
+   * traverser du tout : l'appelant le dit alors au lieu de laisser le cadre échouer sans raison.
+   */
+  versTransport(valeur: unknown): { ok: true; valeur: unknown } | { ok: false; pourquoi: string };
+
+  /** L'inverse : ce qui revient du cadre, rendu au domaine. */
+  depuisTransport(valeur: unknown): unknown;
 }
 
 const NEUTRES: ServicesDomaine = {
@@ -84,6 +102,10 @@ const NEUTRES: ServicesDomaine = {
   globalesInstallees: {},
   reglagesDeProjet: () => ({}),
   appliquerReglagesDeProjet: () => {},
+  // SANS DOMAINE, CE QUI TRAVERSE EST CE QUE LE LANGAGE SAIT CLONER. Le neutre ne refuse rien : un
+  // cadre qui recevrait une valeur inclonable le dira lui-même, et c'est au domaine de l'éviter.
+  versTransport: (valeur) => ({ ok: true, valeur }),
+  depuisTransport: (valeur) => valeur,
 };
 
 let services: ServicesDomaine = NEUTRES;

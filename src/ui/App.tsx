@@ -69,6 +69,8 @@ import { installerMetasExemples } from "../plugins/meta-exemples";
 import { setGrapheRef } from "../audio/graphe-embarque";
 import { servicesDomaine } from "../core/services-domaine";
 import { chargerNodesInstalles } from "../core";
+// LE BAC SE POSE EN S'IMPORTANT : sans lui, un nœud installé refuse de s'exécuter, et c'est voulu.
+import "./bac-a-sable-noeud";
 import { PanneauInspecteur } from "./PanneauInspecteur";
 import { registreUI } from "./registre-actif";
 // Restaure les données de backup si on vient d'une mise à jour (synchrone)
@@ -83,15 +85,15 @@ if (api0?.majRestaurerBackupSync) {
     if (backup.nodesInstalles) localStorage.setItem("attic-nodes-installes", backup.nodesInstalles);
   }
 }
-const nbPluginsAvant = tousLesPlugins().length;
-console.log(`[attic] Plugins avant chargerMetasLocaux: ${nbPluginsAvant}`);
+console.log(`[attic] Plugins avant chargerMetasLocaux: ${tousLesPlugins().length}`);
 // Métas dont un sous-nœud référence un plugin introuvable (renommé/supprimé) :
 // non réinjectés dans le catalogue par chargerMetasLocaux (qui les garde en
 // stockage), mais signalés après le premier rendu (cf. useEffect plus bas) —
 // sinon ils disparaissent de la palette sans qu'aucune trace n'explique pourquoi.
 const metasNonRestaures = chargerMetasLocaux();
 installerMetasExemples();
-// Restaure les nodes installés dynamiquement (.zip) avant le premier rendu.
+// Restaure les nodes installés dynamiquement (.zip) avant le premier rendu. Leur CODE, lui, ne
+// s'évalue qu'au premier run, dans le cadre isolé que l'import ci-dessus a posé.
 chargerNodesInstalles();
 
 // Diagnostic : vérifier que les plugins sont bien chargés

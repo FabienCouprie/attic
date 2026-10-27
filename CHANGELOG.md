@@ -4,6 +4,21 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Changed
+
+- **LE CODE D'UN NŒUD INSTALLÉ S'EXÉCUTE DANS UN CADRE ISOLÉ, ET N'ATTEINT PLUS LE PONT.** Suite du point 1 d'une revue critique : « il faudrait évaluer ce code dans un Worker sans accès au pont ». **Un Worker ne pouvait pas**, et c'est la première mesure qui a changé le plan.
+
+  - **UN WORKER NE FAIT PAS DE WEB AUDIO.** Ni `AudioContext`, ni `OfflineAudioContext`, ni `AudioBuffer` n'y existent : un nœud audio y aurait perdu ce qui fait son office. Un **cadre** `sandbox="allow-scripts"` a les deux — Web Audio entier, et une origine opaque.
+  - **MESURÉ DANS L'APPLICATION AVANT D'ÉCRIRE UNE LIGNE** : origine du cadre **`null`**, `window.api` **`undefined`** à l'intérieur, `window.parent.api` **`SecurityError`**, et un oscillateur à 440 Hz y rend 2 205 échantillons à crête 1,0. Le code d'un nœud s'y évalue, lit ses réglages, fabrique son contexte audio et rend son son ; de l'intérieur, atteindre le pont lève.
+  - **PLUS AUCUN `new Function` DANS LE DOCUMENT.** L'évaluation est sortie du cœur ; elle ne vit plus que dans la page du cadre. C'est ce qui rendra possible d'ôter `unsafe-eval` au document.
+  - **ET SANS CADRE, RIEN NE TOURNE** : aucun repli vers une évaluation dans la page. Un repli silencieux vers l'absence de barrière est la forme la plus commune des barrières qui ne protègent rien ; un cas le tient.
+  - **CE QUI TRAVERSE LA FRONTIÈRE EST DE LA DONNÉE**, et c'est le domaine qui traduit : un `AudioBuffer` se démonte en canaux et se remonte au retour, comme le font déjà les treize workers du dépôt. Une valeur qu'aucune règle ne couvre est **refusée en nommant son type**, au lieu de laisser le cadre échouer sur un clonage sans raison.
+  - **`ctx.runtime` NE TRAVERSE PAS**, et c'est le seul changement de contrat : un nœud installé fabrique désormais son propre contexte audio, et reçoit en donnée les **réglages de projet** du domaine — où un nœud audio lit la fréquence de travail.
+  - **UNE TROUVAILLE DE LA FRONTIÈRE** : `globalesInstallees` portait le **constructeur** `AudioBuffer`, et une fonction ne se clone pas — la poster levait `DataCloneError`. Elle n'avait aucune raison de voyager : la table `attic` se bâtit désormais **dans le cadre**, à partir de ses propres globales.
+  - **LE BANC VIT DANS UN VRAI NAVIGATEUR, et il ne peut pas vivre ailleurs** : jsdom n'a ni origine opaque ni Web Audio, et un cas unitaire qui prétendrait éprouver cette isolation mesurerait sa propre imitation. Défaut planté : `allow-same-origin` ajouté au cadre — le banc tombe en nommant exactement cette cause.
+  - **DEUX GARDES DU DÉPÔT ONT ARRÊTÉ CE LOT, et tous deux avaient raison.** Le contrat de fréquence a refusé un `|| 44100` écrit en dur dans la remontée d'un tampon : le repli doit être la fréquence du **projet**, pas une constante. Et la norme de taille a refusé quatre lignes de branchement dans `ui/App.tsx`, qui est en dette — le module du cadre se déclare donc lui-même, et l'appelant n'écrit qu'un import. Cette ligne-là est payée par une simplification réelle : un compteur de plugins qui n'existait que pour être écrit dans un journal.
+  - **CE QUE CE LOT NE FAIT PAS ENCORE** : le `unsafe-eval` de la CSP ne tombe pas. Le cadre est créé par `srcdoc`, et un document de schéma local **hérite** de la politique de son parent. Pour l'ôter d'un côté seulement, il faudra servir cette page depuis une URL à elle et poser une **CSP par destination** dans `electron/main.cjs`, dont le gestionnaire applique aujourd'hui la même constante à toutes les réponses.
+
 ### Fixed
 
 - **UN NŒUD INSTALLÉ NE S'EXÉCUTE PLUS TOUT SEUL, NI À L'IMPORT, NI AU DÉMARRAGE.** Relevé par une revue critique : « un nœud `.zip` s'exécute toujours dès son import, par `new Function`, dans le contexte principal ». Vrai, et **pire que cela** : `ui/App.tsx` appelle `chargerNodesInstalles()` au chargement du module, avant même que React ne rende. Le code d'un nœud reçu tournait donc **à chaque lancement, sans aucune action de personne**.
