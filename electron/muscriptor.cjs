@@ -15,9 +15,9 @@
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
-const { spawn } = require("child_process");
 
 const { resoudreRessource } = require("./chemins-ressources.cjs");
+const { lancerTravail } = require("./travaux.cjs");
 
 const MODELE = "muscriptor-small-f32.gguf";
 
@@ -52,24 +52,10 @@ function nettoyer(chemin) {
 
 /** Lance l'exécutable et rend sa sortie, en versant l'avancement au fur et à mesure. */
 function lancer(binaire, args, surLigne) {
-  return new Promise((resoudre) => {
-    const enfant = spawn(binaire, args, { windowsHide: true });
-    let journal = "";
-    let reste = "";
-    const avaler = (donnees) => {
-      journal += donnees;
-      reste += donnees;
-      const lignes = reste.split(/\r?\n/);
-      reste = lignes.pop() ?? "";
-      for (const l of lignes) if (l.trim() && surLigne) surLigne(l.trim());
-    };
-    enfant.stdout.setEncoding("utf8");
-    enfant.stderr.setEncoding("utf8");
-    enfant.stdout.on("data", avaler);
-    enfant.stderr.on("data", avaler);
-    enfant.on("error", (e) => resoudre({ code: -1, journal: `${journal}\n${e.message}` }));
-    enfant.on("close", (code) => resoudre({ code, journal }));
-  });
+  // LE LANCEUR VIT DANS `travaux.cjs`, QUI INSCRIT L'ENFANT AU REGISTRE. Ce corps était recopié
+  // ici et dans l'autre module, mot pour mot ; deux copies auraient divergé sur l'inscription, et
+  // un travail non inscrit est un travail qu'« Arrêter » ne peut pas tuer.
+  return lancerTravail(binaire, args, surLigne);
 }
 
 /** Le facteur de temps réel que le moteur a mesuré lui-même, lu dans son journal. */

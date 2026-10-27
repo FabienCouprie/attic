@@ -8,6 +8,7 @@ import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio";
 import { securiserAmplitude } from "../audio/math-formules";
 import { decoderSansReechantillonner } from "../audio/frequence-source";
+import { arreterLesTravauxAuSignal } from "./arret-des-travaux";
 
 const JULIA_KEYWORDS = new Set([
   "function", "return", "if", "elseif", "else", "for", "while", "in", "!", "&&", "||",
@@ -210,6 +211,9 @@ export const fiches: FicheAudio[] = ([
       const outputMidiPath = `${tmpDir}/julia_output_${Date.now()}.mid`;
       const outputTextPath = `${tmpDir}/julia_output_${Date.now()}.txt`;
 
+      // MÊME RAISON QUE POUR PYTHON : un script lancé est un processus enfant, et « Arrêter » doit
+      // l'atteindre. Voir `arret-des-travaux.ts`.
+      const lacherLesTravaux = arreterLesTravauxAuSignal(ctx.signal);
       const result = await api.juliaExecuter({
         code,
         // Ne JAMAIS pousser un chemin null : main.cjs fait args.push(inp.path)
@@ -225,7 +229,7 @@ export const fiches: FicheAudio[] = ([
           ATTIC_SAMPLE_RATE: String(audio instanceof AudioBuffer ? audio.sampleRate : 44100),
           ATTIC_CHANNELS: String(audio instanceof AudioBuffer ? audio.numberOfChannels : 2),
        },
-      });
+      }).finally(lacherLesTravaux);
 
       if (inputPath) { try { await api.supprimerFichier(inputPath); } catch {} }
       if (midiPath) { try { await api.supprimerFichier(midiPath); } catch {} }

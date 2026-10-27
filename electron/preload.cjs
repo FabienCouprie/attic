@@ -109,6 +109,10 @@ contextBridge.exposeInMainWorld("api", {
     return () => ipcRenderer.removeListener("modeles:progression", ecouteur);
   },
 
+  // Arrête les travaux lancés dans le processus principal — les processus enfants, qu'aucun arrêt
+  // n'atteignait. Sans argument : l'ordonnanceur sérialise les runs, il n'y en a qu'un en vol.
+  travauxAnnuler: () => ipcRenderer.invoke("travail:annuler"),
+
   // La chanson locale. `acestepProgression` rend de quoi se désabonner, comme celle des modèles :
   // un nœud qui se démonte sans le faire laisserait un écouteur par exécution.
   acestepPlanifier: (options) => ipcRenderer.invoke("acestep:planifier", options),

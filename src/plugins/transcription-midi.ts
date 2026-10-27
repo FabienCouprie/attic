@@ -36,6 +36,7 @@ import { valeurNote } from "../audio/valeurs-note";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 import { parametreCalcul } from "./parametre-calcul";
 import { relayerProgression } from "./progression-pont";
+import type { ContexteDeRelais } from "./progression-pont";
 
 /**
  * Les groupes d'instruments que le moteur reconnaît, et qui servent ici.
@@ -87,7 +88,7 @@ const CANAL = "muscriptor:transcrire";
 const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknown[]) => Promise<unknown>> }).api;
 
 /** Branche l'avancement du moteur sur celui du nœud, et rend de quoi se débrancher. */
-function suivre(ctx: { onProgress?: (m: string) => void }) {
+function suivre(ctx: ContexteDeRelais) {
   return relayerProgression(ctx, api()?.muscriptorProgression);
 }
 

@@ -1,0 +1,108 @@
+// electron/travaux.test.ts — Le registre des travaux, et ce qu'« Arrêter » atteint.
+//
+// ═══ LE DEFAUT, RELEVE PAR UNE REVUE LE 2026-10-26 ═══
+//
+// « Les travaux confies au processus principal ne s arretent pas. Douze canaux de progression, un
+// seul canal d annulation -- celui des telechargements de modeles --, et aucun `.kill(` dans
+// electron/. Arreter ne stoppe pas une generation de plusieurs minutes : l ordonnanceur attend sa
+// fin avant de lancer la demande suivante, et la carte graphique reste occupee. »
+//
+// VERIFIE, ET VRAI.
+//
+// ═══ CE QUE CES CAS TIENNENT, ET POURQUOI C EST LA PARTIE QUI PEUT SE TROMPER ═══
+//
+// LE REGISTRE EST UN ETAT PARTAGE, et un etat partage se salit. Un enfant mort qui y resterait
+// ferait croire a un travail en cours ; un enfant vivant qui n y serait pas serait un travail
+// qu « Arreter » ne peut pas tuer. Les deux fautes sont silencieuses, et aucune ne se voit sur un
+// run qui se termine bien.
+//
+// LES CAS LANCENT DE VRAIS PROCESSUS -- `process.execPath`, le Node d Electron, qui est toujours
+// la. Un faux `spawn` aurait prouve que mon faux `spawn` marche.
+import { describe, expect, it } from "vitest";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { lancerTravail, inscrireTravail, annulerLesTravaux, travauxEnCours } = require("./travaux.cjs");
+
+/** Un Node qui dort, et qui ne s arretera donc que si on le tue. */
+const DORT = ["-e", "setTimeout(() => process.exit(0), 60000)"];
+/** Un Node qui ecrit trois lignes et sort. */
+const PARLE = ["-e", "console.log('une'); console.log('deux'); console.error('trois');"];
+
+describe("le registre des travaux", () => {
+  it("INSCRIT PENDANT, ET RETIRE APRES : c est ce qui empeche de croire a un travail fini", async () => {
+    const avant = travauxEnCours();
+    const promesse = lancerTravail(process.execPath, PARLE, () => {});
+    // L enfant est deja la : `spawn` rend avant que le processus ait fini de demarrer, et
+    // l inscription est faite dans la meme pile.
+    expect(travauxEnCours()).toBe(avant + 1);
+    const r = await promesse;
+    expect(r.code).toBe(0);
+    expect(travauxEnCours(), "un mort reste au registre").toBe(avant);
+  });
+
+  it("RETIRE AUSSI CE QUI N A JAMAIS DEMARRE, et c est l autre moitie du meme oubli", async () => {
+    const avant = travauxEnCours();
+    const r = await lancerTravail("attic-binaire-qui-n-existe-pas", [], () => {});
+    expect(r.code).toBe(-1);
+    expect(r.journal).toMatch(/ENOENT|not recognized|introuvable/i);
+    expect(travauxEnCours(), "un lancement rate reste au registre").toBe(avant);
+  });
+
+  it("VERSE LES LIGNES DES DEUX SORTIES, parce qu un moteur parle par les deux", async () => {
+    const lignes: string[] = [];
+    await lancerTravail(process.execPath, PARLE, (l: string) => lignes.push(l));
+    expect(lignes).toContain("une");
+    expect(lignes).toContain("deux");
+    expect(lignes, "stderr est perdu").toContain("trois");
+  });
+
+  it("TUE CE QUI DORT, et le registre se vide par `close` et non par `kill`", async () => {
+    const avant = travauxEnCours();
+    const promesse = lancerTravail(process.execPath, DORT, () => {});
+    expect(travauxEnCours()).toBe(avant + 1);
+
+    expect(annulerLesTravaux()).toBe(avant + 1);
+    // LA PROMESSE SE RESOUT, et c est le point : sans cela l appelant attendrait une minute un
+    // travail deja mort, et l ordonnanceur avec lui.
+    const r = await promesse;
+    expect(r.code === null || typeof r.code === "number", "code inattendu").toBe(true);
+    expect(travauxEnCours()).toBe(avant);
+  });
+
+  it("TUE TOUT CE QUI TOURNE, et rend combien -- un chiffre, non `{ ok: true }`", async () => {
+    const avant = travauxEnCours();
+    const deux = [
+      lancerTravail(process.execPath, DORT, () => {}),
+      lancerTravail(process.execPath, DORT, () => {}),
+    ];
+    expect(travauxEnCours()).toBe(avant + 2);
+    expect(annulerLesTravaux()).toBe(avant + 2);
+    await Promise.all(deux);
+    expect(travauxEnCours()).toBe(avant);
+  });
+
+  it("N A RIEN A TUER QUAND RIEN NE TOURNE, et le dit par zero", () => {
+    expect(travauxEnCours()).toBe(0);
+    expect(annulerLesTravaux()).toBe(0);
+  });
+
+  it("INSCRIT UN ENFANT ENGENDRE AILLEURS, puisque `execFile` en rend un aussi", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { execFile } = require("child_process");
+    const avant = travauxEnCours();
+    await new Promise<void>((resoudre) => {
+      let retirer = () => {};
+      const enfant = execFile(process.execPath, PARLE, () => { retirer(); resoudre(); });
+      retirer = inscrireTravail(enfant);
+      expect(travauxEnCours()).toBe(avant + 1);
+    });
+    expect(travauxEnCours(), "le retrait rendu par `inscrireTravail` ne retire pas").toBe(avant);
+  });
+
+  it("NE S ETOUFFE PAS SUR RIEN : `inscrireTravail(undefined)` rend un retrait inoffensif", () => {
+    const avant = travauxEnCours();
+    const retirer = inscrireTravail(undefined);
+    expect(travauxEnCours()).toBe(avant);
+    expect(() => retirer()).not.toThrow();
+  });
+});

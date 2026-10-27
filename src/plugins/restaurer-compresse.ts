@@ -31,13 +31,14 @@ import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { parametreCalcul } from "./parametre-calcul";
 import { relayerProgression } from "./progression-pont";
+import type { ContexteDeRelais } from "./progression-pont";
 
 const CANAL = "apollo:restaurer";
 
 const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknown[]) => Promise<unknown>> }).api;
 
 /** Branche l'avancement du moteur sur celui du nœud, et rend de quoi se débrancher. */
-function suivre(ctx: { onProgress?: (m: string) => void }) {
+function suivre(ctx: ContexteDeRelais) {
   return relayerProgression(ctx, api()?.apolloProgression);
 }
 

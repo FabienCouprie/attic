@@ -10,6 +10,7 @@ import { traduire } from "../i18n";
 import { PARAMETRE_CALCUL } from "./parametre-calcul";
 import { messageEchecPont } from "./pont-electron";
 import { relayerProgression } from "./progression-pont";
+import type { ContexteDeRelais } from "./progression-pont";
 
 /**
  * Les dix langues que l'amont donne pour les mieux tenues.
@@ -105,7 +106,7 @@ export async function octetsWav(valeur: unknown): Promise<Uint8Array | undefined
 }
 
 /** Branche l'avancement du moteur sur celui du nœud, et rend de quoi se débrancher. */
-export function suivre(ctx: { onProgress?: (m: string) => void }) {
+export function suivre(ctx: ContexteDeRelais) {
   return relayerProgression(ctx, api()?.acestepProgression);
 }
 
