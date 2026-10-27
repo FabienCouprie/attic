@@ -3,6 +3,7 @@
 const path = require("path");
 const fs = require("fs");
 const { execFile } = require("child_process");
+const { inscrireTravail } = require("./travaux.cjs");
 const os = require("os");
 
 const VIZS = ["spectrogram", "mel", "chroma", "hpss", "selfsim", "loudness", "tempogram", "mfcc", "flux"];
@@ -61,7 +62,11 @@ async function genererSongsee(cheminEntree, opts = {}) {
   const args = [cheminEntree, "-o", cheminSortie, ...argsSongsee({ viz, palette, width, height, format, start, duration })];
 
   return new Promise((resolve, reject) => {
+    // INSCRIT AU REGISTRE DES TRAVAUX : sans cela, « Arrêter » le laisserait tourner jusqu'à son
+    // délai de deux minutes, et la demande suivante attendrait sa fin. Voir `travaux.cjs`.
+    let retirer = () => {};
     const child = execFile(binaire, args, { timeout: 120000 }, (err) => {
+      retirer();
       if (err) {
         nettoyer(tmp);
         return reject(new Error(`Songsee a échoué : ${err.message}`));
@@ -80,6 +85,7 @@ async function genererSongsee(cheminEntree, opts = {}) {
         reject(e);
       }
     });
+    retirer = inscrireTravail(child);
     child.stderr?.on("data", (d) => console.error("[songsee]", d.toString()));
   });
 }

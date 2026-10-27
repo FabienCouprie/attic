@@ -38,6 +38,7 @@ const { execSync, execFile } = require("child_process");
 const { Readable } = require("stream");
 const { URL: UrlModele } = require("url");
 const { ouvertureAutorisee, ecritureAutorisee, armerJournal, inscrireChemin, inscrireCanal } = require("./chemin-sur.cjs");
+const { inscrireTravail, annulerLesTravaux, travauxEnCours } = require("./travaux.cjs");
 const { HOTES_TELECHARGEMENT, hoteDeTelechargementAutorise } = require("./hotes-telechargement.cjs");
 
 // ═══ LE RELEVÉ DE TOUS LES CANAUX, QUAND IL EST DEMANDÉ ═══
@@ -87,6 +88,9 @@ const lireVersion = (ms) => (fichier, args) => new Promise((resolve, reject) => 
   // `execFile` ET NON `execFileSync` : la version synchrone gelait le processus principal le temps
   // du delai — jusqu'a cinq secondes sans fenetre, sans menu et sans IPC, a chaque fois que
   // l'interface demandait la version de Python ou de Julia.
+  //
+  // TRAVAIL NON INSCRIT : ce n'est pas un travail mais une sonde, bornée par son propre délai et
+  // jamais demandée par un nœud. L'inscrire mettrait « Arrêter » en face d'une lecture de version.
   execFile(fichier, args, { timeout: ms }, (err, stdout) => (err ? reject(err) : resolve(stdout)));
 });
 
@@ -874,6 +878,21 @@ ipcMain.handle("modeles:annuler", () => {
   return { ok: true };
 });
 
+// ═══ LE SECOND CANAL D'ANNULATION, ET IL MANQUAIT ═══
+//
+// Celui du dessus n'arrête que des requêtes HTTP. Tout le reste — une génération de chanson, une
+// séparation de pistes, un script de l'utilisateur — vit dans un processus ENFANT, que personne ne
+// tuait : « Arrêter » rendait la main au rendu pendant que la carte graphique restait occupée, et
+// l'ordonnanceur attendait la fin du travail abandonné avant de lancer le suivant.
+//
+// IL REND CE QU'IL A TOUCHÉ, et non `{ ok: true }`. Un canal d'annulation qui répond toujours la
+// même chose ne se mesure pas ; celui-ci dit combien de travaux tournaient, ce qu'un cas peut lire.
+ipcMain.handle("travail:annuler", () => {
+  const avant = travauxEnCours();
+  const tues = annulerLesTravaux();
+  return { ok: true, tues, avant };
+});
+
 /**
  * Télécharge une file de modèles, et pose ce qu'elle rapporte.
  *
@@ -1239,11 +1258,13 @@ ipcMain.handle("python:executer", async (_event, options) => {
     }
 
     const result = await new Promise((resolve) => {
-      execFile(CHEMIN_PYTHON, args, {
+      let retirer = () => {};
+      const enfant = execFile(CHEMIN_PYTHON, args, {
         env,
         timeout: options.timeout || 30000,
         maxBuffer: 10 * 1024 * 1024,
       }, (err, stdout, stderr) => {
+        retirer();
         // Nettoyer le script temporaire
         try { fs.unlinkSync(scriptPath); } catch {}
         if (err) {
@@ -1252,6 +1273,9 @@ ipcMain.handle("python:executer", async (_event, options) => {
           resolve({ ok: true, stdout, stderr });
         }
       });
+      // INSCRIT AU REGISTRE : un script de trente secondes doit pouvoir être arrêté. Voir
+      // `electron/travaux.cjs`.
+      retirer = inscrireTravail(enfant);
     });
     return result;
   } catch (err) {
@@ -1308,11 +1332,13 @@ ipcMain.handle("julia:executer", async (_event, options) => {
     }
 
     const result = await new Promise((resolve) => {
-      execFile(CHEMIN_JULIA, args, {
+      let retirer = () => {};
+      const enfant = execFile(CHEMIN_JULIA, args, {
         env,
         timeout: options.timeout || 30000,
         maxBuffer: 10 * 1024 * 1024,
       }, (err, stdout, stderr) => {
+        retirer();
         try { fs.unlinkSync(scriptPath); } catch {}
         if (err) {
           resolve({ ok: false, erreur: stderr || err.message, stdout, python: CHEMIN_JULIA });
@@ -1320,6 +1346,9 @@ ipcMain.handle("julia:executer", async (_event, options) => {
           resolve({ ok: true, stdout, stderr });
         }
       });
+      // MÊME INSCRIPTION QUE POUR PYTHON : les deux interprètes sont les deux seuls travaux que le
+      // rendu peut lancer avec du code à lui. Voir `electron/travaux.cjs`.
+      retirer = inscrireTravail(enfant);
     });
     return result;
   } catch (err) {

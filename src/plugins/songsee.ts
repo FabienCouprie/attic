@@ -7,6 +7,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { choixFormats, formatImage } from "../core/formats-image";
 import { cheminDansTravail } from "./pont-electron";
+import { arreterLesTravauxAuSignal } from "./arret-des-travaux";
 
 const VIZS = ["spectrogram", "mel", "chroma", "hpss", "selfsim", "loudness", "tempogram", "mfcc", "flux"];
 const PALETTES = ["classic", "magma", "inferno", "viridis", "gray", "claw"];
@@ -133,6 +134,9 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], message: traduire("msg.songsee.ecriture impossible") };
       }
 
+      // SANS CANAL D'AVANCEMENT, DONC SANS RELAIS : ce nœud n'émet qu'une ligne, mais le binaire
+      // qu'il lance a tout de même son délai de deux minutes. Voir `arret-des-travaux.ts`.
+      const lacherLesTravaux = arreterLesTravauxAuSignal(ctx.signal);
       try {
         ctx.onProgress?.(traduire("msg.songsee.generation"));
         const rep = await api.genererSongsee({
@@ -162,6 +166,7 @@ export const fiches: FicheAudio[] = ([
       } catch (e: any) {
         return { valeurs: [null], message: e?.message || traduire("msg.songsee.erreur") };
       } finally {
+        lacherLesTravaux();
         try { await api.supprimerFichier(tempIn); } catch {}
       }
     },

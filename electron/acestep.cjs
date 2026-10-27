@@ -11,7 +11,6 @@
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
-const { spawn } = require("child_process");
 
 const EXECUTABLES = { planifier: "ace-lm", rendre: "ace-synth" };
 
@@ -24,6 +23,7 @@ const { resoudreRessource } = require("./chemins-ressources.cjs");
 // CE QUE CHAQUE TÂCHE RÉCLAME EST RELEVÉ À PART, et éprouvé à part : `acestep-plan.test.ts` tient
 // la table des sept tâches du moteur et le calcul des plages, sans avoir besoin du binaire.
 const { appliquerTache, requetePlanification } = require("./acestep-plan.cjs");
+const { lancerTravail } = require("./travaux.cjs");
 
 function cheminBinaire(quoi, contexte) {
   const nom = EXECUTABLES[quoi] + (process.platform === "win32" ? ".exe" : "");
@@ -55,24 +55,10 @@ const ecrireJson = (chemin, objet) =>
  * et « [VAE] Tiled decode », ce qui suffit à dire où l'on en est.
  */
 function lancer(binaire, args, surLigne) {
-  return new Promise((resoudre) => {
-    const enfant = spawn(binaire, args, { windowsHide: true });
-    let journal = "";
-    let reste = "";
-    const avaler = (donnees) => {
-      journal += donnees;
-      reste += donnees;
-      const lignes = reste.split(/\r?\n/);
-      reste = lignes.pop() ?? "";
-      for (const l of lignes) if (l.trim() && surLigne) surLigne(l.trim());
-    };
-    enfant.stdout.setEncoding("utf8");
-    enfant.stderr.setEncoding("utf8");
-    enfant.stdout.on("data", avaler);
-    enfant.stderr.on("data", avaler);
-    enfant.on("error", (e) => resoudre({ code: -1, journal: `${journal}\n${e.message}` }));
-    enfant.on("close", (code) => resoudre({ code, journal }));
-  });
+  // LE LANCEUR VIT DANS `travaux.cjs`, QUI INSCRIT L'ENFANT AU REGISTRE. Ce corps était recopié
+  // ici et dans l'autre module, mot pour mot ; deux copies auraient divergé sur l'inscription, et
+  // un travail non inscrit est un travail qu'« Arrêter » ne peut pas tuer.
+  return lancerTravail(binaire, args, surLigne);
 }
 
 /**

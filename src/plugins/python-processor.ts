@@ -10,6 +10,7 @@ import { bufferVersWavBlob } from "../audio";
 import { securiserAmplitude } from "../audio/math-formules";
 import { decoderSansReechantillonner } from "../audio/frequence-source";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
+import { arreterLesTravauxAuSignal } from "./arret-des-travaux";
 
 // Coloration syntaxique Python (highlight simple par tokens)
 const PYTHON_KEYWORDS = new Set([
@@ -265,6 +266,9 @@ export const fiches: FicheAudio[] = ([
       if (inputPath) inputs.push({ path: inputPath });
       if (midiPath) inputs.push({ path: midiPath });
 
+      // LE SCRIPT DE L'UTILISATEUR EST UN TRAVAIL COMME UN AUTRE, et son délai par défaut est de
+      // trente secondes : « Arrêter » doit l'atteindre. Voir `arret-des-travaux.ts`.
+      const lacherLesTravaux = arreterLesTravauxAuSignal(ctx.signal);
       const result = await api.pythonExecuter({
         code,
         inputs,
@@ -280,7 +284,7 @@ export const fiches: FicheAudio[] = ([
           ATTIC_SAMPLE_RATE: String(audio instanceof AudioBuffer ? audio.sampleRate : frequenceDeTravail()),
           ATTIC_CHANNELS: String(audio instanceof AudioBuffer ? audio.numberOfChannels : 2),
        },
-      });
+      }).finally(lacherLesTravaux);
 
       // Nettoyer les fichiers d'entrée
       if (inputPath) { try { await api.supprimerFichier(inputPath); } catch {} }
