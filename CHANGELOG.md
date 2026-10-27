@@ -29,6 +29,11 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **UN NŒUD INSTALLÉ POUVAIT REMPLACER LE CODE D'UN AUTRE.** Relevé par CodeQL sur la pull request #228 (« Code injection », critique, `public/cadre-noeud.html`). L'alerte est née du déplacement de la page du cadre dans un vrai fichier — elle vivait jusque-là dans une chaîne que l'analyse ne lisait pas comme du script —, mais elle désignait un défaut réel : l'écouteur du cadre acceptait un message de **n'importe quelle** fenêtre, et un cadre joint ses frères par `parent.frames[i]`, même d'une origine opaque.
+  - **ÉPROUVÉ AVANT D'ÊTRE RÉPARÉ** : le cadre du nœud A envoie son code à tous les cadres qu'il atteint ; il en atteint deux, et le nœud B rend ensuite le résultat de A.
+  - **LE CADRE N'OBÉIT PLUS QU'À SON PARENT** (`e.source !== parent`), et refuse une seconde pose de code, l'application n'en posant qu'une par cadre. Le même cas, rejoué : B rend son propre résultat.
+  - **CE QUE CODEQL EN DIRA N'EST PAS CONNU** : le flux qu'il signale — une donnée de message évaluée — est la raison d'être du cadre, et la vérification de provenance n'est probablement pas reconnue comme une barrière par l'analyse. À relire sur la prochaine analyse de la pull request.
+
 - **DIX ÉCRITURES IGNORAIENT LEUR REFUS, DONT LES DEUX SAUVEGARDES DE PROJET.** Le pont rend `null` quand il refuse d'écrire — disque plein, fichier verrouillé, extension exécutable, dossier hors des racines —, et personne ne le lisait.
 
   - **LA SAUVEGARDE AUTOMATIQUE NE RÉESSAYAIT JAMAIS** : après un refus, le contenu était tout de même marqué comme écrit. Elle rend désormais la décision `echec`, garde l'ancien contenu comme référence, réessaie au battement suivant, et le dit **une fois** par fichier — une alerte toutes les trente secondes rendrait l'application inutilisable, le silence ferait perdre le travail.

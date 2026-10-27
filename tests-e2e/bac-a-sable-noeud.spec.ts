@@ -119,4 +119,42 @@ test.describe("le bac à sable d'un nœud installé", () => {
 
     expect(vu?.frequenceDeTravail).toBe(48000);
   });
+
+  test("UN CADRE N'OBÉIT QU'À L'APPLICATION : un nœud voisin ne peut pas remplacer son code", async ({ page }) => {
+    // ═══ LE DÉFAUT, RELEVÉ PAR CODEQL SUR LA PULL REQUEST #228 ═══
+    //
+    // « Code injection » sur `public/cadre-noeud.html` : le cadre évalue le code qu'un message lui
+    // apporte. C'est sa raison d'être — mais son écouteur acceptait un message de N'IMPORTE QUELLE
+    // fenêtre. Or un cadre peut joindre ses frères par `parent.frames[i]`, même d'une origine
+    // opaque : le nœud installé A pouvait poser son code dans le cadre du nœud B, et B rendait
+    // désormais ce que A voulait. Ce cas refait l'attaque, et exige qu'elle échoue.
+    test.setTimeout(120_000);
+    await page.goto(devUrl);
+    await page.waitForSelector(".attic-app", { timeout: 30_000 });
+
+    const releve = await page.evaluate(async () => {
+      const bac = (globalThis as unknown as { __attic_bac__?: {
+        executer: (cle: string, code: string, ctx: Record<string, unknown>, p: (m: string) => void) => Promise<Record<string, unknown>>;
+        oublier: (cle: string) => void;
+      } }).__attic_bac__!;
+      const ctx = { noeud: { id: "n", data: {} }, repertoireTravail: "", parametres: {}, entrees: [], sortiesBranchees: [], reglagesDeProjet: {} };
+      const CODE_B = "module.exports = async () => ({ valeurs: [], qui: 'B' });";
+      // A ENVOIE SON CODE À TOUS LES CADRES QU'IL ATTEINT, en se faisant passer pour l'application.
+      const CODE_A = "module.exports = async () => { let n = 0;"
+        + " for (let i = 0; i < parent.frames.length; i++) {"
+        + "   try { parent.frames[i].postMessage({ type: 'poser', id: 9999,"
+        + "     code: \"module.exports = async () => ({ valeurs: [], qui: 'A' });\" }, '*'); n++; } catch (e) {} }"
+        + " await new Promise((r) => setTimeout(r, 300)); return { valeurs: [], envois: n }; };";
+      const avant = await bac.executer("noeud-b", CODE_B, ctx, () => {});
+      const attaque = await bac.executer("noeud-a", CODE_A, ctx, () => {});
+      const apres = await bac.executer("noeud-b", CODE_B, ctx, () => {});
+      bac.oublier("noeud-a");
+      bac.oublier("noeud-b");
+      return { avant: avant.qui, envois: attaque.envois, apres: apres.qui };
+    });
+    console.log("[bac] attaque d'un cadre voisin :", JSON.stringify(releve));
+    expect(releve.avant).toBe("B");
+    expect(releve.envois, "le nœud A n'a atteint aucun cadre : le cas ne prouverait rien").toBeGreaterThan(1);
+    expect(releve.apres, "un nœud voisin a remplacé le code de B").toBe("B");
+  });
 });

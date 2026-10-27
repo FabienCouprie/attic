@@ -40,9 +40,17 @@ function globalesDuCadre() {
   };
 }
 window.addEventListener("message", async function (e) {
+  // LE CADRE N'OBEIT QU'A SON PARENT, L'APPLICATION. Releve par CodeQL sur la pull request #228,
+  // et eprouve avant d'etre repare : un cadre joint ses freres par `parent.frames[i]`, meme d'une
+  // origine opaque, si bien que le noeud installe A posait son code dans le cadre du noeud B. Un
+  // message venu d'ailleurs que du parent est ignore. Voir `tests-e2e/bac-a-sable-noeud.spec.ts`.
+  if (e.source !== parent) return;
   var d = e.data || {};
   if (d.type === "arreter") { if (arret) arret.abort(); return; }
   if (d.type === "poser") {
+    // ET LE CODE NE SE POSE QU'UNE FOIS : l'application ne le pose qu'une fois par cadre, et en
+    // ouvre un autre pour un code nouveau. Une seconde pose n'a donc aucune raison d'etre.
+    if (fn) { repondre({ id: d.id, type: "erreur", message: "code deja pose dans ce cadre" }); return; }
     try {
       var mod = { exports: null };
       var f = new Function("module", "exports", "attic", '"use strict";\n' + d.code);
