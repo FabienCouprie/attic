@@ -160,4 +160,26 @@ describe("la conversion vers la fréquence de travail", () => {
     const court = new AudioBuffer({ numberOfChannels: 1, length: 1, sampleRate: 48000 });
     expect((await convertirVersFrequence(court, 44100)).length).toBeGreaterThan(0);
   });
+
+  it("UN CALCUL PASSÉ HORS DU FIL REND LE MÊME SON, chaque canal à sa place", async () => {
+    // C'est par `porter` que le moteur sort la conversion du fil de l'interface : elle y gelait
+    // treize secondes sur deux minutes de stéréo. Le travailleur exécute `reechantillonnerCanal`
+    // lui-même ; ce cas tient l'autre moitié, que l'assemblage d'un calcul ASYNCHRONE et rendu
+    // dans le désordre remet chaque canal à son rang, à l'échantillon près.
+    const t = new AudioBuffer({ numberOfChannels: 3, length: 4800, sampleRate: 48000 });
+    for (let c = 0; c < 3; c++) t.copyToChannel(sinus(500 * (c + 1), 4800, 48000), c);
+    const appels: number[] = [];
+    const porter = async (x: Float32Array, depart: number, arrivee: number) => {
+      appels.push(depart);
+      await new Promise((r) => setTimeout(r, x[1] < 0.1 ? 15 : 1));
+      return reechantillonnerCanal(x, depart, arrivee);
+    };
+    const dansLeFil = await convertirVersFrequence(t, 44100);
+    const horsDuFil = await convertirVersFrequence(t, 44100, 3, porter);
+    expect(appels, "un appel par canal").toEqual([48000, 48000, 48000]);
+    for (let c = 0; c < 3; c++) {
+      expect(horsDuFil.getChannelData(c), `le canal ${c} n'est pas celui du calcul dans le fil`)
+        .toEqual(dansLeFil.getChannelData(c));
+    }
+  });
 });
