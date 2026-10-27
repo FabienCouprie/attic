@@ -127,6 +127,76 @@ export function planRognage(
   return { gardes, retires: x.length - conserves };
 }
 
+/**
+ * Ramène chaque silence intérieur à une PAUSE de `pauseEch` échantillons, au lieu de le retirer.
+ *
+ * RETIRER TOUTES LES PAUSES HACHE LA PAROLE. Le mode « partout » recollait les phrases bout à bout :
+ * plus une respiration, plus un temps entre deux idées. Une pause courte gardée à chaque coupe rend
+ * le débit d'un orateur qui ne traîne pas, et non celui d'une machine.
+ *
+ * LA PAUSE EST PRISE DANS LE SILENCE LUI-MÊME, moitié après le morceau qui précède, moitié avant
+ * celui qui suit : c'est le fond sonore réel de la prise, et non un blanc numérique qui s'entendrait
+ * comme un trou dans la pièce. Un silence déjà plus court que la pause est gardé entier.
+ */
+export function garderDesPauses(gardes: readonly Segment[], pauseEch: number): Segment[] {
+  const out = gardes.map((s) => ({ ...s }));
+  if (pauseEch <= 0 || out.length < 2) return out;
+  for (let i = 0; i < out.length - 1; i++) {
+    const trou = out[i + 1].debut - out[i].fin;
+    if (trou <= pauseEch) { out[i].fin = out[i + 1].debut; continue; }
+    const avant = Math.ceil(pauseEch / 2);
+    out[i].fin += avant;
+    out[i + 1].debut -= pauseEch - avant;
+  }
+  const fusionnes: Segment[] = [];
+  for (const s of out) {
+    const dernier = fusionnes[fusionnes.length - 1];
+    if (dernier && s.debut <= dernier.fin) dernier.fin = Math.max(dernier.fin, s.fin);
+    else fusionnes.push({ ...s });
+  }
+  return fusionnes;
+}
+
+/**
+ * Recolle les intervalles gardés en FONDU ENCHAÎNÉ de `fonduEch` échantillons à chaque raccord.
+ *
+ * RECOLLER BOUT À BOUT LAISSE UNE MARCHE. Même avec une marge, le dernier échantillon d'un morceau et
+ * le premier du suivant n'ont aucune raison d'être égaux : la forme d'onde saute, et l'on entend un
+ * clic ; un souffle de fond, lui, se coupe net. Le fondu fait se chevaucher les deux bords.
+ *
+ * À PUISSANCE CONSTANTE, et non linéaire : les deux bords qui se rencontrent sont deux instants
+ * différents d'une prise, sans rapport de phase. Pour deux signaux sans corrélation, les gains
+ * cosinus et sinus gardent la puissance constante à travers le raccord ; un fondu linéaire y
+ * creuserait trois décibels au milieu.
+ *
+ * LE FONDU EST BORNÉ par la moitié de chacun des deux morceaux voisins : un morceau plus court que
+ * deux fondus serait sinon entièrement fondu, et son milieu n'existerait plus. Chaque fondu raccourcit
+ * la sortie de sa longueur, les deux bords se recouvrant.
+ */
+export function recollerEnFondu(canaux: readonly Float32Array[], gardes: readonly Segment[], fonduEch: number): Float32Array[] {
+  if (fonduEch <= 0 || gardes.length < 2) return appliquerRognage(canaux, gardes);
+  const longueurs = gardes.map((s) => s.fin - s.debut);
+  const fondus = longueurs.slice(1).map((l, i) =>
+    Math.max(0, Math.min(fonduEch, Math.floor(longueurs[i] / 2), Math.floor(l / 2))));
+  const total = longueurs.reduce((a, b) => a + b, 0) - fondus.reduce((a, b) => a + b, 0);
+  return canaux.map((x) => {
+    const out = new Float32Array(total);
+    let pos = 0;
+    gardes.forEach((s, k) => {
+      const morceau = x.subarray(s.debut, s.fin);
+      const f = k === 0 ? 0 : fondus[k - 1];
+      const depart = pos - f;
+      for (let j = 0; j < f; j++) {
+        const t = ((j + 0.5) / f) * (Math.PI / 2);
+        out[depart + j] = out[depart + j] * Math.cos(t) + morceau[j] * Math.sin(t);
+      }
+      out.set(morceau.subarray(f), pos);
+      pos += morceau.length - f;
+    });
+    return out;
+  });
+}
+
 /** Recolle les intervalles gardés, canal par canal. */
 export function appliquerRognage(canaux: readonly Float32Array[], gardes: readonly Segment[]): Float32Array[] {
   const total = gardes.reduce((n, s) => n + (s.fin - s.debut), 0);
