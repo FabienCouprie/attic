@@ -15,7 +15,9 @@
 // dirait qu'un appel EXISTE, jamais QUAND il a lieu, ce qui est toute la question ici.
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { chargerNodesInstalles, configurerRegistreNodes, installerNode } from "./nodes-installes";
+import {
+  chargerNodesInstalles, configurerBacDExecution, configurerRegistreNodes, installerNode,
+} from "./nodes-installes";
 import type { PluginDef } from "./types";
 
 /** La trace qu'un code evalue laisse derriere lui, et que rien d'autre ne pose. */
@@ -50,10 +52,45 @@ function registreDEssai() {
 
 const evaluations = () => (globalThis as Record<string, unknown>)[TEMOIN] ?? 0;
 
+/**
+ * Un bac d'essai, qui evalue DANS LE PROCESSUS.
+ *
+ * CES CAS MESURENT QUAND LE CODE EST LU, non ou il tourne. L'isolation, elle, se mesure dans un
+ * vrai cadre : `tests-e2e/bac-a-sable-noeud.spec.ts` le fait, et c'est le seul endroit qui le
+ * puisse — jsdom n'a ni origine opaque ni Web Audio.
+ */
+function bacDEssai() {
+  const poses = new Map<string, (ctx: unknown) => Promise<Record<string, unknown>>>();
+  configurerBacDExecution({
+    executer: async (cle, code, contexte) => {
+      let fn = poses.get(cle);
+      if (!fn) {
+        const mod = { exports: null as never };
+        new Function("module", "exports", "attic", `"use strict";\n${code}`)(mod, mod.exports, {});
+        fn = mod.exports as never;
+        poses.set(cle, fn!);
+      }
+      return fn!(contexte);
+    },
+  });
+}
+
 describe("l'evaluation du code d'un noeud installe", () => {
   beforeEach(() => {
     (globalThis as Record<string, unknown>)[TEMOIN] = 0;
     localStorage.clear();
+    bacDEssai();
+  });
+
+  it("SANS BAC, RIEN NE TOURNE : on ne retombe pas sur une evaluation dans la page", async () => {
+    // C'EST LA REGLE QUI TIENT TOUT LE RESTE. Un repli silencieux vers l'absence de barriere est
+    // la forme la plus commune des barrieres qui ne protegent rien.
+    const defs = registreDEssai();
+    configurerBacDExecution(null);
+    installerNode(noeud("essai-sans-bac", new Date().toISOString()) as never);
+    const executer = defs.get("essai-sans-bac")!.executer as (c: unknown) => Promise<{ erreur?: boolean }>;
+    expect((await executer({})).erreur).toBe(true);
+    expect(evaluations(), "et surtout : le code n'a pas ete lu").toBe(0);
   });
 
   it("N'A PAS LIEU A L'INSTALLATION : la fiche se declare sans que le code soit lu", () => {

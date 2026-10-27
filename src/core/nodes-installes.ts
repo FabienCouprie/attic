@@ -72,6 +72,35 @@ const SANS_CONSENTEMENT = "Ce composant installé n'a pas reçu l'autorisation d
   + "Le réimporter en mettant « Exécution » sur « Autoriser ». — This installed component has not "
   + "been authorised to run. Re-import it with « Execution » set to « Authorise ».";
 
+/** Le refus quand aucun bac n'est posé : on ne retombe PAS sur une évaluation sans barrière. */
+const SANS_BAC = "Aucun cadre isolé n'est disponible pour exécuter ce composant installé. "
+  + "— No isolated frame is available to run this installed component.";
+
+/**
+ * Le cadre isolé où le code d'un nœud installé s'exécute.
+ *
+ * ═══ IL EST INJECTÉ, ET SON ABSENCE REFUSE ═══
+ *
+ * Le cœur ne sait pas fabriquer un cadre : cela demande le DOM, qui est à l'interface. Elle le
+ * pose au démarrage, comme elle pose le registre.
+ *
+ * ET SANS LUI, RIEN NE TOURNE. Retomber sur une évaluation dans la page serait défaire ce que ce
+ * cadre existe pour faire : un repli silencieux vers l'absence de barrière est la forme la plus
+ * commune des barrières qui ne protègent rien.
+ */
+export interface BacDExecution {
+  executer(
+    cleNoeud: string,
+    code: string,
+    contexte: Record<string, unknown>,
+    surProgres: (m: string) => void,
+    signal?: AbortSignal,
+  ): Promise<Record<string, unknown>>;
+}
+
+let bac: BacDExecution | null = null;
+export function configurerBacDExecution(b: BacDExecution | null): void { bac = b; }
+
 // Stockage en mémoire
 const nodesInstalles = new Map<string, NodeInstalle>();
 
@@ -102,73 +131,6 @@ export function chargerNodesInstalles(): number {
   } catch { return 0; }
 }
 
-/**
- * Évalue le code d'un nœud installé, et rend sa fonction. Appelé AU PREMIER RUN, jamais avant.
- *
- * ON NE PEUT PAS ÉVALUER PLUS TARD QUE CELA : le code est ce que le nœud fait, et il faut bien
- * l'avoir pour le faire. Ce qu'on a gagné est que le moment soit CHOISI — un nœud qu'on ne lance
- * pas ne s'évalue pas, et aucun ne s'évalue au démarrage.
- */
-function evaluerLeCode(node: NodeInstalle): ((ctx: unknown) => unknown) | string {
-  const m = node.manifest;
-  let fn: any;
-  try {
-    const moduleObj = { exports: null as any };
-    const atticCtx = {
-      // CE QUE LE DOMAINE PRÊTE À UN NODE INSTALLÉ, et c'est à lui de le dire : `AudioBuffer`
-      // figurait ici en dur, c'est-à-dire le domaine audio nommé dans le cœur. Un node installé est
-      // du code du domaine ; ce qu'il lui faut sous la main l'est aussi.
-      ...servicesDomaine().globalesInstallees,
-      // Ce qui suit vient du langage et des API du navigateur, sans DOM ni stockage.
-      Worker: (typeof Worker !== "undefined" ? Worker : undefined),
-      fetch: (typeof fetch !== "undefined" ? fetch : undefined),
-      URL: (typeof URL !== "undefined" ? URL : undefined),
-      TextEncoder: (typeof TextEncoder !== "undefined" ? TextEncoder : undefined),
-      TextDecoder: (typeof TextDecoder !== "undefined" ? TextDecoder : undefined),
-      btoa: (typeof btoa !== "undefined" ? btoa : undefined),
-      atob: (typeof atob !== "undefined" ? atob : undefined),
-      Math, Date, JSON, parseInt, parseFloat, isNaN, console,
-    };
-    // ATTENTION : CE CODE N'EST PAS DANS UN BAC À SABLE, et le commentaire qui était ici disait le
-    // contraire — « Sans window — le code installé n'a pas accès au DOM/localStorage ». C'était faux,
-    // et un commentaire faux sur une propriété de sécurité est pire que pas de commentaire : il
-    // arrête celui qui serait venu regarder.
-    //
-    // `new Function` NE CRÉE AUCUNE ISOLATION. Seuls ses paramètres — `module`, `exports`, `attic` —
-    // masquent les noms correspondants ; le corps s'exécute dans la portée GLOBALE. `window`,
-    // `globalThis`, `document`, `localStorage` et `window.api` y sont tous joignables. La table
-    // `atticCtx` ci-dessus est une COMMODITÉ, pas une barrière : elle met des outils sous la main,
-    // elle n'en retire aucun.
-    //
-    // CE QUE CELA VAUT, mesuré le 2026-10-25 : le pont expose `fichier:ecrire`, qui écrit à
-    // n'importe quel chemin sans validation, et `fichier:ouvrir-chemin`. « Écrire un script puis
-    // l'ouvrir » était un enchaînement complet à partir d'un fichier reçu. `electron/chemin-sur.cjs`
-    // en coupe désormais le dernier maillon en refusant d'ouvrir un exécutable — mais cela NE FERME
-    // PAS le trou : l'écriture reste sans bornes, et un nœud installé garde l'accès au pont.
-    //
-    // CE QU'IL FAUDRAIT ENCORE : évaluer ce code dans un Worker sans accès au pont, et donner des
-    // capacités à l'IPC — un chemin ne serait valide que venu d'un dialogue ou d'un dossier
-    // déclaré. Le consentement et l'évaluation paresseuse, livrés le 2026-10-27, retirent
-    // l'exécution AUTOMATIQUE ; ils ne remplacent pas ce travail-là.
-    const wrappedFn = new Function("module", "exports", "attic", `
-      "use strict";
-      ${node.executerCode}
-    `);
-    wrappedFn(moduleObj, moduleObj.exports, atticCtx);
-    fn = moduleObj.exports;
-    console.log(`[attic] Node « ${m.id} » : code évalué, typeof fn = ${typeof fn}`);
-  } catch (err) {
-    console.error(`[attic] Node « ${m.id} » : ERREUR évaluation code`, err);
-    console.error(`[attic] Code (100 premiers chars):`, node.executerCode.substring(0, 100));
-    return `Le code du composant « ${m.id} » n'a pas pu être évalué : ${String((err as Error)?.message ?? err)}`;
-  }
-
-  if (typeof fn !== "function") {
-    console.error(`[attic] Node « ${m.id} » : module.exports n'est pas une fonction (type=${typeof fn})`);
-    return `Le composant « ${m.id} » n'exporte pas une fonction (${typeof fn}).`;
-  }
-  return fn as (ctx: unknown) => unknown;
-}
 
 /**
  * L'exécuteur d'un nœud installé : il demande le consentement, puis évalue UNE FOIS.
@@ -176,17 +138,71 @@ function evaluerLeCode(node: NodeInstalle): ((ctx: unknown) => unknown) | string
  * LE REFUS EST UN RÉSULTAT, PAS UNE EXCEPTION. Un nœud sans consentement n'est pas en panne : il
  * attend une décision, et le dire dans son message est la seule façon que la personne l'apprenne.
  */
-function executeurParesseux(node: NodeInstalle): (ctx: unknown) => unknown {
-  let fn: ((ctx: unknown) => unknown) | null = null;
-  let refus: string | null = null;
-  return (ctx: unknown) => {
-    if (!node.consenti) return { valeurs: [], erreur: true, message: SANS_CONSENTEMENT };
-    if (!fn && !refus) {
-      const issue = evaluerLeCode(node);
-      if (typeof issue === "string") refus = issue; else fn = issue;
+/** Ce que l'exécuteur reçoit du moteur, réduit à ce que la frontière sait transporter. */
+interface ContexteMoteur {
+  noeud?: { id?: string; data?: Record<string, unknown> };
+  repertoireTravail?: string;
+  entrees?: () => unknown[];
+  sortieBranchee?: (i: number) => boolean;
+  onProgress?: (m: string) => void;
+  signal?: AbortSignal;
+}
+
+/**
+ * Met le contexte du moteur en forme pour la frontière du cadre.
+ *
+ * CE QUI NE TRAVERSE PAS SE DIT, et c'est le domaine qui en juge : une entrée qu'il refuse rend un
+ * message nommant son type, au lieu de laisser le cadre échouer sur un clonage sans raison.
+ */
+function versLeBac(node: NodeInstalle, ctx: ContexteMoteur): { ok: true; contexte: Record<string, unknown> } | { ok: false; message: string } {
+  const d = servicesDomaine();
+  const entrees: unknown[] = [];
+  for (const [i, v] of (ctx.entrees?.() ?? []).entries()) {
+    const t = d.versTransport(v);
+    if (!t.ok) {
+      return { ok: false, message: `L'entrée ${i + 1} est un « ${t.pourquoi} », qui ne peut pas traverser la frontière du cadre isolé.` };
     }
-    if (refus) return { valeurs: [], erreur: true, message: refus };
-    return fn!(ctx);
+    entrees.push(t.valeur);
+  }
+  return {
+    ok: true,
+    contexte: {
+      noeud: { id: ctx.noeud?.id ?? node.manifest.id, data: ctx.noeud?.data ?? {} },
+      repertoireTravail: ctx.repertoireTravail ?? "",
+      parametres: (ctx.noeud?.data?.parametres as Record<string, unknown>) ?? {},
+      entrees,
+      sortiesBranchees: node.manifest.sorties.map((_, i) => ctx.sortieBranchee?.(i) ?? true),
+      reglagesDeProjet: d.reglagesDeProjet(),
+    },
+  };
+}
+
+/**
+ * L'exécuteur d'un nœud installé : consentement, puis exécution DANS LE CADRE.
+ *
+ * LE REFUS EST UN RÉSULTAT, PAS UNE EXCEPTION. Un nœud sans consentement n'est pas en panne : il
+ * attend une décision, et le dire dans son message est la seule façon que la personne l'apprenne.
+ */
+function executeurParesseux(node: NodeInstalle): (ctx: unknown) => unknown {
+  return async (brut: unknown) => {
+    if (!node.consenti) return { valeurs: [], erreur: true, message: SANS_CONSENTEMENT };
+    if (!bac) return { valeurs: [], erreur: true, message: SANS_BAC };
+
+    const ctx = (brut ?? {}) as ContexteMoteur;
+    const mise = versLeBac(node, ctx);
+    if (!mise.ok) return { valeurs: [], erreur: true, message: mise.message };
+
+    try {
+      const rendu = await bac.executer(
+        node.manifest.id, node.executerCode, mise.contexte,
+        (m) => ctx.onProgress?.(m), ctx.signal,
+      );
+      const d = servicesDomaine();
+      const valeurs = Array.isArray(rendu.valeurs) ? rendu.valeurs.map((v) => d.depuisTransport(v)) : [];
+      return { ...rendu, valeurs };
+    } catch (e) {
+      return { valeurs: [], erreur: true, message: String((e as Error)?.message ?? e) };
+    }
   };
 }
 

@@ -238,5 +238,50 @@ configurerServicesDomaine({
   // La sauvegarde, elle, n'a pas à savoir ce qu'est une fréquence : voir `core/services-domaine.ts`.
   reglagesDeProjet: () => ({ frequenceDeTravail: frequenceDeTravail() }),
   appliquerReglagesDeProjet: (json) => publierFrequenceDeTravail(frequenceDuProjet(json)),
+
+  // ═══ CE QUI TRAVERSE LA FRONTIÈRE D'UN CADRE ISOLÉ, ET CE QUI NE PEUT PAS ═══
+  //
+  // `postMessage` clone par l'algorithme du langage : les nombres, les chaînes, les objets simples
+  // et les tableaux typés passent ; un `AudioBuffer` NON. Ses canaux, eux, sont des `Float32Array`.
+  // On le démonte donc à l'aller et on le remonte au retour, ce qui est exactement ce que font
+  // déjà les treize workers du dépôt.
+  //
+  // ET CE QUI NE PEUT PAS TRAVERSER SE DIT, au lieu de laisser le cadre échouer sans raison : une
+  // valeur qu'aucune des deux règles ne couvre est refusée avec son type, et c'est l'appelant qui
+  // en fait un message de nœud.
+  versTransport: (valeur) => {
+    if (typeof AudioBuffer !== "undefined" && valeur instanceof AudioBuffer) {
+      const canaux: Float32Array[] = [];
+      for (let c = 0; c < valeur.numberOfChannels; c++) canaux.push(new Float32Array(valeur.getChannelData(c)));
+      return { ok: true, valeur: { __audio: true, canaux, frequence: valeur.sampleRate } };
+    }
+    if (valeur === null || valeur === undefined) return { ok: true, valeur };
+    const t = typeof valeur;
+    if (t === "number" || t === "string" || t === "boolean") return { ok: true, valeur };
+    if (ArrayBuffer.isView(valeur) || valeur instanceof ArrayBuffer) return { ok: true, valeur };
+    if (t === "object") {
+      // UN OBJET SIMPLE PASSE, un objet à prototype non. Un `File` ou une `Map` se cloneraient,
+      // mais leur sens de ce côté-ci n'est pas garanti : on préfère refuser et le dire.
+      const proto = Object.getPrototypeOf(valeur as object);
+      if (proto === Object.prototype || proto === null || Array.isArray(valeur)) return { ok: true, valeur };
+    }
+    return { ok: false, pourquoi: (valeur as object)?.constructor?.name ?? t };
+  },
+
+  depuisTransport: (valeur) => {
+    const v = valeur as { __audio?: boolean; canaux?: Float32Array[]; frequence?: number };
+    if (!v || typeof v !== "object" || !v.__audio || !Array.isArray(v.canaux)) return valeur;
+    if (typeof AudioBuffer === "undefined") return valeur;
+    const b = new AudioBuffer({
+      numberOfChannels: Math.max(1, v.canaux.length),
+      length: Math.max(1, v.canaux[0]?.length ?? 1),
+      // LA FRÉQUENCE DE REPLI EST CELLE DU PROJET, et non 44 100 en dur : un tampon remonté sans
+      // la sienne doit rejoindre l'invariant du moteur, pas une constante. Un garde refuse ce
+      // 44 100-là, et il a eu raison de le refuser ici.
+      sampleRate: v.frequence || frequenceDeTravail(),
+    });
+    for (let c = 0; c < v.canaux.length; c++) b.getChannelData(c).set(v.canaux[c]);
+    return b;
+  },
 });
 
