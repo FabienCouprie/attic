@@ -6,7 +6,7 @@ Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et vingt-cinq gardes sur lui-même : ils s'emploient, ils
+cela un banc de mesure, une base d'empreintes et vingt-six gardes sur lui-même : ils s'emploient, ils
 ne se réinventent pas.
 
 ---
@@ -163,13 +163,14 @@ se relève donc à l'oreille, et non par un garde.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — vingt-cinq contrats sur le dépôt lui-même : registre des réglages, graines,
+- **`src/docs/*.test.ts`** — vingt-six contrats sur le dépôt lui-même : registre des réglages, graines,
   cœurs par trames, registre anglais, caractères de contrôle, style de documentation, classement
   théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, couverture des
   empreintes, le serveur des specs de bout en bout, le pilote d'un graphe entier, **la fréquence de
   travail — qu'aucun composant ne génère à celle de la carte son** —, **le socle figé —
   qu'aucun composant reçu ne prenne la place d'un natif** —, **les clés de réglage des graphes
-  livrés — une valeur enregistrée doit encore être lue** —, le classement des écarts d'une famille
+  livrés — une valeur enregistrée doit encore être lue** —, **les écritures refusées — qu'aucun
+  appel à `ecrireFichier` ne jette son résultat, la sanction par racines étant armée** —, le classement des écarts d'une famille
   comparée, et la fraîcheur des tables générées. **La norme de taille y est contraignante** :
   aucun fichier neuf ne dépasse quatre cents lignes de code, les quinze qui la dépassaient déjà ne
   grossissent plus, et celui qui redescend dans la norme sort de la dette. Elle ne peut que

@@ -33,6 +33,9 @@ function chaineLongue(nbEtirements: number) {
   return JSON.stringify({ nodes, edges, viewport: { x: 0, y: 0, zoom: 0.5 } });
 }
 
+/** Les maillons de la chaîne, après la tonalité qui l'ouvre. */
+const NB_ETIREMENTS = 14;
+
 test.describe("arrêter une exécution en cours", () => {
   test("le bouton devient Arrêter, interrompt le run et redevient Lancer", async ({ page }) => {
     test.setTimeout(180_000);
@@ -68,8 +71,8 @@ test.describe("arrêter une exécution en cours", () => {
   });
 
   test("la barre d'espace arrête aussi, et relance ensuite", async ({ page }) => {
-    test.setTimeout(180_000);
-    await page.addInitScript((g: string) => { localStorage.setItem("attic-encours", g); }, chaineLongue(14));
+    test.setTimeout(240_000);
+    await page.addInitScript((g: string) => { localStorage.setItem("attic-encours", g); }, chaineLongue(NB_ETIREMENTS));
     await page.goto(devUrl);
     await page.waitForSelector('.react-flow__node[data-id="gen"]', { timeout: 15000 });
 
@@ -84,9 +87,22 @@ test.describe("arrêter une exécution en cours", () => {
     // pas ici que le bouton repasse par « Arrêter » — les nœuds déjà calculés sont en
     // cache, la relance peut se terminer avant qu'on l'observe. Ce qui compte est
     // qu'elle aille au bout.
+    //
+    // « AU BOUT » SE LIT SUR LES NŒUDS TERMINÉS, ET NON SUR L'ABSENCE D'ATTENTE. Ce cas
+    // attendait qu'aucun nœud ne soit plus « en attente », puis laissait cinq secondes au
+    // bouton pour redevenir « Lancer ». Or plus aucune attente veut dire que le DERNIER nœud
+    // a démarré, pas qu'il a fini — et ce dernier étire environ 32 s de son (3 s × 1,2¹³).
+    // Mesuré le 2026-10-27 : à cet instant `e13` tournait encore, et le bouton est parti
+    // 4,8 s plus tard. Le cas échouait donc dès que la machine était un peu chargée, sur
+    // une application qui allait bien au bout.
+    //
+    // ET L'ON N'ATTEND PAS SEULEMENT LA DISPARITION DU BOUTON : juste après la frappe, la
+    // relance n'a peut-être pas encore commencé, et « aucun bouton Arrêter » serait vrai
+    // avant même que le run parte.
     await page.keyboard.press(" ");
-    await expect(page.locator(".react-flow__node .attic-node.attente")).toHaveCount(0, { timeout: 120_000 });
-    await expect(page.locator(".attic-btn-arreter")).toHaveCount(0);
+    await expect(page.locator(".react-flow__node .attic-node.termine")).toHaveCount(1 + NB_ETIREMENTS, { timeout: 150_000 });
+    await expect(page.locator(".attic-btn-arreter")).toHaveCount(0, { timeout: 30_000 });
+    await expect(page.locator(".react-flow__node .attic-node.attente")).toHaveCount(0);
     await expect(page.locator(".react-flow__node .attic-node.running")).toHaveCount(0);
   });
 });

@@ -22,6 +22,17 @@ export interface ContinuationSpectraleResultat {
   sr: number;
   mode: "ar" | "lstm";
   epochs: number;
+  /**
+   * Les époques RÉELLEMENT faites, une par canal.
+   *
+   * `epochs` est ce qu'on a demandé ; le message affichait ce nombre-là, si bien qu'un entraînement
+   * coupé par le budget au bout de trois époques s'annonçait « 100 époques ». Relevé le 2026-10-27.
+   */
+  epochsFaites: number[];
+  /** L'entraînement d'au moins un canal a été coupé par le budget de temps. */
+  arreteParBudget: boolean;
+  /** Les canaux (rang 0) dont la prédiction a divergé, et dont la prolongation est muette. */
+  canauxDiverges: number[];
   dureeGenereeS: number;
 }
 
@@ -108,10 +119,46 @@ function construireModeleLstm(
   return model;
 }
 
-function budgetAutoMs(nFrames: number, nbBins: number, nGenFrames: number): number {
-  // Plus il y a de frames à générer et plus la base est longue, plus on
-  // laisse du temps — mais plafonné à 60 s pour ne pas bloquer l'interface.
-  return Math.min(60000, Math.max(3000, Math.round((nFrames * nbBins + nGenFrames * nbBins) / 100)));
+/**
+ * Ce que coûte une époque d'entraînement, en multiplications-additions, à un facteur près.
+ *
+ * Dense (AR) : chaque échantillon traverse une matrice `history·nbBins → nbBins`. LSTM : quatre
+ * portes, chacune `(nbBins + hidden) → hidden` à chaque pas d'historique, puis la sortie
+ * `hidden → nbBins`. La passe arrière double à peu près ce coût ; un facteur commun ne change rien
+ * au rapport, donc il est omis.
+ */
+export function coutParEpoque(
+  mode: "ar" | "lstm", nSamples: number, history: number, nbBins: number, hiddenUnits: number,
+): number {
+  if (mode === "ar") return nSamples * history * nbBins * nbBins;
+  return nSamples * (history * 4 * hiddenUnits * (nbBins + hiddenUnits) + hiddenUnits * nbBins);
+}
+
+/**
+ * Le travail que le mode automatique s'accorde, en multiplications-additions.
+ *
+ * ═══ POURQUOI UN TRAVAIL ET NON UN TEMPS ═══
+ *
+ * LE MODE AUTOMATIQUE COUPAIT SUR L'HORLOGE, et c'était la cause d'une graine infidèle, relevée le
+ * 2026-10-27 par `tests-e2e/graines-tenues.spec.ts`. Le budget valait le volume du spectrogramme
+ * divisé par cent, en millisecondes, entre 3 et 60 s ; mesuré sur l'entrée d'essai du banc (3 s
+ * stéréo à 48 kHz, réglages par défaut), il coupait l'entraînement à 3 époques sur 100 — et à une
+ * autre quand la machine était chargée, si bien que deux passes à la même graine rendaient deux
+ * sons (valeur efficace 0,244886279 puis 0,244981235). Une graine ne peut pas tenir si le nombre
+ * d'époques dépend de la vitesse de l'ordinateur.
+ *
+ * UN TRAVAIL BORNÉ DONNE LE MÊME NOMBRE D'ÉPOQUES PARTOUT. Cette valeur est CALIBRÉE pour rendre
+ * les 3 époques que l'horloge laissait sur cette entrée : le son par défaut ne change pas ici, il
+ * devient reproductible. Le prix est assumé : sur une machine lente, l'entraînement dure plus
+ * longtemps au lieu d'être coupé. Un budget de temps positif, donné à la main, reste possible, et
+ * il est documenté comme non reproductible.
+ */
+export const TRAVAIL_AUTO = 3.6e9;
+
+/** Le nombre d'époques du mode automatique : au moins une, au plus celles qu'on a demandées. */
+export function epoquesAutomatiques(cout: number, epochsDemandees: number): number {
+  if (!(cout > 0)) return Math.max(1, epochsDemandees);
+  return Math.max(1, Math.min(epochsDemandees, Math.floor(TRAVAIL_AUTO / cout)));
 }
 
 export interface OptionsContinuationSpectrale {
@@ -228,6 +275,8 @@ export async function appliquerContinuationSpectrale(
 
   // Prédiction par canal
   const resultat = new AudioBuffer({ numberOfChannels: nCh, length: length + Math.round(nGenFrames * hop), sampleRate: sr });
+  const epochsFaites: number[] = [];
+  let arreteParBudget = false;
   for (let c = 0; c < nCh; c++) {
     onProgress?.(`Continuation spectrale · entraînement canal ${c + 1}/${nCh}`);
     const m = matrices[c];
@@ -279,19 +328,28 @@ export async function appliquerContinuationSpectrale(
       ? construireModeleAr(tf, nbBins, history, seed + c, learningRate)
       : construireModeleLstm(tf, nbBins, history, hiddenUnits, seed + c, learningRate);
 
-    const budget = budgetMs > 0 ? budgetMs : budgetAutoMs(nFrames, nbBins, nGenFrames);
+    // LE MODE AUTOMATIQUE BORNE LE TRAVAIL, PAS LE TEMPS : voir `TRAVAIL_AUTO`. Seul un budget
+    // positif, donné à la main, coupe sur l'horloge.
+    const budget = budgetMs > 0 ? budgetMs : Infinity;
+    const epochsCeCanal = budgetMs > 0
+      ? epochs
+      : epoquesAutomatiques(coutParEpoque(mode, nSamples, history, nbBins, hiddenUnits), epochs);
     const startTime = Date.now();
     let lastLoss = Infinity;
     let stoppedByBudget = false;
     let stoppedByAbort = false;
+    let faites = 0;
 
     await model.fit(xTensor, yTensor, {
-      epochs,
+      epochs: epochsCeCanal,
       batchSize: Math.min(256, Math.max(16, Math.floor(nSamples / 4))),
       shuffle: false,
       verbose: 0,
       callbacks: {
         onEpochEnd: (epoch: number, logs: any) => {
+          // L'époque qui vient de finir est FAITE, qu'on s'arrête ensuite ou non : `stopTraining`
+          // empêche la suivante, il ne défait pas celle-ci.
+          faites = epoch + 1;
           if (signal?.aborted) {
             model.stopTraining = true;
             stoppedByAbort = true;
@@ -303,12 +361,14 @@ export async function appliquerContinuationSpectrale(
             return;
           }
           lastLoss = logs.loss;
-          onProgress?.(`Continuation spectrale · époque ${epoch + 1}/${epochs} · perte ${logs.loss.toFixed(4)}`);
+          onProgress?.(`Continuation spectrale · époque ${epoch + 1}/${epochsCeCanal} · perte ${logs.loss.toFixed(4)}`);
         },
       },
     });
 
     tf.dispose([xTensor, yTensor]);
+    epochsFaites.push(faites);
+    if (stoppedByBudget) arreteParBudget = true;
 
     onProgress?.(`Continuation spectrale · génération canal ${c + 1}/${nCh}`);
     // Génération autoregressive : historique initial = les dernières frames de la piste
@@ -422,5 +482,8 @@ export async function appliquerContinuationSpectrale(
       ? ` · prédiction divergée sur ${divergents.length === 1 ? "le canal" : "les canaux"} `
         + `${divergents.map((c) => c + 1).join(", ")}, leur prolongation est muette`
       : "");
-  return { audio: resultat, message, nGenFrames, hop, sr, mode, epochs, dureeGenereeS };
+  return {
+    audio: resultat, message, nGenFrames, hop, sr, mode, epochs, epochsFaites, arreteParBudget,
+    canauxDiverges: divergents, dureeGenereeS,
+  };
 }

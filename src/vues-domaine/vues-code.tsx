@@ -13,6 +13,20 @@ import { tokenizeJulia } from "../plugins/julia-processor";
 import { COULEURS_PYTHON } from "./vues-analyse";
 import type { VueProps } from "../ui/registre-vues";
 
+/**
+ * Un script MODIFIÉ dans l'éditeur est déclaré écrit ici, et s'exécutera sans question.
+ *
+ * SEULEMENT S'IL DIFFÈRE DU RÉGLAGE EN PLACE, et c'est toute la règle. L'éditeur synchronise aussi
+ * à la fermeture, frappe ou non : ouvrir puis refermer un script arrivé dans un projet reçu
+ * l'aurait déclaré écrit ici, et il se serait exécuté sans être montré. Lire n'est pas écrire.
+ * Voir `electron/scripts-autorises.cjs`.
+ */
+export function declarerSiEcritIci(synchronise: string, enPlace: string): boolean {
+  if (synchronise === enPlace) return false;
+  (window as unknown as { api?: { scriptsEcritIci?: (c: string) => unknown } }).api?.scriptsEcritIci?.(synchronise);
+  return true;
+}
+
 export function VuePythonProcessor({ id, data }: VueProps) {
   const { t } = useI18n();
   const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
@@ -66,7 +80,7 @@ export function VuePythonProcessor({ id, data }: VueProps) {
       </div>
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizePython} couleurs={COULEURS_PYTHON}
-        onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
+        onSync={(v) => { declarerSiEcritIci(v, code); d.onChangerParametre?.(id, "Code", v); }}
         suffixePied={t("python.requis")} titre={t("python.titre")} langage="python" />
     </div>
   );
@@ -128,7 +142,7 @@ export function VueJuliaProcessor({ id, data }: VueProps) {
       </div>
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizeJulia} couleurs={COULEURS_JULIA}
-        onSync={(v) => d.onChangerParametre?.(id, "Code", v)}
+        onSync={(v) => { declarerSiEcritIci(v, code); d.onChangerParametre?.(id, "Code", v); }}
         suffixePied={t("julia.requis")} titre={t("julia.titre")} langage="julia" />
     </div>
   );

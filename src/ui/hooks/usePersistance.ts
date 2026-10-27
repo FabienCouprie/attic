@@ -56,6 +56,8 @@ export function usePersistance(o: OptionsPersistance) {
   // Le dernier contenu écrit : la sauvegarde automatique s'abstient quand rien n'a bougé,
   // pour ne pas réécrire le même fichier toutes les trente secondes.
   const dernierJsonRef = useRef<string | null>(null);
+  /** Le fichier dont la sauvegarde automatique a déjà signalé un refus : on ne le redit pas. */
+  const echecSignaleRef = useRef<string | null>(null);
   useEffect(() => {
     currentFilePathRef.current = o.currentFilePath;
   }, [o.currentFilePath]);
@@ -180,7 +182,29 @@ export function usePersistance(o: OptionsPersistance) {
         });
       } else if (api?.ecrireFichier) {
         // Écriture directe dans le fichier courant sans dialogue.
-        await api.ecrireFichier(filePath, json);
+        //
+        // UN REFUS SE DIT, ET LE CONTENU N'EST PAS TENU POUR ÉCRIT. Le retour était ignoré : un
+        // disque plein, un fichier verrouillé ou un dossier hors des racines du pont laissaient
+        // croire le projet enregistré, et la sauvegarde automatique, voyant le contenu marqué
+        // comme écrit, ne réessayait plus. Relevé le 2026-10-27.
+        //
+        // ET UN REFUS OUVRE LE DIALOGUE D'ENREGISTREMENT, prérempli avec le même chemin. C'est le cas
+        // d'un projet ouvert par dépôt ou par le sélecteur : son chemin ne vient d'aucun dialogue du
+        // processus principal, donc d'aucune racine, et le pont refuse d'y écrire. Un appui sur
+        // Entrée confirme l'emplacement ; le dialogue accorde alors la racine, et écrit. Aucun chemin
+        // nommé par le rendu ne fonde de racine — c'est la règle de `electron/capacites-chemins.cjs`.
+        const ecrit = await api.ecrireFichier(filePath, json);
+        if (!ecrit) {
+          filePath = await api.sauvegarderFichier({
+            defaultPath: filePath,
+            filters: [{ name: "Workflow Attic", extensions: ["json"] }],
+            data: json,
+          });
+          if (!filePath) {
+            if (typeof alert !== "undefined") alert(t("persistance.ecritureRefusee").replace("{chemin}", String(currentFilePath)));
+            return;
+          }
+        }
       } else {
         // Fallback : dialogue pré-rempli avec le fichier courant.
         filePath = await api.sauvegarderFichier({
@@ -230,7 +254,19 @@ export function usePersistance(o: OptionsPersistance) {
       dernierJson: dernierJsonRef.current,
     });
     if (decision !== "a-ecrire") return decision;
-    await api.ecrireFichier(currentFilePathRef.current, json);
+    const chemin = currentFilePathRef.current;
+    const ecrit = await api.ecrireFichier(chemin, json);
+    // UN REFUS N'EST PAS UNE ÉCRITURE : le contenu reste « à écrire », et le battement suivant
+    // réessaie. La personne l'apprend une fois par fichier — une alerte toutes les trente
+    // secondes rendrait l'application inutilisable, et le silence lui ferait perdre son travail.
+    if (!ecrit) {
+      if (echecSignaleRef.current !== chemin && typeof alert !== "undefined") {
+        echecSignaleRef.current = chemin;
+        alert(t("persistance.sauvegardeAutoRefusee").replace("{chemin}", String(chemin)));
+      }
+      return "echec";
+    }
+    echecSignaleRef.current = null;
     dernierJsonRef.current = json;
     // L'en-cours de localStorage suit : c'est lui qui est relu au démarrage.
     try {

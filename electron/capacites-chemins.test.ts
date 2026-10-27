@@ -80,21 +80,34 @@ describe("une racine declaree", () => {
   });
 });
 
-// ═══ LA SANCTION EST ETEINTE LE TEMPS DU RELEVE, ET C'EST UN ETAT DECLARE ═══
+// ═══ LA SANCTION EST ARMEE PAR DEFAUT DEPUIS LE 2026-10-27, ET L'ETEINDRE EST UN ETAT DECLARE ═══
 //
-// Quinze fichiers ecrivent par ce pont, et leurs chemins viennent de dossiers choisis, parfois dans
-// une session anterieure. Refuser d'emblee casserait des fonctions EN SILENCE. Le mecanisme est donc
-// entier et sa sanction attend le releve.
+// Elle a ete eteinte le temps d'un releve ; elle est armee depuis que les ecritures refusees se
+// disent. `ATTIC_RACINES_STRICTES=0` l'eteint pour un diagnostic.
 describe("la sanction", () => {
   const avec = (strict: boolean, faire: () => void) => {
     const avant = process.env.ATTIC_RACINES_STRICTES;
-    if (strict) process.env.ATTIC_RACINES_STRICTES = "1";
-    else delete process.env.ATTIC_RACINES_STRICTES;
+    // ARMEE, C'EST L'ETAT PAR DEFAUT : on retire la variable plutot que de la poser a « 1 », pour
+    // que les cas « rallumee » eprouvent bien le defaut et non un drapeau.
+    if (strict) delete process.env.ATTIC_RACINES_STRICTES;
+    else process.env.ATTIC_RACINES_STRICTES = "0";
     try { faire(); } finally {
       if (avant === undefined) delete process.env.ATTIC_RACINES_STRICTES;
       else process.env.ATTIC_RACINES_STRICTES = avant;
     }
   };
+
+  it("SANS RIEN DECLARER, ELLE EST ARMEE : un chemin hors racine est refuse", () => {
+    const avant = process.env.ATTIC_RACINES_STRICTES;
+    delete process.env.ATTIC_RACINES_STRICTES;
+    try {
+      cap.oublierLesRacines();
+      expect(cap.racinesStrictes(), "la sanction n'est plus armee par defaut").toBe(true);
+      expect(cap.verdictRacine(`${AILLEURS}/x.wav`).ok).toBe(false);
+    } finally {
+      if (avant !== undefined) process.env.ATTIC_RACINES_STRICTES = avant;
+    }
+  });
 
   it("ETEINTE, un chemin hors racine PASSE — mais le verdict dit qu'il n'etait pas dedans", () => {
     // TROIS ETATS ET NON DEUX : « passe parce qu'on ne sanctionne pas encore » n'est pas « passe

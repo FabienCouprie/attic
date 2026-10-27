@@ -35,7 +35,14 @@ export type DecisionSauvegarde =
   | "sans-ecriture-directe"
   /** Rien n'a changé depuis la dernière écriture : ne pas toucher au fichier. */
   | "inchange"
-  | "a-ecrire";
+  | "a-ecrire"
+  /**
+   * L'écriture a été tentée et REFUSÉE — disque plein, fichier verrouillé, dossier hors des
+   * racines du pont. Le contenu n'est pas tenu pour écrit, si bien que le battement suivant
+   * réessaie. Relevé le 2026-10-27 : le refus était ignoré, le contenu marqué comme écrit, et la
+   * sauvegarde automatique ne réessayait jamais.
+   */
+  | "echec";
 
 export function decisionSauvegardeAuto(etat: {
   /** La bascule de la barre d'outils. Absente : active, comme avant qu'elle existe. */

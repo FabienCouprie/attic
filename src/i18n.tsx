@@ -9,6 +9,18 @@ const LANG_KEY = "attic-lang";
 const DICO: Record<string, Record<Langue, string>> = {
   "app.title": { fr: "Attic", en: "Attic" },
   "btn.lancer": { fr: "Lancer", en: "Run" },
+  "msg.ecriture_refusee": {
+    fr: "écriture refusée : {__VAR_0__} (disque plein, fichier verrouillé, ou dossier non autorisé). Un dossier choisi avant la version 5.1 doit être choisi à nouveau par son bouton : ce choix autorise l'application à y écrire.",
+    en: "write refused: {__VAR_0__} (disk full, file locked, or folder not allowed). A folder chosen before version 5.1 must be chosen again with its button: that choice allows the application to write there.",
+  },
+  "persistance.ecritureRefusee": {
+    fr: "Le projet n'a pas été enregistré : l'écriture de « {chemin} » a été refusée (disque plein, fichier verrouillé, ou dossier non autorisé), et le dialogue d'enregistrement a été fermé sans choisir d'emplacement.",
+    en: "The project was not saved: writing « {chemin} » was refused (disk full, file locked, or folder not allowed), and the save dialog was closed without choosing a location.",
+  },
+  "persistance.sauvegardeAutoRefusee": {
+    fr: "La sauvegarde automatique de « {chemin} » a été refusée (disque plein, fichier verrouillé, ou dossier non autorisé). Elle réessaiera toutes les 30 secondes. Ctrl+S ouvrira le dialogue d'enregistrement : confirmer l'emplacement autorise l'application à y écrire.",
+    en: "The autosave of « {chemin} » was refused (disk full, file locked, or folder not allowed). It will retry every 30 seconds. Ctrl+S will open the save dialog: confirming the location allows the application to write there.",
+  },
   "persistance.importInvalide": { fr: "Fichier invalide : ce n'est pas un workflow Attic (JSON illisible).", en: "Invalid file: not an Attic workflow (unreadable JSON)." },
   // LE RAPPORT DE CHARGEMENT. Ces pertes ne laissaient qu'un `console.warn`, que personne ne lit —
   // et sous Windows la console du processus principal d'Electron n'apparaît même pas.
@@ -741,6 +753,14 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.etirement_dtw_termine_var_0": { fr: "Étirement terminé — durée : {__VAR_0__} s", en: "Time stretch complete — duration: {__VAR_0__} s" },
   "msg.continuation_ar_terminee_var_0_epochs_var_1_s": { fr: "Continuation AR terminée — {__VAR_0__} époques · {__VAR_1__} s générés", en: "AR continuation complete — {__VAR_0__} epochs · {__VAR_1__} s generated" },
   "msg.continuation_lstm_terminee_var_0_epochs_var_1_s": { fr: "Continuation LSTM terminée — {__VAR_0__} époques · {__VAR_1__} s générés", en: "LSTM continuation complete — {__VAR_0__} epochs · {__VAR_1__} s generated" },
+  "msg.continuation.arret_budget": {
+    fr: " · entraînement arrêté par le budget de temps : le point d'arrêt dépend de la machine, et ce résultat n'est pas reproductible",
+    en: " · training stopped by the time budget: the stopping point depends on the machine, and this result is not reproducible",
+  },
+  "msg.continuation.divergence": {
+    fr: " · prédiction divergée sur le(s) canal(aux) {__VAR_0__}, leur prolongation est muette",
+    en: " · prediction diverged on channel(s) {__VAR_0__}, their continuation is silent",
+  },
   "msg.classification_termin_e_var_0_pistes_var_1_groupes": { fr: "Classification terminée : {__VAR_0__} pistes réparties en {__VAR_1__} groupes.", en: "Classification complete: {__VAR_0__} tracks split into {__VAR_1__} groups." },
   "msg.carte_sonore_g_n_r_e_var_0_index_html_var_1_points_var_2_audio_copi": { fr: "Carte sonore générée : {__VAR_0__}\n{__VAR_1__} points · {__VAR_2__} audio copiés dans audio/ · {__VAR_3__}", en: "Sound map generated: {__VAR_0__}\n{__VAR_1__} points · {__VAR_2__} audio copied in audio/ · {__VAR_3__}" },
   "msg.coord_carte_g_n_r_e_var_0_var_1_points_var_2_audio_copi": { fr: "Carte générée : {__VAR_0__}\n{__VAR_1__} points positionnés par coordonnées · {__VAR_2__} audio copiés dans audio/ · {__VAR_3__}", en: "Map generated: {__VAR_0__}\n{__VAR_1__} points positioned by coordinates · {__VAR_2__} audio copied in audio/ · {__VAR_3__}" },
@@ -1101,9 +1121,13 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.chec_export_var_0": { fr: "✗ Échec export : {__VAR_0__}", en: "Export failure: {__VAR_0__}" },
   "msg.l_import_n_cessite_electron": { fr: "L'import nécessite Electron.", en: "The import requires Electron." },
   "msg.import_annul": { fr: "Import annulé.", en: "Import cancelled." },
+  "msg.script_refuse": {
+    fr: "Exécution refusée : ce script n'a pas été autorisé. Il sera montré à nouveau au prochain lancement ; un script modifié dans l'éditeur du nœud s'exécute sans question.",
+    en: "Run refused: this script was not authorised. It will be shown again on the next run; a script edited in the node's editor runs without asking.",
+  },
   "msg.import_sans_autorisation": {
-    fr: "Import refusé : « Exécution » est sur « Refuser ». Un composant importé s'exécute avec les droits de l'application. Mettre « Exécution » sur « Autoriser » pour le lui accorder.",
-    en: "Import refused: « Execution » is set to « Refuse ». An imported component runs with the application's rights. Set « Execution » to « Authorise » to grant them.",
+    fr: "Import refusé : « Exécution » est sur « Refuser ». Mettre « Exécution » sur « Autoriser » pour accorder au composant le droit de s'exécuter ; son nom, ses ports et l'empreinte de son code seront montrés avant l'installation.",
+    en: "Import refused: « Execution » is set to « Refuse ». Set « Execution » to « Authorise » to grant the component the right to run; its name, ports and code fingerprint will be shown before installing.",
   },
   "msg.chec_import_var_0": { fr: "✗ Échec import : {__VAR_0__}", en: "Import failure: {__VAR_0__}" },
   "msg.node_var_0_install_var_1_var_2_var_3_var_4_d_pendance_s_var_": { fr: "✓ Composant « {__VAR_0__} » installé\n{__VAR_1__} · {__VAR_2__}/{__VAR_3__}\n📦 {__VAR_4__} dépendance(s) : {__VAR_5__}", en: "✓ Node \"{__VAR_0__}\" installed\n{__VAR_1__} · {__VAR_2__}/{__VAR_3__}\n📦 {__VAR_4__} dependency(s): {__VAR_5__}" },

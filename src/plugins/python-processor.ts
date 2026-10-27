@@ -11,6 +11,7 @@ import { securiserAmplitude } from "../audio/math-formules";
 import { decoderSansReechantillonner } from "../audio/frequence-source";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { arreterLesTravauxAuSignal } from "./arret-des-travaux";
+import { ecrireOuLever } from "./pont-electron";
 
 // Coloration syntaxique Python (highlight simple par tokens)
 const PYTHON_KEYWORDS = new Set([
@@ -239,7 +240,10 @@ export const fiches: FicheAudio[] = ([
         const blob = bufferVersWavBlob(audio);
         const arrayBuf = await blob.arrayBuffer();
         inputPath = `${tmpDir}/python_input_${Date.now()}.wav`;
-        await api.ecrireFichier(inputPath, new Uint8Array(arrayBuf));
+        // UN REFUS ARRÊTE LE NŒUD : sans lui, le script tournait sans le fichier qu'on croyait lui
+        // avoir donné, et son échec parlait d'un fichier introuvable au lieu du refus.
+        try { await ecrireOuLever(api, inputPath, new Uint8Array(arrayBuf)); }
+        catch (e) { return { valeurs: [null, null, null], erreur: true, message: String((e as Error).message) }; }
       }
 
       // Préparer le MIDI d'entrée (argv[2])
@@ -247,7 +251,8 @@ export const fiches: FicheAudio[] = ([
       if (midi instanceof File) {
         midiPath = `${tmpDir}/python_input_${Date.now()}.mid`;
         const midiBuf = new Uint8Array(await midi.arrayBuffer());
-        await api.ecrireFichier(midiPath, midiBuf);
+        try { await ecrireOuLever(api, midiPath, midiBuf); }
+        catch (e) { return { valeurs: [null, null, null], erreur: true, message: String((e as Error).message) }; }
       }
 
       // Préparer le texte d'entrée (argv[3] + env ATTIC_TEXT_INPUT)
@@ -268,6 +273,10 @@ export const fiches: FicheAudio[] = ([
 
       // LE SCRIPT DE L'UTILISATEUR EST UN TRAVAIL COMME UN AUTRE, et son délai par défaut est de
       // trente secondes : « Arrêter » doit l'atteindre. Voir `arret-des-travaux.ts`.
+      // LE SCRIPT LIVRÉ PAR DÉFAUT EST CELUI DE L'APPLICATION : il s'inscrit sans question, comme un
+      // script écrit dans l'éditeur. Tout autre script inconnu est montré avant de s'exécuter. Voir
+      // `electron/scripts-autorises.cjs`.
+      if (code === CODE_DEFAUT || code === CODE_DEFAUT_EN) await api.scriptsEcritIci?.(code);
       const lacherLesTravaux = arreterLesTravauxAuSignal(ctx.signal);
       const result = await api.pythonExecuter({
         code,
@@ -290,6 +299,7 @@ export const fiches: FicheAudio[] = ([
       if (inputPath) { try { await api.supprimerFichier(inputPath); } catch {} }
       if (midiPath) { try { await api.supprimerFichier(midiPath); } catch {} }
 
+      if (result.refuse) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.script_refuse") };
       if (!result.ok) {
         const pyInfo = result.python ? `\nPython: ${result.python}` : "";
         return { valeurs: [null, null, null], erreur: true, message: traduire("msg.erreur_python_var_0_var_1", result.erreur || result.stderr || "inconnue", pyInfo) };

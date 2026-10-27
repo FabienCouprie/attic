@@ -118,6 +118,23 @@ describe("les travaux du processus principal", () => {
     const preload = readFileSync(new URL("preload.cjs", dossier), "utf8");
     expect(main, "le principal n'écoute pas `travail:annuler`").toMatch(/ipcMain\.handle\("travail:annuler"/);
     expect(preload, "le préchargement ne l'invoque pas").toMatch(/invoke\("travail:annuler"\)/);
-    expect(main, "le canal n'appelle pas le registre").toMatch(/annulerLesTravaux\(\)/);
+    // AU NOM DE LA FENÊTRE QUI LE DEMANDE, et jamais nu : un appel sans propriétaire tue ce qui
+    // tourne dans TOUTES les fenêtres, qui partagent ce processus. Relevé par une revue le
+    // 2026-10-27 ; ce cas exigeait auparavant l'appel nu.
+    expect(main, "le canal n'appelle pas le registre au nom de sa fenêtre")
+      .toMatch(/annulerLesTravaux\(fenetre\)/);
+    expect(main, "un appel nu à `annulerLesTravaux()` tuerait les travaux des autres fenêtres")
+      .not.toMatch(/annulerLesTravaux\(\)/);
+    expect(main, "la fenêtre ne vient pas de l'appelant").toMatch(/const fenetre = event\.sender\.id/);
+  });
+
+  it("ET CHAQUE GESTIONNAIRE S'EXÉCUTE AU NOM DE SA FENÊTRE", () => {
+    // Sans cet emballage, aucun enfant n'aurait de propriétaire, et l'annulation par fenêtre ne
+    // tuerait plus rien : le bouton répondrait, et rien ne mourrait.
+    const main = readFileSync(new URL("main.cjs", dossier), "utf8");
+    const emballage = main.indexOf("avecProprietaire(event?.sender?.id");
+    const premier = main.indexOf("ipcMain.handle(\"");
+    expect(emballage, "`ipcMain.handle` n'est plus emballé par `avecProprietaire`").toBeGreaterThan(-1);
+    expect(emballage, "l'emballage vient après un gestionnaire, qui lui échappe").toBeLessThan(premier);
   });
 });

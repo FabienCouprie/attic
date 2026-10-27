@@ -38,8 +38,47 @@ const { execSync, execFile } = require("child_process");
 const { Readable } = require("stream");
 const { URL: UrlModele } = require("url");
 const { ouvertureAutorisee, ecritureAutorisee, armerJournal, inscrireChemin, inscrireCanal } = require("./chemin-sur.cjs");
-const { inscrireTravail, annulerLesTravaux, travauxEnCours } = require("./travaux.cjs");
+const { inscrireTravail, annulerLesTravaux, travauxEnCours, avecProprietaire } = require("./travaux.cjs");
 const { HOTES_TELECHARGEMENT, hoteDeTelechargementAutorise } = require("./hotes-telechargement.cjs");
+const { resumerManifeste } = require("./resume-node-zip.cjs");
+const { memoriserLesScripts, scriptAutorise, autoriserScript, questionPourScript } = require("./scripts-autorises.cjs");
+
+/**
+ * Le script peut-il s'exécuter ? Oui s'il est déjà autorisé ; sinon, la personne le lit et décide.
+ *
+ * LA QUESTION EST POSÉE ICI, DU CÔTÉ PRIVILÉGIÉ, par une boîte native : un script arrivé dans un
+ * projet reçu ne peut pas y répondre à la place de la personne. Voir `electron/scripts-autorises.cjs`.
+ */
+async function autorisationDuScript(event, langage, code) {
+  if (scriptAutorise(code)) return true;
+  const q = questionPourScript(langage, code, !app.getLocale().toLowerCase().startsWith("fr"));
+  const fenetre = event?.sender ? BrowserWindow.fromWebContents(event.sender) : null;
+  const options = {
+    type: "warning", title: q.titre, message: q.message, detail: q.detail,
+    buttons: q.boutons, defaultId: 1, cancelId: 1, noLink: true,
+  };
+  const { response } = fenetre ? await dialog.showMessageBox(fenetre, options) : await dialog.showMessageBox(options);
+  if (response !== 0) return false;
+  autoriserScript(code);
+  return true;
+}
+
+/** Le refus, dit comme un résultat et non comme une panne. */
+const SCRIPT_REFUSE = {
+  ok: false, refuse: true,
+  erreur: "Exécution refusée : ce script n'a pas été autorisé. Il sera montré à nouveau au prochain lancement.",
+};
+
+// ═══ CHAQUE TRAITEMENT S'EXÉCUTE AU NOM DE LA FENÊTRE QUI L'APPELLE ═══
+//
+// POSÉ ICI POUR LA MÊME RAISON QUE LE RELEVÉ CI-DESSOUS : avant tout `ipcMain.handle`. Un travail
+// engendré pendant le traitement appartient ainsi à la fenêtre qui l'a demandé, et « Arrêter » dans
+// une fenêtre ne tue plus ce qui tourne dans une autre. Voir `electron/travaux.cjs`.
+{
+  const handleSansProprietaire = ipcMain.handle.bind(ipcMain);
+  ipcMain.handle = (canal, traitement) => handleSansProprietaire(canal, (event, ...args) =>
+    avecProprietaire(event?.sender?.id, () => traitement(event, ...args)));
+}
 
 // ═══ LE RELEVÉ DE TOUS LES CANAUX, QUAND IL EST DEMANDÉ ═══
 //
@@ -244,20 +283,13 @@ function detecterJulia() {
 }
 detecterJulia();
 
-// Supprimer le warning de sécurité Electron en mode dev (unsafe-eval est intentionnel)
+// Supprimer le warning de sécurité Electron en mode dev. `unsafe-eval` ne vit plus que dans la page
+// du cadre isolé ; l'avertissement resterait levé par `unsafe-inline`, que les vues emploient.
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
 
-// Content-Security-Policy : unsafe-eval requis pour le chargement dynamique
-// de nodes installés (new Function). unsafe-inline pour les vues canvas/inline.
-const CSP = [
-  "default-src 'self' display-capture",
-  "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://cdn.jsdelivr.net",
-  "style-src 'self' 'unsafe-inline'",
-  `media-src 'self' blob: data: stream: ${SCHEMA_MEDIA}:`,
-  "img-src 'self' blob: data:",
-  "worker-src 'self' blob:",
-  `connect-src 'self' ${SCHEMA_RESSOURCE}: https://huggingface.co https://cdn.jsdelivr.net https://*.hf.co https://*.xet-bridge-us.hf.co https://tfhub.dev https://*.tfhub.dev https://storage.googleapis.com https://*.kaggle.com https://*.googleusercontent.com http://127.0.0.1:11434 http://localhost:11434 blob: data:`,
-].join("; ");
+// Content-Security-Policy : une par destination. Le document n'a plus `unsafe-eval` ; seule la page
+// du cadre isolé des nœuds installés le garde. Voir `electron/politique-securite.cjs`.
+const { politiquePour } = require("./politique-securite.cjs");
 
 // LE SCHÉMA QUI SERT UN FILM DU DISQUE, déclaré AVANT que l'application soit prête : un schéma
 // enregistré après ne reçoit pas les privilèges, et un élément vidéo refuse alors de s'y déplacer.
@@ -529,10 +561,9 @@ ipcMain.handle("fichier:ecrire", async (_event, { chemin, buffer }) => {
   // interpretes a ete retiree le 2026-10-26, sa justification etant fausse — `python:executer` et
   // `julia:executer` materialisent eux-memes leurs scripts, et ne passent jamais par ce pont.
   const verdict = ecritureAutorisee(chemin);
-  // ET LE BORNAGE PAR RACINES, dont la sanction est ÉTEINTE le temps du relevé : hors racine, on
-  // inscrit et l'on passe. `ATTIC_RACINES_STRICTES=1` la rallume. Quinze fichiers écrivent par ce
-  // pont et leurs chemins viennent de dossiers choisis, parfois dans une session antérieure :
-  // refuser d'emblée casserait des fonctions en silence.
+  // ET LE BORNAGE PAR RACINES, dont la sanction est ARMÉE par défaut depuis le 2026-10-27 :
+  // hors racine, on refuse. `ATTIC_RACINES_STRICTES=0` l'éteint pour un diagnostic. Le refus rend
+  // `null`, et chaque appelant le DIT : `src/docs/contrat-ecritures-refusees.test.ts` y veille.
   const racine = verdict.ok ? verdictRacine(chemin) : { ok: false, sousRacine: false };
   inscrireChemin("ecrire", chemin, verdict.ok && racine.ok, racine.sousRacine);
   if (!verdict.ok || !racine.ok) {
@@ -887,9 +918,13 @@ ipcMain.handle("modeles:annuler", () => {
 //
 // IL REND CE QU'IL A TOUCHÉ, et non `{ ok: true }`. Un canal d'annulation qui répond toujours la
 // même chose ne se mesure pas ; celui-ci dit combien de travaux tournaient, ce qu'un cas peut lire.
-ipcMain.handle("travail:annuler", () => {
-  const avant = travauxEnCours();
-  const tues = annulerLesTravaux();
+//
+// ET IL NE VISE QUE LA FENÊTRE QUI LE DEMANDE. Toutes les fenêtres partagent ce processus : tuer
+// tout, c'était arrêter la séparation qu'une autre fenêtre attendait.
+ipcMain.handle("travail:annuler", (event) => {
+  const fenetre = event.sender.id;
+  const avant = travauxEnCours(fenetre);
+  const tues = annulerLesTravaux(fenetre);
   return { ok: true, tues, avant };
 });
 
@@ -1108,7 +1143,7 @@ ipcMain.handle("node:exporter-zip", async (_event, { manifest, executerCode, not
 
 // --- IPC : Importer un node depuis un .zip ---
 // Décompresse dans ~/.attic/nodes/{id}/ et renvoie le contenu des fichiers
-ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
+ipcMain.handle("node:importer-zip", async (event, zipPath) => {
   try {
     const AdmZip = require("adm-zip");
     const zip = new AdmZip(zipPath);
@@ -1116,6 +1151,21 @@ ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
     if (!manifestEntry) return { ok: false, erreur: "manifest.json introuvable dans le zip." };
     const manifest = JSON.parse(manifestEntry.getData().toString("utf-8"));
     if (!manifest.id || !manifest.nom) return { ok: false, erreur: "manifest.json invalide (id/nom manquant)." };
+
+    // ON MONTRE CE QUI VA S'INSTALLER, AVANT D'EXTRAIRE UNE SEULE ENTRÉE. Le réglage « Exécution »
+    // du Gestionnaire disait l'intention ; rien ne nommait le composant qu'on autorisait. La
+    // question est posée ici, du côté privilégié, pour qu'aucun code du rendu ne puisse y répondre
+    // à la place de la personne. Voir `electron/resume-node-zip.cjs`.
+    const codeEntry = zip.getEntry("executer.js");
+    const resume = resumerManifeste(manifest, codeEntry ? codeEntry.getData().toString("utf-8") : "",
+      !app.getLocale().toLowerCase().startsWith("fr"));
+    const fenetre = BrowserWindow.fromWebContents(event.sender);
+    const options = {
+      type: "warning", title: resume.titre, message: resume.message, detail: resume.detail,
+      buttons: resume.boutons, defaultId: 1, cancelId: 1, noLink: true,
+    };
+    const { response } = fenetre ? await dialog.showMessageBox(fenetre, options) : await dialog.showMessageBox(options);
+    if (response !== 0) return { ok: false, annule: true, erreur: "Installation annulée." };
 
     // Répertoire d'installation. `manifest.id` vient du .zip, donc de
     // l'extérieur, et sert à construire un chemin : il est validé avant, sans
@@ -1143,6 +1193,7 @@ ipcMain.handle("node:importer-zip", async (_event, zipPath) => {
     return {
       ok: true,
       manifest,
+      empreinte: resume.empreinte,
       executerCode: fichiers["executer.js"] || "",
       notice: fichiers["notice.json"] ? JSON.parse(fichiers["notice.json"]) : null,
       dependencies: fichiers["dependencies.json"] ? JSON.parse(fichiers["dependencies.json"]).dependencies : [],
@@ -1232,12 +1283,23 @@ ipcMain.handle("python:choisir-executable", async () => {
   return resultat.filePaths[0];
 });
 
+// ─── Un script écrit dans l'éditeur du nœud s'inscrit sans question ───
+//
+// SEUL L'ÉDITEUR DE CODE L'EMPRUNTE (`vues-domaine/vues-code.tsx`), avec le script livré par défaut :
+// on ne demande pas à quelqu'un s'il accepte ce qu'il vient de taper. Un script arrivé dans un
+// fichier n'y passe jamais. Le rendu ne transmet qu'un texte ; l'empreinte est calculée ici.
+ipcMain.handle("scripts:ecrit-ici", (_event, code) => {
+  if (typeof code !== "string") return { ok: false };
+  return { ok: true, empreinte: autoriserScript(code) };
+});
+
 // --- IPC : Exécuter un script Python ---
 // options: { code: string, inputs: { path: string, key: string }[], outputPath: string, timeout: number }
-ipcMain.handle("python:executer", async (_event, options) => {
+ipcMain.handle("python:executer", async (event, options) => {
   if (!CHEMIN_PYTHON) {
     return { ok: false, erreur: "Python n'est pas installé ou introuvable. Définissez la variable d'environnement ATTIC_PYTHON ou installez Python." };
   }
+  if (!(await autorisationDuScript(event, "python", options?.code))) return SCRIPT_REFUSE;
   try {
     // Écrire le script dans un fichier temporaire
     const scriptPath = path.join(app.getPath("temp"), `attic-script-${Date.now()}.py`);
@@ -1311,10 +1373,11 @@ ipcMain.handle("julia:choisir-executable", async () => {
   return resultat.filePaths[0];
 });
 
-ipcMain.handle("julia:executer", async (_event, options) => {
+ipcMain.handle("julia:executer", async (event, options) => {
   if (!CHEMIN_JULIA) {
     return { ok: false, erreur: "Julia n'est pas installé ou introuvable. Définissez la variable d'environnement ATTIC_JULIA ou installez Julia." };
   }
+  if (!(await autorisationDuScript(event, "julia", options?.code))) return SCRIPT_REFUSE;
   try {
     const scriptPath = path.join(app.getPath("temp"), `attic-script-${Date.now()}.jl`);
     fs.writeFileSync(scriptPath, options.code, "utf-8");
@@ -1879,6 +1942,9 @@ app.whenReady().then(() => {
   declarerRacine(app.getPath("userData"));
   dossierDeTravailParDefaut();
   const accords = memoriserLesAccords(path.join(app.getPath("userData"), "racines-accordees.json"));
+  // LES SCRIPTS AUTORISÉS SE RELISENT AVEC LES ACCORDS, et pour la même raison : la personne les a
+  // accordés dans une session antérieure. Voir `electron/scripts-autorises.cjs`.
+  memoriserLesScripts(path.join(app.getPath("userData"), "scripts-autorises.json"));
   const deLEnv = declarerRacinesDeLEnvironnement();
   console.log(`[attic] racines du pont : ${racinesConnues().length}`
     + ` (${accords.length} accordée(s) relue(s), ${deLEnv.length} par ATTIC_RACINES)`
@@ -1891,7 +1957,8 @@ app.whenReady().then(() => {
     // Retirer une CSP existante pour éviter les doublons
     delete headers["Content-Security-Policy"];
     delete headers["content-security-policy"];
-    headers["Content-Security-Policy"] = [CSP];
+    // PAR DESTINATION : la page du cadre isolé a la sienne, le reste celle du document.
+    headers["Content-Security-Policy"] = [politiquePour(details.url)];
     callback({ responseHeaders: headers });
   });
 

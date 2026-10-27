@@ -19,11 +19,20 @@ import { serveurDeVerification } from "./serveur-de-developpement";
 
 const devUrl = serveurDeVerification(5259);
 
-/** Un nœud d'essai qui SONDE sa prison, puis rend un son. Il ne commet rien. */
+/**
+ * Un nœud d'essai qui SONDE sa prison, puis rend un son. Il ne commet rien.
+ *
+ * L'ORIGINE EFFECTIVE SE LIT PAR « self.origin », ET NON PAR « location.origin ». Le second reflète
+ * l'ADRESSE chargée : il valait « null » tant que la page était posée par `srcdoc`, et vaut
+ * l'adresse du serveur depuis qu'elle a la sienne (2026-10-27), sans que rien de l'isolation n'ait
+ * changé. Le stockage du cadre, refusé à une origine opaque, en est le second témoin.
+ */
 const CODE_SONDE = `
   module.exports = async (ctx) => {
-    const vu = { origine: String(location.origin), api: typeof window.api, parent: "?", reglages: null };
+    const vu = { origine: String(self.origin), adresse: String(location.origin), api: typeof window.api,
+      parent: "?", stockage: "?", reglages: null };
     try { vu.parent = typeof window.parent.api; } catch (e) { vu.parent = "REFUSE:" + e.name; }
+    try { vu.stockage = "ACCESSIBLE:" + localStorage.length; } catch (e) { vu.stockage = "REFUSE:" + e.name; }
     vu.reglages = ctx.reglagesDeProjet || null;
 
     const hz = ctx.paramNombre("Fréquence", 440);
@@ -64,7 +73,9 @@ test.describe("le bac à sable d'un nœud installé", () => {
     expect(rendu.absent, "la couture du bac doit être posée").toBeUndefined();
 
     const vu = (rendu as { vu: Record<string, string> }).vu;
+    console.log("[bac] vu depuis le cadre :", JSON.stringify(vu));
     expect(vu.origine, "le cadre a une origine OPAQUE").toBe("null");
+    expect(vu.stockage, "une origine opaque n'a pas de stockage : le cadre en a un").toMatch(/^REFUSE:SecurityError$/);
     expect(vu.api, "`window.api` n'existe pas dans le cadre").toBe("undefined");
     expect(vu.parent, [
       "",

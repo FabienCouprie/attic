@@ -11,6 +11,12 @@ test.describe("Piper TTS plugin", () => {
   });
 
   test("Piper TTS worker can synthesize Russian speech", async ({ page }) => {
+    // LE DÉLAI DU CAS DOIT COUVRIR LA MINUTERIE QU'IL POSE LUI-MÊME. Celle-ci attend 120 s, et
+    // le cas gardait le délai par défaut de Playwright, 30 s : il mourait donc à 30 s quoi
+    // qu'il arrive. Mesuré le 2026-10-27, profil neuf : la page à +8,3 s, la synthèse à
+    // +31,4 s — la voix est tirée de `huggingface.co/rhasspy/piper-voices` à chaque passe,
+    // puisqu'une passe part d'un profil vide. Le cas dépend donc du réseau, et le dit ici.
+    test.setTimeout(180_000);
     await page.goto(devUrl);
     await page.waitForSelector(".attic-app", { timeout: 10000 });
     const workerUrl = new URL("src/workers/piper-tts-worker.js", devUrl).toString();

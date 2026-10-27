@@ -10978,7 +10978,7 @@ Extracts the dominant colors of an image and turns them into a musical sequence.
 
 *Julia code editor with syntax highlighting for audio processing.*
 
-Julia code editor with syntax highlighting for audio, MIDI and text processing. Same architecture as the Python Processor. Variables: ARGS[2] = input WAV, ENV["ATTIC_OUTPUT_PATH"] = output WAV, ENV["ATTIC_SAMPLE_RATE"], ENV["ATTIC_CHANNELS"], ENV["ATTIC_TEXT_INPUT"], and ENV["ATTIC_OUTPUT_MIDI"] and ENV["ATTIC_OUTPUT_TEXT"] for outputs that are not sound. Requires Julia + WAV.jl package installed.
+Julia code editor with syntax highlighting for audio, MIDI and text processing. Same architecture as the Python Processor. Variables: ARGS[2] = input WAV, ENV["ATTIC_OUTPUT_PATH"] = output WAV, ENV["ATTIC_SAMPLE_RATE"], ENV["ATTIC_CHANNELS"], ENV["ATTIC_TEXT_INPUT"], and ENV["ATTIC_OUTPUT_MIDI"] and ENV["ATTIC_OUTPUT_TEXT"] for outputs that are not sound. Requires Julia + WAV.jl package installed. A script that was not edited in the node's editor, such as one from an opened project, is shown before its first run, with its line count and SHA-256 fingerprint, and runs only once authorised; the authorisation is tied to the fingerprint, and a modified script loses it. The default code runs without asking.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -11045,7 +11045,7 @@ Generates audio by running a Pure Data patch (.pd). The patch is interpreted by 
 
 *Python code editor with syntax highlighting for audio processing.*
 
-Python code editor with syntax highlighting for audio processing. Input audio is converted to a temporary WAV and passed to the script via sys.argv[1]. The script must write the result to the path given by os.environ['ATTIC_OUTPUT_PATH']. Available variables: ATTIC_SAMPLE_RATE, ATTIC_CHANNELS, ATTIC_TEXT_INPUT, and ATTIC_OUTPUT_MIDI and ATTIC_OUTPUT_TEXT for outputs that are not sound. The default code reads the WAV, doubles the volume and writes the result. Requires Python + numpy installed on the machine. Python detection is automatic (python, python3, py) or via the ATTIC_PYTHON environment variable. Adjustable timeout (5-120s).
+Python code editor with syntax highlighting for audio processing. Input audio is converted to a temporary WAV and passed to the script via sys.argv[1]. The script must write the result to the path given by os.environ['ATTIC_OUTPUT_PATH']. Available variables: ATTIC_SAMPLE_RATE, ATTIC_CHANNELS, ATTIC_TEXT_INPUT, and ATTIC_OUTPUT_MIDI and ATTIC_OUTPUT_TEXT for outputs that are not sound. The default code reads the WAV, doubles the volume and writes the result. Requires Python + numpy installed on the machine. Python detection is automatic (python, python3, py) or via the ATTIC_PYTHON environment variable. Adjustable timeout (5-120s). A script that was not edited in the node's editor, such as one from an opened project, is shown before its first run, with its line count and SHA-256 fingerprint, and runs only once authorised; the authorisation is tied to the fingerprint, and a modified script loses it. The default code runs without asking.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -11103,7 +11103,7 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 
 *Exports a node as .zip or imports a node from a .zip.*
 
-Exports an existing node as a .zip archive or imports a node from a .zip. To export: enter the node ID, the system extracts the manifest, executer code, notice and detects dependencies, then generates a .zip. To import: select a .zip, the system decompresses, checks dependencies and installs the node in the catalog. « Execution » grants the imported node the right to run: an imported node runs with the application's rights, and the import is refused while this setting is on « Refuse ». The authorisation is stored with the node; its code is read only on the first run. Installed nodes are persisted and survive restarts.
+Exports an existing node as a .zip archive or imports a node from a .zip. To export: enter the node ID, the system extracts the manifest, executer code, notice and detects dependencies, then generates a .zip. To import: select a .zip, the system decompresses, checks dependencies and installs the node in the catalog. « Execution » grants the imported node the right to run, and the import is refused while this setting is on « Refuse ». Before installing, a confirmation shows the node's name, inputs, outputs, settings, dependencies and the SHA-256 fingerprint of its code; nothing is decompressed without it. The code of an imported node runs in an isolated frame: it reads, writes and deletes no file, and reaches only the network addresses the application allows. The authorisation is stored with the node; its code is read only on the first run. Installed nodes are persisted and survive restarts.
 
 *No ports.*
 
@@ -11111,7 +11111,7 @@ Exports an existing node as a .zip archive or imports a node from a .zip. To exp
 |---|---|---|---|---|
 | Action | choice | Export | Export / Import | Export = create a .zip of an existing node. Import = install a node from a .zip. |
 | Node to export | choice |  |  | The node to export is taken from the 5 most recently created. The list updates on each run. |
-| Execution | choice | Refuse | Refuse / Authorise | Grants the imported component the right to run. An imported component runs with the application's rights: it reads, writes and deletes files, and reaches the network. « Refuse » refuses the import. The authorisation is stored with the component, and conditions each of its runs. |
+| Execution | choice | Refuse | Refuse / Authorise | Grants the imported component the right to run. Its code runs in an isolated frame: it reads, writes and deletes no file, and reaches only the network addresses the application allows. « Refuse » refuses the import. With « Authorise », the import shows the name, ports, settings and SHA-256 fingerprint of the code before installing, and installs only once confirmed. The authorisation is stored with the component, and conditions each of its runs. |
 
 ### Learning
 
@@ -11559,10 +11559,10 @@ Extends an audio track by predicting the continuation of its spectrogram. A line
 | FFT | choice | 2048 | 512 / 1024 / 2048 / 4096 | FFT window size. Determines frequency resolution and number of bins. |
 | Hop | number | 25 % | 10 – 100 %, step 1 | Hop size between consecutive windows, as a percentage of FFT size. 25% = 75% overlap. |
 | History | number | 4 frames | 1 – 32 frames, step 1 | Number of past frames used to predict the next frame. Larger = more context (but heavier to train). |
-| Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. Time budget may stop earlier. |
+| Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. With « Budget » at 0, the number of epochs is bounded by the size of the computation; with a positive budget, training stops once that time has elapsed. |
 | Learning rate | number | 0.001 | 0.0001 – 0.01, step 0.0001 | Adam optimizer learning rate. |
-| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track, same settings and same seed give the same result as long as training runs to its end. If it stops on « Budget », the stopping point depends on the machine and two passes differ; the message says so when that happens. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic. A budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ». |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track, same settings and same seed give the same result with « Budget » at 0. With a positive budget that stops training, the stopping point depends on the machine and two passes differ; the message says so when that happens. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic: the number of epochs is bounded by the size of the computation, and the result is reproducible. A positive budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ». |
 
 #### LSTM Continuation
 
@@ -11583,10 +11583,10 @@ Extends an audio track with a small recurrent network (LSTM) trained on the fly 
 | FFT | choice | 2048 | 512 / 1024 / 2048 / 4096 | FFT window size. Determines frequency resolution and number of bins. |
 | Hop | number | 25 % | 10 – 100 %, step 1 | Hop size between consecutive windows, as a percentage of FFT size. 25% = 75% overlap. |
 | History | number | 4 frames | 1 – 32 frames, step 1 | Number of past frames used to predict the next frame. Larger = more context (but heavier to train). |
-| Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. Time budget may stop earlier. |
+| Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. With « Budget » at 0, the number of epochs is bounded by the size of the computation; with a positive budget, training stops once that time has elapsed. |
 | Learning rate | number | 0.001 | 0.0001 – 0.01, step 0.0001 | Adam optimizer learning rate. |
-| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track, same settings and same seed give the same result as long as training runs to its end. If it stops on « Budget », the stopping point depends on the machine and two passes differ; the message says so when that happens. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic. A budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ». |
+| Seed | number | 1 | 0 – 999999, step 1 | Seed for weight initialization. Same track, same settings and same seed give the same result with « Budget » at 0. With a positive budget that stops training, the stopping point depends on the machine and two passes differ; the message says so when that happens. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Budget | number | 0 ms | 0 – 300000 ms, step 1000 | Training time budget in milliseconds. 0 = automatic: the number of epochs is bounded by the size of the computation, and the result is reproducible. A positive budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ». |
 | Hidden units | number | 128 | 16 – 512, step 16 | Number of hidden units in the LSTM layer. Larger = more context memory (but slower). |
 
 #### Neural PCA

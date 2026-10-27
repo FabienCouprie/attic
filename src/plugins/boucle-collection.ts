@@ -21,6 +21,7 @@ import { decoderSansReechantillonner } from "../audio/frequence-source";
 import { FICHE_LOT_DEBUT, FICHE_LOT_FIN, joindre, lotCourant, nomDeSortie } from "./lotGlobal";
 import { lireProfondeurExport } from "../ui/profondeur-export";
 import { decrire } from "../audio/metadonnees";
+import { ecrireOuLever } from "./pont-electron";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -181,7 +182,9 @@ export const fiches: FicheAudio[] = ([
         const blob = format === "mp3"
           ? await bufferVersMp3Blob(audio, 192, undefined, decrire(audio, provenance))
           : bufferVersWavBlob(audio, undefined, false, { bits, ixml: decrire(audio, provenance, bits).ixml });
-        await api.ecrireFichier(joindre(dossier, nom), await blob.arrayBuffer());
+        // UN REFUS LÈVE, et le `catch` ci-dessous le rend comme l'échec de ce fichier : le lot ne
+        // l'inscrit pas parmi les fichiers écrits.
+        await ecrireOuLever(api, joindre(dossier, nom), await blob.arrayBuffer());
         lot.nomsEcrits.push(nom.toLowerCase());
 
         const duree = `${audio.duration.toFixed(1)} s`;

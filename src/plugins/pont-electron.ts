@@ -86,3 +86,23 @@ export function cheminDansTravail(base: unknown, nom: string):
   if (!propre) return { ok: false, message: traduire("msg.travail.absent") };
   return { ok: true, chemin: `${propre}/${nom}` };
 }
+
+/**
+ * Écrit par le pont, et LÈVE si l'écriture est refusée.
+ *
+ * `ecrireFichier` rend le chemin écrit, ou `null` quand le processus principal refuse : disque
+ * plein, fichier verrouillé, extension exécutable, dossier hors des racines du pont. Dix appels du
+ * dépôt ignoraient ce retour, relevé le 2026-10-27 : un lot de conversions annonçait ses fichiers
+ * comme écrits sans en avoir écrit un seul, et un script Python tournait sans le fichier d'entrée
+ * qu'on croyait lui avoir donné. Lever fait passer le refus par le `catch` que chaque appelant a
+ * déjà, qui le compte et le nomme.
+ */
+export async function ecrireOuLever(
+  api: { ecrireFichier: (chemin: string, donnees: unknown) => Promise<unknown> },
+  chemin: string,
+  donnees: unknown,
+): Promise<string> {
+  const ecrit = await api.ecrireFichier(chemin, donnees);
+  if (!ecrit) throw new Error(traduire("msg.ecriture_refusee", chemin));
+  return String(ecrit);
+}

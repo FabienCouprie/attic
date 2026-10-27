@@ -32,8 +32,8 @@ const PARAMETRES_COMMUNS = [
   },
   {
     nom: "Époques", nomEn: "Epochs", type: "nombre", plage: [1, 1000], pas: 1, defaut: 100, unite: "",
-    doc: "Nombre maximal d'époques d'entraînement. Le budget-temps peut arrêter plus tôt.",
-    docEn: "Maximum number of training epochs. Time budget may stop earlier.",
+    doc: "Nombre maximal d'époques d'entraînement. Avec « Budget » à 0, le nombre d'époques est borné d'après la taille du calcul ; avec un budget positif, l'entraînement s'arrête quand ce temps est écoulé.",
+    docEn: "Maximum number of training epochs. With « Budget » at 0, the number of epochs is bounded by the size of the computation; with a positive budget, training stops once that time has elapsed.",
   },
   {
     nom: "Apprentissage", nomEn: "Learning rate", type: "nombre", plage: [0.0001, 0.01], pas: 0.0001, defaut: 0.001, unite: "",
@@ -42,13 +42,13 @@ const PARAMETRES_COMMUNS = [
   },
   {
     nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1, unite: "",
-    doc: "Graine pour l'initialisation des poids. Même piste, mêmes réglages et même graine rendent le même résultat tant que l'entraînement va jusqu'au bout. S'il s'arrête sur « Budget », le point d'arrêt dépend de la machine et deux passes diffèrent ; le message le dit alors.",
-    docEn: "Seed for weight initialization. Same track, same settings and same seed give the same result as long as training runs to its end. If it stops on « Budget », the stopping point depends on the machine and two passes differ; the message says so when that happens.",
+    doc: "Graine pour l'initialisation des poids. Même piste, mêmes réglages et même graine rendent le même résultat avec « Budget » à 0. Avec un budget positif qui arrête l'entraînement, le point d'arrêt dépend de la machine et deux passes diffèrent ; le message le dit alors.",
+    docEn: "Seed for weight initialization. Same track, same settings and same seed give the same result with « Budget » at 0. With a positive budget that stops training, the stopping point depends on the machine and two passes differ; the message says so when that happens.",
   },
   {
     nom: "Budget", nomEn: "Budget", type: "nombre", plage: [0, 300000], pas: 1000, defaut: 0, unite: "ms",
-    doc: "Budget temps d'entraînement en millisecondes. 0 = automatique. Un budget qui interrompt l'entraînement rend le résultat non reproductible, le point d'arrêt dépendant de la machine ; voir « Graine ».",
-    docEn: "Training time budget in milliseconds. 0 = automatic. A budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ».",
+    doc: "Budget temps d'entraînement en millisecondes. 0 = automatique : le nombre d'époques est borné d'après la taille du calcul, et le résultat est reproductible. Un budget positif qui interrompt l'entraînement rend le résultat non reproductible, le point d'arrêt dépendant de la machine ; voir « Graine ».",
+    docEn: "Training time budget in milliseconds. 0 = automatic: the number of epochs is bounded by the size of the computation, and the result is reproducible. A positive budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ».",
   },
 ] as const;
 
@@ -91,7 +91,18 @@ function executerContinuation(mode: "ar" | "lstm", ctx: any) {
   }).then((result: ContinuationSpectraleResultat) => {
     const dureeTexte = result.dureeGenereeS.toFixed(2);
     const key = mode === "ar" ? "msg.continuation_ar_terminee_var_0_epochs_var_1_s" : "msg.continuation_lstm_terminee_var_0_epochs_var_1_s";
-    return { valeurs: [result.audio], message: traduire(key, String(result.epochs), dureeTexte) };
+    // LE MESSAGE DIT CE QUI A ÉTÉ FAIT, ET NON CE QUI A ÉTÉ DEMANDÉ. Il affichait le réglage
+    // « Époques », si bien qu'un entraînement coupé par le budget au bout de quelques époques
+    // s'annonçait « 100 époques » ; et il jetait l'avertissement de divergence que le module
+    // composait. La documentation de « Graine » promettait pourtant que le message dirait l'arrêt
+    // sur budget. Relevé le 2026-10-27.
+    const faites = [...new Set(result.epochsFaites)].join(", ");
+    let message = traduire(key, `${faites}/${result.epochs}`, dureeTexte);
+    if (result.arreteParBudget) message += traduire("msg.continuation.arret_budget");
+    if (result.canauxDiverges.length > 0) {
+      message += traduire("msg.continuation.divergence", result.canauxDiverges.map((c) => c + 1).join(", "));
+    }
+    return { valeurs: [result.audio], message };
   });
 }
 
