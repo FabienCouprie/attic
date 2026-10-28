@@ -9,7 +9,7 @@ Attic ships **510 components** in **7 categories** and **63 families**. Every na
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 246 | [Analysis](#analysis) (1) · [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (17) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
@@ -2548,6 +2548,7 @@ Synthesises a note by frequency modulation between six operators. An operator is
 | Component | Summary |
 |---|---|
 | [PDF input](#pdf-input) | Loads a PDF file and passes it to its output. |
+| [Text Input](#text-input) | Outputs user-entered text on its text output. |
 
 #### PDF input
 
@@ -2563,6 +2564,22 @@ Loads a PDF file from the inspector and passes it to its « File » output, conn
 
 *No parameters.*
 
+#### Text Input
+
+`source-texte` · Inputs → Text
+
+*Outputs user-entered text on its text output.*
+
+Outputs user-entered text on its text output (blue port). Its output feeds any text input in the graph.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Text | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Text | text | `Hello, this is a test text.` |  | Text to output. Will be sent on the text output (blue port). |
+
 ### Text to Speech
 
 | Component | Summary |
@@ -2572,7 +2589,6 @@ Loads a PDF file from the inspector and passes it to its « File » output, conn
 | [MMS-TTS Multilingual](#mms-tts-multilingual) | Multilingual text-to-speech (Meta MMS, 10+ languages). |
 | [Piper TTS](#piper-tts) | Local multilingual text-to-speech via Piper TTS (ONNX). |
 | [SpeechT5 TTS](#speecht5-tts) | High-quality text-to-speech (Microsoft SpeechT5, English). |
-| [Text Input](#text-input) | Outputs user-entered text on its text output. |
 
 #### French TTS
 
@@ -2659,22 +2675,6 @@ High-quality text-to-speech using Microsoft SpeechT5. Connect a « Text Source �
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Voice | choice | US male (BDL) | US male (BDL) / US female (SLT) / US female (CLB) / US male (RMS) / Canadian male (JMK) / Scottish male (AWB) / Indian male (KSP) | Preset voice (CMU Arctic embeddings). BDL/RMS = US males; SLT/CLB = US females; JMK = Canadian male; AWB = Scottish male; KSP = Indian male. |
-
-#### Text Input
-
-`source-texte` · Inputs → Text to Speech
-
-*Outputs user-entered text on its text output.*
-
-Outputs user-entered text on its text output (blue port). Its output feeds any text input in the graph.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Text | text |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Text | text | `Hello, this is a test text.` |  | Text to output. Will be sent on the text output (blue port). |
 
 ### Xenakis
 

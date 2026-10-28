@@ -38,6 +38,8 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **« ENTRÉE TEXTE » EST RANGÉ AVEC LES ENTRÉES DE TEXTE**, à la demande de Fabien : il était sous « Entrées → Text to Speech », parmi cinq synthèses vocales, où l'on cherche une voix et non un champ de saisie. Il est désormais sous « Entrées → Texte », à côté d'« Entrée PDF », ce que la palette de l'application montre. Son identifiant ne change pas : les graphes enregistrés le retrouvent.
+
 - **LE CODE D'UN NŒUD INSTALLÉ S'EXÉCUTE DANS UN CADRE ISOLÉ, ET N'ATTEINT PLUS LE PONT.** Suite du point 1 d'une revue critique : « il faudrait évaluer ce code dans un Worker sans accès au pont ». **Un Worker ne pouvait pas**, et c'est la première mesure qui a changé le plan.
 
   - **UN WORKER NE FAIT PAS DE WEB AUDIO.** Ni `AudioContext`, ni `OfflineAudioContext`, ni `AudioBuffer` n'y existent : un nœud audio y aurait perdu ce qui fait son office. Un **cadre** `sandbox="allow-scripts"` a les deux — Web Audio entier, et une origine opaque.
