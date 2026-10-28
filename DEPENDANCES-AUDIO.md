@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 33 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 97 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 214 · transposable tel quel
+- **pur** : 215 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -197,6 +197,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | lame.ts | pur | — |
 | lecture-vive.ts | pur | — |
 | lfo.ts | pur | — |
+| limiteur-crete-vraie.ts | pur | — |
 | lsysteme.ts | pur | — |
 | lucier.ts | recipient | AudioBuffer |
 | mandelbrot.ts | recipient | AudioBuffer |

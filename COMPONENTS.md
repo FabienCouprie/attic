@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **509 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **510 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 245 | [Analysis](#analysis) (1) · [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (16) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 246 | [Analysis](#analysis) (1) · [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (17) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -5207,6 +5207,7 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | [Parametric Equalizer](#parametric-equalizer) | Corrects the frequency balance with a high-pass, two shelves and four bells placed at will. |
 | [Resonators](#resonators) | A bank of tuned resonators that any sound can set ringing: a noise becomes a chord, a scrape a bell. |
 | [Transient Shaper](#transient-shaper) | Independent attack and sustain control. |
+| [True-Peak Limiter](#true-peak-limiter) | Brings the sound under a true-peak ceiling, seeing the peaks coming. |
 | [Tuned Combs](#tuned-combs) | Comb filters tuned to a note or a chord: the input sound rings like a string, at the note and all its harmonics. |
 
 #### Amplifier
@@ -5663,6 +5664,27 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 | Attack time max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack time » that the curve's one means. |
 | Sustain time min | slider | 50 ms | 10 – 500 ms, step 1 | Value of « Sustain time » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Sustain time max | slider | 300 ms | 10 – 500 ms, step 1 | Value of « Sustain time » that the curve's one means. |
+
+#### True-Peak Limiter
+
+`limiteur-crete-vraie` · Processing → Equalisation and filters
+
+*Brings the sound under a true-peak ceiling, seeing the peaks coming.*
+
+This component brings the peaks of a sound under a ceiling expressed as a true peak, that is, counting the values the signal takes between its samples, following Recommendation ITU-R BS.1770-4. The true peak is read through fourfold oversampling. A single gain is applied to all channels, so that the stereo image does not shift. « Gain » raises the sound before limiting: this is how the sound gains loudness, the peaks that then exceed the ceiling being brought back under it. « Ceiling » sets the true peak the output does not exceed, in dBTP. Minus one is the usual broadcast value. « Lookahead » sets the time during which the gain falls before a peak: the reduction starts ahead of it and reaches it in a ramp, instead of dropping at once on the sample. The longer it is, the gentler the descent. « Hold » sets the time during which the gain stays at its lowest before rising again. It keeps the gain from rising between two cycles of a low sound and falling again before the next, which would distort the wave. At zero, nothing is held. « Release » sets the speed at which the gain then rises, like the time constant of a first-order filter. « Lookahead », « Hold » and « Release » have no effect while no peak exceeds the ceiling: the sound then comes out raised by « Gain » alone. After limiting, the true peak of the output is measured; if one remains above the ceiling, a fixed gain brings it under, and the message says so once that gain reaches a hundredth of a decibel. The « Audio » output returns the limited sound, with the received length, sample rate and channels. The message gives the strongest reduction applied and the true peak of the output.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Gain | number | 0 dB | 0 – 24 dB, step 0.5 | Raises the sound before limiting. This is how the sound gains loudness. |
+| Ceiling | number | -1 dBTP | -6 – 0 dBTP, step 0.1 | The true peak the output does not exceed. Minus one is the usual broadcast value. |
+| Lookahead | number | 2 ms | 0.5 – 10 ms, step 0.5 | The time during which the gain falls before a peak. No effect while no peak exceeds the ceiling. |
+| Hold | number | 20 ms | 0 – 100 ms, step 1 | The time during which the gain stays at its lowest before rising; it keeps a low sound undistorted. No effect while no peak exceeds the ceiling. |
+| Release | number | 100 ms | 10 – 1000 ms, step 5 | The speed at which the gain rises after the hold. No effect while no peak exceeds the ceiling. |
 
 #### Tuned Combs
 

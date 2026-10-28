@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**509 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
+**510 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -337,6 +337,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Lecteur d'analyse | `lecteur-analyse` | 380 × 300 |
 | Légende d'image | `legende-image` | 240 × 118 |
 | Limiteur | `limiteur` | 240 × 184 |
+| Limiteur à crête vraie | `limiteur-crete-vraie` | 240 × 118 |
 | Magenta Continuation | `magenta-continuation` | 240 × 118 |
 | Magenta Drums | `magenta-drums` | 240 × 118 |
 | Magenta Générer batterie | `magenta-generer-batterie` | 240 × 118 |

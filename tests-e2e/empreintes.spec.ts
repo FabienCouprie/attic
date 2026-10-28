@@ -65,6 +65,9 @@ const SURVEILLES: {
   { id: "correction-hauteur", worker: "correction-hauteur-worker.ts" },
   { id: "shimmer", worker: "shimmer-worker.ts", parametres: { "Graine": 1 } },
   { id: "suiveur-hauteur", worker: "hauteur-worker.ts" },
+  // POUSSÉ DE 12 DB, pour que l'empreinte tienne une limitation réelle : aux réglages d'ouverture,
+  // le son d'essai reste sous le plafond et le composant ne ferait que le rendre.
+  { id: "limiteur-crete-vraie", worker: "limiteur-crete-vraie-worker.ts", parametres: { "Gain": 12 } },
   // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
   // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
   // laisse passer ; c'est son MESSAGE qui porte les chiffres mesurés, hauteur comprise.

@@ -12,6 +12,7 @@ import { avecDoc, avecNomDicte } from "./notices";
 import { creerAleatoire } from "../core";
 import { appliquerDelay, appliquerReverberation, appliquerDistorsion, appliquerFlanger, appliquerChorus, compresser, normaliser, supprimerClics, dererverberer, changerTempo, changerTonalite, changerTonaliteVoie, glissandoTonalite, glissandoTonaliteVoie, bitcrusher, gateExpandeur, deEsser, ringModulator, reverberationFractale, limiter, transientShaper, compresserMultiBande, exciter, harmoniser, harmoniserVoie, type OptionsHarmoniser, type OptionsGlissando, vocoder } from "../audio";
 import { quadrafuzz } from "../audio/quadrafuzz";
+import { fiches as limiteurCreteVraie } from "./limiteur-crete-vraie";
 
 import { valeurA } from "../audio/courbe";
 import { MODULATION_MIX, bornesModulation, effet, modulationNommee, reglageModule, param, portModulation } from "./effets-aides";
@@ -462,4 +463,4 @@ export const fiches: FicheAudio[] = ([
     // des bornes « Modulation min » à côté de « Mix 2 min » ne dirait pas laquelle borne quoi.
     [modulationNommee("Mix 1", "Mix 1", [0, 100], "%"),
      modulationNommee("Mix 2", "Mix 2", [0, 100], "%")]),
-] as FicheAudio[]).map(avecDoc).map(avecNomDicte(NOMS_PARLES));
+] as FicheAudio[]).map(avecDoc).map(avecNomDicte(NOMS_PARLES)).concat(limiteurCreteVraie);
