@@ -7,6 +7,28 @@ import type { FicheUI } from "./registre-actif";
 // il est ici pour que `docs/inventaire-ui.ts` le porte dans INTERFACE.md, et qu'un changement de
 // taille se voie dans un diff plutot que de se decouvrir a l'ecran.
 
+/**
+ * Les composants qui montrent une image par `SongseeVue`, et naissent donc assez grands pour la voir.
+ *
+ * LA VUE GARDE SA POIGNÉE EN PERMANENCE depuis le 2026-10-28, donc son cadre aussi : un nœud né à la
+ * taille ordinaire, 240 sur 140, ne laisserait qu'une vingtaine de pixels à l'image une fois
+ * l'en-tête, le message, les ports et le statut posés. Quatre étaient déjà déclarés à 320 × 320 ;
+ * quatre autres tombaient sur la règle ordinaire et débordaient de leur cadre au premier run. Le
+ * goniomètre, qui emploie la même vue, garde la taille qui lui est déclarée plus bas.
+ */
+export const VUES_IMAGE = new Set([
+  "rendu-image", "entree-image", "lecteur-svg",
+  "texte-image", "visualisation-songsee", "visualiseur-courbe",
+]);
+
+/**
+ * Les composants à image qui portent aussi un lecteur audio, et donc une ligne de plus sous l'image.
+ *
+ * MESURÉ PLUTÔT QUE SUPPOSÉ : à 320 × 320, une fois le lecteur apparu, l'image d'« Attracteur / IFS »
+ * ne gardait qu'environ 65 px de haut. À 480, il lui en reste plus de deux cents.
+ */
+export const VUES_IMAGE_AVEC_LECTEUR = new Set(["attracteur-ifs", "camelot"]);
+
 export function tailleDefaut(def: FicheUI): { width: number; height: number } {
   // LE COMPTE QUI DÉCIDE DE LA HAUTEUR EST CELUI QUI SERA DESSINÉ, et non celui que la fiche
   // déclare. Un nœud extensible montre son `defaut` à la naissance : le séparateur de canaux
@@ -53,7 +75,8 @@ export function tailleDefaut(def: FicheUI): { width: number; height: number } {
   if (def.id === "comparaison-esthetique") return { width: 380, height: 300 };
   if (def.id === "colorsynth") return { width: 280, height: 220 };
   if (def.id === "generateur-pochette") return { width: 300, height: 420 };
-  if (def.id === "attracteur-ifs") return { width: 320, height: 320 };
+  if (VUES_IMAGE.has(def.id)) return { width: 320, height: 320 };
+  if (VUES_IMAGE_AVEC_LECTEUR.has(def.id)) return { width: 320, height: 480 };
   // L'animation occupe toute la place laissée par l'en-tête, les trois ports et le lecteur : sans
   // hauteur déclarée, le nœud naissait à la hauteur de son seul contenu et l'image recevait 8 px.
   if (def.id === "cercle-pulsant") return { width: 300, height: 500 };
@@ -66,9 +89,6 @@ export function tailleDefaut(def: FicheUI): { width: number; height: number } {
   // large, une place sur quarante-huit fait 5 px de rayon, ce qui se vise encore ; en dessous, non.
   // La hauteur ajoute la barre du compte au-dessus du dessin.
   if (def.id === "cercle-rythmique" || def.id === "cercle-melodique") return { width: 320, height: 400 };
-  if (def.id === "rendu-image") return { width: 320, height: 320 };
-  if (def.id === "entree-image") return { width: 320, height: 320 };
-  if (def.id === "lecteur-svg") return { width: 320, height: 320 };
   if (def.id.startsWith("vexflow-")) {
     const largeur = Number(def.parametres.find((p) => p.nom === "Largeur" || p.nomEn === "Width")?.defaut ?? 500);
     const hauteur = Number(def.parametres.find((p) => p.nom === "Hauteur" || p.nomEn === "Height")?.defaut ?? 160);

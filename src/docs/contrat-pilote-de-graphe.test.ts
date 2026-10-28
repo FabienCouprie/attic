@@ -188,8 +188,8 @@ describe("le pilote de graphe", () => {
       .toEqual(["boucle-reprise-dans-application.spec.ts", "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "montage-gains-pistes.spec.ts",
-        "profondeur-dans-application.spec.ts", "sorties-extensibles-dans-application.spec.ts",
-        "types-au-port.spec.ts"]);
+        "profondeur-dans-application.spec.ts", "rendu-image-taille-dans-application.spec.ts",
+        "sorties-extensibles-dans-application.spec.ts", "types-au-port.spec.ts"]);
     const coupables = appelants.filter((f) => {
       const code = codeSeul(source(resolve(DOSSIER, f)));
       return code.includes("statut-puce") || code.includes("waitForFunction");

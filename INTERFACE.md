@@ -27,9 +27,9 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Accord mets-musique | `accord-mets-musique` | VueAccordMets | — | 240 × 162 | non | oui | non |
 | Analyseur de spectre | `analyseur-spectre` | VueSpectre | — | 420 × 300 | non | oui | non |
 | Arbre rythmique | `arbre-rythmique` | ArbreRythmiqueVue | — | 620 × 280 | non | oui | non |
-| Attracteur / IFS | `attracteur-ifs` | VueAttracteurIFS | — | 320 × 320 | oui | oui | non |
+| Attracteur / IFS | `attracteur-ifs` | VueAttracteurIFS | — | 320 × 480 | oui | oui | non |
 | Banque SFZ | `banque-sfz` | — | VueBanqueSfz | 240 × 140 | non | oui | non |
-| Roue de Camelot | `camelot` | VueRenduImage | — | 240 × 162 | oui | oui | non |
+| Roue de Camelot | `camelot` | VueRenduImage | — | 320 × 480 | oui | oui | non |
 | Carte sonore | `carte-sonore` | VueCarteSonore | — | 240 × 118 | non | oui | non |
 | Générateur vidéo | `cercle-film` | VueFilmCercle | — | 240 × 118 | non | oui | non |
 | Cercle de gamme | `cercle-gamme` | CercleGammeVue | — | 240 × 118 | non | oui | non |
@@ -110,15 +110,15 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Styles musicaux | `styles-musicaux` | VueStylesMusicaux | — | 300 × 320 | non | oui | non |
 | Suiveur de caractéristique | `suiveur-caracteristique` | VueCourbe | — | 240 × 140 | non | oui | non |
 | Tessitures de voix | `tessitures-voix` | VueTessituresVoix | — | 300 × 320 | non | oui | non |
-| Texte → image | `texte-image` | VueRenduImage | — | 240 × 118 | oui | oui | non |
+| Texte → image | `texte-image` | VueRenduImage | — | 320 × 320 | oui | oui | non |
 | Transcripteur MIDI | `transcripteur-midi` | VueTranscription | — | 240 × 118 | non | oui | non |
 | Grille d'accords VexFlow | `vexflow-grille` | VueVexFlow | — | 500 × 200 | oui | oui | oui |
 | Partition MIDI | `vexflow-midi` | VueVexFlow | — | 800 × 200 | oui | oui | oui |
 | Partition VexFlow | `vexflow-partition` | VueVexFlow | — | 500 × 160 | oui | oui | oui |
 | Portée VexFlow | `vexflow-portee` | VueVexFlow | — | 500 × 160 | oui | oui | oui |
 | Tablature VexFlow | `vexflow-tab` | VueVexFlow | — | 500 × 160 | oui | oui | oui |
-| Visualisation Songsee | `visualisation-songsee` | VueImageDepuisAudio | — | 240 × 118 | non | oui | non |
-| Visualiseur de courbe | `visualiseur-courbe` | VueTraceCourbe | — | 240 × 162 | non | oui | non |
+| Visualisation Songsee | `visualisation-songsee` | VueImageDepuisAudio | — | 320 × 320 | non | oui | non |
+| Visualiseur de courbe | `visualiseur-courbe` | VueTraceCourbe | — | 320 × 320 | non | oui | non |
 | Visualiseur | `visualiseur-forme-onde` | VueFormeOnde | — | 420 × 240 | non | oui | non |
 | Visualiseur multipiste | `visualiseur-multipiste` | VuePistesMultiples | — | 420 × 340 | non | oui | non |
 | VU-mètre / LUFS | `vu-metre` | VueVuMetre | — | 300 × 260 | non | oui | non |
