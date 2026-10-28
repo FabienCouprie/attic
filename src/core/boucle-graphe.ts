@@ -181,6 +181,15 @@ export interface ResultatDepliage {
    */
   depliees: {
     debutId: string;
+    /** La fin qui referme cette boucle : le seul nœud visible qui rende ce que les tours ont fait. */
+    finId: string;
+    /**
+     * Les copies qui forment son corps dans le graphe rendu, que le moteur lâche en fin de run.
+     *
+     * VIDE POUR UNE BOUCLE INTÉRIEURE, et c'est juste : l'extérieure a recopié ses copies sous des
+     * identifiants neufs, qui appartiennent au corps de l'extérieure. C'est celle-ci qui se saute.
+     */
+    copies: string[];
     tours: number;
     /** Combien d'arêtes entrent dans le ventre depuis le dehors, autrement que par le début. */
     entreesDuDehors: number;
@@ -321,7 +330,7 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
       (a) => dedans.has(a.target) && !dedans.has(a.source) && a.source !== debutId).length;
     const sortiesVersDehors = courantE.filter(
       (a) => dedans.has(a.source) && !dedans.has(a.target) && a.target !== fin.id).length;
-    depliees.push({ debutId, tours, entreesDuDehors, sortiesVersDehors });
+    depliees.push({ debutId, finId: fin.id, copies: [], tours, entreesDuDehors, sortiesVersDehors });
     const avant = new Set(origines.keys());
     const { noeuds: nn, aretes: ne } = deplierUne(courantN, courantE, debut, fin, interieur, origines);
     courantN = nn;
@@ -370,6 +379,9 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
   // choses que le graphe n'en contient.
   const vivants = new Set(courantN.map((n) => n.id));
   for (const id of [...toursDesCopies.keys()]) if (!vivants.has(id)) toursDesCopies.delete(id);
+  // LE CORPS DE CHAQUE BOUCLE SE LIT SUR LE GRAPHE RENDU, une fois toutes les boucles dépliées :
+  // c'est le seul moment où l'on sait quelles copies existent encore.
+  for (const d of depliees) d.copies = [...vivants].filter((id) => id.startsWith(`${d.debutId}#`));
 
   return { noeuds: courantN, aretes: courantE, origines, problemes, depliees, toursDesCopies };
 }

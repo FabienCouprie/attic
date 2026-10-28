@@ -185,7 +185,7 @@ describe("le pilote de graphe", () => {
     // fichiers par le bouton du nœud, ce qui ne peut se faire qu'entre le rechargement et le clic.
     // C'est exactement le cas que ce garde-ci existe pour empêcher de résoudre à part.
     expect(appelants.sort(), "les appelants déclarés du pilote")
-      .toEqual(["empreintes-exemples.spec.ts", "executer.spec.ts",
+      .toEqual(["boucle-reprise-dans-application.spec.ts", "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "montage-gains-pistes.spec.ts",
         "profondeur-dans-application.spec.ts", "sorties-extensibles-dans-application.spec.ts",
