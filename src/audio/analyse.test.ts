@@ -129,6 +129,18 @@ describe("calculerRolloffSpectralMeyda", () => {
     expect(rBruit).toBeGreaterThan(rSine);
     expect(rBruit).toBeGreaterThan(SR * 0.1);
   });
+
+  // Régression : meyda rend le rolloff déjà en hertz, et il était multiplié une seconde fois par
+  // `sampleRate / fenêtre`. Le cas précédent ne bornait rien par le haut, et le nœud annonçait
+  // 551 040 Hz à 48 kHz sans qu'il rougisse. Ces deux bornes situent la valeur.
+  it("reste sous la fréquence de Nyquist, et situe une sinusoïde à sa fréquence", () => {
+    const rSine = calculerRolloffSpectralMeyda(sinus(1000, 1)).valeur;
+    expect(rSine).toBeGreaterThan(1000 * 0.9);
+    expect(rSine).toBeLessThan(1000 * 1.1);
+    const rBruit = calculerRolloffSpectralMeyda(bruitBlanc(1)).valeur;
+    expect(rBruit).toBeLessThanOrEqual(SR / 2);
+    expect(rBruit).toBeGreaterThan(SR / 2 * 0.9);
+  });
 });
 
 // ── Transcripteur MIDI : rejet du bruit et fusion des notes ──

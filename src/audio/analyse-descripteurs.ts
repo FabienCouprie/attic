@@ -157,13 +157,15 @@ export function calculerZCR_Meyda(
   return { valeur, texte, trames: valeurs.length };
 }
 
+// LE ROLLOFF ARRIVE DE MEYDA DÉJÀ EN HERTZ, à la différence du centroïde qui arrive en indice de
+// case : meyda le calcule comme `(n + 1) × sampleRate / (2 × (taille − 1))`. Il était multiplié une
+// seconde fois par `sampleRate / fenêtre`, soit ×23,4 à 48 kHz sur 2 048 points : le nœud annonçait
+// 551 040 Hz pour un son dont la fréquence de Nyquist est 24 000 Hz. Corrigé le 2026-10-28.
 export function calculerRolloffSpectralMeyda(
   buffer: AudioBuffer,
   options: OptionsCentroidSpectral = {},
 ): ResultatCentroidSpectral {
-  const fenetre = tailleFenetreAnalyse(options.fenetre || 2048);
-  const facteurHz = buffer.sampleRate / fenetre;
-  const valeurs = extraireValeursMeyda(buffer, "spectralRolloff", options).map((v) => v * facteurHz);
+  const valeurs = extraireValeursMeyda(buffer, "spectralRolloff", options);
   const aggregation = normaliserAggregation(options.aggregation || "moyenne");
   const aggLabel = traduireAggregation(options.aggregation || "moyenne");
   if (valeurs.length === 0) {
