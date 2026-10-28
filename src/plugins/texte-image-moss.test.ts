@@ -54,6 +54,16 @@ describe("le composant Texte → image (MOSS)", () => {
     });
   });
 
+  it("S'OUVRE EN 320 × 320 ET 30 ÉTAPES, et c'est ce qui part quand rien n'est réglé", async () => {
+    // Réglages fixés par Fabien le 2026-10-28. La fiche et les replis de l'exécuteur doivent dire la
+    // même chose : sinon un nœud dont le réglage manque partirait sur une autre taille que celle affichée.
+    const defaut = (nom: string) => fiche.parametres.find((p) => p.nom === nom)!.defaut;
+    expect([defaut("Largeur"), defaut("Hauteur"), defaut("Étapes")]).toEqual([320, 320, 30]);
+    const demandes = poserPont();
+    await fiche.executer(contexte() as any);
+    expect([demandes[0].largeur, demandes[0].hauteur, demandes[0].etapes]).toEqual([320, 320, 30]);
+  });
+
   it("UNE TAILLE QUI N'EST PAS UN MULTIPLE DE SEIZE Y EST RAMENÉE, le modèle l'exigeant", async () => {
     const demandes = poserPont();
     await fiche.executer(contexte({ "Largeur": 1000, "Hauteur": 700 }) as any);

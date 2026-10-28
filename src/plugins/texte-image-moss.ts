@@ -10,6 +10,10 @@
 // Une pochette mise en page en JSON y a rendu son titre, son objet et son sous-titre à leur place,
 // accents compris. Le jugement du rendu est celui de Fabien, qui a demandé l'intégration.
 //
+// LE COMPOSANT S'OUVRE EN 320 × 320 ET 30 ÉTAPES, réglages fixés par Fabien le même jour : une image
+// petite et finie plutôt qu'une grande longue à venir. Le modèle a appris sur 1024 pixels de côté, et
+// la notice le dit pour qui veut monter.
+//
 // LES QUATRE FICHIERS SE PRENNENT À LA PREMIÈRE EXÉCUTION, 9,4 Go dont deux tirés de Hugging Face
 // par l'exception que le manifeste nomme. `annoncerModele` en dit le poids avant de commencer.
 import type { FicheAudio } from "../audio/types-domaine";
@@ -28,9 +32,13 @@ const PROMPT_DEFAUT = "an old brass gramophone in a dusty attic, morning light, 
 
 const api = () => (globalThis as unknown as { api?: Record<string, (...a: unknown[]) => Promise<unknown>> }).api;
 
+/** Le côté de l'image et le nombre d'étapes à l'ouverture, lus par la fiche comme par l'exécution. */
+const COTE_DEFAUT = 320;
+const ETAPES_DEFAUT = 30;
+
 /** Un côté de l'image : le modèle veut un multiple de seize, la glissière avance par soixante-quatre. */
 const cote = (nom: string, nomEn: string, doc: string, docEn: string) => ({
-  nom, nomEn, type: "curseur" as const, plage: [256, 1536], pas: 64, defaut: 1024, unite: "px", doc, docEn,
+  nom, nomEn, type: "curseur" as const, plage: [256, 1536], pas: 64, defaut: COTE_DEFAUT, unite: "px", doc, docEn,
 });
 
 export const fiches = ([
@@ -46,7 +54,8 @@ export const fiches = ([
       + "« label » valant « text » ou « object », une « caption » qui le décrit, un « text » pour les mots à écrire, et "
       + "une « bbox » donnée en pixels sous la forme haut, gauche, bas, droite, mesurés depuis le centre de l'image ; "
       + "le tout accompagné de « bbox_format » valant « yxyx » et de « bbox_coord_space » valant « abs_centralized ». "
-      + "Sur une image de 1024 pixels de côté, chaque coordonnée va donc de moins 512 à 512. Les mots à écrire sont "
+      + "Sur l'image de 320 pixels de côté que le composant rend à l'ouverture, chaque coordonnée va donc de moins "
+      + "160 à 160. Les mots à écrire sont "
       + "rendus tels qu'ils sont donnés. Le modèle a appris en anglais et en chinois. L'entrée du même nom remplace "
       + "le réglage quand elle reçoit un texte.\n\n"
       + "« Prompt négatif » décrit ce qu'on veut écarter. Vide, rien ne l'est.\n\n"
@@ -67,9 +76,9 @@ export const fiches = ([
       + "« summary » object whose « caption » describes the whole, an « items » list in which each element carries a "
       + "« label » worth « text » or « object », a « caption » describing it, a « text » for the words to write, and a "
       + "« bbox » given in pixels as top, left, bottom, right, measured from the centre of the image; all of it "
-      + "together with « bbox_format » worth « yxyx » and « bbox_coord_space » worth « abs_centralized ». On an image "
-      + "1024 pixels wide, each coordinate therefore runs from minus 512 to 512. The words to write are rendered as "
-      + "given. The model learned in English and Chinese. The input of the same name replaces the setting when it "
+      + "together with « bbox_format » worth « yxyx » and « bbox_coord_space » worth « abs_centralized ». On the "
+      + "320-pixel-square image the component renders when opened, each coordinate therefore runs from minus 160 to "
+      + "160. The words to write are rendered as given. The model learned in English and Chinese. The input of the same name replaces the setting when it "
       + "receives a text.\n\n"
       + "« Negative prompt » describes what is to be kept out. Empty, nothing is.\n\n"
       + "« Width » and « Height » set the size of the image. The model learned on 1024 pixels a side, and the compute "
@@ -98,7 +107,7 @@ export const fiches = ([
       cote("Hauteur", "Height",
         "La hauteur de l'image. Les coordonnées d'une mise en page se mesurent depuis le centre, sur cette taille.",
         "The height of the image. The coordinates of a layout are measured from the centre, on this size."),
-      { nom: "Étapes", nomEn: "Steps", type: "curseur", plage: [4, 60], pas: 1, defaut: 20, unite: "",
+      { nom: "Étapes", nomEn: "Steps", type: "curseur", plage: [4, 60], pas: 1, defaut: ETAPES_DEFAUT, unite: "",
         doc: "Le nombre de pas de débruitage. Peu d'étapes rendent une image moins finie ; le temps de calcul croît avec leur nombre.",
         docEn: "The number of denoising steps. Few steps give a less finished image; the compute time grows with their number." },
       { nom: "Guidage", nomEn: "Guidance", type: "curseur", plage: [1, 10], pas: 0.5, defaut: 3, unite: "",
@@ -119,8 +128,8 @@ export const fiches = ([
         : ctx.paramTexte("Prompt", PROMPT_DEFAUT).trim();
       if (!prompt) return { valeurs: [null], erreur: true, message: traduire("msg.moss.sans_prompt") };
       const graine = resoudreGraine(ctx.paramNombre("Graine", -1));
-      const largeur = Math.round(ctx.paramNombre("Largeur", 1024) / 16) * 16;
-      const hauteur = Math.round(ctx.paramNombre("Hauteur", 1024) / 16) * 16;
+      const largeur = Math.round(ctx.paramNombre("Largeur", COTE_DEFAUT) / 16) * 16;
+      const hauteur = Math.round(ctx.paramNombre("Hauteur", COTE_DEFAUT) / 16) * 16;
 
       await annoncerModele(ctx, "texte-image-moss", traduire("progress.moss"));
       const debrancher = relayerProgression(ctx, pont.sdcppProgression);
@@ -130,7 +139,7 @@ export const fiches = ([
           prompt,
           negatif: ctx.paramTexte("Prompt négatif", "").trim(),
           graine,
-          etapes: Math.round(ctx.paramNombre("Étapes", 20)),
+          etapes: Math.round(ctx.paramNombre("Étapes", ETAPES_DEFAUT)),
           guidage: ctx.paramNombre("Guidage", 3),
           largeur, hauteur,
           calcul: ctx.paramTexte("Calcul", "").trim(),
