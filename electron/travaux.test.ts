@@ -56,6 +56,18 @@ describe("le registre des travaux", () => {
     expect(lignes, "stderr est perdu").toContain("trois");
   });
 
+  it("COUPE AU RETOUR CHARIOT QUAND ON LE DEMANDE, et seulement alors", async () => {
+    // La barre d etapes de stable-diffusion.cpp avance par retour chariot seul : sans ce
+    // separateur, ses etapes n arriveraient qu a la fin, en une seule ligne.
+    const BARRE = ["-e", "process.stdout.write(['1/3', '2/3', '3/3'].join(String.fromCharCode(13)) + String.fromCharCode(10))"];
+    const coupees: string[] = [];
+    await lancerTravail(process.execPath, BARRE, (l: string) => coupees.push(l), { separateur: /\r\n|\r|\n/ });
+    expect(coupees).toEqual(["1/3", "2/3", "3/3"]);
+    const entieres: string[] = [];
+    await lancerTravail(process.execPath, BARRE, (l: string) => entieres.push(l));
+    expect(entieres, "le defaut ne coupe qu a la fin de ligne").toHaveLength(1);
+  });
+
   it("TUE CE QUI DORT, et le registre se vide par `close` et non par `kill`", async () => {
     const avant = travauxEnCours();
     const promesse = lancerTravail(process.execPath, DORT, () => {});

@@ -107,8 +107,11 @@ function tuerArbre(enfant) {
  *
  * L ENFANT EST INSCRIT TANT QU IL VIT, et retire a sa fin quelle qu elle soit -- fermeture,
  * erreur, ou mise a mort. Un registre qui garderait un mort ferait croire a un travail en cours.
+ *
+ * `separateur` coupe le flot en lignes. Par defaut la fin de ligne ; stable-diffusion.cpp fait
+ * avancer sa barre d etapes par retour chariot seul, et ses etapes n arriveraient qu a la fin.
  */
-function lancerTravail(binaire, args, surLigne) {
+function lancerTravail(binaire, args, surLigne, { separateur = /\r?\n/ } = {}) {
   return new Promise((resoudre) => {
     const enfant = spawn(binaire, args, { windowsHide: true });
     inscrire(enfant);
@@ -117,7 +120,7 @@ function lancerTravail(binaire, args, surLigne) {
     const avaler = (donnees) => {
       journal += donnees;
       reste += donnees;
-      const lignes = reste.split(/\r?\n/);
+      const lignes = reste.split(separateur);
       reste = lignes.pop() ?? "";
       for (const l of lignes) if (l.trim() && surLigne) surLigne(l.trim());
     };

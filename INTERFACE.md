@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**507 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
+**508 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -496,6 +496,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Synthèse par scanning | `synthese-scanning` | 240 × 118 |
 | Tempérament | `temperament` | 240 × 162 |
 | Terrain d'onde | `terrain-onde` | 240 × 118 |
+| Texte → image (MOSS) | `texte-image-moss` | 240 × 118 |
 | Texte → MIDI | `texte-vers-midi` | 240 × 140 |
 | Texture par statistiques | `texture-statistique` | 240 × 118 |
 | Accord | `tonal-accord` | 240 × 118 |

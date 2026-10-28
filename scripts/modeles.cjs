@@ -382,6 +382,44 @@ const CONNUS = {
       note: "La fiche amont `OpenMOSS-Team/MOSS-Transcribe-Diarize` déclare Apache-2.0, et la fiche de famille d'audio.cpp ne porte aucune réserve de rediffusion, contrairement à celles de `sortformer_diar` et de `mms_forced_aligner`." },
   },
 
+  // ── MOSS-IMAGE, sous `public/sdcpp/`, lu par `sd-cli` que `scripts/outils-manifest.json` épingle ──
+  //
+  // QUATRE FICHIERS, ET DEUX VIENNENT DE HUGGING FACE PAR EXCEPTION. Fabien l'a posé le 2026-10-27 :
+  // un modèle sous 2 Go est hébergé sur la release, au-delà il se tire de Hugging Face si la
+  // fonction le vaut, et ce mode est à éviter. Le transformeur et l'encodeur de texte dépassent le
+  // plafond d'un asset — la plus petite variante du transformeur, Q2_K, pèse encore 2 212 633 440
+  // octets — et sont donc pris à leur adresse amont, ÉPINGLÉE À UN COMMIT, avec leur empreinte. Le
+  // VAE et le tokeniseur passent sous le plafond et suivent la règle.
+  //
+  // LE Q4_K ET NON MOINS, parce que c'est celui qui a été éprouvé : 512 × 512 en 156 s et une mise en
+  // page JSON respectée à la lettre, accents compris, sur une RTX 2060 le 2026-10-28.
+  "moss-image-sft-q4_k.gguf": {
+    id: "moss-image", nom: "Texte → image (MOSS) · transformeur", nomEn: "Text to image (MOSS) · transformer",
+    racine: "sdcpp", noeuds: ["texte-image-moss"],
+    url: "https://huggingface.co/leejet/MOSS-Image-SFT-GGUF/resolve/238daf423f0de65316207453591f275407aac9a7/MOSS-Image-SFT-Q4_K.gguf",
+    licence: { nom: "Apache-2.0", credit: "OpenMOSS — MOSS-Image SFT, converti en GGUF par leejet (stable-diffusion.cpp)", rediffusable: true,
+      note: "Les fiches `OpenMOSS-Team/MOSS-Image-SFT` et `leejet/MOSS-Image-SFT-GGUF` déclarent Apache-2.0, sans réserve. Tiré de Hugging Face par l'exception du 2026-10-27 : 3 327 400 800 octets, au-delà du plafond d'un asset de release." },
+  },
+  "qwen3.5-9b-q4_k_m.gguf": {
+    id: "moss-image-encodeur", nom: "Texte → image (MOSS) · encodeur de texte", nomEn: "Text to image (MOSS) · text encoder",
+    racine: "sdcpp", noeuds: ["texte-image-moss"],
+    url: "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/3885219b6810b007914f3a7950a8d1b469d598a5/Qwen3.5-9B-Q4_K_M.gguf",
+    licence: { nom: "Apache-2.0", credit: "Qwen — Qwen3.5-9B, converti en GGUF par Unsloth", rediffusable: true,
+      note: "La fiche `unsloth/Qwen3.5-9B-GGUF` déclare Apache-2.0. Tiré de Hugging Face par l'exception du 2026-10-27 : 5 680 522 464 octets, au-delà du plafond d'un asset de release." },
+  },
+  "flux2-vae.safetensors": {
+    id: "moss-image-vae", nom: "Texte → image (MOSS) · VAE", nomEn: "Text to image (MOSS) · VAE",
+    racine: "sdcpp", noeuds: ["texte-image-moss"],
+    licence: { nom: "Apache-2.0", credit: "Black Forest Labs — VAE de FLUX.2, tel que le dépôt `Comfy-Org/MOSS-Image` le publie", rediffusable: true,
+      note: "Le dépôt `Comfy-Org/MOSS-Image` déclare Apache-2.0 pour l'ensemble, VAE compris : c'est celui que MOSS-Image emploie." },
+  },
+  "moss-image-tokenizer.json": {
+    id: "moss-image-tokeniseur", nom: "Texte → image (MOSS) · tokeniseur", nomEn: "Text to image (MOSS) · tokenizer",
+    racine: "sdcpp", noeuds: ["texte-image-moss"],
+    licence: { nom: "Apache-2.0", credit: "OpenMOSS — tokeniseur de MOSS-Image SFT (vocabulaire de Qwen3.5)", rediffusable: true,
+      note: "Le fichier `tokenizer/tokenizer.json` du dépôt `OpenMOSS-Team/MOSS-Image-SFT`, sous Apache-2.0. stable-diffusion.cpp l'exige à part : le vocabulaire de Qwen3.5 n'est pas celui qu'il embarque." },
+  },
+
   // L'ALIGNEMENT FORCÉ PLACE UN TEXTE QU'ON CONNAÎT, et c'est pour cela qu'il est plus juste qu'une
   // reconnaissance : les mots ne sont pas devinés, seulement datés.
   //

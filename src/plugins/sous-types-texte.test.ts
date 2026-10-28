@@ -55,9 +55,10 @@ describe("les contenus du flux texte", () => {
     expect([compte("notation", "sorties"), compte("notation", "entrees")]).toEqual([4, 3]);
     expect([compte("abc", "sorties"), compte("abc", "entrees")]).toEqual([3, 3]);
     expect([compte("paroles", "sorties"), compte("paroles", "entrees")]).toEqual([2, 3]);
-    // PROMPT N'A AUCUN PRODUCTEUR, et il compte quand même : il refuse ce qui VA vers lui.
-    expect([compte("prompt", "sorties"), compte("prompt", "entrees")]).toEqual([0, 7]);
-    expect(ports.length).toBe(36);
+    // PROMPT N'A AUCUN PRODUCTEUR, et il compte quand même : il refuse ce qui VA vers lui. Le
+    // huitième est celui de « Texte → image (MOSS) », né le 2026-10-28.
+    expect([compte("prompt", "sorties"), compte("prompt", "entrees")]).toEqual([0, 8]);
+    expect(ports.length).toBe(37);
   });
 
   // ─── Le cas fondateur ───

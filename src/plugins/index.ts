@@ -116,7 +116,7 @@ import { fiches as f_hard_panner } from "./hard-panner";
 import { fiches as f_ocr } from "./ocr";
 import { fiches as f_carte_sonore } from "./carte-sonore";
 import { fiches as f_automate_cellulaire } from "./automate-cellulaire";
-import { fiches as f_texte_image } from "./texte-image";
+import { fiches as f_texte_vers_dessin } from "./index-texte-vers-dessin";
 import { fiches as f_spectrogramme_image } from "./spectrogramme-image";
 import { fiches as f_spectrogramme_operations } from "./spectrogramme-operations";
 import { fiches as f_legende_image } from "./legende-image";
@@ -493,7 +493,7 @@ export const toutesLesFiches: FicheAudio[] = ([
   ...f_ocr,
   ...f_carte_sonore,
   ...f_automate_cellulaire,
-  ...f_texte_image,
+  ...f_texte_vers_dessin,
   ...f_legende_image,
   ...f_algebre_musicale,
   ...f_coordonnees_sur_carte,

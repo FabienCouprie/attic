@@ -42,6 +42,8 @@ const SIGLES = new Set([
   // Apprentissage automatique
   "ONNX", "LLM", "RNN", "VAE", "GAN", "CNN", "PCA", "TTS", "ASR", "STT", "VAD", "DDSP", "SA3",
   "SDXS", "GTCRN", "MDX", "UVR", "WASM", "CPU", "GPU", "RAM",
+  // MOSS-Image, d'OpenMOSS : le nom du modèle s'écrit ainsi, comme SDXS.
+  "MOSS",
   // Musique et notation
   "ABC", "BWV", "IPA", "MEI", "I", "II", "III", "IV", "V", "VI", "VII",
   // Divers

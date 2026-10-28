@@ -3,13 +3,13 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **507 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **508 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 102 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
+| [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
 | [Processing](#processing) | 244 | [Analysis](#analysis) (1) · [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
@@ -1547,6 +1547,7 @@ Searches for a voice that makes a first-species counterpoint, note against note,
 | [Image input](#image-input) | Loads an image file and passes it to its output. |
 | [SVG Reader](#svg-reader) | Loads an SVG file and rasterizes it to a PNG image. |
 | [Text to image](#text-to-image) | Generates a 512×512 image from a text prompt using SDXS-512 (ONNX, 1 step, local). |
+| [Text to image (MOSS)](#text-to-image-moss) | Draws an image from a description or a JSON layout, with MOSS-Image. |
 
 #### Image input
 
@@ -1598,6 +1599,30 @@ Generates a 512×512 image from a text prompt using SDXS-512 (1-step distilled U
 | Seed | slider | -1 | -1 – 999999, step 1 | Random seed. -1 = random. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Model path | folder | — |  | Folder of the SDXS-512 bundle (empty = bundled model in resources/oonx/sdxs-512-texte-image). |
 | Compute | choice | Automatic | Automatic / Graphics card / Processor | The compute device. On the machine where it was measured, the graphics card renders the image in two thirds of the processor's time; the first image costs some twenty seconds more, while the driver compiles. « Automatic » tries the graphics card and falls back to the processor if it refuses the model. « Graphics card » and « Processor » impose one or the other, and report a refusal rather than using the other without warning. |
+
+#### Text to image (MOSS)
+
+`texte-image-moss` · Inputs → Image
+
+*Draws an image from a description or a JSON layout, with MOSS-Image.*
+
+This component draws an image from a description in words, with MOSS-Image, published by OpenMOSS in 2026 under the Apache-2.0 licence. « Prompt » describes the image. It can be a sentence, or a JSON layout that places each element: a « summary » object whose « caption » describes the whole, an « items » list in which each element carries a « label » worth « text » or « object », a « caption » describing it, a « text » for the words to write, and a « bbox » given in pixels as top, left, bottom, right, measured from the centre of the image; all of it together with « bbox_format » worth « yxyx » and « bbox_coord_space » worth « abs_centralized ». On an image 1024 pixels wide, each coordinate therefore runs from minus 512 to 512. The words to write are rendered as given. The model learned in English and Chinese. The input of the same name replaces the setting when it receives a text. « Negative prompt » describes what is to be kept out. Empty, nothing is. « Width » and « Height » set the size of the image. The model learned on 1024 pixels a side, and the compute time grows with the area. « Steps » is the number of denoising steps. Few steps give a less finished image; the compute time grows with their number. « Guidance » sets how closely the image follows the text. Low, the model composes more freely; high, it sticks to the words, at the risk of hardening the image. « Seed » fixes the starting draw. At minus one, it is drawn at random, and the message says which one was used. The same seed gives the same image on the same compute device. « Compute » names the device used. On the first run, the four model files are downloaded, and the message announces their weight. The « Image » output returns a PNG. The message gives the seed used and the size.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Prompt | text (prompt) |  |
+| output | Image | image |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Prompt | text | `an old brass gramophone in a dusty attic, morning light, …` |  | The description of the image, or its JSON layout. The model learned in English and Chinese. |
+| Negative prompt | text | — |  | What is to be kept out. Empty, nothing is. |
+| Width | slider | 1024 px | 256 – 1536 px, step 64 | The width of the image. The model learned on 1024 pixels, and the compute time grows with the area. |
+| Height | slider | 1024 px | 256 – 1536 px, step 64 | The height of the image. The coordinates of a layout are measured from the centre, on this size. |
+| Steps | slider | 20 | 4 – 60, step 1 | The number of denoising steps. Few steps give a less finished image; the compute time grows with their number. |
+| Guidance | slider | 3 | 1 – 10, step 0.5 | How closely the image follows the text. Low, the model composes more freely; high, it sticks to the words. |
+| Seed | slider | -1 | -1 – 999999, step 1 | The starting draw. At minus one, it is drawn at random and the message says which one was used. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 ### Keyboards
 

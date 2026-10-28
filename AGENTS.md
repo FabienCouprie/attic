@@ -1,7 +1,7 @@
 # AGENTS.md — travailler sur Attic
 
 Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19, TypeScript,
-507 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
+508 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
 (voir `PORTING-A-DOMAIN.md`). L'interface et les notices sont bilingues français / anglais.
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
@@ -358,7 +358,8 @@ COMPOSANTS=boite-groove,markov-midi npm run graines
 
   Il lance chaque composant à graine fixée **deux fois** et compare ce qu'il entend. La liste vient
   du rôle `graine: true` au **registre**, jamais du libellé, et la valeur est ramenée dans la plage
-  du réglage. Relevé : **88 composants à graine, 59 comparés sur le son, zéro infidèle**, en 14,6 min.
+  du réglage. Relevé : **89 composants à graine, 59 comparés sur le son, zéro infidèle** ; 88 en
+  14,6 min, et « Texte → image (MOSS) » passé seul le 2026-10-28, rangé sans sortie audio.
   Un composant sans sortie audio ou qui lève est **distingué** d'une graine infidèle.
 - **Régénérer les tables** après toute modification qui les concerne :
 

@@ -81,7 +81,7 @@ describe("table des modèles téléchargeables", () => {
 // Attic : elles se tiennent par un test.
 describe("le manifeste engendré", () => {
   const manifeste = JSON.parse(readFileSync(new URL("./modeles-manifest.json", import.meta.url), "utf8")) as {
-    modeles: { id: string; source: { url: string | null; sha256?: string }; fichiers?: { chemin: string }[] }[];
+    modeles: { id: string; source: { url: string | null; sha256?: string; octets?: number }; fichiers?: { chemin: string }[] }[];
   };
 
   it("TOUTE ENTRÉE A UNE ADRESSE, sans quoi un nœud arrive muet et personne ne le sait", () => {
@@ -96,15 +96,35 @@ describe("le manifeste engendré", () => {
     }
   });
 
-  it("TOUTES LES ADRESSES SONT CELLES DU DÉPÔT, et il n'y a plus d'exception", () => {
+  it("TOUTES LES ADRESSES SONT CELLES DU DÉPÔT, sauf l'exception nommée de Hugging Face", () => {
     // Une adresse tierce qui change ou disparaît emporte le nœud avec elle : c'est arrivé au
     // classeur de genre, dont le dépôt rend 401 depuis le 2026-09-22. GTCRN était le dernier des
-    // vingt à venir d'ailleurs ; il a été publié sur la release le 2026-10-08, et la liste des
-    // amonts tolérés est vide. Une installation qui n'embarque plus aucun modèle ne peut pas
-    // dépendre de ce qu'un tiers garde en ligne.
+    // vingt à venir d'ailleurs ; il a été publié sur la release le 2026-10-08. Une installation qui
+    // n'embarque plus aucun modèle ne peut pas dépendre de ce qu'un tiers garde en ligne.
+    //
+    // L'EXCEPTION DU 2026-10-27, posée par Fabien : « Si besoin est nous hébergeons sur github si le
+    // modèle est < à 2Go sinon on le tirera de hugging face exceptionnellement si la fonction est
+    // pertinente. Ce mode de fonctionnement est cependant à éviter. » Elle est NOMMÉE ici, paquet
+    // par paquet, et tenue à deux conditions : le fichier dépasse le plafond d'un asset, sans quoi
+    // la release le prend ; et l'adresse est épinglée à un commit, pour qu'un amont qui bouge ne
+    // remplace pas en silence ce que l'empreinte attend.
+    const PAR_EXCEPTION: Record<string, string> = {
+      "moss-image": "le transformeur de MOSS-Image, 3 327 400 800 octets",
+      "moss-image-encodeur": "l'encodeur Qwen3.5 9B de MOSS-Image, 5 680 522 464 octets",
+    };
+    const PLAFOND = 2 * 1024 ** 3;
     for (const m of manifeste.modeles) {
+      if (m.id in PAR_EXCEPTION) {
+        expect(m.source.url, `${m.id} doit être épinglé à un commit`)
+          .toMatch(/^https:\/\/huggingface\.co\/[^/]+\/[^/]+\/resolve\/[0-9a-f]{40}\//);
+        expect(m.source.octets, `${m.id} passe sous le plafond : il va sur la release`).toBeGreaterThan(PLAFOND);
+        continue;
+      }
       expect(m.source.url, m.id).toContain("/FabienCouprie/attic/releases/download/assets/");
     }
+    const presents = new Set(manifeste.modeles.map((m) => m.id));
+    expect(Object.keys(PAR_EXCEPTION).filter((id) => !presents.has(id)),
+      "une exception survit au paquet qu'elle couvrait").toEqual([]);
   });
 });
 
