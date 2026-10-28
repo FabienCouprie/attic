@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**508 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
+**509 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -264,6 +264,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Écrans (Xenakis) | `ecrans-xenakis` | 240 × 140 |
 | Écrire une chanson | `ecrire-chanson` | 240 × 140 |
 | Édition ABC par LLM | `edition-abc-llm` | 240 × 140 |
+| Égaliseur paramétrique | `egaliseur-parametrique` | 240 × 118 |
 | Enregistreur | `enregistreur-audio` | 240 × 118 |
 | Égaliseur | `equaliseur` | 240 × 118 |
 | Étirement temporel (DTW) | `etirement-dtw` | 240 × 140 |

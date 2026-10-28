@@ -1,7 +1,7 @@
 # AGENTS.md — travailler sur Attic
 
 Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19, TypeScript,
-508 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
+509 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
 (voir `PORTING-A-DOMAIN.md`). L'interface et les notices sont bilingues français / anglais.
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
@@ -318,8 +318,8 @@ sha256sum catalogue-sonore-2026-10-25.zip   # 6aa1fc8233d19a664644e70a27e1eb9d3b
   sans `--clobber`, de sorte qu'un asset de même nom au contenu différent est refusé — les
   installations vérifient une empreinte, et deux contenus sous un seul nom la feraient mentir. Un
   catalogue régénéré change donc de nom, et l'ancien reste téléchargeable tel qu'il a été entendu.
-  Le relevé de ce catalogue-ci : les **367 composants qui rendent de l'audio**, **288 clips**, zéro
-  erreur, 89 sans sortie audio.
+  Le relevé de ce catalogue-ci, daté du 2026-10-25 : **367** des composants qui rendaient alors de
+  l'audio, **288 clips**, zéro erreur, 89 sans sortie audio.
 - **Faire varier un réglage**, parce que **ce qui est intéressant n'est pas un son mais une
   différence entre au moins deux**. C'est Fabien qui l'a formulé, et c'est par ce trou qu'un défaut
   est passé : `comparer` et `écouter` savent mettre côte à côte N composants **différents**, mais
@@ -413,7 +413,7 @@ jamais vu rouge ne garde rien.
 | Choisir **entre des composants** qui couvrent le même besoin | `FAMILLE=nom npm run comparer` : ce qui les sépare et de combien, mesuré sur le même son d'essai — jamais écrit à la main |
 | **Entendre** ce qu'un composant ou une famille produit | `COMPOSANT=id npm run ecouter`, ou `FAMILLE=nom` : des WAV dans `ECOUTE/`, le son d'essai sec avec eux |
 | **Lancer un graphe entier** et entendre ce qu'il rend | `GRAPHE=nom npm run executer` : l'état et le message de chaque nœud, le WAV de chaque aperçu dans `EXECUTION/` — le seul verbe qui voie des composants **câblés ensemble** |
-| **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie des 367 composants qui rendent de l'audio, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
+| **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie des 368 composants qui rendent de l'audio, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
 | Savoir **ce qu'un réglage change**, et non ce qu'il vaut | `COMPOSANT=id REGLAGE=nom VALEURS=a,b,c npm run varier` : un clip par valeur, un tableau par tranches avec la colonne de l'entrée, et le réglage déclaré **inerte** s'il ne bouge ni l'énergie ni la crête |
 | Vérifier qu'une **graine déclarée tient**, sur le son | `npm run graines` : chaque composant à graine lancé deux fois à la même graine, empreintes comparées — le contrat structurel des graines ne regarde pas le son |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |

@@ -1418,6 +1418,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.texte_image_seed_var_0": { fr: "Texte → image · seed {__VAR_0__}", en: "Text to image · seed {__VAR_0__}" },
   "msg.moss.fait": { fr: "Graine {__VAR_0__} · {__VAR_1__} × {__VAR_2__}", en: "Seed {__VAR_0__} · {__VAR_1__} × {__VAR_2__}" },
   "msg.moss.sans_prompt": { fr: "Aucun prompt : rien à dessiner.", en: "No prompt: nothing to draw." },
+  "msg.egaliseur_parametrique.fait": { fr: "{__VAR_0__} étage(s) posé(s) sur sept", en: "{__VAR_0__} stage(s) applied out of seven" },
+  "msg.egaliseur_parametrique.neutre": { fr: "Aucun gain réglé ni passe-haut : le son passe inchangé.", en: "No gain set and no high-pass: the sound passes unchanged." },
   "msg.var_0_styles_var_1": { fr: "{__VAR_0__} styles{__VAR_1__}", en: "{__VAR_0__} styles{__VAR_1__}" },
   "msg.var_0_tessitures_var_1": { fr: "{__VAR_0__} tessitures{__VAR_1__}", en: "{__VAR_0__} vocal ranges{__VAR_1__}" },
   "msg.var_0_caract_res": { fr: "{__VAR_0__} caractères", en: "{__VAR_0__} characters" },

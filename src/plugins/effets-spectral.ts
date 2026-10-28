@@ -17,6 +17,7 @@ import {
 import { parCanal } from "./hors-fil";
 
 import { effet, param, simple } from "./effets-aides";
+import { fiches as egaliseurParametrique } from "./egaliseur-parametrique";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -449,4 +450,4 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [r], message: traduire("msg.r_verb_ration_convolution_ir_var_0_s", irBuffer.duration.toFixed(1)) };
    },
  },
-] as FicheAudio[]).map(avecDoc).map(avecNomDicte({ "granular-freeze": "gel du son" }));
+] as FicheAudio[]).map(avecDoc).map(avecNomDicte({ "granular-freeze": "gel du son" })).concat(egaliseurParametrique);

@@ -51,7 +51,7 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
   ],
   // Décider de ce qui passe, et à quel niveau.
   "Égalisation et filtres": [
-    "equaliseur", "reponse-filtre", "filtrage-spectre", "de-esser", "peignes-accordes", "resonateurs",
+    "equaliseur", "egaliseur-parametrique", "reponse-filtre", "filtrage-spectre", "de-esser", "peignes-accordes", "resonateurs",
     "compresseur", "compresseur-multibande", "limiteur", "amplificateur", "normaliseur",
     "gate-expandeur", "ducking", "transient-shaper", "recaler-niveau",
   ],

@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **508 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **509 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 244 | [Analysis](#analysis) (1) · [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 245 | [Analysis](#analysis) (1) · [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (16) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -5204,6 +5204,7 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | [Match Level](#match-level) | Aligns the level of one sound with another, by a constant gain. |
 | [Multiband Compressor](#multiband-compressor) | 3-band compressor with independent thresholds/ratios. |
 | [Normalizer](#normalizer) | Brings the sound to a target level, by peak or by loudness (LUFS). |
+| [Parametric Equalizer](#parametric-equalizer) | Corrects the frequency balance with a high-pass, two shelves and four bells placed at will. |
 | [Resonators](#resonators) | A bank of tuned resonators that any sound can set ringing: a noise becomes a chord, a scrape a bell. |
 | [Transient Shaper](#transient-shaper) | Independent attack and sustain control. |
 | [Tuned Combs](#tuned-combs) | Comb filters tuned to a note or a chord: the input sound rings like a string, at the note and all its harmonics. |
@@ -5565,6 +5566,39 @@ Adjusts overall gain to bring the signal peak to the target level, without chang
 | Level | slider | -3 dB | -40 – 0 dB, step 0.5 | Target peak, in Peak mode. This setting does nothing in Loudness mode. |
 | Target loudness | slider | -14 LUFS | -36 – -6 LUFS, step 0.5 | Target loudness, in Loudness mode. -14 is the streaming platforms' target, -23 the EBU R 128 broadcast standard, -16 a common podcast value. |
 | Ceiling | slider | -1 dBTP | -6 – 0 dBTP, step 0.1 | True peak not to be exceeded, in Loudness mode. If the target required crossing it, the ceiling wins and the node announces that the target was not reached: it prefers saying so to clipping silently or slipping a limiter behind a button that only promises to normalise. Put a limiter upstream if you want both. |
+
+#### Parametric Equalizer
+
+`egaliseur-parametrique` · Processing → Equalisation and filters
+
+*Corrects the frequency balance with a high-pass, two shelves and four bells placed at will.*
+
+This component corrects the frequency balance of a sound with seven stages placed at the chosen frequency: a high-pass, a low shelf, four bells and a high shelf. The filters follow Robert Bristow-Johnson's formulae (« Cookbook formulae for audio EQ biquad filter coefficients »). « High-pass » sets the cutoff frequency of a second-order Butterworth filter, which attenuates by three decibels at that frequency and by twelve decibels per octave below it. At zero, nothing is cut. « Low frequency » and « Low gain » set the low shelf: what lies below the frequency receives the gain, and the frequency itself receives half of it, in decibels. « Frequency 1 », « Frequency 2 », « Frequency 3 » and « Frequency 4 » place the centre of the four bells. « Gain 1 », « Gain 2 », « Gain 3 » and « Gain 4 » say what each adds or removes at its centre. « Q 1 », « Q 2 », « Q 3 » and « Q 4 » set their width: a high Q narrows the bell to a few hertz, a low Q spreads it over several octaves. « High frequency » and « High gain » set the high shelf, the mirror of the low one: what lies above the frequency receives the gain, and the frequency itself receives half of it. A stage whose gain is zero is not applied: its frequency and width then have no effect. When no gain is set and « High-pass » is zero, the received sound comes out unchanged. A frequency beyond half the sample rate is brought just below it. A positive gain raises the level, and the peaks with it. The « Audio » output returns the equalised sound, with the received length, sample rate and channels. The message gives the number of stages applied.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| High-pass | number | 0 Hz | 0 – 500 Hz, step 1 | The cutoff of a twelve-decibel-per-octave high-pass. At zero, nothing is cut. |
+| Low frequency | number | 100 Hz | 20 – 1000 Hz, step 1 | The hinge of the low shelf: below it, the gain applies. No effect while the band's gain is zero. |
+| Low gain | number | 0 dB | -18 – 18 dB, step 0.5 | What the low shelf adds or removes. At zero, it is not applied. |
+| Frequency 1 | number | 250 Hz | 20 – 20000 Hz, step 1 | The centre of bell 1. No effect while the band's gain is zero. |
+| Gain 1 | number | 0 dB | -18 – 18 dB, step 0.5 | What bell 1 adds or removes at its centre. At zero, it is not applied. |
+| Q 1 | number | 1 Q | 0.3 – 10 Q, step 0.1 | The width of bell 1: high, it narrows to a few hertz; low, it spreads over several octaves. No effect while the band's gain is zero. |
+| Frequency 2 | number | 1000 Hz | 20 – 20000 Hz, step 1 | The centre of bell 2. No effect while the band's gain is zero. |
+| Gain 2 | number | 0 dB | -18 – 18 dB, step 0.5 | What bell 2 adds or removes at its centre. At zero, it is not applied. |
+| Q 2 | number | 1 Q | 0.3 – 10 Q, step 0.1 | The width of bell 2: high, it narrows to a few hertz; low, it spreads over several octaves. No effect while the band's gain is zero. |
+| Frequency 3 | number | 3000 Hz | 20 – 20000 Hz, step 1 | The centre of bell 3. No effect while the band's gain is zero. |
+| Gain 3 | number | 0 dB | -18 – 18 dB, step 0.5 | What bell 3 adds or removes at its centre. At zero, it is not applied. |
+| Q 3 | number | 1 Q | 0.3 – 10 Q, step 0.1 | The width of bell 3: high, it narrows to a few hertz; low, it spreads over several octaves. No effect while the band's gain is zero. |
+| Frequency 4 | number | 8000 Hz | 20 – 20000 Hz, step 1 | The centre of bell 4. No effect while the band's gain is zero. |
+| Gain 4 | number | 0 dB | -18 – 18 dB, step 0.5 | What bell 4 adds or removes at its centre. At zero, it is not applied. |
+| Q 4 | number | 1 Q | 0.3 – 10 Q, step 0.1 | The width of bell 4: high, it narrows to a few hertz; low, it spreads over several octaves. No effect while the band's gain is zero. |
+| High frequency | number | 10000 Hz | 1000 – 20000 Hz, step 1 | The hinge of the high shelf: above it, the gain applies. No effect while the band's gain is zero. |
+| High gain | number | 0 dB | -18 – 18 dB, step 0.5 | What the high shelf adds or removes. At zero, it is not applied. |
 
 #### Resonators
 
