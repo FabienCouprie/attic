@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**510 composants**, dont **98** avec une vue propre et **7** sans lecteur générique.
+**510 composants**, dont **101** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -107,10 +107,13 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Entrée texte | `source-texte` | VueSourceTexte | — | 280 × 200 | non | oui | non |
 | Incruster les sous-titres | `sous-titres-incrustes` | VueFilmProduit | — | 240 × 140 | non | oui | non |
 | Spectrogramme | `spectrogramme` | VueSpectrogramme | — | 420 × 300 | non | oui | non |
+| Spectrogramme fractal | `spectrogramme-fractal` | VueRenduImage | — | 320 × 480 | oui | oui | non |
+| Spectrogramme → image | `spectrogramme-image` | VueRenduImage | — | 320 × 320 | oui | oui | non |
 | Styles musicaux | `styles-musicaux` | VueStylesMusicaux | — | 300 × 320 | non | oui | non |
 | Suiveur de caractéristique | `suiveur-caracteristique` | VueCourbe | — | 240 × 140 | non | oui | non |
 | Tessitures de voix | `tessitures-voix` | VueTessituresVoix | — | 300 × 320 | non | oui | non |
 | Texte → image | `texte-image` | VueRenduImage | — | 320 × 320 | oui | oui | non |
+| Texte → image (MOSS) | `texte-image-moss` | VueRenduImage | — | 320 × 320 | oui | oui | non |
 | Transcripteur MIDI | `transcripteur-midi` | VueTranscription | — | 240 × 118 | non | oui | non |
 | Grille d'accords VexFlow | `vexflow-grille` | VueVexFlow | — | 500 × 200 | oui | oui | oui |
 | Partition MIDI | `vexflow-midi` | VueVexFlow | — | 800 × 200 | oui | oui | oui |
@@ -483,8 +486,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Spatialisation stéréo | `spatialisation-stereo` | 240 × 162 |
 | Spatialiseur | `spatialiseur` | 240 × 184 |
 | Spectre visible | `spectre-visible` | 240 × 140 |
-| Spectrogramme fractal | `spectrogramme-fractal` | 240 × 140 |
-| Spectrogramme → image | `spectrogramme-image` | 240 × 118 |
 | Spectrogramme → son | `spectrogramme-son` | 240 × 118 |
 | Spirale logarithmique | `spirale-logarithmique` | 240 × 140 |
 | Spirale des quintes | `spirale-quintes` | 240 × 140 |
@@ -498,7 +499,6 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Synthèse par scanning | `synthese-scanning` | 240 × 118 |
 | Tempérament | `temperament` | 240 × 162 |
 | Terrain d'onde | `terrain-onde` | 240 × 118 |
-| Texte → image (MOSS) | `texte-image-moss` | 240 × 118 |
 | Texte → MIDI | `texte-vers-midi` | 240 × 140 |
 | Texture par statistiques | `texture-statistique` | 240 × 118 |
 | Accord | `tonal-accord` | 240 × 118 |

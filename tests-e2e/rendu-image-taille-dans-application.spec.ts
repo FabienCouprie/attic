@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
 
 import { VUES_IMAGE, VUES_IMAGE_AVEC_LECTEUR } from "../src/ui/tailles-noeuds";
-import { relancerEtAttendre, semerEtLancer } from "./pilote-graphe";
+import { etatDesNoeuds, relancerEtAttendre, semerEtLancer } from "./pilote-graphe";
 import { serveurDeVerification } from "./serveur-de-developpement";
 
 const devUrl = serveurDeVerification(5271);
@@ -114,4 +114,43 @@ test("« RENDU IMAGE » GARDE 320 × 320 AU RUN ET À LA REMISE À ZÉRO, l'imag
   expect(apresReset!.debord, rapport).toBeLessThanOrEqual(1);
   expect(source!.debord, rapport).toBeLessThanOrEqual(1);
   expect(source!.placeImage, rapport).toBeGreaterThanOrEqual(120);
+});
+
+// RELEVÉ LE 2026-10-29 : trois composants rendaient une image que leur nœud ne montrait pas, faute
+// de vue au registre. La pose ne le dit pas, aucune image n'y étant encore : il faut un run, qui
+// éprouve le chemin entier, de l'exécution au magasin des résultats jusqu'à la vue. MOSS demande son
+// modèle et Electron, et `moss-dans-application.spec.ts` le tient ; les deux autres tournent dans le
+// navigateur et sont tenus ici, le fractal servant de source au spectrogramme.
+test("LES COMPOSANTS QUI N'AVAIENT PAS DE VUE MONTRENT LEUR IMAGE APRÈS UN RUN, dans leur cadre", async ({ page }) => {
+  test.setTimeout(180000);
+  const graphe = JSON.stringify({
+    nodes: [
+      { id: "fractal", position: { x: 0, y: 0 }, data: { ficheId: "spectrogramme-fractal", parametres: { "Durée": 1 } } },
+      { id: "spectre", position: { x: 420, y: 0 }, data: { ficheId: "son-spectrogramme", parametres: {} } },
+      { id: "image", position: { x: 840, y: 0 }, data: { ficheId: "spectrogramme-image", parametres: {} } },
+    ],
+    edges: [
+      { id: "e1", source: "fractal", sourceHandle: "out:1", target: "spectre", targetHandle: "in:0" },
+      { id: "e2", source: "spectre", sourceHandle: "out:0", target: "image", targetHandle: "in:0" },
+    ],
+  });
+  await semerEtLancer(page, devUrl, graphe);
+  await page.waitForTimeout(1500);
+  const releves: Record<string, unknown> = { etats: await etatDesNoeuds(page) };
+  for (const [id, taille] of [["fractal", [320, 480]], ["image", [320, 320]]] as const) {
+    const c = await cadre(page, id);
+    // DÉCODÉE, et non seulement posée : une balise dont l'adresse ne mène à rien a zéro de large.
+    const decodee = await page.evaluate((nid) => {
+      const img = document.querySelector(`.react-flow__node[data-id="${nid}"] img`) as HTMLImageElement | null;
+      return img ? [img.naturalWidth, img.naturalHeight] : null;
+    }, id);
+    releves[id] = { ...c, decodee };
+    const rapport = JSON.stringify(releves);
+    expect(c?.image, `${id} ne montre pas son image : ${rapport}`).toBe(1);
+    expect(Math.min(...(decodee ?? [0])), rapport).toBeGreaterThan(0);
+    expect([c?.largeur, c?.hauteur], rapport).toEqual(taille);
+    expect(c!.placeImage, rapport).toBeGreaterThanOrEqual(120);
+    expect(c!.debord, rapport).toBeLessThanOrEqual(1);
+  }
+  console.log(JSON.stringify(releves));
 });
