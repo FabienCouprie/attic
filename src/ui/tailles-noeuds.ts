@@ -18,7 +18,8 @@ import type { FicheUI } from "./registre-actif";
  */
 export const VUES_IMAGE = new Set([
   "rendu-image", "entree-image", "lecteur-svg",
-  "texte-image", "visualisation-songsee", "visualiseur-courbe",
+  "texte-image", "texte-image-moss", "visualisation-songsee", "visualiseur-courbe",
+  "spectrogramme-image",
 ]);
 
 /**
@@ -27,7 +28,7 @@ export const VUES_IMAGE = new Set([
  * MESURÉ PLUTÔT QUE SUPPOSÉ : à 320 × 320, une fois le lecteur apparu, l'image d'« Attracteur / IFS »
  * ne gardait qu'environ 65 px de haut. À 480, il lui en reste plus de deux cents.
  */
-export const VUES_IMAGE_AVEC_LECTEUR = new Set(["attracteur-ifs", "camelot"]);
+export const VUES_IMAGE_AVEC_LECTEUR = new Set(["attracteur-ifs", "camelot", "spectrogramme-fractal"]);
 
 export function tailleDefaut(def: FicheUI): { width: number; height: number } {
   // LE COMPTE QUI DÉCIDE DE LA HAUTEUR EST CELUI QUI SERA DESSINÉ, et non celui que la fiche

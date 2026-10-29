@@ -402,7 +402,8 @@ export function VueAttracteurIFS({ data }: VueProps) {
 // ── Rendu image (affiche une image reçue) ──
 export function VueRenduImage({ data, def }: VueProps) {
   const { t } = useI18n();
-  const pasDeMessage = def?.id === "entree-image" || def?.id === "lecteur-svg" || def?.id === "texte-image";
+  const pasDeMessage = ["entree-image", "lecteur-svg", "texte-image", "texte-image-moss",
+    "spectrogramme-fractal", "spectrogramme-image"].includes(def?.id ?? "");
   return <SongseeVue fichier={data.imageResultatFile as File | undefined} url={data.imageResultatUrl as string | undefined} message={pasDeMessage ? "" : t("msg.connecter.image")} />;
 }
 
