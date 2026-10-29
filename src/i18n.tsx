@@ -268,6 +268,9 @@ const DICO: Record<string, Record<Langue, string>> = {
   },
   // Le {nom} est substitué par `String.replace`, pas par le mécanisme __VAR_n__.
   "meta.confirmSupprimerCatalogue": { fr: "Supprimer « {nom} » du catalogue ?", en: "Remove “{nom}” from the catalog?" },
+  "pressePapiers.inconnus": { fr: "Composant(s) inconnu(s) dans cette fenêtre, non collé(s) : {liste}", en: "Component(s) unknown in this window, not pasted: {liste}" },
+  "meta.employeAilleurs": { fr: "« {nom} » est employé dans {nb} autre(s) fenêtre(s) : il reste au catalogue. Le retirer d'abord de leur graphe.", en: "“{nom}” is used in {nb} other window(s): it stays in the catalog. Remove it from their graph first." },
+  "meta.modifieAilleurs": { fr: "« {nom} » vient d'être modifié dans une autre fenêtre. En sortir ici remplacera cette modification par celle-ci.", en: "“{nom}” was just changed in another window. Leaving it here will replace that change with this one." },
   "msg.aucunFichierAudio": { fr: "Aucun fichier audio", en: "No audio file" },
   "msg.cheminInvalide": { fr: "Chemin invalide", en: "Invalid path" },
   "msg.erreur_ouverture": { fr: "Impossible d'ouvrir le fichier.", en: "Could not open the file." },

@@ -37,7 +37,13 @@ import type { PluginDef, PortDef, ParametreDef } from "./types";
 let registre: Registre<unknown, unknown> | null = null;
 export function configurerRegistreNodes(r: Registre<unknown, unknown>): void { registre = r; }
 
-const CLE = "attic-nodes-installes";
+// UNE CLÉ PAR NŒUD, et non plus une liste : la même faute que la bibliothèque de métas, et le même
+// remède (voir `ui/metasLocaux.ts`). Chaque fenêtre réécrivait la liste ENTIÈRE depuis sa mémoire :
+// un nœud installé dans une fenêtre effaçait du stockage celui qu'une autre venait d'installer.
+/** L'ancienne clé, qui tenait tous les nœuds en une liste. Lue une fois au démarrage, pour migrer. */
+export const CLE_LISTE_NODES = "attic-nodes-installes";
+/** La clé d'un nœud installé : ce préfixe, puis son identifiant. */
+export const PREFIXE_NODE_INSTALLE = "attic-node-installe:";
 
 interface NodeInstalle {
   manifest: {
@@ -105,31 +111,85 @@ export function configurerBacDExecution(b: BacDExecution | null): void { bac = b
 // Stockage en mémoire
 const nodesInstalles = new Map<string, NodeInstalle>();
 
-// Sauvegarder en localStorage
-function sauvegarder(): void {
+const estNodeInstalle = (n: unknown): n is NodeInstalle =>
+  !!(n as NodeInstalle)?.manifest?.id && !!(n as NodeInstalle)?.executerCode;
+
+// Sauvegarder UN nœud en localStorage, sous sa clé
+function sauvegarder(id: string): void {
   try {
-    const liste: NodeInstalle[] = [...nodesInstalles.values()];
-    localStorage.setItem(CLE, JSON.stringify(liste));
+    const node = nodesInstalles.get(id);
+    if (node) localStorage.setItem(PREFIXE_NODE_INSTALLE + id, JSON.stringify(node));
   } catch {}
+}
+
+/** Verse l'ancienne liste dans les clés par nœud ; un nœud qui a déjà sa clé la garde. */
+function migrerLaListe(s: Storage): void {
+  const brut = s.getItem(CLE_LISTE_NODES);
+  if (brut === null) return;
+  let liste: unknown;
+  try { liste = JSON.parse(brut); } catch { return; }
+  if (Array.isArray(liste)) {
+    for (const n of liste) {
+      if (estNodeInstalle(n) && s.getItem(PREFIXE_NODE_INSTALLE + n.manifest.id) === null) {
+        s.setItem(PREFIXE_NODE_INSTALLE + n.manifest.id, JSON.stringify(n));
+      }
+    }
+  }
+  s.removeItem(CLE_LISTE_NODES);
+}
+
+/** Tous les nœuds installés en stockage. */
+function nodesStockes(s: Storage): NodeInstalle[] {
+  const tous: NodeInstalle[] = [];
+  for (let i = 0; i < s.length; i++) {
+    const cle = s.key(i);
+    if (!cle?.startsWith(PREFIXE_NODE_INSTALLE)) continue;
+    try { const n = JSON.parse(s.getItem(cle) ?? "null"); if (estNodeInstalle(n)) tous.push(n); } catch {}
+  }
+  return tous;
 }
 
 // Charger depuis localStorage
 export function chargerNodesInstalles(): number {
   try {
-    const brut = localStorage.getItem(CLE);
-    if (!brut) return 0;
-    const liste: NodeInstalle[] = JSON.parse(brut);
-    if (!Array.isArray(liste)) return 0;
+    migrerLaListe(localStorage);
     let n = 0;
-    for (const node of liste) {
-      if (node?.manifest?.id && node?.executerCode) {
-        nodesInstalles.set(node.manifest.id, node);
-        enregistrerNodeDynamique(node);
-        n++;
-      }
+    for (const node of nodesStockes(localStorage)) {
+      nodesInstalles.set(node.manifest.id, node);
+      enregistrerNodeDynamique(node);
+      n++;
     }
     return n;
   } catch { return 0; }
+}
+
+/** Tous les nœuds en une liste, pour la sauvegarde d'avant mise à jour : la forme d'autrefois. */
+export function listeDesNodesInstallesStockes(): string | null {
+  try {
+    const tous = nodesStockes(localStorage);
+    return tous.length ? JSON.stringify(tous) : null;
+  } catch { return null; }
+}
+
+/**
+ * Verse ici ce qu'une autre fenêtre a écrit sous une clé de nœud installé.
+ *
+ * Rend vrai si le catalogue a changé. Rien n'est réécrit : la valeur est déjà en stockage.
+ */
+export function appliquerNodeInstalleDistant(cle: string | null, valeur: string | null): boolean {
+  if (!cle?.startsWith(PREFIXE_NODE_INSTALLE)) return false;
+  const id = cle.slice(PREFIXE_NODE_INSTALLE.length);
+  if (valeur === null) {
+    if (!nodesInstalles.delete(id)) return false;
+    registre?.desenregistrer(id);
+    return true;
+  }
+  let node: unknown;
+  try { node = JSON.parse(valeur); } catch { return false; }
+  if (!estNodeInstalle(node) || node.manifest.id !== id) return false;
+  nodesInstalles.set(id, node);
+  enregistrerNodeDynamique(node);
+  return true;
 }
 
 
@@ -252,6 +312,6 @@ export function installerNode(node: NodeInstalle): boolean {
   }
   nodesInstalles.set(node.manifest.id, node);
   enregistrerNodeDynamique(node);
-  sauvegarder();
+  sauvegarder(node.manifest.id);
   return true;
 }

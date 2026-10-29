@@ -11,6 +11,7 @@ import { demarrerLaFriction } from "./friction-pointeur";
 import { PERIODE_MESURE_MS, agregerMetriques, detailParProcessus, formaterMo, type MesureMemoire } from "./memoire-vive";
 import { SelecteurProfondeurExport } from "./SelecteurProfondeurExport";
 import { SelecteurFrequenceDeTravail } from "./SelecteurFrequenceDeTravail";
+import { instantaneAvantMiseAJour } from "./sauvegarde-avant-maj";
 
 interface Props {
   theme: string; setTheme: (t: "violet" | "black") => void;
@@ -130,15 +131,7 @@ export function BarreOutils(props: Props) {
     api.majInfo?.().then((info: any) => { if (info) setMaj(info); });
     // Quand une mise à jour est téléchargée, sauvegarder les données
     if (api?.majBackupDemande) {
-      api.majBackupDemande(() => {
-        const backup = {
-          metas: localStorage.getItem("attic-metas"),
-          encours: localStorage.getItem("attic-encours"),
-          lang: localStorage.getItem("attic-lang"),
-          nodesInstalles: localStorage.getItem("attic-nodes-installes"),
-        };
-        api.majSauvegarderBackup?.(backup);
-      });
+      api.majBackupDemande(() => api.majSauvegarderBackup?.(instantaneAvantMiseAJour()));
     }
   }, []);
 

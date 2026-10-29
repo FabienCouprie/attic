@@ -91,6 +91,15 @@ export interface ReglagesJournal {
    */
   ecritPourAutrui?: (depuis: number) => boolean;
   /**
+   * Ce qui s'écrit QUAND MÊME, l'en-cours partagé étant laissé à l'autre : la copie de la fenêtre.
+   *
+   * DEPUIS QUE CHAQUE FENÊTRE A SON GRAPHE, le 2026-10-29, l'en-cours partagé n'est plus qu'un
+   * choix pour le prochain lancement, et le garde ci-dessus le laisse à qui a bougé en dernier.
+   * Mais la copie que la fenêtre garde pour son propre rechargement n'est à personne d'autre : la
+   * taire rendrait, au rechargement, le graphe d'avant le dernier geste.
+   */
+  ecrirePourSoi?: () => void;
+  /**
    * Combien de millisecondes de calme avant d'écrire.
    *
    * CE QU'UNE ÉCRITURE COÛTE EST MESURÉ, ET LE SEUIL EST UN CHOIX — les deux ne doivent pas être
@@ -126,7 +135,7 @@ export function creerJournalDeSession(r: ReglagesJournal): JournalDeSession {
   const ecrireMaintenant = () => {
     jeton = null;
     // ON N'ÉCRASE QUE CE QU'ON A ÉCRIT SOI-MÊME : voir `ecritPourAutrui`.
-    if (r.ecritPourAutrui?.(dernierNote)) { ecartes += 1; return; }
+    if (r.ecritPourAutrui?.(dernierNote)) { ecartes += 1; r.ecrirePourSoi?.(); return; }
     if (r.ecrire()) compte += 1;
   };
 

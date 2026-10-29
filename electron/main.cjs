@@ -111,6 +111,9 @@ const { infoExecutable } = require("./executables.cjs");
 const { ecrireSauvegarde, lireSauvegarde } = require("./sauvegarde-maj.cjs");
 const { etatNeutre, etatVerification, etatApresAttente, peutEcraser } = require("./etat-maj.cjs");
 const { installerSauvegardeAvantFermeture } = require("./fermeture-sauvegarde.cjs");
+const {
+  fenetreDe, uneSeuleFois, requeteDeFenetre, adresseDeDeveloppement, uneFenetreVivante,
+} = require("./fenetres.cjs");
 const { resoudreRessource } = require("./chemins-ressources.cjs");
 const { SCHEMA: SCHEMA_MEDIA, cheminDepuisUrl, typeMedia, analyserPlage } = require("./plage-media.cjs");
 const { SCHEMA: SCHEMA_RESSOURCE, servir: servirRessource } = require("./ressource-locale.cjs");
@@ -324,10 +327,26 @@ const PERMISSIONS_ACCORDEES = new Set([
   "midi",                                         // nœud Capture MIDI (navigator.requestMIDIAccess, pas de sysex)
 ]);
 
+// LA PREMIÈRE FENÊTRE, pour les outils de développement ouverts au lancement. Rien d'autre ne la
+// lit : un dialogue se rattache à la fenêtre qui le demande, voir `electron/fenetres.cjs`.
 let fenetre = null;
 
-async function creerFenetre() {
-  fenetre = new BrowserWindow({
+// En dev, forcer un rechargement sans cache du renderer pour éviter qu'un ancien build Vite ne
+// soit réutilisé par la session Electron (HTTP cache, V8 code cache, CacheStorage, localStorage,
+// etc. entre deux redémarrages). UNE FOIS PAR PROCESSUS : fait à chaque fenêtre, il vidait le
+// stockage de celle qui était déjà ouverte. Voir `electron/fenetres.cjs`.
+const viderLesCachesDeDeveloppement = uneSeuleFois(async (sess) => {
+  await sess.clearCache();
+  await sess.clearCodeCaches({ urls: [] });
+  await sess.clearStorageData();
+  console.log("[attic] dev cache cleared (HTTP + V8 + storage)");
+});
+
+/** `nouvelle` : ouverte par « Nouvelle fenêtre », elle naît sur un canevas vide, sans fichier. */
+async function creerFenetre({ nouvelle = false } = {}) {
+  // UNE VARIABLE LOCALE, ET NON LA VARIABLE DE MODULE : celle-ci serait réaffectée par une seconde
+  // ouverture pendant l'attente du vidage, et cette fenêtre-ci chargerait alors la page de l'autre.
+  const f = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 900,
@@ -340,6 +359,7 @@ async function creerFenetre() {
       devTools: true,
     },
   });
+  if (!fenetre || fenetre.isDestroyed()) fenetre = f;
 
   // Les liens externes (favoris « Banque de son », `<a target="_blank">`) doivent
   // s'ouvrir dans le NAVIGATEUR du système, pas dans une fenêtre Electron : sinon
@@ -352,7 +372,7 @@ async function creerFenetre() {
   // window.open() sont refusés ({ action: "deny" }). De plus nodeIntegration est
   // désactivé et contextIsolation est activé. L'application n'est donc pas
   // affectée par l'alerte même si la version d'Electron est vulnérable.
-  fenetre.webContents.setWindowOpenHandler(({ url }) => {
+  f.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:$/.test(new URL(url).protocol)) shell.openExternal(url);
     return { action: "deny" };
   });
@@ -360,26 +380,18 @@ async function creerFenetre() {
   // Sauvegarder le projet avant de fermer : la sauvegarde automatique écrit toutes les
   // 30 secondes, et ce qui a été fait depuis le dernier battement ne tient qu'en mémoire.
   // La séquence vit dans `fermeture-sauvegarde.cjs`, avec ses tests.
-  installerSauvegardeAvantFermeture({ fenetre, ipcMain });
+  installerSauvegardeAvantFermeture({ fenetre: f, ipcMain });
 
   if (DEV) {
-    // En dev, forcer un rechargement sans cache du renderer pour éviter qu'un
-    // ancien build Vite ne soit réutilisé par la session Electron (HTTP cache,
-    // V8 code cache, CacheStorage, localStorage, etc. entre deux redémarrages).
-    const sess = fenetre.webContents.session;
-    await sess.clearCache();
-    await sess.clearCodeCaches({ urls: [] });
-    await sess.clearStorageData();
-    console.log("[attic] dev cache cleared (HTTP + V8 + storage)");
-    fenetre.loadURL("http://localhost:5175");
-    // fenetre.webContents.openDevTools({ mode: "detach" });
+    await viderLesCachesDeDeveloppement(f.webContents.session);
+    f.loadURL(adresseDeDeveloppement("http://localhost:5175", nouvelle));
   } else {
     const cheminDist = path.join(__dirname, "..", "dist", "index.html");
     if (!fs.existsSync(cheminDist)) {
-      fenetre.loadURL("data:text/html;charset=utf-8,<h2>Build introuvable</h2><p>Lancez <code>npm run build</code> d'abord.</p>");
+      f.loadURL("data:text/html;charset=utf-8,<h2>Build introuvable</h2><p>Lancez <code>npm run build</code> d'abord.</p>");
       return;
     }
-    fenetre.loadFile(cheminDist);
+    f.loadFile(cheminDist, { query: requeteDeFenetre(nouvelle) });
   }
 }
 
@@ -402,9 +414,9 @@ ipcMain.handle("capture:ma-fenetre", (event) => {
 });
 
 // --- IPC : enregistrer un fichier (dialogue + écriture) ---
-ipcMain.handle("fichier:sauvegarder", async (_event, options) => {
+ipcMain.handle("fichier:sauvegarder", async (event, options) => {
   const { defaultPath, filters, data } = options;
-  const resultat = await showSaveDialogSuivi(fenetre, {
+  const resultat = await showSaveDialogSuivi(fenetreDe(BrowserWindow, event), {
     defaultPath: defaultPath || undefined,
     filters: filters || [{ name: "Tous", extensions: ["*"] }],
   });
@@ -421,9 +433,9 @@ ipcMain.handle("fichier:sauvegarder", async (_event, options) => {
 });
 
 // --- IPC : ouvrir un fichier binaire (dialogue + lecture brute) ---
-ipcMain.handle("fichier:ouvrir-binaire", async (_event, options) => {
+ipcMain.handle("fichier:ouvrir-binaire", async (event, options) => {
   const { defaultPath, filters } = options;
-  const resultat = await showOpenDialogSuivi(fenetre, {
+  const resultat = await showOpenDialogSuivi(fenetreDe(BrowserWindow, event), {
     defaultPath: defaultPath || undefined,
     filters: filters || [{ name: "Tous", extensions: ["*"] }],
     properties: ["openFile"],
@@ -451,9 +463,9 @@ const dossierExemples = () => (app.isPackaged
 
 ipcMain.handle("exemples:dossier", () => (fs.existsSync(dossierExemples()) ? dossierExemples() : null));
 
-ipcMain.handle("fichier:ouvrir", async (_event, options) => {
+ipcMain.handle("fichier:ouvrir", async (event, options) => {
   const { defaultPath, filters } = options;
-  const resultat = await showOpenDialogSuivi(fenetre, {
+  const resultat = await showOpenDialogSuivi(fenetreDe(BrowserWindow, event), {
     defaultPath: defaultPath || undefined,
     filters: filters || [{ name: "Tous", extensions: ["*"] }],
     properties: ["openFile"],
@@ -468,9 +480,9 @@ ipcMain.handle("fichier:ouvrir", async (_event, options) => {
 // Les deux gestionnaires du dessus lisent le fichier entier, l'un en texte, l'autre en binaire :
 // pour un film de soixante-dix mégaoctets, cela retiendrait tout ce que la lecture par plages évite,
 // et en texte cela n'aurait aucun sens. Un paramètre de type « fichier » ne veut que le chemin.
-ipcMain.handle("fichier:choisir", async (_event, options) => {
+ipcMain.handle("fichier:choisir", async (event, options) => {
   const { defaultPath, filters, title } = options ?? {};
-  const resultat = await showOpenDialogSuivi(fenetre, {
+  const resultat = await showOpenDialogSuivi(fenetreDe(BrowserWindow, event), {
     title: title || undefined,
     defaultPath: defaultPath || undefined,
     filters: filters?.length ? filters : [{ name: "Tous", extensions: ["*"] }],
@@ -481,9 +493,9 @@ ipcMain.handle("fichier:choisir", async (_event, options) => {
 });
 
 // --- IPC : sauvegarder un fichier binaire (audio WAV) ---
-ipcMain.handle("fichier:sauvegarder-binaire", async (_event, options) => {
+ipcMain.handle("fichier:sauvegarder-binaire", async (event, options) => {
   const { defaultPath, filters, buffer } = options;
-  const resultat = await showSaveDialogSuivi(fenetre, {
+  const resultat = await showSaveDialogSuivi(fenetreDe(BrowserWindow, event), {
     defaultPath: defaultPath || undefined,
     filters: filters || [{ name: "Tous", extensions: ["*"] }],
   });
@@ -498,8 +510,8 @@ ipcMain.handle("fichier:sauvegarder-binaire", async (_event, options) => {
 });
 
 // --- IPC : choisir un dossier ---
-ipcMain.handle("dossier:choisir", async () => {
-  const resultat = await showOpenDialogSuivi(fenetre, {
+ipcMain.handle("dossier:choisir", async (event) => {
+  const resultat = await showOpenDialogSuivi(fenetreDe(BrowserWindow, event), {
     properties: ["openDirectory"],
   });
   if (resultat.canceled || resultat.filePaths.length === 0) return null;
@@ -1109,7 +1121,7 @@ function dossierDeTravailParDefaut() {
 ipcMain.handle("dossier:travail-defaut", () => dossierDeTravailParDefaut());
 
 ipcMain.handle("nouvelle-fenetre", async () => {
-  creerFenetre();
+  creerFenetre({ nouvelle: true });
 });
 
 // --- IPC : Exporter un node en .zip ---
@@ -1228,8 +1240,8 @@ ipcMain.handle("node:supprimer", async (_event, nodeId) => {
 });
 
 // --- IPC : Sauvegarde du fichier (dialogue) ---
-ipcMain.handle("node:sauvegarder-zip", async (_event, { defaultPath }) => {
-  const resultat = await showSaveDialogSuivi(fenetre, {
+ipcMain.handle("node:sauvegarder-zip", async (event, { defaultPath }) => {
+  const resultat = await showSaveDialogSuivi(fenetreDe(BrowserWindow, event), {
     defaultPath: defaultPath || "node.zip",
     filters: [{ name: "ZIP", extensions: ["zip"] }],
   });
@@ -1238,8 +1250,8 @@ ipcMain.handle("node:sauvegarder-zip", async (_event, { defaultPath }) => {
 });
 
 // --- IPC : Sélectionner un fichier zip pour import ---
-ipcMain.handle("node:selectionner-zip", async () => {
-  const resultat = await showOpenDialogSuivi(fenetre, {
+ipcMain.handle("node:selectionner-zip", async (event) => {
+  const resultat = await showOpenDialogSuivi(fenetreDe(BrowserWindow, event), {
     title: "Sélectionner un node .zip",
     filters: [{ name: "ZIP", extensions: ["zip"] }],
     properties: ["openFile"],
@@ -1271,8 +1283,8 @@ ipcMain.handle("python:definir-chemin", async (_event, chemin) => {
 });
 
 // --- IPC : Choisir l'exécutable Python via dialogue ---
-ipcMain.handle("python:choisir-executable", async () => {
-  const resultat = await showOpenDialogSuivi(fenetre, {
+ipcMain.handle("python:choisir-executable", async (event) => {
+  const resultat = await showOpenDialogSuivi(fenetreDe(BrowserWindow, event), {
     title: "Sélectionner l'exécutable Python",
     filters: process.platform === "win32"
       ? [{ name: "Python", extensions: ["exe"] }, { name: "Tous", extensions: ["*"] }]
@@ -1363,8 +1375,8 @@ ipcMain.handle("julia:definir-chemin", async (_event, chemin) => {
   }
 });
 
-ipcMain.handle("julia:choisir-executable", async () => {
-  const resultat = await showOpenDialogSuivi(fenetre, {
+ipcMain.handle("julia:choisir-executable", async (event) => {
+  const resultat = await showOpenDialogSuivi(fenetreDe(BrowserWindow, event), {
     title: "Sélectionner l'exécutable Julia",
     filters: [{ name: "Julia", extensions: ["exe"] }],
     properties: ["openFile"],
@@ -1849,8 +1861,9 @@ if (autoUpdater) {
     try {
       // Le renderer ne peut pas écrire directement dans userData,
       // mais on peut sauvegarder le localStorage via le main process
-      // en demandant au renderer de nous l'envoyer
-      fenetre?.webContents.send("maj:backup-demande");
+      // en demandant au renderer de nous l'envoyer. À UNE SEULE FENÊTRE : toutes lisent le même
+      // stockage, et deux réponses écriraient le même fichier en même temps.
+      uneFenetreVivante(BrowserWindow.getAllWindows())?.webContents.send("maj:backup-demande");
     } catch {}
     envoyerInfoMaj();
   });
@@ -1863,9 +1876,11 @@ if (autoUpdater) {
   });
 }
 
+// À TOUTES LES FENÊTRES : chacune a son bouton de mise à jour. L'envoi reste écrit en toutes
+// lettres, `webContents.send("maj:info", …)` : c'est la forme que `pont-canaux.test.ts` lit.
 function envoyerInfoMaj() {
-  if (fenetre && !fenetre.isDestroyed()) {
-    fenetre.webContents.send("maj:info", infoMaj);
+  for (const f of BrowserWindow.getAllWindows()) {
+    if (!f.isDestroyed()) f.webContents.send("maj:info", infoMaj);
   }
 }
 
@@ -2039,15 +2054,17 @@ app.whenReady().then(() => {
   if (DEV && fenetre) {
     fenetre.webContents.openDevTools({ mode: "detach" });
   }
-  // F12 pour ouvrir/fermer les devTools (le menu par défaut qui le permettait a été supprimé)
+  // F12 pour ouvrir/fermer les devTools (le menu par défaut qui le permettait a été supprimé),
+  // CEUX DE LA FENÊTRE OÙ L'ON A APPUYÉ, et non ceux de la dernière ouverte.
   app.on("web-contents-created", (_e, contents) => {
     contents.on("before-input-event", (event, input) => {
       if (input.key === "F12") {
-        if (fenetre && !fenetre.isDestroyed()) {
-          if (fenetre.webContents.isDevToolsOpened()) {
-            fenetre.webContents.closeDevTools();
+        const cible = BrowserWindow.fromWebContents(contents);
+        if (cible && !cible.isDestroyed()) {
+          if (cible.webContents.isDevToolsOpened()) {
+            cible.webContents.closeDevTools();
           } else {
-            fenetre.webContents.openDevTools({ mode: "detach" });
+            cible.webContents.openDevTools({ mode: "detach" });
           }
           event.preventDefault();
         }
