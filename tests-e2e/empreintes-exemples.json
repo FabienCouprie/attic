@@ -509,6 +509,17 @@
       },
       "erreurs": []
     },
+    "une-chanson-prete-a-diffuser.json": {
+      "lecteurs": {},
+      "erreurs": [
+        "egaliseur : Entrée en erreur : rendre",
+        "limiteur : Entrée en erreur : egaliseur",
+        "mesure : Entrée en erreur : normaliseur",
+        "normaliseur : Entrée en erreur : limiteur",
+        "planifier : Nécessite Electron.",
+        "rendre : Entrée en erreur : planifier"
+      ]
+    },
     "une-partition-pour-deux-timbres.json": {
       "lecteurs": {
         "partition": {
