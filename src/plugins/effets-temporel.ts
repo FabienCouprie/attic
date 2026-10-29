@@ -411,7 +411,7 @@ export const fiches: FicheAudio[] = ([
       // du projet, sans laquelle un résultat réussi ne pouvait pas être rejoué.
       const { graine } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const out = appliquerDecoupeAleatoire(a, parts, crossfade, mode, graine);
-      return { valeurs: [out], message: `Découpe aléatoire · ${mode} · graine ${graine}` };
+      return { valeurs: [out], message: traduire("msg.decoupe_aleatoire.resultat", mode, graine) };
     },
   },
   {

@@ -92,7 +92,7 @@ export const fiches: FicheAudio[] = ([
           hasard: creerAleatoire(ctx.paramNombre("Graine", 42)),
         });
         const liste = formes.map(formatCouleur).join(", ");
-        return { valeurs: [audio, midi], message: `Dessin sonore · ${formes.length} formes · ${liste}` };
+        return { valeurs: [audio, midi], message: traduire("msg.dessin_sonore.resultat", formes.length, liste) };
       } catch (e: any) {
         return { valeurs: [null, null], erreur: true, message: e?.message || traduire("msg.erreur") };
       }

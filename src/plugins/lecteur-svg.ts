@@ -103,7 +103,7 @@ const lecteursSvg: FicheAudio[] = [
         const image = await svgToPngFile(fichier, largeur, hauteur);
         return {
           valeurs: [image],
-          message: `${image.name} · ${image.size.toLocaleString()} o`,
+          message: traduire("msg.fichier.taille", image.name, image.size.toLocaleString()),
         };
       } catch (e: any) {
         return { valeurs: [null], erreur: true, message: e?.message || traduire("msg.erreur") };

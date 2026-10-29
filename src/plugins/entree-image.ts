@@ -2,6 +2,7 @@
 // depuis l'inspecteur et le transmet sur sa sortie 'Image'.
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
+import { traduire } from "../i18n";
 
 const entreesImage: FicheAudio[] = [
   {
@@ -26,7 +27,7 @@ const entreesImage: FicheAudio[] = [
       }
       return {
         valeurs: [fichier],
-        message: `${fichier.name} · ${fichier.size.toLocaleString()} o`,
+        message: traduire("msg.fichier.taille", fichier.name, fichier.size.toLocaleString()),
       };
     },
   },

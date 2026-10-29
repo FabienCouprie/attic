@@ -5,13 +5,13 @@
 
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { decoderFichier, rendreAvecEchantillon, analyserMidi, rendreSequence, rendreMidiDepuisBytes, filtrerCanauxMidi, normaliserPic, limiterPic, appliquerInstrumentsParCanal, GAMMES_ACCORDS } from "../audio";
 import { parseMidi } from "midi-file";
 import { genererGrooveBox, type ConfigGrooveBox } from "../audio/groove-box";
 import { rendreBatterieMidi } from "../audio/tone-synths";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2_SUIVI } from "./soundfontGlobal";
-import { optionsPatrons } from "./patrons-rythme";
+import { optionsPatrons, PATRONS } from "./patrons-rythme";
 import { avecDoc } from "./notices";
 
 /**
@@ -356,7 +356,7 @@ export const fiches: FicheAudio[] = ([
         graine: ctx.paramNombre("Graine", 0),
       };
       ctx.onProgress(traduire("progress.g_n_ration_groove_box"));
-      const { midiBytes, midiAccords, midiBasse, midiMelodie, midiBatterie, description, graineUtilisee } = genererGrooveBox(config);
+      const { midiBytes, midiAccords, midiBasse, midiMelodie, midiBatterie, progressionTexte, graineUtilisee } = genererGrooveBox(config);
       const volume = ctx.paramNombre("Volume", 80);
       const volumeBatterie = ctx.paramNombre("Volume batterie", 100);
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
@@ -500,9 +500,15 @@ export const fiches: FicheAudio[] = ([
       // Sécurité : seulement si la somme dépasse le plafond (voir audio/mixage.ts).
       limiterPic(master, 0.95);
 
+      // LA GAMME ET LE STYLE SE DISENT PAR LE LIBELLÉ DU MENU en anglais, et par leur identifiant en
+      // français, qui est ce que le message a toujours montré : « C majeur », « Marche militaire ».
+      const anglais = langueCourante() === "en";
+      const gammeDite = anglais ? (GAMMES_ACCORDS.find((g) => g.id === config.gamme)?.en ?? config.gamme) : config.gamme;
+      const styleDit = anglais ? (PATRONS.find((p) => p.id === config.styleRythme)?.en ?? config.styleRythme) : config.styleRythme;
       return {
         valeurs: [master, fichierBatterie, fichierAccords, fichierBasse, fichierMelodie],
-        message: `${description} · graine ${graineUtilisee}`,
+        message: traduire("msg.groove_box.resultat", config.cle, gammeDite, progressionTexte, config.tempo,
+          config.neurones, styleDit, graineUtilisee),
       };
     },
   },

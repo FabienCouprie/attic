@@ -6,7 +6,7 @@
 
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc, avecNomDicte } from "./notices";
 import { estCourbe, progressionPour, valeurA, valeursParametre } from "../audio/courbe";
 import { creerAleatoire } from "../core";
@@ -62,11 +62,13 @@ export const fiches: FicheAudio[] = ([
       let bas = Infinity;
       let haut = 0;
       for (const f of facteurs) { if (f < bas) bas = f; if (f > haut) haut = f; }
-      const nb = (v: number) => v.toFixed(1).replace(".", ",");
+      // La virgule décimale est celle du français, et du seul français : écrite pour les deux
+      // langues, elle donnait « 71,9 s · 8,0 × » dans l'interface anglaise.
+      const nb = (v: number) => (langueCourante() === "en" ? v.toFixed(1) : v.toFixed(1).replace(".", ","));
       return {
         valeurs: [out],
         message: estCourbe(ctx.entree(1))
-          ? `${nb(out.duration)} s · ${nb(bas)} à ${nb(haut)} ×`
+          ? traduire("msg.paulstretch.course", nb(out.duration), nb(bas), nb(haut))
           : `${nb(out.duration)} s · ${nb(haut)} ×`,
       };
     },

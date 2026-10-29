@@ -26,6 +26,13 @@ import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 // résolvant par la position.
 const VALEURS_QUANTIFICATION = ["1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"];
 
+// LES DIRECTIONS DE L'ARPÉGIATEUR, une seule table pour le menu et pour le message : l'identifiant
+// est le libellé français, et le message doit dire le libellé de la langue de l'interface.
+const DIRECTIONS_ARPEGE = {
+  ids: ["Montant", "Descendant", "UpDown", "DownUp", "Aléatoire"],
+  en: ["Up", "Down", "UpDown", "DownUp", "Random"],
+};
+
 export const fiches: FicheAudio[] = ([
   {
     id: "motif-imposer-rythme", nom: "Imposer un rythme", nomEn: "Impose Rhythm",
@@ -379,8 +386,8 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "MIDI", type: "midi" }],
     parametres: [
       { nom: "Direction", nomEn: "Direction", type: "choix",
-        options: ["Montant", "Descendant", "UpDown", "DownUp", "Aléatoire"], optionIds: ["Montant","Descendant","UpDown","DownUp","Aléatoire"],
-        optionsEn: ["Up", "Down", "UpDown", "DownUp", "Random"],
+        options: DIRECTIONS_ARPEGE.ids, optionIds: DIRECTIONS_ARPEGE.ids,
+        optionsEn: DIRECTIONS_ARPEGE.en,
         defaut: "Montant",
         doc: "Ordre de lecture des notes de l'accord. Up = du grave à l'aigu ; Down = de l'aigu au grave ; UpDown = aller-retour ; Random = ordre aléatoire.",
         docEn: "Order in which chord notes are played. Up = low to high ; Down = high to low ; UpDown = back and forth ; Random = random order.", defautEn: "Up" },
@@ -423,7 +430,11 @@ export const fiches: FicheAudio[] = ([
         await arpegerMidi(fichier, motif, direction, vitesse, octaves, dureeNote, aleatoireArpege),
         ctx.paramNombre("Instrument", 0),
       );
-      return { valeurs: [nouvFichier], message: `${traduire("msg.arp_ge_var_0_var_1_var_2_oct", direction, vitesse, octaves)} · graine ${graine}` };
+      // LA DIRECTION SE DIT PAR SON LIBELLÉ en anglais : son identifiant est le libellé français, et
+      // le message annonçait « Arpeggio Montant ».
+      const directionDite = langueCourante() === "en"
+        ? (DIRECTIONS_ARPEGE.en[DIRECTIONS_ARPEGE.ids.indexOf(direction)] ?? direction) : direction;
+      return { valeurs: [nouvFichier], message: traduire("msg.var_0_graine_var_1", traduire("msg.arp_ge_var_0_var_1_var_2_oct", directionDite, vitesse, octaves), graine) };
    },
   },
   {
@@ -504,9 +515,10 @@ export const fiches: FicheAudio[] = ([
       const [refOut, pisteOut] = alignerPiste(ref, piste, position === "before" ? "avant" : "apres");
       const diff = piste.length - ref.length;
       let msg: string;
-      if (diff < 0) msg = `Piste ${(-diff / ref.sampleRate).toFixed(2)}s trop courte → silence ${position === "before" ? "au début" : "à la fin"}`;
-      else if (diff > 0) msg = `Piste ${(diff / ref.sampleRate).toFixed(2)}s trop longue → fade ${position === "before" ? "d'ouverture" : "de fermeture"}`;
-      else msg = "Pistes de même longueur — aucune modification";
+      const avant = position === "before";
+      if (diff < 0) msg = traduire(avant ? "msg.aligneur.courte_debut" : "msg.aligneur.courte_fin", (-diff / ref.sampleRate).toFixed(2));
+      else if (diff > 0) msg = traduire(avant ? "msg.aligneur.longue_debut" : "msg.aligneur.longue_fin", (diff / ref.sampleRate).toFixed(2));
+      else msg = traduire("msg.aligneur.meme_longueur");
       return { valeurs: [refOut, pisteOut], message: msg };
    },
  },

@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererCouleurRGBAudio, parsePlage } from "../audio";
 import { avecDoc } from "./notices";
+import { traduire } from "../i18n";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -55,7 +56,7 @@ export const fiches: FicheAudio[] = ([
         vert,
         bleu,
       });
-      return { valeurs: [audio], message: `Couleur RGB · ${audio.duration.toFixed(1)} s` };
+      return { valeurs: [audio], message: traduire("msg.couleur_rgb.resultat", audio.duration.toFixed(1)) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

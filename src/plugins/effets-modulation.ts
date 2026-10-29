@@ -38,8 +38,10 @@ export const fiches: FicheAudio[] = ([
       const formantRatio = ctx.paramNombre("Formants", 100) / 100;
       ctx.onProgress(traduire("progress.analyse_lpc"));
       const r = shiftFormants(a, pitch, formantRatio);
-      const pitchInfo = pitch !== 0 ? `pitch ${pitch > 0 ? "+" : ""}${pitch}½-ton` : "pitch inchangé";
-      const formantInfo = formantRatio !== 1 ? `formants ${Math.round(formantRatio * 100)}%` : "formants inchangés";
+      const pitchInfo = pitch !== 0
+        ? traduire("msg.shift_formants.pitch", `${pitch > 0 ? "+" : ""}${pitch}`) : traduire("msg.shift_formants.pitch_inchange");
+      const formantInfo = formantRatio !== 1
+        ? `formants ${Math.round(formantRatio * 100)}%` : traduire("msg.shift_formants.formants_inchanges");
       return { valeurs: [r], message: traduire("msg.var_0_var_1_2", pitchInfo, formantInfo) };
    },
  },

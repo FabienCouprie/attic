@@ -48,7 +48,8 @@ export const fiches: FicheAudio[] = ([
           ? "droite"
           : "centre";
       const sortie = hardPanner(audio, position);
-      const label = position === "gauche" ? "Gauche" : position === "droite" ? "Droite" : "Centre";
+      const label = traduire(position === "gauche" ? "msg.hard_panner.gauche"
+        : position === "droite" ? "msg.hard_panner.droite" : "msg.hard_panner.centre");
       return { valeurs: [sortie], message: `Hard panner · ${label} · ${audio.sampleRate} Hz` };
     },
   },

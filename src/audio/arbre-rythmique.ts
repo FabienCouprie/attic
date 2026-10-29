@@ -18,6 +18,8 @@
 // écrit un ailleurs peut le coller ici. Rien de ce code ne vient d'une source sous licence GPL ;
 // une syntaxe n'est pas un programme. Voir la section 4 de `COMPOSITION-ASSISTEE.md`.
 
+import { traduire } from "../i18n";
+
 /**
  * Un nœud de l'arbre : une proportion, et ce qu'elle contient.
  *
@@ -90,8 +92,12 @@ function decouper(texte: string): Jeton[] {
 export function lireArbre(texte: string): Mesure[] {
   const jetons = decouper(texte);
   let i = 0;
-  const erreur = (m: string): never => {
-    throw new Error(`${m} (jeton ${i + 1} sur ${jetons.length}${jetons[i] ? ` : « ${jetons[i]} »` : ""})`);
+  // LE REFUS SE DIT DANS LA LANGUE DE L'INTERFACE : trois composants le rendent tel quel en message,
+  // et il s'affichait en français dans l'interface anglaise. `cle` est une clé du dictionnaire.
+  const erreur = (cle: string): never => {
+    throw new Error(jetons[i]
+      ? traduire("msg.arbre.position_jeton", traduire(cle), i + 1, jetons.length, jetons[i])
+      : traduire("msg.arbre.position", traduire(cle), i + 1, jetons.length));
   };
 
   const lireNoeud = (): NoeudRythme => {
@@ -99,7 +105,7 @@ export function lireArbre(texte: string): Mesure[] {
       i++;
       const poids = lireNombre();
       const enfants = lireListe();
-      if (jetons[i] !== ")") erreur("parenthèse fermante attendue après une division");
+      if (jetons[i] !== ")") erreur("msg.arbre.fermante_division");
       i++;
       // UNE DIVISION NE SONNE PAS, DONC ELLE N'EST NI SILENCE NI LIÉE, et le signe qui le
       // prétendrait est abandonné ici. Écrit à la main, `(-1 (1 1))` était accepté, DESSINÉ avec
@@ -116,8 +122,8 @@ export function lireArbre(texte: string): Mesure[] {
 
   const lireNombre = (): { valeur: number; liee: boolean } => {
     const j = jetons[i];
-    if (j === undefined) erreur("nombre attendu");
-    if (!/^-?\d+(\.\d+)?$/.test(j)) erreur("nombre attendu");
+    if (j === undefined) erreur("msg.arbre.nombre");
+    if (!/^-?\d+(\.\d+)?$/.test(j)) erreur("msg.arbre.nombre");
     i++;
     // LA VIRGULE MARQUE LA LIAISON, et c'est la convention d'origine : « 1.0 » est une durée d'un
     // temps liée à ce qui précède, « 1 » une note neuve. Les deux valent un, seule l'écriture les
@@ -126,23 +132,23 @@ export function lireArbre(texte: string): Mesure[] {
   };
 
   const lireListe = (): NoeudRythme[] => {
-    if (jetons[i] !== "(") erreur("liste attendue");
+    if (jetons[i] !== "(") erreur("msg.arbre.liste");
     i++;
     const out: NoeudRythme[] = [];
     while (i < jetons.length && jetons[i] !== ")") out.push(lireNoeud());
-    if (jetons[i] !== ")") erreur("parenthèse fermante attendue à la fin d'une liste");
+    if (jetons[i] !== ")") erreur("msg.arbre.fermante_liste");
     i++;
     return out;
   };
 
   const lireMesure = (): Mesure => {
-    if (jetons[i] !== "(") erreur("une mesure commence par une parenthèse");
+    if (jetons[i] !== "(") erreur("msg.arbre.ouvrante_mesure");
     i++;
     const m = /^(\d+)\/(\d+)$/.exec(jetons[i] ?? "");
-    if (!m) erreur("métrique attendue, de la forme 4/4");
+    if (!m) erreur("msg.arbre.metrique");
     i++;
     const contenu = lireListe();
-    if (jetons[i] !== ")") erreur("parenthèse fermante attendue à la fin d'une mesure");
+    if (jetons[i] !== ")") erreur("msg.arbre.fermante_mesure");
     i++;
     return { metrique: [Number(m![1]), Number(m![2])], contenu };
   };
@@ -154,10 +160,10 @@ export function lireArbre(texte: string): Mesure[] {
   if (englobante) i++;
   while (i < jetons.length && jetons[i] === "(") mesures.push(lireMesure());
   if (englobante) {
-    if (jetons[i] !== ")") erreur("parenthèse fermante attendue à la fin de la liste de mesures");
+    if (jetons[i] !== ")") erreur("msg.arbre.fermante_mesures");
     i++;
   }
-  if (i < jetons.length) erreur("texte en trop après le dernier arbre");
+  if (i < jetons.length) erreur("msg.arbre.texte_en_trop");
   return mesures;
 }
 

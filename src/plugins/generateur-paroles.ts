@@ -148,7 +148,9 @@ export const fiches: FicheAudio[] = ([
 
       return {
         valeurs: [paroles],
-        message: traduire("msg.var_0_graine_var_1_var_2_lignes", langue === "fr" ? "Paroles générées" : "Lyrics generated", graineAff, paroles.split("\n").length),
+        // LE MESSAGE SUIT LA LANGUE DE L'INTERFACE, et non celle des paroles : choisi sur la seconde,
+        // il disait « Paroles générées · seed 65696 · 37 lines » dans l'interface anglaise.
+        message: traduire("msg.var_0_graine_var_1_var_2_lignes", traduire("msg.paroles.generees"), graineAff, paroles.split("\n").length),
       };
    },
  },

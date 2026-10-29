@@ -5,7 +5,7 @@
 // pré-entraîné pour resynthétiser le signal avec le timbre d’un instrument.
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { withElectronFetch } from "./electronFetch";
 
@@ -105,7 +105,10 @@ export const fiches: FicheAudio[] = ([
       const customUrl = ctx.paramTexte("URL modèle", "");
       try {
         const out = await appliquerDDSP(buffer, instrument, customUrl);
-        return { valeurs: [out], message: traduire("msg.timbre_ddsp_var_0_var_1_s_var_2_hz", instrument, out.duration.toFixed(1), OUTPUT_SR) };
+        // L'INSTRUMENT SE DIT PAR SON LIBELLÉ en anglais : son identifiant est le libellé français.
+        const instrumentsEn: Record<string, string> = { "Violon": "Violin", "Flûte": "Flute", "Saxophone ténor": "Tenor saxophone", "Trompette": "Trumpet" };
+        const instrumentDit = langueCourante() === "en" ? (instrumentsEn[instrument] ?? instrument) : instrument;
+        return { valeurs: [out], message: traduire("msg.timbre_ddsp_var_0_var_1_s_var_2_hz", instrumentDit, out.duration.toFixed(1), OUTPUT_SR) };
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_ddsp_var_0", err.message ?? err) };
       }

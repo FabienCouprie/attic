@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererCamelot, genererSvgCamelot } from "../audio";
 import { hasardDuNoeud } from "../core";
+import { traduire } from "../i18n";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 
@@ -83,7 +84,7 @@ export const fiches: FicheAudio[] = ([
       const chemin = codes.join(" → ");
       return {
         valeurs: [audio, midi, image],
-        message: `Camelot · ${chemin} · ${accords.length} accords · ${notes.length} notes · ${audio.duration.toFixed(1)} s · graine ${graine}`,
+        message: traduire("msg.camelot.resultat", chemin, accords.length, notes.length, audio.duration.toFixed(1), graine),
       };
     },
   },
