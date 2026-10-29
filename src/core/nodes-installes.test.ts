@@ -16,7 +16,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
-  chargerNodesInstalles, configurerBacDExecution, configurerRegistreNodes, installerNode,
+  CLE_LISTE_NODES, PREFIXE_NODE_INSTALLE, appliquerNodeInstalleDistant,
+  chargerNodesInstalles, configurerBacDExecution, configurerRegistreNodes, installerNode, listeDesNodesInstallesStockes,
 } from "./nodes-installes";
 import type { PluginDef } from "./types";
 
@@ -147,5 +148,48 @@ describe("l'evaluation du code d'un noeud installe", () => {
     const executer = defs.get("essai-tetu")!.executer as (c: unknown) => Promise<unknown>;
     await executer({}); await executer({}); await executer({});
     expect(evaluations()).toBe(0);
+  });
+});
+
+// ═══ UNE CLE PAR NOEUD, et ce qu'une autre fenetre en recoit ═══
+//
+// La liste `attic-nodes-installes` etait reecrite entiere depuis la memoire de la fenetre : la
+// meme faute que la bibliotheque de metas, mesuree le 2026-10-29 sur celle-ci. Un noeud installe
+// dans une fenetre effacait du stockage celui qu'une autre venait d'installer.
+describe("le stockage des noeuds installes", () => {
+  beforeEach(() => { localStorage.clear(); bacDEssai(); });
+
+  it("INSTALLER UN NOEUD N'EFFACE PAS CELUI QU'UNE AUTRE FENETRE A ECRIT", () => {
+    registreDEssai();
+    localStorage.setItem(PREFIXE_NODE_INSTALLE + "venu-d-ailleurs", JSON.stringify(noeud("venu-d-ailleurs")));
+    installerNode(noeud("le-mien") as never);
+    expect(localStorage.getItem(PREFIXE_NODE_INSTALLE + "venu-d-ailleurs")).not.toBeNull();
+    expect(localStorage.getItem(PREFIXE_NODE_INSTALLE + "le-mien")).not.toBeNull();
+  });
+
+  it("L'ANCIENNE LISTE EST MIGREE au chargement, puis retiree", () => {
+    const defs = registreDEssai();
+    localStorage.setItem(CLE_LISTE_NODES, JSON.stringify([noeud("ancien-a"), noeud("ancien-b")]));
+    chargerNodesInstalles();
+    expect(localStorage.getItem(CLE_LISTE_NODES)).toBeNull();
+    expect(defs.has("ancien-a") && defs.has("ancien-b")).toBe(true);
+    expect(JSON.parse(listeDesNodesInstallesStockes()!).length, "et la sauvegarde d'avant mise a jour les rend en liste").toBe(2);
+  });
+
+  it("CE QU'UNE AUTRE FENETRE INSTALLE ENTRE DANS LE CATALOGUE D'ICI", () => {
+    const defs = registreDEssai();
+    const cle = PREFIXE_NODE_INSTALLE + "distant";
+    expect(appliquerNodeInstalleDistant(cle, JSON.stringify(noeud("distant")))).toBe(true);
+    expect(defs.has("distant")).toBe(true);
+    expect(evaluations(), "et son code n'est pas lu pour autant").toBe(0);
+    expect(appliquerNodeInstalleDistant(cle, null), "une cle retiree le retire").toBe(true);
+    expect(defs.has("distant")).toBe(false);
+  });
+
+  it("et une cle qui n'est pas la sienne, ou une valeur illisible, ne change rien", () => {
+    registreDEssai();
+    expect(appliquerNodeInstalleDistant("attic-lang", "fr")).toBe(false);
+    expect(appliquerNodeInstalleDistant(PREFIXE_NODE_INSTALLE + "x", "{illisible")).toBe(false);
+    expect(appliquerNodeInstalleDistant(PREFIXE_NODE_INSTALLE + "x", JSON.stringify(noeud("autre-id")))).toBe(false);
   });
 });

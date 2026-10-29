@@ -13,8 +13,10 @@ export function configurerRegistre(r: Registre<unknown, unknown>): void { regist
 const metas = new Map<string, MetaComposant>();
 
 // Notification de changement (le cœur reste sans stockage : c'est la couche hôte
-// qui s'abonne pour persister — cf. ui/metasLocaux.ts).
-type Ecouteur = () => void;
+// qui s'abonne pour persister — cf. ui/metasLocaux.ts). L'ÉCOUTEUR REÇOIT LE MÉTA TOUCHÉ : chacun
+// s'écrit sous sa propre clé, et réécrire la bibliothèque entière à chaque geste effaçait ce qu'une
+// autre fenêtre venait d'y ajouter (mesuré le 2026-10-29).
+type Ecouteur = (id: string) => void;
 const ecouteurs = new Set<Ecouteur>();
 export function surChangementMetas(cb: Ecouteur): () => void {
   ecouteurs.add(cb);
@@ -95,14 +97,14 @@ export function enregistrerMeta(meta: MetaComposant): void {
   };
   if (!registre) { console.error("[attic] metastore : registre non configuré"); return; }
   registre.enregistrer(def); // remplacement en place si le méta est mis à jour
-  notifier();
+  notifier(meta.id);
 }
 
 // Retire un méta du registre (catalogue) et notifie (→ persistance mise à jour).
 export function supprimerMeta(id: string): void {
   if (!metas.delete(id)) return;
   registre?.desenregistrer(id);
-  notifier();
+  notifier(id);
 }
 
 // Renomme un méta-composant (met à jour le nom + la fiche du catalogue).
@@ -113,6 +115,6 @@ export function renommerMeta(id: string, nouveauNom: string): void {
   enregistrerMeta(meta); // re-enregistre avec le nouveau nom (met à jour la fiche)
 }
 
-function notifier(): void {
-  for (const cb of ecouteurs) { try { cb(); } catch { /* un écouteur ne doit pas casser l'opération */ } }
+function notifier(id: string): void {
+  for (const cb of ecouteurs) { try { cb(id); } catch { /* un écouteur ne doit pas casser l'opération */ } }
 }

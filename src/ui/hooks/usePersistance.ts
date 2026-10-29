@@ -20,6 +20,7 @@ import { rechargerFichiersPersistes } from "../rechargerFichiers";
 import { filtrerAretesInvalides } from "../validerGraphe";
 import { decisionSauvegardeAuto, type DecisionSauvegarde } from "../sauvegarde-auto";
 import { idsDe, oublierNoeuds } from "../oubli-noeuds";
+import { ecrireEncours, ecrireEncoursPropre } from "../fenetre";
 
 // Typage volontairement souple (les nœuds portent un `data` à index-signature et
 // le code d'import d'origine manipulait déjà tout en `any`) : le hook est extrait
@@ -130,7 +131,7 @@ export function usePersistance(o: OptionsPersistance) {
     // UN PROJET N'EMPORTE QUE LES MÉTAS QU'IL EMPLOIE, relevé par Fabien. Il recopiait ici toute la
     // bibliothèque de la session : un graphe livré posait les composants personnels de qui l'avait
     // enregistré dans la palette de qui l'ouvrait. La bibliothèque, elle, reste entière dans
-    // `attic-metas` ; c'est le fichier de projet, et lui seul, qui se restreint.
+    // ses clés `attic-meta:<id>` ; c'est le fichier de projet, et lui seul, qui se restreint.
     const metas = metasEmployes(racine.nodes as unknown as NoeudG[], tousLesMetas()).map(serialiserMeta);
     // LE NUMÉRO DE FORMAT, EN PREMIER DANS LE FICHIER, et c'est la seule place qui vaille : on le
     // lit alors sans dérouler le reste. Il vaut 1, qui est le format de TOUS les fichiers écrits
@@ -215,6 +216,9 @@ export function usePersistance(o: OptionsPersistance) {
       }
       if (filePath) {
         o.setCurrentFilePath(filePath);
+        // Tout de suite, et non à l'effet du prochain rendu : l'en-cours écrit ci-dessous emporte
+        // son fichier, et ce doit être celui qu'on vient de choisir.
+        currentFilePathRef.current = filePath;
         console.log(`[attic] Sauvegardé : ${filePath}`);
       }
     } else {
@@ -224,9 +228,9 @@ export function usePersistance(o: OptionsPersistance) {
       a.download = defaultName || "attic.json"; a.click();
     }
 
-    // Toujours mettre à jour l'en-cours localStorage.
+    // Toujours mettre à jour l'en-cours, avec le fichier de cette fenêtre : voir `ui/fenetre.ts`.
     try {
-      localStorage.setItem("attic-encours", JSON.stringify(encours));
+      ecrireEncours(encours, currentFilePathRef.current);
     } catch {}
     dernierJsonRef.current = json;
   }, [o, buildExportData]);
@@ -268,9 +272,9 @@ export function usePersistance(o: OptionsPersistance) {
     }
     echecSignaleRef.current = null;
     dernierJsonRef.current = json;
-    // L'en-cours de localStorage suit : c'est lui qui est relu au démarrage.
+    // L'en-cours suit, avec son fichier : c'est lui qui est relu au démarrage.
     try {
-      localStorage.setItem("attic-encours", JSON.stringify(encours));
+      ecrireEncours(encours, chemin);
     } catch {}
     return decision;
   }, [buildExportData]);
@@ -283,10 +287,11 @@ export function usePersistance(o: OptionsPersistance) {
    * aurait donc rendu le graphe du dernier enregistrement, et perdu en silence tout ce qui a été
    * modifié depuis. Rien n'est écrit sur le disque ici, et aucun fichier courant n'est touché.
    */
-  const memoriserEncours = useCallback((): boolean => {
+  const memoriserEncours = useCallback((partage = true): boolean => {
     try {
       const { encours } = buildExportData();
-      localStorage.setItem("attic-encours", JSON.stringify(encours));
+      // `partage` faux : seule la copie de la fenêtre, l'en-cours partagé étant à une autre.
+      (partage ? ecrireEncours : ecrireEncoursPropre)(encours, currentFilePathRef.current);
       return true;
     } catch {
       return false;
@@ -314,6 +319,7 @@ export function usePersistance(o: OptionsPersistance) {
   if (!journalRef.current) {
     journalRef.current = creerJournalDeSession({
       ecrire: () => memoriserEncoursRef.current(),
+      ecrirePourSoi: () => { memoriserEncoursRef.current(false); },
       // ON N'ÉCRASE QUE CE QU'ON A ÉCRIT SOI-MÊME, et le module dit pourquoi : une seconde fenêtre,
       // ou une page qui pose un en-cours puis recharge, se faisait écraser par le vidage de
       // fermeture. Une date postérieure à notre dernier changement vient d'ailleurs ; une ABSENCE
@@ -338,7 +344,9 @@ export function usePersistance(o: OptionsPersistance) {
       journal.armer();
     }
     journal.noter();
-  }, [o.nodes, o.edges, o.grapheRacineRef, journal]);
+    // LE FICHIER COURANT EN EST AUSSI : détacher un projet ne change aucun nœud, et l'en-cours
+    // partagé garderait sinon le chemin quitté, que le lancement suivant rattacherait au graphe.
+  }, [o.nodes, o.edges, o.grapheRacineRef, journal, o.currentFilePath]);
 
   useEffect(() => {
     // LES DEUX ÉVÉNEMENTS, et non un seul. `beforeunload` ne part pas toujours quand le processus

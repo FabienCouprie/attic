@@ -167,6 +167,25 @@ describe("le journal de session", () => {
       expect(j.ecartees()).toBe(1);
     });
 
+    it("ET LA COPIE DE LA FENÊTRE S'ÉCRIT QUAND MÊME, sans quoi son rechargement rendrait l'avant-dernier geste", () => {
+      // L'en-cours partagé est à qui a bougé en dernier ; la copie que la fenêtre garde pour se
+      // recharger n'est qu'à elle. Voir `ui/fenetre.ts`.
+      const h = horloge();
+      let partage = 0;
+      let propre = 0;
+      const j = creerJournalDeSession({
+        ecrire: () => { partage += 1; return true; },
+        ecritPourAutrui: () => true,
+        ecrirePourSoi: () => { propre += 1; },
+        differer: h.differer, annulerDifferé: h.annulerDifferé,
+      });
+      j.armer();
+      j.noter();
+      h.avancer();
+      expect(partage, "l'en-cours partagé reste à l'autre").toBe(0);
+      expect(propre, "la copie de la fenêtre suit son graphe").toBe(1);
+    });
+
     it("MAIS IL ÉCRIT QUAND L'EN-COURS EST LE SIEN, sans quoi il ne servirait plus à rien", () => {
       const { h, j, lu } = bacAvecAutrui(() => false);
       j.armer();

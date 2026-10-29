@@ -14,7 +14,7 @@ export type { GrapheVisible, GrapheSansConteneurs } from "./formes-graphe";
 export { trouverMeta, tousLesMetas, estMeta, decrireMeta, enregistrerMeta, supprimerMeta, renommerMeta, surChangementMetas, configurerRegistre as configurerRegistreMeta } from "./metastore";
 export { ordreDeLecture, ordreTopologique, placerEnDernier, ancetres, descendants, perimetreCible, empreinteEntrees, empreinteParametres, empreinteSorties, empreinteValeur, empreinteValeursEntrantes, fermeraitUnCycle, noeudsEnCycle, resoudreEntree, valeursEntrantes } from "./graphe";
 export type { TypeFlux } from "./typesFlux";
-export { chargerNodesInstalles, installerNode, configurerRegistreNodes } from "./nodes-installes";
+export { chargerNodesInstalles, installerNode, configurerRegistreNodes, appliquerNodeInstalleDistant, listeDesNodesInstallesStockes } from "./nodes-installes";
 // CE QUE LE CŒUR DEMANDE AU DOMAINE sur ses propres valeurs : empreinte, nom de type, types non
 // sérialisables, globales prêtées aux nodes installés. Neutre tant qu'aucun adaptateur n'a répondu.
 export { configurerServicesDomaine, oublierServicesDomaine, servicesDomaine } from "./services-domaine";

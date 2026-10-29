@@ -11,7 +11,7 @@ import "@xyflow/react/dist/style.css";
 
 import { trouverMeta,
   estFrontiere, estBulle, estSubstitution, fermeraitUnCycle, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
-  surChangementMetas, supprimerMeta, traduireConnexion, type AreteG, type NoeudG } from "../core";
+  traduireConnexion, type AreteG, type NoeudG } from "../core";
 
 import "../audio/adaptateur";
 
@@ -37,12 +37,13 @@ import { tailleDefaut } from "./tailles-noeuds";
 import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
-import { useExecutionGraphe, CHAMPS_UTILISATEUR, CHAMPS_COPIABLES } from "./hooks/useExecutionGraphe";
+import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
+import { useCopierColler } from "./hooks/useCopierColler";
 import { resultatDe } from "./resultats";
 import { CLE_PREFERENCE, PERIODE_SAUVEGARDE_MS, lirePreference } from "./sauvegarde-auto";
 import { ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
-import { estUnChampDeSaisie, quitterLeChamp } from "./champ-de-saisie";
+import { quitterLeChamp } from "./champ-de-saisie";
 import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "./historique";
 import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
 import { libererGlissement, relachementManque } from "./liberer-glissement";
@@ -64,7 +65,8 @@ import "./clavier.css";
 // Forcer l'enregistrement des plugins
 import "../audio/adaptateur";
 
-import { chargerMetasLocaux, sauvegarderMetasLocaux } from "./metasLocaux";
+import { chargerMetasLocaux } from "./metasLocaux";
+import { useFenetresPartagees } from "./hooks/useFenetresPartagees";
 import { installerMetasExemples } from "../plugins/meta-exemples";
 import { setGrapheRef } from "../audio/graphe-embarque";
 import { servicesDomaine } from "../core/services-domaine";
@@ -73,6 +75,7 @@ import { chargerNodesInstalles } from "../core";
 import "./bac-a-sable-noeud";
 import { PanneauInspecteur } from "./PanneauInspecteur";
 import { registreUI } from "./registre-actif";
+import { demarrage, noterFichierPropre, ouvrirNouvelleFenetre } from "./fenetre";
 // Restaure les données de backup si on vient d'une mise à jour (synchrone)
 const api0 = (window as any).api;
 if (api0?.majRestaurerBackupSync) {
@@ -281,36 +284,20 @@ function Atelier() {
   const callbacksNoeudRef = useRef<(() => Record<string, (...args: any[]) => any>) | null>(null);
   const [repertoire, setRepertoire] = useState(() => localStorage.getItem("attic-repertoire") || "");
 
-  const [currentFilePath, setCurrentFilePath] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem("attic-current-file-path");
-    } catch {
-      return null;
-    }
-  });
+  // LE FICHIER EST À LA FENÊTRE : une fenêtre neuve n'en a pas. Voir `ui/fenetre.ts`.
+  const [currentFilePath, setCurrentFilePath] = useState<string | null>(() => demarrage().fichier);
 
-  // Met à jour le titre de la fenêtre et le localStorage quand le fichier courant change.
+  // Met à jour le titre de la fenêtre et sa copie quand le fichier courant change. L'en-cours
+  // partagé ne le reçoit qu'avec le graphe qui va avec, dans `usePersistance`.
   useEffect(() => {
-    if (currentFilePath) {
-      localStorage.setItem("attic-current-file-path", currentFilePath);
-      document.title = `[Attic] ${currentFilePath.split(/[\\/]/).pop() || currentFilePath}`;
-    } else {
-      localStorage.removeItem("attic-current-file-path");
-      document.title = "Attic";
-    }
+    noterFichierPropre(currentFilePath);
+    document.title = currentFilePath ? `[Attic] ${currentFilePath.split(/[\\/]/).pop() || currentFilePath}` : "Attic";
   }, [currentFilePath]);
 
   const changerRepertoire = useCallback((r: string) => {
     setRepertoire(r);
     localStorage.setItem("attic-repertoire", r);
   }, []);
-
-  // Persistance des méta-composants : sauvegarde locale à chaque changement
-  // (création, édition interne, import). Le chargement se fait au niveau module.
-  useEffect(() => surChangementMetas(() => {
-    sauvegarderMetasLocaux();
-    setPluginsVersion((v) => v + 1);
-  }), []);
 
   // Avertit (une fois, après le premier rendu) si des méta-composants n'ont pas
   // pu être réinjectés dans le catalogue — sinon leur disparition silencieuse
@@ -343,18 +330,8 @@ function Atelier() {
   const prioritaireRef = useRef<string | null>(null);
   prioritaireRef.current = prioritaire;
   const [sf2NomState, setSf2NomState] = useState<string>(sf2Nom());
-  // Presse-papier pour copier/coller de nœuds (Ctrl+C / Ctrl+V).
-  // Historique pour undo (Ctrl+Z).
-  type PressePapierItem = {
-    ficheId: string;
-    parametres: Record<string, number | string>;
-    width: number;
-    height: number;
-    data: Record<string, unknown>;
-    dx: number;
-    dy: number;
-  };
-  const pressePapierRef = useRef<PressePapierItem[] | null>(null);
+  // Historique pour undo (Ctrl+Z). Le presse-papiers de nœuds est celui du système, voir
+  // `hooks/useCopierColler.ts`.
   const historiqueRef = useRef<EntreeHistorique<any, any>[]>([]);
   const MAX_HISTORIQUE = 50;
 
@@ -471,7 +448,7 @@ function Atelier() {
     enCoursCharge.current = true;
     (async () => {
       try {
-        const brut = localStorage.getItem("attic-encours");
+        const brut = demarrage().encours;
         if (!brut) return;
         const data = JSON.parse(brut);
         if (!data.nodes || !Array.isArray(data.nodes)) return;
@@ -716,6 +693,11 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     setSel((prev) => prev && idArr.includes(prev.id) ? null : prev);
   }, [reinitialiserNoeud, setNodes, setEdges]);
 
+  // Ce que les fenêtres ouvertes se partagent : métas et nœuds installés, et le refus de supprimer
+  // un méta qu'une autre emploie. Voir `hooks/useFenetresPartagees.ts`.
+  const { supprimerMetaDuCatalogue } = useFenetresPartagees({
+    noeudsRef, grapheRacineRef, pileRef, setNodes, setPluginsVersion, pushHistorique, supprimerNoeud, t, lang });
+
   // Callbacks standard attachés à tout nœud (ajout, import, copier/coller).
   const callbacksNoeud = useCallback(() => ({
     onSupprimerNoeud: (nid: string) => {
@@ -880,131 +862,8 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     });
   }, [setNodes, t]);
 
-  // ── Copier / Coller (Ctrl+C / Ctrl+V) ──
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      // Ne pas intercepter si on tape dans un champ : Ctrl+C doit y copier le TEXTE, et non les
-      // nœuds sélectionnés derrière. La règle vit dans `champ-de-saisie.ts`, en un seul endroit.
-      if (estUnChampDeSaisie(e.target)) return;
-
-      if ((e.ctrlKey || e.metaKey) && e.key === "c") {
-        const selection = noeudsRef.current.filter((n) => (n as { selected?: boolean }).selected);
-        if (selection.length === 0) return;
-        e.preventDefault();
-        const origineX = Math.min(...selection.map((n) => n.position?.x ?? 0));
-        const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
-        pressePapierRef.current = selection.map((n) => {
-          const d = n.data as Record<string, unknown>;
-          // Allowlist de COPIE : les champs saisis par l'utilisateur (ficheId,
-          // paramètres…), jamais les résultats calculés (buffer audio, URL blob,
-          // message…) — sinon le nœud dupliqué affiche ou joue le résultat de
-          // l'original avant d'avoir tourné lui-même — et jamais non plus le média
-          // chargé sur l'original (CHAMPS_MEDIA_LOCAL) : un « Entrée audio » collé
-          // arrivait avec un lecteur affichant déjà une durée de piste alors qu'il
-          // n'avait rien reçu. Le couper-coller, lui, conserve le média (voir Ctrl+X).
-          const data: Record<string, unknown> = {};
-          for (const [k, v] of Object.entries(d)) {
-            if (typeof v === "function") continue;
-            if (!CHAMPS_COPIABLES.has(k)) continue;
-            data[k] = v;
-          }
-          return {
-            ficheId: d.ficheId as string,
-            parametres: { ...(d.parametres as Record<string, number | string>) },
-            width: n.width ?? 230,
-            height: n.height ?? 200,
-            data,
-            dx: (n.position?.x ?? 0) - origineX,
-            dy: (n.position?.y ?? 0) - origineY,
-          };
-        });
-      }
-
-      if ((e.ctrlKey || e.metaKey) && e.key === "x") {
-        const selection = noeudsRef.current.filter((n) => (n as { selected?: boolean }).selected);
-        if (selection.length === 0) return;
-        e.preventDefault();
-        const origineX = Math.min(...selection.map((n) => n.position?.x ?? 0));
-        const origineY = Math.min(...selection.map((n) => n.position?.y ?? 0));
-        pressePapierRef.current = selection.map((n) => {
-          const d = n.data as Record<string, unknown>;
-          // Allowlist de COUPE : identique à la copie pour les résultats calculés,
-          // mais le média chargé (fichier audio/image/MIDI…) est ici CONSERVÉ. Un
-          // couper-coller est un déplacement, pas une duplication : l'original est
-          // supprimé juste après, donc laisser le média derrière reviendrait à le
-          // détruire.
-          const data: Record<string, unknown> = {};
-          for (const [k, v] of Object.entries(d)) {
-            if (typeof v === "function") continue;
-            if (!CHAMPS_UTILISATEUR.has(k)) continue;
-            data[k] = v;
-          }
-          return {
-            ficheId: d.ficheId as string,
-            parametres: { ...(d.parametres as Record<string, number | string>) },
-            width: n.width ?? 230,
-            height: n.height ?? 200,
-            data,
-            dx: (n.position?.x ?? 0) - origineX,
-            dy: (n.position?.y ?? 0) - origineY,
-          };
-        });
-        // Sauvegarder pour undo puis supprimer
-        pushHistorique();
-        supprimerNoeud(selection.map((n) => n.id));
-      }
-
-      if ((e.ctrlKey || e.metaKey) && e.key === "v" && pressePapierRef.current && pressePapierRef.current.length > 0) {
-        e.preventDefault();
-        const clip = pressePapierRef.current;
-        pushHistorique();
-        const cbs = callbacksNoeud();
-        const ajoutesRef: any[] = [];
-        setNodes((nds) => {
-          const selectionCourante = nds.filter((n) => (n as { selected?: boolean }).selected);
-          const origine = (() => {
-            if (selectionCourante.length === 0) return { x: 120, y: 80 };
-            const cx = selectionCourante.reduce((s, n) => s + (n.position?.x ?? 0), 0) / selectionCourante.length;
-            const cy = selectionCourante.reduce((s, n) => s + (n.position?.y ?? 0), 0) / selectionCourante.length;
-            return { x: cx + 40, y: cy + 40 };
-          })();
-          const deselected = nds.map((n) => n.selected ? { ...n, selected: false } : n);
-          let current = deselected;
-          for (const item of clip) {
-            const nouvelId = idUnique(current);
-            const def = trouverDef(item.ficheId);
-            const { width, height } = def ? tailleDefaut(def) : { width: item.width, height: item.height };
-            const n: any = {
-              id: nouvelId,
-              type: "atelier",
-              position: { x: origine.x + item.dx, y: origine.y + item.dy },
-              width,
-              height,
-              selected: true,
-              data: {
-                ficheId: item.ficheId,
-                parametres: { ...item.parametres },
-                ...item.data,
-                statut: "attente",
-                ...cbs,
-              },
-            };
-            current = [...current, n];
-            ajoutesRef.push(n);
-          }
-          return current;
-        });
-        setSel(ajoutesRef[0] ?? null);
-      }
-
-      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
-        e.preventDefault();
-        undo();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [callbacksNoeud, supprimerNoeud, pushHistorique, setNodes, undo]);
+  // ── Copier / Couper / Coller (Ctrl+C / Ctrl+X / Ctrl+V) et Ctrl+Z, dans hooks/useCopierColler.ts ──
+  useCopierColler({ noeudsRef, setNodes, setSel, pushHistorique, supprimerNoeud, callbacksNoeud, undo, t });
 
   // ── Méta-composants (§3.8) : grouper / dégrouper + navigation ──
   // Dans hooks/useMetaComposants.ts ; la logique pure vit dans core/meta.ts.
@@ -1452,10 +1311,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
             window.alert(`Échec du chargement du SoundFont : ${e?.message ?? e}`);
           }
         }}
-        onDetacher={() => {
-          if ((window as any).api) { (window as any).api.nouvelleFenetre?.(); }
-          else { window.open(location.href, '_blank', 'width=1400,height=900'); }
-        }}
+        onDetacher={ouvrirNouvelleFenetre}
         onExporter={exporter}
         onAjouterCommentaire={ajouterCommentaire}
         onAjouterCadre={ajouterCadre}
@@ -1473,16 +1329,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
         ouverte={paletteOuverte}
         onToggle={togglePalette}
         plugins={plugins.filter((p) => !estFrontiere(p.id))}
-        onSupprimerMeta={(id) => {
-          const meta = trouverMeta(id);
-          const nom = (lang === "en" && meta?.nomEn ? meta.nomEn : meta?.nom) ?? id;
-          if (!window.confirm(t("meta.confirmSupprimerCatalogue").replace("{nom}", nom))) return;
-          // Retire aussi ses instances éventuelles du graphe courant (sinon nœuds orphelins).
-          const aRetirer = noeudsRef.current.filter((n) => n.data.ficheId === id).map((n) => n.id);
-          supprimerMeta(id);
-          pushHistorique();
-          supprimerNoeud(aRetirer);
-        }}
+        onSupprimerMeta={supprimerMetaDuCatalogue}
       />
       <div className={`attic-canevas ${pendingAdd ? "attic-canevas-pending" : ""}`} ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()} onPointerDownCapture={surPointerDown}>
         <div className="attic-onglets">

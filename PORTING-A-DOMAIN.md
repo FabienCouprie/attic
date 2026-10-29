@@ -527,10 +527,10 @@ qui n'est pas un cas d'usage actuel.
 | Élément | Conséquence |
 |---|---|
 | `DEFS_CACHE` (`ui/AtelierNode.tsx`) | cache de fiches partagé par tout le processus, indexé sur l'identifiant de fiche |
-| Clé `attic-nodes-installes` (`core/nodes-installes.ts`) | `localStorage` non namespacé — deux domaines se reliraient les nœuds l'un de l'autre |
+| Clés `attic-node-installe:<id>` (`core/nodes-installes.ts`) | `localStorage` non namespacé — deux domaines se reliraient les nœuds l'un de l'autre |
 
-Pour une vraie cohabitation, il faudrait namespacer ces deux-là. La clé
-`attic-metas` n'est pas dans cette liste : elle appartient au shell
+Pour une vraie cohabitation, il faudrait namespacer ces deux-là. Les clés
+`attic-meta:<id>` ne sont pas dans cette liste : elles appartiennent au shell
 (`ui/metasLocaux.ts`), le cœur ne persistant rien lui-même.
 
 ---
