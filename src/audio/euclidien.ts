@@ -64,23 +64,25 @@ export function motifEnTexte(motif: boolean[]): string {
  * Les noms traditionnels que Toussaint relève pour certains couples (frappes, pas).
  * Un rythme reconnu se dit ; les autres restent « E(k,n) », sans folklore inventé.
  */
-const NOMS: Record<string, string> = {
-  "2,5": "Rythme coréen / khafif-e-ramal",
-  "3,4": "Cumbia, calypso",
-  "3,8": "Tresillo cubain",
-  "4,9": "Rythme turc aksak",
-  "5,8": "Cinquillo cubain",
-  "5,12": "Venda (Afrique du Sud)",
-  "5,16": "Bossa-nova brésilienne",
-  "7,8": "Rythme tuvan",
-  "7,12": "Bembé d'Afrique de l'Ouest",
-  "7,16": "Samba brésilienne",
-  "9,16": "Rythme d'Afrique centrale",
-  "11,24": "Rythme aka (pygmées)",
+const NOMS: Record<string, { fr: string; en: string }> = {
+  "2,5": { fr: "Rythme coréen / khafif-e-ramal", en: "Korean rhythm / khafif-e-ramal" },
+  "3,4": { fr: "Cumbia, calypso", en: "Cumbia, calypso" },
+  "3,8": { fr: "Tresillo cubain", en: "Cuban tresillo" },
+  "4,9": { fr: "Rythme turc aksak", en: "Turkish aksak rhythm" },
+  "5,8": { fr: "Cinquillo cubain", en: "Cuban cinquillo" },
+  "5,12": { fr: "Venda (Afrique du Sud)", en: "Venda (South Africa)" },
+  "5,16": { fr: "Bossa-nova brésilienne", en: "Brazilian bossa nova" },
+  "7,8": { fr: "Rythme tuvan", en: "Tuvan rhythm" },
+  "7,12": { fr: "Bembé d'Afrique de l'Ouest", en: "West African bembé" },
+  "7,16": { fr: "Samba brésilienne", en: "Brazilian samba" },
+  "9,16": { fr: "Rythme d'Afrique centrale", en: "Central African rhythm" },
+  "11,24": { fr: "Rythme aka (pygmées)", en: "Aka rhythm (Pygmy)" },
 };
 
-export function nomTraditionnel(pas: number, frappes: number): string | undefined {
-  return NOMS[`${frappes},${pas}`];
+/** Le nom traditionnel d'un couple, en français ou en anglais : il paraît dans le message du nœud. */
+export function nomTraditionnel(pas: number, frappes: number, en = false): string | undefined {
+  const nom = NOMS[`${frappes},${pas}`];
+  return nom && (en ? nom.en : nom.fr);
 }
 
 export type NoteEuclidienne = NoteMidi;

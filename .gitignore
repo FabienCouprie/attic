@@ -237,6 +237,11 @@ VALIDATION.txt
 
 MESURE.txt
 
+# Le releve des messages d'execution en anglais, rendu par « npm run messages-anglais », pour la
+# meme raison.
+
+MESSAGES-ANGLAIS.json
+
 # La comparaison d'une famille rendue par « npm run comparer », pour la meme raison : elle se
 # rejoue, donc elle ne se garde pas — un exemplaire sur le disque vieillirait sans rien dire.
 

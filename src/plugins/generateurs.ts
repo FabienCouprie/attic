@@ -5,7 +5,7 @@
 
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { genererMelodieAleatoire, genererAccords, analyserMidi, rendreAvecSF2, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, rendreMidiDepuisBytes, GAMMES_ACCORDS, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
@@ -67,7 +67,14 @@ export const fiches: FicheAudio[] = ([
       const tempo = ctx.paramNombre("Tempo",120), dAcc = ctx.paramNombre("Durée par accord",2);
       const nb = ctx.paramNombre("Nombre d'accords",8), vol = ctx.paramNombre("Volume",80);
       const extension = ctx.paramTexte("Extension", "aucune") as "aucune" | "septieme" | "sixte";
-      const { midiBytes, description } = genererAccords(cle, gamme, genre, prog, tempo, dAcc, nb, extension);
+      // En anglais, la description dit la gamme et le genre par les libellés du menu ; en français,
+      // par leurs identifiants, comme elle l'a toujours fait.
+      const anglais = langueCourante() === "en";
+      const libelles = {
+        gamme: anglais ? (GAMMES_ACCORDS.find((g) => g.id === gamme)?.en ?? gamme) : gamme,
+        genre: anglais ? (GENRES_ACCORDS.en[GENRES_ACCORDS.ids.indexOf(genre)] ?? genre) : genre,
+      };
+      const { midiBytes, description } = genererAccords(cle, gamme, genre, prog, tempo, dAcc, nb, extension, libelles);
       const sf2 = sf2Chargee();
       if (sf2) {
         const { notes, canauxInstrument } = analyserMidi(parseMidi(midiBytes));
@@ -142,7 +149,7 @@ export const fiches: FicheAudio[] = ([
       // La graine est AFFICHÉE et pas seulement utilisée : avec le réglage par
       // défaut (0 = tirée au sort), c'est le seul moyen de retrouver une
       // mélodie qu'on voudrait garder.
-      return { valeurs: [audioFinal, midiFinal], message: `${notes.length} notes · graine ${graine}` };
+      return { valeurs: [audioFinal, midiFinal], message: traduire("msg.var_0_graine_var_1", `${notes.length} notes`, graine) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

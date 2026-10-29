@@ -251,7 +251,7 @@ export function ExtraitVideo(p: ExtraitVideoProps) {
               </a>
             )}
             <span>{p.resultat.nom}</span>
-            <span>{enMo(p.resultat.octets).toFixed(1)} Mo</span>
+            <span>{enMo(p.resultat.octets).toFixed(1)} {t("unite.mo")}</span>
           </div>
         )}
       </div>

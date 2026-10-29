@@ -194,7 +194,7 @@ export function VueFilmCercle({ data }: VueProps) {
           </a>
         )}
         <span>{nom}</span>
-        <span>{enMo(n._filmOctets ?? 0).toFixed(1)} Mo</span>
+        <span>{enMo(n._filmOctets ?? 0).toFixed(1)} {t("unite.mo")}</span>
       </div>
     </div>
   );
@@ -230,7 +230,7 @@ export function VueFilmProduit({ data }: VueProps) {
           </a>
         )}
         <span>{nom}</span>
-        <span>{enMo(n.octets ?? 0).toFixed(1)} Mo</span>
+        <span>{enMo(n.octets ?? 0).toFixed(1)} {t("unite.mo")}</span>
       </div>
     </div>
   );
@@ -260,7 +260,7 @@ export function VueVideoMuette({ data }: VueProps) {
         </a>
       )}
       <span>{nom}</span>
-      <span>{enMo(n.octets ?? 0).toFixed(1)} Mo</span>
+      <span>{enMo(n.octets ?? 0).toFixed(1)} {t("unite.mo")}</span>
     </div>
   );
 }

@@ -239,7 +239,7 @@ export const fiches: FicheAudio[] = ([
       const noteRef = ctx.paramNombre("Note référence", 60);
       try {
         const buf = rendreAvecEchantillon(notes, sample, 80, noteRef);
-        return { valeurs: [buf], message: `${traduire("msg.ok_var_0_notes_var_1_s", notes.length, buf.duration.toFixed(1))} · graine ${graine}` };
+        return { valeurs: [buf], message: traduire("msg.var_0_graine_var_1", traduire("msg.ok_var_0_notes_var_1_s", notes.length, buf.duration.toFixed(1)), graine) };
       } catch (e: any) {
         return { valeurs:[null], message: traduire("msg.erreur_rendu_var_0", e?.message ?? e) };
       }
@@ -265,7 +265,11 @@ export const fiches: FicheAudio[] = ([
       const type = ctx.paramTexte("Type", "Blanc");
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const buf = genererBruit(type, ctx.paramNombre("Durée", 2), ctx.paramNombre("Volume", 80), aleatoire);
-      return { valeurs: [buf], message: `${traduire("msg.bruit_var_0_var_1_s", type.toLowerCase(), buf.duration.toFixed(1))} · graine ${graine}` };
+      // LA COULEUR DU BRUIT SE DIT DANS LA LANGUE DE L'INTERFACE : son identifiant est le libellé
+      // français, et le message annonçait « Noise blanc ».
+      const couleurs = { Blanc: "White", Rose: "Pink", Brownien: "Brownian" } as Record<string, string>;
+      const couleur = langueCourante() === "en" ? (couleurs[type] ?? type.toLowerCase()) : type.toLowerCase();
+      return { valeurs: [buf], message: traduire("msg.var_0_graine_var_1", traduire("msg.bruit_var_0_var_1_s", couleur, buf.duration.toFixed(1)), graine) };
     },
   },
   {

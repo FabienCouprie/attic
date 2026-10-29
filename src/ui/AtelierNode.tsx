@@ -4,7 +4,7 @@ import { estMeta, estFrontiere, estBulle, surChangementMetas } from "../core";
 
 const trouverDef = (id: string) => registreUI().trouverDef(id);
 const couleurFlux = (id: string) => registreUI().couleurFlux(id);
-import { useI18n } from "../i18n";
+import { traduire, useI18n } from "../i18n";
 import { champTexte, texteBilingue } from "./texte-bilingue";
 import { useTexteEnCours } from "./texte-en-cours";
 import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "./registre-vues";
@@ -209,7 +209,7 @@ function IndicateurNiveau({ buffer }: { buffer?: AudioBuffer }) {
   const pct = Math.min(100, niveau.peak * 100);
   const couleur = niveau.peak >= 0.7 ? "#e8590c" : niveau.peak >= 0.3 ? "#f59e0b" : "#40c057";
   return (
-    <div className="attic-node-vu" title={`Pic : ${dbText} | RMS : ${(niveau.rms * 100).toFixed(1)}%`}>
+    <div className="attic-node-vu" title={traduire("noeud.indicateurNiveau", dbText, (niveau.rms * 100).toFixed(1))}>
       <div className="attic-node-vu-bar-bg">
         <div className="attic-node-vu-bar" style={{ width: `${pct}%`, background: couleur }} />
       </div>

@@ -5,7 +5,7 @@
 
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { genererBoiteRythmes, notesVersFichierMidi, rendreSequence, genererRythmeCantor, genererGrilleCantor, grilleBoiteRythmes, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE } from "../audio";
 import { CANAL_PERCUSSION, choixPercussion, frappesDePistesBooleennes, notesDepuisFrappes } from "../audio/batterie-midi";
 import { rendreBatterieMidi } from "../audio/tone-synths";
@@ -192,7 +192,7 @@ export const fiches: FicheAudio[] = ([
       }
       const buffer = await rendreBatterieMidi({ notes, volume: ctx.paramNombre("Volume", 80) });
       const midiFile = notesVersFichierMidi(notes, config.tempo, 9);
-      const nom = nomTraditionnel(config.pas, config.frappes);
+      const nom = nomTraditionnel(config.pas, config.frappes, langueCourante() === "en");
       const rotation = config.rotation > 0 ? ` · rotation ${config.rotation}` : "";
       return {
         valeurs: [buffer, midiFile],
@@ -257,7 +257,7 @@ export const fiches: FicheAudio[] = ([
       const midi = notesMidi.length > 0 ? notesVersFichierMidi(notesMidi, tempo, CANAL_PERCUSSION) : null;
       return {
         valeurs: [buffer, midi],
-        message: `${buffer.duration.toFixed(1)} s · grille Cantor · graine ${graine}`
+        message: traduire("msg.cantor.resultat", buffer.duration.toFixed(1), graine)
           + ` · ${traduire("msg.batterie.midi", String(notesMidi.length))}`,
       };
     },

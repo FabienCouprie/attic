@@ -112,7 +112,7 @@ export const fiches: FicheAudio[] = ([
       }
       return {
         valeurs: [fichier],
-        message: `${traduire("msg.pochette_var_0_var_1_var_2", titre, style, prompt.slice(0, 30))} · graine ${graine}`,
+        message: traduire("msg.var_0_graine_var_1", traduire("msg.pochette_var_0_var_1_var_2", titre, style, prompt.slice(0, 30)), graine),
       };
     },
   },

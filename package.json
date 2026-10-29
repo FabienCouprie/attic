@@ -82,6 +82,7 @@
     "catalogue": "playwright test tests-e2e/catalogue-sonore.spec.ts",
     "varier": "playwright test tests-e2e/varier.spec.ts",
     "graines": "playwright test tests-e2e/graines-tenues.spec.ts",
+    "messages-anglais": "playwright test tests-e2e/messages-anglais.spec.ts",
     "racines": "node scripts/racines-du-journal.cjs",
     "test:empreintes-exemples": "playwright test tests-e2e/empreintes-exemples.spec.ts",
     "test:lexique-dictee": "playwright test tests-e2e/lexique-dictee.spec.ts"

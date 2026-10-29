@@ -14,13 +14,8 @@
 // (`nomEn ?? nom`, la valeur par défaut d'un choix résolue vers `optionsEn`…).
 // Une option française qui n'est jamais montrée en anglais ne remonte donc pas.
 //
-// La détection est double :
-//  1. toute lettre accentuée du français — d'une précision remarquable en
-//     pratique, l'anglais technique de ces fiches n'en employant pas, hormis
-//     quelques noms propres explicitement tolérés ;
-//  2. une liste de mots français SANS accent, que ce relevé a effectivement
-//     trouvés (« temps », « tous », « garder »…). Elle n'a pas à être complète :
-//     elle grandit le jour où un mot passe à travers.
+// La détection vit dans `detecteur-francais.ts`, que le balayage des messages
+// d'exécution et le garde des vues emploient aussi.
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { defautParam, valeursParam, uniteEn } from "./catalogue-markdown";
@@ -28,51 +23,8 @@ import { toutesLesFiches } from "../plugins";
 import { CLES_CONNUES, traduireDans } from "../i18n";
 import { FAMILLES_EFFETS, TABLES_PAR_UNIVERS } from "../plugins/familles-palette";
 import type { FicheAudio } from "../audio/types-domaine";
+import { francais, virguleDecimale } from "./detecteur-francais";
 import "../audio/adaptateur";
-
-/**
- * Noms propres : leur accent n'est pas du français. « Möbius » et « Rössler » s'écrivent
- * ainsi dans les deux langues ; « bembé », le rythme d'Afrique de l'Ouest, aussi — c'est
- * son nom, et l'écrire « bembe » en anglais ne serait pas une traduction. « de Cheveigné »,
- * auteur de YIN, relève du même cas : c'est ainsi qu'il signe ses articles en anglais.
- */
-// La limite finale est une négation et non un `\b` : en JavaScript, « é » n'est pas un
-// caractère de mot, si bien que `\bbembé\b` ne reconnaît pas « bembé, ».
-//
-// ET LA LIMITE INITIALE A DÛ LE DEVENIR AUSSI, pour la même raison prise par l'autre bout : le
-// tréma de Möbius est au milieu, mais celui d'« Über » ouvre le mot. Entre une espace et un « Ü »,
-// il n'y a AUCUNE frontière de mot, les deux n'étant pas des caractères de mot : `\büber` ne
-// reconnaissait donc rien, et le titre de Cantor était relevé comme du français.
-// ET LE TITRE D'UN ARTICLE CITÉ RELÈVE DU MÊME CAS. « Über unendliche, lineare
-// Punktmannigfaltigkeiten » est le titre sous lequel l'article de Cantor de 1883 se cite dans
-// toutes les langues : le traduire dans une notice anglaise le rendrait introuvable, ce qui est
-// l'inverse de ce qu'une référence sert à faire.
-// ET LES AUTEURS DE L'ABSORBEUR EN ARC-EN-CIEL RELÈVENT DU MÊME CAS QUE « de Cheveigné » : Noé
-// Jiménez et Vicent Romero-García signent ainsi leurs articles en anglais, et retirer leurs accents
-// ne serait pas une traduction mais une faute sur un nom.
-// ET LE « TRAITÉ DES OBJETS MUSICAUX » RELÈVE DU MÊME CAS QUE LE TITRE DE CANTOR. L'ouvrage de
-// Schaeffer de 1966 se cite sous son titre français dans la littérature anglophone, faute de
-// traduction établie ; le franciser à moitié ou le traduire le rendrait introuvable.
-// ET « HEIKKILÄ » RELÈVE DU MÊME CAS QUE « de Cheveigné » : Ville-Matias Heikkilä signe ainsi son
-// article d'arXiv, en anglais, et retirer son tréma ne serait pas une traduction mais une faute sur
-// un nom.
-const TOLERES = /(?<![a-zà-ÿ])(?:möbius|rössler|bembé|cheveigné|välimäki|knöferle|über|noé|jiménez|garcía|françois|hörsamkeit|traité|heikkilä)(?![a-zà-ÿ])/gi;
-
-const ACCENTS = /[àâäçéèêëîïôöùûüÿœæ]/i;
-
-/**
- * Mots français sans accent relevés dans la projection anglaise. Volontairement
- * restreint aux mots dont AUCUN emploi anglais n'est plausible ici : « note »,
- * « mode », « plus », « son » sont anglais autant que français, les mettre
- * ferait crier le test sur des fiches correctes.
- */
-const MOTS_FR = /\b(?:aucun|aucune|automatique|avec|cellule|cellules|chaque|dans|demi-ton|demi-tons|dossier|droite|entre|garder|gauche|les|mesures|niveau|niveaux|pas|pour|selon|sortie|sorties|temps|tous|toutes|tout|toute|vers|voix)\b/i;
-
-/** Ce qui, dans un texte destiné à l'anglais, trahit du français. */
-function francais(texte: string | undefined | null): boolean {
-  const t = String(texte ?? "").replace(TOLERES, "");
-  return ACCENTS.test(t) || MOTS_FR.test(t);
-}
 
 /** Toute chaîne que le registre montre en anglais, avec d'où elle vient. */
 function projectionAnglaise(f: FicheAudio): { ou: string; texte: string }[] {
@@ -124,6 +76,13 @@ describe("anglais du registre", () => {
     expect(francais("Fenêtre")).toBe(true);
     expect(francais("Duration per chord in beats")).toBe(false);
     expect(francais("Möbius Strip")).toBe(false);
+    // Les fautes du 2026-10-29, dans les messages d'exécution : sans accent, et sans virgule anglaise.
+    expect(francais("Groove Box · C majeur · 15 neurones · graine 4242")).toBe(true);
+    expect(virguleDecimale("71,9 s · 8,0 ×")).toBe(true);
+    expect(virguleDecimale("0,125")).toBe(true);
+    expect(virguleDecimale("essai.png · 1,108 B")).toBe(false);
+    expect(virguleDecimale("E(3,8) x..x..x. · Cuban tresillo")).toBe(false);
+    expect(francais("Script: genre=pop, gamme=majeur")).toBe(false);
   });
 });
 

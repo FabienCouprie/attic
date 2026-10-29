@@ -3,12 +3,14 @@
 // Haute résolution (DPR), texte HTML (pas canvas) pour la lisibilité.
 import { useRef, useState, useEffect, useCallback } from "react";
 import { mesurerNiveau, type MesuresNiveau } from "../audio";
+import { useI18n } from "../i18n";
 
 interface Props {
   audioUrl?: string;
 }
 
 export function VuMetre({ audioUrl }: Props) {
+  const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [mesures, setMesures] = useState<MesuresNiveau | null>(null);
@@ -154,7 +156,7 @@ export function VuMetre({ audioUrl }: Props) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 12px", marginTop: 6, fontSize: 11, fontFamily: '"Segoe UI", system-ui, sans-serif' }}>
           <div style={{ color: "var(--text-secondary)" }}>Crest factor</div>
           <div style={{ color: "#e9a13b", textAlign: "right", fontWeight: 600 }}>{fmt(mesures.crestFactorDb, true)} dB</div>
-          <div style={{ color: "var(--text-secondary)" }}>Plage dyn. (LRA)</div>
+          <div style={{ color: "var(--text-secondary)" }}>{t("vumetre.plageDynamique")}</div>
           <div style={{ color: "#8e6fce", textAlign: "right", fontWeight: 600 }}>{fmt(mesures.plageDynamiqueDb, true)} dB</div>
           <div style={{ color: "var(--text-secondary)" }}>LUFS max</div>
           <div style={{ color: "#e76f51", textAlign: "right", fontWeight: 600 }}>{fmt(mesures.lufsMax, mesures.lufsMax > -119)} LUFS</div>

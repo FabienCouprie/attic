@@ -236,9 +236,9 @@ export const fiches: FicheAudio[] = ([
         const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.92));
         URL.revokeObjectURL(url);
         const jpeg = blob ? new File([blob], "spectrogramme-fractal.jpg", { type: "image/jpeg" }) : image;
-        return { valeurs: [jpeg, audio], message: `Spectrogramme fractal · ${audio.duration.toFixed(1)} s` };
+        return { valeurs: [jpeg, audio], message: traduire("msg.spectrogramme_fractal.resultat", audio.duration.toFixed(1)) };
       }
-      return { valeurs: [image ?? null, audio], message: `Spectrogramme fractal · ${audio.duration.toFixed(1)} s` };
+      return { valeurs: [image ?? null, audio], message: traduire("msg.spectrogramme_fractal.resultat", audio.duration.toFixed(1)) };
     },
   },
   {

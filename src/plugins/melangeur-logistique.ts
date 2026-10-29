@@ -2,6 +2,7 @@
 // La première piste diminue pendant que la seconde augmente, suivant une courbe logistique.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 async function resamplerVers(
@@ -86,13 +87,13 @@ export const fiches: FicheAudio[] = ([
       const a1 = ctx.entree(0);
       const a2 = ctx.entree(1);
       if (!(a1 instanceof AudioBuffer) || !(a2 instanceof AudioBuffer)) {
-        return { valeurs: [null], message: "Branchez deux pistes audio" };
+        return { valeurs: [null], message: traduire("msg.melangeur_logistique.deux_pistes") };
       }
       const centre = ctx.paramNombre("Centre", 50) / 100;
       const pente = ctx.paramNombre("Pente", 10);
       const volume = ctx.paramNombre("Volume", 100);
       const out = await melangerLogistique(a1, a2, centre, pente, volume);
-      return { valeurs: [out], message: `Mélangeur logistique · ${out.duration.toFixed(1)} s` };
+      return { valeurs: [out], message: traduire("msg.melangeur_logistique.resultat", out.duration.toFixed(1)) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

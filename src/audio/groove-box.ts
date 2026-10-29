@@ -50,7 +50,15 @@ export interface ResultatGrooveBox {
   midiMelodie: Uint8Array;
   midiBatterie: Uint8Array;
   notes: NoteGroove[];
-  description: string;
+  /**
+   * La progression jouée, en chiffres romains : « I–VI–IV–V ».
+   *
+   * LE MESSAGE QUI L'ANNONCE SE COMPOSE DANS LE COMPOSANT, ET NON ICI. Il était écrit ici, à partir
+   * des identifiants de la gamme et du style, et il s'affichait donc en français dans l'interface
+   * anglaise : « C majeur · 15 neurones ». Les libellés du menu, dans les deux langues, sont à la
+   * fiche ; ce module-ci ne connaît pas la langue de l'interface.
+   */
+  progressionTexte: string;
   graineUtilisee: number;
 }
 
@@ -372,7 +380,6 @@ export function genererGrooveBox(config: ConfigGrooveBox): ResultatGrooveBox {
   ]);
 
   const progressionTexte = progression.map((d) => ["I", "II", "III", "IV", "V", "VI", "VII"][d % 7]).join("–");
-  const description = `Groove Box · ${config.cle} ${config.gamme} · ${progressionTexte} · ${config.tempo} BPM · ${config.neurones} neurones · ${config.styleRythme}`;
 
-  return { midiBytes, midiAccords, midiBasse, midiMelodie, midiBatterie, notes, description, graineUtilisee };
+  return { midiBytes, midiAccords, midiBasse, midiMelodie, midiBatterie, notes, progressionTexte, graineUtilisee };
 }
