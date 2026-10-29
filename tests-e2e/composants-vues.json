@@ -498,6 +498,18 @@
     "entreeRequiseAutre": false
   },
   {
+    "id": "spectrogramme-fractal",
+    "vue": "VueRenduImage",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "spectrogramme-image",
+    "vue": "VueRenduImage",
+    "entreeAudio": false,
+    "entreeRequiseAutre": true
+  },
+  {
     "id": "styles-musicaux",
     "vue": "VueStylesMusicaux",
     "entreeAudio": false,
@@ -517,6 +529,12 @@
   },
   {
     "id": "texte-image",
+    "vue": "VueRenduImage",
+    "entreeAudio": false,
+    "entreeRequiseAutre": false
+  },
+  {
+    "id": "texte-image-moss",
     "vue": "VueRenduImage",
     "entreeAudio": false,
     "entreeRequiseAutre": false

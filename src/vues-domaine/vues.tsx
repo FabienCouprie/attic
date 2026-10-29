@@ -5,7 +5,7 @@
 // « avant » et « après » veulent dire, comment on en trouve une — et la liste ci-dessous, qui nomme
 // des identifiants de composants AUDIO, avec les modules de vues qui vont avec.
 //
-// LE COMPTE SE LIT SUR LE FICHIER, et nulle part ailleurs : **84 entrées**, nommant 87 identifiants
+// LE COMPTE SE LIT SUR LE FICHIER, et nulle part ailleurs : **87 entrées**, nommant 90 identifiants
 // de composants par `parId` — un composant peut porter plusieurs identifiants, par alias —, et
 // **22 modules de vues** importés ci-dessous. Ces chiffres sont ceux de ce fichier-ci : ils ne sont
 // pas recopiés dans une seconde liste, parce qu'une liste recopiée vieillit.
@@ -127,6 +127,14 @@ declarerVues([
   { correspond: parId("rendu-image"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("camelot"), vue: VueRenduImage, position: "avant" },
   { correspond: parId("texte-image"), vue: VueRenduImage, position: "avant" },
+  // UNE SORTIE IMAGE NE SE MONTRE PAS D'ELLE-MÊME, et ces trois composants n'avaient pas de vue :
+  // relevé le 2026-10-29, MOSS passait à « Done » après 165 s de calcul sans rien montrer, l'image ne
+  // se voyant qu'à travers un « Rendu d'image » branché derrière. Le relevé du registre a trouvé les
+  // deux autres. `contrat-vues-image.test.ts` le tient, et dit pourquoi la classification de pistes
+  // reste sans graphique sur son nœud.
+  { correspond: parId("texte-image-moss"), vue: VueRenduImage, position: "avant" },
+  { correspond: parId("spectrogramme-fractal"), vue: VueRenduImage, position: "avant" },
+  { correspond: parId("spectrogramme-image"), vue: VueRenduImage, position: "avant" },
   { correspond: (f) => f.startsWith("vexflow-"), vue: VueVexFlow, position: "avant", masqueMessage: true },
   { correspond: parId("partition-verovio"), vue: VueGravure, position: "avant" },
   { correspond: parId("galerie-exposition"), vue: VueGalerieExposition, position: "avant" },

@@ -4,13 +4,15 @@
 // pont, `electron/sdcpp.test.ts` ce que le pont dit au moteur. Aucun des deux ne lance
 // stable-diffusion.cpp avec ses quatre fichiers, ni n'écrit le prompt dans un fichier qu'il relit.
 //
-// TROIS CHOSES Y SONT TENUES :
+// QUATRE CHOSES Y SONT TENUES :
 //   1. LE PROMPT EST UN JSON DE MISE EN PAGE QUI PORTE DES ACCENTS. C'est le chemin par fichier
 //      UTF-8 qu'on éprouve ; sur la ligne de commande, il traverserait l'encodage de Windows ;
 //   2. L'AVANCEMENT ARRIVE ÉTAPE PAR ÉTAPE, compté en étapes distinctes vues sur le nœud. Un cas qui
 //      se contenterait d'en apercevoir une resterait vert sans le séparateur de `lancerTravail` :
 //      la barre entière arrive alors en une ligne à la fin, et le nœud en montre une un instant ;
-//   3. L'IMAGE A LA TAILLE DEMANDÉE.
+//   3. L'IMAGE A LA TAILLE DEMANDÉE ;
+//   4. L'IMAGE SE VOIT DANS LE NŒUD. Relevé le 2026-10-29 : le nœud passait à « Terminé » et ne
+//      montrait rien, faute de vue au registre ; l'image n'existait que dans le magasin des résultats.
 //
 // IL NE JUGE PAS L'IMAGE, et ses huit étapes en 512 × 512 ne sont pas faites pour la juger : c'est
 // le chemin qu'il tient. Il se saute sans le moteur, sans les quatre fichiers ou sans build.
@@ -92,6 +94,14 @@ test.describe("MOSS-Image, de bout en bout", () => {
       expect(etapes, "les étapes ne sont pas arrivées une à une sur le nœud").toBeGreaterThanOrEqual(ETAPES - 2);
       // ═══ 3. LA TAILLE DEMANDÉE ═══
       expect([rendu!.largeur, rendu!.hauteur]).toEqual([512, 512]);
+      // ═══ 4. L'IMAGE DANS LE NŒUD, décodée, et qui y occupe une place ═══
+      const vue = page.locator('[data-id="moss"] img');
+      await expect(vue, "le nœud ne montre pas l'image qu'il a rendue").toHaveCount(1, { timeout: 10000 });
+      await expect.poll(() => vue.evaluate((i: HTMLImageElement) => [i.naturalWidth, i.naturalHeight])).toEqual([512, 512]);
+      const place = await vue.evaluate((i: HTMLImageElement) => [i.offsetWidth, i.offsetHeight]);
+      await page.locator('[data-id="moss"]').screenshot({ path: info.outputPath("moss-dans-le-noeud.png") });
+      console.log(`image dans le nœud : ${place[0]} × ${place[1]} px de mise en page`);
+      expect(Math.min(...place), "l'image doit occuper une place dans le nœud").toBeGreaterThanOrEqual(120);
     } finally {
       await app.close();
     }
