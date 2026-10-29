@@ -1,0 +1,15 @@
+/* vues-domaine/songsee.css — Une image dans le cadre de son nœud, et non par-dessous.
+ *
+ * Neuf composants montrent une image par `SongseeVue`. La vue prend la place que laissent l'en-tête,
+ * le message, les ports et le statut ; l'image s'y ajuste sans se déformer. Sans cette chaîne,
+ * l'image prenait 100 % d'une hauteur ambiante et poussait le reste du nœud hors de son cadre.
+ *
+ * CE FICHIER EST À PART PARCE QUE `atelier.css` EST EN DETTE DE TAILLE et ne peut plus grossir, et
+ * `App.tsx` non plus : la vue l'importe elle-même. */
+.attic-node:has(.attic-node-songsee) { display: flex; flex-direction: column; height: 100%; }
+/* SEULE L'IMAGE CÈDE DE LA PLACE. Sans cette règle, tout le contenu se tassait à parts égales, et le
+ * lecteur audio d'« Attracteur / IFS » passait sous la ligne de message. */
+.attic-node:has(.attic-node-songsee) > :not(.attic-node-songsee) { flex-shrink: 0; }
+.attic-node-songsee { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.attic-node-songsee-cadre { flex: 1 1 auto; min-height: 0; }
+.attic-node-songsee-cadre img { width: 100%; height: 100%; object-fit: contain; display: block; border-radius: 4px; }

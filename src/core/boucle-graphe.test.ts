@@ -268,8 +268,10 @@ describe("les trois fins de boucle", () => {
 });
 
 /** Une boucle dépliée telle que le dépliage la rapporte, traversées comprises. */
+// LES QUATRE CHAMPS QUE CES CAS VÉRIFIENT, et eux seuls : la fin et les copies de chaque boucle,
+// ajoutées pour sauter un corps inchangé, se vérifient dans `saut-de-boucle.test.ts`.
 const depliee = (debutId: string, tours: number, entreesDuDehors = 0, sortiesVersDehors = 0) =>
-  ({ debutId, tours, entreesDuDehors, sortiesVersDehors });
+  expect.objectContaining({ debutId, tours, entreesDuDehors, sortiesVersDehors });
 
 describe("boucles imbriquées", () => {
   // DEMANDÉ PAR FABIEN, après un banc d'épreuve où deux boucles emboîtées ne dépliaient rien : les
@@ -563,7 +565,7 @@ describe("une boucle menée par PASSES dans le ventre", () => {
     ];
     const r = deplierBoucles(noeuds, aretes);
     expect(r.problemes).toEqual([]);
-    expect(r.depliees).toEqual([{ debutId: "d", tours: 3, entreesDuDehors: 0, sortiesVersDehors: 0 }]);
+    expect(r.depliees).toEqual([depliee("d", 3)]);
   });
 
   it("SOUS DEUX BOUCLES EMBOÎTÉES, C'EST LA PLUS INTÉRIEURE QUI LE DIT, et rien n'est déplié", () => {

@@ -2,7 +2,7 @@
   "name": "attic",
   "private": true,
   "version": "5.1.0",
-  "description": "Visual node-editor for AI-powered music and sound design — 507 nodes, local ML models, bilingual FR/EN.",
+  "description": "Visual node-editor for AI-powered music and sound design — 510 nodes, local ML models, bilingual FR/EN.",
   "keywords": [
     "audio",
     "music",
@@ -101,6 +101,7 @@
       "!dist/oonx/**/*",
       "!dist/acestep/**/*",
       "!dist/audiocpp/**/*",
+      "!dist/sdcpp/**/*",
       "!dist/magenta/**/*",
       "!dist/sf2/**/*",
       "!dist/sfz/**/*",
@@ -144,6 +145,10 @@
       {
         "from": "bin/audiocpp",
         "to": "bin/audiocpp"
+      },
+      {
+        "from": "bin/sdcpp",
+        "to": "bin/sdcpp"
       },
       {
         "from": "music collection",
@@ -217,7 +222,7 @@
     "lamejs": "^1.2.1",
     "libpd-wasm": "^0.1.6",
     "mathjs": "^15.2.0",
-    "meyda": "^5.6.3",
+    "meyda": "5.6.2",
     "midi-file": "^1.2.4",
     "node-web-audio-api": "^2.0.0",
     "onnxruntime-web": "^1.21.0",

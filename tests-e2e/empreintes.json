@@ -60,12 +60,18 @@
       ],
       "message": "300 trames · 99 % voisé · médiane 220.0 Hz"
     },
+    "limiteur-crete-vraie": {
+      "empreintes": [
+        "0.475967401/0.891250312"
+      ],
+      "message": "Réduction maximale -7.7 dB · crête vraie -1.00 dBTP"
+    },
     "fiche-technique": {
       "empreintes": [
         "0.269865992/0.528780282",
         null
       ],
-      "message": "3 s · stéréo · −9,18 LUFS · −5,53 dBTP · r 0,15 · 220,01 Hz (A3)"
+      "message": "3 s · stéréo · −9,18 LUFS · −5,33 dBTP · r 0,15 · 220,01 Hz (A3)"
     },
     "harmonizer": {
       "empreintes": [

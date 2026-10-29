@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **507 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **510 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
-| [Inputs](#inputs) | 102 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (3) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (1) · [Text to Speech](#text-to-speech) (6) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 244 | [Analysis](#analysis) (1) · [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (15) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
+| [Processing](#processing) | 246 | [Analysis](#analysis) (1) · [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (17) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -1547,6 +1547,7 @@ Searches for a voice that makes a first-species counterpoint, note against note,
 | [Image input](#image-input) | Loads an image file and passes it to its output. |
 | [SVG Reader](#svg-reader) | Loads an SVG file and rasterizes it to a PNG image. |
 | [Text to image](#text-to-image) | Generates a 512×512 image from a text prompt using SDXS-512 (ONNX, 1 step, local). |
+| [Text to image (MOSS)](#text-to-image-moss) | Draws an image from a description or a JSON layout, with MOSS-Image. |
 
 #### Image input
 
@@ -1598,6 +1599,30 @@ Generates a 512×512 image from a text prompt using SDXS-512 (1-step distilled U
 | Seed | slider | -1 | -1 – 999999, step 1 | Random seed. -1 = random. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Model path | folder | — |  | Folder of the SDXS-512 bundle (empty = bundled model in resources/oonx/sdxs-512-texte-image). |
 | Compute | choice | Automatic | Automatic / Graphics card / Processor | The compute device. On the machine where it was measured, the graphics card renders the image in two thirds of the processor's time; the first image costs some twenty seconds more, while the driver compiles. « Automatic » tries the graphics card and falls back to the processor if it refuses the model. « Graphics card » and « Processor » impose one or the other, and report a refusal rather than using the other without warning. |
+
+#### Text to image (MOSS)
+
+`texte-image-moss` · Inputs → Image
+
+*Draws an image from a description or a JSON layout, with MOSS-Image.*
+
+This component draws an image from a description in words, with MOSS-Image, published by OpenMOSS in 2026 under the Apache-2.0 licence. « Prompt » describes the image. It can be a sentence, or a JSON layout that places each element: a « summary » object whose « caption » describes the whole, an « items » list in which each element carries a « label » worth « text » or « object », a « caption » describing it, a « text » for the words to write, and a « bbox » given in pixels as top, left, bottom, right, measured from the centre of the image; all of it together with « bbox_format » worth « yxyx » and « bbox_coord_space » worth « abs_centralized ». On the 320-pixel-square image the component renders when opened, each coordinate therefore runs from minus 160 to 160. The words to write are rendered as given. The model learned in English and Chinese. The input of the same name replaces the setting when it receives a text. « Negative prompt » describes what is to be kept out. Empty, nothing is. « Width » and « Height » set the size of the image. The model learned on 1024 pixels a side, and the compute time grows with the area. « Steps » is the number of denoising steps. Few steps give a less finished image; the compute time grows with their number. « Guidance » sets how closely the image follows the text. Low, the model composes more freely; high, it sticks to the words, at the risk of hardening the image. « Seed » fixes the starting draw. At minus one, it is drawn at random, and the message says which one was used. The same seed gives the same image on the same compute device. « Compute » names the device used. On the first run, the four model files are downloaded, and the message announces their weight. The « Image » output returns a PNG. The message gives the seed used and the size.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Prompt | text (prompt) |  |
+| output | Image | image |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Prompt | text | `an old brass gramophone in a dusty attic, morning light, …` |  | The description of the image, or its JSON layout. The model learned in English and Chinese. |
+| Negative prompt | text | — |  | What is to be kept out. Empty, nothing is. |
+| Width | slider | 320 px | 256 – 1536 px, step 64 | The width of the image. The model learned on 1024 pixels, and the compute time grows with the area. |
+| Height | slider | 320 px | 256 – 1536 px, step 64 | The height of the image. The coordinates of a layout are measured from the centre, on this size. |
+| Steps | slider | 30 | 4 – 60, step 1 | The number of denoising steps. Few steps give a less finished image; the compute time grows with their number. |
+| Guidance | slider | 3 | 1 – 10, step 0.5 | How closely the image follows the text. Low, the model composes more freely; high, it sticks to the words. |
+| Seed | slider | -1 | -1 – 999999, step 1 | The starting draw. At minus one, it is drawn at random and the message says which one was used. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 ### Keyboards
 
@@ -2523,6 +2548,7 @@ Synthesises a note by frequency modulation between six operators. An operator is
 | Component | Summary |
 |---|---|
 | [PDF input](#pdf-input) | Loads a PDF file and passes it to its output. |
+| [Text Input](#text-input) | Outputs user-entered text on its text output. |
 
 #### PDF input
 
@@ -2538,6 +2564,22 @@ Loads a PDF file from the inspector and passes it to its « File » output, conn
 
 *No parameters.*
 
+#### Text Input
+
+`source-texte` · Inputs → Text
+
+*Outputs user-entered text on its text output.*
+
+Outputs user-entered text on its text output (blue port). Its output feeds any text input in the graph.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Text | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Text | text | `Hello, this is a test text.` |  | Text to output. Will be sent on the text output (blue port). |
+
 ### Text to Speech
 
 | Component | Summary |
@@ -2547,7 +2589,6 @@ Loads a PDF file from the inspector and passes it to its « File » output, conn
 | [MMS-TTS Multilingual](#mms-tts-multilingual) | Multilingual text-to-speech (Meta MMS, 10+ languages). |
 | [Piper TTS](#piper-tts) | Local multilingual text-to-speech via Piper TTS (ONNX). |
 | [SpeechT5 TTS](#speecht5-tts) | High-quality text-to-speech (Microsoft SpeechT5, English). |
-| [Text Input](#text-input) | Outputs user-entered text on its text output. |
 
 #### French TTS
 
@@ -2634,22 +2675,6 @@ High-quality text-to-speech using Microsoft SpeechT5. Connect a « Text Source �
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Voice | choice | US male (BDL) | US male (BDL) / US female (SLT) / US female (CLB) / US male (RMS) / Canadian male (JMK) / Scottish male (AWB) / Indian male (KSP) | Preset voice (CMU Arctic embeddings). BDL/RMS = US males; SLT/CLB = US females; JMK = Canadian male; AWB = Scottish male; KSP = Indian male. |
-
-#### Text Input
-
-`source-texte` · Inputs → Text to Speech
-
-*Outputs user-entered text on its text output.*
-
-Outputs user-entered text on its text output (blue port). Its output feeds any text input in the graph.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| output | Text | text |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Text | text | `Hello, this is a test text.` |  | Text to output. Will be sent on the text output (blue port). |
 
 ### Xenakis
 
@@ -5179,8 +5204,10 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | [Match Level](#match-level) | Aligns the level of one sound with another, by a constant gain. |
 | [Multiband Compressor](#multiband-compressor) | 3-band compressor with independent thresholds/ratios. |
 | [Normalizer](#normalizer) | Brings the sound to a target level, by peak or by loudness (LUFS). |
+| [Parametric Equalizer](#parametric-equalizer) | Corrects the frequency balance with a high-pass, two shelves and four bells placed at will. |
 | [Resonators](#resonators) | A bank of tuned resonators that any sound can set ringing: a noise becomes a chord, a scrape a bell. |
 | [Transient Shaper](#transient-shaper) | Independent attack and sustain control. |
+| [True-Peak Limiter](#true-peak-limiter) | Brings the sound under a true-peak ceiling, seeing the peaks coming. |
 | [Tuned Combs](#tuned-combs) | Comb filters tuned to a note or a chord: the input sound rings like a string, at the note and all its harmonics. |
 
 #### Amplifier
@@ -5541,6 +5568,39 @@ Adjusts overall gain to bring the signal peak to the target level, without chang
 | Target loudness | slider | -14 LUFS | -36 – -6 LUFS, step 0.5 | Target loudness, in Loudness mode. -14 is the streaming platforms' target, -23 the EBU R 128 broadcast standard, -16 a common podcast value. |
 | Ceiling | slider | -1 dBTP | -6 – 0 dBTP, step 0.1 | True peak not to be exceeded, in Loudness mode. If the target required crossing it, the ceiling wins and the node announces that the target was not reached: it prefers saying so to clipping silently or slipping a limiter behind a button that only promises to normalise. Put a limiter upstream if you want both. |
 
+#### Parametric Equalizer
+
+`egaliseur-parametrique` · Processing → Equalisation and filters
+
+*Corrects the frequency balance with a high-pass, two shelves and four bells placed at will.*
+
+This component corrects the frequency balance of a sound with seven stages placed at the chosen frequency: a high-pass, a low shelf, four bells and a high shelf. The filters follow Robert Bristow-Johnson's formulae (« Cookbook formulae for audio EQ biquad filter coefficients »). « High-pass » sets the cutoff frequency of a second-order Butterworth filter, which attenuates by three decibels at that frequency and by twelve decibels per octave below it. At zero, nothing is cut. « Low frequency » and « Low gain » set the low shelf: what lies below the frequency receives the gain, and the frequency itself receives half of it, in decibels. « Frequency 1 », « Frequency 2 », « Frequency 3 » and « Frequency 4 » place the centre of the four bells. « Gain 1 », « Gain 2 », « Gain 3 » and « Gain 4 » say what each adds or removes at its centre. « Q 1 », « Q 2 », « Q 3 » and « Q 4 » set their width: a high Q narrows the bell to a few hertz, a low Q spreads it over several octaves. « High frequency » and « High gain » set the high shelf, the mirror of the low one: what lies above the frequency receives the gain, and the frequency itself receives half of it. A stage whose gain is zero is not applied: its frequency and width then have no effect. When no gain is set and « High-pass » is zero, the received sound comes out unchanged. A frequency beyond half the sample rate is brought just below it. A positive gain raises the level, and the peaks with it. The « Audio » output returns the equalised sound, with the received length, sample rate and channels. The message gives the number of stages applied.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| High-pass | number | 0 Hz | 0 – 500 Hz, step 1 | The cutoff of a twelve-decibel-per-octave high-pass. At zero, nothing is cut. |
+| Low frequency | number | 100 Hz | 20 – 1000 Hz, step 1 | The hinge of the low shelf: below it, the gain applies. No effect while the band's gain is zero. |
+| Low gain | number | 0 dB | -18 – 18 dB, step 0.5 | What the low shelf adds or removes. At zero, it is not applied. |
+| Frequency 1 | number | 250 Hz | 20 – 20000 Hz, step 1 | The centre of bell 1. No effect while the band's gain is zero. |
+| Gain 1 | number | 0 dB | -18 – 18 dB, step 0.5 | What bell 1 adds or removes at its centre. At zero, it is not applied. |
+| Q 1 | number | 1 Q | 0.3 – 10 Q, step 0.1 | The width of bell 1: high, it narrows to a few hertz; low, it spreads over several octaves. No effect while the band's gain is zero. |
+| Frequency 2 | number | 1000 Hz | 20 – 20000 Hz, step 1 | The centre of bell 2. No effect while the band's gain is zero. |
+| Gain 2 | number | 0 dB | -18 – 18 dB, step 0.5 | What bell 2 adds or removes at its centre. At zero, it is not applied. |
+| Q 2 | number | 1 Q | 0.3 – 10 Q, step 0.1 | The width of bell 2: high, it narrows to a few hertz; low, it spreads over several octaves. No effect while the band's gain is zero. |
+| Frequency 3 | number | 3000 Hz | 20 – 20000 Hz, step 1 | The centre of bell 3. No effect while the band's gain is zero. |
+| Gain 3 | number | 0 dB | -18 – 18 dB, step 0.5 | What bell 3 adds or removes at its centre. At zero, it is not applied. |
+| Q 3 | number | 1 Q | 0.3 – 10 Q, step 0.1 | The width of bell 3: high, it narrows to a few hertz; low, it spreads over several octaves. No effect while the band's gain is zero. |
+| Frequency 4 | number | 8000 Hz | 20 – 20000 Hz, step 1 | The centre of bell 4. No effect while the band's gain is zero. |
+| Gain 4 | number | 0 dB | -18 – 18 dB, step 0.5 | What bell 4 adds or removes at its centre. At zero, it is not applied. |
+| Q 4 | number | 1 Q | 0.3 – 10 Q, step 0.1 | The width of bell 4: high, it narrows to a few hertz; low, it spreads over several octaves. No effect while the band's gain is zero. |
+| High frequency | number | 10000 Hz | 1000 – 20000 Hz, step 1 | The hinge of the high shelf: above it, the gain applies. No effect while the band's gain is zero. |
+| High gain | number | 0 dB | -18 – 18 dB, step 0.5 | What the high shelf adds or removes. At zero, it is not applied. |
+
 #### Resonators
 
 `resonateurs` · Processing → Equalisation and filters
@@ -5604,6 +5664,27 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 | Attack time max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack time » that the curve's one means. |
 | Sustain time min | slider | 50 ms | 10 – 500 ms, step 1 | Value of « Sustain time » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Sustain time max | slider | 300 ms | 10 – 500 ms, step 1 | Value of « Sustain time » that the curve's one means. |
+
+#### True-Peak Limiter
+
+`limiteur-crete-vraie` · Processing → Equalisation and filters
+
+*Brings the sound under a true-peak ceiling, seeing the peaks coming.*
+
+This component brings the peaks of a sound under a ceiling expressed as a true peak, that is, counting the values the signal takes between its samples, following Recommendation ITU-R BS.1770-4. The true peak is read through fourfold oversampling. A single gain is applied to all channels, so that the stereo image does not shift. « Gain » raises the sound before limiting: this is how the sound gains loudness, the peaks that then exceed the ceiling being brought back under it. « Ceiling » sets the true peak the output does not exceed, in dBTP. Minus one is the usual broadcast value. « Lookahead » sets the time during which the gain falls before a peak: the reduction starts ahead of it and reaches it in a ramp, instead of dropping at once on the sample. The longer it is, the gentler the descent. « Hold » sets the time during which the gain stays at its lowest before rising again. It keeps the gain from rising between two cycles of a low sound and falling again before the next, which would distort the wave. At zero, nothing is held. « Release » sets the speed at which the gain then rises, like the time constant of a first-order filter. « Lookahead », « Hold » and « Release » have no effect while no peak exceeds the ceiling: the sound then comes out raised by « Gain » alone. After limiting, the true peak of the output is measured; if one remains above the ceiling, a fixed gain brings it under, and the message says so once that gain reaches a hundredth of a decibel. The « Audio » output returns the limited sound, with the received length, sample rate and channels. The message gives the strongest reduction applied and the true peak of the output.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio (stereo) |  |
+| output | Audio | audio (stereo) |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Gain | number | 0 dB | 0 – 24 dB, step 0.5 | Raises the sound before limiting. This is how the sound gains loudness. |
+| Ceiling | number | -1 dBTP | -6 – 0 dBTP, step 0.1 | The true peak the output does not exceed. Minus one is the usual broadcast value. |
+| Lookahead | number | 2 ms | 0.5 – 10 ms, step 0.5 | The time during which the gain falls before a peak. No effect while no peak exceeds the ceiling. |
+| Hold | number | 20 ms | 0 – 100 ms, step 1 | The time during which the gain stays at its lowest before rising; it keeps a low sound undistorted. No effect while no peak exceeds the ceiling. |
+| Release | number | 100 ms | 10 – 1000 ms, step 5 | The speed at which the gain rises after the hold. No effect while no peak exceeds the ceiling. |
 
 #### Tuned Combs
 

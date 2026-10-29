@@ -135,6 +135,72 @@
           "sha256": "dc184a70a28ac308174b02dd9b8e4ad9c32956ad23eb3a9ef766367a4351b999"
         }
       }
+    },
+    {
+      "id": "sdcpp",
+      "nom": "stable-diffusion.cpp",
+      "role": "Moteur de diffusion d'images employé par le composant « Texte → image (MOSS) ».",
+      "amont": {
+        "depot": "https://github.com/leejet/stable-diffusion.cpp.git",
+        "version": "be48649",
+        "sousModules": false
+      },
+      "licence": {
+        "nom": "MIT",
+        "credit": "leejet — stable-diffusion.cpp, sur ggml ; libwebp et libwebm sous BSD"
+      },
+      "destination": "bin/sdcpp",
+      "plateformes": {
+        "win32-x64": {
+          "asset": "sdcpp-be48649-win32-x64-vulkan.zip",
+          "amontAsset": {
+            "release": "master-1017-be48649",
+            "nom": "sd-master-be48649-bin-win-vulkan-x64.zip",
+            "octets": 29744133,
+            "sha256": "833414dfe255d9709c6184e699017028ee8d5522058ad53b201d9602805c6b41"
+          },
+          "emprunts": {
+            "depuis": "audiocpp",
+            "fichiers": [
+              "msvcp140.dll",
+              "msvcp140_codecvt_ids.dll",
+              "vcruntime140.dll",
+              "vcruntime140_1.dll",
+              "vcomp140.dll"
+            ]
+          },
+          "fichiers": [
+            "sd-cli.exe",
+            "stable-diffusion.dll",
+            "ggml.dll",
+            "ggml-base.dll",
+            "ggml-vulkan.dll",
+            "ggml-cpu-alderlake.dll",
+            "ggml-cpu-cannonlake.dll",
+            "ggml-cpu-cascadelake.dll",
+            "ggml-cpu-haswell.dll",
+            "ggml-cpu-icelake.dll",
+            "ggml-cpu-sandybridge.dll",
+            "ggml-cpu-skylakex.dll",
+            "ggml-cpu-sse42.dll",
+            "ggml-cpu-x64.dll",
+            "libwebp.dll",
+            "libwebpmux.dll",
+            "libsharpyuv.dll",
+            "webm.dll",
+            "stable-diffusion.cpp.txt",
+            "ggml.txt",
+            "msvcp140.dll",
+            "msvcp140_codecvt_ids.dll",
+            "vcruntime140.dll",
+            "vcruntime140_1.dll",
+            "vcomp140.dll"
+          ],
+          "url": "https://github.com/FabienCouprie/attic/releases/download/assets/sdcpp-be48649-win32-x64-vulkan.zip",
+          "octets": 31407460,
+          "sha256": "0efb5bbd1fc0c77bb067c34869b5b0a278e29efd1b18ee46827c18a0491660aa"
+        }
+      }
     }
   ]
 }

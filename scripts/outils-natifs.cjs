@@ -140,8 +140,17 @@ async function construire(ids) {
       source = path.join(source, ici.produits);
     }
 
+    // UN FICHIER EMPRUNTÉ VIENT DU DOSSIER D'UN AUTRE OUTIL, déjà construit. stable-diffusion.cpp
+    // publie ses binaires sans le runtime de Microsoft qu'ils appellent, et audio.cpp le livre : sur
+    // une machine sans redistribuable Visual C++, le moteur ne démarrerait pas. Mesuré avec ces DLL
+    // en 14.44 à côté de lui : il démarre, et rend une image identique au bit près.
+    const emprunte = (f) => {
+      if (!ici.emprunts?.fichiers.includes(f)) return null;
+      const preteur = manifeste.outils.find((o) => o.id === ici.emprunts.depuis);
+      return preteur ? path.join(RACINE, preteur.destination) : null;
+    };
     for (const f of ici.fichiers) {
-      const de = path.join(source, f);
+      const de = path.join(emprunte(f) ?? source, f);
       if (!fs.existsSync(de)) {
         console.error(`${outil.id} : ${f} est absent de ${source}`);
         process.exit(1);

@@ -1,0 +1,99 @@
+// tests-e2e/moss-dans-application.spec.ts — Une mise en page devient une image, dans l'application réelle.
+//
+// CE QUE LES CAS UNITAIRES NE PEUVENT PAS DIRE. `texte-image-moss.test.ts` tient ce qui part vers le
+// pont, `electron/sdcpp.test.ts` ce que le pont dit au moteur. Aucun des deux ne lance
+// stable-diffusion.cpp avec ses quatre fichiers, ni n'écrit le prompt dans un fichier qu'il relit.
+//
+// TROIS CHOSES Y SONT TENUES :
+//   1. LE PROMPT EST UN JSON DE MISE EN PAGE QUI PORTE DES ACCENTS. C'est le chemin par fichier
+//      UTF-8 qu'on éprouve ; sur la ligne de commande, il traverserait l'encodage de Windows ;
+//   2. L'AVANCEMENT ARRIVE ÉTAPE PAR ÉTAPE, compté en étapes distinctes vues sur le nœud. Un cas qui
+//      se contenterait d'en apercevoir une resterait vert sans le séparateur de `lancerTravail` :
+//      la barre entière arrive alors en une ligne à la fin, et le nœud en montre une un instant ;
+//   3. L'IMAGE A LA TAILLE DEMANDÉE.
+//
+// IL NE JUGE PAS L'IMAGE, et ses huit étapes en 512 × 512 ne sont pas faites pour la juger : c'est
+// le chemin qu'il tient. Il se saute sans le moteur, sans les quatre fichiers ou sans build.
+import { test, expect, _electron as electron, type ElectronApplication } from "@playwright/test";
+import { existsSync, writeFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const RACINE = join(dirname(fileURLToPath(import.meta.url)), "..");
+const BUILD = join(RACINE, "dist", "index.html");
+const MOTEUR = join(RACINE, "bin", "sdcpp", "sd-cli.exe");
+const FICHIERS = ["moss-image-sft-q4_k.gguf", "qwen3.5-9b-q4_k_m.gguf", "flux2-vae.safetensors", "moss-image-tokenizer.json"]
+  .map((f) => join(RACINE, "public", "sdcpp", f));
+const ETAPES = 8;
+
+const MISE_EN_PAGE = JSON.stringify({
+  summary: { meta: ["album cover"], canvas: "single", caption: "An album cover with a brass gramophone in a dusty attic." },
+  items: [
+    { label: "text", caption: "The title in white capital letters at the top.", text: "LE GRENIER", bbox: [-220, -200, -150, 200] },
+    { label: "object", caption: "A brass gramophone horn.", bbox: [-120, -150, 130, 150] },
+    { label: "text", caption: "A subtitle in white italic at the bottom.", text: "musique concrète", bbox: [170, -180, 210, 180] },
+  ],
+  bbox_coord_space: "abs_centralized", bbox_format: "yxyx",
+});
+
+function lancer(): Promise<ElectronApplication> {
+  return electron.launch({ args: [RACINE], cwd: RACINE, env: { ...process.env, NODE_ENV: "" } });
+}
+
+test.describe("MOSS-Image, de bout en bout", () => {
+  test.skip(!existsSync(BUILD), "Aucun build : lancer « npm run build » avant cette épreuve.");
+  test.skip(!existsSync(MOTEUR), "stable-diffusion.cpp absent : « npm run outils ».");
+  test.skip(!FICHIERS.every(existsSync), "MOSS-Image absent : le récupérer depuis le panneau des modèles.");
+  test.setTimeout(900000);
+
+  test("UNE MISE EN PAGE ACCENTUÉE DEVIENT UNE IMAGE, et l'avancement arrive pendant", async ({}, info) => {
+    const app = await lancer();
+    try {
+      const page = await app.firstWindow();
+      await page.waitForLoadState("domcontentloaded");
+      await page.evaluate(([prompt, etapes]) => {
+        localStorage.setItem("attic-encours", JSON.stringify({
+          nodes: [{ id: "moss", position: { x: 0, y: 0 }, data: { ficheId: "texte-image-moss", parametres: {
+            "Prompt": prompt, "Largeur": 512, "Hauteur": 512, "Étapes": etapes, "Guidage": 3, "Graine": 42, "Calcul": "" } } }],
+          edges: [],
+        }));
+      }, [MISE_EN_PAGE, ETAPES] as const);
+      await page.reload();
+      await page.waitForSelector(".attic-app", { timeout: 60000 });
+      await page.locator('[data-id="moss"]').waitFor({ timeout: 60000 });
+      await page.evaluate((etapes) => {
+        const vues = new Set<string>();
+        (window as unknown as { __etapes__: Set<string> }).__etapes__ = vues;
+        const noeud = document.querySelector('[data-id="moss"]')!;
+        const motif = new RegExp(`(\\d+)\\/${etapes}(?!\\d)`, "g");
+        new MutationObserver(() => {
+          for (const m of (noeud.textContent ?? "").matchAll(motif)) vues.add(m[1]);
+        }).observe(noeud, { subtree: true, childList: true, characterData: true });
+      }, ETAPES);
+      const debut = Date.now();
+      await page.getByRole("button", { name: /Lancer/ }).click();
+      await expect(page.locator('[data-id="moss"]')).toContainText(/Graine 42|Seed 42/, { timeout: 840000 });
+      const duree = Math.round((Date.now() - debut) / 1000);
+
+      const rendu = await page.evaluate(async () => {
+        const r = (globalThis as unknown as { __attic_execution__?: { resultats?: Map<string, unknown[]> } })
+          .__attic_execution__?.resultats;
+        const image = (r instanceof Map ? r.get("moss")?.[0] : null) as File | null;
+        if (!image) return null;
+        const bitmap = await createImageBitmap(image);
+        return { largeur: bitmap.width, hauteur: bitmap.height, octets: Array.from(new Uint8Array(await image.arrayBuffer())) };
+      });
+      const etapes = await page.evaluate(() => (window as unknown as { __etapes__: Set<string> }).__etapes__.size);
+      expect(rendu, "le composant doit avoir rendu une image").not.toBe(null);
+      writeFileSync(info.outputPath("moss-dans-application.png"), Buffer.from(rendu!.octets));
+      console.log(`image ${rendu!.largeur} × ${rendu!.hauteur} · ${rendu!.octets.length} octets · ${duree} s · étapes vues ${etapes} sur ${ETAPES}`);
+
+      // ═══ 2. L'AVANCEMENT, PENDANT ET NON À LA FIN ═══
+      expect(etapes, "les étapes ne sont pas arrivées une à une sur le nœud").toBeGreaterThanOrEqual(ETAPES - 2);
+      // ═══ 3. LA TAILLE DEMANDÉE ═══
+      expect([rendu!.largeur, rendu!.hauteur]).toEqual([512, 512]);
+    } finally {
+      await app.close();
+    }
+  });
+});

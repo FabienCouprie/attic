@@ -18,6 +18,10 @@ included in Attic.
 | `audiobox-aesthetics.onnx` | CC-BY 4.0 (weights and most code); MIT (WavLM components derived from microsoft/unilm) | Copyright (c) Meta Platforms, Inc. — Audiobox Aesthetics (https://github.com/facebookresearch/audiobox-aesthetics), weights `facebook/audiobox-aesthetics` on Hugging Face, exported to ONNX (FP32) for Attic. Changes: the positional convolution's weight normalization is folded into a constant weight, and the output de-normalization is included in the graph; scores are unchanged (measured within 2e-5). |
 | `stable-audio-3-small-music/` | Stability AI Community License | Stability AI — Stable Audio 3 small-music (ONNX export by lsb) |
 | `stable-audio-3-small-music/onnx/encoder_q4.onnx` | Stability AI Community License | Stability AI — Stable Audio 3 small-music audio encoder (ONNX export by bgkb) |
+| `sdcpp/moss-image-sft-q4_k.gguf` | Apache-2.0 | OpenMOSS — MOSS-Image SFT (`OpenMOSS-Team/MOSS-Image-SFT`), converted to GGUF Q4_K by leejet (`leejet/MOSS-Image-SFT-GGUF`, commit `238daf4`). Downloaded from Hugging Face at that pinned commit, its size exceeding a release asset |
+| `sdcpp/qwen3.5-9b-q4_k_m.gguf` | Apache-2.0 | Qwen — Qwen3.5-9B, converted to GGUF Q4_K_M by Unsloth (`unsloth/Qwen3.5-9B-GGUF`, commit `3885219`), the text encoder of MOSS-Image. Downloaded from Hugging Face at that pinned commit, its size exceeding a release asset |
+| `sdcpp/flux2-vae.safetensors` | Apache-2.0 | Black Forest Labs — the FLUX.2 VAE, as published by `Comfy-Org/MOSS-Image` for MOSS-Image |
+| `sdcpp/moss-image-tokenizer.json` | Apache-2.0 | OpenMOSS — the tokenizer of MOSS-Image SFT, on the Qwen3.5 vocabulary |
 | `audiocpp/chatterbox-q8_0.gguf` | MIT | Copyright (c) Resemble AI — Chatterbox (`ResembleAI/chatterbox`). GGUF conversion by the audio.cpp project, whose repository declares no licence of its own |
 | `audiocpp/ced-base-f32.gguf` | Apache-2.0 | CED — Consistent Ensemble Distillation audio tagger. GGUF conversion published by the audio.cpp project (`audio-cpp/audio.cpp-gguf`, `CED-GGUF/`), which declares Apache-2.0 for this family. Its five hundred and twenty-seven class names come from the AudioSet ontology, published by Google under CC-BY-4.0; none of AudioSet's recordings are included |
 | `audiocpp/mel-band-roformer-f16.gguf` | MIT | Mel-Band RoFormer vocal separation. GGUF conversion published by the audio.cpp project (`audio-cpp/audio.cpp-gguf`, `Mel-Band-RoFormer-GGUF/`), whose licence table gives MIT and names `mlx-community/mel-roformer-mlx` as the original weights; that repository declares MIT in turn. Its model card is empty, so no original training checkpoint is named and the attribution stops at those two publications |
@@ -115,6 +119,9 @@ because it is a bundled resource an auditor will find in the installer, not beca
 |---|---|---|
 | `songsee` (CLI) | MIT | Copyright (c) Peter Steinberger / openclaw — Spectrogram/visualization CLI (https://github.com/openclaw/songsee), pinned at v0.1.3 |
 | `acestep.cpp` (`ace-lm`, `ace-synth`, `ggml*`) | MIT | Copyright (c) ServeurpersoCom — local song generation on ggml (https://github.com/ServeurpersoCom/acestep.cpp), pinned at commit `de858d8e` |
+| `stable-diffusion.cpp` (`sd-cli`, `stable-diffusion.dll`, `ggml*`) | MIT | Copyright (c) 2023 leejet — image diffusion on ggml (https://github.com/leejet/stable-diffusion.cpp), pinned at commit `be48649`; ggml Copyright (c) 2023-2026 The ggml authors. Both licence texts ship next to the binaries |
+| `libwebp.dll`, `libwebpmux.dll`, `libsharpyuv.dll`, `webm.dll` (with stable-diffusion.cpp) | BSD-3-Clause | Copyright (c) Google Inc. — libwebp and libwebm, as built into the upstream stable-diffusion.cpp package |
+| `msvcp140*.dll`, `vcruntime140*.dll`, `vcomp140.dll` (with stable-diffusion.cpp) | Microsoft Visual C++ Redistributable | Copyright (c) Microsoft Corporation — the runtime that the stable-diffusion.cpp binaries call, version 14.44, taken from the audio.cpp package that already ships it |
 
 ### Csound
 

@@ -28,6 +28,9 @@ public/acestep/
 # modèles, jamais versionné.
 public/audiocpp/
 
+# Les quatre fichiers de MOSS-Image pour stable-diffusion.cpp, 9,4 Go : même régime.
+public/sdcpp/
+
 # Piper TTS assets (copied from node_modules by postinstall)
 public/piper-tts/
 
@@ -51,6 +54,10 @@ bin/audiocpp/*.exe
 bin/audiocpp/*.dll
 bin/audiocpp/*.so
 bin/audiocpp/*.dylib
+# Les deux textes de licence viennent du paquet amont, avec ses binaires.
+bin/sdcpp/*.exe
+bin/sdcpp/*.dll
+bin/sdcpp/*.txt
 
 # LES GRAPHES D'EXEMPLE SONT VERSIONNÉS DEPUIS LE 2026-10-08, demandé par Fabien, et c'est le
 # renversement d'une décision antérieure de lui dont la raison était écrite ici : « c'est un dossier

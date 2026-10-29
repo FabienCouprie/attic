@@ -1652,6 +1652,36 @@ ipcMain.handle("muscriptor:transcrire", async (event, options) => {
   }
 });
 
+// ─── stable-diffusion.cpp : une image tirée d'un texte, par MOSS-Image ───
+//
+// LES FICHIERS SE PRENNENT TOUT SEULS À LA PREMIÈRE UTILISATION, comme le paquet de Stable Audio 3
+// et pour la même raison : le composant vient d'être lancé, l'intention est explicite. Le modèle
+// tient en QUATRE paquets du manifeste, et seuls ceux qui manquent sont pris.
+const { genererMoss, fichiersManquants: fichiersMossManquants } = require("./sdcpp.cjs");
+
+ipcMain.handle("sdcpp:moss", async (event, options) => {
+  try {
+    if (fichiersMossManquants(contexteRessources()).length > 0) {
+      const manifeste = lireManifesteModeles();
+      const aPrendre = inventaireModeles(manifeste, sondesModeles()).modeles
+        .filter((m) => m.noeuds.includes("texte-image-moss") && !m.complet).map((m) => m.id);
+      const file = (manifeste.modeles ?? []).filter((m) => aPrendre.includes(m.id) && m.source?.url);
+      if (file.length < aPrendre.length) return { ok: false, journal: "Un fichier de MOSS-Image est absent du manifeste des modèles." };
+      if (annulationModeles && !annulationModeles.signal.aborted) {
+        return { ok: false, journal: "Un téléchargement de modèle est déjà en cours ; relancez quand il sera fini." };
+      }
+      const pris = await telechargerModeles(file, (etat) => event.sender.send("modeles:progression", etat));
+      if (!pris.ok) return { ok: false, journal: `MOSS-Image n'a pas pu être récupéré : ${pris.erreur ?? "annulé"}` };
+    }
+    return await genererMoss(options, (ligne) => {
+      if (!event.sender.isDestroyed()) event.sender.send("sdcpp:progression", { ligne });
+    }, contexteRessources());
+  } catch (err) {
+    console.error("[attic] sdcpp:moss a échoué :", err);
+    return { ok: false, journal: err?.message || String(err) };
+  }
+});
+
 // ─── audio.cpp : le clonage d'une voix depuis un extrait ───
 //
 // MÊME EXÉCUTABLE, AUTRE FAMILLE, ET DONC AUTRE CANAL D'AVANCEMENT : les deux tâches peuvent

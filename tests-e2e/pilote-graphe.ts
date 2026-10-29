@@ -69,6 +69,15 @@ export interface OptionsPilote {
    * la façon dont la divergence revient — une correction posée dans l'un, l'autre garde le défaut.
    */
   avantDeLancer?: (page: Page) => Promise<void>;
+  /**
+   * Les nœuds qu'on admet « en attente » à la fin d'un run, par leur identifiant.
+   *
+   * LE DÉBUT D'UNE BOUCLE DE GRAPHE Y RESTE, par décision écrite dans `ui/hooks/useExecutionGraphe.ts` :
+   * il est retiré du graphe exécuté, et son statut dit ce que le dépliage a décidé, non le compte
+   * rendu d'un calcul. Sans cette liste, aucun graphe à boucle ne pouvait se mener : le pilote
+   * attendait jusqu'à son délai un nœud qui ne quittera jamais l'attente.
+   */
+  attentesAdmises?: readonly string[];
 }
 
 /**
@@ -108,12 +117,13 @@ export async function semerEtLancer(
 export async function relancerEtAttendre(page: Page, o: OptionsPilote = {}): Promise<void> {
   await page.locator('button[title*="Lancer"]').first().click({ timeout: 15000 });
 
-  await page.waitForFunction(() => {
+  await page.waitForFunction((admis) => {
     const puces = document.querySelectorAll(".attic-node-statut-puce");
     if (puces.length === 0) return false;
-    return document.querySelectorAll(".attic-node-statut-puce.en-cours").length === 0
-      && document.querySelectorAll(".attic-node-statut-puce.attente").length === 0;
-  }, undefined, { timeout: o.delaiRunMs ?? DELAI_RUN_MS });
+    const enAttente = [...document.querySelectorAll(".attic-node-statut-puce.attente")]
+      .filter((p) => !admis.includes(p.closest("[data-id]")?.getAttribute("data-id") ?? ""));
+    return document.querySelectorAll(".attic-node-statut-puce.en-cours").length === 0 && enAttente.length === 0;
+  }, [...(o.attentesAdmises ?? [])], { timeout: o.delaiRunMs ?? DELAI_RUN_MS });
 
   await page.waitForFunction(() => {
     const n = document.querySelectorAll("[data-id] audio[src]").length;
@@ -122,6 +132,31 @@ export async function relancerEtAttendre(page: Page, o: OptionsPilote = {}): Pro
     else { w.__nb = n; w.__stable = 0; }
     return (w.__stable ?? 0) >= 6;
   }, undefined, { timeout: 120_000, polling: 500 });
+}
+
+/**
+ * Commence à relever les nœuds qui passent « en cours », pour savoir ce qu'un run a VRAIMENT refait.
+ *
+ * L'ÉTAT FINAL NE LE DIT PAS : un nœud repris du cache et un nœud recalculé finissent tous deux
+ * « terminés ». Seul le passage par « en cours » distingue les deux — le moteur ne le pose qu'après
+ * avoir écarté le cache —, et il faut donc le guetter pendant le run.
+ */
+export async function observerLesRelances(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const vus = new Set<string>();
+    (window as unknown as { __relances__: Set<string> }).__relances__ = vus;
+    new MutationObserver(() => {
+      for (const p of document.querySelectorAll(".attic-node-statut-puce.en-cours")) {
+        const id = p.closest("[data-id]")?.getAttribute("data-id");
+        if (id) vus.add(id);
+      }
+    }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
+  });
+}
+
+/** Les nœuds visibles passés « en cours » depuis `observerLesRelances`, triés. */
+export async function lireLesRelances(page: Page): Promise<string[]> {
+  return await page.evaluate(() => [...(window as unknown as { __relances__: Set<string> }).__relances__].sort());
 }
 
 /**

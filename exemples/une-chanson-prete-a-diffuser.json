@@ -1,0 +1,203 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": {
+        "x": -40,
+        "y": -560
+      },
+      "width": 460,
+      "height": 420,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UNE CHANSON PRÊTE À DIFFUSER\n\n« Planifier une chanson » et « Rendre une chanson » rendent une ballade de soixante secondes ; les trois composants qui suivent la finissent pour une diffusion, et « VU-mètre / LUFS » dit ce qui en sort.\n\nCE QUE LA FINITION CORRIGE. Deux rendus d'ACE-Step, comparés à un morceau produit du même genre, avaient un grave trop lourd, une présence en retrait jusqu'à 4 dB entre 2 et 6 kHz, moins d'air au-dessus de 10 kHz, et des crêtes au-dessus de 0 dBFS, quand une diffusion demande −1 dBTP au plus.\n\n« Égaliseur paramétrique » coupe sous 30 Hz, retire 2 dB de grave sous 200 Hz, remonte de 3 dB une large cloche à 3,5 kHz pour la présence, et de 2 dB un plateau au-dessus de 10 kHz pour l'air.\n\n« Limiteur à crête vraie » tient les crêtes sous −1 dBTP, celles qui tombent entre les échantillons comprises. Relever la présence et l'air durcit les attaques : une bonne part des crêtes qu'il rattrape vient de l'égaliseur.\n\n« Normaliseur », en mode sonie, amène ensuite le tout à −14 LUFS, la cible des plateformes d'écoute, sans franchir −1 dBTP. Une sortie d'ACE-Step est d'ordinaire plus forte que cette cible : il baisse, et rien ne s'écrête. Si son message annonce « cible non atteinte », le son était trop faible pour y monter sans franchir le plafond ; le « Gain » du limiteur l'élève alors. Pour une diffusion radio selon EBU R 128, « Sonie cible » se règle à −23.\n\nLe son brut s'écoute sur « Rendre une chanson », le son fini sur « VU-mètre / LUFS » : c'est la comparaison qui juge.\n\nCES RÉGLAGES SONT UN POINT DE DÉPART, tirés de deux rendus et d'une référence. Une autre chanson peut demander moins de présence ou plus d'air ; « Apparier à une référence » peut aussi prendre la place de l'égaliseur, avec pour modèle un morceau qu'on aime.",
+        "nomEn": "A SONG READY FOR RELEASE\n\n« Plan a Song » and « Render a Song » return a sixty-second ballad; the three nodes that follow finish it for release, and « VU-meter / LUFS » says what comes out.\n\nWHAT THE FINISHING CORRECTS. Two ACE-Step renders, compared with a produced track of the same genre, had an overly heavy low end, a presence held back by up to 4 dB between 2 and 6 kHz, less air above 10 kHz, and peaks above 0 dBFS, where release asks for −1 dBTP at most.\n\n« Parametric Equalizer » cuts below 30 Hz, takes 2 dB off the lows below 200 Hz, raises a wide bell at 3.5 kHz by 3 dB for presence, and a shelf above 10 kHz by 2 dB for air.\n\n« True-Peak Limiter » keeps the peaks under −1 dBTP, including those that fall between samples. Raising presence and air sharpens the attacks: a good share of the peaks it catches comes from the equalizer.\n\n« Normalizer », in loudness mode, then brings the whole to −14 LUFS, the streaming platforms' target, without crossing −1 dBTP. An ACE-Step output is usually louder than that target: it lowers, and nothing clips. If its message says « target not reached », the sound was too quiet to rise there without crossing the ceiling; the limiter's « Gain » then raises it. For radio broadcast under EBU R 128, « Target loudness » is set to −23.\n\nThe raw sound plays on « Render a Song », the finished sound on « VU-meter / LUFS »: the comparison is the judge.\n\nTHESE SETTINGS ARE A STARTING POINT, drawn from two renders and one reference. Another song may need less presence or more air; « Match a Reference » can also take the equalizer's place, with a track one likes as the model."
+      }
+    },
+    {
+      "id": "planifier",
+      "type": "atelier",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "planifier-chanson",
+        "parametres": {
+          "Description": "a warm french pop ballad, piano, acoustic guitar, soft drums, bass, female vocals, studio production",
+          "Paroles": "[Verse]\nLa lumière tombe sur la ville\nEt le soir se fait tranquille\nJe garde ta voix dans ma main\nComme on garde un peu de demain\n\n[Chorus]\nReste encore, reste un peu\nLe ciel s'ouvre au creux des yeux\nReste encore, reste ici\nLa nuit chante ce qu'on n'a pas dit",
+          "Langue du chant": "fr",
+          "Durée": 60,
+          "Graine": 42,
+          "Calcul": ""
+        }
+      }
+    },
+    {
+      "id": "rendre",
+      "type": "atelier",
+      "position": {
+        "x": 320,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "rendre-chanson",
+        "parametres": {
+          "Pas de débruitage": 8,
+          "Glissement": 3,
+          "Guidage": 7.5,
+          "Calcul": "",
+          "Tuile du décodeur": 256,
+          "Recouvrement": 32
+        }
+      }
+    },
+    {
+      "id": "egaliseur",
+      "type": "atelier",
+      "position": {
+        "x": 640,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "egaliseur-parametrique",
+        "parametres": {
+          "Passe-haut": 30,
+          "Fréquence grave": 200,
+          "Gain grave": -2,
+          "Fréquence 1": 250,
+          "Gain 1": 0,
+          "Q 1": 1,
+          "Fréquence 2": 1000,
+          "Gain 2": 0,
+          "Q 2": 1,
+          "Fréquence 3": 3500,
+          "Gain 3": 3,
+          "Q 3": 0.7,
+          "Fréquence 4": 8000,
+          "Gain 4": 0,
+          "Q 4": 1,
+          "Fréquence aiguë": 10000,
+          "Gain aigu": 2
+        }
+      }
+    },
+    {
+      "id": "limiteur",
+      "type": "atelier",
+      "position": {
+        "x": 960,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "limiteur-crete-vraie",
+        "parametres": {
+          "Gain": 0,
+          "Plafond": -1,
+          "Anticipation": 2,
+          "Maintien": 20,
+          "Relâchement": 100
+        }
+      }
+    },
+    {
+      "id": "normaliseur",
+      "type": "atelier",
+      "position": {
+        "x": 1280,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "normaliseur",
+        "parametres": {
+          "Mode": "sonie",
+          "Niveau": -3,
+          "Sonie cible": -14,
+          "Plafond": -1
+        }
+      }
+    },
+    {
+      "id": "mesure",
+      "type": "atelier",
+      "position": {
+        "x": 1600,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "vu-metre",
+        "parametres": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-planifier-rendre",
+      "source": "planifier",
+      "target": "rendre",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#36a2eb",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-rendre-egaliseur",
+      "source": "rendre",
+      "target": "egaliseur",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-egaliseur-limiteur",
+      "source": "egaliseur",
+      "target": "limiteur",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-limiteur-normaliseur",
+      "source": "limiteur",
+      "target": "normaliseur",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-normaliseur-mesure",
+      "source": "normaliseur",
+      "target": "mesure",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    }
+  ],
+  "metas": [],
+  "viewport": {
+    "x": 80,
+    "y": 640,
+    "zoom": 0.55
+  }
+}

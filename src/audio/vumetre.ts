@@ -2,6 +2,8 @@
 // crest factor, plage dynamique. Calculs en domaines temporel et fréquentiel
 // (poids K pour LUFS).
 
+import { creteVraieDb } from "./crete-vraie";
+
 export interface MesuresNiveau {
   rmsDb: number;        // RMS moyen en dBFS
   peakDb: number;       // crête (peak) en dBFS
@@ -10,7 +12,7 @@ export interface MesuresNiveau {
   lufsMin: number;      // loudness minimale momentanée
   crestFactorDb: number; // différence peak - RMS (facteur de crête)
   plageDynamiqueDb: number; // différence LRA (loudness range approximation)
-  vraiPicDb: number;    // true peak (interpolé 4×) en dBTP
+  vraiPicDb: number;    // crête vraie selon BS.1770-4, suréchantillonnée 4×, en dBTP (voir `crete-vraie.ts`)
 }
 
 // Filtre "K-weighting" pour LUFS : filtre high-shelf + high-pass (simulation ITU-R BS.1770).
@@ -208,19 +210,11 @@ export function mesurerNiveau(buffer: AudioBuffer): MesuresNiveau {
 
   const mesure = sonieIntegree(buffer, sr, nch, length);
 
-  // True peak: 4× interpolation linéaire
-  let vraiPic = 0;
-  for (let c = 0; c < nch; c++) {
-    const d = buffer.getChannelData(c);
-    for (let i = 0; i < length - 1; i++) {
-      for (let j = 0; j < 4; j++) {
-        const frac = j / 4;
-        const v = Math.abs(d[i] * (1 - frac) + d[i + 1] * frac);
-        if (v > vraiPic) vraiPic = v;
-      }
-    }
-  }
-  const vraiPicDb = vraiPic > 1e-9 ? 20 * Math.log10(vraiPic) : -120;
+  // LA CRÊTE VRAIE INTERPOLAIT EN LIGNE DROITE JUSQU'AU 2026-10-28, et une droite entre deux
+  // échantillons ne dépasse jamais le plus grand des deux : la valeur annoncée en dBTP était la crête
+  // des échantillons, 3 dB sous la vraie pour un sinus à fs/4 déphasé de 45°. `crete-vraie.ts` dit
+  // la méthode de la norme, et le Normaliseur, qui en tire son plafond, la reçoit par ici.
+  const vraiPicDb = creteVraieDb(buffer);
 
   return {
     rmsDb,

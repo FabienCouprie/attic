@@ -1,7 +1,7 @@
 # AGENTS.md — travailler sur Attic
 
 Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19, TypeScript,
-507 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
+510 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
 (voir `PORTING-A-DOMAIN.md`). L'interface et les notices sont bilingues français / anglais.
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
@@ -175,7 +175,7 @@ Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
   aucun fichier neuf ne dépasse quatre cents lignes de code, les quinze qui la dépassaient déjà ne
   grossissent plus, et celui qui redescend dans la norme sort de la dette. Elle ne peut que
   décroître, et la liste est dans `src/docs/generer-compte-lignes.test.ts`.
-- **`tests-e2e/empreintes.json` + `empreintes.spec.ts`** — l'empreinte du son de 72 composants
+- **`tests-e2e/empreintes.json` + `empreintes.spec.ts`** — l'empreinte du son de 73 composants
   surveillés, valeur efficace et crête à neuf décimales, plus leur message. Toute modification qui
   altère une sortie fait échouer ce test. Pour l'étendre :
 
@@ -318,8 +318,8 @@ sha256sum catalogue-sonore-2026-10-25.zip   # 6aa1fc8233d19a664644e70a27e1eb9d3b
   sans `--clobber`, de sorte qu'un asset de même nom au contenu différent est refusé — les
   installations vérifient une empreinte, et deux contenus sous un seul nom la feraient mentir. Un
   catalogue régénéré change donc de nom, et l'ancien reste téléchargeable tel qu'il a été entendu.
-  Le relevé de ce catalogue-ci : les **367 composants qui rendent de l'audio**, **288 clips**, zéro
-  erreur, 89 sans sortie audio.
+  Le relevé de ce catalogue-ci, daté du 2026-10-25 : **367** des composants qui rendaient alors de
+  l'audio, **288 clips**, zéro erreur, 89 sans sortie audio.
 - **Faire varier un réglage**, parce que **ce qui est intéressant n'est pas un son mais une
   différence entre au moins deux**. C'est Fabien qui l'a formulé, et c'est par ce trou qu'un défaut
   est passé : `comparer` et `écouter` savent mettre côte à côte N composants **différents**, mais
@@ -358,7 +358,8 @@ COMPOSANTS=boite-groove,markov-midi npm run graines
 
   Il lance chaque composant à graine fixée **deux fois** et compare ce qu'il entend. La liste vient
   du rôle `graine: true` au **registre**, jamais du libellé, et la valeur est ramenée dans la plage
-  du réglage. Relevé : **88 composants à graine, 59 comparés sur le son, zéro infidèle**, en 14,6 min.
+  du réglage. Relevé : **89 composants à graine, 59 comparés sur le son, zéro infidèle** ; 88 en
+  14,6 min, et « Texte → image (MOSS) » passé seul le 2026-10-28, rangé sans sortie audio.
   Un composant sans sortie audio ou qui lève est **distingué** d'une graine infidèle.
 - **Régénérer les tables** après toute modification qui les concerne :
 
@@ -412,7 +413,7 @@ jamais vu rouge ne garde rien.
 | Choisir **entre des composants** qui couvrent le même besoin | `FAMILLE=nom npm run comparer` : ce qui les sépare et de combien, mesuré sur le même son d'essai — jamais écrit à la main |
 | **Entendre** ce qu'un composant ou une famille produit | `COMPOSANT=id npm run ecouter`, ou `FAMILLE=nom` : des WAV dans `ECOUTE/`, le son d'essai sec avec eux |
 | **Lancer un graphe entier** et entendre ce qu'il rend | `GRAPHE=nom npm run executer` : l'état et le message de chaque nœud, le WAV de chaque aperçu dans `EXECUTION/` — le seul verbe qui voie des composants **câblés ensemble** |
-| **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie des 367 composants qui rendent de l'audio, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
+| **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie des 369 composants qui rendent de l'audio, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
 | Savoir **ce qu'un réglage change**, et non ce qu'il vaut | `COMPOSANT=id REGLAGE=nom VALEURS=a,b,c npm run varier` : un clip par valeur, un tableau par tranches avec la colonne de l'entrée, et le réglage déclaré **inerte** s'il ne bouge ni l'énergie ni la crête |
 | Vérifier qu'une **graine déclarée tient**, sur le son | `npm run graines` : chaque composant à graine lancé deux fois à la même graine, empreintes comparées — le contrat structurel des graines ne regarde pas le son |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |

@@ -28,6 +28,7 @@ import { servicesDomaine } from "../../core/services-domaine";
 import { poserApercu, poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
 import { effacerResultats, poserResultat, resultatDe } from "../resultats";
 import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
+import { lacherLeCorps, sautsDeBoucles } from "../../core/saut-de-boucle";
 import { graineDuTour, resoudreGraine } from "../../core/hasard";
 import { deplierInstruments } from "../../core/instrument-graphe";
 
@@ -642,6 +643,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const resultats = new Map<string, ValeurTransportee[]>();
     const messages = new Map<string, string>();
     const traitesCeRun = new Set<string>();
+    // UNE BOUCLE INCHANGÉE NE SE RECALCULE PAS, son corps eût-il été lâché. Voir `core/saut-de-boucle.ts`.
+    const sauts = sautsDeBoucles(deplie.depliees, { noeuds: deplie.noeuds, aretes: aretesG, resultats, cache: cacheExec.current, toursDesCopies: deplie.toursDesCopies,
+      reglages: JSON.stringify(servicesDomaine().reglagesDeProjet()), jamaisCache: (id) => trouverDef(deplie.noeuds.find((n) => n.id === id)?.data.ficheId as string)?.jamaisCache === true });
 
     // ── Les graines, résolues au CENTRE ──
     //
@@ -844,6 +848,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       }
       const node = nds.find((n) => n.id === nodeId);
       if (!node) continue;
+      if (sauts.copieSautee(nodeId, traitesCeRun)) { poserStatut(nodeId, "termine"); continue; }
 
       const sourceReprocessee = sourceRetraitee(nodeId, aretes, traitesCeRun);
       // LES RÉGLAGES DE PROJET DU DOMAINE ENTRENT DANS LA CLÉ, et c'est un défaut évité de peu :
@@ -866,10 +871,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // LA DÉCISION EST DANS `core/cache-execution.ts`, AVEC SES CAS ET SON PRIX. Elle y tient en
       // deux fonctions pures, et l'en-tête de ce module-là dit pourquoi un composant rejoué
       // entraîne toute sa descendance même quand il rend deux fois la même chose.
-      const cacheIdentique = entreeCache && peutReutiliserLeCache(
+      const cacheIdentique = entreeCache && (sauts.finReprise(nodeId) || peutReutiliserLeCache(
         jamaisCache, sourceReprocessee, entreeCache,
         { hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree },
-      );
+      ));
 
       // UN JOURNAL DE HUIT VALEURS PAR NŒUD ET PAR RUN A ÉTÉ RETIRÉ D'ICI, et c'est le second du
       // genre. Il interpolait `sourceReprocessee`, `jamaisCache`, le verdict et quatre empreintes —
@@ -1083,7 +1088,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           // coup de cache les repose telles quelles dans les résultats, et garder les brutes aurait
           // rompu l'invariant de fréquence sur tout nœud rejoué depuis le cache — c'est-à-dire la
           // plupart, et seulement au deuxième run. Le genre de défaut qu'on ne reproduit jamais.
-          if (!jeton?.perime()) cacheExec.current.set(nodeId, { valeurs: valeurs as ValeurTransportee[], message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties, tempsExecution: elapsed });
+          if (!jeton?.perime()) cacheExec.current.set(nodeId, { valeurs: valeurs as ValeurTransportee[], message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties, tempsExecution: elapsed, empreinteBoucle: sauts.empreintePour(nodeId) });
           else console.warn(`[cache] resultat perime ecarte : ${nodeId} (generation ${jeton.generation})`);
           // ═══ CE QUE LE COMPOSANT REND EST-IL DU TYPE QU'IL PROMET ? ═══
           //
@@ -1179,11 +1184,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // premier tour pesant 5,1 Mo et le huitième 28,6, la chaîne allongeant son signal à chaque
     // passage. Ce que la FIN de boucle rend reste en cache, elle : c'est l'échafaudage qu'on lâche,
     // pas l'ouvrage. Voir `resultatRetenu` pour le prix consenti.
-    for (const copie of deplie.origines.keys()) {
-      if (!resultatRetenu({ cacheParBulle: false, corpsDeBoucle: true, economie })) {
-        cacheExec.current.delete(copie);
-      }
-    }
+    lacherLeCorps(deplie.origines.keys(), cacheExec.current, economie);
 
     // CE QUI A EMPÊCHÉ UNE BOUCLE DE SE DÉPLIER SE DIT SUR LE NŒUD, et non dans la seule console.
     //

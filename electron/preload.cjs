@@ -133,6 +133,13 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.on("muscriptor:progression", ecouteur);
     return () => ipcRenderer.removeListener("muscriptor:progression", ecouteur);
   },
+  // Une image tirée d'un texte, par stable-diffusion.cpp et MOSS-Image. Même désabonnement.
+  sdcppMoss: (options) => ipcRenderer.invoke("sdcpp:moss", options),
+  sdcppProgression: (callback) => {
+    const ecouteur = (_e, etat) => callback(etat);
+    ipcRenderer.on("sdcpp:progression", ecouteur);
+    return () => ipcRenderer.removeListener("sdcpp:progression", ecouteur);
+  },
   chatterboxConvertir: (options) => ipcRenderer.invoke("chatterbox:convertir", options),
   chatterboxConversionProgression: (callback) => {
     const ecouteur = (_e, etat) => callback(etat);

@@ -7,9 +7,9 @@ l'interface. Le critère est le RENDU, pas la mention d'`AudioBuffer` : un modul
 que comme récipient fige le fil et devient transposable dès qu'on en extrait un cœur par voie.
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
-- **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 96 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 214 · transposable tel quel
+- **rendu** : 33 · ne peut pas aller dans un worker, mais ne fige pas
+- **récipient** : 97 · fige, transposable après extraction d'un cœur par voie
+- **pur** : 215 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -94,6 +94,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | courbe-trace.ts | pur | — |
 | courbe.ts | pur | — |
 | creneau.ts | recipient | AudioBuffer |
+| crete-vraie.ts | recipient | AudioBuffer |
 | cribles.ts | pur | — |
 | criteres-schaefferiens.ts | pur | — |
 | csound-aleatoire.ts | pur | — |
@@ -137,6 +138,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | effets-spectral.ts | recipient | AudioBuffer |
 | effets-temporel.ts | rendu | OfflineAudioContext |
 | effets-voix.ts | rendu | OfflineAudioContext |
+| egaliseur-parametrique.ts | rendu | OfflineAudioContext |
 | emotion.ts | recipient | AudioBuffer |
 | empreinte-wav.ts | recipient | AudioBuffer |
 | enveloppe-transfert.ts | pur | — |
@@ -195,6 +197,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | lame.ts | pur | — |
 | lecture-vive.ts | pur | — |
 | lfo.ts | pur | — |
+| limiteur-crete-vraie.ts | pur | — |
 | lsysteme.ts | pur | — |
 | lucier.ts | recipient | AudioBuffer |
 | mandelbrot.ts | recipient | AudioBuffer |

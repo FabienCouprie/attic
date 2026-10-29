@@ -9,7 +9,9 @@ import { avecDoc } from "./notices";
 export const fiches: FicheAudio[] = ([
   {
     id: "source-texte", nom: "Entrée texte", nomEn: "Text Input",
-    univers: "Entrées", famille: "Text to Speech",
+    // RANGÉ AVEC LES AUTRES ENTRÉES DE TEXTE, à la demande de Fabien le 2026-10-29 : il était sous
+    // « Text to Speech », où l'on cherche une voix et non un champ de saisie.
+    univers: "Entrées", famille: "Texte",
     resume: "Émet un texte saisi par l'utilisateur sur sa sortie texte.",
     resumeEn: "Outputs user-entered text on its text output.",
     entrees: [],

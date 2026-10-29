@@ -83,11 +83,13 @@ export type ModeMemoire =
  * CE QUE LA FIN DE BOUCLE REND, ELLE, RESTE EN CACHE : c'est un nœud visible, et c'est lui que
  * l'aval consomme. Ce qu'on lâche est l'échafaudage, pas l'ouvrage.
  *
- * LE PRIX EST LE MÊME QUE POUR LES BULLES, ET IL FAUT LE DIRE : sans entrée de cache, chaque tour se
- * refait à l'exécution suivante, et comme le moteur refuse de croire une source qui vient d'être
- * recalculée, la fin de boucle et tout son aval se refont aussi. Une boucle inchangée ne se
- * recalculait pas ; désormais elle se recalcule. On échange du temps contre de la place, et l'échange
- * se défait par le même interrupteur que pour les bulles.
+ * CE PRIX A ÉTÉ PAYÉ PENDANT UN TEMPS, ET IL NE L'EST PLUS. Sans entrée de cache, chaque tour se
+ * refaisait à l'exécution suivante, et comme le moteur refuse de croire une source qui vient d'être
+ * recalculée, la fin de boucle et tout son aval se refaisaient aussi : poser un point d'écoute après
+ * une boucle terminée la relançait entière, relevé par Fabien le 2026-10-28. Depuis, la fin de boucle
+ * range l'empreinte de sa boucle avec son résultat, et un corps inchangé se saute au lieu de se
+ * refaire : voir `core/saut-de-boucle.ts`. Le corps reste lâché ; c'est le recalcul qui disparaît.
+ * Les BULLES, elles, paient encore le leur, leurs sorties étant lâchées avec le reste.
  */
 export function resultatRetenu(
   { cacheParBulle, corpsDeBoucle = false, economie = true }:

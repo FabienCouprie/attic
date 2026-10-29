@@ -1399,6 +1399,94 @@
       ]
     },
     {
+      "id": "moss-image",
+      "nom": "Texte → image (MOSS) · transformeur",
+      "nomEn": "Text to image (MOSS) · transformer",
+      "noeuds": [
+        "texte-image-moss"
+      ],
+      "octets": 3327400800,
+      "source": {
+        "type": "fichier",
+        "url": "https://huggingface.co/leejet/MOSS-Image-SFT-GGUF/resolve/238daf423f0de65316207453591f275407aac9a7/MOSS-Image-SFT-Q4_K.gguf",
+        "octets": 3327400800,
+        "sha256": "902dbb0364d8b313cd91792b3cfe7c87b987386f0c5414986f3f1027b82b2225"
+      },
+      "fichiers": [
+        {
+          "chemin": "sdcpp/moss-image-sft-q4_k.gguf",
+          "octets": 3327400800,
+          "sha256": "902dbb0364d8b313cd91792b3cfe7c87b987386f0c5414986f3f1027b82b2225"
+        }
+      ]
+    },
+    {
+      "id": "moss-image-encodeur",
+      "nom": "Texte → image (MOSS) · encodeur de texte",
+      "nomEn": "Text to image (MOSS) · text encoder",
+      "noeuds": [
+        "texte-image-moss"
+      ],
+      "octets": 5680522464,
+      "source": {
+        "type": "fichier",
+        "url": "https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/3885219b6810b007914f3a7950a8d1b469d598a5/Qwen3.5-9B-Q4_K_M.gguf",
+        "octets": 5680522464,
+        "sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8"
+      },
+      "fichiers": [
+        {
+          "chemin": "sdcpp/qwen3.5-9b-q4_k_m.gguf",
+          "octets": 5680522464,
+          "sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8"
+        }
+      ]
+    },
+    {
+      "id": "moss-image-vae",
+      "nom": "Texte → image (MOSS) · VAE",
+      "nomEn": "Text to image (MOSS) · VAE",
+      "noeuds": [
+        "texte-image-moss"
+      ],
+      "octets": 336211292,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/flux2-vae.safetensors",
+        "octets": 336211292,
+        "sha256": "868fe7b343cc8f3a19dbcfcafbc3d5f888802be3f89bd81b65b3621a066ce8f3"
+      },
+      "fichiers": [
+        {
+          "chemin": "sdcpp/flux2-vae.safetensors",
+          "octets": 336211292,
+          "sha256": "868fe7b343cc8f3a19dbcfcafbc3d5f888802be3f89bd81b65b3621a066ce8f3"
+        }
+      ]
+    },
+    {
+      "id": "moss-image-tokeniseur",
+      "nom": "Texte → image (MOSS) · tokeniseur",
+      "nomEn": "Text to image (MOSS) · tokenizer",
+      "noeuds": [
+        "texte-image-moss"
+      ],
+      "octets": 19989325,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/moss-image-tokenizer.json",
+        "octets": 19989325,
+        "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+      },
+      "fichiers": [
+        {
+          "chemin": "sdcpp/moss-image-tokenizer.json",
+          "octets": 19989325,
+          "sha256": "06b9509352d2af50381ab2247e083b80d32d5c0aba91c272ca9ff729b6a0e523"
+        }
+      ]
+    },
+    {
       "id": "parole-alignement",
       "nom": "Aligner un texte sur la parole (Qwen3)",
       "nomEn": "Align text to speech (Qwen3)",
