@@ -495,7 +495,7 @@ endin`,
         return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       }
       if (o.entrees > 1 && !(a2 instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.csound.deuxEntrees", o.fr) };
+        return { valeurs: [null, null], message: traduire("msg.csound.deuxEntrees", en ? o.en : o.fr) };
       }
       const entrees: EntreeFichier[] = [{ nom: "entree1.wav", buffer: a1 }];
       if (a2 instanceof AudioBuffer) entrees.push({ nom: "entree2.wav", buffer: a2 });

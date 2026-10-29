@@ -1,5 +1,7 @@
 // ui/ErreurBoundary.tsx — Attrape les erreurs React pour éviter l'écran blanc
 import { Component, type ReactNode } from "react";
+// `traduire` et non le crochet : une classe n'en a pas, et cet écran remplace l'application entière.
+import { traduire } from "../i18n";
 
 interface Props { children: ReactNode }
 interface State { erreur: Error | null }
@@ -11,14 +13,14 @@ export class ErreurBoundary extends Component<Props, State> {
     if (this.state.erreur) {
       return (
         <div style={{ padding: 40, fontFamily: "monospace", color: "#e44", background: "#111", height: "100vh" }}>
-          <h2>Erreur</h2>
+          <h2>{traduire("erreurInterface.titre")}</h2>
           <pre>{this.state.erreur.message}</pre>
           <pre style={{ fontSize: 11, marginTop: 16, opacity: 0.6 }}>{this.state.erreur.stack}</pre>
           <button
             onClick={() => this.setState({ erreur: null })}
             style={{ marginTop: 20, padding: "8px 16px", fontSize: 13, cursor: "pointer",
               border: "1px solid #e44", borderRadius: 4, background: "transparent", color: "#e44" }}
-          >Réessayer</button>
+          >{traduire("erreurInterface.reessayer")}</button>
         </div>
       );
     }

@@ -4,6 +4,7 @@
 // par aucun nœud).
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
+import { traduire } from "../i18n";
 
 const entreesPdf: FicheAudio[] = [
   {
@@ -28,7 +29,7 @@ const entreesPdf: FicheAudio[] = [
       }
       return {
         valeurs: [fichier],
-        message: `${fichier.name} · ${fichier.size.toLocaleString()} o`,
+        message: traduire("msg.fichier.taille", fichier.name, fichier.size.toLocaleString()),
       };
     },
   },

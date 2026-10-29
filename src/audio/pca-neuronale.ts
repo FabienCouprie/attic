@@ -3,6 +3,7 @@
 import { fft } from "./fft";
 import { creerFenetreHann } from "./commun";
 import { creerAleatoire } from "../core/hasard";
+import { traduire } from "../i18n";
 
 interface FrameSpectrale {
   start: number;
@@ -419,11 +420,11 @@ export async function appliquerPcaNeuronale(
   model.dispose();
 
   // 7. Message de sortie + garde-fou
-  let message = `PCA neuronale · ${nFrames} trames · ${nbBins} bins · perte ${lastLoss.toFixed(4)} (base ${baseMse.toFixed(4)})`;
-  if (stoppedByAbort) message += ` · arrêté par annulation`;
-  else if (stoppedByBudget) message += ` · arrêté par budget temps`;
+  let message = traduire("msg.pca_neuronale.resultat", nFrames, nbBins, lastLoss.toFixed(4), baseMse.toFixed(4));
+  if (stoppedByAbort) message += ` · ${traduire("msg.pca_neuronale.annulation")}`;
+  else if (stoppedByBudget) message += ` · ${traduire("msg.pca_neuronale.budget")}`;
   if (lastLoss > baseMse * 1.05) {
-    message += ` · avertissement : l'autoencodeur n'a pas fait mieux que la moyenne`;
+    message += ` · ${traduire("msg.pca_neuronale.avertissement")}`;
   }
 
   return { audio: resultat, message };

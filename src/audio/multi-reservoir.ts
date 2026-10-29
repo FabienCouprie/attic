@@ -12,6 +12,7 @@ import { decoderInstrumentSF2 } from "../plugins/soundfontGlobal";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { formeOndeDepuisTimbre } from "./timbres";
 import { frequenceDeTravail } from "./frequence-de-travail";
+import { traduire } from "../i18n";
 
 export interface ConfigMultiReservoir {
   cle: string;
@@ -312,7 +313,7 @@ export function genererMultiReservoir(config: ConfigMultiReservoir): MultiReserv
   return {
     notes: toutesNotes,
     buffer: buf,
-    details: `Mélodie: ${nbMel} · Basse: ${nbBasse} · Harmonie: ${nbHarm} · Rythme: ${nbRythme}`,
+    details: traduire("msg.multi_reservoirs.parties", nbMel, nbBasse, nbHarm, nbRythme),
     // Un canal par partie, et non le canal 0 pour trois d'entre elles : réunies par
     // « Jointure MIDI » ou jouées ensemble, elles se disputaient le même canal, donc le
     // même instrument — la dernière lue l'emportait.

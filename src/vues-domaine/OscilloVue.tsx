@@ -3,6 +3,7 @@
 // harmoniques (le « timbre »). Montre le lien onde ↔ spectre. Réutilise fft.ts.
 import { useRef, useState, useEffect, useCallback } from "react";
 import { fft } from "../audio/fft";
+import { useI18n } from "../i18n";
 
 interface Props {
   audioUrl?: string;
@@ -12,6 +13,7 @@ interface Props {
 const N_HARMONIQUES = 20;
 
 export function OscilloVue({ audioUrl, frequence }: Props) {
+  const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [buffer, setBuffer] = useState<AudioBuffer | null>(null);
   const [chargement, setChargement] = useState(false);
@@ -114,14 +116,14 @@ export function OscilloVue({ audioUrl, frequence }: Props) {
 
   return (
     <div className="attic-node-onde nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-      {chargement && <div className="attic-node-onde-attente">Analyse…</div>}
+      {chargement && <div className="attic-node-onde-attente">{t("oscillo.analyse")}</div>}
       {!buffer && !chargement && (
-        <div className="attic-node-onde-attente">Lancez l'exécution pour générer et visualiser le son.</div>
+        <div className="attic-node-onde-attente">{t("oscillo.attente")}</div>
       )}
       <canvas ref={canvasRef} className="attic-node-onde-canvas" />
       {buffer && (
         <div className="attic-node-onde-infos">
-          <span>onde (haut) · harmoniques (bas)</span>
+          <span>{t("oscillo.legende")}</span>
           <span>{Math.round(frequence)} Hz</span>
         </div>
       )}

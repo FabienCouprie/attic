@@ -3,6 +3,7 @@
 // des virgules, compatible avec les nœuds audio (color-looper, etc.).
 
 import { useEffect, useState } from "react";
+import { useI18n } from "../i18n";
 
 interface Props {
   valeur: string;
@@ -39,6 +40,7 @@ function normaliser(valeur: string): string[] {
 }
 
 export function SaisieCouleurs({ valeur, onChange }: Props) {
+  const { t } = useI18n();
   const [texte, setTexte] = useState(valeur);
 
   // Synchronise le champ texte quand la valeur est modifiée de l'extérieur
@@ -81,7 +83,7 @@ export function SaisieCouleurs({ valeur, onChange }: Props) {
         value={texte}
         onChange={(e) => mettreAJourTexte(e.target.value)}
         placeholder="#e63946,#2a9d8f,#e9c46a,#8e6fce"
-        title="Liste de couleurs (hex ou rgb), séparées par des virgules"
+        title={t("saisieCouleurs.liste")}
       />
       <div className="saisie-couleurs-grille">
         {couleurs.map((c, i) => (
@@ -97,7 +99,7 @@ export function SaisieCouleurs({ valeur, onChange }: Props) {
               type="button"
               onClick={() => supprimer(i)}
               className="saisie-couleur-suppr"
-              title="Supprimer cette couleur"
+              title={t("saisieCouleurs.supprimer")}
             >
               ×
             </button>
@@ -107,7 +109,7 @@ export function SaisieCouleurs({ valeur, onChange }: Props) {
           type="button"
           onClick={ajouter}
           className="saisie-couleur-ajouter"
-          title="Ajouter une couleur"
+          title={t("saisieCouleurs.ajouter")}
         >
           +
         </button>

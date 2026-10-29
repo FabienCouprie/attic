@@ -4,6 +4,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { genererPochetteSVG } from "../plugins/pochette";
+import { useI18n } from "../i18n";
 
 interface Props {
   prompt: string;
@@ -23,6 +24,7 @@ export function PochetteGen({
   prompt, titre, artiste, style, palette, complexite, bordure, typographie,
   largeur, hauteur, graine,
 }: Props) {
+  const { t } = useI18n();
   const [tentative, setTentative] = useState(0);
   const svg = useMemo(() => {
     void tentative; // permet de forcer le recalcul si besoin
@@ -56,7 +58,7 @@ export function PochetteGen({
           document (React l'avertit d'ailleurs en console). Le conteneur, lui,
           reste en place pour que le cadre du nœud ne sursaute pas. */}
       <div style={{ width: "100%", maxWidth: 260, margin: "0 auto", borderRadius: 4, overflow: "hidden", background: "#111" }}>
-        {url && <img src={url} alt="Pochette" style={{ width: "100%", height: "auto", display: "block" }} />}
+        {url && <img src={url} alt={t("pochette.image")} style={{ width: "100%", height: "auto", display: "block" }} />}
       </div>
       <div style={{ display: "flex", gap: 4, justifyContent: "center", marginTop: 4 }}>
         {url && (
@@ -67,7 +69,7 @@ export function PochetteGen({
         )}
         <button
           onClick={() => setTentative((v) => v + 1)}
-          title="Regénérer"
+          title={t("pochette.regenerer")}
           style={{ fontSize: 11, color: "var(--text-secondary)", background: "transparent", border: "none", cursor: "pointer" }}>
           ↻
         </button>

@@ -260,7 +260,7 @@ export const fiches: FicheAudio[] = ([
         const s = a.getChannelData(c), o = out.getChannelData(c);
         for (let i = 0; i < len; i++) o[i] = s[i] * g[i];
       }
-      return { valeurs: [out], message: traduire("msg.var_0_var_1_zone_s", garder ? "Conservé" : "Supprimé", zones.length) };
+      return { valeurs: [out], message: traduire("msg.var_0_var_1_zone_s", traduire(garder ? "msg.masque_zones.conserve" : "msg.masque_zones.supprime"), zones.length) };
    },
  },
   {

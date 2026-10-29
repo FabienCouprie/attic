@@ -24,7 +24,7 @@ export const fiches: FicheAudio[] = ([
       }
       return {
         valeurs: [image],
-        message: `${image.name} · ${image.size.toLocaleString()} o`,
+        message: traduire("msg.fichier.taille", image.name, image.size.toLocaleString()),
       };
     },
   },

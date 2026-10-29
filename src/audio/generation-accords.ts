@@ -5,6 +5,7 @@
 
 import { comparerEvenementsMidi } from "./midi";
 import { writeMidi } from "midi-file";
+import { traduire } from "../i18n";
 import { PROGRESSIONS_GENRE, degreAccordProche, degreSeptiemeProche, degresGammeAccords, traduireCle } from "./generation";
 
 // ─── Générateur d'accords ───
@@ -16,10 +17,16 @@ const ROMAIN_VERS_DEGRE: Record<string, number> = {
 };
 
 
+/**
+ * `libelles` : la gamme et le genre tels que la description doit les dire. Par défaut, leurs
+ * identifiants, qui sont français ; le composant passe les libellés de son menu quand l'interface
+ * est en anglais, ce module ne connaissant pas ces libellés.
+ */
 export function genererAccords(
   cleNom: string, gammeNom: string, genreNom: string, progressionPerso: string,
   tempo: number, dureeAccord: number, nbAccords: number,
   extension: "aucune" | "septieme" | "sixte" = "aucune",
+  libelles: { gamme: string; genre: string } = { gamme: gammeNom, genre: genreNom },
 ): { midiBytes: Uint8Array; description: string } {
   const gammeCourante = degresGammeAccords(gammeNom);
   const estMineur = degreAccordProche(gammeCourante, 0, 4) < 4; // tierce mineure depuis la tonique
@@ -119,9 +126,9 @@ export function genererAccords(
 
   const romain = ["I", "II", "III", "IV", "V", "VI", "VII"];
   const descr = [
-    `── Progression d'accords ──`,
-    `${cleNom} ${gammeNom} · ${genreNom} · ${tempo} BPM`,
-    `${nbAccords} accords × ${dureeAccord}t · ${(nbAccords * dureeSecAccord).toFixed(1)}s`,
+    traduire("msg.generateur_accords.titre"),
+    `${cleNom} ${libelles.gamme} · ${libelles.genre} · ${tempo} BPM`,
+    traduire("msg.generateur_accords.duree", nbAccords, dureeAccord, (nbAccords * dureeSecAccord).toFixed(1)),
     progression.map((d) => romain[d % 7]).join(" – "),
   ].join("\n");
 

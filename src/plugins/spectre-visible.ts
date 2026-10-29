@@ -6,6 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { genererSpectreVisibleAudio, hexToRgb, midiDepuisFrequence, frequenceAudibleDepuisCouleur } from "../audio";
 import { notesVersFichierMidi } from "../audio";
 import { avecDoc } from "./notices";
+import { traduire } from "../i18n";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -68,7 +69,7 @@ export const fiches: FicheAudio[] = ([
       const midiFile = notesVersFichierMidi([{ note: Math.max(0, Math.min(127, midi)), velocite: 100, debut: 0, fin: duree }], 120);
       return {
         valeurs: [audio, midiFile],
-        message: `Spectre visible · λ ≈ ${longueurOnde.toFixed(0)} nm · f ≈ ${frequence.toFixed(1)} Hz`,
+        message: traduire("msg.spectre_visible.resultat", longueurOnde.toFixed(0), frequence.toFixed(1)),
       };
     },
   },

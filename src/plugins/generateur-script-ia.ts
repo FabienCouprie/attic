@@ -140,7 +140,7 @@ export const fiches: FicheAudio[] = ([
       if (tessitures.length > 0) parties.push(`${tessitures.length} ${fr ? "tess." : "voc."}`);
       const source = parties.length > 0 ? parties.join(" · ") : (fr ? "entrées vides — utilisez les valeurs par défaut" : "empty inputs — using defaults");
 
-      return { valeurs: [script], message: `${traduire("msg.var_0_var_1_3", fr ? "Script généré" : "Script generated", source)} · graine ${graine}` };
+      return { valeurs: [script], message: traduire("msg.var_0_graine_var_1", traduire("msg.var_0_var_1_3", fr ? "Script généré" : "Script generated", source), graine) };
    },
  },
 ] as FicheAudio[]).map(avecDoc);

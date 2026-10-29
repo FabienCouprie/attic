@@ -6,7 +6,7 @@ Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et vingt-sept gardes sur lui-même : ils s'emploient, ils
+cela un banc de mesure, une base d'empreintes et vingt-huit gardes sur lui-même : ils s'emploient, ils
 ne se réinventent pas.
 
 ---
@@ -163,8 +163,9 @@ se relève donc à l'oreille, et non par un garde.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — vingt-sept contrats sur le dépôt lui-même : registre des réglages, graines,
-  cœurs par trames, registre anglais, caractères de contrôle, style de documentation, classement
+- **`src/docs/*.test.ts`** — vingt-huit contrats sur le dépôt lui-même : registre des réglages, graines,
+  cœurs par trames, registre anglais, **texte en dur des vues — qu'aucun ne dépende de la langue** —,
+  caractères de contrôle, style de documentation, classement
   théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, couverture des
   empreintes, le serveur des specs de bout en bout, le pilote d'un graphe entier, **la fréquence de
   travail — qu'aucun composant ne génère à celle de la carte son** —, **le socle figé —
@@ -362,6 +363,24 @@ COMPOSANTS=boite-groove,markov-midi npm run graines
   du réglage. Relevé : **89 composants à graine, 59 comparés sur le son, zéro infidèle** ; 88 en
   14,6 min, et « Texte → image (MOSS) » passé seul le 2026-10-28, rangé sans sortie audio.
   Un composant sans sortie audio ou qui lève est **distingué** d'une graine infidèle.
+- **Lire ce que les composants disent en anglais**, parce qu'un message composé à l'exécution
+  n'est ni dans le registre ni dans le dictionnaire, et que `anglais-registre.test.ts` ne le voit
+  donc pas. C'est par là que « C majeur · 15 neurones · graine 4242 » et « 71,9 s · 8,0 × » sont
+  arrivés dans le film de présentation anglais.
+
+```bash
+ANGLAIS=1 npm run messages-anglais
+COMPOSANTS=boite-groove,paulstretch npm run messages-anglais
+```
+
+  Il lance chaque fiche du registre sur le banc, l'interface en anglais, une seconde fois avec
+  toutes ses entrées nourries quand elle en a plusieurs, et passe le message et l'erreur au
+  détecteur de `src/docs/detecteur-francais.ts`, le même que celui du registre. Le relevé se dit en
+  trois classes, avec ce qui a rendu un message, ce qui a levé et ce qui a dépassé son délai.
+  **Ce qu'il ne voit pas** : le message de réussite d'un composant qui refuse son entrée d'essai ou
+  demande un modèle absent, et tout mot français qui n'est pas dans la liste du détecteur. Pour ce
+  second trou, le relevé du 2026-10-29 a été fait dans les deux langues et comparé : un message
+  identique en anglais et en français, chiffres retirés, est un message qui ne se traduit pas.
 - **Régénérer les tables** après toute modification qui les concerne :
 
 ```bash
@@ -416,6 +435,7 @@ jamais vu rouge ne garde rien.
 | **Lancer un graphe entier** et entendre ce qu'il rend | `GRAPHE=nom npm run executer` : l'état et le message de chaque nœud, le WAV de chaque aperçu dans `EXECUTION/` — le seul verbe qui voie des composants **câblés ensemble** |
 | **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie des 369 composants qui rendent de l'audio, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
 | Savoir **ce qu'un réglage change**, et non ce qu'il vaut | `COMPOSANT=id REGLAGE=nom VALEURS=a,b,c npm run varier` : un clip par valeur, un tableau par tranches avec la colonne de l'entrée, et le réglage déclaré **inerte** s'il ne bouge ni l'énergie ni la crête |
+| Vérifier qu'**aucun message ne reste en français** dans l'interface anglaise | `ANGLAIS=1 npm run messages-anglais` : chaque fiche lancée sur le banc en anglais, son message et son erreur passés au détecteur du registre — le texte en dur des vues est tenu par `src/docs/vues-anglais.test.ts` |
 | Vérifier qu'une **graine déclarée tient**, sur le son | `npm run graines` : chaque composant à graine lancé deux fois à la même graine, empreintes comparées — le contrat structurel des graines ne regarde pas le son |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 

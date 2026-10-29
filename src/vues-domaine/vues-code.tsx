@@ -150,6 +150,7 @@ export function VueJuliaProcessor({ id, data }: VueProps) {
 
 // ── Gestionnaire de nodes (instructions + statut) ──
 export function VueGestionNodes({ data }: VueProps) {
+  const { t } = useI18n();
   const p = data.parametres ?? {};
   const action = String(p["Action"] ?? "Exporter");
   const message = data.audioResultatMessage ?? "";
@@ -158,16 +159,16 @@ export function VueGestionNodes({ data }: VueProps) {
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px", fontSize: 11, lineHeight: 1.6 }}>
       {action === "Exporter" ? (
         <div style={{ color: "var(--text-secondary)" }}>
-          <p style={{ marginBottom: 6 }}>1. Lancez une 1ère fois pour peupler la liste</p>
-          <p style={{ marginBottom: 6 }}>2. Sélectionnez un node dans la liste</p>
-          <p style={{ marginBottom: 6 }}>3. Relancez — une boîte de dialogue s'ouvre pour choisir où sauvegarder le .zip</p>
-          {!api?.sauvegarderNodeZip && <p style={{ color: "#e76f51" }}>⚠ Nécessite Electron</p>}
+          <p style={{ marginBottom: 6 }}>{t("gestionNodes.exporter1")}</p>
+          <p style={{ marginBottom: 6 }}>{t("gestionNodes.exporter2")}</p>
+          <p style={{ marginBottom: 6 }}>{t("gestionNodes.exporter3")}</p>
+          {!api?.sauvegarderNodeZip && <p style={{ color: "#e76f51" }}>{t("gestionNodes.electron")}</p>}
         </div>
       ) : (
         <div style={{ color: "var(--text-secondary)" }}>
-          <p style={{ marginBottom: 6 }}>1. Sélectionnez un fichier .zip</p>
-          <p style={{ marginBottom: 6 }}>2. Lancez — le node est installé et apparaît dans le catalogue</p>
-          {!api?.importerNodeZip && <p style={{ color: "#e76f51" }}>⚠ Nécessite Electron</p>}
+          <p style={{ marginBottom: 6 }}>{t("gestionNodes.importer1")}</p>
+          <p style={{ marginBottom: 6 }}>{t("gestionNodes.importer2")}</p>
+          {!api?.importerNodeZip && <p style={{ color: "#e76f51" }}>{t("gestionNodes.electron")}</p>}
         </div>
       )}
       {message && (

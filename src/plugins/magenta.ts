@@ -240,7 +240,7 @@ export const fiches: FicheAudio[] = ([
           ctx.paramNombre("Instrument", 0),
         );
         const label = (langueCourante() === "en" ? MODES_EN : MODES)[MODES_IDS.indexOf(mode)] ?? mode;
-        return { valeurs: [file], message: `${traduire("msg.magenta_improvisation_var_0_s_var_1_var_2_bpm", duree, label, tempo)} · graine ${seed}` };
+        return { valeurs: [file], message: traduire("msg.var_0_graine_var_1", traduire("msg.magenta_improvisation_var_0_s_var_1_var_2_bpm", duree, label, tempo), seed) };
       } catch (err: any) {
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_improvisation_var_0", err.message ?? err) };
       }

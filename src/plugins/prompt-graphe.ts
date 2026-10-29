@@ -9,7 +9,7 @@
 // pas.
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { apparierFlou } from "./appariement-flou";
 import { estDicible } from "./lexique-vosk";
@@ -517,7 +517,11 @@ export const fiches: FicheAudio[] = ([
       // LE GRAPHE PART PAR LE CANAL DU MOTEUR, qui seul sait poser des nœuds sur le canevas.
       const spec = { nodes, edges, prompt };
 
-      const labels = nodes.map((n) => n.label);
+      // LA CHAÎNE SE DIT PAR LES NOMS DE LA LANGUE DE L'INTERFACE. Les libellés des nœuds sont les
+      // noms français du registre, et le message annonçait « Entrée audio → Changement de tempo ».
+      const registre = await obtenirRegistre();
+      const anglais = langueCourante() === "en";
+      const labels = nodes.map((n) => (anglais ? registre.trouverDef(n.ficheId)?.nomEn : undefined) ?? n.label);
       const chainDesc = labels.join(" → ");
       const prefixe = methode === "ollama" && !viaOllama ? `${traduire("msg.ollamaGraphRepli")} ` : "";
       return {

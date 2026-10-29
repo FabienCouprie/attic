@@ -6,6 +6,7 @@
 import { comparerEvenementsMidi } from "./midi";
 import { writeMidi } from "midi-file";
 import { completer, degresDeGamme } from "./gammes";
+import { traduire } from "../i18n";
 
 /**
  * Le genre canonique d'une valeur enregistrée, ou `null` si elle ne nomme aucun genre connu.
@@ -151,7 +152,7 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
   const estMineur = gammeNom.includes("min");
   const gammeCourante = estMineur ? DEGRES_MINEUR : DEGRES_MAJEUR;
   const decalage = traduireCle(cleNom);
-  const tonalite = estMineur ? `${cleNom} mineur` : `${cleNom} majeur`;
+  const tonalite = traduire(estMineur ? "analyse.nom_mineur" : "analyse.nom_majeur", cleNom);
 
   const instr1 = INSTRUMENTS_GM[cfg["instrument1"] || cfg["instr1"]] ?? (estMineur ? 1 : 0);
   const instr2 = INSTRUMENTS_GM[cfg["instrument2"] || cfg["instr2"]] ?? 33;
@@ -256,12 +257,14 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
   const midi = { header: { format: 1 as const, numTracks: 3, ticksPerBeat: tpm }, tracks: [piste1, piste2, piste3] };
   const bytes = new Uint8Array(writeMidi(midi));
 
+  // Le genre reste l'identifiant écrit dans le script, que la description recopie ; le reste se dit
+  // dans la langue de l'interface.
   const descr = [
-    `── Script musical ──`,
-    `Genre : ${genre}  ·  ${tempo} BPM  ·  ${tonalite}  ·  ${dureeSec}s`,
-    `Structure : ${nbAccords} accords × ${dureeAccord.toFixed(1)}s`,
-    `Progression : ${progression.map((d) => ["I", "II", "III", "IV", "V", "VI", "VII"][d % 7]).join(" – ")}`,
-    `Instruments : Piano · Basse · Marimba`,
+    traduire("msg.script_musical.titre"),
+    traduire("msg.script_musical.genre", genre, tempo, tonalite, dureeSec),
+    traduire("msg.script_musical.structure", nbAccords, dureeAccord.toFixed(1)),
+    traduire("msg.script_musical.progression", progression.map((d) => ["I", "II", "III", "IV", "V", "VI", "VII"][d % 7]).join(" – ")),
+    traduire("msg.script_musical.instruments"),
   ].join("\n");
 
   return { midiBytes: bytes, description: descr };

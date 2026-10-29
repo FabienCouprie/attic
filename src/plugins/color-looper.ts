@@ -7,6 +7,7 @@ import { genererColorLooper, parseCouleurs, GAMMES_ACCORDS } from "../audio";
 import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
+import { traduire } from "../i18n";
 import { PARAMETRE_CLE } from "../audio/cles";
 
 export const fiches: FicheAudio[] = ([
@@ -80,7 +81,7 @@ export const fiches: FicheAudio[] = ([
       });
       const nbCouleurs = parseCouleurs(ctx.paramTexte("Couleurs", "#e63946,#2a9d8f,#e9c46a,#8e6fce")).length;
       const nbNotes = notes.length;
-      return { valeurs: [audio, midi], message: `Color Looper · ${nbCouleurs} couleurs · ${nbNotes} notes · ${audio.duration.toFixed(1)} s` };
+      return { valeurs: [audio, midi], message: traduire("msg.color_looper.resultat", nbCouleurs, nbNotes, audio.duration.toFixed(1)) };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

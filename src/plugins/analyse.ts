@@ -202,7 +202,7 @@ export const fiches: FicheAudio[] = ([
       const nom = `${(ctx.paramTexte("Titre", "Attic") || "attic").replace(/[^\w-]+/g, "-")}.musicxml`;
       const sortie = new File([xml], nom, { type: "application/vnd.recordare.musicxml+xml" });
       const mesures = (xml.match(/<measure /g) ?? []).length;
-      return { valeurs: [xml, sortie], message: `${notes.length} notes · ${mesures} mesures` };
+      return { valeurs: [xml, sortie], message: traduire("msg.musicxml.resultat", notes.length, mesures) };
     },
   },
   {
@@ -342,7 +342,7 @@ export const fiches: FicheAudio[] = ([
       const genres = await classerGenre(audio, duree, buf);
       if (!genres.length) return { valeurs: [audio, null], message: traduire("msg.classification_non_disponible") };
       const descr = genres[0].description || genres.map((g: any) => `${g.genre} (${Math.round(g.confiance*100)}%)`).join(" · ");
-      const source = genres[0].description?.includes("modèle ONNX") ? "ONNX" : "heuristique";
+      const source = genres[0].description?.includes("modèle ONNX") ? "ONNX" : traduire("msg.classification.heuristique");
       return { valeurs: [audio, descr], message: traduire("msg.var_0_var_1_var_2", genres[0].genre, Math.round(genres[0].confiance*100), source) };
    }, nomEn: "Genre Classifier", resumeEn: "Identifies the musical genre of a song via AI or heuristics.",
  },

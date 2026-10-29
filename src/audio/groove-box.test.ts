@@ -8,7 +8,7 @@ import { rendreSequence } from "./midi-sequence";
 import { parseMidi } from "midi-file";
 
 describe("genererGrooveBox", () => {
-  it("produit un MIDI non vide et une description", () => {
+  it("produit un MIDI non vide et sa progression en chiffres romains", () => {
     const result = genererGrooveBox({
       cle: "C",
       gamme: "majeur",
@@ -32,8 +32,9 @@ describe("genererGrooveBox", () => {
 
     expect(result.midiBytes.length).toBeGreaterThan(0);
     expect(result.notes.length).toBeGreaterThan(0);
-    expect(result.description).toContain("Groove Box");
-    expect(result.description).toContain("C majeur");
+    // Le message qui l'annonce, avec la tonalité et le style, est composé par le composant, dans la
+    // langue de l'interface : voir `plugins/generateurs.test.ts`.
+    expect(result.progressionTexte).toMatch(/^(?:I|II|III|IV|V|VI|VII)(?:–(?:I|II|III|IV|V|VI|VII))+$/);
     expect(result.graineUtilisee).toBe(42);
 
     // Canal 0 = accords, canal 1 = basse, canal 2 = mélodie, canal 9 = batterie
@@ -184,7 +185,7 @@ describe("genererGrooveBox", () => {
     });
 
     expect(result.notes.length).toBeGreaterThan(0);
-    expect(result.description).toContain("I–IV–V–I");
+    expect(result.progressionTexte).toContain("I–IV–V–I");
   });
 
   // « Extension » ajoutait une 7e ou une 6e à TOUS les accords, ce qui n'a pas de sens

@@ -96,7 +96,7 @@ export const fiches: FicheAudio[] = ([
           hasard: creerAleatoire(ctx.paramNombre("Graine", 42)),
         });
         const liste = palette.map(formatCouleur).join(", ");
-        return { valeurs: [audio, midi], message: `Palette harmonique · ${palette.length} couleurs · ${liste}` };
+        return { valeurs: [audio, midi], message: traduire("msg.palette_harmonique.resultat", palette.length, liste) };
       } catch (e: any) {
         return { valeurs: [null, null], erreur: true, message: e?.message || traduire("msg.erreur") };
       }

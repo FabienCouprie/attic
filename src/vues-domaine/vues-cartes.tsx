@@ -102,6 +102,7 @@ export function VueCoordonneesSurCarte({ data }: VueProps) {
  * rendu. Les deux tirets marquent le tiers et les deux tiers, de quoi juger d'un coup d'œil.
  */
 export function VueCourbe({ data }: VueProps) {
+  const { t } = useI18n();
   const points = (data as unknown as { apercuCourbe?: number[] }).apercuCourbe;
   if (!points || points.length < 2) return null;
   const L = 200, H = 46;
@@ -112,7 +113,7 @@ export function VueCourbe({ data }: VueProps) {
   return (
     <div className="attic-node-courbe">
       <svg viewBox={`0 0 ${L} ${H}`} preserveAspectRatio="none" role="img"
-        aria-label={`Courbe de modulation, de ${bas.toFixed(2)} a ${haut.toFixed(2)}`}>
+        aria-label={t("courbe.description").replace("{__VAR_0__}", bas.toFixed(2)).replace("{__VAR_1__}", haut.toFixed(2))}>
         <line x1="0" y1={H / 3} x2={L} y2={H / 3} className="attic-node-courbe-repere" />
         <line x1="0" y1={(2 * H) / 3} x2={L} y2={(2 * H) / 3} className="attic-node-courbe-repere" />
         <polyline points={trace} className="attic-node-courbe-trace" />
