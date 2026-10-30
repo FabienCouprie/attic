@@ -11523,7 +11523,7 @@ Places a sound source in space, and returns it in the chosen layout. A sound com
 
 *Transcribes a recording and gives the instant of each word, without being given the text.*
 
-This component listens to a recording and returns two things: what is said, and when each word is said. No text is given to it. That is what distinguishes it from « Align text to speech », which places words supplied to it. The two complement each other: this one's « Transcript » output connects to the other's « Text » input, which can then cut out the desired word range. The language is recognized by itself, among twenty-five. There is therefore no language setting, and a recording that changes language along the way is transcribed as it is spoken. « Compute » names the device used. It is the only setting: the engine's other options were tried and set aside, either because they require a package it does not ship, or because they change nothing, or because they lose words. The « Transcript » output returns the text. « Words » gives one line per word, with its rank and its interval. « Report » gives the number of words, the duration covered and the rate in words per minute. The resolution is eighty milliseconds: the returned instants are all multiples of it, and nothing finer is obtained. It is the same as the aligner's, and the two engines were compared on one sound without ever differing by more than two of those steps.
+This component transcribes the recording received on the « Audio » input and dates each word: it returns what is said, and when each word is said, without any text being given to it. The language is recognized by itself, among twenty-five, without a setting. « Compute » chooses the device the engine runs on. It changes the compute time and not the words found. The « Transcript » output returns the text. « Words » gives one line per word: its rank, its start and its end in minutes and seconds, then the word. « Report » gives the number of words dated, the duration of speech, from the start of the first word to the end of the last, against the duration of the sound, and, from two words on, the rate in words per minute. The resolution is eighty milliseconds: the returned instants are all multiples of it, and nothing finer is obtained.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -11542,7 +11542,7 @@ This component listens to a recording and returns two things: what is said, and 
 
 *Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny).*
 
-Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). Connect audio to the green input. Transcribed text is emitted on the blue output. The ONNX model ships with the application, under `oonx/sherpa-asr-whisper-tiny`, and is not downloaded: the node works without a network. It weighs 99 MB. It runs in a dedicated Web Worker.
+Transcribes to text the speech received on the « Audio » input, after the multilingual Whisper tiny model run by Sherpa-ONNX. The sound is mixed to mono and resampled to 16 kHz before recognition. « Language » sets the language of the speech, among thirteen. « Automatic » lets the model detect it. « Resampling quality » chooses the resampling to 16 kHz. « High (Web Audio) » hands it to the browser's audio engine, and falls back to linear interpolation when that engine is unavailable. « Standard (linear) » interpolates linearly between two neighbouring samples. « Model cache » concerns the copy of the model kept in the browser's storage (IndexedDB). « Auto (kept across sessions) » reuses it from one session to the next. « Clear and re-download » erases it and reads the model again from the application's files. The « Text » output returns the transcription. The ONNX model ships with the application, under `oonx/sherpa-asr-whisper-tiny`, and is not downloaded: the node works without a network. It weighs 99 MB. It runs in a dedicated Web Worker.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -11551,9 +11551,9 @@ Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). Connect au
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Language | choice | Automatic | Automatic / English / French / Spanish / German / Italian / Portuguese / Dutch / Russian / Japanese / Chinese / Arabic / Hindi / Korean | Language of the speech to transcribe. « Automatic » lets Whisper detect the language. The model is multilingual (99 languages). |
-| Resampling quality | choice | High (Web Audio) | High (Web Audio) / Standard (linear) | Settings: the resampling quality to 16 kHz. « High » uses Web Audio API (better quality) with automatic fallback to linear interpolation if needed. « Standard » keeps the original fast linear interpolation. |
-| Model cache | choice | Auto (kept across sessions) | Auto (kept across sessions) / Clear and re-download | Manage the offline cache of the ONNX model. « Auto » keeps the downloaded model across sessions (IndexedDB). « Clear and re-download » deletes the cache and forces a fresh download. |
+| Language | choice | Automatic | Automatic / English / French / Spanish / German / Italian / Portuguese / Dutch / Russian / Japanese / Chinese / Arabic / Hindi / Korean | Language of the speech to transcribe. « Automatic » lets the Whisper tiny model detect the language. The model is multilingual (99 languages). |
+| Resampling quality | choice | High (Web Audio) | High (Web Audio) / Standard (linear) | The resampling to 16 kHz. « High (Web Audio) » hands it to the browser's audio engine, and falls back to linear interpolation when that engine is unavailable. « Standard (linear) » interpolates linearly between two neighbouring samples. |
+| Model cache | choice | Auto (kept across sessions) | Auto (kept across sessions) / Clear and re-download | The copy of the ONNX model kept in the browser's storage (IndexedDB). « Auto (kept across sessions) » reuses it from one session to the next. « Clear and re-download » erases it and reads the model again from the application's files. |
 
 #### Transcribe
 
@@ -11598,7 +11598,7 @@ Transcribes the speech on the audio input, and returns each word with its start 
 
 *English speech recognition (OpenAI Whisper base).*
 
-English speech recognition using OpenAI Whisper (base). Connect an audio signal (green port), e.g. an « Audio Input » or « Recorder » node. The model transcribes the speech to text and outputs it on the text output (blue port). The model ships with the application, under `oonx/whisper-base-en`, and is not downloaded: the node works without a network. It weighs 281 MB, the two single-precision weights being the ones the node loads. Transcription runs in a Web Worker. Audio is automatically mixed to mono and resampled to 16 kHz.
+Transcribes to text the English speech received on the « Audio » input, after OpenAI's Whisper base model. The sound is mixed to mono and resampled to 16 kHz before recognition. The « Text » output returns the transcription. The model ships with the application, under `oonx/whisper-base-en`, and is not downloaded: the node works without a network. It weighs 281 MB, the two single-precision weights being the ones the node loads. Transcription runs in a Web Worker.
 
 | Port | Name | Type | |
 |---|---|---|---|

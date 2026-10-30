@@ -60,36 +60,28 @@ export const fiches = ([
     univers: "Autres", famille: "Speech to Text",
     resume: "Transcrit un enregistrement et donne l'instant de chaque mot, sans qu'on donne le texte.",
     resumeEn: "Transcribes a recording and gives the instant of each word, without being given the text.",
-    notice: "Ce composant écoute un enregistrement et rend deux choses : ce qui est dit, et quand chaque mot "
-      + "est dit. On ne lui donne aucun texte.\n\n"
-      + "C'est ce qui le distingue d'« Aligner un texte sur la parole », qui place des mots qu'on lui fournit. "
-      + "Les deux se complètent : la sortie « Transcription » de celui-ci se branche sur l'entrée « Texte » de "
-      + "l'autre, qui sait alors découper la suite de mots voulue.\n\n"
-      + "La langue est reconnue seule, parmi vingt-cinq. Il n'y a donc pas de réglage de langue, et un "
-      + "enregistrement qui change de langue en cours de route est transcrit tel qu'il est dit.\n\n"
-      + "« Calcul » nomme le périphérique employé. C'est le seul réglage : les autres options du moteur ont été "
-      + "essayées et écartées, soit parce qu'elles réclament un paquet qu'il ne livre pas, soit parce qu'elles "
-      + "ne changent rien, soit parce qu'elles perdent des mots.\n\n"
-      + "La sortie « Transcription » rend le texte. « Mots » donne une ligne par mot, avec son rang et son "
-      + "intervalle. « Rapport » donne le nombre de mots, la durée couverte et le débit en mots par minute.\n\n"
+    notice: "Ce composant transcrit l'enregistrement reçu sur l'entrée « Audio » et date chaque mot : il rend "
+      + "ce qui est dit, et quand chaque mot est dit, sans qu'aucun texte lui soit donné. La langue est "
+      + "reconnue seule, parmi vingt-cinq, sans réglage.\n\n"
+      + "« Calcul » choisit le périphérique sur lequel le moteur tourne. Il change le temps de calcul et non "
+      + "les mots trouvés.\n\n"
+      + "La sortie « Transcription » rend le texte. « Mots » donne une ligne par mot : son rang, son début et "
+      + "sa fin en minutes et secondes, puis le mot. « Rapport » donne le nombre de mots datés, la durée de "
+      + "parole, du début du premier mot à la fin du dernier, rapportée à la durée du son, et, à partir de "
+      + "deux mots, le débit en mots par minute.\n\n"
       + "La résolution est de quatre-vingts millisecondes : les instants rendus en sont tous des multiples, et "
-      + "rien de plus fin n'en est obtenu. C'est la même que celle de l'aligneur, et les deux moteurs ont été "
-      + "confrontés sur un même son sans jamais s'écarter de plus de deux de ces pas.",
-    noticeEn: "This component listens to a recording and returns two things: what is said, and when each word "
-      + "is said. No text is given to it.\n\n"
-      + "That is what distinguishes it from « Align text to speech », which places words supplied to it. The "
-      + "two complement each other: this one's « Transcript » output connects to the other's « Text » input, "
-      + "which can then cut out the desired word range.\n\n"
-      + "The language is recognized by itself, among twenty-five. There is therefore no language setting, and "
-      + "a recording that changes language along the way is transcribed as it is spoken.\n\n"
-      + "« Compute » names the device used. It is the only setting: the engine's other options were tried and "
-      + "set aside, either because they require a package it does not ship, or because they change nothing, or "
-      + "because they lose words.\n\n"
-      + "The « Transcript » output returns the text. « Words » gives one line per word, with its rank and its "
-      + "interval. « Report » gives the number of words, the duration covered and the rate in words per minute.\n\n"
+      + "rien de plus fin n'en est obtenu.",
+    noticeEn: "This component transcribes the recording received on the « Audio » input and dates each word: it "
+      + "returns what is said, and when each word is said, without any text being given to it. The language "
+      + "is recognized by itself, among twenty-five, without a setting.\n\n"
+      + "« Compute » chooses the device the engine runs on. It changes the compute time and not the words "
+      + "found.\n\n"
+      + "The « Transcript » output returns the text. « Words » gives one line per word: its rank, its start "
+      + "and its end in minutes and seconds, then the word. « Report » gives the number of words dated, the "
+      + "duration of speech, from the start of the first word to the end of the last, against the duration "
+      + "of the sound, and, from two words on, the rate in words per minute.\n\n"
       + "The resolution is eighty milliseconds: the returned instants are all multiples of it, and nothing "
-      + "finer is obtained. It is the same as the aligner's, and the two engines were compared on one sound "
-      + "without ever differing by more than two of those steps.",
+      + "finer is obtained.",
     entrees: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],
     sorties: [
       { nom: "Transcription", nomEn: "Transcript", type: "texte" },
