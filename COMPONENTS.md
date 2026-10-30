@@ -3,19 +3,19 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **510 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **510 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 246 | [Analysis](#analysis) (1) · [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (17) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
-| [Visualization](#visualization) | 45 | [Analysis](#analysis-1) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
+| [Processing](#processing) | 245 | [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (17) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
-| [Collections](#collections) | 13 | [Analysis](#analysis-2) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
+| [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 88 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (4) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
+| [Other & lab](#other--lab) | 89 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -2758,31 +2758,6 @@ After Iannis Xenakis's sieve theory ("Sieves", 1990; the technique appears as ea
 | Note length | slider | 60 % | 10 – 100 %, step 5 | Share of the subdivision actually sounding. Low, notes stand apart; high, they run together. |
 
 ## Processing
-
-### Analysis
-
-| Component | Summary |
-|---|---|
-| [Vosk (speech recognition)](#vosk-speech-recognition) | Transcribes speech, and returns each word with its instant and confidence. |
-
-#### Vosk (speech recognition)
-
-`vosk-asr` · Processing → Analysis
-
-*Transcribes speech, and returns each word with its instant and confidence.*
-
-Transcribes the speech on the audio input, and returns each word with its start instant, its end instant and its confidence. After Vosk, an engine built on Kaldi, used here through its WebAssembly port. The « Audio » input takes the signal to transcribe. It is mixed to mono and resampled to sixteen kilohertz, the rate the engine works at. « Language » selects the model. Each language has its own, dedicated: a French model is not a multilingual model set to French. Both models ship with the application and weigh some forty megabytes each. « Vocabulary » restricts what the engine may recognise. Words are separated by spaces or commas; when given, they form the only list the engine can return, which greatly raises accuracy on a closed lexicon. Left empty, the model's whole vocabulary is used. The « Text » output carries the transcription. The « Words » output carries a table with one line per word: start, end, confidence, word. Instants are in seconds from the start of the input. Recognition advances along the signal, and partial results appear in the node's progress line.
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio |  |
-| output | Text | text |  |
-| output | Words | text |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Language | choice | French | French / English | The model used. Each language has its own, dedicated: a French model is not a multilingual model set to French, and it shows. |
-| Vocabulary | text | — |  | Words separated by spaces or commas. When given, it restricts what the engine may recognise to those words alone, which greatly raises accuracy on a closed lexicon. Left empty, the model's whole vocabulary is used. |
 
 ### Conversion
 
@@ -11538,7 +11513,8 @@ Places a sound source in space, and returns it in the chosen layout. A sound com
 |---|---|
 | [Date the words](#date-the-words) | Transcribes a recording and gives the instant of each word, without being given the text. |
 | [Sherpa ASR](#sherpa-asr) | Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). |
-| [Transcribe](#transcribe) | Transcribes a recording, with an engine more faithful on short, clean excerpts. |
+| [Transcribe](#transcribe) | Transcribes the speech of a recording, recognizing its language by itself. |
+| [Vosk (speech recognition)](#vosk-speech-recognition) | Transcribes speech, and returns each word with its instant and confidence. |
 | [Whisper (English)](#whisper-english) | English speech recognition (OpenAI Whisper base). |
 
 #### Date the words
@@ -11583,9 +11559,9 @@ Local speech recognition via Sherpa-ONNX (multilingual Whisper tiny). Connect au
 
 `transcrire` · Other & lab → Speech to Text
 
-*Transcribes a recording, with an engine more faithful on short, clean excerpts.*
+*Transcribes the speech of a recording, recognizing its language by itself.*
 
-This component listens to a recording and returns what is said. The language is recognized by itself, among thirty-one. The catalog holds another one, « Date the words », and neither is better everywhere. This one is more faithful on short, clean excerpts, and it asks half the memory. The other is three times faster, safer on long recordings, and it alone gives the instant of each word. To obtain instants with this one, its output connects to the « Text » input of « Align text to speech », which computes them. That is exactly what its engine would do internally, for the same result and without a second model to fetch. « Compute » names the device used. It is the only setting: its engine also accepts a language, but forcing one changes nothing in what it returns, tried on two witnesses and three languages. The « Transcript » output returns the text. « Report » gives the number of words, the duration of the sound and the real-time factor the engine measured itself.
+This component transcribes the speech of the recording received on the « Audio » input. The language is recognized by itself, among thirty-one, without a setting. « Compute » chooses the device the engine runs on. It changes the compute time and not the returned text. The « Transcript » output returns the text, without the instant of each word. « Report » gives the number of words transcribed, the duration of the sound in seconds and, when the engine provides it, the real-time factor: the compute time divided by the duration of the sound.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -11596,6 +11572,25 @@ This component listens to a recording and returns what is said. The language is 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the returned text. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+
+#### Vosk (speech recognition)
+
+`vosk-asr` · Other & lab → Speech to Text
+
+*Transcribes speech, and returns each word with its instant and confidence.*
+
+Transcribes the speech on the audio input, and returns each word with its start instant, its end instant and its confidence. After Vosk, an engine built on Kaldi, used here through its WebAssembly port. The « Audio » input takes the signal to transcribe. It is mixed to mono and resampled to sixteen kilohertz, the rate the engine works at. « Language » selects the model. Each language has its own, dedicated: a French model is not a multilingual model set to French. Both models ship with the application and weigh some forty megabytes each. « Vocabulary » restricts what the engine may recognise. Words are separated by spaces or commas; when given, they form the only list the engine can return, which greatly raises accuracy on a closed lexicon. Left empty, the model's whole vocabulary is used. The « Text » output carries the transcription. The « Words » output carries a table with one line per word: start, end, confidence, word. Instants are in seconds from the start of the input. Recognition advances along the signal, and partial results appear in the node's progress line.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Text | text |  |
+| output | Words | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Language | choice | French | French / English | The model used. Each language has its own, dedicated: a French model is not a multilingual model set to French, and it shows. |
+| Vocabulary | text | — |  | Words separated by spaces or commas. When given, it restricts what the engine may recognise to those words alone, which greatly raises accuracy on a closed lexicon. Left empty, the model's whole vocabulary is used. |
 
 #### Whisper (English)
 
