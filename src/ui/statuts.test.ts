@@ -13,7 +13,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import {
-  ETAT_ATTENTE, poserApercu, poserStatut, reinitialiserStatuts, statutDe, statutsPoses, surStatut,
+  ETAT_ATTENTE, poserApercu, poserStatut, poserStatutOmbre, reinitialiserStatuts, statutDe, statutsPoses,
+  surStatut,
 } from "./statuts";
 
 beforeEach(() => reinitialiserStatuts());
@@ -180,6 +181,33 @@ describe("la réinitialisation", () => {
     surStatut("jamais-pose", vu);
     reinitialiserStatuts(["jamais-pose"]);
     expect(vu).not.toHaveBeenCalled();
+  });
+});
+
+describe("les ombres, l'état des nœuds que l'écran ne montre pas", () => {
+  // CE QU'ELLES EXISTENT POUR DIRE. Le moteur reporte l'état d'un nœud aplati sur son méta, et le
+  // perdait : au run suivant, le méta ne savait plus lesquels de ses nœuds avaient tourné.
+  it("se lisent sous leur propre identifiant, sans toucher au nœud visible", () => {
+    poserStatutOmbre("m::a", "m", "termine");
+    expect(statutDe("m::a").statut).toBe("termine");
+    expect(statutDe("m")).toBe(ETAT_ATTENTE);
+  });
+
+  it("REPARTENT AVEC LEUR NŒUD VISIBLE : remettre un méta à zéro remet à zéro ce qu'il contient", () => {
+    poserStatutOmbre("m::a", "m", "termine");
+    poserStatutOmbre("n::a", "n", "termine");
+    poserStatut("m", "termine");
+    reinitialiserStatuts(["m"]);
+    expect(statutDe("m::a")).toBe(ETAT_ATTENTE);
+    expect(statutDe("n::a").statut).toBe("termine");
+  });
+
+  it("une ombre remise à zéro ne se rattache plus à rien", () => {
+    poserStatutOmbre("m::a", "m", "termine");
+    reinitialiserStatuts(["m::a"]);
+    poserStatut("m::a", "termine");
+    reinitialiserStatuts(["m"]);
+    expect(statutDe("m::a").statut).toBe("termine");
   });
 });
 

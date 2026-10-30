@@ -86,6 +86,20 @@ export interface OptionsPilote {
 export async function semerEtLancer(
   page: Page, url: string, grapheJson: string, o: OptionsPilote = {},
 ): Promise<void> {
+  await semer(page, url, grapheJson, o);
+  if (o.avantDeLancer) await o.avantDeLancer(page);
+  await relancerEtAttendre(page, o);
+}
+
+/**
+ * Sème un graphe dans l'application SANS le lancer.
+ *
+ * POURQUOI CE VERBE EXISTE À PART. Le ▶ d'un nœud ne s'éprouve que sur un graphe dont rien n'a encore
+ * tourné : semer puis presser Lancer aurait déjà tout calculé. Voir `lancerLeNoeudEtAttendre`.
+ */
+export async function semer(
+  page: Page, url: string, grapheJson: string, o: OptionsPilote = {},
+): Promise<void> {
   await page.goto(url);
   await page.waitForSelector(".attic-app", { timeout: 15000 });
   await page.evaluate(([g, bits]) => {
@@ -95,10 +109,6 @@ export async function semerEtLancer(
   await page.reload();
   await page.waitForSelector(".attic-app", { timeout: 15000 });
   await page.waitForTimeout(2500);
-
-  if (o.avantDeLancer) await o.avantDeLancer(page);
-
-  await relancerEtAttendre(page, o);
 }
 
 /**
@@ -125,6 +135,43 @@ export async function relancerEtAttendre(page: Page, o: OptionsPilote = {}): Pro
     return document.querySelectorAll(".attic-node-statut-puce.en-cours").length === 0 && enAttente.length === 0;
   }, [...(o.attentesAdmises ?? [])], { timeout: o.delaiRunMs ?? DELAI_RUN_MS });
 
+  await apercusPoses(page);
+}
+
+/**
+ * Presser le ▶ d'UN nœud sur le graphe déjà posé, et rendre la main quand ce run-là est fini.
+ *
+ * POURQUOI CE VERBE EXISTE À PART. Le ▶ d'un nœud ne calcule que ce dont il dépend : ce qui est hors
+ * de ce périmètre reste « en attente », et la fin d'un run global, plus rien en attente, ne viendrait
+ * jamais. La fin se lit donc sur le nœud visé : plus rien ne tourne, et lui a quitté l'attente. Les
+ * deux autres corrections de l'en-tête voyagent avec : le clic est un vrai clic, et les aperçus se
+ * posent après le statut.
+ *
+ * LE NŒUD VISÉ DOIT ÊTRE EN ATTENTE AVANT LE CLIC, ce qu'est tout nœud d'un graphe qu'on vient de
+ * `semer` : un nœud déjà terminé l'est encore avant que son run ne parte, et l'attente rendrait la
+ * main trop tôt. UN ▶ QUI NE LANCE RIEN laisse le nœud en attente, et c'est le délai qui le dit.
+ */
+export async function lancerLeNoeudEtAttendre(page: Page, id: string, o: OptionsPilote = {}): Promise<void> {
+  await page.locator(`[data-id="${id}"] .attic-node-btn-prio`).click({ timeout: 15000 });
+
+  await page.waitForFunction((cible) => {
+    const puce = document.querySelector(`[data-id="${cible}"] .attic-node-statut-puce`);
+    return !!puce && !puce.classList.contains("attente")
+      && document.querySelectorAll(".attic-node-statut-puce.en-cours").length === 0;
+  }, id, { timeout: o.delaiRunMs ?? DELAI_RUN_MS });
+
+  await apercusPoses(page);
+}
+
+/**
+ * Attendre que le nombre de lecteurs posés CESSE DE BOUGER, ce qui s'arrête tout seul quand il n'y en
+ * a aucun. Voir la troisième correction de l'en-tête.
+ *
+ * LE COMPTE REPART DE ZÉRO À CHAQUE APPEL. Il vit sur `window`, et un second run sur la même page le
+ * trouverait déjà à six : le premier relevé rendrait la main, avant que le moindre aperçu ait bougé.
+ */
+async function apercusPoses(page: Page): Promise<void> {
+  await page.evaluate(() => { (window as unknown as { __stable?: number }).__stable = 0; });
   await page.waitForFunction(() => {
     const n = document.querySelectorAll("[data-id] audio[src]").length;
     const w = window as unknown as { __nb?: number; __stable?: number };
