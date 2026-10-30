@@ -26,7 +26,7 @@ import { Respiration, respirer } from "../../core/respirer";
 import { noeudRegarde, resultatRetenu } from "../../core/memoire";
 import { servicesDomaine } from "../../core/services-domaine";
 import { poserApercu, poserStatut as poserStatutNoeud, poserStatutOmbre, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
-import { avecLeursBulles, conteneurs, statutDuContenu } from "../../core/conteneurs";
+import { aRemettreAZero, avecLeursBulles, conteneurs, statutDuContenu } from "../../core/conteneurs";
 import { effacerResultats, poserResultat, resultatDe } from "../resultats";
 import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
 import { lacherLeCorps, sautsDeBoucles } from "../../core/saut-de-boucle";
@@ -372,7 +372,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
       }
       return { ...n, data: etat as typeof n.data };
     }));
-    for (const id of ids) cacheExec.current.delete(id);
+    // LE CACHE D'UN MÉTA EST CELUI DE SES NŒUDS APLATIS, rangés sous `monMeta::…`, à toute
+    // profondeur. N'effacer que l'identifiant visible laissait le run suivant reprendre tout son
+    // contenu du cache : mesuré, ses quatre nœuds internes repris et seule l'aval refaite.
+    for (const cle of [...cacheExec.current.keys()]) {
+      if (ids.has(cle.split("::")[0])) cacheExec.current.delete(cle);
+    }
   }, [setNodes]);
 
   // ── Les deux réinitialisations ──
@@ -390,9 +395,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
   //   regardant l'onde.
   //
   // La traversée vit dans core/graphe.ts (testée) ; `aretesRef` garantit des
-  // arêtes à jour plutôt qu'une closure périmée.
+  // arêtes à jour plutôt qu'une closure périmée. UNE BULLE SE REMET À ZÉRO PAR SES MEMBRES, et
+  // chacun avec son aval : voir `aRemettreAZero` dans `core/conteneurs.ts`.
   const reinitialiserNoeud = useCallback((nodeId: string) => {
-    reinitialiserIds(new Set([nodeId, ...descendants(nodeId, aretesRef.current)]));
+    const departs = aRemettreAZero(noeudsRef.current as unknown as NoeudG[], nodeId);
+    reinitialiserIds(new Set(departs.flatMap((id) => [id, ...descendants(id, aretesRef.current)])));
   }, [reinitialiserIds]);
 
   /**

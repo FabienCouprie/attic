@@ -18,6 +18,11 @@
 // d'attribution des ports de sortie, lui, ne s'est pas vérifié : les huit câbles du graphe de Fabien
 // partaient des bonnes poignées, et chaque sortie portait la zone voulue, à la milliseconde.
 //
+// LE ↺ AVAIT LE MÊME DÉFAUT, relevé en lisant le code puis mesuré avant d'être corrigé. Celui d'une
+// bulle ne suivait que ses substituts vers l'aval : ses quatre membres restaient terminés. Celui
+// d'un méta n'effaçait du cache que son identifiant visible : le run suivant reprenait ses quatre
+// nœuds aplatis, rangés sous `m::…`, et ne refaisait que l'aval.
+//
 // ═══ POURQUOI DE BOUT EN BOUT ═══
 //
 // La règle vit dans `core/conteneurs.ts` et ses cas unitaires l'éprouvent. Mais le périmètre d'un run
@@ -82,6 +87,73 @@ const GRAPHE_PUITS = JSON.stringify({
   edges: [arete("t1", "p", 0, 0)],
 });
 
+/**
+ * Une bulle de deux branches parallèles dont les entrées n'ont PAS le même type : un point d'écoute
+ * attend de l'audio, une sortie texte du texte. Aucun câble au départ, donc deux ports libres.
+ */
+const GRAPHE_TYPES = JSON.stringify({
+  nodes: [
+    { id: "t", position: { x: 0, y: 0 }, data: { ficheId: "generateur-frequence", parametres: { "Durée": 1 } } },
+    { id: "x", position: { x: 0, y: 320 }, data: { ficheId: "source-texte", parametres: {} } },
+    ecoute("A", 500, 0, "b"),
+    { id: "B", position: { x: 500, y: 320 }, data: { ficheId: "sortie-texte", parametres: {}, bulle: "b" } },
+    { id: "b", position: { x: 500, y: 160 }, data: { ficheId: "bulle::b", parametres: {}, bulleOuverte: false } },
+  ],
+  edges: [],
+});
+
+/** Une bulle OUVERTE de deux écoutes que rien ne relie : deux entrées libres, deux sorties libres. */
+const GRAPHE_OUVERT = JSON.stringify({
+  nodes: [ecoute("A1", 0, 0, "b"), ecoute("A2", 450, 0, "b"),
+    { id: "b", position: { x: 200, y: 300 }, data: { ficheId: "bulle::b", parametres: {}, bulleOuverte: true } }],
+  edges: [],
+});
+
+/** Tirer un câble à la souris, d'une poignée à l'autre, comme on le fait. */
+async function tirer(page: Page, de: string, vers: string): Promise<void> {
+  const a = await page.locator(de).boundingBox();
+  const b = await page.locator(vers).boundingBox();
+  if (!a || !b) throw new Error(`poignée introuvable : ${!a ? de : vers}`);
+  await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+  await page.mouse.down();
+  await page.mouse.move((a.x + b.x) / 2, (a.y + b.y) / 2, { steps: 8 });
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });
+  await page.mouse.up();
+  await page.waitForTimeout(1200);
+}
+
+/** Le type qu'affiche chaque poignée d'entrée de la bulle, dans l'ordre. */
+const typesAffiches = (page: Page, bulle: string): Promise<string[]> =>
+  page.locator(`[data-id="${bulle}"] .react-flow__handle.target`).evaluateAll((hs) => hs.map((h) => h.getAttribute("title") ?? ""));
+
+/**
+ * Pour chaque câble qui arrive sur la bulle, le type qu'affiche la poignée où son tracé aboutit.
+ *
+ * C'EST LA GÉOMÉTRIE QUI TRANCHE, et non l'identifiant de poignée de l'arête : c'est ce que l'œil
+ * voit, un câble posé sur un port d'une certaine couleur. Une arête substituée porte l'identifiant de
+ * l'arête réelle, `sub::e-<source>-<cible>-…`, qui dit vers quel membre elle va vraiment.
+ */
+async function poigneesDesCables(page: Page, bulle: string): Promise<Record<string, string>> {
+  return await page.evaluate((b) => {
+    const poignees = [...document.querySelectorAll(`[data-id="${b}"] .react-flow__handle.target`)] as HTMLElement[];
+    const out: Record<string, string> = {};
+    for (const g of [...document.querySelectorAll(".react-flow__edge")] as SVGGElement[]) {
+      const chemin = g.querySelector("path") as SVGPathElement | null;
+      const ctm = chemin?.getScreenCTM();
+      if (!chemin || !ctm) continue;
+      const p = chemin.getPointAtLength(chemin.getTotalLength());
+      const fin = new DOMPoint(p.x, p.y).matrixTransform(ctm);
+      for (const h of poignees) {
+        const r = h.getBoundingClientRect();
+        if (Math.hypot(r.x + r.width / 2 - fin.x, r.y + r.height / 2 - fin.y) < 12) {
+          out[g.getAttribute("data-id") ?? ""] = h.getAttribute("title") ?? "";
+        }
+      }
+    }
+    return out;
+  }, bulle);
+}
+
 /** Sème le graphe, et le montre en entier : un ▶ caché sous la palette ne reçoit pas le clic. */
 async function poser(page: Page, graphe: string): Promise<void> {
   // Les métas vivent au catalogue, que le graphe en cours ne transporte pas : ils se sèment à côté.
@@ -123,6 +195,40 @@ async function refaireUneBranche(page: Page): Promise<void> {
   await expect.poll(() => statutDe(page, "sa"), { timeout: 10_000 }).toBe("attente");
   await lancerLeNoeud(page, "sa");
 }
+
+/**
+ * L'état de nœuds que l'écran ne montre pas, lu dans le magasin des statuts.
+ *
+ * LES MEMBRES D'UNE BULLE REPLIÉE ET LES NŒUDS APLATIS D'UN MÉTA N'ONT PAS DE PASTILLE : le magasin
+ * est le seul endroit où leur état se lit. Le module importé est celui que l'application emploie,
+ * la page étant neuve.
+ */
+async function statutsDuMagasin(page: Page, ids: string[]): Promise<Record<string, string>> {
+  return await page.evaluate(async (liste) => {
+    const s = await import("/src/ui/statuts.ts") as { statutDe: (id: string) => { statut: string } };
+    return Object.fromEntries(liste.map((id) => [id, s.statutDe(id).statut]));
+  }, ids);
+}
+
+/**
+ * Commence à relever ceux de ces nœuds dont le calcul repart, visibles ou non.
+ *
+ * « EN COURS » NE SE POSE QU'UNE FOIS LE CACHE ÉCARTÉ : un nœud repris du cache passe directement à
+ * « terminé ». C'est donc le passage par « en cours » qui dit qu'un nœud a été refait.
+ */
+async function suivreLesCalculs(page: Page, ids: string[]): Promise<void> {
+  await page.evaluate(async (liste) => {
+    const s = await import("/src/ui/statuts.ts") as {
+      statutDe: (id: string) => { statut: string }; surStatut: (id: string, f: () => void) => () => void;
+    };
+    const vus = new Set<string>();
+    (window as unknown as { __calcules__: Set<string> }).__calcules__ = vus;
+    for (const id of liste) s.surStatut(id, () => { if (s.statutDe(id).statut === "en_cours") vus.add(id); });
+  }, ids);
+}
+
+const lireLesCalculs = async (page: Page): Promise<string[]> =>
+  await page.evaluate(() => [...(window as unknown as { __calcules__: Set<string> }).__calcules__].sort());
 
 /** La durée de l'aperçu de chaque nœud qui en a un, lue dans les octets du WAV. */
 async function durees(page: Page): Promise<Record<string, number>> {
@@ -226,5 +332,93 @@ test.describe("une bulle ou un méta dit l'état de tout son contenu", () => {
     await poser(page, GRAPHE_PUITS);
     await lancerLeNoeud(page, "p");
     expect(await statutDe(page, "p")).toBe("termine");
+  });
+
+  test("UNE POIGNÉE DE BULLE AFFICHE LE TYPE DU PORT QU'ELLE DÉSIGNE, même après un câblage qui les réordonne", async ({ page }) => {
+    await poser(page, GRAPHE_TYPES);
+    const avant = await typesAffiches(page, "b");
+    const iTexte = avant.findIndex((t) => /texte|text/i.test(t));
+    expect(iTexte, `une poignée d'entrée s'affiche texte : ${JSON.stringify(avant)}`).toBeGreaterThanOrEqual(0);
+    // Le câble de texte sur la poignée qui s'affiche texte. Il devient traversant, et passe donc
+    // DEVANT le port libre de l'audio : les ports de la bulle se réordonnent.
+    await tirer(page, '[data-id="x"] .react-flow__handle.source', `[data-id="b"] .react-flow__handle[data-handleid="in:${iTexte}"]`);
+    const apresTexte = await poigneesDesCables(page, "b");
+    console.log(`poignées avant : ${JSON.stringify(avant)} · après le texte : ${JSON.stringify(await typesAffiches(page, "b"))} · câbles : ${JSON.stringify(apresTexte)}`);
+    const texte = Object.entries(apresTexte).find(([id]) => id.startsWith("sub::e-x-B-"));
+    expect(texte, "le câble de texte va à la sortie texte, et se dessine sur une poignée de la bulle").toBeTruthy();
+    expect(texte![1], [
+      "",
+      "LE CÂBLE DE TEXTE ARRIVE SUR UNE POIGNÉE QUI S'AFFICHE D'UN AUTRE TYPE.",
+      "Les ports de la bulle se sont réordonnés, le traversant devant le libre, et la poignée dessinée",
+      "a gardé la fiche d'avant : c'est le cache des fiches de `AtelierNode.tsx`, qui ne doit pas garder",
+      "celle d'une bulle.",
+      "",
+    ].join("\n")).toMatch(/texte|text/i);
+    // L'audio sur la poignée qui s'affiche audio, MAINTENANT : elle doit l'accepter, et le mener au
+    // point d'écoute.
+    const iAudio = (await typesAffiches(page, "b")).findIndex((t) => /audio/i.test(t));
+    await tirer(page, '[data-id="t"] .react-flow__handle.source', `[data-id="b"] .react-flow__handle[data-handleid="in:${iAudio}"]`);
+    const apresAudio = await poigneesDesCables(page, "b");
+    const audio = Object.entries(apresAudio).find(([id]) => id.startsWith("sub::e-t-A-"));
+    expect(audio, `l'audio posé sur la poignée affichée audio est accepté et va au point d'écoute : ${JSON.stringify(apresAudio)}`).toBeTruthy();
+    expect(audio![1]).toMatch(/audio/i);
+  });
+
+  test("UNE ARÊTE ENTRE DEUX MEMBRES RETIRE LEURS PORTS DE LA BULLE, et ses poignées le montrent", async ({ page }) => {
+    // Aucun câble de la bulle ne bouge ici : seule sa fiche change, son nombre de ports avec elle.
+    await poser(page, GRAPHE_OUVERT);
+    expect(await typesAffiches(page, "b"), "deux entrées libres au départ").toHaveLength(2);
+    await tirer(page, '[data-id="A1"] .react-flow__handle.source', '[data-id="A2"] .react-flow__handle.target');
+    const apres = await typesAffiches(page, "b");
+    console.log(`entrées affichées après l'arête intérieure : ${JSON.stringify(apres)}`);
+    expect(apres, [
+      "",
+      "LA BULLE MONTRE ENCORE L'ENTRÉE QU'UNE ARÊTE INTÉRIEURE VIENT D'OCCUPER.",
+      "Sa fiche a été refaite au registre, et le nœud dessine celle d'avant : voir `getDef` dans `AtelierNode.tsx`.",
+      "",
+    ].join("\n")).toHaveLength(1);
+  });
+
+  test("LE ↺ D'UNE BULLE REMET SES MEMBRES À ZÉRO, et le run suivant les refait", async ({ page }) => {
+    await poser(page, grapheBulle(false));
+    await relancerEtAttendre(page, { delaiRunMs: 60_000, attentesAdmises: ["b"] });
+    expect(await statutDe(page, "b")).toBe("termine");
+    await page.locator('[data-id="b"] .attic-node-btn-reset').click();
+    await expect.poll(() => statutDe(page, "b"), { timeout: 10_000 }).toBe("attente");
+    const membres = ["a1", "a2", "c1", "c2"];
+    const apres = await statutsDuMagasin(page, membres);
+    console.log(`membres après le ↺ de la bulle : ${JSON.stringify(apres)}`);
+    expect(Object.values(apres), [
+      "",
+      "LE ↺ DE LA BULLE A LAISSÉ SES MEMBRES TERMINÉS.",
+      "Remettre une bulle à zéro, c'est remettre à zéro ce qu'elle contient : elle ne calcule rien elle-même.",
+      "",
+    ].join("\n")).toEqual(["attente", "attente", "attente", "attente"]);
+    await suivreLesCalculs(page, [...membres, "sa", "sc"]);
+    await relancerEtAttendre(page, { delaiRunMs: 60_000, attentesAdmises: ["b"] });
+    const refaits = await lireLesCalculs(page);
+    console.log(`refaits au run suivant : ${JSON.stringify(refaits)}`);
+    expect(refaits, "l'instrument voit les deux écoutes, remises à zéro par le même geste").toEqual(expect.arrayContaining(["sa", "sc"]));
+    expect(refaits, "les membres de la bulle sont recalculés, et non repris du cache").toEqual(expect.arrayContaining(membres));
+  });
+
+  test("LE ↺ D'UN MÉTA EFFACE LE CACHE DE SES NŒUDS INTERNES, et le run suivant les refait", async ({ page }) => {
+    await poser(page, GRAPHE_META);
+    await relancerEtAttendre(page, { delaiRunMs: 60_000, attentesAdmises: ["m"] });
+    expect(await statutDe(page, "m")).toBe("termine");
+    await page.locator('[data-id="m"] .attic-node-btn-reset').click();
+    await expect.poll(() => statutDe(page, "m"), { timeout: 10_000 }).toBe("attente");
+    const internes = ["m::a1", "m::a2", "m::c1", "m::c2"];
+    await suivreLesCalculs(page, [...internes, "sa", "sc"]);
+    await relancerEtAttendre(page, { delaiRunMs: 60_000, attentesAdmises: ["m"] });
+    const refaits = await lireLesCalculs(page);
+    console.log(`refaits au run suivant : ${JSON.stringify(refaits)}`);
+    expect(refaits, "l'instrument voit les deux écoutes, remises à zéro par le même geste").toEqual(expect.arrayContaining(["sa", "sc"]));
+    expect(refaits, [
+      "",
+      "LE ↺ DU MÉTA N'A PAS TOUCHÉ À SON CONTENU : ses nœuds internes sont repris du cache.",
+      "Le cache est indexé par l'identifiant aplati, `m::a1`, et le ↺ n'effaçait que celui du méta.",
+      "",
+    ].join("\n")).toEqual(expect.arrayContaining(internes));
   });
 });
