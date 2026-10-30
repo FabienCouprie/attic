@@ -8,7 +8,7 @@ import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
-  ancetresBulle, aplatirGraphe, estBulle, estCacheParBulle, estSubstitution, grapheSansConteneurs,
+  aplatirGraphe, estBulle, estCacheParBulle, estSubstitution, grapheSansConteneurs,
   sortieDeBulle,
   trouverMeta,
   ordreTopologique, placerEnDernier, ancetres, descendants, perimetreCible, empreinteParametres, empreinteEntrees, empreinteSorties, empreinteValeursEntrantes,
@@ -25,7 +25,8 @@ import { estResultatEnErreur } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
 import { noeudRegarde, resultatRetenu } from "../../core/memoire";
 import { servicesDomaine } from "../../core/services-domaine";
-import { poserApercu, poserStatut as poserStatutNoeud, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
+import { poserApercu, poserStatut as poserStatutNoeud, poserStatutOmbre, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
+import { avecLeursBulles, conteneurs, statutDuContenu } from "../../core/conteneurs";
 import { effacerResultats, poserResultat, resultatDe } from "../resultats";
 import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
 import { lacherLeCorps, sautsDeBoucles } from "../../core/saut-de-boucle";
@@ -329,7 +330,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
   //
   // `garder` nomme les champs de résultat à laisser en place, et n'est employé que par le changement
   // de réglage : voir `CHAMPS_GARDES_AU_REGLAGE`. Le bouton de remise à zéro, lui, n'en passe pas.
-  const reinitialiserIds = useCallback((ids: Set<string>, garder?: ReadonlySet<string>) => {
+  const reinitialiserIds = useCallback((demandes: Set<string>, garder?: ReadonlySet<string>) => {
+    // Les bulles qui contiennent ces nœuds repartent avec eux : voir `avecLeursBulles`.
+    const ids = avecLeursBulles(noeudsRef.current as unknown as NoeudG[], demandes);
     // Un reset pendant un run en cours signale l'annulation : sans ça, le nœud
     // en cours de calcul (ex. extraction de features piste par piste sur une
     // grosse collection) continue en arrière-plan et écrase l'état qu'on vient
@@ -515,6 +518,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
     const nds = deplie.noeuds as unknown as any[];
     const aretes = deplie.aretes as unknown as Edge[];
+    // LES BULLES ET LES MÉTAS, ET CE QUE CHACUN CONTIENT parmi les nœuds exécutés. Voir `core/conteneurs.ts`.
+    const tousNoeudsG = noeudsRef.current as unknown as NoeudG[];
+    const boites = conteneurs(tousNoeudsG, (id) => plat.expansions.get(id) ?? id, (f) => !!trouverMeta(f));
     const prioriteDemandee = noeudPrioritaireId ?? prioritaireRef.current;
     // Un nœud qui passe en dernier rend compte du graphe entier : le lancer seul n'aurait pas de
     // sens, il n'a pas d'amont. Un run ciblé sur lui devient donc un run global.
@@ -528,13 +534,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // Périmètre d'un run ciblé (nœud prioritaire) : null = run global (tout le graphe).
     let ancPriorite: Set<string> | null = null;
     if (priorite) {
-      // Si le nœud prioritaire est un méta, il n'existe pas dans le graphe aplati
-      // (il est expansé) : cibler ses nœuds de sortie internes aplatis, sinon
-      // `ancetres` ne renvoie que lui-même et rien ne s'exécute.
-      let cibles = [priorite];
-      const noeudPrio = noeudsRef.current.find((n) => n.id === priorite);
-      const metaPrio = noeudPrio && trouverMeta((noeudPrio.data as { ficheId?: string }).ficheId as string);
-      if (metaPrio) cibles = (metaPrio.mapSorties as { noeudInterne: string }[]).map((m) => `${priorite}::${m.noeudInterne}`);
+      // UN CONTENEUR SE LANCE PAR TOUT SON CONTENU. Un méta n'existe pas dans le graphe aplati, une
+      // bulle n'y a aucune arête : viser leur seul identifiant ne lançait rien, et ne cibler que les
+      // nœuds qui alimentent les sorties d'un méta laissait de côté le reste. Voir `core/conteneurs.ts`.
+      const contenu = boites.contenu(priorite, ordonnees);
+      const cibles = contenu.length > 0 ? contenu : [priorite];
       // LE PÉRIMÈTRE EST CALCULÉ PAR `core/graphe.ts`, pur et éprouvé à part : ce crochet ne fait
       // que le lui demander. L'AVAL Y ENTRE QUAND C'EST UNE RELANCE APRÈS RÉGLAGE, et pas autrement.
       //
@@ -618,25 +622,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (!noeudsEnErreur.has(id)) definirStatut(id, "attente");
     }
 
-    // Marquer les méta-nœuds visibles comme "en_cours"
-    for (const n of noeudsRef.current) {
-      const meta = trouverMeta(n.data.ficheId as string);
-      if (meta && !noeudsEnErreur.has(n.id) && estMetaEnScope(n.id)) {
-        definirStatut(n.id, "en_cours");
-      }
-    }
-
-    // UNE BULLE DIT CE QUE FONT SES MEMBRES. Elle ne calcule rien, mais un conteneur muet pendant que
-    // son contenu travaille laisserait croire qu'il ne se passe rien. L'appartenance étant explicite,
-    // la remontée est une lecture directe — sans la convention d'identifiant `::` dont dépend celle des
-    // méta-composants, puisque replier ne renomme rien.
-    const tousNoeudsG = noeudsRef.current as unknown as NoeudG[];
-    const bullesDuNoeud = new Map<string, string[]>();
-    for (const id of ordreFiltre) bullesDuNoeud.set(id, ancetresBulle(tousNoeudsG, id));
-    for (const n of noeudsRef.current) {
-      if (!estBulle(n.data.ficheId as string) || noeudsEnErreur.has(n.id)) continue;
-      const active = ordreFiltre.some((id) => (bullesDuNoeud.get(id) ?? []).includes(n.id));
-      if (active) definirStatut(n.id, "en_cours");
+    // UN CONTENEUR DIT CE QUE FAIT SON CONTENU. Une bulle ou un méta ne calcule rien, mais un
+    // conteneur muet pendant que son contenu travaille laisserait croire qu'il ne se passe rien. Il
+    // est en cours dès que ce run touche à l'un de ses nœuds ; son statut final se pose après le run.
+    for (const c of boites.ids) {
+      if (!noeudsEnErreur.has(c) && boites.contenu(c, ordreFiltre).length > 0) definirStatut(c, "en_cours");
     }
 
     const ctx = await obtenirAudio();
@@ -729,9 +719,13 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // poser le statut. Le moteur exécutant les copies l'une après l'autre, la dernière à finir
     // décide de l'état affiché, ce qui est le bon comportement — sauf pour une ERREUR, qu'une copie
     // suivante ne doit pas effacer : un nœud dont une seule note a échoué a échoué.
+    //
+    // ET LA COPIE GARDE LE SIEN, en ombre : c'est ce que lit le statut final d'un méta ou d'une bulle,
+    // qui doit savoir lesquels de ses nœuds ont tourné. Voir `poserStatutOmbre` dans `ui/statuts.ts`.
     const visiblesEnErreur = new Set<string>();
     const poserStatut = (nodeId: string, statut: string, progression?: string, progressionDuNoeud = false) => {
       const visibleId = plat.expansions.get(nodeId) ?? nodeId;
+      if (visibleId !== nodeId) poserStatutOmbre(nodeId, visibleId, statut);
       if (statut === "erreur") visiblesEnErreur.add(visibleId);
       else if (visiblesEnErreur.has(visibleId)) return;
       definirStatut(visibleId, statut, progression, progressionDuNoeud);
@@ -1423,9 +1417,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
                 : t("execution.brancheEchecAucunResultat") };
           }
         }
-        // Un méta-composant n'est pas exécuté lui-même : ce sont ses nœuds internes qui tournent.
-        // C'est donc ici, une fois leurs résultats remontés, qu'on le déclare terminé.
-        if (meta) poserStatutNoeud(n.id, "termine");
+        // Un méta-composant n'est pas exécuté lui-même : ce sont ses nœuds internes qui tournent. Il ne
+        // se déclare pas terminé ici, sur une sortie produite : c'est après le run, d'après TOUT son
+        // contenu, qu'il l'est ou non. Voir `core/conteneurs.ts`.
         return {
           audioResultatUrl: url ?? undefined,
           audioResultatNom: url ? `${n.data.ficheId}.wav` : undefined,
@@ -1521,16 +1515,17 @@ export function useExecutionGraphe(o: OptionsExecution) {
       );
     }
 
-    // LE STATUT FINAL D'UNE BULLE EST CELUI DE SES MEMBRES : en erreur si l'un a échoué, terminé si
-    // tous ont fini. La laisser sur « en cours » après le run ferait croire à un calcul qui n'en finit
-    // pas, alors qu'elle n'en mène aucun.
-    for (const n of noeudsRef.current) {
-      if (!estBulle(n.data.ficheId as string)) continue;
-      const membres = ordreFiltre.filter((id) => ancetresBulle(tousNoeudsG, id).includes(n.id));
-      if (membres.length === 0) continue;
-      const statuts = membres.map((id) => statutDeNoeud(id).statut);
-      if (statuts.includes("erreur")) definirStatut(n.id, "erreur");
-      else if (statuts.every((s) => s === "termine")) definirStatut(n.id, "termine");
+    // LE STATUT FINAL D'UN CONTENEUR EST CELUI DE TOUT SON CONTENU : en erreur si l'un a échoué,
+    // terminé si tous ont fini, en attente sinon, et il dit alors combien. Il était pris sur les seuls
+    // nœuds DE CE RUN : un ▶ posé en aval d'une branche déclarait terminée une bulle dont six membres
+    // sur huit n'avaient jamais tourné. L'erreur qu'un méta s'est vu poser, sorties vides, reste la
+    // sienne. La laisser « en cours » après le run ferait croire à un calcul qui n'en finit pas.
+    const executables = ordonnees.filter((id) => !idsDecoratifs.has(id));
+    for (const c of boites.ids) {
+      if (boites.contenu(c, ordreFiltre).length === 0 || statutDeNoeud(c).statut === "erreur") continue;
+      const b = statutDuContenu(boites.contenu(c, executables).map((id) => statutDeNoeud(id).statut));
+      const partiel = t("conteneur.partiel").replace("{n}", String(b.faits)).replace("{total}", String(b.total));
+      definirStatut(c, b.statut, b.statut === "attente" ? partiel : undefined);
     }
 
     // ── LES LECTEURS, ÉCRITS APRÈS QUE TOUT EST POSÉ ─────────────────────────────────

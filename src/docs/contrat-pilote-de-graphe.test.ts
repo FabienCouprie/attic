@@ -184,8 +184,12 @@ describe("le pilote de graphe", () => {
     // ET LE DERNIER A FAIT NAÎTRE `avantDeLancer` PLUTÔT QU'UN PILOTAGE À LUI : il doit poser deux
     // fichiers par le bouton du nœud, ce qui ne peut se faire qu'entre le rechargement et le clic.
     // C'est exactement le cas que ce garde-ci existe pour empêcher de résoudre à part.
+    //
+    // LE GARDE DES CONTENEURS A FAIT NAÎTRE `semer` ET `lancerLeNoeudEtAttendre` de la même façon : le
+    // ▶ d'un nœud ne se mène pas comme Lancer, et il fallait l'apprendre au pilote plutôt qu'au spec.
     expect(appelants.sort(), "les appelants déclarés du pilote")
-      .toEqual(["boucle-reprise-dans-application.spec.ts", "empreintes-exemples.spec.ts", "executer.spec.ts",
+      .toEqual(["boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
+        "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "montage-gains-pistes.spec.ts",
         "profondeur-dans-application.spec.ts", "rendu-image-taille-dans-application.spec.ts",

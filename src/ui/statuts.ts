@@ -107,10 +107,35 @@ export function poserApercu(id: string, fraction: number | undefined): void {
   prevenir(id);
 }
 
-/** Remettre des nœuds en attente. Sans liste, c'est tout le graphe. */
+/**
+ * Le nœud visible dont chaque ombre tient lieu.
+ *
+ * UNE OMBRE EST L'ÉTAT D'UN NŒUD QUE L'ÉCRAN NE MONTRE PAS : un nœud aplati d'un méta-composant, une
+ * copie de boucle. Le moteur reporte cet état sur le nœud visible et le perdait aussitôt : un méta ne
+ * savait donc pas, au run suivant, lesquels de ses nœuds avaient déjà tourné, et un run ciblé qui
+ * n'en touchait que la moitié le disait terminé. Aucun composant ne s'abonne à ces identifiants : ils
+ * ne coûtent aucun rendu. Voir `core/conteneurs.ts`.
+ */
+const proprietaires = new Map<string, string>();
+
+/** Poser l'état d'un nœud invisible sous son propre identifiant, rattaché au nœud visible qu'il sert. */
+export function poserStatutOmbre(id: string, visible: string, statut: string): void {
+  proprietaires.set(id, visible);
+  poserStatut(id, statut);
+}
+
+/**
+ * Remettre des nœuds en attente. Sans liste, c'est tout le graphe.
+ *
+ * LES OMBRES D'UN NŒUD REPARTENT AVEC LUI : remettre un méta à zéro remet à zéro ce qu'il contient.
+ */
 export function reinitialiserStatuts(ids?: Iterable<string>): void {
   const cibles = ids ? [...ids] : [...etats.keys()];
+  const visibles = new Set(cibles);
+  for (const [ombre, visible] of proprietaires) if (visibles.has(visible)) cibles.push(ombre);
+  if (!ids) proprietaires.clear();
   for (const id of cibles) {
+    proprietaires.delete(id);
     if (!etats.has(id)) continue;
     etats.delete(id);
     prevenir(id);

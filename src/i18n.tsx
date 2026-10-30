@@ -280,6 +280,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "msg.captureAnnulee": { fr: "Capture annulée.", en: "Capture cancelled." },
   "onde.analyse": { fr: "Analyse…", en: "Analyzing…" },
   "statut.attente": { fr: "En attente", en: "Waiting" },
+  "conteneur.partiel": { fr: "{n} sur {total} exécutés", en: "{n} of {total} run" },
   "boucle.depliee": { fr: "Dépliée en {n} tours", en: "Unrolled into {n} passes" },
   "boucle.entrees": { fr: "{n} entrée(s) du dehors, identiques à chaque tour", en: "{n} input(s) from outside, identical on every pass" },
   "boucle.sorties": { fr: "{n} sortie(s) prise(s) au dernier tour seulement", en: "{n} output(s) taken on the last pass only" },
