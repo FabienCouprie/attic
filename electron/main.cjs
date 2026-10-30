@@ -1456,6 +1456,8 @@ ipcMain.handle("ollama:generer", async (_event, options) => {
         think: false,
         options: options?.options || {},
         ...(options?.format ? { format: options.format } : {}),
+        // Zéro décharge le modèle aussitôt la réponse rendue : voir `OptsOllama` dans `ollama.ts`.
+        ...(typeof options?.keepAlive === "number" ? { keep_alive: options.keepAlive } : {}),
       }),
       signal: ctrl.signal,
     });

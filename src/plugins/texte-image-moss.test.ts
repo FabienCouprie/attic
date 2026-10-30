@@ -4,7 +4,12 @@
 // gigaoctets de modèle. Ce cas tient ce qui part vers le pont, réglage par réglage, pour qu'aucun ne
 // soit lu puis jeté ; l'image se mesure dans l'application.
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { compilerMiseEnPage } from "./moss-mise-en-page";
 import { fiches } from "./texte-image-moss";
+
+// UN FAUX OLLAMA, pour tenir ce qui part vers la rédaction sans serveur ni modèle.
+const ollama = vi.hoisted(() => ({ ollamaGenerer: vi.fn() }));
+vi.mock("./ollama", () => ollama);
 
 const fiche = fiches.find((f) => f.id === "texte-image-moss")!;
 
@@ -28,18 +33,28 @@ function poserPont() {
   return demandes;
 }
 
-afterEach(() => { vi.unstubAllGlobals(); });
+/** Un faux pont qui rend une image, pour lire ce que le composant rend sur ses deux sorties. */
+function poserPontReussi() {
+  const demandes: Record<string, unknown>[] = [];
+  vi.stubGlobal("api", {
+    sdcppMoss: async (o: Record<string, unknown>) => { demandes.push(o); return { ok: true, png: new Uint8Array([137, 80, 78, 71]) }; },
+    sdcppProgression: () => () => {},
+  });
+  return demandes;
+}
+
+afterEach(() => { vi.unstubAllGlobals(); ollama.ollamaGenerer.mockReset(); });
 
 describe("le composant Texte → image (MOSS)", () => {
-  it("rend une image, et son prompt d'entrée est facultatif", () => {
-    expect(fiche.sorties.map((s) => s.type)).toEqual(["image"]);
+  it("rend une image et sa mise en page, et son prompt d'entrée est facultatif", () => {
+    expect(fiche.sorties.map((s) => s.type)).toEqual(["image", "texte"]);
     expect(fiche.entrees[0].requis).toBe(false);
   });
 
   it("hors de l'application de bureau, il le dit au lieu de rendre rien", async () => {
     const r = await fiche.executer(contexte() as any);
     expect(r.erreur).toBe(true);
-    expect(r.valeurs).toEqual([null]);
+    expect(r.valeurs).toEqual([null, null]);
   });
 
   it("CHAQUE RÉGLAGE PART VERS LE PONT, avec la valeur réglée", async () => {
@@ -95,5 +110,50 @@ describe("le composant Texte → image (MOSS)", () => {
     const r = await fiche.executer(contexte() as any);
     expect(r.erreur).toBe(true);
     expect(r.message).toContain("arrêt du cas");
+  });
+});
+
+/** Le brouillon que le faux Ollama rédige : un gramophone sur toute la toile de 320. */
+const BROUILLON = { summary: { caption: "A gramophone in an attic." }, items: [{ label: "object", caption: "A brass gramophone.", bbox: [0, 0, 320, 320] }] };
+
+describe("la réécriture du prompt en mise en page", () => {
+  it("S'OUVRE SUR « AUCUNE » : le prompt part tel quel, aucun modèle de langue n'est appelé, et la sortie le rend", async () => {
+    const demandes = poserPontReussi();
+    const r = await fiche.executer(contexte({ "Prompt": "a poster" }) as any);
+    expect(fiche.parametres.find((p) => p.nom === "Réécriture")!.defaut).toBe("Aucune");
+    expect(ollama.ollamaGenerer).not.toHaveBeenCalled();
+    expect(demandes[0].prompt).toBe("a poster");
+    expect(r.valeurs[1]).toBe("a poster");
+    expect(r.valeurs[0]).toBeInstanceOf(File);
+  });
+
+  it("RÉDIGÉE PAR LE MODÈLE NOMMÉ, compilée, ET C'EST ELLE QUI PART AU MOTEUR ET SORT", async () => {
+    ollama.ollamaGenerer.mockResolvedValue({ reponse: JSON.stringify(BROUILLON) });
+    const demandes = poserPontReussi();
+    const r = await fiche.executer(contexte({
+      "Prompt": "a gramophone in an attic", "Réécriture": "mise-en-page", "Modèle de langue": "qwen3:4b", "Graine": 9,
+    }) as any);
+    const attendu = compilerMiseEnPage(BROUILLON, 320, 320);
+    expect(ollama.ollamaGenerer.mock.calls[0][0]).toMatchObject({ model: "qwen3:4b", keepAlive: 0, options: { seed: 9 } });
+    expect(demandes[0].prompt).toBe(attendu);
+    expect(r.valeurs[1]).toBe(attendu);
+    expect(r.message).toMatch(/9 · 320 × 320 · .*1/);
+  });
+
+  it("un prompt déjà en JSON n'est pas réécrit, même quand la réécriture est demandée", async () => {
+    const demandes = poserPontReussi();
+    const json = "{\"summary\": {\"caption\": \"x\"}, \"items\": []}";
+    const r = await fiche.executer(contexte({ "Prompt": json, "Réécriture": "mise-en-page" }) as any);
+    expect(ollama.ollamaGenerer).not.toHaveBeenCalled();
+    expect([demandes[0].prompt, r.valeurs[1]]).toEqual([json, json]);
+  });
+
+  it("UNE RÉDACTION QUI ÉCHOUE ARRÊTE LE NŒUD avant le dessin, et dit pourquoi", async () => {
+    ollama.ollamaGenerer.mockResolvedValue({ erreur: "Serveur Ollama injoignable" });
+    const demandes = poserPontReussi();
+    const r = await fiche.executer(contexte({ "Réécriture": "mise-en-page" }) as any);
+    expect([r.erreur, r.valeurs]).toEqual([true, [null, null]]);
+    expect(r.message).toContain("Serveur Ollama injoignable");
+    expect(demandes).toHaveLength(0);
   });
 });

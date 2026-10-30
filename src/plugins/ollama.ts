@@ -16,7 +16,10 @@ import { avecDoc } from "./notices";
 // un vrai serveur (qwen3:4b) : avec une simple consigne + /no_think + exemple,
 // le modèle épuisait tout son budget de tokens en raisonnement libre sans
 // jamais atteindre le JSON (voir prompt-graphe.ts:genererViaOllama).
-export interface OptsOllama { model: string; prompt: string; thinking?: boolean; options?: Record<string, unknown>; timeout?: number; format?: "json" | Record<string, unknown> }
+// `keepAlive` : combien de temps Ollama garde le modèle chargé après la réponse, en secondes. Zéro le
+// décharge aussitôt, ce qu'il faut quand un autre moteur a besoin de la carte juste après (voir
+// `moss-mise-en-page.ts`) ; absent, le serveur garde le sien, cinq minutes.
+export interface OptsOllama { model: string; prompt: string; thinking?: boolean; options?: Record<string, unknown>; timeout?: number; format?: "json" | Record<string, unknown>; keepAlive?: number }
 export interface RepOllama { reponse?: string; erreur?: string }
 
 export async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
@@ -32,6 +35,7 @@ export async function ollamaGenerer(opts: OptsOllama): Promise<RepOllama> {
         think: opts.thinking || false,
         options: opts.options || {},
         ...(opts.format ? { format: opts.format } : {}),
+        ...(opts.keepAlive !== undefined ? { keep_alive: opts.keepAlive } : {}),
       }),
     });
     if (!r.ok) {
