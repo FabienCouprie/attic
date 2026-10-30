@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ficheDeBulle } from "./bulles";
-import { avecLeursBulles, conteneurs, statutDuContenu } from "./conteneurs";
+import { aRemettreAZero, avecLeursBulles, conteneurs, statutDuContenu } from "./conteneurs";
 import type { NoeudG } from "./meta";
 
 const noeud = (id: string, ficheId: string, bulle?: string): NoeudG => ({
@@ -92,5 +92,20 @@ describe("la remise à zéro d'un membre", () => {
     const demandes = new Set(["a"]);
     avecLeursBulles(VISIBLES, demandes);
     expect([...demandes]).toEqual(["a"]);
+  });
+});
+
+describe("le ↺ d'un nœud", () => {
+  it("SUR UNE BULLE, EMPORTE SES MEMBRES RÉELS À TOUTE PROFONDEUR, méta compris", () => {
+    // Le méta y figure par son identifiant visible : c'est le ↺ du méta qui efface ses nœuds aplatis.
+    expect(aRemettreAZero(VISIBLES, "b")).toEqual(["b", "a", "boucle", "c", "m"]);
+    expect(aRemettreAZero(VISIBLES, "bi")).toEqual(["bi", "c", "m"]);
+  });
+
+  it("SUR UN MEMBRE OU UN NŒUD ORDINAIRE, NE DESCEND NULLE PART", () => {
+    // Remettre un membre à zéro ne doit pas faire recalculer ses voisins de bulle.
+    expect(aRemettreAZero(VISIBLES, "a")).toEqual(["a"]);
+    expect(aRemettreAZero(VISIBLES, "dehors")).toEqual(["dehors"]);
+    expect(aRemettreAZero(VISIBLES, "inconnu")).toEqual(["inconnu"]);
   });
 });

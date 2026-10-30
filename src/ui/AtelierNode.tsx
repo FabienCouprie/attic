@@ -115,6 +115,12 @@ type NoeudAtelier = Node<DonneesNoeud, "atelier">;
  */
 const DEFS_CACHE = new Map<string, FicheUI>();
 function getDef(ficheId: string): FicheUI | undefined {
+  // LA FICHE D'UNE BULLE NE SE GARDE PAS : elle est refaite à chaque câblage, et ses ports se
+  // réordonnent, les traversants passant devant les libres. Gardée, elle dessinait des poignées d'un
+  // type sur des ports d'un autre : mesuré sur une bulle d'un point d'écoute et d'une sortie texte,
+  // le câble de texte arrivait sur une poignée « Audio », et l'audio posé sur la poignée « Audio »
+  // était refusé, puisqu'elle menait au texte. Le registre, lui, était juste.
+  if (estBulle(ficheId)) return trouverDef(ficheId);
   if (DEFS_CACHE.has(ficheId)) return DEFS_CACHE.get(ficheId);
   const def = trouverDef(ficheId);
   if (def) DEFS_CACHE.set(ficheId, def);

@@ -20,7 +20,7 @@
 // ordinaire tient lieu de lui-même, un nœud aplati de son méta, une copie de boucle de son original.
 // C'est ce qui fait entrer dans une bulle le méta ou la boucle qu'elle contient.
 
-import { ancetresBulle, estBulle } from "./bulles";
+import { ancetresBulle, descendantsDeBulle, estBulle } from "./bulles";
 import type { NoeudG } from "./meta";
 
 export interface Conteneurs {
@@ -90,4 +90,23 @@ export function avecLeursBulles(noeuds: readonly NoeudG[], ids: Iterable<string>
   const out = new Set(ids);
   for (const id of [...out]) for (const b of ancetresBulle(noeuds, id)) out.add(b);
   return out;
+}
+
+/**
+ * Ce que remet à zéro le ↺ d'un nœud : lui-même, et, pour une bulle, chacun de ses membres réels à
+ * toute profondeur. L'appelant y ajoute l'aval de chacun.
+ *
+ * UNE BULLE NE CALCULE RIEN, ELLE N'A DONC RIEN À EFFACER D'ELLE-MÊME. Son ↺ ne suivait que ses
+ * câbles, des substituts qui partent de ses poignées : il remettait l'aval à zéro et laissait ses
+ * membres terminés, leur cache intact, si bien que le run suivant ne refaisait rien de ce qu'elle
+ * contient. Mesuré : quatre membres sur quatre encore terminés après le ↺.
+ *
+ * C'EST LE GESTE SUR LA BULLE QUI DESCEND, ET LUI SEUL. Remettre un membre à zéro remonte à sa bulle
+ * (`avecLeursBulles`) sans redescendre vers ses voisins : un réglage changé sur un membre ne doit
+ * pas faire recalculer toute la bulle.
+ */
+export function aRemettreAZero(noeuds: readonly NoeudG[], id: string): string[] {
+  const n = noeuds.find((x) => x.id === id);
+  if (!n || !estBulle(n.data.ficheId)) return [id];
+  return [id, ...descendantsDeBulle(noeuds, id).map((m) => m.id)];
 }
