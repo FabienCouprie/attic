@@ -217,7 +217,9 @@ export function tableauDesMots(mots: MotVosk[], en: boolean): string {
 export const fiches: FicheAudio[] = ([
   {
     id: "vosk-asr", nomDicte: "reconnaissance vocale", nom: "Vosk (reconnaissance vocale)", nomEn: "Vosk (speech recognition)",
-    univers: "Traitement", famille: "Analyse",
+    // RANGÉ AVEC LES AUTRES TRANSCRIPTIONS, à la demande de Fabien le 2026-10-29 : il était sous
+    // « Traitement → Analyse », à l'écart des quatre composants qui transcrivent la parole.
+    univers: "Autres", famille: "Speech to Text",
     resume: "Transcrit la parole, et rend chaque mot avec son instant et sa confiance.",
     resumeEn: "Transcribes speech, and returns each word with its instant and confidence.",
     entrees: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],

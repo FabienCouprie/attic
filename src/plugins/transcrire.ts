@@ -53,33 +53,22 @@ export const fiches = ([
   {
     id: "transcrire", nom: "Transcrire", nomEn: "Transcribe",
     univers: "Autres", famille: "Speech to Text",
-    resume: "Transcrit un enregistrement, avec un moteur plus fidèle sur les extraits courts et nets.",
-    resumeEn: "Transcribes a recording, with an engine more faithful on short, clean excerpts.",
-    notice: "Ce composant écoute un enregistrement et rend ce qui est dit. La langue est reconnue seule, "
-      + "parmi trente et une.\n\n"
-      + "Le catalogue en porte un autre, « Dater les mots », et aucun des deux ne vaut mieux partout. "
-      + "Celui-ci est plus fidèle sur les extraits courts et nets, et il demande moitié moins de mémoire. "
-      + "L'autre est trois fois plus rapide, plus sûr sur les longs enregistrements, et lui seul donne "
-      + "l'instant de chaque mot.\n\n"
-      + "Pour obtenir des instants avec celui-ci, sa sortie se branche sur l'entrée « Texte » "
-      + "d'« Aligner un texte sur la parole », qui les calcule. C'est exactement ce que son moteur ferait "
-      + "en interne, pour le même résultat et sans second modèle à prendre.\n\n"
-      + "« Calcul » nomme le périphérique employé. C'est le seul réglage : son moteur accepte aussi une "
-      + "langue, mais la forcer ne change rien à ce qu'il rend, éprouvé sur deux témoins et trois langues.\n\n"
-      + "La sortie « Transcription » rend le texte. « Rapport » donne le nombre de mots, la durée du son "
-      + "et le facteur de temps réel que le moteur a mesuré lui-même.",
-    noticeEn: "This component listens to a recording and returns what is said. The language is recognized "
-      + "by itself, among thirty-one.\n\n"
-      + "The catalog holds another one, « Date the words », and neither is better everywhere. This one is "
-      + "more faithful on short, clean excerpts, and it asks half the memory. The other is three times "
-      + "faster, safer on long recordings, and it alone gives the instant of each word.\n\n"
-      + "To obtain instants with this one, its output connects to the « Text » input of « Align text to "
-      + "speech », which computes them. That is exactly what its engine would do internally, for the same "
-      + "result and without a second model to fetch.\n\n"
-      + "« Compute » names the device used. It is the only setting: its engine also accepts a language, but "
-      + "forcing one changes nothing in what it returns, tried on two witnesses and three languages.\n\n"
-      + "The « Transcript » output returns the text. « Report » gives the number of words, the duration of "
-      + "the sound and the real-time factor the engine measured itself.",
+    resume: "Transcrit la parole d'un enregistrement, en reconnaissant seul sa langue.",
+    resumeEn: "Transcribes the speech of a recording, recognizing its language by itself.",
+    notice: "Ce composant transcrit la parole de l'enregistrement reçu sur l'entrée « Audio ». La langue "
+      + "est reconnue seule, parmi trente et une, sans réglage.\n\n"
+      + "« Calcul » choisit le périphérique sur lequel le moteur tourne. Il change le temps de calcul et "
+      + "non le texte rendu.\n\n"
+      + "La sortie « Transcription » rend le texte, sans l'instant de chaque mot. « Rapport » donne le "
+      + "nombre de mots transcrits, la durée du son en secondes et, quand le moteur le fournit, le facteur "
+      + "de temps réel : la durée du calcul divisée par celle du son.",
+    noticeEn: "This component transcribes the speech of the recording received on the « Audio » input. The "
+      + "language is recognized by itself, among thirty-one, without a setting.\n\n"
+      + "« Compute » chooses the device the engine runs on. It changes the compute time and not the "
+      + "returned text.\n\n"
+      + "The « Transcript » output returns the text, without the instant of each word. « Report » gives the "
+      + "number of words transcribed, the duration of the sound in seconds and, when the engine provides "
+      + "it, the real-time factor: the compute time divided by the duration of the sound.",
     entrees: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],
     sorties: [
       { nom: "Transcription", nomEn: "Transcript", type: "texte" },
