@@ -114,7 +114,7 @@ const { installerSauvegardeAvantFermeture } = require("./fermeture-sauvegarde.cj
 const {
   fenetreDe, uneSeuleFois, requeteDeFenetre, adresseDeDeveloppement, uneFenetreVivante,
 } = require("./fenetres.cjs");
-const { resoudreRessource } = require("./chemins-ressources.cjs");
+const { resoudreRessource, sondesRessources } = require("./chemins-ressources.cjs");
 const { SCHEMA: SCHEMA_MEDIA, cheminDepuisUrl, typeMedia, analyserPlage } = require("./plage-media.cjs");
 const { SCHEMA: SCHEMA_RESSOURCE, servir: servirRessource } = require("./ressource-locale.cjs");
 const {
@@ -901,12 +901,7 @@ function lireManifesteModeles() {
  * vienne des ressources livrées ou du dossier de l'utilisateur.
  */
 function sondesModeles() {
-  const ctx = contexteRessources();
-  const ou = (relatif) => resoudreRessource(relatif, ctx);
-  return {
-    existe: (relatif) => { const p = ou(relatif); return Boolean(p) && fs.existsSync(p); },
-    taille: (relatif) => { try { return fs.statSync(ou(relatif)).size; } catch { return -1; } },
-  };
+  return sondesRessources(contexteRessources());
 }
 
 ipcMain.handle("modeles:etat", () => {

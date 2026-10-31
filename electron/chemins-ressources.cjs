@@ -76,4 +76,19 @@ function resoudreRessource(chemin, {
   return existe(dansPublic) ? dansPublic : direct;
 }
 
-module.exports = { resoudreRessource };
+/**
+ * Les sondes de l'inventaire des modèles, branchées sur ce résolveur.
+ *
+ * ELLES VIVENT ICI, ET NON DANS main.cjs, pour qu'un test puisse confronter ce que le panneau des
+ * modèles voit à ce qu'un pont trouve : `acestep-dossier.test.ts` les emploie telles que le panneau
+ * les emploie.
+ */
+function sondesRessources(contexte) {
+  const ou = (relatif) => resoudreRessource(relatif, contexte);
+  return {
+    existe: (relatif) => { const p = ou(relatif); return Boolean(p) && fs.existsSync(p); },
+    taille: (relatif) => { try { return fs.statSync(ou(relatif)).size; } catch { return -1; } },
+  };
+}
+
+module.exports = { resoudreRessource, sondesRessources };
