@@ -89,6 +89,19 @@ describe("ce qui manque a un nœud", () => {
     expect(manqueAuNoeud(e, "separateur-ia")).toEqual({ octets: 430_000_000, paquets: ["a", "b"] });
   });
 
+  it("ne compte pas un paquet qu'un reglage du nœud ecarte", () => {
+    // DEUX DÉBRUITEURS POUR UN RENDU, dont un seul sert : le manifeste les relie tous les deux au
+    // nœud, et c'est son réglage « Modèle » qui écarte l'autre. Sans l'exclusion, l'annonce
+    // additionnerait 1,9 Go qui ne se prendraient pas.
+    const e = etat([
+      paquet("rapide", ["rendre-chanson"], 1_970_472_064, false),
+      paquet("base", ["rendre-chanson"], 1_970_472_000, false),
+    ]);
+    expect(manqueAuNoeud(e, "rendre-chanson", ["base"])).toEqual({ octets: 1_970_472_064, paquets: ["rapide"] });
+    expect(manqueAuNoeud(e, "rendre-chanson", ["rapide", "base"])).toBeNull();
+    expect(manqueAuNoeud(e, "rendre-chanson")?.paquets).toEqual(["rapide", "base"]);
+  });
+
   it("compte un paquet a moitie pris comme absent, puisqu'il se reprend en entier", () => {
     expect(manqueAuNoeud(etat([paquet("p", ["n"], 500, true, true)]), "n"))
       .toEqual({ octets: 500, paquets: ["p"] });

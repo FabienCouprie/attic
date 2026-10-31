@@ -15,12 +15,15 @@ import { createRequire } from "node:module";
 type Fiche = { source: boolean; base: boolean; piste: boolean; offerte: boolean };
 type Resultat = { ok: boolean; plan?: Record<string, unknown>; erreur?: string };
 
-const { TACHES, MODES, MODELE_RAPIDE, MODELE_BASE, appliquerTache, plageProlongement, requetePlanification } =
+const {
+  TACHES, MODES, MODELE_RAPIDE, MODELE_BASE, MODELES, appliquerTache, plageProlongement, requetePlanification,
+} =
   createRequire(import.meta.url)("./acestep-plan.cjs") as {
     TACHES: Record<string, Fiche>;
     MODES: Record<string, boolean>;
     MODELE_RAPIDE: string;
     MODELE_BASE: string;
+    MODELES: Record<string, string>;
     appliquerTache: (plan: unknown, options?: Record<string, unknown>) => Resultat;
     plageProlongement: (cote: string, ajout: number, duree: number) => { debut: number; fin: number } | null;
     requetePlanification: (options?: Record<string, unknown>) => Record<string, unknown>;
@@ -94,7 +97,7 @@ describe("les exigences de chaque tâche", () => {
     const reclamantes = Object.entries(TACHES).filter(([, f]) => f.base).map(([t]) => t);
     expect(reclamantes.length, "la table doit porter des tâches à modèle de base").toBeGreaterThan(0);
     for (const tache of reclamantes) {
-      const r = appliquerTache(PLAN, { ...optionsCompletes(tache), modele: MODELE_RAPIDE });
+      const r = appliquerTache(PLAN, { ...optionsCompletes(tache), modele: "rapide" });
       expect(r.ok, `${tache} sur le modèle rapide`).toBe(false);
       expect(r.erreur).toMatch(/modèle de base/);
     }
@@ -143,6 +146,54 @@ describe("le modèle de rendu", () => {
   it("laisse un plan qui nomme déjà son modèle garder le sien", () => {
     const choisi = { ...PLAN, synth_model: "acestep-v15-base-Q6_K.gguf" };
     expect(appliquerTache(choisi, {}).plan?.synth_model).toBe("acestep-v15-base-Q6_K.gguf");
+  });
+
+  it("se choisit par un identifiant, que le processus principal traduit en fichier", () => {
+    expect(Object.keys(MODELES).length, "la table doit porter les deux débruiteurs").toBe(2);
+    expect(Object.values(MODELES).sort()).toEqual([MODELE_BASE, MODELE_RAPIDE].sort());
+    for (const [id, fichier] of Object.entries(MODELES)) {
+      const r = appliquerTache(PLAN, { tache: "text2music", modele: id });
+      expect(r.ok, id).toBe(true);
+      expect(r.plan?.synth_model, id).toBe(fichier);
+    }
+  });
+
+  it("refuse un identifiant inconnu, et d'abord un nom de fichier venu de la page", () => {
+    // LA PAGE NE NOMME AUCUN FICHIER : ce qui part dans `synth_model` est cherché parmi ceux du
+    // dossier des modèles. `constructor` éprouve la lecture de la table par ses propres clés.
+    for (const modele of [MODELE_BASE, MODELE_RAPIDE, "../modele.gguf", "constructor", "Base"]) {
+      const r = appliquerTache(PLAN, { tache: "text2music", modele });
+      expect(r.ok, `« ${modele} » devrait être refusé`).toBe(false);
+      expect(r.erreur).toContain(modele);
+    }
+  });
+
+  it("laisse la tâche décider quand aucun modèle n'est choisi", () => {
+    for (const modele of [undefined, ""]) {
+      for (const [tache, fiche] of Object.entries(TACHES)) {
+        const r = appliquerTache(PLAN, { ...optionsCompletes(tache), modele });
+        expect(r.plan?.synth_model, `${tache}, modèle ${String(modele)}`).toBe(fiche.base ? MODELE_BASE : MODELE_RAPIDE);
+      }
+    }
+  });
+});
+
+describe("les pas et le glissement", () => {
+  // ZÉRO VEUT DIRE « LA VALEUR DU MODÈLE », mesuré le 2026-10-31 : les deux champs absents, le
+  // moteur résout `steps=8, shift=3.0` sur le rapide et `steps=50, shift=1.0` sur la base. Un zéro
+  // écrit dans la requête serait au contraire une valeur, et ne suivrait plus le modèle.
+  it("ne sont pas écrits à zéro, ni sur ce qui n'est pas un nombre positif", () => {
+    for (const valeur of [0, -1, undefined, Number.NaN, Number.POSITIVE_INFINITY]) {
+      const plan = appliquerTache(PLAN, { pas: valeur, shift: valeur }).plan ?? {};
+      expect(Object.hasOwn(plan, "inference_steps"), `pas ${String(valeur)}`).toBe(false);
+      expect(Object.hasOwn(plan, "shift"), `glissement ${String(valeur)}`).toBe(false);
+    }
+  });
+
+  it("sont écrits tels quels quand ils sont posés", () => {
+    const plan = appliquerTache(PLAN, { pas: 50, shift: 1 }).plan ?? {};
+    expect(plan.inference_steps).toBe(50);
+    expect(plan.shift).toBe(1);
   });
 });
 

@@ -45,8 +45,8 @@
       "data": {
         "ficheId": "rendre-chanson",
         "parametres": {
-          "Pas de débruitage": 8,
-          "Glissement": 3,
+          "Pas de débruitage": 0,
+          "Glissement": 0,
           "Guidage": 7.5,
           "Calcul": "",
           "Tuile du décodeur": 256,

@@ -1,9 +1,9 @@
 // plugins/chanson-accompagnement.ts — Une voix seule reçoit son accompagnement.
 //
-// UN FICHIER À PART, ET POUR UNE RAISON DE FOND : ce nœud est le seul à tirer le débruiteur de
-// base d'ACE-Step, un second modèle de 1,88 Gio que rien d'autre ne réclame. Le champ `noeuds` du
-// manifeste le relie à lui seul, de sorte que les autres nœuds de chanson ne font pas télécharger
-// ce qu'ils n'emploient pas.
+// UN FICHIER À PART, ET POUR UNE RAISON DE FOND : ce nœud est le seul à ne tirer QUE le débruiteur
+// de base d'ACE-Step, un second modèle de 1,88 Gio. Les quatre rendus peuvent le prendre aussi, par
+// leur réglage « Modèle », et le manifeste les relie donc à lui ; chacun écarte de son annonce le
+// débruiteur qu'il n'a pas choisi, de sorte qu'aucun ne fait télécharger ce qu'il n'emploie pas.
 //
 // CE QUE LA MESURE A ÉTABLI, ET QUI DÉCIDE DES DEUX RÉGLAGES. Sur une voix seule de vingt
 // secondes, le modèle rapide ne construit rien : sa sortie corrèle à 0,996 avec la voix reçue, et
@@ -101,13 +101,16 @@ export const fiches = ([
           doc: "Poids de la description du plan. Au plus bas, l'accompagnement reste proche de la voix reçue ; en montant, il s'en éloigne et suit la description.",
           docEn: "How much weight the plan's description carries. At the lowest, the backing stays close to the received vocal; higher up, it moves away and follows the description.",
         },
+        // LES PLAGES D'AVANT LE CHOIX DU MODÈLE : ce composant ne tourne que sur la base, et le zéro
+        // qui ailleurs prend la valeur du modèle n'a rien à choisir ici. Ses défauts sont déjà les
+        // valeurs de ce modèle, écrites en clair.
         "Pas de débruitage": {
-          defaut: 50,
+          plage: [4, 50], defaut: 50,
           doc: "Nombre d'étapes de débruitage. Cinquante est la valeur du modèle employé ici.",
           docEn: "Number of denoising steps. Fifty is this model's value.",
         },
         "Glissement": {
-          defaut: 1,
+          plage: [0.5, 6], defaut: 1,
           doc: "Déplace les instants auxquels le débruitage travaille. Un est la valeur du modèle employé ici.",
           docEn: "Moves the instants at which denoising works. One is this model's value.",
         },

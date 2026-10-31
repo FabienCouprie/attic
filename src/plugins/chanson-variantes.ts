@@ -19,8 +19,8 @@ import { messageEchecPont } from "./pont-electron";
 import { choixLangues } from "../core/langues";
 import {
   CANAL_PLANIFIER, ENTREES_SOURCE, LANGUES, NOTICE_RENDU_EN, NOTICE_RENDU_FR, NOTICE_TIMBRE_EN,
-  NOTICE_TIMBRE_FR, PARAMETRES_RENDU, SORTIE_AUDIO, SORTIE_NOTICE_EN,
-  SORTIE_NOTICE_FR, api, rendreSurAudio, suivre,
+  NOTICE_TIMBRE_FR, PARAMETRES_RENDU, PARAMETRE_MODELE, SORTIE_AUDIO, SORTIE_NOTICE_EN,
+  SORTIE_NOTICE_FR, api, paquetsEcartes, rendreSurAudio, suivre,
 } from "./chanson-aides";
 import { PARAMETRE_CALCUL } from "./parametre-calcul";
 
@@ -62,10 +62,11 @@ export const fiches = ([
         defaut: "Avec", defautEn: "With",
         doc: "Traitement des codes audio tirés de l'audio reçu. « Avec » les quantifie, « Sans » les garde continus.",
         docEn: "How the audio codes drawn from the received audio are treated. « With » quantizes them, « Without » keeps them continuous." },
+      PARAMETRE_MODELE,
       ...PARAMETRES_RENDU,
     ],
     async executer(ctx: any) {
-      const annoncer = () => annoncerModele(ctx, "reprendre-chanson", traduire("progress.chanson.modeles"));
+      const annoncer = () => annoncerModele(ctx, "reprendre-chanson", traduire("progress.chanson.modeles"), paquetsEcartes(ctx));
       return rendreSurAudio(ctx, annoncer, (c) => ({
         // LA LISTE PORTE LE NOM DE LA TÂCHE DANS SON IDENTIFIANT D'OPTION : « Avec » vaut `cover`
         // et « Sans » vaut `cover-nofsq`, donc le choix se lit sans table de correspondance.
@@ -105,10 +106,11 @@ export const fiches = ([
       { nom: "Fin", nomEn: "End", type: "nombre", plage: [0, 600], pas: 0.5, defaut: 8, unite: "s",
         doc: "Instant où le passage refait finit. Il doit être après « Début ».",
         docEn: "Instant at which the repainted passage ends. It must be after « Start »." },
+      PARAMETRE_MODELE,
       ...PARAMETRES_RENDU,
     ],
     async executer(ctx: any) {
-      const annoncer = () => annoncerModele(ctx, "retoucher-chanson", traduire("progress.chanson.modeles"));
+      const annoncer = () => annoncerModele(ctx, "retoucher-chanson", traduire("progress.chanson.modeles"), paquetsEcartes(ctx));
       return rendreSurAudio(ctx, annoncer, (c) => ({
         tache: "repaint",
         debut: c.paramNombre("Début", 0),
@@ -148,10 +150,11 @@ export const fiches = ([
       { nom: "Durée ajoutée", nomEn: "Added length", type: "nombre", plage: [1, 300], pas: 1, defaut: 8, unite: "s",
         doc: "Longueur ajoutée au son reçu.",
         docEn: "Length added to the received sound." },
+      PARAMETRE_MODELE,
       ...PARAMETRES_RENDU,
     ],
     async executer(ctx: any) {
-      const annoncer = () => annoncerModele(ctx, "prolonger-chanson", traduire("progress.chanson.modeles"));
+      const annoncer = () => annoncerModele(ctx, "prolonger-chanson", traduire("progress.chanson.modeles"), paquetsEcartes(ctx));
       return rendreSurAudio(ctx, annoncer, (c, source) => ({
         // LA PLAGE SE CALCULE DANS LE PROCESSUS PRINCIPAL, qui porte le relevé des deux formules.
         // Le nœud ne transmet que le côté, la durée et celle de l'audio reçu.

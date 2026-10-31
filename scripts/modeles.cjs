@@ -231,13 +231,19 @@ const CONNUS = {
     racine: "acestep", noeuds: ["rendre-chanson", "reprendre-chanson", "retoucher-chanson", "prolonger-chanson"],
     licence: { nom: "MIT", credit: "ACE-Step — acestep-v15-turbo, converti en GGUF par Serveurperso", rediffusable: true },
   },
-  // LE MODÈLE DE BASE EST UN SECOND DÉBRUITEUR, et il n'est pris que par le nœud qui en a besoin.
-  // Le rapide ne sait pas accompagner une voix : le moteur avertit lui-même que sa sortie sur ces
-  // tâches est incohérente, et la mesure le confirme. Celui-ci pèse exactement le même poids, à
-  // soixante-quatre octets près, pour cinquante pas de débruitage au lieu de huit.
+  // LE MODÈLE DE BASE EST UN SECOND DÉBRUITEUR. Le rapide ne sait pas accompagner une voix : le
+  // moteur avertit lui-même que sa sortie sur ces tâches est incohérente, et la mesure le confirme.
+  // Celui-ci pèse exactement le même poids, à soixante-quatre octets près, pour cinquante pas de
+  // débruitage au lieu de huit.
+  //
+  // LES QUATRE RENDUS LE PORTENT AUSSI, par leur réglage « Modèle » : le champ dit ce dont un nœud
+  // PEUT avoir besoin, et c'est le nœud qui écarte de son annonce le débruiteur qu'il n'a pas choisi
+  // (`paquetsEcartes` de `plugins/chanson-aides.ts`). Un rendu resté sur le rapide ne fait donc pas
+  // prendre celui-ci.
   "acestep-v15-base-Q6_K.gguf": {
     id: "acestep-debruiteur-base", nom: "Débruiteur de base (ACE-Step)", nomEn: "Base denoiser (ACE-Step)",
-    racine: "acestep", noeuds: ["accompagner-voix"],
+    racine: "acestep",
+    noeuds: ["accompagner-voix", "rendre-chanson", "reprendre-chanson", "retoucher-chanson", "prolonger-chanson"],
     licence: { nom: "MIT", credit: "ACE-Step — acestep-v15-base, converti en GGUF par Serveurperso", rediffusable: true },
   },
   "vae-BF16.gguf": {

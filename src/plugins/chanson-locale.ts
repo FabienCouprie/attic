@@ -20,7 +20,8 @@ import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import {
-  CANAL_PLANIFIER, CANAL_RENDRE, LANGUES, PARAMETRES_RENDU, api, guidageDe, octetsWav, suivre,
+  CANAL_PLANIFIER, CANAL_RENDRE, LANGUES, PARAMETRES_RENDU, PARAMETRE_MODELE, api, guidageDe, modeleChoisi,
+  octetsWav, paquetsEcartes, suivre,
 } from "./chanson-aides";
 import { PARAMETRE_CALCUL } from "./parametre-calcul";
 import { fiches as variantes } from "./chanson-variantes";
@@ -141,9 +142,13 @@ const locales = ([
       + "a relues et corrigées.\n\n"
       + "L'entrée « Timbre » reçoit un audio dont la couleur sonore est reprise : le moteur en encode le "
       + "timbre et l'applique au rendu. La forme, les paroles et la durée restent celles du plan.\n\n"
-      + "« Pas de débruitage » décide du nombre d'étapes. Huit est la valeur du modèle rapide ; davantage "
-      + "allonge le calcul sans toujours changer ce qu'on entend.\n\n"
-      + "« Glissement » déplace les instants auxquels le débruitage travaille. Trois est la valeur usuelle.\n\n"
+      + "« Modèle » choisit le débruiteur qui rend le son. « Rapide » et « Base » rendent un morceau "
+      + "différent du même plan. « Base » est un second fichier de modèle, pris depuis le panneau des "
+      + "modèles ; absent, le composant le signale et ne rend rien.\n\n"
+      + "« Pas de débruitage » décide du nombre d'étapes. À zéro, le modèle prend le sien : huit pour "
+      + "« Rapide », cinquante pour « Base ». Le calcul s'allonge avec le nombre d'étapes.\n\n"
+      + "« Glissement » déplace les instants auxquels le débruitage travaille. À zéro, le modèle prend "
+      + "sa propre valeur : trois pour « Rapide », un pour « Base ».\n\n"
       + "« Calcul » nomme le périphérique employé.\n\n"
       + "« Tuile du décodeur » et « Recouvrement » décident du découpage du décodage audio. La mémoire "
       + "demandée suit la taille de la tuile, jamais la durée du morceau : une tuile de mille vingt-quatre "
@@ -157,9 +162,13 @@ const locales = ([
       + "come back.\n\n"
       + "The « Timbre » input receives an audio whose tone colour is taken up: the engine encodes its timbre "
       + "and applies it to the render. The form, the lyrics and the length stay those of the plan.\n\n"
-      + "« Denoising steps » decides the number of steps. Eight is the fast model's value; more lengthens the "
-      + "computation without always changing what is heard.\n\n"
-      + "« Shift » moves the instants at which denoising works. Three is the usual value.\n\n"
+      + "« Model » chooses the denoiser that renders the sound. « Fast » and « Base » render a different "
+      + "piece from the same plan. « Base » is a second model file, taken from the models panel; when it "
+      + "is missing, the component reports it and returns nothing.\n\n"
+      + "« Denoising steps » decides the number of steps. At zero, the model takes its own: eight for "
+      + "« Fast », fifty for « Base ». The computation lengthens with the number of steps.\n\n"
+      + "« Shift » moves the instants at which denoising works. At zero, the model takes its own value: "
+      + "three for « Fast », one for « Base ».\n\n"
       + "« Compute » names the device used.\n\n"
       + "« Decoder tile » and « Overlap » decide how the audio decoding is cut up. The memory required follows "
       + "the tile size, never the piece's length: a tile of one thousand and twenty-four frames asks for more "
@@ -183,7 +192,7 @@ const locales = ([
     // mesure la soutient le mieux, ce composant n'ayant pas d'audio source : le guidage n'y arbitre
     // qu'entre le rendu et la description, et 7,5 sort plus fort et plus ouvert dans l'aigu que le
     // défaut du moteur. `chanson-aides.ts` porte ce que cela coûte aux trois autres.
-    parametres: [...PARAMETRES_RENDU],
+    parametres: [PARAMETRE_MODELE, ...PARAMETRES_RENDU],
     async executer(ctx: any) {
       const pont = api();
       if (!pont?.acestepRendre) {
@@ -193,7 +202,7 @@ const locales = ([
       if (typeof plan !== "string" || plan.trim() === "") {
         return { valeurs: [null], erreur: true, message: traduire("msg.chanson.aucunPlan") };
       }
-      await annoncerModele(ctx, "rendre-chanson", traduire("progress.chanson.modeles"));
+      await annoncerModele(ctx, "rendre-chanson", traduire("progress.chanson.modeles"), paquetsEcartes(ctx));
       const paroles = ctx.entree(1);
       const timbre = await octetsWav(ctx.entree(2));
       const debrancher = suivre(ctx);
@@ -204,8 +213,9 @@ const locales = ([
             plan,
             paroles: typeof paroles === "string" && paroles.trim() ? paroles : undefined,
             audioTimbre: timbre,
-            pas: ctx.paramNombre("Pas de débruitage", 8),
-            shift: ctx.paramNombre("Glissement", 3),
+            ...modeleChoisi(ctx),
+            pas: ctx.paramNombre("Pas de débruitage", 0),
+            shift: ctx.paramNombre("Glissement", 0),
             peripherique: ctx.paramTexte("Calcul", "").trim(),
             tuile: ctx.paramNombre("Tuile du décodeur", 256),
             recouvrement: ctx.paramNombre("Recouvrement", 32),
