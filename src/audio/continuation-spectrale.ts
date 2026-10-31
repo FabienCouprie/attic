@@ -172,7 +172,11 @@ export interface OptionsContinuationSpectrale {
   history: number;
   /** Caché pour le LSTM. */
   hiddenUnits: number;
-  activation: "relu" | "tanh";
+  // AUCUNE ACTIVATION NE SE RÈGLE ICI. Le type en annonçait deux, « relu » et « tanh », venues de
+  // `pca-neuronale.ts` le jour de la création, et aucune n'a jamais été lue : mesuré le 2026-10-31,
+  // les deux rendaient le même son à l'octet près, en AR comme en LSTM. La seule couche dense de l'AR
+  // est sa sortie, qui prédit des dB standardisés et reste donc linéaire ; le LSTM garde l'activation
+  // interne de tfjs. `src/docs/options-lues.test.ts` refuse qu'un champ de ce type reste sans lecteur.
   epochs: number;
   learningRate: number;
   seed: number;
@@ -196,7 +200,6 @@ export async function appliquerContinuationSpectrale(
     dureeGenereS,
     history,
     hiddenUnits,
-    activation,
     epochs,
     learningRate,
     seed,
@@ -473,8 +476,9 @@ export async function appliquerContinuationSpectrale(
   // portait des NaN sur deux canaux d'un tampon à six, le tampon ayant par ailleurs la bonne forme
   // et la bonne longueur — donc rien en aval ne pouvait s'en apercevoir, et une somme de canaux
   // serait devenue muette d'un bout à l'autre. La divergence n'est pas reproductible à paramètres
-  // égaux : elle n'a pas reparu en trente tirages hors du banc, graines et activations variées.
-  // Faute de pouvoir la provoquer, on garde la SORTIE : aucun NaN ne quitte ce module, et le
+  // égaux : elle n'a pas reparu en trente tirages hors du banc, graines et activations variées. Les
+  // activations n'y variaient rien, l'option étant ignorée (relevé le 2026-10-31) : seules les
+  // graines y ont compté. Faute de pouvoir la provoquer, on garde la SORTIE : aucun NaN ne quitte ce module, et le
   // message nomme les canaux qui en portaient plutôt que de taire l'incident.
   const divergents = assainirNonFinis(resultat);
   const message = `Continuation spectrale ${mode.toUpperCase()} · +${nGenFrames} frames (~${dureeGenereeS.toFixed(2)} s)`

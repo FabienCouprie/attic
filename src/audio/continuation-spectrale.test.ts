@@ -40,7 +40,6 @@ describe("appliquerContinuationSpectrale", () => {
     dureeGenereS: 0.1,
     history: 2,
     hiddenUnits: 16,
-    activation: "relu" as const,
     epochs: 5,
     learningRate: 0.001,
     seed: 1,

@@ -81,7 +81,6 @@ function executerContinuation(mode: "ar" | "lstm", ctx: any) {
     dureeGenereS,
     history,
     hiddenUnits: mode === "lstm" ? ctx.paramNombre("Unités cachées", 128) : 0,
-    activation: "relu",
     epochs,
     learningRate,
     seed,
