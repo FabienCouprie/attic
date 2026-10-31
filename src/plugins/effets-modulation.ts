@@ -11,7 +11,7 @@ import { avecDoc } from "./notices";
 import { valeursParametre } from "../audio/courbe";
 
 import { CADENCE } from "../audio/courbe";
-import { bornesModulation, effet, modulationNommee, portModulation, reglageModule } from "./effets-aides";
+import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 
 export const fiches: FicheAudio[] = ([

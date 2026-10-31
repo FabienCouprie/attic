@@ -20,7 +20,7 @@
 // témoin dont la réponse est connue, et le troisième garde la porte par laquelle la faute revient
 // le plus simplement, `Math.random`.
 import { describe, expect, it } from "vitest";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { creerAleatoire } from "./hasard";

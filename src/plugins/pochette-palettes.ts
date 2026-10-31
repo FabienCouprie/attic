@@ -4,7 +4,6 @@
 // de calcul n'a ete retouchee au passage.
 
 
-import { creerAleatoire } from "../core/hasard";
 export const PALETTES_PRESET: Record<string, string[]> = {
   auto: [],
   chaud: ["#1a1a2e", "#e63946", "#f4a261"],

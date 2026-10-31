@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Handle, Position, NodeResizer, useReactFlow, useUpdateNodeInternals, useNodeConnections, type NodeProps, type Node } from "@xyflow/react";
+import { NodeResizer, useReactFlow, useUpdateNodeInternals, useNodeConnections, type NodeProps, type Node } from "@xyflow/react";
 import { estMeta, estFrontiere, estBulle, surChangementMetas } from "../core";
 
 const trouverDef = (id: string) => registreUI().trouverDef(id);
@@ -14,7 +14,7 @@ import { etatPorts } from "./ports-extensibles";
 import { ColonnePorts } from "./ColonnePorts";
 import { copierTexte } from "./copier";
 import { TexteAvecLiens } from "./texteAvecLiens";
-import { nomFiche, noticeFiche, resumeFiche } from "./libelles-fiche";
+import { noticeFiche, resumeFiche } from "./libelles-fiche";
 import { stylePort } from "./forme-port";
 import { bufferVersWavBlob } from "../audio";
 import { tamponPourApercu } from "../audio/multicanal-ecoute";
@@ -36,7 +36,7 @@ function LecteurALaDemande({ buffer }: { buffer: AudioBuffer }) {
   // La conversion se fait sur ce tampon-ci : si le nœud est recalculé, on repart de zéro.
   useEffect(() => {
     setUrl(null);
-    return () => setUrl((u) => (u && URL.revokeObjectURL(u), null));
+    return () => setUrl((u) => { if (u) URL.revokeObjectURL(u); return null; });
   }, [buffer]);
   if (!url) {
     return (

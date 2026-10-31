@@ -6,7 +6,6 @@
 import { poserParam } from "./automation";
 import { coefficientSuiveur, valeurA, valeurTransformee } from "./courbe";
 import { compresser } from "./effets-dynamique";
-import { bitcrusher } from "./effets-sibilance";
 
 export function limiter(
   buffer: AudioBuffer,

@@ -71,6 +71,3 @@ export interface Note {
 export interface NoteMidi extends Note {
   canal: number;
 }
-
-/** Une note réduite à sa place : ce que la théorie manipule quand la nuance ne l'intéresse pas. */
-export type NotePlacee = Omit<Note, "velocite" | "canal">;

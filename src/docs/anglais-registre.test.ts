@@ -21,7 +21,7 @@ import { describe, it, expect } from "vitest";
 import { defautParam, valeursParam, uniteEn } from "./catalogue-markdown";
 import { toutesLesFiches } from "../plugins";
 import { CLES_CONNUES, traduireDans } from "../i18n";
-import { FAMILLES_EFFETS, TABLES_PAR_UNIVERS } from "../plugins/familles-palette";
+import { TABLES_PAR_UNIVERS } from "../plugins/familles-palette";
 import type { FicheAudio } from "../audio/types-domaine";
 import { francais, virguleDecimale } from "./detecteur-francais";
 import "../audio/adaptateur";

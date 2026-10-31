@@ -7,7 +7,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { Chord, Note, Progression } from "tonal";
+import { Chord, Note } from "tonal";
 import { accordsDepuisRomains, modeDepuisTonalite, toniqueDepuisTonalite } from "../audio/theorie-romains";
 
 // Les symboles produits par `detecterAccords` (audio/accords.ts) suivent ses

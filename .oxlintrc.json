@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "rules": {
+    "no-unused-vars": "error",
+    "no-constant-condition": "error",
+    "no-loss-of-precision": "warn",
+    "unicorn/no-new-array": "off",
+    "unicorn/no-useless-spread": "off"
+  },
+  "ignorePatterns": ["dist", "release", "node_modules", "work", ".claude"]
+}

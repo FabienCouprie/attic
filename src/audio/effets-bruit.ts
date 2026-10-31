@@ -5,7 +5,6 @@
 
 import { fft } from "./fft";
 import { TAILLE_FFT_BRUIT, SAUT_FFT_BRUIT, creerFenetreHann } from "./commun";
-import { amplifier } from "./effets-dynamique";
 
 /**
  * Le profil spectral d'un bruit : par bin, la RACINE DE SA PUISSANCE MOYENNE.

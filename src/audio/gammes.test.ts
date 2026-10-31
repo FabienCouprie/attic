@@ -6,21 +6,7 @@
 // projet, et un identifiant devenu inconnu ferait retomber un graphe rouvert sur la gamme par
 // défaut. Enfin que les gammes ajoutées sont justes, degré par degré.
 import { describe, expect, it } from "vitest";
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
 import { GAMMES, degresDeGamme, gammeDe, gammesDe, parcoursDeGamme } from "./gammes";
-
-/** Les sources où une table de gammes pourrait réapparaître. */
-function sourcesAudioEtPlugins(dossiers = [join("src", "audio"), join("src", "plugins")]): string[] {
-  const out: string[] = [];
-  for (const d of dossiers) {
-    for (const e of readdirSync(d, { withFileTypes: true })) {
-      if (e.isDirectory()) out.push(...sourcesAudioEtPlugins([join(d, e.name)]));
-      else if (/\.tsx?$/.test(e.name) && !/\.test\./.test(e.name)) out.push(join(d, e.name));
-    }
-  }
-  return out;
-}
 
 /** Les degrés tels qu'ils étaient écrits dans les listes d'avant, recopiés. */
 const AVANT: Record<string, number[]> = {

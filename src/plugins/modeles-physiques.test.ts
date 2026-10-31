@@ -102,8 +102,6 @@
 //   c'est elle qui a changé. Le cas ci-dessous constate que le trémolo agit partout.
 import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
-import { notesVersFichierMidi } from "../audio/midi-ecriture";
-import type { Note } from "../audio/note";
 import { BARRES } from "../audio/barre-modale";
 import { SECOUEURS } from "../audio/phisem";
 import { SEUILS } from "../audio/guides-onde";
@@ -131,7 +129,6 @@ const lancer = (id: string, entrees: unknown[], reglages: Record<string, number 
   fiche(id).executer(contexte(entrees, reglages));
 const jouer = async (id: string, reglages: Record<string, number | string> = {}, entrees: unknown[] = [null]) =>
   (await lancer(id, entrees, reglages)).valeurs[0] as AudioBuffer;
-const midi = (notes: Note[]) => notesVersFichierMidi(notes, 120);
 
 /** Les nombres d'un message, dans l'ordre où il les écrit. */
 const chiffres = (message: unknown): number[] =>
@@ -158,20 +155,6 @@ function bande(b: AudioBuffer, centre: number, largeur = 0.06): number {
     total += (re * re + im * im) / (n * n);
   }
   return total;
-}
-
-/** L'amplitude d'un harmonique dans la fenêtre qui suit un instant donné. */
-function harmonique(b: AudioBuffer, f: number, depuis: number): number {
-  const d = b.getChannelData(0);
-  const depart = Math.floor(depuis * b.sampleRate);
-  const n = Math.min(8192, d.length - depart);
-  let re = 0, im = 0;
-  for (let i = 0; i < n; i++) {
-    const a = (2 * Math.PI * f * i) / b.sampleRate;
-    re += d[depart + i] * Math.cos(a);
-    im -= d[depart + i] * Math.sin(a);
-  }
-  return Math.hypot(re, im) / n;
 }
 
 function creteEntre(b: AudioBuffer, debut: number, fin: number): number {

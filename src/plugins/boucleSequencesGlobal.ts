@@ -122,21 +122,9 @@ export function decouvrirPour(debutId: string, morceaux: readonly unknown[]): vo
   if (b && b.morceaux.length === 0) b.morceaux = [...morceaux];
 }
 
-/** Compatible avec l'ancien appel : la boucle la plus intérieure. */
-export function decouvrir(morceaux: readonly Sequence[]): void {
-  const b = boucleCourante();
-  if (b && b.morceaux.length === 0) b.morceaux = [...morceaux];
-}
-
 /** Le morceau de la passe en cours, pour ce début. Les boucles sur séquence relisent ainsi. */
 export function morceauPour(debutId: string): Sequence | null {
   const b = boucleDuDebut(debutId);
-  return b ? ((b.morceaux[b.index] as Sequence | undefined) ?? null) : null;
-}
-
-/** Compatible avec l'ancien appel : la boucle la plus intérieure. */
-export function morceauCourant(): Sequence | null {
-  const b = boucleCourante();
   return b ? ((b.morceaux[b.index] as Sequence | undefined) ?? null) : null;
 }
 
@@ -144,12 +132,6 @@ export function morceauCourant(): Sequence | null {
 export function recolterPour(finId: string, valeur: unknown): void {
   const b = boucleDeLaFin(finId);
   if (b) b.recoltes[b.index] = valeur;
-}
-
-/** Compatible avec l'ancien appel : la boucle la plus intérieure. */
-export function recolter(sequence: Sequence): void {
-  const courante = boucleCourante();
-  if (courante) courante.recoltes[courante.index] = sequence;
 }
 
 /**

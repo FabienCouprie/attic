@@ -163,7 +163,7 @@ export const fiches: FicheAudio[] = ([
 
       const { sequence, blocs: poses } = poserMaquette(blocs, { enVoix });
       const infos: InfoVoix[] = enVoix
-        ? poses.map((p, i) => ({ numero: i, nom: blocs[i].nom }))
+        ? poses.map((_p, i) => ({ numero: i, nom: blocs[i].nom }))
         : [];
       const sortie: Sequence = enVoix ? { ...sequence, voix: infos } : sequence;
       const etires = poses.filter((p) => Math.abs(p.facteur - 1) > 1e-9).length;

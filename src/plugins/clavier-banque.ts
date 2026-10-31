@@ -25,13 +25,6 @@ import { choixOuiNon } from "../core/oui-non";
 const noteDepuisHertz = (hz: number): number =>
   Math.max(NOTE_LA0, Math.min(NOTE_DO8, Math.round(69 + 12 * Math.log2(Math.max(1, hz) / 440))));
 
-/** Un AudioBuffer à partir de canaux, pour recoller les parties d'une décomposition STN. */
-function depuisCanaux(canaux: Float32Array[], sampleRate: number): AudioBuffer {
-  const b = new AudioBuffer({ numberOfChannels: canaux.length, length: canaux[0].length, sampleRate });
-  for (let c = 0; c < canaux.length; c++) b.getChannelData(c).set(canaux[c]);
-  return b;
-}
-
 export const fiches: FicheAudio[] = ([
   {
     id: "banque-clavier", nom: "Étaler sur le clavier", nomEn: "Spread Across Keyboard",

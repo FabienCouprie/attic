@@ -26,7 +26,7 @@
 //     d'un transitoire suivi par un suiveur de caractéristique, précisément ce qu'on vient
 //     regarder. Une bande entre les deux extrêmes ne perd rien.
 
-import { estCourbe, type Courbe } from "./courbe";
+import { estCourbe } from "./courbe";
 
 export interface MesureCourbe {
   /** Nombre de valeurs. */

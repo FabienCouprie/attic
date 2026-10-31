@@ -27,7 +27,7 @@ import { PARAMETRE_CALCUL } from "./parametre-calcul";
 import { fiches as variantes } from "./chanson-variantes";
 import { fiches as accompagnement } from "./chanson-accompagnement";
 import { fiches as compositionDePlan } from "./composer-plan";
-import { choixLangues, libelleLangue } from "../core/langues";
+import { choixLangues } from "../core/langues";
 
 const locales = ([
   {

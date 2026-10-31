@@ -9,10 +9,9 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { MODULATION_MIX_NOMMEE, bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
-import { creerAleatoire } from "../core/hasard";
 import { estCourbe, progressionPour, valeurMax, valeursParametre } from "../audio/courbe";
 import {
-  SAUT, TAILLE, analyserPV, cdpVoie, filtrerParSpectre, melangerFenetres, parCanal, ramenerSousLaCrete,
+  SAUT, TAILLE, analyserPV, cdpVoie, filtrerParSpectre, parCanal, ramenerSousLaCrete,
   type OptionsCdp, type Rangs,
 } from "../audio/spectral-cdp";
 import { parCanal as parCanalHorsFil } from "./hors-fil";

@@ -36,13 +36,6 @@ function sinus(freq: number, dureeS: number, channels = 1): AudioBuffer {
   return b;
 }
 
-function constant(dureeS: number, channels = 1): AudioBuffer {
-  const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
-  for (let ch = 0; ch < channels; ch++) b.getChannelData(ch).fill(1);
-  return b;
-}
-
 function compterZeroCrossings(buf: AudioBuffer, debut = 0, fin = buf.length): number {
   const data = buf.getChannelData(0);
   let count = 0;

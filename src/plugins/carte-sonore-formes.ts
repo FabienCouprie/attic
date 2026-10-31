@@ -10,7 +10,6 @@
 
 
 
-import { creerAleatoire } from "../core/hasard";
 
 export type StyleCarte = "ville" | "concentrique" | "organique" | "voronoi";
 export type Esthetique = "classique" | "baroque" | "art-nouveau" | "art-deco" | "exotique";

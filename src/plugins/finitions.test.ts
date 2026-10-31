@@ -118,15 +118,6 @@ function ecartMax(a: AudioBuffer, b: AudioBuffer): number {
   return m;
 }
 
-const pic = (b: AudioBuffer) => {
-  let m = 0;
-  for (let c = 0; c < b.numberOfChannels; c++) {
-    const d = b.getChannelData(c);
-    for (let i = 0; i < d.length; i++) m = Math.max(m, Math.abs(d[i]));
-  }
-  return m;
-};
-
 const chiffres = (m: string) =>
   (m.match(/-?\d+(?:[.,]\d+)?/g) ?? []).map((x) => Number(x.replace(",", ".")));
 

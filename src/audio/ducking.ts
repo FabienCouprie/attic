@@ -14,7 +14,7 @@
 // que le déclencheur est retombé, si bien qu'une phrase parlée creuse un seul trou plutôt que
 // douze.
 
-import { valeurA, valeurTransformee } from "./courbe";
+import { valeurTransformee } from "./courbe";
 
 export interface OptionsDucking {
   /** Niveau du déclencheur, en dB, au-dessus duquel l'atténuation s'engage. */

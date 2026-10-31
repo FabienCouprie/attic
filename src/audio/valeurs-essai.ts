@@ -25,7 +25,7 @@ import { imageDEssai } from "./png-essai";
 import { videoDEssai } from "./video-essai";
 import { CONTENUS_CONTROLE } from "./sous-types-controle";
 import { CONTENUS_TEXTE } from "./sous-types-texte";
-import { estSequence, type Sequence } from "./sequence";
+import type { Sequence } from "./sequence";
 
 export interface OptionsEssai {
   /** Le son d'essai, quand la valeur demandée en a besoin. C'est l'appelant qui le détient. */

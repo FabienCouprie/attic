@@ -128,9 +128,6 @@ export function instantane(
   return { noeuds: vus, liens: liensVus };
 }
 
-/** L'atelier vide — ce que voit un exercice quand rien n'est encore posé. */
-export const ATELIER_VIDE: Atelier = { noeuds: [], liens: [] };
-
 /** Les nœuds qui alimentent directement celui-ci. */
 export function amontDirect(a: Atelier, id: string): NoeudVu[] {
   const ids = new Set(a.liens.filter((l) => l.vers === id).map((l) => l.de));

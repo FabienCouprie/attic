@@ -4,7 +4,7 @@
 // identifiant de fiche vit dans `vues.tsx`, avec le type `VueProps` que toutes recoivent.
 // Aucune ligne n'a ete retouchee au passage.
 
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useMemo, useCallback } from "react";
 import { useNodeConnections } from "@xyflow/react";
 import { useI18n } from "../i18n";
 import { PistesMultiples, type PisteVue } from "./PistesMultiples";

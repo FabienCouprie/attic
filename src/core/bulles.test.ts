@@ -20,7 +20,6 @@ const DEFS: Record<string, DefPorts> = {
   source: { entrees: [], sorties: [{ nom: "Audio", type: "audio" }] },
 };
 const getDef = (f: string): DefPorts | undefined => DEFS[f];
-const nomDe = (n: NoeudG) => n.id;
 
 const noeud = (id: string, ficheId: string, bulle?: string, replie?: boolean): NoeudG => ({
   id, position: { x: 0, y: 0 },

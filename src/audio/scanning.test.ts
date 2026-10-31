@@ -7,7 +7,6 @@
 // entre le début et la fin, sans quoi on n'aurait qu'une table d'onde ordinaire.
 import { describe, expect, it } from "vitest";
 import { avancerChaine, exciter, synthetiserScanning } from "./scanning";
-import { fft } from "./fft";
 
 const FS = 44100;
 
@@ -22,19 +21,6 @@ const jouer = (options: Partial<Parameters<typeof synthetiserScanning>[0]> = {})
     tension: 0.5, rappel: 0.3, amortissement: 0.1,
     excitation: "pincee", force: 1, ...options,
   }, hasardFixe(1));
-
-function spectre(signal: Float32Array, depart: number) {
-  const n = 16384;
-  const re = new Float64Array(n), im = new Float64Array(n);
-  const debut = Math.floor(depart * FS);
-  for (let i = 0; i < n && debut + i < signal.length; i++) {
-    re[i] = signal[debut + i] * (0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (n - 1)));
-  }
-  fft(re, im, false);
-  const mag: number[] = [];
-  for (let k = 0; k < n / 2; k++) mag.push(Math.sqrt(re[k] * re[k] + im[k] * im[k]));
-  return { mag, resolution: FS / n };
-}
 
 /**
  * Autocorrélation normalisée à un décalage donné, entre 0 et 1.
@@ -66,13 +52,6 @@ function forme(signal: Float32Array, depart: number, periode: number): number[] 
 
 const produitScalaire = (a: number[], b: number[]): number =>
   a.reduce((s, x, i) => s + x * b[i], 0);
-
-function centroide(signal: Float32Array, depart: number): number {
-  const { mag, resolution } = spectre(signal, depart);
-  let s = 0, p = 0;
-  for (let k = 1; k < mag.length; k++) { s += mag[k] * k * resolution; p += mag[k]; }
-  return s / Math.max(1e-9, p);
-}
 
 describe("mécanique de la chaîne", () => {
   it("ne bouge pas si on ne l'excite pas", () => {

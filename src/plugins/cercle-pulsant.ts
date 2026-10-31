@@ -6,7 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
-  accordsDepuisPulsations, couleurVersCamelot, frappesDuCercle, notesDepuisPulsations,
+  accordsDepuisPulsations, frappesDuCercle, notesDepuisPulsations,
   pulsations, pulsationsDepuisNotes, svgAnime,
   type ModeAccords, type ModeDuCercle, type OptionsCercle,
 } from "../audio/cercle-pulsant";

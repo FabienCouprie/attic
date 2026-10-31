@@ -52,7 +52,7 @@ function suivre(ctx: ContexteDeRelais) {
 /**
  * Le même son à une autre fréquence d'échantillonnage, de même durée.
  *
- * CE N'EST PAS `reechantillonnerVers` DU DOMAINE, et la distinction compte : celui-là change la
+ * CE N'EST PAS `reechantillonnerVoie` DU DOMAINE, et la distinction compte : celui-là change la
  * LONGUEUR en gardant la fréquence, ce qui change la durée et donc la hauteur. Ici la durée doit
  * être gardée et c'est la fréquence qui change.
  */

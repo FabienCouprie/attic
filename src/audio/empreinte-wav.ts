@@ -178,11 +178,11 @@ export function tamponDepuisWav(octets: ArrayBuffer, AudioBufferCtor: typeof Aud
   const m = lireWav(octets);
   // On refait le parcours des morceaux : `lireWav` ne rend pas la position des données, et la lui
   // faire rendre obligerait tous ses appelants à connaître une position dont ils n'ont que faire.
-  let o = 12, debut = -1, taille = 0;
+  let o = 12, debut = -1;
   while (o + 8 <= octets.byteLength) {
     const nom = String.fromCharCode(dv.getUint8(o), dv.getUint8(o + 1), dv.getUint8(o + 2), dv.getUint8(o + 3));
     const t = dv.getUint32(o + 4, true);
-    if (nom === "data") { debut = o + 8; taille = Math.min(t, octets.byteLength - o - 8); break; }
+    if (nom === "data") { debut = o + 8; break; }
     o += 8 + t + (t % 2);
   }
   if (debut < 0) throw new Error("WAV incomplet : morceau « data » introuvable");

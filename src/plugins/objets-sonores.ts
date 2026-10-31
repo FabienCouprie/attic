@@ -8,7 +8,6 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { creerAleatoire } from "../core/hasard";
-import { normaliserSonie } from "../audio/normalisation-sonie";
 import {
   decouperEnObjets, decrireZones, monter, reordonnerObjets,
   type CritereDecoupage, type CritereTri, type ObjetSonore, type Plan,

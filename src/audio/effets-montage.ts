@@ -265,32 +265,6 @@ export function extraireCentreCote(buffer: AudioBuffer): CentreCoteResult {
   return { centre, cote };
 }
 
-// --- STFT réutilisable (analyse/synthèse à recouvrement) -----------------
-// Utilisé par le séparateur IA, factorisé depuis le vocodeur de phase.
-
-
-
-export interface SeparateurCanauxResult {
-  gauche: AudioBuffer;
-  droite: AudioBuffer;
-}
-
-export function separerCanaux(buffer: AudioBuffer): SeparateurCanauxResult {
-  const sampleRate = buffer.sampleRate;
-  const length = buffer.length;
-  const gauche = new AudioBuffer({ numberOfChannels: 1, length, sampleRate });
-  const droite = new AudioBuffer({ numberOfChannels: 1, length, sampleRate });
-  const srcL = buffer.getChannelData(0);
-  const srcR = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : srcL;
-  const dstG = gauche.getChannelData(0);
-  const dstD = droite.getChannelData(0);
-  for (let i = 0; i < length; i++) {
-    dstG[i] = srcL[i];
-    dstD[i] = srcR[i];
-  }
-  return { gauche, droite };
-}
-
 /**
  * Inverse la POLARITÉ : chaque échantillon change de signe.
  *

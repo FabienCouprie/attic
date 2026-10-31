@@ -5,8 +5,7 @@
 // « meme entree, meme serie » avec. La coupe est donc positionnelle, et `EXERCICES` reste la
 // concatenation des deux moities, dans l'ordre d'origine.
 
-import type { Chapitre, Exercice } from "./types";
-import { EFFET, GENERATEUR, GENERATEUR_LANCE, REGARD } from "./exercices-criteres";
+import type { Exercice } from "./types";
 
 export const EXERCICES_COMPOSITION: Exercice[] = [
   {

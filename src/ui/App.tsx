@@ -40,13 +40,11 @@ import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
 import { useCopierColler } from "./hooks/useCopierColler";
 import { resultatDe } from "./resultats";
-import { CLE_PREFERENCE, PERIODE_SAUVEGARDE_MS, lirePreference } from "./sauvegarde-auto";
+import { CLE_PREFERENCE, lirePreference } from "./sauvegarde-auto";
 import { ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
 import { rechargerFichiersPersistes } from "./rechargerFichiers";
-import { quitterLeChamp } from "./champ-de-saisie";
 import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "./historique";
 import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
-import { libererGlissement, relachementManque } from "./liberer-glissement";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
@@ -720,7 +718,10 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
       cacheExec.current.delete(nid);
       const api = (window as any).api;
       const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
-      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier), parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
+      // L'URL se crée HORS du réducteur : React le rejoue deux fois en mode strict, et une des
+      // deux URL n'était plus tenue par personne.
+      const audioUrl = URL.createObjectURL(fichier);
+      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, audioFichier: fichier, audioNom: fichier.name, audioUrl, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
       reinitialiserNoeud(nid);
     },
     onChargerMidi: (nid: string, fichier: File) => {

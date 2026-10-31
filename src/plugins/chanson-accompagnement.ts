@@ -19,7 +19,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import {
-  ENTREES_SOURCE, NOTICE_RENDU_EN, NOTICE_RENDU_FR, NOTICE_TIMBRE_EN, NOTICE_TIMBRE_FR,
+  ENTREES_SOURCE, NOTICE_TIMBRE_EN, NOTICE_TIMBRE_FR,
   SORTIE_AUDIO, parametresRenduAvec, rendreSurAudio,
 } from "./chanson-aides";
 

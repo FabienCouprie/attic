@@ -53,8 +53,3 @@ export const genreDomaine = (type: string | undefined): GenreDomaine | undefined
 /** Les genres du domaine dont la valeur est un nombre. */
 export const genresNumeriques = (): string[] =>
   Object.keys(genres).filter((g) => genres[g].numerique === true);
-
-/** Oublie les déclarations. Pour un test qui veut éprouver le shell seul. */
-export function oublierGenresParametre(): void {
-  genres = {};
-}

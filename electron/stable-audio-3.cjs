@@ -15,8 +15,6 @@ const DOWNSAMPLING = 8192;
 const HEADROOM_SECONDS = 6;
 const DEFAULT_STEPS = 8;
 const DEFAULT_SECONDS = 10;
-const DEFAULT_GENERATED_SECONDS = 5;
-const MAX_SECONDS = 120;
 
 let cached = null;
 
@@ -232,24 +230,6 @@ function buildCrossAttentionAndGlobalConditioning(textEmbed, durationEmbed) {
   return { crossAttnCond, globalCond };
 }
 
-function buildInpaintConditioning(prefixLatent, T_in, T_lat, scale = 0.27) {
-  const cond = new Float32Array(1 * 257 * T_lat);
-  const prefixSize = LATENT_CHANNELS * T_in;
-  // The int4 encoder (bgkb/encoder-onnx) emits latents with a far larger scale than the diffusion
-  // latents the model generates: encoder std ~2.3 vs diffusion std ~0.62 on a calibration signal.
-  // Feeding the raw encoder latent into local_add_cond makes the DiT produce huge, distorted
-  // output. Scale down to roughly match the diffusion latent distribution. Value is empirical
-  // (0.62 / 2.31 ≈ 0.27) and works across the tested sine and real-music inputs.
-  for (let j = 0; j < prefixSize; j++) {
-    cond[j] = prefixLatent[j] * scale;
-  }
-  const maskOffset = LATENT_CHANNELS * T_lat;
-  for (let t = 0; t < T_in; t++) {
-    cond[maskOffset + t] = 1;
-  }
-  return cond;
-}
-
 async function diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, localAddCond, seed, steps, prefixLatent, T_in, latentScale) {
   const audioLen = T_lat * AUDIO_SAMPLES_PER_LATENT;
   const rng = mulberry32(seed);
@@ -409,44 +389,6 @@ async function generate(options) {
   const localAddCond = zeros([1, 257, T_lat]);
 
   return diffuseAndDecode(sessions, tokenizer, prompt, seconds, T_lat, localAddCond, seed, steps, null);
-}
-
-function asFloat32Array(arr) {
-  return arr instanceof Float32Array ? arr : Float32Array.from(arr);
-}
-
-function resampleLinear(src, srcRate, dstRate) {
-  if (srcRate === dstRate) return Float32Array.from(src);
-  const ratio = srcRate / dstRate;
-  const dstLen = Math.max(1, Math.floor(src.length / ratio));
-  const dst = new Float32Array(dstLen);
-  for (let i = 0; i < dstLen; i++) {
-    const srcPos = i * ratio;
-    const i0 = Math.floor(srcPos);
-    const i1 = Math.min(i0 + 1, src.length - 1);
-    const frac = srcPos - i0;
-    dst[i] = src[i0] * (1 - frac) + src[i1] * frac;
-  }
-  return dst;
-}
-
-function toStereo44100(channels, sampleRate) {
-  if (!channels || channels.length === 0) {
-    throw new Error("Aucun canal audio fourni");
-  }
-  let left = resampleLinear(asFloat32Array(channels[0]), sampleRate, SAMPLE_RATE);
-  let right = channels.length > 1
-    ? resampleLinear(asFloat32Array(channels[1]), sampleRate, SAMPLE_RATE)
-    : new Float32Array(left.length);
-  if (channels.length === 1) {
-    right = Float32Array.from(left);
-  }
-  const minLen = Math.min(left.length, right.length);
-  if (left.length !== right.length) {
-    left = left.subarray(0, minLen);
-    right = right.subarray(0, minLen);
-  }
-  return { left, right };
 }
 
 module.exports = { generate };

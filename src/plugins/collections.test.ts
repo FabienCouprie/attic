@@ -32,7 +32,7 @@ describe("collections plugin", () => {
       entree: () => null,
       entrees: () => [],
       paramTexte: (nom: string, def: string) => (nom === "Chemin" ? "music collection" : def),
-      paramNombre: (nom: string, def: number) => def,
+      paramNombre: (_nom: string, def: number) => def,
       onProgress: () => {},
       noeud: { data: {} },
       runtime: null,

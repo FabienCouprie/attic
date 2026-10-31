@@ -52,7 +52,7 @@ export function analyserSpectrogramme(
 export function synthetiserSpectrogramme(
   frames: FrameSpectrale[],
   fftSize: number,
-  hop: number,
+  _hop: number,
   fenetre: Float64Array,
   length: number
 ): Float64Array {

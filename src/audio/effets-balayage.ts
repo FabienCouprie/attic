@@ -5,7 +5,6 @@
 
 import { estCourbe, progressionPour, valeurA, valeursParametre } from "./courbe";
 import { cyclesAccumules, frequencesModulees, type BornesFrequence } from "./lfo";
-import { vibrato } from "./effets-modulation";
 
 export function wahwah(
   buffer: AudioBuffer,

@@ -5,7 +5,6 @@
 
 import { fft } from "./fft";
 import type { NoteEvenement } from "./midi-sequence";
-import Meyda from "meyda";
 import { traduire } from "../i18n";
 import type { OptionsCentroidSpectral } from "./analyse-descripteurs";
 

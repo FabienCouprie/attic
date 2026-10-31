@@ -51,12 +51,3 @@ export function poserParam(
   param.setValueCurveAtTime(courbe, 0, dureeSec);
 }
 
-/**
- * La valeur d'un réglage au début du parcours, pour ce qui ne s'automatise pas.
- *
- * CERTAINS RÉGLAGES NE SONT PAS DES `AudioParam` : la taille d'une réponse impulsionnelle, la table
- * d'un distordeur. Les faire varier demanderait de reconstruire le graphe, ce qui n'est pas une
- * automation. Ces réglages prennent la valeur du début de la courbe, et leur documentation le dit.
- */
-export const valeurInitiale = (v: number | Float32Array): number =>
-  typeof v === "number" ? v : (v[0] ?? 0);

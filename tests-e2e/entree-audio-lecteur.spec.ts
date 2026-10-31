@@ -9,9 +9,6 @@ import { serveurDeVerification } from "./serveur-de-developpement";
 
 const devUrl = serveurDeVerification(5212);
 
-const arete = (source: string, target: string, port = 0) =>
-  ({ id: `${source}-${target}-${port}`, source, target, sourceHandle: "out:0", targetHandle: `in:${port}` });
-
 /** Un WAV d'une seconde, chargé par le vrai champ fichier du nœud. */
 const CHARGER = `
   const sr = 44100, n = sr, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);

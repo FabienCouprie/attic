@@ -1,5 +1,5 @@
 // audio/formants.ts — Décalage formantique en deux étapes :
-// 1. Pitch shift en domaine temporel (réutilise etirerDuree + reechantillonnerVers)
+// 1. Pitch shift en domaine temporel (réutilise etirerDureeVoie + reechantillonnerVoie)
 // 2. Correction formantique en domaine spectral (filtre cepstral, pas de pitch shift spectral)
 //
 // Avantage : pas de problème de phase (le pitch shift temporel préserve la phase,

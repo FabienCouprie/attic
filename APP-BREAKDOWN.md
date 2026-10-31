@@ -1,5 +1,12 @@
 # Breakdown of `App.tsx` — completed ✅
 
+> **Archive, relue le 2026-10-31.** This document describes the first extraction (v2.x) and its
+> method. The numbers below are those of that day: `App.tsx` is at 1449 lines today and
+> `useExecutionGraphe.ts` at 1777, with seven business hooks under `src/ui/hooks/` and the
+> domain views under `src/vues-domaine/`. The method (characterization tests first, then refactor)
+> still holds; the figures and the "final structure" do not. `ARCHITECTURE.md` carries the current
+> diagnosis.
+
 **Status: the 3 hooks are extracted.** `App.tsx` went from **839 to 437 lines**
 (`usePersistance` + `useMetaComposants` + `useExecutionGraphe` in `src/ui/hooks/`),
 with no regression: `tsc` 0 errors · 19 tests · build OK · real flows re-checked in

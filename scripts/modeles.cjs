@@ -35,7 +35,6 @@ const { spawnSync } = require("child_process");
 const { inventaire, telechargerFichier, poser } = require("../electron/telechargement-modeles.cjs");
 
 const RACINE = path.resolve(__dirname, "..");
-const SOURCE = path.join(RACINE, "public", "oonx");
 
 // LA RACINE PAR DÉFAUT EST `oonx`, ET CE N'EST PLUS LA SEULE. Les points de contrôle Magenta ne
 // sont pas des ONNX et vivent dans `public/magenta/` ; ils entrent au manifeste par le même chemin,

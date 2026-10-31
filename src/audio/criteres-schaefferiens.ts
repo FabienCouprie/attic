@@ -49,9 +49,6 @@ export type EspeceMasse = (typeof MASSES)[number];
  */
 export const degreDeMasse = (espece: EspeceMasse): number => MASSES.indexOf(espece);
 
-/** Le degré d'une allure, de 0 pour la mécanique à 2 pour la désordonnée. */
-export const degreDAllure = (espece: EspeceAllure): number => ALLURES.indexOf(espece);
-
 export interface Masse {
   /** Le degré de l'échelle. « aucune » pour un son trop faible ou trop court. */
   espece: EspeceMasse;

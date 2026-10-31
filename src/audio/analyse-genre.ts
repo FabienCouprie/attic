@@ -4,7 +4,6 @@
 // de calcul n'a ete retouchee au passage.
 
 import { fft } from "./fft";
-import Meyda from "meyda";
 import { traduire } from "../i18n";
 
 // LE REPLI VERS HUGGINGFACE A ÉTÉ RETIRÉ, et il était contraire à la règle du dépôt : tous les
@@ -283,16 +282,6 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
 
   // Tonalité → genres
   if (cle.includes("mineur")) { add("blues", 2); add("classique", 1); add("jazz", 1); }
-
-  // Tri + normalisation
-  const scSorted = Object.entries(scoresGenre)
-    .map(([genre, score]) => ({ genre, score }))
-    .sort((a, b) => b.score - a.score);
-  const scTotal = scSorted.reduce((s, v) => s + v.score, 0);
-  const _topGenres = scSorted.slice(0, 5).map((s) => ({
-    genre: s.genre,
-    confiance: scTotal > 0 ? s.score / scTotal : 0,
-  }));
 
   // ── Description textuelle ──
   const isMineur = cle.includes("mineur");

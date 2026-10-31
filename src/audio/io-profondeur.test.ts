@@ -69,13 +69,13 @@ async function lireWav(blob: Blob): Promise<Lu> {
   expect(chaine(8, 4)).toBe("WAVE");
 
   const blocs: string[] = [];
-  let fmt = -1, fmtTaille = 0, data = -1, dataTaille = 0, factTrames: number | null = null;
+  let fmt = -1, data = -1, dataTaille = 0, factTrames: number | null = null;
   let o = 12;
   while (o + 8 <= vue.byteLength) {
     const id = chaine(o, 4);
     const taille = vue.getUint32(o + 4, true);
     blocs.push(id);
-    if (id === "fmt ") { fmt = o + 8; fmtTaille = taille; }
+    if (id === "fmt ") { fmt = o + 8; }
     if (id === "data") { data = o + 8; dataTaille = taille; }
     if (id === "fact") factTrames = vue.getUint32(o + 8, true);
     o += 8 + taille + (taille % 2);

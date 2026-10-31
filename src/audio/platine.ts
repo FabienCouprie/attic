@@ -17,9 +17,7 @@
 // des années soixante-dix tient −70 décibels non pondérés, une platine de salon −55. C'est la plage
 // que le réglage parcourt.
 
-/** Les trois vitesses, en tours par minute. */
 import { creerAleatoire } from "../core/hasard";
-export const VITESSES = [33 + 1 / 3, 45, 78];
 
 /** La fréquence de rotation, en hertz : un tour de disque. */
 export const frequenceDeRotation = (toursParMinute: number): number =>

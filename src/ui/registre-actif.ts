@@ -77,6 +77,3 @@ export function registreUI(): RegistreUI {
   }
   return actif;
 }
-
-/** Vrai quand un registre a été déposé. Pour un test qui veut vérifier l'absence sans la provoquer. */
-export const registreUIConfigure = (): boolean => actif !== null;

@@ -4,11 +4,11 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { Chord, Scale, Note, Progression } from "tonal";
+import { Chord, Scale, Note } from "tonal";
 import { estimerTonalite, detecterAccords, accordsVersTexte } from "../audio/accords";
 import { PARAMETRE_CLE } from "../audio/cles";
 import {
-  accordsDepuisRomains, accordsInconnus, modeDepuisTonalite, normaliserRomains, toniqueDepuisTonalite,
+  accordsDepuisRomains, accordsInconnus, modeDepuisTonalite, toniqueDepuisTonalite,
   type ModeProgression,
 } from "../audio/theorie-romains";
 

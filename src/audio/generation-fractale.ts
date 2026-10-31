@@ -7,7 +7,6 @@ import { type NoteEvenement } from "./midi-sequence";
 import { DEMI_TONS_CLE, frequenceDeNoteMidi } from "./commun";
 import { caractereOuSinus, type CaractereTimbreId } from "./timbres";
 import { degresGammeMelodie } from "./generation-melodie";
-import { GAMMES_ACCORDS, degresGammeAccords } from "./generation";
 import { CANTUS_FIRMUS, intervallesDaccord } from "./qualites-accords";
 import { frequenceDeTravail } from "./frequence-de-travail";
 
