@@ -6,7 +6,7 @@ Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et vingt-huit gardes sur lui-même : ils s'emploient, ils
+cela un banc de mesure, une base d'empreintes et vingt-neuf gardes sur lui-même : ils s'emploient, ils
 ne se réinventent pas.
 
 ---
@@ -167,7 +167,7 @@ se relève donc à l'oreille, et non par un garde.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — vingt-huit contrats sur le dépôt lui-même : registre des réglages, graines,
+- **`src/docs/*.test.ts`** — vingt-neuf contrats sur le dépôt lui-même : registre des réglages, graines,
   cœurs par trames, registre anglais, **texte en dur des vues — qu'aucun ne dépende de la langue** —,
   caractères de contrôle, style de documentation, classement
   théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, couverture des
@@ -176,7 +176,8 @@ Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
   qu'aucun composant reçu ne prenne la place d'un natif** —, **les clés de réglage des graphes
   livrés — une valeur enregistrée doit encore être lue** —, **les écritures refusées — qu'aucun
   appel à `ecrireFichier` ne jette son résultat, la sanction par racines étant armée** —, **les vues
-  d'image — qu'aucun composant qui rend une image ne la cache à son nœud** —, le classement des écarts d'une famille
+  d'image — qu'aucun composant qui rend une image ne la cache à son nœud** —, **les options lues —
+  qu'aucun champ du type des options d'un module audio ne reste sans lecteur** —, le classement des écarts d'une famille
   comparée, et la fraîcheur des tables générées. **La norme de taille y est contraignante** :
   aucun fichier neuf ne dépasse quatre cents lignes de code, les quinze qui la dépassaient déjà ne
   grossissent plus, et celui qui redescend dans la norme sort de la dette. Elle ne peut que
