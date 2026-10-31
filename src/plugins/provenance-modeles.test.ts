@@ -44,9 +44,11 @@ const EXCEPTIONS: Record<string, string> = {
     + "depuis storage.googleapis.com à l'exécution. Même traitement à faire que pour Magenta et les "
     + "deux nœuds de reconnaissance vocale : miroir local, entrée au manifeste, publication.",
   "tts.ts":
-    "DETTE PAYÉE LE 2026-10-20, et la ligne reste parce que l'adresse reste. Les deux composants "
+    "DETTE PAYÉE LE 2026-10-31, et la ligne reste parce que l'adresse reste. Les deux composants "
     + "tiraient leurs poids de huggingface.co à chaque première exécution, sans figurer au "
-    + "manifeste ; ils y sont depuis, et `tts-local.js` détourne l'amont vers le miroir local. "
+    + "manifeste ; ils y sont depuis le 2026-10-20, mais le relais de `tts-local.js` ne détournait "
+    + "rien jusqu'au 2026-10-31, Transformers.js passant par son propre `env.fetch` : c'est "
+    + "`tests-e2e/tts-provenance.spec.ts` qui le tient, et non ce garde, qui ne lit que la source. "
     + "L'adresse des vecteurs de locuteur est toujours écrite ici, mais c'est désormais ce que le "
     + "relais RECONNAÎT pour la détourner, comme pour Kokoro, et non ce qu'on va chercher.",
   "tts-local.js":

@@ -7,6 +7,15 @@ import { installerMiroirTts } from "./tts-local.js";
 
 env.backends.onnx.wasm.proxy = true;
 
+// LA BIBLIOTHÈQUE PASSE PAR `env.fetch`, ET NON PAR LE `fetch` DU WORKER. Transformers.js 4.2.0 y
+// range, au chargement de son module, le `fetch` qu'il trouve alors ; le relais du miroir, posé
+// ensuite sur `self.fetch`, ne voyait donc passer que la voix de SpeechT5, que ce worker va chercher
+// lui-même. Les poids partaient vers Hugging Face le miroir présent et complet, du 2026-10-20 au
+// 2026-10-31, sous treize cas unitaires verts : seul un relevé de ce qui sort l'a vu, et c'est
+// `tests-e2e/tts-provenance.spec.ts` qui le tient. La bibliothèque lit désormais `self.fetch` à
+// chaque requête, donc le relais dès qu'il est posé.
+env.fetch = (entree, options) => self.fetch(entree, options);
+
 // LE MIROIR EST BRANCHÉ UNE FOIS, AVANT TOUT CHARGEMENT. Sans lui, les deux composants tiraient
 // leurs poids de HuggingFace à chaque première exécution : une installation hors réseau échouait
 // en silence, et trois des dix langues offertes étaient déjà mortes sans que rien ne le sache.
