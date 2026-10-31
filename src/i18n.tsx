@@ -530,7 +530,6 @@ const DICO: Record<string, Record<Langue, string>> = {
   "favs.aquaplan": { fr: "AquaPLAN (sons sous-marins)", en: "AquaPLAN (underwater sounds)" },
   "favs.marineMammals": { fr: "Mammifères marins (32 espèces)", en: "Marine mammals (32 species)" },
   "maj.a-jour": { fr: "À jour", en: "Up to date" },
-  "maj.pret": { fr: "Mise à jour prête", en: "Update ready" },
   "maj.verification": { fr: "Vérifier les mises à jour", en: "Check for updates" },
   "maj.enVerification": { fr: "Vérification en cours…", en: "Checking…" },
   "maj.disponibleClic": { fr: "Mise à jour {__VAR_0__} disponible — cliquez pour la prendre", en: "Update {__VAR_0__} available — click to take it" },
