@@ -4,7 +4,7 @@
 // « The Geometry of Musical Chords », Science 313, 2006. La logique est dans
 // `audio/rythme-analyse.ts` et `audio/conduite-voix.ts`, testées ; ce fichier n'est que la prise.
 
-import { parseMidi } from "midi-file";
+import { notesDuMidi } from "../audio/midi";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -16,13 +16,6 @@ import { analyserConduite } from "../audio/conduite-voix";
 import { estSequence } from "../audio/sequence";
 
 interface NoteSimple { note: number; debut: number; fin: number }
-
-async function notesDuMidi(fichier: unknown): Promise<NoteSimple[] | null> {
-  if (!(fichier instanceof File)) return null;
-  const { analyserMidi } = await import("../audio");
-  const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
-  return notes.map((n) => ({ note: n.note, debut: n.debut, fin: n.fin }));
-}
 
 /** Lit un motif écrit à la main : « x..x..x. » ou « 1001001 0 » ou « 0 3 6 ». */
 export function lireMotif(texte: string, pasDemandes: number): Rythme {

@@ -14,13 +14,12 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
-import { parseMidi } from "midi-file";
-import { analyserMidi } from "../audio";
+import { notesDuMidi } from "../audio/midi";
 import { choixFenetre } from "../audio/fenetres-analyse";
 import {
   construireCsd, messagesUtiles, orchestreLit, partitionDepuisNotes, rendreCsd, sourcePartition,
   texteBranche,
-  type EntreeFichier, type NoteCsound, type Provenance, type ResultatCsound, type SourcePartition,
+  type EntreeFichier, type Provenance, type ResultatCsound, type SourcePartition,
 } from "../audio/csound";
 import {
   OPCODES, opcodeDe, orchestreInstrument, orchestreSpectral, tablesInstrument, tablesSpectral,
@@ -49,14 +48,6 @@ const PARTITION_EXEMPLE = `i1 0.0 1.0 220 0.5
 i1 1.0 1.0 277 0.5
 i1 2.0 1.5 330 0.6
 e`;
-
-async function notesDuMidi(fichier: unknown): Promise<NoteCsound[] | null> {
-  if (!(fichier instanceof File)) return null;
-  const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
-  return notes.map((n) => ({
-    note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin,
-  }));
-}
 
 /** Comment nommer, dans le message du nœud, la source d'où vient la partition. */
 function nomDeSource(source: SourcePartition, notes: number): string {

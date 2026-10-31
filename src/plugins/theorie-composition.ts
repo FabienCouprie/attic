@@ -9,7 +9,7 @@
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
-import { parseMidi } from "midi-file";
+import { notesDuMidi } from "../audio/midi";
 import { PARAMETRE_TONIQUE } from "../audio/cles";
 import {
   PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2,
@@ -32,16 +32,6 @@ import {
 } from "../audio/voicings";
 
 type NoteSimple = Note;
-
-/** Lit un MIDI d'entrée, ou rend null si rien n'est branché. */
-async function notesDuMidi(fichier: unknown): Promise<NoteSimple[] | null> {
-  if (!(fichier instanceof File)) return null;
-  const { analyserMidi } = await import("../audio");
-  const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
-  return notes.map((n) => ({
-    note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin, canal: n.canal,
-  }));
-}
 
 /**
  * Les notes reçues, de la séquence s'il y en a une, du MIDI sinon.

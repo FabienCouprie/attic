@@ -6,8 +6,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { parseMidi } from "midi-file";
-import { analyserMidi } from "../audio/midi";
+import { analyserMidi, midiDuFichier } from "../audio/midi";
 import { GRILLES_NOTATION, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
 import { choixValeurs } from "../audio/valeurs-note";
 import { accordsInconnus } from "../audio/theorie-romains";
@@ -243,7 +242,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
-      const midi = parseMidi(new Uint8Array(await fichier.arrayBuffer()));
+      const midi = await midiDuFichier(fichier);
       let bpm = ctx.paramNombre("Tempo", 0);
       if (bpm <= 0) {
         bpm = 120;

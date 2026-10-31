@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { writeMidi, parseMidi } from "midi-file";
-import { analyserMidi } from "./midi";
+import { analyserMidi, lireMidi, midiDuFichier, notesDuMidi } from "./midi";
 import { appliquerInstrumentsParCanal } from "./midi-ecriture";
 import { joindreMidi, bouclerMidi } from "./midi-montage";
 
@@ -288,5 +288,30 @@ describe("appliquerInstrumentsParCanal", () => {
     expect(evts.some((e: any) => e.type === "controller" && e.controllerType === 0)).toBe(true);
     expect(evts.some((e: any) => e.type === "controller" && e.controllerType === 32)).toBe(true);
     expect(programmes(out)[0]).toBe(5);
+  });
+});
+
+describe("lireMidi et notesDuMidi : LE chemin de lecture d'un fichier", () => {
+  const fichier = () => createMidiFile([
+    { note: 60, velocity: 100, start: 0, end: 0.5 },
+    { note: 64, velocity: 80, start: 0.5, end: 1 },
+  ], { programChange: 5 });
+
+  it("lireMidi rend exactement ce qu'analyserMidi rend des mêmes octets", async () => {
+    const f = fichier();
+    const attendu = analyserMidi(parseMidi(new Uint8Array(await f.arrayBuffer())));
+    const lu = await lireMidi(f);
+    expect(lu.notes).toEqual(attendu.notes);
+    expect(lu.dureeTotale).toBe(attendu.dureeTotale);
+    expect([...lu.canauxInstrument]).toEqual([...attendu.canauxInstrument]);
+    expect(await midiDuFichier(f)).toEqual(parseMidi(new Uint8Array(await f.arrayBuffer())));
+  });
+
+  it("notesDuMidi rend les notes d'un fichier, et null pour tout ce qui n'en est pas un", async () => {
+    const notes = await notesDuMidi(fichier());
+    expect(notes?.map((n) => [n.note, n.velocite, n.canal])).toEqual([[60, 100, 0], [64, 80, 0]]);
+    for (const rien of [null, undefined, "texte", new Uint8Array(4), { notes: [] }]) {
+      expect(await notesDuMidi(rien)).toBeNull();
+    }
   });
 });

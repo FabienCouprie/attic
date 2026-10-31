@@ -183,9 +183,8 @@ export const fiches: FicheAudio[] = ([
       if (estSequence(recue)) {
         notes = recue.notes;
       } else if (fichier instanceof File) {
-        const { analyserMidi } = await import("../audio");
-        const { parseMidi } = await import("midi-file");
-        notes = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer()))).notes;
+        const { lireMidi } = await import("../audio");
+        notes = (await lireMidi(fichier)).notes;
       } else {
         return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       }

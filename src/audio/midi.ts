@@ -24,6 +24,35 @@ export interface InstrumentCanal {
 // que les sept écrivains MIDI qui l'employaient ne changent pas d'adresse.
 export { comparerEvenementsMidi } from "./midi-ordre";
 
+/** Ce que `midi-file` lit d'un fichier : les pistes et leurs événements, avant toute analyse. */
+export async function midiDuFichier(fichier: Blob): Promise<ReturnType<typeof parseMidi>> {
+  return parseMidi(new Uint8Array(await fichier.arrayBuffer()));
+}
+
+/**
+ * Un fichier MIDI lu en notes, durée totale et instruments par canal.
+ *
+ * C'EST LE CHEMIN DE LECTURE, ET IL ÉTAIT ÉCRIT VINGT-DEUX FOIS À LA MAIN (relevé du 2026-10-31,
+ * lot 4 de la revue) : `analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())))`,
+ * dans quatorze composants, deux vues et deux modules du domaine, dont cinq fonctions `notesDuMidi`
+ * au corps identique. Une lecture qui change — un en-tête à tolérer, une erreur à nommer — ne doit
+ * avoir qu'un endroit où changer.
+ */
+export async function lireMidi(fichier: Blob): Promise<ReturnType<typeof analyserMidi>> {
+  return analyserMidi(await midiDuFichier(fichier));
+}
+
+/**
+ * Les notes d'un MIDI d'entrée, ou `null` si rien n'est branché.
+ *
+ * Les composants qui lisent un MIDI facultatif partagent cette lecture, donc la même tolérance : ce
+ * qui n'est pas un fichier rend `null`, et c'est au composant de dire qu'il n'a rien reçu.
+ */
+export async function notesDuMidi(fichier: unknown): Promise<NoteMidi[] | null> {
+  if (!(fichier instanceof File)) return null;
+  return (await lireMidi(fichier)).notes;
+}
+
 export function analyserMidi(midi: ReturnType<typeof parseMidi>): {
   notes: NoteMidi[];
   dureeTotale: number;

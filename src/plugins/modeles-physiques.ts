@@ -16,8 +16,9 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
 import {
-  FREQUENCE_ECH, frequenceDe, lireNote, melanger, notesDuMidi, versBuffer,
+  FREQUENCE_ECH, frequenceDe, lireNote, melanger, versBuffer,
 } from "./instruments-communs";
+import { notesDuMidi } from "../audio/midi";
 import { SECOUEURS, secoueur, secoussesRegulieres, synthetiserSecoueur, type Secousse } from "../audio/phisem";
 import { synthetiserVent, type Vent } from "../audio/guides-onde";
 import { BARRES, barre, synthetiserBarre } from "../audio/barre-modale";
