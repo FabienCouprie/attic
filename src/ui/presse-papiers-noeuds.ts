@@ -18,6 +18,13 @@
 // Un `File`, un `Blob`, un `AudioBuffer` ne traversent pas un JSON, et une adresse `blob:` ne vaut
 // que dans la page qui l'a créée. Couper dans une fenêtre et coller dans une autre n'emporte donc que
 // les chemins : le média se relit depuis le disque, comme à l'ouverture d'un projet.
+//
+// ═══ UNE NOTE ET UN CADRE N'ONT PAS DE FICHE, ET NE SONT PAS INCONNUS POUR AUTANT ═══
+//
+// Le collage refuse, en le nommant, un composant que cette fenêtre ne connaît pas : il arriverait
+// sous son identifiant brut, sans un port. La question était posée au seul registre, où une note
+// (`comment`) et un cadre (`frame`) n'ont jamais eu de fiche. Relevé par Fabien le 2026-10-31 :
+// copier une note ou un cadre ne collait plus rien, et les couper les effaçait.
 
 import { identifiantAuHasard } from "./fenetre";
 
@@ -74,6 +81,20 @@ export function lireCopie(texte: string | null | undefined): ContenuCopie | null
     dx: Number(e.dx) || 0, dy: Number(e.dy) || 0,
   }));
   return { jeton: brut.jeton, coupe: brut.coupe === true, elements };
+}
+
+/** Les annotations du canevas : aucune fiche au registre, et rien d'inconnu pour autant. */
+export const ANNOTATIONS: ReadonlySet<string> = new Set(["comment", "frame"]);
+
+/** Ce qu'un collage pose, et les fiches qu'il refuse faute que `connue` les trouve au registre. */
+export function trierCollage(
+  elements: readonly ElementCopie[], connue: (ficheId: string) => boolean,
+): { posables: ElementCopie[]; inconnus: string[] } {
+  const posable = (e: ElementCopie) => ANNOTATIONS.has(e.ficheId) || connue(e.ficheId);
+  return {
+    posables: elements.filter(posable),
+    inconnus: [...new Set(elements.filter((e) => !posable(e)).map((e) => e.ficheId))],
+  };
 }
 
 /** Écrit dans le presse-papiers du système. Rend faux si l'écriture est refusée. */
