@@ -5,7 +5,7 @@
 // ce qui ne traverse pas un JSON — fichiers, tampons, adresses `blob:` — n'y entre pas.
 import { describe, expect, it } from "vitest";
 
-import { FORMAT_PRESSE_PAPIERS, lireCopie, serialiserCopie, type ElementCopie } from "./presse-papiers-noeuds";
+import { FORMAT_PRESSE_PAPIERS, lireCopie, serialiserCopie, trierCollage, type ElementCopie } from "./presse-papiers-noeuds";
 
 const element = (sur: Partial<ElementCopie> = {}): ElementCopie => ({
   ficheId: "oscillateur", parametres: { Fréquence: 440 }, width: 230, height: 200, data: { nom: "La" }, dx: 0, dy: 0, ...sur,
@@ -41,5 +41,17 @@ describe("le presse-papiers de nœuds", () => {
     const brut = JSON.parse(serialiserCopie({ jeton: "j", coupe: false, elements: [element()] }));
     brut.elements.push({ parametres: {} });
     expect(lireCopie(JSON.stringify(brut))!.elements).toHaveLength(1);
+  });
+
+  // LE DÉFAUT DU 2026-10-31 : le tri ne demandait qu'au registre, où une note et un cadre n'ont pas
+  // de fiche. Ils étaient refusés comme inconnus, et une coupe les effaçait.
+  it("UNE NOTE ET UN CADRE SE COLLENT sans fiche au registre, et seul l'inconnu est refusé", () => {
+    const registre = new Set(["oscillateur"]);
+    const { posables, inconnus } = trierCollage(
+      [element({ ficheId: "comment" }), element({ ficheId: "frame" }), element(), element({ ficheId: "disparu" })],
+      (id) => registre.has(id),
+    );
+    expect(posables.map((e) => e.ficheId)).toEqual(["comment", "frame", "oscillateur"]);
+    expect(inconnus).toEqual(["disparu"]);
   });
 });

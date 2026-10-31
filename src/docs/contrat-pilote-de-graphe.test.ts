@@ -191,8 +191,12 @@ describe("le pilote de graphe", () => {
     // LA RESTAURATION D'UN COMPRESSÉ Y EST ENTRÉE POUR UN MORCEAU DE 194 S, qui ne passe que par
     // « Entrée audio » et donc par `avantDeLancer` : le métronome plafonne à soixante secondes, et
     // c'est la durée qui faisait tomber le moteur en mémoire.
+    //
+    // LE COPIER-COLLER DES NOTES ET DES CADRES N'Y PREND QUE `semer` : il ne lance rien, il sème un
+    // graphe puis le travaille au clavier.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
+        "copier-coller-annotations-dans-application.spec.ts",
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "montage-gains-pistes.spec.ts",

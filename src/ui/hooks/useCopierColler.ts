@@ -13,7 +13,7 @@ import { tailleDefaut } from "../tailles-noeuds";
 import { registreUI } from "../registre-actif";
 import { rechargerFichiersPersistes } from "../rechargerFichiers";
 import {
-  ecrireDansLePressePapiers, lireCopie, lireLePressePapiers, nouveauJeton, serialiserCopie,
+  ecrireDansLePressePapiers, lireCopie, lireLePressePapiers, nouveauJeton, serialiserCopie, trierCollage,
   type ContenuCopie, type ElementCopie,
 } from "../presse-papiers-noeuds";
 
@@ -75,9 +75,8 @@ export function useCopierColler(o: OptionsCopierColler) {
       const { setNodes, setSel, pushHistorique, callbacksNoeud, t } = oRef.current;
       const trouverDef = (id: string) => registreUI().trouverDef(id);
       // UN COMPOSANT QUE CETTE FENÊTRE NE CONNAÎT PAS N'EST PAS POSÉ : il arriverait sous son
-      // identifiant brut, sans un port. On le dit, et le reste se colle.
-      const inconnus = [...new Set(contenu.elements.filter((e) => !trouverDef(e.ficheId)).map((e) => e.ficheId))];
-      const elements = contenu.elements.filter((e) => trouverDef(e.ficheId));
+      // identifiant brut, sans un port. On le dit, et le reste se colle — notes et cadres compris.
+      const { posables: elements, inconnus } = trierCollage(contenu.elements, (id) => !!trouverDef(id));
       if (inconnus.length) window.alert(t("pressePapiers.inconnus").replace("{liste}", inconnus.join(", ")));
       if (elements.length === 0) return;
       pushHistorique();
