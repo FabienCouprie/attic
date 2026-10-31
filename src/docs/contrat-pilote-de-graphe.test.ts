@@ -187,12 +187,17 @@ describe("le pilote de graphe", () => {
     //
     // LE GARDE DES CONTENEURS A FAIT NAÎTRE `semer` ET `lancerLeNoeudEtAttendre` de la même façon : le
     // ▶ d'un nœud ne se mène pas comme Lancer, et il fallait l'apprendre au pilote plutôt qu'au spec.
+    //
+    // LA RESTAURATION D'UN COMPRESSÉ Y EST ENTRÉE POUR UN MORCEAU DE 194 S, qui ne passe que par
+    // « Entrée audio » et donc par `avantDeLancer` : le métronome plafonne à soixante secondes, et
+    // c'est la durée qui faisait tomber le moteur en mémoire.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "montage-gains-pistes.spec.ts",
         "profondeur-dans-application.spec.ts", "rendu-image-taille-dans-application.spec.ts",
+        "restaurer-dans-application.spec.ts",
         "sorties-extensibles-dans-application.spec.ts", "types-au-port.spec.ts"]);
     const coupables = appelants.filter((f) => {
       const code = codeSeul(source(resolve(DOSSIER, f)));

@@ -2,12 +2,40 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { createRequire } from "module";
 
-import { doser } from "./restaurer-compresse";
+import { doser, fiches, messageDEchec } from "./restaurer-compresse";
 
-const { CADENCE_EXIGEE, restaurer } = createRequire(import.meta.url)("../../electron/apollo.cjs") as {
+const {
+  CADENCE_EXIGEE, CONTEXTE_BORD, TRANCHE_DEFAUT, memoireRefusee, optionsDeTranche, restaurer,
+} = createRequire(import.meta.url)("../../electron/apollo.cjs") as {
   CADENCE_EXIGEE: number;
+  CONTEXTE_BORD: number;
+  TRANCHE_DEFAUT: number;
+  memoireRefusee: (journal: string) => { peripherique: string | null; octets: number | null } | null;
+  optionsDeTranche: (tranche: unknown, recouvrement?: number) => string[];
   restaurer: (o: { audio: Uint8Array }) => Promise<{ ok: boolean; journal?: string }>;
 };
+
+/** Les options de requête passées au moteur, en table. */
+function requete(args: string[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (let i = 0; i < args.length - 1; i++) {
+    if (args[i] !== "--request-option") continue;
+    const [cle, valeur] = args[i + 1].split("=");
+    out[cle] = Number(valeur);
+  }
+  return out;
+}
+
+/** Ce que le moteur demande par trame de dix millisecondes, relevé de 195 à 205 s le 2026-10-31. */
+const OCTETS_PAR_TRAME = 2068284;
+
+/** La sortie que Fabien a collée, telle quelle, le début de sa première ligne manquant. */
+const JOURNAL_DE_FABIEN = [
+  "on of size 1589985280 failed.",
+  "ggml_vulkan: vk::Device::allocateMemory: ErrorOutOfDeviceMemory",
+  "ggml_gallocr_reserve_n_impl: failed to allocate Vulkan1 buffer of size 40143349760",
+  "audiocpp_cli failed: Apollo shared graph allocation failed",
+].join("\n");
 
 const SR = 44100;
 
@@ -65,6 +93,68 @@ describe("la cadence que le moteur exige", () => {
     expect(r.ok).toBe(false);
     expect(r.journal).toMatch(/cadence illisible/);
     expect(r.journal, "un refus d'entrée ne doit pas dépendre du modèle").not.toMatch(/Modèle absent/);
+  });
+});
+
+describe("la mémoire que le moteur demande, qui suit la tranche et non le morceau", () => {
+  // LE DÉFAUT QUE CES CAS GARDENT : le fichier entier passait en un seul graphe, de sorte que la
+  // mémoire suivait la durée du morceau. 194 s demandaient 40 143 349 760 octets à une carte de six.
+  // Ils tiennent sans modèle ni carte, donc en intégration continue ; l'épreuve d'application,
+  // `tests-e2e/restaurer-dans-application.spec.ts`, fait passer le morceau entier pour de bon.
+
+  it("LE MOTEUR REÇOIT TOUJOURS UNE TRANCHE, MÊME D'UN PROJET QUI PORTE « TRANCHE » À ZÉRO", () => {
+    // Zéro était l'ancien défaut, et il est ENREGISTRÉ dans le projet de quiconque a posé le nœud
+    // avant la correction : c'est le nœud que Fabien a lancé. Le moteur lit zéro comme « le
+    // fichier entier », et il ne doit donc jamais le recevoir.
+    for (const reglage of [undefined, 0, -3, Number.NaN, "", null]) {
+      const r = requete(optionsDeTranche(reglage));
+      expect(r.audio_chunk_duration_sec, `réglage ${String(reglage)}`).toBe(TRANCHE_DEFAUT);
+    }
+    expect(TRANCHE_DEFAUT).toBeGreaterThan(0);
+    expect(requete(optionsDeTranche(25)).audio_chunk_duration_sec, "une tranche donnée passe telle quelle").toBe(25);
+  });
+
+  it("CHAQUE TRANCHE PORTE SON CONTEXTE DE BORD, sans quoi les coutures s'entendent", () => {
+    // Sans contexte, des tranches de 5 s s'écartaient du rendu entier de −16,1 dB, autant que
+    // l'effet lui-même ; une demi-seconde suffit à tomber au plancher du seize bits (−114 dB).
+    for (const reglage of [0, 5, 10, 60]) {
+      const r = requete(optionsDeTranche(reglage));
+      expect(r.edge_pad_duration_sec, `tranche ${reglage}`).toBeGreaterThanOrEqual(0.5);
+      expect(r.edge_pad_duration_sec).toBe(CONTEXTE_BORD);
+      expect(r.audio_chunk_overlap_sec, "le fondu ne dépasse pas la moitié de la tranche")
+        .toBeLessThanOrEqual(r.audio_chunk_duration_sec / 2);
+    }
+  });
+
+  it("LE DÉFAUT DÉCLARÉ EST CELUI DU PONT, et il tient sur une carte de six giga-octets", () => {
+    const tranche = fiches[0].parametres.find((p) => p.nom === "Tranche");
+    expect(tranche?.defaut, "l'inspecteur et le pont doivent dire la même tranche").toBe(TRANCHE_DEFAUT);
+    // La pente vaut pour les grands graphes ; aux petits, le moteur demande moins (1 933 020 688
+    // octets mesurés pour 12 s). C'est donc un majorant, et il doit laisser de la place à côté.
+    const trames = (Number(tranche?.defaut) + 2 * CONTEXTE_BORD) * 100 + 1;
+    expect(trames * OCTETS_PAR_TRAME, "le défaut doit tenir dans la moitié d'une carte de six giga-octets")
+      .toBeLessThan(3 * 2 ** 30);
+  });
+
+  it("LE REFUS DE MÉMOIRE SE LIT DANS LE JOURNAL QUE FABIEN A REÇU, et dans sa forme sans taille", () => {
+    expect(memoireRefusee(JOURNAL_DE_FABIEN)).toEqual({ peripherique: "Vulkan1", octets: 40143349760 });
+    // 31 s en un graphe : la réservation passe, l'allocation tombe, et le moteur ne dit plus de taille.
+    expect(memoireRefusee("audiocpp_cli failed: vk::Device::allocateMemory: ErrorOutOfDeviceMemory"))
+      .toEqual({ peripherique: null, octets: null });
+    expect(memoireRefusee("audiocpp_cli failed: Apollo requires 44.1 kHz input audio"),
+      "un autre échec n'est pas un refus de mémoire").toBe(null);
+  });
+
+  it("ET IL SE DIT AVEC SES CHIFFRES ET LE NOM DU RÉGLAGE, et non par le journal en anglais", () => {
+    const message = messageDEchec({
+      ok: false, tranche: 10, journal: JOURNAL_DE_FABIEN, memoire: memoireRefusee(JOURNAL_DE_FABIEN) });
+    expect(message).toContain("Vulkan1");
+    expect(message, "40 143 349 760 octets sont 37,4 Gio").toContain("37,4");
+    expect(message).toContain("10 s");
+    expect(message, "le réglage qui lève le refus doit être nommé tel qu'à l'écran").toContain("« Tranche »");
+    expect(message).not.toContain("gallocr");
+    // Un autre échec garde la fin du journal, qui est ce qu'on a de plus précis.
+    expect(messageDEchec({ ok: false, journal: "x".repeat(300) + "fin" })).toMatch(/fin$/);
   });
 });
 
