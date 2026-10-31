@@ -79,23 +79,60 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Effets",
     resume: "Les quatre défauts d'une bande : pleurage, scintillement, saturation, décrochages.",
     resumeEn: "The four faults of tape: wow, flutter, saturation, dropouts.",
-    notice: "Aucun des quatre défauts n'est décoratif, et chacun a une cause distincte.\n\nLe pleurage vient de l'excentricité de la bobine : une oscillation lente, sous deux hertz, qui fait dériver la hauteur. Le scintillement vient du cabestan et des galets : la même chose, mais entre cinq et vingt hertz, et l'oreille l'entend comme un tremblement plutôt que comme une dérive. La saturation vient de l'oxyde, qui cesse de répondre linéairement bien avant de rendre les armes, d'où une compression douce des crêtes, et des harmoniques qui n'étaient pas là. Les décrochages viennent des trous dans la couche magnétique : le son disparaît un instant, sans prévenir.\n\nLes deux premiers partagent leur machinerie avec le Doppler, et c'est la même idée : lire le signal à une distance qui change. Une ambulance qui approche raccourcit la distance ; un galet qui tourne mal l'allonge et la raccourcit tour à tour.\n\nLa saturation est normalisée : monter son attaque change la forme de l'onde, pas le volume. Sans cela, on croirait à un défaut du réglage.",
-    noticeEn: "None of the four faults is decorative, and each has a distinct cause.\n\nWow comes from the reel's eccentricity: a slow oscillation, under two hertz, that makes the pitch drift. Flutter comes from the capstan and the rollers: the same thing, but between five and twenty hertz, and the ear hears it as a tremble rather than a drift. Saturation comes from the oxide, which stops responding linearly long before it gives up, hence a gentle compression of the peaks, and harmonics that were not there. Dropouts come from holes in the magnetic coating: the sound vanishes for an instant, without warning.\n\nThe first two share their machinery with the Doppler node, and it is the same idea: reading the signal at a distance that changes. An ambulance coming closer shortens the distance; a badly turning roller lengthens and shortens it by turns.\n\nSaturation is normalised: raising its drive changes the waveshape, not the volume. Without that, one would take it for a fault in the setting.",
+    notice: "Ce composant fait subir à un son les défauts d'une bande magnétique : le pleurage, le scintillement, "
+      + "la saturation et les décrochages, auxquels s'ajoute un souffle. Le pleurage et le scintillement font varier la "
+      + "vitesse de lecture, donc la hauteur et le temps ensemble ; le son est relu à cette vitesse par une "
+      + "interpolation à sinus cardinal fenêtré, et sa durée reste celle du son reçu.\n\n"
+      + "« Écart de pleurage » fixe de combien la hauteur monte et descend sous l'effet du pleurage, oscillation lente "
+      + "de la vitesse, en pour cent : 0,3 la fait varier de 0,3 % de part et d'autre. « Pleurage Hz » fixe la "
+      + "fréquence de cette oscillation, sans changer l'écart.\n\n"
+      + "« Écart de scintillement » et « Scintillement Hz » font de même pour le scintillement, oscillation plus rapide "
+      + "de la vitesse. Les deux écarts s'ajoutent.\n\n"
+      + "« Saturation » fixe l'attaque d'une compression douce des crêtes, par une tangente hyperbolique, qui ajoute des "
+      + "harmoniques. Elle est ramenée de sorte que la pleine échelle reste la pleine échelle ; un son plus faible en "
+      + "ressort relevé, ses crêtes comprimées. À zéro, il n'y a pas de saturation.\n\n"
+      + "« Décrochages » fixe le nombre de creux par seconde. Chacun dure vingt millisecondes, s'ouvre et se referme en "
+      + "fondu, et sa profondeur est tirée au hasard.\n\n"
+      + "« Souffle » fixe le niveau d'un bruit ajouté, dont la crête vaut ce pour cent de la pleine échelle.\n\n"
+      + "« Graine » fixe le tirage des décrochages et du souffle : une même graine rend la même bande. Chaque canal "
+      + "reçoit son propre tirage.\n\n"
+      + "La sortie « Audio » rend le son déformé, avec la durée, la fréquence d'échantillonnage et les canaux reçus.",
+    noticeEn: "This component applies the faults of a magnetic tape to a sound: wow, flutter, saturation and dropouts, "
+      + "with a hiss added. Wow and flutter vary the playback speed, hence pitch and time together; the sound is read "
+      + "again at that speed through a windowed sinc interpolation, and its duration stays that of the received sound.\n\n"
+      + "« Wow depth » sets how far the pitch rises and falls under wow, a slow oscillation of the speed, in percent: "
+      + "0.3 moves it by 0.3 % either way. « Wow rate » sets the frequency of this oscillation, without changing the "
+      + "depth.\n\n"
+      + "« Flutter depth » and « Flutter rate » do the same for flutter, a faster oscillation of the speed. The two "
+      + "depths add up.\n\n"
+      + "« Saturation » sets the drive of a gentle compression of the peaks, through a hyperbolic tangent, which adds "
+      + "harmonics. It is scaled so that full scale stays full scale; a quieter sound comes out raised, its peaks "
+      + "compressed. At zero, there is no saturation.\n\n"
+      + "« Dropouts » sets the number of dips per second. Each lasts twenty milliseconds, opens and closes with a fade, "
+      + "and its depth is drawn at random.\n\n"
+      + "« Hiss » sets the level of an added noise, whose peak is this percentage of full scale.\n\n"
+      + "« Seed » sets the draw of dropouts and hiss: the same seed gives the same tape. Each channel gets its own draw.\n\n"
+      + "The « Audio » output returns the distorted sound, with the received length, sample rate and channels.",
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
-      { nom: "Pleurage", nomEn: "Wow", type: "curseur", plage: [0, 60], pas: 1, defaut: 8, unite: "%",
-        doc: "Amplitude de la dérive lente de hauteur. Quelques pour cent suffisent à donner l'impression d'une machine fatiguée ; au-delà de vingt, on entend un instrument qui se désaccorde tout seul.",
-        docEn: "Amplitude of the slow pitch drift. A few per cent are enough to suggest a tired machine; beyond twenty, one hears an instrument detuning itself." },
+      // RENOMMÉS, ET NON GARDÉS SOUS LEUR ANCIEN NOM, parce que l'unité a changé : « Pleurage » et
+      // « Scintillement » étaient des pour cent d'un retard de 10 ms, que la fréquence multipliait.
+      // Un graphe enregistré porte « Pleurage : 8 », qui valait ±0,30 % de hauteur ; relu sous le même
+      // nom, il aurait donné ±8 %, vingt-six fois plus. Sous un nom neuf, l'ancienne valeur n'est plus
+      // lue, et le nœud prend l'ouverture, qui rend le son de l'ancienne.
+      { nom: "Écart de pleurage", nomEn: "Wow depth", type: "curseur", plage: [0, 10], pas: 0.05, defaut: 0.3, unite: "%",
+        doc: "De combien la hauteur monte et descend sous l'effet du pleurage, en crête : 0,3 la fait varier de 0,3 % de part et d'autre, quel que soit « Pleurage Hz ».",
+        docEn: "How far the pitch rises and falls under wow, at its peak: 0.3 moves it by 0.3 % either way, whatever « Wow rate »." },
       { nom: "Pleurage Hz", nomEn: "Wow rate", type: "curseur", plage: [0.1, 3], pas: 0.1, defaut: 0.6, unite: "Hz",
-        doc: "Vitesse de la dérive, c'est-à-dire le tour de bobine. Sous un hertz, on entend une respiration ; au-dessus de deux, cela commence à ressembler à un vibrato.",
-        docEn: "Rate of the drift, that is the reel's turn. Under one hertz one hears a breathing; above two it starts to resemble a vibrato." },
-      { nom: "Scintillement", nomEn: "Flutter", type: "curseur", plage: [0, 30], pas: 1, defaut: 3, unite: "%",
-        doc: "Amplitude du tremblement rapide. Il se remarque bien moins que le pleurage à amplitude égale, et c'est pour cela que son réglage monte moins haut.",
-        docEn: "Amplitude of the fast tremble. It is far less noticeable than wow at equal amplitude, which is why its range goes less high." },
+        doc: "Fréquence de l'oscillation lente de la vitesse. Elle ne change pas « Écart de pleurage ».",
+        docEn: "Frequency of the slow oscillation of the speed. It does not change « Wow depth »." },
+      { nom: "Écart de scintillement", nomEn: "Flutter depth", type: "curseur", plage: [0, 10], pas: 0.05, defaut: 1.7, unite: "%",
+        doc: "De combien la hauteur monte et descend sous l'effet du scintillement, en crête : 1,7 la fait varier de 1,7 % de part et d'autre, quel que soit « Scintillement Hz ».",
+        docEn: "How far the pitch rises and falls under flutter, at its peak: 1.7 moves it by 1.7 % either way, whatever « Flutter rate »." },
       { nom: "Scintillement Hz", nomEn: "Flutter rate", type: "curseur", plage: [4, 25], pas: 0.5, defaut: 9, unite: "Hz",
-        doc: "Vitesse du tremblement, c'est-à-dire le tour du cabestan.",
-        docEn: "Rate of the tremble, that is the capstan's turn." },
+        doc: "Fréquence de l'oscillation rapide de la vitesse. Elle ne change pas « Écart de scintillement ».",
+        docEn: "Frequency of the fast oscillation of the speed. It does not change « Flutter depth »." },
       { nom: "Saturation", nomEn: "Saturation", type: "curseur", plage: [0, 12], pas: 0.5, defaut: 2,
         doc: "Attaque de la saturation de bande. À zéro, aucune. Le niveau ne change pas quand on la monte, seule la forme de l'onde change, et les harmoniques qui vont avec.",
         docEn: "Drive of the tape saturation. At zero, none. The level does not change as it is raised, only the waveshape does, and the harmonics that come with it." },
@@ -113,9 +150,9 @@ export const fiches: FicheAudio[] = ([
       const e = ctx.entree(0);
       if (!(e instanceof AudioBuffer)) return sansEntree();
       const o = {
-        pleurage: ctx.paramNombre("Pleurage", 8),
+        pleurage: ctx.paramNombre("Écart de pleurage", 0.3),
         pleurageHz: ctx.paramNombre("Pleurage Hz", 0.6),
-        scintillement: ctx.paramNombre("Scintillement", 3),
+        scintillement: ctx.paramNombre("Écart de scintillement", 1.7),
         scintillementHz: ctx.paramNombre("Scintillement Hz", 9),
         saturation: ctx.paramNombre("Saturation", 2),
         decrochages: ctx.paramNombre("Décrochages", 0.5),

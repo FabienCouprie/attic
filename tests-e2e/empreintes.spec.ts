@@ -68,6 +68,9 @@ const SURVEILLES: {
   // POUSSÉ DE 12 DB, pour que l'empreinte tienne une limitation réelle : aux réglages d'ouverture,
   // le son d'essai reste sous le plafond et le composant ne ferait que le rendre.
   { id: "limiteur-crete-vraie", worker: "limiteur-crete-vraie-worker.ts", parametres: { "Gain": 12 } },
+  // LA RÉFÉRENCE EST LE 660 HZ DU SON D'ESSAI, le même sur les deux canaux : au réglage d'ouverture,
+  // 50 Hz, le son d'essai n'en porte aucune, et le composant le rendrait tel quel.
+  { id: "correction-pleurage", worker: "correction-pleurage-worker.ts", parametres: { "Référence": 660 } },
   // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
   // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
   // laisse passer ; c'est son MESSAGE qui porte les chiffres mesurés, hauteur comprise.

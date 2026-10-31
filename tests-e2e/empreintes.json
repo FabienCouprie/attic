@@ -66,6 +66,13 @@
       ],
       "message": "Réduction maximale -7.7 dB · crête vraie -1.00 dBTP"
     },
+    "correction-pleurage": {
+      "empreintes": [
+        "0.269862194/0.536886573",
+        "courbe 0.500005656/0.507264197 · 600 valeurs · 599 paliers"
+      ],
+      "message": "Écart de vitesse 0.05 % en crête, 0.02 % efficace · vitesse moyenne 0.00 %, gardée"
+    },
     "fiche-technique": {
       "empreintes": [
         "0.269865992/0.528780282",

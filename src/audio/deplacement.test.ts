@@ -65,9 +65,11 @@ describe("lire à retard variable", () => {
   });
 
   it("un retard fractionnaire interpole, il n'arrondit pas", () => {
-    const x = Float32Array.from({ length: 8 }, (_, i) => i);
-    const y = lireAvecRetard(x, new Float32Array(8).fill(0.5));
-    expect(y[4]).toBeCloseTo(3.5, 6);
+    // Un demi-échantillon de retard sur un sinus : la lecture doit rendre le sinus lui-même un
+    // demi-échantillon plus tard, et non l'échantillon voisin.
+    const x = sinus(440, 0.1);
+    const y = lireAvecRetard(x, new Float32Array(x.length).fill(0.5));
+    for (let i = 200; i < 4000; i += 37) expect(y[i]).toBeCloseTo(Math.sin((2 * Math.PI * 440 * (i - 0.5)) / SR), 4);
   });
 
   it("un retard qui sort de la source rend du silence, sans lever", () => {
@@ -173,15 +175,13 @@ describe("le passage d'une source", () => {
 });
 
 describe("la bande", () => {
-  it("au repos, elle ne fait presque rien — seul le retard de base décale le son", () => {
+  it("au repos, elle rend le son tel quel, sans retard", () => {
     const x = sinus(440, 0.5);
-    const y = bande(x, BANDE);
-    const retard = Math.round(0.01 * SR);
-    for (let i = SR * 0.1; i < SR * 0.4; i += 311) expect(y[i]).toBeCloseTo(x[i - retard], 3);
+    expect([...bande(x, BANDE)]).toEqual([...x]);
   });
 
   it("le pleurage fait dériver la hauteur, lentement", () => {
-    const y = bande(sinus(440, 2), { ...BANDE, pleurage: 30, pleurageHz: 0.5 });
+    const y = bande(sinus(440, 2), { ...BANDE, pleurage: 1, pleurageHz: 0.5 });
     // ON MESURE LÀ OÙ LE RETARD CHANGE LE PLUS VITE, c'est-à-dire aux quarts de la période, et
     // non à la demie. Le décalage de hauteur suit la DÉRIVÉE du retard : à 0,5 s et 1,5 s d'une
     // oscillation de 2 s, cette dérivée est nulle et les deux mesures tombaient sur la même
@@ -192,7 +192,7 @@ describe("la bande", () => {
   });
 
   it("le scintillement le fait vite : deux tranches proches diffèrent déjà", () => {
-    const y = bande(sinus(440, 1), { ...BANDE, scintillement: 20, scintillementHz: 10 });
+    const y = bande(sinus(440, 1), { ...BANDE, scintillement: 2, scintillementHz: 10 });
     const a = hauteur(y, SR * 0.30, SR * 0.34);
     const b = hauteur(y, SR * 0.35, SR * 0.39);
     expect(Math.abs(a - b)).toBeGreaterThan(2);
@@ -211,8 +211,7 @@ describe("la bande", () => {
     // sinus pur, qui est la définition d'une distorsion.
     const x = sinus(440, 0.5);
     let ecart = 0;
-    const retard = Math.round(0.01 * SR);
-    for (let i = SR * 0.1; i < SR * 0.4; i++) ecart = Math.max(ecart, Math.abs(y[i] - x[i - retard]));
+    for (let i = SR * 0.1; i < SR * 0.4; i++) ecart = Math.max(ecart, Math.abs(y[i] - x[i]));
     expect(ecart).toBeGreaterThan(0.05);
   });
 
@@ -220,9 +219,9 @@ describe("la bande", () => {
     const x = sinus(440, 2);
     const avec = bande(x, { ...BANDE, decrochages: 6, graine: 3 });
     const sans = bande(x, { ...BANDE, decrochages: 0 });
-    // ON CHERCHE SUR DES TRANCHES DE 20 ms, la longueur d'un décrochage, et l'on écarte le début :
-    // le retard de base laisse un dixième de seconde de silence en tête, qui est le creux le plus
-    // bas des DEUX sons et masquait donc la différence qu'on cherche.
+    // ON CHERCHE SUR DES TRANCHES DE 20 ms, la longueur d'un décrochage, et l'on écarte le premier
+    // dixième de seconde : le retard de base d'autrefois y laissait un silence, le creux le plus bas
+    // des DEUX sons, qui masquait la différence cherchée.
     const creuxLePlusBas = (y: Float32Array) => {
       const large = Math.round(0.02 * SR);
       let m = Infinity;
@@ -244,9 +243,47 @@ describe("la bande", () => {
     expect([...bande(x, o)]).toEqual([...bande(x, o)]);
   });
 
-  it("le retard reste positif : une modulation ne doit jamais faire lire le futur", () => {
-    const r = retardsBande(SR, { ...BANDE, pleurage: 90, scintillement: 90 });
-    expect(Math.min(...r)).toBeGreaterThan(0);
+  it("LE RETARD EST CENTRÉ SUR ZÉRO, et son amplitude vaut l'écart divisé par la pulsation", () => {
+    // Un pleurage de 1 % à 0,5 Hz, sur deux périodes entières : moyenne nulle, crête a/ω.
+    const r = retardsBande(4 * SR, { ...BANDE, pleurage: 1, pleurageHz: 0.5 });
+    const moyenne = r.reduce((s, v) => s + v, 0) / r.length;
+    expect(Math.abs(moyenne)).toBeLessThan(0.01);
+    expect(r.reduce((m, v) => Math.max(m, Math.abs(v)), 0)).toBeCloseTo((SR * 0.01) / (2 * Math.PI * 0.5), 1);
+  });
+
+  it.each([
+    ["pleurage", 0.5, [0.3, 3]],
+    ["scintillement", 1, [4, 25]],
+  ] as const)("L'ÉCART DE %s DIT LA HAUTEUR, %f %%, quel que soit son rythme", (quoi, ecart, rythmes) => {
+    // La hauteur d'un ton pur à 1 kHz, période par période : sa demi-amplitude doit valoir l'écart
+    // réglé, au plus lent comme au plus rapide des rythmes. Autrefois, le réglage était un pour cent
+    // d'un retard de 10 ms, et le rythme le multipliait : « 1 » à 25 Hz donnait ±1,57 %.
+    for (const hz of rythmes) {
+      const o: OptionsBande = quoi === "pleurage"
+        ? { ...BANDE, pleurage: ecart, pleurageHz: hz } : { ...BANDE, scintillement: ecart, scintillementHz: hz };
+      const y = bande(Float32Array.from({ length: 8 * SR }, (_, i) => 0.4 * Math.sin((2 * Math.PI * 1000 * i) / SR)), o);
+      const passages: number[] = [];
+      for (let i = SR; i < 7 * SR; i++) if (y[i] < 0 && y[i + 1] >= 0) passages.push(i + y[i] / (y[i] - y[i + 1]));
+      const f = passages.slice(1).map((p, k) => SR / (p - passages[k]));
+      const haut = Math.max(...f), bas = Math.min(...f);
+      expect((100 * (haut - bas)) / (haut + bas), `${quoi} à ${hz} Hz`).toBeCloseTo(ecart, 2);
+    }
+  });
+
+  it("LA LECTURE RESTE JUSTE DANS L'AIGU : un ton à 10 kHz suit la déformation exacte à −70 dB", () => {
+    // Relevé : −85 dB par le sinc fenêtré ; l'interpolation linéaire d'autrefois rendait −15 dB, son
+    // erreur montant comme le carré de la fréquence.
+    const o: OptionsBande = { ...BANDE, pleurage: 0.3, pleurageHz: 0.6, scintillement: 1.7, scintillementHz: 9 };
+    const n = 2 * SR, ton = (t: number) => 0.4 * Math.sin(2 * Math.PI * 10000 * t);
+    const r = retardsBande(n, o);
+    const y = lireAvecRetard(Float32Array.from({ length: n }, (_, i) => ton(i / SR)), r);
+    let s = 0, e = 0;
+    for (let i = SR / 2; i < n - SR / 2; i++) {
+      const exact = ton((i - r[i]) / SR);
+      s += exact * exact;
+      e += (y[i] - exact) ** 2;
+    }
+    expect(10 * Math.log10(e / s)).toBeLessThan(-70);
   });
 
   it("aux réglages extrêmes, le son reste fini", () => {

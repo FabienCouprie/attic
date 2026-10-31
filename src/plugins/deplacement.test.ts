@@ -188,13 +188,24 @@ describe("magnetophone : sept réglages, et une graine qui tient", () => {
   it("TOUT À ZÉRO, LE RUBAN EST TRANSPARENT : un magnétophone neuf ne s'entend pas", async () => {
     const source = sonEssai(1);
     const out = (await lancer("magnetophone", [source], {
-      "Pleurage": 0, "Scintillement": 0, "Saturation": 0, "Décrochages": 0, "Souffle": 0,
+      "Écart de pleurage": 0, "Écart de scintillement": 0, "Saturation": 0, "Décrochages": 0, "Souffle": 0,
     })).valeurs[0] as AudioBuffer;
-    expect(rms(out)).toBeCloseTo(rms(source), 2);
+    // Sans modulation, le retard est nul partout et la lecture rend chaque échantillon tel quel.
+    expect(ecartMax(out, source)).toBe(0);
+  });
+
+  it("L'ANCIEN « PLEURAGE » N'EST PLUS LU : sa valeur, un pour cent d'un retard, serait vingt-six fois trop forte", async () => {
+    // Un graphe enregistré avant le renommage porte « Pleurage : 8 » et « Scintillement : 3 ». Ces
+    // clés ne sont plus celles d'aucun réglage : le nœud rend le son de son ouverture, et non
+    // ±8 % de hauteur.
+    const source = sonEssai(1);
+    const ancien = (await lancer("magnetophone", [source], { "Graine": 3, "Pleurage": 8, "Scintillement": 3 })).valeurs[0] as AudioBuffer;
+    const ouverture = (await lancer("magnetophone", [source], { "Graine": 3 })).valeurs[0] as AudioBuffer;
+    expect(ecartMax(ancien, ouverture)).toBe(0);
   });
 
   const reglages: [string, number, number][] = [
-    ["Pleurage", 0, 60], ["Pleurage Hz", 0.1, 3], ["Scintillement", 0, 30],
+    ["Écart de pleurage", 0, 10], ["Pleurage Hz", 0.1, 3], ["Écart de scintillement", 0, 10],
     ["Scintillement Hz", 4, 25], ["Saturation", 0, 12], ["Décrochages", 0, 20], ["Souffle", 0, 5],
   ];
   for (const [nom, bas, haut] of reglages) {
@@ -203,7 +214,7 @@ describe("magnetophone : sept réglages, et une graine qui tient", () => {
       // Les deux vitesses de modulation n'agissent que si leur profondeur est non nulle : les
       // exercer à profondeur zéro reviendrait à leur reprocher de ne rien faire là où il n'y a
       // rien à moduler.
-      const socle = { "Graine": 3, "Pleurage": 30, "Scintillement": 15 };
+      const socle = { "Graine": 3, "Écart de pleurage": 1, "Écart de scintillement": 1 };
       const a = (await lancer("magnetophone", [source], { ...socle, [nom]: bas })).valeurs[0] as AudioBuffer;
       const b = (await lancer("magnetophone", [source], { ...socle, [nom]: haut })).valeurs[0] as AudioBuffer;
       expect(ecartMax(a, b), `« ${nom} » ne peut rien faire`).toBeGreaterThan(1e-6);

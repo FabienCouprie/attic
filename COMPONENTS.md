@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **510 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **511 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 245 | [Conversion](#conversion) (24) · [Denoising](#denoising) (7) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (17) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 246 | [Conversion](#conversion) (24) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (17) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -3322,6 +3322,7 @@ This component writes a MIDI file from dated zones. Each zone gives one note: it
 | [Noise Profile](#noise-profile) | Captures the spectral profile of a noise. |
 | [Noise Reduction](#noise-reduction) | Spectral noise subtraction. |
 | [Restore compressed audio](#restore-compressed-audio) | Repairs the artifacts a low-bitrate encoding leaves in a recording. |
+| [Wow and Flutter Correction](#wow-and-flutter-correction) | Removes the speed variations of a tape, found in a fixed-frequency tone. |
 
 #### AI Denoise
 
@@ -3458,6 +3459,27 @@ This component repairs what a low-bitrate encoding has damaged: the grain, the h
 | Amount | slider | 100 % | 0 – 100 %, step 1 | The share of the result in the final sound. At one hundred, the sound is entirely the engine's, which imprints its colour even on a healthy sound. At zero, the received sound comes out unchanged and the engine runs for nothing. |
 | Chunk | number | 0 s | 0 – 120 s, step 1 | The duration of the chunks processed separately. At zero, the file goes through in one pass: better result, more memory. Chunks overlap by one second and crossfade. |
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the returned sound, measured identical to the fourth decimal between processor and card. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+
+#### Wow and Flutter Correction
+
+`correction-pleurage` · Processing → Denoising
+
+*Removes the speed variations of a tape, found in a fixed-frequency tone.*
+
+This component removes the speed variations of a tape from a sound: wow, which is slow, and flutter, which is fast. It finds them in a fixed-frequency tone recorded along with the music, mains hum, pilot tone or held note, whose pitch varied like everything else. The phase of this tone, followed step by step, gives the clock of the recording, and the sound is read again along it, through a windowed sinc interpolation. The tone is followed on all channels together, and the same clock applies to each of them. « Reference » gives the nominal frequency of this tone, in hertz: 50 or 60 for mains hum, or the frequency of a pilot tone. The tone must dominate the band around it; another sound at the same pitch mixes into its tracking. « Max deviation » sets the largest speed variation allowed, in percent. A step where the reference strays further, or becomes too weak, is declared uncertain and takes the mean speed of the reliable steps within the second around it. Beyond half of the steps uncertain, the reference is declared not found, and the sound comes out as it went in. « Max rate » sets the fastest variation followed, in hertz. The band followed around the reference is « Max deviation » applied to « Reference », plus this rate; it is brought back, when needed, to six tenths of « Reference », and the message then gives the rate followed. « Mean speed » decides the overall speed. « Kept » removes only the variations around the mean speed, and the duration stays that of the received sound. « Corrected » also brings the reference back to its nominal frequency: a transfer one percent too fast comes out one percent longer and lower. At the start and the end of the sound, over half of the tracking window, the deviation cannot be read; these passages take the mean speed of the steps that follow or precede them. The « Audio » output returns the corrected sound, with the received sample rate and channels. The « Deviation » output returns the speed deviation around the mean, instant by instant, over the received duration: one half means no deviation, zero and one mean « Max deviation » below and above. The message gives the peak and RMS deviation, the mean speed of the transfer, and the share of the sound where the reference was uncertain.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+| output | Deviation | curve |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Reference | number | 50 Hz | 20 – 20000 Hz, step 0.01 | The nominal frequency of the tone followed: 50 or 60 for mains hum, or that of a pilot tone. |
+| Max deviation | number | 3 % | 0.5 – 10 %, step 0.1 | The largest speed variation allowed. A step beyond it is declared uncertain. |
+| Max rate | number | 20 Hz | 1 – 100 Hz, step 1 | The fastest variation followed. The band followed stays under six tenths of « Reference ». |
+| Mean speed | choice | Kept | Kept / Corrected | Kept: only the variations around the mean are removed, and the duration stays. Corrected: the reference also returns to its nominal frequency. |
 
 ### Distortion and modulation
 
@@ -3791,7 +3813,7 @@ Multiplies the signal by a sine wave (carrier), producing sidebands, the sum and
 
 *The four faults of tape: wow, flutter, saturation, dropouts.*
 
-None of the four faults is decorative, and each has a distinct cause. Wow comes from the reel's eccentricity: a slow oscillation, under two hertz, that makes the pitch drift. Flutter comes from the capstan and the rollers: the same thing, but between five and twenty hertz, and the ear hears it as a tremble rather than a drift. Saturation comes from the oxide, which stops responding linearly long before it gives up, hence a gentle compression of the peaks, and harmonics that were not there. Dropouts come from holes in the magnetic coating: the sound vanishes for an instant, without warning. The first two share their machinery with the Doppler node, and it is the same idea: reading the signal at a distance that changes. An ambulance coming closer shortens the distance; a badly turning roller lengthens and shortens it by turns. Saturation is normalised: raising its drive changes the waveshape, not the volume. Without that, one would take it for a fault in the setting.
+This component applies the faults of a magnetic tape to a sound: wow, flutter, saturation and dropouts, with a hiss added. Wow and flutter vary the playback speed, hence pitch and time together; the sound is read again at that speed through a windowed sinc interpolation, and its duration stays that of the received sound. « Wow depth » sets how far the pitch rises and falls under wow, a slow oscillation of the speed, in percent: 0.3 moves it by 0.3 % either way. « Wow rate » sets the frequency of this oscillation, without changing the depth. « Flutter depth » and « Flutter rate » do the same for flutter, a faster oscillation of the speed. The two depths add up. « Saturation » sets the drive of a gentle compression of the peaks, through a hyperbolic tangent, which adds harmonics. It is scaled so that full scale stays full scale; a quieter sound comes out raised, its peaks compressed. At zero, there is no saturation. « Dropouts » sets the number of dips per second. Each lasts twenty milliseconds, opens and closes with a fade, and its depth is drawn at random. « Hiss » sets the level of an added noise, whose peak is this percentage of full scale. « Seed » sets the draw of dropouts and hiss: the same seed gives the same tape. Each channel gets its own draw. The « Audio » output returns the distorted sound, with the received length, sample rate and channels.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3800,10 +3822,10 @@ None of the four faults is decorative, and each has a distinct cause. Wow comes 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Wow | slider | 8 % | 0 – 60 %, step 1 | Amplitude of the slow pitch drift. A few per cent are enough to suggest a tired machine; beyond twenty, one hears an instrument detuning itself. |
-| Wow rate | slider | 0.6 Hz | 0.1 – 3 Hz, step 0.1 | Rate of the drift, that is the reel's turn. Under one hertz one hears a breathing; above two it starts to resemble a vibrato. |
-| Flutter | slider | 3 % | 0 – 30 %, step 1 | Amplitude of the fast tremble. It is far less noticeable than wow at equal amplitude, which is why its range goes less high. |
-| Flutter rate | slider | 9 Hz | 4 – 25 Hz, step 0.5 | Rate of the tremble, that is the capstan's turn. |
+| Wow depth | slider | 0.3 % | 0 – 10 %, step 0.05 | How far the pitch rises and falls under wow, at its peak: 0.3 moves it by 0.3 % either way, whatever « Wow rate ». |
+| Wow rate | slider | 0.6 Hz | 0.1 – 3 Hz, step 0.1 | Frequency of the slow oscillation of the speed. It does not change « Wow depth ». |
+| Flutter depth | slider | 1.7 % | 0 – 10 %, step 0.05 | How far the pitch rises and falls under flutter, at its peak: 1.7 moves it by 1.7 % either way, whatever « Flutter rate ». |
+| Flutter rate | slider | 9 Hz | 4 – 25 Hz, step 0.5 | Frequency of the fast oscillation of the speed. It does not change « Flutter depth ». |
 | Saturation | slider | 2 | 0 – 12, step 0.5 | Drive of the tape saturation. At zero, none. The level does not change as it is raised, only the waveshape does, and the harmonics that come with it. |
 | Dropouts | slider | 0.5 /s | 0 – 20 /s, step 0.5 | Holes per second in the magnetic coating. Each lasts some twenty milliseconds and opens with a fade, without which one would hear a click rather than an absence. |
 | Hiss | slider | 0.5 % | 0 – 5 %, step 0.1 | Level of tape hiss. It is heard only in the silences, which is exactly its original failing. |
