@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**510 composants**, dont **101** avec une vue propre et **7** sans lecteur générique.
+**511 composants**, dont **101** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -221,6 +221,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Convertir une voix | `convertir-voix` | 240 × 140 |
 | Convolution de deux sons | `convolution-deux-sons` | 240 × 162 |
 | Correction de hauteur | `correction-hauteur` | 240 × 140 |
+| Correction du pleurage | `correction-pleurage` | 240 × 140 |
 | Couleur RGB | `couleur-rgb` | 240 × 118 |
 | Couper aux mots | `couper-aux-mots` | 240 × 162 |
 | Courbe de dissonance | `courbe-dissonance` | 240 × 162 |

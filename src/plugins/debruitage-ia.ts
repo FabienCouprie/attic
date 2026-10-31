@@ -20,6 +20,7 @@ import {
 } from "../audio/gtcrn";
 import { lireModeleEmbarque } from "../modele-embarque";
 import { fiches as fichesRestauration } from "./restaurer-compresse";
+import { fiches as fichesPleurage } from "./correction-pleurage";
 
 const rmsGlobal = (a: Float32Array) => {
   let s = 0;
@@ -163,4 +164,6 @@ export const fiches: FicheAudio[] = ([
   // composant est de cette famille, « Traitement → Débruitage », donc c'est ici son ailleurs, et
   // l'index le prend sans une ligne de plus par le `...f_debruitage_ia` qu'il porte déjà.
   ...(fichesRestauration as FicheAudio[]),
+  // « CORRECTION DU PLEURAGE » EST VERSÉE ICI pour la même raison, et de la même famille.
+  ...(fichesPleurage as FicheAudio[]),
 ] as FicheAudio[]).map(avecDoc);

@@ -36,7 +36,7 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
   // Enlever ce qui n'est pas le son.
   "Débruitage": [
     "debruitage-ia", "reduction-bruit", "profil-bruit", "suppression-clics",
-    "restauration-ecretage", "dereverberation",
+    "restauration-ecretage", "dereverberation", "correction-pleurage",
   ],
   // Changer la durée sans changer la hauteur — ou la vitesse, qui change les deux.
   "Tempo": [

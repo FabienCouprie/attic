@@ -5,7 +5,8 @@
 // s'use. Ils sont pourtant le MÊME calcul : lire le signal à une distance qui change. Quand cette
 // distance croît, on lit plus lentement et le son baisse ; quand elle décroît, il monte. Une
 // ambulance qui approche raccourcit la distance ; un galet de magnétophone qui tourne mal
-// l'allonge et la raccourcit tour à tour. D'où un seul lecteur, éprouvé une fois.
+// l'allonge et la raccourcit tour à tour. Le Doppler lit sa source par l'inverse de ses instants
+// d'arrivée, `emissions`, et le magnétophone par `lireAvecRetard` : deux lecteurs, pour la même idée.
 //
 // POURQUOI LE RETARD PLUTÔT QU'UN RAPPORT DE FRÉQUENCE. On lit souvent l'effet Doppler écrit
 // comme `f' = f·c/(c−v)`, et l'on est tenté de transposer le son de ce rapport. C'est faux dès que
@@ -16,23 +17,31 @@
 // passage où elle bascule.
 
 import { creerAleatoire } from "../core/hasard";
+import { lireTabule, tableSinc } from "./lecture-sinc";
 
 /**
- * Lecture à retard variable, par interpolation linéaire.
+ * Lecture à retard variable, par le sinus cardinal fenêtré tabulé de `audio/lecture-sinc.ts`.
  *
  * `retards[i]` est le retard, EN ÉCHANTILLONS, à appliquer pour produire la sortie `i`. Un retard
  * fractionnaire est la règle et non l'exception : c'est lui qui porte le changement de hauteur, et
  * l'arrondir rendrait un son granuleux au lieu d'un glissement.
+ *
+ * L'INTERPOLATION LINÉAIRE QUI ÉTAIT ICI AJOUTAIT UNE ERREUR QUI MONTAIT AVEC LA FRÉQUENCE. Relevé
+ * contre la déformation exacte, sur un ton à 0,4 et aux réglages d'ouverture de la bande, à 44,1 kHz :
+ * −54,7 dB à 1 kHz, −26,8 dB à 5 kHz, −15,1 dB à 10 kHz et −8,5 dB à 15 kHz. Le même relevé, par ce
+ * noyau, donne −86,7, −89,5, −85,2 et −59,6 dB. Ce n'était pas un défaut de bande : l'erreur suivait la
+ * partie fractionnaire du retard, et non l'usure d'un oxyde.
+ *
+ * LA COUPURE EST CELLE DE LA LECTURE LA PLUS RAPIDE, lue sur la pente des retards : un retard qui
+ * décroît fait lire la source plus vite. Sans modulation, elle vaut un, et un retard entier rend la
+ * source échantillon pour échantillon.
  */
 export function lireAvecRetard(x: Float32Array, retards: Float32Array): Float32Array {
+  let vitesseMax = 1;
+  for (let i = 1; i < retards.length - 1; i++) vitesseMax = Math.max(vitesseMax, 1 - (retards[i + 1] - retards[i - 1]) / 2);
+  const noyau = tableSinc(1 / vitesseMax);
   const y = new Float32Array(retards.length);
-  for (let i = 0; i < retards.length; i++) {
-    const p = i - retards[i];
-    const i0 = Math.floor(p);
-    if (i0 < 0 || i0 + 1 >= x.length) continue;
-    const f = p - i0;
-    y[i] = x[i0] * (1 - f) + x[i0 + 1] * f;
-  }
+  for (let i = 0; i < retards.length; i++) y[i] = lireTabule(x, i - retards[i], noyau);
   return y;
 }
 
@@ -165,11 +174,11 @@ export function hauteurEloignee(f: number, vitesse: number, celerite: number): n
 // le son disparaît un instant, sans prévenir.
 
 export interface OptionsBande {
-  /** Amplitude du pleurage, en pour cent de variation de hauteur. */
+  /** Écart de hauteur du pleurage, en crête et en pour cent : 0,3 fait monter et descendre de 0,3 %. */
   pleurage: number;
   /** Fréquence du pleurage, en hertz. */
   pleurageHz: number;
-  /** Amplitude du scintillement, en pour cent. */
+  /** Écart de hauteur du scintillement, en crête et en pour cent. */
   scintillement: number;
   /** Fréquence du scintillement, en hertz. */
   scintillementHz: number;
@@ -183,21 +192,28 @@ export interface OptionsBande {
   frequence: number;
 }
 
-/** Le retard, en échantillons, que le pleurage et le scintillement imposent à chaque instant. */
+/**
+ * Le retard, en échantillons, que le pleurage et le scintillement imposent à chaque instant.
+ *
+ * L'ÉCART SE RÈGLE EN HAUTEUR, ET LE RETARD EN DÉCOULE. La hauteur suit la vitesse de lecture,
+ * 1 − r'(t) : pour qu'elle monte et descende de a à la pulsation ω, le retard vaut −(a/ω) sin(ωt).
+ * Le réglage était autrefois un pour cent d'un retard de base de 10 ms, que la pulsation multipliait :
+ * « 8 % » à 0,6 Hz rendait ±0,30 % de hauteur, et « 3 % » à 9 Hz ±1,70 %, relevé sur un ton pur ; le
+ * même réglage pesait quinze fois plus en scintillement qu'en pleurage, et changer le rythme changeait
+ * aussi la profondeur.
+ *
+ * LE RETARD EST CENTRÉ SUR ZÉRO, et la lecture peut prendre de l'avance : le son entier est là, et
+ * rien n'oblige à ne lire que le passé. Le retard de base qui le gardait positif décalait tout le son
+ * de 10 ms, et ne suffisait plus : un pleurage de 10 % à 0,1 Hz déplace la lecture de 0,16 s.
+ */
 export function retardsBande(n: number, o: OptionsBande): Float32Array {
   const r = new Float32Array(n);
-  // Un retard moyen d'un centième de seconde : la modulation doit pouvoir descendre SOUS lui sans
-  // devenir négative, ce qui reviendrait à lire le futur.
-  const base = 0.01 * o.frequence;
+  const wp = 2 * Math.PI * o.pleurageHz, ws = 2 * Math.PI * o.scintillementHz;
+  // Une pulsation nulle ne module rien : sans ce garde, a/ω vaudrait l'infini.
+  const kp = wp > 0 ? o.pleurage / 100 / wp : 0, ks = ws > 0 ? o.scintillement / 100 / ws : 0;
   for (let i = 0; i < n; i++) {
     const t = i / o.frequence;
-    const p = (o.pleurage / 100) * Math.sin(2 * Math.PI * o.pleurageHz * t);
-    const s = (o.scintillement / 100) * Math.sin(2 * Math.PI * o.scintillementHz * t + 1.7);
-    // LE RETARD DOIT RESTER POSITIF. Les deux modulations s'ajoutent : à 90 % chacune, leur somme
-    // descend à −1,8 et le retard devenait NÉGATIF, c'est-à-dire qu'on lisait le futur — ce que la
-    // lecture interprète comme un index hors bornes, donc du silence. Le plancher garde un
-    // vingtième du retard de base, assez pour que la modulation continue d'agir.
-    r[i] = base * Math.max(0.05, 1 + p + s);
+    r[i] = -o.frequence * (kp * Math.sin(wp * t) + ks * Math.sin(ws * t + 1.7));
   }
   return r;
 }
