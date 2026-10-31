@@ -36,6 +36,27 @@ function dossierModeles(contexte) {
   return resoudreRessource("acestep", contexte) ?? path.resolve(__dirname, "..", "public", "acestep");
 }
 
+/**
+ * Le dossier où se trouve un débruiteur, cherché comme le panneau des modèles le cherche.
+ *
+ * LE FICHIER SE RÉSOUT, ET NON LE DOSSIER. Le panneau sonde chaque fichier du manifeste par
+ * `resoudreRessource("acestep/<fichier>")`, donc dans le dossier de l'utilisateur puis dans les
+ * ressources livrées ; résoudre le dossier `acestep` s'arrête au premier qui existe. Relevé le
+ * 2026-10-31 sur la machine de Fabien : le dossier de l'utilisateur porte le rapide et pas la base,
+ * `public/acestep` porte les deux. Le panneau disait la base présente et n'offrait rien à prendre ;
+ * le pont, qui ne regardait que le premier dossier, refusait « Reprendre une chanson » sur « Base »
+ * en renvoyant vers ce même panneau. Les quatre rendus sur « Base » et « Accompagner une voix »
+ * tombaient de la même façon.
+ *
+ * `ace-synth` ne lit qu'un dossier, et y cherche aussi le décodeur et l'encodeur de texte : le
+ * dossier rendu est donc celui du débruiteur, et non un assemblage de fichiers venus de plusieurs.
+ * `acestep-dossier.test.ts` tient l'accord entre ce choix et l'inventaire du panneau.
+ */
+function dossierDuDebruiteur(fichier, contexte) {
+  const chemin = resoudreRessource(`acestep/${fichier}`, contexte);
+  return chemin ? path.dirname(chemin) : dossierModeles(contexte);
+}
+
 function dossierTemp() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "attic-acestep-"));
 }
@@ -137,8 +158,8 @@ async function rendre(options = {}, surAvancement, contexte) {
     // depuis le panneau des modèles, et le pont ne télécharge rien de lui-même. Mesuré le
     // 2026-10-31, le moteur s'arrête alors en anglais, sur « FATAL: synth_model '…' not found in
     // registry » ; la phrase dit ici quoi faire. Ce qui se refuse sans le disque passe avant.
-    const modeles = dossierModeles(contexte);
     const debruiteur = prepare.plan.synth_model;
+    const modeles = dossierDuDebruiteur(debruiteur, contexte);
     if (!fs.existsSync(path.join(modeles, debruiteur))) {
       return {
         ok: false,
@@ -161,4 +182,6 @@ async function rendre(options = {}, surAvancement, contexte) {
   }
 }
 
-module.exports = { planifier, rendre, cheminBinaire, dossierModeles, sortieAudio, drapeauxAudio };
+module.exports = {
+  planifier, rendre, cheminBinaire, dossierModeles, dossierDuDebruiteur, sortieAudio, drapeauxAudio,
+};
