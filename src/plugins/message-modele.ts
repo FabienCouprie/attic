@@ -21,10 +21,17 @@
 import { formaterOctets, type EtatModeles } from "../ui/etat-modeles";
 import { traduire } from "../i18n";
 
-/** Ce qui manque à ce nœud pour tourner : la taille à prendre, et les paquets concernés. */
+/**
+ * Ce qui manque à ce nœud pour tourner : la taille à prendre, et les paquets concernés.
+ *
+ * `ecartes` NOMME LES PAQUETS QU'UN RÉGLAGE DU NŒUD ÉCARTE pour cette exécution. Le manifeste dit
+ * ce dont un nœud PEUT avoir besoin ; un nœud qui choisit entre deux modèles n'a besoin que de
+ * l'un, et annoncer l'autre ferait prendre un téléchargement qui ne sert pas.
+ */
 export function manqueAuNoeud(
   etat: EtatModeles | null | undefined,
   noeudId: string,
+  ecartes: readonly string[] = [],
 ): { octets: number; paquets: string[] } | null {
   const modeles = etat?.modeles;
   if (!Array.isArray(modeles)) return null;
@@ -32,6 +39,7 @@ export function manqueAuNoeud(
   const paquets: string[] = [];
   for (const m of modeles) {
     if (!m?.noeuds?.includes(noeudId)) continue;
+    if (ecartes.includes(m.id)) continue;
     // `partiel` compte comme absent : un fichier à moitié pris se reprend en entier.
     if (m.complet && !m.partiel) continue;
     octets += m.octets ?? 0;
@@ -51,8 +59,9 @@ export function texteAvecModele(
   action: string,
   etat: EtatModeles | null | undefined,
   noeudId: string,
+  ecartes: readonly string[] = [],
 ): string {
-  const manque = manqueAuNoeud(etat, noeudId);
+  const manque = manqueAuNoeud(etat, noeudId, ecartes);
   if (!manque) return action;
   const note = traduire("progress.modele.premiere_fois", formaterOctets(manque.octets));
   return action ? `${action} ${note}` : note;
@@ -77,13 +86,15 @@ async function inventaire(): Promise<EtatModeles | null> {
  *
  * L'appel se place JUSTE AVANT le calcul bloquant : `onProgress` remplace la ligne d'état, donc un
  * message émis plus tôt serait recouvert et l'avertissement ne tiendrait pas pendant l'attente.
+ * `ecartes` : voir `manqueAuNoeud`.
  */
 export async function annoncerModele(
   ctx: { onProgress?: (texte: string) => void },
   noeudId: string,
   action: string,
+  ecartes: readonly string[] = [],
 ): Promise<void> {
-  const texte = texteAvecModele(action, await inventaire(), noeudId);
+  const texte = texteAvecModele(action, await inventaire(), noeudId, ecartes);
   // RIEN À DIRE VEUT DIRE NE RIEN DIRE. Les nœuds dont l'avancement vient d'ailleurs — le score
   // esthétique, les deux voix — passent une action vide : quand le modèle est déjà là, le texte est
   // vide à son tour, et l'émettre effacerait la ligne d'état que le calcul est en train d'écrire.

@@ -23,17 +23,68 @@ import type { ContexteDeRelais } from "./progression-pont";
 export const LANGUES = ["fr", "en", "es", "de", "it", "pt", "ru", "ja", "ko", "zh"];
 
 /**
+ * Les deux débruiteurs qu'un rendu peut prendre, et le paquet du manifeste qui porte chacun.
+ *
+ * L'IDENTIFIANT VOYAGE, JAMAIS LE FICHIER : `electron/acestep-plan.cjs` tient la correspondance
+ * avec les noms de fichier et refuse ce qu'il ne connaît pas. Le paquet sert à l'annonce du
+ * téléchargement, qui ne doit parler que du débruiteur choisi ; `choix-modele-chanson.test.ts`
+ * apparie les trois tables.
+ *
+ * MESURÉ LE 2026-10-31 sur un même plan, graine 4242, vingt secondes, RTX 2060 : un pas coûte le même
+ * prix sur les deux (8,56 s et 8,71 s pour huit pas), la base prend cinquante pas quand on la laisse
+ * faire (53,6 s), la carte reste à 2 004 Mio, et les deux rendent un morceau différent du même
+ * plan (corrélation 0,16 à 0,20).
+ */
+export const MODELES_RENDU = [
+  { id: "rapide", fr: "Rapide", en: "Fast", paquet: "acestep-debruiteur" },
+  { id: "base", fr: "Base", en: "Base", paquet: "acestep-debruiteur-base" },
+] as const;
+
+/** Le choix du débruiteur, sur les quatre rendus qui peuvent prendre l'un ou l'autre. */
+export const PARAMETRE_MODELE = {
+  nom: "Modèle", nomEn: "Model", type: "choix" as const,
+  options: MODELES_RENDU.map((m) => m.fr), optionsEn: MODELES_RENDU.map((m) => m.en),
+  optionIds: MODELES_RENDU.map((m) => m.id),
+  defaut: MODELES_RENDU[0].fr, defautEn: MODELES_RENDU[0].en,
+  doc: "Le débruiteur qui rend le son. « Pas de débruitage » à zéro, « Rapide » débruite en huit pas et « Base » en cinquante, ce qui allonge le calcul d'autant. Les deux rendent un morceau différent du même plan. « Base » est un second fichier de modèle, pris depuis le panneau des modèles.",
+  docEn: "The denoiser that renders the sound. With « Denoising steps » at zero, « Fast » denoises in eight steps and « Base » in fifty, which lengthens the computation as much. The two render a different piece from the same plan. « Base » is a second model file, taken from the models panel.",
+};
+
+/** Le débruiteur choisi, à passer au pont, ou rien quand le nœud n'offre pas ce choix. */
+export function modeleChoisi(ctx: { paramTexte: (nom: string, repli: string) => string }) {
+  const id = ctx.paramTexte("Modèle", "");
+  return id ? { modele: id } : {};
+}
+
+/**
+ * Les paquets que le choix écarte, pour que l'annonce du téléchargement n'en parle pas.
+ *
+ * LE MANIFESTE RELIE LES DEUX DÉBRUITEURS AUX QUATRE RENDUS, puisque chacun peut servir ; c'est le
+ * réglage qui dit lequel sert à cette exécution. Sans cette exclusion, choisir le rapide ferait
+ * annoncer les 1,9 Go de la base, et l'inverse.
+ */
+export function paquetsEcartes(ctx: { paramTexte: (nom: string, repli: string) => string }): string[] {
+  const id = ctx.paramTexte("Modèle", MODELES_RENDU[0].id) || MODELES_RENDU[0].id;
+  return MODELES_RENDU.filter((m) => m.id !== id).map((m) => m.paquet);
+}
+
+/**
  * Les réglages que tout rendu partage : le débruitage, le périphérique et le découpage du
  * décodage. Les quatre nœuds qui appellent le moteur de rendu les portent tous, et aucun ne les
  * recopie.
+ *
+ * ZÉRO DONNE LA VALEUR DU MODÈLE, pour les pas comme pour le glissement : le champ n'est pas posé,
+ * et le moteur résout seul huit pas et trois sur le rapide, cinquante et un sur la base, mesuré le
+ * 2026-10-31. C'est ce qui permet de changer de débruiteur sans retoucher deux réglages taillés pour
+ * l'autre.
  */
 export const PARAMETRES_RENDU = [
-  { nom: "Pas de débruitage", nomEn: "Denoising steps", type: "nombre" as const, plage: [4, 50], pas: 1, defaut: 8,
-    doc: "Nombre d'étapes de débruitage. Huit est la valeur du modèle rapide.",
-    docEn: "Number of denoising steps. Eight is the fast model's value." },
-  { nom: "Glissement", nomEn: "Shift", type: "nombre" as const, plage: [0.5, 6], pas: 0.5, defaut: 3,
-    doc: "Déplace les instants auxquels le débruitage travaille.",
-    docEn: "Moves the instants at which denoising works." },
+  { nom: "Pas de débruitage", nomEn: "Denoising steps", type: "nombre" as const, plage: [0, 50], pas: 1, defaut: 0,
+    doc: "Nombre d'étapes de débruitage. À zéro, celui du modèle : huit pour « Rapide », cinquante pour « Base ».",
+    docEn: "Number of denoising steps. At zero, the model's own: eight for « Fast », fifty for « Base »." },
+  { nom: "Glissement", nomEn: "Shift", type: "nombre" as const, plage: [0, 6], pas: 0.5, defaut: 0,
+    doc: "Déplace les instants auxquels le débruitage travaille. À zéro, la valeur du modèle : trois pour « Rapide », un pour « Base ».",
+    docEn: "Moves the instants at which denoising works. At zero, the model's own value: three for « Fast », one for « Base »." },
   // LE SEUL RÉGLAGE DONT L'EFFET SUR LE SON EST NET, et il n'était offert que par un nœud sur six.
   // Le moteur lit `guidance_scale` et `acestep-plan.cjs` sait l'écrire depuis l'origine ; seul
   // « Accompagner une voix » le passait, de sorte que les cinq autres rendus tournaient sur le
@@ -147,9 +198,13 @@ export const SORTIE_AUDIO = [{ nom: "Audio", type: "audio" as const, sousType: "
 
 /** Le paragraphe des réglages partagés, écrit une fois pour toutes les notices qui le portent. */
 export const NOTICE_RENDU_FR =
-  "« Pas de débruitage » décide du nombre d'étapes. Davantage allonge le calcul sans toujours "
-  + "changer ce qu'on entend.\n\n"
-  + "« Glissement » déplace les instants auxquels le débruitage travaille.\n\n"
+  "« Modèle » choisit le débruiteur qui rend le son. « Rapide » et « Base » rendent un morceau "
+  + "différent du même plan. « Base » est un second fichier de modèle, pris depuis le panneau des "
+  + "modèles ; absent, le composant le signale et ne rend rien.\n\n"
+  + "« Pas de débruitage » décide du nombre d'étapes. À zéro, le modèle prend le sien : huit pour "
+  + "« Rapide », cinquante pour « Base ». Le calcul s'allonge avec le nombre d'étapes.\n\n"
+  + "« Glissement » déplace les instants auxquels le débruitage travaille. À zéro, le modèle prend "
+  + "sa propre valeur : trois pour « Rapide », un pour « Base ».\n\n"
   + "« Guidage » décide du poids que la description du plan porte dans le rendu. À zéro, le champ "
   + "n'est pas posé et le moteur décide seul. En montant, le rendu suit la description de plus "
   + "près, et le risque d'artefacts croît avec elle. Sur un rendu qui part d'une entrée « Audio », "
@@ -160,9 +215,13 @@ export const NOTICE_RENDU_FR =
   + "empêche une jointure de s'entendre.\n\n";
 
 export const NOTICE_RENDU_EN =
-  "« Denoising steps » decides the number of steps. More lengthens the computation without always "
-  + "changing what is heard.\n\n"
-  + "« Shift » moves the instants at which denoising works.\n\n"
+  "« Model » chooses the denoiser that renders the sound. « Fast » and « Base » render a different "
+  + "piece from the same plan. « Base » is a second model file, taken from the models panel; when it "
+  + "is missing, the component reports it and returns nothing.\n\n"
+  + "« Denoising steps » decides the number of steps. At zero, the model takes its own: eight for "
+  + "« Fast », fifty for « Base ». The computation lengthens with the number of steps.\n\n"
+  + "« Shift » moves the instants at which denoising works. At zero, the model takes its own value: "
+  + "three for « Fast », one for « Base ».\n\n"
   + "« Guidance » decides how much weight the plan's description carries in the render. At zero, "
   + "the field is not set and the engine decides on its own. Higher up, the render follows the "
   + "description more closely, and the risk of artefacts grows with it. On a render that starts "
@@ -218,8 +277,9 @@ export async function rendreSurAudio(
     try {
       r = await pont.acestepRendre({
         plan, audioSource, audioTimbre,
-        pas: ctx.paramNombre("Pas de débruitage", 8),
-        shift: ctx.paramNombre("Glissement", 3),
+        ...modeleChoisi(ctx),
+        pas: ctx.paramNombre("Pas de débruitage", 0),
+        shift: ctx.paramNombre("Glissement", 0),
         peripherique: ctx.paramTexte("Calcul", "").trim(),
         tuile: ctx.paramNombre("Tuile du décodeur", 256),
         recouvrement: ctx.paramNombre("Recouvrement", 32),

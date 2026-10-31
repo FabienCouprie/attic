@@ -1222,7 +1222,11 @@
       "nom": "Débruiteur de base (ACE-Step)",
       "nomEn": "Base denoiser (ACE-Step)",
       "noeuds": [
-        "accompagner-voix"
+        "accompagner-voix",
+        "rendre-chanson",
+        "reprendre-chanson",
+        "retoucher-chanson",
+        "prolonger-chanson"
       ],
       "octets": 1970472000,
       "source": {

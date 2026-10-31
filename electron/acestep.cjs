@@ -121,8 +121,6 @@ async function rendre(options = {}, surAvancement, contexte) {
     } catch {
       return { ok: false, journal: "Le plan reçu n'est pas un JSON lisible." };
     }
-    if (options.pas) plan.inference_steps = options.pas;
-    if (options.shift) plan.shift = options.shift;
     // LES PAROLES REÇUES REMPLACENT CELLES DU PLAN, et rien d'autre n'est touché : le reste du
     // plan — forme, tempo, tonalité, codes — est ce que le planificateur a décidé, et on ne
     // corrige ici que le texte chanté.
@@ -134,9 +132,22 @@ async function rendre(options = {}, surAvancement, contexte) {
     // français ce qui se sait d'avance.
     const prepare = appliquerTache(plan, options);
     if (!prepare.ok) return { ok: false, journal: prepare.erreur };
+
+    // LE DÉBRUITEUR CHOISI PEUT MANQUER, et c'est ici qu'on le sait : les deux se prennent chacun
+    // depuis le panneau des modèles, et le pont ne télécharge rien de lui-même. Mesuré le
+    // 2026-10-31, le moteur s'arrête alors en anglais, sur « FATAL: synth_model '…' not found in
+    // registry » ; la phrase dit ici quoi faire. Ce qui se refuse sans le disque passe avant.
+    const modeles = dossierModeles(contexte);
+    const debruiteur = prepare.plan.synth_model;
+    if (!fs.existsSync(path.join(modeles, debruiteur))) {
+      return {
+        ok: false,
+        journal: `Le débruiteur « ${debruiteur} » n'est pas sur le disque : le prendre depuis le panneau des modèles.`,
+      };
+    }
     ecrireJson(requete, prepare.plan);
 
-    const args = ["--models", dossierModeles(contexte), "--request", requete];
+    const args = ["--models", modeles, "--request", requete];
     if (options.peripherique) args.push("--device", options.peripherique);
     if (options.tuile) args.push("--vae-chunk", String(options.tuile));
     if (options.recouvrement) args.push("--vae-overlap", String(options.recouvrement));

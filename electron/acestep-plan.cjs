@@ -40,6 +40,19 @@ const MODELE_RAPIDE = "acestep-v15-turbo-Q6_K.gguf";
  */
 const MODELE_BASE = "acestep-v15-base-Q6_K.gguf";
 
+/**
+ * Les débruiteurs qu'un nœud peut choisir, par un IDENTIFIANT et non par un nom de fichier.
+ *
+ * LA PAGE NE NOMME AUCUN FICHIER. Ce qu'elle envoie part dans `synth_model`, que `ace-synth` cherche
+ * parmi les fichiers du dossier des modèles ; un nom reçu tel quel laisserait la page désigner
+ * n'importe lequel. La correspondance vit donc ici, et un identifiant inconnu est refusé.
+ *
+ * LES PAS ET LE GLISSEMENT SUIVENT LE MODÈLE quand le nœud ne les pose pas, mesuré le 2026-10-31
+ * en laissant les deux champs absents : le moteur résout seul `steps=8, shift=3.0` sur le rapide et
+ * `steps=50, shift=1.0` sur la base. C'est ce que veut dire leur zéro côté nœud.
+ */
+const MODELES = { rapide: MODELE_RAPIDE, base: MODELE_BASE };
+
 const TACHES = {
   text2music: { source: false, base: false, piste: false, offerte: true },
   cover: { source: true, base: false, piste: false, offerte: true },
@@ -106,7 +119,15 @@ function appliquerTache(plan, options = {}) {
   // LE DÉBRUITEUR SUIT LA TÂCHE, et non l'appelant : c'est ici que se trouve le relevé de ce que
   // chacune réclame, et un nœud n'a donc pas à nommer un fichier de modèle.
   const sortie = { synth_model: fiche.base ? MODELE_BASE : MODELE_RAPIDE, ...plan, task_type: tache };
-  if (options.modele) sortie.synth_model = options.modele;
+  if (options.modele !== undefined && options.modele !== "") {
+    if (!Object.hasOwn(MODELES, options.modele)) {
+      return { ok: false, erreur: `Modèle inconnu : « ${options.modele} ».` };
+    }
+    sortie.synth_model = MODELES[options.modele];
+  }
+  // ZÉRO NE POSE RIEN, et le moteur prend alors la valeur du modèle : voir `MODELES`.
+  if (Number.isFinite(options.pas) && options.pas > 0) sortie.inference_steps = options.pas;
+  if (Number.isFinite(options.shift) && options.shift > 0) sortie.shift = options.shift;
   if (Number.isFinite(options.guidage)) sortie.guidance_scale = options.guidage;
   if (fiche.base && sortie.synth_model === MODELE_RAPIDE) {
     return {
@@ -173,6 +194,6 @@ function requetePlanification(options = {}) {
 }
 
 module.exports = {
-  TACHES, MODES, MODELE_RAPIDE, MODELE_BASE,
+  TACHES, MODES, MODELE_RAPIDE, MODELE_BASE, MODELES,
   appliquerTache, plageProlongement, plageDemandee, modeValide, requetePlanification,
 };
