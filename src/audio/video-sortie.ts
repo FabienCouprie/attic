@@ -255,6 +255,11 @@ export interface OptionsSortie {
  * LA CONVERSION EST COMPOSABLE, et c'est ce qui permet le partage du travail : elle ajoute la piste
  * vidéo et la mène, pendant que nous menons la piste audio sur la même sortie. Démarrer et clore le
  * conteneur nous revient alors, puisque personne d'autre n'en a la charge.
+ *
+ * L'ARRÊT NOUS REVIENT AUSSI, pour la même raison : une conversion composable annulée arrête la
+ * copie, mais elle laisse la sortie ouverte, puisqu'elle ne l'a pas ouverte. Les deux voisines n'ont
+ * pas ce souci, leur conversion menant sa sortie. Sans cet abonnement, l'encodage du mélange allait
+ * jusqu'au bout après « Arrêter » : 3,07 s sur un film de onze minutes, mesuré dans l'application.
  */
 export async function ecrireMp4(
   video: VideoOuverte,
@@ -284,13 +289,27 @@ export async function ecrireMp4(
   });
   output.addAudioTrack(source);
 
-  await output.start();
-  // Le son d'abord : il est déjà en mémoire, et la copie de l'image est ce qui prend du temps.
-  await source.add(melange);
-  source.close();
-  if (o.onProgress) conversion.onProgress = (f) => o.onProgress?.(f);
-  await conversion.execute();
-  await output.finalize();
+  // Annuler la sortie ferme l'encodeur du son et refuse ce qu'on lui ajoute ensuite ; un arrêt
+  // survenu pendant l'ouverture de la conversion n'enverra plus d'événement, d'où le premier appel.
+  const annuler = () => { void conversion.cancel(); void output.cancel(); };
+  if (o.signal?.aborted) annuler();
+  o.signal?.addEventListener("abort", annuler, { once: true });
+  try {
+    await output.start();
+    // Le son d'abord : il est déjà en mémoire, et la copie de l'image est ce qui prend du temps.
+    await source.add(melange);
+    source.close();
+    if (o.onProgress) conversion.onProgress = (f) => o.onProgress?.(f);
+    await conversion.execute();
+    await output.finalize();
+  } catch (e) {
+    // L'annulation de la sortie est attendue avant de rendre la main : l'appelant qui reçoit l'arrêt
+    // ne laisse alors derrière lui aucun encodeur ouvert.
+    if (o.signal?.aborted) await output.cancel();
+    throw e;
+  } finally {
+    o.signal?.removeEventListener("abort", annuler);
+  }
 
   return new Blob([cible.buffer!], { type: "video/mp4" });
 }

@@ -43,8 +43,6 @@ const DETTE = new Set([
   // Deux bornes optionnelles que le rendu n'emploie pas.
   "src/audio/spectrogramme-fractal.ts OptionsSpectrogrammeFractal.minFreq",
   "src/audio/spectrogramme-fractal.ts OptionsSpectrogrammeFractal.maxFreq",
-  // `ecrireMp4` ne s'abonne pas à l'annulation, là où ses deux voisines du fichier le font.
-  "src/audio/video-sortie.ts OptionsSortie.signal",
   // `glissandoInterieur` prend la taille de la trame elle-même ; celle que l'appelant passe était
   // versée dans une variable que rien n'employait.
   "src/audio/spectral-wishart.ts OptionsGlissandoInterieur.taille",
