@@ -45,6 +45,9 @@ const DETTE = new Set([
   "src/audio/spectrogramme-fractal.ts OptionsSpectrogrammeFractal.maxFreq",
   // `ecrireMp4` ne s'abonne pas à l'annulation, là où ses deux voisines du fichier le font.
   "src/audio/video-sortie.ts OptionsSortie.signal",
+  // `glissandoInterieur` prend la taille de la trame elle-même ; celle que l'appelant passe était
+  // versée dans une variable que rien n'employait.
+  "src/audio/spectral-wishart.ts OptionsGlissandoInterieur.taille",
 ]);
 
 const EST_TYPE_D_OPTIONS = /^Options/;
@@ -191,6 +194,16 @@ function analyserOptions(sources: Map<string, string>): Map<string, Bilan> {
       visite(portee);
       return out;
     };
+    /** La valeur lue finit dans une variable que rien n'emploie, `?? défaut` compris : ce n'est pas une lecture. */
+    const jetee = (acces: ts.Node, portee: ts.Node): boolean => {
+      let n = acces;
+      while (ts.isParenthesizedExpression(n.parent) || ts.isAsExpression(n.parent) || ts.isNonNullExpression(n.parent)
+        || (ts.isBinaryExpression(n.parent) && (n.parent.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken
+          || n.parent.operatorToken.kind === ts.SyntaxKind.BarBarToken))) n = n.parent;
+      const d = n.parent;
+      return ts.isVariableDeclaration(d) && d.initializer === n && ts.isIdentifier(d.name)
+        && references(portee, d.name.text, d.name).length === 0;
+    };
     const lireMotif = (vises: string[], motif: ts.ObjectBindingPattern, portee: ts.Node) => {
       for (const e of motif.elements) {
         if (e.dotDotDotToken) { fuir(vises, `reste déstructuré, ${ou(e)}`); continue; }
@@ -206,8 +219,10 @@ function analyserOptions(sources: Map<string, string>): Map<string, Bilan> {
       if (!ts.isIdentifier(nom)) return fuir(vises, `porteur en tableau, ${ou(nom)}`);
       for (const r of references(portee, nom.text, nom)) {
         const p = r.parent;
-        if (ts.isPropertyAccessExpression(p) && p.expression === r) lire(vises, p.name.text);
-        else if (ts.isElementAccessExpression(p) && p.expression === r && ts.isStringLiteral(p.argumentExpression)) lire(vises, p.argumentExpression.text);
+        if (ts.isPropertyAccessExpression(p) && p.expression === r) { if (!jetee(p, portee)) lire(vises, p.name.text); }
+        else if (ts.isElementAccessExpression(p) && p.expression === r && ts.isStringLiteral(p.argumentExpression)) {
+          if (!jetee(p, portee)) lire(vises, p.argumentExpression.text);
+        }
         else if (ts.isVariableDeclaration(p) && p.initializer === r && ts.isObjectBindingPattern(p.name)) lireMotif(vises, p.name, portee);
         else if (ts.isCallExpression(p) && resteDansSrc(vises, p, p.arguments.indexOf(r))) continue;
         else if (ts.isSpreadAssignment(p) && ts.isObjectLiteralExpression(p.parent)) {
@@ -278,6 +293,9 @@ describe("les champs du type des options d'un module audio", () => {
       const couche = () => ({ activation: "linear" });
       export function f(options: OptionsC) { const { mode, activation } = options; return [mode, couche()]; }` }))
       .toEqual(["OptionsC.activation"]);
+    // La même faute écrite par l'accès : la valeur va dans une variable que rien n'emploie.
+    expect(sans({ "src/audio/c.ts": `${TYPE}
+      export function f(o: OptionsC) { const a = o.activation ?? "relu"; return o.mode; }` })).toEqual(["OptionsC.activation"]);
     // Le 2026-10-31, après le lint : le champ n'est plus même déstructuré.
     expect(sans({ "src/audio/c.ts": `${TYPE}
       export function f(options: OptionsC) { const { mode } = options; return mode; }` })).toEqual(["OptionsC.activation"]);
