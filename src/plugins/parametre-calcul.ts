@@ -2,9 +2,24 @@
 //
 // ═══ CE QUE CES IDENTIFIANTS SONT, ET POURQUOI ILS NE VALENT PAS PARTOUT ═══
 //
-// Ce sont les périphériques que comprennent les binaires joints par le PONT NATIF de la famille
-// ACE-Step et sherpa : la chaîne vide pour « laisse le moteur choisir », puis `CPU`, `Vulkan0`,
-// `Vulkan1`, `CUDA0`. Ils voyagent tels quels jusqu'au binaire, qui les lit.
+// Ce sont les périphériques que comprennent les binaires joints par le PONT NATIF, ceux
+// d'audio.cpp, d'acestep.cpp et de stable-diffusion.cpp : la chaîne vide pour « laisse le moteur
+// choisir », puis `CPU`, `Vulkan0`, `Vulkan1`. Ils voyagent tels quels jusqu'au binaire, qui les lit.
+//
+// ═══ CUDA 0 N'EST PLUS OFFERT : AUCUN DES TROIS BINAIRES LIVRÉS NE LE CONNAÎT ═══
+//
+// Les trois sont des builds VULKAN (`scripts/outils-manifest.json`), et l'option échouait sur
+// chacun, mesuré le 2026-10-31 sur la machine de développement : `audiocpp_cli` sort en code 1 sur
+// « CUDA backend requested but it is not registered in this build », `ace-lm` sur « --device CUDA0
+// not found. Available: Vulkan0 Vulkan1 CPU », `sd-cli` sur « backend 'CUDA0' was not found ». Le
+// nœud tombait donc en erreur, pendant que l'inspecteur, qui ne trouvait pas l'identifiant dans sa
+// liste, affichait « Automatique ».
+//
+// UN PROJET QUI LE PORTE RETOMBE SUR « AUTOMATIQUE », par `optionsHeritees` et non par un repli
+// écrit dans chaque pont : `valeurCanoniqueChoix` (`i18n.tsx`) rend telle quelle une valeur qu'il ne
+// reconnaît pas, et elle serait arrivée au binaire. « Automatique » plutôt qu'un numéro de carte,
+// parce que ce numéro dépend de la machine : `Vulkan0` est le circuit intégré sur celle de
+// développement.
 //
 // HUIT DÉCLARATIONS PORTAIENT CETTE LISTE, identiques identifiant pour identifiant, et rien ne
 // les tenait ensemble. Un périphérique ajouté au moteur aurait dû être écrit huit fois, et c'est
@@ -14,7 +29,7 @@
 //
 // « Bruitage IA » passe par Stable Audio 3, qui tourne sous DIRECTML et non sous Vulkan ou CUDA :
 // voir `electron/stable-audio-3.cjs`, dont la table des fournisseurs ne connaît que `auto`,
-// `carte` et `processeur`. Lui donner CETTE liste-ci rendrait TROIS OPTIONS SUR CINQ INERTES, et
+// `carte` et `processeur`. Lui donner CETTE liste-ci rendrait TROIS OPTIONS SUR QUATRE INERTES, et
 // en silence : `FOURNISSEURS[calcul] ?? FOURNISSEURS.auto` retombe sur « auto » pour tout
 // identifiant qu'il ne connaît pas. Un réglage qui ne peut rien changer est précisément ce que le
 // contrat de composant interdit, et c'est pourquoi ce nœud garde son vocabulaire.
@@ -43,11 +58,19 @@ const CALCULS = [
   { id: "CPU", fr: "Processeur", en: "Processor" },
   { id: "Vulkan0", fr: "Vulkan 0", en: "Vulkan 0" },
   { id: "Vulkan1", fr: "Vulkan 1", en: "Vulkan 1" },
-  { id: "CUDA0", fr: "CUDA 0", en: "CUDA 0" },
 ];
 
 /** Les identifiants, pour le garde qui refuse qu'une seconde liste apparaisse ailleurs. */
 export const IDS_CALCUL: readonly string[] = CALCULS.map((c) => c.id);
+
+/**
+ * Les valeurs retirées de la liste, et l'identifiant qu'un projet qui les porte lit désormais.
+ *
+ * L'IDENTIFIANT ET SON LIBELLÉ : l'inspecteur enregistre le premier, un graphe écrit à la main peut
+ * porter le second, que `valeurCanoniqueChoix` résolvait par son rang. Aucun graphe livré ne porte
+ * l'un ou l'autre, relevé le 2026-10-31. Voir l'en-tête pour la raison du retrait.
+ */
+export const CALCULS_RETIRES: Readonly<Record<string, string>> = { CUDA0: "", "CUDA 0": "" };
 
 const COMMUN_FR = "« Automatique » laisse le moteur prendre ce qu'il juge le meilleur, ce qui n'est"
   + " pas toujours la carte graphique : une machine à deux cartes expose souvent le circuit intégré"
@@ -69,6 +92,7 @@ export const parametreCalcul = (invariance?: string, invarianceEn?: string) => (
   nom: "Calcul", nomEn: "Compute", type: "choix" as const,
   options: CALCULS.map((c) => c.fr), optionsEn: CALCULS.map((c) => c.en),
   optionIds: CALCULS.map((c) => c.id),
+  optionsHeritees: CALCULS_RETIRES,
   defaut: "Automatique", defautEn: "Automatic",
   doc: `Le périphérique de calcul.${invariance ? ` ${invariance}` : ""} ${COMMUN_FR}`,
   docEn: `The compute device.${invarianceEn ? ` ${invarianceEn}` : ""} ${COMMUN_EN}`,

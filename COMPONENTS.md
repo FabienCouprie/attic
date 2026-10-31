@@ -97,7 +97,7 @@ This component builds an instrumental backing around an isolated vocal, followin
 | Denoising steps | number | 50 | 4 – 50, step 1 | Number of denoising steps. Fifty is this model's value. |
 | Shift | number | 1 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. One is this model's value. |
 | Guidance | slider | 7.5 | 1 – 10, step 0.5 | How much weight the plan's description carries. At the lowest, the backing stays close to the received vocal; higher up, it moves away and follows the description. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
 
@@ -120,7 +120,7 @@ This component makes an audio excerpt's voice say a text. The « Voice » input 
 | Text | text | `Hello, this is a voice cloning test.` |  | What will be said. The « Text » input replaces it when connected. |
 | Language | choice | Automatic | Automatic / French / English / Spanish / German / Italian / Portuguese | The pronunciation language. « Automatic » lets the model decide from the text; imposing a language clearly changes the pronunciation and the length of the result. |
 | Excerpt transcript | text | — |  | The text the excerpt pronounces. Optional: the model does without it, and it only helps when the excerpt is hard to read. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Compose a Plan
 
@@ -172,7 +172,7 @@ This component renders a new version of an audio, following the song plan it rec
 | Denoising steps | number | 8 | 4 – 50, step 1 | Number of denoising steps. Eight is the fast model's value. |
 | Shift | number | 3 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. |
 | Guidance | slider | 7.5 | 0 – 20, step 0.5 | How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
 
@@ -198,7 +198,7 @@ This component adds music before or after an audio, following the song plan it r
 | Denoising steps | number | 8 | 4 – 50, step 1 | Number of denoising steps. Eight is the fast model's value. |
 | Shift | number | 3 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. |
 | Guidance | slider | 7.5 | 0 – 20, step 0.5 | How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
 
@@ -224,7 +224,7 @@ This component writes a song's plan from a description, and returns it as text. 
 | Singing language | choice | French | French / English / Spanish / German / Italian / Portuguese / Russian / Japanese / Korean / Chinese | The language the voice sings in. The ten offered are those the model holds best; it knows more, less well sung. When « Lyrics » is empty, the written text does not always follow this language. |
 | Length | number | 60 s | 0 – 600 s, step 10 | Target length. At zero, the planner chooses, and it aims long. |
 | Seed | number | -1 | -1 – 999999, step 1 | Makes the plan reproducible. At minus one, every run differs. When « Lyrics » is empty, it also decides the written text, which does not always follow the requested language: giving the lyrics is the only way to settle what will be sung. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Plan Loop Start
 
@@ -264,7 +264,7 @@ This component renders the audio of a plan written by « Plan a Song ». The pla
 | Denoising steps | number | 8 | 4 – 50, step 1 | Number of denoising steps. Eight is the fast model's value. |
 | Shift | number | 3 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. |
 | Guidance | slider | 7.5 | 0 – 20, step 0.5 | How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
 
@@ -290,7 +290,7 @@ This component repaints a passage of an audio between two instants, and keeps th
 | Denoising steps | number | 8 | 4 – 50, step 1 | Number of denoising steps. Eight is the fast model's value. |
 | Shift | number | 3 | 0.5 – 6, step 0.5 | Moves the instants at which denoising works. |
 | Guidance | slider | 7.5 | 0 – 20, step 0.5 | How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 | Decoder tile | number | 256 frames | 64 – 1024 frames, step 64 | Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length. |
 | Overlap | number | 32 frames | 0 – 128 frames, step 8 | Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard. |
 
@@ -313,7 +313,7 @@ This component writes a song's complete plan from a short sentence, and returns 
 | Sentence | text | `a sad piano ballad` |  | What is wanted, in a few words. The « Sentence » input replaces it when connected. |
 | Singing language | choice | French | French / English / Spanish / German / Italian / Portuguese / Russian / Japanese / Korean / Chinese | The language the voice sings in. The ten offered are those the model holds best. |
 | Seed | number | -1 | -1 – 999999, step 1 | Makes the plan reproducible. At minus one, every run differs. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 ### Audio
 
@@ -1625,7 +1625,7 @@ This component draws an image from a description in words, with MOSS-Image, publ
 | Steps | slider | 30 | 4 – 60, step 1 | The number of denoising steps. Few steps give a less finished image; the compute time grows with their number. |
 | Guidance | slider | 3 | 1 – 10, step 0.5 | How closely the image follows the text. Low, the model composes more freely; high, it sticks to the words. |
 | Seed | slider | -1 | -1 – 999999, step 1 | The starting draw. At minus one, it is drawn at random and the message says which one was used. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 ### Keyboards
 
@@ -2883,7 +2883,7 @@ This component keeps what is said and has it said by another voice. The « Audio
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Seed | number | 42 | 0 – 999999, step 1 | The seed of the draw. With the same seed and the same inputs, the result is the same; changing it gives another take of the same conversion. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. It changes the compute time. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Extract Voice
 
@@ -3032,7 +3032,7 @@ This component transcribes a recording into MIDI notes, one track per recognized
 | Tempo | number | 0 BPM | 0 – 400 BPM, step 1 | The tempo written in the file. At zero, the one the engine wrote is kept. No note changes instant; the bars, however, follow this number. |
 | Quantization | choice | None | None / 1/4 / 1/8 / 1/16 / 1/32 / 1/8 triplet / 1/16 triplet | The grid the onsets are placed on. Each onset joins the nearest subdivision, which moves it; the report's index says how far the chosen tempo puts them from it. |
 | Quantize ends | choice | No | No / Yes | Applies the grid to note ends, which otherwise keep their duration. Without effect when « Quantization » is « None », since there is then no grid. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the notes, which are the same from one device to another. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. It changes the compute time and not the notes, which are the same from one device to another. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### MP3 → WAV
 
@@ -3458,7 +3458,7 @@ This component repairs what a low-bitrate encoding has damaged: the grain, the h
 |---|---|---|---|---|
 | Amount | slider | 100 % | 0 – 100 %, step 1 | The share of the result in the final sound. At one hundred, the sound is entirely the engine's, which imprints its colour even on a healthy sound. At zero, the received sound comes out unchanged and the engine runs for nothing. |
 | Chunk | number | 0 s | 0 – 120 s, step 1 | The duration of the chunks processed separately. At zero, the file goes through in one pass: better result, more memory. Chunks overlap by one second and crossfade. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the returned sound, measured identical to the fourth decimal between processor and card. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. It changes the compute time and not the returned sound, measured identical to the fourth decimal between processor and card. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Wow and Flutter Correction
 
@@ -4238,7 +4238,7 @@ This component receives a recording and the text spoken in it, and says where ea
 | Editing | choice | Keep the place | Keep the place / Join end to end | Where to place what is kept. « Keep the place » silences the rest without moving anything, so that the result overlays the original. « Join end to end » puts the cut at the start and shortens the output. |
 | Fade | number | 10 ms | 0 – 200 ms, step 1 | The fade length at both edges of the cut. At zero, the cut is abrupt and may click. Since words that follow one another are joined first, a word sequence receives only one fade at each end. |
 | Language | choice | French | French / English / German / Spanish / Italian / Portuguese / Russian / Chinese / Cantonese / Japanese / Korean | The language of the text, among the eleven the engine knows. A language that does not match the text degrades the placement without refusing the work. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the instants found. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. It changes the compute time and not the instants found. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Audio Join
 
@@ -5115,7 +5115,7 @@ This component splits a recording into speaker turns. For each turn it gives the
 | Speaker | choice | All | All / The first / The second / The third / The fourth | The speaker to keep in the returned sound, by order of appearance. At « All », the sound comes out unchanged and only the texts inform. A rank the recording does not contain returns a silent sound, and the report says so. |
 | Editing | choice | Keep the place | Keep the place / Join end to end | Where to place what is kept. « Keep the place » silences the rest without moving anything, so that the result overlays the original. « Join end to end » puts the turns one after another, which shortens the output accordingly. Without effect when « Speaker » is « All », since the sound then comes out whole and there is nothing to remove. |
 | Fade | number | 10 ms | 0 – 200 ms, step 1 | The fade length at both edges of each kept turn. At zero, the cut is abrupt and may click. A fade longer than half a turn is brought back to that half. Without effect when « Speaker » is « All », since no cut is made. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the turns found. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. It changes the compute time and not the turns found. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Zone Mask
 
@@ -7807,7 +7807,7 @@ This component separates a track into two: the voice on one side, the backing on
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Phase Reconstruction (PGHI)
 
@@ -9371,7 +9371,7 @@ This component names the sounds present in an audio, among five hundred and twen
 |---|---|---|---|---|
 | Label count | number | 10 | 1 – 20, step 1 | How many labels to ask the model for, from the best scored to the least well scored. |
 | Threshold | number | 0 % | 0 – 50 %, step 1 | Minimum score for a label to be kept. At zero, all are kept. Scores fall quickly: beyond the third label they often go under one per cent, so a high threshold also discards correct labels. |
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Emotional Analysis
 
@@ -11559,7 +11559,7 @@ This component transcribes the recording received on the « Audio » input and d
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the words found. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. It changes the compute time and not the words found. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Sherpa ASR
 
@@ -11596,7 +11596,7 @@ This component transcribes the speech of the recording received on the « Audio 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 / CUDA 0 | The compute device. It changes the compute time and not the returned text. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
+| Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. It changes the compute time and not the returned text. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
 #### Vosk (speech recognition)
 

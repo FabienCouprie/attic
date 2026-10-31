@@ -15,7 +15,7 @@
 // `onnxruntime-web` dans la page pour le débruitage et la séparation, DirectML pour Stable Audio.
 //
 // D'OÙ LA SECONDE RÈGLE, qui est la vraie leçon de ce chantier : unifier le vocabulaire de
-// « Bruitage IA » sur celui-ci rendrait TROIS OPTIONS SUR CINQ INERTES, et en silence —
+// « Bruitage IA » sur celui-ci rendrait TROIS OPTIONS SUR QUATRE INERTES, et en silence —
 // `electron/stable-audio-3.cjs` retombe sur « auto » pour tout identifiant qu'il ne connaît pas.
 // Le garde inscrit donc l'exception AVEC SA RAISON, pour que la prochaine homogénéisation ne la
 // prenne pas pour un oubli.
@@ -25,9 +25,11 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { IDS_CALCUL, IDS_CALCUL_DML } from "./parametre-calcul";
+import { CALCULS_RETIRES, IDS_CALCUL, IDS_CALCUL_DML } from "./parametre-calcul";
 import { registre } from "../audio/adaptateur";
 import "../composition";
+import { valeurCanoniqueChoix } from "../i18n";
+import type { ParametreDef } from "../core/types";
 
 const ICI = dirname(fileURLToPath(import.meta.url));
 const MODULE = "parametre-calcul.ts";
@@ -50,8 +52,8 @@ const fiches = () => registre.tousLesPlugins()
   .filter((d) => !d.id.startsWith("__") && !d.id.startsWith("frontiere"));
 
 const reglagesCalcul = () => fiches().flatMap((d) => {
-  const ps = (d as unknown as { parametres?: { nom?: string; optionIds?: string[] }[] }).parametres ?? [];
-  return ps.filter((p) => p?.nom === "Calcul").map((p) => ({ id: d.id, ids: p.optionIds ?? [] }));
+  const ps = (d as unknown as { parametres?: ParametreDef[] }).parametres ?? [];
+  return ps.filter((p) => p?.nom === "Calcul").map((p) => ({ id: d.id, ids: p.optionIds ?? [], p }));
 });
 
 describe("le réglage de périphérique", () => {
@@ -114,6 +116,34 @@ describe("le réglage de périphérique", () => {
       "n'existe plus, et par couvrir le défaut qu'elle était censée excepter.",
       "",
     ].join("\n")).toEqual([]);
+  });
+
+  it("UN PROJET ENREGISTRÉ AVEC « CUDA 0 » RETOMBE SUR « AUTOMATIQUE », sur chaque nœud du pont", () => {
+    // CUDA 0 A ÉTÉ RETIRÉ PARCE QU'AUCUN BINAIRE LIVRÉ NE LE CONNAÎT, et un projet peut encore le
+    // porter. `valeurCanoniqueChoix` est ce que `paramTexte` appelle avant de rendre la valeur au
+    // nœud ; sans héritage, il la rendrait telle quelle, et le binaire sortirait en erreur.
+    const pont = reglagesCalcul().filter((r) => !SOUS_DIRECTML[r.id]);
+    expect(pont.length, "aucun nœud du pont trouvé : le cas n'éprouverait rien").toBeGreaterThan(0);
+    const fautifs = pont.flatMap((r) => Object.keys(CALCULS_RETIRES)
+      .map((ancien) => ({ ancien, lu: String(valeurCanoniqueChoix(r.p, ancien)) }))
+      .filter(({ lu }) => lu !== "")
+      .map(({ ancien, lu }) => `${r.id} : « ${ancien} » est lu « ${lu} »`));
+    expect(fautifs, [
+      "",
+      "UNE VALEUR RETIRÉE DE LA LISTE N'EST PLUS RAMENÉE SUR « AUTOMATIQUE ».",
+      "",
+      "Elle arrive alors au binaire, qui refuse un périphérique qu'il ne connaît pas. Déclarer",
+      "`optionsHeritees: CALCULS_RETIRES` dans `parametreCalcul`.",
+      "",
+    ].join("\n")).toEqual([]);
+  });
+
+  it("ET UNE VALEUR RETIRÉE N'EST PLUS OFFERTE, ET DÉSIGNE UNE OPTION QUI L'EST", () => {
+    // Revenue dans la liste, elle serait lue avant l'héritage, et l'entrée décrirait un retrait
+    // qui n'a plus lieu ; désignant une option absente, elle tomberait dans le vide sans rien dire.
+    const offertes = Object.keys(CALCULS_RETIRES).filter((v) => IDS_CALCUL.includes(v));
+    const perdues = Object.values(CALCULS_RETIRES).filter((v) => !IDS_CALCUL.includes(v));
+    expect({ offertes, perdues }).toEqual({ offertes: [], perdues: [] });
   });
 });
 

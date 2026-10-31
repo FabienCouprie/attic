@@ -101,7 +101,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "The engine that generates the sound. Only one is wired so far." },
       // LE VOCABULAIRE DE DIRECTML, ET NON CELUI DU PONT : Stable Audio 3 tourne sous
       // `onnxruntime-node`, qui n'expose que le processeur et la carte. Lui donner `Vulkan0` ou
-      // `CUDA0` rendrait trois options inertes, `electron/stable-audio-3.cjs` retombant sur
+      // `Vulkan1` rendrait trois options inertes, `electron/stable-audio-3.cjs` retombant sur
       // « auto » pour tout identifiant inconnu. Les deux vocabulaires sont déclarés une fois
       // chacun dans `plugins/parametre-calcul.ts`.
       parametreCalculDirectML(),
