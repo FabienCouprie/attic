@@ -6,7 +6,7 @@
 import { parseMidi, writeMidi } from "midi-file";
 import { sf2Chargee } from "../plugins/soundfontGlobal";
 import { traduire } from "../i18n";
-import { analyserMidi } from "./midi";
+import { analyserMidi, midiDuFichier } from "./midi";
 import { normaliserBuffer, rendreAvecSF2 } from "./midi-soundfont";
 import { bpmInitial, evenementsAbsolus } from "./midi-ecriture";
 import { frequenceDeTravail } from "./frequence-de-travail";
@@ -17,8 +17,8 @@ export async function joindreMidi(
   chevauchementSec: number,
 ): Promise<File> {
   const tpmSortie = 480;
-  const midi1 = parseMidi(new Uint8Array(await fichier1.arrayBuffer()));
-  const midi2 = parseMidi(new Uint8Array(await fichier2.arrayBuffer()));
+  const midi1 = await midiDuFichier(fichier1);
+  const midi2 = await midiDuFichier(fichier2);
 
   const evts1 = evenementsAbsolus(midi1, tpmSortie, false);
   const evts2 = evenementsAbsolus(midi2, tpmSortie, true);

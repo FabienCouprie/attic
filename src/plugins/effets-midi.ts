@@ -9,15 +9,14 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
-import { parseMidi } from "midi-file";
-import { appliquerInstrumentMidi, joindreMidi, bouclerMidi, analyserMidi } from "../audio";
+import { appliquerInstrumentMidi, joindreMidi, bouclerMidi, lireMidi, notesDuMidi } from "../audio";
 import { eclaircir, echoNotes, evenements, imposerRythme, palindrome, repeterEtTourner, type SensMotif } from "../audio/motifs-midi";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
 import { PARAMETRE_TONIQUE } from "../audio/cles";
 import { TEMPERAMENTS, noteTemperee, tableEcarts, temperament } from "../audio/temperaments";
 import { apprendre, engendrer, statistiques, tableEnTexte } from "../audio/markov";
 
-import { canalDominant, notesDuMidi, rendreMotif, PARAMETRES_RENDU_MOTIF, SORTIES_MOTIF } from "./effets-aides";
+import { canalDominant, rendreMotif, PARAMETRES_RENDU_MOTIF, SORTIES_MOTIF } from "./effets-aides";
 import { LIBELLES_HERITES_VALEURS, choixValeurs } from "../audio/valeurs-note";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 
@@ -238,7 +237,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
-      const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
+      const { notes } = await lireMidi(fichier);
       if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
       const ordre = ctx.paramNombre("Ordre", 2);
       const table = apprendre(
@@ -301,8 +300,8 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
-      const { analyserMidi, rendreSequence } = await import("../audio");
-      const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
+      const { rendreSequence } = await import("../audio");
+      const { notes } = await lireMidi(fichier);
       if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
       const temp = temperament(ctx.paramTexte("Tempérament", "juste"));
       const tonique = parseInt(ctx.paramTexte("Tonique", "0"), 10) || 0;
@@ -457,7 +456,7 @@ export const fiches: FicheAudio[] = ([
       }
       const chevauchement = ctx.paramNombre("Chevauchement", 0);
       const nouvFichier = await joindreMidi(fichier1, fichier2, chevauchement);
-      const { notes, dureeTotale } = analyserMidi(parseMidi(new Uint8Array(await nouvFichier.arrayBuffer())));
+      const { notes, dureeTotale } = await lireMidi(nouvFichier);
       return { valeurs: [nouvFichier], message: traduire("msg.jointure_midi_var_0_notes_var_1_s", notes.length, dureeTotale.toFixed(2)) };
     },
   },
@@ -482,7 +481,7 @@ export const fiches: FicheAudio[] = ([
       const repetitions = Math.round(ctx.paramNombre("Répétitions", 4));
       const fondu = ctx.paramNombre("Fondu", 0);
       const nouvFichier = await bouclerMidi(fichier, repetitions, fondu);
-      const { notes, dureeTotale } = analyserMidi(parseMidi(new Uint8Array(await nouvFichier.arrayBuffer())));
+      const { notes, dureeTotale } = await lireMidi(nouvFichier);
       return { valeurs: [nouvFichier], message: traduire("msg.boucle_midi_var_0_repetitions_var_1_notes_var_2_s", repetitions, notes.length, dureeTotale.toFixed(2)) };
     },
   },
