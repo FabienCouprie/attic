@@ -11,18 +11,10 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function ctx(entree: unknown, params: Record<string, string> = {}, data: Record<string, unknown> = {}) {
-  return {
-    entree: () => entree,
-    entrees: () => [entree],
-    paramTexte: (nom: string, def: string) => params[nom] ?? def,
-    paramNombre: (_n: string, def: number) => def,
-    onProgress: () => {},
-    noeud: { id: "n1", data },
-    runtime: null,
-    repertoireTravail: "",
-  };
+  return ctxDEssai([entree], params, { data });
 }
 
 async function executer(entree: unknown, params: Record<string, string> = {}, data: Record<string, unknown> = {}) {

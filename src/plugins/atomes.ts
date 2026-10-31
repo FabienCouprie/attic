@@ -10,6 +10,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import {
   ECHELLES, EST_ECHELLE, atomesEnNotes, decomposer, echellesEnEchantillons, repartition,
   type Decomposition, type OptionsDecomposition,
@@ -50,12 +51,10 @@ export const fiches: FicheAudio[] = ([
         doc: "La pente de fréquence qu'un atome peut porter, en hertz par seconde. À « Aucune », chaque atome tient une fréquence fixe et un glissando est approché par un escalier de petits atomes constants. Les trois autres ouvrent des pentes de plus en plus raides, jusqu'à ±900, ±3 600 et ±14 400 hertz par seconde, et un glissando se décrit alors d'un seul atome. Le calcul coûte une transformée de plus par pente offerte.",
         docEn: "The frequency slope an atom may carry, in hertz per second. At « None », each atom holds a fixed frequency and a glissando is approached by a staircase of small constant atoms. The other three open steeper and steeper slopes, up to ±900, ±3,600 and ±14,400 hertz per second, and a glissando is then described by a single atom. The computation costs one further transform per slope offered." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null, null, null, null], message: en ? "No input." : "Aucune entrée." };
-      }
+      const audio = entreeAudio(ctx, 0, { sorties: 4 });
+      if (sansEntree(audio)) return audio;
       const frequence = audio.sampleRate;
       const choix = ctx.paramTexte("Échelles", "trois");
       const echelles = echellesEnEchantillons(EST_ECHELLE(choix) ? choix : "trois", frequence);

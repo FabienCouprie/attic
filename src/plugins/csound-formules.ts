@@ -36,7 +36,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Niveau de sortie, écrit dans l'orchestre sous la forme d'une variable globale `gkNiveau` que chaque ligne de sortie multiplie. Elle est visible dans le texte : qui le relit peut la changer à la main.",
         docEn: "Output level, written into the orchestra as a global variable `gkNiveau` that every output line multiplies. It is visible in the text: whoever reads it can change it by hand." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const id = ctx.paramTexte("Formule", FORMULES[0].id);
       const formule = trouverFormule(id) ?? FORMULES[0];
       const en = langueCourante() === "en";

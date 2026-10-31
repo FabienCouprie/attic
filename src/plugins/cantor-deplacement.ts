@@ -88,7 +88,7 @@ After Georg Cantor, « Über unendliche, lineare Punktmannigfaltigkeiten », Mat
         doc: "Fixe le tirage. Une même graine rend la même séquence.",
         docEn: "Fixes the draw. The same seed returns the same sequence." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recue = ctx.entree(0);
       if (!estSequence(recue)) {
         return { valeurs: [null, ""], erreur: true,

@@ -91,7 +91,7 @@ export const fiches = ([
         doc: "Nom du fichier écrit dans le répertoire de travail. L'extension .srt est ajoutée si elle manque.",
         docEn: "Name of the file written in the working directory. The .srt extension is added when missing." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) {
         return { valeurs: [null, null], message: traduire("msg.aucune_entr_e_audio") };

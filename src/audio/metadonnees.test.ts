@@ -4,28 +4,15 @@
 // octet, une étiquette ID3 dont l'en-tête contredit les trames : ces fautes ne se voient pas depuis
 // Attic, qui se relit lui-même avec ses propres conventions. On les cherche donc avec le lecteur le
 // plus bête qui soit, celui qui suit la norme à la lettre.
-import { describe, expect, it, beforeAll } from "vitest";
+import { describe, expect, it } from "vitest";
 import { bufferVersWavBlob, extraireGrapheMp3, extraireGrapheWav } from "./io";
 import { etiqueter } from "./multicanal";
 import {
   VERSION_ATTIC, blocIxml, decrire, echapperXml, etiquetteId3, ixmlImplicite, nomsDePistes, uidDeContenu,
 } from "./metadonnees";
 
-class AudioBufferPolyfill {
-  numberOfChannels: number; length: number; sampleRate: number; duration: number;
-  private canaux: Float32Array[];
-  constructor(o: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = o.numberOfChannels; this.length = o.length; this.sampleRate = o.sampleRate;
-    this.duration = o.length / o.sampleRate;
-    this.canaux = Array.from({ length: o.numberOfChannels }, () => new Float32Array(o.length));
-  }
-  getChannelData(c: number) { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number) { this.canaux[c].set(src.subarray(0, this.length)); }
-}
-beforeAll(() => { (globalThis as any).AudioBuffer = AudioBufferPolyfill; });
-
 const tampon = (canaux: number, n: number, sr = 48000): AudioBuffer => {
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: canaux, length: n, sampleRate: sr }) as AudioBuffer;
+  const b = new AudioBuffer({ numberOfChannels: canaux, length: n, sampleRate: sr }) as AudioBuffer;
   for (let c = 0; c < canaux; c++) b.getChannelData(c).set(Float32Array.from({ length: n }, (_, i) => Math.sin((i + c) / 9) * 0.5));
   return b;
 };

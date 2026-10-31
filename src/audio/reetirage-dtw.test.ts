@@ -1,30 +1,10 @@
 // audio/reetirage-dtw.test.ts
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { correspondanceIPourJ, reetirerParChemin } from "./reetirage-dtw";
 import type { PointAlignement } from "./algebre-alignement";
 
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-}
-
-beforeAll(() => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-});
-
 function bufferDeRampe(n: number, canaux = 1): AudioBuffer {
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: canaux, length: n, sampleRate: 44100 });
+  const b = new AudioBuffer({ numberOfChannels: canaux, length: n, sampleRate: 44100 });
   for (let c = 0; c < canaux; c++) {
     const d = b.getChannelData(c);
     for (let i = 0; i < n; i++) d[i] = i + c * 1000; // rampe distincte par canal

@@ -28,6 +28,7 @@ import { accordageDepuisCents, hauteurDuDegre } from "../audio/accordage";
 import { nomNote } from "../audio/nom-note";
 import { hauteurJouee, parametresLecture, rendreNotes, voixPourNote, type Banque } from "../audio/clavier-banque";
 import { preparerBanque, zoneDuLot, type OptionsLotBanque } from "../audio/clavier-banque-lot";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const SR = 44100;
 const TONIQUE = 60;
@@ -127,16 +128,7 @@ const REGLAGES = {
 
 /** Le contexte d'exécution de la fiche. */
 function ctx(params: Record<string, string | number>) {
-  const entrees: unknown[] = [sinus(), CLOCHE];
-  return {
-    entree: (rang: number) => entrees[rang] ?? null,
-    entrees: () => entrees,
-    paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-    paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-    onProgress: () => {},
-    noeud: { id: "n1", data: {} },
-    runtime: null,
-  } as never;
+  return ctxDEssai([sinus(), CLOCHE], params) as never;
 }
 
 async function banqueDeLaFiche(params: Record<string, string | number>): Promise<Banque> {

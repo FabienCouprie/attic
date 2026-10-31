@@ -36,7 +36,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Note référence", nomEn: "Reference note", plage: [21, 108], pas: 1, defaut: 60,
         doc: "Note MIDI correspondant à la hauteur d'origine de l'échantillon (60 = Do central).", docEn: "MIDI note matching the original pitch of the sample (60 = middle C)." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const midiFile = ctx.entree(0);
       if (!(midiFile instanceof File)) return { valeurs: [null, null], message: traduire("msg.branchez_un_source_midi") };
       const audioFichier = ctx.noeud.data.audioFichier as File | undefined;
@@ -334,13 +334,13 @@ export const fiches: FicheAudio[] = ([
         docEn: "A fourth slot, for the fourth output. « Follow MIDI » keeps the internal drum synth, synthesized percussion, always audible even with no SoundFont loaded, and the default. Picking a preset renders the drums with that SoundFont kit instead; choose one from bank 128. Either way the « MIDI drums » output carries the chosen kit, so whichever node renders it next will use it.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const config: ConfigGrooveBox = {
         cle: ctx.paramTexte("Clé", "C"),
         gamme: ctx.paramTexte("Gamme", "majeur"),
         genre: ctx.paramTexte("Genre", "pop"),
         progression: ctx.paramTexte("Progression", "I-V-vi-IV"),
-        extension: ctx.paramTexte("Extension", "aucune"),
+        extension: ctx.paramTexte("Extension", "aucune") as ConfigGrooveBox["extension"],
         tempo: ctx.paramNombre("Tempo", 110),
         dureeAccord: ctx.paramNombre("Durée par accord", 2),
         nbAccords: ctx.paramNombre("Nombre d'accords", 8),

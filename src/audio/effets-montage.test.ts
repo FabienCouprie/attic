@@ -1,24 +1,6 @@
 // audio/effets-montage.test.ts
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { extraireZone } from "./effets-montage";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-}
-
-beforeAll(() => { (globalThis as any).AudioBuffer = AudioBufferPolyfill; });
 
 const SR = 44100;
 
@@ -26,7 +8,7 @@ const SR = 44100;
 // exclusivement du fondu, ce qui rend l'assertion sans ambiguïté.
 function constant(dureeS: number, valeur = 1): AudioBuffer {
   const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
   b.getChannelData(0).fill(valeur);
   return b;
 }
@@ -76,7 +58,7 @@ describe("extraireZone — paramètre Fondu", () => {
 
   it("applique le fondu sur tous les canaux", () => {
     const n = Math.floor(SR * 2);
-    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: SR });
+    const b = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: SR });
     b.getChannelData(0).fill(1);
     b.getChannelData(1).fill(1);
     const out = extraireZone(b, 0.5, 1, 10);

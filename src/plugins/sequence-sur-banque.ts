@@ -75,7 +75,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le canal MIDI retenu quand un fichier arrive sur l'entrée « MIDI ». À moins un, tous les canaux sont pris ensemble ; de zéro à quinze, seules les notes de ce canal sont jouées. C'est ainsi qu'une partition à plusieurs voix se répartit sur plusieurs banques, chaque voix étant écrite sur son canal.",
         docEn: "The MIDI channel kept when a file arrives on the « MIDI » input. At minus one, all channels are taken together; from zero to fifteen, only that channel's notes are played. This is how a score in several voices is spread over several banks, each voice being written on its own channel." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const banque = ctx.entree(1);
       if (!estBanque(banque) || banque.zones.length === 0) {
         return { valeurs: [null], message: en() ? "No bank." : "Aucune banque." };

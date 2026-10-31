@@ -135,7 +135,7 @@ export const fiches: FicheAudio[] = ([
         doc: "L'intervalle maximal entre deux notes consécutives. À zéro, aucun frein.",
         docEn: "The maximum interval between two consecutive notes. At zero, no restraint." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const choisie = ctx.paramTexte("Source", SOURCES[0].id);
       const source = SOURCES.find((s) => s.id === choisie || s.nom === choisie || s.nomEn === choisie) ?? SOURCES[0];
       const metrique = lireMetrique(ctx.paramTexte("Métrique", "4/4"));
@@ -237,7 +237,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Nuance", nomEn: "Velocity", plage: [1, 127], pas: 1, defaut: 90,
         doc: "La vélocité des notes.", docEn: "The velocity of the notes." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const arbreEntree = ctx.entree(0);
       const texte = typeof arbreEntree === "string" && arbreEntree.trim().length > 0
         ? arbreEntree

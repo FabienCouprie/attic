@@ -40,7 +40,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["mono", "stereo"], defaut: "Stéréo", defautEn: "Stereo",
         doc: "Nombre de canaux de l'audio de sortie.", docEn: "Number of output audio channels." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const rouge = parsePlage(ctx.paramTexte("Rouge (Hz)", "100,1000"), [100, 1000]);
       const vert = parsePlage(ctx.paramTexte("Vert (Hz)", "500,3000"), [500, 3000]);
       const bleu = parsePlage(ctx.paramTexte("Bleu (Hz)", "1000,5000"), [1000, 5000]);

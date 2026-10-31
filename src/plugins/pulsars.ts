@@ -39,7 +39,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Amplitude", nomEn: "Amplitude", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Niveau de sortie.", docEn: "Output level." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { pulsars, cycleDeService } = await import("../audio/pulsars");
       const fondamentaleHz = ctx.paramNombre("Fondamentale", 110);
       const formantHz = ctx.paramNombre("Formant", 1100);

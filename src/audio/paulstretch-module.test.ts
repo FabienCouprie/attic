@@ -9,7 +9,6 @@
 //     DE SORTIE à la fin de la source qu'à son début. Une mise en œuvre qui lirait la courbe sur la
 //     sortie, ou qui ne l'appliquerait qu'en moyenne, rendrait la bonne durée totale et la mauvaise
 //     répartition — et la durée est tout ce qu'on regarde d'ordinaire.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { appliquerPaulstretch } from "./effets-grains";

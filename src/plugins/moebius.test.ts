@@ -3,18 +3,11 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const SR = 44100;
 
-const ctxParams = (entree: unknown, params: Record<string, string | number>) => ({
-  entree: () => entree,
-  entrees: () => [entree],
-  paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-  paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-  onProgress: () => {},
-  noeud: { data: {} },
-  runtime: null,
-});
+const ctxParams = (entree: unknown, params: Record<string, string | number>) => ctxDEssai([entree], params);
 
 const mono = (secondes: number) => {
   const b = new AudioBuffer({ numberOfChannels: 1, length: Math.round(secondes * SR), sampleRate: SR });

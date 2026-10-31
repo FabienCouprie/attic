@@ -16,6 +16,7 @@
 // câble, et c'est un défaut qu'aucun test de calcul ne verrait.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./analyse";
 
 const SR = 16000;
@@ -71,14 +72,7 @@ function pulsation(bpm: number, secondes = 8): AudioBuffer {
 }
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages) as never;
 }
 
 const fiche = (id: string) => {

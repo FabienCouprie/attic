@@ -15,10 +15,10 @@
 // CE CAS LANCE DONC CHAQUE FICHE SANS SORTIE À VIDE, sans aucune entrée et sur ses réglages par
 // défaut, et exige qu'elle se déclare en erreur. À vide, aucune ne peut avoir travaillé : celle qui
 // annoncerait une réussite mentirait forcément.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import { toutesLesFiches } from "./index";
 import { estResultatEnErreur } from "../core/execution";
+import { ctxDEssai } from "../core/contexte-essai";
 
 /**
  * Les fiches sans sortie qui ont RAISON de ne pas se déclarer en erreur à vide, avec leur raison.
@@ -39,15 +39,7 @@ describe("les composants sans sortie", () => {
       if ((f.sorties ?? []).length > 0) continue;
       eprouvees++;
       const entrees = (f.entrees ?? []) as any[];
-      const ctx = {
-        noeud: { id: "n", data: { ficheId: f.id, parametres: {} } },
-        entree: () => null,
-        entrees: () => entrees.map(() => null),
-        paramTexte: (_nom: string, defaut: string) => defaut,
-        paramNombre: (_nom: string, defaut: number) => defaut,
-        onProgress: () => {},
-        repertoireTravail: "",
-      };
+      const ctx = ctxDEssai(entrees.map(() => null), {}, { id: "n", ficheId: f.id });
       let res: any;
       try {
         res = await f.executer(ctx as any);

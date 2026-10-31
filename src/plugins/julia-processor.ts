@@ -166,7 +166,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée maximale d'exécution du script (en secondes).",
         docEn: "Maximum script execution time (in seconds)." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = (window as any).api;
       if (!api?.juliaInfo) return { valeurs: [null, null, null], message: traduire("msg.n_cessite_electron") };
 

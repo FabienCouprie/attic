@@ -92,7 +92,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée d'un tour, pour quantifier un MIDI. Sans MIDI branché, ce réglage ne sert pas.",
         docEn: "Length of one turn, to quantise a MIDI file. With no MIDI connected, this setting does nothing." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const pas = Math.round(ctx.paramNombre("Pas", 16));
       const notes = await notesDuMidi(ctx.entree(0));
@@ -147,7 +147,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Écart en deçà duquel deux notes reçues sont tenues pour simultanées, donc membres du même accord. Sans entrée branchée, ce réglage ne sert pas.",
         docEn: "Gap below which two notes received are taken as simultaneous, hence members of the same chord. With no input connected, this setting does nothing." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       // LA SÉQUENCE PASSE DEVANT LE MIDI, qui passe devant le réglage. L'écart circulaire se
       // calcule sur des nombres à virgule, donc une progression microtonale se mesure telle

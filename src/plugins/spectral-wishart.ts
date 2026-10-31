@@ -7,13 +7,14 @@
 // trame. Le réglage « Finesse » veut dire la même chose pour les quatre, et une seule explication
 // sert aux quatre notices.
 
-import type { FicheAudio } from "../audio/types-domaine";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { choixFenetre } from "../audio/fenetres-analyse";
 import { estCourbe, valeurA, valeursParametre } from "../audio/courbe";
 import { TAILLE_TRAME, wishartVoie, type OptionsWishart } from "../audio/spectral-wishart";
 import { parCanal } from "./hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 /** Le réglage commun aux quatre : ce que l'analyse voit du temps et de la fréquence. */
 const FINESSE = {
@@ -28,7 +29,7 @@ const FINESSE = {
   docEn: "Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long.",
 };
 
-const tailleDe = (ctx: any): number => {
+const tailleDe = (ctx: ContexteAudio): number => {
   const t = parseInt(ctx.paramTexte("Finesse", "2048"), 10);
   return Number.isFinite(t) && t >= 256 ? t : TAILLE_TRAME;
 };
@@ -47,7 +48,7 @@ const tailleDe = (ctx: any): number => {
  * plus être passée en argument, elle se nomme. C'est le seul changement de forme ; le calcul, lui,
  * est celui d'avant, bourrage des bords compris.
  */
-async function parVoies(entree: AudioBuffer, o: OptionsWishart, ctx: any): Promise<AudioBuffer> {
+async function parVoies(entree: AudioBuffer, o: OptionsWishart, ctx: ContexteAudio): Promise<AudioBuffer> {
   const voies = Array.from({ length: entree.numberOfChannels }, (_, c) => entree.getChannelData(c));
   const rendues = await parCanal<OptionsWishart, Float32Array>(voies, o, {
     creerWorker: () => new Worker(new URL("../workers/wishart-worker.ts", import.meta.url), { type: "module" }),
@@ -88,8 +89,6 @@ const MIX = {
   docEn: "Proportion of processed sound. At 0 %, the output is the input, unchanged.",
 };
 
-const sansEntree = () => ({ valeurs: [null], message: traduire("msg.aucune_entr_e") });
-
 export const fiches: FicheAudio[] = ([
   {
     id: "tracage-spectral", nom: "Traçage spectral", nomEn: "Spectral Tracing",
@@ -106,9 +105,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Number of components kept at each moment. At 1, the dominant partial alone. Beyond a hundred or so the effect becomes hard to hear on most sounds: there is not much left to throw away." },
       FINESSE, MIX,
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return sansEntree();
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       const n = Math.round(ctx.paramNombre("Composantes", 12));
       const out = await parVoies(e, { mode: "tracer", taille: tailleDe(ctx), composantes: n }, ctx);
       return { valeurs: [melanger(e, out, ctx.paramNombre("Mix", 100) / 100)] };
@@ -129,9 +128,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Number of moments averaged. At 1, nothing changes. How long that is depends on the resolution: at 2048 and 44,100 Hz one moment is 12 ms, so 24 moments spread the sound over roughly three tenths of a second." },
       FINESSE, MIX,
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return sansEntree();
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       const w = Math.round(ctx.paramNombre("Largeur", 24));
       const out = await parVoies(e, { mode: "flouter", taille: tailleDe(ctx), largeur: w }, ctx);
       return { valeurs: [melanger(e, out, ctx.paramNombre("Mix", 100) / 100)] };
@@ -152,9 +151,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Where the freeze begins, as a proportion of the duration. What precedes passes through unchanged; from there on, that moment's spectrum is held to the end." },
       FINESSE, MIX,
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return sansEntree();
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       const part = Math.max(0, Math.min(1, ctx.paramNombre("Instant", 50) / 100));
       const out = await parVoies(e, { mode: "geler", taille: tailleDe(ctx), part }, ctx);
       return { valeurs: [melanger(e, out, ctx.paramNombre("Mix", 100) / 100)] };
@@ -190,9 +189,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Proportion que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
         docEn: "Proportion that the curve's one means. A value below Modulation min reverses the direction of travel." },
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return sansEntree();
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       const out = await parVoies(e, {
         mode: "glissando", taille: tailleDe(ctx),
         vitesse: ctx.paramNombre("Vitesse", 0.5),

@@ -24,18 +24,10 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function ctxParams(params: Record<string, string | number>, entree: unknown = null) {
-  return {
-    entree: () => entree,
-    entrees: () => [entree],
-    paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-    paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-    onProgress: () => {},
-    noeud: { id: "n1", data: {} },
-    runtime: null,
-    repertoireTravail: "",
-  };
+  return ctxDEssai([entree], params);
 }
 
 /** Empreinte d'un buffer : suffisante pour distinguer deux rendus. */

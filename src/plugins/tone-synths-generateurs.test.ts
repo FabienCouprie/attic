@@ -76,6 +76,7 @@ import { publierFrequenceDeTravail } from "../audio/frequence-de-travail";
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { fiches } from "./tone-synths";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = (id: string) => {
   const f = fiches.find((x) => x.id === id);
@@ -84,15 +85,7 @@ const fiche = (id: string) => {
 };
 
 function contexte(reglages: Record<string, number | string>, sampleRate?: number) {
-  return {
-    entree: () => null,
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-    runtime: sampleRate === undefined ? undefined : { sampleRate },
-  } as never;
+  return ctxDEssai([], reglages, { runtime: sampleRate === undefined ? undefined : { sampleRate } }) as never;
 }
 
 const lancer = (id: string, reglages: Record<string, number | string> = {}, sampleRate?: number) =>

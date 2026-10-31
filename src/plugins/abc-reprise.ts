@@ -43,7 +43,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de l'audio synthétisé.", docEn: "Synthesized audio volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const abc = ctx.entree(0);
       if (typeof abc !== "string" || !abc.trim()) return { valeurs: [null, null, null, null], erreur: true, message: traduire("msg.abc_reprise.aucun_abc") };
       const id = ctx.paramTexte("Style", "ballade");

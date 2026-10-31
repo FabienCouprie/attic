@@ -19,7 +19,6 @@
 // deux formes rendent le même double et le même rapport, zéro écart. Elles ne divergent que sur
 // certains écarts FRACTIONNAIRES, un tiers de demi-ton par exemple. Ce cas épingle donc la VALEUR,
 // qui est ce qui compte pour la base ; il ne garde pas la forme du calcul, et ne le prétend pas.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { voixPourNote, type Banque, type Zone } from "./clavier-banque";

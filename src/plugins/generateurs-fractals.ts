@@ -43,7 +43,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       console.log("[attic] Musique fractale : exécution démarrée");
       const tempo = ctx.paramNombre("Tempo",80);
       const { audio, notes } = await genererMusiqueFractale(ctx.paramTexte("Motif","Triade M"),ctx.paramTexte("Intervalles","0,3,7,10"),ctx.paramNombre("Profondeur",3),ctx.paramNombre("Durée",8),tempo,ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Timbre","Douce"));
@@ -105,7 +105,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const cx = ctx.paramNombre("Centre X", -0.5);
       const cy = ctx.paramNombre("Centre Y", 0);
       const zoom = ctx.paramNombre("Zoom", 1);
@@ -169,7 +169,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const { audio, midiFile } = await genererArpegeKoch({
         cle: ctx.paramTexte("Clé", "Do"),
@@ -211,7 +211,7 @@ export const fiches: FicheAudio[] = ([
       // composant à l'autre jusque dans son ordre.
       { nom: "Format", nomEn: "Format", type: "choix", ...choixFormats(["png", "jpeg"]), defaut: "PNG", defautEn: "PNG", doc: "Format de l'image de sortie.", docEn: "Output image format." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fftSize = parseInt(ctx.paramTexte("FFT", "2048"), 10);
       const { audio, image } = await rendreSpectrogrammeFractal({
         duree: ctx.paramNombre("Durée", 4),
@@ -263,7 +263,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Décimation audio", nomEn: "Audio decimation", type: "nombre", plage: [1, 100], pas: 1, defaut: 1, unite: "pts/éch", uniteEn: "pts/sample", doc: "Un point audio sur N est utilisé pour ralentir la variation de fréquence.", docEn: "One audio point out of N is used to slow down the frequency variation." },
       { nom: "Volume audio", nomEn: "Audio volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%", doc: "Volume du signal audio de sortie.", docEn: "Output audio signal volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const type = ctx.paramTexte("Attracteur", "Lorenz");
       const typeNormalise = normaliserTypeAttracteur(type);
       if (!typeNormalise) {

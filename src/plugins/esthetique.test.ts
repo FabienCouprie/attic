@@ -2,6 +2,7 @@
 import "node-web-audio-api/polyfill.js";
 import { afterEach, describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = (id: string) => registre.trouverDef(id)!;
 
@@ -28,17 +29,7 @@ function fausseApi(options: { absent?: boolean } = {}) {
 
 const ctx = (entrees: unknown[], signal?: AbortSignal) => {
   const progres: string[] = [];
-  return {
-    progres,
-    entree: (i: number) => entrees[i],
-    entrees: () => entrees,
-    paramTexte: (_: string, d: string) => d,
-    paramNombre: (_: string, d: number) => d,
-    onProgress: (t: string) => progres.push(t),
-    noeud: { data: {} as Record<string, any> },
-    signal,
-    runtime: null,
-  };
+  return { ...ctxDEssai(entrees, {}, { onProgress: (t: string) => progres.push(t), signal }), progres };
 };
 
 afterEach(() => { delete (globalThis as any).window; });

@@ -1,33 +1,13 @@
 // plugins/pca-neuronale.test.ts — Tests du nœud PCA neuronale.
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { fiches } from "./pca-neuronale";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
-}
-
-beforeAll(() => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-});
+import { ctxDEssai } from "../core/contexte-essai";
 
 const SR = 44100;
 
 function sinus(freq: number, dureeS: number, channels = 1): AudioBuffer {
   const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
   for (let ch = 0; ch < channels; ch++) {
     const d = b.getChannelData(ch);
     for (let i = 0; i < n; i++) d[i] = Math.sin((2 * Math.PI * freq * i) / SR);
@@ -38,13 +18,7 @@ function sinus(freq: number, dureeS: number, channels = 1): AudioBuffer {
 const fiche = fiches.find((f) => f.id === "pca-neuronale")!;
 
 function ctxDe(entree: AudioBuffer, params: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => (i === 0 ? entree : null),
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-    onProgress: () => {},
-    signal: { aborted: false },
-  };
+  return ctxDEssai([entree], params, { signal: new AbortController().signal });
 }
 
 describe("pca-neuronale", () => {

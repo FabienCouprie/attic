@@ -19,6 +19,7 @@ import {
   AXES_ESTHETIQUES, preparerTranches, agregerTranches, scoresDepuisSortie, pointsFaibles,
   ecartsEsthetiques, formaterHorodatage, type AnalyseEsthetique, type ScoresEsthetiques, type TrancheNotee,
 } from "../audio/esthetique";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 interface ApiEsthetique {
   noterTrancheEsthetique?: (o: { signal: Float32Array; utiles: number }) =>
@@ -102,11 +103,9 @@ const scoreEsthetique: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio", requis: true }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "Rapport", nomEn: "Report", type: "texte" }],
     parametres: [],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) {
-        return { valeurs: [null, null], erreur: true, message: traduire("msg.esthetique.aucune_entree") };
-      }
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(buffer)) return buffer;
       try {
         await annoncerModele(ctx, "score-esthetique", "");
         const analyse = await analyserEsthetique(buffer, apiFenetre(), (t) => ctx.onProgress(t), ctx.signal);
@@ -129,11 +128,10 @@ const scoreEsthetique: FicheAudio[] = ([
     entrees: [{ nom: "A", type: "audio", requis: true }, { nom: "B", type: "audio", requis: true }],
     sorties: [{ nom: "Rapport", nomEn: "Report", type: "texte" }],
     parametres: [],
-    async executer(ctx: any) {
-      const a = ctx.entree(0), b = ctx.entree(1);
-      if (!(a instanceof AudioBuffer) || !(b instanceof AudioBuffer)) {
-        return { valeurs: [null], erreur: true, message: traduire("msg.esthetique.deux_entrees") };
-      }
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0), b = entreeAudio(ctx, 1);
+      if (sansEntree(a)) return a;
+      if (sansEntree(b)) return b;
       try {
         await annoncerModele(ctx, "comparaison-esthetique", "");
         const api = apiFenetre();

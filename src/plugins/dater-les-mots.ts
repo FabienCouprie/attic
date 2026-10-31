@@ -32,6 +32,7 @@ import { formaterMots, type Mot } from "../audio/parole-datee";
 import { traduire } from "../i18n";
 import { octetsWav } from "./chanson-aides";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { parametreCalcul } from "./parametre-calcul";
@@ -93,15 +94,13 @@ export const fiches = ([
         "Il change le temps de calcul et non les mots trouvés.",
         "It changes the compute time and not the words found."),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pont = api();
       if (!pont?.parakeetTranscrire) {
         return { valeurs: [null, null, null], erreur: true, message: traduire("msg.n_cessite_electron") };
       }
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) {
-        return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucune_entr_e_audio") };
-      }
+      const buffer = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(buffer)) return buffer;
       // LE MOTEUR ACCEPTE N'IMPORTE QUELLE CADENCE, mesuré : le son part tel qu'il est reçu, sans
       // le détour par 16 ou 44,1 kHz que ses deux voisins de cette famille d'outils imposent.
       const audio = await octetsWav(buffer);

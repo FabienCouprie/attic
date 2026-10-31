@@ -5,7 +5,6 @@
 // disque, et aucun ne serait une platine. Ce qui fait la platine est que TOUT y est accroché à la
 // rotation, et que chaque défaut garde sa nature, un grondement en bas, une impulsion brève, un fond
 // continu. Les cas mesurent ces trois choses sur le son rendu.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { frequenceDeRotation, platine, ronflement, surfaceEtClics } from "./platine";

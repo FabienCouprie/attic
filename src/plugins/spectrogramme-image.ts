@@ -13,7 +13,7 @@
 // Les calculs, leurs références et la raison de leurs choix sont dans `audio/mel.ts`,
 // `audio/spectrogramme-mel.ts` et `audio/spectrogramme-pixels.ts`.
 
-import type { FicheAudio } from "../audio/types-domaine";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { imageDataDepuisFichier, mixdownMono } from "../audio";
@@ -24,6 +24,7 @@ import {
   type Analyse, type OptionsAnalyse, type OptionsSynthese, type SpectrogrammeMel, type Synthese,
 } from "../audio/spectrogramme-mel";
 import { parCanal } from "./hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { imageDepuisMel, melDepuisImage } from "../audio/spectrogramme-pixels";
 
 const en = () => langueCourante() === "en";
@@ -65,7 +66,7 @@ const CANAUX = {
 } as const;
 
 /** Les réglages de l'échelle lus sur le nœud, le nombre de bandes compris. */
-function echelleLue(ctx: any, echantillonnage: number, bandes?: number): ParametresMel {
+function echelleLue(ctx: ContexteAudio, echantillonnage: number, bandes?: number): ParametresMel {
   return {
     echantillonnage,
     bandes: bandes ?? Math.round(ctx.paramNombre("Bandes", PARAMETRES_RIFFUSION.bandes)),
@@ -77,7 +78,7 @@ function echelleLue(ctx: any, echantillonnage: number, bandes?: number): Paramet
   };
 }
 
-const estStereo = (ctx: any) => ctx.paramTexte("Canaux", "mono") === "stereo";
+const estStereo = (ctx: ContexteAudio) => ctx.paramTexte("Canaux", "mono") === "stereo";
 const estSpectrogramme = (v: unknown): v is SpectrogrammeMel =>
   !!v && typeof v === "object" && Array.isArray((v as SpectrogrammeMel).canaux)
   && !!(v as SpectrogrammeMel).parametres;
@@ -112,9 +113,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     sorties: [{ nom: "Spectrogramme", nomEn: "Spectrogram", type: "spectrogramme" }],
     parametres: [...REGLAGES_ECHELLE, CANAUX],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en() ? "No audio input" : "Aucune entrée audio" };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const stereo = estStereo(ctx) && a.numberOfChannels > 1;
       const p = echelleLue(ctx, a.sampleRate);
       const voies = stereo ? [a.getChannelData(0), a.getChannelData(1)] : [mixdownMono(a)];
@@ -157,7 +158,7 @@ export const fiches: FicheAudio[] = ([
         doc: "La graine du tirage de la phase de départ. La même graine rend le même son.",
         docEn: "The seed of the draw for the starting phase. The same seed returns the same sound." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const s = ctx.entree(0);
       if (!estSpectrogramme(s)) return { valeurs: [null], message: sansSpectrogramme() };
       const tours = Math.round(ctx.paramNombre("Tours", 8));
@@ -209,7 +210,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Spectrogramme", nomEn: "Spectrogram", type: "spectrogramme" }],
     sorties: [{ nom: "Image", nomEn: "Image", type: "image" }],
     parametres: [PUISSANCE],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const s = ctx.entree(0);
       if (!estSpectrogramme(s)) return { valeurs: [null], message: sansSpectrogramme() };
       const puissance = ctx.paramNombre("Puissance", 0.25);
@@ -238,7 +239,7 @@ export const fiches: FicheAudio[] = ([
       PUISSANCE, CANAUX,
       ...REGLAGES_ECHELLE.filter((r) => r.nom !== "Bandes"),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null], message: en() ? "No image input" : "Aucune entrée image" };
       const puissance = ctx.paramNombre("Puissance", 0.25);
@@ -255,4 +256,4 @@ export const fiches: FicheAudio[] = ([
       };
     },
   },
-] as unknown as FicheAudio[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

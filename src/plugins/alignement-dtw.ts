@@ -10,6 +10,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { calculerDTW } from "../audio/algebre-alignement";
 import { chromagrammeParTrame } from "../audio/analyse";
 import { extraitCentre, decalageExtraitCentre, mixdownMono } from "../audio/commun";
@@ -44,12 +45,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée maximale (extrait central) analysée par piste. Plus contraint par la mémoire (calcul par damiers), mais le temps de calcul reste quadratique : environ 2 s pour 1 min par piste, ~10 s pour 2 min, ~35-55 s pour 4-5 min.",
         docEn: "Maximum duration (centered excerpt) analyzed per track. No longer memory-constrained (checkpointed computation), but compute time stays quadratic: roughly 2 s for 1 min per track, ~10 s for 2 min, ~35-55 s for 4-5 min." },
     ],
-    async executer(ctx: any) {
-      const audioA = ctx.entree(0);
-      const audioB = ctx.entree(1);
-      if (!(audioA instanceof AudioBuffer) || !(audioB instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.connecter.audio") };
-      }
+    async executer(ctx) {
+      const audioA = entreeAudio(ctx, 0, { sorties: 2 }), audioB = entreeAudio(ctx, 1, { sorties: 2 });
+      if (sansEntree(audioA)) return audioA;
+      if (sansEntree(audioB)) return audioB;
 
       const dureeMaxS = ctx.paramNombre("Durée max analysée", DUREE_MAX_ANALYSE_DTW_DEFAUT_S);
       ctx.onProgress(traduire("progress.extraction_chroma"));

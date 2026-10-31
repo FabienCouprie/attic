@@ -1,40 +1,19 @@
 // audio/effets-temporel.test.ts — Vérification de Paulstretch.
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { appliquerEchoInverse } from "./effets-echo";
 import { appliquerPaulstretch, beatRepeat } from "./effets-grains";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
-}
 
 const SR = 44100;
 
 function sinus(freq: number, dureeS: number, channels = 1): AudioBuffer {
   const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
   for (let ch = 0; ch < channels; ch++) {
     const d = b.getChannelData(ch);
     for (let i = 0; i < n; i++) d[i] = Math.sin((2 * Math.PI * freq * i) / SR);
   }
   return b;
 }
-
-beforeAll(() => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-});
 
 describe("appliquerPaulstretch", () => {
   it("étire la durée d'environ le facteur demandé", async () => {
@@ -75,7 +54,7 @@ describe("appliquerEchoInverse", () => {
   });
 
   it("place les répétitions atténuées avant le signal principal", () => {
-    const buffer = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
+    const buffer = new AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
     const src = buffer.getChannelData(0);
     src[0] = 1;
     const out = appliquerEchoInverse(buffer, 50, 50);
@@ -118,7 +97,7 @@ describe("beatRepeat", () => {
   });
 
   it("réduit l'énergie aux moments de répétition avec un mix à 100", () => {
-    const buffer = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
+    const buffer = new AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
     buffer.getChannelData(0).fill(1);
     const out = beatRepeat(buffer, 60, 4, 16, 4, 40, 100);
     // À 60 BPM, 1/4 = 1 seconde. 1/16 = 0.25 seconde. 4 répétitions = 1 seconde.
@@ -141,7 +120,7 @@ describe("beatRepeat", () => {
     // est bornée par cet intervalle ; les premiers échantillons du segment sont donc exactement ceux
     // qu'ils remplacent, et la sortie égale l'entrée. Offrir 1/1 sur la taille ajouterait une valeur
     // inerte pour TOUS les intervalles offerts, ce que le contrat de composant interdit.
-    const buffer = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: 4 * SR, sampleRate: SR });
+    const buffer = new AudioBuffer({ numberOfChannels: 1, length: 4 * SR, sampleRate: SR });
     // Une rampe plutôt qu'un continu : la répétition d'un segment constant ne se verrait pas.
     for (let i = 0; i < buffer.length; i++) buffer.getChannelData(0)[i] = i / buffer.length;
     const ecartAvecEntree = (sortie: AudioBuffer) => {

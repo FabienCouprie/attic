@@ -122,7 +122,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Quelle part du trajet vers la figure d'arrivée est parcourue sur la durée. À zéro, la figure de départ tient tout le film ; à cent, il finit exactement sur la figure d'arrivée.",
         docEn: "How much of the journey towards the target shape is travelled over the duration. At zero the starting shape holds the whole film; at a hundred it ends exactly on the target shape." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       // LE TYPE DIT CE QUE CE FILM EMPLOIE, et c'est `OptionsPulsations` et non `OptionsCercle` :
       // un seuil de silence ne règle que ce qui sonne, or ce film est muet. Le curseur existait
       // pourtant, visible et documenté, et ne pouvait rien changer.

@@ -42,7 +42,7 @@ export const fiches: FicheAudio[] = ([
         doc:"Graine des rafales de bruit (caisse claire, charley). Valeur par défaut fixe : le même patron doit rendre le même fichier à chaque exécution.",
         docEn:"Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const tempo = ctx.paramNombre("Tempo", 120);
       const patron = ctx.paramTexte("Patron", "Rock");
       const mesures = ctx.paramNombre("Mesures", 2);
@@ -105,7 +105,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume du rendu.", docEn: "Output volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const choix = ctx.paramTexte("Exemple", "algues");
       const exemple = EXEMPLES.find((e) => e.id === choix);
       const axiome = exemple ? exemple.axiome : ctx.paramTexte("Axiome", "A");
@@ -172,7 +172,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume du rendu audio.", docEn: "Output volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const DUREES: Record<string, number> = { noire: 1, croche: 0.5, double: 0.25, triolet: 1 / 3 };
       const config = {
         pas: ctx.paramNombre("Pas", 8),
@@ -220,7 +220,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine du choix de la partie retirée et des rafales de bruit. Sans effet sur la grille hors du mode « Aléatoire », mais elle fixe toujours le bruit. 0 = tirée au sort à chaque exécution, et affichée dans le message.",
         docEn: "Seed for the removed-part choice and the noise bursts. No effect on the grid outside the « Random » mode, but it always fixes the noise. 0 = drawn at random on every run, and shown in the message." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const partie = ctx.paramTexte("Partie retirée", "center") as any;
       const partieValide = ["center", "left", "right", "random"].includes(partie) ? partie : "center";
       const subdivision = parseInt(ctx.paramTexte("Subdivision", "3"), 10);

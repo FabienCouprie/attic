@@ -122,7 +122,7 @@ The « Journey » output gives, voice by voice, the starting note, the arrival n
         doc: "Le niveau de crête. Il tient compte du nombre de voix et de partiels.",
         docEn: "The peak level. It accounts for the number of voices and partials." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const agregat = (suffixe: string, octaveDefaut: number) => {
         const qualite = ctx.paramTexte(`Accord ${suffixe}`, QUALITES[0].id);
         const demiTon = parseInt(ctx.paramTexte(`Fondamentale ${suffixe}`, "0"), 10) || 0;

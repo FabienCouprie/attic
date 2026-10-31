@@ -11,30 +11,11 @@
 // prouve rien du tout ; ce qui compte est que l'erreur de reconstruction baisse effectivement, et
 // de la quantité annoncée par la théorie — six décibels par bit, donc quarante-huit décibels entre
 // seize et vingt-quatre. On le mesure plutôt que de l'affirmer.
-import { describe, expect, it, beforeAll } from "vitest";
+import { describe, expect, it } from "vitest";
 import { bufferVersWavBlob, extraireGrapheWav, type ProfondeurExport } from "./io";
 
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
-}
-
-beforeAll(() => { (globalThis as any).AudioBuffer = AudioBufferPolyfill; });
-
 const faireBuffer = (canaux: Float32Array[], sampleRate = 44100): AudioBuffer => {
-  const b = new (globalThis as any).AudioBuffer({
+  const b = new AudioBuffer({
     numberOfChannels: canaux.length, length: canaux[0].length, sampleRate,
   }) as AudioBuffer;
   for (let c = 0; c < canaux.length; c++) b.copyToChannel(new Float32Array(canaux[c]), c);

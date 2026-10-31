@@ -32,6 +32,7 @@ import { langueCourante, traduire } from "../i18n";
 import { octetsWav } from "./chanson-aides";
 import { aLaFrequence, FREQUENCE_MODELE } from "./isoler-voix";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { parametreCalcul } from "./parametre-calcul";
@@ -159,15 +160,13 @@ export const fiches = ([
         "Il change le temps de calcul et non le son rendu, mesuré identique à la quatrième décimale entre le processeur et la carte.",
         "It changes the compute time and not the returned sound, measured identical to the fourth decimal between processor and card."),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pont = api();
       if (!pont?.apolloRestaurer) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.n_cessite_electron") };
       }
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) {
-        return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_entr_e_audio") };
-      }
+      const buffer = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(buffer)) return buffer;
 
       const frequenceDOrigine = buffer.sampleRate;
       const audio = await octetsWav(await aLaFrequence(buffer, FREQUENCE_MODELE));

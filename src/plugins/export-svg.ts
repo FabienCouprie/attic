@@ -33,7 +33,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Output SVG filename (in the working directory). The extension is forced to .svg.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = (window as any).api;
       if (!api?.ecrireFichier) {
         return { valeurs: [null], message: traduire("msg.n_cessite_electron") };

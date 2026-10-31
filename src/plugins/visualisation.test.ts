@@ -22,7 +22,6 @@
 // et ses identifiants en anglais : tout ce qui sépare ce nœud du silence est la canonisation faite
 // par `paramTexte`. D'où le contexte d'essai ci-dessous, qui canonise COMME LE MOTEUR : un contexte
 // qui ne le ferait pas prouverait quelque chose que l'application ne fait jamais.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import { valeurCanoniqueChoix } from "../i18n";
 import { fiches } from "./visualisation";

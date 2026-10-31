@@ -59,7 +59,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine aléatoire (0 = nouveau script à chaque exécution). Même graine = même script.",
         docEn: "Random seed (0 = new script each run). Same seed = same script." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const c1Nom = ctx.paramTexte("Couleur 1", "Bleu");
       const c2Nom = ctx.paramTexte("Couleur 2", "(aucune)");
       const variabilite = ctx.paramNombre("Variabilité", 70);

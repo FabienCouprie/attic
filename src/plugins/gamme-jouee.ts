@@ -137,7 +137,7 @@ The « Notation » output writes the run as text, one note per line with its oct
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de l'audio rendu.", docEn: "Volume of the rendered audio." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const gamme = ctx.paramTexte("Gamme", GAMMES[0].id);
       const demiTon = parseInt(ctx.paramTexte("Clé", "0"), 10) || 0;
       const octave = Math.round(ctx.paramNombre("Octave", 4));

@@ -5,7 +5,7 @@
 // `audio/peigne.ts`. Les notices sont des descriptifs fonctionnels : ce que fait le nœud et comment
 // s'en servir, sans le situer par rapport à un autre.
 
-import type { FicheAudio } from "../audio/types-domaine";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { MODULATION_MIX_NOMMEE, bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
@@ -17,9 +17,9 @@ import {
 import { parCanal as parCanalHorsFil } from "./hors-fil";
 import { melangerPeignes, peignesVoie, type OptionsPeigneVoie } from "../audio/peigne";
 import { lireIntervalles } from "./concret";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const en = () => langueCourante() === "en";
-const aucuneEntree = () => (en() ? "No audio input." : "Aucune entrée audio.");
 
 /** Une courbe lue trame par trame : la valeur de la courbe à l'instant de la trame t. */
 /**
@@ -34,7 +34,7 @@ const aucuneEntree = () => (en() ? "No audio input." : "Aucune entrée audio.");
  * l'entrée entière à celle de la sortie entière, tous canaux confondus, et une voie seule ne peut
  * pas la faire sans se tromper.
  */
-async function voiesMisesEnForme(a: AudioBuffer, o: OptionsCdp, ctx: any): Promise<AudioBuffer> {
+async function voiesMisesEnForme(a: AudioBuffer, o: OptionsCdp, ctx: ContexteAudio): Promise<AudioBuffer> {
   const voies = Array.from({ length: a.numberOfChannels }, (_, c) => a.getChannelData(c));
   const rendues = await parCanalHorsFil<OptionsCdp, Float32Array>(voies, o, {
     creerWorker: () => new Worker(new URL("../workers/cdp-worker.ts", import.meta.url), { type: "module" }),
@@ -87,9 +87,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Étirement max", nomEn: "Stretch max", modulationDe: "Étirement", type: "curseur", plage: [0.5, 2], pas: 0.01, defaut: 1.6,
         doc: "Étirement que vaut le un de la courbe.", docEn: "Stretch that the curve's one means." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: aucuneEntree() };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const k = parTrame(ctx.entree(1), a, ctx.paramNombre("Étirement", 1.3),
         { min: ctx.paramNombre("Étirement min", 1), max: ctx.paramNombre("Étirement max", 1.6) });
       const pivot = ctx.paramNombre("Pivot", 200);
@@ -124,9 +124,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Temps qu'un partiel met à perdre 60 dB après le passage de la bande. 0 : il se tait dès qu'elle s'éloigne.",
         docEn: "Time a partial takes to lose 60 dB after the band has passed. 0: it falls silent as soon as the band moves on." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: aucuneEntree() };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const o = {
         vitesse: ctx.paramNombre("Vitesse", 1), largeur: ctx.paramNombre("Largeur", 0.5),
         bas: ctx.paramNombre("Bas", 100), haut: ctx.paramNombre("Haut", 5000),
@@ -155,9 +155,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "À graine égale, le même mélange.", docEn: "Same seed, same shuffle." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: aucuneEntree() };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const tramesParBloc = Math.max(1, Math.round((ctx.paramNombre("Durée des blocs", 50) / 1000) * a.sampleRate / SAUT));
       const porteeBlocs = (ctx.paramNombre("Portée", 1) * a.sampleRate / SAUT) / tramesParBloc;
       const graine = ctx.paramNombre("Graine", 42);
@@ -203,9 +203,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fondamentale max", nomEn: "Fundamental max", modulationDe: "Fondamentale", type: "curseur", plage: [20, 2000], pas: 0.5, defaut: 220, unite: "Hz",
         doc: "Fondamentale que vaut le un de la courbe.", docEn: "Fundamental that the curve's one means." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: aucuneEntree() };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const f0 = parTrame(ctx.entree(1), a, ctx.paramNombre("Fondamentale", 110), {
         min: ctx.paramNombre("Fondamentale min", 55), max: ctx.paramNombre("Fondamentale max", 220), ...progressionPour({ unite: "Hz" }),
       });
@@ -240,11 +240,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Largeur sur laquelle le spectre du filtre est moyenné. 0 : ses partiels découpent le son ; quelques centaines de hertz : seule son enveloppe, sa couleur, s'imprime.",
         docEn: "Width over which the filter's spectrum is averaged. 0: its partials carve the sound; a few hundred hertz: only its envelope, its colour, is printed." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0), b = ctx.entree(1);
-      if (!(a instanceof AudioBuffer) || !(b instanceof AudioBuffer)) {
-        return { valeurs: [null], message: en() ? "A sound and a filter are needed." : "Il faut un son et un filtre." };
-      }
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0), b = entreeAudio(ctx, 1);
+      if (sansEntree(a)) return a;
+      if (sansEntree(b)) return b;
       const profondeur = ctx.paramNombre("Profondeur", 100) / 100;
       const cases = Math.round(ctx.paramNombre("Lissage", 0) / (a.sampleRate / TAILLE));
       const filtres = Array.from({ length: b.numberOfChannels }, (_, c) => analyserPV(b.getChannelData(c), a.sampleRate));
@@ -292,9 +291,9 @@ export const fiches: FicheAudio[] = ([
         pas: 0.05,
       }),
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: aucuneEntree() };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const f0 = ctx.paramNombre("Fondamentale", 110);
       // LA COURBE SE LIT SUR LA LONGUEUR DE L'ENTRÉE ; au-delà, sa dernière valeur tient, ce qui
       // couvre la traîne ajoutée après le son. L'ordre est forcé : la traîne se déduit du maximum

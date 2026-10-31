@@ -9,6 +9,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { decalerFrequence } from "../audio/decalage-frequence";
 import { estCourbe, valeurA, valeursParametre } from "../audio/courbe";
 
@@ -40,11 +41,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Part que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours. Le message de sortie donne alors la part moyenne.",
         docEn: "Share that the curve's one means. A value below Modulation min reverses the direction of travel. The output message then gives the average share." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0);
+      if (sansEntree(entree)) return entree;
       const decalage = ctx.paramNombre("Décalage", 100);
       const ecart = ctx.paramNombre("Écart stéréo", 0);
       const melange = Math.max(0, Math.min(1, ctx.paramNombre("Mélange", 100) / 100));

@@ -1,10 +1,10 @@
 // plugins/sortie-conversion.ts — Nœuds sortie-conversion (issus du découpage de complements.ts).
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
 import { bufferVersMp3Blob } from "../audio";
 import { decrire } from "../audio/metadonnees";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -12,8 +12,8 @@ export const fiches: FicheAudio[] = ([
     resume: "Affiche la forme d'onde du signal avec zoom et barre de défilement.",
     resumeEn: "Displays the waveform with zoom and scrollbar.",
     entrees: [{ nom: "Audio", type: "audio" }], sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }], parametres: [],
-    async executer(ctx: any) {
-      const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null, null] };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 2 }); if (sansEntree(a)) return a;
       return { valeurs:[a, { debut: 0, duree: a.duration }] };
    },
  },
@@ -26,9 +26,9 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Qualité", nomEn: "Quality", plage: [64,320], defaut: 192, unite: "kbps" },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(a)) return a;
       let mp3Url: string | undefined;
       try {
         const qualite = ctx.paramNombre("Qualité", 192);
@@ -60,9 +60,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }],
     parametres: [],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(a)) return a;
       const { serialiserGraphe } = await import("../audio/graphe-embarque");
       const graphe = serialiserGraphe() ?? undefined;
       // LE GRAPHE PART PAR LE CANAL DU MOTEUR : c'est lui qui écrit le WAV, donc lui qui doit
@@ -77,9 +77,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_connect_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       return { valeurs: [a] };
    },
  },

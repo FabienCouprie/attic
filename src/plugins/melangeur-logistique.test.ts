@@ -2,6 +2,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function makeBuffer(len: number, value: number, sampleRate = 44100) {
   const b = new AudioBuffer({ numberOfChannels: 1, length: len, sampleRate });
@@ -10,15 +11,7 @@ function makeBuffer(len: number, value: number, sampleRate = 44100) {
 }
 
 function ctx(a1: AudioBuffer, a2: AudioBuffer | null, params: Record<string, number>) {
-  return {
-    entree: (idx: number) => (idx === 0 ? a1 : a2),
-    entrees: () => [a1, a2],
-    paramTexte: () => "",
-    paramNombre: (nom: string, def: number) => params[nom] ?? def,
-    onProgress: () => {},
-    noeud: { data: {} },
-    runtime: null,
-  };
+  return ctxDEssai([a1, a2], params);
 }
 
 describe("mélangeur logistique", () => {

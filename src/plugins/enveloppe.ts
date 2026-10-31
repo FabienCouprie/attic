@@ -1,9 +1,9 @@
 // plugins/enveloppe.ts — Modeleur d'enveloppe ADSR.
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { appliquerADSR } from "../audio";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -23,9 +23,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Relâchement", nomEn: "Release", plage: [0, 3000], pas: 1, defaut: 200, unite: "ms",
         doc: "Temps de retour au silence à la fin (la « queue » du son).", docEn: "Time to return to silence at the end (the sound's « tail »)." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const out = appliquerADSR(
         a,
         ctx.paramNombre("Attaque", 10),

@@ -82,7 +82,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Identifier of the loaded patch (updated automatically by the file picker). Used to invalidate the cache when the file changes.", defautEn: "",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.noeud.data.pureDataFichier as File | undefined;
       if (!fichier) {
         return { valeurs: [null], erreur: true, message: traduire("msg.aucun_patch_pure_data_charg") };

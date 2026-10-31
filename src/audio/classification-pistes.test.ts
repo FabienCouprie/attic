@@ -1,31 +1,14 @@
 // audio/classification-pistes.test.ts
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { classifierPistes, calculerMoyennesParGroupe, type PisteVectorisee } from "./classification-pistes";
 import { extraireVecteurFeatures } from "./features-piste";
 import { creerAleatoire } from "../core/hasard";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
-}
 
 const SR = 44100;
 
 function sinus(freq: number, dureeS: number): AudioBuffer {
   const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
   const d = b.getChannelData(0);
   for (let i = 0; i < n; i++) d[i] = Math.sin((2 * Math.PI * freq * i) / SR);
   return b;
@@ -36,16 +19,12 @@ function sinus(freq: number, dureeS: number): AudioBuffer {
 // tonales par hasard peut faire fusionner ce groupe avec un autre au clustering.
 function bruitBlanc(dureeS: number, graine = 1): AudioBuffer {
   const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
   const d = b.getChannelData(0);
   const rng = creerAleatoire(graine);
   for (let i = 0; i < n; i++) d[i] = rng() * 2 - 1;
   return b;
 }
-
-beforeAll(() => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-});
 
 // 3 groupes de 3 pistes synthétiques, nettement distincts en chroma/centroïde/
 // MFCC : sinusoïde grave (A2, classe A), sinusoïde aiguë (C6, classe C),

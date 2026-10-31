@@ -11,7 +11,6 @@
 //   — LA COURBE PEUT NE RIEN COMMANDER. Un réglage lu puis oublié passe tous les cas de forme :
 //     durée, canaux, absence de NaN. Les cas de commande vérifient donc que le début et la fin d'un
 //     son diffèrent quand la profondeur monte de zéro à cent.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { chopper } from "./effets-decoupe";

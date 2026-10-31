@@ -56,7 +56,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Analyse", nomEn: "Analysis", type: "texte" },
     ],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recues = (ctx.entrees() as unknown[]).filter(estSequence)
         .filter((s) => s.notes.length > 0);
       if (recues.length === 0) {
@@ -95,7 +95,7 @@ export const fiches: FicheAudio[] = ([
         doc: "La voix rendue, zéro étant la première. Au-delà de la dernière, le compte reprend à la première.",
         docEn: "The voice returned, zero being the first. Beyond the last, the count starts again at the first." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       if (!estSequence(entree) || entree.notes.length === 0) {
         return {

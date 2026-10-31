@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { miroirCanaux } from "../audio/miroir";
 import { versAudioBuffer, canauxDe, DUREE_SORTIE_MAX_SEC } from "../audio/geometrie-sonore";
 
@@ -27,9 +28,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondu enchaîné entre le miroir et l'original quand Tours dépasse 1.",
         docEn: "Crossfade between mirror and original when Laps is above 1." },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
       const options = {
         pivotHz: ctx.paramNombre("Pivot", 632),
         tours: Math.round(ctx.paramNombre("Tours", 1)),

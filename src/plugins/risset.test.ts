@@ -5,6 +5,7 @@ import { publierFrequenceDeTravail } from "../audio/frequence-de-travail";
 import { describe, it, expect } from "vitest";
 import "node-web-audio-api/polyfill.js";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = registre.trouverDef("glissando-risset")!;
 
@@ -17,12 +18,7 @@ function source(sr = 8000, dureeSec = 0.5): AudioBuffer {
 }
 
 function ctxDe(params: Record<string, string | number> = {}, entree: unknown = source()) {
-  return {
-    entree: () => entree,
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-    onProgress: () => {},
-  } as any;
+  return ctxDEssai([entree], params) as any;
 }
 
 describe("nœud Glissando de Risset", () => {
@@ -104,13 +100,7 @@ const ficheCloche = registre.trouverDef("cloche-risset")!;
 describe("nœud Cloche de Risset", () => {
   /** Ce nœud est un générateur : pas d'entrée, mais un AudioContext dans `runtime`. */
   function ctxCloche(params: Record<string, number> = {}, sampleRate = 22050) {
-    return {
-      runtime: { sampleRate },
-      entree: () => null,
-      paramTexte: (_: string, d: string) => d,
-      paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-      onProgress: () => {},
-    } as any;
+    return ctxDEssai([], params, { runtime: { sampleRate } }) as any;
   }
 
   it("génère sans aucune entrée", async () => {

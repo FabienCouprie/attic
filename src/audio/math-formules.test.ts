@@ -1,33 +1,12 @@
 // audio/math-formules.test.ts — Tests des processeurs audio par formules mathématiques.
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { appliquerFormuleEchantillons, genererAudioFormule, appliquerFormuleSpectrale } from "./math-formules";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
-}
-
-beforeAll(() => {
-  (globalThis as unknown as any).AudioBuffer = AudioBufferPolyfill;
-});
 
 const SR = 44100;
 
 function bufferSinus(freq: number, dureeS: number, channels = 1, amplitude = 1): any {
   const len = Math.floor(SR * dureeS);
-  const b = new AudioBufferPolyfill({ numberOfChannels: channels, length: len, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: channels, length: len, sampleRate: SR });
   for (let c = 0; c < channels; c++) {
     const d = b.getChannelData(c);
     for (let i = 0; i < len; i++) d[i] = amplitude * Math.sin((2 * Math.PI * freq * i) / SR);

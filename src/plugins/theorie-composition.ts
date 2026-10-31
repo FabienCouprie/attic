@@ -6,7 +6,7 @@
 // opérations sérielles, l'analyse par ensembles de classes de hauteurs, l'harmonie
 // négative, et la mise en voix des accords.
 
-import type { FicheAudio } from "../audio/types-domaine";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { parseMidi } from "midi-file";
@@ -80,7 +80,7 @@ async function notesEntrantes(sequence: unknown, midi: unknown): Promise<
  * théorie a d'autant plus besoin de s'entendre que son intérêt est de comparer — une série
  * et son rétrograde, un accord et son image négative.
  */
-async function rendreEtEcrire(ctx: any, notes: NoteSimple[]): Promise<[AudioBuffer, File]> {
+async function rendreEtEcrire(ctx: ContexteAudio, notes: NoteSimple[]): Promise<[AudioBuffer, File]> {
   const { notesVersFichierMidi, appliquerInstrumentMidi, rendreSequence } = await import("../audio");
   const instrument = ctx.paramNombre("Instrument", 0);
   const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
@@ -173,7 +173,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Force des notes.", docEn: "Note strength." },
       ...PARAMETRES_RENDU,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = await notesDuMidi(ctx.entree(0));
       const serie = entree && entree.length > 0
         ? [...entree].sort((a, b) => a.debut - b.debut || a.note - b.note).map((n) => ((n.note % 12) + 12) % 12)
@@ -231,7 +231,7 @@ export const fiches: FicheAudio[] = ([
         doc: "« Accord par accord » analyse chaque groupe de notes simultanées séparément, puis relève les formes premières qui revenaient ; c'est ce qui permet de dire que deux passages emploient le même matériau.",
         docEn: "« Chord by chord » analyses each group of simultaneous notes separately, then lists the prime forms that recurred, which is what allows saying that two passages use the same material." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recu = await notesEntrantes(ctx.entree(1), ctx.entree(0));
       const entree = recu?.notes ?? null;
       const en = langueCourante() === "en";
@@ -301,7 +301,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "« Classes » reflects each note within its octave: the harmony changes, the line keeps its contour; this is what one wants to substitute a chord. « True mirror » reflects everything around a single axis: intervals change direction and the melody turns over." },
       ...PARAMETRES_RENDU,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
@@ -355,7 +355,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Note la plus haute que la conduite des voix s'autorise.", docEn: "Highest note the voice leading allows itself." },
       ...PARAMETRES_RENDU,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recu = await notesEntrantes(ctx.entree(1), ctx.entree(0));
       if (!recu) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const notes = recu.notes;

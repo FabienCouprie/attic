@@ -19,6 +19,7 @@ import {
 } from "../audio/velours";
 import { parCanal } from "./hors-fil";
 import { MODULATION_MELANGE, bornesModulation, reglageModule, portModulation } from "./effets-aides";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -62,11 +63,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Seed of the positions and signs. Two seeds give two rooms of the same dimensions." },
       ...bornesModulation(MODULATION_MELANGE),
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(entree)) return entree;
       const { sampleRate, numberOfChannels: canaux, length } = entree;
       const profil = ctx.paramTexte("Profil", "exponentielle") as ProfilDecroissance;
       const duree = ctx.paramNombre("Durée", 2);

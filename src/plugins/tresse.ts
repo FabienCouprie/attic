@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { lireMotTresse, tresserCanaux } from "../audio/tresse";
 import { versAudioBuffer, canauxDe } from "../audio/geometrie-sonore";
 
@@ -35,9 +36,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Écart des places extrêmes par rapport au centre.",
         docEn: "Distance of the outermost places from the centre." },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
       const brins = ctx.paramTexte("Brins", "3") === "4" ? 4 : 3;
       const texte = ctx.paramTexte("Mot", "1 -2");
       const lu = lireMotTresse(texte, brins);

@@ -20,7 +20,6 @@
 //
 // Les deux rendent la même hauteur, au millième de cent près, et c'est ce que les deux premiers cas
 // mesurent. Le troisième mesure ce qui arrivait avant : la mauvaise adresse, et son écart.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { accordageDepuisCents, CENTS_PAR_OCTAVE, hauteurDuDegre } from "./accordage";

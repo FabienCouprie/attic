@@ -10,7 +10,6 @@
 // MÊME ÉNERGIE, l'une chargée dans le grave, l'autre dans l'aigu. Un son aigu n'a qu'une place, et
 // une recherche qui ne regarderait que le niveau la trouverait une fois sur deux, au hasard du
 // tirage.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import {

@@ -1,31 +1,15 @@
 // plugins/etirement-dtw.test.ts
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches as fichesEtirement } from "./etirement-dtw";
 import { fiches as fichesAlignement } from "./alignement-dtw";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
-}
 
 const SR = 44100;
 
 function melodie(freqs: number[], dureeParNoteS: number): AudioBuffer {
   const nParNote = Math.floor(SR * dureeParNoteS);
   const n = nParNote * freqs.length;
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
   const d = b.getChannelData(0);
   freqs.forEach((freq, noteIdx) => {
     for (let i = 0; i < nParNote; i++) d[noteIdx * nParNote + i] = Math.sin((2 * Math.PI * freq * i) / SR);
@@ -33,23 +17,15 @@ function melodie(freqs: number[], dureeParNoteS: number): AudioBuffer {
   return b;
 }
 
-beforeAll(() => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-});
-
 const ficheEtirement = fichesEtirement.find((f) => f.id === "etirement-dtw")!;
 const ficheAlignement = fichesAlignement.find((f) => f.id === "alignement-dtw")!;
 
 function ctxAlignement(entrees: any[], params: Record<string, number> = {}) {
-  return {
-    entree: (i: number) => entrees[i] ?? null,
-    onProgress: () => {},
-    paramNombre: (nom: string, defaut: number) => params[nom] ?? defaut,
-  };
+  return ctxDEssai(entrees, params);
 }
 
 function ctxEtirement(entrees: any[]) {
-  return { entree: (i: number) => entrees[i] ?? null, onProgress: () => {} };
+  return ctxDEssai(entrees);
 }
 
 const MELODIE = [220, 246.94, 261.63, 293.66, 329.63];

@@ -15,17 +15,10 @@ import { registre } from "../audio/adaptateur";
 import { analyserMidi } from "../audio/midi";
 import { parseMidi } from "midi-file";
 import { CANAL_PERCUSSION, NOTES_PERCUSSION_GM, velociteMidiDepuisNuance } from "../audio/batterie-midi";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function ctxParams(params: Record<string, string | number>) {
-  return {
-    entree: () => null,
-    entrees: () => [],
-    paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-    paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-    onProgress: () => {},
-    noeud: { id: "n1", data: {} },
-    runtime: null,
-  } as any;
+  return ctxDEssai([], params) as any;
 }
 
 /** La fenêtre d'analyse : 4 ms, soit six fois plus courte que le pas le plus rapide employé ici. */

@@ -100,8 +100,8 @@
 //   0,307 sur une cloche. Le code était le bon — rien ne gagnerait à interdire l'essai que la notice
 //   invitait à faire dans la même phrase —, c'est la documentation qui disait le contraire de lui, et
 //   c'est elle qui a changé. Le cas ci-dessous constate que le trémolo agit partout.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { BARRES } from "../audio/barre-modale";
 import { SECOUEURS } from "../audio/phisem";
 import { SEUILS } from "../audio/guides-onde";
@@ -115,14 +115,7 @@ const fiche = (id: string) => {
 };
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages) as never;
 }
 
 const lancer = (id: string, entrees: unknown[], reglages: Record<string, number | string> = {}) =>

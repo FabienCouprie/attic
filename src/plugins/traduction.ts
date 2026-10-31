@@ -69,7 +69,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Paire de langues source → cible. Chaque paire utilise un modèle OPUS-MT dédié (~30 MB).",
         docEn: "Source → target language pair. Each pair uses a dedicated OPUS-MT model (~30 MB)." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const texte = ctx.entree(0);
       if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.branchez_un_texte_port_bleu") };
       const paireId = ctx.paramTexte("Paire", "fr-en");

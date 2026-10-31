@@ -7,6 +7,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { declipper, devinerSeuil } from "../audio/declipper";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
@@ -41,11 +42,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Écart en dessous duquel une trame est jugée expliquée, et le calcul s'arrête. Ce réglage compte plus qu'il n'en a l'air : mesuré sur un son écrêté à 24 %, 0,01 rend 16,8 dB là où 0,1 n'en rend que 8,5, l'arrêt anticipé coupait la convergence bien trop tôt.",
         docEn: "Gap below which a frame is deemed explained, and computation stops. This setting matters more than it looks: measured on a sound clipped at 24 %, 0.01 gives 16.8 dB where 0.1 gives only 8.5, stopping early was cutting convergence far too short." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0);
+      if (sansEntree(entree)) return entree;
       const auto = ctx.paramTexte("Seuil", "auto") !== "manuel";
       const options = {
         taille: parseInt(ctx.paramTexte("Fenêtre", "1024"), 10) || 1024,

@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { ampleur, correlation, efficace, tenueAttendue, tenueEnMono, type OptionsAmpleur } from "../audio/ampleur";
 import { valeursParametre } from "../audio/courbe";
 
@@ -50,10 +51,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine des deux motifs de réflexions. Une même graine rejoue la même pièce. Changer de graine change la pièce sans changer ses dimensions.",
         docEn: "Seed for the two reflection patterns. The same seed replays the same room. Changing the seed changes the room without changing its dimensions." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+      const e = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(e)) return e;
 
       const melange = ctx.paramNombre("Mix", 100) / 100;
       const gauche = e.getChannelData(0);

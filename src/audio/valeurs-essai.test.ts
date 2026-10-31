@@ -9,7 +9,6 @@
 // LA REGLE EST DONC BINAIRE : chaque type de flux ENREGISTRE porte une valeur d'essai, ou figure
 // dans `SANS_VALEUR_DESSAI` avec sa raison. Le cas lit le REGISTRE, non une liste ecrite a cote :
 // un seizieme type arrive avec son nom, et il tombe ici tant que personne ne s'est prononce.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { registre } from "./adaptateur";

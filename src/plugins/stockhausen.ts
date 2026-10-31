@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -33,9 +34,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondu appliqué pour que la source boucle sans clic. Ralentie mille fois, elle ne fournirait sinon qu'une fraction de milliseconde de matériau.",
         docEn: "Crossfade so the source loops without a click. Slowed a thousandfold it would otherwise supply a fraction of a millisecond of material." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { continuumHauteurRythme } = await import("../audio/stockhausen");
       const versLaHauteur = ctx.paramTexte("Sens", "rythme") === "hauteur";
       const octaves = ctx.paramNombre("Octaves", 10);

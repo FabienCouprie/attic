@@ -8,6 +8,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { SoundTouch, SimpleFilter, WebAudioBufferSource } from "soundtouchjs";
 
 interface SoundTouchParams {
@@ -143,9 +144,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Facteur de tempo. 1 = original, 2 = 2x plus vite, 0.5 = 2x plus lent.",
         docEn: "Tempo factor. 1 = original, 2 = 2x faster, 0.5 = 2x slower." },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
       const tempo = ctx.paramNombre("Tempo", 1);
       if (tempo <= 0) return { valeurs: [null], erreur: true, message: traduire("msg.le_tempo_doit_tre_positif") };
       const out = appliquerSoundTouch(buffer, { tempo });
@@ -164,9 +165,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Transposition en demi-tons. 0 = original, +12 = une octave plus haut, -12 = une octave plus bas.",
         docEn: "Pitch shift in semitones. 0 = original, +12 = one octave up, -12 = one octave down." },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
       const semi = ctx.paramNombre("Tonalité", 0);
       const out = appliquerSoundTouch(buffer, { pitchSemitones: semi });
       const signe = semi >= 0 ? "+" : "";
@@ -185,9 +186,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Facteur de vitesse global. 1 = original, 2 = 2x plus vite et plus aigu, 0.5 = 2x plus lent et plus grave.",
         docEn: "Overall playback rate. 1 = original, 2 = 2x faster and higher, 0.5 = 2x slower and lower." },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
       const rate = ctx.paramNombre("Vitesse", 1);
       if (rate <= 0) return { valeurs: [null], erreur: true, message: traduire("msg.la_vitesse_doit_tre_positive") };
       const out = appliquerSoundTouch(buffer, { rate });

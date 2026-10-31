@@ -1,9 +1,10 @@
 // plugins/tonal.ts — Nœuds de théorie musicale via la bibliothèque Tonal.
 // Tonal : MIT licence — ajouté dans THIRD_PARTY.md.
 
-import type { FicheAudio } from "../audio/types-domaine";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { Chord, Scale, Note } from "tonal";
 import { estimerTonalite, detecterAccords, accordsVersTexte } from "../audio/accords";
 import { PARAMETRE_CLE } from "../audio/cles";
@@ -57,7 +58,7 @@ function progressionSuggest(type: "major" | "minor"): string {
  * personne ne pense à changer quand une tonalité arrive par un câble. Un texte
  * muet sur le mode — une simple tonique « A » — laisse le paramètre décider.
  */
-function gammeDemandee(ctx: any, entree: unknown): ModeProgression {
+function gammeDemandee(ctx: ContexteAudio, entree: unknown): ModeProgression {
   const duTexte = typeof entree === "string" ? modeDepuisTonalite(entree) : null;
   if (duTexte) return duTexte;
   return ctx.paramTexte("Gamme", "majeur") === "mineur" ? "mineur" : "majeur";
@@ -76,7 +77,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Notes de l'accord séparées par des espaces (ex : C E G, F A C E).",
         docEn: "Chord notes separated by spaces (e.g. C E G, F A C E).", defautEn: "C E G" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const notesTexte = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Notes", "C E G");
@@ -117,7 +118,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Type de gamme.",
         docEn: "Scale type.", optionsEn: ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"], defautEn: "major" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const tonic = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Tonalité", "C");
@@ -143,7 +144,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Intervalle de transposition (2M = ton, 3m = tierce mineure, 3M = tierce majeure, etc.).",
         docEn: "Transposition interval (2M = whole tone, 3m = minor third, 3M = major third, etc.).", optionsEn: ["1P", "2m", "2M", "3m", "3M", "4P", "4A", "5P", "6m", "6M", "7m", "7M", "8P"], defautEn: "2M" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const note = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Note", "C4");
@@ -173,7 +174,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Progression en chiffres romains (ex : I V vi IV, ii V I). Majuscules = majeur, minuscules = mineur ; une altération explicite (bIII, #IV) est respectée telle quelle.",
         docEn: "Roman numeral progression (e.g. I V vi IV, ii V I). Uppercase = major, lowercase = minor; an explicit accidental (bIII, #IV) is kept as written.", defautEn: "I V vi IV" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const tonic = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Tonalité", "C");
@@ -233,7 +234,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Bloc joue toutes les notes simultanément, Arpège les décline en croches.",
         docEn: "Block plays all notes at once, Arpeggio plays them as eighth notes.", defautEn: "Block" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const tonic = ctx.paramTexte("Tonalité", "C");
       const progEntree = (typeof entree === "string" && entree.trim())
@@ -311,11 +312,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Style", nomEn: "Style", type: "choix", options: ["Pop", "Jazz", "Blues"], optionsEn: ["Pop", "Jazz", "Blues"], defaut: "Pop",
         doc: "Style de la progression suggérée, adapté au mode détecté (majeur ou mineur).", docEn: "Suggested progression style, adapted to the detected mode (major or minor).", defautEn: "Pop" },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!buffer || !(buffer instanceof AudioBuffer)) {
-        return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucun_audio_connect") };
-      }
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(buffer)) return buffer;
       const tonalite = estimerTonalite(buffer);
       const accords = detecterAccords(buffer, 0.5);
       const style = ctx.paramTexte("Style", "Pop");

@@ -14,8 +14,8 @@
 //   · un paramètre lu sous un nom qui n'est pas celui qu'on affiche, donc jamais reçu ;
 //   · une entrée absente qui lance au lieu de parler ;
 //   · un nombre de valeurs rendues qui ne correspond plus aux sorties déclarées.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./effets-cresson";
 import { luParLExecuteur } from "./effets-aides";
 
@@ -43,14 +43,7 @@ function sonEssai(secondes = 1, { identiques = true } = {}): AudioBuffer {
 }
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages) as never;
 }
 
 const fiche = (id: string) => {

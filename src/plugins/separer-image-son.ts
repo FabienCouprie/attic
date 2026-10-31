@@ -35,7 +35,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Audio", nomEn: "Audio", type: "audio" },
     ],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       if (!(entree instanceof Blob)) {
         return {

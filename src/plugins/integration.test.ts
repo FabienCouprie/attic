@@ -5,6 +5,7 @@ import { writeMidi } from "midi-file";
 import { registre } from "../audio/adaptateur";
 import { bufferVersWavBlob } from "../audio/io";
 import { valeurCanoniqueChoix } from "../i18n";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function makeBuffer(len: number, sampleRate = len) {
   const b = new AudioBuffer({ numberOfChannels: 1, length: len, sampleRate });
@@ -53,15 +54,7 @@ async function lirePcmWav(blob: Blob) {
 }
 
 function ctx(params: Record<string, string | number>, entrees: unknown[], noeudData: Record<string, unknown> = {}, onProgress: (msg: string) => void = () => {}) {
-  return {
-    entree: (idx: number) => entrees[idx],
-    entrees: () => entrees,
-    paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-    paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-    onProgress,
-    noeud: { data: noeudData },
-    runtime: null,
-  };
+  return ctxDEssai(entrees, params, { data: noeudData, onProgress });
 }
 
 describe("chaînes critiques", () => {

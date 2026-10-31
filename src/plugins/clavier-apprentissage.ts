@@ -76,7 +76,7 @@ export const fiches: FicheAudio[] = ([
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) {

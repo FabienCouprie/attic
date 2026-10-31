@@ -16,10 +16,10 @@
 // `notesVersFichierMidi` RECALE la séquence sur sa première note, de sorte qu'une note isolée
 // commençant tard est écrite au tick zéro ; et c'est donc l'écart ENTRE deux notes qui mesure leur
 // placement, non le silence devant une seule.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { fiches } from "./syntheses-exotiques";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = (id: string) => {
   const f = fiches.find((x) => x.id === id);
@@ -28,14 +28,7 @@ const fiche = (id: string) => {
 };
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages) as never;
 }
 
 const lancer = (id: string, entrees: unknown[], reglages: Record<string, number | string> = {}) =>

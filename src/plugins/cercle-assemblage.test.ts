@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import { POSITIONS_MAX, estCercle, estSuite, melanger, type Cercle } from "../audio/cercle";
 import { estSequence, type Sequence } from "../audio/sequence";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches as fichesCercle } from "./cercle-assemblage";
 import { fiches as fichesSequence } from "./sequence-assemblage";
 
@@ -27,14 +28,8 @@ const seq = (debuts: number[], duree: number, note = 60, tempo?: number): Sequen
   duree, ...(tempo === undefined ? {} : { tempo }),
 });
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n", data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) =>
+  ctxDEssai(entrees, params, { id: "n" });
 
 const places = (c: Cercle) => c.sommets.map((s) => s.position).sort((a, b) => a - b);
 

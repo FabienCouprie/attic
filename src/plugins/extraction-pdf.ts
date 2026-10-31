@@ -47,7 +47,7 @@ const extractionPdfPlugins: FicheAudio[] = [
         docEn: "Plain text: content only. Markdown: headings, lists and tables reconstructed from the PDF's layout.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0) as File | null;
       if (!(fichier instanceof File)) {
         return { valeurs: [null], message: traduire("msg.connecter_fichier_pdf") };

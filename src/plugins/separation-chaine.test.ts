@@ -9,9 +9,9 @@
 // gravure doit en tirer une portée par voix, et l'extraction doit en rendre une seule. Si ce n'était
 // pas le cas, la séparation rendrait un objet d'une espèce à part, et rien de ce qui existe ne
 // saurait le recevoir.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
+import { ctxDEssai } from "../core/contexte-essai";
 import type { Sequence } from "../audio/sequence";
 import { fiches as fichesArbre } from "./arbre-rythmique";
 import { fiches as fichesVoix } from "./voix";
@@ -24,14 +24,8 @@ const extraire = fichesVoix.find((f) => f.id === "extraire-voix")!;
 const separer = fichesSeparation.find((f) => f.id === "separer-voix")!;
 const musicxml = fichesAnalyse.find((f) => f.id === "musicxml")!;
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) =>
+  ctxDEssai(entrees, params);
 
 async function jouer(arbre: string, hauteurs: string): Promise<Sequence> {
   const res = await rythme.executer(contexte([arbre, hauteurs, null], { Tempo: 120 }) as any);

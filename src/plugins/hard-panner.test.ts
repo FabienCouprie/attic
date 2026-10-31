@@ -2,17 +2,10 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function ctx(entrees: unknown[], params: Record<string, string> = {}) {
-  return {
-    entree: (idx: number) => entrees[idx],
-    entrees: () => entrees,
-    paramTexte: (nom: string, def: string) => params[nom] ?? def,
-    paramNombre: (_nom: string, def: number) => def,
-    onProgress: () => {},
-    noeud: { data: {} },
-    runtime: null,
-  };
+  return ctxDEssai(entrees, params);
 }
 
 function makeStereoBuffer(len: number, sampleRate: number) {

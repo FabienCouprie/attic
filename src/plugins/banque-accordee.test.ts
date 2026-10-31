@@ -19,6 +19,7 @@ import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { accordageEgal } from "../audio/accordage";
 import { construireBanque, type Banque } from "../audio/clavier-banque";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const RACINE = 60;
 const DIX_NEUF = accordageEgal(19, 1200, RACINE);
@@ -33,16 +34,7 @@ function sonDEssai(): AudioBuffer {
 
 /** Le contexte d'exécution de la fiche, avec son audio et son accordage. */
 function ctx(params: Record<string, string | number>, accordage: unknown) {
-  const entrees = [sonDEssai(), accordage];
-  return {
-    entree: (rang: number) => entrees[rang] ?? null,
-    entrees: () => entrees,
-    paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-    paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-    onProgress: () => {},
-    noeud: { id: "n1", data: {} },
-    runtime: null,
-  } as never;
+  return ctxDEssai([sonDEssai(), accordage], params) as never;
 }
 
 const REGLAGES = {

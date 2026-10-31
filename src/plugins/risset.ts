@@ -7,6 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -48,9 +49,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondu enchaîné appliqué pour rendre la source bouclable sans clic. À monter si la source a des bouts francs, à baisser si elle est très courte.",
         docEn: "Crossfade applied to make the source loop without a click. Raise it if the source has abrupt ends, lower it if the source is very short." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       // LA VARIANTE RESPIRANTE, parce que ce calcul a lieu dans le fil de la fenêtre : mesuré, le
       // rendu tenait le fil 1 245 ms sur 1 245 ms, donc sans jamais rendre la main.
       const { glissandoRissetRespirant } = await import("../audio/risset");
@@ -107,9 +108,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondu enchaîné appliqué pour rendre la source bouclable sans clic. À monter si la source a des bouts francs.",
         docEn: "Crossfade applied to make the source loop without a click. Raise it if the source has abrupt ends." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { rythmeRissetRespirant } = await import("../audio/risset");
       const sens = ctx.paramTexte("Sens", "accelerant");
       const cycleSec = ctx.paramNombre("Cycle", 10);
@@ -159,7 +160,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Échelle des désaccords de 1 Hz et 1,7 Hz appliqués aux partiels doublés. 0 % = plus aucun battement, son figé ; au-delà de 100 %, le battement s'accélère jusqu'à devenir une rugosité.",
         docEn: "Scale of the 1 Hz and 1.7 Hz detunings applied to the doubled partials. 0% = no beating, a static tone; above 100% the beating speeds up until it turns into roughness." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { clocheRisset } = await import("../audio/cloche-risset");
       const frequenceHz = ctx.paramNombre("Fréquence", 400);
       const dureeSec = ctx.paramNombre("Durée", 8);

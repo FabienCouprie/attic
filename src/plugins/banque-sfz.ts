@@ -50,7 +50,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Rend un aperçu audio : une note par touche de la banque, l'une après l'autre, et non une par zone, sans quoi une banque à couches ferait entendre trois fois la même note. S'il y a des couches de vélocité, un escalier de nuances suit, sur une seule touche, de la plus douce à la plus forte : c'est la seule façon d'entendre ce qu'elles apportent.",
         docEn: "Renders an audio preview: one note per key of the bank, one after another, not one per zone, otherwise a layered bank would sound the same note three times. If there are velocity layers, a staircase of dynamics follows on a single key, from softest to loudest: the only way to hear what they bring." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = (window as any).api;
       if (!api?.lireTexte) return { valeurs: [null, null], message: traduire("msg.n_cessite_electron") };
       const integre = ctx.paramTexte("Source", "integre") !== "fichier";

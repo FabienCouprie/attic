@@ -45,7 +45,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Utilisé avec Contrôle « Personnalisé ». Parmi : mesures, métrique, tonalité, mélodie, rythme, accords, ambitus. Mélodie et rythme portent sur la première voix ; ambitus vérifie qu'aucune note ne sort de la plage de l'original.",
         docEn: "Used with Check « Custom ». Among: bars, meter, key, melody, rhythm, chords, range. Melody and rhythm apply to the first voice; range checks that no note leaves the original's span." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const [origineTexte, modifieTexte] = [ctx.entree(0), ctx.entree(1)];
       if (typeof origineTexte !== "string" || typeof modifieTexte !== "string") {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.abc_contraintes.entrees") };
@@ -119,7 +119,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Délai d'un appel. Le premier appel à un modèle doit le charger en mémoire : comptez plusieurs minutes.",
         docEn: "Timeout of one call. The first call to a model must load it into memory: allow several minutes." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const abc = ctx.entree(0);
       if (typeof abc !== "string" || !abc.trim()) return { valeurs: [null, null], erreur: true, message: traduire("msg.abc_edition.aucun_abc") };
       const consigneEntree = ctx.entree(1);

@@ -16,6 +16,7 @@ import { fiches as limiteurCreteVraie } from "./limiteur-crete-vraie";
 
 import { valeurA } from "../audio/courbe";
 import { MODULATION_MIX, bornesModulation, effet, modulationNommee, reglageModule, param, portModulation } from "./effets-aides";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 /**
  * Les noms sous lesquels ces effets se DISENT, pour ceux dont le nom ne se prononce pas.
@@ -239,10 +240,11 @@ export const fiches: FicheAudio[] = ([
       ...bornesModulation({ ...modulationNommee("Seuil", "Threshold", [-80, 0], "dB"), defauts: [-60, -20] }),
       ...bornesModulation({ ...modulationNommee("Ratio", "Ratio", [1, 20], "∶1"), defauts: [1, 10] }),
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      const mode = ctx.paramTexte("Mode", "gate");
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
+      // L'identifiant canonique du choix est « expander » ; la primitive, elle, parle français.
+      const mode = ctx.paramTexte("Mode", "gate") as "gate" | "expander";
       // LE REPLI DES BORNES EST DONNÉ, et il manquait sur les quatre. Aucune n'est en pour cent :
       // sans lui, un graphe enregistré avant que ces bornes existent les lirait de zéro à cent,
       // soit des décibels et des millisecondes pris pour des pour cent.
@@ -263,7 +265,7 @@ export const fiches: FicheAudio[] = ([
         bornes: [20, 300],
       });
       const attenuation = ctx.paramNombre("Atténuation", 40);
-      const r = gateExpandeur(audio, mode, seuil, ratio, attaque, relachement, attenuation);
+      const r = gateExpandeur(audio, mode === "gate" ? "gate" : "expandeur", seuil, ratio, attaque, relachement, attenuation);
       // LE MESSAGE ANNONCE LES VALEURS DU DÉBUT DU SON quand une courbe commande : il rend un
       // chiffre, et une valeur qui se déplace en vaudrait autant qu'il y a d'instants.
       return { valeurs: [r], message: traduire("msg.var_0_seuil_var_1_db_var_2", mode === "gate" ? "Gate" : "Expandeur", valeurA(seuil, 0), mode === "expander" ? ` · ratio ${valeurA(ratio, 0)}:1` : "") };
@@ -334,10 +336,10 @@ export const fiches: FicheAudio[] = ([
         ...modulationNommee("Q", "Q", [0.5, 12], ""), defauts: [1, 8], pas: 0.1,
       }),
     ],
-    async executer(ctx: any) {
-      const modulateur = ctx.entree(0);
-      const porteuse = ctx.entree(1);
-      if (!(modulateur instanceof AudioBuffer) || !(porteuse instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+    async executer(ctx) {
+      const modulateur = entreeAudio(ctx, 0), porteuse = entreeAudio(ctx, 1);
+      if (sansEntree(modulateur)) return modulateur;
+      if (sansEntree(porteuse)) return porteuse;
       const bands = ctx.paramNombre("Bandes", 8);
       const n = Math.min(modulateur.length, porteuse.length);
       // LES DEUX BORNES ET LE Q ACCEPTENT UNE COURBE. Les deux bornes ne servent pas directement :
@@ -388,9 +390,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Vrai pic à ne pas dépasser, en mode Sonie. Si la cible demandait de le franchir, le plafond gagne et le composant annonce que la cible n'est pas atteinte : il préfère le dire plutôt qu'écrêter en silence ou glisser un limiteur derrière un bouton qui promet seulement de normaliser. Mettez un limiteur en amont si vous voulez les deux.",
         docEn: "True peak not to be exceeded, in Loudness mode. If the target required crossing it, the ceiling wins and the node announces that the target was not reached: it prefers saying so to clipping silently or slipping a limiter behind a button that only promises to normalise. Put a limiter upstream if you want both." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       if (ctx.paramTexte("Mode", "crete") === "crete") {
         const niveau = ctx.paramNombre("Niveau", -3);
         return { valeurs: [normaliser(audio, niveau)], message: traduire("msg.normaliseur.crete", niveau.toFixed(1)) };

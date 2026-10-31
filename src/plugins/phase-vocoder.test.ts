@@ -1,33 +1,17 @@
 // plugins/phase-vocoder.test.ts — Vérification des nœuds de phase vocoder.
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { fiches } from "./phase-vocoder";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function trouver(id: string) {
   return fiches.find((f) => f.id === id);
-}
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
 }
 
 const SR = 44100;
 
 function sinus(freq: number, dureeS: number, channels = 1): AudioBuffer {
   const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
   for (let ch = 0; ch < channels; ch++) {
     const d = b.getChannelData(ch);
     for (let i = 0; i < n; i++) d[i] = Math.sin((2 * Math.PI * freq * i) / SR);
@@ -36,16 +20,8 @@ function sinus(freq: number, dureeS: number, channels = 1): AudioBuffer {
 }
 
 function ctxAudio(buffer: any, params: Record<string, number>) {
-  return {
-    entree: (idx: number) => (idx === 0 ? buffer : null),
-    paramNombre: (nom: string, defaut: number) => (nom in params ? params[nom] : defaut),
-    paramTexte: (_nom: string, defaut: string) => defaut,
-  };
+  return ctxDEssai([buffer], params);
 }
-
-beforeAll(() => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-});
 
 describe("nœuds Phase Vocoder", () => {
   it("les 2 fiches sont enregistrées", () => {

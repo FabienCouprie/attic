@@ -8,6 +8,7 @@ import { calculerProfilBruit, reduireBruit } from "../audio/effets-bruit";
 import type { AreteG } from "../core/meta";
 import type { FicheAudio } from "../audio/types-domaine";
 import { creerAleatoire } from "../core/hasard";
+import { ctxDEssai } from "../core/contexte-essai";
 
 // Le bruit de test est tiré d'un générateur à graine fixe, pas de Math.random.
 // Ces tests mesurent des rapports d'énergie sur du bruit : avec un tirage
@@ -108,11 +109,7 @@ describe("profil-bruit + réduction-bruit en graphe", () => {
     expect(def).toBeDefined();
     const audio = bruitBlanc(0.5);
     const profilVide = new Float32Array(4097);
-    const res = await def!.executer({
-      entree: (i: number) => (i === 0 ? audio : profilVide),
-      paramNombre: (_: string, d: number) => d,
-      paramTexte: (_: string, d: string) => d,
-    } as any);
+    const res = await def!.executer(ctxDEssai([audio, profilVide]) as any);
     expect(res.valeurs[0]).toBe(audio);
     expect(res.message).toContain("vide");
   });
@@ -121,10 +118,7 @@ describe("profil-bruit + réduction-bruit en graphe", () => {
     const def = registre.trouverDef("profil-bruit") as FicheAudio | undefined;
     expect(def).toBeDefined();
     const silence = new AudioBuffer({ numberOfChannels: 1, length: 44100, sampleRate: 44100 });
-    const res = await def!.executer({
-      entree: (_: number) => silence,
-      paramNombre: (_: string, d: number) => d,
-    } as any);
+    const res = await def!.executer(ctxDEssai([silence]) as any);
     expect(res.valeurs[0]).toBeInstanceOf(Float32Array);
     expect(res.message).toContain("vide");
   });
@@ -182,11 +176,7 @@ describe("profil-bruit + réduction-bruit en graphe", () => {
     const profil = calculerProfilBruit(hum);
     const melange = signalAvecHum(0.3, 0.2, fHum);
     const rmsAvant = rms(melange);
-    const res = await def!.executer({
-      entree: (i: number) => (i === 0 ? melange : profil),
-      paramNombre: (_: string, d: number) => d,
-      paramTexte: (nom: string, d: string) => (nom === "Mode" ? "Notches" : d),
-    } as any);
+    const res = await def!.executer(ctxDEssai([melange, profil], { Mode: "Notches" }) as any);
     const reduit = res.valeurs[0] as AudioBuffer;
     expect(reduit).toBeInstanceOf(AudioBuffer);
     const rmsApres = rms(reduit);

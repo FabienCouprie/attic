@@ -1,6 +1,7 @@
 // plugins/texte-image.test.ts — Vérification de l'enregistrement du nœud Texte → image.
 import { describe, it, expect } from "vitest";
 import { fiches } from "./texte-image";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function trouver(id: string) {
   return fiches.find((f) => f.id === id);
@@ -19,12 +20,7 @@ describe("nœud Texte → image", () => {
 
   it("retourne une erreur si l'API bureau n'est pas disponible", async () => {
     const f = trouver("texte-image")!;
-    const ctx = {
-      entree: () => null,
-      paramTexte: (_nom: string, defaut: string) => defaut,
-      paramNombre: (_nom: string, defaut: number) => defaut,
-      onProgress: (_msg: string) => {},
-    };
+    const ctx = ctxDEssai();
     const res = await f.executer(ctx as any);
     expect(res.erreur).toBe(true);
     expect(res.valeurs[0]).toBeNull();

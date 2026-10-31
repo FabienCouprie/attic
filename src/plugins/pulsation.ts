@@ -97,7 +97,7 @@ The irregularity is zero on a perfect grid and one when the intervals' standard 
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Le niveau de crête du son rendu.", docEn: "The peak level of the rendered sound." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recue = ctx.entree(0);
       if (!estSequence(recue)) {
         return { valeurs: [null, "", null], erreur: true,

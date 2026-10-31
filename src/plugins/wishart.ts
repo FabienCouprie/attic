@@ -4,6 +4,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -30,9 +31,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine du mélange : même graine, même résultat. Sans effet sur les autres opérations.",
         docEn: "Shuffle seed: same seed, same result. No effect on the other operations." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { transformerWavesets, decouperWavesets } = await import("../audio/wishart");
       const operation = ctx.paramTexte("Opération", "repetition");
       const facteur = ctx.paramNombre("Facteur", 2);

@@ -127,7 +127,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Crête visée pour la sortie normalisée, en décibels sous la pleine échelle.",
         docEn: "Peak aimed at for the normalised output, in decibels below full scale." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = typeof window !== "undefined" ? (window as any).api : null;
       if (!api?.genererStableAudio3) {
         return {

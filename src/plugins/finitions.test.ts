@@ -31,6 +31,7 @@
 //   prise, et faire coïncider leurs fins inventerait un alignement que personne n'a demandé. »
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./finitions";
 import { luParLExecuteur } from "./effets-aides";
 
@@ -43,14 +44,7 @@ const fiche = (id: string) => {
 };
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages) as never;
 }
 
 const lancer = (id: string, entrees: unknown[], reglages: Record<string, number | string> = {}) =>

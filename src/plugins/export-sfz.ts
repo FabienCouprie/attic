@@ -35,7 +35,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Relâchement écrit dans l'enveloppe globale du SFZ (`ampeg_release`). Il ne change pas les échantillons : c'est l'échantillonneur qui l'appliquera.",
         docEn: "Release written into the SFZ's global envelope (`ampeg_release`). It does not change the samples: the sampler will apply it." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = (window as any).api;
       if (!api?.ecrireFichier) {
         return { valeurs: [null], message: traduire("msg.n_cessite_electron") };

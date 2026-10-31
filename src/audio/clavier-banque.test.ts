@@ -5,7 +5,6 @@
 // et c'est donc là que se mesure l'apport des zones. La hauteur est vérifiée quand même, par le
 // suiveur de hauteur : une erreur de mapping s'y verrait aussitôt, et c'est le genre de faute qu'on
 // ne voit pas en écoutant deux notes.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import {
   NOTE_DO8, NOTE_LA0, banqueDepuisRendus, choisirZone, construireBanque, ecartDeZone,

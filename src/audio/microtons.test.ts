@@ -19,7 +19,6 @@
 // mais cette fonction n'est appelée que depuis `midiVersAbc`, qui reçoit des octets. Aucun microton
 // ne peut l'atteindre aujourd'hui. Le jour où une hauteur continue y entrerait, c'est le premier
 // endroit à revoir.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { parseMidi } from "midi-file";

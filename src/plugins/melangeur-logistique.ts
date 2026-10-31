@@ -4,6 +4,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 async function resamplerVers(
   buffer: AudioBuffer,
@@ -83,12 +84,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Volume de sortie.", docEn: "Output volume.",
       },
     ],
-    async executer(ctx: any) {
-      const a1 = ctx.entree(0);
-      const a2 = ctx.entree(1);
-      if (!(a1 instanceof AudioBuffer) || !(a2 instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.melangeur_logistique.deux_pistes") };
-      }
+    async executer(ctx) {
+      const a1 = entreeAudio(ctx, 0), a2 = entreeAudio(ctx, 1);
+      if (sansEntree(a1)) return a1;
+      if (sansEntree(a2)) return a2;
       const centre = ctx.paramNombre("Centre", 50) / 100;
       const pente = ctx.paramNombre("Pente", 10);
       const volume = ctx.paramNombre("Volume", 100);

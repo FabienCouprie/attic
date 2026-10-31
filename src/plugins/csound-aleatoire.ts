@@ -89,7 +89,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine du tirage. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici. Toute autre valeur redonne exactement la même partition, ce qui permet de garder un tirage qu'on aime.",
         docEn: "Seed of the draw. 0 = drawn at random on each run, and shown in the message so it can be copied back here. Any other value gives exactly the same score again, which is how a draw you like is kept." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const courbeEntrante = ctx.entree(0);
       const courbe: Courbe | null = estCourbe(courbeEntrante) ? courbeEntrante : null;

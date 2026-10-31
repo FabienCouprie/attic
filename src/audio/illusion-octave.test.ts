@@ -9,7 +9,6 @@
 // d'après une oreille et le côté d'après l'autre ; il en sort, un pas sur deux, une hauteur entendue
 // du côté qui ne l'a jamais reçue. C'est cela qu'il faut garder, et non le seul fait que deux sons
 // alternent.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import {

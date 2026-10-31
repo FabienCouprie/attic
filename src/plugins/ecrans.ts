@@ -74,7 +74,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le tirage, de bout en bout : le livre d'écrans comme la place de chaque grain dans sa case. La même graine rejoue exactement la même pièce, ce qui est indispensable à une musique tirée au sort, sans quoi rien de ce qu'on aime ne se retrouve.",
         docEn: "The draw, from end to end: the book of screens as well as each grain's place inside its cell. The same seed replays exactly the same piece, which is indispensable to music drawn at random, without it nothing you liked can be found again." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       // La fréquence du PROJET, et non celle de la carte son : voir `audio/frequence-de-travail.ts`.
       const frequence = frequenceDeTravail();

@@ -14,6 +14,7 @@ import { avecDoc } from "./notices";
 import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
 import { FENETRES, type Fenetre } from "../audio/micromontage";
 import { EST_MODELE, granulationEcologique, rapportDeRebond } from "../audio/granulation-ecologique";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const FENETRES_FR = ["Gaussienne", "Trapèze", "Expodec", "Rexpodec"];
 const FENETRES_EN = ["Gaussian", "Trapezoid", "Expodec", "Rexpodec"];
@@ -139,11 +140,9 @@ The « Audio » output carries the render. The message gives the number of grain
       ...bornesModulation(MOD_RUGOSITE),
       ...bornesModulation(MOD_NIVEAU),
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0);
+      if (sansEntree(entree)) return entree;
       const sr = entree.sampleRate;
       const n = Math.max(1, Math.round(ctx.paramNombre("Durée", 4) * sr));
       const modeleLu = ctx.paramTexte("Modèle", "rebond");

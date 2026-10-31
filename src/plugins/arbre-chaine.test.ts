@@ -11,9 +11,9 @@
 //   2. chaque note tombe au même instant et dure aussi longtemps que son événement ;
 //   3. les hauteurs tournent dans l'ordre donné, les silences n'en consommant aucune ;
 //   4. LE SON RENDU DURE CE QUE DURE LA MESURE, silence final compris.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
+import { ctxDEssai } from "../core/contexte-essai";
 import { derouler, dureeArbre, ecrireArbre, lireArbre, type Mesure } from "../audio/arbre-rythmique";
 import { catalogueArbres } from "../audio/arbres-catalogue";
 import { estSequence, type Sequence } from "../audio/sequence";
@@ -23,14 +23,7 @@ import { fiches as fichesSequence } from "./sequence";
 const rythme = fichesArbre.find((f) => f.id === "rythme-sur-hauteurs")!;
 const rendu = fichesSequence.find((f) => f.id === "rendu-sequence")!;
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ctxDEssai(entrees, params);
 
 const TEMPO = 120;
 const HAUTEURS = "60 62 64 65 67 69 71";

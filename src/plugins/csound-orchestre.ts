@@ -45,7 +45,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Niveau appliqué à tous les instruments, en plus du gain propre à chacun. Ces gains viennent de la mesure : les opcodes de Csound ne partagent aucune convention d'amplitude, pour une amplitude demandée de 0,6, les crêtes mesurées allaient de 0,10 pour la résonance modale à 0,95 pour la corde frottée, qui touchait le limiteur.",
         docEn: "Level applied to every instrument, on top of each one's own gain. Those gains come from measurement: Csound's opcodes share no amplitude convention, for a requested amplitude of 0.6, measured peaks ranged from 0.10 for the modal resonance to 0.95 for the bowed string, which hit the limiter." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const ids = analyserListeInstruments(ctx.paramTexte("Instruments", DEFAUT));
       if (ids.length === 0) {
         return { valeurs: [null, null], message: traduire("msg.csound.orchestreVide") };

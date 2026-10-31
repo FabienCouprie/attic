@@ -35,6 +35,7 @@ import "node-web-audio-api/polyfill.js";
 import { readFileSync } from "node:fs";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { fiches } from "./spectrogramme-image";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const SR = 22050;
 
@@ -45,14 +46,7 @@ const fiche = (id: string) => {
 };
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages) as never;
 }
 
 const lancer = (id: string, entrees: unknown[], reglages: Record<string, number | string> = {}) =>

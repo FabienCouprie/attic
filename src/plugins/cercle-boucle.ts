@@ -56,7 +56,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Combien de fois la chaîne est calculée, donc combien de cercles la fin recueille. Le nombre est libre ; le message donne le rang de la passe sur le nombre demandé, de sorte qu'une valeur que le nombre total de passes ne laisse pas atteindre se voit.",
         docEn: "How many times the chain is computed, hence how many circles the end collects. The number is free; the message gives the rank of the pass out of the number asked for, so that a value the total pass count does not allow shows up." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       // LA SOURCE PEUT DÉJÀ ÊTRE UNE SUITE, et elle ne se réduit pas à son premier cercle : une
       // boucle branchée sur une autre transformerait alors quatre variations en une seule, sans
       // rien dire. Ce qui entre entre en entier.
@@ -98,7 +98,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Cercle", nomEn: "Circle", type: "cercle" }],
     sorties: [{ nom: "Cercle", nomEn: "Circle", type: "cercle" }],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       // CE QUI ARRIVE ARRIVE EN ENTIER. Une passe peut avoir produit plusieurs cercles, parce qu'une
       // boucle en contenait une autre ou qu'une source en portait déjà une suite : n'en garder que
       // le premier perdrait le reste en silence.

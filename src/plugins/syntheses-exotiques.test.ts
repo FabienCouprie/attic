@@ -40,10 +40,10 @@
 // de l'effacer, comme le veut la règle que `versBuffer` énonce — un modèle ne normalise pas, le
 // mélange se normalise une fois. Les cas qui tiennent tout cela sont dans la batterie sœur,
 // `syntheses-exotiques-midi.test.ts`, puisque ces réglages n'agissent qu'avec une séquence.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import { constante } from "../audio/courbe";
 import { fiches } from "./syntheses-exotiques";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = (id: string) => {
   const f = fiches.find((x) => x.id === id);
@@ -52,14 +52,7 @@ const fiche = (id: string) => {
 };
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages) as never;
 }
 
 const lancer = (id: string, entrees: unknown[], reglages: Record<string, number | string> = {}) =>

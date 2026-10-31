@@ -13,6 +13,7 @@ import {
   traiterVoie, type OptionsVoieTexture, type ResultatTexture,
 } from "../audio/texture-statistique";
 import { parCanal } from "./hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
@@ -44,11 +45,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine du bruit de départ. Deux graines donnent deux textures différentes aux mêmes statistiques ; c'est exactement ce que deux enregistrements de la même pluie sont l'un pour l'autre.",
         docEn: "Seed of the starting noise. Two seeds give two different textures with the same statistics, which is exactly what two recordings of the same rain are to each other." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0);
+      if (sansEntree(entree)) return entree;
       const { sampleRate, numberOfChannels: canaux } = entree;
       const longueur = Math.max(1, Math.round(ctx.paramNombre("Durée", 10) * sampleRate));
       const nombreBandes = parseInt(ctx.paramTexte("Bandes", "20"), 10) || 20;

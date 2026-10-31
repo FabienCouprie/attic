@@ -74,7 +74,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Canaux (ou pistes) de la batterie. 10 par défaut, la convention du General MIDI. Cette sortie demande une banque d'un autre genre (un kit, où une touche est un son et non une hauteur) et c'est pourquoi elle est nommée.",
         docEn: "Channels (or tracks) of the drums. 10 by default, the General MIDI convention. This output needs a different kind of bank (a kit, where a key is a sound and not a pitch) hence its name." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) {
         return { valeurs: [null, null, null, null, null], message: traduire("msg.branchez_un_source_midi") };

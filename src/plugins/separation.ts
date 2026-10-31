@@ -6,6 +6,7 @@ import { annoncerModele } from "./message-modele";
 import { avecDoc } from "./notices";
 import { lireModeleEmbarque } from "../modele-embarque";
 import { fiches as isolationDeVoix } from "./isoler-voix";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const separateurSixPistes: FicheAudio[] = ([
   {
@@ -25,8 +26,8 @@ const separateurSixPistes: FicheAudio[] = ([
         docEn:"Separation architecture. Demucs (HT) = 4 stems, Demucs 6s = 6 stems (+ guitar + piano), MDX-Net = vocals/instrumental.", defautEn: "Demucs 6s" },
       { nom:"URL du modèle", nomEn:"Model URL", type:"texte", defaut:"", doc:"URL d'un modèle .onnx. Vide = modèle par défaut du dossier public/oonx/.", docEn:"URL of an .onnx model. Empty = default model from public/oonx/.", defautEn: "" },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null,null,null,null,null,null], message:traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 6 }); if (sansEntree(a)) return a;
       const modele = ctx.paramTexte("Modèle","Demucs (HT)");
       const api = (window as any).api;
       const nulls6 = [null,null,null,null,null,null];

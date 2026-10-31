@@ -116,7 +116,7 @@ export const fiches = ([
         },
       }),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const annoncer = () => annoncerModele(ctx, "accompagner-voix", traduire("progress.chanson.modeles"));
       return rendreSurAudio(ctx, annoncer, (c) => ({
         // LE DÉBRUITEUR N'EST PAS NOMMÉ ICI : `electron/acestep-plan.cjs` porte le relevé de ce que

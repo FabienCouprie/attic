@@ -6,18 +6,12 @@
 import { describe, expect, it } from "vitest";
 import { fiches } from "./csound-formules";
 import { FORMULES } from "../audio/csound-formules";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = fiches.find((f) => f.id === "formules-csound")!;
 
 function contexte(params: Record<string, string | number> = {}) {
-  return {
-    noeud: { id: "n1", data: { ficheId: "formules-csound", parametres: params } },
-    runtime: null,
-    entree: () => null,
-    entrees: () => [],
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-  };
+  return ctxDEssai([], params, { ficheId: "formules-csound" });
 }
 
 describe("le nœud Formules Csound", () => {

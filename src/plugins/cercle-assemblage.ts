@@ -45,7 +45,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Une suite de tours, chaque cercle gardant ses places, ou un cycle unique dont les places s'additionnent.",
         docEn: "A series of turns, each circle keeping its positions, or a single cycle whose positions add up." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const suite: Cercle[] = [];
       for (let i = 0; i < ENTREES; i++) suite.push(...enSuite(ctx.entree(i)));
       if (suite.length === 0) {
@@ -86,7 +86,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Cercle", nomEn: "Circle", type: "cercle", dynamique: true }],
     sorties: [{ nom: "Cercle", nomEn: "Circle", type: "cercle" }],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recus: Cercle[] = [];
       for (const v of ctx.entrees()) recus.push(...enSuite(v));
       if (recus.length < 2) {

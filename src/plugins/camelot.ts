@@ -59,7 +59,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine du parcours, sans effet hors du mode « Aléatoire ». 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici ; toute autre valeur rejoue le même parcours.",
         docEn: "Seed for the journey; no effect outside the \"Random\" mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here; any other value replays the same journey." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const parcoursBrut = ctx.paramTexte("Parcours", "Complet");
       const parcours: any = ["voisins", "aleatoire"].includes(parcoursBrut.toLowerCase()) ? parcoursBrut.toLowerCase() : "complet";
       const modeBrut = ctx.paramTexte("Mode", "Bloc");

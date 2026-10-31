@@ -20,7 +20,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Dossier sortie", nomEn: "Output folder", type: "dossier", defaut: "", defautEn: "" },
       { nom: "Qualité", nomEn: "Quality", plage: [64,320], defaut: 192, unite: "kbps" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       if (!(window as any).api) return { valeurs:[null], erreur: true, message:traduire("msg.electron_requis") };
       const dIn = ctx.paramTexte("Dossier entrée","");
       const dOut = ctx.paramTexte("Dossier sortie","");
@@ -63,7 +63,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Dossier entrée", nomEn: "Input folder", type: "dossier", defaut: "", defautEn: "" },
       { nom: "Dossier sortie", nomEn: "Output folder", type: "dossier", defaut: "", defautEn: "" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       if (!(window as any).api) return { valeurs:[null], erreur: true, message:traduire("msg.electron_requis") };
       const dIn = ctx.paramTexte("Dossier entrée","");
       const dOut = ctx.paramTexte("Dossier sortie","");
@@ -114,7 +114,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
       { nom: "Qualité", nomEn: "Quality", plage: [64,320], defaut: 192, unite: "kbps" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       if (!(window as any).api) return { valeurs:[null], erreur: true, message:traduire("msg.electron_requis") };
       const dIn = ctx.paramTexte("Dossier entrée","");
       const dOut = ctx.paramTexte("Dossier sortie","");
@@ -174,7 +174,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Piste", nomEn: "Track", type: "texte", defaut: "", defautEn: "", hidden: true,
         doc: "Nom du fichier actuellement sélectionné (réservé à l'interface).", docEn: "Name of the currently selected file (reserved for the UI)." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       if (!(window as any).api) return { valeurs: [null], erreur: true, message: traduire("msg.electron_requis") };
       const chemin = ctx.paramTexte("Chemin", "music collection").replace(/^[/\\]+|[/\\]+$/g, "");
       if (!chemin) return { valeurs: [null], erreur: true, message: traduire("msg.configurez_les_dossiers") };

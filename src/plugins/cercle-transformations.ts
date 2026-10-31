@@ -14,7 +14,7 @@
 // rotation est un entier de places, une graine un numéro de tirage : ni l'un ni l'autre ne se lit
 // sur une courbe.
 
-import type { FicheAudio } from "../audio/types-domaine";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { choixPercussion } from "../audio/batterie-midi";
 import {
   complementaire, enSuite, inverserIntervalles, inverserOrdre, permuterEtiquettes, reflechir,
@@ -60,7 +60,7 @@ function rangDeLaPasse(): string {
  * cercle seul est une suite d'un : le cas ordinaire ne change pas, et une boucle de variation peut
  * traverser une transformation sans que ses cercles se perdent.
  */
-function suiteRecue(ctx: any): Cercle[] {
+function suiteRecue(ctx: ContexteAudio): Cercle[] {
   return enSuite(ctx.entree(0));
 }
 
@@ -97,7 +97,7 @@ export const fiches: FicheAudio[] = ([
         doc: `Le nombre de places dont le cercle tourne. ${CHAMP_FR}`,
         docEn: `The number of positions the circle turns by. ${CHAMP_EN}` },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const suite = suiteRecue(ctx);
       if (suite.length === 0) return RIEN();
       const pas = Math.round(quantiteDeLaPasse(ctx.paramTexte("Pas", "1"), 0));
@@ -122,7 +122,7 @@ export const fiches: FicheAudio[] = ([
         doc: `La place que la réflexion laisse en place. ${CHAMP_FR}`,
         docEn: `The position the reflection leaves in place. ${CHAMP_EN}` },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const suite = suiteRecue(ctx);
       if (suite.length === 0) return RIEN();
       const axe = Math.round(quantiteDeLaPasse(ctx.paramTexte("Axe", "0"), 0));
@@ -154,7 +154,7 @@ export const fiches: FicheAudio[] = ([
         doc: `Le pivot du renversement des intervalles, en demi-tons. Vide, c'est la note la plus grave du cercle. ${CHAMP_FR}`,
         docEn: `The pivot of the interval inversion, in semitones. Empty, it is the lowest note of the circle. ${CHAMP_EN}` },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const suite = suiteRecue(ctx);
       if (suite.length === 0) return RIEN();
       const quoi = ctx.paramTexte("Inversion", "ordre");
@@ -192,7 +192,7 @@ export const fiches: FicheAudio[] = ([
         doc: `Le numéro du tirage. La même graine rend la même permutation. ${CHAMP_FR}`,
         docEn: `The number of the draw. The same seed gives the same permutation. ${CHAMP_EN}` },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const suite = suiteRecue(ctx);
       if (suite.length === 0) return RIEN();
       const graine = Math.round(quantiteDeLaPasse(ctx.paramTexte("Graine", "1"), 1));
@@ -219,7 +219,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le son du complémentaire d'un cercle de percussion. Sans effet sur une mélodie, dont les notes se déduisent de la fondamentale.",
         docEn: "The sound of the complement of a percussion circle. No effect on a melody, whose notes follow from the fundamental." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const suite = suiteRecue(ctx);
       if (suite.length === 0) return RIEN();
       const son = parseInt(ctx.paramTexte("Percussion", "38"), 10) || 38;

@@ -42,7 +42,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["mono", "stereo"], defaut: "Stéréo", defautEn: "Stereo",
         doc: "Nombre de canaux de sortie.", docEn: "Number of output channels." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       let r = ctx.paramNombre("Rouge", 128);
       let g = ctx.paramNombre("Vert", 128);
       let b = ctx.paramNombre("Bleu", 128);

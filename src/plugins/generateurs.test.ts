@@ -8,39 +8,14 @@ import { analyserMidi } from "../audio/midi";
 import { joindreMidi } from "../audio/midi-montage";
 import { parseMidi } from "midi-file";
 import { estResultatEnErreur } from "../core/execution";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function ctx(sequenceNotes: any[]) {
-  return {
-    entree: () => null,
-    entrees: () => [],
-    paramTexte: (nom: string, def: string) => {
-      const params: Record<string, string> = { Synthèse: "FM/Oscillateurs" };
-      return params[nom] ?? def;
-    },
-    paramNombre: (nom: string, def: number) => {
-      const params: Record<string, number> = {
-        Instrument: 0,
-        Tempo: 120,
-        Volume: 80,
-      };
-      return params[nom] ?? def;
-    },
-    onProgress: () => {},
-    noeud: { data: { sequenceNotes } },
-    runtime: null,
-  };
+  return ctxDEssai([], { Synthèse: "FM/Oscillateurs", Instrument: 0, Tempo: 120, Volume: 80 }, { data: { sequenceNotes } });
 }
 
 function ctxParams(params: Record<string, string | number>) {
-  return {
-    entree: () => null,
-    entrees: () => [],
-    paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-    paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-    onProgress: () => {},
-    noeud: { data: {} },
-    runtime: null,
-  };
+  return ctxDEssai([], params);
 }
 
 function bufferNonSilencieux(b: AudioBuffer) {
@@ -82,15 +57,8 @@ function mesurerFrequence(b: AudioBuffer): number {
 // coïncidait, et AUCUN test ne pouvait voir le défaut. C'est ce qui l'a laissé
 // passer.
 describe("Groove Box : une seule fréquence pour le mix", () => {
-  const ctxRuntime = (params: Record<string, string | number>, sampleRate: number) => ({
-    entree: () => null,
-    entrees: () => [],
-    paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-    paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-    onProgress: () => {},
-    noeud: { data: {} },
-    runtime: { sampleRate },
-  });
+  const ctxRuntime = (params: Record<string, string | number>, sampleRate: number) =>
+    ctxDEssai([], params, { runtime: { sampleRate } });
 
   const config = {
     "Clé": "A", "Gamme": "mineur", "Genre": "pop", "Tempo": 120,
@@ -295,15 +263,7 @@ describe("generateurs plugin", () => {
 
   it("Clavier mélodie retourne null si aucune séquence", async () => {
     const f = registre.trouverDef("clavier-melodie")!;
-    const ctxSansNotes = {
-      entree: () => null,
-      entrees: () => [],
-      paramTexte: (nom: string, def: string) => ({ Synthèse: "FM/Oscillateurs" })[nom] ?? def,
-      paramNombre: (nom: string, def: number) => ({ Instrument: 0, Tempo: 120, Volume: 80 })[nom] ?? def,
-      onProgress: () => {},
-      noeud: { data: {} },
-      runtime: null,
-    };
+    const ctxSansNotes = ctxDEssai([], { Synthèse: "FM/Oscillateurs", Instrument: 0, Tempo: 120, Volume: 80 });
     const res = await f.executer(ctxSansNotes as any);
     expect(res.valeurs.length).toBe(2);
     expect(res.valeurs[0]).toBeNull();
@@ -320,15 +280,10 @@ describe("generateurs plugin", () => {
     // UN MODE DE SYNTHÈSE QUI N'A PAS DE QUOI RENDRE : « SoundFont » sans fichier SF2 chargé lève
     // dans `rendreSequence`, et l'exécuteur rattrape en rendant deux sorties nulles. Depuis que la
     // nullité ne suffit plus à signaler l'échec, c'est le `erreur: true` de ce chemin qui le dit.
-    const res = await f.executer({
-      entree: () => null,
-      entrees: () => [],
-      paramTexte: (nom: string, def: string) => ({ Synthèse: "SoundFont" } as Record<string, string>)[nom] ?? def,
-      paramNombre: (nom: string, def: number) => ({ Instrument: 0, Tempo: 120, Volume: 80 } as Record<string, number>)[nom] ?? def,
-      onProgress: () => {},
-      noeud: { data: { sequenceNotes: [{ note: 60, velocite: 100, debut: 0, fin: 0.3 }] } },
-      runtime: null,
-    } as any);
+    const res = await f.executer(ctxDEssai(
+      [], { Synthèse: "SoundFont", Instrument: 0, Tempo: 120, Volume: 80 },
+      { data: { sequenceNotes: [{ note: 60, velocite: 100, debut: 0, fin: 0.3 }] } },
+    ) as any);
     expect(res.valeurs).toEqual([null, null]);
     expect((res as { erreur?: boolean }).erreur, "le chemin d'échec doit se déclarer lui-même").toBe(true);
     expect(estResultatEnErreur(f as never, res as never)).toBe(true);

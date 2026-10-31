@@ -77,7 +77,7 @@ export const fiches: FicheAudio[] = ([
     ],
     // Le catalogue interrogé dépend du registre, que ni les paramètres ni les entrées ne capturent.
     jamaisCache: true,
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const reglages = reglagesDepuis((nom, defaut) =>
         typeof defaut === "number" ? ctx.paramNombre(nom, defaut) : ctx.paramTexte(nom, defaut));

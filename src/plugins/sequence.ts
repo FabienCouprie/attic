@@ -93,7 +93,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Inscrit dans le fichier MIDI ; sans effet sur ce qu'on entend.",
         docEn: "Written into the MIDI file; no effect on what is heard." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       if (!estSequence(entree)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       if (entree.notes.length === 0) {

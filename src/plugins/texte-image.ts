@@ -65,7 +65,7 @@ export const fiches: FicheAudio[] = ([
         "On the machine where it was measured, the graphics card renders the image in two thirds of the processor's time; the first image costs some twenty seconds more, while the driver compiles.",
       ),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = typeof window !== "undefined" ? (window as any).api : null;
       if (!api?.genererImageSdxs) {
         return { valeurs: [null], erreur: true, message: traduire("msg.texte_image_n_cessite_l_application_de_bureau") };

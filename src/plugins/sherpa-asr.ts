@@ -13,6 +13,7 @@ import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
 import { baseModeleLivre } from "./base-modeles";
 import { annoncerModele } from "./message-modele";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { LANGUE_AUTO, choixLangues } from "../core/langues";
 import { estAnnulation } from "../core/annulation";
 
@@ -363,21 +364,19 @@ export const fiches: FicheAudio[] = ([
         docEn: "The copy of the ONNX model kept in the browser's storage (IndexedDB). « Auto (kept across sessions) » reuses it from one session to the next. « Clear and re-download » erases it and reads the model again from the application's files.",
       },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
-      }
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       // LE PAQUET PEUT MANQUER, dans l'installeur allégé qui ne l'embarque pas : c'est ce message
       // qui le dit et qui le fait prendre, au lieu de laisser le worker échouer sur un fichier
       // absent. Le manifeste relie le paquet à cette fiche, et un test refuse qu'un nœud nommé par
       // lui reste muet.
       await annoncerModele(ctx, "sherpa-asr", traduire("progress.asr.chargement_sherpa"));
       // `paramTexte` renvoie désormais l'id canonique, qui EST le code ISO
-      // (« auto » = pas de code). Le repli sur LANGUES couvre les projets
-      // enregistrés avant la migration, qui stockent encore le libellé.
+      // (« auto » = pas de code). Un repli `LANGUES[langue]` couvrait les projets d'avant la
+      // migration ; LANGUES étant devenue une liste, il ne rendait plus rien, et il est parti.
       const langue = ctx.paramTexte("Langue", "auto");
-      const langCode = langue === "auto" ? "" : (LANGUES[langue] ?? langue);
+      const langCode = langue === "auto" ? "" : langue;
       const qualiteResampling = ctx.paramTexte("Qualité resampling", RESAMPLE_OPTIONS_FR[0]);
       const modeCache = ctx.paramTexte("Cache modèle", CACHE_OPTIONS_FR[0]);
       const mono = bufferVersMono(audio);

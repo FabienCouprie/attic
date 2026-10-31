@@ -7,13 +7,12 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { NB_BANDES, bandesCritiques, bark, masquageParBande, proportionMasquee } from "../audio/masquage";
 import { analyserResultante } from "../audio/schillinger";
 import { CANAL_PERCUSSION, choixPercussion } from "../audio/batterie-midi";
 import { GAMMES, degresInjouables, ecartAuTempere, frequences, gammeParId, intervalles } from "../audio/gammes-monde";
 import { analyser, modules, TAILLE_TRAME } from "../audio/spectral-wishart";
-
-const sansEntree = () => ({ valeurs: [null], message: traduire("msg.aucune_entr_e") });
 
 /** La fréquence centrale approximative d'une bande critique, pour nommer ce qu'on montre. */
 function frequenceDeBande(b: number): number {
@@ -53,11 +52,11 @@ export const fiches: FicheAudio[] = ([
         doc: "Taille de la fenêtre d'analyse. Une fenêtre longue sépare mieux les bandes graves, où elles sont étroites.",
         docEn: "Analysis window size. A long window separates the low bands better, where they are narrow." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const masque = ctx.entree(0);
-      const masquant = ctx.entree(1);
-      if (!(masque instanceof AudioBuffer) || !(masquant instanceof AudioBuffer)) return sansEntree();
+      const masque = entreeAudio(ctx, 0, { sorties: 2 }), masquant = entreeAudio(ctx, 1, { sorties: 2 });
+      if (sansEntree(masque)) return masque;
+      if (sansEntree(masquant)) return masquant;
       const taille = parseInt(ctx.paramTexte("Finesse", "2048"), 10) || TAILLE_TRAME;
       const saut = Math.round(taille / 4);
       const nature = ctx.paramTexte("Nature du masquant", "entre");
@@ -159,7 +158,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Niveau du son rendu. Sans effet sur le MIDI, dont la nuance est écrite dans les notes.",
         docEn: "Level of the rendered sound. No effect on the MIDI, whose dynamics are written into the notes." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const a = analyserResultante(ctx.paramNombre("Pulsation A", 3), ctx.paramNombre("Pulsation B", 2));
       const tempo = ctx.paramNombre("Tempo", 120);
@@ -219,7 +218,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Écart au demi-ton tempéré au-delà duquel un degré est déclaré injouable sur un clavier. Vingt cents est à peu près ce qu'une oreille exercée entend comme faux.",
         docEn: "Deviation from the tempered semitone beyond which a degree is declared unplayable on a keyboard. Twenty cents is about what a trained ear hears as out of tune." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const g = gammeParId(ctx.paramTexte("Gamme", GAMMES[0].id)) ?? GAMMES[0];
       const tonique = ctx.paramNombre("Tonique", 220);

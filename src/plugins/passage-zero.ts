@@ -11,6 +11,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { calerZones, type Pente, type Zone } from "../audio/passage-zero";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const en = () => langueCourante() === "en";
 
@@ -45,17 +46,12 @@ export const fiches: FicheAudio[] = ([
         doc: "Le sens de la traversée. Un seul sens pour toutes les frontières rend n'importe quel raccord compatible avec n'importe quel autre.",
         docEn: "The direction of the crossing. One single direction for every boundary makes any splice compatible with any other." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) {
-        return {
-          valeurs: [null, null], erreur: true,
-          message: en() ? "No sound at the input." : "Aucun son à l'entrée.",
-        };
-      }
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(a)) return a;
       const recues = ctx.entree(1);
       const zones: Zone[] = (Array.isArray(recues) ? recues : [])
-        .filter((z: any) => z && Number.isFinite(z.debut) && Number.isFinite(z.duree));
+        .filter((z: any): z is Zone => z && Number.isFinite(z.debut) && Number.isFinite(z.duree));
       if (zones.length === 0) {
         return {
           valeurs: [[], null], erreur: true,

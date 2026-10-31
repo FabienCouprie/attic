@@ -119,7 +119,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Vélocité écrite dans la sortie MIDI, pour les composants qui en tiennent compte.",
         docEn: "Velocity written into the MIDI output, for the nodes that take it into account." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const note = Math.round(ctx.paramNombre("Note", 60));
       const duree = ctx.paramNombre("Durée", 1.5);
       const audio = exciter(
@@ -167,7 +167,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Où la boucle commence dans l'échantillon, après l'attaque, donc.",
         docEn: "Where the loop starts within the sample, after the attack, then." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const brutes = ctx.entrees() as unknown[];
       // Les racines se recalculent ici à l'identique du dépliage : le moteur a livré un rendu par
       // racine, DANS CET ORDRE, et c'est pourquoi la fonction est partagée. L'appariement garde

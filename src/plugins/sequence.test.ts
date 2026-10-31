@@ -12,9 +12,9 @@
 //
 // Ces deux valeurs par défaut sont donc du domaine de la justesse et non du goût, et c'est pour cela
 // qu'un test les tient. La mesure du son lui-même vit dans `audio/harmonie-spectrale.test.ts`.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import { fiches } from "./sequence";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = fiches.find((f) => f.id === "rendu-sequence")!;
 const reglage = (nom: string) => fiche.parametres.find((p) => p.nom === nom)!;
@@ -45,14 +45,8 @@ describe("le message du nœud", () => {
     ],
     tempo: 120,
   };
-  const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-    noeud: { id: "n1", data: { ficheId: "rendu-sequence", parametres: params } },
-    runtime: null,
-    entree: (i: number) => entrees[i] ?? null,
-    entrees: () => entrees,
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-  });
+  const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) =>
+    ctxDEssai(entrees, params, { ficheId: "rendu-sequence" });
 
   it("NOMME LE MOTEUR QUI A RENDU, et non le réglage", async () => {
     // « Automatique » ne dit pas lequel a servi, et deux écoutes ont été perdues à chercher dans le

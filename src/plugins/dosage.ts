@@ -13,6 +13,7 @@ import { doser, enveloppeDeZones, type LoiFondu, type ModeDosage, type Zone } fr
 import { valeursParametre } from "../audio/courbe";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const en = () => langueCourante() === "en";
 
@@ -69,15 +70,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Deux signaux en phase s'additionnent en amplitude, et leur somme garde son niveau quand les deux parts font un : c'est le linéaire, et c'est le cas d'un son et de sa version filtrée. Deux signaux sans rapport de phase s'additionnent en puissance, et leur somme garde son niveau quand les carrés des deux parts font un : c'est la puissance constante, et c'est le cas d'un son et de sa réverbération. Se tromper creuse trois décibels à mi-rampe. Ce réglage n'agit qu'en insertion, un départ additionnant au lieu de traverser.",
         docEn: "Two signals in phase add in amplitude, and their sum keeps its level when the two shares make one: that is linear, and that is the case of a sound and its filtered version. Two signals with no phase relation add in power, and their sum keeps its level when the squares of the two shares make one: that is constant power, and that is the case of a sound and its reverberation. Choosing wrong digs three decibels mid-ramp. This setting acts in insert only, a send adding instead of crossing." },
     ],
-    async executer(ctx: any) {
-      const sec = ctx.entree(0);
-      const traite = ctx.entree(1);
-      if (!(sec instanceof AudioBuffer) || !(traite instanceof AudioBuffer)) {
-        return {
-          valeurs: [null], erreur: true,
-          message: en() ? "Connect the dry sound and the treated one." : "Brancher le son sec et le son traité.",
-        };
-      }
+    async executer(ctx) {
+      const sec = entreeAudio(ctx, 0), traite = entreeAudio(ctx, 1);
+      if (sansEntree(sec)) return sec;
+      if (sansEntree(traite)) return traite;
       if (sec.sampleRate !== traite.sampleRate) {
         return {
           valeurs: [null], erreur: true,
@@ -89,7 +85,7 @@ export const fiches: FicheAudio[] = ([
 
       const recues = ctx.entree(2);
       const zones: Zone[] = (Array.isArray(recues) ? recues : [])
-        .filter((z: any) => z && Number.isFinite(z.debut) && Number.isFinite(z.duree));
+        .filter((z: any): z is Zone => z && Number.isFinite(z.debut) && Number.isFinite(z.duree));
       const sr = sec.sampleRate;
       const longueur = Math.max(sec.length, traite.length);
       const dehors = ctx.paramTexte("Application", "dedans") === "dehors";

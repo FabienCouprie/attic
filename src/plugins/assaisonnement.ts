@@ -6,6 +6,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { assaisonnerVers } from "../audio/assaisonnement";
 import { goutDominant, pointDepuisDegustation, type ProfilDegustation } from "../audio/accord-mets";
 import { profil, type Gout } from "../audio/gout";
@@ -45,11 +46,9 @@ export const fiches: FicheAudio[] = ([
         doc: "La part du chemin parcourue vers la région : à 0 %, le son ressort intact ; à 100 %, chaque dimension est amenée jusqu'à la valeur de la région, dans la limite de ce que chaque geste autorise.",
         docEn: "How far toward the region: at 0%, the sound comes out untouched; at 100%, every dimension is taken to the region's value, within what each gesture allows." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: en() ? "No audio input." : "Aucune entrée audio." };
-      }
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(a)) return a;
       const anglais = en();
       const dose = ctx.paramNombre("Dose", 60) / 100;
       const noms: Record<Gout, string> = anglais

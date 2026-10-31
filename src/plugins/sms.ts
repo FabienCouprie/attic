@@ -12,6 +12,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { traiterVoie, type OptionsVoieSms, type VoieSms } from "../audio/sms";
 import { parCanal } from "./hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
@@ -51,11 +52,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Taille de la transformée. Grande, deux partiels voisins se distinguent mieux mais les attaques s'étalent ; petite, l'inverse.",
         docEn: "Transform size. Large separates neighbouring partials better but smears attacks; small does the opposite." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null, null, null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(entree)) return entree;
       const transposition = Math.round(ctx.paramNombre("Transposition", 0));
       const gainPartiels = ctx.paramNombre("Gain des partiels", 100) / 100;
       const gainResidu = ctx.paramNombre("Gain du résidu", 100) / 100;

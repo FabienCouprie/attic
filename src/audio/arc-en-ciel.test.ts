@@ -10,7 +10,6 @@
 // rien faire de ce que l'arc-en-ciel fait : c'est pourquoi les cas vérifient aussi que les trajets
 // s'ORDONNENT avec la fréquence, et qu'un son bref rend bien deux canaux dont les énergies penchent
 // du bon côté selon sa hauteur.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { arcEnCiel, bandesArcEnCiel, dureeArcEnCiel, type OptionsArcEnCiel } from "./arc-en-ciel";

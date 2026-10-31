@@ -132,7 +132,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine aléatoire (0 = nouveau à chaque exécution). Même graine = mêmes paroles.",
         docEn: "Random seed (0 = new each run). Same seed = same lyrics." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const theme = ctx.paramTexte("Thème", "l'amour");
       const emotion = ctx.paramTexte("Émotion", "l'espoir");
       // `paramTexte` renvoie l'id canonique (code ISO) ; les anciens libellés

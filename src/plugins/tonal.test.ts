@@ -1,42 +1,22 @@
 // plugins/tonal.test.ts — Vérification rapide des nœuds de théorie musicale.
-import { describe, it, expect, beforeAll, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { fiches } from "./tonal";
 import * as accords from "../audio/accords";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function trouver(id: string) {
   return fiches.find((f) => f.id === id);
 }
 
 function ctxSimple(valeur: string | null) {
-  return {
-    entree: () => valeur,
-    paramTexte: (_nom: string, defaut: string) => defaut,
-    paramNombre: (_nom: string, defaut: number) => defaut,
-  };
-}
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
+  return ctxDEssai([valeur]);
 }
 
 const SR = 44100;
 
 function gammeC(dureeS: number): AudioBuffer {
   const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
   const d = b.getChannelData(0);
   const notes = [261.63, 329.63, 392.0, 523.25]; // C4, E4, G4, C5
   const segment = Math.floor(n / notes.length);
@@ -46,10 +26,6 @@ function gammeC(dureeS: number): AudioBuffer {
   }
   return b;
 }
-
-beforeAll(() => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-});
 
 describe("nœuds Tonal", () => {
   it("les 6 fiches sont enregistrées", () => {
@@ -106,11 +82,7 @@ describe("nœuds Tonal", () => {
 
   it("tonal-grille accepte une progression en symboles", async () => {
     const f = trouver("tonal-grille")!;
-    const ctx = {
-      entree: () => "C Am F G",
-      paramTexte: (_nom: string, defaut: string) => defaut,
-      paramNombre: (_nom: string, defaut: number) => defaut,
-    };
+    const ctx = ctxDEssai(["C Am F G"]);
     const res = await f.executer(ctx as any);
     const notation = res.valeurs[0] as string;
     expect(notation).toContain("C3+E3+G3 1");
@@ -124,11 +96,7 @@ describe("nœuds Tonal", () => {
     // pas une note valide, Chord.get() ne trouvait aucune note et l'accord
     // disparaissait silencieusement de la notation, sans erreur.
     const f = trouver("tonal-grille")!;
-    const ctx = {
-      entree: () => null,
-      paramTexte: (nom: string, defaut: string) => (nom === "Progression" ? "IMaj7 IV7 V7 vi7" : defaut),
-      paramNombre: (_nom: string, defaut: number) => defaut,
-    };
+    const ctx = ctxDEssai([], { Progression: "IMaj7 IV7 V7 vi7" });
     const res = await f.executer(ctx as any);
     const notation = res.valeurs[0] as string;
     expect(notation).toContain("C3+E3+G3+B3 1");

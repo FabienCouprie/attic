@@ -45,7 +45,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine de la carte (0 = carte différente à chaque exécution).", docEn: "Map seed (0 = new map each run)." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = (window as any).api;
       if (!api?.lireDossier || !api?.ecrireFichier) return { valeurs: [], erreur: true, message: traduire("msg.n_cessite_electron") };
 

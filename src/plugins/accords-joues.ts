@@ -203,7 +203,7 @@ The « Notation » output writes the chord as text, one onset per line and simul
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de l'audio rendu.", docEn: "Volume of the rendered audio." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const qualite = ctx.paramTexte("Accord", QUALITES[0].id);
       const demiTon = parseInt(ctx.paramTexte("Fondamentale", "0"), 10) || 0;
       const octave = Math.round(ctx.paramNombre("Octave", 4));

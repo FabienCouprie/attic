@@ -86,7 +86,7 @@ The « Audio » output carries the sound. The message gives the number of bytes 
       ...bornesModulation(MOD_CADENCE),
       ...bornesModulation(MOD_VOLUME),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const sr = frequenceDeTravail();
       const dureeSec = ctx.paramNombre("Durée", 8);
       const n = Math.max(1, Math.round(dureeSec * sr));

@@ -1,5 +1,6 @@
 // plugins/legende-image.test.ts — Vérification de l'enregistrement du nœud Légende d'image.
 import { describe, it, expect } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./legende-image";
 
 function trouver(id: string) {
@@ -19,11 +20,7 @@ describe("nœud Légende d'image", () => {
 
   it("retourne un message si aucune image n'est connectée", async () => {
     const f = trouver("legende-image")!;
-    const ctx = {
-      entree: () => null,
-      paramNombre: (_nom: string, defaut: number) => defaut,
-      onProgress: (_msg: string) => {},
-    };
+    const ctx = ctxDEssai();
     const res = await f.executer(ctx as any);
     expect(res.valeurs[0]).toBeNull();
   });

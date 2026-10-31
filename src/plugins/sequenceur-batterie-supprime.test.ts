@@ -11,6 +11,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const ANCIEN_MOTIF = [
   "1000000010000000", // Kick
@@ -22,15 +23,7 @@ const ANCIEN_MOTIF = [
 
 /** Le contexte d'un nœud sans entrée, dont tous les réglages viennent d'un graphe enregistré. */
 function contexte(params: Record<string, string | number>) {
-  return {
-    noeud: { id: "n1", data: { ficheId: "sequenceur-batterie", parametres: params } },
-    runtime: null,
-    entree: () => null,
-    entrees: () => [],
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-    onProgress: () => {},
-  };
+  return ctxDEssai([], params, { ficheId: "sequenceur-batterie" });
 }
 
 describe("le séquenceur de batterie supprimé", () => {

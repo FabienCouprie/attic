@@ -11,7 +11,6 @@
 //
 // Un stimulus qui manquerait l'une des deux sonnerait comme un intervalle ordinaire, et l'on
 // n'entendrait plus qu'une montée ou une descente, la même pour tout le monde.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import {

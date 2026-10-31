@@ -14,7 +14,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const texte = ctx.entree(0);
       if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.aucun_texte_en_entr_e") };
       return { valeurs: [texte], message: texte };

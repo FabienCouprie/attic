@@ -60,7 +60,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const modeTexte = ctx.paramTexte("Mode", "Mélodie").toLowerCase();
       const mode = modeTexte.includes("arp") ? "arpeges" : modeTexte.includes("harm") ? "harmonie" : "melodie";
       const modeRenduBrut = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));

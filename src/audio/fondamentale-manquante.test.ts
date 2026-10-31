@@ -9,7 +9,6 @@
 // décalage ajouté à tous les partiels laisse leurs ÉCARTS inchangés : une oreille qui ne lirait que
 // la période de l'enveloppe entendrait la même hauteur. La mesure de Schouten dit le contraire, et
 // la prédiction du composant doit suivre cette mesure, non l'écart des partiels.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import {

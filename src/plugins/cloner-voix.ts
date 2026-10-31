@@ -95,7 +95,7 @@ export const fiches = ([
         docEn: "The text the excerpt pronounces. Optional: the model does without it, and it only helps when the excerpt is hard to read." },
       PARAMETRE_CALCUL,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pont = api();
       if (!pont?.chatterboxCloner) {
         return { valeurs: [null], erreur: true, message: traduire("msg.n_cessite_electron") };

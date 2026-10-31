@@ -21,6 +21,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { extraireVecteurFeatures } from "../audio/features-piste";
 
 /** Les étiquettes traduites : le module les écrit en français, l'inspecteur peut être en anglais. */
@@ -68,10 +69,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Chiffres après la virgule. Les coefficients cepstraux se jouent sur des dixièmes, les variances sur des unités : trois décimales conviennent aux deux.",
         docEn: "Digits after the decimal point. Cepstral coefficients play out in tenths, variances in units: three decimals suit both." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+      const e = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(e)) return e;
 
       const { vecteur, etiquettes } = extraireVecteurFeatures(e);
       const d = Math.round(ctx.paramNombre("Décimales", 3));

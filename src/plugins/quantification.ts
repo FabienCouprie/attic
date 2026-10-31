@@ -74,7 +74,7 @@ export const fiches: FicheAudio[] = ([
         doc: "L'écriture rendue parmi celles qui sont classées. Zéro est la mieux classée.",
         docEn: "The writing returned among those ranked. Zero is the best ranked." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       if (!estSequence(entree) || entree.notes.length === 0) {
         return {
@@ -87,7 +87,7 @@ export const fiches: FicheAudio[] = ([
       // recouvrent sans que rien à l'écran ne dise laquelle a servi, c'est la confusion qui a coûté
       // deux écoutes ailleurs.
       const porte = typeof entree.tempo === "number" && entree.tempo > 0;
-      const tempo = porte ? entree.tempo : ctx.paramNombre("Tempo", 120);
+      const tempo = porte ? (entree.tempo as number) : ctx.paramNombre("Tempo", 120);
       const provenance = porte
         ? (en() ? "sequence tempo" : "tempo de la séquence")
         : (en() ? "tempo setting" : "réglage de tempo");

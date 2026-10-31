@@ -99,7 +99,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Amplitude envelope release time.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const note = ctx.paramTexte("Note", "C2");
       const duree = ctx.paramNombre("Durée", 1.5);
       const volume = ctx.paramNombre("Volume", 80);
@@ -248,7 +248,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Envelope release time after the note ends.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const note = ctx.paramTexte("Note", "C5");
       const duree = ctx.paramNombre("Durée", 2);
       const volume = ctx.paramNombre("Volume", 80);
@@ -388,7 +388,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Envelope release time after the note ends.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const notesBrutes = ctx.paramTexte("Notes", "C4,E4,G4");
       const notes = notesBrutes.split(",").map((n: string) => n.trim()).filter(Boolean);
       // UN ACCORD VIDE N'EST PAS UN SUCCÈS. Sans ce refus, un champ laissé vide rendait un tampon

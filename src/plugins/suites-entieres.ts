@@ -139,7 +139,7 @@ The « Audio » output carries the render, the « MIDI » output the sequence as
       ...bornesModulation(MOD_TEMPO),
       ...bornesModulation(MOD_VOLUME),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { notesVersFichierMidi, appliquerInstrumentMidi, rendreSequence } = await import("../audio");
       const lue = ctx.paramTexte("Suite", "fibonacci");
       const suite: Suite = EST_SUITE(lue) ? lue : "fibonacci";

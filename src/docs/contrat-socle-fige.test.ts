@@ -11,7 +11,6 @@
 // en silence un plugin de même identifiant, de sorte qu'un nœud installé depuis un `.zip` partagé —
 // ou un méta-composant porté par un projet reçu — pouvait prendre la place d'un composant du socle,
 // en gardant son nom, son icône et sa place dans la palette.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it, vi } from "vitest";
 
 // `registre` VIENT DE L'ADAPTATEUR, dont l'import est aussi ce qui inscrit le socle et le fige :

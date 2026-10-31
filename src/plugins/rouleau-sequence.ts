@@ -35,7 +35,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Séquence", nomEn: "Sequence", type: "sequence" }],
     sorties: [],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recue = ctx.entree(0);
       if (!estSequence(recue)) {
         // RIEN N'EST DÉSIGNÉ, ET NON LE DESSIN PRÉCÉDENT LAISSÉ TEL QUEL : sans cela, débrancher une

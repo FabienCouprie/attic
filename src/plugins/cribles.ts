@@ -47,7 +47,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Part de la subdivision réellement sonnante. Faible, les notes se détachent ; élevée, elles se rejoignent.",
         docEn: "Share of the subdivision actually sounding. Low, notes stand apart; high, they run together." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { parserCrible, appliquerCrible, periodeCrible, ecrireCrible } = await import("../audio/cribles");
       const classes = parserCrible(ctx.paramTexte("Crible", "5@0 7@2 11@3"));
       if (!classes.length) {

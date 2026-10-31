@@ -53,7 +53,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
         doc: "Niveau de sortie.", docEn: "Output level." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const choix = String(ctx.paramTexte("Classe de départ", "douze"));
       const classes = choix === "douze"
         ? Array.from({ length: 12 }, (_, i) => i)

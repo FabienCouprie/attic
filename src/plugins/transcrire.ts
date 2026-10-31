@@ -34,6 +34,7 @@ import { messageEchecPont } from "./pont-electron";
 import { parametreCalcul } from "./parametre-calcul";
 import { relayerProgression } from "./progression-pont";
 import type { ContexteDeRelais } from "./progression-pont";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const CANAL = "qwen3asr:transcrire";
 
@@ -79,15 +80,13 @@ export const fiches = ([
         "Il change le temps de calcul et non le texte rendu.",
         "It changes the compute time and not the returned text."),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pont = api();
       if (!pont?.qwen3AsrTranscrire) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.n_cessite_electron") };
       }
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) {
-        return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_entr_e_audio") };
-      }
+      const buffer = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(buffer)) return buffer;
       const audio = await octetsWav(buffer);
       if (!audio) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_entr_e_audio") };

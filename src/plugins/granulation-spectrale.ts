@@ -21,6 +21,7 @@ import {
 } from "../audio/granulation-spectrale";
 import { hasardDuNoeud } from "../core";
 import { parCanal } from "./hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const TAILLES = [256, 512, 1024, 2048, 4096, 8192];
 
@@ -81,12 +82,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Fixe le hasard de l'extraction et de la dispersion. Deux exécutions de même graine rendent le même son.",
         docEn: "Fixes the randomness of extraction and spread. Two runs with the same seed return the same sound." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null], message: en ? "No input." : "Aucune entrée." };
-      }
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const lireTaille = (nom: string, defaut: number) => {
         const t = parseInt(ctx.paramTexte(nom, String(defaut)), 10);
         return TAILLES.includes(t) ? t : defaut;

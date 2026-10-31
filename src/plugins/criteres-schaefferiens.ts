@@ -18,6 +18,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import {
   ALLURE_MAX, ALLURE_MIN, ENTRETIEN_IMPULSION, ETENDUE_VARIEE, IRREGULARITE_MECANIQUE,
   IRREGULARITE_VIVANTE, OCCUPATION_BLANC, OCCUPATION_PUR, SEUIL_BOMBEMENT, SEUIL_ONDULATION,
@@ -149,10 +150,8 @@ The « Audio » output returns the sound unchanged. The « Criteria » output gi
         docEn: "The spread beyond which the allure is disordered rather than living. A ten per cent rate departure gives 0.070, a twenty per cent one 0.141, and an undulation whose every period is drawn at random from 0.18 to 0.23." },
     ],
     async executer(ctx) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      }
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const m = criteresSchaefferiens(audio.getChannelData(0), audio.sampleRate, {
         occupationBlanc: ctx.paramNombre("Seuil du bruit blanc", OCCUPATION_BLANC),
         occupationPur: ctx.paramNombre("Occupation du son pur", OCCUPATION_PUR),

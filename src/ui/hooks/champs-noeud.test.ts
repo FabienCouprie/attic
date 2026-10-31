@@ -36,7 +36,7 @@ import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { CHAMPS_GARDES_AU_REGLAGE, CHAMPS_RESULTAT, CHAMPS_UTILISATEUR } from "./useExecutionGraphe";
+import { CHAMPS_GARDES_AU_REGLAGE, CHAMPS_RESULTAT, CHAMPS_UTILISATEUR } from "../../core/classes-de-champs";
 
 /**
  * Les champs qu'un exécuteur pose sans qu'on ait décidé de leur classe.

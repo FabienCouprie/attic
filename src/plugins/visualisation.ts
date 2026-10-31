@@ -7,6 +7,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
 import { choixFenetre } from "../audio/fenetres-analyse";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
@@ -50,9 +51,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Frequency axis scale. Logarithmic = close to pitch perception (even octaves); linear = evenly spaced frequencies.", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic",
      },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       return { valeurs: [a] };
    },
  },
@@ -78,9 +79,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Vertical frequency axis scale (log = close to perception).", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic",
      },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       return { valeurs: [a] };
    },
  },
@@ -105,7 +106,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée du son généré.", docEn: "Duration of the generated tone." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const forme = ctx.paramTexte("Forme", "sine");
       const freq = ctx.paramNombre("Fréquence", 220);
       const duree = ctx.paramNombre("Durée", 1.5);
@@ -167,7 +168,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Ramène le signal écouté au même niveau crête, pour une comparaison honnête (le plus fort paraît sinon « meilleur »).",
         docEn: "Brings the heard signal to the same peak level, for a fair comparison (the louder one otherwise seems « better »)." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const a = ctx.entree(0), b = ctx.entree(1);
       const A = a instanceof AudioBuffer ? a : null;
       const B = b instanceof AudioBuffer ? b : null;
@@ -213,9 +214,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "Mesures", nomEn: "Readings", type: "texte" }],
     parametres: [],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(a)) return a;
       const { mesurerNiveau } = await import("../audio");
       const m = mesurerNiveau(a);
       const rapport = `RMS: ${m.rmsDb.toFixed(1)} dBFS\nPeak: ${m.peakDb.toFixed(1)} dBFS\nTrue Peak: ${m.vraiPicDb.toFixed(1)} dBTP\nLUFS: ${m.lufs.toFixed(1)}\nCrest: ${m.crestFactorDb.toFixed(1)} dB\nLRA: ${m.plageDynamiqueDb.toFixed(1)} dB\nLUFS max: ${m.lufsMax > -119 ? m.lufsMax.toFixed(1) : "—"}\nLUFS min: ${m.lufsMin > -119 ? m.lufsMin.toFixed(1) : "—"}`;
@@ -230,9 +231,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       return { valeurs: [a], message: traduire("msg.palette_de_couleurs_g_n_r_e") };
    },
  },

@@ -67,7 +67,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Nuance", nomEn: "Velocity", plage: [1, 127], pas: 1, defaut: 90,
         doc: "La vélocité des notes.", docEn: "The velocity of the notes." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const rang = Math.round(ctx.paramNombre("Numéro", 0));
       const depart = Math.round(ctx.paramNombre("Note de départ", 0));
       const choisie = ctx.paramTexte("Forme", FORMES[0].id);
@@ -130,7 +130,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Combien de fois une figure doit revenir pour être relevée.",
         docEn: "How many times a figure must recur to be reported." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const a = ctx.entree(0);
       if (!estSequence(a)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const choisie = ctx.paramTexte("Sur quoi", MATIERES[0].id);

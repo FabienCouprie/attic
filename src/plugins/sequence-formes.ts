@@ -52,7 +52,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le canal retenu. À moins un, tous les canaux passent.",
         docEn: "The channel kept. At minus one, every channel passes." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       if (!estSequence(entree)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const { gardees, ecartees } = filtrerNotes(entree.notes, {
@@ -101,7 +101,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Continues garde les fractions de demi-ton que la courbe produit ; Demi-tons arrondit.",
         docEn: "Continuous keeps the fractions of a semitone the curve produces; Semitones rounds." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       if (!estSequence(entree)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
       const profil = profilDeSequence(entree.notes);

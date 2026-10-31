@@ -69,7 +69,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Décimales", nomEn: "Decimals", plage: [0, 6], pas: 1, defaut: 4,
         doc: "La précision des nombres écrits.", docEn: "The precision of the numbers written." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const depart = lireChamp(ctx.paramTexte("Départs", "0:2"));
       const duree = lireChamp(ctx.paramTexte("Durées", "0.5"));
       const libres = RANGS

@@ -1,15 +1,10 @@
 // plugins/coordonnees-sur-carte.test.ts
 import { describe, it, expect, vi } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./coordonnees-sur-carte";
 
 function ctxDe(entrees: (string | null)[], params: Record<string, string> = {}, nombres: Record<string, number> = {}) {
-  return {
-    noeud: { data: {} },
-    entree: (i: number) => entrees[i] ?? null,
-    paramTexte: (nom: string, defaut: string) => params[nom] ?? defaut,
-    paramNombre: (nom: string, defaut: number) => nombres[nom] ?? defaut,
-    onProgress: () => {},
-  };
+  return ctxDEssai(entrees, { ...params, ...nombres });
 }
 
 describe("coordonnees-sur-carte", () => {

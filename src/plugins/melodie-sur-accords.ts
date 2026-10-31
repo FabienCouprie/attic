@@ -118,7 +118,7 @@ When no line satisfies every rule, the « Melody » output is empty and the repo
         doc: "Le nombre d'affectations essayées au plus avant de renoncer. Un problème sans solution tournerait sans fin.",
         docEn: "The number of assignments tried at most before giving up. A problem with no solution would run forever." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recue = ctx.entree(0);
       if (!estSequence(recue)) {
         return { valeurs: [null, ""], erreur: true,

@@ -8,17 +8,10 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function ctxParams(params: Record<string, string | number>) {
-  return {
-    entree: () => null,
-    entrees: () => [],
-    paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-    paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-    onProgress: () => {},
-    noeud: { data: {} },
-    runtime: null,
-  };
+  return ctxDEssai([], params);
 }
 
 async function sonner(params: Record<string, string | number>) {

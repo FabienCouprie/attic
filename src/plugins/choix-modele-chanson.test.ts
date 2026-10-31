@@ -16,6 +16,7 @@ import { basename } from "node:path";
 import { MODELES_RENDU, paquetsEcartes } from "./chanson-aides";
 import { toutesLesFiches } from "./index";
 import { formaterOctets } from "../ui/etat-modeles";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const { MODELES } = createRequire(import.meta.url)("../../electron/acestep-plan.cjs") as {
   MODELES: Record<string, string>;
@@ -102,12 +103,7 @@ describe("le choix arrive au pont", () => {
   (globalThis as unknown as { api?: unknown }).api = pont;
   afterEach(() => { recu.length = 0; });
 
-  const contexte = (id: string, entrees: unknown[]) => ({
-    entree: (i: number) => entrees[i],
-    paramTexte: (nom: string, repli: string) => (nom === "Modèle" ? id : repli),
-    paramNombre: (_nom: string, repli: number) => repli,
-    onProgress: () => {},
-  });
+  const contexte = (id: string, entrees: unknown[]) => ctxDEssai(entrees, { "Modèle": id });
   const plan = JSON.stringify({ caption: "une ballade", duration: 4 });
   const fiche = (id: string) => toutesLesFiches.find((f) => f.id === id) as unknown as {
     executer: (ctx: unknown) => Promise<unknown>;

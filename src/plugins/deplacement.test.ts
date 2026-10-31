@@ -15,8 +15,8 @@
 // DEUX CHIFFRES SONT VÉRIFIABLES À LA MAIN, et ils portent les cas les plus forts : l'effet Doppler
 // suit f·c/(c∓v), une formule qu'on peut écrire ; et l'ambisonie doit rendre un son INCHANGÉ quand
 // on ne la fait pas tourner.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./deplacement";
 
 const SR = 16000;
@@ -51,14 +51,7 @@ function declencheur(secondes = 2): AudioBuffer {
 }
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages) as never;
 }
 
 const fiche = (id: string) => {

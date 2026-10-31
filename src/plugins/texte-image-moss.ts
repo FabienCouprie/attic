@@ -153,7 +153,7 @@ export const fiches = ([
         docEn: "The starting draw. At minus one, it is drawn at random and the message says which one was used." },
       parametreCalcul(),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pont = api();
       if (!pont?.sdcppMoss) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.n_cessite_electron") };
@@ -208,4 +208,4 @@ export const fiches = ([
       return { valeurs: [image, envoye], message };
     },
   },
-] as unknown as FicheAudio[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

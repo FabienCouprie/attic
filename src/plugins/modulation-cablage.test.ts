@@ -46,6 +46,7 @@ import { fiches as fichesDeplacement } from "./deplacement";
 import { fiches as fichesModulation } from "./effets-modulation";
 import { fiches as fichesMicromontage } from "./micromontage";
 import type { FicheAudio } from "../audio/types-domaine";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const SR = 16000;
 /** Court exprès : onze fiches lancées deux fois, dont trois réverbérations. */
@@ -114,15 +115,7 @@ function salve(graine: number, canaux = 1): AudioBuffer {
 }
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string>) {
-  return {
-    entree: (i: number) => entrees[i],
-    sortieBranchee: () => false,
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages, { sortieBranchee: () => false }) as never;
 }
 
 /**

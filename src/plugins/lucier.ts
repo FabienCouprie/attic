@@ -6,6 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { creerAleatoire } from "../core";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -41,9 +42,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine de la pièce. Elle mérite d'être fixe ici plus qu'ailleurs : la pièce est le sujet de l'œuvre, et vingt itérations dans une pièce chaque fois différente ne donneraient pas deux fois le même résultat. La changer, c'est enregistrer dans une autre pièce.",
         docEn: "Seed for the room. It deserves to be fixed here more than anywhere else: the room is the subject of the piece, and twenty passes through a different room each time would never give the same result twice. Changing it means recording in another room." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const [{ pieceDeLucier, platitudeSpectrale }, { genererIR }] = await Promise.all([
         import("../audio/lucier"),
         import("../audio/convolution"),

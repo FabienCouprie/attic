@@ -5,18 +5,12 @@
 // Csound compilerait sans broncher pour ne produire aucun son.
 import { describe, expect, it } from "vitest";
 import { fiches } from "./csound-orchestre";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = fiches.find((f) => f.id === "orchestre-csound")!;
 
 function contexte(params: Record<string, string | number> = {}) {
-  return {
-    noeud: { id: "n1", data: { ficheId: "orchestre-csound", parametres: params } },
-    runtime: null,
-    entree: () => null,
-    entrees: () => [],
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-  };
+  return ctxDEssai([], params, { ficheId: "orchestre-csound" });
 }
 
 describe("le nœud Orchestre Csound", () => {

@@ -111,7 +111,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0, unite: "",
         doc: "Graine aléatoire (0 = aléatoire à chaque exécution).", docEn: "Random seed (0 = random each run)." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const langue = langueCourante();
       const instruments = decouperEntree(ctx.entree(0));
       const styles = decouperEntree(ctx.entree(1));

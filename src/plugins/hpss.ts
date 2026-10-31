@@ -11,6 +11,7 @@ import { avecDoc } from "./notices";
 import { separerVoie, type OptionsHpss, type ResultatHpss } from "../audio/hpss";
 import { parCanal } from "./hors-fil";
 import { choixFenetre } from "../audio/fenetres-analyse";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -46,11 +47,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Doux partage l'énergie ambiguë entre les deux sorties, à la manière d'un filtre de Wiener. Tranché envoie chaque point entièrement d'un côté : plus net, au prix d'artefacts sur la matière qui n'est franchement ni l'un ni l'autre. Dans les deux cas les deux sorties, remises bout à bout, redonnent le son de départ.",
         docEn: "Soft shares ambiguous energy between the two outputs, Wiener-fashion. Hard sends each point entirely to one side: cleaner-cut, at the cost of artefacts on material that is frankly neither. In both cases the two outputs, added back together, give back the original sound." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(entree)) return entree;
       const taille = parseInt(ctx.paramTexte("Fenêtre", "2048"), 10) || 2048;
       const reglages = {
         medianeTemps: Math.round(ctx.paramNombre("Filtre temporel", 17)),

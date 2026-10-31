@@ -107,7 +107,7 @@ export const fiches: FicheAudio[] = ([
         doc: "La graine du tirage qui disperse les instants. La même graine rejoue exactement le même désordre, ce qui permet de retrouver un rendu.",
         docEn: "The seed of the draw that disperses the instants. The same seed replays exactly the same disorder, which is what makes a render findable again." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const audio = ctx.entree(0);
       const avecSource = audio instanceof AudioBuffer;

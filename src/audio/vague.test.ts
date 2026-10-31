@@ -5,7 +5,6 @@
 // vague. Ce qui fait la vague est le RAPPORT entre le temps qu'elle met à se former et celui qu'elle
 // met à se briser, et c'est la seule chose que l'oreille ne vérifie pas d'elle-même. Les cas le
 // mesurent sur l'enveloppe du son rendu, et non sur les réglages.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { dureesDesCycles, formeDeLaVague, vague } from "./vague";

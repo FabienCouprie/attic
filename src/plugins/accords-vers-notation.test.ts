@@ -1,6 +1,7 @@
 // plugins/accords-vers-notation.test.ts
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = registre.trouverDef("accords-vers-notation")!;
 
@@ -13,12 +14,7 @@ const fiche = registre.trouverDef("accords-vers-notation")!;
 function ctxDe(entrees: (string | null)[], params: Record<string, string | number> = {}) {
   const [accords = null, progression = null, tonalite = null] = entrees;
   const ports: (string | null)[] = [tonalite, progression, accords];
-  return {
-    entree: (i: number) => ports[i] ?? null,
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-    onProgress: () => {},
-  } as any;
+  return ctxDEssai(ports, params) as any;
 }
 
 // Les lignes utilisent le format RÉEL observé en bout de chaîne, horodatage

@@ -41,7 +41,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Maximum number of tokens generated for the caption.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0) as File | null;
       if (!(fichier instanceof File)) {
         return { valeurs: [null], message: traduire("msg.connecter.image") };

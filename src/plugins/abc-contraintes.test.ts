@@ -5,16 +5,9 @@ import "node-web-audio-api/polyfill.js";
 import { describe, it, expect, afterEach } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { lireMorceau } from "../audio/abc";
+import { ctxDEssai } from "../core/contexte-essai";
 
-const ctx = (entrees: unknown[], params: Record<string, string | number>) => ({
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-  paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-  onProgress: () => {},
-  noeud: { data: {} },
-  runtime: null,
-});
+const ctx = (entrees: unknown[], params: Record<string, string | number>) => ctxDEssai(entrees, params);
 const noeud = (id: string) => registre.trouverDef(id)!;
 
 const AIR = `X:1\nT:Essai\nM:4/4\nL:1/8\nK:G\n"G"GABG DGBG|"C"cBcd "G"efge|"D"dcBA GFGA|"G"BGAF "D"G4|]`;

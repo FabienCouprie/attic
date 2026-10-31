@@ -20,6 +20,7 @@
 // que la fiche demande bien son rendu audio.
 import { describe, expect, it, vi } from "vitest";
 import { parseMidi } from "midi-file";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./effets-midi";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 
@@ -48,14 +49,7 @@ function midiVide(): File {
  * fiche, ce qui est le comportement réel — un paramètre jamais touché n'est pas écrit sur le nœud.
  */
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? reglages[nom] : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages) as never;
 }
 
 const fiche = (id: string) => {

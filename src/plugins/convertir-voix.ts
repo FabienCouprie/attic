@@ -24,6 +24,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { octetsWav } from "./chanson-aides";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { parametreCalcul } from "./parametre-calcul";
@@ -86,16 +87,14 @@ export const fiches = ([
         "Il change le temps de calcul.",
         "It changes the compute time."),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pont = api();
       if (!pont?.chatterboxConvertir) {
         return { valeurs: [null], erreur: true, message: traduire("msg.n_cessite_electron") };
       }
-      const source = ctx.entree(0);
+      const source = entreeAudio(ctx, 0);
+      if (sansEntree(source)) return source;
       const cible = ctx.entree(1);
-      if (!(source instanceof AudioBuffer)) {
-        return { valeurs: [null], erreur: true, message: traduire("msg.aucune_entr_e_audio") };
-      }
       if (!(cible instanceof AudioBuffer)) {
         return { valeurs: [null], erreur: true, message: traduire("msg.convertirVoix.sansCible") };
       }

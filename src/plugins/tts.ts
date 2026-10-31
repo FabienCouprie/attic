@@ -95,7 +95,7 @@ const synthesesVocales: FicheAudio[] = ([
         doc: "Voix prédéfinie (embeddings CMU Arctic). BDL/RMS = hommes américains ; SLT/CLB = femmes américaines ; JMK = homme canadien ; AWB = homme écossais ; KSP = homme indien.",
         docEn: "Preset voice (CMU Arctic embeddings). BDL/RMS = US males; SLT/CLB = US females; JMK = Canadian male; AWB = Scottish male; KSP = Indian male.", defautEn: VOIX_SPEECHT5[0].nomEn ?? VOIX_SPEECHT5[0].nom },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const texte = ctx.entree(0);
       if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.branchez_un_texte_port_bleu") };
       const voixId = ctx.paramTexte("Voix", VOIX_SPEECHT5[0].nom);
@@ -137,7 +137,7 @@ const synthesesVocales: FicheAudio[] = ([
         doc: "Langue du texte à synthétiser. Détermine le modèle MMS utilisé.",
         docEn: "Language of the text to synthesize. Determines which MMS model is used.", defautEn: "English" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const texte = ctx.entree(0);
       if (typeof texte !== "string" || !texte.trim()) return { valeurs: [null], message: traduire("msg.branchez_un_texte_port_bleu") };
       const langue = ctx.paramTexte("Langue", "en");

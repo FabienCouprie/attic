@@ -7,14 +7,10 @@ import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { normaliserRomains } from "../audio/theorie-romains";
 import { Progression, Chord } from "tonal";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function ctxDe(entree: unknown, params: Record<string, string | number> = {}) {
-  return {
-    entree: () => entree,
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-    onProgress: () => {},
-  } as any;
+  return ctxDEssai([entree], params) as any;
 }
 
 describe("normaliserRomains", () => {

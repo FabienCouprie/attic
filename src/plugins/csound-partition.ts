@@ -88,7 +88,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Secondes ajoutées après la dernière note, écrites en `f0`. Sans elles, Csound s'arrête à la dernière note et coupe les queues de réverbération ou de résonance, ce qui s'entend comme un clic.",
         docEn: "Seconds added after the last note, written as `f0`. Without them, Csound stops at the last note and cuts reverb or resonance tails, which is heard as a click." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) {
         return { valeurs: [null, null], message: traduire("msg.branchez_un_source_midi") };

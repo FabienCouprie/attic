@@ -5,17 +5,14 @@ import { fiches } from "./vexflow";
 import { jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
 import { accordsInconnus } from "../audio/theorie-romains";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function trouver(id: string) {
   return fiches.find((f) => f.id === id);
 }
 
 function ctxSimple(valeur: any) {
-  return {
-    entree: () => valeur,
-    paramTexte: (_nom: string, defaut: string) => defaut,
-    paramNombre: (_nom: string, defaut: number) => defaut,
-  };
+  return ctxDEssai([valeur]);
 }
 
 function notesMelodieSimple() {
@@ -57,11 +54,7 @@ describe("nœuds VexFlow", () => {
 
   it("vexflow-portee utilise l'entrée connectée", async () => {
     const f = trouver("vexflow-portee")!;
-    const ctx = {
-      entree: () => "A4/q B4/q",
-      paramTexte: (_nom: string, defaut: string) => defaut,
-      paramNombre: (_nom: string, defaut: number) => defaut,
-    };
+    const ctx = ctxDEssai(["A4/q B4/q"]);
     const res = await f.executer(ctx as any);
     expect(res.message).toContain("<svg");
   });
@@ -80,11 +73,7 @@ describe("nœuds VexFlow", () => {
 
   it("vexflow-grille accepte une progression en chiffres romains", async () => {
     const f = trouver("vexflow-grille")!;
-    const ctx = {
-      entree: () => "I V vi IV",
-      paramTexte: (_nom: string, defaut: string) => defaut,
-      paramNombre: (_nom: string, defaut: number) => defaut,
-    };
+    const ctx = ctxDEssai(["I V vi IV"]);
     const res = await f.executer(ctx as any);
     expect(res.message).toContain("<svg");
   });
@@ -223,11 +212,7 @@ describe("nœuds VexFlow", () => {
 
   it("vexflow-portee affiche les accords et la syntaxe plus", async () => {
     const f = trouver("vexflow-portee")!;
-    const ctx = {
-      entree: () => "C4+E4+G4/q (C4 E4 G4)/h B4/q/r",
-      paramTexte: (_nom: string, defaut: string) => defaut,
-      paramNombre: (_nom: string, defaut: number) => defaut,
-    };
+    const ctx = ctxDEssai(["C4+E4+G4/q (C4 E4 G4)/h B4/q/r"]);
     const res = await f.executer(ctx as any);
     expect(res.message).toContain("<svg");
   });

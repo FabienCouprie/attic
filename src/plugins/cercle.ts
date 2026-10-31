@@ -107,7 +107,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le son de toutes les attaques du cercle. Un cercle rythmique n'en porte qu'un ; pour en mêler plusieurs, poser plusieurs cercles.",
         docEn: "The sound of every onset of the circle. A rhythm circle carries only one; to mix several, place several circles." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const choisi = ctx.paramTexte("Rythme", RYTHME_LIBRE);
       const brut = motifDuRythme(choisi, ctx.paramTexte("Motif", MOTIF_DEFAUT));
       const motif = nettoyerMotif(brut) || MOTIF_DEFAUT;
@@ -151,7 +151,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Ce que valent les places autres que zéro. L'octave divisée par le cercle, le demi-ton tempéré, ou la chaîne de quintes justes prise dans l'ordre des attaques.",
         docEn: "What the positions other than zero are worth. The octave divided by the circle, the tempered semitone, or the chain of just fifths taken in the order of the onsets." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const motif = nettoyerMotif(ctx.paramTexte("Motif", MOTIF_MELODIQUE)) || MOTIF_MELODIQUE;
       const fondamentale = parseInt(ctx.paramTexte("Fondamentale", "60"), 10) || 60;
       const repartition = ctx.paramTexte("Répartition", "octave") as Repartition;
@@ -194,7 +194,7 @@ export const fiches: FicheAudio[] = ([
         doc: "La nuance de toutes les notes rendues, un cercle n'en portant pas.",
         docEn: "The dynamics of every rendered note, a circle carrying none." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       // UNE ENTRÉE PORTE UNE SUITE, et une suite d'un cercle est le cas ordinaire. C'est ce qui
       // permet à une boucle de variation de brancher ses quatre cercles sur une seule entrée.
       const voies: Cercle[][] = [];

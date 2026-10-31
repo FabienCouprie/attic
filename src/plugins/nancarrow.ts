@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 /** Rapports proposés, du plus simple au plus retors. */
 const RAPPORTS: Record<string, number> = {
@@ -48,9 +49,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondu appliqué pour que la source boucle sans clic. Il raccourcit la boucle d'autant, ce dont le calcul de la période de coïncidence tient compte.",
         docEn: "Crossfade so the source loops without a click. It shortens the loop by that much, which the coincidence period accounts for." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const [{ canonDeTempo, periodeCanon }, { boucleSansCouture }] = await Promise.all([
         import("../audio/nancarrow"),
         import("../audio/risset"),

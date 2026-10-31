@@ -13,6 +13,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { parseMidi } from "midi-file";
 import { analyserMidi } from "../audio";
 import { choixFenetre } from "../audio/fenetres-analyse";
@@ -170,7 +171,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Number of channels in the input files written for Csound. In mono, « a1 diskin2 \"entree1.wav\", 1 » always works; in stereo, diskin2 requires two outputs (« a1, a2 diskin2 … ») and refuses the note otherwise, which yields a silent render." },
       ...PARAMETRES_SORTIE,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const audioEntree = ctx.entree(0);
       const notes = await notesDuMidi(ctx.entree(1));
@@ -264,7 +265,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Seed of the random opcodes, so the render is reproducible." },
       ...PARAMETRES_SORTIE,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
@@ -344,12 +345,10 @@ endin`,
         docEn: "Number of channels in the input files written for Csound. In mono, « a1 diskin2 \"entree1.wav\", 1 » always works; in stereo, diskin2 requires two outputs (« a1, a2 diskin2 … ») and refuses the note otherwise, which yields a silent render." },
       ...PARAMETRES_SORTIE,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const a1 = ctx.entree(0), a2 = ctx.entree(1);
-      if (!(a1 instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      }
+      const a1 = entreeAudio(ctx, 0, { sorties: 2 }), a2 = ctx.entree(1);
+      if (sansEntree(a1)) return a1;
       const stereo = ctx.paramTexte("Canaux d'entrée", "mono") === "stereo";
       const entrees: EntreeFichier[] = [{ nom: "entree1.wav", buffer: a1, stereo }];
       if (a2 instanceof AudioBuffer) entrees.push({ nom: "entree2.wav", buffer: a2, stereo });
@@ -418,7 +417,7 @@ endin`,
         doc: "Durée de la note, quand aucun MIDI n'est branché.", docEn: "Note duration, when no MIDI is connected." },
       ...PARAMETRES_SORTIE,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const o = opcodeDe("instrument", ctx.paramTexte("Instrument", INSTRUMENTS[0].id));
       const orchestre = orchestreInstrument(o, {
@@ -487,13 +486,11 @@ endin`,
         docEn: "Time added to the processed duration. Essential for the stretch, which lengthens the sound." },
       ...PARAMETRES_SORTIE,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const o = opcodeDe("spectral", ctx.paramTexte("Traitement", SPECTRAUX[0].id));
-      const a1 = ctx.entree(0), a2 = ctx.entree(1);
-      if (!(a1 instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      }
+      const a1 = entreeAudio(ctx, 0, { sorties: 2 }), a2 = ctx.entree(1);
+      if (sansEntree(a1)) return a1;
       if (o.entrees > 1 && !(a2 instanceof AudioBuffer)) {
         return { valeurs: [null, null], message: traduire("msg.csound.deuxEntrees", en ? o.en : o.fr) };
       }

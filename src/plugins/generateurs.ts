@@ -61,7 +61,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Ajoute une 7e ou une 6e diatonique (selon la gamme choisie) à chaque accord.", docEn: "Adds a diatonic 7th or 6th (per the chosen scale) to each chord." },
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const cle = ctx.paramTexte("Clé","C"), gamme = ctx.paramTexte("Gamme","majeur");
       const genre = ctx.paramTexte("Genre","pop"), prog = ctx.paramTexte("Progression","I-IV-V-I");
       const tempo = ctx.paramNombre("Tempo",120), dAcc = ctx.paramNombre("Durée par accord",2);
@@ -121,7 +121,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       console.log("[attic] Mélodie aléatoire : exécution démarrée");
       const tempo = ctx.paramNombre("Tempo",100);
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));

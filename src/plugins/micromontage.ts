@@ -131,7 +131,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "The level of the montage. Density does not affect it: the sum is already brought back to the square root of the mean overlap." },
       ...bornesModulation(modulationNommee("Niveau", "Level out", [0, 100], "%")),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const sources: Float32Array[][] = [];
       for (let i = 0; i < SOURCES; i++) {
         const v = ctx.entree(i);

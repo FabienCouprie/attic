@@ -21,7 +21,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Texte à émettre. Sera transmis sur la sortie texte (port bleu).",
         docEn: "Text to output. Will be sent on the text output (blue port).", defautEn: "Hello, this is a test text." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const texte = ctx.paramTexte("Texte", "Bonjour, ceci est un texte de test.");
       return { valeurs: [texte], message: traduire("msg.var_0_caract_res", texte.length) };
    },

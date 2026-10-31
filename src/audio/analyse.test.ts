@@ -1,30 +1,13 @@
 // audio/analyse.test.ts — Vérification des extracteurs Meyda.
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda } from "./analyse-descripteurs";
 import { transcrireMono, fusionnerNotesRepetees } from "./analyse-transcription";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
-}
 
 const SR = 44100;
 
 function sinus(freq: number, dureeS: number, channels = 1): AudioBuffer {
   const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
   for (let ch = 0; ch < channels; ch++) {
     const d = b.getChannelData(ch);
     for (let i = 0; i < n; i++) d[i] = Math.sin((2 * Math.PI * freq * i) / SR);
@@ -34,17 +17,13 @@ function sinus(freq: number, dureeS: number, channels = 1): AudioBuffer {
 
 function bruitBlanc(dureeS: number, channels = 1): AudioBuffer {
   const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: channels, length: n, sampleRate: SR });
   for (let ch = 0; ch < channels; ch++) {
     const d = b.getChannelData(ch);
     for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
   }
   return b;
 }
-
-beforeAll(() => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-});
 
 describe("calculerCentroidSpectralMeyda", () => {
   it("calcule un centroïde proche de la fréquence d'une sinusoïde", () => {
@@ -102,7 +81,7 @@ describe("calculerRMS_Meyda", () => {
   });
 
   it("retourne des valeurs plus faibles pour un signal silencieux", () => {
-    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
+    const b = new AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
     b.getChannelData(0).fill(0);
     const resultat = calculerRMS_Meyda(b);
     expect(resultat.valeur).toBeLessThan(-50);

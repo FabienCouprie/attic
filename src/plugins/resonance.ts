@@ -2,6 +2,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { appliquerResonanceAudio } from "../audio/effets-espace";
 
 const MATERIALS = [
@@ -81,11 +82,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Material applied to the six room surfaces.", defautEn: "plaster-smooth",
       },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
-      }
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const sourceX = ctx.paramNombre("Source X", 2);
       const sourceY = ctx.paramNombre("Source Y", 0);
       const sourceZ = ctx.paramNombre("Source Z", 0);

@@ -4,11 +4,11 @@
 // son propre résumé le dit. Équilibrer quatre instruments demandait donc quatre amplificateurs et
 // quatre spatialisations — huit nœuds pour ce qui tient en deux curseurs. La plage de touches, elle,
 // permet de partager un même MIDI entre deux banques sans toucher au fichier.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import { writeMidi } from "midi-file";
 import { fiches } from "./clavier-banque";
 import { banqueDepuisRendus, type Banque, type Zone } from "../audio/clavier-banque";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = fiches.find((f) => f.id === "sampler-multizones")!;
 const SR = 22050;
@@ -60,14 +60,7 @@ const banqueKit = (): Banque => {
 };
 
 function contexte(midiFile: unknown, banque: Banque | null, params: Record<string, number> = {}) {
-  return {
-    noeud: { id: "n1", data: { ficheId: "sampler-multizones", parametres: params } },
-    runtime: null,
-    entree: (i: number) => (i === 0 ? midiFile : banque),
-    entrees: () => [midiFile, banque],
-    paramTexte: (nom: string, defaut: string) => String((params as any)[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number((params as any)[nom] ?? defaut),
-  };
+  return ctxDEssai([midiFile, banque], params, { ficheId: "sampler-multizones" });
 }
 
 const crete = (a: AudioBuffer, canal: number) => {

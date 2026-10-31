@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import { writeMidi } from "midi-file";
 import { fiches } from "./csound-partition";
 import { constante } from "../audio/courbe";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = fiches.find((f) => f.id === "partition-csound")!;
 const TPM = 480;
@@ -33,14 +34,7 @@ function midi(notes: { note: number; canal: number; velocite?: number }[]): File
 }
 
 function contexte(entrees: unknown[], params: Record<string, string | number> = {}) {
-  return {
-    noeud: { id: "n1", data: { ficheId: "partition-csound", parametres: params } },
-    runtime: null,
-    entree: (i: number) => entrees[i] ?? null,
-    entrees: () => entrees,
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-  };
+  return ctxDEssai(entrees, params, { ficheId: "partition-csound" });
 }
 
 describe("le nœud Partition Csound", () => {

@@ -13,6 +13,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import {
   CADENCE, engendrer, lisser, suivre,
   type Caracteristique, type Courbe, type FormeCourbe,
@@ -45,11 +46,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Valeurs par seconde. Haute, la courbe suit les moindres soubresauts ; basse, elle ne garde que le geste d'ensemble. La cadence n'a pas à valoir celle du son : l'effet interpole.",
         docEn: "Values per second. High, the curve follows every twitch; low, it keeps only the overall gesture. The rate need not match the sound's: the effect interpolates." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(entree)) return entree;
       const quoi = ctx.paramTexte("Caractéristique", "energie") as Caracteristique;
       const cadence = Math.round(ctx.paramNombre("Cadence", CADENCE));
       const courbe = suivre(entree.getChannelData(0), entree.sampleRate, quoi, cadence);
@@ -124,7 +123,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Exposant k de la loi de Weibull, de densité k·x^(k−1)·e^(−x^k). À 1, la courbe est la décroissance exponentielle ; entre 1 et 3, une cloche dont la queue traîne vers la droite ; vers 3,6, elle est presque symétrique ; au-delà, elle se resserre et penche vers la gauche. Ce réglage n'agit que sur la forme Weibull.",
         docEn: "Exponent k of the Weibull law, of density k·x^(k−1)·e^(−x^k). At 1 the curve is the exponential decay; between 1 and 3, a bell whose tail trails to the right; around 3.6 it is nearly symmetrical; beyond, it tightens and leans to the left. This setting acts on the Weibull shape only." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const forme = ctx.paramTexte("Forme", "sinus") as FormeCourbe;
       const dureeSec = ctx.paramNombre("Durée", 10);
       const courbe = engendrer({
@@ -167,7 +166,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Hauteur du tracé. L'échelle reste de zéro à un quoi qu'il arrive : la hauteur change la place prise, pas la lecture.",
         docEn: "Height of the plot. The scale stays from zero to one whatever happens: the height changes the room taken, not the reading." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const mesure = mesurerCourbe(entree);
       if (mesure.nombre === 0) return { valeurs: [null, null, null], message: traduire("msg.courbe.aucune") };

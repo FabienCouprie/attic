@@ -66,7 +66,7 @@ export const fiches: FicheAudio[] = ([
           docEn: `Length of track ${k + 1}'s fade out.` },
       ]).flat(),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const chemin = ctx.paramTexte("Chemin", "").trim();
       if (!chemin) {
         return { valeurs: [null], message: en() ? "Name a film in « Path »." : "Indiquez un film dans « Chemin »." };

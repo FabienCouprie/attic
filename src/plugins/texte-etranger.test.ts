@@ -27,10 +27,10 @@
 // accord de trois notes tenu deux temps. C'est voulu. Un charabia quelconque serait refusé par tout
 // le monde sans rien prouver ; celui-ci est lisible par UN composant et étranger à tous les autres,
 // ce qui est exactement le piège que la campagne a trouvé cinq fois.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import { toutesLesFiches } from "./index";
 import { estResultatEnErreur } from "../core/execution";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const TEXTE_ETRANGER = "Tempo 90\nC4+E4+G4 2.000";
 
@@ -59,15 +59,8 @@ const ACCEPTENT: Record<string, string> = {
     "Un début de boucle non déplié laisse passer le plan et le dit, exactement comme celui qui porte l'audio. Ce n'est pas un échec, c'est un graphe auquel il manque sa fin de boucle.",
 };
 
-const contexte = (entrees: any[], indice: number) => ({
-  noeud: { id: "n", data: { ficheId: "x", parametres: {} } },
-  entree: (j: number) => (j === indice ? TEXTE_ETRANGER : null),
-  entrees: () => entrees.map((_: any, j: number) => (j === indice ? TEXTE_ETRANGER : null)),
-  paramTexte: (_nom: string, defaut: string) => defaut,
-  paramNombre: (_nom: string, defaut: number) => defaut,
-  onProgress: () => {},
-  repertoireTravail: "",
-});
+const contexte = (entrees: any[], indice: number) =>
+  ctxDEssai(entrees.map((_: any, j: number) => (j === indice ? TEXTE_ETRANGER : null)), {}, { id: "n" });
 
 describe("le banc du texte étranger", () => {
   it("AUCUN COMPOSANT N'ANNONCE UNE RÉUSSITE SUR UN TEXTE QUI N'EST PAS SON FORMAT", async () => {

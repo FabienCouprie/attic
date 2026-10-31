@@ -58,7 +58,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de l'audio synthétisé.", docEn: "Synthesized audio volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const texte = typeof entree === "string" && entree.trim() ? entree : ctx.paramTexte("ABC", EXEMPLE);
       const morceaux = decouperMorceaux(texte);

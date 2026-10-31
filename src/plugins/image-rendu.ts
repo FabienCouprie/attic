@@ -17,7 +17,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Image", type: "image" }],
     sorties: [{ nom: "Image", type: "image" }],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const image = ctx.entree(0);
       if (!(image instanceof File)) {
         return { valeurs: [null], message: traduire("msg.connecter.image") };

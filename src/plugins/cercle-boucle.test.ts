@@ -10,6 +10,7 @@
 import { describe, expect, it } from "vitest";
 
 import { estCercle, estSuite, type Cercle } from "../audio/cercle";
+import { ctxDEssai } from "../core/contexte-essai";
 import {
   FICHE_CERCLE_DEBUT, FICHE_CERCLE_FIN, planifierBoucles, publierBoucle, publierBoucles,
   type BoucleCourante,
@@ -28,14 +29,8 @@ const melo = (positions: number, paires: [number, number][]): Cercle => ({
   positions, sorte: "hauteur", sommets: paires.map(([position, valeur]) => ({ position, valeur })),
 });
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}, id = "n") => ({
-  noeud: { id, data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}, id = "n") =>
+  ctxDEssai(entrees, params, { id });
 
 const places = (c: Cercle) => c.sommets.map((s) => s.position).sort((a, b) => a - b);
 const sons = (c: Cercle) => c.sommets.map((s) => s.valeur);

@@ -8,7 +8,6 @@
 // POUR HAAS, CE QU'IL FAUT GARDER EST LE RETARD LUI-MÊME, à l'échantillon près : tout l'effet tient
 // à ce que les deux canaux portent le MÊME son à deux instants, et un canal qui ne serait pas la
 // copie exacte de l'autre ne serait plus une réflexion.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import {

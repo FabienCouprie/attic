@@ -2,7 +2,7 @@
 // Les calculs lourds sont délégués à src/workers/magenta-worker.ts pour ne pas
 // bloquer le thread principal.
 
-import type { FicheAudio } from "../audio/types-domaine";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { MODES, MODES_EN, MODES_IDS } from "./magenta-helpers";
@@ -17,7 +17,7 @@ import { annoncerModele } from "./message-modele";
 import { choixValeurs } from "../audio/valeurs-note";
 
 let worker: Worker | null = null;
-const pending: { resolve: (v: any) => void; reject: (e: any) => void; ctx: any }[] = [];
+const pending: { resolve: (v: any) => void; reject: (e: any) => void; ctx: ContexteAudio }[] = [];
 
 /**
  * Un worker mort doit FAIRE ÉCHOUER les nœuds, et non les laisser attendre.
@@ -64,14 +64,14 @@ function getWorker(): Worker {
   return worker;
 }
 
-function runMagenta(ctx: any, type: string, payload: any): Promise<any> {
+function runMagenta(ctx: ContexteAudio, type: string, payload: any): Promise<any> {
   return new Promise((resolve, reject) => {
     pending.push({ resolve, reject, ctx });
     getWorker().postMessage({ type, payload });
   });
 }
 
-async function runMagentaFile(ctx: any, type: string, payload: any): Promise<File> {
+async function runMagentaFile(ctx: ContexteAudio, type: string, payload: any): Promise<File> {
   const result = await runMagenta(ctx, type, payload);
   if (result?.kind === "file") {
     return new File([result.bytes], result.name, { type: result.type });
@@ -111,7 +111,7 @@ export const fiches: FicheAudio[] = ([
      },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       try {
         const temperature = ctx.paramNombre("Température", 1.0);
         const tempo = ctx.paramNombre("Tempo", 120);
@@ -159,7 +159,7 @@ export const fiches: FicheAudio[] = ([
      },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const file = ctx.entree(0);
       if (!(file instanceof File)) {
         return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
@@ -227,7 +227,7 @@ export const fiches: FicheAudio[] = ([
      },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       try {
         const duree = ctx.paramNombre("Durée", 8);
         const tempo = ctx.paramNombre("Tempo", 120);
@@ -278,7 +278,7 @@ export const fiches: FicheAudio[] = ([
      },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const file = ctx.entree(0);
       if (!(file instanceof File)) {
         return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
@@ -334,7 +334,7 @@ export const fiches: FicheAudio[] = ([
      },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const file1 = ctx.entree(0);
       const file2 = ctx.entree(1);
       if (!(file1 instanceof File) || !(file2 instanceof File)) {
@@ -392,7 +392,7 @@ export const fiches: FicheAudio[] = ([
      },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       try {
         const temperature = ctx.paramNombre("Température", 1.0);
         const tempo = ctx.paramNombre("Tempo", 120);
@@ -440,7 +440,7 @@ export const fiches: FicheAudio[] = ([
      },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const file = ctx.entree(0);
       if (!(file instanceof File)) {
         return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };

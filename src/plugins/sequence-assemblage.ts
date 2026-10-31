@@ -59,7 +59,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Donne à chaque entrée son propre numéro de voix, ce qui grave autant de portées qu'il y a d'entrées.",
         docEn: "Gives each input its own voice number, which engraves as many staves as there are inputs." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recues: Sequence[] = [];
       for (let i = 0; i < ENTREES; i++) {
         const v = ctx.entree(i);
@@ -119,7 +119,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Séquence", nomEn: "Sequence", type: "sequence", dynamique: true }],
     sorties: [{ nom: "Séquence", nomEn: "Sequence", type: "sequence" }],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recues = ctx.entrees().filter(estSequence) as Sequence[];
       if (recues.length < 2) {
         return {

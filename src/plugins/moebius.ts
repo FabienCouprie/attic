@@ -6,6 +6,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { rendreMoebius, planMoebius, DUREE_SORTIE_MAX_SEC, type FaceMoebius } from "../audio/moebius";
 
 export const fiches: FicheAudio[] = ([
@@ -34,9 +35,9 @@ export const fiches: FicheAudio[] = ([
         doc: "100 % : la torsion seule. En dessous, le son d'origine revient se mêler à l'autre face. À 50 %, les deux faces s'annulent au bout d'un tour : sur la face Phase le son s'éteint entièrement, sur la face Stéréo gauche et droite se rejoignent au centre.",
         docEn: "100%: the twist alone. Below that, the original sound mixes back with the other side. At 50%, the two sides cancel after one lap: on the Phase side the sound fades out completely, on the Stereo side left and right meet in the centre." },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
 
       const face: FaceMoebius = ctx.paramTexte("Face", "stereo") === "phase" ? "phase" : "stereo";
       const options = {

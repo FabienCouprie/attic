@@ -88,7 +88,7 @@ const locales = ([
         docEn: "Makes the plan reproducible. At minus one, every run differs. When « Lyrics » is empty, it also decides the written text, which does not always follow the requested language: giving the lyrics is the only way to settle what will be sung." },
       PARAMETRE_CALCUL,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pont = api();
       if (!pont?.acestepPlanifier) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.n_cessite_electron") };
@@ -193,7 +193,7 @@ const locales = ([
     // qu'entre le rendu et la description, et 7,5 sort plus fort et plus ouvert dans l'aigu que le
     // défaut du moteur. `chanson-aides.ts` porte ce que cela coûte aux trois autres.
     parametres: [PARAMETRE_MODELE, ...PARAMETRES_RENDU],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pont = api();
       if (!pont?.acestepRendre) {
         return { valeurs: [null], erreur: true, message: traduire("msg.n_cessite_electron") };

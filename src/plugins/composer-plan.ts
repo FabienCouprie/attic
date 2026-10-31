@@ -174,7 +174,7 @@ export const fiches = ([
         doc: "Rend le rendu reproductible. À moins un, le moteur en tire une à chaque exécution et l'inscrit dans le plan : les rendus diffèrent, et celle qui a servi est lisible dans le message, de sorte qu'un résultat réussi peut être refait.",
         docEn: "Makes the render reproducible. At minus one, the engine draws one at each run and writes it into the plan: the renders differ, and the one that served is readable in the message, so a successful result can be made again." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entreeDescription = ctx.entree(0);
       const entreeParoles = ctx.entree(1);
       const entreeTempo = ctx.entree(2);

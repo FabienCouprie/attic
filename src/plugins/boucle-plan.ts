@@ -60,7 +60,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Ce que deviennent les réglages « Graine » des composants de la chaîne. « Une par tour » en donne une différente à chaque tour : le plan reste le même et le rendu change, ce qui donne des sections d'un même morceau. « Identiques » donne la même à tous, et les tours se ressemblent.",
         docEn: "What becomes of the « Seed » settings of the chain's nodes. « One per pass » gives each pass a different one: the plan stays the same and the rendering changes, which yields sections of one piece. « Identical » gives them all the same, and the passes resemble each other." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       // CE NŒUD N'EST NORMALEMENT JAMAIS EXÉCUTÉ : le moteur déplie la boucle avant l'exécution et
       // le remplace par les copies de la chaîne. S'il s'exécute, c'est que le dépliage n'a pas eu
       // lieu, presque toujours faute de « Fin de boucle » en aval. On laisse alors passer le plan,

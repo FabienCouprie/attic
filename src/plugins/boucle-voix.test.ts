@@ -9,9 +9,9 @@
 // LE PILOTE LUI-MÊME N'EST PAS ICI, étant un hook React que le dépôt n'a pas de quoi rendre. Ce
 // qu'il fait tient en quatre gestes, reproduits tels quels ci-dessous ; ce qui reste de lui est la
 // plomberie de cache et d'annulation, commune au lot déjà en place.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
+import { ctxDEssai } from "../core/contexte-essai";
 import type { Sequence } from "../audio/sequence";
 import {
   boucleCourante, planifierBoucle, publierBoucle, passesRestantes,
@@ -28,14 +28,7 @@ const rythme = fichesArbre.find((f) => f.id === "rythme-sur-hauteurs")!;
 const reunir = fichesVoix.find((f) => f.id === "reunir-voix")!;
 const formule = fichesFormule.find((f) => f.id === "formule-sequence")!;
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ctxDEssai(entrees, params);
 
 async function jouer(arbre: string, hauteurs: string): Promise<Sequence> {
   const r = await rythme.executer(contexte([arbre, hauteurs, null], { Tempo: 120 }) as any);

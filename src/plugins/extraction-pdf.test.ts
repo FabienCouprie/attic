@@ -2,6 +2,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./extraction-pdf";
 
 // Le glue code wasm-bindgen du plugin appelle `fetch(new URL(..., import.meta.url))`
@@ -84,11 +85,7 @@ function fichierPdf(octets: Uint8Array, nom = "document.pdf"): File {
 const fiche = fiches.find((f) => f.id === "extraction-pdf")!;
 
 function ctxDe(entree: File | null, params: Record<string, string> = {}) {
-  return {
-    entree: () => entree,
-    paramTexte: (nom: string, defaut: string) => params[nom] ?? defaut,
-    onProgress: () => {},
-  };
+  return ctxDEssai([entree], params);
 }
 
 describe("extraction-pdf (executer)", () => {
