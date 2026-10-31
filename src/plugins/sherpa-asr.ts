@@ -337,8 +337,8 @@ export const fiches: FicheAudio[] = ([
         ...choixLangues(LANGUES),
         defaut: "Automatique",
         defautEn: "Automatic",
-        doc: "Langue du discours à transcrire. « Automatique » laisse Whisper détecter la langue. Le modèle est multilingue (99 langues).",
-        docEn: "Language of the speech to transcribe. « Automatic » lets Whisper detect the language. The model is multilingual (99 languages).",
+        doc: "Langue du discours à transcrire. « Automatique » laisse le modèle Whisper tiny détecter la langue. Le modèle est multilingue (99 langues).",
+        docEn: "Language of the speech to transcribe. « Automatic » lets the Whisper tiny model detect the language. The model is multilingual (99 languages).",
       },
       {
         nom: "Qualité resampling",
@@ -348,8 +348,8 @@ export const fiches: FicheAudio[] = ([
         optionsEn: [...RESAMPLE_OPTIONS_EN],
         defaut: RESAMPLE_OPTIONS_FR[0],
         defautEn: RESAMPLE_OPTIONS_EN[0],
-        doc: "Choix de la qualité du resampling vers 16 kHz. « Haute » utilise Web Audio API (meilleure qualité) avec retour automatique à l'interpolation linéaire si nécessaire. « Standard » conserve l'interpolation linéaire rapide d'origine.",
-        docEn: "Settings: the resampling quality to 16 kHz. « High » uses Web Audio API (better quality) with automatic fallback to linear interpolation if needed. « Standard » keeps the original fast linear interpolation.",
+        doc: "Le rééchantillonnage vers 16 kHz. « Haute (Web Audio) » le confie au moteur audio du navigateur, et passe à l'interpolation linéaire si celui-ci est indisponible. « Standard (linéaire) » interpole linéairement entre deux échantillons voisins.",
+        docEn: "The resampling to 16 kHz. « High (Web Audio) » hands it to the browser's audio engine, and falls back to linear interpolation when that engine is unavailable. « Standard (linear) » interpolates linearly between two neighbouring samples.",
       },
       {
         nom: "Cache modèle",
@@ -359,8 +359,8 @@ export const fiches: FicheAudio[] = ([
         optionsEn: [...CACHE_OPTIONS_EN],
         defaut: CACHE_OPTIONS_FR[0],
         defautEn: CACHE_OPTIONS_EN[0],
-        doc: "Gestion du cache offline du modèle ONNX. « Auto » conserve le modèle téléchargé entre les sessions (IndexedDB). « Vider et re-télécharger » supprime le cache et force un nouveau téléchargement.",
-        docEn: "Manage the offline cache of the ONNX model. « Auto » keeps the downloaded model across sessions (IndexedDB). « Clear and re-download » deletes the cache and forces a fresh download.",
+        doc: "La copie du modèle ONNX gardée dans le stockage du navigateur (IndexedDB). « Auto (conservé entre sessions) » la réutilise d'une session à l'autre. « Vider et re-télécharger » l'efface et relit le modèle depuis les fichiers de l'application.",
+        docEn: "The copy of the ONNX model kept in the browser's storage (IndexedDB). « Auto (kept across sessions) » reuses it from one session to the next. « Clear and re-download » erases it and reads the model again from the application's files.",
       },
     ],
     async executer(ctx: any) {
