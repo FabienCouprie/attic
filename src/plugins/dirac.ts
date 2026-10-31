@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { rendreDirac, DUREE_SORTIE_MAX_SEC } from "../audio/dirac";
 import { planBoucle } from "../audio/geometrie-sonore";
 
@@ -33,9 +34,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondu enchaîné à chaque couture entre deux tours. Borné au quart de la durée du son.",
         docEn: "Crossfade at each seam between two laps. Capped at a quarter of the sound's length." },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
       const options = {
         tours: Math.round(ctx.paramNombre("Tours", 2)),
         fonduSec: ctx.paramNombre("Fondu", 30) / 1000,

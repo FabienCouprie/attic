@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { arcEnCiel, bandesArcEnCiel } from "../audio/arc-en-ciel";
 import { MODULATION_MIX, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
 
@@ -60,11 +61,9 @@ export const fiches: FicheAudio[] = ([
       ...bornesModulation(MODULATION_MIX),
       ...bornesModulation(modulationNommee("Ouverture", "Spread", [0, 100], "%")),
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) {
-        return { valeurs: [null], message: en() ? "No audio input." : "Aucune entrée audio." };
-      }
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const o = {
         bandes: ctx.paramNombre("Bandes", 32),
         grave: ctx.paramNombre("Grave", 60),

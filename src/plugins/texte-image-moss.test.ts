@@ -6,6 +6,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { compilerMiseEnPage } from "./moss-mise-en-page";
 import { fiches } from "./texte-image-moss";
+import { ctxDEssai } from "../core/contexte-essai";
 
 // UN FAUX OLLAMA, pour tenir ce qui part vers la rédaction sans serveur ni modèle.
 const ollama = vi.hoisted(() => ({ ollamaGenerer: vi.fn() }));
@@ -14,13 +15,7 @@ vi.mock("./ollama", () => ollama);
 const fiche = fiches.find((f) => f.id === "texte-image-moss")!;
 
 function contexte(params: Record<string, string | number> = {}, entree: unknown = null) {
-  return {
-    entree: () => entree,
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-    onProgress: () => {},
-    signal: new AbortController().signal,
-  };
+  return ctxDEssai([entree], params, { signal: new AbortController().signal });
 }
 
 /** Un faux pont qui garde ce qu'on lui demande et répond un échec, pour s'arrêter avant l'image. */

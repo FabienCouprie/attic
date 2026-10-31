@@ -4,7 +4,6 @@
 // quelques mégaoctets, et un cache qui garde tout finirait par tenir en mémoire chaque banque jamais
 // calculée dans une session de travail. Le test vérifie donc surtout ce qui est jeté, et dans quel
 // ordre.
-import "./polyfill-audiobuffer";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   MAX_BANQUES, banqueVive, deposerBanque, nombreBanquesVives, oublierBanque,

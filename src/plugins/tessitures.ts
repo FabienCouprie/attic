@@ -107,7 +107,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Séparateur du texte produit.", docEn: "Separator of the produced text.", defautEn: "Comma",
      },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const langue = langueCourante();
       const grp = ctx.paramTexte("Groupe", "Toutes");
       const { texte, total } = construireListeTessitures(grp, ctx.paramTexte("Format", "Virgule"), langue);

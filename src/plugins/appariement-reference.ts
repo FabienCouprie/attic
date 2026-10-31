@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { apparierSurReference } from "../audio/appariement-reference";
 import { choixFenetre } from "../audio/fenetres-analyse";
 import { choixOuiNon } from "../core/oui-non";
@@ -49,12 +50,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Résolution de l'analyse. Grande, elle distingue les graves ; petite, elle suit mieux les changements rapides.",
         docEn: "Analysis resolution. Large, it tells low frequencies apart; small, it follows fast changes better." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const reference = ctx.entree(1);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      }
       if (!(reference instanceof AudioBuffer)) {
         return { valeurs: [null], message: traduire("msg.apparier.sans_reference") };
       }

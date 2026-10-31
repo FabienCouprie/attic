@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 import {
   CHAMPS_UTILISATEUR, CHAMPS_MEDIA_LOCAL, CHAMPS_COPIABLES, CHAMPS_RESULTAT,
-} from "./useExecutionGraphe";
+} from "../../core/classes-de-champs";
 
 describe("champs copiables", () => {
   // Le piège principal : un champ mal orthographié dans CHAMPS_MEDIA_LOCAL

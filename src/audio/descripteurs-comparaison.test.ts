@@ -10,7 +10,6 @@
 // un son double sonne six decibels plus fort ; une sinusoide une octave au-dessus deplace le
 // centroide de douze demi-tons. Ce sont des verites d'arithmetique, pas des opinions sur l'audio,
 // et c'est ce qui les rend utilisables comme gardes.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { PLANCHER_DB, descripteursComparaison, ecartRelatifDb } from "./descripteurs-comparaison";

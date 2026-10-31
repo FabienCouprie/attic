@@ -17,6 +17,7 @@ import {
   DEBIT_MAX, DEBIT_MIN, SEUIL_ALLURE, SEUIL_HARMONIQUE, SEUIL_PROFOND, SEUIL_RELIEF, SEUIL_TENUE,
   grainSchaefferien,
 } from "../audio/grain-schaefferien";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -103,11 +104,9 @@ The « Audio » output returns the sound unchanged. The « Grain » output gives
         doc: "Sous ce débit, la modulation d'un entretien continu est une allure, et la sortie « Grain » l'annonce comme telle. Sa valeur par défaut est celle où la force de fluctuation cède à la rugosité, d'après Zwicker et Fastl, « Psychoacoustics: Facts and Models », 3e édition, Springer, 2007. Un entretien dont l'enveloppe retombe entre deux chocs garde son espèce discontinue et son débit à tout débit, la « Profondeur » décidant avant ce seuil.",
         docEn: "Below this rate, the modulation of a continuous sustain is an allure, and the « Grain » output states it as such. Its default value is where fluctuation strength yields to roughness, after Zwicker and Fastl, « Psychoacoustics: Facts and Models », 3rd edition, Springer, 2007. A sustain whose envelope falls back between two strikes keeps its discontinuous species and its rate at any rate, « Depth » deciding before this threshold." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const m = grainSchaefferien(audio.getChannelData(0), audio.sampleRate, {
         seuilProfond: ctx.paramNombre("Seuil de profondeur", SEUIL_PROFOND),
         seuilHarmonique: ctx.paramNombre("Seuil d'harmonicité", SEUIL_HARMONIQUE),

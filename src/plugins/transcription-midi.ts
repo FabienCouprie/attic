@@ -37,6 +37,7 @@ import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 import { parametreCalcul } from "./parametre-calcul";
 import { relayerProgression } from "./progression-pont";
 import type { ContexteDeRelais } from "./progression-pont";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 /**
  * Les groupes d'instruments que le moteur reconnaît, et qui servent ici.
@@ -169,15 +170,13 @@ export const fiches = ([
         "Il change le temps de calcul et non les notes, qui sont les mêmes d'un périphérique à l'autre.",
         "It changes the compute time and not the notes, which are the same from one device to another."),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pont = api();
       if (!pont?.muscriptorTranscrire) {
         return { valeurs: [null, null, null], erreur: true, message: traduire("msg.n_cessite_electron") };
       }
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucune_entr_e") };
-      }
+      const audio = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(audio)) return audio;
 
       await annoncerModele(ctx, "transcription-midi", traduire("progress.transcription.modele"));
       const { bufferVersWavBlob } = await import("../audio/io");

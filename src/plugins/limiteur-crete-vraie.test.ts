@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { fiches } from "./limiteur-crete-vraie";
 import { fiches as fichesEffets } from "./effets";
 import { creteVraieDb } from "../audio/crete-vraie";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = fiches.find((f) => f.id === "limiteur-crete-vraie")!;
 const SR = 48000;
@@ -24,7 +25,7 @@ function son(): AudioBuffer {
 }
 
 function contexte(params: Record<string, number>, entree: unknown = son()) {
-  return { entree: () => entree, paramNombre: (nom: string, defaut: number) => params[nom] ?? defaut };
+  return ctxDEssai([entree], params);
 }
 
 const DEPART: Record<string, number> = { Gain: 6, Plafond: -1, Anticipation: 2, Maintien: 20, "Relâchement": 100 };

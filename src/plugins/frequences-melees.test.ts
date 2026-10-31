@@ -16,15 +16,12 @@
 // à l'entrée de chaque nœud changerait ce que rend TOUT graphe déjà enregistré, et l'on ne sait pas
 // encore sur combien d'arêtes cela arrive vraiment. Le relevé le dira ; d'ici là, rien n'est touché.
 import { describe, expect, it } from "vitest";
-import { AudioBuffer } from "node-web-audio-api";
 import { servicesApercu } from "../ui/services-apercu";
 // LE DOMAINE DOIT ETRE BRANCHE, sans quoi `servicesApercu()` rend les reponses NEUTRES -- et toutes
 // valent la liste vide. Mon premier jet n importait que l adaptateur : trois cas tombaient, et les
 // trois qui attendaient une liste vide « passaient » pour la mauvaise raison. C est la racine de
 // composition qui installe ces services, comme `composition.test.ts` le tient.
 import "../composition";
-
-globalThis.AudioBuffer = AudioBuffer as never;
 
 const tampon = (frequence: number) =>
   new AudioBuffer({ numberOfChannels: 1, length: 8, sampleRate: frequence }) as unknown;

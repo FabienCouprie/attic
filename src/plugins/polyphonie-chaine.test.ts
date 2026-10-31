@@ -6,9 +6,9 @@
 //
 // ET LE VA-ET-VIENT, qui est la raison d'être de la paire : réunir, ressortir une voix, la retoucher
 // et la réunir de nouveau. Une direction sans l'autre ne servirait à rien.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
+import { ctxDEssai } from "../core/contexte-essai";
 import type { Sequence } from "../audio/sequence";
 import { fiches as fichesArbre } from "./arbre-rythmique";
 import { fiches as fichesVoix } from "./voix";
@@ -21,14 +21,8 @@ const extraire = fichesVoix.find((f) => f.id === "extraire-voix")!;
 const voicings = fichesTheorie.find((f) => f.id === "voicings-accords")!;
 const musicxml = fichesAnalyse.find((f) => f.id === "musicxml")!;
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) =>
+  ctxDEssai(entrees, params);
 
 const DESSUS = "(4/4 (1 (1 (1 1 1)) 1 1))";
 const BASSE = "(4/4 (1 1 1 1))";

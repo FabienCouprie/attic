@@ -86,7 +86,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le nombre d'essais au plus avant de renoncer. Le message dit si la recherche a renoncé ou conclu.",
         docEn: "The number of attempts at most before giving up. The message says whether the search gave up or concluded." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recue = ctx.entree(0);
       const ecrit = lireHauteurs(ctx.paramTexte("Cantus firmus", ""));
       const graine = Math.round(ctx.paramNombre("Graine", 1));

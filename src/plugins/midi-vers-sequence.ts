@@ -39,7 +39,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le tempo inscrit dans la séquence, employé pour la gravure. Celui du fichier a la priorité.",
         docEn: "The tempo written into the sequence, used for engraving. The one in the file takes priority." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) {
         return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };

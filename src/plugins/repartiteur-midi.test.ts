@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { writeMidi } from "midi-file";
 import { fiches, analyserListePistes } from "./repartiteur-midi";
 import { compterNotes } from "../audio/repartition-midi";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = fiches.find((f) => f.id === "repartiteur-midi")!;
 const TPM = 480;
@@ -43,14 +44,7 @@ const fichier = (bytes: Uint8Array, nom = "arrangement.mid") =>
   new File([bytes as BlobPart], nom, { type: "audio/midi" });
 
 function contexte(entree: unknown, params: Record<string, string> = {}) {
-  return {
-    noeud: { id: "n1", data: { ficheId: "repartiteur-midi", parametres: params } },
-    runtime: null,
-    entree: () => entree,
-    entrees: () => [entree],
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-  };
+  return ctxDEssai([entree], params, { ficheId: "repartiteur-midi" });
 }
 
 const octets = async (v: unknown): Promise<Uint8Array> =>

@@ -48,7 +48,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Titre écrit dans le champ T:. Vide : le nom de piste du fichier, s'il en a un.",
         docEn: "Title written in the T: field. Empty: the file's track name, if any." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File) && !(fichier instanceof Blob)) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.midi_abc.aucun_midi") };

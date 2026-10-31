@@ -7,8 +7,8 @@
 //
 // Le disque est en double : `lireTexte` rend le texte du kit, `lireFichierAudio` un chemin que le
 // décodeur factice retrouve. Le vrai kit versionné, lui, est éprouvé dans `audio/kit-batterie.test.ts`.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it, vi } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./banque-sfz";
 import { CHEMIN_KIT_EMBARQUE, VOIX_KIT, sfzDuKit } from "../audio/kit-batterie";
 import { choisirZone, voixPourNote, type Banque } from "../audio/clavier-banque";
@@ -49,14 +49,7 @@ function installerMonde(textes: Record<string, string>, presents: string[]) {
 }
 
 function contexte(runtime: unknown, params: Record<string, string> = {}, data: Record<string, unknown> = {}) {
-  return {
-    noeud: { id: "n1", data: { ficheId: "banque-sfz", parametres: params, ...data } },
-    runtime,
-    entree: () => null,
-    entrees: () => [],
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-  };
+  return ctxDEssai([], params, { runtime, ficheId: "banque-sfz", data });
 }
 
 const MONDE_KIT = () => installerMonde(

@@ -6,6 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { rendreKlein, periodeRetourSec } from "../audio/klein";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -37,9 +38,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondu enchaîné appliqué pour rendre la source bouclable sans clic.",
         docEn: "Crossfade applied to make the source loop without a click." },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
       const options = {
         dureeSec: ctx.paramNombre("Durée", 30),
         cycleSec: ctx.paramNombre("Cycle", 3),

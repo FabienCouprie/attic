@@ -114,7 +114,7 @@ export const fiches = ([
         docEn: "Minimum score for a label to be kept. At zero, all are kept. Scores fall quickly: beyond the third label they often go under one per cent, so a high threshold also discards correct labels." },
       PARAMETRE_CALCUL,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const buffer = ctx.entree(0);
       const pont = api();
       if (!pont?.cedEtiqueter) {

@@ -15,22 +15,14 @@ import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { etiqueter } from "../audio/multicanal";
+import { ctxDEssai } from "../core/contexte-essai";
 
 /**
  * Un contexte d'essai. `branchees` dit quelles sorties sont câblées ; `undefined` ne pose PAS le
  * guichet, ce qui est le cas d'un appelant qui ne peut rien en dire.
  */
 function ctx(entrees: unknown[], branchees?: number[]) {
-  const base = {
-    entree: (idx: number) => entrees[idx],
-    entrees: () => entrees,
-    paramTexte: (_nom: string, def: string) => def,
-    paramNombre: (_nom: string, def: number) => def,
-    onProgress: () => {},
-    noeud: { data: {} },
-    runtime: null,
-  };
-  return branchees ? { ...base, sortieBranchee: (r: number) => branchees.includes(r) } : base;
+  return ctxDEssai(entrees, {}, branchees ? { sortieBranchee: (r: number) => branchees.includes(r) } : {});
 }
 
 const def = () => registre.trouverDef("separateur-canaux")!;

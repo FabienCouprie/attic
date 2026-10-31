@@ -77,7 +77,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Deux graines donnent deux sons sans rapport tirés du même matériau. À graine égale, le composant rend deux fois exactement le même son, ce qui permet de retrouver un tirage qu'on avait aimé.",
         docEn: "Two seeds give two unrelated sounds drawn from the same material. At equal seed the node returns exactly the same sound twice, which lets you find again a draw you had liked." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const frequence = frequenceDeTravail();
       const principe = (nom: string, defaut: Principe): Principe => {

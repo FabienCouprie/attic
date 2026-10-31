@@ -16,8 +16,7 @@ import { decoderStereo, encoderStereo, partDirectionnelle, tourner } from "../au
 import { mesurerStereo } from "../audio/stereo-correlation";
 import { valeursParametre } from "../audio/courbe";
 import { choixOuiNon } from "../core/oui-non";
-
-const sansEntree = () => ({ valeurs: [null], message: traduire("msg.aucune_entr_e") });
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 /** Le canal `c` d'un tampon, ou son dernier si le tampon en a moins. */
 const voie = (b: AudioBuffer, c: number) => b.getChannelData(Math.min(c, b.numberOfChannels - 1));
@@ -46,9 +45,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Appliquer la baisse de niveau en un sur la distance. Sans elle, on garde le décalage de hauteur et le déplacement dans le champ, mais la source semble rester aussi proche, ce qui est parfois exactement ce qu'on veut.",
         docEn: "Apply the one-over-distance level drop. Without it, one keeps the pitch shift and the movement across the field, but the source seems to stay as close, which is sometimes exactly what one wants." },
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return sansEntree();
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       const o = {
         vitesse: ctx.paramNombre("Vitesse", 30),
         distance: ctx.paramNombre("Distance", 10),
@@ -146,9 +145,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine des décrochages et du souffle. Une même graine rejoue la même bande.",
         docEn: "Seed for dropouts and hiss. The same seed replays the same tape." },
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return sansEntree();
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       const o = {
         pleurage: ctx.paramNombre("Écart de pleurage", 0.3),
         pleurageHz: ctx.paramNombre("Pleurage Hz", 0.6),
@@ -216,10 +215,10 @@ export const fiches: FicheAudio[] = ([
       ...bornesModulation({ ...modulationNommee("Attaque", "Attack", [0.001, 0.5], "s"), defauts: [0.005, 0.2], pas: 0.001 }),
       ...bornesModulation({ ...modulationNommee("Relâchement", "Release", [0.01, 2], "s"), defauts: [0.05, 1], pas: 0.01 }),
     ],
-    async executer(ctx: any) {
-      const cible = ctx.entree(0);
-      const declencheur = ctx.entree(1);
-      if (!(cible instanceof AudioBuffer) || !(declencheur instanceof AudioBuffer)) return sansEntree();
+    async executer(ctx) {
+      const cible = entreeAudio(ctx, 0), declencheur = entreeAudio(ctx, 1);
+      if (sansEntree(cible)) return cible;
+      if (sansEntree(declencheur)) return declencheur;
       const o = {
         // LE REPLI DES BORNES EST DONNÉ, et il manquait. Aucune de ces quatre n'est en pour cent :
         // sans lui, un graphe enregistré avant que ces bornes existent les lirait de zéro à cent,
@@ -303,9 +302,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Rotation that the curve's one means. From zero to 360°, a ramp makes the scene turn a full circle." },
       ...bornesModulation({ ...modulationNommee("Ouverture", "Decoder width", [30, 180], "°"), defauts: [60, 150] }),
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return sansEntree();
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       const rad = (d: number) => (d * Math.PI) / 180;
       const champ = encoderStereo(voie(e, 0), voie(e, 1), rad(ctx.paramNombre("Écart des sources", 90)));
       // Sans courbe, une constante à la valeur du réglage : un seul chemin de calcul.

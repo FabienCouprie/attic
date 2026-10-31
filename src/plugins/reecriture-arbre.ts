@@ -43,7 +43,7 @@ export const fiches: FicheAudio[] = ([
         doc: "La notation en listes, employée quand l'entrée du même nom n'est pas branchée.",
         docEn: "The list notation, used when the input of the same name is not connected." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const texte = typeof entree === "string" && entree.trim().length > 0
         ? entree

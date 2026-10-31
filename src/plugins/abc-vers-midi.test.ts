@@ -4,16 +4,9 @@ import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { parseMidi } from "midi-file";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
-const ctx = (entree: unknown, params: Record<string, string | number>) => ({
-  entree: () => entree,
-  entrees: () => [entree],
-  paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-  paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-  onProgress: () => {},
-  noeud: { data: {} },
-  runtime: null,
-});
+const ctx = (entree: unknown, params: Record<string, string | number>) => ctxDEssai([entree], params);
 
 const fiche = () => registre.trouverDef("abc-vers-midi")!;
 const base = { "Synthèse": "FM/Oscillateurs" };

@@ -156,7 +156,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Ce qui est rendu de part et d'autre de chaque mot. Une frontière de mot tombe sur l'attaque de la consonne, et couper là en retire le début. La marge recolle aussi les mots voisins : deux mots séparés de moins de deux marges ne forment plus qu'un seul morceau.",
         docEn: "What is given back on either side of each word. A word boundary falls on the consonant's attack, and cutting there removes its beginning. The margin also joins neighbouring words: two words less than two margins apart form a single piece." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) {
         return { valeurs: [null, null, null], message: traduire("msg.aucune_entr_e_audio") };

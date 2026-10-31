@@ -11,6 +11,7 @@
 import { describe, expect, it } from "vitest";
 
 import { estCercle, type Cercle } from "../audio/cercle";
+import { ctxDEssai } from "../core/contexte-essai";
 import { publierBoucle, publierBoucles, type BoucleCourante } from "./boucleSequencesGlobal";
 import { fiches, quantiteDeLaPasse } from "./cercle-transformations";
 
@@ -23,14 +24,7 @@ const melo = (positions: number, paires: [number, number][]): Cercle => ({
   positions, sorte: "hauteur", sommets: paires.map(([position, valeur]) => ({ position, valeur })),
 });
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ctxDEssai(entrees, params);
 
 /** Une boucle de `passes` tours, posée comme le pilote la pose. */
 function poserBoucle(passes: number, index: number): void {

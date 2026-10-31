@@ -91,7 +91,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Output level, after the peak has been normalised." },
       ...reglagesDesOperateurs(),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const algorithme = ctx.paramTexte("Branchement", "deux-piles");
       const frequence = ctx.paramNombre("Fréquence", 220);
       const operateurs = Array.from({ length: OPERATEURS }, (_, k) => ({

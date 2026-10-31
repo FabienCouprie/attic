@@ -37,6 +37,7 @@ import { octetsWav } from "./chanson-aides";
 import { PARAMETRE_CALCUL } from "./parametre-calcul";
 import { relayerProgression } from "./progression-pont";
 import type { ContexteDeRelais } from "./progression-pont";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const CANAL = "roformer:separer";
 
@@ -100,15 +101,13 @@ export const fiches = ([
       { nom: "Accompagnement", nomEn: "Backing", type: "audio" },
     ],
     parametres: [PARAMETRE_CALCUL],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0, { sorties: 2 });
       const pont = api();
       if (!pont?.roformerSeparer) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.n_cessite_electron") };
       }
-      if (!(buffer instanceof AudioBuffer)) {
-        return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_entr_e_audio") };
-      }
+      if (sansEntree(buffer)) return buffer;
 
       const frequenceDOrigine = buffer.sampleRate;
       const audio = await octetsWav(await aLaFrequence(buffer, FREQUENCE_MODELE));

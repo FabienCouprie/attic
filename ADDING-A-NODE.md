@@ -26,9 +26,9 @@ File: [`src/plugins/sortie-conversion.ts`](src/plugins/sortie-conversion.ts)
   entrees: [{ nom: "Audio", type: "audio" }],
   sorties: [{ nom: "Audio", type: "audio" }],
   parametres: [],
-  async executer(ctx: any) {
-    const a = ctx.entree(0);
-    if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée connectée." };
+  async executer(ctx) {
+    const a = entreeAudio(ctx, 0);      // le son de l'entrée 0, ou l'échec à rendre tel quel
+    if (sansEntree(a)) return a;        // `plugins/lire-entree.ts` : un seul message, `erreur: true`
     return { valeurs: [a] };            // passe l'entrée telle quelle sur la sortie
   },
 }
@@ -121,13 +121,17 @@ no open dialog can designate. The rule is enforced by
 ## The `executer(ctx)` contract
 
 `ctx` is the **execution context** ([`core/types.ts`](src/core/types.ts),
-`ContexteExecution<TValeur, TRuntime>`). Most plugins type it `any` for
-brevity; you can also annotate it `ContexteExecution` for autocompletion.
+`ContexteExecution<TValeur, TRuntime>`). Write `async executer(ctx)` with no annotation: the
+sheet sits in an array cast `as FicheAudio[]`, so the compiler infers the audio context. A helper
+function that takes the context names it `ContexteAudio` (from `audio/types-domaine.ts`). Never
+`ctx: any`, and never `as unknown as FicheAudio[]`: both silence the compiler about what a sheet
+really returns, and `ValeurAudio` already lists everything that travels on an edge.
 
 **Read inputs / parameters:**
 | Call | Returns |
 |---|---|
 | `ctx.entree(i)` | the value plugged into input `i` (or `null` if not connected) |
+| `entreeAudio(ctx, i)` | from `plugins/lire-entree.ts`: the `AudioBuffer` on input `i`, or a ready-to-return failure (`erreur: true`, one translated message). Test it with `sansEntree(a)` and `return a` — this replaces the hand-written `instanceof AudioBuffer` preamble |
 | `ctx.entrees()` | **all** input values (array, `null` included) — for `dynamique` ports. Filter by type yourself: `ctx.entrees().filter(v => v instanceof AudioBuffer)` |
 | `ctx.paramNombre(nom, defaut)` | numeric value of a parameter |
 | `ctx.paramTexte(nom, defaut)` | text value of a parameter |
@@ -236,9 +240,9 @@ A neutral "Marker" node: passes audio as-is + a label parameter
     { nom: "Étiquette", nomEn: "Label", type: "texte", defaut: "repère",
       doc: "Texte libre affiché comme repère.", docEn: "Free label shown as a marker." },
   ],
-  async executer(ctx: any) {
-    const a = ctx.entree(0);
-    if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: "Aucune entrée connectée." };
+  async executer(ctx) {
+    const a = entreeAudio(ctx, 0);
+    if (sansEntree(a)) return a;
     const etiquette = ctx.paramTexte("Étiquette", "repère");
     return { valeurs: [a], message: `Marqueur : ${etiquette}` };
   },

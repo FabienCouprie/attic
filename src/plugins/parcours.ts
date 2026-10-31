@@ -51,7 +51,7 @@ export const fiches: FicheAudio[] = ([
     // Ce que le nœud rend dépend d'un champ de progression que la vue modifie sans passer par le
     // moteur : sans cela, relancer après avoir réussi une étape rendrait le bulletin de la veille.
     jamaisCache: true,
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const reglages = reglagesDepuis((nom, defaut) => ctx.paramTexte(nom, defaut));
       const entree = ctx.entree(0);

@@ -95,7 +95,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée attribuée à chaque accord quand la source ne fournit pas de durée (cas de la Progression).",
         docEn: "Duration given to each chord when the source provides none (Progression case)." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const source = ctx.paramTexte("Source", "accords");
       const octave = ctx.paramNombre("Octave", 3);
       const tempo = ctx.paramNombre("Tempo", 120);

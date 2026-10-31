@@ -8,6 +8,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { boucherTrous, detecterTrous, type Trou } from "../audio/inpainting";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 /** Les zones du sélecteur multi-zones, en secondes, converties en échantillons. */
 function trousDepuisZones(zones: unknown, sampleRate: number, longueur: number): Trou[] {
@@ -54,11 +55,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Au-delà, le trou est laissé tel quel et le composant le dit. Ce n'est pas une limite de principe mais de temps : le calcul croît comme la longueur du trou multipliée par le carré de l'ordre, 90 ms pour un trou de 20 ms, deux secondes et demie pour un trou de 100 ms. Et la qualité baisse : 53 dB à 20 ms, 34 dB à 100 ms.",
         docEn: "Beyond this, the gap is left as it is and the node says so. This is not a limit of principle but of time: computation grows as gap length times the square of the order, 90 ms for a 20 ms gap, two and a half seconds for a 100 ms one. And quality drops: 53 dB at 20 ms, 34 dB at 100 ms." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0);
+      if (sansEntree(entree)) return entree;
       const { numberOfChannels: canaux, length, sampleRate } = entree;
       const automatique = ctx.paramTexte("Trous", "zones") === "silences";
       const seuil = Math.pow(10, ctx.paramNombre("Seuil de silence", -60) / 20);

@@ -10,7 +10,6 @@
 // espaces dans les noms de fichiers, l'héritage des opcodes, les noms de notes, `default_path`, les
 // couches de vélocité. La hauteur jouée, elle, est MESURÉE au suiveur de hauteur : une erreur de
 // racine ou de désaccord s'y voit, là où une comparaison de nombres ne fait que répéter le calcul.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import {
   analyserOpcodes, analyserSfz, banqueDepuisSfz, chargerSfz, cheminsAChargerSfz, dossierDe,

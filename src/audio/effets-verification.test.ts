@@ -3,26 +3,10 @@
 // compresseur/normaliseur « conformes à la doc ? »). Ces tests mesurent le
 // signal de sortie ; ils échouent si un effet redevient un passe-plat.
 //
-// L'environnement vitest est `node` : pas d'AudioBuffer. On installe un
-// polyfill minimal AVANT d'importer les modules d'effets (import dynamique).
+// L'environnement vitest est `node` : pas d'AudioBuffer. Le polyfill minimal de
+// `audio/polyfill-audiobuffer.ts` est installé par `setupFiles` AVANT d'importer les modules
+// d'effets (import dynamique).
 import { describe, it, expect, beforeAll } from "vitest";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
-}
 
 // UN ESPACE DE NOMS PAR MODULE, depuis que les trois grandes familles d'effets ont été découpées :
 // la dynamique en cinq, le temporel en cinq, le spectral en sept. Ce test appelle une vingtaine de
@@ -37,8 +21,7 @@ let decoupe: typeof import("./effets-decoupe");
 let grains: typeof import("./effets-grains");
 
 beforeAll(async () => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-  dyn = await import("./effets-dynamique");
+  dyn =await import("./effets-dynamique");
   sibilance = await import("./effets-sibilance");
   restauration = await import("./effets-restauration");
   mastering = await import("./effets-mastering");
@@ -52,7 +35,7 @@ const SR = 44100;
 
 function sinus(freq: number, dureeS: number, amplitude = 1): AudioBuffer {
   const n = Math.floor(SR * dureeS);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
   const d = b.getChannelData(0);
   for (let i = 0; i < n; i++) d[i] = amplitude * Math.sin((2 * Math.PI * freq * i) / SR);
   return b;
@@ -91,7 +74,7 @@ describe("normaliser", () => {
     expect(pic(s)).toBeCloseTo(Math.pow(10, -6 / 20), 3); // −6 dB = 0.501
   });
   it("laisse le silence inchangé (pas de division par zéro)", () => {
-    const e = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: 1000, sampleRate: SR });
+    const e = new AudioBuffer({ numberOfChannels: 1, length: 1000, sampleRate: SR });
     const s = dyn.normaliser(e, -6);
     expect(pic(s)).toBe(0);
   });
@@ -206,7 +189,7 @@ describe("limiter", () => {
 describe("transientShaper", () => {
   function burstSustain(): AudioBuffer {
     const n = SR;
-    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
     const d = b.getChannelData(0);
     for (let i = 0; i < n; i++) {
       const t = i / SR;
@@ -240,7 +223,7 @@ describe("transientShaper", () => {
 describe("largeurStereo", () => {
   function stereoSinus(): AudioBuffer {
     const n = Math.floor(SR * 0.5);
-    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: SR });
+    const b = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: SR });
     for (let i = 0; i < n; i++) {
       b.getChannelData(0)[i] = Math.sin((2 * Math.PI * 440 * i) / SR);
       b.getChannelData(1)[i] = Math.sin((2 * Math.PI * 440 * i) / SR + Math.PI);
@@ -281,7 +264,7 @@ describe("largeurStereo", () => {
   });
 
   it("coupe le centre quand Mid est 0", () => {
-    const e = new (globalThis as any).AudioBuffer({ numberOfChannels: 2, length: 1000, sampleRate: SR });
+    const e = new AudioBuffer({ numberOfChannels: 2, length: 1000, sampleRate: SR });
     for (let i = 0; i < 1000; i++) { e.getChannelData(0)[i] = 0.5; e.getChannelData(1)[i] = 0.5; }
     const s = mastering.ajusterLargeurStereo(e, 100, 0);
     expect(pic(s)).toBeCloseTo(0, 5);
@@ -292,7 +275,7 @@ describe("dererverberer", () => {
   it("atténue une traîne de réverbération synthétique", () => {
     // Burst 100 ms suivi d'une « traîne » : le même signal qui décroît en exp.
     const n = SR; // 1 s
-    const e = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const e = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
     const d = e.getChannelData(0);
     for (let i = 0; i < n; i++) {
       const t = i / SR;
@@ -345,7 +328,7 @@ describe("dererverberer, sur une queue longue", () => {
    */
   function reverbere(): AudioBuffer {
     const n = Math.round(5 * SR), nd = Math.round(2 * SR);
-    const e = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const e = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
     const d = e.getChannelData(0);
     let x = 12345;
     for (let i = 0; i < n; i++) {
@@ -406,7 +389,7 @@ describe("dererverberer, sur une queue longue", () => {
     // mémoire sans le faire tomber. Signal SEC : deux secondes fortes, une de silence, deux à
     // −34 dB — aucune réverbération à retirer.
     const n = Math.round(5 * SR);
-    const e = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const e = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
     const d = e.getChannelData(0);
     for (let i = 0; i < n; i++) {
       const t = i / SR;
@@ -443,7 +426,7 @@ describe("harmoniser", () => {
 
 describe("granularFreeze", () => {
   it("répète un grain sur toute la durée", () => {
-    const e = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
+    const e = new AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
     const d = e.getChannelData(0);
     // 1 s : burst au début, silence ensuite
     for (let i = 0; i < SR; i++) d[i] = i < SR / 10 ? 0.5 : 0;
@@ -480,7 +463,7 @@ describe("vocoder", () => {
     expect(typeof voix.vocoder).toBe("function");
   });
   it.skipIf(!(globalThis as any).OfflineAudioContext)("produit une sortie modulée par l'enveloppe", async () => {
-    const mod = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
+    const mod = new AudioBuffer({ numberOfChannels: 1, length: SR, sampleRate: SR });
     const car = sinus(1000, 1, 0.5);
     const d = mod.getChannelData(0);
     // modulateur = gate 100 Hz on/off toutes les 100 ms

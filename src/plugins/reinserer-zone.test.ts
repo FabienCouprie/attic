@@ -16,20 +16,12 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const SR = 44100;
 
 function ctx(entrees: unknown[], params: Record<string, number> = {}) {
-  return {
-    entree: (i: number) => entrees[i] ?? null,
-    entrees: () => entrees,
-    paramTexte: (_n: string, d: string) => d,
-    paramNombre: (n: string, d: number) => (n in params ? params[n] : d),
-    onProgress: () => {},
-    noeud: { id: "n1", data: {} },
-    runtime: null,
-    repertoireTravail: "",
-  };
+  return ctxDEssai(entrees, params);
 }
 
 /** Signal constant : toute variation dans le résultat vient du montage. */

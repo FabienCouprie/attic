@@ -17,6 +17,7 @@ import { avecDoc } from "./notices";
 import { hautParleurRotatif, tremoloHarmonique } from "../audio/rotatifs";
 import { valeurA } from "../audio/courbe";
 import { MODULATION_MELANGE, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const canauxDe = (a: AudioBuffer): Float32Array[] =>
   Array.from({ length: a.numberOfChannels }, (_, c) => a.getChannelData(c));
@@ -71,11 +72,9 @@ export const fiches: FicheAudio[] = ([
         pas: 10,
       }),
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
-      }
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const coupure = reglageModule(ctx, a.length, 3, {
         reglage: "Coupure", defaut: 800, rendu: "pourCent",
         noms: ["Coupure min", "Coupure max"], bornes: [200, 3000],
@@ -145,11 +144,9 @@ export const fiches: FicheAudio[] = ([
         pas: 10,
       }),
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
-      }
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const vitesseAigu = ctx.paramNombre("Vitesse de la trompe", 6.7);
       const doppler = reglageModule(ctx, a.length, 3, {
         reglage: "Profondeur du Doppler", defaut: 100,

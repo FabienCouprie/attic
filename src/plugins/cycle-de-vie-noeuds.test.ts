@@ -24,7 +24,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { apresCopie, apresEffacement, champsAReporter, CANAUX_DECLARES, urlsARevoquer } from "../core/cycle-de-vie";
-import { CHAMPS_GARDES_AU_REGLAGE, CLASSES } from "../ui/hooks/useExecutionGraphe";
+import { CHAMPS_GARDES_AU_REGLAGE, CLASSES } from "../core/classes-de-champs";
 import { toutesLesFiches } from "./index";
 import "../audio/adaptateur";
 

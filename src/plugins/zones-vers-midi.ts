@@ -115,8 +115,9 @@ export const fiches = ([
         doc: "Le tempo inscrit dans le fichier. Les notes gardent les instants des zones : le tempo ne les déplace pas, il décide de la façon dont une partition les écrit.",
         docEn: "The tempo written into the file. The notes keep the instants of the zones: the tempo does not move them, it decides how a score writes them." },
     ],
-    async executer(ctx: any) {
-      const zones = zonesRetenues(Array.isArray(ctx.entree(0)) ? ctx.entree(0) : []);
+    async executer(ctx) {
+      const recues = ctx.entree(0);
+      const zones = zonesRetenues(Array.isArray(recues) ? recues : []);
       if (zones.length === 0) {
         return { valeurs: [null, null], message: traduire("msg.zonesMidi.aucuneZone") };
       }

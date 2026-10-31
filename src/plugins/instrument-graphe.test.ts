@@ -5,8 +5,8 @@
 // 18 » envoie chercher un défaut dans la chaîne, alors que le même symptôme vient le plus souvent
 // d'un câblage — pas de « Note d'instrument » en amont, donc aucun dépliage. Les deux causes
 // demandent deux gestes différents, et le nœud doit donc les distinguer.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./instrument-graphe";
 import { racinesInstrument } from "../core/instrument-graphe";
 import type { Banque } from "../audio/clavier-banque";
@@ -24,13 +24,7 @@ const PARAMS = {
 
 function contexte(entrees: unknown[], params: Record<string, string | number> = {}) {
   const p = { ...PARAMS, ...params };
-  return {
-    noeud: { id: "fin", data: { ficheId: "instrument-fin", parametres: p } },
-    entrees: () => entrees,
-    entree: (i: number) => entrees[i] ?? null,
-    paramTexte: (nom: string, defaut: string) => String((p as any)[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number((p as any)[nom] ?? defaut),
-  };
+  return ctxDEssai(entrees, p, { id: "fin", ficheId: "instrument-fin" });
 }
 
 /** Les dix-huit notes du réglage par défaut, telles que le dépliage les calcule. */

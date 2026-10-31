@@ -245,7 +245,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine d'initialisation (K-means++/GMM), mêmes pistes et même graine ⇒ même résultat.",
         docEn: "Initialization seed (K-means++/GMM), same tracks and same seed ⇒ same result." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = (window as any).api;
       if (!api?.lireDossier || !api?.lireFichierAudio) return { valeurs: [null, null, null, null, null], message: traduire("msg.n_cessite_electron") };
 

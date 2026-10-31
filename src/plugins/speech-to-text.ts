@@ -16,6 +16,7 @@ import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
 import { baseModeleLivre } from "./base-modeles";
 import { annoncerModele } from "./message-modele";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 /** Le dossier qui CONTIENT le paquet, et le paquet : Transformers.js compose les deux. */
 export const RACINE_MODELES = "oonx";
@@ -77,9 +78,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Texte", nomEn: "Text", type: "texte" }],
     parametres: [],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const mono = resamplerVers16k(bufferVersMono(audio), audio.sampleRate);
       // LE PAQUET PEUT MANQUER, dans l'installeur allégé qui ne l'embarque pas : c'est ce message
       // qui le dit et qui le fait prendre, au lieu de laisser le worker échouer sur un fichier

@@ -106,7 +106,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Motif encodé (édité par la grille du composant) : 13 rangées (du grave au aigu) de pas séparées par « | ».",
         docEn: "Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « | »." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       console.log("[attic] Séquenceur mélodique : exécution démarrée");
       const tempo = ctx.paramNombre("Tempo", 120);
       const nbPas = parseInt(ctx.paramTexte("Nombre de pas", "16"), 10) || 16;
@@ -174,7 +174,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Motif encodé (édité par la grille du composant) : 21 rangées (7 degrés × triade/7e/6e) de pas séparées par « | ». Cliquez une case pour choisir l'accord (ex. C, Cmaj7, C6) à ce pas.",
         docEn: "Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « | ». Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const tempo = ctx.paramNombre("Tempo", 120);
       const nbPas = parseInt(ctx.paramTexte("Nombre de pas", "16"), 10) || 16;
       const swing = ctx.paramNombre("Swing", 0);
@@ -225,7 +225,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine des rafales de bruit (caisse claire, charley). Valeur par défaut fixe : le même motif doit rendre le même fichier à chaque exécution.",
         docEn: "Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const tempo = ctx.paramNombre("Tempo", 120);
       const nbPas = parseInt(ctx.paramTexte("Nombre de pas", "16"), 10) || 16;
       const swing = ctx.paramNombre("Swing", 0);

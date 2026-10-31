@@ -10,6 +10,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import {
   EST_ONDELETTE, EST_OPERATION, ONDELETTES, OPERATIONS,
   bandesDetages, etagesPossibles, filtreDe, ondelettesVoie,
@@ -60,12 +61,10 @@ export const fiches: FicheAudio[] = ([
         doc: "La part des coefficients que « Garder les plus forts » conserve. À cinq pour-cent, un son tenu garde presque toute son énergie et du bruit n'en garde qu'un tiers : c'est la mesure même de sa parcimonie. Descendre plus bas donne une esquisse de plus en plus sommaire, et de plus en plus intéressante à écouter. Sans effet sur les deux autres opérations.",
         docEn: "The share of coefficients that « Keep the strongest » retains. At five per cent, a held sound keeps nearly all its energy and noise keeps only a third: that is the very measure of its sparsity. Going lower gives an ever rougher sketch, and an ever more interesting one to listen to. No effect on the other two operations." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null, null, null], message: en ? "No input." : "Aucune entrée." };
-      }
+      const audio = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(audio)) return audio;
       const frequence = audio.sampleRate;
       const nomOndelette = ctx.paramTexte("Ondelette", "d8");
       const h = filtreDe(EST_ONDELETTE(nomOndelette) ? nomOndelette : "d8");

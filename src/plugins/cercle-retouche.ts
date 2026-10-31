@@ -60,7 +60,7 @@ The message states how many positions were turned off and how many turned on.`,
         doc: "Le masque, une suite de zéros et de uns, un par place. Vide, le cercle reçu passe tel quel.",
         docEn: "The mask, a string of zeros and ones, one per position. Empty, the received circle passes through as it is." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const suite: Cercle[] = enSuite(ctx.entree(0));
       if (suite.length === 0) {
         return { valeurs: [null], erreur: true,

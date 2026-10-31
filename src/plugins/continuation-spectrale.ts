@@ -1,8 +1,9 @@
 // plugins/continuation-spectrale.ts — Deux nœuds de prolongation d'une piste
 // par prédiction autoregressive sur son spectrogramme (famille Test zone).
-import type { FicheAudio } from "../audio/types-domaine";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { appliquerContinuationSpectrale, type ContinuationSpectraleResultat } from "../audio/continuation-spectrale";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
@@ -60,11 +61,9 @@ const PARAMETRES_LSTM = [
   },
 ] as const;
 
-function executerContinuation(mode: "ar" | "lstm", ctx: any) {
-  const audio = ctx.entree(0);
-  if (!(audio instanceof AudioBuffer)) {
-    return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
-  }
+function executerContinuation(mode: "ar" | "lstm", ctx: ContexteAudio) {
+  const audio = entreeAudio(ctx, 0);
+  if (sansEntree(audio)) return audio;
   const fftSize = parseInt(ctx.paramTexte("FFT", "2048"), 10);
   const hopPercent = ctx.paramNombre("Hop", 25);
   const dureeGenereS = ctx.paramNombre("Durée générée", 5);
@@ -117,7 +116,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: PARAMETRES_COMMUNS,
-    async executer(ctx: any) {
+    async executer(ctx) {
       return executerContinuation("ar", ctx);
     },
   },
@@ -132,7 +131,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [...PARAMETRES_COMMUNS, ...PARAMETRES_LSTM],
-    async executer(ctx: any) {
+    async executer(ctx) {
       return executerContinuation("lstm", ctx);
     },
   },

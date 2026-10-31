@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { rendreCantorCanaux, planCantor, ETAGES_MAX, type ModeCantor } from "../audio/cantor";
 import { DUREE_SORTIE_MAX_SEC, versAudioBuffer, canauxDe } from "../audio/geometrie-sonore";
 
@@ -31,9 +32,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondu posé à l'intérieur de chaque fragment, pour que les bords ne claquent pas. Les parties retirées restent exactement silencieuses. Borné à la moitié d'un fragment : aux étages profonds, un fragment ne dure que quelques millisecondes.",
         docEn: "Fade placed inside each fragment, so the edges do not click. Removed parts stay exactly silent. Capped at half a fragment: at deep levels a fragment lasts only a few milliseconds." },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
 
       const options = {
         etages: Math.round(ctx.paramNombre("Étages", 4)),

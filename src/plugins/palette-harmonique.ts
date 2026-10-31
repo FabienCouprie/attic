@@ -64,7 +64,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine de l'extraction de palette (initialisation k-means++). Valeur par défaut fixe : une même image doit rendre les mêmes couleurs à chaque exécution. La changer peut faire ressortir d'autres teintes dominantes.",
         docEn: "Seed for the palette extraction (k-means++ initialisation). The default is fixed: the same image must yield the same colours on every run. Changing it may surface other dominant hues." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const image = ctx.entree(0);
       if (!(image instanceof File)) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.connecter.image") };

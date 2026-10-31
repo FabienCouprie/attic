@@ -11,9 +11,10 @@
 // à trois entrées de modulation nommées est donc un outil d'écriture de l'espace, et l'inspecteur y
 // montre chaque trajectoire comme sa plage, dans ses degrés.
 
-import type { FicheAudio } from "../audio/types-domaine";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { estCourbe, valeursParametre } from "../audio/courbe";
 import {
   DISPOSITIONS, decoder, dispositionDe, dispositionParId, estObjet, etiqueter, nombreDeCanaux,
@@ -78,7 +79,7 @@ const PARAMETRES_TRAJECTOIRE = [
 ];
 
 /** La trajectoire d'un nœud : chaque composante est une courbe branchée, ou le réglage constant. */
-function trajectoireDe(ctx: any, n: number, premierPort: number): Trajectoire {
+function trajectoireDe(ctx: ContexteAudio, n: number, premierPort: number): Trajectoire {
   const piste = (port: number, nom: string, defaut: number, min: number, max: number): Float32Array | number => {
     const c = ctx.entree(port);
     if (!estCourbe(c)) return ctx.paramNombre(nom, defaut);
@@ -112,10 +113,10 @@ export const fiches: FicheAudio[] = ([
         docEn: "The room being written for. Rings and channel formats are real speakers; ambisonics is a field, decoded later to any room. The octophony numbers its channels clockwise starting left of the axis: it is the most widespread convention for concert rings, not the only one." },
       ...PARAMETRES_TRAJECTOIRE,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en ? "No input." : "Aucune entrée." };
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const d = dispositionParId(ctx.paramTexte("Disposition", "7.1.4")) ?? dispositionParId("7.1.4")!;
       const mono = versMono(canauxDe(a));
       const t = trajectoireDe(ctx, mono.length, 1);
@@ -139,10 +140,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Ce que sont les canaux de l'entrée. Un fichier AmbiX se déclare en ambisonie de l'ordre correspondant : quatre canaux pour l'ordre un, neuf pour le deux, seize pour le trois.",
         docEn: "What the input's channels are. An AmbiX file is declared as ambisonics of the matching order: four channels for order one, nine for two, sixteen for three." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en ? "No input." : "Aucune entrée." };
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const d = dispositionParId(ctx.paramTexte("Disposition", "5.1")) ?? dispositionParId("5.1")!;
       const attendu = nombreDeCanaux(d);
       if (a.numberOfChannels !== attendu) {
@@ -175,10 +176,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Les poids max-rE concentrent l'énergie vers la direction de la source et réduisent les lobes arrière ; les poids basiques gardent la réponse la plus fidèle au champ mais localisent moins bien. Pour l'écoute, max-rE.",
         docEn: "Max-rE weights concentrate energy towards the source direction and reduce rear lobes; basic weights keep the response most faithful to the field but localise less well. For listening, max-rE." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en ? "No input." : "Aucune entrée." };
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const source = dispositionDe(a);
       if (!source || source.famille !== "ambisonie") {
         return {
@@ -206,10 +207,10 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],
     sorties: [{ nom: "Casque", nomEn: "Headphones", type: "audio", sousType: "stereo" }],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en ? "No input." : "Aucune entrée." };
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const d = dispositionDe(a);
       if (!d) {
         if (a.numberOfChannels <= 2) return { valeurs: [a], message: en ? "Already stereo." : "Déjà en stéréo." };
@@ -237,10 +238,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Un nom pour s'y retrouver dans le rendu, qui liste ses objets.", docEn: "A name to find your way in the renderer, which lists its objects." },
       ...PARAMETRES_TRAJECTOIRE,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en ? "No input." : "Aucune entrée." };
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const son = versMono(canauxDe(a));
       const trajectoire = trajectoireDe(ctx, son.length, 1);
       const nom = ctx.paramTexte("Nom", "").trim() || undefined;
@@ -264,7 +265,7 @@ export const fiches: FicheAudio[] = ([
         doc: "La salle de rendu, pour tous les objets à la fois. La changer ne réécrit rien : les trajectoires restent celles des objets.",
         docEn: "The render room, for all objects at once. Changing it rewrites nothing: the trajectories stay the objects' own." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const objets = (ctx.entrees() as unknown[]).filter(estObjet);
       if (objets.length === 0) return { valeurs: [null], message: en ? "No object connected." : "Aucun objet branché." };

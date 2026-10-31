@@ -18,6 +18,7 @@ import { parCanal } from "./hors-fil";
 
 import { effet, param, simple } from "./effets-aides";
 import { fiches as egaliseurParametrique } from "./egaliseur-parametrique";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -43,9 +44,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine de la randomisation des phases. Valeur par défaut fixe : un étirement qui change à chaque exécution serait un défaut. La changer donne une autre texture, de même caractère.",
         docEn: "Seed for the phase randomization. The default is fixed: a stretch that changes on every run would be a defect. Changing it gives another texture of the same character." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const fenetre = ctx.paramNombre("Fenêtre", 0.25);
       // Un seul chemin : sans courbe, un tableau plat à la valeur du réglage. L'étirement se
       // parcourt en MULTIPLIANT, parce qu'un facteur est un rapport : de 1 à 64, le milieu de la
@@ -110,9 +111,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Gain que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
         docEn: "Gain that the curve's one means. A value below Modulation min reverses the direction of travel." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const formule = ctx.paramTexte("Formule", "sin(t * 2 * pi * 440) + x");
       const volume = ctx.paramNombre("Volume", 30);
       // Sans courbe branchée, le gain reste un nombre et la boucle garde son chemin : à volume plein
@@ -163,9 +164,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.", uniteEn: "samples",
         doc: "Taille de la FFT (arrondie à la puissance de 2 supérieure).", docEn: "FFT size (rounded up to next power of 2)." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const formuleMag = ctx.paramTexte("Magnitude", "mag * 2");
       const formulePhase = ctx.paramTexte("Phase", "");
       const fftSize = ctx.paramNombre("FFT", 2048);
@@ -252,9 +253,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée", nomEn: "Duration", plage: [0.1, 600], pas: 0.1, defaut: 5, unite: "s", doc: "Durée de la zone extraite.", docEn: "Duration of the extracted zone." },
       { nom: "Fondu", nomEn: "Fade", plage: [0, 100], pas: 1, defaut: 5, unite: "ms", doc: "Durée du fondu aux bords.", docEn: "Crossfade duration at edges." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(a)) return a;
       const debut = ctx.paramNombre("Début", 0);
       const duree = Math.min(ctx.paramNombre("Durée", 5), a.duration - debut);
       // Le paramètre « Fondu » n'était tout simplement jamais lu : il existait
@@ -291,7 +292,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Notches", nomEn: "Notches", type: "nombre", plage: [1, 100], pas: 1, defaut: 50, unite: "", doc: "(Mode Notches) Nombre maximum de filtres coupe-bande appliqués. Augmentez si le ronflement a beaucoup d'harmoniques.", docEn: "(Notches mode) Maximum number of notch filters applied. Increase if the hum has many harmonics." },
       { nom: "Q", nomEn: "Q", type: "nombre", plage: [1, 50], pas: 1, defaut: 10, unite: "", doc: "(Mode Notches) Sélectivité des filtres coupe-bande. Plus Q est élevé, plus la bande supprimée est étroite. Pour des harmoniques proches, laissez Q = 10.", docEn: "(Notches mode) Notch filter selectivity. Higher Q = narrower removed band. For close harmonics, leave Q = 10." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const audio = ctx.entree(0);
       const profil = ctx.entree(1);
       if (!(audio instanceof AudioBuffer) || !(profil instanceof Float32Array))
@@ -318,9 +319,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Profil", nomEn: "Profile", type: "controle", sousType: "profil" }],
     parametres: [],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const profil = await calculerProfilBruit(audio);
       const profilEnergie = profil.reduce((a, b) => a + b, 0) / profil.length;
       return { valeurs: [profil], message: profilEnergie < 1e-6 ? traduire("msg.profil_bruit_trop_faible") : undefined };
@@ -361,9 +362,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Résonance que vaut le un de la courbe. Deux réglages du même filtre peuvent bouger ensemble : la coupure qui balaie pendant que la résonance se pince est ce qu'aucune mise en série de deux filtres ne reproduit.",
         docEn: "Resonance that the curve's one means. Two settings of the same filter can move together: the cutoff sweeping while the resonance pinches is what no two filters in series can reproduce." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const type = ctx.paramTexte("Type", "Passe-bas");
       const modulationQ = ctx.entree(2);
       const q = estCourbe(modulationQ)
@@ -426,9 +427,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine de la queue diffuse. Contrairement aux composants où le hasard est l'effet recherché, la valeur par défaut est fixe : une réverbération qui change de pièce à chaque exécution serait un défaut. La changer donne une autre pièce, de mêmes dimensions.",
         docEn: "Seed for the diffuse tail. Unlike nodes where randomness is the point, the default is fixed: a reverb that moves to a different room on every run would be a defect. Changing it gives another room of the same dimensions." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { reverberationConvolution, genererIR } = await import("../audio");
       const mix = ctx.paramNombre("Mix", 50);
       let irBuffer: AudioBuffer;

@@ -7,29 +7,15 @@
 // LE SECOND est celui du plafond : quand la cible demanderait de dépasser le vrai pic autorisé, le
 // module préfère ne pas l'atteindre et le DIRE, plutôt qu'écrêter en silence ou glisser un
 // limiteur derrière un bouton qui promet seulement de normaliser.
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { normaliserSonie } from "./normalisation-sonie";
 import { mesurerNiveau } from "./vumetre";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number; length: number; sampleRate: number; duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-}
-beforeAll(() => { (globalThis as any).AudioBuffer = AudioBufferPolyfill; });
 
 const SR = 44100;
 const N = SR * 3;
 
 function depuis(f: (i: number) => number, canaux = 1): AudioBuffer {
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: canaux, length: N, sampleRate: SR }) as AudioBuffer;
+  const b = new AudioBuffer({ numberOfChannels: canaux, length: N, sampleRate: SR }) as AudioBuffer;
   for (let c = 0; c < canaux; c++) {
     const d = b.getChannelData(c);
     for (let i = 0; i < N; i++) d[i] = f(i);
@@ -93,7 +79,7 @@ describe("normaliser à la sonie", () => {
   });
 
   it("ne touche ni à la forme du tampon ni à l'équilibre des canaux", () => {
-    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 2, length: N, sampleRate: SR }) as AudioBuffer;
+    const b = new AudioBuffer({ numberOfChannels: 2, length: N, sampleRate: SR }) as AudioBuffer;
     const g = b.getChannelData(0), d = b.getChannelData(1);
     for (let i = 0; i < N; i++) {
       g[i] = 0.4 * Math.sin((2 * Math.PI * 440 * i) / SR);

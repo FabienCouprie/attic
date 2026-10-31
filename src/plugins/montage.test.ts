@@ -2,23 +2,10 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function ctx(audio: AudioBuffer, zones: any[], action: string) {
-  return {
-    entree: (idx: number) => idx === 0 ? audio : zones,
-    entrees: () => [audio, zones],
-    paramTexte: (nom: string, def: string) => {
-      const params: Record<string, string> = { Action: action };
-      return params[nom] ?? def;
-    },
-    paramNombre: (nom: string, def: number) => {
-      const params: Record<string, number> = { Fondu: 0 };
-      return params[nom] ?? def;
-    },
-    onProgress: () => {},
-    noeud: { data: {} },
-    runtime: null,
-  };
+  return ctxDEssai([audio, zones], { Action: action, Fondu: 0 });
 }
 
 const SR = 3000;
@@ -31,15 +18,7 @@ function makeBuffer(len: number, sampleRate = SR) {
 }
 
 function ctxExtraire(audio: AudioBuffer, zones: any[], mode: string, fondu = 0) {
-  return {
-    entree: (idx: number) => idx === 0 ? audio : zones,
-    entrees: () => [audio, zones],
-    paramTexte: (nom: string, def: string) => ({ Mode: mode }[nom] ?? def),
-    paramNombre: (nom: string, def: number) => ({ Fondu: fondu }[nom] ?? def),
-    onProgress: () => {},
-    noeud: { data: {} },
-    runtime: null,
-  };
+  return ctxDEssai([audio, zones], { Mode: mode, Fondu: fondu });
 }
 
 describe("montage plugin", () => {
@@ -78,15 +57,7 @@ describe("montage plugin", () => {
     const SR_FADE = 10000;
     const audio = makeBuffer(SR_FADE, SR_FADE);
     const zones = [{ debut: 3000 / SR_FADE, duree: 15 / SR_FADE }];
-    const ctxFade = (action: string) => ({
-      entree: (idx: number) => idx === 0 ? audio : zones,
-      entrees: () => [audio, zones],
-      paramTexte: (nom: string, def: string) => ({ Action: action }[nom] ?? def),
-      paramNombre: (nom: string, def: number) => ({ Fondu: 20 }[nom] ?? def),
-      onProgress: () => {},
-      noeud: { data: {} },
-      runtime: null,
-    });
+    const ctxFade = (action: string) => ctxDEssai([audio, zones], { Action: action, Fondu: 20 });
 
     const resSupprimer = await f.executer(ctxFade("mute") as any);
     const outSupprimer = resSupprimer.valeurs[0] as AudioBuffer;
@@ -154,15 +125,7 @@ describe("fins de boucle A, B et C", () => {
     return b;
   }
 
-  const ctxBoucle = (tours: AudioBuffer[], params: Record<string, number> = {}) => ({
-    entree: (i: number) => tours[i] ?? null,
-    entrees: () => tours,
-    paramTexte: (_nom: string, def: string) => def,
-    paramNombre: (nom: string, def: number) => params[nom] ?? def,
-    onProgress: () => {},
-    noeud: { data: {} },
-    runtime: null,
-  });
+  const ctxBoucle = (tours: AudioBuffer[], params: Record<string, number> = {}) => ctxDEssai(tours, params);
 
   const trois = () => [tour(1, 0.5), tour(0.5, 0.5), tour(0.25, 0.25)];
 

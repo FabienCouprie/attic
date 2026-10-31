@@ -39,7 +39,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine du tirage. Même graine, même son : indispensable pour retrouver un résultat qui vous a plu.",
         docEn: "Random seed. Same seed, same sound: essential to recover a result you liked." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { gendyn } = await import("../audio/gendyn");
       const points = ctx.paramNombre("Points", 8);
       const dureeMinMs = ctx.paramNombre("Segment min", 0.5);

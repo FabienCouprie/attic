@@ -44,7 +44,7 @@ export const fiches: FicheAudio[] = ([
     entreesExtensibles: { min: 2, defaut: 2 },
     sorties: [],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pistes: PisteVisu[] = [];
       for (let k = 0; k < PISTES_VISU; k++) {
         const son = ctx.entree(k);

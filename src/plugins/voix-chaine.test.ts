@@ -9,9 +9,9 @@
 // ET CE QU'ELLE PROUVE SURTOUT. Qu'une écriture qui ne décrit plus les notes est ÉCARTÉE. Un arbre
 // périmé gravé tel quel donne une partition fausse qui paraît juste, ce qui est pire que pas de
 // partition du tout.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
+import { ctxDEssai } from "../core/contexte-essai";
 import type { Sequence } from "../audio/sequence";
 import { fiches as fichesArbre } from "./arbre-rythmique";
 import { fiches as fichesQuantification } from "./quantification";
@@ -25,14 +25,8 @@ const voicings = fichesTheorie.find((f) => f.id === "voicings-accords")!;
 const filtre = fichesFormes.find((f) => f.id === "filtre-sequence")!;
 const musicxml = fichesAnalyse.find((f) => f.id === "musicxml")!;
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) =>
+  ctxDEssai(entrees, params);
 
 const AVEC_TRIOLET = "(4/4 (1 (1 (1 1 1)) 1 1))";
 

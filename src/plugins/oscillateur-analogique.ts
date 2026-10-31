@@ -116,7 +116,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Output level, after the peak has been normalised.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const forme = (FORMES.find((f) => f.id === ctx.paramTexte("Forme", "sawtooth"))?.id
         ?? "sawtooth") as FormeVco;
       const frequence = ctx.paramNombre("Fréquence", 220);

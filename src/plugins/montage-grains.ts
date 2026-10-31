@@ -16,6 +16,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { creerAleatoire } from "../core/hasard";
 import {
   ESPACEMENTS, EST_ESPACEMENT, EST_OPERATION, OPERATIONS, detecterGrains, monter, planMontage,
@@ -92,12 +93,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Le tirage du mélange. La même graine rejoue exactement le même ordre, ce qui permet de retrouver un résultat qu'on avait aimé.",
         docEn: "The shuffle's draw. The same seed replays exactly the same order, which is what makes a result you liked findable again." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: en ? "No input." : "Aucune entrée." };
-      }
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const frequence = audio.sampleRate;
       const canaux = Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c));
       const grains = detecterGrains(canaux[0], {

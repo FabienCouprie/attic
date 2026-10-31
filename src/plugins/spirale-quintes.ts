@@ -69,7 +69,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Niveau du rendu sonore.", docEn: "Level of the rendered sound." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const nombre = Math.round(ctx.paramNombre("Quintes", 12));
       const centsQuinte = QUINTES[ctx.paramTexte("Quinte", "juste")] ?? CENTS_QUINTE_JUSTE;

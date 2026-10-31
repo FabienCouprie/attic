@@ -12,6 +12,7 @@
 //   4. un silence final s'écrit, la durée de la séquence faisant loi.
 import { describe, expect, it } from "vitest";
 
+import { ctxDEssai } from "../core/contexte-essai";
 import { derouler, ecrireArbre, lireArbre } from "../audio/arbre-rythmique";
 import { catalogueArbres } from "../audio/arbres-catalogue";
 import { estSequence, type Sequence } from "../audio/sequence";
@@ -21,14 +22,8 @@ import { fiches as fichesQuantification } from "./quantification";
 const rythme = fichesArbre.find((f) => f.id === "rythme-sur-hauteurs")!;
 const quantifier = fichesQuantification.find((f) => f.id === "quantifier-rythme")!;
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) =>
+  ctxDEssai(entrees, params);
 
 const TEMPO = 120;
 const HAUTEURS = "60 62 64 65 67 69 71";

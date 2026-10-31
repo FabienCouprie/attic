@@ -233,7 +233,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le tempo écrit dans le fichier. Les notes gardent les instants de la parole : le tempo ne les déplace pas, il décide seulement de la grille de mesures sur laquelle un séquenceur les affichera.",
         docEn: "The tempo written into the file. The notes keep the instants of the speech: the tempo does not move them, it only decides the bar grid a sequencer will show them on." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = (await import("../i18n")).langueCourante() === "en";
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) {

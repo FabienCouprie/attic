@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { rendreTore, DUREE_SORTIE_MAX_SEC, type RapportTore } from "../audio/tore";
 import { planBoucle } from "../audio/geometrie-sonore";
 
@@ -35,13 +36,13 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondu enchaîné à chaque couture entre deux tours, pour qu'un son qui ne se boucle pas ne claque pas. Borné au quart de la durée du son.",
         docEn: "Crossfade at each seam between two laps, so a sound that does not loop does not click. Capped at a quarter of the sound's length." },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
 
       const id = ctx.paramTexte("Rapport", "2:3");
       const options = {
-        rapport: (RAPPORTS.includes(id) ? id : "2:3") as RapportTore,
+        rapport: ((RAPPORTS as readonly string[]).includes(id) ? id : "2:3") as RapportTore,
         tours: Math.round(ctx.paramNombre("Tours", 3)),
         fonduSec: ctx.paramNombre("Fondu", 30) / 1000,
         profondeur: ctx.paramNombre("Profondeur", 100) / 100,

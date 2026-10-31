@@ -227,7 +227,7 @@ The animation is displayed in the node and is not available on an output port. I
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume du rendu sonore.", docEn: "Level of the rendered sound." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const gammeChoisie = ctx.paramTexte("Gamme", SELON_LA_ROUE);
       const qualiteChoisie = ctx.paramTexte("Qualité des accords", SELON_LA_ROUE);
@@ -254,7 +254,7 @@ The animation is displayed in the node and is not available on an output port. I
       const dictee = estSequence(recue) ? (recue.notes ?? []) : null;
       if (dictee && dictee.length > 0) {
         o.dureeSec = Math.max(
-          recue.duree ?? 0,
+          (estSequence(recue) ? recue.duree : undefined) ?? 0,
           dictee.reduce((m: number, n: { fin: number }) => Math.max(m, n.fin), 0),
         ) || o.dureeSec;
       }

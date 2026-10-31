@@ -100,7 +100,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Délai avant abandon. Le premier appel à un modèle doit le charger en mémoire : comptez plusieurs minutes pour un gros modèle (Qwen3.6 = 24 Go). Les appels suivants sont bien plus rapides tant que le modèle reste résident.",
         docEn: "Timeout before aborting. The first call to a model must load it into memory: allow several minutes for a large model (Qwen3.6 = 24 GB). Subsequent calls are much faster while the model stays resident." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const prompt = (typeof entree === "string" && entree.trim()) ? entree : ctx.paramTexte("Prompt", "");
       if (!prompt.trim()) return { valeurs: [null], message: traduire("msg.aucun_prompt_param_tre_ou_entr_e_texte") };

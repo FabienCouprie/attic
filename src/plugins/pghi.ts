@@ -6,6 +6,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { reconstruire, type OptionsReconstruction, type Reconstruction } from "../audio/pghi";
 import { parCanal } from "./hors-fil";
 import { choixFenetre } from "../audio/fenetres-analyse";
@@ -36,11 +37,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Proportion de son reconstruit. À 0 %, la sortie est l'entrée.",
         docEn: "Proportion of reconstructed sound. At 0 %, the output is the input." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0);
+      if (sansEntree(entree)) return entree;
       const taille = parseInt(ctx.paramTexte("Fenêtre", "1024"), 10) || 1024;
       const saut = taille / 4;
       const affinage = Math.round(ctx.paramNombre("Affinage", 10));

@@ -7,6 +7,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { creerAleatoire } from "../core/hasard";
 import {
   decouperEnObjets, decrireZones, monter, reordonnerObjets,
@@ -83,9 +84,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Pour le critère des silences : ce qui passe sous ce niveau est un silence. Sans effet sur les autres critères.",
         docEn: "For the silence criterion: what falls below this level is a silence. No effect on the other criteria." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null, null], message: en() ? "No audio input." : "Aucune entrée audio." };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(a)) return a;
       const objets = decouperEnObjets(a, {
         critere: String(ctx.paramTexte("Critère", "attaques")) as CritereDecoupage,
         sensibilite: ctx.paramNombre("Sensibilité", 50),
@@ -126,11 +127,12 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Pour l'ordre au hasard : à graine égale, le même ordre.", docEn: "For random order: same seed, same order." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en() ? "No audio input." : "Aucune entrée audio." };
-      const brutes = (Array.isArray(ctx.entree(1)) ? ctx.entree(1) : [])
-        .filter((z: any) => z && typeof z.debut === "number" && typeof z.duree === "number" && z.duree > 0);
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
+      const zonesRecues = ctx.entree(1);
+      const brutes = (Array.isArray(zonesRecues) ? zonesRecues : [])
+        .filter((z: any): z is { debut: number; duree: number } => z && typeof z.debut === "number" && typeof z.duree === "number" && z.duree > 0);
       if (!brutes.length) return { valeurs: [null], message: en() ? "No zones." : "Aucune zone." };
       const critere = String(ctx.paramTexte("Ordre", "brillance")) as CritereTri;
       const decrites = brutes.every((z: any) => typeof z.brillance === "number") ? brutes : decrireZones(a, brutes);
@@ -191,7 +193,7 @@ export const fiches: FicheAudio[] = ([
         doc: `Durée du fondu de sortie de la piste ${k + 1}. Ce réglage cesse d'agir sur cette piste dès qu'un morceau y est posé sur la ligne de temps ; c'est alors la poignée du coin droit de la barre.`,
         docEn: `Length of track ${k + 1}'s fade out. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the handle at the bar's right corner takes over.` },
     ])).flat(),
-    async executer(ctx: any) {
+    async executer(ctx) {
       const sons: Record<number, AudioBuffer> = {};
       const pistes: { piste: number; duree: number }[] = [];
       for (let k = 0; k < PISTES; k++) {

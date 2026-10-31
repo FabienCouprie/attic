@@ -31,6 +31,7 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { libelleLangue } from "../core/langues";
+import { ctxDEssai } from "../core/contexte-essai";
 
 /**
  * Un double de worker, qui n'est que ce que `CibleWorker` demande.
@@ -92,14 +93,7 @@ const fiche = (id: string) => {
 };
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string>, journal: string[]) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: (m: string) => journal.push(m),
-  } as never;
+  return ctxDEssai(entrees, reglages, { onProgress: (m: string) => journal.push(m) }) as never;
 }
 
 const lancer = (id: string, entrees: unknown[] = [null],

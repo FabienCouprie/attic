@@ -11,6 +11,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
 import { estCourbe } from "../audio/courbe";
 import { FENETRES, type Fenetre } from "../audio/micromontage";
@@ -128,11 +129,9 @@ The « Modulation time », « Modulation scatter », « Modulation transposition
       ...bornesModulation(MOD_REINJECTION),
       ...bornesModulation(MOD_MELANGE),
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0);
+      if (sansEntree(entree)) return entree;
       const { numberOfChannels: canaux, length, sampleRate: sr } = entree;
 
       // LES TROIS GRANDEURS QUI DIMENSIONNENT LE RENDU SE LISENT SUR LA BORNE quand une courbe est

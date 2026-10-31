@@ -4,32 +4,13 @@
 // tout son intérêt est qu'ajoutée à l'original elle ne laisse RIEN. C'est ce silence qui fait le
 // test d'annulation — la preuve la plus sûre que deux fichiers sont identiques — et c'est donc lui
 // qu'il faut vérifier, plutôt que de constater que les signes ont changé.
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { inverserAudio, inverserPolarite } from "./effets-montage";
-
-// Meme polyfill que `effets-montage.test.ts` : hors navigateur, `AudioBuffer` n'existe pas.
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-}
-
-beforeAll(() => { (globalThis as any).AudioBuffer = AudioBufferPolyfill; });
 
 const SR = 44100;
 
 function tampon(valeurs: number[][]): AudioBuffer {
-  const b = new (globalThis as any).AudioBuffer({
+  const b = new AudioBuffer({
     numberOfChannels: valeurs.length, length: valeurs[0].length, sampleRate: SR,
   }) as AudioBuffer;
   valeurs.forEach((canal, c) => b.getChannelData(c).set(Float32Array.from(canal)));

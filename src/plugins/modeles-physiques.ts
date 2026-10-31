@@ -58,7 +58,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const notes = await notesDuMidi(ctx.entree(0));
       const energie = ctx.paramNombre("Énergie", 50) / 100;
       const particules = Math.round(ctx.paramNombre("Particules", 0));
@@ -117,7 +117,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const instrument = ctx.paramTexte("Instrument", "clarinette") as Vent;
       const commun = {
         instrument, frequenceEch: FS(),
@@ -213,7 +213,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const choisie = barre(ctx.paramTexte("Instrument", "marimba"));
       const commun = {
         barre: choisie, frequenceEch: FS(),

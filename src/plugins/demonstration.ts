@@ -63,7 +63,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Affiche à droite de chaque segment les valeurs réglées du composant, huit au plus. Masqués, le résultat prend toute la largeur.",
         docEn: "Shows the node's set values to the right of each segment, eight at most. Hidden, the result takes the full width." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const exec = executionCourante();
       if (!exec) return { valeurs: [null], message: en() ? "No run in progress." : "Aucune exécution en cours." };
       const registre = await obtenirRegistre();

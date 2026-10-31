@@ -6,23 +6,12 @@ import { describe, expect, it } from "vitest";
 import { frequenceDuFichier } from "./frequence-source";
 import { bufferVersWavBlob } from "./io";
 
-class AudioBufferPolyfill {
-  numberOfChannels: number; length: number; sampleRate: number; duration: number;
-  private d: Float32Array[];
-  constructor(o: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = o.numberOfChannels; this.length = o.length; this.sampleRate = o.sampleRate;
-    this.duration = o.length / o.sampleRate;
-    this.d = Array.from({ length: o.numberOfChannels }, () => new Float32Array(o.length));
-  }
-  getChannelData(c: number) { return this.d[c]; }
-}
-
 const ascii = (o: Uint8Array, p: number, s: string) => { for (let i = 0; i < s.length; i++) o[p + i] = s.charCodeAt(i); };
 
 describe("frequenceDuFichier", () => {
   it("WAV : la fréquence écrite par Attic lui-même, à 44,1 et à 96 kHz", async () => {
     for (const sr of [44100, 96000]) {
-      const b = new AudioBufferPolyfill({ numberOfChannels: 2, length: 100, sampleRate: sr }) as unknown as AudioBuffer;
+      const b = new AudioBuffer({ numberOfChannels: 2, length: 100, sampleRate: sr });
       const octets = await bufferVersWavBlob(b, undefined, false, { bits: 24 }).arrayBuffer();
       expect(frequenceDuFichier(octets)).toBe(sr);
     }

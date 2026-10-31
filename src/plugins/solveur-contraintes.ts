@@ -88,7 +88,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le nombre d'essais au plus avant de renoncer.",
         docEn: "The number of attempts at most before giving up." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const combien = Math.round(ctx.paramNombre("Longueur", 12));
       const domaine = domaineHauteurs(
         ctx.paramNombre("Grave", 55), ctx.paramNombre("Aigu", 79),

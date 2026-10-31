@@ -7,6 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { degresParPeriode, type Accordage } from "../audio/accordage";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { analyserMidi } from "../audio/midi";
 import { hauteurMediane, suivreHauteur } from "../audio/hauteur";
 import {
@@ -94,11 +95,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Longueur de la boucle de maintien, comptée depuis son début. Elle se donne en secondes et non en part de l'échantillon : une boucle de maintien est courte par nature, et un son de trente secondes bouclé sur la moitié de sa durée s'entend recommencer au lieu de tenir. La fin reste bornée à quatre-vingt-quinze pour cent de l'échantillon, au-delà desquels la boucle mordrait sur l'extinction.",
         docEn: "Length of the sustain loop, counted from its start. It is given in seconds rather than as a share of the sample: a sustain loop is short by nature, and a thirty second sound looped over half its length is heard starting again instead of holding. The end stays bounded to ninety-five percent of the sample, beyond which the loop would bite into the decay." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(entree)) return entree;
       const auto = ctx.paramTexte("Note d'origine", "auto") !== "manuel";
       const sr = entree.sampleRate;
       let racine = Math.round(ctx.paramNombre("Note manuelle", 60));
@@ -233,7 +232,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Dernière note jouée par cette banque. Les notes au-dessus sont ignorées.",
         docEn: "Last note this bank plays. Notes above are ignored." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const midiFile = ctx.entree(0);
       const banque = ctx.entree(1) as Banque | null;
       if (!(midiFile instanceof File)) return { valeurs: [null, null], message: traduire("msg.branchez_un_source_midi") };

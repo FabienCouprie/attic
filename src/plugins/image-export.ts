@@ -39,7 +39,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Output image filename (in the working directory). The extension is adapted to the actual image format.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = (window as any).api;
       if (!api?.ecrireFichier) {
         return { valeurs: [null], message: traduire("msg.n_cessite_electron") };

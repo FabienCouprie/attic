@@ -42,7 +42,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Dernière image gardée. Une valeur qui ne dépasse pas le début désigne la fin du film.",
         docEn: "Last frame kept. A value that does not exceed the start means the end of the film." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const chemin = ctx.paramTexte("Chemin", "").trim();
       if (!chemin) {
         return { valeurs: [null], message: en() ? "Name a film in « Path »." : "Indiquez un film dans « Chemin »." };

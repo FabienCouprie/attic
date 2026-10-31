@@ -19,6 +19,7 @@ import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import type { SuiviHauteur } from "../audio/hauteur";
 import type { MotVosk } from "./vosk-asr";
+import { ctxDEssai } from "../core/contexte-essai";
 
 /**
  * Ce que le double du moteur a vu, et ce qu'il répond.
@@ -103,12 +104,7 @@ function prise(
 function ctxDe(audio: AudioBuffer | null, reglages: Record<string, string | number> = {}) {
   const progres: string[] = [];
   return {
-    ctx: {
-      entree: () => audio,
-      paramTexte: (n: string, d: string) => String(reglages[n] ?? d),
-      paramNombre: (n: string, d: number) => Number(reglages[n] ?? d),
-      onProgress: (t: string) => progres.push(t),
-    } as never,
+    ctx: ctxDEssai([audio], reglages, { onProgress: (t: string) => progres.push(t) }) as never,
     progres,
   };
 }

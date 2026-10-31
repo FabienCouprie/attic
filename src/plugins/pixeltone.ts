@@ -99,7 +99,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Output volume of the sound.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const image = ctx.entree(0);
       if (!(image instanceof File)) {
         return { valeurs: [null], message: traduire("msg.connecter.image") };

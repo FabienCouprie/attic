@@ -58,7 +58,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Donne à chaque boîte son propre numéro de voix, ce qui grave autant de portées qu'il y a de boîtes.",
         docEn: "Gives each box its own voice number, which engraves as many staves as there are boxes." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const blocs: Bloc[] = [];
       // LE NUMÉRO DE PORT EST GARDÉ À PART. Le rang d'un bloc est sa place parmi les boîtes
       // BRANCHÉES, qui n'est pas son numéro dès qu'on en saute une : la ligne de temps, elle, range

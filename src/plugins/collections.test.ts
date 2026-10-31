@@ -1,6 +1,7 @@
 // plugins/collections.test.ts — Vérifications des nœuds Collections.
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 describe("collections plugin", () => {
   const originalApi = (globalThis as any).window?.api;
@@ -28,15 +29,7 @@ describe("collections plugin", () => {
     expect(f).toBeDefined();
     expect(f?.entrees).toHaveLength(0);
     expect(f?.sorties).toHaveLength(0);
-    const res = await f!.executer({
-      entree: () => null,
-      entrees: () => [],
-      paramTexte: (nom: string, def: string) => (nom === "Chemin" ? "music collection" : def),
-      paramNombre: (_nom: string, def: number) => def,
-      onProgress: () => {},
-      noeud: { data: {} },
-      runtime: null,
-    } as any);
+    const res = await f!.executer(ctxDEssai([], { Chemin: "music collection" }) as any);
     expect(res.valeurs).toHaveLength(1);
     expect(res.valeurs[0]).toBeNull();
     expect(res.message).toMatch(/Lecteur musique|Music player/);

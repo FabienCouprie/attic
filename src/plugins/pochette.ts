@@ -74,7 +74,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine aléatoire (0 = nouvelle à chaque exécution). Même graine = même pochette.",
         docEn: "Random seed (0 = new each run). Same seed = same cover." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const prompt = ctx.paramTexte("Prompt", "dark ambient night mysterious");
       const titre = ctx.paramTexte("Titre", "Album");
       const artiste = ctx.paramTexte("Artiste", "");

@@ -45,7 +45,7 @@ export const fiches: FicheAudio[] = ([
     ],
     sorties: SORTIES_MOTIF,
     parametres: PARAMETRES_RENDU_MOTIF,
-    async executer(ctx: any) {
+    async executer(ctx) {
       const hauteurs = await notesDuMidi(ctx.entree(0));
       const grille = await notesDuMidi(ctx.entree(1));
       if (!hauteurs || !grille) return { valeurs: [null, null], message: traduire("msg.motif.deuxMidi") };
@@ -81,7 +81,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Transposition accumulated at each copy: +7 sends the echo up fifth by fifth. A copy that would leave the MIDI range ends the series." },
       ...PARAMETRES_RENDU_MOTIF,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
@@ -122,7 +122,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "0 = drawn at random on every run, and shown in the message. Any other value replays the exact same thinning." },
       ...PARAMETRES_RENDU_MOTIF,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
@@ -161,7 +161,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "What becomes of the turning event. C-D-E followed by its retrograde gives C-D-E-E-D-C, where the E is played twice; the palindrome one writes in music is C-D-E-D-C, with a single E at the top. Repeating marks the turn, dropping it makes it flow. No effect in « Retrograde » mode." },
       ...PARAMETRES_RENDU_MOTIF,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
@@ -191,7 +191,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Shifts the pitch sequence along the rhythmic grid without touching the onsets: the rhythm stays, the melody slides. The rotation applies after the repeats, hence on the densified pattern." },
       ...PARAMETRES_RENDU_MOTIF,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes) return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
@@ -235,7 +235,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume du rendu audio.", docEn: "Output volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
@@ -298,7 +298,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume du rendu.", docEn: "Output volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const { analyserMidi, rendreSequence } = await import("../audio");
@@ -360,7 +360,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes).", defautEn: "No" },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { transposerQuantifierMidi } = await import("../audio");
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
@@ -416,7 +416,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Length of each arpeggiated note as a percentage of the step time. 100% = legato, 50% = staccato." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { arpegerMidi } = await import("../audio");
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
@@ -449,7 +449,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée pendant laquelle le deuxième MIDI démarre avant la fin du premier. 0 = concaténation simple. Un chevauchement plus long que le premier fichier est ramené à sa durée, les deux partant alors ensemble : seul le second se déplace, et il ne peut pas reculer avant le début.",
         docEn: "Duration for which the second MIDI starts before the first ends. 0 = simple concatenation. An overlap longer than the first file is brought back to its duration, the two then starting together: only the second one moves, and it cannot go back before the start." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier1 = ctx.entree(0);
       const fichier2 = ctx.entree(1);
       if (!(fichier1 instanceof File) || !(fichier2 instanceof File)) {
@@ -476,7 +476,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Chevauchement entre deux répétitions. 0 = pas de chevauchement (raccord sec).",
         docEn: "Overlap between two repetitions. 0 = no overlap (hard join)." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const repetitions = Math.round(ctx.paramNombre("Répétitions", 4));
@@ -505,7 +505,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Où ajuster la différence. Si la piste est trop courte : ajoute du silence au début (« Avant ») ou à la fin (« Après »). Si trop longue : fade d'ouverture (« Avant », garde le début) ou fade de fermeture (« Après », garde la fin).",
         docEn: "Where to adjust the difference. If the track is too short: adds silence at the start (« Before ») or end (« After »). If too long: fade in (« Before », keeps the start) or fade out (« After », keeps the end).", defautEn: "After" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const ref = ctx.entree(0);
       const piste = ctx.entree(1);
       if (!(ref instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.branchez_une_r_f_rence_entr_e_1") };

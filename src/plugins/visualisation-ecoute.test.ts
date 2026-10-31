@@ -24,7 +24,6 @@
 // entrées sont par ailleurs FACULTATIVES, et un cas le tient : tant qu'elles ne l'étaient pas, le
 // moteur refusait d'exécuter le nœud dès qu'un câble manquait, et tous les cas de repli ci-dessous
 // portaient sur du code que l'application n'atteignait jamais.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import { valeurCanoniqueChoix } from "../i18n";
 import { fiches } from "./visualisation";

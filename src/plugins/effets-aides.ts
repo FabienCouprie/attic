@@ -6,8 +6,7 @@
 // partagee est un sujet a elle seule.
 
 
-import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { estCourbe, progressionPour, valeursParametre } from "../audio/courbe";
 import { parseMidi } from "midi-file";
 import { appliquerInstrumentMidi, analyserMidi, notesVersFichierMidi, rendreSequence } from "../audio";
@@ -15,6 +14,7 @@ import { rendreBatterieMidi } from "../audio/tone-synths";
 import { type NoteMotif } from "../audio/motifs-midi";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
 import { parCanal } from "./hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 
 // `graine` PORTE LE MÊME RÔLE QU'AILLEURS : ces réglages-ci se fabriquent par `param()`, et sans
@@ -255,7 +255,7 @@ export const luParLExecuteur = (source: string, nom: string): boolean =>
  * et `plugins/niveau-des-synthes.test.ts` en garde la trace. L'appelant déclare donc ce qu'il veut.
  */
 export function reglageModule(
-  ctx: any, n: number, rangPort: number,
+  ctx: ContexteAudio, n: number, rangPort: number,
   o: {
     reglage: string; defaut?: number; rendu?: "proportion" | "pourCent";
     /**
@@ -382,9 +382,9 @@ export function effet(
       })),
       ...modules.flatMap((m) => bornesModulation(m)),
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const args: any[] = parametres.map(p => ctx.paramNombre(p.nom, p.defaut));
       // UN SEUL CHEMIN, modulé ou non : sans courbe, une constante à la valeur du réglage. Le port
       // de la modulation `i` est à l'entrée `1 + i`, dans l'ordre où les entrées sont déclarées.
@@ -449,9 +449,9 @@ export function simple(slug: string, nom: string, nomEn: string, resume: string,
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       return { valeurs: [await fn(audio)] };
    },
   };
@@ -494,7 +494,7 @@ export function canalDominant(notes: NoteMotif[]): number {
  * imposé au fichier, ce qui ferait taire la batterie chez les autres lecteurs.
  */
 export async function rendreMotif(
-  ctx: any, notes: NoteMotif[], canal: number,
+  ctx: ContexteAudio, notes: NoteMotif[], canal: number,
 ): Promise<[AudioBuffer, File]> {
   const tempo = ctx.paramNombre("Tempo", 120);
   const volume = ctx.paramNombre("Volume", 80);

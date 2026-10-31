@@ -7,19 +7,13 @@
 import { describe, expect, it } from "vitest";
 import { fiches } from "./csound-aleatoire";
 import { constante } from "../audio/courbe";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = fiches.find((f) => f.id === "partition-aleatoire-csound")!;
 
 function contexte(params: Record<string, string | number> = {}, entree: unknown = null) {
   const p: Record<string, string | number> = { "Graine": 42, "Durée": 10, "Densité": 6, ...params };
-  return {
-    noeud: { id: "n1", data: { ficheId: "partition-aleatoire-csound", parametres: p } },
-    runtime: null,
-    entree: () => entree,
-    entrees: () => [entree],
-    paramTexte: (nom: string, defaut: string) => String(p[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(p[nom] ?? defaut),
-  };
+  return ctxDEssai([entree], p, { ficheId: "partition-aleatoire-csound" });
 }
 
 /** Les lignes de notes d'une partition. */

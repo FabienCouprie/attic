@@ -13,8 +13,8 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
     // Ce chemin est un DOSSIER où chercher, et non une piste ; il se choisit au lieu de s'écrire.
     parametres: [{ nom: "Chemin", nomEn: "Path", type: "dossier", defaut: "music collection", doc: "Dossier où chercher les pistes, relatif au dossier du projet.", docEn: "Directory to scan, relative to project folder.", defautEn: "music collection" }],
-    async executer(ctx: any) {
-      const f = ctx.noeud.data.audioFichier;
+    async executer(ctx) {
+      const f = ctx.noeud.data.audioFichier as File | undefined;
       if (!f) return { valeurs: [null], message: traduire("msg.aucun_fichier") };
       const buf = await decoderFichier(f, ctx.runtime);
       return { valeurs: [buf] };

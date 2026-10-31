@@ -10,7 +10,6 @@
 // les chiffres doivent revenir. C'est un aller-retour, donc il eprouve les deux sens a la fois, et
 // il eprouve les TROIS profondeurs que l'application exporte — dont les vingt-quatre bits, qui sont
 // son defaut et que la plupart des lecteurs ecrits a la va-vite ne savent pas lire.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { calculerCentroidSpectralMeyda } from "./analyse-descripteurs";

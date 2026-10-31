@@ -4,17 +4,10 @@ import { genererPochetteSVG, genererPochetteFile, rasteriserPochettePNG } from "
 import { paletteDepuisPrompt, PALETTES_PRESET } from "./pochette-palettes";
 import { creerAleatoire } from "../core/hasard";
 import { registre } from "../audio/adaptateur";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function ctx(params: Record<string, string | number> = {}) {
-  return {
-    entree: (_idx: number) => null,
-    entrees: () => [] as unknown[],
-    paramTexte: (nom: string, def: string) => (params[nom] as string) ?? def,
-    paramNombre: (nom: string, def: number) => (typeof params[nom] === "number" ? params[nom] as number : def),
-    onProgress: () => {},
-    noeud: { data: {} },
-    runtime: null,
-  };
+  return ctxDEssai([], params);
 }
 
 describe("pochette-svg", () => {

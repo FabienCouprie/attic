@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { appliquerSoundTouch } from "./soundtouch";
 import { rendreProgression, planProgression } from "../audio/pitch-progressif";
 
@@ -27,9 +28,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Transposition ajoutée à chaque reprise, en demi-tons. −5 descend de 5, puis 10, puis 15 demi-tons sous l'original. Négatif pour descendre, positif pour monter.",
         docEn: "Pitch added at each repeat, in semitones. −5 goes 5, then 10, then 15 semitones below the original. Negative descends, positive rises." },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
 
       const boucles = Math.round(ctx.paramNombre("Boucles", 3));
       const pauseSec = ctx.paramNombre("Pause", 10);

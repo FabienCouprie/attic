@@ -81,7 +81,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Tempo écrit dans le fichier MIDI de sortie. Il ne change pas l'audio : ce qui a été joué a été joué au temps où on l'a joué.",
         docEn: "Tempo written into the output MIDI file. It does not change the audio: what was played was played at the time it was played." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const source = ctx.paramTexte("Source", "auto");
       const entrante = ctx.entree(0);
       const chemin = ctx.noeud.data.sfzChemin as string | undefined;

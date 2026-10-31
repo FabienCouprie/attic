@@ -63,7 +63,7 @@ export const fiches: FicheAudio[] = ([
     ],
     // Son résultat dépend du graphe entier, qu'aucune empreinte de cache ne regarde.
     jamaisCache: true,
-    async executer(ctx: any) {
+    async executer(ctx) {
       const graphe = grapheCourant();
       if (!graphe || graphe.noeuds.length === 0) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.doc.aucunGraphe") };

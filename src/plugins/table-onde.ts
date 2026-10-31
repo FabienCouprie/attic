@@ -78,7 +78,7 @@ export const fiches: FicheAudio[] = ([
         ...modulationNommee("Fréquence", "Frequency", [20, 4000], "Hz"), defauts: [110, 880],
       }),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const cases = Math.round(ctx.paramNombre("Cases", CASES));
       const duree = ctx.paramNombre("Durée", 1.5);
       const frequence = reglageModule(ctx, Math.round(duree * FREQUENCE_ECH()), 3, {

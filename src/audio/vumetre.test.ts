@@ -11,32 +11,17 @@
 // dépend d'une implémentation de biquads dont on ne veut pas figer le dixième de décibel ; en
 // revanche, doubler une amplitude DOIT ajouter six décibels, deux canaux identiques DOIVENT en
 // ajouter trois, et le silence NE DOIT rien changer. Ces trois-là ne dépendent d'aucun réglage.
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { mesurerNiveau } from "./vumetre";
 
 const SR = 44100;
-
-class AudioBufferPolyfill {
-  numberOfChannels: number; length: number; sampleRate: number; duration: number;
-  private canaux: Float32Array[];
-  constructor(o: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = o.numberOfChannels;
-    this.length = o.length;
-    this.sampleRate = o.sampleRate;
-    this.duration = o.length / o.sampleRate;
-    this.canaux = Array.from({ length: o.numberOfChannels }, () => new Float32Array(o.length));
-  }
-  getChannelData(c: number) { return this.canaux[c]; }
-}
-
-beforeAll(() => { (globalThis as any).AudioBuffer = AudioBufferPolyfill; });
 
 /** Un tampon construit canal par canal. */
 function tampon(...canaux: ((i: number) => number)[]): AudioBuffer {
   const longueur = 0;
   void longueur;
   const n = TAILLE;
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: canaux.length, length: n, sampleRate: SR }) as AudioBuffer;
+  const b = new AudioBuffer({ numberOfChannels: canaux.length, length: n, sampleRate: SR });
   for (let c = 0; c < canaux.length; c++) {
     const d = b.getChannelData(c);
     for (let i = 0; i < n; i++) d[i] = canaux[c](i);
@@ -52,7 +37,7 @@ const sinus = (hz: number, amplitude: number) => (i: number) => amplitude * Math
 function avecSilence(hz: number, amplitude: number, sonSec: number, silenceSec: number): AudioBuffer {
   const n = Math.round((sonSec + silenceSec) * SR);
   const limite = Math.round(sonSec * SR);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR }) as AudioBuffer;
+  const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
   const d = b.getChannelData(0);
   for (let i = 0; i < limite; i++) d[i] = amplitude * Math.sin((2 * Math.PI * hz * i) / SR);
   return b;
@@ -121,7 +106,7 @@ describe("la plage de sonie", () => {
     // Douze secondes : six fortes, six à vingt décibels en dessous. Les blocs de trois secondes
     // de la norme ont alors la place de voir les deux.
     const n = Math.round(12 * SR);
-    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR }) as AudioBuffer;
+    const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
     const d = b.getChannelData(0);
     for (let i = 0; i < n; i++) {
       const fort = i < n / 2;

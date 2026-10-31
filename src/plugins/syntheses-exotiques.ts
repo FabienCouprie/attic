@@ -9,6 +9,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { hasardDuNoeud } from "../core";
 import { compile } from "mathjs";
 import { fft } from "../audio/fft";
@@ -69,7 +70,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const commun = {
         frequenceEch: FS(),
         masses: Math.round(ctx.paramNombre("Masses", 64)),
@@ -168,7 +169,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const terrain = ctx.paramTexte("Terrain", "classique") as Terrain;
       let evaluer: ((x: number, y: number) => number) | undefined;
       if (terrain === "personnalise") {
@@ -268,7 +269,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       // LA VOYELLE NE LISAIT PAS LA VÉLOCITÉ : son exécuteur ne la mentionnait nulle part, et une
       // séquence jouée avec des nuances sortait toute au même niveau. Même traitement que la
@@ -351,11 +352,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Volume que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
         docEn: "Volume that the curve's one means. A value below Modulation min reverses the direction of travel." },
     ],
-    async executer(ctx: any) {
-      const cible = ctx.entree(0), corpus = ctx.entree(1);
-      if (!(cible instanceof AudioBuffer) || !(corpus instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.mosaique.deuxEntrees") };
-      }
+    async executer(ctx) {
+      const cible = entreeAudio(ctx, 0, { sorties: 2 }), corpus = entreeAudio(ctx, 1, { sorties: 2 });
+      if (sansEntree(cible)) return cible;
+      if (sansEntree(corpus)) return corpus;
       const mono = (b: AudioBuffer): Float32Array => {
         const g = b.getChannelData(0);
         if (b.numberOfChannels < 2) return new Float32Array(g);

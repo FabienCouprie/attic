@@ -7,6 +7,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { withElectronFetch } from "./electronFetch";
 
 const OUTPUT_SR = 48000;
@@ -98,9 +99,9 @@ export const fiches: FicheAudio[] = ([
         doc: "URL personnalisée d’un checkpoint DDSP. Si renseignée, elle remplace l’instrument choisi.",
         docEn: "Custom URL of a DDSP checkpoint. If set, it overrides the selected instrument.", defautEn: "" },
     ],
-    async executer(ctx: any) {
-      const buffer = ctx.entree(0);
-      if (!(buffer instanceof AudioBuffer)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_audio_connect") };
+    async executer(ctx) {
+      const buffer = entreeAudio(ctx, 0);
+      if (sansEntree(buffer)) return buffer;
       const instrument = ctx.paramTexte("Instrument", "Violon");
       const customUrl = ctx.paramTexte("URL modèle", "");
       try {

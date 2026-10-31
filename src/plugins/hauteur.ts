@@ -12,6 +12,7 @@ import {
   type OptionsVoieHauteur, type SuiviHauteur,
 } from "../audio/hauteur";
 import { parCanal } from "./hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -47,11 +48,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Trames par seconde. C'est le réglage qui décide du coût, et il compte ici plus qu'ailleurs : une transformée par trame, soit environ 60 ms de calcul par seconde de son à cadence 50, 112 ms à 100 et 182 ms à 200.",
         docEn: "Frames per second. This is the setting that decides the cost, and it matters more here than elsewhere: one transform per frame, that is about 60 ms of computation per second of sound at rate 50, 112 ms at 100 and 182 ms at 200." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null, null, null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(entree)) return entree;
       const fMin = ctx.paramNombre("Hauteur min", 55);
       const fMax = Math.max(fMin * 2, ctx.paramNombre("Hauteur max", 1760));
       // UNE SEULE VOIE : le suivi porte sur le canal de gauche, une hauteur étant une propriété de

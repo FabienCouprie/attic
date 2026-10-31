@@ -10,8 +10,8 @@ Le graphe nodal d'Attic est composé de trois couches qui partagent trop d'état
    transitions ; l'exécuteur rend par les canaux `affichage`, `designe` et `moteur` de
    `core/types.ts`, et plus aucun plugin n'écrit sur `ctx.noeud.data`. Ce qui reste : le type réel
    du nœud, `DonneesNoeud` dans `src/ui/AtelierNode.tsx`, est un sac ouvert qui mêle encore saisies,
-   résultats matérialisés (`audioResultatUrl`, `audioResultatBuffer`) et douze callbacks React, et les
-   classes de champs sont déclarées dans `useExecutionGraphe.ts` plutôt que dans le cœur.
+   résultats matérialisés (`audioResultatUrl`, `audioResultatBuffer`) et douze callbacks React. Les
+   classes de champs, elles, sont dans le cœur depuis le lot 1 (`core/classes-de-champs.ts`).
    Le diagnostic d'origine suit.
    `NodeData` contient à la fois des données saisies par l'utilisateur (`zonesSelectionnees`, `parametres`, fichiers chargés) et des résultats de l'exécution (`audioResultatUrl`, `audioResultatBuffer`, `mp3Url`, `statut`). Quand un hook comme `useExecutionGraphe` réinitialise un nœud, il ne peut pas distinguer ce qui est calculé de ce qui appartient à l'utilisateur, ce qui efface des sélections de zones ou des paramètres.
 
@@ -90,7 +90,8 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 - [x] **Marquer explicitement les champs utilisateur** dans `NodeData` et exclure ces champs de `reinitialiserNoeud`.
   Fait (relu le 2026-10-31) : `core/saisies.ts` déclare les saisies, `core/cycle-de-vie.ts` les
   classes et les transitions, `src/plugins/cycle-de-vie-noeuds.test.ts` les éprouve sur toutes les
-  fiches. Reste à déplacer `CLASSES` et `CHAMPS_RESULTAT` de `useExecutionGraphe.ts` vers le cœur.
+  fiches. `CLASSES` et `CHAMPS_RESULTAT` ont rejoint le cœur (`core/classes-de-champs.ts`) avec le
+  lot 1 de la revue du 2026-10-31.
 - [x] **Ajouter des tests d'intégration** pour les scénarios les plus sensibles.
   Fait et dépassé : `src/plugins/integration.test.ts` couvre 14 chaînes
   UI → graphe → plugin (bien au-delà des 5 scénarios listés à l'origine),
@@ -108,9 +109,10 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   route). Relu le 2026-10-31 : le moteur pur s'est étendu depuis dans `core/cache-execution.ts`,
   `core/cycle-de-vie.ts`, `core/memoire.ts`, `core/conteneurs.ts`, `core/boucle-graphe.ts`,
   `core/saut-de-boucle.ts` et `core/services-domaine.ts` (34 fichiers de test dans `src/core/`),
-  mais `useExecutionGraphe.ts` est monté à 1777 lignes et la passe elle-même, `lancerUnePasse`,
-  reste une fermeture React de 1166 lignes.
-- [ ] **Générer les types des plugins** à partir de `FicheAudio` pour typer les `executer`. Pas fait : `executer(ctx: any)` est présent 470 fois dans 267 fichiers de `src/plugins/` (relevé du 2026-10-31 ; 60 fichiers en 2026-08), et `ContexteExecution` de `core/types.ts` n'est importé que par un seul plugin.
+  mais `useExecutionGraphe.ts` est monté à 1777 lignes (1624 depuis que les classes de champs sont
+  dans `core/classes-de-champs.ts`, lot 1) et la passe elle-même, `lancerUnePasse`, reste une
+  fermeture React de 1166 lignes.
+- [x] **Générer les types des plugins** à partir de `FicheAudio` pour typer les `executer`. Fait le 2026-10-31 (lot 1 de la revue) : `executer(ctx: any)` était présent 469 fois dans 267 fichiers de `src/plugins/` ; il n'en reste aucun. L'annotation retirée, le tableau `as FicheAudio[]` type le contexte par inférence ; 33 erreurs sont sorties, dont huit fiches cachées derrière `as unknown as FicheAudio[]` parce que `ValeurAudio` ne déclarait pas la séquence, le spectrogramme ou le cercle qu'elles rendaient. L'union dit désormais les quinze types qui circulent, et les fonctions d'aide prennent `ContexteAudio`.
 - [x] **Introduire des tests de non-régression** qui rejouent des graphes de référence.
   Fait (relu le 2026-10-31) : `tests-e2e/empreintes.json` surveille 74 composants isolés et
   `tests-e2e/empreintes-exemples.json` le son de chaque exemple livré, chaîne entière.
@@ -121,7 +123,7 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   (couleurs de nœuds, badges de temps d'exécution, placement de notes/cadres,
   éditeur de formules, etc.). `useExecutionGraphe.ts` : 538 lignes.
   Relu le 2026-10-31 : `App.tsx` 1449 lignes (37 états, 35 `useCallback`, 13 `useEffect`, sept
-  hooks métier), `useExecutionGraphe.ts` 1777. Les deux sont dans la dette de `LINE-COUNT.md`.
+  hooks métier), `useExecutionGraphe.ts` 1777, puis 1624 après le lot 1. Les deux sont dans la dette de `LINE-COUNT.md`.
 
 ### Long terme
 

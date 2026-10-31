@@ -270,7 +270,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Pénalité de répétition. Élevée = évite de répéter les mêmes mots.",
         docEn: "Repetition penalty. High = avoids repeating the same words." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const promptEntree = ctx.entree(0);
       const prompt = typeof promptEntree === "string" && promptEntree.trim()
         ? promptEntree
@@ -340,7 +340,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine aléatoire (0 = nouveau réseau à chaque exécution).",
         docEn: "Random seed (0 = new network each run)." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       // Graine 0 : tirée une fois ici, passée au calcul et montrée dans le message — la convention
       // du projet, sans laquelle un résultat réussi ne pouvait pas être rejoué.
       const { graine } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
@@ -374,7 +374,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Anti-répétition", nomEn: "Repetition penalty", plage: [1.0, 2.0], pas: 0.1, defaut: 1.3,
         doc: "Pénalité de répétition. Élevée = évite de répéter les mêmes phrases.", docEn: "Repetition penalty. High = avoids repeating the same phrases." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const promptEntree = ctx.entree(0);
       const prompt = typeof promptEntree === "string" && promptEntree.trim()
         ? promptEntree
@@ -425,7 +425,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Créativité", nomEn: "Temperature", plage: [0.1, 1.5], pas: 0.1, defaut: 0.9,
         doc: "Température. Élevée = plus créatif ; basse = plus prévisible.", docEn: "Temperature. High = more creative; low = more predictable." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const promptEntree = ctx.entree(0);
       const prompt = typeof promptEntree === "string" && promptEntree.trim()
         ? promptEntree

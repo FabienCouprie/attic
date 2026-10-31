@@ -20,6 +20,7 @@ import { garderIntervalles, formaterMots, tranche, type Mot } from "../audio/par
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
 import { choixLangues } from "../core/langues";
@@ -126,15 +127,13 @@ export const fiches = ([
         "Il change le temps de calcul et non les instants trouvés.",
         "It changes the compute time and not the instants found."),
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pont = api();
       if (!pont?.paroleAligner) {
         return { valeurs: [null, null, null], erreur: true, message: traduire("msg.n_cessite_electron") };
       }
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucune_entr_e") };
-      }
+      const audio = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(audio)) return audio;
       const texte = typeof ctx.entree(1) === "string" ? String(ctx.entree(1)).trim() : "";
       if (!texte) {
         return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aligner.sans_texte") };

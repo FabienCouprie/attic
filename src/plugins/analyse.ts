@@ -5,6 +5,7 @@ import { avecDoc, avecNomDicte } from "./notices";
 import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, analyserEmotion, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
 import { langueCourante, traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { lireModeleEmbarque } from "../modele-embarque";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { genererSvgGoniometre, mesurerStereo, pointsGoniometre, verdictStereo } from "../audio/stereo-correlation";
@@ -48,9 +49,9 @@ function noeudMeyda(
       { nom: "Agrégation", nomEn: "Aggregation", type: "choix", options: ["Moyenne", "Médiane", "Maximum"], optionIds: ["moyenne","mediane","maximum"], defaut: "Moyenne",
         doc: "Méthode de combinaison des valeurs par trame.", docEn: "Aggregation method for the per-frame values.", optionsEn: ["Average", "Median", "Maximum"], defautEn: "Average" },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e_audio") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const fenetre = ctx.paramNombre("Fenêtre", 2048);
       const pas = ctx.paramNombre("Pas", 1024);
       const aggregation = ctx.paramTexte("Agrégation", "Moyenne") as OptionsCentroidSpectral["aggregation"];
@@ -67,9 +68,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "Analyse", nomEn: "Analysis", type: "texte" }],
     parametres: [],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const resultat = analyserAudio(audio);
       return { valeurs: [audio, resultat.description] };
    }, nomEn: "Audio Analysis", resumeEn: "Analyse tempo, key, song/instrumental type.",
@@ -109,7 +110,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Plus petite valeur écrite. Une note jouée entre deux cases est ramenée sur la grille : c'est ce qui rend la partition lisible, et ce qui lui fait perdre le détail de l'interprétation.",
         docEn: "Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       const recue = ctx.entree(1);
       // L'ARBRE PORTÉ PAR LA SÉQUENCE SERT QUAND LE PORT N'EST PAS BRANCHÉ. Un arbre tiré sur son
@@ -134,7 +135,7 @@ export const fiches: FicheAudio[] = ([
         }));
         const xmlVoix = voixVersMusicXML(parties, {
           titre: ctx.paramTexte("Titre", "Attic"),
-          tempo: recue.tempo ?? ctx.paramNombre("Tempo", 120),
+          tempo: (estSequence(recue) ? recue.tempo : undefined) ?? ctx.paramNombre("Tempo", 120),
         });
         const nomV = `${(ctx.paramTexte("Titre", "Attic") || "attic").replace(/[^\w-]+/g, "-")}.musicxml`;
         return {
@@ -228,9 +229,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Plage haute", nomEn: "Range high", type: "nombre", plage: [80, 240], pas: 1, defaut: 160,
         doc: "Borne haute de la plage de repli. La plage doit couvrir au moins une octave (le double de la borne basse) : plus étroite, aucun tempo n'a toujours un double ou une moitié dedans, et le repli est abandonné.", docEn: "Upper bound of the folding range. The range must span at least an octave (twice the lower bound): narrower, no tempo is sure to have its double or half inside, and folding is dropped." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(audio)) return audio;
       const brut = analyserAudio(audio);
       const correction = ctx.paramTexte("Correction d'octave", "plage");
       const bas = ctx.paramNombre("Plage basse", 80), haut = ctx.paramNombre("Plage haute", 160);
@@ -260,9 +261,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre de points dessinés dans la figure. Plus il y en a, plus le nuage est dense, et plus le SVG est lourd.",
         docEn: "Number of points drawn in the figure. More points means a denser cloud, and a heavier SVG." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(audio)) return audio;
       const gauche = audio.getChannelData(0);
       // Un fichier mono n'a qu'un canal : c'est alors le même des deux côtés, et la
       // mesure dira « mono » — ce qui est la vérité, et non une erreur.
@@ -291,9 +292,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "Analyse", nomEn: "Analysis", type: "texte" }],
     parametres: [],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const resultat = analyserEmotion(audio);
       return { valeurs: [audio, resultat.description], message: traduire("emotion.verdict", resultat.emotion, Math.round(resultat.confiance * 100)) };
    },
@@ -304,7 +305,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }, { nom: "Analyse", nomEn: "Analysis", type: "texte" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const audioIn = ctx.entree(0);
       const texte = ctx.entree(1);
       if (typeof texte !== "string") return { valeurs: [null], message: traduire("msg.branchez_la_sortie_analyse") };
@@ -320,10 +321,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mode", type: "choix", options: ["IA (ONNX)","Heuristique"], optionsEn: ["AI (ONNX)", "Heuristic"], optionIds: ["ai", "heuristic"], defaut: "IA (ONNX)", defautEn: "AI (ONNX)", nomEn: "Mode" },
       { nom: "Durée", plage: [5,120], defaut: 30, unite: "s", nomEn: "Duration" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       await annoncerModele(ctx, "classificateur-genre", traduire("progress.extraction_des_caract_ristiques"));
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const duree = ctx.paramNombre("Durée", 30);
       const mode = ctx.paramTexte("Mode", "ai");
       let buf: ArrayBuffer | undefined;
@@ -384,7 +385,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo du fichier MIDI", nomEn: "MIDI tempo", plage: [40,240], defaut: 120, unite: "BPM", docEn: "Tempo of the generated MIDI file." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const audio = ctx.entree(0);
       if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
       const methode = ctx.paramTexte("Méthode", "mono");
@@ -445,9 +446,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée de chaque fenêtre d'analyse. Plus courte = plus précis temporellement mais moins stable ; plus longue = plus stable mais moins détaillé.",
         docEn: "Duration of each analysis window. Shorter = more time-precise but less stable; longer = more stable but less detailed." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e_audio") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const langue = langueCourante();
       const fenetre = ctx.paramNombre("Fenêtre d'analyse", 0.5);
       ctx.onProgress(traduire("progress.analyse_harmonique"));

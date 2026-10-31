@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { monoGrave } from "../audio/mono-grave";
 import { centroide, morphingSpectral } from "../audio/morphing-spectral";
 import { valeursParametre } from "../audio/courbe";
@@ -30,9 +31,9 @@ export const fiches: FicheAudio[] = ([
         doc: "À 100 %, le côté grave disparaît entièrement ; à 50 %, il en garde la moitié. Le réglage sert, parce qu'un grave entièrement mono resserre parfois une réverbération qu'on avait voulue large.",
         docEn: "At 100 % the low side vanishes entirely; at 50 % half of it remains. The setting is useful, because a fully mono bass sometimes tightens a reverberation one had wanted wide." },
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       const r = monoGrave(voie(e, 0), voie(e, 1), ctx.paramNombre("Coupure", 120), e.sampleRate,
         ctx.paramNombre("Quantité", 100) / 100);
       const out = new AudioBuffer({ numberOfChannels: 2, length: e.length, sampleRate: e.sampleRate });
@@ -76,11 +77,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Taille de l'analyse. Longue, elle sépare mieux les partiels et brouille les attaques ; courte, l'inverse. Deux mille quarante-huit points font quarante-six millisecondes à 44,1 kHz.",
         docEn: "Analysis size. Long, it separates partials better and blurs attacks; short, the reverse. Two thousand and forty-eight points are forty-six milliseconds at 44.1 kHz." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0), b = ctx.entree(1);
-      if (!(a instanceof AudioBuffer) || !(b instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 2 }), b = entreeAudio(ctx, 1, { sorties: 2 });
+      if (sansEntree(a)) return a;
+      if (sansEntree(b)) return b;
       const taille = Math.round(Number(ctx.paramTexte("Fenêtre", "2048"))) || 2048;
       const melange = ctx.paramNombre("Mélange", 50) / 100;
       const n = Math.max(a.length, b.length);

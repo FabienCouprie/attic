@@ -13,9 +13,9 @@ import {
   type OptionsVitesse, type StructureResonateurs,
 } from "../audio/concret";
 import { parCanal } from "./hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const en = () => langueCourante() === "en";
-const aucuneEntree = () => (en() ? "No audio input." : "Aucune entrée audio.");
 
 /** « 0 4 7 », « 0, 3, 7, 10 » ou « 0;5;7 » : des demi-tons, dans n'importe quel ordre. */
 export function lireIntervalles(texte: string): number[] {
@@ -45,9 +45,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Transposition max", nomEn: "Transposition max", modulationDe: "Transposition", type: "curseur", plage: [-48, 48], pas: 0.1, defaut: 12, unite: "demi-tons", uniteEn: "semitones",
         doc: "Transposition que vaut le un de la courbe.", docEn: "Transposition that the curve's one means." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: aucuneEntree() };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       try {
         const rapports = rapportsDeVitesse(a.length, ctx.paramNombre("Transposition", -12), ctx.entree(1), {
           min: ctx.paramNombre("Transposition min", -12), max: ctx.paramNombre("Transposition max", 12),
@@ -98,11 +98,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Part que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
         docEn: "Share that the curve's one means. A value below Modulation min reverses the direction of travel." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0), b = ctx.entree(1);
-      if (!(a instanceof AudioBuffer) || !(b instanceof AudioBuffer)) {
-        return { valeurs: [null], message: en() ? "Two sounds are needed." : "Il faut deux sons." };
-      }
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0), b = entreeAudio(ctx, 1);
+      if (sansEntree(a)) return a;
+      if (sansEntree(b)) return b;
       // Sans courbe branchée, on passe le NOMBRE : la boucle de mélange garde son chemin exact.
       const modulation = ctx.entree(2);
       const mix = estCourbe(modulation)
@@ -169,9 +168,9 @@ export const fiches: FicheAudio[] = ([
       }),
       ...bornesModulation(modulationNommee("Brillance", "Brightness", [0, 100], "%")),
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: aucuneEntree() };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const structure = String(ctx.paramTexte("Structure", "harmonique")).toLowerCase() as StructureResonateurs;
       const fondamentale = ctx.paramNombre("Fondamentale", 110);
       // LA COURBE DU T60 SE LIT SUR LA LONGUEUR DE L'ENTRÉE ; au-delà, sa dernière valeur tient, ce

@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 // liste complète le rend insensible à un regroupement futur.
 import { toutesLesFiches as fiches } from "./index";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
+import { ctxDEssai } from "../core/contexte-essai";
 
 function trouver(id: string) { return fiches.find((f) => f.id === id); }
 
@@ -21,20 +22,8 @@ async function midiTest() {
   );
 }
 
-const ctx = (fichierMidi: File) => ({
-  entree: (i: number) => (i === 0 ? fichierMidi : null),
-  entrees: () => [fichierMidi],
-  paramTexte: (_nom: string, def: string) => def,
-  paramNombre: (nom: string, def: number) => {
-    const params: Record<string, number> = {
-      "Canal MIDI": 10,
-      Volume: 80,
-    };
-    return params[nom] ?? def;
-  },
-  onProgress: () => {},
-  runtime: { sampleRate: 44100 },
-});
+const ctx = (fichierMidi: File) =>
+  ctxDEssai([fichierMidi], { "Canal MIDI": 10, Volume: 80 }, { runtime: { sampleRate: 44100 } });
 
 describe("drum-synth plugin", () => {
   it("est enregistré", () => {

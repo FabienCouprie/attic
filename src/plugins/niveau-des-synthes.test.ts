@@ -21,6 +21,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { toutesLesFiches } from ".";
 import type { FicheAudio } from "../audio/types-domaine";
+import { ctxDEssai } from "../core/contexte-essai";
 
 /** La crête à laquelle `versBuffer` normalise avant d'appliquer le volume. */
 const CRETE_NORMALISEE = 0.9;
@@ -43,13 +44,7 @@ const PLANCHER_EPROUVES = 9;
 const EXEMPTEES: Record<string, string> = {};
 
 function contexte() {
-  return {
-    entree: () => undefined,
-    sortieBranchee: () => false,
-    paramNombre: (_nom: string, defaut: number) => defaut,
-    paramTexte: (_nom: string, defaut: string) => defaut,
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai([], {}, { sortieBranchee: () => false }) as never;
 }
 
 const cretheDe = (v: unknown): number => {

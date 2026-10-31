@@ -18,8 +18,7 @@ import {
   timbreEtire, timbreHarmonique, type Partiel,
 } from "../audio/dissonance";
 import { analyser, modules, TAILLE_TRAME, SAUT } from "../audio/spectral-wishart";
-
-const sansEntree = () => ({ valeurs: [null], message: traduire("msg.aucune_entr_e") });
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 /** Les partiels d'un son : ceux de la trame la plus forte, là où le timbre est le plus net. */
 export function partielsDuSon(
@@ -74,11 +73,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Profondeur minimale d'un creux pour être retenu, en fraction de l'amplitude de la courbe. Monter ce réglage ne garde que les intervalles francs ; le baisser fait apparaître les degrés que le timbre ne supporte qu'à peine.",
         docEn: "Minimum depth for a dip to be kept, as a fraction of the curve's range. Raising it keeps only the clear intervals; lowering it brings out the degrees the timbre barely supports." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const combien = Math.round(ctx.paramNombre("Partiels", 8));
       const mode = ctx.paramTexte("Timbre", "mesure");
-      const entree = ctx.entree(0);
 
       let partiels: Partiel[];
       let origine: string;
@@ -90,7 +88,8 @@ export const fiches: FicheAudio[] = ([
         partiels = timbreEtire(250, combien, e);
         origine = `${en ? "timbre stretched by" : "timbre étiré de"} ${e}`;
       } else {
-        if (!(entree instanceof AudioBuffer)) return sansEntree();
+        const entree = entreeAudio(ctx, 0, { sorties: 3 });
+        if (sansEntree(entree)) return entree;
         partiels = partielsDuSon(entree.getChannelData(0), entree.sampleRate, TAILLE_TRAME, combien);
         origine = en ? "measured from the sound" : "mesuré sur le son";
       }
@@ -168,10 +167,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Taille de la fenêtre d'analyse. Une fenêtre longue sépare mieux les partiels voisins, donc mesure mieux la rugosité d'un accord tenu ; une fenêtre courte suit mieux un passage qui bouge.",
         docEn: "Analysis window size. A long window separates neighbouring partials better, hence measures a held chord's roughness better; a short one follows a moving passage better." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return sansEntree();
+      const e = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(e)) return e;
       const taille = parseInt(ctx.paramTexte("Finesse", "2048"), 10) || TAILLE_TRAME;
       const saut = Math.max(1, Math.round(taille / (TAILLE_TRAME / SAUT)));
       const trames = analyser(e.getChannelData(0), taille, saut).map(modules);
@@ -232,7 +231,7 @@ export const fiches: FicheAudio[] = ([
         doc: "La hauteur du degré zéro, en numéro de note MIDI, le do central valant 60. Elle remplace celle que l'accordage porte.",
         docEn: "The pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const recu = ctx.entree(0) as Accordage | null;
       if (!recu || !Array.isArray(recu.degres) || recu.degres.length === 0) {

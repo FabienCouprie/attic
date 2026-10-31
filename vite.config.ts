@@ -41,7 +41,14 @@ export default defineConfig({
   // et le runner d'intégration continue est plus lent qu'elle. Un échec de délai ne dit alors rien
   // du code, seulement de la charge, et c'est la pire sorte : il fait douter d'un résultat juste.
   // Soixante secondes ne coûtent rien — seuls les tests qui se bloquent VRAIMENT les paient.
-  test: { include: ['src/**/*.test.ts', 'electron/**/*.test.ts', 'scripts/**/*.test.ts'], testTimeout: 60000 },
+  test: {
+    include: ['src/**/*.test.ts', 'electron/**/*.test.ts', 'scripts/**/*.test.ts'],
+    // LE CONTENEUR AudioBuffer EST LÀ POUR TOUT CAS, sans que chacun l'importe : trente-cinq fichiers
+    // en recopiaient la classe, cinquante-trois importaient celle-ci. Le portage natif, quand un
+    // cas le charge, écrase ces globales sans condition, et garde donc le dernier mot.
+    setupFiles: ['src/audio/polyfill-audiobuffer.ts'],
+    testTimeout: 60000,
+  },
 })
 
 // Vite dev server does not always serve .wasm files with the correct MIME type,

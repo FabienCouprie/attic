@@ -17,6 +17,7 @@ import {
 import { traduire } from "../i18n";
 import { parUneFois } from "./hors-lot";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const INERTE = "Sans effet tant qu'aucune crête ne dépasse le plafond.";
 const INERTE_EN = "No effect while no peak exceeds the ceiling.";
@@ -91,9 +92,9 @@ export const fiches = ([
         doc: `La vitesse à laquelle le gain remonte après le maintien. ${INERTE}`,
         docEn: `The speed at which the gain rises after the hold. ${INERTE_EN}` },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const reglages: ReglagesLimiteur = {
         gainDb: ctx.paramNombre("Gain", 0),
         plafondDbtp: ctx.paramNombre("Plafond", -1),
@@ -116,4 +117,4 @@ export const fiches = ([
       return { valeurs: [sortie], message };
     },
   },
-] as unknown as FicheAudio[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

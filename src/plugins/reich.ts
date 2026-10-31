@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -33,9 +34,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondu appliqué pour que la source boucle sans clic. Il raccourcit la boucle d'autant, ce dont le calcul du cycle tient compte.",
         docEn: "Crossfade applied so the source loops without a click. It shortens the loop by that much, which the cycle computation accounts for." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { dephasage, ecartPourPeriode, longueurBoucleEffectiveSec } = await import("../audio/reich");
       const fonduBoucleSec = ctx.paramNombre("Fondu de boucle", 50) / 1000;
       const cycle = ctx.paramNombre("Cycle", 60);

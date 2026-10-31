@@ -30,8 +30,8 @@ function safeFileName(nom: string): string {
 interface CoordEntree { nom: string; chemin: string; x: number; y: number }
 interface RapportEntree { nom: string; chemin: string; groupe: number; probabilites?: number[] }
 
-function parserJson<T>(texte: string | null | undefined): T[] | null {
-  if (!texte || !texte.trim()) return null;
+function parserJson<T>(texte: unknown): T[] | null {
+  if (typeof texte !== "string" || !texte.trim()) return null;
   try {
     const v = JSON.parse(texte);
     return Array.isArray(v) ? v : null;
@@ -81,7 +81,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine du décor procédural (0 = décor différent à chaque exécution). Ne change pas la position des points, calquée sur les coordonnées reçues.", docEn: "Procedural backdrop seed (0 = different backdrop each run). Does not affect point position, which follows the received coordinates." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = (window as any).api;
       if (!api?.ecrireFichier) return { valeurs: [], erreur: true, message: traduire("msg.n_cessite_electron") };
 

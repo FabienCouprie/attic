@@ -21,6 +21,7 @@
 // attrape.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./effets-spectral";
 
 const SR = 16000;
@@ -48,18 +49,9 @@ function sonEssai(secondes = 1, { canaux = 2, sr = SR } = {}): AudioBuffer {
 }
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}, data: Record<string, unknown> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    // `reverbe-convolution` lit `ctx.noeud.data.irFichier` pour savoir s'il a reçu une réponse
-    // impulsionnelle : sans ce champ, le contexte le ferait échouer pour une raison étrangère.
-    noeud: { data },
-    runtime: null,
-    onProgress: () => {},
-  } as never;
+  // `reverbe-convolution` lit `ctx.noeud.data.irFichier` pour savoir s'il a reçu une réponse
+  // impulsionnelle : sans ce champ, le contexte le ferait échouer pour une raison étrangère.
+  return ctxDEssai(entrees, reglages, { data }) as never;
 }
 
 const fiche = (id: string) => {

@@ -9,6 +9,7 @@ import { avecDoc } from "./notices";
 import { filtrerBande, reponseFdn, rt60Mesure, traiterFdn } from "../audio/fdn";
 import { MODULATION_MIX, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
 import { valeurA, valeurMax } from "../audio/courbe";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -75,11 +76,9 @@ export const fiches: FicheAudio[] = ([
         defauts: [2000, 12000],
       }),
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(entree)) return entree;
       const { numberOfChannels: canaux, length, sampleRate } = entree;
       const rt60Bas = ctx.paramNombre("RT60 grave", 2);
       const rt60Haut = ctx.paramNombre("RT60 aigu", 0.7);

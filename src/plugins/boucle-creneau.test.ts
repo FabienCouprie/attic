@@ -5,9 +5,9 @@
 // qu'elle remplit. Les deux preuves qui comptent : que le contenu reçoive bien sa place, donc qu'il
 // puisse en dépendre, et que la fin plie ce qu'il rend à la largeur du créneau, sans quoi le créneau
 // ne serait qu'une étiquette.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
+import { ctxDEssai } from "../core/contexte-essai";
 import type { Sequence } from "../audio/sequence";
 import {
   FICHE_CRENEAU_DEBUT, FICHE_CRENEAU_FIN, planifierBoucle, planifierBoucles, publierBoucle,
@@ -21,14 +21,7 @@ const fin = fichesCreneau.find((f) => f.id === FICHE_CRENEAU_FIN)!;
 const rythme = fichesArbre.find((f) => f.id === "rythme-sur-hauteurs")!;
 const formule = fichesFormule.find((f) => f.id === "formule-sequence")!;
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ctxDEssai(entrees, params);
 
 /** Ce que le pilote fait, reproduit : une passe de découverte, puis les suivantes. */
 async function mener(

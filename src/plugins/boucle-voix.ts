@@ -35,7 +35,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Séquence", nomEn: "Sequence", type: "sequence" }],
     sorties: [{ nom: "Séquence", nomEn: "Sequence", type: "sequence" }],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       if (!estSequence(entree) || entree.notes.length === 0) {
         return {
@@ -79,7 +79,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Séquence", nomEn: "Sequence", type: "sequence" }],
     sorties: [{ nom: "Séquence", nomEn: "Sequence", type: "sequence" }],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       if (!estSequence(entree)) {
         return {

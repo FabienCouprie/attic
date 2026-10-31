@@ -160,7 +160,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine pour les pochettes procédurales (0 = aléatoire). Même graine = mêmes pochettes.",
         docEn: "Seed for procedural cover art (0 = random). Same seed = same covers." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const titre = ctx.paramTexte("Titre", "Ma galerie");
       const repertoire = ctx.paramTexte("Répertoire MP3", "");
       const sortieDir = ctx.paramTexte("Répertoire de sortie", "");

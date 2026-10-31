@@ -7,10 +7,12 @@
 // l'ordre d'évaluation des modules. Les pièces communes n'ont donc aucune dépendance sur les
 // fiches, et les deux fichiers de fiches en dépendent tous les deux.
 import { traduire } from "../i18n";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { PARAMETRE_CALCUL } from "./parametre-calcul";
 import { messageEchecPont } from "./pont-electron";
 import { relayerProgression } from "./progression-pont";
 import type { ContexteDeRelais } from "./progression-pont";
+import type { ContexteAudio } from "../audio/types-domaine";
 
 /**
  * Les dix langues que l'amont donne pour les mieux tenues.
@@ -253,8 +255,8 @@ export const SORTIE_NOTICE_EN = "The « Audio » output returns the sound, in st
  * avant d'avoir constaté qu'il y a de quoi travailler.
  */
 export async function rendreSurAudio(
-  ctx: any, annoncer: () => Promise<unknown>,
-  supplements: (ctx: any, source: AudioBuffer) => Record<string, unknown>,
+  ctx: ContexteAudio, annoncer: () => Promise<unknown>,
+  supplements: (ctx: ContexteAudio, source: AudioBuffer) => Record<string, unknown>,
 ) {
   const pont = api();
   if (!pont?.acestepRendre) {
@@ -264,10 +266,8 @@ export async function rendreSurAudio(
   if (typeof plan !== "string" || plan.trim() === "") {
     return { valeurs: [null], erreur: true, message: traduire("msg.chanson.aucunPlan") };
   }
-  const source = ctx.entree(1);
-  if (!(source instanceof AudioBuffer)) {
-    return { valeurs: [null], erreur: true, message: traduire("msg.aucune_entr_e_audio") };
-  }
+  const source = entreeAudio(ctx, 1);
+  if (sansEntree(source)) return source;
 
   await annoncer();
   const [audioSource, audioTimbre] = [await octetsWav(source), await octetsWav(ctx.entree(2))];

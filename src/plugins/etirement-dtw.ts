@@ -12,6 +12,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { reetirerParChemin } from "../audio/reetirage-dtw";
 import { SAUT_TRAME_CHROMAGRAMME } from "../audio/analyse";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -27,12 +28,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Piste alignée", nomEn: "Aligned track", type: "audio" },
     ],
     parametres: [],
-    async executer(ctx: any) {
-      const audioA = ctx.entree(0);
+    async executer(ctx) {
+      const audioA = entreeAudio(ctx, 0);
       const cheminBrut = ctx.entree(1);
-      if (!(audioA instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.connecter.audio") };
-      }
+      if (sansEntree(audioA)) return audioA;
       if (typeof cheminBrut !== "string" || !cheminBrut.trim()) {
         return { valeurs: [null], message: traduire("msg.connecter_chemin_alignement") };
       }

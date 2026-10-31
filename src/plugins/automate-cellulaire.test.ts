@@ -1,44 +1,32 @@
 // plugins/automate-cellulaire.test.ts
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./automate-cellulaire";
 
 function trouver(id: string) { return fiches.find((f) => f.id === id); }
 
-const ctx = {
-  entree: () => null,
-  entrees: () => [],
-  paramTexte: (nom: string, def: string) => {
-    const params: Record<string, string> = {
-      Topologie: "1D",
-      Règle: "90",
-      "Mode voix": "Polyphonie",
-      Mapping: "Hauteur",
-      Clé: "Do",
-      Gamme: "Pentatonique majeure",
-      Synthèse: "FM/Oscillateurs",
-    };
-    return params[nom] ?? def;
-  },
-  paramNombre: (nom: string, def: number) => {
-    const params: Record<string, number> = {
-      "Règle personnalisée": 90,
-      Largeur: 8,
-      Hauteur: 8,
-      Générations: 8,
-      Graine: 0,
-      Octave: 4,
-      "Durée note": 0.25,
-      Vélocité: 100,
-      Volume: 80,
-      "Densité max": 4,
-      "Probabilité mutation": 0,
-      Instrument: 0,
-    };
-    return params[nom] ?? def;
-  },
-  onProgress: () => {},
-};
+const ctx = ctxDEssai([], {
+  Topologie: "1D",
+  Règle: "90",
+  "Mode voix": "Polyphonie",
+  Mapping: "Hauteur",
+  Clé: "Do",
+  Gamme: "Pentatonique majeure",
+  Synthèse: "FM/Oscillateurs",
+  "Règle personnalisée": 90,
+  Largeur: 8,
+  Hauteur: 8,
+  Générations: 8,
+  Graine: 0,
+  Octave: 4,
+  "Durée note": 0.25,
+  Vélocité: 100,
+  Volume: 80,
+  "Densité max": 4,
+  "Probabilité mutation": 0,
+  Instrument: 0,
+});
 
 describe("automate-cellulaire plugin", () => {
   it("est enregistré", () => {

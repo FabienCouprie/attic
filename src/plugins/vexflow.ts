@@ -50,7 +50,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Hauteur", nomEn: "Height", plage: [100, 400], pas: 10, defaut: 160, unite: "px",
         doc: "Hauteur du SVG.", docEn: "SVG height." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const notation = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Notation", "C4/q D4/8 E4/8 F4/q G4/q");
@@ -94,7 +94,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Hauteur", nomEn: "Height", plage: [100, 400], pas: 10, defaut: 160, unite: "px",
         doc: "Hauteur du SVG.", docEn: "SVG height." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const tabText = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Tablature", "6-3/q 5-0/q 5-2/q 4-0/q 5-3/q");
@@ -143,7 +143,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Hauteur", nomEn: "Height", plage: [100, 600], pas: 10, defaut: 200, unite: "px",
         doc: "Hauteur du SVG.", docEn: "SVG height." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const texte = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Accords", "C Am F G");
@@ -202,7 +202,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Hauteur", nomEn: "Height", plage: [100, 400], pas: 10, defaut: 160, unite: "px",
         doc: "Hauteur du SVG.", docEn: "SVG height." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       const progression = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Progression", "I V vi IV");
@@ -240,7 +240,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Hauteur", nomEn: "Height", plage: [100, 800], pas: 10, defaut: 200, unite: "px",
         doc: "Hauteur du SVG.", docEn: "SVG height." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const midi = parseMidi(new Uint8Array(await fichier.arrayBuffer()));

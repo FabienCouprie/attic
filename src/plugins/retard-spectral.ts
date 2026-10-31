@@ -7,6 +7,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { MODULATION_MIX_NOMMEE, bornesModulation, portModulation, reglageModule } from "./effets-aides";
 import { longueurTraine, retardDeGroupe, retardSpectral } from "../audio/retard-spectral";
 
@@ -53,11 +54,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Dispersion que vaut le un de la courbe. C'est aussi ce qui fixe la longueur de la traîne quand une courbe est branchée : elle se mesure sur la dispersion la plus forte que le rendu atteindra.",
         docEn: "Dispersion that the curve's one means. It is also what sets the tail length when a curve is connected: the tail is measured on the strongest dispersion the render will reach." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0);
+      if (sansEntree(entree)) return entree;
       const sections = Math.round(ctx.paramNombre("Sections", 200));
       const dispersion = ctx.paramNombre("Dispersion", 0.9);
       const versLeGrave = ctx.paramTexte("Sens", "grave") !== "aigu";

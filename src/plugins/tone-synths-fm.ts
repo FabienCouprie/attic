@@ -131,7 +131,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Envelope release time after the note ends.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const mode = ctx.paramTexte("Mode", "FM") as "FM" | "AM";
       const note = ctx.paramTexte("Note", "C4");
       const duree = ctx.paramNombre("Durée", 1.5);
@@ -253,7 +253,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Time for the resonance to ramp down to zero.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const note = ctx.paramTexte("Note", "C4");
       const duree = ctx.paramNombre("Durée", 2);
       const volume = ctx.paramNombre("Volume", 80);
@@ -318,7 +318,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Output level of the drum kit.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null, null], message: traduire("msg.aucun_midi") };
       const canal = ctx.paramNombre("Canal MIDI", 10);

@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import {
   NOMBRE_OR, pointSpirale, rapportDistanceParTour, rapportValide, type OptionsSpatiale,
 } from "../audio/spirale-spatiale";
@@ -51,12 +52,10 @@ export const fiches: FicheAudio[] = ([
         doc: "De combien l'air ferme l'aigu avec la distance. À zéro, s'éloigner ne fait que baisser le niveau, ce qu'un simple gain ferait aussi ; c'est le timbre qui dit la distance quand le niveau ment.",
         docEn: "How far the air closes the high end with distance. At zero, receding only lowers the level, which a plain gain would do too; it is timbre that tells distance when level lies." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null], message: en ? "Connect a sound." : "Branchez un son." };
-      }
+      const entree = entreeAudio(ctx, 0);
+      if (sansEntree(entree)) return entree;
 
       const choix = ctx.paramTexte("Rapport par tour", "double");
       const o: OptionsSpatiale = {

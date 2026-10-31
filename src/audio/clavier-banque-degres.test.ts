@@ -14,7 +14,6 @@
 // LE CAS QUI COMPTE LE PLUS EST LA NEUTRALITÉ : un accordage à douze degrés égaux doit rendre
 // EXACTEMENT les hauteurs du clavier ordinaire. Sans cela, poser un accordage déplacerait le son
 // sans qu'on l'ait demandé.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { accordageDepuisCents, accordageEgal, hauteurDuDegre } from "./accordage";

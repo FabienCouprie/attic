@@ -62,7 +62,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
         doc: "Niveau du rendu.", docEn: "Level of the render." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const choix = ctx.paramTexte("Rapport par tour", "or");
       const rapport = rapportValide(RAPPORTS[choix] ?? ctx.paramNombre("Rapport libre", 1.62));

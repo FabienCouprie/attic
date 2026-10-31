@@ -4,9 +4,9 @@
 // Il ne savait pas naître de ce que le reste du catalogue produit, c'est-à-dire des fichiers MIDI :
 // aucun des quatre cents composants ne pouvait l'alimenter. Une fonction reprise d'ailleurs restait
 // donc isolée, ce que l'évaluation d'OpenMusic désignait comme le défaut à éviter.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 import { writeMidi } from "midi-file";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./midi-vers-sequence";
 import { estSequence } from "../audio/sequence";
 
@@ -31,14 +31,8 @@ function midi(notes: { note: number; canal: number }[], bpm = 120): File {
   return new File([octets as BlobPart], "essai.mid", { type: "audio/midi" });
 }
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "midi-vers-sequence", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) =>
+  ctxDEssai(entrees, params, { ficheId: "midi-vers-sequence" });
 
 describe("MIDI vers séquence", () => {
   it("REND UNE SÉQUENCE QUE LE FLUX RECONNAÎT", async () => {

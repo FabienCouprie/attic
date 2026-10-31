@@ -18,7 +18,7 @@
 // une écoute rapide, en synthèse locale, timbre sinus, à un niveau fixe. Qui veut choisir son
 // moteur, son timbre ou son volume branche le point d'écoute, qui est fait pour cela.
 
-import type { FicheAudio } from "../audio/types-domaine";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 
 /** Le niveau de cette écoute rapide, celui que le point d'écoute prend par défaut. */
 const VOLUME = 80;
@@ -62,7 +62,7 @@ export function avecSortieAudio(def: FicheAudio): FicheAudio {
     sorties: [...sorties, { nom: "Audio", nomEn: "Audio", type: "audio" }],
     notice: def.notice ? `${def.notice}\n\n${MENTION}` : def.notice,
     noticeEn: def.noticeEn ? `${def.noticeEn}\n\n${MENTION_EN}` : def.noticeEn,
-    async executer(ctx: any) {
+    async executer(ctx) {
       const rendu = await original.call(def, ctx);
       const valeurs = [...(rendu?.valeurs ?? [])];
       while (valeurs.length < rangAudio) valeurs.push(null);
@@ -73,7 +73,7 @@ export function avecSortieAudio(def: FicheAudio): FicheAudio {
 }
 
 /** Le son d'une séquence, ou rien : rien quand le port est libre, quand la séquence est vide, ou en cas d'échec. */
-async function rendreSiBranche(ctx: any, rang: number, valeur: unknown): Promise<AudioBuffer | null> {
+async function rendreSiBranche(ctx: ContexteAudio, rang: number, valeur: unknown): Promise<AudioBuffer | null> {
   if (typeof ctx?.sortieBranchee !== "function" || !ctx.sortieBranchee(rang)) return null;
   const { estSequence, dureeSequence } = await import("../audio/sequence");
   if (!estSequence(valeur) || valeur.notes.length === 0) return null;

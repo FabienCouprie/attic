@@ -15,6 +15,7 @@ import { decalerFormantsHorsFil } from "./formants-hors-fil";
 
 import { MODULATION_MIX, MODULATION_MIX_NOMMEE, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
 import { choixValeurs } from "../audio/valeurs-note";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -61,9 +62,9 @@ export const fiches: FicheAudio[] = ([
         ...modulationNommee("Résonance", "Resonance", [0.5, 20], "Q"), defauts: [1, 15], pas: 0.5,
       }),
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { wahwah } = await import("../audio");
       return { valeurs: [wahwah(
         a, ctx.paramNombre("Fréquence", 2),
@@ -110,9 +111,9 @@ export const fiches: FicheAudio[] = ([
       ...bornesModulation(MODULATION_MIX_NOMMEE),
       ...bornesModulation(modulationNommee("Profondeur", "Depth", [0, 100], "%")),
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { phaser } = await import("../audio");
       return { valeurs: [phaser(a, ctx.paramNombre("Fréquence", 0.5),
         reglageModule(ctx, a.length, 3, { reglage: "Profondeur", defaut: 80, rendu: "pourCent", noms: ["Profondeur min", "Profondeur max"] }),
@@ -152,9 +153,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Écart que vaut le un de la courbe.", docEn: "Deviation that the curve's one means." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { vibrato } = await import("../audio");
       // Un seul chemin : sans courbe, un tableau plat à la valeur du réglage.
       const profondeur = valeursParametre(ctx.entree(3), a.length, ctx.paramNombre("Profondeur", 50), {
@@ -191,9 +192,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Mélange que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
         docEn: "Mix that the curve's one means. A value below Modulation min reverses the direction of travel." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { octaver } = await import("../audio");
       // Sans courbe branchée, on passe le NOMBRE et non un tableau constant : la boucle garde
       // exactement le chemin qu'elle avait, et sa sortie ne bouge pas d'un bit.
@@ -239,9 +240,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 16, unite: "Hz",
         doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { chopper } = await import("../audio");
       const typeStr = ctx.paramTexte("Type", "Dur");
       // Un seul chemin : sans courbe, un tableau plat à la valeur du réglage.
@@ -284,9 +285,9 @@ export const fiches: FicheAudio[] = ([
         ...modulationNommee("Feedback", "Feedback", [0, 95], "%"), defauts: [0, 80],
       }),
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { beatRepeat } = await import("../audio");
       const intervalStr = ctx.paramTexte("Intervalle", "1/4");
       const sizeStr = ctx.paramTexte("Taille", "1/16");
@@ -330,9 +331,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Feedback max", nomEn: "Feedback max", modulationDe: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 80, unite: "%",
         doc: "Réinjection que vaut le un de la courbe.", docEn: "Feedback that the curve's one means." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       return { valeurs: [await appliquerEchoPingPong(a, ctx.paramNombre("Temps", 350), ctx.paramNombre("Feedback", 40), ctx.paramNombre("Répartition", 50),
       {
         temps: ctx.entree(1), bornesTemps: { min: ctx.paramNombre("Temps min", 100), max: ctx.paramNombre("Temps max", 800) },
@@ -352,9 +353,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
         doc: "Quantité de signal réinjecté (plus = plus de répétitions et plus longue montée).", docEn: "Amount of signal fed back (more = more repetitions and longer build-up)." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       return { valeurs: [appliquerEchoInverse(a, ctx.paramNombre("Temps", 350), ctx.paramNombre("Feedback", 40))] };
    },
   },
@@ -371,9 +372,9 @@ export const fiches: FicheAudio[] = ([
         defaut: "Chipmunk",
         doc: "Type de transformation vocale.", docEn: "Voice transformation preset." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const effet = ctx.paramTexte("Effet", "Chipmunk");
       // Le décalage de formants, seule étape qui figeait, est calculé hors du fil.
       return {
@@ -401,9 +402,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "Graine aléatoire (0 = nouvel ordre à chaque exécution). Même graine = même découpe.", docEn: "Random seed (0 = new order each run). Same seed = same slice order." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const parts = ctx.paramNombre("Parts", 8);
       const crossfade = ctx.paramNombre("Crossfade", 5);
       const mode = ctx.paramTexte("Mode", "Random");
@@ -443,9 +444,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Mix", nomEn: "Mix", type: "nombre", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const iterations = ctx.paramNombre("Itérations", 60);
       const phase = ctx.paramTexte("Phase initiale", "aleatoire");
       const fftSize = ctx.paramNombre("FFT", 2048);

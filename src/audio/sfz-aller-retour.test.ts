@@ -15,7 +15,6 @@
 // ET LE CAS RELIT SA PROPRE SORTIE, ce qui est la preuve et non le texte. Vérifier la chaîne écrite
 // dirait seulement qu'on a écrit quelque chose ; la faire relire par l'analyseur du dépôt dit qu'on a
 // écrit la bonne chose, et dans l'unité que le lecteur attend.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { versSfz, type Banque, type Zone } from "./clavier-banque";

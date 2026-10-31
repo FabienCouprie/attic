@@ -87,7 +87,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { genererReservoirMusical, rendreReservoirAudio, rendreSequence, notesVersFichierMidi, appliquerInstrumentMidi } = await import("../audio");
       const resolution = ctx.paramTexte("Résolution", "1/8");
       const pasParBeat = resolution === "1/4" ? 1 : resolution === "1/16" ? 4 : 2;
@@ -217,7 +217,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Influence croisée du rythme sur les autres voix. 0 = indépendantes, 100% = les autres ne jouent que sur les pas rythmiques.",
         docEn: "Cross-influence of rhythm on other voices. 0 = independent, 100% = others only play on rhythmic steps." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const { genererMultiReservoir } = await import("../audio");
       const resolution = ctx.paramTexte("Résolution", "1/8");
       const pasParBeat = resolution === "1/4" ? 1 : resolution === "1/16" ? 4 : 2;

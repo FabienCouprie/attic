@@ -7,7 +7,7 @@
 import { useEffect, useRef } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import { estUnChampDeSaisie } from "../champ-de-saisie";
-import { CHAMPS_COPIABLES, CHAMPS_UTILISATEUR } from "./useExecutionGraphe";
+import { CHAMPS_COPIABLES, CHAMPS_UTILISATEUR } from "../../core/classes-de-champs";
 import { idUnique } from "../ids";
 import { tailleDefaut } from "../tailles-noeuds";
 import { registreUI } from "../registre-actif";

@@ -112,7 +112,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Ajouté au nom avant l'extension. Sert à distinguer deux passages successifs du même lot dans un même dossier, ou simplement à marquer ce qui a été traité.",
         docEn: "Added to the name before the extension. Useful to tell two successive runs of the same batch apart in one folder, or simply to mark what has been processed." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const lot = lotCourant();
       const audio = ctx.entree(0);

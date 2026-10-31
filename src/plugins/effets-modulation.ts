@@ -13,6 +13,7 @@ import { valeursParametre } from "../audio/courbe";
 import { CADENCE } from "../audio/courbe";
 import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -30,9 +31,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Décalage des formants (filtre vocal) en %. 100% = pas de changement. >100% = formants plus hauts (voix plus claire/aiguë). <100% = formants plus bas (voix plus sombre/grave). Pour conversion homme→femme : Hauteur +12, Formants 120%. Pour femme→homme : Hauteur −12, Formants 80%.",
         docEn: "Formant shift (vocal tract filter) in %. 100% = no change. >100% = higher formants (brighter/higher voice). <100% = lower formants (darker/lower voice). For male→female: Pitch +12, Formants 120%. For female→male: Pitch −12, Formants 80%." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { shiftFormants } = await import("../audio");
       const pitch = ctx.paramNombre("Hauteur", 0);
       const formantRatio = ctx.paramNombre("Formants", 100) / 100;
@@ -58,9 +59,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Après", nomEn: "After", plage: [0, 240], pas: 0.1, defaut: 1, unite: "s",
         doc: "Silence ajouté à la fin de la piste (en secondes).", docEn: "Silence added at the end of the track (in seconds)." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const avant = Math.max(0, ctx.paramNombre("Avant", 1));
       const apres = Math.max(0, ctx.paramNombre("Après", 1));
       if (avant === 0 && apres === 0) return { valeurs: [a], message: traduire("msg.aucun_silence_ajouter") };
@@ -110,9 +111,9 @@ export const fiches: FicheAudio[] = ([
         optionsEn: FORMES_ONDE_CHOIX.en, optionsHeritees: LIBELLES_HERITES_FORMES, defaut: "Sinus",
         doc: "Forme de l'onde de modulation.", docEn: "LFO waveform shape.", defautEn: "Sine" },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const freq = ctx.paramNombre("Fréquence", 5);
       // Un seul chemin : sans courbe, une constante à la valeur du réglage.
       const profondeurs = valeursParametre(ctx.entree(1), a.length, ctx.paramNombre("Profondeur", 50) / 100,
@@ -136,9 +137,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fin", nomEn: "End", type: "curseur", plage: [0.25, 4], pas: 0.05, defaut: 2, unite: "x",
         doc: "Facteur d'étirement à la fin.", docEn: "Stretch factor at the end." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { etirementGlissant } = await import("../audio");
       const debut = ctx.paramNombre("Début", 1);
       const fin = ctx.paramNombre("Fin", 2);
@@ -173,9 +174,9 @@ export const fiches: FicheAudio[] = ([
       // il la dépasserait, ce qui n'est plus une largeur. La borne montait à deux cents.
       ...bornesModulation(modulationNommee("Largeur", "Width", [0, 100], "%")),
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { spatialiserStereo } = await import("../audio");
       const pos = ctx.paramNombre("Position", 0) / 100;
       // LA LARGEUR SE LIT À LA CADENCE DE LA TRAJECTOIRE, non par échantillon : c'est déjà celle
@@ -219,9 +220,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 8, unite: "Hz",
         doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const { autoPan } = await import("../audio");
       const freq = ctx.paramNombre("Fréquence", 2);
       // Un seul chemin : sans courbe, un tableau plat à la valeur du réglage.

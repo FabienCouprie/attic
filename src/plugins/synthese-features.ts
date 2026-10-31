@@ -56,7 +56,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Remesurer le son produit et afficher l'écart famille par famille. C'est la seule preuve que le composant s'approche de quelque chose, et cela double son temps de calcul. « Non » ne rend que le son.",
         docEn: "Re-measure the sound produced and show the deviation family by family. It is the only proof the node comes close to anything, and it doubles the computation time. « No » returns the sound only." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       const lu = lireVecteurJson(ctx.entree(0));
       if (!lu) return { valeurs: [null, null], message: traduire("msg.syntheseFeatures.sansVecteur") };

@@ -81,7 +81,7 @@ export const fiches: FicheAudio[] = ([
         doc: "La vélocité du partiel le plus fort ; les autres suivent leur amplitude.",
         docEn: "The velocity of the loudest partial; the others follow their amplitude." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       // LE RÉGLAGE REND L'IDENTIFIANT, PAS LE LIBELLÉ : c'est l'identifiant qui est enregistré,
       // pour qu'un graphe rouvert dans l'autre langue retrouve le même procédé. Le message, lui,
       // doit dire le nom que le réglage affiche, et non « serie ».

@@ -6,6 +6,7 @@
 // un nom que la fiche ne déclare pas retomberait sur son repli et ne bougerait rien : il tomberait ici.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./egaliseur-parametrique";
 import { fiches as fichesEffets } from "./effets-spectral";
 
@@ -23,11 +24,7 @@ function son(): AudioBuffer {
 }
 
 function contexte(params: Record<string, number>, entree: unknown = son()) {
-  return {
-    entree: () => entree,
-    paramNombre: (nom: string, defaut: number) => params[nom] ?? defaut,
-    paramTexte: (_nom: string, defaut: string) => defaut,
-  };
+  return ctxDEssai([entree], params);
 }
 
 /** Chaque bande a un gain : aucun réglage n'est inerte à ce point de départ. */

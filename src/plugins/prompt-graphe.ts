@@ -498,7 +498,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Délai avant abandon (mode Ollama uniquement). Le premier appel à un modèle doit le charger en mémoire.",
         docEn: "Timeout before aborting (Ollama mode only). The first call to a model must load it into memory." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const promptEntree = ctx.entree(0);
       const prompt = typeof promptEntree === "string" && promptEntree.trim()
         ? promptEntree

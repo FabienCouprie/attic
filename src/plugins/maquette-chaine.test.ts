@@ -8,9 +8,9 @@
 // ET CE QU'IL FIXE COMME LIMITE. L'écriture mesurée ne survit ni au déplacement ni à l'étirement.
 // C'est une conséquence de ce qu'un arbre rythmique DIT, non un manque du placement, et un test
 // vaut mieux qu'une phrase pour que personne n'aille l'y remettre.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
+import { ctxDEssai } from "../core/contexte-essai";
 import type { Sequence } from "../audio/sequence";
 import { fiches as fichesArbre } from "./arbre-rythmique";
 import { fiches as fichesMaquette } from "./maquette";
@@ -22,14 +22,7 @@ const maquette = fichesMaquette.find((f) => f.id === "maquette")!;
 const quantifier = fichesQuantification.find((f) => f.id === "quantifier-rythme")!;
 const musicxml = fichesAnalyse.find((f) => f.id === "musicxml")!;
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ctxDEssai(entrees, params);
 
 const QUATRE_NOIRES = "(4/4 (1 1 1 1))";
 const AVEC_TRIOLET = "(4/4 (1 (1 (1 1 1)) 1 1))";

@@ -5,6 +5,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { rendreMidi, appliquerInstrumentMidi } from "../audio";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -19,9 +20,9 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 100, unite: "%" },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const vol = ctx.paramNombre("Volume", 100);
       if (vol >= 100) return { valeurs: [audio, { debut: 0, duree: audio.duration }] };
       const buf = new AudioBuffer({ numberOfChannels: audio.numberOfChannels, length: audio.length, sampleRate: audio.sampleRate });
@@ -46,7 +47,7 @@ export const fiches: FicheAudio[] = ([
       PARAMETRE_INSTRUMENT_SF2_SUIVI,
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi") };
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
@@ -73,7 +74,7 @@ export const fiches: FicheAudio[] = ([
       PARAMETRE_INSTRUMENT_SF2_SUIVI,
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const midi = ctx.noeud.data.midiFichier as File | undefined;
       if (!midi) return { valeurs: [null, null], message: traduire("msg.chargez_un_fichier_midi") };
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
@@ -98,7 +99,7 @@ export const fiches: FicheAudio[] = ([
       PARAMETRE_INSTRUMENT_SF2_SUIVI,
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 80, unite: "%" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       console.log("[attic] Point d'écoute MIDI : exécution démarrée");
       const midi = ctx.entree(0);
       if (!(midi instanceof File)) return { valeurs: [null, null], message: traduire("msg.aucun_midi") };

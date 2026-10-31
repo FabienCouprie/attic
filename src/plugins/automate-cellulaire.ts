@@ -217,7 +217,7 @@ const FICHES: FicheAudio[] = [
       },
       PARAMETRE_INSTRUMENT_SF2,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const regleTexte = ctx.paramTexte("Règle", "90");
       const regle = regleTexte === "Personnalisée" || regleTexte === "Custom"
         ? ctx.paramNombre("Règle personnalisée", 90)

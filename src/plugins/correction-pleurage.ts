@@ -16,6 +16,7 @@ import {
 } from "../audio/correction-pleurage";
 import { traduire } from "../i18n";
 import { parUneFois } from "./hors-lot";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { avecDoc } from "./notices";
 
 const pourCent = (x: number, chiffres = 2) => (100 * x).toFixed(chiffres);
@@ -113,9 +114,9 @@ export const fiches = ([
         doc: "Gardée : seules les variations autour de la moyenne sont retirées, et la durée reste. Corrigée : la référence revient aussi à sa fréquence nominale.",
         docEn: "Kept: only the variations around the mean are removed, and the duration stays. Corrected: the reference also returns to its nominal frequency." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const demande: DemandePleurage = {
         canaux: Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c)),
         sr: audio.sampleRate,
@@ -136,4 +137,4 @@ export const fiches = ([
       return { valeurs: [sortie, { valeurs: new Float32Array(r.ecart), cadence: 200 }], message: messageDe(r, demande) };
     },
   },
-] as unknown as FicheAudio[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

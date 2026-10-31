@@ -1,28 +1,7 @@
 // audio/multi-reservoir.test.ts — Vérification du générateur multi-réservoir.
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { parseMidi } from "midi-file";
 import { genererMultiReservoir } from "./multi-reservoir";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
-}
-
-beforeAll(() => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-});
 
 function config() {
   return {
@@ -53,7 +32,7 @@ function config() {
 describe("genererMultiReservoir", () => {
   it("renvoie un mix audio + 4 fichiers MIDI", () => {
     const res = genererMultiReservoir(config() as any);
-    expect(res.buffer).toBeInstanceOf(AudioBufferPolyfill);
+    expect(res.buffer).toBeInstanceOf(AudioBuffer);
     expect(res.buffer.numberOfChannels).toBe(2);
     expect(res.buffer.length).toBeGreaterThan(0);
     expect(res.midis).toBeDefined();

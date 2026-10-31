@@ -10,6 +10,7 @@
 // dont la mesure a montré qu'il ne construit rien sur cette tâche. Et celui de la tonalité, parce
 // que le nœud voisin rend `G major (87%)` là où le moteur attend `G major`.
 import { describe, expect, it } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches, planDepuis, tonaliteNormalisee } from "./composer-plan";
 
 const champs = {
@@ -106,11 +107,7 @@ describe("planDepuis", () => {
   // « Terminé », et ce plan part ensuite vers un modèle de rendu. Le nœud violait ainsi la forme
   // que sa propre documentation fixe : « G major » ou « A minor ».
 
-  const ctxTonalite = (valeur: string | null) => ({
-    entree: (i: number) => (i === 3 ? valeur : null),
-    paramTexte: (_nom: string, defaut: string) => defaut,
-    paramNombre: (_nom: string, defaut: number) => defaut,
-  });
+  const ctxTonalite = (valeur: string | null) => ctxDEssai([null, null, null, valeur]);
 
   const noeud = () => fiches.find((f) => f.id === "composer-plan")!;
 

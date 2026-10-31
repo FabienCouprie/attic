@@ -6,10 +6,10 @@
 // qu'on entend, les instants sont respectés, et deux banques différentes sur la MÊME séquence
 // donnent deux sons différents. Sans cette dernière, le composant pourrait ignorer sa banque et
 // personne ne le verrait.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { fiches } from "./sequence-sur-banque";
+import { ctxDEssai } from "../core/contexte-essai";
 import { construireBanque } from "../audio/clavier-banque";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import type { Sequence } from "../audio/sequence";
@@ -43,14 +43,8 @@ const sequence = (notes: [number, number, number][]): Sequence => ({
   tempo: 120,
 });
 
-const contexte = (entrees: unknown[], params: Record<string, number | string> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "sequence-sur-banque", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, number | string> = {}) =>
+  ctxDEssai(entrees, params, { ficheId: "sequence-sur-banque" });
 
 const jouer = async (entrees: unknown[], params: Record<string, number | string> = {}) =>
   fiche.executer(contexte(entrees, params) as any);

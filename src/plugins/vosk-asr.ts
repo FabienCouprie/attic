@@ -31,6 +31,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { baseModeleLivre } from "./base-modeles";
 import { annoncerModele } from "./message-modele";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { choixLangues } from "../core/langues";
 
 /** Les modèles livrés, et le fichier de chacun sous `oonx/`. */
@@ -237,12 +238,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Liste de mots séparés par des espaces ou des virgules. Donnée, elle restreint ce que le moteur peut reconnaître à ces seuls mots, ce qui relève beaucoup la justesse sur un lexique fermé. Laissée vide, le vocabulaire entier du modèle est employé.",
         docEn: "Words separated by spaces or commas. When given, it restricts what the engine may recognise to those words alone, which greatly raises accuracy on a closed lexicon. Left empty, the model's whole vocabulary is used." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = (await import("../i18n")).langueCourante() === "en";
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e_audio") };
-      }
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const langue = ctx.paramTexte("Langue", "fr");
       const choisi = MODELES[langue] ?? MODELES.fr;
       await annoncerModele(ctx, "vosk-asr", traduire("progress.vosk.chargement"));

@@ -84,7 +84,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Fixe le tirage. La même graine rend la même mélodie.",
         docEn: "Fixes the draw. The same seed gives the same melody." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const recu = ctx.entree(0);
       const modele = estSequence(recu) && recu.notes.length > 1
         ? [...recu.notes].sort((a, b) => a.debut - b.debut).map((n) => n.note)

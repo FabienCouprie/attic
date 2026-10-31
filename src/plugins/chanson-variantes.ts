@@ -65,7 +65,7 @@ export const fiches = ([
       PARAMETRE_MODELE,
       ...PARAMETRES_RENDU,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const annoncer = () => annoncerModele(ctx, "reprendre-chanson", traduire("progress.chanson.modeles"), paquetsEcartes(ctx));
       return rendreSurAudio(ctx, annoncer, (c) => ({
         // LA LISTE PORTE LE NOM DE LA TÂCHE DANS SON IDENTIFIANT D'OPTION : « Avec » vaut `cover`
@@ -109,7 +109,7 @@ export const fiches = ([
       PARAMETRE_MODELE,
       ...PARAMETRES_RENDU,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const annoncer = () => annoncerModele(ctx, "retoucher-chanson", traduire("progress.chanson.modeles"), paquetsEcartes(ctx));
       return rendreSurAudio(ctx, annoncer, (c) => ({
         tache: "repaint",
@@ -153,7 +153,7 @@ export const fiches = ([
       PARAMETRE_MODELE,
       ...PARAMETRES_RENDU,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const annoncer = () => annoncerModele(ctx, "prolonger-chanson", traduire("progress.chanson.modeles"), paquetsEcartes(ctx));
       return rendreSurAudio(ctx, annoncer, (c, source) => ({
         // LA PLAGE SE CALCULE DANS LE PROCESSUS PRINCIPAL, qui porte le relevé des deux formules.
@@ -210,7 +210,7 @@ export const fiches = ([
         docEn: "Makes the plan reproducible. At minus one, every run differs." },
       PARAMETRE_CALCUL,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const pont = api();
       if (!pont?.acestepPlanifier) {
         return { valeurs: [null, null], erreur: true, message: traduire("msg.n_cessite_electron") };

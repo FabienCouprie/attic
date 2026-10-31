@@ -9,9 +9,9 @@
 // ET CE QUI ARRONDIT PAR DÉFINITION EST DIT AUSSI. Une classe de hauteur est l'un des douze degrés :
 // l'analyse par ensembles ramène au demi-tonMIDI le plus proche, et ce n'est pas une perte du
 // câble. Le test l'écrit, pour qu'on ne prenne pas un jour cette propriété pour un défaut.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
+import { ctxDEssai } from "../core/contexte-essai";
 import { estSequence, type Sequence } from "../audio/sequence";
 import type { Note } from "../audio/note";
 import { fiches as fichesTheorie } from "./theorie-composition";
@@ -21,14 +21,7 @@ const voicings = fichesTheorie.find((f) => f.id === "voicings-accords")!;
 const ensembles = fichesTheorie.find((f) => f.id === "classes-hauteurs")!;
 const conduite = fichesRythmeVoix.find((f) => f.id === "distance-conduite-voix")!;
 
-const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ({
-  noeud: { id: "n1", data: { ficheId: "x", parametres: params } },
-  runtime: null,
-  entree: (i: number) => entrees[i] ?? null,
-  entrees: () => entrees,
-  paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-  paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-});
+const contexte = (entrees: unknown[], params: Record<string, string | number> = {}) => ctxDEssai(entrees, params);
 
 const note = (n: number, debut: number): Note => ({ note: n, velocite: 90, debut, fin: debut + 1 });
 

@@ -8,8 +8,8 @@
 // NI ELECTRON NI DÉCODEUR RÉEL : `lireFichierAudio` et `decodeAudioData` sont remplacés par des
 // doubles qui font circuler le CHEMIN au lieu des octets — ce qui suffit à vérifier que le bon
 // fichier est demandé pour la bonne région, et garde le test instantané.
-import "../audio/polyfill-audiobuffer";
 import { describe, expect, it, vi } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { fiches, decodeurElectron } from "./clavier-sfz";
 import { banqueVive, oublierBanque } from "../audio/banques-vives";
 import { banqueDepuisRendus, type Banque } from "../audio/clavier-banque";
@@ -56,15 +56,9 @@ function contexte(o: {
   runtime: unknown; id?: string; chemin?: string | undefined; notes?: unknown[];
   entree?: Banque | null; params?: Record<string, string | number>;
 }) {
-  const params = o.params ?? {};
-  return {
-    noeud: { id: o.id ?? "n1", data: { sfzChemin: o.chemin, sequenceNotes: o.notes } },
-    runtime: o.runtime,
-    entree: () => o.entree ?? null,
-    entrees: () => (o.entree ? [o.entree] : []),
-    paramTexte: (nom: string, defaut: string) => String(params[nom] ?? defaut),
-    paramNombre: (nom: string, defaut: number) => Number(params[nom] ?? defaut),
-  };
+  return ctxDEssai(o.entree ? [o.entree] : [], o.params ?? {}, {
+    id: o.id, runtime: o.runtime, data: { sfzChemin: o.chemin, sequenceNotes: o.notes },
+  });
 }
 
 const NOTES = [

@@ -88,7 +88,7 @@ The « Circle » output carries the positions and their pitches, with no duratio
         doc: "Garder le degré qui atteint l'octave. À garder pour le gamelan, dont l'octave est étirée.",
         docEn: "Keep the degree that reaches the octave. Keep it for the gamelan, whose octave is stretched." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const id = ctx.paramTexte("Gamme", GAMMES_REUNIES[0].id);
       const fondamentale = parseInt(ctx.paramTexte("Fondamentale", "60"), 10) || 60;
       const places = ctx.paramTexte("Places", "degre") as PlacesDeGamme;

@@ -47,7 +47,7 @@ export const fiches: FicheAudio[] = ([
     // n'était pas nécessaire tant que la nullité suffisait à le signaler, et le serait devenu
     // silencieux sans lui.
     sortieNullePermise: true,
-    async executer(ctx: any) {
+    async executer(ctx) {
       console.log("[attic] Clavier mélodie : exécution démarrée");
       const notes = ctx.noeud.data.sequenceNotes as NoteEvenement[] | undefined;
       if (!notes || !Array.isArray(notes)) return { valeurs:[null, null], message:traduire("msg.aucune_s_quence") };
@@ -115,7 +115,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le niveau de ce qui s'entend sous les doigts, et celui de la sortie « Audio ».",
         docEn: "The level of what sounds under the fingers, and that of the « Audio » output." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
       // L'ACCORDAGE REÇU, OU LE REPLI DÉCLARÉ. Le repli n'est pas un silence : le nœud dit de quelle
       // source son réseau vient, de sorte qu'un réseau à douze degrés faute d'entrée branchée ne se
@@ -187,7 +187,7 @@ export const fiches: FicheAudio[] = ([
         doc:"Graine de la mélodie. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici. Toute autre valeur rejoue exactement la même mélodie.",
         docEn:"Seed for the melody. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same melody." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       // SANS FICHIER DÉPOSÉ, CE COMPOSANT N'A RIEN À JOUER, ET IL LE DIT.
       //
       // IL ALLAIT CHERCHER `/soundbank/waterdrop.mp3`, QUI N'A JAMAIS EXISTÉ — vérifié sur toute
@@ -261,7 +261,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine du bruit. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici. Toute autre valeur rejoue exactement le même bruit, échantillon par échantillon.",
         docEn: "Seed for the noise. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same noise, sample for sample." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const type = ctx.paramTexte("Type", "Blanc");
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const buf = genererBruit(type, ctx.paramNombre("Durée", 2), ctx.paramNombre("Volume", 80), aleatoire);
@@ -296,7 +296,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée du signal généré.", docEn: "Duration of the generated signal." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 80, unite: "%" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const saisie = ctx.paramTexte("Saisie", "frequency").trim().toLowerCase();
       const enModeNote = saisie === "note" || saisie.startsWith("note");
       let freq: number;
@@ -364,7 +364,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre de canaux de sortie.", docEn: "Number of output channels.", defautEn: "Stereo" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 30, unite: "%" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const formule = ctx.paramTexte("Formule", "sin(t * 2 * pi * 440)");
       const duree = ctx.paramNombre("Durée", 2);
       const channels = ctx.paramTexte("Canaux", "stereo") === "mono" ? 1 : 2;
@@ -406,7 +406,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Click sound. Click = short transient; Woodblock = woody resonance; Beep = brief sine.", defautEn: "Click" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 90, unite: "%" },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const tempo = ctx.paramNombre("Tempo", 120);
       const sig = ctx.paramTexte("Signature", "4/4");
       const duree = ctx.paramNombre("Durée", 10);

@@ -22,11 +22,12 @@
 // donc le suivi SEUL qui part dans un ouvrier, celui du nœud « Suiveur de hauteur ».
 
 import type { FicheAudio } from "../audio/types-domaine";
-import { langueCourante, traduire } from "../i18n";
+import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { CIBLES_DIFFUSION, ficheSon, resumeSon } from "../parcours/fiche-son";
 import { mesurerCopieHorsFil } from "./mesure-hors-fil";
 import { choixOuiNon } from "../core/oui-non";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -53,12 +54,10 @@ export const fiches: FicheAudio[] = ([
         doc: "La hauteur et la justesse demandent un suivi pYIN : une transformée par trame, bornée aux huit premières secondes du son. C'est négligeable sur une prise, sensible sur une collection de deux cents fichiers, et sans objet sur de la percussion, qui n'a pas de hauteur à trouver. Débranchée, la rubrique Hauteur disparaît de la fiche.",
         docEn: "Pitch and tuning need a pYIN track: one transform per frame, bounded to the sound's first eight seconds. That is negligible on a take, noticeable over a collection of two hundred files, and moot on percussion, which has no pitch to find. Switched off, the Pitch section disappears from the sheet." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
-      }
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const diffusion = ctx.paramTexte("Cible de diffusion", "aucune");
       const avecHauteur = ctx.paramTexte("Analyse de hauteur", "oui") !== "non";
       const mesure = await mesurerCopieHorsFil(audio, avecHauteur);

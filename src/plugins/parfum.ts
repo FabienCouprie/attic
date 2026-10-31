@@ -55,7 +55,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Volume de la synthèse, avant la mise au niveau visé.", docEn: "Synthesis volume, before the target level is applied." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const anglais = en();
       const choisi = ctx.paramTexte("Parfum", "citron");
       const odeur = odeurParId(choisi);

@@ -45,7 +45,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Nom du fichier écrit, dans le répertoire de travail. Une extension connue est respectée ; sinon elle est déduite du type réel du film.",
         docEn: "Name of the file written, in the working directory. A known extension is respected; failing that it is deduced from the film's actual type." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = (window as any).api;
       if (!api?.ecrireFichier) {
         return { valeurs: [null], message: traduire("msg.n_cessite_electron") };

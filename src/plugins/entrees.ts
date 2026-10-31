@@ -128,7 +128,7 @@ const entrees: FicheAudio[] = [
     // Même dispositif de synthèse que « Lecteur MIDI » (sorties.ts) : la
     // performance capturée est un fichier MIDI comme un autre une fois
     // enregistrée (posé sur ctx.noeud.data.midiFichier par l'inspecteur).
-    async executer(ctx: any) {
+    async executer(ctx) {
       const midi = ctx.noeud.data.midiFichier as File | undefined;
       if (!midi) return { valeurs: [null, null], message: traduire("msg.aucune_performance_midi_cliquez_sur_enregistrer_dans_l_inspecteur") };
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));

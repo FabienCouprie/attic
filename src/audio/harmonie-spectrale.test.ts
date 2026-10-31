@@ -4,7 +4,6 @@
 // UN SPECTRE SE CONTRÔLE PAR SES CENTS. Dire « le septième partiel est un si bémol » ne prouve
 // rien ; dire qu'il tombe à trente et un cents sous le si bémol tempéré est une valeur publiée
 // depuis deux siècles, et une erreur d'un demi-ton comme d'un centième s'y verrait aussitôt.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { frequenceDeNoteMidi, noteMidiDeFrequence } from "./commun";

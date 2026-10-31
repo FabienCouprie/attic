@@ -10,7 +10,6 @@
 // LE TROISIÈME CAS EST CELUI QU'IL FAUT GARDER. Une mise en œuvre fautive pourrait fabriquer la
 // pulsation en ajoutant un son très grave à la bonne vitesse : l'enveloppe serait juste, et tout le
 // reste tomberait. Le spectre le dit, et rien d'autre ne le dirait.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import {

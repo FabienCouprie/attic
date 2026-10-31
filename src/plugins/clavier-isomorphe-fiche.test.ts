@@ -17,21 +17,13 @@ import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { accordageEgal, type Accordage } from "../audio/accordage";
 import { CASES } from "../audio/clavier-isomorphe";
+import { ctxDEssai } from "../core/contexte-essai";
 import { estResultatEnErreur } from "../core/execution";
 import { traduire } from "../i18n";
 
 /** Le contexte d'exécution : une entrée, des réglages, et la séquence posée sur le nœud. */
 function ctx(o: { accordage?: Accordage | null; params?: Record<string, string | number>; notes?: unknown[] }) {
-  const params = o.params ?? {};
-  return {
-    entree: () => o.accordage ?? null,
-    entrees: () => [o.accordage ?? null],
-    paramTexte: (nom: string, def: string) => String(params[nom] ?? def),
-    paramNombre: (nom: string, def: number) => Number(params[nom] ?? def),
-    onProgress: () => {},
-    noeud: { data: { sequenceNotes: o.notes } },
-    runtime: null,
-  } as never;
+  return ctxDEssai([o.accordage ?? null], o.params ?? {}, { data: { sequenceNotes: o.notes } }) as never;
 }
 
 const fiche = () => registre.trouverDef("clavier-isomorphe")!;

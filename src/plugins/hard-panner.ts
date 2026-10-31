@@ -5,6 +5,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { hardPanner } from "../audio";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -36,11 +37,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Pan position: hard left, center, or hard right.",
       },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
-      }
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const pos = ctx.paramTexte("Position", "Centre").toLowerCase();
       const position = pos.includes("gauche") || pos.includes("left")
         ? "gauche"

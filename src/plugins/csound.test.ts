@@ -17,8 +17,8 @@
 // ET LE CHEMIN D'ÉCHEC COMPTE AUTANT. Csound est un langage : l'utilisateur écrit du texte, et ce
 // texte sera souvent faux. Un orchestre qui ne compile pas doit rendre un rapport lisible et non
 // une exception, et c'est la moitié de l'ergonomie de ces cinq nœuds.
-import "../audio/polyfill-audiobuffer";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ctxDEssai } from "../core/contexte-essai";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 
 // `vi.mock` ET NON `vi.spyOn`, et la différence n'est pas de style. Le module des fiches lie
@@ -81,16 +81,7 @@ function midiEssai(n = 4): File {
 }
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    noeud: { data: {} },
-    runtime: null,
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages) as never;
 }
 
 const fiche = (id: string) => {

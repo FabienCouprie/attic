@@ -8,6 +8,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { separerStn, type ReglagesStn, type ResultatStn } from "../audio/stn";
 import { parCanal } from "./hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
@@ -50,11 +51,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Largeur de la zone où un point appartient aux deux matières à la fois, en proportion ; c'est l'apport de l'article. À zéro, le partage redevient tout ou rien : plus net, et plus bruyant sur la matière qui n'est franchement ni l'une ni l'autre. Dans les deux cas les trois sorties, additionnées, redonnent le son de départ.",
         docEn: "Width of the zone where a point belongs to both materials at once, in proportion; this is the paper's contribution. At zero the split goes back to all-or-nothing: cleaner-cut, and noisier on material that is frankly neither. In both cases the three outputs, added together, give back the original sound." },
     ],
-    async executer(ctx: any) {
-      const entree = ctx.entree(0);
-      if (!(entree instanceof AudioBuffer)) {
-        return { valeurs: [null, null, null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const entree = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(entree)) return entree;
       const reglages = {
         tailleSinus: parseInt(ctx.paramTexte("Fenêtre sinus", "4096"), 10) || 4096,
         tailleTransitoires: parseInt(ctx.paramTexte("Fenêtre transitoires", "512"), 10) || 512,

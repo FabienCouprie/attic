@@ -53,7 +53,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "curseur", plage: [0, 100], pas: 1, defaut: 70, unite: "%",
         doc: "Niveau de sortie.", docEn: "Output level." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const plan = pasDeLaSequence({
         frequence: ctx.paramNombre("Fréquence", 400),
         ecart: ctx.paramNombre("Écart", 12),

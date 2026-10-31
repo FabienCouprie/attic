@@ -12,6 +12,7 @@ import { vague } from "../audio/vague";
 import { frequenceDeRotation, platine } from "../audio/platine";
 import { enUneVoie, meilleurCreneau, poserDansLeCreneau } from "../audio/creneau";
 import { MODULATION_MELANGE, bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const en = () => langueCourante() === "en";
 const nb = (v: number, d = 1) => (en() ? v.toFixed(d) : v.toFixed(d).replace(".", ","));
@@ -48,9 +49,9 @@ export const fiches: FicheAudio[] = ([
         ...modulationNommee("Décroissance", "Decay", [0.05, 10], "s"), defauts: [0.2, 4], pas: 0.05,
       }),
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en() ? "No audio input" : "Aucune entrée audio" };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const distance = ctx.paramNombre("Distance", 3);
       const out = echoFlottant(a, {
         distance,
@@ -91,9 +92,9 @@ export const fiches: FicheAudio[] = ([
         doc: "La force du canal retardé. L'image reste du côté arrivé le premier même quand ce niveau le dépasse.",
         docEn: "The strength of the delayed channel. The image stays on the side that arrives first even when this level exceeds it." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en() ? "No audio input" : "Aucune entrée audio" };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const ms = ctx.paramNombre("Retard", 12);
       const out = haas(a, {
         retard: ms / 1000,
@@ -132,9 +133,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Le tirage des coefficients. La changer donne une autre dispersion, de même caractère.",
         docEn: "The draw of the coefficients. Changing it gives another dispersion of the same character." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en() ? "No audio input" : "Aucune entrée audio" };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const out = ubiquite(a, {
         // Le repli des bornes est donné : sa course va de moins cent à cent, non de zéro à cent.
         dispersion: reglageModule(ctx, a.length, 1, {
@@ -198,9 +199,9 @@ export const fiches: FicheAudio[] = ([
         noms: ["Ouverture min", "Ouverture max"], nomsEn: ["Opening min", "Opening max"],
       }),
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en() ? "No audio input" : "Aucune entrée audio" };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const periode = ctx.paramNombre("Période", 7);
       const out = vague(a, {
         periode,
@@ -255,9 +256,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Le tirage du bruit et des clics. La changer donne un autre disque, de même état.",
         docEn: "The draw of the noise and the clicks. Changing it gives another record in the same condition." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: en() ? "No audio input" : "Aucune entrée audio" };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const vitesse = Number(ctx.paramTexte("Vitesse", "33")) === 45 ? 45
         : Number(ctx.paramTexte("Vitesse", "33")) === 78 ? 78 : 33 + 1 / 3;
       const out = platine(a, {
@@ -313,12 +314,10 @@ export const fiches: FicheAudio[] = ([
         noms: ["Niveau min", "Niveau max"], nomsEn: ["Level min", "Level max"],
       }),
     ],
-    async executer(ctx: any) {
-      const fond = ctx.entree(0);
-      const son = ctx.entree(1);
-      if (!(fond instanceof AudioBuffer) || !(son instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: en() ? "Needs a background and a sound" : "Demande un fond et un son" };
-      }
+    async executer(ctx) {
+      const fond = entreeAudio(ctx, 0, { sorties: 2 }), son = entreeAudio(ctx, 1, { sorties: 2 });
+      if (sansEntree(fond)) return fond;
+      if (sansEntree(son)) return son;
       const c = meilleurCreneau(enUneVoie(fond), enUneVoie(son), fond.sampleRate, {
         fenetre: ctx.paramNombre("Fenêtre", 50) / 1000,
         auPlusTot: ctx.paramNombre("Au plus tôt", 0),

@@ -6,7 +6,7 @@
 // vérité extérieur au code, qu'il s'agisse d'un traité, d'un théorème ou d'une suite
 // publiée, et c'est ce qui les rend vérifiables.
 
-import type { FicheAudio } from "../audio/types-domaine";
+import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
@@ -22,6 +22,7 @@ import {
 import { SAUT_TRAME_CHROMAGRAMME, chromagrammeParTrame } from "../audio/analyse";
 import { notesDuMidi } from "./instruments-communs";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 import type { Note } from "../audio/note";
 import { degresDeGamme } from "../audio/gammes";
@@ -34,7 +35,7 @@ import { PARAMETRE_TONIQUE } from "../audio/cles";
 type NoteSimple = Note;
 
 /** Rend l'audio et le MIDI d'une suite de notes, avec les réglages de synthèse du nœud. */
-async function rendre(ctx: any, notes: NoteSimple[]): Promise<[AudioBuffer, File]> {
+async function rendre(ctx: ContexteAudio, notes: NoteSimple[]): Promise<[AudioBuffer, File]> {
   const { notesVersFichierMidi, appliquerInstrumentMidi, rendreSequence } = await import("../audio");
   const instrument = ctx.paramNombre("Instrument", 0);
   const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
@@ -107,7 +108,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "Pitch the chords are placed around. The voices then follow the shortest path, which is what makes the parsimony audible." },
       ...PARAMETRES_RENDU,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = await notesDuMidi(ctx.entree(0));
       let depart = lireTriade(ctx.paramTexte("Accord de départ", "C"), { fondamentale: 0, type: "majeur" });
       if (entree && entree.length >= 3) {
@@ -170,7 +171,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Fux interdit l'unisson ailleurs qu'au début et à la fin, parce que les deux voix s'y confondent et que l'on n'entend plus qu'une ligne.",
         docEn: "Fux forbids the unison anywhere but at the start and the end, because the two voices merge there and only one line is heard." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const lire = (texte: string): number[] => {
         const base: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
         return texte.split(/[\s,]+/).filter(Boolean).map((mot) => {
@@ -245,7 +246,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "One MIDI pitch per voice. This is what makes the tiling audible: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared." },
       ...PARAMETRES_RENDU,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const n = Math.round(ctx.paramNombre("Pulsations", 12));
       const texte = ctx.paramTexte("Motif", "0 1 2").trim();
       let motif = texte.split(/[\s,]+/).filter(Boolean).map((x: string) => parseInt(x, 10))
@@ -322,7 +323,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée de chaque note de la voix rapide.", docEn: "Length of each note of the fast voice." },
       ...PARAMETRES_RENDU,
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const longueur = Math.round(ctx.paramNombre("Notes", 64));
       const nombreVoix = Math.round(ctx.paramNombre("Voix", 1));
       const tonique = (parseInt(ctx.paramTexte("Tonique", "0"), 10) || 0)
@@ -389,9 +390,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Distance minimale entre deux frontières. Un pic large donne sinon trois ou quatre maxima qui décrivent tous la même articulation.",
         docEn: "Minimum distance between two boundaries. A broad peak otherwise gives three or four maxima all describing the same articulation." },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null, null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0, { sorties: 3 });
+      if (sansEntree(audio)) return audio;
       const dureeTrame = ctx.paramNombre("Trame", 0.5);
       // Le chromagramme avance de 512 échantillons ; on regroupe pour atteindre la durée
       // de trame demandée, seule échelle à laquelle la forme d'un morceau se voit.

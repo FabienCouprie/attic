@@ -49,7 +49,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Accorde au composant importé le droit de s'exécuter. Son code s'exécute dans un cadre isolé : il ne lit, n'écrit ni ne supprime aucun fichier, et ne joint que les adresses réseau que l'application autorise. « Refuser » refuse l'import. Avec « Autoriser », l'import montre avant l'installation le nom, les ports, les réglages et l'empreinte SHA-256 du code, et n'installe qu'après confirmation. L'autorisation est enregistrée avec le composant, et conditionne chacune de ses exécutions.",
         docEn: "Grants the imported component the right to run. Its code runs in an isolated frame: it reads, writes and deletes no file, and reaches only the network addresses the application allows. « Refuse » refuses the import. With « Authorise », the import shows the name, ports, settings and SHA-256 fingerprint of the code before installing, and installs only once confirmed. The authorisation is stored with the component, and conditions each of its runs." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const action = ctx.paramTexte("Action", "Exporter");
       const api = (window as any).api;
 

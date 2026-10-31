@@ -1,27 +1,6 @@
 // audio/io.test.ts — Sécurité de l'encodage WAV.
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { bufferVersWavBlob, bufferVersWavBlobRespirant } from "./io";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
-}
-
-beforeAll(() => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-});
 
 function echantillon16VersFloat(v: number): number {
   return v < 0 ? v / 0x8000 : v / 0x7fff;
@@ -48,7 +27,7 @@ async function lirePcmWav(blob: Blob) {
 
 describe("bufferVersWavBlob", () => {
   it("clamp les échantillons hors [-1, 1] à [-1, 1] par défaut", async () => {
-    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 2, length: 4, sampleRate: 44100 });
+    const b = new AudioBuffer({ numberOfChannels: 2, length: 4, sampleRate: 44100 });
     const left = b.getChannelData(0);
     const right = b.getChannelData(1);
     left[0] = 1.5;  right[0] = -2.0;
@@ -71,7 +50,7 @@ describe("bufferVersWavBlob", () => {
   });
 
   it("en mode sécurisé, plafonne les échantillons à [-0.5, 0.5] (-6 dBFS)", async () => {
-    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 2, length: 5, sampleRate: 44100 });
+    const b = new AudioBuffer({ numberOfChannels: 2, length: 5, sampleRate: 44100 });
     const left = b.getChannelData(0);
     const right = b.getChannelData(1);
     left[0] = 1.5;  right[0] = -2.0;
@@ -106,7 +85,7 @@ describe("l'encodage par tranches", () => {
   };
 
   function tampon(canaux: number, n: number, graine = 1) {
-    const b = new (globalThis as any).AudioBuffer({ numberOfChannels: canaux, length: n, sampleRate: 48000 });
+    const b = new AudioBuffer({ numberOfChannels: canaux, length: n, sampleRate: 48000 });
     let g = graine;
     for (let c = 0; c < canaux; c++) {
       const d = b.getChannelData(c);

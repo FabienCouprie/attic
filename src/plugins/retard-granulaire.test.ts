@@ -10,36 +10,16 @@
 // ET LES LONGUEURS SE LISENT SUR LA BORNE QUAND UNE COURBE EST BRANCHÉE, non sur le réglage, qui
 // ne sert alors à rien : une courbe de temps balayant jusqu'à une seconde demande une ligne d'une
 // seconde, que le réglage à 0,25 s ne dimensionnerait pas.
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { fiches } from "./retard-granulaire";
 import { constante } from "../audio/courbe";
-
-// `AudioBuffer` est du Web Audio, absent de l'environnement des cas : chaque fichier qui en a
-// besoin déclare le sien, comme le fait déjà une dizaine d'entre eux.
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-}
-
-beforeAll(() => { (globalThis as any).AudioBuffer = AudioBufferPolyfill; });
 
 const SR = 16000;
 const fiche: any = fiches.find((f) => f.id === "retard-granulaire")!;
 
 function source(dureeSec: number): AudioBuffer {
   const n = Math.round(dureeSec * SR);
-  const b = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+  const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
   const d = b.getChannelData(0);
   for (let i = 0; i < n; i++) d[i] = 0.4 * Math.sin((2 * Math.PI * 440 * i) / SR);
   return b;

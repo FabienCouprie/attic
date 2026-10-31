@@ -15,6 +15,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { egaliserParametrique, etagesActifs, type ReglagesEgaliseur } from "../audio/egaliseur-parametrique";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 /** Les quatre cloches, leur centre à l'ouverture : une par région où l'on corrige le plus souvent. */
 const CLOCHES = [250, 1000, 3000, 8000];
@@ -104,9 +105,9 @@ export const fiches = ([
       gain("Gain aigu", "High gain", "Ce que le plateau aigu ajoute ou retire. À zéro, il n'est pas posé.",
         "What the high shelf adds or removes. At zero, it is not applied."),
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const reglages: ReglagesEgaliseur = {
         passeHaut: ctx.paramNombre("Passe-haut", 0),
         graveFrequence: ctx.paramNombre("Fréquence grave", 100),
@@ -128,4 +129,4 @@ export const fiches = ([
       };
     },
   },
-] as unknown as FicheAudio[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

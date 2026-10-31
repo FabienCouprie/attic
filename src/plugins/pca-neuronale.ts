@@ -1,7 +1,7 @@
 // plugins/pca-neuronale.ts — Nœud PCA neuronale (Autres → Test zone).
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { appliquerPcaNeuronale } from "../audio/pca-neuronale";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
@@ -69,11 +69,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "Training time budget in milliseconds. 0 = automatic (depends on n_frames × n_bins). A budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ».",
       },
     ],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
-      }
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
       const fftSize = parseInt(ctx.paramTexte("FFT", "2048"), 10);
       const hopPercent = ctx.paramNombre("Hop", 25);
       const latentDim = ctx.paramNombre("Axes", 64);

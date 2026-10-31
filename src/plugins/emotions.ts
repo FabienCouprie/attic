@@ -145,7 +145,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Séparateur du texte produit.", docEn: "Separator of the produced text.", defautEn: "Comma",
      },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const langue = langueCourante();
       const cat = ctx.paramTexte("Catégorie", "Toutes");
       const { texte, total } = construireListeEmotions(cat, ctx.paramTexte("Format", "Virgule"), langue);

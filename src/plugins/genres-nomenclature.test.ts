@@ -14,6 +14,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 
+import { ctxDEssai } from "../core/contexte-essai";
 import { toutesLesFiches } from "./index";
 import { PROGRESSIONS_GENRE, genererDepuisScript, normaliserGenre } from "../audio/generation";
 
@@ -126,12 +127,9 @@ describe("le genre change ce qui est rendu", () => {
     // distinguent à l'œil : « I – IV – V – VI » pour le hip-hop, « I – VI – IV – V » pour la pop.
     const { registre } = await import("../audio/adaptateur");
     const fiche = registre.trouverDef("generateur-musical")!;
-    const lancer = (genre: string) => fiche.executer({
-      entree: () => null, entrees: () => [],
-      paramTexte: (nom: string, def: string) => (nom === "Genre" ? genre : def),
-      paramNombre: (_nom: string, def: number) => def,
-      onProgress: () => {}, noeud: { data: {} }, runtime: null,
-    } as never) as Promise<{ valeurs: unknown[]; message?: string }>;
+    const lancer = (genre: string) => fiche.executer(
+      ctxDEssai([], { Genre: genre }) as never,
+    ) as Promise<{ valeurs: unknown[]; message?: string }>;
 
     // La description sort par le MESSAGE du nœud, ses quatre sorties portant l'audio et trois
     // fichiers MIDI.

@@ -8,6 +8,7 @@ import {
   fusionnerPistes, bouclerAudio,
 } from "../audio";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { valeursParametre } from "../audio/courbe";
 import { enveloppeDeZones } from "../audio/dosage";
 import { creerAleatoire } from "../core";
@@ -16,7 +17,7 @@ import { creerAleatoire } from "../core";
 import { fiches as fichesBouclePlan } from "./boucle-plan";
 
 function zonesValides(z: any) {
-  return (Array.isArray(z) ? z : []).filter((x: any) => x && typeof x.debut === "number" && typeof x.duree === "number");
+  return (Array.isArray(z) ? z : []).filter((x: any): x is { debut: number; duree: number } => x && typeof x.debut === "number" && typeof x.duree === "number");
 }
 
 function fusionnerZones(zones: any[]): any[] {
@@ -91,8 +92,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Feedback max", nomEn: "Feedback max", modulationDe: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 80, unite: "%",
         doc: "Réinjection que vaut le un de la courbe.", docEn: "Feedback that the curve's one means." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null] };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0); if (sansEntree(a)) return a;
       return { valeurs: [await appliquerEchoPingPong(a, ctx.paramNombre("Temps",250), ctx.paramNombre("Feedback",35), ctx.paramNombre("Pan",80),
       {
         temps: ctx.entree(1), bornesTemps: { min: ctx.paramNombre("Temps min", 100), max: ctx.paramNombre("Temps max", 800) },
@@ -114,8 +115,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine du bruit de la réponse impulsionnelle. Valeur par défaut fixe : une réverbération qui change de pièce à chaque exécution serait un défaut.",
         docEn: "Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null] };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0); if (sansEntree(a)) return a;
       const fondu = ctx.paramNombre("Fondu", 8);
       const d = fondu > 0 ? fondu : a.duration;
       return { valeurs: [await appliquerReverbeProgressive(a, ctx.paramNombre("Taille",50), ctx.paramNombre("Début",0), ctx.paramNombre("Fin",50), d,
@@ -141,8 +142,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Ce que le un de la courbe veut dire.",
         docEn: "What the curve's one means."},
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null] };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0); if (sansEntree(a)) return a;
       // UN SEUL CHEMIN DE CALCUL : sans courbe branchée, `valeursParametre` rend une constante à
       // la valeur du réglage. Il n'existe donc pas de version « ordinaire » qui pourrait diverger
       // de la version modulée — c'est l'invariant, tenu par construction plutôt que promis.
@@ -162,10 +163,13 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }, { nom: "Zone traitée", nomEn: "Processed zone", type: "audio" }, { nom: "Zone", nomEn: "Zone", type: "controle", sousType: "zones" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [{ nom:"Fondu", plage:[0,100], defaut:15, unite:"ms", nomEn: "Fade" }],
-    async executer(ctx: any) {
-      const piste = ctx.entree(0), zoneTraitee = ctx.entree(1), zoneEntree = ctx.entree(2);
-      if (!(piste instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.piste_non_connect_e") };
-      if (!(zoneTraitee instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.zone_trait_e_non_connect_e") };
+    async executer(ctx) {
+      // Deux sons attendus, et le message dit LEQUEL manque : un test tient à ce qu'on ne les confonde pas.
+      const piste = entreeAudio(ctx, 0, { message: traduire("msg.piste_non_connect_e") });
+      const zoneTraitee = entreeAudio(ctx, 1, { message: traduire("msg.zone_trait_e_non_connect_e") });
+      const zoneEntree = ctx.entree(2);
+      if (sansEntree(piste)) return piste;
+      if (sansEntree(zoneTraitee)) return zoneTraitee;
 
       // Le port « Zone » accepte AUSSI une liste. Le sélecteur multi-zones et
       // « Extraire zones » émettent un tableau sur un port de type `controle`,
@@ -208,8 +212,8 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Selects multiple audio zones and passes them as a list.",
     entrees: [{ nom: "Audio", type: "audio" }], sorties: [{ nom: "Audio", type: "audio" }, { nom: "Zones", nomEn: "Zones", type: "controle", sousType: "zones" }, { nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }],
     parametres: [],
-    async executer(ctx: any) {
-      const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null,null,null] };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 3 }); if (sansEntree(a)) return a;
       return { valeurs:[a, (ctx.noeud.data as any).zonesSelectionnees ?? [], { debut: 0, duree: a.duration }] };
    },
  },
@@ -231,11 +235,11 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée de la rampe qui suit chaque zone, à l'extérieur d'elle également. Deux zones dont les rampes se rencontrent prennent la plus haute des deux valeurs.",
         docEn: "Length of the ramp after each zone, outside it as well. Two zones whose ramps meet take the higher of the two values." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.connectez_une_source_audio") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0);
+      if (sansEntree(a)) return a;
       const z = ctx.entree(1);
-      const zones = (Array.isArray(z) ? z : []).filter((x: any) => x && typeof x.debut === "number" && typeof x.duree === "number");
+      const zones = (Array.isArray(z) ? z : []).filter((x: any): x is { debut: number; duree: number } => x && typeof x.debut === "number" && typeof x.duree === "number");
       const action = ctx.paramTexte("Action", "mute");
       const garder = action === "keep";
       const sr = a.sampleRate, len = a.length;
@@ -275,12 +279,12 @@ export const fiches: FicheAudio[] = ([
     ],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
-    async executer(ctx: any) {
-      const son = ctx.entree(0);
+    async executer(ctx) {
+      const son = entreeAudio(ctx, 0);
       const piste = ctx.entree(1);
       const zones = ctx.entree(2);
       const duree = ctx.entree(3);
-      if (!(son instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.son_non_connect") };
+      if (sansEntree(son)) return son;
       if (!Array.isArray(zones)) return { valeurs:[null], message:traduire("msg.branchez_le_s_lecteur_multi_zones") };
       if (!zones.length) return { valeurs:[null], message:traduire("msg.aucune_zone_placer") };
       const dureeTotaleSec = piste instanceof AudioBuffer ? piste.duration : (duree && typeof duree === "object" && "duree" in duree ? (duree as any).duree : null);
@@ -298,7 +302,7 @@ export const fiches: FicheAudio[] = ([
     resume: "Additionne plusieurs pistes en une seule. Le niveau de chaque piste se règle sur le composant qui la produit.",
     entrees: [{ nom: "Piste", nomEn: "Track", type: "audio", dynamique: true }], sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const bufs = ctx.entrees().filter((v: any) => v instanceof AudioBuffer);
       if (bufs.length < 2) return { valeurs:[null], message:traduire("msg.2_entr_es") };
       return { valeurs:[await melangerPistes(bufs, 0)] };
@@ -327,7 +331,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Ce que deviennent les réglages « Graine » des composants de la chaîne. « Identiques » donne à tous les tours la même graine, qu'elle soit posée ou tirée : chaque tour applique donc le même tirage. « Une par tour » la dérive du numéro du tour : les tours diffèrent, et la même graine avec le même nombre de tours rend toujours la même suite. Dans les deux cas, une graine tirée est rendue dans le message, et la reposer rejoue la boucle entière.",
         docEn: "What becomes of the « Seed » settings of the chain's nodes. « Identical » gives every pass the same seed, whether it was set or drawn: every pass therefore applies the same draw. « One per pass » derives it from the pass number: the passes differ, and the same seed with the same pass count always returns the same series. Either way, a drawn seed is given back in the message, and putting it back replays the whole loop." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       // Ce nœud n'est normalement JAMAIS exécuté : le moteur déplie la boucle avant
       // l'exécution et le remplace par les copies de la chaîne. S'il s'exécute, c'est
       // que le dépliage n'a pas eu lieu — presque toujours faute de « Fin de boucle »
@@ -353,7 +357,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondu enchaîné entre deux tours. 0 = raccord sec, les tours se suivent exactement.",
         docEn: "Crossfade between two passes. 0 = hard join, the passes follow each other exactly." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       // Après dépliage, ce nœud reçoit UNE arête par tour, dans l'ordre des tours.
       const entrees = (ctx.entrees() as unknown[]).filter((v): v is AudioBuffer => v instanceof AudioBuffer);
       if (entrees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
@@ -373,7 +377,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
-    async executer(ctx: any) {
+    async executer(ctx) {
       // Les tours arrivent dans l'ordre : le dernier est le dernier de la liste. Les tours
       // précédents sont bel et bien calculés — ils doivent l'être, chacun partant du
       // résultat du précédent —, mais ils ne ressortent pas d'ici.
@@ -402,7 +406,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Niveau appliqué à la somme des tours. À 0 dB, les tours s'additionnent tels quels, comme sur le mélangeur.",
         docEn: "Level applied to the sum of the passes. At 0 dB they add up as they are, as on the mixer." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entrees = (ctx.entrees() as unknown[]).filter((v): v is AudioBuffer => v instanceof AudioBuffer);
       if (entrees.length === 0) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
       // Un seul chemin, même pour un tour unique : rien qui puisse diverger du cas général.
@@ -431,9 +435,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée du fondu enchaîné entre la fin de la piste 1 et le début de la piste 2. Un chevauchement plus long que la plus courte des deux pistes est ramené à cette durée : on ne recouvre pas plus de son qu'il n'y en a.",
         docEn: "Crossfade duration between the end of track 1 and the start of track 2. An overlap longer than the shorter of the two tracks is brought back to that duration: one does not overlap more sound than there is." },
     ],
-    async executer(ctx: any) {
-      const p1 = ctx.entree(0), p2 = ctx.entree(1);
-      if (!(p1 instanceof AudioBuffer) || !(p2 instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.branchez_deux_pistes") };
+    async executer(ctx) {
+      const p1 = entreeAudio(ctx, 0), p2 = entreeAudio(ctx, 1);
+      if (sansEntree(p1)) return p1;
+      if (sansEntree(p2)) return p2;
       return { valeurs:[await fusionnerPistes(p1, p2, ctx.paramNombre("Chevauchement", 2))] };
    },
  },
@@ -452,8 +457,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Répétitions", nomEn: "Repeats", plage: [1,32], pas: 1, defaut: 4, doc: "Nombre de fois où l'entrée est rejouée à la suite.", docEn: "Number of times the input is replayed in a row." },
       { nom: "Fondu", nomEn: "Fade", plage: [0,100], defaut: 0, unite: "ms", doc: "Fondu enchaîné à chaque raccord entre deux répétitions. 0 = pas de fondu (raccord sec).", docEn: "Crossfade at each join between two repetitions. 0 = no crossfade (hard join)." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0); if (!(a instanceof AudioBuffer)) return { valeurs:[null], message:traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0); if (sansEntree(a)) return a;
       const reps = ctx.paramNombre("Répétitions", 4);
       const out = bouclerAudio(a, a.duration, reps, ctx.paramNombre("Fondu", 0));
       // Rend visible la durée réelle de l'entrée : si le total dépasse reps×4 s,
@@ -473,9 +478,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }, { nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }],
     parametres: [],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(a)) return a;
       return { valeurs: [a, { debut: 0, duree: a.duration }] };
    },
  },
@@ -498,10 +503,10 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fondu", nomEn: "Fade", plage: [0, 100], defaut: 5, unite: "ms",
         doc: "Fondu aux bords de chaque zone extraite pour éviter les clics.", docEn: "Fade at the edges of each extracted zone to avoid clicks." },
     ],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 2 });
       const z = ctx.entree(1);
-      if (!(a instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.connectez_une_source_audio") };
+      if (sansEntree(a)) return a;
       const selected = zonesValides(z);
       if (selected.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_zone_re_ue_branchez_le_s_lecteur_multi_zones") };
       const mode = ctx.paramTexte("Mode", "selected");

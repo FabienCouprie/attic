@@ -15,6 +15,7 @@ import { parCanal } from "./hors-fil";
 import { garderDesPauses, planRognage, recollerEnFondu } from "../audio/silences";
 import { fusionnerStereo } from "../audio/effets-montage";
 import { MODULATION_MIX, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 
 export const fiches: FicheAudio[] = ([
@@ -64,9 +65,9 @@ export const fiches: FicheAudio[] = ([
       // que DEUX positions atteignables, et le curseur était inutilisable.
       ...bornesModulation({ ...modulationNommee("Chute", "Fall", [0.002, 0.3], "s"), defauts: [0.01, 0.3], pas: 0.002 }),
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       const o: OptionsHachee = {
         decroissanceSec: ctx.paramNombre("Décroissance", 1.5),
         maintienSec: ctx.paramNombre("Maintien", 0.2),
@@ -127,9 +128,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine de la réponse de la salle.", docEn: "Seed of the room's response." },
       ...bornesModulation(MODULATION_MIX),
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       const o = {
         decroissanceSec: ctx.paramNombre("Décroissance", 1.2),
         rebouclage: ctx.paramNombre("Rebouclage", 60) / 100,
@@ -187,9 +188,9 @@ export const fiches: FicheAudio[] = ([
         doc: "En mode Partout : chaque raccord est un fondu enchaîné à puissance constante de cette durée, qui évite le clic et la coupure nette d'un souffle de fond. Le fondu ne dépasse jamais la moitié d'un des deux morceaux qu'il relie. À 0, les morceaux sont recollés bout à bout. Aux bords, il n'y a pas de raccord, et ce réglage n'agit pas.",
         docEn: "In Everywhere mode: each join is an equal-power crossfade of this length, which avoids the click and the abrupt cut of a background hiss. The crossfade never exceeds half of either of the two pieces it joins. At 0, the pieces are butted together. At the edges there is no join, and this setting has no effect." },
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       // LE PLAN EST CALCULÉ SUR LA SOMME DES CANAUX, et appliqué à tous : rogner chaque canal selon
       // son propre silence décalerait l'image dès qu'un côté commence avant l'autre.
       const n = e.length;
@@ -238,11 +239,10 @@ export const fiches: FicheAudio[] = ([
     ],
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [],
-    async executer(ctx: any) {
-      const g = ctx.entree(0), d = ctx.entree(1);
-      if (!(g instanceof AudioBuffer) || !(d instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.aucune_entr_e") };
-      }
+    async executer(ctx) {
+      const g = entreeAudio(ctx, 0), d = entreeAudio(ctx, 1);
+      if (sansEntree(g)) return g;
+      if (sansEntree(d)) return d;
       const out = fusionnerStereo(g, d);
       return {
         valeurs: [out],

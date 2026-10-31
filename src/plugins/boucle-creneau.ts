@@ -65,7 +65,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le tempo porté par la séquence rendue.",
         docEn: "The tempo carried by the returned sequence." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const combien = Math.max(1, Math.round(ctx.paramNombre("Créneaux", 4)));
       const tempo = ctx.paramNombre("Tempo", 120);
       const depart = lireChamp(ctx.paramTexte("Départs", "0:6"));
@@ -112,7 +112,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Donne à chaque passe son propre numéro de voix, ce qui grave autant de portées qu'il y a de créneaux.",
         docEn: "Gives each pass its own voice number, which engraves as many staves as there are slots." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       if (!estSequence(entree)) {
         return {

@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { recaler, type MesureRecalage } from "../audio/recaler-niveau";
 import { choixOuiNon } from "../core/oui-non";
 
@@ -46,18 +47,13 @@ export const fiches: FicheAudio[] = ([
         doc: "Crête maximale tolérée en sortie, quand le plafonnement est actif.",
         docEn: "Maximum peak tolerated on the output, when capping is active." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const anglais = en();
-      const reference = ctx.entree(0);
-      const aCorriger = ctx.entree(1);
-      if (!(reference instanceof AudioBuffer)) {
-        return { valeurs: [null], message: anglais
-          ? "Connect a reference to input 1." : "Branchez une référence sur l'entrée 1." };
-      }
-      if (!(aCorriger instanceof AudioBuffer)) {
-        return { valeurs: [null], message: anglais
-          ? "Connect the sound to correct to input 2." : "Branchez le son à corriger sur l'entrée 2." };
-      }
+      // Deux sons attendus, et le message dit LEQUEL manque, par le numéro de son entrée.
+      const reference = entreeAudio(ctx, 0, { message: anglais ? "Connect a reference to input 1." : "Branchez une référence sur l'entrée 1." });
+      const aCorriger = entreeAudio(ctx, 1, { message: anglais ? "Connect the sound to correct to input 2." : "Branchez le son à corriger sur l'entrée 2." });
+      if (sansEntree(reference)) return reference;
+      if (sansEntree(aCorriger)) return aCorriger;
 
       const plafonner = ctx.paramTexte("Plafonner la crête", "oui") !== "non";
       const { audio, resultat: r } = recaler(reference, aCorriger, {

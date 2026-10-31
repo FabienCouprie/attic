@@ -22,6 +22,7 @@ import {
   nomRegime, tracer, vivreVoie, type OptionsEcosysteme, type Resultat,
 } from "../audio/ecosysteme";
 import { parCanal } from "./hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -64,12 +65,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Deux graines donnent deux sons qui ne se ressemblent en rien échantillon par échantillon, et se ressemblent en tout statistiquement, mêmes niveaux, mêmes densités. Ce que le composant rend n'est pas un objet mais une instance, et la graine sert à retrouver exactement celle qu'on avait aimée.",
         docEn: "Two seeds give two sounds that resemble each other in no sample and in every statistic, same levels, same densities. What the node returns is not an object but an instance, and the seed serves to find again exactly the one you had liked." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const en = langueCourante() === "en";
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: en ? "No input." : "Aucune entrée." };
-      }
+      const audio = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(audio)) return audio;
       const frequence = audio.sampleRate;
       const options: OptionsEcosysteme = {
         frequence,

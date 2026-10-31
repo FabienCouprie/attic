@@ -9,6 +9,7 @@ import {
   type OptionsCorrection, type ResultatCorrection,
 } from "../audio/correction-hauteur";
 import { parCanal } from "./hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { PARAMETRE_CLE, demiTonDeCle } from "../audio/cles";
 
 
@@ -47,9 +48,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Au-delà de cet écart, la trame n'est pas corrigée : un suiveur se trompe d'octave sur les sons riches, et corriger une erreur d'octave déplacerait la note d'une octave entière.",
         docEn: "Beyond this deviation the frame is not corrected: a follower makes octave errors on rich sounds, and correcting one would move the note by a whole octave." },
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return { valeurs: [null, null], message: traduire("msg.aucune_entr_e") };
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(e)) return e;
       // `demiTonDeCle` ACCEPTE TOUTE ORTHOGRAPHE, dont les identifiants en minuscules au bémol
       // typographique que ce composant employait et que rien d'autre ne connaissait.
       const tonique = demiTonDeCle(ctx.paramTexte("Tonique", "C")) ?? 0;

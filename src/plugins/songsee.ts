@@ -8,6 +8,7 @@ import { avecDoc } from "./notices";
 import { choixFormats, formatImage } from "../core/formats-image";
 import { cheminDansTravail } from "./pont-electron";
 import { arreterLesTravauxAuSignal } from "./arret-des-travaux";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const VIZS = ["spectrogram", "mel", "chroma", "hpss", "selfsim", "loudness", "tempogram", "mfcc", "flux"];
 const PALETTES = ["classic", "magma", "inferno", "viridis", "gray", "claw"];
@@ -100,16 +101,14 @@ export const fiches: FicheAudio[] = ([
         docEn: "Duration of the analyzed region (seconds). 0 = whole file.",
       },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const api = (window as any).api;
       if (!api?.genererSongsee) {
         return { valeurs: [null], message: traduire("msg.n_cessite_electron") };
       }
 
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: [null], message: traduire("msg.connecter.audio") };
-      }
+      const audio = entreeAudio(ctx, 0);
+      if (sansEntree(audio)) return audio;
 
       const viz = ctx.paramTexte("Visualisation", "Toutes");
       const palette = ctx.paramTexte("Palette", "classic");

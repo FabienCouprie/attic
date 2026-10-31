@@ -9,6 +9,7 @@ import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { profil, rapport } from "../audio/gout";
 import { mesurerGoutHorsFil } from "./gout-hors-fil";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 const en = () => langueCourante() === "en";
 
@@ -26,11 +27,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Rapport", nomEn: "Report", type: "texte" },
     ],
     parametres: [],
-    async executer(ctx: any) {
-      const a = ctx.entree(0);
-      if (!(a instanceof AudioBuffer)) {
-        return { valeurs: [null, null], message: en() ? "No audio input." : "Aucune entrée audio." };
-      }
+    async executer(ctx) {
+      const a = entreeAudio(ctx, 0, { sorties: 2 });
+      if (sansEntree(a)) return a;
       const anglais = en();
       const m = await mesurerGoutHorsFil(a);
       const parts = profil(m.dimensions);

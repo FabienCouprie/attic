@@ -54,7 +54,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Remet les notes dans l'ordre des départs, qu'une formule sur le début a pu défaire.",
         docEn: "Puts the notes back in order of onset, which a formula on the onset may have undone." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       if (!estSequence(entree) || entree.notes.length === 0) {
         return {

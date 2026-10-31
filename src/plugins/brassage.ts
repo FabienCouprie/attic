@@ -7,12 +7,11 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 import { brasser } from "../audio/brassage";
 import { transfererEnveloppe } from "../audio/enveloppe-transfert";
 import { estCourbe, valeursParametre } from "../audio/courbe";
 import { choixOuiNon } from "../core/oui-non";
-
-const sansEntree = () => ({ valeurs: [null], message: traduire("msg.aucune_entr_e") });
 
 /** Applique une transformation canal par canal, la longueur de sortie étant décidée par elle. */
 function parCanal(entree: AudioBuffer, f: (x: Float32Array) => Float32Array): AudioBuffer {
@@ -57,9 +56,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine du tirage. Une même graine rejoue exactement le même brassage, utile pour retrouver un résultat qu'on a aimé. Sans dispersion, elle ne sert à rien : rien n'est tiré au sort.",
         docEn: "Seed of the draw. The same seed replays exactly the same brassage, useful to find again a result one liked. With no scatter it does nothing: nothing is drawn at random." },
     ],
-    async executer(ctx: any) {
-      const e = ctx.entree(0);
-      if (!(e instanceof AudioBuffer)) return sansEntree();
+    async executer(ctx) {
+      const e = entreeAudio(ctx, 0);
+      if (sansEntree(e)) return e;
       const o = {
         grainSec: ctx.paramNombre("Segment", 0.05),
         densite: ctx.paramNombre("Densité", 40),
@@ -111,10 +110,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Proportion que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
         docEn: "Proportion that the curve's one means. A value below Modulation min reverses the direction of travel." },
     ],
-    async executer(ctx: any) {
-      const cible = ctx.entree(0);
-      const modele = ctx.entree(1);
-      if (!(cible instanceof AudioBuffer) || !(modele instanceof AudioBuffer)) return sansEntree();
+    async executer(ctx) {
+      const cible = entreeAudio(ctx, 0), modele = entreeAudio(ctx, 1);
+      if (sansEntree(cible)) return cible;
+      if (sansEntree(modele)) return modele;
       // Sans courbe branchée, la proportion reste le scalaire d'avant et la boucle son chemin exact.
       const modulation = ctx.entree(2);
       const o = {

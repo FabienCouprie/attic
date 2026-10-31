@@ -1,30 +1,9 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { griffinLim } from "./griffin-lim";
-
-class AudioBufferPolyfill {
-  numberOfChannels: number;
-  length: number;
-  sampleRate: number;
-  duration: number;
-  private canaux: Float32Array[];
-  constructor(opts: { numberOfChannels: number; length: number; sampleRate: number }) {
-    this.numberOfChannels = opts.numberOfChannels;
-    this.length = opts.length;
-    this.sampleRate = opts.sampleRate;
-    this.duration = opts.length / opts.sampleRate;
-    this.canaux = Array.from({ length: opts.numberOfChannels }, () => new Float32Array(opts.length));
-  }
-  getChannelData(c: number): Float32Array { return this.canaux[c]; }
-  copyToChannel(src: Float32Array, c: number): void { this.canaux[c].set(src.subarray(0, this.length)); }
-}
-
-beforeAll(() => {
-  (globalThis as any).AudioBuffer = AudioBufferPolyfill;
-});
 
 function makeSine(freq: number, sr: number, duration: number): AudioBuffer {
   const len = Math.round(sr * duration);
-  const buf = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: len, sampleRate: sr });
+  const buf = new AudioBuffer({ numberOfChannels: 1, length: len, sampleRate: sr });
   const data = buf.getChannelData(0);
   for (let i = 0; i < len; i++) {
     data[i] = Math.sin((2 * Math.PI * freq * i) / sr);
@@ -90,7 +69,7 @@ describe("griffinLim", () => {
   it("produit un signal audible sur une entrée stéréo de 2 s", async () => {
     const sr = 48000;
     const len = 2 * sr;
-    const buf = new (globalThis as any).AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
+    const buf = new AudioBuffer({ numberOfChannels: 2, length: len, sampleRate: sr });
     for (let c = 0; c < 2; c++) {
       const d = buf.getChannelData(c);
       for (let i = 0; i < len; i++) {
@@ -107,7 +86,7 @@ describe("griffinLim", () => {
   it("produit un signal audible sur du bruit blanc", async () => {
     const sr = 44100;
     const len = sr;
-    const buf = new (globalThis as any).AudioBuffer({ numberOfChannels: 1, length: len, sampleRate: sr });
+    const buf = new AudioBuffer({ numberOfChannels: 1, length: len, sampleRate: sr });
     const d = buf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = (Math.random() - 0.5) * 2;
     const out = await griffinLim(buf, 30, 2048, "75%", "aleatoire", 100);

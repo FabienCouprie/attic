@@ -40,7 +40,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Écart en deçà duquel deux instants sont tenus pour le même.",
         docEn: "Gap below which two instants are taken as the same." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       if (!estSequence(entree) || entree.notes.length === 0) {
         return {

@@ -36,6 +36,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { dispositionDe, nombreDeCanaux } from "../audio/multicanal";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { entreeAudio, sansEntree } from "./lire-entree";
 
 /** Le plus grand nombre de canaux qu'une disposition de ce dépôt déclare. Voir l'en-tête. */
 const SORTIES = 16;
@@ -117,17 +118,15 @@ export const fiches: FicheAudio[] = ([
       nom: `Canal ${i + 1}`, nomEn: `Channel ${i + 1}`, type: "audio", sousType: "mono",
     })),
     parametres: [],
-    async executer(ctx: any) {
-      const audio = ctx.entree(0);
+    async executer(ctx) {
+      const audio = entreeAudio(ctx, 0, { sorties: SORTIES });
+      if (sansEntree(audio)) return audio;
       const vide = Array.from({ length: SORTIES }, () => null);
-      if (!(audio instanceof AudioBuffer)) {
-        return { valeurs: vide, erreur: true, message: traduire("msg.aucune_entr_e") };
-      }
       // SANS LE GUICHET DES SORTIES, ON REND TOUT. Un appelant qui ne peut pas dire ce qui est
       // câblé — le banc, un cas unitaire — doit recevoir les canaux, et non le vide : c'est
       // l'inverse du choix de `sortie-audio.ts`, dont la sortie d'appoint est chère et facultative.
-      const sait = typeof ctx.sortieBranchee === "function";
-      const voulu = (rang: number) => !sait || ctx.sortieBranchee(rang);
+      const branchee = ctx.sortieBranchee;
+      const voulu = (rang: number) => !branchee || branchee(rang);
 
       const valeurs: (AudioBuffer | null)[] = vide.slice();
       const rendus = Math.min(audio.numberOfChannels, SORTIES);

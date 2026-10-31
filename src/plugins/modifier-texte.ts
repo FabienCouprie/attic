@@ -32,7 +32,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le texte rendu sur la sortie. Vide, le texte d'entrée passe sans changement.",
         docEn: "The text returned on the output. Empty, the input text passes through unchanged." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const entree = ctx.entree(0);
       // La vue montre ce qui arrive avant toute correction : sans cela, la zone resterait vide et
       // l'on corrigerait un texte qu'on ne voit pas. C'est une désignation de l'ENTRÉE, donc écrire

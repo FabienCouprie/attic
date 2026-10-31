@@ -10,7 +10,6 @@
 // Les deux passeraient un cas qui ne regarderait que la corrélation. Le cas du repli en mono est
 // donc celui qu'il faut garder : il mesure ce que la décorrélation COÛTE, et c'est la seule chose
 // qu'une oreille ne peut pas juger sur une écoute au casque.
-import "./polyfill-audiobuffer";
 import { describe, expect, it } from "vitest";
 
 import { correlationDesCanaux, ubiquite } from "./ubiquite";

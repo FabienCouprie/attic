@@ -11,6 +11,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
+import { ctxDEssai } from "../core/contexte-essai";
 import type { MotVosk } from "./vosk-asr";
 import type { Segment } from "../audio/silences";
 
@@ -94,12 +95,7 @@ function valeurs(b: AudioBuffer, canal = 0): number[] {
 
 async function lancer(audio: AudioBuffer | null, r: Record<string, string | number> = {}) {
   const progres: string[] = [];
-  const ctx = {
-    entree: () => audio,
-    paramTexte: (n: string, d: string) => String(r[n] ?? d),
-    paramNombre: (n: string, d: number) => Number(r[n] ?? d),
-    onProgress: (t: string) => progres.push(t),
-  } as never;
+  const ctx = ctxDEssai([audio], r, { onProgress: (t) => { progres.push(t); } }) as never;
   return { ...(await fiche().executer(ctx)), progres };
 }
 

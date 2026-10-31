@@ -85,7 +85,7 @@ export const fiches = ([
         doc: "Débit de l'image réencodée. Il fixe le poids du fichier : la durée multipliée par le débit.",
         docEn: "Bitrate of the re-encoded picture. It sets the file's weight: the length times the bitrate." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const film = ctx.entree(0);
       if (!(film instanceof File)) {
         return { valeurs: [null], erreur: true, message: traduire("msg.incrustation.aucunFilm") };

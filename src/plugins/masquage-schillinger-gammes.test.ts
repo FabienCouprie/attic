@@ -77,6 +77,7 @@ import { NB_BANDES } from "../audio/masquage";
 import { GAMMES } from "../audio/gammes-monde";
 import { CANAL_PERCUSSION, PERCUSSIONS_JOUABLES } from "../audio/batterie-midi";
 import { fiches } from "./masquage-schillinger-gammes";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const SR = 44100;
 const TICKS = 480;
@@ -88,14 +89,7 @@ const fiche = (id: string) => {
 };
 
 function contexte(entrees: unknown[], reglages: Record<string, number | string> = {}) {
-  return {
-    entree: (i: number) => entrees[i],
-    paramNombre: (nom: string, defaut: number) =>
-      (typeof reglages[nom] === "number" ? (reglages[nom] as number) : defaut),
-    paramTexte: (nom: string, defaut: string) =>
-      (typeof reglages[nom] === "string" ? (reglages[nom] as string) : defaut),
-    onProgress: () => {},
-  } as never;
+  return ctxDEssai(entrees, reglages) as never;
 }
 
 const lancer = (id: string, entrees: unknown[], reglages: Record<string, number | string> = {}) =>

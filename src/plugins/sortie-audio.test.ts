@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 import { toutesLesFiches } from "./index";
 import { avecSortieAudio, SANS_SORTIE_AUDIO } from "./sortie-audio";
 import type { Sequence } from "../audio/sequence";
+import { ctxDEssai } from "../core/contexte-essai";
 
 const sequence = (combien: number, duree: number): Sequence => ({
   notes: Array.from({ length: combien }, (_, i) => ({
@@ -21,15 +22,8 @@ const sequence = (combien: number, duree: number): Sequence => ({
   duree,
 });
 
-const contexte = (branchees: number[] = []) => ({
-  noeud: { id: "n", data: { ficheId: "x", parametres: {} } },
-  runtime: null,
-  entree: () => null,
-  entrees: () => [],
-  paramTexte: (_n: string, d: string) => d,
-  paramNombre: (_n: string, d: number) => d,
-  sortieBranchee: (i: number) => branchees.includes(i),
-});
+const contexte = (branchees: number[] = []) =>
+  ctxDEssai([], {}, { id: "n", sortieBranchee: (i: number) => branchees.includes(i) });
 
 /** Une fiche minimale qui rend ce qu'on lui dit, pour éprouver l'enveloppe seule. */
 const fiche = (sorties: { nom: string; type: string }[], valeurs: unknown[]) => avecSortieAudio({

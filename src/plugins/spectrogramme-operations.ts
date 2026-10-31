@@ -50,7 +50,7 @@ export const fiches: FicheAudio[] = ([
         doc: "L'étalement dans le sens des bandes, en écart-type. Il émousse les partiels ; sur l'échelle des mels, il couvre la même largeur pour l'oreille du grave à l'aigu.",
         docEn: "The spreading in the band direction, as a standard deviation. It dulls the partials; on the mel scale it covers the same width for the ear from low to high." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const s = ctx.entree(0);
       if (!estSpectrogramme(s)) return { valeurs: [null], message: sansSpectrogramme() };
       const tempsMs = ctx.paramNombre("Temps", 0);
@@ -82,7 +82,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le nombre de rangs dont tout le contenu se déplace, positif vers l'aigu. Ce n'est pas une transposition : au défaut, cent hertz montent d'un facteur 1,527 et cinq mille d'un facteur 1,075.",
         docEn: "The number of rows the whole content moves by, positive towards the high end. This is not a transposition: at the default, a hundred hertz go up by a factor of 1.527 and five thousand by 1.075." },
     ],
-    async executer(ctx: any) {
+    async executer(ctx) {
       const s = ctx.entree(0);
       if (!estSpectrogramme(s)) return { valeurs: [null], message: sansSpectrogramme() };
       const bandes = Math.round(ctx.paramNombre("Bandes", 12));
@@ -97,4 +97,4 @@ export const fiches: FicheAudio[] = ([
       };
     },
   },
-] as unknown as FicheAudio[]).map(avecDoc);
+] as FicheAudio[]).map(avecDoc);

@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { constante } from "../audio/courbe";
 import { francais, virguleDecimale } from "../docs/detecteur-francais";
+import { ctxDEssai } from "../core/contexte-essai";
 
 /**
  * Exécute quelque chose avec l'interface dans une langue donnée.
@@ -36,15 +37,7 @@ async function avecLangue<T>(langue: string, f: () => Promise<T>): Promise<T> {
 }
 
 function contexte(entrees: unknown[], reglages: Record<string, string | number>) {
-  return {
-    entree: (i: number) => entrees[i] ?? null,
-    entrees: () => entrees,
-    paramTexte: (nom: string, def: string) => String(reglages[nom] ?? def),
-    paramNombre: (nom: string, def: number) => Number(reglages[nom] ?? def),
-    onProgress: () => {},
-    noeud: { data: {} },
-    runtime: { sampleRate: 44100 },
-  } as never;
+  return ctxDEssai(entrees, reglages, { runtime: { sampleRate: 44100 } }) as never;
 }
 
 const lancer = async (id: string, entrees: unknown[], reglages: Record<string, string | number>) =>
