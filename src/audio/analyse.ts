@@ -4,7 +4,6 @@
 // de calcul n'a ete retouchee au passage.
 
 import { creerFenetreHann, tramesDepuisBuffer } from "./commun";
-import Meyda from "meyda";
 import { traduire } from "../i18n";
 import { traduireType } from "./analyse-transcription";
 

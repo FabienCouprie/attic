@@ -5,7 +5,6 @@
 
 import { parseMidi, writeMidi } from "midi-file";
 import { comparerEvenementsMidi } from "./midi-ordre";
-import { rendreAvecSF2 } from "./midi-soundfont";
 
 // ─── Transposition + quantification MIDI ───
 

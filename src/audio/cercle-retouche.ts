@@ -19,9 +19,6 @@
 
 import type { Cercle, Sommet } from "./cercle";
 
-/** Le masque vide : rien n'est retouché, le cercle reçu passe tel quel. */
-export const SANS_RETOUCHE = "";
-
 /**
  * Le masque qu'un cercle porte de lui-même : un un par place qui sonne.
  *

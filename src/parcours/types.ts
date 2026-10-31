@@ -137,9 +137,3 @@ export interface Point {
   texte: string;
   texteEn: string;
 }
-
-/** La phrase d'un point dans la langue demandée. */
-export const phrase = (p: Point, en: boolean): string => (en ? p.texteEn : p.texte);
-
-/** Le titre d'un exercice dans la langue demandée. */
-export const titreLangue = (x: Exercice | Chapitre, en: boolean): string => (en ? x.titreEn : x.titre);

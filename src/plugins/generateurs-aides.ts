@@ -49,9 +49,6 @@ export const GENRES_ACCORDS = {
   en: ["Pop", "Rock", "Jazz", "Blues", "Classical", "Electronic", "Hip-hop", "Reggae", "Ambient", "Custom"],
 };
 
-/** Les mêmes identifiants seuls, pour qui n'a pas besoin des libellés. */
-export const GENRES_ACCORDS_IDS = GENRES_ACCORDS.ids;
-
 /**
  * Les libellés que les listes de genres ont portés avant cette table, et ce qu'ils désignaient.
  *

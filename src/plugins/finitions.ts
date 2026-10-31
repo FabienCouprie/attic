@@ -16,7 +16,6 @@ import { garderDesPauses, planRognage, recollerEnFondu } from "../audio/silences
 import { fusionnerStereo } from "../audio/effets-montage";
 import { MODULATION_MIX, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
 
-const voie = (b: AudioBuffer, c: number) => b.getChannelData(Math.min(c, b.numberOfChannels - 1));
 
 export const fiches: FicheAudio[] = ([
   {

@@ -103,7 +103,7 @@ export const fiches = ([
       const mono = await vers16k(versMono(audio), audio.sampleRate);
       const vocabulaire = String(ctx.paramTexte("Vocabulaire", ""))
         .split(/[\s,]+/).map((m: string) => m.trim().toLowerCase()).filter(Boolean);
-      const { texte, mots } = await transcrire(modele, mono, {
+      const { mots } = await transcrire(modele, mono, {
         grammaire: vocabulaire,
         surPartiel: (p: string) => ctx.onProgress?.(p),
       });

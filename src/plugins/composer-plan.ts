@@ -36,7 +36,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { LANGUES } from "./chanson-aides";
-import { choixLangues, libelleLangue } from "../core/langues";
+import { choixLangues } from "../core/langues";
 import { toniqueDepuisTonalite } from "../audio/theorie-romains";
 
 /** Les signatures que le moteur reçoit. Le champ est une CHAÎNE dans le plan, non un nombre. */

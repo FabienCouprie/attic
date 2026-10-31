@@ -32,7 +32,7 @@ function trouver(id: string) {
 function ctxMidi(file: any) {
   return {
     entree: (idx: number) => (idx === 0 ? file : null),
-    paramTexte: (nom: string, defaut: string) => defaut,
+    paramTexte: (_nom: string, defaut: string) => defaut,
     paramNombre: (_nom: string, defaut: number) => defaut,
   };
 }
@@ -40,7 +40,7 @@ function ctxMidi(file: any) {
 function ctxMidi2(file1: any, file2: any) {
   return {
     entree: (idx: number) => (idx === 0 ? file1 : idx === 1 ? file2 : null),
-    paramTexte: (nom: string, defaut: string) => defaut,
+    paramTexte: (_nom: string, defaut: string) => defaut,
     paramNombre: (_nom: string, defaut: number) => defaut,
   };
 }

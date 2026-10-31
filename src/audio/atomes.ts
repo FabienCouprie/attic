@@ -114,7 +114,7 @@ function meilleureCase(re: Float64Array, im: Float64Array): { bin: number; modul
  * calcul est rigoureusement celui d'avant.
  */
 function poserAtome(
-  sortie: Float64Array, echelle: number, debut: number, omega: number, phase: number,
+  sortie: Float64Array, echelle: number, _debut: number, omega: number, phase: number,
   fenetre: Float64Array, beta = 0,
 ): number {
   let norme = 0;

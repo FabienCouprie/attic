@@ -16,7 +16,7 @@
 // totaux, le nombre de fichiers hors norme et leur marque, la règle de comptage elle-même — tout
 // cela s'éprouve sur les sources, non sur une copie. Seule la copie sort. `npm run docs:lignes`
 // l'engendre quand on veut la lire, et un cas refuse qu'elle revienne sous git.
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 

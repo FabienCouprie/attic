@@ -7,9 +7,9 @@ l'interface. Le critère est le RENDU, pas la mention d'`AudioBuffer` : un modul
 que comme récipient fige le fil et devient transposable dès qu'on en extrait un cœur par voie.
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
-- **rendu** : 33 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 97 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 217 · transposable tel quel
+- **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
+- **récipient** : 96 · fige, transposable après extraction d'un cœur par voie
+- **pur** : 219 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -33,7 +33,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | analyse-polyphonique.ts | recipient | AudioBuffer |
 | analyse-transcription.ts | recipient | AudioBuffer |
 | analyse.ts | recipient | AudioBuffer |
-| apercu-video.ts | recipient | AudioBuffer |
+| apercu-video.ts | pur | — |
 | appariement-reference.ts | recipient | AudioBuffer |
 | arbre-disposition.ts | pur | — |
 | arbre-rythmique.ts | pur | — |
@@ -171,7 +171,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | generation-rythme.ts | rendu | OfflineAudioContext |
 | generation.ts | pur | — |
 | geometrie-sonore.ts | recipient | AudioBuffer |
-| glissando.ts | rendu | OfflineAudioContext |
+| glissando.ts | pur | — |
 | gout.ts | recipient | AudioBuffer |
 | grain-schaefferien.ts | pur | — |
 | grains.ts | pur | — |

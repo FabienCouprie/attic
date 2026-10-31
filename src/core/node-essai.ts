@@ -58,14 +58,3 @@ export const SONDE_ENVIRONNEMENT = `
   };
 `;
 
-/** Le nœud d'essai complet, prêt pour `installerNode`. */
-export function nodeDEssai(id = "essai-sonde", code = SONDE_ENVIRONNEMENT): NodeDEssai {
-  return {
-    manifest: {
-      id, nom: "Sonde d'essai", univers: "Essai", famille: "Essai",
-      resume: "Rend ce qu'il trouve autour de lui. Pièce d'essai, sans usage musical.",
-      entrees: [], sorties: [{ nom: "Texte", type: "texte" }], parametres: [],
-    },
-    executerCode: code,
-  };
-}

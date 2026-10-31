@@ -7,25 +7,11 @@
 // vaut le plus cher, que `tonal` soit prise en TÉMOIN là où les deux s'accordent : vingt-huit
 // qualités gardées par une source extérieure, et les cinq écarts nommés avec leur raison.
 import { describe, expect, it } from "vitest";
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
 import { Chord, Note } from "tonal";
 import {
   QUALITES, completer, dansLeSens, intervallesDaccord, jouerAccord, notesDaccord, qualiteDe,
   qualitesDe, qualitesParIds,
 } from "./qualites-accords";
-
-/** Les sources où une table d'accords pourrait réapparaître. */
-function sourcesAudioEtPlugins(dossiers = [join("src", "audio"), join("src", "plugins")]): string[] {
-  const out: string[] = [];
-  for (const d of dossiers) {
-    for (const e of readdirSync(d, { withFileTypes: true })) {
-      if (e.isDirectory()) out.push(...sourcesAudioEtPlugins([join(d, e.name)]));
-      else if (/\.tsx?$/.test(e.name) && !/\.test\./.test(e.name)) out.push(join(d, e.name));
-    }
-  }
-  return out;
-}
 
 /** Les intervalles tels que les trois tables d'avant les écrivaient, recopiés. */
 const AVANT: Record<string, number[]> = {

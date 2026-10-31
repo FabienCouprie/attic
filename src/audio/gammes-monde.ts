@@ -35,9 +35,6 @@ export interface GammeMonde {
   noteEn: string;
 }
 
-/** Un quart de ton du système du Caire : cinquante cents. */
-const Q = 50;
-
 export const GAMMES: GammeMonde[] = [
   // ── MAQAMAT ──────────────────────────────────────────────────────────────────────────────────
   {

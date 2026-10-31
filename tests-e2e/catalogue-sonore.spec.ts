@@ -50,7 +50,7 @@
 // LA LISTE DES COMPOSANTS VIENT DU REGISTRE, jamais d'une liste écrite à côté : un composant neuf
 // entre dans le catalogue sans que personne y pense.
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 
@@ -59,7 +59,6 @@ import { serveurDeVerification } from "./serveur-de-developpement";
 
 const devUrl = serveurDeVerification(5242);
 const ICI = dirname(fileURLToPath(import.meta.url));
-const RACINE = resolve(ICI, "..");
 
 /** Le répertoire du catalogue. Ignoré par git : 367 clips se refont, ils ne se versionnent pas. */
 const DOSSIER = "CATALOGUE";

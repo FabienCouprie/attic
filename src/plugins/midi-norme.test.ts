@@ -171,22 +171,6 @@ function manquements(octets: Uint8Array): string[] {
 }
 
 /**
- * LES NON-CONFORMITÉS CONNUES, relevées le 2026-09-27, et que ce test tolère en les nommant.
- *
- * Aucune n'est acquise : le but est de VIDER cette table, une entrée à la fois, et retirer une
- * entrée fait partie de la correction. Tolérer sans nommer aurait laissé le test au vert sans rien
- * apprendre ; nommer sans tolérer aurait laissé la suite au rouge, ce qui la rend inutilisable.
- *
- * Le recouvrement de même hauteur sur un même canal est ambigu en MIDI : un lecteur conforme
- * relance la note et le premier note-off éteint tout. Le lecteur du logiciel, lui, retrouve toutes
- * les notes. Mesuré, l'écart de durée sonnante entre les deux lectures vaut 4,114 s pour
- * `arpege-koch`, 6,300 s pour `automate-cellulaire` et 0,206 s pour `boite-groove` ; pour
- * `motif-echo-notes`, 9 des 36 notes tombent à durée nulle chez un lecteur conforme. L'export ne
- * sonne donc pas comme l'application.
- */
-const RECOUVREMENT = ["hauteur deja ouverte", "note-off orphelin"];
-
-/**
  * Ce qui reste, et pourquoi ces deux-là seulement.
  *
  * SEPT COMPOSANTS EMPILAIENT DEUX NOTES DE MÊME HAUTEUR sur un même canal, ce qui est ambigu : un

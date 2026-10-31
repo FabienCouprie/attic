@@ -33,8 +33,8 @@ describe("nœud Pure Data", () => {
     (globalThis as any).AudioBuffer = AudioBufferPolyfill;
     const ctx = {
       noeud: { data: {} },
-      paramTexte: (nom: string, defaut: string) => defaut,
-      paramNombre: (nom: string, defaut: number) => defaut,
+      paramTexte: (_nom: string, defaut: string) => defaut,
+      paramNombre: (_nom: string, defaut: number) => defaut,
     };
     const res = await f.executer(ctx as any);
     expect(res.erreur).toBe(true);

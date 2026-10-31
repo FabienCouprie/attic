@@ -13,8 +13,8 @@ function trouver(id: string) {
 function ctxSimple(valeur: any) {
   return {
     entree: () => valeur,
-    paramTexte: (nom: string, defaut: string) => defaut,
-    paramNombre: (nom: string, defaut: number) => defaut,
+    paramTexte: (_nom: string, defaut: string) => defaut,
+    paramNombre: (_nom: string, defaut: number) => defaut,
   };
 }
 
@@ -59,8 +59,8 @@ describe("nœuds VexFlow", () => {
     const f = trouver("vexflow-portee")!;
     const ctx = {
       entree: () => "A4/q B4/q",
-      paramTexte: (nom: string, defaut: string) => defaut,
-      paramNombre: (nom: string, defaut: number) => defaut,
+      paramTexte: (_nom: string, defaut: string) => defaut,
+      paramNombre: (_nom: string, defaut: number) => defaut,
     };
     const res = await f.executer(ctx as any);
     expect(res.message).toContain("<svg");
@@ -82,8 +82,8 @@ describe("nœuds VexFlow", () => {
     const f = trouver("vexflow-grille")!;
     const ctx = {
       entree: () => "I V vi IV",
-      paramTexte: (nom: string, defaut: string) => defaut,
-      paramNombre: (nom: string, defaut: number) => defaut,
+      paramTexte: (_nom: string, defaut: string) => defaut,
+      paramNombre: (_nom: string, defaut: number) => defaut,
     };
     const res = await f.executer(ctx as any);
     expect(res.message).toContain("<svg");
@@ -225,8 +225,8 @@ describe("nœuds VexFlow", () => {
     const f = trouver("vexflow-portee")!;
     const ctx = {
       entree: () => "C4+E4+G4/q (C4 E4 G4)/h B4/q/r",
-      paramTexte: (nom: string, defaut: string) => defaut,
-      paramNombre: (nom: string, defaut: number) => defaut,
+      paramTexte: (_nom: string, defaut: string) => defaut,
+      paramNombre: (_nom: string, defaut: number) => defaut,
     };
     const res = await f.executer(ctx as any);
     expect(res.message).toContain("<svg");

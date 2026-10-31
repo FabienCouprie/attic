@@ -196,7 +196,6 @@ export async function appliquerContinuationSpectrale(
     dureeGenereS,
     history,
     hiddenUnits,
-    activation,
     epochs,
     learningRate,
     seed,
@@ -335,7 +334,6 @@ export async function appliquerContinuationSpectrale(
       ? epochs
       : epoquesAutomatiques(coutParEpoque(mode, nSamples, history, nbBins, hiddenUnits), epochs);
     const startTime = Date.now();
-    let lastLoss = Infinity;
     let stoppedByBudget = false;
     let stoppedByAbort = false;
     let faites = 0;
@@ -360,7 +358,6 @@ export async function appliquerContinuationSpectrale(
             stoppedByBudget = true;
             return;
           }
-          lastLoss = logs.loss;
           onProgress?.(`Continuation spectrale · époque ${epoch + 1}/${epochsCeCanal} · perte ${logs.loss.toFixed(4)}`);
         },
       },

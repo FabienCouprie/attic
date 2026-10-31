@@ -4,7 +4,6 @@
 // de calcul n'a ete retouchee au passage.
 
 import type { NoteEvenement } from "./midi-sequence";
-import Meyda from "meyda";
 import { traduire } from "../i18n";
 
 // ── Basic Pitch (polyphonique) ────────────────────────────────────────────

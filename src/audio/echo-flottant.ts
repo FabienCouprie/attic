@@ -118,9 +118,6 @@ export interface OptionsHaas {
   gainDuRetarde: number;
 }
 
-/** Au-delà de ce retard, l'oreille cesse de fondre les deux arrivées et entend un écho. */
-export const FUSION_MAX = 0.04;
-
 /**
  * L'effet Haas : un canal retardé de quelques millisecondes.
  *

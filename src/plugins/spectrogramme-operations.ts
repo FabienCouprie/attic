@@ -13,7 +13,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { melVersHz, hzVersMel } from "../audio/mel";
-import { bandesDe, colonnesDe, type SpectrogrammeMel } from "../audio/spectrogramme-mel";
+import { bandesDe, type SpectrogrammeMel } from "../audio/spectrogramme-mel";
 import { decalerBandes, flouterSpectrogramme } from "../audio/spectrogramme-operations";
 
 const en = () => langueCourante() === "en";

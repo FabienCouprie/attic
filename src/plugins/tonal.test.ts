@@ -10,8 +10,8 @@ function trouver(id: string) {
 function ctxSimple(valeur: string | null) {
   return {
     entree: () => valeur,
-    paramTexte: (nom: string, defaut: string) => defaut,
-    paramNombre: (nom: string, defaut: number) => defaut,
+    paramTexte: (_nom: string, defaut: string) => defaut,
+    paramNombre: (_nom: string, defaut: number) => defaut,
   };
 }
 
@@ -108,8 +108,8 @@ describe("nœuds Tonal", () => {
     const f = trouver("tonal-grille")!;
     const ctx = {
       entree: () => "C Am F G",
-      paramTexte: (nom: string, defaut: string) => defaut,
-      paramNombre: (nom: string, defaut: number) => defaut,
+      paramTexte: (_nom: string, defaut: string) => defaut,
+      paramNombre: (_nom: string, defaut: number) => defaut,
     };
     const res = await f.executer(ctx as any);
     const notation = res.valeurs[0] as string;
@@ -127,7 +127,7 @@ describe("nœuds Tonal", () => {
     const ctx = {
       entree: () => null,
       paramTexte: (nom: string, defaut: string) => (nom === "Progression" ? "IMaj7 IV7 V7 vi7" : defaut),
-      paramNombre: (nom: string, defaut: number) => defaut,
+      paramNombre: (_nom: string, defaut: number) => defaut,
     };
     const res = await f.executer(ctx as any);
     const notation = res.valeurs[0] as string;

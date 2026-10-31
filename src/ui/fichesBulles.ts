@@ -21,7 +21,7 @@ import type { AreteG, PluginDef } from "../core";
 // rend que des `null`, qui entrent dans n'importe quel type de valeur.
 import type { RegistreUI } from "./registre-actif";
 import {
-  estBulle, estSubstitution, ficheDeBulle, noeudDeFicheBulle, portsDeBulle, type NoeudG,
+  estBulle, estSubstitution, ficheDeBulle, portsDeBulle, type NoeudG,
 } from "../core";
 
 export const UNIVERS_BULLES = "Bulles";
@@ -117,6 +117,3 @@ export function synchroniserFichesBulles(
   }
   return { inscrites, retirees };
 }
-
-/** L'identifiant du nœud qu'une fiche de bulle décrit, ou la chaîne vide. */
-export const noeudDeFiche = noeudDeFicheBulle;

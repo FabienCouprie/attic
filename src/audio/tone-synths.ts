@@ -304,8 +304,6 @@ export interface OptionsDrumSynth {
  * reste sous un même à plein volume. Des frappes qui se recouvrent peuvent encore s'additionner :
  * c'est le propre d'un mélange, et la marge laissée sous un le supporte.
  */
-const CIBLE_CRETE = 0.8;
-
 const VOIX_PERCUSSION: Record<string, {
   type: "membrane" | "metal" | "bruit";
   options: Record<string, unknown>;

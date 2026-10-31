@@ -34,7 +34,6 @@ let mastering: typeof import("./effets-mastering");
 let voix: typeof import("./effets-voix");
 let balayage: typeof import("./effets-balayage");
 let decoupe: typeof import("./effets-decoupe");
-let temp: typeof import("./effets-temporel");
 let grains: typeof import("./effets-grains");
 
 beforeAll(async () => {
@@ -46,7 +45,6 @@ beforeAll(async () => {
   voix = await import("./effets-voix");
   balayage = await import("./effets-balayage");
   decoupe = await import("./effets-decoupe");
-  temp = await import("./effets-temporel");
   grains = await import("./effets-grains");
 });
 

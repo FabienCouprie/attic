@@ -11,16 +11,6 @@
 
 import { gainDeFondu } from "./objets-sonores";
 
-/** Une piste à entendre : son son, son début sur le film, son niveau et ses fondus. */
-export interface PisteApercu {
-  piste: number;
-  son: AudioBuffer;
-  debutSec: number;
-  gainDb: number;
-  fonduEntreeMs: number;
-  fonduSortieMs: number;
-}
-
 /** Comment démarrer une source pour qu'elle tombe juste, le film étant déjà à `tempsFilm`. */
 export interface Calage {
   /** Dans combien de secondes la démarrer (0 si elle est déjà en cours). */

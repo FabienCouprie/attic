@@ -68,6 +68,7 @@ describe("l'analyseur de Bytebeat", () => {
     // « t & 255 > 128 » se lit « t & (255 > 128) », donc « t & 1 », et non « (t & 255) > 128 ».
     // La référence s'écrit avec le choix à trois termes parce que JavaScript convertit le vrai en
     // un, là où TypeScript refuse un booléen comme opérande binaire.
+    // oxlint-disable-next-line no-constant-condition, no-constant-binary-expression
     memeQueJs("t & 255 > 128", (t) => t & (255 > 128 ? 1 : 0));
     memeQueJs("t > 1000 ? t >> 2 : t", (t) => (t > 1000 ? t >> 2 : t));
     // a ? b : c ? d : e se lit a ? b : (c ? d : e).

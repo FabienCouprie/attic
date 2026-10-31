@@ -95,7 +95,7 @@ describe("classification-pistes (executer, bout en bout)", () => {
     const ctx = {
       noeud: { data: {} },
       paramTexte: (nom: string, defaut: string) => (({ Dossier: "/fake" } as Record<string, string>)[nom] ?? defaut),
-      paramNombre: (nom: string, defaut: number) => defaut,
+      paramNombre: (_nom: string, defaut: number) => defaut,
       onProgress: () => {},
     };
 
@@ -131,7 +131,7 @@ describe("classification-pistes (executer, bout en bout)", () => {
     const ctx = {
       noeud: { data: {} },
       paramTexte: (nom: string, defaut: string) => (({ Dossier: "/fake" } as Record<string, string>)[nom] ?? defaut),
-      paramNombre: (nom: string, defaut: number) => defaut,
+      paramNombre: (_nom: string, defaut: number) => defaut,
       onProgress: () => {},
       signal: controller.signal,
     };

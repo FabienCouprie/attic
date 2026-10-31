@@ -24,7 +24,7 @@ function creerRng(graine: number) {
   return creerAleatoire(graine);
 }
 
-function hashNoise(rng: () => number, x: number, y: number): number {
+function hashNoise(_rng: () => number, x: number, y: number): number {
   // Mélange simple de coordonnées avec la graine via le RNG.
   const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
   return (n - Math.floor(n)) * 2 - 1;

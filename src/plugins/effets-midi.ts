@@ -10,14 +10,14 @@ import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
 import { parseMidi } from "midi-file";
-import { appliquerInstrumentMidi, joindreMidi, bouclerMidi, analyserMidi, rendreSequence } from "../audio";
+import { appliquerInstrumentMidi, joindreMidi, bouclerMidi, analyserMidi } from "../audio";
 import { eclaircir, echoNotes, evenements, imposerRythme, palindrome, repeterEtTourner, type SensMotif } from "../audio/motifs-midi";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
 import { PARAMETRE_TONIQUE } from "../audio/cles";
 import { TEMPERAMENTS, noteTemperee, tableEcarts, temperament } from "../audio/temperaments";
 import { apprendre, engendrer, statistiques, tableEnTexte } from "../audio/markov";
 
-import { effet, simple, canalDominant, notesDuMidi, rendreMotif, PARAMETRES_RENDU_MOTIF, SORTIES_MOTIF } from "./effets-aides";
+import { canalDominant, notesDuMidi, rendreMotif, PARAMETRES_RENDU_MOTIF, SORTIES_MOTIF } from "./effets-aides";
 import { LIBELLES_HERITES_VALEURS, choixValeurs } from "../audio/valeurs-note";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 

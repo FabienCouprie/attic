@@ -31,9 +31,6 @@ import { frequenceDeTravail } from "../audio/frequence-de-travail";
  */
 export const SR = () => frequenceDeTravail();
 
-/** Les quatre types, tels que le réglage « Type » les nomme. */
-export type TypeFiltre = "Passe-bas" | "Passe-haut" | "Passe-bande" | "Coupe-bande";
-
 /**
  * Gain, en décibels, d'un biquad RBJ à la fréquence `f`.
  *

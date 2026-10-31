@@ -38,7 +38,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Le dossier dont chaque fichier audio sera traité. Les extensions reconnues sont wav, wave, ogg, mp3, flac, m4a, aac, aif et aiff ; tout le reste est ignoré sans bruit. Le nombre de passes est le nombre de fichiers trouvés, et il se lit sur ce composant dès le lancement.",
         docEn: "The folder whose every audio file will be processed. Recognised extensions are wav, wave, ogg, mp3, flac, m4a, aac, aif and aiff; everything else is quietly ignored. The number of passes is the number of files found, and it is shown on this node as soon as the run starts." },
     ],
-    async executer(ctx: any) {
+    async executer(_ctx: any) {
       const en = langueCourante() === "en";
       const lot = lotCourant();
       if (!lot) {

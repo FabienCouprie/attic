@@ -142,7 +142,7 @@ export function genererIR(
 
 interface Reflexion { delay: number; gain: number; pan: number; }
 
-function getReflexions(type: string, taille: number, dureeEarly: number, _sr: number): Reflexion[] {
+function getReflexions(type: string, _taille: number, dureeEarly: number, _sr: number): Reflexion[] {
   const base = dureeEarly;
   switch (type) {
     case "Room":

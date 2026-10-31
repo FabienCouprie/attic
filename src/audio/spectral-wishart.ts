@@ -343,7 +343,6 @@ export function spectreRisset(n: number, frequence: number, position: number, oc
 }
 
 export function glissandoInterieur(trames: TrameFFT[], o: OptionsGlissandoInterieur): TrameFFT[] {
-  const taille = o.taille ?? TAILLE_TRAME;
   const saut = o.saut ?? SAUT;
   const parSeconde = saut / o.frequence;
   return trames.map((trame, k) => {

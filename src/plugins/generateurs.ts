@@ -6,7 +6,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
-import { genererMelodieAleatoire, genererAccords, analyserMidi, rendreAvecSF2, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, rendreMidiDepuisBytes, GAMMES_ACCORDS, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio";
+import { genererMelodieAleatoire, genererAccords, analyserMidi, rendreAvecSF2, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, GAMMES_ACCORDS, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio";
 import { parseMidi } from "midi-file";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";

@@ -13,10 +13,14 @@ ne se réinventent pas.
 
 ## 1. L'ordre de vérification, avant d'annoncer quoi que ce soit
 
-Dans cet ordre, et les quatre étapes :
+Dans cet ordre, et les cinq étapes :
 
 ```bash
 npx tsc -b
+```
+
+```bash
+npx oxlint
 ```
 
 ```bash

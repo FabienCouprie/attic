@@ -54,7 +54,7 @@ async function analyserSignal(
 async function synthetiserSignal(
   frames: SpectralFrame[],
   fftSize: number,
-  hop: number,
+  _hop: number,
   window: Float64Array,
   length: number,
   souffle: Respiration,

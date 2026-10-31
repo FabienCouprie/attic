@@ -299,17 +299,6 @@ export function reechantillonnerVoie(
   return dst;
 }
 
-export function reechantillonnerVers(buffer: AudioBuffer, ratio: number, longueurCible: number): AudioBuffer {
-  const resultat = new AudioBuffer({
-    numberOfChannels: buffer.numberOfChannels,
-    length: longueurCible,
-    sampleRate: buffer.sampleRate,
-  });
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    resultat.getChannelData(c).set(reechantillonnerVoie(buffer.getChannelData(c), ratio, longueurCible));
-  }
-  return resultat;
-}
 
 
 export interface TrameFFT {

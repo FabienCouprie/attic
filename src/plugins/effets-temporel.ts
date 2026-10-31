@@ -13,7 +13,7 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
 import { appliquerEchoPingPong, appliquerEchoInverse, appliquerVoiceChanger, appliquerDecoupeAleatoire, griffinLim, picAbsolu } from "../audio";
 import { decalerFormantsHorsFil } from "./formants-hors-fil";
 
-import { MODULATION_MIX, MODULATION_MIX_NOMMEE, bornesModulation, effet, modulationNommee, reglageModule, portModulation } from "./effets-aides";
+import { MODULATION_MIX, MODULATION_MIX_NOMMEE, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
 import { choixValeurs } from "../audio/valeurs-note";
 
 export const fiches: FicheAudio[] = ([

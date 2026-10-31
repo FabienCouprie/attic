@@ -26,7 +26,7 @@
 // quinze familles demanderait de lire quinze registres, et ce n'est pas fait.
 import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join } from "node:path";
 
 import { CLES_CONNUES } from "./i18n";
 
@@ -35,18 +35,36 @@ const DOSSIERS = ["src", "electron", "scripts", "tests-e2e"];
 const EXTENSIONS = /\.(tsx?|cjs|mjs|js)$/;
 /** Le dictionnaire lui-même : une clé citée seulement là où elle est déclarée n'est pas employée. */
 const DICTIONNAIRE = join(RACINE, "src", "i18n.tsx");
+/** Et ce garde : une clé nommée dans ses commentaires passerait pour employée. */
+const CE_GARDE = join(RACINE, "src", "i18n-cles-mortes.test.ts");
 
 function fichiersDe(racine: string, vus: string[] = []): string[] {
   for (const entree of readdirSync(racine)) {
     const chemin = join(racine, entree);
     if (statSync(chemin).isDirectory()) { fichiersDe(chemin, vus); continue; }
-    if (EXTENSIONS.test(entree) && chemin !== DICTIONNAIRE) vus.push(chemin);
+    if (EXTENSIONS.test(entree) && chemin !== DICTIONNAIRE && chemin !== CE_GARDE) vus.push(chemin);
   }
   return vus;
 }
 
 const SOURCES = DOSSIERS.flatMap((d) => fichiersDe(join(RACINE, d)));
 const TOUT = SOURCES.map((f) => readFileSync(f, "utf8")).join("\n");
+
+/**
+ * La clé ENTIÈRE, et non un préfixe d'une autre. Cherchée comme sous-chaîne, une clé passait pour
+ * employée dès qu'une autre commençait par elle, et quatre clés mortes ont tenu ainsi le 2026-10-31 :
+ * trois de l'ancienne apparence de mise à jour, masquées par leurs voisines à suffixe, et une forme
+ * de message à deux variables, préfixe de ses variantes à trois.
+ */
+function estEmployee(cle: string): boolean {
+  let depuis = 0;
+  for (;;) {
+    const i = TOUT.indexOf(cle, depuis);
+    if (i < 0) return false;
+    if (!/[A-Za-z0-9_]/.test(TOUT.charAt(i + cle.length))) return true;
+    depuis = i + 1;
+  }
+}
 
 /** Les préfixes que le code interpole : `favs.`, `univers.`, `criteres.masse.`… */
 const FAMILLES = [...new Set(
@@ -64,7 +82,7 @@ describe("les clés du dictionnaire", () => {
 
   it("AUCUNE CLÉ DÉCLARÉE N'EST MORTE : ce qui est traduit est employé", () => {
     const mortes = [...CLES_CONNUES]
-      .filter((cle) => !TOUT.includes(cle))
+      .filter((cle) => !estEmployee(cle))
       .filter((cle) => !FAMILLES.some((f) => cle.startsWith(f)))
       .sort();
     expect(mortes, [

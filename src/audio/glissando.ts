@@ -210,18 +210,6 @@ export function sonDuGlissando(o: OptionsSonGlissando): { echantillons: Float32A
   return { echantillons: echantillonsDuGlissando(o.voix, { ...o, sampleRate: SR_GLISSANDO() }) };
 }
 
-/** Le glissement rendu en son, monophonique. */
-export function tamponDuGlissando(
-  voix: readonly VoixDeGlissando[],
-  o: Omit<OptionsGlissando, "sampleRate">,
-): AudioBuffer {
-  const x = echantillonsDuGlissando(voix, { ...o, sampleRate: SR_GLISSANDO() });
-  const ctx = new OfflineAudioContext(1, x.length, SR_GLISSANDO());
-  const tampon = ctx.createBuffer(1, x.length, SR_GLISSANDO());
-  tampon.getChannelData(0).set(x);
-  return tampon;
-}
-
 /**
  * Le trajet des voix, une par ligne.
  *

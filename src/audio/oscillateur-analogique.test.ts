@@ -15,7 +15,7 @@
 import { describe, expect, it } from "vitest";
 import { fft } from "./fft";
 import {
-  COUPURE, LARGEUR_MAX, LARGEUR_MIN, SUR_ECHANTILLONNAGE, decimer, echantillonVco,
+  COUPURE, LARGEUR_MIN, SUR_ECHANTILLONNAGE, decimer, echantillonVco,
   noyauDecimation, ondeVco, retirerLeContinu, synthetiserVco, type ReglagesVco,
 } from "./oscillateur-analogique";
 

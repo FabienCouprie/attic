@@ -4,7 +4,6 @@
 // de calcul n'a ete retouchee au passage.
 
 import { parseMidi } from "midi-file";
-import { comparerEvenementsMidi } from "./midi-ordre";
 
 export interface NoteMidi {
   note: number;

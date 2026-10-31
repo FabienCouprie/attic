@@ -75,7 +75,7 @@ import { describe, expect, it } from "vitest";
 import { parseMidi } from "midi-file";
 import { NB_BANDES } from "../audio/masquage";
 import { GAMMES } from "../audio/gammes-monde";
-import { CANAL_PERCUSSION, PERCUSSIONS_CHOIX, PERCUSSIONS_JOUABLES } from "../audio/batterie-midi";
+import { CANAL_PERCUSSION, PERCUSSIONS_JOUABLES } from "../audio/batterie-midi";
 import { fiches } from "./masquage-schillinger-gammes";
 
 const SR = 44100;

@@ -9,7 +9,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
-  analyserRythme, enCases, rythme, type Rythme,
+  analyserRythme, rythme, type Rythme,
 } from "../audio/rythme-analyse";
 import { motifEuclidien } from "../audio/euclidien";
 import { analyserConduite } from "../audio/conduite-voix";

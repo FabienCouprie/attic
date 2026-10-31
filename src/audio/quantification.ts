@@ -269,7 +269,7 @@ function marquer(
   debutMesure: number, largeurMesure: number,
 ): void {
   const bornes: number[] = [];
-  for (const n of racine) bornes.push(0);
+  for (let i = 0; i < racine.length; i++) bornes.push(0);
   bornes.length = 0;
   const faux: NoeudRythme = { valeur: 1, enfants: [...racine] };
   frontieres(faux, 0, 1, bornes);

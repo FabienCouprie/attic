@@ -24,7 +24,7 @@ async function midiTest() {
 const ctx = (fichierMidi: File) => ({
   entree: (i: number) => (i === 0 ? fichierMidi : null),
   entrees: () => [fichierMidi],
-  paramTexte: (nom: string, def: string) => def,
+  paramTexte: (_nom: string, def: string) => def,
   paramNombre: (nom: string, def: number) => {
     const params: Record<string, number> = {
       "Canal MIDI": 10,

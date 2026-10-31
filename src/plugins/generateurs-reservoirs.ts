@@ -6,7 +6,6 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
-import { notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, rendreMidiDepuisBytes } from "../audio";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
