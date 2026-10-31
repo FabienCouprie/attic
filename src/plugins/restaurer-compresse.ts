@@ -21,9 +21,14 @@
 // QUARANTE-QUATRE MILLE CENT HERTZ, ET RIEN D'AUTRE : le moteur refuse toute autre cadence. Le
 // composant descend donc le son et le ramène à la cadence reçue, par la même pièce que « Isoler la
 // voix », qui porte la même contrainte.
+//
+// TOUJOURS EN TRANCHES, ce que le pont décide et que `electron/apollo.cjs` mesure en tête : le
+// fichier entier en un seul graphe demandait 40 143 349 760 octets pour un morceau de 194 s, et
+// les tranches avec une seconde de contexte de part et d'autre rendent le même son. « Tranche » ne
+// règle donc plus que la mémoire et le temps, et un refus de mémoire se dit avec ses chiffres.
 import { plafonnerCrete } from "../audio/commun";
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { octetsWav } from "./chanson-aides";
 import { aLaFrequence, FREQUENCE_MODELE } from "./isoler-voix";
 import { avecDoc } from "./notices";
@@ -65,6 +70,37 @@ export function doser(recu: AudioBuffer, rendu: AudioBuffer, part: number): Audi
   return sortie;
 }
 
+/** Ce que le pont rend. `memoire` n'est posé que sur un refus de mémoire du moteur. */
+export interface ReponsePont {
+  ok: boolean;
+  audio?: Uint8Array;
+  releves?: { rtf: number | null };
+  journal?: string;
+  tranche?: number;
+  memoire?: { peripherique: string | null; octets: number | null } | null;
+}
+
+/** Un nombre écrit dans la langue courante, virgule ou point selon le cas. */
+const nb = (v: number, d = 1) => (langueCourante() === "en" ? v.toFixed(d) : v.toFixed(d).replace(".", ","));
+
+/**
+ * Le message d'un échec : un refus de mémoire se dit avec ses chiffres, le reste par la fin du journal.
+ *
+ * LE JOURNAL BRUT ÉTAIT TOUT CE QUE FABIEN AVAIT, en anglais et coupé à 240 caractères : « failed to
+ * allocate Vulkan1 buffer of size 40143349760 » ne nomme ni le réglage ni l'unité. Le refus de
+ * mémoire est le seul échec de ce moteur que l'utilisateur peut lever lui-même, en raccourcissant la
+ * tranche, et il se dit donc dans sa langue, la taille en gibioctets et la tranche qui l'a demandée.
+ */
+export function messageDEchec(r: ReponsePont): string {
+  const m = r.memoire;
+  if (!m) return (r.journal ?? "").slice(-240);
+  const peripherique = m.peripherique ?? traduire("msg.apollo.peripherique");
+  const tranche = String(r.tranche ?? "?");
+  return m.octets == null
+    ? traduire("msg.apollo.memoire", peripherique, tranche)
+    : traduire("msg.apollo.memoire_chiffree", peripherique, nb(m.octets / 2 ** 30), tranche);
+}
+
 export const fiches = ([
   {
     id: "restaurer-compresse", nom: "Restaurer un son compressé", nomEn: "Restore compressed audio",
@@ -80,10 +116,12 @@ export const fiches = ([
       + "moteur, qui imprime sa propre couleur même à un son sain ; plus bas, on prend une part de la "
       + "réparation en gardant le reste du son d'origine. C'est le réglage à baisser quand le résultat "
       + "paraît lissé.\n\n"
-      + "« Tranche » découpe les longs fichiers. À zéro, le fichier passe d'un seul coup, ce qui donne "
-      + "le meilleur résultat et demande le plus de mémoire. Une tranche de quelques dizaines de "
-      + "secondes permet de traiter une pièce entière sur une petite carte ; les tranches se recouvrent "
-      + "et se fondent, de sorte que les coutures ne s'entendent pas.\n\n"
+      + "« Tranche » fixe la durée des morceaux que le moteur traite l'un après l'autre. Chaque tranche "
+      + "est calculée avec une seconde de son de part et d'autre, ensuite écartée, et deux tranches "
+      + "voisines se recouvrent d'une seconde et se fondent : le son rendu est le même quelle que soit "
+      + "la tranche, au dernier bit près. La tranche fixe en revanche la mémoire demandée, de l'ordre de "
+      + "deux cents mégaoctets par seconde de tranche, et le temps de calcul : une tranche longue va un "
+      + "peu plus vite et demande davantage. Un son plus court qu'une tranche passe d'un seul tenant.\n\n"
       + "« Calcul » nomme le périphérique employé.\n\n"
       + "Le moteur travaille à 44 100 Hz et n'accepte rien d'autre : le son y est amené puis ramené à "
       + "sa cadence d'origine, dont la durée ne change pas.",
@@ -96,9 +134,12 @@ export const fiches = ([
       + "entirely the engine's, which imprints its own colour even on a healthy sound; lower, one takes "
       + "part of the repair while keeping the rest of the original. This is the setting to lower when "
       + "the result seems smoothed.\n\n"
-      + "« Chunk » splits long files. At zero the file goes through in one pass, which gives the best "
-      + "result and asks the most memory. A chunk of a few tens of seconds allows a whole piece to be "
-      + "processed on a small card; chunks overlap and crossfade, so the seams are not heard.\n\n"
+      + "« Chunk » sets the duration of the pieces the engine processes one after another. Each chunk "
+      + "is computed with one second of sound on either side, then discarded, and two neighbouring "
+      + "chunks overlap by one second and crossfade: the returned sound is the same whatever the chunk, "
+      + "down to the last bit. The chunk does set the memory asked, on the order of two hundred "
+      + "megabytes per second of chunk, and the compute time: a long chunk goes a little faster and "
+      + "asks more. A sound shorter than one chunk goes through in one piece.\n\n"
       + "« Compute » names the device used.\n\n"
       + "The engine works at 44 100 Hz and accepts nothing else: the sound is brought there and "
       + "returned to its original rate, with its duration unchanged.",
@@ -111,9 +152,9 @@ export const fiches = ([
       { nom: "Dosage", nomEn: "Amount", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "La part du rendu dans le son final. À cent, le son est entièrement celui du moteur, qui imprime sa couleur même à un son sain. À zéro, le son reçu ressort inchangé et le moteur tourne pour rien.",
         docEn: "The share of the result in the final sound. At one hundred, the sound is entirely the engine's, which imprints its colour even on a healthy sound. At zero, the received sound comes out unchanged and the engine runs for nothing." },
-      { nom: "Tranche", nomEn: "Chunk", type: "nombre", plage: [0, 120], pas: 1, defaut: 0, unite: "s",
-        doc: "La durée des tranches traitées séparément. À zéro, le fichier passe d'un seul coup : meilleur résultat, plus de mémoire. Les tranches se recouvrent d'une seconde et se fondent.",
-        docEn: "The duration of the chunks processed separately. At zero, the file goes through in one pass: better result, more memory. Chunks overlap by one second and crossfade." },
+      { nom: "Tranche", nomEn: "Chunk", type: "nombre", plage: [5, 60], pas: 1, defaut: 10, unite: "s",
+        doc: "La durée des morceaux traités l'un après l'autre. Elle change la mémoire demandée, de l'ordre de deux cents mégaoctets par seconde de tranche, et le temps de calcul, et non le son rendu : chaque tranche est calculée avec une seconde de contexte de part et d'autre, et les tranches se recouvrent d'une seconde et se fondent.",
+        docEn: "The duration of the pieces processed one after another. It changes the memory asked, on the order of two hundred megabytes per second of chunk, and the compute time, and not the returned sound: each chunk is computed with one second of context on either side, and chunks overlap by one second and crossfade." },
       parametreCalcul(
         "Il change le temps de calcul et non le son rendu, mesuré identique à la quatrième décimale entre le processeur et la carte.",
         "It changes the compute time and not the returned sound, measured identical to the fourth decimal between processor and card."),
@@ -136,11 +177,11 @@ export const fiches = ([
 
       await annoncerModele(ctx, "restaurer-compresse", traduire("progress.apollo.modele"));
       const debrancher = suivre(ctx);
-      let r: { ok: boolean; audio?: Uint8Array; releves?: { rtf: number | null }; journal?: string };
+      let r: ReponsePont;
       try {
         r = await pont.apolloRestaurer({
           audio,
-          tranche: ctx.paramNombre("Tranche", 0),
+          tranche: ctx.paramNombre("Tranche", 10),
           calcul: ctx.paramTexte("Calcul", "").trim(),
         }) as typeof r;
       } catch (erreur) {
@@ -149,7 +190,7 @@ export const fiches = ([
         debrancher();
       }
       if (!r.ok || !r.audio) {
-        return { valeurs: [null, null], erreur: true, message: (r.journal ?? "").slice(-240) };
+        return { valeurs: [null, null], erreur: true, message: messageDEchec(r) };
       }
 
       const { decoderBlob } = await import("../audio");
@@ -162,6 +203,7 @@ export const fiches = ([
       const rapport = [
         traduire("msg.apollo.dosage", String(Math.round(part * 100))),
         traduire("msg.apollo.cadence", String(FREQUENCE_MODELE), String(frequenceDOrigine)),
+        r.tranche == null ? "" : traduire("msg.apollo.tranches", String(r.tranche)),
         rtf == null ? "" : traduire("msg.apollo.vitesse", rtf.toFixed(3)),
       ].filter(Boolean).join("\n");
 

@@ -700,6 +700,19 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
     fr: "facteur de temps réel {__VAR_0__}",
     en: "real-time factor {__VAR_0__}",
   },
+  "msg.apollo.tranches": {
+    fr: "tranches de {__VAR_0__} s, une seconde de contexte de part et d'autre",
+    en: "chunks of {__VAR_0__} s, one second of context on either side",
+  },
+  "msg.apollo.memoire_chiffree": {
+    fr: "Mémoire insuffisante sur {__VAR_0__} : {__VAR_1__} Gio demandés pour des tranches de {__VAR_2__} s. Une « Tranche » plus courte en demande moins, de l'ordre de 0,2 Gio par seconde.",
+    en: "Not enough memory on {__VAR_0__}: {__VAR_1__} GiB asked for chunks of {__VAR_2__} s. A shorter « Chunk » asks less, on the order of 0.2 GiB per second.",
+  },
+  "msg.apollo.memoire": {
+    fr: "Mémoire insuffisante sur {__VAR_0__} pour des tranches de {__VAR_1__} s. Une « Tranche » plus courte en demande moins, de l'ordre de 0,2 Gio par seconde.",
+    en: "Not enough memory on {__VAR_0__} for chunks of {__VAR_1__} s. A shorter « Chunk » asks less, on the order of 0.2 GiB per second.",
+  },
+  "msg.apollo.peripherique": { fr: "le périphérique de calcul", en: "the compute device" },
   "msg.parole.tours": { fr: "{__VAR_0__} tours de parole", en: "{__VAR_0__} speaker turns" },
   "msg.parole.locuteurs": { fr: "{__VAR_0__} locuteurs", en: "{__VAR_0__} speakers" },
   "msg.parole.tous_gardes": { fr: "tous gardés", en: "all kept" },
