@@ -28,6 +28,7 @@ import { couleurArete, couleurFlux, lienDicte, portsDeFiche, trouverDef } from "
 import { useEnCours } from "./hooks/useEnCours";
 import { useRelanceApresReglage } from "./hooks/useRelanceApresReglage";
 import { useChargementMedias } from "./hooks/useChargementMedias";
+import { useNotesEtCadres } from "./hooks/useNotesEtCadres";
 import { appliquerCommandes, type LotDicte, type OutilsDeDictee } from "./dictee/appliquer-commandes";
 import { tailleDefaut } from "./tailles-noeuds";
 import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
@@ -150,11 +151,6 @@ function Atelier() {
   const rfRef = useRef<HTMLDivElement>(null);
   const pointerDownRef = useRef(false);
   const [sel, setSel] = useState<NoeudAtelier | null>(null);
-  // Placement des éléments décoratifs (note / cadre) : après un clic sur la barre
-  // d'outils, le prochain clic sur le canevas pose l'élément à l'endroit cliqué.
-  const [pendingAdd, setPendingAdd] = useState<null | "comment" | "frame">(null);
-  const pendingAddRef = useRef(pendingAdd);
-  pendingAddRef.current = pendingAdd;
   // Navigation dans les méta-composants : pile de contextes (fil d'Ariane).
   // Vide = graphe racine. Chaque niveau = { metaId, nom } du méta ouvert.
   const [pile, setPile] = useState<{ metaId: string; nom: string; nomEn?: string }[]>([]);
@@ -583,53 +579,10 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     });
   }, [setNodes, fabriquerNoeud]);
 
-  const ajouterCommentaire = useCallback(() => {
-    setPendingAdd("comment");
-  }, []);
-
-  const ajouterCadre = useCallback(() => {
-    setPendingAdd("frame");
-  }, []);
-
-  const creerCommentaire = useCallback((position: { x: number; y: number }) => {
-    setNodes((nds) => [...nds, {
-      id: idUnique(noeudsRef.current),
-      type: "atelier",
-      position,
-      width: 180,
-      height: 100,
-      data: {
-        ficheId: "comment",
-        parametres: {},
-        statut: "attente",
-        // AUCUN TEXTE POSÉ DANS LA DONNÉE : « Ajouter une note » y était écrit à la création, donc
-        // figé dans la langue du moment. L'invite du champ, elle, suit la langue.
-        ...(callbacksNoeudRef.current?.()),
-      },
-    }]);
-  }, [setNodes]);
-
-  const creerCadre = useCallback((position: { x: number; y: number }) => {
-    setNodes((nds) => {
-      const nouveau = {
-        id: idUnique(noeudsRef.current),
-        type: "atelier" as const,
-        position,
-        width: 320,
-        height: 200,
-        data: {
-          ficheId: "frame",
-          parametres: {},
-          statut: "attente",
-          // AUCUN NOM POSÉ DANS LA DONNÉE : « Ajouter un cadre » y était écrit à la création, donc
-          // figé dans la langue du moment. L'invite du champ, elle, suit la langue.
-          couleur: "rgba(120,120,120,0.12)",
-          ...(callbacksNoeudRef.current?.()),
-        },
-      };
-      return [nouveau, ...nds];
-    });
-  }, [setNodes, t]);
+  // ── Notes et cadres, dans hooks/useNotesEtCadres.ts ──
+  const { pendingAdd, ajouterCommentaire, ajouterCadre, onPaneClick } = useNotesEtCadres({
+    noeudsRef, rfInstanceRef, callbacksNoeudRef, setNodes, setSel,
+  });
 
   // ── Copier / Couper / Coller (Ctrl+C / Ctrl+X / Ctrl+V) et Ctrl+Z, dans hooks/useCopierColler.ts ──
   useCopierColler({ noeudsRef, setNodes, setSel, pushHistorique, supprimerNoeud, callbacksNoeud, undo, t });
@@ -791,32 +744,6 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
       .filter((f): f is { fichier: File; sorte: SorteDeposee } => f.sorte !== null);
     if (connus.length > 0) deposerSons(connus, position);
   }, [ajouterNoeud, deposerSons, rfInstance]);
-
-  const onPaneClick = useCallback((e: React.MouseEvent) => {
-    const type = pendingAddRef.current;
-    if (type && rfInstanceRef.current) {
-      // Même correctif qu'au dépôt : des coordonnées client, sans retirer l'enveloppe.
-      const position = rfInstanceRef.current.screenToFlowPosition({ x: e.clientX, y: e.clientY });
-      setPendingAdd(null);
-      if (type === "comment") {
-        creerCommentaire(position);
-      } else {
-        creerCadre(position);
-      }
-      return;
-    }
-    setSel(null);
-  }, [creerCommentaire, creerCadre]);
-
-  // Échap annule un placement de note/cadre en attente.
-  useEffect(() => {
-    if (!pendingAdd) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setPendingAdd(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [pendingAdd]);
 
   const isValidConnection = useCallback((conn: Connection | Edge) => {
     // La validité se juge sur la connexion TRADUITE : sur une poignée de bulle, ce sont les types du
