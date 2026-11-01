@@ -27,6 +27,7 @@
 //   laquelle il n'y a pas de `garde-worker` ici — il n'y a pas de worker à garder, et la
 //   bibliothèque rend ses erreurs par son propre canal.
 import type { FicheAudio } from "../audio/types-domaine";
+import { reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { baseModeleLivre } from "./base-modeles";
@@ -121,12 +122,7 @@ export async function vers16k(mono: Float32Array, frequence: number): Promise<Fl
   const source = new AudioBuffer({ numberOfChannels: 1, length: mono.length, sampleRate: frequence });
   source.getChannelData(0).set(mono);
   const longueur = Math.max(1, Math.ceil((mono.length * FREQUENCE_VOSK) / frequence));
-  const ctx = new OfflineAudioContext(1, longueur, FREQUENCE_VOSK);
-  const n = ctx.createBufferSource();
-  n.buffer = source;
-  n.connect(ctx.destination);
-  n.start();
-  return (await ctx.startRendering()).getChannelData(0);
+  return (await reechantillonnerParLeNavigateur(source, FREQUENCE_VOSK, { longueur })).getChannelData(0);
 }
 
 /**

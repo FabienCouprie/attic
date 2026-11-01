@@ -29,6 +29,7 @@
 // la plateforme en porte un bon : un `OfflineAudioContext` rend ce travail au décodeur du
 // navigateur. L'adaptateur, lui, refuse plutôt que de rééchantillonner mal en silence.
 import type { FicheAudio } from "../audio/types-domaine";
+import { reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
@@ -59,16 +60,11 @@ function suivre(ctx: ContexteDeRelais) {
  */
 export async function aLaFrequence(buffer: AudioBuffer, frequence: number): Promise<AudioBuffer> {
   if (buffer.sampleRate === frequence) return buffer;
-  const hors = new OfflineAudioContext(
-    buffer.numberOfChannels,
-    Math.max(1, Math.round(buffer.duration * frequence)),
-    frequence,
-  );
-  const source = hors.createBufferSource();
-  source.buffer = buffer;
-  source.connect(hors.destination);
-  source.start();
-  return hors.startRendering();
+  // La longueur s'ARRONDIT ici, là où les autres appelants la prennent au plafond : c'est ce que ce
+  // composant a toujours fait, et un échantillon de plus ou de moins change ce que le modèle reçoit.
+  return reechantillonnerParLeNavigateur(buffer, frequence, {
+    longueur: Math.max(1, Math.round(buffer.duration * frequence)),
+  });
 }
 
 export const fiches = ([

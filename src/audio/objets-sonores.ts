@@ -13,6 +13,7 @@
 // secondes —, si bien que toute la chaîne existante les accepte. Elles portent en plus leurs
 // descripteurs, que les nœuds existants ignorent et que « Réordonner les objets » exploite.
 
+import { reechantillonnerParLeNavigateur } from "./convertir-frequence";
 import { fft } from "./fft";
 import {
   criteresSchaefferiens, degreDeMasse,
@@ -457,9 +458,7 @@ export async function monter(plans: Plan[]): Promise<AudioBuffer> {
   const canaux = Math.max(...plans.map((p) => p.son.numberOfChannels));
   const prets = await Promise.all(plans.map(async (p) => {
     if (p.son.sampleRate === sr) return p;
-    const off = new OfflineAudioContext(p.son.numberOfChannels, Math.max(1, Math.ceil(p.son.duration * sr)), sr);
-    const s = off.createBufferSource(); s.buffer = p.son; s.connect(off.destination); s.start(0);
-    return { ...p, son: await off.startRendering() };
+    return { ...p, son: await reechantillonnerParLeNavigateur(p.son, sr) };
   }));
   const longueur = Math.max(1, maxDe(prets.map((p) => Math.round(p.debut * sr) + fenetreDuPlan(p, sr).n)));
   const sortie = new AudioBuffer({ numberOfChannels: canaux, length: longueur, sampleRate: sr });

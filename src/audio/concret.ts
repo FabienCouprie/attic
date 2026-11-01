@@ -6,6 +6,7 @@
 // autre, on accorde un bruit. Aucun ne suppose de modèle — ni note, ni instrument, ni hauteur
 // écrite : chacun prend un son tel qu'il est et le transforme en un autre son.
 
+import { reechantillonnerParLeNavigateur } from "./convertir-frequence";
 import { estCourbe, valeurA, valeurMax, valeurTransformee, valeursParametre } from "./courbe";
 import { intervallesDaccord } from "./qualites-accords";
 
@@ -141,10 +142,7 @@ const pic = (b: AudioBuffer): number => {
 
 async function reechantillonner(b: AudioBuffer, sr: number): Promise<AudioBuffer> {
   if (b.sampleRate === sr) return b;
-  const off = new OfflineAudioContext(b.numberOfChannels, Math.max(1, Math.ceil(b.duration * sr)), sr);
-  const s = off.createBufferSource();
-  s.buffer = b; s.connect(off.destination); s.start(0);
-  return off.startRendering();
+  return reechantillonnerParLeNavigateur(b, sr);
 }
 
 /**
