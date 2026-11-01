@@ -41,7 +41,7 @@ DEUX RÈGLES, À VÉRIFIER SUR CE COMPOSANT AVANT DE PASSER À AUTRE CHOSE.
                  l'efface, un réglage le GARDE : régler ce composant ne touche pas à ce qu'il a
                  reçu. C'est ce qui permet d'entendre un montage pendant qu'on le règle.
      moteur      ce que le composant demande au MOTEUR, et non à une vue : un graphe à poser sur
-                 le canevas, un graphe à embarquer dans le fichier écrit, une palette à relire.
+                 le canevas, une palette à relire.
                  Rien ne se pose sur le nœud, donc rien n'est à effacer ensuite.
 
    ÉCRIRE SUR \`ctx.noeud.data\` EST LA FAUTE QUE CE CONTRAT EXISTE POUR EMPÊCHER. Un champ posé là

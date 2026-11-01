@@ -233,7 +233,9 @@ export interface EtiquetteMp3 {
   titre?: string;
   /** Le document iXML à recopier dans une trame TXXX « iXML ». */
   ixml?: string;
-  /** Le graphe Attic embarqué, relu par Attic à l'import. */
+  /** Un graphe Attic à embarquer. Plus aucun composant n'en écrit ni n'en relit depuis le
+   *  2026-11-01 : un fichier audio ne porte pas de graphe. La trame reste écrite si on la demande,
+   *  et les tests de format s'en servent de témoin. */
   graphe?: string;
 }
 

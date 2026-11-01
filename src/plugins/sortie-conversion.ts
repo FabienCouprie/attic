@@ -32,9 +32,7 @@ export const fiches: FicheAudio[] = ([
       let mp3Url: string | undefined;
       try {
         const qualite = ctx.paramNombre("Qualité", 192);
-        const { serialiserGraphe } = await import("../audio/graphe-embarque");
-        const graphe = serialiserGraphe() ?? undefined;
-        const blob = await bufferVersMp3Blob(a, qualite, graphe, decrire(a, { noeud: "WAV → MP3" }));
+        const blob = await bufferVersMp3Blob(a, qualite, undefined, decrire(a, { noeud: "WAV → MP3" }));
         // LE MP3 PRÉCÉDENT SE RÉVOQUE, et il se relit dans le canal déclaré où le run d'avant l'a
         // laissé. Ce fichier était le dernier champ d'affichage d'un composant à passer par un nom
         // convenu : il figurait même dans la signature universelle des exécuteurs, faute d'endroit
@@ -63,11 +61,10 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const a = entreeAudio(ctx, 0, { sorties: 2 });
       if (sansEntree(a)) return a;
-      const { serialiserGraphe } = await import("../audio/graphe-embarque");
-      const graphe = serialiserGraphe() ?? undefined;
-      // LE GRAPHE PART PAR LE CANAL DU MOTEUR : c'est lui qui écrit le WAV, donc lui qui doit
-      // savoir quoi y embarquer. Rien ne se pose sur le nœud.
-      return { valeurs: [a, { debut: 0, duree: a.duration }], moteur: { grapheAEmbarquer: graphe } };
+      // LE FICHIER NE PORTE PLUS LE GRAPHE. Les deux convertisseurs écrivaient le graphe entier du
+      // canevas dans chaque fichier produit, et « Entrée audio » le reposait au run suivant : un
+      // fichier audio ne porte pas de graphe. Retiré le 2026-11-01, à la demande de Fabien.
+      return { valeurs: [a, { debut: 0, duree: a.duration }] };
    },
  },
   {

@@ -766,7 +766,6 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
     en: "The worker returned an unreadable message: a non-transferable value failed to cross.",
   },
   "msg.erreur_conversion_png": { fr: "Conversion PNG échouée.", en: "PNG conversion failed." },
-  "msg.graphe_embarqu_d_tect_var_0_nodes_var_1_connexions": { fr: "Graphe embarqué détecté ! {__VAR_0__} composants · {__VAR_1__} connexions", en: "Onboard graph detected! {__VAR_0__} nodes · {__VAR_1__} connections" },
   "msg.aucun_enregistrement": { fr: "Aucun enregistrement.", en: "No recording." },
   "msg.aucune_capture_cliquez_sur_enregistrer_dans_l_inspecteur": { fr: "Aucune capture. Cliquez sur Enregistrer dans l'inspecteur.", en: "No capture. Click Record in the inspector." },
   "msg.var_0_rendu_soundfont": { fr: "{__VAR_0__}\n── Rendu : SoundFont", en: "{__VAR_0__}\n── Rendered: SoundFont" },

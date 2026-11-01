@@ -62,7 +62,6 @@ import "../audio/adaptateur";
 import { chargerMetasLocaux } from "./metasLocaux";
 import { useFenetresPartagees } from "./hooks/useFenetresPartagees";
 import { installerMetasExemples } from "../plugins/meta-exemples";
-import { setGrapheRef } from "../audio/graphe-embarque";
 import { chargerNodesInstalles } from "../core";
 // LE BAC SE POSE EN S'IMPORTANT : sans lui, un nœud installé refuse de s'exécuter, et c'est voulu.
 import "./bac-a-sable-noeud";
@@ -204,7 +203,6 @@ function Atelier() {
     noeudsRef.current = nodes;
     aretesRef.current = edges;
     enExecRef.current = enExecution;
-    setGrapheRef({ nodes, edges });
   }, [nodes, edges, enExecution]);
   const [rfInstance, setRfInstance] = useState<any>(null);
   const rfInstanceRef = useRef(rfInstance);
