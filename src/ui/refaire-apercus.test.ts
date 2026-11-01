@@ -83,19 +83,18 @@ describe("refaire les aperçus à une autre profondeur", () => {
     expect(recues).toEqual([]);
   });
 
-  it("CE QU'IL FAUT POUR RÉÉCRIRE EST REPRIS TEL QUEL, graphe embarqué compris", async () => {
+  it("CE QU'IL FAUT POUR RÉÉCRIRE EST REPRIS TEL QUEL, nom pour les métadonnées compris", async () => {
     // ═══ LE DÉFAUT QUE CE CAS EMPÊCHE EST UNE PERTE SILENCIEUSE ═══
     //
-    // Le graphe embarqué vient du canal `moteur` de l'exécution du nœud, et le nom pour les
-    // métadonnées de sa fiche : NI L'UN NI L'AUTRE NE SE REDÉRIVE. Réécrire sans eux rendrait un
-    // fichier qui s'ouvre, qui s'écoute, et qui a perdu le graphe qu'il portait — c'est-à-dire
-    // pire que de ne rien refaire, puisque personne ne s'en apercevrait.
+    // Le nom pour les métadonnées vient de la fiche du nœud, et NE SE REDÉRIVE PAS d'un aperçu.
+    // Réécrire sans lui rendrait un fichier qui s'ouvre, qui s'écoute, et qui a perdu sa
+    // provenance — c'est-à-dire pire que de ne rien refaire, puisque personne ne s'en apercevrait.
+    // (Le graphe embarqué, qui voyageait par le même chemin, n'est plus écrit depuis le 2026-11-01.)
     const recues = domaineQuiNote();
     poserUnApercu("sortie", 24, {
-      securiser: true, grapheAEmbarquer: '{"nodes":[]}', nomPourMetadonnees: "Sortie audio",
+      securiser: true, nomPourMetadonnees: "Sortie audio",
     } as never);
     await refaireLesApercus(16);
-    expect(recues[0].grapheAEmbarquer).toBe('{"nodes":[]}');
     expect(recues[0].nomPourMetadonnees).toBe("Sortie audio");
     expect(recues[0].securiser).toBe(true);
   });

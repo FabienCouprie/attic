@@ -129,12 +129,6 @@ export type FonctionPlugin<TValeur, TRuntime> = (ctx: ContexteExecution<TValeur,
 /** Ce qu'un composant peut demander au moteur. Voir `moteur` dans le retour d'un exécuteur. */
 export interface DemandeAuMoteur {
   /**
-   * Le graphe à embarquer dans le fichier que ce run écrit.
-   *
-   * Sérialisé, tel qu'il ira dans le WAV : un projet se retrouve ainsi dans le son qu'il a produit.
-   */
-  grapheAEmbarquer?: string;
-  /**
    * Des nœuds et des arêtes à poser sur le canevas, décrits par leur fiche.
    *
    * Une arête désigne ses deux bouts par leur RANG dans `nodes`, et non par un identifiant : le
@@ -144,13 +138,6 @@ export interface DemandeAuMoteur {
     nodes: { ficheId: string; label: string }[];
     edges: { source: number; target: number }[];
   };
-  /**
-   * Un graphe TROUVÉ dans un fichier importé, à poser sur le canevas.
-   *
-   * Distinct du précédent parce qu'il arrive sous la forme d'un graphe enregistré, avec des
-   * identifiants de nœuds, là où l'autre décrit des fiches et des rangs.
-   */
-  grapheTrouve?: { nodes: { id: string; ficheId: string }[]; edges: { source: string; target: string }[] };
   /** Un composant vient d'être installé : la palette doit se relire. */
   paletteARelire?: boolean;
 }

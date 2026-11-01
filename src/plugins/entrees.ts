@@ -32,10 +32,11 @@ const entrees: FicheAudio[] = [
       const fichier = ctx.noeud.data.audioFichier as File | undefined;
       if (!fichier) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_charg") };
       const buffer = await decoderFichier(fichier, ctx.runtime);
-      // Détecter un graphe embarqué dans les métadonnées du fichier
+      // Lire les métadonnées du fichier : l'heure d'enregistrement d'un BWF. Le graphe qu'Attic
+      // embarquait dans ses exports n'est plus lu ni écrit depuis le 2026-11-01 : un fichier audio
+      // ne porte pas de graphe, et celui qu'on en tirait se reposait sur le canevas à chaque run.
       let heureBwf = "";
       try {
-        const { extraireGrapheWav, extraireGrapheMp3, deserialiserGraphe } = await import("../audio");
         const arrayBuf = await fichier.arrayBuffer();
         // L'HEURE D'ENREGISTREMENT, QUE LE FICHIER PORTE ET QU'ATTIC JETAIT. Un enregistreur de
         // terrain écrit un bloc `bext` disant à quel instant de la journée son premier échantillon
@@ -62,25 +63,6 @@ const entrees: FicheAudio[] = [
             // permet au Montage de replacer deux prises l'une par rapport à l'autre.
             const { poserDepart } = await import("../audio/depart-bwf");
             poserDepart(buffer, secondes);
-          }
-        }
-        let grapheJson: string | null = null;
-        if (fichier.name.toLowerCase().endsWith(".wav")) grapheJson = extraireGrapheWav?.(arrayBuf) ?? null;
-        else if (fichier.name.toLowerCase().endsWith(".mp3")) grapheJson = extraireGrapheMp3?.(arrayBuf) ?? null;
-        if (grapheJson) {
-          const graphe = deserialiserGraphe?.(grapheJson);
-          if (graphe) {
-            // LE GRAPHE TROUVÉ PART PAR LE CANAL DU MOTEUR : il arrive avec des identifiants de
-            // nœuds, que le moteur convertit en fiches et en rangs pour le canevas.
-            return {
-              valeurs: [buffer],
-              moteur: { grapheTrouve: graphe },
-              // LES DEUX SE DISENT, et le graphe passe devant : c'est lui qui appelle un geste.
-              message: [
-                traduire("msg.graphe_embarqu_d_tect_var_0_nodes_var_1_connexions", graphe.nodes.length, graphe.edges.length),
-                heureBwf,
-              ].filter(Boolean).join(" · "),
-            };
           }
         }
       } catch {}
