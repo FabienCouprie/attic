@@ -15,13 +15,11 @@ import { trouverMeta,
 
 import "../audio/adaptateur";
 
-const trouverDef = (id: string) => registreUI().trouverDef(id);
 /** Le temps qu'on laisse passer après le dernier réglage avant de relancer un nœud qui le demande.
  *  Assez long pour qu'une valeur tapée chiffre par chiffre ne lance qu'une fois, assez court pour
  *  qu'on entende le résultat du geste qu'on vient de faire. */
 const DELAI_RELANCE_MS = 350;
 const tousLesPlugins = () => registreUI().tousLesPlugins();
-const couleurFlux = (id: string) => registreUI().couleurFlux(id);
 import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
 import { useI18n, traduire, defautParametre, defautCanoniqueChoix } from "../i18n";
 
@@ -30,8 +28,9 @@ import { idsDe, oublierNoeuds } from "./oubli-noeuds";
 import { planDeGrapheEngendre } from "./graphe-engendre";
 import { useDictee } from "./dictee/useDictee";
 import type { Commande } from "./dictee/commandes-dictee";
-import { premierLienCompatible, type AreteDeDictee, type NoeudPose, type PortsDictes }
-  from "./dictee/pose-dictee";
+import { premierLienCompatible, type AreteDeDictee, type NoeudPose } from "./dictee/pose-dictee";
+import { couleurArete, couleurFlux, lienDicte, portsDeFiche, trouverDef } from "./ports-canevas";
+import { useEnCours } from "./hooks/useEnCours";
 import { appliquerCommandes, type LotDicte, type OutilsDeDictee } from "./dictee/appliquer-commandes";
 import { tailleDefaut } from "./tailles-noeuds";
 import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
@@ -42,9 +41,8 @@ import { useCopierColler } from "./hooks/useCopierColler";
 import { resultatDe } from "./resultats";
 import { CLE_PREFERENCE, lirePreference } from "./sauvegarde-auto";
 import { ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
-import { rechargerFichiersPersistes } from "./rechargerFichiers";
 import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "./historique";
-import { filtrerAretesInvalides, validerArete } from "./validerGraphe";
+import { validerArete } from "./validerGraphe";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
@@ -67,7 +65,6 @@ import { chargerMetasLocaux } from "./metasLocaux";
 import { useFenetresPartagees } from "./hooks/useFenetresPartagees";
 import { installerMetasExemples } from "../plugins/meta-exemples";
 import { setGrapheRef } from "../audio/graphe-embarque";
-import { servicesDomaine } from "../core/services-domaine";
 import { chargerNodesInstalles } from "../core";
 // LE BAC SE POSE EN S'IMPORTANT : sans lui, un nœud installé refuse de s'exécuter, et c'est voulu.
 import "./bac-a-sable-noeud";
@@ -134,55 +131,6 @@ type NoeudAtelier = Node<DonneesNoeud, "atelier">;
 
 // nodeTypes/edgeTypes sont définis dans reactflowTypes.ts (hors du cycle HMR
 // d'App.tsx) pour éviter l'avertissement React Flow #002.
-
-// ── Helpers ──
-
-function couleurArete(nodes: any[], source: string, sourceHandle: string): string {
-  const node = nodes.find((n) => n.id === source);
-  const ficheId = node?.data?.ficheId;
-  const def = ficheId ? trouverDef(ficheId) : undefined;
-  const idx = parseInt(sourceHandle.split(":")[1] ?? "0", 10);
-  const type = def?.sorties[idx]?.type ?? "audio";
-  return couleurFlux(type);
-}
-
-/**
- * Les ports d'une fiche, lus sur la définition que le REGISTRE livre — celle qu'il augmente.
- *
- * `plugins/sortie-audio.ts` ajoute une sortie « Audio » en dernier à toute fiche qui rend une
- * séquence : lire la fiche telle qu'elle est écrite dans son plugin ferait croire qu'il n'y a
- * qu'un port là où il y en a deux, et ferait choisir le mauvais.
- */
-function portsDeFiche(ficheId: string | undefined): PortsDictes | undefined {
-  const def = ficheId ? trouverDef(ficheId) : undefined;
-  return def ? { sorties: def.sorties ?? [], entrees: def.entrees ?? [] } : undefined;
-}
-
-/** Les ports d'un nœud du canevas, par la fiche qu'il porte. */
-function portsDe(nodes: any[], id: string): PortsDictes | undefined {
-  return portsDeFiche(nodes.find((n) => n.id === id)?.data?.ficheId);
-}
-
-/**
- * L'arête que la dictée peut vraiment poser entre deux nœuds, ou `null` si aucun port ne s'accorde.
- *
- * ELLE REMPLACE QUATRE `out:0 → in:0` ÉCRITS EN DUR. La souris passe par `isValidConnection` et
- * refuse une liaison dont les types ne vont pas ensemble ; la voix ne passait par rien, et était
- * donc le seul chemin par lequel une arête impossible entrait dans un graphe.
- */
-function lienDicte(nodes: any[], source: string, target: string):
-{ sourceHandle: string; targetHandle: string; type: "arete-personnalisee"; style: { stroke: string; strokeWidth: number } } | null {
-  const paire = premierLienCompatible(
-    portsDe(nodes, source), portsDe(nodes, target),
-    (s, e) => registreUI().fluxCompatibles(s.type, e.type, s.sousType, e.sousType),
-  );
-  if (!paire) return null;
-  const sourceHandle = `out:${paire.sortie}`;
-  return {
-    sourceHandle, targetHandle: `in:${paire.entree}`, type: "arete-personnalisee",
-    style: { stroke: couleurArete(nodes, source, sourceHandle), strokeWidth: 2.5 },
-  };
-}
 
 // ── Application ──
 
@@ -439,71 +387,8 @@ function Atelier() {
   const [menu, setMenu] = useState<EtatMenu | null>(null);
   const plugins = useMemo(() => tousLesPlugins(), [pluginsVersion]);
 
-  // ── Chargement automatique de l'en-cours sauvegardé ──
-  const enCoursCharge = useRef(false);
-  useEffect(() => {
-    if (enCoursCharge.current) return;
-    enCoursCharge.current = true;
-    (async () => {
-      try {
-        const brut = demarrage().encours;
-        if (!brut) return;
-        const data = JSON.parse(brut);
-        if (!data.nodes || !Array.isArray(data.nodes)) return;
-        const cbs = callbacksNoeud();
-        const nodesRestaures = data.nodes.map((n: any) => {
-          const def = trouverDef(n.data.ficheId);
-          const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
-          return {
-            id: n.id, type: "atelier", position: n.position, width: n.width ?? width, height: n.height ?? height,
-            data: {
-              ficheId: n.data.ficheId,
-              parametres: n.data.parametres ?? {},
-              statut: "attente",
-              zonesSelectionnees: n.data.zonesSelectionnees,
-              audioChemin: n.data.audioChemin,
-              sfzChemin: n.data.sfzChemin,
-              sfzNom: n.data.sfzNom,
-              sequenceNotes: n.data.sequenceNotes,
-              // Le découpage d'un montage et les pistes qu'on y a vidées : une session reprise
-              // rendait sinon un montage que personne n'avait découpé.
-              morceaux: n.data.morceaux,
-              pistesVidees: n.data.pistesVidees,
-              nomFichier: n.data.nomFichier,
-              nom: n.data.nom,
-              nomEn: n.data.nomEn,
-              couleur: n.data.couleur,
-              // Les deux champs d'une bulle. Sans eux, une session reprise rendrait un nœud de bulle
-              // sans ports et ses arêtes perdues : la panne silencieuse relevée au relevé des risques.
-              bulle: n.data.bulle,
-              bulleOuverte: n.data.bulleOuverte,
-              // TOUS LES GESTES, ET NON UNE LISTE RECOPIÉE. Douze noms étaient énumérés ici, et
-              // douze autres à la génération d'un graphe : trois écritures du même savoir, dont
-              // deux silencieuses. Un geste neuf ajouté au seul `callbacksNoeud` manquait donc aux
-              // nœuds RESTAURÉS — le même geste marchait sur un nœud posé à la main et pas sur le
-              // même nœud rouvert depuis un fichier, ce qui est la pire panne à chercher.
-              // Les trois listes étaient identiques, vérifié nom par nom avant de les réunir.
-              ...cbs,
-            },
-          };
-        });
-        const edgesRestaures = (data.edges ?? []).map((e: any) => ({
-          ...e, type: "arete-personnalisee",
-          style: { stroke: couleurArete(nodesRestaures, e.source, e.sourceHandle), strokeWidth: 2.5 },
-        }));
-        const edgesValides = filtrerAretesInvalides(nodesRestaures, edgesRestaures);
-        await rechargerFichiersPersistes(nodesRestaures);
-        setNodes(nodesRestaures);
-        setEdges(edgesValides);
-        // Les réglages de domaine de l'en-cours, comme le cadrage : une séance reprise rend ce
-        // qu'elle rendait. Côté audio, sa fréquence de travail ; un en-cours sans elle vaut 44 100.
-        servicesDomaine().appliquerReglagesDeProjet(data);
-        if (data.viewport && rfInstance) queueMicrotask(() => rfInstance.setViewport(data.viewport));
-    } catch (e) {
-      console.warn("[attic] Restauration de l'en-cours échouée", e);
-    }
-  })();
-}, [pluginsVersion]); // après chargement des plugins
+  // ── Chargement automatique de l'en-cours sauvegardé, dans hooks/useEnCours.ts ──
+  useEnCours({ pluginsVersion, rfInstance, callbacksNoeudRef, setNodes, setEdges });
 
   // ── Exécution du graphe, dans hooks/useExecutionGraphe.ts ──
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
