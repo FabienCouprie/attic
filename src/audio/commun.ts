@@ -114,7 +114,18 @@ export function assainirNonFinis(buffer: AudioBuffer): number[] {
   return touches;
 }
 
-export function mixdownMono(buffer: AudioBuffer): Float32Array {
+/**
+ * Les canaux ramenés à une voie, en moyenne : `+= x / n` dans un `Float32Array`, canal après canal.
+ *
+ * C'EST L'ARITHMÉTIQUE QUI FAIT LE CANONIQUE, pas l'idée. Seize copies de cette boucle vivaient
+ * dans le dépôt (relevé du 2026-10-31, lot 4 de la revue) ; celles qui l'écrivaient ainsi l'ont
+ * rejointe, au bit près. Celles qui sommaient puis divisaient, ou accumulaient en double précision
+ * (`esthetique.mixerMono`, `multicanal.versMono`, `analyse-genre`, les accords, les vues du
+ * spectre), n'arrondissent pas pareil et restent chez elles : les rapprocher changerait leur son.
+ *
+ * Le type de retour est explicite parce que `copyToChannel` exige un tampon à nous, non partagé.
+ */
+export function mixdownMono(buffer: AudioBuffer): Float32Array<ArrayBuffer> {
   const mono = new Float32Array(buffer.length);
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const ch = buffer.getChannelData(c);

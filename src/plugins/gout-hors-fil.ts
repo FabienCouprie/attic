@@ -10,7 +10,8 @@
 // Les deux derniers ne tiennent pas tout leur temps de la mesure — ils SYNTHÉTISENT ensuite une
 // pièce de dix à vingt secondes —, et c'est pourquoi la mesure seule ne suffit pas à les délivrer.
 
-import { mesurerVoie, voieMoyenne, type MesuresGout, type OptionsVoieGout } from "../audio/gout";
+import { mesurerVoie, type MesuresGout, type OptionsVoieGout } from "../audio/gout";
+import { mixdownMono } from "../audio/commun";
 import { parCanal } from "./hors-fil";
 
 /** Les cinq dimensions d'un son, mesurées dans un ouvrier quand on en a un. */
@@ -18,7 +19,7 @@ export async function mesurerGoutHorsFil(buffer: AudioBuffer): Promise<MesuresGo
   // UNE SEULE VOIE : un goût est une propriété du son, non de son image stéréo. Le mélange a lieu
   // ici, où il coûte une passe sur les échantillons, et l'ouvrier ne reçoit qu'un tableau.
   const [mesure] = await parCanal<OptionsVoieGout, MesuresGout>(
-    [voieMoyenne(buffer)],
+    [mixdownMono(buffer)],
     { sampleRate: buffer.sampleRate },
     {
       creerWorker: () => new Worker(new URL("../workers/gout-worker.ts", import.meta.url), { type: "module" }),

@@ -6,6 +6,7 @@
 import Meyda from "meyda";
 import { traduire } from "../i18n";
 import { normaliserAggregation, tailleFenetreAnalyse, traduireAggregation } from "./analyse-transcription";
+import { mixdownMono } from "./commun";
 import { versDb } from "./decibels";
 
 export interface OptionsCentroidSpectral {
@@ -37,13 +38,8 @@ function extraireValeursMeyda(
   const fenetre = tailleFenetreAnalyse(options.fenetre || 2048);
   const pas = Math.max(64, options.pas || Math.floor(fenetre / 2));
   const sr = buffer.sampleRate;
-  const nCh = buffer.numberOfChannels;
   const length = buffer.length;
-  const mono = new Float32Array(length);
-  for (let c = 0; c < nCh; c++) {
-    const ch = buffer.getChannelData(c);
-    for (let i = 0; i < length; i++) mono[i] += ch[i] / nCh;
-  }
+  const mono = mixdownMono(buffer);
 
   Meyda.sampleRate = sr;
   Meyda.bufferSize = fenetre;
@@ -69,13 +65,8 @@ export function extraireMFCC(
   const fenetre = tailleFenetreAnalyse(options.fenetre || 2048);
   const pas = Math.max(64, options.pas || Math.floor(fenetre / 2));
   const sr = buffer.sampleRate;
-  const nCh = buffer.numberOfChannels;
   const length = buffer.length;
-  const mono = new Float32Array(length);
-  for (let c = 0; c < nCh; c++) {
-    const ch = buffer.getChannelData(c);
-    for (let i = 0; i < length; i++) mono[i] += ch[i] / nCh;
-  }
+  const mono = mixdownMono(buffer);
 
   Meyda.sampleRate = sr;
   Meyda.bufferSize = fenetre;

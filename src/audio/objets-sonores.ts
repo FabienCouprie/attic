@@ -13,6 +13,7 @@
 // secondes —, si bien que toute la chaîne existante les accepte. Elles portent en plus leurs
 // descripteurs, que les nœuds existants ignorent et que « Réordonner les objets » exploite.
 
+import { mixdownMono } from "./commun";
 import { reechantillonnerParLeNavigateur } from "./convertir-frequence";
 import { fft } from "./fft";
 import {
@@ -99,13 +100,6 @@ interface Trames {
   occupation: Float64Array;
   /** La partielle la plus forte de la trame, en hertz : l'autre axe, celui du placement de la masse. */
   dominante: Float64Array;
-}
-
-function mono(b: AudioBuffer): Float32Array {
-  if (b.numberOfChannels === 1) return b.getChannelData(0);
-  const m = new Float32Array(b.length);
-  for (let c = 0; c < b.numberOfChannels; c++) { const x = b.getChannelData(c); for (let i = 0; i < m.length; i++) m[i] += x[i] / b.numberOfChannels; }
-  return m;
 }
 
 function trames(x: Float32Array, sr: number): Trames {
@@ -202,7 +196,7 @@ function affinerAttaque(x: Float32Array, trame: number, sr: number): number {
 
 /** Découpe un son en objets et les décrit. */
 export function decouperEnObjets(b: AudioBuffer, o: OptionsDecoupage): ObjetSonore[] {
-  const sr = b.sampleRate, x = mono(b), tr = trames(x, sr);
+  const sr = b.sampleRate, x = mixdownMono(b), tr = trames(x, sr);
   const tramesMin = Math.max(1, Math.round((o.dureeMinMs / 1000) * sr / SAUT));
   let bornes: [number, number][] = [];
 
@@ -306,7 +300,7 @@ export function decouperEnObjets(b: AudioBuffer, o: OptionsDecoupage): ObjetSono
  * sélection faite à la main se trie comme un découpage automatique.
  */
 export function decrireZones(b: AudioBuffer, zones: { debut: number; duree: number }[]): ObjetSonore[] {
-  const sr = b.sampleRate, x = mono(b), tr = trames(x, sr);
+  const sr = b.sampleRate, x = mixdownMono(b), tr = trames(x, sr);
   return zones.map((z) => decrire(tr, x, sr, Math.max(0, Math.round(z.debut * sr)), Math.min(b.length, Math.round((z.debut + z.duree) * sr))));
 }
 

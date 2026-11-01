@@ -88,16 +88,6 @@ function energieDeTranche(x: Float32Array, debut: number, fin: number): number {
   return s;
 }
 
-/** La somme des canaux, ramenée à une seule voie : une place se cherche sur ce qu'on entend. */
-export function enUneVoie(buffer: AudioBuffer): Float32Array {
-  const n = buffer.length;
-  const x = new Float32Array(n);
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const src = buffer.getChannelData(c);
-    for (let i = 0; i < n; i++) x[i] += src[i] / buffer.numberOfChannels;
-  }
-  return x;
-}
 
 /**
  * Le profil de bandes d'un son, normalisé à somme un.

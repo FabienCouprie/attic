@@ -14,7 +14,8 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { cheminDansTravail } from "./pont-electron";
-import { MODELES, chargerModele, transcrire, versMono, vers16k } from "./vosk-asr";
+import { MODELES, chargerModele, transcrire, vers16k } from "./vosk-asr";
+import { mixdownMono } from "../audio/commun";
 import { decouperEnSousTitres, versSrt } from "../audio/sous-titres";
 import { choixLangues } from "../core/langues";
 
@@ -100,7 +101,7 @@ export const fiches = ([
       const choisi = MODELES[langue] ?? MODELES.fr;
       await annoncerModele(ctx, "sous-titres-srt", traduire("progress.vosk.chargement"));
       const modele = await chargerModele(choisi.fichier);
-      const mono = await vers16k(versMono(audio), audio.sampleRate);
+      const mono = await vers16k(mixdownMono(audio), audio.sampleRate);
       const vocabulaire = String(ctx.paramTexte("Vocabulaire", ""))
         .split(/[\s,]+/).map((m: string) => m.trim().toLowerCase()).filter(Boolean);
       const { mots } = await transcrire(modele, mono, {
