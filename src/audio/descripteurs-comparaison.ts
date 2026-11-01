@@ -20,6 +20,7 @@ import { calculerCentroidSpectralMeyda } from "./analyse-descripteurs";
 import { correlation } from "./ampleur";
 import { dynamique, masse } from "./criteres-schaefferiens";
 import { sonieIntegree } from "./vumetre";
+import { versDb } from "./decibels";
 
 export interface Descripteurs {
   secondes: number;
@@ -56,7 +57,7 @@ export interface Descripteurs {
 export const PLANCHER_DB = -120;
 
 const enDb = (amplitude: number): number =>
-  amplitude > 0 ? 20 * Math.log10(amplitude) : PLANCHER_DB;
+  amplitude > 0 ? versDb(amplitude) : PLANCHER_DB;
 
 /** Le canal droit d'un tampon, ou le gauche quand il est mono : un mono est parfaitement corrélé. */
 const droite = (b: AudioBuffer): Float32Array =>

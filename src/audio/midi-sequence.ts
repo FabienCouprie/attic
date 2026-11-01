@@ -11,6 +11,7 @@ import { melangerTampons, RESERVE_BATTERIE, separerPercussions, tamponSilencieux
 import { rendreAvecSF2 } from "./midi-soundfont";
 import { sansRecouvrementDeHauteur } from "./recouvrement-hauteur";
 import { frequenceDeTravail } from "./frequence-de-travail";
+import { frequenceDeNoteMidi } from "./commun";
 
 export type NoteEvenement = Note;
 
@@ -162,7 +163,7 @@ async function rendreHauteurs(
   for (const n of notes) {
     const dureeNote = n.fin - n.debut;
     if (dureeNote <= 0.001) continue;
-    const freq = 440 * 2 ** ((n.note - 69) / 12);
+    const freq = frequenceDeNoteMidi(n.note);
     const gain = gainDeNote(n.velocite, volume);
     // Le caractère du timbre, s'il est demandé ; sans lui, le réglage d'origine, inchangé.
     const { ratio, idxMod, a, d, sVal, r } = CARACTERES_FM[caractere ?? "origine"];

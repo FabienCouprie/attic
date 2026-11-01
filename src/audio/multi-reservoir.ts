@@ -13,6 +13,7 @@ import { notesVersFichierMidi } from "./midi-ecriture";
 import { formeOndeDepuisTimbre } from "./timbres";
 import { frequenceDeTravail } from "./frequence-de-travail";
 import { traduire } from "../i18n";
+import { frequenceDeNoteMidi } from "./commun";
 
 export interface ConfigMultiReservoir {
   cle: string;
@@ -205,7 +206,7 @@ export function genererMultiReservoir(config: ConfigMultiReservoir): MultiReserv
   function rendreNotes(notes: NoteGeneree[], typeOsc: OscillatorType, volRole: number, pan: number) {
     for (const n of notes) {
       if (n.silence) continue;
-      const freq = 440 * Math.pow(2, (n.note - 69) / 12);
+      const freq = frequenceDeNoteMidi(n.note);
       const debutEch = Math.floor(n.debut * sr);
       const finEch = Math.min(debutEch + Math.ceil(n.duree * sr), len);
       const dureeNote = (finEch - debutEch) / sr;

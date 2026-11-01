@@ -3,7 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { creerFenetreHann, tramesDepuisBuffer } from "./commun";
+import { creerFenetreHann, tramesDepuisBuffer, noteMidiDeFrequence } from "./commun";
 import { traduire } from "../i18n";
 import { traduireType } from "./analyse-transcription";
 
@@ -46,7 +46,7 @@ export function chromagramme(donnees: Float32Array, sampleRate: number): number[
       const mag = Math.sqrt(trame.re[bin] ** 2 + trame.im[bin] ** 2);
       const freq = (bin * sampleRate) / fftTaille;
       if (freq < 65 || freq > 8000) continue;
-      const midiNote = 12 * Math.log2(freq / 440) + 69;
+      const midiNote = noteMidiDeFrequence(freq);
       const pc = ((Math.round(midiNote) % 12) + 12) % 12;
       chroma[pc] += mag;
     }
@@ -86,7 +86,7 @@ export function chromagrammeParTrame(donnees: Float32Array, sampleRate: number):
       const mag = Math.sqrt(trame.re[bin] ** 2 + trame.im[bin] ** 2);
       const freq = (bin * sampleRate) / fftTaille;
       if (freq < 65 || freq > 8000) continue;
-      const midiNote = 12 * Math.log2(freq / 440) + 69;
+      const midiNote = noteMidiDeFrequence(freq);
       const pc = ((Math.round(midiNote) % 12) + 12) % 12;
       chroma[pc] += mag;
     }

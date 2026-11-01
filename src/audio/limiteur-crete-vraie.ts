@@ -43,6 +43,7 @@
 // aucun objet Web Audio, et c'est ce qui le rend possible.
 
 import { creteVraie, enveloppeCreteVraie } from "./crete-vraie";
+import { versDb, depuisDb } from "./decibels";
 
 export interface ReglagesLimiteur {
   gainDb: number;
@@ -73,8 +74,7 @@ export function limiterDemande(d: DemandeLimiteur): ResultatLimiteur {
   return limiterCreteVraie(d.canaux, d.sr, d);
 }
 
-const versLineaire = (db: number) => Math.pow(10, db / 20);
-const versDb = (v: number) => (v > 1e-9 ? 20 * Math.log10(v) : -120);
+const dbOuPlancher = (v: number) => (v > 1e-9 ? versDb(v) : -120);
 
 /** Pour chaque e, le plus petit de v[e − largeur + 1] à v[e] : une file monotone, en un seul passage. */
 function minimumGlissant(v: Float32Array, largeur: number): Float32Array {
@@ -117,7 +117,7 @@ function gainLisse(requis: Float32Array, anticipation: number, maintien: number)
 
 export function limiterCreteVraie(entree: Float32Array[], sr: number, r: ReglagesLimiteur): ResultatLimiteur {
   const n = entree[0]?.length ?? 0;
-  const gainEntree = versLineaire(r.gainDb), plafond = versLineaire(r.plafondDbtp);
+  const gainEntree = depuisDb(r.gainDb), plafond = depuisDb(r.plafondDbtp);
   // UNE BOUCLE ET NON `Float32Array.from(c, fonction)` : relevé sur 214 s de stéréo, la forme avec
   // une fonction appelée à chaque échantillon prenait 3,7 s des 5,1 que coûtait tout le limiteur.
   const canaux = entree.map((c) => {
@@ -152,8 +152,8 @@ export function limiterCreteVraie(entree: Float32Array[], sr: number, r: Reglage
   if (crete > plafond) {
     const g = plafond / crete;
     for (const c of canaux) for (let i = 0; i < n; i++) c[i] *= g;
-    correctionDb = versDb(g);
+    correctionDb = dbOuPlancher(g);
     crete = creteVraie(canaux);
   }
-  return { canaux, reductionMaxDb: versDb(plusBas), creteVraieDb: versDb(crete), correctionDb };
+  return { canaux, reductionMaxDb: dbOuPlancher(plusBas), creteVraieDb: dbOuPlancher(crete), correctionDb };
 }

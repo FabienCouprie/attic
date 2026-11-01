@@ -24,6 +24,7 @@ import {
 import {
   OPCODES, opcodeDe, orchestreInstrument, orchestreSpectral, tablesInstrument, tablesSpectral,
 } from "../audio/csound-opcodes";
+import { frequenceDeNoteMidi } from "../audio/commun";
 
 const INSTRUMENTS = OPCODES.filter((o) => o.sorte === "instrument");
 const SPECTRAUX = OPCODES.filter((o) => o.sorte === "spectral");
@@ -429,7 +430,7 @@ endin`,
             + ((m[3] === undefined ? 3 : parseInt(m[3], 10)) + 1) * 12
           : 57;
         const duree = ctx.paramNombre("Durée", 2);
-        partition = `${tablesInstrument(o)}\ni1 0 ${duree.toFixed(3)} ${(440 * 2 ** ((midi - 69) / 12)).toFixed(3)} 0.6 ${midi}\ne`;
+        partition = `${tablesInstrument(o)}\ni1 0 ${duree.toFixed(3)} ${(frequenceDeNoteMidi(midi)).toFixed(3)} 0.6 ${midi}\ne`;
       }
       const r = await rendreCsd(construireCsd({ orchestre, partition, graine: 1 }));
       if (!r.audio) {

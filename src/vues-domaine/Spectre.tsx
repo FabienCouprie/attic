@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { creerFenetreHann } from "../audio/commun";
 import { fft } from "../audio/fft";
 import { useI18n } from "../i18n";
+import { versDb } from "../audio/decibels";
 
 interface Props {
   audioUrl?: string;
@@ -108,7 +109,7 @@ export function SpectreFFT({ audioUrl, tailleFFT, log }: Props) {
     let magMax = 1e-12;
     for (let k = 1; k < half; k++) if (mags[k] > magMax) magMax = mags[k];
     const magToY = (mag: number) => {
-      const db = 20 * Math.log10(mag / magMax);
+      const db = versDb(mag / magMax);
       const clamp = Math.max(DB_PLANCHER, Math.min(0, db));
       return H - ((clamp - DB_PLANCHER) / -DB_PLANCHER) * H;
     };

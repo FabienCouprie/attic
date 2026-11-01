@@ -23,6 +23,7 @@
 import { changerTempo, changerTonalite } from "./effets-spectral";
 import { respirer } from "../core/respirer";
 import { mesurer, profil, REGIONS, type DimensionsGout, type Gout } from "./gout";
+import { depuisDb } from "./decibels";
 
 export interface Assaisonnement {
   /** Demi-tons de transposition appliqués. */
@@ -108,7 +109,7 @@ export function porter(b: AudioBuffer, profondeur: number): AudioBuffer {
     const x = b.getChannelData(c), y = sortie.getChannelData(c);
     let crete = 0;
     for (let i = 0; i < x.length; i++) crete = Math.max(crete, Math.abs(x[i]));
-    const seuil = crete * Math.pow(10, (-18 * profondeur) / 20);
+    const seuil = crete * depuisDb((-18 * profondeur));
     let suivi = 0, gain = 0;
     for (let i = 0; i < x.length; i++) {
       const v = Math.abs(x[i]);
@@ -247,7 +248,7 @@ export async function assaisonnerVers(
     await respirer();
   }
   if (Math.abs(reglages.gainDb) > 0.1) {
-    const g = Math.pow(10, reglages.gainDb / 20);
+    const g = depuisDb(reglages.gainDb);
     const sortie = memeForme(son);
     for (let c = 0; c < son.numberOfChannels; c++) {
       const x = son.getChannelData(c), y = sortie.getChannelData(c);

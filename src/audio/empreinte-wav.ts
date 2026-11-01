@@ -15,6 +15,8 @@
 // ses données quand un graphe y est embarqué : sauter à un décalage fixe de quarante-quatre octets
 // lirait l'en-tête du graphe comme du son.
 
+import { versDb } from "./decibels";
+
 export interface MesureWav {
   /** 1 pour l'entier, 3 pour le flottant. */
   format: number;
@@ -140,7 +142,7 @@ export function niveauxParTranche(octets: ArrayBuffer, secondesParTranche = 0.5)
       somme += v * v; n++;
     }
     const rms = n > 0 ? Math.sqrt(somme / n) : 0;
-    out.push({ secondes: t / m.taux, db: rms > 0 ? 20 * Math.log10(rms) : -Infinity });
+    out.push({ secondes: t / m.taux, db: rms > 0 ? versDb(rms) : -Infinity });
   }
   return out;
 }

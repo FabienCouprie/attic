@@ -4,7 +4,7 @@
 // 7ᵉ, diminué, sus2, sus4) par corrélation. Renvoie la progression d'accords.
 
 import { fft } from "./fft";
-import { creerFenetreHann } from "./commun";
+import { creerFenetreHann, noteMidiDeFrequence } from "./commun";
 import { intervallesDaccord } from "./qualites-accords";
 
 const NOMS_NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -66,7 +66,7 @@ function chromaFenetre(
     const mag = Math.hypot(re[b], im[b]);
     const freq = (b * sr) / taille;
     if (freq < 65 || freq > 8000) continue;
-    const midi = 12 * Math.log2(freq / 440) + 69;
+    const midi = noteMidiDeFrequence(freq);
     const pc = ((Math.round(midi) % 12) + 12) % 12;
     chroma[pc] += mag;
   }

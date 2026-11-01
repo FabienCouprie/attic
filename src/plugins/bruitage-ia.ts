@@ -33,6 +33,7 @@ import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { parametreCalculDirectML } from "./parametre-calcul";
+import { versDb, depuisDb } from "../audio/decibels";
 
 const en = () => langueCourante() === "en";
 
@@ -76,7 +77,7 @@ export function mettreAuNiveau(canaux: Float32Array[], dbfs: number): number {
     if (v > crete) crete = v;
   }
   if (crete < 1e-6) return 0;
-  const gain = Math.pow(10, dbfs / 20) / crete;
+  const gain = depuisDb(dbfs) / crete;
   for (const c of canaux) for (let i = 0; i < c.length; i++) c[i] *= gain;
   return gain;
 }
@@ -180,7 +181,7 @@ export const fiches: FicheAudio[] = ([
 
         const dit = brute
           ? (en() ? "as is" : "telle quelle")
-          : `${en() ? "gain" : "gain"} ${(20 * Math.log10(Math.max(gain, 1e-9))).toFixed(1)} dB`;
+          : `${en() ? "gain" : "gain"} ${(versDb(Math.max(gain, 1e-9))).toFixed(1)} dB`;
         return {
           valeurs: [buf],
           // LE PAQUET EN TÊTE DU MESSAGE : c'est le moteur qui le nomme, et non le réglage. Un

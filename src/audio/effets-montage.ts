@@ -1,6 +1,7 @@
 // audio/effets-montage.ts — Effets (issus du découpage de effets.ts).
 import { type PositionZone } from "./commun";
 import { convertirVersFrequence } from "./convertir-frequence";
+import { depuisDb } from "./decibels";
 
 // `fonduMs` applique un fondu linéaire en entrée ET en sortie de l'extrait.
 // C'est ce qui évite le clic à la coupe : trancher au milieu d'une période
@@ -147,7 +148,7 @@ export async function melangerPistes(entrees: AudioBuffer[], niveauDb: number): 
   const offline = new OfflineAudioContext(canaux, Math.ceil(dureeMax * frequence), frequence);
 
   const gainSortie = offline.createGain();
-  gainSortie.gain.value = Math.pow(10, niveauDb / 20);
+  gainSortie.gain.value = depuisDb(niveauDb);
   gainSortie.connect(offline.destination);
 
   for (const buffer of entrees) {

@@ -32,6 +32,7 @@ import { mixdownMono } from "./commun";
 
 import type { Note } from "./note";
 import { frequenceDeTravail } from "./frequence-de-travail";
+import { frequenceDeNoteMidi } from "./commun";
 /**
  * La frequence a laquelle on RAMENE ce que Csound a rendu.
  *
@@ -227,7 +228,7 @@ export function partitionDepuisNotes(notes: NoteCsound[], instrument = 1): strin
     .sort((a, b) => a.debut - b.debut || a.note - b.note)
     .map((n) => {
       const duree = Math.max(0.01, n.fin - n.debut);
-      const frequence = 440 * 2 ** ((n.note - 69) / 12);
+      const frequence = frequenceDeNoteMidi(n.note);
       return `i${instrument} ${n.debut.toFixed(4)} ${duree.toFixed(4)} `
         + `${frequence.toFixed(3)} ${(n.velocite / 127).toFixed(3)} ${n.note}`;
     })

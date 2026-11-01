@@ -31,6 +31,7 @@
 // Un signe fautif ne donnerait pas un son un peu moins bon mais du bruit, et la mesure de
 // convergence spectrale des tests le verrait immédiatement.
 import { fft } from "./fft";
+import { versDb } from "./decibels";
 
 /**
  * Fenêtre gaussienne, et le λ qui va avec.
@@ -302,7 +303,7 @@ export function convergenceSpectrale(voulus: Float32Array[], obtenus: Float32Arr
     }
   }
   if (den <= 0) return 0;
-  return 20 * Math.log10(Math.sqrt(num / den));
+  return versDb(Math.sqrt(num / den));
 }
 
 export interface OptionsReconstruction {

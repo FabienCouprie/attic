@@ -14,6 +14,7 @@ import { formeOndeDepuisTimbre } from "./timbres";
 import { degresDeGamme } from "./gammes";
 import { creerAleatoire } from "../core/hasard";
 import { frequenceDeTravail } from "./frequence-de-travail";
+import { frequenceDeNoteMidi } from "./commun";
 
 export interface ConfigReservoir {
   taille: number;          // nombre de neurones (10-50)
@@ -312,7 +313,7 @@ export function rendreReservoirAudio(
 
   for (const n of notes) {
     if (n.silence) continue;
-    const freq = 440 * Math.pow(2, (n.note - 69) / 12);
+    const freq = frequenceDeNoteMidi(n.note);
     const debutEch = Math.floor(n.debut * sr);
     const finEch = Math.min(debutEch + Math.ceil(n.duree * sr), len);
     const dureeNote = (finEch - debutEch) / sr;

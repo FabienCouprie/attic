@@ -21,6 +21,7 @@ import { deployer, type Champ } from "../audio/matrice-parametres";
 import { FENETRES, partition, poserFragments, tirage, type Fenetre } from "../audio/micromontage";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
+import { versDb } from "../audio/decibels";
 
 const en = () => langueCourante() === "en";
 
@@ -210,19 +211,19 @@ export const fiches: FicheAudio[] = ([
         `up to ${rapport.recouvrementMax} sounding together, ${rapport.recouvrementMoyen.toFixed(1)} on average`,
         `average length ${rapport.dureeMoyenneMs.toFixed(1)} ms`,
         `transposition spanning ${ecart.toFixed(1)} semitones`,
-        `peak ${(20 * Math.log10(Math.max(1e-9, crete))).toFixed(1)} dB`,
+        `peak ${(versDb(Math.max(1e-9, crete))).toFixed(1)} dB`,
       ] : [
         `${rapport.poses} fragments posés, ${rapport.ignores} hors de leur source`,
         `${rapport.duree.toFixed(2)} s, ${rapport.densite.toFixed(1)} fragments par seconde`,
         `jusqu'à ${rapport.recouvrementMax} ensemble, ${rapport.recouvrementMoyen.toFixed(1)} en moyenne`,
         `durée moyenne ${rapport.dureeMoyenneMs.toFixed(1)} ms`,
         `transposition étalée sur ${ecart.toFixed(1)} demi-tons`,
-        `crête ${(20 * Math.log10(Math.max(1e-9, crete))).toFixed(1)} dB`,
+        `crête ${(versDb(Math.max(1e-9, crete))).toFixed(1)} dB`,
       ];
       return {
         valeurs: [sortie, lignes.join("\n")],
         message: `${rapport.poses} fragments · ${rapport.densite.toFixed(0)}/s · `
-          + `${rapport.duree.toFixed(2)} s · ${(20 * Math.log10(Math.max(1e-9, crete))).toFixed(1)} dB`
+          + `${rapport.duree.toFixed(2)} s · ${(versDb(Math.max(1e-9, crete))).toFixed(1)} dB`
           + (estCourbe(modulation) ? ` · ${en() ? "curve" : "courbe"} ${ecart.toFixed(1)} ${en() ? "st" : "dt"}` : ""),
       };
     },
