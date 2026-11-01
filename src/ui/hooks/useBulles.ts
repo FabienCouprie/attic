@@ -9,6 +9,10 @@
 // AUCUN IDENTIFIANT NE CHANGE, NI À LA CLARIFICATION NI AU DÉVELOPPEMENT. C'est la propriété qui fait
 // tout tenir : le cache d'exécution est indexé par identifiant de nœud, donc replier et développer ne
 // coûtent aucun recalcul. Un geste de lisibilité doit être gratuit.
+//
+// UNE EXCEPTION, ET ELLE EST VOULUE : sous l'économie de mémoire, un run fait bulle repliée lâche les
+// membres dont la valeur atteint le seuil des aperçus, dix minutes de son, et le run qui suit
+// « Développer » les refait. En deçà, rien n'est lâché. Voir `resultatRetenu` dans `core/memoire.ts`.
 
 import { useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";

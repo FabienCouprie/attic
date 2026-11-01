@@ -23,6 +23,12 @@
 // d'un méta n'effaçait du cache que son identifiant visible : le run suivant reprenait ses quatre
 // nœuds aplatis, rangés sous `m::…`, et ne refaisait que l'aval.
 //
+// « DÉVELOPPER » FAISAIT TOUT REFAIRE APRÈS UN RUN REPLIÉ, relevé le 2026-11-01 en tournant la vidéo
+// des bulles. Le run replié sortait du cache, puis le ménage de fin de run lâchait les membres sous
+// l'économie de mémoire, quelle que soit leur durée : au run suivant, quatre membres et les deux
+// écoutes d'aval repartaient. Économie coupée, rien. Fabien a gardé le ménage à partir du seuil des
+// aperçus, dix minutes, et l'a levé en deçà : voir `resultatRetenu` dans `core/memoire.ts`.
+//
 // ═══ POURQUOI DE BOUT EN BOUT ═══
 //
 // La règle vit dans `core/conteneurs.ts` et ses cas unitaires l'éprouvent. Mais le périmètre d'un run
@@ -230,6 +236,17 @@ async function suivreLesCalculs(page: Page, ids: string[]): Promise<void> {
 const lireLesCalculs = async (page: Page): Promise<string[]> =>
   await page.evaluate(() => [...(window as unknown as { __calcules__: Set<string> }).__calcules__].sort());
 
+/** Un geste du clic droit sur une bulle, par son libellé dans l'une ou l'autre langue. */
+async function gesteDeBulle(page: Page, bulle: string, libelle: RegExp): Promise<void> {
+  await page.locator(`[data-id="${bulle}"] .attic-node-nom`).click({ button: "right" });
+  await page.locator(".attic-menu-contextuel-item").filter({ hasText: libelle }).click();
+  await page.waitForTimeout(800);
+}
+
+/** Ceux de ces nœuds qui portent un lecteur écoutable. */
+const avecLecteur = (page: Page, ids: string[]): Promise<string[]> =>
+  page.evaluate((liste) => liste.filter((id) => !!document.querySelector(`[data-id="${id}"] audio[src]`)), ids);
+
 /** La durée de l'aperçu de chaque nœud qui en a un, lue dans les octets du WAV. */
 async function durees(page: Page): Promise<Record<string, number>> {
   const out: Record<string, number> = {};
@@ -420,5 +437,42 @@ test.describe("une bulle ou un méta dit l'état de tout son contenu", () => {
       "Le cache est indexé par l'identifiant aplati, `m::a1`, et le ↺ n'effaçait que celui du méta.",
       "",
     ].join("\n")).toEqual(expect.arrayContaining(internes));
+  });
+
+  test("REPLIER, LANCER PUIS DÉVELOPPER NE REFAIT RIEN sur un son court, et les membres reviennent écoutables", async ({ page }) => {
+    // L'ÉCONOMIE DE MÉMOIRE EST ÉPINGLÉE ACTIVE, comme elle l'est par défaut : coupée, rien n'est
+    // jamais lâché, et ce cas passerait sans rien éprouver.
+    await page.addInitScript(() => { localStorage.setItem("attic-economie-memoire", "1"); });
+    await poser(page, grapheBulle(true));
+    const membres = ["a1", "a2", "c1", "c2"];
+    const suivis = [...membres, "sa", "sc"];
+    await suivreLesCalculs(page, suivis);
+    await relancerEtAttendre(page, { delaiRunMs: 60_000, attentesAdmises: ["b"] });
+    expect(await lireLesCalculs(page), "l'instrument voit le premier run, bulle ouverte, tout calculer").toEqual([...suivis].sort());
+
+    await gesteDeBulle(page, "b", /^(Refermer|Close)$/);
+    await suivreLesCalculs(page, suivis);
+    await relancerEtAttendre(page, { delaiRunMs: 60_000, attentesAdmises: ["b"] });
+    expect(await lireLesCalculs(page), "replier ne refait rien : le run replié sort du cache").toEqual([]);
+
+    await gesteDeBulle(page, "b", /^(Développer|Expand)$/);
+    const ecoutables = await avecLecteur(page, membres);
+    await suivreLesCalculs(page, suivis);
+    await relancerEtAttendre(page, { delaiRunMs: 60_000 });
+    const refaits = await lireLesCalculs(page);
+    console.log(`après Développer : lecteurs ${JSON.stringify(ecoutables)} · refaits au run suivant ${JSON.stringify(refaits)}`);
+    expect(refaits, [
+      "",
+      "LE RUN QUI SUIT « DÉVELOPPER » A REFAIT CE QUE LE RUN REPLIÉ AVAIT CALCULÉ.",
+      "Le ménage de fin de run a lâché des membres d'une seconde : il ne le doit qu'à partir du seuil",
+      "des aperçus. Voir `resultatRetenu` dans `core/memoire.ts` et `valeursLourdes` dans le moteur.",
+      "",
+    ].join("\n")).toEqual([]);
+    expect(ecoutables, [
+      "",
+      "DÉVELOPPÉS, LES MEMBRES N'ONT PAS DE LECTEUR : le run replié les a dépouillés.",
+      "Sous le seuil, un membre caché garde son aperçu comme le cache garde sa valeur : voir `membreReplie`.",
+      "",
+    ].join("\n")).toEqual(membres);
   });
 });

@@ -9,7 +9,8 @@
 // sous-graphe renomme ses nœuds — c'est ce que fait l'aplatissement d'un méta-composant, qui préfixe
 // tout par `monNoeud::` —, donc invalide chaque résultat déjà calculé. Un geste de lisibilité qu'on
 // répète dix fois par séance ne peut pas coûter un rendu complet. Replier ne renomme rien : les
-// résultats survivent.
+// résultats survivent, sauf ceux qu'un run replié lâche à partir de dix minutes de son, sous
+// l'économie de mémoire (`resultatRetenu`, `core/memoire.ts`).
 //
 // CE QUE CELA ÉPARGNE. Rien à définir hors du graphe, donc rien à ranger dans un catalogue, rien à
 // restaurer, rien à réécrire en sortant. L'annulation, le fichier de projet et la reprise de session

@@ -66,6 +66,15 @@ export type ModeMemoire =
  *
  * L'ÉCHANGE SUIT LE RÉGLAGE QUI EXISTE DÉJÀ, l'économie de mémoire, plutôt que d'ajouter un
  * interrupteur : c'est le même arbitrage que pour les aperçus, et il se défait de la même façon.
+ *
+ * ET IL NE SE FAIT QU'À PARTIR DU SEUIL DES APERÇUS, décidé par Fabien le 2026-11-01. Il se faisait
+ * sur toute valeur, une seconde de son comprise : un run fait bulle repliée lâchait ses membres, et
+ * le premier run après « Développer » les refaisait tous, avec l'aval. Mesuré dans l'application,
+ * deux tons d'une et deux secondes : quatre membres et deux écoutes refaits sous l'économie, rien
+ * sans elle. En deçà du seuil, un membre ne pèse pas plus qu'un nœud hors bulle, qui garde le sien
+ * quelle que soit sa durée, et replier redevient gratuit. `lourd` dit si la valeur l'atteint ; c'est le domaine qui en juge, le seuil étant le sien
+ * (`audio/memoire-audio.ts`). Faute de le dire, une valeur est tenue pour lourde : c'est le régime
+ * d'avant, le plus sûr pour la mémoire.
  */
 /**
  * ET LE CORPS D'UNE BOUCLE DÉPLIÉE NE SE GARDE PAS DAVANTAGE — demandé par Fabien.
@@ -89,13 +98,14 @@ export type ModeMemoire =
  * une boucle terminée la relançait entière, relevé par Fabien le 2026-10-28. Depuis, la fin de boucle
  * range l'empreinte de sa boucle avec son résultat, et un corps inchangé se saute au lieu de se
  * refaire : voir `core/saut-de-boucle.ts`. Le corps reste lâché ; c'est le recalcul qui disparaît.
- * Les BULLES, elles, paient encore le leur, leurs sorties étant lâchées avec le reste.
+ * Les BULLES, elles, ne le paient plus qu'à partir du seuil des aperçus : voir le paragraphe d'avant.
+ * Un tour de boucle, lui, se lâche quelle que soit sa durée : le saut lui épargne déjà le recalcul.
  */
 export function resultatRetenu(
-  { cacheParBulle, corpsDeBoucle = false, economie = true }:
-    { cacheParBulle: boolean; corpsDeBoucle?: boolean; economie?: boolean },
+  { cacheParBulle, corpsDeBoucle = false, economie = true, lourd = true }:
+    { cacheParBulle: boolean; corpsDeBoucle?: boolean; economie?: boolean; lourd?: boolean },
 ): boolean {
-  return !economie || (!cacheParBulle && !corpsDeBoucle);
+  return !economie || (!(cacheParBulle && lourd) && !corpsDeBoucle);
 }
 
 export function noeudRegarde(
