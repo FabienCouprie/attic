@@ -3,6 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
+import { creerFenetreHann } from "./commun";
 import { fft } from "./fft";
 import { traduire } from "../i18n";
 import { noteMidiDeFrequence } from "./commun";
@@ -52,8 +53,7 @@ function bancMel(nMels: number, tailleFFT: number, sr: number): Float64Array[] {
 function logMelSpectrogramme(
   mono: Float64Array, sr: number, tailleFFT: number, saut: number, nMels: number,
 ): Float32Array[] {
-  const fen = new Float64Array(tailleFFT);
-  for (let i = 0; i < tailleFFT; i++) fen[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (tailleFFT - 1));
+  const fen = creerFenetreHann(tailleFFT);
   const filtres = bancMel(nMels, tailleFFT, sr);
   const nbFr = Math.max(0, Math.floor((mono.length - tailleFFT) / saut) + 1);
   if (nbFr === 0) return [];
@@ -119,8 +119,7 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
 
   // Flux spectral
   const fftFlux = 1024, hopFlux = 512;
-  const fenFlux = new Float64Array(fftFlux);
-  for (let i = 0; i < fftFlux; i++) fenFlux[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (fftFlux - 1));
+  const fenFlux = creerFenetreHann(fftFlux);
   const nbFrFlux = Math.max(0, Math.floor((monoC.length - fftFlux) / hopFlux) + 1);
   const flux = new Float64Array(nbFrFlux);
   const nbBinsFlux = fftFlux / 2 + 1;
@@ -143,8 +142,7 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
 
   // Chromagramme + tonalité
   const fftC = 2048, hopC = 512;
-  const fenC = new Float64Array(fftC);
-  for (let i = 0; i < fftC; i++) fenC[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (fftC - 1));
+  const fenC = creerFenetreHann(fftC);
   const nbFrC = Math.max(0, Math.floor((monoC.length - fftC) / hopC) + 1);
   const chroma = new Float64Array(12);
   for (let f = 0; f < nbFrC; f++) {
@@ -178,8 +176,7 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
 
   // Centroïde spectral, rolloff, flatness
   const fftS = 2048, hopS = 1024;
-  const fenS = new Float64Array(fftS);
-  for (let i = 0; i < fftS; i++) fenS[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (fftS - 1));
+  const fenS = creerFenetreHann(fftS);
   const nbFrS = Math.max(0, Math.floor((monoC.length - fftS) / hopS) + 1);
   const nbBinsS = fftS / 2 + 1;
   const centroides: number[] = [], rolloffs: number[] = [], flatness: number[] = [];

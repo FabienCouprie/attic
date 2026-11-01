@@ -79,6 +79,7 @@
 // de périodes de la porteuse ; elle est maintenant le carré du son suivi d'un passe-bas, où la
 // porteuse se FILTRE au lieu de se moyenner. Le détail est sur `enveloppe`, avec le prix mesuré.
 import { partVoisee, suivreHauteur } from "./hauteur";
+import { fenetreHann } from "./stft";
 import { fft } from "./fft";
 
 export const ESPECES = ["harmonique", "compact", "discontinu", "aucun"] as const;
@@ -296,10 +297,8 @@ export function partielleDominante(x: Float32Array, sampleRate: number): number 
   const de = Math.floor((x.length - TAILLE_PARTIELLE) / 2);
   const re = new Float64Array(TAILLE_PARTIELLE);
   const im = new Float64Array(TAILLE_PARTIELLE);
-  for (let k = 0; k < TAILLE_PARTIELLE; k++) {
-    const w = 0.5 - 0.5 * Math.cos((2 * Math.PI * k) / TAILLE_PARTIELLE);
-    re[k] = x[de + k] * w;
-  }
+  const w = fenetreHann(TAILLE_PARTIELLE);
+  for (let k = 0; k < TAILLE_PARTIELLE; k++) re[k] = x[de + k] * w[k];
   fft(re, im, false);
   let sommet = 1;
   for (let k = 1; k < TAILLE_PARTIELLE / 2; k++) {

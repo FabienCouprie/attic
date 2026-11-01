@@ -2,6 +2,7 @@
 // carte 2D temps × fréquence × intensité. Réutilise audio/fft.ts et le patron
 // de décodage de FormeOnde.
 import { useRef, useState, useEffect, useCallback } from "react";
+import { creerFenetreHann } from "../audio/commun";
 import { fft } from "../audio/fft";
 import { useI18n } from "../i18n";
 import { versDb } from "../audio/decibels";
@@ -62,8 +63,7 @@ export function Spectrogramme({ audioUrl, tailleFFT, log }: Props) {
       const dc = buffer.getChannelData(c);
       for (let i = 0; i < total; i++) mono[i] += dc[i] / buffer.numberOfChannels;
     }
-    const win = new Float64Array(N);
-    for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (N - 1));
+    const win = creerFenetreHann(N);
     const hop = Math.max(1, Math.floor((total - N) / Math.max(1, largeur))); // ~1 trame/colonne
     const re = new Float64Array(N), im = new Float64Array(N);
 

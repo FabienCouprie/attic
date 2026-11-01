@@ -26,6 +26,7 @@
 // ses propres unités.
 
 import { fft } from "./fft";
+import { fenetreHann } from "./stft";
 import { creerAleatoire } from "../core/hasard";
 
 /** Cadence par défaut des courbes, en valeurs par seconde. */
@@ -195,6 +196,8 @@ export function suivre(
   const n = Math.max(1, Math.ceil(x.length / saut));
   const brut = new Float32Array(n);
   const re = new Float64Array(TAILLE), im = new Float64Array(TAILLE);
+  // Fenêtre de Hann, pour que le spectre ne soit pas celui d'un signal coupé net.
+  const fen = fenetreHann(TAILLE);
   let precedent: Float64Array | null = null;
 
   for (let t = 0; t < n; t++) {
@@ -208,8 +211,7 @@ export function suivre(
     re.fill(0); im.fill(0);
     for (let i = 0; i < TAILLE; i++) {
       const j = debut + i - TAILLE / 2;
-      // Fenêtre de Hann, pour que le spectre ne soit pas celui d'un signal coupé net.
-      re[i] = (j >= 0 && j < x.length ? x[j] : 0) * (0.5 - 0.5 * Math.cos((2 * Math.PI * i) / TAILLE));
+      re[i] = (j >= 0 && j < x.length ? x[j] : 0) * fen[i];
     }
     fft(re, im, false);
     const moitie = TAILLE / 2;
