@@ -67,6 +67,20 @@ describe("ce qu'une bulle repliée garde de son intérieur", () => {
     expect(resultatRetenu({ cacheParBulle: true, economie: false })).toBe(true);
   });
 
+  it("SOUS LE SEUIL DES APERÇUS, UN MEMBRE CACHÉ GARDE LE SIEN : « Développer » ne refait rien", () => {
+    // Décidé par Fabien le 2026-11-01 : une seconde de son lâchée faisait tout refaire à la réouverture.
+    expect(resultatRetenu({ cacheParBulle: true, lourd: false })).toBe(true);
+    expect(resultatRetenu({ cacheParBulle: true, lourd: true })).toBe(false);
+  });
+
+  it("une valeur dont on ne dit pas le poids est tenue pour lourde : le régime le plus sûr", () => {
+    expect(resultatRetenu({ cacheParBulle: true, economie: true })).toBe(false);
+  });
+
+  it("le poids ne sauve pas un tour de boucle : son corps se lâche quelle que soit sa durée", () => {
+    expect(resultatRetenu({ cacheParBulle: false, corpsDeBoucle: true, lourd: false })).toBe(false);
+  });
+
 });
 
 describe("ce qu'une boucle dépliée garde de ses tours", () => {

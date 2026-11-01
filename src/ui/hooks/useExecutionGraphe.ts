@@ -60,6 +60,17 @@ import { registreUI } from "../registre-actif";
 const trouverDef = (id: string) => registreUI().trouverDef(id);
 
 /**
+ * Ces valeurs atteignent-elles le seuil où un membre de bulle repliée les lâche ? Voir `resultatRetenu`.
+ *
+ * C'EST LA QUESTION DES APERÇUS, POSÉE POUR UN INTERMÉDIAIRE ET SANS LA BASCULE : une valeur dont le
+ * domaine ne garderait pas l'aperçu d'un nœud non regardé est lourde. Le seuil reste donc écrit une
+ * seule fois, dans le domaine ; la bascule, elle, est lue par `resultatRetenu`. Une seule sortie
+ * lourde suffit : l'entrée de cache les retient toutes.
+ */
+const valeursLourdes = (valeurs: readonly unknown[] | undefined): boolean =>
+  (valeurs ?? []).some((v) => v != null && !servicesApercu().apercuUtile(v, { regarde: false, economie: true }));
+
+/**
  * Ce qu'un run CIBLÉ embrasse, au-delà du nœud visé et de son amont.
  *
  * DEUX APPELANTS, DEUX INTENTIONS. Cliquer le ▶ d'un nœud veut dire « calcule jusqu'ici » : l'aval
@@ -1007,7 +1018,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // de mémoire. C'est le symptôme « lecteur gris à 0:00 » : il frappe le
     // dernier nœud de la chaîne, quel qu'il soit, et non celui qui aurait un
     // défaut.
-    // CE QUI EST DANS UNE BULLE REPLIÉE N'EST PAS GARDÉ, et le ménage se fait ICI, à la fin du run,
+    // CE QUI EST LOURD DANS UNE BULLE REPLIÉE N'EST PAS GARDÉ, et le ménage se fait ICI, à la fin du run,
     // et non au moment où un nœud range son résultat. La raison est qu'un membre qui TROUVE son
     // résultat en cache n'exécute pas, donc ne range rien, donc ne déclenchait aucun ménage : les
     // tampons restaient accrochés au cache alors que les données des nœuds les avaient lâchés, et
@@ -1015,12 +1026,14 @@ export function useExecutionGraphe(o: OptionsExecution) {
     //
     // À LA FIN PLUTÔT QU'AU DÉBUT : le run courant garde ses raccourcis de cache, et c'est le
     // suivant qui refera la bulle. On paie le recalcul une fois par exécution, pas deux.
-    // Voir `resultatRetenu` dans `core/memoire.ts` pour l'échange consenti.
+    // Voir `resultatRetenu` dans `core/memoire.ts` pour l'échange consenti, et son seuil : sous lui,
+    // un membre se garde, et « Développer » ne refait rien.
     const economie = economieMemoireRef?.current ?? true;
     for (const n of noeudsRef.current) {
       const garde = resultatRetenu({
         cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
         economie,
+        lourd: valeursLourdes(cacheExec.current.get(n.id)?.valeurs),
       });
       if (!garde) cacheExec.current.delete(n.id);
     }
@@ -1154,10 +1167,13 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // arithmétique (cf. `audio/memoire-audio.ts`).
         // UN MEMBRE DE BULLE REPLIÉE NE RETIENT RIEN : ni aperçu, ni référence au tampon. Le premier
         // ne s'écouterait pas, le second annulerait la libération faite plus haut — un tampon qui
-        // reste accroché aux données du nœud n'est pas libéré parce que le cache l'a lâché.
+        // reste accroché aux données du nœud n'est pas libéré parce que le cache l'a lâché. SOUS LE
+        // SEUIL, IL GARDE LES DEUX, comme le cache garde sa valeur : rien n'est libéré qu'il annulerait,
+        // et « Développer » le montre aussitôt avec son lecteur.
         const membreReplie = !resultatRetenu({
           cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
           economie: economieMemoireRef?.current ?? true,
+          lourd: valeursLourdes(valsSafe),
         });
         const garderApercu = !audio || (!membreReplie && servicesApercu().apercuUtile(audio, {
           regarde: noeudRegarde({
