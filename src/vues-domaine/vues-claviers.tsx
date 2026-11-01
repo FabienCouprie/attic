@@ -21,6 +21,7 @@ import { gainDeNote, rendreSequence } from "../audio/midi-sequence";
 import { ClavierApprentissage as VueClavierApprentissage } from "./ClavierApprentissage";
 import { INSTRUMENTS_ORCHESTRE } from "../audio/csound-orchestre";
 import type { VueProps } from "../ui/registre-vues";
+import { frequenceDeNoteMidi } from "../audio/commun";
 
 export function VueApprentissage({ data }: VueProps) {
   return (
@@ -64,7 +65,7 @@ export function ClavierMelodie({ id, data }: VueProps) {
     // toute facon ce que ce reglage demande.
     if (niveau <= 0) return { arreter: () => {} };
     const osc = ctx.createOscillator(), gain = ctx.createGain();
-    osc.type = "triangle"; osc.frequency.value = 440 * 2 ** ((note - 69) / 12);
+    osc.type = "triangle"; osc.frequency.value = frequenceDeNoteMidi(note);
     gain.gain.setValueAtTime(niveau, ctx.currentTime);
     // La descente garde sa forme, deux decades, quel que soit le niveau de depart : une cible
     // ecrite en dur remonterait au-dessus du depart sur un volume faible.

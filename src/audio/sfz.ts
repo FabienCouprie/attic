@@ -28,6 +28,7 @@
 // ignorés : pan, fil_cutoff… » que faire sonner un instrument à moitié et laisser croire qu'il est
 // complet.
 import type { Banque, Zone } from "./clavier-banque";
+import { depuisDb } from "./decibels";
 
 /** Une région : une zone de clavier et son échantillon, opcodes hérités déjà résolus. */
 export interface RegionSfz {
@@ -382,7 +383,7 @@ export function banqueDepuisSfz(
     // résultat est le même à un bit près mais pas au même bit : la base d'empreintes surveille ce
     // composant, et elle le verrait.
     if (r.centsParTouche !== 100 && r.centsParTouche !== 0) zone.centsParTouche = r.centsParTouche;
-    if (r.volume !== 0) zone.gain = Math.pow(10, r.volume / 20);
+    if (r.volume !== 0) zone.gain = depuisDb(r.volume);
     // Les bornes de vélocité ne sont posées que si elles disent quelque chose : une région pleine
     // plage reste une zone sans couche, et se comporte exactement comme avant.
     if (r.loVel > 0 || r.hiVel < 127) { zone.velBasse = r.loVel; zone.velHaute = r.hiVel; }

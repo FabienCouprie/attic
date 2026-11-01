@@ -25,6 +25,7 @@ import { reseau, sautDeRangee, tableDuReseau, RANGEES } from "../audio/clavier-i
 import { useClavierJouable } from "./clavier-jouable";
 import { ecouterTampon } from "../ui/niveau-ecoute";
 import type { VueProps } from "../ui/registre-vues";
+import { frequenceDeNoteMidi } from "../audio/commun";
 
 /** De combien de tours on peut s'éloigner de la tonique, de part et d'autre. */
 const TOURS_MAX = 3;
@@ -152,7 +153,7 @@ export function ClavierIsomorphe({ id, data, def }: VueProps) {
     osc.type = "triangle";
     // LA HAUTEUR EST FRACTIONNAIRE, et c'est tout l'objet : la conversion est continue, donc un
     // degré qui ne tombe pas sur un demi-ton sonne à sa place et non à celle du demi-ton voisin.
-    osc.frequency.value = 440 * 2 ** ((note - 69) / 12);
+    osc.frequency.value = frequenceDeNoteMidi(note);
     gain.gain.setValueAtTime(niveau, ctx.currentTime);
     // La descente garde sa forme, deux décades, quel que soit le niveau de départ.
     gain.gain.exponentialRampToValueAtTime(niveau * 0.01, ctx.currentTime + 1.2);

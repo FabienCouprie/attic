@@ -23,6 +23,7 @@ import {
 import { lireModeleEmbarque } from "../modele-embarque";
 import { fiches as fichesRestauration } from "./restaurer-compresse";
 import { fiches as fichesPleurage } from "./correction-pleurage";
+import { versDb } from "../audio/decibels";
 
 const rmsGlobal = (a: Float32Array) => {
   let s = 0;
@@ -139,14 +140,14 @@ export const fiches: FicheAudio[] = ([
       const planchAvant = planchecherDeBruit(signal);
       const planchApres = planchecherDeBruit(debruite);
       const baisse = planchAvant > 1e-9
-        ? 20 * Math.log10(Math.max(1e-9, planchApres) / planchAvant)
+        ? versDb(Math.max(1e-9, planchApres) / planchAvant)
         : 0;
       return {
         valeurs: [sortie],
         message: traduire(
           "msg.debruitage.var_0_var_1_var_2",
           baisse.toFixed(1),
-          (20 * Math.log10(Math.max(1e-9, rmsGlobal(debruite)) / Math.max(1e-9, rmsGlobal(signal)))).toFixed(1),
+          (versDb(Math.max(1e-9, rmsGlobal(debruite)) / Math.max(1e-9, rmsGlobal(signal)))).toFixed(1),
           sortie.sampleRate === GTCRN_SAMPLE_RATE ? "16 kHz" : `${(sortie.sampleRate / 1000).toFixed(1)} kHz`,
         ),
       };

@@ -22,12 +22,13 @@ import {
   sf2Chargee, normaliserModeSynthèse, decoderInstrumentSF2,
   PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2,
 } from "./soundfontGlobal";
+import { noteMidiDeFrequence } from "../audio/commun";
 
 /** La fréquence d'échantillonnage du battement rendu, la même que celle du composant Pulsation. */
 const SR = () => frequenceDeTravail();
 
 /** La hauteur en demi-tons d'une fréquence : la même conversion que dans `plugins/pulsation.ts`. */
-const hauteurDe = (hertz: number) => 69 + 12 * Math.log2(Math.max(1, hertz) / 440);
+const hauteurDe = (hertz: number) => noteMidiDeFrequence(Math.max(1, hertz));
 
 /** « Selon la roue » : la saturation choisit l'anneau, donc le mode, comme avant tout réglage. */
 const SELON_LA_ROUE = "roue";

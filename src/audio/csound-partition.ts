@@ -26,12 +26,13 @@
 // message — d'où ce réglage, explicite, plutôt qu'une valeur en dur.
 import type { NoteCsound } from "./csound";
 import type { Courbe } from "./courbe";
+import { frequenceDeNoteMidi } from "./commun";
 
 /** Les quatre conventions de hauteur de Csound. */
 export type Convention = "cps" | "pch" | "oct" | "midi";
 
 /** Fréquence en hertz, la convention `cps`. */
-export const hzDepuisNote = (note: number): number => 440 * Math.pow(2, (note - 69) / 12);
+export const hzDepuisNote = (note: number): number => frequenceDeNoteMidi(note);
 
 /**
  * Octave en décimal, la convention `oct` : 8,0 pour le do central.

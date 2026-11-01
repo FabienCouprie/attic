@@ -5,6 +5,7 @@
 
 import { poserParam } from "./automation";
 import { coefficientSuiveur, valeurA, valeurTransformee } from "./courbe";
+import { versDb, depuisDb } from "./decibels";
 
 export async function deEsser(
   buffer: AudioBuffer,
@@ -57,11 +58,11 @@ export async function deEsser(
       const niveau = Math.abs(bande[i]);
       const coeff = niveau > env ? attaqueCoeff(i) : relachementCoeff(i);
       env = coeff * env + (1 - coeff) * niveau;
-      const envDb = env > 1e-9 ? 20 * Math.log10(env) : -180;
+      const envDb = env > 1e-9 ? versDb(env) : -180;
       const seuil = valeurA(seuilDb, i);
       let gainDb = 0;
       if (envDb > seuil) gainDb = (seuil - envDb) * (1 - 1 / Math.max(1, valeurA(ratio, i)));
-      dst[i] = src[i] * Math.pow(10, gainDb / 20);
+      dst[i] = src[i] * depuisDb(gainDb);
     }
   }
   return resultat;
@@ -149,7 +150,7 @@ export function gateExpandeur(
 
   // Gate : le plancher est une attenuation fixe (en dB).
   // Expandeur : le ratio atténue progressivement sous le seuil (comme un compresseur inversé).
-  const plancherLin = Math.pow(10, -Math.max(0, attenuationDb) / 20);
+  const plancherLin = depuisDb(-Math.max(0, attenuationDb));
 
   const resultat = new AudioBuffer({ numberOfChannels: nch, length: buffer.length, sampleRate: sr });
   const src: Float32Array[] = [];
@@ -169,7 +170,7 @@ export function gateExpandeur(
     const coeff = niveau > env ? attaqueCoeff(i) : relachementCoeff(i);
     env = coeff * env + (1 - coeff) * niveau;
 
-    const envDb = env > 1e-9 ? 20 * Math.log10(env) : -180;
+    const envDb = env > 1e-9 ? versDb(env) : -180;
 
     let gain: number;
     // `valeurA` rend un scalaire tel quel : un seul chemin de calcul, modulé ou non.
@@ -189,7 +190,7 @@ export function gateExpandeur(
         const gainDb = (seuil - envDb) * (1 - 1 / ratioSafe);
         // Limiter l'atténuation maximale au plancher
         const gainDbLimite = Math.max(gainDb, -attenuationDb);
-        gain = Math.pow(10, gainDbLimite / 20);
+        gain = depuisDb(gainDbLimite);
       } else {
         gain = 1;
       }

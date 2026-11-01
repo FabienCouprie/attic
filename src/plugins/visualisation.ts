@@ -12,6 +12,7 @@ import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } fro
 import { choixFenetre } from "../audio/fenetres-analyse";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
+import { versDb } from "../audio/decibels";
 
 // LES QUATRE FORMES D'ONDE VIENNENT DE `audio/timbres.ts`. Elles étaient déclarées trois fois dans
 // ce fichier : les libellés français dans `options`, les anglais dans `optionsEn`, et une troisième
@@ -201,7 +202,7 @@ export const fiches: FicheAudio[] = ([
           out = nb;
         }
       }
-      const dB = (p: number) => (p > 0 ? `${(20 * Math.log10(p)).toFixed(1)} dB` : "−∞");
+      const dB = (p: number) => (p > 0 ? `${(versDb(p)).toFixed(1)} dB` : "−∞");
       const mention = align ? ` · ${traduire("msg.niveaux_egalises")}` : "";
       return { valeurs: [out], message: traduire("msg.coute_var_0_a_var_1_b_var_2_var_3", entendu, dB(pA), dB(pB), mention) };
    },

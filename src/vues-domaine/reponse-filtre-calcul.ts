@@ -17,6 +17,7 @@
 // bornes de ce qu'il traverse dit la vérité de ce qu'on entend, et se lit d'un coup d'œil.
 
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
+import { versDb } from "../audio/decibels";
 
 /**
  * La fréquence d'échantillonnage sur laquelle la réponse est calculée.
@@ -48,7 +49,7 @@ export function reponseDb(type: string, f0: number, Q: number, f: number): numbe
   const w = (2 * Math.PI * f) / SR(), c1 = Math.cos(w), s1 = Math.sin(w), c2 = Math.cos(2 * w), s2 = Math.sin(2 * w);
   const nRe = b0 + b1 * c1 + b2 * c2, nIm = -(b1 * s1 + b2 * s2);
   const dRe = 1 + a1 * c1 + a2 * c2, dIm = -(a1 * s1 + a2 * s2);
-  return 20 * Math.log10(Math.hypot(nRe, nIm) / Math.hypot(dRe, dIm) + 1e-9);
+  return versDb(Math.hypot(nRe, nIm) / Math.hypot(dRe, dIm) + 1e-9);
 }
 
 /** Une grandeur du filtre : fixe quand rien ne la module, bornée quand une courbe la pilote. */

@@ -5,6 +5,7 @@
 
 
 import { coefficientSuiveur, valeurA, valeurTransformee } from "./courbe";
+import { versDb, depuisDb } from "./decibels";
 
 export function normaliser(buffer: AudioBuffer, cibleDb: number): AudioBuffer {
   let pic = 0;
@@ -26,7 +27,7 @@ export function normaliser(buffer: AudioBuffer, cibleDb: number): AudioBuffer {
     }
     return resultat;
   }
-  const gain = Math.pow(10, cibleDb / 20) / pic;
+  const gain = depuisDb(cibleDb) / pic;
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);
     const dst = resultat.getChannelData(c);
@@ -41,7 +42,7 @@ export function normaliser(buffer: AudioBuffer, cibleDb: number): AudioBuffer {
 
 
 export function amplifier(buffer: AudioBuffer, gainDb: number): AudioBuffer {
-  const gain = Math.pow(10, gainDb / 20);
+  const gain = depuisDb(gainDb);
   const resultat = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
     length: buffer.length,
@@ -80,7 +81,7 @@ export function compresser(
   // MÊME RÈGLE POUR LES TROIS AUTRES : `valeurTransformee` ne calcule qu'une fois ce qui ne bouge
   // pas. La pente `1 − 1/r` était jusqu'ici recalculée à chaque échantillon sous le seuil ; elle
   // ne l'est plus quand le ratio est un nombre.
-  const compensationA = valeurTransformee(compensationDb, (v) => Math.pow(10, v / 20));
+  const compensationA = valeurTransformee(compensationDb, (v) => depuisDb(v));
   const penteA = valeurTransformee(ratio, (v) => 1 - 1 / Math.max(1, v));
   const nch = buffer.numberOfChannels;
 
@@ -102,11 +103,11 @@ export function compresser(
     const coeff = niveau > env ? attaqueCoeff(i) : relachementCoeff(i);
     env = coeff * env + (1 - coeff) * niveau;
 
-    const envDb = env > 1e-9 ? 20 * Math.log10(env) : -180;
+    const envDb = env > 1e-9 ? versDb(env) : -180;
     let gainDb = 0;
     const seuil = valeurA(seuilDb, i);
     if (envDb > seuil) gainDb = (seuil - envDb) * penteA(i);
-    const gain = Math.pow(10, gainDb / 20) * compensationA(i);
+    const gain = depuisDb(gainDb) * compensationA(i);
 
     for (let c = 0; c < nch; c++) dst[c][i] = src[c][i] * gain;
   }

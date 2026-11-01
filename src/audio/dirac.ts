@@ -27,6 +27,7 @@
 // approximation, et elle est dite comme telle.
 
 import { quadrature, planBoucle, bouclerAvecFondu, versAudioBuffer, canauxDe } from "./geometrie-sonore";
+import { depuisDb } from "./decibels";
 
 export { DUREE_SORTIE_MAX_SEC } from "./geometrie-sonore";
 
@@ -70,7 +71,7 @@ export function tournerDirac(entree: Float32Array[], sampleRate: number, o: Opti
   // l'annulation complète. La somme des deux poids vaut 1, pour que le niveau
   // au départ ne dépende pas du réglage.
   const poidsTemoin = t / 2, poidsSource = 1 - t / 2;
-  const gainArriere = 10 ** (-Math.max(0, o.arriereDb) / 20);
+  const gainArriere = depuisDb(-Math.max(0, o.arriereDb));
   const centre = Math.SQRT1_2;
 
   const L = new Float32Array(plan.total), R = new Float32Array(plan.total);

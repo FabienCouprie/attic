@@ -24,6 +24,7 @@
 // dans la porte, qu'aucun calcul de gain ne peut révéler.
 
 import { mesurerNiveau } from "./vumetre";
+import { depuisDb } from "./decibels";
 
 export interface ResultatNormalisationSonie {
   audio: AudioBuffer;
@@ -44,7 +45,6 @@ export interface OptionsNormalisationSonie {
   plafondDb?: number;
 }
 
-const LINEAIRE = (db: number) => Math.pow(10, db / 20);
 
 /**
  * Amène la sonie intégrée à la cible, sans dépasser le plafond de vrai pic.
@@ -71,7 +71,7 @@ export function normaliserSonie(
   const gainSonie = muet ? 0 : cibleLufs - avant.lufs;
   const gainPlafond = muet ? 0 : plafondDb - avant.vraiPicDb;
   const gainDb = muet ? 0 : Math.min(gainSonie, gainPlafond);
-  const gain = LINEAIRE(gainDb);
+  const gain = depuisDb(gainDb);
 
   for (let c = 0; c < buffer.numberOfChannels; c++) {
     const src = buffer.getChannelData(c);

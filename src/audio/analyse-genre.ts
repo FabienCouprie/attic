@@ -5,6 +5,7 @@
 
 import { fft } from "./fft";
 import { traduire } from "../i18n";
+import { noteMidiDeFrequence } from "./commun";
 
 // LE REPLI VERS HUGGINGFACE A ÉTÉ RETIRÉ, et il était contraire à la règle du dépôt : tous les
 // modèles viennent de la release `assets`, et aucun nœud ne va les chercher chez un tiers. Celui-ci
@@ -155,7 +156,7 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
       const mag = Math.sqrt(re[b] * re[b] + im[b] * im[b]);
       const freq = (b * srC) / fftC;
       if (freq < 65 || freq > 8000) continue;
-      const midi = 12 * Math.log2(freq / 440) + 69;
+      const midi = noteMidiDeFrequence(freq);
       const pc = ((Math.round(midi) % 12) + 12) % 12;
       chroma[pc] += mag;
     }

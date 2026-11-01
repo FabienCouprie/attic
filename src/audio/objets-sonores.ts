@@ -20,6 +20,7 @@ import {
   criteresSchaefferiens, degreDeMasse,
   type EspeceAllure, type EspeceMasse, type FormeDynamique,
 } from "./criteres-schaefferiens";
+import { versDb, depuisDb } from "./decibels";
 
 export type CritereDecoupage = "attaques" | "silences" | "timbre" | "masse";
 
@@ -108,7 +109,7 @@ function trames(x: Float32Array, sr: number): Trames {
   const occupation = new Float64Array(nb), dominante = new Float64Array(nb);
   // Le champ est borné en hertz, donc en rangs par la cadence ; le dernier rang utile ne bouge pas.
   const hautChamp = Math.min(N / 2 - 1, Math.max(2, Math.floor((CHAMP_MASSE_HZ * N) / sr)));
-  const seuilVide = Math.pow(10, PLANCHER_MASSE_DB / 20);
+  const seuilVide = depuisDb(PLANCHER_MASSE_DB);
   const brut = new Float64Array(N / 2);
   let precedent = new Float64Array(N / 2);
   const re = new Float64Array(N), im = new Float64Array(N);
@@ -146,7 +147,7 @@ function trames(x: Float32Array, sr: number): Trames {
   return { nb, rms, flux, centre, platitude, occupation, dominante };
 }
 
-const db = (v: number) => 20 * Math.log10(Math.max(v, 1e-9));
+const db = (v: number) => versDb(Math.max(v, 1e-9));
 
 /** Le maximum d'un tableau, par une boucle : `Math.max(...t)` déborde la pile au-delà d'une centaine
  *  de milliers d'éléments, soit une dizaine de minutes de trames. */
@@ -457,7 +458,7 @@ export async function monter(plans: Plan[]): Promise<AudioBuffer> {
   const longueur = Math.max(1, maxDe(prets.map((p) => Math.round(p.debut * sr) + fenetreDuPlan(p, sr).n)));
   const sortie = new AudioBuffer({ numberOfChannels: canaux, length: longueur, sampleRate: sr });
   for (const p of prets) {
-    const decalage = Math.round(p.debut * sr), gain = Math.pow(10, p.gainDb / 20);
+    const decalage = Math.round(p.debut * sr), gain = depuisDb(p.gainDb);
     // LA FENÊTRE DU PLAN, ET NON LE SON ENTIER : un plan peut n'en poser qu'une partie, ce qui est
     // ce qui rend une coupe possible. Sans `dans` ni `duree`, elle couvre le son d'un bout à l'autre.
     const { depart, n } = fenetreDuPlan(p, sr);

@@ -32,6 +32,7 @@
 
 import { periodeDesNotes } from "./suites-entieres";
 import { creerAleatoire } from "../core/hasard";
+import { versDb } from "./decibels";
 
 /** Les principes de sélection de Koenig, ceux de Projet 1 et 2 portés à l'échelle de l'onde. */
 export const PRINCIPES = [
@@ -351,7 +352,7 @@ export function creteDb(x: Float32Array): number {
   let pire = 0, somme = 0;
   for (const v of x) { pire = Math.max(pire, Math.abs(v)); somme += v * v; }
   const efficace = Math.sqrt(somme / Math.max(1, x.length));
-  return efficace > 1e-12 ? 20 * Math.log10(pire / efficace) : 0;
+  return efficace > 1e-12 ? versDb(pire / efficace) : 0;
 }
 
 /** La longueur moyenne des répétitions d'une suite — ce qui sépare « groupe » d'« aléa ». */

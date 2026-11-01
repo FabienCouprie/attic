@@ -27,6 +27,7 @@
 import { fft } from "./fft";
 import { fenetreHann } from "./stft";
 import type { Note } from "./note";
+import { noteMidiDeFrequence } from "./commun";
 
 /** Un atome retenu : une sinusoïde sous une fenêtre, à une place et une durée données. */
 export interface Atome {
@@ -342,7 +343,7 @@ export function atomesEnNotes(
   const notes: Note[] = [];
   let ecartees = 0;
   for (const a of atomes) {
-    const hauteur = 69 + 12 * Math.log2(Math.max(1e-6, a.frequenceHz) / 440);
+    const hauteur = noteMidiDeFrequence(Math.max(1e-6, a.frequenceHz));
     if (!(hauteur >= 0 && hauteur <= 127)) { ecartees++; continue; }
     const debut = a.debut / sr;
     notes.push({

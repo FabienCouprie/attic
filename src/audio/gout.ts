@@ -24,6 +24,7 @@
 import { creerFenetreHann, mixdownMono, tramesDepuisBuffer } from "./commun";
 import { partielsDepuisModules, dissonanceSpectre } from "./dissonance";
 import { suivreHauteur, hauteurMediane, partVoisee } from "./hauteur";
+import { versDb, depuisDb } from "./decibels";
 
 /** Les cinq dimensions, ramenées à [0, 1] — 0 pour un extrême, 1 pour l'autre. */
 export interface DimensionsGout {
@@ -143,7 +144,7 @@ export function mesurerVoie(x: Float32Array, o: OptionsVoieGout): MesuresGout {
     env.push(Math.sqrt(s / pas));
   }
   const crete = env.reduce((m, v) => Math.max(m, v), 0);
-  const seuil = crete * Math.pow(10, -35 / 20);
+  const seuil = crete * depuisDb(-35);
   const audibles = env.filter((v) => v > seuil).length;
   const duree = env.length ? audibles / env.length : 0;
 
@@ -168,7 +169,7 @@ export function mesurerVoie(x: Float32Array, o: OptionsVoieGout): MesuresGout {
   let somme = 0;
   for (let i = 0; i < n; i++) somme += x[i] * x[i];
   const rms = Math.sqrt(somme / Math.max(1, n));
-  const db = rms > 0 ? 20 * Math.log10(rms) : -120;
+  const db = rms > 0 ? versDb(rms) : -120;
 
   // ── Hauteur ──
   const suivi = suivreHauteur(x, sr, { cadence: 50 });

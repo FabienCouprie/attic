@@ -7,6 +7,7 @@ import {
 } from "./spectrogramme-fenetre";
 import { creerAleatoire } from "../core/hasard";
 import { traduire } from "../i18n";
+import { versDb, depuisDb } from "./decibels";
 
 const EPS = 1e-10;
 
@@ -184,7 +185,7 @@ export async function appliquerPcaNeuronale(
   for (let c = 0; c < nCh; c++) {
     for (const frame of spectrograms[c].frames) {
       for (let b = 0; b < nbBins; b++) {
-        matrix[idx++] = 20 * Math.log10(frame.mag[b] + EPS);
+        matrix[idx++] = versDb(frame.mag[b] + EPS);
       }
     }
   }
@@ -313,7 +314,7 @@ export async function appliquerPcaNeuronale(
         // Borné à 6 dB au-dessus du plus fort niveau analysé : les magnitudes se reconstruisent en
         // 10^(dB/20), et une erreur de quelques écarts-types serait sinon amplifiée exponentiellement.
         const db = Math.min(dbMax + 6, recon[offsetGlobal + b] * std + mean[b]);
-        mag[b] = Math.max(0, Math.pow(10, db / 20));
+        mag[b] = Math.max(0, depuisDb(db));
       }
       frames.push({ start: spectrograms[c].frames[f].start, mag, phase: spectrograms[c].frames[f].phase });
     }

@@ -15,6 +15,7 @@
 // douze.
 
 import { valeurTransformee } from "./courbe";
+import { depuisDb } from "./decibels";
 
 export interface OptionsDucking {
   /** Niveau du déclencheur, en dB, au-dessus duquel l'atténuation s'engage. */
@@ -53,8 +54,8 @@ export function gainsDucking(declencheur: Float32Array, n: number, o: OptionsDuc
   const env = enveloppeDeclencheur(declencheur, o.frequence);
   // `valeurTransformee` garde deux chemins : un scalaire ne paie qu'un seul `pow`, calculé avant
   // la boucle, exactement comme avant que ces deux réglages s'ouvrent.
-  const seuilA = valeurTransformee(o.seuilDb, (v) => Math.pow(10, v / 20));
-  const plancherA = valeurTransformee(o.reductionDb, (v) => Math.pow(10, -Math.abs(v) / 20));
+  const seuilA = valeurTransformee(o.seuilDb, (v) => depuisDb(v));
+  const plancherA = valeurTransformee(o.reductionDb, (v) => depuisDb(-Math.abs(v)));
   // LES DEUX COEFFICIENTS GARDENT LEUR PROPRE ÉCRITURE, et ce n'est pas une recopie par paresse.
   // `coefficientSuiveur` compte en MILLISECONDES et plancherait à 0,01 ; ces deux-ci comptent en
   // SECONDES et planchent à un échantillon. Les deux formules coïncident partout au-dessus d'une

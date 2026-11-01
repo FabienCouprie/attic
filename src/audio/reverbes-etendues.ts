@@ -24,6 +24,7 @@
 import { valeurA, valeurMax, valeurTransformee } from "./courbe";
 import { changerTonaliteVoie } from "./effets-spectral";
 import { convoluer, reponseVelours, type OptionsVelours } from "./velours";
+import { versDb, depuisDb } from "./decibels";
 
 /**
  * La réponse, ramenée à un gain unitaire en énergie.
@@ -77,7 +78,7 @@ export function enveloppePorte(
 ): Float32Array {
   // `valeurTransformee` ne calcule qu'une fois ce qui ne bouge pas : un seuil fixe garde son `pow`
   // unique, et une chute fixe son arrondi, exactement comme avant que ces deux réglages s'ouvrent.
-  const seuilA = valeurTransformee(o.seuilDb, (v) => Math.pow(10, v / 20));
+  const seuilA = valeurTransformee(o.seuilDb, (v) => depuisDb(v));
   const maintien = Math.max(1, Math.round(o.maintienSec * o.frequence));
   const chuteA = valeurTransformee(o.chuteSec, (v) => Math.max(1, Math.round(v * o.frequence)));
   const out = new Float32Array(sec.length);
@@ -116,7 +117,7 @@ export function dureeQueue(x: Float32Array, frequence: number, sousLaCreteDb = -
   let crete = 0;
   for (let i = 0; i < x.length; i++) crete = Math.max(crete, Math.abs(x[i]));
   if (crete < 1e-9) return 0;
-  const seuil = crete * Math.pow(10, sousLaCreteDb / 20);
+  const seuil = crete * depuisDb(sousLaCreteDb);
   for (let i = x.length - 1; i >= 0; i--) if (Math.abs(x[i]) >= seuil) return (i + 1) / frequence;
   return 0;
 }
@@ -240,7 +241,7 @@ export function shimmer(x: Float32Array, o: OptionsShimmer): ResultatShimmer {
     out[i] = x[i] * (1 - m) + (x[i] + somme[i]) * m;
   }
   const premier = niveaux[0] || 1e-12;
-  return { audio: out, generationsDb: niveaux.map((n) => 20 * Math.log10(Math.max(1e-12, n) / premier)) };
+  return { audio: out, generationsDb: niveaux.map((n) => versDb(Math.max(1e-12, n) / premier)) };
 }
 
 /**

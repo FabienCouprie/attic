@@ -8,6 +8,7 @@
 // LE GAIN EST CONSTANT SUR TOUTE LA DURÉE. Ce module n'est pas un compresseur : il applique un
 // facteur unique, si bien que la dynamique du son corrigé est intacte, à la constante près.
 import { creteDb, niveauDb } from "./ecart-niveau";
+import { versDb, depuisDb } from "./decibels";
 
 export type MesureRecalage = "sonie" | "rms" | "crete";
 
@@ -50,7 +51,7 @@ export function mesurerSelon(buffer: AudioBuffer, mesure: MesureRecalage): numbe
   }
   const n = buffer.length * Math.max(1, buffer.numberOfChannels);
   const rms = n > 0 ? Math.sqrt(somme / n) : 0;
-  return rms > 0 ? 20 * Math.log10(rms) : -Infinity;
+  return rms > 0 ? versDb(rms) : -Infinity;
 }
 
 /**
@@ -93,7 +94,7 @@ export function recaler(
     }
   }
 
-  const facteur = Math.pow(10, gain / 20);
+  const facteur = depuisDb(gain);
   const audio = creerTampon(aCorriger.numberOfChannels, aCorriger.length, aCorriger.sampleRate);
   for (let c = 0; c < aCorriger.numberOfChannels; c++) {
     const src = aCorriger.getChannelData(c);

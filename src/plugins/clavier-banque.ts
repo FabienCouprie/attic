@@ -21,10 +21,11 @@ import {
 } from "../audio/clavier-banque-lot";
 import { parLot } from "./hors-lot";
 import { choixOuiNon } from "../core/oui-non";
+import { noteMidiDeFrequence } from "../audio/commun";
 
 /** La note MIDI la plus proche d'une fréquence. */
 const noteDepuisHertz = (hz: number): number =>
-  Math.max(NOTE_LA0, Math.min(NOTE_DO8, Math.round(69 + 12 * Math.log2(Math.max(1, hz) / 440))));
+  Math.max(NOTE_LA0, Math.min(NOTE_DO8, Math.round(noteMidiDeFrequence(Math.max(1, hz)))));
 
 export const fiches: FicheAudio[] = ([
   {

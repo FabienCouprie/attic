@@ -37,6 +37,8 @@
 // première, et 9 960 seulement la seconde : c'était le calcul des bornes qui coûtait, non
 // l'interpolation.
 
+import { versDb } from "./decibels";
+
 const DEMI = 8;
 const BETA = 6;
 const TAILLE = 2 * DEMI;
@@ -193,5 +195,5 @@ export function creteVraie(canaux: Float32Array[]): number {
 export function creteVraieDb(buffer: AudioBuffer): number {
   const canaux = Array.from({ length: buffer.numberOfChannels }, (_, c) => buffer.getChannelData(c));
   const m = creteVraie(canaux);
-  return m > 1e-9 ? 20 * Math.log10(m) : -120;
+  return m > 1e-9 ? versDb(m) : -120;
 }

@@ -10,6 +10,7 @@ import { analyserMidi, midiDuFichier } from "./midi";
 import { normaliserBuffer, rendreAvecSF2 } from "./midi-soundfont";
 import { bpmInitial, evenementsAbsolus } from "./midi-ecriture";
 import { frequenceDeTravail } from "./frequence-de-travail";
+import { frequenceDeNoteMidi } from "./commun";
 
 export async function joindreMidi(
   fichier1: File,
@@ -165,7 +166,7 @@ export async function rendreMidiDepuisBytes(
   for (const n of notes) {
     const dureeNote = n.fin - n.debut;
     if (dureeNote <= 0.001) continue;
-    const freq = 440 * 2 ** ((n.note - 69) / 12);
+    const freq = frequenceDeNoteMidi(n.note);
     const gain = (n.velocite / 127) * vol * 0.4;
     const ratio = 2;
     const idxMod = 3;

@@ -14,6 +14,8 @@
 //     l'abscisse est (R−L) et l'ordonnée (R+L), tourné de 45°. Un trait vertical est du
 //     mono, un nuage rond une stéréo large, un trait horizontal une opposition de phase.
 
+import { versDb } from "./decibels";
+
 export interface MesureStereo {
   /** Corrélation de Pearson entre les deux canaux, de −1 à +1. */
   correlation: number;
@@ -28,7 +30,7 @@ export interface MesureStereo {
   largeur: number;
 }
 
-const dB = (x: number) => 20 * Math.log10(Math.max(1e-9, x));
+const dB = (x: number) => versDb(Math.max(1e-9, x));
 const rms = (d: Float32Array | number[]) => {
   let s = 0;
   for (let i = 0; i < d.length; i++) s += d[i] * d[i];

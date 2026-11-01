@@ -21,6 +21,7 @@ import { tamponPourApercu } from "../audio/multicanal-ecoute";
 
 import { LecteurAudio } from "./lecteur-audio";
 import { registreUI, type FicheUI } from "./registre-actif";
+import { versDb } from "../audio/decibels";
 
 /**
  * Le lecteur d'un intermédiaire sur une piste longue, construit au clic.
@@ -210,7 +211,7 @@ function IndicateurNiveau({ buffer }: { buffer?: AudioBuffer }) {
     return { peak, rms: n > 0 ? Math.sqrt(rmsAcc / n) : 0 };
   }, [buffer]);
   if (!niveau) return null;
-  const db = niveau.peak > 0 ? 20 * Math.log10(niveau.peak) : -Infinity;
+  const db = niveau.peak > 0 ? versDb(niveau.peak) : -Infinity;
   const dbText = Number.isFinite(db) ? `${db.toFixed(1)} dB` : "-∞ dB";
   const pct = Math.min(100, niveau.peak * 100);
   const couleur = niveau.peak >= 0.7 ? "#e8590c" : niveau.peak >= 0.3 ? "#f59e0b" : "#40c057";
