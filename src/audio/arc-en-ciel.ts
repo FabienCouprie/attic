@@ -29,6 +29,7 @@
 // temps de résonance décroît donc quand la fréquence monte, si bien que la bande qui va le plus loin
 // est aussi celle qui demeure le plus longtemps. Le réglage se donne en secondes sur la bande la
 // plus grave, parce que c'est ce qu'une oreille sait juger.
+import { mixdownMono } from "./commun";
 import { valeurA } from "./courbe";
 import { picTampon } from "./mixage";
 
@@ -151,11 +152,7 @@ export function arcEnCiel(buffer: AudioBuffer, o: OptionsArcEnCiel): AudioBuffer
   const n = Math.round(dureeArcEnCiel(buffer.length / sr, bandes) * sr);
 
   // Le son reçu, ramené à une voie : c'est lui que le banc trie.
-  const mono = new Float32Array(buffer.length);
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const x = buffer.getChannelData(c);
-    for (let i = 0; i < x.length; i++) mono[i] += x[i] / buffer.numberOfChannels;
-  }
+  const mono = mixdownMono(buffer);
 
   const humide = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: sr });
   const gauche = humide.getChannelData(0);

@@ -26,8 +26,9 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import {
-  FREQUENCE_VOSK, MODELES, fiches, tableauDesMots, transcrire, vers16k, versMono,
+  FREQUENCE_VOSK, MODELES, fiches, tableauDesMots, transcrire, vers16k,
 } from "./vosk-asr";
+import { mixdownMono as versMono } from "../audio/commun";
 
 const fiche = () => {
   const f = fiches.find((x) => x.id === "vosk-asr");

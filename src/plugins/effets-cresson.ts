@@ -10,7 +10,8 @@ import { echoFlottant, frequenceDuPeigne, haas, periodeEntreMurs } from "../audi
 import { correlationDesCanaux, ubiquite } from "../audio/ubiquite";
 import { vague } from "../audio/vague";
 import { frequenceDeRotation, platine } from "../audio/platine";
-import { enUneVoie, meilleurCreneau, poserDansLeCreneau } from "../audio/creneau";
+import { meilleurCreneau, poserDansLeCreneau } from "../audio/creneau";
+import { mixdownMono } from "../audio/commun";
 import { MODULATION_MELANGE, bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
@@ -318,7 +319,7 @@ export const fiches: FicheAudio[] = ([
       const fond = entreeAudio(ctx, 0, { sorties: 2 }), son = entreeAudio(ctx, 1, { sorties: 2 });
       if (sansEntree(fond)) return fond;
       if (sansEntree(son)) return son;
-      const c = meilleurCreneau(enUneVoie(fond), enUneVoie(son), fond.sampleRate, {
+      const c = meilleurCreneau(mixdownMono(fond), mixdownMono(son), fond.sampleRate, {
         fenetre: ctx.paramNombre("Fenêtre", 50) / 1000,
         auPlusTot: ctx.paramNombre("Au plus tôt", 0),
         parLeTimbre: String(ctx.paramTexte("Écoute", "timbre")) !== "niveau",

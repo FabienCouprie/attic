@@ -8,6 +8,7 @@
 // Il est maintenant sous `public/oonx/sherpa-asr-whisper-tiny/`, au manifeste avec son empreinte, et
 // publié sur la release `assets` d'où l'installeur allégé le prend.
 import type { FicheAudio } from "../audio/types-domaine";
+import { mixdownMono } from "../audio/commun";
 import { reechantillonnerLineaire, reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -65,16 +66,6 @@ function makeRequestId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-function bufferVersMono(buffer: AudioBuffer): Float32Array {
-  const nch = buffer.numberOfChannels;
-  const len = buffer.length;
-  const mono = new Float32Array(len);
-  for (let c = 0; c < nch; c++) {
-    const d = buffer.getChannelData(c);
-    for (let i = 0; i < len; i++) mono[i] += d[i] / nch;
-  }
-  return mono;
-}
 
 const RESAMPLE_OPTIONS_FR = ["Haute (Web Audio)", "Standard (linéaire)"] as const;
 const RESAMPLE_OPTIONS_EN = ["High (Web Audio)", "Standard (linear)"] as const;
@@ -364,7 +355,7 @@ export const fiches: FicheAudio[] = ([
       const langCode = langue === "auto" ? "" : langue;
       const qualiteResampling = ctx.paramTexte("Qualité resampling", RESAMPLE_OPTIONS_FR[0]);
       const modeCache = ctx.paramTexte("Cache modèle", CACHE_OPTIONS_FR[0]);
-      const mono = bufferVersMono(audio);
+      const mono = mixdownMono(audio);
       const mono16k = await resamplerVers16k(mono, audio.sampleRate, qualiteResampling);
       const config = buildConfig(langCode);
       const configHash = hashConfig(config);

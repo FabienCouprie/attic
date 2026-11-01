@@ -23,7 +23,8 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
-import { MODELES, chargerModele, transcrire, versMono, vers16k, type MotVosk } from "./vosk-asr";
+import { MODELES, chargerModele, transcrire, vers16k, type MotVosk } from "./vosk-asr";
+import { mixdownMono } from "../audio/commun";
 import { suivreVoie, type OptionsVoieHauteur, type SuiviHauteur } from "../audio/hauteur";
 import { parCanal } from "./hors-fil";
 import { degrePlusProche } from "../audio/correction-hauteur";
@@ -243,7 +244,7 @@ export const fiches: FicheAudio[] = ([
       const choisi = MODELES[langue] ?? MODELES.fr;
       await annoncerModele(ctx, "parole-vers-sequence", traduire("progress.vosk.chargement"));
       const modele = await chargerModele(choisi.fichier);
-      const mono = versMono(audio);
+      const mono = mixdownMono(audio);
       const seize = await vers16k(mono, audio.sampleRate);
       const vocabulaire = String(ctx.paramTexte("Vocabulaire", ""))
         .split(/[\s,]+/).map((m: string) => m.trim().toLowerCase()).filter(Boolean);
