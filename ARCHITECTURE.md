@@ -124,6 +124,9 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   éditeur de formules, etc.). `useExecutionGraphe.ts` : 538 lignes.
   Relu le 2026-10-31 : `App.tsx` 1449 lignes (37 états, 35 `useCallback`, 13 `useEffect`, sept
   hooks métier), `useExecutionGraphe.ts` 1777, puis 1624 après le lot 1. Les deux sont dans la dette de `LINE-COUNT.md`.
+  Fait pour `App.tsx` le 2026-11-01, en neuf sorties (lot 2 de la revue) : 392 lignes de code,
+  574 en tout, seize crochets métier sous `src/ui/hooks/`, et il a quitté la dette.
+  `useExecutionGraphe.ts` y reste.
 
 ### Long terme
 
