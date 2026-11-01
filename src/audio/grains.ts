@@ -24,6 +24,7 @@
 // trois ou quatre grains, et toutes les manipulations qui suivent deviennent du hachis.
 
 import { enveloppe, type Segment } from "./silences";
+import { versDb, depuisDb } from "./decibels";
 
 export interface OptionsDetection {
   frequence: number;
@@ -48,7 +49,7 @@ export interface Grain extends Segment {
 
 const PLANCHER_DB = -120;
 
-const enDb = (x: number): number => (x > 1e-12 ? 20 * Math.log10(x) : PLANCHER_DB);
+const enDb = (x: number): number => (x > 1e-12 ? versDb(x) : PLANCHER_DB);
 
 /**
  * Les grains d'un son : niveau d'abord, attaques ensuite.
@@ -60,7 +61,7 @@ const enDb = (x: number): number => (x > 1e-12 ? 20 * Math.log10(x) : PLANCHER_D
 export function detecterGrains(x: Float32Array, o: OptionsDetection): Grain[] {
   if (x.length === 0) return [];
   const env = enveloppe(x, o.frequence, o.fenetreMs);
-  const seuil = Math.pow(10, o.seuilDb / 20);
+  const seuil = depuisDb(o.seuilDb);
   const ecartMin = Math.max(1, Math.round((o.ecartMinMs / 1000) * o.frequence));
   const montee = Math.max(0, o.monteeDb);
 

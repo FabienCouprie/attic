@@ -24,6 +24,7 @@
 // fraction d'octave traite les deux comme on les entend.
 import { creerFenetreHann, mixdownMono } from "./commun";
 import { analyserSpectrogramme, synthetiserSpectrogramme } from "./spectrogramme-fenetre";
+import { versDb, depuisDb } from "./decibels";
 
 export interface OptionsAppariement {
   /** Recopier le niveau efficace de la référence. */
@@ -60,7 +61,7 @@ export interface ReleveAppariement {
 }
 
 const EPS = 1e-12;
-const enDb = (x: number) => 20 * Math.log10(Math.max(EPS, x));
+const enDb = (x: number) => versDb(Math.max(EPS, x));
 
 function efficace(x: Float32Array): number {
   let s = 0;
@@ -124,7 +125,7 @@ function appliquerCourbe(x: Float32Array, gainDb: Float64Array, fftSize: number)
   const spec = analyserSpectrogramme(x, fftSize, hop, fenetre);
   if (spec.frames.length === 0) return x.slice();
   for (const trame of spec.frames) {
-    for (let k = 0; k < trame.mag.length; k++) trame.mag[k] *= Math.pow(10, gainDb[k] / 20);
+    for (let k = 0; k < trame.mag.length; k++) trame.mag[k] *= depuisDb(gainDb[k]);
   }
   const rendu = synthetiserSpectrogramme(spec.frames, fftSize, hop, fenetre, x.length);
   return Float32Array.from(rendu);

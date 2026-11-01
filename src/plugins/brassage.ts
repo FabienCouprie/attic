@@ -12,6 +12,7 @@ import { brasser } from "../audio/brassage";
 import { transfererEnveloppe } from "../audio/enveloppe-transfert";
 import { estCourbe, valeursParametre } from "../audio/courbe";
 import { choixOuiNon } from "../core/oui-non";
+import { depuisDb } from "../audio/decibels";
 
 /** Applique une transformation canal par canal, la longueur de sortie étant décidée par elle. */
 function parCanal(entree: AudioBuffer, f: (x: Float32Array) => Float32Array): AudioBuffer {
@@ -119,7 +120,7 @@ export const fiches: FicheAudio[] = ([
       const o = {
         fenetre: Math.max(1, Math.round((ctx.paramNombre("Résolution", 10) / 1000) * cible.sampleRate)),
         aplatir: ctx.paramTexte("Aplatir", "oui") !== "non",
-        plancher: Math.pow(10, ctx.paramNombre("Plancher", -60) / 20),
+        plancher: depuisDb(ctx.paramNombre("Plancher", -60)),
         melange: estCourbe(modulation)
           ? valeursParametre(modulation, cible.length, 0, {
             min: ctx.paramNombre("Modulation min", 0) / 100,

@@ -9,6 +9,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 import {
   NOMBRE_OR, pointSpirale, rapportDistanceParTour, rapportValide, type OptionsSpatiale,
 } from "../audio/spirale-spatiale";
+import { versDb } from "../audio/decibels";
 
 const RAPPORTS: Record<string, number | null> = {
   double: 2, or: NOMBRE_OR, moitie: 1.5, quadruple: 4, libre: null,
@@ -100,7 +101,7 @@ export const fiches: FicheAudio[] = ([
           `${o.tours} ${en ? "turns" : "tours"}`,
           `${en ? "distance" : "distance"} ${o.distanceDebut.toFixed(1)} → ${fin.distance.toFixed(1)} m`,
           `${en ? "per turn" : "par tour"} ×${parTour.toFixed(2)}`,
-          `${(20 * Math.log10(fin.gain)).toFixed(1)} dB`,
+          `${(versDb(fin.gain)).toFixed(1)} dB`,
           `${en ? "air" : "air"} ${Math.round(coupureMax)} → ${Math.round(coupureMin)} Hz`,
         ].join(" · "),
       };

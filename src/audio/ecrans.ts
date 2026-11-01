@@ -24,6 +24,7 @@
 // où l'on n'entend presque pas de différence, et une seule case pour les trois octaves du grave.
 
 import { creerAleatoire } from "../core/hasard";
+import { depuisDb } from "./decibels";
 
 export interface OptionsLivre {
   /** Nombre de bandes de fréquence. */
@@ -134,7 +135,7 @@ export function grainsDuLivre(livre: readonly Ecran[], o: OptionsTirage): GrainT
         if (!livre[e][b][n]) continue;
         const combien = Math.floor(parEcran) + (o.aleatoire() < parEcran - Math.floor(parEcran) ? 1 : 0);
         // Le niveau le plus haut sonne à pleine amplitude, les autres descendent par pas.
-        const amplitude = Math.pow(10, (-(niveaux - 1 - n) * pas) / 20);
+        const amplitude = depuisDb(-(niveaux - 1 - n) * pas);
         for (let k = 0; k < combien; k++) {
           grains.push({
             instant: debut + o.aleatoire() * o.dureeEcranSec,

@@ -9,6 +9,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { boucherTrous, detecterTrous, type Trou } from "../audio/inpainting";
 import { entreeAudio, sansEntree } from "./lire-entree";
+import { depuisDb } from "../audio/decibels";
 
 /** Les zones du sélecteur multi-zones, en secondes, converties en échantillons. */
 function trousDepuisZones(zones: unknown, sampleRate: number, longueur: number): Trou[] {
@@ -60,7 +61,7 @@ export const fiches: FicheAudio[] = ([
       if (sansEntree(entree)) return entree;
       const { numberOfChannels: canaux, length, sampleRate } = entree;
       const automatique = ctx.paramTexte("Trous", "zones") === "silences";
-      const seuil = Math.pow(10, ctx.paramNombre("Seuil de silence", -60) / 20);
+      const seuil = depuisDb(ctx.paramNombre("Seuil de silence", -60));
       const longueurMin = Math.max(1, Math.round((ctx.paramNombre("Durée min", 1) * sampleRate) / 1000));
       const ordre = Math.round(ctx.paramNombre("Ordre", 0));
       const options = {

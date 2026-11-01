@@ -13,6 +13,7 @@ import { mesurerGoutHorsFil } from "./gout-hors-fil";
 import { rendreSequence } from "../audio/midi-sequence";
 import { creerAleatoire } from "../core/hasard";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2_SUIVI } from "./soundfontGlobal";
+import { frequenceDeNoteMidi } from "../audio/commun";
 
 const en = () => langueCourante() === "en";
 
@@ -113,7 +114,7 @@ export const fiches: FicheAudio[] = ([
           `  ${anglais ? "family" : "famille"} ${anglais ? timbre.motsEn : timbre.mots}`,
         "",
         anglais ? "Motif" : "Motif",
-        `  ${(anglais ? "centre" : "centre").padEnd(14)} ${nomDeNote(motif.noteCentre)} (${Math.round(440 * Math.pow(2, (motif.noteCentre - 69) / 12))} Hz)`,
+        `  ${(anglais ? "centre" : "centre").padEnd(14)} ${nomDeNote(motif.noteCentre)} (${Math.round(frequenceDeNoteMidi(motif.noteCentre))} Hz)`,
         `  ${(anglais ? "aimed register" : "registre visé").padEnd(14)} ${Math.round(hertzDepuisHauteur(cible.hauteur))} Hz`,
         `  ${(anglais ? "attacks/s" : "attaques/s").padEnd(14)} ${v(motif.attaquesParSeconde, 2)}`,
         `  ${(anglais ? "voices" : "voix").padEnd(14)} ${motif.voix.join(", ")} ${anglais ? "semitones above the melody" : "demi-tons au-dessus de la mélodie"}`,

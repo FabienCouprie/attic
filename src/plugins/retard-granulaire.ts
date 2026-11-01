@@ -17,6 +17,7 @@ import { estCourbe } from "../audio/courbe";
 import { FENETRES, type Fenetre } from "../audio/micromontage";
 import { retardGranulaire, retardMaximal, toursAudibles } from "../audio/retard-granulaire";
 import { choixOuiNon } from "../core/oui-non";
+import { versDb } from "../audio/decibels";
 
 const FENETRES_FR = ["Gaussienne", "Trapèze", "Expodec", "Rexpodec"];
 const FENETRES_EN = ["Gaussian", "Trapezoid", "Expodec", "Rexpodec"];
@@ -208,7 +209,7 @@ The « Modulation time », « Modulation scatter », « Modulation transposition
           String(rapport.grains),
           rapport.recouvrementMoyen.toFixed(1),
           ((rapport.ligne / sr) * 1000).toFixed(0),
-          (20 * Math.log10(rapport.compensationMoyenne)).toFixed(1),
+          (versDb(rapport.compensationMoyenne)).toFixed(1),
           rapport.bornes > 0 ? traduire("msg.retardGranulaire.bornes", String(rapport.bornes)) : ""),
       };
     },

@@ -19,6 +19,8 @@
 // dixièmes de milliseconde. L'enveloppe est donc lissée sur une fenêtre courte avant comparaison,
 // faute de quoi le mode « partout » découperait un la 440 en huit cent quatre-vingts morceaux.
 
+import { depuisDb } from "./decibels";
+
 export interface OptionsRognage {
   /** Seuil de silence, en dBFS. */
   seuilDb: number;
@@ -66,7 +68,7 @@ export function enveloppe(x: Float32Array, frequence: number, fenetreMs = FENETR
  * couperait un silence de dix millisecondes en deux morceaux de cinq.
  */
 export function segmentsSonores(x: Float32Array, o: OptionsRognage): Segment[] {
-  const seuil = Math.pow(10, o.seuilDb / 20);
+  const seuil = depuisDb(o.seuilDb);
   const env = enveloppe(x, o.frequence, o.fenetreMs);
   const marge = Math.max(0, Math.round((o.margeMs / 1000) * o.frequence));
   const out: Segment[] = [];

@@ -5,6 +5,7 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue, traduire } from "../i18n";
+import { noteMidiDeFrequence } from "../audio/commun";
 
 type Tessiture = { fr: string; en: string; grave: number; aigu: number };
 
@@ -59,7 +60,7 @@ const GROUPES_TESSITURES_LABEL: Record<string, Record<Langue, string>> = {
 
 function freqVersNote(hz: number): string {
   const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-  const midi = Math.round(69 + 12 * Math.log2(hz / 440));
+  const midi = Math.round(noteMidiDeFrequence(hz));
   return NOTES[midi % 12] + (Math.floor(midi / 12) - 1);
 }
 

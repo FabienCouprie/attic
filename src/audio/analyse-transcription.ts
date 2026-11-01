@@ -7,6 +7,7 @@ import { fft } from "./fft";
 import type { NoteEvenement } from "./midi-sequence";
 import { traduire } from "../i18n";
 import type { OptionsCentroidSpectral } from "./analyse-descripteurs";
+import { noteMidiDeFrequence } from "./commun";
 
 // LA TABLE DE L'ANALYSE S'ARRÊTE À 16 384, là où celle des effets temporels monte à 65 536. Les deux
 // fonctions qui les parcourent portaient le même nom, `tailleFenetreAnalyse`, et rendaient pourtant
@@ -161,7 +162,7 @@ export function transcrireMono(
     // seulement empêcher d'inventer une hauteur (cf. fusion plus bas).
     if (pic.platitude > SEUIL_PLATITUDE) { rejets.push([tDebut, tFin]); continue; }
 
-    const noteMidi = Math.round(69 + 12 * Math.log2(pic.frequence / 440));
+    const noteMidi = Math.round(noteMidiDeFrequence(pic.frequence));
     if (noteMidi < noteMin || noteMidi > noteMax) continue;
 
     const vel = Math.min(127, Math.round((pic.ampleur / maxEnv) * 127));

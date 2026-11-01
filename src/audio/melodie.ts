@@ -8,6 +8,7 @@ import type { NoteEvenement } from "./midi-sequence";
 import { formeOndeDepuisTimbre } from "./timbres";
 import { degresDeGamme } from "./gammes";
 import { frequenceDeTravail } from "./frequence-de-travail";
+import { frequenceDeNoteMidi } from "./commun";
 
 export const NB_RANGEES_MELO = 13; // ~2 octaves de la gamme + 1 note
 
@@ -36,7 +37,7 @@ function noteMidiPourRangee(
 }
 
 function frequenceNoteMidi(midi: number): number {
-  return 440 * Math.pow(2, (midi - 69) / 12);
+  return frequenceDeNoteMidi(midi);
 }
 
 // Nom lisible d'une note pour l'étiquette de rangée (ex. "C4", "F#3").

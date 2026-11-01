@@ -20,6 +20,7 @@
 // assez de blocs ; on retombe alors sur le niveau efficace, qui pour un son court dit la même chose
 // à quelques dixièmes près.
 import { sonieIntegree } from "./vumetre";
+import { versDb } from "./decibels";
 
 /** Le niveau d'un tampon, en décibels. Sonie BS.1770, ou niveau efficace sur un son trop court. */
 export function niveauDb(buffer: AudioBuffer): number {
@@ -33,7 +34,7 @@ export function niveauDb(buffer: AudioBuffer): number {
   }
   const n = buffer.length * Math.max(1, buffer.numberOfChannels);
   const rms = n > 0 ? Math.sqrt(somme / n) : 0;
-  return rms > 0 ? 20 * Math.log10(rms) : -Infinity;
+  return rms > 0 ? versDb(rms) : -Infinity;
 }
 
 /** La crête absolue d'un tampon, tous canaux confondus. */
@@ -46,7 +47,7 @@ export function creteDb(buffer: AudioBuffer): number {
       if (v > pic) pic = v;
     }
   }
-  return pic > 0 ? 20 * Math.log10(pic) : -Infinity;
+  return pic > 0 ? versDb(pic) : -Infinity;
 }
 
 export interface EcartNiveau {

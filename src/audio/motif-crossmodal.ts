@@ -27,6 +27,8 @@
 import { writeMidi } from "midi-file";
 import type { NoteEvenement } from "./midi-sequence";
 import { mesurer, type DimensionsGout } from "./gout";
+import { depuisDb } from "./decibels";
+import { noteMidiDeFrequence } from "./commun";
 
 const borner = (x: number, min: number, max: number) => Math.max(min, Math.min(max, x));
 
@@ -122,7 +124,7 @@ export function motifDepuisPoint(cible: DimensionsGout, o: OptionsMotif): Motif 
   const attaques = borner(attaquesDepuisVitesse(cible.vitesse), 0.25, 12);
   const pas = 1 / attaques;
   const hz = hertzDepuisHauteur(cible.hauteur) / (o.facteurTimbre ?? FACTEUR_TIMBRE);
-  const noteCentre = Math.round(borner(69 + 12 * Math.log2(hz / 440), 24, 100));
+  const noteCentre = Math.round(borner(noteMidiDeFrequence(hz), 24, 100));
   const consonant = cible.consonance >= 0.5;
   const degres = consonant ? CONSONANTS : DISSONANTS;
   // Deux voix à la quinte, ou l'amas âpre : c'est le seul endroit où la consonance visée se joue.
@@ -287,7 +289,7 @@ export function viserNiveau(b: AudioBuffer, dbVise: number): AudioBuffer {
   }
   const rms = Math.sqrt(somme / Math.max(1, echantillons));
   if (rms <= 0 || crete <= 0) return b;
-  const voulu = Math.pow(10, dbVise / 20) / rms;
+  const voulu = depuisDb(dbVise) / rms;
   const gain = Math.min(voulu, 0.99 / crete);
   const sortie = new AudioBuffer({ numberOfChannels: b.numberOfChannels, length: b.length, sampleRate: b.sampleRate });
   for (let c = 0; c < b.numberOfChannels; c++) {

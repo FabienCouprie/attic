@@ -35,6 +35,7 @@ import { noteMidiDeFrequence } from "../audio/commun";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import type { Note } from "../audio/note";
 import { choixLangues } from "../core/langues";
+import { versDb } from "../audio/decibels";
 
 /**
  * Les réglages du suivi de hauteur, taillés pour la parole et mesurés sur elle.
@@ -127,7 +128,7 @@ export function niveauDuMot(mot: MotVosk, mono: Float32Array, frequence: number)
 /** La nuance d'un niveau, rapportée au plus fort de la phrase. */
 export function nuanceDuNiveau(niveau: number, plusFort: number): number {
   if (plusFort <= 0 || niveau <= 0) return 64;
-  const db = 20 * Math.log10(niveau / plusFort);
+  const db = versDb(niveau / plusFort);
   const part = 1 - Math.min(1, Math.max(0, -db / ETENDUE_DB));
   return Math.round(40 + 87 * part);
 }

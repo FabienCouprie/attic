@@ -4,6 +4,7 @@
 
 import { rgbToHsl } from "./couleurs";
 import { frequenceDeTravail } from "./frequence-de-travail";
+import { noteMidiDeFrequence } from "./commun";
 
 export interface OptionsSpectreVisible {
   r: number;
@@ -36,7 +37,7 @@ export function frequenceAudibleDepuisCouleur(
 }
 
 export function midiDepuisFrequence(frequence: number): number {
-  return 69 + 12 * Math.log2(frequence / 440);
+  return noteMidiDeFrequence(frequence);
 }
 
 export function genererSpectreVisibleAudio(options: OptionsSpectreVisible): AudioBuffer {

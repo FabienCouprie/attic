@@ -23,9 +23,9 @@ import { banqueDepuisRendus, rendreNotes, type Banque } from "../audio/clavier-b
 import { LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
 import { choixOuiNon } from "../core/oui-non";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
+import { frequenceDeNoteMidi } from "../audio/commun";
 
 const TICKS_NOIRE = 480;
-const hertz = (note: number) => 440 * Math.pow(2, (note - 69) / 12);
 
 /** Un fichier MIDI d'une seule note, pour les nœuds qui jouent des notes eux-mêmes. */
 function midiUneNote(note: number, velocite: number, dureeSec: number): File {
@@ -50,7 +50,7 @@ function exciter(
   const n = Math.max(1, Math.round(dureeSec * sampleRate));
   const audio = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate });
   const d = audio.getChannelData(0);
-  const f = hertz(note);
+  const f = frequenceDeNoteMidi(note);
   const fondu = Math.min(Math.round(0.005 * sampleRate), Math.floor(n / 2));
   // Le bruit de cette forme d'onde tire sur le générateur du dépôt, semé par la note : deux rendus
   // de la même note se ressemblent, deux notes différentes ne se ressemblent pas.
@@ -133,7 +133,7 @@ export const fiches: FicheAudio[] = ([
       const hauteurCourbe = { valeurs: new Float32Array(32).fill(part), cadence: 32 / duree };
       return {
         valeurs: [audio, midi, hauteurCourbe],
-        message: traduire("msg.instrument.note", String(note), hertz(note).toFixed(1)),
+        message: traduire("msg.instrument.note", String(note), frequenceDeNoteMidi(note).toFixed(1)),
       };
     },
   },

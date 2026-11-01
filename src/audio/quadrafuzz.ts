@@ -14,6 +14,7 @@
 import { plafonnerCrete } from "./commun";
 import { valeurA } from "./courbe";
 import { POINTS_AUTOMATION, poserParam } from "./automation";
+import { depuisDb } from "./decibels";
 
 /**
  * Courbe de saturation, pour un waveshaper.
@@ -140,7 +141,7 @@ export async function separerEnBandes(
 export async function quadrafuzz(buffer: AudioBuffer, r: ReglagesQuadrafuzz): Promise<AudioBuffer> {
   const bandes = await separerEnBandes(buffer, r.f1, r.f2, r.f3);
   const courbes = [r.graves, r.basMediums, r.hautsMediums, r.aigus].map((s) => courbeFuzz(s));
-  const gainSortie = 10 ** (r.sortie / 20);
+  const gainSortie = depuisDb(r.sortie);
 
   const out = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,

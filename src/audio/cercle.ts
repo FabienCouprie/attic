@@ -20,6 +20,7 @@
 
 import { nomNoteRond } from "./nom-note";
 import { creerAleatoire } from "../core/hasard";
+import { frequenceDeNoteMidi } from "./commun";
 
 /**
  * Le nombre de positions au plus.
@@ -491,5 +492,5 @@ export function hauteursDuCercle(
 export const FONDAMENTALES: readonly { note: number; nom: string; hertz: number }[] =
   Array.from({ length: 61 }, (_, i) => {
     const note = 24 + i;
-    return { note, nom: nomNoteRond(note), hertz: 440 * 2 ** ((note - 69) / 12) };
+    return { note, nom: nomNoteRond(note), hertz: frequenceDeNoteMidi(note) };
   });
