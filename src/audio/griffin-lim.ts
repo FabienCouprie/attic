@@ -2,57 +2,35 @@
 // Reconstruit un signal audio à partir du spectrogramme de magnitude de l'entrée
 // en itérant sur la phase. Utile comme effet créatif (textures, drones) ou pour
 // l'audio généré par réseaux qui prédisent uniquement la magnitude.
-import { fft } from "./fft";
 import { creerFenetreHann } from "./commun";
+import {
+  normaliserRecouvrement, prochainePuissanceDeDeux, superposerTrame, trameSpectrale, type FrameSpectrale,
+} from "./spectrogramme-fenetre";
 import { Respiration } from "../core/respirer";
 
-interface SpectralFrame {
-  start: number;
-  mag: Float64Array;
-  phase: Float64Array;
-}
-
-function prochainePuissanceDeDeux(n: number): number {
-  if (n <= 1) return 1;
-  return 1 << (32 - Math.clz32(n - 1));
-}
-
-// LA RESPIRATION EST PAR TRAME, ET NON PAR ITÉRATION. Une itération coûte le signal entier : sur
-// une prise de trois minutes elle dure une dizaine de secondes, et rendre la main entre deux
-// itérations laisserait ce gel-là intact. Une trame, elle, coûte le même temps quelle que soit la
-// longueur de la prise, ce qui borne le gel indépendamment de la durée du son.
+/**
+ * L'analyse par trames, en respirant entre deux trames : la dernière déborde du signal et le manque
+ * est du silence, comme ce module l'a toujours fait. Le travail par trame est celui de
+ * `spectrogramme-fenetre.ts`.
+ */
 async function analyserSignal(
   signal: Float32Array | Float64Array,
   fftSize: number,
   hop: number,
   window: Float64Array,
   souffle: Respiration,
-): Promise<SpectralFrame[]> {
-  const frames: SpectralFrame[] = [];
-  const nbBins = fftSize / 2 + 1;
+): Promise<FrameSpectrale[]> {
+  const frames: FrameSpectrale[] = [];
   for (let start = 0; start < signal.length; start += hop) {
     await souffle.tour();
-    const re = new Float64Array(fftSize);
-    const im = new Float64Array(fftSize);
-    for (let i = 0; i < fftSize; i++) {
-      const idx = start + i;
-      if (idx < signal.length) re[i] = signal[idx] * window[i];
-    }
-    fft(re, im, false);
-
-    const mag = new Float64Array(nbBins);
-    const phase = new Float64Array(nbBins);
-    for (let k = 0; k < nbBins; k++) {
-      mag[k] = Math.hypot(re[k], im[k]);
-      phase[k] = Math.atan2(im[k], re[k]);
-    }
-    frames.push({ start, mag, phase });
+    frames.push(trameSpectrale(signal, start, fftSize, window));
   }
   return frames;
 }
 
+/** La synthèse par recouvrement, en respirant ; un poids positif divise, un poids nul rend zéro. */
 async function synthetiserSignal(
-  frames: SpectralFrame[],
+  frames: FrameSpectrale[],
   fftSize: number,
   _hop: number,
   window: Float64Array,
@@ -61,40 +39,11 @@ async function synthetiserSignal(
 ): Promise<Float64Array> {
   const out = new Float64Array(length);
   const norm = new Float64Array(length);
-  const nbBins = fftSize / 2 + 1;
-
   for (const frame of frames) {
     await souffle.tour();
-    const re = new Float64Array(fftSize);
-    const im = new Float64Array(fftSize);
-    for (let k = 0; k < nbBins; k++) {
-      const mag = frame.mag[k];
-      const phase = frame.phase[k];
-      re[k] = mag * Math.cos(phase);
-      im[k] = mag * Math.sin(phase);
-      if (k > 0 && k < nbBins - 1) {
-        re[fftSize - k] = re[k];
-        im[fftSize - k] = -im[k];
-      }
-    }
-    // Nyquist à zéro pour FFT paire
-    if (fftSize % 2 === 0) {
-      im[nbBins - 1] = 0;
-    }
-
-    fft(re, im, true);
-    for (let i = 0; i < fftSize; i++) {
-      const idx = frame.start + i;
-      if (idx < length) {
-        out[idx] += re[i] * window[i];
-        norm[idx] += window[i] * window[i];
-      }
-    }
+    superposerTrame(frame, fftSize, window, out, norm);
   }
-
-  for (let i = 0; i < length; i++) {
-    out[i] = norm[i] > 0 ? out[i] / norm[i] : 0;
-  }
+  normaliserRecouvrement(out, norm, { seuil: 0 });
   return out;
 }
 

@@ -1,108 +1,14 @@
 // audio/pca-neuronale.ts — PCA neuronale : autoencodeur MLP entraîné sur le
 // spectrogramme d'une piste pour en filtrer/reconstruire la texture.
-import { fft } from "./fft";
 import { creerFenetreHann } from "./commun";
+import {
+  analyserSpectrogramme, prochainePuissanceDeDeux, synthetiserSpectrogramme,
+  type FrameSpectrale, type Spectrogramme,
+} from "./spectrogramme-fenetre";
 import { creerAleatoire } from "../core/hasard";
 import { traduire } from "../i18n";
 
-interface FrameSpectrale {
-  start: number;
-  mag: Float64Array; // magnitude linéaire originale
-  phase: Float64Array; // phase conservée pour la resynthèse
-}
-
-interface Spectrogramme {
-  fftSize: number;
-  hop: number;
-  frames: FrameSpectrale[];
-}
-
 const EPS = 1e-10;
-
-function analyserSpectrogramme(
-  signal: Float32Array,
-  fftSize: number,
-  hop: number,
-  fenetre: Float64Array
-): Spectrogramme {
-  const nbBins = Math.floor(fftSize / 2) + 1;
-  const frames: FrameSpectrale[] = [];
-  for (let start = 0; start < signal.length; start += hop) {
-    const re = new Float64Array(fftSize);
-    const im = new Float64Array(fftSize);
-    for (let i = 0; i < fftSize; i++) {
-      const idx = start + i;
-      if (idx < signal.length) re[i] = signal[idx] * fenetre[i];
-    }
-    fft(re, im, false);
-
-    const mag = new Float64Array(nbBins);
-    const phase = new Float64Array(nbBins);
-    for (let k = 0; k < nbBins; k++) {
-      mag[k] = Math.hypot(re[k], im[k]);
-      phase[k] = Math.atan2(im[k], re[k]);
-    }
-    frames.push({ start, mag, phase });
-  }
-  return { fftSize, hop, frames };
-}
-
-function synthetiserSpectrogramme(
-  frames: FrameSpectrale[],
-  fftSize: number,
-  _hop: number,
-  fenetre: Float64Array,
-  length: number
-): Float64Array {
-  const out = new Float64Array(length);
-  const norm = new Float64Array(length);
-  const nbBins = Math.floor(fftSize / 2) + 1;
-
-  for (const frame of frames) {
-    const re = new Float64Array(fftSize);
-    const im = new Float64Array(fftSize);
-    for (let k = 0; k < nbBins; k++) {
-      const mag = frame.mag[k];
-      const phase = frame.phase[k];
-      re[k] = mag * Math.cos(phase);
-      im[k] = mag * Math.sin(phase);
-      if (k > 0 && k < nbBins - 1) {
-        re[fftSize - k] = re[k];
-        im[fftSize - k] = -im[k];
-      }
-    }
-    if (fftSize % 2 === 0) {
-      im[nbBins - 1] = 0;
-    }
-
-    fft(re, im, true);
-    for (let i = 0; i < fftSize; i++) {
-      const idx = frame.start + i;
-      if (idx < length) {
-        out[idx] += re[i] * fenetre[i];
-        norm[idx] += fenetre[i] * fenetre[i];
-      }
-    }
-  }
-
-  // UN PLANCHER SOUS LE POIDS DES FENÊTRES. Aux bords, un seul bord de fenêtre couvre les premiers
-  // échantillons et son poids tend vers zéro : diviser par lui est exact pour une trame inchangée,
-  // et explose dès que la reconstruction la modifie — mesuré, une crête de 3 000 pour un son à 0,5.
-  // Sous le dixième du poids maximal, on divise par ce dixième : les bords s'adoucissent au lieu
-  // d'exploser.
-  let normMax = 0;
-  for (let i = 0; i < length; i++) normMax = Math.max(normMax, norm[i]);
-  const plancher = 0.1 * normMax;
-  for (let i = 0; i < length; i++) {
-    if (norm[i] > 0) out[i] /= Math.max(norm[i], plancher);
-  }
-  return out;
-}
-
-function prochainePuissanceDeDeux(n: number): number {
-  if (n <= 1) return 1;
-  return 1 << (32 - Math.clz32(n - 1));
-}
 
 function taillesGeometriques(inputDim: number, latentDim: number, couchesCachees: number): number[] {
   const sizes: number[] = [];
@@ -266,7 +172,8 @@ export async function appliquerPcaNeuronale(
   for (let c = 0; c < nCh; c++) {
     onProgress?.(`PCA neuronale · analyse STFT canal ${c + 1}/${nCh}`);
     const ch = buffer.getChannelData(c);
-    spectrograms.push(analyserSpectrogramme(ch, fftSize, hop, fenetre));
+    // La dernière trame déborde et le manque est du silence : c'est ce que ce module a toujours fait.
+    spectrograms.push(analyserSpectrogramme(ch, fftSize, hop, fenetre, { remplirFin: true }));
   }
   const nFrames = spectrograms[0].frames.length;
   const totalFrames = nFrames * nCh;
@@ -410,7 +317,9 @@ export async function appliquerPcaNeuronale(
       }
       frames.push({ start: spectrograms[c].frames[f].start, mag, phase: spectrograms[c].frames[f].phase });
     }
-    const signalCh = synthetiserSpectrogramme(frames, fftSize, hop, fenetre, length);
+    // Le diviseur ne descend pas sous un dixième du poids maximal : un spectre déformé par le réseau
+    // ne doit pas exploser aux bords des trames.
+    const signalCh = synthetiserSpectrogramme(frames, fftSize, hop, fenetre, length, { normalisation: { plancherRelatif: 0.1 } });
     const dst = resultat.getChannelData(c);
     for (let i = 0; i < length; i++) dst[i] = signalCh[i];
   }
