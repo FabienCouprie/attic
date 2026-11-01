@@ -9,7 +9,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { trouverMeta,
-  estFrontiere, estBulle, estSubstitution, fermeraitUnCycle, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
+  estFrontiere, estSubstitution, fermeraitUnCycle, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
   traduireConnexion, type AreteG, type NoeudG } from "../core";
 
 import "../audio/adaptateur";
@@ -29,7 +29,6 @@ import { useNotesEtCadres } from "./hooks/useNotesEtCadres";
 import { useHistorique } from "./hooks/useHistorique";
 import { useDicteeCanevas } from "./hooks/useDicteeCanevas";
 import { tailleDefaut } from "./tailles-noeuds";
-import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
@@ -41,7 +40,9 @@ import { validerArete } from "./validerGraphe";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
-import { MenuContextuel, type EntreeMenu, type EtatMenu } from "./MenuContextuel";
+import { MenuContextuel } from "./MenuContextuel";
+import { useMenuContextuel } from "./hooks/useMenuContextuel";
+import { useDepot } from "./hooks/useDepot";
 import { useSauvegardeAutomatique } from "./hooks/useSauvegardeAutomatique";
 import { useFiletGlissement } from "./hooks/useFiletGlissement";
 import { useBulles } from "./hooks/useBulles";
@@ -299,7 +300,6 @@ function Atelier() {
   }, [pile, rfInstance]);
 
   const [pluginsVersion, setPluginsVersion] = useState(0);
-  const [menu, setMenu] = useState<EtatMenu | null>(null);
   const plugins = useMemo(() => tousLesPlugins(), [pluginsVersion]);
 
   // ── Chargement automatique de l'en-cours sauvegardé, dans hooks/useEnCours.ts ──
@@ -567,105 +567,11 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   // Une bulle vidée de son dernier membre se supprime d'elle-même.
   useEffect(() => { retirerBullesVides(); }, [nodes, retirerBullesVides]);
 
-  // LE CLIC DROIT DÉPLACE DÉJÀ LE CANEVAS (`panOnDrag={[2]}`), et l'événement de menu arrive aussi au
-  // relâchement d'un glissement : sans ce garde-fou, déplacer la vue ouvrirait un menu à l'arrivée.
-  // On note où le bouton est descendu, et on n'ouvre que si rien n'a bougé.
-  const origineClicDroit = useRef<{ x: number; y: number } | null>(null);
-  const surPointerDown = useCallback((e: React.PointerEvent) => {
-    if (e.button === 2) origineClicDroit.current = { x: e.clientX, y: e.clientY };
-  }, []);
-
-  const surClicDroit = useCallback((e: React.MouseEvent, noeud?: Node) => {
-    e.preventDefault();
-    const o0 = origineClicDroit.current;
-    origineClicDroit.current = null;
-    if (o0 && Math.hypot(e.clientX - o0.x, e.clientY - o0.y) > 4) { setMenu(null); return; }
-    const entrees: EntreeMenu[] = [];
-    const bulle = noeud && estBulle((noeud.data as { ficheId?: string }).ficheId) ? noeud : undefined;
-    if (bulle) {
-      const replie = (bulle.data as { bulleOuverte?: boolean }).bulleOuverte !== true;
-      entrees.push({
-        cle: "ouvrir", libelle: t(replie ? "bulle.ouvrir" : "bulle.refermer"),
-        titre: t("bulle.ouvrirTitle"), action: () => basculerRepli(bulle.id),
-      });
-      entrees.push({
-        cle: "developper", libelle: t("bulle.developper"),
-        titre: t("bulle.developperTitle"), action: () => developper(bulle.id),
-      });
-    } else if (noeudsRef.current.filter((n) => n.selected).length >= 2) {
-      entrees.push({
-        cle: "clarifier", libelle: t("bulle.clarifier"),
-        titre: t("bulle.clarifierTitle"), action: clarifier,
-      });
-    }
-    setMenu(entrees.length ? { x: e.clientX, y: e.clientY, entrees } : null);
-  }, [t, basculerRepli, developper, clarifier]);
-
-  /**
-   * Un son lâché sur le canevas devient une entrée audio, déjà remplie.
-   *
-   * LE NŒUD NAÎT AVEC SON FICHIER, en une seule écriture. Le poser puis le remplir demanderait de
-   * connaître son identifiant entre les deux, or il est tiré à l'intérieur de la mise à jour ; et
-   * deux écritures de suite laisseraient un nœud vide le temps d'un rendu.
-   *
-   * Le chemin disque est relevé au passage, comme le fait le chargement par le sélecteur : c'est
-   * lui qui permettra de retrouver le fichier à la réouverture du projet.
-   */
-  const deposerSons = useCallback((fichiers: { fichier: File; sorte: SorteDeposee }[], depart: { x: number; y: number }) => {
-    const reconnus = fichiers.filter((f) => trouverDef(f.sorte === "midi" ? "lecteur-midi" : "entree-audio"));
-    if (reconnus.length === 0) return;
-    pushHistorique();
-    const api = (window as any).api;
-    const positions = positionsEnCascade(depart, reconnus.length);
-    setNodes((nds) => {
-      const ajoutes: NoeudAtelier[] = [];
-      for (const [i, { fichier, sorte }] of reconnus.entries()) {
-        const ficheId = sorte === "midi" ? "lecteur-midi" : "entree-audio";
-        const def = trouverDef(ficheId)!;
-        const parametres: Record<string, number | string> = {};
-        for (const p of def.parametres) {
-          parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParametre(p, lang);
-        }
-        parametres.Chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
-        // Chaque sorte a ses champs, et ce sont ceux que les vues et le rechargement de session
-        // attendent : les inventer ici ferait un nœud qui paraît rempli et ne lit rien.
-        const media = sorte === "midi"
-          ? { midiFichier: fichier, midiNom: fichier.name }
-          : { audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier) };
-        const { width, height } = tailleDefaut(def);
-        ajoutes.push({
-          id: idUnique([...nds, ...ajoutes]),
-          type: "atelier",
-          position: positions[i],
-          width, height,
-          data: { ficheId, parametres, statut: "attente", ...media, ...callbacksNoeud() },
-        } as unknown as NoeudAtelier);
-      }
-      return [...nds, ...ajoutes];
-    });
-  }, [setNodes, callbacksNoeud, pushHistorique, lang]);
-
-  // ── Glisser-déposer ──
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (!rfInstance) return;
-    // `screenToFlowPosition` ATTEND DES COORDONNÉES CLIENT : elle retire elle-même la position du
-    // canevas à l'écran. Lui retirer d'avance le rectangle de l'enveloppe le comptait donc deux
-    // fois, et le nœud tombait à 240 px à gauche et 118 px au-dessus du pointeur — mesuré à 1600 px
-    // en visant le milieu du canevas. Le correctif enlève la soustraction ; il rend aussi le dépôt
-    // INDÉPENDANT de la mise en page, ce qui compte depuis que la barre d'outils n'est plus dans
-    // l'enveloppe du canevas et que son rectangle ne commence plus au même endroit.
-    const position = rfInstance.screenToFlowPosition({ x: e.clientX, y: e.clientY });
-    const ficheId = e.dataTransfer.getData("application/attic-fiche-id");
-    if (ficheId) { ajouterNoeud(ficheId, position); return; }
-    // Pas de composant tiré de la palette : peut-être des fichiers venus du système. Ceux dont
-    // aucun composant ne sait quoi faire sont laissés de côté, comme avant — le canevas ne les
-    // refuse pas, il ne sait simplement pas encore les lire.
-    const connus = [...(e.dataTransfer.files ?? [])]
-      .map((fichier) => ({ fichier, sorte: sorteDeposee(fichier.name, fichier.type) }))
-      .filter((f): f is { fichier: File; sorte: SorteDeposee } => f.sorte !== null);
-    if (connus.length > 0) deposerSons(connus, position);
-  }, [ajouterNoeud, deposerSons, rfInstance]);
+  // ── Clic droit, dans hooks/useMenuContextuel.ts ; glisser-déposer, dans hooks/useDepot.ts ──
+  const { menu, fermerMenu, surPointerDown, surClicDroit } = useMenuContextuel({
+    noeudsRef, basculerRepli, developper, clarifier,
+  });
+  const { onDrop } = useDepot({ rfInstance, ajouterNoeud, setNodes, callbacksNoeud, pushHistorique, lang });
 
   const isValidConnection = useCallback((conn: Connection | Edge) => {
     // La validité se juge sur la connexion TRADUITE : sur une poignée de bulle, ce sont les types du
@@ -922,7 +828,7 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
           <Controls />
           <MiniMap pannable zoomable nodeColor={nodeColor} />
         </ReactFlow>
-        <MenuContextuel etat={menu} onFermer={() => setMenu(null)} />
+        <MenuContextuel etat={menu} onFermer={fermerMenu} />
       </div>
       <PanneauInspecteur>
       <Inspector
