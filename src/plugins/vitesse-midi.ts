@@ -20,8 +20,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { parseMidi, writeMidi } from "midi-file";
-import { analyserMidi, rendreSequence, appliquerInstrumentMidi, type NoteEvenement } from "../audio";
+import { writeMidi } from "midi-file";
+import { analyserMidi, midiDuFichier, rendreSequence, appliquerInstrumentMidi, type NoteEvenement } from "../audio";
 import {
   DUREE_MIN_DEFAUT, etirerNotes, facteurDepuisTempo, facteurValide, reglerTempoMidi,
   tempoDuMidi, tempoEtire,
@@ -73,7 +73,7 @@ export const fiches: FicheAudio[] = ([
       if (!(fichier instanceof File)) {
         return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       }
-      const parse = parseMidi(new Uint8Array(await fichier.arrayBuffer()));
+      const parse = await midiDuFichier(fichier);
       const { notes } = analyserMidi(parse);
       if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
       const { tempo: tempoSource, changements } = tempoDuMidi(parse.tracks as never);

@@ -15,8 +15,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NodeResizer } from "@xyflow/react";
-import { parseMidi } from "midi-file";
-import { analyserMidi } from "../audio";
+import { lireMidi } from "../audio";
 import { assignerMains, type Main, type NoteJouee } from "../audio/conformite-clavier";
 import { NOTE_MAX, NOTE_MIN, disposition, largeurBlanchePour, nomNote } from "./clavier-disposition";
 import { useI18n } from "../i18n";
@@ -95,7 +94,7 @@ export function ClavierApprentissage({ midi, audioUrl, anticipation = 3 }: Props
     if (!midi) { setNotes([]); setMains([]); return; }
     void (async () => {
       try {
-        const { notes: lues } = analyserMidi(parseMidi(new Uint8Array(await midi.arrayBuffer())));
+        const { notes: lues } = await lireMidi(midi);
         if (annule) return;
         const jouees: NoteJouee[] = lues
           .map((n) => ({ note: n.note, debut: n.debut, fin: n.fin, canal: n.canal, velocite: n.velocite }))

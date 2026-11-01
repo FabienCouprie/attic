@@ -20,9 +20,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
-import { parseMidi } from "midi-file";
 import {
-  analyserMidi, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi,
+  lireMidi, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi,
   type NoteEvenement,
 } from "../audio";
 import {
@@ -82,7 +81,7 @@ export const fiches: FicheAudio[] = ([
       if (!(fichier instanceof File)) {
         return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       }
-      const { notes: brutes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
+      const { notes: brutes } = await lireMidi(fichier);
       if (brutes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
 
       const toutes: NoteJouee[] = brutes.map((n) => ({

@@ -35,9 +35,8 @@ export interface LectureMidi {
 export async function lireMidiEnSequence(
   fichier: File, canal = -1, tempoParDefaut = 120,
 ): Promise<LectureMidi> {
-  const { analyserMidi } = await import("./index");
-  const { parseMidi } = await import("midi-file");
-  const lu = parseMidi(new Uint8Array(await fichier.arrayBuffer()));
+  const { analyserMidi, midiDuFichier } = await import("./midi");
+  const lu = await midiDuFichier(fichier);
   const { notes } = analyserMidi(lu);
   const rang = Math.round(canal);
   const gardees = rang < 0 ? notes : notes.filter((n: any) => n.canal === rang);

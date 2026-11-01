@@ -4,8 +4,6 @@
 // tous un MIDI facultatif en entrée, et jouent tous une note quand rien n'est branché.
 // Ces quatre fonctions sont ce qui se répétait d'un fichier à l'autre.
 
-import { parseMidi } from "midi-file";
-import { analyserMidi } from "../audio";
 import { valeurA } from "../audio/courbe";
 
 import type { Note } from "../audio/note";
@@ -13,15 +11,6 @@ import { frequenceDeTravail } from "../audio/frequence-de-travail";
 export const FREQUENCE_ECH = () => frequenceDeTravail();
 
 export type NoteJouee = Note;
-
-/** Lit un MIDI d'entrée, ou rend null si rien n'est branché. */
-export async function notesDuMidi(fichier: unknown): Promise<NoteJouee[] | null> {
-  if (!(fichier instanceof File)) return null;
-  const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
-  return notes.map((n) => ({
-    note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin,
-  }));
-}
 
 export const frequenceDe = (note: number): number => 440 * 2 ** ((note - 69) / 12);
 

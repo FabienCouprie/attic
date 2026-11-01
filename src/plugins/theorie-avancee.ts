@@ -20,7 +20,7 @@ import {
   courbeNouveaute, frontieres, matriceEnSvg, matriceSimilarite, regrouper, segments,
 } from "../audio/auto-similarite";
 import { SAUT_TRAME_CHROMAGRAMME, chromagrammeParTrame } from "../audio/analyse";
-import { notesDuMidi } from "./instruments-communs";
+import { notesDuMidi } from "../audio/midi";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
 import { entreeAudio, sansEntree } from "./lire-entree";
 

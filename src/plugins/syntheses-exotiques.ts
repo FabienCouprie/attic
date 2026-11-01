@@ -15,8 +15,9 @@ import { compile } from "mathjs";
 import { fft } from "../audio/fft";
 import { estCourbe, valeursParametre } from "../audio/courbe";
 import {
-  FREQUENCE_ECH, frequenceDe, lireNote, melanger, notesDuMidi, versBuffer,
+  FREQUENCE_ECH, frequenceDe, lireNote, melanger, versBuffer,
 } from "./instruments-communs";
+import { notesDuMidi } from "../audio/midi";
 import { synthetiserScanning } from "../audio/scanning";
 import { synthetiserTerrain, type Orbite, type Terrain } from "../audio/terrain-onde";
 import { VOYELLES, laVoyelle, synthetiserFof } from "../audio/fof";

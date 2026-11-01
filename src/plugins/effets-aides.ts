@@ -8,8 +8,7 @@
 
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { estCourbe, progressionPour, valeursParametre } from "../audio/courbe";
-import { parseMidi } from "midi-file";
-import { appliquerInstrumentMidi, analyserMidi, notesVersFichierMidi, rendreSequence } from "../audio";
+import { appliquerInstrumentMidi, notesVersFichierMidi, rendreSequence } from "../audio";
 import { rendreBatterieMidi } from "../audio/tone-synths";
 import { type NoteMotif } from "../audio/motifs-midi";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
@@ -455,21 +454,6 @@ export function simple(slug: string, nom: string, nomEn: string, resume: string,
       return { valeurs: [await fn(audio)] };
    },
   };
-}
-
-/**
- * Lit un MIDI d'entrée en notes de motif.
- *
- * Les quatre nœuds de motifs partagent cette lecture, donc la même tolérance et le même
- * message quand il n'y a rien à lire. Le champ de vélocité s'appelle `velocite` dans le
- * domaine — une coquille ancienne, gardée pour ne pas casser les graphes enregistrés.
- */
-export async function notesDuMidi(fichier: unknown): Promise<NoteMotif[] | null> {
-  if (!(fichier instanceof File)) return null;
-  const { notes } = analyserMidi(parseMidi(new Uint8Array(await fichier.arrayBuffer())));
-  return notes.map((n) => ({
-    note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin, canal: n.canal,
-  }));
 }
 
 /** Le canal le plus représenté : une percussion doit ressortir en percussion. */
