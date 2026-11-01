@@ -24,6 +24,7 @@
 // Schaeffer observe que des causes différentes donnent la même masse, et c'est de là qu'il tire
 // l'écoute réduite. Les espèces décrivent ce qui est perçu, non ce qui l'a produit.
 import { enveloppe, spectreDeModulation } from "./grain-schaefferien";
+import { fenetreHann } from "./stft";
 import { partVoisee, suivreHauteur } from "./hauteur";
 import { fft } from "./fft";
 
@@ -179,10 +180,8 @@ function spectre(x: Float32Array, sampleRate: number): { bins: Float64Array; par
   const de = Math.max(0, Math.floor((x.length - n) / 2));
   const re = new Float64Array(taille);
   const im = new Float64Array(taille);
-  for (let k = 0; k < n; k++) {
-    const w = 0.5 - 0.5 * Math.cos((2 * Math.PI * k) / n);
-    re[k] = (x[de + k] ?? 0) * w;
-  }
+  const w = fenetreHann(n);
+  for (let k = 0; k < n; k++) re[k] = (x[de + k] ?? 0) * w[k];
   fft(re, im, false);
   const bins = new Float64Array(taille / 2);
   for (let k = 0; k < bins.length; k++) bins[k] = Math.hypot(re[k], im[k]);

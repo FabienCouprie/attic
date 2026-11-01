@@ -17,6 +17,7 @@
 // distincte — voir `pieceDeLucier`.
 
 import { reverberationConvolution } from "./convolution";
+import { fenetreHann } from "./stft";
 
 /** Amplitude maximale d'un buffer. */
 function pic(buffer: AudioBuffer): number {
@@ -136,13 +137,14 @@ export function platitudeSpectrale(buffer: AudioBuffer, trame = 2048): number {
   const pas = Math.max(1, Math.floor(n / 2));
   const energie = new Float64Array(bandes.length);
   let trames = 0;
+  const fen = fenetreHann(n);
   for (let debut = 0; debut + n <= d.length; debut += pas) {
     trames++;
     for (let b = 0; b < bandes.length; b++) {
       const w = (2 * Math.PI * bandes[b]) / sr, c = 2 * Math.cos(w);
       let s1 = 0, s2 = 0;
       for (let i = 0; i < n; i++) {
-        const x = d[debut + i] * (0.5 - 0.5 * Math.cos((2 * Math.PI * i) / n));
+        const x = d[debut + i] * fen[i];
         const s0 = x + c * s1 - s2; s2 = s1; s1 = s0;
       }
       energie[b] += Math.abs(s1 * s1 + s2 * s2 - c * s1 * s2) / (n * n);

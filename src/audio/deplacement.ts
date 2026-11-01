@@ -17,6 +17,7 @@
 // passage où elle bascule.
 
 import { creerAleatoire } from "../core/hasard";
+import { creerFenetreHann } from "./commun";
 import { lireTabule, tableSinc } from "./lecture-sinc";
 
 /**
@@ -239,12 +240,12 @@ export function bande(x: Float32Array, o: OptionsBande): Float32Array {
   const creux = new Float32Array(n).fill(1);
   const combien = Math.round((o.decrochages * n) / o.frequence);
   const longueur = Math.max(2, Math.round(0.02 * o.frequence));
+  const forme = creerFenetreHann(longueur);
   for (let k = 0; k < combien; k++) {
     const debut = Math.floor(alea() * Math.max(1, n - longueur));
     const profondeur = 0.2 + alea() * 0.75;
     for (let i = 0; i < longueur; i++) {
-      const forme = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (longueur - 1));
-      creux[debut + i] *= 1 - profondeur * forme;
+      creux[debut + i] *= 1 - profondeur * forme[i];
     }
   }
 

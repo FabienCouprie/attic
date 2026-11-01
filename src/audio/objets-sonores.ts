@@ -14,6 +14,7 @@
 // descripteurs, que les nœuds existants ignorent et que « Réordonner les objets » exploite.
 
 import { mixdownMono } from "./commun";
+import { fenetreHann } from "./stft";
 import { reechantillonnerParLeNavigateur } from "./convertir-frequence";
 import { fft } from "./fft";
 import {
@@ -103,7 +104,7 @@ interface Trames {
 
 function trames(x: Float32Array, sr: number): Trames {
   const nb = Math.max(1, Math.floor((x.length - N) / SAUT) + 1);
-  const hann = Float64Array.from({ length: N }, (_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / N));
+  const hann = fenetreHann(N);
   const rms = new Float64Array(nb), flux = new Float64Array(nb), centre = new Float64Array(nb), platitude = new Float64Array(nb);
   const occupation = new Float64Array(nb), dominante = new Float64Array(nb);
   // Le champ est borné en hertz, donc en rangs par la cadence ; le dernier rang utile ne bouge pas.

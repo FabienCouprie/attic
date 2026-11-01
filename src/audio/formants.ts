@@ -6,20 +6,14 @@
 // et la correction formantique est un simple filtre spectral appliqué frame par frame).
 
 import { fft } from "./fft";
-import { etirerDureeVoie, reechantillonnerVoie } from "./commun";
+import { creerFenetreHann, etirerDureeVoie, reechantillonnerVoie } from "./commun";
 
 const N_FFT = 2048;
 const HOP = 512;
 const NB_BINS = N_FFT / 2;
 const CEPSTRE_ORDRE = 30;
 
-function hann(len: number): Float64Array {
-  const w = new Float64Array(len);
-  for (let i = 0; i < len; i++) w[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (len - 1)));
-  return w;
-}
-
-const FENETRE = hann(N_FFT);
+const FENETRE = creerFenetreHann(N_FFT);
 
 // ─── Enveloppe spectrale par cepstre liftering ───
 
