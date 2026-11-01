@@ -180,10 +180,15 @@ describe("les transitions d'un nœud, sur toutes les fiches", () => {
     // depuis l'inspecteur arrêtait l'écoute. Un commentaire disait déjà « il y en a deux dans ce
     // fichier » ; le dire n'a rien empêché. Le banc ci-dessus éprouve les règles, pas leur câblage :
     // sans ce cas, une seconde copie du geste lui échapperait entièrement.
+    // LE GESTE VIT DANS `useRelanceApresReglage.ts` depuis le 2026-11-01 ; ses deux appelants, le
+    // nœud et l'inspecteur, sont restés dans `App.tsx`. Les deux fichiers sont lus, et `App.tsx` ne
+    // doit plus appeler la remise à zéro pour réglage lui-même.
     const app = readFileSync(join("src", "ui", "App.tsx"), "utf8");
-    const appels = (motif: RegExp) => (app.match(motif) ?? []).length;
-    expect(appels(/reinitialiserPourReglage\(/g), "un seul appelant pour « changer un réglage »").toBe(1);
-    expect(appels(/changerReglage\(/g), "un seul point d'entrée, appelé par le nœud et l'inspecteur")
+    const relance = readFileSync(join("src", "ui", "hooks", "useRelanceApresReglage.ts"), "utf8");
+    const appels = (source: string, motif: RegExp) => (source.match(motif) ?? []).length;
+    expect(appels(relance, /reinitialiserPourReglage\(/g), "un seul appelant pour « changer un réglage »").toBe(1);
+    expect(appels(app, /reinitialiserPourReglage\(/g), "et aucun hors du crochet").toBe(0);
+    expect(appels(app, /changerReglage\(/g), "un seul point d'entrée, appelé par le nœud et l'inspecteur")
       .toBeLessThanOrEqual(3);
   });
 });
