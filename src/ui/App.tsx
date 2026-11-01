@@ -27,6 +27,7 @@ import { premierLienCompatible, type AreteDeDictee, type NoeudPose } from "./dic
 import { couleurArete, couleurFlux, lienDicte, portsDeFiche, trouverDef } from "./ports-canevas";
 import { useEnCours } from "./hooks/useEnCours";
 import { useRelanceApresReglage } from "./hooks/useRelanceApresReglage";
+import { useChargementMedias } from "./hooks/useChargementMedias";
 import { appliquerCommandes, type LotDicte, type OutilsDeDictee } from "./dictee/appliquer-commandes";
 import { tailleDefaut } from "./tailles-noeuds";
 import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
@@ -502,6 +503,8 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
   const { supprimerMetaDuCatalogue } = useFenetresPartagees({
     noeudsRef, grapheRacineRef, pileRef, setNodes, setPluginsVersion, pushHistorique, supprimerNoeud, t, lang });
 
+  const { chargerMedia, changerEnregistrement, chargerIR } = useChargementMedias({ cacheExec, setNodes, reinitialiserNoeud });
+
   // Callbacks standard attachés à tout nœud (ajout, import, copier/coller).
   const callbacksNoeud = useCallback(() => ({
     onSupprimerNoeud: (nid: string) => {
@@ -510,55 +513,13 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     },
     onReinitialiser: (nid: string) => reinitialiserNoeud(nid),
     onDefinirPrioritaire: (nid: string) => { setPrioritaire(nid); lancerRef.current(nid); },
-    // ── Chargement d'un média sur un nœud ──
-    // Chacun se termine par `reinitialiserNoeud`, comme `onChangerParametre` :
-    // choisir un autre fichier est le changement d'entrée le plus lourd qui
-    // soit, et sans cette cascade l'aval gardait son résultat d'avant, marqué
-    // « Terminé ». Sur un sélecteur multi-zones, cela voulait dire dessiner des
-    // zones sur la forme d'onde de l'ancien fichier pour les appliquer au
-    // nouveau. L'incohérence tenait en une ligne : ces gestionnaires écrivent
-    // aussi le paramètre « Chemin », or le même changement passé par
-    // l'inspecteur réinitialisait, lui. Les zones et les fichiers chargés
-    // survivent à la cascade (CHAMPS_UTILISATEUR).
-    onChargerAudio: (nid: string, fichier: File) => {
-      cacheExec.current.delete(nid);
-      const api = (window as any).api;
-      const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
-      // L'URL se crée HORS du réducteur : React le rejoue deux fois en mode strict, et une des
-      // deux URL n'était plus tenue par personne.
-      const audioUrl = URL.createObjectURL(fichier);
-      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, audioFichier: fichier, audioNom: fichier.name, audioUrl, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
-      reinitialiserNoeud(nid);
-    },
-    onChargerMidi: (nid: string, fichier: File) => {
-      cacheExec.current.delete(nid);
-      const api = (window as any).api;
-      const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
-      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
-      reinitialiserNoeud(nid);
-    },
-    onChargerImage: (nid: string, fichier: File) => {
-      cacheExec.current.delete(nid);
-      const api = (window as any).api;
-      const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
-      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, imageFichier: fichier, imageNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
-      reinitialiserNoeud(nid);
-    },
-    onChargerSvg: (nid: string, fichier: File) => {
-      cacheExec.current.delete(nid);
-      const api = (window as any).api;
-      const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
-      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, svgFichier: fichier, svgNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
-      reinitialiserNoeud(nid);
-    },
-    onChargerPdf: (nid: string, fichier: File) => {
-      cacheExec.current.delete(nid);
-      const api = (window as any).api;
-      const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
-      setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, pdfFichier: fichier, pdfNom: fichier.name, parametres: { ...n.data.parametres, Chemin: chemin } } } : n));
-      reinitialiserNoeud(nid);
-    },
-    onChangerEnregistrement: (nid: string, blob: Blob) => { cacheExec.current.delete(nid); const url = URL.createObjectURL(blob); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n)); reinitialiserNoeud(nid); },
+    // ── Chargement d'un média sur un nœud, dans hooks/useChargementMedias.ts ──
+    onChargerAudio: (nid: string, fichier: File) => chargerMedia(nid, "audio", fichier),
+    onChargerMidi: (nid: string, fichier: File) => chargerMedia(nid, "midi", fichier),
+    onChargerImage: (nid: string, fichier: File) => chargerMedia(nid, "image", fichier),
+    onChargerSvg: (nid: string, fichier: File) => chargerMedia(nid, "svg", fichier),
+    onChargerPdf: (nid: string, fichier: File) => chargerMedia(nid, "pdf", fichier),
+    onChangerEnregistrement: changerEnregistrement,
     onChangerParametre: (nid: string, nom: string, val: number | string) => {
       changerReglage(nid, nom, val);
     },
@@ -579,8 +540,9 @@ parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParamet
     // morceau qu'on vient d'y poser, tirer une barre puis tirer la glissière donnait l'impression
     // que RIEN ne fonctionnait. Relevé par Fabien, trois fois dans cette famille.
     onChangerDecoupe: (nid: string, decoupe: Record<string, unknown>) => { setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, ...decoupe } } : n)); perimerEtRelancer(nid); },
-    onChargerIR: (nid: string, fichier: File) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n)); reinitialiserNoeud(nid); },
-  }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef, perimerEtRelancer]);
+    onChargerIR: chargerIR,
+  }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef, perimerEtRelancer,
+    chargerMedia, changerEnregistrement, chargerIR]);
   callbacksNoeudRef.current = callbacksNoeud;
 
   // ── Ajouter / Supprimer ──
