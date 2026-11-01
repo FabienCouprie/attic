@@ -26,6 +26,7 @@
 import { enveloppe, spectreDeModulation } from "./grain-schaefferien";
 import { partVoisee, suivreHauteur } from "./hauteur";
 import { fft } from "./fft";
+import { depuisDb } from "./decibels";
 
 // ── La masse ──
 
@@ -201,7 +202,7 @@ function raies(bins: Float64Array, haut: number): number[] {
   const trouvees: number[] = [];
   let crete = 0;
   for (let k = 1; k <= haut; k++) if (bins[k] > crete) crete = bins[k];
-  const plancher = crete * Math.pow(10, PLANCHER_RAIE_DB / 20);
+  const plancher = crete * depuisDb(PLANCHER_RAIE_DB);
   for (let k = VOISINAGE; k <= Math.min(haut, bins.length - VOISINAGE - 1); k++) {
     if (bins[k] < plancher) continue;
     if (bins[k] < bins[k - 1] || bins[k] < bins[k + 1]) continue;
@@ -272,7 +273,7 @@ export function masse(x: Float32Array, sampleRate: number, o: OptionsMasse = {})
   for (let k = 1; k <= haut; k++) if (bins[k] > bins[sommet]) sommet = k;
   if (bins[sommet] <= 0) return vide;
 
-  const plancher = bins[sommet] * Math.pow(10, PLANCHER_OCCUPATION_DB / 20);
+  const plancher = bins[sommet] * depuisDb(PLANCHER_OCCUPATION_DB);
   let pleins = 0;
   for (let k = 1; k <= haut; k++) if (bins[k] >= plancher) pleins++;
   const occupation = pleins / haut;

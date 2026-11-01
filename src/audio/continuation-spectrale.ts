@@ -13,6 +13,7 @@ import {
 } from "./spectrogramme-fenetre";
 import { Respiration } from "../core/respirer";
 import { creerAleatoire } from "../core/hasard";
+import { versDb, depuisDb } from "./decibels";
 
 export interface ContinuationSpectraleResultat {
   audio: AudioBuffer;
@@ -247,7 +248,7 @@ export async function appliquerContinuationSpectrale(
     for (let f = 0; f < nFrames; f++) {
       const offset = f * nbBins;
       for (let b = 0; b < nbBins; b++) {
-        m[offset + b] = 20 * Math.log10(spectrograms[c].frames[f].mag[b] + EPS);
+        m[offset + b] = versDb(spectrograms[c].frames[f].mag[b] + EPS);
       }
     }
     const mean = new Float32Array(nbBins);
@@ -420,7 +421,7 @@ export async function appliquerContinuationSpectrale(
         // dB prediction from exploding into a loud spike after linearization.
         const clampedPred = Math.max(-3, Math.min(3, pred[b]));
         const db = clampedPred * std[b] + mean[b];
-        mag[b] = Math.max(0, Math.pow(10, db / 20));
+        mag[b] = Math.max(0, depuisDb(db));
         phase[b] = lastPhase[b] + phaseIncrement[b];
         lastPhase[b] = phase[b];
       }

@@ -18,6 +18,7 @@
 // que le réglage parcourt.
 
 import { creerAleatoire } from "../core/hasard";
+import { depuisDb } from "./decibels";
 
 /** La fréquence de rotation, en hertz : un tour de disque. */
 export const frequenceDeRotation = (toursParMinute: number): number =>
@@ -60,7 +61,7 @@ export function ronflement(
   const a = Math.exp((-2 * Math.PI * COUPURE_RONFLEMENT) / sampleRate);
   const etats = [0, 0, 0];
   const rot = frequenceDeRotation(o.vitesse);
-  const gain = Math.pow(10, o.niveau / 20);
+  const gain = depuisDb(o.niveau);
   const x = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     let v = suivant() * 2 - 1;
@@ -84,7 +85,7 @@ export function surfaceEtClics(
   n: number, sampleRate: number, o: { surface: number; clics: number; graine: number },
 ): Float32Array {
   const suivant = tirage(o.graine ^ 0x5bf0);
-  const gainFond = Math.pow(10, o.surface / 20);
+  const gainFond = depuisDb(o.surface);
   const x = new Float32Array(n);
   // Le fond : un bruit passé dans un passe-haut d'ordre un, la poussière n'ayant pas de grave.
   let precedent = 0;

@@ -13,6 +13,7 @@ import {
   sf2Chargee, normaliserModeSynthèse, decoderInstrumentSF2,
   PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2,
 } from "./soundfontGlobal";
+import { noteMidiDeFrequence } from "../audio/commun";
 
 /** Les trois quintes qui ont un nom, en cents. La mésotonique est celle du quart de comma. */
 const QUINTES: Record<string, number> = {
@@ -84,7 +85,7 @@ export const fiches: FicheAudio[] = ([
       // LA HAUTEUR EST FRACTIONNAIRE, et c'est tout l'objet : un degré entier effacerait
       // précisément l'écart que la spirale accumule. Le rendu joue la note en demi-tons décimaux.
       const noteDe = (centsReplies: number) =>
-        69 + 12 * Math.log2(fondamentale / 440) + centsReplies / 100;
+        noteMidiDeFrequence(fondamentale) + centsReplies / 100;
       const fin = pas.length * pasSec;
       const notes = pas.map((p, i) => ({
         note: noteDe(p.centsReplies),

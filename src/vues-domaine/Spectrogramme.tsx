@@ -4,6 +4,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { fft } from "../audio/fft";
 import { useI18n } from "../i18n";
+import { versDb } from "../audio/decibels";
 
 interface Props {
   audioUrl?: string;
@@ -74,7 +75,7 @@ export function Spectrogramme({ audioUrl, tailleFFT, log }: Props) {
       fft(re, im, false);
       const col = new Float32Array(half);
       for (let k = 0; k < half; k++) {
-        const db = 20 * Math.log10(Math.hypot(re[k], im[k]) + 1e-12);
+        const db = versDb(Math.hypot(re[k], im[k]) + 1e-12);
         col[k] = db; if (db > dbMax) dbMax = db;
       }
       trames.push(col);

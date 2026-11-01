@@ -6,6 +6,7 @@
 import { poserParam } from "./automation";
 import { coefficientSuiveur, valeurA, valeurTransformee } from "./courbe";
 import { compresser } from "./effets-dynamique";
+import { depuisDb } from "./decibels";
 
 export function limiter(
   buffer: AudioBuffer,
@@ -16,8 +17,8 @@ export function limiter(
   const sr = buffer.sampleRate;
   // `valeurTransformee` ne calcule qu'une fois ce qui ne bouge pas : deux valeurs fixes gardent
   // leurs deux `pow` uniques, exactement comme avant que ces réglages s'ouvrent.
-  const seuilA = valeurTransformee(seuilDb, (v) => Math.pow(10, v / 20));
-  const plafondA = valeurTransformee(plafondDb, (v) => Math.pow(10, v / 20));
+  const seuilA = valeurTransformee(seuilDb, (v) => depuisDb(v));
+  const plafondA = valeurTransformee(plafondDb, (v) => depuisDb(v));
   // Un scalaire garde son exponentielle unique ; une courbe en paie une par échantillon.
   const relachementCoeff = coefficientSuiveur(relachementMs, sr);
   const nch = buffer.numberOfChannels;
@@ -102,8 +103,8 @@ export function transientShaper(
 
     const maxEnv = Math.max(envAttaque, envSustain, 1e-9);
     const force = (envAttaque - envSustain) / maxEnv;
-    const attaqueGain = Math.pow(10, valeurA(attaqueDb, i) / 20);
-    const sustainGain = Math.pow(10, sustainDb / 20);
+    const attaqueGain = depuisDb(valeurA(attaqueDb, i));
+    const sustainGain = depuisDb(sustainDb);
     const gain = force > 0
       ? attaqueGain * force + sustainGain * (1 - force)
       : sustainGain;

@@ -8,11 +8,12 @@ import { valeurA } from "../audio/courbe";
 
 import type { Note } from "../audio/note";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
+import { frequenceDeNoteMidi } from "../audio/commun";
 export const FREQUENCE_ECH = () => frequenceDeTravail();
 
 export type NoteJouee = Note;
 
-export const frequenceDe = (note: number): number => 440 * 2 ** ((note - 69) / 12);
+export const frequenceDe = (note: number): number => frequenceDeNoteMidi(note);
 
 const NOMS_NOTES: Record<string, number> = {
   c: 0, "c#": 1, db: 1, d: 2, "d#": 3, eb: 3, e: 4, f: 5, "f#": 6, gb: 6,

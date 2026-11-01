@@ -12,10 +12,11 @@ import { calerZones, type Pente, type Zone } from "../audio/passage-zero";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
+import { versDb } from "../audio/decibels";
 
 const en = () => langueCourante() === "en";
 
-const dB = (x: number) => (x <= 1e-9 ? "−∞" : (20 * Math.log10(x)).toFixed(1));
+const dB = (x: number) => (x <= 1e-9 ? "−∞" : (versDb(x)).toFixed(1));
 
 export const fiches: FicheAudio[] = ([
   {

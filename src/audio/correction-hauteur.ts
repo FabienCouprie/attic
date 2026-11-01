@@ -30,6 +30,7 @@
 import { suivreHauteur } from "./hauteur";
 import type { Courbe } from "./courbe";
 import { degresDeGamme, gammeDe } from "./gammes";
+import { noteMidiDeFrequence } from "./commun";
 
 export interface OptionsCorrection {
   /** Les classes de hauteur permises, de 0 (do) à 11. */
@@ -58,7 +59,7 @@ export interface ResultatCorrection {
   partCorrigee: number;
 }
 
-const MIDI = (hz: number) => 69 + 12 * Math.log2(Math.max(1e-6, hz) / 440);
+const MIDI = (hz: number) => noteMidiDeFrequence(Math.max(1e-6, hz));
 
 /**
  * Les gammes vers lesquelles on peut corriger.

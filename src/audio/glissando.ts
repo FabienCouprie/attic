@@ -28,6 +28,7 @@
 
 import { nomNote, type Alteration } from "./nom-note";
 import { frequenceDeTravail } from "./frequence-de-travail";
+import { frequenceDeNoteMidi } from "./commun";
 
 /** Une voix du glissement : d'où elle part, où elle va, et dans lequel des deux agrégats elle est. */
 export interface VoixDeGlissando {
@@ -105,7 +106,7 @@ export function partDuGlissement(t: number, tenueDepart: number, glissement: num
 }
 
 /** La fréquence d'un numéro de note, l'écart à l'entier compris. */
-export const frequenceDe = (hauteur: number): number => 440 * 2 ** ((hauteur - 69) / 12);
+export const frequenceDe = (hauteur: number): number => frequenceDeNoteMidi(hauteur);
 
 export interface OptionsGlissando {
   /** Le temps pendant lequel l'agrégat de départ est tenu, en secondes. */

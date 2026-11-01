@@ -31,6 +31,7 @@
 //      Le résidu, lui, reste celui du masque : on ne le refabrique pas, on le garde.
 
 import { analyseSynthese } from "./stft";
+import { versDb, depuisDb } from "./decibels";
 
 export const TAILLE_TRAME = 2048;
 
@@ -84,7 +85,7 @@ export function picsDeTrame(
     if (mod[k] > maxi) maxi = mod[k];
   }
   if (maxi <= 1e-12) return [];
-  const plancher = maxi * 10 ** (-seuilDb / 20);
+  const plancher = maxi * depuisDb(-seuilDb);
 
   const pics: Pic[] = [];
   const voisinage = new Float64Array(2 * VOISINAGE + 1);
@@ -100,12 +101,12 @@ export function picsDeTrame(
     }
     const tri = Array.prototype.slice.call(voisinage, 0, compte).sort((u: number, v: number) => u - v);
     const fond = tri[compte >> 1];
-    if (fond > 1e-12 && 20 * Math.log10(mod[k] / fond) < saillieDb) continue;
+    if (fond > 1e-12 && versDb(mod[k] / fond) < saillieDb) continue;
     // Interpolation parabolique en décibels : c'est la forme d'un lobe de fenêtre de Hann au
     // voisinage de son sommet, et c'est pourquoi on interpole là plutôt que sur l'amplitude.
-    const a = 20 * Math.log10(Math.max(1e-12, mod[k - 1]));
-    const b = 20 * Math.log10(Math.max(1e-12, mod[k]));
-    const c = 20 * Math.log10(Math.max(1e-12, mod[k + 1]));
+    const a = versDb(Math.max(1e-12, mod[k - 1]));
+    const b = versDb(Math.max(1e-12, mod[k]));
+    const c = versDb(Math.max(1e-12, mod[k + 1]));
     const d = (a - c) / (2 * (a - 2 * b + c));
     const decalage = Number.isFinite(d) ? Math.max(-0.5, Math.min(0.5, d)) : 0;
     pics.push({

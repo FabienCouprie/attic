@@ -3,6 +3,7 @@
 // (poids K pour LUFS).
 
 import { creteVraieDb } from "./crete-vraie";
+import { versDb } from "./decibels";
 
 export interface MesuresNiveau {
   rmsDb: number;        // RMS moyen en dBFS
@@ -204,8 +205,8 @@ export function mesurerNiveau(buffer: AudioBuffer): MesuresNiveau {
     }
   }
   const rms = Math.sqrt(sumSq / (length * nch));
-  const rmsDb = rms > 1e-9 ? 20 * Math.log10(rms) : -120;
-  const peakDb = peak > 1e-9 ? 20 * Math.log10(peak) : -120;
+  const rmsDb = rms > 1e-9 ? versDb(rms) : -120;
+  const peakDb = peak > 1e-9 ? versDb(peak) : -120;
   const crestFactorDb = peakDb - rmsDb;
 
   const mesure = sonieIntegree(buffer, sr, nch, length);

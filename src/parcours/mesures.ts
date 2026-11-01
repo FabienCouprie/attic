@@ -35,6 +35,7 @@ import { fft } from "../audio/fft";
 import { fenetreHann } from "../audio/stft";
 import { chiffre } from "./conditions";
 import type { Cible, Grandeur, Point } from "./types";
+import { versDb } from "../audio/decibels";
 
 /** Le minimum qu'on exige d'un son pour le mesurer — un `AudioBuffer` en est un. */
 export interface SonSoumis {
@@ -101,7 +102,7 @@ function efficaceDb(x: Float32Array): number {
   let s = 0;
   for (let i = 0; i < x.length; i++) s += x[i] * x[i];
   const rms = Math.sqrt(s / Math.max(1, x.length));
-  return rms > 1e-12 ? 20 * Math.log10(rms) : -120;
+  return rms > 1e-12 ? versDb(rms) : -120;
 }
 
 /**

@@ -30,6 +30,8 @@
 // écrit 20·log10(1/√2) ≈ −3,0103. Le lui donner en linéaire poserait une bosse de résonance.
 
 /** Une cloche : son centre, ce qu'elle ajoute ou retire, et sa largeur. */
+import { versDb } from "./decibels";
+
 export interface Cloche {
   frequence: number;
   gainDb: number;
@@ -55,7 +57,7 @@ export interface Etage {
 }
 
 /** Le Q d'un Butterworth du second ordre, exprimé en décibels comme la norme le lit pour un passe-haut. */
-export const Q_BUTTERWORTH_DB = 20 * Math.log10(Math.SQRT1_2);
+export const Q_BUTTERWORTH_DB = versDb(Math.SQRT1_2);
 
 /**
  * La fréquence la plus haute qu'un étage reçoit : un peu sous la moitié de la cadence.

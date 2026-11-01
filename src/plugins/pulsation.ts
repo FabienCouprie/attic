@@ -16,6 +16,7 @@ import { estSequence, type Sequence } from "../audio/sequence";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
+import { noteMidiDeFrequence } from "../audio/commun";
 
 const en = () => langueCourante() === "en";
 
@@ -23,7 +24,7 @@ const en = () => langueCourante() === "en";
 const SR = () => frequenceDeTravail();
 
 /** La hauteur en demi-tons d'une fréquence, pour que le seuil se règle en hertz. */
-const hauteurDe = (hertz: number) => 69 + 12 * Math.log2(Math.max(1, hertz) / 440);
+const hauteurDe = (hertz: number) => noteMidiDeFrequence(Math.max(1, hertz));
 
 export const fiches: FicheAudio[] = ([
   {

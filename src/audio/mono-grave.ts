@@ -27,6 +27,8 @@
 // elle est gratuite. Et à quantité nulle, l'entrée ressort telle quelle, sans même un déphasage.
 
 /** Un biquad passe-haut Butterworth d'ordre deux. */
+import { versDb } from "./decibels";
+
 function passeHaut(x: Float32Array, f0: number, sr: number): Float32Array {
   const w = (2 * Math.PI * f0) / sr;
   const cos = Math.cos(w), sin = Math.sin(w);
@@ -126,6 +128,6 @@ export function monoGrave(
     gauche: sortieG, droite: sortieD,
     correlationAvant: correlation(grave(gauche.subarray(0, n), coupureHz, sr), grave(droite.subarray(0, n), coupureHz, sr)),
     correlationApres: correlation(grave(sortieG, coupureHz, sr), grave(sortieD, coupureHz, sr)),
-    coteRetireDb: graveAvant > 1e-12 ? 20 * Math.log10(Math.max(1e-12, graveApres) / graveAvant) : 0,
+    coteRetireDb: graveAvant > 1e-12 ? versDb(Math.max(1e-12, graveApres) / graveAvant) : 0,
   };
 }

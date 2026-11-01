@@ -6,6 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { frequenceDeNoteMidi } from "../audio/commun";
 
 export const fiches: FicheAudio[] = ([
   {
@@ -88,7 +89,7 @@ export const fiches: FicheAudio[] = ([
 
       for (const ev of evenements) {
         const debut = Math.round(ev.instant * sr);
-        const freq = 440 * Math.pow(2, (ev.note - 69) / 12);
+        const freq = frequenceDeNoteMidi(ev.note);
         for (let i = 0; i < dureeNote && debut + i < n; i++) {
           // Enveloppe en cloche : sans elle, chaque note commencerait et
           // finirait sur un clic, et l'on entendrait la grille plutôt que le

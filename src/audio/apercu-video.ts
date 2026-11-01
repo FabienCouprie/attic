@@ -10,6 +10,7 @@
 // pas d'aperçu du tout, puisqu'on réglerait au son d'un mensonge.
 
 import { gainDeFondu } from "./objets-sonores";
+import { depuisDb } from "./decibels";
 
 /** Comment démarrer une source pour qu'elle tombe juste, le film étant déjà à `tempsFilm`. */
 export interface Calage {
@@ -41,7 +42,7 @@ export function calerSource(debutSec: number, dureeSec: number, tempsFilm: numbe
 }
 
 /** Le gain linéaire d'un niveau en décibels ; à −60 dB et au-dessous, le silence. */
-export const gainLineaire = (db: number): number => (db <= -60 ? 0 : Math.pow(10, db / 20));
+export const gainLineaire = (db: number): number => (db <= -60 ? 0 : depuisDb(db));
 
 /**
  * La courbe de gain de la portion jouée : le niveau de la piste, creusé par ses deux fondus.

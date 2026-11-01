@@ -6,6 +6,7 @@
 import Meyda from "meyda";
 import { traduire } from "../i18n";
 import { normaliserAggregation, tailleFenetreAnalyse, traduireAggregation } from "./analyse-transcription";
+import { versDb } from "./decibels";
 
 export interface OptionsCentroidSpectral {
   fenetre?: number;
@@ -137,7 +138,7 @@ export function calculerRMS_Meyda(
     return { valeur: -Infinity, texte: traduire("analyse.non_calculable", traduire("analyse.rms_label")), trames: 0 };
   }
   const rms = agregerValeurs(valeurs, aggregation);
-  const db = 20 * Math.log10(rms + 1e-10);
+  const db = versDb(rms + 1e-10);
   const texte = traduire("analyse.rms", db.toFixed(1), aggLabel, valeurs.length);
   return { valeur: db, texte, trames: valeurs.length };
 }
