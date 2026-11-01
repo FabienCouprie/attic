@@ -139,7 +139,10 @@ function sourcesRacine(): string[] {
  *
  * LES CINQ DETTES QUI RESTENT, et ce qu'il leur faudrait :
  *
- *   `App.tsx`                    le graphe embarqué, l'écriture de fichiers, les métas d'exemple
+ *   `App.tsx`                    l'adaptateur audio et les métas d'exemple, posés au chargement
+ *                                du module (le graphe embarqué est parti le 2026-11-01)
+ *   `hooks/useSoundFont.ts`      le SoundFont global, sorti d'`App.tsx` le 2026-11-01 : le même
+ *                                couplage, qui a changé de fichier
  *   `AtelierNode.tsx`            l'écoute multicanal
  *   `Inspector.tsx`              les courbes
  *   `hooks/useExecutionGraphe.ts` les deux PILOTES de passes : le lot et les boucles de séquences.
@@ -199,6 +202,7 @@ const COUPLES_ATTENDUS = [
   "ui/Inspector.tsx",
   "ui/SelecteurFrequenceDeTravail.tsx",
   "ui/hooks/useExecutionGraphe.ts",
+  "ui/hooks/useSoundFont.ts",
   "ui/ordre-palette.ts",
 ];
 
