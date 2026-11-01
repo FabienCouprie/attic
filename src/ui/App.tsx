@@ -19,9 +19,8 @@ import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontG
 import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
 
 import { idUnique } from "./ids";
-import { planDeGrapheEngendre } from "./graphe-engendre";
-import { premierLienCompatible } from "./dictee/pose-dictee";
-import { couleurArete, couleurFlux, portsDeFiche, trouverDef } from "./ports-canevas";
+import { usePoseGrapheEngendre } from "./hooks/usePoseGrapheEngendre";
+import { couleurArete, couleurFlux, trouverDef } from "./ports-canevas";
 import { useEnCours } from "./hooks/useEnCours";
 import { useRelanceApresReglage } from "./hooks/useRelanceApresReglage";
 import { useChargementMedias } from "./hooks/useChargementMedias";
@@ -308,67 +307,13 @@ function Atelier() {
   // ── Exécution du graphe, dans hooks/useExecutionGraphe.ts ──
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
+  const poserGrapheEngendre = usePoseGrapheEngendre({ noeudsRef, callbacksNoeudRef, setNodes, setEdges, lang });
   const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout } = useExecutionGraphe({
     noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec, economieMemoireRef,
     pileMetaRef: pileRef,
     edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
-    onGrapheGenere: (nodeId, spec) => {
-      // LE PLAN SE CALCULE HORS DES POSEURS, et les deux updaters qui suivent ne font qu'ajouter.
-      // Créer les arêtes DANS l'updater de `setNodes` les posait deux fois sous `StrictMode`, qui
-      // appelle un updater deux fois pour débusquer exactement cet effet de bord ; voir
-      // `ui/graphe-engendre.ts`, qui porte le calcul et son histoire.
-      {
-        const baseX = noeudsRef.current.find((n) => n.id === nodeId)?.position?.x ?? 200;
-        const baseY = noeudsRef.current.find((n) => n.id === nodeId)?.position?.y ?? 200;
-        const cbs = callbacksNoeud();
-        const plan = planDeGrapheEngendre(spec, noeudsRef.current, `${nodeId}-${Date.now()}`,
-          (s, c) => premierLienCompatible(portsDeFiche(s), portsDeFiche(c),
-            (a, b) => registreUI().fluxCompatibles(a.type, b.type, a.sousType, b.sousType)));
-        for (const c of plan.cycles) {
-          console.warn(`[attic] Prompt → graphe : arête ${c.source} → ${c.target} écartée, elle refermerait un cycle.`);
-        }
-        // LE MÊME SORT QU'UN CYCLE, ET POUR LA MÊME RAISON : un modèle de langue peut demander un
-        // lien que les ports refusent. L'arête est écartée plutôt que posée en rouge, et le nom des
-        // deux composants est dit — le reste du graphe reste utilisable.
-        for (const x of plan.incompatibles) {
-          console.warn(`[attic] Prompt → graphe : arête écartée, « ${spec.nodes[x.source]?.ficheId} » `
-            + `et « ${spec.nodes[x.target]?.ficheId} » n'ont aucun couple de ports qui s'accorde.`);
-        }
-        const idsNouveaux: string[] = plan.ids;
-        const nouveauxNodes = spec.nodes.map((specNode, i) => {
-          const def = trouverDef(specNode.ficheId);
-          const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
-          const parametres: Record<string, number | string> = {};
-          if (def) for (const p of def.parametres) {
-            // Tout paramètre « choix » passe par la forme canonique (indépendante de la
-// langue), y compris SANS optionIds : la valeur stockée doit correspondre à
-// l'`<option value>` du menu, qui reste le terme français. Restreindre ce
-// traitement aux seuls optionIds créait, en anglais, des nœuds dont le
-// paramètre valait par ex. "Center" — absent du menu (donc affiché comme
-// « Left ») et refusé par l'exécution.
-parametres[p.nom] = p.type === "choix" ? defautCanoniqueChoix(p) : defautParametre(p, lang);
-          }
-          return {
-            id: idsNouveaux[i], type: "atelier" as const,
-            position: { x: baseX + 250 + i * 260, y: baseY + 40 },
-            width, height,
-            data: {
-              ficheId: specNode.ficheId, parametres, statut: "attente",
-              ...cbs,
-            },
-          };
-        });
-        const nouveauxEdges: Edge[] = plan.aretes.map(({ sortie, entree, ...a }) => ({
-          ...a,
-          sourceHandle: `out:${sortie}`,
-          targetHandle: `in:${entree}`,
-          type: "arete-personnalisee" as const,
-          style: { stroke: couleurArete(nouveauxNodes, a.source, `out:${sortie}`), strokeWidth: 2.5 },
-        }));
-        setNodes((nds) => [...nds, ...nouveauxNodes]);
-        setEdges((eds) => [...eds, ...nouveauxEdges]);
-      }
-    },
+    // La pose d'un graphe demandé par un composant, dans hooks/usePoseGrapheEngendre.ts.
+    onGrapheGenere: poserGrapheEngendre,
     onNodeInstalle: () => {
       setPluginsVersion((v) => v + 1);
     },
