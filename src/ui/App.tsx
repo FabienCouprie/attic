@@ -4,38 +4,39 @@ import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap,
   useNodesState, useEdgesState,
-  type Node, type Edge, type Connection, type OnConnect,
+  type Node, type Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import { trouverMeta,
-  estFrontiere, estSubstitution, fermeraitUnCycle, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
-  traduireConnexion, type AreteG, type NoeudG } from "../core";
+import { trouverMeta, estFrontiere, type AreteG, type NoeudG } from "../core";
 
 import "../audio/adaptateur";
 
 const tousLesPlugins = () => registreUI().tousLesPlugins();
-import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontGlobal";
 import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
 
 import { idUnique } from "./ids";
 import { usePoseGrapheEngendre } from "./hooks/usePoseGrapheEngendre";
-import { couleurArete, couleurFlux, trouverDef } from "./ports-canevas";
+import { trouverDef } from "./ports-canevas";
 import { useEnCours } from "./hooks/useEnCours";
 import { useRelanceApresReglage } from "./hooks/useRelanceApresReglage";
 import { useChargementMedias } from "./hooks/useChargementMedias";
 import { useNotesEtCadres } from "./hooks/useNotesEtCadres";
 import { useHistorique } from "./hooks/useHistorique";
 import { useDicteeCanevas } from "./hooks/useDicteeCanevas";
+import { usePreferencesAtelier } from "./hooks/usePreferencesAtelier";
+import { useSoundFont } from "./hooks/useSoundFont";
+import { useConnexions } from "./hooks/useConnexions";
+import { useCommandesBarre } from "./hooks/useCommandesBarre";
+import { BarreMeta } from "./BarreMeta";
+import { InspecteurDuCanevas } from "./InspecteurDuCanevas";
+import type { NoeudAtelier } from "./noeud-atelier";
 import { tailleDefaut } from "./tailles-noeuds";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
 import { useCopierColler } from "./hooks/useCopierColler";
 import { resultatDe } from "./resultats";
-import { CLE_PREFERENCE, lirePreference } from "./sauvegarde-auto";
-import { ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
-import { validerArete } from "./validerGraphe";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
@@ -47,7 +48,6 @@ import { useFiletGlissement } from "./hooks/useFiletGlissement";
 import { useBulles } from "./hooks/useBulles";
 import { useRepliBulles } from "./hooks/useRepliBulles";
 import { signatureBulles, synchroniserFichesBulles } from "./fichesBulles";
-import { Inspector } from "./Inspector";
 import { EXEMPLES, fichierDExemple } from "./exemples";
 import { nodeTypes as nodeTypesImport, edgeTypes as edgeTypesImport } from "./reactflowTypes";
 import "./atelier.css";
@@ -62,7 +62,6 @@ import { installerMetasExemples } from "../plugins/meta-exemples";
 import { chargerNodesInstalles } from "../core";
 // LE BAC SE POSE EN S'IMPORTANT : sans lui, un nœud installé refuse de s'exécuter, et c'est voulu.
 import "./bac-a-sable-noeud";
-import { PanneauInspecteur } from "./PanneauInspecteur";
 import { registreUI } from "./registre-actif";
 import { demarrage, noterFichierPropre, ouvrirNouvelleFenetre } from "./fenetre";
 // Restaure les données de backup si on vient d'une mise à jour (synchrone)
@@ -91,40 +90,8 @@ chargerNodesInstalles();
 // Diagnostic : vérifier que les plugins sont bien chargés
 const nbPlugins = tousLesPlugins().length; console.log("[attic] Plugins charg�s:", nbPlugins);
 
-// ── Types ──
-
-interface DonneesNoeud {
-  ficheId: string;
-  parametres: Record<string, number | string>;
-  statut: string;
-  progression?: string;
-  audioResultatUrl?: string;
-  audioResultatNom?: string;
-  audioResultatBuffer?: AudioBuffer;
-  audioResultatMessage?: string;
-  audioFichier?: File;
-  midiFichier?: File;
-  midiFichierSortie?: File;
-  modeleFichier?: File;
-  enregistrementBlob?: Blob;
-  visualisationUrl?: string;
-  nomFichier?: string;
-  prioritaire?: boolean;
-  imageResultatUrl?: string;
-  imageResultatFile?: File;
-  imageFichier?: File;
-  imageNom?: string;
-  svgFichier?: File;
-  svgNom?: string;
-  pdfFichier?: File;
-  pdfNom?: string;
-  [key: string]: unknown;
-}
-
-type NoeudAtelier = Node<DonneesNoeud, "atelier">;
-
-// nodeTypes/edgeTypes sont définis dans reactflowTypes.ts (hors du cycle HMR
-// d'App.tsx) pour éviter l'avertissement React Flow #002.
+// Le type d'un nœud du canevas vit dans `ui/noeud-atelier.ts` ; nodeTypes/edgeTypes dans
+// `reactflowTypes.ts` (hors du cycle HMR d'App.tsx) pour éviter l'avertissement React Flow #002.
 
 // ── Application ──
 
@@ -155,45 +122,11 @@ function Atelier() {
   const grapheRacineRef = useRef<{ nodes: NoeudAtelier[]; edges: Edge[] } | null>(null);
   const [enExecution, setEnExecution] = useState(false);
   const enExecRef = useRef(false);
-  const [paletteOuverte, setPaletteOuverte] = useState(() => localStorage.getItem("attic-palette-ouverte") !== "false");
-  // Sauvegarde automatique : bascule du groupe Fichier, retenue d'une session à l'autre.
-  // Coupée, elle l'est pour de bon — ni au battement des 30 s, ni à la fermeture.
-  const [sauvegardeAutoActive, setSauvegardeAutoActive] = useState(() => lirePreference());
-  const basculerSauvegardeAuto = useCallback(() => {
-    setSauvegardeAutoActive((prev) => {
-      const suivant = !prev;
-      try { localStorage.setItem(CLE_PREFERENCE, suivant ? "1" : "0"); } catch {}
-      return suivant;
-    });
-  }, []);
-  // Économie de mémoire sur les pistes longues : bascule voisine, même groupe. Elle ne change
-  // rien en deçà de dix minutes ; au-delà, elle décide si les nœuds intermédiaires reçoivent
-  // leur aperçu écoutable ou le bouton qui le construit à la demande.
-  const [economieMemoire, setEconomieMemoire] = useState(() => lireEconomieMemoire());
-  // LA PROFONDEUR DES FICHIERS ÉCRITS N'EST PLUS ICI, et ce qui était écrit à sa place disait la
-  // limite en la tenant pour voulue : « elle ne prend effet qu'au prochain lancement ». Mesuré,
-  // c'était pire — elle ne prenait effet NI au prochain lancement, l'adresse de l'aperçu étant
-  // gardée tant que le tampon est le même objet. Le réglage vit dans `ui/profondeur-export.ts`,
-  // son sélecteur s'y abonne, et changer de valeur refait les aperçus sans rejouer un seul nœud :
-  // voir `ui/SelecteurProfondeurExport.tsx` et `ui/refaire-apercus.ts`.
-  const basculerEconomieMemoire = useCallback(() => {
-    setEconomieMemoire((prev) => {
-      const suivant = !prev;
-      ecrireEconomieMemoire(suivant);
-      return suivant;
-    });
-  }, []);
-  // Le moteur la lit au moment où il écrit les résultats, et non à la construction de `lancer` :
-  // une bascule pendant un rendu d'une heure doit valoir pour la suite de ce rendu-là.
-  const economieMemoireRef = useRef(economieMemoire);
-  economieMemoireRef.current = economieMemoire;
-  const togglePalette = useCallback(() => {
-    setPaletteOuverte((prev) => {
-      const next = !prev;
-      localStorage.setItem("attic-palette-ouverte", String(next));
-      return next;
-    });
-  }, []);
+  // ── Les réglages retenus d'une session à l'autre, dans hooks/usePreferencesAtelier.ts ──
+  const {
+    paletteOuverte, togglePalette, sauvegardeAutoActive, basculerSauvegardeAuto,
+    economieMemoire, basculerEconomieMemoire, economieMemoireRef, theme, setTheme, repertoire, changerRepertoire,
+  } = usePreferencesAtelier();
   const noeudsRef = useRef(nodes);
   const aretesRef = useRef(edges);
   useEffect(() => {
@@ -216,7 +149,6 @@ function Atelier() {
   const lancerRef = useRef<any>(null);
   const cacheExec = useRef<Map<string, any>>(new Map());
   const callbacksNoeudRef = useRef<(() => Record<string, (...args: any[]) => any>) | null>(null);
-  const [repertoire, setRepertoire] = useState(() => localStorage.getItem("attic-repertoire") || "");
 
   // LE FICHIER EST À LA FENÊTRE : une fenêtre neuve n'en a pas. Voir `ui/fenetre.ts`.
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(() => demarrage().fichier);
@@ -227,11 +159,6 @@ function Atelier() {
     noterFichierPropre(currentFilePath);
     document.title = currentFilePath ? `[Attic] ${currentFilePath.split(/[\\/]/).pop() || currentFilePath}` : "Attic";
   }, [currentFilePath]);
-
-  const changerRepertoire = useCallback((r: string) => {
-    setRepertoire(r);
-    localStorage.setItem("attic-repertoire", r);
-  }, []);
 
   // Avertit (une fois, après le premier rendu) si des méta-composants n'ont pas
   // pu être réinjectés dans le catalogue — sinon leur disparition silencieuse
@@ -248,49 +175,21 @@ function Atelier() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Répertoire de travail par défaut (Electron) : le dossier « work » du projet.
-  // Sert de dossier initial aux dialogues d'export/import tant que l'utilisateur
-  // n'a pas choisi le sien (via l'icône « dossier » de la barre d'outils).
-  useEffect(() => {
-    if (repertoire) return;
-    (async () => {
-      const w = await (window as any).api?.obtenirRepertoireTravail?.();
-      if (w) setRepertoire(w);
-    })();
-    // Exécuté une seule fois au montage ; le garde interne évite d'écraser un choix.
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   const [prioritaire, setPrioritaire] = useState<string | null>(null);
   const prioritaireRef = useRef<string | null>(null);
   prioritaireRef.current = prioritaire;
-  const [sf2NomState, setSf2NomState] = useState<string>(sf2Nom());
+  // ── Le SoundFont global, dans hooks/useSoundFont.ts ──
+  const { sf2Nom: sf2NomState, chargerSF2 } = useSoundFont({ repertoire, cacheExec });
   // ── Historique, Ctrl+Z, vidage du canevas et fichier détaché, dans hooks/useHistorique.ts ──
   const { pushHistorique, undo, fermerOnglet, detacherFichier } = useHistorique({
     noeudsRef, aretesRef, grapheRacineRef, callbacksNoeudRef, cacheExec,
     setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath,
   });
 
-  // Auto-load SF2 au démarrage
-  useEffect(() => {
-    (async () => {
-      const sf2 = await autoChargerSF2(repertoire);
-      if (sf2) {
-        setSf2NomState(sf2Nom());
-        cacheExec.current.clear();
-      }
-    })();
-  }, [repertoire]);
-
   // Mettre à jour prioritaire sur les nœuds
   useEffect(() => {
     setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, prioritaire: n.id === prioritaire } })));
   }, [prioritaire, setNodes]);
-  const [theme, setTheme] = useState<"violet" | "black">("black");
-
-  useEffect(() => {
-    if (theme === "violet") delete document.documentElement.dataset.theme;
-    else document.documentElement.dataset.theme = theme;
-  }, [theme]);
 
   // Recadre la vue à chaque navigation dans/hors d'un méta-composant.
   useEffect(() => {
@@ -518,71 +417,13 @@ function Atelier() {
   });
   const { onDrop } = useDepot({ rfInstance, ajouterNoeud, setNodes, callbacksNoeud, pushHistorique, lang });
 
-  const isValidConnection = useCallback((conn: Connection | Edge) => {
-    // La validité se juge sur la connexion TRADUITE : sur une poignée de bulle, ce sont les types du
-    // port réel qui comptent, jamais ceux d'un port de façade.
-    const traduite = traduireConnexion(
-      noeudsRef.current as unknown as NoeudG[], aretesRef.current as unknown as AreteG[],
-      conn as any, trouverDef,
-    );
-    if (!traduite) return false;
-    // AUCUNE ARÊTE NE SE POSE SANS QUE LE CYCLE SOIT CHERCHÉ. Le moteur n'exécute qu'un graphe
-    // acyclique : un cycle n'a pas d'ordre topologique, et les nœuds qu'il contient ne seraient
-    // jamais lancés — sans erreur, sans message, une branche entière qui ne calcule rien. Le refus
-    // se fait ici, où il ne coûte rien à personne : la connexion ne se dépose simplement pas.
-    //
-    // SUR LES ARÊTES RÉELLES, ET NON SUR LES SUBSTITUTIONS. Une bulle repliée porte des arêtes de
-    // remplacement qui ramènent à elle celles de ses membres : deux membres sans rapport y
-    // paraissent reliés par elle, et une arête licite se ferait refuser. Les vraies arêtes sont
-    // gardées sous ces substituts, seulement cachées, et ce sont elles qui disent la topologie.
-    const reelles = (aretesRef.current as unknown as AreteG[]).filter((a) => !estSubstitution(a));
-    if (fermeraitUnCycle(traduite.source, traduite.target, reelles)) return false;
-    const source = noeudsRef.current.find((n) => n.id === traduite.source);
-    const target = noeudsRef.current.find((n) => n.id === traduite.target);
-    return validerArete(source, target, { ...conn, ...traduite });
-  }, [nomDeNoeud]);
+  // ── Poser une arête à la souris, dans hooks/useConnexions.ts ──
+  const { isValidConnection, onConnect } = useConnexions({ noeudsRef, aretesRef, setEdges, pushHistorique, lang });
 
   const nodeColor = useCallback((node: any) => {
     const cat = categorieNoeud(node.data?.ficheId, registreUI().trouverDef(node.data?.ficheId));
     return COULEURS_CATEGORIE[cat] ?? "var(--text-muted)";
   }, []);
-
-  const onConnect: OnConnect = useCallback((connBrute) => {
-    if (!connBrute.sourceHandle || !connBrute.targetHandle) return;
-    // UNE POIGNÉE DE BULLE EST CONNECTABLE, et la vraie arête va au membre qu'elle représente : c'est
-    // lui qui calcule. Traduite d'abord, la connexion suit ensuite le chemin ordinaire — même
-    // remplacement d'un port non dynamique, même couleur, même historique. Refusée si la poignée ne
-    // désigne rien, plutôt que devinée.
-    const traduite = traduireConnexion(
-      noeudsRef.current as unknown as NoeudG[], aretesRef.current as unknown as AreteG[],
-      connBrute as any, trouverDef,
-    );
-    if (!traduite) return;
-    const conn = { ...connBrute, ...traduite };
-    const ficheSource = noeudsRef.current.find((n) => n.id === conn.source)?.data.ficheId;
-    const ficheTarget = noeudsRef.current.find((n) => n.id === conn.target)?.data.ficheId;
-    if (ficheSource === "comment" || ficheTarget === "comment") return;
-    // LE MÊME REFUS QU'AU SURVOL, ET CE N'EST PAS UN DOUBLON. `isValidConnection` garde le geste à
-    // la souris ; celui-ci garde la pose elle-même, quel que soit le chemin qui y mène. Une seule
-    // arête qui referme un cycle suffit à rendre muette une branche entière.
-    if (fermeraitUnCycle(conn.source, conn.target,
-      (aretesRef.current as unknown as AreteG[]).filter((a) => !estSubstitution(a)))) {
-      console.warn(`[attic] Arête refusée : ${conn.source} → ${conn.target} refermerait un cycle.`);
-      return;
-    }
-    pushHistorique();
-    const defT = trouverDef(noeudsRef.current.find((n) => n.id === conn.target)?.data.ficheId ?? "");
-    const ti = parseInt(conn.targetHandle.split(":")[1]);
-    const portTarget = defT?.entrees[ti];
-    const c = couleurArete(noeudsRef.current, conn.source, conn.sourceHandle);
-    setEdges((eds) => {
-      // Remplacer une connexion existante sur un port d'entrée non dynamique.
-      const nettoyees = portTarget && !portTarget.dynamique
-        ? eds.filter((e) => !(e.target === conn.target && e.targetHandle === conn.targetHandle))
-        : eds;
-      return [...nettoyees, { ...conn, id: `e-${conn.source}-${conn.target}-${Date.now()}`, type: "arete-personnalisee", style: { stroke: c, strokeWidth: 2.5 } }];
-    });
-  }, [setEdges, pushHistorique, trouverDef, couleurFlux]);
 
   // ── Ce qu'une dictée fait au canevas, dans hooks/useDicteeCanevas.ts ──
   const dictee = useDicteeCanevas({
@@ -639,6 +480,11 @@ function Atelier() {
     setCurrentFilePath(null);
   }, [importer, setCurrentFilePath]);
 
+  // ── Trois commandes de la barre qui ont besoin de l'atelier, dans hooks/useCommandesBarre.ts ──
+  const { choisirDossier, lancerEtRecadrer, recharger } = useCommandesBarre({
+    changerRepertoire, lancer, rfInstance, enExecution, memoriserEncours,
+  });
+
   // ── Sauvegarde automatique, et filet anti-curseur collé ──
   //
   // Les deux sujets vivent dans leurs crochets : le minuteur qui écrit le projet et l'écriture
@@ -653,50 +499,16 @@ function Atelier() {
         theme={theme} setTheme={setTheme}
         enExecution={enExecution}
         repertoire={repertoire}
-        onChoisirDossier={() => {
-          const input = document.createElement("input");
-          input.type = "file";
-          input.webkitdirectory = true;
-          input.onchange = (e: any) => {
-            const files = e.target.files;
-            if (files?.length) changerRepertoire(files[0].webkitRelativePath.split("/")[0]);
-          };
-          input.click();
-        }}            
-        onLancer={async () => {
-          await lancer();
-          rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
-        }}
+        onChoisirDossier={choisirDossier}
+        onLancer={lancerEtRecadrer}
         onArreter={arreter}
         onReinitialiser={reinitialiserTout}
-        onRecharger={() => {
-          // Le graphe d'abord, le rechargement ensuite : l'en-cours n'est autrement écrit qu'à
-          // l'enregistrement, et recharger rendrait le graphe du dernier enregistrement.
-          //
-          // PAS DÉSACTIVÉ PENDANT UNE EXÉCUTION, contrairement à la réinitialisation. Recharger
-          // est justement le recours quand une exécution ne rend plus la main, ou quand
-          // l'application s'est mise dans un état qu'aucun autre bouton ne répare ; le griser à
-          // ce moment-là le rendrait inutilisable précisément quand on en a besoin. On demande
-          // seulement confirmation, puisque le calcul en cours sera perdu.
-          if (enExecution && !window.confirm(t("barre.recharger.confirmer"))) return;
-          memoriserEncours();
-          window.location.reload();
-        }}
+        onRecharger={recharger}
         onResumeAudio={resumeAudio}
         nbPlugins={nbPlugins}
         sf2Nom={sf2NomState}
         currentFilePath={currentFilePath}
-        onChargerSF2={async (f) => {
-          try {
-            await chargerSF2Globale(await f.arrayBuffer(), f.name);
-            setSf2NomState(f.name);
-            localStorage.setItem("attic-sf2-nom", f.name);
-            cacheExec.current.clear();
-          } catch (e: any) {
-            console.error("[attic] Échec chargement SF2 :", e);
-            window.alert(`Échec du chargement du SoundFont : ${e?.message ?? e}`);
-          }
-        }}
+        onChargerSF2={chargerSF2}
         onDetacher={ouvrirNouvelleFenetre}
         onExporter={exporter}
         onAjouterCommentaire={ajouterCommentaire}
@@ -718,35 +530,10 @@ function Atelier() {
         onSupprimerMeta={supprimerMetaDuCatalogue}
       />
       <div className={`attic-canevas ${pendingAdd ? "attic-canevas-pending" : ""}`} ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()} onPointerDownCapture={surPointerDown}>
-        <div className="attic-onglets">
-          <span className="attic-onglet actif">
-            <button className="attic-onglet-fermer" onClick={(e) => { e.stopPropagation(); fermerOnglet("wf-1"); }} title={t("workflow.nouveauTitre")}>✕</button>
-          </span>
-        </div>
-        <div className="attic-meta-actions">
-          {pile.length > 0 ? (
-            <>
-              <button onClick={() => ajouterNoeud(ID_ENTREE_FRONTIERE)} title={t("meta.ajoutEntree")}>➕ {t("meta.entree")}</button>
-              <button onClick={() => ajouterNoeud(ID_SORTIE_FRONTIERE)} title={t("meta.ajoutSortie")}>➕ {t("meta.sortie")}</button>
-            </>
-          ) : (
-            <>
-              <button onClick={grouperAvecBulles} title={t("meta.grouperTitle")}>⊟ {t("meta.grouper")}</button>
-              <button onClick={degrouper} title={t("meta.degrouperTitle")}>⊞ {t("meta.degrouper")}</button>
-              <button onClick={renommer} title={t("meta.renommerTitle")}>✎ {t("meta.renommer")}</button>
-            </>
-          )}
-        </div>
-        {pile.length > 0 && (
-          <div className="attic-filariane">
-            <button onClick={() => remonterA(-1)}>{t("meta.atelier")}</button>            {pile.map((niv, i) => (
-              <span key={i}>
-                <span className="sep">›</span>
-                <button onClick={() => remonterA(i)} disabled={i === pile.length - 1}>{lang === "en" && niv.nomEn ? niv.nomEn : niv.nom}</button>
-              </span>
-            ))}
-          </div>
-        )}
+        <BarreMeta
+          pile={pile} ajouterNoeud={ajouterNoeud} grouperAvecBulles={grouperAvecBulles}
+          degrouper={degrouper} renommer={renommer} remonterA={remonterA} fermerOnglet={fermerOnglet}
+        />
         <ReactFlow<NoeudAtelier>
           ref={rfRef}
           nodes={nodes} edges={edges}
@@ -775,60 +562,11 @@ function Atelier() {
         </ReactFlow>
         <MenuContextuel etat={menu} onFermer={fermerMenu} />
       </div>
-      <PanneauInspecteur>
-      <Inspector
-        noeud={nodes.find((n) => n.id === sel?.id) ?? null}
-        def={sel ? trouverDef(sel.data.ficheId) : undefined}
-        // Calculé ici et non dans l'inspecteur : retrouver quels ports sont de type courbe demande
-        // de connaître le domaine, et l'inspecteur doit rester générique. Chaque port de modulation
-        // nomme sa cible ; on ne garde que celles dont le port est effectivement branché — un
-        // réglage n'est « piloté » que quand une courbe y arrive vraiment.
-        parametresModules={(() => {
-          if (!sel) return [];
-          const d = trouverDef(sel.data.ficheId);
-          if (!d) return [];
-          return d.entrees.flatMap((port, rang) =>
-            port.module
-            && edges.some((a) => a.target === sel.id && (a.targetHandle ?? `in:${rang}`) === `in:${rang}`)
-              ? [port.module] : []);
-        })()}
-        portsBranches={sel ? edges.filter((a) => a.target === sel.id)
-          .map((a) => parseInt(String(a.targetHandle ?? "in:0").split(":")[1], 10)).filter(Number.isFinite) : []}
-        onChangerParametre={(nom, val) => {
-          if (!sel) return;
-          // LE MÊME CHEMIN QUE DEPUIS LE NŒUD, et c'est tout ce qui reste ici : l'inspecteur n'a
-          // plus à refaire la règle, seulement à se remettre à jour sur ce qu'elle a produit.
-          const suite = changerReglage(sel.id, nom, val);
-          if (suite) setSel((prev) => (prev ? { ...prev, data: { ...prev.data, parametres: suite } } : null));
-        }}
-        onChargerFichier={(key, fichier) => {
-          if (!sel) return;
-          setNodes((nds) => nds.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, [key]: fichier, audioNom: fichier.name } } : n));
-        }}
-        onSupprimer={() => {
-          if (sel) {
-            pushHistorique();
-            supprimerNoeud(sel.id);
-          }
-        }}
-        onReinitialiser={() => {
-          if (sel) reinitialiserNoeud(sel.id);
-        }}
-        onEnregistrer={(id, blob) => {
-          const url = URL.createObjectURL(blob);
-          setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n));
-        }}
-        onEnregistrerMidi={(id, fichier) => {
-          // Même contrat que onChargerMidi (AtelierNode) : vider le cache
-          // AVANT de poser le nouveau fichier, sinon un ré-enregistrement
-          // sans toucher aucun paramètre rejoue le résultat de la prise
-          // précédente (empreinteParametres/empreinteEntrees ne voient pas
-          // midiFichier, qui n'est pas dans `parametres`).
-          cacheExec.current.delete(id);
-          setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n));
-        }}
+      <InspecteurDuCanevas
+        nodes={nodes} edges={edges} sel={sel} setSel={setSel} setNodes={setNodes} cacheExec={cacheExec}
+        changerReglage={changerReglage} pushHistorique={pushHistorique}
+        supprimerNoeud={supprimerNoeud} reinitialiserNoeud={reinitialiserNoeud}
       />
-      </PanneauInspecteur>
       {calqueDemo}
     </div>
   );
