@@ -2,6 +2,7 @@
 // Haut : quelques périodes de la forme d'onde (le « geste »). Bas : barres des
 // harmoniques (le « timbre »). Montre le lien onde ↔ spectre. Réutilise fft.ts.
 import { useRef, useState, useEffect, useCallback } from "react";
+import { creerFenetreHann } from "../audio/commun";
 import { fft } from "../audio/fft";
 import { useI18n } from "../i18n";
 
@@ -79,9 +80,9 @@ export function OscilloVue({ audioUrl, frequence }: Props) {
     const N2 = N;
     const re = new Float64Array(N2), im = new Float64Array(N2);
     const off = Math.floor((data.length - N2) / 2);
+    const win = creerFenetreHann(N2);
     for (let i = 0; i < N2; i++) {
-      const w = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (N2 - 1));
-      re[i] = (data[off + i] ?? 0) * w; im[i] = 0;
+      re[i] = (data[off + i] ?? 0) * win[i]; im[i] = 0;
     }
     fft(re, im, false);
     const binHz = sr / N2;

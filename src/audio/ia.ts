@@ -1,4 +1,5 @@
 import * as ort from "onnxruntime-web";
+import { creerFenetreHann } from "./commun";
 import { fft } from "./fft";
 
 const TAILLE_TRANCHE = 343980;
@@ -119,13 +120,7 @@ const N_FFT = 4096;
 const HOP = 1024;
 const NB_BINS = N_FFT / 2;
 
-function hann(len: number): Float64Array {
-  const w = new Float64Array(len);
-  for (let i = 0; i < len; i++) w[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (len - 1)));
-  return w;
-}
-
-const FENETRE = hann(N_FFT);
+const FENETRE = creerFenetreHann(N_FFT);
 
 function stft(audio: Float32Array): { real: Float64Array; imag: Float64Array; nframes: number } {
   const n = audio.length;

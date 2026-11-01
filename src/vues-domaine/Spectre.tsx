@@ -1,6 +1,7 @@
 // ui/Spectre.tsx — Canvas d'analyseur de spectre (FFT).
 // Haute résolution (DPR), gradient de remplissage, grille nette, police système.
 import { useRef, useState, useEffect, useCallback } from "react";
+import { creerFenetreHann } from "../audio/commun";
 import { fft } from "../audio/fft";
 import { useI18n } from "../i18n";
 import { versDb } from "../audio/decibels";
@@ -23,8 +24,7 @@ function calculerSpectre(buffer: AudioBuffer, N: number): Float32Array {
   }
   const half = N >> 1;
   const acc = new Float64Array(half);
-  const win = new Float64Array(N);
-  for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (N - 1));
+  const win = creerFenetreHann(N);
   const re = new Float64Array(N);
   const im = new Float64Array(N);
   const hop = N >> 1;

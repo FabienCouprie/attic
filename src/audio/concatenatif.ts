@@ -16,6 +16,8 @@
 // chose qui manquait — et il le fait avec des descripteurs NORMALISÉS, sans quoi la mesure
 // de distance serait dominée par celui dont les valeurs sont les plus grandes.
 
+import { creerFenetreHann } from "./commun";
+
 export interface Grain {
   /** Position du grain dans le signal source, en échantillons. */
   debut: number;
@@ -46,6 +48,9 @@ export function decrireGrains(
   let n = 16;
   while (n < t) n *= 2;
   const re = new Float64Array(n), im = new Float64Array(n);
+  // Fenêtre de Hann : sans elle, les bords du grain inventent des aigus et faussent le
+  // centre de gravité, donc l'appariement.
+  const fen = creerFenetreHann(t);
 
   for (let debut = 0; debut + t <= signal.length; debut += p) {
     let somme = 0, passages = 0;
@@ -55,9 +60,7 @@ export function decrireGrains(
       const x = signal[debut + i];
       somme += x * x;
       if (i > 0 && (x >= 0) !== (signal[debut + i - 1] >= 0)) passages++;
-      // Fenêtre de Hann : sans elle, les bords du grain inventent des aigus et faussent le
-      // centre de gravité, donc l'appariement.
-      re[i] = x * (0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (t - 1)));
+      re[i] = x * fen[i];
     }
     fftReelle(re, im);
     let poids = 0, moment = 0;
@@ -156,10 +159,11 @@ export function assembler(
     const destination = cible[i];
     if (!source || !destination) return;
     const n = Math.min(source.longueur, destination.longueur);
+    const fen = creerFenetreHann(n);
     for (let k = 0; k < n; k++) {
       const cible_ = destination.debut + k;
       if (cible_ >= longueurSortie) break;
-      const fenetre = 0.5 - 0.5 * Math.cos((2 * Math.PI * k) / (n - 1));
+      const fenetre = fen[k];
       sortie[cible_] += corpusSignal[source.debut + k] * fenetre;
       poids[cible_] += fenetre;
     }
