@@ -21,7 +21,7 @@
 // aucune mesure de ce fichier ne change le goût de quoi que ce soit : elle situe un son dans un
 // espace de correspondances, ce qui est déjà beaucoup et n'est que cela.
 
-import { creerFenetreHann, tramesDepuisBuffer } from "./commun";
+import { creerFenetreHann, mixdownMono, tramesDepuisBuffer } from "./commun";
 import { partielsDepuisModules, dissonanceSpectre } from "./dissonance";
 import { suivreHauteur, hauteurMediane, partVoisee } from "./hauteur";
 
@@ -114,22 +114,7 @@ export interface MesuresGout {
  * clics ne l'est pas, quel que soit leur nombre.
  */
 export function mesurer(buffer: AudioBuffer): MesuresGout {
-  return mesurerVoie(voieMoyenne(buffer), { sampleRate: buffer.sampleRate });
-}
-
-/**
- * Les canaux rassemblés en une voie : un goût est une propriété du son, non de son image stéréo.
- *
- * ELLE EST SÉPARÉE DE LA MESURE pour que la mesure puisse avoir lieu dans un ouvrier, où
- * `AudioBuffer` n'existe pas. Le mélange, lui, coûte une passe sur les échantillons.
- */
-export function voieMoyenne(buffer: AudioBuffer): Float32Array {
-  const x = new Float32Array(buffer.length);
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const d = buffer.getChannelData(c);
-    for (let i = 0; i < buffer.length; i++) x[i] += d[i] / buffer.numberOfChannels;
-  }
-  return x;
+  return mesurerVoie(mixdownMono(buffer), { sampleRate: buffer.sampleRate });
 }
 
 /** Tout ce qu'une voie demande, en un seul objet sérialisable : c'est tout ce qu'un ouvrier reçoit. */

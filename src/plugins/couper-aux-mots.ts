@@ -13,7 +13,8 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
-import { MODELES, chargerModele, transcrire, versMono, vers16k, type MotVosk } from "./vosk-asr";
+import { MODELES, chargerModele, transcrire, vers16k, type MotVosk } from "./vosk-asr";
+import { mixdownMono } from "../audio/commun";
 import { appliquerRognage, type Segment } from "../audio/silences";
 import { choixLangues } from "../core/langues";
 
@@ -165,7 +166,7 @@ export const fiches: FicheAudio[] = ([
       const choisi = MODELES[langue] ?? MODELES.fr;
       await annoncerModele(ctx, "couper-aux-mots", traduire("progress.vosk.chargement"));
       const modele = await chargerModele(choisi.fichier);
-      const seize = await vers16k(versMono(audio), audio.sampleRate);
+      const seize = await vers16k(mixdownMono(audio), audio.sampleRate);
       const { mots } = await transcrire(modele, seize, {
         grammaire: listeDeMots(ctx.paramTexte("Vocabulaire", "")),
         surPartiel: (p) => ctx.onProgress?.(p),

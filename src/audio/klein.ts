@@ -30,6 +30,7 @@
 // panoramique sin θ, et le miroir θ → −θ échange gauche et droite. Chaque voix
 // est un point, si bien qu'une entrée stéréo est d'abord ramenée en mono.
 
+import { mixdownMono } from "./commun";
 import { voixRisset, boucleSansCouture, type OptionsRisset } from "./risset";
 
 export type OptionsKlein = {
@@ -70,11 +71,7 @@ export function rendreKlein(buffer: AudioBuffer, o: OptionsKlein): AudioBuffer {
   const sr = buffer.sampleRate;
   // Ramener en mono AVANT de boucler : chaque voix est un point de la fibre.
   const mono = new AudioBuffer({ numberOfChannels: 1, length: buffer.length, sampleRate: sr });
-  const m = mono.getChannelData(0);
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const d = buffer.getChannelData(c);
-    for (let i = 0; i < d.length; i++) m[i] += d[i] / buffer.numberOfChannels;
-  }
+  mono.copyToChannel(mixdownMono(buffer), 0);
   const src = boucleSansCouture(mono, o.fonduBoucleSec).getChannelData(0);
 
   const optionsRisset: OptionsRisset = {

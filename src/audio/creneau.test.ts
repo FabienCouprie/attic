@@ -13,8 +13,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  centresDeBandes, enUneVoie, meilleurCreneau, poserDansLeCreneau, profilDeBandes,
+  centresDeBandes, meilleurCreneau, poserDansLeCreneau, profilDeBandes,
 } from "./creneau";
+import { mixdownMono as enUneVoie } from "./commun";
 
 const SR = 8000;
 

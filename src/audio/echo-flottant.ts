@@ -25,6 +25,7 @@
 // un seul son, qu'elle localise du côté arrivé LE PREMIER, même si le retardé est plus fort. Au-delà
 // d'une quarantaine de millisecondes la fusion se défait et l'on entend deux sons.
 
+import { mixdownMono } from "./commun";
 import { valeurA, valeurTransformee } from "./courbe";
 
 /** La célérité du son dans l'air à vingt degrés, en mètres par seconde. */
@@ -132,11 +133,7 @@ export function haas(buffer: AudioBuffer, o: OptionsHaas): AudioBuffer {
   const retard = Math.max(0, Math.round(Math.max(0, o.retard) * sr));
   const gain = Math.max(0, o.gainDuRetarde);
 
-  const mono = new Float32Array(n);
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const src = buffer.getChannelData(c);
-    for (let i = 0; i < n; i++) mono[i] += src[i] / buffer.numberOfChannels;
-  }
+  const mono = mixdownMono(buffer);
 
   const sortie = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: sr });
   const tot = sortie.getChannelData(o.retarderLaDroite ? 0 : 1);

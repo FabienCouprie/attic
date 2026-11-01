@@ -11,6 +11,7 @@
 // et un hébergeur tiers libre de déplacer ce qu'il sert.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { mixdownMono } from "../audio/commun";
 import { reechantillonnerLineaire } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -43,17 +44,6 @@ function makeRequestId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-// Mixage stéréo → mono Float32Array pour Whisper
-function bufferVersMono(buffer: AudioBuffer): Float32Array {
-  const nch = buffer.numberOfChannels;
-  const len = buffer.length;
-  const mono = new Float32Array(len);
-  for (let c = 0; c < nch; c++) {
-    const d = buffer.getChannelData(c);
-    for (let i = 0; i < len; i++) mono[i] += d[i] / nch;
-  }
-  return mono;
-}
 
 
 export const fiches: FicheAudio[] = ([
@@ -69,7 +59,7 @@ export const fiches: FicheAudio[] = ([
       const audio = entreeAudio(ctx, 0);
       if (sansEntree(audio)) return audio;
       // Whisper veut du 16 kHz ; le linéaire suffit à des mots.
-      const mono = reechantillonnerLineaire(bufferVersMono(audio), audio.sampleRate, 16000);
+      const mono = reechantillonnerLineaire(mixdownMono(audio), audio.sampleRate, 16000);
       // LE PAQUET PEUT MANQUER, dans l'installeur allégé qui ne l'embarque pas : c'est ce message
       // qui le dit et qui le fait prendre, au lieu de laisser le worker échouer sur un fichier
       // absent. Le manifeste relie le paquet à cette fiche, et un test refuse qu'un nœud nommé par

@@ -28,6 +28,7 @@
 //     Csound ne limite pas, c'est à l'appelant de le faire.
 
 import { bufferVersWavBlob } from "./io";
+import { mixdownMono } from "./commun";
 
 import type { Note } from "./note";
 import { frequenceDeTravail } from "./frequence-de-travail";
@@ -424,12 +425,7 @@ function versMono(buffer: AudioBuffer): AudioBuffer {
   const mono = new AudioBuffer({
     numberOfChannels: 1, length: buffer.length, sampleRate: buffer.sampleRate,
   });
-  const sortie = new Float32Array(buffer.length);
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const d = buffer.getChannelData(c);
-    for (let i = 0; i < buffer.length; i++) sortie[i] += d[i] / buffer.numberOfChannels;
-  }
-  mono.copyToChannel(sortie, 0);
+  mono.copyToChannel(mixdownMono(buffer), 0);
   return mono;
 }
 

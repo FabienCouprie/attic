@@ -27,6 +27,7 @@
 //   laquelle il n'y a pas de `garde-worker` ici — il n'y a pas de worker à garder, et la
 //   bibliothèque rend ses erreurs par son propre canal.
 import type { FicheAudio } from "../audio/types-domaine";
+import { mixdownMono } from "../audio/commun";
 import { reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -105,16 +106,6 @@ export async function chargerModele(fichier: string): Promise<ModeleVosk> {
   return promesse;
 }
 
-/** Mixe en mono. */
-export function versMono(buffer: AudioBuffer): Float32Array {
-  const n = buffer.numberOfChannels;
-  const mono = new Float32Array(buffer.length);
-  for (let c = 0; c < n; c++) {
-    const d = buffer.getChannelData(c);
-    for (let i = 0; i < buffer.length; i++) mono[i] += d[i] / n;
-  }
-  return mono;
-}
 
 /** Rééchantillonne vers seize kilohertz par Web Audio, qui filtre au lieu de décimer. */
 export async function vers16k(mono: Float32Array, frequence: number): Promise<Float32Array> {
@@ -242,7 +233,7 @@ export const fiches: FicheAudio[] = ([
       const choisi = MODELES[langue] ?? MODELES.fr;
       await annoncerModele(ctx, "vosk-asr", traduire("progress.vosk.chargement"));
       const modele = await chargerModele(choisi.fichier);
-      const mono = await vers16k(versMono(audio), audio.sampleRate);
+      const mono = await vers16k(mixdownMono(audio), audio.sampleRate);
       const vocabulaire = String(ctx.paramTexte("Vocabulaire", ""))
         .split(/[\s,]+/).map((m: string) => m.trim().toLowerCase()).filter(Boolean);
       const { texte, mots } = await transcrire(modele, mono, {
