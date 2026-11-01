@@ -68,6 +68,12 @@ const HORS_LEXIQUE_FR: ReadonlySet<string> = new Set([
   // défaut que cette liste existe pour empêcher, et il durait sur neuf composants.
   "apparier", "atténuateur", "bytebeat", "granulaire", "granulation", "inharmonique",
   "isomorphe", "résonants", "schaefferiens", "trémolo", "vosim",
+  // ═══ UN MOT RELEVÉ LE 2026-11-01 PAR LE GARDE `tests-e2e/lexique-dictee.spec.ts` ═══
+  //
+  // « Correction du pleurage » est entré au catalogue le 2026-10-31, et le garde du lexique, lancé
+  // après lui, a vu le moteur jeter « pleurage » : le nom entrait amputé, « correction du »
+  // concurrençant les autres corrections. Le composant se dit désormais par son nom parlé.
+  "pleurage",
 ]);
 
 /**

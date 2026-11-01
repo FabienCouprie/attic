@@ -43,7 +43,7 @@ function messageDe(r: ResultatPleurage, d: DemandePleurage): string {
 
 export const fiches = ([
   {
-    id: "correction-pleurage", nom: "Correction du pleurage", nomEn: "Wow and Flutter Correction",
+    id: "correction-pleurage", nomDicte: "correction de la vitesse de bande", nom: "Correction du pleurage", nomEn: "Wow and Flutter Correction",
     univers: "Traitement", famille: "Effets",
     resume: "Retire les variations de vitesse d'une bande, retrouvées dans un ton de fréquence fixe.",
     resumeEn: "Removes the speed variations of a tape, found in a fixed-frequency tone.",
