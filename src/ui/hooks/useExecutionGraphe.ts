@@ -594,9 +594,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // de ses entrées, et cette distinction seule décide de ce qu'un réglage périme.
     const affichageParNoeud = new Map<string, Record<string, unknown>>();
     const designeParNoeud = new Map<string, Record<string, unknown>>();
-    // CE QUE LES COMPOSANTS DEMANDENT AU MOTEUR, et qui ne se pose jamais sur un nœud : embarquer un
-    // graphe dans le fichier écrit, en poser un sur le canevas, relire la palette. Voir `moteur`
-    // dans `core/types.ts`.
+    // CE QUE LES COMPOSANTS DEMANDENT AU MOTEUR, et qui ne se pose jamais sur un nœud : poser un
+    // graphe sur le canevas, relire la palette. Voir `moteur` dans `core/types.ts`.
     const demandesParNoeud = new Map<string, DemandeAuMoteur>();
 
     // LA PRÉPARATION EST LE PLUS GROS GEL DU LANCEMENT. Valider le graphe, l'aplatir, déplier les
@@ -1146,8 +1145,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // Ce qu'une courbe produite donne à dessiner. Combien de points y suffisent, et ce qu'est une
         // courbe, relèvent du domaine : voir `plugins/apercu-domaine.ts`.
         const apercuCourbe = servicesApercu().apercuCourbe(valsSafe as unknown[]);
-        // Embarquer le graphe dans le WAV de prévisualisation si le node l'a demandé
-        const grapheExport = demandesParNoeud.get(n.id)?.grapheAEmbarquer;
         // Réutilise l'URL existante si le buffer audio n'a pas changé — évite de
         // démonter/remonter le lecteur à chaque run (cache) et empêche le
         // rechargement gris/0:00 sur les nœuds déjà terminés.
@@ -1204,8 +1201,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
             const securiser = trouverDef(n.data.ficheId as string)?.sortieHorsPlagePossible === true;
             // Ce blob est à la fois l'aperçu écoutable et le fichier sauvegardé : la profondeur
             // choisie s'applique donc ici, et non au moment de la sauvegarde. Les séparer aurait
-            // demandé de réencoder à l'enregistrement, donc de reconstruire le graphe embarqué,
-            // que seule cette boucle connaît. Ce qu'écrire veut dire — repliement d'un multicanal,
+            // demandé de réencoder à l'enregistrement, donc de reconstruire les métadonnées que
+            // seule cette boucle connaît. Ce qu'écrire veut dire — repliement d'un multicanal,
             // métadonnées, tranches qui rendent la main — appartient au domaine.
             const ficheId = n.data.ficheId as string;
             // LE NŒUD DÉCLARE QUE SON APERÇU EST LE FICHIER, le shell ne tient plus la liste. Elle
@@ -1214,11 +1211,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
             // calcul parcourt la valeur entière, et un aperçu intermédiaire n'est jamais livré.
             const def = trouverDef(ficheId);
             const aEcouter = audio;
-            // CE QU'IL FAUDRAIT POUR LE RÉÉCRIRE EST DÉPOSÉ À CÔTÉ, et c'est nécessaire : ni le
-            // graphe embarqué — qui vient du canal `moteur` de cette exécution — ni le nom pour les
-            // métadonnées ne se redérivent d'un nœud. `ui/refaire-apercus.ts` les relit pour
-            // refaire l'aperçu à une autre profondeur sans rejouer le nœud.
-            refaisable = { bits: bitsVoulus, reecriture: { securiser, grapheAEmbarquer: grapheExport,
+            // CE QU'IL FAUDRAIT POUR LE RÉÉCRIRE EST DÉPOSÉ À CÔTÉ, et c'est nécessaire : le nom
+            // pour les métadonnées ne se redérive pas d'un nœud. `ui/refaire-apercus.ts` le relit
+            // pour refaire l'aperçu à une autre profondeur sans rejouer le nœud.
+            refaisable = { bits: bitsVoulus, reecriture: { securiser,
               nomPourMetadonnees: def?.apercuEstLeFichier ? (def.nom ?? ficheId) : undefined } };
             lecteursAEcrire.set(n.id, async () => {
               const blob = await servicesApercu().blobApercu(aEcouter, {
@@ -1325,18 +1321,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
     for (const [nodeId, demande] of demandesParNoeud) {
       if (onGrapheGenere && demande.grapheACreer?.nodes && demande.grapheACreer?.edges) {
         onGrapheGenere(nodeId, { nodes: demande.grapheACreer.nodes, edges: demande.grapheACreer.edges });
-      }
-      // UN GRAPHE TROUVÉ DANS UN FICHIER arrive avec des identifiants de nœuds : il se convertit en
-      // fiches et en rangs, qui est ce que le canevas sait poser.
-      const trouve = demande.grapheTrouve;
-      if (onGrapheGenere && trouve?.nodes && trouve?.edges) {
-        onGrapheGenere(nodeId, {
-          nodes: trouve.nodes.map((nn) => ({ ficheId: nn.ficheId, label: nn.ficheId })),
-          edges: trouve.edges.map((ee) => ({
-            source: trouve.nodes.findIndex((nn) => nn.id === ee.source),
-            target: trouve.nodes.findIndex((nn) => nn.id === ee.target),
-          })).filter((e) => e.source >= 0 && e.target >= 0),
-        });
       }
     }
     if (onNodeInstalle && [...demandesParNoeud.values()].some((d) => d.paletteARelire)) onNodeInstalle();

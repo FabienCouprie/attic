@@ -110,7 +110,7 @@ export const APERCU_AUDIO: ServicesApercu = {
       referenceTemps: depart !== undefined ? Math.round(depart * ecrit.sampleRate) : 0,
     };
     return bufferVersWavBlobRespirant(
-      ecrit, o.grapheAEmbarquer, o.securiser, { bits: o.bits, ixml: description?.ixml, bext },
+      ecrit, undefined, o.securiser, { bits: o.bits, ixml: description?.ixml, bext },
       o.souffle, o.onAvance);
   },
 

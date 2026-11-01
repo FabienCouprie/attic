@@ -105,7 +105,7 @@ export const CHAMPS_RESULTAT = new Set([
   // VINGT-NEUF CHAMPS Y FIGURAIENT, sur douze composants. Vingt-six sont passés au canal
   // d'affichage, deux ont été retirés parce que rien ne les lisait, et le dernier, `_grapheExport`,
   // est parti par le canal du moteur : il ne décrivait pas ce qu'on voit, il disait au moteur quoi
-  // embarquer dans le fichier écrit.
+  // embarquer dans le fichier écrit — et ce canal-là a été retiré à son tour le 2026-11-01.
   //
   // Ce qui précède est ce que le MOTEUR lui-même dépose sur un nœud : l'URL du son rendu, son
   // message, le temps d'exécution. Un composant, lui, n'écrit plus rien.
