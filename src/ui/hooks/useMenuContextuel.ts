@@ -7,6 +7,15 @@
 // LE CLIC DROIT DÉPLACE DÉJÀ LE CANEVAS (`panOnDrag={[2]}`), et l'événement de menu arrive aussi au
 // relâchement d'un glissement : sans ce garde-fou, déplacer la vue ouvrirait un menu à l'arrivée.
 // On note où le bouton est descendu, et on n'ouvre que si rien n'a bougé.
+//
+// TROIS ENDROITS REÇOIVENT LE CLIC DROIT, et chacun a son entrée ici. Le nœud, par `onNodeContextMenu`.
+// Le rectangle qu'un cadre de sélection pose DEVANT les nœuds pris, par `onSelectionContextMenu` : sans
+// lui, ce clic n'allait nulle part, et « Clarifier » ne s'atteignait qu'après un Ctrl+clic. Le fond
+// vide, par l'événement natif remonté jusqu'au canevas, et non par `onPaneContextMenu` : React Flow
+// n'appelle celui-ci qu'au bout d'un déplacement de vue resté nul, et le moindre `mousemove` entre la
+// descente et le relâchement en est un. Relevé le 2026-11-01 : sur le fond, aucun menu dès qu'un
+// mouvement s'intercale, fût-il de zéro pixel, quand le nœud en tolère trois. Les trois passent
+// désormais par le même seuil.
 import { useCallback, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import type { Node } from "@xyflow/react";
@@ -56,7 +65,25 @@ export function useMenuContextuel({ noeudsRef, basculerRepli, developper, clarif
     setMenu(entrees.length ? { x: e.clientX, y: e.clientY, entrees } : null);
   }, [t, basculerRepli, developper, clarifier]);
 
+  /**
+   * Le clic droit sur le rectangle d'une sélection faite au cadre : le même menu que sur le nœud que
+   * le rectangle cache sous le pointeur, et celui du fond entre deux nœuds. Une bulle prise au cadre
+   * s'ouvre donc encore.
+   */
+  const surClicDroitSelection = useCallback((e: React.MouseEvent, selection: Node[]) => {
+    const ids = new Set(selection.map((n) => n.id));
+    const vise = document.elementsFromPoint(e.clientX, e.clientY)
+      .map((el) => el.closest(".react-flow__node")?.getAttribute("data-id"))
+      .find((id) => id && ids.has(id));
+    surClicDroit(e, selection.find((n) => n.id === vise));
+  }, [surClicDroit]);
+
+  /** Le fond vide, par l'événement natif : le nœud et le rectangle ont déjà leur entrée. */
+  const surClicDroitFond = useCallback((e: React.MouseEvent) => {
+    if ((e.target as Element).classList?.contains("react-flow__pane")) surClicDroit(e);
+  }, [surClicDroit]);
+
   const fermerMenu = useCallback(() => setMenu(null), []);
 
-  return { menu, fermerMenu, surPointerDown, surClicDroit };
+  return { menu, fermerMenu, surPointerDown, surClicDroit, surClicDroitSelection, surClicDroitFond };
 }

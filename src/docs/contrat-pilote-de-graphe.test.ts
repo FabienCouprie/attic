@@ -194,12 +194,16 @@ describe("le pilote de graphe", () => {
     //
     // LE COPIER-COLLER DES NOTES ET DES CADRES N'Y PREND QUE `semer` : il ne lance rien, il sème un
     // graphe puis le travaille au clavier.
+    //
+    // LE MENU DU CLIC DROIT N'Y PREND QUE `semer` lui aussi : il sème un graphe, puis y tire un cadre
+    // de sélection et clique du bouton droit.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
         "copier-coller-annotations-dans-application.spec.ts",
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
-        "melange-frequences-dans-application.spec.ts", "montage-gains-pistes.spec.ts",
+        "melange-frequences-dans-application.spec.ts", "menu-contextuel-dans-application.spec.ts",
+        "montage-gains-pistes.spec.ts",
         "profondeur-dans-application.spec.ts", "rendu-image-taille-dans-application.spec.ts",
         "restaurer-dans-application.spec.ts",
         "sorties-extensibles-dans-application.spec.ts", "types-au-port.spec.ts"]);

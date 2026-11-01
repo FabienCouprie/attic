@@ -412,7 +412,7 @@ function Atelier() {
   useEffect(() => { retirerBullesVides(); }, [nodes, retirerBullesVides]);
 
   // ── Clic droit, dans hooks/useMenuContextuel.ts ; glisser-déposer, dans hooks/useDepot.ts ──
-  const { menu, fermerMenu, surPointerDown, surClicDroit } = useMenuContextuel({
+  const { menu, fermerMenu, surPointerDown, surClicDroit, surClicDroitSelection, surClicDroitFond } = useMenuContextuel({
     noeudsRef, basculerRepli, developper, clarifier,
   });
   const { onDrop } = useDepot({ rfInstance, ajouterNoeud, setNodes, callbacksNoeud, pushHistorique, lang });
@@ -529,7 +529,7 @@ function Atelier() {
         plugins={plugins.filter((p) => !estFrontiere(p.id))}
         onSupprimerMeta={supprimerMetaDuCatalogue}
       />
-      <div className={`attic-canevas ${pendingAdd ? "attic-canevas-pending" : ""}`} ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()} onPointerDownCapture={surPointerDown}>
+      <div className={`attic-canevas ${pendingAdd ? "attic-canevas-pending" : ""}`} ref={wrapperRef} onDrop={onDrop} onDragOver={(e) => e.preventDefault()} onPointerDownCapture={surPointerDown} onContextMenu={surClicDroitFond}>
         <BarreMeta
           pile={pile} ajouterNoeud={ajouterNoeud} grouperAvecBulles={grouperAvecBulles}
           degrouper={degrouper} renommer={renommer} remonterA={remonterA} fermerOnglet={fermerOnglet}
@@ -544,8 +544,8 @@ function Atelier() {
           onNodeClick={(_, n) => setSel(n)}
           onNodeDoubleClick={(_, n) => { if (trouverMeta(n.data.ficheId as string)) ouvrirMeta(n.data.ficheId as string); }}
           onPaneClick={onPaneClick}
-          onPaneContextMenu={(e) => surClicDroit(e as React.MouseEvent)}
           onNodeContextMenu={(e, n) => surClicDroit(e, n as Node)}
+          onSelectionContextMenu={(e, sel) => surClicDroitSelection(e, sel as Node[])}
           onInit={setRfInstance}
           fitView deleteKeyCode={["Delete"]}
           panOnDrag={[2]}
