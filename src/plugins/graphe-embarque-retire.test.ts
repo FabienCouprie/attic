@@ -44,7 +44,8 @@ describe("un fichier audio ne porte pas de graphe", () => {
     // Le témoin porte vraiment un graphe : c'est la fonction de format, gardée, qui le dit.
     expect(extraireGrapheWav(octets)).toBe(GRAPHE);
     const fichier = new File([octets], "avec-graphe.wav", { type: "audio/wav" });
-    const runtime = { sampleRate: 44100, decodeAudioData: async () => son };
+    // Le décodeur ne lit que `sampleRate` et `decodeAudioData` : un faux contexte suffit au banc.
+    const runtime = { sampleRate: 44100, decodeAudioData: async () => son } as unknown as AudioContext;
     const r = await fiche("entree-audio").executer(ctxDEssai([], {}, { data: { audioFichier: fichier }, runtime }));
     expect(r.valeurs[0]).toBe(son);
     expect(r.moteur, "rien n'est demandé au moteur").toBeUndefined();
