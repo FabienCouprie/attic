@@ -2,6 +2,7 @@
 // La première piste diminue pendant que la seconde augmente, suivant une courbe logistique.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
@@ -14,12 +15,7 @@ async function resamplerVers(
   if (buffer.sampleRate === sampleRate && buffer.numberOfChannels === numberOfChannels) {
     return buffer;
   }
-  const offline = new OfflineAudioContext(numberOfChannels, Math.ceil(buffer.duration * sampleRate), sampleRate);
-  const source = offline.createBufferSource();
-  source.buffer = buffer;
-  source.connect(offline.destination);
-  source.start(0);
-  return offline.startRendering();
+  return reechantillonnerParLeNavigateur(buffer, sampleRate, { canaux: numberOfChannels });
 }
 
 async function melangerLogistique(

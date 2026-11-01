@@ -7,8 +7,8 @@ l'interface. Le critère est le RENDU, pas la mention d'`AudioBuffer` : un modul
 que comme récipient fige le fil et devient transposable dès qu'on en extrait un cœur par voie.
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
-- **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 96 · fige, transposable après extraction d'un cœur par voie
+- **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
+- **récipient** : 97 · fige, transposable après extraction d'un cœur par voie
 - **pur** : 219 · transposable tel quel
 
 | module | classe | marqueur |
@@ -246,7 +246,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | norgard.ts | pur | — |
 | normalisation-sonie.ts | recipient | AudioBuffer |
 | note.ts | pur | — |
-| objets-sonores.ts | rendu | OfflineAudioContext |
+| objets-sonores.ts | recipient | AudioBuffer |
 | ondelettes.ts | pur | — |
 | ordre-catalogue.ts | pur | — |
 | ordre-galerie.ts | pur | — |

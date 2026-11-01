@@ -16,7 +16,7 @@
 //     CETTE fréquence-là qu'il faut relever. Un rapport global n'y verrait rien.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
-import { convertirVersFrequence, reechantillonnerCanal } from "./convertir-frequence";
+import { convertirVersFrequence, reechantillonnerCanal, reechantillonnerLineaire, reechantillonnerParLeNavigateur } from "./convertir-frequence";
 import { echantillonCubique, echantillonLineaire } from "./interpolation";
 import { raieSurParasites } from "./mesure-raie";
 
@@ -181,5 +181,62 @@ describe("la conversion vers la fréquence de travail", () => {
       expect(horsDuFil.getChannelData(c), `le canal ${c} n'est pas celui du calcul dans le fil`)
         .toEqual(dansLeFil.getChannelData(c));
     }
+  });
+});
+
+describe("le rééchantillonnage PAR LE NAVIGATEUR, écrit une fois", () => {
+  // LE TÉMOIN EST LE BLOC QUE SIX MODULES ÉCRIVAIENT, recopié tel quel : le canonique doit rendre
+  // les mêmes échantillons, au bit près, sinon il a changé leur son.
+  async function temoin(b: AudioBuffer, sr: number, canaux = b.numberOfChannels, longueur = Math.max(1, Math.ceil(b.duration * sr))) {
+    const off = new OfflineAudioContext(canaux, longueur, sr);
+    const s = off.createBufferSource(); s.buffer = b; s.connect(off.destination); s.start(0);
+    return off.startRendering();
+  }
+  function stereo(sr: number, n: number): AudioBuffer {
+    const b = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: sr });
+    b.copyToChannel(sinus(440, n, sr), 0); b.copyToChannel(sinus(1000, n, sr), 1);
+    return b;
+  }
+  const memes = (a: AudioBuffer, b: AudioBuffer) => {
+    expect([a.numberOfChannels, a.length, a.sampleRate]).toEqual([b.numberOfChannels, b.length, b.sampleRate]);
+    for (let c = 0; c < a.numberOfChannels; c++) expect(a.getChannelData(c)).toEqual(b.getChannelData(c));
+  };
+
+  it("rend ce que rendait le bloc, en baissant et en montant", async () => {
+    const b = stereo(48000, 4801);
+    memes(await reechantillonnerParLeNavigateur(b, 44100), await temoin(b, 44100));
+    memes(await reechantillonnerParLeNavigateur(b, 96000), await temoin(b, 96000));
+  });
+
+  it("respecte le nombre de canaux et la longueur que l'appelant impose", async () => {
+    const b = stereo(48000, 4801);
+    memes(await reechantillonnerParLeNavigateur(b, 16000, { canaux: 1 }), await temoin(b, 16000, 1));
+    const b2 = stereo(48000, 4807); // 4 416,43 échantillons à 44 100 : arrondir et plafonner diffèrent
+    const longueur = Math.max(1, Math.round(b2.duration * 44100));
+    expect(longueur).not.toBe(Math.ceil(b2.duration * 44100));
+    memes(await reechantillonnerParLeNavigateur(b2, 44100, { longueur }), await temoin(b2, 44100, 2, longueur));
+  });
+});
+
+describe("le rééchantillonnage linéaire, écrit une fois", () => {
+  // Le témoin est la fonction que deux transcripteurs portaient chacun, recopiée.
+  function temoin(mono: Float32Array, sr: number): Float32Array {
+    if (sr === 16000) return mono;
+    const ratio = 16000 / sr;
+    const nb = Math.floor(mono.length * ratio);
+    const out = new Float32Array(nb);
+    for (let i = 0; i < nb; i++) {
+      const pos = i / ratio; const idx = Math.floor(pos); const frac = pos - idx;
+      out[i] = idx + 1 < mono.length ? mono[idx] * (1 - frac) + mono[idx + 1] * frac : mono[Math.min(idx, mono.length - 1)];
+    }
+    return out;
+  }
+
+  it("rend les mêmes échantillons que les deux copies, et le même objet à fréquence égale", () => {
+    for (const sr of [44100, 48000, 22050, 8000]) {
+      expect(reechantillonnerLineaire(sinus(440, 2205, sr), sr, 16000)).toEqual(temoin(sinus(440, 2205, sr), sr));
+    }
+    const deja = sinus(440, 160, 16000);
+    expect(reechantillonnerLineaire(deja, 16000, 16000)).toBe(deja);
   });
 });

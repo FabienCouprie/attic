@@ -11,6 +11,7 @@
 // et un hébergeur tiers libre de déplacer ce qu'il sert.
 
 import type { FicheAudio } from "../audio/types-domaine";
+import { reechantillonnerLineaire } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
@@ -54,20 +55,6 @@ function bufferVersMono(buffer: AudioBuffer): Float32Array {
   return mono;
 }
 
-// Whisper nécessite 16 kHz — rééchantillonnage linéaire simple
-function resamplerVers16k(mono: Float32Array, sr: number): Float32Array {
-  if (sr === 16000) return mono;
-  const ratio = 16000 / sr;
-  const nb = Math.floor(mono.length * ratio);
-  const out = new Float32Array(nb);
-  for (let i = 0; i < nb; i++) {
-    const pos = i / ratio;
-    const idx = Math.floor(pos);
-    const frac = pos - idx;
-    out[i] = idx + 1 < mono.length ? mono[idx] * (1 - frac) + mono[idx + 1] * frac : mono[Math.min(idx, mono.length - 1)];
-  }
-  return out;
-}
 
 export const fiches: FicheAudio[] = ([
   {
@@ -81,7 +68,8 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const audio = entreeAudio(ctx, 0);
       if (sansEntree(audio)) return audio;
-      const mono = resamplerVers16k(bufferVersMono(audio), audio.sampleRate);
+      // Whisper veut du 16 kHz ; le linéaire suffit à des mots.
+      const mono = reechantillonnerLineaire(bufferVersMono(audio), audio.sampleRate, 16000);
       // LE PAQUET PEUT MANQUER, dans l'installeur allégé qui ne l'embarque pas : c'est ce message
       // qui le dit et qui le fait prendre, au lieu de laisser le worker échouer sur un fichier
       // absent. Le manifeste relie le paquet à cette fiche, et un test refuse qu'un nœud nommé par

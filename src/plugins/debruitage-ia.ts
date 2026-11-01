@@ -12,6 +12,7 @@
 //
 // L'analyse/synthèse et la boucle de trames vivent dans audio/gtcrn.ts, testées.
 import type { FicheAudio } from "../audio/types-domaine";
+import { reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
 import { entreeAudio, sansEntree } from "./lire-entree";
@@ -40,12 +41,7 @@ const tailleCache = (forme: readonly number[]) => forme.reduce((a, b) => a * b, 
 
 async function resamplerMono(buffer: AudioBuffer, sampleRate: number): Promise<AudioBuffer> {
   if (buffer.sampleRate === sampleRate && buffer.numberOfChannels === 1) return buffer;
-  const offline = new OfflineAudioContext(1, Math.ceil(buffer.duration * sampleRate), sampleRate);
-  const source = offline.createBufferSource();
-  source.buffer = buffer;
-  source.connect(offline.destination);
-  source.start(0);
-  return offline.startRendering();
+  return reechantillonnerParLeNavigateur(buffer, sampleRate, { canaux: 1 });
 }
 
 export const fiches: FicheAudio[] = ([

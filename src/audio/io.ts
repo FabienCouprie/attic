@@ -1,4 +1,5 @@
 // audio/io.ts — Extrait de l'ancien monolithe DSP.
+import { reechantillonnerParLeNavigateur } from "./convertir-frequence";
 import { creerQuantificateur } from "./dither";
 import { dispositionDe } from "./multicanal";
 import { blocBext, type ChampsBext } from "./bext";
@@ -356,12 +357,7 @@ export async function bufferVersMp3Blob(
 ): Promise<Blob> {
   const SUPPORTED = [32000, 44100, 48000];
   let buf = buffer;
-  if (!SUPPORTED.includes(buf.sampleRate)) {
-    const off = new OfflineAudioContext(buf.numberOfChannels, Math.ceil(buf.duration * 44100), 44100);
-    const src = off.createBufferSource(); src.buffer = buf;
-    src.connect(off.destination); src.start(0);
-    buf = await off.startRendering();
-  }
+  if (!SUPPORTED.includes(buf.sampleRate)) buf = await reechantillonnerParLeNavigateur(buf, 44100);
   const canaux = buf.numberOfChannels;
   const sr = buf.sampleRate;
   try {

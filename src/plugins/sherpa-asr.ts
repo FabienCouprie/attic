@@ -8,6 +8,7 @@
 // Il est maintenant sous `public/oonx/sherpa-asr-whisper-tiny/`, au manifeste avec son empreinte, et
 // publié sur la release `assets` d'où l'installeur allégé le prend.
 import type { FicheAudio } from "../audio/types-domaine";
+import { reechantillonnerLineaire, reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { installerGardeWorker } from "./garde-worker";
@@ -82,17 +83,7 @@ const CACHE_OPTIONS_FR = ["Auto (conservé entre sessions)", "Vider et re-télé
 const CACHE_OPTIONS_EN = ["Auto (kept across sessions)", "Clear and re-download"] as const;
 
 export function resamplerLineaireVers16k(mono: Float32Array, sr: number): Float32Array {
-  if (sr === 16000) return mono;
-  const ratio = 16000 / sr;
-  const nb = Math.floor(mono.length * ratio);
-  const out = new Float32Array(nb);
-  for (let i = 0; i < nb; i++) {
-    const pos = i / ratio;
-    const idx = Math.floor(pos);
-    const frac = pos - idx;
-    out[i] = idx + 1 < mono.length ? mono[idx] * (1 - frac) + mono[idx + 1] * frac : mono[Math.min(idx, mono.length - 1)];
-  }
-  return out;
+  return reechantillonnerLineaire(mono, sr, 16000);
 }
 
 async function resamplerWebAudioVers16k(mono: Float32Array, sr: number): Promise<Float32Array> {
@@ -102,14 +93,8 @@ async function resamplerWebAudioVers16k(mono: Float32Array, sr: number): Promise
   }
   const sourceBuffer = new AudioBuffer({ numberOfChannels: 1, length: mono.length, sampleRate: sr });
   sourceBuffer.getChannelData(0).set(mono);
-  const targetLength = Math.max(1, Math.ceil(mono.length * 16000 / sr));
-  const ctx = new OfflineAudioContext(1, targetLength, 16000);
-  const source = ctx.createBufferSource();
-  source.buffer = sourceBuffer;
-  source.connect(ctx.destination);
-  source.start();
-  const rendered = await ctx.startRendering();
-  return rendered.getChannelData(0);
+  const longueur = Math.max(1, Math.ceil(mono.length * 16000 / sr));
+  return (await reechantillonnerParLeNavigateur(sourceBuffer, 16000, { longueur })).getChannelData(0);
 }
 
 export async function resamplerVers16k(mono: Float32Array, sr: number, mode: string): Promise<Float32Array> {

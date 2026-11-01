@@ -182,3 +182,53 @@ export async function convertirVersFrequence(
   source.start(0);
   return offline.startRendering();
 }
+
+/**
+ * Le son porté à `frequence` PAR LE MOTEUR DU NAVIGATEUR, et non par le filtre de ce module.
+ *
+ * CE SONT DEUX MOTEURS, ET ILS NE RENDENT PAS LES MÊMES ÉCHANTILLONS. `convertirVersFrequence`
+ * filtre et interpole ici même, pour que l'invariant de fréquence du projet ne dépende pas de ce que
+ * Chromium fait d'un `OfflineAudioContext`. Mais six modules rééchantillonnaient par le navigateur
+ * — une réponse impulsionnelle à amener à la fréquence du son, un tampon à porter aux 16 kHz d'un
+ * modèle, un MP3 à écrire — et chacun écrivait le même bloc de huit lignes (relevé du 2026-10-31,
+ * lot 4 de la revue : `concret`, `convolution`, `io`, `objets-sonores`, `debruitage-ia`,
+ * `melangeur-logistique`, plus `isoler-voix`, `sherpa-asr` et `vosk-asr`). Les faire passer par le
+ * filtre d'ici aurait changé leur son ; ce bloc est donc écrit une fois, et c'est tout.
+ *
+ * `longueur` SE DONNE PARCE QUE LES COPIES NE LA CALCULAIENT PAS TOUTES PAREIL : `Math.ceil` de la
+ * durée pour six, `Math.round` pour une, `length × arrivée ÷ départ` pour deux, et un flottant ne
+ * tombe pas toujours du même côté de l'entier selon le chemin. Le défaut est la formule des six ;
+ * un appelant qui en avait une autre la passe, et ses échantillons restent les mêmes au bit près.
+ */
+export async function reechantillonnerParLeNavigateur(
+  buffer: AudioBuffer, frequence: number,
+  { canaux = buffer.numberOfChannels, longueur = Math.max(1, Math.ceil(buffer.duration * frequence)) } = {},
+): Promise<AudioBuffer> {
+  const hors = new OfflineAudioContext(canaux, longueur, frequence);
+  const source = hors.createBufferSource();
+  source.buffer = buffer;
+  source.connect(hors.destination);
+  source.start(0);
+  return hors.startRendering();
+}
+
+/**
+ * Une voie rééchantillonnée en LINÉAIRE : le repli des transcripteurs quand le navigateur manque.
+ *
+ * Deux d'entre eux l'écrivaient chacun, à l'identique. Ce n'est pas le filtre de
+ * `reechantillonnerCanal`, et ce n'est pas voulu pour le son : un transcripteur veut des mots, et il
+ * l'a choisi pour sa vitesse.
+ */
+export function reechantillonnerLineaire(x: Float32Array, depart: number, arrivee: number): Float32Array {
+  if (depart === arrivee) return x;
+  const ratio = arrivee / depart;
+  const nb = Math.floor(x.length * ratio);
+  const out = new Float32Array(nb);
+  for (let i = 0; i < nb; i++) {
+    const pos = i / ratio;
+    const idx = Math.floor(pos);
+    const frac = pos - idx;
+    out[i] = idx + 1 < x.length ? x[idx] * (1 - frac) + x[idx + 1] * frac : x[Math.min(idx, x.length - 1)];
+  }
+  return out;
+}

@@ -1,5 +1,6 @@
 // audio/convolution.ts — Réverbération à convolution depuis une réponse impulsionnelle (IR).
 // Utilise le ConvolverNode natif du Web Audio via OfflineAudioContext.
+import { reechantillonnerParLeNavigateur } from "./convertir-frequence";
 
 export async function reverberationConvolution(
   entree: AudioBuffer,
@@ -21,7 +22,7 @@ export async function reverberationConvolution(
   // Le nœud de convolution refuse une réponse dont la fréquence n'est pas celle de son contexte
   // (NotSupportedError). Une réponse chargée d'un fichier a la fréquence de ce fichier ; on la
   // ramène donc à celle du son traité, et non l'inverse — c'est le son qu'on livre.
-  convolueur.buffer = ir.sampleRate === sr ? ir : await reechantillonnerA(ir, sr);
+  convolueur.buffer = ir.sampleRate === sr ? ir : await reechantillonnerParLeNavigateur(ir, sr);
   convolueur.normalize = true;
 
   const gainSec = offline.createGain();
@@ -183,14 +184,4 @@ function getReflexions(type: string, _taille: number, dureeEarly: number, _sr: n
         { delay: base * 0.5, gain: 0.3, pan: 1.0 },
       ];
   }
-}
-
-/** Rééchantillonne un tampon à la fréquence voulue, par le moteur du navigateur. */
-async function reechantillonnerA(b: AudioBuffer, sr: number): Promise<AudioBuffer> {
-  const off = new OfflineAudioContext(b.numberOfChannels, Math.max(1, Math.ceil(b.duration * sr)), sr);
-  const src = off.createBufferSource();
-  src.buffer = b;
-  src.connect(off.destination);
-  src.start(0);
-  return off.startRendering();
 }
