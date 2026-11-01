@@ -26,7 +26,8 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const CONTRAT = `CONTRAT DE COMPOSANT. Un composant vient d'être créé ou modifié.
 
@@ -104,14 +105,36 @@ function nomsDeParametres(source) {
   return [...new Set(noms)];
 }
 
-/** Les trois classes, lues dans la source pour qu'elles ne soient pas recopiées ici. */
-function classes(racine) {
-  const source = readFileSync(join(racine, "src/ui/hooks/useExecutionGraphe.ts"), "utf8");
-  const set = (nom) => {
-    const m = source.match(new RegExp(`${nom}\\s*=\\s*new Set\\(\\[([\\s\\S]*?)\\]\\)`));
-    return new Set(m ? [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]) : []);
-  };
-  return new Set([...set("CHAMPS_UTILISATEUR"), ...set("CHAMPS_RESULTAT"), ...set("CHAMPS_SIGNAL_UNIQUE")]);
+/** Une source sans ses commentaires de ligne : un nom cité dans un commentaire n'est pas une classe. */
+const sansCommentaires = (source) => source.split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
+
+/**
+ * Les deux classes, lues là où elles sont DÉCLARÉES pour qu'elles ne soient pas recopiées ici.
+ *
+ * ELLES ÉTAIENT LUES DANS `useExecutionGraphe.ts`, D'OÙ ELLES ÉTAIENT PARTIES. Le 2026-10-31, les
+ * classes ont rejoint `core/classes-de-champs.ts`, et `CHAMPS_UTILISATEUR` y est devenu un nom pour
+ * la table des genres de saisie, dérivée et non plus énumérée. Ce script, lui, cherchait toujours
+ * trois littéraux `new Set([…])` dans le moteur : mesuré le 2026-11-01, il n'en trouvait AUCUN, et
+ * comparait donc chaque écriture sur un nœud à un ensemble vide. Un garde qui cherche dans le
+ * mauvais fichier, pour la troisième fois dans ce dépôt ; `scripts/contrat-noeud.test.ts` le tient.
+ *
+ *   · ce que la personne a posé sur un nœud : chaque `champs: […]` de `core/saisies.ts`, la table
+ *     universelle comprise, puisque `CHAMPS_DE_SAISIE` en est l'union ;
+ *   · ce qu'une exécution dépose : le littéral `CHAMPS_RESULTAT = new Set([…])` de
+ *     `core/classes-de-champs.ts`.
+ *
+ * La troisième classe, `CHAMPS_SIGNAL_UNIQUE`, n'existe plus : ce qu'elle nommait passe par le
+ * canal `moteur` du retour de l'exécuteur, et rien ne se pose.
+ */
+export function classes(racine) {
+  const saisies = sansCommentaires(readFileSync(join(racine, "src/core/saisies.ts"), "utf8"));
+  const resultat = sansCommentaires(readFileSync(join(racine, "src/core/classes-de-champs.ts"), "utf8"));
+  const noms = (texte) => [...texte.matchAll(/"([^"]+)"/g)].map((x) => x[1]);
+  const connues = new Set();
+  for (const m of saisies.matchAll(/champs:\s*\[([^\]]*)\]/g)) for (const n of noms(m[1])) connues.add(n);
+  const m = resultat.match(/CHAMPS_RESULTAT\s*=\s*new Set\(\[([\s\S]*?)\]\)/);
+  for (const n of noms(m ? m[1] : "")) connues.add(n);
+  return connues;
 }
 
 const ECRITURE = /(?<![A-Za-z0-9_])data(?:\s+as\s+any)?\s*\)?\s*\.([A-Za-z_][A-Za-z0-9_]*)\s*=(?!=)/g;
@@ -208,10 +231,14 @@ function main() {
   return 2;
 }
 
-let code = 0;
-try {
-  code = main();
-} catch {
-  code = 0;
+// LE SCRIPT NE TOURNE QUE LANCÉ, et non importé : son test importe `classes` sans que le balayage
+// parte ni que l'empreinte s'écrive.
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  let code = 0;
+  try {
+    code = main();
+  } catch {
+    code = 0;
+  }
+  process.exit(code);
 }
-process.exit(code);
