@@ -112,7 +112,7 @@ test.describe("la dictée, dans l'application", () => {
       "LES COMPOSANTS DICTÉS NE SONT PAS SUR LE CANEVAS.",
       "",
       "Les gestes ont été rendus par le découpage, mais le canevas ne les porte pas : c'est le",
-      "versement qui n'a pas eu lieu. Voir `appliquerDictee` dans `ui/App.tsx`, qui verse le lot que",
+      "versement qui n'a pas eu lieu. Voir `appliquerDictee` dans `ui/hooks/useDicteeCanevas.ts`, qui verse le lot que",
       "`dictee/appliquer-commandes.ts` calcule.",
       "",
     ].join("\n")).toBe(3);
