@@ -118,13 +118,13 @@ describe("la table des genres de saisie", () => {
 
   it("TOUT CE QUI S'ENREGISTRE ARRIVE AUX DEUX BOUTS DE LA PERSISTANCE", () => {
     // CE QUE CE CAS GARDE FERMÉ. Les sites qui écrivent le projet et qui le relisent énumèrent
-    // encore leurs clés à la main : `usePersistance.ts` d'un côté, la restauration d'`App.tsx` de
-    // l'autre. Tant qu'ils le font, un genre ajouté à la table sans être ajouté là serait écrit par
+    // encore leurs clés à la main : `usePersistance.ts` d'un côté, la restauration de
+    // `useEnCours.ts` de l'autre. Tant qu'ils le font, un genre ajouté à la table sans être ajouté là serait écrit par
     // la table et perdu par la persistance, sans que rien ne le dise. C'est la divergence même que
     // cette table existe pour empêcher ; ici elle est surveillée plutôt que supprimée, parce que
     // réécrire ces deux sites demande d'éprouver un enregistrement et une réouverture.
     const persistance = readFileSync(join("src", "ui", "hooks", "usePersistance.ts"), "utf8");
-    const restauration = readFileSync(join("src", "ui", "App.tsx"), "utf8");
+    const restauration = readFileSync(join("src", "ui", "hooks", "useEnCours.ts"), "utf8");
     const absents = (source: string) => [...CHAMPS_ENREGISTRES].filter((c) => !source.includes(c));
     expect(absents(persistance), "enregistré par la table, ignoré par la sauvegarde").toEqual([]);
     expect(absents(restauration), "enregistré par la table, ignoré par la réouverture").toEqual([]);
