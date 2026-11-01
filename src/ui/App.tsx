@@ -19,7 +19,6 @@ import { chargerSF2Globale, autoChargerSF2, sf2Nom } from "../plugins/soundfontG
 import { useI18n, traduire, defautParametre, defautCanoniqueChoix } from "../i18n";
 
 import { idUnique } from "./ids";
-import { idsDe, oublierNoeuds } from "./oubli-noeuds";
 import { planDeGrapheEngendre } from "./graphe-engendre";
 import { useDictee } from "./dictee/useDictee";
 import type { Commande } from "./dictee/commandes-dictee";
@@ -29,6 +28,7 @@ import { useEnCours } from "./hooks/useEnCours";
 import { useRelanceApresReglage } from "./hooks/useRelanceApresReglage";
 import { useChargementMedias } from "./hooks/useChargementMedias";
 import { useNotesEtCadres } from "./hooks/useNotesEtCadres";
+import { useHistorique } from "./hooks/useHistorique";
 import { appliquerCommandes, type LotDicte, type OutilsDeDictee } from "./dictee/appliquer-commandes";
 import { tailleDefaut } from "./tailles-noeuds";
 import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "./fichiers-deposes";
@@ -39,7 +39,6 @@ import { useCopierColler } from "./hooks/useCopierColler";
 import { resultatDe } from "./resultats";
 import { CLE_PREFERENCE, lirePreference } from "./sauvegarde-auto";
 import { ecrireEconomieMemoire, lireEconomieMemoire } from "./economie-memoire";
-import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "./historique";
 import { validerArete } from "./validerGraphe";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
@@ -267,84 +266,11 @@ function Atelier() {
   const prioritaireRef = useRef<string | null>(null);
   prioritaireRef.current = prioritaire;
   const [sf2NomState, setSf2NomState] = useState<string>(sf2Nom());
-  // Historique pour undo (Ctrl+Z). Le presse-papiers de nœuds est celui du système, voir
-  // `hooks/useCopierColler.ts`.
-  const historiqueRef = useRef<EntreeHistorique<any, any>[]>([]);
-  const MAX_HISTORIQUE = 50;
-
-  // Instantané avant une action annulable. `contexte` n'est passé que par les actions qui
-  // changent aussi la navigation dans les méta-composants ou le fichier ouvert — vider le
-  // canevas. La copie garde les fichiers chargés par référence (voir ui/historique.ts).
-  const pushHistorique = useCallback((contexte?: ContexteHistorique<any, any>) => {
-    empiler(historiqueRef.current, instantane(noeudsRef.current, aretesRef.current, contexte), MAX_HISTORIQUE);
-  }, []);
-
-  const undo = useCallback(() => {
-    const prev = historiqueRef.current.pop();
-    if (!prev) return;
-    // L'historique est sérialisé (JSON.stringify), donc les callbacks des nœuds
-    // ont été perdus. On les ré-attache pour que les boutons reset/play/supprimer
-    // restent fonctionnels après un Ctrl+Z.
-    const cbs = callbacksNoeudRef.current?.();
-    if (!cbs) return;
-    setNodes(prev.nodes.map((n: any) => ({ ...n, data: { ...n.data, ...cbs } })));
-    setEdges(prev.edges);
-    if (prev.contexte) {
-      // Le graphe racine mis de côté porte, lui aussi, des nœuds sans gestionnaires.
-      grapheRacineRef.current = prev.contexte.racine
-        ? { nodes: prev.contexte.racine.nodes.map((n: any) => ({ ...n, data: { ...n.data, ...cbs } })), edges: prev.contexte.racine.edges }
-        : null;
-      setPile(prev.contexte.pile);
-      setCurrentFilePath(prev.contexte.cheminFichier);
-    }
-    setSel(null);
-    cacheExec.current.clear();
-    // CE QUE L'ANNULATION ABANDONNE S'OUBLIE AUSSI. Les résultats et les statuts vivent hors du
-    // tableau des nœuds, et remettre un graphe d'avant les laissait en place : un nœud du graphe
-    // annulé gardait son entrée, qu'un nœud neuf portant le même identifiant retrouvait ensuite.
-    // Voir `ui/oubli-noeuds.ts`.
-    oublierNoeuds([...idsDe(prev.nodes), ...idsDe(prev.contexte?.racine?.nodes)]);
-  }, [setNodes, setEdges]);
-
-  // Un seul onglet wf-1. Le bouton × vide le canevas — et Ctrl+Z le rend.
-  //
-  // Il vidait sans confirmation et sans passer par l'historique : un clic à côté de
-  // « Sauvegarder » perdait le graphe entier, sans recours. L'instantané emporte aussi la
-  // navigation dans les méta-composants et le fichier ouvert, que le ✕ remet à zéro :
-  // vidé depuis l'intérieur d'un méta, le canevas revient au même endroit, avec son
-  // graphe racine. Un canevas déjà vide n'ajoute rien à l'historique.
-  //
-  // Les URL de résultats ne sont PAS révoquées ici, contrairement à une suppression de
-  // nœud : ce sont elles que Ctrl+Z doit rendre, lecteurs compris. Elles restent tenues
-  // par l'historique, qui en garde au plus MAX_HISTORIQUE.
-  const fermerOnglet = useCallback((id: string) => {
-    void id;
-    if (noeudsRef.current.length === 0 && pile.length === 0) return;
-    pushHistorique({ pile, racine: grapheRacineRef.current, cheminFichier: currentFilePath });
-    setNodes([]);
-    setEdges([]);
-    cacheExec.current.clear();
-    setSel(null);
-    setPile([]);
-    grapheRacineRef.current = null;
-    setCurrentFilePath(null);
-    // LE GRAPHE EST ABANDONNÉ, DONC SES RÉSULTATS AUSSI. Sans cette ligne, un composant posé
-    // ensuite sur le canevas vide reprenait l'identifiant « noeud-1 » et, avec lui, le lecteur, le
-    // niveau et le message du workflow effacé, marqué « terminé » sans avoir tourné. Relevé par
-    // Fabien, reproduit, et explique dans `ui/oubli-noeuds.ts`.
-    oublierNoeuds([]);
-  }, [setNodes, setEdges, pushHistorique, pile, currentFilePath]);
-
-  // Détacher le projet de son fichier SANS toucher au canevas : l'équivalent d'un
-  // « nouveau projet » qui garde le graphe. Le nom disparaît de la barre d'outils,
-  // l'auto-save toutes les 30 s s'arrête — c'est le but : plus rien n'est écrit dans
-  // l'ancien fichier — et le prochain Ctrl+S redemande où enregistrer. Annulable, comme
-  // le vidage : l'instantané ne garde que le chemin, les nœuds ne bougeant pas.
-  const detacherFichier = useCallback(() => {
-    if (!currentFilePath) return;
-    pushHistorique({ pile, racine: grapheRacineRef.current, cheminFichier: currentFilePath });
-    setCurrentFilePath(null);
-  }, [currentFilePath, pushHistorique, pile]);
+  // ── Historique, Ctrl+Z, vidage du canevas et fichier détaché, dans hooks/useHistorique.ts ──
+  const { pushHistorique, undo, fermerOnglet, detacherFichier } = useHistorique({
+    noeudsRef, aretesRef, grapheRacineRef, callbacksNoeudRef, cacheExec,
+    setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath,
+  });
 
   // Auto-load SF2 au démarrage
   useEffect(() => {
