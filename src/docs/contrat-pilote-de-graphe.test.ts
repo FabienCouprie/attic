@@ -198,7 +198,8 @@ describe("le pilote de graphe", () => {
     // LE MENU DU CLIC DROIT N'Y PREND QUE `semer` lui aussi : il sème un graphe, puis y tire un cadre
     // de sélection et clique du bouton droit.
     expect(appelants.sort(), "les appelants déclarés du pilote")
-      .toEqual(["boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
+      .toEqual(["boucle-dans-lot-dans-application.spec.ts",
+        "boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
         "copier-coller-annotations-dans-application.spec.ts",
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
