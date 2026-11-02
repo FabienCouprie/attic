@@ -1,43 +1,49 @@
 /* atelier.css — Styles de l'application Attic */
 
+/* Thème violet : bleu nuit indigo, violet franc pour ce qui est actif, ambre pour l'action
+   principale, pris sur le tableau de bord sombre que Fabien a donné en référence. Le fond, la barre
+   latérale, les cartes violettes et l'ambre y ont été relevés au pixel, en moyenne de 5 × 5. */
 :root {
-  --bg-app: #0f0b17;
-  --bg-surface: #1a1425;
+  --bg-app: #17162f;
+  --bg-surface: #1f1d3e;
   --bg-node: var(--bg-surface);
-  --bg-surface-alt: #120e1b;
-  --bg-toolbar: #161020;
-  --bg-hover: rgba(255,255,255,0.04);
-  --bg-hover-accent: rgba(147,51,234,0.12);
-  --bg-btn: #251c35;
-  --bg-btn-hover: #322346;
-  --bg-input: #120e1b;
-  --bg-badge: #2a1f3d;
-  --border: #2d2342;
-  --border-divider: #1f172b;
-  --text-primary: #e8e0f0;
-  --text-secondary: #a99bb8;
-  --text-tertiary: #7d6e8f;
-  --text-muted: #5a4d6b;
-  --text-title: #f5f0f8;
+  --bg-surface-alt: #0f0e25;
+  --bg-toolbar: #121129;
+  --bg-hover: rgba(255,255,255,0.05);
+  --bg-hover-accent: rgba(112,63,242,0.18);
+  --bg-btn: #282653;
+  --bg-btn-hover: #342f6c;
+  --bg-input: #121129;
+  --bg-badge: #2a2758;
+  --border: #2e2b5c;
+  --border-divider: #221f47;
+  --text-primary: #e8e6f5;
+  --text-secondary: #a7a3d0;
+  --text-tertiary: #8e8ab8;
+  --text-muted: #65619a;
+  --text-title: #f6f5fd;
   --text-inverse: #ffffff;
-  --text-icon: #7d6e8f;
-  --text-badge: #a99bb8;
-  --success: #9d4edd;
-  --success-dim: #5e2a7e;
-  /* Le bouton « Lancer » a sa propre couleur, distincte de « succès » : dans le thème violet
-     elle vaut la même, si bien que rien n'y bouge ; dans le thème plan technique, elle passe au
-     bleu pendant que les pastilles d'état restent vertes. Sans cette variable, teinter le bouton
-     aurait teint aussi les points d'état, le halo d'exécution et le bouton de priorité d'un nœud. */
-  --lancer: var(--success);
-  --lancer-dim: var(--success-dim);
-  --lancer-texte: var(--text-inverse);
-  --arret: #e0576f;
-  --accent: #a855f7;
+  --text-icon: #8e8ab8;
+  --text-badge: #bdb9e3;
+  --success: #8b5cf6;
+  --success-dim: #4b2fa3;
+  /* Le bouton « Lancer » a sa propre couleur, distincte de « succès » : dans le thème violet il
+     prend l'ambre du bouton principal de la référence, texte sombre, pendant que les pastilles d'état
+     restent violettes ; dans le thème plan technique, il passe au bleu. Sans cette variable, teinter
+     le bouton aurait teint aussi les points d'état, le halo d'exécution et le bouton de priorité
+     d'un nœud. */
+  --lancer: #f5b84b;
+  --lancer-dim: #8a6526;
+  --lancer-texte: #17162f;
+  /* L'accent et l'arrêt s'écrivent en texte sur les panneaux : un cran plus clairs que le violet et
+     le rouge de la référence, pour tenir 4,5 pour 1 sur `--bg-surface` (4,63 et 4,53, calculés). */
+  --arret: #ec5257;
+  --accent: #9771f8;
   /* L'onde d'une piste, dans le ton complémentaire de la barre qui la porte : la barre dit la place
      et la durée de la piste, l'onde dit sa matière, et deux choses différentes ne se lisent pas dans
      la même couleur. Défini ici et non par thème, la barre étant seule à changer de ton. */
   --onde: #ff9f43;
-  --etiquette-bg: #2a1f3d;
+  --etiquette-bg: #2a2758;
   --cat-entree: #4c6ef5;
   --cat-generation: #40c057;
   --cat-effet: #a855f7;
@@ -1476,7 +1482,7 @@ body { font-family: system-ui, -apple-system, sans-serif; }
   margin: 10px;
 }
 .react-flow__minimap-mask {
-  fill: rgba(15, 11, 23, 0.85);
+  fill: rgba(23, 22, 47, 0.85);
 }
 [data-theme="black"] .react-flow__minimap-mask {
   fill: rgba(10, 26, 64, 0.85);
