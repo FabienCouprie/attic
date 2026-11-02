@@ -179,7 +179,7 @@ function Atelier() {
   const prioritaireRef = useRef<string | null>(null);
   prioritaireRef.current = prioritaire;
   // ── Le SoundFont global, dans hooks/useSoundFont.ts ──
-  const { sf2Nom: sf2NomState, chargerSF2 } = useSoundFont({ repertoire, cacheExec });
+  const { sf2Nom: sf2NomState, chargerSF2 } = useSoundFont({ repertoire, cacheExec, enExecution });
   // ── Historique, Ctrl+Z, vidage du canevas et fichier détaché, dans hooks/useHistorique.ts ──
   const { pushHistorique, undo, fermerOnglet, detacherFichier } = useHistorique({
     noeudsRef, aretesRef, grapheRacineRef, callbacksNoeudRef, cacheExec,
