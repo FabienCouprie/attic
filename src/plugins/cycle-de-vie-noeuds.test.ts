@@ -255,11 +255,15 @@ describe("les deux canaux déclarés ne viennent que de l'exécuteur ou du cache
       .toMatch(/entreeCache\.affichage\)\s*affichageParNoeud\.set/);
     expect(moteur, "et les en ressortir aussi pour le désigné")
       .toMatch(/entreeCache\.designe\)\s*designeParNoeud\.set/);
-    expect(moteur, "le report doit passer par `champsAReporter`, et non relire `Object.keys` sur place")
+    // LE REPORT EST FAIT PAR LE MÉNAGE D'APRÈS PASSE depuis le 2026-11-02 (`ui/menage-apres-passe.ts`,
+    // sortie 7 du plan du moteur) : c'est là qu'on le cherche, et le balayage à la main reste
+    // interdit des deux côtés, pour qu'il ne revienne pas par le moteur.
+    const menage = readFileSync(join("src", "ui", "menage-apres-passe.ts"), "utf8");
+    expect(menage, "le report doit passer par `champsAReporter`, et non relire `Object.keys` sur place")
       .toMatch(/champsAReporter\(/);
     // Et la boucle de report ne doit plus balayer les clés elle-même : c'est cette boucle-là qui
     // ramassait les canaux déclarés.
-    expect(moteur.match(/for \(const cle of Object\.keys\(d\)\)/g) ?? [],
+    expect((moteur + menage).match(/for \(const cle of Object\.keys\(d\)\)/g) ?? [],
       "plus aucun balayage des champs `_` à la main dans le moteur").toEqual([]);
   });
 
