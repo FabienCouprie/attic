@@ -8,11 +8,11 @@ import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge } from "@xyflow/react";
 import {
-  aplatirGraphe, estBulle, estCacheParBulle, estSubstitution, grapheSansConteneurs,
+  estBulle, estCacheParBulle,
   sortieDeBulle,
   trouverMeta,
-  ordreTopologique, placerEnDernier, perimetreCible, empreinteParametres, empreinteEntrees, empreinteSorties, empreinteValeursEntrantes,
-  noeudsEnCycle, valeursEntrantes, validerGraphe, signalerEcartsDeType,
+  empreinteParametres, empreinteEntrees, empreinteSorties, empreinteValeursEntrantes,
+  valeursEntrantes, signalerEcartsDeType,
   type NoeudG, type AreteG,
 } from "../../core";
 
@@ -26,13 +26,13 @@ import { Respiration, respirer } from "../../core/respirer";
 import { noeudRegarde, resultatRetenu } from "../../core/memoire";
 import { servicesDomaine } from "../../core/services-domaine";
 import { poserApercu, poserStatut as poserStatutNoeud, poserStatutOmbre, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
-import { conteneurs, statutDuContenu } from "../../core/conteneurs";
+import { statutDuContenu } from "../../core/conteneurs";
 import { poserResultat, resultatDe } from "../resultats";
-import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
+import { COPIES_MAX } from "../../core/boucle-graphe";
 import { lacherLeCorps, sautsDeBoucles } from "../../core/saut-de-boucle";
 import { creerResolveurDeGraines } from "../../core/graines-de-passe";
 import { contexteDePasse } from "../../core/contexte-de-passe";
-import { deplierInstruments } from "../../core/instrument-graphe";
+import { preparerLaPasse } from "../../core/preparation-passe";
 
 import { servicesOrchestration } from "../services-orchestration";
 // CE QUE LE SHELL DEMANDE AU DOMAINE SUR LES VALEURS PRODUITES. Six fonctions audio étaient
@@ -48,7 +48,7 @@ import { fusionDeLot, useOrdonnanceurDeRuns, type JetonDeRun } from "../ordonnan
 // ils rejouent `lancerUnePasse` sans rien connaître du moteur.
 import { usePilotesDePasse } from "./usePilotesDePasse";
 
-import { traduire, useI18n, valeurCanoniqueChoix } from "../../i18n";
+import { useI18n, valeurCanoniqueChoix } from "../../i18n";
 import { registreUI } from "../registre-actif";
 
 const trouverDef = (id: string) => registreUI().trouverDef(id);
@@ -216,187 +216,26 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // les vraies arêtes sont toujours là. Les laisser entrer ici changerait l'empreinte des entrées
     // d'un nœud, donc invaliderait son résultat au moindre repli — or ne RIEN invalider est la
     // propriété qui justifie de replier plutôt que d'extraire. Voir `core/bulles.ts`.
-    const aretesReelles = (aretesRef.current as unknown as AreteG[]).filter((a) => !estSubstitution(a));
-    // Aplatit les méta-composants (sous-graphes) en leur contenu réel avant
-    // d'exécuter : le moteur DAG tourne sur un graphe sans méta-nœud. Les
-    // résultats des nœuds internes sont remontés au méta-nœud via `expansions`.
-    const plat = aplatirGraphe(
-      noeudsRef.current as unknown as NoeudG[],
-      aretesReelles,
-      trouverMeta,
-    );
-    // LE GRAPHE MIS À DISPOSITION DES NŒUDS QUI LE DOCUMENTENT EST CELUI QUI CALCULE : les
-    // conteneurs dépliés, leur contenu à leur place, les boucles et les instruments PAS ENCORE
-    // recopiés. Il était publié avant l'aplatissement, si bien qu'un méta-composant se documentait
-    // lui-même par la notice que son magasin lui fabrique, et que ses oscillateurs n'étaient
-    // documentés nulle part. Le contrat d'exécution du cœur ne porte pas le graphe et n'a pas à le
-    // porter ; voir plugins/grapheGlobal.ts et core/formes-graphe.ts.
-    const aDocumenter = grapheSansConteneurs(
-      noeudsRef.current as unknown as NoeudG[],
-      aretesReelles,
-      trouverMeta,
-      estBulle,
-    );
-    servicesOrchestration().publierGraphe(aDocumenter);
-    for (const id of aDocumenter.conteneursRetires) {
-      console.warn(`[attic] Documentation : conteneur non dépliable retiré (${id})`);
-    }
-    // Puis DÉPLIE les instruments : tout ce qui est branché entre « Note d'instrument » et
-    // « Fin d'instrument » est recopié une fois PAR NOTE du clavier, la note étant injectée dans
-    // chaque copie. C'est ainsi qu'une recette devient un instrument : rien n'est transposé, chaque
-    // note est calculée à sa hauteur. Avant le dépliage des boucles, de sorte qu'une chaîne
-    // d'instrument puisse elle-même contenir une boucle — chaque copie en porte alors une, et le
-    // dépliage suivant les traite comme autant de boucles indépendantes.
-    // Voir `core/instrument-graphe.ts`, testé.
-    const instruments = deplierInstruments(plat.noeuds, plat.aretes);
-    for (const [copie, origine] of instruments.origines) {
-      plat.expansions.set(copie, plat.expansions.get(origine) ?? origine);
-    }
-    for (const p of instruments.problemes) {
-      console.warn(`[attic] Instrument de graphe : ${p.code} sur ${p.noeudId}`);
-    }
-    plat.noeuds = instruments.noeuds;
-    plat.aretes = instruments.aretes;
-
-    // Puis DÉPLIE les boucles de graphe : une boucle est un cycle, et le moteur n'exécute
-    // que des graphes acycliques. Les nœuds compris entre « Début de boucle » et « Fin de
-    // boucle » sont recopiés autant de fois qu'il y a de tours, chaque copie recevant le
-    // résultat de la précédente — c'est ainsi que les effets s'accumulent d'un tour à
-    // l'autre. Voir `core/boucle-graphe.ts`, testé.
-    const deplie = deplierBoucles(plat.noeuds, plat.aretes);
-    for (const [copie, origine] of deplie.origines) {
-      plat.expansions.set(copie, plat.expansions.get(origine) ?? origine);
-    }
-    for (const p of deplie.problemes) {
-      console.warn(`[attic] Boucle de graphe : ${p.code} sur ${p.noeudId}`);
-    }
-    // UN DÉBUT DE BOUCLE DIT CE QU'IL EST DEVENU. Il est RETIRÉ du graphe exécuté — c'est la chaîne
-    // recopiée qui tourne à sa place —, donc il ne rend rien et restait « En attente » pour
-    // toujours, ce qui ne dit rien de ce qui s'est passé. Relevé par Fabien. Le statut est posé ici
-    // plutôt qu'après l'exécution : ce n'est pas le compte rendu d'un calcul, c'est ce que le
-    // dépliage vient de décider, et cela vaut même si le run est interrompu ensuite.
-    for (const d of deplie.depliees) {
-      // ET LES TRAVERSÉES AVEC, parce que leur sens ne se devine pas. Une entrée venue du dehors
-      // alimente CHAQUE tour à l'identique, une sortie prise ailleurs que par la fin ne sort QU'UNE
-      // FOIS, au dernier tour : un seul câble, et trente et une valeurs sur trente-deux qui ne
-      // sortent jamais. Elles ne se disent que lorsqu'il y en a, pour ne pas encombrer le cas simple.
-      const dits = [t("boucle.depliee").replace("{n}", String(d.tours))];
-      if (d.entreesDuDehors > 0) dits.push(t("boucle.entrees").replace("{n}", String(d.entreesDuDehors)));
-      if (d.sortiesVersDehors > 0) dits.push(t("boucle.sorties").replace("{n}", String(d.sortiesVersDehors)));
-      definirStatut(d.debutId, "attente", dits.join(" · "));
-    }
-    const nds = deplie.noeuds as unknown as any[];
+    // ── LA PRÉPARATION EST DANS LE CŒUR, `core/preparation-passe.ts`, PURE ──
+    // Aplatir, déplier, ordonner, cibler, valider, relever les cycles : le plan rend ce que le
+    // moteur posait en chemin, statuts, avertissements et trace, dans l'ordre où il les posait,
+    // et c'est ici qu'ils s'appliquent. Le graphe à documenter est publié avant tout, comme avant.
+    const plan = preparerLaPasse({
+      noeuds: noeudsRef.current as unknown as NoeudG[],
+      aretes: aretesRef.current as unknown as AreteG[],
+      prioriteDemandee: noeudPrioritaireId ?? prioritaireRef.current,
+      versLAval: perimetre?.versLAval === true,
+      trouverMeta, trouverDef, fluxCompatibles: registreUI().fluxCompatibles, t,
+    });
+    const {
+      aretesReelles, plat, deplie, nds, aretesG, tousNoeudsG, boites,
+      ordreFiltre, noeudsEnErreur, idsDecoratifs, ordonnees, estMetaEnScope,
+    } = plan;
     const aretes = deplie.aretes as unknown as Edge[];
-    // LES BULLES ET LES MÉTAS, ET CE QUE CHACUN CONTIENT parmi les nœuds exécutés. Voir `core/conteneurs.ts`.
-    const tousNoeudsG = noeudsRef.current as unknown as NoeudG[];
-    const boites = conteneurs(tousNoeudsG, (id) => plat.expansions.get(id) ?? id, (f) => !!trouverMeta(f));
-    const prioriteDemandee = noeudPrioritaireId ?? prioritaireRef.current;
-    // Un nœud qui passe en dernier rend compte du graphe entier : le lancer seul n'aurait pas de
-    // sens, il n'a pas d'amont. Un run ciblé sur lui devient donc un run global.
-    const estDernier = (id: string) => trouverDef((deplie.noeuds.find((n) => n.id === id)?.data as { ficheId?: string } | undefined)?.ficheId as string)?.executerEnDernier === true;
-    const priorite = prioriteDemandee && estDernier(prioriteDemandee) ? undefined : prioriteDemandee;
-
-    // Topologie (logique pure testée — cf. core/graphe.ts)
-    const aretesG = aretes as unknown as AreteG[];
-    const ordonnees = placerEnDernier(ordreTopologique(nds.map((n) => n.id), aretesG), estDernier, aretesG);
-    let ordreFiltre = ordonnees;
-    // Périmètre d'un run ciblé (nœud prioritaire) : null = run global (tout le graphe).
-    let ancPriorite: Set<string> | null = null;
-    if (priorite) {
-      // UN CONTENEUR SE LANCE PAR TOUT SON CONTENU. Un méta n'existe pas dans le graphe aplati, une
-      // bulle n'y a aucune arête : viser leur seul identifiant ne lançait rien, et ne cibler que les
-      // nœuds qui alimentent les sorties d'un méta laissait de côté le reste. Voir `core/conteneurs.ts`.
-      const contenu = boites.contenu(priorite, ordonnees);
-      const cibles = contenu.length > 0 ? contenu : [priorite];
-      // LE PÉRIMÈTRE EST CALCULÉ PAR `core/graphe.ts`, pur et éprouvé à part : ce crochet ne fait
-      // que le lui demander. L'AVAL Y ENTRE QUAND C'EST UNE RELANCE APRÈS RÉGLAGE, et pas autrement.
-      //
-      // RELEVÉ PAR FABIEN : « j'ai l'impression que le gain de la table de montage ne fonctionne
-      // pas ». Il fonctionnait : le montage se recalculait bien, cache rafraîchi, mais **rien en
-      // aval n'était refait**, alors que le moteur venait d'en effacer les résultats. Mesuré sur
-      // une chaîne générateur → montage → rotation ambisonique : aussitôt le gain changé, le nœud
-      // d'aval passait à « En attente » sans lecteur, et une relance GLOBALE donnait le bon niveau,
-      // 0,05931 contre 0,5931, soit le rapport de dix attendu pour −20 dB. Le calcul était donc
-      // juste ; c'est la propagation qui manquait. Depuis l'aval — où l'on écoute, où l'on exporte
-      // — le gain paraissait mort.
-      //
-      // ET UN RUN CIBLÉ DEMANDÉ PAR LA PERSONNE N'EMBRASSE TOUJOURS QUE L'AMONT. Les deux chemins
-      // passent par ici, et leur intention diffère : cliquer le ▶ d'un nœud veut dire « calcule
-      // jusqu'ici », et y ajouter l'aval ferait tourner ce qu'on n'a pas demandé. Une relance
-      // automatique, elle, n'a pas été demandée du tout : elle répare l'effacement qu'un réglage
-      // vient de causer, et doit donc refaire tout ce qui a été effacé.
-      const anc = perimetreCible(cibles, aretesG, perimetre?.versLAval === true);
-      ancPriorite = anc;
-      ordreFiltre = ordonnees.filter((id) => anc.has(id));
-    }
-    // Debug : tracer l'ordre topologique réel pour diagnostiquer les exécutions avant
-    // les branches amont (ex. mélangeur terminal avant SpeechT5).
-    console.log("[ordre] priorite=" + priorite + " ordreFiltre=" + ordreFiltre.map((id) => id + "(" + ((nds.find((n: any) => n.id === id) as any)?.data?.ficheId ?? "?") + ")").join(", "));
-    // Résout les types depuis les PluginDef et rejette les arêtes incompatibles.
-    // Les nœuds cibles passent en statut « erreur » et ne sont pas exécutés.
-    // `validerGraphe` inspecte TOUT le graphe (entrées obligatoires non connectées
-    // comprises) : sur un run ciblé (nœud prioritaire), un nœud hors périmètre —
-    // même totalement déconnecté du nœud lancé — se faisait donc marquer « erreur »
-    // alors qu'il n'a ni lien ni exécution avec le nœud sur lequel on a cliqué
-    // « lancer ». On restreint donc l'application des résultats de validation au
-    // périmètre du run (`ancPriorite`), comme le fait déjà `ordreFiltre` plus bas.
-    // LA VALIDATION PORTE SUR LE GRAPHE RÉELLEMENT EXÉCUTÉ, nœuds ET arêtes venant du même état.
-    //
-    // Elle lisait les nœuds d'AVANT le dépliage et les arêtes d'APRÈS. Or déplier une boucle RETIRE
-    // son « Début de boucle » et recâble ses arêtes vers les copies : le validateur voyait donc ce
-    // nœud sans la moindre arête, lui reprochait son entrée requise non branchée, et le marquait en
-    // erreur. Relevé sur deux boucles de trente-deux tours qui avaient parfaitement abouti : les
-    // 256 copies exécutées, les deux fins de boucle terminées, et les deux débuts en rouge.
-    //
-    // Le tri topologique et le relevé des cycles travaillent déjà sur `nds`, et la raison est écrite
-    // plus bas dans les mêmes termes : « sur le graphe RÉELLEMENT exécuté, avec les mêmes entrées
-    // que le tri lui-même ». La validation manquait seulement à l'appel.
-    const validation = validerGraphe(
-      nds,
-      aretes as unknown as AreteG[],
-      (ficheId) => trouverDef(ficheId),
-      registreUI().fluxCompatibles,
-    );
-    const noeudsEnErreur = new Set<string>();
-    for (const [nodeId, msgs] of validation.noeudsAffectes) {
-      if (ancPriorite && !ancPriorite.has(nodeId)) continue;
-      noeudsEnErreur.add(nodeId);
-      definirStatut(nodeId, "erreur", msgs[0]);
-    }
-    // UN CYCLE NE DOIT PAS ÊTRE UNE PANNE MUETTE. Kahn n'émet jamais un nœud pris dans un cycle :
-    // ce qui manque à l'ordre EST le cycle, et ces nœuds ne sont donc pas exécutés. Jusqu'ici ils
-    // l'étaient en silence — ni statut, ni message —, et une branche entière restait sans résultat
-    // sans que rien ne dise pourquoi. La pose d'une arête refuse désormais de refermer un cycle,
-    // mais un projet enregistré avant ce contrôle peut en porter un, et l'aplatissement d'un méta
-    // ou d'un instrument pourrait en fabriquer un : le relevé se fait donc ici aussi, sur le graphe
-    // RÉELLEMENT exécuté, avec les mêmes entrées que le tri lui-même.
-    for (const id of noeudsEnCycle(nds.map((n: any) => n.id), aretesG)) {
-      if (ancPriorite && !ancPriorite.has(id)) continue;
-      if (noeudsEnErreur.has(id)) continue;
-      noeudsEnErreur.add(id);
-      definirStatut(id, "erreur", traduire("erreur.cycle"));
-    }
-    // Un méta est « dans le périmètre » du run ssi au moins un de ses nœuds internes
-    // aplatis (`${id}::…`) y figure. Un run prioritaire ne doit PAS toucher les métas
-    // hors périmètre (branches déconnectées) — sinon ils passaient « en cours » puis
-    // « erreur », donnant l'illusion d'un run global.
-    // Une bulle rejoint le commentaire et le cadre : elle ne calcule rien, ses membres si.
-    const idsDecoratifs = new Set(nds.filter((n: any) =>
-      n.data?.ficheId === "comment" || n.data?.ficheId === "frame" || estBulle(n.data?.ficheId),
-    ).map((n: any) => n.id));
-    ordreFiltre = ordreFiltre.filter((id) => !idsDecoratifs.has(id));
-    const estMetaEnScope = (nodeId: string) => ordreFiltre.some((id) => id.startsWith(`${nodeId}::`));
-
-    for (const id of ordreFiltre) {
-      if (!noeudsEnErreur.has(id)) definirStatut(id, "attente");
-    }
-
-    // UN CONTENEUR DIT CE QUE FAIT SON CONTENU. Une bulle ou un méta ne calcule rien, mais un
-    // conteneur muet pendant que son contenu travaille laisserait croire qu'il ne se passe rien. Il
-    // est en cours dès que ce run touche à l'un de ses nœuds ; son statut final se pose après le run.
-    for (const c of boites.ids) {
-      if (!noeudsEnErreur.has(c) && boites.contenu(c, ordreFiltre).length > 0) definirStatut(c, "en_cours");
-    }
+    servicesOrchestration().publierGraphe(plan.aDocumenter);
+    for (const a of plan.avertissements) console.warn(a);
+    for (const s of plan.statuts) definirStatut(s.id, s.statut, s.progression);
+    console.log(plan.traceOrdre);
 
     const ctx = await obtenirAudio();
     const resultats = new Map<string, ValeurTransportee[]>();
