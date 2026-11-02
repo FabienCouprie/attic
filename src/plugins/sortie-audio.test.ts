@@ -8,7 +8,19 @@
 // ET QU'ELLE NE CALCULE RIEN QUAND PERSONNE N'ÉCOUTE. C'est la condition qui l'a rendue possible :
 // le rendu coûte 8,6 ms par seconde de son, et vingt-cinq nœuds le paieraient à chaque lancement.
 import "node-web-audio-api/polyfill.js";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// LE RENDU EST ESPIONNÉ, ET C'EST LUI QUI TÉMOIGNE. « Rien n'est calculé sans câble » se prouvait
+// par un chronomètre, dix millisecondes au plus : vu rouge chez Fabien le 2026-11-02 à 33 ms, sur
+// une machine chargée, et vert ailleurs au même instant — un délai mesuré rougit sous charge et ne
+// prouve rien au repos, c'est le piège « temps réel dans un test » que ce dépôt connaît. Le vrai
+// rendu reste appelé quand un câble part, pour que le cas voisin entende un son ; l'espion ne fait
+// que compter.
+const rendus = vi.hoisted(() => ({ appels: 0 }));
+vi.mock("../audio/midi-sequence", async (importOriginal) => {
+  const vrai = await importOriginal<typeof import("../audio/midi-sequence")>();
+  return { ...vrai, rendreSequence: (...args: Parameters<typeof vrai.rendreSequence>) => { rendus.appels++; return vrai.rendreSequence(...args); } };
+});
 
 import { toutesLesFiches } from "./index";
 import { avecSortieAudio, SANS_SORTIE_AUDIO } from "./sortie-audio";
@@ -127,18 +139,22 @@ describe("ce que l'enveloppe ne doit pas casser", () => {
 describe("le rendu, et quand il n'a pas lieu", () => {
   it("SANS CÂBLE, RIEN N'EST CALCULÉ : c'est la condition qui rend la chose possible", async () => {
     const f = fiche([{ nom: "Séquence", type: "sequence" }], [sequence(20, 4)]);
-    const t = performance.now();
+    const avant = rendus.appels;
     const r = await f.executer!(contexte([]) as never) as any;
     expect(r.valeurs[1]).toBeNull();
-    // Quatre secondes de son coûteraient une trentaine de millisecondes ; rien n'a été rendu.
-    expect(performance.now() - t).toBeLessThan(10);
+    // Quatre secondes de son coûteraient une trentaine de millisecondes, 8,6 par seconde mesurées ;
+    // ce n'est pas le temps qui le dit, c'est le rendu, qui n'a pas été appelé.
+    expect(rendus.appels - avant, "aucun rendu sans câble").toBe(0);
   });
 
   it("AVEC UN CÂBLE, LE SON SORT, et il dure ce que la séquence dure", async () => {
     const f = fiche([{ nom: "Séquence", type: "sequence" }], [sequence(8, 2)]);
+    const avant = rendus.appels;
     const r = await f.executer!(contexte([1]) as never) as any;
     expect(r.valeurs[1]).toBeInstanceOf(AudioBuffer);
     expect((r.valeurs[1] as AudioBuffer).duration).toBeCloseTo(2, 1);
+    // Et l'espion voit un rendu quand il y en a un : c'est ce qui donne son sens au zéro d'au-dessus.
+    expect(rendus.appels - avant, "un rendu avec câble").toBe(1);
   });
 
   it("une séquence vide ne rend pas de silence, elle ne rend rien", async () => {
