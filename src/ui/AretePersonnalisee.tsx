@@ -68,10 +68,18 @@ export function AretePersonnalisee({
         labelBgPadding={[5, 3]}
         labelBgBorderRadius={4}
       />
+      {/* Le flux se montre de deux façons, et le thème choisit laquelle dans `atelier.css` : la
+          boule qui court sur le lien, ou le filé, un trait de lumière qui glisse avec sa traînée.
+          `pathLength` ramène toute arête à cent unités, si bien que le même pointillé fait la même
+          traînée sur un câble court et sur un long. */}
       {enFlux && (
-        <circle r="3" fill={dotColor}>
-          <animateMotion dur="1.2s" repeatCount="indefinite" path={edgePath} />
-        </circle>
+        <>
+          <circle className="attic-arete-boule" r="3" fill={dotColor}>
+            <animateMotion dur="1.2s" repeatCount="indefinite" path={edgePath} />
+          </circle>
+          <path className="attic-arete-file-trainee" d={edgePath} pathLength={100} style={{ stroke: dotColor }} />
+          <path className="attic-arete-file-tete" d={edgePath} pathLength={100} style={{ stroke: dotColor, color: dotColor }} />
+        </>
       )}
     </g>
   );

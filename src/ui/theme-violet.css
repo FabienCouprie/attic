@@ -1,0 +1,41 @@
+/* theme-violet.css — Ce que le thème violet change au-delà de ses couleurs. Les variables du thème
+   restent dans le bloc `:root` d'`atelier.css` ; ce fichier porte les règles propres au thème, que
+   la norme de taille interdit d'ajouter à `atelier.css`. Le thème violet est celui qui ne pose pas
+   `data-theme` : chaque règle ici est donc gardée par `:root:not([data-theme])`, et le thème plan
+   technique ne voit que les deux règles de repli du flux. */
+
+/* UN NŒUD TERMINÉ SE CERNE D'AMBRE, et non du vert de repli de `.termine`, demandé par Fabien ; le
+   thème plan technique garde le bleu de son `--execution-outline`. Le flash de fin suit, pour ne
+   pas laisser un éclair vert sous un liseré ambre. */
+:root:not([data-theme]) .attic-node.termine { outline-color: var(--lancer); }
+:root:not([data-theme]) .attic-node-flash.termine { background: rgba(245, 184, 75, 0.35); }
+
+/* LE FLUX SUR UNE ARÊTE : la boule par défaut, le filé dans le thème violet. Le filé est deux
+   pointillés d'une seule maille sur cent unités de chemin (`pathLength`), qui avancent ensemble :
+   une traînée large, floue et pâle de dix-huit unités, et une tête vive de six posée à son bout
+   avant, si bien que la lumière précède sa traînée dans le sens du câble. */
+.attic-arete-file-trainee, .attic-arete-file-tete { display: none; }
+:root:not([data-theme]) .attic-arete-boule { display: none; }
+:root:not([data-theme]) .attic-arete-file-trainee,
+:root:not([data-theme]) .attic-arete-file-tete {
+  display: inline; fill: none; stroke-linecap: round; pointer-events: none;
+  animation: arete-file 1.2s linear infinite;
+}
+:root:not([data-theme]) .attic-arete-file-trainee {
+  stroke-width: 6; stroke-dasharray: 18 82; opacity: 0.45; filter: blur(2px);
+}
+:root:not([data-theme]) .attic-arete-file-tete {
+  stroke-width: 2.5; stroke-dasharray: 0 12 6 82;
+  filter: brightness(1.6) drop-shadow(0 0 3px currentColor);
+}
+@keyframes arete-file {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* LES GLISSIÈRES DE L'INSPECTEUR PRENNENT LE MAUVE DU THÈME, demandé par Fabien d'après l'image de
+   référence. Elles ne déclaraient aucune couleur et prenaient donc le bleu par défaut du navigateur,
+   le seul bleu qui restait dans le thème violet. Le thème plan technique garde ce bleu, qui est le
+   sien. */
+:root:not([data-theme]) .inspecteur-range input[type="range"],
+:root:not([data-theme]) .inspecteur-plage-borne input[type="range"] { accent-color: var(--accent); }
