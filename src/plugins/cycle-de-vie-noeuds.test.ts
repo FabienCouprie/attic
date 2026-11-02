@@ -275,9 +275,11 @@ describe("les deux canaux déclarés ne viennent que de l'exécuteur ou du cache
   // zéro ou la suppression cessaient de le purger, il retiendrait les tampons de nœuds qui
   // n'existent plus — une fuite vraie, celle-là, et invisible.
   it("UNE REMISE À ZÉRO PURGE L'ENTRÉE DE CACHE, sans quoi le cache survivrait au résultat", () => {
-    const moteur = readFileSync(join("src", "ui", "hooks", "useExecutionGraphe.ts"), "utf8");
+    // LA REMISE À ZÉRO VIT DANS `useRemiseAZero.ts` depuis le 2026-11-02 (sortie 2 du plan du moteur) :
+    // c'est là que ce cas lit la purge.
+    const moteur = readFileSync(join("src", "ui", "hooks", "useRemiseAZero.ts"), "utf8");
     const debut = moteur.indexOf("const reinitialiserIds");
-    expect(debut, "`reinitialiserIds` a disparu du moteur").toBeGreaterThan(-1);
+    expect(debut, "`reinitialiserIds` a disparu de la remise à zéro").toBeGreaterThan(-1);
     const corps = moteur.slice(debut, moteur.indexOf("const reinitialiser", debut + 30));
     expect(corps, "la remise à zéro doit supprimer l'entrée de cache des nœuds visés")
       .toMatch(/cacheExec\.current\.delete\(/);
