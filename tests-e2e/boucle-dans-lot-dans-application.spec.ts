@@ -77,6 +77,13 @@ const GRAPHE = JSON.stringify({
 });
 
 test("UNE BOUCLE PAR CRÉNEAU DANS UN LOT BOUCLE POUR CHAQUE FICHIER, et le lot n'écrit pas plus", async ({ page }) => {
+  // LA LIMITE EST CELLE DES AUTRES CAS D'APPLICATION, et non les trente secondes par défaut. Ce cas
+  // en dépense une vingtaine avant même de lancer : la page semée puis rechargée, jusqu'à quinze
+  // secondes d'attente de l'instrument, et trois de stabilité des aperçus après le run. Il a tenu en
+  // 24 s à sa naissance, puis dépassé les 30 s le 2026-11-02, trois fois de suite sur une machine
+  // chargée, en écrivant les bons fichiers en 39 s dès qu'on lui en laissait le temps. Ce n'est pas
+  // la durée qu'il éprouve, c'est le nombre de fichiers.
+  test.setTimeout(300_000);
   // LE SOUNDFONT DOIT AVOIR FINI DE SE CHARGER AVANT QU'ON LANCE. Son chargement automatique aboutit
   // quelques secondes après l'ouverture et vidait le cache d'exécution à son arrivée : tombé au milieu
   // du lot, il faisait rejouer la chaîne audio à la passe suivante, et le lot écrivait son second
