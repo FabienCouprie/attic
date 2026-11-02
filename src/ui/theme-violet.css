@@ -32,3 +32,10 @@
   from { stroke-dashoffset: 100; }
   to { stroke-dashoffset: 0; }
 }
+
+/* LES GLISSIÈRES DE L'INSPECTEUR PRENNENT LE MAUVE DU THÈME, demandé par Fabien d'après l'image de
+   référence. Elles ne déclaraient aucune couleur et prenaient donc le bleu par défaut du navigateur,
+   le seul bleu qui restait dans le thème violet. Le thème plan technique garde ce bleu, qui est le
+   sien. */
+:root:not([data-theme]) .inspecteur-range input[type="range"],
+:root:not([data-theme]) .inspecteur-plage-borne input[type="range"] { accent-color: var(--accent); }
