@@ -113,14 +113,10 @@
       "!release-build*/**/*",
       "!release-prod*/**/*",
       "!build/**/*",
-      "!**/*.dylib",
-      "!**/*.so",
-      "!**/*.so.*",
       "!**/*.a",
       "!**/.cache/**/*",
       "!**/*.d.ts",
-      "!**/*.map",
-      "!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**/*"
+      "!**/*.map"
     ],
     "extraResources": [
       {
@@ -172,7 +168,19 @@
       "target": [
         "nsis"
       ],
-      "icon": "public/icon.ico"
+      "icon": "public/icon.ico",
+      "files": [
+        "!node_modules/onnxruntime-node/bin/napi-v6/linux/**/*",
+        "!node_modules/onnxruntime-node/bin/napi-v6/darwin/**/*",
+        "!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**/*"
+      ]
+    },
+    "linux": {
+      "files": [
+        "!node_modules/onnxruntime-node/bin/napi-v6/win32/**/*",
+        "!node_modules/onnxruntime-node/bin/napi-v6/darwin/**/*",
+        "!node_modules/onnxruntime-node/bin/napi-v6/linux/arm64/**/*"
+      ]
     },
     "asarUnpack": [
       "dist/piper-tts/**/*.wasm",
