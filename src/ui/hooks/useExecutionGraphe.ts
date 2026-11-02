@@ -12,7 +12,7 @@ import {
   sortieDeBulle,
   trouverMeta,
   ordreTopologique, placerEnDernier, perimetreCible, empreinteParametres, empreinteEntrees, empreinteSorties, empreinteValeursEntrantes,
-  noeudsEnCycle, resoudreEntree, valeursEntrantes, validerGraphe, signalerEcartsDeType,
+  noeudsEnCycle, valeursEntrantes, validerGraphe, signalerEcartsDeType,
   type NoeudG, type AreteG,
 } from "../../core";
 
@@ -31,6 +31,7 @@ import { poserResultat, resultatDe } from "../resultats";
 import { COPIES_MAX, deplierBoucles } from "../../core/boucle-graphe";
 import { lacherLeCorps, sautsDeBoucles } from "../../core/saut-de-boucle";
 import { creerResolveurDeGraines } from "../../core/graines-de-passe";
+import { contexteDePasse } from "../../core/contexte-de-passe";
 import { deplierInstruments } from "../../core/instrument-graphe";
 
 import { servicesOrchestration } from "../services-orchestration";
@@ -43,7 +44,6 @@ import type { DemandeAuMoteur } from "../../core/types";
 import { useRemiseAZero } from "./useRemiseAZero";
 import { lireProfondeurExport } from "../profondeur-export";
 import { fusionDeLot, useOrdonnanceurDeRuns, type JetonDeRun } from "../ordonnanceur-runs";
-import { ErreurAnnulation } from "../../core/annulation";
 // LES DEUX PILOTES DE PASSES SONT DANS `usePilotesDePasse.ts`, le lot et les boucles par passes :
 // ils rejouent `lancerUnePasse` sans rien connaître du moteur.
 import { usePilotesDePasse } from "./usePilotesDePasse";
@@ -653,91 +653,20 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); poserStatut(nodeId, "erreur"); marquerMetaEnEchec(nodeId, node.data.ficheId as string); continue; }
 
       const start = performance.now();
-      // CE NŒUD A-T-IL DEMANDÉ SI SES SORTIES ÉTAIENT BRANCHÉES ? La réponse se constate pendant son
-      // run, et décide si son câblage aval entre dans sa clé de cache. Déclaré par tour de boucle :
-      // c'est une propriété de CE nœud, et la porter au-delà les mélangerait.
-      let aConsulteSesSorties = false;
       const ajouterTemps = (ms: number) => {
         const visibleId = plat.expansions.get(nodeId) ?? nodeId;
         tempsParVisible.set(visibleId, (tempsParVisible.get(visibleId) ?? 0) + ms);
       };
+      // CE QUE LE NŒUD REÇOIT EST CONSTRUIT PAR LE CŒUR, dans `core/contexte-de-passe.ts` : ses
+      // entrées, ses réglages lus comme le contrat le dit, la question des sorties, retenue pour la
+      // clé de cache, et un `onProgress` qui lève après annulation.
+      const { ctx: contexteDuNoeud, aConsulteSesSorties } = contexteDePasse<ValeurTransportee, AudioContext>({
+        noeud: node, aretes: aretesG, resultats, runtime: ctx, repertoireTravail: repertoire,
+        trouverDef, canoniser: valeurCanoniqueChoix, graineDuNoeud, signal: controller.signal,
+        poserProgression: (msg) => poserStatut(nodeId, "en_cours", msg, true),
+      });
       try {
-        const res = await fn({
-          noeud: node,
-          runtime: ctx,
-          repertoireTravail: repertoire,
-          entree: (idx: number) => resoudreEntree<ValeurTransportee>(nodeId, idx, aretesG, resultats) as ValeurTransportee,
-          entrees: () => valeursEntrantes<ValeurTransportee>(nodeId, aretesG, resultats),
-          // Les arêtes sont ici, et elles disent si un câble part de cette sortie. Un nœud peut
-          // alors ne calculer une sortie chère que lorsqu'elle sert.
-          //
-          // ET POSER LA QUESTION EST RETENU. C'est ce fait — non une liste de composants — qui
-          // décide si le câblage aval entre dans la clé de cache de ce nœud. Voir
-          // `core/cache-execution.ts` : un nœud qui ne demande jamais si ses sorties sont branchées
-          // ne peut pas en dépendre, et un câble ajouté derrière lui ne doit pas le faire rejouer.
-          sortieBranchee: (idx: number) => {
-            aConsulteSesSorties = true;
-            return aretesG.some((a) => a.source === nodeId && a.sourceHandle === `out:${idx}`);
-          },
-          paramNombre: (nom: string, defaut: number) => {
-            const p = (node.data.parametres as Record<string, number|string>)?.[nom];
-            const def = trouverDef(node.data.ficheId as string);
-            const pDef = def?.parametres.find((p) => p.nom === nom);
-            // LE REPLI EST LE DÉFAUT DÉCLARÉ, et c'est la racine d'une famille entière de défauts.
-            //
-            // CE QU'IL Y AVAIT ICI ÉTAIT UNE BRANCHE MORTE. Le repli consultait `defautEn`, qui est
-            // le champ du défaut TEXTUEL traduit, typé sur une chaîne : relevé sur le registre,
-            // AUCUN des 1983 réglages numériques du catalogue n'en déclare un qui soit un nombre.
-            // La condition était donc toujours fausse, et le repli retombait toujours sur le
-            // littéral de l'appel.
-            //
-            // CE QUE CELA COÛTAIT. Un nœud CRÉÉ reçoit chaque réglage déclaré ; un graphe
-            // ENREGISTRÉ AVANT qu'un réglage existe ne le porte pas, ni le chargeur ni la
-            // sérialisation ne complétant les manquants. Le littéral décidait donc seul du sort de
-            // ces nœuds, et il pouvait différer du défaut que l'inspecteur affiche : seize appels
-            // de bornes de modulation lisaient ainsi zéro et cent à la place de leur course, et le
-            // kit de batterie d'un projet ancien sortait sur un preset mélodique.
-            //
-            // MESURÉ AVANT DE CHANGER : sur 1402 appels portant un littéral, 1399 donnaient déjà la
-            // valeur déclarée. Des trois qui divergeaient, deux étaient des littéraux périmés,
-            // corrigés avec ce changement ; le troisième lit un réglage que sa fiche ne déclare
-            // plus, une lecture de migration que `pDef` indéfini laisse passer au littéral.
-            const brut = typeof p === "number" ? p
-              : typeof pDef?.defaut === "number" ? pDef.defaut
-              : defaut;
-            // UNE GRAINE EST RÉSOLUE ICI, ET NON DANS CHACUN DES SOIXANTE-CINQ COMPOSANTS QUI EN
-            // PORTENT UNE. C'est la correction de la décentralisation relevée par Fabien : la
-            // convention du projet — zéro ou moins veut dire « tire au sort » — n'était appliquée
-            // que par treize d'entre eux, et ailleurs une graine à zéro était une graine FIXE
-            // valant zéro. Le rôle est DÉCLARÉ sur le réglage, jamais cherché dans son libellé.
-            return pDef?.graine ? graineDuNoeud(nodeId, nom, brut) : brut;
-          },
-          paramTexte: (nom: string, defaut: string) => {
-            const p = (node.data.parametres as Record<string, number|string>)?.[nom];
-            const def = trouverDef(node.data.ficheId as string);
-            const pDef = def?.parametres.find((p) => p.nom === nom);
-            if (typeof p === "string" && pDef) {
-              return String(valeurCanoniqueChoix(pDef, p));
-            }
-            // Repli sur le défaut DÉCLARÉ PAR LA FICHE (`defaut`, français),
-            // jamais `defautEn` : la forme canonique d'un « choix » est celle
-            // de la liste `options`, et un plugin compare la valeur reçue à ses
-            // propres termes français (ex. profilCouleur("Bleu")). Préférer
-            // `defautEn` renvoyait "Blue" quand le paramètre était absent de
-            // `parametres` (ancien workflow, JSON écrit à la main) et faisait
-            // échouer le nœud sur « Couleur 1 inconnue : Blue » — alors que
-            // l'inspecteur, lui, affichait bien « Bleu ». Cf. defautCanoniqueChoix.
-            return pDef ? String(valeurCanoniqueChoix(pDef, pDef.defaut)) : defaut;
-          },
-          // UN onProgress APRÈS ANNULATION LÈVE, et c'est ce qui rend 74 exécuteurs
-          // interruptibles d'un seul geste : deux seulement lisaient `signal.aborted`.
-          // Il ignorait auparavant l'appel, ce qui réglait le symptôme — un « en cours »
-          // réaffiché par dessus l'« attente » que le reset venait de poser — sans arrêter
-          // le travail. Le `catch` de cette boucle reconnaît déjà le cas : il sort sans
-          // marquer le nœud en erreur. Voir `core/annulation.ts`.
-          onProgress: (msg: string) => { if (controller.signal.aborted) throw new ErreurAnnulation(); poserStatut(nodeId, "en_cours", msg, true); },
-          signal: controller.signal,
-        });
+        const res = await fn(contexteDuNoeud);
         // Le nœud a été réinitialisé pendant que sa promesse était en vol (le
         // plugin a ignoré `signal`, ou a fini pile au moment de l'annulation) :
         // ne pas écraser l'état déjà remis à « attente » par le reset avec un
@@ -801,7 +730,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
           // coup de cache les repose telles quelles dans les résultats, et garder les brutes aurait
           // rompu l'invariant de fréquence sur tout nœud rejoué depuis le cache — c'est-à-dire la
           // plupart, et seulement au deuxième run. Le genre de défaut qu'on ne reproduit jamais.
-          if (!jeton?.perime()) cacheExec.current.set(nodeId, { valeurs: valeurs as ValeurTransportee[], message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties, tempsExecution: elapsed, empreinteBoucle: sauts.empreintePour(nodeId) });
+          if (!jeton?.perime()) cacheExec.current.set(nodeId, { valeurs: valeurs as ValeurTransportee[], message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties(), tempsExecution: elapsed, empreinteBoucle: sauts.empreintePour(nodeId) });
           else console.warn(`[cache] resultat perime ecarte : ${nodeId} (generation ${jeton.generation})`);
           // ═══ CE QUE LE COMPOSANT REND EST-IL DU TYPE QU'IL PROMET ? ═══
           //

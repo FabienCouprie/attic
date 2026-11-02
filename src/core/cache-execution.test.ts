@@ -122,15 +122,19 @@ describe("le câblage aval ne compte que pour le composant qui le consulte", () 
     // tombe — le résultat étant alors un rejeu inutile, qui ne se remarque qu'à l'oreille et à la
     // montre. Les deux bouts sont attachés PAR LE NOM DE LA VARIABLE : renommer la déplace des deux
     // côtés et le cas tient, en retirer un seul et il tombe.
-    const source = readFileSync(
+    // LE CONTEXTE EST CONSTRUIT PAR LE CŒUR depuis le 2026-11-02 (`core/contexte-de-passe.ts`, sortie 4
+    // du plan du moteur) : le drapeau s'y lève, et c'est le moteur qui le porte au cache. Les deux
+    // bouts restent attachés PAR LE NOM : le contexte rend un lecteur du même nom que son drapeau.
+    const contexte = readFileSync(fileURLToPath(new URL("./contexte-de-passe.ts", import.meta.url)), "utf8");
+    const moteur = readFileSync(
       fileURLToPath(new URL("../ui/hooks/useExecutionGraphe.ts", import.meta.url)), "utf8");
-    const debut = source.indexOf("sortieBranchee:");
-    expect(debut, "le moteur doit fournir `sortieBranchee` au composant").toBeGreaterThan(0);
+    const debut = contexte.indexOf("sortieBranchee:");
+    expect(debut, "le contexte doit fournir `sortieBranchee` au composant").toBeGreaterThan(0);
 
-    const corps = source.slice(debut, debut + 600);
+    const corps = contexte.slice(debut, debut + 600);
     const drapeau = corps.match(/([A-Za-z_][A-Za-z0-9_]*) = true/)?.[1];
     expect(drapeau, "`sortieBranchee` doit retenir qu'on lui a posé la question").toBeTruthy();
-    expect(source.includes(`consulteSorties: ${drapeau}`),
+    expect(moteur.includes(`consulteSorties: ${drapeau}`),
       "ce que `sortieBranchee` a retenu doit partir dans l'entrée de cache").toBe(true);
   });
 });
