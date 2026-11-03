@@ -114,13 +114,12 @@
       "!release-prod*/**/*",
       "!build/**/*",
       "!**/*.dylib",
-      "!**/*.so",
-      "!**/*.so.*",
       "!**/*.a",
       "!**/.cache/**/*",
       "!**/*.d.ts",
       "!**/*.map",
-      "!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**/*"
+      "!node_modules/onnxruntime-node/bin/napi-v6/!(${platform})/**/*",
+      "!node_modules/onnxruntime-node/bin/napi-v6/*/arm64/**/*"
     ],
     "extraResources": [
       {

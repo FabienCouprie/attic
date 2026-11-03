@@ -34,7 +34,7 @@ Chaque ligne dit ce qui casse sous Linux, ce qu'il faut changer, et comment le v
 | Où | Ce qui suppose Windows | Ce qui casse sous Linux | À changer | Vérifier |
 |---|---|---|---|---|
 | `package.json:171-176` | Seule la cible `win` / `nsis` est déclarée, icône `.ico` | `electron-builder --linux` n'a ni cible ni icône déclarées | Ajouter un bloc `linux` (§ 4) | `release/` contient un `.AppImage` |
-| `package.json:117-118` | `!**/*.so` et `!**/*.so.*` dans `build.files` | Retire `libonnxruntime.so.1` du paquet | À trouver : les déplacer dans `win.files` casse la liste blanche (§ 4.1) | `find release/linux-unpacked -name 'libonnxruntime.so*'` rend un fichier |
+| `package.json:117-118` | `!**/*.so` et `!**/*.so.*` dans `build.files` | Retire `libonnxruntime.so.1` du paquet | Corrigé : exclusions de dossiers par `${platform}` dans le `files` commun (§ 4.1) | `find release/linux-unpacked -name 'libonnxruntime.so*'` rend un fichier |
 | `package.json:123` | Ne retire que `win32/arm64` d'onnxruntime | Le paquet Linux embarquerait les DLL Windows (64 Mo pour `win32/x64`, mesuré) | Exclusions propres à Linux dans `linux.files` | `du -sh` du dossier onnxruntime dans le paquet |
 | `package.json:40` | `publish:electron` passe `--win` | Rien à construire pour Linux | Ajouter un script `publish:electron:linux`, ou passer la plateforme | — |
 | `package.json:96-98`, `181-188` | Bloc `toolsets.nsis` et bloc `nsis` | Rien : ignorés hors cible NSIS (**non vérifié**) | Aucun | Le journal d'electron-builder ne parle pas de NSIS |
@@ -127,8 +127,9 @@ Il n'est **pas** encore éprouvé.
 }
 ```
 
-Le tri des bibliothèques d'onnxruntime par plateforme n'est **pas** dans ce bloc : un `files` de
-plateforme fait de seules exclusions casse la liste blanche (§ 4.1).
+Le tri des bibliothèques d'onnxruntime par plateforme n'est **pas** dans ce bloc : il est dans le
+`files` commun, et un `files` de plateforme fait de seules exclusions casse la liste blanche
+(§ 4.1).
 
 - **`icon`** : `public/icon.png` fait 256 × 256 (mesuré), le minimum qu'electron-builder accepte
   pour Linux.
@@ -138,18 +139,32 @@ plateforme fait de seules exclusions casse la liste blanche (§ 4.1).
 
 ### 4.1 Le défaut des `.so`
 
-`package.json:116-118` exclut `**/*.dylib`, `**/*.so` et `**/*.so.*` de **tout** le paquet. Sous
-Windows c'est juste : on y retire les bibliothèques Linux et macOS d'onnxruntime. Sous Linux, c'est
-`libonnxruntime.so.1` qui part, et `require("onnxruntime-node")` lève au premier pont ONNX
+**Corrigé.** `build.files` excluait `**/*.so` et `**/*.so.*` de **tout** le paquet, et sous Linux
+`libonnxruntime.so.1` partait avec : `require("onnxruntime-node")` levait au premier pont ONNX
 (`electron/demucs.cjs`, `esthetique.cjs`, `sdxs-image.cjs`, `stable-audio-3.cjs`, entre autres).
+Ces deux motifs sont remplacés, dans le même `files` commun, par deux exclusions de dossiers :
 
-**Ne pas** simplement déplacer ces trois lignes vers `win.files` : essayé par la PR 285, cela a
-fait avorter la première construction de la v5.1.1 au plafond NSIS. Un `files` de plateforme qui
-ne porte que des exclusions fait ajouter `**/*` par electron-builder
-(`node_modules/app-builder-lib/out/fileMatcher.js:120-121`), et la liste blanche `dist/**/*` du
-`files` commun ne tient plus : toute la racine du projet part dans l'application. La correction
-reste à trouver ; son témoin doit poser un fichier hors de la liste blanche et vérifier qu'il
-n'est pas embarqué, en plus de compter les fichiers d'onnxruntime.
+```json
+"!node_modules/onnxruntime-node/bin/napi-v6/!(${platform})/**/*",
+"!node_modules/onnxruntime-node/bin/napi-v6/*/arm64/**/*"
+```
+
+electron-builder déplie `${platform}` dans les motifs (`app-builder-lib/out/fileMatcher.js:51`,
+`util/macroExpander.js:34-35`) en `process.platform` **de la machine qui construit** : `win32`
+sous Windows, `linux` sous Linux. Construire Linux depuis Windows garderait donc `win32/` ; ce
+document fait construire chaque paquet sur sa plateforme (§ 7). `!**/*.dylib` reste : seul
+onnxruntime en porte.
+
+**Ne pas** déplacer ces exclusions vers `win.files` ou `linux.files` : essayé par la PR 285, cela
+a fait avorter la première construction de la v5.1.1 au plafond NSIS. electron-builder range le
+`files` commun dans un ensemble à part (`builder-effective-config.yaml` le montre sous `filter:`) ;
+le `files` de plateforme, fait de seules exclusions, devient alors le motif principal, auquel
+`fileMatcher.js:120-121` ajoute `**/*`. La liste blanche `dist/**/*` ne tient plus, et toute la
+racine du projet part dans l'application.
+
+**Le témoin d'une retouche de ces motifs** pose un fichier hors de la liste blanche et vérifie
+qu'il n'est pas embarqué, en plus de compter les fichiers d'onnxruntime ; le côté Linux se lance
+sous Linux, `${platform}` suivant la machine.
 
 **Vérifier** que Windows n'a pas bougé : `scripts/verify-bundled-resources.cjs --paquet
 release/win-unpacked/resources` passe, et le nombre de fichiers de `release/win-unpacked` est le
