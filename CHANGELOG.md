@@ -4,6 +4,14 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [5.1.1] — 2026-11-03
+
+**« CORRECTION DU PLEURAGE », UN COMPOSANT NEUF, ET LES QUATRE RENDUS DE CHANSON CHOISISSENT LEUR DÉBRUITEUR.** Le pleurage et le scintillement d'une bande se retirent d'un son ; « Magnétophone » les règle en pour cent de hauteur. « Texte → image (MOSS) » fait rédiger sa mise en page par un modèle de langue et montre enfin l'image qu'il rend.
+
+**DES CORRECTIFS QUE L'ON VOIT EN TRAVAILLANT.** Les notes et les cadres se copient et se collent de nouveau, deux fenêtres partagent le copier-coller, le clic droit ouvre son menu après un cadre de sélection, une bulle ou un méta dit l'état de ce qu'il contient, « Arrêter » arrête l'écriture du film de « Montage vidéo », et « Restaurer un son compressé » rend un morceau entier sur une carte de six giga-octets. L'interface anglaise ne montre plus de français.
+
+**À SAVOIR EN METTANT À JOUR** : un fichier audio ne porte plus de graphe, et « Entrée audio » n'en lit plus ; le réglage « Calcul » n'offre plus « CUDA 0 ». `npm audit` tombe à zéro vulnérabilité.
+
 ### Added
 
 - **UN CAS D'APPLICATION TIENT L'EMBOÎTEMENT D'UNE BOUCLE PAR PASSES DANS UN LOT.** Les deux pilotes de passes s'emboîtent dans l'ordre où ils se lisent, le lot dehors et les boucles par passes dedans ; le pilote du lot a déjà appelé la passe directement, et une boucle par voix, par créneau ou par cercle posée dans un graphe mené par lot n'était alors jamais planifiée. Corrigé, relevé par Fabien, et gardé nulle part : `frontiere-domaine.test.ts` en faisait la condition de toute généralisation des pilotes.
