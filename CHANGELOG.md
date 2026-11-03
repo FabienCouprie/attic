@@ -4,6 +4,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Fixed
+
+- **UN PAQUET LINUX GARDE `libonnxruntime.so.1`, ET LA LISTE BLANCHE DE `build.files` TIENT TOUJOURS.** `build.files` excluait `**/*.so` et `**/*.so.*` de tout le paquet : sous Linux, la bibliothèque d'onnxruntime partait avec, et tous les ponts ONNX du processus principal seraient tombés. Les deux motifs sont remplacés, dans le même `files` commun, par `!node_modules/onnxruntime-node/bin/napi-v6/!(${platform})/**/*` et `!…/napi-v6/*/arm64/**/*`. electron-builder déplie `${platform}` en `process.platform` de la machine qui construit, `win32` ou `linux`. La tentative de la PR 285, par des blocs `win.files` et `linux.files`, avait fait embarquer toute la racine du projet ; celle-ci ne touche pas aux blocs de plateforme.
+  - **Témoin sous Windows et sous Linux (WSL)**, avec un fichier posé hors de la liste blanche : il n'est embarqué dans aucun des deux. Windows garde les cinq fichiers `win32/x64` d'onnxruntime, Linux `linux/x64/libonnxruntime.so.1` et sa liaison, rien d'autre ; la configuration de la 5.1.0 y laissait quatre liaisons `.node` et pas de `.so`.
+  - **Construction Windows `--win dir` du dépôt** avec ces motifs : la racine de l'application ne porte que `dist`, `electron`, `node_modules`, `package.json` et `scripts`, aucune `.so` n'y entre, et `verify-bundled-resources.cjs --paquet` est vert. L'installeur NSIS, lui, n'a pas été reconstruit.
+
 ## [5.1.1] — 2026-11-03
 
 **« CORRECTION DU PLEURAGE », UN COMPOSANT NEUF, ET LES QUATRE RENDUS DE CHANSON CHOISISSENT LEUR DÉBRUITEUR.** Le pleurage et le scintillement d'une bande se retirent d'un son ; « Magnétophone » les règle en pour cent de hauteur. « Texte → image (MOSS) » fait rédiger sa mise en page par un modèle de langue et montre enfin l'image qu'il rend.
