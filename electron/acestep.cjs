@@ -82,6 +82,31 @@ function lancer(binaire, args, surLigne) {
   return lancerTravail(binaire, args, surLigne);
 }
 
+// « AUTOMATIQUE » RETOMBE SUR LE PROCESSEUR QUAND LA CARTE EST REFUSÉE, LES CHOIX EXPLICITES NON.
+// Mesuré le 2026-11-04 sous Linux sur un Intel HD 4000 : ggml-vulkan écarte la carte (« does not
+// support 16-bit storage ») puis le moteur s'arrête sur « terminate … Unsupported device », sans
+// avoir rien produit. Laissé tel quel, « Automatique » tombait en erreur à chaque lancement sur
+// cette machine, alors que « Processeur » y rend. Qui a nommé un périphérique veut savoir s'il
+// répond : celui-là reçoit l'erreur, comme pour DirectML (`src/plugins/parametre-calcul.ts`).
+const CARTE_REFUSEE = /Unsupported device/;
+
+/** Vrai quand un lancement sans périphérique nommé a échoué parce que la carte est refusée. */
+function doitRepasserSurProcesseur(code, journal, peripherique) {
+  return code !== 0 && !peripherique && CARTE_REFUSEE.test(journal ?? "");
+}
+
+const REPLI = "La carte graphique est refusée par Vulkan (« Unsupported device ») :"
+  + " repris sur le processeur, bien plus lent. Régler « Calcul » sur « Processeur » évite"
+  + " ce premier essai.\n";
+
+/** Lance, et relance sur le processeur si « Automatique » a buté sur une carte refusée. */
+async function lancerAvecRepli(binaire, args, peripherique, surLigne) {
+  const premier = await lancer(binaire, args, surLigne);
+  if (!doitRepasserSurProcesseur(premier.code, premier.journal, peripherique)) return premier;
+  const second = await lancer(binaire, [...args, "--device", "CPU"], surLigne);
+  return { ...second, journal: REPLI + (second.journal ?? "") };
+}
+
 /**
  * Le premier fichier produit par le rendu, quel que soit son suffixe.
  *
@@ -123,7 +148,8 @@ async function planifier(options = {}, surAvancement, contexte) {
     ecrireJson(requete, requetePlanification(options));
     const args = ["--models", dossierModeles(contexte), "--request", requete];
     if (options.peripherique) args.push("--device", options.peripherique);
-    const { code, journal } = await lancer(cheminBinaire("planifier", contexte), args, surAvancement);
+    const { code, journal } = await lancerAvecRepli(
+      cheminBinaire("planifier", contexte), args, options.peripherique, surAvancement);
     const plan = path.join(travail, "requete0.json");
     if (code !== 0 || !fs.existsSync(plan)) return { ok: false, journal };
     return { ok: true, plan: fs.readFileSync(plan, "utf8"), journal };
@@ -173,7 +199,8 @@ async function rendre(options = {}, surAvancement, contexte) {
     if (options.tuile) args.push("--vae-chunk", String(options.tuile));
     if (options.recouvrement) args.push("--vae-overlap", String(options.recouvrement));
     args.push(...drapeauxAudio(options, travail));
-    const { code, journal } = await lancer(cheminBinaire("rendre", contexte), args, surAvancement);
+    const { code, journal } = await lancerAvecRepli(
+      cheminBinaire("rendre", contexte), args, options.peripherique, surAvancement);
     const audio = sortieAudio(travail);
     if (code !== 0 || !audio) return { ok: false, journal };
     return { ok: true, donnees: fs.readFileSync(audio), nom: path.basename(audio), journal };
@@ -184,4 +211,5 @@ async function rendre(options = {}, surAvancement, contexte) {
 
 module.exports = {
   planifier, rendre, cheminBinaire, dossierModeles, dossierDuDebruiteur, sortieAudio, drapeauxAudio,
+  doitRepasserSurProcesseur,
 };
