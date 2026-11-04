@@ -182,3 +182,140 @@ jobs:
           Write-Host "Les $($attendus.Count) assets attendus sont bien publies."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # L'APPIMAGE LINUX SE CONSTRUIT SUR LINUX, et c'est une contrainte d'electron-builder et non un
+  # choix : il déplie `${platform}` de `build.files` en `process.platform` de la machine qui
+  # construit, si bien qu'un paquet Linux construit sous Windows porterait l'onnxruntime de Windows.
+  # Voir BUILD-LINUX.md, § 7.
+  #
+  # `ubuntu-24.04` EN TOUTES LETTRES, ET NON `ubuntu-latest` : la glibc de l'image fixe le plancher
+  # de ce qui est construit ici, et `ubuntu-latest` le ferait monter le jour où GitHub change
+  # d'image, sans que rien ne le dise. Les outils natifs, eux, ne se construisent pas ici : ils
+  # viennent de la release « assets », épinglés et vérifiés, comme sous Windows.
+  #
+  # `needs: release` : le job Windows crée la release s'il le faut, et deux créations parallèles
+  # se seraient disputé le tag. Un échec Windows laisse donc la release sans AppImage, ce qui vaut
+  # mieux qu'une release à moitié faite publiée par l'autre job.
+  release-linux:
+    name: Build and publish the Linux AppImage
+    runs-on: ubuntu-24.04
+    needs: release
+    permissions:
+      contents: write
+    env:
+      # Sous linux/x64, le postinstall d'onnxruntime-node télécharge le fournisseur CUDA 12, que le
+      # code d'Attic ne demande jamais (BUILD-LINUX.md, § 2.3) : du poids mort et un téléchargement.
+      ONNXRUNTIME_NODE_INSTALL: skip
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Disk space before
+        run: df -h .
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify the Sherpa WASM files
+        run: npm run download:sherpa-wasm
+
+      - name: Ensure Electron binary is present
+        run: node node_modules/electron/install.js
+
+      # LE SOUNDFONT SEUL, PAR `tar`. `assets.zip` est en réalité une archive tar — mesuré :
+      # `7z l` y lit « Type = tar » et `unzip` le refuse —, ce qui permet d'en tirer le seul
+      # fichier embarqué sans déplier les deux giga-octets à côté de `node_modules`. Mesuré sur la
+      # machine de développement Linux : FluidR3_GM.sf2 sort à 148 398 306 octets, identique à
+      # l'octet à celui du dépôt. L'archive est effacée aussitôt, pour la place.
+      - name: Download the bundled SoundFont
+        run: |
+          gh release download assets -p assets.zip --dir .
+          tar -xf assets.zip public/sf2/FluidR3_GM.sf2
+          rm assets.zip
+          test "$(stat -c %s public/sf2/FluidR3_GM.sf2)" = 148398306
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download the demo music collection
+        run: npm run download:music-collection
+
+      # LES MÊMES ÉTAPES QUE LE JOB WINDOWS, dans le même ordre et pour les mêmes raisons (voir ses
+      # commentaires), avec trois différences : la cible `--linux AppImage`, le contrôle a
+      # posteriori sur `release/linux-unpacked`, et pas de patch d'`artifactName`, le bloc `linux`
+      # de package.json portant déjà un nom sans espace (`Attic-${version}-${arch}.${ext}`).
+      - name: Build the AppImage
+        run: |
+          set -euo pipefail
+          node -e "const p = require('./package.json'); p.build.asar = false; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');"
+          npm run build
+          # Les outils linux-x64 du manifeste : téléchargés, empreinte vérifiée, posés en 755.
+          npm run outils
+          node scripts/verify-bundled-resources.cjs
+          cp -r node_modules/electron/dist electron-dist
+          node -e "
+            const p = require('./package.json');
+            const fs = require('fs');
+            const ver = (n) => { try { return require('./node_modules/' + n + '/package.json').version; } catch { return '*'; } };
+            p.dependencies = {
+              '@huggingface/tokenizers': ver('@huggingface/tokenizers'),
+              'adm-zip': p.dependencies['adm-zip'] || ver('adm-zip'),
+              'electron-updater': p.dependencies['electron-updater'] || ver('electron-updater'),
+              'onnxruntime-node': p.dependencies['onnxruntime-node'] || ver('onnxruntime-node')
+            };
+            fs.writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');
+          "
+          npm prune --production
+          npm install --no-save electron-builder@26.15.3
+          node -e "const p = require('./package.json'); p.build.electronDist = 'electron-dist'; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2) + '\n');"
+          npm exec -- electron-builder --linux AppImage -p never
+          node scripts/verify-bundled-resources.cjs --paquet release/linux-unpacked/resources
+          # LES OUTILS DOIVENT RESTER EXÉCUTABLES DANS LE PAQUET : un binaire posé en 644 ne se
+          # lance pas, et le nœud tomberait sur « permission denied » chez l'utilisateur.
+          for f in songsee/songsee acestep/ace-lm acestep/ace-synth audiocpp/audiocpp_cli sdcpp/sd-cli; do
+            test -x "release/linux-unpacked/resources/bin/$f" || { echo "Non executable : $f"; exit 1; }
+          done
+          df -h .
+        env:
+          NODE_OPTIONS: --max-old-space-size=14336
+
+      # L'AppImage porte sa table de blocs EN ELLE-MÊME (`blockMapSize` dans latest-linux.yml) :
+      # il n'y a pas de `.blockmap` à part, contrairement à l'installeur NSIS. Deux assets, donc.
+      - name: Publish the AppImage to the GitHub release
+        run: |
+          set -euo pipefail
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          shopt -s nullglob
+          images=(release/Attic-*-x86_64.AppImage)
+          if [ "${#images[@]}" -ne 1 ] || [ ! -f release/latest-linux.yml ]; then
+            echo "Fichier manquant a la sortie du build : AppImage=${#images[@]} latest-linux.yml=$(test -f release/latest-linux.yml && echo 1 || echo 0)"
+            exit 1
+          fi
+          appimage="${images[0]}"
+
+          gh release view "$tag" > /dev/null 2>&1 || gh release create "$tag" --title "$tag" --notes "Attic $tag"
+          gh release upload "$tag" "$appimage" release/latest-linux.yml --clobber
+
+          # La même vérification a posteriori que sous Windows : le code de retour seul a déjà
+          # laissé passer deux releases incomplètes.
+          publies="$(gh release view "$tag" --json assets --jq '.assets[] | "\(.name):\(.size)"')"
+          echo "Assets publies :"
+          echo "$publies"
+          for nom in "$(basename "$appimage")" latest-linux.yml; do
+            ligne="$(grep -F "$nom:" <<< "$publies" || true)"
+            [ -n "$ligne" ] || { echo "Asset absent de la release : $nom"; exit 1; }
+            [ "${ligne##*:}" -gt 0 ] || { echo "Asset vide : $ligne"; exit 1; }
+          done
+          echo "Les 2 assets Linux attendus sont bien publies."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

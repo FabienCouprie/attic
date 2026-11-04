@@ -350,7 +350,16 @@ Une machine Linux réelle (ou une VM Ubuntu 24.04) reste le seul endroit où **t
 
 ### 7.3 Le job à écrire
 
-À ajouter dans `.github/workflows/release.yml`, après le job `release`. Ébauche, **non lancée** :
+**ÉCRIT LE 2026-11-04** : le job `release-linux` de `.github/workflows/release.yml` en est la
+version tenue, et c'est lui qui fait foi. Il s'écarte de l'ébauche ci-dessous sur trois points :
+il est en `bash` et non en `pwsh` ; il tire le SoundFont seul par `tar -xf assets.zip
+public/sf2/FluidR3_GM.sf2`, `assets.zip` étant en réalité une archive tar (mesuré : `7z l` y lit
+« Type = tar », `unzip` le refuse) ; et il vérifie que les cinq exécutables restent exécutables
+dans le paquet. Mesuré hors CI : `electron-builder --linux AppImage -p never` rend l'AppImage et
+`latest-linux.yml`, sans `.blockmap` à part (la table est embarquée). **Non lancé sur GitHub** à
+cette date.
+
+L'ébauche d'origine, gardée pour mémoire :
 
 ```yaml
   release-linux:

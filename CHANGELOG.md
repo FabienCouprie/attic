@@ -4,6 +4,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Added
+
+- **LA RELEASE PUBLIE UNE APPIMAGE LINUX, PAR UN JOB `release-linux` SUR `ubuntu-24.04`.** Il suit le job Windows (`needs: release`), en reprend les étapes une à une et publie deux assets, `Attic-<version>-x86_64.AppImage` et `latest-linux.yml`, avec la même vérification a posteriori de leur présence et de leur taille. Les outils natifs viennent de la release `assets` par `npm run outils`, comme sous Windows ; aucun dépôt amont n'est cloné.
+  - **Le SoundFont sort seul de `assets.zip` par `tar`** : l'archive est un tar sous une extension `.zip` (mesuré : `7z l` y lit « Type = tar », `unzip` la refuse), ce qui évite de déplier ses deux giga-octets. Mesuré sur la machine Linux : 148 398 306 octets, identiques au fichier du dépôt.
+  - **Mesuré hors CI** : `electron-builder --linux AppImage -p never` rend l'AppImage et `latest-linux.yml`, sans `.blockmap` séparé ; la boucle de vérification refuse un asset absent et un asset vide. `scripts/bundled-resources.test.ts` exige le contrôle a posteriori sur `release/linux-unpacked/resources`.
+  - **Non vérifié** : le job lui-même n'a pas encore tourné sur GitHub, en particulier la mémoire et l'espace disque du coureur, qu'il affiche par `df -h`.
+
 ### Fixed
 
 - **« CALCUL » SUR « AUTOMATIQUE » REPASSE SUR LE PROCESSEUR QUAND LA CARTE EST REFUSÉE, POUR LES NŒUDS ACE-STEP.** Relevé par Fabien sous Linux, sur un Intel HD 4000 : ggml-vulkan écarte la carte, faute de stockage 16 bits, et `ace-lm` comme `ace-synth` s'arrêtent sur « Unsupported device » sans rien produire. « Automatique » tombait donc en erreur à chaque lancement sur cette machine, alors que « Processeur » y rend. Le pont relance désormais une fois avec `--device CPU` et l'écrit en tête du journal. Un périphérique nommé, « Vulkan 0 » ou « Processeur », garde son erreur, comme pour DirectML.
