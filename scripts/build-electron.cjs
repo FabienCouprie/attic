@@ -74,6 +74,21 @@ const CIBLES = {
   linux: { drapeaux: ["--linux", "AppImage"], deplie: "release/linux-unpacked" },
 };
 
+// LE BINAIRE D'ELECTRON NE REVIENT PAS AVEC `npm install`. Le `npm prune --production` retire le
+// paquet `electron` (dépendance de développement) ; le `npm install` final le remet, mais sans son
+// dossier `dist/` : mesuré deux fois sous Linux, le paquet revenait sans binaire et la construction
+// suivante échouait sur la copie de `node_modules/electron/dist`. Son propre script d'installation
+// le retélécharge ; on l'appelle au départ et à l'arrivée quand le binaire manque.
+function assurerBinaireElectron() {
+  const chemin = path.join(projectDir, "node_modules", "electron", "path.txt");
+  const binaire = fs.existsSync(chemin)
+    ? path.join(electronDistSource, fs.readFileSync(chemin, "utf8").trim())
+    : null;
+  if (binaire && fs.existsSync(binaire)) return 0;
+  console.log("[build] Binaire d'Electron absent : retéléchargement par node_modules/electron/install.js.");
+  return runCommand("node", ["node_modules/electron/install.js"]);
+}
+
 function main() {
   if (!CIBLES[process.platform]) {
     console.error(`[build] Aucune cible prévue pour ${process.platform}.`);
@@ -142,6 +157,10 @@ function main() {
   if (sourcesStatus !== 0) cleanup(sourcesStatus ?? 1);
 
   // Save the Electron binary so electron-builder can still use it after we prune dev deps.
+  if (assurerBinaireElectron() !== 0) {
+    console.error("[build] Impossible d'obtenir le binaire d'Electron.");
+    cleanup(1);
+  }
   try {
     fs.cpSync(electronDistSource, electronDistTarget, { recursive: true });
   } catch (err) {
@@ -204,6 +223,10 @@ function main() {
   if (restoreStatus !== 0) {
     console.error("[build] Failed to restore dev dependencies after packaging.");
     process.exit(restoreStatus ?? 1);
+  }
+  if (assurerBinaireElectron() !== 0) {
+    console.error("[build] Binaire d'Electron non restauré : lancer « node node_modules/electron/install.js ».");
+    process.exit(1);
   }
 
   process.exit(0);
