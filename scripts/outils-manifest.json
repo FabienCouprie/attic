@@ -58,7 +58,10 @@
           ],
           "fichiers": [
             "songsee"
-          ]
+          ],
+          "url": "https://github.com/FabienCouprie/attic/releases/download/assets/songsee-v0.1.3-linux-x64",
+          "octets": 6310624,
+          "sha256": "93b1609231c8b66a84a936c14a098afddee2530523f4969607eedd44de3ca762"
         }
       }
     },
@@ -166,7 +169,10 @@
             "libggml-cpu-sse42.so",
             "libggml-cpu-x64.so",
             "libggml-cpu-zen4.so"
-          ]
+          ],
+          "url": "https://github.com/FabienCouprie/attic/releases/download/assets/acestep-de858d8e-linux-x64-vulkan.zip",
+          "octets": 18006248,
+          "sha256": "113a0006f1af287245f08238af709bb0e0231eb4827dd01aaf6f8e5fd6657525"
         }
       }
     },
@@ -219,7 +225,10 @@
           },
           "fichiers": [
             "audiocpp_cli"
-          ]
+          ],
+          "url": "https://github.com/FabienCouprie/attic/releases/download/assets/audiocpp_cli-v0.9.2-drama3-base-small-linux-x64-vulkan",
+          "octets": 93452648,
+          "sha256": "f4a2c947886953eec0228810feb5971fcf0fd9e0c56df959b00207939b3dba29"
         }
       }
     },
@@ -321,7 +330,10 @@
             "libwebm.so",
             "stable-diffusion.cpp.txt",
             "ggml.txt"
-          ]
+          ],
+          "url": "https://github.com/FabienCouprie/attic/releases/download/assets/sdcpp-be48649-linux-x64-vulkan.zip",
+          "octets": 34996055,
+          "sha256": "c76b8d4652be82493c7963db57db7302a622821582d8c7aa0bc3eb6d43344647"
         }
       }
     }
