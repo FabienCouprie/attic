@@ -109,7 +109,15 @@ async function recupererAmont(outil, ici, travail) {
     process.exit(1);
   }
   const deplie = path.join(travail, "deplie");
-  new (require("adm-zip"))(archive).extractAllTo(deplie, true);
+  fs.mkdirSync(deplie, { recursive: true });
+  // AUDIO.CPP PUBLIE SES BINAIRES LINUX EN `.tar.gz`, et non en `.zip` comme sous Windows.
+  // `adm-zip` ne lit que le zip ; le paquet `tar`, déjà en dépendance de développement, garde en
+  // outre le bit d'exécution que l'archive porte.
+  if (/\.tar\.gz$|\.tgz$/.test(a.nom)) {
+    await require("tar").x({ file: archive, cwd: deplie });
+  } else {
+    new (require("adm-zip"))(archive).extractAllTo(deplie, true);
+  }
   console.log(`  ${mo(fs.statSync(archive).size)} Mo, empreinte amont vérifiée`);
   return deplie;
 }
@@ -135,7 +143,12 @@ async function construire(ids) {
       clonerEpingle(outil.amont, source);
       for (const etape of ici.construction) {
         console.log(`  ${etape.commande} ${etape.args.join(" ")}`);
-        executer(etape.commande, etape.args, { cwd: path.join(source, etape.dans ?? "") });
+        // `env` porte ce que l'étape demande à son environnement : sous Ubuntu 24.04, `go` vaut
+        // 1.22 et songsee demande 1.25 ; `GOTOOLCHAIN` fait prendre la bonne chaîne par Go lui-même.
+        executer(etape.commande, etape.args, {
+          cwd: path.join(source, etape.dans ?? ""),
+          env: { ...process.env, ...etape.env },
+        });
       }
       source = path.join(source, ici.produits);
     }
@@ -155,7 +168,11 @@ async function construire(ids) {
         console.error(`${outil.id} : ${f} est absent de ${source}`);
         process.exit(1);
       }
-      fs.copyFileSync(de, path.join(dest, path.basename(f)));
+      const vers = path.join(dest, path.basename(f));
+      fs.copyFileSync(de, vers);
+      // `adm-zip` déplie sans le bit d'exécution : relevé sur `sd-cli`, posé en 666. Le même
+      // `chmod` que celui de `--telecharger`, pour que l'outil construit ici se lance aussi.
+      if (process.platform !== "win32") fs.chmodSync(vers, 0o755);
     }
     console.log(`${outil.id} : ${ici.fichiers.length} fichier(s) dans ${outil.destination}`);
   }
