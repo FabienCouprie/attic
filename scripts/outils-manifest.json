@@ -131,7 +131,11 @@
                 "-DCMAKE_BUILD_TYPE=Release",
                 "-DGGML_VULKAN=ON",
                 "-DGGML_NATIVE=OFF",
-                "-DBUILD_SHARED_LIBS=OFF"
+                "-DGGML_BACKEND_DL=ON",
+                "-DGGML_CPU_ALL_VARIANTS=ON",
+                "-DBUILD_SHARED_LIBS=ON",
+                "-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON",
+                "-DCMAKE_INSTALL_RPATH=$ORIGIN"
               ]
             },
             {
@@ -144,7 +148,24 @@
           ],
           "fichiers": [
             "ace-lm",
-            "ace-synth"
+            "ace-synth",
+            "libggml.so.0",
+            "libggml-base.so.0",
+            "libggml-vulkan.so",
+            "libggml-cpu-alderlake.so",
+            "libggml-cpu-cannonlake.so",
+            "libggml-cpu-cascadelake.so",
+            "libggml-cpu-cooperlake.so",
+            "libggml-cpu-haswell.so",
+            "libggml-cpu-icelake.so",
+            "libggml-cpu-ivybridge.so",
+            "libggml-cpu-piledriver.so",
+            "libggml-cpu-sandybridge.so",
+            "libggml-cpu-sapphirerapids.so",
+            "libggml-cpu-skylakex.so",
+            "libggml-cpu-sse42.so",
+            "libggml-cpu-x64.so",
+            "libggml-cpu-zen4.so"
           ]
         }
       }
