@@ -295,7 +295,9 @@ construit sans cgo et ne demande aucune glibc. Electron (2.25) et onnxruntime (2
   (`.github/workflows/release.yml:66-85`).
 - **Les modèles ONNX et GGUF** ne sont plus embarqués depuis le 2026-10-08
   (`.github/workflows/release.yml:53-54`) : ils se prennent depuis l'application, dans
-  `userData/ressources` (`electron/main.cjs:159`). Les mêmes fichiers servent sous Linux.
+  `userData/ressources` sous Windows, et sous Linux dans `~/.local/share/attic/ressources`
+  (`$XDG_DATA_HOME` s'il est posé) : voir `electron/dossier-ressources.cjs`. Un ancien
+  `~/.config/attic/ressources` y est renommé au premier lancement. Les mêmes fichiers servent.
 - **Le contenu de `dist/`** (WASM de Sherpa, Piper, Csound, Vosk…) est du web : identique.
 
 ## 6. Les chemins et appels système
@@ -306,8 +308,8 @@ construit sans cgo et ne demande aucune glibc. Electron (2.25) et onnxruntime (2
   (`electron/main.cjs:144`, `159`, `188`, `251`), `documents` pour le dossier de travail
   (`electron/main.cjs:1082-1084`), `temp` pour les scripts (`electron/main.cjs:1312`, `1389`),
   `home` pour les nœuds installés (`electron/main.cjs:141`). Sous Linux, `userData` devient
-  `~/.config/Attic` (ou `~/.config/attic`, selon le nom que l'application packagée lit ; **non
-  vérifié**), et `documents` le dossier XDG des documents. Aucun `%APPDATA%` n'est lu en dur hors
+  `~/.config/attic` (mesuré avec l'AppImage), et `documents` le dossier XDG des documents. Les
+  modèles téléchargés n'y sont pas : ils vont dans `~/.local/share/attic/ressources`. Aucun `%APPDATA%` n'est lu en dur hors
   des chemins de Julia, eux-mêmes gardés par la plateforme (`electron/main.cjs:270-274`).
 - **Les ressources** passent par `resoudreRessource` (`electron/chemins-ressources.cjs:46-77`), sur
   `process.resourcesPath` : dans un AppImage, c'est le dossier `resources` du montage.

@@ -375,8 +375,14 @@ describe("les sites qui frappent une racine, dans le processus principal", () =>
    *   · `dossier` est un élément de la liste de candidats que `dossierDeTravailParDefaut` calcule
    *     elle-même ; aucun argument n'y entre.
    *   · `app.getPath("userData")` est le dossier de l'application.
+   *   · `dossierRessourcesUtilisateur()` est celui des modèles téléchargés, que `userData` couvrait
+   *     jusqu'à ce qu'il en sorte sous Linux (`~/.local/share/attic`). Il se calcule de
+   *     `app.getPath`, de `process.platform` et de `XDG_DATA_HOME` ; la fonction ne prend aucun
+   *     argument, et le rendu ne la nomme pas.
    */
-  const PERMISES = new Set(['r.filePath', 'p', 'dossier', 'app.getPath("userData")']);
+  const PERMISES = new Set([
+    'r.filePath', 'p', 'dossier', 'app.getPath("userData")', 'dossierRessourcesUtilisateur()',
+  ]);
 
   it("n'emploient que des expressions mintées par le côté privilégié", () => {
     // LES PARENTHÈSES IMBRIQUÉES COMPTENT, et mon premier jet les a manquées : `[^)]*` coupait
