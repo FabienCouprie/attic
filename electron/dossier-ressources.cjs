@@ -26,12 +26,16 @@ const path = require("path");
  *
  * `XDG_DATA_HOME` n'est retenu que s'il est absolu : la spécification XDG demande d'ignorer une
  * valeur relative, qui se résoudrait sinon contre le dossier courant du lancement.
+ *
+ * LA BRANCHE LINUX PARLE `path.posix`, et non `path` : sous Linux c'est le même module, mais la CI
+ * tourne sous Windows, où `path.join` aurait rendu `\h\.local\share` — un chemin Linux qu'aucun
+ * Linux ne lirait. Relevé par la CI de la PR #290.
  */
 function dossierRessourcesVoulu({ plateforme, userData, home, env = {} }) {
   if (plateforme !== "linux") return path.join(userData, "ressources");
   const xdg = env.XDG_DATA_HOME;
-  const donnees = xdg && path.isAbsolute(xdg) ? xdg : path.join(home, ".local", "share");
-  return path.join(donnees, "attic", "ressources");
+  const donnees = xdg && path.posix.isAbsolute(xdg) ? xdg : path.posix.join(home, ".local", "share");
+  return path.posix.join(donnees, "attic", "ressources");
 }
 
 /**
