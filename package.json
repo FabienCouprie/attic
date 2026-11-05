@@ -38,6 +38,7 @@
     "build": "tsc -b && vite build",
     "build:electron": "node scripts/build-electron.cjs",
     "publish:electron": "npm run build && npm run outils && electron-builder --win -p always -c.electronDist=node_modules/electron/dist",
+    "publish:electron:linux": "npm run build && npm run outils && electron-builder --linux AppImage -p always -c.electronDist=node_modules/electron/dist",
     "outils": "node scripts/outils-natifs.cjs --telecharger",
     "outils:construire": "node scripts/outils-natifs.cjs --construire",
     "outils:publier": "node scripts/outils-natifs.cjs --publier",
@@ -172,6 +173,16 @@
         "nsis"
       ],
       "icon": "public/icon.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "public/icon.png",
+      "category": "AudioVideo",
+      "executableName": "attic",
+      "artifactName": "Attic-${version}-${arch}.${ext}",
+      "synopsis": "Visual node-editor for AI-powered music and sound design"
     },
     "asarUnpack": [
       "dist/piper-tts/**/*.wasm",

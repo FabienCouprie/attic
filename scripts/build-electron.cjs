@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
-// Local Windows build script for Attic.
+// Local build script for Attic (Windows NSIS installer, or Linux AppImage when run on Linux).
 // - Works around electron-builder 26.x memory exhaustion by temporarily setting
 //   package.json "packageManager" to "traversal" so it uses manual node_modules
 //   traversal instead of the npm dependency collector.
@@ -68,7 +68,32 @@ function removeDirectory(dir) {
 // réimplémente ses étapes en ligne. La seule trace d'un installeur allégé est un fichier local,
 // jamais publié.
 
+// La cible d'electron-builder et le dossier déplié qu'elle laisse, par plateforme de construction.
+const CIBLES = {
+  win32: { drapeaux: ["--win"], deplie: "release/win-unpacked" },
+  linux: { drapeaux: ["--linux", "AppImage"], deplie: "release/linux-unpacked" },
+};
+
+// LE BINAIRE D'ELECTRON NE REVIENT PAS AVEC `npm install`. Le `npm prune --production` retire le
+// paquet `electron` (dépendance de développement) ; le `npm install` final le remet, mais sans son
+// dossier `dist/` : mesuré deux fois sous Linux, le paquet revenait sans binaire et la construction
+// suivante échouait sur la copie de `node_modules/electron/dist`. Son propre script d'installation
+// le retélécharge ; on l'appelle au départ et à l'arrivée quand le binaire manque.
+function assurerBinaireElectron() {
+  const chemin = path.join(projectDir, "node_modules", "electron", "path.txt");
+  const binaire = fs.existsSync(chemin)
+    ? path.join(electronDistSource, fs.readFileSync(chemin, "utf8").trim())
+    : null;
+  if (binaire && fs.existsSync(binaire)) return 0;
+  console.log("[build] Binaire d'Electron absent : retéléchargement par node_modules/electron/install.js.");
+  return runCommand("node", ["node_modules/electron/install.js"]);
+}
+
 function main() {
+  if (!CIBLES[process.platform]) {
+    console.error(`[build] Aucune cible prévue pour ${process.platform}.`);
+    process.exit(1);
+  }
   originalPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
   if (fs.existsSync(packageLockPath)) {
     originalPackageLock = fs.readFileSync(packageLockPath, "utf8");
@@ -132,6 +157,10 @@ function main() {
   if (sourcesStatus !== 0) cleanup(sourcesStatus ?? 1);
 
   // Save the Electron binary so electron-builder can still use it after we prune dev deps.
+  if (assurerBinaireElectron() !== 0) {
+    console.error("[build] Impossible d'obtenir le binaire d'Electron.");
+    cleanup(1);
+  }
   try {
     fs.cpSync(electronDistSource, electronDistTarget, { recursive: true });
   } catch (err) {
@@ -171,12 +200,14 @@ function main() {
   finalPkg.build.electronDist = "electron-dist";
   fs.writeFileSync(packageJsonPath, JSON.stringify(finalPkg, null, 2) + "\n", "utf8");
 
-  // Package the app.
-  const builderStatus = runCommand("npx", ["electron-builder", "--win"], { NODE_OPTIONS: nodeOptions });
+  // Package the app, for the platform this script runs on: electron-builder expands `${platform}`
+  // in `build.files` to the BUILDING machine's platform, so each package is built on its own OS.
+  const cible = CIBLES[process.platform];
+  const builderStatus = runCommand("npx", ["electron-builder", ...cible.drapeaux], { NODE_OPTIONS: nodeOptions });
   if (builderStatus !== 0) cleanup(builderStatus ?? 1);
 
   // Check what actually landed in the packaged app.
-  const packageStatus = runCommand("node", ["scripts/verify-bundled-resources.cjs", "--paquet", "release/win-unpacked/resources"]);
+  const packageStatus = runCommand("node", ["scripts/verify-bundled-resources.cjs", "--paquet", `${cible.deplie}/resources`]);
   if (packageStatus !== 0) cleanup(packageStatus ?? 1);
 
   // Restore the workspace before exiting.
@@ -192,6 +223,10 @@ function main() {
   if (restoreStatus !== 0) {
     console.error("[build] Failed to restore dev dependencies after packaging.");
     process.exit(restoreStatus ?? 1);
+  }
+  if (assurerBinaireElectron() !== 0) {
+    console.error("[build] Binaire d'Electron non restauré : lancer « node node_modules/electron/install.js ».");
+    process.exit(1);
   }
 
   process.exit(0);

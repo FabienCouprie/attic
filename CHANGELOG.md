@@ -4,7 +4,24 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Added
+
+- **LA RELEASE PUBLIE UNE APPIMAGE LINUX, PAR UN JOB `release-linux` SUR `ubuntu-24.04`.** Il suit le job Windows (`needs: release`), en reprend les étapes une à une et publie deux assets, `Attic-<version>-x86_64.AppImage` et `latest-linux.yml`, avec la même vérification a posteriori de leur présence et de leur taille. Les outils natifs viennent de la release `assets` par `npm run outils`, comme sous Windows ; aucun dépôt amont n'est cloné.
+  - **Le SoundFont sort seul de `assets.zip` par `tar`** : l'archive est un tar sous une extension `.zip` (mesuré : `7z l` y lit « Type = tar », `unzip` la refuse), ce qui évite de déplier ses deux giga-octets. Mesuré sur la machine Linux : 148 398 306 octets, identiques au fichier du dépôt.
+  - **Mesuré hors CI** : `electron-builder --linux AppImage -p never` rend l'AppImage et `latest-linux.yml`, sans `.blockmap` séparé ; la boucle de vérification refuse un asset absent et un asset vide. `scripts/bundled-resources.test.ts` exige le contrôle a posteriori sur `release/linux-unpacked/resources`.
+  - **Non vérifié** : le job lui-même n'a pas encore tourné sur GitHub, en particulier la mémoire et l'espace disque du coureur, qu'il affiche par `df -h`.
+
+- **L'APPIMAGE VISE GLIBC 2.35 ET TOUT PROCESSEUR X86-64 : UBUNTU 22.04 ET DEBIAN 12 COMPRIS**, à la demande de Fabien. Les outils natifs Linux se compilent dans un conteneur Ubuntu 22.04 (`scripts/outils-linux.sh`, podman), et non plus sur la machine qui construit, qui leur donnait sa glibc 2.38.
+  - **audio.cpp ne plante plus sur un processeur sans AVX2.** Son binaire amont, compilé pour le processeur natif de la machine de l'amont, mourait sur « Instruction non permise » sur un i7-3610QM (Ivy Bridge). Il se compile désormais depuis la version épinglée, avec les quatorze variantes de processeur, comme acestep et stable-diffusion.cpp, qui passe lui aussi des binaires amont aux sources. Mesuré : transcription MIDI rendue en 17 s sur cette machine, avec la variante `ivybridge`.
+  - **songsee est statique** (`CGO_ENABLED=0`) et ne demande aucune glibc ; **`libgomp.so.1` part avec chaque outil C++**, une installation minimale ne l'ayant pas.
+  - **Mesuré dans des conteneurs `ubuntu:22.04` et `debian:12` nus** : `ldd` ne signale plus aucune bibliothèque manquante, et la transcription MIDI aboutit sous Debian 12 sans Vulkan ni OpenMP installés, le moteur Vulkan étant ignoré. Plancher relevé : `GLIBC_2.35`. ace-lm rend son plan sur cette machine ; sd-cli démarre, **la génération d'image n'a pas été relancée**.
+
 ### Fixed
+
+- **« CALCUL » SUR « AUTOMATIQUE » REPASSE SUR LE PROCESSEUR QUAND LA CARTE EST REFUSÉE, POUR LES NŒUDS ACE-STEP.** Relevé par Fabien sous Linux, sur un Intel HD 4000 : ggml-vulkan écarte la carte, faute de stockage 16 bits, et `ace-lm` comme `ace-synth` s'arrêtent sur « Unsupported device » sans rien produire. « Automatique » tombait donc en erreur à chaque lancement sur cette machine, alors que « Processeur » y rend. Le pont relance désormais une fois avec `--device CPU` et l'écrit en tête du journal. Un périphérique nommé, « Vulkan 0 » ou « Processeur », garde son erreur, comme pour DirectML.
+  - **Mesuré avec le vrai `ace-lm` par `planifier`, en « Automatique », sur cette machine** : refus de la carte, relance sur `libggml-cpu-ivybridge.so`, plan rendu en 96 s.
+  - **`electron/acestep-repli.test.ts`**, sur un faux moteur qui refuse comme la carte : deux appels, le second finissant par `--device CPU`, plan rendu ; un choix nommé part en un seul appel, sans repli.
+  - **Vérifié par Fabien dans l'AppImage**, « Calcul » laissé sur « Automatique » : les nœuds ACE-Step rendent sur cette machine.
 
 - **UN PAQUET LINUX GARDE `libonnxruntime.so.1`, ET LA LISTE BLANCHE DE `build.files` TIENT TOUJOURS.** `build.files` excluait `**/*.so` et `**/*.so.*` de tout le paquet : sous Linux, la bibliothèque d'onnxruntime partait avec, et tous les ponts ONNX du processus principal seraient tombés. Les deux motifs sont remplacés, dans le même `files` commun, par `!node_modules/onnxruntime-node/bin/napi-v6/!(${platform})/**/*` et `!…/napi-v6/*/arm64/**/*`. electron-builder déplie `${platform}` en `process.platform` de la machine qui construit, `win32` ou `linux`. La tentative de la PR 285, par des blocs `win.files` et `linux.files`, avait fait embarquer toute la racine du projet ; celle-ci ne touche pas aux blocs de plateforme.
   - **Témoin sous Windows et sous Linux (WSL)**, avec un fichier posé hors de la liste blanche : il n'est embarqué dans aucun des deux. Windows garde les cinq fichiers `win32/x64` d'onnxruntime, Linux `linux/x64/libonnxruntime.so.1` et sa liaison, rien d'autre ; la configuration de la 5.1.0 y laissait quatre liaisons `.node` et pas de `.so`.

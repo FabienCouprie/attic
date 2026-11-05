@@ -91,6 +91,8 @@ describe("configuration réelle", () => {
     expect(wf).toContain("npm run download:music-collection");
     expect(wf).toContain("node scripts/verify-bundled-resources.cjs\n");
     expect(wf).toContain("node scripts/verify-bundled-resources.cjs --paquet release/win-unpacked/resources");
+    // L'AppImage passe par le même contrôle a posteriori, sur son propre dossier déplié.
+    expect(wf).toContain("node scripts/verify-bundled-resources.cjs --paquet release/linux-unpacked/resources");
   });
 
   it("ET IL NE RAPATRIE PLUS AUCUN MODÈLE, qui ne sont plus embarqués", () => {

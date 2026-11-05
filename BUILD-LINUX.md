@@ -265,10 +265,24 @@ Trois remèdes, par ordre de préférence :
 Un binaire compilé sur Ubuntu 24.04 demande la glibc de 24.04 (2.39) ; il ne démarre pas sur
 Ubuntu 22.04 (2.35) ni sur Debian 12 (2.36). stable-diffusion.cpp est déjà dans ce cas (§ 5.4).
 
-**Recommandation : construire tout sur `ubuntu-24.04` et annoncer Ubuntu 24.04 (glibc 2.39) comme
-plancher de la première version.** Descendre à 22.04 demanderait de recompiler stable-diffusion.cpp
-au lieu de prendre son binaire, ce que le manifeste a écarté pour audio.cpp
-(`scripts/outils-natifs.cjs:88-92`).
+**DÉCIDÉ PAR FABIEN LE 2026-11-04 : LE PLANCHER EST GLIBC 2.35, Ubuntu 22.04 ET Debian 12
+COMPRIS.** La recommandation d'origine (24.04 et 2.39) est écartée. Les trois outils C++ se
+compilent dans un conteneur Ubuntu 22.04, `scripts/outils-linux.sh` (podman) sur
+`scripts/outils-linux.Containerfile`, et non plus sur la machine qui construit ; songsee est
+construit sans cgo et ne demande aucune glibc. Electron (2.25) et onnxruntime (2.28) sont en dessous.
+
+- **Plus aucun binaire amont sous Linux** : audio.cpp et stable-diffusion.cpp se compilent depuis
+  la version épinglée. Le binaire amont d'audio.cpp était de toute façon inutilisable : compilé
+  avec `ENGINE_ENABLE_NATIVE_CPU` (le défaut), il porte de l'AVX2, du FMA et de l'AVX-512, et
+  mourait sur « Instruction non permise » sur un i7-3610QM (Ivy Bridge), mesuré le 2026-11-04.
+  Les trois sont désormais construits avec toutes les variantes de processeur
+  (`GGML_CPU_ALL_VARIANTS`, `ENGINE_ENABLE_CPU_ALL_VARIANTS`), et ggml choisit au lancement.
+- **`libgomp.so.1` part avec chaque outil** : les exécutables y sont liés, et une installation
+  minimale ne l'a pas. Redistribuable sous la GCC Runtime Library Exception. `libvulkan.so.1`, lui,
+  ne part pas : le moteur Vulkan est chargé à la demande, et sans lui ggml reste sur le processeur.
+- **Mesuré** : dans des conteneurs `ubuntu:22.04` et `debian:12` nus, `ldd` ne signale plus rien
+  de manquant, et `audiocpp_cli` rend une transcription MIDI sous Debian 12 sans Vulkan ni OpenMP
+  installés. Plancher relevé : `GLIBC_2.35`, `GLIBCXX_3.4.30` (libstdc++ de 22.04 et de Debian 12).
 
 **Vérifier** le plancher réel : pour chaque binaire de `bin/` et pour `attic`,
 `objdump -T <fichier> | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1`.
@@ -350,7 +364,16 @@ Une machine Linux réelle (ou une VM Ubuntu 24.04) reste le seul endroit où **t
 
 ### 7.3 Le job à écrire
 
-À ajouter dans `.github/workflows/release.yml`, après le job `release`. Ébauche, **non lancée** :
+**ÉCRIT LE 2026-11-04** : le job `release-linux` de `.github/workflows/release.yml` en est la
+version tenue, et c'est lui qui fait foi. Il s'écarte de l'ébauche ci-dessous sur trois points :
+il est en `bash` et non en `pwsh` ; il tire le SoundFont seul par `tar -xf assets.zip
+public/sf2/FluidR3_GM.sf2`, `assets.zip` étant en réalité une archive tar (mesuré : `7z l` y lit
+« Type = tar », `unzip` le refuse) ; et il vérifie que les cinq exécutables restent exécutables
+dans le paquet. Mesuré hors CI : `electron-builder --linux AppImage -p never` rend l'AppImage et
+`latest-linux.yml`, sans `.blockmap` à part (la table est embarquée). **Non lancé sur GitHub** à
+cette date.
+
+L'ébauche d'origine, gardée pour mémoire :
 
 ```yaml
   release-linux:

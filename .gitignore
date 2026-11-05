@@ -58,6 +58,16 @@ bin/audiocpp/*.dylib
 bin/sdcpp/*.exe
 bin/sdcpp/*.dll
 bin/sdcpp/*.txt
+# Sous Linux, les mêmes outils n'ont pas d'extension, et les bibliothèques portent un numéro de
+# version après `.so` (`libggml.so.0`) : `*.so` seul ne les prend pas.
+bin/acestep/ace-lm
+bin/acestep/ace-synth
+bin/acestep/*.so.*
+bin/audiocpp/audiocpp_cli
+bin/audiocpp/*.so.*
+bin/sdcpp/sd-cli
+bin/sdcpp/*.so
+bin/sdcpp/*.so.*
 
 # LES GRAPHES D'EXEMPLE SONT VERSIONNÉS DEPUIS LE 2026-10-08, demandé par Fabien, et c'est le
 # renversement d'une décision antérieure de lui dont la raison était écrite ici : « c'est un dossier
