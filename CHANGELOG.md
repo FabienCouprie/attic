@@ -4,6 +4,10 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+## [5.1.2] — 2026-11-05
+
+**ATTIC SORT SOUS LINUX, EN APPIMAGE.** La release publie désormais, à côté de l'installeur Windows, une AppImage x86-64 qui tourne sur tout processeur et sur toute distribution à glibc 2.35 ou plus (Ubuntu 22.04, Debian 12 et suivantes). Les modèles s'y téléchargent depuis l'application, comme sous Windows, dans `~/.local/share/attic/ressources`.
+
 ### Added
 
 - **LA RELEASE PUBLIE UNE APPIMAGE LINUX, PAR UN JOB `release-linux` SUR `ubuntu-24.04`.** Il suit le job Windows (`needs: release`), en reprend les étapes une à une et publie deux assets, `Attic-<version>-x86_64.AppImage` et `latest-linux.yml`, avec la même vérification a posteriori de leur présence et de leur taille. Les outils natifs viennent de la release `assets` par `npm run outils`, comme sous Windows ; aucun dépôt amont n'est cloné.
