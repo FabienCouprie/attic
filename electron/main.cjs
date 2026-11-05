@@ -115,6 +115,7 @@ const {
   fenetreDe, uneSeuleFois, requeteDeFenetre, adresseDeDeveloppement, uneFenetreVivante,
 } = require("./fenetres.cjs");
 const { resoudreRessource, sondesRessources } = require("./chemins-ressources.cjs");
+const { dossierRessourcesVoulu, migrerRessources } = require("./dossier-ressources.cjs");
 const { SCHEMA: SCHEMA_MEDIA, cheminDepuisUrl, typeMedia, analyserPlage } = require("./plage-media.cjs");
 const { SCHEMA: SCHEMA_RESSOURCE, servir: servirRessource } = require("./ressource-locale.cjs");
 const {
@@ -155,8 +156,27 @@ const CHEMIN_SAUVEGARDE_MAJ = () => path.join(app.getPath("userData"), "attic-ba
  * même disposition — `oonx/x.onnx` ici répond au même chemin relatif que `oonx/x.onnx` là-bas —
  * si bien qu'aucun nœud n'a à savoir d'où vient son modèle. Le résolveur y regarde EN PREMIER,
  * de sorte qu'un modèle téléchargé répare un modèle livré abîmé.
+ *
+ * SOUS LINUX, CE N'EST PLUS `userData` (`~/.config/attic`) mais `~/.local/share/attic` : voir
+ * `electron/dossier-ressources.cjs`. Le premier appel, au démarrage, y renomme l'ancien dossier ;
+ * le résultat est retenu, si bien qu'un renommage refusé laisse servir l'ancien jusqu'au bout.
  */
-const dossierRessourcesUtilisateur = () => path.join(app.getPath("userData"), "ressources");
+let dossierRessourcesRetenu = null;
+const dossierRessourcesUtilisateur = () => {
+  if (dossierRessourcesRetenu) return dossierRessourcesRetenu;
+  const ancien = path.join(app.getPath("userData"), "ressources");
+  const voulu = dossierRessourcesVoulu({
+    plateforme: process.platform, userData: app.getPath("userData"),
+    home: app.getPath("home"), env: process.env,
+  });
+  const migration = migrerRessources(ancien, voulu);
+  if (migration.action !== "aucune") {
+    console.log(`[attic] ressources : ${migration.action} ${ancien} → ${migration.dossier}`
+      + (migration.erreur ? ` (${migration.erreur})` : ""));
+  }
+  dossierRessourcesRetenu = migration.dossier;
+  return dossierRessourcesRetenu;
+};
 
 const contexteRessources = () => ({
   empaquete: app.isPackaged,
@@ -1982,6 +2002,10 @@ app.whenReady().then(() => {
   // destinations relevées n'y mène, et il est partagé avec toutes les autres applications de la
   // machine. Une racine que la mesure ne demande pas est une permission devinée.
   declarerRacine(app.getPath("userData"));
+  // LES MODÈLES TÉLÉCHARGÉS, hors de `userData` sous Linux : ils y étaient couverts par la racine
+  // ci-dessus, ils doivent l'être encore là où ils vont. L'appel fait aussi le déplacement, une
+  // fois, avant que la fenêtre n'interroge l'inventaire.
+  declarerRacine(dossierRessourcesUtilisateur());
   dossierDeTravailParDefaut();
   const accords = memoriserLesAccords(path.join(app.getPath("userData"), "racines-accordees.json"));
   // LES SCRIPTS AUTORISÉS SE RELISENT AVEC LES ACCORDS, et pour la même raison : la personne les a

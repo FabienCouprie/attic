@@ -16,6 +16,14 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - **songsee est statique** (`CGO_ENABLED=0`) et ne demande aucune glibc ; **`libgomp.so.1` part avec chaque outil C++**, une installation minimale ne l'ayant pas.
   - **Mesuré dans des conteneurs `ubuntu:22.04` et `debian:12` nus** : `ldd` ne signale plus aucune bibliothèque manquante, et la transcription MIDI aboutit sous Debian 12 sans Vulkan ni OpenMP installés, le moteur Vulkan étant ignoré. Plancher relevé : `GLIBC_2.35`. ace-lm rend son plan sur cette machine ; sd-cli démarre, **la génération d'image n'a pas été relancée**.
 
+### Changed
+
+- **SOUS LINUX, LES MODÈLES TÉLÉCHARGÉS QUITTENT `~/.config/attic/ressources` POUR `~/.local/share/attic/ressources`** (ou `$XDG_DATA_HOME/attic/ressources`), à la demande de Fabien. `~/.config` est, par convention XDG, le dossier des réglages, que l'on sauvegarde et recopie en bloc ; les modèles y pesaient 26 Go chez Fabien. Windows et macOS ne changent pas (`electron/dossier-ressources.cjs`).
+  - **Le déplacement est un renommage, fait une fois au démarrage**, avant que la fenêtre n'interroge l'inventaire. S'il échoue — les deux dossiers sur des disques différents (`EXDEV`) —, rien n'est recopié : l'ancien dossier continue de servir, et le journal le dit. Si les deux existent, le nouveau sert et l'ancien n'est pas touché.
+  - **Le nouveau dossier est déclaré racine du pont**, comme `userData` qui le couvrait jusqu'ici. Le garde de `capacites-chemins.test.ts` est tombé sur ce site neuf, comme il le doit : `dossierRessourcesUtilisateur()` rejoint ses expressions permises, avec sa raison.
+  - **`electron/dossier-ressources.test.ts`** : le chemin selon la plateforme et `XDG_DATA_HOME` (ignoré s'il est relatif), le renommage réel d'un dossier avec son contenu, les deux dossiers présents, et un renommage refusé en `EXDEV` qui garde l'ancien.
+  - **Non vérifié dans l'application** : le déplacement des 26 Go au premier lancement de l'AppImage. Les deux dossiers sont sur le même système de fichiers sur la machine de Fabien.
+
 ### Fixed
 
 - **« CALCUL » SUR « AUTOMATIQUE » REPASSE SUR LE PROCESSEUR QUAND LA CARTE EST REFUSÉE, POUR LES NŒUDS ACE-STEP.** Relevé par Fabien sous Linux, sur un Intel HD 4000 : ggml-vulkan écarte la carte, faute de stockage 16 bits, et `ace-lm` comme `ace-synth` s'arrêtent sur « Unsupported device » sans rien produire. « Automatique » tombait donc en erreur à chaque lancement sur cette machine, alors que « Processeur » y rend. Le pont relance désormais une fois avec `--device CPU` et l'écrit en tête du journal. Un périphérique nommé, « Vulkan 0 » ou « Processeur », garde son erreur, comme pour DirectML.
