@@ -71,6 +71,8 @@ const WORKERS = [
   "magenta-worker.ts", "asr-worker.js", "image-to-text-worker.js", "kokoro-francais-worker.js",
   "kokoro-tts-worker.js", "opus-worker.js", "piper-tts-worker.js",
   "textgen-worker.js", "tts-worker.js",
+  // Il importe `audio/ia.ts` et `audio/gtcrn.ts`, écrits pour la page avant d'y passer.
+  "inference-onnx-worker.ts",
 ];
 
 describe.each(WORKERS)("le graphe d'imports de %s", (nom) => {

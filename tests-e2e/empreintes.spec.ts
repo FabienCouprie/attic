@@ -71,6 +71,10 @@ const SURVEILLES: {
   // LA RÉFÉRENCE EST LE 660 HZ DU SON D'ESSAI, le même sur les deux canaux : au réglage d'ouverture,
   // 50 Hz, le son d'essai n'en porte aucune, et le composant le rendrait tel quel.
   { id: "correction-pleurage", worker: "correction-pleurage-worker.ts", parametres: { "Référence": 660 } },
+  // L'INFÉRENCE ONNX, hors du fil depuis le 2026-11-06. Son empreinte a été enregistrée sur le calcul
+  // d'avant, dans la page, puis retrouvée à l'identique par le worker. Le séparateur MDX-Net passe
+  // par le même ouvrier ; il n'est pas ici, son fournisseur « Auto » prenant WebGPU là où il existe.
+  { id: "debruitage-ia", worker: "inference-onnx-worker.ts" },
   // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
   // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
   // laisse passer ; c'est son MESSAGE qui porte les chiffres mesurés, hauteur comprise.

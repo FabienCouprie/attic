@@ -34,6 +34,15 @@ const COMPOSANT = process.env.COMPOSANT ?? "";
 const PARAMETRES = process.env.PARAMETRES ? JSON.parse(process.env.PARAMETRES) : {};
 const MARQUEURS = process.env.MARQUEURS ? process.env.MARQUEURS.split(",").map((s) => s.trim()) : [];
 const ENTREES = process.env.ENTREES ? process.env.ENTREES.split(",").map((s) => Number(s.trim())) : undefined;
+/**
+ * `HORS_LIGNE=1` coupe toute requête qui ne vise pas le serveur local, et le rapport les nomme.
+ *
+ * POURQUOI CETTE OPTION. Un composant annoncé local peut tirer une pièce du réseau sans que rien ne
+ * le montre quand le réseau répond : « Débruitage IA » chargeait le wasm d'onnxruntime depuis
+ * jsdelivr. `setOffline` couperait aussi le serveur de la page, d'où un tri par adresse.
+ */
+const HORS_LIGNE = process.env.HORS_LIGNE === "1";
+const LOCAL = /^(https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?\/|data:|blob:)/;
 
 /** La mesure en texte, telle qu'on veut la lire sur une console. */
 function enTexte(id: string, m: Awaited<ReturnType<typeof mesurerComposant>>): string {
@@ -71,10 +80,19 @@ test.describe("mesurer", () => {
     // donc en silence quand la passe complète le rencontre.
     test.skip(!COMPOSANT, "aucun COMPOSANT désigné : ce spec est un guichet, pas un garde.");
 
+    const coupees: string[] = [];
+    if (HORS_LIGNE) {
+      await page.context().route((url) => !LOCAL.test(url.href), (route) => {
+        coupees.push(route.request().url());
+        return route.abort("internetdisconnected");
+      });
+    }
     const m = await mesurerComposant(page, devUrl, COMPOSANT, {
       marqueurs: MARQUEURS, parametres: PARAMETRES, entreesAudio: ENTREES,
     });
-    const rapport = enTexte(COMPOSANT, m);
+    const rapport = enTexte(COMPOSANT, m) + (HORS_LIGNE
+      ? `\n  hors ligne     : ${coupees.length} requête(s) coupée(s)${coupees.map((u) => `\n    ${u}`).join("")}`
+      : "");
     // LE RAPPORT S'ÉCRIT AVANT LE VERDICT : un refus l'interrompt, et c'est justement le cas où
     // l'on veut relire le détail sur le disque.
     writeFileSync("MESURE.txt", `${rapport}\n`, "utf8");

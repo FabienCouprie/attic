@@ -182,7 +182,7 @@ Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
   aucun fichier neuf ne dépasse quatre cents lignes de code, les quinze qui la dépassaient déjà ne
   grossissent plus, et celui qui redescend dans la norme sort de la dette. Elle ne peut que
   décroître, et la liste est dans `src/docs/generer-compte-lignes.test.ts`.
-- **`tests-e2e/empreintes.json` + `empreintes.spec.ts`** — l'empreinte du son de 74 composants
+- **`tests-e2e/empreintes.json` + `empreintes.spec.ts`** — l'empreinte du son de 75 composants
   surveillés, valeur efficace et crête à neuf décimales, plus leur message. Toute modification qui
   altère une sortie fait échouer ce test. Pour l'étendre :
 
@@ -244,7 +244,9 @@ COMPOSANT=echo-ping-pong npm run mesurer
 
   Il rend la durée, le gel du fil, le message du nœud et l'empreinte de chaque sortie, et son code de
   sortie vaut un si le composant lève. `PARAMETRES` prend un objet JSON de réglages, `MARQUEURS` une
-  liste de motifs à chercher dans la source exécutée, `ENTREES` les rangs d'entrée à nourrir.
+  liste de motifs à chercher dans la source exécutée, `ENTREES` les rangs d'entrée à nourrir, et
+  `HORS_LIGNE=1` coupe toute requête qui ne vise pas le serveur local, en nommant celles qu'il a
+  coupées : c'est ce qui dit qu'un composant annoncé local l'est vraiment.
 - **Comparer une famille** plutôt que de l'affirmer. Devant huit réverbérations, la question n'est
   pas ce que fait chacune mais **laquelle, et pourquoi pas une autre** — et cette réponse n'est dans
   aucun fichier : le registre dit les ports et les réglages, il ne dit pas que l'une allonge le son

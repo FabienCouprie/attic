@@ -17,28 +17,18 @@ import { traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { avecDoc } from "./notices";
-import {
-  debruiterParTrames, planchecherDeBruit, GTCRN_BINS, GTCRN_SAMPLE_RATE,
-} from "../audio/gtcrn";
+import { planchecherDeBruit, GTCRN_SAMPLE_RATE } from "../audio/gtcrn";
 import { lireModeleEmbarque } from "../modele-embarque";
 import { fiches as fichesRestauration } from "./restaurer-compresse";
 import { fiches as fichesPleurage } from "./correction-pleurage";
 import { versDb } from "../audio/decibels";
+import { inferer } from "./onnx-hors-fil";
 
 const rmsGlobal = (a: Float32Array) => {
   let s = 0;
   for (let i = 0; i < a.length; i++) s += a[i] * a[i];
   return Math.sqrt(s / Math.max(1, a.length));
 };
-
-/** Formes des trois caches, relevées sur la signature de l'ONNX. */
-const FORMES_CACHE = {
-  conv_cache: [2, 1, 16, 16, 33],
-  tra_cache: [2, 3, 1, 1, 16],
-  inter_cache: [2, 1, 33, 16],
-} as const;
-
-const tailleCache = (forme: readonly number[]) => forme.reduce((a, b) => a * b, 1);
 
 async function resamplerMono(buffer: AudioBuffer, sampleRate: number): Promise<AudioBuffer> {
   if (buffer.sampleRate === sampleRate && buffer.numberOfChannels === 1) return buffer;
@@ -71,7 +61,6 @@ export const fiches: FicheAudio[] = ([
       const rendreOrigine = ctx.paramTexte("Sortie", "origine") !== "modele";
 
       await annoncerModele(ctx, "debruitage-ia", traduire("progress.debruitage.chargement_modele"));
-      const { preparerSession } = await import("../audio/ia");
       // Par le processus principal dans l'app, et non par `fetch` : une fois
       // installée, `fetch("oonx/…")` cherche dans `resources/app/dist/oonx/`, où le
       // modèle n'est pas. C'était le défaut de la 3.2.0 — voir modele-embarque.ts.
@@ -79,45 +68,18 @@ export const fiches: FicheAudio[] = ([
       if (!octets) {
         return { valeurs: [null], erreur: true, message: traduire("msg.debruitage.modele_absent") };
       }
-      // CPU (WASM) explicitement, et non « Auto ».
-      //
-      // « Auto » essaie WebGPU d'abord. Mesuré ici sur 3 s d'audio, avec le même
-      // modèle et le même signal : WASM prend 0,58 s et rend un gain de 7,8 dB de
-      // rapport signal/bruit ; WebGPU prend 41,4 s — 71 fois plus — et rend un
-      // signal ENTIÈREMENT NUL, sans lever d'erreur. Deux raisons de ne pas lui
-      // laisser la main : le résultat est faux, et le profil de calcul lui est
-      // hostile. GTCRN pèse 344 ko et se déroule image par image ; on l'appelle
-      // 62 fois par seconde d'audio, sur des tenseurs minuscules. Le coût est
-      // alors celui des allers-retours vers le GPU, pas celui du calcul.
-      const session = await preparerSession(octets, "CPU (WASM)", "gtcrn");
-      const ort = await import("onnxruntime-web");
 
       ctx.onProgress(traduire("progress.debruitage.reechantillonnage"));
       const mono = await resamplerMono(entree, GTCRN_SAMPLE_RATE);
       const signal = mono.getChannelData(0);
 
-      // Les caches sont l'état récurrent du modèle : ils se passent d'une trame à
-      // la suivante, et repartent de zéro pour chaque piste. Les oublier ferait un
-      // débruitage sans mémoire, donc sans la moindre tenue temporelle.
-      let convCache = new ort.Tensor("float32", new Float32Array(tailleCache(FORMES_CACHE.conv_cache)), FORMES_CACHE.conv_cache as unknown as number[]);
-      let traCache = new ort.Tensor("float32", new Float32Array(tailleCache(FORMES_CACHE.tra_cache)), FORMES_CACHE.tra_cache as unknown as number[]);
-      let interCache = new ort.Tensor("float32", new Float32Array(tailleCache(FORMES_CACHE.inter_cache)), FORMES_CACHE.inter_cache as unknown as number[]);
-
-      const debruite = await debruiterParTrames(
-        signal,
-        async (spectre) => {
-          const r = await session.run({
-            mix: new ort.Tensor("float32", spectre, [1, GTCRN_BINS, 1, 2]),
-            conv_cache: convCache, tra_cache: traCache, inter_cache: interCache,
-          });
-          convCache = r.conv_cache_out as any;
-          traCache = r.tra_cache_out as any;
-          interCache = r.inter_cache_out as any;
-          return r.enh.data as Float32Array;
-        },
+      // HORS DU FIL : la session et la boucle de trames sont dans `audio/inference-onnx.ts`,
+      // derrière le worker d'inférence ; le choix du processeur (WASM) y est écrit avec sa mesure.
+      const debruite = await inferer<Float32Array>(
+        { type: "debruiter-gtcrn", cle: "gtcrn", modele: octets, signal, force },
         {
-          force,
-          surProgres: (f) => ctx.onProgress(traduire("progress.debruitage.var_0", Math.round(f * 100))),
+          signal: ctx.signal,
+          surAvancement: (f) => ctx.onProgress(traduire("progress.debruitage.var_0", Math.round(f * 100))),
         },
       );
 
