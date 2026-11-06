@@ -8,7 +8,8 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
-import { declipper, devinerSeuil } from "../audio/declipper";
+import { declipperVoie, type ReglagesDeclipVoie, type ResultatDeclip } from "../audio/declipper";
+import { parCanal } from "./hors-fil";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
@@ -45,8 +46,9 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const entree = entreeAudio(ctx, 0);
       if (sansEntree(entree)) return entree;
-      const auto = ctx.paramTexte("Seuil", "auto") !== "manuel";
-      const options = {
+      const reglages: ReglagesDeclipVoie = {
+        auto: ctx.paramTexte("Seuil", "auto") !== "manuel",
+        seuilManuel: ctx.paramNombre("Seuil manuel", 0.5),
         taille: parseInt(ctx.paramTexte("Fenêtre", "1024"), 10) || 1024,
         iterations: Math.round(ctx.paramNombre("Tours", 60)),
         epsilon: ctx.paramNombre("Tolérance", 0.01),
@@ -56,13 +58,18 @@ export const fiches: FicheAudio[] = ([
       const sortie = new AudioBuffer({ numberOfChannels: canaux, length, sampleRate });
       let reparees = 0, seuil = 0, tours = 0, crete = 0, residu = 0;
 
+      // HORS DU FIL : les canaux partent COPIÉS, le tampon reçu appartenant au nœud amont, et
+      // reviennent transférés. Sans worker, en test, le même calcul tourne dans le fil.
+      const voies = Array.from({ length: canaux }, (_, c) => entree.getChannelData(c));
+      const resultats = await parCanal<ReglagesDeclipVoie, ResultatDeclip>(voies, reglages, {
+        creerWorker: () => new Worker(new URL("../workers/declipper-worker.ts", import.meta.url), { type: "module" }),
+        calcul: declipperVoie,
+        surProgres: (c, n) => ctx.onProgress?.(traduire("msg.declip.canal", String(c), String(n))),
+      });
       for (let c = 0; c < canaux; c++) {
-        ctx.onProgress?.(traduire("msg.declip.canal", String(c + 1), String(canaux)));
-        const voie = entree.getChannelData(c);
-        // Le seuil se devine sur CHAQUE canal : un enregistrement peut n'écrêter qu'à gauche.
-        const s = auto ? devinerSeuil(voie) : ctx.paramNombre("Seuil manuel", 0.5);
-        const r = declipper(voie, { ...options, seuil: s });
-        sortie.getChannelData(c).set(r.signal);
+        const r = resultats[c];
+        // `copyToChannel` et non `getChannelData().set` : les tableaux reviennent d'un ouvrier.
+        sortie.copyToChannel(new Float32Array(r.signal), c);
         reparees += r.reparees;
         seuil = Math.max(seuil, r.seuil);
         tours = Math.max(tours, r.toursMoyens);

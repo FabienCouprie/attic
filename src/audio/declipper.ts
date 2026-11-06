@@ -307,6 +307,20 @@ export function declipper(x: Float32Array, o: OptionsDeclip = {}): ResultatDecli
   };
 }
 
+/** Les réglages d'un canal tels que les reçoit `workers/declipper-worker.ts`. */
+export interface ReglagesDeclipVoie extends Omit<OptionsDeclip, "seuil"> {
+  /** Vrai : le seuil se devine sur le canal. Faux : `seuilManuel` vaut pour tous. */
+  auto: boolean;
+  seuilManuel: number;
+}
+
+/** Un canal réparé : le calcul que le worker sert, et que le fil refait tel quel sans worker. */
+export function declipperVoie(voie: Float32Array, o: ReglagesDeclipVoie): ResultatDeclip {
+  const { auto, seuilManuel, ...options } = o;
+  // Le seuil se devine sur CHAQUE canal : un enregistrement peut n'écrêter qu'à gauche.
+  return declipper(voie, { ...options, seuil: auto ? devinerSeuil(voie) : seuilManuel });
+}
+
 /**
  * Rapport signal sur distorsion sur les échantillons ÉCRÊTÉS seulement, en décibels.
  *

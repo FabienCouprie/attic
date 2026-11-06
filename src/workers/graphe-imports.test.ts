@@ -75,6 +75,8 @@ const WORKERS = [
   "inference-onnx-worker.ts",
   // Il importe `audio/criteres-schaefferiens.ts` et le suiveur de hauteur, écrits pour la page.
   "criteres-schaefferiens-worker.ts",
+  // Il importe `audio/declipper.ts` et ses fenêtres d'analyse, écrits pour la page.
+  "declipper-worker.ts",
 ];
 
 describe.each(WORKERS)("le graphe d'imports de %s", (nom) => {
