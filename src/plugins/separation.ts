@@ -7,6 +7,8 @@ import { avecDoc } from "./notices";
 import { lireModeleEmbarque } from "../modele-embarque";
 import { fiches as isolationDeVoix } from "./isoler-voix";
 import { entreeAudio, sansEntree } from "./lire-entree";
+import { inferer, telechargerDepuisUrl } from "./onnx-hors-fil";
+import type { ResultatSeparation } from "../audio/ia";
 
 const separateurSixPistes: FicheAudio[] = ([
   {
@@ -75,8 +77,7 @@ const separateurSixPistes: FicheAudio[] = ([
         return { valeurs: [versBuffer(s.batterie), versBuffer(s.basse), versBuffer(s.voix), versBuffer(s.autre), versBuffer(s.guitare), versBuffer(s.piano)], message: traduire("msg.s_par_6_pistes_batterie_basse_voix_autre_guitare_piano") };
       }
 
-      // ── MDX-Net : chemin renderer WASM (modèle plus léger) ──
-      const { telechargerDepuisUrl, preparerSession, separerAvecSession } = await import("../audio/ia");
+      // ── MDX-Net : par le worker d'inférence, hors du fil (modèle plus léger) ──
       const url = ctx.paramTexte("URL du modèle","");
       let octets: ArrayBuffer | null = null;
       const fichier = ctx.noeud.data.modeleFichier as File | undefined;
@@ -93,9 +94,19 @@ const separateurSixPistes: FicheAudio[] = ([
       }
       if (!octets) return { valeurs:nulls6, message:traduire("msg.mod_le_mdx_non_disponible") };
       ctx.onProgress(traduire("progress.pr_paration_de_la_session"));
-      const session = await preparerSession(octets, "Auto", modele);
-      const r = await separerAvecSession(a, session, (p: number) => ctx.onProgress(traduire("progress.s_paration_var_0", Math.round(p))), "mdx");
-       return { valeurs:[null, null, r.voix, r.autre, null, null], message:traduire("msg.s_par_voix_instrumental") };
+      const canaux = Array.from({ length: a.numberOfChannels }, (_, c) => a.getChannelData(c));
+      const r = await inferer<ResultatSeparation>(
+        { type: "separer-mdx", cle: modele, modele: octets, fournisseur: "Auto", canaux },
+        { signal: ctx.signal, surAvancement: (p) => ctx.onProgress(traduire("progress.s_paration_var_0", Math.round(p))) },
+      );
+      // Les pistes reviennent en tableaux, un worker n'ayant pas d'`AudioBuffer`.
+      const enSon = (piste: Float32Array[] | null): AudioBuffer | null => {
+        if (!piste) return null;
+        const buf = new AudioBuffer({ numberOfChannels: piste.length, length: piste[0].length, sampleRate: a.sampleRate });
+        piste.forEach((c, i) => buf.copyToChannel(new Float32Array(c), i));
+        return buf;
+      };
+       return { valeurs:[null, null, enSon(r.voix), enSon(r.autre), null, null], message:traduire("msg.s_par_voix_instrumental") };
    },
  },
 ] as FicheAudio[]).map(avecDoc);

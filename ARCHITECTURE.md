@@ -164,7 +164,8 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   ménage d'après passe.
 - [x] **Générer les types des plugins** à partir de `FicheAudio` pour typer les `executer`. Fait le 2026-10-31 (lot 1 de la revue) : `executer(ctx: any)` était présent 469 fois dans 267 fichiers de `src/plugins/` ; il n'en reste qu'un, `executer(_ctx: any)` de `src/plugins/boucle-collection.ts`, que le lot 0 avait renommé et qui sortait donc du motif (la revue en comptait 470 ; relu le 2026-11-06). L'annotation retirée, le tableau `as FicheAudio[]` type le contexte par inférence ; 33 erreurs sont sorties, dont huit fiches cachées derrière `as unknown as FicheAudio[]` parce que `ValeurAudio` ne déclarait pas la séquence, le spectrogramme ou le cercle qu'elles rendaient. L'union dit désormais les quinze types qui circulent, et les fonctions d'aide prennent `ContexteAudio`.
 - [x] **Introduire des tests de non-régression** qui rejouent des graphes de référence.
-  Fait (relu le 2026-10-31) : `tests-e2e/empreintes.json` surveille 74 composants isolés et
+  Fait (relu le 2026-10-31) : `tests-e2e/empreintes.json` surveille 74 composants isolés (75 depuis
+  le 2026-11-06, `debruitage-ia` compris) et
   `tests-e2e/empreintes-exemples.json` le son de chaque exemple livré, chaîne entière.
 - [x] **Limiter la taille des fichiers `App.tsx` et `useExecutionGraphe.ts`** en extrayant des hooks spécialisés (cache, reset, persistance, URL blob).
   Pas fait au relevé du 2026-08-03 — et la tendance s'est inversée : `App.tsx` était descendu à 437

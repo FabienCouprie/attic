@@ -1,11 +1,6 @@
 import * as ort from "onnxruntime-web";
-import { creerFenetreHann } from "./commun";
 import { fft } from "./fft";
-
-const TAILLE_TRANCHE = 343980;
-export const CHEVAUCHEMENT = 4410;
-
-const NOMS_STEMS = ["Batterie", "Basse", "Voix", "Autre"] as const;
+import { fenetreHann } from "./stft";
 
 // Fournisseurs d'exécution réellement disponibles avec l'import par défaut
 // d'onnxruntime-web : le backend « wasm » et, via le même module WASM/JSEP,
@@ -18,43 +13,18 @@ const PROVIDERS: Record<string, string[]> = {
   Auto: ["webgpu", "wasm"],
 };
 
-ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/";
+// LE WASM EST CELUI DU PAQUET, servi par l'application, et non celui de jsdelivr. Relevé le
+// 2026-11-06 au banc, `HORS_LIGNE=1` : « Débruitage IA » et le séparateur MDX échouaient sur « no
+// available backend found », la seule requête coupée étant `ort-wasm-simd-threaded.jsep.mjs` sur
+// jsdelivr. Le paquet par défaut (`ort.bundle.min.mjs`) porte son code de liaison et ne demande que
+// ce wasm ; `new URL` le fait émettre par Vite à la construction, sous le même nom haché que celui
+// que la construction émettait déjà. Ce module ne tourne plus que dans `inference-onnx-worker.ts`.
+ort.env.wasm.wasmPaths = {
+  wasm: new URL("../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm", import.meta.url).href,
+};
 ort.env.wasm.numThreads = 1;
 
-const bufferCache = new Map<string, ArrayBuffer>();
 const sessionCache = new Map<string, ort.InferenceSession>();
-
-export async function telechargerDepuisUrl(url: string, surProgres?: (pct: number) => void): Promise<ArrayBuffer> {
-  const existant = bufferCache.get(url);
-  if (existant) return existant;
-  const reponse = await fetch(url);
-  if (!reponse.ok) throw new Error(`Impossible de télécharger le modèle (${reponse.status})`);
-  const total = Number(reponse.headers.get("content-length") ?? 0);
-  if (!total || !reponse.body) {
-    const buffer = await reponse.arrayBuffer();
-    bufferCache.set(url, buffer);
-    return buffer;
-  }
-  const lecteur = reponse.body.getReader();
-  const morceaux: Uint8Array[] = [];
-  let recu = 0;
-  while (true) {
-    const { done, value } = await lecteur.read();
-    if (done) break;
-    morceaux.push(value);
-    recu += value.length;
-    surProgres?.(Math.round((recu / total) * 100));
-  }
-  const donnees = new Uint8Array(recu);
-  let pos = 0;
-  for (const m of morceaux) {
-    donnees.set(m, pos);
-    pos += m.length;
-  }
-  const buffer = donnees.buffer;
-  bufferCache.set(url, buffer);
-  return buffer;
-}
 
 export async function preparerSession(
   donnees: ArrayBuffer,
@@ -87,18 +57,20 @@ export async function preparerSession(
       executionProviders: ["wasm"],
     });
   }
-  if (cleCache) {
-    sessionCache.set(cleCache, session);
-    bufferCache.delete(cleCache);
-  }
+  if (cleCache) sessionCache.set(cleCache, session);
   return session;
 }
 
+/**
+ * Un mélange vu par ses canaux, et les pistes séparées de même, canal par canal.
+ *
+ * DES TABLEAUX ET NON DES `AudioBuffer` : ce calcul tourne dans un worker, où `AudioBuffer` n'existe
+ * pas. C'est l'appelant, dans la page, qui en refait des sons à la fréquence de l'entrée.
+ */
+export interface Melange { canaux: Float32Array[] }
 export interface ResultatSeparation {
-  voix: AudioBuffer | null;
-  batterie: AudioBuffer | null;
-  basse: AudioBuffer | null;
-  autre: AudioBuffer | null;
+  voix: Float32Array[] | null;
+  autre: Float32Array[] | null;
 }
 
 // ─── FFT radix-2 (délégation au module partagé) ───
@@ -114,17 +86,42 @@ function ifft(real: Float64Array, imag: Float64Array): void {
   for (let i = 0; i < n; i++) { real[i] /= n; imag[i] = -imag[i] / n; }
 }
 
-// ─── STFT / iSTFT ───
+// ─── STFT / iSTFT CENTRÉES, comme `torch.stft(center=True)` ───
+//
+// POURQUOI CENTRÉES, ET C'ÉTAIT LE DÉFAUT. Les trames commençaient au premier échantillon du
+// segment, si bien que ses bords n'étaient couverts que par la pointe d'une seule fenêtre. Or la
+// synthèse divise par la somme des fenêtres au carré : aux bords, cette somme tend vers zéro, et un
+// spectre qui n'est pas EXACTEMENT celui d'un signal — ce que rend tout modèle — y était multiplié
+// par des dizaines de milliers. Relevé au banc le 2026-11-06, la sortie « Voix » du séparateur :
+// crête 3 948 sur le son d'essai, +30 dB dans la première demi-seconde du son de référence et −60 dB
+// ensuite. Centrées, les trames débordent d'une demi-fenêtre de chaque côté, prolongée en miroir, et
+// la somme des fenêtres reste au-dessus de 1,25 sur tout ce qu'on garde.
 
 const N_FFT = 4096;
 const HOP = 1024;
 const NB_BINS = N_FFT / 2;
+/** La demi-fenêtre dont chaque segment est prolongé de chaque côté. */
+const BORD = N_FFT / 2;
 
-const FENETRE = creerFenetreHann(N_FFT);
+/** Hann périodique : celle de l'entraînement (`torch.hann_window`). */
+const FENETRE = fenetreHann(N_FFT);
+
+/** Le segment prolongé de `BORD` échantillons de chaque côté, en miroir (`pad_mode="reflect"`). */
+function prolongerEnMiroir(x: Float32Array): Float64Array {
+  const n = x.length;
+  const p = new Float64Array(n + 2 * BORD);
+  for (let i = 0; i < p.length; i++) {
+    let j = i - BORD;
+    if (j < 0) j = -j;
+    else if (j >= n) j = 2 * (n - 1) - j;
+    p[i] = x[j];
+  }
+  return p;
+}
 
 function stft(audio: Float32Array): { real: Float64Array; imag: Float64Array; nframes: number } {
-  const n = audio.length;
-  const nframes = Math.max(1, Math.ceil((n - N_FFT) / HOP) + 1);
+  const p = prolongerEnMiroir(audio);
+  const nframes = Math.floor((p.length - N_FFT) / HOP) + 1;
   const r = new Float64Array(N_FFT);
   const im = new Float64Array(N_FFT);
   const nbValeurs = nframes * NB_BINS;
@@ -133,11 +130,8 @@ function stft(audio: Float32Array): { real: Float64Array; imag: Float64Array; nf
 
   for (let f = 0; f < nframes; f++) {
     const offset = f * HOP;
-    r.fill(0); im.fill(0);
-    for (let i = 0; i < N_FFT; i++) {
-      const pos = offset + i;
-      r[i] = pos < n ? audio[pos] * FENETRE[i] : 0;
-    }
+    im.fill(0);
+    for (let i = 0; i < N_FFT; i++) r[i] = p[offset + i] * FENETRE[i];
     fftAvant(r, im);
     const dst = f * NB_BINS;
     for (let b = 0; b < NB_BINS; b++) {
@@ -148,9 +142,11 @@ function stft(audio: Float32Array): { real: Float64Array; imag: Float64Array; nf
   return { real: realOut, imag: imagOut, nframes };
 }
 
+/** Le signal de `longueur` échantillons dont `real`/`imag` sont les trames centrées. */
 function istft(real: Float64Array, imag: Float64Array, nframes: number, longueur: number): Float32Array {
-  const out = new Float64Array(longueur);
-  const norm = new Float64Array(longueur);
+  const total = longueur + 2 * BORD;
+  const out = new Float64Array(total);
+  const norm = new Float64Array(total);
   const r = new Float64Array(N_FFT);
   const im = new Float64Array(N_FFT);
 
@@ -169,7 +165,7 @@ function istft(real: Float64Array, imag: Float64Array, nframes: number, longueur
     const offset = f * HOP;
     for (let i = 0; i < N_FFT; i++) {
       const pos = offset + i;
-      if (pos < longueur) {
+      if (pos < total) {
         out[pos] += r[i] * FENETRE[i];
         norm[pos] += FENETRE[i] * FENETRE[i];
       }
@@ -177,164 +173,72 @@ function istft(real: Float64Array, imag: Float64Array, nframes: number, longueur
   }
 
   const result = new Float32Array(longueur);
-  for (let i = 0; i < longueur; i++) result[i] = norm[i] > 1e-10 ? out[i] / norm[i] : 0;
+  for (let i = 0; i < longueur; i++) {
+    const k = BORD + i;
+    result[i] = norm[k] > 1e-10 ? out[k] / norm[k] : 0;
+  }
   return result;
 }
 
-// ─── Extraction de stems pour différents formats de modèles ───
+// ─── Traitement MDX-Net (spectrogramme, segments de ~5,9 s) ───
+//
+// LA DÉCOUPE EST CELLE DE L'ENTRAÎNEMENT DU MODÈLE (UVR, `ConvTDFNet`) : un segment de
+// `HOP × (256 − 1)` échantillons donne les 256 trames centrées que le modèle attend, et l'on n'en
+// garde que le cœur, une demi-fenêtre retirée de chaque côté. Le segment suivant reprend exactement
+// là où le cœur s'arrête : chaque échantillon rendu a donc son contexte entier, et deux segments se
+// touchent sans fondu. L'ancienne découpe fondait des segments dont la fin, prise à plein poids,
+// portait le défaut des bords.
 
-function extraireStems(
-  tenseur: ort.Tensor,
-  tailleTranche: number
-): Float32Array[] {
-  const d = tenseur.dims;
-  const data = tenseur.data as Float32Array;
-
-  if (d.length === 4 && d[1] === 4) {
-    const chunk = d[3];
-    const canauxSortie = d[2];
-    const stems: Float32Array[] = [];
-    for (let s = 0; s < 4; s++) {
-      const buf = new Float32Array(tailleTranche * 2);
-      for (let c = 0; c < Math.min(canauxSortie, 2); c++) {
-        const offsetSrc = s * canauxSortie * chunk + c * chunk;
-        const offsetDst = c * tailleTranche;
-        for (let i = 0; i < tailleTranche; i++) buf[offsetDst + i] = data[offsetSrc + i];
-      }
-      if (canauxSortie < 2) {
-        const src = buf.subarray(0, tailleTranche);
-        buf.set(src, tailleTranche);
-      }
-      stems.push(buf);
-    }
-    return stems;
-  }
-
-  if (d.length === 3) return [data];
-  return [];
-}
-
-// ─── Traitement Demucs (temps réel, chunk ~7.8s) ───
-
-async function traiterDemucs(
-  mix: AudioBuffer,
-  session: ort.InferenceSession,
-  surProgres?: (pct: number) => void,
-  chevauchement?: number
-): Promise<ResultatSeparation> {
-  const chunk = TAILLE_TRANCHE;
-  const chev = chevauchement ?? CHEVAUCHEMENT;
-  const nbCanaux = Math.min(2, mix.numberOfChannels);
-  const longueur = mix.length;
-  const pas = chunk - chev;
-  const nbTranches = Math.max(1, Math.ceil((longueur - chev) / pas));
-
-  const accumulateurs: Float64Array[] = NOMS_STEMS.map(() => new Float64Array(longueur));
-  const enveloppes: Float64Array[] = NOMS_STEMS.map(() => new Float64Array(longueur));
-  const nomEntree = session.inputNames[0];
-
-  for (let t = 0; t < nbTranches; t++) {
-    const debut = t * pas;
-    const fin = Math.min(debut + chunk, longueur);
-    const tailleTranche = fin - debut;
-
-    const donnees = new Float32Array(nbCanaux * chunk);
-    for (let c = 0; c < nbCanaux; c++) {
-      const ch = mix.getChannelData(c);
-      const decalage = c * chunk;
-      for (let i = 0; i < tailleTranche; i++) donnees[decalage + i] = ch[debut + i];
-    }
-
-    const tenseur = new ort.Tensor("float32", donnees, [1, nbCanaux, chunk]);
-    const sorties = await session.run({ [nomEntree]: tenseur });
-    const tenseurSortie = sorties[session.outputNames[0]];
-    if (!tenseurSortie) continue;
-
-    const stems = extraireStems(tenseurSortie, tailleTranche);
-
-    for (let s = 0; s < Math.min(NOMS_STEMS.length, stems.length); s++) {
-      const acc = accumulateurs[s];
-      const env = enveloppes[s];
-      const valeurs = stems[s];
-      for (let c = 0; c < nbCanaux; c++) {
-        const decalageCanal = c * tailleTranche;
-        for (let i = 0; i < tailleTranche; i++) {
-          const pos = debut + i;
-          if (pos >= longueur) break;
-          const poids = i < chev ? 0.5 * (1 - Math.cos((Math.PI * i) / chev)) : 1;
-          acc[pos] += valeurs[decalageCanal + i] * poids;
-          env[pos] += poids;
-        }
-      }
-    }
-    surProgres?.(Math.round(((t + 1) / nbTranches) * 100));
-  }
-
-  return reconstruireStems(accumulateurs, enveloppes, longueur, nbCanaux, mix.sampleRate);
-}
-
-// ─── Traitement MDX-Net (spectrogramme, chunk ~5.9s) ───
-// Le modèle `UVR_MDXNET_9482` produit un masque de séparation vocale (2 stems).
-// Sortie : voix (masque appliqué), autre (mix - voix).
+const MDX_TRAMES = 256;
+const MDX_SEGMENT = HOP * (MDX_TRAMES - 1);
+const MDX_COEUR = MDX_SEGMENT - 2 * BORD;
 
 async function traiterMdx(
-  mix: AudioBuffer,
+  mix: Melange,
   session: ort.InferenceSession,
   surProgres?: (pct: number) => void
 ): Promise<ResultatSeparation> {
-  const longueur = mix.length;
-  const nframesModele = 256;
-  const tailleTrame = (nframesModele - 1) * HOP + N_FFT;
-  const chevauchementTrames = N_FFT;
-  const pas = tailleTrame - chevauchementTrames;
-  const nbTranches = Math.max(1, Math.ceil((longueur - chevauchementTrames) / pas));
-
-  // Accumulateurs séparés par canal (stéréo) : l'ancienne version additionnait
-  // les deux canaux dans un seul accumulateur mono puis dupliquait ce mono sur
-  // les deux sorties. L'enveloppe (somme des poids) est commune car les poids
-  // de recouvrement sont identiques pour voix/autre et pour les deux canaux.
-  const accVoix0 = new Float64Array(longueur);
-  const accVoix1 = new Float64Array(longueur);
-  const accAutre0 = new Float64Array(longueur);
-  const accAutre1 = new Float64Array(longueur);
-  const env = new Float64Array(longueur);
+  const longueur = mix.canaux[0].length;
+  const ch0 = mix.canaux[0];
+  const ch1 = mix.canaux[1] ?? ch0;
+  const nbSegments = Math.max(1, Math.ceil(longueur / MDX_COEUR));
+  const voix = [new Float32Array(longueur), new Float32Array(longueur)];
+  const autre = [new Float32Array(longueur), new Float32Array(longueur)];
   const nomEntree = session.inputNames[0];
 
-  for (let t = 0; t < nbTranches; t++) {
-    const debut = t * pas;
-    const fin = Math.min(debut + tailleTrame, longueur);
-    const tailleTranche = fin - debut;
-
-    const bufCh0 = new Float32Array(tailleTrame);
-    const bufCh1 = new Float32Array(tailleTrame);
-    const ch0 = mix.getChannelData(0);
-    const ch1 = mix.numberOfChannels > 1 ? mix.getChannelData(1) : ch0;
-    for (let i = 0; i < tailleTranche; i++) {
-      bufCh0[i] = ch0[debut + i];
-      bufCh1[i] = ch1[debut + i];
+  for (let s = 0; s < nbSegments; s++) {
+    // Le segment commence une demi-fenêtre avant le cœur qu'il rend ; hors du mélange, des zéros.
+    const debut = s * MDX_COEUR - BORD;
+    const bufCh0 = new Float32Array(MDX_SEGMENT);
+    const bufCh1 = new Float32Array(MDX_SEGMENT);
+    for (let i = 0; i < MDX_SEGMENT; i++) {
+      const pos = debut + i;
+      if (pos >= 0 && pos < longueur) {
+        bufCh0[i] = ch0[pos];
+        bufCh1[i] = ch1[pos];
+      }
     }
 
     const s0 = stft(bufCh0);
     const s1 = stft(bufCh1);
-    const nf = s0.nframes;
-    const nbFramesEffectif = Math.min(nf, nframesModele);
+    const nf = Math.min(s0.nframes, MDX_TRAMES);
 
-    // Le tenseur d'entrée est [1, 4, dim_f=NB_BINS, dim_t=nframesModele] en
+    // Le tenseur d'entrée est [1, 4, dim_f=NB_BINS, dim_t=MDX_TRAMES] en
     // ordre C : l'axe fréquence (b) est AVANT l'axe temps (f). L'ancienne
     // version écrivait dans l'ordre inverse (f puis b), ce qui transposait
     // fréquence et temps et donnait un spectrogramme incohérent au modèle.
-    const entree = new Float32Array(4 * NB_BINS * nframesModele);
-    for (let f = 0; f < nbFramesEffectif; f++) {
+    const entree = new Float32Array(4 * NB_BINS * MDX_TRAMES);
+    for (let f = 0; f < nf; f++) {
       for (let b = 0; b < NB_BINS; b++) {
         const idx = f * NB_BINS + b;
-        entree[b * nframesModele + f] = s0.real[idx];
-        entree[(1 * NB_BINS + b) * nframesModele + f] = s0.imag[idx];
-        entree[(2 * NB_BINS + b) * nframesModele + f] = s1.real[idx];
-        entree[(3 * NB_BINS + b) * nframesModele + f] = s1.imag[idx];
+        entree[b * MDX_TRAMES + f] = s0.real[idx];
+        entree[(1 * NB_BINS + b) * MDX_TRAMES + f] = s0.imag[idx];
+        entree[(2 * NB_BINS + b) * MDX_TRAMES + f] = s1.real[idx];
+        entree[(3 * NB_BINS + b) * MDX_TRAMES + f] = s1.imag[idx];
       }
     }
 
-    const tenseur = new ort.Tensor("float32", entree, [1, 4, NB_BINS, nframesModele]);
+    const tenseur = new ort.Tensor("float32", entree, [1, 4, NB_BINS, MDX_TRAMES]);
     const sorties = await session.run({ [nomEntree]: tenseur });
     const tenseurSortie = sorties[session.outputNames[0]];
     if (!tenseurSortie) continue;
@@ -365,96 +269,34 @@ async function traiterMdx(
       }
     }
 
-    const voixCh0 = istft(r0Voix, i0Voix, mF, tailleTrame);
-    const voixCh1 = istft(r1Voix, i1Voix, mF, tailleTrame);
+    const voixCh0 = istft(r0Voix, i0Voix, mF, MDX_SEGMENT);
+    const voixCh1 = istft(r1Voix, i1Voix, mF, MDX_SEGMENT);
 
-    for (let i = 0; i < tailleTranche; i++) {
+    // SEUL LE CŒUR EST GARDÉ, et il tombe à `s × MDX_COEUR` dans le mélange.
+    for (let i = BORD; i < BORD + MDX_COEUR; i++) {
       const pos = debut + i;
       if (pos >= longueur) break;
-      const poids = i < chevauchementTrames ? 0.5 * (1 - Math.cos((Math.PI * i) / chevauchementTrames)) : 1;
-      accVoix0[pos] += voixCh0[i] * poids;
-      accVoix1[pos] += voixCh1[i] * poids;
-      accAutre0[pos] += (bufCh0[i] - voixCh0[i]) * poids;
-      accAutre1[pos] += (bufCh1[i] - voixCh1[i]) * poids;
-      env[pos] += poids;
+      voix[0][pos] = voixCh0[i];
+      voix[1][pos] = voixCh1[i];
+      autre[0][pos] = bufCh0[i] - voixCh0[i];
+      autre[1][pos] = bufCh1[i] - voixCh1[i];
     }
 
-    surProgres?.(Math.round(((t + 1) / nbTranches) * 100));
-    await yieldToMain();
+    surProgres?.(Math.round(((s + 1) / nbSegments) * 100));
   }
 
-  const resultat: ResultatSeparation = { voix: null, batterie: null, basse: null, autre: null };
-  for (const { c0, c1, nom } of [
-    { c0: accVoix0, c1: accVoix1, nom: "voix" as const },
-    { c0: accAutre0, c1: accAutre1, nom: "autre" as const },
-  ]) {
-    let aUnSignal = false;
-    const chA = new Float32Array(longueur);
-    const chB = new Float32Array(longueur);
-    for (let i = 0; i < longueur; i++) {
-      const e = env[i];
-      chA[i] = e > 1e-6 ? c0[i] / e : 0;
-      chB[i] = e > 1e-6 ? c1[i] / e : 0;
-      if (Math.abs(chA[i]) > 1e-6 || Math.abs(chB[i]) > 1e-6) aUnSignal = true;
-    }
-    if (aUnSignal) {
-      const buf = new AudioBuffer({ numberOfChannels: 2, length: longueur, sampleRate: mix.sampleRate });
-      buf.getChannelData(0).set(chA);
-      buf.getChannelData(1).set(chB);
-      resultat[nom] = buf;
-    }
-  }
-  return resultat;
-}
-
-function reconstruireStems(
-  accumulateurs: Float64Array[],
-  enveloppes: Float64Array[],
-  longueur: number,
-  nbCanaux: number,
-  sampleRate: number
-): ResultatSeparation {
-  // Le modèle Demucs (HT) embarqué produit les stems dans l'ordre observé :
-  // [batterie, basse, voix, autre].  On corrige le nommage ici pour que
-  // resultat.voix contienne bien la voix, resultat.batterie la batterie, etc.
-  const resultat: ResultatSeparation = { voix: null, batterie: null, basse: null, autre: null };
-  const sortiesNom = ["batterie", "basse", "voix", "autre"] as const;
-
-  for (let s = 0; s < NOMS_STEMS.length; s++) {
-    const acc = accumulateurs[s];
-    const env = enveloppes[s];
-    let aUnSignal = false;
-    const canaux: Float32Array[] = [];
-    for (let c = 0; c < nbCanaux; c++) {
-      const ch = new Float32Array(longueur);
-      for (let i = 0; i < longueur; i++) {
-        ch[i] = env[i] > 1e-6 ? acc[i] / env[i] : 0;
-        if (Math.abs(ch[i]) > 1e-6) aUnSignal = true;
-      }
-      canaux.push(ch);
-    }
-    if (aUnSignal) {
-      const buf = new AudioBuffer({ numberOfChannels: canaux.length, length: longueur, sampleRate });
-      for (let c = 0; c < canaux.length; c++) buf.getChannelData(c).set(canaux[c]);
-      resultat[sortiesNom[s]] = buf;
-    }
-  }
-  return resultat;
+  const garderSiSonore = (piste: Float32Array[]) =>
+    piste.some((c) => c.some((v) => Math.abs(v) > 1e-6)) ? piste : null;
+  return { voix: garderSiSonore(voix), autre: garderSiSonore(autre) };
 }
 
 // ─── Point d'entrée unique ───
 
+/** La voix et le reste d'un mélange, par le modèle MDX-Net de `session`. */
 export async function separerAvecSession(
-  mix: AudioBuffer,
+  mix: Melange,
   session: ort.InferenceSession,
   surProgres?: (pct: number) => void,
-  architecture = "demucs",
-  chevauchement?: number
 ): Promise<ResultatSeparation> {
-  if (architecture === "mdx") return traiterMdx(mix, session, surProgres);
-  return traiterDemucs(mix, session, surProgres, chevauchement);
-}
-
-function yieldToMain(): Promise<void> {
-  return new Promise((r) => setTimeout(r, 0));
+  return traiterMdx(mix, session, surProgres);
 }

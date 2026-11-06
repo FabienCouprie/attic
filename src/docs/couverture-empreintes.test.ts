@@ -25,7 +25,7 @@ const WORKERS = resolve(RACINE, "src", "workers");
 const SPEC = resolve(RACINE, "tests-e2e", "empreintes.spec.ts");
 
 /** Les dialogues de worker du dépôt : un worker de calcul en importe un. */
-const SOCLES = ['from "./servir-par-canal"', 'from "./servir-par-lot"'];
+const SOCLES = ['from "./servir-par-canal"', 'from "./servir-par-lot"', 'from "./servir-par-demande"'];
 
 /**
  * Les workers qui servent un calcul, c'est-à-dire un calcul sorti du fil.
@@ -34,7 +34,7 @@ const SOCLES = ['from "./servir-par-canal"', 'from "./servir-par-lot"'];
  * `servirParCanal` sans être le worker d'aucun composant, et la première version de ce test le
  * signalait comme orphelin. Chercher le nom était un substitut ; l'import est la dépendance.
  *
- * LES DEUX SOCLES SONT CHERCHÉS. Un socle ajouté sans être inscrit ici rendrait ses workers
+ * LES TROIS SOCLES SONT CHERCHÉS. Un socle ajouté sans être inscrit ici rendrait ses workers
  * invisibles au garde, ce qui est précisément le trou que ce fichier ferme.
  */
 /**
