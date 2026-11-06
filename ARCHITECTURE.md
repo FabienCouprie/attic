@@ -89,8 +89,7 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 > correction en cinq lots qui en découle est dans la revue du 2026-10-31
 > (`work/revue-architecture-2026-10-31.md`, non versionné).
 >
-> Où en sont les cinq lots au 2026-11-06, d'après les pull requests fusionnées (une seule est
-> ouverte, la 292, pour le lot 3) :
+> Où en sont les cinq lots au 2026-11-06, d'après les pull requests fusionnées :
 >
 > - **Lot 0, l'outillage** : fait le 2026-10-31 (PR 247). Reste son point A6, reporté avec sa
 >   raison dans `CHANGELOG.md` : les URL de médias remplacées ne sont pas révoquées, l'historique
@@ -103,12 +102,13 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   bougé : une fonction de 435 lignes, de la ligne 52 à la ligne 486 de
 >   `src/ui/hooks/usePersistance.ts`. Pas fait non plus : la norme de cent vingt lignes par
 >   fonction que le lot proposait d'ajouter à `src/docs/generer-compte-lignes.test.ts`.
-> - **Lot 3, hors du fil** : rien de fusionné. Sa première pièce est en PR 292, ouverte le
->   2026-11-06 depuis la branche `travaux/lot-3-ia-hors-du-fil` : « Débruitage IA » et le
->   séparateur MDX-Net y calculent dans un worker, avec le wasm d'onnxruntime livré dans `dist/`
->   (gel relevé de 769 à 16 ms et de 9 811 à 25 ms), et le découpage du MDX y est corrigé. Sur
->   `origin/master`, `src/audio/ia.ts` charge toujours ce wasm depuis jsdelivr, dans la page. Restent
->   les sept modules à passer au banc, les accès disque synchrones de `main.cjs`, et
+> - **Lot 3, hors du fil** : commencé. Sa première pièce est fusionnée le 2026-11-06 (PR 292) :
+>   « Débruitage IA » et le séparateur MDX-Net calculent dans un worker, avec le wasm d'onnxruntime
+>   livré dans `dist/` (gel relevé de 769 à 16 ms et de 9 811 à 25 ms), et le découpage du MDX est
+>   corrigé. Sa deuxième, « Critères schaefferiens » hors du fil (un gel total de 379 ms ramené à
+>   2 ms), est sur la branche `travaux/lot-3-criteres-schaefferiens`. Restent les six autres modules
+>   de la revue, dont trois, `auto-similarite`, `inpainting` et `declipper`, à mesurer sur une
+>   matière qui les fasse travailler, les accès disque synchrones de `main.cjs`, et
 >   `analyse-genre.ts` comme `analyse-polyphonique.ts`, qui chargent onnxruntime dans la page.
 > - **Lot 4, les canoniques ignorés** : fait du 2026-10-31 au 2026-11-01, en six PR, de la 251 à
 >   la 256. `ia.ts` garde sa STFT, et `CHANGELOG.md` dit pourquoi.
@@ -164,8 +164,8 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   ménage d'après passe.
 - [x] **Générer les types des plugins** à partir de `FicheAudio` pour typer les `executer`. Fait le 2026-10-31 (lot 1 de la revue) : `executer(ctx: any)` était présent 469 fois dans 267 fichiers de `src/plugins/` ; il n'en reste qu'un, `executer(_ctx: any)` de `src/plugins/boucle-collection.ts`, que le lot 0 avait renommé et qui sortait donc du motif (la revue en comptait 470 ; relu le 2026-11-06). L'annotation retirée, le tableau `as FicheAudio[]` type le contexte par inférence ; 33 erreurs sont sorties, dont huit fiches cachées derrière `as unknown as FicheAudio[]` parce que `ValeurAudio` ne déclarait pas la séquence, le spectrogramme ou le cercle qu'elles rendaient. L'union dit désormais les quinze types qui circulent, et les fonctions d'aide prennent `ContexteAudio`.
 - [x] **Introduire des tests de non-régression** qui rejouent des graphes de référence.
-  Fait (relu le 2026-10-31) : `tests-e2e/empreintes.json` surveille 74 composants isolés (75 depuis
-  le 2026-11-06, `debruitage-ia` compris) et
+  Fait (relu le 2026-10-31) : `tests-e2e/empreintes.json` surveille 74 composants isolés (76 depuis
+  le 2026-11-06, `debruitage-ia` et `criteres-schaefferiens` compris) et
   `tests-e2e/empreintes-exemples.json` le son de chaque exemple livré, chaîne entière.
 - [x] **Limiter la taille des fichiers `App.tsx` et `useExecutionGraphe.ts`** en extrayant des hooks spécialisés (cache, reset, persistance, URL blob).
   Pas fait au relevé du 2026-08-03 — et la tendance s'est inversée : `App.tsx` était descendu à 437

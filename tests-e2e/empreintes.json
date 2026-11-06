@@ -79,6 +79,13 @@
       ],
       "message": "Bruit de fond : -51.3 dB · niveau global -15.2 dB · sortie 48.0 kHz."
     },
+    "criteres-schaefferiens": {
+      "empreintes": [
+        "0.269865992/0.528780282",
+        null
+      ],
+      "message": "masse tonique · dynamique tenue · allure aucune"
+    },
     "fiche-technique": {
       "empreintes": [
         "0.269865992/0.528780282",

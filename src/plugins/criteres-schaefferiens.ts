@@ -19,10 +19,11 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
+import { parUneFois } from "./hors-lot";
 import {
   ALLURE_MAX, ALLURE_MIN, ENTRETIEN_IMPULSION, ETENDUE_VARIEE, IRREGULARITE_MECANIQUE,
   IRREGULARITE_VIVANTE, OCCUPATION_BLANC, OCCUPATION_PUR, SEUIL_BOMBEMENT, SEUIL_ONDULATION,
-  SEUIL_PENTE, criteresSchaefferiens,
+  SEUIL_PENTE, criteresDeLaDemande, type CriteresSchaefferiens, type DemandeCriteres,
 } from "../audio/criteres-schaefferiens";
 
 export const fiches: FicheAudio[] = ([
@@ -152,18 +153,29 @@ The « Audio » output returns the sound unchanged. The « Criteria » output gi
     async executer(ctx) {
       const audio = entreeAudio(ctx, 0, { sorties: 2 });
       if (sansEntree(audio)) return audio;
-      const m = criteresSchaefferiens(audio.getChannelData(0), audio.sampleRate, {
-        occupationBlanc: ctx.paramNombre("Seuil du bruit blanc", OCCUPATION_BLANC),
-        occupationPur: ctx.paramNombre("Occupation du son pur", OCCUPATION_PUR),
-        etendueVariee: ctx.paramNombre("Étendue variée", ETENDUE_VARIEE),
-        entretienImpulsion: ctx.paramNombre("Entretien de l'impulsion", ENTRETIEN_IMPULSION),
-        seuilBombement: ctx.paramNombre("Seuil de bombement", SEUIL_BOMBEMENT),
-        seuilPente: ctx.paramNombre("Seuil de pente", SEUIL_PENTE),
-        allureMin: ctx.paramNombre("Débit min", ALLURE_MIN),
-        allureMax: ctx.paramNombre("Débit max", ALLURE_MAX),
-        seuilOndulation: ctx.paramNombre("Seuil d'ondulation", SEUIL_ONDULATION),
-        irregulariteMecanique: ctx.paramNombre("Irrégularité mécanique", IRREGULARITE_MECANIQUE),
-        irregulariteVivante: ctx.paramNombre("Irrégularité vivante", IRREGULARITE_VIVANTE),
+      const demande: DemandeCriteres = {
+        signal: audio.getChannelData(0),
+        sampleRate: audio.sampleRate,
+        options: {
+          occupationBlanc: ctx.paramNombre("Seuil du bruit blanc", OCCUPATION_BLANC),
+          occupationPur: ctx.paramNombre("Occupation du son pur", OCCUPATION_PUR),
+          etendueVariee: ctx.paramNombre("Étendue variée", ETENDUE_VARIEE),
+          entretienImpulsion: ctx.paramNombre("Entretien de l'impulsion", ENTRETIEN_IMPULSION),
+          seuilBombement: ctx.paramNombre("Seuil de bombement", SEUIL_BOMBEMENT),
+          seuilPente: ctx.paramNombre("Seuil de pente", SEUIL_PENTE),
+          allureMin: ctx.paramNombre("Débit min", ALLURE_MIN),
+          allureMax: ctx.paramNombre("Débit max", ALLURE_MAX),
+          seuilOndulation: ctx.paramNombre("Seuil d'ondulation", SEUIL_ONDULATION),
+          irregulariteMecanique: ctx.paramNombre("Irrégularité mécanique", IRREGULARITE_MECANIQUE),
+          irregulariteVivante: ctx.paramNombre("Irrégularité vivante", IRREGULARITE_VIVANTE),
+        },
+      };
+      // HORS DU FIL : le canal part COPIÉ, le tampon reçu appartenant au nœud amont, et le son rendu
+      // reste ce tampon, que le composant laisse passer. Sans worker, en test, le même calcul tourne
+      // dans le fil.
+      const m = await parUneFois<DemandeCriteres, CriteresSchaefferiens>(demande, {
+        creerWorker: () => new Worker(new URL("../workers/criteres-schaefferiens-worker.ts", import.meta.url), { type: "module" }),
+        calcul: criteresDeLaDemande,
       });
 
       // LE SAUT DE LIGNE PASSE PAR UNE CONSTRUCTION EXPLICITE, ce que le contrat des caractères de
