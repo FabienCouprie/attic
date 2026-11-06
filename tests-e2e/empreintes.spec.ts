@@ -80,6 +80,10 @@ const SURVEILLES: {
   // nomme la masse, la forme et l'allure, que la base tient au caractère près. Empreinte écrite
   // sur le calcul d'avant, dans la page, puis retrouvée par le worker.
   { id: "criteres-schaefferiens", worker: "criteres-schaefferiens-worker.ts" },
+  // LA RESTAURATION D'ÉCRÊTAGE, hors du fil depuis le 2026-11-06. Le son d'essai n'est pas écrêté :
+  // le seuil manuel de 0,5, sous sa crête de 0,528, lui donne 0,5 % d'échantillons à réparer, ce qui
+  // gelait la page 2 875 ms avant. Empreinte écrite sur le calcul d'avant, puis retrouvée par le worker.
+  { id: "restauration-ecretage", worker: "declipper-worker.ts", parametres: { "Seuil": "Manuel", "Seuil manuel": 0.5 } },
   // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
   // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
   // laisse passer ; c'est son MESSAGE qui porte les chiffres mesurés, hauteur comprise.
