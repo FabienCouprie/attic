@@ -10,21 +10,31 @@ Le graphe nodal d'Attic est composé de trois couches qui partagent trop d'état
    transitions ; l'exécuteur rend par les canaux `affichage`, `designe` et `moteur` de
    `core/types.ts`, et plus aucun plugin n'écrit sur `ctx.noeud.data`. Ce qui reste : le type réel
    du nœud, `DonneesNoeud` dans `src/ui/AtelierNode.tsx`, est un sac ouvert qui mêle encore saisies,
-   résultats matérialisés (`audioResultatUrl`, `audioResultatBuffer`) et douze callbacks React. Les
+   résultats matérialisés (`audioResultatUrl`, `audioResultatBuffer`) et onze callbacks React. Les
    classes de champs, elles, sont dans le cœur depuis le lot 1 (`core/classes-de-champs.ts`).
+   Relu le 2026-11-06 : inchangé, et ce type a un homonyme, le `DonneesNoeud` de
+   `src/ui/noeud-atelier.ts`, sorti d'`App.tsx` le 2026-11-01, sans les callbacks et ouvert lui
+   aussi par `[key: string]: unknown`.
    Le diagnostic d'origine suit.
    `NodeData` contient à la fois des données saisies par l'utilisateur (`zonesSelectionnees`, `parametres`, fichiers chargés) et des résultats de l'exécution (`audioResultatUrl`, `audioResultatBuffer`, `mp3Url`, `statut`). Quand un hook comme `useExecutionGraphe` réinitialise un nœud, il ne peut pas distinguer ce qui est calculé de ce qui appartient à l'utilisateur, ce qui efface des sélections de zones ou des paramètres.
 
 2. **Couplage via des chaînes de caractères localisées** — ✅ *résolu en v2.2.2, voir feuille de route ci-dessous.*  
    Plusieurs plugins (ex. `Masque de zones`, `Boucle`, `Porte`) comparent la valeur d'un paramètre `choix` avec la chaîne française affichée (`"Conserver les zones"`). Si l'UI est en anglais, si on renomme un label, ou si la valeur stockée vient d'une ancienne sauvegarde, le plugin interprète mal l'action. La langue d'affichage ne devrait jamais être une clé de logique métier.
 
-3. **Hooks globaux avec des effets de bord larges** — toujours vrai, voire aggravé.  
-   `App.tsx` et `useExecutionGraphe.ts` concentrent la création des nœuds, la suppression, la réinitialisation, l'exécution, le cache, la gestion des URLs blob, etc. Une modification dans la logique de reset ou de cache peut se propager à l'ensemble des 200+ nœuds, car il n'y a pas de garde-fou par famille de nœud. (`App.tsx` est passé de 437 à 1013 lignes depuis l'extraction de hooks documentée dans `APP-BREAKDOWN.md`, et à 1449 le 2026-10-31 ; `useExecutionGraphe.ts` est à 1777, dont une seule fermeture, `lancerUnePasse`, de 1166 lignes.)
+3. **Hooks globaux avec des effets de bord larges** — *atténué par le lot 2, pas résolu (relu le 2026-11-06).*  
+   `App.tsx` et `useExecutionGraphe.ts` concentrent la création des nœuds, la suppression, la réinitialisation, l'exécution, le cache, la gestion des URLs blob, etc. Une modification dans la logique de reset ou de cache peut se propager à l'ensemble des 200+ nœuds, car il n'y a pas de garde-fou par famille de nœud. (`App.tsx` était passé de 437 à 1013 lignes depuis l'extraction de hooks documentée dans `APP-BREAKDOWN.md`, et à 1449 le 2026-10-31 ; `useExecutionGraphe.ts` était à 1777, dont une seule fermeture, `lancerUnePasse`, de 1166 lignes. Relu le 2026-11-06, après le lot 2 : `App.tsx` compte 393 lignes de code pour 575 en tout, `useExecutionGraphe.ts` 289 pour 681, et `lancerUnePasse` 482 lignes, de la ligne 180 à la ligne 661. La passe reste une seule fermeture React.)
 
 4. **Manque de tests d'intégration entre UI et plugins** — ✅ *résolu en v2.2.2, voir feuille de route ci-dessous.*  
    Les tests unitaires couvrent bien les plugins isolés, mais il n'existe pas de tests qui exécutent une chaîne complète : sélection de zones dans le composant React → passage dans le graphe → exécution du plugin. De ce fait, une régression sur un chemin critique (sélecteur → masque) n'est détectée que manuellement.
 
-5. **Absence de contrat explicite entre UI et plugins**  
+5. **Absence de contrat explicite entre UI et plugins** — *en partie résolu par le lot 1 (relu le 2026-11-06).*  
+   Les `executer` sont typés par inférence depuis le lot 1 (voir la feuille de route ci-dessous),
+   sauf un, `executer(_ctx: any)` dans `src/plugins/boucle-collection.ts`, qui ne lit pas son
+   contexte. Ce qui reste : un réglage se lit toujours par un nom en chaîne,
+   `paramTexte(nom: string, defaut)` de `src/core/types.ts`, que le build ne rapproche pas des
+   paramètres déclarés ; et 221 `any` restent dans `src/plugins/` hors tests, relevés par motif,
+   dont 53 `catch (e: any)`.
+   Le diagnostic d'origine suit.
    Chaque plugin lit `ctx.paramTexte`, `ctx.entree(0)`, etc. sans contrat fort sur le type, le format attendu, ou la valeur canonique des paramètres. Le type `any` est très répandu dans les fonctions `executer`, ce qui empêche TypeScript de détecter les ruptures.
 
 Ces problèmes ne viennent pas du paradigme nodal en lui-même, mais du fait que les frontières entre UI, moteur d'exécution et logique métier des plugins ne sont pas assez étanches.
@@ -73,10 +83,40 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 
 ## Feuille de route concrète
 
-> **Statut re-vérifié le 2026-10-31** contre le code réel, en **v5.1.0** (le relevé précédent
-> datait du 2026-08-03, en v3.1.5). Chaque case porte sa note datée ; `CHANGELOG.md` fait foi
-> pour ce qui a bougé entre deux relevés. Le plan de correction en cinq lots qui en découle est
-> dans la revue du 2026-10-31 (`work/revue-architecture-2026-10-31.md`, non versionné).
+> **Statut re-vérifié le 2026-11-06** contre le code réel d'`origin/master`, en **v5.1.2** (les
+> relevés précédents dataient du 2026-10-31, en v5.1.0, et du 2026-08-03, en v3.1.5). Chaque case
+> porte sa note datée ; `CHANGELOG.md` fait foi pour ce qui a bougé entre deux relevés. Le plan de
+> correction en cinq lots qui en découle est dans la revue du 2026-10-31
+> (`work/revue-architecture-2026-10-31.md`, non versionné).
+>
+> Où en sont les cinq lots au 2026-11-06, d'après les pull requests fusionnées (une seule est
+> ouverte, la 292, pour le lot 3) :
+>
+> - **Lot 0, l'outillage** : fait le 2026-10-31 (PR 247). Reste son point A6, reporté avec sa
+>   raison dans `CHANGELOG.md` : les URL de médias remplacées ne sont pas révoquées, l'historique
+>   d'annulation et le collage partageant l'URL avec le nœud. Et `src/ui/rechargerFichiers.ts`
+>   écrit toujours dans `n.data` en place, sans passer par `setNodes`.
+> - **Lot 1, le contrat des exécuteurs** : fait le 2026-10-31 (PR 250).
+> - **Lot 2, les trois géants** : fait pour `App.tsx` le 2026-11-01, en neuf PR entre la 257 et la
+>   267, et pour `useExecutionGraphe.ts` le 2026-11-02, en sept PR entre la 271 et la 280. Le
+>   troisième géant de la revue, `usePersistance`, n'était pas dans le plan du lot et n'a pas
+>   bougé : une fonction de 435 lignes, de la ligne 52 à la ligne 486 de
+>   `src/ui/hooks/usePersistance.ts`. Pas fait non plus : la norme de cent vingt lignes par
+>   fonction que le lot proposait d'ajouter à `src/docs/generer-compte-lignes.test.ts`.
+> - **Lot 3, hors du fil** : rien de fusionné. Sa première pièce est en PR 292, ouverte le
+>   2026-11-06 depuis la branche `travaux/lot-3-ia-hors-du-fil` : « Débruitage IA » et le
+>   séparateur MDX-Net y calculent dans un worker, avec le wasm d'onnxruntime livré dans `dist/`
+>   (gel relevé de 769 à 16 ms et de 9 811 à 25 ms), et le découpage du MDX y est corrigé. Sur
+>   `origin/master`, `src/audio/ia.ts` charge toujours ce wasm depuis jsdelivr, dans la page. Restent
+>   les sept modules à passer au banc, les accès disque synchrones de `main.cjs`, et
+>   `analyse-genre.ts` comme `analyse-polyphonique.ts`, qui chargent onnxruntime dans la page.
+> - **Lot 4, les canoniques ignorés** : fait du 2026-10-31 au 2026-11-01, en six PR, de la 251 à
+>   la 256. `ia.ts` garde sa STFT, et `CHANGELOG.md` dit pourquoi.
+> - **Lot 5, à décider** : rien n'est décidé. `electron/main.cjs` porte toujours les 71 appels
+>   `ipcMain.handle(` d'`electron/`, en 2 103 lignes ; la norme de taille ne compte que `src/`.
+>
+> La dette de taille compte treize fichiers, contre quinze le 2026-10-19 : `App.tsx` et
+> `useExecutionGraphe.ts` en sont sortis, et aucun autre.
 
 ### Court terme (avant la prochaine release)
 
@@ -93,9 +133,12 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   fiches. `CLASSES` et `CHAMPS_RESULTAT` ont rejoint le cœur (`core/classes-de-champs.ts`) avec le
   lot 1 de la revue du 2026-10-31.
 - [x] **Ajouter des tests d'intégration** pour les scénarios les plus sensibles.
-  Fait et dépassé : `src/plugins/integration.test.ts` couvre 14 chaînes
-  UI → graphe → plugin (bien au-delà des 5 scénarios listés à l'origine),
-  toutes centrées sur la bascule libellé localisé → id canonique ci-dessus.
+  Fait et dépassé : `src/plugins/integration.test.ts` couvre 19 cas
+  (bien au-delà des 5 scénarios listés à l'origine) : quatorze sur la bascule
+  libellé localisé → id canonique ci-dessus, quatre sur Griffin-Lim et un sur
+  l'absence de lecteur de l'Aligneur de piste. Relu le
+  2026-11-06 : ces cas enchaînent les `executer` pris au registre, sans le moteur
+  ni React ; le graphe entier, lui, est rejoué par les empreintes des exemples.
 - [ ] **Documenter les chemins critiques** dans un `IMPACT.md` ou ce fichier. Pas de `IMPACT.md` ; non fait (ROADMAP.md joue un rôle voisin mais ne remplace pas un tel document).
 
 ### Moyen terme (prochaines releases)
@@ -112,12 +155,19 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   mais `useExecutionGraphe.ts` est monté à 1777 lignes (1624 depuis que les classes de champs sont
   dans `core/classes-de-champs.ts`, lot 1) et la passe elle-même, `lancerUnePasse`, reste une
   fermeture React de 1166 lignes.
-- [x] **Générer les types des plugins** à partir de `FicheAudio` pour typer les `executer`. Fait le 2026-10-31 (lot 1 de la revue) : `executer(ctx: any)` était présent 469 fois dans 267 fichiers de `src/plugins/` ; il n'en reste aucun. L'annotation retirée, le tableau `as FicheAudio[]` type le contexte par inférence ; 33 erreurs sont sorties, dont huit fiches cachées derrière `as unknown as FicheAudio[]` parce que `ValeurAudio` ne déclarait pas la séquence, le spectrogramme ou le cercle qu'elles rendaient. L'union dit désormais les quinze types qui circulent, et les fonctions d'aide prennent `ContexteAudio`.
+  Relu le 2026-11-06 : le lot 2 a mis dans le cœur la préparation de la passe
+  (`core/preparation-passe.ts`), les graines (`core/graines-de-passe.ts`) et le contexte passé à
+  l'exécuteur (`core/contexte-de-passe.ts`) ; le correctif de résultat et le ménage d'après passe
+  sont sortis côté interface (`src/ui/correctif-resultat.ts`, `src/ui/menage-apres-passe.ts`).
+  `src/core/` compte 38 fichiers de test. La boucle nœud par nœud reste dans `lancerUnePasse`,
+  fermeture React de 482 lignes ; elle n'appelle plus `setNodes` elle-même, elle le prête au
+  ménage d'après passe.
+- [x] **Générer les types des plugins** à partir de `FicheAudio` pour typer les `executer`. Fait le 2026-10-31 (lot 1 de la revue) : `executer(ctx: any)` était présent 469 fois dans 267 fichiers de `src/plugins/` ; il n'en reste qu'un, `executer(_ctx: any)` de `src/plugins/boucle-collection.ts`, que le lot 0 avait renommé et qui sortait donc du motif (la revue en comptait 470 ; relu le 2026-11-06). L'annotation retirée, le tableau `as FicheAudio[]` type le contexte par inférence ; 33 erreurs sont sorties, dont huit fiches cachées derrière `as unknown as FicheAudio[]` parce que `ValeurAudio` ne déclarait pas la séquence, le spectrogramme ou le cercle qu'elles rendaient. L'union dit désormais les quinze types qui circulent, et les fonctions d'aide prennent `ContexteAudio`.
 - [x] **Introduire des tests de non-régression** qui rejouent des graphes de référence.
   Fait (relu le 2026-10-31) : `tests-e2e/empreintes.json` surveille 74 composants isolés et
   `tests-e2e/empreintes-exemples.json` le son de chaque exemple livré, chaîne entière.
-- [ ] **Limiter la taille des fichiers `App.tsx` et `useExecutionGraphe.ts`** en extrayant des hooks spécialisés (cache, reset, persistance, URL blob).
-  Pas fait — et la tendance s'est inversée : `App.tsx` était descendu à 437
+- [x] **Limiter la taille des fichiers `App.tsx` et `useExecutionGraphe.ts`** en extrayant des hooks spécialisés (cache, reset, persistance, URL blob).
+  Pas fait au relevé du 2026-08-03 — et la tendance s'est inversée : `App.tsx` était descendu à 437
   lignes après l'extraction documentée dans `APP-BREAKDOWN.md`, il est
   remonté à **1013 lignes** avec les fonctionnalités ajoutées depuis
   (couleurs de nœuds, badges de temps d'exécution, placement de notes/cadres,
@@ -125,11 +175,13 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   Relu le 2026-10-31 : `App.tsx` 1449 lignes (37 états, 35 `useCallback`, 13 `useEffect`, sept
   hooks métier), `useExecutionGraphe.ts` 1777, puis 1624 après le lot 1. Les deux sont dans la dette de `LINE-COUNT.md`.
   Fait pour `App.tsx` le 2026-11-01, en neuf sorties (lot 2 de la revue) : 392 lignes de code,
-  574 en tout, seize crochets métier sous `src/ui/hooks/`, et il a quitté la dette.
+  574 en tout, vingt-deux crochets importés de `src/ui/hooks/`, et il a quitté la dette.
   Fait pour `useExecutionGraphe.ts` le 2026-11-02, en sept sorties : 289 lignes de code, 681 en
   tout, les pilotes et les remises à zéro en crochets, les graines, le contexte et la préparation
   dans `src/core/`, le correctif de résultat et le ménage d'après passe dans `src/ui/`, et il a
   quitté la dette à son tour.
+  Relu le 2026-11-06 : `App.tsx` 393 lignes de code et 575 en tout, `useExecutionGraphe.ts` 289 et
+  681 ; ni l'un ni l'autre n'est revenu dans la dette.
 
 ### Long terme
 
