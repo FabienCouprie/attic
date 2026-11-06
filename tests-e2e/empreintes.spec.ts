@@ -75,6 +75,11 @@ const SURVEILLES: {
   // d'avant, dans la page, puis retrouvée à l'identique par le worker. Le séparateur MDX-Net passe
   // par le même ouvrier ; il n'est pas ici, son fournisseur « Auto » prenant WebGPU là où il existe.
   { id: "debruitage-ia", worker: "inference-onnx-worker.ts" },
+  // LES CRITÈRES DE SCHAEFFER, hors du fil depuis le 2026-11-06 : 379 ms de gel total sur le son
+  // d'essai avant. Leur sortie audio est l'entrée rendue telle quelle ; c'est leur MESSAGE, qui
+  // nomme la masse, la forme et l'allure, que la base tient au caractère près. Empreinte écrite
+  // sur le calcul d'avant, dans la page, puis retrouvée par le worker.
+  { id: "criteres-schaefferiens", worker: "criteres-schaefferiens-worker.ts" },
   // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
   // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
   // laisse passer ; c'est son MESSAGE qui porte les chiffres mesurés, hauteur comprise.

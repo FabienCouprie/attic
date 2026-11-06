@@ -73,6 +73,8 @@ const WORKERS = [
   "textgen-worker.js", "tts-worker.js",
   // Il importe `audio/ia.ts` et `audio/gtcrn.ts`, écrits pour la page avant d'y passer.
   "inference-onnx-worker.ts",
+  // Il importe `audio/criteres-schaefferiens.ts` et le suiveur de hauteur, écrits pour la page.
+  "criteres-schaefferiens-worker.ts",
 ];
 
 describe.each(WORKERS)("le graphe d'imports de %s", (nom) => {

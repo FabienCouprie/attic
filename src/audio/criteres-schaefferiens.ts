@@ -627,6 +627,17 @@ export const criteresSchaefferiens = (
   allure: allure(x, sampleRate, o),
 });
 
+/** Ce que reçoit `workers/criteres-schaefferiens-worker.ts` : un canal, sa fréquence, les réglages. */
+export interface DemandeCriteres {
+  signal: Float32Array;
+  sampleRate: number;
+  options: OptionsCriteres;
+}
+
+/** Le calcul que le worker sert, et que le fil refait tel quel quand il n'y a pas de worker. */
+export const criteresDeLaDemande = (d: DemandeCriteres): CriteresSchaefferiens =>
+  criteresSchaefferiens(d.signal, d.sampleRate, d.options);
+
 /** L'harmonicité de la porteuse, rendue pour mémoire : elle sert au grain et au timbre. */
 export const harmonicite = (x: Float32Array, sampleRate: number): number =>
   partVoisee(suivreHauteur(x, sampleRate, { fMin: 55, fMax: 4000, cadence: 100 }));

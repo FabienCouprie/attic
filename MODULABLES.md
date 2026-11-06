@@ -31,7 +31,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 
 ### dynamique · 3
 
-- Critères schaefferiens `criteres-schaefferiens` : Seuil du bruit blanc, Seuil de bombement, Seuil de pente, Seuil d'ondulation · **⟨trames⟩** criteresSchaefferiens (appelle masse)
+- Critères schaefferiens `criteres-schaefferiens` : Seuil du bruit blanc, Seuil de bombement, Seuil de pente, Seuil d'ondulation · **⟨trames⟩** criteresDeLaDemande (appelle criteresSchaefferiens)
 - Décrire un audio `decrire-audio` : Seuil
 - Limiteur à crête vraie `limiteur-crete-vraie` : Plafond
 
