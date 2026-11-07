@@ -102,7 +102,8 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   bougé : une fonction de 435 lignes, de la ligne 52 à la ligne 486 de
 >   `src/ui/hooks/usePersistance.ts`. Pas fait non plus : la norme de cent vingt lignes par
 >   fonction que le lot proposait d'ajouter à `src/docs/generer-compte-lignes.test.ts`.
-> - **Lot 3, hors du fil** : commencé. Sa première pièce est fusionnée le 2026-11-06 (PR 292) :
+> - **Lot 3, hors du fil** : fait du 2026-11-06 au 2026-11-07. Sa première pièce est fusionnée
+>   le 2026-11-06 (PR 292) :
 >   « Débruitage IA » et le séparateur MDX-Net calculent dans un worker, avec le wasm d'onnxruntime
 >   livré dans `dist/` (gel relevé de 769 à 16 ms et de 9 811 à 25 ms), et le découpage du MDX est
 >   corrigé. Sa deuxième, « Critères schaefferiens » hors du fil (un gel total de 379 ms ramené à
@@ -131,16 +132,19 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   le tampon qu'elle bâtit ; une seule copie depuis, et il reste de 21 à 27 ms. Le point 2 du lot,
 >   ses sept modules, est ainsi épuisé. Son point 3 a sa première moitié fusionnée le même jour
 >   (PR 306) : les neuf handlers IPC de `main.cjs` qui lisent ou écrivent un fichier entier le font
->   par `fs.promises`, et la lecture
->   d'un fichier de 258 Mo ne rend plus le processus principal sourd que 98 à 143 ms au lieu de 234
->   à 411, le reste étant l'envoi des octets à la page ; `main.cjs` garde 55 appels `*Sync(`, sur
->   de petits fichiers. L'autre moitié, les sondes Python et Julia au lancement, attend que Fabien
->   revienne sur le « blocage accepté ». Basic Pitch, qui gelait la page de 22 à 43 ms dans le
->   Transcripteur polyphonique, calcule dans le worker d'inférence ONNX sur la branche
->   `travaux/basic-pitch-hors-du-fil` : 35 ms ramenés à 2 ou 3 sur le son d'essai ; sur deux
->   minutes, ce qui reste est l'envoi de l'entrée au worker, 20 ms pour deux canaux. Reste dans la
->   page l'analyse du genre, qui ne se mesure pas au banc, son modèle ne se lisant que par le pont
->   d'Electron.
+>   par `fs.promises`, et la lecture d'un fichier de 258 Mo ne rend plus le processus principal
+>   sourd que 98 à 143 ms au lieu de 234 à 411, le reste étant l'envoi des octets à la page.
+>   `electron/fichiers-entiers-ipc.test.ts` refuse depuis qu'un handler lise ou écrive un fichier
+>   entier d'un bloc, hormis quatre exceptions déclarées. L'autre moitié, les sondes Python et Julia
+>   au lancement, reste telle quelle, décidé par Fabien le 2026-11-07, comme l'écriture synchrone de
+>   leurs chemins et de leurs scripts : ce sont les quatre exceptions. Basic Pitch, qui gelait la
+>   page de 22 à 43 ms dans le Transcripteur polyphonique, calcule dans le worker d'inférence ONNX
+>   (PR 309) : 35 ms ramenés à 2 ou 3 sur le son d'essai ; sur deux minutes, ce qui reste est
+>   l'envoi de l'entrée au worker, 20 ms pour deux canaux. Reste dans la page l'analyse du genre,
+>   qui ne se mesure pas au banc, son modèle ne se lisant que par le pont d'Electron. Le point 4 du
+>   lot, la borne en octets de `cacheExec`, n'est pas fait, et ne le sera pas sans autre raison :
+>   `src/core/cache-execution.ts` consigne la mesure du 2026-10-26, ce cache ne gardant que des
+>   tampons que le magasin des résultats retient déjà.
 > - **Lot 4, les canoniques ignorés** : fait du 2026-10-31 au 2026-11-01, en six PR, de la 251 à
 >   la 256. `ia.ts` garde sa STFT, et `CHANGELOG.md` dit pourquoi.
 > - **Lot 5, à décider** : rien n'est décidé. `electron/main.cjs` porte toujours les 71 appels
