@@ -1293,6 +1293,7 @@ ipcMain.handle("python:definir-chemin", async (_event, chemin) => {
     if (!info.disponible) return { ok: false, erreur: info.erreur ?? "Exécutable inutilisable" };
     CHEMIN_PYTHON = chemin;
     const dataPath = path.join(app.getPath("userData"), "python-path.txt");
+    // fichier entier accepté : un chemin d'exécutable ; Python reste tel quel, décidé le 2026-11-07.
     fs.writeFileSync(dataPath, chemin, "utf-8");
     return { ok: true, chemin, version: info.version };
   } catch (err) {
@@ -1333,6 +1334,7 @@ ipcMain.handle("python:executer", async (event, options) => {
   try {
     // Écrire le script dans un fichier temporaire
     const scriptPath = path.join(app.getPath("temp"), `attic-script-${Date.now()}.py`);
+    // fichier entier accepté : le script tapé dans le nœud ; Python reste tel quel, décidé le 2026-11-07.
     fs.writeFileSync(scriptPath, options.code, "utf-8");
 
     // Arguments : chemin du script + variables d'env
@@ -1386,6 +1388,7 @@ ipcMain.handle("julia:definir-chemin", async (_event, chemin) => {
     if (!info.disponible) return { ok: false, erreur: info.erreur ?? "Exécutable inutilisable" };
     CHEMIN_JULIA = chemin;
     const dataPath = path.join(app.getPath("userData"), "julia-path.txt");
+    // fichier entier accepté : un chemin d'exécutable ; Julia reste tel quel, décidé le 2026-11-07.
     fs.writeFileSync(dataPath, chemin, "utf-8");
     return { ok: true, chemin, version: info.version };
   } catch (err) {
@@ -1410,6 +1413,7 @@ ipcMain.handle("julia:executer", async (event, options) => {
   if (!(await autorisationDuScript(event, "julia", options?.code))) return SCRIPT_REFUSE;
   try {
     const scriptPath = path.join(app.getPath("temp"), `attic-script-${Date.now()}.jl`);
+    // fichier entier accepté : le script tapé dans le nœud ; Julia reste tel quel, décidé le 2026-11-07.
     fs.writeFileSync(scriptPath, options.code, "utf-8");
 
     const args = [scriptPath];
