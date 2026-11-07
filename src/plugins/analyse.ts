@@ -315,7 +315,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const audio = entreeAudio(ctx, 0, { sorties: 2 });
       if (sansEntree(audio)) return audio;
-      // HORS DU FIL, comme l'analyse d'ensemble : le premier canal et le mélange partent copiés, et
+      // HORS DU FIL, comme l'analyse d'ensemble : les canaux partent copiés, le worker les mélange, et
       // seuls la combinaison et le rapport se font ici. Sans worker, en test, la même mesure.
       const resultat = decrireEmotion(await parUneFois<DemandeEmotion, MesuresEmotion>(demandeEmotion(audio), {
         creerWorker: () => new Worker(new URL("../workers/emotion-worker.ts", import.meta.url), { type: "module" }),

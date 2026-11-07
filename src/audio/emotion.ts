@@ -11,7 +11,6 @@
 // LA MESURE SE FAIT DANS `emotion-mesures.ts`, que lit le worker ; ce fichier combine et rédige.
 import { decrireAnalyse } from "./analyse";
 import { resultatCentroide, resultatRms } from "./analyse-descripteurs";
-import { mixdownMono } from "./commun";
 import { mesurerEmotion, type DemandeEmotion, type MesuresEmotion } from "./emotion-mesures";
 import { traduire } from "../i18n";
 
@@ -79,9 +78,12 @@ function etiquetteDepuisAngle(valence: number, arousal: number): { cle: string; 
   return meilleure;
 }
 
-/** Ce que la mesure reçoit d'un tampon : son premier canal, et le mélange de tous. */
+/** Ce que la mesure reçoit d'un tampon : ses canaux, que le worker mélange lui-même. */
 export function demandeEmotion(buffer: AudioBuffer): DemandeEmotion {
-  return { mono: buffer.getChannelData(0), melange: mixdownMono(buffer), sampleRate: buffer.sampleRate };
+  return {
+    canaux: Array.from({ length: buffer.numberOfChannels }, (_, c) => buffer.getChannelData(c)),
+    sampleRate: buffer.sampleRate,
+  };
 }
 
 /** L'analyse émotionnelle dans le fil : la mesure, puis sa combinaison et son rapport. */

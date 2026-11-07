@@ -117,8 +117,9 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   D'APRÈS SONT REMESURÉS : la sonde du banc ne comptait pas le bloc qu'un composant fait avant sa
 >   première attente. Avec la sonde corrigée, le 2026-11-07, ils valent 20 ms pour le débruitage,
 >   30 ms pour le MDX, 2 ms pour les critères, 8 ms pour l'écrêtage, 2 ms pour le trou et pour la
->   réverbération, de 1 à 3 ms pour le tempo, et de 9 à 10 ms pour l'émotion, dont la page mélange
->   encore les canaux avant d'envoyer. Le banc a mesuré, sur trois secondes de son et d'un seul
+>   réverbération, de 1 à 3 ms pour le tempo, et 2 ms pour l'émotion, une fois le mélange de ses
+>   canaux passé au worker : la page le faisait avant d'envoyer, et gelait de 9 à 10 ms (branche
+>   `travaux/emotion-melange-dans-le-worker`). Le banc a mesuré, sur trois secondes de son et d'un seul
 >   bloc, ce qui reste des modules de la revue : `auto-similarite` 37 ms, `multicanal` 27 ms, et le
 >   « Transcripteur MIDI » 128 ms, dont l'analyse d'ensemble n'est qu'une part. Restent aussi les
 >   accès disque synchrones de `main.cjs`, et les deux analyses qui chargent onnxruntime dans la
