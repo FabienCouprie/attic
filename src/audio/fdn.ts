@@ -285,3 +285,45 @@ export function rt60Mesure(h: Float32Array, sampleRate: number): number {
   if (i5 < 0 || i35 < 0 || i35 <= i5) return 0;
   return ((i35 - i5) / sampleRate) * 2;
 }
+
+/** Ce que reçoit `workers/fdn-worker.ts` : le son côté par côté, et les réglages du réseau. */
+export interface DemandeFdn {
+  gauche: Float32Array;
+  /** `null` pour un son mono : le côté gauche sert alors aux deux sorties. */
+  droite: Float32Array | null;
+  options: OptionsFdn & { freqRef: number | Float32Array };
+}
+
+/**
+ * Le rendu, la réponse impulsionnelle et les deux temps mesurés sur elle.
+ *
+ * À PLAT, et non en objets imbriqués : la liste de transfert des workers ne descend que d'un niveau,
+ * et un tableau rangé plus bas repartirait recopié.
+ */
+export interface ResultatFdn {
+  aGauche: Float32Array;
+  aDroite: Float32Array;
+  bDroite: Float32Array | null;
+  reponseGauche: Float32Array;
+  reponseDroite: Float32Array;
+  mesureBas: number;
+  mesureHaut: number;
+}
+
+/** Le calcul entier du composant : ce que le worker sert, et que le fil refait tel quel sans lui. */
+export function reverbererFdn(d: DemandeFdn): ResultatFdn {
+  const { options } = d;
+  const a = traiterFdn(d.gauche, options);
+  const b = d.droite ? traiterFdn(d.droite, options) : null;
+  const ri = reponseFdn({ ...options, queue: options.queue });
+  // Le nœud MESURE ce qu'il a produit, par l'intégrale de Schroeder sur sa propre réponse, dans
+  // une bande grave et une bande à la fréquence de référence, prise au début du son quand une
+  // courbe la commande : voir `plugins/fdn.ts`.
+  const sr = options.sampleRate;
+  return {
+    aGauche: a.gauche, aDroite: a.droite, bDroite: b ? b.droite : null,
+    reponseGauche: ri.gauche, reponseDroite: ri.droite,
+    mesureBas: rt60Mesure(filtrerBande(ri.gauche, sr, 150, 8), sr),
+    mesureHaut: rt60Mesure(filtrerBande(ri.gauche, sr, valeurA(options.freqRef, 0), 8), sr),
+  };
+}
