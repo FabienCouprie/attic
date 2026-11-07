@@ -84,6 +84,10 @@ const SURVEILLES: {
   // le seuil manuel de 0,5, sous sa crête de 0,528, lui donne 0,5 % d'échantillons à réparer, ce qui
   // gelait la page 2 875 ms avant. Empreinte écrite sur le calcul d'avant, puis retrouvée par le worker.
   { id: "restauration-ecretage", worker: "declipper-worker.ts", parametres: { "Seuil": "Manuel", "Seuil manuel": 0.5 } },
+  // LE REMPLISSAGE DE TROU, hors du fil depuis le 2026-11-06. Le son d'essai n'a pas de silence : à
+  // −20 dB, la détection y trouve 72 creux à boucher, 73 ms en tout, ce qui gelait la page 749 ms
+  // avant. Empreinte écrite sur le calcul d'avant, puis retrouvée par le worker.
+  { id: "remplissage-trou", worker: "inpainting-worker.ts", parametres: { "Trous": "Silences détectés", "Seuil de silence": -20 } },
   // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
   // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
   // laisse passer ; c'est son MESSAGE qui porte les chiffres mesurés, hauteur comprise.

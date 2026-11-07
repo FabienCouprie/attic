@@ -269,6 +269,23 @@ export function detecterTrous(x: Float32Array, seuil = 1e-4, longueurMin = 16): 
   return trous;
 }
 
+/** Les réglages d'un canal tels que les reçoit `workers/inpainting-worker.ts`. */
+export interface ReglagesTrouVoie extends OptionsInpainting {
+  /** Vrai : les trous se détectent sur le canal. Faux : `zones` vaut pour tous les canaux. */
+  automatique: boolean;
+  seuil: number;
+  longueurMin: number;
+  zones: Trou[];
+}
+
+/** Un canal bouché : le calcul que le worker sert, et que le fil refait tel quel sans worker. */
+export function boucherVoie(voie: Float32Array, o: ReglagesTrouVoie): ResultatInpainting {
+  const { automatique, seuil, longueurMin, zones, ...options } = o;
+  // En détection automatique, les trous se cherchent canal par canal : un décrochage peut
+  // n'avoir touché qu'une voie.
+  return boucherTrous(voie, automatique ? detecterTrous(voie, seuil, longueurMin) : zones, options);
+}
+
 /** Rapport signal sur distorsion SUR LE TROU, en décibels : la mesure de la littérature. */
 export function sdrTrou(original: Float32Array, essai: Float32Array, trous: Trou[]): number {
   let signal = 0, bruit = 0;

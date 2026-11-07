@@ -77,6 +77,8 @@ const WORKERS = [
   "criteres-schaefferiens-worker.ts",
   // Il importe `audio/declipper.ts` et ses fenêtres d'analyse, écrits pour la page.
   "declipper-worker.ts",
+  // Il importe `audio/inpainting.ts`, écrit pour la page.
+  "inpainting-worker.ts",
 ];
 
 describe.each(WORKERS)("le graphe d'imports de %s", (nom) => {
