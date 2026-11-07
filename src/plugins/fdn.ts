@@ -6,9 +6,10 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { filtrerBande, reponseFdn, rt60Mesure, traiterFdn } from "../audio/fdn";
+import { reverbererFdn, type DemandeFdn, type ResultatFdn } from "../audio/fdn";
 import { MODULATION_MIX, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
-import { valeurA, valeurMax } from "../audio/courbe";
+import { valeurMax } from "../audio/courbe";
+import { parUneFois } from "./hors-lot";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
@@ -114,32 +115,35 @@ export const fiches: FicheAudio[] = ([
       };
 
       // Le son est traité en passant DANS le réseau, et non par convolution : c'est la structure
-      // même de l'article, et elle coûte 20 ms pour deux secondes de son à huit lignes.
-      const voieG = entree.getChannelData(0);
-      const voieD = canaux > 1 ? entree.getChannelData(1) : voieG;
-      const a = traiterFdn(voieG, options);
-      const b = canaux > 1 ? traiterFdn(voieD, options) : a;
-      const n = a.gauche.length;
+      // même de l'article. HORS DU FIL, par `reverbererFdn` : les côtés partent COPIÉS, le tampon
+      // reçu appartenant au nœud amont, et le rendu revient transféré. Sans worker, en test, le
+      // même calcul tourne dans le fil.
+      //
+      // La réponse impulsionnelle est rendue comme le fait la réverbération velours : à regarder,
+      // ou à brancher sur la réverbération à convolution. Le nœud MESURE ce qu'il a produit, par
+      // l'intégrale de Schroeder sur sa propre réponse, dans une bande grave et une bande à la
+      // fréquence de référence : c'est la seule façon de savoir si la salle demandée est la salle
+      // obtenue. LA MESURE SE PREND AU DÉBUT DU SON quand une courbe commande cette fréquence : le
+      // nœud rend UN chiffre par bande, et une fréquence qui se déplace en vaudrait autant qu'il y
+      // a d'instants ; en choisir un est plus honnête que d'en moyenner plusieurs.
+      const demande: DemandeFdn = {
+        gauche: entree.getChannelData(0),
+        droite: canaux > 1 ? entree.getChannelData(1) : null,
+        options,
+      };
+      const r = await parUneFois<DemandeFdn, ResultatFdn>(demande, {
+        creerWorker: () => new Worker(new URL("../workers/fdn-worker.ts", import.meta.url), { type: "module" }),
+        calcul: reverbererFdn,
+      });
+      const n = r.aGauche.length;
       const sortie = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate });
-      sortie.getChannelData(0).set(a.gauche);
-      sortie.getChannelData(1).set(canaux > 1 ? b.droite : a.droite);
-
-      // La réponse impulsionnelle, comme le fait la réverbération velours : à regarder, ou à
-      // brancher sur la réverbération à convolution.
-      const ri = reponseFdn({ ...options, queue: options.queue });
-      const reponse = new AudioBuffer({ numberOfChannels: 2, length: ri.gauche.length, sampleRate });
-      reponse.getChannelData(0).set(ri.gauche);
-      reponse.getChannelData(1).set(ri.droite);
-
-      // Le nœud MESURE ce qu'il a produit, par l'intégrale de Schroeder sur sa propre réponse, dans
-      // une bande grave et une bande à la fréquence de référence. C'est la seule façon de savoir si
-      // la salle demandée est la salle obtenue, sans avoir à la mesurer soi-même.
-      const mesureBas = rt60Mesure(filtrerBande(ri.gauche, sampleRate, 150, 8), sampleRate);
-      // LA MESURE SE PREND AU DÉBUT DU SON quand une courbe commande la fréquence de référence.
-      // Le nœud rend UN chiffre, le temps de réverbération obtenu dans une bande ; une fréquence
-      // qui se déplace en vaudrait autant qu'il y a d'instants, et en choisir un est plus honnête
-      // que d'en moyenner plusieurs sous un seul nombre. Sans courbe, c'est le réglage lui-même.
-      const mesureHaut = rt60Mesure(filtrerBande(ri.gauche, sampleRate, valeurA(freqRef, 0), 8), sampleRate);
+      // `copyToChannel` et non `getChannelData().set` : les tableaux reviennent d'un ouvrier.
+      sortie.copyToChannel(new Float32Array(r.aGauche), 0);
+      sortie.copyToChannel(new Float32Array(r.bDroite ?? r.aDroite), 1);
+      const reponse = new AudioBuffer({ numberOfChannels: 2, length: r.reponseGauche.length, sampleRate });
+      reponse.copyToChannel(new Float32Array(r.reponseGauche), 0);
+      reponse.copyToChannel(new Float32Array(r.reponseDroite), 1);
+      const { mesureBas, mesureHaut } = r;
       void length;
       return {
         valeurs: [sortie, reponse],

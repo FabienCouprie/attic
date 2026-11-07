@@ -88,6 +88,11 @@ const SURVEILLES: {
   // −20 dB, la détection y trouve 72 creux à boucher, 73 ms en tout, ce qui gelait la page 749 ms
   // avant. Empreinte écrite sur le calcul d'avant, puis retrouvée par le worker.
   { id: "remplissage-trou", worker: "inpainting-worker.ts", parametres: { "Trous": "Silences détectés", "Seuil de silence": -20 } },
+  // LA RÉVERBÉRATION À RÉSEAU DE RETARDS, hors du fil depuis le 2026-11-07 : 105 ms de gel total sur
+  // le son d'essai avant, un calcul qui croît avec la durée du son. Ses deux sorties, le son et la
+  // réponse impulsionnelle, et son message, qui chiffre les deux RT60 mesurés, sont tenus. Empreinte
+  // écrite sur le calcul d'avant, puis retrouvée par le worker.
+  { id: "reverbe-reseau", worker: "fdn-worker.ts" },
   // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
   // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
   // laisse passer ; c'est son MESSAGE qui porte les chiffres mesurés, hauteur comprise.

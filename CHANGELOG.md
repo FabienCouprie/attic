@@ -6,6 +6,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **« RÉVERBÉRATION À RÉSEAU » CALCULE HORS DU FIL.** Cinquième pièce du lot 3 de la revue d'architecture du 2026-10-31, la troisième du relevé fait pour la restauration d'écrêtage.
+  - **Avant**, sur le son d'essai : 105 ms d'un seul bloc, sans qu'un message passe, pour un calcul qui croît avec la durée du son et de sa queue. **Après** : 123 ms, dont 1 ms de gel au plus long, 21 727 messages passés. Les deux sorties, le son et la réponse impulsionnelle, et le message, qui chiffre les deux RT60 mesurés, sont identiques avant et après.
+  - **Les pièces.** `workers/fdn-worker.ts` joint `servirUneFois` à `reverbererFdn` d'`audio/fdn.ts`, qui fait tout le calcul du composant tel quel : `traiterFdn` sur chaque côté, `reponseFdn`, puis les deux mesures de Schroeder, la fréquence de référence prise au début du son quand une courbe la commande. Le composant passe par `parUneFois`, les côtés partant copiés. Le résultat revient à plat, la liste de transfert ne descendant que d'un niveau.
+  - **La surveillance suit.** Le composant entre dans la base d'empreintes avec son worker, aux réglages d'ouverture : son empreinte a été écrite sur l'ancien code, ce qui n'a ajouté que cette entrée, puis retrouvée par le worker. Le worker entre au graphe d'imports de `graphe-imports.test.ts`, et `AGENTS.md` annonce soixante-dix-neuf composants surveillés. Les cas de modulation qui font passer le composant dans le fil, en test, restent verts.
+  - **Preuves** : `npx tsc -b` vert, `npx oxlint` 0 erreur et les mêmes 27 avertissements, les tables régénérées inchangées, les soixante-dix-neuf empreintes vertes, et la passe complète rend 708 fichiers et 10 204 tests en 22 min 4 s : 10 190 verts, 14 sautés, aucun rouge.
+
 - **« REMPLISSAGE DE TROU » CALCULE HORS DU FIL.** Quatrième pièce du lot 3 de la revue d'architecture du 2026-10-31, la deuxième du relevé fait pour la troisième.
   - **Avant**, sur le son d'essai et d'un seul bloc, sans qu'un message passe : 749 ms pour les silences détectés à −20 dB (72 creux, 73 ms à reconstruire), 8 094 ms à −12 dB (391 creux, 546 ms).
   - **Après** : 715 ms dont 2 ms de gel au plus long, et 7 765 ms dont 10 ms. Le message et le son rendu sont identiques aux deux seuils.

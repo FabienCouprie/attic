@@ -98,6 +98,13 @@
       ],
       "message": "72 trou(s) bouché(s) · « durée » reconstruits"
     },
+    "reverbe-reseau": {
+      "empreintes": [
+        "0.130466815/0.356636316",
+        "0.001003552/0.090778656"
+      ],
+      "message": "RT60 mesuré : grave 1.94 s · aigu 0.82 s · durée 5.00 s"
+    },
     "fiche-technique": {
       "empreintes": [
         "0.269865992/0.528780282",
