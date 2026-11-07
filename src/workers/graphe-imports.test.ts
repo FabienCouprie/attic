@@ -83,6 +83,8 @@ const WORKERS = [
   "fdn-worker.ts",
   // Il importe `audio/analyse-mesures.ts`, tiré d'`audio/analyse.ts` qui rédige avec `traduire`.
   "analyse-worker.ts",
+  // Il importe `audio/emotion-mesures.ts` et Meyda, par `audio/descripteurs-valeurs.ts`.
+  "emotion-worker.ts",
 ];
 
 describe.each(WORKERS)("le graphe d'imports de %s", (nom) => {

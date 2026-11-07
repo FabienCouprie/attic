@@ -98,6 +98,11 @@ const SURVEILLES: {
   // qui porte le tempo et sa fiabilité. Empreinte écrite sur le calcul d'avant, puis retrouvée par
   // le worker.
   { id: "detecteur-tempo", worker: "analyse-worker.ts" },
+  // L'ANALYSE ÉMOTIONNELLE, hors du fil depuis le 2026-11-07 : 211 ms de gel total sur le son d'essai
+  // avant. Elle ajoute à l'analyse d'ensemble la sonie et la brillance de Meyda ; son MESSAGE porte
+  // l'émotion et sa confiance, qui dépendent des quatre. Empreinte écrite sur le calcul d'avant,
+  // puis retrouvée par le worker.
+  { id: "analyse-emotionnelle", worker: "emotion-worker.ts" },
   // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
   // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
   // laisse passer ; c'est son MESSAGE qui porte les chiffres mesurés, hauteur comprise.

@@ -7,8 +7,12 @@
 // arousal (calme/énergique) — selon le modèle circomplex de Russell (1980),
 // puis reprojetés sur 8 émotions nommées réparties tous les 45° autour du
 // cercle, plus un état neutre au centre.
-import { analyserAudio } from "./analyse";
-import { calculerRMS_Meyda, calculerCentroidSpectralMeyda } from "./analyse-descripteurs";
+//
+// LA MESURE SE FAIT DANS `emotion-mesures.ts`, que lit le worker ; ce fichier combine et rédige.
+import { decrireAnalyse } from "./analyse";
+import { resultatCentroide, resultatRms } from "./analyse-descripteurs";
+import { mixdownMono } from "./commun";
+import { mesurerEmotion, type DemandeEmotion, type MesuresEmotion } from "./emotion-mesures";
 import { traduire } from "../i18n";
 
 export interface AnalyseEmotionnelle {
@@ -75,10 +79,21 @@ function etiquetteDepuisAngle(valence: number, arousal: number): { cle: string; 
   return meilleure;
 }
 
+/** Ce que la mesure reçoit d'un tampon : son premier canal, et le mélange de tous. */
+export function demandeEmotion(buffer: AudioBuffer): DemandeEmotion {
+  return { mono: buffer.getChannelData(0), melange: mixdownMono(buffer), sampleRate: buffer.sampleRate };
+}
+
+/** L'analyse émotionnelle dans le fil : la mesure, puis sa combinaison et son rapport. */
 export function analyserEmotion(buffer: AudioBuffer): AnalyseEmotionnelle {
-  const base = analyserAudio(buffer);
-  const rms = calculerRMS_Meyda(buffer);
-  const centroide = calculerCentroidSpectralMeyda(buffer);
+  return decrireEmotion(mesurerEmotion(demandeEmotion(buffer)));
+}
+
+/** Les quatre indices combinés en valence et en éveil, et rédigés, sur ce qu'a rendu `mesurerEmotion`. */
+export function decrireEmotion(m: MesuresEmotion): AnalyseEmotionnelle {
+  const base = decrireAnalyse(m.analyse);
+  const rms = resultatRms(m.rms);
+  const centroide = resultatCentroide(m.centroide);
 
   // Indices bruts normalisés en [0,1].
   const tempoNorm = normaliser(base.tempo, 50, 180); // lent → rapide
