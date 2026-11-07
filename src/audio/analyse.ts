@@ -6,6 +6,10 @@
 import { creerFenetreHann, tramesDepuisBuffer, noteMidiDeFrequence } from "./commun";
 import { traduire } from "../i18n";
 import { traduireType } from "./analyse-transcription";
+import { mesurerAnalyse, type MesuresAnalyse } from "./analyse-mesures";
+
+// La mesure, et le chromagramme avec elle, vit dans `analyse-mesures.ts` pour passer hors du fil.
+export { chromagramme } from "./analyse-mesures";
 
 export interface AnalyseResultat {
   tempo: number;
@@ -31,30 +35,6 @@ const KK_MINOR = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.
 const TEMP_MAJOR = [5.0, 2.0, 3.5, 2.5, 4.5, 4.0, 2.5, 5.0, 2.5, 3.5, 1.5, 4.0];
 
 const TEMP_MINOR = [5.0, 2.5, 3.5, 4.5, 2.5, 4.0, 2.5, 5.0, 3.5, 2.5, 1.5, 4.0];
-
-
-export function chromagramme(donnees: Float32Array, sampleRate: number): number[] {
-  const fftTaille = 2048;
-  const saut = 512;
-  const fenetre = creerFenetreHann(fftTaille);
-  const trames = tramesDepuisBuffer(donnees, fftTaille, saut, fenetre);
-  const nbBins = fftTaille / 2 + 1;
-  const chroma = Array.from({ length: 12 }, () => 0);
-
-  for (const trame of trames) {
-    for (let bin = 1; bin < nbBins; bin++) {
-      const mag = Math.sqrt(trame.re[bin] ** 2 + trame.im[bin] ** 2);
-      const freq = (bin * sampleRate) / fftTaille;
-      if (freq < 65 || freq > 8000) continue;
-      const midiNote = noteMidiDeFrequence(freq);
-      const pc = ((Math.round(midiNote) % 12) + 12) % 12;
-      chroma[pc] += mag;
-    }
-  }
-
-  const max = Math.max(...chroma, 1e-10);
-  return chroma.map((v) => v / max);
-}
 
 
 /**
@@ -111,70 +91,10 @@ function meilleureCorrelation(chroma: number[], profil: number[]): { shift: numb
 }
 
 
-function ecartTypeVals(valeurs: number[]): number {
-  if (valeurs.length === 0) return 0;
-  const moy = valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
-  const var_ = valeurs.reduce((a, b) => a + (b - moy) ** 2, 0) / valeurs.length;
-  return Math.sqrt(var_);
-}
-
-
-export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
-  const sampleRate = buffer.sampleRate;
-  const mono = buffer.getChannelData(0);
-  const duree = buffer.length / sampleRate;
+/** Le rapport de l'analyse d'ensemble, rédigé sur ce qu'a rendu `mesurerAnalyse`. */
+export function decrireAnalyse(m: MesuresAnalyse): AnalyseResultat {
+  const { duree, t1, t2, chroma, chroma1, chroma2, ecCent, ecZCR, ecBand } = m;
   const lignes: string[] = [];
-  const hopTempo = 512;
-
-  // ── Enveloppe RMS (partagée) ──
-  const nbFramesRMS = Math.max(1, Math.floor(mono.length / hopTempo));
-  const enveloppe = new Float64Array(nbFramesRMS);
-  for (let f = 0; f < nbFramesRMS; f++) {
-    const offset = f * hopTempo;
-    const n = Math.min(hopTempo, mono.length - offset);
-    let sum = 0;
-    for (let i = 0; i < n; i++) sum += mono[offset + i] ** 2;
-    enveloppe[f] = Math.sqrt(sum / n);
-  }
-  const onsets = new Float64Array(nbFramesRMS - 1);
-  for (let i = 0; i < nbFramesRMS - 1; i++) onsets[i] = Math.max(0, enveloppe[i + 1] - enveloppe[i]);
-
-  function tempoParAutocorr(seq: Float64Array, hop: number): { bpm: number; corr: number } {
-    const minLag = Math.round(60 * sampleRate / hop / 200);
-    const maxLag = Math.round(60 * sampleRate / hop / 40);
-    let bestLag = 0, bestCorr = 0;
-    for (let lag = minLag; lag <= Math.min(maxLag, Math.floor(seq.length / 2)); lag++) {
-      let corr = 0, n = 0;
-      for (let i = 0; i + lag < seq.length; i++, n++) corr += seq[i] * seq[i + lag];
-      if (n > 0) corr /= n;
-      if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
-    }
-    return { bpm: bestLag > 0 ? Math.round(60 * sampleRate / hop / bestLag) : 0, corr: bestCorr };
-  }
-
-  // ────── TEMPO ──────
-  // Méthode 1 : onsets d'énergie RMS
-  const t1 = tempoParAutocorr(onsets, hopTempo);
-
-  // Méthode 2 : flux spectral (différence FFT)
-  const fftFlux = 1024;
-  const hopFlux = 512;
-  const fenFlux = creerFenetreHann(fftFlux);
-  const tramesFlux = tramesDepuisBuffer(mono, fftFlux, hopFlux, fenFlux);
-  const nbBinsFlux = fftFlux / 2 + 1;
-  const flux = new Float64Array(tramesFlux.length);
-  let prevMag = new Float64Array(nbBinsFlux).fill(0);
-  for (let t = 0; t < tramesFlux.length; t++) {
-    let sum = 0;
-    for (let b = 1; b < nbBinsFlux; b++) {
-      const mag = Math.sqrt(tramesFlux[t].re[b] ** 2 + tramesFlux[t].im[b] ** 2);
-      const diff = Math.max(0, mag - prevMag[b]);
-      sum += diff;
-      prevMag[b] = mag;
-    }
-    flux[t] = sum / nbBinsFlux;
-  }
-  const t2 = tempoParAutocorr(flux, hopFlux);
 
   lignes.push(traduire("analyse.tempo"));
   lignes.push(traduire("analyse.rms_autocorr", t1.bpm, (t1.corr * 100).toFixed(0)));
@@ -187,7 +107,6 @@ export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
   lignes.push(traduire("analyse.retenu", tempoFinal, suffix));
 
   // ────── TONALITÉ ──────
-  const chroma = chromagramme(mono, sampleRate);
 
   function evaluerProfil(profilMaj: number[], profilMin: number[], etiquette: string): string {
     const m = meilleureCorrelation(chroma, profilMaj);
@@ -217,10 +136,6 @@ export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
   const principale = bestKK.conf >= bestTP.conf ? bestKK : bestTP;
 
   // Analyse par moitiés avec les deux profils
-  const moitie = Math.floor(mono.length / 2);
-  const chroma1 = chromagramme(mono.slice(0, moitie), sampleRate);
-  const chroma2 = chromagramme(mono.slice(moitie), sampleRate);
-
   function profilermoitie(chr: number[], label: string): string[] {
     const mk = meilleureCorrelation(chr, KK_MAJOR);
     const nk = meilleureCorrelation(chr, KK_MINOR);
@@ -243,47 +158,6 @@ export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
   lignes.push(...profilermoitie(chroma2, `${(duree / 2).toFixed(1)}–${duree.toFixed(1)}s`));
 
   // ────── SONG VS INSTRUMENTAL ──────
-  const fftSI = 2048;
-  const hopSI = 1024;
-  const fenSI = creerFenetreHann(fftSI);
-  const tramesSI = tramesDepuisBuffer(mono, fftSI, hopSI, fenSI);
-  const nbBinsSI = fftSI / 2 + 1;
-  const centroides: number[] = [];
-  const bandRatios: number[] = [];
-
-  for (const trame of tramesSI) {
-    let sommeMag = 0, sommeFreq = 0, sommeMagVoix = 0;
-    for (let bin = 1; bin < nbBinsSI; bin++) {
-      const mag = Math.sqrt(trame.re[bin] ** 2 + trame.im[bin] ** 2);
-      const freq = (bin * sampleRate) / fftSI;
-      if (freq >= 200 && freq <= 4000) {
-        sommeMag += mag;
-        sommeFreq += freq * mag;
-        if (freq >= 300 && freq <= 3000) sommeMagVoix += mag;
-      }
-    }
-    if (sommeMag > 0) centroides.push(sommeFreq / sommeMag);
-    if (sommeMag > 0) bandRatios.push(sommeMagVoix / sommeMag);
-  }
-
-  // ZCR
-  const hopZCR = 512;
-  const nZCR = Math.max(1, Math.floor(mono.length / hopZCR));
-  const zcrs: number[] = [];
-  for (let f = 0; f < nZCR; f++) {
-    const offset = f * hopZCR;
-    const n = Math.min(hopZCR, mono.length - offset);
-    let z = 0;
-    for (let i = 1; i < n; i++) {
-      if ((mono[offset + i] >= 0) !== (mono[offset + i - 1] >= 0)) z++;
-    }
-    zcrs.push(z / n);
-  }
-
-  const ecCent = ecartTypeVals(centroides);
-  const ecZCR = ecartTypeVals(zcrs);
-  const ecBand = ecartTypeVals(bandRatios);
-
   function classer(v: number, seuilHaut: number, seuilBas: number): "chanson" | "instrumental" | "incertain" {
     if (v > seuilHaut) return "chanson";
     if (v > seuilBas) return "incertain";
@@ -314,6 +188,12 @@ export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
     songVsInstrumental,
     description: lignes.join("\n"),
   };
+}
+
+
+/** L'analyse d'ensemble dans le fil : la mesure, puis son rapport. Seul le premier canal est lu. */
+export function analyserAudio(buffer: AudioBuffer): AnalyseResultat {
+  return decrireAnalyse(mesurerAnalyse({ mono: buffer.getChannelData(0), sampleRate: buffer.sampleRate }));
 }
 
 

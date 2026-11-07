@@ -105,6 +105,14 @@
       ],
       "message": "RT60 mesuré : grave 1.94 s · aigu 0.82 s · durée 5.00 s"
     },
+    "detecteur-tempo": {
+      "empreintes": [
+        "0.269865992/0.528780282",
+        null,
+        null
+      ],
+      "message": "82 BPM · fiabilité faible"
+    },
     "fiche-technique": {
       "empreintes": [
         "0.269865992/0.528780282",
