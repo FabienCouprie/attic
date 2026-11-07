@@ -448,7 +448,10 @@ ipcMain.handle("fichier:sauvegarder", async (event, options) => {
   const vS = ecritureAutorisee(resultat.filePath);
   inscrireChemin("sauvegarder", resultat.filePath, vS.ok, true);
   if (!vS.ok) { console.error(`[attic] fichier:sauvegarder REFUSE: ${resultat.filePath} — ${vS.raison}`); return null; }
-  fs.writeFileSync(resultat.filePath, data, "utf-8");
+  // PROMIS ET NON SYNCHRONE, comme les huit autres lectures et écritures de fichiers entiers des
+  // handlers de ce fichier depuis le 2026-11-07 : le processus principal sert la fenêtre, les menus
+  // et tous les IPC, et un fichier de 258 Mo le rendait sourd jusqu'à 411 ms. Voir `CHANGELOG.md`.
+  await fs.promises.writeFile(resultat.filePath, data, "utf-8");
   return resultat.filePath;
 });
 
@@ -462,7 +465,7 @@ ipcMain.handle("fichier:ouvrir-binaire", async (event, options) => {
   });
   if (resultat.canceled || resultat.filePaths.length === 0) return null;
   const chemin = resultat.filePaths[0];
-  const contenu = fs.readFileSync(chemin);
+  const contenu = await fs.promises.readFile(chemin);
   return { donnees: contenu, nom: path.basename(chemin), chemin };
 });
 
@@ -492,7 +495,7 @@ ipcMain.handle("fichier:ouvrir", async (event, options) => {
   });
   if (resultat.canceled || resultat.filePaths.length === 0) return null;
   const chemin = resultat.filePaths[0];
-  const contenu = fs.readFileSync(chemin, "utf-8");
+  const contenu = await fs.promises.readFile(chemin, "utf-8");
   return { chemin, contenu, nom: path.basename(chemin) };
 });
 
@@ -525,7 +528,7 @@ ipcMain.handle("fichier:sauvegarder-binaire", async (event, options) => {
   inscrireChemin("sauvegarder-binaire", resultat.filePath, vB.ok, true);
   if (!vB.ok) { console.error(`[attic] fichier:sauvegarder-binaire REFUSE: ${resultat.filePath} — ${vB.raison}`); return null; }
   const buf = Buffer.from(buffer);
-  fs.writeFileSync(resultat.filePath, buf);
+  await fs.promises.writeFile(resultat.filePath, buf);
   return resultat.filePath;
 });
 
@@ -608,7 +611,7 @@ ipcMain.handle("fichier:ecrire", async (_event, { chemin, buffer }) => {
     const dir = path.dirname(chemin);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const data = typeof buffer === "string" ? Buffer.from(buffer, "utf-8") : Buffer.from(buffer);
-    fs.writeFileSync(chemin, data);
+    await fs.promises.writeFile(chemin, data);
     console.log(`[attic] fichier:ecrire OK: ${chemin} (${data.length} octets)`);
     return chemin;
   } catch (err) {
@@ -636,7 +639,7 @@ ipcMain.handle("fichier:copier", async (_event, { source, cible }) => {
   try {
     const dir = path.dirname(cible);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.copyFileSync(source, cible);
+    await fs.promises.copyFile(source, cible);
     return cible;
   } catch {
     return null;
@@ -670,7 +673,7 @@ ipcMain.handle("fichier:ouvrir-chemin", async (_event, chemin) => {
 // --- IPC : extraire l'image (pochette) d'un fichier MP3 (tag ID3 APIC) ---
 ipcMain.handle("mp3:extraire-pochette", async (_event, cheminFichier) => {
   try {
-    const buf = fs.readFileSync(cheminFichier);
+    const buf = await fs.promises.readFile(cheminFichier);
     if (buf.length > 10 && buf[0] === 0x49 && buf[1] === 0x44 && buf[2] === 0x33) {
       const versionMinor = buf[3]; // 3 = ID3v2.3, 4 = ID3v2.4
       const headerSize = ((buf[6] & 0x7f) << 21) | ((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
@@ -1577,7 +1580,7 @@ ipcMain.handle("fichier:lire-binaire", async (_event, cheminRelatif) => {
     // qui ne l'avaient pas.
     const chemin = resoudreRessource(cheminRelatif, contexteRessources());
     if (!chemin || !fs.existsSync(chemin)) return null;
-    const buf = fs.readFileSync(chemin);
+    const buf = await fs.promises.readFile(chemin);
     return { donnees: buf, nom: path.basename(chemin) };
   } catch {
     return null;
@@ -1589,7 +1592,7 @@ ipcMain.handle("fichier:lire-texte", async (_event, cheminRelatif) => {
   try {
     const chemin = resoudreRessource(cheminRelatif, contexteRessources());
     if (!chemin || !fs.existsSync(chemin)) return null;
-    return fs.readFileSync(chemin, "utf-8");
+    return await fs.promises.readFile(chemin, "utf-8");
   } catch {
     return null;
   }

@@ -125,13 +125,19 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   de sortie audio : `tests-e2e/transcription-dans-application.spec.ts` en fait la preuve à sa
 >   place. Sa neuvième, la « Matrice d'auto-similarité » hors du fil, est fusionnée (PR 304) : sur
 >   deux minutes de son, 1 128 ms de gel total ramenés à 10 ms. CE QUI RESTE SE MESURE SUR UN SON
->   LONG, trois secondes ne suffisant plus à départager. Sa dixième, `multicanal` hors du fil, est sur
->   la branche `travaux/lot-3-multicanal` : sur deux minutes, le « Rendu d'objets » passe de 872 ms
->   d'un bloc à 35 ms, et le « Spatialiseur » de 663 à 36 ms, ce qui reste étant la recopie des
->   douze canaux dans le tampon que la page bâtit. Restent aussi les accès disque synchrones de
->   `main.cjs`, et les deux analyses qui chargent onnxruntime dans la page : celle de
->   `analyse-polyphonique.ts`, Basic Pitch, gèle de 22 à 43 ms dans le Transcripteur ; celle du
->   genre ne se mesure pas au banc, son modèle ne se lisant que par le pont d'Electron.
+>   LONG, trois secondes ne suffisant plus à départager. Sa dixième, `multicanal` hors du fil, est
+>   fusionnée (PR 305) : sur deux minutes, le « Rendu d'objets » passe de 872 ms d'un bloc à 35 ms,
+>   et le « Spatialiseur » de 663 à 36 ms, ce qui reste étant la recopie des douze canaux dans le
+>   tampon que la page bâtit. Le point 2 du lot, ses sept modules, est ainsi épuisé. Son point 3 a sa
+>   première moitié sur la branche `travaux/lot-3-ipc-fichiers` : les neuf handlers IPC de
+>   `main.cjs` qui lisent ou écrivent un fichier entier le font par `fs.promises`, et la lecture
+>   d'un fichier de 258 Mo ne rend plus le processus principal sourd que 98 à 143 ms au lieu de 234
+>   à 411, le reste étant l'envoi des octets à la page ; `main.cjs` garde 55 appels `*Sync(`, sur
+>   de petits fichiers. L'autre moitié, les sondes Python et Julia au lancement, attend que Fabien
+>   revienne sur le « blocage accepté ». Restent aussi les deux analyses qui chargent onnxruntime
+>   dans la page : celle de `analyse-polyphonique.ts`, Basic Pitch, gèle de 22 à 43 ms dans le
+>   Transcripteur ; celle du genre ne se mesure pas au banc, son modèle ne se lisant que par le pont
+>   d'Electron.
 > - **Lot 4, les canoniques ignorés** : fait du 2026-10-31 au 2026-11-01, en six PR, de la 251 à
 >   la 256. `ia.ts` garde sa STFT, et `CHANGELOG.md` dit pourquoi.
 > - **Lot 5, à décider** : rien n'est décidé. `electron/main.cjs` porte toujours les 71 appels
