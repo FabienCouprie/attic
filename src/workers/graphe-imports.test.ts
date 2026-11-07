@@ -87,6 +87,8 @@ const WORKERS = [
   "emotion-worker.ts",
   // Il importe `audio/transcription-mesures.ts`, tiré d'`audio/analyse-transcription.ts`.
   "transcription-worker.ts",
+  // Il importe `audio/auto-similarite.ts` et le chromagramme par trame d'`audio/analyse-mesures.ts`.
+  "auto-similarite-worker.ts",
 ];
 
 describe.each(WORKERS)("le graphe d'imports de %s", (nom) => {

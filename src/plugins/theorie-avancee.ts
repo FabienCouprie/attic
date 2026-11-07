@@ -17,9 +17,9 @@ import { bilan, verifier } from "../audio/contrepoint";
 import { canonEnNotes, canonEnTexte, chercherMotifs, construire } from "../audio/canon-pavage";
 import { serie, statistiques, versHauteurs, voix, type ModeHauteur } from "../audio/norgard";
 import {
-  courbeNouveaute, frontieres, matriceEnSvg, matriceSimilarite, regrouper, segments,
+  analyserAutoSimilarite, type DemandeAutoSimilarite, type ResultatAutoSimilarite,
 } from "../audio/auto-similarite";
-import { SAUT_TRAME_CHROMAGRAMME, chromagrammeParTrame } from "../audio/analyse";
+import { parUneFois } from "./hors-lot";
 import { notesDuMidi } from "../audio/midi";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
 import { entreeAudio, sansEntree } from "./lire-entree";
@@ -394,22 +394,23 @@ export const fiches: FicheAudio[] = ([
       const audio = entreeAudio(ctx, 0, { sorties: 3 });
       if (sansEntree(audio)) return audio;
       const dureeTrame = ctx.paramNombre("Trame", 0.5);
-      // Le chromagramme avance de 512 échantillons ; on regroupe pour atteindre la durée
-      // de trame demandée, seule échelle à laquelle la forme d'un morceau se voit.
-      const facteur = Math.max(1, Math.round((dureeTrame * audio.sampleRate) / SAUT_TRAME_CHROMAGRAMME));
-      const trames = regrouper(chromagrammeParTrame(audio.getChannelData(0), audio.sampleRate), facteur);
-      if (trames.length < 8) return { valeurs: [null, null, null], message: traduire("msg.similarite.tropCourt") };
-      const matrice = matriceSimilarite(trames);
-      const noyau = Math.min(Math.round(ctx.paramNombre("Taille du noyau", 8)), Math.floor(trames.length / 3));
-      const courbe = courbeNouveaute(matrice, Math.max(2, noyau));
-      const trouvees = frontieres(
-        courbe, ctx.paramNombre("Seuil", 40) / 100, Math.round(ctx.paramNombre("Écart minimal", 6)),
-      );
-      const parties = segments(trouvees, trames.length);
+      // HORS DU FIL : le premier canal part copié, et toute l'analyse se fait dans le worker,
+      // jusqu'au dessin de la matrice. Seul le texte, qui suit la langue, se rédige ici. Sans
+      // worker, en test, la même analyse tourne dans le fil.
+      const r = await parUneFois<DemandeAutoSimilarite, ResultatAutoSimilarite>({
+        mono: audio.getChannelData(0), sampleRate: audio.sampleRate, dureeTrame,
+        noyau: ctx.paramNombre("Taille du noyau", 8), seuil: ctx.paramNombre("Seuil", 40),
+        ecartMinimal: ctx.paramNombre("Écart minimal", 6),
+      }, {
+        creerWorker: () => new Worker(new URL("../workers/auto-similarite-worker.ts", import.meta.url), { type: "module" }),
+        calcul: analyserAutoSimilarite,
+      });
+      if (r.svg === null) return { valeurs: [null, null, null], message: traduire("msg.similarite.tropCourt") };
+      const { parties, frontieres: trouvees, nombreTrames } = r;
       const en = langueCourante() === "en";
       const temps = (trame: number) => `${(trame * dureeTrame).toFixed(1)} s`;
       const texte = [
-        `${trames.length} ${en ? "frames of" : "trames de"} ${dureeTrame.toFixed(1)} s · ${
+        `${nombreTrames} ${en ? "frames of" : "trames de"} ${dureeTrame.toFixed(1)} s · ${
           parties.length} ${en ? "sections" : "sections"}`,
         "",
         ...parties.map((p, i) => `${en ? "Section" : "Section"} ${i + 1} : ${temps(p.debut)} → ${temps(p.fin)}`),
@@ -420,8 +421,8 @@ export const fiches: FicheAudio[] = ([
           : `${en ? "Boundaries" : "Frontières"} : ${trouvees.map(temps).join(" · ")}`,
       ].join("\n");
       return {
-        valeurs: [audio, matriceEnSvg(matrice, 320), texte],
-        message: traduire("msg.similarite.resultat", parties.length, trames.length),
+        valeurs: [audio, r.svg, texte],
+        message: traduire("msg.similarite.resultat", parties.length, nombreTrames),
       };
     },
   },

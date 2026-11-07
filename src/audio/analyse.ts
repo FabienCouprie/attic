@@ -3,13 +3,13 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { creerFenetreHann, tramesDepuisBuffer, noteMidiDeFrequence } from "./commun";
 import { traduire } from "../i18n";
 import { traduireType } from "./analyse-transcription";
 import { mesurerAnalyse, type MesuresAnalyse } from "./analyse-mesures";
 
-// La mesure, et le chromagramme avec elle, vit dans `analyse-mesures.ts` pour passer hors du fil.
-export { chromagramme } from "./analyse-mesures";
+// La mesure, et les deux chromagrammes avec elle, vivent dans `analyse-mesures.ts` pour passer hors
+// du fil : le chromagramme par trame y a rejoint l'autre pour la matrice d'auto-similarité.
+export { chromagramme, chromagrammeParTrame, SAUT_TRAME_CHROMAGRAMME } from "./analyse-mesures";
 
 export interface AnalyseResultat {
   tempo: number;
@@ -35,45 +35,6 @@ const KK_MINOR = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.
 const TEMP_MAJOR = [5.0, 2.0, 3.5, 2.5, 4.5, 4.0, 2.5, 5.0, 2.5, 3.5, 1.5, 4.0];
 
 const TEMP_MINOR = [5.0, 2.5, 3.5, 4.5, 2.5, 4.0, 2.5, 5.0, 3.5, 2.5, 1.5, 4.0];
-
-
-/**
- * Comme `chromagramme`, mais renvoie un vecteur de 12 classes par trame FFT
- * (~11.6 ms à 44.1 kHz, saut 512) plutôt qu'un seul vecteur agrégé sur tout
- * le signal — nécessaire pour aligner deux pistes trame par trame (DTW), qui
- * a besoin d'une vraie série temporelle, pas d'un résumé. Fonction distincte
- * plutôt que dérivée de `chromagramme` : agréger des vecteurs déjà normalisés
- * par trame donnerait un résultat différent de la normalisation par le
- * maximum global que fait `chromagramme` — les deux doivent rester
- * indépendantes pour ne pas changer son comportement (déjà testé).
- */
-// Exporté : un consommateur du chemin d'alignement DTW (ex. un nœud
-// d'étirement temporel) a besoin de connaître le pas en échantillons pour
-// replacer un indice de trame `i`/`j` sur l'axe temporel — dupliquer cette
-// constante ailleurs risquerait de diverger silencieusement si elle change ici.
-export const SAUT_TRAME_CHROMAGRAMME = 512;
-
-export function chromagrammeParTrame(donnees: Float32Array, sampleRate: number): number[][] {
-  const fftTaille = 2048;
-  const saut = SAUT_TRAME_CHROMAGRAMME;
-  const fenetre = creerFenetreHann(fftTaille);
-  const trames = tramesDepuisBuffer(donnees, fftTaille, saut, fenetre);
-  const nbBins = fftTaille / 2 + 1;
-
-  return trames.map((trame) => {
-    const chroma = new Array(12).fill(0);
-    for (let bin = 1; bin < nbBins; bin++) {
-      const mag = Math.sqrt(trame.re[bin] ** 2 + trame.im[bin] ** 2);
-      const freq = (bin * sampleRate) / fftTaille;
-      if (freq < 65 || freq > 8000) continue;
-      const midiNote = noteMidiDeFrequence(freq);
-      const pc = ((Math.round(midiNote) % 12) + 12) % 12;
-      chroma[pc] += mag;
-    }
-    const maxTrame = Math.max(...chroma, 1e-10);
-    return chroma.map((v) => v / maxTrame);
-  });
-}
 
 
 function meilleureCorrelation(chroma: number[], profil: number[]): { shift: number; corr: number } {
