@@ -172,11 +172,19 @@ function telechargerFichier(url, destination, o = {}) {
         if (fini) return;
         fini = true;
         res.destroy();
-        sortie.destroy();
         // LE PARTIEL RESTE, et c'est tout l'objet de ce lot : il est la reprise. Un partiel
         // corrompu ne survit pas pour autant, l'appelant l'effaçant dès que l'empreinte ne tombe
         // pas juste.
-        resolve({ ok: false, erreur, annule, temporaire });
+        const rendre = () => resolve({ ok: false, erreur, annule, temporaire });
+        // ET LA RÉPONSE ATTEND QUE LE FICHIER SOIT FERMÉ. `destroy` n'arrête pas une écriture déjà
+        // partie dans le pool de libuv : le flux la laisse s'achever avant de fermer, et le
+        // partiel grandit pendant ce temps sur un fil de travail. Rendre la main plus tôt laissait
+        // l'appelant mesurer un partiel inachevé, et une reprise lancée aussitôt demandait une
+        // plage fausse : 16 000 octets mesurés au retour, 24 000 relus par la reprise, sur la CI
+        // de la PR 295 le 2026-11-06. Un flux déjà fermé n'émettra plus `close`, d'où le test.
+        if (sortie.closed) rendre();
+        else sortie.once("close", rendre);
+        sortie.destroy();
       };
       const surAnnulation = () => abandonner("Annulé", true);
       signal?.addEventListener?.("abort", surAnnulation, { once: true });

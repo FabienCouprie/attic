@@ -22,7 +22,7 @@
 import { createRequire } from "module";
 import { createServer, type Server } from "node:http";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, rmSync, statSync, existsSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, existsSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -92,6 +92,56 @@ async function interrompreApres(url: string, destination: string, seuil: number)
   });
 }
 
+type Rappel = (erreur: unknown, valeur?: unknown) => void;
+type Appel = (...a: unknown[]) => unknown;
+
+/**
+ * Tient en vol la `rang`-ième écriture du flux ouvert sur `chemin`, puis la rend au vrai disque.
+ *
+ * POURQUOI CET INSTRUMENT. La course qu'éprouve le cas « L'ARRÊT ATTEND L'ÉCRITURE EN VOL » ne
+ * s'ouvrait que sous charge : la CI de la PR 295 l'a vue le 2026-11-06, une sonde de trente
+ * interruptions au repos jamais. Une écriture partie dans le pool de libuv s'y achève sur un fil de
+ * travail, quand elle le peut, et le fil principal ne l'attend pas. Le flux d'écriture de Node
+ * relit `write` et `writev` sur le module `fs` à chaque écriture : les envelopper tient une
+ * écriture en vol aussi longtemps que le cas le décide, ce que la charge fait au hasard.
+ *
+ * Seul le descripteur ouvert sur `chemin` est touché, et `tenue` ne se règle qu'une fois une
+ * écriture retenue : un cas qui ne retiendrait rien finirait son téléchargement et ne dirait rien.
+ */
+function retenirEcriture(chemin: string, rang: number) {
+  const fs = createRequire(import.meta.url)("node:fs") as Record<"open" | "write" | "writev", Appel>;
+  const origine = { open: fs.open, write: fs.write, writev: fs.writev };
+  const descripteurs = new Set<unknown>();
+  let vues = 0;
+  let rendre: (() => void) | null = null;
+  let signalerTenue = () => {};
+  let signalerAchevee: (octets: number) => void = () => {};
+  const tenue = new Promise<void>((r) => { signalerTenue = r; });
+  const achevee = new Promise<number>((r) => { signalerAchevee = r; });
+
+  fs.open = (...a) => {
+    const rappel = a.pop() as Rappel;
+    return origine.open(...a, (erreur: unknown, fd: unknown) => {
+      if (!erreur && String(a[0]) === chemin) descripteurs.add(fd);
+      rappel(erreur, fd);
+    });
+  };
+  const envelopper = (vraie: Appel): Appel => (...a) => {
+    if (!descripteurs.has(a[0]) || ++vues !== rang) return vraie(...a);
+    const rappel = a.pop() as Rappel;
+    rendre = () => vraie(...a, (erreur: unknown, octets: unknown) => {
+      signalerAchevee(Number(octets));
+      rappel(erreur, octets);
+    });
+    signalerTenue();
+  };
+  fs.write = envelopper(origine.write);
+  fs.writev = envelopper(origine.writev);
+
+  const liberer = () => { const r = rendre; rendre = null; r?.(); };
+  return { tenue, achevee, liberer, restaurer: () => { Object.assign(fs, origine); liberer(); } };
+}
+
 describe("reprendre un téléchargement interrompu", () => {
   it("UNE INTERRUPTION GARDE CE QUI EST DÉJÀ LÀ", async () => {
     const destination = join(dossier, "garde.bin");
@@ -118,6 +168,64 @@ describe("reprendre un téléchargement interrompu", () => {
     expect(plagesRecues.join(" "), "la reprise n'a pas demandé de plage")
       .toContain(`bytes=${deja}-`);
     expect(readFileSync(second.temporaire!).length).toBe(TAILLE);
+  });
+
+  it("L'ARRÊT ATTEND L'ÉCRITURE EN VOL : la taille rendue est celle que la reprise relira", async () => {
+    // LE DÉFAUT QUE CE CAS TIENT, vu par la CI de la PR 295 le 2026-11-06 sur le cas précédent :
+    // 16 000 octets mesurés au retour de l'interruption, 24 000 relus par la reprise un instant
+    // plus tard, et une plage demandée qui n'était plus la bonne. L'interruption rendait la main
+    // pendant qu'une écriture s'achevait encore. Ici l'écriture est tenue exprès, au lieu
+    // d'attendre que la charge la tienne.
+    const destination = join(dossier, "en-vol.bin");
+    const partiel = `${destination}.partiel`;
+    const retenue = retenirEcriture(partiel, 2);
+    let tailleRendue = -1;
+    try {
+      const arret = new AbortController();
+      let rendu = false;
+      const course = telechargerFichier(`${base}/honore`, destination, { signal: arret.signal })
+        .then((r) => { rendu = true; tailleRendue = statSync(partiel).size; return r; });
+      await Promise.race([retenue.tenue, course.then(() => {
+        throw new Error("aucune écriture retenue : l'instrument n'a rien éprouvé");
+      })]);
+      const surDisque = statSync(partiel).size;
+      arret.abort();
+      // Un tour de boucle, pour qu'une réponse rendue à l'arrêt mesure le partiel avant que
+      // l'écriture retenue ne reparte : c'est la fenêtre que la charge ouvrait.
+      await new Promise((r) => setImmediate(r));
+      const renduEnVol = rendu;
+      retenue.liberer();
+      const r = await course;
+      const octetsRetenus = await retenue.achevee;
+      expect(r.annule, r.erreur).toBe(true);
+      expect(surDisque, "la première écriture n'est pas arrivée sur le disque").toBeGreaterThan(0);
+      expect(octetsRetenus, "l'écriture retenue ne portait rien").toBeGreaterThan(0);
+      expect(tailleRendue, "le partiel a grandi après le retour de l'interruption")
+        .toBe(surDisque + octetsRetenus);
+      expect(renduEnVol, "l'interruption a rendu la main avec une écriture encore en vol").toBe(false);
+    } finally {
+      retenue.restaurer();
+    }
+
+    plagesRecues.length = 0;
+    const second = await telechargerFichier(`${base}/honore`, destination);
+    expect(second.ok, second.erreur).toBe(true);
+    expect(second.sha256).toBe(EMPREINTE);
+    expect(plagesRecues.join(" "), "la reprise n'a pas demandé la suite de ce qui était rendu")
+      .toContain(`bytes=${tailleRendue}-`);
+  });
+
+  it("UNE ÉCRITURE IMPOSSIBLE REND SON ERREUR, et l'attente de la fermeture ne pend pas", async () => {
+    // C'EST LE CHEMIN OÙ LE FLUX EST DÉJÀ FERMÉ QUAND L'ARRÊT S'EN MÊLE. Relevé sur Node 26.5 le
+    // 2026-11-07 : à l'émission de `error`, `closed` vaut déjà vrai et `close` n'est pas encore
+    // parti ; et une fois `close` passé, un second `destroy` ne le réémet pas. Un `.partiel` qui
+    // est un dossier fait échouer l'ouverture, et le cas exige une réponse au lieu d'un délai.
+    const destination = join(dossier, "bloque.bin");
+    mkdirSync(`${destination}.partiel`);
+    const r = await telechargerFichier(`${base}/honore`, destination);
+    expect(r.ok).toBe(false);
+    expect(r.annule).toBe(false);
+    expect(r.erreur).toMatch(/EISDIR|EPERM|EACCES/);
   });
 
   it("UN SERVEUR QUI IGNORE LA PLAGE NE CORROMPT RIEN : on repart de zéro", async () => {
