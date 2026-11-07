@@ -25,6 +25,25 @@ const METRIQUES = [...SIGNATURES];
 import { estSequence } from "../audio/sequence";
 import { arbreDe, voixDe } from "../audio/voix";
 import { estAnnulation } from "../core/annulation";
+import { decrireAnalyse, type AnalyseResultat } from "../audio/analyse";
+import { mesurerAnalyse, type DemandeAnalyse, type MesuresAnalyse } from "../audio/analyse-mesures";
+import { parUneFois } from "./hors-lot";
+
+/**
+ * L'analyse d'ensemble HORS DU FIL : le premier canal part COPIÉ, le tampon reçu appartenant au nœud
+ * amont, et seul le rapport se rédige ici, `traduire` n'ayant pas sa place dans un worker. Sans
+ * worker, en test, la même mesure tourne dans le fil.
+ */
+async function analyserHorsDuFil(audio: AudioBuffer): Promise<AnalyseResultat> {
+  const mesures = await parUneFois<DemandeAnalyse, MesuresAnalyse>(
+    { mono: audio.getChannelData(0), sampleRate: audio.sampleRate },
+    {
+      creerWorker: () => new Worker(new URL("../workers/analyse-worker.ts", import.meta.url), { type: "module" }),
+      calcul: mesurerAnalyse,
+    },
+  );
+  return decrireAnalyse(mesures);
+}
 
 function noeudMeyda(
   id: string,
@@ -71,7 +90,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const audio = entreeAudio(ctx, 0, { sorties: 2 });
       if (sansEntree(audio)) return audio;
-      const resultat = analyserAudio(audio);
+      const resultat = await analyserHorsDuFil(audio);
       return { valeurs: [audio, resultat.description] };
    }, nomEn: "Audio Analysis", resumeEn: "Analyse tempo, key, song/instrumental type.",
  },
@@ -231,7 +250,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const audio = entreeAudio(ctx, 0, { sorties: 3 });
       if (sansEntree(audio)) return audio;
-      const brut = analyserAudio(audio);
+      const brut = await analyserHorsDuFil(audio);
       const correction = ctx.paramTexte("Correction d'octave", "plage");
       const bas = ctx.paramNombre("Plage basse", 80), haut = ctx.paramNombre("Plage haute", 160);
       const bpm = correction === "aucune" ? Math.round(brut.tempo) : ramenerDansPlage(brut.tempo, bas, haut);
