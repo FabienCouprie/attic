@@ -21,7 +21,7 @@
 //      s'influencent.
 //   3. LE GEL SE MESURE PAR `MessageChannel`, que l'arrière-plan ne ralentit pas, là où
 //      `requestAnimationFrame` ne tire pas du tout dans un onglet caché. Zéro message signifie un gel
-//      TOTAL, non l'absence de gel.
+//      TOTAL, non l'absence de gel. Et le silence d'avant le premier message compte, voir plus bas.
 //   4. L'ENTRÉE EST DÉTERMINISTE, sans quoi deux empreintes ne se comparent pas.
 //   5. LES CHOIX SONT CANONISÉS COMME L'APPLICATION LE FAIT. Un paramètre « choix » porte une
 //      ÉTIQUETTE et un IDENTIFIANT, et le moteur réel canonise l'une vers l'autre. Une première
@@ -334,7 +334,14 @@ export async function mesurerComposant(
     const ms = Math.round(performance.now() - debut);
     actif = false;
 
-    let plusLong = 0;
+    // LE PREMIER SILENCE COMPTE AUTANT QUE LES AUTRES. Le premier message de la sonde est posté juste
+    // avant le composant, dans la même tâche : il n'arrive qu'une fois rendu le fil, donc après tout
+    // ce que le composant fait d'un bloc avant sa première attente. Seuls les écarts ENTRE deux
+    // messages étaient comptés, si bien que ce bloc d'entrée disparaissait dès qu'un message passait
+    // ensuite. Mesuré le 2026-11-07 sur le « Transcripteur MIDI » polyphonique, qui devine son tempo
+    // d'un bloc avant d'attendre son modèle : 19 ms annoncés, 96 ms réels. Un composant entièrement
+    // d'un bloc ne laisse passer aucun message, et reste un gel TOTAL.
+    let plusLong = instants.length > 0 ? instants[0] - debut : 0;
     for (let i = 1; i < instants.length; i++) {
       plusLong = Math.max(plusLong, instants[i] - instants[i - 1]);
     }
