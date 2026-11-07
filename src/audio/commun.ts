@@ -126,10 +126,25 @@ export function assainirNonFinis(buffer: AudioBuffer): number[] {
  * Le type de retour est explicite parce que `copyToChannel` exige un tampon à nous, non partagé.
  */
 export function mixdownMono(buffer: AudioBuffer): Float32Array<ArrayBuffer> {
-  const mono = new Float32Array(buffer.length);
-  for (let c = 0; c < buffer.numberOfChannels; c++) {
-    const ch = buffer.getChannelData(c);
-    for (let i = 0; i < buffer.length; i++) mono[i] += ch[i] / buffer.numberOfChannels;
+  return melangerVoies(Array.from({ length: buffer.numberOfChannels }, (_, c) => buffer.getChannelData(c)));
+}
+
+/**
+ * Le même mélange, sur les canaux eux-mêmes : c'est lui qui porte l'arithmétique.
+ *
+ * UN WORKER N'A PAS DE TAMPON AUDIO, seulement ses canaux ; il mélange donc par ici, au bit près
+ * comme `mixdownMono`. ET LA BOUCLE NE RELIT PLUS LE TAMPON à chaque échantillon : `buffer.length` et
+ * `buffer.numberOfChannels` sont des accesseurs du navigateur, et l'ancienne boucle les appelait
+ * deux fois par échantillon. Relevé le 2026-11-07 sur l'« Analyse émotionnelle », qui mélangeait
+ * dans la page avant d'envoyer : de 9 à 10 ms de gel pour trois secondes de stéréo.
+ */
+export function melangerVoies(canaux: readonly Float32Array[]): Float32Array<ArrayBuffer> {
+  const longueur = canaux[0]?.length ?? 0;
+  const n = canaux.length;
+  const mono = new Float32Array(longueur);
+  for (let c = 0; c < n; c++) {
+    const ch = canaux[c];
+    for (let i = 0; i < longueur; i++) mono[i] += ch[i] / n;
   }
   return mono;
 }
