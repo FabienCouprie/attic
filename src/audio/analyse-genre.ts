@@ -1,12 +1,13 @@
-// audio/analyse-genre.ts — Le classement par genre, et le spectrogramme en mels qui le nourrit.
+// audio/analyse-genre.ts — Le classement par genre : le modèle, et l'heuristique qui le double.
 //
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
-// de calcul n'a ete retouchee au passage.
+// de calcul n'a ete retouchee au passage, hormis l'entrée du modèle, corrigée le 2026-11-07.
 
 import { creerFenetreHann } from "./commun";
 import { fft } from "./fft";
 import { traduire } from "../i18n";
 import { noteMidiDeFrequence } from "./commun";
+import { reechantillonnerCanal } from "./convertir-frequence";
 
 // LE REPLI VERS HUGGINGFACE A ÉTÉ RETIRÉ, et il était contraire à la règle du dépôt : tous les
 // modèles viennent de la release `assets`, et aucun nœud ne va les chercher chez un tiers. Celui-ci
@@ -24,55 +25,32 @@ const ETIQUETTES_GENRE = [
 ];
 
 
-function hzVersMel(hz: number): number { return 2595 * Math.log10(1 + hz / 700); }
+// LE MODÈLE EST UN HUBERT RÉGLÉ SUR GTZAN (voir `scripts/modeles.cjs`) : il lit la forme d'onde à
+// 16 kHz, centrée et réduite comme le fait l'extracteur de HuBERT, et rend dix logits. Il recevait un
+// spectrogramme en mels de 128 bandes, aplati en une seule ligne, et ses logits s'affichaient tels
+// quels : « metal 400 % » ou « hip-hop 374 % » sur toute la collection de Fabien, le classement
+// tombant presque toujours sur metal, hip-hop ou jazz quelle que soit la musique.
+const FREQUENCE_MODELE_GENRE = 16000;
 
-function melVersHz(mel: number): number { return 700 * (10 ** (mel / 2595) - 1); }
-
-
-function bancMel(nMels: number, tailleFFT: number, sr: number): Float64Array[] {
-  const nbBins = Math.floor(tailleFFT / 2) + 1;
-  const mMin = hzVersMel(0), mMax = hzVersMel(sr / 2);
-  const pm = new Float64Array(nMels + 2);
-  for (let i = 0; i < nMels + 2; i++) pm[i] = melVersHz(mMin + (mMax - mMin) * i / (nMels + 1));
-  const filtres: Float64Array[] = [];
-  for (let m = 0; m < nMels; m++) {
-    const f = new Float64Array(nbBins);
-    for (let k = 0; k < nbBins; k++) {
-      const freq = (k * sr) / tailleFFT;
-      if (freq <= pm[m]) f[k] = 0;
-      else if (freq <= pm[m + 1]) f[k] = (freq - pm[m]) / (pm[m + 1] - pm[m]);
-      else if (freq <= pm[m + 2]) f[k] = (pm[m + 2] - freq) / (pm[m + 2] - pm[m + 1]);
-      else f[k] = 0;
-    }
-    filtres.push(f);
-  }
-  return filtres;
+/** La forme d'onde qu'attend le modèle : mono à 16 kHz, de moyenne nulle et d'écart type un. */
+function ondeDuModele(mono: Float64Array, sr: number): Float32Array {
+  const x = reechantillonnerCanal(mono, sr, FREQUENCE_MODELE_GENRE);
+  let moyenne = 0;
+  for (let i = 0; i < x.length; i++) moyenne += x[i];
+  moyenne /= x.length;
+  let variance = 0;
+  for (let i = 0; i < x.length; i++) variance += (x[i] - moyenne) ** 2;
+  const ecart = Math.sqrt(variance / x.length + 1e-7);
+  for (let i = 0; i < x.length; i++) x[i] = (x[i] - moyenne) / ecart;
+  return x;
 }
 
-
-function logMelSpectrogramme(
-  mono: Float64Array, sr: number, tailleFFT: number, saut: number, nMels: number,
-): Float32Array[] {
-  const fen = creerFenetreHann(tailleFFT);
-  const filtres = bancMel(nMels, tailleFFT, sr);
-  const nbFr = Math.max(0, Math.floor((mono.length - tailleFFT) / saut) + 1);
-  if (nbFr === 0) return [];
-  const trames: Float32Array[] = [];
-  for (let f = 0; f < nbFr; f++) {
-    const debut = f * saut;
-    const re = new Float64Array(tailleFFT), im = new Float64Array(tailleFFT);
-    for (let i = 0; i < tailleFFT; i++) re[i] = mono[debut + i] * fen[i];
-    fft(re, im, false);
-    const mel = new Float32Array(nMels);
-    const nbBins = Math.floor(tailleFFT / 2) + 1;
-    for (let m = 0; m < nMels; m++) {
-      let acc = 0;
-      for (let b = 1; b < nbBins; b++) acc += (re[b] * re[b] + im[b] * im[b]) * filtres[m][b];
-      mel[m] = Math.log(Math.max(acc, 1e-10));
-    }
-    trames.push(mel);
-  }
-  return trames;
+/** Les logits du modèle en probabilités : un seul genre par morceau, comme dans GTZAN. */
+function softmax(logits: Float32Array): number[] {
+  const max = Math.max(...logits);
+  const e = Array.from(logits, (v) => Math.exp(v - max));
+  const somme = e.reduce((a, b) => a + b, 0);
+  return e.map((v) => v / somme);
 }
 
 
@@ -299,27 +277,26 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
   descr.push(traduire("analyse.aigus", (eAigue * 100).toFixed(0)));
 
   // ── Essai ONNX pour les étiquettes de genre ──
-  const tailleF = 2048, hopM = 512, nM = 128;
-  const trames = logMelSpectrogramme(monoC, srC, tailleF, hopM, nM);
   let genresOnnx: { genre: string; score: number }[] | null = null;
   let erreurOnnx = "";
-  if (trames.length > 0) {
+  if (nb > 0) {
     try {
       const ort = await import("onnxruntime-web");
       // SANS MODÈLE LOCAL, ON NE CHERCHE PLUS AILLEURS : on le dit et l'on retombe sur
       // l'heuristique, ce que la suite fait déjà quand la session échoue.
       if (!modeleBuffer) throw new Error(traduire("msg.classification_modele_absent"));
       const sess = await ort.InferenceSession.create(new Uint8Array(modeleBuffer), { executionProviders: ["wasm"] });
-      const nF = trames.length;
-      const td = new Float32Array(nF * nM);
-      for (let f = 0; f < nF; f++) td.set(trames[f], f * nM);
-      const nomEntree = sess.inputNames[0];
-      const ten = new ort.Tensor("float32", td, [1, nF * nM]);
-      const out = await sess.run({ [nomEntree]: ten });
-      const data = out[sess.outputNames[0]].data as Float32Array;
-      const nC = data.length;
+      // LE MODÈLE REÇOIT LA FORME D'ONDE, ET REND DES LOGITS. Il déclare une seule entrée,
+      // `input_values` de forme [lot, longueur], et une sortie, `logits`, sur dix genres. Il recevait un
+      // spectrogramme en mels aplati, lu comme une forme d'onde, et ses logits s'affichaient comme des
+      // probabilités : « metal 400 % » ou « hip-hop 374 % » sur toute la collection de Fabien, relevé
+      // le 2026-11-07. Il reçoit maintenant ce que son extracteur lui donnait à l'entraînement.
+      const onde = ondeDuModele(mono, sr);
+      const out = await sess.run({ [sess.inputNames[0]]: new ort.Tensor("float32", onde, [1, onde.length]) });
+      const probabilites = softmax(out[sess.outputNames[0]].data as Float32Array);
+      const nC = probabilites.length;
       const scoresOnnx: { idx: number; score: number }[] = [];
-      for (let i = 0; i < nC; i++) scoresOnnx.push({ idx: i, score: data[i] });
+      for (let i = 0; i < nC; i++) scoresOnnx.push({ idx: i, score: probabilites[i] });
       scoresOnnx.sort((a, b) => b.score - a.score);
       const mL = Math.min(nC, ETIQUETTES_GENRE.length) - 1;
       genresOnnx = scoresOnnx.slice(0, 5).map((s) => ({
