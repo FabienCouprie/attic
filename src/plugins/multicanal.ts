@@ -18,9 +18,10 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 import { estCourbe, valeursParametre } from "../audio/courbe";
 import {
   DISPOSITIONS, decoder, dispositionDe, dispositionParId, estObjet, etiqueter, nombreDeCanaux,
-  rendreObjets, spatialiser, versMono, type Disposition, type ObjetSonore, type Trajectoire,
+  rendreMulticanal, versMono, type DemandeMulticanal, type Disposition, type ObjetSonore, type Trajectoire,
 } from "../audio/multicanal";
 import { rendreBinaural } from "../audio/multicanal-ecoute";
+import { parUneFois } from "./hors-lot";
 
 const UNIVERS = "Autres";
 const FAMILLE = "Multicanal";
@@ -44,6 +45,13 @@ function tamponEtiquete(canaux: Float32Array[], frequence: number, d: Dispositio
 
 const canauxDe = (b: AudioBuffer): Float32Array[] =>
   Array.from({ length: b.numberOfChannels }, (_, c) => b.getChannelData(c));
+
+/** Le placement ou le rendu, HORS DU FIL, par l'ouvrier que le Spatialiseur et le Rendu partagent. */
+const rendreHorsDuFil = (demande: DemandeMulticanal): Promise<Float32Array[]> =>
+  parUneFois<DemandeMulticanal, Float32Array[]>(demande, {
+    creerWorker: () => new Worker(new URL("../workers/multicanal-worker.ts", import.meta.url), { type: "module" }),
+    calcul: rendreMulticanal,
+  });
 
 // Les trois trajectoires, leurs ports et leurs bornes, communs au spatialiseur et à l'objet sonore.
 const PORTS_TRAJECTOIRE = [
@@ -118,9 +126,11 @@ export const fiches: FicheAudio[] = ([
       const a = entreeAudio(ctx, 0);
       if (sansEntree(a)) return a;
       const d = dispositionParId(ctx.paramTexte("Disposition", "7.1.4")) ?? dispositionParId("7.1.4")!;
-      const mono = versMono(canauxDe(a));
-      const t = trajectoireDe(ctx, mono.length, 1);
-      const sortie = tamponEtiquete(spatialiser(mono, d, t), a.sampleRate, d);
+      const t = trajectoireDe(ctx, a.length, 1);
+      // HORS DU FIL : les canaux partent copiés, et le worker les ramène au mono avant de placer la
+      // source. Sans worker, en test, le même calcul tourne dans le fil.
+      const canaux = await rendreHorsDuFil({ sorte: "source", canaux: canauxDe(a), disposition: d.id, trajectoire: t });
+      const sortie = tamponEtiquete(canaux, a.sampleRate, d);
       return {
         valeurs: [sortie],
         message: `${en ? d.en : d.fr} · ${nombreDeCanaux(d)} ${en ? "channels" : "canaux"}\n${resumeTrajectoire(t)}`,
@@ -277,7 +287,8 @@ export const fiches: FicheAudio[] = ([
         };
       }
       const d = dispositionParId(ctx.paramTexte("Disposition", "7.1.4")) ?? dispositionParId("7.1.4")!;
-      const sortie = tamponEtiquete(rendreObjets(objets, d), frequence, d);
+      // HORS DU FIL, par l'ouvrier du Spatialiseur : les objets partent copiés, leur son compris.
+      const sortie = tamponEtiquete(await rendreHorsDuFil({ sorte: "objets", objets, disposition: d.id }), frequence, d);
       const noms = objets.map((o, i) => o.nom ?? `${i + 1}`).join(", ");
       return {
         valeurs: [sortie],

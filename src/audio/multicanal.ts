@@ -489,6 +489,24 @@ export function rendreObjets(objets: readonly ObjetSonore[], d: Disposition): Fl
 }
 
 /**
+ * Ce que reçoit le worker de la famille : une source à placer, ou des objets à rendre, et la salle.
+ *
+ * HORS DU FIL DEPUIS LE 2026-11-07. Sur deux minutes de son, le « Spatialiseur » gelait la page
+ * 663 ms d'un bloc et le « Rendu d'objets » 872 ms. La disposition voyage par son identifiant, et la
+ * source par ses canaux : le worker la ramène au mono lui-même, comme le composant le faisait.
+ */
+export type DemandeMulticanal =
+  | { sorte: "source"; canaux: Float32Array[]; disposition: string; trajectoire: Trajectoire }
+  | { sorte: "objets"; objets: ObjetSonore[]; disposition: string };
+
+export function rendreMulticanal(demande: DemandeMulticanal): Float32Array[] {
+  const d = dispositionParId(demande.disposition) ?? dispositionParId("7.1.4")!;
+  return demande.sorte === "source"
+    ? spatialiser(versMono(demande.canaux), d, demande.trajectoire)
+    : rendreObjets(demande.objets, d);
+}
+
+/**
  * Le nom d'un nombre de canaux, dans la langue demandée.
  *
  * POURQUOI CETTE PIÈCE EXISTE. Trois endroits du dépôt nommaient un nombre de canaux, chacun à sa

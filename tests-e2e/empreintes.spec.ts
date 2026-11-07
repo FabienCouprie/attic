@@ -109,6 +109,12 @@ const SURVEILLES: {
   // matrice et sa structure étant de l'image et du texte. Empreinte écrite sur le calcul d'avant,
   // puis retrouvée par le worker.
   { id: "auto-similarite", worker: "auto-similarite-worker.ts", parametres: { "Trame": 0.1 } },
+  // LA FAMILLE MULTICANAL, hors du fil depuis le 2026-11-07 : sur deux minutes de son, le
+  // « Spatialiseur » gelait 663 ms d'un bloc et le « Rendu d'objets » 872 ms. Les deux partagent
+  // leur ouvrier ; l'un place une source, l'autre rend l'objet d'essai, tous deux en 7.1.4, douze
+  // canaux. Empreintes écrites sur le calcul d'avant, puis retrouvées par le worker.
+  { id: "spatialiseur", worker: "multicanal-worker.ts" },
+  { id: "rendu-objets", worker: "multicanal-worker.ts" },
   // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
   // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
   // laisse passer ; c'est son MESSAGE qui porte les chiffres mesurés, hauteur comprise.

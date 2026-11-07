@@ -123,11 +123,12 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   total ramenés à 2 ms en monophonique, et de 96 à 119 ms ramenés à 22-43 ms en polyphonique, où
 >   ne reste que Basic Pitch. Son worker est le seul d'un composant que la base d'empreintes ne couvre pas, faute
 >   de sortie audio : `tests-e2e/transcription-dans-application.spec.ts` en fait la preuve à sa
->   place. Sa neuvième, la « Matrice d'auto-similarité » hors du fil, est sur la branche
->   `travaux/lot-3-suite` : sur deux minutes de son, 1 128 ms de gel total ramenés à 10 ms. CE QUI
->   RESTE DES MODULES DE LA REVUE SE MESURE SUR UN SON LONG, trois secondes ne suffisant plus à
->   départager : sur deux minutes, `multicanal` gèle d'un bloc 872 ms par « Rendu d'objets » et
->   663 ms par le « Spatialiseur ». Restent aussi les accès disque synchrones de
+>   place. Sa neuvième, la « Matrice d'auto-similarité » hors du fil, est fusionnée (PR 304) : sur
+>   deux minutes de son, 1 128 ms de gel total ramenés à 10 ms. CE QUI RESTE SE MESURE SUR UN SON
+>   LONG, trois secondes ne suffisant plus à départager. Sa dixième, `multicanal` hors du fil, est sur
+>   la branche `travaux/lot-3-multicanal` : sur deux minutes, le « Rendu d'objets » passe de 872 ms
+>   d'un bloc à 35 ms, et le « Spatialiseur » de 663 à 36 ms, ce qui reste étant la recopie des
+>   douze canaux dans le tampon que la page bâtit. Restent aussi les accès disque synchrones de
 >   `main.cjs`, et les deux analyses qui chargent onnxruntime dans la page : celle de
 >   `analyse-polyphonique.ts`, Basic Pitch, gèle de 22 à 43 ms dans le Transcripteur ; celle du
 >   genre ne se mesure pas au banc, son modèle ne se lisant que par le pont d'Electron.
@@ -185,10 +186,10 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   ménage d'après passe.
 - [x] **Générer les types des plugins** à partir de `FicheAudio` pour typer les `executer`. Fait le 2026-10-31 (lot 1 de la revue) : `executer(ctx: any)` était présent 469 fois dans 267 fichiers de `src/plugins/` ; il n'en reste qu'un, `executer(_ctx: any)` de `src/plugins/boucle-collection.ts`, que le lot 0 avait renommé et qui sortait donc du motif (la revue en comptait 470 ; relu le 2026-11-06). L'annotation retirée, le tableau `as FicheAudio[]` type le contexte par inférence ; 33 erreurs sont sorties, dont huit fiches cachées derrière `as unknown as FicheAudio[]` parce que `ValeurAudio` ne déclarait pas la séquence, le spectrogramme ou le cercle qu'elles rendaient. L'union dit désormais les quinze types qui circulent, et les fonctions d'aide prennent `ContexteAudio`.
 - [x] **Introduire des tests de non-régression** qui rejouent des graphes de référence.
-  Fait (relu le 2026-10-31) : `tests-e2e/empreintes.json` surveille 74 composants isolés (82 depuis
+  Fait (relu le 2026-10-31) : `tests-e2e/empreintes.json` surveille 74 composants isolés (84 depuis
   le 2026-11-07, `debruitage-ia`, `criteres-schaefferiens`, `restauration-ecretage`,
-  `remplissage-trou`, `reverbe-reseau`, `detecteur-tempo`, `analyse-emotionnelle` et
-  `auto-similarite` compris) et
+  `remplissage-trou`, `reverbe-reseau`, `detecteur-tempo`, `analyse-emotionnelle`,
+  `auto-similarite`, `spatialiseur` et `rendu-objets` compris) et
   `tests-e2e/empreintes-exemples.json` le son de chaque exemple livré, chaîne entière.
 - [x] **Limiter la taille des fichiers `App.tsx` et `useExecutionGraphe.ts`** en extrayant des hooks spécialisés (cache, reset, persistance, URL blob).
   Pas fait au relevé du 2026-08-03 — et la tendance s'est inversée : `App.tsx` était descendu à 437
