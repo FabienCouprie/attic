@@ -118,15 +118,17 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   première attente. Avec la sonde corrigée, le 2026-11-07, ils valent 20 ms pour le débruitage,
 >   30 ms pour le MDX, 2 ms pour les critères, 8 ms pour l'écrêtage, 2 ms pour le trou et pour la
 >   réverbération, de 1 à 3 ms pour le tempo, et 2 ms pour l'émotion, une fois le mélange de ses
->   canaux passé au worker : la page le faisait avant d'envoyer, et gelait de 9 à 10 ms (branche
->   `travaux/emotion-melange-dans-le-worker`). Le banc a mesuré, sur trois secondes de son et d'un seul
->   bloc, ce qui reste des modules de la revue : `auto-similarite` 37 ms, `multicanal` 27 ms, et le
->   « Transcripteur MIDI » 128 ms, dont l'analyse d'ensemble n'est qu'une part. Restent aussi les
->   accès disque synchrones de `main.cjs`, et les deux analyses qui chargent onnxruntime dans la
->   page : celle de `analyse-polyphonique.ts` ne gèle que 19 ms, mais le « Transcripteur MIDI »
->   polyphonique qui l'appelle gèle de 96 à 119 ms, par l'analyse de tempo qu'il fait d'un bloc
->   avant elle ; celle du genre ne se mesure pas au banc, son modèle ne se lisant que par le pont
->   d'Electron.
+>   canaux passé au worker : la page le faisait avant d'envoyer, et gelait de 9 à 10 ms (PR 302).
+>   Sa huitième, le « Transcripteur MIDI » hors du fil, est sur la branche
+>   `travaux/lot-3-transcripteur` : 127 ms de gel total ramenés à 2 ms en monophonique, et de 96 à
+>   119 ms ramenés à 22-43 ms en polyphonique, où ne reste que Basic Pitch. Son worker est le seul
+>   d'un composant que la base d'empreintes ne couvre pas, faute de sortie audio :
+>   `tests-e2e/transcription-dans-application.spec.ts` en fait la preuve à sa place. Le banc a
+>   mesuré, sur trois secondes de son et d'un seul bloc, ce qui reste des modules de la revue :
+>   `auto-similarite` 37 ms et `multicanal` 27 ms. Restent aussi les accès disque synchrones de
+>   `main.cjs`, et les deux analyses qui chargent onnxruntime dans la page : celle de
+>   `analyse-polyphonique.ts`, Basic Pitch, gèle de 22 à 43 ms dans le Transcripteur ; celle du
+>   genre ne se mesure pas au banc, son modèle ne se lisant que par le pont d'Electron.
 > - **Lot 4, les canoniques ignorés** : fait du 2026-10-31 au 2026-11-01, en six PR, de la 251 à
 >   la 256. `ia.ts` garde sa STFT, et `CHANGELOG.md` dit pourquoi.
 > - **Lot 5, à décider** : rien n'est décidé. `electron/main.cjs` porte toujours les 71 appels

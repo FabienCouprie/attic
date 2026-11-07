@@ -85,6 +85,8 @@ const WORKERS = [
   "analyse-worker.ts",
   // Il importe `audio/emotion-mesures.ts` et Meyda, par `audio/descripteurs-valeurs.ts`.
   "emotion-worker.ts",
+  // Il importe `audio/transcription-mesures.ts`, tiré d'`audio/analyse-transcription.ts`.
+  "transcription-worker.ts",
 ];
 
 describe.each(WORKERS)("le graphe d'imports de %s", (nom) => {

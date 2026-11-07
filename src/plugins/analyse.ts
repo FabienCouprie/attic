@@ -2,7 +2,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc, avecNomDicte } from "./notices";
-import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
+import { classerGenre, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
 import { langueCourante, traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
 import { entreeAudio, sansEntree } from "./lire-entree";
@@ -30,6 +30,7 @@ import { mesurerAnalyse, type DemandeAnalyse, type MesuresAnalyse } from "../aud
 import { parUneFois } from "./hors-lot";
 import { decrireEmotion, demandeEmotion } from "../audio/emotion";
 import { mesurerEmotion, type DemandeEmotion, type MesuresEmotion } from "../audio/emotion-mesures";
+import { mesurerTranscription, type DemandeTranscription, type MesuresTranscription } from "../audio/transcription-mesures";
 
 /**
  * L'analyse d'ensemble HORS DU FIL : le premier canal part COPIÉ, le tampon reçu appartenant au nœud
@@ -418,10 +419,19 @@ export const fiches: FicheAudio[] = ([
       const noteMin = ctx.paramNombre("Note minimale", 36);
       const noteMax = ctx.paramNombre("Note maximale", 96);
       let tempo = ctx.paramNombre("Tempo du fichier MIDI", 120);
-      // Auto-détection du tempo si le paramètre n'a pas été changé manuellement
-      if (tempo === 120) {
+      // Auto-détection du tempo si le paramètre n'a pas été changé manuellement. HORS DU FIL, avec la
+      // transcription monophonique : les canaux partent copiés. Sans worker, en test, la même mesure.
+      const deviner = tempo === 120, mono = methode !== "poly";
+      const mesures = deviner || mono ? await parUneFois<DemandeTranscription, MesuresTranscription>({
+        canaux: Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c)),
+        sampleRate: audio.sampleRate, seuil, noteMin, noteMax, tempo: deviner, notes: mono,
+      }, {
+        creerWorker: () => new Worker(new URL("../workers/transcription-worker.ts", import.meta.url), { type: "module" }),
+        calcul: mesurerTranscription,
+      }) : null;
+      if (mesures?.analyse) {
         try {
-          const { tempo: tDetecte } = analyserAudio(audio);
+          const { tempo: tDetecte } = decrireAnalyse(mesures.analyse);
           if (tDetecte > 0) tempo = tDetecte;
         } catch {}
       }
@@ -446,7 +456,7 @@ export const fiches: FicheAudio[] = ([
             message: traduire("msg.transcription_poly_indisponible_var_0", e?.message ?? String(e)) };
         }
       } else {
-        notes = transcrireMono(audio, seuil, noteMin, noteMax);
+        notes = mesures?.notes ?? [];
       }
       if (!notes.length) return { valeurs: [null], message: traduire("msg.aucune_note_d_tect_e") };
       const fichier = await appliquerInstrumentMidi(notesVersFichierMidi(notes, tempo), ctx.paramNombre("Instrument", 0));

@@ -50,6 +50,20 @@ const DU_MOTEUR: Record<string, string> = {
   "frequence-worker.ts": "gel-de-conversion-dans-application.spec.ts",
 };
 
+/**
+ * Les workers d'un composant qui ne rend PAS DE SON, avec la spec qui en tient la sortie.
+ *
+ * LA BASE D'EMPREINTES EXIGE UNE SORTIE AUDIO, et c'est voulu : un composant qui n'en rend plus est
+ * un changement en soi. Le Transcripteur MIDI ne rend qu'un fichier MIDI, et ne peut donc pas y
+ * entrer. Sa preuve est faite dans l'application par la spec nommée : le composant rend son fichier
+ * par son worker, puis sans worker, dans le fil, et pas un octet ne doit différer. Elle a été vue
+ * rouge sur une vélocité changée dans le seul worker. Décidé par Fabien le 2026-11-07, plutôt que
+ * d'apprendre au banc l'empreinte d'un fichier MIDI.
+ */
+const SANS_SORTIE_AUDIO: Record<string, string> = {
+  "transcription-worker.ts": "transcription-dans-application.spec.ts",
+};
+
 function workersDeCalcul(): string[] {
   return readdirSync(WORKERS)
     .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"))
@@ -64,7 +78,7 @@ describe("la couverture de la base d'empreintes", () => {
   it("CHAQUE WORKER DE CALCUL EST RÉCLAMÉ par un composant surveillé", () => {
     const spec = readFileSync(SPEC, "utf8");
     const reclamePar = (w: string) => {
-      const autre = DU_MOTEUR[w];
+      const autre = DU_MOTEUR[w] ?? SANS_SORTIE_AUDIO[w];
       return autre !== undefined && readFileSync(resolve(RACINE, "tests-e2e", autre), "utf8").includes(w);
     };
     const orphelins = workersDeCalcul().filter((w) => !spec.includes(w) && !reclamePar(w));
@@ -98,6 +112,8 @@ describe("la couverture de la base d'empreintes", () => {
       "Un worker réclamé par la base d'empreintes a disparu.").toEqual([]);
     expect(Object.keys(DU_MOTEUR).filter((w) => !presents.has(w)),
       "Un worker du moteur inscrit dans ce garde a disparu.").toEqual([]);
+    expect(Object.keys(SANS_SORTIE_AUDIO).filter((w) => !presents.has(w)),
+      "Un worker sans sortie audio inscrit dans ce garde a disparu.").toEqual([]);
   });
 
   it("la base d'empreintes existe et couvre tous les composants surveillés", () => {
