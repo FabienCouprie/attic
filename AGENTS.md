@@ -182,7 +182,7 @@ Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
   aucun fichier neuf ne dépasse quatre cents lignes de code, les quinze qui la dépassaient déjà ne
   grossissent plus, et celui qui redescend dans la norme sort de la dette. Elle ne peut que
   décroître, et la liste est dans `src/docs/generer-compte-lignes.test.ts`.
-- **`tests-e2e/empreintes.json` + `empreintes.spec.ts`** — l'empreinte du son de 77 composants
+- **`tests-e2e/empreintes.json` + `empreintes.spec.ts`** — l'empreinte du son de 78 composants
   surveillés, valeur efficace et crête à neuf décimales, plus leur message. Toute modification qui
   altère une sortie fait échouer ce test. Pour l'étendre :
 

@@ -106,10 +106,11 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   « Débruitage IA » et le séparateur MDX-Net calculent dans un worker, avec le wasm d'onnxruntime
 >   livré dans `dist/` (gel relevé de 769 à 16 ms et de 9 811 à 25 ms), et le découpage du MDX est
 >   corrigé. Sa deuxième, « Critères schaefferiens » hors du fil (un gel total de 379 ms ramené à
->   2 ms), est fusionnée le même jour (PR 294) ; sa troisième, « Restauration d'écrêtage » hors du fil (2 875 ms de gel
->   total ramenés à 9 ms au seuil de 0,5), est sur la branche `travaux/lot-3-declipper`. Le banc a
->   mesuré, sur trois secondes de son et d'un seul bloc, ce qui reste des modules de la revue :
->   `inpainting` 8 094 ms quand « Remplissage de trou » bouche les silences, `fdn` 110 ms, le tempo
+>   2 ms), est fusionnée le même jour (PR 294). Sa troisième, « Restauration d'écrêtage » hors du
+>   fil (2 875 ms de gel total ramenés à 9 ms au seuil de 0,5), est fusionnée dans la nuit (PR 295) ; sa quatrième,
+>   « Remplissage de trou » hors du fil (8 094 ms de gel total ramenés à 10 ms sur les silences
+>   détectés à −12 dB), est sur la branche `travaux/lot-3-inpainting`. Le banc a mesuré, sur trois
+>   secondes de son et d'un seul bloc, ce qui reste des modules de la revue : `fdn` 110 ms, le tempo
 >   d'`analyse` 105 ms, `auto-similarite` 37 ms, `multicanal` 27 ms. Restent aussi les accès disque
 >   synchrones de `main.cjs`, et les deux analyses qui chargent onnxruntime dans la page : celle de
 >   `analyse-polyphonique.ts` ne gèle que 51 ms, et celle du genre ne se mesure pas au banc, son
@@ -168,8 +169,9 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   ménage d'après passe.
 - [x] **Générer les types des plugins** à partir de `FicheAudio` pour typer les `executer`. Fait le 2026-10-31 (lot 1 de la revue) : `executer(ctx: any)` était présent 469 fois dans 267 fichiers de `src/plugins/` ; il n'en reste qu'un, `executer(_ctx: any)` de `src/plugins/boucle-collection.ts`, que le lot 0 avait renommé et qui sortait donc du motif (la revue en comptait 470 ; relu le 2026-11-06). L'annotation retirée, le tableau `as FicheAudio[]` type le contexte par inférence ; 33 erreurs sont sorties, dont huit fiches cachées derrière `as unknown as FicheAudio[]` parce que `ValeurAudio` ne déclarait pas la séquence, le spectrogramme ou le cercle qu'elles rendaient. L'union dit désormais les quinze types qui circulent, et les fonctions d'aide prennent `ContexteAudio`.
 - [x] **Introduire des tests de non-régression** qui rejouent des graphes de référence.
-  Fait (relu le 2026-10-31) : `tests-e2e/empreintes.json` surveille 74 composants isolés (77 depuis
-  le 2026-11-06, `debruitage-ia`, `criteres-schaefferiens` et `restauration-ecretage` compris) et
+  Fait (relu le 2026-10-31) : `tests-e2e/empreintes.json` surveille 74 composants isolés (78 depuis
+  le 2026-11-06, `debruitage-ia`, `criteres-schaefferiens`, `restauration-ecretage` et
+  `remplissage-trou` compris) et
   `tests-e2e/empreintes-exemples.json` le son de chaque exemple livré, chaîne entière.
 - [x] **Limiter la taille des fichiers `App.tsx` et `useExecutionGraphe.ts`** en extrayant des hooks spécialisés (cache, reset, persistance, URL blob).
   Pas fait au relevé du 2026-08-03 — et la tendance s'est inversée : `App.tsx` était descendu à 437

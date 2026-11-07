@@ -6,6 +6,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **« REMPLISSAGE DE TROU » CALCULE HORS DU FIL.** Quatrième pièce du lot 3 de la revue d'architecture du 2026-10-31, la deuxième du relevé fait pour la troisième.
+  - **Avant**, sur le son d'essai et d'un seul bloc, sans qu'un message passe : 749 ms pour les silences détectés à −20 dB (72 creux, 73 ms à reconstruire), 8 094 ms à −12 dB (391 creux, 546 ms).
+  - **Après** : 715 ms dont 2 ms de gel au plus long, et 7 765 ms dont 10 ms. Le message et le son rendu sont identiques aux deux seuils.
+  - **Les pièces.** `workers/inpainting-worker.ts` joint `servirParCanal` à `boucherVoie` d'`audio/inpainting.ts`, qui détecte les trous sur chaque canal comme le composant le faisait, ou prend les zones branchées, puis appelle `boucherTrous` tel quel ; le composant passe par `parCanal`, les canaux partant copiés.
+  - **La surveillance suit.** Le composant entre dans la base d'empreintes avec son worker, sur les silences détectés à −20 dB, le son d'essai n'en ayant pas de vrais : son empreinte a été écrite sur l'ancien code, ce qui n'a ajouté que cette entrée, puis retrouvée par le worker. Le worker entre au graphe d'imports de `graphe-imports.test.ts`, et `AGENTS.md` annonce soixante-dix-huit composants surveillés. Le chemin des zones branchées ne passe pas par la base, qui ne nourrit que la première entrée.
+  - **Preuves** : `npx tsc -b` vert, `npx oxlint` 0 erreur et les mêmes 27 avertissements, les tables régénérées inchangées, les soixante-dix-huit empreintes vertes, et la passe complète rend 708 fichiers et 10 198 tests en 23 min 1 s : 10 184 verts, 14 sautés, aucun rouge.
+
 - **« RESTAURATION D'ÉCRÊTAGE » CALCULE HORS DU FIL.** Troisième pièce du lot 3 de la revue d'architecture du 2026-10-31, désignée par le banc.
   - **Le relevé qui l'a désignée.** Sur le son d'essai, quatre composants n'atteignaient pas leur calcul ; leurs réglages leur ont donné la matière qu'ils attendent. `restauration-ecretage` au seuil manuel de 0,3 : 12 176 ms ; `remplissage-trou` sur les silences détectés à −12 dB : 8 094 ms ; `auto-similarite` à la trame de 0,1 s : 37 ms ; tous d'un bloc, sans qu'un message passe. `transcripteur-midi` en polyphonique, par Basic Pitch, dure 1 493 ms mais ne gèle que 51 ms. Le classement par genre ne se mesure pas au banc : son modèle ne se lit que par le pont d'Electron.
   - **Après**, au seuil de 0,5 que tient la base : 3 125 ms, dont 9 ms de gel au plus long, 545 377 messages passés, contre 2 875 ms de gel total avant ; au seuil de 0,3, 12 797 ms dont 18 ms de gel, contre 12 176 ms de gel total, au même message. Le message et le son rendu sont identiques avant et après.

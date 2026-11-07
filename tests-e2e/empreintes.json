@@ -92,6 +92,12 @@
       ],
       "message": "0.5 % réparé · seuil 0.500 · crête 0.56 · résidu 18 %"
     },
+    "remplissage-trou": {
+      "empreintes": [
+        "0.269874216/0.528780282"
+      ],
+      "message": "72 trou(s) bouché(s) · « durée » reconstruits"
+    },
     "fiche-technique": {
       "empreintes": [
         "0.269865992/0.528780282",

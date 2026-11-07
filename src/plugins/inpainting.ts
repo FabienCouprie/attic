@@ -7,7 +7,8 @@
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { boucherTrous, detecterTrous, type Trou } from "../audio/inpainting";
+import { boucherVoie, type ReglagesTrouVoie, type ResultatInpainting, type Trou } from "../audio/inpainting";
+import { parCanal } from "./hors-fil";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { depuisDb } from "../audio/decibels";
 
@@ -77,14 +78,19 @@ export const fiches: FicheAudio[] = ([
 
       const sortie = new AudioBuffer({ numberOfChannels: canaux, length, sampleRate });
       let bouches = 0, echantillons = 0, renonces = 0;
+      // HORS DU FIL : les canaux partent COPIÉS, le tampon reçu appartenant au nœud amont, et
+      // reviennent transférés. Sans worker, en test, le même calcul tourne dans le fil.
+      const reglages: ReglagesTrouVoie = { ...options, automatique, seuil, longueurMin, zones };
+      const voies = Array.from({ length: canaux }, (_, c) => entree.getChannelData(c));
+      const resultats = await parCanal<ReglagesTrouVoie, ResultatInpainting>(voies, reglages, {
+        creerWorker: () => new Worker(new URL("../workers/inpainting-worker.ts", import.meta.url), { type: "module" }),
+        calcul: boucherVoie,
+        surProgres: (c, n) => ctx.onProgress?.(traduire("msg.trou.canal", String(c), String(n))),
+      });
       for (let c = 0; c < canaux; c++) {
-        ctx.onProgress?.(traduire("msg.trou.canal", String(c + 1), String(canaux)));
-        const voie = entree.getChannelData(c);
-        // En détection automatique, les trous se cherchent canal par canal : un décrochage peut
-        // n'avoir touché qu'une voie.
-        const trous = automatique ? detecterTrous(voie, seuil, longueurMin) : zones;
-        const r = boucherTrous(voie, trous, options);
-        sortie.getChannelData(c).set(r.signal);
+        const r = resultats[c];
+        // `copyToChannel` et non `getChannelData().set` : les tableaux reviennent d'un ouvrier.
+        sortie.copyToChannel(new Float32Array(r.signal), c);
         bouches += r.bouches;
         echantillons += r.echantillons;
         renonces += r.renonces;
