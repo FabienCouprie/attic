@@ -2,7 +2,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc, avecNomDicte } from "./notices";
-import { classerGenre, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
+import { classerGenre, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, type OptionsCentroidSpectral, type ResultatCentroidSpectral, type NoteEvenement } from "../audio";
 import { langueCourante, traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
 import { entreeAudio, sansEntree } from "./lire-entree";
@@ -28,6 +28,7 @@ import { estAnnulation } from "../core/annulation";
 import { decrireAnalyse, type AnalyseResultat } from "../audio/analyse";
 import { mesurerAnalyse, type DemandeAnalyse, type MesuresAnalyse } from "../audio/analyse-mesures";
 import { parUneFois } from "./hors-lot";
+import { inferer } from "./onnx-hors-fil";
 import { decrireEmotion, demandeEmotion } from "../audio/emotion";
 import { mesurerEmotion, type DemandeEmotion, type MesuresEmotion } from "../audio/emotion-mesures";
 import { mesurerTranscription, type DemandeTranscription, type MesuresTranscription } from "../audio/transcription-mesures";
@@ -442,8 +443,11 @@ export const fiches: FicheAudio[] = ([
           // se téléchargeait auparavant chez un tiers au fond du calcul, sans que rien ne le dise.
           await annoncerModele(ctx, "transcripteur-midi", traduire("progress.transcription_pourcent_var_0", 0));
           const modele = await lireModeleEmbarque("oonx/basic-pitch.onnx");
-          notes = await transcrirePolyphonique(audio, seuil, noteMin, noteMax, (p) =>
-            ctx.onProgress(traduire("progress.transcription_pourcent_var_0", p)), modele);
+          // HORS DU FIL, par le worker d'inférence ONNX, où chaque fenêtre de deux secondes calcule :
+          // dans la page, chacune gelait le fil de 22 à 43 ms. Les canaux partent copiés.
+          if (!modele) throw new Error(traduire("msg.basic_pitch_modele_absent"));
+          notes = await inferer<NoteEvenement[]>({ type: "transcrire-basic-pitch", cle: "basic-pitch", modele, sampleRate: audio.sampleRate, seuil, noteMin, noteMax,
+            canaux: Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c)) }, { surAvancement: (p) => ctx.onProgress(traduire("progress.transcription_pourcent_var_0", p)) });
         } catch (e: any) {
           // Une annulation n'est pas un échec de ce composant. Voir `core/annulation.ts`.
           if (estAnnulation(e)) throw e;

@@ -135,9 +135,11 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   d'un fichier de 258 Mo ne rend plus le processus principal sourd que 98 à 143 ms au lieu de 234
 >   à 411, le reste étant l'envoi des octets à la page ; `main.cjs` garde 55 appels `*Sync(`, sur
 >   de petits fichiers. L'autre moitié, les sondes Python et Julia au lancement, attend que Fabien
->   revienne sur le « blocage accepté ». Restent aussi les deux analyses qui chargent onnxruntime
->   dans la page : celle de `analyse-polyphonique.ts`, Basic Pitch, gèle de 22 à 43 ms dans le
->   Transcripteur ; celle du genre ne se mesure pas au banc, son modèle ne se lisant que par le pont
+>   revienne sur le « blocage accepté ». Basic Pitch, qui gelait la page de 22 à 43 ms dans le
+>   Transcripteur polyphonique, calcule dans le worker d'inférence ONNX sur la branche
+>   `travaux/basic-pitch-hors-du-fil` : 35 ms ramenés à 2 ou 3 sur le son d'essai ; sur deux
+>   minutes, ce qui reste est l'envoi de l'entrée au worker, 20 ms pour deux canaux. Reste dans la
+>   page l'analyse du genre, qui ne se mesure pas au banc, son modèle ne se lisant que par le pont
 >   d'Electron.
 > - **Lot 4, les canoniques ignorés** : fait du 2026-10-31 au 2026-11-01, en six PR, de la 251 à
 >   la 256. `ia.ts` garde sa STFT, et `CHANGELOG.md` dit pourquoi.
