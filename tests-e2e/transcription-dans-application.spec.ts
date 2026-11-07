@@ -22,11 +22,24 @@
 // canaux reçus doivent rester entiers : ils partent copiés, le tampon appartenant au nœud amont.
 //
 // Vue rouge le 2026-11-07 sur la vélocité de la première note changée d'un, dans le seul worker.
+//
+// ═══ ET LE POLYPHONIQUE, PAR LE WORKER D'INFÉRENCE ONNX ═══
+//
+// Depuis le même jour, Basic Pitch calcule dans `workers/inference-onnx-worker.ts`, que la base
+// d'empreintes couvre déjà par « Débruitage IA ». Le second cas fait la même comparaison sur ce
+// chemin-là : sans `Worker`, le client d'inférence calcule dans la page. Il se saute sans le modèle,
+// que la page lit par `fetch` dans `public/oonx/`. Vu rouge le même jour sur la même vélocité
+// changée, dans le seul `inference-onnx-worker.ts` : le module d'inférence sert aussi le calcul
+// dans le fil, et une faute plantée là ne pourrait pas se voir.
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 
 import { serveurDeVerification } from "./serveur-de-developpement";
 
 const devUrl = serveurDeVerification(5278);
+const RACINE = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 test("le Transcripteur MIDI rend par son worker le fichier qu'il rend dans le fil", async ({ page }) => {
   test.setTimeout(120_000);
@@ -120,4 +133,67 @@ test("le Transcripteur MIDI rend par son worker le fichier qu'il rend dans le fi
   expect(r.cas.some((c) => c.aDesNotes), "aucun cas ne trouve de notes").toBe(true);
   expect(r.cas.some((c) => c.tempo === 120 && c.tempoEcrit !== null && c.tempoEcrit !== 120),
     "aucun cas ne devine un tempo autre que 120 : le chemin du tempo n'est pas éprouvé").toBe(true);
+});
+
+test("le Transcripteur MIDI polyphonique rend par le worker d'inférence le fichier qu'il rend dans le fil", async ({ page }) => {
+  test.skip(!existsSync(join(RACINE, "public", "oonx", "basic-pitch.onnx")), "modèle Basic Pitch absent de public/oonx");
+  test.setTimeout(180_000);
+  await page.goto(devUrl);
+  await page.waitForSelector(".attic-app", { timeout: 15000 });
+
+  const r = await page.evaluate(async () => {
+    const urls: string[] = [];
+    const Origine = window.Worker;
+    class Espion extends Origine {
+      constructor(u: string | URL, o?: WorkerOptions) { super(u, o); urls.push(String(u)); }
+    }
+    const { fiches } = await import("/src/plugins/analyse.ts");
+    const fiche = (fiches as any[]).find((f) => f.id === "transcripteur-midi");
+    const hz = (m: number) => 440 * 2 ** ((m - 69) / 12);
+    const sr = 44100, n = sr * 6;
+    const b = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: sr });
+    for (let c = 0; c < 2; c++) {
+      const d = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        const t = i / sr, accord = [[60, 64, 67], [57, 60, 64], [53, 57, 60]][Math.floor(t / 2) % 3];
+        d[i] = accord.reduce((s, m) => s + 0.2 * Math.sin(2 * Math.PI * hz(m + (c ? 12 : 0)) * t), 0) * Math.min(1, (t % 2) * 20);
+      }
+      b.copyToChannel(d, c);
+    }
+    const cas: any[] = [];
+    for (const tempo of [90, 120]) {
+      const ctx = {
+        noeud: { id: "x", data: {} }, runtime: null, repertoireTravail: null,
+        entree: () => b, entrees: () => [b],
+        paramNombre: (p: string, def: number) => (p === "Tempo du fichier MIDI" ? tempo : def),
+        paramTexte: (p: string, def: string) => (p === "Méthode" ? "poly" : def),
+        onProgress: () => {}, signal: new AbortController().signal,
+      };
+      const lire = async () => {
+        const res = await fiche.executer(ctx);
+        const f = res.valeurs[0] as File | null;
+        return { message: res.message as string, octets: f ? Array.from(new Uint8Array(await f.arrayBuffer())) : null };
+      };
+      (window as any).Worker = Espion;
+      const parWorker = await lire();
+      (window as any).Worker = undefined;
+      const dansLeFil = await lire();
+      (window as any).Worker = Origine;
+      cas.push({
+        tempo, message: parWorker.message, aDesNotes: parWorker.octets !== null,
+        egaux: parWorker.message === dansLeFil.message && JSON.stringify(parWorker.octets) === JSON.stringify(dansLeFil.octets),
+        canauxEntiers: b.getChannelData(0).length === n && b.getChannelData(1).length === n,
+      });
+    }
+    return { urls, cas };
+  });
+
+  console.log(JSON.stringify(r, null, 2));
+  expect(r.urls.some((u) => u.includes("inference-onnx-worker")),
+    "Basic Pitch n'a pas calculé par le worker d'inférence : la comparaison ne prouverait rien").toBe(true);
+  for (const c of r.cas) {
+    expect(c.egaux, `tempo ${c.tempo} : le worker ne rend pas le fichier du fil`).toBe(true);
+    expect(c.canauxEntiers, "un canal reçu a été vidé").toBe(true);
+    expect(c.aDesNotes, `tempo ${c.tempo} : aucune note`).toBe(true);
+  }
 });
