@@ -2,7 +2,7 @@
 
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc, avecNomDicte } from "./notices";
-import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, analyserEmotion, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
+import { analyserAudio, classerGenre, transcrireMono, transcrirePolyphonique, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, type OptionsCentroidSpectral, type ResultatCentroidSpectral } from "../audio";
 import { langueCourante, traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
 import { entreeAudio, sansEntree } from "./lire-entree";
@@ -28,6 +28,8 @@ import { estAnnulation } from "../core/annulation";
 import { decrireAnalyse, type AnalyseResultat } from "../audio/analyse";
 import { mesurerAnalyse, type DemandeAnalyse, type MesuresAnalyse } from "../audio/analyse-mesures";
 import { parUneFois } from "./hors-lot";
+import { decrireEmotion, demandeEmotion } from "../audio/emotion";
+import { mesurerEmotion, type DemandeEmotion, type MesuresEmotion } from "../audio/emotion-mesures";
 
 /**
  * L'analyse d'ensemble HORS DU FIL : le premier canal part COPIÉ, le tampon reçu appartenant au nœud
@@ -313,7 +315,12 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const audio = entreeAudio(ctx, 0, { sorties: 2 });
       if (sansEntree(audio)) return audio;
-      const resultat = analyserEmotion(audio);
+      // HORS DU FIL, comme l'analyse d'ensemble : le premier canal et le mélange partent copiés, et
+      // seuls la combinaison et le rapport se font ici. Sans worker, en test, la même mesure.
+      const resultat = decrireEmotion(await parUneFois<DemandeEmotion, MesuresEmotion>(demandeEmotion(audio), {
+        creerWorker: () => new Worker(new URL("../workers/emotion-worker.ts", import.meta.url), { type: "module" }),
+        calcul: mesurerEmotion,
+      }));
       return { valeurs: [audio, resultat.description], message: traduire("emotion.verdict", resultat.emotion, Math.round(resultat.confiance * 100)) };
    },
  },

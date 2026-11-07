@@ -9,12 +9,8 @@ import { traduire } from "../i18n";
 import type { OptionsCentroidSpectral } from "./analyse-descripteurs";
 import { noteMidiDeFrequence } from "./commun";
 
-// LA TABLE DE L'ANALYSE S'ARRÊTE À 16 384, là où celle des effets temporels monte à 65 536. Les deux
-// fonctions qui les parcourent portaient le même nom, `tailleFenetreAnalyse`, et rendaient pourtant
-// des valeurs différentes au-delà de cette borne. Elles étaient privées chacune dans son fichier, ce
-// qui cachait la confusion ; le découpage les a mises face à face dans le baril de `src/audio/`, et
-// c'est ce qui l'a révélée. Celle-ci porte donc désormais le nom de ce qu'elle sert.
-const FENETRES_PUISSANCE_2 = [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384];
+// La taille de fenêtre de l'analyse vit dans `descripteurs-valeurs.ts`, que lit le worker.
+export { tailleFenetreAnalyse } from "./descripteurs-valeurs";
 
 // Accepte l'id canonique ("moyenne"/"mediane"/"maximum"), l'ancien libellé
 // français ET l'anglais. Le cas « Médiane » était un bug silencieux : son
@@ -51,11 +47,6 @@ export function traduireType(valeur: string): string {
     "incertain": "analyse.incertain",
   };
   return map[valeur] ? traduire(map[valeur]) : valeur;
-}
-
-export function tailleFenetreAnalyse(n: number): number {
-  for (const taille of FENETRES_PUISSANCE_2) if (taille >= n) return taille;
-  return FENETRES_PUISSANCE_2[FENETRES_PUISSANCE_2.length - 1];
 }
 
 function trouverPicFFT(

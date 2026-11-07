@@ -5,15 +5,16 @@
 
 import Meyda from "meyda";
 import { traduire } from "../i18n";
-import { normaliserAggregation, tailleFenetreAnalyse, traduireAggregation } from "./analyse-transcription";
+import { normaliserAggregation, traduireAggregation } from "./analyse-transcription";
 import { mixdownMono } from "./commun";
 import { versDb } from "./decibels";
+import {
+  agregerValeurs, extraireValeursMeyda as valeursMeyda, tailleFenetreAnalyse, valeursCentroideHz,
+  type MeydaFeatureSimple, type OptionsCentroidSpectral,
+} from "./descripteurs-valeurs";
 
-export interface OptionsCentroidSpectral {
-  fenetre?: number;
-  pas?: number;
-  aggregation?: "moyenne" | "mediane" | "maximum";
-}
+// L'extraction et l'agrégation vivent dans `descripteurs-valeurs.ts`, que lit le worker.
+export type { MeydaFeatureSimple, OptionsCentroidSpectral } from "./descripteurs-valeurs";
 
 export interface ResultatCentroidSpectral {
   valeur: number;
@@ -21,38 +22,13 @@ export interface ResultatCentroidSpectral {
   trames: number;
 }
 
-export type MeydaFeatureSimple =
-  | "rms"
-  | "zcr"
-  | "spectralCentroid"
-  | "spectralRolloff"
-  | "spectralFlatness"
-  | "spectralSpread"
-  | "energy";
-
+/** L'extraction de `descripteurs-valeurs.ts`, sur le mélange mono du tampon. */
 function extraireValeursMeyda(
   buffer: AudioBuffer,
   feature: MeydaFeatureSimple,
   options: OptionsCentroidSpectral = {},
 ): number[] {
-  const fenetre = tailleFenetreAnalyse(options.fenetre || 2048);
-  const pas = Math.max(64, options.pas || Math.floor(fenetre / 2));
-  const sr = buffer.sampleRate;
-  const length = buffer.length;
-  const mono = mixdownMono(buffer);
-
-  Meyda.sampleRate = sr;
-  Meyda.bufferSize = fenetre;
-  Meyda.windowingFunction = "hanning";
-
-  const valeurs: number[] = [];
-  for (let debut = 0; debut + fenetre <= length; debut += pas) {
-    const frame = mono.slice(debut, debut + fenetre);
-    const features = Meyda.extract(feature, frame);
-    const val = typeof features === "number" ? features : (features as any)?.[feature];
-    if (typeof val === "number" && Number.isFinite(val)) valeurs.push(val);
-  }
-  return valeurs;
+  return valeursMeyda(mixdownMono(buffer), buffer.sampleRate, feature, options);
 }
 
 // MFCC : Meyda renvoie un tableau de coefficients par trame (pas un scalaire
@@ -81,32 +57,15 @@ export function extraireMFCC(
   return trames;
 }
 
-function agregerValeurs(
-  valeurs: number[],
-  aggregation: OptionsCentroidSpectral["aggregation"] = "moyenne",
-): number {
-  if (valeurs.length === 0) return 0;
-  switch (aggregation) {
-    case "mediane": {
-      const sorted = [...valeurs].sort((a, b) => a - b);
-      const mid = Math.floor(sorted.length / 2);
-      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-    }
-    case "maximum":
-      return Math.max(...valeurs);
-    case "moyenne":
-    default:
-      return valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
-  }
-}
-
 export function calculerCentroidSpectralMeyda(
   buffer: AudioBuffer,
   options: OptionsCentroidSpectral = {},
 ): ResultatCentroidSpectral {
-  const fenetre = tailleFenetreAnalyse(options.fenetre || 2048);
-  const facteurHz = buffer.sampleRate / fenetre;
-  const valeurs = extraireValeursMeyda(buffer, "spectralCentroid", options).map((v) => v * facteurHz);
+  return resultatCentroide(valeursCentroideHz(mixdownMono(buffer), buffer.sampleRate, options), options);
+}
+
+/** Le centroïde agrégé et son texte, sur les valeurs par trame en hertz qu'a rendues l'extraction. */
+export function resultatCentroide(valeurs: number[], options: OptionsCentroidSpectral = {}): ResultatCentroidSpectral {
   const aggregation = normaliserAggregation(options.aggregation || "moyenne");
   const aggLabel = traduireAggregation(options.aggregation || "moyenne");
   if (valeurs.length === 0) {
@@ -122,7 +81,11 @@ export function calculerRMS_Meyda(
   buffer: AudioBuffer,
   options: OptionsCentroidSpectral = {},
 ): ResultatCentroidSpectral {
-  const valeurs = extraireValeursMeyda(buffer, "rms", options);
+  return resultatRms(extraireValeursMeyda(buffer, "rms", options), options);
+}
+
+/** La valeur efficace agrégée, en décibels, et son texte, sur les valeurs par trame de l'extraction. */
+export function resultatRms(valeurs: number[], options: OptionsCentroidSpectral = {}): ResultatCentroidSpectral {
   const aggregation = normaliserAggregation(options.aggregation || "moyenne");
   const aggLabel = traduireAggregation(options.aggregation || "moyenne");
   if (valeurs.length === 0) {

@@ -113,6 +113,13 @@
       ],
       "message": "82 BPM · fiabilité faible"
     },
+    "analyse-emotionnelle": {
+      "empreintes": [
+        "0.269865992/0.528780282",
+        null
+      ],
+      "message": "→ Mélancolique (confiance 24%)"
+    },
     "fiche-technique": {
       "empreintes": [
         "0.269865992/0.528780282",
