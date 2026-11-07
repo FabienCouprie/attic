@@ -112,14 +112,20 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   les silences détectés à −12 dB), le 2026-11-07 (PR 297), comme sa cinquième, « Réverbération à
 >   réseau » hors du fil (105 ms de gel total ramenés à 1 ms, PR 298). Sa sixième, le tempo
 >   d'`analyse` hors du fil (un gel total de 112 ms ramené à 1 ms pour le « Détecteur de tempo », de
->   111 ms à 1 ms pour l'« Analyse audio »), est fusionnée le même jour (PR 299) ; sa septième,
->   l'« Analyse émotionnelle » hors du fil (211 ms de gel total ramenés à 1 ms), est sur la branche
->   `travaux/lot-3-emotion`. Le banc a mesuré, sur trois secondes de son et d'un seul bloc, ce qui
->   reste des modules de la revue : `auto-similarite` 37 ms, `multicanal` 27 ms, et le
+>   111 ms à 1 ms pour l'« Analyse audio »), est fusionnée le même jour (PR 299), comme sa
+>   septième, l'« Analyse émotionnelle » hors du fil (211 ms de gel total, PR 300). CES GELS
+>   D'APRÈS SONT REMESURÉS : la sonde du banc ne comptait pas le bloc qu'un composant fait avant sa
+>   première attente. Avec la sonde corrigée, le 2026-11-07, ils valent 20 ms pour le débruitage,
+>   30 ms pour le MDX, 2 ms pour les critères, 8 ms pour l'écrêtage, 2 ms pour le trou et pour la
+>   réverbération, de 1 à 3 ms pour le tempo, et de 9 à 10 ms pour l'émotion, dont la page mélange
+>   encore les canaux avant d'envoyer. Le banc a mesuré, sur trois secondes de son et d'un seul
+>   bloc, ce qui reste des modules de la revue : `auto-similarite` 37 ms, `multicanal` 27 ms, et le
 >   « Transcripteur MIDI » 128 ms, dont l'analyse d'ensemble n'est qu'une part. Restent aussi les
 >   accès disque synchrones de `main.cjs`, et les deux analyses qui chargent onnxruntime dans la
->   page : celle de `analyse-polyphonique.ts` ne gèle que 51 ms, et celle du genre ne se mesure pas au banc, son
->   modèle ne se lisant que par le pont d'Electron.
+>   page : celle de `analyse-polyphonique.ts` ne gèle que 19 ms, mais le « Transcripteur MIDI »
+>   polyphonique qui l'appelle gèle de 96 à 119 ms, par l'analyse de tempo qu'il fait d'un bloc
+>   avant elle ; celle du genre ne se mesure pas au banc, son modèle ne se lisant que par le pont
+>   d'Electron.
 > - **Lot 4, les canoniques ignorés** : fait du 2026-10-31 au 2026-11-01, en six PR, de la 251 à
 >   la 256. `ia.ts` garde sa STFT, et `CHANGELOG.md` dit pourquoi.
 > - **Lot 5, à décider** : rien n'est décidé. `electron/main.cjs` porte toujours les 71 appels
