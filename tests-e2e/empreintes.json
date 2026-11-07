@@ -128,6 +128,18 @@
       ],
       "message": "3 sections · 31 trames"
     },
+    "spatialiseur": {
+      "empreintes": [
+        "0.059167983/0.447095931"
+      ],
+      "message": "7.1.4 · 12 canaux\n0° / 0°"
+    },
+    "rendu-objets": {
+      "empreintes": [
+        "0.077907624/0.383638918"
+      ],
+      "message": "1 objets → 7.1.4\nobjet d'essai"
+    },
     "fiche-technique": {
       "empreintes": [
         "0.269865992/0.528780282",
