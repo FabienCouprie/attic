@@ -127,10 +127,11 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   deux minutes de son, 1 128 ms de gel total ramenés à 10 ms. CE QUI RESTE SE MESURE SUR UN SON
 >   LONG, trois secondes ne suffisant plus à départager. Sa dixième, `multicanal` hors du fil, est
 >   fusionnée (PR 305) : sur deux minutes, le « Rendu d'objets » passe de 872 ms d'un bloc à 35 ms,
->   et le « Spatialiseur » de 663 à 36 ms, ce qui reste étant la recopie des douze canaux dans le
->   tampon que la page bâtit. Le point 2 du lot, ses sept modules, est ainsi épuisé. Son point 3 a sa
->   première moitié fusionnée le même jour (PR 306) : les neuf handlers IPC de
->   `main.cjs` qui lisent ou écrivent un fichier entier le font par `fs.promises`, et la lecture
+>   et le « Spatialiseur » de 663 à 36 ms. La page recopiait ensuite deux fois les douze canaux dans
+>   le tampon qu'elle bâtit ; une seule copie depuis, et il reste de 21 à 27 ms. Le point 2 du lot,
+>   ses sept modules, est ainsi épuisé. Son point 3 a sa première moitié fusionnée le même jour
+>   (PR 306) : les neuf handlers IPC de `main.cjs` qui lisent ou écrivent un fichier entier le font
+>   par `fs.promises`, et la lecture
 >   d'un fichier de 258 Mo ne rend plus le processus principal sourd que 98 à 143 ms au lieu de 234
 >   à 411, le reste étant l'envoi des octets à la page ; `main.cjs` garde 55 appels `*Sync(`, sur
 >   de petits fichiers. L'autre moitié, les sondes Python et Julia au lancement, attend que Fabien
