@@ -39,7 +39,11 @@ const choixDisposition = (filtre: (d: Disposition) => boolean, defaut: string) =
 /** Un tampon multicanal neuf, étiqueté de sa disposition. */
 function tamponEtiquete(canaux: Float32Array[], frequence: number, d: Disposition): AudioBuffer {
   const b = new AudioBuffer({ numberOfChannels: canaux.length, length: Math.max(1, canaux[0]?.length ?? 1), sampleRate: frequence });
-  canaux.forEach((c, i) => b.copyToChannel(new Float32Array(c), i));
+  // UNE SEULE COPIE : `copyToChannel` recopie déjà dans le tampon. Le `new Float32Array(c)` d'avant
+  // en faisait une seconde pour le seul type, `copyToChannel` voulant un `Float32Array<ArrayBuffer>` :
+  // sur deux minutes en 7.1.4, douze canaux recopiés deux fois gelaient la page 35 ms. Aucun canal
+  // de cette famille ne vit dans un tampon partagé, ce que la conversion de type suppose.
+  canaux.forEach((c, i) => b.copyToChannel(c as Float32Array<ArrayBuffer>, i));
   return etiqueter(b, d.id);
 }
 
