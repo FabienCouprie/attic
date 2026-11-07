@@ -103,6 +103,12 @@ const SURVEILLES: {
   // l'émotion et sa confiance, qui dépendent des quatre. Empreinte écrite sur le calcul d'avant,
   // puis retrouvée par le worker.
   { id: "analyse-emotionnelle", worker: "emotion-worker.ts" },
+  // LA MATRICE D'AUTO-SIMILARITÉ, hors du fil depuis le 2026-11-07 : 1 128 ms de gel total sur deux
+  // minutes de son avant, par son chromagramme trame par trame. À la trame de 0,1 s, le son d'essai
+  // lui donne trente et une trames ; son MESSAGE porte le nombre de sections et de trames, sa
+  // matrice et sa structure étant de l'image et du texte. Empreinte écrite sur le calcul d'avant,
+  // puis retrouvée par le worker.
+  { id: "auto-similarite", worker: "auto-similarite-worker.ts", parametres: { "Trame": 0.1 } },
   // LA FICHE TECHNIQUE PARTAGE L'OUVRIER DU SUIVEUR, et c'est voulu : sa notice promet qu'elle ne
   // peut pas contredire le suiveur de hauteur. Son empreinte audio est celle de l'entrée, qu'elle
   // laisse passer ; c'est son MESSAGE qui porte les chiffres mesurés, hauteur comprise.

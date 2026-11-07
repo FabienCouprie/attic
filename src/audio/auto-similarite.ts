@@ -17,6 +17,12 @@
 // ressemble à « après », et où les deux ne se ressemblent pas — c'est-à-dire exactement une
 // frontière. La courbe obtenue s'appelle la nouveauté, et ses pics sont les articulations
 // du morceau.
+//
+// LE TOUT SE FAIT HORS DU FIL depuis le 2026-11-07, par `analyserAutoSimilarite` en bas de ce
+// fichier : sur deux minutes de son, le composant gelait la page 1 128 ms d'un bloc, l'essentiel
+// dans le chromagramme. Ce fichier n'importe que la mesure, sans texte ; le composant rédige.
+
+import { SAUT_TRAME_CHROMAGRAMME, chromagrammeParTrame } from "./analyse-mesures";
 
 /** Similarité cosinus, entre 0 et 1 pour des vecteurs positifs. */
 export function cosinus(a: number[], b: number[]): number {
@@ -189,4 +195,44 @@ export function matriceEnSvg(matrice: number[][], taille = 240): string {
     ...rects,
     "</svg>",
   ].join("");
+}
+
+/** Ce que reçoit l'analyse : le premier canal, seul lu, et les réglages du composant. */
+export interface DemandeAutoSimilarite {
+  mono: Float32Array;
+  sampleRate: number;
+  /** En secondes. */
+  dureeTrame: number;
+  /** Demi-largeur demandée du noyau, en trames, avant d'être bornée au tiers du morceau. */
+  noyau: number;
+  /** En pour cent. */
+  seuil: number;
+  ecartMinimal: number;
+}
+
+export interface ResultatAutoSimilarite {
+  nombreTrames: number;
+  /** Les sections, les frontières en trames, et la matrice dessinée ; vides sous huit trames. */
+  parties: Segment[];
+  frontieres: number[];
+  svg: string | null;
+}
+
+/** L'analyse entière du composant : chromagramme, matrice, nouveauté, frontières et dessin. */
+export function analyserAutoSimilarite(d: DemandeAutoSimilarite): ResultatAutoSimilarite {
+  // Le chromagramme avance de 512 échantillons ; on regroupe pour atteindre la durée
+  // de trame demandée, seule échelle à laquelle la forme d'un morceau se voit.
+  const facteur = Math.max(1, Math.round((d.dureeTrame * d.sampleRate) / SAUT_TRAME_CHROMAGRAMME));
+  const trames = regrouper(chromagrammeParTrame(d.mono, d.sampleRate), facteur);
+  if (trames.length < 8) return { nombreTrames: trames.length, parties: [], frontieres: [], svg: null };
+  const matrice = matriceSimilarite(trames);
+  const noyau = Math.min(Math.round(d.noyau), Math.floor(trames.length / 3));
+  const courbe = courbeNouveaute(matrice, Math.max(2, noyau));
+  const trouvees = frontieres(courbe, d.seuil / 100, Math.round(d.ecartMinimal));
+  return {
+    nombreTrames: trames.length,
+    parties: segments(trouvees, trames.length),
+    frontieres: trouvees,
+    svg: matriceEnSvg(matrice, 320),
+  };
 }
