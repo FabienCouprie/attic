@@ -9,7 +9,7 @@
 // CHANGEMENT.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { refaireLesApercus } from "./refaire-apercus";
+import { apercuPerdu, refaireLesApercus, reparerApercu } from "./refaire-apercus";
 import { effacerResultats, poserResultat, resultatDe } from "./resultats";
 import { configurerServicesApercu, oublierServicesApercu, type OptionsApercu } from "./services-apercu";
 
@@ -110,5 +110,62 @@ describe("refaire les aperçus à une autre profondeur", () => {
     expect(revoquees).toEqual([]);
     expect(avertir).toHaveBeenCalled();
     avertir.mockRestore();
+  });
+});
+
+// ═══ L'APERÇU DONT LES OCTETS ONT DISPARU ═══
+//
+// Le défaut est relevé dans l'en-tête de la seconde partie de `refaire-apercus.ts` : le tampon est
+// intact, l'adresse ne se lit plus, et le lecteur restait grisé même après un nouveau run. Les
+// adresses déclarées perdues vivent dans le module pour toute la séance : chaque cas a donc les siennes.
+describe("réécrire l'aperçu perdu d'un nœud", () => {
+  it("L'APERÇU SE RÉÉCRIT DEPUIS LE TAMPON, À LA MÊME PROFONDEUR, ET L'ADRESSE PERDUE EST RÉVOQUÉE", async () => {
+    const recues = domaineQuiNote();
+    poserUnApercu("perdu", 24, { securiser: true, nomPourMetadonnees: "Sortie audio" } as never);
+    expect(await reparerApercu("perdu", "blob:avant/perdu")).toBe(true);
+    expect(recues.map((o) => o.bits), "la profondeur est celle de l'aperçu perdu").toEqual([24]);
+    expect(recues[0].nomPourMetadonnees, "la provenance du fichier n'est pas perdue").toBe("Sortie audio");
+    expect(resultatDe("perdu").audioResultatUrl).toBe(adresses[0]);
+    expect(revoquees).toEqual(["blob:avant/perdu"]);
+    expect(apercuPerdu("blob:avant/perdu")).toBe(true);
+    expect(apercuPerdu(adresses[0]), "l'adresse neuve n'est pas perdue").toBe(false);
+  });
+
+  it("UNE SEULE TENTATIVE PAR ADRESSE : un lecteur qui retombe ne fait pas boucler les réécritures", async () => {
+    const recues = domaineQuiNote();
+    poserUnApercu("boucle", 24);
+    await reparerApercu("boucle", "blob:avant/boucle");
+    poserResultat("boucle", { audioResultatUrl: "blob:avant/boucle" });
+    expect(await reparerApercu("boucle", "blob:avant/boucle")).toBe(false);
+    expect(recues.length).toBe(1);
+  });
+
+  it("UN RUN QUI POSE UN AUTRE APERÇU PENDANT LA RÉÉCRITURE GAGNE, et le blob réécrit ne devient pas une adresse", async () => {
+    configurerServicesApercu({
+      blobApercu: async () => { poserResultat("course", { audioResultatUrl: "blob:run/course" }); return new Blob(["x"]); },
+    });
+    poserUnApercu("course", 24);
+    expect(await reparerApercu("course", "blob:avant/course")).toBe(false);
+    expect(resultatDe("course").audioResultatUrl).toBe("blob:run/course");
+    expect(adresses).toEqual([]);
+    expect(revoquees).toEqual([]);
+  });
+
+  it("SANS TAMPON, RIEN N'EST RÉÉCRIT, MAIS L'ADRESSE EST DÉCLARÉE PERDUE pour que le run suivant la refasse", async () => {
+    const recues = domaineQuiNote();
+    poserResultat("sans", { audioResultatUrl: "blob:avant/sans", audioResultatBuffer: undefined,
+      audioResultatRefaisable: { bits: 24, reecriture: { securiser: false } } });
+    expect(await reparerApercu("sans", "blob:avant/sans")).toBe(false);
+    expect(recues).toEqual([]);
+    expect(resultatDe("sans").audioResultatUrl).toBe("blob:avant/sans");
+    expect(apercuPerdu("blob:avant/sans")).toBe(true);
+  });
+
+  it("UNE ADRESSE QUI N'EST PLUS CELLE DU NŒUD N'EST PAS TOUCHÉE", async () => {
+    const recues = domaineQuiNote();
+    poserUnApercu("autre", 24);
+    expect(await reparerApercu("autre", "blob:ancienne/autre")).toBe(false);
+    expect(recues).toEqual([]);
+    expect(resultatDe("autre").audioResultatUrl).toBe("blob:avant/autre");
   });
 });

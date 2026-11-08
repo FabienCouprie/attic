@@ -12,6 +12,7 @@ import type { EtatDePasse } from "./etat-de-passe";
 import { effacerResultats, poserResultat } from "./resultats";
 import { configurerServicesApercu, oublierServicesApercu } from "./services-apercu";
 import { lireProfondeurExport } from "./profondeur-export";
+import { reparerApercu } from "./refaire-apercus";
 import { reinitialiserStatuts, statutDe } from "./statuts";
 import { Respiration } from "../core/respirer";
 import { configurerRegistreMeta, enregistrerMeta, supprimerMeta, type NoeudG, type AreteG } from "../core";
@@ -87,6 +88,22 @@ describe("un nœud ordinaire, et son lecteur", () => {
     expect(patch!.audioResultatRefaisable).toBe(refaisable);
     expect(revoquees).toEqual([]);
     expect(passe.lecteursAEcrire.size).toBe(0);
+  });
+
+  it("MÊME TAMPON, MAIS SON LECTEUR A PERDU SES OCTETS : l'adresse n'est plus réemployée, le lecteur se refait", async () => {
+    // Relevé dans l'application construite : une seconde instance sur le même profil efface les
+    // blobs que Chromium a posés sur le disque, et relancer un nœud venu du cache rendait LE MÊME
+    // lecteur grisé, faute de regarder autre chose que l'identité du tampon. Voir `refaire-apercus.ts`.
+    const s = son("a");
+    const refaisable = { bits: lireProfondeurExport(), reecriture: { securiser: false } };
+    poserResultat("a", { audioResultatUrl: "blob:perdue/a" });
+    expect(await reparerApercu("a", "blob:perdue/a"), "sans tampon, rien à réécrire").toBe(false);
+    poserResultat("a", { audioResultatBuffer: s, audioResultatRefaisable: refaisable });
+    const passe = etat({ resultats: new Map([["a", [s]]]) });
+    const patch = await calculerCorrectifResultat(noeud("a", "son"), passe);
+    expect(patch!.audioResultatUrl, "l'adresse perdue ne doit pas revenir à l'écran").toBeUndefined();
+    expect(revoquees).toEqual(["blob:perdue/a"]);
+    expect(passe.lecteursAEcrire.has("a"), "le lecteur doit se réécrire depuis le tampon").toBe(true);
   });
 
   it("AUTRE PROFONDEUR : l'ancienne adresse est révoquée et le lecteur se refait à la nouvelle", async () => {

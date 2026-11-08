@@ -16,6 +16,7 @@ import { poserApercu, poserStatut } from "./statuts";
 import { resultatDe } from "./resultats";
 import { servicesApercu, type ApercuRefaisable } from "./services-apercu";
 import { lireProfondeurExport } from "./profondeur-export";
+import { apercuPerdu } from "./refaire-apercus";
 import type { EtatDePasse } from "./etat-de-passe";
 
 /**
@@ -137,8 +138,10 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
     // de démonter le lecteur à chaque run —, mais elle ne regardait pas à quelle profondeur
     // l'aperçu avait été écrit. Le sélecteur de profondeur était donc inopérant même en
     // relançant. Voir `ui/refaire-apercus.ts`, qui porte le relevé.
+    // ET UNE ADRESSE DONT LE LECTEUR A PERDU LES OCTETS N'EST PLUS RÉEMPLOYÉE : sans cela, relancer
+    // un nœud venu du cache rendait le même lecteur grisé. Voir `ui/refaire-apercus.ts`.
     if (audio === dejaLa.audioResultatBuffer && dejaLa.audioResultatUrl
-      && dejaLa.audioResultatRefaisable?.bits === bitsVoulus) {
+      && dejaLa.audioResultatRefaisable?.bits === bitsVoulus && !apercuPerdu(dejaLa.audioResultatUrl)) {
       // L'ADRESSE EST GARDÉE, DONC SON COMPAGNON AUSSI. Le correctif rendu plus bas pose TOUS
       // les champs, si bien que l'omettre ici l'effacerait : l'aperçu deviendrait
       // irréécrivable, et le sélecteur de profondeur inopérant sur ce nœud-là seulement.

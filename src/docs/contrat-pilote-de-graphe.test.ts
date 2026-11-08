@@ -201,12 +201,16 @@ describe("le pilote de graphe", () => {
     // LA PISTE BRANCHÉE DU MONTAGE Y PREND `semerEtLancer` PUIS `relancerEtAttendre` entre ses
     // gestes : elle retire une barre au clavier, tire un câble à la souris, et relance après chacun
     // pour mesurer ce que la ligne de temps dessine et ce que le montage fait entendre.
+    //
+    // LE LECTEUR DONT L'APERÇU EST PERDU Y PREND `semerEtLancer` : il sème un métronome et le lance,
+    // puis fait perdre à son aperçu ses octets et presse le ▶ ; ses attentes passent par `expect.poll`.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["boucle-dans-lot-dans-application.spec.ts",
         "boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
         "copier-coller-annotations-dans-application.spec.ts",
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
+        "lecteur-apercu-perdu-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "menu-contextuel-dans-application.spec.ts",
         "montage-gains-pistes.spec.ts", "montage-piste-branchee.spec.ts",
         "profondeur-dans-application.spec.ts", "rendu-image-taille-dans-application.spec.ts",
