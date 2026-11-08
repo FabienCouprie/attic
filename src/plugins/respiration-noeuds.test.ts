@@ -100,11 +100,11 @@ const GEL_MAX_MS = 900;
 /**
  * CE QUE CETTE MESURE NE PEUT PAS DÉCIDER, nommé avec sa raison plutôt que laissé au rouge.
  *
- * DEUX CAS, ET ILS NE SE RESSEMBLENT PAS. Les deux premiers sont des ARTEFACTS DU POLYFILL : leur
- * temps passe dans `rendreSequence`, dont le module est de classe « rendu » au sens de
- * `DEPENDANCES-AUDIO.md`, c'est-à-dire un `OfflineAudioContext`. Dans un navigateur ce rendu a lieu
- * hors du fil de l'interface et ne gèle rien ; le polyfill de Node, lui, l'exécute synchroniquement,
- * et ce qu'on mesure alors est sa propre implémentation, pas le code du nœud.
+ * TROIS SORTES DE CAS, ET ELLES NE SE RESSEMBLENT PAS. Les deux premiers sont des ARTEFACTS DU
+ * POLYFILL : leur temps passe dans `rendreSequence`, dont le module est de classe « rendu » au
+ * sens de `DEPENDANCES-AUDIO.md`, c'est-à-dire un `OfflineAudioContext`. Dans un navigateur ce
+ * rendu a lieu hors du fil de l'interface et ne gèle rien ; le polyfill de Node, lui, l'exécute
+ * synchroniquement, et ce qu'on mesure alors est sa propre implémentation, pas le code du nœud.
  *
  * Les deux autres sont un VRAI RÉSIDU, et il ne se corrige pas d'ici : le bloc restant est un seul
  * noyau de TensorFlow.js, le produit matriciel d'un lot d'entraînement. Mesuré, la respiration
@@ -112,13 +112,49 @@ const GEL_MAX_MS = 900;
  * ne le bouge pas d'un millième, et `yieldEvery: "batch"` non plus : un appel synchrone dans une
  * bibliothèque ne se découpe pas du dehors. Les seuls leviers seraient un lot plus petit ou moins
  * d'unités cachées, qui changent le calcul lui-même.
+ *
+ * Les deux derniers sont des cas QUE LE SEUIL NE PEUT PAS TRANCHER : ils passaient au vert quand le
+ * calcul finissait sous `GEL_MAX_MS`, et au rouge quand le coureur était chargé. Mesuré le
+ * 2026-11-08, au calme, puis sous six instances et vingt-quatre brûleurs pour seize cœurs.
+ * `reverbe-reseau` calcule dans `fdn-worker.ts` dans la page, avec 1 ms de gel au banc. Sans
+ * `Worker`, le repli de `parUneFois` n'a aucun `await`, et le pire gel égale la durée dans les douze
+ * relevés : de 161 ms au calme à 2,2 s sous charge, et 972 ms sur la CI de la PR 311. Le cas ne
+ * mesurait que la vitesse du coureur. `rythme-euclidien` respire, mais son calcul propre coûte
+ * 63 ms une fois Tone chargé : le seuil ne le prendrait pas en défaut même s'il ne respirait pas du
+ * tout. Son temps à froid est le chargement de Tone, que vitest transforme (`ssr.noExternal`) :
+ * 811 ms sur 909 au calme. Sous charge, son plus long bloc est toujours au début du premier
+ * `Tone.Offline`, de 453 à 710 ms, et c'est vraisemblablement celui des 904 ms d'une passe
+ * complète. Son rendu hors ligne coûte moins de 10 ms.
  */
 const HORS_MESURE: Record<string, string> = {
   "accord-mets-musique": "le temps passe dans un OfflineAudioContext, que le polyfill Node execute sur le fil",
   "parfum-motif": "meme raison : le rendu de la sequence n'a pas lieu sur le fil dans un navigateur",
   "continuation-spectrale-ar": "residu de 6,3 s : un seul noyau TensorFlow.js, indivisible du dehors",
   "continuation-spectrale-lstm": "residu de 3,4 s : meme noyau, reseau recurrent",
+  "reverbe-reseau": "calcule dans fdn-worker.ts dans la page ; sans Worker, son repli est un seul bloc, gel egal a la duree",
+  "rythme-euclidien": "son calcul propre coute 63 ms, quinze fois sous le seuil : la mesure ne peut pas le prendre en defaut",
 };
+
+/**
+ * ET CEUX-LÀ DOIVENT SE FAIRE ENTENDRE, pas seulement rendre un tampon. Décidé par Fabien le
+ * 2026-11-08 pour les deux derniers entrés dans la table : un tampon rempli de zéros est un nœud
+ * muet, et l'exigence d'un `AudioBuffer` le laissait passer. Chaque tampon rendu doit monter à
+ * −60 dB de crête au moins. Mesuré dans les conditions du cas : la réverbération rend 0,246 sur sa
+ * sortie et 0,093 sur sa réponse, le rythme 0,692, soit près de 40 dB de marge au plus mince. Les
+ * quatre autres nœuds de la table n'y sont pas soumis : leur crête n'a pas été relevée.
+ */
+const SON_AUDIBLE = new Set(["reverbe-reseau", "rythme-euclidien"]);
+const CRETE_AUDIBLE = 0.001;
+
+/** La plus forte valeur absolue d'un tampon, tous canaux confondus. */
+function crete(b: AudioBuffer): number {
+  let m = 0;
+  for (let c = 0; c < b.numberOfChannels; c++) {
+    const x = b.getChannelData(c);
+    for (let i = 0; i < x.length; i++) m = Math.max(m, Math.abs(x[i]));
+  }
+  return m;
+}
 
 /**
  * Les nœuds dont le calcul se fait dans la page, et qui coûtent assez pour que la question se pose.
@@ -168,13 +204,19 @@ describe("les nœuds rendent la main pendant qu'ils calculent", () => {
         // ce qui est vrai de n'importe quel appel, même d'un nœud qui rend `null` ou qui jette son
         // erreur dans son message. Un nœud muet passait donc, et l'entrée de cette table le
         // couvrait exactement comme son commentaire disait vouloir l'éviter. Ce qui est exigé
-        // désormais, c'est du SON : les quatre nœuds de cette table rendent un tampon audio.
+        // désormais, c'est du SON : les six nœuds de cette table rendent un tampon audio.
         const valeurs = (rendu as { valeurs?: unknown[] } | null)?.valeurs;
         expect(Array.isArray(valeurs), `${cas.id} n'a rien rendu du tout`).toBe(true);
         expect(
           (valeurs ?? []).some((v) => v instanceof AudioBuffer),
           `${cas.id} n'a rendu aucun son en ${total} ms, alors que sa raison d'être ici est d'en rendre : ${raison}`,
         ).toBe(true);
+        if (SON_AUDIBLE.has(cas.id)) {
+          // La comparaison est écrite à l'envers pour qu'une crête qui n'est pas un nombre échoue.
+          const muettes = (valeurs ?? []).flatMap((v, k) =>
+            v instanceof AudioBuffer && !(crete(v) >= CRETE_AUDIBLE) ? [`sortie ${k}, crete ${crete(v)}`] : []);
+          expect(muettes, `${cas.id} a rendu un tampon silencieux, sous ${CRETE_AUDIBLE} de crete`).toEqual([]);
+        }
         return;
       }
       // Le total sert à lire le pire : un pire égal au total veut dire « aucune respiration ».
