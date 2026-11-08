@@ -57,10 +57,9 @@ export function useEnCours({ pluginsVersion, rfInstance, callbacksNoeudRef, setN
               sfzChemin: n.data.sfzChemin,
               sfzNom: n.data.sfzNom,
               sequenceNotes: n.data.sequenceNotes,
-              // Le découpage d'un montage et les pistes qu'on y a vidées : une session reprise
-              // rendait sinon un montage que personne n'avait découpé.
+              // Le découpage d'un montage : une session reprise rendait sinon un montage que
+              // personne n'avait découpé.
               morceaux: n.data.morceaux,
-              pistesVidees: n.data.pistesVidees,
               nomFichier: n.data.nomFichier,
               // LES QUATRE NOMS DE FICHIER, QUE LA TABLE DIT CONSERVÉS et que l'import garde déjà en
               // recopiant tout `data`. Ils manquaient ici, et le garde de `saisies.test.ts` ne le

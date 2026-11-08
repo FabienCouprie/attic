@@ -15,7 +15,7 @@ import {
   appliquerGeste, collerMorceaux, couperA, couperMorceau, deplacerMorceau, dureeSonnante,
   etendueDesMorceaux, gainBorne, morceauA, morceauxAEcrire, morceauxCompletes,
   morceauxDepuisParametres, normaliserMorceau, nouvelId,
-  remplacerMorceau, retirerMorceau, type GesteMorceau, type Morceau,
+  remplacerMorceau, retirerMorceau, retraitRefuse, type GesteMorceau, type Morceau,
 } from "./montage-morceaux";
 
 const M = (p: Partial<Morceau> = {}): Morceau => ({
@@ -403,15 +403,15 @@ describe("ce qu'un geste ECRIT, et ce qu'il laisse sous ses reglages", () => {
   const branchees = [0, 1, 2];
 
   /** Le geste de l'utilisateur, puis ce que le nœud garde : la vue n'en fait pas davantage. */
-  const apresGeste = (vus: Morceau[], modifie: Morceau, avant: number[] = []) =>
-    morceauxAEcrire(remplacerMorceau(vus, modifie), branchees, params, avant);
+  const apresGeste = (vus: Morceau[], modifie: Morceau) =>
+    morceauxAEcrire(remplacerMorceau(vus, modifie), branchees, params);
 
   it("UNE PISTE JAMAIS TOUCHEE GARDE SES REGLAGES APRES UN GESTE SUR UNE AUTRE", () => {
     // Le scenario exact : trois pistes, on deplace la premiere barre, puis on tire la glissiere de
     // gain de la DEUXIEME piste. C'est elle qui ne repondait plus.
     const vus = morceauxCompletes([], branchees, params);
     const e = apresGeste(vus, { ...vus[0], debut: 5 });
-    const relu = morceauxCompletes(e.morceaux, branchees, avecGain2(-20), e.videes);
+    const relu = morceauxCompletes(e.morceaux, branchees, avecGain2(-20));
     expect(relu.find((m) => m.piste === 1)!.gain).toBe(-20);
     expect(relu.find((m) => m.piste === 2)!.gain).toBe(-18);
   });
@@ -429,7 +429,6 @@ describe("ce qu'un geste ECRIT, et ce qu'il laisse sous ses reglages", () => {
     const e = apresGeste(vus, { ...vus[0], debut: 5 });
     expect(e.reglages["Début 1"], "la glissiere suit la barre").toBe(5);
     expect(e.morceaux, "et aucun morceau n'est fige : la piste reste sous ses reglages").toEqual([]);
-    expect(e.videes).toEqual([]);
     // ET D'ELLE SEULE : les trois autres cles d'une autre piste n'y sont pas.
     expect(Object.keys(e.reglages).sort())
       .toEqual(["Début 1", "Fondu entrée 1", "Fondu sortie 1", "Gain 1"]);
@@ -442,10 +441,10 @@ describe("ce qu'un geste ECRIT, et ce qu'il laisse sous ses reglages", () => {
     const vus = morceauxCompletes([], branchees, params);
     const e = apresGeste(vus, { ...vus[0], debut: 5 });
     const apres = { ...params, ...e.reglages };
-    const relu = morceauxCompletes(e.morceaux, branchees, apres, e.videes);
+    const relu = morceauxCompletes(e.morceaux, branchees, apres);
     expect(relu.find((m) => m.piste === 0)!.debut, "la barre est la ou le geste l'a mise").toBe(5);
     // Et la glissiere reprend la main : la bouger deplace la barre.
-    const encore = morceauxCompletes(e.morceaux, branchees, { ...apres, "Début 1": 99 }, e.videes);
+    const encore = morceauxCompletes(e.morceaux, branchees, { ...apres, "Début 1": 99 });
     expect(encore.find((m) => m.piste === 0)!.debut).toBe(99);
   });
 
@@ -471,15 +470,16 @@ describe("ce qu'un geste ECRIT, et ce qu'il laisse sous ses reglages", () => {
   it("ET UNE LISTE ENCORE ENTIEREMENT SOUS SES REGLAGES NE S'ECRIT PAS DU TOUT", () => {
     // Un geste repris a son point de depart, ou une simple selection : rien n'a bouge, rien ne se fige.
     const vus = morceauxCompletes([], branchees, params);
-    expect(morceauxAEcrire(vus, branchees, params)).toEqual({ morceaux: [], videes: [], reglages: {} });
+    expect(morceauxAEcrire(vus, branchees, params)).toEqual({ morceaux: [], reglages: {} });
   });
 });
 
-describe("une piste videe reste vide", () => {
-  // CE QUE CES CAS GARDENT. Supprimer le dernier morceau d'une piste la laissait absente de ce qui
-  // s'ecrit, c'est-a-dire exactement dans l'etat d'une piste jamais touchee : elle se rededuisait de
-  // ses reglages au relevé suivant, et le morceau revenait. Releve par Fabien. Une piste sans morceau
-  // ne peut pas se dire par un morceau : il faut donc une liste a part.
+describe("une piste branchee apparait toujours", () => {
+  // CE QUE CES CAS GARDENT. La regle de Fabien du 2026-11-06 : « une source est branchee ou pas,
+  // branchee elle apparait, non branchee elle n'apparait pas ». Ces cas tenaient la regle inverse,
+  // une piste « videe » qui ne recevait plus jamais de morceau ; elle a cache la troisieme piste de
+  // son propre projet. Le projet lui-meme et l'executeur du montage sont dans
+  // `montage-piste-branchee.test.ts`.
   const params = {
     "Début 1": 0, "Gain 1": -6, "Fondu entrée 1": 50, "Fondu sortie 1": 60,
     "Début 2": 4, "Gain 2": -12, "Fondu entrée 2": 70, "Fondu sortie 2": 80,
@@ -487,43 +487,39 @@ describe("une piste videe reste vide", () => {
   };
   const branchees = [0, 1, 2];
   /** La suppression du dernier morceau de la piste 2, telle que la ligne de temps la rend. */
-  const apresSuppression = (avant: number[] = []) => {
-    const vus = morceauxCompletes([], branchees, params, avant);
+  const apresSuppression = () => {
+    const vus = morceauxCompletes([], branchees, params);
     const reste = retirerMorceau(vus, vus.find((m) => m.piste === 2)!.id);
-    return morceauxAEcrire(reste, branchees, params, avant);
+    return morceauxAEcrire(reste, branchees, params);
   };
 
-  it("UN MORCEAU SUPPRIME NE REVIENT PAS", () => {
+  it("RETIRER LE DERNIER MORCEAU D'UNE PISTE BRANCHEE NE LA CACHE PAS : ses reglages la decrivent", () => {
     const e = apresSuppression();
-    expect(e.videes).toEqual([2]);
-    expect(morceauxCompletes(e.morceaux, branchees, params, e.videes).map((m) => m.piste)).toEqual([0, 1]);
+    const relu = morceauxCompletes(e.morceaux, branchees, params);
+    expect(relu.map((m) => m.piste)).toEqual([0, 1, 2]);
+    expect(relu.find((m) => m.piste === 2)).toMatchObject({ debut: 9, gain: -18, entree: 90, sortie: 100, dans: 0, duree: 0 });
   });
 
-  it("ET LES AUTRES PISTES GARDENT LEURS REGLAGES : vider n'est pas toucher a tout", () => {
+  it("ET LES AUTRES PISTES GARDENT LEURS REGLAGES", () => {
     const e = apresSuppression();
-    const relu = morceauxCompletes(e.morceaux, branchees, { ...params, "Gain 2": -30 }, e.videes);
+    const relu = morceauxCompletes(e.morceaux, branchees, { ...params, "Gain 2": -30 });
     expect(relu.find((m) => m.piste === 1)!.gain).toBe(-30);
   });
 
-  it("ET REPOSER UN MORCEAU SUR LA PISTE LA REND A SES REGLAGES", () => {
-    const e = apresSuppression();
-    const colle = [...morceauxCompletes(e.morceaux, branchees, params, e.videes), M({ id: "colle", piste: 2, debut: 1 })];
-    const e2 = morceauxAEcrire(colle, branchees, params, e.videes);
-    expect(e2.videes).toEqual([]);
-    // Le morceau colle est seul sur sa piste et joue tout son son : la piste revient donc sous ses
-    // reglages, qui portent desormais ce que le geste a pose.
-    expect(e2.morceaux).toEqual([]);
-    expect(e2.reglages["Début 3"]).toBe(1);
+  it("ET LA LIGNE DE TEMPS REFUSE DE RETIRER LE DERNIER MORCEAU D'UNE PISTE BRANCHEE", () => {
+    // Decision de Fabien : « refuser la suppression ». Pour faire taire une piste, on la debranche.
+    const seul = M({ id: "s", piste: 2, debut: 4 });
+    const coupes = [M({ id: "a", piste: 1, debut: 2, duree: 1 }), M({ id: "b", piste: 1, debut: 3, dans: 1 })];
+    expect(retraitRefuse([seul, ...coupes], "s", branchees), "le dernier d'une piste branchee").toBe(true);
+    expect(retraitRefuse([seul, ...coupes], "a", branchees), "l'un de deux sur une piste branchee").toBe(false);
+    expect(retraitRefuse([seul, ...coupes], "s", [0, 1]), "le dernier d'une piste debranchee").toBe(false);
+    expect(retraitRefuse([seul], "inconnu", branchees), "un morceau qui n'existe pas").toBe(false);
   });
 
-  it("ET UNE PISTE VIDEE PUIS DEBRANCHEE GARDE SON ETAT", () => {
-    // Sans ce report, rebrancher le cable ferait revenir le morceau qu'on avait retire.
+  it("ET UNE PISTE DEBRANCHEE PUIS REBRANCHEE REAPPARAIT", () => {
     const e = apresSuppression();
-    const apresDebranchement = morceauxAEcrire(
-      morceauxCompletes(e.morceaux, [0, 1], params, e.videes), [0, 1], params, e.videes,
-    );
-    expect(apresDebranchement.videes).toEqual([2]);
-    expect(morceauxCompletes(apresDebranchement.morceaux, branchees, params, apresDebranchement.videes)
-      .map((m) => m.piste)).toEqual([0, 1]);
+    const sansElle = morceauxAEcrire(morceauxCompletes(e.morceaux, [0, 1], params), [0, 1], params);
+    expect(morceauxCompletes(sansElle.morceaux, [0, 1], params).map((m) => m.piste)).toEqual([0, 1]);
+    expect(morceauxCompletes(sansElle.morceaux, branchees, params).map((m) => m.piste)).toEqual([0, 1, 2]);
   });
 });

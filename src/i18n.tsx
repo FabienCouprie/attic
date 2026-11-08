@@ -436,6 +436,10 @@ const DICO: Record<string, Record<Langue, string>> = {
   "montage.zoom": { fr: "Zoom de la ligne de temps. La molette zoome aussi, sur l'instant visé.", en: "Timeline zoom. The wheel zooms too, on the instant under the pointer." },
   "montage.defilement": { fr: "Défilement de la ligne de temps. La largeur du curseur dit quelle part de la pièce est visible.", en: "Timeline scrolling. The thumb's width says how much of the piece is visible." },
   "montage.fonduSortie": { fr: "Tirer pour régler le fondu de sortie", en: "Drag to set the fade out" },
+  "montage.derniereBarre": {
+    fr: "Une piste branchée garde au moins un morceau : celui-ci ne se retire pas. Pour faire taire la piste, débranchez-la.",
+    en: "A connected track keeps at least one clip: this one is not removed. To silence the track, disconnect it.",
+  },
   "maquette.dureeBoite": { fr: "Tirer pour régler la durée de la boîte", en: "Drag to set the box length" },
   "maquette.aucuneBoite": { fr: "Branchez une séquence sur une boîte pour la voir sur la ligne de temps.", en: "Connect a sequence to a box to see it on the timeline." },
   "maquette.ligneTemps": { fr: "Ligne de temps de la maquette", en: "Maquette timeline" },

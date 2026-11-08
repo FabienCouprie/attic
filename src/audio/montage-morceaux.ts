@@ -124,15 +124,22 @@ export function morceauxDepuisParametres(
  *
  * LES IDENTIFIANTS NE SE HEURTENT PAS : un morceau déduit prend un nom qu'aucun posé ne porte, la
  * sélection et le presse-papier s'y retrouvant par le nom.
+ *
+ * ═══ UNE PISTE BRANCHÉE APPARAÎT TOUJOURS, ET IL N'Y A PLUS D'EXCEPTION ═══
+ *
+ * Décision de Fabien le 2026-11-06 : « une source est branchée ou pas, branchée elle apparaît, non
+ * branchée elle n'apparaît pas. » Il y avait une exception, la piste « vidée » : retirer le dernier
+ * morceau d'une piste l'inscrivait dans une liste `pistesVidees`, par son seul numéro, et elle ne
+ * recevait plus jamais de morceau, quoi qu'on y branche ensuite. Relevé sur son propre projet : « la
+ * troisième piste branchée fait apparaître sa place réservée mais pas la piste ». La liste n'est
+ * plus lue nulle part, si bien qu'un projet enregistré avec elle s'ouvre avec toutes ses pistes.
  */
 export function morceauxCompletes(
   poses: readonly Morceau[], branchees: readonly number[], params: ParametresMontage,
-  videes: readonly number[] = [],
 ): Morceau[] {
   const avec = new Set(poses.map((m) => m.piste));
-  const vide = new Set(videes);
   const manquantes = [...branchees]
-    .filter((k) => !avec.has(k) && !vide.has(k))
+    .filter((k) => !avec.has(k))
     .sort((a, b) => a - b);
   if (manquantes.length === 0) return [...poses];
   const out = [...poses];
@@ -142,11 +149,9 @@ export function morceauxCompletes(
   return out.sort((a, b) => a.piste - b.piste || a.debut - b.debut);
 }
 
-/** Ce qu'un geste sur la ligne de temps laisse au nœud : son découpage, et ses pistes vidées. */
+/** Ce qu'un geste sur la ligne de temps laisse au nœud : son découpage, et ses réglages. */
 export interface EcritureMontage {
   morceaux: Morceau[];
-  /** Les pistes que l'on a vidées de tous leurs morceaux, et qui ne doivent donc pas se redéduire. */
-  videes: number[];
   /**
    * Les RÉGLAGES à poser, quand une piste reste descriptible par eux.
    *
@@ -199,15 +204,15 @@ function memeMorceau(a: Morceau, b: Morceau): boolean {
  * UNE PISTE DÉBRANCHÉE S'ÉCRIT TOUJOURS : ses réglages ne la décrivent plus, puisqu'il n'y en a plus
  * pour elle, et la perdre effacerait un découpage qu'un câble rebranché doit retrouver.
  *
- * ET LES PISTES VIDÉES SE DISENT À PART, parce qu'une piste sans morceau ne peut pas se dire par un
- * morceau. Sans cette liste, supprimer le dernier morceau d'une piste la laissait absente de ce qui
- * s'écrit, c'est-à-dire exactement dans l'état d'une piste jamais touchée : elle se redéduisait de
- * ses réglages au relevé suivant, et le morceau revenait. **Mesuré : après suppression du morceau de
- * la piste 3, la relecture rendait les pistes 0, 1 et 2.**
+ * ET UNE PISTE BRANCHÉE SANS MORCEAU N'A PAS D'ÉTAT À ELLE. Elle s'écrivait dans une liste de pistes
+ * « vidées » qui la tenait cachée pour toujours ; la règle de Fabien du 2026-11-06 — branchée, une
+ * source apparaît — l'a retirée, voir `morceauxCompletes`. La ligne de temps refuse d'ailleurs de
+ * retirer le dernier morceau d'une piste branchée (`retraitRefuse`) ; si une liste sans lui arrivait
+ * quand même ici, rien ne s'écrirait pour cette piste, et la lecture suivante lui rendrait le morceau
+ * que ses quatre réglages décrivent.
  */
 export function morceauxAEcrire(
   affiches: readonly Morceau[], branchees: readonly number[], params: ParametresMontage,
-  videesAvant: readonly number[] = [],
 ): EcritureMontage {
   const derives = new Map(morceauxDepuisParametres(branchees, params).map((m) => [m.piste, m]));
   const parPiste = new Map<number, Morceau[]>();
@@ -236,16 +241,7 @@ export function morceauxAEcrire(
     }
     out.push(...liste);
   }
-  // UNE PISTE BRANCHÉE ABSENTE DE CE QU'ON AFFICHE A ÉTÉ VIDÉE, et il n'y a pas d'autre cas : la
-  // lecture donne un morceau à toute piste branchée qui n'en a pas. Une piste vidée puis débranchée
-  // garde son état, sans quoi rebrancher le câble ferait revenir ce qu'on avait retiré.
-  const presentes = new Set(affiches.map((m) => m.piste));
-  const encore = new Set(branchees);
-  const videes = [
-    ...branchees.filter((k) => !presentes.has(k)),
-    ...videesAvant.filter((k) => !encore.has(k)),
-  ].sort((a, b) => a - b);
-  return { morceaux: out.sort((a, b) => a.piste - b.piste || a.debut - b.debut), videes, reglages };
+  return { morceaux: out.sort((a, b) => a.piste - b.piste || a.debut - b.debut), reglages };
 }
 
 /**
@@ -432,6 +428,19 @@ export function remplacerMorceau(morceaux: readonly Morceau[], remplacant: Morce
 /** La liste sans le morceau nommé. */
 export function retirerMorceau(morceaux: readonly Morceau[], id: string): Morceau[] {
   return morceaux.filter((m) => m.id !== id);
+}
+
+/**
+ * Retirer ce morceau est-il refusé ? Oui s'il est le DERNIER d'une piste BRANCHÉE.
+ *
+ * Décision de Fabien le 2026-11-06, à la suite de « branchée, une source apparaît » : « refuser la
+ * suppression ». Une piste branchée montre toujours au moins un morceau ; pour la faire taire, on la
+ * débranche. Le morceau d'une piste débranchée, lui, se retire : il n'attendait que son câble.
+ */
+export function retraitRefuse(morceaux: readonly Morceau[], id: string, branchees: readonly number[]): boolean {
+  const m = morceaux.find((x) => x.id === id);
+  if (!m || !branchees.includes(m.piste)) return false;
+  return !morceaux.some((x) => x.id !== id && x.piste === m.piste);
 }
 
 /**
