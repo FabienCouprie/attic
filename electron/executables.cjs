@@ -20,7 +20,7 @@
 //    rejetée au lieu de rendre « indisponible ».
 //
 // LE PIÈGE DU CORRECTIF NAÏF : citer partout casserait un cas légitime. La
-// détection de Python peut stocker « py -3 » (main.cjs, branche `c.includes(" ")`)
+// détection de Python peut stocker « py -3 » (ipc-scripts.cjs, branche `c.includes(" ")`)
 // — une commande AVEC argument, pas un chemin. Citer donnerait
 // « "py -3" --version », où le shell cherche un fichier nommé « py -3 ».
 //
