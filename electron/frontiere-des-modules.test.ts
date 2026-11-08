@@ -66,8 +66,13 @@ function liesParLePrincipal(texte: string) {
   return noms;
 }
 
+/**
+ * Le nom est lu comme un mot entier. Tout ce qu'une expression régulière lit à part y est échappé,
+ * l'antislash compris : un identifiant n'en porte pas, mais un échappement partiel est ce que CodeQL
+ * relève (`js/incomplete-sanitization`), et la PR de ce garde restait rouge à cause de lui.
+ */
 const lu = (texte: string, nom: string) =>
-  new RegExp(`(?<![\\w$.])${nom.replace(/\$/g, "\\$")}(?![\\w$])`).test(texte);
+  new RegExp(`(?<![\\w$.])${nom.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&")}(?![\\w$])`).test(texte);
 
 const MODULES = readdirSync(dossier).filter((f) => /^ipc-.+\.cjs$/.test(f)).sort();
 const principal = code(lire("main.cjs"));
