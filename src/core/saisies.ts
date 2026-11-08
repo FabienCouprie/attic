@@ -96,13 +96,15 @@ export const GENRES_DE_SAISIE: Readonly<Record<string, GenreDeSaisie>> = {
   clavier: {
     champs: ["sequenceNotes"], conserves: ["sequenceNotes"], mediaLocal: false,
   },
-  // CE QU'ON A DÉCOUPÉ SUR LA LIGNE DE TEMPS D'UN MONTAGE, et les pistes qu'on y a vidées. Deux
-  // tableaux légers et sérialisables, du même genre que la mélodie du clavier : ce que la personne a
-  // posé sur ce nœud. Ils n'y figuraient pas, et c'est pourquoi un montage découpé revenait intact
-  // de sa sauvegarde. Les pistes vidées sont déclarées à part des morceaux parce qu'une piste sans
-  // morceau ne peut pas se dire par un morceau.
+  // CE QU'ON A DÉCOUPÉ SUR LA LIGNE DE TEMPS D'UN MONTAGE. Un tableau léger et sérialisable, du même
+  // genre que la mélodie du clavier : ce que la personne a posé sur ce nœud. Il n'y figurait pas, et
+  // c'est pourquoi un montage découpé revenait intact de sa sauvegarde.
+  //
+  // LES PISTES « VIDÉES » N'Y SONT PLUS, depuis la règle de Fabien du 2026-11-06 : une source
+  // branchée apparaît toujours. Un projet ancien qui les porte s'ouvre sans les lire, et ne les
+  // réécrit pas. Voir `morceauxCompletes` dans `audio/montage-morceaux.ts`.
   montage: {
-    champs: ["morceaux", "pistesVidees"], conserves: ["morceaux", "pistesVidees"], mediaLocal: false,
+    champs: ["morceaux"], conserves: ["morceaux"], mediaLocal: false,
   },
 };
 
