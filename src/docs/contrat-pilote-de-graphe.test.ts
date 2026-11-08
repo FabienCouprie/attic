@@ -197,6 +197,10 @@ describe("le pilote de graphe", () => {
     //
     // LE MENU DU CLIC DROIT N'Y PREND QUE `semer` lui aussi : il sème un graphe, puis y tire un cadre
     // de sélection et clique du bouton droit.
+    //
+    // LA PISTE BRANCHÉE DU MONTAGE Y PREND `semerEtLancer` PUIS `relancerEtAttendre` entre ses
+    // gestes : elle retire une barre au clavier, tire un câble à la souris, et relance après chacun
+    // pour mesurer ce que la ligne de temps dessine et ce que le montage fait entendre.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["boucle-dans-lot-dans-application.spec.ts",
         "boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
@@ -204,7 +208,7 @@ describe("le pilote de graphe", () => {
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "menu-contextuel-dans-application.spec.ts",
-        "montage-gains-pistes.spec.ts",
+        "montage-gains-pistes.spec.ts", "montage-piste-branchee.spec.ts",
         "profondeur-dans-application.spec.ts", "rendu-image-taille-dans-application.spec.ts",
         "restaurer-dans-application.spec.ts",
         "sorties-extensibles-dans-application.spec.ts", "types-au-port.spec.ts"]);

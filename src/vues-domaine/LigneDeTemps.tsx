@@ -44,7 +44,7 @@ import {
   type Geste, type LigneMontage, type ModeleLigne, type PisteMontage, type Vue,
 } from "./ligne-temps-calcul";
 import {
-  appliquerGeste, collerMorceaux, couperA, remplacerMorceau, retirerMorceau, type Morceau,
+  appliquerGeste, collerMorceaux, couperA, remplacerMorceau, retirerMorceau, retraitRefuse, type Morceau,
 } from "../audio/montage-morceaux";
 
 export type { PisteMontage } from "./ligne-temps-calcul";
@@ -139,6 +139,16 @@ export function LigneDeTemps({
   const [teteSaisie, setTeteSaisie] = useState(false);
   /** Le morceau choisi, sur lequel portent couper, copier et coller. */
   const [selection, setSelection] = useState<string | null>(null);
+  /**
+   * UN RETRAIT REFUSÉ SE DIT, et il se dit jusqu'au prochain choix : retirer le dernier morceau d'une
+   * piste branchée ne fait rien (`retraitRefuse`), et une touche qui ne fait rien sans un mot se
+   * prend pour une panne. La touche est en outre consommée : laissée au canevas, Suppr y supprimerait
+   * le nœud Montage, qu'un glissement de barre vient de sélectionner.
+   */
+  const [refus, setRefus] = useState(false);
+  // IL SE TAIT AU PROCHAIN CHOIX OU AU PROCHAIN GESTE, et pas avant : `morceaux` est une liste neuve à
+  // chaque rendu, et le suivre effaçait le message avant qu'on ait pu le lire.
+  useEffect(() => { setRefus(false); }, [selection]);
 
   // LA MESURE NE DOIT PAS SE RÉPONDRE À ELLE-MÊME. Dans l'inspecteur, la largeur valait 280 pixels et
   // ne bougeait jamais : mesurer puis dessiner s'arrêtait au premier tour. Sur un nœud qui se
@@ -242,8 +252,8 @@ export function LigneDeTemps({
   // TOUT CE DONT LES RACCOURCIS ONT BESOIN PASSE PAR UNE RÉFÉRENCE, et l'écoute n'est posée qu'une
   // fois. La tête de lecture change soixante fois par seconde : la nommer en dépendance démonterait
   // et remonterait l'écoute à chaque image.
-  const pourRaccourcis = useRef({ morceaux, selection, pos: 0, dureeDe, onMorceaux });
-  pourRaccourcis.current = { morceaux, selection, pos: axe.pos, dureeDe, onMorceaux };
+  const pourRaccourcis = useRef({ morceaux, selection, pos: 0, dureeDe, onMorceaux, branchees });
+  pourRaccourcis.current = { morceaux, selection, pos: axe.pos, dureeDe, onMorceaux, branchees };
 
   useEffect(() => {
     // LA CAPTURE PASSE AVANT LE CANEVAS. Le Ctrl+C du canevas copie les NŒUDS sélectionnés, et il
@@ -251,7 +261,7 @@ export function LigneDeTemps({
     // nœud qui le porte. On prend donc l'événement à la descente, et on l'arrête net quand il nous
     // revient.
     function surTouche(e: KeyboardEvent) {
-      const { morceaux: ms, selection: sel, pos, dureeDe: duree, onMorceaux: ecrire } = pourRaccourcis.current;
+      const { morceaux: ms, selection: sel, pos, dureeDe: duree, onMorceaux: ecrire, branchees: br } = pourRaccourcis.current;
       if (!ms || !ecrire) return;
       // CETTE LIGNE DE TEMPS A-T-ELLE LE FOCUS ? C'est la seule question qui vaille, et la seule qui
       // se rende d'elle-même : cliquer un nœud du canevas le déplace ailleurs, et le montage cesse
@@ -264,6 +274,14 @@ export function LigneDeTemps({
       const pris = () => { e.preventDefault(); e.stopImmediatePropagation(); };
 
       if (mod && e.key === "c" && choisi) { pressePapier = [choisi]; pris(); return; }
+      // LE DERNIER MORCEAU D'UNE PISTE BRANCHÉE NE SE RETIRE PAS, décision de Fabien : une piste
+      // branchée apparaît toujours. Ctrl+X le copie quand même, seul le retrait est refusé.
+      const retrait = (mod && e.key === "x") || (!mod && (e.key === "Delete" || e.key === "Backspace"));
+      if (retrait && choisi && retraitRefuse(ms, choisi.id, br)) {
+        if (mod) pressePapier = [choisi];
+        setRefus(true);
+        pris(); return;
+      }
       if (mod && e.key === "x" && choisi) {
         pressePapier = [choisi];
         ecrire(retirerMorceau(ms, choisi.id));
@@ -398,6 +416,7 @@ export function LigneDeTemps({
 
   const saisir = (e: React.PointerEvent, l: LigneMontage, quoi: Prise["quoi"]) => {
     e.preventDefault(); e.stopPropagation();
+    setRefus(false);
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
     // LE CLIC CHOISIT LA BARRE, et le même geste peut la déplacer : on ne demande pas de cliquer
     // d'abord puis de tirer ensuite. Le porteur de la sélection change ici, de sorte qu'un second
@@ -632,6 +651,7 @@ export function LigneDeTemps({
         </div>
       )}
       {lignes.some((l) => !l.connue) && <div className="ligne-temps-note">{t("montage.dureesInconnues")}</div>}
+      {refus && <div className="ligne-temps-note ligne-temps-refus" role="status">{t("montage.derniereBarre")}</div>}
     </div>
   );
 }

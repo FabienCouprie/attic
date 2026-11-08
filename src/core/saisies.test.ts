@@ -46,7 +46,6 @@ const RECUPERES = new Map([
   ["pureDataFichier", "le patch Pure Data chargé, que son composant lit à l'exécution"],
   ["couleur", "la couleur donnée au nœud, enregistrée et relue mais perdue à chaque copie"],
   ["morceaux", "le découpage posé sur la ligne de temps d'un montage, qu'aucune sauvegarde ne gardait"],
-  ["pistesVidees", "les pistes d'un montage que l'on a vidées, qu'un morceau ne peut pas dire à leur place"],
 ]);
 
 const tri = (s: Iterable<string>) => [...s].sort();
@@ -62,8 +61,11 @@ describe("la table des genres de saisie", () => {
     // sauvegarde, ni dans la reprise de session. Un montage découpé revenait intact de son fichier,
     // en silence. C'est exactement ce que le cas « aux deux bouts de la persistance » surveille, et
     // il n'avait rien à surveiller tant que la table ignorait ces deux champs.
+    //
+    // LES PISTES « VIDÉES » DU MONTAGE EN SONT SORTIES le 2026-11-06 : une source branchée apparaît
+    // toujours, et rien ne lit plus cette liste. Voir `core/saisies.ts`.
     expect(tri([...CHAMPS_ENREGISTRES].filter((c) => !AVANT.conserves.includes(c))))
-      .toEqual(["couleur", "morceaux", "pistesVidees"]);
+      .toEqual(["couleur", "morceaux"]);
   });
 
   it("ET EXACTEMENT LES FICHIERS QUE L'OUVERTURE REFABRIQUE", () => {

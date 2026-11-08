@@ -53,8 +53,6 @@ export function VueMontage({ id, data }: VueProps) {
     onChangerDecoupe?: (id: string, decoupe: Record<string, unknown>) => void;
     /** Les morceaux posés, quand le nœud en porte. Absents sur un graphe enregistré avant eux. */
     morceaux?: Morceau[];
-    /** Les pistes que l'on a vidées : elles ne se redéduisent pas de leurs réglages. */
-    pistesVidees?: number[];
   };
 
   // LA MAQUETTE GARDE SON MODÈLE : une boîte y EST un port, avec sa durée réglée, et rien n'a été
@@ -64,9 +62,10 @@ export function VueMontage({ id, data }: VueProps) {
   // LES MORCEAUX SE DÉDUISENT DES RÉGLAGES PISTE PAR PISTE, et non tous ou aucun. Un graphe
   // enregistré avant eux s'ouvre avec un morceau par piste branchée, donc exactement ce qu'il
   // montrait ; et une piste branchée APRÈS un premier découpage reçoit le sien, au lieu de rester
-  // invisible. Rien n'est écrit sur le disque tant qu'on ne touche à rien.
+  // invisible. Rien n'est écrit sur le disque tant qu'on ne touche à rien. Et une piste branchée en
+  // reçoit toujours un : la liste des pistes « vidées » qu'un projet ancien porte n'est plus lue.
   const morceaux = estMaquette ? undefined
-    : morceauxCompletes(d.morceaux ?? [], branchees, d.parametres ?? {}, d.pistesVidees ?? []);
+    : morceauxCompletes(d.morceaux ?? [], branchees, d.parametres ?? {});
 
   // ON ÉCRIT DANS LES DONNÉES DU NŒUD, comme le clavier y écrit ce qu'on vient de jouer. Une vue a le
   // droit de poser ce que L'UTILISATEUR a fait ; ce qu'elle n'a pas le droit de poser, ce sont les
@@ -100,10 +99,12 @@ export function VueMontage({ id, data }: VueProps) {
   // fait, et il n'y a plus deux sources de vérité à départager. Relevé par Fabien : « il n'y a aucun
   // lien entre les éléments graphiques et leur équivalent dans l'inspecteur ».
   const ecrireMorceaux = (ms: Morceau[]) => {
-    const ecriture = morceauxAEcrire(ms, branchees, d.parametres ?? {}, d.pistesVidees ?? []);
+    const ecriture = morceauxAEcrire(ms, branchees, d.parametres ?? {});
     d.onChangerDecoupe?.(id, {
       morceaux: ecriture.morceaux,
-      pistesVidees: ecriture.videes,
+      // LA LISTE DES PISTES « VIDÉES » D'UN PROJET ANCIEN S'EFFACE AU PREMIER GESTE. Elle n'est plus
+      // lue ni enregistrée ; la laisser sur le nœud la ferait signaler comme une perte à l'export.
+      pistesVidees: undefined,
       // LES RÉGLAGES SE FUSIONNENT, ils ne se remplacent pas : le nœud en porte d'autres que ceux
       // des pistes — le calage sur l'heure d'enregistrement, par exemple.
       ...(Object.keys(ecriture.reglages).length
