@@ -151,9 +151,11 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   2026-11-07 : `electron/main.cjs` en six modules `ipc-*.cjs`, par famille de canaux, une PR par
 >   module et aucun comportement changé. Le premier, `ipc-maj.cjs`, reprend les six canaux `maj:`
 >   (PR 311). Le deuxième, `ipc-scripts.cjs`, reprend les neuf canaux `python:`, `julia:` et
->   `scripts:` avec la détection des deux interprètes, sur la branche `travaux/ipc-scripts`.
->   `main.cjs` garde 57 appels `ipcMain.handle(` sur 71, en 1 668 lignes au lieu de 2 103. Restent
->   les fichiers, les modèles, les moteurs et les fenêtres. La norme de taille ne compte que `src/`.
+>   `scripts:` avec la détection des deux interprètes (PR 312). Le troisième, `ipc-fichiers.cjs`,
+>   reprend les vingt canaux `fichier:`, `dossier:`, `exemples:` et `mp3:` avec le dossier de travail
+>   par défaut, sur la branche `travaux/ipc-fichiers`. `main.cjs` garde 37 appels `ipcMain.handle(`
+>   sur 71, en 1 217 lignes au lieu de 2 103. Restent les modèles, les moteurs et les fenêtres, où
+>   `doc:ouvrir` rejoindra `app:quitter`. La norme de taille ne compte que `src/`.
 >   Les trois autres propositions, le regroupement par familles, le chargement par catégorie et la
 >   règle de nommage, restent à décider.
 >

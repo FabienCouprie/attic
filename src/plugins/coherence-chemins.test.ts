@@ -13,7 +13,7 @@
 // UN PARAMÈTRE CACHÉ EST HORS RÈGLE : il n'est pas saisi, il est écrit par le programme pour se
 // souvenir du fichier chargé par la vue du nœud, et rechargé à la reprise de session.
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { registre } from "../audio/adaptateur";
 import type { ParametreDef } from "../core/types";
 
@@ -95,11 +95,17 @@ describe("cohérence des paramètres de chemin", () => {
   // dessine un bouton sans effet. Les deux bouts de la chaîne sont donc vérifiés ici même.
   it("le sélecteur de fichier existe de bout en bout", () => {
     const preload = readFileSync(new URL("../../electron/preload.cjs", import.meta.url), "utf-8");
-    const main = readFileSync(new URL("../../electron/main.cjs", import.meta.url), "utf-8");
+    // TOUS LES MODULES DU PRINCIPAL, ET NON `main.cjs` SEUL : les deux canaux vivent dans
+    // `ipc-fichiers.cjs` depuis le 2026-11-08.
+    const electron = new URL("../../electron/", import.meta.url);
+    const principal = readdirSync(electron)
+      .filter((f) => f.endsWith(".cjs") && f !== "preload.cjs")
+      .map((f) => readFileSync(new URL(f, electron), "utf-8"))
+      .join("\n");
     expect(preload).toContain("choisirFichier");
     expect(preload).toContain("choisirDossier");
-    expect(main).toContain('ipcMain.handle("fichier:choisir"');
-    expect(main).toContain('ipcMain.handle("dossier:choisir"');
+    expect(principal).toContain('ipcMain.handle("fichier:choisir"');
+    expect(principal).toContain('ipcMain.handle("dossier:choisir"');
   });
 
   it("l'inspecteur rend les deux types avec un sélecteur", () => {

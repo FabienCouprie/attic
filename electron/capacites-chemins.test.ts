@@ -8,7 +8,7 @@
 // LA PRIMITIVE EST DONC « ce chemin est-il sous une racine declaree ». Elle est la piece critique :
 // un contournement ici rend tout le reste decoratif. Trois en sont connus, et chacun a son cas.
 import { describe, expect, it } from "vitest";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 
@@ -364,7 +364,27 @@ function bac2() {
 // dire pourquoi son expression est mintée par le côté privilégié. C'est un garde qui force une
 // décision à être reprise, pas un garde qui la prend.
 describe("les sites qui frappent une racine, dans le processus principal", () => {
-  const MAIN = readFileSync(join(__dirname, "main.cjs"), "utf8");
+  // TOUS LES MODULES DU PRINCIPAL, ET NON `main.cjs` SEUL. Depuis le 2026-11-08, les canaux des
+  // fichiers et le dossier de travail vivent dans `ipc-fichiers.cjs`. Un garde qui ne lirait que
+  // `main.cjs` y perdrait les quatre canaux nommés plus bas en criant « disparu », et, sans rien
+  // dire, le `declarerRacine(dossier)` parti avec eux : le premier cas restait vert sur les sites
+  // qui demeuraient. Le registre, `capacites-chemins.cjs`, n'est pas lu : il DÉFINIT ces fonctions,
+  // et ses appels internes reçoivent les arguments de leurs appelants, qui sont lus ici.
+  const SOURCES = readdirSync(__dirname)
+    .filter((f) => f.endsWith(".cjs") && f !== "preload.cjs" && f !== "capacites-chemins.cjs")
+    .map((f) => readFileSync(join(__dirname, f), "utf8"));
+  const PRINCIPAL = SOURCES.join("\n");
+
+  /** Le corps d'un gestionnaire, jusqu'au suivant DU MÊME FICHIER, ou `null` s'il n'existe nulle part. */
+  const corpsDe = (canal: string): string | null => {
+    for (const source of SOURCES) {
+      const debut = source.indexOf(`ipcMain.handle("${canal}"`);
+      if (debut < 0) continue;
+      const fin = source.indexOf("ipcMain.handle(", debut + 20);
+      return source.slice(debut, fin > debut ? fin : undefined);
+    }
+    return null;
+  };
 
   /**
    * LES EXPRESSIONS AUTORISÉES, et pourquoi chacune l'est.
@@ -388,11 +408,15 @@ describe("les sites qui frappent une racine, dans le processus principal", () =>
     // LES PARENTHÈSES IMBRIQUÉES COMPTENT, et mon premier jet les a manquées : `[^)]*` coupait
     // `app.getPath("userData")` à la parenthèse intérieure, et le garde refusait une expression
     // qu'il aurait dû reconnaître. Un niveau d'imbrication est capturé explicitement.
-    const sites = [...MAIN.matchAll(/\b(?:declarer|accorder)Racine(?:DuFichier)?\(((?:[^()]|\([^()]*\))*)\)/g)]
+    const sites = [...PRINCIPAL.matchAll(/\b(?:declarer|accorder)Racine(?:DuFichier)?\(((?:[^()]|\([^()]*\))*)\)/g)]
       .map((m) => m[1].trim())
       .filter((a) => a);
-    expect(sites.length, "les sites qui frappent une racine ont disparu de main.cjs")
+    expect(sites.length, "les sites qui frappent une racine ont disparu du processus principal")
       .toBeGreaterThan(0);
+    // LE DOSSIER DE TRAVAIL EST NOMMÉ, parce que c'est lui qui a disparu sans bruit quand il a quitté
+    // `main.cjs` : le compte du dessus restait positif sur les sites qui demeuraient.
+    expect(sites, "le dossier de travail ne frappe plus sa racine, ou ce garde ne le voit plus")
+      .toContain("dossier");
     for (const arg of sites) {
       expect(PERMISES.has(arg), [
         "",
@@ -420,10 +444,8 @@ describe("les sites qui frappent une racine, dans le processus principal", () =>
     // LE BORNAGE AVAIT ÉTÉ POSÉ CANAL PAR CANAL, et rien ne disait lesquels devaient l'avoir. Un
     // canal oublié ne se voyait donc pas — et le prochain ne se verrait pas davantage.
     for (const canal of ["fichier:ecrire", "fichier:copier", "fichier:ouvrir-chemin", "fichier:supprimer"]) {
-      const debut = MAIN.indexOf(`ipcMain.handle("${canal}"`);
-      expect(debut, `le canal ${canal} a disparu`).toBeGreaterThan(-1);
-      const fin = MAIN.indexOf("ipcMain.handle(", debut + 20);
-      const corps = MAIN.slice(debut, fin > debut ? fin : undefined);
+      const corps = corpsDe(canal);
+      expect(corps, `le canal ${canal} a disparu`).not.toBeNull();
       expect(corps, [
         "",
         `LE CANAL « ${canal} » NE PÈSE PAS LE CHEMIN QU'IL REÇOIT.`,
@@ -441,10 +463,8 @@ describe("les sites qui frappent une racine, dans le processus principal", () =>
     // Les quatre canaux qui reçoivent un chemin nommé par le rendu. Un `declarerRacine` dans leur
     // corps autoriserait le chemin qu'ils sont chargés de vérifier.
     for (const canal of ["fichier:ecrire", "fichier:copier", "fichier:ouvrir-chemin", "fichier:supprimer"]) {
-      const debut = MAIN.indexOf(`ipcMain.handle("${canal}"`);
-      expect(debut, `le canal ${canal} a disparu`).toBeGreaterThan(-1);
-      const fin = MAIN.indexOf("ipcMain.handle(", debut + 20);
-      const corps = MAIN.slice(debut, fin > debut ? fin : undefined);
+      const corps = corpsDe(canal);
+      expect(corps, `le canal ${canal} a disparu`).not.toBeNull();
       expect(corps, `${canal} ne doit pas pouvoir frapper une racine`)
         .not.toMatch(/\b(?:declarer|accorder)Racine/);
     }

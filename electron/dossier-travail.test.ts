@@ -15,10 +15,15 @@
 // vérifie ici est donc la FORME de la décision, et elle suffit — le défaut était un chemin dérivé
 // de l'emplacement de l'exécutable, et c'est cette dérivation que l'on interdit.
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const SOURCE = readFileSync(resolve(__dirname, "main.cjs"), "utf8");
+// TOUS LES MODULES DU PRINCIPAL, ET NON `main.cjs` SEUL : la fonction en est partie le 2026-11-08,
+// pour `ipc-fichiers.cjs`, et elle se cherche désormais où qu'elle vive.
+const SOURCE = readdirSync(__dirname)
+  .filter((f) => f.endsWith(".cjs") && f !== "preload.cjs")
+  .map((f) => readFileSync(resolve(__dirname, f), "utf8"))
+  .join("\n");
 
 /**
  * Le corps du gestionnaire qui rend le dossier de travail, COMMENTAIRES RETIRÉS.
