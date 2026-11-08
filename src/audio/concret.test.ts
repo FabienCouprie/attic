@@ -19,6 +19,18 @@ function son(n: number, f: (i: number) => number, canaux = 1): AudioBuffer {
 const sinus = (hz: number, n = SR, a = 0.5) => son(n, (i) => a * Math.sin(2 * Math.PI * hz * i / SR));
 const bruit = (n: number, graine = 3) => { let e = graine; return son(n, () => { e = (e * 1664525 + 1013904223) >>> 0; return 0.4 * (e / 4294967296 * 2 - 1); }); };
 
+/**
+ * Une voie QUE CE FICHIER POSSÈDE, et non une vue sur un tampon qu'il ne garde pas.
+ *
+ * `getChannelData` rend une vue sur la mémoire du tampon natif de `node-web-audio-api`. Prise sur un
+ * tampon temporaire, elle pend dès que le ramasse-miettes a repris ce tampon et que son finaliseur a
+ * tourné, au tour de boucle suivant. « L'OPÉRATION EST SYMÉTRIQUE » lisait ainsi `ab` après l'attente
+ * de la seconde convolution : sous une jeune génération de 1 Mo, 14 travailleurs morts (0xC0000005)
+ * et 7 comparaisons fausses sur 1 220 passes, aucun sur 1 200 avec cette copie. Une copie possédée
+ * par JavaScript ne peut pas pendre.
+ */
+const canal = (b: AudioBuffer, c = 0): Float32Array => Float32Array.from(b.getChannelData(c));
+
 /** Fréquence moyenne par les passages montants par zéro, interpolés. */
 function frequence(x: Float32Array, de = 0, a = x.length): number {
   const p: number[] = [];
@@ -52,7 +64,7 @@ describe("vitesse variable", () => {
   });
 
   it("ACCÉLÉRER NE REPLIE PAS LES AIGUS : un 8 kHz poussé à 32 kHz disparaît, il ne revient pas à 12 kHz", () => {
-    const y = vitesseVariable(sinus(8000, SR), rapportsDeVitesse(SR, 24)).getChannelData(0);
+    const y = canal(vitesseVariable(sinus(8000, SR), rapportsDeVitesse(SR, 24)));
     // Une interpolation naïve rendrait un 12,1 kHz d'amplitude voisine de l'original (0,5).
     expect(amplitude(y, SR - 32000, 200, y.length - 200)).toBeLessThan(0.005);
   });
@@ -94,8 +106,8 @@ describe("convolution de deux sons", () => {
 
   it("L'OPÉRATION EST SYMÉTRIQUE : échanger les deux sons rend le même son, au niveau près", async () => {
     const a = bruit(4000, 5), b = son(3000, (i) => Math.exp(-i / 400) * Math.sin(i / 3));
-    const ab = (await convoluerDeuxSons(a, b, 100)).getChannelData(0);
-    const ba = (await convoluerDeuxSons(b, a, 100)).getChannelData(0);
+    const ab = canal(await convoluerDeuxSons(a, b, 100));
+    const ba = canal(await convoluerDeuxSons(b, a, 100));
     // Le niveau est ramené à celui du premier son : on compare donc les formes, normalisées.
     const norme = (x: Float32Array) => { const m = Math.max(...Array.from(x, Math.abs)); return Float32Array.from(x, (v) => v / m); };
     const na = norme(ab), nb = norme(ba);
@@ -105,14 +117,14 @@ describe("convolution de deux sons", () => {
   });
 
   it("SEULES LES FRÉQUENCES COMMUNES SURVIVENT : un bruit convolué par un sinus devient ce sinus", async () => {
-    const y = (await convoluerDeuxSons(bruit(SR), sinus(1000, SR / 2), 100)).getChannelData(0);
+    const y = canal(await convoluerDeuxSons(bruit(SR), sinus(1000, SR / 2), 100));
     const f = frequence(y, SR / 4, SR);
     expect(Math.abs(f / 1000 - 1)).toBeLessThan(0.01);
   });
 
   it("le niveau de sortie est celui du premier son, et non +40 dB", async () => {
     const x = bruit(SR / 2);
-    const y = (await convoluerDeuxSons(x, bruit(SR / 2, 9), 100)).getChannelData(0);
+    const y = canal(await convoluerDeuxSons(x, bruit(SR / 2, 9), 100));
     const picX = Math.max(...Array.from(x.getChannelData(0), Math.abs));
     expect(Math.abs(Math.max(...Array.from(y, Math.abs)) - picX)).toBeLessThan(1e-4);
   });
@@ -131,7 +143,7 @@ describe("résonateurs", () => {
   });
 
   it("UNE IMPULSION FAIT SONNER EXACTEMENT LES FRÉQUENCES DEMANDÉES, et rien entre elles", () => {
-    const y = resonateurs(impulsion(), { fondamentale: 220, rapports: rapportsResonateurs("harmonique", 4), t60: 2, brillance: 100, mix: 100 }).getChannelData(0);
+    const y = canal(resonateurs(impulsion(), { fondamentale: 220, rapports: rapportsResonateurs("harmonique", 4), t60: 2, brillance: 100, mix: 100 }));
     const de = SR / 10, a = SR / 10 + SR / 2;
     const sur = [220, 440, 660, 880].map((f) => amplitude(y, f, de, a));
     const entre = [330, 550, 770].map((f) => amplitude(y, f, de, a));
@@ -140,7 +152,7 @@ describe("résonateurs", () => {
 
   it("LA RÉSONANCE SE RÈGLE EN SECONDES : après T60, 60 dB de moins", () => {
     for (const t60 of [0.5, 2]) {
-      const y = resonateurs(impulsion(), { fondamentale: 440, rapports: [1], t60, brillance: 100, mix: 100 }).getChannelData(0);
+      const y = canal(resonateurs(impulsion(), { fondamentale: 440, rapports: [1], t60, brillance: 100, mix: 100 }));
       const niveau = (t: number) => amplitude(y, 440, Math.round(t * SR), Math.round(t * SR) + 2205);
       const chute = 20 * Math.log10(niveau(0.05) / niveau(0.05 + t60));
       expect(Math.abs(chute - 60), `T60 = ${t60} s : ${chute.toFixed(1)} dB`).toBeLessThan(3);
@@ -155,13 +167,13 @@ describe("résonateurs", () => {
   it("LA FONDAMENTALE PILOTÉE GLISSE : de 220 à 440 Hz, le résonateur suit", () => {
     const n = 2 * SR;
     const f = Float32Array.from({ length: n + 3 * SR }, (_, i) => (i < n / 2 ? 220 : 440));
-    const y = resonateurs(bruit(n), { fondamentale: 220, rapports: [1], t60: 0.3, brillance: 100, mix: 100, fondamentales: f }).getChannelData(0);
+    const y = canal(resonateurs(bruit(n), { fondamentale: 220, rapports: [1], t60: 0.3, brillance: 100, mix: 100, fondamentales: f }));
     expect(amplitude(y, 220, SR / 4, SR - 2000)).toBeGreaterThan(5 * amplitude(y, 440, SR / 4, SR - 2000));
     expect(amplitude(y, 440, SR + SR / 4, n - 2000)).toBeGreaterThan(5 * amplitude(y, 220, SR + SR / 4, n - 2000));
   });
 
   it("une fréquence au-delà de Nyquist est écartée, pas repliée", () => {
-    const y = resonateurs(impulsion(), { fondamentale: 15000, rapports: [1, 2], t60: 1, brillance: 100, mix: 100 }).getChannelData(0);
+    const y = canal(resonateurs(impulsion(), { fondamentale: 15000, rapports: [1, 2], t60: 1, brillance: 100, mix: 100 }));
     expect(y.every(Number.isFinite)).toBe(true);
     // 30 kHz replié tomberait à 14,1 kHz.
     expect(amplitude(y, SR - 30000, SR / 10, SR / 2)).toBeLessThan(0.05 * amplitude(y, 15000, SR / 10, SR / 2));
