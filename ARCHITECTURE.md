@@ -156,10 +156,10 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   par défaut (PR 315). Le quatrième, `ipc-modeles.cjs`, reprend les cinq canaux `telecharger:url`,
 >   `modeles:` et `travail:annuler`, et rend aux deux moteurs qui prennent eux-mêmes leur paquet le
 >   téléchargement et de quoi savoir s'il en tourne un, sur la branche `travaux/ipc-modeles`.
->   `electron/frontiere-des-modules.test.ts` refuse depuis que `main.cjs` lise un nom resté dans un
->   module sans l'avoir reçu. `main.cjs` garde 32 appels `ipcMain.handle(` sur 71, en 1 025 lignes
->   au lieu de 2 103. Restent les moteurs et les fenêtres, où `doc:ouvrir` rejoindra `app:quitter`.
->   La norme de taille ne compte que `src/`.
+>   `main.cjs` garde 32 appels `ipcMain.handle(` sur 71, en 1 025 lignes au lieu de 2 103. Restent
+>   les moteurs, avec Ollama, puis les six canaux `node:`, qui feront un septième module, décidé par
+>   Fabien le 2026-11-08, et les fenêtres, où `doc:ouvrir` rejoindra `app:quitter`. La norme de
+>   taille ne compte que `src/`.
 >   Les trois autres propositions, le regroupement par familles, le chargement par catégorie et la
 >   règle de nommage, restent à décider.
 >
