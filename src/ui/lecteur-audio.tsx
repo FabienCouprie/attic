@@ -36,15 +36,26 @@ interface Props {
   onPointerDown?: (e: PointerEventReact<HTMLAudioElement>) => void;
   /** Les traces de console que les lecteurs de nœud écrivaient déjà. */
   trace?: boolean;
+  /**
+   * L'élément n'a pas pu lire `src`. L'appelant qui sait refaire la source la remplace : voir
+   * `reparerApercu` de `ui/refaire-apercus.ts`, où la perte est relevée et mesurée.
+   */
+  onSourcePerdue?: (src: string) => void;
 }
 
 export function LecteurAudio({
-  src, className = "attic-node-audio nodrag", style, elementRef, onPointerDown, trace,
+  src, className = "attic-node-audio nodrag", style, elementRef, onPointerDown, trace, onSourcePerdue,
 }: Props) {
   const ref = useRef<HTMLAudioElement | null>(null);
   const [ou, setOu] = useState(0);
   const [duree, setDuree] = useState(NaN);
   const anim = useRef(0);
+  // UNE LECTURE QUE LA PERTE DE LA SOURCE A INTERROMPUE REPREND SUR LA SOURCE NEUVE. Le composant
+  // survit au changement d'adresse, seul l'élément est recréé par sa clé : ces deux drapeaux relient
+  // le ▶ pressé sur l'ancien élément à la lecture du nouveau. Sans eux, le premier ▶ après la perte
+  // ne faisait rien entendre, et il fallait deviner qu'un second clic jouerait.
+  const lecture = useRef(false);
+  const reprendre = useRef(false);
 
   // LE RAPPEL DE L'APPELANT EST LU AU MOMENT DE POSER, non capturé à la construction : la fonction
   // qui pose la référence reste donc la même d'un rendu à l'autre, et React cesse de détacher puis
@@ -83,12 +94,19 @@ export function LecteurAudio({
           setDuree(e.currentTarget.duration);
           setOu(e.currentTarget.currentTime);
           if (trace) console.log("[audio player] loadedmetadata", e.currentTarget.duration, e.currentTarget.src);
+          if (reprendre.current) { reprendre.current = false; void e.currentTarget.play().catch(() => {}); }
         }}
-        onPlay={(e) => { suivre(); if (trace) console.log("[audio player] play", e.currentTarget.src); }}
-        onPause={arreter}
-        onEnded={arreter}
+        onPlay={(e) => { lecture.current = true; suivre(); if (trace) console.log("[audio player] play", e.currentTarget.src); }}
+        onPause={(e) => { if (!e.currentTarget.error) lecture.current = false; arreter(); }}
+        onEnded={() => { lecture.current = false; arreter(); }}
         onSeeked={arreter}
-        onError={(e) => console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src)}
+        onError={(e) => {
+          console.error("[audio player] error", e.currentTarget.error, e.currentTarget.src);
+          if (!onSourcePerdue || !src) return;
+          reprendre.current = lecture.current;
+          lecture.current = false;
+          onSourcePerdue(src);
+        }}
       />
       {src && (
         <div className="attic-node-duree">{tempsAuCentieme(ou)} / {tempsAuCentieme(duree)}</div>

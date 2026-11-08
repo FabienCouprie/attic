@@ -20,6 +20,7 @@ import { bufferVersWavBlob } from "../audio";
 import { tamponPourApercu } from "../audio/multicanal-ecoute";
 
 import { LecteurAudio } from "./lecteur-audio";
+import { reparerApercu } from "./refaire-apercus";
 import { registreUI, type FicheUI } from "./registre-actif";
 import { versDb } from "../audio/decibels";
 
@@ -687,7 +688,7 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
           {data.audioResultatUrl && !lecteurPorteParUneVue && (
             <div className="attic-node-player nodrag" onPointerDown={(e) => e.stopPropagation()}>
               <IndicateurNiveau buffer={data.audioResultatBuffer} />
-              <LecteurAudio src={data.audioResultatUrl} trace />
+              <LecteurAudio src={data.audioResultatUrl} trace onSourcePerdue={(url) => void reparerApercu(id, url)} />
             </div>
           )}
           {/* Un tampon sans aperçu : piste longue, nœud intermédiaire. Le lecteur se construit au clic. */}

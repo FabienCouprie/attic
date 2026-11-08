@@ -1,4 +1,5 @@
-// ui/refaire-apercus.ts — Refaire les aperçus à une autre profondeur, sans rejouer un seul nœud.
+// ui/refaire-apercus.ts — Refaire les aperçus à une autre profondeur, sans rejouer un seul nœud ; et
+// réécrire celui dont les octets ont disparu (voir la seconde partie du fichier).
 //
 // ═══ LE DÉFAUT, ET IL A ÉTÉ MESURÉ ═══
 //
@@ -84,4 +85,62 @@ export async function refaireLesApercus(bits: ProfondeurExport): Promise<number>
     await souffle.tour();
   }
   return refaits;
+}
+
+// ═══ L'APERÇU DONT LES OCTETS ONT DISPARU, ET IL A ÉTÉ MESURÉ ═══
+//
+// Relevé par Fabien sur l'application installée, ouverte trois jours : « en appuyant sur le play du
+// lecteur, un timer à 00:00 et l'icône play grisé ». Le tampon, lui, était intact. La cause est
+// hors de l'application : passé un plafond en mémoire, Chromium pose les blobs les plus anciens sur
+// le disque, sous `userData/blob_storage/<session>` (2,8 Go de blobs y ont mis 182 fichiers), et
+// TOUT processus qui démarre sur le même profil efface les dossiers de session qui ne sont pas le
+// sien. Une seconde instance, l'Electron de développement ou une épreuve Playwright sans
+// `--user-data-dir` emportent donc les octets d'un aperçu que la première instance montre encore.
+// Reproduit dans l'application construite :
+//
+//     lecteur chargé, premier ▶      PIPELINE_ERROR_READ, code 2, le temps reste à 0:00
+//     second ▶, ou nœud replié       MEDIA_ELEMENT_ERROR: Format error, code 4, ▶ grisé, 0:00 / 0:00
+//     tampon du moteur au même instant   6 s, 2 canaux, crête 0,8019 : rien de perdu
+//     nouveau Lancer                 même adresse réemployée, toujours grisé
+//
+// LE NOUVEAU LANCER NE RÉPARAIT RIEN, et c'est la seconde faute : le nœud vient du cache, son tampon
+// est le même objet, donc `correctif-resultat.ts` réemploie l'adresse. Une adresse déclarée perdue
+// n'est plus réemployée, et le lecteur qui la voit tomber demande sa réécriture tout de suite.
+
+const perdues = new Set<string>();
+
+/** Cette adresse d'aperçu a-t-elle perdu ses octets ? Un run ne la réemploie pas. */
+export const apercuPerdu = (url: string): boolean => perdues.has(url);
+
+/**
+ * Réécrit, depuis le tampon retenu, l'aperçu d'un nœud dont le lecteur n'a pas pu lire `perdue`.
+ * Rend vrai si une adresse neuve a été posée.
+ *
+ * UNE SEULE TENTATIVE PAR ADRESSE : un aperçu neuf qui tomberait à son tour ne doit pas faire boucler
+ * le lecteur sur des réécritures. L'adresse neuve, elle, a droit à la sienne.
+ *
+ * RIEN N'EST POSÉ SI UN RUN A REMPLACÉ L'APERÇU PENDANT LA RÉÉCRITURE : le sien est plus récent, et le
+ * blob réécrit ne devient jamais une adresse, donc ne retient rien.
+ */
+export async function reparerApercu(id: string, perdue: string): Promise<boolean> {
+  if (perdues.has(perdue)) return false;
+  perdues.add(perdue);
+  const r = resultatDe(id) as ResultatAvecApercu;
+  const refaisable = r.audioResultatRefaisable;
+  if (r.audioResultatUrl !== perdue || r.audioResultatBuffer == null || !refaisable) return false;
+  try {
+    const blob = await servicesApercu().blobApercu(r.audioResultatBuffer, {
+      ...refaisable.reecriture, bits: refaisable.bits, souffle: new Respiration(),
+      onAvance: (part) => poserApercu(id, part),
+    });
+    if (!blob || resultatDe(id).audioResultatUrl !== perdue) return false;
+    poserResultat(id, { audioResultatUrl: URL.createObjectURL(blob) });
+    URL.revokeObjectURL(perdue);
+    return true;
+  } catch (e) {
+    console.warn(`[apercu] réécriture impossible sur ${id} ; un nouveau run la refera`, e);
+    return false;
+  } finally {
+    poserApercu(id, undefined);
+  }
 }
