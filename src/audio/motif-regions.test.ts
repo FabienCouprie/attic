@@ -20,8 +20,9 @@ import { creerAleatoire } from "../core/hasard";
 async function rendreRegion(gout: Gout, programme: number) {
   const cible = { ...REGIONS[gout], intensite: 0.4 };
   const premier = motifDepuisPoint(cible, { duree: 6, hasard: creerAleatoire(42), programme });
+  // `mesurer` sur le fil : les nœuds passent par l'ouvrier, qui fait exactement ce calcul.
   const { son, correction } = await rendreAuRegistre(premier, cible.hauteur, (m) =>
-    rendreSequence(m.notes, "FM/Oscillateurs", 80, m.programme, 0, "douce"));
+    rendreSequence(m.notes, "FM/Oscillateurs", 80, m.programme, 0, "douce"), mesurer);
   const mesure = mesurer(viserNiveau(son, dbDepuisIntensite(cible.intensite)));
   return { cible, mesure, parts: profil(mesure.dimensions), correction };
 }

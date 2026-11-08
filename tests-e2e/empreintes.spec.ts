@@ -167,6 +167,11 @@ const SURVEILLES: {
   // un journal en plus de leur son, et ils figeaient tout autant — 248, 228, 203 et 154
   // millisecondes sans qu'un seul message passe.
   { id: "gout-du-son", worker: "gout-worker.ts" },
+  // La même mesure, que ces deux-là faisaient en plus SUR LE FIL pour corriger le registre de leur
+  // motif : 2 785 et 816 ms de gel au banc avant. Empreintes écrites sur le calcul d'avant, puis
+  // retrouvées par le worker.
+  { id: "accord-mets-musique", worker: "gout-worker.ts" },
+  { id: "parfum-motif", worker: "gout-worker.ts" },
   { id: "ecosysteme", worker: "ecosysteme-worker.ts", parametres: { "Graine": 7 } },
   { id: "reverberation-velours", worker: "velours-worker.ts", parametres: { "Graine": 1 } },
   { id: "reverbe-hachee", worker: "hachee-worker.ts" },

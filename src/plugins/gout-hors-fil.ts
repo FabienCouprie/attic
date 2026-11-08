@@ -7,8 +7,10 @@
 //
 // **CE QUE CELA RÉPARE, MESURÉ.** Sur trois secondes de son, et pas un seul message passé pendant
 // ce temps : 248 millisecondes pour le goût, 1 558 pour le parfum, 3 920 pour l'accord mets-musique.
-// Les deux derniers ne tiennent pas tout leur temps de la mesure — ils SYNTHÉTISENT ensuite une
-// pièce de dix à vingt secondes —, et c'est pourquoi la mesure seule ne suffit pas à les délivrer.
+// Les deux derniers MESURAIENT UNE SECONDE FOIS SUR LE FIL, pour corriger le registre de leur
+// motif, et ce n'était pas leur synthèse qui gelait encore la page : 2 785 et 816 ms au banc le
+// 2026-11-08, 231 à 245 et 107 à 113 ms une fois cette mesure-là passée par ici,
+// `rendreAuRegistre` la recevant en paramètre.
 
 import { mesurerVoie, type MesuresGout, type OptionsVoieGout } from "../audio/gout";
 import { mixdownMono } from "../audio/commun";

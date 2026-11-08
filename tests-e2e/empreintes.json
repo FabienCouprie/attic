@@ -272,6 +272,22 @@
       ],
       "message": "sucré 61 % · amer 28 %"
     },
+    "accord-mets-musique": {
+      "empreintes": [
+        "0.063095734/0.235495374",
+        null,
+        null
+      ],
+      "message": "sucré · piano · G4 · 19.5 s"
+    },
+    "parfum-motif": {
+      "empreintes": [
+        "0.100000000/0.432714671",
+        null,
+        null
+      ],
+      "message": "citron · A5 · sucré 65 % · salé 15 % · 11.6 s"
+    },
     "ecosysteme": {
       "empreintes": [
         "0.116484010/0.988313615",
