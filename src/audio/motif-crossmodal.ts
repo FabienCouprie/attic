@@ -26,7 +26,7 @@
 
 import { writeMidi } from "midi-file";
 import type { NoteEvenement } from "./midi-sequence";
-import { mesurer, type DimensionsGout } from "./gout";
+import type { DimensionsGout, MesuresGout } from "./gout";
 import { depuisDb } from "./decibels";
 import { noteMidiDeFrequence } from "./commun";
 
@@ -240,11 +240,18 @@ export function transposerMotif(m: Motif, demiTons: number): Motif {
  * On mesure donc ce qu'on a produit, et l'on retransposse du manque. Une seule passe : la correction
  * est exacte en octaves, et une deuxième ne gagnerait que le bruit de mesure. La correction appliquée
  * est rendue, pour que le nœud puisse la dire.
+ *
+ * LA MESURE EST FOURNIE PAR L'APPELANT, et elle doit l'être hors du fil. Appelée ici directement,
+ * `mesurer` gelait la page à chaque passe : 2 785 ms sur 4 042 pour « Accord mets-musique », 816
+ * sur 1 476 pour « Parfum → motif », relevés au banc le 2026-11-08. Ce module ne peut pas ouvrir
+ * l'ouvrier, qui est l'affaire de `plugins/` : les deux nœuds lui passent `mesurerGoutHorsFil`, qui
+ * fait le même calcul. Le paramètre n'a pas de défaut, pour qu'un appelant neuf ait à choisir.
  */
 export async function rendreAuRegistre(
   motif: Motif,
   hauteurVisee: number,
   rendre: (m: Motif) => Promise<AudioBuffer>,
+  mesurerSon: (son: AudioBuffer) => Promise<MesuresGout> | MesuresGout,
   passes = 2,
 ): Promise<{ son: AudioBuffer; motif: Motif; correction: number }> {
   const vise = hertzDepuisHauteur(hauteurVisee);
@@ -252,7 +259,7 @@ export async function rendreAuRegistre(
   let son = await rendre(courant);
   let total = 0;
   for (let i = 0; i < passes; i++) {
-    const { registre } = mesurer(son);
+    const { registre } = await mesurerSon(son);
     if (!(registre > 0)) break;
     // Trois octaves de rattrapage : le biais d'un timbre très brillant en vaut deux à lui seul.
     const pas = Math.round(borner(12 * Math.log2(vise / registre), -36, 36));

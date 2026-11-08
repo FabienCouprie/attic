@@ -90,7 +90,8 @@ export const fiches: FicheAudio[] = ([
       // place la médiane de son énergie deux octaves au-dessus de sa fondamentale — mesuré, 6 202 Hz
       // contre 1 227 Hz pour les mêmes notes —, et le registre visé devenait alors hors d'atteinte.
       const { son: brut, motif, correction } = await rendreAuRegistre(premier, cible.hauteur, (m) =>
-        rendreSequence(m.notes, modeRendu, ctx.paramNombre("Volume", 80), instrument >= 0 ? instrument : m.programme, 0, "douce"));
+        rendreSequence(m.notes, modeRendu, ctx.paramNombre("Volume", 80), instrument >= 0 ? instrument : m.programme, 0, "douce"),
+      mesurerGoutHorsFil);
       const octets = octetsMidi(motif.notes, motif.tempo, motif.programme);
       const audio = viserNiveau(brut, dbDepuisIntensite(cible.intensite));
 

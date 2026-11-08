@@ -100,11 +100,13 @@ const GEL_MAX_MS = 900;
 /**
  * CE QUE CETTE MESURE NE PEUT PAS DÉCIDER, nommé avec sa raison plutôt que laissé au rouge.
  *
- * TROIS SORTES DE CAS, ET ELLES NE SE RESSEMBLENT PAS. Les deux premiers sont des ARTEFACTS DU
- * POLYFILL : leur temps passe dans `rendreSequence`, dont le module est de classe « rendu » au
- * sens de `DEPENDANCES-AUDIO.md`, c'est-à-dire un `OfflineAudioContext`. Dans un navigateur ce
- * rendu a lieu hors du fil de l'interface et ne gèle rien ; le polyfill de Node, lui, l'exécute
- * synchroniquement, et ce qu'on mesure alors est sa propre implémentation, pas le code du nœud.
+ * TROIS SORTES DE CAS, ET ELLES NE SE RESSEMBLENT PAS. Les deux premiers MESURENT LEUR GOÛT DANS
+ * `gout-worker.ts`, dans la page. Ils ont passé ici pour des artefacts du polyfill, un rendu hors
+ * ligne exécuté sur le fil, et c'était faux : ils n'en font aucun. Relevé au banc le 2026-11-08,
+ * ils gelaient la page 2 785 et 816 ms, par une mesure de goût appelée sur le fil pour corriger
+ * leur registre ; passée par l'ouvrier, 231 à 245 et 107 à 113 ms. Sans `Worker`, le repli de
+ * `parCanal` reste un seul bloc, et le seuil ne mesurerait ici que la vitesse du coureur :
+ * `gout-hors-fil.test.ts` tient à sa place ce qui compte, qu'aucune mesure n'ait lieu sur le fil.
  *
  * Les deux autres sont un VRAI RÉSIDU, et il ne se corrige pas d'ici : le bloc restant est un seul
  * noyau de TensorFlow.js, le produit matriciel d'un lot d'entraînement. Mesuré, la respiration
@@ -127,8 +129,8 @@ const GEL_MAX_MS = 900;
  * complète. Son rendu hors ligne coûte moins de 10 ms.
  */
 const HORS_MESURE: Record<string, string> = {
-  "accord-mets-musique": "le temps passe dans un OfflineAudioContext, que le polyfill Node execute sur le fil",
-  "parfum-motif": "meme raison : le rendu de la sequence n'a pas lieu sur le fil dans un navigateur",
+  "accord-mets-musique": "mesure son gout dans gout-worker.ts dans la page ; sans Worker, son repli est un seul bloc",
+  "parfum-motif": "meme chemin : mesure dans gout-worker.ts dans la page, repli d'un seul bloc sans Worker",
   "continuation-spectrale-ar": "residu de 6,3 s : un seul noyau TensorFlow.js, indivisible du dehors",
   "continuation-spectrale-lstm": "residu de 3,4 s : meme noyau, reseau recurrent",
   "reverbe-reseau": "calcule dans fdn-worker.ts dans la page ; sans Worker, son repli est un seul bloc, gel egal a la duree",
