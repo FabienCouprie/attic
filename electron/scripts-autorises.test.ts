@@ -8,7 +8,7 @@
 // CES CAS TIENNENT LA LISTE ET LE BRANCHEMENT. La boite native elle-meme ne se clique pas sous Node ;
 // ce qui peut se tromper ici est ce qu'elle laisse passer sans etre posee.
 import { describe, expect, it, beforeEach } from "vitest";
-import { mkdtempSync, readFileSync, writeFileSync, existsSync } from "fs";
+import { mkdtempSync, readFileSync, readdirSync, writeFileSync, existsSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { createHash } from "crypto";
@@ -88,12 +88,22 @@ describe("la question posee avant un script inconnu", () => {
 
 describe("le branchement dans le processus principal", () => {
   const main = readFileSync(new URL("main.cjs", import.meta.url), "utf8");
+  // TOUS LES MODULES DU PRINCIPAL, ET NON `main.cjs` SEUL : les deux gestionnaires vivent dans
+  // `ipc-scripts.cjs` depuis le 2026-11-08, et un garde qui ne lirait qu'un fichier les perdrait au
+  // prochain déplacement en criant « introuvable », ou pire, en lisant une copie restée en arrière.
+  const dossier = new URL(".", import.meta.url);
+  const principal = readdirSync(dossier)
+    .filter((f) => f.endsWith(".cjs") && f !== "preload.cjs")
+    .map((f) => readFileSync(new URL(f, dossier), "utf8"))
+    .join("\n");
 
   for (const langage of ["python", "julia"]) {
     it(`« ${langage}:executer » DEMANDE L'AUTORISATION AVANT D'ECRIRE LE SCRIPT`, () => {
-      const debut = main.indexOf(`ipcMain.handle("${langage}:executer"`);
+      const debut = principal.indexOf(`ipcMain.handle("${langage}:executer"`);
       expect(debut, "gestionnaire introuvable").toBeGreaterThan(-1);
-      const corps = main.slice(debut, debut + 2500);
+      expect(principal.indexOf(`ipcMain.handle("${langage}:executer"`, debut + 1), "deux gestionnaires du même canal")
+        .toBe(-1);
+      const corps = principal.slice(debut, debut + 2500);
       const autorisation = corps.indexOf(`autorisationDuScript(event, "${langage}"`);
       const ecriture = corps.indexOf("fs.writeFileSync(scriptPath");
       expect(autorisation, "le gestionnaire ne demande plus l'autorisation").toBeGreaterThan(-1);

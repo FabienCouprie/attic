@@ -95,12 +95,14 @@ describe("les travaux du processus principal", () => {
   it("ET LE REGISTRE EST LE SEUL À PRENDRE `child_process`, hors les sondes synchrones", () => {
     // UN `require` EST PLUS DUR À CONTOURNER QU'UN NOM D'APPEL : un module qui renomme `spawn` en
     // `lancerVite` passerait le cas du dessus, pas celui-ci. Les deux fichiers nommés prennent
-    // `execFile` ou `execSync`, et leurs sites sont jugés par le cas précédent.
+    // `execFile` ou `execSync`, et leurs sites sont jugés par le cas précédent. `ipc-scripts.cjs` a
+    // remplacé `main.cjs` dans la liste le 2026-11-08, en emportant les deux interprètes et leurs
+    // sondes : `main.cjs` ne lance plus rien lui-même.
     const preneurs = sources
       .filter(({ texte }) => /require\(["']child_process["']\)/.test(texte))
       .map(({ fichier }) => fichier)
       .sort();
-    expect(preneurs).toEqual(["main.cjs", "songsee.cjs", "travaux.cjs"]);
+    expect(preneurs).toEqual(["ipc-scripts.cjs", "songsee.cjs", "travaux.cjs"]);
   });
 
   it("ET `travaux.cjs` EXPOSE DE QUOI TOUT ARRÊTER", () => {
@@ -136,5 +138,15 @@ describe("les travaux du processus principal", () => {
     const premier = main.indexOf("ipcMain.handle(\"");
     expect(emballage, "`ipcMain.handle` n'est plus emballé par `avecProprietaire`").toBeGreaterThan(-1);
     expect(emballage, "l'emballage vient après un gestionnaire, qui lui échappe").toBeLessThan(premier);
+    // ET LES MODULES QUI REÇOIVENT `ipcMain` LE REÇOIVENT EMBALLÉ. Depuis le 2026-11-07, des
+    // familles de canaux s'installent hors de `main.cjs` (`ipc-maj.cjs`, `ipc-scripts.cjs`), par un
+    // appel qui leur passe `ipcMain`. Un tel appel posé avant l'emballage installerait toute une
+    // famille sans propriétaire, et le cas du dessus, qui ne voit que les `ipcMain.handle("` de ce
+    // fichier, resterait vert.
+    const remises = [...main.matchAll(/\(\{[^()]*\bipcMain\b[^()]*\}\)/g)];
+    expect(remises.length, "aucun module ne reçoit `ipcMain` : ce cas ne voit plus rien").toBeGreaterThanOrEqual(2);
+    for (const r of remises) {
+      expect(r.index, `« ${r[0]} » remet \`ipcMain\` avant son emballage`).toBeGreaterThan(emballage);
+    }
   });
 });

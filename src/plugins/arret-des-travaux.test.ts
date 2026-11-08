@@ -131,6 +131,39 @@ function nomsImportes(texte: string, travail: Set<string>): string[] {
   return noms;
 }
 
+/**
+ * Où se ferme le gestionnaire, dans le texte qui suit son `ipcMain.handle(` : l'indice de la
+ * parenthèse qui ferme l'appel, comptée hors des chaînes et des commentaires. La découpe est celle
+ * d'`electron/fichiers-entiers-ipc.test.ts`.
+ *
+ * LA TÊTE VALAIT LES 1 800 CARACTÈRES D'APRÈS, quoi qu'il y eût, et elle se trompait dans les deux
+ * sens, relevé le 2026-11-08 :
+ *   · ELLE DÉBORDAIT SUR CE QUI SUIT. `main.cjs` venait de prendre l'appel `installerIpcScripts(...)`
+ *     juste après `node:selectionner-zip`. Comme `ipc-scripts.cjs` mène à `travaux.cjs`, ce canal est
+ *     passé pour un lanceur, et `gestion-nodes.ts` pour un nœud qu'« Arrêter » ne tuerait pas.
+ *   · ELLE S'ARRÊTAIT AVANT LA FIN. Le `inscrireTravail` de `python:executer` tombe à 1 893
+ *     caractères : ce canal n'a jamais été vu, et `python-processor.ts` n'était pas gardé. Celui de
+ *     `julia:executer` tombait à 1 716, et le cran d'indentation pris en entrant dans un module lui
+ *     avait déjà coûté 76 caractères de marge.
+ * Le gestionnaire est donc lu en entier, et rien au-delà. Sur l'arbre du jour, cela ajoute
+ * `python:executer` et retire `node:selectionner-zip`, sans rien changer d'autre.
+ */
+function finDuGestionnaire(corps: string): number {
+  let profondeur = 1;
+  for (let i = 0; i < corps.length; i++) {
+    const c = corps[i];
+    if (c === "/" && corps[i + 1] === "/") { i = corps.indexOf("\n", i); if (i < 0) break; continue; }
+    if (c === "/" && corps[i + 1] === "*") { i = corps.indexOf("*/", i + 2); if (i < 0) break; i++; continue; }
+    if (c === '"' || c === "'" || c === "`") {
+      for (i++; i < corps.length && corps[i] !== c; i++) if (corps[i] === "\\") i++;
+      continue;
+    }
+    if (c === "(") profondeur++;
+    else if (c === ")" && --profondeur === 0) return i;
+  }
+  return corps.length;
+}
+
 /** Les canaux IPC dont le gestionnaire mène à un enfant. */
 function canauxDeTravail(): string[] {
   const travail = modulesDeTravail();
@@ -138,14 +171,15 @@ function canauxDeTravail(): string[] {
   for (const f of cjs) {
     const texte = lireElectron(f);
     const noms = nomsImportes(texte, travail);
-    // `python:executer` et `julia:executer` engendrent DANS `main.cjs` : leur gestionnaire ne cite
-    // aucun module, mais appelle `execFile` et `inscrireTravail` lui-même.
+    // `python:executer` et `julia:executer` engendrent DANS LEUR MODULE, `ipc-scripts.cjs` : leur
+    // gestionnaire ne cite aucun module de travail, mais appelle `execFile` et `inscrireTravail`
+    // lui-même.
     const morceaux = texte.split(/ipcMain\.handle\(/).slice(1);
     for (const corps of morceaux) {
       const nom = /^\s*["']([^"']+)["']/.exec(corps)?.[1];
       if (!nom) continue;
-      const tete = corps.slice(0, 1800);
-      if (noms.some((n) => new RegExp(`\\b${n}\\(`).test(tete)) || /inscrireTravail/.test(tete)) {
+      const propre = corps.slice(0, finDuGestionnaire(corps));
+      if (noms.some((n) => new RegExp(`\\b${n}\\(`).test(propre)) || /inscrireTravail/.test(propre)) {
         trouves.add(nom);
       }
     }
@@ -216,6 +250,10 @@ describe("les nœuds qui lancent un travail", () => {
     expect(canaux.length, `canaux de travail : ${canaux.join(", ")}`).toBeGreaterThanOrEqual(15);
     expect(methodes.size).toBeGreaterThanOrEqual(15);
     expect(relais.size, "aucun relais exporté trouvé").toBeGreaterThanOrEqual(1);
+    // LES DEUX INTERPRÈTES SONT NOMMÉS, parce que l'un a manqué jusqu'au 2026-11-08 sans qu'aucun
+    // chiffre ne le dise : leur gestionnaire ne passe par aucun module, et seule sa lecture les trouve.
+    expect(canaux, "un interprète lance un travail que ce garde ne voit plus")
+      .toEqual(expect.arrayContaining(["python:executer", "julia:executer"]));
   });
 
   it("ONT TOUS UN CHEMIN VERS L'ARRÊT, et aucun n'y échappe", () => {
