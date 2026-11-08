@@ -147,8 +147,13 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   tampons que le magasin des résultats retient déjà.
 > - **Lot 4, les canoniques ignorés** : fait du 2026-10-31 au 2026-11-01, en six PR, de la 251 à
 >   la 256. `ia.ts` garde sa STFT, et `CHANGELOG.md` dit pourquoi.
-> - **Lot 5, à décider** : rien n'est décidé. `electron/main.cjs` porte toujours les 71 appels
->   `ipcMain.handle(` d'`electron/`, en 2 103 lignes ; la norme de taille ne compte que `src/`.
+> - **Lot 5, à décider** : une seule de ses quatre propositions est décidée, par Fabien le
+>   2026-11-07 : `electron/main.cjs` en six modules `ipc-*.cjs`, par famille de canaux, une PR par
+>   module et aucun comportement changé. Le premier, `ipc-maj.cjs`, reprend les six canaux `maj:` sur
+>   la branche `travaux/ipc-maj` ; `main.cjs` garde 66 appels `ipcMain.handle(` sur 71, en 1 986
+>   lignes au lieu de 2 103. La norme de taille ne compte que `src/`. Les trois autres propositions,
+>   le regroupement par familles, le chargement par catégorie et la règle de nommage, restent à
+>   décider.
 >
 > La dette de taille compte treize fichiers, contre quinze le 2026-10-19 : `App.tsx` et
 > `useExecutionGraphe.ts` en sont sortis, et aucun autre.
