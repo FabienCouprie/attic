@@ -1,7 +1,8 @@
 // ui/hooks/usePersistance.ts — Export / import du workflow (JSON) + méta-composants.
 // Extrait d'App.tsx à l'identique (comportement inchangé). Le hook reçoit l'état
 // et les setters dont il a besoin et renvoie { exporter, importer }.
-// Ce qu'un projet écrit, fichier et en-cours, se construit dans `ui/projet-a-ecrire.ts`.
+// Ce qu'un projet écrit, fichier et en-cours, se construit dans `ui/projet-a-ecrire.ts` ; le journal
+// de session vit dans `hooks/useJournalDeSession.ts`.
 import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge, Viewport } from "@xyflow/react";
@@ -13,8 +14,8 @@ import {
 import { servicesDomaine } from "../../core/services-domaine";
 import { registreUI } from "../registre-actif";
 import { pertesDesNoeuds, traduireNomsHerites } from "../pertes-chargement";
-import { creerJournalDeSession, type JournalDeSession } from "../journal-de-session";
 import { projetAEcrire } from "../projet-a-ecrire";
+import { useJournalDeSession } from "./useJournalDeSession";
 import { useI18n } from "../../i18n";
 import { rechargerFichiersPersistes } from "../rechargerFichiers";
 import { filtrerAretesInvalides } from "../validerGraphe";
@@ -209,69 +210,10 @@ export function usePersistance(o: OptionsPersistance) {
     }
   }, [buildExportData]);
 
-  // ═══ LE JOURNAL DE SESSION : LE TRAVAIL EN COURS SURVIT À UNE FERMETURE ═══
-  //
-  // RELEVÉ PAR UNE REVUE DU DÉPÔT, point 9, et vérifié plus grave que décrit. `memoriserEncours`
-  // ci-dessus n'était appelé QUE par le bouton « Recharger » ; il n'y avait ni `beforeunload`, ni
-  // `pagehide`, ni minuteur, et côté Electron `window-all-closed` appelle `app.quit()` sans rien
-  // demander au rendu. Ce n'était donc pas seulement un plantage : fermer la fenêtre proprement
-  // perdait tout depuis le dernier enregistrement manuel.
-  //
-  // LA RÈGLE QUI PROTÈGE LA SESSION VIT DANS `ui/journal-de-session.ts`, avec ses neuf cas, et c'est
-  // celle de l'ARMEMENT : la restauration de `attic-encours` se fait dans un effet ASYNCHRONE, donc
-  // le graphe est vide au montage. Un journal qui écrirait au premier changement remplacerait la
-  // session par du vide. Il ne s'arme donc que sur un graphe non vide.
-  // `memoriserEncours` change d'identité à chaque rendu ; le journal, lui, est créé une seule fois.
-  // Sans cette indirection, il écrirait avec la version de `buildExportData` du premier rendu —
-  // c'est-à-dire avec le graphe d'alors.
-  const memoriserEncoursRef = useRef(memoriserEncours);
-  memoriserEncoursRef.current = memoriserEncours;
-  const journalRef = useRef<JournalDeSession | null>(null);
-  if (!journalRef.current) {
-    journalRef.current = creerJournalDeSession({
-      ecrire: () => memoriserEncoursRef.current(),
-      ecrirePourSoi: () => { memoriserEncoursRef.current(false); },
-      // ON N'ÉCRASE QUE CE QU'ON A ÉCRIT SOI-MÊME, et le module dit pourquoi : une seconde fenêtre,
-      // ou une page qui pose un en-cours puis recharge, se faisait écraser par le vidage de
-      // fermeture. Une date postérieure à notre dernier changement vient d'ailleurs ; une ABSENCE
-      // de date aussi, puisque `memoriserEncours` en pose toujours une.
-      ecritPourAutrui: (depuis) => {
-        try {
-          const brut = localStorage.getItem("attic-encours");
-          if (!brut) return false;
-          const quand = Date.parse((JSON.parse(brut) as { date?: string }).date ?? "");
-          return !Number.isFinite(quand) || quand > depuis;
-        } catch { return false; }
-      },
-    });
-  }
-  const journal = journalRef.current;
-
-  useEffect(() => {
-    const vide = (o.grapheRacineRef.current?.nodes ?? o.nodes).length === 0;
-    if (!journal.estArme()) {
-      // RIEN À PERDRE SUR UN CANEVAS VIDE, et tout à perdre si l'on écrit avant la restauration.
-      if (vide) return;
-      journal.armer();
-    }
-    journal.noter();
-    // LE FICHIER COURANT EN EST AUSSI : détacher un projet ne change aucun nœud, et l'en-cours
-    // partagé garderait sinon le chemin quitté, que le lancement suivant rattacherait au graphe.
-  }, [o.nodes, o.edges, o.grapheRacineRef, journal, o.currentFilePath]);
-
-  useEffect(() => {
-    // LES DEUX ÉVÉNEMENTS, et non un seul. `beforeunload` ne part pas toujours quand le processus
-    // principal détruit la fenêtre ; `pagehide` est le plus fiable des deux. Vider deux fois ne
-    // coûte rien : la seconde ne trouve plus rien en attente.
-    const vider = () => journal.vider();
-    window.addEventListener("beforeunload", vider);
-    window.addEventListener("pagehide", vider);
-    return () => {
-      window.removeEventListener("beforeunload", vider);
-      window.removeEventListener("pagehide", vider);
-      journal.annuler();
-    };
-  }, [journal]);
+  // LE JOURNAL DE SESSION, qui fait survivre le travail en cours à une fermeture, vit dans
+  // `hooks/useJournalDeSession.ts`. Il est appelé ici, à la place exacte de son ancien bloc :
+  // l'ordre des crochets ne change pas.
+  useJournalDeSession(memoriserEncours, o);
 
   const exporter = useCallback(() => sauvegarder(true), [sauvegarder]);
 
