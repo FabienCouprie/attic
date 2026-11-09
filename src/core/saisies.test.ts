@@ -120,12 +120,15 @@ describe("la table des genres de saisie", () => {
 
   it("TOUT CE QUI S'ENREGISTRE ARRIVE AUX DEUX BOUTS DE LA PERSISTANCE", () => {
     // CE QUE CE CAS GARDE FERMÉ. Les sites qui écrivent le projet et qui le relisent énumèrent
-    // encore leurs clés à la main : `usePersistance.ts` d'un côté, la restauration de
+    // encore leurs clés à la main : `ui/projet-a-ecrire.ts` d'un côté, la restauration de
     // `useEnCours.ts` de l'autre. Tant qu'ils le font, un genre ajouté à la table sans être ajouté là serait écrit par
     // la table et perdu par la persistance, sans que rien ne le dise. C'est la divergence même que
     // cette table existe pour empêcher ; ici elle est surveillée plutôt que supprimée, parce que
     // réécrire ces deux sites demande d'éprouver un enregistrement et une réouverture.
-    const persistance = readFileSync(join("src", "ui", "hooks", "usePersistance.ts"), "utf8");
+    // LE CÔTÉ QUI ÉCRIT A CHANGÉ DE FICHIER le 2026-11-08 : les listes de champs sont sorties de
+    // `ui/hooks/usePersistance.ts` avec le corps qui les écrit. Ce cas lit là où elles sont, sans
+    // quoi il chercherait les champs dans un fichier qui ne les porte plus.
+    const persistance = readFileSync(join("src", "ui", "projet-a-ecrire.ts"), "utf8");
     const restauration = readFileSync(join("src", "ui", "hooks", "useEnCours.ts"), "utf8");
     const absents = (source: string) => [...CHAMPS_ENREGISTRES].filter((c) => !source.includes(c));
     expect(absents(persistance), "enregistré par la table, ignoré par la sauvegarde").toEqual([]);

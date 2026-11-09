@@ -16,7 +16,7 @@ import { servicesDomaine } from "./services-domaine";
 // figurait ici en dur, et c'était le domaine audio nommé dans le cœur.
 const TYPES_NON_SERIALIZABLE = ["File", "Blob", "ArrayBuffer", "Float32Array", "Float64Array", "Uint8Array", "Int16Array", "DataView"];
 
-// Liste blanche : champs conservés par usePersistance.exporter.
+// La liste à laquelle `ui/projet-a-ecrire.ts` compare chaque nœud avant d'écrire un projet.
 // Liste blanche : ce qu'un projet enregistre. DERIVEE de la table des genres de saisie, dans
 // core/saisies.ts, et non plus enumeree : le meme savoir etait ecrit ici et a sept autres endroits,
 // chacun avec un sous-ensemble different.
