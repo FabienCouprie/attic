@@ -1,20 +1,20 @@
 // ui/hooks/usePersistance.ts — Export / import du workflow (JSON) + méta-composants.
 // Extrait d'App.tsx à l'identique (comportement inchangé). Le hook reçoit l'état
 // et les setters dont il a besoin et renvoie { exporter, importer }.
+// Ce qu'un projet écrit, fichier et en-cours, se construit dans `ui/projet-a-ecrire.ts`.
 import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
-import type { Edge } from "@xyflow/react";
+import type { Edge, Viewport } from "@xyflow/react";
 import {
-  estSubstitution, metasEmployes, tousLesMetas, enregistrerMeta,
+  enregistrerMeta,
   FORMAT_PROJET, versionDuProjet, perteAuChargementVide, rienDePerduAuChargement, rapportDuChargement,
-  type AreteG, type MetaComposant, type NoeudG, type PerteAuChargement,
+  type MetaComposant, type PerteAuChargement,
 } from "../../core";
 import { servicesDomaine } from "../../core/services-domaine";
 import { registreUI } from "../registre-actif";
 import { pertesDesNoeuds, traduireNomsHerites } from "../pertes-chargement";
 import { creerJournalDeSession, type JournalDeSession } from "../journal-de-session";
-import { serialiserMeta } from "../metasLocaux";
-import { detecterPertes, formaterRapportPertes } from "../../core/pertes";
+import { projetAEcrire } from "../projet-a-ecrire";
 import { useI18n } from "../../i18n";
 import { rechargerFichiersPersistes } from "../rechargerFichiers";
 import { filtrerAretesInvalides } from "../validerGraphe";
@@ -38,6 +38,8 @@ export interface OptionsPersistance {
   sauvegarderContexteCourant: () => void;
   grapheRacineRef: MutableRefObject<GrapheRacine>;
   setPile: (p: { metaId: string; nom: string; nomEn?: string }[]) => void;
+  /** Où l'import dépose la vue du fichier, pour le recadrage que sa remise à zéro de la pile déclenche. */
+  vueAPoserRef: MutableRefObject<Viewport | null>;
   reinitialiserNoeud: (id: string) => void;
   supprimerNoeud: (ids: string | string[]) => void;
   setPrioritaire: (id: string | null) => void;
@@ -66,97 +68,7 @@ export function usePersistance(o: OptionsPersistance) {
   const buildExportData = useCallback(() => {
     o.sauvegarderContexteCourant();
     const racine = o.grapheRacineRef.current ?? { nodes: o.nodes, edges: o.edges };
-
-    // ── Détection des pertes de données (Chantier B) ──
-    const pertes: { noeud: string; champs: ReturnType<typeof detecterPertes> }[] = [];
-    for (const n of racine.nodes) {
-      const champsPurges = detecterPertes(n.data as Record<string, unknown>);
-      if (champsPurges.length > 0) {
-        pertes.push({ noeud: n.data?.ficheId ?? n.id, champs: champsPurges });
-      }
-    }
-    if (pertes.length > 0) {
-      const rapport = formaterRapportPertes(pertes);
-      console.warn(`[attic] Données non-sérialisables purgées lors de l'export :\n${rapport}`);
-    }
-
-    const cleanNodes = racine.nodes.map(({ id, type, position, width, height, data }) => ({
-      id, type, position, width, height,
-      data: {
-        ficheId: data.ficheId,
-        parametres: data.parametres,
-        audioNom: data.audioNom,
-        audioChemin: data.audioChemin,
-        midiNom: data.midiNom,
-        imageNom: data.imageNom,
-        svgNom: data.svgNom,
-        zonesSelectionnees: data.zonesSelectionnees,
-        // Le .sfz designe dans un « Clavier SFZ » : sans lui, un graphe reouvert avait un clavier
-        // sans instrument, alors que le fichier n'avait pas bouge du disque.
-        sfzChemin: data.sfzChemin,
-        sfzNom: data.sfzNom,
-        // Ce qui a ete joue au clavier d'un noeud : perdu jusqu'ici a chaque reouverture.
-        sequenceNotes: data.sequenceNotes,
-        // CE QU'ON A DECOUPE SUR LA LIGNE DE TEMPS D'UN MONTAGE. Absent de cette liste, un montage
-        // decoupe revenait intact de sa sauvegarde : les morceaux deplaces, coupes et regles etaient
-        // perdus en silence.
-        morceaux: data.morceaux,
-        // COMBIEN DE PORTS UN NŒUD EXTENSIBLE MONTRE, des deux côtés. Absents de cette liste, les
-        // ports ouverts à la main revenaient refermés : la règle du bas ramène ceux qui portent un
-        // câble, mais les emplacements libres qu'on avait ouverts pour brancher étaient perdus, et
-        // le nœud rouvert ne ressemblait plus à celui qu'on avait quitté.
-        portsVisibles: data.portsVisibles,
-        portsVisiblesSortie: data.portsVisiblesSortie,
-        nomFichier: data.nomFichier,
-        nom: data.nom,
-        // Le second texte d'une note ou d'un cadre, qui suit la langue de l'interface. Absent de
-        // cette liste, il serait perdu au premier enregistrement, en silence.
-        nomEn: data.nomEn,
-        couleur: data.couleur,
-        // LES DEUX SEULS CHAMPS D'UNE BULLE : à quelle bulle ce nœud appartient, et si elle est
-        // repliée. Le reste — ce qui est caché, les arêtes de substitution, la fiche et ses ports —
-        // est DÉRIVÉ, donc refait à l'ouverture. Voir core/bulles.ts.
-        bulle: data.bulle,
-        bulleOuverte: data.bulleOuverte,
-      },
-    }));
-    // LES ARÊTES DE SUBSTITUTION NE SE SAUVEGARDENT PAS : ce sont des objets d'affichage, refaits au
-    // chargement par la normalisation. Les écrire les ferait s'accumuler d'une sauvegarde à l'autre.
-    const cleanEdges = racine.edges
-      .filter((e: { id: string }) => !estSubstitution(e as unknown as AreteG))
-      .map(({ id, source, target, sourceHandle, targetHandle, type, style }: any) => ({
-        id, source, target, sourceHandle, targetHandle, type, style,
-      }));
-    // UN PROJET N'EMPORTE QUE LES MÉTAS QU'IL EMPLOIE, relevé par Fabien. Il recopiait ici toute la
-    // bibliothèque de la session : un graphe livré posait les composants personnels de qui l'avait
-    // enregistré dans la palette de qui l'ouvrait. La bibliothèque, elle, reste entière dans
-    // ses clés `attic-meta:<id>` ; c'est le fichier de projet, et lui seul, qui se restreint.
-    const metas = metasEmployes(racine.nodes as unknown as NoeudG[], tousLesMetas()).map(serialiserMeta);
-    // LE NUMÉRO DE FORMAT, EN PREMIER DANS LE FICHIER, et c'est la seule place qui vaille : on le
-    // lit alors sans dérouler le reste. Il vaut 1, qui est le format de TOUS les fichiers écrits
-    // jusqu'ici — leur donner un numéro ne les change pas, cela les nomme. Voir `core/format-projet`.
-    // ET LES RÉGLAGES DU DOMAINE VOYAGENT AVEC LE PROJET — côté audio, sa fréquence de travail.
-    // Sans cela le réglage ne vaudrait que pour la session : un fichier rouvert ailleurs, ou demain,
-    // rendrait un autre son, et c'est exactement le défaut qu'il répare. CE FICHIER NE SAIT PAS CE
-    // QU'IL ÉCRIT, et c'est voulu : il demande au domaine ce qu'il a à mettre dans le fichier, par
-    // `core/services-domaine.ts`. Un garde l'exige — changer de domaine est un but du projet.
-    const json = JSON.stringify({
-      formatVersion: FORMAT_PROJET, ...servicesDomaine().reglagesDeProjet(),
-      nodes: cleanNodes, edges: cleanEdges, metas, viewport: o.rfInstance?.getViewport(),
-    }, null, 2);
-
-    const encours = {
-      // `bulle` et `replie` ici AUSSI : la reprise de session lit cet objet, et une bulle absente de
-      // celui-ci reviendrait en nœud sans ports, ses arêtes perdues. `cleanEdges` a déjà écarté les
-      // arêtes de substitution.
-      nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, morceaux: n.data.morceaux,portsVisibles: n.data.portsVisibles, portsVisiblesSortie: n.data.portsVisiblesSortie, nom: n.data.nom, nomEn: n.data.nomEn, couleur: n.data.couleur, bulle: n.data.bulle, bulleOuverte: n.data.bulleOuverte } })),
-      edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
-      viewport: o.rfInstance?.getViewport(),
-      ...servicesDomaine().reglagesDeProjet(),
-      date: new Date().toISOString(),
-    };
-
-    return { json, cleanNodes, cleanEdges, encours };
+    return projetAEcrire(racine, () => o.rfInstance?.getViewport());
   }, [o]);
 
   /** Sauvegarde "classique" : écrit dans le fichier courant si connu, sinon demande. */
@@ -363,7 +275,11 @@ export function usePersistance(o: OptionsPersistance) {
 
   const exporter = useCallback(() => sauvegarder(true), [sauvegarder]);
 
-  const importer = useCallback(async (f?: File) => {
+  // `cadrer` : la vue que le fichier porte est ignorée, et le projet ouvert est cadré. C'est ce que
+  // demande l'ouverture d'un exemple livré, décidé par Fabien le 2026-11-09 : un exemple s'ouvre sur
+  // n'importe quelle fenêtre, et seize des vingt portaient une vue que personne n'avait jamais vue,
+  // sous laquelle sept s'ouvraient sur un canevas presque vide.
+  const importer = useCallback(async (f?: File, ouverture: { cadrer?: boolean } = {}) => {
     let texte: string;
     let chemin: string | null = null;
     if (f) {
@@ -408,6 +324,10 @@ export function usePersistance(o: OptionsPersistance) {
       catch (e) { console.error(`[attic] Import : méta « ${(m as any)?.id} » non enregistré`, e); }
     }
     // On repart à la racine (fin d'une éventuelle navigation dans un méta).
+    // LA VUE DU FICHIER EST DÉPOSÉE AVANT : cette remise à zéro déclenche le recadrage d'`App.tsx`,
+    // qui écrasait la vue posée plus bas. Il la pose désormais au lieu de cadrer ; sans vue, ou pour
+    // un exemple, il cadre.
+    o.vueAPoserRef.current = ouverture.cadrer ? null : json.viewport ?? null;
     o.setPile([]);
     o.grapheRacineRef.current = null;
     const importedNodes = (json.nodes || []).map((n: any) => ({
@@ -465,7 +385,7 @@ export function usePersistance(o: OptionsPersistance) {
     // graphe racine viennent d'être remis à zéro : seuls les nœuds importés vivent encore.
     // Voir `ui/oubli-noeuds.ts`.
     oublierNoeuds(idsDe(importedNodes));
-    if (json.viewport && o.rfInstance) o.rfInstance.setViewport(json.viewport);
+    if (json.viewport && o.rfInstance && !ouverture.cadrer) o.rfInstance.setViewport(json.viewport);
 
     // LE RAPPORT PARAÎT APRÈS QUE LE GRAPHE EST POSÉ, et non avant : ce qui s'est ouvert est à
     // l'écran derrière le message, et l'on peut donc rapprocher les deux.

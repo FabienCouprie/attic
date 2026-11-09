@@ -189,7 +189,7 @@ function sourcesRacine(): string[] {
  * de dix-huit lignes, et c'est ce qui compte — `ui/BarreOutils.tsx` n'en sait rien, elle pose une
  * balise ; un autre domaine retire ce fichier et cette ligne, et garde la barre entière.
  *
- * ET CE QUI POUVAIT ÊTRE DÉCOUPLÉ L'A ÉTÉ : `ui/hooks/usePersistance.ts` écrit ce réglage dans le
+ * ET CE QUI POUVAIT ÊTRE DÉCOUPLÉ L'A ÉTÉ : `ui/projet-a-ecrire.ts` écrit ce réglage dans le
  * fichier de projet sans savoir ce qu'il écrit, en le demandant par `core/services-domaine.ts`.
  * C'est ce garde-ci qui l'a exigé, et il avait raison : la sauvegarde n'a pas à connaître l'audio.
  */

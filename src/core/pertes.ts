@@ -6,7 +6,7 @@
 // présents dans `data` avec la liste blanche d'export et renvoie explicitement
 // les champs purgés avec leur type, pour affichage à l'utilisateur.
 
-import { CHAMPS_ENREGISTRES, CHAMPS_RECHARGEABLES } from "./saisies";
+import { CHAMPS_RECHARGEABLES } from "./saisies";
 import { servicesDomaine } from "./services-domaine";
 
 // Types de champs qui ne survivent pas à JSON.stringify / re-parse.
@@ -16,11 +16,13 @@ import { servicesDomaine } from "./services-domaine";
 // figurait ici en dur, et c'était le domaine audio nommé dans le cœur.
 const TYPES_NON_SERIALIZABLE = ["File", "Blob", "ArrayBuffer", "Float32Array", "Float64Array", "Uint8Array", "Int16Array", "DataView"];
 
-// Liste blanche : champs conservés par usePersistance.exporter.
-// Liste blanche : ce qu'un projet enregistre. DERIVEE de la table des genres de saisie, dans
-// core/saisies.ts, et non plus enumeree : le meme savoir etait ecrit ici et a sept autres endroits,
-// chacun avec un sous-ensemble different.
-const CHAMPS_CONSERVES = CHAMPS_ENREGISTRES;
+// LA LISTE BLANCHE EST CELLE DE L'ÉCRIVAIN, et elle arrive avec l'appel : `ui/projet-a-ecrire.ts`
+// passe les champs qu'il écrit vraiment, lus sur ce qu'il vient de construire. Elle était la table
+// des genres de saisie, `CHAMPS_ENREGISTRES` de `core/saisies.ts`, et la table ne nomme pas tout ce
+// que le fichier garde : `bulle` et `bulleOuverte`, qu'elle écarte exprès, ni `audioChemin`,
+// `portsVisibles` et `portsVisiblesSortie`. La console annonçait donc purgés, à chaque
+// enregistrement, cinq champs que le fichier venait d'écrire. Relevé le 2026-11-08 par
+// `tests-e2e/persistance-aller-retour.spec.ts`. Ce qui est perdu se mesure à ce qui est écrit.
 
 // Champs File/Blob re-créés à partir du paramètre "Chemin" sauvé : pas la peine
 // de les signaler comme des pertes à l'export.
@@ -52,13 +54,14 @@ function estNonSerializable(v: unknown): boolean {
     || servicesDomaine().typesNonSerialisables.includes(nom);
 }
 
-// Analyse un objet `data` de nœud et renvoie la liste des champs purgés.
+// Analyse un objet `data` de nœud et renvoie la liste des champs purgés : ceux que `conserves`, les
+// champs que l'écrivain garde de ce nœud, ne nomme pas.
 export interface ChampPurge { champ: string; type: string; nom?: string }
-export function detecterPertes(data: Record<string, unknown>): ChampPurge[] {
+export function detecterPertes(data: Record<string, unknown>, conserves: ReadonlySet<string>): ChampPurge[] {
   const pertes: ChampPurge[] = [];
   for (const [cle, val] of Object.entries(data)) {
     if (val === undefined || val === null) continue;
-    if (CHAMPS_CONSERVES.has(cle)) continue;
+    if (conserves.has(cle)) continue;
     // Champs commençant par _ (internes, temporaires) — non purgés, juste ignorés
     if (cle.startsWith("_") || cle.startsWith("on")) continue;
     // Champs de statut runtime (recréés à l'exécution)
@@ -80,7 +83,7 @@ export function detecterPertes(data: Record<string, unknown>): ChampPurge[] {
       continue;
     }
     // Tout autre champ non whitelisté est potentiellement perdu
-    if (!CHAMPS_CONSERVES.has(cle)) {
+    if (!conserves.has(cle)) {
       pertes.push({ champ: cle, type: typeChamp(val), nom: (val as any)?.name });
     }
   }

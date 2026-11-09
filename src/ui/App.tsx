@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap,
   useNodesState, useEdgesState,
-  type Node, type Edge,
+  type Node, type Edge, type Viewport,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -120,6 +120,8 @@ function Atelier() {
   const [pile, setPile] = useState<{ metaId: string; nom: string; nomEn?: string }[]>([]);
   const pileRef = useRef(pile);
   pileRef.current = pile;
+  /** La vue d'un projet qu'on vient d'ouvrir, que le recadrage du bas pose au lieu de cadrer. */
+  const vueAPoserRef = useRef<Viewport | null>(null);
   const grapheRacineRef = useRef<{ nodes: NoeudAtelier[]; edges: Edge[] } | null>(null);
   const [enExecution, setEnExecution] = useState(false);
   const enExecRef = useRef(false);
@@ -193,8 +195,19 @@ function Atelier() {
   }, [prioritaire, setNodes]);
 
   // Recadre la vue à chaque navigation dans/hors d'un méta-composant.
+  //
+  // SAUF QUAND UN PROJET VIENT D'ÊTRE OUVERT AVEC SA VUE. L'import remet la pile à zéro, ce qui
+  // déclenche cet effet, et le recadrage écrasait la vue que le fichier porte : elle n'avait jamais
+  // été rendue, depuis la première version. Relevé le 2026-11-08 par
+  // `tests-e2e/persistance-aller-retour.spec.ts` : une vue `{ x: 40, y: 80, zoom: 0.75 }` ouverte
+  // revenait `{ x: -4, y: 300.75, zoom: 0.5 }`. L'import dépose donc la vue lue dans `vueAPoserRef`
+  // avant de remettre la pile à zéro, et ce recadrage-ci la pose. Un fichier sans vue est cadré.
   useEffect(() => {
-    const t = setTimeout(() => rfInstance?.fitView?.({ duration: 200, padding: 0.2 }), 60);
+    const t = setTimeout(() => {
+      const vue = vueAPoserRef.current;
+      vueAPoserRef.current = null;
+      if (vue) rfInstance?.setViewport?.(vue); else rfInstance?.fitView?.({ duration: 200, padding: 0.2 });
+    }, 60);
     return () => clearTimeout(t);
   }, [pile, rfInstance]);
 
@@ -434,7 +447,7 @@ function Atelier() {
   // Export / import du workflow, dans hooks/usePersistance.ts.
   const { sauvegarder, sauvegarderAuto, exporter, importer, memoriserEncours } = usePersistance({
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
-    sauvegarderContexteCourant, grapheRacineRef, setPile,
+    sauvegarderContexteCourant, grapheRacineRef, setPile, vueAPoserRef,
     reinitialiserNoeud, supprimerNoeud, setPrioritaire, lancerRef, cacheExec,
     callbacksNoeud,
     currentFilePath, setCurrentFilePath,
@@ -467,17 +480,19 @@ function Atelier() {
         filters: [{ name: "Workflow Attic", extensions: ["json"] }],
       });
       if (!choisi) return;
-      await importer(new File([choisi.contenu], choisi.nom, { type: "application/json" }));
       // CE N'EST UN EXEMPLE QUE SI C'EN EST UN. Le dialogue s'ouvre sur le dossier des exemples,
       // mais rien n'empêche d'en sortir et de prendre son propre projet : celui-là garde son
-      // fichier courant, et le Ctrl+S suivant doit l'écrire là où il est.
+      // fichier courant, et le Ctrl+S suivant doit l'écrire là où il est. ET SA VUE : seul un
+      // exemple est cadré, la question se pose donc avant de l'ouvrir.
       const normaliser = (c: string) => c.replace(/\\/g, "/").toLowerCase();
-      if (dossier && normaliser(choisi.chemin).startsWith(normaliser(dossier) + "/")) setCurrentFilePath(null);
+      const estExemple = !!dossier && normaliser(choisi.chemin).startsWith(normaliser(dossier) + "/");
+      await importer(new File([choisi.contenu], choisi.nom, { type: "application/json" }), { cadrer: estExemple });
+      if (estExemple) setCurrentFilePath(null);
       return;
     }
     const ex = EXEMPLES.find((e) => e.id === id);
     if (!ex) return;
-    await importer(fichierDExemple(ex));
+    await importer(fichierDExemple(ex), { cadrer: true });
     setCurrentFilePath(null);
   }, [importer, setCurrentFilePath]);
 
