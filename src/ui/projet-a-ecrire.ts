@@ -5,6 +5,9 @@
 // ligne : seules ses deux lectures du crochet changent de forme. Le graphe racine arrive en
 // argument, et la vue par une fonction appelée aux deux mêmes places qu'avant.
 //
+// UNE SEULE CHOSE A CHANGÉ DEPUIS, le 2026-11-09 : la détection des pertes vient après les nœuds
+// propres, et se mesure à eux. Elle annonçait purgés cinq champs que le fichier écrit.
+//
 // CE QUI RESTE AU CROCHET, et pourquoi : `sauvegarderContexteCourant()`, appelé avant tout. À la
 // racine il pose une copie du graphe dans `grapheRacineRef` ; dans un méta, il réécrit la définition
 // du méta. Ce sont des effets sur l'atelier, et ce module n'en a aucun : il lit la bibliothèque des
@@ -34,19 +37,6 @@ export interface GrapheAEcrire { nodes: NoeudAtelier[]; edges: Edge[] }
  * puis pour l'en-cours, comme la vue de React Flow l'était.
  */
 export function projetAEcrire(racine: GrapheAEcrire, lireVue: () => unknown) {
-  // ── Détection des pertes de données (Chantier B) ──
-  const pertes: { noeud: string; champs: ReturnType<typeof detecterPertes> }[] = [];
-  for (const n of racine.nodes) {
-    const champsPurges = detecterPertes(n.data as Record<string, unknown>);
-    if (champsPurges.length > 0) {
-      pertes.push({ noeud: n.data?.ficheId ?? n.id, champs: champsPurges });
-    }
-  }
-  if (pertes.length > 0) {
-    const rapport = formaterRapportPertes(pertes);
-    console.warn(`[attic] Données non-sérialisables purgées lors de l'export :\n${rapport}`);
-  }
-
   const cleanNodes = racine.nodes.map(({ id, type, position, width, height, data }) => ({
     id, type, position, width, height,
     data: {
@@ -87,6 +77,24 @@ export function projetAEcrire(racine: GrapheAEcrire, lireVue: () => unknown) {
       bulleOuverte: data.bulleOuverte,
     },
   }));
+
+  // ── Détection des pertes de données (Chantier B) ──
+  //
+  // CE QUI EST PERDU SE MESURE À CE QUI VIENT D'ÊTRE ÉCRIT : les champs d'un nœud propre, lus sur
+  // l'objet ci-dessus, qui les porte tous même quand ils valent `undefined`. La détection venait
+  // avant lui et comparait à la table des saisies, qui ne les nomme pas tous : voir `core/pertes.ts`.
+  const pertes: { noeud: string; champs: ReturnType<typeof detecterPertes> }[] = [];
+  for (const [i, n] of racine.nodes.entries()) {
+    const champsPurges = detecterPertes(n.data as Record<string, unknown>, new Set(Object.keys(cleanNodes[i].data)));
+    if (champsPurges.length > 0) {
+      pertes.push({ noeud: n.data?.ficheId ?? n.id, champs: champsPurges });
+    }
+  }
+  if (pertes.length > 0) {
+    const rapport = formaterRapportPertes(pertes);
+    console.warn(`[attic] Données non-sérialisables purgées lors de l'export :\n${rapport}`);
+  }
+
   // LES ARÊTES DE SUBSTITUTION NE SE SAUVEGARDENT PAS : ce sont des objets d'affichage, refaits au
   // chargement par la normalisation. Les écrire les ferait s'accumuler d'une sauvegarde à l'autre.
   const cleanEdges = racine.edges

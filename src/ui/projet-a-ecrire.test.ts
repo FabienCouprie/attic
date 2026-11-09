@@ -1,10 +1,13 @@
 // ui/projet-a-ecrire.test.ts — Ce qu'un projet écrit est ce que le crochet écrivait.
 //
 // LE TÉMOIN EST L'ANCIEN CORPS, recopié de `ui/hooks/usePersistance.ts` sur `bc79523` sans ses
-// commentaires, et il garde sa lecture `o.rfInstance?.getViewport()` : aucune ligne de code n'y est
-// retouchée, pas même pour la rendre plus commode. Chaque cas le fait tourner avec le module sur la
-// même entrée, à la même heure, et exige le même fichier, octet pour octet, le même en-cours et la
-// même console.
+// commentaires, et il garde sa lecture `o.rfInstance?.getViewport()`. Une seule retouche : la liste
+// blanche que `detecterPertes` lisait d'elle-même, `CHAMPS_ENREGISTRES`, lui est passée, puisqu'elle
+// la reçoit désormais. Chaque cas le fait tourner avec le module sur la même entrée, à la même
+// heure, et exige le même fichier, octet pour octet, et le même en-cours.
+//
+// LA CONSOLE, ELLE, A CHANGÉ EXPRÈS : elle annonçait purgés cinq champs que le fichier écrit. Le
+// module doit dire tout ce que l'ancien corps disait, sauf ce que le fichier garde.
 //
 // ET QUELQUES AFFIRMATIONS DIRECTES, parce qu'une égalité avec un témoin ne dit pas ce que le
 // témoin faisait : le numéro de format en tête, les arêtes de substitution écartées, le méta non
@@ -26,7 +29,7 @@ function ancien(racine: { nodes: any[]; edges: any[] }, o: { rfInstance: any }) 
   // ── Détection des pertes de données (Chantier B) ──
   const pertes: { noeud: string; champs: ReturnType<typeof detecterPertes> }[] = [];
   for (const n of racine.nodes) {
-    const champsPurges = detecterPertes(n.data as Record<string, unknown>);
+    const champsPurges = detecterPertes(n.data as Record<string, unknown>, CHAMPS_ENREGISTRES);
     if (champsPurges.length > 0) {
       pertes.push({ noeud: n.data?.ficheId ?? n.id, champs: champsPurges });
     }
@@ -133,6 +136,22 @@ function lesDeux(racine: { nodes: any[]; edges: any[] }, vue: unknown) {
   return { a, n, consoleAncien, consoleNouveau: avertissements, lectures };
 }
 
+/** Les champs qu'un avertissement nomme, sous la forme `fiche.champ`, dans l'ordre où il les dit. */
+function champsNommes(avertissements: unknown[][]): string[] {
+  const out: string[] = [];
+  for (const a of avertissements) {
+    let noeud = "";
+    for (const l of String(a[0]).split("\n").slice(1)) {
+      const m = /^ {2}• (\S+) \(/.exec(l);
+      if (m) out.push(`${noeud}.${m[1]}`); else noeud = l.replace(/:$/, "");
+    }
+  }
+  return out;
+}
+
+/** Ce que le fichier garde d'un nœud : les clés d'un nœud propre, qui les porte toutes. */
+const gardes = (n: { cleanNodes: { data: object }[] }) => new Set(Object.keys(n.cleanNodes[0].data));
+
 describe("ce qu'un projet écrit", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -149,14 +168,36 @@ describe("ce qu'un projet écrit", () => {
     vi.useRealTimers();
   });
 
-  it("REND LE FICHIER, L'EN-COURS ET LA CONSOLE DE L'ANCIEN CORPS, sur un graphe qui exerce chaque branche", () => {
-    const { a, n, consoleAncien, consoleNouveau } = lesDeux(graphe(), VUE);
+  it("REND LE FICHIER ET L'EN-COURS DE L'ANCIEN CORPS, sur un graphe qui exerce chaque branche", () => {
+    const { a, n } = lesDeux(graphe(), VUE);
     expect(n.json).toBe(a.json);
     expect(n.encours).toEqual(a.encours);
     expect(n.cleanNodes).toEqual(a.cleanNodes);
     expect(n.cleanEdges).toEqual(a.cleanEdges);
-    expect(consoleAncien.length, "le graphe porte des champs écartés : la console devait en parler").toBe(1);
-    expect(consoleNouveau).toEqual(consoleAncien);
+  });
+
+  it("LA CONSOLE DIT CE QUE L'ANCIENNE DISAIT, SAUF LES CHAMPS QUE LE FICHIER GARDE", () => {
+    const { n, consoleAncien, consoleNouveau } = lesDeux(graphe(), VUE);
+    const avant = champsNommes(consoleAncien);
+    const garde = gardes(n);
+    expect(avant, "l'ancienne console nommait ces champs gardés : le cas les exerce").toEqual(
+      expect.arrayContaining(["generateur-courbe.audioChemin", "generateur-courbe.portsVisibles",
+        "generateur-courbe.portsVisiblesSortie", "echo.bulle", "bulle::b.bulleOuverte"]));
+    expect(champsNommes(consoleNouveau)).toEqual(avant.filter((c) => !garde.has(c.split(".").pop()!)));
+    expect(champsNommes(consoleNouveau), "ce que rien n'écrit reste dit").toEqual(
+      expect.arrayContaining(["generateur-courbe.champInconnu", "echo.cacheParBulle"]));
+  });
+
+  it("AUCUN CHAMP QUE LE FICHIER GARDE N'EST DIT PERDU, quel que soit le nœud qui le porte", () => {
+    const p = porteur();
+    const data = p.data as Record<string, unknown>;
+    const garde = gardes(projetAEcrire({ nodes: [porteur()], edges: [] }, () => undefined));
+    for (const c of garde) data[c] ??= `valeur de ${c}`;
+    const avertissements: unknown[][] = [];
+    const espion = vi.spyOn(console, "warn").mockImplementation((...a: unknown[]) => { avertissements.push(a); });
+    projetAEcrire({ nodes: [p], edges: [] }, () => undefined);
+    espion.mockRestore();
+    expect(champsNommes(avertissements).filter((c) => garde.has(c.split(".").pop()!)), "gardé par le fichier, dit perdu").toEqual([]);
   });
 
   it("ET CE FICHIER-LÀ DIT CE QU'IL DOIT : format en tête, ni substitution, ni méta libre, ni champ inconnu", () => {
@@ -198,13 +239,14 @@ describe("ce qu'un projet écrit", () => {
     expect((n.encours as Record<string, unknown>).frequenceDeTravail).toBe(48000);
   });
 
-  it("UN CHAMP QUI NE SE SÉRIALISE PAS EST DIT EN CONSOLE, dans les mêmes mots", () => {
+  it("UN CHAMP QUI NE SE SÉRIALISE PAS EST DIT EN CONSOLE, avec son type", () => {
     const g = graphe();
     (g.nodes[0].data as Record<string, unknown>).audioFichier = new Blob(["x"]);
     (g.nodes[0].data as Record<string, unknown>).tampon = new ArrayBuffer(4);
-    const { a, n, consoleAncien, consoleNouveau } = lesDeux(g, VUE);
+    const { a, n, consoleNouveau } = lesDeux(g, VUE);
     expect(n.json).toBe(a.json);
-    expect(String(consoleNouveau[0]?.[0])).toContain("tampon");
-    expect(consoleNouveau).toEqual(consoleAncien);
+    expect(String(consoleNouveau[0]?.[0])).toContain("• tampon (ArrayBuffer)");
+    // Le fichier audio se refait depuis son chemin à l'ouverture : il n'est pas une perte.
+    expect(champsNommes(consoleNouveau)).not.toContain("generateur-courbe.audioFichier");
   });
 });
