@@ -4,7 +4,7 @@
 // Ce qu'un projet écrit, fichier et en-cours, se construit dans `ui/projet-a-ecrire.ts`.
 import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
-import type { Edge } from "@xyflow/react";
+import type { Edge, Viewport } from "@xyflow/react";
 import {
   enregistrerMeta,
   FORMAT_PROJET, versionDuProjet, perteAuChargementVide, rienDePerduAuChargement, rapportDuChargement,
@@ -38,6 +38,8 @@ export interface OptionsPersistance {
   sauvegarderContexteCourant: () => void;
   grapheRacineRef: MutableRefObject<GrapheRacine>;
   setPile: (p: { metaId: string; nom: string; nomEn?: string }[]) => void;
+  /** Où l'import dépose la vue du fichier, pour le recadrage que sa remise à zéro de la pile déclenche. */
+  vueAPoserRef: MutableRefObject<Viewport | null>;
   reinitialiserNoeud: (id: string) => void;
   supprimerNoeud: (ids: string | string[]) => void;
   setPrioritaire: (id: string | null) => void;
@@ -273,7 +275,11 @@ export function usePersistance(o: OptionsPersistance) {
 
   const exporter = useCallback(() => sauvegarder(true), [sauvegarder]);
 
-  const importer = useCallback(async (f?: File) => {
+  // `cadrer` : la vue que le fichier porte est ignorée, et le projet ouvert est cadré. C'est ce que
+  // demande l'ouverture d'un exemple livré, décidé par Fabien le 2026-11-09 : un exemple s'ouvre sur
+  // n'importe quelle fenêtre, et seize des vingt portaient une vue que personne n'avait jamais vue,
+  // sous laquelle sept s'ouvraient sur un canevas presque vide.
+  const importer = useCallback(async (f?: File, ouverture: { cadrer?: boolean } = {}) => {
     let texte: string;
     let chemin: string | null = null;
     if (f) {
@@ -318,6 +324,10 @@ export function usePersistance(o: OptionsPersistance) {
       catch (e) { console.error(`[attic] Import : méta « ${(m as any)?.id} » non enregistré`, e); }
     }
     // On repart à la racine (fin d'une éventuelle navigation dans un méta).
+    // LA VUE DU FICHIER EST DÉPOSÉE AVANT : cette remise à zéro déclenche le recadrage d'`App.tsx`,
+    // qui écrasait la vue posée plus bas. Il la pose désormais au lieu de cadrer ; sans vue, ou pour
+    // un exemple, il cadre.
+    o.vueAPoserRef.current = ouverture.cadrer ? null : json.viewport ?? null;
     o.setPile([]);
     o.grapheRacineRef.current = null;
     const importedNodes = (json.nodes || []).map((n: any) => ({
@@ -375,7 +385,7 @@ export function usePersistance(o: OptionsPersistance) {
     // graphe racine viennent d'être remis à zéro : seuls les nœuds importés vivent encore.
     // Voir `ui/oubli-noeuds.ts`.
     oublierNoeuds(idsDe(importedNodes));
-    if (json.viewport && o.rfInstance) o.rfInstance.setViewport(json.viewport);
+    if (json.viewport && o.rfInstance && !ouverture.cadrer) o.rfInstance.setViewport(json.viewport);
 
     // LE RAPPORT PARAÎT APRÈS QUE LE GRAPHE EST POSÉ, et non avant : ce qui s'est ouvert est à
     // l'écran derrière le message, et l'on peut donc rapprocher les deux.

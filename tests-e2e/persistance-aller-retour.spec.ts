@@ -22,11 +22,7 @@
 //    la sauvegarde automatique vient d'écrire, octet pour octet. L'en-cours partagé et celui de la
 //    fenêtre sont le même texte, et ne disent rien que le fichier ne dise.
 // 4. DANS UNE SECONDE APPLICATION, sur un profil neuf, OUVRIR L'EXPORT ET L'EXPORTER À NOUVEAU : le
-//    second export est le premier, octet pour octet, à la vue près.
-//
-// CE QU'ELLE NE TIENT PAS : la vue. Un projet ouvert est recadré, et la vue qu'il portait est perdue ;
-// le point 1 dit pourquoi. C'est un comportement de l'application, relevé et laissé, pas une
-// tolérance de l'épreuve.
+//    second export est le premier, octet pour octet, vue comprise.
 // Et aucune alerte de tout le trajet : le projet est sain, et un rapport qui paraîtrait dirait une
 // perte.
 //
@@ -84,7 +80,11 @@ function semence(): Projet {
   Object.assign(porteur.data, CHAMPS_DU_PORTEUR, { [CHAMP_INCONNU]: "rien ne l'enregistre" });
   note.data.couleur = "#6a4cff";
   g.metas = [META_NON_EMPLOYE];
-  g.viewport = { x: 40, y: 80, zoom: 0.75 };
+  // UNE VUE QUI LAISSE LE NŒUD DÉPLACÉ À L'ÉCRAN : la vue du fichier étant rendue, celle-ci décide de
+  // ce que la souris peut saisir. À 0,75, « ecoute » tombait sous l'inspecteur. ET UN ZOOM DANS LES
+  // BORNES DE REACT FLOW, de 0,5 à 2, les seuls que l'application écrive : en dessous, le premier
+  // cran de molette ramène la vue à 0,5.
+  g.viewport = { x: -200, y: 40, zoom: 0.55 };
   return g;
 }
 
@@ -237,16 +237,19 @@ test.describe("l'aller-retour d'un projet par le disque", () => {
         expect(CHAMP_INCONNU in porteur.data, "un champ que rien n'enregistre a été écrit").toBe(false);
         expect(A.edges.map((e) => e.id), "une arête de substitution, ou une arête perdue").toEqual(g.edges.map((e) => e.id));
         expect((A.metas ?? []).map((m) => m.id), "le projet n'emporte que le méta qu'il emploie").toEqual(["meta-synth-soustractif"]);
-        // LA VUE DU FICHIER N'EST PAS RENDUE À L'OUVERTURE, et ce cas ne le prétend pas. L'import pose
-        // la vue lue, puis remet la pile des métas à zéro ; l'effet d'`App.tsx` qui recadre à chaque
-        // navigation dans un méta se déclenche alors, et recadre. Relevé le 2026-11-08 : une vue
-        // `{ x: 40, y: 80, zoom: 0.75 }` ouverte revient `{ x: -4, y: 300.75, zoom: 0.5 }`. Le fichier
-        // écrit porte donc la vue recadrée, et l'aller-retour du point 4 la retrouve à l'identique.
-        expect(Object.keys(A.viewport as object).sort()).toEqual(["x", "y", "zoom"]);
+        // LA VUE DU FICHIER EST RENDUE À L'OUVERTURE. Elle ne l'était pas : l'import remet la pile des
+        // métas à zéro, et l'effet d'`App.tsx` qui recadre à chaque navigation dans un méta écrasait
+        // la vue lue. Relevé le 2026-11-08, `{ x: 40, y: 80, zoom: 0.75 }` revenait
+        // `{ x: -4, y: 300.75, zoom: 0.5 }` ; réparé le 2026-11-09.
+        expect(A.viewport, "la vue du fichier n'a pas été rendue à l'ouverture").toEqual(g.viewport);
 
         // ═══ 2. DÉPLACER UN NŒUD, ET LAISSER LA SAUVEGARDE AUTOMATIQUE ÉCRIRE ═══
         const entete = un.page.locator('.react-flow__node[data-id="ecoute"] .attic-node-entete');
         const b = (await entete.boundingBox())!;
+        // LE POINT SAISI EST SUR LE NŒUD, et non sur ce qui le couvre : sans cela le glisser ne déplace
+        // rien, et l'échec se lit cinquante secondes plus tard comme une sauvegarde qui n'écrit pas.
+        expect(await un.page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest(".react-flow__node")?.getAttribute("data-id") ?? null,
+          [b.x + 12, b.y + b.height / 2]), "le nœud à déplacer n'est pas sous la souris").toBe("ecoute");
         await un.page.mouse.move(b.x + 12, b.y + b.height / 2);
         await un.page.mouse.down();
         await un.page.mouse.move(b.x + 72, b.y + b.height / 2 + 40, { steps: 8 });
@@ -300,11 +303,9 @@ test.describe("l'aller-retour d'un projet par le disque", () => {
         await expect.poll(() => { f = lireQuandEntier(reexporte) ?? ""; return f.length > 0; }, {
           timeout: 15_000, message: "le second export n'a rien écrit",
         }).toBe(true);
-        // À LA VUE PRÈS, et seulement à elle : la réouverture recadre (voir le point 1), et les bornes
-        // du graphe ont changé avec le nœud déplacé. Relevé le 2026-11-08 : `x` passe de -4 à -30. Le
-        // reste se compare octet pour octet, dans l'ordre des clés écrit par l'application.
-        const sansVue = (texte: string) => { const o = JSON.parse(texte) as Projet; delete o.viewport; return JSON.stringify(o, null, 2); };
-        expect(sansVue(f), "l'aller-retour a changé le projet").toBe(sansVue(releve.exporte as string));
+        // VUE COMPRISE : la réouverture rend la vue du fichier (voir le point 1). Tant qu'elle
+        // recadrait, le nœud déplacé changeait les bornes du graphe, et `x` passait de -4 à -30.
+        expect(f, "l'aller-retour a changé le projet").toBe(releve.exporte);
         expect(await alertes(deux.page), "une alerte a paru à la réouverture").toEqual([]);
         Object.assign(releve, { reexporte: f, proposesSeconde: (await proposes(deux.app)).map((p) => normaliser(p, d)) });
       } finally {
@@ -321,5 +322,56 @@ test.describe("l'aller-retour d'un projet par le disque", () => {
         try { rmSync(dossier, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 }); } catch { /* retiré plus tard */ }
       }
     }
+  });
+
+  // ═══ UN EXEMPLE LIVRÉ S'OUVRE CADRÉ, et lui seul ═══
+  //
+  // Décidé par Fabien le 2026-11-09, quand la vue d'un projet ouvert a enfin été rendue : seize des
+  // vingt exemples portaient une vue que personne n'avait vue, et sous elle sept s'ouvraient sur un
+  // canevas presque vide. Celui-ci en est un : sa vue ne montre entier aucun de ses cinq nœuds. Le
+  // même bouton ouvre aussi un projet pris hors du dossier des exemples, et celui-là garde sa vue.
+  test("UN EXEMPLE S'OUVRE CADRÉ QUELLE QUE SOIT SA VUE, et un projet pris à côté garde la sienne", async () => {
+    const exemple = EXEMPLE;
+    const avant = readFileSync(exemple);
+    const vueDuFichier = (JSON.parse(avant.toString("utf8")) as Projet).viewport;
+    const d = mkdtempSync(join(tmpdir(), "attic-exemple-cadre-"));
+    const profil = mkdtempSync(join(tmpdir(), "attic-exemple-cadre-profil-"));
+    const projet = join(d, "a-cote.json");
+    const g = semence();
+    writeFileSync(projet, JSON.stringify(g, null, 2), "utf8");
+    const { app, page } = await lancer(profil, [exemple, projet], [], []);
+    /** La vue rendue, lue sur le canevas, et combien de nœuds visibles y tiennent entiers. */
+    const relever = () => page.evaluate(() => {
+      const t = (document.querySelector(".react-flow__viewport") as HTMLElement).style.transform;
+      const m = /translate\((-?[\d.]+)px, (-?[\d.]+)px\) scale\(([\d.]+)\)/.exec(t);
+      const cadre = document.querySelector(".react-flow")!.getBoundingClientRect();
+      const entiers = [...document.querySelectorAll<HTMLElement>(".react-flow__node")]
+        .filter((n) => getComputedStyle(n).visibility !== "hidden")
+        .map((n) => n.getBoundingClientRect())
+        .filter((b) => b.left >= cadre.left && b.right <= cadre.right && b.top >= cadre.top && b.bottom <= cadre.bottom).length;
+      return { vue: m ? { x: Number(m[1]), y: Number(m[2]), zoom: Number(m[3]) } : null, entiers };
+    });
+    const ouvrirUnExemple = async () => {
+      await page.locator('button[aria-label^="Ouvrir un exemple"], button[aria-label^="Open an example"]').first().click();
+      await page.waitForSelector('.react-flow__node[data-id="synth"]', { timeout: 30_000 });
+      await page.waitForTimeout(1000);
+    };
+    try {
+      await ouvrirUnExemple();
+      const r = await relever();
+      expect(r.vue, "l'exemple s'est ouvert sous la vue de son fichier").not.toEqual(vueDuFichier);
+      expect(r.entiers, "cadré, l'exemple montre au moins un nœud entier").toBeGreaterThan(0);
+      expect(await page.evaluate(() => localStorage.getItem("attic-current-file-path")), "un exemple n'est le fichier de personne").toBeNull();
+
+      await ouvrirUnExemple();
+      expect((await relever()).vue, "un projet pris hors des exemples a perdu sa vue").toEqual(g.viewport);
+      expect(await alertes(page), "une alerte a paru").toEqual([]);
+    } finally {
+      await app.close();
+      for (const dossier of [d, profil]) {
+        try { rmSync(dossier, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 }); } catch { /* retiré plus tard */ }
+      }
+    }
+    expect(readFileSync(exemple).equals(avant), "le fichier de l'exemple a été réécrit").toBe(true);
   });
 });
