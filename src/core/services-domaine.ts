@@ -65,7 +65,7 @@ export interface ServicesDomaine {
    * MAIS CE N'EST PAS UN RÉGLAGE DU CŒUR, et la sauvegarde ne doit pas le savoir. Un domaine de
    * texte ou d'images n'a pas de fréquence d'échantillonnage ; un autre aurait ses propres réglages
    * de projet. Le cœur demande donc « qu'as-tu à écrire » et « voilà ce qui était écrit », et
-   * `ui/projet-a-ecrire.ts`, qui écrit le fichier, comme `ui/hooks/usePersistance.ts`, qui le relit,
+   * `ui/projet-a-ecrire.ts`, qui écrit le fichier, comme `ui/hooks/useImportProjet.ts`, qui le relit,
    * restent ignorants du domaine — ce qu'un garde exige, parce que changer de domaine est un but du
    * projet.
    *
