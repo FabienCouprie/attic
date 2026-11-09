@@ -1,12 +1,14 @@
 // ui/hooks/usePersistance.ts — Export / import du workflow (JSON) + méta-composants.
 // Extrait d'App.tsx à l'identique (comportement inchangé). Le hook reçoit l'état
 // et les setters dont il a besoin et renvoie { exporter, importer }.
-// Ce qu'un projet écrit, fichier et en-cours, se construit dans `ui/projet-a-ecrire.ts` ; le journal
-// de session vit dans `hooks/useJournalDeSession.ts`, et l'import dans `hooks/useImportProjet.ts`.
+// Ce qu'un projet écrit, fichier et en-cours, se construit dans `ui/projet-a-ecrire.ts`, et où il
+// s'écrit dans `ui/ecriture-projet.ts` ; le journal de session vit dans
+// `hooks/useJournalDeSession.ts`, et l'import dans `hooks/useImportProjet.ts`.
 import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { Edge, Viewport } from "@xyflow/react";
 import { projetAEcrire } from "../projet-a-ecrire";
+import { ecrireParLePont, telechargerProjet } from "../ecriture-projet";
 import { useJournalDeSession } from "./useJournalDeSession";
 import { useImportProjet } from "./useImportProjet";
 import { useI18n } from "../../i18n";
@@ -71,51 +73,12 @@ export function usePersistance(o: OptionsPersistance) {
 
     if ((window as any).api?.sauvegarderFichier) {
       const api = (window as any).api;
-      console.log("[persistance] api available, ecrireFichier=", !!api.ecrireFichier);
-      let filePath = currentFilePath;
-      // Si pas de fichier courant ou "Save as" demandé, on ouvre le dialogue.
-      if (!filePath || forceDialog) {
-        let dossier = o.repertoire;
-        if (!dossier) dossier = await api.obtenirRepertoireTravail?.();
-        const defaultPath = filePath || (dossier ? `${dossier}\\${defaultName}` : defaultName);
-        filePath = await api.sauvegarderFichier({
-          defaultPath,
-          filters: [{ name: "Workflow Attic", extensions: ["json"] }],
-          data: json,
-        });
-      } else if (api?.ecrireFichier) {
-        // Écriture directe dans le fichier courant sans dialogue.
-        //
-        // UN REFUS SE DIT, ET LE CONTENU N'EST PAS TENU POUR ÉCRIT. Le retour était ignoré : un
-        // disque plein, un fichier verrouillé ou un dossier hors des racines du pont laissaient
-        // croire le projet enregistré, et la sauvegarde automatique, voyant le contenu marqué
-        // comme écrit, ne réessayait plus. Relevé le 2026-10-27.
-        //
-        // ET UN REFUS OUVRE LE DIALOGUE D'ENREGISTREMENT, prérempli avec le même chemin. C'est le cas
-        // d'un projet ouvert par dépôt ou par le sélecteur : son chemin ne vient d'aucun dialogue du
-        // processus principal, donc d'aucune racine, et le pont refuse d'y écrire. Un appui sur
-        // Entrée confirme l'emplacement ; le dialogue accorde alors la racine, et écrit. Aucun chemin
-        // nommé par le rendu ne fonde de racine — c'est la règle de `electron/capacites-chemins.cjs`.
-        const ecrit = await api.ecrireFichier(filePath, json);
-        if (!ecrit) {
-          filePath = await api.sauvegarderFichier({
-            defaultPath: filePath,
-            filters: [{ name: "Workflow Attic", extensions: ["json"] }],
-            data: json,
-          });
-          if (!filePath) {
-            if (typeof alert !== "undefined") alert(t("persistance.ecritureRefusee").replace("{chemin}", String(currentFilePath)));
-            return;
-          }
-        }
-      } else {
-        // Fallback : dialogue pré-rempli avec le fichier courant.
-        filePath = await api.sauvegarderFichier({
-          defaultPath: filePath,
-          filters: [{ name: "Workflow Attic", extensions: ["json"] }],
-          data: json,
-        });
-      }
+      // LA CASCADE QUI CHOISIT OÙ ÉCRIRE vit dans `ui/ecriture-projet.ts` : le dialogue, l'écriture
+      // directe, le dialogue prérempli d'un refus, l'alerte d'un refus annulé et le repli. Un refus
+      // annulé sort ici, avant l'en-cours et le dernier contenu écrit, comme avant.
+      const issue = await ecrireParLePont(api, { json, currentFilePath, forceDialog, defaultName, repertoire: o.repertoire, t });
+      if (issue.abandon) return;
+      const filePath = issue.chemin;
       if (filePath) {
         o.setCurrentFilePath(filePath);
         // Tout de suite, et non à l'effet du prochain rendu : l'en-cours écrit ci-dessous emporte
@@ -125,9 +88,7 @@ export function usePersistance(o: OptionsPersistance) {
       }
     } else {
       // Mode web : téléchargement (aucun vrai "fichier courant" possible).
-      const blob = new Blob([json], { type: "application/json" });
-      const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-      a.download = defaultName || "attic.json"; a.click();
+      telechargerProjet(json, defaultName);
     }
 
     // Toujours mettre à jour l'en-cours, avec le fichier de cette fenêtre : voir `ui/fenetre.ts`.
