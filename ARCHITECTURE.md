@@ -97,11 +97,14 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   écrit toujours dans `n.data` en place, sans passer par `setNodes`.
 > - **Lot 1, le contrat des exécuteurs** : fait le 2026-10-31 (PR 250).
 > - **Lot 2, les trois géants** : fait pour `App.tsx` le 2026-11-01, en neuf PR entre la 257 et la
->   267, et pour `useExecutionGraphe.ts` le 2026-11-02, en sept PR entre la 271 et la 280. Le
->   troisième géant de la revue, `usePersistance`, n'était pas dans le plan du lot et n'a pas
->   bougé : une fonction de 435 lignes, de la ligne 52 à la ligne 486 de
->   `src/ui/hooks/usePersistance.ts`. Pas fait non plus : la norme de cent vingt lignes par
->   fonction que le lot proposait d'ajouter à `src/docs/generer-compte-lignes.test.ts`.
+>   267, pour `useExecutionGraphe.ts` le 2026-11-02, en sept PR entre la 271 et la 280, et pour
+>   `usePersistance` du 2026-11-08 au 2026-11-10, en quatre PR à partir de la 322. Ce troisième
+>   géant n'était pas dans le plan du lot. Sa fonction passe de 434 à 131 lignes, et ses quatre
+>   pièces sont sorties dans `ui/projet-a-ecrire.ts`, `hooks/useJournalDeSession.ts`,
+>   `hooks/useImportProjet.ts` et `ui/ecriture-projet.ts`. Pas fait : la norme de cent vingt
+>   lignes par fonction que le lot proposait d'ajouter à `src/docs/generer-compte-lignes.test.ts`.
+>   `usePersistance` y resterait au-dessus, à 131 lignes, et la fonction de `useImportProjet`
+>   aussi, à 129.
 > - **Lot 3, hors du fil** : fait du 2026-11-06 au 2026-11-07. Sa première pièce est fusionnée
 >   le 2026-11-06 (PR 292) :
 >   « Débruitage IA » et le séparateur MDX-Net calculent dans un worker, avec le wasm d'onnxruntime
