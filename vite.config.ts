@@ -24,7 +24,17 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
   plugins: [react() as any, ...audioBuildPlugins, wasmMimeTypePlugin()],
-  build: { outDir: 'dist', emptyOutDir: true },
+  // L'ORDRE D'EXÉCUTION DES MODULES EST CELUI D'ESM, MÊME ENTRE DEUX MORCEAUX. Sans cette option,
+  // Rolldown range les modules en morceaux comme il l'entend, et un cycle entre deux morceaux
+  // s'évalue dans l'ordre où ils se chargent. Il y en a un : `audio/adaptateur.ts` importe les
+  // plugins, qui importent `../audio` en retour, et plusieurs lisent ce qu'il exporte AU
+  // CHARGEMENT. MESURÉ le 2026-11-10 : un import ajouté dans `core/meta.ts` a fait passer ce module
+  // dans le morceau `audio`, l'ordre s'est inversé, et l'application construite tombait au
+  // démarrage sur « Cannot read properties of undefined (reading 'map') », dans
+  // `plugins/generateurs-aides.ts`. Le serveur de développement, qui ne découpe pas, ne le voyait
+  // pas ; seule l'épreuve Electron de la CI l'a vu. Coût mesuré : 205 Ko sur 170 Mo, et aucun
+  // retard au démarrage (484 ms contre 545 sur le build d'avant).
+  build: { outDir: 'dist', emptyOutDir: true, rolldownOptions: { output: { strictExecutionOrder: true } } },
   optimizeDeps: audioOptimizeDeps,
   ssr: { noExternal: ['tone'] },
   // `electron/` est inclus depuis qu'un défaut y a survécu faute de test : la
