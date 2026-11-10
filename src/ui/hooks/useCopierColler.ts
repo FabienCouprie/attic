@@ -1,4 +1,5 @@
-// ui/hooks/useCopierColler.ts — Copier, couper, coller des nœuds (Ctrl+C / Ctrl+X / Ctrl+V), et Ctrl+Z.
+// ui/hooks/useCopierColler.ts — Copier, couper, coller des nœuds (Ctrl+C / Ctrl+X / Ctrl+V), Ctrl+Z
+// et Ctrl+Y.
 //
 // Extrait d'`App.tsx` le 2026-10-29, au passage du presse-papiers de la fenêtre à celui du système :
 // voir `ui/presse-papiers-noeuds.ts` pour ce qui a été mesuré et pour la forme écrite. Ce qui suit
@@ -25,6 +26,7 @@ export interface OptionsCopierColler {
   supprimerNoeud: (ids: string[]) => void;
   callbacksNoeud: () => Record<string, unknown>;
   undo: () => void;
+  redo: () => void;
   t: (cle: string) => string;
 }
 
@@ -119,7 +121,7 @@ export function useCopierColler(o: OptionsCopierColler) {
       // Ne pas intercepter si on tape dans un champ : Ctrl+C doit y copier le TEXTE, et non les
       // nœuds sélectionnés derrière. La règle vit dans `champ-de-saisie.ts`, en un seul endroit.
       if (estUnChampDeSaisie(e.target)) return;
-      const { noeudsRef, pushHistorique, supprimerNoeud, undo } = oRef.current;
+      const { noeudsRef, pushHistorique, supprimerNoeud, undo, redo } = oRef.current;
       if (!(e.ctrlKey || e.metaKey)) return;
       const selection = () => noeudsRef.current.filter((n) => (n as { selected?: boolean }).selected);
 
@@ -160,6 +162,12 @@ export function useCopierColler(o: OptionsCopierColler) {
       if (e.key === "z") {
         e.preventDefault();
         undo();
+      } else if (e.key === "y" || e.key === "Y" || (e.key === "Z" && e.shiftKey)) {
+        // CTRL+Y ET CTRL+MAJ+Z, les deux usages. La touche est lue comme caractère, et non comme
+        // position : sur un clavier AZERTY, Z et Y sont là où on les lit. Ctrl+Z avec la majuscule
+        // verrouillée rend « Z » sans Maj, et ne rétablit pas : il ne faisait déjà rien.
+        e.preventDefault();
+        redo();
       }
     };
     window.addEventListener("keydown", onKey);

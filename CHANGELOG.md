@@ -4,6 +4,19 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ## [Unreleased]
 
+### Added
+
+- **CTRL+Y ET CTRL+MAJ+Z RÉTABLISSENT CE QUE CTRL+Z VIENT D'ANNULER.** Décidé par Fabien le 2026-11-10, au point A6 de la revue d'architecture du 2026-10-31 : seul Ctrl+Z existait. Le registre des URL de médias, pièce suivante du point, comptera la pile de rétablissement parmi ce qui tient une URL.
+  - **La règle, dans `ui/historique.ts`** : deux piles. Annuler pose l'instantané d'avant et photographie l'état qu'il quitte sur la seconde ; rétablir fait l'inverse. Une action neuve vide la seconde. Le contexte suit l'entrée : une entrée qui porte la navigation et le fichier, celle du canevas vidé ou du fichier détaché, fait photographier l'état qu'elle remplace avec les siens, et rétablir un vidage rend le canevas vide ET le fichier détaché. Le plafond de cinquante entrées ne change pas, et la somme des deux piles ne le dépasse jamais : une bascule échange une entrée contre une autre.
+  - **Le branchement** : `hooks/useHistorique.ts` pose les entrées des deux piles par la même fonction, gestionnaires rattachés, navigation et fichier rendus, cache vidé, résultats des nœuds abandonnés oubliés. `hooks/useCopierColler.ts` lit Ctrl+Y et Ctrl+Maj+Z hors des champs de saisie, comme Ctrl+Z, par le caractère de la touche : sur un clavier AZERTY, Z et Y sont là où on les lit.
+  - **Ce que les piles ne voient pas, comme Ctrl+Z avant elles** : un geste qui ne prend pas d'instantané, un réglage changé, un fichier chargé, un nœud déplacé. Il n'efface pas ce qui se rétablit, et Ctrl+Y le recouvre, comme Ctrl+Z recouvre déjà ce qui a suivi l'instantané qu'il pose.
+  - **Un écart, et un seul, dans Ctrl+Z** : les gestionnaires des nœuds sont demandés avant de retirer l'entrée de sa pile. Retirée d'abord, elle se perdait quand ils manquaient, ce qui n'arrive qu'avant le premier rendu d'`App.tsx`.
+  - **`ui/historique.test.ts`, six cas neufs**, douze en tout. Vus rouges sur trois fautes plantées une à la fois : l'action neuve qui n'efface plus, le contexte perdu, la première pile sans plafond. Une quatrième, la bascule sans plafond, est restée verte, et c'était juste : la somme des deux piles ne pouvait pas déborder, le plafond y était inutile et il est retiré.
+  - **`tests-e2e/retablir-dans-application.spec.ts`, quatre cas**, sur le port 5280 : Ctrl+Y et Ctrl+Maj+Z rendent le nœud supprimé, et rien au-delà ; une action neuve efface ce qui se rétablissait ; le canevas vidé se rétablit avec son fichier détaché ; dans le champ de recherche de la palette, Ctrl+Y reste au champ. Verts trois passes de suite, de 16,7 à 17,3 s. Vus rouges sur trois fautes plantées dans le code : les touches non lues, trois cas tombent ; le contexte non photographié, le fichier reste attaché après Ctrl+Y ; l'action neuve qui n'efface plus, Ctrl+Y écrase la suppression qui a suivi.
+  - **Les épreuves qui pressaient déjà Ctrl+Z restent vertes** : `detacher-fichier`, `meta-ungroup` et `copier-coller-annotations-dans-application`, dix cas.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans erreur, avec les mêmes 27 avertissements que `master` ; les gardes de `src/docs/` verts. La passe complète est verte, 711 fichiers et 3 sautés sur 714, soit 10 260 cas verts et 14 sautés, en 21 min 33 s.
+  - **Pas fait** : la commande vocale. La dictée sait « annuler » ; « rétablir » demanderait de vérifier le mot contre le lexique du modèle par `npm run test:lexique-dictee`.
+
 ### Changed
 
 - **OÙ UN PROJET S'ÉCRIT SORT DE `usePersistance`, DANS `ui/ecriture-projet.ts`.** Quatrième et dernière pièce du découpage de `usePersistance`, le troisième géant du lot 2 de la revue d'architecture du 2026-10-31, dans l'ordre décidé par Fabien le 2026-11-08 ; aucun comportement ne change.

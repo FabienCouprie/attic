@@ -183,8 +183,8 @@ function Atelier() {
   prioritaireRef.current = prioritaire;
   // ── Le SoundFont global, dans hooks/useSoundFont.ts ──
   const { sf2Nom: sf2NomState, chargerSF2 } = useSoundFont({ repertoire, cacheExec, enExecution });
-  // ── Historique, Ctrl+Z, vidage du canevas et fichier détaché, dans hooks/useHistorique.ts ──
-  const { pushHistorique, undo, fermerOnglet, detacherFichier } = useHistorique({
+  // ── Historique, Ctrl+Z et Ctrl+Y, vidage du canevas et fichier détaché, dans hooks/useHistorique.ts ──
+  const { pushHistorique, undo, redo, fermerOnglet, detacherFichier } = useHistorique({
     noeudsRef, aretesRef, grapheRacineRef, callbacksNoeudRef, cacheExec,
     setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath,
   });
@@ -364,8 +364,8 @@ function Atelier() {
     noeudsRef, rfInstanceRef, callbacksNoeudRef, setNodes, setSel,
   });
 
-  // ── Copier / Couper / Coller (Ctrl+C / Ctrl+X / Ctrl+V) et Ctrl+Z, dans hooks/useCopierColler.ts ──
-  useCopierColler({ noeudsRef, setNodes, setSel, pushHistorique, supprimerNoeud, callbacksNoeud, undo, t });
+  // ── Copier / Couper / Coller (Ctrl+C / Ctrl+X / Ctrl+V), Ctrl+Z et Ctrl+Y, dans hooks/useCopierColler.ts ──
+  useCopierColler({ noeudsRef, setNodes, setSel, pushHistorique, supprimerNoeud, callbacksNoeud, undo, redo, t });
 
   // ── Méta-composants (§3.8) : grouper / dégrouper + navigation ──
   // Dans hooks/useMetaComposants.ts ; la logique pure vit dans core/meta.ts.
