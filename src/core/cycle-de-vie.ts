@@ -91,6 +91,41 @@ export function urlsARevoquer(etat: EtatNoeud, classes: ClassesDeChamps, garder?
 }
 
 /**
+ * Les URL d'objet que l'affichage d'avant tenait et que celui qui le remplace ne tient plus.
+ *
+ * POURQUOI ELLE EXISTE, point A6 de la revue du 2026-10-31, et MESURÉ dans l'application : un run
+ * qui remplaçait le canal d'affichage d'un nœud ne révoquait pas le film que l'ancien montrait.
+ * Cinq exécuteurs le cherchaient dans `ctx.noeud.data`, où un résultat ne vit plus depuis qu'il a
+ * son magasin, et un sixième ne le cherchait pas. « Séparer image et son » branché derrière le
+ * « Générateur vidéo », qui ne se met jamais en cache, gardait ainsi une vidéo muette de plus à
+ * chaque run. Seul le moteur connaît l'affichage d'avant : c'est donc lui qui révoque.
+ *
+ * CE QUE LE NOUVEAU TIENT ENCORE RESTE. Un nœud sauté rend l'affichage de son entrée de cache, donc
+ * les mêmes adresses : rien ne part.
+ */
+export function urlsLachees(avant: unknown, apres: unknown): string[] {
+  const tenues: string[] = [];
+  recolter(apres, tenues);
+  const restent = new Set(tenues);
+  const vues: string[] = [];
+  recolter(avant, vues);
+  return [...new Set(vues)].filter((u) => !restent.has(u));
+}
+
+/**
+ * Toutes les URL d'objet d'un résultat, champ par champ, à la profondeur de `urlsARevoquer`.
+ *
+ * POUR CE QUI NE REVIENDRA PAS : un nœud qu'une annulation abandonne. Son oubli ne lisait que le
+ * premier niveau, et un film du canal d'affichage est un niveau plus bas : MESURÉ, couper le
+ * « Générateur vidéo », le coller, le lancer puis annuler le collage laissait son film lisible.
+ */
+export function urlsDUnResultat(resultat: EtatNoeud): string[] {
+  const urls: string[] = [];
+  for (const v of Object.values(resultat)) recolter(v, urls);
+  return urls;
+}
+
+/**
  * Les deux canaux que l'EXÉCUTEUR déclare, et dont lui seul décide.
  *
  * POURQUOI ILS DOIVENT ÊTRE NOMMÉS À PART. Le moteur reporte sur le nœud vivant les champs préfixés

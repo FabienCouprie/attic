@@ -93,14 +93,16 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >
 > - **Lot 0, l'outillage** : fait le 2026-10-31 (PR 247). Reste son point A6, reporté avec sa
 >   raison dans `CHANGELOG.md` : les URL de médias remplacées n'étaient pas révoquées, l'historique
->   d'annulation et le collage partageant l'URL avec le nœud. Fait en partie le 2026-11-10 :
+>   d'annulation et le collage partageant l'URL avec le nœud. Fait le 2026-11-10, en quatre pièces :
 >   `src/ui/rechargerFichiers.ts` rend les nœuds rechargés au lieu d'écrire dans le `n.data` de
 >   ceux qu'on lui passe (PR 326) ; Ctrl+Y rétablit ce que Ctrl+Z a annulé (PR 327) ; et le
 >   registre de `src/ui/urls-medias.ts` révoque une URL quand ni un nœud vivant, ni une entrée
 >   d'annulation ou de rétablissement, ni le presse-papiers ne la tiennent (PR 328). Toutes les
 >   naissances d'URL de média de l'interface passent par lui, et `src/ui/urls-medias-naissances.test.ts`
->   refuse une URL d'objet créée à côté sans être classée. Restent les deux films posés sur le nœud,
->   celui du cercle pulsant et celui de la démonstration.
+>   refuse une URL d'objet créée à côté sans être classée (PR 329). Des deux films posés sur le
+>   nœud, celui de la démonstration naît par le registre, et celui du « Générateur vidéo » passe
+>   au canal d'affichage ; le moteur révoque désormais un film de ce canal quand un run le remplace
+>   ou qu'une annulation abandonne son nœud.
 > - **Lot 1, le contrat des exécuteurs** : fait le 2026-10-31 (PR 250).
 > - **Lot 2, les trois géants** : fait pour `App.tsx` le 2026-11-01, en neuf PR entre la 257 et la
 >   267, pour `useExecutionGraphe.ts` le 2026-11-02, en sept PR entre la 271 et la 280, et pour

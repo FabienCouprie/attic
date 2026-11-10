@@ -155,6 +155,50 @@ describe("un nœud ordinaire, et son lecteur", () => {
   });
 });
 
+// LE CANAL D'AFFICHAGE REMPLACÉ, point A6 de la revue du 2026-10-31. Cinq exécuteurs cherchaient leur
+// film précédent dans les données du nœud, où il ne vit plus : MESURÉ dans l'application, chaque run
+// gardait un film de plus. `tests-e2e/films-des-noeuds.spec.ts` le tient de bout en bout.
+describe("le canal d'affichage, quand un run le remplace", () => {
+  const passeAvec = (affichage?: Record<string, unknown>, designe?: Record<string, unknown>) => etat({
+    resultats: new Map([["a", [null]]]),
+    affichageParNoeud: new Map(affichage ? [["a", affichage]] : []),
+    designeParNoeud: new Map(designe ? [["a", designe]] : []),
+  });
+
+  it("LE FILM QUE L'ANCIEN MONTRAIT EST RÉVOQUÉ, et celui du nouveau reste", async () => {
+    poserResultat("a", { _affichage: { url: "blob:film/1", nom: "a.mp4" } });
+    const patch = await calculerCorrectifResultat(noeud("a", "son"), passeAvec({ url: "blob:film/2", nom: "a.mp4" }));
+    expect(patch!._affichage).toEqual({ url: "blob:film/2", nom: "a.mp4" });
+    expect(revoquees).toEqual(["blob:film/1"]);
+  });
+
+  it("UN NŒUD SAUTÉ REND LE MÊME AFFICHAGE, depuis son cache : rien ne part", async () => {
+    const affichage = { url: "blob:film/1" };
+    poserResultat("a", { _affichage: affichage });
+    await calculerCorrectifResultat(noeud("a", "son"), passeAvec({ ...affichage }));
+    expect(revoquees).toEqual([]);
+  });
+
+  it("UN RUN QUI NE MONTRE PLUS RIEN efface l'affichage, donc révoque son film", async () => {
+    poserResultat("a", { _affichage: { url: "blob:film/1" } });
+    const patch = await calculerCorrectifResultat(noeud("a", "son"), passeAvec());
+    expect(patch!._affichage).toBeUndefined();
+    expect(revoquees).toEqual(["blob:film/1"]);
+  });
+
+  it("UN COMPOSANT À AFFICHAGE AUTONOME suit la même règle", async () => {
+    poserResultat("a", { _affichage: { url: "blob:carte/1" } });
+    await calculerCorrectifResultat(noeud("a", "autonome"), passeAvec({ url: "blob:carte/2" }));
+    expect(revoquees).toEqual(["blob:carte/1"]);
+  });
+
+  it("CE QUE LE NŒUD A DÉSIGNÉ N'EST PAS À LUI : `designe` remplacé ne révoque rien", async () => {
+    poserResultat("a", { _designe: { url: "blob:recu/1" } });
+    await calculerCorrectifResultat(noeud("a", "son"), passeAvec(undefined, { url: "blob:recu/2" }));
+    expect(revoquees).toEqual([]);
+  });
+});
+
 describe("une bulle, et ses membres", () => {
   const bulle = (ouverte: boolean): NoeudG[] => [
     noeud("b", "bulle::b", ouverte ? { bulleOuverte: true } : {}),

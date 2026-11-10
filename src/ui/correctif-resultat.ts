@@ -11,6 +11,7 @@
 // lecteur PROMIS plutôt qu'écrit, une adresse réutilisée tant que le tampon et la profondeur sont
 // les mêmes, et rien de lourd quand une bulle repliée le cache.
 import { estBulle, estCacheParBulle, sortieDeBulle, trouverMeta } from "../core";
+import { urlsLachees } from "../core/cycle-de-vie";
 import { noeudRegarde, resultatRetenu } from "../core/memoire";
 import { poserApercu, poserStatut } from "./statuts";
 import { resultatDe } from "./resultats";
@@ -74,7 +75,7 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
       _affichage: affichageParNoeud.get(n.id) ?? undefined,
       _designe: designeParNoeud.get(n.id) ?? undefined,
     };
-    return canaux._affichage || canaux._designe || canaux.audioResultatMessage ? canaux : null;
+    return canaux._affichage || canaux._designe || canaux.audioResultatMessage ? lacherAffichage(n.id, canaux) : null;
   }
   const valsSafe = vals ?? [];
   // LA SORTIE QUI REPRÉSENTE CE QUE LE NŒUD A PRODUIT, et c'est le domaine qui la désigne.
@@ -222,7 +223,7 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
   // Un méta-composant n'est pas exécuté lui-même : ce sont ses nœuds internes qui tournent. Il ne
   // se déclare pas terminé ici, sur une sortie produite : c'est après le run, d'après TOUT son
   // contenu, qu'il l'est ou non. Voir `core/conteneurs.ts`.
-  return {
+  return lacherAffichage(n.id, {
     audioResultatUrl: url ?? undefined,
     audioResultatNom: url ? `${n.data.ficheId}.wav` : undefined,
     audioResultatBuffer: membreReplie ? undefined : (audio ?? undefined),
@@ -238,5 +239,18 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
     // l'écran décrirait une exécution qui n'a plus lieu.
     _affichage: affichageParNoeud.get(n.id) ?? undefined,
     _designe: designeParNoeud.get(n.id) ?? undefined,
-  };
+  });
+}
+
+/**
+ * Révoque les films que l'affichage d'avant tenait et que ce correctif ne tient plus, puis le rend.
+ *
+ * ICI, COMME L'URL DU SON ET CELLE DE L'IMAGE plus haut : le correctif est la seule pièce qui voit à
+ * la fois l'affichage d'avant, dans le magasin, et celui qui le remplace. Le canal seul : `designe`
+ * nomme ce que le nœud a reçu, et ce qui le porte n'est pas à lui. Voir `urlsLachees`.
+ */
+function lacherAffichage<T extends { _affichage?: unknown }>(id: string, correctif: T): T {
+  const avant = (resultatDe(id) as { _affichage?: unknown })._affichage;
+  for (const url of urlsLachees(avant, correctif._affichage)) URL.revokeObjectURL(url);
+  return correctif;
 }

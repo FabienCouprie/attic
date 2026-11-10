@@ -23,7 +23,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { apresCopie, apresEffacement, champsAReporter, CANAUX_DECLARES, urlsARevoquer } from "../core/cycle-de-vie";
+import { apresCopie, apresEffacement, champsAReporter, CANAUX_DECLARES, urlsARevoquer, urlsDUnResultat, urlsLachees } from "../core/cycle-de-vie";
 import { CHAMPS_GARDES_AU_REGLAGE, CLASSES } from "../core/classes-de-champs";
 import { toutesLesFiches } from "./index";
 import "../audio/adaptateur";
@@ -165,6 +165,24 @@ describe("les transitions d'un nœud, sur toutes les fiches", () => {
     it("ET CE QU'UN RÉGLAGE GARDE RESTE GARDÉ, jusque dans ce que le canal contient", () => {
       const etat = { _designe: { url: "blob:http://localhost/garde" } };
       expect(urlsARevoquer(etat, CLASSES, CHAMPS_GARDES_AU_REGLAGE)).toEqual([]);
+    });
+  });
+
+  // UN AFFICHAGE REMPLACÉ PAR UN RUN, et un résultat oublié : point A6 de la revue du 2026-10-31.
+  describe("ce qu'un affichage remplacé lâche, et ce qu'un résultat oublié porte", () => {
+    it("L'AFFICHAGE D'AVANT LÂCHE CE QUE LE NOUVEAU NE TIENT PLUS, et rien d'autre", () => {
+      expect(urlsLachees({ url: "blob:1", nom: "a" }, { url: "blob:2", nom: "a" })).toEqual(["blob:1"]);
+      expect(urlsLachees({ url: "blob:1" }, { url: "blob:1" }), "le cache rend la même adresse").toEqual([]);
+      expect(urlsLachees({ url: "blob:1" }, undefined), "un run qui ne montre plus rien").toEqual(["blob:1"]);
+      expect(urlsLachees(undefined, { url: "blob:2" }), "un premier run").toEqual([]);
+      expect(urlsLachees([{ url: "blob:a" }, { url: "blob:b" }], [{ url: "blob:b" }])).toEqual(["blob:a"]);
+    });
+
+    it("UN RÉSULTAT OUBLIÉ REND TOUTES SES ADRESSES, du premier niveau comme du canal", () => {
+      expect(urlsDUnResultat({
+        audioResultatUrl: "blob:son", audioResultatNom: "a.wav",
+        _affichage: { url: "blob:film", octets: 3 },
+      })).toEqual(["blob:son", "blob:film"]);
     });
   });
 

@@ -27,6 +27,7 @@
 // pas une faute ; se servir d'eux comme cle d'un magasin qu'on ne nettoie pas en est une. Un
 // compteur qui ne redescend jamais masquerait le defaut sans le fermer, et la premiere entree
 // oubliee reviendrait au premier identifiant rejoue.
+import { urlsDUnResultat } from "../core/cycle-de-vie";
 import { effacerResultats, resultatDe, resultatsPoses } from "./resultats";
 import { reinitialiserStatuts, statutsPoses } from "./statuts";
 
@@ -56,6 +57,10 @@ export function orphelins(idsVivants: Iterable<string>, idsPoses: Iterable<strin
  * LES ADRESSES BLOB SONT REVOQUEES AU PASSAGE. Un resultat porte des `createObjectURL` — une bande
  * son, un film, une image — et les perdre sans les revoquer laisse leur memoire au navigateur
  * jusqu'a la fermeture. Ces noeuds-la ne reviendront pas : tout ce qui commence par `blob:` part.
+ *
+ * ET JUSQUE DANS LE CANAL D'AFFICHAGE, point A6 de la revue du 2026-10-31 : seul le premier niveau
+ * etait lu, et un film du canal est un niveau plus bas. MESURE, le film d'un « Generateur video »
+ * colle puis abandonne par Ctrl+Z restait lisible. Voir `urlsDUnResultat`.
  */
 export function oublierNoeuds(idsVivants: Iterable<string>): number {
   const vivants = new Set(idsVivants);
@@ -63,9 +68,7 @@ export function oublierNoeuds(idsVivants: Iterable<string>): number {
   const aOublier = orphelins(vivants, poses);
   if (aOublier.length === 0) return 0;
   for (const id of aOublier) {
-    for (const v of Object.values(resultatDe(id))) {
-      if (typeof v === "string" && v.startsWith("blob:")) URL.revokeObjectURL(v);
-    }
+    for (const url of urlsDUnResultat(resultatDe(id))) URL.revokeObjectURL(url);
   }
   effacerResultats(aOublier);
   reinitialiserStatuts(aOublier);
