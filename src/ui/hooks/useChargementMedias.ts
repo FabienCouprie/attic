@@ -48,7 +48,8 @@ export function useChargementMedias({ cacheExec, setNodes, reinitialiserNoeud }:
   /** Une prise au micro : un blob, et son URL écoutable. Pas de chemin disque, elle n'en a pas. */
   const changerEnregistrement = useCallback((nid: string, blob: Blob) => {
     cacheExec.current.delete(nid);
-    const url = URL.createObjectURL(blob);
+    // Par le registre, comme le son chargé : la prise qu'elle remplace part d'elle-même.
+    const url = creerUrlMedia(blob);
     setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n));
     reinitialiserNoeud(nid);
   }, [cacheExec, setNodes, reinitialiserNoeud]);

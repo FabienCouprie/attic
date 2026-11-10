@@ -12,6 +12,7 @@ import { positionsEnCascade, sorteDeposee, type SorteDeposee } from "../fichiers
 import { idUnique } from "../ids";
 import { trouverDef } from "../ports-canevas";
 import { tailleDefaut } from "../tailles-noeuds";
+import { creerUrlMedia } from "../urls-medias";
 
 export interface OptionsDepot {
   rfInstance: any;
@@ -40,6 +41,10 @@ export function useDepot({ rfInstance, ajouterNoeud, setNodes, callbacksNoeud, p
     pushHistorique();
     const api = (window as any).api;
     const positions = positionsEnCascade(depart, reconnus.length);
+    // LES URL SE CRÉENT HORS DU RÉDUCTEUR, et par le registre. MESURÉ : créées dedans, un son déposé
+    // en recevait deux, React rejouant le réducteur en mode strict, et la seconde n'était tenue par
+    // personne. Voir `ui/urls-medias.ts`.
+    const urls = reconnus.map(({ fichier, sorte }) => (sorte === "midi" ? null : creerUrlMedia(fichier)));
     setNodes((nds) => {
       const ajoutes: any[] = [];
       for (const [i, { fichier, sorte }] of reconnus.entries()) {
@@ -54,7 +59,7 @@ export function useDepot({ rfInstance, ajouterNoeud, setNodes, callbacksNoeud, p
         // attendent : les inventer ici ferait un nœud qui paraît rempli et ne lit rien.
         const media = sorte === "midi"
           ? { midiFichier: fichier, midiNom: fichier.name }
-          : { audioFichier: fichier, audioNom: fichier.name, audioUrl: URL.createObjectURL(fichier) };
+          : { audioFichier: fichier, audioNom: fichier.name, audioUrl: urls[i] };
         const { width, height } = tailleDefaut(def);
         ajoutes.push({
           id: idUnique([...nds, ...ajoutes]),

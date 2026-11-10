@@ -84,9 +84,23 @@ export async function ecrireParLePont(api: any, demande: DemandeEcriture): Promi
   return { abandon: false, chemin: filePath };
 }
 
-/** Le mode web, sans pont : le projet part en téléchargement, et aucun fichier courant n'existe. */
+/**
+ * Le temps laissé au navigateur pour prendre le fichier avant que son adresse soit révoquée : celui
+ * que `vues-domaine/vues-collections.tsx` laisse déjà à un WAV téléchargé.
+ */
+export const DELAI_AVANT_REVOCATION_MS = 1000;
+
+/**
+ * Le mode web, sans pont : le projet part en téléchargement, et aucun fichier courant n'existe.
+ *
+ * L'ADRESSE EST RÉVOQUÉE APRÈS LE CLIC, et non au clic : certains navigateurs ne prennent le fichier
+ * qu'au tour suivant. MESURÉ AVANT : elle n'était jamais révoquée, et chaque export laissait son
+ * projet au navigateur jusqu'à la fermeture.
+ */
 export function telechargerProjet(json: string, defaultName: string | undefined): void {
   const blob = new Blob([json], { type: "application/json" });
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url;
   a.download = defaultName || "attic.json"; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), DELAI_AVANT_REVOCATION_MS);
 }

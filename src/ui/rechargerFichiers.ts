@@ -9,6 +9,12 @@
 // aurait passé les nœuds vivants les aurait modifiés sans `setNodes`, sans que rien ne le dise. Un
 // nœud qui reçoit un fichier revient donc copié, lui et son `data` ; un nœud qui ne reçoit rien
 // revient tel quel. Voir `rechargerFichiers.test.ts`, qui la nourrit de nœuds gelés.
+//
+// SES URL NAISSENT PAR LE REGISTRE de `ui/urls-medias.ts`, qui les révoquera quand plus rien ne les
+// tiendra. Entre deux lectures, celles déjà créées ne sont encore sur aucun nœud : le registre les
+// tient pour naissantes, et n'en révoque aucune avant de l'avoir vue posée.
+
+import { creerUrlMedia } from "./urls-medias";
 
 export type NoeudAtelier = any;
 
@@ -20,7 +26,7 @@ async function fichierRelu(data: Record<string, any>, chemin: string, api: any):
     const mime = res.url?.match(/data:([^;]+);base64/)?.[1] ?? "audio/wav";
     const blob = new Blob([res.donnees], { type: mime });
     const fichier = new File([blob], res.nom, { type: mime });
-    return { audioFichier: fichier, audioNom: res.nom, audioUrl: URL.createObjectURL(fichier) };
+    return { audioFichier: fichier, audioNom: res.nom, audioUrl: creerUrlMedia(fichier) };
   }
   if (data.ficheId === "lecteur-midi" && !data.midiFichier) {
     const res = await api.lireBinaire(chemin);
@@ -51,7 +57,7 @@ async function fichierRelu(data: Record<string, any>, chemin: string, api: any):
     const mime = res.url?.match(/data:([^;]+);base64/)?.[1] ?? "audio/mpeg";
     const blob = new Blob([res.donnees], { type: mime });
     const fichier = new File([blob], res.nom, { type: mime });
-    return { audioFichier: fichier, audioNom: res.nom, audioUrl: URL.createObjectURL(fichier) };
+    return { audioFichier: fichier, audioNom: res.nom, audioUrl: creerUrlMedia(fichier) };
   }
   return null;
 }

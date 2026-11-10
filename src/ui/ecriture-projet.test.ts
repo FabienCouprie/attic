@@ -11,7 +11,7 @@
 // et ce que la cascade rend. C'est ce que `sauvegarder` lit ensuite pour poser le fichier courant,
 // écrire l'en-cours ou s'arrêter avant.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ecrireParLePont, telechargerProjet, type DemandeEcriture } from "./ecriture-projet";
+import { DELAI_AVANT_REVOCATION_MS, ecrireParLePont, telechargerProjet, type DemandeEcriture } from "./ecriture-projet";
 
 const FILTRES = [{ name: "Workflow Attic", extensions: ["json"] }];
 const JSON_PROJET = '{"formatVersion":3,"nodes":[]}';
@@ -150,5 +150,27 @@ describe("le téléchargement du mode web", () => {
     expect(liens.map((a) => a.href)).toEqual(["blob:projet", "blob:projet"]);
     expect(liens.every((a) => (a.click as unknown as { mock: { calls: unknown[] } }).mock.calls.length === 1)).toBe(true);
     expect(contenus.map((b) => b.type)).toEqual(["application/json", "application/json"]);
+  });
+
+  it("ET L'ADRESSE DU TÉLÉCHARGEMENT EST RÉVOQUÉE, une fois le clic passé : elle restait au navigateur", () => {
+    vi.useFakeTimers();
+    try {
+      const creer = document.createElement.bind(document);
+      vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+        const e = creer(tag);
+        if (tag === "a") (e as HTMLAnchorElement).click = vi.fn();
+        return e;
+      });
+      const revoquees: string[] = [];
+      vi.stubGlobal("URL", Object.assign(Object.create(URL), {
+        createObjectURL: () => "blob:projet", revokeObjectURL: (u: string) => { revoquees.push(u); },
+      }));
+      telechargerProjet(JSON_PROJET, NOM_DU_JOUR);
+      expect(revoquees, "pas avant que le navigateur ait pris le fichier").toEqual([]);
+      vi.advanceTimersByTime(DELAI_AVANT_REVOCATION_MS);
+      expect(revoquees).toEqual(["blob:projet"]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

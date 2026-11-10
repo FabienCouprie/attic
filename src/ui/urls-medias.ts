@@ -50,8 +50,13 @@
 // LES RACINES, au 2026-11-10 : le canevas et le graphe racine d'un méta ouvert
 // (`hooks/useUrlsMedias.ts`), les deux piles de l'historique (`hooks/useHistorique.ts`), le
 // presse-papiers de la fenêtre (`hooks/useCopierColler.ts`), la copie que garde la démonstration
-// filmée (`demo/useRealisateurDemo.tsx`). Un endroit neuf qui garde des nœuds de côté se déclare par
-// `useRacineDesUrls`, sans quoi les URL qu'il garde seront révoquées sous lui.
+// filmée (`demo/useRealisateurDemo.tsx`), et la piste que la vue de l'explorateur de musique garde
+// pour son lecteur (`vues-domaine/vues-explorateur.tsx`). Un endroit neuf qui garde des nœuds ou des
+// URL de côté se déclare par `useRacineDesUrls`, sans quoi ce qu'il garde sera révoqué sous lui.
+//
+// LES NAISSANCES, au 2026-11-10 : toutes celles de l'interface passent par `creerUrlMedia`, et
+// `ui/urls-medias-naissances.test.ts` refuse une URL d'objet créée à côté sans être classée. Restent
+// les deux films posés sur le nœud, celui du cercle pulsant et celui de la démonstration.
 
 type Lecteur = () => unknown;
 
