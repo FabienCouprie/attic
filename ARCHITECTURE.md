@@ -93,8 +93,10 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >
 > - **Lot 0, l'outillage** : fait le 2026-10-31 (PR 247). Reste son point A6, reporté avec sa
 >   raison dans `CHANGELOG.md` : les URL de médias remplacées ne sont pas révoquées, l'historique
->   d'annulation et le collage partageant l'URL avec le nœud. Et `src/ui/rechargerFichiers.ts`
->   écrit toujours dans `n.data` en place, sans passer par `setNodes`.
+>   d'annulation et le collage partageant l'URL avec le nœud. Sa seconde moitié est faite le
+>   2026-11-10 : `src/ui/rechargerFichiers.ts` rend les nœuds rechargés au lieu d'écrire dans le
+>   `n.data` de ceux qu'on lui passe, et ses trois appelants, l'import, l'en-cours et le collage,
+>   posent ce qu'il rend.
 > - **Lot 1, le contrat des exécuteurs** : fait le 2026-10-31 (PR 250).
 > - **Lot 2, les trois géants** : fait pour `App.tsx` le 2026-11-01, en neuf PR entre la 257 et la
 >   267, pour `useExecutionGraphe.ts` le 2026-11-02, en sept PR entre la 271 et la 280, et pour

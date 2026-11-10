@@ -84,10 +84,12 @@ export function useCopierColler(o: OptionsCopierColler) {
       const ajoutes: any[] = [];
       // Venus d'une autre fenêtre par une coupe, les médias se relisent depuis leur chemin.
       const aRelire = contenu !== locale && contenu.coupe;
-      const poses = elements.map((item) => ({
+      const lus = elements.map((item) => ({
         item, data: { ficheId: item.ficheId, parametres: { ...item.parametres }, ...item.data },
       }));
-      if (aRelire) await rechargerFichiersPersistes(poses.map((p) => ({ data: p.data })));
+      // Les données rechargées sont rendues, et non écrites en place : voir `ui/rechargerFichiers.ts`.
+      const relus = aRelire ? await rechargerFichiersPersistes(lus.map((p) => ({ data: p.data }))) : null;
+      const poses = relus ? lus.map((p, i) => ({ item: p.item, data: relus[i].data })) : lus;
       setNodes((nds) => {
         const selectionCourante = nds.filter((n) => (n as { selected?: boolean }).selected);
         const origine = (() => {

@@ -93,8 +93,8 @@ export function useEnCours({ pluginsVersion, rfInstance, callbacksNoeudRef, setN
           style: { stroke: couleurArete(nodesRestaures, e.source, e.sourceHandle), strokeWidth: 2.5 },
         }));
         const edgesValides = filtrerAretesInvalides(nodesRestaures, edgesRestaures);
-        await rechargerFichiersPersistes(nodesRestaures);
-        setNodes(nodesRestaures);
+        // Les nœuds rechargés sont rendus, et non écrits en place : voir `ui/rechargerFichiers.ts`.
+        setNodes(await rechargerFichiersPersistes(nodesRestaures));
         setEdges(edgesValides);
         // Les réglages de domaine de l'en-cours, comme le cadrage : une séance reprise rend ce
         // qu'elle rendait. Côté audio, sa fréquence de travail ; un en-cours sans elle vaut 44 100.
