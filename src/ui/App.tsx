@@ -94,6 +94,14 @@ const nbPlugins = tousLesPlugins().length; console.log("[attic] Plugins charg�
 // Le type d'un nœud du canevas vit dans `ui/noeud-atelier.ts` ; nodeTypes/edgeTypes dans
 // `reactflowTypes.ts` (hors du cycle HMR d'App.tsx) pour éviter l'avertissement React Flow #002.
 
+// LA TOUCHE DE SUPPRESSION EST UN TABLEAU CONSTANT, et non `["Delete"]` écrit dans le rendu. React
+// Flow suit les touches enfoncées par des écouteurs qu'il repose quand ce tableau change : neuf à
+// chaque rendu, il les retirait et les reposait à chaque rendu. MESURÉ le 2026-11-10 : un Ctrl+Z
+// après un tournage de la démonstration fait quatre rendus entre l'appui de Z et son relâchement,
+// le relâchement tombait entre un retrait et une pose, Z restait « enfoncé », et le Suppr suivant
+// ne correspondait plus à la touche seule : il était perdu, le second prenait.
+const TOUCHES_SUPPRESSION = ["Delete"];
+
 // ── Application ──
 
 export default function App() {
@@ -564,7 +572,7 @@ function Atelier() {
           onNodeContextMenu={(e, n) => surClicDroit(e, n as Node)}
           onSelectionContextMenu={(e, sel) => surClicDroitSelection(e, sel as Node[])}
           onInit={setRfInstance}
-          fitView deleteKeyCode={["Delete"]}
+          fitView deleteKeyCode={TOUCHES_SUPPRESSION}
           panOnDrag={[2]}
           selectionOnDrag={true}
           selectNodesOnDrag={false}

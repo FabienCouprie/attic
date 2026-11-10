@@ -176,8 +176,6 @@ test.describe("démonstration filmée de l'application", () => {
 // démonstration sur un film mort. Il naît désormais par le registre de `ui/urls-medias.ts`, qui ne le
 // révoque que quand plus rien ne le tient. Le critère : une adresse révoquée ne se lit plus.
 test.describe("le film de l'application, et l'annulation", () => {
-  // Le presse-papiers, pour couper un nœud.
-  test.use({ permissions: ["clipboard-read", "clipboard-write"] });
   const ids = (page: Page) => page.evaluate(() =>
     [...document.querySelectorAll(".react-flow__node")].map((n) => n.getAttribute("data-id")!).sort());
   const lire = (page: Page, url: string) => page.evaluate(async (u) => {
@@ -195,8 +193,10 @@ test.describe("le film de l'application, et l'annulation", () => {
   /** Le balayage du registre part un quart de seconde après le dernier changement des nœuds. */
   const laisserBalayer = (page: Page) => page.waitForTimeout(1000);
   /**
-   * Recadre sur tout le graphe, et attend que la vue soit posée. MESURÉ : après un tournage, la vue
-   * n'est pas celle d'avant, et un nœud peut se trouver hors de l'écran.
+   * Recadre sur tout le graphe, et attend que la vue soit posée. La vue de départ laisse un nœud
+   * hors de l'écran à cette taille de fenêtre, et la démonstration la rend telle qu'elle l'a trouvée :
+   * MESURÉ le 2026-11-10, identique avant et après un tournage. Une première lecture, faite sans
+   * comparer avec la vue d'avant, avait cru que le tournage la déplaçait.
    */
   async function cadrer(page: Page) {
     await page.locator(".react-flow__controls-fitview").click();
@@ -210,8 +210,8 @@ test.describe("le film de l'application, et l'annulation", () => {
       return stable;
     }, { timeout: 15000, intervals: [400] }).toBe(true);
   }
-  /** Retire un nœud par la touche donnée, Suppr ou Ctrl+X, après l'avoir sélectionné seul. */
-  async function retirer(page: Page, id: string, touche: "Delete" | "Control+x") {
+  /** Supprime un nœud par Suppr, après l'avoir sélectionné seul. */
+  async function supprimer(page: Page, id: string) {
     await cadrer(page);
     const p = await page.evaluate((id) => {
       const r = document.querySelector(`.react-flow__node[data-id="${id}"]`)!.getBoundingClientRect();
@@ -230,8 +230,8 @@ test.describe("le film de l'application, et l'annulation", () => {
     await expect.poll(() => page.evaluate(() =>
       [...document.querySelectorAll(".react-flow__node.selected")].map((n) => n.getAttribute("data-id")).join(",")),
     { message: `seul ${id} est sélectionné`, timeout: 5000 }).toBe(id);
-    await page.keyboard.press(touche);
-    await expect.poll(() => ids(page)).not.toContain(id);
+    await page.keyboard.press("Delete");
+    await expect.poll(() => ids(page), { message: `Suppr retire ${id}` }).not.toContain(id);
   }
 
   test("TENU PAR L'HISTORIQUE, LE FILM PRÉCÉDENT SURVIT : Ctrl+Z le rend lisible ; lâché, le suivant part", async ({ page }) => {
@@ -253,7 +253,7 @@ test.describe("le film de l'application, et l'annulation", () => {
     page.on("dialog", async (d) => { await d.dismiss(); });
 
     const premier = await filmer(page, "");
-    await retirer(page, "z", "Delete");
+    await supprimer(page, "z");
     const second = await filmer(page, premier);
     await laisserBalayer(page);
     expect(await lire(page, premier), "l'instantané de la suppression tient le premier film").toBeGreaterThan(0);
@@ -265,9 +265,10 @@ test.describe("le film de l'application, et l'annulation", () => {
     expect(await lire(page, premier), "et il se lit").toBeGreaterThan(0);
 
     // UNE ACTION NEUVE EFFACE LA PILE DE RÉTABLISSEMENT, seule à tenir le second film : il part.
-    // UNE COUPE ET NON UNE SUPPRESSION : MESURÉ, la première pression de Suppr qui suit ce Ctrl+Z est
-    // perdue, quel que soit le nœud visé, et la suivante prend. Relevé à part, hors du point A6.
-    await retirer(page, "courbe", "Control+x");
+    // ET LE PREMIER SUPPR QUI SUIT CE CTRL+Z PREND. MESURÉ le 2026-11-10 : il était perdu, Z restant
+    // « enfoncé » pour React Flow, qui reposait ses écouteurs à chaque rendu d'`App.tsx` et avait
+    // manqué son relâchement. Voir `TOUCHES_SUPPRESSION` dans `ui/App.tsx`.
+    await supprimer(page, "courbe");
     await expect.poll(() => lire(page, second), { message: "lâché par tous, le second film est révoqué", timeout: 5000 }).toBe(-1);
     expect(await lire(page, premier), "le premier, que le canevas tient, se lit toujours").toBeGreaterThan(0);
   });
