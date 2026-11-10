@@ -10,11 +10,16 @@ import { useI18n } from "../i18n";
 import type { VueProps } from "../ui/registre-vues";
 
 import { LecteurAudio } from "../ui/lecteur-audio";
+import { creerUrlMedia } from "../ui/urls-medias";
+import { useRacineDesUrls } from "../ui/hooks/useUrlsMedias";
 export function VueExplorateur({ id, data }: VueProps) {
   const { t } = useI18n();
   const [fichiersMusique, setFichiersMusique] = useState<{ nom: string; chemin: string }[] | null>(null);
   const [chargementMusique, setChargementMusique] = useState(false);
   const [audioLocale, setAudioLocale] = useState<string | null>(data.audioUrl ?? null);
+  // LA VUE GARDE SA PISTE DE CÔTÉ, et son lecteur la joue quand le nœud n'en porte plus, après un
+  // Ctrl+Z par exemple : elle tient donc son URL tant qu'elle vit. Voir `ui/urls-medias.ts`.
+  useRacineDesUrls(`explorateur ${id}`, () => audioLocale);
   const { setNodes } = useReactFlow();
   const api = (window as { api?: any }).api;
 
@@ -86,7 +91,8 @@ export function VueExplorateur({ id, data }: VueProps) {
     }
     const blob = new Blob([resultat.donnees], { type: "audio/mpeg" });
     const fichier = new File([blob], resultat.nom, { type: "audio/mpeg" });
-    const url = URL.createObjectURL(fichier);
+    // Par le registre : la piste qu'elle remplace part quand plus rien ne la tient.
+    const url = creerUrlMedia(fichier);
     setAudioLocale(url);
     setNodes((nds) => nds.map((nd) => nd.id === id ? {
       ...nd,

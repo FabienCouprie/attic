@@ -97,10 +97,10 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   `src/ui/rechargerFichiers.ts` rend les nœuds rechargés au lieu d'écrire dans le `n.data` de
 >   ceux qu'on lui passe (PR 326) ; Ctrl+Y rétablit ce que Ctrl+Z a annulé (PR 327) ; et le
 >   registre de `src/ui/urls-medias.ts` révoque une URL quand ni un nœud vivant, ni une entrée
->   d'annulation ou de rétablissement, ni le presse-papiers ne la tiennent. Seul le chargement d'un
->   son passe encore par lui : les autres naissances d'URL, l'enregistrement au micro, le dépôt d'un
->   fichier, l'explorateur de musique et le rechargement, restent à y porter, puis les deux films
->   posés sur le nœud, celui du cercle pulsant et celui de la démonstration.
+>   d'annulation ou de rétablissement, ni le presse-papiers ne la tiennent (PR 328). Toutes les
+>   naissances d'URL de média de l'interface passent par lui, et `src/ui/urls-medias-naissances.test.ts`
+>   refuse une URL d'objet créée à côté sans être classée. Restent les deux films posés sur le nœud,
+>   celui du cercle pulsant et celui de la démonstration.
 > - **Lot 1, le contrat des exécuteurs** : fait le 2026-10-31 (PR 250).
 > - **Lot 2, les trois géants** : fait pour `App.tsx` le 2026-11-01, en neuf PR entre la 257 et la
 >   267, pour `useExecutionGraphe.ts` le 2026-11-02, en sept PR entre la 271 et la 280, et pour

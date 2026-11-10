@@ -69,8 +69,12 @@ export function InspecteurDuCanevas({
           if (sel) reinitialiserNoeud(sel.id);
         }}
         onEnregistrer={(id, blob) => {
-          const url = URL.createObjectURL(blob);
-          setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n));
+          // LA MÊME PRISE QUE DEPUIS LE NŒUD, par le geste qu'il porte : `changerEnregistrement` de
+          // `hooks/useChargementMedias.ts`. L'inspecteur en tenait une seconde écriture, sans la purge
+          // du cache ni la remise à zéro : MESURÉ, une prise refaite ici laissait le nœud « Terminé »,
+          // sur le résultat de la précédente.
+          const n = nodes.find((x) => x.id === id);
+          (n?.data.onChangerEnregistrement as ((nid: string, b: Blob) => void) | undefined)?.(id, blob);
         }}
         onEnregistrerMidi={(id, fichier) => {
           // Même contrat que onChargerMidi (AtelierNode) : vider le cache

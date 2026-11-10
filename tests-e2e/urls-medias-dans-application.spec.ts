@@ -34,11 +34,17 @@
 // premier cas, lui, remplace le fichier SANS attendre : c'est ce trajet rapide qui a montré qu'une
 // URL jamais vue tenue restait gardée pour toujours.
 import { test, expect, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { serveurDeVerification } from "./serveur-de-developpement";
 
 const devUrl = serveurDeVerification(5281);
 
-test.use({ permissions: ["clipboard-read", "clipboard-write"] });
+// LE PRESSE-PAPIERS, ET UN MICRO FACTICE pour la prise depuis l'inspecteur : Chromium joue un son
+// d'essai à la place du périphérique, et ne demande rien. Il ne sert qu'à `getUserMedia`.
+test.use({
+  permissions: ["clipboard-read", "clipboard-write", "microphone"],
+  launchOptions: { args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] },
+});
 
 /** Un WAV mono 16 bits à 44,1 kHz : 44 octets d'en-tête et deux par échantillon. */
 function wav(secondes: number): Buffer {
@@ -251,5 +257,144 @@ test.describe("les URL de médias", () => {
     await page.waitForTimeout(2500);
     await charger(page, "a", "B");
     await expect.poll(() => lire(page, urlA), { message: "l'adresse de A est révoquée", timeout: 5000 }).toBe(-1);
+  });
+});
+
+// ═══ LES AUTRES NAISSANCES, portées par le registre à la pièce suivante du point A6 ═══
+//
+// Chacune se juge de la même façon : l'adresse qu'elle a créée se révoque quand un autre fichier la
+// remplace. Une naissance restée à côté du registre garde son adresse pour toujours. L'adresse est
+// relevée à sa création, par `URL.createObjectURL` enveloppé avant le chargement de la page, ce qui
+// compte aussi les naissances : un son déposé n'en doit faire qu'une.
+
+/** Enveloppe `URL.createObjectURL` : chaque adresse créée s'ajoute à `window.__nees`. */
+const COMPTER_LES_NAISSANCES = () => {
+  const creer = URL.createObjectURL.bind(URL);
+  (window as any).__nees = [];
+  URL.createObjectURL = (o: Blob | MediaSource) => { const u = creer(o); (window as any).__nees.push(u); return u; };
+};
+const nees = (page: Page): Promise<string[]> => page.evaluate(() => [...(window as any).__nees]);
+
+/** Un faux pont : un dossier de deux pistes, et le WAV de chaque chemin, de durée connue. */
+const FAUX_PONT = ([a, b]: string[]) => {
+  const octets = (b64: string) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const disque: Record<string, Uint8Array> = { "C:/sons/essai.wav": octets(a), "musique/une.wav": octets(a), "musique/deux.wav": octets(b) };
+  (window as any).api = {
+    lireDossier: async () => [{ nom: "une.wav", chemin: "musique/une.wav" }, { nom: "deux.wav", chemin: "musique/deux.wav" }],
+    lireFichierAudio: async (chemin: string) => (disque[chemin] ? { url: "", donnees: disque[chemin], nom: chemin.split("/").pop() } : null),
+    choisirDossier: async () => null,
+  };
+};
+const PONT = [FICHIERS.A.toString("base64"), FICHIERS.B.toString("base64")];
+
+test.describe("les autres naissances d'URL de médias", () => {
+  test("UN SON DÉPOSÉ SUR LE CANEVAS NAÎT AVEC UNE SEULE ADRESSE, et la rend quand un autre fichier le remplace", async ({ page }) => {
+    test.setTimeout(120000);
+    await page.addInitScript(COMPTER_LES_NAISSANCES);
+    await ouvrir(page, []);
+    const avant = (await nees(page)).length;
+    await page.evaluate((b64) => {
+      const fichier = new File([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], "A.wav", { type: "audio/wav" });
+      const dt = new DataTransfer();
+      dt.items.add(fichier);
+      const cible = document.querySelector(".react-flow__pane")!;
+      const r = cible.getBoundingClientRect();
+      cible.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true, clientX: r.left + 300, clientY: r.top + 200 }));
+    }, FICHIERS.A.toString("base64"));
+    await expect.poll(async () => (await ids(page)).length).toBe(1);
+    const neesAuDepot = (await nees(page)).slice(avant);
+    expect(neesAuDepot, "un seul fichier déposé, une seule adresse : le mode strict rejoue le réducteur").toHaveLength(1);
+    const [id] = await ids(page);
+    expect(await lire(page, neesAuDepot[0]), "l'adresse du dépôt lit le fichier").toBe(OCTETS.A);
+    await laisserBalayer(page);
+    await charger(page, id, "B");
+    await expect.poll(() => lire(page, neesAuDepot[0]), { message: "remplacée, l'adresse du dépôt part", timeout: 5000 }).toBe(-1);
+  });
+
+  test("UNE PISTE CHOISIE DANS L'EXPLORATEUR REND SON ADRESSE QUAND UNE AUTRE LA REMPLACE", async ({ page }) => {
+    test.setTimeout(120000);
+    await page.addInitScript(COMPTER_LES_NAISSANCES);
+    await page.addInitScript(FAUX_PONT, PONT);
+    await ouvrir(page, [{ id: "x", type: "atelier", position: { x: 0, y: 0 }, width: 320, height: 380,
+      data: { ficheId: "explorateur-musique", parametres: { Chemin: "musique" } } }]);
+    const noeud = page.locator('.react-flow__node[data-id="x"]');
+    await noeud.locator(".attic-node-fichier-btn").first().click();
+    const liste = noeud.locator("select.attic-node-select");
+    await expect(liste.locator("option")).toHaveCount(2, { timeout: 10000 });
+    const avant = (await nees(page)).length;
+    await liste.locator("option").nth(0).click();
+    await expect.poll(async () => (await nees(page)).length, { message: "la piste choisie a son adresse" }).toBe(avant + 1);
+    const urlUne = (await nees(page))[avant];
+    expect(await lire(page, urlUne)).toBe(OCTETS.A);
+    await laisserBalayer(page);
+    await liste.locator("option").nth(1).click();
+    await expect.poll(() => lire(page, urlUne), { message: "remplacée, l'adresse de la première piste part", timeout: 5000 }).toBe(-1);
+  });
+
+  test("UN FICHIER RELU À L'OUVERTURE D'UN PROJET REND SON ADRESSE QUAND UN AUTRE LE REMPLACE", async ({ page }) => {
+    test.setTimeout(120000);
+    await page.addInitScript(COMPTER_LES_NAISSANCES);
+    await page.addInitScript(FAUX_PONT, PONT);
+    await ouvrir(page, []);
+    const avant = (await nees(page)).length;
+    await page.locator('input[type=file][accept=".json"]').setInputFiles({
+      name: "projet.json", mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify({ nodes: [{ ...entree("a", 0), data: { ficheId: "entree-audio", parametres: { Chemin: "C:/sons/essai.wav" } } }], edges: [] })),
+    });
+    await expect(page.locator('.react-flow__node[data-id="a"]')).toContainText("essai.wav", { timeout: 15000 });
+    const neesALouverture = (await nees(page)).slice(avant);
+    expect(neesALouverture, "le fichier relu a une adresse").toHaveLength(1);
+    expect(await lire(page, neesALouverture[0])).toBe(OCTETS.A);
+    await laisserBalayer(page);
+    await charger(page, "a", "B");
+    await expect.poll(() => lire(page, neesALouverture[0]), { message: "remplacée, l'adresse du fichier relu part", timeout: 5000 }).toBe(-1);
+  });
+});
+
+// ═══ DEUX RELEVÉS DE LA MÊME PIÈCE, CORRIGÉS À LA DEMANDE DE FABIEN LE 2026-11-10 ═══
+
+test.describe("la prise au micro depuis l'inspecteur", () => {
+  /** Enregistre une seconde au micro depuis l'inspecteur, le nœud étant sélectionné. */
+  async function enregistrer(page: Page) {
+    const panneau = page.locator(".inspecteur");
+    await panneau.locator(".attic-node-btn-record").first().click();
+    await expect(panneau.locator(".attic-node-btn-stop")).toBeVisible({ timeout: 10000 });
+    await page.waitForTimeout(1200);
+    await panneau.locator(".attic-node-btn-stop").click();
+    await expect(panneau.locator("audio")).toHaveCount(1, { timeout: 10000 });
+  }
+
+  test("UNE PRISE REFAITE DANS L'INSPECTEUR REMET LE NŒUD À ZÉRO, comme celle du nœud : il ne garde pas le résultat de la précédente", async ({ page }) => {
+    test.setTimeout(120000);
+    await ouvrir(page, [{ id: "r", type: "atelier", position: { x: 0, y: 0 }, data: { ficheId: "enregistreur-audio", parametres: {} } }]);
+    await selectionner(page, "r");
+    await enregistrer(page);
+    await lancer(page);
+    const statut = () => page.evaluate(() =>
+      document.querySelector('.react-flow__node[data-id="r"] .attic-node-statut-puce')?.className ?? "");
+    expect(await statut(), "la première prise lancée").toContain("termine");
+    const premiere = (await page.locator(".inspecteur audio").getAttribute("src"))!;
+    expect(await lire(page, premiere), "la première prise se lit").toBeGreaterThan(0);
+    await enregistrer(page);
+    await expect.poll(statut, { message: "la prise refaite remet le nœud en attente", timeout: 5000 }).not.toContain("termine");
+    // ET LA PRISE REMPLACÉE PART : elle naît par le registre, et plus rien ne la tient.
+    await expect.poll(() => lire(page, premiere), { message: "l'adresse de la première prise est révoquée", timeout: 5000 }).toBe(-1);
+  });
+});
+
+test.describe("le téléchargement d'un projet en mode web", () => {
+  test("L'ADRESSE DU TÉLÉCHARGEMENT EST RÉVOQUÉE une fois le fichier pris : elle restait au navigateur", async ({ page }) => {
+    test.setTimeout(120000);
+    await page.addInitScript(COMPTER_LES_NAISSANCES);
+    await ouvrir(page, [entree("a", 0)]);
+    const avant = (await nees(page)).length;
+    const telechargement = page.waitForEvent("download");
+    await page.keyboard.press("Control+Shift+S");
+    const fichier = await telechargement;
+    const contenu = JSON.parse(readFileSync(await fichier.path(), "utf8"));
+    expect(contenu.nodes.map((n: { id: string }) => n.id), "le projet téléchargé est celui du canevas").toEqual(["a"]);
+    const adresses = (await nees(page)).slice(avant);
+    expect(adresses, "une adresse pour le téléchargement").toHaveLength(1);
+    await expect.poll(() => lire(page, adresses[0]), { message: "l'adresse du téléchargement est révoquée", timeout: 5000 }).toBe(-1);
   });
 });
