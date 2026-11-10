@@ -70,3 +70,63 @@ export function empiler<N, E>(pile: EntreeHistorique<N, E>[], entree: EntreeHist
   pile.push(entree);
   while (pile.length > max) pile.shift();
 }
+
+// ═══ CTRL+Y : LA SECONDE PILE ═══
+//
+// Demandé par Fabien le 2026-11-10, au point A6 de la revue d'architecture du 2026-10-31 : seul
+// Ctrl+Z existait. Annuler pose l'instantané d'avant ; rétablir pose celui que l'annulation a
+// remplacé, et c'est donc l'annulation qui le photographie, au moment où elle le quitte.
+//
+// UNE ACTION NEUVE EFFACE CE QUI SE RÉTABLISSAIT. Annuler deux pas puis agir ouvre une autre suite :
+// rétablir l'ancienne écraserait ce qu'on vient de faire.
+//
+// LE CONTEXTE SUIT L'ENTRÉE. Une entrée qui porte la navigation et le fichier, celles du vidage du
+// canevas et du fichier détaché, demande que l'état qu'elle remplace soit photographié avec les
+// siens : sans eux, rétablir un vidage rendrait le canevas vide en gardant le fichier ouvert.
+//
+// CE QUE CES PILES NE VOIENT PAS, comme Ctrl+Z avant elles : un geste qui ne prend pas d'instantané,
+// un réglage changé, un fichier chargé, un nœud déplacé. Il n'efface pas ce qui se rétablissait, et
+// Ctrl+Y le recouvre, comme Ctrl+Z recouvre déjà ce qui a suivi l'instantané qu'il pose.
+
+/** Ce que Ctrl+Z et Ctrl+Y se partagent : l'une se vide dans l'autre. */
+export interface PilesHistorique<N = unknown, E = unknown> {
+  annulation: EntreeHistorique<N, E>[];
+  retablissement: EntreeHistorique<N, E>[];
+}
+
+export const pilesVides = <N = unknown, E = unknown>(): PilesHistorique<N, E> => ({ annulation: [], retablissement: [] });
+
+/** L'instantané de l'état à l'écran, avec sa navigation et son fichier si `avecContexte`. */
+export type EtatCourant<N, E> = (avecContexte: boolean) => EntreeHistorique<N, E>;
+
+/** Une action annulable : son instantané s'empile, et ce qui avait été annulé ne se rétablit plus. */
+export function noterAction<N, E>(piles: PilesHistorique<N, E>, entree: EntreeHistorique<N, E>, max: number): void {
+  empiler(piles.annulation, entree, max);
+  piles.retablissement.length = 0;
+}
+
+/**
+ * D'une pile à l'autre : l'entrée à poser, l'état courant passant sur l'autre pile.
+ *
+ * SANS PLAFOND, ET RIEN NE DÉBORDE : une entrée ne passe sur l'autre pile qu'en échange de celle
+ * qu'elle quitte, et une action neuve vide la seconde. La somme des deux reste donc sous le plafond
+ * que `noterAction` tient sur la première.
+ */
+function basculer<N, E>(
+  depuis: EntreeHistorique<N, E>[], vers: EntreeHistorique<N, E>[], courant: EtatCourant<N, E>,
+): EntreeHistorique<N, E> | undefined {
+  const entree = depuis.pop();
+  if (!entree) return undefined;
+  vers.push(courant(!!entree.contexte));
+  return entree;
+}
+
+/** Ctrl+Z : l'entrée à poser, ou rien. L'état courant devient ce que Ctrl+Y rendra. */
+export function annuler<N, E>(piles: PilesHistorique<N, E>, courant: EtatCourant<N, E>) {
+  return basculer(piles.annulation, piles.retablissement, courant);
+}
+
+/** Ctrl+Y : l'entrée à poser, ou rien. L'état courant redevient ce que Ctrl+Z rendra. */
+export function retablir<N, E>(piles: PilesHistorique<N, E>, courant: EtatCourant<N, E>) {
+  return basculer(piles.retablissement, piles.annulation, courant);
+}

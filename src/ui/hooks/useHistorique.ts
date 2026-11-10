@@ -1,15 +1,23 @@
-// ui/hooks/useHistorique.ts — Ce que Ctrl+Z rend : l'instantané avant une action annulable, et les
-// deux gestes qui en prennent un avec leur contexte, vider le canevas et détacher le fichier.
+// ui/hooks/useHistorique.ts — Ce que Ctrl+Z rend : l'instantané avant une action annulable, ce que
+// Ctrl+Y rend : celui que l'annulation a quitté, et les deux gestes qui en prennent un avec leur
+// contexte, vider le canevas et détacher le fichier.
 //
-// Sorti d'`App.tsx` le 2026-11-01, à l'identique : même pile, même plafond, mêmes instantanés. La
-// pile elle-même et la copie d'un graphe vivent dans `ui/historique.ts` ; ce crochet ne fait que
+// Sorti d'`App.tsx` le 2026-11-01, à l'identique : même pile, même plafond, mêmes instantanés. Les
+// piles elles-mêmes et la copie d'un graphe vivent dans `ui/historique.ts` ; ce crochet ne fait que
 // les relier à l'état de React. Le presse-papiers de nœuds est celui du système, voir
 // `hooks/useCopierColler.ts`.
+//
+// LE RÉTABLISSEMENT, demandé par Fabien le 2026-11-10 : la seconde pile. Annuler et rétablir posent
+// une entrée de la même façon, gestionnaires rattachés, navigation et fichier rendus, cache vidé,
+// résultats des nœuds abandonnés oubliés ; ils ne diffèrent que par la pile qu'ils vident.
 import { useCallback, useRef } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import type { Edge } from "@xyflow/react";
 
-import { empiler, instantane, type ContexteHistorique, type EntreeHistorique } from "../historique";
+import {
+  annuler, instantane, noterAction, pilesVides, retablir,
+  type ContexteHistorique, type EntreeHistorique, type PilesHistorique,
+} from "../historique";
 import { idsDe, oublierNoeuds } from "../oubli-noeuds";
 
 type Niveau = { metaId: string; nom: string; nomEn?: string };
@@ -35,24 +43,28 @@ export function useHistorique({
   noeudsRef, aretesRef, grapheRacineRef, callbacksNoeudRef, cacheExec,
   setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath,
 }: OptionsHistorique) {
-  const historiqueRef = useRef<EntreeHistorique<any, any>[]>([]);
+  const pilesRef = useRef<PilesHistorique<any, any>>(pilesVides());
   const MAX_HISTORIQUE = 50;
+  // LA NAVIGATION ET LE FICHIER DE L'INSTANT, que Ctrl+Z photographie pour Ctrl+Y. Ils arrivent
+  // en valeurs, et les gestes ci-dessous ne changent pas d'identité à chaque rendu.
+  const pileRef = useRef(pile);
+  pileRef.current = pile;
+  const cheminRef = useRef(currentFilePath);
+  cheminRef.current = currentFilePath;
 
   // Instantané avant une action annulable. `contexte` n'est passé que par les actions qui
   // changent aussi la navigation dans les méta-composants ou le fichier ouvert — vider le
   // canevas. La copie garde les fichiers chargés par référence (voir ui/historique.ts).
   const pushHistorique = useCallback((contexte?: ContexteHistorique<any, any>) => {
-    empiler(historiqueRef.current, instantane(noeudsRef.current, aretesRef.current, contexte), MAX_HISTORIQUE);
+    noterAction(pilesRef.current, instantane(noeudsRef.current, aretesRef.current, contexte), MAX_HISTORIQUE);
   }, []);
 
-  const undo = useCallback(() => {
-    const prev = historiqueRef.current.pop();
-    if (!prev) return;
-    // L'historique est sérialisé (JSON.stringify), donc les callbacks des nœuds
-    // ont été perdus. On les ré-attache pour que les boutons reset/play/supprimer
-    // restent fonctionnels après un Ctrl+Z.
-    const cbs = callbacksNoeudRef.current?.();
-    if (!cbs) return;
+  /** L'état à l'écran, que la pile d'en face rendra. */
+  const etatCourant = useCallback((avecContexte: boolean) => instantane(noeudsRef.current, aretesRef.current,
+    avecContexte ? { pile: pileRef.current, racine: grapheRacineRef.current, cheminFichier: cheminRef.current } : undefined), []);
+
+  /** Pose une entrée de l'une ou l'autre pile. */
+  const poser = useCallback((prev: EntreeHistorique<any, any>, cbs: Record<string, unknown>) => {
     setNodes(prev.nodes.map((n: any) => ({ ...n, data: { ...n.data, ...cbs } })));
     setEdges(prev.edges);
     if (prev.contexte) {
@@ -71,6 +83,27 @@ export function useHistorique({
     // Voir `ui/oubli-noeuds.ts`.
     oublierNoeuds([...idsDe(prev.nodes), ...idsDe(prev.contexte?.racine?.nodes)]);
   }, [setNodes, setEdges]);
+
+  // L'historique est sérialisé (JSON.stringify), donc les callbacks des nœuds
+  // ont été perdus. On les ré-attache pour que les boutons reset/play/supprimer
+  // restent fonctionnels après un Ctrl+Z.
+  //
+  // LES GESTIONNAIRES SONT DEMANDÉS AVANT DE VIDER UNE PILE : sans eux rien ne se pose. Retirer
+  // l'entrée d'abord la perdait quand ils manquaient ; avec deux piles, l'état courant serait en plus
+  // passé pour rien sur l'autre.
+  const undo = useCallback(() => {
+    const cbs = callbacksNoeudRef.current?.();
+    if (!cbs) return;
+    const prev = annuler(pilesRef.current, etatCourant);
+    if (prev) poser(prev, cbs);
+  }, [etatCourant, poser]);
+
+  const redo = useCallback(() => {
+    const cbs = callbacksNoeudRef.current?.();
+    if (!cbs) return;
+    const suivant = retablir(pilesRef.current, etatCourant);
+    if (suivant) poser(suivant, cbs);
+  }, [etatCourant, poser]);
 
   // Un seul onglet wf-1. Le bouton × vide le canevas — et Ctrl+Z le rend.
   //
@@ -112,5 +145,5 @@ export function useHistorique({
     setCurrentFilePath(null);
   }, [currentFilePath, pushHistorique, pile]);
 
-  return { pushHistorique, undo, fermerOnglet, detacherFichier };
+  return { pushHistorique, undo, redo, fermerOnglet, detacherFichier };
 }
