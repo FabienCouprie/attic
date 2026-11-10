@@ -101,7 +101,7 @@ export function useImportProjet(o: OptionsImportProjet, t: (cle: string) => stri
     o.vueAPoserRef.current = ouverture.cadrer ? null : json.viewport ?? null;
     o.setPile([]);
     o.grapheRacineRef.current = null;
-    const importedNodes = (json.nodes || []).map((n: any) => ({
+    const nodesLus = (json.nodes || []).map((n: any) => ({
       ...n,
       data: {
         ...n.data,
@@ -117,9 +117,9 @@ export function useImportProjet(o: OptionsImportProjet, t: (cle: string) => stri
       },
     }));
 
-    // Recharger les fichiers persistés (Electron) : le File n'est pas sérialisable,
-    // mais le chemin est sauvé dans le paramètre "Chemin".
-    await rechargerFichiersPersistes(importedNodes);
+    // Recharger les fichiers persistés (Electron) : le File n'est pas sérialisable, mais le chemin
+    // est sauvé dans « Chemin ». Les nœuds rechargés sont rendus : voir `ui/rechargerFichiers.ts`.
+    const importedNodes = await rechargerFichiersPersistes(nodesLus);
 
     // ═══ CE QUE LE CHARGEMENT A PERDU SE DIT, au lieu de n'être qu'un `console.warn` ═══
     //
