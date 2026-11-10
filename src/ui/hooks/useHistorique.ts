@@ -127,9 +127,12 @@ export function useHistorique({
   // vidé depuis l'intérieur d'un méta, le canevas revient au même endroit, avec son
   // graphe racine. Un canevas déjà vide n'ajoute rien à l'historique.
   //
-  // Les URL de résultats ne sont PAS révoquées ici, contrairement à une suppression de
-  // nœud : ce sont elles que Ctrl+Z doit rendre, lecteurs compris. Elles restent tenues
-  // par l'historique, qui en garde au plus MAX_HISTORIQUE.
+  // CE QUE CTRL+Z REND, ET CE QU'IL NE REND PAS. Les nœuds, les arêtes, la navigation et le
+  // fichier, et les médias posés sur les nœuds : leurs URL sont tenues par l'entrée
+  // d'historique, et le registre de `ui/urls-medias.ts` ne les révoque pas tant qu'elle vit.
+  // Les RÉSULTATS, eux, ne sont pas dans l'historique : ils sont oubliés plus bas, leurs URL
+  // révoquées, et le run suivant les refait. Ce commentaire disait le contraire, d'avant le
+  // magasin des résultats.
   const fermerOnglet = useCallback((id: string) => {
     void id;
     if (noeudsRef.current.length === 0 && pile.length === 0) return;

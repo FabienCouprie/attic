@@ -3,6 +3,7 @@
 // d'une sélection, et aplatissement d'un graphe (expansion des méta-nœuds) avant
 // exécution. Réutilise le moteur DAG existant sans le modifier.
 import type { PortDef } from "./types";
+import { CHAMPS_DE_SAISIE } from "./saisies";
 
 export interface NoeudG {
   id: string;
@@ -67,13 +68,29 @@ export function indexPort(handle: string | null | undefined, defaut = 0): number
   return Number.isNaN(n) ? defaut : n;
 }
 
-// N'emporte dans le sous-graphe que les champs utiles à l'exécution/au rendu
-// (pas les callbacks React ni les URL de résultat runtime).
+/**
+ * Ce qu'un nœud emporte dans le sous-graphe d'un méta : ce que la personne y a posé, et rien d'autre.
+ *
+ * LA LISTE VIENT DE `core/saisies.ts`, ET C'EST LA RÉPARATION. Elle était écrite ici à la main,
+ * douze noms qui ne suivaient pas la table : elle gardait `imageNom` sans `imageFichier`. MESURÉ dans
+ * l'application, une « Entrée image » groupée en outil puis dégroupée montrait encore le nom de son
+ * image et passait en erreur au run. Treize saisies se perdaient ainsi : le fichier d'une image,
+ * d'un SVG, d'un PDF et son nom, d'une réponse impulsionnelle et son nom, d'un patch Pure Data, le
+ * chemin d'un son, les coupes d'un montage, le nom du fichier d'origine, le nom donné au nœud dans
+ * les deux langues, et sa couleur.
+ *
+ * UNE ADRESSE `blob:` NE SUIT PAS, quel que soit son champ. La définition d'un méta n'est pas une
+ * racine du registre de `ui/urls-medias.ts` : une adresse qui n'y vivrait plus serait révoquée sous
+ * lui. Le fichier, lui, suit, et l'adresse se refait. Ni les gestionnaires, ni les résultats, ni
+ * les statuts ne sont des saisies : ils restent dehors.
+ */
 export function nettoyerNoeud(n: NoeudG): NoeudG {
   const d = n.data as Record<string, unknown>;
   const data: NoeudG["data"] = { ficheId: d.ficheId as string, parametres: (d.parametres as Record<string, unknown>) ?? {} };
-  for (const cle of ["audioFichier", "audioNom", "midiFichier", "midiNom", "imageNom", "svgNom", "enregistrementBlob", "sequenceNotes", "modeleFichier", "zonesSelectionnees", "sfzChemin", "sfzNom"]) {
-    if (d[cle] !== undefined) data[cle] = d[cle];
+  for (const cle of CHAMPS_DE_SAISIE) {
+    const v = d[cle];
+    if (v === undefined || (typeof v === "string" && v.startsWith("blob:"))) continue;
+    data[cle] = v;
   }
   return { id: n.id, type: n.type, position: n.position ?? { x: 0, y: 0 }, width: n.width, height: n.height, data };
 }

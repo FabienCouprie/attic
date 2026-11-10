@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { serveurDeVerification } from "./serveur-de-developpement";
 
 const devUrl = serveurDeVerification(5219);
@@ -242,5 +242,73 @@ test.describe("Global reset", () => {
       return label?.textContent ?? null;
     });
     expect(texte).toContain("En attente");
+  });
+});
+
+// CE QU'UN NŒUD EMPORTE DANS UN OUTIL. La liste de `nettoyerNoeud` était écrite à la main et gardait
+// le nom d'une image sans son fichier : MESURÉ, une « Entrée image » groupée en outil faisait tomber
+// l'outil en erreur, et dégroupée elle montrait encore « pixel.png » mais tombait au run. La liste
+// vient désormais de `core/saisies.ts`.
+test.describe("grouper puis dégrouper", () => {
+  // Un PNG d'un pixel.
+  const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+  const ids = (page: Page) => page.evaluate(() =>
+    [...document.querySelectorAll(".react-flow__node")].map((n) => n.getAttribute("data-id")!).sort());
+  /** Un clic sur un point du nœud que rien ne recouvre, ni champ, ni bouton, ni image. */
+  async function cliquer(page: Page, id: string, ajouter = false) {
+    const p = await page.evaluate((id) => {
+      const r = document.querySelector(`.react-flow__node[data-id="${id}"]`)!.getBoundingClientRect();
+      for (let fy = 0.05; fy < 1; fy += 0.05) for (let fx = 0.03; fx < 1; fx += 0.05) {
+        const x = r.left + r.width * fx, y = r.top + r.height * fy;
+        const el = document.elementFromPoint(x, y);
+        if (el?.closest(".react-flow__node")?.getAttribute("data-id") === id
+          && !el.closest("input,textarea,select,button,label,canvas,audio,video,img,.react-flow__handle,.nodrag")) return { x, y };
+      }
+      return null;
+    }, id);
+    expect(p, `aucun point libre sur ${id}`).not.toBeNull();
+    if (ajouter) await page.keyboard.down("Control");
+    await page.mouse.click(p!.x, p!.y);
+    if (ajouter) await page.keyboard.up("Control");
+  }
+  /** Lance, et rend le statut de chaque nœud une fois tous finis. */
+  async function lancer(page: Page): Promise<Record<string, string>> {
+    await page.click(".attic-btn-lancer");
+    await page.waitForFunction(() => {
+      const noeuds = [...document.querySelectorAll(".react-flow__node")];
+      return noeuds.length > 0 && noeuds.every((n) => n.querySelector(".attic-node-statut-puce.termine, .attic-node-statut-puce.erreur"));
+    }, null, { timeout: 30000 });
+    return page.evaluate(() => Object.fromEntries([...document.querySelectorAll(".react-flow__node")].map((n) =>
+      [n.getAttribute("data-id")!, n.querySelector(".attic-node-statut-puce.termine") ? "termine" : "erreur"])));
+  }
+
+  test("UNE ENTRÉE IMAGE GARDE SON FICHIER : l'outil se lance, et dégroupée elle se lance encore", async ({ page }) => {
+    test.setTimeout(90000);
+    await page.setViewportSize({ width: 1600, height: 900 });
+    const graphe = { nodes: [
+      { id: "img", type: "atelier", position: { x: 0, y: 0 }, data: { ficheId: "entree-image", parametres: { Chemin: "" } } },
+      { id: "courbe", type: "atelier", position: { x: 400, y: 0 }, data: { ficheId: "generateur-courbe", parametres: {} } },
+    ], edges: [] };
+    await page.addInitScript((g: string) => { localStorage.setItem("attic-encours", g); }, JSON.stringify(graphe));
+    await page.goto(devUrl);
+    await page.waitForSelector(".attic-app", { timeout: 20000 });
+    await expect.poll(() => ids(page), { timeout: 15000 }).toEqual(["courbe", "img"]);
+    await page.locator('.react-flow__node[data-id="img"] input[type=file]').first()
+      .setInputFiles({ name: "pixel.png", mimeType: "image/png", buffer: PNG });
+    expect(await lancer(page), "avant de grouper, les deux se lancent").toEqual({ courbe: "termine", img: "termine" });
+
+    await cliquer(page, "img");
+    await cliquer(page, "courbe", true);
+    await page.getByRole("button", { name: /Grouper en outil|Group into tool/ }).click();
+    await expect.poll(async () => (await ids(page)).length, { timeout: 5000 }).toBe(1);
+    const outil = (await ids(page))[0];
+    expect(await lancer(page), "l'outil se lance").toEqual({ [outil]: "termine" });
+
+    await cliquer(page, outil);
+    await page.click(".attic-meta-actions button:nth-child(2)");
+    await expect.poll(async () => (await ids(page)).length, { timeout: 5000 }).toBe(2);
+    const rendue = (await ids(page)).find((id) => id.endsWith("img"))!;
+    const statuts = await lancer(page);
+    expect(statuts[rendue], "dégroupée, l'image se lance encore").toBe("termine");
   });
 });

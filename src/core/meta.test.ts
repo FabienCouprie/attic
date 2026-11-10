@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { creerMeta, aplatirGraphe, frontieresPourEdition, metasEmployes, redériverMeta,
+import { creerMeta, aplatirGraphe, frontieresPourEdition, metasEmployes, nettoyerNoeud, redériverMeta,
   ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE,
   type NoeudG, type AreteG, type DefPorts, type MetaComposant } from "./meta";
+import { CHAMPS_DE_SAISIE } from "./saisies";
 
 const DEFS: Record<string, DefPorts> = {
   "entree-audio": { entrees: [], sorties: [{ nom: "Audio", type: "audio" }] },
@@ -201,5 +202,38 @@ describe("les métas qu'un graphe emploie", () => {
 
   it("un nœud qui nomme un méta inconnu est ignoré plutôt que de faire échouer l'enregistrement", () => {
     expect(metasEmployes([noeud("meta-disparu")], [meta("meta-a")])).toEqual([]);
+  });
+});
+
+// CE QU'UN NŒUD EMPORTE DANS UN MÉTA. La liste était écrite à la main dans `nettoyerNoeud`, et elle
+// gardait `imageNom` sans `imageFichier` : MESURÉ dans l'application, une « Entrée image » groupée
+// en outil puis dégroupée montrait encore le nom de son image, et passait en erreur au run. La liste
+// vient désormais de `core/saisies.ts`, et ce cas la parcourt telle que la table la déclare : un
+// genre de saisie ajouté demain y est éprouvé sans qu'on y pense.
+describe("ce qu'un nœud emporte dans un méta-composant", () => {
+  it("TOUTE SAISIE QUE LA TABLE DÉCLARE suit le nœud, fichier compris", () => {
+    const data: Record<string, unknown> = { ficheId: "entree-image", parametres: { Chemin: "x.png" } };
+    for (const champ of CHAMPS_DE_SAISIE) if (!(champ in data)) data[champ] = { marque: champ };
+    const garde = nettoyerNoeud({ id: "n", data } as NoeudG).data as Record<string, unknown>;
+    const perdus = [...CHAMPS_DE_SAISIE].filter((champ) => garde[champ] !== data[champ]);
+    expect(perdus, "des saisies que le méta perd").toEqual([]);
+  });
+
+  it("UNE ADRESSE `blob:` NE SUIT PAS, quel que soit son champ : la définition d'un méta ne la tient pas", () => {
+    const garde = nettoyerNoeud({ id: "n", data: {
+      ficheId: "entree-audio", audioFichier: { marque: "fichier" }, audioUrl: "blob:http://local/son",
+      enregistrementUrl: "blob:http://local/prise", nom: "Mon son",
+    } } as NoeudG).data as Record<string, unknown>;
+    expect(garde).toMatchObject({ audioFichier: { marque: "fichier" }, nom: "Mon son" });
+    expect("audioUrl" in garde).toBe(false);
+    expect("enregistrementUrl" in garde).toBe(false);
+  });
+
+  it("NI UN GESTIONNAIRE, NI UN RÉSULTAT, NI UN STATUT : ce qui n'est pas une saisie reste dehors", () => {
+    const garde = nettoyerNoeud({ id: "n", data: {
+      ficheId: "effet", parametres: { Gain: 5 }, onReset: () => {}, statut: "termine",
+      audioResultatUrl: "blob:http://local/rendu", _affichage: { url: "blob:http://local/film" },
+    } } as NoeudG).data;
+    expect(garde).toEqual({ ficheId: "effet", parametres: { Gain: 5 } });
   });
 });
