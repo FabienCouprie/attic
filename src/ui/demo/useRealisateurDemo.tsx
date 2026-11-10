@@ -19,6 +19,7 @@ import { langueCourante, traduire } from "../../i18n";
 import { scenarioDemo, type ActionDemo } from "./scenario";
 import { effacerResultats, resultatDe } from "../resultats";
 import { registreUI } from "../registre-actif";
+import { useRacineDesUrls } from "../hooks/useUrlsMedias";
 
 export const EVENEMENT_FILMER = "attic:filmer-demo";
 
@@ -118,6 +119,10 @@ export function useRealisateurDemo(params: Params): { calque: ReactNode; enCours
   const curseurRef = useRef(curseur);
   curseurRef.current = curseur;
   const abandonRef = useRef<AbortController | null>(null);
+  // LE GRAPHE MIS DE CÔTÉ PENDANT LE FILM TIENT SES URL DE MÉDIAS : il revient à la fin, lecteurs
+  // compris, même si une scène a retiré un nœud entre-temps. Voir `ui/urls-medias.ts`.
+  const copieEnCoursRef = useRef<unknown>(null);
+  useRacineDesUrls("démonstration", () => copieEnCoursRef.current);
 
   const filmer = useCallback(async (demoId: string) => {
     const p = pRef.current;
@@ -130,6 +135,7 @@ export function useRealisateurDemo(params: Params): { calque: ReactNode; enCours
     const titreDemo = typeof parametres["Titre"] === "string" ? (parametres["Titre"] as string) : "";
 
     const copieNoeuds = p.noeudsRef.current;
+    copieEnCoursRef.current = copieNoeuds;
     const copieAretes = p.aretesRef.current;
     const copieVue = rf.getViewport();
     const autres = copieNoeuds.filter((n) => n.id !== demoId);
@@ -340,6 +346,7 @@ export function useRealisateurDemo(params: Params): { calque: ReactNode; enCours
         return { ...n, data: { ...n.data, _demoAppVideoUrl: url, _demoAppVideoTaille: video!.size } };
       }));
       p.setEdges(() => copieAretes);
+      copieEnCoursRef.current = null;
       rf.setViewport(copieVue);
       abandonRef.current = null;
       setEnCours(false);

@@ -17,6 +17,8 @@
 import { useCallback } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 
+import { creerUrlMedia } from "../urls-medias";
+
 /** Les cinq matières qu'un nœud reçoit par son bouton « Charger », avec le paramètre « Chemin ». */
 export type SorteDeMedia = "audio" | "midi" | "image" | "svg" | "pdf";
 
@@ -32,9 +34,11 @@ export function useChargementMedias({ cacheExec, setNodes, reinitialiserNoeud }:
     const api = (window as any).api;
     const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
     // L'URL se crée HORS du réducteur : React le rejoue deux fois en mode strict, et une des
-    // deux URL n'était plus tenue par personne.
+    // deux URL n'était plus tenue par personne. ELLE SE CRÉE PAR LE REGISTRE, qui la révoquera
+    // quand ni ce nœud, ni l'historique, ni le presse-papiers ne la tiendront : celle qu'elle
+    // remplace part ainsi d'elle-même. Voir `ui/urls-medias.ts`.
     const media: Record<string, unknown> = { [`${sorte}Fichier`]: fichier, [`${sorte}Nom`]: fichier.name };
-    if (sorte === "audio") media.audioUrl = URL.createObjectURL(fichier);
+    if (sorte === "audio") media.audioUrl = creerUrlMedia(fichier);
     setNodes((nds2) => nds2.map((n) => n.id === nid
       ? { ...n, data: { ...n.data, ...media, parametres: { ...n.data.parametres, Chemin: chemin } } }
       : n));
