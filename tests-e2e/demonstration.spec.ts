@@ -3,7 +3,7 @@
 // CE QUI NE SE TESTE PAS HORS DU NAVIGATEUR : le dessin sur une toile et l'encodage WebCodecs. On
 // pose donc un petit graphe — un son, un tremolo, une courbe, un texte, et la démonstration —, on
 // le lance, et on relit la vidéo produite avec une balise <video> : durée, taille, piste son.
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { serveurDeVerification } from "./serveur-de-developpement";
 
 // Le partage de l'onglet accepté sans demander, et une fenêtre VISIBLE : Chromium sans affichage ne
@@ -168,5 +168,107 @@ test.describe("démonstration filmée de l'application", () => {
     expect(texte.indexOf("On relie « Arpège flocon de Koch » à « Tremolo »")).toBeGreaterThan(texte.indexOf("On ajoute « Tremolo »"));
     expect(texte).toMatch(/On lance le graphe/);
     expect(texte.indexOf("« Tremolo » : son résultat")).toBeGreaterThan(texte.indexOf("On lance le graphe"));
+  });
+});
+
+// LE FILM PRÉCÉDENT ET L'HISTORIQUE, point A6 de la revue du 2026-10-31. Le film remplacé était
+// révoqué au tournage suivant, alors qu'une entrée d'annulation le tenait : un Ctrl+Z rendait la
+// démonstration sur un film mort. Il naît désormais par le registre de `ui/urls-medias.ts`, qui ne le
+// révoque que quand plus rien ne le tient. Le critère : une adresse révoquée ne se lit plus.
+test.describe("le film de l'application, et l'annulation", () => {
+  // Le presse-papiers, pour couper un nœud.
+  test.use({ permissions: ["clipboard-read", "clipboard-write"] });
+  const ids = (page: Page) => page.evaluate(() =>
+    [...document.querySelectorAll(".react-flow__node")].map((n) => n.getAttribute("data-id")!).sort());
+  const lire = (page: Page, url: string) => page.evaluate(async (u) => {
+    try { return (await (await fetch(u)).arrayBuffer()).byteLength; } catch { return -1; }
+  }, url);
+  const filmDe = (page: Page) => page.evaluate(() =>
+    (document.querySelector('.react-flow__node[data-id="film"] .attic-demo-bloc video') as HTMLVideoElement | null)?.getAttribute("src") ?? "");
+  /** Tourne le film et rend son adresse, une fois le graphe revenu. */
+  async function filmer(page: Page, avant: string): Promise<string> {
+    await page.locator('.react-flow__node[data-id="film"] .attic-demo-filmer').click();
+    await expect.poll(() => filmDe(page), { timeout: 200000, intervals: [500] }).not.toBe(avant);
+    await expect.poll(() => page.evaluate(() => !document.querySelector(".demo-calque")), { timeout: 20000 }).toBe(true);
+    return filmDe(page);
+  }
+  /** Le balayage du registre part un quart de seconde après le dernier changement des nœuds. */
+  const laisserBalayer = (page: Page) => page.waitForTimeout(1000);
+  /**
+   * Recadre sur tout le graphe, et attend que la vue soit posée. MESURÉ : après un tournage, la vue
+   * n'est pas celle d'avant, et un nœud peut se trouver hors de l'écran.
+   */
+  async function cadrer(page: Page) {
+    await page.locator(".react-flow__controls-fitview").click();
+    const transformation = () => page.evaluate(() =>
+      (document.querySelector(".react-flow__viewport") as HTMLElement | null)?.style.transform ?? "");
+    let avant = "";
+    await expect.poll(async () => {
+      const maintenant = await transformation();
+      const stable = maintenant !== "" && maintenant === avant;
+      avant = maintenant;
+      return stable;
+    }, { timeout: 15000, intervals: [400] }).toBe(true);
+  }
+  /** Retire un nœud par la touche donnée, Suppr ou Ctrl+X, après l'avoir sélectionné seul. */
+  async function retirer(page: Page, id: string, touche: "Delete" | "Control+x") {
+    await cadrer(page);
+    const p = await page.evaluate((id) => {
+      const r = document.querySelector(`.react-flow__node[data-id="${id}"]`)!.getBoundingClientRect();
+      for (let fy = 0.05; fy < 1; fy += 0.05) for (let fx = 0.03; fx < 1; fx += 0.05) {
+        const x = r.left + r.width * fx, y = r.top + r.height * fy;
+        const el = document.elementFromPoint(x, y);
+        if (el?.closest(".react-flow__node")?.getAttribute("data-id") === id
+          && !el.closest("input,textarea,select,button,label,canvas,audio,video,.react-flow__handle,.nodrag")) return { x, y };
+      }
+      const centre = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return { diag: `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)} sous le centre : ${centre?.tagName}.${centre?.className}` };
+    }, id);
+    expect("diag" in p ? p.diag : "", `aucun point libre sur ${id}`).toBe("");
+    const { x, y } = p as { x: number; y: number };
+    await page.mouse.click(x, y);
+    await expect.poll(() => page.evaluate(() =>
+      [...document.querySelectorAll(".react-flow__node.selected")].map((n) => n.getAttribute("data-id")).join(",")),
+    { message: `seul ${id} est sélectionné`, timeout: 5000 }).toBe(id);
+    await page.keyboard.press(touche);
+    await expect.poll(() => ids(page)).not.toContain(id);
+  }
+
+  test("TENU PAR L'HISTORIQUE, LE FILM PRÉCÉDENT SURVIT : Ctrl+Z le rend lisible ; lâché, le suivant part", async ({ page }) => {
+    test.setTimeout(420000);
+    const graphe = {
+      nodes: [
+        { id: "film", position: { x: 0, y: 420 }, data: { ficheId: "film-application", parametres: { "Durée par nœud": 1, "Titre": "" } } },
+        { id: "courbe", position: { x: 0, y: 0 }, data: { ficheId: "generateur-courbe", parametres: {} } },
+        // Une « Entrée audio », parce qu'elle garde une surface libre où cliquer : la courbe, une fois
+        // lancée par le film, est couverte de son dessin.
+        { id: "z", position: { x: 400, y: 0 }, data: { ficheId: "entree-audio", parametres: { Chemin: "" } } },
+      ],
+      edges: [],
+    };
+    await page.addInitScript(([g]: string[]) => { localStorage.setItem("attic-encours", g); }, [JSON.stringify(graphe)]);
+    await page.goto(devUrl);
+    await page.waitForSelector(".attic-app", { timeout: 20000 });
+    await expect.poll(() => ids(page), { timeout: 15000 }).toEqual(["courbe", "film", "z"]);
+    page.on("dialog", async (d) => { await d.dismiss(); });
+
+    const premier = await filmer(page, "");
+    await retirer(page, "z", "Delete");
+    const second = await filmer(page, premier);
+    await laisserBalayer(page);
+    expect(await lire(page, premier), "l'instantané de la suppression tient le premier film").toBeGreaterThan(0);
+
+    await page.keyboard.press("Control+z");
+    await expect.poll(() => ids(page)).toEqual(["courbe", "film", "z"]);
+    await laisserBalayer(page);
+    expect(await filmDe(page), "Ctrl+Z rend la démonstration avec son premier film").toBe(premier);
+    expect(await lire(page, premier), "et il se lit").toBeGreaterThan(0);
+
+    // UNE ACTION NEUVE EFFACE LA PILE DE RÉTABLISSEMENT, seule à tenir le second film : il part.
+    // UNE COUPE ET NON UNE SUPPRESSION : MESURÉ, la première pression de Suppr qui suit ce Ctrl+Z est
+    // perdue, quel que soit le nœud visé, et la suivante prend. Relevé à part, hors du point A6.
+    await retirer(page, "courbe", "Control+x");
+    await expect.poll(() => lire(page, second), { message: "lâché par tous, le second film est révoqué", timeout: 5000 }).toBe(-1);
+    expect(await lire(page, premier), "le premier, que le canevas tient, se lit toujours").toBeGreaterThan(0);
   });
 });

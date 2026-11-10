@@ -49,11 +49,9 @@ export const fiches: FicheAudio[] = ([
     // et l'export ne dépend plus du seul bouton de la vue.
     entrees: [],
     sorties: [{ nom: "Vidéo", nomEn: "Video", type: "video" }],
-    // Un film de quinze mégaoctets ne se garde pas d'une exécution à l'autre, et le nœud pilote
-    // lui-même son affichage depuis ses données.
-    // SANS `affichageAutonome` : ce drapeau écarte le nœud de la phase des résultats, et son
-    // message avec lui. Le film vit dans les données du nœud et sa vue l'y trouve ; le message,
-    // lui, doit passer par le chemin ordinaire pour s'afficher.
+    // Un film de quinze mégaoctets ne se garde pas d'une exécution à l'autre.
+    // SANS `affichageAutonome` : le film passe par le canal d'affichage et le message par le chemin
+    // ordinaire, comme pour tout composant qui ne pilote pas lui-même sa vue.
     jamaisCache: true,
     parametres: [
       { nom: "Durée", nomEn: "Duration", type: "curseur", plage: [2, 120], pas: 1, defaut: 20, unite: "s",
@@ -177,22 +175,20 @@ export const fiches: FicheAudio[] = ([
       });
 
       // LE FILM SORT PAR DEUX CHEMINS, ET C'EST VOULU. Le port « Vidéo » le rend composable : il se
-      // branche là où un film s'attend. Et une URL posée dans les données du nœud le donne à sa vue,
-      // qui le joue et l'enregistre, exactement comme le fait l'extraction vidéo.
+      // branche là où un film s'attend. Et le canal d'affichage le donne à sa vue, qui le joue et
+      // l'enregistre, exactement comme le fait l'extraction vidéo.
       //
-      // LE SOUFFLET N'EST PAS RETENU DANS LES DONNÉES, seulement son URL et son poids : un blob de
-      // quinze mégaoctets accroché au nœud ne serait libéré par rien. Le préfixe `_` écarte ces
-      // champs de la sérialisation, comme ailleurs.
-      const donnees = ctx.noeud.data as Record<string, unknown>;
-      if (typeof donnees._filmUrl === "string") URL.revokeObjectURL(donnees._filmUrl as string);
+      // PAR LE CANAL, ET NON PAR LES DONNÉES DU NŒUD, point A6 de la revue du 2026-10-31. Le film
+      // y était écrit, contre le contrat de composant, et MESURÉ : son URL partait dans chaque
+      // instantané d'annulation, l'exécuteur la révoquait au run suivant, et un Ctrl+Z rendait un
+      // nœud qui montrait un film mort. Une remise à zéro, elle, le laissait à l'écran. Dans le
+      // canal, le film est un résultat : le moteur le révoque quand un run le remplace, la remise
+      // à zéro l'efface, et l'annulation ne le photographie pas.
       const nomFilm = `cercle-${o.graine}-${Math.round(o.dureeSec)}s.mp4`;
-      donnees._filmUrl = URL.createObjectURL(rendu.blob);
-      donnees._filmNom = nomFilm;
-      donnees._filmOctets = rendu.blob.size;
-
       const mo = enMo(rendu.blob.size).toFixed(1);
       return {
         valeurs: [new File([rendu.blob], nomFilm, { type: "video/mp4" })],
+        affichage: { url: URL.createObjectURL(rendu.blob), nom: nomFilm, octets: rendu.blob.size },
         message: en()
           ? `${rendu.images} frames · ${def.l}×${def.h} · ${mo} MB · ${(rendu.msTotal / 1000).toFixed(1)} s`
           : `${rendu.images} images · ${def.l}×${def.h} · ${mo} Mo · ${(rendu.msTotal / 1000).toFixed(1)} s`,

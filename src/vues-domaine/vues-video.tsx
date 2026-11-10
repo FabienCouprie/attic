@@ -170,31 +170,31 @@ export function VueExtraitVideo({ id, data }: VueProps) {
 
 // ── Le film du cercle : le regarder, puis l'enregistrer ──
 //
-// CE NŒUD N'A AUCUN PORT, ni d'entrée ni de sortie : il est purement illustratif et ne sert qu'à
-// l'export. Son film n'existe donc qu'ici, dans ses données, et cette vue est le seul endroit où on
-// le voit et d'où on l'écrit. Tant qu'il n'est pas enregistré, le fichier n'existe qu'en mémoire.
+// Il ne reçoit rien et ne sert qu'à l'export : cette vue est l'endroit où l'on voit son film et d'où
+// on l'écrit. Tant qu'il n'est pas enregistré, le fichier n'existe qu'en mémoire. Elle lit le canal
+// d'affichage, comme la vue suivante, et ne s'en distingue que par la lecture en boucle.
 export function VueFilmCercle({ data }: VueProps) {
   const { t } = useI18n();
   const api = (window as { api?: any }).api;
-  const n = data as unknown as { _filmUrl?: string; _filmNom?: string; _filmOctets?: number };
-  if (!n._filmUrl) return null;
-  const nom = n._filmNom ?? "cercle.mp4";
+  const n = (data as unknown as { _affichage?: { url?: string; nom?: string; octets?: number } })._affichage ?? {};
+  if (!n.url) return null;
+  const nom = n.nom ?? "cercle.mp4";
   return (
     <div className="attic-vue-film-cercle" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-      <video src={n._filmUrl} controls loop className="attic-vue-film-cercle-lecteur" />
+      <video src={n.url} controls loop className="attic-vue-film-cercle-lecteur" />
       <div className="attic-vue-film-resultat">
         {api?.sauvegarderBinaire ? (
           <button className="attic-node-fichier-btn" onClick={async () => {
-            const buffer = await (await fetch(n._filmUrl!)).arrayBuffer();
+            const buffer = await (await fetch(n.url!)).arrayBuffer();
             await api.sauvegarderBinaire({ defaultPath: nom, filters: [{ name: "MP4", extensions: ["mp4"] }], buffer });
           }}>💾 {t("film.enregistrer")}</button>
         ) : (
-          <a className="attic-node-fichier-btn" href={n._filmUrl} download={nom}>
+          <a className="attic-node-fichier-btn" href={n.url} download={nom}>
             💾 {t("film.enregistrer")}
           </a>
         )}
         <span>{nom}</span>
-        <span>{enMo(n._filmOctets ?? 0).toFixed(1)} {t("unite.mo")}</span>
+        <span>{enMo(n.octets ?? 0).toFixed(1)} {t("unite.mo")}</span>
       </div>
     </div>
   );
@@ -204,8 +204,7 @@ export function VueFilmCercle({ data }: VueProps) {
 //
 // ELLE LIT `_affichage`, ET NON DES CHAMPS POSÉS SUR LE NŒUD. C'est le canal que le contrat de
 // composant réserve à ce qu'un run a produit : une remise à zéro l'efface, un réglage changé aussi,
-// de sorte qu'un film ne reste jamais à l'écran sur un nœud redevenu « en attente ». La vue du
-// cercle, plus ancienne, lit encore des champs préfixés dans les données.
+// de sorte qu'un film ne reste jamais à l'écran sur un nœud redevenu « en attente ».
 //
 // ET LE LECTEUR COMPTE AUTANT QUE LE BOUTON : un film qu'on ne peut pas regarder sur place
 // demande d'enregistrer puis d'ouvrir ailleurs pour savoir s'il est juste.

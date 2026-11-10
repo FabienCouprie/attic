@@ -55,8 +55,10 @@
 // URL de côté se déclare par `useRacineDesUrls`, sans quoi ce qu'il garde sera révoqué sous lui.
 //
 // LES NAISSANCES, au 2026-11-10 : toutes celles de l'interface passent par `creerUrlMedia`, et
-// `ui/urls-medias-naissances.test.ts` refuse une URL d'objet créée à côté sans être classée. Restent
-// les deux films posés sur le nœud, celui du cercle pulsant et celui de la démonstration.
+// `ui/urls-medias-naissances.test.ts` refuse une URL d'objet créée à côté sans être classée. Le film
+// de la démonstration filmée en est une. Celui du « Générateur vidéo », que son exécuteur posait sur
+// le nœud, n'est plus un média du nœud : c'est un résultat, rendu par le canal d'affichage, et le
+// moteur le révoque quand un run le remplace ou que le nœud est oublié.
 
 type Lecteur = () => unknown;
 

@@ -20,6 +20,7 @@ import { scenarioDemo, type ActionDemo } from "./scenario";
 import { effacerResultats, resultatDe } from "../resultats";
 import { registreUI } from "../registre-actif";
 import { useRacineDesUrls } from "../hooks/useUrlsMedias";
+import { creerUrlMedia } from "../urls-medias";
 
 export const EVENEMENT_FILMER = "attic:filmer-demo";
 
@@ -336,13 +337,16 @@ export function useRealisateurDemo(params: Params): { calque: ReactNode; enCours
       setLegende(""); setTitre(""); setCurseur((c) => ({ ...c, visible: false }));
       if (morceaux.length) video = await reindexer(new Blob(morceaux, { type: "video/webm" }));
       // Le graphe tel qu'il était, avec les résultats du run ; la démonstration porte son film.
-      const url = video ? URL.createObjectURL(video) : null;
+      // LE FILM NAÎT PAR LE REGISTRE, point A6 de la revue du 2026-10-31. Celui qu'il remplace était
+      // révoqué ici, alors qu'une entrée d'annulation pouvait le tenir encore : un Ctrl+Z rendait la
+      // démonstration sur un film mort. Le registre le révoque quand plus rien ne le tient. Voir
+      // `ui/urls-medias.ts`.
+      const url = video ? creerUrlMedia(video) : null;
       const apres = new Map(p.noeudsRef.current.map((n) => [n.id, n]));
       p.setNodes(() => copieNoeuds.map((n) => {
         const courant = apres.get(n.id);
         const base = courant ? { ...courant, hidden: false } : n;
         if (n.id !== demoId || !url) return base;
-        if (typeof n.data?._demoAppVideoUrl === "string") URL.revokeObjectURL(n.data._demoAppVideoUrl);
         return { ...n, data: { ...n.data, _demoAppVideoUrl: url, _demoAppVideoTaille: video!.size } };
       }));
       p.setEdges(() => copieAretes);

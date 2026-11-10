@@ -14,8 +14,9 @@
 // ou il passe par `creerUrlMedia`. Et un fichier de la liste qui n'en porte plus la rend fausse.
 //
 // CE QU'IL NE VOIT PAS : `src/plugins` et `src/audio`, où les exécuteurs rendent leurs URL par le
-// canal d'affichage et le magasin des résultats, qui les révoque. Le film du cercle pulsant, posé
-// sur le nœud par son exécuteur, est la pièce suivante du point A6.
+// canal d'affichage et le magasin des résultats, qui les révoque. Le film du « Générateur vidéo »,
+// que son exécuteur posait sur le nœud, y passe lui aussi depuis la pièce 4 du point A6, et
+// `tests-e2e/films-des-noeuds.spec.ts` le tient dans l'application.
 import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -30,7 +31,6 @@ const CLASSEES: Record<string, { appels: number; raison: string }> = {
   "ui/correctif-resultat.ts": { appels: 2, raison: "l'aperçu et l'image d'un résultat, révoqués par le magasin des résultats" },
   "ui/refaire-apercus.ts": { appels: 2, raison: "un aperçu réécrit, qui révoque celui qu'il remplace" },
   "ui/AtelierNode.tsx": { appels: 1, raison: "l'écoute d'un tampon, tenue par la vue et révoquée par elle" },
-  "ui/demo/useRealisateurDemo.tsx": { appels: 1, raison: "le film de la démonstration, pièce suivante du point A6" },
   "ui/dictee/useDictee.ts": { appels: 1, raison: "le code du module audio de la dictée, et non un média" },
   "ui/ecriture-projet.ts": { appels: 1, raison: "le téléchargement du projet en mode web, révoqué une seconde après le clic" },
   "vues-domaine/PochetteGen.tsx": { appels: 1, raison: "l'aperçu d'une pochette, tenu par la vue et révoqué par elle" },
@@ -79,8 +79,9 @@ describe("les naissances d'URL d'objet dans l'interface", () => {
 
   it("CHAQUE FICHIER QUI EN CRÉE EST CLASSÉ, AVEC SON COMPTE EXACT : une URL de média passe par le registre", () => {
     const comptes = releve();
-    // LE DÉNOMINATEUR : douze fichiers et quinze appels le 2026-11-10. Si le relevé tombe sous la
-    // moitié, il ne regarde plus le bon endroit.
+    // LE DÉNOMINATEUR : onze fichiers et quatorze appels le 2026-11-10, depuis que le film de la
+    // démonstration naît par le registre. Si le relevé tombe sous la moitié, il ne regarde plus le
+    // bon endroit.
     expect(Object.keys(comptes).length, "le relevé ne voit presque plus de fichiers : il regarde ailleurs").toBeGreaterThanOrEqual(6);
     const attendus = Object.fromEntries(Object.entries(CLASSEES).map(([f, c]) => [f, c.appels]));
     expect(comptes, [
@@ -90,10 +91,11 @@ describe("les naissances d'URL d'objet dans l'interface", () => {
     ].join("\n")).toEqual(attendus);
   });
 
-  it("LES NAISSANCES DE MÉDIA PASSENT PAR LE REGISTRE, dans chacun des quatre fichiers qui en portent", () => {
+  it("LES NAISSANCES DE MÉDIA PASSENT PAR LE REGISTRE, dans chacun des cinq fichiers qui en portent", () => {
     const portes: Record<string, number> = {
       "ui/hooks/useChargementMedias.ts": 2, "ui/hooks/useDepot.ts": 1,
       "ui/rechargerFichiers.ts": 2, "vues-domaine/vues-explorateur.tsx": 1,
+      "ui/demo/useRealisateurDemo.tsx": 1,
     };
     const vus: Record<string, number> = {};
     for (const f of Object.keys(portes)) {

@@ -105,4 +105,17 @@ describe("oublier les noeuds d'un graphe abandonne", () => {
     }
     expect(revoquees).toEqual(["blob:http://local/abcd"]);
   });
+
+  it("ET JUSQUE DANS LE CANAL D'AFFICHAGE, un niveau plus bas, ou un film restait en memoire", () => {
+    const revoquees: string[] = [];
+    const avant = URL.revokeObjectURL;
+    URL.revokeObjectURL = (u: string) => { revoquees.push(u); };
+    try {
+      poserResultat("film", { _affichage: { url: "blob:http://local/film", nom: "cercle.mp4" } });
+      oublierNoeuds([]);
+    } finally {
+      URL.revokeObjectURL = avant;
+    }
+    expect(revoquees).toEqual(["blob:http://local/film"]);
+  });
 });
