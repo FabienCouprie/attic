@@ -17,6 +17,7 @@ import {
   ecrireDansLePressePapiers, lireCopie, lireLePressePapiers, nouveauJeton, serialiserCopie, trierCollage,
   type ContenuCopie, type ElementCopie,
 } from "../presse-papiers-noeuds";
+import { useRacineDesUrls } from "./useUrlsMedias";
 
 export interface OptionsCopierColler {
   noeudsRef: MutableRefObject<any[]>;
@@ -59,6 +60,8 @@ export function useCopierColler(o: OptionsCopierColler) {
   oRef.current = o;
   /** La dernière copie faite ICI, nœuds intacts : c'est elle qu'on colle si le système porte son jeton. */
   const copieLocale = useRef<ContenuCopie | null>(null);
+  // UNE COUPE GARDE LES URL DE SES MÉDIAS, pour les nœuds qu'elle collera : voir `ui/urls-medias.ts`.
+  useRacineDesUrls("presse-papiers", () => copieLocale.current);
 
   useEffect(() => {
     const garder = (contenu: ContenuCopie) => {

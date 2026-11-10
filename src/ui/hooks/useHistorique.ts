@@ -19,6 +19,8 @@ import {
   type ContexteHistorique, type EntreeHistorique, type PilesHistorique,
 } from "../historique";
 import { idsDe, oublierNoeuds } from "../oubli-noeuds";
+import { urlsDUnFige } from "../urls-medias";
+import { useBalayageDesUrls, useRacineDesUrls } from "./useUrlsMedias";
 
 type Niveau = { metaId: string; nom: string; nomEn?: string };
 type GrapheRacine = { nodes: any[]; edges: Edge[] } | null;
@@ -37,20 +39,32 @@ export interface OptionsHistorique {
   setCurrentFilePath: Dispatch<SetStateAction<string | null>>;
   pile: Niveau[];
   currentFilePath: string | null;
+  /** Les nœuds de l'état : leur changement déclenche le balayage des URL de médias. */
+  nodes: readonly unknown[];
 }
 
 export function useHistorique({
   noeudsRef, aretesRef, grapheRacineRef, callbacksNoeudRef, cacheExec,
-  setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath,
+  setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath, nodes,
 }: OptionsHistorique) {
   const pilesRef = useRef<PilesHistorique<any, any>>(pilesVides());
   const MAX_HISTORIQUE = 50;
+  // LES DEUX PILES TIENNENT LES URL DE MÉDIAS DE LEURS INSTANTANÉS : Ctrl+Z et Ctrl+Y doivent rendre
+  // des lecteurs qui jouent. Une entrée sortie au-delà du plafond, ou effacée par une action neuve,
+  // lâche les siennes. Un instantané ne change plus après sa prise : ses adresses se relèvent une
+  // fois, à sa première lecture. Voir `ui/urls-medias.ts`.
+  useRacineDesUrls("historique", () =>
+    [...pilesRef.current.annulation, ...pilesRef.current.retablissement].map(urlsDUnFige));
   // LA NAVIGATION ET LE FICHIER DE L'INSTANT, que Ctrl+Z photographie pour Ctrl+Y. Ils arrivent
   // en valeurs, et les gestes ci-dessous ne changent pas d'identité à chaque rendu.
   const pileRef = useRef(pile);
   pileRef.current = pile;
   const cheminRef = useRef(currentFilePath);
   cheminRef.current = currentFilePath;
+  // LE BALAYAGE VIT ICI, avec ce qu'il lit d'autre : le canevas, le graphe racine et la navigation,
+  // que ce crochet photographie déjà. Appelé depuis `App.tsx`, avec son import, il le portait à 401
+  // lignes de code, une de plus que la norme.
+  useBalayageDesUrls(nodes, grapheRacineRef, pileRef);
 
   // Instantané avant une action annulable. `contexte` n'est passé que par les actions qui
   // changent aussi la navigation dans les méta-composants ou le fichier ouvert — vider le

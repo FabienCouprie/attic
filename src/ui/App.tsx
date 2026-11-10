@@ -183,10 +183,11 @@ function Atelier() {
   prioritaireRef.current = prioritaire;
   // ── Le SoundFont global, dans hooks/useSoundFont.ts ──
   const { sf2Nom: sf2NomState, chargerSF2 } = useSoundFont({ repertoire, cacheExec, enExecution });
-  // ── Historique, Ctrl+Z et Ctrl+Y, vidage du canevas et fichier détaché, dans hooks/useHistorique.ts ──
+  // ── Historique, Ctrl+Z et Ctrl+Y, vidage du canevas et fichier détaché, dans hooks/useHistorique.ts ;
+  // et le balayage des URL de médias qu'il tient avec le canevas, dans hooks/useUrlsMedias.ts ──
   const { pushHistorique, undo, redo, fermerOnglet, detacherFichier } = useHistorique({
     noeudsRef, aretesRef, grapheRacineRef, callbacksNoeudRef, cacheExec,
-    setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath,
+    setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath, nodes,
   });
 
   // Mettre à jour prioritaire sur les nœuds
