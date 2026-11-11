@@ -96,7 +96,7 @@ interface ResultatsDuNoeud {
  * Deux d'entre eux, l'enregistrement et la découpe, étaient posés sans être déclarés : les vues qui
  * les lisent les affirmaient elles-mêmes. La pièce 4 du chantier les sort de `data`.
  */
-interface RappelsDuNoeud {
+export interface RappelsDuNoeud {
   onDefinirPrioritaire?: (id: string) => void;
   onReinitialiser?: (id: string) => void;
   onSupprimerNoeud?: (id: string) => void;

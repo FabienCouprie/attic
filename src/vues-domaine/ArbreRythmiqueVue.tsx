@@ -27,6 +27,7 @@ import { derouler, ecrireArbre, lireArbre, type Mesure } from "../audio/arbre-ry
 import { useI18n } from "../i18n";
 
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 const HAUTEUR_ETAGE = 26;
 const HAUTEUR_BRANCHE = 18;
@@ -41,6 +42,7 @@ const memeChemin = (a: Chemin | null, b: Chemin) =>
 export function ArbreRythmiqueVue({ id, data }: VueProps) {
   const { t } = useI18n();
   const { setNodes } = useReactFlow();
+  const gestes = useGestes();
   const [choisi, setChoisi] = useState<Chemin | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; chemin: Chemin } | null>(null);
 
@@ -60,14 +62,13 @@ export function ArbreRythmiqueVue({ id, data }: VueProps) {
 
   const ecrire = useCallback((suivant: Mesure[]) => {
     const valeur = ecrireArbre(suivant);
-    (data as { onChangerParametre?: (n: string, p: string, v: string | number) => void })
-      .onChangerParametre?.(id, "Arbre", valeur);
+    gestes.onChangerParametre(id, "Arbre", valeur);
     // Quand l'application ne fournit pas le rappel — vue isolée —, on écrit dans le nœud
     // directement, sans quoi le dessin reviendrait à son état d'avant la retouche.
     setNodes((nds) => nds.map((n) => n.id === id
       ? { ...n, data: { ...n.data, parametres: { ...(n.data.parametres as object), Arbre: valeur } } }
       : n));
-  }, [data, id, setNodes]);
+  }, [gestes, id, setNodes]);
 
   const disposition = useMemo(() => disposerArbre(mesures), [mesures]);
   const evenements = useMemo(() => derouler(mesures, 120), [mesures]);

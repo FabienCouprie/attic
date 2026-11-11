@@ -6,14 +6,16 @@
 
 import { useI18n } from "../i18n";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 export function VueUploadMidi({ id, data }: VueProps) {
   const { t } = useI18n();
+  const gestes = useGestes();
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <label className="attic-node-fichier-btn">
         {data.midiNom ? t("btn.changer.midi") : t("btn.charger.midi")}
-        <input type="file" accept=".mid,.midi" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerMidi?.(id, f); }} />
+        <input type="file" accept=".mid,.midi" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) gestes.onChargerMidi(id, f); }} />
       </label>
       {data.midiNom && <div className="attic-node-fichier-nom">{data.midiNom}</div>}
     </div>
@@ -63,12 +65,13 @@ export function VueUploadOnnx({ data }: VueProps) {
 // ── Chargement d'une réponse impulsionnelle (IR) ──
 export function VueUploadIR({ id, data }: VueProps) {
   const { t } = useI18n();
-  const d = data as { irFichier?: File; irNom?: string; onChargerIR?: (id: string, f: File) => void };
+  const gestes = useGestes();
+  const d = data as { irFichier?: File; irNom?: string };
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <label className="attic-node-fichier-btn">
         {d.irNom ? t("btn.changer.audio") : t("btn.charger.ir")}
-        <input type="file" accept="audio/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) { d.irFichier = f; d.irNom = f.name; d.onChargerIR?.(id, f); } }} />
+        <input type="file" accept="audio/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) { d.irFichier = f; d.irNom = f.name; gestes.onChargerIR(id, f); } }} />
       </label>
       {d.irNom && <div className="attic-node-fichier-nom">{d.irNom}</div>}
     </div>
@@ -78,10 +81,10 @@ export function VueUploadIR({ id, data }: VueProps) {
 // ── Chargement d'un patch Pure Data ──
 export function VueUploadPd({ id, data }: VueProps) {
   const { t } = useI18n();
+  const gestes = useGestes();
   const d = data as {
     pureDataFichier?: File;
     pureDataNom?: string;
-    onChangerParametre?: (id: string, nom: string, v: string | number) => void;
   };
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
@@ -96,7 +99,7 @@ export function VueUploadPd({ id, data }: VueProps) {
             if (f) {
               d.pureDataFichier = f;
               d.pureDataNom = f.name;
-              d.onChangerParametre?.(id, "Patch", `${f.name}@${f.lastModified}`);
+              gestes.onChangerParametre(id, "Patch", `${f.name}@${f.lastModified}`);
             }
           }}
         />

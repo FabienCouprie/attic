@@ -38,6 +38,7 @@ import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
 import { useCopierColler } from "./hooks/useCopierColler";
 import { resultatDe } from "./resultats";
 import { definirPrioritaire } from "./priorite";
+import { FournisseurDeGestes, useGestesStables } from "./gestes-noeud";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
@@ -326,6 +327,9 @@ function Atelier() {
   }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, supprimerNoeud, pushHistorique, cacheExec, lancerRef, perimerEtRelancer,
     chargerMedia, changerEnregistrement, chargerIR]);
   callbacksNoeudRef.current = callbacksNoeud;
+  // LES MÊMES GESTES, FOURNIS PAR UN CONTEXTE dont la valeur ne change jamais : chaque appel lit la
+  // version courante de `callbacksNoeud`. Le nœud et ses vues les lisent là. Voir `ui/gestes-noeud.ts`.
+  const gestes = useGestesStables(callbacksNoeudRef);
 
   // ── Ajouter / Supprimer ──
   /**
@@ -515,7 +519,7 @@ function Atelier() {
   useSauvegardeAutomatique({ currentFilePath, sauvegardeAutoActive, sauvegarderAuto });
   useFiletGlissement({ pointerDownRef, rfRef });
 
-  return (
+  const atelier = (
     <div className="attic-app" style={{ gridTemplateColumns: paletteOuverte ? "260px 1fr 280px" : "40px 1fr 280px" }}>
       <BarreOutils
         theme={theme} setTheme={setTheme}
@@ -592,4 +596,5 @@ function Atelier() {
       {calqueDemo}
     </div>
   );
+  return <FournisseurDeGestes value={gestes}>{atelier}</FournisseurDeGestes>;
 }

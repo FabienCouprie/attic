@@ -33,17 +33,18 @@ import { CHAPITRES, EXERCICES } from "../parcours/exercices";
 import { bilan, noter, oublier, titreGagne } from "../parcours/voyage";
 import type { Point } from "../parcours/types";
 import { registreUI } from "../ui/registre-actif";
+import { useGestes } from "../ui/gestes-noeud";
 
 interface Props {
   id: string;
   data: {
     parametres: Record<string, number | string>;
-    onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
   };
 }
 
 export function Parcours({ id, data }: Props) {
   const { t, lang } = useI18n();
+  const gestes = useGestes();
   const en = lang === "en";
   const noeuds = useNodes();
   const liens = useEdges();
@@ -108,7 +109,7 @@ export function Parcours({ id, data }: Props) {
   const chapitre = chapitreDe(exercice);
   const titre = titreGagne(b.epreuvesReussies, en);
 
-  const changer = (nom: string, valeur: string | number) => data.onChangerParametre?.(id, nom, valeur);
+  const changer = (nom: string, valeur: string | number) => gestes.onChangerParametre(id, nom, valeur);
 
   function valider() {
     if (!exercice) return;

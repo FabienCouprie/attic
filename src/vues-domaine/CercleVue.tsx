@@ -20,6 +20,7 @@ import { useI18n } from "../i18n";
 import { CercleDessin } from "./CercleDessin";
 import { ajusterMotif, disposerCercle, lireMotif, nettoyerMotif } from "./cercle-disposition";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 /**
  * Le cercle d'un composant, cliquable.
@@ -30,6 +31,7 @@ import type { VueProps } from "../ui/registre-vues";
 export function CercleVue({ id, data, avecHauteurs }: VueProps & { avecHauteurs?: boolean }) {
   const { t } = useI18n();
   const { setNodes } = useReactFlow();
+  const gestes = useGestes();
 
   const parametres = (data as { parametres?: Record<string, unknown> }).parametres ?? {};
   // UN RYTHME CHOISI DANS LA LISTE GOUVERNE LE MOTIF SAISI, et le dessin suit la même règle que le
@@ -49,14 +51,13 @@ export function CercleVue({ id, data, avecHauteurs }: VueProps & { avecHauteurs?
   const repartition = String(parametres["Répartition"] ?? "octave") as Repartition;
 
   const ecrire = useCallback((valeur: string) => {
-    const changer = (data as { onChangerParametre?: (n: string, p: string, v: string | number) => void })
-      .onChangerParametre;
-    changer?.(id, "Motif", valeur);
+    const changer = gestes.onChangerParametre;
+    changer(id, "Motif", valeur);
     // LE CLIC REND LA MAIN AU MOTIF, en remettant le choix sur « Libre ». Sans cela, un rythme
     // choisi continuerait à gouverner et le dessin reviendrait à lui dès le rendu suivant : on
     // cliquerait une place, elle s'allumerait, puis s'éteindrait toute seule. Le rythme choisi
     // reste le point de départ, puisque c'est lui qu'on vient d'écrire dans le motif.
-    changer?.(id, "Rythme", RYTHME_LIBRE);
+    changer(id, "Rythme", RYTHME_LIBRE);
     // Sans le rappel de l'application — vue isolée —, on écrit dans le nœud directement, sans quoi
     // le dessin reviendrait à son état d'avant le clic.
     setNodes((nds) => nds.map((n) => n.id === id
@@ -68,7 +69,7 @@ export function CercleVue({ id, data, avecHauteurs }: VueProps & { avecHauteurs?
         },
       }
       : n));
-  }, [data, id, setNodes]);
+  }, [gestes, id, setNodes]);
 
   const disposition = useMemo(() => disposerCercle(positions, lireMotif(motif)), [positions, motif]);
 
