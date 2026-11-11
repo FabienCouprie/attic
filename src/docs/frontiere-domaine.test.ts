@@ -22,7 +22,7 @@
 // l'isolation avance ; chaque retrait se lit dans son diff. Il n'encode aucun jugement sur ce qui
 // mérite d'être couplé — ce jugement vieillirait, le compte non.
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const RACINE = resolve(__dirname, "..");
@@ -207,6 +207,30 @@ const COUPLES_ATTENDUS = [
   "ui/ordre-palette.ts",
 ];
 
+/** Le répertoire du cœur. */
+const COEUR = join(RACINE, "core");
+
+/**
+ * Les chemins qu'un fichier demande, sous toutes les formes qu'un import peut prendre.
+ *
+ * CE N'EST PAS `importsVers`, ET C'EST VOULU. Celui-là cherche des répertoires NOMMÉS, après un
+ * `from` ou en effet de bord, entre guillemets doubles : il ne voit ni `import("…")`, chargé à
+ * l'exécution ou écrit en position de type, ni `require(…)`, ni les guillemets simples. Pour le cœur,
+ * la question n'est pas « vers quel dossier » mais « hors du cœur ou non » : elle se lit sur le chemin
+ * résolu, et toutes les formes comptent. Les commentaires sont écartés, comme dans le cas des types :
+ * un import cité pour raconter une fuite n'en est pas une.
+ */
+function cheminsDemandes(src: string): string[] {
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*$/gm, "");
+  const formes = [
+    /\bfrom[ \t]*(["'])([^"'\n]+)\1/g,
+    /^[ \t]*import[ \t]*(["'])([^"'\n]+)\1/gm,
+    /\bimport[ \t]*\([ \t]*(["'])([^"'\n]+)\1/g,
+    /\brequire[ \t]*\([ \t]*(["'])([^"'\n]+)\1/g,
+  ];
+  return formes.flatMap((f) => [...code.matchAll(f)].map((m) => m[2]));
+}
+
 describe("la frontière entre le cœur, le shell et le domaine", () => {
   it("LE CŒUR N'IMPORTE RIEN DU DOMAINE, et c'est le mur qui a tenu", () => {
     const fautifs = sources(join(RACINE, "core"))
@@ -253,6 +277,41 @@ describe("la frontière entre le cœur, le shell et le domaine", () => {
       "Un fichier du cœur nomme un type du domaine audio dans son code.",
       "Le cœur transporte des valeurs opaques : s'il a besoin d'en savoir quelque chose,",
       "il le DEMANDE au domaine par `core/services-domaine.ts` au lieu de le deviner.",
+    ].join("\n")).toEqual([]);
+  });
+
+  // ═══ ET LE CŒUR N'IMPORTE RIEN DU SHELL NON PLUS, CE QUE RIEN NE TENAIT ═══
+  //
+  // LES DEUX CAS PRÉCÉDENTS GARDENT LE CŒUR CONTRE LE DOMAINE, ET C'EST TOUT. Relevé le 2026-11-11 :
+  // aucun fichier de `src/core/` n'importait `ui/` ni `i18n`, mais par convention, et une convention
+  // ne se défend pas. Or l'extraction du moteur d'exécution, plan du même jour, déplace dans le cœur
+  // du code qui appelle aujourd'hui `ui/statuts.ts`, `ui/services-apercu.ts` et
+  // `ui/registre-actif.ts` : un import oublié en chemin passerait `tsc`, `oxlint` et la passe
+  // complète, et le moteur dit pur tirerait le magasin du shell, et React avec lui.
+  //
+  // LA RÈGLE SE LIT SUR UNE FORME, ET NON SUR DEUX NOMS : tout chemin relatif d'un fichier du cœur se
+  // résout dans `src/core/`. Nommer `ui` et `i18n` aurait laissé passer `docs/`, `main.tsx`,
+  // `composition.ts` et le prochain répertoire du shell, comme la liste du domaine a laissé passer
+  // `vues-domaine/` le jour de sa création. Les tests du cœur restent hors de portée, comme dans les
+  // deux cas précédents : trois d'entre eux lisent le domaine pour l'éprouver.
+  it("LE CŒUR N'IMPORTE RIEN DU SHELL, et tout ce qu'il demande se résout dans `src/core/`", () => {
+    const demandes = sources(COEUR).flatMap((f) =>
+      cheminsDemandes(readFileSync(f, "utf8")).map((c) => ({ f, c })));
+    // L'INSTRUMENT DIT CE QU'IL A LU. Un lecteur qui ne trouverait plus rien rendrait ce cas vert sur
+    // un cœur qui importerait tout : il en a lu 75, toutes internes, le jour où il a été écrit, dont les
+    // deux `import("./types")` en position de type de `core/validation.ts`.
+    expect(demandes.length, "le lecteur doit trouver les imports internes du cœur").toBeGreaterThanOrEqual(60);
+    const fautifs = demandes
+      .filter(({ f, c }) => {
+        if (!c.startsWith(".")) return false;
+        const r = relative(COEUR, resolve(dirname(f), c));
+        return r.startsWith("..") || isAbsolute(r);
+      })
+      .map(({ f, c }) => `${chemin(f)} → ${c}`);
+    expect(fautifs, [
+      "Un fichier de `src/core/` demande un module hors du cœur.",
+      "Ce dont le cœur a besoin du shell lui est PRÊTÉ en argument, comme la fiche, la traduction ou",
+      "la pose d'un statut : voir `core/preparation-passe.ts` et `core/contexte-de-passe.ts`.",
     ].join("\n")).toEqual([]);
   });
 
