@@ -93,7 +93,7 @@ export function VueExport({ data }: VueProps) {
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <input className="attic-node-export-nom" type="text" placeholder={t("export.nomFichier")}
         value={nomFichierLocal}
-        onChange={(e) => { setNomFichierLocal(e.target.value); (data as { nomFichier?: string }).nomFichier = e.target.value; }} />
+        onChange={(e) => { setNomFichierLocal(e.target.value); data.nomFichier = e.target.value; }} />
       {data.audioResultatUrl ? (
         <>
           {data.midiFichierSortie && (

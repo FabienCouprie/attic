@@ -48,6 +48,7 @@ const RECUPERES = new Map([
   ["sequenceNotes", "la mélodie jouée au clavier du nœud"],
   ["nomFichier", "le nom du fichier d'origine, que les métadonnées d'export réécrivent"],
   ["pureDataFichier", "le patch Pure Data chargé, que son composant lit à l'exécution"],
+  ["pureDataNom", "le nom de ce patch, que sa vue écrivait sur le nœud sans qu'aucune table le déclare"],
   ["couleur", "la couleur donnée au nœud, enregistrée et relue mais perdue à chaque copie"],
   ["morceaux", "le découpage posé sur la ligne de temps d'un montage, qu'aucune sauvegarde ne gardait"],
 ]);

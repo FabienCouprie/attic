@@ -87,8 +87,10 @@ export const GENRES_DE_SAISIE: Readonly<Record<string, GenreDeSaisie>> = {
   modele: {
     champs: ["modeleFichier"], conserves: [], mediaLocal: true,
   },
+  // `pureDataNom`, LE NOM DU PATCH QUE SA VUE MONTRE, déclaré le 2026-11-11 : la vue l'écrivait sur
+  // le nœud sans qu'aucune table le connaisse. Comme `pdfNom`, il n'est pas conservé.
   pureData: {
-    champs: ["pureDataFichier"], conserves: [], rechargeable: "pureDataFichier", mediaLocal: true,
+    champs: ["pureDataFichier", "pureDataNom"], conserves: [], rechargeable: "pureDataFichier", mediaLocal: true,
   },
   // UN CHEMIN DE DISQUE, DONC SÉRIALISABLE ET LÉGER : il s'enregistre tel quel et suit une copie.
   sfz: {

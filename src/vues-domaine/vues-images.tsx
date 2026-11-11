@@ -32,7 +32,7 @@ export function VueCouleurSunoIA({ data }: VueProps) {
   const hex2 = obj2?.hex ?? "#333";
   const nom1 = obj1 ? obj1[lang] : c1;
   const nom2 = obj2 ? obj2[lang] : c2;
-  const texte = (data as { scriptGenere?: string }).scriptGenere ?? "";
+  const texte = data.scriptGenere ?? "";
   return (
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>

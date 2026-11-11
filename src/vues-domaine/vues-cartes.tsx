@@ -103,7 +103,7 @@ export function VueCoordonneesSurCarte({ data }: VueProps) {
  */
 export function VueCourbe({ data }: VueProps) {
   const { t } = useI18n();
-  const points = (data as unknown as { apercuCourbe?: number[] }).apercuCourbe;
+  const points = data.apercuCourbe;
   if (!points || points.length < 2) return null;
   const L = 200, H = 46;
   const trace = points

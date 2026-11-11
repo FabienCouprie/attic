@@ -100,6 +100,12 @@ export const CHAMPS_RESULTAT = new Set([
   "visualisationUrl",
   "tempsExecution",
   "ecartNiveau",
+  // LE FILM DE L'APPLICATION QUE LA DÉMONSTRATION ENREGISTRE, et sa taille. C'est le réalisateur de
+  // démonstration qui les pose, non le moteur, mais ils sont ce que le nœud a produit : une remise à
+  // zéro les efface, et révoque l'URL du film. Ils n'étaient déclarés nulle part avant la pièce 5 du
+  // plan DonneesNoeud, le 2026-11-11, et survivaient donc à la remise à zéro.
+  "_demoAppVideoUrl",
+  "_demoAppVideoTaille",
   // ── L'ANCIEN RÉGIME EST VIDE ──
   //
   // VINGT-NEUF CHAMPS Y FIGURAIENT, sur douze composants. Vingt-six sont passés au canal

@@ -46,7 +46,7 @@ export function ArbreRythmiqueVue({ id, data }: VueProps) {
   const [choisi, setChoisi] = useState<Chemin | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; chemin: Chemin } | null>(null);
 
-  const parametres = (data as { parametres?: Record<string, unknown> }).parametres ?? {};
+  const parametres = data.parametres ?? {};
   const texte = String(parametres["Arbre"] ?? "(4/4 (1 1 1 1))");
 
   // UN ARBRE ILLISIBLE NE DOIT PAS FAIRE DISPARAÎTRE LA VUE : on retombe sur une mesure vide et

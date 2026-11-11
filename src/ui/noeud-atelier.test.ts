@@ -91,19 +91,33 @@ function morceaux(texte: string, separateurs: string): string[] {
 
 interface Section { champs: string[]; etend: string[]; ouverte: boolean }
 
-/** Chaque interface du fichier : ses champs nommés, ce qu'elle étend, et sa signature ouverte. */
+/**
+ * Chaque type d'objet du fichier : ses champs nommés, ce qu'il réunit, et sa signature ouverte.
+ *
+ * DEUX FORMES SONT LUES, depuis que la pièce 5 a fermé le sac : `interface X extends A, B { … }`,
+ * et l'alias `type X = { … }` ou `type X = A & B & C;`, que React Flow demande pour un `data` fermé.
+ */
 function interfaces(src: string): Map<string, Section> {
   const t = code(src);
   const out = new Map<string, Section>();
-  for (const m of t.matchAll(/\binterface\s+(\w+)\s*(?:extends\s+([^{]+))?\{/g)) {
-    const s: Section = { champs: [], etend: (m[2] ?? "").split(",").map((x) => x.trim()).filter(Boolean), ouverte: false };
-    for (const ligne of morceaux(corps(t, m.index + m[0].length - 1), ";\n")) {
+  const corpsVers = (nom: string, s: Section, ouvrante: number) => {
+    for (const ligne of morceaux(corps(t, ouvrante), ";\n")) {
       const champ = ligne.match(/^([A-Za-z_$][\w$]*)\??\s*:/);
       if (champ) s.champs.push(champ[1]);
       else if (/^\[\s*\w+\s*:\s*string\s*\]\s*:/.test(ligne)) s.ouverte = true;
-      else throw new Error(`${m[1]} : une ligne que le garde ne sait pas lire, « ${ligne} »`);
+      else throw new Error(`${nom} : une ligne que le garde ne sait pas lire, « ${ligne} »`);
     }
-    out.set(m[1], s);
+    out.set(nom, s);
+  };
+  for (const m of t.matchAll(/\binterface\s+(\w+)\s*(?:extends\s+([^{]+))?\{/g)) {
+    corpsVers(m[1], { champs: [], etend: (m[2] ?? "").split(",").map((x) => x.trim()).filter(Boolean), ouverte: false },
+      m.index + m[0].length - 1);
+  }
+  for (const m of t.matchAll(/\btype\s+(\w+)\s*=\s*\{/g)) {
+    corpsVers(m[1], { champs: [], etend: [], ouverte: false }, m.index + m[0].length - 1);
+  }
+  for (const m of t.matchAll(/\btype\s+(\w+)\s*=\s*([A-Za-z_]\w*(?:\s*&\s*[A-Za-z_]\w*)+)\s*;/g)) {
+    out.set(m[1], { champs: [], etend: m[2].split("&").map((x) => x.trim()), ouverte: false });
   }
   return out;
 }
@@ -155,11 +169,19 @@ function lignesDeCode(motif: RegExp, garder: (chemin: string) => boolean = () =>
 }
 
 describe("le type d'un nœud, tenu à ses sources", () => {
-  it("DonneesNoeud NE NOMME AUCUN CHAMP EN PROPRE : il étend les trois sections, et rien d'autre", () => {
+  it("DonneesNoeud NE NOMME AUCUN CHAMP EN PROPRE : il réunit les trois sections, et rien d'autre", () => {
     const d = TYPE.get("DonneesNoeud");
-    expect(d, "DonneesNoeud doit être une interface de ui/noeud-atelier.ts").toBeDefined();
+    expect(d, "DonneesNoeud doit être un type de ui/noeud-atelier.ts").toBeDefined();
     expect(d!.champs, "Un champ nommé dans DonneesNoeud même n'a pas de classe : rangez-le dans sa section.").toEqual([]);
     expect(trie(d!.etend)).toEqual(trie(["SaisiesDuNoeud", "StructureDuNoeud", "ResultatsDuNoeud"]));
+  });
+
+  it("LE SAC EST FERMÉ : ni DonneesNoeud ni aucune section n'a de signature ouverte", () => {
+    // UNE SIGNATURE OUVERTE LAISSE LIRE ET ÉCRIRE TOUT NOM, déclaré ou non : c'est ce qui laissait
+    // circuler sur `data` des champs qu'aucune table ne connaissait. Le sac a été fermé le 2026-11-11,
+    // à la pièce 5 du plan DonneesNoeud.
+    const ouvertes = ["DonneesNoeud", ...TYPE.get("DonneesNoeud")!.etend].filter((nom) => TYPE.get(nom)?.ouverte);
+    expect(ouvertes, "Déclarez le champ dans sa section, et sa règle dans sa table.").toEqual([]);
   });
 
   it("LES SAISIES DU TYPE SONT CELLES DE LA TABLE, ni plus ni moins", () => {
@@ -169,9 +191,13 @@ describe("le type d'un nœud, tenu à ses sources", () => {
     ].join("\n")).toEqual(trie(CHAMPS_DE_SAISIE));
   });
 
-  it("CHAQUE RÉSULTAT NOMMÉ EST DÉCLARÉ PAR CHAMPS_RESULTAT, que la remise à zéro efface", () => {
+  it("LES RÉSULTATS DU TYPE SONT CEUX DE CHAMPS_RESULTAT, ni plus ni moins", () => {
     expect(section("ResultatsDuNoeud").filter((c) => !CHAMPS_RESULTAT.has(c)),
       "Un résultat absent de CHAMPS_RESULTAT survivrait à la remise à zéro du nœud qui l'a produit.").toEqual([]);
+    // ET DANS L'AUTRE SENS depuis que le sac est fermé : un résultat que la table déclare et que le
+    // type ne nomme pas ne se lirait plus que sous une affirmation de type, ce que faisaient trois vues.
+    expect([...CHAMPS_RESULTAT].filter((c) => !section("ResultatsDuNoeud").includes(c)),
+      "Un résultat de la table que le type ne nomme pas.").toEqual([]);
   });
 
   it("LES GESTES DU CONTEXTE SONT CEUX QU'App.tsx FOURNIT, ni plus ni moins", () => {

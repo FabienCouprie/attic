@@ -33,7 +33,7 @@ export function CercleVue({ id, data, avecHauteurs }: VueProps & { avecHauteurs?
   const { setNodes } = useReactFlow();
   const gestes = useGestes();
 
-  const parametres = (data as { parametres?: Record<string, unknown> }).parametres ?? {};
+  const parametres = data.parametres ?? {};
   // UN RYTHME CHOISI DANS LA LISTE GOUVERNE LE MOTIF SAISI, et le dessin suit la même règle que le
   // composant : ce qu'on voit est donc toujours ce qui sortira. Voir `motifDuRythme`.
   // LE REPLI VIENT DU CATALOGUE, `audio/cercle.ts`, ET NON D'UNE CHAÎNE ÉCRITE ICI. Il ne sert que
