@@ -138,6 +138,26 @@ export interface CachePrecedent extends EmpreintesDuRun {
   consulteSorties?: boolean;
 }
 
+/**
+ * Ce que le moteur range pour un composant qui a réussi, et ce qu'un coup de cache repose ensuite.
+ *
+ * NOMMÉ LE 2026-11-11, quand l'écriture du cache est passée du crochet au cœur (pièce 2 du plan
+ * `work/plan-runtime-execution-2026-11-11.md`) : la signature l'imposait. Le cache du crochet reste
+ * une table sans type ; ce type ne dit que ce que le moteur y écrit, sans rien changer à ce qu'il lit.
+ */
+export interface EntreeDeCache extends CachePrecedent {
+  /** Les valeurs CONVERTIES à la fréquence de travail, et non celles que l'exécuteur a rendues. */
+  valeurs: unknown[];
+  message?: string;
+  /** Les deux canaux déclarés, qu'un coup de cache repasse au nœud. */
+  affichage?: Record<string, unknown>;
+  designe?: Record<string, unknown>;
+  /** Le temps de son dernier calcul, en millisecondes, que le nœud montre encore après un coup de cache. */
+  tempsExecution: number;
+  /** Pour une fin de boucle : l'empreinte de sa boucle entière. Voir `core/saut-de-boucle.ts`. */
+  empreinteBoucle?: string;
+}
+
 /** Ce qu'il faut savoir d'une arête pour décider : d'où elle part, où elle va. */
 export interface LienDeGraphe {
   source: string;

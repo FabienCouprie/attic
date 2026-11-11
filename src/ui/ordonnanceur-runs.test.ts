@@ -391,8 +391,19 @@ describe("le moteur d'exécution", () => {
   it("et le cache n'est écrit que par une exécution qui n'est pas périmée", () => {
     // La seule écriture du cache de tout le moteur. Un composant qui ne consulte pas son signal
     // continue en arrière-plan ; son résultat ne doit pas atterrir dans le graphe qui tourne.
-    const ecriture = SOURCE.match(/[^\n]*cacheExec\.current\.set\([^\n]*/)?.[0] ?? "";
-    expect(ecriture, "l'écriture du cache a disparu ou changé de forme").not.toBe("");
-    expect(ecriture, "elle doit être gardée par le jeton de génération").toContain("perime()");
+    //
+    // ELLE S'ÉCRIT DANS LE CŒUR depuis le 2026-11-11 (`core/execution.ts`, pièce 2 du plan du
+    // runtime), par une écriture que le crochet lui prête. Deux formes se gardent donc : chaque appel
+    // de cette écriture, dans le cœur, est gardé par le jeton ; et le crochet n'écrit plus le cache
+    // lui-même, sa seule écriture étant celle qu'il prête. La première version de ce cas, restée sur
+    // le crochet, est tombée sur la ligne du prêt, qui n'a pas à porter le jeton.
+    const sansCommentaires = (s: string) => s.split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
+    const COEUR = sansCommentaires(readFileSync(join(__dirname, "..", "core", "execution.ts"), "utf8"));
+    const appels = COEUR.match(/[^\n]*ecrireCache\([^\n]*/g) ?? [];
+    expect(appels.length, "l'écriture du cache a disparu du cœur ou changé de forme").toBeGreaterThan(0);
+    for (const a of appels) expect(a, "elle doit être gardée par le jeton de génération").toContain("perime()");
+    const directes = (CODE.match(/[^\n]*cacheExec\.current\.set\([^\n]*/g) ?? [])
+      .filter((l) => !/^\s*ecrireCache:/.test(l));
+    expect(directes, "le crochet n'écrit le cache que par l'écriture qu'il prête au cœur").toEqual([]);
   });
 });
