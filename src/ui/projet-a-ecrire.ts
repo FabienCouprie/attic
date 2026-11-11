@@ -93,10 +93,12 @@ export function projetAEcrire(racine: GrapheAEcrire, lireVue: () => unknown) {
   }, null, 2);
 
   const encours = {
-    // `bulle` et `replie` ici AUSSI : la reprise de session lit cet objet, et une bulle absente de
-    // celui-ci reviendrait en nœud sans ports, ses arêtes perdues. `cleanEdges` a déjà écarté les
-    // arêtes de substitution.
-    nodes: cleanNodes.map((n: any) => ({ id: n.id, type: n.type, position: n.position, width: n.width, height: n.height, data: { ficheId: n.data.ficheId, parametres: n.data.parametres, zonesSelectionnees: n.data.zonesSelectionnees, audioChemin: n.data.audioChemin, sfzChemin: n.data.sfzChemin, sfzNom: n.data.sfzNom, sequenceNotes: n.data.sequenceNotes, morceaux: n.data.morceaux,portsVisibles: n.data.portsVisibles, portsVisiblesSortie: n.data.portsVisiblesSortie, nom: n.data.nom, nomEn: n.data.nomEn, couleur: n.data.couleur, bulle: n.data.bulle, bulleOuverte: n.data.bulleOuverte } })),
+    // LES NŒUDS MÊMES DU FICHIER, et non une liste à part. La reprise de séance relit cet objet, et
+    // il énumérait ses clés à la main : il oubliait les quatre noms de fichier et `nomFichier`, que
+    // `hooks/useEnCours.ts` relit pourtant, de sorte qu'une séance reprise sans le fichier sur le
+    // disque montrait un nœud sans nom. Relevé le 2026-11-11 ; voir `ui/en-cours-a-relire.test.ts`.
+    // `cleanEdges` a déjà écarté les arêtes de substitution.
+    nodes: cleanNodes,
     edges: cleanEdges.map((e: any) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle })),
     viewport: lireVue(),
     ...servicesDomaine().reglagesDeProjet(),
