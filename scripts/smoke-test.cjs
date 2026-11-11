@@ -7,6 +7,7 @@ const path = require("path");
 
 const CRITICAL_PATHS = [
   "src/ui/hooks/useExecutionGraphe.ts",
+  "src/core/execution.ts",
   "src/ui/App.tsx",
   "src/core/types.ts",
   "src/i18n.tsx",
