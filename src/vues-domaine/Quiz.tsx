@@ -26,17 +26,18 @@ import { nomTheme, reglagesDepuis, seance } from "../quiz/seance";
 import { corriger, ecrireReponses, lettre, lireReponses, positionJuste, propositions } from "../quiz/tour";
 import { enonceLangue, pourquoiLangue } from "../quiz/types";
 import { registreUI } from "../ui/registre-actif";
+import { useGestes } from "../ui/gestes-noeud";
 
 interface Props {
   id: string;
   data: {
     parametres: Record<string, number | string>;
-    onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
   };
 }
 
 export function Quiz({ id, data }: Props) {
   const { t, lang } = useI18n();
+  const gestes = useGestes();
   const en = lang === "en";
   const [correction, setCorrection] = useState<number | null>(null);
 
@@ -61,7 +62,7 @@ export function Quiz({ id, data }: Props) {
   const montre = enCorrection ?? rang;
   const posee = serie[Math.min(montre, serie.length - 1)];
 
-  const changer = (nom: string, valeur: string | number) => data.onChangerParametre?.(id, nom, valeur);
+  const changer = (nom: string, valeur: string | number) => gestes.onChangerParametre(id, nom, valeur);
 
   function repondre(position: number) {
     changer("Réponses", ecrireReponses([...reponses, position]));

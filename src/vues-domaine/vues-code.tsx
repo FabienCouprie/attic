@@ -12,6 +12,7 @@ import { tokenizePython } from "../plugins/python-processor";
 import { tokenizeJulia } from "../plugins/julia-processor";
 import { COULEURS_PYTHON } from "./vues-analyse";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 /**
  * Un script MODIFIÉ dans l'éditeur est déclaré écrit ici, et s'exécutera sans question.
@@ -29,7 +30,7 @@ export function declarerSiEcritIci(synchronise: string, enPlace: string): boolea
 
 export function VuePythonProcessor({ id, data }: VueProps) {
   const { t } = useI18n();
-  const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
+  const gestes = useGestes();
   const code = String(data.parametres?.["Code"] ?? "");
   const [pyInfo, setPyInfo] = useState<{ disponible: boolean; chemin: string; version: string } | null>(null);
 
@@ -80,7 +81,7 @@ export function VuePythonProcessor({ id, data }: VueProps) {
       </div>
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizePython} couleurs={COULEURS_PYTHON}
-        onSync={(v) => { declarerSiEcritIci(v, code); d.onChangerParametre?.(id, "Code", v); }}
+        onSync={(v) => { declarerSiEcritIci(v, code); gestes.onChangerParametre(id, "Code", v); }}
         suffixePied={t("python.requis")} titre={t("python.titre")} langage="python" />
     </div>
   );
@@ -94,7 +95,7 @@ const COULEURS_JULIA: Record<string, string> = {
 
 export function VueJuliaProcessor({ id, data }: VueProps) {
   const { t } = useI18n();
-  const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
+  const gestes = useGestes();
   const code = String(data.parametres?.["Code"] ?? "");
   const [jlInfo, setJlInfo] = useState<{ disponible: boolean; chemin: string; version: string } | null>(null);
 
@@ -142,7 +143,7 @@ export function VueJuliaProcessor({ id, data }: VueProps) {
       </div>
       {/* Éditeur partagé, NON-CONTRÔLÉ (voir ui/EditeurCode.tsx) */}
       <EditeurCode codeInitial={code} tokenize={tokenizeJulia} couleurs={COULEURS_JULIA}
-        onSync={(v) => { declarerSiEcritIci(v, code); d.onChangerParametre?.(id, "Code", v); }}
+        onSync={(v) => { declarerSiEcritIci(v, code); gestes.onChangerParametre(id, "Code", v); }}
         suffixePied={t("julia.requis")} titre={t("julia.titre")} langage="julia" />
     </div>
   );

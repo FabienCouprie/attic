@@ -22,6 +22,7 @@ import { construireListeEmotions } from "../plugins/emotions";
 import { construireListeTessitures } from "../plugins/tessitures";
 import { estLog } from "./vues-fichiers";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 export function VueSpectre({ data }: VueProps) {
   const p = data.parametres ?? {};
@@ -83,7 +84,7 @@ export function VueSequenceurMelodique({ id, data }: VueProps) {
   const cle = String(p["Clé"] ?? "C");
   const gamme = String(p["Gamme"] ?? "majeur");
   const octave = Number(p["Octave"] ?? 3);
-  const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
+  const gestes = useGestes();
   return (
     <SequenceurMelodique
       motif={motif}
@@ -91,7 +92,7 @@ export function VueSequenceurMelodique({ id, data }: VueProps) {
       cle={cle}
       gamme={gamme}
       octave={octave}
-      onChange={(m) => d.onChangerParametre?.(id, "Motif", m)}
+      onChange={(m) => gestes.onChangerParametre(id, "Motif", m)}
     />
   );
 }
@@ -103,14 +104,14 @@ export function VueSequenceurAccords({ id, data }: VueProps) {
   const motif = String(p["Motif"] ?? "");
   const cle = String(p["Clé"] ?? "C");
   const gamme = String(p["Gamme"] ?? "majeur");
-  const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
+  const gestes = useGestes();
   return (
     <SequenceurAccords
       motif={motif}
       nbPas={nbPas}
       cle={cle}
       gamme={gamme}
-      onChange={(m) => d.onChangerParametre?.(id, "Motif", m)}
+      onChange={(m) => gestes.onChangerParametre(id, "Motif", m)}
     />
   );
 }
@@ -120,12 +121,12 @@ export function VueSequenceurBatterieAvance({ id, data }: VueProps) {
   const p = data.parametres ?? {};
   const nbPas = parseInt(String(p["Nombre de pas"] ?? "16"), 10) || 16;
   const motif = String(p["Motif"] ?? "");
-  const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
+  const gestes = useGestes();
   return (
     <SequenceurBatterieAvance
       motif={motif}
       nbPas={nbPas}
-      onChange={(m) => d.onChangerParametre?.(id, "Motif", m)}
+      onChange={(m) => gestes.onChangerParametre(id, "Motif", m)}
     />
   );
 }
@@ -230,14 +231,11 @@ export function VueGenerateurScriptIA({ data }: VueProps) {
 // ── Comparateur A/B (boutons de bascule + relance) ──
 export function VueComparateurAB({ id, data }: VueProps) {
   const sel = String(data.parametres?.["Écoute"] ?? "A");
-  const d = data as {
-    onChangerParametre?: (id: string, nom: string, v: string | number) => void;
-    onDefinirPrioritaire?: (id: string) => void;
-  };
+  const gestes = useGestes();
   const choisir = (v: string) => {
-    d.onChangerParametre?.(id, "Écoute", v);
+    gestes.onChangerParametre(id, "Écoute", v);
     // Laisse l'état se propager (noeudsRef) avant de relancer ce nœud.
-    setTimeout(() => d.onDefinirPrioritaire?.(id), 60);
+    setTimeout(() => gestes.onDefinirPrioritaire(id), 60);
   };
   const btn = (v: string): CSSProperties => ({
     flex: 1, padding: "6px 0", cursor: "pointer", fontWeight: 700, borderRadius: 4,

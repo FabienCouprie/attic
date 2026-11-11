@@ -8,12 +8,14 @@ import { useState, useRef, useEffect } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useI18n } from "../i18n";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 import { LecteurAudio } from "../ui/lecteur-audio";
 import { creerUrlMedia } from "../ui/urls-medias";
 import { useRacineDesUrls } from "../ui/hooks/useUrlsMedias";
 export function VueExplorateur({ id, data }: VueProps) {
   const { t } = useI18n();
+  const gestes = useGestes();
   const [fichiersMusique, setFichiersMusique] = useState<{ nom: string; chemin: string }[] | null>(null);
   const [chargementMusique, setChargementMusique] = useState(false);
   const [audioLocale, setAudioLocale] = useState<string | null>(data.audioUrl ?? null);
@@ -133,7 +135,7 @@ export function VueExplorateur({ id, data }: VueProps) {
             </button>
             <button className="attic-node-fichier-btn" style={{ flexShrink: 0 }} title={t("btn.choisirDossier")} onClick={async () => {
               const dossier = await api?.choisirDossier();
-              if (dossier) { data.parametres!["Chemin"] = dossier; data.onChangerParametre?.(id, "Chemin", dossier); }
+              if (dossier) { data.parametres!["Chemin"] = dossier; gestes.onChangerParametre(id, "Chemin", dossier); }
             }}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4a1 1 0 011-1h3l2 2h5a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" /></svg>
             </button>

@@ -21,6 +21,7 @@ import { gainDeNote, rendreSequence } from "../audio/midi-sequence";
 import { ClavierApprentissage as VueClavierApprentissage } from "./ClavierApprentissage";
 import { INSTRUMENTS_ORCHESTRE } from "../audio/csound-orchestre";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 import { frequenceDeNoteMidi } from "../audio/commun";
 
 export function VueApprentissage({ data }: VueProps) {
@@ -354,6 +355,7 @@ export function VueBanqueSfz({ id, data }: VueProps) {
 export function VueOrchestreCsound({ id, data }: VueProps) {
   const { t } = useI18n();
   const { setNodes } = useReactFlow();
+  const gestes = useGestes();
   const params = (data.parametres ?? {}) as Record<string, unknown>;
   const brut = String(params["Instruments"] ?? "");
   const choisis = brut.split(/[,;\s]+/).map((s) => s.trim()).filter(Boolean);
@@ -363,8 +365,7 @@ export function VueOrchestreCsound({ id, data }: VueProps) {
     const suivant = choisis.includes(idInstrument)
       ? choisis.filter((x) => x !== idInstrument)
       : [...choisis, idInstrument];
-    (data as { onChangerParametre?: (n: string, p: string, v: string | number) => void })
-      .onChangerParametre?.(id, "Instruments", suivant.join(","));
+    gestes.onChangerParametre(id, "Instruments", suivant.join(","));
     // `onChangerParametre` passe par l'application ; quand il manque — vue isolee —, on ecrit
     // directement dans le noeud pour que la case reste cochee.
     setNodes((nds) => nds.map((nd) => nd.id === id

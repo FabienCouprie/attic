@@ -10,10 +10,11 @@ import { NodeResizer } from "@xyflow/react";
 import { useI18n, traduire } from "../i18n";
 import { copierTexte } from "../ui/copier";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 export function VueSourceTexte({ id, data }: VueProps) {
   const { t } = useI18n();
-  const d = data as { onChangerParametre?: (id: string, nom: string, v: string | number) => void };
+  const gestes = useGestes();
   const texte = String(data.parametres?.["Texte"] ?? "");
   return (
     <div className="nodrag attic-node-source-texte" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
@@ -21,7 +22,7 @@ export function VueSourceTexte({ id, data }: VueProps) {
       <textarea
         defaultValue={texte}
         key={`${id}-texte`}
-        onChange={(e) => d.onChangerParametre?.(id, "Texte", e.target.value)}
+        onChange={(e) => gestes.onChangerParametre(id, "Texte", e.target.value)}
         style={{
           width: "100%", flex: "1 1 auto", minHeight: 80,
           resize: "none",
@@ -143,9 +144,9 @@ export function VueModifierTexte({ id, data }: VueProps) {
   const { t } = useI18n();
   // Le texte reçu vient du canal déclaré de l'exécuteur, sous `designe` : il décrit l'ENTRÉE, donc
   // écrire dans la zone ne le périme pas et il reste sous les yeux pendant qu'on corrige.
+  const gestes = useGestes();
   const d = data as {
     _designe?: { texteRecu?: string };
-    onChangerParametre?: (id: string, nom: string, v: string | number) => void;
   };
   const recu = String(d._designe?.texteRecu ?? "");
   const ecrit = String(data.parametres?.["Texte"] ?? "");
@@ -153,7 +154,7 @@ export function VueModifierTexte({ id, data }: VueProps) {
 
   useEffect(() => { if (ecrit === "") setValeur(recu); }, [recu, ecrit]);
 
-  const changer = (v: string) => { setValeur(v); d.onChangerParametre?.(id, "Texte", v); };
+  const changer = (v: string) => { setValeur(v); gestes.onChangerParametre(id, "Texte", v); };
 
   return (
     <div className="nodrag attic-node-sortie-texte" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>

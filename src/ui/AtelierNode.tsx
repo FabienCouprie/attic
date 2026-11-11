@@ -11,6 +11,7 @@ import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "./re
 import { useStatut } from "./statuts";
 import { useResultat } from "./resultats";
 import { useEstPrioritaire } from "./priorite";
+import { useGestes } from "./gestes-noeud";
 import type { NoeudAtelier } from "./noeud-atelier";
 import { etatPorts } from "./ports-extensibles";
 import { ColonnePorts } from "./ColonnePorts";
@@ -242,6 +243,9 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
   // LA PRIORITÉ NON PLUS ne vient du tableau des nœuds : un effet la recopiait dans le `data` de tous,
   // deux fois par ▶. Ici, seuls l'ancien et le nouveau prioritaire sont prévenus. Voir `ui/priorite.ts`.
   const estPrioritaire = useEstPrioritaire(id);
+  // LES GESTES NE VIENNENT PLUS DE `data`, où chaque nœud gardait ceux du moment où il avait été posé :
+  // ils viennent du contexte qu'`App.tsx` fournit, toujours à jour. Voir `ui/gestes-noeud.ts`.
+  const gestes = useGestes();
   const data = useMemo(
     () => (Object.keys(resultat).length === 0 ? donneesDuGraphe : { ...donneesDuGraphe, ...resultat }),
     [donneesDuGraphe, resultat],
@@ -538,7 +542,7 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
         <NodeResizer minWidth={140} minHeight={80} maxWidth={800} maxHeight={600} lineClassName="attic-node-comment-resize-line" handleClassName="attic-node-comment-resize-handle" />
         <div className="attic-node-comment-entete">
           <span className="attic-node-comment-titre">Note</span>
-          <button className="attic-node-btn-del" onClick={(e) => { e.stopPropagation(); data.onSupprimerNoeud?.(id); }}>×</button>
+          <button className="attic-node-btn-del" onClick={(e) => { e.stopPropagation(); gestes.onSupprimerNoeud(id); }}>×</button>
         </div>
         <TexteDeNote
           valeur={texte}
@@ -570,7 +574,7 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
             invite={t("cadre.titre")}
             onChanger={(v) => setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, [champCadre]: v } } : n))}
           />
-          <button className="attic-node-btn-del" onClick={(e) => { e.stopPropagation(); data.onSupprimerNoeud?.(id); }}>×</button>
+          <button className="attic-node-btn-del" onClick={(e) => { e.stopPropagation(); gestes.onSupprimerNoeud(id); }}>×</button>
         </div>
         <div className="attic-node-frame-couleurs nodrag" onPointerDown={(e) => e.stopPropagation()}>
           {COULEURS_CADRE.map((c) => (
@@ -612,8 +616,8 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
           onResizeEnd={(_, { width, height }) => {
             const w = Math.round(width);
             const h = Math.round(height);
-            data.onChangerParametre?.(id, "Largeur", w);
-            data.onChangerParametre?.(id, "Hauteur", h);
+            gestes.onChangerParametre(id, "Largeur", w);
+            gestes.onChangerParametre(id, "Hauteur", h);
             // Persister explicitement les nouvelles dimensions du nœud,
             // sinon ReactFlow le réinitialise à sa taille initiale après le setNodes.
             setNodes((nds) => nds.map((n) => n.id === id ? { ...n, width, height } : n));
@@ -627,12 +631,12 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
           {nom}
         </span>
         <span className="attic-node-actions">
-          <button className="attic-node-btn-prio" onClick={(e) => { e.stopPropagation(); data.onDefinirPrioritaire?.(id); }}
+          <button className="attic-node-btn-prio" onClick={(e) => { e.stopPropagation(); gestes.onDefinirPrioritaire(id); }}
             title={t("btn.executer")} style={{ color: estPrioritaire ? "#2a9d8f" : undefined }}>▶</button>
-          <button className="attic-node-btn-reset" onClick={(e) => { e.stopPropagation(); data.onReinitialiser?.(id); }} title={t("btn.reinitialiser")}>↺</button>
+          <button className="attic-node-btn-reset" onClick={(e) => { e.stopPropagation(); gestes.onReinitialiser(id); }} title={t("btn.reinitialiser")}>↺</button>
           {(def?.notice || def?.resume) && <button className="attic-node-btn-doc" onClick={(e) => { e.stopPropagation(); setDocOpen((v) => !v); }} title={t("btn.doc")}>?</button>}
           <button className="attic-node-btn-collapse" onClick={(e) => { e.stopPropagation(); setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, replie: !replie } } : n)); }} title={replie ? t("btn.deplier") : t("btn.replier")}>{replie ? "+" : "−"}</button>
-          <button className="attic-node-btn-del" onClick={(e) => { e.stopPropagation(); data.onSupprimerNoeud?.(id); }}>×</button>
+          <button className="attic-node-btn-del" onClick={(e) => { e.stopPropagation(); gestes.onSupprimerNoeud(id); }}>×</button>
         </span>
       </div>
       {!replie && (

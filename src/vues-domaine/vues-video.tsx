@@ -14,6 +14,7 @@ import { ExtraitVideo } from "./ExtraitVideo";
 import { enMo } from "../core/octets";
 import { urlMedia } from "./url-media";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 export function VuePistesMultiples({ data }: VueProps) {
   const pistes = ((data as unknown as { _designe?: { pistes?: PisteVue[] } })._designe?.pistes ?? []);
@@ -26,6 +27,7 @@ export function VuePistesMultiples({ data }: VueProps) {
 // moins d'un mégaoctet, et la cadence est ce qui permet de compter en images. Sans elle, on placerait
 // des sons sur un axe muet.
 export function VueMontageVideo({ id, data }: VueProps) {
+  const gestes = useGestes();
   const params = (data.parametres ?? {}) as Record<string, unknown>;
   const chemin = String(params.Chemin ?? "").trim();
   const connexions = useNodeConnections({ handleType: "target", id });
@@ -115,7 +117,7 @@ export function VueMontageVideo({ id, data }: VueProps) {
         fonduEntreeMs: Number(params[`Fondu entrée ${piste + 1}`] ?? 10),
         fonduSortieMs: Number(params[`Fondu sortie ${piste + 1}`] ?? 10),
       })}
-      onDeplacer={(piste, image) => data.onChangerParametre?.(id, `Image ${piste + 1}`, image)}
+      onDeplacer={(piste, image) => gestes.onChangerParametre(id, `Image ${piste + 1}`, image)}
       onMesurer={onMesurer}
     />
   );
@@ -123,6 +125,7 @@ export function VueMontageVideo({ id, data }: VueProps) {
 
 // ── Extrait vidéo : le film, et la portion qu'on en garde ──
 export function VueExtraitVideo({ id, data }: VueProps) {
+  const gestes = useGestes();
   const params = (data.parametres ?? {}) as Record<string, unknown>;
   const chemin = String(params.Chemin ?? "").trim();
   const api = (window as { api?: any }).api;
@@ -157,7 +160,7 @@ export function VueExtraitVideo({ id, data }: VueProps) {
       infos={infos}
       imageDebut={Number(params["Image de début"] ?? 0)}
       imageFin={Number(params["Image de fin"] ?? 0)}
-      onBorner={(borne, image) => data.onChangerParametre?.(
+      onBorner={(borne, image) => gestes.onChangerParametre(
         id, borne === "debut" ? "Image de début" : "Image de fin", image,
       )}
       resultat={n._affichage?.url

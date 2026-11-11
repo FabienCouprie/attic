@@ -14,6 +14,7 @@ import { LigneDeTemps, type PisteMontage } from "./LigneDeTemps";
 import { MODELE_MAQUETTE, MODELE_MONTAGE } from "./ligne-temps-calcul";
 import { morceauxAEcrire, morceauxCompletes, type Morceau } from "../audio/montage-morceaux";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 export function VueMontage({ id, data }: VueProps) {
   // `useReactFlow().setNodes` N'EST PLUS ICI, et c'est le fond de la correction : une vue n'écrit
@@ -21,6 +22,7 @@ export function VueMontage({ id, data }: VueProps) {
   // réglage fait — purge du cache, péremption de l'aval, relance.
   // Les rangs branchés, lus comme le nœud les lit : c'est la poignée qui porte le numéro du port.
   const entrees = useNodeConnections({ handleType: "target", id });
+  const gestes = useGestes();
   const branchees = [...new Set(
     entrees
       .map((c) => Number(String(c.targetHandle ?? "in:0").split(":")[1]))
@@ -42,15 +44,6 @@ export function VueMontage({ id, data }: VueProps) {
       /** Les notes des boîtes de la Maquette, en fractions de leur durée propre. */
       notes?: Record<number, { debut: number; duree: number; note: number }[]>;
     };
-    onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
-    /**
-     * Pose un découpage sur le nœud, PAR LA MÊME PORTE QU'UN RÉGLAGE.
-     *
-     * C'est-à-dire : purge l'entrée de cache, périme l'aval en gardant ce que le nœud a désigné de
-     * ses entrées — sans quoi le graphe vivant du montage n'aurait plus rien à jouer —, et déclenche
-     * la relance automatique vers l'aval. Un `setNodes` nu ne faisait aucune des trois.
-     */
-    onChangerDecoupe?: (id: string, decoupe: Record<string, unknown>) => void;
     /** Les morceaux posés, quand le nœud en porte. Absents sur un graphe enregistré avant eux. */
     morceaux?: Morceau[];
   };
@@ -98,9 +91,14 @@ export function VueMontage({ id, data }: VueProps) {
   // tirer la poignée de niveau déplace « Gain 1 ». L'inspecteur montre donc ce que la ligne de temps
   // fait, et il n'y a plus deux sources de vérité à départager. Relevé par Fabien : « il n'y a aucun
   // lien entre les éléments graphiques et leur équivalent dans l'inspecteur ».
+  //
+  // `onChangerDecoupe` POSE UN DÉCOUPAGE PAR LA MÊME PORTE QU'UN RÉGLAGE : il purge l'entrée de cache,
+  // périme l'aval en gardant ce que le nœud a désigné de ses entrées — sans quoi le graphe vivant du
+  // montage n'aurait plus rien à jouer —, et déclenche la relance vers l'aval. Il vient du contexte
+  // des gestes, `ui/gestes-noeud.ts`.
   const ecrireMorceaux = (ms: Morceau[]) => {
     const ecriture = morceauxAEcrire(ms, branchees, d.parametres ?? {});
-    d.onChangerDecoupe?.(id, {
+    gestes.onChangerDecoupe(id, {
       morceaux: ecriture.morceaux,
       // LA LISTE DES PISTES « VIDÉES » D'UN PROJET ANCIEN S'EFFACE AU PREMIER GESTE. Elle n'est plus
       // lue ni enregistrée ; la laisser sur le nœud la ferait signaler comme une perte à l'export.
@@ -122,7 +120,7 @@ export function VueMontage({ id, data }: VueProps) {
         pistes={d._designe?.durees ?? []}
         branchees={branchees}
         params={d.parametres ?? {}}
-        onChanger={(nom, valeur) => d.onChangerParametre?.(id, nom, valeur)}
+        onChanger={(nom, valeur) => gestes.onChangerParametre(id, nom, valeur)}
         modele={estMaquette ? MODELE_MAQUETTE : MODELE_MONTAGE}
         audioUrl={d.audioResultatUrl}
         sons={d._designe?.sons}

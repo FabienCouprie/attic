@@ -158,6 +158,31 @@ describe("le type d'un nœud, tenu à ses sources", () => {
     ].join("\n")).toEqual(trie(poses));
   });
 
+  it("AUCUN RAPPEL N'EST PLUS LU SUR UN NŒUD : le nœud et ses vues lisent les gestes du contexte", () => {
+    // LA FORME CHERCHÉE EST L'ACCÈS, quel que soit l'objet : `data.onX`, `d.onX` sous un alias,
+    // `(data as {…}).onX` sous une affirmation de type, `n?.data.onX` — tous les chemins par lesquels
+    // dix-neuf fichiers les lisaient. Seul `gestes.onX` est permis, la valeur de `useGestes()`. Les
+    // treize noms sont ceux de la section du type, et non une liste écrite ici.
+    const noms = section("RappelsDuNoeud").join("|");
+    const acces = new RegExp(String.raw`(?<!\bgestes)(\?\.|\.)(${noms})\b`);
+    const fautifs: string[] = [];
+    const parcourir = (d: string) => {
+      for (const n of readdirSync(d)) {
+        const c = join(d, n);
+        if (statSync(c).isDirectory()) { parcourir(c); continue; }
+        if (!/\.tsx?$/.test(n) || /\.test\.tsx?$/.test(n)) continue;
+        code(readFileSync(c, "utf8")).split("\n").forEach((ligne, i) => {
+          if (acces.test(ligne)) fautifs.push(`${relative(SRC, c).replace(/\\/g, "/")}:${i + 1}`);
+        });
+      }
+    };
+    parcourir(SRC);
+    expect(fautifs, [
+      "Un rappel lu sur le nœud garde la fermeture du moment où le nœud a été posé, et manque à tout",
+      "nœud qu'un chemin a oublié d'en munir. Lisez `useGestes()` de `ui/gestes-noeud.ts`.",
+    ].join("\n")).toEqual([]);
+  });
+
   it("LA STRUCTURE DU TYPE EST CELLE DE LA TABLE, ni plus ni moins", () => {
     expect(trie(section("StructureDuNoeud")), [
       "Un champ de structure se déclare dans CHAMPS_DE_STRUCTURE, qui dit si le projet l'écrit ;",

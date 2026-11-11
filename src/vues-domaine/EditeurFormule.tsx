@@ -8,6 +8,7 @@ import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useI18n } from "../i18n";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 import type { ParametreDef } from "../core/types";
 
 export function EditeurFormule({ id, data, def }: VueProps) {
@@ -17,7 +18,8 @@ export function EditeurFormule({ id, data, def }: VueProps) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const syncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const derniereValeur = useRef<string | null>(null);
-  const onChange = useCallback((nom: string, v: string) => data.onChangerParametre?.(id, nom, v), [data, id]);
+  const gestes = useGestes();
+  const onChange = useCallback((nom: string, v: string) => gestes.onChangerParametre(id, nom, v), [gestes, id]);
 
   const synchroniser = useCallback(() => {
     if (syncRef.current) { clearTimeout(syncRef.current); syncRef.current = null; }

@@ -11,6 +11,7 @@ import { decrire } from "../audio/metadonnees";
 import { lireProfondeurExport } from "../ui/profondeur-export";
 
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 import { registreUI } from "../ui/registre-actif";
 
 /**
@@ -25,6 +26,7 @@ const tamponMulticanal = (b: unknown): AudioBuffer | null =>
 
 export function VueCollections({ id, data, def }: VueProps) {
   const { t, lang } = useI18n();
+  const gestes = useGestes();
   if (!def || def.parametres.length === 0) return null;
   return (
     <div className="attic-node-params" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
@@ -35,7 +37,7 @@ export function VueCollections({ id, data, def }: VueProps) {
           <label>{lang === "en" && p.nomEn ? p.nomEn : p.nom}</label>
           {p.type === "dossier" || p.type === "fichier" ? (
             <div style={{ display: "flex", gap: 4 }}>
-              <input type="text" value={String(data.parametres?.[p.nom] ?? defautP)} onChange={(e) => data.onChangerParametre?.(id, p.nom, e.target.value)}
+              <input type="text" value={String(data.parametres?.[p.nom] ?? defautP)} onChange={(e) => gestes.onChangerParametre(id, p.nom, e.target.value)}
                 style={{ flex: 1, fontSize: 11, background: "var(--bg-input)", border: "1px solid var(--border)", borderRadius: 3, padding: "2px 4px", color: "var(--text-title)" }} />
               <button onClick={async () => {
                 const api = (window as { api?: any }).api;
@@ -44,10 +46,10 @@ export function VueCollections({ id, data, def }: VueProps) {
                     ? [{ name: p.nom, extensions: p.extensions }, { name: "Tous", extensions: ["*"] }]
                     : undefined;
                   const f = await api.choisirFichier({ filters: filtres });
-                  if (f) data.onChangerParametre?.(id, p.nom, f);
+                  if (f) gestes.onChangerParametre(id, p.nom, f);
                 } else if (api?.choisirDossier) {
                   const d = await api.choisirDossier();
-                  if (d) data.onChangerParametre?.(id, p.nom, d);
+                  if (d) gestes.onChangerParametre(id, p.nom, d);
                 } else {
                   const inp = document.createElement("input");
                   inp.type = "file";
@@ -55,7 +57,7 @@ export function VueCollections({ id, data, def }: VueProps) {
                   // pis-aller, et il ne doit au moins pas demander un dossier pour un fichier.
                   if (p.type === "dossier") (inp as { webkitdirectory?: boolean }).webkitdirectory = true;
                   else if (p.extensions?.length) inp.accept = p.extensions.map((e) => `.${e}`).join(",");
-                  inp.onchange = () => { const f = inp.files?.[0]; if (f) data.onChangerParametre?.(id, p.nom, (f as { path?: string }).path ?? f.name); };
+                  inp.onchange = () => { const f = inp.files?.[0]; if (f) gestes.onChangerParametre(id, p.nom, (f as { path?: string }).path ?? f.name); };
                   inp.click();
                 }
               }} className="attic-node-fichier-btn" title={t("btn.parcourir")}>…</button>

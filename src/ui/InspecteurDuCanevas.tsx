@@ -7,6 +7,7 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import type { Edge } from "@xyflow/react";
 
+import { useGestes } from "./gestes-noeud";
 import { Inspector } from "./Inspector";
 import type { NoeudAtelier } from "./noeud-atelier";
 import { PanneauInspecteur } from "./PanneauInspecteur";
@@ -28,6 +29,7 @@ export interface PropsInspecteurDuCanevas {
 export function InspecteurDuCanevas({
   nodes, edges, sel, setSel, setNodes, cacheExec, changerReglage, pushHistorique, supprimerNoeud, reinitialiserNoeud,
 }: PropsInspecteurDuCanevas) {
+  const gestes = useGestes();
   return (
     <PanneauInspecteur>
       <Inspector
@@ -72,9 +74,8 @@ export function InspecteurDuCanevas({
           // LA MÊME PRISE QUE DEPUIS LE NŒUD, par le geste qu'il porte : `changerEnregistrement` de
           // `hooks/useChargementMedias.ts`. L'inspecteur en tenait une seconde écriture, sans la purge
           // du cache ni la remise à zéro : MESURÉ, une prise refaite ici laissait le nœud « Terminé »,
-          // sur le résultat de la précédente.
-          const n = nodes.find((x) => x.id === id);
-          (n?.data.onChangerEnregistrement as ((nid: string, b: Blob) => void) | undefined)?.(id, blob);
+          // sur le résultat de la précédente. Le geste vient du contexte, comme pour le nœud.
+          gestes.onChangerEnregistrement(id, blob);
         }}
         onEnregistrerMidi={(id, fichier) => {
           // Même contrat que onChargerMidi (AtelierNode) : vider le cache

@@ -9,6 +9,7 @@ import { useStatut } from "../ui/statuts";
 import { FormeOnde } from "./FormeOnde";
 import { SelecteurMultiZones } from "./SelecteurMultiZones";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 import { LecteurAudio } from "../ui/lecteur-audio";
 export function VueFormeOnde({ data }: VueProps) {
@@ -23,11 +24,12 @@ export function VueFormeOnde({ data }: VueProps) {
 
 // ── Sélecteur multi-zones (canvas natif) ──
 export function VueSelecteurMultiZones({ id, data }: VueProps) {
+  const gestes = useGestes();
   return (
     <SelecteurMultiZones
       audioUrl={data.audioResultatUrl}
       zones={data.zonesSelectionnees ?? []}
-      onZonesChange={(z) => data.onChangerZones?.(id, z)}
+      onZonesChange={(z) => gestes.onChangerZones(id, z)}
     />
   );
 }
@@ -51,6 +53,7 @@ export function estLog(valeur: unknown): boolean {
 
 export function VueUploadAudio({ id, data }: VueProps) {
   const { t } = useI18n();
+  const gestes = useGestes();
   // L'ENTRÉE AUDIO NE MONTRE SON LECTEUR QU'APRÈS LE RUN, et le perd à la réinitialisation, comme
   // tout nœud qui rend un résultat : au chargement, le bouton et le nom du fichier suffisent.
   // Demandé par Fabien le 2026-09-22 — le lecteur affiché dès le chargement, et qu'aucune
@@ -62,7 +65,7 @@ export function VueUploadAudio({ id, data }: VueProps) {
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <label className="attic-node-fichier-btn">
         {data.audioNom ? t("btn.changer.audio") : t("btn.charger.audio")}
-        <input type="file" accept="audio/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerAudio?.(id, f); }} />
+        <input type="file" accept="audio/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) gestes.onChargerAudio(id, f); }} />
       </label>
       {data.audioNom && <div className="attic-node-fichier-nom">{data.audioNom}</div>}
       {data.audioUrl && lecteurVisible && (
@@ -75,11 +78,12 @@ export function VueUploadAudio({ id, data }: VueProps) {
 // ── Chargement d'un fichier image ──
 export function VueUploadImage({ id, data }: VueProps) {
   const { t } = useI18n();
+  const gestes = useGestes();
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <label className="attic-node-fichier-btn">
         {data.imageNom ? t("btn.changer.image") : t("btn.charger.image")}
-        <input type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerImage?.(id, f); }} />
+        <input type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) gestes.onChargerImage(id, f); }} />
       </label>
       {data.imageNom && <div className="attic-node-fichier-nom">{data.imageNom}</div>}
     </div>
@@ -89,11 +93,12 @@ export function VueUploadImage({ id, data }: VueProps) {
 // ── Chargement d'un fichier SVG ──
 export function VueUploadSvg({ id, data }: VueProps) {
   const { t } = useI18n();
+  const gestes = useGestes();
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <label className="attic-node-fichier-btn">
         {data.svgNom ? t("btn.changer.svg") : t("btn.charger.svg")}
-        <input type="file" accept=".svg" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerSvg?.(id, f); }} />
+        <input type="file" accept=".svg" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) gestes.onChargerSvg(id, f); }} />
       </label>
       {data.svgNom && <div className="attic-node-fichier-nom">{data.svgNom}</div>}
     </div>
@@ -103,11 +108,12 @@ export function VueUploadSvg({ id, data }: VueProps) {
 // ── Chargement d'un fichier PDF ──
 export function VueUploadPdf({ id, data }: VueProps) {
   const { t } = useI18n();
+  const gestes = useGestes();
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <label className="attic-node-fichier-btn">
         {data.pdfNom ? t("btn.changer.pdf") : t("btn.charger.pdf")}
-        <input type="file" accept=".pdf,application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) data.onChargerPdf?.(id, f); }} />
+        <input type="file" accept=".pdf,application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) gestes.onChargerPdf(id, f); }} />
       </label>
       {data.pdfNom && <div className="attic-node-fichier-nom">{data.pdfNom}</div>}
     </div>

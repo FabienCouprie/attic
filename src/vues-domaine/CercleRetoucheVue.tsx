@@ -20,6 +20,7 @@ import { useI18n } from "../i18n";
 
 import { CercleDessin } from "./CercleDessin";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 /** Le cercle reçu, tel que le run l'a désigné de ses entrées. */
 function cercleRecu(data: unknown): Cercle | undefined {
@@ -37,21 +38,20 @@ function cercleRecu(data: unknown): Cercle | undefined {
 export function CercleRetoucheVue({ id, data }: VueProps) {
   const { t } = useI18n();
   const { setNodes } = useReactFlow();
+  const gestes = useGestes();
 
   const recu = cercleRecu(data);
   const parametres = (data as { parametres?: Record<string, unknown> }).parametres ?? {};
   const masque = String(parametres["Retouche"] ?? "");
 
   const ecrire = useCallback((valeur: string) => {
-    const changer = (data as { onChangerParametre?: (n: string, p: string, v: string | number) => void })
-      .onChangerParametre;
-    changer?.(id, "Retouche", valeur);
+    gestes.onChangerParametre(id, "Retouche", valeur);
     // Sans le rappel de l'application — vue isolée —, on écrit dans le nœud directement, sans quoi
     // le dessin reviendrait à son état d'avant le clic.
     setNodes((nds) => nds.map((n) => n.id === id
       ? { ...n, data: { ...n.data, parametres: { ...(n.data.parametres as object), Retouche: valeur } } }
       : n));
-  }, [data, id, setNodes]);
+  }, [gestes, id, setNodes]);
 
   if (!recu) return null;
 

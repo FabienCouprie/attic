@@ -11,9 +11,11 @@ import { useStatut } from "../ui/statuts";
 import { estActif } from "./vues-fichiers";
 import { tempsAuCentieme } from "../ui/lecteur-audio";
 import type { VueProps } from "../ui/registre-vues";
+import { useGestes } from "../ui/gestes-noeud";
 
 export function VueLecteurMusique({ id, data }: VueProps) {
   const { t } = useI18n();
+  const gestes = useGestes();
   const api = (window as { api?: any }).api;
   const [fichiers, setFichiers] = useState<{ nom: string; chemin: string }[] | null>(null);
   const [chargement, setChargement] = useState(false);
@@ -76,8 +78,8 @@ export function VueLecteurMusique({ id, data }: VueProps) {
     prevUrlRef.current = url;
     setAudioUrl(url);
     setPendingPlay(andPlay);
-    data.onChangerParametre?.(id, "Piste", f.nom);
-  }, [api, fichiers, data, id]);
+    gestes.onChangerParametre(id, "Piste", f.nom);
+  }, [api, fichiers, data, gestes, id]);
 
   const nextIndex = useCallback((from: number) => {
     if (!fichiers || fichiers.length === 0) return -1;
@@ -148,17 +150,17 @@ export function VueLecteurMusique({ id, data }: VueProps) {
   // Écrit l'id canonique (et non plus le libellé français), pour rester
   // cohérent avec la valeur des <option> du menu déroulant de l'inspecteur.
   const toggleShuffle = useCallback(() => {
-    data.onChangerParametre?.(id, "Lecture aléatoire", shuffle ? "non" : "oui");
-  }, [data, id, shuffle]);
+    gestes.onChangerParametre(id, "Lecture aléatoire", shuffle ? "non" : "oui");
+  }, [gestes, id, shuffle]);
 
   const toggleLoop = useCallback(() => {
-    data.onChangerParametre?.(id, "Lecture en boucle", loop ? "non" : "oui");
-  }, [data, id, loop]);
+    gestes.onChangerParametre(id, "Lecture en boucle", loop ? "non" : "oui");
+  }, [gestes, id, loop]);
 
   const handleVolume = useCallback((v: number) => {
-    data.onChangerParametre?.(id, "Volume", v);
+    gestes.onChangerParametre(id, "Volume", v);
     if (audioRef.current) audioRef.current.volume = v / 100;
-  }, [data, id]);
+  }, [gestes, id]);
 
   const handleSeek = useCallback((v: number) => {
     if (audioRef.current && duration) audioRef.current.currentTime = (v / 100) * duration;
@@ -212,7 +214,7 @@ export function VueLecteurMusique({ id, data }: VueProps) {
             </button>
             <button className="attic-node-fichier-btn" title={t("btn.choisirDossier")} onClick={async () => {
               const d = await api?.choisirDossier();
-              if (d) data.onChangerParametre?.(id, "Chemin", d);
+              if (d) gestes.onChangerParametre(id, "Chemin", d);
             }}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4a1 1 0 011-1h3l2 2h5a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" /></svg>
             </button>
