@@ -41,7 +41,7 @@ export function CercleRetoucheVue({ id, data }: VueProps) {
   const gestes = useGestes();
 
   const recu = cercleRecu(data);
-  const parametres = (data as { parametres?: Record<string, unknown> }).parametres ?? {};
+  const parametres = data.parametres ?? {};
   const masque = String(parametres["Retouche"] ?? "");
 
   const ecrire = useCallback((valeur: string) => {

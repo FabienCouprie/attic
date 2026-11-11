@@ -66,7 +66,7 @@ export function VueUploadOnnx({ data }: VueProps) {
 export function VueUploadIR({ id, data }: VueProps) {
   const { t } = useI18n();
   const gestes = useGestes();
-  const d = data as { irFichier?: File; irNom?: string };
+  const d = data;
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <label className="attic-node-fichier-btn">
@@ -82,10 +82,7 @@ export function VueUploadIR({ id, data }: VueProps) {
 export function VueUploadPd({ id, data }: VueProps) {
   const { t } = useI18n();
   const gestes = useGestes();
-  const d = data as {
-    pureDataFichier?: File;
-    pureDataNom?: string;
-  };
+  const d = data;
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <label className="attic-node-fichier-btn">

@@ -77,7 +77,7 @@ export function VueDemonstration({ data }: VueProps) {
 // ── Film de l'application : le bouton qui le lance, et le film ──
 export function VueFilmApplication({ id, data }: VueProps) {
   const { t } = useI18n();
-  const url = (data as { _demoAppVideoUrl?: string })._demoAppVideoUrl;
+  const url = data._demoAppVideoUrl;
   return (
     <div className="attic-node-fichier nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <button className="attic-node-fichier-btn attic-demo-filmer" title={t("demo.filmerTitre")}

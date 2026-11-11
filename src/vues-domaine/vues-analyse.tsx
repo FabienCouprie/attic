@@ -212,7 +212,7 @@ export function VueTessituresVoix({ data }: VueProps) {
 export function VueGenerateurScriptIA({ data }: VueProps) {
   const { t } = useI18n();
   const script = data.audioResultatMessage ?? "";
-  const texte = (data as { scriptGenere?: string }).scriptGenere ?? "";
+  const texte = data.scriptGenere ?? "";
   const affiche = texte || script;
   return (
     <div className="nodrag" onPointerDown={(e) => e.stopPropagation()} style={{ padding: "4px 2px" }}>
