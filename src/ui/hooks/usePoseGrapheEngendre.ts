@@ -23,18 +23,15 @@ import { tailleDefaut } from "../tailles-noeuds";
 
 export interface OptionsPoseGrapheEngendre {
   noeudsRef: MutableRefObject<any[]>;
-  /** Les gestionnaires attachés au `data` de chaque nœud, définis une seule fois dans App. */
-  callbacksNoeudRef: MutableRefObject<(() => Record<string, unknown>) | null>;
   setNodes: Dispatch<SetStateAction<any[]>>;
   setEdges: Dispatch<SetStateAction<Edge[]>>;
   lang: Langue;
 }
 
-export function usePoseGrapheEngendre({ noeudsRef, callbacksNoeudRef, setNodes, setEdges, lang }: OptionsPoseGrapheEngendre) {
+export function usePoseGrapheEngendre({ noeudsRef, setNodes, setEdges, lang }: OptionsPoseGrapheEngendre) {
   return useCallback((nodeId: string, spec: SpecGrapheEngendre) => {
     const baseX = noeudsRef.current.find((n) => n.id === nodeId)?.position?.x ?? 200;
     const baseY = noeudsRef.current.find((n) => n.id === nodeId)?.position?.y ?? 200;
-    const cbs = callbacksNoeudRef.current?.() ?? {};
     const plan = planDeGrapheEngendre(spec, noeudsRef.current, `${nodeId}-${Date.now()}`,
       (s, c) => premierLienCompatible(portsDeFiche(s), portsDeFiche(c),
         (a, b) => registreUI().fluxCompatibles(a.type, b.type, a.sousType, b.sousType)));
@@ -65,10 +62,7 @@ export function usePoseGrapheEngendre({ noeudsRef, callbacksNoeudRef, setNodes, 
         id: idsNouveaux[i], type: "atelier" as const,
         position: { x: baseX + 250 + i * 260, y: baseY + 40 },
         width, height,
-        data: {
-          ficheId: specNode.ficheId, parametres,
-          ...cbs,
-        },
+        data: { ficheId: specNode.ficheId, parametres },
       };
     });
     const nouveauxEdges: Edge[] = plan.aretes.map(({ sortie, entree, ...a }) => ({
@@ -80,5 +74,5 @@ export function usePoseGrapheEngendre({ noeudsRef, callbacksNoeudRef, setNodes, 
     }));
     setNodes((nds) => [...nds, ...nouveauxNodes]);
     setEdges((eds) => [...eds, ...nouveauxEdges]);
-  }, [noeudsRef, callbacksNoeudRef, setNodes, setEdges, lang]);
+  }, [noeudsRef, setNodes, setEdges, lang]);
 }

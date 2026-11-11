@@ -193,7 +193,7 @@ function Atelier() {
   // ── Historique, Ctrl+Z et Ctrl+Y, vidage du canevas et fichier détaché, dans hooks/useHistorique.ts ;
   // et le balayage des URL de médias qu'il tient avec le canevas, dans hooks/useUrlsMedias.ts ──
   const { pushHistorique, undo, redo, fermerOnglet, detacherFichier } = useHistorique({
-    noeudsRef, aretesRef, grapheRacineRef, callbacksNoeudRef, cacheExec,
+    noeudsRef, aretesRef, grapheRacineRef, cacheExec,
     setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath, nodes,
   });
 
@@ -222,12 +222,12 @@ function Atelier() {
   const plugins = useMemo(() => tousLesPlugins(), [pluginsVersion]);
 
   // ── Chargement automatique de l'en-cours sauvegardé, dans hooks/useEnCours.ts ──
-  useEnCours({ pluginsVersion, rfInstance, callbacksNoeudRef, setNodes, setEdges });
+  useEnCours({ pluginsVersion, rfInstance, setNodes, setEdges });
 
   // ── Exécution du graphe, dans hooks/useExecutionGraphe.ts ──
   // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
-  const poserGrapheEngendre = usePoseGrapheEngendre({ noeudsRef, callbacksNoeudRef, setNodes, setEdges, lang });
+  const poserGrapheEngendre = usePoseGrapheEngendre({ noeudsRef, setNodes, setEdges, lang });
   const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout } = useExecutionGraphe({
     noeudsRef, aretesRef, enExecRef, audioCtxRef, cacheExec, economieMemoireRef,
     pileMetaRef: pileRef,
@@ -288,7 +288,8 @@ function Atelier() {
 
   const { chargerMedia, changerEnregistrement, chargerIR } = useChargementMedias({ cacheExec, setNodes, reinitialiserNoeud });
 
-  // Callbacks standard attachés à tout nœud (ajout, import, copier/coller).
+  // LES GESTES OFFERTS À CHAQUE NŒUD, par le contexte de `ui/gestes-noeud.ts` et par lui seul : ils
+  // étaient recopiés dans le `data` de chaque nœud en quatorze endroits, et ne le sont plus nulle part.
   const callbacksNoeud = useCallback(() => ({
     onSupprimerNoeud: (nid: string) => {
       pushHistorique();
@@ -357,9 +358,9 @@ function Atelier() {
     const { width, height } = tailleDefaut(def);
     return {
       id: idUnique(noeuds as { id: string }[]), type: "atelier" as const, position, width, height,
-      data: { ficheId, parametres, ...callbacksNoeud() },
+      data: { ficheId, parametres },
     };
-  }, [lang, callbacksNoeud]);
+  }, [lang]);
 
   const ajouterNoeud = useCallback((ficheId: string, pos?: { x: number; y: number }) => {
     const position = pos ?? { x: 120 + Math.random() * 200, y: 80 + Math.random() * 240 };
@@ -371,24 +372,24 @@ function Atelier() {
 
   // ── Notes et cadres, dans hooks/useNotesEtCadres.ts ──
   const { pendingAdd, ajouterCommentaire, ajouterCadre, onPaneClick } = useNotesEtCadres({
-    noeudsRef, rfInstanceRef, callbacksNoeudRef, setNodes, setSel,
+    noeudsRef, rfInstanceRef, setNodes, setSel,
   });
 
   // ── Copier / Couper / Coller (Ctrl+C / Ctrl+X / Ctrl+V), Ctrl+Z et Ctrl+Y, dans hooks/useCopierColler.ts ──
-  useCopierColler({ noeudsRef, setNodes, setSel, pushHistorique, supprimerNoeud, callbacksNoeud, undo, redo, t });
+  useCopierColler({ noeudsRef, setNodes, setSel, pushHistorique, supprimerNoeud, undo, redo, t });
 
   // ── Méta-composants (§3.8) : grouper / dégrouper + navigation ──
   // Dans hooks/useMetaComposants.ts ; la logique pure vit dans core/meta.ts.
   const { grouper, degrouper, renommer, sauvegarderContexteCourant, ouvrirMeta, remonterA } = useMetaComposants({
     noeudsRef, aretesRef, pileRef, grapheRacineRef, cacheExec,
-    setNodes, setEdges, setPile, setSel, callbacksNoeud,
+    setNodes, setEdges, setPile, setSel,
   });
 
   // ── Bulles : clarifier / développer / ouvrir ──
   // Rien de commun avec « grouper » : une bulle replie le schéma pour le lire, elle ne range aucun
   // outil au catalogue. La logique pure vit dans core/bulles.ts.
   const { clarifier, developper, basculerRepli, retirerBullesVides, developperAvantMeta } = useBulles({
-    noeudsRef, aretesRef, setNodes, setEdges, setSel, pushHistorique, callbacksNoeud,
+    noeudsRef, aretesRef, setNodes, setEdges, setSel, pushHistorique,
   });
 
   /**
@@ -439,7 +440,7 @@ function Atelier() {
   const { menu, fermerMenu, surPointerDown, surClicDroit, surClicDroitSelection, surClicDroitFond } = useMenuContextuel({
     noeudsRef, basculerRepli, developper, clarifier,
   });
-  const { onDrop } = useDepot({ rfInstance, ajouterNoeud, setNodes, callbacksNoeud, pushHistorique, lang });
+  const { onDrop } = useDepot({ rfInstance, ajouterNoeud, setNodes, pushHistorique, lang });
 
   // ── Poser une arête à la souris, dans hooks/useConnexions.ts ──
   const { isValidConnection, onConnect } = useConnexions({ noeudsRef, aretesRef, setEdges, pushHistorique, lang });
@@ -459,7 +460,6 @@ function Atelier() {
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
     sauvegarderContexteCourant, grapheRacineRef, setPile, vueAPoserRef,
     reinitialiserNoeud, supprimerNoeud, lancerRef, cacheExec,
-    callbacksNoeud,
     currentFilePath, setCurrentFilePath,
   });
 

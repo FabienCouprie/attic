@@ -31,8 +31,6 @@ export interface OptionsMeta {
   setEdges: Dispatch<SetStateAction<Edge[]>>;
   setPile: Dispatch<SetStateAction<{ metaId: string; nom: string }[]>>;
   setSel: (n: any) => void;
-  // Callbacks standard à rattacher à chaque nœud (fournis par App, réutilisés ici).
-  callbacksNoeud: () => Record<string, unknown>;
 }
 
 export function useMetaComposants(o: OptionsMeta) {
@@ -57,7 +55,7 @@ export function useMetaComposants(o: OptionsMeta) {
     );
     enregistrerMeta(meta);
     const externes = o.noeudsRef.current.filter((n) => !selection.has(n.id));
-    const noeudUI = { ...noeudMeta, data: { ...noeudMeta.data, ...o.callbacksNoeud() } };
+    const noeudUI = { ...noeudMeta, data: { ...noeudMeta.data } };
     o.setNodes([...externes, noeudUI]);
     o.setEdges(nouvellesAretes as unknown as Edge[]);
     o.cacheExec.current.clear();
@@ -70,7 +68,6 @@ export function useMetaComposants(o: OptionsMeta) {
     if (!cible) { window.alert(t("meta.degrouperSelection")); return; }
     const meta = trouverMeta(cible.data.ficheId as string)!;
     const prefixe = `${cible.id}::`;
-    const cb = o.callbacksNoeud();
     // Le sous-graphe est replacé sous le méta-nœud : on translate les positions
     // intérieures pour que leur barycentre coïncide avec la position actuelle du méta.
     const cx = meta.sousNoeuds.reduce((s, n) => s + (n.position?.x ?? 0), 0) / Math.max(1, meta.sousNoeuds.length);
@@ -87,7 +84,7 @@ export function useMetaComposants(o: OptionsMeta) {
         type: "atelier",
         position: { x: (sn.position?.x ?? 0) + dx, y: (sn.position?.y ?? 0) + dy },
         selected: true,
-        data: { ...sn.data, ...cb },
+        data: { ...sn.data },
       });
     }
     const nouvellesA = o.aretesRef.current.filter((e) => e.source !== cible.id && e.target !== cible.id).slice() as unknown as AreteG[];
@@ -128,11 +125,10 @@ export function useMetaComposants(o: OptionsMeta) {
   const chargerContexteMeta = useCallback((metaId: string) => {
     const meta = trouverMeta(metaId);
     if (!meta) return;
-    const cb = o.callbacksNoeud();
     // Nœuds réels + nœuds-frontière (ports exposés matérialisés pour l'édition).
     const fr = frontieresPourEdition(meta);
     const tous = [...meta.sousNoeuds, ...fr.noeuds];
-    const inner = tous.map((sn) => ({ ...sn, type: "atelier", position: sn.position ?? { x: 0, y: 0 }, data: { ...sn.data, ...cb } }));
+    const inner = tous.map((sn) => ({ ...sn, type: "atelier", position: sn.position ?? { x: 0, y: 0 }, data: { ...sn.data } }));
     o.setNodes(inner as unknown as any[]);
     o.setEdges([...meta.sousAretes, ...fr.aretes].map((a) => ({ ...a })) as unknown as Edge[]);
     o.cacheExec.current.clear();

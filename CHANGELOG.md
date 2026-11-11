@@ -19,6 +19,35 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **UN NŒUD NE PORTE PLUS SES GESTES : LES QUATORZE RECOPIES TOMBENT.** Pièce 4b du plan `work/plan-donnees-noeud-2026-11-11.md`, seconde des deux PR par couche décidées par Fabien le 2026-11-11. Posée sur la pièce 4a, qui avait fait passer tous les lecteurs au contexte.
+  - **Ce qui tombe.** Les gestes d'`App.tsx` étaient recopiés dans le `data` de chaque nœud en quatorze endroits, dans onze fichiers : la création d'un nœud, le dépôt d'un son, l'import, le collage, la reprise de séance, l'annulation et le rétablissement, les notes et les cadres, les bulles, le groupement et le dégroupement d'un méta, l'ouverture de son intérieur, le graphe qu'un composant engendre. Depuis la pièce 4a, personne ne les y lisait plus. Avec les recopies tombe le passage de `callbacksNoeud`, ou de sa référence, dans dix crochets : `useBulles`, `useCopierColler`, `useDepot`, `useEnCours`, `useHistorique`, `useImportProjet`, `useMetaComposants`, `useNotesEtCadres`, `usePersistance`, `usePoseGrapheEngendre`. `noeudsRelus` ne reçoit plus de gestes.
+  - **Ctrl+Z n'attend plus les gestes.** L'annulation et le rétablissement refusaient de poser quoi que ce soit tant qu'`App.tsx` ne les avait pas fournis, puisqu'il fallait les recopier sur chaque nœud rendu. Ils posent désormais l'entrée tout de suite. Chaque nœud rendu reste un objet neuf, comme avant.
+  - **Le type des gestes change de fichier.** `GestesNoeud` est déclaré dans `ui/gestes-noeud.ts`, et la section `RappelsDuNoeud` quitte `DonneesNoeud`, qui n'étend plus que trois sections : les saisies, la structure et les résultats. `Zone` est exporté de `ui/noeud-atelier.ts` pour lui.
+  - **Mesuré** : 150 lignes ajoutées et 169 retirées dans seize fichiers, commentaires compris. `App.tsx` passe de 398 à 397 lignes de code, `useHistorique.ts` de 91 à 86 ; `ui/gestes-noeud.ts`, qui porte désormais le type, de 26 à 40.
+  - **Les gardes.** Dans `ui/noeud-atelier.test.ts` :
+    - les gestes du type sont ceux qu'`App.tsx` fournit, lus dans `GestesNoeud`, dans les deux sens ;
+    - le type d'un nœud n'en nomme plus aucun ;
+    - `callbacksNoeud` n'est nommé que dans `App.tsx`, qui ne l'appelle plus par son nom, et personne ne répand les gestes du contexte dans un objet ;
+    - la lecture interdite de la pièce 4a lit ses treize noms dans `GestesNoeud`.
+
+    Dans `ui/en-cours-a-relire.test.ts`, un nœud relu ne porte aucun geste.
+  - **Vu rouge dans un arbre séparé, hors de `E:\attic`**, sur six fautes plantées une à la fois, le témoin restant vert, 20 cas sur 20. `App.tsx` qui repose les gestes sur chaque nœud qu'il fabrique, un crochet qui les reçoit de nouveau, une bulle neuve qui reçoit les gestes du contexte : le cas de `callbacksNoeud` tombe. La section des rappels remise dans le type : deux cas. Un geste fourni qui n'est plus déclaré, et un geste déclaré par personne : le cas des gestes fournis.
+  - **Dans l'application, vertes**, pour chacun des chemins qui posaient des nœuds et pour les gestes eux-mêmes :
+    - `entree-audio-lecteur` ;
+    - `montage-pistes` et `montage-gains-pistes` (5 cas) ;
+    - `panneau-inspecteur` (4) ;
+    - `vues-non-ecrasees` (8) ;
+    - `conteneurs-dans-application` (12, les bulles et le ▶) ;
+    - `retablir-dans-application` (4, l'annulation et le rétablissement) ;
+    - `detacher-fichier` (2) ;
+    - `copier-coller-annotations-dans-application` (4, le collage, les notes et les cadres) ;
+    - `meta-ungroup` (5, le groupement et le dégroupement) ;
+    - `runs-serialises` ;
+    - `persistance-aller-retour` (2, l'import par le dialogue, sur l'application construite).
+
+    Quarante-neuf cas en tout, la reprise de séance éprouvée par chacun, puisque tous sèment leur graphe par l'en-cours.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, la liste de `master` ligne pour ligne. Passe complète verte, 722 fichiers et 10 370 cas, 3 fichiers et 14 cas sautés, en 22 min 8 s : la pièce 4a et les deux cas neufs.
+
 - **LE NŒUD ET SES VUES LISENT LEURS GESTES DANS UN CONTEXTE, ET NON PLUS DANS `data`.** Pièce 4a du plan `work/plan-donnees-noeud-2026-11-11.md`, décidée par Fabien le 2026-11-11 avec le découpage en deux PR par couche : d'abord les lecteurs, ensuite les recopies. Posée sur la pièce 3.
   - **Ce qui était là.** Les treize gestes d'`App.tsx` sont posés dans le `data` de chaque nœud, recopiés en quatorze endroits. Dix-neuf fichiers les y relisaient : `AtelierNode.tsx` en sept places, `InspecteurDuCanevas.tsx` en une, et dix-sept fichiers de vues. Ils passaient par `data.onX`, par un alias `d.onX`, ou sous une affirmation de type `(data as { onX?: … }).onX`, que plusieurs vues écrivaient chacune pour son compte. Un nœud gardait les fermetures du moment où il avait été posé.
   - **`ui/gestes-noeud.ts`** fournit les gestes par un contexte React, posé une fois par `App.tsx` autour de tout l'atelier. La valeur du contexte ne change jamais. Chaque geste lit, au moment où on l'appelle, la version courante de `callbacksNoeud`, par la référence qu'`App.tsx` tenait déjà : aucune fermeture n'est jamais périmée, et aucun nœud n'est redessiné pour cela. Chaque geste garde aussi son identité d'un rendu à l'autre, de sorte qu'un effet qui en dépend ne repart pas. Hors d'un atelier, une vue montée seule dans un test, un geste ne fait rien, comme un nœud qui n'en portait pas. Les noms ne sont écrits nulle part dans le module : un geste se crée à sa première lecture.

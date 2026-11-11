@@ -13,13 +13,33 @@
 // aucun nœud n'est redessiné pour cela. Chaque geste garde aussi la même identité d'un rendu à
 // l'autre, de sorte qu'un effet qui en dépend ne repart pas.
 //
-// DEUX TEMPS. Dans celui-ci, les lecteurs passent au contexte ; les gestes restent recopiés dans
-// `data`, sans plus personne pour les y lire. Le suivant retire les recopies.
+// EN DEUX TEMPS. Les lecteurs sont passés au contexte d'abord ; les recopies dans `data` sont tombées
+// ensuite, et avec elles le passage de `callbacksNoeud` dans dix crochets. Un nœud ne porte plus de
+// geste, et aucun chemin qui pose un nœud n'a plus à s'en souvenir.
 import { createContext, useContext, useMemo, type MutableRefObject } from "react";
-import type { RappelsDuNoeud } from "./noeud-atelier";
+import type { Zone } from "./noeud-atelier";
 
-/** Les treize gestes d'un nœud, tous présents. */
-export type GestesNoeud = Required<RappelsDuNoeud>;
+/**
+ * Les gestes qu'`App.tsx` offre à chaque nœud par `callbacksNoeud`, les treize, ni plus ni moins.
+ *
+ * Deux d'entre eux, l'enregistrement et la découpe, étaient posés sur les nœuds sans être déclarés :
+ * les vues qui les lisaient les affirmaient elles-mêmes.
+ */
+export interface GestesNoeud {
+  onDefinirPrioritaire: (id: string) => void;
+  onReinitialiser: (id: string) => void;
+  onSupprimerNoeud: (id: string) => void;
+  onChargerAudio: (id: string, fichier: File) => void;
+  onChargerMidi: (id: string, fichier: File) => void;
+  onChargerImage: (id: string, fichier: File) => void;
+  onChargerSvg: (id: string, fichier: File) => void;
+  onChargerPdf: (id: string, fichier: File) => void;
+  onChargerIR: (id: string, fichier: File) => void;
+  onChangerEnregistrement: (id: string, blob: Blob) => void;
+  onChangerParametre: (id: string, nom: string, valeur: string | number) => void;
+  onChangerZones: (id: string, zones: Zone[]) => void;
+  onChangerDecoupe: (id: string, decoupe: Record<string, unknown>) => void;
+}
 
 /**
  * Des gestes qui délèguent, à chaque appel, à la version courante de ce que `lire` rend.

@@ -18,13 +18,11 @@ export interface OptionsDepot {
   rfInstance: any;
   ajouterNoeud: (ficheId: string, position: { x: number; y: number }) => void;
   setNodes: Dispatch<SetStateAction<any[]>>;
-  /** Les gestionnaires attachés au `data` de chaque nœud, définis une seule fois dans App. */
-  callbacksNoeud: () => Record<string, unknown>;
   pushHistorique: () => void;
   lang: Langue;
 }
 
-export function useDepot({ rfInstance, ajouterNoeud, setNodes, callbacksNoeud, pushHistorique, lang }: OptionsDepot) {
+export function useDepot({ rfInstance, ajouterNoeud, setNodes, pushHistorique, lang }: OptionsDepot) {
   /**
    * Un son lâché sur le canevas devient une entrée audio, déjà remplie.
    *
@@ -66,12 +64,12 @@ export function useDepot({ rfInstance, ajouterNoeud, setNodes, callbacksNoeud, p
           type: "atelier",
           position: positions[i],
           width, height,
-          data: { ficheId, parametres, ...media, ...callbacksNoeud() },
+          data: { ficheId, parametres, ...media },
         });
       }
       return [...nds, ...ajoutes];
     });
-  }, [setNodes, callbacksNoeud, pushHistorique, lang]);
+  }, [setNodes, pushHistorique, lang]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();

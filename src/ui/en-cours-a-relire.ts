@@ -15,10 +15,11 @@ import { tailleDefaut } from "./tailles-noeuds";
 
 /**
  * Chaque nœud d'un en-cours, tel que le canevas le reçoit : sa taille par défaut quand l'en-cours n'en
- * porte pas, des réglages vides s'il n'en a pas, et les gestes d'`App.tsx` posés sur son `data`. Son
- * statut n'y est pas : il vit dans `ui/statuts.ts`, et un nœud qui n'y figure pas est en attente.
+ * porte pas, et des réglages vides s'il n'en a pas. Son statut n'y est pas : il vit dans
+ * `ui/statuts.ts`, et un nœud qui n'y figure pas est en attente. Ses gestes non plus : ils viennent du
+ * contexte de `ui/gestes-noeud.ts`, de sorte qu'un nœud restauré ne peut plus en manquer.
  */
-export function noeudsRelus(noeuds: readonly any[], gestes: Record<string, unknown>): any[] {
+export function noeudsRelus(noeuds: readonly any[]): any[] {
   return noeuds.map((n: any) => {
     const def = trouverDef(n.data.ficheId);
     const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
@@ -27,12 +28,6 @@ export function noeudsRelus(noeuds: readonly any[], gestes: Record<string, unkno
       data: {
         ...Object.fromEntries([...CHAMPS_DU_PROJET].map((c) => [c, n.data[c]])),
         parametres: n.data.parametres ?? {},
-        // TOUS LES GESTES, ET NON UNE LISTE RECOPIÉE. Douze noms étaient énumérés ici, et douze
-        // autres à la génération d'un graphe : trois écritures du même savoir, dont deux
-        // silencieuses. Un geste neuf ajouté au seul `callbacksNoeud` manquait donc aux nœuds
-        // RESTAURÉS — le même geste marchait sur un nœud posé à la main et pas sur le même nœud
-        // rouvert depuis un fichier, ce qui est la pire panne à chercher.
-        ...gestes,
       },
     };
   });

@@ -25,7 +25,6 @@ export interface OptionsCopierColler {
   setSel: (n: any) => void;
   pushHistorique: () => void;
   supprimerNoeud: (ids: string[]) => void;
-  callbacksNoeud: () => Record<string, unknown>;
   undo: () => void;
   redo: () => void;
   t: (cle: string) => string;
@@ -77,7 +76,7 @@ export function useCopierColler(o: OptionsCopierColler) {
       // illisible, auquel cas on colle comme avant. Un texte copié ailleurs depuis ne colle rien.
       const contenu = lu ? (locale && lu.jeton === locale.jeton ? locale : lu) : (texte === null ? locale : null);
       if (!contenu || contenu.elements.length === 0) return;
-      const { setNodes, setSel, pushHistorique, callbacksNoeud, t } = oRef.current;
+      const { setNodes, setSel, pushHistorique, t } = oRef.current;
       const trouverDef = (id: string) => registreUI().trouverDef(id);
       // UN COMPOSANT QUE CETTE FENÊTRE NE CONNAÎT PAS N'EST PAS POSÉ : il arriverait sous son
       // identifiant brut, sans un port. On le dit, et le reste se colle — notes et cadres compris.
@@ -85,7 +84,6 @@ export function useCopierColler(o: OptionsCopierColler) {
       if (inconnus.length) window.alert(t("pressePapiers.inconnus").replace("{liste}", inconnus.join(", ")));
       if (elements.length === 0) return;
       pushHistorique();
-      const cbs = callbacksNoeud();
       const ajoutes: any[] = [];
       // Venus d'une autre fenêtre par une coupe, les médias se relisent depuis leur chemin.
       const aRelire = contenu !== locale && contenu.coupe;
@@ -112,7 +110,7 @@ export function useCopierColler(o: OptionsCopierColler) {
             id: nouvelId, type: "atelier",
             position: { x: origine.x + item.dx, y: origine.y + item.dy },
             width, height, selected: true,
-            data: { ...data, ...cbs },
+            data,
           };
           current = [...current, n];
           ajoutes.push(n);

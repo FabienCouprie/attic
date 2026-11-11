@@ -35,8 +35,6 @@ export interface OptionsPersistance {
   vueAPoserRef: MutableRefObject<Viewport | null>;
   reinitialiserNoeud: (id: string) => void;
   supprimerNoeud: (ids: string | string[]) => void;
-  /** Gestionnaires attachés au `data` de chaque nœud — définis une seule fois, dans App. */
-  callbacksNoeud: () => Record<string, unknown>;
   lancerRef: MutableRefObject<any>;
   cacheExec: MutableRefObject<Map<string, any>>;
   currentFilePath: string | null;

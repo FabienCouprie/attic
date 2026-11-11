@@ -29,8 +29,6 @@ export interface OptionsHistorique {
   noeudsRef: MutableRefObject<any[]>;
   aretesRef: MutableRefObject<Edge[]>;
   grapheRacineRef: MutableRefObject<GrapheRacine>;
-  /** Les gestionnaires attachés au `data` de chaque nœud, définis une seule fois dans App. */
-  callbacksNoeudRef: MutableRefObject<(() => Record<string, unknown>) | null>;
   cacheExec: MutableRefObject<Map<string, any>>;
   setNodes: Dispatch<SetStateAction<any[]>>;
   setEdges: Dispatch<SetStateAction<Edge[]>>;
@@ -44,7 +42,7 @@ export interface OptionsHistorique {
 }
 
 export function useHistorique({
-  noeudsRef, aretesRef, grapheRacineRef, callbacksNoeudRef, cacheExec,
+  noeudsRef, aretesRef, grapheRacineRef, cacheExec,
   setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath, nodes,
 }: OptionsHistorique) {
   const pilesRef = useRef<PilesHistorique<any, any>>(pilesVides());
@@ -78,13 +76,12 @@ export function useHistorique({
     avecContexte ? { pile: pileRef.current, racine: grapheRacineRef.current, cheminFichier: cheminRef.current } : undefined), []);
 
   /** Pose une entrée de l'une ou l'autre pile. */
-  const poser = useCallback((prev: EntreeHistorique<any, any>, cbs: Record<string, unknown>) => {
-    setNodes(prev.nodes.map((n: any) => ({ ...n, data: { ...n.data, ...cbs } })));
+  const poser = useCallback((prev: EntreeHistorique<any, any>) => {
+    setNodes(prev.nodes.map((n: any) => ({ ...n, data: { ...n.data } })));
     setEdges(prev.edges);
     if (prev.contexte) {
-      // Le graphe racine mis de côté porte, lui aussi, des nœuds sans gestionnaires.
       grapheRacineRef.current = prev.contexte.racine
-        ? { nodes: prev.contexte.racine.nodes.map((n: any) => ({ ...n, data: { ...n.data, ...cbs } })), edges: prev.contexte.racine.edges }
+        ? { nodes: prev.contexte.racine.nodes.map((n: any) => ({ ...n, data: { ...n.data } })), edges: prev.contexte.racine.edges }
         : null;
       setPile(prev.contexte.pile);
       setCurrentFilePath(prev.contexte.cheminFichier);
@@ -98,25 +95,18 @@ export function useHistorique({
     oublierNoeuds([...idsDe(prev.nodes), ...idsDe(prev.contexte?.racine?.nodes)]);
   }, [setNodes, setEdges]);
 
-  // L'historique est sérialisé (JSON.stringify), donc les callbacks des nœuds
-  // ont été perdus. On les ré-attache pour que les boutons reset/play/supprimer
-  // restent fonctionnels après un Ctrl+Z.
-  //
-  // LES GESTIONNAIRES SONT DEMANDÉS AVANT DE VIDER UNE PILE : sans eux rien ne se pose. Retirer
-  // l'entrée d'abord la perdait quand ils manquaient ; avec deux piles, l'état courant serait en plus
-  // passé pour rien sur l'autre.
+  // LES GESTES NE SE RÉ-ATTACHENT PLUS. Un instantané perdait ceux que les nœuds portaient, et l'on
+  // les recopiait sur chaque nœud rendu, faute de quoi ses boutons restaient sans effet ; Ctrl+Z
+  // attendait donc qu'ils existent pour poser quoi que ce soit. Ils viennent désormais du contexte de
+  // `ui/gestes-noeud.ts`, et un nœud rendu les a d'office.
   const undo = useCallback(() => {
-    const cbs = callbacksNoeudRef.current?.();
-    if (!cbs) return;
     const prev = annuler(pilesRef.current, etatCourant);
-    if (prev) poser(prev, cbs);
+    if (prev) poser(prev);
   }, [etatCourant, poser]);
 
   const redo = useCallback(() => {
-    const cbs = callbacksNoeudRef.current?.();
-    if (!cbs) return;
     const suivant = retablir(pilesRef.current, etatCourant);
-    if (suivant) poser(suivant, cbs);
+    if (suivant) poser(suivant);
   }, [etatCourant, poser]);
 
   // Un seul onglet wf-1. Le bouton × vide le canevas — et Ctrl+Z le rend.

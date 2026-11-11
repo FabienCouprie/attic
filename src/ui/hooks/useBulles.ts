@@ -58,7 +58,6 @@ export interface OptionsBulles {
   setEdges: Dispatch<SetStateAction<Edge[]>>;
   setSel: (n: any) => void;
   pushHistorique: () => void;
-  callbacksNoeud: () => Record<string, unknown>;
 }
 
 export function useBulles(o: OptionsBulles) {
@@ -103,7 +102,6 @@ export function useBulles(o: OptionsBulles) {
           // `estRepliee` dans core/bulles.ts.
           bulleOuverte: false,
           ...(parent ? { bulle: parent } : {}),
-          ...o.callbacksNoeud(),
         },
       },
     ]);

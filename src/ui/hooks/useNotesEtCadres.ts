@@ -15,13 +15,11 @@ import { idUnique } from "../ids";
 export interface OptionsNotesEtCadres {
   noeudsRef: MutableRefObject<{ id: string }[]>;
   rfInstanceRef: MutableRefObject<any>;
-  /** Les gestionnaires attachés au `data` de chaque nœud, définis une seule fois dans App. */
-  callbacksNoeudRef: MutableRefObject<(() => Record<string, unknown>) | null>;
   setNodes: Dispatch<SetStateAction<any[]>>;
   setSel: (n: null) => void;
 }
 
-export function useNotesEtCadres({ noeudsRef, rfInstanceRef, callbacksNoeudRef, setNodes, setSel }: OptionsNotesEtCadres) {
+export function useNotesEtCadres({ noeudsRef, rfInstanceRef, setNodes, setSel }: OptionsNotesEtCadres) {
   // Placement des éléments décoratifs (note / cadre) : après un clic sur la barre
   // d'outils, le prochain clic sur le canevas pose l'élément à l'endroit cliqué.
   const [pendingAdd, setPendingAdd] = useState<null | "comment" | "frame">(null);
@@ -48,7 +46,6 @@ export function useNotesEtCadres({ noeudsRef, rfInstanceRef, callbacksNoeudRef, 
         parametres: {},
         // AUCUN TEXTE POSÉ DANS LA DONNÉE : « Ajouter une note » y était écrit à la création, donc
         // figé dans la langue du moment. L'invite du champ, elle, suit la langue.
-        ...(callbacksNoeudRef.current?.()),
       },
     }]);
   }, [setNodes]);
@@ -67,7 +64,6 @@ export function useNotesEtCadres({ noeudsRef, rfInstanceRef, callbacksNoeudRef, 
           // AUCUN NOM POSÉ DANS LA DONNÉE : « Ajouter un cadre » y était écrit à la création, donc
           // figé dans la langue du moment. L'invite du champ, elle, suit la langue.
           couleur: "rgba(120,120,120,0.12)",
-          ...(callbacksNoeudRef.current?.()),
         },
       };
       return [nouveau, ...nds];
