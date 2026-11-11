@@ -267,8 +267,11 @@ describe("les deux canaux déclarés ne viennent que de l'exécuteur ou du cache
     // Le banc ci-dessus éprouve la règle, pas son câblage. Ces trois lectures gardent les trois
     // endroits du moteur où le défaut se tenait.
     const moteur = readFileSync(join("src", "ui", "hooks", "useExecutionGraphe.ts"), "utf8");
-    expect(moteur, "le cache doit ranger les deux canaux, sans quoi un nœud sauté vide son écran")
-      .toMatch(/cacheExec\.current\.set\([^)]*affichage:\s*res\.affichage[^)]*designe:\s*res\.designe/s);
+    // L'ENTRÉE DE CACHE S'ÉCRIT DANS LE CŒUR depuis le 2026-11-11 (`core/execution.ts`, pièce 2 du
+    // plan du runtime), par l'écriture que le crochet lui prête : c'est là qu'on la cherche.
+    const retour = readFileSync(join("src", "core", "execution.ts"), "utf8");
+    expect(retour, "le cache doit ranger les deux canaux, sans quoi un nœud sauté vide son écran")
+      .toMatch(/ecrireCache\([^)]*affichage:\s*res\.affichage[^)]*designe:\s*res\.designe/s);
     expect(moteur, "et les en ressortir au succès de cache")
       .toMatch(/entreeCache\.affichage\)\s*affichageParNoeud\.set/);
     expect(moteur, "et les en ressortir aussi pour le désigné")
@@ -281,7 +284,7 @@ describe("les deux canaux déclarés ne viennent que de l'exécuteur ou du cache
       .toMatch(/champsAReporter\(/);
     // Et la boucle de report ne doit plus balayer les clés elle-même : c'est cette boucle-là qui
     // ramassait les canaux déclarés.
-    expect((moteur + menage).match(/for \(const cle of Object\.keys\(d\)\)/g) ?? [],
+    expect((moteur + menage + retour).match(/for \(const cle of Object\.keys\(d\)\)/g) ?? [],
       "plus aucun balayage des champs `_` à la main dans le moteur").toEqual([]);
   });
 

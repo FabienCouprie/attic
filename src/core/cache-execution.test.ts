@@ -125,17 +125,27 @@ describe("le câblage aval ne compte que pour le composant qui le consulte", () 
     // LE CONTEXTE EST CONSTRUIT PAR LE CŒUR depuis le 2026-11-02 (`core/contexte-de-passe.ts`, sortie 4
     // du plan du moteur) : le drapeau s'y lève, et c'est le moteur qui le porte au cache. Les deux
     // bouts restent attachés PAR LE NOM : le contexte rend un lecteur du même nom que son drapeau.
-    const contexte = readFileSync(fileURLToPath(new URL("./contexte-de-passe.ts", import.meta.url)), "utf8");
-    const moteur = readFileSync(
-      fileURLToPath(new URL("../ui/hooks/useExecutionGraphe.ts", import.meta.url)), "utf8");
+    //
+    // ET LE CHEMIN A TROIS BOUTS depuis le 2026-11-11 (pièce 2 du plan du runtime) : l'entrée de
+    // cache s'écrit dans le cœur, `core/execution.ts`, et le crochet n'y fait que passer le lecteur.
+    // Le cas suit les trois. Le crochet doit passer le lecteur LUI-MÊME, sous son nom, une fois reçu
+    // du contexte et une fois rendu au cœur : un `{ …, drapeau: () => false }` le romprait sans rien
+    // changer au nom, et c'est la forme abrégée qui se compte, non le nom.
+    const lire = (chemin: string) => readFileSync(fileURLToPath(new URL(chemin, import.meta.url)), "utf8");
+    const contexte = lire("./contexte-de-passe.ts");
+    const retour = lire("./execution.ts");
+    const crochet = lire("../ui/hooks/useExecutionGraphe.ts").split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
     const debut = contexte.indexOf("sortieBranchee:");
     expect(debut, "le contexte doit fournir `sortieBranchee` au composant").toBeGreaterThan(0);
 
     const corps = contexte.slice(debut, debut + 600);
     const drapeau = corps.match(/([A-Za-z_][A-Za-z0-9_]*) = true/)?.[1];
     expect(drapeau, "`sortieBranchee` doit retenir qu'on lui a posé la question").toBeTruthy();
-    expect(moteur.includes(`consulteSorties: ${drapeau}`),
-      "ce que `sortieBranchee` a retenu doit partir dans l'entrée de cache").toBe(true);
+    expect(retour.includes(`consulteSorties: ${drapeau}()`),
+      "ce que `sortieBranchee` a retenu doit partir dans l'entrée de cache, écrite par `core/execution.ts`").toBe(true);
+    const passes = crochet.match(new RegExp(String.raw`[{,]\s*${drapeau}\s*[,}]`, "g")) ?? [];
+    expect(passes.length,
+      "le crochet doit recevoir le lecteur du contexte, et le rendre tel quel au cœur").toBeGreaterThanOrEqual(2);
   });
 });
 

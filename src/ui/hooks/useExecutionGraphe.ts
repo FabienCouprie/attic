@@ -10,7 +10,6 @@ import type { Edge } from "@xyflow/react";
 import {
   estCacheParBulle,
   trouverMeta,
-  valeursEntrantes, signalerEcartsDeType,
   type NoeudG, type AreteG,
 } from "../../core";
 
@@ -18,7 +17,7 @@ import {
 // `TypeValeur`, c est-à-dire l union du domaine audio : le chemin d exécution de TOUS les domaines
 // était typé contre un seul. Il n en lit aucune ; il les prend d un nœud et les donne au suivant.
 type ValeurTransportee = unknown;
-import { deciderDuNoeud, estResultatEnErreur } from "../../core/execution";
+import { deciderDuNoeud, enregistrerLEchec, enregistrerLeRetour, type PretsDuRetour } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
 import { noeudRegarde } from "../../core/memoire";
 import { servicesDomaine } from "../../core/services-domaine";
@@ -338,6 +337,16 @@ export function useExecutionGraphe(o: OptionsExecution) {
       dansUnMeta: (pileMetaRef?.current?.length ?? 0) > 0,
       cacheParBulle: estCacheParBulle(tousNoeudsG, id),
     });
+    // CE QUE LE CŒUR REÇOIT POUR RANGER LE RETOUR D'UN NŒUD : les tables de la passe, telles quelles,
+    // la seule écriture du cache, le jeton, la fiche, le domaine et la pose des statuts.
+    const retour: PretsDuRetour = {
+      aretes: aretesG, expansions: plat.expansions, resultats, messages, affichageParNoeud, designeParNoeud,
+      demandesParNoeud, ecartsParNoeud, tempsParVisible, noeudsEnErreur,
+      ecrireCache: (id, entree) => cacheExec.current.set(id, entree),
+      empreinteBoucle: (id) => sauts.empreintePour(id), jeton, trouverDef,
+      typeFlux: (t) => registreUI().typeFlux(t), questions: () => servicesApercu(),
+      poserStatut, marquerMetaEnEchec,
+    };
 
     for (let i = 0; i < ordreFiltre.length; i++) {
       // Run annulé (reset pendant l'exécution) : arrêter d'enchaîner les nœuds
@@ -393,8 +402,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
         }
         continue;
       }
-      // Les quatre empreintes que l'entrée de cache rangera si le nœud réussit.
-      const { hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree } = decision.empreintes;
 
       // Le statut « en cours » n'est posé qu'après le test de cache : un nœud
       // déjà en cache ne doit pas flasher « en cours »/« terminé » — ce flash
@@ -432,10 +439,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); poserStatut(nodeId, "erreur"); marquerMetaEnEchec(nodeId, node.data.ficheId as string); continue; }
 
       const start = performance.now();
-      const ajouterTemps = (ms: number) => {
-        const visibleId = plat.expansions.get(nodeId) ?? nodeId;
-        tempsParVisible.set(visibleId, (tempsParVisible.get(visibleId) ?? 0) + ms);
-      };
       // CE QUE LE NŒUD REÇOIT EST CONSTRUIT PAR LE CŒUR, dans `core/contexte-de-passe.ts` : ses
       // entrées, ses réglages lus comme le contrat le dit, la question des sorties, retenue pour la
       // clé de cache, et un `onProgress` qui lève après annulation.
@@ -444,6 +447,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
         trouverDef, canoniser: valeurCanoniqueChoix, graineDuNoeud, signal: controller.signal,
         poserProgression: (msg) => poserStatut(nodeId, "en_cours", msg, true),
       });
+      // ── CE QUE LE MOTEUR FAIT DU RETOUR, PAR LE CŒUR : `enregistrerLeRetour` et `enregistrerLEchec`
+      // de `core/execution.ts`. Conversion à la fréquence de travail, héritage, écart de niveau,
+      // canaux, erreur ou succès, la seule écriture du cache gardée par le jeton, types au port,
+      // statut et temps. Le `try` couvre l'exécuteur ET son retour : ce qui lève dans l'un ou l'autre
+      // est l'échec du nœud, comme avant.
+      const quiATourne = { id: nodeId, noeud: node, empreintes: decision.empreintes, aConsulteSesSorties, debut: start };
       try {
         const res = await fn(contexteDuNoeud);
         // Le nœud a été réinitialisé pendant que sa promesse était en vol (le
@@ -451,96 +460,13 @@ export function useExecutionGraphe(o: OptionsExecution) {
         // ne pas écraser l'état déjà remis à « attente » par le reset avec un
         // résultat/statut « terminé » ou « erreur » périmé.
         if (controller.signal.aborted) break;
-        // ═══ L'INVARIANT : TOUT CE QUI CIRCULE SUR UNE ARÊTE EST À LA FRÉQUENCE DU PROJET ═══
-        //
-        // Point 5 d'une revue du dépôt. À LA SORTIE ET NON À L'ENTRÉE : une valeur lue par trois
-        // nœuds serait sinon convertie trois fois, et son aperçu — celui qu'on écoute et qu'on
-        // enregistre — ne serait à la bonne fréquence sur aucun des trois. Le domaine décide de
-        // tout : ce qu'est une fréquence, laquelle est celle du projet, quel rééchantillonneur
-        // l'applique. Gratuit dans le cas ordinaire, où il rend le même tableau.
-        const valeurs = await servicesApercu().porterALaFrequenceDeTravail(res.valeurs as unknown[]);
-        resultats.set(nodeId, valeurs as ValeurTransportee[]);
-        // CE QUE LES SORTIES HÉRITENT DES ENTRÉES, et que le calcul ne reproduit pas : côté audio,
-        // la disposition des canaux. C'est ici, et seulement ici, que les entrées et les sorties
-        // sont toutes deux sous la main — d'où la question posée depuis ce point du moteur.
-        const entrantes = () => valeursEntrantes<ValeurTransportee>(nodeId, aretesG, resultats) as unknown[];
-        servicesApercu().heriterDesEntrees(valeurs, entrantes());
-        // DE COMBIEN CE NŒUD A CHANGÉ LE NIVEAU DE CE QU'IL A REÇU, porté sur le nœud à côté du
-        // temps d'exécution. Ce que « niveau » veut dire appartient au domaine, et c'est lui qui
-        // mesure ; le shell ne sait que l'endroit où la question se pose.
-        const ecart = servicesApercu().ecartNiveau(valeurs, entrantes());
-        if (ecart !== undefined) ecartsParNoeud.set(nodeId, ecart);
-        // ET LE GARDE DE L'INVARIANT : ce recensement a d'abord servi à mesurer avant de convertir,
-        // il ne doit désormais PLUS JAMAIS PARLER — toute valeur posée dans les résultats est à la
-        // fréquence du projet, donc aucun nœud n'en reçoit deux. S'il parle, la conversion n'a pas
-        // eu lieu, et c'est l'unique symptôme qu'on en aurait.
-        const melees = servicesApercu().frequencesMelees(entrantes()); if (melees.length) console.warn(`[frequence] ${nodeId}(${node.data.ficheId}) reçoit ${melees.join(" et ")} Hz : la conversion du moteur n'a pas eu lieu`);
-        if (res.message) messages.set(nodeId, res.message);
-        if (res.affichage) affichageParNoeud.set(nodeId, res.affichage);
-        if (res.designe) designeParNoeud.set(nodeId, res.designe);
-        if (res.moteur) demandesParNoeud.set(nodeId, res.moteur);
-        // Un nœud qui A des sorties mais ne renvoie QUE des null n'a pas réussi
-        // (entrée manquante, pas assez d'entrées, fichier absent…) : le marquer
-        // « erreur » (et donc le propager) au lieu de « terminé ». Sinon un
-        // mixer/endpoint en aval « aboutit » alors qu'aucun résultat n'a été
-        // produit — la branche n'a rien donné mais le workflow paraît réussi.
-        // …SAUF si la fiche déclare qu'une sortie nulle est un résultat valide
-        // (sortieNullePermise) : « aucune note détectée » d'un transcripteur ou
-        // un nœud-frontière ne sont pas des échecs.
-        const defRes = trouverDef(node.data.ficheId as string);
-        if (estResultatEnErreur(defRes, res as { valeurs: ValeurTransportee[]; erreur?: boolean })) {
-          noeudsEnErreur.add(nodeId);
-          poserStatut(nodeId, "erreur", res.message);
-          marquerMetaEnEchec(nodeId, node.data.ficheId as string);
-          ajouterTemps(performance.now() - start);
-        } else {
-          const elapsed = performance.now() - start;
-          // ═══ UNE EXÉCUTION PÉRIMÉE N'ÉCRIT PLUS DANS LE CACHE ═══
-          //
-          // C'est la seule écriture du cache de tout le moteur, et c'est donc le seul endroit où ce
-          // jeton compte. La sérialisation empêche deux runs de tourner ensemble ; ce qu'elle ne peut
-          // pas empêcher, c'est qu'un composant lance son propre travail asynchrone sans consulter
-          // son signal — « continue en arrière-plan et écrase l'état qu'on vient de réinitialiser »,
-          // ce que `reinitialiserIds` dit déjà de lui. Son résultat arriverait alors dans le cache
-          // d'un graphe qui tourne maintenant.
-          // `consulteSorties` est ce que le nœud vient de DEMANDER, et non ce qu'une fiche déclare :
-          // sans lui, le câblage aval de tous entrerait dans la clé pour la raison d'un seul.
-          // LE CACHE GARDE LES VALEURS CONVERTIES, et non celles que le composant a rendues : un
-          // coup de cache les repose telles quelles dans les résultats, et garder les brutes aurait
-          // rompu l'invariant de fréquence sur tout nœud rejoué depuis le cache — c'est-à-dire la
-          // plupart, et seulement au deuxième run. Le genre de défaut qu'on ne reproduit jamais.
-          if (!jeton?.perime()) cacheExec.current.set(nodeId, { valeurs: valeurs as ValeurTransportee[], message: res.message, affichage: res.affichage, designe: res.designe, hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree, consulteSorties: aConsulteSesSorties(), tempsExecution: elapsed, empreinteBoucle: sauts.empreintePour(nodeId) });
-          else console.warn(`[cache] resultat perime ecarte : ${nodeId} (generation ${jeton.generation})`);
-          // ═══ CE QUE LE COMPOSANT REND EST-IL DU TYPE QU'IL PROMET ? ═══
-          //
-          // Point 6 d'une revue du dépôt : rien ne le vérifiait, et un composant qui déclare une
-          // sortie audio pouvait rendre n'importe quoi. Le prédicat vit sur le TYPE DE FLUX, que le
-          // domaine déclare ; le moteur ne fait que poser la question. Il RAPPORTE et ne refuse
-          // pas : un écart est un défaut du composant, et refuser casserait le graphe de quelqu'un
-          // qui n'y peut rien. Voir `core/types-au-port.ts`.
-          //
-          // CETTE LIGNE REMPLACE UN `console.log` QUE PERSONNE NE LISAIT — « [cache store] » et ses
-          // quatre empreintes, interpolées pour chaque nœud de chaque run. Le fichier est à son
-          // plafond de dette : ce qu'on y ajoute doit y être payé, et une vérification valait mieux
-          // qu'un journal. Elle coûte d'ailleurs moins : un `instanceof` au lieu d'une chaîne.
-          signalerEcartsDeType(nodeId, String(node.data.ficheId), defRes?.sorties ?? [], valeurs, (t) => registreUI().typeFlux(t));
-          poserStatut(nodeId, "termine");
-          ajouterTemps(elapsed);
-        }
+        await enregistrerLeRetour(quiATourne, res, retour);
       } catch (e: any) {
         // Même garde que côté succès : une exception levée après annulation
         // (ex. le plugin vérifie `signal.aborted` et lève pour sortir vite de
         // sa boucle) ne doit pas non plus marquer le nœud « erreur ».
         if (controller.signal.aborted) break;
-        // Spec §6.5 : toute exception d'un executer est journalisée (console.error)
-        // ET remontée sur le nœud (statut « erreur » + message).
-        const elapsed = performance.now() - start;
-        console.error(`[attic] Nœud « ${node.data.ficheId} » (id=${nodeId}) a échoué :`, e);
-        noeudsEnErreur.add(nodeId);
-        resultats.set(nodeId, [null]);
-        poserStatut(nodeId, "erreur", e?.message ? String(e.message) : undefined);
-        marquerMetaEnEchec(nodeId, node.data.ficheId as string);
-        ajouterTemps(elapsed);
+        enregistrerLEchec(quiATourne, e, retour);
       }
       // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER. En erreur comme en
       // succès : un message d'erreur est un résultat, et l'attendre jusqu'au bout de la boucle
