@@ -19,7 +19,7 @@
 // les liens de la barre d'outils et les genres de paramètre.
 
 import type { ReactNode } from "react";
-import type { DonneesNoeud } from "./AtelierNode";
+import type { DonneesNoeud } from "./noeud-atelier";
 import { registreUI, type FicheUI } from "./registre-actif";
 
 /** Ce qu'une vue de nœud reçoit. */

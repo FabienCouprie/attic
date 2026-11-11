@@ -27,7 +27,7 @@ import { toutesLesFiches } from "../plugins";
 import { registre } from "../audio/adaptateur";
 import { configurerRegistreUI, type RegistreUI } from "../ui/registre-actif";
 import { vuesPourNoeud, type Vue } from "../ui/registre-vues";
-import type { DonneesNoeud } from "../ui/AtelierNode";
+import type { DonneesNoeud } from "../ui/noeud-atelier";
 // Les vues du domaine se déclarent par un effet de bord, que ce test provoque comme l'application.
 import "../vues-domaine/vues";
 import { VueGravure, VuePochette, VueVexFlow } from "../vues-domaine/vues-images";

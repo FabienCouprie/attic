@@ -14,7 +14,7 @@ import { PochetteGen } from "./PochetteGen";
 import { SongseeVue } from "./Songsee";
 import { COULEURS, cleCouleur } from "../audio";
 import type { VueProps } from "../ui/registre-vues";
-import type { DonneesNoeud } from "../ui/AtelierNode";
+import type { DonneesNoeud } from "../ui/noeud-atelier";
 import { partsDeDegustation } from "../audio/accord-mets";
 
 import { LecteurAudio } from "../ui/lecteur-audio";
