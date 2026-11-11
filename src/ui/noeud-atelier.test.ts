@@ -10,22 +10,18 @@
 //   SaisiesDuNoeud     = `CHAMPS_DE_SAISIE` de `core/saisies.ts`, dans les deux sens ;
 //   ResultatsDuNoeud   ⊂ `CHAMPS_RESULTAT` de `core/classes-de-champs.ts` ;
 //   RappelsDuNoeud     = les clés que `callbacksNoeud` d'`App.tsx` pose, dans les deux sens ;
-//   StructureDuNoeud   = une liste écrite ici, faute de table : la pièce 2 du chantier la remplace ;
+//   StructureDuNoeud   = `CHAMPS_DE_STRUCTURE` de `core/saisies.ts`, dans les deux sens ;
 //   EtatDuNoeud        = une liste écrite ici, faute de table : la pièce 3 retire ces champs de `data`.
 // Une ligne qu'il ne sait pas lire le fait échouer, au lieu de passer sans la voir.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CHAMPS_DE_SAISIE } from "../core/saisies";
+import { CHAMPS_DE_SAISIE, CHAMPS_DE_STRUCTURE } from "../core/saisies";
 import { CHAMPS_RESULTAT } from "../core/classes-de-champs";
 
 const SRC = resolve(__dirname, "..");
 const lire = (f: string) => readFileSync(resolve(SRC, f), "utf8");
 
-/** La structure du graphe, que nulle table ne déclare encore. La pièce 2 lui en donne une. */
-const STRUCTURE_SANS_TABLE = [
-  "bulle", "bulleOuverte", "cacheParBulle", "replie", "portsVisibles", "portsVisiblesSortie", "frontiereNom",
-];
 /** Le statut d'une passe et la priorité, que la pièce 3 sort de `data`. */
 const ETAT_SANS_TABLE = ["statut", "progression", "progressionDuNoeud", "prioritaire"];
 
@@ -161,8 +157,14 @@ describe("le type d'un nœud, tenu à ses sources", () => {
     ].join("\n")).toEqual(trie(poses));
   });
 
-  it("LA STRUCTURE ET L'ÉTAT DE LA PASSE SONT CEUX QUE CE GARDE NOMME, faute de table", () => {
-    expect(trie(section("StructureDuNoeud"))).toEqual(trie(STRUCTURE_SANS_TABLE));
+  it("LA STRUCTURE DU TYPE EST CELLE DE LA TABLE, ni plus ni moins", () => {
+    expect(trie(section("StructureDuNoeud")), [
+      "Un champ de structure se déclare dans CHAMPS_DE_STRUCTURE, qui dit si le projet l'écrit ;",
+      "le type le nomme ensuite.",
+    ].join("\n")).toEqual(trie(Object.keys(CHAMPS_DE_STRUCTURE)));
+  });
+
+  it("L'ÉTAT DE LA PASSE EST CELUI QUE CE GARDE NOMME, faute de table", () => {
     expect(trie(section("EtatDuNoeud"))).toEqual(trie(ETAT_SANS_TABLE));
   });
 

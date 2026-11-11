@@ -46,8 +46,8 @@ export interface GenreDeSaisie {
  *
  * `bulle` ET `bulleOuverte` N'EN SONT PAS, et c'est délibéré. Ils disent à quelle bulle un nœud
  * appartient, donc une structure du graphe et non une saisie posée sur ce nœud : les recopier à un
- * collage ferait arriver le nœud dans une bulle qui n'existe peut-être pas. Ils sont enregistrés par
- * la persistance, qui les traite comme ce qu'ils sont.
+ * collage ferait arriver le nœud dans une bulle qui n'existe peut-être pas. Ils ont leur table,
+ * `CHAMPS_DE_STRUCTURE`, plus bas.
  */
 export const SAISIES_UNIVERSELLES = {
   champs: ["ficheId", "nom", "nomEn", "parametres", "zonesSelectionnees", "nomFichier", "couleur"],
@@ -56,9 +56,11 @@ export const SAISIES_UNIVERSELLES = {
 
 /** Les matières qu'on pose sur un nœud, chacune déclarée une fois. */
 export const GENRES_DE_SAISIE: Readonly<Record<string, GenreDeSaisie>> = {
+  // `audioChemin` EST CONSERVÉ, décidé par Fabien le 2026-11-11 : le projet l'écrivait déjà sans que
+  // la table le dise, et l'explorateur de musique y relit la piste choisie à l'ouverture.
   audio: {
     champs: ["audioFichier", "audioNom", "audioUrl", "audioChemin"],
-    conserves: ["audioNom"], rechargeable: "audioFichier", mediaLocal: true,
+    conserves: ["audioNom", "audioChemin"], rechargeable: "audioFichier", mediaLocal: true,
   },
   midi: {
     champs: ["midiFichier", "midiNom", "midiUrl"],
@@ -126,3 +128,48 @@ export const CHAMPS_ENREGISTRES: ReadonlySet<string> =
 /** Les fichiers que l'ouverture refabrique depuis ce qui a été conservé. */
 export const CHAMPS_RECHARGEABLES: ReadonlySet<string> =
   new Set(tous.map((g) => g.rechargeable).filter((c): c is string => !!c));
+
+/** Ce qu'il advient d'un champ de structure dans le fichier de projet. */
+export interface ChampDeStructure {
+  /** Vrai quand le projet le réécrit ; sinon l'ouverture le refait, ou ne le rend pas. */
+  enregistre: boolean;
+}
+
+/**
+ * La place d'un nœud dans le graphe, et non une matière posée sur lui.
+ *
+ * CES CHAMPS N'ÉTAIENT DÉCLARÉS NULLE PART jusqu'au 2026-11-11. La table des saisies écartait les
+ * deux d'une bulle exprès, sans dire où ils allaient, et la liste du projet, écrite à la main dans
+ * `ui/projet-a-ecrire.ts`, en nommait quatre sans qu'aucune table le sache.
+ *
+ * CE QUI VAUT POUR TOUS, et que `saisies.test.ts` vérifie. Aucun ne suit une copie ni un
+ * couper-coller, qui n'emportent que des saisies : recopier `bulle` ferait arriver le nœud dans une
+ * bulle qui n'existe peut-être pas. Aucun n'est effacé par une remise à zéro, qui n'efface que des
+ * résultats. Ce qui les distingue est donc le fichier, et lui seul.
+ */
+export const CHAMPS_DE_STRUCTURE: Readonly<Record<string, ChampDeStructure>> = {
+  // À quelle bulle le nœud appartient, et si elle est ouverte. Le reste d'une bulle est dérivé.
+  bulle: { enregistre: true },
+  bulleOuverte: { enregistre: true },
+  // Combien de ports un nœud extensible montre, des deux côtés : sans eux, les emplacements libres
+  // ouverts à la main revenaient refermés.
+  portsVisibles: { enregistre: true },
+  portsVisiblesSortie: { enregistre: true },
+  // Ce qu'une bulle fermée cache, dérivé de `bulle` par `core/bulles.ts` et refait à l'ouverture.
+  cacheParBulle: { enregistre: false },
+  // Le nom d'un port exposé, posé sur les nœuds de bord de la vue interne d'un méta ; le méta le
+  // garde dans ses entrées et ses sorties, et `core/meta.ts` le repose en entrant dans la vue.
+  frontiereNom: { enregistre: false },
+  // Le corps d'un nœud replié par le « − » de son en-tête. Le projet ne l'écrit pas, et un nœud
+  // replié se rouvre déplié : c'est l'état relevé le 2026-11-11, non une décision.
+  replie: { enregistre: false },
+};
+
+/**
+ * Ce que le fichier de projet écrit d'un nœud, dans cet ordre : les saisies conservées, puis la
+ * structure enregistrée. `ui/projet-a-ecrire.ts` n'écrit rien d'autre, et rien de moins.
+ */
+export const CHAMPS_DU_PROJET: ReadonlySet<string> = new Set([
+  ...CHAMPS_ENREGISTRES,
+  ...Object.entries(CHAMPS_DE_STRUCTURE).filter(([, s]) => s.enregistre).map(([c]) => c),
+]);

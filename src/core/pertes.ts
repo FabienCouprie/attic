@@ -18,11 +18,12 @@ const TYPES_NON_SERIALIZABLE = ["File", "Blob", "ArrayBuffer", "Float32Array", "
 
 // LA LISTE BLANCHE EST CELLE DE L'ÉCRIVAIN, et elle arrive avec l'appel : `ui/projet-a-ecrire.ts`
 // passe les champs qu'il écrit vraiment, lus sur ce qu'il vient de construire. Elle était la table
-// des genres de saisie, `CHAMPS_ENREGISTRES` de `core/saisies.ts`, et la table ne nomme pas tout ce
+// des genres de saisie, `CHAMPS_ENREGISTRES` de `core/saisies.ts`, et la table ne nommait pas tout ce
 // que le fichier garde : `bulle` et `bulleOuverte`, qu'elle écarte exprès, ni `audioChemin`,
 // `portsVisibles` et `portsVisiblesSortie`. La console annonçait donc purgés, à chaque
 // enregistrement, cinq champs que le fichier venait d'écrire. Relevé le 2026-11-08 par
 // `tests-e2e/persistance-aller-retour.spec.ts`. Ce qui est perdu se mesure à ce qui est écrit.
+// Depuis le 2026-11-11, l'écrivain tire sa liste de `CHAMPS_DU_PROJET`, qui les nomme tous.
 
 // Champs File/Blob re-créés à partir du paramètre "Chemin" sauvé : pas la peine
 // de les signaler comme des pertes à l'export.

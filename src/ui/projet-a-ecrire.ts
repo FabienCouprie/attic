@@ -5,8 +5,10 @@
 // ligne : seules ses deux lectures du crochet changent de forme. Le graphe racine arrive en
 // argument, et la vue par une fonction appelée aux deux mêmes places qu'avant.
 //
-// UNE SEULE CHOSE A CHANGÉ DEPUIS, le 2026-11-09 : la détection des pertes vient après les nœuds
-// propres, et se mesure à eux. Elle annonçait purgés cinq champs que le fichier écrit.
+// DEUX CHOSES ONT CHANGÉ DEPUIS. Le 2026-11-09, la détection des pertes vient après les nœuds
+// propres, et se mesure à eux : elle annonçait purgés cinq champs que le fichier écrit. Le
+// 2026-11-11, ce qu'un nœud propre porte vient des tables de `core/saisies.ts` et non plus d'une
+// liste écrite ici ; les mêmes vingt champs, dans l'ordre des tables.
 //
 // CE QUI RESTE AU CROCHET, et pourquoi : `sauvegarderContexteCourant()`, appelé avant tout. À la
 // racine il pose une copie du graphe dans `grapheRacineRef` ; dans un méta, il réécrit la définition
@@ -21,6 +23,7 @@ import { estSubstitution, metasEmployes, tousLesMetas, FORMAT_PROJET, type Arete
 import { servicesDomaine } from "../core/services-domaine";
 import { serialiserMeta } from "./metasLocaux";
 import { detecterPertes, formaterRapportPertes } from "../core/pertes";
+import { CHAMPS_DU_PROJET } from "../core/saisies";
 
 // Typage volontairement souple, celui du crochet d'où ce corps vient : les nœuds portent un `data` à
 // index-signature, et il les manipulait déjà en `any`. Le déplacer n'est pas l'occasion de resserrer.
@@ -37,45 +40,14 @@ export interface GrapheAEcrire { nodes: NoeudAtelier[]; edges: Edge[] }
  * puis pour l'en-cours, comme la vue de React Flow l'était.
  */
 export function projetAEcrire(racine: GrapheAEcrire, lireVue: () => unknown) {
+  // CE QU'UN NŒUD PROPRE PORTE VIENT DES TABLES : les saisies conservées, puis la structure
+  // enregistrée, `CHAMPS_DU_PROJET` de `core/saisies.ts`. Vingt noms étaient écrits ici à la main,
+  // chacun avec la panne qu'avait causée son oubli ; la raison de chacun est désormais dans sa table.
+  // Chaque clé est posée même quand elle vaut `undefined`, comme avant : la détection des pertes, plus
+  // bas, lit sur ce nœud propre ce que le fichier garde.
   const cleanNodes = racine.nodes.map(({ id, type, position, width, height, data }) => ({
     id, type, position, width, height,
-    data: {
-      ficheId: data.ficheId,
-      parametres: data.parametres,
-      audioNom: data.audioNom,
-      audioChemin: data.audioChemin,
-      midiNom: data.midiNom,
-      imageNom: data.imageNom,
-      svgNom: data.svgNom,
-      zonesSelectionnees: data.zonesSelectionnees,
-      // Le .sfz designe dans un « Clavier SFZ » : sans lui, un graphe reouvert avait un clavier
-      // sans instrument, alors que le fichier n'avait pas bouge du disque.
-      sfzChemin: data.sfzChemin,
-      sfzNom: data.sfzNom,
-      // Ce qui a ete joue au clavier d'un noeud : perdu jusqu'ici a chaque reouverture.
-      sequenceNotes: data.sequenceNotes,
-      // CE QU'ON A DECOUPE SUR LA LIGNE DE TEMPS D'UN MONTAGE. Absent de cette liste, un montage
-      // decoupe revenait intact de sa sauvegarde : les morceaux deplaces, coupes et regles etaient
-      // perdus en silence.
-      morceaux: data.morceaux,
-      // COMBIEN DE PORTS UN NŒUD EXTENSIBLE MONTRE, des deux côtés. Absents de cette liste, les
-      // ports ouverts à la main revenaient refermés : la règle du bas ramène ceux qui portent un
-      // câble, mais les emplacements libres qu'on avait ouverts pour brancher étaient perdus, et
-      // le nœud rouvert ne ressemblait plus à celui qu'on avait quitté.
-      portsVisibles: data.portsVisibles,
-      portsVisiblesSortie: data.portsVisiblesSortie,
-      nomFichier: data.nomFichier,
-      nom: data.nom,
-      // Le second texte d'une note ou d'un cadre, qui suit la langue de l'interface. Absent de
-      // cette liste, il serait perdu au premier enregistrement, en silence.
-      nomEn: data.nomEn,
-      couleur: data.couleur,
-      // LES DEUX SEULS CHAMPS D'UNE BULLE : à quelle bulle ce nœud appartient, et si elle est
-      // repliée. Le reste — ce qui est caché, les arêtes de substitution, la fiche et ses ports —
-      // est DÉRIVÉ, donc refait à l'ouverture. Voir core/bulles.ts.
-      bulle: data.bulle,
-      bulleOuverte: data.bulleOuverte,
-    },
+    data: Object.fromEntries([...CHAMPS_DU_PROJET].map((c) => [c, data[c]])),
   }));
 
   // ── Détection des pertes de données (Chantier B) ──

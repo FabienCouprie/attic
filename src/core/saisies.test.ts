@@ -1,7 +1,7 @@
 // core/saisies.test.ts — La table des genres de saisie reproduit-elle ce qui était écrit à la main ?
 //
-// CE QUE CES CAS TIENNENT. D'abord que la dérivation n'a rien perdu : les quatre listes qu'elle
-// remplace sont écrites ici telles qu'elles étaient, et la table doit les rendre. Un refactoring de
+// CE QUE CES CAS TIENNENT. D'abord que la dérivation n'a rien perdu : les listes qu'elle remplace
+// sont écrites ici telles qu'elles étaient, et la table doit les rendre. Un refactoring de
 // listes qui gouvernent la persistance ne se croit pas sur parole, il se démontre — s'y tromper fait
 // perdre à la personne un fichier qu'elle avait chargé.
 //
@@ -12,8 +12,10 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  CHAMPS_DE_SAISIE, CHAMPS_ENREGISTRES, CHAMPS_MEDIA, CHAMPS_RECHARGEABLES, GENRES_DE_SAISIE,
+  CHAMPS_DE_SAISIE, CHAMPS_DE_STRUCTURE, CHAMPS_DU_PROJET, CHAMPS_ENREGISTRES, CHAMPS_MEDIA,
+  CHAMPS_RECHARGEABLES, GENRES_DE_SAISIE,
 } from "./saisies";
+import { CHAMPS_COPIABLES, CHAMPS_RESULTAT, CHAMPS_UTILISATEUR } from "./classes-de-champs";
 
 /** Les listes telles qu'elles étaient écrites à la main, avant la table. */
 const AVANT = {
@@ -30,6 +32,10 @@ const AVANT = {
     "zonesSelectionnees", "nomFichier", "sfzChemin", "sfzNom", "sequenceNotes", "nom", "nomEn"],
   rechargeables: ["audioFichier", "midiFichier", "imageFichier", "svgFichier",
     "enregistrementBlob", "irFichier", "pureDataFichier"],
+  // Ce que `ui/projet-a-ecrire.ts` écrivait d'un nœud jusqu'au 2026-11-11, dans son ordre à lui.
+  projet: ["ficheId", "parametres", "audioNom", "audioChemin", "midiNom", "imageNom", "svgNom",
+    "zonesSelectionnees", "sfzChemin", "sfzNom", "sequenceNotes", "morceaux", "portsVisibles",
+    "portsVisiblesSortie", "nomFichier", "nom", "nomEn", "couleur", "bulle", "bulleOuverte"],
 };
 
 /**
@@ -64,8 +70,15 @@ describe("la table des genres de saisie", () => {
     //
     // LES PISTES « VIDÉES » DU MONTAGE EN SONT SORTIES le 2026-11-06 : une source branchée apparaît
     // toujours, et rien ne lit plus cette liste. Voir `core/saisies.ts`.
+    //
+    // ET LE CHEMIN D'UNE PISTE AUDIO, décidé par Fabien le 2026-11-11 : le projet l'écrivait déjà,
+    // la table ne le disait pas. Le fichier ne change pas, la table cesse de se taire.
     expect(tri([...CHAMPS_ENREGISTRES].filter((c) => !AVANT.conserves.includes(c))))
-      .toEqual(["couleur", "morceaux"]);
+      .toEqual(["audioChemin", "couleur", "morceaux"]);
+  });
+
+  it("LE PROJET ÉCRIT LES VINGT CHAMPS QU'IL ÉCRIVAIT À LA MAIN, ni plus ni moins", () => {
+    expect(tri(CHAMPS_DU_PROJET), "la liste dérivée des tables doit être celle que le projet écrivait").toEqual(tri(AVANT.projet));
   });
 
   it("ET EXACTEMENT LES FICHIERS QUE L'OUVERTURE REFABRIQUE", () => {
@@ -128,10 +141,15 @@ describe("la table des genres de saisie", () => {
     // LE CÔTÉ QUI ÉCRIT A CHANGÉ DE FICHIER le 2026-11-08 : les listes de champs sont sorties de
     // `ui/hooks/usePersistance.ts` avec le corps qui les écrit. Ce cas lit là où elles sont, sans
     // quoi il chercherait les champs dans un fichier qui ne les porte plus.
-    const persistance = readFileSync(join("src", "ui", "projet-a-ecrire.ts"), "utf8");
+    //
+    // LE CÔTÉ QUI ÉCRIT LE FICHIER NE SE LIT PLUS DANS LE TEXTE depuis le 2026-11-11 : il tire sa
+    // liste de `CHAMPS_DU_PROJET`, et `ui/projet-a-ecrire.test.ts` l'éprouve en l'exécutant. Lu dans
+    // le texte après ce changement, ce cas est tombé sur cinq noms que seule la liste du fichier
+    // portait : l'en-cours, écrit dans le même fichier, ne les écrit pas, et la recherche dans le
+    // texte entier le masquait. Ce défaut est tenu par `ui/projet-a-ecrire.test.ts`.
     const restauration = readFileSync(join("src", "ui", "hooks", "useEnCours.ts"), "utf8");
     const absents = (source: string) => [...CHAMPS_ENREGISTRES].filter((c) => !source.includes(c));
-    expect(absents(persistance), "enregistré par la table, ignoré par la sauvegarde").toEqual([]);
+    expect([...CHAMPS_ENREGISTRES].filter((c) => !CHAMPS_DU_PROJET.has(c)), "enregistré par la table, ignoré par la sauvegarde").toEqual([]);
     expect(absents(restauration), "enregistré par la table, ignoré par la réouverture").toEqual([]);
   });
 
@@ -145,5 +163,26 @@ describe("la table des genres de saisie", () => {
       }
     }
     expect(doubles, "un champ partagé rendrait sa classe ambiguë").toEqual([]);
+  });
+});
+
+describe("la table de la structure du graphe", () => {
+  const structure = Object.keys(CHAMPS_DE_STRUCTURE);
+
+  it("AUCUN CHAMP DE STRUCTURE NE SUIT UNE COPIE NI UN COUPER-COLLER", () => {
+    // Ce sont les deux listes que `ui/hooks/useCopierColler.ts` passe à sa copie.
+    expect(structure.filter((c) => CHAMPS_COPIABLES.has(c) || CHAMPS_UTILISATEUR.has(c)),
+      "un nœud collé arriverait dans une bulle qui n'existe peut-être pas").toEqual([]);
+  });
+
+  it("AUCUN N'EST EFFACÉ PAR UNE REMISE À ZÉRO, qui n'efface que des résultats", () => {
+    expect(structure.filter((c) => CHAMPS_RESULTAT.has(c))).toEqual([]);
+  });
+
+  it("LA STRUCTURE N'EST PAS UNE SAISIE, et le projet écrit exactement les deux tables", () => {
+    expect(structure.filter((c) => CHAMPS_DE_SAISIE.has(c))).toEqual([]);
+    expect([...CHAMPS_DU_PROJET]).toEqual([
+      ...CHAMPS_ENREGISTRES, ...structure.filter((c) => CHAMPS_DE_STRUCTURE[c].enregistre),
+    ]);
   });
 });
