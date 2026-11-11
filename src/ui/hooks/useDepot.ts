@@ -66,7 +66,7 @@ export function useDepot({ rfInstance, ajouterNoeud, setNodes, callbacksNoeud, p
           type: "atelier",
           position: positions[i],
           width, height,
-          data: { ficheId, parametres, statut: "attente", ...media, ...callbacksNoeud() },
+          data: { ficheId, parametres, ...media, ...callbacksNoeud() },
         });
       }
       return [...nds, ...ajoutes];

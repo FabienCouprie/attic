@@ -105,7 +105,6 @@ export function useImportProjet(o: OptionsImportProjet, t: (cle: string) => stri
       ...n,
       data: {
         ...n.data,
-        statut: "attente",
         // Les MÊMES gestionnaires que pour un nœud ajouté à la main : ce bloc en
         // portait une seconde écriture, et les deux avaient divergé. La copie
         // d'ici oubliait le `cacheExec.delete` des chargements de fichier — un

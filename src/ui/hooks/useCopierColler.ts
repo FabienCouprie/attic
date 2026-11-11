@@ -112,7 +112,7 @@ export function useCopierColler(o: OptionsCopierColler) {
             id: nouvelId, type: "atelier",
             position: { x: origine.x + item.dx, y: origine.y + item.dy },
             width, height, selected: true,
-            data: { ...data, statut: "attente", ...cbs },
+            data: { ...data, ...cbs },
           };
           current = [...current, n];
           ajoutes.push(n);

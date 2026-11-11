@@ -305,7 +305,7 @@ export function useRealisateurDemo(params: Params): { calque: ReactNode; enCours
       // `data` champ par champ ; il n'y est plus. Voir `ui/resultats.ts`.
       effacerResultats(autres.map((n) => n.id));
       p.setNodes(() => autres.map((n) => ({
-        ...n, data: { ...n.data, statut: "attente" },
+        ...n,
         hidden: !["comment", "frame"].includes(String(n.data?.ficheId)), selected: false,
       })));
       // L'état de React arrive quelques images plus tard, et un rendu intermédiaire peut reposer

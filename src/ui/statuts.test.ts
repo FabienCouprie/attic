@@ -212,28 +212,45 @@ describe("les ombres, l'état des nœuds que l'écran ne montre pas", () => {
 });
 
 describe("le graphe ne porte plus l'état d'exécution", () => {
-  // CE QUE CE TEST EMPÊCHE DE REVENIR. Tant que `statut` reste présent dans `node.data` — il y est
-  // encore posé à la création d'un nœud, sans conséquence —, rien n'empêche quelqu'un de le relire
-  // par habitude. Or il n'est plus tenu à jour : ce lecteur-là verrait « attente » pour toujours,
-  // et le défaut serait invisible sur un graphe d'essai à un seul nœud.
-  it("aucun composant ne lit `data.statut` ni `data.progression`", () => {
-    const racine = resolve(__dirname, "..");
+  // CE QUE CES CAS EMPÊCHENT DE REVENIR. Le statut, la progression et la priorité vivent dans des
+  // magasins, celui-ci et `ui/priorite.ts`. Un lecteur qui les chercherait dans `node.data` par
+  // habitude verrait « attente » pour toujours, et le défaut serait invisible sur un graphe d'essai à
+  // un seul nœud. Jusqu'à la pièce 3 du plan DonneesNoeud, le statut y était encore posé à la création
+  // de chaque nœud, en treize endroits, et la priorité recopiée dans tous les nœuds à chaque ▶.
+  const racine = resolve(__dirname, "..");
+  /** Chaque ligne de code de `src/` qui répond au motif, commentaires et magasin des statuts exclus. */
+  const lignes = (motif: RegExp, garder: (nom: string) => boolean): string[] => {
     const fautifs: string[] = [];
     const parcourir = (dossier: string) => {
       for (const entree of readdirSync(dossier, { withFileTypes: true })) {
         const chemin = join(dossier, entree.name);
         if (entree.isDirectory()) { parcourir(chemin); continue; }
-        if (!/\.(ts|tsx)$/.test(entree.name) || entree.name.startsWith("statuts.")) continue;
-        const source = readFileSync(chemin, "utf8");
-        source.split("\n").forEach((ligne, i) => {
+        if (!/\.(ts|tsx)$/.test(entree.name) || entree.name.startsWith("statuts.") || !garder(entree.name)) continue;
+        readFileSync(chemin, "utf8").split("\n").forEach((ligne, i) => {
           if (/^\s*(\/\/|\*)/.test(ligne)) return;
-          if (/\bdata\??\.(statut|progression|progressionDuNoeud)\b/.test(ligne)) {
-            fautifs.push(`${chemin.slice(racine.length + 1).split(sep).join("/")}:${i + 1}`);
-          }
+          if (motif.test(ligne)) fautifs.push(`${chemin.slice(racine.length + 1).split(sep).join("/")}:${i + 1}`);
         });
       }
     };
     parcourir(racine);
-    expect(fautifs).toEqual([]);
+    return fautifs;
+  };
+  const ETAT = "statut|progression|progressionDuNoeud|prioritaire";
+
+  it("aucun composant ne lit `data.statut`, `data.progression` ni `data.prioritaire`", () => {
+    // LA LECTURE SOUS UNE AFFIRMATION DE TYPE EN EST AUSSI. `(sn.data as { statut?: string }).statut`
+    // relisait le statut des nœuds d'un méta, et la première forme de ce motif ne la voyait pas.
+    expect(lignes(new RegExp(String.raw`\bdata\??\.(${ETAT})\b|\bdata as [^)]*\)\??\.(${ETAT})\b`), () => true)).toEqual([]);
+  });
+
+  it("aucune source ne pose plus le statut « attente » ni la priorité sur un nœud", () => {
+    // CE QUE CE CAS TIENT, ET CE QU'IL NE TIENT PAS. Il empêche les treize écritures retirées de
+    // revenir telles qu'on les recopierait ; une écriture sous une autre forme lui échapperait. C'est
+    // la fermeture du type, pièce 5 du plan, qui les refusera toutes. Les cas de test en sont exclus :
+    // leurs données d'essai peuvent porter un statut pour éprouver qu'il n'est pas relu.
+    // Un statut suivi de `|` est un type, non une écriture ; une priorité précédée de `let` est la
+    // variable du magasin, non une clé de `data`.
+    const ecriture = /\bstatut\s*:\s*["']attente["'](?!\s*\|)|(?<!\b(?:let|const|var)\s+)\bprioritaire\s*:/;
+    expect(lignes(ecriture, (nom) => !/\.test\.tsx?$/.test(nom))).toEqual([]);
   });
 });

@@ -57,7 +57,7 @@ export function useMetaComposants(o: OptionsMeta) {
     );
     enregistrerMeta(meta);
     const externes = o.noeudsRef.current.filter((n) => !selection.has(n.id));
-    const noeudUI = { ...noeudMeta, data: { ...noeudMeta.data, statut: "attente" as const, ...o.callbacksNoeud() } };
+    const noeudUI = { ...noeudMeta, data: { ...noeudMeta.data, ...o.callbacksNoeud() } };
     o.setNodes([...externes, noeudUI]);
     o.setEdges(nouvellesAretes as unknown as Edge[]);
     o.cacheExec.current.clear();
@@ -87,7 +87,7 @@ export function useMetaComposants(o: OptionsMeta) {
         type: "atelier",
         position: { x: (sn.position?.x ?? 0) + dx, y: (sn.position?.y ?? 0) + dy },
         selected: true,
-        data: { ...sn.data, statut: "attente", ...cb },
+        data: { ...sn.data, ...cb },
       });
     }
     const nouvellesA = o.aretesRef.current.filter((e) => e.source !== cible.id && e.target !== cible.id).slice() as unknown as AreteG[];
@@ -132,7 +132,7 @@ export function useMetaComposants(o: OptionsMeta) {
     // Nœuds réels + nœuds-frontière (ports exposés matérialisés pour l'édition).
     const fr = frontieresPourEdition(meta);
     const tous = [...meta.sousNoeuds, ...fr.noeuds];
-    const inner = tous.map((sn) => ({ ...sn, type: "atelier", position: sn.position ?? { x: 0, y: 0 }, data: { ...sn.data, statut: (sn.data as { statut?: string }).statut ?? "attente", ...cb } }));
+    const inner = tous.map((sn) => ({ ...sn, type: "atelier", position: sn.position ?? { x: 0, y: 0 }, data: { ...sn.data, ...cb } }));
     o.setNodes(inner as unknown as any[]);
     o.setEdges([...meta.sousAretes, ...fr.aretes].map((a) => ({ ...a })) as unknown as Edge[]);
     o.cacheExec.current.clear();
