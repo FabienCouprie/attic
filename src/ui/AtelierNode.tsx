@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { NodeResizer, useReactFlow, useUpdateNodeInternals, useNodeConnections, type NodeProps, type Node } from "@xyflow/react";
+import { NodeResizer, useReactFlow, useUpdateNodeInternals, useNodeConnections, type NodeProps } from "@xyflow/react";
 import { estMeta, estFrontiere, estBulle, surChangementMetas } from "../core";
 
 const trouverDef = (id: string) => registreUI().trouverDef(id);
@@ -10,6 +10,7 @@ import { useTexteEnCours } from "./texte-en-cours";
 import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "./registre-vues";
 import { useStatut } from "./statuts";
 import { useResultat } from "./resultats";
+import type { NoeudAtelier } from "./noeud-atelier";
 import { etatPorts } from "./ports-extensibles";
 import { ColonnePorts } from "./ColonnePorts";
 import { copierTexte } from "./copier";
@@ -59,47 +60,6 @@ function LecteurALaDemande({ buffer }: { buffer: AudioBuffer }) {
     </div>
   );
 }
-
-export type DonneesNoeud = {
-  ficheId: string; parametres: Record<string, number | string>; statut: string;
-  progression?: string;
-  /** Vrai quand `progression` vient du NŒUD lui-même (son `onProgress`), et non du moteur. */
-  progressionDuNoeud?: boolean;
-  audioResultatUrl?: string; audioResultatMessage?: string;
-  audioFichier?: File; audioNom?: string; audioUrl?: string; audioChemin?: string;
-  audioResultatBuffer?: AudioBuffer;
-  midiFichier?: File; midiNom?: string; midiFichierSortie?: File;
-  modeleFichier?: File;
-  enregistrementBlob?: Blob; enregistrementUrl?: string;
-  imageFichier?: File; imageNom?: string;
-  svgFichier?: File; svgNom?: string;
-  pdfFichier?: File; pdfNom?: string;
-  prioritaire?: boolean;
-  tempsExecution?: number;
-  /** De combien ce composant a change le niveau de son entree, en decibels. Mesure par le
-   *  moteur apres chaque execution ; voir `audio/ecart-niveau.ts`. */
-  ecartNiveau?: number;
-  imageResultatUrl?: string;
-  imageResultatFile?: File;
-  onDefinirPrioritaire?: (id: string) => void;
-  onReinitialiser?: (id: string) => void;
-  onSupprimerNoeud?: (id: string) => void;
-  onChargerAudio?: (id: string, fichier: File) => void;
-  onChargerMidi?: (id: string, fichier: File) => void;
-  onChargerImage?: (id: string, fichier: File) => void;
-  onChargerSvg?: (id: string, fichier: File) => void;
-  onChargerPdf?: (id: string, fichier: File) => void;
-  onChangerParametre?: (id: string, nom: string, valeur: string | number) => void;
-  zonesSelectionnees?: { debut: number; duree: number }[];
-  onChangerZones?: (id: string, zones: { debut: number; duree: number }[]) => void;
-  onChargerIR?: (id: string, fichier: File) => void;
-  /** Le texte d'une note ou d'un cadre, et sa version anglaise quand il en a une. */
-  nom?: string;
-  nomEn?: string;
-  [key: string]: unknown;
-};
-
-type NoeudAtelier = Node<DonneesNoeud, "atelier">;
 
 // ── Couleurs de port ──
 // La couleur d'un port vient désormais du registre de types de flux du domaine
