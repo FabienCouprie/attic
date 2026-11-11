@@ -9,6 +9,7 @@
 // LE FILM N'EST PAS CHARGÉ EN MÉMOIRE : il est lu par plages, et l'image est recopiée sans être
 // ré-encodée. Un extrait de onze minutes coûte donc le temps d'une copie, non celui d'un encodage.
 
+import type { AffichageFilm, DesigneExtraitVideo } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -106,13 +107,13 @@ export const fiches: FicheAudio[] = ([
       const nomExtrait = `${(nomSource || "film").replace(/\.[^.]+$/, "")}-extrait.mp4`;
       // LA CADENCE ET LA DURÉE SONT CELLES DU FILM REÇU, donc `designe` : un réglage de bornes ne
       // les périme pas, et la vue garde son axe pendant qu'on déplace une borne.
-      const designe = {
+      const designe: DesigneExtraitVideo = {
         infos: {
           dureeSec: video.dureeSec, cadence: video.cadence,
           largeur: video.largeur, hauteur: video.hauteur,
         },
       };
-      const affichage = { url: URL.createObjectURL(blob), nom: nomExtrait, octets: blob.size };
+      const affichage: AffichageFilm = { url: URL.createObjectURL(blob), nom: nomExtrait, octets: blob.size };
 
       const fichier = new File([blob], nomExtrait, { type: "video/mp4" });
       const demandee = plage.finSec - plage.debutSec;

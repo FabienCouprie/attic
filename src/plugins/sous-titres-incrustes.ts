@@ -13,6 +13,7 @@
 // LES INSTANTS SONT DEMANDÉS DANS L'ORDRE, par `canvasesAtTimestamps`, qui ne décode alors chaque
 // paquet qu'une fois. Demander image par image par `getCanvas` ferait un accès au hasard, et une
 // recherche par image sur un film entier.
+import type { AffichageFilm } from "./formes-des-canaux";
 import { CanvasSink } from "mediabunny";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
@@ -138,7 +139,7 @@ export const fiches = ([
       const fichier = new File([rendu.blob], nom, { type: "video/mp4" });
       return {
         valeurs: [fichier],
-        affichage: { url: URL.createObjectURL(rendu.blob), nom, octets: rendu.blob.size },
+        affichage: { url: URL.createObjectURL(rendu.blob), nom, octets: rendu.blob.size } satisfies AffichageFilm,
         message: traduire("msg.incrustation.resume",
           String(sous.length), String(rendu.images), enMo(rendu.blob.size).toFixed(1),
           (rendu.msTotal / 1000).toFixed(1)),

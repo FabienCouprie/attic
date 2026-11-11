@@ -16,6 +16,10 @@ import { COULEURS, cleCouleur } from "../audio";
 import type { VueProps } from "../ui/registre-vues";
 import type { DonneesNoeud } from "../ui/noeud-atelier";
 import { partsDeDegustation } from "../audio/accord-mets";
+import { affichageDe } from "./lire-canaux";
+import type {
+  AffichageAnimation, AffichageComparaisonEsthetique, AffichageEsthetique, AffichageGalerie, AffichageProfilGout,
+} from "../plugins/formes-des-canaux";
 
 import { LecteurAudio } from "../ui/lecteur-audio";
 export function VueCouleurSunoIA({ data }: VueProps) {
@@ -70,7 +74,7 @@ export function VueCouleurSunoIA({ data }: VueProps) {
 export function VueGalerieExposition({ data }: VueProps) {
   const { t } = useI18n();
   const [erreur, setErreur] = useState<string | null>(null);
-  const a = (data as any)._affichage as { htmlPath?: string; pistes?: { nom: string; url: string }[] } | undefined;
+  const a = affichageDe<AffichageGalerie>(data);
   const htmlPath = a?.htmlPath;
   const pistes = a?.pistes;
 
@@ -211,8 +215,8 @@ function BarresDeGout({ parts }: { parts: { gout: string; part: number }[] }) {
 }
 
 const partsAffichees = (data: DonneesNoeud): { gout: string; part: number }[] => {
-  const brut = (data as { _affichage?: { profilGout?: unknown } })._affichage?.profilGout;
-  return Array.isArray(brut) ? (brut as { gout: string; part: number }[]) : [];
+  const brut = affichageDe<AffichageProfilGout>(data)?.profilGout;
+  return Array.isArray(brut) ? brut : [];
 };
 
 export function VueGout({ data }: VueProps) {
@@ -362,7 +366,7 @@ function useImageCaleeSurLeSon() {
 
 export function VueAnimationSvg({ data }: VueProps) {
   const { t } = useI18n();
-  const dessine = (data as { _affichage?: { animationSvg?: unknown } })._affichage?.animationSvg;
+  const dessine = affichageDe<AffichageAnimation>(data)?.animationSvg;
   const svg = typeof dessine === "string" ? dessine : "";
   const { boite, poserLecteur } = useImageCaleeSurLeSon();
   if (!svg.includes("<svg")) {
@@ -420,12 +424,12 @@ export function VueColorSynth({ data }: VueProps) {
 // que les statuts vivent dans leur magasin, et la condition était donc toujours fausse. Le canal
 // déclaré efface vraiment ce qu'un run a produit : il n'y a plus rien à contourner.
 export function VueEsthetique({ data }: VueProps) {
-  const d = data as { _affichage?: { analyse?: any } };
-  return d._affichage?.analyse ? <VueScoreEsthetique analyse={d._affichage.analyse} /> : null;
+  const analyse = affichageDe<AffichageEsthetique>(data)?.analyse;
+  return analyse ? <VueScoreEsthetique analyse={analyse} /> : null;
 }
 export function VueComparaisonEsth({ data }: VueProps) {
-  const d = data as { _affichage?: { a?: any; b?: any } };
-  return d._affichage?.a ? <VueComparaisonEsthetique a={d._affichage.a} b={d._affichage.b} /> : null;
+  const comparaison = affichageDe<AffichageComparaisonEsthetique>(data);
+  return comparaison?.a ? <VueComparaisonEsthetique a={comparaison.a} b={comparaison.b} /> : null;
 }
 
 export function VueVuMetre({ data }: VueProps) {

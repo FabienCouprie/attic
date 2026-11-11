@@ -9,6 +9,7 @@
 // tranche dans le processus principal (electron/esthetique.cjs) → moyenne pondérée. La
 // courbe par tranche est le vrai apport face au seul score global : sur la collection
 // de démonstration, « Winter-Time » a un PQ global de 7,72 mais une tranche à 5,59.
+import type { AffichageComparaisonEsthetique, AffichageEsthetique } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
@@ -111,7 +112,7 @@ const scoreEsthetique: FicheAudio[] = ([
         const analyse = await analyserEsthetique(buffer, apiFenetre(), (t) => ctx.onProgress(t), ctx.signal);
         return {
           valeurs: [buffer, rapportEsthetique(analyse)],
-          affichage: { analyse },
+          affichage: { analyse } satisfies AffichageEsthetique,
           message: traduire("msg.esthetique.resultat_var_0_var_1", ligneScores(analyse.global), analyse.tranches.length),
         };
       } catch (e) {
@@ -139,7 +140,7 @@ const scoreEsthetique: FicheAudio[] = ([
         const analyseB = await analyserEsthetique(b, api, (t) => ctx.onProgress(t), ctx.signal, "B · ");
         return {
           valeurs: [rapportComparaison(analyseA, analyseB)],
-          affichage: { a: analyseA, b: analyseB },
+          affichage: { a: analyseA, b: analyseB } satisfies AffichageComparaisonEsthetique,
           message: traduire("msg.esthetique.ecarts_var_0", ligneScores(ecartsEsthetiques(analyseA, analyseB), signe)),
         };
       } catch (e) {

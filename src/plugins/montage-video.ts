@@ -13,6 +13,7 @@
 // LE SON D'ORIGINE EST GARDÉ, comme une piste parmi les autres, avec son gain : le baisser à moins
 // soixante revient à le supprimer, sans qu'il faille un réglage de plus.
 
+import type { AffichageFilm, DesigneMontageVideo } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { respirer } from "../core/respirer";
 import { langueCourante } from "../i18n";
@@ -150,7 +151,7 @@ export const fiches: FicheAudio[] = ([
       // eux, sont là pour s'entendre sur le film, et ce sont les sons posés, courts par nature,
       // jamais le film : celui-ci est rendu par l'élément vidéo.
       const posees = pistes.filter((p) => p.piste >= 0);
-      const designe = {
+      const designe: DesigneMontageVideo = {
         infos: {
           dureeSec: video.dureeSec, cadence: video.cadence,
           largeur: video.largeur, hauteur: video.hauteur,
@@ -163,7 +164,7 @@ export const fiches: FicheAudio[] = ([
       };
       // ET CE QUE LE RUN A PRODUIT VA DANS `affichage` : la vue propose de l'enregistrer, et un
       // fichier produit qui ne se récupère nulle part n'est pas produit.
-      const affichage = { url: URL.createObjectURL(blob), nom: fichier.name, octets: blob.size };
+      const affichage: AffichageFilm = { url: URL.createObjectURL(blob), nom: fichier.name, octets: blob.size };
       // Les octets du film n'entrent pas dans ce compte : ils n'ont jamais été tenus. Restent le
       // mélange et le fichier produit.
       const retenu = enMo(melange.length * melange.numberOfChannels * 4 + blob.size);

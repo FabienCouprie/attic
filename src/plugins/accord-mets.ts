@@ -4,6 +4,7 @@
 // motif dans `audio/motif-crossmodal.ts`. Les deux sont purs et testés ; ce fichier n'est que la
 // prise.
 
+import type { AffichageProfilGout } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -143,7 +144,7 @@ export const fiches: FicheAudio[] = ([
       ];
       return {
         valeurs: [audio, midi, plan.join("\n")],
-        affichage: { profilGout },
+        affichage: { profilGout } satisfies AffichageProfilGout,
         message: `${nomDominant} · ${anglais ? instrument.nomEn : instrument.nom} · ${nomDeNote(motif.noteCentre)} · ${audio.duration.toFixed(1)} s`,
       };
     },

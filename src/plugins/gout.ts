@@ -4,6 +4,7 @@
 // Trevisan et Sigman à partir d'improvisations sur les quatre mots de goût. Le calcul, les régions
 // et leurs sources sont dans `audio/gout.ts`, pur et testé ; ce fichier n'est que la prise.
 
+import type { AffichageProfilGout } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -42,7 +43,7 @@ export const fiches: FicheAudio[] = ([
       const tete = parts.slice(0, 2)
         .map((p) => `${noms[p.gout] ?? p.gout} ${Math.round(p.part * 100)} %`)
         .join(" · ");
-      return { valeurs: [a, rapport(m, parts, anglais)], affichage: { profilGout }, message: tete };
+      return { valeurs: [a, rapport(m, parts, anglais)], affichage: { profilGout } satisfies AffichageProfilGout, message: tete };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

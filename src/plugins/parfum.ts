@@ -3,6 +3,7 @@
 // Le vocabulaire des odeurs et leurs sources sont dans `audio/parfum.ts` ; la fabrique du motif dans
 // `audio/motif-crossmodal.ts`. Les deux sont purs et testés ; ce fichier n'est que la prise.
 
+import type { AffichageProfilGout } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -139,7 +140,7 @@ export const fiches: FicheAudio[] = ([
       const tete = parts.slice(0, 2).map((p) => `${noms[p.gout] ?? p.gout} ${Math.round(p.part * 100)} %`).join(" · ");
       return {
         valeurs: [audio, midi, rapport.join("\n")],
-        affichage: { profilGout },
+        affichage: { profilGout } satisfies AffichageProfilGout,
         message: `${nomOdeur} · ${nomDeNote(motif.noteCentre)} · ${tete} · ${audio.duration.toFixed(1)} s`,
       };
     },

@@ -4,6 +4,7 @@
 // declarent presque toutes la meme, ce qui ne decoupe rien.
 
 
+import type { DesigneAccordage } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { decoderFichier, rendreAvecEchantillon, genererBruit, genererAudioFormule, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE, type NoteEvenement } from "../audio";
@@ -132,7 +133,7 @@ export const fiches: FicheAudio[] = ([
       // LE RÉSEAU EST RENDU PAR `designe`, le canal de ce qu'un run a désigné de ses entrées : il
       // survit donc à un changement de réglage, puisque régler ce composant ne touche pas à
       // l'accordage qu'il a reçu. La vue n'a aucun autre moyen de connaître une entrée.
-      const designe = { accordage };
+      const designe: DesigneAccordage = { accordage };
       // LA BANQUE PASSE PAR LE CACHE DES BANQUES VIVES, et non par `designe` : c'est un objet
       // VIVANT de plusieurs mégaoctets, dix-neuf tampons audio, et `banques-vives.ts` existe
       // précisément pour qu'une vue puisse jouer ce que l'exécution vient de calculer.

@@ -7,6 +7,7 @@
 // CE QUE CE NŒUD FAIT ET NE FAIT PAS : voir `audio/maquette.ts`. En deux mots, une boîte s'adapte à
 // sa place, elle ne se recalcule pas dedans.
 
+import type { DesigneMontage } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -96,7 +97,7 @@ export const fiches: FicheAudio[] = ([
       // ce qu'on pose. Des fractions suffisent, une durée imposée étirant le contenu dans un rapport
       // unique et une transposition déplaçant toutes les hauteurs du même intervalle : ni l'une ni
       // l'autre ne change le dessin relatif.
-      const designe = {
+      const designe: DesigneMontage = {
         durees: poses.map((b, i) => ({ piste: ports[i], duree: b.duree })),
         notes: Object.fromEntries(blocs.map((b, i) => {
           const propre = dureeSequence(b.sequence);

@@ -4,6 +4,7 @@
 // les objets d'un enregistrement sans les désigner à la main, et poser des sons dans le temps. Le
 // calcul est dans `audio/objets-sonores.ts`.
 
+import type { DesigneMontage } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -246,7 +247,7 @@ export const fiches: FicheAudio[] = ([
       // reçus, les tampons sont ceux des composants d'amont, désignés et non recopiés puisqu'ils
       // vivent déjà dans le cache d'exécution. Régler une piste ne périme donc rien de tout cela, et
       // c'est ce qui permet d'entendre le montage pendant qu'on le règle. Voir `FonctionPlugin`.
-      const designe = { durees: pistes, sons: Object.fromEntries(pistes.map((p) => [p.piste, sons[p.piste]])) };
+      const designe: DesigneMontage = { durees: pistes, sons: Object.fromEntries(pistes.map((p) => [p.piste, sons[p.piste]])) };
       if (!plans.length) {
         return { valeurs: [null], designe, message: en() ? "No track connected." : "Aucune piste branchée." };
       }

@@ -8,6 +8,7 @@
 // l'effacerait, et la place s'allumerait puis disparaîtrait. `designe` dit que le cercle vient
 // d'une entrée : une remise à zéro l'efface, un réglage le garde.
 
+import type { DesigneCercle } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { enSuite, type Cercle } from "../audio/cercle";
 import { cercleRetouche, differenceDeRetouche } from "../audio/cercle-retouche";
@@ -83,7 +84,7 @@ The message states how many positions were turned off and how many turned on.`,
         valeurs: [retouches.length === 1 ? retouches[0] : retouches],
         // CE QUE LE DESSIN MONTRE VIENT DE L'ENTRÉE, donc de ce canal : un réglage ne le périme pas,
         // et cliquer une place ne fait donc pas disparaître le cercle qu'on est en train de cliquer.
-        designe: { cercle: suite[0] },
+        designe: { cercle: suite[0] } satisfies DesigneCercle,
         message: `${suite[0].positions} ${en() ? "positions" : "places"} · `
           + `${retouches[0].sommets.length} ${en() ? "onsets" : "attaques"} · ${change}${variations}`,
       };

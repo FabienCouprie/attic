@@ -26,6 +26,8 @@ import { useClavierJouable } from "./clavier-jouable";
 import { ecouterTampon } from "../ui/niveau-ecoute";
 import type { VueProps } from "../ui/registre-vues";
 import { frequenceDeNoteMidi } from "../audio/commun";
+import { designeDe } from "./lire-canaux";
+import type { DesigneAccordage } from "../plugins/formes-des-canaux";
 
 /** De combien de tours on peut s'éloigner de la tonique, de part et d'autre. */
 const TOURS_MAX = 3;
@@ -38,7 +40,7 @@ export function ClavierIsomorphe({ id, data, def }: VueProps) {
   const params = data.parametres as Record<string, unknown> | undefined;
 
   // ─── L'accordage : celui qui est arrivé, ou le repli déclaré ───
-  const recu = (data as { _designe?: { accordage?: Accordage } })._designe?.accordage;
+  const recu = designeDe<DesigneAccordage>(data)?.accordage;
   const accordage = useMemo<Accordage>(() => {
     const tonique = Number(params?.["Tonique"] ?? 60);
     const base = recu && Array.isArray(recu.degres) && recu.degres.length > 0

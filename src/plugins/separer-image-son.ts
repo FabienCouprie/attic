@@ -12,6 +12,7 @@
 // coûte donc le temps d'une copie. Le son, lui, est décodé d'un bout à l'autre, et c'est la part
 // lourde de ce composant.
 
+import type { AffichageFilm } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { respirer } from "../core/respirer";
 import { langueCourante } from "../i18n";
@@ -67,7 +68,7 @@ export const fiches: FicheAudio[] = ([
       if (typeof avant === "string") URL.revokeObjectURL(avant);
       const nomSource = (entree as File).name ?? "";
       const nomMuet = `${(nomSource || "film").replace(/\.[^.]+$/, "")}-muet.mp4`;
-      const affichage = { url: URL.createObjectURL(blob), nom: nomMuet, octets: blob.size };
+      const affichage: AffichageFilm = { url: URL.createObjectURL(blob), nom: nomMuet, octets: blob.size };
 
       const fichier = new File([blob], nomMuet, { type: "video/mp4" });
       const sonDit = son

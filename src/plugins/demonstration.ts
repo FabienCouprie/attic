@@ -13,6 +13,7 @@
 //  3. Il déclare `jamaisCache` : son résultat dépend de tout le graphe, que les empreintes du
 //     cache ne regardent pas.
 
+import type { AffichageDemonstration } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -108,7 +109,7 @@ export const fiches: FicheAudio[] = ([
       const duree = (Math.round(plan.duree * 10) / 10).toLocaleString(anglais ? "en-US" : "fr-FR");
       return {
         valeurs: [fichier],
-        affichage: { videoUrl: URL.createObjectURL(video), taille: video.size },
+        affichage: { videoUrl: URL.createObjectURL(video), taille: video.size } satisfies AffichageDemonstration,
         message: `${etapes.length} ${anglais ? "steps" : "étapes"} · ${duree} s · ${largeur} × ${hauteur}`,
       };
     },

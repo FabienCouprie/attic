@@ -6,6 +6,7 @@
 // change. carte-sonore.ts n'est ni modifié ni dupliqué : uniquement ses
 // exports publics (générateurs de carte, rendu HTML, types).
 
+import type { AffichageCarte } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -153,7 +154,7 @@ export const fiches: FicheAudio[] = ([
 
       return {
         valeurs: [],
-        affichage: { htmlPath, carte: carteRepositionnee },
+        affichage: { htmlPath, carte: carteRepositionnee } satisfies AffichageCarte,
         message: traduire("msg.coord_carte_g_n_r_e_var_0_var_1_points_var_2_audio_copi", htmlPath, points.length, copies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗"),
       };
     },

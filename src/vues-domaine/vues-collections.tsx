@@ -13,6 +13,8 @@ import { lireProfondeurExport } from "../ui/profondeur-export";
 import type { VueProps } from "../ui/registre-vues";
 import { useGestes } from "../ui/gestes-noeud";
 import { registreUI } from "../ui/registre-actif";
+import { affichageDe } from "./lire-canaux";
+import type { AffichageMp3 } from "../plugins/formes-des-canaux";
 
 /**
  * Le tampon d'un nœud s'il a plus de deux canaux : son aperçu est alors un repliement, pas le
@@ -87,7 +89,7 @@ export function VueExport({ data }: VueProps) {
   const { t } = useI18n();
   const [nomFichierLocal, setNomFichierLocal] = useState(String(data.nomFichier ?? ""));
   const api = (window as { api?: any }).api;
-  const mp3Url = (data as { _affichage?: { mp3Url?: string } })._affichage?.mp3Url;
+  const mp3Url = affichageDe<AffichageMp3>(data)?.mp3Url;
   const nomOu = (defaut: string) => (data.nomFichier as string)?.toString().trim() || defaut;
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
