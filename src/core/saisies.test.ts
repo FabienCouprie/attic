@@ -9,8 +9,6 @@
 // sans figurer parmi les saisies : un nœud copié les perdait en silence. Ils sont nommés un par un,
 // avec leur raison, pour qu'on voie ce que la table a changé et pourquoi.
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import {
   CHAMPS_DE_SAISIE, CHAMPS_DE_STRUCTURE, CHAMPS_DU_PROJET, CHAMPS_ENREGISTRES, CHAMPS_MEDIA,
   CHAMPS_RECHARGEABLES, GENRES_DE_SAISIE,
@@ -146,11 +144,14 @@ describe("la table des genres de saisie", () => {
     // liste de `CHAMPS_DU_PROJET`, et `ui/projet-a-ecrire.test.ts` l'éprouve en l'exécutant. Lu dans
     // le texte après ce changement, ce cas est tombé sur cinq noms que seule la liste du fichier
     // portait : l'en-cours, écrit dans le même fichier, ne les écrit pas, et la recherche dans le
-    // texte entier le masquait. Ce défaut est tenu par `ui/projet-a-ecrire.test.ts`.
-    const restauration = readFileSync(join("src", "ui", "hooks", "useEnCours.ts"), "utf8");
-    const absents = (source: string) => [...CHAMPS_ENREGISTRES].filter((c) => !source.includes(c));
-    expect([...CHAMPS_ENREGISTRES].filter((c) => !CHAMPS_DU_PROJET.has(c)), "enregistré par la table, ignoré par la sauvegarde").toEqual([]);
-    expect(absents(restauration), "enregistré par la table, ignoré par la réouverture").toEqual([]);
+    // texte entier le masquait.
+    //
+    // LE CÔTÉ QUI RELIT NE SE LIT PLUS DANS LE TEXTE NON PLUS, depuis la réparation de l'en-cours
+    // du même jour : `ui/en-cours-a-relire.ts` relit `CHAMPS_DU_PROJET`, et
+    // `ui/en-cours-a-relire.test.ts` fait l'aller-retour entier en l'exécutant, champ par champ. Il
+    // reste à ce cas ce qu'aucun des deux ne dit : la table des saisies est contenue dans ce que la
+    // persistance transporte, aux deux bouts.
+    expect([...CHAMPS_ENREGISTRES].filter((c) => !CHAMPS_DU_PROJET.has(c)), "enregistré par la table, ignoré par la persistance").toEqual([]);
   });
 
   it("DEUX GENRES NE SE PARTAGENT PAS UN CHAMP", () => {

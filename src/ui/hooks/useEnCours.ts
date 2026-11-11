@@ -16,9 +16,9 @@ import type { Edge } from "@xyflow/react";
 
 import { servicesDomaine } from "../../core/services-domaine";
 import { demarrage } from "../fenetre";
-import { couleurArete, trouverDef } from "../ports-canevas";
+import { couleurArete } from "../ports-canevas";
+import { noeudsRelus } from "../en-cours-a-relire";
 import { rechargerFichiersPersistes } from "../rechargerFichiers";
-import { tailleDefaut } from "../tailles-noeuds";
 import { filtrerAretesInvalides } from "../validerGraphe";
 
 export interface OptionsEnCours {
@@ -43,51 +43,8 @@ export function useEnCours({ pluginsVersion, rfInstance, callbacksNoeudRef, setN
         const data = JSON.parse(brut);
         if (!data.nodes || !Array.isArray(data.nodes)) return;
         const cbs = callbacksNoeudRef.current?.() ?? {};
-        const nodesRestaures = data.nodes.map((n: any) => {
-          const def = trouverDef(n.data.ficheId);
-          const { width, height } = def ? tailleDefaut(def) : { width: 230, height: 200 };
-          return {
-            id: n.id, type: "atelier", position: n.position, width: n.width ?? width, height: n.height ?? height,
-            data: {
-              ficheId: n.data.ficheId,
-              parametres: n.data.parametres ?? {},
-              statut: "attente",
-              zonesSelectionnees: n.data.zonesSelectionnees,
-              audioChemin: n.data.audioChemin,
-              sfzChemin: n.data.sfzChemin,
-              sfzNom: n.data.sfzNom,
-              sequenceNotes: n.data.sequenceNotes,
-              // Le découpage d'un montage : une session reprise rendait sinon un montage que
-              // personne n'avait découpé.
-              morceaux: n.data.morceaux,
-              nomFichier: n.data.nomFichier,
-              // LES QUATRE NOMS DE FICHIER, QUE LA TABLE DIT CONSERVÉS et que l'import garde déjà en
-              // recopiant tout `data`. Ils manquaient ici, et le garde de `saisies.test.ts` ne le
-              // voyait pas : il lisait `App.tsx` entier, où les gestionnaires de chargement les
-              // écrivent. Sorti dans ce fichier, il les a cherchés dans la seule restauration et
-              // les a trouvés absents. Sans eux, un en-cours rouvert sans le fichier sur le disque
-              // montrait un nœud sans nom, là où le même projet importé le gardait.
-              audioNom: n.data.audioNom,
-              midiNom: n.data.midiNom,
-              imageNom: n.data.imageNom,
-              svgNom: n.data.svgNom,
-              nom: n.data.nom,
-              nomEn: n.data.nomEn,
-              couleur: n.data.couleur,
-              // Les deux champs d'une bulle. Sans eux, une session reprise rendrait un nœud de bulle
-              // sans ports et ses arêtes perdues : la panne silencieuse relevée au relevé des risques.
-              bulle: n.data.bulle,
-              bulleOuverte: n.data.bulleOuverte,
-              // TOUS LES GESTES, ET NON UNE LISTE RECOPIÉE. Douze noms étaient énumérés ici, et
-              // douze autres à la génération d'un graphe : trois écritures du même savoir, dont
-              // deux silencieuses. Un geste neuf ajouté au seul `callbacksNoeud` manquait donc aux
-              // nœuds RESTAURÉS — le même geste marchait sur un nœud posé à la main et pas sur le
-              // même nœud rouvert depuis un fichier, ce qui est la pire panne à chercher.
-              // Les trois listes étaient identiques, vérifié nom par nom avant de les réunir.
-              ...cbs,
-            },
-          };
-        });
+        // Les nœuds remis en forme par `ui/en-cours-a-relire.ts`, qu'un cas éprouve sans ce crochet.
+        const nodesRestaures = noeudsRelus(data.nodes, cbs);
         const edgesRestaures = (data.edges ?? []).map((e: any) => ({
           ...e, type: "arete-personnalisee",
           style: { stroke: couleurArete(nodesRestaures, e.source, e.sourceHandle), strokeWidth: 2.5 },

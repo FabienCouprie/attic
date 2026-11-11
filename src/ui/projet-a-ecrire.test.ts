@@ -14,6 +14,10 @@
 // LA CONSOLE, ELLE, A CHANGÉ EXPRÈS : elle annonçait purgés cinq champs que le fichier écrit. Le
 // module doit dire tout ce que l'ancien corps disait, sauf ce que le fichier garde.
 //
+// L'EN-COURS AUSSI, le 2026-11-11 : il énumérait ses clés à la main et en oubliait cinq que le fichier
+// écrit, les quatre noms de fichier et `nomFichier`. Ses nœuds sont désormais ceux du fichier ; le
+// reste, arêtes, vue, réglages et date, est celui du témoin.
+//
 // ET QUELQUES AFFIRMATIONS DIRECTES, parce qu'une égalité avec un témoin ne dit pas ce que le
 // témoin faisait : le numéro de format en tête, les arêtes de substitution écartées, le méta non
 // employé laissé dans la bibliothèque, chaque champ enregistré par la table arrivé dans le fichier.
@@ -167,6 +171,16 @@ function champsNommes(avertissements: unknown[][]): string[] {
 /** Deux fichiers de projet qui disent la même chose : mêmes clés, mêmes valeurs, quel qu'en soit l'ordre. */
 const memeFichier = (nouveau: string, temoin: string) => expect(JSON.parse(nouveau)).toEqual(JSON.parse(temoin));
 
+/**
+ * L'en-cours du module est celui du témoin, hors ses nœuds, qui sont ceux du fichier : chacun porte
+ * tout ce que le nœud du témoin portait, et les cinq champs que le témoin oubliait.
+ */
+function memeEnCours(n: ReturnType<typeof projetAEcrire>, a: ReturnType<typeof ancien>) {
+  expect({ ...n.encours, nodes: undefined }).toEqual({ ...a.encours, nodes: undefined });
+  expect(n.encours.nodes).toEqual(n.cleanNodes);
+  a.encours.nodes.forEach((noeud, i) => expect(n.encours.nodes[i]).toMatchObject(noeud));
+}
+
 /** Ce que le fichier garde d'un nœud : les clés d'un nœud propre, qui les porte toutes. */
 const gardes = (n: { cleanNodes: { data: object }[] }) => new Set(Object.keys(n.cleanNodes[0].data));
 
@@ -189,7 +203,7 @@ describe("ce qu'un projet écrit", () => {
   it("REND LE FICHIER ET L'EN-COURS DE L'ANCIEN CORPS, sur un graphe qui exerce chaque branche", () => {
     const { a, n } = lesDeux(graphe(), VUE);
     memeFichier(n.json, a.json);
-    expect(n.encours).toEqual(a.encours);
+    memeEnCours(n, a);
     expect(n.cleanNodes).toEqual(a.cleanNodes);
     expect(n.cleanEdges).toEqual(a.cleanEdges);
   });
@@ -204,15 +218,14 @@ describe("ce qu'un projet écrit", () => {
       [...CHAMPS_DU_PROJET].filter((c) => c in ecrit));
   });
 
-  it("L'EN-COURS OUBLIE CINQ CHAMPS QUE LE FICHIER ÉCRIT, et la liste ne peut que rétrécir", () => {
-    // UN DÉFAUT TENU, PAS UNE RÈGLE. L'en-cours énumère encore ses clés à la main, et n'écrit ni les
-    // quatre noms de fichier ni `nomFichier`, que `hooks/useEnCours.ts` relit pourtant : une session
-    // reprise sans le fichier sur le disque montre un nœud sans nom. Relevé le 2026-11-11 en dérivant
-    // la liste du fichier ; sa réparation est une PR à part, décidée par Fabien, qui videra ceci.
-    const OUBLIES_PAR_L_ENCOURS = ["audioNom", "midiNom", "imageNom", "svgNom", "nomFichier"];
+  it("L'EN-COURS PORTE LES NŒUDS MÊMES DU FICHIER, et n'oublie aucun de leurs champs", () => {
+    // IL EN OUBLIAIT CINQ jusqu'au 2026-11-11 : les quatre noms de fichier et `nomFichier`, que
+    // `hooks/useEnCours.ts` relit, de sorte qu'une séance reprise sans le fichier sur le disque
+    // montrait un nœud sans nom. Ce cas les épinglait, en liste qui ne pouvait que rétrécir ; elle est
+    // vide. L'aller-retour entier, relecture comprise, est dans `ui/en-cours-a-relire.test.ts`.
     const { n } = lesDeux(graphe(), VUE);
-    const ecrits = new Set(Object.keys((n.encours.nodes[0] as { data: object }).data));
-    expect([...CHAMPS_DU_PROJET].filter((c) => !ecrits.has(c)).sort()).toEqual([...OUBLIES_PAR_L_ENCOURS].sort());
+    expect(n.encours.nodes).toEqual(n.cleanNodes);
+    for (const noeud of n.encours.nodes) expect(Object.keys(noeud.data)).toEqual([...CHAMPS_DU_PROJET]);
   });
 
   it("LA CONSOLE DIT CE QUE L'ANCIENNE DISAIT, SAUF LES CHAMPS QUE LE FICHIER GARDE", () => {
@@ -273,7 +286,7 @@ describe("ce qu'un projet écrit", () => {
     const { a, n } = lesDeux(graphe(), VUE);
     expect(appels, "deux appels par corps, quatre en tout").toBe(4);
     memeFichier(n.json, a.json);
-    expect(n.encours).toEqual(a.encours);
+    memeEnCours(n, a);
     expect(Object.keys(JSON.parse(n.json)).slice(0, 2)).toEqual(["formatVersion", "frequenceDeTravail"]);
     expect((n.encours as Record<string, unknown>).frequenceDeTravail).toBe(48000);
   });
