@@ -29,9 +29,9 @@ function porteur() {
 }
 
 /** L'en-cours que la sauvegarde écrit, passé par JSON comme le stockage le fait, puis relu. */
-function allerRetour(noeuds: object[], gestes: Record<string, unknown> = {}) {
+function allerRetour(noeuds: object[]) {
   const ecrit = projetAEcrire({ nodes: noeuds as never[], edges: [] }, () => undefined);
-  return { ecrit, relus: noeudsRelus(JSON.parse(JSON.stringify(ecrit.encours)).nodes, gestes) };
+  return { ecrit, relus: noeudsRelus(JSON.parse(JSON.stringify(ecrit.encours)).nodes) };
 }
 
 describe("l'en-cours, écrit puis relu", () => {
@@ -53,11 +53,12 @@ describe("l'en-cours, écrit puis relu", () => {
 
   // LA RELECTURE NE POSE PLUS DE STATUT depuis la pièce 3 du chantier : il vit dans `ui/statuts.ts`,
   // et `ui/statuts.test.ts` interdit qu'on le lise dans `data`. Le cas suivant exige qu'il n'y soit pas.
-  it("UN NŒUD RELU GARDE SA PLACE ET SA TAILLE, et porte les gestes", () => {
-    const geste = () => undefined;
-    const { relus } = allerRetour([porteur()], { onReinitialiser: geste });
-    expect(relus[0].data.onReinitialiser).toBe(geste);
+  // LES GESTES NE S'Y POSENT PLUS NON PLUS depuis la pièce 4 : ils viennent du contexte de
+  // `ui/gestes-noeud.ts`, et un nœud restauré n'a donc plus à les recevoir pour que ses boutons agissent.
+  it("UN NŒUD RELU GARDE SA PLACE ET SA TAILLE, et ne porte aucun geste", () => {
+    const { relus } = allerRetour([porteur()]);
     expect(relus[0]).toMatchObject({ id: "p", type: "atelier", position: { x: 10, y: 20 }, width: 300, height: 120 });
+    expect(Object.entries(relus[0].data).filter(([, v]) => typeof v === "function").map(([k]) => k)).toEqual([]);
   });
 
   it("UN EN-COURS QUI PORTERAIT UN RÉSULTAT, UN STATUT OU UN CHAMP INCONNU NE LES REND PAS", () => {
@@ -65,14 +66,14 @@ describe("l'en-cours, écrit puis relu", () => {
     // cas d'application y posent des fichiers de projet, et un fichier se modifie à la main.
     const relus = noeudsRelus([{ id: "r", position: { x: 0, y: 0 }, data: {
       ficheId: "generateur-courbe", parametres: {}, statut: "termine", audioResultatUrl: "blob:x", champInconnu: 1,
-    } }], {});
+    } }]);
     expect(relus[0].data.audioResultatUrl, "un résultat ne survit pas à la séance").toBeUndefined();
     expect(relus[0].data.champInconnu).toBeUndefined();
     expect(Object.keys(relus[0].data), "le statut vit dans ui/statuts.ts, non dans data").not.toContain("statut");
   });
 
   it("SANS TAILLE NI RÉGLAGES, le nœud prend une taille par défaut et des réglages vides", () => {
-    const relus = noeudsRelus([{ id: "q", position: { x: 0, y: 0 }, data: { ficheId: "inconnue" } }], {});
+    const relus = noeudsRelus([{ id: "q", position: { x: 0, y: 0 }, data: { ficheId: "inconnue" } }]);
     expect(relus[0]).toMatchObject({ width: 230, height: 200, data: { parametres: {} } });
   });
 });

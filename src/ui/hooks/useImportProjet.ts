@@ -39,8 +39,6 @@ export interface OptionsImportProjet {
   setPile: (p: { metaId: string; nom: string; nomEn?: string }[]) => void;
   /** Où l'import dépose la vue du fichier, pour le recadrage que sa remise à zéro de la pile déclenche. */
   vueAPoserRef: MutableRefObject<Viewport | null>;
-  /** Gestionnaires attachés au `data` de chaque nœud — définis une seule fois, dans App. */
-  callbacksNoeud: () => Record<string, unknown>;
   cacheExec: MutableRefObject<Map<string, any>>;
   setCurrentFilePath: (path: string | null) => void;
 }
@@ -103,17 +101,9 @@ export function useImportProjet(o: OptionsImportProjet, t: (cle: string) => stri
     o.grapheRacineRef.current = null;
     const nodesLus = (json.nodes || []).map((n: any) => ({
       ...n,
-      data: {
-        ...n.data,
-        // Les MÊMES gestionnaires que pour un nœud ajouté à la main : ce bloc en
-        // portait une seconde écriture, et les deux avaient divergé. La copie
-        // d'ici oubliait le `cacheExec.delete` des chargements de fichier — un
-        // projet importé rejouait donc le résultat du fichier précédent depuis
-        // le cache — n'empilait pas l'historique à la suppression d'un nœud, et
-        // n'aurait pas reçu la cascade de réinitialisation ajoutée en face.
-        // Un seul endroit, pour qu'aucune correction ne s'applique qu'à moitié.
-        ...o.callbacksNoeud(),
-      },
+      // AUCUN GESTE N'EST POSÉ ICI : le nœud importé les reçoit du contexte de `ui/gestes-noeud.ts`,
+      // les mêmes que tout autre nœud, et aucune correction ne peut plus s'appliquer qu'à moitié.
+      data: { ...n.data },
     }));
 
     // Recharger les fichiers persistés (Electron) : le File n'est pas sérialisable, mais le chemin

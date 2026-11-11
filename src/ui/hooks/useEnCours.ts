@@ -7,11 +7,10 @@
 // la première.
 //
 // L'EFFET NE DÉPEND QUE DE LA VERSION DES PLUGINS, et c'est voulu : il attend que le catalogue soit
-// là pour retrouver chaque fiche. Les gestionnaires de nœud sont lus par leur référence au moment
-// où l'effet tourne, et non à la construction du crochet, parce qu'`App.tsx` les définit après
-// l'avoir appelé.
+// là pour retrouver chaque fiche. Les gestes des nœuds n'y passent plus : ils viennent du contexte
+// de `ui/gestes-noeud.ts`, et un nœud restauré n'en porte aucun.
 import { useEffect, useRef } from "react";
-import type { Dispatch, MutableRefObject, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import type { Edge } from "@xyflow/react";
 
 import { servicesDomaine } from "../../core/services-domaine";
@@ -25,13 +24,11 @@ export interface OptionsEnCours {
   /** Monte quand le catalogue change ; l'en-cours attend qu'il soit là. */
   pluginsVersion: number;
   rfInstance: any;
-  /** Les gestionnaires attachés au `data` de chaque nœud, définis une seule fois dans App. */
-  callbacksNoeudRef: MutableRefObject<(() => Record<string, unknown>) | null>;
   setNodes: Dispatch<SetStateAction<any[]>>;
   setEdges: Dispatch<SetStateAction<Edge[]>>;
 }
 
-export function useEnCours({ pluginsVersion, rfInstance, callbacksNoeudRef, setNodes, setEdges }: OptionsEnCours) {
+export function useEnCours({ pluginsVersion, rfInstance, setNodes, setEdges }: OptionsEnCours) {
   const enCoursCharge = useRef(false);
   useEffect(() => {
     if (enCoursCharge.current) return;
@@ -42,9 +39,8 @@ export function useEnCours({ pluginsVersion, rfInstance, callbacksNoeudRef, setN
         if (!brut) return;
         const data = JSON.parse(brut);
         if (!data.nodes || !Array.isArray(data.nodes)) return;
-        const cbs = callbacksNoeudRef.current?.() ?? {};
         // Les nœuds remis en forme par `ui/en-cours-a-relire.ts`, qu'un cas éprouve sans ce crochet.
-        const nodesRestaures = noeudsRelus(data.nodes, cbs);
+        const nodesRestaures = noeudsRelus(data.nodes);
         const edgesRestaures = (data.edges ?? []).map((e: any) => ({
           ...e, type: "arete-personnalisee",
           style: { stroke: couleurArete(nodesRestaures, e.source, e.sourceHandle), strokeWidth: 2.5 },

@@ -5,14 +5,14 @@
 // que la table des saisies déclare. Rien ne les comparait, ni entre eux ni aux tables : une liste
 // tenue à la main vieillit, et celle-ci avait vieilli deux fois.
 //
-// CE QU'IL LIT, ET COMMENT. Le type est rangé en quatre sections, une par classe de champ. Le garde lit
+// CE QU'IL LIT, ET COMMENT. Le type est rangé en trois sections, une par classe de champ. Le garde lit
 // chaque section PAR SA FORME, dans le texte de `ui/noeud-atelier.ts`, et la compare à sa source :
 //   SaisiesDuNoeud     = `CHAMPS_DE_SAISIE` de `core/saisies.ts`, dans les deux sens ;
 //   ResultatsDuNoeud   ⊂ `CHAMPS_RESULTAT` de `core/classes-de-champs.ts` ;
-//   RappelsDuNoeud     = les clés que `callbacksNoeud` d'`App.tsx` pose, dans les deux sens ;
 //   StructureDuNoeud   = `CHAMPS_DE_STRUCTURE` de `core/saisies.ts`, dans les deux sens.
-// La cinquième, l'état d'une passe, a disparu à la pièce 3 : le statut, la progression et la priorité
-// vivent dans des magasins, et le type ne doit plus les nommer.
+// L'état d'une passe a quitté le type à la pièce 3, les gestes à la pièce 4 : ceux-ci sont déclarés
+// par `GestesNoeud` de `ui/gestes-noeud.ts`, que le garde compare aux clés que `callbacksNoeud`
+// d'`App.tsx` fournit, dans les deux sens.
 // Une ligne qu'il ne sait pas lire le fait échouer, au lieu de passer sans la voir.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
@@ -128,13 +128,38 @@ const section = (nom: string) => {
   if (!s) throw new Error(`section ${nom} absente de ui/noeud-atelier.ts`);
   return s.champs;
 };
+/** Les gestes d'un nœud, tels que `ui/gestes-noeud.ts` les déclare. */
+const GESTES = (() => {
+  const g = interfaces(lire("ui/gestes-noeud.ts")).get("GestesNoeud");
+  if (!g) throw new Error("GestesNoeud absent de ui/gestes-noeud.ts");
+  return g.champs;
+})();
+
+/** Chaque ligne de code des sources de `src/`, tests exclus, qui répond au motif ; commentaires et chaînes vidés. */
+function lignesDeCode(motif: RegExp, garder: (chemin: string) => boolean = () => true): string[] {
+  const fautifs: string[] = [];
+  const parcourir = (d: string) => {
+    for (const n of readdirSync(d)) {
+      const c = join(d, n);
+      if (statSync(c).isDirectory()) { parcourir(c); continue; }
+      if (!/\.tsx?$/.test(n) || /\.test\.tsx?$/.test(n)) continue;
+      const rel = relative(SRC, c).replace(/\\/g, "/");
+      if (!garder(rel)) continue;
+      code(readFileSync(c, "utf8")).split("\n").forEach((ligne, i) => {
+        if (motif.test(ligne)) fautifs.push(`${rel}:${i + 1}`);
+      });
+    }
+  };
+  parcourir(SRC);
+  return fautifs;
+}
 
 describe("le type d'un nœud, tenu à ses sources", () => {
-  it("DonneesNoeud NE NOMME AUCUN CHAMP EN PROPRE : il étend les quatre sections, et rien d'autre", () => {
+  it("DonneesNoeud NE NOMME AUCUN CHAMP EN PROPRE : il étend les trois sections, et rien d'autre", () => {
     const d = TYPE.get("DonneesNoeud");
     expect(d, "DonneesNoeud doit être une interface de ui/noeud-atelier.ts").toBeDefined();
     expect(d!.champs, "Un champ nommé dans DonneesNoeud même n'a pas de classe : rangez-le dans sa section.").toEqual([]);
-    expect(trie(d!.etend)).toEqual(trie(["SaisiesDuNoeud", "StructureDuNoeud", "ResultatsDuNoeud", "RappelsDuNoeud"]));
+    expect(trie(d!.etend)).toEqual(trie(["SaisiesDuNoeud", "StructureDuNoeud", "ResultatsDuNoeud"]));
   });
 
   it("LES SAISIES DU TYPE SONT CELLES DE LA TABLE, ni plus ni moins", () => {
@@ -149,34 +174,42 @@ describe("le type d'un nœud, tenu à ses sources", () => {
       "Un résultat absent de CHAMPS_RESULTAT survivrait à la remise à zéro du nœud qui l'a produit.").toEqual([]);
   });
 
-  it("LES RAPPELS DU TYPE SONT CEUX QU'App.tsx POSE, ni plus ni moins", () => {
-    const poses = rappelsPoses();
-    expect(poses.length, "le garde doit lire les treize rappels de callbacksNoeud").toBeGreaterThanOrEqual(13);
-    expect(trie(section("RappelsDuNoeud")), [
-      "Un rappel posé sur chaque nœud et absent du type oblige les vues à l'affirmer elles-mêmes ;",
-      "un rappel déclaré que rien ne pose est une promesse que personne ne tient.",
-    ].join("\n")).toEqual(trie(poses));
+  it("LES GESTES DU CONTEXTE SONT CEUX QU'App.tsx FOURNIT, ni plus ni moins", () => {
+    const fournis = rappelsPoses();
+    expect(fournis.length, "le garde doit lire les treize gestes de callbacksNoeud").toBeGreaterThanOrEqual(13);
+    expect(trie(GESTES), [
+      "Un geste fourni et absent du type oblige les vues à l'affirmer elles-mêmes ;",
+      "un geste déclaré que rien ne fournit est une promesse que personne ne tient.",
+    ].join("\n")).toEqual(trie(fournis));
   });
 
-  it("AUCUN RAPPEL N'EST PLUS LU SUR UN NŒUD : le nœud et ses vues lisent les gestes du contexte", () => {
+  it("LE TYPE D'UN NŒUD NE NOMME PLUS AUCUN GESTE", () => {
+    const nommes = [...TYPE.values()].flatMap((s) => s.champs);
+    expect(GESTES.filter((g) => nommes.includes(g)), [
+      "Les gestes viennent du contexte de ui/gestes-noeud.ts : les déclarer sur le nœud inviterait à",
+      "les y poser, et un nœud posé par un chemin qui les oublierait resterait sourd.",
+    ].join("\n")).toEqual([]);
+  });
+
+  it("callbacksNoeud N'EST NOMMÉ QUE DANS App.tsx : aucun chemin qui pose un nœud ne reçoit les gestes", () => {
+    // DIX CROCHETS LES RECEVAIENT, pour les recopier sur les nœuds qu'ils posaient : la création, le
+    // dépôt, l'import, le collage, la reprise de séance, l'annulation, les notes et les cadres, les
+    // bulles, les méta-composants, le graphe qu'un composant engendre. Un crochet qui les recevrait de
+    // nouveau n'aurait qu'une raison de le faire. Le fournisseur du contexte les lit par la référence
+    // qu'`App.tsx` lui passe.
+    expect(lignesDeCode(/\bcallbacksNoeud/, (rel) => rel !== "ui/App.tsx")).toEqual([]);
+    // ET `App.tsx` NE LES APPELLE PLUS PAR LEUR NOM, lui qui les posait sur chaque nœud qu'il
+    // fabriquait ; personne ne répand non plus les gestes du contexte dans un objet.
+    expect(lignesDeCode(/\bcallbacksNoeud\s*\(|\.\.\.\s*gestes\b/), "un geste répandu dans les données d'un nœud").toEqual([]);
+  });
+
+  it("AUCUN GESTE N'EST PLUS LU SUR UN NŒUD : le nœud et ses vues lisent les gestes du contexte", () => {
     // LA FORME CHERCHÉE EST L'ACCÈS, quel que soit l'objet : `data.onX`, `d.onX` sous un alias,
     // `(data as {…}).onX` sous une affirmation de type, `n?.data.onX` — tous les chemins par lesquels
     // dix-neuf fichiers les lisaient. Seul `gestes.onX` est permis, la valeur de `useGestes()`. Les
-    // treize noms sont ceux de la section du type, et non une liste écrite ici.
-    const noms = section("RappelsDuNoeud").join("|");
-    const acces = new RegExp(String.raw`(?<!\bgestes)(\?\.|\.)(${noms})\b`);
-    const fautifs: string[] = [];
-    const parcourir = (d: string) => {
-      for (const n of readdirSync(d)) {
-        const c = join(d, n);
-        if (statSync(c).isDirectory()) { parcourir(c); continue; }
-        if (!/\.tsx?$/.test(n) || /\.test\.tsx?$/.test(n)) continue;
-        code(readFileSync(c, "utf8")).split("\n").forEach((ligne, i) => {
-          if (acces.test(ligne)) fautifs.push(`${relative(SRC, c).replace(/\\/g, "/")}:${i + 1}`);
-        });
-      }
-    };
-    parcourir(SRC);
+    // treize noms sont ceux de `GestesNoeud`, et non une liste écrite ici.
+    const acces = new RegExp(String.raw`(?<!\bgestes)(\?\.|\.)(${GESTES.join("|")})\b`);
+    const fautifs = lignesDeCode(acces);
     expect(fautifs, [
       "Un rappel lu sur le nœud garde la fermeture du moment où le nœud a été posé, et manque à tout",
       "nœud qu'un chemin a oublié d'en munir. Lisez `useGestes()` de `ui/gestes-noeud.ts`.",
