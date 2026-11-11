@@ -7,8 +7,8 @@
 // patch Pure Data. Ces champs circulaient sur `data` sans que le type les connaisse.
 //
 // LE TYPE EST RANGÉ PAR CLASSE, et chaque classe dit d'où elle vient. Les saisies et les résultats
-// ont leur table dans le cœur ; les rappels sont ceux qu'`App.tsx` pose sur chaque nœud par
-// `callbacksNoeud` ; la structure et l'état de la passe n'ont pas encore de table. Le garde
+// ont leur table dans le cœur, et la structure aussi depuis la pièce 2 ; les rappels sont ceux
+// qu'`App.tsx` pose sur chaque nœud par `callbacksNoeud` ; l'état de la passe n'a pas de table. Le garde
 // `ui/noeud-atelier.test.ts` tient chaque section à sa source, dans les deux sens.
 //
 // LE SAC RESTE OUVERT (`[key: string]: unknown`) : les vues y lisent encore ce que le canal
@@ -52,9 +52,8 @@ interface SaisiesDuNoeud {
 /**
  * La place du nœud dans le graphe, et non une matière posée sur lui.
  *
- * AUCUNE TABLE NE LES DÉCLARE ENCORE. `core/saisies.ts` écarte `bulle` et `bulleOuverte` exprès, et
- * les autres ne figurent nulle part : la liste du projet les écrit à la main. C'est la pièce 2 du
- * chantier ; d'ici là, le garde les tient à une liste qu'il nomme comme telle.
+ * CHAQUE CHAMP EST DÉCLARÉ PAR `CHAMPS_DE_STRUCTURE` de `core/saisies.ts`, avec ce que le fichier de
+ * projet en fait ; aucun ne suit une copie, aucun n'est effacé par une remise à zéro.
  */
 interface StructureDuNoeud {
   /** La bulle à laquelle le nœud appartient, par son identifiant. */

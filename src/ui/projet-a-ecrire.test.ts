@@ -4,7 +4,12 @@
 // commentaires, et il garde sa lecture `o.rfInstance?.getViewport()`. Une seule retouche : la liste
 // blanche que `detecterPertes` lisait d'elle-même, `CHAMPS_ENREGISTRES`, lui est passée, puisqu'elle
 // la reçoit désormais. Chaque cas le fait tourner avec le module sur la même entrée, à la même
-// heure, et exige le même fichier, octet pour octet, et le même en-cours.
+// heure, et exige le même fichier et le même en-cours.
+//
+// LE MÊME FICHIER, ET NON PLUS LES MÊMES OCTETS, depuis le 2026-11-11. Le module tire ce qu'un nœud
+// porte des tables de `core/saisies.ts`, dans leur ordre, et non plus de la liste écrite à la main :
+// les mêmes clés et les mêmes valeurs, rangées autrement, ce que Fabien a accepté. Le fichier se
+// compare donc relu, et l'ordre des clés d'un nœud est tenu à part, par la table.
 //
 // LA CONSOLE, ELLE, A CHANGÉ EXPRÈS : elle annonçait purgés cinq champs que le fichier écrit. Le
 // module doit dire tout ce que l'ancien corps disait, sauf ce que le fichier garde.
@@ -19,17 +24,27 @@ import {
   enregistrerMeta, supprimerMeta, type AreteG, type MetaComposant, type NoeudG,
 } from "../core";
 import { configurerServicesDomaine, oublierServicesDomaine, servicesDomaine } from "../core/services-domaine";
-import { CHAMPS_ENREGISTRES } from "../core/saisies";
+import { CHAMPS_DU_PROJET, CHAMPS_ENREGISTRES } from "../core/saisies";
 import { detecterPertes, formaterRapportPertes } from "../core/pertes";
 import { serialiserMeta } from "./metasLocaux";
 import { projetAEcrire } from "./projet-a-ecrire";
+
+/**
+ * La liste blanche que l'ancien corps recevait, `CHAMPS_ENREGISTRES` tel qu'il était sur master
+ * 78ed746, avant que la table conserve `audioChemin`. Lue vivante, elle ferait taire dans la console
+ * du témoin un champ que l'ancien corps annonçait perdu.
+ */
+const ENREGISTRES_DU_TEMOIN: ReadonlySet<string> = new Set([
+  "ficheId", "nom", "nomEn", "parametres", "zonesSelectionnees", "nomFichier", "couleur",
+  "audioNom", "midiNom", "imageNom", "svgNom", "sfzChemin", "sfzNom", "sequenceNotes", "morceaux",
+]);
 
 /** L'ancien `buildExportData`, après sa première ligne : le corps tel qu'il était, sa lecture `o` comprise. */
 function ancien(racine: { nodes: any[]; edges: any[] }, o: { rfInstance: any }) {
   // ── Détection des pertes de données (Chantier B) ──
   const pertes: { noeud: string; champs: ReturnType<typeof detecterPertes> }[] = [];
   for (const n of racine.nodes) {
-    const champsPurges = detecterPertes(n.data as Record<string, unknown>, CHAMPS_ENREGISTRES);
+    const champsPurges = detecterPertes(n.data as Record<string, unknown>, ENREGISTRES_DU_TEMOIN);
     if (champsPurges.length > 0) {
       pertes.push({ noeud: n.data?.ficheId ?? n.id, champs: champsPurges });
     }
@@ -149,6 +164,9 @@ function champsNommes(avertissements: unknown[][]): string[] {
   return out;
 }
 
+/** Deux fichiers de projet qui disent la même chose : mêmes clés, mêmes valeurs, quel qu'en soit l'ordre. */
+const memeFichier = (nouveau: string, temoin: string) => expect(JSON.parse(nouveau)).toEqual(JSON.parse(temoin));
+
 /** Ce que le fichier garde d'un nœud : les clés d'un nœud propre, qui les porte toutes. */
 const gardes = (n: { cleanNodes: { data: object }[] }) => new Set(Object.keys(n.cleanNodes[0].data));
 
@@ -170,10 +188,31 @@ describe("ce qu'un projet écrit", () => {
 
   it("REND LE FICHIER ET L'EN-COURS DE L'ANCIEN CORPS, sur un graphe qui exerce chaque branche", () => {
     const { a, n } = lesDeux(graphe(), VUE);
-    expect(n.json).toBe(a.json);
+    memeFichier(n.json, a.json);
     expect(n.encours).toEqual(a.encours);
     expect(n.cleanNodes).toEqual(a.cleanNodes);
     expect(n.cleanEdges).toEqual(a.cleanEdges);
+  });
+
+  it("UN NŒUD PROPRE PORTE LES CHAMPS DU PROJET, dans l'ordre des tables, et seulement eux", () => {
+    const { n } = lesDeux(graphe(), VUE);
+    for (const noeud of n.cleanNodes) {
+      expect(Object.keys(noeud.data), "la liste du projet et les tables divergent").toEqual([...CHAMPS_DU_PROJET]);
+    }
+    const ecrit = JSON.parse(n.json).nodes[0].data;
+    expect(Object.keys(ecrit), "le fichier range les clés du porteur comme la table").toEqual(
+      [...CHAMPS_DU_PROJET].filter((c) => c in ecrit));
+  });
+
+  it("L'EN-COURS OUBLIE CINQ CHAMPS QUE LE FICHIER ÉCRIT, et la liste ne peut que rétrécir", () => {
+    // UN DÉFAUT TENU, PAS UNE RÈGLE. L'en-cours énumère encore ses clés à la main, et n'écrit ni les
+    // quatre noms de fichier ni `nomFichier`, que `hooks/useEnCours.ts` relit pourtant : une session
+    // reprise sans le fichier sur le disque montre un nœud sans nom. Relevé le 2026-11-11 en dérivant
+    // la liste du fichier ; sa réparation est une PR à part, décidée par Fabien, qui videra ceci.
+    const OUBLIES_PAR_L_ENCOURS = ["audioNom", "midiNom", "imageNom", "svgNom", "nomFichier"];
+    const { n } = lesDeux(graphe(), VUE);
+    const ecrits = new Set(Object.keys((n.encours.nodes[0] as { data: object }).data));
+    expect([...CHAMPS_DU_PROJET].filter((c) => !ecrits.has(c)).sort()).toEqual([...OUBLIES_PAR_L_ENCOURS].sort());
   });
 
   it("LA CONSOLE DIT CE QUE L'ANCIENNE DISAIT, SAUF LES CHAMPS QUE LE FICHIER GARDE", () => {
@@ -223,7 +262,7 @@ describe("ce qu'un projet écrit", () => {
 
   it("SANS VUE, le fichier n'en porte pas, comme avant", () => {
     const { a, n, lectures } = lesDeux(graphe(), undefined);
-    expect(n.json).toBe(a.json);
+    memeFichier(n.json, a.json);
     expect("viewport" in JSON.parse(n.json)).toBe(false);
     expect(lectures, "la vue est lue deux fois, pour le fichier puis pour l'en-cours").toEqual([undefined, undefined]);
   });
@@ -233,7 +272,7 @@ describe("ce qu'un projet écrit", () => {
     configurerServicesDomaine({ reglagesDeProjet: () => { appels++; return { frequenceDeTravail: 48000 }; } });
     const { a, n } = lesDeux(graphe(), VUE);
     expect(appels, "deux appels par corps, quatre en tout").toBe(4);
-    expect(n.json).toBe(a.json);
+    memeFichier(n.json, a.json);
     expect(n.encours).toEqual(a.encours);
     expect(Object.keys(JSON.parse(n.json)).slice(0, 2)).toEqual(["formatVersion", "frequenceDeTravail"]);
     expect((n.encours as Record<string, unknown>).frequenceDeTravail).toBe(48000);
@@ -244,7 +283,7 @@ describe("ce qu'un projet écrit", () => {
     (g.nodes[0].data as Record<string, unknown>).audioFichier = new Blob(["x"]);
     (g.nodes[0].data as Record<string, unknown>).tampon = new ArrayBuffer(4);
     const { a, n, consoleNouveau } = lesDeux(g, VUE);
-    expect(n.json).toBe(a.json);
+    memeFichier(n.json, a.json);
     expect(String(consoleNouveau[0]?.[0])).toContain("• tampon (ArrayBuffer)");
     // Le fichier audio se refait depuis son chemin à l'ouverture : il n'est pas une perte.
     expect(champsNommes(consoleNouveau)).not.toContain("generateur-courbe.audioFichier");
