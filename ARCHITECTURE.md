@@ -203,7 +203,19 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 
 ### Moyen terme (prochaines releases)
 
-- [ ] **Extraire le runtime d'exécution** de `useExecutionGraphe.ts` dans un module pur (`src/core/execution.ts`) sans dépendance React.
+- [x] **Extraire le runtime d'exécution** de `useExecutionGraphe.ts` dans un module pur (`src/core/execution.ts`) sans dépendance React.
+  Fait le 2026-11-11, en cinq pièces décidées par Fabien (`work/plan-runtime-execution-2026-11-11.md`) :
+  un garde qui tient le cœur à l'écart du shell (PR 333) ; la pose des statuts et la décision d'avant
+  l'exécution (PR 334) ; le retour d'un exécuteur (PR 335) ; la boucle elle-même, `executerLesNoeuds`
+  (PR 337) ; les deux répliques du moteur, dans `core/domaine-nombre.test.ts` et
+  `core/cache-execution.test.ts`, remplacées par lui. `core/execution.ts` compte 252 lignes de
+  code et n'importe que le cœur ; le runtime y est générique, l'`AudioContext` lui étant prêté.
+  `useExecutionGraphe.ts` passe de 289 à 179 lignes de code, et `lancerUnePasse` de 482 lignes et
+  198 de code à 217 et 94. Le crochet ne garde que React, le contrôleur d'annulation, l'`AudioContext`,
+  les publications, les sauts de boucle, la pose des résultats, le ménage et les lecteurs. La boucle
+  est éprouvée contre celle d'avant le chantier par `core/execution-boucle.test.ts`, et
+  `src/core/` compte 41 fichiers de test.
+  L'historique qui suit est celui des relevés d'avant.
   Partiellement fait : `src/core/execution.ts` existe et teste
   `estResultatEnErreur` (la règle « tout-null = échec », testée), mais c'est
   un extrait ciblé, pas l'extraction complète de l'ordonnancement/cache/

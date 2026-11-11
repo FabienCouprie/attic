@@ -9,6 +9,11 @@
 // `lecture-vive.ts` face à `useLectureVive.ts` ; le moteur, qui est la pièce la plus partagée, ne
 // l'avait jamais été.
 //
+// LA RÉPLIQUE N'EST PLUS, depuis le 2026-11-11 : la boucle du moteur est dans le cœur,
+// `core/execution.ts`, éprouvée contre la boucle d'avant par `core/execution-boucle.test.ts`, et le
+// second domaine comme la règle du cache passent par elle. Voir le plan
+// `work/plan-runtime-execution-2026-11-11.md`.
+//
 // LES CLASSES ARRIVENT EN ARGUMENT, elles ne sont pas déclarées ici. Elles vivent avec le moteur qui
 // les applique ; ce module dit ce qu'on en fait, pas ce qu'elles contiennent. Un banc peut donc les
 // lui donner telles quelles et éprouver les transitions sur les quatre cent quarante-huit fiches.

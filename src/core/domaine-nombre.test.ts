@@ -5,10 +5,15 @@
 // Si le moteur renvoie 11, le framework est officiellement baptisé.
 import { describe, it, expect } from "vitest";
 import { creerRegistre } from "./registre";
-import { ordreTopologique, resoudreEntree, valeursEntrantes } from "./graphe";
+import { ordreTopologique } from "./graphe";
 import { validerGraphe } from "./validation";
 import type { NoeudG, AreteG } from "./meta";
-import type { PluginDef, FonctionPlugin, ContexteExecution } from "./types";
+import type { PluginDef, FonctionPlugin } from "./types";
+import type { EntreeDeCache } from "./cache-execution";
+import { creerTablesDePasse, executerLesNoeuds, type QuestionsDuRetour } from "./execution";
+import { preparerLaPasse } from "./preparation-passe";
+import { sautsDeBoucles } from "./saut-de-boucle";
+import { servicesDomaine } from "./services-domaine";
 
 // ── Domaine fantôme : registre propre (pas de pollution du registre audio) ──
 const registre = creerRegistre<TValeur, TRuntime>();
@@ -93,57 +98,55 @@ const formaterDef: PluginDef<TValeur, TRuntime> = {
 };
 registre.enregistrer(formaterDef);
 
-// ── Moteur d'exécution pur (réplique minimale de useExecutionGraphe sans React) ──
-// N'utilise QUE les fonctions pures de /core : ordreTopologique, resoudreEntree,
-// valeursEntrantes, trouverPlugin, validerGraphe. Aucune modification de /core.
+// ── LE VRAI MOTEUR, ET NON PLUS SA RÉPLIQUE ──
 //
-// Les casts `as unknown as FonctionPlugin<TValeur, TRuntime>` sont les casts de
-// FRONTIÈRE : le registre stocke les fiches en `unknown`, le domaine prouve le
-// type ici. Ce sont les seuls casts du fichier.
+// Jusqu'au 2026-11-11, ce fichier portait une « réplique minimale de useExecutionGraphe sans
+// React » : un ordre, une validation, un contexte écrit à la main. Elle prouvait que les fonctions
+// pures du cœur suffisaient à un autre domaine, mais elle éprouvait une COPIE du moteur, que rien ne
+// tenait égale à l'original. Depuis la pièce 4 du plan du runtime, le second domaine passe par le
+// moteur lui-même, appelé comme le crochet l'appelle : `preparerLaPasse`, les sauts de boucle, puis
+// `executerLesNoeuds`, SANS AUCUN SERVICE configuré. Une faute plantée dans la boucle fait tomber ce
+// baptême, ce que la réplique ne pouvait pas faire.
+//
+// LES RÉPONSES DU DOMAINE SUR LES VALEURS sont les réponses neutres, recopiées : elles vivent dans
+// `ui/services-apercu.ts`, qui est du shell, et le cœur ne l'importe pas. Un domaine neutre rend les
+// valeurs telles quelles et ne mesure rien.
+//
+// Les casts `as unknown as` sont les casts de FRONTIÈRE : le registre du domaine porte ses types,
+// le moteur les transporte en `unknown`. Ce sont les seuls casts du fichier.
+const QUESTIONS_NEUTRES: QuestionsDuRetour = {
+  porterALaFrequenceDeTravail: async (valeurs) => [...valeurs],
+  heriterDesEntrees: () => {},
+  ecartNiveau: () => undefined,
+  frequencesMelees: () => [],
+};
+
 async function executerGraphe(
   noeuds: NoeudG[],
   aretes: AreteG[],
 ): Promise<Map<string, unknown[]>> {
-  const ids = noeuds.map((n) => n.id);
-
-  // Garde-fou : valider les connexions et ports requis avant exécution
-  const validation = validerGraphe(noeuds, aretes, (id) => registre.trouverDef(id), registre.fluxCompatibles);
-  const noeudsEnErreur = new Set(validation.noeudsAffectes.keys());
-
-  const ordre = ordreTopologique(ids, aretes).filter((id) => !noeudsEnErreur.has(id));
-  const resultats = new Map<string, unknown[]>();
-
-  for (const nodeId of ordre) {
-    const node = noeuds.find((n) => n.id === nodeId)!;
-    // Cast de frontière : le registre retourne FonctionPlugin<unknown, unknown>,
-    // le domaine nombre prouve que c'est FonctionPlugin<number, null>.
-    const fn = registre.trouverPlugin(node.data.ficheId as string) as unknown as FonctionPlugin<TValeur, TRuntime> | undefined;
-    if (!fn) { resultats.set(nodeId, [null]); continue; }
-
-    const ctx: ContexteExecution<TValeur, TRuntime> = {
-      noeud: node,
-      runtime: null,
-      repertoireTravail: "",
-      // entree() garantit non-null pour les ports requis (validé par validerGraphe).
-      // resoudreEntree retourne T | null au niveau bas ; le moteur asserte non-null.
-      entree: (idx: number) => resoudreEntree<unknown>(nodeId, idx, aretes, resultats) as TValeur,
-      entrees: () => valeursEntrantes<unknown>(nodeId, aretes, resultats) as (TValeur | null)[],
-      paramNombre: (nom: string, defaut: number) => {
-        const p = (node.data.parametres as Record<string, number | string>)?.[nom];
-        return typeof p === "number" ? p : defaut;
-      },
-      paramTexte: (nom: string, defaut: string) => {
-        const p = (node.data.parametres as Record<string, number | string>)?.[nom];
-        return typeof p === "string" ? p : defaut;
-      },
-      onProgress: () => {},
-    };
-
-    const res = await fn(ctx);
-    resultats.set(nodeId, res.valeurs);
-  }
-
-  return resultats;
+  const trouverDef = (id: string) => registre.trouverDef(id) as unknown as PluginDef<unknown, unknown> | undefined;
+  const plan = preparerLaPasse({
+    noeuds, aretes, prioriteDemandee: null, versLAval: false,
+    trouverMeta: () => undefined, trouverDef, fluxCompatibles: registre.fluxCompatibles, t: (cle) => cle,
+  });
+  const tables = creerTablesDePasse();
+  const cache = new Map<string, EntreeDeCache>();
+  const { deplie } = plan;
+  const sauts = sautsDeBoucles(deplie.depliees, {
+    noeuds: deplie.noeuds, aretes: plan.aretesG, resultats: tables.resultats, cache, toursDesCopies: deplie.toursDesCopies,
+    reglages: JSON.stringify(servicesDomaine().reglagesDeProjet()),
+    jamaisCache: (id) => trouverDef(deplie.noeuds.find((n) => n.id === id)?.data.ficheId as string)?.jamaisCache === true,
+  });
+  await executerLesNoeuds<TRuntime>(plan, tables, {
+    runtime: null, repertoireTravail: "", signal: new AbortController().signal, trouverDef,
+    trouverPlugin: (id) => registre.trouverPlugin(id) as unknown as FonctionPlugin<unknown, TRuntime> | undefined,
+    typeFlux: (id) => registre.typeFlux(id), canoniser: (_p, v) => v, graineDuNoeud: (_id, _nom, brut) => brut,
+    lireCache: (id) => cache.get(id), ecrireCache: (id, e) => cache.set(id, e), sauts,
+    questions: () => QUESTIONS_NEUTRES, poser: () => {}, poserOmbre: () => {}, t: (cle) => cle,
+    quandUnNoeudAFini: () => {},
+  });
+  return tables.resultats;
 }
 
 describe("baptême du framework — domaine nombre fantôme", () => {

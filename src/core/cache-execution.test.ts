@@ -14,45 +14,80 @@
 // audio différents de même forme portent la même empreinte. C'est cela qui interdit d'arrêter la
 // propagation en comparant les sorties.
 import "node-web-audio-api/polyfill.js";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// LA RESPIRATION DE LA BOUCLE NE RESPIRE PAS ICI. Elle rend une image au navigateur avant chaque
+// nœud, et sans navigateur elle n'est qu'une minuterie : mesuré le 2026-11-11, le cas des trois
+// cents tours, deux runs de six cents nœuds, durait 9,3 s, la minuterie de Windows valant une
+// quinzaine de millisecondes ; sans elle, 45 ms. Ces cas éprouvent la règle du cache, non la
+// fluidité, et la boucle tourne pour le reste telle quelle.
+vi.mock("./respirer", async (original) => ({ ...(await original<typeof import("./respirer")>()), respirer: () => Promise.resolve() }));
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
-  peutReutiliserLeCache, sourceRetraitee, type EmpreintesDuRun, type LienDeGraphe,
+  peutReutiliserLeCache, sourceRetraitee, type EmpreintesDuRun, type EntreeDeCache, type LienDeGraphe,
 } from "./cache-execution";
 import { empreinteValeur, ordreTopologique } from "./graphe";
 import { deplierBoucles, FICHE_DEBUT, FICHE_FIN } from "./boucle-graphe";
+import { creerTablesDePasse, executerLesNoeuds, type QuestionsDuRetour } from "./execution";
 import type { AreteG, NoeudG } from "./meta";
+import type { ContexteExecution, FonctionPlugin, PluginDef } from "./types";
 
 const EMPREINTES: EmpreintesDuRun = {
   hashParams: "p", hashEntree: "e", hashSorties: "s", hashValeursEntree: "v",
 };
 
+/** Un composant qui rend ce qu'il reçoit, et le même s'il refuse le cache : ce que le cas déclare. */
+const relayer: FonctionPlugin<unknown, null> = async (ctx: ContexteExecution<unknown, null>) => ({ valeurs: [ctx.entree(0) ?? "source"] });
+const FICHES_DU_RUN: Record<string, PluginDef<unknown, unknown>> = {
+  fixe: { sorties: [{ nom: "S", type: "x" }], executer: relayer } as unknown as PluginDef<unknown, unknown>,
+  jamais: { sorties: [{ nom: "S", type: "x" }], jamaisCache: true, executer: relayer } as unknown as PluginDef<unknown, unknown>,
+};
+const NEUTRES: QuestionsDuRetour = {
+  porterALaFrequenceDeTravail: async (v) => [...v], heriterDesEntrees: () => {}, ecartNiveau: () => undefined, frequencesMelees: () => [],
+};
+
 /**
- * Le run du moteur, réduit à sa décision de cache.
+ * Qui tourne au second run, quand le cache tient ce que le cas déclare.
  *
- * REPREND LA BOUCLE DE `useExecutionGraphe`, ET RIEN D'AUTRE : l'ordre topologique, la question
- * posée à chaque nœud, et le marquage du nœud qui a tourné. C'est ce qui permet d'éprouver la
- * PROPAGATION, qui ne se voit sur aucune des deux fonctions prise seule.
+ * C'EST LA VRAIE BOUCLE DU MOTEUR depuis le 2026-11-11 (pièce 4 du plan du runtime), et non plus sa
+ * réplique : celle-ci reprenait l'ordre, la question posée à chaque nœud et le marquage du nœud qui
+ * a tourné, et éprouvait donc une copie que rien ne tenait égale au moteur. Le graphe est posé tel
+ * que le cas le donne et parcouru dans l'ordre qu'il donne. Un premier run remplit le cache ; il est
+ * ramené aux composants que le cas déclare en cache ; le second dit qui tourne.
+ *
+ * LES SAUTS DE BOUCLE SONT NEUTRES, comme ils l'étaient dans la réplique : ces cas éprouvent la règle
+ * du cache sur un graphe déjà déplié, et `core/saut-de-boucle.test.ts` tient les sauts.
  */
-function quiTourne(
+async function quiTourne(
   ordre: readonly string[],
   liens: readonly LienDeGraphe[],
   jamaisCache: ReadonlySet<string>,
-  cachePrecedent: ReadonlyMap<string, EmpreintesDuRun>,
-  empreintes: (id: string) => EmpreintesDuRun = () => EMPREINTES,
-): string[] {
-  const retraites = new Set<string>();
-  for (const id of ordre) {
-    const reutilise = peutReutiliserLeCache(
-      jamaisCache.has(id),
-      sourceRetraitee(id, liens, retraites),
-      cachePrecedent.get(id),
-      empreintes(id),
+  cachePrecedent: ReadonlyMap<string, unknown>,
+): Promise<string[]> {
+  const nds: NoeudG[] = ordre.map((id) => ({ id, data: { ficheId: jamaisCache.has(id) ? "jamais" : "fixe", parametres: {} } }));
+  const aretesG: AreteG[] = liens.map((l, i) => ({ id: `l${i}`, source: l.source, target: l.target, sourceHandle: "out:0", targetHandle: "in:0" }));
+  const cache = new Map<string, EntreeDeCache>();
+  const run = async () => {
+    const tourne: string[] = [];
+    await executerLesNoeuds<null>(
+      { ordreFiltre: [...ordre], nds, aretesG, noeudsEnErreur: new Set(), plat: { expansions: new Map() } },
+      creerTablesDePasse(),
+      {
+        runtime: null, repertoireTravail: "", signal: new AbortController().signal,
+        trouverDef: (f) => FICHES_DU_RUN[f], trouverPlugin: (f) => FICHES_DU_RUN[f]?.executer as FonctionPlugin<unknown, null> | undefined,
+        typeFlux: () => undefined, canoniser: (_p, v) => v, graineDuNoeud: (_id, _nom, brut) => brut,
+        lireCache: (id) => cache.get(id), ecrireCache: (id, e) => cache.set(id, e),
+        sauts: { copieSautee: () => false, finReprise: () => false, empreintePour: () => undefined },
+        questions: () => NEUTRES, poser: () => {}, poserOmbre: () => {}, t: (cle) => cle,
+        quandUnNoeudAFini: (id) => { tourne.push(id); },
+      },
     );
-    if (!reutilise) retraites.add(id);
-  }
-  return [...retraites];
+    return tourne;
+  };
+  await run();
+  for (const id of [...cache.keys()]) if (!cachePrecedent.has(id)) cache.delete(id);
+  return run();
 }
 
 /** Une chaîne a → b → c, telle que la posait le relevé : extrait, export, sortie texte. */
@@ -154,43 +189,43 @@ describe("l'exception, et ce qu'elle entraîne", () => {
     expect(peutReutiliserLeCache(true, false, EMPREINTES, EMPREINTES)).toBe(false);
   });
 
-  it("ET IL ENTRAÎNE TOUTE SA DESCENDANCE, c'est la réponse au relevé", () => {
+  it("ET IL ENTRAÎNE TOUTE SA DESCENDANCE, c'est la réponse au relevé", async () => {
     // La chaîne du relevé : un extrait vidéo qui ne se cache jamais, un export, une sortie texte.
     // Les trois ont déjà tourné et rien n'a changé ; les trois tournent quand même.
-    expect(quiTourne(["a", "b", "c"], CHAINE, new Set(["a"]), TOUS_EN_CACHE)).toEqual(["a", "b", "c"]);
+    expect(await quiTourne(["a", "b", "c"], CHAINE, new Set(["a"]), TOUS_EN_CACHE)).toEqual(["a", "b", "c"]);
   });
 
-  it("SANS L'EXCEPTION, LA MÊME CHAÎNE NE REJOUE RIEN", () => {
+  it("SANS L'EXCEPTION, LA MÊME CHAÎNE NE REJOUE RIEN", async () => {
     // Le contre-essai, et c'est lui qui prouve que l'exception est bien la cause.
-    expect(quiTourne(["a", "b", "c"], CHAINE, new Set(), TOUS_EN_CACHE)).toEqual([]);
+    expect(await quiTourne(["a", "b", "c"], CHAINE, new Set(), TOUS_EN_CACHE)).toEqual([]);
   });
 
-  it("LA PROPAGATION EST TRANSITIVE, et ne s'arrête pas au premier aval", () => {
+  it("LA PROPAGATION EST TRANSITIVE, et ne s'arrête pas au premier aval", async () => {
     const longue: LienDeGraphe[] = [
       { source: "a", target: "b" }, { source: "b", target: "c" },
       { source: "c", target: "d" }, { source: "d", target: "e" },
     ];
     const cache = new Map(["a", "b", "c", "d", "e"].map((id) => [id, EMPREINTES]));
-    expect(quiTourne(["a", "b", "c", "d", "e"], longue, new Set(["a"]), cache))
+    expect(await quiTourne(["a", "b", "c", "d", "e"], longue, new Set(["a"]), cache))
       .toEqual(["a", "b", "c", "d", "e"]);
   });
 
-  it("UNE BRANCHE SŒUR N'EST PAS ENTRAÎNÉE, la propagation suivant les arêtes", () => {
+  it("UNE BRANCHE SŒUR N'EST PAS ENTRAÎNÉE, la propagation suivant les arêtes", async () => {
     // Deux branches parallèles depuis deux sources distinctes. Seule celle qui descend du composant
     // non caché rejoue ; l'autre suit dans l'ordre du run sans en dépendre, et reste tranquille.
     // Cela a été une faute : invalider tout l'aval de l'ordre linéaire rejouait les sœurs.
     const liens: LienDeGraphe[] = [{ source: "a", target: "b" }, { source: "x", target: "y" }];
     const cache = new Map(["a", "b", "x", "y"].map((id) => [id, EMPREINTES]));
-    expect(quiTourne(["a", "b", "x", "y"], liens, new Set(["a"]), cache)).toEqual(["a", "b"]);
+    expect(await quiTourne(["a", "b", "x", "y"], liens, new Set(["a"]), cache)).toEqual(["a", "b"]);
   });
 
-  it("UN COMPOSANT QUI REJOUE SON CACHE N'ENTRAÎNE PERSONNE", () => {
+  it("UN COMPOSANT QUI REJOUE SON CACHE N'ENTRAÎNE PERSONNE", async () => {
     // Le milieu de la chaîne n'a pas tourné : son aval ne doit pas être averti.
     const cache = new Map([["b", EMPREINTES], ["c", EMPREINTES]]);
     // « a » n'a pas de cache, donc il tourne ; « b » aussi, puisqu'il en descend ; « c » de même.
-    expect(quiTourne(["a", "b", "c"], CHAINE, new Set(), cache)).toEqual(["a", "b", "c"]);
+    expect(await quiTourne(["a", "b", "c"], CHAINE, new Set(), cache)).toEqual(["a", "b", "c"]);
     // Mais si « a » a lui aussi son cache, personne ne tourne.
-    expect(quiTourne(["a", "b", "c"], CHAINE, new Set(), TOUS_EN_CACHE)).toEqual([]);
+    expect(await quiTourne(["a", "b", "c"], CHAINE, new Set(), TOUS_EN_CACHE)).toEqual([]);
   });
 });
 
@@ -277,65 +312,65 @@ describe("le cache d'une boucle dépliée", () => {
       ["deb#0::dans", "deb#1::dans", "deb#2::dans"]);
   });
 
-  it("AU PREMIER RUN TOUT TOURNE, copies comprises", () => {
+  it("AU PREMIER RUN TOUT TOURNE, copies comprises", async () => {
     const { ordre, liens, ids } = deplie(3);
-    expect(quiTourne(ordre, liens, new Set(), new Map()).sort()).toEqual([...ids].sort());
+    expect((await quiTourne(ordre, liens, new Set(), new Map())).sort()).toEqual([...ids].sort());
   });
 
-  it("ET AU RUN SUIVANT, RIEN NE TOURNE : une boucle inchangée ne se recalcule pas", () => {
+  it("ET AU RUN SUIVANT, RIEN NE TOURNE : une boucle inchangée ne se recalcule pas", async () => {
     const { ordre, liens, ids } = deplie(3);
     const tout = new Map(ids.map((id) => [id, EMPREINTES]));
-    expect(quiTourne(ordre, liens, new Set(), tout)).toEqual([]);
+    expect(await quiTourne(ordre, liens, new Set(), tout)).toEqual([]);
   });
 
-  it("UN RÉGLAGE CHANGÉ EN AMONT ENTRAÎNE CHAQUE TOUR, puis la fin et l'aval", () => {
+  it("UN RÉGLAGE CHANGÉ EN AMONT ENTRAÎNE CHAQUE TOUR, puis la fin et l'aval", async () => {
     // C'est le cas exact du relevé. La remise à zéro d'un réglage efface le cache des descendants
     // VISIBLES — `avant`, `deb`, `finA`, `apres` — et ne peut pas toucher celui des copies, qui
     // n'existent pas hors du dépliage. Sans propagation, les trois tours serviraient le son d'avant.
     const { ordre, liens, ids } = deplie(3);
     const cache = new Map(ids.map((id) => [id, EMPREINTES]));
     cache.delete("avant");
-    const tournent = quiTourne(ordre, liens, new Set(), cache);
+    const tournent = await quiTourne(ordre, liens, new Set(), cache);
     expect(tournent, "chaque tour doit être entraîné, et aucun ne doit resservir son cache").toEqual(
       ["avant", "deb#0::dans", "deb#1::dans", "deb#2::dans", "finA", "apres"]);
     expect(tournent, "et la source, elle, n'a aucune raison de rejouer").not.toContain("src");
   });
 
-  it("ET CELA TIENT SUR TROIS CENTS TOURS, le réglage n'ayant plus de plafond", () => {
+  it("ET CELA TIENT SUR TROIS CENTS TOURS, le réglage n'ayant plus de plafond", async () => {
     // Le nombre de tours était clos à trente-deux ; il est ouvert, et seul le nombre total de
     // COPIES est borné. Trois cents tours d'un ventre d'un nœud restent sous ce plafond-là.
     const TOURS = 300;
     const { ordre, liens, ids } = deplie(TOURS);
     const cache = new Map(ids.map((id) => [id, EMPREINTES]));
     cache.delete("avant");
-    const tournent = quiTourne(ordre, liens, new Set(), cache);
+    const tournent = await quiTourne(ordre, liens, new Set(), cache);
     const copies = ids.filter((id) => id.includes("::dans"));
     expect(copies.length).toBe(TOURS);
     for (const c of copies) expect(tournent, `le tour ${c} doit rejouer`).toContain(c);
     expect(tournent).toContain("apres");
   });
 
-  it("UN COMPOSANT `jamaisCache` DANS LA BOUCLE ENTRAÎNE TOUS LES TOURS QUI LE SUIVENT", () => {
+  it("UN COMPOSANT `jamaisCache` DANS LA BOUCLE ENTRAÎNE TOUS LES TOURS QUI LE SUIVENT", async () => {
     // Un lecteur de fichier, un tirage au sort : son résultat peut changer sans qu'aucune empreinte
     // ne bouge. Le tour où il se trouve rejoue, donc le suivant aussi, de proche en proche.
     const { ordre, liens, ids } = deplie(4);
     const cache = new Map(ids.map((id) => [id, EMPREINTES]));
-    const tournent = quiTourne(ordre, liens, new Set(["deb#1::dans"]), cache);
+    const tournent = await quiTourne(ordre, liens, new Set(["deb#1::dans"]), cache);
     expect(tournent).toEqual(["deb#1::dans", "deb#2::dans", "deb#3::dans", "finA", "apres"]);
     expect(tournent, "le tour d'avant n'a aucune raison de rejouer").not.toContain("deb#0::dans");
   });
 
-  it("ET L'AMONT DE LA BOUCLE N'EST JAMAIS ENTRAÎNÉ PAR ELLE : la propagation ne remonte pas", () => {
+  it("ET L'AMONT DE LA BOUCLE N'EST JAMAIS ENTRAÎNÉ PAR ELLE : la propagation ne remonte pas", async () => {
     const { ordre, liens, ids } = deplie(3);
     const cache = new Map(ids.map((id) => [id, EMPREINTES]));
-    const tournent = quiTourne(ordre, liens, new Set(["finA"]), cache);
+    const tournent = await quiTourne(ordre, liens, new Set(["finA"]), cache);
     expect(tournent).toEqual(["finA", "apres"]);
     for (const amont of ["src", "avant", "deb#0::dans", "deb#1::dans", "deb#2::dans"]) {
       expect(tournent, `${amont} est en amont : le rejouer serait du temps perdu`).not.toContain(amont);
     }
   });
 
-  it("DEUX BOUCLES CÔTE À CÔTE NE S'ENTRAÎNENT PAS L'UNE L'AUTRE", () => {
+  it("DEUX BOUCLES CÔTE À CÔTE NE S'ENTRAÎNENT PAS L'UNE L'AUTRE", async () => {
     // Une branche sœur n'est pas une descendance, et ce fut une faute autrefois. Sur deux boucles
     // elle se paierait n fois, une par tour.
     const noeuds: NoeudG[] = [
@@ -358,7 +393,7 @@ describe("le cache d'une boucle dépliée", () => {
     const liens = r.aretes.map((a) => ({ source: a.source, target: a.target }));
     const ordre = ordreTopologique(r.noeuds.map((n) => n.id), r.aretes);
     const cache = new Map(r.noeuds.map((n) => [n.id, EMPREINTES]));
-    const tournent = quiTourne(ordre, liens, new Set(["debA#0::dansA"]), cache);
+    const tournent = await quiTourne(ordre, liens, new Set(["debA#0::dansA"]), cache);
     for (const b of tournent) expect(b, "aucune copie de la boucle B ne doit être entraînée").not.toContain("dansB");
     expect(tournent).not.toContain("finB");
     expect(tournent).toContain("finA");
