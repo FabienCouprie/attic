@@ -272,9 +272,11 @@ describe("les deux canaux déclarés ne viennent que de l'exécuteur ou du cache
     const retour = readFileSync(join("src", "core", "execution.ts"), "utf8");
     expect(retour, "le cache doit ranger les deux canaux, sans quoi un nœud sauté vide son écran")
       .toMatch(/ecrireCache\([^)]*affichage:\s*res\.affichage[^)]*designe:\s*res\.designe/s);
-    expect(moteur, "et les en ressortir au succès de cache")
+    // LE SUCCÈS DE CACHE S'APPLIQUE DANS LE CŒUR depuis la pièce 3 du plan du runtime, avec la boucle :
+    // c'est là qu'on en cherche les deux formes.
+    expect(retour, "et les en ressortir au succès de cache")
       .toMatch(/entreeCache\.affichage\)\s*affichageParNoeud\.set/);
-    expect(moteur, "et les en ressortir aussi pour le désigné")
+    expect(retour, "et les en ressortir aussi pour le désigné")
       .toMatch(/entreeCache\.designe\)\s*designeParNoeud\.set/);
     // LE REPORT EST FAIT PAR LE MÉNAGE D'APRÈS PASSE depuis le 2026-11-02 (`ui/menage-apres-passe.ts`,
     // sortie 7 du plan du moteur) : c'est là qu'on le cherche, et le balayage à la main reste

@@ -16,8 +16,8 @@ import {
 // CE QUE LE SHELL TRANSPORTE SANS LE REGARDER. Le moteur d exécution déclarait ses valeurs
 // `TypeValeur`, c est-à-dire l union du domaine audio : le chemin d exécution de TOUS les domaines
 // était typé contre un seul. Il n en lit aucune ; il les prend d un nœud et les donne au suivant.
-type ValeurTransportee = unknown;
-import { deciderDuNoeud, enregistrerLEchec, enregistrerLeRetour, type PretsDuRetour } from "../../core/execution";
+// Depuis la pièce 3 du plan du runtime, c'est la boucle du cœur qui les transporte, en `unknown`.
+import { creerTablesDePasse, executerLesNoeuds } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
 import { noeudRegarde } from "../../core/memoire";
 import { servicesDomaine } from "../../core/services-domaine";
@@ -25,16 +25,13 @@ import { poserStatut as poserStatutNoeud, poserStatutOmbre, reinitialiserStatuts
 import { poserResultat } from "../resultats";
 import { sautsDeBoucles } from "../../core/saut-de-boucle";
 import { creerResolveurDeGraines } from "../../core/graines-de-passe";
-import { contexteDePasse } from "../../core/contexte-de-passe";
 import { preparerLaPasse } from "../../core/preparation-passe";
-import { creerPoseDesStatuts } from "../../core/statuts-de-passe";
 
 import { servicesOrchestration } from "../services-orchestration";
 // CE QUE LE SHELL DEMANDE AU DOMAINE SUR LES VALEURS PRODUITES. Six fonctions audio étaient
 // importées ici, sur le chemin d'exécution de tous les domaines, et `AudioBuffer` nommé à trois
 // endroits. Les questions sont désormais posées, et le domaine y répond (cf. ui/services-apercu.ts).
 import { servicesApercu } from "../services-apercu";
-import type { DemandeAuMoteur } from "../../core/types";
 import { useRemiseAZero } from "./useRemiseAZero";
 // CE QUE LE MAGASIN REÇOIT POUR UN NŒUD est calculé dans `ui/correctif-resultat.ts`, sur les tables
 // de la passe que `EtatDePasse` nomme une fois ; voir ces deux fichiers.
@@ -217,7 +214,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     });
     const {
       aretesReelles, plat, deplie, nds, aretesG, tousNoeudsG, boites,
-      ordreFiltre, noeudsEnErreur, idsDecoratifs, ordonnees, estMetaEnScope,
+      ordreFiltre, idsDecoratifs, ordonnees, estMetaEnScope,
     } = plan;
     servicesOrchestration().publierGraphe(plan.aDocumenter);
     for (const a of plan.avertissements) console.warn(a);
@@ -225,9 +222,10 @@ export function useExecutionGraphe(o: OptionsExecution) {
     console.log(plan.traceOrdre);
 
     const ctx = await obtenirAudio();
-    const resultats = new Map<string, ValeurTransportee[]>();
-    const messages = new Map<string, string>();
-    const traitesCeRun = new Set<string>();
+    // LES TABLES DE LA PASSE, créées avant la boucle : les deux premières sont publiées avant elle, et
+    // le ménage lit les autres après. Voir `TablesDePasse` dans `core/execution.ts`.
+    const tables = creerTablesDePasse();
+    const { resultats, messages, affichageParNoeud, designeParNoeud, demandesParNoeud, ecartsParNoeud, tempsParVisible } = tables;
     // UNE BOUCLE INCHANGÉE NE SE RECALCULE PAS, son corps eût-il été lâché. Voir `core/saut-de-boucle.ts`.
     const sauts = sautsDeBoucles(deplie.depliees, { noeuds: deplie.noeuds, aretes: aretesG, resultats, cache: cacheExec.current, toursDesCopies: deplie.toursDesCopies,
       reglages: JSON.stringify(servicesDomaine().reglagesDeProjet()), jamaisCache: (id) => trouverDef(deplie.noeuds.find((n) => n.id === id)?.data.ficheId as string)?.jamaisCache === true });
@@ -239,26 +237,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
     });
     // Les tables VIVANTES du run, pour les nœuds qui passent en dernier (cf. grapheGlobal.ts).
     servicesOrchestration().publierExecution({ ordre: ordreFiltre, noeuds: nds, aretes: aretesG, resultats, messages, expansions: plat.expansions });
-
-    // ── LES STATUTS D'UNE PASSE SE POSENT PAR LE CŒUR, `core/statuts-de-passe.ts` ──
-    // Une copie traduite vers son nœud visible, son ombre gardée, une erreur qui tient, et le méta
-    // d'un nœud interne en échec qui le dit aussitôt. Le magasin et la langue lui sont prêtés.
-    const { poserStatut, marquerMetaEnEchec } = creerPoseDesStatuts({
-      expansions: plat.expansions, poser: definirStatut, poserOmbre: poserStatutOmbre, t,
-    });
-
-    const tempsParVisible = new Map<string, number>();
-    // L'ecart de niveau mesure sur chaque noeud, en decibels. Voir le commentaire pose la
-    // ou il est calcule.
-    const ecartsParNoeud = new Map<string, number>();
-    // CE QUE CHAQUE COMPOSANT MONTRE, par le canal déclaré de son exécuteur. Voir `FonctionPlugin`
-    // dans `core/types.ts` : `affichage` est ce que le run a produit, `designe` ce qu'il a désigné
-    // de ses entrées, et cette distinction seule décide de ce qu'un réglage périme.
-    const affichageParNoeud = new Map<string, Record<string, unknown>>();
-    const designeParNoeud = new Map<string, Record<string, unknown>>();
-    // CE QUE LES COMPOSANTS DEMANDENT AU MOTEUR, et qui ne se pose jamais sur un nœud : poser un
-    // graphe sur le canevas, relire la palette. Voir `moteur` dans `core/types.ts`.
-    const demandesParNoeud = new Map<string, DemandeAuMoteur>();
 
     // LA PRÉPARATION EST LE PLUS GROS GEL DU LANCEMENT. Valider le graphe, l'aplatir, déplier les
     // boucles et les instruments, le publier, calculer l'ordre topologique : tout cela est
@@ -337,157 +315,38 @@ export function useExecutionGraphe(o: OptionsExecution) {
       dansUnMeta: (pileMetaRef?.current?.length ?? 0) > 0,
       cacheParBulle: estCacheParBulle(tousNoeudsG, id),
     });
-    // CE QUE LE CŒUR REÇOIT POUR RANGER LE RETOUR D'UN NŒUD : les tables de la passe, telles quelles,
-    // la seule écriture du cache, le jeton, la fiche, le domaine et la pose des statuts.
-    const retour: PretsDuRetour = {
-      aretes: aretesG, expansions: plat.expansions, resultats, messages, affichageParNoeud, designeParNoeud,
-      demandesParNoeud, ecartsParNoeud, tempsParVisible, noeudsEnErreur,
+    // ── LA BOUCLE NŒUD PAR NŒUD EST DANS LE CŒUR, `executerLesNoeuds` de `core/execution.ts` ──
+    // Décider, appliquer la décision, exécuter, ranger le retour, avec ses trois points d'annulation.
+    // Le crochet lui prête ce qu'il tient : le runtime, le contrôleur, le jeton, le registre, le cache,
+    // les sauts de boucle, les questions du domaine, la pose des statuts et celle des résultats.
+    await executerLesNoeuds<AudioContext>(plan, tables, {
+      runtime: ctx, repertoireTravail: repertoire, signal: controller.signal, jeton, trouverDef,
+      trouverPlugin: (f) => registreUI().trouverPlugin(f), typeFlux: (t) => registreUI().typeFlux(t),
+      canoniser: valeurCanoniqueChoix, graineDuNoeud,
+      lireCache: (id) => cacheExec.current.get(id),
       ecrireCache: (id, entree) => cacheExec.current.set(id, entree),
-      empreinteBoucle: (id) => sauts.empreintePour(id), jeton, trouverDef,
-      typeFlux: (t) => registreUI().typeFlux(t), questions: () => servicesApercu(),
-      poserStatut, marquerMetaEnEchec,
-    };
-
-    for (let i = 0; i < ordreFiltre.length; i++) {
-      // Run annulé (reset pendant l'exécution) : arrêter d'enchaîner les nœuds
-      // suivants. Le nœud éventuellement en cours au moment de l'annulation est
-      // géré séparément plus bas (il faut laisser sa promesse se résoudre).
-      if (controller.signal.aborted) break;
-      const nodeId = ordreFiltre[i];
-      // ── CE QUE LA PASSE FAIT DE CE NŒUD EST DÉCIDÉ PAR LE CŒUR, `deciderDuNoeud` de `core/execution.ts` ──
-      // Déjà en erreur, entrée en erreur, absent, copie sautée, cache, ou à exécuter : le verdict
-      // vient dans cet ordre, et c'est ici qu'il s'applique, aux tables, aux statuts et aux temps.
-      const decision = deciderDuNoeud(nodeId, {
-        noeudsEnErreur, noeuds: nds, aretes: aretesG, resultats, traitesCeRun,
-        lireCache: (id) => cacheExec.current.get(id), sauts, trouverDef,
-      });
-      if (decision.genre === "dejaEnErreur" || decision.genre === "absent") continue;
-      // ── Propagation d'erreur ── : une entrée vient d'un nœud en erreur, de validation OU
-      // d'exécution, et ce nœud ne peut pas réussir en silence avec une entrée manquante.
-      if (decision.genre === "entreeEnErreur") {
-        noeudsEnErreur.add(nodeId);
-        resultats.set(nodeId, [null]);
-        poserStatut(nodeId, "erreur", t("execution.entreeEnErreur").replace("{source}", decision.source));
-        marquerMetaEnEchec(nodeId);
-        continue;
-      }
-      if (decision.genre === "copieSautee") { poserStatut(nodeId, "termine"); continue; }
-      const node = decision.noeud;
-
-      // UN JOURNAL DE HUIT VALEURS PAR NŒUD ET PAR RUN A ÉTÉ RETIRÉ D'ICI, et c'est le second du
-      // genre. Il interpolait `sourceReprocessee`, `jamaisCache`, le verdict et quatre empreintes —
-      // y compris un objet littéral, donc une sérialisation — pour chaque nœud de chaque run, et
-      // rien ne le lisait : ni un cas, ni un script, ni un garde. La décision du cache, elle, est
-      // éprouvée dans `core/cache-execution.ts`, avec ses cas et le prix de sa règle écrit.
-      //
-      // CE QU'IL A PAYÉ : le recensement des fréquences, plus bas. Le fichier est à son plafond de
-      // dette, et la règle du dépôt est que ce qu'on y ajoute doit y être payé — ce journal valait
-      // moins qu'une mesure, comme « [cache store] » avant lui.
-      if (decision.genre === "cache") {
-        const entreeCache = decision.entree;
-        resultats.set(nodeId, entreeCache.valeurs);
-        if (entreeCache.message) messages.set(nodeId, entreeCache.message);
-        // LE CACHE PORTE AUSSI CE QUE LE NŒUD MONTRAIT, et il ne le portait pas. Un raccourci de
-        // cache ne repassait donc rien dans les deux canaux déclarés, et le moteur posait
-        // `undefined` : l'écran d'un nœud sauté se vidait. Cela ne se voyait pas, parce que le
-        // report des champs autonomes remettait par-dessus la valeur de l'INSTANTANÉ, c'est-à-dire
-        // celle d'un run antérieur. Deux fautes qui se masquaient l'une l'autre ; corriger l'une
-        // sans l'autre aurait vidé l'écran à chaque cache.
-        if (entreeCache.affichage) affichageParNoeud.set(nodeId, entreeCache.affichage);
-        if (entreeCache.designe) designeParNoeud.set(nodeId, entreeCache.designe);
-        poserStatut(nodeId, "termine");
-        if (typeof entreeCache.tempsExecution === "number") {
-          const visibleId = plat.expansions.get(nodeId) ?? nodeId;
-          tempsParVisible.set(visibleId, (tempsParVisible.get(visibleId) ?? 0) + entreeCache.tempsExecution);
-        }
-        continue;
-      }
-
-      // Le statut « en cours » n'est posé qu'après le test de cache : un nœud
-      // déjà en cache ne doit pas flasher « en cours »/« terminé » — ce flash
-      // donnait l'impression que le modèle Qwen redémarrait inutilement.
-      poserStatut(nodeId, "en_cours", t("execution.etape").replace("{i}", String(i + 1)).replace("{total}", String(ordreFiltre.length)));
-
-      // UNE IMAGE AVANT DE PARTIR. Les nœuds calculent dans le fil de l'interface : un nœud qui ne
-      // rend jamais la main empêche toute image d'être affichée. Sans cette pause, le statut
-      // « en cours » qu'on vient de poser n'apparaissait JAMAIS pendant le calcul du nœud, le
-      // bouton « Arrêter » restait inatteignable, et l'on ne voyait pas qui travaillait — mesuré
-      // sur cinq nœuds ordinaires : 1,4 seconde sans une seule image sur 1,6 seconde d'exécution.
-      //
-      // Elle coûte un millième de seconde par nœud. Elle ne suffit pas à elle seule — un nœud qui
-      // calcule dix secondes d'affilée fige toujours dix secondes —, mais elle rend l'interface
-      // vivante ENTRE les nœuds, et c'est là que se joue la perception d'une application qui répond.
-      await respirer();
-      if (controller.signal.aborted) break;
-
-      // NE PAS invalider tous les nœuds en aval dans l'ordre topologique plat :
-      // cela réexécutait les branches PARALLÈLES (sœurs) d'un nœud rejoué, car
-      // elles suivent ce nœud dans l'ordre linéaire sans en dépendre. La
-      // réexécution des vrais descendants est déjà assurée par `sourceReprocessee`
-      // (propagation transitive via `traitesCeRun`), qui ne touche QUE les
-      // nœuds dont une entrée réelle a été recalculée ce run.
-      //
-      // ET C'EST ICI, AVANT L'EXÉCUTION, QUE LE NŒUD EST DÉCLARÉ RETRAITÉ : dès qu'il a TOURNÉ, et
-      // non dès que sa sortie a CHANGÉ. Un composant `jamaisCache` qui rend deux fois la même chose
-      // entraîne donc toute sa descendance. Comparer les sorties pour arrêter la propagation serait
-      // faux : les empreintes décrivent une forme et non un contenu, et deux sons différents de
-      // même durée en portent une seule. Voir `core/cache-execution.ts`, qui tient la décision et
-      // ses cas.
-      traitesCeRun.add(nodeId);
-
-      const fn = registreUI().trouverPlugin(node.data.ficheId as string);
-      if (!fn) { noeudsEnErreur.add(nodeId); resultats.set(nodeId, [null]); poserStatut(nodeId, "erreur"); marquerMetaEnEchec(nodeId, node.data.ficheId as string); continue; }
-
-      const start = performance.now();
-      // CE QUE LE NŒUD REÇOIT EST CONSTRUIT PAR LE CŒUR, dans `core/contexte-de-passe.ts` : ses
-      // entrées, ses réglages lus comme le contrat le dit, la question des sorties, retenue pour la
-      // clé de cache, et un `onProgress` qui lève après annulation.
-      const { ctx: contexteDuNoeud, aConsulteSesSorties } = contexteDePasse<ValeurTransportee, AudioContext>({
-        noeud: node, aretes: aretesG, resultats, runtime: ctx, repertoireTravail: repertoire,
-        trouverDef, canoniser: valeurCanoniqueChoix, graineDuNoeud, signal: controller.signal,
-        poserProgression: (msg) => poserStatut(nodeId, "en_cours", msg, true),
-      });
-      // ── CE QUE LE MOTEUR FAIT DU RETOUR, PAR LE CŒUR : `enregistrerLeRetour` et `enregistrerLEchec`
-      // de `core/execution.ts`. Conversion à la fréquence de travail, héritage, écart de niveau,
-      // canaux, erreur ou succès, la seule écriture du cache gardée par le jeton, types au port,
-      // statut et temps. Le `try` couvre l'exécuteur ET son retour : ce qui lève dans l'un ou l'autre
-      // est l'échec du nœud, comme avant.
-      const quiATourne = { id: nodeId, noeud: node, empreintes: decision.empreintes, aConsulteSesSorties, debut: start };
-      try {
-        const res = await fn(contexteDuNoeud);
-        // Le nœud a été réinitialisé pendant que sa promesse était en vol (le
-        // plugin a ignoré `signal`, ou a fini pile au moment de l'annulation) :
-        // ne pas écraser l'état déjà remis à « attente » par le reset avec un
-        // résultat/statut « terminé » ou « erreur » périmé.
-        if (controller.signal.aborted) break;
-        await enregistrerLeRetour(quiATourne, res, retour);
-      } catch (e: any) {
-        // Même garde que côté succès : une exception levée après annulation
-        // (ex. le plugin vérifie `signal.aborted` et lève pour sortir vite de
-        // sa boucle) ne doit pas non plus marquer le nœud « erreur ».
-        if (controller.signal.aborted) break;
-        enregistrerLEchec(quiATourne, e, retour);
-      }
-      // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER. En erreur comme en
-      // succès : un message d'erreur est un résultat, et l'attendre jusqu'au bout de la boucle
-      // laissait un nœud rouge sans sa raison.
-      aPoser.add(nodeId);
-      // SEUL LE NŒUD QU'ON REGARDE EST POSÉ PENDANT LE RUN, et les autres à la fin.
-      //
-      // POURQUOI CE PARTAGE, ET CE QU'IL COÛTE. Montrer un résultat coûte le rendu de ce résultat :
-      // mesuré en A/B alterné sur douze nœuds, poser chacun pendant le run portait le run de 4 103
-      // à 4 920 ms, soit +20 %. Ce n'est pas une inefficacité à corriger — `setNodes`, le double
-      // calcul du correctif, le souffle et le parcours du tampon par l'indicateur de niveau ont été
-      // éliminés tour à tour, et le coût est resté. C'est le prix du dessin, que l'ancien moteur ne
-      // payait pas parce qu'il dessinait tout après le dernier nœud.
-      //
-      // ON NE LE PAIE DONC QUE POUR CE QU'ON REGARDE. Le nœud sélectionné ou terminal est posé
-      // aussitôt, les autres à la fin de la boucle : le coût tombe de N nœuds à un ou deux, et l'on
-      // voit sans attendre ce que l'on avait sous les yeux. Relevé par Fabien : « les lecteurs
-      // apparaissent longtemps après que les nœuds soient notés comme terminés dans les workflows
-      // longs ».
-      if (estRegarde(nodeId)) await poserUnNoeud(nodeId);
-    }
+      sauts, questions: () => servicesApercu(), poser: definirStatut, poserOmbre: poserStatutOmbre, t,
+      // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER : il rejoint ce qui
+      // est à poser, et il est posé aussitôt s'il est regardé.
+      quandUnNoeudAFini: (nodeId) => {
+        aPoser.add(nodeId);
+        // SEUL LE NŒUD QU'ON REGARDE EST POSÉ PENDANT LE RUN, et les autres à la fin.
+        //
+        // POURQUOI CE PARTAGE, ET CE QU'IL COÛTE. Montrer un résultat coûte le rendu de ce résultat :
+        // mesuré en A/B alterné sur douze nœuds, poser chacun pendant le run portait le run de 4 103
+        // à 4 920 ms, soit +20 %. Ce n'est pas une inefficacité à corriger — `setNodes`, le double
+        // calcul du correctif, le souffle et le parcours du tampon par l'indicateur de niveau ont été
+        // éliminés tour à tour, et le coût est resté. C'est le prix du dessin, que l'ancien moteur ne
+        // payait pas parce qu'il dessinait tout après le dernier nœud.
+        //
+        // ON NE LE PAIE DONC QUE POUR CE QU'ON REGARDE. Le nœud sélectionné ou terminal est posé
+        // aussitôt, les autres à la fin de la boucle : le coût tombe de N nœuds à un ou deux, et l'on
+        // voit sans attendre ce que l'on avait sous les yeux. Relevé par Fabien : « les lecteurs
+        // apparaissent longtemps après que les nœuds soient notés comme terminés dans les workflows
+        // longs ». La promesse n'est rendue, et attendue, que pour le nœud regardé.
+        if (estRegarde(nodeId)) return poserUnNoeud(nodeId);
+      },
+    });
 
     // LE MÉNAGE D'APRÈS PASSE ET LES LECTEURS, dans `ui/menage-apres-passe.ts`, dans cet ordre : le
     // cache lâché, les causes de boucle et les graines dans les messages, la pose finale, les demandes,
