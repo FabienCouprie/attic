@@ -18,7 +18,7 @@
 import { expect, test } from "@playwright/test";
 
 import { serveurDeVerification } from "./serveur-de-developpement";
-import { semerEtLancer } from "./pilote-graphe";
+import { relancerEtAttendre, semer, semerEtLancer } from "./pilote-graphe";
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -110,13 +110,41 @@ test.describe("les types aux ports", () => {
     // donc le prédicat de l'audio DEPUIS LA PAGE, sur le registre vivant, et l'on vérifie que la
     // console se met à parler. C'est la paire que ce dépôt exige : un garde qui se tait, et la
     // preuve qu'il pouvait parler.
+    //
+    // ═══ ET LE PRÉDICAT SE DÉSARME AVANT QUE LES NŒUDS CALCULENT ═══
+    //
+    // LA VÉRIFICATION EST POSÉE SUR UN NŒUD QUI S'EXÉCUTE. Un nœud que le cache sert ne repasse pas
+    // par elle : ses valeurs l'ont été le jour où il les a rendues. Désarmer après un run puis
+    // relancer n'éprouve donc que ce que le second run recalcule, et sur un graphe en cache, rien.
+    //
+    // CE CAS L'A FAIT DE SA NAISSANCE AU 2026-11-01, et il n'entendait que par un ménage qui ne le
+    // regardait pas : sous l'économie de mémoire, la fin d'un run lâchait le cache des membres d'une
+    // bulle repliée, et le second run refaisait les trois effets de `bulle-effets`, soit trois lignes
+    // `[type]`. Le commit 01f3cf4 (PR 269) a levé ce ménage en deçà de dix minutes de son, comme il le
+    // devait : depuis, le second run sert du cache les huit nœuds qui calculent, la console se tait,
+    // et ce cas accusait d'un défaut un moteur qui appelait bel et bien la vérification. Bissecté le
+    // 2026-11-11 : vert à ec41dde, fusion de la PR 268 ; rouge à 1ef7fb2, fusion de la PR 269.
+    //
+    // IL SÈME DONC DEUX FOIS. Le premier run, prédicat armé, dit que le graphe est sain : sans lui,
+    // une ligne venue d'un vrai défaut passerait pour l'effet du désarmement. Le second semis recharge
+    // la page, d'où un registre neuf et un cache vide, puisque le cache vit en mémoire ; on désarme
+    // entre le rechargement et le clic, et chaque nœud calcule sous le prédicat désarmé. Le cache vide
+    // ne se suppose pas : la ligne `[lancer]` du moteur le dit, et c'est le premier relevé exigé,
+    // pour que les deux silences ne se confondent plus.
     const ecarts: string[] = [];
-    page.on("console", (m) => { if (m.text().startsWith("[type] ")) ecarts.push(m.text()); });
+    const lancements: string[] = [];
+    page.on("console", (m) => {
+      const t = m.text();
+      if (t.startsWith("[type] ")) ecarts.push(t);
+      if (t.startsWith("[lancer] ")) lancements.push(t);
+    });
 
     const graphe = readFileSync(join(RACINE, "exemples", EXEMPLES[0]), "utf8");
     await semerEtLancer(page, devUrl, graphe, { profondeurExport: 32 });
     expect(ecarts, "le graphe doit être sain avant qu'on désarme").toEqual([]);
 
+    await semer(page, devUrl, graphe, { profondeurExport: 32 });
+    lancements.length = 0;
     const desarme = await page.evaluate(() => {
       const reg = (window as unknown as { __attic_registre__?: {
         typeFlux: (id: string) => { estDuType?: (v: unknown) => boolean } | undefined } }).__attic_registre__;
@@ -134,10 +162,19 @@ test.describe("les types aux ports", () => {
       "",
     ].join("\n")).toBe(true);
 
-    await page.locator('button[title*="Lancer"]').first().click({ timeout: 15_000 });
-    await page.waitForTimeout(12_000);
+    await relancerEtAttendre(page);
+    console.log(`run désarmé · ${lancements[0] ?? "aucune ligne [lancer]"}`);
     console.log(`écarts après désarmement : ${ecarts.length}`);
     for (const e of ecarts.slice(0, 4)) console.log(`  ${e}`);
+    expect(lancements[0] ?? "", [
+      "",
+      "LE RUN DÉSARMÉ N'EST PAS PARTI D'UN CACHE VIDE, et ce cas ne peut alors rien entendre.",
+      "",
+      "Un nœud servi par le cache ne repasse pas par la vérification : un silence ici ne dirait",
+      "rien du moteur. C'est le piège qui a tenu ce cas rouge à tort depuis le 2026-11-01. Ou",
+      "bien la ligne « [lancer] … cacheSize=… » de `useExecutionGraphe.ts` a changé de forme.",
+      "",
+    ].join("\n")).toMatch(/ cacheSize=0$/);
     expect(ecarts.length, [
       "",
       "LA VÉRIFICATION NE TOURNE PAS.",
