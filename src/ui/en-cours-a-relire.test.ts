@@ -51,9 +51,8 @@ describe("l'en-cours, écrit puis relu", () => {
     expect(perdus, "gardé par le fichier, perdu par la reprise de séance").toEqual([]);
   });
 
-  // LE STATUT « ATTENTE » QUE LA RELECTURE POSE N'EST PAS TENU ICI, et c'est voulu : rien ne le lit,
-  // `ui/statuts.test.ts` interdit qu'on le lise, et la pièce 3 du chantier le retire de `data`. Le
-  // premier jet de ces cas l'affirmait, et ce garde les a fait tomber.
+  // LA RELECTURE NE POSE PLUS DE STATUT depuis la pièce 3 du chantier : il vit dans `ui/statuts.ts`,
+  // et `ui/statuts.test.ts` interdit qu'on le lise dans `data`. Le cas suivant exige qu'il n'y soit pas.
   it("UN NŒUD RELU GARDE SA PLACE ET SA TAILLE, et porte les gestes", () => {
     const geste = () => undefined;
     const { relus } = allerRetour([porteur()], { onReinitialiser: geste });
@@ -61,7 +60,7 @@ describe("l'en-cours, écrit puis relu", () => {
     expect(relus[0]).toMatchObject({ id: "p", type: "atelier", position: { x: 10, y: 20 }, width: 300, height: 120 });
   });
 
-  it("UN EN-COURS QUI PORTERAIT UN RÉSULTAT OU UN CHAMP INCONNU NE LES REND PAS", () => {
+  it("UN EN-COURS QUI PORTERAIT UN RÉSULTAT, UN STATUT OU UN CHAMP INCONNU NE LES REND PAS", () => {
     // L'écriture les écarte déjà ; la relecture aussi, car un en-cours peut venir d'ailleurs : les
     // cas d'application y posent des fichiers de projet, et un fichier se modifie à la main.
     const relus = noeudsRelus([{ id: "r", position: { x: 0, y: 0 }, data: {
@@ -69,6 +68,7 @@ describe("l'en-cours, écrit puis relu", () => {
     } }], {});
     expect(relus[0].data.audioResultatUrl, "un résultat ne survit pas à la séance").toBeUndefined();
     expect(relus[0].data.champInconnu).toBeUndefined();
+    expect(Object.keys(relus[0].data), "le statut vit dans ui/statuts.ts, non dans data").not.toContain("statut");
   });
 
   it("SANS TAILLE NI RÉGLAGES, le nœud prend une taille par défaut et des réglages vides", () => {

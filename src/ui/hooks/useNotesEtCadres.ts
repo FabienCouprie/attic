@@ -46,7 +46,6 @@ export function useNotesEtCadres({ noeudsRef, rfInstanceRef, callbacksNoeudRef, 
       data: {
         ficheId: "comment",
         parametres: {},
-        statut: "attente",
         // AUCUN TEXTE POSÉ DANS LA DONNÉE : « Ajouter une note » y était écrit à la création, donc
         // figé dans la langue du moment. L'invite du champ, elle, suit la langue.
         ...(callbacksNoeudRef.current?.()),
@@ -65,7 +64,6 @@ export function useNotesEtCadres({ noeudsRef, rfInstanceRef, callbacksNoeudRef, 
         data: {
           ficheId: "frame",
           parametres: {},
-          statut: "attente",
           // AUCUN NOM POSÉ DANS LA DONNÉE : « Ajouter un cadre » y était écrit à la création, donc
           // figé dans la langue du moment. L'invite du champ, elle, suit la langue.
           couleur: "rgba(120,120,120,0.12)",

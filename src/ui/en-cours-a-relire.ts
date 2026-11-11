@@ -14,9 +14,9 @@ import { trouverDef } from "./ports-canevas";
 import { tailleDefaut } from "./tailles-noeuds";
 
 /**
- * Chaque nœud d'un en-cours, tel que le canevas le reçoit : « en attente », sa taille par défaut
- * quand l'en-cours n'en porte pas, des réglages vides s'il n'en a pas, et les gestes d'`App.tsx`
- * posés sur son `data`.
+ * Chaque nœud d'un en-cours, tel que le canevas le reçoit : sa taille par défaut quand l'en-cours n'en
+ * porte pas, des réglages vides s'il n'en a pas, et les gestes d'`App.tsx` posés sur son `data`. Son
+ * statut n'y est pas : il vit dans `ui/statuts.ts`, et un nœud qui n'y figure pas est en attente.
  */
 export function noeudsRelus(noeuds: readonly any[], gestes: Record<string, unknown>): any[] {
   return noeuds.map((n: any) => {
@@ -27,7 +27,6 @@ export function noeudsRelus(noeuds: readonly any[], gestes: Record<string, unkno
       data: {
         ...Object.fromEntries([...CHAMPS_DU_PROJET].map((c) => [c, n.data[c]])),
         parametres: n.data.parametres ?? {},
-        statut: "attente",
         // TOUS LES GESTES, ET NON UNE LISTE RECOPIÉE. Douze noms étaient énumérés ici, et douze
         // autres à la génération d'un graphe : trois écritures du même savoir, dont deux
         // silencieuses. Un geste neuf ajouté au seul `callbacksNoeud` manquait donc aux nœuds

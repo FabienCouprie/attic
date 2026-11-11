@@ -96,7 +96,6 @@ export function useBulles(o: OptionsBulles) {
         data: {
           ficheId: ficheDeBulle(id),
           parametres: {},
-          statut: "attente" as const,
           // AUCUN NOM ÉCRIT ICI. Il l'était, dans la langue du moment : une bulle créée en français
           // restait « Bulle » en anglais. Le nom par défaut vient de sa fiche, qui porte les deux et
           // qui est refaite à chaque changement ; `data.nom` ne sert qu'au nom donné à la main.

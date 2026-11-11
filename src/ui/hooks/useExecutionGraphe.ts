@@ -23,6 +23,7 @@ import { noeudRegarde } from "../../core/memoire";
 import { servicesDomaine } from "../../core/services-domaine";
 import { poserStatut as poserStatutNoeud, poserStatutOmbre, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
 import { poserResultat } from "../resultats";
+import { definirPrioritaire, noeudPrioritaire } from "../priorite";
 import { sautsDeBoucles } from "../../core/saut-de-boucle";
 import { creerResolveurDeGraines } from "../../core/graines-de-passe";
 import { preparerLaPasse } from "../../core/preparation-passe";
@@ -66,7 +67,6 @@ export interface OptionsExecution {
   noeudsRef: MutableRefObject<any[]>;
   aretesRef: MutableRefObject<any[]>;
   enExecRef: MutableRefObject<boolean>;
-  prioritaireRef: MutableRefObject<string | null>;
   audioCtxRef: MutableRefObject<AudioContext | null>;
   cacheExec: MutableRefObject<Map<string, any>>;
   /** La bascule « économiser la mémoire » de la barre d'outils. Absente : active, le défaut sûr. */
@@ -76,8 +76,6 @@ export interface OptionsExecution {
   edges: Edge[];
   setNodes: Dispatch<SetStateAction<any[]>>;
   setEnExecution: (b: boolean) => void;
-  prioritaire: string | null;
-  setPrioritaire: (id: string | null) => void;
   repertoire: string;
   onGrapheGenere?: (nodeId: string, spec: { nodes: { ficheId: string; label: string }[]; edges: { source: number; target: number }[] }) => void;
   onNodeInstalle?: () => void;
@@ -86,8 +84,8 @@ export interface OptionsExecution {
 export function useExecutionGraphe(o: OptionsExecution) {
   const { t } = useI18n();
   const {
-    noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec, economieMemoireRef, pileMetaRef,
-    setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
+    noeudsRef, aretesRef, enExecRef, audioCtxRef, cacheExec, economieMemoireRef, pileMetaRef,
+    setNodes, setEnExecution, repertoire,
     onGrapheGenere, onNodeInstalle,
   } = o;
 
@@ -208,7 +206,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const plan = preparerLaPasse({
       noeuds: noeudsRef.current as unknown as NoeudG[],
       aretes: aretesRef.current as unknown as AreteG[],
-      prioriteDemandee: noeudPrioritaireId ?? prioritaireRef.current,
+      prioriteDemandee: noeudPrioritaireId ?? noeudPrioritaire(),
       versLAval: perimetre?.versLAval === true,
       trouverMeta, trouverDef, fluxCompatibles: registreUI().fluxCompatibles, t,
     });
@@ -385,10 +383,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
       if (estGlobal) { enExecRef.current = false; setEnExecution(false); }
       // Lire la valeur LIVE (pas la closure, périmée quand onDefinirPrioritaire vient
       // de la fixer) pour toujours effacer la priorité après le run — sinon le run
-      // global suivant reste filtré sur l'ancien nœud prioritaire.
-      if (prioritaireRef.current) setPrioritaire(null);
+      // global suivant reste filtré sur l'ancien nœud prioritaire. Le magasin d'`ui/priorite.ts`
+      // la tient vive, et ne prévient que le nœud qui la perd.
+      if (noeudPrioritaire()) definirPrioritaire(null);
     }
-  }, [prioritaire, repertoire, t]);
+  }, [repertoire, t]);
 
   // ── Les deux pilotes de passes, le lot et les boucles par passes, dans usePilotesDePasse.ts ──
   const { lancerLeLot } = usePilotesDePasse({ lancerUnePasse, noeudsRef, aretesRef, cacheExec, arretLotRef });

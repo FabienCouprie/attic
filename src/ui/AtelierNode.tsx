@@ -10,6 +10,7 @@ import { useTexteEnCours } from "./texte-en-cours";
 import { vuesPourNoeud, vueAvantMasqueMessage, vueAvantPorteLecteur } from "./registre-vues";
 import { useStatut } from "./statuts";
 import { useResultat } from "./resultats";
+import { useEstPrioritaire } from "./priorite";
 import type { NoeudAtelier } from "./noeud-atelier";
 import { etatPorts } from "./ports-extensibles";
 import { ColonnePorts } from "./ColonnePorts";
@@ -238,6 +239,9 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
   // domaine ne changent pas d'une ligne : elles continuent de lire `data.audioResultatUrl`. Le
   // graphe passe en premier et le résultat par-dessus, puisque c'est lui qui décrit le dernier run.
   const resultat = useResultat(id);
+  // LA PRIORITÉ NON PLUS ne vient du tableau des nœuds : un effet la recopiait dans le `data` de tous,
+  // deux fois par ▶. Ici, seuls l'ancien et le nouveau prioritaire sont prévenus. Voir `ui/priorite.ts`.
+  const estPrioritaire = useEstPrioritaire(id);
   const data = useMemo(
     () => (Object.keys(resultat).length === 0 ? donneesDuGraphe : { ...donneesDuGraphe, ...resultat }),
     [donneesDuGraphe, resultat],
@@ -624,7 +628,7 @@ export function AtelierNode({ id, data: donneesDuGraphe, selected }: NodeProps<N
         </span>
         <span className="attic-node-actions">
           <button className="attic-node-btn-prio" onClick={(e) => { e.stopPropagation(); data.onDefinirPrioritaire?.(id); }}
-            title={t("btn.executer")} style={{ color: data.prioritaire ? "#2a9d8f" : undefined }}>▶</button>
+            title={t("btn.executer")} style={{ color: estPrioritaire ? "#2a9d8f" : undefined }}>▶</button>
           <button className="attic-node-btn-reset" onClick={(e) => { e.stopPropagation(); data.onReinitialiser?.(id); }} title={t("btn.reinitialiser")}>↺</button>
           {(def?.notice || def?.resume) && <button className="attic-node-btn-doc" onClick={(e) => { e.stopPropagation(); setDocOpen((v) => !v); }} title={t("btn.doc")}>?</button>}
           <button className="attic-node-btn-collapse" onClick={(e) => { e.stopPropagation(); setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, replie: !replie } } : n)); }} title={replie ? t("btn.deplier") : t("btn.replier")}>{replie ? "+" : "−"}</button>

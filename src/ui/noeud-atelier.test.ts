@@ -5,13 +5,14 @@
 // que la table des saisies déclare. Rien ne les comparait, ni entre eux ni aux tables : une liste
 // tenue à la main vieillit, et celle-ci avait vieilli deux fois.
 //
-// CE QU'IL LIT, ET COMMENT. Le type est rangé en cinq sections, une par classe de champ. Le garde lit
+// CE QU'IL LIT, ET COMMENT. Le type est rangé en quatre sections, une par classe de champ. Le garde lit
 // chaque section PAR SA FORME, dans le texte de `ui/noeud-atelier.ts`, et la compare à sa source :
 //   SaisiesDuNoeud     = `CHAMPS_DE_SAISIE` de `core/saisies.ts`, dans les deux sens ;
 //   ResultatsDuNoeud   ⊂ `CHAMPS_RESULTAT` de `core/classes-de-champs.ts` ;
 //   RappelsDuNoeud     = les clés que `callbacksNoeud` d'`App.tsx` pose, dans les deux sens ;
-//   StructureDuNoeud   = `CHAMPS_DE_STRUCTURE` de `core/saisies.ts`, dans les deux sens ;
-//   EtatDuNoeud        = une liste écrite ici, faute de table : la pièce 3 retire ces champs de `data`.
+//   StructureDuNoeud   = `CHAMPS_DE_STRUCTURE` de `core/saisies.ts`, dans les deux sens.
+// La cinquième, l'état d'une passe, a disparu à la pièce 3 : le statut, la progression et la priorité
+// vivent dans des magasins, et le type ne doit plus les nommer.
 // Une ligne qu'il ne sait pas lire le fait échouer, au lieu de passer sans la voir.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
@@ -22,8 +23,8 @@ import { CHAMPS_RESULTAT } from "../core/classes-de-champs";
 const SRC = resolve(__dirname, "..");
 const lire = (f: string) => readFileSync(resolve(SRC, f), "utf8");
 
-/** Le statut d'une passe et la priorité, que la pièce 3 sort de `data`. */
-const ETAT_SANS_TABLE = ["statut", "progression", "progressionDuNoeud", "prioritaire"];
+/** L'état d'une passe et la priorité, sortis de `data` à la pièce 3, et que le type ne nomme plus. */
+const ETAT_HORS_DE_DATA = ["statut", "progression", "progressionDuNoeud", "prioritaire"];
 
 /**
  * LES ALIAS EN `any` QUI PORTENT ENCORE LE NOM. Quatre fichiers déclarent `type NoeudAtelier = any`,
@@ -129,11 +130,11 @@ const section = (nom: string) => {
 };
 
 describe("le type d'un nœud, tenu à ses sources", () => {
-  it("DonneesNoeud NE NOMME AUCUN CHAMP EN PROPRE : il étend les cinq sections, et rien d'autre", () => {
+  it("DonneesNoeud NE NOMME AUCUN CHAMP EN PROPRE : il étend les quatre sections, et rien d'autre", () => {
     const d = TYPE.get("DonneesNoeud");
     expect(d, "DonneesNoeud doit être une interface de ui/noeud-atelier.ts").toBeDefined();
     expect(d!.champs, "Un champ nommé dans DonneesNoeud même n'a pas de classe : rangez-le dans sa section.").toEqual([]);
-    expect(trie(d!.etend)).toEqual(trie(["SaisiesDuNoeud", "StructureDuNoeud", "EtatDuNoeud", "ResultatsDuNoeud", "RappelsDuNoeud"]));
+    expect(trie(d!.etend)).toEqual(trie(["SaisiesDuNoeud", "StructureDuNoeud", "ResultatsDuNoeud", "RappelsDuNoeud"]));
   });
 
   it("LES SAISIES DU TYPE SONT CELLES DE LA TABLE, ni plus ni moins", () => {
@@ -164,8 +165,12 @@ describe("le type d'un nœud, tenu à ses sources", () => {
     ].join("\n")).toEqual(trie(Object.keys(CHAMPS_DE_STRUCTURE)));
   });
 
-  it("L'ÉTAT DE LA PASSE EST CELUI QUE CE GARDE NOMME, faute de table", () => {
-    expect(trie(section("EtatDuNoeud"))).toEqual(trie(ETAT_SANS_TABLE));
+  it("L'ÉTAT D'UNE PASSE N'EST PLUS DANS LE TYPE, ni le statut, ni la progression, ni la priorité", () => {
+    const nommes = [...TYPE.values()].flatMap((s) => s.champs);
+    expect(ETAT_HORS_DE_DATA.filter((c) => nommes.includes(c)), [
+      "Le statut et la progression vivent dans ui/statuts.ts, la priorité dans ui/priorite.ts :",
+      "les remettre dans data ferait réécrire tous les nœuds pour changer l'un d'eux.",
+    ].join("\n")).toEqual([]);
   });
 
   it("AUCUN CHAMP N'EST DE DEUX CLASSES", () => {

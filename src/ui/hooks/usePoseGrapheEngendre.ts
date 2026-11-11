@@ -66,7 +66,7 @@ export function usePoseGrapheEngendre({ noeudsRef, callbacksNoeudRef, setNodes, 
         position: { x: baseX + 250 + i * 260, y: baseY + 40 },
         width, height,
         data: {
-          ficheId: specNode.ficheId, parametres, statut: "attente",
+          ficheId: specNode.ficheId, parametres,
           ...cbs,
         },
       };

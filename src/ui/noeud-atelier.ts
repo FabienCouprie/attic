@@ -8,8 +8,9 @@
 //
 // LE TYPE EST RANGÉ PAR CLASSE, et chaque classe dit d'où elle vient. Les saisies et les résultats
 // ont leur table dans le cœur, et la structure aussi depuis la pièce 2 ; les rappels sont ceux
-// qu'`App.tsx` pose sur chaque nœud par `callbacksNoeud` ; l'état de la passe n'a pas de table. Le garde
-// `ui/noeud-atelier.test.ts` tient chaque section à sa source, dans les deux sens.
+// qu'`App.tsx` pose sur chaque nœud par `callbacksNoeud`. L'état d'une passe, statut, progression et
+// priorité, a quitté `data` à la pièce 3. Le garde `ui/noeud-atelier.test.ts` tient chaque section à
+// sa source, dans les deux sens.
 //
 // LE SAC RESTE OUVERT (`[key: string]: unknown`) : les vues y lisent encore ce que le canal
 // d'affichage fusionne sous des noms qu'aucun type ne déclare. Le fermer est la dernière pièce du
@@ -69,20 +70,6 @@ interface StructureDuNoeud {
 }
 
 /**
- * Ce que l'interface pose sur le nœud pendant une passe, et la priorité qu'on lui a donnée.
- *
- * AUCUNE TABLE NON PLUS, et ces champs n'en auront pas : la pièce 3 les sort de `data`. Le statut
- * s'y écrit dans dix fichiers et ne s'y lit nulle part, le nœud lisant `ui/statuts.ts`.
- */
-interface EtatDuNoeud {
-  statut: string;
-  progression?: string;
-  /** Vrai quand `progression` vient du NŒUD lui-même (son `onProgress`), et non du moteur. */
-  progressionDuNoeud?: boolean;
-  prioritaire?: boolean;
-}
-
-/**
  * Ce qu'une exécution a produit, déclaré par `CHAMPS_RESULTAT` de `core/classes-de-champs.ts`.
  *
  * RIEN NE LES ÉCRIT DANS `data` : le nœud les fusionne au moment de s'afficher, depuis
@@ -125,9 +112,14 @@ interface RappelsDuNoeud {
   onChangerDecoupe?: (id: string, decoupe: Record<string, unknown>) => void;
 }
 
-/** Tout ce qu'un nœud porte : les cinq classes, et rien qui n'en soit d'aucune. */
+/**
+ * Tout ce qu'un nœud porte : les quatre classes, et rien qui n'en soit d'aucune.
+ *
+ * L'ÉTAT D'UNE PASSE N'EN EST PLUS depuis la pièce 3 : le statut et la progression vivent dans
+ * `ui/statuts.ts`, la priorité dans `ui/priorite.ts`, chacun avec un abonnement par nœud.
+ */
 export interface DonneesNoeud
-  extends SaisiesDuNoeud, StructureDuNoeud, EtatDuNoeud, ResultatsDuNoeud, RappelsDuNoeud {
+  extends SaisiesDuNoeud, StructureDuNoeud, ResultatsDuNoeud, RappelsDuNoeud {
   [key: string]: unknown;
 }
 

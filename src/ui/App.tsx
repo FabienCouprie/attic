@@ -37,6 +37,7 @@ import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
 import { useCopierColler } from "./hooks/useCopierColler";
 import { resultatDe } from "./resultats";
+import { definirPrioritaire } from "./priorite";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
 import { BarreOutils } from "./BarreOutils";
 import { Palette } from "./Palette";
@@ -186,9 +187,6 @@ function Atelier() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [prioritaire, setPrioritaire] = useState<string | null>(null);
-  const prioritaireRef = useRef<string | null>(null);
-  prioritaireRef.current = prioritaire;
   // ── Le SoundFont global, dans hooks/useSoundFont.ts ──
   const { sf2Nom: sf2NomState, chargerSF2 } = useSoundFont({ repertoire, cacheExec, enExecution });
   // ── Historique, Ctrl+Z et Ctrl+Y, vidage du canevas et fichier détaché, dans hooks/useHistorique.ts ;
@@ -198,10 +196,9 @@ function Atelier() {
     setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath, nodes,
   });
 
-  // Mettre à jour prioritaire sur les nœuds
-  useEffect(() => {
-    setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, prioritaire: n.id === prioritaire } })));
-  }, [prioritaire, setNodes]);
+  // LA PRIORITÉ N'EST PLUS RECOPIÉE DANS LES NŒUDS : elle vit dans `ui/priorite.ts`, et seul le bouton
+  // des deux nœuds concernés se redessine. Un effet réécrivait ici le `data` de tous les nœuds, deux
+  // fois par ▶.
 
   // Recadre la vue à chaque navigation dans/hors d'un méta-composant.
   //
@@ -231,9 +228,9 @@ function Atelier() {
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
   const poserGrapheEngendre = usePoseGrapheEngendre({ noeudsRef, callbacksNoeudRef, setNodes, setEdges, lang });
   const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout } = useExecutionGraphe({
-    noeudsRef, aretesRef, enExecRef, prioritaireRef, audioCtxRef, cacheExec, economieMemoireRef,
+    noeudsRef, aretesRef, enExecRef, audioCtxRef, cacheExec, economieMemoireRef,
     pileMetaRef: pileRef,
-    edges, setNodes, setEnExecution, prioritaire, setPrioritaire, repertoire,
+    edges, setNodes, setEnExecution, repertoire,
     // La pose d'un graphe demandé par un composant, dans hooks/usePoseGrapheEngendre.ts.
     onGrapheGenere: poserGrapheEngendre,
     onNodeInstalle: () => {
@@ -297,7 +294,7 @@ function Atelier() {
       supprimerNoeud(nid);
     },
     onReinitialiser: (nid: string) => reinitialiserNoeud(nid),
-    onDefinirPrioritaire: (nid: string) => { setPrioritaire(nid); lancerRef.current(nid); },
+    onDefinirPrioritaire: (nid: string) => { definirPrioritaire(nid); lancerRef.current(nid); },
     // ── Chargement d'un média sur un nœud, dans hooks/useChargementMedias.ts ──
     onChargerAudio: (nid: string, fichier: File) => chargerMedia(nid, "audio", fichier),
     onChargerMidi: (nid: string, fichier: File) => chargerMedia(nid, "midi", fichier),
@@ -326,7 +323,7 @@ function Atelier() {
     // que RIEN ne fonctionnait. Relevé par Fabien, trois fois dans cette famille.
     onChangerDecoupe: (nid: string, decoupe: Record<string, unknown>) => { setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, ...decoupe } } : n)); perimerEtRelancer(nid); },
     onChargerIR: chargerIR,
-  }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, setPrioritaire, supprimerNoeud, pushHistorique, cacheExec, lancerRef, perimerEtRelancer,
+  }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, supprimerNoeud, pushHistorique, cacheExec, lancerRef, perimerEtRelancer,
     chargerMedia, changerEnregistrement, chargerIR]);
   callbacksNoeudRef.current = callbacksNoeud;
 
@@ -356,7 +353,7 @@ function Atelier() {
     const { width, height } = tailleDefaut(def);
     return {
       id: idUnique(noeuds as { id: string }[]), type: "atelier" as const, position, width, height,
-      data: { ficheId, parametres, statut: "attente", ...callbacksNoeud() },
+      data: { ficheId, parametres, ...callbacksNoeud() },
     };
   }, [lang, callbacksNoeud]);
 
@@ -457,7 +454,7 @@ function Atelier() {
   const { sauvegarder, sauvegarderAuto, exporter, importer, memoriserEncours } = usePersistance({
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
     sauvegarderContexteCourant, grapheRacineRef, setPile, vueAPoserRef,
-    reinitialiserNoeud, supprimerNoeud, setPrioritaire, lancerRef, cacheExec,
+    reinitialiserNoeud, supprimerNoeud, lancerRef, cacheExec,
     callbacksNoeud,
     currentFilePath, setCurrentFilePath,
   });
