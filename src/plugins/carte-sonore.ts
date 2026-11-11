@@ -8,6 +8,7 @@
 // art nouveau, art déco, exotique). Charge un dossier de sons et génère une
 // page HTML autonome dans le dossier de sortie.
 
+import type { AffichageCarte } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -108,7 +109,7 @@ export const fiches: FicheAudio[] = ([
       // « Ouvrir dans le navigateur » (le vrai fichier sur disque, aux côtés
       // de son dossier audio/) donne un résultat qui fonctionne.
       // LA GRAINE N'EST PLUS POSÉE : elle l'était sans que rien ne la lise, ni vue ni test.
-      return { valeurs: [], affichage: { htmlPath, carte }, message: traduire("msg.carte_sonore_g_n_r_e_var_0_index_html_var_1_points_var_2_audio_copi", htmlPath, carte.points.length, copies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") };
+      return { valeurs: [], affichage: { htmlPath, carte } satisfies AffichageCarte, message: traduire("msg.carte_sonore_g_n_r_e_var_0_index_html_var_1_points_var_2_audio_copi", htmlPath, carte.points.length, copies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") };
     },
   },
 ] as FicheAudio[]).map(avecDoc);

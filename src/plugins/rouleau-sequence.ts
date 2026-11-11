@@ -16,6 +16,7 @@
 // LE DESSIN VIT AILLEURS : `ui/RouleauSequence.tsx` pour les traits, `ui/rouleau-calcul.ts` pour la
 // géométrie et ses tests. Ce fichier ne fait que reconnaître une séquence et la poser.
 
+import type { DesigneSequence } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { compterMicrotons, dureeSequence, estSequence } from "../audio/sequence";
 import { langueCourante } from "../i18n";
@@ -44,7 +45,7 @@ export const fiches: FicheAudio[] = ([
       }
       // La vue le lit par le canal déclaré : seule l'exécution connaît la séquence branchée, et
       // c'est une désignation de l'ENTRÉE, qu'un réglage ne périme pas.
-      const designe = { sequence: recue };
+      const designe: DesigneSequence = { sequence: recue };
 
       const voix = new Set(recue.notes.map((n: any) => Math.max(0, Math.floor(n.voix ?? 0)))).size;
       const microtons = compterMicrotons(recue);

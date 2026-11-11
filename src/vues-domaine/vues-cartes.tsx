@@ -7,11 +7,13 @@
 import { useState } from "react";
 import { useI18n } from "../i18n";
 import type { VueProps } from "../ui/registre-vues";
+import { affichageDe } from "./lire-canaux";
+import type { AffichageCarte } from "../plugins/formes-des-canaux";
 
 export function VueCarteSonore({ data }: VueProps) {
   const { t } = useI18n();
   const [erreur, setErreur] = useState<string | null>(null);
-  const htmlPath = (data as any)._affichage?.htmlPath as string | undefined;
+  const htmlPath = affichageDe<AffichageCarte>(data)?.htmlPath;
   const message = data.audioResultatMessage ?? "";
 
   async function ouvrirDansNavigateur() {
@@ -52,7 +54,7 @@ export function VueCarteSonore({ data }: VueProps) {
 export function VueCoordonneesSurCarte({ data }: VueProps) {
   const { t } = useI18n();
   const [erreur, setErreur] = useState<string | null>(null);
-  const htmlPath = (data as any)._affichage?.htmlPath as string | undefined;
+  const htmlPath = affichageDe<AffichageCarte>(data)?.htmlPath;
   const message = data.audioResultatMessage ?? "";
 
   async function ouvrirDansNavigateur() {

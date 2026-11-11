@@ -6,6 +6,7 @@
 // IL N'A PAS DE DESSIN À LUI. Ce qu'il rend est un cercle comme un autre, et c'est le composant qui
 // affiche un cercle reçu qui le montre : un dessin de plus ici redirait le sien.
 
+import type { AffichageCercle } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { FONDAMENTALES } from "../audio/cercle";
 import { cercleDeGamme, type PlacesDeGamme } from "../audio/cercle-gamme";
@@ -114,7 +115,7 @@ The « Circle » output carries the positions and their pitches, with no duratio
         valeurs: [cercle],
         // LE CERCLE SE VOIT SUR LE NŒUD, par le canal de ce qu'un run a PRODUIT : il est fabriqué
         // des réglages, donc un réglage changé le périme, ce qu'`affichage` fait exactement.
-        affichage: { cercle },
+        affichage: { cercle } satisfies AffichageCercle,
         message: `${nom ? (en() ? nom.en : nom.fr) : id} · ${cercle.positions} `
           + `${en() ? "positions" : "places"} · ${cercle.sommets.length} ${en() ? "degrees" : "degrés"}${repli}${hors}`,
       };

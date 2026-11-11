@@ -2,6 +2,7 @@
 //
 // La logique est dans `audio/cercle-pulsant.ts`, testée ; ce fichier n'est que la prise.
 
+import type { AffichageAnimation } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -375,7 +376,7 @@ The animation is displayed in the node and is not available on an output port. I
         // L'animation se regarde ici, et ne sort pas : voir l'en-tête de ce fichier. Elle passe
         // par `affichage`, n'étant que le dessin de CE run : le réglage qui la rendrait fausse
         // l'efface, comme la remise à zéro.
-        affichage: { animationSvg: svg },
+        affichage: { animationSvg: svg } satisfies AffichageAnimation,
         // LES ACCORDS SE COMPTENT PAR LEURS DÉBUTS, et non en divisant par trois. Une qualité
         // nommée peut en avoir quatre sons ou cinq : la division rendait un compte faux dès qu'on
         // sortait de la triade, et un compte à virgule arrondi ne se voit pas.

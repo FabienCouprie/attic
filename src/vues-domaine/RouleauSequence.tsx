@@ -25,11 +25,13 @@
 
 import { useMemo } from "react";
 
-import { estSequence, type Sequence } from "../audio/sequence";
+import { estSequence } from "../audio/sequence";
 import { useI18n } from "../i18n";
 
 import { disposerRouleau, L_ROULEAU, NUANCES } from "./rouleau-calcul";
+import { designeDe } from "./lire-canaux";
 import type { VueProps } from "../ui/registre-vues";
+import type { DesigneSequence } from "../plugins/formes-des-canaux";
 
 /** Le carré du document : les fractions du calcul sont multipliées par lui sur les deux axes. */
 const C = L_ROULEAU;
@@ -39,7 +41,7 @@ const COULEURS_VOIX = 6;
 
 export function RouleauSequence({ id, data }: VueProps) {
   const { t } = useI18n();
-  const recue = (data as unknown as { _designe?: { sequence?: Sequence } })._designe?.sequence;
+  const recue = designeDe<DesigneSequence>(data)?.sequence;
   // LE CHAMP EST TRAVERSÉ SANS TYPE, et la vue existe avant toute exécution : `estSequence` répond
   // d'un seul coup aux deux cas, l'absence et la forme. Un nœud qu'on vient de poser n'a rien reçu,
   // et dessiner une géométrie calculée sur `undefined` viderait le nœud sans rien expliquer.

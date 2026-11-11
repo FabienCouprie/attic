@@ -10,11 +10,13 @@
 // `porteLecteur: true` DANS LE REGISTRE fait taire le lecteur générique du nœud : deux jeux de
 // commandes pour un même son se contrediraient, et la tête de lecture ne saurait plus lequel suivre.
 import { NodeResizer, useNodeConnections } from "@xyflow/react";
-import { LigneDeTemps, type PisteMontage } from "./LigneDeTemps";
+import { LigneDeTemps } from "./LigneDeTemps";
 import { MODELE_MAQUETTE, MODELE_MONTAGE } from "./ligne-temps-calcul";
 import { morceauxAEcrire, morceauxCompletes, type Morceau } from "../audio/montage-morceaux";
 import type { VueProps } from "../ui/registre-vues";
 import { useGestes } from "../ui/gestes-noeud";
+import { designeDe } from "./lire-canaux";
+import type { DesigneMontage } from "../plugins/formes-des-canaux";
 
 export function VueMontage({ id, data }: VueProps) {
   // `useReactFlow().setNodes` N'EST PLUS ICI, et c'est le fond de la correction : une vue n'écrit
@@ -32,20 +34,16 @@ export function VueMontage({ id, data }: VueProps) {
   // CE QUE LA VUE MONTRE VIENT DU CANAL DÉCLARÉ, `_designe`, et non plus de champs posés un à un
   // dans le sac de l'interface. L'exécuteur dit ce qu'il désigne de ses entrées ; le moteur le pose
   // sous cette clé ; une remise à zéro l'efface et un réglage le garde, par construction.
-  const d = data as unknown as {
-    ficheId?: string;
-    parametres?: Record<string, unknown>;
-    audioResultatUrl?: string;
-    _designe?: {
-      /** Les durées réelles des pistes ou des boîtes, que seule l'exécution connaît. */
-      durees?: PisteMontage[];
-      /** Les tampons des pistes du Montage : l'onde s'y lit, et l'écoute vivante y joue. */
-      sons?: Record<number, AudioBuffer>;
-      /** Les notes des boîtes de la Maquette, en fractions de leur durée propre. */
-      notes?: Record<number, { debut: number; duree: number; note: number }[]>;
-    };
-    /** Les morceaux posés, quand le nœud en porte. Absents sur un graphe enregistré avant eux. */
-    morceaux?: Morceau[];
+  const d = {
+    ficheId: data.ficheId,
+    parametres: data.parametres,
+    audioResultatUrl: data.audioResultatUrl,
+    // Les durées, les tampons et les notes, sous la forme que le Montage et la Maquette écrivent :
+    // `DesigneMontage` de `plugins/formes-des-canaux.ts`.
+    _designe: designeDe<DesigneMontage>(data),
+    // LES MORCEAUX POSÉS, quand le nœud en porte, absents sur un graphe enregistré avant eux. Le shell
+    // les transporte sans les lire (`unknown[]`) : c'est le domaine qui sait ce qu'un morceau contient.
+    morceaux: data.morceaux as Morceau[] | undefined,
   };
 
   // LA MAQUETTE GARDE SON MODÈLE : une boîte y EST un port, avec sa durée réglée, et rien n'a été

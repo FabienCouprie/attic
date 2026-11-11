@@ -12,6 +12,7 @@
 // LE TEXTE ÉCRIT EST UN PARAMÈTRE, et non une donnée de passage : c'est la seule forme que la
 // sauvegarde du projet conserve. Une correction faite à la main doit se retrouver à la réouverture.
 
+import type { DesigneTexte } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -37,7 +38,7 @@ export const fiches: FicheAudio[] = ([
       // La vue montre ce qui arrive avant toute correction : sans cela, la zone resterait vide et
       // l'on corrigerait un texte qu'on ne voit pas. C'est une désignation de l'ENTRÉE, donc écrire
       // dans la zone ne la périme pas : le texte reçu reste sous les yeux pendant qu'on le corrige.
-      const designe = typeof entree === "string" ? { texteRecu: entree } : undefined;
+      const designe: DesigneTexte | undefined = typeof entree === "string" ? { texteRecu: entree } : undefined;
 
       const ecrit = ctx.paramTexte("Texte", "");
       const sortie = ecrit !== "" ? ecrit : (typeof entree === "string" ? entree : null);

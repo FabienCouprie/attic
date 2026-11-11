@@ -11,6 +11,8 @@ import { useI18n, traduire } from "../i18n";
 import { copierTexte } from "../ui/copier";
 import type { VueProps } from "../ui/registre-vues";
 import { useGestes } from "../ui/gestes-noeud";
+import { affichageDe, designeDe } from "./lire-canaux";
+import type { AffichageDemonstration, DesigneTexte } from "../plugins/formes-des-canaux";
 
 export function VueSourceTexte({ id, data }: VueProps) {
   const { t } = useI18n();
@@ -65,7 +67,7 @@ function VideoDeNoeud({ url, nom }: { url: string; nom: string }) {
 
 export function VueDemonstration({ data }: VueProps) {
   const { t } = useI18n();
-  const url = (data as { _affichage?: { videoUrl?: string } })._affichage?.videoUrl;
+  const url = affichageDe<AffichageDemonstration>(data)?.videoUrl;
   return (
     <div className="attic-node-fichier nodrag" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       {url ? <VideoDeNoeud url={url} nom="demonstration.webm" />
@@ -145,10 +147,7 @@ export function VueModifierTexte({ id, data }: VueProps) {
   // Le texte reçu vient du canal déclaré de l'exécuteur, sous `designe` : il décrit l'ENTRÉE, donc
   // écrire dans la zone ne le périme pas et il reste sous les yeux pendant qu'on corrige.
   const gestes = useGestes();
-  const d = data as {
-    _designe?: { texteRecu?: string };
-  };
-  const recu = String(d._designe?.texteRecu ?? "");
+  const recu = String(designeDe<DesigneTexte>(data)?.texteRecu ?? "");
   const ecrit = String(data.parametres?.["Texte"] ?? "");
   const [valeur, setValeur] = useState(ecrit || recu);
 

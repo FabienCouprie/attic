@@ -15,11 +15,13 @@ import { nomNote } from "../audio/nom-note";
 import { useI18n } from "../i18n";
 
 import { CercleDessin } from "./CercleDessin";
+import { affichageDe } from "./lire-canaux";
 import type { VueProps } from "../ui/registre-vues";
+import type { AffichageCercle } from "../plugins/formes-des-canaux";
 
 /** Le cercle produit par le run, tel que l'exécuteur l'a rendu. */
-function cercleProduit(data: unknown): Cercle | undefined {
-  const produit = (data as { _affichage?: { cercle?: unknown } })._affichage?.cercle;
+function cercleProduit(data: VueProps["data"]): Cercle | undefined {
+  const produit = affichageDe<AffichageCercle>(data)?.cercle;
   return estCercle(produit) ? produit : undefined;
 }
 

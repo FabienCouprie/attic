@@ -1,5 +1,6 @@
 // plugins/sortie-conversion.ts — Nœuds sortie-conversion (issus du découpage de complements.ts).
 
+import type { AffichageMp3 } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { bufferVersMp3Blob } from "../audio";
 import { decrire } from "../audio/metadonnees";
@@ -45,7 +46,7 @@ export const fiches: FicheAudio[] = ([
         // se dit — c'est son silence qui avait caché des MP3 qui n'en étaient pas.
         return { valeurs: [a, { debut: 0, duree: a.duration }], message: `MP3 : ${e?.message ?? String(e)}` };
       }
-      return { valeurs: [a, { debut: 0, duree: a.duration }], affichage: { mp3Url } };
+      return { valeurs: [a, { debut: 0, duree: a.duration }], affichage: { mp3Url } satisfies AffichageMp3 };
    },
  },
   {

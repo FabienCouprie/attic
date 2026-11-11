@@ -17,6 +17,7 @@
 // bouge pas ; celle du bas montre la portion que la barre désigne, et la molette la resserre. C'est
 // pour elle que l'enveloppe gardée est fine : sans cela, zoomer n'aurait fait qu'agrandir.
 
+import type { DesignePistesMultiples } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { respirer } from "../core/respirer";
 import { langueCourante } from "../i18n";
@@ -57,7 +58,7 @@ export const fiches: FicheAudio[] = ([
       }
       // La vue les lit par le canal déclaré : seule l'exécution connaît les sons branchés et leur
       // durée, et c'est une désignation des ENTRÉES, qu'un réglage ne périme pas.
-      const designe = { pistes };
+      const designe: DesignePistesMultiples = { pistes };
       if (pistes.length === 0) {
         return { valeurs: [], erreur: true, message: en() ? "No track connected." : "Aucune piste branchée." };
       }

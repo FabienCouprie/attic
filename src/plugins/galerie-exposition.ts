@@ -2,6 +2,7 @@
 // génère une galerie HTML visuelle avec pochettes procédurales par piste,
 // lecteurs intégrés, métadonnées et design vitrine. Exposable sur le web ou en local.
 
+import type { AffichageGalerie } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -231,7 +232,7 @@ export const fiches: FicheAudio[] = ([
       // Pas de blob téléchargeable séparément : le HTML référence ses MP3 en
       // chemins relatifs (`mp3/xxx.mp3`, copiés à côté d'index.html sur
       // disque) — un téléchargement isolé du blob romprait ces liens.
-      const affichage = { htmlPath: `${dossierSortie}/index.html`, pistes };
+      const affichage: AffichageGalerie = { htmlPath: `${dossierSortie}/index.html`, pistes };
 
       // L'ordre d'accrochage se dit : une galerie rangée par coordonnées et une galerie rangée par
       // le dossier se ressemblent à l'œil, et rien d'autre ne distinguerait les deux.

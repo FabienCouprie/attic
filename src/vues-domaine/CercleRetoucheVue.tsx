@@ -19,12 +19,14 @@ import { nomNote } from "../audio/nom-note";
 import { useI18n } from "../i18n";
 
 import { CercleDessin } from "./CercleDessin";
+import { designeDe } from "./lire-canaux";
 import type { VueProps } from "../ui/registre-vues";
 import { useGestes } from "../ui/gestes-noeud";
+import type { DesigneCercle } from "../plugins/formes-des-canaux";
 
 /** Le cercle reçu, tel que le run l'a désigné de ses entrées. */
-function cercleRecu(data: unknown): Cercle | undefined {
-  const recu = (data as { _designe?: { cercle?: unknown } })._designe?.cercle;
+function cercleRecu(data: VueProps["data"]): Cercle | undefined {
+  const recu = designeDe<DesigneCercle>(data)?.cercle;
   return estCercle(recu) ? recu : undefined;
 }
 

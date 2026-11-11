@@ -7,17 +7,20 @@
 import { useState, useRef, useMemo, useCallback } from "react";
 import { useNodeConnections } from "@xyflow/react";
 import { useI18n } from "../i18n";
-import { PistesMultiples, type PisteVue } from "./PistesMultiples";
+import { PistesMultiples } from "./PistesMultiples";
 import { MontageVideo, type InfosFilm } from "./MontageVideo";
-import type { ColonneVue } from "./montage-video-geometrie";
 import { ExtraitVideo } from "./ExtraitVideo";
 import { enMo } from "../core/octets";
 import { urlMedia } from "./url-media";
 import type { VueProps } from "../ui/registre-vues";
 import { useGestes } from "../ui/gestes-noeud";
+import { affichageDe, designeDe } from "./lire-canaux";
+import type {
+  AffichageFilm, DesigneExtraitVideo, DesigneMontageVideo, DesignePistesMultiples,
+} from "../plugins/formes-des-canaux";
 
 export function VuePistesMultiples({ data }: VueProps) {
-  const pistes = ((data as unknown as { _designe?: { pistes?: PisteVue[] } })._designe?.pistes ?? []);
+  const pistes = designeDe<DesignePistesMultiples>(data)?.pistes ?? [];
   return <PistesMultiples pistes={pistes} />;
 }
 
@@ -37,7 +40,8 @@ export function VueMontageVideo({ id, data }: VueProps) {
   // n'avait pas encore tourné, et écrivait le relevé dans le champ que l'exécuteur écrit aussi :
   // deux auteurs pour un même champ, dont l'un n'a aucun droit sur ce qu'un run produit. Sa mesure
   // vit désormais dans son propre état, et ce que le run a reçu se lit dans le canal déclaré.
-  const dejaConnu = (data as unknown as { _designe?: { infos?: InfosFilm } })._designe?.infos ?? null;
+  const dsg = designeDe<DesigneMontageVideo>(data);
+  const dejaConnu = dsg?.infos ?? null;
   const [mesure, setMesure] = useState<InfosFilm | null>(null);
   const filmMesure = useRef<string | null>(null);
   const infos = dejaConnu ?? mesure;
@@ -71,12 +75,6 @@ export function VueMontageVideo({ id, data }: VueProps) {
   // l'affichage. Le filtrage dit la même chose sans rien écrire, et il ne coûte pas la mémoire que
   // l'effacement prétendait rendre : ces tampons sont DÉSIGNÉS, c'est-à-dire ceux des composants
   // d'amont, déjà tenus par le cache d'exécution, et les enveloppes pèsent seize kilo-octets.
-  const dsg = (data as unknown as {
-    _designe?: {
-      pistes?: { piste: number; dureeSec: number; crete: number; colonnes: ColonneVue[] }[];
-      sons?: Record<string, AudioBuffer>;
-    };
-  })._designe;
   const vivantes = useMemo(() => new Set(branchees), [branchees]);
   const enveloppes = useMemo(
     () => (dsg?.pistes ?? []).filter((p) => vivantes.has(p.piste)),
@@ -89,9 +87,7 @@ export function VueMontageVideo({ id, data }: VueProps) {
     [dsg, vivantes],
   );
 
-  const aff = (data as unknown as {
-    _affichage?: { url?: string; nom?: string; octets?: number };
-  })._affichage;
+  const aff = affichageDe<AffichageFilm>(data);
   const resultat = aff?.url
     ? { url: aff.url, nom: aff.nom ?? "montage.mp4", octets: aff.octets ?? 0 }
     : null;
@@ -132,11 +128,8 @@ export function VueExtraitVideo({ id, data }: VueProps) {
 
   // MÊME RÈGLE QUE LE MONTAGE VIDÉO : la vue ne pose plus rien sur le nœud. Sa mesure vit dans son
   // état, ce que le run a reçu se lit dans le canal déclaré, et le film produit dans `affichage`.
-  const n = data as unknown as {
-    _designe?: { infos?: InfosFilm };
-    _affichage?: { url?: string; nom?: string; octets?: number };
-  };
-  const dejaConnu = n._designe?.infos ?? null;
+  const film = affichageDe<AffichageFilm>(data);
+  const dejaConnu = designeDe<DesigneExtraitVideo>(data)?.infos ?? null;
   const [mesure, setMesure] = useState<InfosFilm | null>(null);
   const filmMesure = useRef<string | null>(null);
   const infos = dejaConnu ?? mesure;
@@ -163,8 +156,8 @@ export function VueExtraitVideo({ id, data }: VueProps) {
       onBorner={(borne, image) => gestes.onChangerParametre(
         id, borne === "debut" ? "Image de début" : "Image de fin", image,
       )}
-      resultat={n._affichage?.url
-        ? { url: n._affichage.url, nom: n._affichage.nom ?? "extrait.mp4", octets: n._affichage.octets ?? 0 }
+      resultat={film?.url
+        ? { url: film.url, nom: film.nom ?? "extrait.mp4", octets: film.octets ?? 0 }
         : null}
       onMesurer={onMesurer}
     />
@@ -179,7 +172,7 @@ export function VueExtraitVideo({ id, data }: VueProps) {
 export function VueFilmCercle({ data }: VueProps) {
   const { t } = useI18n();
   const api = (window as { api?: any }).api;
-  const n = (data as unknown as { _affichage?: { url?: string; nom?: string; octets?: number } })._affichage ?? {};
+  const n = affichageDe<AffichageFilm>(data) ?? {};
   if (!n.url) return null;
   const nom = n.nom ?? "cercle.mp4";
   return (
@@ -214,7 +207,7 @@ export function VueFilmCercle({ data }: VueProps) {
 export function VueFilmProduit({ data }: VueProps) {
   const { t } = useI18n();
   const api = (window as { api?: any }).api;
-  const n = (data as unknown as { _affichage?: { url?: string; nom?: string; octets?: number } })._affichage ?? {};
+  const n = affichageDe<AffichageFilm>(data) ?? {};
   if (!n.url) return null;
   const nom = n.nom ?? "film.mp4";
   return (
@@ -246,7 +239,7 @@ export function VueFilmProduit({ data }: VueProps) {
 export function VueVideoMuette({ data }: VueProps) {
   const { t } = useI18n();
   const api = (window as { api?: any }).api;
-  const n = (data as unknown as { _affichage?: { url?: string; nom?: string; octets?: number } })._affichage ?? {};
+  const n = affichageDe<AffichageFilm>(data) ?? {};
   if (!n.url) return null;
   const nom = n.nom ?? "muet.mp4";
   return (

@@ -11,6 +11,7 @@
 // IL NE SE MET PAS EN CACHE. Vingt secondes de film pèsent une quinzaine de mégaoctets, et les
 // retenir d'une exécution à l'autre coûterait plus que de les refaire.
 
+import type { AffichageFilm } from "./formes-des-canaux";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -188,7 +189,7 @@ export const fiches: FicheAudio[] = ([
       const mo = enMo(rendu.blob.size).toFixed(1);
       return {
         valeurs: [new File([rendu.blob], nomFilm, { type: "video/mp4" })],
-        affichage: { url: URL.createObjectURL(rendu.blob), nom: nomFilm, octets: rendu.blob.size },
+        affichage: { url: URL.createObjectURL(rendu.blob), nom: nomFilm, octets: rendu.blob.size } satisfies AffichageFilm,
         message: en()
           ? `${rendu.images} frames · ${def.l}×${def.h} · ${mo} MB · ${(rendu.msTotal / 1000).toFixed(1)} s`
           : `${rendu.images} images · ${def.l}×${def.h} · ${mo} Mo · ${(rendu.msTotal / 1000).toFixed(1)} s`,
