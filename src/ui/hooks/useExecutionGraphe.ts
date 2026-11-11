@@ -10,7 +10,6 @@ import type { Edge } from "@xyflow/react";
 import {
   estCacheParBulle,
   trouverMeta,
-  empreinteParametres, empreinteEntrees, empreinteSorties, empreinteValeursEntrantes,
   valeursEntrantes, signalerEcartsDeType,
   type NoeudG, type AreteG,
 } from "../../core";
@@ -19,8 +18,7 @@ import {
 // `TypeValeur`, c est-à-dire l union du domaine audio : le chemin d exécution de TOUS les domaines
 // était typé contre un seul. Il n en lit aucune ; il les prend d un nœud et les donne au suivant.
 type ValeurTransportee = unknown;
-import { peutReutiliserLeCache, sourceRetraitee } from "../../core/cache-execution";
-import { estResultatEnErreur } from "../../core/execution";
+import { deciderDuNoeud, estResultatEnErreur } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
 import { noeudRegarde } from "../../core/memoire";
 import { servicesDomaine } from "../../core/services-domaine";
@@ -30,6 +28,7 @@ import { sautsDeBoucles } from "../../core/saut-de-boucle";
 import { creerResolveurDeGraines } from "../../core/graines-de-passe";
 import { contexteDePasse } from "../../core/contexte-de-passe";
 import { preparerLaPasse } from "../../core/preparation-passe";
+import { creerPoseDesStatuts } from "../../core/statuts-de-passe";
 
 import { servicesOrchestration } from "../services-orchestration";
 // CE QUE LE SHELL DEMANDE AU DOMAINE SUR LES VALEURS PRODUITES. Six fonctions audio étaient
@@ -221,7 +220,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
       aretesReelles, plat, deplie, nds, aretesG, tousNoeudsG, boites,
       ordreFiltre, noeudsEnErreur, idsDecoratifs, ordonnees, estMetaEnScope,
     } = plan;
-    const aretes = deplie.aretes as unknown as Edge[];
     servicesOrchestration().publierGraphe(plan.aDocumenter);
     for (const a of plan.avertissements) console.warn(a);
     for (const s of plan.statuts) definirStatut(s.id, s.statut, s.progression);
@@ -243,42 +241,12 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // Les tables VIVANTES du run, pour les nœuds qui passent en dernier (cf. grapheGlobal.ts).
     servicesOrchestration().publierExecution({ ordre: ordreFiltre, noeuds: nds, aretes: aretesG, resultats, messages, expansions: plat.expansions });
 
-    // Retour visuel IMMÉDIAT sur le méta propriétaire d'un nœud interne en échec.
-    // Sans ça le méta garde son « en cours » (posé en amont) jusqu'à la passe
-    // finale — qui n'arrive qu'à la toute fin du run, voire jamais si une autre
-    // branche est très lente : le méta semble alors tourner normalement alors que
-    // sa chaîne interne a déjà échoué. `expansions` relie un id aplati au
-    // méta-nœud visible d'origine.
-    const marquerMetaEnEchec = (idAplati: string, detail?: string) => {
-      const proprio = plat.expansions.get(idAplati);
-      if (proprio && proprio !== idAplati) {
-        definirStatut(proprio, "erreur", detail ? t("execution.brancheEnEchecDetail").replace("{detail}", detail) : t("execution.brancheEnEchec"));
-      }
-    };
-
-    // ── Les statuts des nœuds DÉPLIÉS ──
-    //
-    // Un graphe déplié — boucle ou instrument — n'exécute pas les nœuds qu'on voit : il exécute des
-    // COPIES, aux identifiants fabriqués. `definirStatut` cherchant le nœud par son id dans la liste
-    // visible, ces copies ne posaient aucun statut, et les nœuds de la chaîne restaient affichés « en
-    // attente » alors que leur travail était fait — constaté dans l'application : « note=attente |
-    // filtre=attente » pendant que la fin d'instrument annonçait ses deux notes rendues.
-    //
-    // `expansions` relie une copie au nœud visible dont elle vient : on traduit donc l'id avant de
-    // poser le statut. Le moteur exécutant les copies l'une après l'autre, la dernière à finir
-    // décide de l'état affiché, ce qui est le bon comportement — sauf pour une ERREUR, qu'une copie
-    // suivante ne doit pas effacer : un nœud dont une seule note a échoué a échoué.
-    //
-    // ET LA COPIE GARDE LE SIEN, en ombre : c'est ce que lit le statut final d'un méta ou d'une bulle,
-    // qui doit savoir lesquels de ses nœuds ont tourné. Voir `poserStatutOmbre` dans `ui/statuts.ts`.
-    const visiblesEnErreur = new Set<string>();
-    const poserStatut = (nodeId: string, statut: string, progression?: string, progressionDuNoeud = false) => {
-      const visibleId = plat.expansions.get(nodeId) ?? nodeId;
-      if (visibleId !== nodeId) poserStatutOmbre(nodeId, visibleId, statut);
-      if (statut === "erreur") visiblesEnErreur.add(visibleId);
-      else if (visiblesEnErreur.has(visibleId)) return;
-      definirStatut(visibleId, statut, progression, progressionDuNoeud);
-    };
+    // ── LES STATUTS D'UNE PASSE SE POSENT PAR LE CŒUR, `core/statuts-de-passe.ts` ──
+    // Une copie traduite vers son nœud visible, son ombre gardée, une erreur qui tient, et le méta
+    // d'un nœud interne en échec qui le dit aussitôt. Le magasin et la langue lui sont prêtés.
+    const { poserStatut, marquerMetaEnEchec } = creerPoseDesStatuts({
+      expansions: plat.expansions, poser: definirStatut, poserOmbre: poserStatutOmbre, t,
+    });
 
     const tempsParVisible = new Map<string, number>();
     // L'ecart de niveau mesure sur chaque noeud, en decibels. Voir le commentaire pose la
@@ -377,51 +345,25 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // géré séparément plus bas (il faut laisser sa promesse se résoudre).
       if (controller.signal.aborted) break;
       const nodeId = ordreFiltre[i];
-      // Sauter les nœuds en erreur (connexion illégale) — déjà marqués « erreur »
-      if (noeudsEnErreur.has(nodeId)) continue;
-      // ── Propagation d'erreur ──
-      // Si une entrée de ce nœud provient d'un nœud en erreur (validation OU échec
-      // d'exécution), il ne peut pas produire un résultat correct : le marquer en
-      // erreur au lieu de « réussir » silencieusement avec une entrée manquante —
-      // cas d'un mixer/joiner de terminaison en aval de branches parallèles dont
-      // une a échoué. L'ordre topologique garantit que la source est déjà traitée.
-      const entreeFautive = aretesG.find((a) => a.target === nodeId && noeudsEnErreur.has(a.source));
-      if (entreeFautive) {
+      // ── CE QUE LA PASSE FAIT DE CE NŒUD EST DÉCIDÉ PAR LE CŒUR, `deciderDuNoeud` de `core/execution.ts` ──
+      // Déjà en erreur, entrée en erreur, absent, copie sautée, cache, ou à exécuter : le verdict
+      // vient dans cet ordre, et c'est ici qu'il s'applique, aux tables, aux statuts et aux temps.
+      const decision = deciderDuNoeud(nodeId, {
+        noeudsEnErreur, noeuds: nds, aretes: aretesG, resultats, traitesCeRun,
+        lireCache: (id) => cacheExec.current.get(id), sauts, trouverDef,
+      });
+      if (decision.genre === "dejaEnErreur" || decision.genre === "absent") continue;
+      // ── Propagation d'erreur ── : une entrée vient d'un nœud en erreur, de validation OU
+      // d'exécution, et ce nœud ne peut pas réussir en silence avec une entrée manquante.
+      if (decision.genre === "entreeEnErreur") {
         noeudsEnErreur.add(nodeId);
         resultats.set(nodeId, [null]);
-        poserStatut(nodeId, "erreur", t("execution.entreeEnErreur").replace("{source}", entreeFautive.source));
+        poserStatut(nodeId, "erreur", t("execution.entreeEnErreur").replace("{source}", decision.source));
         marquerMetaEnEchec(nodeId);
         continue;
       }
-      const node = nds.find((n) => n.id === nodeId);
-      if (!node) continue;
-      if (sauts.copieSautee(nodeId, traitesCeRun)) { poserStatut(nodeId, "termine"); continue; }
-
-      const sourceReprocessee = sourceRetraitee(nodeId, aretes, traitesCeRun);
-      // LES RÉGLAGES DE PROJET DU DOMAINE ENTRENT DANS LA CLÉ, et c'est un défaut évité de peu :
-      // changer la fréquence de travail d'un projet ne relançait rien, et le lancement suivant
-      // reposait les tampons du cache — à l'ancienne fréquence. Le réglage aurait paru inopérant au
-      // deuxième run, ce qui est la pire espèce de panne. Le moteur ne sait pas ce qu'il hache : il
-      // demande au domaine, par `core/services-domaine.ts`.
-      const hashParams = empreinteParametres(node.data) + JSON.stringify(servicesDomaine().reglagesDeProjet());
-      const monHashEntree = empreinteEntrees(nodeId, aretesG);
-      // LE CÂBLAGE AVAL ENTRE DANS LA CLÉ depuis qu'un nœud peut savoir si une de ses sorties est
-      // branchée : ce qu'il rend en dépend. Voir `empreinteSorties`.
-      const hashSorties = empreinteSorties(nodeId, aretesG);
-      const hashValeursEntree = empreinteValeursEntrantes(nodeId, aretesG, resultats);
-      const entreeCache = cacheExec.current.get(nodeId);
-
-      // Certains nodes (sans sortie, avec I/O fichiers) ne doivent jamais être
-      // cachés — la fiche le déclare, le moteur ne connaît aucun id en dur.
-      const jamaisCache = trouverDef(node.data.ficheId as string)?.jamaisCache === true;
-
-      // LA DÉCISION EST DANS `core/cache-execution.ts`, AVEC SES CAS ET SON PRIX. Elle y tient en
-      // deux fonctions pures, et l'en-tête de ce module-là dit pourquoi un composant rejoué
-      // entraîne toute sa descendance même quand il rend deux fois la même chose.
-      const cacheIdentique = entreeCache && (sauts.finReprise(nodeId) || peutReutiliserLeCache(
-        jamaisCache, sourceReprocessee, entreeCache,
-        { hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree },
-      ));
+      if (decision.genre === "copieSautee") { poserStatut(nodeId, "termine"); continue; }
+      const node = decision.noeud;
 
       // UN JOURNAL DE HUIT VALEURS PAR NŒUD ET PAR RUN A ÉTÉ RETIRÉ D'ICI, et c'est le second du
       // genre. Il interpolait `sourceReprocessee`, `jamaisCache`, le verdict et quatre empreintes —
@@ -432,7 +374,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
       // CE QU'IL A PAYÉ : le recensement des fréquences, plus bas. Le fichier est à son plafond de
       // dette, et la règle du dépôt est que ce qu'on y ajoute doit y être payé — ce journal valait
       // moins qu'une mesure, comme « [cache store] » avant lui.
-      if (cacheIdentique) {
+      if (decision.genre === "cache") {
+        const entreeCache = decision.entree;
         resultats.set(nodeId, entreeCache.valeurs);
         if (entreeCache.message) messages.set(nodeId, entreeCache.message);
         // LE CACHE PORTE AUSSI CE QUE LE NŒUD MONTRAIT, et il ne le portait pas. Un raccourci de
@@ -450,6 +393,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
         }
         continue;
       }
+      // Les quatre empreintes que l'entrée de cache rangera si le nœud réussit.
+      const { hashParams, hashEntree: monHashEntree, hashSorties, hashValeursEntree } = decision.empreintes;
 
       // Le statut « en cours » n'est posé qu'après le test de cache : un nœud
       // déjà en cache ne doit pas flasher « en cours »/« terminé » — ce flash
