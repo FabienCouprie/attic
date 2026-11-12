@@ -3,7 +3,7 @@
 // Les calculs, leurs références et la raison de leurs choix sont dans `audio/echo-flottant.ts`,
 // `audio/ubiquite.ts`, `audio/vague.ts`, `audio/platine.ts` et `audio/creneau.ts`.
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -20,7 +20,7 @@ const en = () => langueCourante() === "en";
 const nb = (v: number, d = 1) => (en() ? v.toFixed(d) : v.toFixed(d).replace(".", ","));
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "echo-flottant", nom: "Écho flottant", nomEn: "Flutter Echo",
     univers: "Traitement", famille: "Effets",
     resume: "Le battement métallique d'un son pris entre deux murs parallèles.",
@@ -112,7 +112,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "ubiquite", nomDicte: "présence partout", nom: "Ubiquité", nomEn: "Ubiquity",
     univers: "Traitement", famille: "Effets",
     resume: "Une source qu'on ne peut plus situer, ou qu'on situe mieux que nature.",
@@ -155,7 +155,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "vague", nom: "Vague", nomEn: "Wave",
     univers: "Traitement", famille: "Effets",
     resume: "Des cycles de crescendo, de sommet et de ressac, espacés de plusieurs secondes.",
@@ -279,7 +279,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "creneau", nom: "Créneau", nomEn: "Niche",
     univers: "Traitement", famille: "Montage",
     resume: "Pose un son à l'instant où le fond lui laisse sa place, en temps et en fréquence.",

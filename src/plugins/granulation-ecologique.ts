@@ -8,7 +8,7 @@
 // le rapport de phase ne veut rien dire sur un flux unique. Le contrat de composant l'autorise à
 // cette condition, et c'est la forme que prend un composant qui met trois modèles sous un nom.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -28,7 +28,7 @@ const MOD_RUGOSITE = { ...modulationNommee("Rugosité", "Roughness", [0, 100], "
 const MOD_NIVEAU = { ...modulationNommee("Niveau", "Level", [0, 100], "%"), defauts: [0, 100] as [number, number] };
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "granulation-ecologique", nomDicte: "grains écologiques", nom: "Granulation écologique", nomEn: "Ecological Granulation",
     univers: "Traitement", famille: "Montage",
     resume: "Pose les grains d'un son selon un modèle d'événement physique : un rebond, un écoulement ou un frottement.",

@@ -2,7 +2,7 @@
 //
 // Le calcul, ses références et la raison de ses choix sont dans `audio/arc-en-ciel.ts`.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -13,7 +13,7 @@ import { MODULATION_MIX, bornesModulation, modulationNommee, reglageModule, port
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "arc-en-ciel-acoustique", nom: "Arc-en-ciel acoustique", nomEn: "Acoustic Rainbow",
     univers: "Traitement", famille: "Stéréo",
     // PAS DE PROMESSE DE FLUX, et le contrat de mémoire a eu raison de la refuser : le niveau du son

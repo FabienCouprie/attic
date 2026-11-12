@@ -11,7 +11,7 @@
 // sautent déjà. La propriété qui compte ici est que la somme des deux bandes reste plate, et
 // un calcul qu'on ne peut pas éprouver hors du navigateur ne peut pas porter ce garde.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -35,7 +35,7 @@ function versTampon(canaux: Float32Array[], echantillonnage: number): AudioBuffe
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "tremolo-harmonique", nomDicte: "variation de volume harmonique", nom: "Trémolo harmonique", nomEn: "Harmonic Tremolo",
     univers: "Traitement", famille: "Effets",
     // flux : deux biquads par bande, état dans quatre scalaires, et aucun regard en avant.
@@ -99,7 +99,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "haut-parleur-rotatif", nom: "Haut-parleur rotatif", nomEn: "Rotary Speaker",
     univers: "Traitement", famille: "Effets",
     // flux : les lignes à retard sont bornées par le rayon des rotors, un millième de seconde.

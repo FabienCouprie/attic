@@ -5,7 +5,7 @@
 // dans `effets-aides.ts`.
 
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -147,7 +147,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [etirementGlissant(a, debut, fin)], message: traduire("msg.var_0_x_var_1_x_var_2_s_var_3_s", debut, fin, a.duration.toFixed(1), (a.duration * (debut + fin) / 2).toFixed(1)) };
    },
  }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "spatialisation-stereo", nom: "Spatialisation stéréo", nomEn: "Stereo Spatialization", univers: "Traitement", famille: "Effets",
     resume: "Positionne le son dans l'espace stéréo (gauche/droite).",
     resumeEn: "Positions the sound in stereo space (left/right).",

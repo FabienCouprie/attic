@@ -29,7 +29,8 @@ const DOSSIER = resolve(__dirname);
 /**
  * LES FICHES DONT LES NOMS NE SE DÉDUISENT PAS ENCORE, relevées le 2026-11-11 quand ce garde est né.
  * Elles étaient 134 ; les trente que les réglages SoundFont partagés élargissaient en sont sorties le
- * 2026-11-12, quand ces réglages ont gardé leur nom par `reglagePartage`.
+ * 2026-11-12, quand ces réglages ont gardé leur nom par `reglagePartage`, puis vingt-huit le même jour,
+ * quand les bornes de `bornesModulation` ont gardé les leurs.
  *
  * ELLE NE PEUT QUE DÉCROÎTRE. Leur liste de réglages mêle des réglages partagés ou construits à ceux
  * écrits sur place, et leurs noms s'élargissent à `string` : c'est la pièce 2 du plan. Une fiche qui
@@ -37,16 +38,13 @@ const DOSSIER = resolve(__dirname);
  */
 const SANS_NOMS_VERIFIES: Record<string, string[]> = {
   "aligner-texte.ts": ["aligner-texte"],
-  "arc-en-ciel.ts": ["arc-en-ciel-acoustique"],
   "automate-cellulaire.ts": ["automate-cellulaire"],
   "bruitage-ia.ts": ["bruitage-ia"],
-  "bytebeat.ts": ["bytebeat"],
   "chanson-accompagnement.ts": ["accompagner-voix"],
   "chanson-locale.ts": ["planifier-chanson", "rendre-chanson"],
   "chanson-variantes.ts": ["reprendre-chanson", "retoucher-chanson", "prolonger-chanson", "ecrire-chanson"],
   "cloner-voix.ts": ["cloner-voix"],
   "color-looper.ts": ["color-looper"],
-  "concret.ts": ["resonateurs"],
   "continuation-spectrale.ts": ["continuation-spectrale-ar", "continuation-spectrale-lstm"],
   "convertir-voix.ts": ["convertir-voix"],
   "csound-partition.ts": ["partition-csound"],
@@ -55,21 +53,13 @@ const SANS_NOMS_VERIFIES: Record<string, string[]> = {
   ],
   "dater-les-mots.ts": ["dater-les-mots"],
   "decrire-audio.ts": ["decrire-audio"],
-  "deplacement.ts": ["ducking", "ambisonique"],
   "dessin-sonore.ts": ["dessin-sonore"],
-  "effets-cresson.ts": ["echo-flottant", "ubiquite", "vague", "creneau"],
   "effets-midi.ts": [
     "motif-imposer-rythme", "motif-echo-notes", "motif-eclaircir", "motif-retrograde",
     "motif-repeter-tourner", "temperament",
   ],
-  "effets-modulation.ts": ["spatialisation-stereo"],
-  "effets-rotatifs.ts": ["tremolo-harmonique", "haut-parleur-rotatif"],
-  "effets-temporel.ts": ["wahwah", "phaser", "beat-repeat"],
-  "effets.ts": ["gate-expandeur", "vocoder"],
   "egaliseur-parametrique.ts": ["egaliseur-parametrique"],
   "entrees.ts": ["generateur-musical"],
-  "fdn.ts": ["reverbe-reseau"],
-  "finitions.ts": ["reverbe-hachee", "shimmer"],
   "fm-operateurs.ts": ["fm-six-operateurs"],
   "generateurs-echantillons.ts": ["boite-groove"],
   "generateurs-fractals.ts": ["generateur-fractal", "mappeur-mandelbrot", "arpege-koch"],
@@ -79,7 +69,6 @@ const SANS_NOMS_VERIFIES: Record<string, string[]> = {
   "generateurs.ts": ["generateur-accords", "melodie-aleatoire"],
   "glissando-de-gamme.ts": ["glissando-de-gamme"],
   "glissando-harmonique.ts": ["glissando-harmonique"],
-  "granulation-ecologique.ts": ["granulation-ecologique"],
   "isoler-voix.ts": ["isoler-voix"],
   "maquette.ts": ["maquette"],
   "matrice-parametres.ts": ["matrice-parametres"],
@@ -90,23 +79,16 @@ const SANS_NOMS_VERIFIES: Record<string, string[]> = {
   "palette-harmonique.ts": ["palette-harmonique"],
   "qui-parle-quand.ts": ["qui-parle-quand"],
   "restaurer-compresse.ts": ["restaurer-compresse"],
-  "retard-granulaire.ts": ["retard-granulaire"],
-  "retard-spectral.ts": ["retard-spectral"],
   "sequenceurs.ts": ["sequenceur-melodique", "sequenceur-accords"],
   "solveur-contraintes.ts": ["solveur-contraintes"],
-  "spectral-cdp.ts": ["peignes-accordes"],
   "spectral-wishart.ts": ["tracage-spectral", "flou-spectral", "gel-spectral", "glissando-interieur"],
   "spectrogramme-image.ts": ["son-spectrogramme", "spectrogramme-image", "image-spectrogramme"],
-  "suites-entieres.ts": ["suites-entieres"],
-  "table-onde.ts": ["oscillateur-table-onde"],
   "texte-image-moss.ts": ["texte-image-moss"],
   "texte-image.ts": ["texte-image"],
   "theorie-avancee.ts": ["tonnetz", "canon-pavage", "serie-infinie"],
   "theorie-composition.ts": ["serie-dodecaphonique", "harmonie-negative", "voicings-accords"],
   "transcription-midi.ts": ["transcription-midi"],
   "transcrire.ts": ["transcrire"],
-  "velours.ts": ["reverberation-velours"],
-  "vosim.ts": ["vosim"],
 };
 
 const nomDePropriete = (p: ts.ObjectLiteralElementLike) =>
@@ -149,7 +131,7 @@ const ECRITES = fichesEcrites();
 
 describe("une fiche ne lit que les réglages qu'elle déclare", () => {
   it("le garde lit les fiches des greffons, sans quoi il ne dirait rien", () => {
-    // 334 vérifiées et 134 sans noms vérifiés le 2026-11-11, 364 et 104 le 2026-11-12, sur 511 fiches.
+    // 334 vérifiées et 134 sans noms vérifiés le 2026-11-11 ; 392 et 76 le 2026-11-12, sur 511 fiches.
     expect(ECRITES.verifiees).toBeGreaterThanOrEqual(300);
   });
 

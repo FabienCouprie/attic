@@ -12,7 +12,7 @@
 // point de départ, elles commencent à leur premier terme. Le contrat de composant l'autorise à
 // cette condition.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -47,7 +47,7 @@ function termesDe(suite: Suite, combien: number, depart: number): bigint[] {
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "suites-entieres", nom: "Suites d'entiers", nomEn: "Integer Sequences",
     univers: "Entrées", famille: "Génération",
     resume: "Joue une suite d'entiers note par note, et mesure la période de ce qui sort.",

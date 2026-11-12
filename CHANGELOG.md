@@ -19,6 +19,26 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **LES BORNES DE MODULATION GARDENT LEUR NOM : VINGT-HUIT FICHES DE PLUS SONT VÉRIFIÉES.** Pièce 2b du plan `work/plan-reglages-par-nom-2026-11-11.md`, la famille de la modulation, ordonnée par Fabien le 2026-11-12. Posée sur la pièce 2a.
+  - **Ce qui élargissait.** `bornesModulation()`, dans `plugins/effets-aides.ts`, rend les deux réglages qui disent ce que valent le zéro et le un d'une courbe branchée. Vingt-neuf fiches l'étalent. Ses deux noms venaient de `BORNES_PAR_DEFAUT`, typé `readonly [string, string]`, ou de `modulationNommee()`, qui les fabrique en gabarit et les rendait en `string`.
+  - **Ce qui change.**
+    - `BORNES_PAR_DEFAUT` est un couple littéral.
+    - `modulationNommee("Seuil", …)` rend « Seuil min » et « Seuil max » sous un type gabarit.
+    - `bornesModulation()` a trois signatures : sans noms, les deux par défaut ; avec des noms, ceux-là ; et une forme ouverte pour `effet()`, la fabrique des fiches de la pièce 3, qui ne les connaît pas.
+    - `MODULATION_MELANGE` et `MODULATION_MIX` ne sont plus annotées, mais vérifiées par `satisfies`, pour ne pas porter de noms élargis.
+  - **Vingt-huit fiches repassent à `fiche()`**, par script, dans dix-neuf fichiers : les vingt-sept que la modulation seule élargissait, et une que la SoundFont élargissait aussi. Aucune ne lit un réglage qu'elle ne déclare pas : `tsc` est resté vert. `ambisonique` lit directement « Modulation min » et « Modulation max », et ces deux lectures sont désormais vérifiées. La liste du garde passe de 104 fiches à 76 ; 392 fiches sont vérifiées.
+  - **Vu rouge dans un arbre séparé, hors de `E:\attic`**, sur cinq fautes plantées une à la fois, le témoin restant vert :
+    - une faute de frappe dans une fiche libérée, puis dans une borne par défaut lue par `ambisonique` : `tsc`, TS2345 ;
+    - `BORNES_PAR_DEFAUT` de nouveau en `string` : `tsc` refuse douze fiches ;
+    - `modulationNommee` qui rend des noms élargis : `tsc` refuse vingt-trois fiches ;
+    - une fiche libérée qui retourne aux noms non vérifiés : le cas de la liste.
+  - **Mesuré** : 86 lignes ajoutées et 81 retirées dans vingt et un fichiers, commentaires compris, CHANGELOG non compté.
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, la liste de `master` ligne pour ligne ;
+    - passe complète verte, 724 fichiers et 10 380 cas, 3 fichiers et 14 cas sautés, en 25 min 58 s ;
+    - `npm run build` passe, et l'application construite, lancée par Electron sur un profil jetable, mène les quatorze nœuds de `canon-de-proportions` à leur terme sans erreur de page, avec les neuf mêmes requêtes `blob:` que `master` ;
+    - `empreintes-exemples` rend les quatorze exemples surveillés identiques, la banque General MIDI posée dans l'arbre par lien physique.
+
 - **LES RÉGLAGES SOUNDFONT PARTAGÉS GARDENT LEUR NOM : TRENTE FICHES DE PLUS SONT VÉRIFIÉES.** Pièce 2a du plan `work/plan-reglages-par-nom-2026-11-11.md`, première des familles de la pièce 2, ordonnée par Fabien le 2026-11-12. Posée sur la pièce 1.
   - **Le relevé qui ordonne la pièce 2.** Les 134 fiches passées par `ficheSansNomsVerifies` ont été classées par ce qui élargit leurs noms, au parseur de TypeScript :
     - cinq familles de réglages partagés en couvrent 106 ; les 28 dernières tiennent à des listes construites ou à des fabriques isolées ;
