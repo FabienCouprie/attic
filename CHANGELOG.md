@@ -19,6 +19,24 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **LA CLÉ ET LA TONIQUE GARDENT LEUR NOM : DIX-NEUF FICHES DE PLUS SONT VÉRIFIÉES.** Pièce 2e du plan `work/plan-reglages-par-nom-2026-11-11.md`, la famille de la tonalité. Fabien a demandé la suite le 2026-11-12. Posée sur la pièce 2d.
+  - **Ce qui élargissait.** `PARAMETRE_CLE` et `PARAMETRE_TONIQUE`, dans `audio/cles.ts`, étaient annotés `ParametreDef` seul, ce qui élargissait leur nom à `string`. Dix-neuf fiches les reprennent en `{ ...PARAMETRE_CLE, doc: "…" }`, et perdaient la vérification de tous leurs réglages.
+  - **Ce qui change.** Les deux réglages portent le type que rend `reglagePartage()`, `ParametreDef & { nom: "Clé" }` et son pareil pour « Tonique ». Il est écrit en annotation plutôt que par un import de `plugins/fiche.ts` : `audio/cles.ts` ne tire rien des greffons, et une dépendance de l'audio vers eux est de celles qui ont déjà fait tomber l'application construite.
+  - **Dix-neuf fiches repassent à `fiche()`**, par script, dans quatorze fichiers. La liste du garde passe de 47 fiches à 28 ; le garde compte lui-même 450 fiches vérifiées.
+  - **Une seule lecture a été refusée**, et c'était une lecture par variable : la boîte à groove lisait l'instrument de chaque partie par `pourPartie(nom: string)`. Son paramètre est désormais l'union des trois parties, « Instrument accords », « Instrument basse » et « Instrument mélodie », que la fiche déclare.
+  - **Vu rouge dans un arbre séparé, hors de `E:\attic`**, sur huit fautes plantées une à la fois, le témoin restant vert :
+    - une faute de frappe sur « Clé », sur un autre réglage d'une fiche libérée, puis sur « Tonique » : `tsc`, TS2345 ;
+    - une partie mal nommée dans la boîte à groove, puis sa lecture revenue à un nom libre : `tsc`, TS2345 ;
+    - `PARAMETRE_CLE` de nouveau annoté `ParametreDef` seul : `tsc` refuse les dix-sept fiches qui le reprennent ;
+    - `PARAMETRE_TONIQUE` de même : `tsc` refuse ses deux fiches ;
+    - une fiche libérée qui retourne aux noms non vérifiés : le cas de la liste.
+  - **Mesuré** : 42 lignes ajoutées et 51 retirées dans seize fichiers, commentaires compris, CHANGELOG non compté.
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, la liste de `master` ligne pour ligne ;
+    - passe complète verte, 724 fichiers et 10 381 cas, 3 fichiers et 14 cas sautés, en 23 min 39 s ;
+    - `npm run build` passe, et l'application construite, lancée par Electron sur un profil jetable, mène les quatorze nœuds de `canon-de-proportions` à leur terme sans erreur de page, avec les neuf mêmes requêtes `blob:` que `master` ;
+    - `empreintes-exemples` rend les quatorze exemples surveillés identiques, la banque General MIDI posée dans l'arbre par lien physique.
+
 - **LES RÉGLAGES DE RENDU GARDENT LEUR NOM : QUINZE FICHES DE PLUS SONT VÉRIFIÉES, ET SEPT AIDES LISENT SOUS DES NOMS VÉRIFIÉS.** Pièce 2d du plan `work/plan-reglages-par-nom-2026-11-11.md`, la famille de la chanson et du rendu MIDI. Fabien a demandé la suite le 2026-11-12. Posée sur la pièce 2c.
   - **Ce qui élargissait.** Quatre listes de réglages de rendu perdaient leurs noms :
     - `PARAMETRE_MODELE` et `PARAMETRES_RENDU`, dans `plugins/chanson-aides.ts`, annotés `ParametreDef` ;

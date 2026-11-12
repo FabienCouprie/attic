@@ -6,7 +6,7 @@
 // vérité extérieur au code, qu'il s'agisse d'un traité, d'un théorème ou d'une suite
 // publiée, et c'est ce qui les rend vérifiables.
 
-import { fiche, ficheSansNomsVerifies, lecteurDe, reglagePartage, type ContexteQuiDeclare } from "./fiche";
+import { fiche, lecteurDe, reglagePartage, type ContexteQuiDeclare } from "./fiche";
 import type { NomDuRenduMidi } from "./effets-aides";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
@@ -289,7 +289,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "serie-infinie", nomDicte: "série de l'infini", nom: "Série de l'infini (Nørgård)", nomEn: "Infinity Series (Nørgård)",
     univers: "Entrées", famille: "Génération",
     resume: "Engendre la suite auto-similaire de Per Nørgård, et ses voix plus lentes qui forment un canon exact.",

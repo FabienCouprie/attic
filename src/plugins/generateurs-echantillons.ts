@@ -4,7 +4,7 @@
 // declarent presque toutes la meme, ce qui ne decoupe rien.
 
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { decoderFichier, rendreAvecEchantillon, analyserMidi, rendreSequence, rendreMidiDepuisBytes, filtrerCanauxMidi, normaliserPic, limiterPic, appliquerInstrumentsParCanal, GAMMES_ACCORDS } from "../audio";
@@ -53,7 +53,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [buf, midiFile], message: traduire("msg.var_0_notes_chantillon_var_1", notes.length, audioFichier.name) };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "boite-groove",
     nom: "Groove Box",
     nomEn: "Groove Box",
@@ -371,7 +371,7 @@ export const fiches: FicheAudio[] = ([
       // lit comme valeur de repli, pour que ces projets sonnent comme avant. Un
       // choix explicite par partie l'emporte.
       const legs = ctx.paramNombre("Instrument", -1);
-      const pourPartie = (nom: string) => {
+      const pourPartie = (nom: "Instrument accords" | "Instrument basse" | "Instrument mélodie") => {
         const v = ctx.paramNombre(nom, -1);
         return v >= 0 ? v : legs;
       };

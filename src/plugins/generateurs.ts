@@ -4,7 +4,7 @@
 // declarent presque toutes la meme, ce qui ne decoupe rien.
 
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { genererMelodieAleatoire, genererAccords, analyserMidi, rendreAvecSF2, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, GAMMES_ACCORDS, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio";
@@ -25,7 +25,7 @@ import { PARAMETRE_CLE } from "../audio/cles";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "generateur-accords", nom: "Générateur d'accords", nomEn: "Chord Generator", univers: "Entrées", famille: "Génération",
     resume: "Génère une progression d'accords.",
     resumeEn: "Generates a chord progression.",
@@ -103,7 +103,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs:[await rendreMidiDepuisBytes(midiBytes,"FM/Oscillateurs",vol)], message:traduire("msg.var_0_fm", description) };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "melodie-aleatoire", nom: "Mélodie aléatoire", nomEn: "Random Melody", univers: "Entrées", famille: "Génération",
     resume: "Génère une mélodie aléatoire.",
     resumeEn: "Generates a random melody.",

@@ -2,7 +2,7 @@
 // Séquenceur où chaque pas est une couleur. La liste de couleurs détermine le
 // motif : teinte → note, saturation → vélocité, luminosité → octave.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererColorLooper, parseCouleurs, GAMMES_ACCORDS } from "../audio";
 import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
@@ -12,7 +12,7 @@ import { traduire } from "../i18n";
 import { PARAMETRE_CLE } from "../audio/cles";
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "color-looper", nomDicte: "boucle de couleurs",
     nom: "Color Looper",
     nomEn: "Color Looper",

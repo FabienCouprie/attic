@@ -141,8 +141,12 @@ export function demiTonDeCle(valeur: string): number | undefined {
  *
  * Un composant écrit `{ ...PARAMETRE_CLE, doc: "…" }` pour en changer la documentation, comme il le
  * fait déjà pour `PARAMETRE_SYNTHESE`. Ce qu'il ne fait pas, c'est recopier les douze noms.
+ *
+ * SON NOM EST TYPÉ LITTÉRAL, et les fiches qui le reprennent en gardent la vérification de tous leurs
+ * réglages. Annoté `ParametreDef` seul, il élargissait le nom à `string`. Ce module ne tire rien des
+ * greffons : le type est écrit ici, celui que rend `reglagePartage` (`plugins/fiche.ts`).
  */
-export const PARAMETRE_CLE: ParametreDef = {
+export const PARAMETRE_CLE: ParametreDef & { nom: "Clé" } = {
   nom: "Clé",
   nomEn: "Key",
   type: "choix",
@@ -163,7 +167,7 @@ export const PARAMETRE_CLE: ParametreDef = {
  * intervalles veut un nombre : lui donner un nom l'obligerait à le traduire à chaque lecture, et
  * c'est une traduction de plus à tenir juste.
  */
-export const PARAMETRE_TONIQUE: ParametreDef = {
+export const PARAMETRE_TONIQUE: ParametreDef & { nom: "Tonique" } = {
   ...PARAMETRE_CLE,
   nom: "Tonique",
   nomEn: "Tonic",

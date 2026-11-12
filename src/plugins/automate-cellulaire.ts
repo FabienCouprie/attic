@@ -1,5 +1,5 @@
 // plugins/automate-cellulaire.ts — Nœud de génération musicale par automate cellulaire.
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererAutomateCellulaire, REGLES_1D } from "../audio/automate-cellulaire";
 import {
@@ -20,7 +20,7 @@ const reglesOptions = ["Personnalisée", ...REGLES_1D.map(String)];
 const reglesOptionsEn = ["Custom", ...REGLES_1D.map(String)];
 
 const FICHES: FicheAudio[] = [
-  ficheSansNomsVerifies({
+  fiche({
     id: "automate-cellulaire",
     nom: "Automate cellulaire",
     nomEn: "Cellular automaton",
