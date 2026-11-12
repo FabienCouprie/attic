@@ -6,8 +6,9 @@
 // vérité extérieur au code, qu'il s'agisse d'un traité, d'un théorème ou d'une suite
 // publiée, et c'est ce qui les rend vérifiables.
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
-import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
+import { fiche, ficheSansNomsVerifies, lecteurDe, reglagePartage, type ContexteQuiDeclare } from "./fiche";
+import type { NomDuRenduMidi } from "./effets-aides";
+import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
@@ -35,30 +36,35 @@ import { PARAMETRE_TONIQUE } from "../audio/cles";
 
 type NoteSimple = Note;
 
-/** Rend l'audio et le MIDI d'une suite de notes, avec les réglages de synthèse du nœud. */
-async function rendre(ctx: ContexteAudio, notes: NoteSimple[]): Promise<[AudioBuffer, File]> {
+/**
+ * Rend l'audio et le MIDI d'une suite de notes, avec les réglages de synthèse du nœud.
+ *
+ * LA FICHE QUI L'APPELLE DÉCLARE LES QUATRE RÉGLAGES DU RENDU, et le compilateur l'exige.
+ */
+async function rendre<N extends string>(ctx: ContexteQuiDeclare<N, NomDuRenduMidi>, notes: NoteSimple[]): Promise<[AudioBuffer, File]> {
   const { notesVersFichierMidi, appliquerInstrumentMidi, rendreSequence } = await import("../audio");
-  const instrument = ctx.paramNombre("Instrument", 0);
-  const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+  const lu = lecteurDe<NomDuRenduMidi>(ctx);
+  const instrument = lu.paramNombre("Instrument", 0);
+  const mode = normaliserModeSynthèse(lu.paramTexte("Synthèse", "Automatique"));
   const modeRendu: "FM/Oscillateurs" | "SoundFont" =
     mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
   const { programme, banque } = decoderInstrumentSF2(instrument);
-  const midi = notesVersFichierMidi(notes, ctx.paramNombre("Tempo", 120), 0);
+  const midi = notesVersFichierMidi(notes, lu.paramNombre("Tempo", 120), 0);
   return [
-    await rendreSequence(notes, modeRendu, ctx.paramNombre("Volume", 80), programme, banque),
+    await rendreSequence(notes, modeRendu, lu.paramNombre("Volume", 80), programme, banque),
     await appliquerInstrumentMidi(midi, instrument),
   ];
 }
 
 const PARAMETRES_RENDU = [
-  { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300] as [number, number], pas: 1, defaut: 120, unite: "BPM",
-    doc: "Tempo inscrit dans le fichier MIDI produit.", docEn: "Tempo written into the produced MIDI file." },
+  reglagePartage({ nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300] as [number, number], pas: 1, defaut: 120, unite: "BPM",
+    doc: "Tempo inscrit dans le fichier MIDI produit.", docEn: "Tempo written into the produced MIDI file." }),
   { ...PARAMETRE_SYNTHESE,
     doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM.",
     docEn: "Auto = SoundFont if an SF2 file is loaded, else FM." },
   PARAMETRE_INSTRUMENT_SF2,
-  { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100] as [number, number], pas: 1, defaut: 80, unite: "%",
-    doc: "Volume du rendu audio.", docEn: "Output volume." },
+  reglagePartage({ nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100] as [number, number], pas: 1, defaut: 80, unite: "%",
+    doc: "Volume du rendu audio.", docEn: "Output volume." }),
 ];
 
 /** Lit « Do majeur », « Am », « F# mineur »… en triade. */
@@ -75,7 +81,7 @@ function lireTriade(texte: string, defaut: Triade): Triade {
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "tonnetz", nomDicte: "réseau de hauteurs", nom: "Tonnetz", nomEn: "Tonnetz",
     univers: "Traitement", famille: "Effets",
     resume: "Enchaîne les accords par les trois transformations néo-riemanniennes P, L et R, qui ne déplacent qu'une voix.",
@@ -217,7 +223,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "canon-pavage", nom: "Canon par pavage", nomEn: "Tiling Canon",
     univers: "Entrées", famille: "Génération",
     resume: "Construit un canon rythmique où chaque pulsation est frappée par une voix et une seule.",

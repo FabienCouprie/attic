@@ -63,7 +63,9 @@ describe("les trois tables s'accordent", () => {
 });
 
 describe("l'annonce ne parle que du débruiteur choisi", () => {
-  const ctx = (id: string) => ({ paramTexte: (nom: string, repli: string) => (nom === "Modèle" ? id : repli) });
+  // Un faux contexte réduit au seul lecteur que l'aide emploie : l'aide exige un contexte de fiche
+  // qui déclare « Modèle », ce que le compilateur vérifie sur les vraies fiches.
+  const ctx = (id: string) => ({ paramTexte: (nom: string, repli: string) => (nom === "Modèle" ? id : repli) }) as never;
 
   it("écarte chaque fois l'autre paquet, et lui seul", () => {
     for (const m of MODELES_RENDU) {

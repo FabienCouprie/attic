@@ -14,7 +14,7 @@
 // deux périphériques Vulkan, et le premier est le circuit intégré, pas la carte graphique. Laisser
 // « le meilleur disponible » choisir, c'est accepter de tourner onze fois plus lentement sans le
 // savoir.
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -131,7 +131,7 @@ const locales = ([
       }
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "rendre-chanson", nom: "Rendre une chanson", nomEn: "Render a Song",
     univers: "Entrées", famille: "Génération",
     resume: "Rend l'audio d'un plan de chanson, en stéréo 48 kHz.",

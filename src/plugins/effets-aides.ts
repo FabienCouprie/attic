@@ -8,7 +8,7 @@
 
 import type { ContexteAudio, FicheAudio, RuntimeAudio, ValeurAudio } from "../audio/types-domaine";
 import type { ContexteExecution, ParametreDef } from "../core";
-import type { ContexteQuiDeclare } from "./fiche";
+import { lecteurDe, reglagePartage, type ContexteQuiDeclare } from "./fiche";
 import { estCourbe, progressionPour, valeursParametre } from "../audio/courbe";
 import { appliquerInstrumentMidi, notesVersFichierMidi, rendreSequence } from "../audio";
 import { rendreBatterieMidi } from "../audio/tone-synths";
@@ -513,37 +513,43 @@ export function canalDominant(notes: NoteMotif[]): number {
  * passe par la synthèse de batterie — un MIDI de percussion joué en FM donnerait des sons
  * de flûte sur les notes de grosse caisse —, et l'instrument mélodique n'est alors pas
  * imposé au fichier, ce qui ferait taire la batterie chez les autres lecteurs.
+ *
+ * LA FICHE QUI L'APPELLE DÉCLARE LES QUATRE RÉGLAGES DU RENDU, et le compilateur l'exige.
  */
-export async function rendreMotif(
-  ctx: ContexteAudio, notes: NoteMotif[], canal: number,
+export async function rendreMotif<N extends string>(
+  ctx: ContexteQuiDeclare<N, NomDuRenduMidi>, notes: NoteMotif[], canal: number,
 ): Promise<[AudioBuffer, File]> {
-  const tempo = ctx.paramNombre("Tempo", 120);
-  const volume = ctx.paramNombre("Volume", 80);
+  const lu = lecteurDe<NomDuRenduMidi>(ctx);
+  const tempo = lu.paramNombre("Tempo", 120);
+  const volume = lu.paramNombre("Volume", 80);
   const brut = notesVersFichierMidi(notes, tempo, canal);
   if (canal === 9) {
     return [await rendreBatterieMidi({ notes, volume }), brut];
   }
-  const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+  const mode = normaliserModeSynthèse(lu.paramTexte("Synthèse", "Automatique"));
   const modeRendu: "FM/Oscillateurs" | "SoundFont" =
     mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
-  const { programme, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
+  const { programme, banque } = decoderInstrumentSF2(lu.paramNombre("Instrument", 0));
   return [
     await rendreSequence(notes, modeRendu, volume, programme, banque),
-    await appliquerInstrumentMidi(brut, ctx.paramNombre("Instrument", 0)),
+    await appliquerInstrumentMidi(brut, lu.paramNombre("Instrument", 0)),
   ];
 }
 
+/** Les quatre réglages qu'un rendu de notes lit, ici et dans les nœuds de théorie. */
+export type NomDuRenduMidi = "Tempo" | "Synthèse" | "Instrument" | "Volume";
+
 /** Les réglages de rendu communs aux nœuds de motifs : écouter d'abord, exporter ensuite. */
 export const PARAMETRES_RENDU_MOTIF = [
-  { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300] as [number, number], pas: 1, defaut: 120, unite: "BPM",
+  reglagePartage({ nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300] as [number, number], pas: 1, defaut: 120, unite: "BPM",
     doc: "Tempo inscrit dans le fichier MIDI produit. Les durées, elles, sont en secondes et ne changent pas.",
-    docEn: "Tempo written into the produced MIDI file. The durations themselves are in seconds and do not change." },
+    docEn: "Tempo written into the produced MIDI file. The durations themselves are in seconds and do not change." }),
   { ...PARAMETRE_SYNTHESE,
     doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. Sans effet sur une piste de percussion, qui passe toujours par la synthèse de batterie.",
     docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. No effect on a percussion track, which always goes through the drum synthesis." },
   PARAMETRE_INSTRUMENT_SF2,
-  { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100] as [number, number], pas: 1, defaut: 80, unite: "%",
-    doc: "Volume du rendu audio.", docEn: "Output volume." },
+  reglagePartage({ nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100] as [number, number], pas: 1, defaut: 80, unite: "%",
+    doc: "Volume du rendu audio.", docEn: "Output volume." }),
 ];
 
 export const SORTIES_MOTIF = [

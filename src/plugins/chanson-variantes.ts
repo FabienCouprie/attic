@@ -11,7 +11,7 @@
 // LES TROIS TÂCHES À MODÈLE DE BASE NE SONT PAS ICI. `lego`, `extract` et `complete` partent avec
 // le modèle rapide, mais le moteur avertit lui-même que leur sortie ne vaut rien. Le champ
 // `offerte` de la table les tient à l'écart, et un cas le garde.
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -21,12 +21,12 @@ import { choixLangues } from "../core/langues";
 import {
   CANAL_PLANIFIER, ENTREES_SOURCE, LANGUES, NOTICE_RENDU_EN, NOTICE_RENDU_FR, NOTICE_TIMBRE_EN,
   NOTICE_TIMBRE_FR, PARAMETRES_RENDU, PARAMETRE_MODELE, SORTIE_AUDIO, SORTIE_NOTICE_EN,
-  SORTIE_NOTICE_FR, api, paquetsEcartes, rendreSurAudio, suivre,
+  SORTIE_NOTICE_FR, api, modeleChoisi, paquetsEcartes, rendreSurAudio, suivre,
 } from "./chanson-aides";
 import { PARAMETRE_CALCUL } from "./parametre-calcul";
 
 export const fiches = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "reprendre-chanson", nom: "Reprendre une chanson", nomEn: "Cover a Song",
     univers: "Entrées", famille: "Génération",
     resume: "Rend une nouvelle version d'un audio, en suivant un plan de chanson.",
@@ -69,6 +69,7 @@ export const fiches = ([
     async executer(ctx) {
       const annoncer = () => annoncerModele(ctx, "reprendre-chanson", traduire("progress.chanson.modeles"), paquetsEcartes(ctx));
       return rendreSurAudio(ctx, annoncer, (c) => ({
+        ...modeleChoisi(c),
         // LA LISTE PORTE LE NOM DE LA TÂCHE DANS SON IDENTIFIANT D'OPTION : « Avec » vaut `cover`
         // et « Sans » vaut `cover-nofsq`, donc le choix se lit sans table de correspondance.
         tache: c.paramTexte("Quantification des codes", "cover") || "cover",
@@ -77,7 +78,7 @@ export const fiches = ([
       }));
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "retoucher-chanson", nom: "Retoucher une chanson", nomEn: "Repaint a Song",
     univers: "Entrées", famille: "Génération",
     resume: "Refait un passage d'un audio entre deux instants, et garde le reste.",
@@ -113,13 +114,14 @@ export const fiches = ([
     async executer(ctx) {
       const annoncer = () => annoncerModele(ctx, "retoucher-chanson", traduire("progress.chanson.modeles"), paquetsEcartes(ctx));
       return rendreSurAudio(ctx, annoncer, (c) => ({
+        ...modeleChoisi(c),
         tache: "repaint",
         debut: c.paramNombre("Début", 0),
         fin: c.paramNombre("Fin", 8),
       }));
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "prolonger-chanson", nom: "Prolonger une chanson", nomEn: "Extend a Song",
     univers: "Entrées", famille: "Génération",
     resume: "Ajoute de la musique avant ou après un audio, en suivant un plan de chanson.",
@@ -157,6 +159,7 @@ export const fiches = ([
     async executer(ctx) {
       const annoncer = () => annoncerModele(ctx, "prolonger-chanson", traduire("progress.chanson.modeles"), paquetsEcartes(ctx));
       return rendreSurAudio(ctx, annoncer, (c, source) => ({
+        ...modeleChoisi(c),
         // LA PLAGE SE CALCULE DANS LE PROCESSUS PRINCIPAL, qui porte le relevé des deux formules.
         // Le nœud ne transmet que le côté, la durée et celle de l'audio reçu.
         tache: "repaint",
