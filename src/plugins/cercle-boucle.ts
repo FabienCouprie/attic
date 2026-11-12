@@ -18,6 +18,7 @@
 // tour d'avant dans `boucleSequencesGlobal.ts`, le même module ambiant que les deux autres boucles
 // emploient. Le graphe reste acyclique, et rien du moteur n'est touché.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { POSITIONS_MAX, enSuite } from "../audio/cercle";
 import { langueCourante } from "../i18n";
@@ -41,7 +42,7 @@ const en = () => langueCourante() === "en";
 const VARIATIONS_MIN = 1;
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: FICHE_CERCLE_DEBUT,
     nom: "Début de boucle par cercle", nomEn: "Circle Loop Start",
     univers: "Autres", famille: "Circle",
@@ -86,8 +87,8 @@ export const fiches: FicheAudio[] = ([
           + `${en() ? "positions" : "places"}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: FICHE_CERCLE_FIN,
     nom: "Fin de boucle par cercle", nomEn: "Circle Loop End",
     univers: "Autres", famille: "Circle",
@@ -141,5 +142,5 @@ export const fiches: FicheAudio[] = ([
           + (suite[0].positions > POSITIONS_MAX ? ` · ${en() ? "beyond the maximum" : "au-delà du maximum"}` : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

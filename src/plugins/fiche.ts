@@ -16,7 +16,7 @@
 // qu'elle est, et que le garde `plugins/fiche.test.ts` tient dans une liste qui ne fait que rétrécir.
 //
 // LES DEUX FONCTIONS RENDENT LEUR ARGUMENT TEL QUEL : elles ne servent qu'au compilateur.
-import type { FonctionPlugin, ParametreDef } from "../core";
+import type { ContexteExecution, FonctionPlugin, ParametreDef } from "../core";
 import type { FicheAudio, RuntimeAudio, ValeurAudio } from "../audio/types-domaine";
 
 /**
@@ -26,6 +26,36 @@ import type { FicheAudio, RuntimeAudio, ValeurAudio } from "../audio/types-domai
  * `nom: string`, elle rouvrait la porte que la fiche ferme, et le compilateur la refuse.
  */
 export type NomDeReglage<C extends { paramTexte(nom: never, defaut: string): string }> = Parameters<C["paramTexte"]>[0];
+
+/**
+ * Refuse le contexte d'une fiche qui ne déclare pas tous les réglages `M` qu'une aide lit.
+ *
+ * POURQUOI UN TYPE ET NON LE CONTEXTE DE L'AIDE ÉCRIT AVEC SES NOMS. Les deux lecteurs du contexte
+ * sont des méthodes, donc bivariants : une fiche qui ne déclarerait qu'une partie des noms de l'aide
+ * passerait. L'aide prend donc le contexte de la fiche tel quel, `ContexteExecution<…, N>`, et ce
+ * type le refuse quand `M` n'est pas tout entier dans `N`. Une fiche aux noms non vérifiés a
+ * `N = string`, et passe comme avant.
+ */
+export type ExigeReglages<N extends string, M extends string> = [M] extends [N]
+  ? unknown
+  : { "reglages lus par l'aide et absents de la fiche": Exclude<M, N> };
+
+/**
+ * Le contexte qu'une aide reçoit d'une fiche qui déclare au moins les réglages `M` :
+ * `function aide<N extends string>(ctx: ContexteQuiDeclare<N, "Gamme">)`.
+ */
+export type ContexteQuiDeclare<N extends string, M extends string> =
+  ContexteExecution<ValeurAudio, RuntimeAudio, N> & ExigeReglages<N, M>;
+
+/**
+ * Le même contexte, lu par l'aide sous ses seuls noms `M` : ses propres lectures sont ainsi
+ * vérifiées à leur tour, et une faute de frappe dans l'aide tombe comme dans une fiche.
+ */
+export function lecteurDe<M extends string>(
+  ctx: ContexteExecution<ValeurAudio, RuntimeAudio, string>,
+): ContexteExecution<ValeurAudio, RuntimeAudio, M> {
+  return ctx;
+}
 
 /** Refuse une fiche dont les noms de réglage se sont élargis à `string`, en le disant. */
 type NomsLitteraux<N extends string> = [string] extends [N]

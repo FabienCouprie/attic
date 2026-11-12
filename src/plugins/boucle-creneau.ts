@@ -17,6 +17,7 @@
 // porte : une chaîne qui produit deux secondes de musique pour un créneau de six sort étirée trois
 // fois. Sans cela, le créneau ne serait qu'une étiquette et la boîte n'aurait pas de largeur.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -37,7 +38,7 @@ const creneauEnSequence = (debut: number, duree: number, tempo: number): Sequenc
 });
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: FICHE_CRENEAU_DEBUT,
     nom: "Début de boucle par créneau", nomEn: "Slot Loop Start",
     univers: "Traitement", famille: "Montage",
@@ -89,8 +90,8 @@ export const fiches: FicheAudio[] = ([
           + `${note.debut.toFixed(2)} s · ${(note.fin - note.debut).toFixed(2)} s`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: FICHE_CRENEAU_FIN,
     nom: "Fin de boucle par créneau", nomEn: "Slot Loop End",
     univers: "Traitement", famille: "Montage",
@@ -174,5 +175,5 @@ export const fiches: FicheAudio[] = ([
           + (etires > 0 ? ` · ${etires} ${en() ? "folded" : "pliés"}` : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

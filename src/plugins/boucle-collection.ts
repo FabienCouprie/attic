@@ -14,6 +14,7 @@
 // exécute le graphe une fois par fichier, l'un après l'autre, et la mémoire d'une passe est rendue
 // avant la suivante. Voir `plugins/lotGlobal.ts` et `ui/hooks/useExecutionGraphe.ts`.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -24,7 +25,7 @@ import { decrire } from "../audio/metadonnees";
 import { ecrireOuLever } from "./pont-electron";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: FICHE_LOT_DEBUT, nom: "Début de boucle collection", nomEn: "Collection Loop Start",
     univers: "Collections", famille: "Conversion",
     resume: "Ouvre un traitement par lot : le graphe est exécuté une fois par fichier audio du dossier, et ce composant rend le fichier de la passe en cours.",
@@ -81,8 +82,8 @@ export const fiches: FicheAudio[] = ([
         };
       }
     },
-  },
-  {
+  }),
+  fiche({
     id: FICHE_LOT_FIN, nom: "Fin de boucle collection", nomEn: "Collection Loop End",
     univers: "Collections", famille: "Conversion",
     resume: "Referme un traitement par lot : écrit le résultat de chaque passe dans le dossier de sortie, sous le nom du fichier d'origine.",
@@ -197,5 +198,5 @@ export const fiches: FicheAudio[] = ([
         return echouer(e?.message ?? String(e));
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

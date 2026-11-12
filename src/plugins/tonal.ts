@@ -1,8 +1,8 @@
 // plugins/tonal.ts — Nœuds de théorie musicale via la bibliothèque Tonal.
 // Tonal : MIT licence — ajouté dans THIRD_PARTY.md.
 
-import { fiche } from "./fiche";
-import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
+import { fiche, lecteurDe, type ContexteQuiDeclare } from "./fiche";
+import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
@@ -59,10 +59,10 @@ function progressionSuggest(type: "major" | "minor"): string {
  * personne ne pense à changer quand une tonalité arrive par un câble. Un texte
  * muet sur le mode — une simple tonique « A » — laisse le paramètre décider.
  */
-function gammeDemandee(ctx: ContexteAudio, entree: unknown): ModeProgression {
+function gammeDemandee<N extends string>(ctx: ContexteQuiDeclare<N, "Gamme">, entree: unknown): ModeProgression {
   const duTexte = typeof entree === "string" ? modeDepuisTonalite(entree) : null;
   if (duTexte) return duTexte;
-  return ctx.paramTexte("Gamme", "majeur") === "mineur" ? "mineur" : "majeur";
+  return lecteurDe<"Gamme">(ctx).paramTexte("Gamme", "majeur") === "mineur" ? "mineur" : "majeur";
 }
 
 export const fiches: FicheAudio[] = ([

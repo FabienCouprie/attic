@@ -10,7 +10,9 @@
 //   · une fiche passée par `ficheSansNomsVerifies` lit tout nom, et la liste de ces fiches ne doit
 //     que rétrécir ;
 //   · un ancien réglage qui serait encore vivant, ou hérité par un réglage vivant, ne serait jamais
-//     lu sous son nom.
+//     lu sous son nom ;
+//   · une aide qui lit un réglage sous un contexte aux noms libres ne vérifie rien, et la liste de
+//     ces aides ne doit que rétrécir (pièce 3a).
 //
 // ET CE QUE LE COMPILATEUR DIT, CE GARDE LE PROUVE, par trois témoins écrits sous `@ts-expect-error`
 // et que `tsc -b` lit avec les tests : si la vérification tombait, l'affirmation inutile ferait
@@ -94,13 +96,88 @@ const SANS_NOMS_VERIFIES: Record<string, string[]> = {
 const nomDePropriete = (p: ts.ObjectLiteralElementLike) =>
   p.name && (ts.isIdentifier(p.name) || ts.isStringLiteral(p.name)) ? p.name.text : null;
 
-/** L'`id` d'une fiche écrite sur place : un littéral d'objet qui porte un `id`, des réglages et un exécuteur. */
+/**
+ * L'`id` d'une fiche écrite sur place : un littéral d'objet qui porte un `id`, des réglages et un exécuteur.
+ *
+ * L'`id` EST UNE CHAÎNE, OU UNE CONSTANTE EN CAPITALES (`id: FICHE_LOT_DEBUT`) : dix fiches nomment le
+ * leur ainsi, et la pièce 1 les avait laissées hors de `fiche()`. Un `id` en minuscules est celui
+ * qu'une fabrique reçoit en argument, `effet(slug, …)`, et sa fiche n'est pas écrite sur place.
+ */
 function idDeFiche(n: ts.Node): string | null {
   if (!ts.isObjectLiteralExpression(n)) return null;
   const noms = new Map(n.properties.map((p) => [nomDePropriete(p), p]));
   const id = noms.get("id");
-  if (!id || !noms.has("executer") || !noms.has("parametres")) return null;
-  return ts.isPropertyAssignment(id) && ts.isStringLiteral(id.initializer) ? id.initializer.text : null;
+  if (!id || !noms.has("executer") || !noms.has("parametres") || !ts.isPropertyAssignment(id)) return null;
+  if (ts.isStringLiteral(id.initializer)) return id.initializer.text;
+  return ts.isIdentifier(id.initializer) && /^[A-Z][A-Z0-9_]+$/.test(id.initializer.text) ? id.initializer.text : null;
+}
+
+/**
+ * LES AIDES QUI LISENT ENCORE UN RÉGLAGE SOUS UN CONTEXTE AUX NOMS LIBRES, relevées le 2026-11-12.
+ *
+ * ELLE NE PEUT QUE DÉCROÎTRE. Une aide qui prend `ContexteQuiDeclare<N, M>` de `plugins/fiche.ts`
+ * fait vérifier ses lectures, et que la fiche appelante déclare tout ce qu'elle lit ; elle sort de la
+ * liste. Celles-ci servent des fiches encore sans noms vérifiés, et se typent avec la famille de la
+ * pièce 2 qui les libère (décidé par Fabien le 2026-11-12). L'exécuteur de `effet()` lit par
+ * construction les réglages qu'il déclare, `ctx.paramNombre(p.nom, …)`, et y reste à ce titre.
+ */
+const AIDES_NON_VERIFIEES: Record<string, string[]> = {
+  "chanson-aides.ts": ["guidageDe", "modeleChoisi", "paquetsEcartes", "rendreSurAudio"],
+  "continuation-spectrale.ts": ["executerContinuation"],
+  "effets-aides.ts": ["effet (exécuteur de fabrique)", "rendreMotif"],
+  "multicanal.ts": ["piste"],
+  "spectral-wishart.ts": ["tailleDe"],
+  "spectrogramme-image.ts": ["echelleLue", "estStereo"],
+  "theorie-avancee.ts": ["rendre"],
+  "theorie-composition.ts": ["rendreEtEcrire"],
+};
+
+/** Le nom de la fonction qui contient ce nœud, comme une déclaration ou une constante le donne. */
+function fonctionDe(n: ts.Node): string | null {
+  for (let p = n.parent; p; p = p.parent) {
+    if ((ts.isFunctionDeclaration(p) || ts.isMethodDeclaration(p)) && p.name && nomDePropriete(p as never) !== "executer") return p.name.getText();
+    if ((ts.isArrowFunction(p) || ts.isFunctionExpression(p)) && ts.isVariableDeclaration(p.parent)) return p.parent.name.getText();
+  }
+  return null;
+}
+
+/** Les aides qui lisent un réglage hors de l'exécuteur d'une fiche enveloppée, et sans contexte vérifié. */
+function aidesNonVerifiees(): string[] {
+  const trouvees = new Set<string>();
+  for (const nom of readdirSync(DOSSIER).sort()) {
+    if (!nom.endsWith(".ts") || nom.includes(".test.") || nom === "fiche.ts") continue;
+    const sf = ts.createSourceFile(nom, readFileSync(join(DOSSIER, nom), "utf8"), ts.ScriptTarget.Latest, true);
+    // Les fonctions dont une déclaration, surcharges comprises, prend un contexte vérifié.
+    const verifiees = new Set<string>();
+    const lecteurs: { fonction: string; dansExecuteur: boolean }[] = [];
+    const visiter = (n: ts.Node) => {
+      if ((ts.isFunctionDeclaration(n) && n.name) || (ts.isVariableDeclaration(n) && n.initializer
+        && (ts.isArrowFunction(n.initializer) || ts.isFunctionExpression(n.initializer)))) {
+        if (/\bContexteQuiDeclare\b/.test(n.getText(sf).split("{")[0] ?? "")) verifiees.add(n.name!.getText(sf));
+      }
+      if (ts.isCallExpression(n) && ts.isPropertyAccessExpression(n.expression)
+        && ["paramNombre", "paramTexte"].includes(n.expression.name.text)) {
+        let dansFiche = false, dansExecuteur = false;
+        for (let p: ts.Node | undefined = n.parent; p; p = p.parent) {
+          if ((ts.isMethodDeclaration(p) || ts.isPropertyAssignment(p)) && nomDePropriete(p as never) === "executer") {
+            dansExecuteur = true;
+            const appel = p.parent?.parent;
+            dansFiche = !!appel && ts.isCallExpression(appel) && ts.isIdentifier(appel.expression)
+              && ["fiche", "ficheSansNomsVerifies"].includes(appel.expression.text);
+            break;
+          }
+        }
+        if (!dansFiche) lecteurs.push({ fonction: fonctionDe(n) ?? "(module)", dansExecuteur });
+      }
+      ts.forEachChild(n, visiter);
+    };
+    visiter(sf);
+    for (const l of lecteurs) {
+      if (verifiees.has(l.fonction)) continue;
+      trouvees.add(`${nom} : ${l.dansExecuteur ? `${l.fonction} (exécuteur de fabrique)` : l.fonction}`);
+    }
+  }
+  return [...trouvees].sort();
 }
 
 /** Les fiches de chaque fichier de greffons, rangées par la fonction qui les enveloppe. */
@@ -131,7 +208,8 @@ const ECRITES = fichesEcrites();
 
 describe("une fiche ne lit que les réglages qu'elle déclare", () => {
   it("le garde lit les fiches des greffons, sans quoi il ne dirait rien", () => {
-    // 334 vérifiées et 134 sans noms vérifiés le 2026-11-11 ; 392 et 76 le 2026-11-12, sur 511 fiches.
+    // 334 vérifiées et 134 sans noms vérifiés le 2026-11-11 ; 392 et 76 le 2026-11-12, puis 402 et 76
+    // quand les dix fiches à identifiant constant sont passées par fiche(), sur 511 fiches.
     expect(ECRITES.verifiees).toBeGreaterThanOrEqual(300);
   });
 
@@ -152,6 +230,19 @@ describe("une fiche ne lit que les réglages qu'elle déclare", () => {
       "enTrop : une fiche de plus lit ses réglages sans vérification. Écrivez ses réglages sur place,",
       "ou typez la liste partagée, pour que fiche() en déduise les noms.",
       "sortiesDeLaListe : la fiche passe désormais par fiche(), ou n'existe plus ; retirez-la de la liste.",
+    ].join("\n")).toEqual({ enTrop: [], sortiesDeLaListe: [] });
+  });
+
+  it("LES AIDES QUI LISENT SOUS DES NOMS LIBRES SONT CELLES DE LA LISTE, et la liste ne fait que rétrécir", () => {
+    const attendues = Object.entries(AIDES_NON_VERIFIEES).flatMap(([f, noms]) => noms.map((n) => `${f} : ${n}`)).sort();
+    const trouvees = aidesNonVerifiees();
+    expect({
+      enTrop: trouvees.filter((x) => !attendues.includes(x)),
+      sortiesDeLaListe: attendues.filter((x) => !trouvees.includes(x)),
+    }, [
+      "enTrop : une aide de plus lit un réglage sous un contexte aux noms libres. Faites-lui prendre",
+      "ContexteQuiDeclare<N, …> de plugins/fiche.ts, et lire par lecteurDe.",
+      "sortiesDeLaListe : l'aide est désormais vérifiée, ou ne lit plus rien ; retirez-la de la liste.",
     ].join("\n")).toEqual({ enTrop: [], sortiesDeLaListe: [] });
   });
 

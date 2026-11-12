@@ -19,6 +19,39 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **LES AIDES ET LES FICHES DE FABRIQUE LISENT LEURS RÉGLAGES SOUS DES NOMS VÉRIFIÉS.** Pièce 3a du plan `work/plan-reglages-par-nom-2026-11-11.md`. Fabien a demandé le 2026-11-12 de faire la pièce 3 avant les familles 2c à 2f, puis, sur le relevé, de la couper en deux. Posée sur la pièce 2b.
+  - **Le relevé.** 62 lectures de réglage se faisaient hors de l'exécuteur d'une fiche passée par `fiche()` :
+    - quatorze dans des fiches nées d'une fabrique ou nommées par une constante ;
+    - six par variable, dans `effet()` et `reglageModule()` ;
+    - trois dans `multicanal` ;
+    - trente-neuf noms littéraux dans treize aides partagées.
+
+    `effet()` et `simple()`, qui font 29 fiches, lisent par construction les réglages qu'elles déclarent. Onze des treize aides ne servent que des fiches encore sans noms vérifiés : les typer avant les familles 2c à 2f ne vérifierait rien. Elles se typeront avec la famille qui libère leurs fiches, décidé par Fabien.
+  - **Le mécanisme, dans `plugins/fiche.ts`.** Une aide prend le contexte de la fiche appelante tel quel, `ContexteQuiDeclare<N, M>`, et le compilateur le refuse si la fiche ne déclare pas tous les réglages `M` que l'aide lit. L'aide lit par `lecteurDe<M>(ctx)`, sous ses seuls noms, de sorte que ses propres lectures sont vérifiées aussi. Ce n'est pas un contexte écrit avec les noms de l'aide : ses lecteurs étant des méthodes, donc bivariants, une fiche qui n'en déclarerait qu'une partie passerait.
+  - **`reglageModule()`**, la lecture d'un réglage modulé, déduit les noms de la fiche de son contexte, jamais de l'option (`NoInfer`) :
+    - le réglage nommé et ses deux bornes doivent être déclarés ;
+    - sans bornes nommées, la fiche doit déclarer les deux bornes par défaut.
+
+    Ses soixante-treize appels passent, dont ceux de vingt-huit fiches vérifiées.
+  - **`gammeDemandee`**, l'aide de la tonalité, exige « Gamme » de ses deux fiches.
+  - **Quatorze fiches passent par `fiche()`** :
+    - les quatre descripteurs Meyda, dans leur fabrique ;
+    - les huit fiches de boucle et de lot, et les deux de la frontière, dont l'`id` est une constante en capitales. Le garde les lit désormais comme les autres.
+
+    Aucune ne lit un réglage qu'elle ne déclare pas.
+  - **Le garde `plugins/fiche.test.ts`** gagne un cas : les aides qui lisent encore sous des noms libres sont celles d'une liste qui ne fait que rétrécir. Elle compte treize entrées en huit fichiers, dont l'exécuteur de `effet()`, qui lit par construction. Il exige aussi `fiche()` des fiches à identifiant constant.
+  - **Vu rouge dans un arbre séparé, hors de `E:\attic`**, sur huit fautes plantées une à la fois, le témoin restant vert :
+    - une faute de frappe dans une fiche de boucle, dans la fabrique Meyda, puis dans l'aide de la tonalité : `tsc`, TS2345 ;
+    - l'aide qui exige un réglage que l'une de ses fiches ne déclare pas : `tsc` refuse cette fiche seule, l'autre le déclarant ;
+    - un réglage modulé mal écrit : `tsc`, TS2769 ;
+    - une aide revenue aux noms libres, puis une fiche de boucle écrite sans `fiche()`, puis la liste qui nomme une aide absente : chacun son cas.
+  - **Mesuré** : 199 lignes ajoutées et 54 retirées dans dix fichiers, commentaires compris, CHANGELOG non compté.
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, la liste de `master` ligne pour ligne ;
+    - passe complète verte, 724 fichiers et 10 381 cas, 3 fichiers et 14 cas sautés, en 21 min 51 s, soit la 2b et le nouveau cas du garde ;
+    - `npm run build` passe, et l'application construite, lancée par Electron sur un profil jetable, mène les quatorze nœuds de `canon-de-proportions` à leur terme sans erreur de page, avec les neuf mêmes requêtes `blob:` que `master` ;
+    - `empreintes-exemples` rend les quatorze exemples surveillés identiques, la banque General MIDI posée dans l'arbre par lien physique.
+
 - **LES BORNES DE MODULATION GARDENT LEUR NOM : VINGT-HUIT FICHES DE PLUS SONT VÉRIFIÉES.** Pièce 2b du plan `work/plan-reglages-par-nom-2026-11-11.md`, la famille de la modulation, ordonnée par Fabien le 2026-11-12. Posée sur la pièce 2a.
   - **Ce qui élargissait.** `bornesModulation()`, dans `plugins/effets-aides.ts`, rend les deux réglages qui disent ce que valent le zéro et le un d'une courbe branchée. Vingt-neuf fiches l'étalent. Ses deux noms venaient de `BORNES_PAR_DEFAUT`, typé `readonly [string, string]`, ou de `modulationNommee()`, qui les fabrique en gabarit et les rendait en `string`.
   - **Ce qui change.**

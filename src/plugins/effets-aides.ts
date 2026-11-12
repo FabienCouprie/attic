@@ -6,8 +6,9 @@
 // partagee est un sujet a elle seule.
 
 
-import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
-import type { ParametreDef } from "../core";
+import type { ContexteAudio, FicheAudio, RuntimeAudio, ValeurAudio } from "../audio/types-domaine";
+import type { ContexteExecution, ParametreDef } from "../core";
+import type { ContexteQuiDeclare } from "./fiche";
 import { estCourbe, progressionPour, valeursParametre } from "../audio/courbe";
 import { appliquerInstrumentMidi, notesVersFichierMidi, rendreSequence } from "../audio";
 import { rendreBatterieMidi } from "../audio/tone-synths";
@@ -276,10 +277,37 @@ export const luParLExecuteur = (source: string, nom: string): boolean =>
  * son maximum, ou un son quarante décibels trop bas — c'est arrivé à trois synthés du catalogue,
  * et `plugins/niveau-des-synthes.test.ts` en garde la trace. L'appelant déclare donc ce qu'il veut.
  */
-export function reglageModule(
-  ctx: ContexteAudio, n: number, rangPort: number,
-  o: {
-    reglage: string; defaut?: number; rendu?: "proportion" | "pourCent";
+// LES NOMS LUS SONT CEUX DE LA FICHE APPELANTE, et c'est la pièce 3a du plan des réglages par nom.
+// `N` se déduit du contexte, jamais de l'option (`NoInfer`) : le nom passé en `reglage`, et ceux des
+// bornes, doivent être des réglages que la fiche déclare. Sans `noms`, ce sont les deux bornes par
+// défaut que l'aide lit, et la fiche doit les déclarer aussi.
+export function reglageModule<N extends string>(
+  ctx: ContexteQuiDeclare<N, typeof BORNES_PAR_DEFAUT[number]>,
+  n: number, rangPort: number,
+  o: OptionsModule<NoInfer<N>> & { noms?: undefined },
+): number | Float32Array;
+export function reglageModule<N extends string>(
+  ctx: ContexteExecution<ValeurAudio, RuntimeAudio, N>, n: number, rangPort: number,
+  o: OptionsModule<NoInfer<N>> & { noms: readonly [NoInfer<N>, NoInfer<N>] },
+): number | Float32Array;
+export function reglageModule(ctx: ContexteAudio, n: number, rangPort: number, o: OptionsModule<string>): number | Float32Array {
+  const { reglage, defaut = 100, rendu = "proportion", noms = BORNES_PAR_DEFAUT, bornes = [0, 100], echelle } = o;
+  const facteur = rendu === "pourCent" ? 1 : 100;
+  const fixe = ctx.paramNombre(reglage, defaut);
+  const courbe = ctx.entree(rangPort);
+  if (!estCourbe(courbe)) return fixe / facteur;
+  const valeurs = valeursParametre(courbe, n, fixe, {
+    min: ctx.paramNombre(noms[0], bornes[0]),
+    max: ctx.paramNombre(noms[1], bornes[1]),
+    echelle,
+  });
+  if (facteur !== 1) for (let i = 0; i < valeurs.length; i++) valeurs[i] /= facteur;
+  return valeurs;
+}
+
+/** Ce que `reglageModule` lit, et comment : `N` sont les noms de réglage de la fiche appelante. */
+type OptionsModule<N extends string> = {
+    reglage: N; defaut?: number; rendu?: "proportion" | "pourCent";
     /**
      * Les noms des deux bornes à lire, quand ce n'est pas le premier réglage modulé de la fiche.
      *
@@ -287,7 +315,7 @@ export function reglageModule(
      * réglage déclaré dans le texte de l'exécuteur : les deux noms par défaut lui sont connus par
      * `REGLAGES_LUS_PAR_L_AIDE`, et des noms donnés ici apparaissent dans la source.
      */
-    noms?: readonly [string, string];
+    noms?: readonly [N, N];
     /**
      * Ce que valent les deux bornes QUAND LE NŒUD NE LES PORTE PAS ENCORE.
      *
@@ -309,21 +337,7 @@ export function reglageModule(
      * gardent la course additive qu'ils avaient.
      */
     echelle?: "lineaire" | "logarithmique";
-  },
-): number | Float32Array {
-  const { reglage, defaut = 100, rendu = "proportion", noms = BORNES_PAR_DEFAUT, bornes = [0, 100], echelle } = o;
-  const facteur = rendu === "pourCent" ? 1 : 100;
-  const fixe = ctx.paramNombre(reglage, defaut);
-  const courbe = ctx.entree(rangPort);
-  if (!estCourbe(courbe)) return fixe / facteur;
-  const valeurs = valeursParametre(courbe, n, fixe, {
-    min: ctx.paramNombre(noms[0], bornes[0]),
-    max: ctx.paramNombre(noms[1], bornes[1]),
-    echelle,
-  });
-  if (facteur !== 1) for (let i = 0; i < valeurs.length; i++) valeurs[i] /= facteur;
-  return valeurs;
-}
+};
 
 export function effet(
   slug: string, nom: string, nomEn: string, resume: string, resumeEn: string,

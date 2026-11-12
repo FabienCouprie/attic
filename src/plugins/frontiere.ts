@@ -2,11 +2,12 @@
 // méta-composant dans sa vue interne (§3.8). Reliés à un port interne, ils
 // définissent une entrée/sortie exposée du méta. Jamais exécutés réellement
 // (retirés à la sauvegarde du sous-graphe) ; filtrés de la palette.
+import { fiche } from "./fiche";
 import { ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE } from "../core";
 import type { FicheAudio } from "../audio/types-domaine";
 
 const defs: FicheAudio[] = [
-  {
+  fiche({
     id: ID_ENTREE_FRONTIERE, nom: "▸ Entrée exposée", nomEn: "▸ Exposed input",
     univers: "Méta-composants", famille: "Frontière",
     resume: "Point d'entrée exposé d'un méta-composant.",
@@ -19,8 +20,8 @@ const defs: FicheAudio[] = [
     // producteur) : le filet « tout-null = échec » ne doit pas s'appliquer.
     sortieNullePermise: true,
     executer: async () => ({ valeurs: [null] }),
- },
-  {
+ }),
+  fiche({
     id: ID_SORTIE_FRONTIERE, nom: "Sortie exposée ◂", nomEn: "Exposed output ◂",
     univers: "Méta-composants", famille: "Frontière",
     resume: "Point de sortie exposé d'un méta-composant.",
@@ -30,7 +31,7 @@ const defs: FicheAudio[] = [
     entrees: [{ nom: "Sortie", nomEn: "Output", type: "frontiere" }], sorties: [],
     parametres: [],
     executer: async () => ({ valeurs: [] }),
- },
+ }),
 ];
 
 export const fiches: FicheAudio[] = defs;
