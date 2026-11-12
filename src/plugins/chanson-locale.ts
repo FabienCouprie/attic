@@ -14,7 +14,7 @@
 // deux périphériques Vulkan, et le premier est le circuit intégré, pas la carte graphique. Laisser
 // « le meilleur disponible » choisir, c'est accepter de tourner onze fois plus lentement sans le
 // savoir.
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -31,7 +31,7 @@ import { fiches as compositionDePlan } from "./composer-plan";
 import { choixLangues } from "../core/langues";
 
 const locales = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "planifier-chanson", nom: "Planifier une chanson", nomEn: "Plan a Song",
     univers: "Entrées", famille: "Génération",
     resume: "Écrit le plan d'une chanson : ses paroles, sa forme et ses codes audio.",

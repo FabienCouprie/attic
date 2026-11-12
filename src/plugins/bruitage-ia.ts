@@ -28,7 +28,7 @@
 // « Stable Audio 3 » a déjà reçu, sur cinq fois plus de poids. Le chemin sans PyTorch annoncé par
 // cette famille concerne ses modèles de parole, pas celui-ci.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -84,7 +84,7 @@ export function mettreAuNiveau(canaux: Float32Array[], dbfs: number): number {
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "bruitage-ia", nom: "Bruitage IA", nomEn: "AI Sound Effect",
     univers: "Entrées", famille: "Génération",
     resume: "Engendre un bruitage ou une ambiance à partir d'une description, et le rend au niveau demandé.",

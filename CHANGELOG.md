@@ -19,6 +19,22 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **LE RÉGLAGE « CALCUL » GARDE SON NOM : QUATORZE FICHES DE PLUS SONT VÉRIFIÉES.** Pièce 2c du plan `work/plan-reglages-par-nom-2026-11-11.md`, la famille du calcul. Fabien a demandé de poursuivre le 2026-11-12. Posée sur la pièce 3a.
+  - **L'ordre corrigé.** La 2c devait être la chanson. Le relevé ne voyait que les causes directes d'une fiche, et `PARAMETRES_RENDU`, la liste des rendus d'ACE-Step, contient `PARAMETRE_CALCUL` : ces cinq fiches ne se libèrent qu'avec le calcul, qui passe donc avant. La chanson devient la 2d. Elle y gagne deux aides prévues en 2e, `rendre` et `rendreEtEcrire`, de la théorie : elles lisent les listes du rendu MIDI, que la chanson libère.
+  - **Ce qui élargissait.** `parametreCalcul()` et `parametreCalculDirectML()`, dans `plugins/parametre-calcul.ts`, rendaient un objet tel quel, dont le nom « Calcul » s'élargissait à `string`. Toute fiche qui reprenait le réglage perdait la vérification de tous ses noms.
+  - **Ce qui change.** Les deux fabriques passent par `reglagePartage()`, l'outil de la 2a. Les quatorze fiches que le calcul seul élargissait repassent à `fiche()`, par script, dans quatorze fichiers. Aucune ne lit un réglage qu'elle ne déclare pas : `tsc` est resté vert. La liste du garde passe de 76 fiches à 62. Le garde compte lui-même 416 fiches vérifiées.
+  - **Vu rouge dans un arbre séparé, hors de `E:\attic`**, sur six fautes plantées une à la fois, le témoin restant vert :
+    - une faute de frappe sur « Calcul » dans une fiche libérée, sur un autre de ses réglages, puis dans une fiche du second vocabulaire : `tsc`, TS2345 ;
+    - `parametreCalcul()` qui rend de nouveau un objet nu : `tsc` refuse ses douze fiches ;
+    - `parametreCalculDirectML()` de même : `tsc` refuse ses deux fiches ;
+    - une fiche libérée qui retourne aux noms non vérifiés : le cas de la liste.
+  - **Mesuré** : 40 lignes ajoutées et 45 retirées dans seize fichiers, commentaires compris, CHANGELOG non compté.
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, la liste de `master` ligne pour ligne ;
+    - passe complète verte, 724 fichiers et 10 381 cas, 3 fichiers et 14 cas sautés, en 21 min 59 s ;
+    - `npm run build` passe, et l'application construite, lancée par Electron sur un profil jetable, mène les quatorze nœuds de `canon-de-proportions` à leur terme sans erreur de page, avec les neuf mêmes requêtes `blob:` que `master` ;
+    - `empreintes-exemples` rend les quatorze exemples surveillés identiques, la banque General MIDI posée dans l'arbre par lien physique.
+
 - **LES AIDES ET LES FICHES DE FABRIQUE LISENT LEURS RÉGLAGES SOUS DES NOMS VÉRIFIÉS.** Pièce 3a du plan `work/plan-reglages-par-nom-2026-11-11.md`. Fabien a demandé le 2026-11-12 de faire la pièce 3 avant les familles 2c à 2f, puis, sur le relevé, de la couper en deux. Posée sur la pièce 2b.
   - **Le relevé.** 62 lectures de réglage se faisaient hors de l'exécuteur d'une fiche passée par `fiche()` :
     - quatorze dans des fiches nées d'une fabrique ou nommées par une constante ;

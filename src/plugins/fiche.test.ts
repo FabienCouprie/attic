@@ -39,22 +39,16 @@ const DOSSIER = resolve(__dirname);
  * retrouve des noms déduits en sort ; une fiche neuve n'y entre pas, elle écrit ses réglages.
  */
 const SANS_NOMS_VERIFIES: Record<string, string[]> = {
-  "aligner-texte.ts": ["aligner-texte"],
   "automate-cellulaire.ts": ["automate-cellulaire"],
-  "bruitage-ia.ts": ["bruitage-ia"],
   "chanson-accompagnement.ts": ["accompagner-voix"],
-  "chanson-locale.ts": ["planifier-chanson", "rendre-chanson"],
-  "chanson-variantes.ts": ["reprendre-chanson", "retoucher-chanson", "prolonger-chanson", "ecrire-chanson"],
-  "cloner-voix.ts": ["cloner-voix"],
+  "chanson-locale.ts": ["rendre-chanson"],
+  "chanson-variantes.ts": ["reprendre-chanson", "retoucher-chanson", "prolonger-chanson"],
   "color-looper.ts": ["color-looper"],
   "continuation-spectrale.ts": ["continuation-spectrale-ar", "continuation-spectrale-lstm"],
-  "convertir-voix.ts": ["convertir-voix"],
   "csound-partition.ts": ["partition-csound"],
   "csound.ts": [
     "csound", "csound-instrument", "csound-effet", "csound-instruments-physiques", "csound-spectral",
   ],
-  "dater-les-mots.ts": ["dater-les-mots"],
-  "decrire-audio.ts": ["decrire-audio"],
   "dessin-sonore.ts": ["dessin-sonore"],
   "effets-midi.ts": [
     "motif-imposer-rythme", "motif-echo-notes", "motif-eclaircir", "motif-retrograde",
@@ -71,7 +65,6 @@ const SANS_NOMS_VERIFIES: Record<string, string[]> = {
   "generateurs.ts": ["generateur-accords", "melodie-aleatoire"],
   "glissando-de-gamme.ts": ["glissando-de-gamme"],
   "glissando-harmonique.ts": ["glissando-harmonique"],
-  "isoler-voix.ts": ["isoler-voix"],
   "maquette.ts": ["maquette"],
   "matrice-parametres.ts": ["matrice-parametres"],
   "micromontage.ts": ["micromontage"],
@@ -79,18 +72,13 @@ const SANS_NOMS_VERIFIES: Record<string, string[]> = {
   "multicanal.ts": ["spatialiseur", "objet-sonore"],
   "objets-sonores.ts": ["montage"],
   "palette-harmonique.ts": ["palette-harmonique"],
-  "qui-parle-quand.ts": ["qui-parle-quand"],
-  "restaurer-compresse.ts": ["restaurer-compresse"],
   "sequenceurs.ts": ["sequenceur-melodique", "sequenceur-accords"],
   "solveur-contraintes.ts": ["solveur-contraintes"],
   "spectral-wishart.ts": ["tracage-spectral", "flou-spectral", "gel-spectral", "glissando-interieur"],
   "spectrogramme-image.ts": ["son-spectrogramme", "spectrogramme-image", "image-spectrogramme"],
   "texte-image-moss.ts": ["texte-image-moss"],
-  "texte-image.ts": ["texte-image"],
   "theorie-avancee.ts": ["tonnetz", "canon-pavage", "serie-infinie"],
   "theorie-composition.ts": ["serie-dodecaphonique", "harmonie-negative", "voicings-accords"],
-  "transcription-midi.ts": ["transcription-midi"],
-  "transcrire.ts": ["transcrire"],
 };
 
 const nomDePropriete = (p: ts.ObjectLiteralElementLike) =>
@@ -209,7 +197,8 @@ const ECRITES = fichesEcrites();
 describe("une fiche ne lit que les réglages qu'elle déclare", () => {
   it("le garde lit les fiches des greffons, sans quoi il ne dirait rien", () => {
     // 334 vérifiées et 134 sans noms vérifiés le 2026-11-11 ; 392 et 76 le 2026-11-12, puis 402 et 76
-    // quand les dix fiches à identifiant constant sont passées par fiche(), sur 511 fiches.
+    // quand les dix fiches à identifiant constant sont passées par fiche(), et 416 et 62 avec le
+    // réglage « Calcul », sur 511 fiches.
     expect(ECRITES.verifiees).toBeGreaterThanOrEqual(300);
   });
 

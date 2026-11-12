@@ -25,7 +25,7 @@
 // le même anglais, et forcer `en` ou `de` sur un témoin français rend le même français : trois
 // valeurs, deux témoins, sorties identiques. Le réglage est inerte, et le contrat de composant
 // interdit de déclarer ce qui ne peut rien changer.
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { octetsWav } from "./chanson-aides";
@@ -52,7 +52,7 @@ export function compterMots(texte: string): number {
 }
 
 export const fiches = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "transcrire", nom: "Transcrire", nomEn: "Transcribe",
     univers: "Autres", famille: "Speech to Text",
     resume: "Transcrit la parole d'un enregistrement, en reconnaissant seul sa langue.",
