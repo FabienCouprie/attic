@@ -6,8 +6,9 @@
 // opérations sérielles, l'analyse par ensembles de classes de hauteurs, l'harmonie
 // négative, et la mise en voix des accords.
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
-import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
+import { fiche, lecteurDe, reglagePartage, type ContexteQuiDeclare } from "./fiche";
+import type { NomDuRenduMidi } from "./effets-aides";
+import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { notesDuMidi } from "../audio/midi";
@@ -70,31 +71,34 @@ async function notesEntrantes(sequence: unknown, midi: unknown): Promise<
  * pas entendre ce qu'on vient de régler sans lui brancher un point d'écoute. Un nœud de
  * théorie a d'autant plus besoin de s'entendre que son intérêt est de comparer — une série
  * et son rétrograde, un accord et son image négative.
+ *
+ * LA FICHE QUI L'APPELLE DÉCLARE LES QUATRE RÉGLAGES DU RENDU, et le compilateur l'exige.
  */
-async function rendreEtEcrire(ctx: ContexteAudio, notes: NoteSimple[]): Promise<[AudioBuffer, File]> {
+async function rendreEtEcrire<N extends string>(ctx: ContexteQuiDeclare<N, NomDuRenduMidi>, notes: NoteSimple[]): Promise<[AudioBuffer, File]> {
   const { notesVersFichierMidi, appliquerInstrumentMidi, rendreSequence } = await import("../audio");
-  const instrument = ctx.paramNombre("Instrument", 0);
-  const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
+  const lu = lecteurDe<NomDuRenduMidi>(ctx);
+  const instrument = lu.paramNombre("Instrument", 0);
+  const mode = normaliserModeSynthèse(lu.paramTexte("Synthèse", "Automatique"));
   const modeRendu: "FM/Oscillateurs" | "SoundFont" =
     mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
   const { programme, banque } = decoderInstrumentSF2(instrument);
-  const midi = notesVersFichierMidi(notes, ctx.paramNombre("Tempo", 120), 0);
+  const midi = notesVersFichierMidi(notes, lu.paramNombre("Tempo", 120), 0);
   return [
-    await rendreSequence(notes, modeRendu, ctx.paramNombre("Volume", 80), programme, banque),
+    await rendreSequence(notes, modeRendu, lu.paramNombre("Volume", 80), programme, banque),
     await appliquerInstrumentMidi(midi, instrument),
   ];
 }
 
 /** Les réglages de rendu communs : écouter d'abord, exporter ensuite. */
 const PARAMETRES_RENDU = [
-  { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300] as [number, number], pas: 1, defaut: 120, unite: "BPM",
-    doc: "Tempo inscrit dans le fichier MIDI produit.", docEn: "Tempo written into the produced MIDI file." },
+  reglagePartage({ nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300] as [number, number], pas: 1, defaut: 120, unite: "BPM",
+    doc: "Tempo inscrit dans le fichier MIDI produit.", docEn: "Tempo written into the produced MIDI file." }),
   { ...PARAMETRE_SYNTHESE,
     doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM.",
     docEn: "Auto = SoundFont if an SF2 file is loaded, else FM." },
   PARAMETRE_INSTRUMENT_SF2,
-  { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100] as [number, number], pas: 1, defaut: 80, unite: "%",
-    doc: "Volume du rendu audio.", docEn: "Output volume." },
+  reglagePartage({ nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100] as [number, number], pas: 1, defaut: 80, unite: "%",
+    doc: "Volume du rendu audio.", docEn: "Output volume." }),
 ];
 
 // LES DOUZE CLÉS VIENNENT DE LA TABLE COMMUNE, `audio/cles.ts`. Elles étaient recopiées ici, et
@@ -125,7 +129,7 @@ function rapportAnalyse(a: Analyse, titre: string): string {
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "serie-dodecaphonique", nomDicte: "opérations de série", nom: "Opérations sérielles", nomEn: "Serial Operations",
     univers: "Traitement", famille: "Effets",
     resume: "Joue les quatre formes d'une série (originale, rétrograde, inversion, rétrograde de l'inversion) et écrit sa matrice.",
@@ -268,7 +272,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "harmonie-negative", nom: "Harmonie négative", nomEn: "Negative Harmony",
     univers: "Traitement", famille: "Effets",
     resume: "Réfléchit les hauteurs autour de l'axe tonique-dominante : do majeur devient do mineur, sol septième devient fa mineur sixte.",
@@ -311,7 +315,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "voicings-accords", nomDicte: "renversements d'accords", nom: "Renversements et voicings", nomEn: "Inversions and Voicings",
     univers: "Traitement", famille: "Effets",
     resume: "Renverse, écarte et enchaîne les accords en bougeant le moins de voix possible.",

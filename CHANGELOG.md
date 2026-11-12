@@ -19,6 +19,33 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **LES RÉGLAGES DE RENDU GARDENT LEUR NOM : QUINZE FICHES DE PLUS SONT VÉRIFIÉES, ET SEPT AIDES LISENT SOUS DES NOMS VÉRIFIÉS.** Pièce 2d du plan `work/plan-reglages-par-nom-2026-11-11.md`, la famille de la chanson et du rendu MIDI. Fabien a demandé la suite le 2026-11-12. Posée sur la pièce 2c.
+  - **Ce qui élargissait.** Quatre listes de réglages de rendu perdaient leurs noms :
+    - `PARAMETRE_MODELE` et `PARAMETRES_RENDU`, dans `plugins/chanson-aides.ts`, annotés `ParametreDef` ;
+    - `PARAMETRES_RENDU_MOTIF`, dans `plugins/effets-aides.ts`, et les deux listes locales du même rôle dans `theorie-avancee.ts` et `theorie-composition.ts`, dont « Tempo » et « Volume » étaient écrits nus.
+  - **Ce qui change dans les listes.** Chaque réglage passe par `reglagePartage()`. `parametresRenduAvec()`, qui remplace les défauts d'un rendu, ne prend plus pour clé qu'un nom de réglage de rendu : une clé mal écrite ne remplaçait rien sans un mot, et le compilateur la refuse.
+  - **Les sept aides de rendu** prennent le contexte de la fiche appelante, `ContexteQuiDeclare`, et lisent sous leurs seuls noms :
+    - `guidageDe`, `modeleChoisi` et `paquetsEcartes` exigent « Guidage » ou « Modèle » ;
+    - `rendreSurAudio` exige les six réglages de rendu, et `supplements` reçoit le contexte de la fiche sous ses propres noms : ce qu'une variante y lit est vérifié comme dans son exécuteur ;
+    - `rendreMotif`, `rendre` et `rendreEtEcrire` exigent les quatre réglages du rendu de notes, que nomme `NomDuRenduMidi`.
+  - **Une lecture facultative déplacée.** `rendreSurAudio` lisait « Modèle » pour ses quatre fiches, dont « Accompagner une voix », qui ne le déclare pas : la lecture retombait chez elle sur la chaîne vide, et le pont ne recevait rien. L'appel passe dans les suppléments des trois variantes qui offrent ce choix. Le pont reçoit les mêmes champs qu'avant.
+  - **Quinze fiches repassent à `fiche()`**, par script, dans six fichiers : les cinq rendus d'ACE-Step, les cinq motifs MIDI et cinq nœuds de théorie. Aucune ne lit un réglage qu'elle ne déclare pas : `tsc` est resté vert. La liste du garde passe de 62 fiches à 47 ; le garde compte lui-même 431 fiches vérifiées. Celle des aides passe de treize entrées à six.
+  - **Deux tests** appellent `guidageDe` et `paquetsEcartes` avec un faux contexte réduit à un lecteur : ils le passent désormais en `as never`, ce qu'ils vérifient restant le même.
+  - **Vu rouge dans un arbre séparé, hors de `E:\attic`**, sur neuf fautes plantées une à la fois, le témoin restant vert :
+    - une faute de frappe dans les suppléments d'une variante libérée, puis dans le rendu commun : `tsc`, TS2345 ;
+    - une clé de remplacement mal nommée dans « Accompagner une voix » : `tsc`, TS2353 ;
+    - une variante qui ne déclare plus « Modèle » : `tsc` refuse ses deux appels d'aide ;
+    - une liste de théorie sans « Instrument » : `tsc` refuse les trois appels de son aide de rendu ;
+    - le « Tempo » des motifs de nouveau écrit nu : `tsc` refuse les cinq fiches de motif ;
+    - l'aide des motifs qui lit un nom hors de ses quatre : `tsc`, TS2345 ;
+    - l'aide des motifs revenue aux noms libres, puis une fiche de motif revenue aux noms non vérifiés : chacun son cas du garde.
+  - **Mesuré** : 145 lignes ajoutées et 106 retirées dans onze fichiers, commentaires compris, CHANGELOG non compté.
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, la liste de `master` ligne pour ligne ;
+    - passe complète verte, 724 fichiers et 10 381 cas, 3 fichiers et 14 cas sautés, en 24 min 14 s ;
+    - `npm run build` passe, et l'application construite, lancée par Electron sur un profil jetable, mène les quatorze nœuds de `canon-de-proportions` à leur terme sans erreur de page, avec les neuf mêmes requêtes `blob:` que `master` ;
+    - `empreintes-exemples` rend les quatorze exemples surveillés identiques, la banque General MIDI posée dans l'arbre par lien physique.
+
 - **LE RÉGLAGE « CALCUL » GARDE SON NOM : QUATORZE FICHES DE PLUS SONT VÉRIFIÉES.** Pièce 2c du plan `work/plan-reglages-par-nom-2026-11-11.md`, la famille du calcul. Fabien a demandé de poursuivre le 2026-11-12. Posée sur la pièce 3a.
   - **L'ordre corrigé.** La 2c devait être la chanson. Le relevé ne voyait que les causes directes d'une fiche, et `PARAMETRES_RENDU`, la liste des rendus d'ACE-Step, contient `PARAMETRE_CALCUL` : ces cinq fiches ne se libèrent qu'avec le calcul, qui passe donc avant. La chanson devient la 2d. Elle y gagne deux aides prévues en 2e, `rendre` et `rendreEtEcrire`, de la théorie : elles lisent les listes du rendu MIDI, que la chanson libère.
   - **Ce qui élargissait.** `parametreCalcul()` et `parametreCalculDirectML()`, dans `plugins/parametre-calcul.ts`, rendaient un objet tel quel, dont le nom « Calcul » s'élargissait à `string`. Toute fiche qui reprenait le réglage perdait la vérification de tous ses noms.

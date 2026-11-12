@@ -14,7 +14,9 @@ import { guidageDe, PARAMETRES_RENDU } from "./chanson-aides";
 import { toutesLesFiches } from "./index";
 
 describe("guidageDe", () => {
-  const ctx = (valeur: number) => ({ paramNombre: () => valeur });
+  // Un faux contexte réduit au seul lecteur que l'aide emploie : l'aide exige un contexte de fiche
+  // qui déclare « Guidage », ce que le compilateur vérifie sur les vraies fiches.
+  const ctx = (valeur: number) => ({ paramNombre: () => valeur }) as never;
 
   it("ZÉRO NE TRANSMET RIEN : le moteur garde sa consigne, comme avant ce réglage", () => {
     expect(guidageDe(ctx(0))).toEqual({});

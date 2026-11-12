@@ -34,7 +34,7 @@ const DIRECTIONS_ARPEGE = {
 };
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "motif-imposer-rythme", nom: "Imposer un rythme", nomEn: "Impose Rhythm",
     univers: "Traitement", famille: "Effets",
     resume: "Plaque la grille rythmique d'un MIDI sur les hauteurs d'un autre.",
@@ -60,7 +60,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "motif-echo-notes", nom: "Écho de notes", nomEn: "Note Echo",
     univers: "Traitement", famille: "Effets",
     resume: "Superpose des copies décalées d'un motif, de vélocité décroissante.",
@@ -98,7 +98,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "motif-eclaircir", nom: "Éclaircir", nomEn: "Thin Out",
     univers: "Traitement", famille: "Effets",
     resume: "Retire une part des notes au hasard, de façon reproductible.",
@@ -139,7 +139,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "motif-retrograde", nomDicte: "motif à l'envers", nom: "Rétrograde et palindrome", nomEn: "Retrograde and Palindrome",
     univers: "Traitement", famille: "Effets",
     resume: "Joue un motif à l'envers, ou en aller-retour.",
@@ -175,7 +175,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "motif-repeter-tourner", nom: "Répéter et tourner", nomEn: "Ply and Rotate",
     univers: "Traitement", famille: "Effets",
     resume: "Répète chaque note dans sa propre durée, et décale les hauteurs sur la grille.",

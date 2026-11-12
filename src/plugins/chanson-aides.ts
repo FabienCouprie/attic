@@ -7,13 +7,14 @@
 // l'ordre d'évaluation des modules. Les pièces communes n'ont donc aucune dépendance sur les
 // fiches, et les deux fichiers de fiches en dépendent tous les deux.
 import { traduire } from "../i18n";
+import { lecteurDe, reglagePartage, type ContexteQuiDeclare } from "./fiche";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { PARAMETRE_CALCUL } from "./parametre-calcul";
 import { messageEchecPont } from "./pont-electron";
 import { relayerProgression } from "./progression-pont";
 import type { ContexteDeRelais } from "./progression-pont";
-import type { ContexteAudio } from "../audio/types-domaine";
-import type { ParametreDef } from "../core";
+import type { RuntimeAudio, ValeurAudio } from "../audio/types-domaine";
+import type { ContexteExecution, ParametreDef } from "../core";
 
 /**
  * Les dix langues que l'amont donne pour les mieux tenues.
@@ -44,18 +45,25 @@ export const MODELES_RENDU = [
 ] as const;
 
 /** Le choix du débruiteur, sur les quatre rendus qui peuvent prendre l'un ou l'autre. */
-export const PARAMETRE_MODELE: ParametreDef = {
+export const PARAMETRE_MODELE = reglagePartage({
   nom: "Modèle", nomEn: "Model", type: "choix" as const,
   options: MODELES_RENDU.map((m) => m.fr), optionsEn: MODELES_RENDU.map((m) => m.en),
   optionIds: MODELES_RENDU.map((m) => m.id),
   defaut: MODELES_RENDU[0].fr, defautEn: MODELES_RENDU[0].en,
   doc: "Le débruiteur qui rend le son. « Pas de débruitage » à zéro, « Rapide » débruite en huit pas et « Base » en cinquante, ce qui allonge le calcul d'autant. Les deux rendent un morceau différent du même plan. « Base » est un second fichier de modèle, pris depuis le panneau des modèles.",
   docEn: "The denoiser that renders the sound. With « Denoising steps » at zero, « Fast » denoises in eight steps and « Base » in fifty, which lengthens the computation as much. The two render a different piece from the same plan. « Base » is a second model file, taken from the models panel.",
-};
+});
 
-/** Le débruiteur choisi, à passer au pont, ou rien quand le nœud n'offre pas ce choix. */
-export function modeleChoisi(ctx: { paramTexte: (nom: string, repli: string) => string }) {
-  const id = ctx.paramTexte("Modèle", "");
+/**
+ * Le débruiteur choisi, à passer au pont.
+ *
+ * SEULES LES FICHES QUI OFFRENT CE CHOIX L'APPELLENT, et le compilateur exige qu'elles déclarent
+ * « Modèle ». « Accompagner une voix » ne l'offre pas : elle ne l'appelle pas, et le pont ne reçoit
+ * rien, ce qui laisse `electron/acestep-plan.cjs` donner à sa tâche le modèle de base. Avant, le rendu
+ * commun lisait « Modèle » pour tous, et retombait sur la chaîne vide chez elle.
+ */
+export function modeleChoisi<N extends string>(ctx: ContexteQuiDeclare<N, "Modèle">) {
+  const id = lecteurDe<"Modèle">(ctx).paramTexte("Modèle", "");
   return id ? { modele: id } : {};
 }
 
@@ -66,8 +74,8 @@ export function modeleChoisi(ctx: { paramTexte: (nom: string, repli: string) => 
  * réglage qui dit lequel sert à cette exécution. Sans cette exclusion, choisir le rapide ferait
  * annoncer les 1,9 Go de la base, et l'inverse.
  */
-export function paquetsEcartes(ctx: { paramTexte: (nom: string, repli: string) => string }): string[] {
-  const id = ctx.paramTexte("Modèle", MODELES_RENDU[0].id) || MODELES_RENDU[0].id;
+export function paquetsEcartes<N extends string>(ctx: ContexteQuiDeclare<N, "Modèle">): string[] {
+  const id = lecteurDe<"Modèle">(ctx).paramTexte("Modèle", MODELES_RENDU[0].id) || MODELES_RENDU[0].id;
   return MODELES_RENDU.filter((m) => m.id !== id).map((m) => m.paquet);
 }
 
@@ -81,13 +89,13 @@ export function paquetsEcartes(ctx: { paramTexte: (nom: string, repli: string) =
  * 2026-10-31. C'est ce qui permet de changer de débruiteur sans retoucher deux réglages taillés pour
  * l'autre.
  */
-export const PARAMETRES_RENDU: ParametreDef[] = [
-  { nom: "Pas de débruitage", nomEn: "Denoising steps", type: "nombre" as const, plage: [0, 50], pas: 1, defaut: 0,
+export const PARAMETRES_RENDU = [
+  reglagePartage({ nom: "Pas de débruitage", nomEn: "Denoising steps", type: "nombre" as const, plage: [0, 50], pas: 1, defaut: 0,
     doc: "Nombre d'étapes de débruitage. À zéro, celui du modèle : huit pour « Rapide », cinquante pour « Base ».",
-    docEn: "Number of denoising steps. At zero, the model's own: eight for « Fast », fifty for « Base »." },
-  { nom: "Glissement", nomEn: "Shift", type: "nombre" as const, plage: [0, 6], pas: 0.5, defaut: 0,
+    docEn: "Number of denoising steps. At zero, the model's own: eight for « Fast », fifty for « Base »." }),
+  reglagePartage({ nom: "Glissement", nomEn: "Shift", type: "nombre" as const, plage: [0, 6], pas: 0.5, defaut: 0,
     doc: "Déplace les instants auxquels le débruitage travaille. À zéro, la valeur du modèle : trois pour « Rapide », un pour « Base ».",
-    docEn: "Moves the instants at which denoising works. At zero, the model's own value: three for « Fast », one for « Base »." },
+    docEn: "Moves the instants at which denoising works. At zero, the model's own value: three for « Fast », one for « Base »." }),
   // LE SEUL RÉGLAGE DONT L'EFFET SUR LE SON EST NET, et il n'était offert que par un nœud sur six.
   // Le moteur lit `guidance_scale` et `acestep-plan.cjs` sait l'écrire depuis l'origine ; seul
   // « Accompagner une voix » le passait, de sorte que les cinq autres rendus tournaient sur le
@@ -126,19 +134,22 @@ export const PARAMETRES_RENDU: ParametreDef[] = [
   //
   // CE QUE LA MESURE NE DIT PAS : qu'un guidage haut sonne MIEUX. Elle dit qu'il monte le niveau et
   // l'aigu ; en diffusion, le prix habituel en est la saturation et les artefacts, et cela s'écoute.
-  { nom: "Guidage", nomEn: "Guidance", type: "curseur" as const, plage: [0, 20], pas: 0.5, defaut: 7.5,
+  reglagePartage({ nom: "Guidage", nomEn: "Guidance", type: "curseur" as const, plage: [0, 20], pas: 0.5, defaut: 7.5,
     doc: "Poids de la description du plan dans le rendu. À zéro, le champ n'est pas posé et le moteur décide seul. En montant, le rendu suit la description de plus près, et le risque d'artefacts croît avec elle. Sur un rendu qui part d'une entrée « Audio », monter le guidage éloigne aussi le résultat de cet audio.",
-    docEn: "How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio." },
+    docEn: "How much weight the plan's description carries in the render. At zero, the field is not set and the engine decides on its own. Higher up, the render follows the description more closely, and the risk of artefacts grows with it. On a render that starts from an « Audio » input, raising the guidance also moves the result away from that audio." }),
   PARAMETRE_CALCUL,
-  { nom: "Tuile du décodeur", nomEn: "Decoder tile", type: "nombre" as const, plage: [64, 1024], pas: 64, defaut: 256,
+  reglagePartage({ nom: "Tuile du décodeur", nomEn: "Decoder tile", type: "nombre" as const, plage: [64, 1024], pas: 64, defaut: 256,
     unite: "trames", uniteEn: "frames",
     doc: "Trames latentes décodées d'un bloc, à vingt-cinq par seconde. La mémoire demandée suit cette taille, et non la durée du morceau.",
-    docEn: "Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length." },
-  { nom: "Recouvrement", nomEn: "Overlap", type: "nombre" as const, plage: [0, 128], pas: 8, defaut: 32,
+    docEn: "Latent frames decoded at once, at twenty-five per second. The memory required follows this size, not the piece's length." }),
+  reglagePartage({ nom: "Recouvrement", nomEn: "Overlap", type: "nombre" as const, plage: [0, 128], pas: 8, defaut: 32,
     unite: "trames", uniteEn: "frames",
     doc: "Trames décodées en plus de part et d'autre de chaque tuile, et jetées ensuite. C'est ce qui empêche une jointure de s'entendre.",
-    docEn: "Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard." },
+    docEn: "Frames decoded on each side of every tile, then dropped. This is what keeps a seam from being heard." }),
 ];
+
+/** Les noms des réglages de rendu, tels que le compilateur les tient. */
+type NomDeRendu = (typeof PARAMETRES_RENDU)[number]["nom"];
 
 /** Les deux canaux du processus principal, nommes une fois : on les appelle et on les reconnait. */
 export const CANAL_PLANIFIER = "acestep:planifier";
@@ -172,14 +183,24 @@ export function suivre(ctx: ContexteDeRelais) {
  * absent laisse le moteur décider, comme avant que ce réglage existe. Un zéro transmis serait au
  * contraire un guidage NUL, c'est-à-dire un rendu qui n'écoute plus du tout sa description.
  */
-export function guidageDe(ctx: { paramNombre: (nom: string, repli: number) => number }) {
-  const g = ctx.paramNombre("Guidage", 0);
+export function guidageDe<N extends string>(ctx: ContexteQuiDeclare<N, "Guidage">) {
+  const g = lecteurDe<"Guidage">(ctx).paramNombre("Guidage", 0);
   return Number.isFinite(g) && g > 0 ? { guidage: g } : {};
 }
 
-/** Les mêmes réglages de rendu, avec d'autres valeurs par défaut quand le modèle n'est pas le même. */
-export function parametresRenduAvec(remplacements: Record<string, Partial<ParametreDef>>): ParametreDef[] {
-  return PARAMETRES_RENDU.map((p) => (remplacements[p.nom] ? { ...p, ...remplacements[p.nom] } : p));
+/**
+ * Les mêmes réglages de rendu, avec d'autres valeurs par défaut quand le modèle n'est pas le même.
+ *
+ * UN REMPLACEMENT SE NOMME PAR UN RÉGLAGE DE RENDU, et ne renomme rien : une clé mal écrite ne
+ * remplacerait rien sans un mot, le compilateur la refuse.
+ */
+export function parametresRenduAvec(
+  remplacements: { [Nom in NomDeRendu]?: Partial<Omit<ParametreDef, "nom">> },
+): (typeof PARAMETRES_RENDU)[number][] {
+  return PARAMETRES_RENDU.map((p) => {
+    const r = remplacements[p.nom];
+    return r ? { ...p, ...r } : p;
+  });
 }
 
 /**
@@ -254,11 +275,17 @@ export const SORTIE_NOTICE_EN = "The « Audio » output returns the sound, in st
  * romprait sans que rien ne le dise. L'identifiant reste donc écrit en clair dans chaque fiche, et
  * c'est ce qui le rend vérifiable. L'ordre, lui, reste ici : on n'annonce pas de téléchargement
  * avant d'avoir constaté qu'il y a de quoi travailler.
+ *
+ * LA FICHE DÉCLARE TOUS LES RÉGLAGES DE RENDU, et le compilateur l'exige. `supplements` reçoit son
+ * contexte sous ses propres noms : ce qu'elle y lit est vérifié comme dans son exécuteur. Le
+ * débruiteur n'est pas lu ici, puisque « Accompagner une voix » ne l'offre pas : les fiches qui
+ * l'offrent passent `modeleChoisi` dans leurs suppléments.
  */
-export async function rendreSurAudio(
-  ctx: ContexteAudio, annoncer: () => Promise<unknown>,
-  supplements: (ctx: ContexteAudio, source: AudioBuffer) => Record<string, unknown>,
+export async function rendreSurAudio<N extends string>(
+  ctx: ContexteQuiDeclare<N, NomDeRendu>, annoncer: () => Promise<unknown>,
+  supplements: (ctx: ContexteExecution<ValeurAudio, RuntimeAudio, N>, source: AudioBuffer) => Record<string, unknown>,
 ) {
+  const lu = lecteurDe<NomDeRendu>(ctx);
   const pont = api();
   if (!pont?.acestepRendre) {
     return { valeurs: [null], erreur: true, message: traduire("msg.n_cessite_electron") };
@@ -278,13 +305,12 @@ export async function rendreSurAudio(
     try {
       r = await pont.acestepRendre({
         plan, audioSource, audioTimbre,
-        ...modeleChoisi(ctx),
-        pas: ctx.paramNombre("Pas de débruitage", 0),
-        shift: ctx.paramNombre("Glissement", 0),
-        peripherique: ctx.paramTexte("Calcul", "").trim(),
-        tuile: ctx.paramNombre("Tuile du décodeur", 256),
-        recouvrement: ctx.paramNombre("Recouvrement", 32),
-        ...guidageDe(ctx),
+        pas: lu.paramNombre("Pas de débruitage", 0),
+        shift: lu.paramNombre("Glissement", 0),
+        peripherique: lu.paramTexte("Calcul", "").trim(),
+        tuile: lu.paramNombre("Tuile du décodeur", 256),
+        recouvrement: lu.paramNombre("Recouvrement", 32),
+        ...guidageDe(lu),
         ...supplements(ctx, source),
       }) as typeof r;
     } catch (erreur) {

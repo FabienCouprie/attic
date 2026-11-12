@@ -40,9 +40,6 @@ const DOSSIER = resolve(__dirname);
  */
 const SANS_NOMS_VERIFIES: Record<string, string[]> = {
   "automate-cellulaire.ts": ["automate-cellulaire"],
-  "chanson-accompagnement.ts": ["accompagner-voix"],
-  "chanson-locale.ts": ["rendre-chanson"],
-  "chanson-variantes.ts": ["reprendre-chanson", "retoucher-chanson", "prolonger-chanson"],
   "color-looper.ts": ["color-looper"],
   "continuation-spectrale.ts": ["continuation-spectrale-ar", "continuation-spectrale-lstm"],
   "csound-partition.ts": ["partition-csound"],
@@ -50,10 +47,7 @@ const SANS_NOMS_VERIFIES: Record<string, string[]> = {
     "csound", "csound-instrument", "csound-effet", "csound-instruments-physiques", "csound-spectral",
   ],
   "dessin-sonore.ts": ["dessin-sonore"],
-  "effets-midi.ts": [
-    "motif-imposer-rythme", "motif-echo-notes", "motif-eclaircir", "motif-retrograde",
-    "motif-repeter-tourner", "temperament",
-  ],
+  "effets-midi.ts": ["temperament"],
   "egaliseur-parametrique.ts": ["egaliseur-parametrique"],
   "entrees.ts": ["generateur-musical"],
   "fm-operateurs.ts": ["fm-six-operateurs"],
@@ -77,8 +71,7 @@ const SANS_NOMS_VERIFIES: Record<string, string[]> = {
   "spectral-wishart.ts": ["tracage-spectral", "flou-spectral", "gel-spectral", "glissando-interieur"],
   "spectrogramme-image.ts": ["son-spectrogramme", "spectrogramme-image", "image-spectrogramme"],
   "texte-image-moss.ts": ["texte-image-moss"],
-  "theorie-avancee.ts": ["tonnetz", "canon-pavage", "serie-infinie"],
-  "theorie-composition.ts": ["serie-dodecaphonique", "harmonie-negative", "voicings-accords"],
+  "theorie-avancee.ts": ["serie-infinie"],
 };
 
 const nomDePropriete = (p: ts.ObjectLiteralElementLike) =>
@@ -110,14 +103,11 @@ function idDeFiche(n: ts.Node): string | null {
  * construction les réglages qu'il déclare, `ctx.paramNombre(p.nom, …)`, et y reste à ce titre.
  */
 const AIDES_NON_VERIFIEES: Record<string, string[]> = {
-  "chanson-aides.ts": ["guidageDe", "modeleChoisi", "paquetsEcartes", "rendreSurAudio"],
   "continuation-spectrale.ts": ["executerContinuation"],
-  "effets-aides.ts": ["effet (exécuteur de fabrique)", "rendreMotif"],
+  "effets-aides.ts": ["effet (exécuteur de fabrique)"],
   "multicanal.ts": ["piste"],
   "spectral-wishart.ts": ["tailleDe"],
   "spectrogramme-image.ts": ["echelleLue", "estStereo"],
-  "theorie-avancee.ts": ["rendre"],
-  "theorie-composition.ts": ["rendreEtEcrire"],
 };
 
 /** Le nom de la fonction qui contient ce nœud, comme une déclaration ou une constante le donne. */
@@ -197,8 +187,8 @@ const ECRITES = fichesEcrites();
 describe("une fiche ne lit que les réglages qu'elle déclare", () => {
   it("le garde lit les fiches des greffons, sans quoi il ne dirait rien", () => {
     // 334 vérifiées et 134 sans noms vérifiés le 2026-11-11 ; 392 et 76 le 2026-11-12, puis 402 et 76
-    // quand les dix fiches à identifiant constant sont passées par fiche(), et 416 et 62 avec le
-    // réglage « Calcul », sur 511 fiches.
+    // quand les dix fiches à identifiant constant sont passées par fiche(), 416 et 62 avec le
+    // réglage « Calcul », et 431 et 47 avec les réglages de rendu, sur 511 fiches.
     expect(ECRITES.verifiees).toBeGreaterThanOrEqual(300);
   });
 
