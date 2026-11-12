@@ -2,7 +2,7 @@
 // Les calculs lourds sont délégués à src/workers/magenta-worker.ts pour ne pas
 // bloquer le thread principal.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -81,7 +81,7 @@ async function runMagentaFile(ctx: ContexteAudio, type: string, payload: any): P
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "magenta-drums",
     nom: "Magenta Drums",
     nomEn: "Magenta Drums",
@@ -128,7 +128,7 @@ export const fiches: FicheAudio[] = ([
       }
      },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "magenta-continuation",
     nom: "Magenta Continuation",
     nomEn: "Magenta Continuation",
@@ -182,7 +182,7 @@ export const fiches: FicheAudio[] = ([
       }
      },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "magenta-improvisation",
     nom: "Magenta Improvisation",
     nomEn: "Magenta Improvisation",
@@ -247,7 +247,7 @@ export const fiches: FicheAudio[] = ([
       }
      },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "magenta-generer-melodie",
     nom: "Magenta Générer mélodie",
     nomEn: "Magenta Generate Melody",
@@ -301,7 +301,7 @@ export const fiches: FicheAudio[] = ([
       }
      },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "magenta-interpoler-midi", nomDicte: "mélange de deux mélodies",
     nom: "Magenta Interpoler MIDI",
     nomEn: "Magenta Interpolate MIDI",
@@ -356,7 +356,7 @@ export const fiches: FicheAudio[] = ([
       }
    },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "magenta-generer-batterie",
     nom: "Magenta Générer batterie",
     nomEn: "Magenta Generate Drums",
@@ -415,7 +415,7 @@ export const fiches: FicheAudio[] = ([
       }
      },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "magenta-humaniser-groove",
     nom: "Magenta Humaniser groove",
     nomEn: "Magenta Humanize Groove",

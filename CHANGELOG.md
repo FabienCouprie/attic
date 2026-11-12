@@ -19,6 +19,24 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **LES RÉGLAGES SOUNDFONT PARTAGÉS GARDENT LEUR NOM : TRENTE FICHES DE PLUS SONT VÉRIFIÉES.** Pièce 2a du plan `work/plan-reglages-par-nom-2026-11-11.md`, première des familles de la pièce 2, ordonnée par Fabien le 2026-11-12. Posée sur la pièce 1.
+  - **Le relevé qui ordonne la pièce 2.** Les 134 fiches passées par `ficheSansNomsVerifies` ont été classées par ce qui élargit leurs noms, au parseur de TypeScript :
+    - cinq familles de réglages partagés en couvrent 106 ; les 28 dernières tiennent à des listes construites ou à des fabriques isolées ;
+    - **SoundFont** : `PARAMETRE_INSTRUMENT_SF2`, `PARAMETRE_SYNTHESE` et leurs deux variantes, repris par 46 fiches, dont 30 qui n'ont pas d'autre cause ;
+    - viennent ensuite, dans l'ordre de ce qu'elles libèrent : la **modulation** (`bornesModulation()`, 27), la **chanson** (15), le **calcul** (14) et la **tonalité** (19 en tout, presque toutes mêlées aux autres).
+  - **`reglagePartage()`**, dans `plugins/fiche.ts`, rend un réglage tel quel en gardant son nom littéral. Un réglage partagé annoté `ParametreDef` élargissait son nom à `string`, et chaque fiche qui le reprenait, ou l'étalait dans un réglage à elle, perdait tous les siens.
+  - **Les quatre réglages de `soundfontGlobal.ts` passent par lui**, et les trente fiches qu'ils seuls élargissaient repassent à `fiche()`, par script, dans vingt fichiers. Aucune ne lit un réglage qu'elle ne déclare pas : `tsc` est resté vert. La liste du garde passe de 134 fiches à 104 ; 364 fiches sont vérifiées.
+  - **Vu rouge dans un arbre séparé, hors de `E:\attic`**, sur quatre fautes plantées une à la fois, le témoin restant vert :
+    - une faute de frappe dans une fiche libérée : `tsc`, TS2345 ;
+    - `PARAMETRE_SYNTHESE` de nouveau annoté `ParametreDef` : `tsc` refuse les vingt fiches qui l'étalent ;
+    - une fiche libérée qui retourne aux noms non vérifiés, puis la liste qui la nomme encore : le cas de la liste.
+  - **Mesuré** : 82 lignes ajoutées et 81 retirées dans vingt-trois fichiers, commentaires compris, CHANGELOG non compté.
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, la liste de `master` ligne pour ligne ;
+    - passe complète verte, 724 fichiers et 10 380 cas, 3 fichiers et 14 cas sautés, en 23 min 17 s ;
+    - `npm run build` passe, et l'application construite, lancée par Electron sur un profil jetable, mène les quatorze nœuds de `canon-de-proportions` à leur terme sans erreur de page, avec les neuf mêmes requêtes `blob:` que `master` ;
+    - `empreintes-exemples` rend les quatorze exemples surveillés identiques, la banque General MIDI posée dans l'arbre par lien physique.
+
 - **LE COMPILATEUR VÉRIFIE LES NOMS DE RÉGLAGE : UNE LECTURE QUE SA FICHE NE DÉCLARE PAS NE COMPILE PLUS.** Pièce 1 du plan `work/plan-reglages-par-nom-2026-11-11.md`. Fabien a relevé le 2026-11-11 que les réglages lus par un nom en chaîne n'étaient vérifiés par aucun build. Il a décidé le même jour : le compilateur plutôt qu'un garde de test, les lectures de migration déclarées sur la fiche, et le dernier `executer(_ctx: any)` dans cette pièce.
   - **Ce qui manquait.** Un exécuteur lit ses réglages par leur libellé, `ctx.paramNombre("Gain", 1)`, et `fiches: FicheAudio[]` élargissait les noms de la fiche à `string`. Un nom mal écrit, ou un réglage renommé dans sa fiche, retombait sans un mot sur le défaut de l'appel. `repli-du-defaut.test.ts` le laissait passer, puisqu'il tenait pour une migration tout nom que la fiche ne déclarait pas. Relevé sur `master` : 2 251 lectures par un nom littéral, et aucune faute aujourd'hui. Seules deux lectures de migration sont voulues.
   - **Le contrat.** `ContexteExecution` reçoit un troisième paramètre, `TNom`, l'union des noms de la fiche, par défaut `string`. Les deux lecteurs y sont des méthodes, pour qu'une fonction d'aide qui prend un `ContexteAudio` accepte le contexte de toute fiche. `FonctionPlugin` suit, et la fiche du cœur gagne `anciensReglages` : les réglages qu'elle ne déclare plus et que son exécuteur lit encore.

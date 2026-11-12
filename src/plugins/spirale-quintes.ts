@@ -2,7 +2,7 @@
 //
 // Le calcul est dans `audio/spirale-quintes.ts`, testé ; ce fichier n'est que la prise.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -26,7 +26,7 @@ const QUINTES: Record<string, number> = {
 const signe = (v: number) => (v >= 0 ? `+${v.toFixed(2)}` : v.toFixed(2));
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "spirale-quintes", nom: "Spirale des quintes", nomEn: "Spiral of Fifths",
     // SA PLACE EST DANS LES ENTRÉES, et non parmi les traitements : il ne reçoit rien et fabrique un
     // son. Demandé par Fabien.

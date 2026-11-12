@@ -205,7 +205,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "markov-midi", nom: "Chaîne de Markov", nomEn: "Markov Chain",
     univers: "Traitement", famille: "Effets",
     resume: "Apprend les enchaînements de notes d'un MIDI et en engendre de nouveaux, avec la table de transitions en clair.",
@@ -332,7 +332,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "transposeur-quantiseur-midi", nomDicte: "transposition et calage", nom: "Transposeur/Quantiseur MIDI", nomEn: "MIDI Transposer/Quantizer",
     univers: "Traitement", famille: "Effets",
     resume: "Transpose et/ou quantifie un fichier MIDI.",
@@ -377,7 +377,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [nouvFichier], message: msgs.length > 0 ? msgs.join(" · ") : traduire("msg.aucune_modification") };
    },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "arpegiateur-midi", nomDicte: "notes en cascade", nom: "Arpégiateur MIDI", nomEn: "MIDI Arpeggiator",
     univers: "Traitement", famille: "Effets",
     resume: "Arpège les accords d'un fichier MIDI selon un motif et une direction.",

@@ -1,6 +1,6 @@
 // plugins/analyse.ts — Nœuds d'analyse
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc, avecNomDicte } from "./notices";
 import { classerGenre, notesVersFichierMidi, detecterAccords, accordsVersTexte, appliquerInstrumentMidi, type NoteEvenement } from "../audio";
@@ -343,7 +343,7 @@ export const fiches: FicheAudio[] = ([
  }),
   // Les quatre descripteurs Meyda, à leur place de toujours : `plugins/analyse-meyda.ts`.
   ...fichesMeyda,
-  ficheSansNomsVerifies({
+  fiche({
     id: "transcripteur-midi", nomDicte: "relevé des notes", nom: "Transcripteur MIDI", nomEn: "MIDI Transcriber", univers: "Traitement", famille: "Conversion",
     resume: "Transcrit un signal audio en notes MIDI.",
     resumeEn: "Transcribes an audio signal into MIDI notes.",

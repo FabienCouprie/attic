@@ -28,30 +28,23 @@ const DOSSIER = resolve(__dirname);
 
 /**
  * LES FICHES DONT LES NOMS NE SE DÉDUISENT PAS ENCORE, relevées le 2026-11-11 quand ce garde est né.
+ * Elles étaient 134 ; les trente que les réglages SoundFont partagés élargissaient en sont sorties le
+ * 2026-11-12, quand ces réglages ont gardé leur nom par `reglagePartage`.
  *
  * ELLE NE PEUT QUE DÉCROÎTRE. Leur liste de réglages mêle des réglages partagés ou construits à ceux
  * écrits sur place, et leurs noms s'élargissent à `string` : c'est la pièce 2 du plan. Une fiche qui
  * retrouve des noms déduits en sort ; une fiche neuve n'y entre pas, elle écrit ses réglages.
  */
 const SANS_NOMS_VERIFIES: Record<string, string[]> = {
-  "abc-reprise.ts": ["reprise-abc"],
-  "abc-vers-midi.ts": ["abc-vers-midi"],
-  "accord-mets.ts": ["accord-mets-musique"],
-  "accords-joues.ts": ["accords-joues"],
   "aligner-texte.ts": ["aligner-texte"],
-  "analyse.ts": ["transcripteur-midi"],
   "arc-en-ciel.ts": ["arc-en-ciel-acoustique"],
   "automate-cellulaire.ts": ["automate-cellulaire"],
   "bruitage-ia.ts": ["bruitage-ia"],
   "bytebeat.ts": ["bytebeat"],
-  "camelot.ts": ["camelot"],
-  "cercle-pulsant.ts": ["cercle-pulsant"],
   "chanson-accompagnement.ts": ["accompagner-voix"],
   "chanson-locale.ts": ["planifier-chanson", "rendre-chanson"],
   "chanson-variantes.ts": ["reprendre-chanson", "retoucher-chanson", "prolonger-chanson", "ecrire-chanson"],
-  "clavier-apprentissage.ts": ["clavier-apprentissage"],
   "cloner-voix.ts": ["cloner-voix"],
-  "collections.ts": ["collection-midi-vers-mp3"],
   "color-looper.ts": ["color-looper"],
   "concret.ts": ["resonateurs"],
   "continuation-spectrale.ts": ["continuation-spectrale-ar", "continuation-spectrale-lstm"],
@@ -67,32 +60,27 @@ const SANS_NOMS_VERIFIES: Record<string, string[]> = {
   "effets-cresson.ts": ["echo-flottant", "ubiquite", "vague", "creneau"],
   "effets-midi.ts": [
     "motif-imposer-rythme", "motif-echo-notes", "motif-eclaircir", "motif-retrograde",
-    "motif-repeter-tourner", "markov-midi", "temperament", "transposeur-quantiseur-midi", "arpegiateur-midi",
+    "motif-repeter-tourner", "temperament",
   ],
   "effets-modulation.ts": ["spatialisation-stereo"],
   "effets-rotatifs.ts": ["tremolo-harmonique", "haut-parleur-rotatif"],
   "effets-temporel.ts": ["wahwah", "phaser", "beat-repeat"],
   "effets.ts": ["gate-expandeur", "vocoder"],
   "egaliseur-parametrique.ts": ["egaliseur-parametrique"],
-  "entrees.ts": ["capture-midi", "generateur-musical"],
+  "entrees.ts": ["generateur-musical"],
   "fdn.ts": ["reverbe-reseau"],
   "finitions.ts": ["reverbe-hachee", "shimmer"],
   "fm-operateurs.ts": ["fm-six-operateurs"],
-  "gamme-jouee.ts": ["gamme-jouee"],
   "generateurs-echantillons.ts": ["boite-groove"],
   "generateurs-fractals.ts": ["generateur-fractal", "mappeur-mandelbrot", "arpege-koch"],
   "generateurs-reservoirs.ts": ["reservoir-musical", "multi-reservoirs"],
   "generateurs-rythme.ts": ["l-systeme"],
-  "generateurs-sources.ts": ["clavier-melodie", "sampler-personnalise"],
+  "generateurs-sources.ts": ["sampler-personnalise"],
   "generateurs.ts": ["generateur-accords", "melodie-aleatoire"],
   "glissando-de-gamme.ts": ["glissando-de-gamme"],
   "glissando-harmonique.ts": ["glissando-harmonique"],
   "granulation-ecologique.ts": ["granulation-ecologique"],
   "isoler-voix.ts": ["isoler-voix"],
-  "magenta.ts": [
-    "magenta-drums", "magenta-continuation", "magenta-improvisation", "magenta-generer-melodie",
-    "magenta-interpoler-midi", "magenta-generer-batterie", "magenta-humaniser-groove",
-  ],
   "maquette.ts": ["maquette"],
   "matrice-parametres.ts": ["matrice-parametres"],
   "micromontage.ts": ["micromontage"],
@@ -100,30 +88,24 @@ const SANS_NOMS_VERIFIES: Record<string, string[]> = {
   "multicanal.ts": ["spatialiseur", "objet-sonore"],
   "objets-sonores.ts": ["montage"],
   "palette-harmonique.ts": ["palette-harmonique"],
-  "parfum.ts": ["parfum-motif"],
   "qui-parle-quand.ts": ["qui-parle-quand"],
   "restaurer-compresse.ts": ["restaurer-compresse"],
   "retard-granulaire.ts": ["retard-granulaire"],
   "retard-spectral.ts": ["retard-spectral"],
-  "sequence.ts": ["rendu-sequence"],
   "sequenceurs.ts": ["sequenceur-melodique", "sequenceur-accords"],
   "solveur-contraintes.ts": ["solveur-contraintes"],
-  "sorties.ts": ["sortie-midi", "lecteur-midi", "point-ecoute-midi"],
   "spectral-cdp.ts": ["peignes-accordes"],
   "spectral-wishart.ts": ["tracage-spectral", "flou-spectral", "gel-spectral", "glissando-interieur"],
   "spectrogramme-image.ts": ["son-spectrogramme", "spectrogramme-image", "image-spectrogramme"],
-  "spirale-quintes.ts": ["spirale-quintes"],
   "suites-entieres.ts": ["suites-entieres"],
   "table-onde.ts": ["oscillateur-table-onde"],
   "texte-image-moss.ts": ["texte-image-moss"],
   "texte-image.ts": ["texte-image"],
-  "texte-vers-midi.ts": ["texte-vers-midi"],
   "theorie-avancee.ts": ["tonnetz", "canon-pavage", "serie-infinie"],
   "theorie-composition.ts": ["serie-dodecaphonique", "harmonie-negative", "voicings-accords"],
   "transcription-midi.ts": ["transcription-midi"],
   "transcrire.ts": ["transcrire"],
   "velours.ts": ["reverberation-velours"],
-  "vitesse-midi.ts": ["vitesse-midi"],
   "vosim.ts": ["vosim"],
 };
 
@@ -167,7 +149,7 @@ const ECRITES = fichesEcrites();
 
 describe("une fiche ne lit que les réglages qu'elle déclare", () => {
   it("le garde lit les fiches des greffons, sans quoi il ne dirait rien", () => {
-    // 334 vérifiées et 134 sans noms vérifiés le 2026-11-11, sur 511 fiches au registre.
+    // 334 vérifiées et 134 sans noms vérifiés le 2026-11-11, 364 et 104 le 2026-11-12, sur 511 fiches.
     expect(ECRITES.verifiees).toBeGreaterThanOrEqual(300);
   });
 

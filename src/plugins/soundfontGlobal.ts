@@ -1,5 +1,5 @@
 import { analyserSF2, type StructureSF2 } from "../audio/soundfont";
-import type { ParametreDef } from "../core/types";
+import { reglagePartage } from "./fiche";
 
 type GlobalAttic = typeof globalThis & {
   __attic_sf2__?: StructureSF2 | null;
@@ -44,22 +44,28 @@ export function decoderInstrumentSF2(valeur: number): { programme: number; banqu
   return { programme, banque };
 }
 
-/** Paramètre réutilisable : sélecteur d'instrument SoundFont. */
-export const PARAMETRE_INSTRUMENT_SF2: ParametreDef = {
+/**
+ * Paramètre réutilisable : sélecteur d'instrument SoundFont.
+ *
+ * LES QUATRE RÉGLAGES DE CE FICHIER PASSENT PAR `reglagePartage` (`plugins/fiche.ts`), et c'est ce
+ * qui garde leur nom littéral. Annotés `ParametreDef`, ils l'élargissaient à `string`, et les
+ * quarante-six fiches qui les reprennent perdaient la vérification de tous leurs noms.
+ */
+export const PARAMETRE_INSTRUMENT_SF2 = reglagePartage({
   nom: "Instrument",
   nomEn: "Instrument",
   type: "sf2instrument",
   defaut: 0,
   doc: "Preset du SoundFont global à utiliser pour le rendu (ignoré en mode FM). Chargez d'abord un fichier SF2 dans la barre d'outils. Les kits de percussion (banque 128) sont inclus s'ils sont présents.",
   docEn: "Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present.",
-};
+});
 
-export const PARAMETRE_INSTRUMENT_SF2_SUIVI: ParametreDef = {
+export const PARAMETRE_INSTRUMENT_SF2_SUIVI = reglagePartage({
   ...PARAMETRE_INSTRUMENT_SF2,
   defaut: -1,
   doc: "Preset du SoundFont à utiliser, ou Suivre le MIDI pour respecter les changements de programme/banque présents dans le fichier MIDI.",
   docEn: "SoundFont preset to use, or Follow MIDI to use the program/bank changes already in the MIDI file.",
-};
+});
 
 /**
  * Paramètre réutilisable : moteur de synthèse. Déclaré une seule fois plutôt
@@ -67,7 +73,7 @@ export const PARAMETRE_INSTRUMENT_SF2_SUIVI: ParametreDef = {
  * `optionIds` (identité stable, indépendante de la langue) en un seul endroit.
  * Les nœuds qui ont besoin d'une variante font `{ ...PARAMETRE_SYNTHESE, doc: … }`.
  */
-export const PARAMETRE_SYNTHESE: ParametreDef = {
+export const PARAMETRE_SYNTHESE = reglagePartage({
   nom: "Synthèse",
   nomEn: "Synthesis",
   type: "choix",
@@ -77,16 +83,16 @@ export const PARAMETRE_SYNTHESE: ParametreDef = {
   defaut: "Automatique",
   doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
   docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples.",
-};
+});
 
 /** Variante sans « Automatique » (nœuds dont le rendu FM est le défaut). */
-export const PARAMETRE_SYNTHESE_SANS_AUTO: ParametreDef = {
+export const PARAMETRE_SYNTHESE_SANS_AUTO = reglagePartage({
   ...PARAMETRE_SYNTHESE,
   options: ["FM/Oscillateurs", "SoundFont"],
   optionsEn: ["FM/Oscillators", "SoundFont"],
   optionIds: ["fm", "soundfont"],
   defaut: "FM/Oscillateurs",
-};
+});
 
 // Accepte indifféremment l'id canonique ("auto"/"fm"/"soundfont"), l'ancienne
 // valeur française ou l'anglaise : les projets enregistrés avant l'ajout des

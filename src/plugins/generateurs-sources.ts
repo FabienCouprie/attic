@@ -30,7 +30,7 @@ import { SIGNATURES, clicsDeMesure, dureeUnite, lireSignature, tempsParMesure } 
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "clavier-melodie", nom: "Clavier mélodie", nomEn: "Melody Keyboard", univers: "Entrées", famille: "Génération",
     resume: "Joue une séquence enregistrée au clavier et exporte aussi un fichier MIDI.",
     resumeEn: "Plays a keyboard-recorded sequence and also exports a MIDI file.",

@@ -96,7 +96,7 @@ const entrees: FicheAudio[] = [
       return { valeurs: [buffer] };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "capture-midi", nom: "Capture MIDI", nomEn: "MIDI Capture", univers: "Entrées", famille: "Audio",
     resume: "Enregistre une performance jouée sur un clavier ou contrôleur MIDI branché.",
     resumeEn: "Records a performance played on a connected MIDI keyboard or controller.",
