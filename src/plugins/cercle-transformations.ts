@@ -14,6 +14,7 @@
 // rotation est un entier de places, une graine un numéro de tirage : ni l'un ni l'autre ne se lit
 // sur une courbe.
 
+import { fiche } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { choixPercussion } from "../audio/batterie-midi";
 import {
@@ -82,7 +83,7 @@ const CHAMP_FR = "Un nombre seul vaut pour toutes les passes ; une suite de nomb
 const CHAMP_EN = "A single number holds for every pass; a series of numbers gives the first ones and repeats the last; two numbers separated by a colon make a straight ramp spread over the passes.";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "cercle-tourner",
     nom: "Tourner un cercle", nomEn: "Rotate Circle",
     univers: "Autres", famille: "Circle",
@@ -106,8 +107,8 @@ export const fiches: FicheAudio[] = ([
         message: `${en() ? "step" : "pas"} ${pas}${rangDeLaPasse()}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "cercle-miroir",
     nom: "Miroir d'un cercle", nomEn: "Mirror Circle",
     univers: "Autres", famille: "Circle",
@@ -131,8 +132,8 @@ export const fiches: FicheAudio[] = ([
         message: `${en() ? "axis" : "axe"} ${axe}${rangDeLaPasse()}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "cercle-inverser",
     nom: "Inverser une mélodie", nomEn: "Invert Melody",
     univers: "Autres", famille: "Circle",
@@ -173,8 +174,8 @@ export const fiches: FicheAudio[] = ([
           + rangDeLaPasse(),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "cercle-permuter", nomDicte: "tourner les notes du cercle",
     nom: "Permuter les notes", nomEn: "Permute Notes",
     univers: "Autres", famille: "Circle",
@@ -201,8 +202,8 @@ export const fiches: FicheAudio[] = ([
         message: `${en() ? "seed" : "graine"} ${graine}${rangDeLaPasse()}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "cercle-complementaire",
     nom: "Complémentaire d'un cercle", nomEn: "Circle Complement",
     univers: "Autres", famille: "Circle",
@@ -239,5 +240,5 @@ export const fiches: FicheAudio[] = ([
           + rangDeLaPasse(),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

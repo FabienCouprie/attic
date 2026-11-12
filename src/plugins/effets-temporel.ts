@@ -5,6 +5,7 @@
 // dans `effets-aides.ts`.
 
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -18,7 +19,7 @@ import { choixValeurs } from "../audio/valeurs-note";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "wahwah", nom: "Wah-wah", nomEn: "Wah-wah", univers: "Traitement", famille: "Effets",
     memoire: "flux", // biquad, etat dans quatre scalaires
     resume: "Filtre passe-bande modulé (effet pédale wah).",
@@ -79,8 +80,8 @@ export const fiches: FicheAudio[] = ([
         ctx.entree(2), { min: ctx.paramNombre("Fréquence min", 0.5), max: ctx.paramNombre("Fréquence max", 8) },
       )] };
    },
- },
-  {
+ }),
+  ficheSansNomsVerifies({
     id: "phaser", nom: "Phaser", nomEn: "Phaser", univers: "Traitement", famille: "Effets",
     memoire: "flux", // passe-tout en cascade, etat par etage
     resume: "Filtres passe-tout en cascade modulés par LFO (effet planant).",
@@ -121,8 +122,8 @@ export const fiches: FicheAudio[] = ([
         reglageModule(ctx, a.length, 2, { reglage: "Mix", defaut: 50, rendu: "pourCent", noms: ["Mix min", "Mix max"] }),
         ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 0.1), max: ctx.paramNombre("Fréquence max", 4) })] };
    },
- },
-  {
+ }),
+  fiche({
     id: "vibrato", nom: "Vibrato", nomEn: "Vibrato", univers: "Traitement", famille: "Effets",
     memoire: "flux", // lecture decalee bornee : 0,18 s au plus (0,1 Hz, 100 %), en avant comme en arriere
     resume: "Modulation de hauteur par LFO (oscillation de la note).",
@@ -164,8 +165,8 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [vibrato(a, ctx.paramNombre("Fréquence", 5), profondeur, ctx.entree(1),
         ctx.entree(2), { min: ctx.paramNombre("Fréquence min", 1), max: ctx.paramNombre("Fréquence max", 10) })] };
    },
- },
-  {
+ }),
+  fiche({
     id: "octaver", nomDicte: "ajout d'octave", nom: "Octaver", nomEn: "Octaver", univers: "Traitement", famille: "Effets",
     memoire: "flux", // redresseur, etat dans trois scalaires
     resume: "Ajoute une octave supérieure et/ou inférieure.",
@@ -206,8 +207,8 @@ export const fiches: FicheAudio[] = ([
         : ctx.paramNombre("Mix", 50);
       return { valeurs: [octaver(a, ctx.paramNombre("Octave sup", 50), ctx.paramNombre("Octave inf", 50), mix)] };
    },
- },
-  {
+ }),
+  fiche({
     id: "chopper", nom: "Chopper", nomEn: "Chopper", univers: "Traitement", famille: "Effets",
     memoire: "flux", // gain fonction de i seul
     resume: "Gate rythmique qui coupe le son périodiquement (effet stutter/DJ).",
@@ -252,8 +253,8 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [chopper(a, ctx.paramNombre("Fréquence", 4), ctx.paramNombre("Durée", 50), typeStr === "Fondu" || typeStr === "Soft" ? 1 : 0,
         ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 1), max: ctx.paramNombre("Fréquence max", 16) }, profondeur)] };
    },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "beat-repeat", nomDicte: "répétition de mesure", nom: "Beat Repeat / Stutter", nomEn: "Beat Repeat / Stutter", univers: "Traitement", famille: "Effets",
     resume: "Capture et répète un court segment à intervalles rythmiques (effet stutter).",
     resumeEn: "Captures and repeats a short segment at rhythmic intervals (stutter effect).",
@@ -302,8 +303,8 @@ export const fiches: FicheAudio[] = ([
       });
       return { valeurs: [beatRepeat(a, ctx.paramNombre("Tempo", 120), parseDiv(intervalStr), parseDiv(sizeStr), ctx.paramNombre("Répétitions", 4), feedback, mix)], message: traduire("msg.beat_repeat", (a.duration ?? 0).toFixed(1)) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "echo", nom: "Echo", nomEn: "Echo", univers: "Traitement", famille: "Effets",
     resume: "Delay/écho ping-pong avec feedback.",
     resumeEn: "Ping-pong delay/echo with feedback.",
@@ -340,8 +341,8 @@ export const fiches: FicheAudio[] = ([
         feedback: ctx.entree(2), bornesFeedback: { min: ctx.paramNombre("Feedback min", 0), max: ctx.paramNombre("Feedback max", 80) },
       })] };
    },
-  },
-  {
+  }),
+  fiche({
     id: "echo-inverse", nom: "Echo inversé", nomEn: "Reverse Echo", univers: "Traitement", famille: "Effets",
     resume: "Echo inversé : les répétitions atténuées arrivent avant le son principal.",
     resumeEn: "Reverse echo: attenuated repetitions build up before the main sound.",
@@ -358,8 +359,8 @@ export const fiches: FicheAudio[] = ([
       if (sansEntree(a)) return a;
       return { valeurs: [appliquerEchoInverse(a, ctx.paramNombre("Temps", 350), ctx.paramNombre("Feedback", 40))] };
    },
-  },
-  {
+  }),
+  fiche({
     id: "voice-changer", nom: "Voice Changer", nomEn: "Voice Changer", univers: "Traitement", famille: "Effets",
     resume: "Transforme une voix avec des effets prédéfinis : chipmunk, monstre, robot, téléphone, alien, hélium, fantôme.",
     resumeEn: "Transforms a voice with preset effects: chipmunk, monster, robot, phone, alien, helium, ghost.",
@@ -382,8 +383,8 @@ export const fiches: FicheAudio[] = ([
         message: `Voice Changer · ${effet}`,
       };
    },
-  },
-  {
+  }),
+  fiche({
     id: "decoupe-aleatoire", nom: "Découpe aléatoire", nomEn: "Random Slice", univers: "Traitement", famille: "Effets",
     resume: "Découpe une piste en parts égales et les réarrange (ordre aléatoire, original ou inverse).",
     resumeEn: "Slices a track into equal parts and rearranges them (random, original or reverse order).",
@@ -414,8 +415,8 @@ export const fiches: FicheAudio[] = ([
       const out = appliquerDecoupeAleatoire(a, parts, crossfade, mode, graine);
       return { valeurs: [out], message: traduire("msg.decoupe_aleatoire.resultat", mode, graine) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "griffin-lim", nom: "Griffin-Lim", nomEn: "Griffin-Lim", univers: "Traitement", famille: "Effets",
     resume: "Reconstruction itérative depuis le spectrogramme de magnitude. Change la phase pour créer des textures spectrales.",
     resumeEn: "Iterative reconstruction from the magnitude spectrogram. Changes phase to create spectral textures.",
@@ -481,5 +482,5 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], message: traduire("msg.erreur_formule_spectrale_var_0", e?.message ?? e) };
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

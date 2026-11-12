@@ -25,12 +25,13 @@
 // premier sur une entrée texte, et la fin de boucle annonçait « Entrée en erreur » là où le premier
 // tour était vert.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "boucle-plan-debut", nom: "Début de boucle sur un plan", nomEn: "Plan Loop Start",
     univers: "Entrées", famille: "Génération",
     resume: "Marque le début d'une boucle de graphe qui fait tourner un plan : ce qui suit est rejoué N fois, avec une graine par tour.",
@@ -71,5 +72,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.boucle.nonDepliee"),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

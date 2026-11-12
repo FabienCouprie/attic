@@ -2,6 +2,7 @@
 //
 // Le calcul, ses références et la raison de ses choix sont dans `audio/paradoxe-triton.ts`.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -14,7 +15,7 @@ const en = () => langueCourante() === "en";
 const SR = () => frequenceDeTravail();
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "paradoxe-triton", nom: "Paradoxe du triton", nomEn: "Tritone Paradox",
     univers: "Entrées", famille: "Génération",
     resume: "Deux sons séparés d'un demi-octave, dont le sens du mouvement dépend de qui écoute.",
@@ -94,5 +95,5 @@ export const fiches: FicheAudio[] = ([
           : `${paires.length} paires · ${(sortie.length / SR()).toFixed(2).replace(".", ",")} s`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

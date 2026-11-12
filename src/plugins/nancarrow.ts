@@ -2,6 +2,7 @@
 // superposé à lui-même dans un rapport de tempo fixe.
 // Voir audio/nancarrow.ts pour le principe.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -19,7 +20,7 @@ const RAPPORTS: Record<string, number> = {
 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "canon-nancarrow", nomDicte: "canon de tempo", nom: "Canon de tempo (Nancarrow)", nomEn: "Tempo Canon (Nancarrow)",
     univers: "Traitement", famille: "Effets",
     resume: "Superpose un motif à lui-même dans un rapport de tempo fixe.",
@@ -79,5 +80,5 @@ export const fiches: FicheAudio[] = ([
           : traduire("msg.canon_ouvert_var_0_var_1", cle, voix),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

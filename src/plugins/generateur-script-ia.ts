@@ -3,6 +3,7 @@
 // voix reçus en entrée texte pour produire un prompt/script pour un applicatif
 // IA tel que Suno. Bilingue FR/EN.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
@@ -89,7 +90,7 @@ function construireScript(
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "generateur-script-ia", nom: "Générateur de script IA", nomEn: "AI Script Generator",
     univers: "Autres", famille: "Texte",
     resume: "Génère un prompt pour une IA musicale (Suno, Udio…) en combinant aléatoirement instruments, styles, émotions et tessitures.",
@@ -142,5 +143,5 @@ export const fiches: FicheAudio[] = ([
 
       return { valeurs: [script], message: traduire("msg.var_0_graine_var_1", traduire("msg.var_0_var_1_3", fr ? "Script généré" : "Script generated", source), graine) };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

@@ -8,6 +8,7 @@
 //
 // LE CALCUL EST DANS `audio/evolution.ts`, éprouvé ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { PARAMETRE_CLE, demiTonDeCle } from "../audio/cles";
@@ -26,7 +27,7 @@ import { nomNote } from "../audio/nom-note";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "evolution-melodie",
     nom: "Faire évoluer une mélodie", nomEn: "Evolve a Melody",
     univers: "Entrées", famille: "Génération",
@@ -173,5 +174,5 @@ export const fiches: FicheAudio[] = ([
           + (ev.atteinte ? ` · ${en() ? "target reached" : "cible atteinte"}` : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

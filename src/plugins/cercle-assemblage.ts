@@ -10,6 +10,7 @@
 // mélangeur prend un seul port qui accepte tous les câbles qu'on y tire, comme le mélangeur audio :
 // une somme ne dépend pas de l'ordre de ses termes.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import {
   POSITIONS_MAX, enSuite, joindre, melanger, type Cercle,
@@ -23,7 +24,7 @@ const en = () => langueCourante() === "en";
 const ENTREES = 8;
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "cercle-jointure",
     nom: "Jointure de cercles", nomEn: "Circle Join",
     univers: "Autres", famille: "Circle",
@@ -74,8 +75,8 @@ export const fiches: FicheAudio[] = ([
           + `${cycle.sommets.length} ${en() ? "onsets" : "attaques"}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "cercle-melangeur",
     nom: "Mélangeur de cercles", nomEn: "Circle Mixer",
     univers: "Autres", famille: "Circle",
@@ -115,5 +116,5 @@ export const fiches: FicheAudio[] = ([
           + (confondues > 0 ? ` · ${confondues} ${en() ? "merged" : "confondues"}` : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

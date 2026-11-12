@@ -13,7 +13,9 @@
 // LE CALCUL EST DANS `audio/fm-operateurs.ts`, qui porte en tête la contrainte d'ordre des
 // indices et la raison pour laquelle un niveau n'a pas le même sens des deux côtés.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
+import type { ParametreDef } from "../core";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { FREQUENCE_ECH, versBuffer } from "./instruments-communs";
@@ -37,8 +39,8 @@ const DEFAUTS_DECLIN = [1.5, 1, 0.7, 0.5, 0.4, 0.3];
  * fiche d'un paramètre n'ayant pas de champ de groupe, l'ordre est le seul rangement
  * disponible, et en déclarer un que personne ne lit n'aurait rien rangé.
  */
-function reglagesDesOperateurs(): unknown[] {
-  const out: unknown[] = [];
+function reglagesDesOperateurs(): ParametreDef[] {
+  const out: ParametreDef[] = [];
   for (let k = 0; k < OPERATEURS; k++) {
     const n = k + 1;
     out.push(
@@ -60,7 +62,7 @@ function reglagesDesOperateurs(): unknown[] {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "fm-six-operateurs", nom: "FM à six opérateurs", nomEn: "Six-Operator FM",
     univers: "Entrées", famille: "Synthétiseurs",
     resume: "Six opérateurs et huit branchements : c'est le branchement qui fait le timbre.",
@@ -116,5 +118,5 @@ export const fiches: FicheAudio[] = ([
           algo.porteuses.length, Math.round(frequence)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

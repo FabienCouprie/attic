@@ -4,6 +4,7 @@
 // declarent presque toutes la meme, ce qui ne decoupe rien.
 
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { langueCourante, traduire } from "../i18n";
@@ -14,7 +15,7 @@ import { avecDoc } from "./notices";
 
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "fm-synth",
     nom: "FM / AM Synth",
     nomEn: "FM / AM Synth",
@@ -168,8 +169,8 @@ export const fiches: FicheAudio[] = ([
         };
       }
     },
-  },
-  {
+  }),
+  fiche({
     id: "pluck-synth", nomDicte: "corde pincée",
     nom: "Pluck Synth",
     nomEn: "Pluck Synth",
@@ -284,8 +285,8 @@ export const fiches: FicheAudio[] = ([
         };
       }
     },
-  },
-  {
+  }),
+  fiche({
     id: "drum-synth",
     nom: "Batterie synthétique",
     nomEn: "Drum Synth",
@@ -354,5 +355,5 @@ export const fiches: FicheAudio[] = ([
         };
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

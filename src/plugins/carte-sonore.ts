@@ -9,6 +9,7 @@
 // page HTML autonome dans le dossier de sortie.
 
 import type { AffichageCarte } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -25,7 +26,7 @@ const EXTENSIONS_AUDIO = [".wav", "wave", ".mp3", ".ogg", ".flac", ".m4a", ".aac
 
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "carte-sonore", nom: "Carte sonore", nomEn: "Sound Map", univers: "Collections", famille: "Export",
     resume: "Charge un dossier audio et génère une carte HTML interactive d'une ville fictive ou d'une carte concentrique, avec plusieurs esthétiques, ouvrable dans le navigateur.",
     resumeEn: "Loads an audio folder and generates an interactive HTML map of a fictional city or a concentric map with several aesthetics, openable in a browser.",
@@ -111,6 +112,6 @@ export const fiches: FicheAudio[] = ([
       // LA GRAINE N'EST PLUS POSÉE : elle l'était sans que rien ne la lise, ni vue ni test.
       return { valeurs: [], affichage: { htmlPath, carte } satisfies AffichageCarte, message: traduire("msg.carte_sonore_g_n_r_e_var_0_index_html_var_1_points_var_2_audio_copi", htmlPath, carte.points.length, copies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
 

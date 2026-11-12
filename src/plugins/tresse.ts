@@ -2,6 +2,7 @@
 // Des bandes de fréquence qui se croisent dessus-dessous dans l'espace stéréo.
 // Le découpage, les mots de tresse et le rendu vivent dans audio/tresse.ts, testés.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -10,7 +11,7 @@ import { lireMotTresse, tresserCanaux } from "../audio/tresse";
 import { versAudioBuffer, canauxDe } from "../audio/geometrie-sonore";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "tresse", nom: "Tresse", nomEn: "Braid",
     univers: "Traitement", famille: "Effets",
     resume: "Découpe le son en bandes qui se croisent dessus-dessous dans l'espace, et reviennent à leur place au bout d'un nombre de motifs qu'on peut compter.",
@@ -60,5 +61,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.tresse.var_0_var_1_var_2", brins, r.croisements, retour),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -14,6 +14,7 @@
 // entend un geste là où le tirage ne donne qu'une texture. Les autres grandeurs sont ou bien des
 // rangs, ou bien des lois de tirage, ce que `MODULABLES.md` écarte nommément de la modulation.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { estCourbe, valeurA, valeursParametre } from "../audio/courbe";
 import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
@@ -69,7 +70,7 @@ function trio(
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "micromontage", nomDicte: "montage très fin",
     nom: "Micromontage", nomEn: "Micromontage",
     univers: "Traitement", famille: "Montage",
@@ -227,5 +228,5 @@ export const fiches: FicheAudio[] = ([
           + (estCourbe(modulation) ? ` · ${en() ? "curve" : "courbe"} ${ecart.toFixed(1)} ${en() ? "st" : "dt"}` : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

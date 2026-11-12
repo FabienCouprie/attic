@@ -10,6 +10,7 @@
 //
 // « ANTICIPATION », « MAINTIEN » ET « RELÂCHEMENT » SONT INERTES tant que rien ne dépasse le plafond,
 // et leur documentation le dit : ils règlent une réduction qui n'a pas lieu.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import {
   limiterDemande, type DemandeLimiteur, type ReglagesLimiteur, type ResultatLimiteur,
@@ -23,7 +24,7 @@ const INERTE = "Sans effet tant qu'aucune crête ne dépasse le plafond.";
 const INERTE_EN = "No effect while no peak exceeds the ceiling.";
 
 export const fiches = ([
-  {
+  fiche({
     id: "limiteur-crete-vraie", nom: "Limiteur à crête vraie", nomEn: "True-Peak Limiter",
     univers: "Traitement", famille: "Effets",
     resume: "Ramène le son sous un plafond en crête vraie, en voyant venir les crêtes.",
@@ -116,5 +117,5 @@ export const fiches = ([
         + (r.correctionDb <= -0.005 ? traduire("msg.limiteur_crete_vraie.correction", r.correctionDb.toFixed(2)) : "");
       return { valeurs: [sortie], message };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

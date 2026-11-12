@@ -10,6 +10,7 @@
 // huit sorties et huit entrées, et les huit consommateurs étaient des EFFETS : on pilotait donc un
 // effet par une courbe sans jamais pouvoir la regarder, et on l'ajustait en écoutant le résultat.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -21,7 +22,7 @@ import {
 import { enveloppe, genererSvgCourbe, mesurerCourbe } from "../audio/courbe-trace";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "suiveur-caracteristique", nom: "Suiveur de caractéristique", nomEn: "Feature Follower",
     univers: "Traitement", famille: "Effets",
     resume: "Extrait une caractéristique d'un son (énergie, brillance, platitude, variation) pour en piloter un effet.",
@@ -60,8 +61,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.courbe.suivi", String(lissee.valeurs.length), String(cadence)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "generateur-courbe", nom: "Courbe", nomEn: "Curve",
     univers: "Entrées", famille: "Génération",
     resume: "Fabrique une courbe de modulation : oscillateur, rampe, courbe en S, loi de probabilité, logarithme, suite logistique ou marche aléatoire.",
@@ -144,8 +145,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.courbe.engendree", String(courbe.valeurs.length), dureeSec.toFixed(1)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "visualiseur-courbe", nom: "Visualiseur de courbe", nomEn: "Curve Viewer",
     univers: "Visualisation", famille: "Analyse",
     resume: "Dessine une courbe de modulation et la mesure, sans la modifier.",
@@ -187,5 +188,5 @@ export const fiches: FicheAudio[] = ([
           mesure.agitation.toFixed(2), mesure.dureeSec.toFixed(1)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

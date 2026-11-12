@@ -7,6 +7,7 @@
 // arrivait puisqu'il était absent de `modeles-manifest.json`, et l'hébergeur pouvait le déplacer.
 // Il est maintenant sous `public/oonx/sherpa-asr-whisper-tiny/`, au manifeste avec son empreinte, et
 // publié sur la release `assets` d'où l'installeur allégé le prend.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { mixdownMono } from "../audio/commun";
 import { reechantillonnerLineaire, reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
@@ -294,7 +295,7 @@ function sendTranscribe(w: Worker, sampleRate: number, samples: Float32Array): P
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "sherpa-asr",
     nom: "Sherpa ASR",
     nomEn: "Sherpa ASR",
@@ -391,7 +392,7 @@ export const fiches: FicheAudio[] = ([
         };
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
 
 // Note : le worker est volontairement gardé en vie entre les exécutions pour

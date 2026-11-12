@@ -2,6 +2,7 @@
 // Renvoie chaque fréquence f à f₀²/f : les graves deviennent aigus. Le vocodeur
 // de phase vit dans audio/miroir.ts, testé.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -10,7 +11,7 @@ import { miroirCanaux } from "../audio/miroir";
 import { versAudioBuffer, canauxDe, DUREE_SORTIE_MAX_SEC } from "../audio/geometrie-sonore";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "miroir-inversion", nom: "Miroir d'inversion", nomEn: "Inversion Mirror",
     univers: "Traitement", famille: "Effets",
     resume: "Retourne le spectre autour d'une fréquence pivot : les graves deviennent aigus et les aigus graves.",
@@ -50,5 +51,5 @@ export const fiches: FicheAudio[] = ([
           Math.round(r.pivot), (r.pivot ** 2 / (buffer.sampleRate / 2)).toFixed(0), (r.perdue * 100).toFixed(1)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

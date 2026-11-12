@@ -18,7 +18,7 @@ new flow type…) are at the end of the guide, each optional.
 File: [`src/plugins/sortie-conversion.ts`](src/plugins/sortie-conversion.ts)
 
 ```ts
-{
+fiche({
   id: "point-ecoute", nom: "Point d'écoute", nomEn: "Listening Point",
   univers: "Sorties", famille: "Écoute",
   resume: "Auditionne le signal sans interrompre la chaîne.",
@@ -31,10 +31,12 @@ File: [`src/plugins/sortie-conversion.ts`](src/plugins/sortie-conversion.ts)
     if (sansEntree(a)) return a;        // `plugins/lire-entree.ts` : un seul message, `erreur: true`
     return { valeurs: [a] };            // passe l'entrée telle quelle sur la sortie
   },
-}
+})
 ```
 
-Then at the bottom of the file, **a single line** registers all the sheets in the file:
+`fiche` comes from [`src/plugins/fiche.ts`](src/plugins/fiche.ts) and returns the sheet unchanged:
+it exists so that the compiler knows the names of the sheet's parameters (see *The `executer(ctx)`
+contract*). Then at the bottom of the file, **a single line** registers all the sheets in the file:
 
 ```ts
 ] as FicheAudio[]).map(avecDoc);
@@ -70,6 +72,7 @@ Defined in [`src/core/types.ts`](src/core/types.ts).
 | `notice` / `noticeEn` | recommended | "Learn more" explanation (§3.9). Provided here **or** via `notices.ts` (see below). Its absence triggers a console *warning* in dev. |
 | `entrees` / `sorties` | ✅ (arrays, possibly empty) | Ports. See below. |
 | `parametres` | ✅ (array, possibly empty) | Settings exposed in the inspector. See below. |
+| `anciensReglages` | optional | Parameters the sheet no longer declares and that `executer` still reads, for projects saved before they were replaced. They are never shown. |
 | `executer` | ✅ | The computation function. See the contract below. |
 | `etiquettes` | optional | Search keywords. |
 
@@ -121,11 +124,21 @@ no open dialog can designate. The rule is enforced by
 ## The `executer(ctx)` contract
 
 `ctx` is the **execution context** ([`core/types.ts`](src/core/types.ts),
-`ContexteExecution<TValeur, TRuntime>`). Write `async executer(ctx)` with no annotation: the
-sheet sits in an array cast `as FicheAudio[]`, so the compiler infers the audio context. A helper
+`ContexteExecution<TValeur, TRuntime, TNom>`). Write `async executer(ctx)` with no annotation:
+`fiche({...})` infers the audio context, and `TNom`, the names of the sheet's parameters. A helper
 function that takes the context names it `ContexteAudio` (from `audio/types-domaine.ts`). Never
 `ctx: any`, and never `as unknown as FicheAudio[]`: both silence the compiler about what a sheet
 really returns, and `ValeurAudio` already lists everything that travels on an edge.
+
+**A parameter is read by a name the sheet declares.** `ctx.paramNombre("Volme", 100)` does not
+compile when the sheet declares `Volume`: without this check, a misspelt name, or a parameter
+renamed in its sheet, silently fell back on the call's default. A closure that reads a parameter
+through a variable types it `(nom: NomDeReglage<typeof ctx>) => ctx.paramTexte(nom, "")`, and a
+fixed list of names is written `as const`. A parameter the sheet replaced, and still reads for old
+projects, is named in `anciensReglages`. A sheet whose names cannot be inferred, because a function
+builds its list or the list mixes shared parameters with its own, is refused by `fiche`: it goes
+through `ficheSansNomsVerifies`, which reads any name unchecked, and is listed in
+[`plugins/fiche.test.ts`](src/plugins/fiche.test.ts), a list that only shrinks.
 
 **Read inputs / parameters:**
 | Call | Returns |
@@ -133,8 +146,8 @@ really returns, and `ValeurAudio` already lists everything that travels on an ed
 | `ctx.entree(i)` | the value plugged into input `i` (or `null` if not connected) |
 | `entreeAudio(ctx, i)` | from `plugins/lire-entree.ts`: the `AudioBuffer` on input `i`, or a ready-to-return failure (`erreur: true`, one translated message). Test it with `sansEntree(a)` and `return a` — this replaces the hand-written `instanceof AudioBuffer` preamble |
 | `ctx.entrees()` | **all** input values (array, `null` included) — for `dynamique` ports. Filter by type yourself: `ctx.entrees().filter(v => v instanceof AudioBuffer)` |
-| `ctx.paramNombre(nom, defaut)` | numeric value of a parameter |
-| `ctx.paramTexte(nom, defaut)` | text value of a parameter |
+| `ctx.paramNombre(nom, defaut)` | numeric value of a parameter the sheet declares |
+| `ctx.paramTexte(nom, defaut)` | text value of a parameter the sheet declares |
 | `ctx.noeud.data` | node data (raw params **and** loaded files: `audioFichier`, `midiFichier`, `enregistrementBlob`…) |
 | `ctx.runtime` | the domain environment — here the `AudioContext` (e.g. `decoderFichier(f, ctx.runtime)`) |
 | `ctx.repertoireTravail` | working folder (Electron I/O) |
@@ -158,7 +171,7 @@ Any exception is anyway **caught** by the engine, logged and surfaced as an
 ## The 3 steps (neutral node)
 
 ### 1. Write the sheet
-Add the `FicheAudio` object in the appropriate **family** file of `src/plugins/`
+Add the `FicheAudio` object, wrapped in `fiche({...})`, in the appropriate **family** file of `src/plugins/`
 (by domain/theme): `entrees.ts`, `effets.ts`, `generateurs.ts`, `montage.ts`,
 `analyse.ts`, `sorties.ts`, `sortie-conversion.ts`… Each file ends with
 `… as FicheAudio[]).map(avecDoc);` → your sheet is registered
@@ -206,6 +219,10 @@ The Listening Point needs none of them. Add them only if relevant:
   `ancien-id → nouvel-id` in the `ALIAS` table of
   [`src/core/registre.ts`](src/core/registre.ts): saved graphs always reload.
 
+- **Replace a parameter** — saved projects still carry the old one. If `executer` keeps reading it
+  as a fallback, name it in the sheet's `anciensReglages`: the compiler then accepts the read, and
+  `plugins/repli-du-defaut.test.ts` knows it is a migration and not a misspelling.
+
 ---
 
 ## Verify
@@ -229,7 +246,7 @@ A neutral "Marker" node: passes audio as-is + a label parameter
 (illustrates a text parameter). To paste into a file in `src/plugins/`:
 
 ```ts
-{
+fiche({
   id: "marqueur", nom: "Marqueur", nomEn: "Marker",
   univers: "Sorties", famille: "Écoute",
   resume: "Repère un point de la chaîne ; laisse passer le signal inchangé.",
@@ -246,7 +263,7 @@ A neutral "Marker" node: passes audio as-is + a label parameter
     const etiquette = ctx.paramTexte("Étiquette", "repère");
     return { valeurs: [a], message: `Marqueur : ${etiquette}` };
   },
-}
+})
 ```
 
 And its notice in `notices.ts`:

@@ -10,6 +10,7 @@
 // d'usage sans réseau, aucune empreinte vérifiée puisqu'il était absent de `modeles-manifest.json`,
 // et un hébergeur tiers libre de déplacer ce qu'il sert.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { mixdownMono } from "../audio/commun";
 import { reechantillonnerLineaire } from "../audio/convertir-frequence";
@@ -47,7 +48,7 @@ function makeRequestId(): string {
 
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "whisper-en", nom: "Whisper (Anglais)", nomEn: "Whisper (English)",
     univers: "Autres", famille: "Speech to Text",
     resume: "Transcription vocale en anglais (OpenAI Whisper base).",
@@ -90,5 +91,5 @@ export const fiches: FicheAudio[] = ([
         });
       });
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

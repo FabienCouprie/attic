@@ -1,8 +1,10 @@
 // plugins/analyse.ts — Nœuds d'analyse
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc, avecNomDicte } from "./notices";
-import { classerGenre, notesVersFichierMidi, detecterAccords, accordsVersTexte, calculerCentroidSpectralMeyda, calculerRMS_Meyda, calculerZCR_Meyda, calculerRolloffSpectralMeyda, appliquerInstrumentMidi, type OptionsCentroidSpectral, type ResultatCentroidSpectral, type NoteEvenement } from "../audio";
+import { classerGenre, notesVersFichierMidi, detecterAccords, accordsVersTexte, appliquerInstrumentMidi, type NoteEvenement } from "../audio";
+import { fichesMeyda } from "./analyse-meyda";
 import { langueCourante, traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
 import { entreeAudio, sansEntree } from "./lire-entree";
@@ -49,43 +51,8 @@ async function analyserHorsDuFil(audio: AudioBuffer): Promise<AnalyseResultat> {
   return decrireAnalyse(mesures);
 }
 
-function noeudMeyda(
-  id: string,
-  nom: string,
-  nomEn: string,
-  resume: string,
-  resumeEn: string,
-  nomSortie: string,
-  nomSortieEn: string,
-  fn: (audio: AudioBuffer, options: OptionsCentroidSpectral) => ResultatCentroidSpectral,
-): FicheAudio {
-  return {
-    id, nom, nomEn, univers: "Visualisation", famille: "Analyse",
-    resume, resumeEn,
-    entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "Audio", type: "audio" }, { nom: nomSortie, nomEn: nomSortieEn, type: "texte" }],
-    parametres: [
-      { nom: "Fenêtre", nomEn: "Window", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.", uniteEn: "samples",
-        doc: "Taille de la fenêtre d'analyse (arrondie à la puissance de 2 supérieure).", docEn: "Analysis window size (rounded up to the next power of 2)." },
-      { nom: "Pas", nomEn: "Hop", type: "nombre", plage: [64, 4096], pas: 64, defaut: 1024, unite: "éch.", uniteEn: "samples",
-        doc: "Décalage entre deux fenêtres d'analyse.", docEn: "Hop size between analysis frames." },
-      { nom: "Agrégation", nomEn: "Aggregation", type: "choix", options: ["Moyenne", "Médiane", "Maximum"], optionIds: ["moyenne","mediane","maximum"], defaut: "Moyenne",
-        doc: "Méthode de combinaison des valeurs par trame.", docEn: "Aggregation method for the per-frame values.", optionsEn: ["Average", "Median", "Maximum"], defautEn: "Average" },
-    ],
-    async executer(ctx) {
-      const audio = entreeAudio(ctx, 0, { sorties: 2 });
-      if (sansEntree(audio)) return audio;
-      const fenetre = ctx.paramNombre("Fenêtre", 2048);
-      const pas = ctx.paramNombre("Pas", 1024);
-      const aggregation = ctx.paramTexte("Agrégation", "Moyenne") as OptionsCentroidSpectral["aggregation"];
-      const resultat = fn(audio, { fenetre, pas, aggregation });
-      return { valeurs: [audio, resultat.texte], message: resultat.texte };
-   },
-  };
-}
-
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "analyse-audio", nom: "Analyse audio", univers: "Visualisation", famille: "Analyse",
     resume: "Analyse tempo, tonalité, type chanson/instrumental.",
     entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }],
@@ -97,8 +64,8 @@ export const fiches: FicheAudio[] = ([
       const resultat = await analyserHorsDuFil(audio);
       return { valeurs: [audio, resultat.description] };
    }, nomEn: "Audio Analysis", resumeEn: "Analyse tempo, key, song/instrumental type.",
- },
-  {
+ }),
+  fiche({
     id: "musicxml", nomDicte: "partition en fichier", nom: "MusicXML", nomEn: "MusicXML", univers: "Visualisation", famille: "Analyse",
     resume: "Convertit un MIDI en partition MusicXML, le format que lisent MuseScore, Finale et Sibelius.",
     resumeEn: "Converts MIDI into a MusicXML score, the format MuseScore, Finale and Sibelius read.",
@@ -227,8 +194,8 @@ export const fiches: FicheAudio[] = ([
       const mesures = (xml.match(/<measure /g) ?? []).length;
       return { valeurs: [xml, sortie], message: traduire("msg.musicxml.resultat", notes.length, mesures) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "detecteur-tempo", nom: "Détecteur de tempo", nomEn: "Tempo Detector", univers: "Visualisation", famille: "Analyse",
     resume: "Estime le tempo d'un audio et le rend comme valeur réutilisable.",
     resumeEn: "Estimates an audio track's tempo and outputs it as a reusable value.",
@@ -267,8 +234,8 @@ export const fiches: FicheAudio[] = ([
       ].join("\n");
       return { valeurs: [audio, bpm, rapport], message: `${bpm} BPM · ${fiabilite}` };
     },
-  },
-  {
+  }),
+  fiche({
     id: "goniometre", nomDicte: "image de la stéréo", nom: "Goniomètre", nomEn: "Goniometer", univers: "Visualisation", famille: "Analyse",
     resume: "Mesure la largeur stéréo, la corrélation de phase et ce que le mix perdrait en mono.",
     resumeEn: "Measures stereo width, phase correlation and what the mix would lose in mono.",
@@ -304,8 +271,8 @@ export const fiches: FicheAudio[] = ([
         message: `r = ${mesure.correlation.toFixed(2)} · ${verdict}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "analyse-emotionnelle", nom: "Analyse émotionnelle", nomEn: "Emotional Analysis", univers: "Visualisation", famille: "Analyse",
     resume: "Associe une émotion à un morceau à partir de sa musique seule (tempo, mode, énergie, timbre), aucun texte ni parole analysés.",
     resumeEn: "Associates an emotion with a track from its music alone (tempo, mode, energy, timbre), no text or lyrics analyzed.",
@@ -325,8 +292,8 @@ export const fiches: FicheAudio[] = ([
       }));
       return { valeurs: [audio, resultat.description], message: traduire("emotion.verdict", resultat.emotion, Math.round(resultat.confiance * 100)) };
    },
- },
-  {
+ }),
+  fiche({
     id: "lecteur-analyse", nom: "Lecteur d'analyse", univers: "Visualisation", famille: "Analyse",
     resume: "Affiche le résultat d'une analyse et permet l'écoute.",
     entrees: [{ nom: "Audio", type: "audio" }, { nom: "Analyse", nomEn: "Analysis", type: "texte" }],
@@ -338,8 +305,8 @@ export const fiches: FicheAudio[] = ([
       if (typeof texte !== "string") return { valeurs: [null], message: traduire("msg.branchez_la_sortie_analyse") };
       return { valeurs: [audioIn instanceof AudioBuffer ? audioIn : null], message: texte };
    }, nomEn: "Analysis Player", resumeEn: "Displays an analysis result and allows listening.",
- },
-  {
+ }),
+  fiche({
     id: "classificateur-genre", nom: "Classificateur de genre", univers: "Visualisation", famille: "Analyse",
     resume: "Identifie le genre musical d'un morceau via IA ou heuristiques.",
     entrees: [{ nom: "Audio", type: "audio" }],
@@ -373,28 +340,10 @@ export const fiches: FicheAudio[] = ([
       const source = genres[0].description?.includes("modèle ONNX") ? "ONNX" : traduire("msg.classification.heuristique");
       return { valeurs: [audio, descr], message: traduire("msg.var_0_var_1_var_2", genres[0].genre, Math.round(genres[0].confiance*100), source) };
    }, nomEn: "Genre Classifier", resumeEn: "Identifies the musical genre of a song via AI or heuristics.",
- },
-  noeudMeyda(
-    "centroide-spectral", "Centroïde spectral (Meyda)", "Spectral Centroid (Meyda)",
-    "Calcule le centroïde spectral du signal avec la bibliothèque Meyda.",
-    "Computes the spectral centroid of the signal using the Meyda library.",
-    "Centroïde", "Centroid", calculerCentroidSpectralMeyda),
-  noeudMeyda(
-    "rms-meyda", "RMS (Meyda)", "RMS (Meyda)",
-    "Calcule le niveau RMS moyen du signal en dBFS avec Meyda.",
-    "Computes the average RMS level of the signal in dBFS using Meyda.",
-    "RMS", "RMS", calculerRMS_Meyda),
-  noeudMeyda(
-    "zcr-meyda", "ZCR (Meyda)", "ZCR (Meyda)",
-    "Compte les passages par zéro par fenêtre avec Meyda.",
-    "Counts zero crossings per frame using Meyda.",
-    "ZCR", "ZCR", calculerZCR_Meyda),
-  noeudMeyda(
-    "rolloff-spectral-meyda", "Rolloff spectral (Meyda)", "Spectral Rolloff (Meyda)",
-    "Calcule la fréquence de rolloff spectral avec Meyda.",
-    "Computes the spectral rolloff frequency using Meyda.",
-    "Rolloff", "Rolloff", calculerRolloffSpectralMeyda),
-  {
+ }),
+  // Les quatre descripteurs Meyda, à leur place de toujours : `plugins/analyse-meyda.ts`.
+  ...fichesMeyda,
+  ficheSansNomsVerifies({
     id: "transcripteur-midi", nomDicte: "relevé des notes", nom: "Transcripteur MIDI", nomEn: "MIDI Transcriber", univers: "Traitement", famille: "Conversion",
     resume: "Transcrit un signal audio en notes MIDI.",
     resumeEn: "Transcribes an audio signal into MIDI notes.",
@@ -466,8 +415,8 @@ export const fiches: FicheAudio[] = ([
       const fichier = await appliquerInstrumentMidi(notesVersFichierMidi(notes, tempo), ctx.paramNombre("Instrument", 0));
       return { valeurs: [fichier], message: traduire("msg.midi_var_0_notes_transcrites", notes.length) };
    },
-  },
-  {
+  }),
+  fiche({
     id: "detecteur-accords", nom: "Détecteur d'accords", nomEn: "Chord Detector", univers: "Visualisation", famille: "Analyse",
     resume: "Détecte la progression d'accords dans le signal audio.",
     resumeEn: "Detects the chord progression in the audio signal.",
@@ -504,7 +453,7 @@ export const fiches: FicheAudio[] = ([
       // de cinquante lignes n'est pas un message.
       return { valeurs: [audio, texte], message: resume };
    },
- },
+ }),
   // LES QUATRE DESCRIPTEURS MEYDA SE DISENT AUTREMENT : « Meyda » est une marque, et « centroïde »,
   // « zcr » et « rolloff » manquent au lexique du moteur vocal. Ils naissent d'une fabrique, d'où
   // cette table plutôt qu'un champ sur chacun. Voir `core/types.ts`.

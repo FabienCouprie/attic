@@ -5,6 +5,7 @@
 // et leurs sources sont dans `audio/gout.ts`, pur et testé ; ce fichier n'est que la prise.
 
 import type { AffichageProfilGout } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -15,7 +16,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "gout-du-son", nom: "Le goût d'un son", nomEn: "The Taste of a Sound",
     univers: "Visualisation", famille: "Analyse",
     resume: "Situe un son entre sucré, acide, amer et salé, d'après les correspondances publiées entre musique et goût, et dit ce qui l'y place.",
@@ -45,5 +46,5 @@ export const fiches: FicheAudio[] = ([
         .join(" · ");
       return { valeurs: [a, rapport(m, parts, anglais)], affichage: { profilGout } satisfies AffichageProfilGout, message: tete };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

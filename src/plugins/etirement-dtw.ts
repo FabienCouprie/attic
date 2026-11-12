@@ -7,6 +7,7 @@
 // exactement le découpage retenu : le chemin peut alimenter d'autres
 // consommateurs (visualisation, autre traitement) sans dépendre de celui-ci.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -15,7 +16,7 @@ import { SAUT_TRAME_CHROMAGRAMME } from "../audio/analyse";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "etirement-dtw", nomDicte: "étirement temporel", nom: "Étirement temporel (DTW)", nomEn: "Time Stretch (DTW)",
     univers: "Autres", famille: "Test zone",
     resume: "[expérimental : résultat très discutable] Réétire l'audio de la Piste A le long du chemin d'alignement produit par Similarité audio, par interpolation linéaire le long de la correspondance de trames. Ce n'est pas un vocodeur de phase : la hauteur dérive localement partout où le débit change (comme une lecture à vitesse variable).",
@@ -60,5 +61,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.etirement_dtw_termine_var_0", sortie.duration.toFixed(2)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

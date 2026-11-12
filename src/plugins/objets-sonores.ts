@@ -5,6 +5,7 @@
 // calcul est dans `audio/objets-sonores.ts`.
 
 import type { DesigneMontage } from "./formes-des-canaux";
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -56,7 +57,7 @@ export function rapportObjets(objets: ObjetSonore[], anglais: boolean): string {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "decoupage-objets", nom: "Découpage en objets", nomEn: "Sound Object Segmentation",
     univers: "Traitement", famille: "Montage",
     memoire: "flux", // trames de 1024 échantillons, décision locale
@@ -97,8 +98,8 @@ export const fiches: FicheAudio[] = ([
       const rapport = rapportObjets(objets, en());
       return { valeurs: [a, objets, rapport], message: `${objets.length} ${en() ? "objects" : "objets"}` };
     },
-  },
-  {
+  }),
+  fiche({
     id: "reordonner-objets", nomDicte: "remettre les objets en ordre", nom: "Réordonner les objets", nomEn: "Reorder Objects",
     univers: "Traitement", famille: "Montage",
     resume: "Enchaîne les objets d'un son dans l'ordre d'un descripteur : du plus sombre au plus brillant, du plus calme au plus fort.",
@@ -144,8 +145,8 @@ export const fiches: FicheAudio[] = ([
       });
       return { valeurs: [y], message: `${decrites.length} ${en() ? "objects" : "objets"} · ${y.duration.toFixed(2)} s` };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "montage", nom: "Montage", nomEn: "Montage",
     univers: "Traitement", famille: "Montage",
     // SA LIGNE DE TEMPS SE RÈGLE EN ÉCOUTANT, donc son résultat ne doit pas disparaître au premier
@@ -270,5 +271,5 @@ export const fiches: FicheAudio[] = ([
         : "";
       return { valeurs: [brut], designe, message: `${morceauxDits} · ${brut.duration.toFixed(2)} s${cale}` };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

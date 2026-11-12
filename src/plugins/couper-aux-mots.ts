@@ -9,6 +9,7 @@
 // IL REPREND LE DÉCOUPAGE DU ROGNAGE PLUTÔT QUE D'EN REFAIRE UN. Les intervalles gardés sont des
 // `Segment` de `audio/silences.ts`, et c'est `appliquerRognage` qui recolle : seule la façon de
 // choisir les intervalles change, pas la façon de les appliquer.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -117,7 +118,7 @@ function monter(source: AudioBuffer, gardes: readonly Segment[]): AudioBuffer | 
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "couper-aux-mots", nom: "Couper aux mots", nomEn: "Cut at Words",
     univers: "Traitement", famille: "Montage",
     resume: "Monte une prise aux frontières des mots reconnus, et non à un seuil de niveau.",
@@ -197,5 +198,5 @@ export const fiches: FicheAudio[] = ([
           String(gardes.length)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

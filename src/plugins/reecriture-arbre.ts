@@ -6,6 +6,7 @@
 // LE CALCUL EST DANS `audio/reecriture-arbre.ts`, éprouvé sur six cent quarante arbres ; ce fichier
 // n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -25,7 +26,7 @@ const LIBELLES: Record<string, { fr: string; en: string }> = {
 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "reecrire-arbre",
     nom: "Simplifier un arbre", nomEn: "Simplify a Tree",
     univers: "Traitement", famille: "Conversion",
@@ -101,5 +102,5 @@ export const fiches: FicheAudio[] = ([
           : (en() ? "nothing to reduce" : "rien à réduire"),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

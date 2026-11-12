@@ -1,5 +1,6 @@
 // plugins/ocr.ts — Nœud « OCR » : reconnaissance optique de caractères multi-alphabets
 // en local via Tesseract.js (WASM). Reçoit une image, retourne le texte reconnu.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -49,7 +50,7 @@ function languesToArray(langues: string): string[] {
 }
 
 const ocrPlugins: FicheAudio[] = [
-  {
+  fiche({
     id: "ocr",
     nom: "OCR",
     nomEn: "OCR",
@@ -94,7 +95,7 @@ const ocrPlugins: FicheAudio[] = [
         };
       }
     },
-  },
+  }),
 ];
 
 export const fiches: FicheAudio[] = ocrPlugins.map(avecDoc) as FicheAudio[];

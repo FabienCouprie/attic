@@ -3,6 +3,7 @@
 // LE CALCUL EST DANS `audio/cantor-deplacement.ts`, éprouvé, et l'en-tête de ce fichier-là dit
 // pourquoi le compte est conservé. Celui-ci n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { deplacerSurCantor, type OuPoser } from "../audio/cantor-deplacement";
 import { estSequence, type Sequence } from "../audio/sequence";
@@ -12,7 +13,7 @@ import { avecDoc } from "./notices";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "cantor-deplacement", nom: "Déplacement de Cantor", nomEn: "Cantor Displacement",
     univers: "Traitement", famille: "Effets",
     resume: "Porte les événements tombés dans les trous d'une poussière de Cantor vers ce qui en reste, sans en perdre aucun.",
@@ -135,5 +136,5 @@ After Georg Cantor, « Über unendliche, lineare Punktmannigfaltigkeiten », Mat
           + `${(rapport.ecartMoyen * 1000).toFixed(0)} ms`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

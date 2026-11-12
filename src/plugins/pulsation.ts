@@ -8,6 +8,7 @@
 // leur hauteur la fréquence. Refaire ici une analyse redirait ce qu'elle dit, et les deux se
 // désaccorderaient.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import {
   cadenceDesFrappes, echantillonsDeBattements, irregularite, pulsationDeSequence,
@@ -27,7 +28,7 @@ const SR = () => frequenceDeTravail();
 const hauteurDe = (hertz: number) => noteMidiDeFrequence(Math.max(1, hertz));
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "pulsation", nom: "Pulsation", nomEn: "Pulse",
     univers: "Visualisation", famille: "Détecteurs",
     resume: "Garde les atomes courts, forts et graves d'un son décomposé, et les fait entendre comme un seul son qui bat.",
@@ -171,5 +172,5 @@ The irregularity is zero on a perfect grid and one when the intervals' standard 
           + `${en() ? "per minute" : "par minute"} · ${en() ? "irregularity" : "irrégularité"} ${ecart.toFixed(2)}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

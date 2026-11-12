@@ -6,6 +6,7 @@
 //
 // La logique est dans `audio/decalage-frequence.ts`, testée ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -14,7 +15,7 @@ import { decalerFrequence } from "../audio/decalage-frequence";
 import { estCourbe, valeurA, valeursParametre } from "../audio/courbe";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "decaleur-frequence", nomDicte: "décalage de fréquence", nom: "Décaleur de fréquence", nomEn: "Frequency Shifter",
     univers: "Traitement", famille: "Effets",
     resume: "Ajoute le même nombre de hertz à toutes les fréquences : le son cesse d'être harmonique et devient cloche.",
@@ -83,5 +84,5 @@ export const fiches: FicheAudio[] = ([
           String(partAffichee)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

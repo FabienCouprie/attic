@@ -3,6 +3,7 @@
 // Les trois outils de la musique concrète qui manquaient au catalogue (relevé du 2026-09-21, pour
 // un compositeur électroacousticien). Le calcul est dans `audio/concret.ts`.
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -23,7 +24,7 @@ export function lireIntervalles(texte: string): number[] {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "vitesse-variable", nom: "Vitesse variable", nomEn: "Varispeed",
     univers: "Traitement", famille: "Effets",
     resume: "La bande qu'on accélère ou qu'on freine : hauteur et durée liées, pilotables par une courbe.",
@@ -73,8 +74,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], message: e?.message ?? String(e) };
       }
     },
-  },
-  {
+  }),
+  fiche({
     id: "convolution-deux-sons", nomDicte: "empreinte de deux sons", nom: "Convolution de deux sons", nomEn: "Two-Sound Convolution",
     univers: "Traitement", famille: "Effets",
     resume: "Fait sonner un son par un autre : seules leurs fréquences communes survivent, et leurs durées s'additionnent.",
@@ -116,8 +117,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], message: e?.message ?? String(e) };
       }
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "resonateurs", nomDicte: "caisses de résonance", nom: "Résonateurs", nomEn: "Resonators",
     univers: "Traitement", famille: "Effets",
     memoire: "flux", // filtres récursifs, état dans deux scalaires par résonateur
@@ -208,5 +209,5 @@ export const fiches: FicheAudio[] = ([
         ? `${audibles} resonators, ${t60Dit} s`
         : `${audibles} résonateurs, ${String(t60Dit).replace(".", ",")} s` };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

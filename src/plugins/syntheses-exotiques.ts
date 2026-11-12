@@ -6,6 +6,7 @@
 // pendant que la première reste juste. La FOF fait la même séparation pour la voix. Le
 // mosaïquage, lui, ne synthétise rien : il reconstruit un son avec les morceaux d'un autre.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -30,7 +31,7 @@ import {
 const FS = () => FREQUENCE_ECH();
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "synthese-scanning", nomDicte: "synthèse par balayage", nom: "Synthèse par scanning", nomEn: "Scanned Synthesis",
     univers: "Traitement", famille: "Effets",
     resume: "Lit la forme d'un objet mécanique en mouvement lent comme une table d'onde : le timbre évolue sans fin, la note reste juste.",
@@ -119,8 +120,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.scanning.resultat", notes.length, pasTotal),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "terrain-onde", nom: "Terrain d'onde", nomEn: "Wave Terrain",
     univers: "Traitement", famille: "Effets",
     resume: "Parcourt une surface z = f(x, y) le long d'une orbite : l'orbite fait la hauteur, le relief fait le timbre.",
@@ -224,8 +225,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.terrain.resultat", notes.length, relief.toFixed(2)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "voyelle-fof", nomDicte: "voyelle chantée", nom: "Voyelle chantée (FOF)", nomEn: "Sung Vowel (FOF)",
     univers: "Traitement", famille: "Effets",
     resume: "Synthétise une voyelle par ses formants, d'après la table de Peterson et Barney : la hauteur et le timbre ne se touchent pas.",
@@ -315,8 +316,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.fof.resultat", commun.voyelle.id, total, graine),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "mosaiquage", nomDicte: "mosaïque par corpus", nom: "Mosaïquage par corpus", nomEn: "Corpus Mosaicing",
     univers: "Traitement", famille: "Effets",
     resume: "Reconstruit un son avec les grains d'un autre : la forme de la cible, la matière du corpus.",
@@ -404,5 +405,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.mosaique.resultat", r.grainsCible, r.distincts, r.grainsCorpus),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

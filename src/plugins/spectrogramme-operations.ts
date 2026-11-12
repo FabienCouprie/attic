@@ -9,6 +9,7 @@
 // paramétrage voyage avec la matrice, donc un flou peut se demander en millisecondes plutôt qu'en
 // colonnes. Sans lui, chaque composant compterait en cases et l'on devrait convertir de tête.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -33,7 +34,7 @@ function apresDecalage(s: SpectrogrammeMel, hz: number, bandes: number): number 
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "flou-spectrogramme", nomDicte: "flou de l'image du spectre", nom: "Flou du spectrogramme", nomEn: "Spectrogram Blur",
     univers: "Traitement", famille: "Mels",
     resume: "Étale un spectrogramme dans le temps et dans la fréquence, par une gaussienne.",
@@ -67,8 +68,8 @@ export const fiches: FicheAudio[] = ([
           : `${nb(tempsMs, 0)} ms (${nb(colonnes)} col.) · ${nb(bandes)} bandes`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "decalage-bandes", nom: "Décalage des bandes", nomEn: "Band Shift",
     univers: "Traitement", famille: "Mels",
     resume: "Monte ou descend un spectrogramme d'un nombre de bandes de mels, ce qui n'est pas une transposition.",
@@ -96,5 +97,5 @@ export const fiches: FicheAudio[] = ([
         message: `${bandes > 0 ? "+" : ""}${bandes} · 100 → ${nb(cent, 0)} Hz · 1000 → ${nb(mille, 0)} Hz`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

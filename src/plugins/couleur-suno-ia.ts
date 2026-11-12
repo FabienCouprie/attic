@@ -3,6 +3,7 @@
 // Suno/Udio avec variabilité (graine aléatoire). Combine la psychologie des
 // couleurs (mapping statique) avec la créativité du LLM (génération textuelle).
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -33,7 +34,7 @@ function makeRequestId(): string {
 const COULEURS_EN = NOMS_COULEURS.map((c) => COULEURS[c].en);
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "couleur-suno-ia", nom: "Couleur → Son IA", nomEn: "Color → Sound AI",
     univers: "Autres", famille: "Génération",
     resume: "Génère un script Suno/Udio par IA depuis 1 ou 2 couleurs avec variabilité.",
@@ -165,5 +166,5 @@ ${[...profil.styles.map((s: any) => s.en).map((s: string) => s.toLowerCase().rep
         message: traduire("msg.script_g_n_r_var_0_graine_var_1_var_2_caract_res", couleursLabel.join(" + "), graine, scriptFinal.length),
       };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

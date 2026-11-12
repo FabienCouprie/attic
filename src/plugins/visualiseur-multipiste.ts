@@ -18,6 +18,7 @@
 // pour elle que l'enveloppe gardée est fine : sans cela, zoomer n'aurait fait qu'agrandir.
 
 import type { DesignePistesMultiples } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { respirer } from "../core/respirer";
 import { langueCourante } from "../i18n";
@@ -30,7 +31,7 @@ export const PISTES_VISU = 6;
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "visualiseur-multipiste", nomDicte: "visualiseur de pistes", nom: "Visualiseur multipiste", nomEn: "Multitrack Viewer",
     univers: "Visualisation", famille: "Analyse",
     resume: "Dessine jusqu'à six sons l'un sous l'autre, sur un axe du temps commun.",
@@ -69,5 +70,5 @@ export const fiches: FicheAudio[] = ([
         message: `${pistes.length} ${en() ? "tracks" : "pistes"} · ${duree.toFixed(2)} s`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -2,6 +2,7 @@
 // texte une large collection de styles musicaux, filtrable par catégorie.
 // Bilingue : les noms suivent la langue de l'app (FR/EN). Rangé dans « Autres ».
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue, traduire } from "../i18n";
@@ -153,7 +154,7 @@ export function construireListeStyles(
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "styles-musicaux", nom: "Styles musicaux", nomEn: "Musical Styles",
     univers: "Autres", famille: "Texte",
     resume: "Émet en texte une large collection de styles musicaux par catégorie.",
@@ -184,5 +185,5 @@ export const fiches: FicheAudio[] = ([
       const catAff = cat === "Toutes" ? "" : (CATEGORIES_LABEL[cat]?.[langue] ?? cat);
       return { valeurs: [texte], message: traduire("msg.var_0_styles_var_1", total, catAff ? ` — ${catAff}` : "") };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

@@ -7,6 +7,7 @@
 // affiche un cercle reçu qui le montre : un dessin de plus ici redirait le sien.
 
 import type { AffichageCercle } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { FONDAMENTALES } from "../audio/cercle";
 import { cercleDeGamme, type PlacesDeGamme } from "../audio/cercle-gamme";
@@ -24,7 +25,7 @@ function horsDuClavier(degres: readonly number[]): number {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "cercle-gamme", nom: "Cercle de gamme", nomEn: "Scale Circle",
     univers: "Autres", famille: "Circle",
     resume: "Pose les degrés d'une gamme nommée sur un cercle, maqamat et gamelan compris.",
@@ -120,5 +121,5 @@ The « Circle » output carries the positions and their pitches, with no duratio
           + `${en() ? "positions" : "places"} · ${cercle.sommets.length} ${en() ? "degrees" : "degrés"}${repli}${hors}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

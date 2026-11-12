@@ -3,6 +3,7 @@
 // Le texte provient d'une entrée texte (port bleu) — branchez un node « Source de texte ».
 // La synthèse tourne dans un Web Worker pour ne pas bloquer l'UI.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -81,7 +82,7 @@ function modeleMMS(valeur: string): string | undefined {
 }
 
 const synthesesVocales: FicheAudio[] = ([
-  {
+  fiche({
     id: "tts-speecht5", nomDicte: "voix parlée de synthèse", nom: "SpeechT5 TTS", nomEn: "SpeechT5 TTS",
     univers: "Entrées", famille: "Text to Speech",
     resume: "Synthèse vocale haute qualité (Microsoft SpeechT5, anglais).",
@@ -122,8 +123,8 @@ const synthesesVocales: FicheAudio[] = ([
         w.postMessage({ text: texte, modelId: "Xenova/speecht5_tts", speakerUrl: voix.url, baseMiroir: baseModeleLivre("oonx"), requestId });
       });
    },
-  },
-  {
+  }),
+  fiche({
     id: "tts-mms", nom: "MMS-TTS Multilingue", nomEn: "MMS-TTS Multilingual",
     univers: "Entrées", famille: "Text to Speech",
     resume: "Synthèse vocale multilingue (Meta MMS, 10+ langues).",
@@ -174,7 +175,7 @@ const synthesesVocales: FicheAudio[] = ([
         w.postMessage({ text: texte, modelId, baseMiroir: baseModeleLivre("oonx"), requestId });
       });
    },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
 
 // LE CLONEUR SORT PAR ICI, avec les deux synthèses dont il est le proche : il fait de la parole,

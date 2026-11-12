@@ -2,13 +2,14 @@
 // à un son la frontière où l'oreille cesse d'entendre une note pour entendre une
 // pulsation. Voir audio/stockhausen.ts pour le principe.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "continuum-stockhausen", nom: "Continuum hauteur ↔ rythme", nomEn: "Pitch ↔ Rhythm Continuum",
     univers: "Traitement", famille: "Effets",
     resume: "Ralentit un son jusqu'à ce que sa hauteur devienne une pulsation.",
@@ -51,5 +52,5 @@ export const fiches: FicheAudio[] = ([
           octaves, Math.round(Math.pow(2, octaves))),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -4,6 +4,7 @@
 // declarent presque toutes la meme, ce qui ne decoupe rien.
 
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { genererBoiteRythmes, notesVersFichierMidi, rendreSequence, genererRythmeCantor, genererGrilleCantor, grilleBoiteRythmes, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE } from "../audio";
@@ -24,7 +25,7 @@ import { PARAMETRE_CLE } from "../audio/cles";
  */
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "boite-rythmes", nom: "Boîte à rythmes", nomEn: "Drum Machine", univers: "Entrées", famille: "Génération",
     resume: "Génère une piste rythmique, et sort le même rythme en MIDI pour pouvoir changer les sons dessous.",
     resumeEn: "Generates a drum pattern, and outputs the same rhythm as MIDI so the sounds underneath can be changed.",
@@ -68,8 +69,8 @@ export const fiches: FicheAudio[] = ([
         message: `${buffer.duration.toFixed(1)} s · ${traduire("msg.batterie.midi", String(notesMidi.length))}`,
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "l-systeme", nom: "L-système", nomEn: "L-system", univers: "Entrées", famille: "Génération",
     resume: "Engendre une mélodie par une grammaire qui se réécrit (Lindenmayer).",
     resumeEn: "Generates a melody from a self-rewriting grammar (Lindenmayer).",
@@ -130,8 +131,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.lsysteme.resultat", mot.length, notes.length),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "rythme-euclidien", nomDicte: "rythme réparti", nom: "Rythme euclidien", nomEn: "Euclidean Rhythm", univers: "Entrées", famille: "Génération",
     resume: "Répartit N frappes le plus régulièrement possible sur M pas (algorithme de Bjorklund).",
     resumeEn: "Spreads N onsets as evenly as possible over M steps (Bjorklund's algorithm).",
@@ -199,8 +200,8 @@ export const fiches: FicheAudio[] = ([
         message: `E(${config.frappes},${config.pas}) ${motifEnTexte(motif)}${rotation}${nom ? ` · ${nom}` : ""}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "rythme-cantor", nom: "Rythme de Cantor", nomEn: "Cantor Rhythm", univers: "Entrées", famille: "Génération",
     resume: "Génère une groove rythmique auto-similaire par récursion sur une grille de pas, et la sort aussi en MIDI.",
     resumeEn: "Generates a self-similar rhythmic groove by recursively removing beats from a grid, and also outputs it as MIDI.",
@@ -261,5 +262,5 @@ export const fiches: FicheAudio[] = ([
           + ` · ${traduire("msg.batterie.midi", String(notesMidi.length))}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

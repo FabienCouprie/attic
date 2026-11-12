@@ -5,6 +5,7 @@
 // nœud offre la liste à cocher — l'inspecteur n'ayant pas de type « choix multiple », le réglage est
 // un texte, ce qui le laisse lisible, sérialisable et modifiable à la main.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -16,7 +17,7 @@ import {
 const DEFAUT = "wgbow,foscil";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "orchestre-csound", nomDicte: "orchestre programmé", nom: "Orchestre Csound", nomEn: "Csound Orchestra",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Compose un orchestre Csound en cochant plusieurs instruments, et rend une partition d'essai jouable qui les fait sonner chacun à son tour.",
@@ -68,7 +69,7 @@ export const fiches: FicheAudio[] = ([
           + (ecartes > 0 ? ` · ${traduire("msg.csound.orchestreEcartes", String(ecartes))}` : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
 
 export { INSTRUMENTS_ORCHESTRE };

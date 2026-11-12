@@ -7,6 +7,7 @@
 // le signale clairement plutôt que de renvoyer silencieusement un texte vide
 // — ce nœud n'inclut PAS d'OCR de repli : un PDF scanné doit être rasterisé
 // puis passé au nœud OCR séparément (hors scope ici).
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -28,7 +29,7 @@ async function moduleWasm() {
 }
 
 const extractionPdfPlugins: FicheAudio[] = [
-  {
+  fiche({
     id: "extraction-pdf",
     nom: "Extraction PDF",
     nomEn: "PDF Extraction",
@@ -86,7 +87,7 @@ const extractionPdfPlugins: FicheAudio[] = [
         return { valeurs: [null], erreur: true, message: `${traduire("msg.pdf_erreur")} ${detail}` };
       }
     },
-  },
+  }),
 ];
 
 export const fiches: FicheAudio[] = extractionPdfPlugins.map(avecDoc) as FicheAudio[];

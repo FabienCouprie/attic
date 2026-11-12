@@ -31,8 +31,14 @@ export interface Reglages {
   accomplis: string[];
 }
 
+/**
+ * Les réglages que le parcours lit, par leur nom sur sa fiche. Nommés ici, l'exécuteur qui passe sa
+ * lecture à `reglagesDepuis` les fait vérifier contre la fiche (`plugins/fiche.ts`).
+ */
+export type NomDeReglageParcours = "Chapitre" | "Accomplis";
+
 /** Les réglages, lus d'où qu'ils viennent — des paramètres du nœud ou de la vue. */
-export function reglagesDepuis(lire: (nom: string, defaut: string) => string | number): Reglages {
+export function reglagesDepuis(lire: (nom: NomDeReglageParcours, defaut: string) => string | number): Reglages {
   const chapitre = String(lire("Chapitre", AU_FIL));
   return {
     chapitre: OPTIONS_CHAPITRE.some((o) => o.id === chapitre) ? chapitre : AU_FIL,

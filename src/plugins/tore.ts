@@ -2,6 +2,7 @@
 // Deux cercles : la position stéréo et le niveau, à deux vitesses. La géométrie
 // et le traitement vivent dans audio/tore.ts, testés.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -12,7 +13,7 @@ import { planBoucle } from "../audio/geometrie-sonore";
 const RAPPORTS: RapportTore[] = ["1:1", "1:2", "2:3", "3:5", "5:8", "or"];
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "tore", nom: "Tore", nomEn: "Torus",
     univers: "Traitement", famille: "Effets",
     resume: "Fait tourner la position et le niveau du son à deux vitesses : ils ne se retrouvent qu'au tour q, ou jamais.",
@@ -68,5 +69,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.tore.var_0_var_1_var_2", plan.tours, sortie.duration.toFixed(1), retour),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

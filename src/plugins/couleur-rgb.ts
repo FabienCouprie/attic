@@ -2,13 +2,14 @@
 // Trois oscillateurs sinusoïdaux pilotés par les composantes R, G, B d'une couleur.
 // Chaque canal est mappé sur une plage de fréquences réglable.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererCouleurRGBAudio, parsePlage } from "../audio";
 import { avecDoc } from "./notices";
 import { traduire } from "../i18n";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "couleur-rgb",
     nom: "Couleur RGB",
     nomEn: "RGB Color",
@@ -58,5 +59,5 @@ export const fiches: FicheAudio[] = ([
       });
       return { valeurs: [audio], message: traduire("msg.couleur_rgb.resultat", audio.duration.toFixed(1)) };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

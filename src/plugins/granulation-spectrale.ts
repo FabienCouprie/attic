@@ -10,6 +10,7 @@
 // comme le contrat l'exige : « Vitesse » ne sert qu'à l'extraction séquentielle, et « Tours » ne
 // sert qu'à la reconstruction de Griffin-Lim.
 
+import { fiche, type NomDeReglage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -26,7 +27,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 const TAILLES = [256, 512, 1024, 2048, 4096, 8192];
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "granulation-spectrale", nomDicte: "grains du spectre", nom: "Granulation spectrale", nomEn: "Spectral granulation",
     univers: "Traitement", famille: "Effets",
     resume: "Granule un son dans le domaine des fréquences : chaque grain ne garde que son spectre d'amplitude, et se réécrit à une autre taille.",
@@ -86,7 +87,7 @@ export const fiches: FicheAudio[] = ([
       const en = langueCourante() === "en";
       const audio = entreeAudio(ctx, 0);
       if (sansEntree(audio)) return audio;
-      const lireTaille = (nom: string, defaut: number) => {
+      const lireTaille = (nom: NomDeReglage<typeof ctx>, defaut: number) => {
         const t = parseInt(ctx.paramTexte(nom, String(defaut)), 10);
         return TAILLES.includes(t) ? t : defaut;
       };
@@ -133,5 +134,5 @@ export const fiches: FicheAudio[] = ([
         : (en ? `${trames} spectra` : `${trames} spectres`);
       return { valeurs: [sortie], message };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

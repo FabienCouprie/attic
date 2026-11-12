@@ -17,6 +17,7 @@
 // sur un canal unique. La logique est dans `audio/vitesse-midi.ts`, testée ; ce fichier n'est
 // que la prise.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -32,7 +33,7 @@ import {
 } from "./soundfontGlobal";
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "vitesse-midi", nom: "Vitesse MIDI", nomEn: "MIDI Speed",
     univers: "Traitement", famille: "Effets",
     resume: "Joue un MIDI plus lentement ou plus vite, sans toucher aux hauteurs.",
@@ -116,5 +117,5 @@ export const fiches: FicheAudio[] = ([
       ].filter(Boolean);
       return { valeurs: [audio, midi], message: messages.join(" · ") };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

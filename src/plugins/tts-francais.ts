@@ -2,6 +2,7 @@
 // via Kokoro-82M (ONNX) + ephone pour la phonémisation. Utilise la voix ff_siwis.
 // Le modèle et le pack de phonémisation sont téléchargés depuis HuggingFace au
 // premier usage, puis mis en cache. Tourne dans un Web Worker.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
@@ -31,7 +32,7 @@ function makeRequestId(): string {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "tts-francais",
     nom: "TTS Français",
     nomEn: "French TTS",
@@ -99,5 +100,5 @@ export const fiches: FicheAudio[] = ([
         w.postMessage({ text: texte, voice: VOIX_FRANCAISE, speed: vitesse, lang, labels, requestId });
       });
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

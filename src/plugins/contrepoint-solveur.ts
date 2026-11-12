@@ -8,6 +8,7 @@
 // LE CALCUL EST DANS `audio/contraintes.ts` ET `audio/contrepoint-solveur.ts`, éprouvés ; ce fichier
 // n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -40,7 +41,7 @@ const modeDe = (suite: readonly number[]): number[] =>
   [...new Set(suite.map((h) => ((Math.round(h) % 12) + 12) % 12))].sort((a, b) => a - b);
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "contrepoint-solveur",
     nom: "Écrire un contrepoint", nomEn: "Write a Counterpoint",
     univers: "Entrées", famille: "Génération",
@@ -175,5 +176,5 @@ export const fiches: FicheAudio[] = ([
           + `${res.noeuds} ${en() ? "attempts" : "essais"} · ${res.avis.length} ${en() ? "advisories" : "avis"} · ${provenance}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -12,6 +12,7 @@
 // La logique est dans `audio/repartition-midi.ts`, testée — inventaire, règle de répartition,
 // découpage par canaux ou par pistes, et la garantie qui compte : la somme des notes des parties
 // égale celle du fichier d'origine.
+import { fiche } from "./fiche";
 import { parseMidi } from "midi-file";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
@@ -43,7 +44,7 @@ function analyserListePistes(texte: string): number[] {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "repartiteur-midi", nom: "Répartiteur MIDI", nomEn: "MIDI Splitter",
     univers: "Traitement", famille: "Montage",
     resume: "Coupe un fichier MIDI en parties, une par instrument, pour les jouer avec quatre banques différentes.",
@@ -85,7 +86,7 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null, null, null, null, null], message: traduire("msg.aucune_note_dans_le_midi") };
       }
       const mode = ctx.paramTexte("Répartition", "auto");
-      const noms = ["Partie 1", "Partie 2", "Partie 3", "Batterie"];
+      const noms = ["Partie 1", "Partie 2", "Partie 3", "Batterie"] as const;
       const base = (fichier.name || "midi").replace(/\.midi?$/i, "");
 
       /** Découpe une partie et la rend en fichier, ou null si elle ne contient rien. */
@@ -137,7 +138,7 @@ export const fiches: FicheAudio[] = ([
         message: `${traduire("msg.midi.reparti", String(inv.notesTotal), String(inv.parCanal.size), String(inv.pistes.length))} · ${morceaux.join(" ")}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
 
 export { analyserListePistes, CANAL_BATTERIE_HUMAIN };

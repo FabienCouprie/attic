@@ -10,6 +10,7 @@
 // n'invente donc aucune finesse ; il ouvre le chemin par lequel « Tempérament », l'harmonie
 // spectrale ou l'intonation juste peuvent en ajouter, et la gravure les conserver.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -18,7 +19,7 @@ import { lireMidiEnSequence } from "../audio/midi-lecture-sequence";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "midi-vers-sequence",
     nom: "MIDI → séquence", nomEn: "MIDI → Sequence",
     univers: "Traitement", famille: "Conversion",
@@ -63,5 +64,5 @@ export const fiches: FicheAudio[] = ([
           + `${lu.canaux} ${en() ? "channels" : "canaux"} · ${lu.tempo} BPM`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

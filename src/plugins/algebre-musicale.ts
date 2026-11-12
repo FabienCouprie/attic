@@ -3,6 +3,7 @@
 // vit dans audio/classification-pistes.ts (testable sans Electron) ; ce
 // fichier ne fait que lire le dossier, décoder l'audio et sérialiser les sorties.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -216,7 +217,7 @@ function attendreProchainTick(): Promise<void> {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "classification-pistes", nom: "Classification de pistes", nomEn: "Track classification",
     univers: "Collections", famille: "Analyse",
     resume: "Regroupe une collection de pistes par similarité (features audio → PCA → KMeans/GMM) et estime la probabilité d'appartenance de chaque piste à chaque groupe.",
@@ -341,5 +342,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.classification_termin_e_var_0_pistes_var_1_groupes", pistes.length, resultat.k) + messageIgnorees,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

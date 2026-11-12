@@ -2,6 +2,7 @@
 //
 // Le calcul, ses références et la raison de ses choix sont dans `audio/fondamentale-manquante.ts`.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -15,7 +16,7 @@ const en = () => langueCourante() === "en";
 const SR = () => frequenceDeTravail();
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "fondamentale-manquante", nom: "Fondamentale manquante", nomEn: "Missing Fundamental",
     univers: "Entrées", famille: "Génération",
     resume: "Une suite d'harmoniques sans son fondamental, qui s'entend pourtant à la hauteur de ce fondamental absent.",
@@ -119,5 +120,5 @@ export const fiches: FicheAudio[] = ([
           : `${partiels.length} partiels, rangs ${partiels[0].rang} à ${partiels[partiels.length - 1].rang} · entendu à ${nb(predite)} Hz`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

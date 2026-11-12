@@ -8,6 +8,7 @@
 // des alias supplémentaires (synonymes, abréviations) que le registre ne porte
 // pas.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -472,7 +473,7 @@ async function genererViaOllama(prompt: string, model: string, timeoutMs: number
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "prompt-vers-graphe", nom: "Prompt → graphe", nomEn: "Prompt → graph",
     univers: "Autres", famille: "Texte",
     resume: "Génère un graphe de composants depuis un prompt texte en langage naturel.",
@@ -530,5 +531,5 @@ export const fiches: FicheAudio[] = ([
         message: prefixe + traduire("msg.var_0_nodes_var_1_connexions_var_2", nodes.length, edges.length, chainDesc),
       };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

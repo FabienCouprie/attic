@@ -3,6 +3,7 @@
 // D'après Jot et Chaigne, AES 1991, et Schlecht et Habets, DAFx-17. La logique est dans
 // `audio/fdn.ts`, testée ; ce fichier n'est que la prise.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -13,7 +14,7 @@ import { parUneFois } from "./hors-lot";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "reverbe-reseau", nom: "Réverbération à réseau (FDN)", nomEn: "Feedback Delay Network Reverb",
     // « fdn » MANQUE AU LEXIQUE DU MOTEUR VOCAL, et le sigle n'est qu'une glose : le nom parlé est
     // le nom lui-même, sans lui. Voir `core/types.ts`, qui porte la règle.
@@ -151,5 +152,5 @@ export const fiches: FicheAudio[] = ([
           mesureBas.toFixed(2), mesureHaut.toFixed(2), (n / sampleRate).toFixed(2)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

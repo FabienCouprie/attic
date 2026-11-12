@@ -6,6 +6,7 @@
 //
 // LE CALCUL EST DANS `audio/matrice-parametres.ts`, éprouvé ; ce fichier n'est que la prise.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -21,7 +22,7 @@ const en = () => langueCourante() === "en";
 const RANGS = [4, 5, 6, 7, 8, 9];
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "matrice-parametres",
     nom: "Matrice de paramètres", nomEn: "Parameter Matrix",
     univers: "Autres", famille: "Csound wrapper",
@@ -152,5 +153,5 @@ export const fiches: FicheAudio[] = ([
         message: `${combien} ${en() ? "events" : "événements"} · ${matrice.rangs.length} ${en() ? "fields" : "champs"} · ${fin.toFixed(2)} s`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

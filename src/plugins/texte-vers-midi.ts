@@ -10,6 +10,7 @@
 //   rest 0.5            ← silence
 //   C4+E4+G4 1          ← accord (notes séparées par +)
 // Les lignes vides et celles commençant par # ou // sont ignorées.
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -57,7 +58,7 @@ function parserNotation(texte: string, tempoInitial: number): { notes: NoteEvene
 const EXEMPLE = "Tempo 120\nC4 0.5\nE4 0.5\nG4 0.5\nC5 1\nrest 0.5\nA4+C5+E5 1";
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "texte-vers-midi", nom: "Texte → MIDI", nomEn: "Text → MIDI",
     univers: "Traitement", famille: "Conversion",
     resume: "Convertit une notation texte (note/accord par ligne) en MIDI + audio.",
@@ -105,5 +106,5 @@ export const fiches: FicheAudio[] = ([
       const midiFinal = await appliquerInstrumentMidi(midiFichier, ctx.paramNombre("Instrument", 0));
       return { valeurs: [audio, midiFinal], message: traduire("msg.var_0_note_s_var_1_bpm_var_2_s", notes.length, tempo, audio.duration.toFixed(1)) };
    },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

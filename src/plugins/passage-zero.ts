@@ -7,6 +7,7 @@
 // profite donc à tous d'un coup, et aucun n'a à savoir que le calage existe. Ce nœud ne touche pas
 // à l'audio, il ne fait que déplacer des instants de quelques échantillons.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { calerZones, type Pente, type Zone } from "../audio/passage-zero";
 import { langueCourante } from "../i18n";
@@ -19,7 +20,7 @@ const en = () => langueCourante() === "en";
 const dB = (x: number) => (x <= 1e-9 ? "−∞" : (versDb(x)).toFixed(1));
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "caler-coupes",
     nom: "Caler les coupes", nomEn: "Snap Cuts",
     univers: "Traitement", famille: "Montage",
@@ -84,5 +85,5 @@ export const fiches: FicheAudio[] = ([
           + `${dB(rapport.residuAvant)} → ${dB(rapport.residuApres)} dB`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

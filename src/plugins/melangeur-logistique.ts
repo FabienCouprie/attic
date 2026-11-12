@@ -1,6 +1,7 @@
 // plugins/melangeur-logistique.ts — Mélangeur à transition logistique entre deux pistes.
 // La première piste diminue pendant que la seconde augmente, suivant une courbe logistique.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
@@ -51,7 +52,7 @@ async function melangerLogistique(
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "melangeur-logistique",
     nom: "Mélangeur logistique",
     nomEn: "Logistic Mixer",
@@ -90,5 +91,5 @@ export const fiches: FicheAudio[] = ([
       const out = await melangerLogistique(a1, a2, centre, pente, volume);
       return { valeurs: [out], message: traduire("msg.melangeur_logistique.resultat", out.duration.toFixed(1)) };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

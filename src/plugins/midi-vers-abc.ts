@@ -2,6 +2,7 @@
 // Écrit un fichier MIDI en notation ABC, pour le rendre lisible et modifiable
 // en texte. L'écriture vit dans audio/midi-vers-abc.ts, testée.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -12,7 +13,7 @@ const METRIQUES = ["fichier", ...SIGNATURES];
 const GRILLES: Record<string, "auto" | number> = { auto: "auto", "2": 2, "4": 4, "8": 8, "3": 3, "6": 6, "12": 12 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "midi-vers-abc", nom: "MIDI → ABC", nomEn: "MIDI → ABC",
     univers: "Visualisation", famille: "Notation",
     resume: "Écrit un fichier MIDI en notation ABC : une partition en texte, lisible et modifiable par un modèle de langage.",
@@ -88,5 +89,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.midi_abc.var_0_var_1_var_2_var_3_var_4", r.notesEcrites, r.voix, r.metrique, ton, grille) + avert,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

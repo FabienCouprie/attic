@@ -1,6 +1,7 @@
 // plugins/export-svg.ts — Nœud « Export SVG » : sauvegarde un fichier SVG reçu
 // sur son entrée dans le répertoire de travail et retourne le chemin.
 // Nécessite Electron.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -12,7 +13,7 @@ function nomAvecExtensionSvg(nom: string) {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "export-svg",
     nom: "Export SVG",
     nomEn: "SVG Export",
@@ -61,5 +62,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.export_svg.termine", nomFinal),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

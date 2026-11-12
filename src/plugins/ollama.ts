@@ -4,6 +4,7 @@
 // direct en mode web/dev. Attic ne télécharge aucun modèle — c'est Ollama qui
 // gère téléchargement, cache et exécution (hors du renderer → pas de saturation
 // mémoire WASM, cf. modèles Transformers.js).
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -74,7 +75,7 @@ export async function ollamaModeles(): Promise<RepModelesOllama> {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "ollama-llm", nomDicte: "modèle de langue local", nom: "LLM Ollama", nomEn: "Ollama LLM",
     univers: "Autres", famille: "Texte",
     resume: "Génère du texte via un modèle local Ollama (Llama, Qwen, Mistral…).",
@@ -116,5 +117,5 @@ export const fiches: FicheAudio[] = ([
       if (!texte) return { valeurs: [null], erreur: true, message: traduire("msg.r_ponse_vide_d_ollama_rifiez_le_mod_le_et_le_serveur") };
       return { valeurs: [texte], message: texte };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

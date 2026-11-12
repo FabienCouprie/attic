@@ -8,7 +8,9 @@
 // sa place, elle ne se recalcule pas dedans.
 
 import type { DesigneMontage } from "./formes-des-canaux";
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
+import type { ParametreDef } from "../core";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { dureeSequence, estSequence, type Sequence } from "../audio/sequence";
@@ -22,7 +24,7 @@ const en = () => langueCourante() === "en";
 const BOITES = 8;
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "maquette",
     nom: "Maquette", nomEn: "Maquette",
     univers: "Traitement", famille: "Montage",
@@ -42,7 +44,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Analyse", nomEn: "Analysis", type: "texte" },
     ],
     parametres: [
-      ...Array.from({ length: BOITES }, (_, k) => [
+      ...Array.from({ length: BOITES }, (_, k): ParametreDef[] => [
         { nom: `Début ${k + 1}`, nomEn: `Start ${k + 1}`, plage: [0, 600], pas: 0.01, defaut: k * 2, unite: "s", port: k,
           doc: `Instant où commence la boîte ${k + 1}.`,
           docEn: `Instant at which box ${k + 1} starts.` },
@@ -127,5 +129,5 @@ export const fiches: FicheAudio[] = ([
         message: entete,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -2,6 +2,7 @@
 //
 // Le calcul, ses références et la raison de ses choix sont dans `audio/battements-binauraux.ts`.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -18,7 +19,7 @@ const SR = () => frequenceDeTravail();
 const nb = (v: number, d = 1) => (en() ? v.toFixed(d) : v.toFixed(d).replace(".", ","));
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "battements-binauraux", nomDicte: "battements entre les oreilles", nom: "Battements binauraux", nomEn: "Binaural Beats",
     univers: "Entrées", famille: "Génération",
     resume: "Deux sons purs voisins, un par oreille, dont la pulsation entendue n'est dans aucun des deux.",
@@ -144,5 +145,5 @@ export const fiches: FicheAudio[] = ([
           : `${nb(basse)} et ${nb(haute)} Hz · battement ${nb(battement)} Hz · ${nb(sortie.length / SR(), 2)} s`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

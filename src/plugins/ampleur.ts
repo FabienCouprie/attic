@@ -2,6 +2,7 @@
 //
 // La logique est dans `audio/ampleur.ts`, testée ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -10,7 +11,7 @@ import { ampleur, correlation, efficace, tenueAttendue, tenueEnMono, type Option
 import { valeursParametre } from "../audio/courbe";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "ampleur", nom: "Ampleur", nomEn: "Spaciousness",
     univers: "Traitement", famille: "Effets",
     resume: "Élargit un son au lieu de le monter : des premières réflexions différentes pour chaque oreille, à sonie constante.",
@@ -103,5 +104,5 @@ export const fiches: FicheAudio[] = ([
           correlAvant.toFixed(2), correlApres.toFixed(2), monoApres.toFixed(2), sonie.toFixed(3)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

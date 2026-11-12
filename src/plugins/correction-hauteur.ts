@@ -1,6 +1,7 @@
 // plugins/correction-hauteur.ts — Le nœud « Correction de hauteur ». La logique est dans
 // `audio/correction-hauteur.ts`, testée ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -14,7 +15,7 @@ import { PARAMETRE_CLE, demiTonDeCle } from "../audio/cles";
 
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "correction-hauteur", nom: "Correction de hauteur", nomEn: "Pitch Correction",
     univers: "Traitement", famille: "Effets",
     resume: "Ramène chaque note sur le degré le plus proche de la gamme choisie, sans déplacer les formants.",
@@ -82,5 +83,5 @@ export const fiches: FicheAudio[] = ([
           premier.centsMoyen.toFixed(0), Math.round(premier.partCorrigee * 100)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -2,6 +2,7 @@
 // texte une collection de tessitures vocales, scindées hommes/femmes.
 // Bilingue FR/EN.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue, traduire } from "../i18n";
@@ -84,7 +85,7 @@ export function construireListeTessitures(
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "tessitures-voix", nomDicte: "étendues de voix", nom: "Tessitures de voix", nomEn: "Vocal Ranges",
     univers: "Autres", famille: "Texte",
     resume: "Émet en texte une collection de tessitures vocales (hommes, femmes, enfants).",
@@ -115,5 +116,5 @@ export const fiches: FicheAudio[] = ([
       const grpAff = grp === "Toutes" ? "" : (GROUPES_TESSITURES_LABEL[grp]?.[langue] ?? grp);
       return { valeurs: [texte], message: traduire("msg.var_0_tessitures_var_1", total, grpAff ? ` — ${grpAff}` : "") };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

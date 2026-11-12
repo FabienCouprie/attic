@@ -20,6 +20,7 @@
 //     Sans ce drapeau il rendrait la documentation de l'avant-dernier état du graphe, ce qui
 //     est exactement le genre de mémoire qu'on vient de corriger ailleurs.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -37,7 +38,7 @@ async function obtenirRegistre() {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "documentation-graphe", nom: "Documentation du graphe", nomEn: "Graph Documentation",
     univers: "Autres", famille: "Texte",
     resume: "Documente le graphe où il est posé : chaque composant, ses valeurs réglées, son câblage, et la notice de chaque composant employé.",
@@ -106,5 +107,5 @@ export const fiches: FicheAudio[] = ([
           dossier ? String(ecrits) : String(doc.avertissements.length)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -5,6 +5,7 @@
 // dans `effets-aides.ts`.
 
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -16,7 +17,7 @@ import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "shift-formants", nomDicte: "déplacement des timbres", nom: "Shift formants", nomEn: "Formant Shift",
     univers: "Traitement", famille: "Effets",
     resume: "Décalage formantique par LPC, change hauteur et timbre indépendamment (conversion vocale).",
@@ -45,8 +46,8 @@ export const fiches: FicheAudio[] = ([
         ? `formants ${Math.round(formantRatio * 100)}%` : traduire("msg.shift_formants.formants_inchanges");
       return { valeurs: [r], message: traduire("msg.var_0_var_1_2", pitchInfo, formantInfo) };
    },
- },
-  {
+ }),
+  fiche({
     id: "ajouter-silence", nom: "Ajouter silence", nomEn: "Add Silence",
     univers: "Traitement", famille: "Montage",
     resume: "Ajoute du silence au début et/ou à la fin de la piste.",
@@ -77,8 +78,8 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs: [resultat], message: traduire("msg.var_0_s_avant_var_1_s_apr_s_total_var_2_s", avant, apres, resultat.duration.toFixed(1)) };
    },
- },
-  {
+ }),
+  fiche({
     id: "tremolo", nomDicte: "variation de volume", nom: "Tremolo", nomEn: "Tremolo", univers: "Traitement", famille: "Effets",
     memoire: "flux", // dst[i] = src[i] * gain
     resume: "Modulation d'amplitude (variations de volume périodiques).",
@@ -124,8 +125,8 @@ export const fiches: FicheAudio[] = ([
         min: ctx.paramNombre("Fréquence min", 1), max: ctx.paramNombre("Fréquence max", 10),
       })] };
    },
- },
-  {
+ }),
+  fiche({
     id: "etirement-glissant", nom: "Étirement glissant", nomEn: "Slide Stretch", univers: "Traitement", famille: "Effets",
     resume: "Étirement dont le facteur varie progressivement du début à la fin.",
     resumeEn: "Time-stretch with a factor that gradually changes from start to end.",
@@ -145,8 +146,8 @@ export const fiches: FicheAudio[] = ([
       const fin = ctx.paramNombre("Fin", 2);
       return { valeurs: [etirementGlissant(a, debut, fin)], message: traduire("msg.var_0_x_var_1_x_var_2_s_var_3_s", debut, fin, a.duration.toFixed(1), (a.duration * (debut + fin) / 2).toFixed(1)) };
    },
- },
-  {
+ }),
+  ficheSansNomsVerifies({
     id: "spatialisation-stereo", nom: "Spatialisation stéréo", nomEn: "Stereo Spatialization", univers: "Traitement", famille: "Effets",
     resume: "Positionne le son dans l'espace stéréo (gauche/droite).",
     resumeEn: "Positions the sound in stereo space (left/right).",
@@ -190,8 +191,8 @@ export const fiches: FicheAudio[] = ([
         max: ctx.paramNombre("Modulation max", 100) / 100,
       })] };
    },
- },
-  {
+ }),
+  fiche({
     id: "auto-pan", nom: "Auto-pan", nomEn: "Auto-pan", univers: "Traitement", famille: "Effets",
     memoire: "flux", // dst[i] = src[i] * gain
     resume: "Balayage automatique gauche/droite (panoramique animé).",
@@ -231,5 +232,5 @@ export const fiches: FicheAudio[] = ([
       });
       return { valeurs: [await autoPan(a, freq, depth, ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 0.5), max: ctx.paramNombre("Fréquence max", 8) })] };
    },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

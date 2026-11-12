@@ -14,6 +14,7 @@
 // soixante revient à le supprimer, sans qu'il faille un réglage de plus.
 
 import type { AffichageFilm, DesigneMontageVideo } from "./formes-des-canaux";
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { respirer } from "../core/respirer";
 import { langueCourante } from "../i18n";
@@ -30,7 +31,7 @@ export const PISTES_VIDEO = 6;
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "montage-video", nom: "Montage vidéo", nomEn: "Video Montage",
     univers: "Autres", famille: "Vidéo",
     resume: "Pose jusqu'à six sons sur un film, chacun à son image, et rend le film sonorisé en MP4.",
@@ -177,5 +178,5 @@ export const fiches: FicheAudio[] = ([
           + `${en() ? "held" : "retenu"} ${retenu.toFixed(0)} Mo`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -9,6 +9,7 @@
 // d'une entrée : une remise à zéro l'efface, un réglage le garde.
 
 import type { DesigneCercle } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { enSuite, type Cercle } from "../audio/cercle";
 import { cercleRetouche, differenceDeRetouche } from "../audio/cercle-retouche";
@@ -18,7 +19,7 @@ import { avecDoc } from "./notices";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "cercle-retouche", nom: "Cercle à retoucher", nomEn: "Circle Editor",
     univers: "Autres", famille: "Circle",
     resume: "Montre le cercle reçu, laisse allumer ou éteindre ses places, et rend le cercle retouché.",
@@ -89,5 +90,5 @@ The message states how many positions were turned off and how many turned on.`,
           + `${retouches[0].sommets.length} ${en() ? "onsets" : "attaques"} · ${change}${variations}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

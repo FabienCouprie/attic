@@ -7,6 +7,7 @@
 // trame. Le réglage « Finesse » veut dire la même chose pour les quatre, et une seule explication
 // sert aux quatre notices.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -90,7 +91,7 @@ const MIX = {
 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "tracage-spectral", nom: "Traçage spectral", nomEn: "Spectral Tracing",
     univers: "Traitement", famille: "Effets",
     resume: "Ne garde que les partiels les plus forts de chaque instant : un son complexe devient quelques lignes qui se tressent.",
@@ -112,8 +113,8 @@ export const fiches: FicheAudio[] = ([
       const out = await parVoies(e, { mode: "tracer", taille: tailleDe(ctx), composantes: n }, ctx);
       return { valeurs: [melanger(e, out, ctx.paramNombre("Mix", 100) / 100)] };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "flou-spectral", nom: "Flou spectral", nomEn: "Spectral Blur",
     univers: "Traitement", famille: "Effets",
     resume: "Moyenne le spectre sur plusieurs instants voisins : le son s'étale dans le temps sans changer de durée.",
@@ -135,8 +136,8 @@ export const fiches: FicheAudio[] = ([
       const out = await parVoies(e, { mode: "flouter", taille: tailleDe(ctx), largeur: w }, ctx);
       return { valeurs: [melanger(e, out, ctx.paramNombre("Mix", 100) / 100)] };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "gel-spectral", nom: "Gel spectral", nomEn: "Spectral Freeze",
     univers: "Traitement", famille: "Effets",
     resume: "Tient le spectre d'un instant pour toute la suite : une immobilité, et non une boucle.",
@@ -158,8 +159,8 @@ export const fiches: FicheAudio[] = ([
       const out = await parVoies(e, { mode: "geler", taille: tailleDe(ctx), part }, ctx);
       return { valeurs: [melanger(e, out, ctx.paramNombre("Mix", 100) / 100)] };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "glissando-interieur", nomDicte: "glissement intérieur", nom: "Glissando intérieur", nomEn: "Inner Glissando",
     univers: "Traitement", famille: "Effets",
     resume: "Garde l'enveloppe de formants du son et met dessous un glissando sans fin : l'illusion de Risset, habillée d'un timbre réel.",
@@ -210,5 +211,5 @@ export const fiches: FicheAudio[] = ([
         : ctx.paramNombre("Mix", 100) / 100;
       return { valeurs: [melanger(e, out, part)] };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

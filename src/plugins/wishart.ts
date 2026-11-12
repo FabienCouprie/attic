@@ -1,13 +1,14 @@
 // plugins/wishart.ts — Nœud « Wavesets » : découpe le son aux passages par zéro
 // et manipule les segments obtenus. Voir audio/wishart.ts pour le principe.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "wavesets-wishart", nomDicte: "paquets d'ondes", nom: "Wavesets (Wishart)", nomEn: "Wavesets (Wishart)",
     univers: "Traitement", famille: "Effets",
     resume: "Découpe le son aux passages par zéro et rejoue les segments autrement.",
@@ -48,5 +49,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.wavesets_var_0_var_1_var_2", segments, facteur, out.duration.toFixed(2)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

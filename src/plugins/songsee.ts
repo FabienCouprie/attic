@@ -1,6 +1,7 @@
 // plugins/songsee.ts — Nœud « Visualisation Songsee » : génère une image de
 // visualisation audio (spectrogram, mel, chroma, hpss, selfsim, loudness,
 // tempogram, mfcc, flux) via le binaire Go Songsee. Nécessite Electron.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { bufferVersWavBlob } from "../audio/io";
 import { traduire } from "../i18n";
@@ -14,7 +15,7 @@ const VIZS = ["spectrogram", "mel", "chroma", "hpss", "selfsim", "loudness", "te
 const PALETTES = ["classic", "magma", "inferno", "viridis", "gray", "claw"];
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "visualisation-songsee", nomDicte: "vue du morceau",
     nom: "Visualisation Songsee",
     nomEn: "Songsee Visualizer",
@@ -169,5 +170,5 @@ export const fiches: FicheAudio[] = ([
         try { await api.supprimerFichier(tempIn); } catch {}
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

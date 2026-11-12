@@ -2,6 +2,7 @@
 // Retire le tiers central, puis le tiers central de chaque morceau, et ainsi de
 // suite. Le découpage vit dans audio/cantor.ts, testé.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -10,7 +11,7 @@ import { rendreCantorCanaux, planCantor, ETAGES_MAX, type ModeCantor } from "../
 import { DUREE_SORTIE_MAX_SEC, versAudioBuffer, canauxDe } from "../audio/geometrie-sonore";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "poussiere-cantor", nom: "Poussière de Cantor", nomEn: "Cantor Dust",
     univers: "Traitement", famille: "Effets",
     resume: "Creuse le son en ôtant le tiers central de chaque morceau, étage après étage : un silence fractal.",
@@ -56,5 +57,5 @@ export const fiches: FicheAudio[] = ([
           plan.etages, r.fragments, r.fragmentMs.toFixed(1), Math.round(r.fractionGardee * 100)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -11,6 +11,7 @@
 // 203 millisecondes, et pas un seul message passé pendant ce temps. Les deux transformées de la
 // convolution portent sur la somme des longueurs du son et de la queue, et c'est tout le coût.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -22,7 +23,7 @@ import { MODULATION_MELANGE, bornesModulation, reglageModule, portModulation } f
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "reverberation-velours", nom: "Réverbération velours", nomEn: "Velvet Reverb",
     univers: "Traitement", famille: "Effets",
     resume: "Réverbération à queue libre : exponentielle comme une salle, linéaire, en gonflement, ou à deux pentes.",
@@ -105,5 +106,5 @@ export const fiches: FicheAudio[] = ([
             String(Math.round(ctx.paramNombre("Modulation max", 100)))),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

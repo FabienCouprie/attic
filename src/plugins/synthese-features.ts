@@ -4,6 +4,7 @@
 // nœud mesure son propre résultat et affiche l'écart : c'est la seule chose qui distingue un
 // procédé vérifiable d'une boîte qui rend du plausible.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -27,7 +28,7 @@ export function lireVecteurJson(texte: unknown): { vecteur: number[]; etiquettes
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "synthese-features", nom: "Synthèse par caractéristiques", nomEn: "Feature Synthesis",
     univers: "Entrées", famille: "Génération",
     resume: "Fabrique un son à partir des quarante mesures qui le décrivent, et affiche de combien il s'en approche.",
@@ -102,5 +103,5 @@ export const fiches: FicheAudio[] = ([
           pire.famille, (pire.ecart * 100).toFixed(0)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -1,5 +1,6 @@
 // plugins/sequenceurs.ts — Séquenceurs (motifs édités à la grille).
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -70,7 +71,7 @@ const MOTIF_ACCORDS_DEFAUT = [
 ].join("|");
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "sequenceur-melodique", nom: "Séquenceur mélodique", nomEn: "Melodic Sequencer",
     univers: "Entrées", famille: "Génération",
     resume: "Programme une mélodie sur une grille piano-roll pas-à-pas (synthèse).",
@@ -134,8 +135,8 @@ export const fiches: FicheAudio[] = ([
       console.log(`[attic] Séquenceur mélodique : audioFinal durée=${audioFinal?.duration ?? 0}`);
       return { valeurs: [audioFinal, midiFinal], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_note_s_var_4_var_5", nbPas, mesures, tempo, noteCount, noteBas, noteHaut) };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "sequenceur-accords", nom: "Séquenceur d'accords", nomEn: "Chord Sequencer",
     univers: "Entrées", famille: "Génération",
     resume: "Programme une progression d'accords sur une grille pas-à-pas.",
@@ -196,8 +197,8 @@ export const fiches: FicheAudio[] = ([
       const accordCount = grille[0].map((_, c) => grille.some((row) => row[c])).filter(Boolean).length;
       return { valeurs: [audio, midiFinal], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_accord_s", nbPas, mesures, tempo, accordCount) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "sequenceur-batterie-avance", nom: "Séquenceur de batterie avancé", nomEn: "Advanced Drum Sequencer",
     univers: "Entrées", famille: "Génération",
     resume: "Programme un motif de batterie sur 8 pistes avec velocity par pas, et sort le rythme en MIDI pour pouvoir changer les sons dessous.",
@@ -249,5 +250,5 @@ export const fiches: FicheAudio[] = ([
           + ` · ${traduire("msg.batterie.midi", String(notesMidi.length))}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

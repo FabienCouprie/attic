@@ -3,6 +3,7 @@
 // D'après Fierro et Välimäki, JAES 71(7-8), 2023. La logique est dans `audio/stn.ts`, testée ;
 // ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -12,7 +13,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "stn-sinus-transitoires-bruit", nomDicte: "partiels attaques et bruit",
     nom: "Sinus + transitoires + bruit (STN)", nomEn: "Sines + Transients + Noise (STN)",
     univers: "Traitement", famille: "Effets",
@@ -90,5 +91,5 @@ export const fiches: FicheAudio[] = ([
           pourcent(parts.sinus), pourcent(parts.transitoires), pourcent(parts.bruit)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

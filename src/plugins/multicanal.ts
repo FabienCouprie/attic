@@ -11,6 +11,7 @@
 // à trois entrées de modulation nommées est donc un outil d'écriture de l'espace, et l'inspecteur y
 // montre chaque trajectoire comme sa plage, dans ses degrés.
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -111,7 +112,7 @@ const resumeTrajectoire = (t: Trajectoire): string => {
 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "spatialiseur", nomDicte: "placer dans l'espace", nom: "Spatialiseur", nomEn: "Spatialiser", univers: UNIVERS, famille: FAMILLE,
     resume: "Place un son sur une trajectoire (azimut, élévation, distance) dans une disposition au choix : anneau de concert, 5.1 à 7.1.4, ou champ ambisonique.",
     resumeEn: "Places a sound on a trajectory (azimuth, elevation, distance) in a layout of your choice: concert ring, 5.1 to 7.1.4, or ambisonic field.",
@@ -140,8 +141,8 @@ export const fiches: FicheAudio[] = ([
         message: `${en ? d.en : d.fr} · ${nombreDeCanaux(d)} ${en ? "channels" : "canaux"}\n${resumeTrajectoire(t)}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "declarer-disposition", nom: "Déclarer la disposition", nomEn: "Declare Layout", univers: UNIVERS, famille: FAMILLE,
     resume: "Dit ce que sont les canaux d'un fichier multicanal (un 5.1, un anneau, un champ AmbiX) pour que la suite de la chaîne le sache.",
     resumeEn: "States what a multichannel file's channels are (a 5.1, a ring, an AmbiX field) so that the rest of the chain knows.",
@@ -172,8 +173,8 @@ export const fiches: FicheAudio[] = ([
       // branche du graphe, qui n'a rien déclaré et ne doit pas hériter d'une étiquette par surprise.
       return { valeurs: [tamponEtiquete(canauxDe(a), a.sampleRate, d)], message: en ? d.en : d.fr };
     },
-  },
-  {
+  }),
+  fiche({
     id: "decodeur-ambisonique", nomDicte: "décodeur du champ", nom: "Décodeur ambisonique", nomEn: "Ambisonic Decoder", univers: UNIVERS, famille: FAMILLE,
     resume: "Décode un champ ambisonique vers une salle réelle : anneau de concert ou format à canaux.",
     resumeEn: "Decodes an ambisonic field to a real room: concert ring or channel format.",
@@ -208,8 +209,8 @@ export const fiches: FicheAudio[] = ([
       const sortie = tamponEtiquete(decoder(canauxDe(a), source.ordre ?? 1, cible.hautParleurs, maxRE), a.sampleRate, cible);
       return { valeurs: [sortie], message: `${en ? source.en : source.fr} → ${en ? cible.en : cible.fr}` };
     },
-  },
-  {
+  }),
+  fiche({
     id: "ecoute-binaurale", nomDicte: "écoute au casque", nom: "Écoute binaurale", nomEn: "Binaural Monitor", univers: UNIVERS, famille: FAMILLE,
     resume: "Fait entendre au casque n'importe quelle disposition (anneau, 7.1.4, champ ambisonique) par des haut-parleurs virtuels filtrés par la tête.",
     resumeEn: "Makes any layout audible on headphones (ring, 7.1.4, ambisonic field) through virtual speakers filtered by the head.",
@@ -238,8 +239,8 @@ export const fiches: FicheAudio[] = ([
       const rendu = await rendreBinaural(a, d);
       return { valeurs: [rendu], message: `${en ? d.en : d.fr} → ${en ? "binaural" : "binaural"}` };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "objet-sonore", nom: "Objet sonore", nomEn: "Sound Object", univers: UNIVERS, famille: FAMILLE,
     resume: "Attache à un son sa trajectoire, sans choisir de salle : la disposition ne sera décidée qu'au rendu, pour tous les objets à la fois.",
     resumeEn: "Attaches its trajectory to a sound without choosing a room: the layout will only be decided at render time, for all objects at once.",
@@ -265,8 +266,8 @@ export const fiches: FicheAudio[] = ([
         message: `${nom ?? (en ? "Object" : "Objet")} · ${a.duration.toFixed(1)} s\n${resumeTrajectoire(trajectoire)}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "rendu-objets", nom: "Rendu d'objets", nomEn: "Object Renderer", univers: UNIVERS, famille: FAMILLE,
     resume: "Rend tous les objets sonores branchés dans une seule salle, choisie ici et changeable à tout moment.",
     resumeEn: "Renders every connected sound object into a single room, chosen here and changeable at any time.",
@@ -299,5 +300,5 @@ export const fiches: FicheAudio[] = ([
         message: `${objets.length} ${en ? "objects" : "objets"} → ${en ? d.en : d.fr}\n${noms}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

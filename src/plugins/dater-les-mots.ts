@@ -27,6 +27,7 @@
 // au découpage `fixed`, il est strictement pire : sur 178,4 s il rend 465 mots au lieu de 480 — il
 // en perd quinze aux coutures — et il est sept fois plus lent. Un réglage dont la seule autre
 // valeur dégrade est un piège, donc il n'est pas offert.
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { formaterMots, type Mot } from "../audio/parole-datee";
 import { traduire } from "../i18n";
@@ -56,7 +57,7 @@ export function motsParMinute(mots: readonly Mot[]): number | null {
 }
 
 export const fiches = ([
-  {
+  ficheSansNomsVerifies({
     id: "dater-les-mots", nom: "Dater les mots", nomEn: "Date the words",
     univers: "Autres", famille: "Speech to Text",
     resume: "Transcrit un enregistrement et donne l'instant de chaque mot, sans qu'on donne le texte.",
@@ -145,5 +146,5 @@ export const fiches = ([
           + (debit == null ? "" : ` · ${Math.round(debit)} ${traduire("msg.dater.parMinute")}`),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

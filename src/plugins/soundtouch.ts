@@ -5,6 +5,7 @@
 // tempo et de tonalité, en utilisant l'algorithme SoundTouch (phase vocoder
 // avancé).
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -132,7 +133,7 @@ function passeStereo(buffer: AudioBuffer, params: SoundTouchParams): AudioBuffer
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "soundtouch-tempo", nomDicte: "changer le tempo", nom: "SoundTouch Tempo", nomEn: "SoundTouch Tempo",
     univers: "Traitement", famille: "Effets",
     resume: "Change le tempo en préservant la hauteur (time-stretch de qualité).",
@@ -152,8 +153,8 @@ export const fiches: FicheAudio[] = ([
       const out = appliquerSoundTouch(buffer, { tempo });
       return { valeurs: [out], message: traduire("msg.tempo_x_var_0_var_1_s", tempo.toFixed(2), out.duration.toFixed(1)) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "soundtouch-tonalite", nomDicte: "changer la tonalité", nom: "SoundTouch Tonalité", nomEn: "SoundTouch Pitch",
     univers: "Traitement", famille: "Effets",
     resume: "Change la hauteur en préservant la durée (pitch-shift de qualité).",
@@ -173,8 +174,8 @@ export const fiches: FicheAudio[] = ([
       const signe = semi >= 0 ? "+" : "";
       return { valeurs: [out], message: traduire("msg.tonalit_var_0_var_1_st_var_2_s", signe, semi.toFixed(1), out.duration.toFixed(1)) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "soundtouch-rate", nomDicte: "changer la vitesse", nom: "SoundTouch Vitesse", nomEn: "SoundTouch Rate",
     univers: "Traitement", famille: "Effets",
     resume: "Change la vitesse de lecture (tempo + hauteur), comme un lecteur.",
@@ -194,5 +195,5 @@ export const fiches: FicheAudio[] = ([
       const out = appliquerSoundTouch(buffer, { rate });
       return { valeurs: [out], message: traduire("msg.vitesse_x_var_0_var_1_s", rate.toFixed(2), out.duration.toFixed(1)) };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

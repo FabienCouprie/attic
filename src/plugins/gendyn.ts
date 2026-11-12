@@ -1,13 +1,14 @@
 // plugins/gendyn.ts — Nœud « GENDYN (Xenakis) » : la forme d'onde elle-même est
 // une marche aléatoire bornée. Voir audio/gendyn.ts pour le principe.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "gendyn-xenakis", nomDicte: "synthèse stochastique", nom: "GENDYN (Xenakis)", nomEn: "GENDYN (Xenakis)",
     // Générateur sans entrée : sa place est parmi les sources.
     univers: "Entrées", famille: "Génération",
@@ -61,5 +62,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.gendyn_var_0_var_1_var_2", points, hz(dureeMaxMs), hz(dureeMinMs)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

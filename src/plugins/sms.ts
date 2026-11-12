@@ -7,6 +7,7 @@
 //
 // La logique est dans `audio/sms.ts`, testée ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -16,7 +17,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "sms-sinusoides-bruit", nomDicte: "partiels et bruit", nom: "Sinusoïdes + bruit (SMS)", nomEn: "Sinusoids + Noise (SMS)",
     univers: "Traitement", famille: "Effets",
     resume: "Suit les partiels d'un son et met le reste à part : transposer l'harmonie sans toucher au souffle.",
@@ -96,5 +97,5 @@ export const fiches: FicheAudio[] = ([
           transposition === 0 ? traduire("msg.sms.masque") : traduire("msg.sms.additif")),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

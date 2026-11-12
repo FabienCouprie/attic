@@ -3,6 +3,7 @@
 // D'après Plomp et Levelt (JASA 38, 1965) et Sethares (JASA 94, 1993 ; « Tuning, Timbre, Spectrum,
 // Scale », 1998). La logique est dans `audio/dissonance.ts`, testée ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import {
   accordageDepuisCents, decrireAccordage, degresParPeriode, hauteurDuDegre, rangsDemandes,
@@ -37,7 +38,7 @@ export function partielsDuSon(
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "courbe-dissonance", nom: "Courbe de dissonance", nomEn: "Dissonance Curve",
     univers: "Autres", famille: "Théorie",
     resume: "Trouve la gamme qu'un timbre appelle : les creux de sa courbe de dissonance sont ses intervalles.",
@@ -140,8 +141,8 @@ export const fiches: FicheAudio[] = ([
             : (en ? "no period found: widen the range" : "aucune période trouvée : élargissez l'étendue")}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "rugosite", nom: "Rugosité", nomEn: "Roughness",
     univers: "Visualisation", famille: "Analyse",
     resume: "Mesure la dissonance sensorielle d'un son au fil du temps, d'après le modèle de Plomp et Levelt.",
@@ -199,11 +200,11 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.rugosite.resume", chiffre(moyenne), chiffre(max), instant.toFixed(2)),
       };
     },
-  },
+  }),
   // LE CONSOMMATEUR DU FLUX `accordage`, et il vit ici parce qu'il joue ce que la courbe ci-dessus
   // trouve. Il ne calcule aucun son : il rend une `sequence`, dont le rendu existant porte les
   // hauteurs fractionnaires jusqu'au haut-parleur.
-  {
+  fiche({
     id: "accordage-notes", nom: "Accordage → notes", nomEn: "Tuning → Notes",
     // TRAITEMENT ET CONVERSION, ET C'EST LE GARDE DE CLASSEMENT QUI L'A DIT. Rangé d'abord dans
     // « Théorie » par voisinage avec la courbe de dissonance, il en a été sorti par la règle que
@@ -262,5 +263,5 @@ export const fiches: FicheAudio[] = ([
           + `${horsTempere} ${en ? "off the keyboard" : "hors du clavier"}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

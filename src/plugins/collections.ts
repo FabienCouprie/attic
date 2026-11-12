@@ -1,5 +1,6 @@
 // plugins/collections.ts — Nœuds collections (issus du découpage de complements.ts).
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -10,7 +11,7 @@ import { choixOuiNon } from "../core/oui-non";
 import { ecrireOuLever } from "./pont-electron";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "collection-vers-mp3", nomDicte: "collection en fichier compressé", nom: "Conversion WAV→MP3", nomEn: "WAV→MP3 conversion", univers: "Collections", famille: "Conversion",
     resume: "Convertit un dossier de fichiers audio en MP3.",
     resumeEn: "Converts a folder of audio files to MP3.",
@@ -53,8 +54,8 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs:[null], message:traduire("msg.termin_var_0_converti_s_var_1", ok, err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : "") };
     },
-  },
-  {
+  }),
+  fiche({
     id: "collection-mp3-vers-wav", nomDicte: "collection en fichier brut", nom: "Conversion MP3→WAV", nomEn: "MP3→WAV conversion", univers: "Collections", famille: "Conversion",
     resume: "Convertit un dossier de MP3 en WAV.",
     resumeEn: "Converts a folder of MP3 files to WAV.",
@@ -98,8 +99,8 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs:[null], message:traduire("msg.termin_var_0_converti_s_var_1", ok, err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : "") };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "collection-midi-vers-mp3", nomDicte: "collection de notes en fichier compressé", nom: "Conversion MIDI→MP3", nomEn: "MIDI→MP3 conversion", univers: "Collections", famille: "Conversion",
     resume: "Convertit un dossier de fichiers MIDI en MP3.",
     resumeEn: "Converts a folder of MIDI files to MP3.",
@@ -152,8 +153,8 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs:[null], message:traduire("msg.termin_var_0_converti_s_var_1", ok, err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : "") };
     },
-  },
-  {
+  }),
+  fiche({
     id: "collection-lecteur-musique", nom: "Lecteur musique", nomEn: "Music player", univers: "Collections", famille: "Lecture",
     resume: "Lecteur simple pour pré-écouter un dossier de musique (shuffle, boucle, contrôle du volume).",
     resumeEn: "Simple player to preview a music folder (shuffle, loop, volume control).",
@@ -180,5 +181,5 @@ export const fiches: FicheAudio[] = ([
       if (!chemin) return { valeurs: [null], erreur: true, message: traduire("msg.configurez_les_dossiers") };
       return { valeurs: [null], message: traduire("msg.lecteur_musique") };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -2,6 +2,7 @@
 // Les calculs lourds sont délégués à src/workers/magenta-worker.ts pour ne pas
 // bloquer le thread principal.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -80,7 +81,7 @@ async function runMagentaFile(ctx: ContexteAudio, type: string, payload: any): P
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "magenta-drums",
     nom: "Magenta Drums",
     nomEn: "Magenta Drums",
@@ -126,8 +127,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_drums_var_0", err.message ?? err) };
       }
      },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "magenta-continuation",
     nom: "Magenta Continuation",
     nomEn: "Magenta Continuation",
@@ -180,8 +181,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_continuation_var_0", err.message ?? err) };
       }
      },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "magenta-improvisation",
     nom: "Magenta Improvisation",
     nomEn: "Magenta Improvisation",
@@ -245,8 +246,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_improvisation_var_0", err.message ?? err) };
       }
      },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "magenta-generer-melodie",
     nom: "Magenta Générer mélodie",
     nomEn: "Magenta Generate Melody",
@@ -299,8 +300,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_g_n_rer_m_lodie_var_0", err.message ?? err) };
       }
      },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "magenta-interpoler-midi", nomDicte: "mélange de deux mélodies",
     nom: "Magenta Interpoler MIDI",
     nomEn: "Magenta Interpolate MIDI",
@@ -354,8 +355,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_interpolation_var_0", err.message ?? err) };
       }
    },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "magenta-generer-batterie",
     nom: "Magenta Générer batterie",
     nomEn: "Magenta Generate Drums",
@@ -413,8 +414,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_g_n_rer_batterie_var_0", err.message ?? err) };
       }
      },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "magenta-humaniser-groove",
     nom: "Magenta Humaniser groove",
     nomEn: "Magenta Humanize Groove",
@@ -460,5 +461,5 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_magenta_humaniser_groove_var_0", err.message ?? err) };
       }
    },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -21,6 +21,7 @@
 // le suivi pYIN prend 330 de ces millisecondes, les onze autres mesures en prennent onze — et c'est
 // donc le suivi SEUL qui part dans un ouvrier, celui du nœud « Suiveur de hauteur ».
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -30,7 +31,7 @@ import { choixOuiNon } from "../core/oui-non";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "fiche-technique", nom: "Fiche technique", nomEn: "Spec Sheet",
     univers: "Visualisation", famille: "Analyse",
     resume: "Rend en texte tout ce qui se mesure d'un son : durée, sonie, vrai pic, facteur de crête, parts de bande, corrélation, équilibre, hauteur et justesse, avec un verdict de conformité.",
@@ -66,5 +67,5 @@ export const fiches: FicheAudio[] = ([
         message: resumeSon(mesure, en, diffusion),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

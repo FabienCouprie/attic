@@ -4,6 +4,7 @@
 // Project. La logique est dans `audio/brassage.ts` et `audio/enveloppe-transfert.ts`, testées ;
 // ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -25,7 +26,7 @@ function parCanal(entree: AudioBuffer, f: (x: Float32Array) => Float32Array): Au
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "brassage", nom: "Brassage", nomEn: "Brassage",
     univers: "Traitement", famille: "Effets",
     resume: "Un seul moteur de segments : étirement, transposition, granulation et brouillage sont quatre réglages du même geste.",
@@ -77,8 +78,8 @@ export const fiches: FicheAudio[] = ([
           String(Math.round((out.length / e.sampleRate) * o.densite))),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "transfert-enveloppe", nom: "Transfert d'enveloppe", nomEn: "Envelope Transfer",
     univers: "Traitement", famille: "Effets",
     resume: "Prend le contour d'amplitude d'un son et le pose sur un autre : le rythme de l'un, la matière de l'autre.",
@@ -141,5 +142,5 @@ export const fiches: FicheAudio[] = ([
           (modele.length / modele.sampleRate).toFixed(2), (cible.length / cible.sampleRate).toFixed(2)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

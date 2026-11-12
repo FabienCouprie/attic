@@ -11,6 +11,7 @@
 // LES TROIS TÂCHES À MODÈLE DE BASE NE SONT PAS ICI. `lego`, `extract` et `complete` partent avec
 // le modèle rapide, mais le moteur avertit lui-même que leur sortie ne vaut rien. Le champ
 // `offerte` de la table les tient à l'écart, et un cas le garde.
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -25,7 +26,7 @@ import {
 import { PARAMETRE_CALCUL } from "./parametre-calcul";
 
 export const fiches = ([
-  {
+  ficheSansNomsVerifies({
     id: "reprendre-chanson", nom: "Reprendre une chanson", nomEn: "Cover a Song",
     univers: "Entrées", famille: "Génération",
     resume: "Rend une nouvelle version d'un audio, en suivant un plan de chanson.",
@@ -75,8 +76,8 @@ export const fiches = ([
         bruit: c.paramNombre("Bruit", 0),
       }));
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "retoucher-chanson", nom: "Retoucher une chanson", nomEn: "Repaint a Song",
     univers: "Entrées", famille: "Génération",
     resume: "Refait un passage d'un audio entre deux instants, et garde le reste.",
@@ -117,8 +118,8 @@ export const fiches = ([
         fin: c.paramNombre("Fin", 8),
       }));
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "prolonger-chanson", nom: "Prolonger une chanson", nomEn: "Extend a Song",
     univers: "Entrées", famille: "Génération",
     resume: "Ajoute de la musique avant ou après un audio, en suivant un plan de chanson.",
@@ -163,8 +164,8 @@ export const fiches = ([
         dureeSource: source.duration,
       }));
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "ecrire-chanson", nom: "Écrire une chanson", nomEn: "Write a Song",
     univers: "Entrées", famille: "Génération",
     resume: "Écrit le plan complet d'une chanson à partir d'une phrase courte.",
@@ -249,5 +250,5 @@ export const fiches = ([
         debrancher();
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

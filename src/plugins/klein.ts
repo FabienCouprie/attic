@@ -2,6 +2,7 @@
 // Un glissando sans fin dont chaque voix revient en miroir à chaque tour de
 // l'étendue. Le principe et le rendu vivent dans audio/klein.ts, testés.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -9,7 +10,7 @@ import { rendreKlein, periodeRetourSec } from "../audio/klein";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "bouteille-klein", nom: "Bouteille de Klein", nomEn: "Klein Bottle",
     univers: "Traitement", famille: "Effets",
     resume: "Glissando sans fin dont chaque voix revient de l'autre côté à chaque tour : il faut deux tours pour que tout revienne.",
@@ -62,5 +63,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.klein.var_0_var_1_var_2", options.octaves, (options.octaves * options.cycleSec).toFixed(1), complet),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

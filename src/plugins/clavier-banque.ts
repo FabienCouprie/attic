@@ -2,6 +2,7 @@
 //
 // La logique est dans `audio/clavier-banque.ts`, testée ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import { parseMidi } from "midi-file";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
@@ -28,7 +29,7 @@ const noteDepuisHertz = (hz: number): number =>
   Math.max(NOTE_LA0, Math.min(NOTE_DO8, Math.round(noteMidiDeFrequence(Math.max(1, hz)))));
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "banque-clavier", nom: "Étaler sur le clavier", nomEn: "Spread Across Keyboard",
     univers: "Traitement", famille: "Effets",
     resume: "Fait d'un son une banque d'échantillons jouable sur les 88 touches, par zones.",
@@ -198,8 +199,8 @@ export const fiches: FicheAudio[] = ([
           String(racine), mesuree > 0 ? mesuree.toFixed(1) : "—"),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "sampler-multizones", nom: "Sampler multi-zones", nomEn: "Multi-Zone Sampler",
     univers: "Traitement", famille: "Effets",
     resume: "Joue un MIDI avec une banque de clavier : chaque note prend la zone la plus proche.",
@@ -297,7 +298,7 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs: [audio, midiFile], message: morceaux.join(" · ") };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
 
 // Réexport pour le nœud d'export SFZ, qui vient ensuite.

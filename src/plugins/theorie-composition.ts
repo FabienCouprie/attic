@@ -6,6 +6,7 @@
 // opérations sérielles, l'analyse par ensembles de classes de hauteurs, l'harmonie
 // négative, et la mise en voix des accords.
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -124,7 +125,7 @@ function rapportAnalyse(a: Analyse, titre: string): string {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "serie-dodecaphonique", nomDicte: "opérations de série", nom: "Opérations sérielles", nomEn: "Serial Operations",
     univers: "Traitement", famille: "Effets",
     resume: "Joue les quatre formes d'une série (originale, rétrograde, inversion, rétrograde de l'inversion) et écrit sa matrice.",
@@ -199,8 +200,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.serie.resultat", notes.length, formes.length, niveau),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "classes-hauteurs", nom: "Classes de hauteurs", nomEn: "Pitch-Class Sets",
     univers: "Autres", famille: "Théorie",
     resume: "Analyse un accord ou un passage en ensemble de classes de hauteurs : forme normale, forme première, vecteur d'intervalles.",
@@ -266,8 +267,8 @@ export const fiches: FicheAudio[] = ([
         message: `${traduire("msg.ensembles.resultat", groupes.length, comptes.size)} · ${recu!.provenance}`,
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "harmonie-negative", nom: "Harmonie négative", nomEn: "Negative Harmony",
     univers: "Traitement", famille: "Effets",
     resume: "Réfléchit les hauteurs autour de l'axe tonique-dominante : do majeur devient do mineur, sol septième devient fa mineur sixte.",
@@ -309,8 +310,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.negative.resultat", nomClasse(tonique), reflete.length),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "voicings-accords", nomDicte: "renversements d'accords", nom: "Renversements et voicings", nomEn: "Inversions and Voicings",
     univers: "Traitement", famille: "Effets",
     resume: "Renverse, écarte et enchaîne les accords en bougeant le moins de voix possible.",
@@ -378,5 +379,5 @@ export const fiches: FicheAudio[] = ([
             : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

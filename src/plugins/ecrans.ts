@@ -12,6 +12,7 @@
 // la trame ne s'apprend pas : « c'est aléatoire » n'explique rien. Une colonne par écran, une
 // ligne par case, et l'on compare ce qu'on lit à ce qu'on entend.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { langueCourante } from "../i18n";
@@ -21,7 +22,7 @@ import {
 } from "../audio/ecrans";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "ecrans-xenakis", nomDicte: "écrans", nom: "Écrans (Xenakis)", nomEn: "Screens (Xenakis)",
     univers: "Entrées", famille: "Génération",
     resume: "Un quadrillage de fréquences et d'intensités dont chaque case tire ses grains, et des écrans qui s'enchaînent par une chaîne de Markov.",
@@ -127,5 +128,5 @@ export const fiches: FicheAudio[] = ([
         ].join("\n"),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

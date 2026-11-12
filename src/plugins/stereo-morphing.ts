@@ -2,6 +2,7 @@
 // d'un son à un autre par le spectre. La logique est dans `audio/mono-grave.ts` et
 // `audio/morphing-spectral.ts`, testées ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -14,7 +15,7 @@ import { choixFenetre } from "../audio/fenetres-analyse";
 const voie = (b: AudioBuffer, c: number) => b.getChannelData(Math.min(c, b.numberOfChannels - 1));
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "mono-grave", nom: "Grave en mono", nomEn: "Bass Mono",
     univers: "Traitement", famille: "Effets",
     resume: "Réunit le grave des deux canaux sous une coupure, et laisse l'aigu intact.",
@@ -45,8 +46,8 @@ export const fiches: FicheAudio[] = ([
           r.coteRetireDb.toFixed(1), r.correlationAvant.toFixed(2), r.correlationApres.toFixed(2)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "morphing-spectral", nomDicte: "fondu de timbres", nom: "Morphing spectral", nomEn: "Spectral Morphing",
     univers: "Traitement", famille: "Effets",
     resume: "Passe d'un son à un autre par le spectre : au milieu, un timbre qui n'existait pas.",
@@ -107,5 +108,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.morphing.resume", cA.toFixed(0), cOut.toFixed(0), cB.toFixed(0)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

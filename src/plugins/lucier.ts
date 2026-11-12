@@ -2,6 +2,7 @@
 // pièce, encore et encore, jusqu'à ce que la pièce le remplace.
 // Voir audio/lucier.ts pour le principe.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { creerAleatoire } from "../core";
@@ -9,7 +10,7 @@ import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "piece-lucier", nomDicte: "pièce de la salle", nom: "Pièce de Lucier", nomEn: "Lucier Room",
     univers: "Traitement", famille: "Effets",
     resume: "Réinjecte le son dans la même pièce jusqu'à ne laisser que ses résonances.",
@@ -77,5 +78,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.lucier_var_0_var_1_var_2", iterations, enDb(avant), enDb(apres)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

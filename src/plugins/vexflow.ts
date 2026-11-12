@@ -3,6 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -12,7 +13,7 @@ import { choixValeurs } from "../audio/valeurs-note";
 import { accordsInconnus } from "../audio/theorie-romains";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "vexflow-portee", nomDicte: "portée gravée", nom: "Portée VexFlow", nomEn: "VexFlow Staff",
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une portée de notation musicale à partir d'une notation texte.",
@@ -74,8 +75,8 @@ export const fiches: FicheAudio[] = ([
       // noeud « Erreur » alors que la portee s'affichait correctement.
       return { valeurs: [svg, new File([svg], "portee.svg", { type: "image/svg+xml" })], message: svg };
    },
- },
-  {
+ }),
+  fiche({
     id: "vexflow-tab", nomDicte: "tablature gravée", nom: "Tablature VexFlow", nomEn: "VexFlow Tab",
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une tablature à partir d'une notation texte.",
@@ -115,8 +116,8 @@ export const fiches: FicheAudio[] = ([
       // noeud « Erreur » alors que la portee s'affichait correctement.
       return { valeurs: [svg, new File([svg], "tablature.svg", { type: "image/svg+xml" })], message: svg };
    },
- },
-  {
+ }),
+  fiche({
     id: "vexflow-grille", nomDicte: "grille d'accords gravée", nom: "Grille d'accords VexFlow", nomEn: "VexFlow Chord Chart",
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une grille d'accords à partir d'une liste de symboles.",
@@ -174,8 +175,8 @@ export const fiches: FicheAudio[] = ([
       // noeud « Erreur » alors que la portee s'affichait correctement.
       return { valeurs: [svg, new File([svg], "grille.svg", { type: "image/svg+xml" })], message: svg };
    },
- },
-  {
+ }),
+  fiche({
     id: "vexflow-partition", nomDicte: "partition dessinée", nom: "Partition VexFlow", nomEn: "VexFlow Score",
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une partition simple à partir d'une progression d'accords.",
@@ -217,8 +218,8 @@ export const fiches: FicheAudio[] = ([
       // noeud « Erreur » alors que la portee s'affichait correctement.
       return { valeurs: [svg, new File([svg], "partition.svg", { type: "image/svg+xml" })], message: svg };
     },
-  },
-  {
+  }),
+  fiche({
     id: "vexflow-midi", nom: "Partition MIDI", nomEn: "MIDI Score",
     univers: "Visualisation", famille: "Notation",
     resume: "Affiche une portée de notation musicale à partir d'un fichier MIDI.",
@@ -271,6 +272,6 @@ export const fiches: FicheAudio[] = ([
       const svgFile = new File([svg], "partition.svg", { type: "image/svg+xml" });
       return { valeurs: [svgFile], message: svg };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
 

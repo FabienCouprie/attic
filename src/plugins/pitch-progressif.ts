@@ -2,6 +2,7 @@
 // Répète le son n+1 fois en le transposant d'un cran de plus à chaque reprise,
 // silences intercalés. Le montage vit dans audio/pitch-progressif.ts, testé.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -10,7 +11,7 @@ import { appliquerSoundTouch } from "./soundtouch";
 import { rendreProgression, planProgression } from "../audio/pitch-progressif";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "pitch-progressif", nom: "Tonalité progressive", nomEn: "Progressive Pitch",
     univers: "Traitement", famille: "Effets",
     resume: "Répète le son en le transposant d'un cran de plus à chaque reprise, silences intercalés.",
@@ -57,5 +58,5 @@ export const fiches: FicheAudio[] = ([
         ),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -3,6 +3,7 @@
 // gardant la mélodie et les accords. Le motif et l'assemblage vivent dans
 // audio/abc-reprise.ts, testés.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -11,7 +12,7 @@ import { rendreMidiDepuisBytes } from "../audio/midi-montage";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "reprise-abc", nom: "Reprise ABC", nomEn: "ABC Cover",
     univers: "Traitement", famille: "Conversion",
     resume: "Reprend une partition ABC dans un autre style : même mélodie, mêmes accords, avec un accompagnement et une basse, ballade, pop, valse, marche, bossa nova.",
@@ -77,5 +78,5 @@ export const fiches: FicheAudio[] = ([
           + ` · ${audio.duration.toFixed(1)} s · ${traduire("msg.abc_reprise.melodie_intacte")}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

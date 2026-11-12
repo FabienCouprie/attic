@@ -15,6 +15,7 @@
 // libre, la mesure tranche, et c'est la seule chose du parcours qui prouve qu'on a compris plutôt
 // que recopié.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -25,7 +26,7 @@ import { bilan, titreGagne } from "../parcours/voyage";
 import { CHAPITRES, EXERCICES } from "../parcours/exercices";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "parcours", nom: "Parcours", nomEn: "Journey",
     univers: "Autres", famille: "Apprendre",
     resume: "Quarante-cinq exercices de prise en main qui se valident sur l'atelier que vous construisez, et dix épreuves mesurées sur le son que vous rendez.",
@@ -75,5 +76,5 @@ export const fiches: FicheAudio[] = ([
         message,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -1,6 +1,7 @@
 // plugins/traduction.ts — Node de traduction OPUS-MT dans « Autres » :
 // texte → texte multilingue (paires de langues, modèle léger).
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -47,7 +48,7 @@ const Paires_OPUS: { id: string; nom: string; nomEn: string; model: string }[] =
 ];
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "traduction-opus", nom: "Traduction OPUS-MT", nomEn: "OPUS-MT Translation",
     univers: "Autres", famille: "Texte",
     resume: "Traduit un texte entre paires de langues (OPUS-MT, modèle léger).",
@@ -91,5 +92,5 @@ export const fiches: FicheAudio[] = ([
         w.postMessage({ text: texte, modelId: paire.model });
       });
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

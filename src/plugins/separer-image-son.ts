@@ -13,6 +13,7 @@
 // lourde de ce composant.
 
 import type { AffichageFilm } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { respirer } from "../core/respirer";
 import { langueCourante } from "../i18n";
@@ -23,7 +24,7 @@ import { enMo } from "../core/octets";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "separer-image-son", nom: "Séparer image et son", nomEn: "Split Picture and Sound",
     univers: "Autres", famille: "Vidéo",
     resume: "Prend un film et en rend deux choses : l'image sans son, et le son décodé.",
@@ -81,5 +82,5 @@ export const fiches: FicheAudio[] = ([
           + `${enMo(blob.size).toFixed(1)} Mo · ${sonDit}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

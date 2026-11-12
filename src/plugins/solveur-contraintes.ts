@@ -12,6 +12,7 @@
 // LE CALCUL EST DANS `audio/contraintes.ts`, `audio/contraintes-ecrites.ts` et `audio/evolution.ts`,
 // tous éprouvés ; ce fichier n'est que la prise.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -27,7 +28,7 @@ const en = () => langueCourante() === "en";
 const REGLES = ["Règle 1", "Règle 2", "Règle 3", "Règle 4", "Règle 5", "Règle 6"];
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "solveur-contraintes",
     nom: "Chercher sous contraintes", nomEn: "Search under Constraints",
     univers: "Entrées", famille: "Génération",
@@ -180,5 +181,5 @@ export const fiches: FicheAudio[] = ([
         message: `${en() ? "approached" : "approchée"} · ${en() ? "cost" : "coût"} ${ev.cout} · ${cause}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

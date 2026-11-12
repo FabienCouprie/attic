@@ -32,6 +32,7 @@
 //
 // LES CÂBLES DÉJÀ POSÉS SURVIVENT : une arête retient `out:0` et `out:1`, des INDEX et non des noms.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { dispositionDe, nombreDeCanaux } from "../audio/multicanal";
 import { traduire } from "../i18n";
@@ -56,7 +57,7 @@ function canalSeul(source: AudioBuffer, canal: number): AudioBuffer {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "separateur-canaux",
     memoire: "flux", // recopie canal par canal
     nom: "Séparateur canaux",
@@ -156,5 +157,5 @@ export const fiches: FicheAudio[] = ([
       ].filter(Boolean);
       return { valeurs, message: `${parts.join(" · ")} · ${audio.sampleRate} Hz` };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

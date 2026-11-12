@@ -26,7 +26,14 @@ import type { ModeMemoire } from "./memoire";
 // internes du moteur. Les plugins accèdent aux valeurs via `entree()` et
 // `entrees()`. Le cœur garantit que `entree(idx)` est non-null pour les ports
 // obligatoires (validation avant exécution — cf. validerGraphe).
-export interface ContexteExecution<TValeur, TRuntime> {
+//
+// `TNom` EST L'UNION DES NOMS DE RÉGLAGE QUE LA FICHE DÉCLARE, et c'est ce qui fait vérifier une
+// lecture par le compilateur. Un réglage se lit par son libellé, une chaîne ; sans ce paramètre, un
+// nom mal écrit ou un réglage renommé dans sa fiche retombait sans un mot sur le défaut de l'appel.
+// La fiche d'un domaine le déduit de ses `parametres` (`plugins/fiche.ts` pour l'audio). Par défaut
+// `string` : un contexte qui ne connaît pas sa fiche, celui d'un essai ou d'une fonction d'aide,
+// accepte tout nom, comme avant.
+export interface ContexteExecution<TValeur, TRuntime, TNom extends string = string> {
   noeud: { id: string; data: Record<string, unknown> };
   runtime: TRuntime;
   repertoireTravail: string;
@@ -49,8 +56,12 @@ export interface ContexteExecution<TValeur, TRuntime> {
   //
   // FACULTATIF : un appelant qui ne le fournit pas laisse le plugin faire comme avant.
   sortieBranchee?: (index: number) => boolean;
-  paramNombre: (nom: string, defaut: number) => number;
-  paramTexte: (nom: string, defaut: string) => string;
+  // LES DEUX LECTEURS SONT DES MÉTHODES, et non des propriétés fléchées, pour qu'une fonction d'aide
+  // qui prend le contexte de n'importe quelle fiche (`ContexteAudio`, aux noms libres) reçoive celui
+  // d'une fiche aux noms connus. Une propriété le refuserait : son paramètre `TNom` est plus étroit
+  // que `string`. Dans l'exécuteur, l'appel reste vérifié.
+  paramNombre(nom: TNom, defaut: number): number;
+  paramTexte(nom: TNom, defaut: string): string;
   onProgress: (msg: string) => void;
   // Signal d'annulation du run courant (posé par le moteur si l'utilisateur
   // réinitialise un nœud pendant qu'il tourne — cf. useExecutionGraphe.ts).
@@ -69,7 +80,7 @@ export interface ContexteExecution<TValeur, TRuntime> {
 //    de sortie est traitée comme un échec, SAUF si la fiche déclare
 //    `sortieNullePermise` (cf. PluginDef) ;
 //  - l'erreur se propage transitivement à toute la descendance.
-export type FonctionPlugin<TValeur, TRuntime> = (ctx: ContexteExecution<TValeur, TRuntime>) => Promise<{
+export type FonctionPlugin<TValeur, TRuntime, TNom extends string = string> = (ctx: ContexteExecution<TValeur, TRuntime, TNom>) => Promise<{
   valeurs: TValeur[];
   message?: string;
   // Échec déclaré. Ne pas compter sur le filet « tout-null » : lui seul ne
@@ -360,6 +371,17 @@ export interface PluginDef<TValeur, TRuntime> {
   entrees: PortDef[];
   sorties: PortDef[];
   parametres: ParametreDef[];
+  /**
+   * Les réglages que cette fiche ne déclare plus et que son exécuteur lit encore, pour les projets
+   * enregistrés avant qu'ils disparaissent.
+   *
+   * UNE LECTURE DE MIGRATION EST UN FAIT DÉCLARÉ, et non l'absence d'une déclaration. Lire un nom
+   * que `parametres` ne porte pas retombe sur le défaut de l'appel ; c'est voulu pour un réglage
+   * remplacé (le « Fondu » unique du masque de zones, devenu deux fondus), et c'est une faute
+   * partout ailleurs. Nommé ici, le réglage entre dans les noms que l'exécuteur peut lire, sans
+   * paraître dans l'inspecteur ni dans aucune liste de réglages.
+   */
+  anciensReglages?: readonly string[];
   executer: FonctionPlugin<TValeur, TRuntime>;
   etiquettes?: string[];
 

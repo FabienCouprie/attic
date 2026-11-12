@@ -13,12 +13,13 @@
 // sauvegarde du projet conserve. Une correction faite à la main doit se retrouver à la réouverture.
 
 import type { DesigneTexte } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "modifier-texte", nom: "Modifier le texte", nomEn: "Edit Text",
     univers: "Autres", famille: "Texte",
     resume: "Affiche le texte reçu, le laisse corriger à la main, et rend ce que contient la zone.",
@@ -51,5 +52,5 @@ export const fiches: FicheAudio[] = ([
         message: `${traduire("msg.var_0_caract_res", sortie.length)} · ${etat}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

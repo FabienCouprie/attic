@@ -1,5 +1,6 @@
 // plugins/tts-kokoro.ts — Nœud « Kokoro TTS » : synthèse vocale locale
 // (anglais) via Kokoro-82M ONNX + Transformers.js, exécuté dans un Web Worker.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
@@ -65,7 +66,7 @@ function isVoixKokoro(v: string): v is VoixKokoro {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "tts-kokoro", nomDicte: "voix parlée naturelle",
     nom: "Kokoro TTS",
     nomEn: "Kokoro TTS",
@@ -147,5 +148,5 @@ export const fiches: FicheAudio[] = ([
         w.postMessage({ text: texte, voice: voix, speed: vitesse, lang, labels, requestId });
       });
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

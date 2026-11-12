@@ -4,6 +4,7 @@
 // IEEE/ACM TASLP 2021. La logique est dans `audio/declipper.ts`, testée ; ce fichier n'est que la
 // prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -13,7 +14,7 @@ import { parCanal } from "./hors-fil";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "restauration-ecretage", nomDicte: "réparer les crêtes coupées", nom: "Restauration d'écrêtage", nomEn: "Declipper",
     univers: "Traitement", famille: "Effets",
     resume: "Reconstruit les sommets coupés d'un son écrêté, en cherchant le signal le plus simple qui rende compte de ce qui reste.",
@@ -92,5 +93,5 @@ export const fiches: FicheAudio[] = ([
           seuil.toFixed(3), crete.toFixed(2), (100 * residu).toFixed(0)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -4,6 +4,7 @@
 // « The Geometry of Musical Chords », Science 313, 2006. La logique est dans
 // `audio/rythme-analyse.ts` et `audio/conduite-voix.ts`, testées ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import { notesDuMidi } from "../audio/midi";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
@@ -65,7 +66,7 @@ export function lireAccords(texte: string): number[][] {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "analyse-rythme", nom: "Analyse rythmique", nomEn: "Rhythm Analysis",
     univers: "Autres", famille: "Théorie",
     resume: "Décrit un rythme comme « Classes de hauteurs » décrit un accord : intervalles, régularité, contretemps, collier.",
@@ -118,8 +119,8 @@ export const fiches: FicheAudio[] = ([
           a.intervalles.join("-"), (a.uniformite * 100).toFixed(0), String(a.contretemps.length)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "distance-conduite-voix", nom: "Distance de conduite de voix", nomEn: "Voice-Leading Distance",
     univers: "Autres", famille: "Théorie",
     resume: "Mesure en demi-tons ce que coûte chaque enchaînement d'accords, et dit lequel coule et lequel se tend.",
@@ -184,5 +185,5 @@ export const fiches: FicheAudio[] = ([
         message: `${traduire("msg.conduiteVoix.resume", String(a.total), a.moyenne.toFixed(2))} · ${provenance}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

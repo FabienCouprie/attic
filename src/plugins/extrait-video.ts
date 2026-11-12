@@ -10,6 +10,7 @@
 // ré-encodée. Un extrait de onze minutes coûte donc le temps d'une copie, non celui d'un encodage.
 
 import type { AffichageFilm, DesigneExtraitVideo } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -21,7 +22,7 @@ import { enMo } from "../core/octets";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "extrait-video", nom: "Extrait vidéo", nomEn: "Video Excerpt",
     univers: "Autres", famille: "Vidéo",
     resume: "Garde une portion d'un film, entre deux images, avec son son, et la rend en MP4.",
@@ -133,5 +134,5 @@ export const fiches: FicheAudio[] = ([
           + `${son} · ${enMo(blob.size).toFixed(1)} Mo`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

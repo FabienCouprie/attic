@@ -8,6 +8,7 @@
 // sur les BORNES dès qu'une courbe est branchée, non sur le réglage, qui ne sert alors à rien.
 // Les courbes se construisent ensuite à la longueur trouvée. L'ordre inverse serait circulaire.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -30,7 +31,7 @@ const MOD_REINJECTION = { ...modulationNommee("Réinjection", "Feedback", [0, 95
 const MOD_MELANGE = { ...modulationNommee("Mélange", "Mix", [0, 100], "%"), defauts: [0, 100] as [number, number] };
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "retard-granulaire", nomDicte: "retard par grains", nom: "Retard granulaire", nomEn: "Granular Delay",
     univers: "Traitement", famille: "Effets",
     resume: "Retarde le son et le rend par grains ; ce qui sort retourne dans la ligne et s'y regranule.",
@@ -213,5 +214,5 @@ The « Modulation time », « Modulation scatter », « Modulation transposition
           rapport.bornes > 0 ? traduire("msg.retardGranulaire.bornes", String(rapport.bornes)) : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

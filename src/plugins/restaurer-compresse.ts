@@ -26,6 +26,7 @@
 // fichier entier en un seul graphe demandait 40 143 349 760 octets pour un morceau de 194 s, et
 // les tranches avec une seconde de contexte de part et d'autre rendent le même son. « Tranche » ne
 // règle donc plus que la mémoire et le temps, et un refus de mémoire se dit avec ses chiffres.
+import { ficheSansNomsVerifies } from "./fiche";
 import { plafonnerCrete } from "../audio/commun";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
@@ -103,7 +104,7 @@ export function messageDEchec(r: ReponsePont): string {
 }
 
 export const fiches = ([
-  {
+  ficheSansNomsVerifies({
     id: "restaurer-compresse", nom: "Restaurer un son compressé", nomEn: "Restore compressed audio",
     univers: "Traitement", famille: "Débruitage",
     resume: "Répare les artefacts qu'un encodage à bas débit laisse dans un enregistrement.",
@@ -211,5 +212,5 @@ export const fiches = ([
         message: `${Math.round(part * 100)} %${rtf == null ? "" : ` · RTF ${rtf.toFixed(2)}`}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

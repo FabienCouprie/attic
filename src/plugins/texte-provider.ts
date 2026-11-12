@@ -2,12 +2,13 @@
 // par l'utilisateur sur sa sortie texte (port bleu). Utile comme source pour
 // les nodes de synthèse vocale, les scripts IA, etc.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "source-texte", nom: "Entrée texte", nomEn: "Text Input",
     // RANGÉ AVEC LES AUTRES ENTRÉES DE TEXTE, à la demande de Fabien le 2026-10-29 : il était sous
     // « Text to Speech », où l'on cherche une voix et non un champ de saisie.
@@ -25,5 +26,5 @@ export const fiches: FicheAudio[] = ([
       const texte = ctx.paramTexte("Texte", "Bonjour, ceci est un texte de test.");
       return { valeurs: [texte], message: traduire("msg.var_0_caract_res", texte.length) };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

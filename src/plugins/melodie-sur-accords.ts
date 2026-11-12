@@ -3,6 +3,7 @@
 // LE CALCUL EST DANS `audio/melodie-sur-accords.ts`, éprouvé, et l'en-tête de ce fichier-là dit
 // pourquoi le raccord est fait de trois pièces qui existaient déjà. Celui-ci n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { melodieSurAccords, type OptionsMelodie } from "../audio/melodie-sur-accords";
 import { accordsDeSequence, nomDeLaccord } from "../audio/reconnaitre-accord";
@@ -17,7 +18,7 @@ import { choixOuiNon } from "../core/oui-non";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "melodie-sur-accords", nom: "Mélodie sur accords", nomEn: "Melody over Chords",
     univers: "Traitement", famille: "Effets",
     resume: "Cherche une mélodie sur une suite d'accords reçue, sous des contraintes qu'on pose une par une.",
@@ -192,5 +193,5 @@ When no line satisfies every rule, the « Melody » output is empty and the repo
           + `${r.resolution.noeuds} ${anglais ? "assignments" : "affectations"}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

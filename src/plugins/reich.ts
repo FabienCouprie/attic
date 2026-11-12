@@ -2,13 +2,14 @@
 // qui se décalent lentement, et dont le décalage compose tout seul.
 // Voir audio/reich.ts pour le principe.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "dephasage-reich", nom: "Déphasage de Reich", nomEn: "Reich Phasing",
     univers: "Traitement", famille: "Effets",
     resume: "Fait dériver plusieurs copies d'un motif l'une par rapport à l'autre.",
@@ -58,5 +59,5 @@ export const fiches: FicheAudio[] = ([
           voix, cycle, (longueurBoucleEffectiveSec(a, fonduBoucleSec)).toFixed(2)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -2,6 +2,7 @@
 //
 // Le calcul, ses références et la raison de ses choix sont dans `audio/illusion-octave.ts`.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -17,7 +18,7 @@ const SR = () => frequenceDeTravail();
 const hz = (v: number) => (en() ? v.toFixed(1) : v.toFixed(1).replace(".", ","));
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "illusion-octave", nom: "Illusion d'octave", nomEn: "Octave Illusion",
     univers: "Entrées", famille: "Génération",
     resume: "Deux sons séparés d'une octave alternent d'une oreille à l'autre, et l'on en entend un seul.",
@@ -127,5 +128,5 @@ export const fiches: FicheAudio[] = ([
           : `${plan.length} pas · ${(sortie.length / SR()).toFixed(2).replace(".", ",")} s · ${hz(grave)} et ${hz(aigu)} Hz, ${demiTons} demi-tons`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

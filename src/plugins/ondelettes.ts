@@ -7,6 +7,7 @@
 // « Retiré » est la différence exacte entre l'entrée et la sortie — si l'on y entend le son, le
 // seuil est trop fort, et l'oreille le dit en une seconde là où aucun chiffre ne le dirait.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -19,7 +20,7 @@ import {
 import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "ondelettes", nomDicte: "petites ondes", nom: "Ondelettes", nomEn: "Wavelets",
     univers: "Traitement", famille: "Effets",
     resume: "Analyse le son par ondelettes (fenêtre courte dans l'aigu, longue dans le grave) et n'en garde que les coefficients qui portent quelque chose.",
@@ -160,5 +161,5 @@ export const fiches: FicheAudio[] = ([
         ].join("\n"),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

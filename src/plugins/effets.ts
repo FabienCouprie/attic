@@ -5,6 +5,7 @@
 // dans `effets-aides.ts`.
 
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import { normaliserSonie } from "../audio/normalisation-sonie";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
@@ -197,7 +198,7 @@ export const fiches: FicheAudio[] = ([
      { parametre: "Relâchement", bornes: [5, 1000], defauts: [20, 400], unite: "ms" },
      { parametre: "Fréq Low", bornes: [40, 1000], defauts: [80, 600], unite: "Hz" },
      { parametre: "Fréq High", bornes: [1000, 12000], defauts: [2000, 8000], unite: "Hz" }]),
-  {
+  ficheSansNomsVerifies({
     id: "gate-expandeur", nomDicte: "porte de bruit", nom: "Gate/Expandeur", nomEn: "Gate/Expander",
     memoire: "flux", // enveloppe recursive, un seul scalaire
     univers: "Traitement", famille: "Effets",
@@ -270,7 +271,7 @@ export const fiches: FicheAudio[] = ([
       // chiffre, et une valeur qui se déplace en vaudrait autant qu'il y a d'instants.
       return { valeurs: [r], message: traduire("msg.var_0_seuil_var_1_db_var_2", mode === "gate" ? "Gate" : "Expandeur", valeurA(seuil, 0), mode === "expander" ? ` · ratio ${valeurA(ratio, 0)}:1` : "") };
    },
-  },
+  }),
   effet("transient-shaper", "Transient Shaper", "Transient Shaper", "Contrôle indépendant de l'attaque et du sustain.", "Independent attack and sustain control.",
     [param("Attaque", 0, "Attack", "dB", "Gain appliqué à l'attaque des transitoires. Positif = plus de punch ; négatif = moins agressif.", "Gain applied to transient attacks. Positive = more punch; negative = less aggressive.", [-12, 12], 0.5), param("Sustain", 0, "Sustain", "dB", "Gain appliqué au corps/sustain. Positif = plus de tenue ; négatif = plus court.", "Gain applied to the sustain body. Positive = more sustain; negative = shorter.", [-12, 12], 0.5), param("Temps attaque", 1, "Attack time", "ms", "Temps de réaction du détecteur de transitoires. Sans effet tant qu'Attaque et Sustain sont tous deux à 0 dB : le nœud laisse alors passer le son tel quel.", "Transient detector reaction time. No effect while Attack and Sustain are both at 0 dB: the node then passes the sound through unchanged.", [0.1, 50], 0.1), param("Temps sustain", 100, "Sustain time", "ms", "Temps de réaction du détecteur de sustain. Sans effet tant qu'Attaque et Sustain sont tous deux à 0 dB.", "Sustain detector reaction time. No effect while Attack and Sustain are both at 0 dB.", [10, 500], 1)],
     (a, attaque, sustain, tAttaque, tSustain) => transientShaper(a, attaque, sustain, tAttaque, tSustain),
@@ -300,7 +301,7 @@ export const fiches: FicheAudio[] = ([
     [{ parametre: "Mix", bornes: [0, 100], unite: "%" },
      { ...modulationNommee("Fréquence", "Frequency", [1, 8000], "Hz"), defauts: [50, 2000],
        echelle: "logarithmique" }]),
-  {
+  ficheSansNomsVerifies({
     id: "vocoder", nomDicte: "voix synthétique", nom: "Vocoder", nomEn: "Vocoder",
     univers: "Traitement", famille: "Effets",
     resume: "Vocoder filterbank : modulateur + porteuse → effet robot.",
@@ -364,10 +365,10 @@ export const fiches: FicheAudio[] = ([
       const out = await vocoder(modulateur, porteuse, bands, fMin, fMax, Q, mix);
       return { valeurs: [out] };
     },
-  },
+  }),
   // DEUX MODES, ET LE SECOND MANQUAIT DEPUIS LE DÉBUT. Attic MESURAIT la sonie — le VU-mètre rend
   // des LUFS — sans savoir y amener un son : normaliser à la crête est la réponse d'avant 2015.
-  {
+  fiche({
     id: "normaliseur", nomDicte: "mise à niveau", nom: "Normaliseur", nomEn: "Normalizer",
     univers: "Traitement", famille: "Effets",
     resume: "Amène le son à un niveau cible, en crête ou en sonie (LUFS).",
@@ -405,7 +406,7 @@ export const fiches: FicheAudio[] = ([
         message: r.plafonne ? `${resume} — ${traduire("msg.normaliseur.plafonne")}` : resume,
       };
     },
-  },
+  }),
   effet("suppression-clics", "Suppression de clics", "Click Removal", "Détection et suppression de clicks.", "Click detection and removal.",
     [param("Seuil", 5, "Threshold", "×", "Sensibilité de détection (multiple de la dérivée médiane). Plus élevé = moins sensible (détecte seulement les gros clics). Plus bas = plus sensible.", "Detection sensitivity (multiple of median derivative). Higher = less sensitive (only big clicks). Lower = more sensitive.", [1, 50], 1),
      param("Fenêtre", 5, "Window", "ms", "Largeur de la fenêtre de remplacement.", "Replacement window width.")],

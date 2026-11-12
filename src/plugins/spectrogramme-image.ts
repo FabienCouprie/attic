@@ -13,7 +13,9 @@
 // Les calculs, leurs références et la raison de leurs choix sont dans `audio/mel.ts`,
 // `audio/spectrogramme-mel.ts` et `audio/spectrogramme-pixels.ts`.
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
+import type { ParametreDef } from "../core";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { imageDataDepuisFichier, mixdownMono } from "../audio";
@@ -31,7 +33,7 @@ const en = () => langueCourante() === "en";
 const nb = (v: number, d = 2) => (en() ? v.toFixed(d) : v.toFixed(d).replace(".", ","));
 
 /** Les réglages de l'échelle, déclarés là où on les pose : à l'analyse, et à la lecture d'image. */
-const REGLAGES_ECHELLE = [
+const REGLAGES_ECHELLE: ParametreDef[] = [
   { nom: "Bandes", nomEn: "Bands", type: "curseur", plage: [64, 1024], pas: 1, defaut: 512, unite: "",
     doc: "Le nombre de bandes de mels, donc la hauteur du spectrogramme. Cinq cent douze suit la référence.",
     docEn: "The number of mel bands, and so the height of the spectrogram. Five hundred and twelve follows the reference." },
@@ -50,20 +52,20 @@ const REGLAGES_ECHELLE = [
   { nom: "Fréquence max", nomEn: "Max frequency", type: "curseur", plage: [1000, 22050], pas: 100, defaut: 10000, unite: "Hz",
     doc: "La fréquence de la bande du haut. Ce qui est au-dessus n'entre pas dans le spectrogramme et ne revient pas au retour.",
     docEn: "The frequency of the top band. Anything above does not enter the spectrogram and does not come back on the return trip." },
-] as const;
+];
 
-const PUISSANCE = {
+const PUISSANCE: ParametreDef = {
   nom: "Puissance", nomEn: "Power", type: "curseur", plage: [0.05, 1], pas: 0.05, defaut: 0.25,
   doc: "L'exposant appliqué au module avant l'écriture sur 256 niveaux. Un quart suit la référence et rend visible le bas de la dynamique ; un vaut l'écriture linéaire, où l'image est presque entièrement blanche.",
   docEn: "The exponent applied to the magnitude before writing to 256 levels. A quarter follows the reference and makes the bottom of the dynamic range visible; one is linear writing, where the image is almost entirely white.",
-} as const;
+};
 
-const CANAUX = {
+const CANAUX: ParametreDef = {
   nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"],
   optionIds: ["mono", "stereo"], defaut: "Mono", defautEn: "Mono",
   doc: "Mono analyse un seul canal. Stéréo en garde deux, qui se suivent jusqu'au bout de la chaîne.",
   docEn: "Mono analyses a single channel. Stereo keeps two, which follow each other to the end of the chain.",
-} as const;
+};
 
 /** Les réglages de l'échelle lus sur le nœud, le nombre de bandes compris. */
 function echelleLue(ctx: ContexteAudio, echantillonnage: number, bandes?: number): ParametresMel {
@@ -103,7 +105,7 @@ function fichierDepuisPixels(rgba: Uint8ClampedArray, largeur: number, hauteur: 
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "son-spectrogramme", nomDicte: "son vers image du spectre", nom: "Son → spectrogramme", nomEn: "Sound to spectrogram",
     univers: "Traitement", famille: "Mels",
     resume: "Analyse un son en spectrogramme de mels, au paramétrage de Riffusion.",
@@ -140,8 +142,8 @@ export const fiches: FicheAudio[] = ([
         message: `${colonnesDe(spectre)} × ${bandesDe(spectre)} · ${nb(a.duration)} s${alerte}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "spectrogramme-son", nomDicte: "image du spectre vers son", nom: "Spectrogramme → son", nomEn: "Spectrogram to sound",
     univers: "Traitement", famille: "Mels",
     resume: "Rend le son que porte un spectrogramme de mels, la phase estimée par Griffin-Lim.",
@@ -199,8 +201,8 @@ export const fiches: FicheAudio[] = ([
           : `${nb(longueur / sr)} s · ${tours} tours · graine ${graine}`,
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "spectrogramme-image", nomDicte: "image du spectre vers dessin", nom: "Spectrogramme → image", nomEn: "Spectrogram to image",
     univers: "Traitement", famille: "Mels",
     resume: "Écrit un spectrogramme de mels en image, à la convention de Riffusion.",
@@ -221,8 +223,8 @@ export const fiches: FicheAudio[] = ([
         message: `${image.largeur} × ${image.hauteur} · ${(fichier.size / 1024).toFixed(0)} ko`,
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "image-spectrogramme", nomDicte: "dessin vers image du spectre", nom: "Image → spectrogramme", nomEn: "Image to spectrogram",
     univers: "Traitement", famille: "Mels",
     resume: "Relit une image comme un spectrogramme de mels, à la convention de Riffusion.",
@@ -255,5 +257,5 @@ export const fiches: FicheAudio[] = ([
         message: `${colonnesDe(spectre)} × ${bandesDe(spectre)} · ${nb(duree)} s`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

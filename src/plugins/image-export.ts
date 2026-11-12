@@ -1,6 +1,7 @@
 // plugins/image-export.ts — Nœud « Export image » : sauvegarde un fichier image
 // reçu sur son entrée dans le répertoire de travail et retourne le chemin.
 // Nécessite Electron.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -19,7 +20,7 @@ function nomAvecExtension(nom: string, mime: string) {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "export-image",
     nom: "Export image",
     nomEn: "Image Export",
@@ -67,5 +68,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.export_image.termine", nomFinal),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

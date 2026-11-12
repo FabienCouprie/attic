@@ -5,6 +5,7 @@
 //
 // La logique est dans `audio/hpss.ts`, testée ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -14,7 +15,7 @@ import { choixFenetre } from "../audio/fenetres-analyse";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "separation-harmonique-percussive", nomDicte: "séparer tenue et frappe",
     nom: "Séparation harmonique / percussive", nomEn: "Harmonic/Percussive Separation",
     univers: "Traitement", famille: "Effets",
@@ -84,5 +85,5 @@ export const fiches: FicheAudio[] = ([
           Math.round(partPercussive * 100).toString(), Math.round((1 - partPercussive) * 100).toString()),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

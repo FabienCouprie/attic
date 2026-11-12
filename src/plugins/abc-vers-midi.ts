@@ -2,6 +2,7 @@
 // Lit une partition en notation ABC et la rend en MIDI multipiste + audio. La
 // lecture et l'écriture MIDI vivent dans audio/abc.ts, testées.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -18,7 +19,7 @@ K:G
 |:"G"GABG DGBG|"C"cBcd "G"efge|"D"dcBA GFGA|"G"BG"D"AF "G"G4:|`;
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "abc-vers-midi", nom: "ABC → MIDI", nomEn: "ABC → MIDI",
     univers: "Traitement", famille: "Conversion",
     resume: "Lit une partition en notation ABC (mélodie, accords chiffrés, reprises, plusieurs voix) et la rend en MIDI et en audio.",
@@ -101,5 +102,5 @@ export const fiches: FicheAudio[] = ([
           Math.round(tempo), nbNotes, audio.duration.toFixed(1)) + plusieurs + avert,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

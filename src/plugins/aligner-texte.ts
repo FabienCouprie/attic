@@ -16,6 +16,7 @@
 // mot ne tombe dans le silence du milieu, les quinze derniers mots commencent tous après ce
 // silence, et le décalage entre les deux copies vaut exactement la phrase plus le trou. Les quatre
 // tenaient — le décalage à 6,880 s pour une phrase de 4,880 s et un trou de 2,000 s.
+import { ficheSansNomsVerifies } from "./fiche";
 import { garderIntervalles, formaterMots, tranche, type Mot } from "../audio/parole-datee";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
@@ -51,7 +52,7 @@ function suivre(ctx: ContexteDeRelais) {
 }
 
 export const fiches = ([
-  {
+  ficheSansNomsVerifies({
     id: "aligner-texte", nom: "Aligner un texte sur la parole", nomEn: "Align text to speech",
     univers: "Traitement", famille: "Montage",
     resume: "Date chaque mot d'un texte donné sur l'enregistrement qui le prononce, et découpe la suite de mots demandée.",
@@ -187,5 +188,5 @@ export const fiches = ([
         message: `${mots.length} · ${gardes.length} · ${duree.toFixed(1)} s`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

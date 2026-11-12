@@ -19,6 +19,7 @@
 // d'affichage, qu'on ne peut plus toucher ensuite. Le prix du choix est mesuré et modeste : la
 // reconnaissance de trois secondes de parole prend 3,3 s, et le modèle est en cache au niveau du
 // module de `vosk-asr.ts` — un graphe qui porte les deux nœuds ne le charge qu'une fois.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -191,7 +192,7 @@ export function tableauDeSequence(
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     // LE NOM DISAIT UN PORT QUE CE NŒUD NE PORTE PAS. Il s'appelait « Parole vers séquence » et sa
     // sortie est de type `midi` : « séquence » est un type de port du dépôt, et le promettre
     // envoyait chercher un branchement qui n'existe pas. Il faut « MIDI → séquence » après, comme
@@ -290,5 +291,5 @@ export const fiches: FicheAudio[] = ([
           String(notes.length), String(mots.length), String(muets.length), texte.slice(0, 40)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -9,6 +9,7 @@
 // IL EST LE JUMEAU DE L'EXPORT D'IMAGE, et volontairement : mêmes réglages, même place, même façon
 // de rendre le chemin écrit. Ce qui les sépare tient à l'extension et au poids.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { cheminDansTravail } from "./pont-electron";
 import { langueCourante, traduire } from "../i18n";
@@ -30,7 +31,7 @@ function nomAvecExtension(nom: string, mime: string): string {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "export-video",
     nom: "Export vidéo", nomEn: "Video Export",
     univers: "Sorties", famille: "Export",
@@ -77,5 +78,5 @@ export const fiches: FicheAudio[] = ([
         message: en() ? `${nomFinal} · ${mo} MB written` : `${nomFinal} · ${mo} Mo écrits`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

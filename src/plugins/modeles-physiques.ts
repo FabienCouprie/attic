@@ -11,6 +11,7 @@
 // la dynamique au lieu de changer seulement de volume. Rien de tout cela n'est programmé
 // comme un effet ; cela tombe du modèle, et c'est ce qu'aucun échantillon ne donne.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -28,7 +29,7 @@ import { BARRES, barre, synthetiserBarre } from "../audio/barre-modale";
 const FS = () => FREQUENCE_ECH();
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "secoueurs", nomDicte: "instruments secoués", nom: "Secoueurs", nomEn: "Shakers",
     univers: "Traitement", famille: "Effets",
     resume: "Percussions secouées (maracas, cabasa, tambourin, grelots) par modèle stochastique de particules.",
@@ -82,8 +83,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.phisem.resultat", secousses.length, collisions, graine),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "vent-guide-onde", nom: "Instrument à vent", nomEn: "Wind Instrument",
     univers: "Traitement", famille: "Effets",
     resume: "Clarinette, flûte ou cuivre par guide d'onde : un tuyau, une anche, et le timbre qui en découle.",
@@ -179,8 +180,8 @@ export const fiches: FicheAudio[] = ([
           : traduire("msg.vent.muet"),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "barre-modale", nom: "Barre modale", nomEn: "Modal Bar",
     univers: "Traitement", famille: "Effets",
     resume: "Marimba, vibraphone, glockenspiel, cloche tubulaire ou bol, par synthèse modale aux rapports publiés.",
@@ -254,5 +255,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.barre.resultat", notes.length, choisie.modes.length),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
