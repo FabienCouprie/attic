@@ -12,6 +12,7 @@
 // itère sur une liste de séquences, et un autre début de boucle découperait par mesure ou par
 // accord sans qu'il y ait une ligne à changer ici.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -24,7 +25,7 @@ import {
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: FICHE_BOUCLE_DEBUT,
     nom: "Début de boucle par voix", nomEn: "Voice Loop Start",
     univers: "Traitement", famille: "Conversion",
@@ -67,8 +68,8 @@ export const fiches: FicheAudio[] = ([
           + (courant.titre ? ` · ${courant.titre}` : ""),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: FICHE_BOUCLE_FIN,
     nom: "Fin de boucle par voix", nomEn: "Voice Loop End",
     univers: "Traitement", famille: "Conversion",
@@ -130,5 +131,5 @@ export const fiches: FicheAudio[] = ([
             : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

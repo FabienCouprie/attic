@@ -14,7 +14,12 @@ import {
   type OptionsCentroidSpectral, type ResultatCentroidSpectral,
 } from "../audio";
 import { entreeAudio, sansEntree } from "./lire-entree";
+import { fiche } from "./fiche";
 
+/**
+ * Un descripteur Meyda. SA FICHE PASSE PAR `fiche()` comme une fiche écrite sur place, bien qu'elle
+ * naisse ici : son exécuteur lit trois réglages par leur nom, et ils sont vérifiés (pièce 3a).
+ */
 function noeudMeyda(
   id: string,
   nom: string,
@@ -25,7 +30,7 @@ function noeudMeyda(
   nomSortieEn: string,
   fn: (audio: AudioBuffer, options: OptionsCentroidSpectral) => ResultatCentroidSpectral,
 ): FicheAudio {
-  return {
+  return fiche({
     id, nom, nomEn, univers: "Visualisation", famille: "Analyse",
     resume, resumeEn,
     entrees: [{ nom: "Audio", type: "audio" }],
@@ -47,7 +52,7 @@ function noeudMeyda(
       const resultat = fn(audio, { fenetre, pas, aggregation });
       return { valeurs: [audio, resultat.texte], message: resultat.texte };
    },
-  };
+  });
 }
 
 /** Les quatre descripteurs, dans l'ordre où le registre les a toujours portés. */
