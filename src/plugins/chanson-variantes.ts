@@ -11,7 +11,7 @@
 // LES TROIS TÂCHES À MODÈLE DE BASE NE SONT PAS ICI. `lego`, `extract` et `complete` partent avec
 // le modèle rapide, mais le moteur avertit lui-même que leur sortie ne vaut rien. Le champ
 // `offerte` de la table les tient à l'écart, et un cas le garde.
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -165,7 +165,7 @@ export const fiches = ([
       }));
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "ecrire-chanson", nom: "Écrire une chanson", nomEn: "Write a Song",
     univers: "Entrées", famille: "Génération",
     resume: "Écrit le plan complet d'une chanson à partir d'une phrase courte.",

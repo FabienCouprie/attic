@@ -22,7 +22,7 @@
 //
 // L'ENTRÉE « TEMPO » EXISTE POUR QUE LE CHIFFRE VIENNE D'AILLEURS. Un détecteur de tempo le rend
 // sur un port de contrôle ; le brancher ici évite de recopier à la main un nombre qui se mesure.
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import { parseMidi, writeMidi } from "midi-file";
 import { analyserMidi } from "../audio/midi";
 import { bpmInitial } from "../audio/midi-ecriture";
@@ -104,7 +104,7 @@ function instrumentsTrouves(evenements: string): { nom: string; notes: number }[
 }
 
 export const fiches = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "transcription-midi", nom: "Transcription MIDI", nomEn: "MIDI Transcription",
     univers: "Traitement", famille: "Conversion",
     resume: "Transcrit un audio en notes MIDI par instrument, avec son tempo et sa quantification.",

@@ -44,6 +44,12 @@
 // tours de parole, les notes, le texte rendu —, et « Restaurer un compressé » va jusqu'à donner
 // sa mesure. C'est la seule part du texte qui diffère d'un nœud à l'autre, et c'est la seule qui
 // vaut d'être lue : elle est donc passée en argument plutôt que perdue dans la mise en commun.
+//
+// ═══ LES DEUX FABRIQUES PASSENT PAR `reglagePartage` (`plugins/fiche.ts`) ═══
+//
+// C'est ce qui garde le nom « Calcul » littéral. Un objet rendu tel quel l'élargissait à `string`,
+// et chaque fiche qui reprenait le réglage perdait la vérification de tous ses noms.
+import { reglagePartage } from "./fiche";
 
 /**
  * Les périphériques que les binaires du pont acceptent. La chaîne vide les laisse choisir.
@@ -88,7 +94,7 @@ const COMMUN_EN = "« Automatic » lets the engine take what it deems best, whic
  * savoir avant d'y toucher. L'omettre ne laisse que le texte commun, ce qui convient aux nœuds
  * dont le rendu varie légitimement d'un périphérique à l'autre.
  */
-export const parametreCalcul = (invariance?: string, invarianceEn?: string) => ({
+export const parametreCalcul = (invariance?: string, invarianceEn?: string) => reglagePartage({
   nom: "Calcul", nomEn: "Compute", type: "choix" as const,
   options: CALCULS.map((c) => c.fr), optionsEn: CALCULS.map((c) => c.en),
   optionIds: CALCULS.map((c) => c.id),
@@ -130,7 +136,7 @@ const DML_EN = "« Automatic » tries the graphics card and falls back to the pr
   + " a refusal rather than using the other without warning.";
 
 /** Le réglage de périphérique d'un nœud qui tourne sous `onnxruntime-node`. */
-export const parametreCalculDirectML = (mesure?: string, mesureEn?: string) => ({
+export const parametreCalculDirectML = (mesure?: string, mesureEn?: string) => reglagePartage({
   nom: "Calcul", nomEn: "Compute", type: "choix" as const,
   options: CALCULS_DML.map((c) => c.fr), optionsEn: CALCULS_DML.map((c) => c.en),
   optionIds: CALCULS_DML.map((c) => c.id),

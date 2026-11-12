@@ -20,7 +20,7 @@
 // les mots sont ceux de la SOURCE, mot pour mot selon la transcription, alors que la voix cible
 // prononçait une autre phrase — ce qui rend la mesure sans ambiguïté. Facteur de temps réel 0,566
 // sur une RTX 2060, durée conservée.
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { octetsWav } from "./chanson-aides";
@@ -42,7 +42,7 @@ function suivre(ctx: ContexteDeRelais) {
 }
 
 export const fiches = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "convertir-voix", nom: "Convertir une voix", nomEn: "Convert a voice",
     univers: "Traitement", famille: "Conversion",
     resume: "Garde les mots et l'intonation d'un enregistrement, et lui donne le timbre d'une autre voix.",

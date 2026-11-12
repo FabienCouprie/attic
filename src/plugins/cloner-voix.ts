@@ -13,7 +13,7 @@
 // MESURÉ SUR UNE RTX 2060, paquet q8 : facteur de temps réel 1,29 à 1,90 selon la longueur, pic de
 // 3 668 MiB de mémoire de carte sur 6 144, sortie en 24 kHz mono. L'amont annonçait six gigaoctets
 // au minimum ; la quantification ramène la chose dans la carte avec deux gigaoctets de marge.
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -44,7 +44,7 @@ function suivre(ctx: ContexteDeRelais) {
 const LANGUES = [LANGUE_AUTO, "fr", "en", "es", "de", "it", "pt"];
 
 export const fiches = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "cloner-voix", nom: "Cloner une voix", nomEn: "Clone a Voice",
     univers: "Entrées", famille: "Génération",
     resume: "Fait dire un texte par la voix d'un extrait audio.",

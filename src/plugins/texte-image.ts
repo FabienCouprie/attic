@@ -5,7 +5,7 @@
 // Modèle embarqué dans l'app via extraResources (~680 Mo, quantifié int8).
 // L'utilisateur peut aussi fournir un chemin explicite via le paramètre
 // « Chemin modèle ».
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
@@ -35,7 +35,7 @@ function fileDepuisRgba(rgba: ArrayLike<number>, width: number, height: number, 
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "texte-image",
     nom: "Texte → image",
     nomEn: "Text to image",
