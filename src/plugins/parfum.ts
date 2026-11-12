@@ -4,7 +4,7 @@
 // `audio/motif-crossmodal.ts`. Les deux sont purs et testés ; ce fichier n'est que la prise.
 
 import type { AffichageProfilGout } from "./formes-des-canaux";
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -20,7 +20,7 @@ import { frequenceDeNoteMidi } from "../audio/commun";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "parfum-motif", nom: "Parfum → motif", nomEn: "Odour → Motif",
     univers: "Entrées", famille: "Génération",
     resume: "Fabrique un motif d'après une odeur, registre, consonance et timbre pris des correspondances publiées entre odeurs et sons.",

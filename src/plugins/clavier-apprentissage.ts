@@ -17,7 +17,7 @@
 // écarter la percussion — existe, mais elle est DEMANDÉE : une adaptation silencieuse mentirait
 // sur la musique, une adaptation choisie est un arrangement.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -39,7 +39,7 @@ const CANAUX_EN = ["Automatic", "All", ...Array.from({ length: 16 }, (_, i) => S
 const CANAUX_IDS = ["auto", "tous", ...Array.from({ length: 16 }, (_, i) => String(i))];
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "clavier-apprentissage", nom: "Clavier d'apprentissage", nomEn: "Practice Keyboard",
     univers: "Visualisation", famille: "Analyse",
     resume: "Montre un MIDI joué sur un clavier de 88 touches, une couleur par main, et dit s'il est jouable.",

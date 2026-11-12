@@ -3,7 +3,7 @@
 // La logique est dans `audio/cercle-pulsant.ts`, testée ; ce fichier n'est que la prise.
 
 import type { AffichageAnimation } from "./formes-des-canaux";
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -36,7 +36,7 @@ const hauteurDe = (hertz: number) => noteMidiDeFrequence(Math.max(1, hertz));
 const SELON_LA_ROUE = "roue";
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "cercle-pulsant", nomDicte: "cercle qui bat", nom: "Cercle pulsant", nomEn: "Pulsing Circle",
     univers: "Entrées", famille: "Génération",
     resume: "Une animation et un son tirés de la même suite de pulsations : un battement sourd, un rythme frappé ou une mélodie et ses accords, la couleur donnant la tonalité.",

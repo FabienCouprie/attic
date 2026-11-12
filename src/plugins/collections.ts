@@ -1,6 +1,6 @@
 // plugins/collections.ts — Nœuds collections (issus du découpage de complements.ts).
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -100,7 +100,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs:[null], message:traduire("msg.termin_var_0_converti_s_var_1", ok, err ? `, ${err} erreur(s)${errs.length ? " — " + errs.join(" | ") : ""}` : "") };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "collection-midi-vers-mp3", nomDicte: "collection de notes en fichier compressé", nom: "Conversion MIDI→MP3", nomEn: "MIDI→MP3 conversion", univers: "Collections", famille: "Conversion",
     resume: "Convertit un dossier de fichiers MIDI en MP3.",
     resumeEn: "Converts a folder of MIDI files to MP3.",

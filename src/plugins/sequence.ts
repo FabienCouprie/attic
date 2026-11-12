@@ -13,7 +13,7 @@
 // d'un fichier MIDI est un octet. C'est la limite du format et non un défaut du nœud ; qui veut
 // garder les cents grave en MusicXML, dont le champ d'altération accepte les fractions.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -52,7 +52,7 @@ function presetSf2(programme: number, banque: number): string {
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "rendu-sequence",
     // L'IDENTIFIANT NE SUIT PAS LE NOM, et c'est délibéré : il est inscrit dans les graphes déjà
     // enregistrés, et le changer les rendrait illisibles. Seul l'affichage bouge.

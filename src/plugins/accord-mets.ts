@@ -5,7 +5,7 @@
 // prise.
 
 import type { AffichageProfilGout } from "./formes-des-canaux";
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -20,7 +20,7 @@ import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INST
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "accord-mets-musique", nom: "Accord mets-musique", nomEn: "Food-Music Pairing",
     univers: "Entrées", famille: "Génération",
     resume: "D'un profil de dégustation (sucré, acide, amer, salé) vers une musique d'accompagnement, et le plan écrit de ce qu'elle fait.",

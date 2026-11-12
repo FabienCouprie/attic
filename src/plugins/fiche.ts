@@ -48,6 +48,19 @@ export function fiche<N extends string = never, A extends string = never>(
 }
 
 /**
+ * Un réglage déclaré une fois et repris par plusieurs fiches, dont le nom reste littéral.
+ *
+ * POURQUOI CETTE FONCTION, et c'est la pièce 2 du plan. Un réglage partagé écrit
+ * `const X: ParametreDef = { nom: "Instrument", ... }` élargit son nom à `string`, et chaque fiche
+ * qui le reprend perd tous les siens : `fiche()` ne peut plus les déduire. Écrit
+ * `const X = reglagePartage({ ... })`, il garde son nom, et les fiches qui l'étalent ou le
+ * reprennent se vérifient comme les autres. Elle rend le réglage tel quel.
+ */
+export function reglagePartage<N extends string>(p: ParametreDef & { nom: N }): ParametreDef & { nom: N } {
+  return p;
+}
+
+/**
  * Une fiche dont les noms de réglage ne se déduisent pas encore, et dont l'exécuteur lit donc tout
  * nom sans vérification, comme avant ce module. Chacune est nommée dans `plugins/fiche.test.ts`.
  */

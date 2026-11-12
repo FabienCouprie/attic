@@ -2,7 +2,7 @@
 // Génère un parcours audio/MIDI sur la roue de Camelot pour illustrer les
 // transitions harmoniques compatibles entre tonalités.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererCamelot, genererSvgCamelot } from "../audio";
 import { hasardDuNoeud } from "../core";
@@ -11,7 +11,7 @@ import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INST
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "camelot",
     nom: "Roue de Camelot",
     nomEn: "Camelot Wheel",

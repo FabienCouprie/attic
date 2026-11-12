@@ -1,6 +1,6 @@
 // plugins/sorties.ts — Nœuds de sortie
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -35,7 +35,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [buf, { debut: 0, duree: buf.duration }] };
    },
  }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "sortie-midi", nom: "Sortie MIDI", nomEn: "MIDI output", univers: "Sorties", famille: "Écoute",
     resume: "Reçoit un fichier MIDI, le synthétise en audio et le transmet.",
     resumeEn: "Receives a MIDI file, synthesizes it to audio and passes it along.",
@@ -60,7 +60,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [buffer, midiFinal, { debut: 0, duree: buffer.duration }] };
    },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "lecteur-midi", nom: "Lecteur MIDI", nomEn: "MIDI Player", univers: "Entrées", famille: "Audio",
     resume: "Lit un fichier MIDI depuis l'inspecteur et le synthétise + transmet le MIDI.",
     resumeEn: "Loads a MIDI file from the inspector, synthesizes it and passes the MIDI along.",
@@ -87,7 +87,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [buffer, midiFinal] };
    },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "point-ecoute-midi", nom: "Point d'écoute MIDI", nomEn: "MIDI Listening Point", univers: "Sorties", famille: "Écoute",
     resume: "Auditionne le MIDI sans interrompre la chaîne.",
     resumeEn: "Auditions the MIDI without interrupting the chain.",
