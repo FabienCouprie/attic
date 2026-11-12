@@ -29,6 +29,7 @@
 // VITESSE RELEVÉE : facteur de temps réel de 0,0057 à 0,0196, soit cinquante et un à cent
 // soixante-quatorze fois le temps réel ; les quatre minutes vingt-trois du morceau de blues ont été
 // étiquetées en deux secondes, pour un pic de 398 Mo de mémoire vive.
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -74,7 +75,7 @@ export function tableauEtiquettes(etiquettes: Etiquette[]): string {
 }
 
 export const fiches = ([
-  {
+  ficheSansNomsVerifies({
     id: "decrire-audio", nom: "Décrire un audio", nomEn: "Describe an Audio",
     univers: "Visualisation", famille: "Analyse",
     resume: "Dit en mots ce qu'on entend : instruments, sources, lieu, présence d'une voix.",
@@ -153,5 +154,5 @@ export const fiches = ([
         debrancher();
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

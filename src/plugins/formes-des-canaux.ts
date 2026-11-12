@@ -14,6 +14,13 @@
 //
 // UN MODULE ET NON UN PAR EXÉCUTEUR : plusieurs formes ont plusieurs auteurs. Le film produit en a
 // cinq, le profil de goût trois.
+//
+// DES ALIAS DE TYPE, ET NON DES INTERFACES. Le canal d'un exécuteur est un `Record<string, unknown>`
+// (`core/types.ts`), et une interface n'y entre pas : elle n'a pas de signature d'index, un alias
+// si. Écrites en interfaces, ces formes compilaient tant que chaque fiche se vérifiait à travers
+// l'affirmation `as FicheAudio[]` de son tableau ; quand `plugins/fiche.ts` a fait vérifier chaque
+// fiche seule, le 2026-11-12, dix exécuteurs sont tombés. C'est le piège que React Flow avait déjà
+// tendu à `DonneesNoeud`.
 import type { Accordage } from "../audio/accordage";
 import type { AnalyseEsthetique } from "../audio/esthetique";
 import type { Sequence } from "../audio/sequence";
@@ -25,66 +32,66 @@ import type { PisteVue } from "../vues-domaine/PistesMultiples";
 // ── Ce qu'un exécuteur MONTRE, sous `affichage` ──
 
 /** Le cercle que « Cercle de gamme » produit. La vue en vérifie la forme par `estCercle`. */
-export interface AffichageCercle { cercle?: unknown }
+export type AffichageCercle = { cercle?: unknown };
 
 /** La carte écrite sur le disque par « Carte sonore » et « Coordonnées sur carte ». */
-export interface AffichageCarte { htmlPath?: string; carte?: unknown }
+export type AffichageCarte = { htmlPath?: string; carte?: unknown };
 
 /** La galerie écrite sur le disque par « Galerie d'exposition », et ses pistes. */
-export interface AffichageGalerie { htmlPath?: string; pistes?: { nom: string; url: string }[] }
+export type AffichageGalerie = { htmlPath?: string; pistes?: { nom: string; url: string }[] };
 
 /** Le profil de goût d'un son, que « Goût », « Parfum » et « Accord mets » produisent. */
-export interface AffichageProfilGout { profilGout?: { gout: string; part: number }[] }
+export type AffichageProfilGout = { profilGout?: { gout: string; part: number }[] };
 
 /** L'animation SVG que « Cercle pulsant » dessine. */
-export interface AffichageAnimation { animationSvg?: string }
+export type AffichageAnimation = { animationSvg?: string };
 
 /** L'analyse esthétique d'un son, ou la comparaison de deux. */
-export interface AffichageEsthetique { analyse?: AnalyseEsthetique }
-export interface AffichageComparaisonEsthetique { a?: AnalyseEsthetique; b?: AnalyseEsthetique }
+export type AffichageEsthetique = { analyse?: AnalyseEsthetique };
+export type AffichageComparaisonEsthetique = { a?: AnalyseEsthetique; b?: AnalyseEsthetique };
 
 /** Le MP3 que « Sortie conversion » écrit. */
-export interface AffichageMp3 { mp3Url?: string }
+export type AffichageMp3 = { mp3Url?: string };
 
 /** Le film de la démonstration, et sa taille en octets. */
-export interface AffichageDemonstration { videoUrl?: string; taille?: number }
+export type AffichageDemonstration = { videoUrl?: string; taille?: number };
 
 /** Un film produit, à enregistrer : cinq exécuteurs vidéo le rendent. */
-export interface AffichageFilm { url?: string; nom?: string; octets?: number }
+export type AffichageFilm = { url?: string; nom?: string; octets?: number };
 
 // ── Ce qu'un exécuteur DÉSIGNE de ses entrées, sous `designe` ──
 
 /** Le cercle reçu par « Retouche de cercle ». */
-export interface DesigneCercle { cercle?: unknown }
+export type DesigneCercle = { cercle?: unknown };
 
 /** L'accordage reçu par le clavier isomorphe. */
-export interface DesigneAccordage { accordage?: Accordage }
+export type DesigneAccordage = { accordage?: Accordage };
 
 /** La séquence reçue par le rouleau. */
-export interface DesigneSequence { sequence?: Sequence }
+export type DesigneSequence = { sequence?: Sequence };
 
 /** Le texte reçu par « Modifier le texte ». */
-export interface DesigneTexte { texteRecu?: string }
+export type DesigneTexte = { texteRecu?: string };
 
 /** Les pistes branchées sur le visualiseur multipiste. */
-export interface DesignePistesMultiples { pistes?: PisteVue[] }
+export type DesignePistesMultiples = { pistes?: PisteVue[] };
 
 /** Les pistes d'un montage ou les boîtes d'une maquette : durées, tampons et notes. */
-export interface DesigneMontage {
+export type DesigneMontage = {
   /** Les durées réelles des pistes ou des boîtes, que seule l'exécution connaît. */
   durees?: PisteMontage[];
   /** Les tampons des pistes du Montage : l'onde s'y lit, et l'écoute vivante y joue. */
   sons?: Record<number, AudioBuffer>;
   /** Les notes des boîtes de la Maquette, en fractions de leur durée propre. */
   notes?: Record<number, { debut: number; duree: number; note: number }[]>;
-}
+};
 
 /** Le film reçu par « Extrait vidéo ». */
-export interface DesigneExtraitVideo { infos?: InfosFilm }
+export type DesigneExtraitVideo = { infos?: InfosFilm };
 
 /** Le film reçu par « Montage vidéo », et les sons posés dessous. */
-export interface DesigneMontageVideo {
+export type DesigneMontageVideo = {
   infos?: InfosFilm;
   pistes?: { piste: number; dureeSec: number; crete: number; colonnes: ColonneVue[] }[];
   sons?: Record<string, AudioBuffer>;
-}
+};

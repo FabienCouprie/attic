@@ -28,6 +28,7 @@
 // travaille le reste du dépôt. Le rééchantillonnage se fait ici, à l'aller et au retour, parce que
 // la plateforme en porte un bon : un `OfflineAudioContext` rend ce travail au décodeur du
 // navigateur. L'adaptateur, lui, refuse plutôt que de rééchantillonner mal en silence.
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
@@ -68,7 +69,7 @@ export async function aLaFrequence(buffer: AudioBuffer, frequence: number): Prom
 }
 
 export const fiches = ([
-  {
+  ficheSansNomsVerifies({
     id: "isoler-voix", nom: "Isoler la voix", nomEn: "Isolate the Voice",
     univers: "Traitement", famille: "Effets",
     resume: "Sépare un morceau en deux pistes : la voix et tout le reste.",
@@ -136,5 +137,5 @@ export const fiches = ([
         debrancher();
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

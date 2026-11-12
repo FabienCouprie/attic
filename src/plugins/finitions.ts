@@ -4,6 +4,7 @@
 // La logique est dans `audio/reverbes-etendues.ts`, `audio/silences.ts` et `audio/effets-montage.ts`,
 // testées ; ce fichier n'est que la prise.
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -19,7 +20,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "reverbe-hachee", nom: "Réverbération hachée", nomEn: "Gated Reverb",
     univers: "Traitement", famille: "Effets",
     resume: "Une queue de réverbération coupée net par une porte commandée par le son sec.",
@@ -98,8 +99,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.hachee.resume", premier!.traineeLibreSec.toFixed(2), premier!.traineeSec.toFixed(2)),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "shimmer", nomDicte: "réverbération scintillante", nom: "Shimmer", nomEn: "Shimmer",
     univers: "Traitement", famille: "Effets",
     resume: "Une réverbération dont la queue monte d'une octave à chaque tour, et s'éloigne en montant.",
@@ -156,8 +157,8 @@ export const fiches: FicheAudio[] = ([
           premier!.generationsDb.map((d) => d.toFixed(0)).join(" \u00b7 ")),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "rogner-silences", nom: "Rogner les silences", nomEn: "Trim Silence",
     univers: "Traitement", famille: "Montage",
     resume: "Retire le silence au début et à la fin d'une prise, et au milieu si on le demande.",
@@ -225,8 +226,8 @@ export const fiches: FicheAudio[] = ([
           (e.duration).toFixed(2), (out.length / e.sampleRate).toFixed(2), String(plan.gardes.length)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "fusion-stereo", nom: "Fusionner en stéréo", nomEn: "Merge to Stereo",
     univers: "Traitement", famille: "Montage",
     resume: "Réunit deux prises mono en une stéréo : la première à gauche, la seconde à droite.",
@@ -249,5 +250,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.fusion.resume", g.duration.toFixed(2), d.duration.toFixed(2), out.duration.toFixed(2)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

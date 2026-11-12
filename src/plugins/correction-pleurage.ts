@@ -10,6 +10,7 @@
 //
 // RANGÉ DANS « TRAITEMENT → DÉBRUITAGE », ET VERSÉ PAR `debruitage-ia.ts` : c'est la famille de ce
 // qui enlève ce qui n'est pas le son, et l'index, en dette de taille, ne prend pas une ligne de plus.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import {
   corrigerPleurage, suiviPour, type DemandePleurage, type ModeVitesse, type ResultatPleurage,
@@ -42,7 +43,7 @@ function messageDe(r: ResultatPleurage, d: DemandePleurage): string {
 }
 
 export const fiches = ([
-  {
+  fiche({
     id: "correction-pleurage", nomDicte: "correction de la vitesse de bande", nom: "Correction du pleurage", nomEn: "Wow and Flutter Correction",
     univers: "Traitement", famille: "Effets",
     resume: "Retire les variations de vitesse d'une bande, retrouvées dans un ton de fréquence fixe.",
@@ -136,5 +137,5 @@ export const fiches = ([
       r.canaux.forEach((c, i) => sortie.copyToChannel(new Float32Array(c), i));
       return { valeurs: [sortie, { valeurs: new Float32Array(r.ecart), cadence: 200 }], message: messageDe(r, demande) };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

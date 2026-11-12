@@ -9,6 +9,7 @@
 // LE FICHIER SORT À CÔTÉ DU FILM, ET N'Y EST PAS INCRUSTÉ. Un SRT se lit par un lecteur, une
 // plateforme ou un logiciel de montage, et il reste corrigible après coup ; incruster le texte
 // demanderait de décoder les images, ce qui est un autre chantier.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -20,7 +21,7 @@ import { decouperEnSousTitres, versSrt } from "../audio/sous-titres";
 import { choixLangues } from "../core/langues";
 
 export const fiches = ([
-  {
+  fiche({
     id: "sous-titres-srt", nom: "Sous-titres (SRT)", nomEn: "Subtitles (SRT)",
     univers: "Autres", famille: "Vidéo",
     resume: "Transcrit la parole et la découpe en sous-titres, chacun à l'instant de ses mots.",
@@ -147,5 +148,5 @@ export const fiches = ([
         message: traduire("msg.sousTitres.resume", ...compte, nom),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

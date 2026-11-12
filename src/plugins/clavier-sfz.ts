@@ -13,6 +13,7 @@
 //
 // LA LECTURE EST DANS `audio/sfz.ts`, pure et testée, aller-retour compris avec notre propre
 // exportateur. Ce fichier n'est que la prise : lire le disque, décoder les WAV, rendre la séquence.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -47,7 +48,7 @@ const banqueValide = (b: unknown): b is Banque =>
   !!b && Array.isArray((b as Banque).zones) && (b as Banque).zones.length > 0;
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "clavier-sfz", nomDicte: "clavier de banque", nom: "Clavier SFZ", nomEn: "SFZ Keyboard",
     univers: "Entrées", famille: "Génération",
     resume: "Joue une banque SFZ, fichier du disque ou banque du graphe, sur un clavier de 88 touches, et enregistre ce qu'on joue.",
@@ -147,5 +148,5 @@ export const fiches: FicheAudio[] = ([
         message: `${detail} · ${traduire("msg.sfz.joue", String(jouables.length), audio.duration.toFixed(1))}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

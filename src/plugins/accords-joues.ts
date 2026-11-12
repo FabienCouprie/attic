@@ -14,6 +14,7 @@
 // et du piano, les notes entrant l'une après l'autre et restant tenues. C'est bien une suite de
 // notes, et non un glissement continu de hauteur.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { notesVersFichierMidi, rendreMidi, appliquerInstrumentMidi } from "../audio";
 import {
@@ -66,7 +67,7 @@ function notation(jouees: readonly Note[], tempo: number, alteration: Alteration
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "accords-joues", nom: "Accords joués", nomEn: "Chord Run",
     univers: "Entrées", famille: "Génération",
     resume: "Joue un accord nommé, plaqué, arpégé ou roulé, dans la fondamentale et le renversement voulus.",
@@ -256,5 +257,5 @@ The « Notation » output writes the chord as text, one onset per line and simul
         message: `${titre} · ${notes.length} notes${renverse} · ${derniere.toFixed(1)} s${hors}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

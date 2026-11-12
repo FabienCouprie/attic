@@ -14,6 +14,7 @@
 // on le reprend où on l'avait laissé. C'est aussi ce qui permet au corrigé de compter les points
 // sans que la vue ait à lui transmettre quoi que ce soit — les deux lisent le même champ.
 
+import { fiche } from "./fiche";
 import type { Registre } from "../core";
 import type { ValeurAudio, RuntimeAudio } from "../audio/types-domaine";
 import type { FicheAudio } from "../audio/types-domaine";
@@ -39,7 +40,7 @@ export function questionsDuCatalogue(): Question[] {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "quiz", nom: "Quiz", nomEn: "Quiz",
     univers: "Autres", famille: "Apprendre",
     resume: "Interroge sur les sigles, notions, formules, chiffres et sources, dans un ordre tiré au sort et sans répétition.",
@@ -90,5 +91,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.quiz.resume", s.length, reglages.graine, bilan.repondues, bilan.justes, pourcent),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -2,6 +2,7 @@
 //
 // Le calcul est dans `audio/recaler-niveau.ts`, testé ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -15,7 +16,7 @@ const en = () => langueCourante() === "en";
 const db = (v: number) => (Number.isFinite(v) ? `${v >= 0 ? "+" : ""}${v.toFixed(1)}` : "?");
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "recaler-niveau", nom: "Recaler le niveau", nomEn: "Match Level",
     univers: "Traitement", famille: "Effets",
     resume: "Aligne le niveau d'un son sur celui d'un autre, par un gain constant.",
@@ -76,5 +77,5 @@ export const fiches: FicheAudio[] = ([
 
       return { valeurs: [audio], message: parts.join(" · ") };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

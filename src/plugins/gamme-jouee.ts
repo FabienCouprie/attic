@@ -15,6 +15,7 @@
 // son octave et sa durée. C'est ce qui manquait pour qu'une gamme puisse être lue, retouchée à la
 // main, puis rejouée.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { notesVersFichierMidi, rendreMidi, appliquerInstrumentMidi, type NoteEvenement } from "../audio";
 import { GAMMES, parcoursDeGamme, type SensDeParcours } from "../audio/gammes";
@@ -39,7 +40,7 @@ function notation(
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "gamme-jouee", nom: "Gamme jouée", nomEn: "Scale Run",
     univers: "Entrées", famille: "Génération",
     resume: "Joue les degrés d'une gamme un à un, dans une clé et sur le nombre d'octaves voulu.",
@@ -185,5 +186,5 @@ The « Notation » output writes the run as text, one note per line with its oct
         message: `${titre} · ${hauteurs.length} notes · ${(hauteurs.length * duree).toFixed(1)} s${ecart}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

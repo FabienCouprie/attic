@@ -18,6 +18,7 @@
 // centaines de pistes reste calculable. L'offrir en réglage ici permettrait d'obtenir un vecteur
 // que la classification ne reconnaîtrait pas.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -47,7 +48,7 @@ function famille(etiquette: string): string {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "caracteristiques-piste", nom: "Caractéristiques de piste", nomEn: "Track Features",
     univers: "Visualisation", famille: "Analyse",
     resume: "Les quarante mesures dont la classification de pistes se sert, pour une seule piste.",
@@ -109,5 +110,5 @@ export const fiches: FicheAudio[] = ([
           String(vecteur.length), vecteur[0].toFixed(0), vecteur[1].toFixed(0)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -11,6 +11,7 @@
 // LA FRÉQUENCE ET LE Q D'UNE BANDE À ZÉRO DÉCIBEL SONT INERTES, et leur documentation le dit :
 // une bande sans gain n'est pas posée. Ce n'est pas un réglage mort, c'est un réglage en attente
 // de son gain.
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { egaliserParametrique, etagesActifs, type ReglagesEgaliseur } from "../audio/egaliseur-parametrique";
 import { traduire } from "../i18n";
@@ -44,7 +45,7 @@ const parametresCloches = CLOCHES.flatMap((centre, i) => {
 });
 
 export const fiches = ([
-  {
+  ficheSansNomsVerifies({
     id: "egaliseur-parametrique", nom: "Égaliseur paramétrique", nomEn: "Parametric Equalizer",
     univers: "Traitement", famille: "Effets",
     resume: "Corrige l'équilibre fréquentiel par un passe-haut, deux plateaux et quatre cloches placés à volonté.",
@@ -128,5 +129,5 @@ export const fiches = ([
           : traduire("msg.egaliseur_parametrique.fait", poses),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

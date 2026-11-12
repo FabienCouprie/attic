@@ -1,13 +1,15 @@
 // plugins/continuation-spectrale.ts — Deux nœuds de prolongation d'une piste
 // par prédiction autoregressive sur son spectrogramme (famille Test zone).
+import { ficheSansNomsVerifies } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
+import type { ParametreDef } from "../core";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { appliquerContinuationSpectrale, type ContinuationSpectraleResultat } from "../audio/continuation-spectrale";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
-const PARAMETRES_COMMUNS = [
+const PARAMETRES_COMMUNS: ParametreDef[] = [
   {
     nom: "Durée générée", nomEn: "Generated duration", type: "curseur",
     plage: [1, 60], pas: 1, defaut: 5, unite: "s",
@@ -51,15 +53,15 @@ const PARAMETRES_COMMUNS = [
     doc: "Budget temps d'entraînement en millisecondes. 0 = automatique : le nombre d'époques est borné d'après la taille du calcul, et le résultat est reproductible. Un budget positif qui interrompt l'entraînement rend le résultat non reproductible, le point d'arrêt dépendant de la machine ; voir « Graine ».",
     docEn: "Training time budget in milliseconds. 0 = automatic: the number of epochs is bounded by the size of the computation, and the result is reproducible. A positive budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ».",
   },
-] as const;
+];
 
-const PARAMETRES_LSTM = [
+const PARAMETRES_LSTM: ParametreDef[] = [
   {
     nom: "Unités cachées", nomEn: "Hidden units", type: "nombre", plage: [16, 512], pas: 16, defaut: 128, unite: "",
     doc: "Nombre d'unités cachées de la couche LSTM. Plus c'est grand, plus le modèle peut mémoriser de contexte (mais plus lent).",
     docEn: "Number of hidden units in the LSTM layer. Larger = more context memory (but slower).",
   },
-] as const;
+];
 
 function executerContinuation(mode: "ar" | "lstm", ctx: ContexteAudio) {
   const audio = entreeAudio(ctx, 0);
@@ -105,7 +107,7 @@ function executerContinuation(mode: "ar" | "lstm", ctx: ContexteAudio) {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "continuation-spectrale-ar",
     nom: "Continuation AR",
     nomEn: "AR Continuation",
@@ -119,8 +121,8 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       return executerContinuation("ar", ctx);
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "continuation-spectrale-lstm", nomDicte: "continuation du spectre",
     nom: "Continuation LSTM",
     nomEn: "LSTM Continuation",
@@ -134,5 +136,5 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       return executerContinuation("lstm", ctx);
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

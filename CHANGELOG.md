@@ -19,6 +19,48 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **LE COMPILATEUR VÉRIFIE LES NOMS DE RÉGLAGE : UNE LECTURE QUE SA FICHE NE DÉCLARE PAS NE COMPILE PLUS.** Pièce 1 du plan `work/plan-reglages-par-nom-2026-11-11.md`. Fabien a relevé le 2026-11-11 que les réglages lus par un nom en chaîne n'étaient vérifiés par aucun build. Il a décidé le même jour : le compilateur plutôt qu'un garde de test, les lectures de migration déclarées sur la fiche, et le dernier `executer(_ctx: any)` dans cette pièce.
+  - **Ce qui manquait.** Un exécuteur lit ses réglages par leur libellé, `ctx.paramNombre("Gain", 1)`, et `fiches: FicheAudio[]` élargissait les noms de la fiche à `string`. Un nom mal écrit, ou un réglage renommé dans sa fiche, retombait sans un mot sur le défaut de l'appel. `repli-du-defaut.test.ts` le laissait passer, puisqu'il tenait pour une migration tout nom que la fiche ne déclarait pas. Relevé sur `master` : 2 251 lectures par un nom littéral, et aucune faute aujourd'hui. Seules deux lectures de migration sont voulues.
+  - **Le contrat.** `ContexteExecution` reçoit un troisième paramètre, `TNom`, l'union des noms de la fiche, par défaut `string`. Les deux lecteurs y sont des méthodes, pour qu'une fonction d'aide qui prend un `ContexteAudio` accepte le contexte de toute fiche. `FonctionPlugin` suit, et la fiche du cœur gagne `anciensReglages` : les réglages qu'elle ne déclare plus et que son exécuteur lit encore.
+  - **`plugins/fiche.ts`.** `fiche({...})` déduit les noms de `parametres` et en type l'exécuteur. Une fiche dont les noms ne se déduisent pas est refusée : sa liste est construite par une fonction, ou mêle des réglages partagés aux siens. Elle passe alors par `ficheSansNomsVerifies`, qui le dit. `NomDeReglage<typeof ctx>` type une fermeture qui lit un réglage par une variable. Les deux fonctions rendent la fiche telle quelle.
+  - **468 fiches enveloppées par script, dans 266 fichiers** : 334 ne lisent plus qu'un réglage qu'elles déclarent. 134 passent par `ficheSansNomsVerifies`, et c'est la pièce 2. Les 43 fiches des fabriques restent hors d'atteinte, et c'est la pièce 3.
+  - **Ce que l'enveloppe a fait sortir.**
+    - **Neuf lectures par une variable** :
+      - trois fermetures écrites `nom: string`, dans `appariement-reference`, `ssp` et `granulation-spectrale` ;
+      - deux listes de noms passées en `as const`, dans `formule-sequence` et `repartiteur-midi` ;
+      - les deux `reglagesDepuis` du quiz et du parcours, qui nomment désormais les réglages qu'ils lisent.
+    - **Deux migrations déclarées** : « Fondu » sur le masque de zones, « Instrument » sur la boîte à groove.
+    - **Des fautes de type que l'affirmation `as FicheAudio[]` des tableaux taisait**, puisqu'une fiche y est désormais vérifiée seule :
+      - le Détecteur de tempo rend son tempo en nombre nu, et ses deux consommateurs le lisent ainsi : `ValeurAudio` gagne `number` ;
+      - des listes et des fabriques de réglages partagés étaient typées `unknown[]`, `plage: number[]` ou `as const` ; elles prennent `ParametreDef`, dans `chanson-aides`, `texte-image-moss`, `fm-operateurs`, `maquette`, `continuation-spectrale` et `spectrogramme-image`.
+  - **Les formes des canaux deviennent des alias de type.** Reportée sur `master` après la fusion de la pièce 5b, la pièce a fait tomber dix des exécuteurs de la 5b. Leur `affichage` ou leur `designe` était annoté d'une forme écrite en interface, et une interface n'entre pas dans le `Record<string, unknown>` du canal, faute de signature d'index. L'affirmation `as FicheAudio[]` des tableaux le taisait. Les dix-huit formes de `plugins/formes-des-canaux.ts` sont désormais des alias, et `vues-domaine/lire-canaux.test.ts` lit les deux écritures. Vu rouge sur trois fautes : une forme retirée, le motif qui ne lit plus que les interfaces, et le film redevenu une interface, que `tsc` refuse dans trois exécuteurs.
+  - **Le dernier `ctx: any` tombe** : `boucle-collection.ts` ne lit pas son contexte, et s'écrit `async executer()`. Il n'en reste aucun.
+  - **`analyse.ts` cède ses quatre descripteurs Meyda à `plugins/analyse-meyda.ts`**, sur décision de Fabien. L'import de `./fiche` le portait à 401 lignes de code, une de plus que la norme. La fabrique et ses quatre appels sont la part la plus détachable du fichier. Ils sont étalés à leur place dans le tableau, et le registre en sort identique, relevé avant et après : 511 fiches, dans le même ordre, avec les mêmes noms de réglage. `analyse.ts` passe à 356 lignes de code.
+  - **Le rattachement d'une lecture à sa fiche lit un `id` à point.** `docs/appels-de-reglage.ts` ne lisait pas `qwen2.5-lyrics`, et ses quatre lectures passaient à la fiche d'avant. `appelsDeParamNombre` peut aussi écarter un `id` qui n'est pas celui d'une fiche.
+  - **Les gardes.**
+    - `plugins/fiche.test.ts`, cinq cas :
+      - le garde lit bien les fiches ;
+      - chaque fiche écrite sur place passe par `fiche()` ;
+      - les fiches sans noms vérifiés sont celles d'une liste qui ne fait que rétrécir ;
+      - un ancien réglage n'est ni vivant ni hérité ;
+      - trois témoins sous `@ts-expect-error`, que `tsc -b` lit : si la vérification tombait, le build tomberait.
+    - `repli-du-defaut.test.ts` n'exempte plus que la migration déclarée. Un nom ni déclaré ni ancien est une faute, y compris dans les fiches aux noms non vérifiés.
+  - **Vu rouge dans un arbre séparé, hors de `E:\attic`**, sur onze fautes plantées une à la fois, le témoin restant vert :
+    - une faute de frappe dans une fiche vérifiée, puis la migration du masque retirée : `tsc`, TS2345 ;
+    - une fiche écrite sans `fiche()`, une fiche de plus sans noms vérifiés, puis la liste qui nomme une fiche absente : chacun son cas ;
+    - un ancien réglage encore vivant : son cas ;
+    - la migration de la boîte à groove retirée, une faute de frappe dans une fiche aux noms non vérifiés, puis le motif qui ne lit plus un `id` à point : le cas du repli ;
+    - le lecteur qui reprend un nom libre : `tsc`, TS2578 sur le témoin devenu inutile ;
+    - une fermeture qui lit par un nom libre : `tsc`, TS2345.
+  - **La documentation suit** : `ADDING-A-NODE.md` écrit ses fiches dans `fiche({...})` et dit le contrat des noms ; `ARCHITECTURE.md` note le dernier `ctx: any` tombé.
+  - **Mesuré** : 1 781 lignes ajoutées et 1 068 retirées dans 281 fichiers, commentaires compris, CHANGELOG non compté. Le nouveau garde compte 206 lignes de code, `plugins/fiche.ts` 18 et `plugins/analyse-meyda.ts` 55.
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, la liste de `master` ligne pour ligne ;
+    - passe complète verte sur l'arbre reporté sur la pièce 5b et corrigé : 724 fichiers et 10 380 cas, 3 fichiers et 14 cas sautés, en 23 min 30 s, soit la 5b, le nouveau garde et ses cinq cas. La première passe, avant le report, était rouge d'un seul cas, la norme de taille sur `analyse.ts`, d'où la sortie de Meyda ;
+    - `npm run build` passe ; le build, la sonde Electron et les empreintes ont été pris avant le report, qui n'a changé que des types, les alias des formes ;
+    - l'application construite, lancée par Electron sur un profil jetable, mène les quatorze nœuds de `canon-de-proportions` à leur terme sans une erreur de page. Les neuf requêtes `blob:` échouées qu'elle relève sont aussi celles de `master`, mesuré sur le même graphe et la même banque ;
+    - `empreintes-exemples` rend les quatorze exemples surveillés identiques, la banque General MIDI posée dans l'arbre par lien physique.
+
 - **LES CANAUX D'AFFICHAGE SE LISENT SOUS UNE FORME DÉCLARÉE : LES VINGT-TROIS AFFIRMATIONS DES VUES TOMBENT.** Pièce 5b du plan `work/plan-donnees-noeud-2026-11-11.md`, seconde moitié de la pièce 5, décidée par Fabien le 2026-11-11 : chaque famille de vues déclare une fois la forme qu'elle lit, à côté de l'exécuteur qui l'écrit, et la lit par une fonction nommée. Posée sur la pièce 5a.
   - **Ce qui manquait.** Un exécuteur choisit la forme de ses deux canaux déclarés, `affichage` et `designe`, que le nœud reçoit sous `_affichage` et `_designe`, en `unknown` depuis la pièce 5a. Les vues les relisaient sous vingt-trois affirmations de type, dans dix fichiers, chacune écrite pour son compte : trois en `any`, dix en passant par `unknown`, deux qui lisaient des champs en `any`. Rien ne tenait la forme écrite à la forme lue : un exécuteur qui renommait un champ laissait sa vue lire `undefined`, sans un mot du compilateur.
   - **Les formes.** `plugins/formes-des-canaux.ts` en déclare dix-huit, dix sous `affichage` et huit sous `designe`. Un module pour toutes et non un par exécuteur, parce que plusieurs formes ont plusieurs auteurs : le film produit en a cinq, le profil de goût trois, la carte deux.

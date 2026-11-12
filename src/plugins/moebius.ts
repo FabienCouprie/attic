@@ -3,6 +3,7 @@
 // après deux il est revenu. La géométrie et le traitement vivent dans
 // audio/moebius.ts, testés.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -10,7 +11,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 import { rendreMoebius, planMoebius, DUREE_SORTIE_MAX_SEC, type FaceMoebius } from "../audio/moebius";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "anneau-moebius", nomDicte: "anneau retourné", nom: "Anneau de Möbius", nomEn: "Möbius Strip",
     univers: "Traitement", famille: "Effets",
     resume: "Fait parcourir au son un anneau de Möbius : un tour le passe sur l'autre face, deux tours le ramènent.",
@@ -76,5 +77,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.moebius.var_0_var_1_var_2_var_3", plan.tours, sortie.duration.toFixed(1), fin, detail),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

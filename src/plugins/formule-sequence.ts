@@ -7,6 +7,7 @@
 //
 // LE CALCUL EST DANS `audio/formule-sequence.ts`, éprouvé ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -19,7 +20,7 @@ import { choixOuiNon } from "../core/oui-non";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "formule-sequence",
     nom: "Formule sur séquence", nomEn: "Formula on Sequence",
     univers: "Traitement", famille: "Conversion",
@@ -63,9 +64,9 @@ export const fiches: FicheAudio[] = ([
         };
       }
 
-      const nomsDeChamp: Record<ChampFormule, string> = {
+      const nomsDeChamp = {
         note: "Hauteur", debut: "Début", duree: "Durée", velocite: "Nuance",
-      };
+      } as const satisfies Record<ChampFormule, string>;
       const formules: Partial<Record<ChampFormule, string>> = {};
       for (const champ of CHAMPS) formules[champ] = ctx.paramTexte(nomsDeChamp[champ], "");
 
@@ -109,5 +110,5 @@ export const fiches: FicheAudio[] = ([
             : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

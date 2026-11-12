@@ -2,6 +2,7 @@
 // Convertit une couleur RGB en longueur d'onde, puis transpose la fréquence
 // de la lumière dans le domaine audible pour produire un drone.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererSpectreVisibleAudio, hexToRgb, midiDepuisFrequence, frequenceAudibleDepuisCouleur } from "../audio";
 import { notesVersFichierMidi } from "../audio";
@@ -9,7 +10,7 @@ import { avecDoc } from "./notices";
 import { traduire } from "../i18n";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "spectre-visible",
     nom: "Spectre visible",
     nomEn: "Visible Spectrum",
@@ -72,5 +73,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.spectre_visible.resultat", longueurOnde.toFixed(0), frequence.toFixed(1)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

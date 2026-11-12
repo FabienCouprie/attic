@@ -1,5 +1,6 @@
 // plugins/entrees.ts — Nœuds d'entrée
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -15,7 +16,7 @@ import { GENRES_SANS_PERSONNALISE, LIBELLES_HERITES_GENRES } from "./generateurs
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 const entrees: FicheAudio[] = [
-  {
+  fiche({
     id: "entree-audio", nom: "Entrée audio", nomEn: "Audio input", univers: "Entrées", famille: "Audio",
     resume: "Charge un fichier audio et le transmet sur sa sortie.",
     resumeEn: "Loads an audio file and passes it to its output.",
@@ -68,8 +69,8 @@ const entrees: FicheAudio[] = [
       } catch {}
       return heureBwf ? { valeurs: [buffer], message: heureBwf } : { valeurs: [buffer] };
     },
-  },
-  {
+  }),
+  fiche({
     id: "enregistreur-audio", nom: "Enregistreur", nomEn: "Recorder", univers: "Entrées", famille: "Audio",
     resume: "Transmet un enregistrement micro comme source audio.",
     resumeEn: "Passes a microphone recording as audio source.",
@@ -81,8 +82,8 @@ const entrees: FicheAudio[] = [
       const buffer = await decoderBlob(blob, ctx.runtime);
       return { valeurs: [buffer] };
     },
-  },
-  {
+  }),
+  fiche({
     id: "capture-systeme-audio", nom: "Capture système audio", nomEn: "System Audio Capture", univers: "Entrées", famille: "Audio",
     resume: "Capture le son du système (autre application, navigateur, etc.).",
     resumeEn: "Captures system audio (other app, browser, etc.).",
@@ -94,8 +95,8 @@ const entrees: FicheAudio[] = [
       const buffer = await decoderBlob(blob, ctx.runtime);
       return { valeurs: [buffer] };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "capture-midi", nom: "Capture MIDI", nomEn: "MIDI Capture", univers: "Entrées", famille: "Audio",
     resume: "Enregistre une performance jouée sur un clavier ou contrôleur MIDI branché.",
     resumeEn: "Records a performance played on a connected MIDI keyboard or controller.",
@@ -121,8 +122,8 @@ const entrees: FicheAudio[] = [
       const midiFinal = await appliquerInstrumentMidi(midi, ctx.paramNombre("Instrument", -1));
       return { valeurs: [buffer, midiFinal] };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "generateur-musical", nom: "Générateur musical", nomEn: "Music Generator", univers: "Entrées", famille: "Génération",
     resume: "Génère une composition multi-pistes à partir d'un script descriptif. Sortie audio + trois sorties MIDI (une par instrument).",
     resumeEn: "Generates a multi-track composition from a descriptive script. Audio output + three MIDI outputs (one per instrument).",
@@ -212,7 +213,7 @@ const entrees: FicheAudio[] = [
 
       return { valeurs: [audioBuffer, midi1, midi2, midi3], message: traduire(sf2 ? "msg.var_0_rendu_soundfont" : "msg.var_0_rendu_fm", description) };
     },
-  },
+  }),
 ];
 
 export const fiches: FicheAudio[] = entrees.map(avecDoc) as FicheAudio[];

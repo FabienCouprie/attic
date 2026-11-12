@@ -13,6 +13,7 @@
 // LES FORMULES VIENNENT DE LA LITTÉRATURE PUBLIÉE, jamais d'un code sous licence GPL : voir
 // l'en-tête de `audio/harmonie-spectrale.ts` et la section 4 de `COMPOSITION-ASSISTEE.md`.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -32,7 +33,7 @@ const PROCEDES = [
 ];
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "harmonie-spectrale",
     nom: "Harmonie spectrale", nomEn: "Spectral Harmony",
     univers: "Entrées", famille: "Génération",
@@ -132,5 +133,5 @@ export const fiches: FicheAudio[] = ([
           + `${en() ? "virtual fundamental" : "fondamentale virtuelle"} ${virtuelle.toFixed(2)} Hz`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

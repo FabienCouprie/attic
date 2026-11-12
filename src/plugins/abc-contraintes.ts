@@ -2,6 +2,7 @@
 // Le vérificateur et l'éditeur vivent dans audio/abc-contraintes.ts et
 // audio/abc-edition-llm.ts, testés ; l'éditeur l'est avec un modèle simulé.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -18,7 +19,7 @@ const texteQualite = (q: Qualite) =>
   traduire("msg.abc_contraintes.qualite_var_0_var_1", pct(q.consonanceTempsForts), pct(q.notesDansLaGamme));
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "contraintes-abc", nom: "Contraintes ABC", nomEn: "ABC Constraints",
     univers: "Visualisation", famille: "Notation",
     resume: "Vérifie qu'une retouche d'une partition ABC a gardé ce qui devait rester fixe : mesures, métrique, tonalité, mélodie, rythme, accords.",
@@ -77,8 +78,8 @@ export const fiches: FicheAudio[] = ([
           + ` · ${texteQualite(r.qualite)}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "edition-abc-llm", nom: "Édition ABC par LLM", nomEn: "ABC Editing by LLM",
     univers: "Autres", famille: "Texte",
     resume: "Retouche une partition ABC avec un modèle local Ollama (nouveaux accords, ou nouvelles hauteurs sur le même rythme) sans qu'il puisse casser ce qui doit rester fixe.",
@@ -157,5 +158,5 @@ export const fiches: FicheAudio[] = ([
           + ` · ${texteQualite(r.verification!.qualite)}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -8,6 +8,7 @@
 // engendre des événements et les confie à `construirePartition`, qui sait déjà les quatre conventions
 // de hauteur et les p-fields. Un seul chemin pour écrire une partition, donc un seul à corriger.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -18,7 +19,7 @@ import { construirePartition, type ChampP, type Convention } from "../audio/csou
 import { composerAleatoire, statsLisibles, type Loi, type Repartition } from "../audio/csound-aleatoire";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "partition-aleatoire-csound", nomDicte: "partition programmée au hasard", nom: "Partition aléatoire Csound", nomEn: "Random Csound Score",
     // Avec les autres nœuds Csound, et non dans « Génération » : ce qu'il produit n'est pas de
     // l'audio mais une partition, qui ne se branche que sur un nœud Csound. Le chercher là où il
@@ -143,5 +144,5 @@ export const fiches: FicheAudio[] = ([
           signature.toFixed(2), String(graine)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

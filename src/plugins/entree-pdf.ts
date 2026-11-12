@@ -2,12 +2,13 @@
 // l'inspecteur et le transmet sur sa sortie 'Fichier' (type générique
 // "fichier", déjà enregistré dans le registre de flux mais jusqu'ici inutilisé
 // par aucun nœud).
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { traduire } from "../i18n";
 
 const entreesPdf: FicheAudio[] = [
-  {
+  fiche({
     id: "entree-pdf",
     nom: "Entrée PDF",
     nomEn: "PDF input",
@@ -32,7 +33,7 @@ const entreesPdf: FicheAudio[] = [
         message: traduire("msg.fichier.taille", fichier.name, fichier.size.toLocaleString()),
       };
     },
-  },
+  }),
 ];
 
 export const fiches: FicheAudio[] = entreesPdf.map(avecDoc) as FicheAudio[];

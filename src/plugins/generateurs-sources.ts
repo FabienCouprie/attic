@@ -5,6 +5,7 @@
 
 
 import type { DesigneAccordage } from "./formes-des-canaux";
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { decoderFichier, rendreAvecEchantillon, genererBruit, genererAudioFormule, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE, type NoteEvenement } from "../audio";
@@ -29,7 +30,7 @@ import { SIGNATURES, clicsDeMesure, dureeUnite, lireSignature, tempsParMesure } 
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "clavier-melodie", nom: "Clavier mélodie", nomEn: "Melody Keyboard", univers: "Entrées", famille: "Génération",
     resume: "Joue une séquence enregistrée au clavier et exporte aussi un fichier MIDI.",
     resumeEn: "Plays a keyboard-recorded sequence and also exports a MIDI file.",
@@ -71,8 +72,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs:[null, null], erreur: true, message: traduire("msg.erreur_synth_se_var_0", e?.message ?? e) };
       }
     },
-  },
-  {
+  }),
+  fiche({
     id: "clavier-isomorphe", nomDicte: "clavier en réseau", nom: "Clavier isomorphe", nomEn: "Isomorphic Keyboard",
     univers: "Entrées", famille: "Génération",
     resume: "Joue les degrés d'un accordage au clavier de l'ordinateur, en réseau.",
@@ -171,8 +172,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.iso.jouee", String(notes.length), String(CASES), String(saut), source, timbre),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "sampler-personnalise", nom: "Sampler personnalisé", nomEn: "Custom Sampler", univers: "Entrées", famille: "Génération",
     resume: "Joue un échantillon audio comme un instrument mélodique.",
     resumeEn: "Plays an audio sample as a melodic instrument.",
@@ -245,8 +246,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs:[null], message: traduire("msg.erreur_rendu_var_0", e?.message ?? e) };
       }
     },
-  },
-  {
+  }),
+  fiche({
     id: "generateur-bruit", nom: "Générateur de bruit", nomEn: "Noise Generator",
     univers: "Entrées", famille: "Génération",
     resume: "Génère du bruit blanc, rose ou brownien.",
@@ -272,8 +273,8 @@ export const fiches: FicheAudio[] = ([
       const couleur = langueCourante() === "en" ? (couleurs[type] ?? type.toLowerCase()) : type.toLowerCase();
       return { valeurs: [buf], message: traduire("msg.var_0_graine_var_1", traduire("msg.bruit_var_0_var_1_s", couleur, buf.duration.toFixed(1)), graine) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "generateur-frequence", nom: "Générateur de fréquence", nomEn: "Frequency Generator",
     univers: "Entrées", famille: "Génération",
     resume: "Génère une tonalité pure à une fréquence (Hz) ou note donnée.",
@@ -346,8 +347,8 @@ export const fiches: FicheAudio[] = ([
       const labelForme = libelles[FORMES_ONDE_CHOIX.ids.indexOf(typeOsc)] ?? forme;
       return { valeurs: [buf], message: traduire("msg.var_0_var_1_var_2_s", noteAff, labelForme, duree.toFixed(1)) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "generateur-audio-mathematique", nom: "Générateur audio mathématique", nomEn: "Mathematical Audio Generator",
     univers: "Entrées", famille: "Génération",
     resume: "Génère un signal audio à partir d'une expression mathématique.",
@@ -384,8 +385,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], message: traduire("msg.erreur_formule_var_0", e?.message ?? e) };
       }
     },
-  },
-  {
+  }),
+  fiche({
     id: "metronome", nom: "Métronome", nomEn: "Metronome",
     univers: "Entrées", famille: "Génération",
     resume: "Génère un clic métronomique régulier à un tempo donné.",
@@ -494,5 +495,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.metronome.releve", tempo, sig, nbMesures, nbTemps, nbUnites),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -3,6 +3,7 @@
 // Les calculs, leurs références et la raison de leurs choix sont dans `audio/echo-flottant.ts`,
 // `audio/ubiquite.ts`, `audio/vague.ts`, `audio/platine.ts` et `audio/creneau.ts`.
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -19,7 +20,7 @@ const en = () => langueCourante() === "en";
 const nb = (v: number, d = 1) => (en() ? v.toFixed(d) : v.toFixed(d).replace(".", ","));
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "echo-flottant", nom: "Écho flottant", nomEn: "Flutter Echo",
     univers: "Traitement", famille: "Effets",
     resume: "Le battement métallique d'un son pris entre deux murs parallèles.",
@@ -70,8 +71,8 @@ export const fiches: FicheAudio[] = ([
           : `aller-retour ${nb(periodeEntreMurs(distance) * 1000)} ms · peigne à ${nb(frequenceDuPeigne(distance))} Hz`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "haas", nom: "Effet Haas", nomEn: "Haas Effect",
     univers: "Traitement", famille: "Effets",
     resume: "Un canal retardé de quelques millisecondes : l'image se porte du côté arrivé le premier.",
@@ -110,8 +111,8 @@ export const fiches: FicheAudio[] = ([
           : `${nb(ms)} ms · ${fondu ? "un seul son fondu" : "deux sons distincts"}`,
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "ubiquite", nomDicte: "présence partout", nom: "Ubiquité", nomEn: "Ubiquity",
     univers: "Traitement", famille: "Effets",
     resume: "Une source qu'on ne peut plus situer, ou qu'on situe mieux que nature.",
@@ -153,8 +154,8 @@ export const fiches: FicheAudio[] = ([
           : `corrélation ${nb(avant, 2)} à ${nb(apres, 2)}`,
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "vague", nom: "Vague", nomEn: "Wave",
     univers: "Traitement", famille: "Effets",
     resume: "Des cycles de crescendo, de sommet et de ressac, espacés de plusieurs secondes.",
@@ -225,8 +226,8 @@ export const fiches: FicheAudio[] = ([
           : `${combien} vagues · ${nb(a.duration / combien)} s chacune`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "platine", nom: "Platine", nomEn: "Turntable",
     univers: "Traitement", famille: "Effets",
     resume: "Les défauts d'un tourne-disques : ronflement, surface, clics, et le trou décentré.",
@@ -277,8 +278,8 @@ export const fiches: FicheAudio[] = ([
           : `${nb(vitesse)} tours · un tour en ${nb(1 / frequenceDeRotation(vitesse), 2)} s`,
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "creneau", nom: "Créneau", nomEn: "Niche",
     univers: "Traitement", famille: "Montage",
     resume: "Pose un son à l'instant où le fond lui laisse sa place, en temps et en fréquence.",
@@ -354,5 +355,5 @@ export const fiches: FicheAudio[] = ([
           : `${nb(c.instant, 2)} s · ${nb(part * 100)} % de la moyenne`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

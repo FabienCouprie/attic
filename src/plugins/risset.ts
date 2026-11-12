@@ -3,6 +3,7 @@
 // hauteur sans fin, « Rythme » fait accélérer (ou ralentir) la pulsation sans
 // fin. Voir audio/risset.ts pour le principe et la dualité qui les relie.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
@@ -10,7 +11,7 @@ import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "glissando-risset", nomDicte: "glissement sans fin", nom: "Glissando de Risset", nomEn: "Risset Glissando",
     univers: "Traitement", famille: "Effets",
     resume: "Transforme un son en hauteur qui descend (ou monte) sans fin.",
@@ -75,8 +76,8 @@ export const fiches: FicheAudio[] = ([
           traduire(mode === "hauteur" ? "risset.mode.hauteur" : "risset.mode.bande")),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "rythme-risset", nomDicte: "rythme sans fin", nom: "Rythme de Risset", nomEn: "Risset Rhythm",
     univers: "Traitement", famille: "Effets",
     resume: "Transforme une boucle en pulsation qui accélère (ou ralentit) sans fin.",
@@ -130,8 +131,8 @@ export const fiches: FicheAudio[] = ([
           cycleSec, couches),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "cloche-risset", nomDicte: "cloche sans fin", nom: "Cloche de Risset", nomEn: "Risset Bell",
     // « Entrées » et non « Traitement » : ce nœud n'a aucune entrée, il produit
     // un son de toutes pièces. Sa place est parmi les sources, avec les autres
@@ -184,5 +185,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.cloche_risset_var_0_var_1_var_2", frequenceHz, partiels, Math.round(inharmonicite * 100)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

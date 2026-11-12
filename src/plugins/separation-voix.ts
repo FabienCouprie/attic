@@ -6,6 +6,7 @@
 //
 // LE CALCUL EST DANS `audio/separation-voix.ts`, éprouvé ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -16,7 +17,7 @@ import { nomNote } from "../audio/nom-note";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "separer-voix",
     nom: "Séparer les voix", nomEn: "Separate Voices",
     univers: "Traitement", famille: "Conversion",
@@ -82,5 +83,5 @@ export const fiches: FicheAudio[] = ([
           : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

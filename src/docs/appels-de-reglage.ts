@@ -21,6 +21,9 @@
 // fiche n'apparaît pas dans son texte. Un faux rattachement ferait comparer un appel à la mauvaise
 // déclaration ; l'ordre d'un fichier de greffons rend le cas improbable, chaque fiche portant son
 // `id` avant son `executer`.
+//
+// UN IDENTIFIANT PEUT PORTER UN POINT, et le motif l'a longtemps ignoré : `qwen2.5-lyrics` ne s'y
+// lisait pas, et ses quatre lectures passaient à la fiche d'avant, relevé le 2026-11-11.
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -35,6 +38,11 @@ export interface AppelDeReglage {
   reglage: string;
   /** Tout le texte de l'appel, de son ouverture à sa fermeture. */
   bloc: string;
+}
+
+/** L'identifiant d'une fiche, écrit `id: "..."` ou `effet("...")`, point compris. */
+function idSurLaLigne(ligne: string): string | null {
+  return (/id: "([a-z0-9.-]+)"/.exec(ligne) ?? /effet\("([a-z0-9.-]+)"/.exec(ligne))?.[1] ?? null;
 }
 
 /** Le texte d'un appel, lu depuis sa ligne jusqu'à ce que ses parenthèses se referment. */
@@ -62,8 +70,11 @@ function blocDepuis(lignes: string[], depart: number): string {
  * déclare pas le nom lu, ce qui est le cas d'une lecture de MIGRATION, un réglage qu'une fiche
  * portait autrefois et que les projets enregistrés portent encore. Une redondance qui dérive est
  * trompeuse : elle annonce une valeur que le run n'emploie plus.
+ *
+ * `fichesConnues`, QUAND IL EST DONNÉ, écarte les `id` qui ne sont pas ceux d'une fiche : celui d'un
+ * algorithme ou d'une option, écrit dans un exécuteur, lui prendrait sinon les lectures qui suivent.
  */
-export function appelsDeParamNombre(racineSrc: string): {
+export function appelsDeParamNombre(racineSrc: string, fichesConnues?: ReadonlySet<string>): {
   fichier: string; ligne: number; fiche: string; reglage: string; litteral: number;
 }[] {
   const racine = join(racineSrc, "plugins");
@@ -73,8 +84,8 @@ export function appelsDeParamNombre(racineSrc: string): {
     const lignes = readFileSync(join(racine, fichier), "utf-8").split(/\r?\n/);
     let fiche = "";
     for (let i = 0; i < lignes.length; i++) {
-      const mId = /id: "([a-z0-9-]+)"/.exec(lignes[i]) ?? /effet\("([a-z0-9-]+)"/.exec(lignes[i]);
-      if (mId) fiche = mId[1];
+      const id = idSurLaLigne(lignes[i]);
+      if (id && (!fichesConnues || fichesConnues.has(id))) fiche = id;
       for (const m of lignes[i].matchAll(/paramNombre\(\s*"([^"]+)"\s*,\s*(-?[0-9][0-9.e-]*)\s*\)/g)) {
         out.push({ fichier, ligne: i + 1, fiche, reglage: m[1], litteral: Number(m[2]) });
       }
@@ -92,8 +103,8 @@ export function appelsDeReglage(racineSrc: string): AppelDeReglage[] {
     const lignes = readFileSync(join(racine, fichier), "utf-8").split(/\r?\n/);
     let fiche = "";
     for (let i = 0; i < lignes.length; i++) {
-      const mId = /id: "([a-z0-9-]+)"/.exec(lignes[i]) ?? /effet\("([a-z0-9-]+)"/.exec(lignes[i]);
-      if (mId) fiche = mId[1];
+      const id = idSurLaLigne(lignes[i]);
+      if (id) fiche = id;
       if (!/reglageModule\(/.test(lignes[i])) continue;
       const bloc = blocDepuis(lignes, i);
       const r = /reglage: "([^"]+)"/.exec(bloc);

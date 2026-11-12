@@ -1,11 +1,12 @@
 // plugins/entree-image.ts — Nœud d'entrée image : charge un fichier PNG/JPEG
 // depuis l'inspecteur et le transmet sur sa sortie 'Image'.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { traduire } from "../i18n";
 
 const entreesImage: FicheAudio[] = [
-  {
+  fiche({
     id: "entree-image",
     nom: "Entrée image",
     nomEn: "Image input",
@@ -30,7 +31,7 @@ const entreesImage: FicheAudio[] = [
         message: traduire("msg.fichier.taille", fichier.name, fichier.size.toLocaleString()),
       };
     },
-  },
+  }),
 ];
 
 export const fiches: FicheAudio[] = entreesImage.map(avecDoc) as FicheAudio[];

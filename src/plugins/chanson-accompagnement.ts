@@ -14,6 +14,7 @@
 // instruments ne compte qu'une fois le guidage monté : à 7,5 les quatre formations offertes
 // s'écartent de 0,80 à 0,96 les unes des autres, là qu'à 1,0 elles étaient indistinctes. Une seule
 // piste demandée reste inerte quel que soit le guidage, 0,9956 : aucune formation n'en propose.
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -37,7 +38,7 @@ const FORMATIONS = [
 const DEFAUT = FORMATIONS[0].id;
 
 export const fiches = ([
-  {
+  ficheSansNomsVerifies({
     id: "accompagner-voix", nom: "Accompagner une voix", nomEn: "Back a Vocal",
     univers: "Entrées", famille: "Génération",
     resume: "Construit un accompagnement instrumental autour d'une voix seule.",
@@ -128,5 +129,5 @@ export const fiches = ([
         // sur ce composant, donc il est toujours transmis.
       }));
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

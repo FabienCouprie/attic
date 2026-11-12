@@ -6,6 +6,7 @@
 //
 // La logique est dans `audio/texture-statistique.ts`, testée ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -17,7 +18,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "texture-statistique", nom: "Texture par statistiques", nomEn: "Statistical Texture",
     univers: "Traitement", famille: "Effets",
     resume: "Engendre une texture neuve aux statistiques d'un son donné (pluie, feu, foule) sans en recopier un seul échantillon.",
@@ -78,5 +79,5 @@ export const fiches: FicheAudio[] = ([
           (longueur / sampleRate).toFixed(1), String(nombreBandes), ecart.toFixed(0)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

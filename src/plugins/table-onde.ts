@@ -15,6 +15,7 @@
 // traite en amont, en refusant d'écrire ce qui ne peut pas être représenté, là où
 // l'oscillateur analogique doit le traiter en aval.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -26,7 +27,7 @@ import {
 } from "../audio/table-onde";
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "oscillateur-table-onde", nom: "Oscillateur à table d'onde", nomEn: "Wavetable Oscillator",
     univers: "Entrées", famille: "Génération",
     resume: "Lit une banque de cycles et la balaie : le timbre voyage, la hauteur ne bouge pas.",
@@ -123,5 +124,5 @@ export const fiches: FicheAudio[] = ([
           : traduire("msg.table-onde.engendree", cases, Math.round(valeurA(frequence, 0))),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

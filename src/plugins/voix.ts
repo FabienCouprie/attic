@@ -13,6 +13,7 @@
 // L'APPARTENANCE EST PORTÉE PAR LA NOTE, et la logique est dans `audio/voix.ts`, éprouvée ; ce
 // fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -42,7 +43,7 @@ function tableDesVoix(sequence: Sequence): string {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "reunir-voix",
     nom: "Réunir des voix", nomEn: "Merge Voices",
     univers: "Traitement", famille: "Conversion",
@@ -76,8 +77,8 @@ export const fiches: FicheAudio[] = ([
             : ""),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "extraire-voix",
     nom: "Extraire une voix", nomEn: "Extract Voice",
     univers: "Traitement", famille: "Conversion",
@@ -122,7 +123,7 @@ export const fiches: FicheAudio[] = ([
           + (seule.arbre ? ` · ${en() ? "written" : "écrite"}` : ""),
       };
     },
-  },
+  }),
   // « CONVERTIR UNE VOIX » EST VERSÉ ICI, et non dans `plugins/index.ts`, parce que la norme de
   // taille l'exige : l'index est en dette — plus de cinq cents lignes pour une liste écrite à la
   // main — et son garde refuse qu'un fichier en dette grossisse encore. « Ce qu'on ajoute à un

@@ -1,4 +1,5 @@
 // plugins/pure-data.ts — Nœud d'exécution d'un patch Pure Data (.pd).
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -6,7 +7,7 @@ import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "pure-data",
     nom: "Pure Data",
     nomEn: "Pure Data",
@@ -116,5 +117,5 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_pure_data_var_0", err?.message ?? err) };
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

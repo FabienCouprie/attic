@@ -4,6 +4,7 @@
 // problème ; Janssen, Veldhuis et Vries, IEEE Trans. ASSP 34(2), 1986, pour la méthode. La logique
 // est dans `audio/inpainting.ts`, testée ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -25,7 +26,7 @@ function trousDepuisZones(zones: unknown, sampleRate: number, longueur: number):
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "remplissage-trou", nom: "Remplissage de trou", nomEn: "Audio Inpainting",
     univers: "Traitement", famille: "Effets",
     resume: "Reconstruit un passage manquant en prolongeant la résonance du son de part et d'autre.",
@@ -103,5 +104,5 @@ export const fiches: FicheAudio[] = ([
           : traduire("msg.trou.bouches", String(Math.round(bouches / canaux)), ms),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

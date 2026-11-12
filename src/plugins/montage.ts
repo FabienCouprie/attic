@@ -1,5 +1,6 @@
 // plugins/montage.ts — Nœuds montage (issus du découpage de complements.ts).
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import {
@@ -67,7 +68,7 @@ function appliquerFonduSegment(src: Float32Array, dst: Float32Array, offset: num
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "echo-ping-pong", nom: "Echo Ping-Pong", nomEn: "Ping-Pong Echo", univers: "Traitement", famille: "Effets",
     resume: "Écho stéréo ping-pong.",
     resumeEn: "Stereo ping-pong echo.",
@@ -100,8 +101,8 @@ export const fiches: FicheAudio[] = ([
         feedback: ctx.entree(2), bornesFeedback: { min: ctx.paramNombre("Feedback min", 0), max: ctx.paramNombre("Feedback max", 80) },
       })] };
    },
- },
-  {
+ }),
+  fiche({
     id: "reverb-progressive", nom: "Reverb Progressive", nomEn: "Progressive Reverb", univers: "Traitement", famille: "Effets",
     resume: "Réverbération progressive (dry→wet).",
     resumeEn: "Progressive reverb (dry→wet).",
@@ -122,8 +123,8 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [await appliquerReverbeProgressive(a, ctx.paramNombre("Taille",50), ctx.paramNombre("Début",0), ctx.paramNombre("Fin",50), d,
         creerAleatoire(ctx.paramNombre("Graine", 42)))] };
    },
- },
-  {
+ }),
+  fiche({
     id: "amplificateur", nom: "Amplificateur", univers: "Traitement", famille: "Effets",
     resume: "Amplification/atténuation du signal.",
     entrees: [
@@ -154,10 +155,10 @@ export const fiches: FicheAudio[] = ([
       for (let ch=0;ch<a.numberOfChannels;ch++) { const s=a.getChannelData(ch),d=r.getChannelData(ch); for(let i=0;i<s.length;i++) d[i]=s[i]*gains[i]; }
       return { valeurs:[r] };
    }, nomEn: "Amplifier", resumeEn: "Amplification/ attenuation of the signal.",
- },
+ }),
 
   // ── Montage ──
-  {
+  fiche({
     id: "reinserer-zone", nom: "Réinsérer une zone", univers: "Traitement", famille: "Montage",
     resume: "Réinsère une zone traitée dans la piste originale.",
     entrees: [{ nom: "Piste", nomEn: "Track", type: "audio" }, { nom: "Zone traitée", nomEn: "Processed zone", type: "audio" }, { nom: "Zone", nomEn: "Zone", type: "controle", sousType: "zones" }],
@@ -205,8 +206,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.zone_r_ins_r_e_var_0_s", zone.debut.toFixed(2)) + suffixe,
       };
    }, nomEn: "Reinsert Zone", resumeEn: "Reinserts a treated zone into the original track.",
-  },
-  {
+  }),
+  fiche({
     id: "selecteur-multi-zones", nom: "Sélecteur multi-zones", nomEn: "Multi-Zone Selector", univers: "Traitement", famille: "Montage",
     resume: "Sélectionne plusieurs zones audio et les transmet en liste.",
     resumeEn: "Selects multiple audio zones and passes them as a list.",
@@ -216,8 +217,8 @@ export const fiches: FicheAudio[] = ([
       const a = entreeAudio(ctx, 0, { sorties: 3 }); if (sansEntree(a)) return a;
       return { valeurs:[a, (ctx.noeud.data as any).zonesSelectionnees ?? [], { debut: 0, duree: a.duration }] };
    },
- },
-  {
+ }),
+  fiche({
     id: "masque-zones", nom: "Masque de zones", nomEn: "Zone Mask", univers: "Traitement", famille: "Montage",
     resume: "Selon l'option, supprime le son sur les zones sélectionnées ou ne conserve qu'elles.",
     resumeEn: "Depending on the option, mutes the selected zones or keeps only them.",
@@ -235,6 +236,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée de la rampe qui suit chaque zone, à l'extérieur d'elle également. Deux zones dont les rampes se rencontrent prennent la plus haute des deux valeurs.",
         docEn: "Length of the ramp after each zone, outside it as well. Two zones whose ramps meet take the higher of the two values." },
     ],
+    // L'ancien fondu unique, que les deux fondus nommés ont remplacé : un projet enregistré avant eux
+    // le porte encore, et l'exécuteur en tire la moitié de chaque côté.
+    anciensReglages: ["Fondu"],
     async executer(ctx) {
       const a = entreeAudio(ctx, 0);
       if (sansEntree(a)) return a;
@@ -266,8 +270,8 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs: [out], message: traduire("msg.var_0_var_1_zone_s", traduire(garder ? "msg.masque_zones.conserve" : "msg.masque_zones.supprime"), zones.length) };
    },
- },
-  {
+ }),
+  fiche({
     id: "placer-sons-zones", nom: "Placer un son sur zones", nomEn: "Place sound on zones", univers: "Traitement", famille: "Montage",
     resume: "Insère une copie d'un son au centre de chaque zone sur une piste cible, ou sur une piste silencieuse de la durée fournie.",
     resumeEn: "Inserts a copy of a sound at the center of each zone onto a target track, or onto a silent track of the given duration.",
@@ -291,8 +295,8 @@ export const fiches: FicheAudio[] = ([
       if (typeof dureeTotaleSec !== "number" || dureeTotaleSec <= 0) return { valeurs:[null], message:traduire("msg.branchez_une_piste_ou_duree") };
       return { valeurs:[await placerSonSurZones(son, dureeTotaleSec, zones as any, piste instanceof AudioBuffer ? piste : undefined)] };
     },
-  },
-  {
+  }),
+  fiche({
     id: "melangeur", nom: "Mélangeur", univers: "Traitement", famille: "Montage",
     // Le résumé annonçait « avec niveaux réglables ». Le nœud n'a aucun
     // paramètre et applique un gain unique de 0 dB à la somme : il n'y a jamais
@@ -307,8 +311,8 @@ export const fiches: FicheAudio[] = ([
       if (bufs.length < 2) return { valeurs:[null], message:traduire("msg.2_entr_es") };
       return { valeurs:[await melangerPistes(bufs, 0)] };
    }, nomEn: "Mixer", resumeEn: "Sums several tracks into one. Each track's level is set on the node that produces it.",
- },
-  {
+ }),
+  fiche({
     id: "boucle-graphe-debut", nom: "Début de boucle", nomEn: "Loop Start", univers: "Traitement", famille: "Montage",
     resume: "Marque le début d'une boucle de graphe : ce qui suit est rejoué N fois, chaque tour partant du résultat du précédent.",
     resumeEn: "Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result.",
@@ -339,8 +343,8 @@ export const fiches: FicheAudio[] = ([
       const a = ctx.entree(0);
       return { valeurs: [a ?? null], message: traduire("msg.boucle.nonDepliee") };
     },
-  },
-  {
+  }),
+  fiche({
     // Les trois fins de boucle referment la même boucle et reçoivent les mêmes n résultats :
     // elles ne diffèrent que par ce qu'elles en font. Le choix se fait donc en posant la
     // variante voulue, et non en réglant un paramètre « Mode » sur un nœud unique — un
@@ -369,8 +373,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.boucle.tours", entrees.length, resultat.duration.toFixed(2)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "boucle-graphe-fin-b", nom: "Fin de boucle B", nomEn: "Loop End B", univers: "Traitement", famille: "Montage",
     resume: "Referme une boucle de graphe et ne garde que le résultat du dernier tour.",
     resumeEn: "Closes a graph loop and keeps only the last pass's result.",
@@ -389,8 +393,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.boucle.dernier", entrees.length, dernier.duration.toFixed(2)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "boucle-graphe-fin-c", nom: "Fin de boucle C", nomEn: "Loop End C", univers: "Traitement", famille: "Montage",
     resume: "Referme une boucle de graphe et empile les tours l'un sur l'autre, comme le mélangeur.",
     resumeEn: "Closes a graph loop and stacks the passes on top of one another, like the mixer.",
@@ -421,8 +425,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.boucle.empile", entrees.length, resultat.duration.toFixed(2), crete.toFixed(2)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "jointure-audio", nom: "Jointure audio", nomEn: "Audio Join", univers: "Traitement", famille: "Montage",
     resume: "Place deux pistes l'une après l'autre avec un fondu enchaîné.",
     resumeEn: "Places two tracks one after the other with a crossfade.",
@@ -441,8 +445,8 @@ export const fiches: FicheAudio[] = ([
       if (sansEntree(p2)) return p2;
       return { valeurs:[await fusionnerPistes(p1, p2, ctx.paramNombre("Chevauchement", 2))] };
    },
- },
-  {
+ }),
+  fiche({
     // Rangé dans « Montage » et non dans « Effets » : il ne transforme pas le son,
     // il le remet bout à bout — comme « Assemblage audio » et « Boucle MIDI », ses
     // voisins de fichier, avec lesquels il se cherchait dans deux familles différentes.
@@ -466,10 +470,10 @@ export const fiches: FicheAudio[] = ([
       // pas la boucle — qui produit exactement reps × durée d'entrée.
       return { valeurs:[out], message: traduire("msg.var_0_var_1_s_var_2_s", reps, a.duration.toFixed(2), out.duration.toFixed(2)) };
    },
- },
+ }),
 
   // ── Générateurs ──
-  {
+  fiche({
     id: "extraire-duree", nom: "Extraire durée", nomEn: "Extract duration", univers: "Traitement", famille: "Montage",
     resume: "Mesure la durée d'une piste et la transmet.",
     resumeEn: "Measures track duration and passes it along.",
@@ -483,12 +487,12 @@ export const fiches: FicheAudio[] = ([
       if (sansEntree(a)) return a;
       return { valeurs: [a, { debut: 0, duree: a.duration }] };
    },
- },
+ }),
 
    // ── Visualisation + Convertisseur ──
 
   // ── Extraction de zones (depuis sélecteur multi-zones) ──
-  {
+  fiche({
     id: "extraire-zones-selecteur", nom: "Extraire zones (sélecteur)", nomEn: "Extract Zones (Selector)",
     univers: "Traitement", famille: "Montage",
     resume: "Découpe et concatène les zones choisies dans le sélecteur multi-zones.",
@@ -547,5 +551,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.var_0_zones_rabout_es_var_1_s", extractedZones.length, (offset / sr).toFixed(2)),
       };
    },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc).concat(fichesBouclePlan);

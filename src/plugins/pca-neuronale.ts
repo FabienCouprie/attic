@@ -1,4 +1,5 @@
 // plugins/pca-neuronale.ts — Nœud PCA neuronale (Autres → Test zone).
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
@@ -6,7 +7,7 @@ import { appliquerPcaNeuronale } from "../audio/pca-neuronale";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "pca-neuronale",
     nom: "PCA neuronale",
     nomEn: "Neural PCA",
@@ -97,5 +98,5 @@ export const fiches: FicheAudio[] = ([
       });
       return { valeurs: [out], message };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

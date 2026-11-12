@@ -4,6 +4,7 @@
 // décrit l'harmonie pour un lecteur humain (« Cmaj (1.5s) », « I V vi IV »),
 // le second attend une notation exécutable (« C4+E4+G4 1.5 »). Sans ce nœud,
 // il fallait retaper la transcription à la main.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -59,7 +60,7 @@ function parserLigneAccord(ligne: string, dureeDefaut: number): { symbole: strin
 // « C major (87%) » / « A minor » → tonique utilisable par Tonal.
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "accords-vers-notation",
     nom: "Accords → Notation MIDI", nomEn: "Chords → MIDI Notation",
     univers: "Traitement", famille: "Conversion",
@@ -184,5 +185,5 @@ export const fiches: FicheAudio[] = ([
           : traduire("msg.accords_notation.resultat_var_0", nbAccords),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

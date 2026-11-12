@@ -3,6 +3,7 @@
 // lecteurs intégrés, métadonnées et design vitrine. Exposable sur le web ou en local.
 
 import type { AffichageGalerie } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -132,7 +133,7 @@ ${cards}
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "galerie-exposition", nom: "Galerie d'exposition", nomEn: "Exhibition Gallery",
     univers: "Collections", famille: "Export",
     resume: "Génère une galerie HTML visuelle avec pochettes procédurales depuis un répertoire de MP3, accrochée dans l'ordre du dossier ou dans celui de coordonnées reçues.",
@@ -241,5 +242,5 @@ export const fiches: FicheAudio[] = ([
         : "";
       return { valeurs: [], affichage, message: traduire("msg.galerie_g_n_r_e_var_0_index_html_var_1_pistes_var_2_mp3_copi", dossierSortie, pistes.length, nbCopies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗") + ordre };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

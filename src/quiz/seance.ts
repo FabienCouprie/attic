@@ -68,9 +68,17 @@ export interface ReglagesQuiz {
   graine: number;
 }
 
+/**
+ * Les réglages que la séance lit, par leur nom sur la fiche du quiz.
+ *
+ * NOMMÉS ICI, ILS SONT VÉRIFIÉS LÀ-BAS : l'exécuteur passe sa lecture à `reglagesDepuis`, et le
+ * compilateur refuse désormais qu'un de ces noms manque à la fiche (`plugins/fiche.ts`).
+ */
+export type NomDeReglageQuiz = "Thème" | "Niveau" | "Questions" | "Graine";
+
 /** Les réglages tels qu'un nœud les porte, quelle que soit la façon de les lire. */
 export function reglagesDepuis(
-  lire: (nom: string, defaut: string | number) => string | number,
+  lire: (nom: NomDeReglageQuiz, defaut: string | number) => string | number,
 ): ReglagesQuiz {
   return {
     theme: themeDepuis(String(lire("Thème", "tout"))),

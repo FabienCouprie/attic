@@ -1,5 +1,6 @@
 // plugins/sorties.ts — Nœuds de sortie
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -8,7 +9,7 @@ import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INST
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "sortie-audio", nom: "Sortie audio", nomEn: "Audio output", univers: "Sorties", famille: "Écoute",
     resume: "Point d'écoute final. Joue le signal reçu et permet l'export.",
     resumeEn: "Final output. Plays the received signal and enables export.",
@@ -33,8 +34,8 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs: [buf, { debut: 0, duree: buf.duration }] };
    },
- },
-  {
+ }),
+  ficheSansNomsVerifies({
     id: "sortie-midi", nom: "Sortie MIDI", nomEn: "MIDI output", univers: "Sorties", famille: "Écoute",
     resume: "Reçoit un fichier MIDI, le synthétise en audio et le transmet.",
     resumeEn: "Receives a MIDI file, synthesizes it to audio and passes it along.",
@@ -58,8 +59,8 @@ export const fiches: FicheAudio[] = ([
       const midiFinal = await appliquerInstrumentMidi(fichier, ctx.paramNombre("Instrument", -1));
       return { valeurs: [buffer, midiFinal, { debut: 0, duree: buffer.duration }] };
    },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "lecteur-midi", nom: "Lecteur MIDI", nomEn: "MIDI Player", univers: "Entrées", famille: "Audio",
     resume: "Lit un fichier MIDI depuis l'inspecteur et le synthétise + transmet le MIDI.",
     resumeEn: "Loads a MIDI file from the inspector, synthesizes it and passes the MIDI along.",
@@ -85,8 +86,8 @@ export const fiches: FicheAudio[] = ([
       const midiFinal = await appliquerInstrumentMidi(midi, ctx.paramNombre("Instrument", -1));
       return { valeurs: [buffer, midiFinal] };
    },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "point-ecoute-midi", nom: "Point d'écoute MIDI", nomEn: "MIDI Listening Point", univers: "Sorties", famille: "Écoute",
     resume: "Auditionne le MIDI sans interrompre la chaîne.",
     resumeEn: "Auditions the MIDI without interrupting the chain.",
@@ -113,5 +114,5 @@ export const fiches: FicheAudio[] = ([
       console.log(`[attic] Point d'écoute MIDI : buffer rendu, durée=${buffer.duration}`);
       return { valeurs: [buffer, midiFinal] };
    },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

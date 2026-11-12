@@ -1,6 +1,7 @@
 // plugins/legende-image.ts — Nœud « Légende d'image » : décrit une image en
 // texte (image captioning) via Mozilla/distilvit (Transformers.js, ONNX).
 // Tourne dans un Web Worker, comme les autres nœuds Transformers.js de l'app.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -27,7 +28,7 @@ function makeRequestId(): string {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "legende-image", nom: "Légende d'image", nomEn: "Image Caption",
     univers: "Traitement", famille: "Image",
     resume: "Décrit une image en texte avec Mozilla/distilvit (Transformers.js, ONNX, local).",
@@ -66,5 +67,5 @@ export const fiches: FicheAudio[] = ([
         w.postMessage({ image: fichier, modelId: "Mozilla/distilvit", maxTokens, requestId });
       });
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

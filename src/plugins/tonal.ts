@@ -1,6 +1,7 @@
 // plugins/tonal.ts — Nœuds de théorie musicale via la bibliothèque Tonal.
 // Tonal : MIT licence — ajouté dans THIRD_PARTY.md.
 
+import { fiche } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -65,7 +66,7 @@ function gammeDemandee(ctx: ContexteAudio, entree: unknown): ModeProgression {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "tonal-accord", nom: "Accord", nomEn: "Chord",
     univers: "Autres", famille: "Théorie",
     resume: "Détecte le nom d'un accord à partir de ses notes.",
@@ -102,8 +103,8 @@ export const fiches: FicheAudio[] = ([
       const resultat = Chord.get(symbole).name || symbole;
       return { valeurs: [resultat], message: resultat };
    },
- },
-  {
+ }),
+  fiche({
     id: "tonal-gamme", nom: "Gamme", nomEn: "Scale",
     univers: "Autres", famille: "Théorie",
     resume: "Liste les notes d'une gamme à partir d'une tonalité et d'un type.",
@@ -128,8 +129,8 @@ export const fiches: FicheAudio[] = ([
       const resultat = gamme.notes.join(" ");
       return { valeurs: [resultat], message: resultat };
    },
- },
-  {
+ }),
+  fiche({
     id: "tonal-transposer", nom: "Transposer", nomEn: "Transpose",
     univers: "Autres", famille: "Théorie",
     resume: "Transpose une note ou un accord d'un intervalle donné.",
@@ -153,8 +154,8 @@ export const fiches: FicheAudio[] = ([
       if (!transposee) return { valeurs: [null], message: traduire("msg.transposition_impossible") };
       return { valeurs: [transposee], message: transposee };
    },
- },
-  {
+ }),
+  fiche({
     id: "tonal-progression", nom: "Progression", nomEn: "Progression",
     univers: "Autres", famille: "Théorie",
     resume: "Génère une progression d'accords à partir d'une tonalité et de chiffres romains.",
@@ -204,8 +205,8 @@ export const fiches: FicheAudio[] = ([
       const resultat = accords.join(" ");
       return { valeurs: [resultat], message: resultat };
    },
- },
-  {
+ }),
+  fiche({
     id: "tonal-grille", nom: "Grille d'accords", nomEn: "Chord Grid",
     univers: "Traitement", famille: "Génération",
     resume: "Génère un accompagnement complet au format texte-vers-midi.",
@@ -297,8 +298,8 @@ export const fiches: FicheAudio[] = ([
       const listeAccords = accords.join(" ");
       return { valeurs: [notation, listeAccords], message: traduire("msg.var_0_accords_var_1_var_2_bpm", accords.length, mode, tempo) };
    },
- },
-  {
+ }),
+  fiche({
     id: "tonal-analyse", nom: "Analyse harmonique", nomEn: "Harmonic Analysis",
     // Avec les autres analyses (Détecteur d'accords, Analyse audio) : il en était
     // le seul exemplaire rangé dans « Traitement », où il formait à lui seul une
@@ -337,5 +338,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.tonalit_var_0_var_1_accord_s_d_tect_s", tonalite.nom, accords.length),
       };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

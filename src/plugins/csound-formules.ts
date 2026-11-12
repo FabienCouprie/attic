@@ -7,13 +7,14 @@
 // La bibliothèque est dans `audio/csound-formules.ts`, testée, et chaque formule a été RENDUE et
 // MESURÉE dans l'application avant d'y figurer.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { FORMULES, partitionFormule, texteFormule, trouverFormule } from "../audio/csound-formules";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "formules-csound", nomDicte: "formules programmées", nom: "Formules Csound", nomEn: "Csound Formulas",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Huit orchestres complets au choix (FM, soustractive, granulaire, bus de réverbération) chacun avec sa partition d'essai.",
@@ -49,5 +50,5 @@ export const fiches: FicheAudio[] = ([
           formule.champs.map((c) => c.champ).join(", ")),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

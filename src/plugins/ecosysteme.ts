@@ -15,6 +15,7 @@
 // forces sonnent au même volume, puisque c'est précisément ce que l'homéostat leur impose. Ce qui
 // les sépare est la dépense, et elle ne se lit que sur la courbe de poussée.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -25,7 +26,7 @@ import { parCanal } from "./hors-fil";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "ecosysteme", nomDicte: "écosystème sonore", nom: "Écosystème (Di Scipio)", nomEn: "Ecosystem (Di Scipio)",
     univers: "Traitement", famille: "Effets",
     resume: "Un système qui s'écoute, règle lui-même sa densité et ses grains d'après ce qu'il entend, et cherche son propre équilibre. On ne règle pas le résultat, on règle le couplage.",
@@ -138,7 +139,7 @@ export const fiches: FicheAudio[] = ([
         ].join("\n"),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
 
 /** Ce que chaque régime veut dire, en une phrase, sous la courbe qui l'a montré. */

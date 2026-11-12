@@ -3,6 +3,7 @@
 // L'audio d'entrée est converti en WAV temporaire, le script Python
 // le traite et produit un WAV de sortie.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -189,7 +190,7 @@ print(f"Processed: {len(audio)} samples, {channels} channels")
 `;
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "python-processor", nomDicte: "programme python", nom: "Python Processor", nomEn: "Python Processor",
     univers: "Autres", famille: "Génération",
     resume: "Éditeur de code Python avec coloration syntaxique pour traiter l'audio.",
@@ -356,5 +357,5 @@ export const fiches: FicheAudio[] = ([
 
       return { valeurs: [sorties[0], sorties[1], sorties[2]], message: traduire("msg.python_var_0_var_1", parts.join(" · "), stdout) };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

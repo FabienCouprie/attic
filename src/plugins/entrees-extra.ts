@@ -1,12 +1,13 @@
 // plugins/entrees-extra.ts — Nœuds entrees-extra (issus du découpage de complements.ts).
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { decoderFichier } from "../audio";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "explorateur-musique", nom: "Explorateur musique", nomEn: "Music explorer", univers: "Entrées", famille: "Audio",
     resume: "Charge un fichier audio depuis l'explorateur.",
     resumeEn: "Loads an audio file from the explorer.",
@@ -19,7 +20,7 @@ export const fiches: FicheAudio[] = ([
       const buf = await decoderFichier(f, ctx.runtime);
       return { valeurs: [buf] };
     },
-  },
+  }),
 
   // ── Effets ──
 ] as FicheAudio[]).map(avecDoc);

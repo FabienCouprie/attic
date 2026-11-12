@@ -2,6 +2,7 @@
 // Le son fait le tour de l'auditeur ; il ne revient intact qu'au second tour.
 // Le principe et le rendu vivent dans audio/dirac.ts, testés.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -10,7 +11,7 @@ import { rendreDirac, DUREE_SORTIE_MAX_SEC } from "../audio/dirac";
 import { planBoucle } from "../audio/geometrie-sonore";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "ceinture-dirac", nom: "Ceinture de Dirac", nomEn: "Dirac Belt",
     univers: "Traitement", famille: "Effets",
     resume: "Fait tourner le son autour de l'auditeur : au premier tour il revient inversé et s'annule, au second il est intact.",
@@ -59,5 +60,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.dirac.var_0_var_1_var_2", plan.tours, sortie.duration.toFixed(1), detail),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

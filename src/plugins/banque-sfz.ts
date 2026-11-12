@@ -13,6 +13,7 @@
 // et la touche 60 le crash à ×1,888. Un kit, lui, ne transpose rien et laisse muette une touche sans
 // son. Le fichier le dit lui-même — régions d'une seule touche, ou `pitch_keytrack=0` — et le nœud le
 // détecte ; le réglage permet de trancher quand on veut l'autre lecture.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -23,7 +24,7 @@ import { decodeurElectron } from "./clavier-sfz";
 import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "banque-sfz", nomDicte: "banque d'échantillons", nom: "Banque SFZ", nomEn: "SFZ Bank",
     univers: "Entrées", famille: "Audio",
     resume: "Charge une banque d'échantillons SFZ (le kit de batterie intégré, ou un fichier du disque) sans clavier.",
@@ -115,7 +116,7 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs: [banque as unknown as null, apercu], message: morceaux.join(" · ") };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
 
 export type { Banque };

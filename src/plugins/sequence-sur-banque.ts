@@ -13,6 +13,7 @@
 // sont le MÊME type, `Note` de `audio/note.ts`. Il n'y a donc aucune conversion, et rien qui puisse
 // diverger entre ce qu'on joue à la main et ce qu'on écrit.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -27,7 +28,7 @@ const estBanque = (v: unknown): v is Banque =>
   !!v && typeof v === "object" && Array.isArray((v as Banque).zones);
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "sequence-sur-banque",
     nom: "Jouer une séquence sur une banque", nomEn: "Play Sequence on Bank",
     univers: "Sorties", famille: "Écoute",
@@ -151,5 +152,5 @@ export const fiches: FicheAudio[] = ([
         : "";
       return { valeurs: [audio], message: dit + venue + reste + grille };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

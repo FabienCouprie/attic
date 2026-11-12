@@ -14,6 +14,7 @@
 // paquet qu'une fois. Demander image par image par `getCanvas` ferait un accès au hasard, et une
 // recherche par image sur un film entier.
 import type { AffichageFilm } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import { CanvasSink } from "mediabunny";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
@@ -27,7 +28,7 @@ import { encoderFilm, nombreDImages } from "../audio/video-rendu";
 
 import { enMo } from "../core/octets";
 export const fiches = ([
-  {
+  fiche({
     id: "sous-titres-incrustes", nom: "Incruster les sous-titres", nomEn: "Burn In Subtitles",
     univers: "Autres", famille: "Vidéo",
     resume: "Grave des sous-titres SRT dans l'image d'un film, et rend le film gravé en MP4.",
@@ -145,5 +146,5 @@ export const fiches = ([
           (rendu.msTotal / 1000).toFixed(1)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

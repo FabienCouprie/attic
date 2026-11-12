@@ -8,6 +8,7 @@
 // permuter leurs sons ne changerait rien. Une mélodie en porte une par sommet. Un seul composant à
 // bascule offrirait donc, dans un de ses deux états, des réglages sans effet.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { choixPercussion } from "../audio/batterie-midi";
 import {
@@ -80,7 +81,7 @@ function cercleMelodique(motifBrut: string, fondamentale: number, repartition: R
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "cercle-rythmique",
     nom: "Cercle rythmique", nomEn: "Rhythm Circle",
     univers: "Autres", famille: "Circle",
@@ -120,8 +121,8 @@ export const fiches: FicheAudio[] = ([
           + `${en() ? "positions" : "places"}${nomme ? ` · ${en() ? nomme.nomEn : nomme.nom}` : ""}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "cercle-melodique",
     nom: "Cercle mélodique", nomEn: "Melodic Circle",
     univers: "Autres", famille: "Circle",
@@ -162,8 +163,8 @@ export const fiches: FicheAudio[] = ([
         message: `${cercle.sommets.length} notes · ${cercle.positions} ${en() ? "positions" : "places"} · ${nom}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "rendu-cercles",
     nom: "Rendu de cercles", nomEn: "Circle Renderer",
     univers: "Autres", famille: "Circle",
@@ -223,5 +224,5 @@ export const fiches: FicheAudio[] = ([
           + ` · ${sequence.notes.length} notes · ${(sequence.duree ?? 0).toFixed(2)} s`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -13,6 +13,7 @@ import { messageEchecPont } from "./pont-electron";
 import { relayerProgression } from "./progression-pont";
 import type { ContexteDeRelais } from "./progression-pont";
 import type { ContexteAudio } from "../audio/types-domaine";
+import type { ParametreDef } from "../core";
 
 /**
  * Les dix langues que l'amont donne pour les mieux tenues.
@@ -43,7 +44,7 @@ export const MODELES_RENDU = [
 ] as const;
 
 /** Le choix du débruiteur, sur les quatre rendus qui peuvent prendre l'un ou l'autre. */
-export const PARAMETRE_MODELE = {
+export const PARAMETRE_MODELE: ParametreDef = {
   nom: "Modèle", nomEn: "Model", type: "choix" as const,
   options: MODELES_RENDU.map((m) => m.fr), optionsEn: MODELES_RENDU.map((m) => m.en),
   optionIds: MODELES_RENDU.map((m) => m.id),
@@ -80,7 +81,7 @@ export function paquetsEcartes(ctx: { paramTexte: (nom: string, repli: string) =
  * 2026-10-31. C'est ce qui permet de changer de débruiteur sans retoucher deux réglages taillés pour
  * l'autre.
  */
-export const PARAMETRES_RENDU = [
+export const PARAMETRES_RENDU: ParametreDef[] = [
   { nom: "Pas de débruitage", nomEn: "Denoising steps", type: "nombre" as const, plage: [0, 50], pas: 1, defaut: 0,
     doc: "Nombre d'étapes de débruitage. À zéro, celui du modèle : huit pour « Rapide », cinquante pour « Base ».",
     docEn: "Number of denoising steps. At zero, the model's own: eight for « Fast », fifty for « Base »." },
@@ -177,7 +178,7 @@ export function guidageDe(ctx: { paramNombre: (nom: string, repli: number) => nu
 }
 
 /** Les mêmes réglages de rendu, avec d'autres valeurs par défaut quand le modèle n'est pas le même. */
-export function parametresRenduAvec(remplacements: Record<string, Record<string, unknown>>) {
+export function parametresRenduAvec(remplacements: Record<string, Partial<ParametreDef>>): ParametreDef[] {
   return PARAMETRES_RENDU.map((p) => (remplacements[p.nom] ? { ...p, ...remplacements[p.nom] } : p));
 }
 

@@ -26,6 +26,7 @@
 //   est donc déjà hors du fil principal, et ce fichier n'a pas de worker à lui. C'est la raison pour
 //   laquelle il n'y a pas de `garde-worker` ici — il n'y a pas de worker à garder, et la
 //   bibliothèque rend ses erreurs par son propre canal.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { mixdownMono } from "../audio/commun";
 import { reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
@@ -203,7 +204,7 @@ export function tableauDesMots(mots: MotVosk[], en: boolean): string {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "vosk-asr", nomDicte: "reconnaissance vocale", nom: "Vosk (reconnaissance vocale)", nomEn: "Vosk (speech recognition)",
     // RANGÉ AVEC LES AUTRES TRANSCRIPTIONS, à la demande de Fabien le 2026-10-29 : il était sous
     // « Traitement → Analyse », à l'écart des quatre composants qui transcrivent la parole.
@@ -245,5 +246,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.vosk.resume", String(mots.length), texte.slice(0, 60)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

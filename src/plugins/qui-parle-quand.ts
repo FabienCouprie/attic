@@ -15,6 +15,7 @@
 // à seize kilohertz avant de le passer, et le fait en mono, puisque la diarisation ne lit qu'une
 // voie. LE SON RENDU, LUI, GARDE SES CANAUX ET SA CADENCE : les intervalles s'appliquent à
 // l'original, non à la copie réduite qui a servi à les trouver.
+import { ficheSansNomsVerifies } from "./fiche";
 import { mixdownMono } from "../audio/commun";
 import { garderIntervalles, formaterTours, locuteursDe, type Tour } from "../audio/parole-datee";
 import type { FicheAudio } from "../audio/types-domaine";
@@ -61,7 +62,7 @@ async function wavMono16k(audio: AudioBuffer): Promise<Uint8Array> {
 }
 
 export const fiches = ([
-  {
+  ficheSansNomsVerifies({
     id: "qui-parle-quand", nom: "Qui parle quand", nomEn: "Who speaks when",
     univers: "Traitement", famille: "Montage",
     resume: "Découpe un enregistrement en tours de parole, dit qui parle et ce qui est dit, et isole un locuteur.",
@@ -183,5 +184,5 @@ export const fiches = ([
         message: `${tours.length} · ${noms.length} · ${part.toFixed(0)} %`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

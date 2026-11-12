@@ -4,6 +4,7 @@
 // Utilise SPICE pour extraire f0/loudness d’un audio, puis un modèle DDSP
 // pré-entraîné pour resynthétiser le signal avec le timbre d’un instrument.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -81,7 +82,7 @@ async function appliquerDDSP(buffer: AudioBuffer, instrument: string, customUrl:
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "ddsp-tone-transfer", nomDicte: "transfert de timbre", nom: "DDSP Tone Transfer", nomEn: "DDSP Tone Transfer",
     univers: "Traitement", famille: "Effets",
     resume: "Transfère le timbre d’un audio vers un instrument par modèle DDSP (violon, flûte, saxophone, trompette).",
@@ -114,5 +115,5 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_ddsp_var_0", err.message ?? err) };
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -13,6 +13,7 @@
 // quelle durée moyenne, à quel écart moyen —, et l'opération « Compter seulement » existe pour
 // qu'on puisse régler la détection avant de toucher au son.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -48,7 +49,7 @@ function texteRapport(grains: readonly Grain[], joues: readonly Grain[], frequen
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "montage-grains", nom: "Montage par grains", nomEn: "Grain Editing",
     univers: "Traitement", famille: "Montage",
     resume: "Trouve les grains d'un son (chaque frappe, chaque syllabe) puis en retire, en répète, en inverse l'ordre ou les mélange, sans jamais couper au milieu d'un son.",
@@ -154,5 +155,5 @@ export const fiches: FicheAudio[] = ([
         ].join("\n"),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

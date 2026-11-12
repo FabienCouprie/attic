@@ -13,6 +13,7 @@
 // plusieurs séquences en renumérotant leurs voix, ce qui est exactement une superposition. Ce nœud
 // n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { dureeSequence, estSequence, type Sequence } from "../audio/sequence";
 import { reunirVoix } from "../audio/voix";
@@ -36,7 +37,7 @@ function decaler(s: Sequence, de: number): Sequence {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "sequence-jointure",
     nom: "Jointure de séquences", nomEn: "Sequence Join",
     univers: "Traitement", famille: "Montage",
@@ -107,8 +108,8 @@ export const fiches: FicheAudio[] = ([
           + `${totale.toFixed(2)} s${divergents > 0 ? ` · ${divergents} ${en() ? "other tempos" : "autres tempos"}` : ""}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "sequence-melangeur",
     nom: "Mélangeur de séquences", nomEn: "Sequence Mixer",
     univers: "Traitement", famille: "Montage",
@@ -136,5 +137,5 @@ export const fiches: FicheAudio[] = ([
           + (tempoDivergent > 0 ? ` · ${tempoDivergent} ${en() ? "other tempos" : "autres tempos"}` : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

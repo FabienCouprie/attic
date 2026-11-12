@@ -1,6 +1,7 @@
 // plugins/hard-panner.ts — Nœud « Hard panner ».
 // Bascule le son entièrement à gauche, au centre ou à droite.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { hardPanner } from "../audio";
 import { traduire } from "../i18n";
@@ -8,7 +9,7 @@ import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "hard-panner", nomDicte: "panoramique dur",
     memoire: "flux", // dstL[i] / dstR[i] depuis src[i]
     nom: "Hard panner",
@@ -51,5 +52,5 @@ export const fiches: FicheAudio[] = ([
         : position === "droite" ? "msg.hard_panner.droite" : "msg.hard_panner.centre");
       return { valeurs: [sortie], message: `Hard panner · ${label} · ${audio.sampleRate} Hz` };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

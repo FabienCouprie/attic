@@ -2,6 +2,7 @@
 // niveau, la couleur, la largeur et la crête d'un autre.
 // Voir audio/appariement-reference.ts pour le principe et pour la borne.
 
+import { fiche, type NomDeReglage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -11,7 +12,7 @@ import { choixFenetre } from "../audio/fenetres-analyse";
 import { choixOuiNon } from "../core/oui-non";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "apparier-reference", nomDicte: "caler sur une référence", nom: "Apparier sur une référence", nomEn: "Match a Reference",
     univers: "Traitement", famille: "Effets",
     resume: "Donne au son le niveau, la couleur, la largeur et la crête d'un autre son.",
@@ -57,7 +58,7 @@ export const fiches: FicheAudio[] = ([
       if (!(reference instanceof AudioBuffer)) {
         return { valeurs: [null], message: traduire("msg.apparier.sans_reference") };
       }
-      const oui = (nom: string) => ctx.paramTexte(nom, "oui") !== "non";
+      const oui = (nom: NomDeReglage<typeof ctx>) => ctx.paramTexte(nom, "oui") !== "non";
       let rendu;
       try {
         rendu = apparierSurReference(audio, reference, {
@@ -85,5 +86,5 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs: [rendu.audio], message: bouts.join(" · ") };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

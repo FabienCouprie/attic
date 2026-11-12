@@ -8,6 +8,7 @@
 // sa tierce par tous les quarts de ton intermédiaires, et aucune de ces hauteurs ne tombe sur une
 // touche. Un clavier ne peut pas jouer ce trajet ; un glissement continu, si.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { GAMMES_REUNIES, degresDUneOctave } from "../audio/gammes-reunies";
 import { trajetDesVoix, voixDuGlissando } from "../audio/glissando";
@@ -39,7 +40,7 @@ function cote(suffixeFr: string, suffixeEn: string, gamme: number, octaveDefaut:
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "glissando-de-gamme", nomDicte: "glissement de gamme", nom: "Glissando de gamme", nomEn: "Scale Glissando",
     univers: "Entrées", famille: "Génération",
     resume: "Fait glisser tous les degrés d'une gamme vers ceux d'une autre, chacun vers celui de même rang.",
@@ -172,5 +173,5 @@ The « Journey » output gives, degree by degree, the starting note, the arrival
           + ` · ${audio.duration.toFixed(1)} s`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

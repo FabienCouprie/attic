@@ -10,6 +10,7 @@
 // constantes cachées : la littérature dit ce qu'il faut peser, jamais combien. Voir
 // `QUANTIFICATION-RYTHMIQUE.md` pour l'état de l'art et `src/audio/quantification.ts` pour le calcul.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -33,7 +34,7 @@ function lireMetrique(texte: string): [number, number] {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "quantifier-rythme",
     nom: "Quantifier", nomEn: "Quantize",
     univers: "Traitement", famille: "Conversion",
@@ -163,5 +164,5 @@ export const fiches: FicheAudio[] = ([
           + `${notes.length} ${en() ? "onsets written" : "attaques écrites"} · ${provenance}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

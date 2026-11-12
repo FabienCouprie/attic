@@ -9,6 +9,7 @@
 // la hauteur d'une mélodie peut donc être pilotée par ce qui pilote une fréquence de coupure,
 // jusqu'à l'enveloppe relevée sur un son. Aucun troisième type n'a été nécessaire.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -20,7 +21,7 @@ import { filtrerNotes, imposerProfil, profilDeSequence } from "../audio/sequence
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "filtre-sequence",
     nom: "Filtre de séquence", nomEn: "Sequence Filter",
     univers: "Traitement", famille: "Conversion",
@@ -70,8 +71,8 @@ export const fiches: FicheAudio[] = ([
         message: `${gardees.length} ${en() ? "kept" : "gardées"} · ${ecartees.length} ${en() ? "dropped" : "écartées"}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "profil-melodique",
     nom: "Profil mélodique", nomEn: "Melodic Profile",
     univers: "Traitement", famille: "Conversion",
@@ -135,5 +136,5 @@ export const fiches: FicheAudio[] = ([
           + `${basse.toFixed(1)} ${en() ? "to" : "à"} ${haute.toFixed(1)}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

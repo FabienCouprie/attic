@@ -3,6 +3,7 @@
 // 2. Réservoir textuel : émergence par réseau de neurones aléatoires
 // 3. NLLB Multilingue : génération multilingue (français, espagnol…)
 
+import { fiche } from "./fiche";
 import { hasardDuNoeud } from "../core";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
@@ -249,7 +250,7 @@ function genererTexteReservoir(
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "gpt2-paroles", nomDicte: "paroles inventées", nom: "DistilGPT-2", nomEn: "DistilGPT-2",
     univers: "Autres", famille: "Texte",
     resume: "Génère du texte par IA (DistilGPT-2, anglais).",
@@ -297,8 +298,8 @@ export const fiches: FicheAudio[] = ([
         w.postMessage({ prompt, modelId: "Xenova/distilgpt2", task: "text-generation", maxTokens, temperature, repetitionPenalty: repPenalty, requestId });
       });
    },
-  },
-  {
+  }),
+  fiche({
     id: "reservoir-textuel", nom: "Réservoir textuel", nomEn: "Text Reservoir",
     univers: "Autres", famille: "Texte",
     resume: "Écrit des mots prononçables qui n'existent pas, par un réseau de neurones jamais entraîné.",
@@ -355,8 +356,8 @@ export const fiches: FicheAudio[] = ([
       const graineUtilisee = graine;
       return { valeurs: [texte], message: traduire("msg.var_0_mots_graine_var_1", texte.split(" ").length, graineUtilisee) };
    },
- },
-  {
+ }),
+  fiche({
     id: "qwen2.5-lyrics", nomDicte: "paroles de chanson", nom: "Qwen2.5-0.5B", nomEn: "Qwen2.5-0.5B",
     univers: "Autres", famille: "Texte",
     resume: "Génère du texte par IA avec le modèle Qwen2.5-0.5B (multilingue).",
@@ -405,8 +406,8 @@ export const fiches: FicheAudio[] = ([
         w.postMessage({ messages, modelId: "onnx-community/Qwen2.5-0.5B", task: "text-generation", maxTokens, temperature, repetitionPenalty: repPenalty, requestId });
       });
    },
-  },
-  {
+  }),
+  fiche({
     id: "nllb-paroles", nom: "Paroles multilingues (IA)", nomEn: "Multilingual Lyrics (AI)",
     univers: "Autres", famille: "Texte",
     resume: "Génère des paroles en anglais via DistilGPT-2 puis les traduit dans la langue choisie.",
@@ -515,5 +516,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.paroles_en_var_0_var_1_caract_res", langueLabel, texteTraduit.length),
       };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

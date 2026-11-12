@@ -8,6 +8,7 @@
 // écrit et vérifient que les quatre-vingt-huit touches sont couvertes une fois chacune. Ce fichier
 // n'écrit que sur le disque.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -20,7 +21,7 @@ import { enMo } from "../core/octets";
 const sansExtension = (nom: string): string => nom.replace(/\.[^./\\]*$/, "");
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "export-sfz", nomDicte: "écrire la banque", nom: "Export SFZ", nomEn: "SFZ Export",
     univers: "Sorties", famille: "Export",
     resume: "Écrit une banque de clavier au format SFZ : un fichier texte et ses échantillons, lisibles par n'importe quel échantillonneur.",
@@ -88,5 +89,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.sfz.ecrit", nomSfz, String(ecrits), enMo(octets).toFixed(1)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

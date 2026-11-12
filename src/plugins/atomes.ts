@@ -7,6 +7,7 @@
 // apprend plus que l'esquisse elle-même. À nombre d'atomes suffisant il ne reste qu'un souffle ;
 // à dix atomes, on y entend tout ce qui fait le grain du son.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -19,7 +20,7 @@ import type { Sequence } from "../audio/sequence";
 import { parCanal } from "./hors-fil";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "decomposition-atomique", nom: "Décomposition atomique", nomEn: "Atomic Decomposition",
     univers: "Traitement", famille: "Effets",
     resume: "Décrit un son par les N grains de Gabor qui l'expliquent le mieux, et rend séparément l'esquisse obtenue et ce qu'elle a laissé.",
@@ -149,5 +150,5 @@ export const fiches: FicheAudio[] = ([
         ].join("\n"),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

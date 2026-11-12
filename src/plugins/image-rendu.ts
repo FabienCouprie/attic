@@ -1,12 +1,13 @@
 // plugins/image-rendu.ts — Nœud « Rendu image » : affiche une image reçue sur
 // son entrée et la transmet inchangée sur sa sortie. Permet de visualiser une
 // image n'importe où dans le graphe sans interruption de la chaîne.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "rendu-image",
     nom: "Rendu image",
     nomEn: "Image Renderer",
@@ -27,5 +28,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.fichier.taille", image.name, image.size.toLocaleString()),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

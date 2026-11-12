@@ -10,6 +10,7 @@
 // prise, mais le cas est neuf, et c'est pourquoi il est vérifié dans l'application plutôt que
 // supposé.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -24,7 +25,7 @@ const MOD_DECROISSANCE = { ...modulationNommee("Décroissance", "Decay", [0, 100
 const MOD_VOLUME = { ...modulationNommee("Volume", "Volume", [0, 100], "%"), defauts: [0, 100] as [number, number] };
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "vosim", nomDicte: "synthèse de voyelle", nom: "VOSIM", nomEn: "VOSIM",
     univers: "Entrées", famille: "Génération",
     resume: "Place un formant par un train d'impulsions en sinus carré, sans aucun filtre.",
@@ -147,5 +148,5 @@ The « Audio » output carries the sound. The message gives the number of events
             ctx.paramNombre("Fondamentale", 110), ctx.paramNombre("Formant", 1200)))),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

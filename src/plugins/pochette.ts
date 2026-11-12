@@ -2,6 +2,7 @@
 // d'album procédurale en SVG depuis un prompt + titre + artiste.
 // Hors-ligne, instantané, sans GPU. Sortie « Image » (SVG) chaînable.
 
+import { fiche } from "./fiche";
 import { hasardDuNoeud } from "../core";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
@@ -12,7 +13,7 @@ import { FORMATS_IMAGE, choixFormats, formatImage } from "../core/formats-image"
 export { genererPochetteSVG };
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "generateur-pochette", nom: "Générateur de pochette", nomEn: "Cover Art Generator",
     // Auprès de la « Galerie d'exposition », qui fabrique les mêmes pochettes procédurales pour
     // tout un répertoire : c'est le même geste, sur un seul album.
@@ -115,5 +116,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.var_0_graine_var_1", traduire("msg.pochette_var_0_var_1_var_2", titre, style, prompt.slice(0, 30)), graine),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

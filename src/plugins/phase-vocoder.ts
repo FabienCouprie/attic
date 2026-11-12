@@ -4,6 +4,7 @@
 // Fournit une alternative fréquentielle de haute qualité aux algorithmes
 // temporels (WSOLA) et aux nœuds natifs de changement de tempo / tonalité.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -38,7 +39,7 @@ function appliquerPitchShift(buffer: AudioBuffer, semitones: number): AudioBuffe
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "phase-vocoder-tempo", nomDicte: "tempo par la phase", nom: "Phase Vocoder Tempo", nomEn: "Phase Vocoder Tempo",
     univers: "Traitement", famille: "Effets",
     resume: "Change le tempo par phase vocoder (fréquentiel), avec détection de transitoires.",
@@ -59,8 +60,8 @@ export const fiches: FicheAudio[] = ([
       const out = appliquerVocoder(buffer, factor);
       return { valeurs: [out], message: traduire("msg.tempo_x_var_0_var_1_s", tempo.toFixed(2), out.duration.toFixed(1)) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "phase-vocoder-tonalite", nomDicte: "tonalité par la phase", nom: "Phase Vocoder Tonalité", nomEn: "Phase Vocoder Pitch",
     univers: "Traitement", famille: "Effets",
     resume: "Transpose la hauteur par phase vocoder (fréquentiel), sans modifier la durée.",
@@ -80,5 +81,5 @@ export const fiches: FicheAudio[] = ([
       const signe = semi >= 0 ? "+" : "";
       return { valeurs: [out], message: traduire("msg.tonalit_var_0_var_1_st_var_2_s", signe, semi.toFixed(1), out.duration.toFixed(1)) };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

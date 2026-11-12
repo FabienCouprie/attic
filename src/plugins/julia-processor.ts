@@ -2,6 +2,7 @@
 // éditeur de code Julia pour traiter l'audio, MIDI et texte.
 // Même architecture que le Python Processor.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -145,7 +146,7 @@ println("Processed: $(size(audio, 1)) samples, $channels channels")
 `;
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "julia-processor", nomDicte: "programme julia", nom: "Julia Processor", nomEn: "Julia Processor",
     univers: "Autres", famille: "Génération",
     resume: "Éditeur de code Julia avec coloration syntaxique pour traiter l'audio.",
@@ -290,5 +291,5 @@ export const fiches: FicheAudio[] = ([
 
       return { valeurs: sorties, message: traduire("msg.julia_var_0_var_1", parts.join(" · "), stdout) };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

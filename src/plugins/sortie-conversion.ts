@@ -1,6 +1,7 @@
 // plugins/sortie-conversion.ts — Nœuds sortie-conversion (issus du découpage de complements.ts).
 
 import type { AffichageMp3 } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { bufferVersMp3Blob } from "../audio";
 import { decrire } from "../audio/metadonnees";
@@ -8,7 +9,7 @@ import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "visualiseur-forme-onde", nom: "Visualiseur", nomEn: "Waveform Viewer", univers: "Visualisation", famille: "Analyse",
     resume: "Affiche la forme d'onde du signal avec zoom et barre de défilement.",
     resumeEn: "Displays the waveform with zoom and scrollbar.",
@@ -17,8 +18,8 @@ export const fiches: FicheAudio[] = ([
       const a = entreeAudio(ctx, 0, { sorties: 2 }); if (sansEntree(a)) return a;
       return { valeurs:[a, { debut: 0, duree: a.duration }] };
    },
- },
-  {
+ }),
+  fiche({
     id: "convertisseur-audio", nomDicte: "convertir en fichier compressé", nom: "WAV → MP3", nomEn: "WAV → MP3", univers: "Traitement", famille: "Conversion",
     resume: "Convertit un flux audio en MP3 téléchargeable.",
     resumeEn: "Converts an audio stream to downloadable MP3.",
@@ -48,8 +49,8 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs: [a, { debut: 0, duree: a.duration }], affichage: { mp3Url } satisfies AffichageMp3 };
    },
- },
-  {
+ }),
+  fiche({
     id: "convertisseur-mp3-wav", nomDicte: "convertir en fichier brut", nom: "MP3 → WAV", nomEn: "MP3 → WAV", univers: "Traitement", famille: "Conversion",
     resume: "Convertit un flux audio en WAV téléchargeable.",
     resumeEn: "Converts an audio stream to downloadable WAV.",
@@ -67,8 +68,8 @@ export const fiches: FicheAudio[] = ([
       // fichier audio ne porte pas de graphe. Retiré le 2026-11-01, à la demande de Fabien.
       return { valeurs: [a, { debut: 0, duree: a.duration }] };
    },
- },
-  {
+ }),
+  fiche({
     id: "point-ecoute", nom: "Point d'écoute", nomEn: "Listening Point", univers: "Sorties", famille: "Écoute",
     resume: "Auditionne le signal sans interrompre la chaîne.",
     resumeEn: "Auditions the signal at a point in the chain without interrupting it.",
@@ -80,7 +81,7 @@ export const fiches: FicheAudio[] = ([
       if (sansEntree(a)) return a;
       return { valeurs: [a] };
    },
- },
+ }),
 
   // ── IA ──
 ] as FicheAudio[]).map(avecDoc);

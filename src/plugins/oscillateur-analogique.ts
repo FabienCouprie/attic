@@ -17,6 +17,7 @@
 // repliement coûte et pourquoi la position de la rupture compte plus que le facteur de
 // suréchantillonnage.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -38,7 +39,7 @@ const libelleForme = (id: string): string => {
 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "oscillateur-analogique", nom: "Oscillateur analogique", nomEn: "Analogue Oscillator",
     univers: "Entrées", famille: "Génération",
     resume: "Génère une onde par les quatre gestes d'un oscillateur à tension : largeur, synchronisation, pile désaccordée, phase déformée.",
@@ -146,5 +147,5 @@ export const fiches: FicheAudio[] = ([
           voix, sync > 1 ? `· ${sync}:1` : "", resultat.continu.toFixed(3)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

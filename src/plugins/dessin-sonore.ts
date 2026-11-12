@@ -3,6 +3,7 @@
 // Position X → timing, position Y → hauteur, taille → durée/vélocité,
 // couleur → octave. Sortie audio + MIDI.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererDessinSonore, GAMMES_ACCORDS, type FormeColoree } from "../audio";
 import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
@@ -15,7 +16,7 @@ import { PARAMETRE_CLE } from "../audio/cles";
 const formatCouleur = (c: FormeColoree) => `rgb(${c.couleur.r},${c.couleur.g},${c.couleur.b})`;
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "dessin-sonore",
     nom: "Dessin sonore",
     nomEn: "Sound Drawing",
@@ -97,5 +98,5 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null, null], erreur: true, message: e?.message || traduire("msg.erreur") };
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -15,6 +15,7 @@
 // universelle. Elles sont donc à l'écran avec ce qu'elles valent par défaut, plutôt que cachées
 // dans le calcul.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -27,7 +28,7 @@ import {
 } from "../audio/criteres-schaefferiens";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "criteres-schaefferiens", nomDicte: "critères de l'objet sonore", nom: "Critères schaefferiens", nomEn: "Schaefferian Criteria",
     univers: "Visualisation", famille: "Analyse",
     resume: "Relève la masse, la forme dynamique et l'allure d'un son, dans les espèces du Traité des objets musicaux.",
@@ -206,5 +207,5 @@ The « Audio » output returns the sound unchanged. The « Criteria » output gi
         message: traduire("msg.criteresSchaefferiens.rendu", masse, forme, allure),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

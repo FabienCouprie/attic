@@ -17,6 +17,7 @@
 // géométrie et ses tests. Ce fichier ne fait que reconnaître une séquence et la poser.
 
 import type { DesigneSequence } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { compterMicrotons, dureeSequence, estSequence } from "../audio/sequence";
 import { langueCourante } from "../i18n";
@@ -25,7 +26,7 @@ import { avecDoc } from "./notices";
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "rouleau-sequence",
     nom: "Rouleau de séquence", nomEn: "Sequence Roll",
     univers: "Visualisation", famille: "Analyse",
@@ -58,5 +59,5 @@ export const fiches: FicheAudio[] = ([
       if (microtons > 0) bouts.push(`${microtons} ${en() ? "microtones" : "microtons"}`);
       return { valeurs: [], designe, message: bouts.join(" · ") };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

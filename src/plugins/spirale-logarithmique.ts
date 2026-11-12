@@ -2,6 +2,7 @@
 //
 // La géométrie est dans `audio/spirale-logarithmique.ts`, testée ; ce fichier fait la synthèse.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -22,7 +23,7 @@ const RAPPORTS: Record<string, number | null> = {
 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "spirale-logarithmique", nom: "Spirale logarithmique", nomEn: "Logarithmic Spiral",
     univers: "Entrées", famille: "Génération",
     resume: "Un spectre en progression géométrique qui glisse : un tour de spirale le multiplie par un rapport, et il se superpose à lui-même.",
@@ -109,5 +110,5 @@ export const fiches: FicheAudio[] = ([
           + ` · ${en ? "self-similarity" : "auto-similarité"} ${ecart.toFixed(3)} ‰`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

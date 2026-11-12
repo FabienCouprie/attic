@@ -57,7 +57,11 @@ function sources(dossier: string): { chemin: string; code: string }[] {
 }
 
 const MODULE = "plugins/formes-des-canaux.ts";
-const FORMES = [...code(readFileSync(resolve(SRC, MODULE), "utf8")).matchAll(/\bexport\s+interface\s+(\w+)/g)].map((m) => m[1]);
+// LES FORMES SONT DES ALIAS DE TYPE depuis le 2026-11-12 : une interface n'entre pas dans le canal,
+// qui est un `Record<string, unknown>`. Le garde lit les deux écritures, pour qu'une interface
+// ajoutée ici compte encore comme une forme et que le compilateur dise seul ce qui ne va pas.
+const FORMES = [...code(readFileSync(resolve(SRC, MODULE), "utf8"))
+  .matchAll(/\bexport\s+(?:interface\s+(\w+)|type\s+(\w+)\s*=)/g)].map((m) => m[1] ?? m[2]);
 const VUES = sources("vues-domaine");
 const EXECUTEURS = sources("plugins").filter((s) => s.chemin !== MODULE);
 

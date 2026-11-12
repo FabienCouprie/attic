@@ -1,6 +1,7 @@
 // plugins/pixeltone.ts — Nœud « Pixeltone » : sonification d'image façon
 // pixeltone.js. Chaque pixel devient une tranche sonore ; les canaux R, G, B
 // pilotent trois fréquences réglables. Nécessite un environnement navigateur.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { sonifierImage } from "../audio";
 import { traduire } from "../i18n";
@@ -8,7 +9,7 @@ import { avecDoc } from "./notices";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "pixeltone", nomDicte: "image en points sonores",
     nom: "Pixeltone",
     nomEn: "Pixeltone",
@@ -141,5 +142,5 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], message: e?.message || traduire("msg.erreur") };
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

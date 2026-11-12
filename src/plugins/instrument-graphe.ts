@@ -13,6 +13,7 @@
 // l'aigu par exemple. Le premier venu aurait suffi pour un oscillateur, et aurait fermé les deux
 // autres familles d'instruments.
 
+import { fiche } from "./fiche";
 import { writeMidi } from "midi-file";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
@@ -84,7 +85,7 @@ function exciter(
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "frontiere-note", nom: "Note d'instrument", nomEn: "Instrument Note",
     univers: "Entrées", famille: "Génération",
     resume: "Porte la note jouée dans une chaîne d'instrument : excitation audio, MIDI d'une note, et la hauteur en courbe.",
@@ -136,8 +137,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.instrument.note", String(note), frequenceDeNoteMidi(note).toFixed(1)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "instrument-fin", nom: "Fin d'instrument", nomEn: "Instrument End",
     // Dans les SORTIES, avec « Export SFZ » : ce nœud ne traite pas un son, il REFERME une chaîne
     // et livre une banque — c'est un aboutissement, pas un effet de plus dans le signal.
@@ -212,5 +213,5 @@ export const fiches: FicheAudio[] = ([
           : traduire("msg.instrument.faite", String(banque.zones.length), String(racines[0]), String(racines[racines.length - 1])),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

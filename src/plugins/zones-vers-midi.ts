@@ -12,6 +12,7 @@
 //
 // LE RENDU N'EST PAS ICI. La sortie est un fichier MIDI, que les nœuds d'écoute et de rendu
 // existants prennent en entrée : ce nœud ne synthétise rien, donc il n'a ni volume ni niveau.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -23,7 +24,7 @@ import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { notesDesZones, tableauDesZones, zonesRetenues } from "../audio/zones-vers-midi";
 
 export const fiches = ([
-  {
+  fiche({
     id: "zones-vers-midi", nom: "Zones → MIDI", nomEn: "Zones → MIDI",
     univers: "Traitement", famille: "Conversion",
     resume: "Pose une note sur chaque zone reçue, à son début et pour sa durée.",
@@ -146,5 +147,5 @@ export const fiches = ([
           String(notes.length), String(zones.length), String(sansHauteur), String(sansSonie)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -14,6 +14,7 @@
 //     cache ne regardent pas.
 
 import type { AffichageDemonstration } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -32,7 +33,7 @@ async function obtenirRegistre() {
 const RESOLUTIONS: Record<string, [number, number]> = { "480p": [854, 480], "720p": [1280, 720], "1080p": [1920, 1080] };
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "demonstration", nom: "Démonstration", nomEn: "Demonstration",
     univers: "Autres", famille: "Vidéo",
     resume: "Fabrique la vidéo du graphe où il est posé : chaque composant à son tour, son nom, ses réglages, et son résultat joué ou affiché.",
@@ -113,8 +114,8 @@ export const fiches: FicheAudio[] = ([
         message: `${etapes.length} ${anglais ? "steps" : "étapes"} · ${duree} s · ${largeur} × ${hauteur}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "film-application", nom: "Film de l'application", nomEn: "Application Film",
     univers: "Autres", famille: "Vidéo",
     resume: "Filme la fenêtre de l'application pendant qu'elle construit le graphe où il est posé, le lance et fait entendre chaque composant.",
@@ -135,5 +136,5 @@ export const fiches: FicheAudio[] = ([
     async executer() {
       return { valeurs: [], erreur: true, message: en() ? "Use « Film the application »." : "Utiliser « Filmer l'application »." };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

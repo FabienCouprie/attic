@@ -11,6 +11,7 @@
 //
 // La reconnaissance du format et les options de gravure sont dans `audio/verovio.ts`, pur et testé.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -39,7 +40,7 @@ async function outil(): Promise<any> {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "partition-verovio", nom: "Partition gravée", nomEn: "Engraved Score",
     univers: "Visualisation", famille: "Notation",
     resume: "Grave une notation ABC, MusicXML, MEI ou Humdrum en partition SVG, aux règles d'un éditeur de musique.",
@@ -131,5 +132,5 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null, null], erreur: true, message: e?.message ?? String(e) };
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

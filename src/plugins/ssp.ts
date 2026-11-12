@@ -12,6 +12,7 @@
 // ne permet de la prévoir de tête. Le rapport la mesure donc après coup, ce qui est la seule façon
 // honnête de rendre ce procédé utilisable sans le trahir.
 
+import { fiche, type NomDeReglage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -29,7 +30,7 @@ const optionsPrincipe = () => ({
 });
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "ssp-koenig", nom: "SSP (Koenig)", nomEn: "SSP (Koenig)",
     univers: "Entrées", famille: "Génération",
     resume: "Compose la forme d'onde comme on compose une pièce : deux listes de nombres, des principes pour y puiser, et le son est le trait qui relie les points obtenus.",
@@ -80,7 +81,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const en = langueCourante() === "en";
       const frequence = frequenceDeTravail();
-      const principe = (nom: string, defaut: Principe): Principe => {
+      const principe = (nom: NomDeReglage<typeof ctx>, defaut: Principe): Principe => {
         const choix = ctx.paramTexte(nom, defaut);
         return EST_PRINCIPE(choix) ? choix : defaut;
       };
@@ -183,5 +184,5 @@ export const fiches: FicheAudio[] = ([
         ].join("\n"),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

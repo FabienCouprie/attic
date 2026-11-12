@@ -1,5 +1,6 @@
 // plugins/separation.ts — Nœuds separation (issus du découpage de complements.ts).
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
@@ -11,7 +12,7 @@ import { inferer, telechargerDepuisUrl } from "./onnx-hors-fil";
 import type { ResultatSeparation } from "../audio/ia";
 
 const separateurSixPistes: FicheAudio[] = ([
-  {
+  fiche({
     id: "separateur-ia", nom: "Séparateur IA", nomEn: "AI Separator", univers: "Traitement", famille: "Effets",
     resume: "Sépare les sources audio via IA (Demucs 4/6 stems, MDX-Net).",
     resumeEn: "Separates audio sources via AI (Demucs 4/6 stems, MDX-Net).",
@@ -108,7 +109,7 @@ const separateurSixPistes: FicheAudio[] = ([
       };
        return { valeurs:[null, null, enSon(r.voix), enSon(r.autre), null, null], message:traduire("msg.s_par_voix_instrumental") };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);
 
 // LE SÉPARATEUR DE VOIX SORT PAR ICI, avec celui à six pistes dont il est le proche : tous deux

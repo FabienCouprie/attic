@@ -3,6 +3,7 @@
 // D'après de Cheveigné et Kawahara, « YIN », JASA 111(4), 2002 ; et Mauch et Dixon, « pYIN »,
 // ICASSP 2014. La logique est dans `audio/hauteur.ts`, testée ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -15,7 +16,7 @@ import { parCanal } from "./hors-fil";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "suiveur-hauteur", nom: "Suiveur de hauteur", nomEn: "Pitch Follower",
     univers: "Traitement", famille: "Effets",
     resume: "Suit la hauteur d'un son instant par instant, pour en piloter un effet.",
@@ -78,5 +79,5 @@ export const fiches: FicheAudio[] = ([
           String(suivi.hauteurs.length), (partVoisee(suivi) * 100).toFixed(0), mediane.toFixed(1)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

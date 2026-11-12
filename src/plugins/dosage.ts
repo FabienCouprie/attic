@@ -8,6 +8,7 @@
 // porte, et tout ce qui produit de l'audio devient applicable sur une portion, y compris ce qui
 // regarde le signal entier et ne saurait pas travailler par morceaux.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { doser, enveloppeDeZones, type LoiFondu, type ModeDosage, type Zone } from "../audio/dosage";
 import { valeursParametre } from "../audio/courbe";
@@ -21,7 +22,7 @@ const canauxDe = (b: AudioBuffer) =>
   Array.from({ length: b.numberOfChannels }, (_, c) => b.getChannelData(c));
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "doser-effet",
     nom: "Doser un effet", nomEn: "Effect Blend",
     univers: "Traitement", famille: "Montage",
@@ -142,5 +143,5 @@ export const fiches: FicheAudio[] = ([
           : `${nz} zone${nz === 1 ? "" : "s"} · ${part.toFixed(0)} % de la durée · dosage moyen ${moyen.toFixed(2)} · ${duree}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

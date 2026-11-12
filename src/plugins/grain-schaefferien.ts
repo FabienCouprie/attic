@@ -10,6 +10,7 @@
 // universelle. Les deux frontières sont donc à l'écran, avec ce qu'elles valent par défaut, plutôt
 // que cachées dans le calcul.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -20,7 +21,7 @@ import {
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "grain-schaefferien", nom: "Grain (Schaeffer)", nomEn: "Grain (Schaeffer)",
     univers: "Visualisation", famille: "Analyse",
     resume: "Range le grain d'un son en trois espèces, harmonique, compact ou discontinu, et en donne le débit et la profondeur.",
@@ -156,5 +157,5 @@ The « Audio » output returns the sound unchanged. The « Grain » output gives
             espece, m.debit.toFixed(1), m.profondeur.toFixed(2), m.harmonicite.toFixed(2)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -1,4 +1,5 @@
 // plugins/resonance.ts — Nœud de spatialisation 3D via Resonance Audio.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -26,7 +27,7 @@ const MATERIALS = [
 ];
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "resonance-audio", nomDicte: "son dans l'espace",
     nom: "Resonance Audio",
     nomEn: "Resonance Audio",
@@ -108,5 +109,5 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: traduire("msg.erreur_resonance_audio_var_0", err?.message ?? err) };
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

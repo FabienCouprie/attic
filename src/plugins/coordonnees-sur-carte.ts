@@ -7,6 +7,7 @@
 // exports publics (générateurs de carte, rendu HTML, types).
 
 import type { AffichageCarte } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -59,7 +60,7 @@ function rescalerCoordonnees(points: CoordEntree[], largeur: number, hauteur: nu
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "coordonnees-sur-carte", nom: "Coordonnées sur carte", nomEn: "Coordinates on Map",
     univers: "Collections", famille: "Export",
     resume: "Projette des coordonnées 2D reçues en entrée (ex. sortie Coordonnées de Classification de pistes) sur une carte fictive, même moteur visuel (style, esthétique) que Carte sonore, mais la position des points reflète la similarité calculée en amont plutôt que d'être aléatoire.",
@@ -158,5 +159,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.coord_carte_g_n_r_e_var_0_var_1_points_var_2_audio_copi", htmlPath, points.length, copies, htmlOk ? "HTML écrit ✓" : "HTML échec ✗"),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

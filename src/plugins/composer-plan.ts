@@ -32,6 +32,7 @@
 // écraserait le choix de la tâche, et « Accompagner une voix », qui exige le modèle de base,
 // repartirait sur le modèle rapide — dont la mesure a montré qu'il ne construit rien sur cette
 // tâche. Le plan dit la musique ; la tâche dit le moteur.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -92,7 +93,7 @@ export function planDepuis(champs: {
 }
 
 export const fiches = ([
-  {
+  fiche({
     id: "composer-plan", nom: "Composer un plan", nomEn: "Compose a Plan",
     univers: "Entrées", famille: "Génération",
     resume: "Assemble un plan de chanson à partir de pièces mesurées sur un audio ou écrites à la main.",
@@ -230,5 +231,5 @@ export const fiches = ([
         message: traduire("msg.composerPlan.rendu", resume, String(ecrit.duration)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

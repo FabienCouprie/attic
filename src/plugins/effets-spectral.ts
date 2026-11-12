@@ -5,6 +5,7 @@
 // dans `effets-aides.ts`.
 
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc, avecNomDicte } from "./notices";
@@ -21,7 +22,7 @@ import { fiches as egaliseurParametrique } from "./egaliseur-parametrique";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "paulstretch", nomDicte: "étirement extrême", nom: "Paulstretch", nomEn: "Paulstretch", univers: "Traitement", famille: "Effets",
     resume: "Étirement extrême par randomisation des phases (stéréo).",
     resumeEn: "Extreme phase-randomization time-stretch (stereo).",
@@ -73,7 +74,7 @@ export const fiches: FicheAudio[] = ([
           : `${nb(out.duration)} s · ${nb(haut)} ×`,
       };
     },
-  },
+  }),
   effet("granular-freeze", "Granular freeze", "Granular Freeze", "Boucle un grain avec contrôle de taille et de hauteur.", "Loops a grain with size and pitch control.",
     [param("Taille", 50, "Grain size", "ms", "Taille du grain bouclé.", "Size of the looped grain.", [5, 500], 1), param("Pitch", 0, "Pitch", "st", "Transposition du grain en demi-tons.", "Grain pitch shift in semitones.", [-24, 24], 1), param("Position", 0, "Position", "%", "Position dans le fichier où le grain est extrait.", "Position in the file where the grain is extracted.", [0, 100], 1), param("Mix", 50, "Mix", "%", "Équilibre signal original / effet.", "Dry/wet balance.", [0, 100], 1)],
     (a, taille, pitch, position, mix) => granularFreeze(a, taille, pitch, position, mix), undefined,
@@ -85,7 +86,7 @@ export const fiches: FicheAudio[] = ([
      // LA PHASE DU GRAIN EST DÉJÀ ACCUMULÉE : une transposition qui varie y est donc exacte, et la
      // hauteur suit les demi-tons demandés à chaque instant.
      { parametre: "Pitch", bornes: [-24, 24], defauts: [-12, 12], unite: "st" }]),
-  {
+  fiche({
     id: "formule-echantillons", nom: "Formule sur échantillons", nomEn: "Sample Formula",
     univers: "Traitement", famille: "Effets",
     resume: "Applique une expression mathématique à chaque échantillon du signal.",
@@ -143,8 +144,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], message: traduire("msg.erreur_formule_var_0", e?.message ?? e) };
       }
    },
- },
-  {
+ }),
+  fiche({
     id: "formule-spectrale", nom: "Formule spectrale", nomEn: "Spectral Formula",
     univers: "Traitement", famille: "Effets",
     resume: "Modifie le spectre du signal par des expressions mathématiques sur magnitude et phase.",
@@ -196,7 +197,7 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [null], message: traduire("msg.erreur_formule_spectrale_var_0", e?.message ?? e) };
       }
    },
-  },
+  }),
   effet("equaliseur", "Égaliseur", "Equalizer", "Égaliseur 9 bandes.", "9-band equalizer.",
     [
       param("32 Hz", 0, "32 Hz", "dB", "Gain de la bande 32 Hz.", "32 Hz band gain.", [-24, 24], 1),
@@ -242,7 +243,7 @@ export const fiches: FicheAudio[] = ([
   effet("fondu", "Fondu", "Fade", "Fondu entrée/sortie.", "Fade in/out.",
     [param("Entrée", 0.5, "In", "s", "Durée du fondu d'entrée.", "Fade-in duration."), param("Sortie", 0.5, "Out", "s", "Durée du fondu de sortie.", "Fade-out duration.")],
     (a,e,s) => { const r = appliquerFondu(a, "Fermeture", s); return appliquerFondu(r, "Ouverture", e); }),
-  {
+  fiche({
     id: "extraire-zone", nom: "Extraire une zone", nomEn: "Extract Zone", univers: "Traitement", famille: "Montage",
     resume: "Extrait une portion avec fondu et renvoie l'objet Zone.",
     resumeEn: "Extracts a portion with fade and returns the Zone object.",
@@ -273,8 +274,8 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs: [extraireZone(a, debut, duree, fondu), zone] };
    },
-  },
-  {
+  }),
+  fiche({
     id: "reduction-bruit", nom: "Réduction de bruit", nomEn: "Noise Reduction", univers: "Traitement", famille: "Effets",
     resume: "Soustraction spectrale du bruit.",
     resumeEn: "Spectral noise subtraction.",
@@ -311,8 +312,8 @@ export const fiches: FicheAudio[] = ([
       const plancher = ctx.paramNombre("Plancher", 1) / 100;
       return { valeurs: [await reduireBruit(audio, profil, reduction, plancher)] };
    },
-  },
-  {
+  }),
+  fiche({
     id: "profil-bruit", nom: "Profil de bruit", nomEn: "Noise Profile", univers: "Traitement", famille: "Effets",
     resume: "Capture le profil spectral d'un bruit.",
     resumeEn: "Captures the spectral profile of a noise.",
@@ -326,8 +327,8 @@ export const fiches: FicheAudio[] = ([
       const profilEnergie = profil.reduce((a, b) => a + b, 0) / profil.length;
       return { valeurs: [profil], message: profilEnergie < 1e-6 ? traduire("msg.profil_bruit_trop_faible") : undefined };
    },
-  },
-  {
+  }),
+  fiche({
     id: "reponse-filtre", nom: "Filtre + réponse", nomEn: "Filter + Response",
     univers: "Traitement", famille: "Effets",
     resume: "Filtre le signal ET affiche la courbe de réponse en fréquence.",
@@ -391,8 +392,8 @@ export const fiches: FicheAudio[] = ([
         : ctx.paramNombre("Fréquence de coupure", 1000);
       return { valeurs: [await appliquerFiltre(a, map[type] ?? "lowpass", coupure, q)] };
    },
- },
-  {
+ }),
+  fiche({
     id: "reverbe-convolution", nom: "Réverbération à convolution (IR)", nomEn: "Convolution Reverb (IR)",
     // « convolution » MANQUE AU LEXIQUE DU MOTEUR VOCAL, et ce composant était donc indicible.
     // « réponse » le dit sans le mot qui manque, et sans amputer : « réverbération à » toute seule
@@ -452,5 +453,5 @@ export const fiches: FicheAudio[] = ([
       const r = await reverberationConvolution(a, irBuffer, mix);
       return { valeurs: [r], message: traduire("msg.r_verb_ration_convolution_ir_var_0_s", irBuffer.duration.toFixed(1)) };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc).map(avecNomDicte({ "granular-freeze": "gel du son" })).concat(egaliseurParametrique);

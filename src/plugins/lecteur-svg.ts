@@ -2,6 +2,7 @@
 // l'inspecteur, le rasterise à la taille demandée et le transmet sur sa sortie
 // 'Image' (File PNG) pour la chaîne image (Rendu image, Pixeltone, Export image…).
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -48,7 +49,7 @@ async function svgToPngFile(fichier: File, largeur: number, hauteur: number): Pr
 }
 
 const lecteursSvg: FicheAudio[] = [
-  {
+  fiche({
     id: "lecteur-svg",
     nom: "Lecteur SVG",
     nomEn: "SVG Reader",
@@ -109,7 +110,7 @@ const lecteursSvg: FicheAudio[] = [
         return { valeurs: [null], erreur: true, message: e?.message || traduire("msg.erreur") };
       }
     },
-  },
+  }),
 ];
 
 export const fiches: FicheAudio[] = lecteursSvg.map(avecDoc) as FicheAudio[];

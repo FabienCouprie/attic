@@ -7,6 +7,7 @@
 // La logique est dans `audio/csound-partition.ts`, testée : les quatre conventions de hauteur y sont
 // éprouvées contre les valeurs de Csound lui-même (`cpspch(8.00)` = 261,63 Hz, `cpsoct(8.75)` = 440).
 
+import { ficheSansNomsVerifies } from "./fiche";
 import { parseMidi } from "midi-file";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
@@ -41,7 +42,7 @@ const champ = (nom: string, nomEn: string, defaut: ChampP, doc: string, docEn: s
 });
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "partition-csound", nomDicte: "partition programmée", nom: "Partition Csound", nomEn: "Csound Score",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Traduit un MIDI en partition Csound : une note par ligne, avec le choix de la convention de hauteur et des p-fields.",
@@ -137,5 +138,5 @@ export const fiches: FicheAudio[] = ([
           + (alertes.length ? ` · ${alertes.join(" · ")}` : ""),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

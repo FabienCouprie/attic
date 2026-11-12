@@ -5,6 +5,7 @@
 // `audio/deplacement.ts`, `audio/ducking.ts` et `audio/ambisonique.ts`, testées ; ce fichier n'est
 // que la prise.
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -22,7 +23,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 const voie = (b: AudioBuffer, c: number) => b.getChannelData(Math.min(c, b.numberOfChannels - 1));
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "doppler", nom: "Doppler", nomEn: "Doppler",
     univers: "Traitement", famille: "Effets",
     resume: "Une source qui passe : la hauteur monte en approchant, bascule au plus près, et descend en s'éloignant.",
@@ -72,8 +73,8 @@ export const fiches: FicheAudio[] = ([
           hauteurEloignee(440, o.vitesse, o.celerite).toFixed(0)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "magnetophone", nom: "Magnétophone", nomEn: "Tape Machine",
     univers: "Traitement", famille: "Effets",
     resume: "Les quatre défauts d'une bande : pleurage, scintillement, saturation, décrochages.",
@@ -169,8 +170,8 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs: [out] };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "ducking", nomDicte: "baisser sous la voix", nom: "Ducking", nomEn: "Ducking",
     univers: "Traitement", famille: "Effets",
     resume: "Un son s'efface devant un autre : la musique recule sous la voix, sans que la voix sorte.",
@@ -246,8 +247,8 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs: [out] };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "ambisonique", nomDicte: "rotation du champ", nom: "Rotation ambisonique", nomEn: "Ambisonic Rotation",
     univers: "Traitement", famille: "Effets",
     resume: "Encode la prise en champ sonore, le fait tourner autour de l'auditeur, et le redescend en stéréo.",
@@ -344,5 +345,5 @@ export const fiches: FicheAudio[] = ([
         message: part < 0.05 ? `${resume} — ${traduire("msg.ambisonique.rienATourner")}` : resume,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

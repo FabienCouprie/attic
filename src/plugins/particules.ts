@@ -14,6 +14,7 @@
 // autrement. Six nœuds séparés l'auraient caché ;
 // ici on change un choix et l'on entend ce qui les sépare.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -46,7 +47,7 @@ const nomEspece = (id: Espece, en: boolean): string => {
 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "particules", nom: "Particules", nomEn: "Particles",
     // SA PLACE EST DANS LES TRAITEMENTS, et non parmi les sources. Il produit certes du son sans
     // rien recevoir — ce qui plaidait pour les Entrées, comme les pulsars —, mais c'est l'endroit
@@ -151,5 +152,5 @@ export const fiches: FicheAudio[] = ([
       ].filter(Boolean);
       return { valeurs: [r.audio, r.messages.join("\n")], message: lignes.join("\n") };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc).concat(fichesGranulationSpectrale);

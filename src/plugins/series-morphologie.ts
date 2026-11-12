@@ -8,6 +8,7 @@
 // la distance d'édition de 1966 ; ni l'un ni l'autre ne vient d'un code sous licence GPL, ce qui
 // serait une œuvre dérivée. Voir la section 4 de `COMPOSITION-ASSISTEE.md`.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -35,7 +36,7 @@ const MATIERES = [
 ];
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "serie-tous-intervalles",
     nom: "Série à tous les intervalles", nomEn: "All-Interval Series",
     univers: "Entrées", famille: "Génération",
@@ -98,8 +99,8 @@ export const fiches: FicheAudio[] = ([
         message: `${en() ? def.nomEn : def.nom} · ${en() ? "number" : "numéro"} ${rang} · ${NOMS[((depart % 12) + 12) % 12]}`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "morphologie",
     nom: "Morphologie", nomEn: "Morphology",
     univers: "Visualisation", famille: "Analyse",
@@ -184,5 +185,5 @@ export const fiches: FicheAudio[] = ([
         message: resume,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -1,5 +1,6 @@
 // plugins/tts-piper.ts — Nœud « Piper TTS » : synthèse vocale locale multilingue
 // (ONNX) via Piper TTS. Excellente qualité pour le russe et de nombreuses langues.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -43,7 +44,7 @@ function makeRequestId(): string {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "tts-piper",
     nom: "Piper TTS",
     nomEn: "Piper TTS",
@@ -109,5 +110,5 @@ export const fiches: FicheAudio[] = ([
         w.postMessage({ text: texte, voice: voix.id, speaker: 0, requestId });
       });
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

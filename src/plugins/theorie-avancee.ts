@@ -6,6 +6,7 @@
 // vérité extérieur au code, qu'il s'agisse d'un traité, d'un théorème ou d'une suite
 // publiée, et c'est ce qui les rend vérifiables.
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -74,7 +75,7 @@ function lireTriade(texte: string, defaut: Triade): Triade {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "tonnetz", nomDicte: "réseau de hauteurs", nom: "Tonnetz", nomEn: "Tonnetz",
     univers: "Traitement", famille: "Effets",
     resume: "Enchaîne les accords par les trois transformations néo-riemanniennes P, L et R, qui ne déplacent qu'une voix.",
@@ -148,8 +149,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.tonnetz.resultat", suite.length, operations.join("")),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "contrepoint-especes", nom: "Contrepoint d'espèces", nomEn: "Species Counterpoint",
     univers: "Autres", famille: "Théorie",
     resume: "Vérifie un contrepoint de première espèce contre les règles de Fux et annote chaque infraction.",
@@ -215,8 +216,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.contrepoint.resultat", b.erreurs, b.avis),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "canon-pavage", nom: "Canon par pavage", nomEn: "Tiling Canon",
     univers: "Entrées", famille: "Génération",
     resume: "Construit un canon rythmique où chaque pulsation est frappée par une voix et une seule.",
@@ -281,8 +282,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.canon.resultat", canon.entrees.length, canon.rythme.length, canon.n),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "serie-infinie", nomDicte: "série de l'infini", nom: "Série de l'infini (Nørgård)", nomEn: "Infinity Series (Nørgård)",
     univers: "Entrées", famille: "Génération",
     resume: "Engendre la suite auto-similaire de Per Nørgård, et ses voix plus lentes qui forment un canon exact.",
@@ -364,8 +365,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.norgard.resultat", notes.length, nombreVoix, s.minimum, s.maximum),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "auto-similarite", nom: "Matrice d'auto-similarité", nomEn: "Self-Similarity Matrix",
     univers: "Visualisation", famille: "Analyse",
     resume: "Dessine la forme d'un morceau et en détecte les articulations, par la méthode de Foote.",
@@ -425,5 +426,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.similarite.resultat", parties.length, nombreTrames),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -1,12 +1,13 @@
 // plugins/enveloppe.ts — Modeleur d'enveloppe ADSR.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { appliquerADSR } from "../audio";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "enveloppe-adsr", nomDicte: "enveloppe en quatre temps", nom: "Enveloppe ADSR", nomEn: "ADSR Envelope",
     univers: "Traitement", famille: "Effets",
     resume: "Modèle le volume du son dans le temps (attaque, déclin, maintien, relâchement).",
@@ -35,5 +36,5 @@ export const fiches: FicheAudio[] = ([
       );
       return { valeurs: [out] };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

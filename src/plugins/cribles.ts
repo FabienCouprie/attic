@@ -2,6 +2,7 @@
 // rythme par arithmétique modulaire, puis les joue.
 // Voir audio/cribles.ts pour le principe.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
@@ -9,7 +10,7 @@ import { avecDoc } from "./notices";
 import { frequenceDeNoteMidi } from "../audio/commun";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "crible-xenakis", nomDicte: "crible", nom: "Crible (Xenakis)", nomEn: "Sieve (Xenakis)",
     // Générateur sans entrée : sa place est parmi les sources.
     univers: "Entrées", famille: "Génération",
@@ -105,5 +106,5 @@ export const fiches: FicheAudio[] = ([
           ecrireCrible(classes), retenus.length, periodeCrible(classes)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

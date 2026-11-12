@@ -4,6 +4,7 @@
 // Oscillateur pédagogique : générateur (synthèse additive band-limitée) dont la
 // vue montre l'onde ET son spectre (timbre ↔ harmoniques).
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -27,7 +28,7 @@ const libelleForme = (id: string): string => {
 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "analyseur-spectre", nom: "Analyseur de spectre", nomEn: "Spectrum Analyzer",
     univers: "Visualisation", famille: "Analyse",
     resume: "Décompose le signal en fréquences (FFT) et affiche son spectre.",
@@ -57,8 +58,8 @@ export const fiches: FicheAudio[] = ([
       if (sansEntree(a)) return a;
       return { valeurs: [a] };
    },
- },
-  {
+ }),
+  fiche({
     id: "spectrogramme", nomDicte: "image du spectre", nom: "Spectrogramme", nomEn: "Spectrogram",
     univers: "Visualisation", famille: "Analyse",
     resume: "Affiche l'évolution du spectre dans le temps (temps × fréquence × intensité).",
@@ -85,8 +86,8 @@ export const fiches: FicheAudio[] = ([
       if (sansEntree(a)) return a;
       return { valeurs: [a] };
    },
- },
-  {
+ }),
+  fiche({
     id: "oscillateur", nom: "Oscillateur", nomEn: "Oscillator",
     univers: "Entrées", famille: "Génération",
     resume: "Génère une forme d'onde pure ; la vue montre l'onde et ses harmoniques.",
@@ -142,8 +143,8 @@ export const fiches: FicheAudio[] = ([
 
       return { valeurs: [buf], message: traduire("msg.var_0_var_1_hz_var_2_harmonique_s", labelForme, freq, harmoniques.length) };
    },
- },
-  {
+ }),
+  fiche({
     id: "comparateur-ab", nom: "Comparateur A/B", nomEn: "A/B Comparator",
     univers: "Sorties", famille: "Écoute",
     resume: "Compare deux signaux à niveau égalisé ; bascule l'écoute A/B.",
@@ -206,8 +207,8 @@ export const fiches: FicheAudio[] = ([
       const mention = align ? ` · ${traduire("msg.niveaux_egalises")}` : "";
       return { valeurs: [out], message: traduire("msg.coute_var_0_a_var_1_b_var_2_var_3", entendu, dB(pA), dB(pB), mention) };
    },
- },
-  {
+ }),
+  fiche({
     id: "vu-metre", nomDicte: "aiguille de niveau", nom: "VU-mètre / LUFS", nomEn: "VU-meter / LUFS",
     univers: "Visualisation", famille: "Analyse",
     resume: "Mesure et affiche les niveaux audio : RMS, peak, true peak, LUFS.",
@@ -223,8 +224,8 @@ export const fiches: FicheAudio[] = ([
       const rapport = `RMS: ${m.rmsDb.toFixed(1)} dBFS\nPeak: ${m.peakDb.toFixed(1)} dBFS\nTrue Peak: ${m.vraiPicDb.toFixed(1)} dBTP\nLUFS: ${m.lufs.toFixed(1)}\nCrest: ${m.crestFactorDb.toFixed(1)} dB\nLRA: ${m.plageDynamiqueDb.toFixed(1)} dB\nLUFS max: ${m.lufsMax > -119 ? m.lufsMax.toFixed(1) : "—"}\nLUFS min: ${m.lufsMin > -119 ? m.lufsMin.toFixed(1) : "—"}`;
       return { valeurs: [a, rapport], message: traduire("msg.rms_var_0_db_peak_var_1_db_lufs_var_2", m.rmsDb.toFixed(1), m.peakDb.toFixed(1), m.lufs.toFixed(1)) };
    },
- },
-  {
+ }),
+  fiche({
     id: "colorsynth", nomDicte: "synthèse par couleurs", nom: "ColorSynth", nomEn: "ColorSynth",
     univers: "Visualisation", famille: "Analyse",
     resume: "Déduit une palette de couleurs depuis le spectre audio (voir le timbre).",
@@ -237,5 +238,5 @@ export const fiches: FicheAudio[] = ([
       if (sansEntree(a)) return a;
       return { valeurs: [a], message: traduire("msg.palette_de_couleurs_g_n_r_e") };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

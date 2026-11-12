@@ -3,6 +3,7 @@
 // D'après Průša, Balazs et Søndergaard, IEEE/ACM TASLP 25(5), 2017. La logique est dans
 // `audio/pghi.ts`, testée ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -12,7 +13,7 @@ import { parCanal } from "./hors-fil";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "phase-pghi", nomDicte: "reconstruction de phase", nom: "Reconstruction de phase (PGHI)", nomEn: "Phase Reconstruction (PGHI)",
     univers: "Traitement", famille: "Effets",
     resume: "Reconstruit un son à partir des seules magnitudes de son spectrogramme, sans itérer : la phase se lit dans le gradient de la magnitude.",
@@ -76,5 +77,5 @@ export const fiches: FicheAudio[] = ([
           convergence.toFixed(1), String(ilots), (100 * partIntegree).toFixed(0)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

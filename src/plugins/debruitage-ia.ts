@@ -11,6 +11,7 @@
 // bande. Sur de la musique, il retire aussi ce qui n'est pas de la voix.
 //
 // L'analyse/synthèse et la boucle de trames vivent dans audio/gtcrn.ts, testées.
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { reechantillonnerParLeNavigateur } from "../audio/convertir-frequence";
 import { traduire } from "../i18n";
@@ -36,7 +37,7 @@ async function resamplerMono(buffer: AudioBuffer, sampleRate: number): Promise<A
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "debruitage-ia", nomDicte: "retirer le bruit", nom: "Débruitage IA", nomEn: "AI Denoise",
     univers: "Traitement", famille: "Effets",
     resume: "Débruite la parole avec le modèle GTCRN, sans profil de bruit à fournir.",
@@ -114,7 +115,7 @@ export const fiches: FicheAudio[] = ([
         ),
       };
     },
-  },
+  }),
   // « RESTAURER UN SON COMPRESSÉ » EST VERSÉ ICI, et non dans `plugins/index.ts`, parce que la
   // norme de taille l'exige : l'index est en dette — plus de cinq cents lignes pour une liste
   // écrite à la main — et le garde de `generer-compte-lignes.test.ts` refuse qu'un fichier en dette

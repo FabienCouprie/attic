@@ -12,6 +12,7 @@
 // retenir d'une exécution à l'autre coûterait plus que de les refaire.
 
 import type { AffichageFilm } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -37,7 +38,7 @@ const DEFINITIONS: Record<string, { l: number; h: number }> = {
 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "cercle-film",
     nom: "Générateur vidéo", nomEn: "Video Generator",
     univers: "Collections", famille: "Export",
@@ -195,5 +196,5 @@ export const fiches: FicheAudio[] = ([
           : `${rendu.images} images · ${def.l}×${def.h} · ${mo} Mo · ${(rendu.msTotal / 1000).toFixed(1)} s`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

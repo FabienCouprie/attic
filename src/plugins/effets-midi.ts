@@ -5,6 +5,7 @@
 // dans `effets-aides.ts`.
 
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -33,7 +34,7 @@ const DIRECTIONS_ARPEGE = {
 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "motif-imposer-rythme", nom: "Imposer un rythme", nomEn: "Impose Rhythm",
     univers: "Traitement", famille: "Effets",
     resume: "Plaque la grille rythmique d'un MIDI sur les hauteurs d'un autre.",
@@ -58,8 +59,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.motif.imposer", sortie.length, evenements(grille).length, evenements(hauteurs).length),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "motif-echo-notes", nom: "Écho de notes", nomEn: "Note Echo",
     univers: "Traitement", famille: "Effets",
     resume: "Superpose des copies décalées d'un motif, de vélocité décroissante.",
@@ -96,8 +97,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.motif.echo", notes.length, sortie.length - notes.length),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "motif-eclaircir", nom: "Éclaircir", nomEn: "Thin Out",
     univers: "Traitement", famille: "Effets",
     resume: "Retire une part des notes au hasard, de façon reproductible.",
@@ -137,8 +138,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.motif.eclaircir", notes.length - sortie.length, notes.length, graine),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "motif-retrograde", nomDicte: "motif à l'envers", nom: "Rétrograde et palindrome", nomEn: "Retrograde and Palindrome",
     univers: "Traitement", famille: "Effets",
     resume: "Joue un motif à l'envers, ou en aller-retour.",
@@ -173,8 +174,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.motif.retrograde", evenements(sortie).length, evenements(notes).length),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "motif-repeter-tourner", nom: "Répéter et tourner", nomEn: "Ply and Rotate",
     univers: "Traitement", famille: "Effets",
     resume: "Répète chaque note dans sa propre durée, et décale les hauteurs sur la grille.",
@@ -203,8 +204,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.motif.repeter", sortie.length, repetitions, rotation),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "markov-midi", nom: "Chaîne de Markov", nomEn: "Markov Chain",
     univers: "Traitement", famille: "Effets",
     resume: "Apprend les enchaînements de notes d'un MIDI et en engendre de nouveaux, avec la table de transitions en clair.",
@@ -264,8 +265,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.markov.resultat", engendrees.length, stats.contextes, graine),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "temperament", nom: "Tempérament", nomEn: "Temperament",
     univers: "Traitement", famille: "Effets",
     resume: "Rejoue un MIDI dans un tempérament historique ou en intonation juste, au lieu du tempérament égal.",
@@ -330,8 +331,8 @@ export const fiches: FicheAudio[] = ([
         message: `${nom} · ${notes.length} notes · ${horsTempere} ${langueCourante() === "en" ? "off the keyboard" : "hors du clavier"}`,
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "transposeur-quantiseur-midi", nomDicte: "transposition et calage", nom: "Transposeur/Quantiseur MIDI", nomEn: "MIDI Transposer/Quantizer",
     univers: "Traitement", famille: "Effets",
     resume: "Transpose et/ou quantifie un fichier MIDI.",
@@ -375,8 +376,8 @@ export const fiches: FicheAudio[] = ([
       if (grille !== "none") msgs.push(traduire("msg.quantification_var_0_var_1", grille, quantifierFin ? " +fins" : ""));
       return { valeurs: [nouvFichier], message: msgs.length > 0 ? msgs.join(" · ") : traduire("msg.aucune_modification") };
    },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "arpegiateur-midi", nomDicte: "notes en cascade", nom: "Arpégiateur MIDI", nomEn: "MIDI Arpeggiator",
     univers: "Traitement", famille: "Effets",
     resume: "Arpège les accords d'un fichier MIDI selon un motif et une direction.",
@@ -435,8 +436,8 @@ export const fiches: FicheAudio[] = ([
         ? (DIRECTIONS_ARPEGE.en[DIRECTIONS_ARPEGE.ids.indexOf(direction)] ?? direction) : direction;
       return { valeurs: [nouvFichier], message: traduire("msg.var_0_graine_var_1", traduire("msg.arp_ge_var_0_var_1_var_2_oct", directionDite, vitesse, octaves), graine) };
    },
-  },
-  {
+  }),
+  fiche({
     id: "jointure-midi", nom: "Jointure MIDI", nomEn: "MIDI Join",
     univers: "Traitement", famille: "Montage",
     resume: "Place deux fichiers MIDI l'un après l'autre avec un chevauchement.",
@@ -459,8 +460,8 @@ export const fiches: FicheAudio[] = ([
       const { notes, dureeTotale } = await lireMidi(nouvFichier);
       return { valeurs: [nouvFichier], message: traduire("msg.jointure_midi_var_0_notes_var_1_s", notes.length, dureeTotale.toFixed(2)) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "boucle-midi", nom: "Boucle MIDI", nomEn: "MIDI Loop",
     univers: "Traitement", famille: "Montage",
     resume: "Répète un fichier MIDI un nombre de fois donné.",
@@ -484,8 +485,8 @@ export const fiches: FicheAudio[] = ([
       const { notes, dureeTotale } = await lireMidi(nouvFichier);
       return { valeurs: [nouvFichier], message: traduire("msg.boucle_midi_var_0_repetitions_var_1_notes_var_2_s", repetitions, notes.length, dureeTotale.toFixed(2)) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "aligneur-piste", nomDicte: "alignement de piste", nom: "Aligneur de piste", nomEn: "Track Aligner",
     univers: "Traitement", famille: "Montage",
     // AUCUN LECTEUR ICI. L'aperçu joue la PREMIÈRE sortie audio, et celle-ci est « Référence »,
@@ -520,5 +521,5 @@ export const fiches: FicheAudio[] = ([
       else msg = traduire("msg.aligneur.meme_longueur");
       return { valeurs: [refOut, pisteOut], message: msg };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

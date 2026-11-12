@@ -7,6 +7,7 @@
 // dédié pourra consommer le chemin pour produire l'audio réétiré, sans que
 // celui-ci ait à refaire le calcul DTW.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -27,7 +28,7 @@ import { estAnnulation } from "../core/annulation";
 const DUREE_MAX_ANALYSE_DTW_DEFAUT_S = 180;
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "alignement-dtw", nom: "Similarité audio", nomEn: "Audio Similarity",
     univers: "Collections", famille: "Analyse",
     resume: "Similarité audio : aligne deux pistes qui diffèrent en tempo/durée (Dynamic Time Warping sur le chromagramme) et mesure leur similarité une fois alignées.",
@@ -90,5 +91,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.alignement_dtw_termine_var_0", similariteTexte),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

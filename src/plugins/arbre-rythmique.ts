@@ -14,6 +14,7 @@
 // admet quelques centaines d'arbres, ce qui se feuillette ; à deux étages, douze milliards. Le
 // premier étage se recense, au-delà il faut tirer sous surveillance.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -68,7 +69,7 @@ function lireMetrique(texte: string): [number, number] {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "arbre-rythmique",
     nom: "Arbre rythmique", nomEn: "Rhythm Tree",
     univers: "Entrées", famille: "Génération",
@@ -204,8 +205,8 @@ export const fiches: FicheAudio[] = ([
           + `${dureeArbre(mesures, 120).toFixed(2)} s ${en() ? "at" : "à"} 120`,
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "rythme-sur-hauteurs",
     nom: "Rythme sur hauteurs", nomEn: "Rhythm on Pitches",
     univers: "Traitement", famille: "Conversion",
@@ -339,5 +340,5 @@ export const fiches: FicheAudio[] = ([
           + `${(duree * repetitions).toFixed(2)} s · ${nolets} ${en() ? "irregular groups" : "groupes irréguliers"} · ${provenance}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

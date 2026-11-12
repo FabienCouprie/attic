@@ -3,6 +3,7 @@
 // d'un thème, d'une émotion et d'une clé, sans IA — par templates + tirage
 // aléatoire dans des dictionnaires de mots. Instantané, hors-ligne, reproductible.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { creerAleatoire } from "../core/hasard";
@@ -107,7 +108,7 @@ function genererParoles(
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "generateur-paroles", nom: "Générateur de paroles", nomEn: "Lyrics Generator",
     univers: "Autres", famille: "Texte",
     resume: "Génère des paroles de chanson structurées (couplets, refrain, pont) sans IA.",
@@ -153,5 +154,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.var_0_graine_var_1_var_2_lignes", traduire("msg.paroles.generees"), graineAff, paroles.split("\n").length),
       };
    },
- },
+ }),
 ] as FicheAudio[]).map(avecDoc);

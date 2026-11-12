@@ -10,6 +10,7 @@
 // — les instruments d'un côté, les traitements spectraux de l'autre — réglables sans écrire
 // une ligne de code.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -120,7 +121,7 @@ function auVolume(audio: AudioBuffer, volume: number): AudioBuffer {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "csound", nomDicte: "langage sonore", nom: "Csound", nomEn: "Csound",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Exécute un orchestre et une partition Csound, et rend l'audio produit.",
@@ -222,8 +223,8 @@ export const fiches: FicheAudio[] = ([
           + (alertes.length > 0 ? ` · ${alertes.join(" · ")}` : ""),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "csound-instrument", nomDicte: "instrument programmé", nom: "Instrument Csound", nomEn: "Csound Instrument",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Joue un MIDI avec un orchestre Csound : chaque note devient un événement de partition.",
@@ -285,8 +286,8 @@ export const fiches: FicheAudio[] = ([
           + traduire("msg.csound.notes", notes.length, r.audio.duration.toFixed(2)),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "csound-effet", nomDicte: "effet programmé", nom: "Effet Csound", nomEn: "Csound Effect",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Traite un ou deux sons par un orchestre Csound.",
@@ -374,8 +375,8 @@ endin`,
           + (muettes.alertes.length > 0 ? ` · ${muettes.alertes.join(" · ")}` : ""),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "csound-instruments-physiques", nomDicte: "instruments programmés", nom: "Instruments Csound", nomEn: "Csound Instruments",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Les instruments de Perry Cook tels que Csound les porte : corde frottée, clarinette, flûte, cuivre, corde pincée, formants.",
@@ -441,8 +442,8 @@ endin`,
         message: traduire("msg.csound.opcode", o.id, r.audio.duration.toFixed(2), r.ms.toFixed(0)),
       };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "csound-spectral", nomDicte: "spectral programmé", nom: "Spectral Csound", nomEn: "Csound Spectral",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Morphing spectral, vocodeur et étirement à phase verrouillée, par les opcodes de flux spectral de Csound.",
@@ -508,5 +509,5 @@ endin`,
         message: traduire("msg.csound.opcode", o.id, r.audio.duration.toFixed(2), r.ms.toFixed(0)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

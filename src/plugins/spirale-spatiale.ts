@@ -2,6 +2,7 @@
 //
 // La trajectoire est dans `audio/spirale-spatiale.ts`, testée ; ce fichier applique.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -16,7 +17,7 @@ const RAPPORTS: Record<string, number | null> = {
 };
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "spirale-spatiale", nom: "Spirale spatiale", nomEn: "Spatial Spiral",
     univers: "Traitement", famille: "Effets",
     resume: "Fait tourner le son autour de l'auditeur en l'éloignant : l'azimut se referme à chaque tour, la distance jamais.",
@@ -106,5 +107,5 @@ export const fiches: FicheAudio[] = ([
         ].join(" · "),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

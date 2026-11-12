@@ -5,6 +5,7 @@
 // `audio/peigne.ts`. Les notices sont des descriptifs fonctionnels : ce que fait le nœud et comment
 // s'en servir, sans le situer par rapport à un autre.
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -62,7 +63,7 @@ function parTrame(courbe: unknown, a: AudioBuffer, defaut: number, forme: Parame
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "etirement-spectre", nom: "Étirement du spectre", nomEn: "Spectrum Stretch",
     univers: "Traitement", famille: "Effets",
     resume: "Écarte ou resserre les partiels au-dessus d'une fréquence pivot : un son harmonique devient inharmonique, progressivement s'il le faut.",
@@ -97,8 +98,8 @@ export const fiches: FicheAudio[] = ([
         mode: "etirer", frequence: a.sampleRate, pivot, facteurs: parTrameEnTableau(k, a.length),
       }, ctx)] };
     },
-  },
-  {
+  }),
+  fiche({
     id: "arpege-spectral", nomDicte: "notes du spectre une à une", nom: "Arpège spectral", nomEn: "Spectral Arpeggio",
     univers: "Traitement", famille: "Effets",
     resume: "Une bande étroite parcourt le spectre et ne laisse sonner que les partiels qu'elle touche : un son tenu s'égrène partiel par partiel.",
@@ -135,8 +136,8 @@ export const fiches: FicheAudio[] = ([
       };
       return { valeurs: [await voiesMisesEnForme(a, { mode: "arpeger", frequence: a.sampleRate, arpege: o }, ctx)] };
     },
-  },
-  {
+  }),
+  fiche({
     id: "melange-fenetres", nom: "Mélange des fenêtres", nomEn: "Window Shuffle",
     univers: "Traitement", famille: "Effets",
     resume: "Découpe le son en blocs très brefs et les déplace dans le temps : le son devient un nuage de ses propres instants.",
@@ -168,8 +169,8 @@ export const fiches: FicheAudio[] = ([
         mode: "melanger", frequence: a.sampleRate, tramesParBloc, porteeBlocs, graine,
       }, ctx)] };
     },
-  },
-  {
+  }),
+  fiche({
     id: "crible-harmonique", nom: "Crible harmonique", nomEn: "Harmonic Sieve",
     univers: "Traitement", famille: "Effets",
     resume: "Ne garde, ou retire, que les composantes proches de certaines harmoniques d'une fondamentale : un bruit devient un accord, un son perd ses pairs.",
@@ -220,8 +221,8 @@ export const fiches: FicheAudio[] = ([
         fondamentales: parTrameEnTableau(f0, a.length), rangs, tolerance: tol, inverse,
       }, ctx)] };
     },
-  },
-  {
+  }),
+  fiche({
     id: "filtrage-spectre", nom: "Filtrage par un spectre", nomEn: "Filter by Spectrum",
     univers: "Traitement", famille: "Effets",
     resume: "Filtre un son par le spectre d'un autre, instant par instant : les partiels du second découpent le premier, ou sa couleur s'y imprime.",
@@ -249,8 +250,8 @@ export const fiches: FicheAudio[] = ([
       const filtres = Array.from({ length: b.numberOfChannels }, (_, c) => analyserPV(b.getChannelData(c), a.sampleRate));
       return { valeurs: [parCanal(a, (an, c) => filtrerParSpectre(an, filtres[Math.min(c, filtres.length - 1)], profondeur, cases))] };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "peignes-accordes", nom: "Peignes accordés", nomEn: "Tuned Combs",
     univers: "Traitement", famille: "Effets",
     memoire: "flux", // lignes à retard bornées par la note la plus grave
@@ -327,5 +328,5 @@ export const fiches: FicheAudio[] = ([
       const y = melangerPeignes(a, humides, reglageModule(ctx, a.length, 2, { reglage: "Mix", rendu: "pourCent", noms: ["Mix min", "Mix max"] }));
       return { valeurs: [y], message: `${frequences.length} ${en() ? (frequences.length > 1 ? "combs" : "comb") : (frequences.length > 1 ? "peignes" : "peigne")}` };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

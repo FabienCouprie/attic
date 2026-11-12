@@ -44,6 +44,11 @@ export interface Zone {
  * pour que le compilateur se taise. L'union dit désormais ce que l'adaptateur enregistre comme types
  * de flux (`audio/adaptateur.ts`) et ce que les contenus de contrôle transportent
  * (`audio/sous-types-controle.ts`) : une zone, des zones, une durée, un tempo, un profil.
+ *
+ * ET UN TEMPO CIRCULE EN NOMBRE NU. Relevé le 2026-11-11, quand chaque fiche a cessé d'être vérifiée
+ * à travers `as FicheAudio[]` : le « Détecteur de tempo » rend le tempo en `number` sur son port
+ * de contrôle, et ses deux consommateurs, `transcription-midi` et `composer-plan`, le lisent par
+ * `typeof … === "number"`. L'affirmation du tableau le taisait ; l'union le dit.
  */
 export type ValeurAudio =
   | AudioBuffer
@@ -53,6 +58,7 @@ export type ValeurAudio =
   | Zone
   | Zone[]
   | { tempo: number }
+  | number
   | Courbe
   | Sequence
   | ObjetSonore

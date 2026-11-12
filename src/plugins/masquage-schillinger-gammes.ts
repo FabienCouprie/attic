@@ -4,6 +4,7 @@
 // La logique est dans `audio/masquage.ts`, `audio/schillinger.ts` et `audio/gammes-monde.ts`,
 // testées ; ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -25,7 +26,7 @@ function frequenceDeBande(b: number): number {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "masquage", nom: "Masquage", nomEn: "Masking",
     univers: "Visualisation", famille: "Analyse",
     resume: "Dit ce qu'une piste rend inaudible dans une autre, bande critique par bande critique.",
@@ -117,8 +118,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.masquage.resume", (moyenne * 100).toFixed(1), String(enfouies.length)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "resultante-schillinger", nomDicte: "résultante de deux pulsations", nom: "Résultante (Schillinger)", nomEn: "Resultant (Schillinger)",
     univers: "Entrées", famille: "Génération",
     resume: "Le rythme qui naît de la superposition de deux pulsations régulières.",
@@ -195,8 +196,8 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.resultante.resume", a.ecarts.join("-"), String(a.cycle)),
       };
     },
-  },
-  {
+  }),
+  fiche({
     id: "gammes-monde", nom: "Gammes du monde", nomEn: "World Scales",
     univers: "Autres", famille: "Théorie",
     resume: "Maqamat, ragas et gammes de gamelan, en cents, les degrés qu'un clavier ne sait pas jouer.",
@@ -253,5 +254,5 @@ export const fiches: FicheAudio[] = ([
           String(g.cents.length - 1), String(injouables.length)),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

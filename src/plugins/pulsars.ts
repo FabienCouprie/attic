@@ -1,6 +1,7 @@
 // plugins/pulsars.ts — Nœud « Synthèse par pulsars » : fondamentale et formant
 // réglés indépendamment. Voir audio/pulsars.ts pour le principe.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
@@ -8,7 +9,7 @@ import { avecDoc } from "./notices";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "pulsars-roads", nomDicte: "synthèse par impulsions", nom: "Synthèse par pulsars", nomEn: "Pulsar Synthesis",
     // Générateur sans entrée : sa place est parmi les sources.
     univers: "Entrées", famille: "Génération",
@@ -59,5 +60,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.pulsars_var_0_var_1_var_2", fondamentaleHz, formantHz, cycle),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

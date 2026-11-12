@@ -4,6 +4,7 @@
 // declarent presque toutes la meme, ce qui ne decoupe rien.
 
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { qualiteDe } from "../audio/qualites-accords";
@@ -22,7 +23,7 @@ import { choixFenetre } from "../audio/fenetres-analyse";
  */
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "generateur-fractal", nom: "Musique fractale", nomEn: "Fractal Music", univers: "Entrées", famille: "Génération",
     resume: "Génère une mélodie fractale depuis un motif répété et une gamme.",
     resumeEn: "Generates a fractal melody from a repeated motif and scale.",
@@ -69,8 +70,8 @@ export const fiches: FicheAudio[] = ([
       console.log(`[attic] Musique fractale : audioFinal durée=${audioFinal?.duration ?? 0}`);
       return { valeurs: [audioFinal, midiFinal] };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "mappeur-mandelbrot", nomDicte: "carte fractale", nom: "Mappeur Mandelbrot", nomEn: "Mandelbrot Mapper", univers: "Entrées", famille: "Génération",
     resume: "Parcourt une vue de l'ensemble de Mandelbrot et fait de chaque point une note : le nombre d'itérations avant divergence donne la hauteur.",
     resumeEn: "Scans a view of the Mandelbrot set and turns each point into a note: the number of iterations before divergence sets the pitch.",
@@ -136,8 +137,8 @@ export const fiches: FicheAudio[] = ([
       }, normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique")));
       return { valeurs: [audio, midiFile], message: `Mandelbrot · ${ctx.paramTexte("Mode", "Escape time")} · ${audio.duration.toFixed(1)} s` };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "arpege-koch", nomDicte: "flocon de notes", nom: "Arpège flocon de Koch", nomEn: "Koch Snowflake Arpeggiator", univers: "Entrées", famille: "Génération",
     resume: "Trois voix qui jouent trois niveaux du même flocon de Koch, à trois vitesses : le motif et ses réductions entendus ensemble.",
     resumeEn: "Three voices playing three levels of the same Koch snowflake at three speeds: the pattern and its reductions heard together.",
@@ -194,8 +195,8 @@ export const fiches: FicheAudio[] = ([
       const nomAccord = qualite ? (langueCourante() === "en" ? qualite.en : qualite.fr) : ctx.paramTexte("Accord", "maj");
       return { valeurs: [audio, midiFile], message: `Koch · ${nomAccord} · ${audio.duration.toFixed(1)} s` };
     },
-  },
-  {
+  }),
+  fiche({
     id: "spectrogramme-fractal", nomDicte: "image fractale du spectre", nom: "Spectrogramme fractal", nomEn: "Fractal Spectrogram", univers: "Entrées", famille: "Génération",
     resume: "Génère un spectrogramme fractal et son audio associé.",
     resumeEn: "Generates a fractal spectrogram and its associated audio.",
@@ -240,8 +241,8 @@ export const fiches: FicheAudio[] = ([
       }
       return { valeurs: [image ?? null, audio], message: traduire("msg.spectrogramme_fractal.resultat", audio.duration.toFixed(1)) };
     },
-  },
-  {
+  }),
+  fiche({
     id: "attracteur-ifs", nomDicte: "forme chaotique", nom: "Attracteur / IFS", nomEn: "Attractor / IFS", univers: "Entrées", famille: "Génération",
     resume: "Rend un attracteur chaotique ou un IFS en image + audio.",
     resumeEn: "Renders a chaotic attractor or IFS as image + audio.",
@@ -297,5 +298,5 @@ export const fiches: FicheAudio[] = ([
         message: traduire("msg.attracteur.termine", type, `${image.size.toLocaleString()} o · ${audio.duration.toFixed(1)} s`),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -4,6 +4,7 @@
 // declarent presque toutes la meme, ce qui ne decoupe rien.
 
 
+import { fiche, ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { decoderFichier, rendreAvecEchantillon, analyserMidi, rendreSequence, rendreMidiDepuisBytes, filtrerCanauxMidi, normaliserPic, limiterPic, appliquerInstrumentsParCanal, GAMMES_ACCORDS } from "../audio";
@@ -24,7 +25,7 @@ import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
 import { PARAMETRE_CLE } from "../audio/cles";
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "sampler-midi", nom: "Sampler MIDI", nomEn: "MIDI Sampler", univers: "Traitement", famille: "Effets",
     resume: "Joue les notes MIDI entrantes avec un échantillon audio chargé dans l'inspecteur.",
     resumeEn: "Plays incoming MIDI notes with an audio sample loaded from the inspector.",
@@ -51,8 +52,8 @@ export const fiches: FicheAudio[] = ([
       const buf = rendreAvecEchantillon(adapt, sample, vol, noteRef);
       return { valeurs: [buf, midiFile], message: traduire("msg.var_0_notes_chantillon_var_1", notes.length, audioFichier.name) };
     },
-  },
-  {
+  }),
+  ficheSansNomsVerifies({
     id: "boite-groove",
     nom: "Groove Box",
     nomEn: "Groove Box",
@@ -334,6 +335,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "A fourth slot, for the fourth output. « Follow MIDI » keeps the internal drum synth, synthesized percussion, always audible even with no SoundFont loaded, and the default. Picking a preset renders the drums with that SoundFont kit instead; choose one from bank 128. Either way the « MIDI drums » output carries the chosen kit, so whichever node renders it next will use it.",
       },
     ],
+    // L'ancienne case unique d'instrument, que les cases par partie ont remplacée : un projet
+    // enregistré avant elles la porte encore, et l'exécuteur la lit en repli.
+    anciensReglages: ["Instrument"],
     async executer(ctx) {
       const config: ConfigGrooveBox = {
         cle: ctx.paramTexte("Clé", "C"),
@@ -511,5 +515,5 @@ export const fiches: FicheAudio[] = ([
           config.neurones, styleDit, graineUtilisee),
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

@@ -7,6 +7,7 @@
 // LES INTERVALLES VIENNENT DE LA TABLE COMMUNE, `audio/qualites-accords.ts` : ce composant ne sait
 // pas ce qu'est un accord de treizième, il sait le faire glisser.
 
+import { ficheSansNomsVerifies } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { QUALITES, notesDaccord } from "../audio/qualites-accords";
 import { trajetDesVoix, voixDuGlissando } from "../audio/glissando";
@@ -42,7 +43,7 @@ function cote(suffixeFr: string, suffixeEn: string, octaveDefaut: number) {
 }
 
 export const fiches: FicheAudio[] = ([
-  {
+  ficheSansNomsVerifies({
     id: "glissando-harmonique", nomDicte: "glissement harmonique", nom: "Glissando harmonique", nomEn: "Harmonic Glissando",
     univers: "Entrées", famille: "Génération",
     resume: "Fait glisser un accord entier vers un autre, chaque voix rejoignant la sienne sans jamais se poser.",
@@ -165,5 +166,5 @@ The « Journey » output gives, voice by voice, the starting note, the arrival n
           + ` · ${audio.duration.toFixed(1)} s`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);

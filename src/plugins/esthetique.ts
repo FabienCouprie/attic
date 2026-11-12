@@ -10,6 +10,7 @@
 // courbe par tranche est le vrai apport face au seul score global : sur la collection
 // de démonstration, « Winter-Time » a un PQ global de 7,72 mais une tranche à 5,59.
 import type { AffichageComparaisonEsthetique, AffichageEsthetique } from "./formes-des-canaux";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
@@ -96,7 +97,7 @@ function rapportComparaison(a: AnalyseEsthetique, b: AnalyseEsthetique): string 
 const apiFenetre = (): ApiEsthetique => ((globalThis as { window?: { api?: ApiEsthetique } }).window?.api ?? {});
 
 const scoreEsthetique: FicheAudio[] = ([
-  {
+  fiche({
     id: "score-esthetique", nom: "Score esthétique", nomEn: "Aesthetic Score",
     univers: "Visualisation", famille: "Analyse",
     resume: "Note un son sur quatre axes (plaisir, intérêt, complexité, qualité de production) avec la courbe de chaque axe dans le temps.",
@@ -120,8 +121,8 @@ const scoreEsthetique: FicheAudio[] = ([
         return { valeurs: [null, null], erreur: true, message: e.message };
       }
     },
-  },
-  {
+  }),
+  fiche({
     id: "comparaison-esthetique", nom: "Comparaison esthétique", nomEn: "Aesthetic Comparison",
     univers: "Visualisation", famille: "Analyse",
     resume: "Compare deux versions d'un son sur les quatre axes esthétiques : un mix contre un autre, un son avant et après traitement.",
@@ -148,7 +149,7 @@ const scoreEsthetique: FicheAudio[] = ([
         return { valeurs: [null], erreur: true, message: e.message };
       }
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
 
 // LE DESCRIPTEUR DE SONS SORT PAR ICI, avec le scoreur esthétique dont il est le proche : tous deux

@@ -3,6 +3,7 @@
 // Le calcul, les gestes et leurs raisons sont dans `audio/assaisonnement.ts`, pur et testé ; les
 // cinq dimensions et les régions dans `audio/gout.ts`. Ce fichier n'est que la prise.
 
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -17,7 +18,7 @@ const en = () => langueCourante() === "en";
 const GOUTS: Gout[] = ["sucré", "acide", "amer", "salé"];
 
 export const fiches: FicheAudio[] = ([
-  {
+  fiche({
     id: "assaisonnement-sonore", nom: "Assaisonnement sonore", nomEn: "Sonic Seasoning",
     univers: "Traitement", famille: "Effets",
     resume: "Déplace un son vers un profil de goût, une part de sucré, d'acide, d'amer et de salé, et dit de combien il a bougé.",
@@ -114,5 +115,5 @@ export const fiches: FicheAudio[] = ([
           + ` · ${anglais ? "distance" : "distance"} ${v(r.distanceAvant)} → ${v(r.distanceApres)}`,
       };
     },
-  },
+  }),
 ] as FicheAudio[]).map(avecDoc);
