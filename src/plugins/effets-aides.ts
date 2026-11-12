@@ -7,6 +7,7 @@
 
 
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
+import type { ParametreDef } from "../core";
 import { estCourbe, progressionPour, valeursParametre } from "../audio/courbe";
 import { appliquerInstrumentMidi, notesVersFichierMidi, rendreSequence } from "../audio";
 import { rendreBatterieMidi } from "../audio/tone-synths";
@@ -45,10 +46,17 @@ export type FnEffet = (audio: AudioBuffer, ...args: any[]) => Promise<AudioBuffe
  *
  * Ils sont la convention du catalogue depuis l'origine, et les graphes enregistrés rangent leurs
  * valeurs sous ces noms-là : les changer relirait des graphes aux bornes revenues au défaut.
+ *
+ * LITTÉRAUX, ET NON `string` : les fiches qui étalent `bornesModulation` en tirent ces deux noms, et
+ * `fiche()` de `plugins/fiche.ts` ne vérifie que des noms qu'il peut lire (pièce 2b).
  */
-export const BORNES_PAR_DEFAUT: readonly [string, string] = ["Modulation min", "Modulation max"];
+export const BORNES_PAR_DEFAUT = ["Modulation min", "Modulation max"] as const;
 
-type ModulationEffet = {
+/**
+ * La modulation d'un réglage, et les noms de ses deux bornes quand ils ne sont pas ceux par défaut.
+ * `Min` et `Max` sont ces noms ; par défaut `string`, pour l'usage de `effet()` qui ne les lit pas.
+ */
+type ModulationEffet<Min extends string = string, Max extends string = string> = {
   /** Le nom du réglage piloté, tel qu'il apparaît à l'écran. */
   parametre: string;
   /**
@@ -76,9 +84,9 @@ type ModulationEffet = {
    * « Feedback min » sur l'écho, « Azimut min » et « Distance min » sur le spatialiseur. Le défaut
    * reproduit donc l'existant, et les graphes enregistrés se relisent sans rien changer.
    */
-  noms?: [string, string];
+  noms?: readonly [Min, Max];
   /** Les mêmes dans l'interface anglaise. Par défaut, les noms français. */
-  nomsEn?: [string, string];
+  nomsEn?: readonly [string, string];
   /** Bornes des deux réglages, dans l'unité de l'écran. */
   bornes: [number, number];
   /** Ce que valent le zéro et le un de la courbe. Par défaut, les bornes elles-mêmes. */
@@ -151,8 +159,20 @@ export const portModulation = (
  * de l'article de Verfaille, Zölzer et Arfib, placé du côté qui connaît ses propres unités. Les
  * deux bornes sont donc chez l'effet, jamais chez la source, et leur documentation se fabrique
  * d'un seul endroit pour que cent effets ne la racontent pas de cent façons.
+ *
+ * LES DEUX NOMS RESTENT LITTÉRAUX, et c'est la pièce 2b du plan des réglages par nom. Sans `noms`,
+ * ce sont ceux de `BORNES_PAR_DEFAUT` ; avec, ceux qu'on lui donne, que `modulationNommee` fabrique
+ * en gabarit. Une fiche qui étale ces bornes peut ainsi passer par `fiche()` : jusque-là, leurs noms
+ * en `string` élargissaient tous les siens.
  */
-export const bornesModulation = (m: ModulationEffet) => {
+export function bornesModulation(m: ModulationEffet & { noms?: undefined }): BornesDeModulation<typeof BORNES_PAR_DEFAUT[number]>;
+export function bornesModulation<Min extends string, Max extends string>(
+  m: ModulationEffet<Min, Max> & { noms: readonly [Min, Max] },
+): BornesDeModulation<Min | Max>;
+// La forme ouverte, pour `effet()`, qui reçoit ses modulations sans en connaître les noms : ses
+// fiches naissent d'une fabrique, et c'est la pièce 3 du plan qui les vérifiera.
+export function bornesModulation(m: ModulationEffet): BornesDeModulation<string>;
+export function bornesModulation(m: ModulationEffet): BornesDeModulation<string> {
   const en = m.parametreEn ?? m.parametre;
   const [nomMin, nomMax] = m.noms ?? BORNES_PAR_DEFAUT;
   const [nomMinEn, nomMaxEn] = m.nomsEn ?? m.noms ?? BORNES_PAR_DEFAUT;
@@ -168,7 +188,10 @@ export const bornesModulation = (m: ModulationEffet) => {
       doc: `Valeur de « ${m.parametre} » que vaut le un de la courbe.`,
       docEn: `Value of « ${en} » that the curve's one means.` },
   ];
-};
+}
+
+/** Les deux réglages de bornes d'une modulation, dont les noms sont `N`. */
+type BornesDeModulation<N extends string> = (ParametreDef & { nom: N })[];
 
 /**
  * La modulation d'un mélange sec/mouillé, en pour cent : la même chez tous ceux qui en ont un.
@@ -178,10 +201,10 @@ export const bornesModulation = (m: ModulationEffet) => {
  * son nom ; les deux constantes disent donc la même chose sous les deux noms, et c'est la seule
  * place du dépôt où cette divergence coûte quelque chose.
  */
-export const MODULATION_MELANGE: ModulationEffet =
-  { parametre: "Mélange", parametreEn: "Mix", bornes: [0, 100], unite: "%" };
-export const MODULATION_MIX: ModulationEffet =
-  { parametre: "Mix", parametreEn: "Mix", bornes: [0, 100], unite: "%" };
+export const MODULATION_MELANGE =
+  { parametre: "Mélange", parametreEn: "Mix", bornes: [0, 100], unite: "%" } satisfies ModulationEffet;
+export const MODULATION_MIX =
+  { parametre: "Mix", parametreEn: "Mix", bornes: [0, 100], unite: "%" } satisfies ModulationEffet;
 
 /**
  * Le même mélange, mais sur une fiche qui module déjà autre chose : ses bornes se nomment.
@@ -193,9 +216,9 @@ export const MODULATION_MIX: ModulationEffet =
  * « Fréquence min » sur le phaser, « Fondamentale min » sur les résonateurs, « Temps min » sur
  * l'écho. Les cinq fiches de cette famille emploient donc celle-ci.
  */
-export const modulationNommee = (
-  parametre: string, parametreEn: string, bornes: [number, number], unite?: string,
-): ModulationEffet => ({
+export const modulationNommee = <P extends string>(
+  parametre: P, parametreEn: string, bornes: [number, number], unite?: string,
+): ModulationEffet<`${P} min`, `${P} max`> & { noms: readonly [`${P} min`, `${P} max`] } => ({
   parametre, parametreEn, bornes, unite,
   noms: [`${parametre} min`, `${parametre} max`],
   nomsEn: [`${parametreEn} min`, `${parametreEn} max`],

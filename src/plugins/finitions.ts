@@ -4,7 +4,7 @@
 // La logique est dans `audio/reverbes-etendues.ts`, `audio/silences.ts` et `audio/effets-montage.ts`,
 // testées ; ce fichier n'est que la prise.
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -20,7 +20,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "reverbe-hachee", nom: "Réverbération hachée", nomEn: "Gated Reverb",
     univers: "Traitement", famille: "Effets",
     resume: "Une queue de réverbération coupée net par une porte commandée par le son sec.",
@@ -100,7 +100,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "shimmer", nomDicte: "réverbération scintillante", nom: "Shimmer", nomEn: "Shimmer",
     univers: "Traitement", famille: "Effets",
     resume: "Une réverbération dont la queue monte d'une octave à chaque tour, et s'éloigne en montant.",

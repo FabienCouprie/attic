@@ -5,7 +5,7 @@
 // `audio/peigne.ts`. Les notices sont des descriptifs fonctionnels : ce que fait le nœud et comment
 // s'en servir, sans le situer par rapport à un autre.
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -251,7 +251,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [parCanal(a, (an, c) => filtrerParSpectre(an, filtres[Math.min(c, filtres.length - 1)], profondeur, cases))] };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "peignes-accordes", nom: "Peignes accordés", nomEn: "Tuned Combs",
     univers: "Traitement", famille: "Effets",
     memoire: "flux", // lignes à retard bornées par la note la plus grave

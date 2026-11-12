@@ -3,7 +3,7 @@
 // Les trois outils de la musique concrète qui manquaient au catalogue (relevé du 2026-09-21, pour
 // un compositeur électroacousticien). Le calcul est dans `audio/concret.ts`.
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -118,7 +118,7 @@ export const fiches: FicheAudio[] = ([
       }
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "resonateurs", nomDicte: "caisses de résonance", nom: "Résonateurs", nomEn: "Resonators",
     univers: "Traitement", famille: "Effets",
     memoire: "flux", // filtres récursifs, état dans deux scalaires par résonateur

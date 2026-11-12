@@ -5,7 +5,7 @@
 // `audio/deplacement.ts`, `audio/ducking.ts` et `audio/ambisonique.ts`, testées ; ce fichier n'est
 // que la prise.
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -171,7 +171,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [out] };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "ducking", nomDicte: "baisser sous la voix", nom: "Ducking", nomEn: "Ducking",
     univers: "Traitement", famille: "Effets",
     resume: "Un son s'efface devant un autre : la musique recule sous la voix, sans que la voix sorte.",
@@ -248,7 +248,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [out] };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "ambisonique", nomDicte: "rotation du champ", nom: "Rotation ambisonique", nomEn: "Ambisonic Rotation",
     univers: "Traitement", famille: "Effets",
     resume: "Encode la prise en champ sonore, le fait tourner autour de l'auditeur, et le redescend en stéréo.",

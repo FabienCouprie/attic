@@ -7,7 +7,7 @@
 // n'a pas su lire, et l'exécuteur le rapporte à l'écran : une formule qui passerait pour jouée en
 // ne rendant rien est le pire des deux comportements.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -22,7 +22,7 @@ const MOD_CADENCE = { ...modulationNommee("Cadence", "Rate", [1000, 48000], "Hz"
 const MOD_VOLUME = { ...modulationNommee("Volume", "Volume", [0, 100], "%"), defauts: [0, 100] as [number, number] };
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "bytebeat", nomDicte: "musique par formule", nom: "Bytebeat", nomEn: "Bytebeat",
     univers: "Entrées", famille: "Génération",
     resume: "Calcule un octet par échantillon à partir d'une formule entière sur le compteur du temps.",

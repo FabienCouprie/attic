@@ -4,7 +4,7 @@
 // Välimäki, DAFx-09, pour la réaction et les coefficients variables. La logique est dans
 // `audio/retard-spectral.ts`, testée ; ce fichier n'est que la prise.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -13,7 +13,7 @@ import { MODULATION_MIX_NOMMEE, bornesModulation, portModulation, reglageModule 
 import { longueurTraine, retardDeGroupe, retardSpectral } from "../audio/retard-spectral";
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "retard-spectral", nom: "Retard spectral", nomEn: "Spectral Delay",
     univers: "Traitement", famille: "Effets",
     resume: "Retarde le grave plus que l'aigu, ou l'inverse, sans rien couper : le son n'est pas filtré, il est étalé.",

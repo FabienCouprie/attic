@@ -5,7 +5,7 @@
 // dans `effets-aides.ts`.
 
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import { normaliserSonie } from "../audio/normalisation-sonie";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
@@ -198,7 +198,7 @@ export const fiches: FicheAudio[] = ([
      { parametre: "Relâchement", bornes: [5, 1000], defauts: [20, 400], unite: "ms" },
      { parametre: "Fréq Low", bornes: [40, 1000], defauts: [80, 600], unite: "Hz" },
      { parametre: "Fréq High", bornes: [1000, 12000], defauts: [2000, 8000], unite: "Hz" }]),
-  ficheSansNomsVerifies({
+  fiche({
     id: "gate-expandeur", nomDicte: "porte de bruit", nom: "Gate/Expandeur", nomEn: "Gate/Expander",
     memoire: "flux", // enveloppe recursive, un seul scalaire
     univers: "Traitement", famille: "Effets",
@@ -301,7 +301,7 @@ export const fiches: FicheAudio[] = ([
     [{ parametre: "Mix", bornes: [0, 100], unite: "%" },
      { ...modulationNommee("Fréquence", "Frequency", [1, 8000], "Hz"), defauts: [50, 2000],
        echelle: "logarithmique" }]),
-  ficheSansNomsVerifies({
+  fiche({
     id: "vocoder", nomDicte: "voix synthétique", nom: "Vocoder", nomEn: "Vocoder",
     univers: "Traitement", famille: "Effets",
     resume: "Vocoder filterbank : modulateur + porteuse → effet robot.",

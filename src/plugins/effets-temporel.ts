@@ -5,7 +5,7 @@
 // dans `effets-aides.ts`.
 
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -19,7 +19,7 @@ import { choixValeurs } from "../audio/valeurs-note";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "wahwah", nom: "Wah-wah", nomEn: "Wah-wah", univers: "Traitement", famille: "Effets",
     memoire: "flux", // biquad, etat dans quatre scalaires
     resume: "Filtre passe-bande modulé (effet pédale wah).",
@@ -81,7 +81,7 @@ export const fiches: FicheAudio[] = ([
       )] };
    },
  }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "phaser", nom: "Phaser", nomEn: "Phaser", univers: "Traitement", famille: "Effets",
     memoire: "flux", // passe-tout en cascade, etat par etage
     resume: "Filtres passe-tout en cascade modulés par LFO (effet planant).",
@@ -254,7 +254,7 @@ export const fiches: FicheAudio[] = ([
         ctx.entree(1), { min: ctx.paramNombre("Fréquence min", 1), max: ctx.paramNombre("Fréquence max", 16) }, profondeur)] };
    },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "beat-repeat", nomDicte: "répétition de mesure", nom: "Beat Repeat / Stutter", nomEn: "Beat Repeat / Stutter", univers: "Traitement", famille: "Effets",
     resume: "Capture et répète un court segment à intervalles rythmiques (effet stutter).",
     resumeEn: "Captures and repeats a short segment at rhythmic intervals (stutter effect).",
