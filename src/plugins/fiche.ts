@@ -11,11 +11,12 @@
 // la fiche ne montre plus et que l'exécuteur lit encore se nomme dans `anciensReglages`.
 //
 // UNE FICHE DONT LES NOMS NE SE DÉDUISENT PAS EST REFUSÉE, et non laissée libre en silence. C'est le
-// cas d'une liste qu'une fonction construit, ou qui mêle des réglages partagés à ceux écrits sur
-// place : ses noms s'élargissent à `string`. Elle passe alors par `ficheSansNomsVerifies`, qui dit ce
-// qu'elle est, et que le garde `plugins/fiche.test.ts` tient dans une liste qui ne fait que rétrécir.
+// cas d'une liste qu'une fonction construit, ou qui reprend un réglage partagé annoté `ParametreDef` :
+// ses noms s'élargissent à `string`. Il n'y a pas de porte de sortie. Le réglage partagé passe par
+// `reglagePartage`, la fabrique prend son nom en paramètre générique, et des noms tirés d'un rang
+// viennent d'un tuple de numéros `as const`.
 //
-// LES DEUX FONCTIONS RENDENT LEUR ARGUMENT TEL QUEL : elles ne servent qu'au compilateur.
+// LES FONCTIONS DE CE MODULE RENDENT LEUR ARGUMENT TEL QUEL : elles ne servent qu'au compilateur.
 import type { ContexteExecution, FonctionPlugin, ParametreDef } from "../core";
 import type { FicheAudio, RuntimeAudio, ValeurAudio } from "../audio/types-domaine";
 
@@ -33,8 +34,8 @@ export type NomDeReglage<C extends { paramTexte(nom: never, defaut: string): str
  * POURQUOI UN TYPE ET NON LE CONTEXTE DE L'AIDE ÉCRIT AVEC SES NOMS. Les deux lecteurs du contexte
  * sont des méthodes, donc bivariants : une fiche qui ne déclarerait qu'une partie des noms de l'aide
  * passerait. L'aide prend donc le contexte de la fiche tel quel, `ContexteExecution<…, N>`, et ce
- * type le refuse quand `M` n'est pas tout entier dans `N`. Une fiche aux noms non vérifiés a
- * `N = string`, et passe comme avant.
+ * type le refuse quand `M` n'est pas tout entier dans `N`. Un contexte aux noms libres, `N = string`,
+ * passe comme avant : c'est celui de l'exécuteur que `effet()` construit.
  */
 export type ExigeReglages<N extends string, M extends string> = [M] extends [N]
   ? unknown
@@ -59,7 +60,7 @@ export function lecteurDe<M extends string>(
 
 /** Refuse une fiche dont les noms de réglage se sont élargis à `string`, en le disant. */
 type NomsLitteraux<N extends string> = [string] extends [N]
-  ? { "les noms de reglage ne se deduisent pas : ecrivez-les sur place, ou passez par ficheSansNomsVerifies": true }
+  ? { "les noms de reglage ne se deduisent pas : ecrivez-les sur place, ou declarez le reglage partage par reglagePartage": true }
   : unknown;
 
 /**
@@ -88,12 +89,4 @@ export function fiche<N extends string = never, A extends string = never>(
  */
 export function reglagePartage<N extends string>(p: ParametreDef & { nom: N }): ParametreDef & { nom: N } {
   return p;
-}
-
-/**
- * Une fiche dont les noms de réglage ne se déduisent pas encore, et dont l'exécuteur lit donc tout
- * nom sans vérification, comme avant ce module. Chacune est nommée dans `plugins/fiche.test.ts`.
- */
-export function ficheSansNomsVerifies(f: FicheAudio): FicheAudio {
-  return f;
 }

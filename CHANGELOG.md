@@ -19,6 +19,22 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **`ficheSansNomsVerifies` EST RETIRÉE : IL N'Y A PLUS DE PORTE DE SORTIE À LA VÉRIFICATION DES NOMS.** La fin du plan `work/plan-reglages-par-nom-2026-11-11.md`, demandée par Fabien le 2026-11-13. Posée sur la pièce 2f, qui vidait sa liste.
+  - **Ce qui change.**
+    - La fonction disparaît de `plugins/fiche.ts`. Une fiche dont les noms ne se déduisent pas reste refusée par `fiche()`, et le message du refus nomme désormais le remède, `reglagePartage`, au lieu de la sortie.
+    - Le garde `plugins/fiche.test.ts` perd sa liste vide, le cas qui la tenait, et le témoin qui prouvait qu'une fiche sans noms vérifiés lisait tout nom.
+    - Une fiche passée par une autre fonction que `fiche()` compte désormais parmi les fiches nues, et le garde nomme cette fonction. Une enveloppe qui remplacerait la fonction retirée tomberait là.
+    - `ADDING-A-NODE.md` dit les trois remèdes au lieu de la sortie, et `ARCHITECTURE.md` date le retrait.
+  - **Vu rouge dans un arbre séparé, hors de `E:\attic`**, sur trois fautes plantées une à la fois dans « Texte → image (MOSS) », le témoin restant vert :
+    - la fiche passée par une enveloppe `libre(f: FicheAudio)` : `tsc` reste vert, et le garde la nomme, « `texte-image-moss (par libre)` » ;
+    - la fonction retirée, rappelée : `tsc`, TS2305 ;
+    - un réglage partagé dont le nom s'élargit à `string` : `tsc`, TS2322, avec le message neuf.
+  - **Mesuré** : 33 lignes ajoutées et 61 retirées dans quatre fichiers, CHANGELOG non compté.
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, la liste de la 2f ligne pour ligne ;
+    - passe complète verte, 724 fichiers et 10 380 cas, 3 fichiers et 14 cas sautés, en 23 min 44 s ; un cas de moins que la 2f, celui de la liste retirée ;
+    - le bundle de `vite build` est identique, octet pour octet, à celui de la 2f : ses 124 fichiers d'`assets` et ses quatre fichiers de tête. La fonction n'était appelée par aucune fiche, et le bundle de la 2f est celui qui a passé la sonde Electron et `empreintes-exemples`.
+
 - **TOUTES LES FICHES LISENT LEURS RÉGLAGES SOUS DES NOMS VÉRIFIÉS : LES VINGT-HUIT DERNIÈRES LE SONT.** Pièce 2f du plan `work/plan-reglages-par-nom-2026-11-11.md`, la dernière famille. Fabien a demandé la suite le 2026-11-13. Posée sur la pièce 2e.
   - **Ce qui élargissait.** Vingt-huit fiches dans dix-sept fichiers, chacune pour une raison à elle :
     - des listes et réglages isolés annotés `ParametreDef`, ou écrits en objets nus ;
