@@ -6,7 +6,7 @@
 //
 // LE CALCUL EST DANS `audio/matrice-parametres.ts`, éprouvé ; ce fichier n'est que la prise.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -18,11 +18,16 @@ import {
 
 const en = () => langueCourante() === "en";
 
-/** Les champs libres offerts, de p4 à p9. */
-const RANGS = [4, 5, 6, 7, 8, 9];
+/**
+ * Les champs libres offerts, de p4 à p9.
+ *
+ * UN LITTÉRAL CHACUN, et c'est ce qui fait vérifier « p4 » à « p9 », à la déclaration comme à la
+ * lecture : un tableau simple les élargissait à `string`.
+ */
+const RANGS = [4, 5, 6, 7, 8, 9] as const;
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "matrice-parametres",
     nom: "Matrice de paramètres", nomEn: "Parameter Matrix",
     univers: "Autres", famille: "Csound wrapper",
@@ -47,7 +52,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "The instants, p2. A number, a series, or a ramp written « from:to »." },
       { nom: "Durées", nomEn: "Lengths", type: "texte", defaut: "0.5", defautEn: "0.5",
         doc: "Les durées, p3.", docEn: "The lengths, p3." },
-      ...RANGS.map((r, i) => ({
+      ...RANGS.map((r, i) => reglagePartage({
         nom: `p${r}`, nomEn: `p${r}`, type: "texte" as const,
         defaut: i === 0 ? "0.3" : i === 1 ? "200:2000" : "",
         defautEn: i === 0 ? "0.3" : i === 1 ? "200:2000" : "",
@@ -75,7 +80,7 @@ export const fiches: FicheAudio[] = ([
       const duree = lireChamp(ctx.paramTexte("Durées", "0.5"));
       const libres = RANGS
         .map((rang) => ({ rang, champ: lireChamp(ctx.paramTexte(`p${rang}`, "")) }))
-        .filter((c): c is { rang: number; champ: NonNullable<ReturnType<typeof lireChamp>> } => c.champ !== null);
+        .filter((c): c is { rang: (typeof RANGS)[number]; champ: NonNullable<ReturnType<typeof lireChamp>> } => c.champ !== null);
 
       const demande = Math.round(ctx.paramNombre("Événements", 0));
       const combien = demande > 0

@@ -19,6 +19,38 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **TOUTES LES FICHES LISENT LEURS RÉGLAGES SOUS DES NOMS VÉRIFIÉS : LES VINGT-HUIT DERNIÈRES LE SONT.** Pièce 2f du plan `work/plan-reglages-par-nom-2026-11-11.md`, la dernière famille. Fabien a demandé la suite le 2026-11-13. Posée sur la pièce 2e.
+  - **Ce qui élargissait.** Vingt-huit fiches dans dix-sept fichiers, chacune pour une raison à elle :
+    - des listes et réglages isolés annotés `ParametreDef`, ou écrits en objets nus ;
+    - des fabriques qui prenaient leur nom en `string` : `champ`, `frequence`, `gain`, les trois `cote` et `trio` ;
+    - des noms tirés d'un rang, `Fréquence ${i + 1}` ou `Rapport ${k + 1}`, qui valaient `string` à la déclaration comme à la lecture ;
+    - des tableaux de noms simples, `REGLES` et `RANGS` ;
+    - le montage, dont la liste était affirmée `any[]`.
+  - **Ce qui change.**
+    - Les listes et réglages isolés passent par `reglagePartage()`, enveloppés par script.
+    - Les fabriques prennent leur nom en paramètre générique, et les côtés des glissandi et les grandeurs du micromontage sont des unions de littéraux.
+    - Les numéros des bandes, des opérateurs, des boîtes et des pistes sont des tuples littéraux. `satisfies` tient chaque tuple au compte du calcul : un septième opérateur ne compile pas. Les champs de la partition Csound sont écrits dans une table.
+    - `REGLES` et `RANGS` passent en `as const`, et le montage perd son `as any[]`.
+  - **Deux lectures conditionnelles.**
+    - `executerContinuation` n'exige « Unités cachées » que de la fiche LSTM : la fiche AR ne le déclare pas.
+    - `echelleLue` n'exige « Bandes » que de l'appel qui ne donne pas leur nombre. La liste filtrée de « Image → spectrogramme » prend un prédicat de type qui retire « Bandes » ; sans lui, elle passait pour le déclarer.
+  - **Les cinq dernières aides** prennent `ContexteQuiDeclare` : `executerContinuation`, `tailleDe`, `echelleLue`, `estStereo`, et `trajectoireDe` avec sa `piste` imbriquée. Le garde accepte désormais une fonction imbriquée dans une aide vérifiée, puisqu'elle ne lit qu'à travers le contexte de cette aide. Sa liste d'aides ne garde que l'exécuteur de `effet()`, qui lit par construction.
+  - **Vingt-huit fiches repassent à `fiche()`**, par script. Deux lectures seulement ont été refusées, les champs p4 à p7 de la partition Csound lus par leur rang. **La liste du garde est vide** : 478 fiches vérifiées, compté par le garde, et aucune sans noms vérifiés. `ficheSansNomsVerifies` ne sert plus à aucune fiche, mais reste dans `plugins/fiche.ts`.
+  - **Vu rouge dans un arbre séparé, hors de `E:\attic`**, sur douze fautes plantées une à la fois, le témoin restant vert :
+    - une faute de frappe dans l'aide de continuation, dans un nom de cloche en gabarit, dans une borne de trajectoire de la `piste` imbriquée, dans le montage et dans un côté de glissando : `tsc`, TS2345 ;
+    - la fiche AR qui demande le mode LSTM : `tsc` la refuse, faute de déclarer « Unités cachées » ;
+    - l'image lue sans le nombre de bandes : `tsc` la refuse, faute de déclarer « Bandes » ;
+    - un septième numéro d'opérateur : `tsc`, TS1360, sur le `satisfies` ;
+    - les règles du solveur de nouveau en tableau simple : `tsc` refuse la fiche ;
+    - une aide revenue aux noms libres, puis l'aide qui contient la `piste` : le cas des aides nomme l'une, puis la `piste` ;
+    - une fiche qui retourne aux noms non vérifiés : le cas de la liste.
+  - **Mesuré** : 397 lignes ajoutées et 313 retirées dans dix-huit fichiers, commentaires compris, CHANGELOG non compté.
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, la liste de `master` ligne pour ligne ;
+    - passe complète verte, 724 fichiers et 10 381 cas, 3 fichiers et 14 cas sautés, en 23 min 48 s ;
+    - `npm run build` passe, et l'application construite, lancée par Electron sur un profil jetable, mène les quatorze nœuds de `canon-de-proportions` à leur terme sans erreur de page, avec les neuf mêmes requêtes `blob:` que `master` ;
+    - `empreintes-exemples` rend les quatorze exemples surveillés identiques, la banque General MIDI posée dans l'arbre par lien physique.
+
 - **LA CLÉ ET LA TONIQUE GARDENT LEUR NOM : DIX-NEUF FICHES DE PLUS SONT VÉRIFIÉES.** Pièce 2e du plan `work/plan-reglages-par-nom-2026-11-11.md`, la famille de la tonalité. Fabien a demandé la suite le 2026-11-12. Posée sur la pièce 2d.
   - **Ce qui élargissait.** `PARAMETRE_CLE` et `PARAMETRE_TONIQUE`, dans `audio/cles.ts`, étaient annotés `ParametreDef` seul, ce qui élargissait leur nom à `string`. Dix-neuf fiches les reprennent en `{ ...PARAMETRE_CLE, doc: "…" }`, et perdaient la vérification de tous leurs réglages.
   - **Ce qui change.** Les deux réglages portent le type que rend `reglagePartage()`, `ParametreDef & { nom: "Clé" }` et son pareil pour « Tonique ». Il est écrit en annotation plutôt que par un import de `plugins/fiche.ts` : `audio/cles.ts` ne tire rien des greffons, et une dépendance de l'audio vers eux est de celles qui ont déjà fait tomber l'application construite.

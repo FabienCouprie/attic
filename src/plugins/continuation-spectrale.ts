@@ -1,79 +1,90 @@
 // plugins/continuation-spectrale.ts — Deux nœuds de prolongation d'une piste
 // par prédiction autoregressive sur son spectrogramme (famille Test zone).
-import { ficheSansNomsVerifies } from "./fiche";
-import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
-import type { ParametreDef } from "../core";
+import { fiche, lecteurDe, reglagePartage, type ContexteQuiDeclare } from "./fiche";
+import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { appliquerContinuationSpectrale, type ContinuationSpectraleResultat } from "../audio/continuation-spectrale";
 import { choixFenetre } from "../audio/fenetres-analyse";
 
-const PARAMETRES_COMMUNS: ParametreDef[] = [
-  {
+const PARAMETRES_COMMUNS = [
+  reglagePartage({
     nom: "Durée générée", nomEn: "Generated duration", type: "curseur",
     plage: [1, 60], pas: 1, defaut: 5, unite: "s",
     doc: "Durée de la prolongation à générer, en secondes.",
     docEn: "Duration of the continuation to generate, in seconds.",
-  },
-  {
+  }),
+  reglagePartage({
     nom: "FFT", nomEn: "FFT", type: "choix",
     ...choixFenetre([512, 1024, 2048, 4096]),
     defaut: "2048", defautEn: "2048",
     doc: "Taille de la fenêtre FFT. Détermine la résolution fréquentielle et le nombre de bins.",
     docEn: "FFT window size. Determines frequency resolution and number of bins.",
-  },
-  {
+  }),
+  reglagePartage({
     nom: "Hop", nomEn: "Hop", type: "nombre", plage: [10, 100], pas: 1, defaut: 25, unite: "%",
     doc: "Saut entre deux fenêtres consécutives, en pourcentage de la taille FFT. 25 % = 75 % de recouvrement.",
     docEn: "Hop size between consecutive windows, as a percentage of FFT size. 25% = 75% overlap.",
-  },
-  {
+  }),
+  reglagePartage({
     nom: "Historique", nomEn: "History", type: "nombre", plage: [1, 32], pas: 1, defaut: 4, unite: "frames",
     doc: "Nombre de frames passées utilisées pour prédire la frame suivante. Plus c'est grand, plus le contexte est long (mais plus lourd à entraîner).",
     docEn: "Number of past frames used to predict the next frame. Larger = more context (but heavier to train).",
-  },
-  {
+  }),
+  reglagePartage({
     nom: "Époques", nomEn: "Epochs", type: "nombre", plage: [1, 1000], pas: 1, defaut: 100, unite: "",
     doc: "Nombre maximal d'époques d'entraînement. Avec « Budget » à 0, le nombre d'époques est borné d'après la taille du calcul ; avec un budget positif, l'entraînement s'arrête quand ce temps est écoulé.",
     docEn: "Maximum number of training epochs. With « Budget » at 0, the number of epochs is bounded by the size of the computation; with a positive budget, training stops once that time has elapsed.",
-  },
-  {
+  }),
+  reglagePartage({
     nom: "Apprentissage", nomEn: "Learning rate", type: "nombre", plage: [0.0001, 0.01], pas: 0.0001, defaut: 0.001, unite: "",
     doc: "Taux d'apprentissage de l'optimiseur Adam.",
     docEn: "Adam optimizer learning rate.",
-  },
-  {
+  }),
+  reglagePartage({
     nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1, unite: "",
     doc: "Graine pour l'initialisation des poids. Même piste, mêmes réglages et même graine rendent le même résultat avec « Budget » à 0. Avec un budget positif qui arrête l'entraînement, le point d'arrêt dépend de la machine et deux passes diffèrent ; le message le dit alors.",
     docEn: "Seed for weight initialization. Same track, same settings and same seed give the same result with « Budget » at 0. With a positive budget that stops training, the stopping point depends on the machine and two passes differ; the message says so when that happens.",
-  },
-  {
+  }),
+  reglagePartage({
     nom: "Budget", nomEn: "Budget", type: "nombre", plage: [0, 300000], pas: 1000, defaut: 0, unite: "ms",
     doc: "Budget temps d'entraînement en millisecondes. 0 = automatique : le nombre d'époques est borné d'après la taille du calcul, et le résultat est reproductible. Un budget positif qui interrompt l'entraînement rend le résultat non reproductible, le point d'arrêt dépendant de la machine ; voir « Graine ».",
     docEn: "Training time budget in milliseconds. 0 = automatic: the number of epochs is bounded by the size of the computation, and the result is reproducible. A positive budget that interrupts training makes the result non reproducible, the stopping point depending on the machine; see « Seed ».",
-  },
+  }),
 ];
 
-const PARAMETRES_LSTM: ParametreDef[] = [
-  {
+const PARAMETRES_LSTM = [
+  reglagePartage({
     nom: "Unités cachées", nomEn: "Hidden units", type: "nombre", plage: [16, 512], pas: 16, defaut: 128, unite: "",
     doc: "Nombre d'unités cachées de la couche LSTM. Plus c'est grand, plus le modèle peut mémoriser de contexte (mais plus lent).",
     docEn: "Number of hidden units in the LSTM layer. Larger = more context memory (but slower).",
-  },
+  }),
 ];
 
-function executerContinuation(mode: "ar" | "lstm", ctx: ContexteAudio) {
+type NomCommun = (typeof PARAMETRES_COMMUNS)[number]["nom"];
+type NomLstm = (typeof PARAMETRES_LSTM)[number]["nom"];
+
+/**
+ * Le rendu commun aux deux modes.
+ *
+ * CHAQUE MODE EXIGE DE SA FICHE CE QU'IL LIT. « Unités cachées » n'est lu qu'en LSTM, et la fiche AR
+ * ne le déclare pas : le compilateur le demande à la seule fiche LSTM.
+ */
+function executerContinuation<N extends string, M extends "ar" | "lstm">(
+  mode: M, ctx: ContexteQuiDeclare<N, M extends "lstm" ? NomCommun | NomLstm : NomCommun>,
+) {
+  const lu = lecteurDe<NomCommun | NomLstm>(ctx);
   const audio = entreeAudio(ctx, 0);
   if (sansEntree(audio)) return audio;
-  const fftSize = parseInt(ctx.paramTexte("FFT", "2048"), 10);
-  const hopPercent = ctx.paramNombre("Hop", 25);
-  const dureeGenereS = ctx.paramNombre("Durée générée", 5);
-  const history = ctx.paramNombre("Historique", 4);
-  const epochs = ctx.paramNombre("Époques", 100);
-  const learningRate = ctx.paramNombre("Apprentissage", 0.001);
-  const seed = ctx.paramNombre("Graine", 1);
-  const budget = ctx.paramNombre("Budget", 0);
+  const fftSize = parseInt(lu.paramTexte("FFT", "2048"), 10);
+  const hopPercent = lu.paramNombre("Hop", 25);
+  const dureeGenereS = lu.paramNombre("Durée générée", 5);
+  const history = lu.paramNombre("Historique", 4);
+  const epochs = lu.paramNombre("Époques", 100);
+  const learningRate = lu.paramNombre("Apprentissage", 0.001);
+  const seed = lu.paramNombre("Graine", 1);
+  const budget = lu.paramNombre("Budget", 0);
 
   return appliquerContinuationSpectrale(audio, {
     mode,
@@ -81,7 +92,7 @@ function executerContinuation(mode: "ar" | "lstm", ctx: ContexteAudio) {
     hopPercent,
     dureeGenereS,
     history,
-    hiddenUnits: mode === "lstm" ? ctx.paramNombre("Unités cachées", 128) : 0,
+    hiddenUnits: mode === "lstm" ? lu.paramNombre("Unités cachées", 128) : 0,
     epochs,
     learningRate,
     seed,
@@ -107,7 +118,7 @@ function executerContinuation(mode: "ar" | "lstm", ctx: ContexteAudio) {
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "continuation-spectrale-ar",
     nom: "Continuation AR",
     nomEn: "AR Continuation",
@@ -122,7 +133,7 @@ export const fiches: FicheAudio[] = ([
       return executerContinuation("ar", ctx);
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "continuation-spectrale-lstm", nomDicte: "continuation du spectre",
     nom: "Continuation LSTM",
     nomEn: "LSTM Continuation",

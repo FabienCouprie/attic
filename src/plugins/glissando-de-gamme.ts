@@ -8,7 +8,7 @@
 // sa tierce par tous les quarts de ton intermédiaires, et aucune de ces hauteurs ne tombe sur une
 // touche. Un clavier ne peut pas jouer ce trajet ; un glissement continu, si.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { GAMMES_REUNIES, degresDUneOctave } from "../audio/gammes-reunies";
 import { trajetDesVoix, voixDuGlissando } from "../audio/glissando";
@@ -20,27 +20,35 @@ import { avecDoc } from "./notices";
 const en = () => langueCourante() === "en";
 
 
-/** Les trois réglages d'un côté, déclarés une fois pour les deux. */
-function cote(suffixeFr: string, suffixeEn: string, gamme: number, octaveDefaut: number) {
+/** Les deux côtés du glissement, tels que les noms de leurs réglages les portent. */
+type Cote = "de départ" | "d'arrivée";
+
+/**
+ * Les trois réglages d'un côté, déclarés une fois pour les deux.
+ *
+ * LE CÔTÉ EST UN LITTÉRAL, et les trois noms qu'on en tire, « Gamme de départ » et les autres, sont
+ * vérifiés comme des noms écrits en clair, à la déclaration comme à la lecture.
+ */
+function cote<S extends Cote>(suffixeFr: S, suffixeEn: string, gamme: number, octaveDefaut: number) {
   return [
-    { nom: `Gamme ${suffixeFr}`, nomEn: `${suffixeEn} scale`, type: "choix" as const,
+    reglagePartage({ nom: `Gamme ${suffixeFr}`, nomEn: `${suffixeEn} scale`, type: "choix" as const,
       options: GAMMES_REUNIES.map((g) => g.fr), optionsEn: GAMMES_REUNIES.map((g) => g.en),
       optionIds: GAMMES_REUNIES.map((g) => g.id),
       defaut: GAMMES_REUNIES[gamme].fr, defautEn: GAMMES_REUNIES[gamme].en,
       doc: `La gamme ${suffixeFr}. Les premières de la liste sont comptées en demi-tons, les suivantes en cents.`,
-      docEn: `The ${suffixeEn.toLowerCase()} scale. The first in the list are counted in semitones, the rest in cents.` },
-    { ...PARAMETRE_TONIQUE, nom: `Tonique ${suffixeFr}`, nomEn: `${suffixeEn} tonic`,
+      docEn: `The ${suffixeEn.toLowerCase()} scale. The first in the list are counted in semitones, the rest in cents.` }),
+    reglagePartage({ ...PARAMETRE_TONIQUE, nom: `Tonique ${suffixeFr}`, nomEn: `${suffixeEn} tonic`,
       doc: `La tonique de cette gamme. Elle déplace tous ses degrés sans changer les écarts entre eux.`,
-      docEn: `That scale's tonic. It moves every degree without changing the gaps between them.` },
-    { nom: `Octave ${suffixeFr}`, nomEn: `${suffixeEn} octave`, type: "curseur" as const,
+      docEn: `That scale's tonic. It moves every degree without changing the gaps between them.` }),
+    reglagePartage({ nom: `Octave ${suffixeFr}`, nomEn: `${suffixeEn} octave`, type: "curseur" as const,
       plage: [0, 8] as [number, number], pas: 1, defaut: octaveDefaut,
       doc: `L'octave de cette tonique. Quatre place le do central.`,
-      docEn: `That tonic's octave. Four places middle C.` },
+      docEn: `That tonic's octave. Four places middle C.` }),
   ];
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "glissando-de-gamme", nomDicte: "glissement de gamme", nom: "Glissando de gamme", nomEn: "Scale Glissando",
     univers: "Entrées", famille: "Génération",
     resume: "Fait glisser tous les degrés d'une gamme vers ceux d'une autre, chacun vers celui de même rang.",
@@ -125,7 +133,7 @@ The « Journey » output gives, degree by degree, the starting note, the arrival
         docEn: "The peak level. It accounts for the number of voices and partials." },
     ],
     async executer(ctx) {
-      const agregat = (suffixe: string, defaut: string) => {
+      const agregat = (suffixe: Cote, defaut: string) => {
         const id = ctx.paramTexte(`Gamme ${suffixe}`, defaut);
         const demiTon = parseInt(ctx.paramTexte(`Tonique ${suffixe}`, "0"), 10) || 0;
         const octave = Math.round(ctx.paramNombre(`Octave ${suffixe}`, 3));

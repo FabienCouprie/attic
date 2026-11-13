@@ -8,9 +8,8 @@
 // sa place, elle ne se recalcule pas dedans.
 
 import type { DesigneMontage } from "./formes-des-canaux";
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
-import type { ParametreDef } from "../core";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { dureeSequence, estSequence, type Sequence } from "../audio/sequence";
@@ -23,8 +22,15 @@ const en = () => langueCourante() === "en";
 /** Le nombre de boîtes déclarées ; l'interface n'en montre que quelques-unes au départ. */
 const BOITES = 8;
 
+/**
+ * Les numéros des boîtes, un littéral chacun : c'est ce qui fait vérifier les vingt-quatre noms qu'on
+ * en tire, à la déclaration comme à la lecture. Calculé depuis le rang, `Début ${k + 1}` valait
+ * `string`. `satisfies` tient leur nombre égal à celui des boîtes.
+ */
+const NUMEROS = [1, 2, 3, 4, 5, 6, 7, 8] as const satisfies { length: typeof BOITES };
+
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "maquette",
     nom: "Maquette", nomEn: "Maquette",
     univers: "Traitement", famille: "Montage",
@@ -44,17 +50,17 @@ export const fiches: FicheAudio[] = ([
       { nom: "Analyse", nomEn: "Analysis", type: "texte" },
     ],
     parametres: [
-      ...Array.from({ length: BOITES }, (_, k): ParametreDef[] => [
-        { nom: `Début ${k + 1}`, nomEn: `Start ${k + 1}`, plage: [0, 600], pas: 0.01, defaut: k * 2, unite: "s", port: k,
-          doc: `Instant où commence la boîte ${k + 1}.`,
-          docEn: `Instant at which box ${k + 1} starts.` },
-        { nom: `Durée ${k + 1}`, nomEn: `Length ${k + 1}`, plage: [0, 600], pas: 0.01, defaut: 0, unite: "s", port: k,
-          doc: `Durée imposée à la boîte ${k + 1}, son contenu étant étiré dans le même rapport. À zéro, la boîte garde sa durée propre.`,
-          docEn: `Length imposed on box ${k + 1}, its content being stretched in the same ratio. At zero, the box keeps its own length.` },
-        { nom: `Transposition ${k + 1}`, nomEn: `Transposition ${k + 1}`, plage: [-24, 24], pas: 0.5, defaut: 0, port: k,
-          doc: `Déplacement des hauteurs de la boîte ${k + 1}, en demi-tons.`,
-          docEn: `Shift of box ${k + 1}'s pitches, in semitones.` },
-      ]).flat(),
+      ...NUMEROS.flatMap((n, k) => [
+        reglagePartage({ nom: `Début ${n}`, nomEn: `Start ${n}`, plage: [0, 600], pas: 0.01, defaut: k * 2, unite: "s", port: k,
+          doc: `Instant où commence la boîte ${n}.`,
+          docEn: `Instant at which box ${n} starts.` }),
+        reglagePartage({ nom: `Durée ${n}`, nomEn: `Length ${n}`, plage: [0, 600], pas: 0.01, defaut: 0, unite: "s", port: k,
+          doc: `Durée imposée à la boîte ${n}, son contenu étant étiré dans le même rapport. À zéro, la boîte garde sa durée propre.`,
+          docEn: `Length imposed on box ${n}, its content being stretched in the same ratio. At zero, the box keeps its own length.` }),
+        reglagePartage({ nom: `Transposition ${n}`, nomEn: `Transposition ${n}`, plage: [-24, 24], pas: 0.5, defaut: 0, port: k,
+          doc: `Déplacement des hauteurs de la boîte ${n}, en demi-tons.`,
+          docEn: `Shift of box ${n}'s pitches, in semitones.` }),
+      ]),
       { nom: "Une voix par boîte", nomEn: "One voice per box", type: "choix",
         ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
@@ -67,16 +73,16 @@ export const fiches: FicheAudio[] = ([
       // BRANCHÉES, qui n'est pas son numéro dès qu'on en saute une : la ligne de temps, elle, range
       // par numéro de port, et les confondre ferait porter les réglages d'une boîte par une autre.
       const ports: number[] = [];
-      for (let k = 0; k < BOITES; k++) {
+      for (const [k, n] of NUMEROS.entries()) {
         const recue = ctx.entree(k);
         if (!estSequence(recue) || recue.notes.length === 0) continue;
         ports.push(k);
         blocs.push({
           sequence: recue,
-          debut: ctx.paramNombre(`Début ${k + 1}`, k * 2),
-          duree: ctx.paramNombre(`Durée ${k + 1}`, 0),
-          transposition: ctx.paramNombre(`Transposition ${k + 1}`, 0),
-          nom: `${en() ? "Box" : "Boîte"} ${k + 1}`,
+          debut: ctx.paramNombre(`Début ${n}`, k * 2),
+          duree: ctx.paramNombre(`Durée ${n}`, 0),
+          transposition: ctx.paramNombre(`Transposition ${n}`, 0),
+          nom: `${en() ? "Box" : "Boîte"} ${n}`,
         });
       }
       if (blocs.length === 0) {

@@ -5,7 +5,7 @@
 // calcul est dans `audio/objets-sonores.ts`.
 
 import type { DesigneMontage } from "./formes-des-canaux";
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -23,6 +23,13 @@ import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
 const PISTES = 16;
+
+/**
+ * Les numéros des pistes, un littéral chacun : c'est ce qui garde leurs soixante-quatre noms de
+ * réglage. Calculé depuis le rang, `Début ${k + 1}` valait `string`, et la fiche perdait la
+ * vérification de tous ses noms. `satisfies` tient leur nombre égal à celui des pistes.
+ */
+const NUMEROS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as const satisfies { length: typeof PISTES };
 
 /**
  * Ce que les quatre réglages d'une piste déclarent de leur propre inertie.
@@ -146,7 +153,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [y], message: `${decrites.length} ${en() ? "objects" : "objets"} · ${y.duration.toFixed(2)} s` };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "montage", nom: "Montage", nomEn: "Montage",
     univers: "Traitement", famille: "Montage",
     // SA LIGNE DE TEMPS SE RÈGLE EN ÉCOUTANT, donc son résultat ne doit pas disparaître au premier
@@ -162,7 +169,7 @@ export const fiches: FicheAudio[] = ([
     // pour toutes par la fiche (cf. ui/ports-extensibles.ts).
     entreesExtensibles: { min: 2, defaut: 4 },
     sorties: [{ nom: "Audio", nomEn: "Audio", type: "audio" }],
-    parametres: ([
+    parametres: [
       // IL AGIT SUR LE MÊME ÉTAT QUE LES QUATRE RÉGLAGES DE PISTE, et cesse d'agir au même moment.
       // Les réglages décrivent un montage qu'on n'a pas encore découpé ; dès qu'un morceau est
       // touché, ce sont les morceaux qui font foi, et ce calage avec eux. Le dire ici évite qu'on
@@ -172,29 +179,32 @@ export const fiches: FicheAudio[] = ([
         defaut: "Non", defautEn: "No",
         doc: "Décale les pistes de l'écart réel entre leurs heures d'enregistrement, lues dans le bloc BWF de leurs fichiers. La plus ancienne donne l'origine. Sans effet tant que moins de deux pistes portent une heure, et dès qu'un morceau a été déplacé à la main.",
         docEn: "Offsets the tracks by the real gap between their recording times, read from the BWF chunk of their files. The oldest one gives the origin. No effect while fewer than two tracks carry a time, or once a clip has been moved by hand." },
-    ] as any[]).concat(Array.from({ length: PISTES }, (_, k) => [
+      // LA LISTE N'EST PLUS AFFIRMÉE `any[]` : l'affirmation effaçait tous ses noms, et le type de ses
+      // soixante-quatre réglages de piste avec eux.
+      ...NUMEROS.flatMap((n, k) => [
       // LES QUATRE PORTENT LA RÈGLE QUI LES ÉTEINT, et aucune ne la portait. La notice la disait,
       // et personne ne lit la notice en tirant une glissière qui ne fait rien. Le contrat de
       // composant du dépôt l'exige : un réglage légitimement inerte porte sa raison à côté de lui.
       // Relevé par Fabien sur le niveau, le seul des quatre dont le geste de remplacement manquait.
-      { nom: `Début ${k + 1}`, nomEn: `Start ${k + 1}`, type: "nombre", plage: [-600, 3600], pas: 0.01, defaut: k * 2, unite: "s", port: k, ...inertieDePiste(k),
+      reglagePartage({ nom: `Début ${n}`, nomEn: `Start ${n}`, type: "nombre", plage: [-600, 3600], pas: 0.01, defaut: k * 2, unite: "s", port: k, ...inertieDePiste(k),
         doc: `Instant où commence la piste ${k + 1}. Négatif : le son est rogné d'autant. Ce réglage cesse d'agir sur cette piste dès qu'un morceau y est posé sur la ligne de temps ; c'est alors le glissement de la barre qui place le morceau.`,
-        docEn: `Instant at which track ${k + 1} starts. Negative: the sound is trimmed by that much. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the bar is then dragged to place the clip.` },
+        docEn: `Instant at which track ${k + 1} starts. Negative: the sound is trimmed by that much. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the bar is then dragged to place the clip.` }),
       // LES QUATRE PORTENT MAINTENANT LEUR INERTIE, et non plus seulement sa mention dans leur doc.
       // Depuis que la barre et la glissière sont le même nombre, il ne reste qu'un cas où ces
       // réglages ne décrivent plus leur piste : elle est coupée en plusieurs morceaux, ou rognée.
       // L'inspecteur grise alors la glissière et montre la raison, sans rien savoir du montage.
-      { nom: `Gain ${k + 1}`, nomEn: `Gain ${k + 1}`, type: "curseur", plage: [GAIN_MIN, GAIN_MAX], pas: GAIN_PAS, defaut: 0, unite: "dB", port: k,
+      reglagePartage({ nom: `Gain ${n}`, nomEn: `Gain ${n}`, type: "curseur", plage: [GAIN_MIN, GAIN_MAX], pas: GAIN_PAS, defaut: 0, unite: "dB", port: k,
         ...inertieDePiste(k),
         doc: `Niveau de la piste ${k + 1}. Ce réglage cesse d'agir sur cette piste dès qu'un morceau y est posé sur la ligne de temps ; c'est alors la poignée de niveau, en bas à droite de la barre, qui se tire vers le haut ou vers le bas.`,
-        docEn: `Level of track ${k + 1}. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the level handle, at the bar's bottom right, is then dragged up or down.` },
-      { nom: `Fondu entrée ${k + 1}`, nomEn: `Fade in ${k + 1}`, type: "nombre", plage: [0, 60000], pas: 1, defaut: 10, unite: "ms", port: k, ...inertieDePiste(k),
+        docEn: `Level of track ${k + 1}. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the level handle, at the bar's bottom right, is then dragged up or down.` }),
+      reglagePartage({ nom: `Fondu entrée ${n}`, nomEn: `Fade in ${n}`, type: "nombre", plage: [0, 60000], pas: 1, defaut: 10, unite: "ms", port: k, ...inertieDePiste(k),
         doc: `Durée du fondu d'entrée de la piste ${k + 1}. Quelques millisecondes évitent un clic ; plusieurs secondes font paraître le son. Ce réglage cesse d'agir sur cette piste dès qu'un morceau y est posé sur la ligne de temps ; c'est alors la poignée du coin gauche de la barre.`,
-        docEn: `Length of track ${k + 1}'s fade in. A few milliseconds avoid a click; several seconds make the sound emerge. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the handle at the bar's left corner takes over.` },
-      { nom: `Fondu sortie ${k + 1}`, nomEn: `Fade out ${k + 1}`, type: "nombre", plage: [0, 60000], pas: 1, defaut: 10, unite: "ms", port: k, ...inertieDePiste(k),
+        docEn: `Length of track ${k + 1}'s fade in. A few milliseconds avoid a click; several seconds make the sound emerge. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the handle at the bar's left corner takes over.` }),
+      reglagePartage({ nom: `Fondu sortie ${n}`, nomEn: `Fade out ${n}`, type: "nombre", plage: [0, 60000], pas: 1, defaut: 10, unite: "ms", port: k, ...inertieDePiste(k),
         doc: `Durée du fondu de sortie de la piste ${k + 1}. Ce réglage cesse d'agir sur cette piste dès qu'un morceau y est posé sur la ligne de temps ; c'est alors la poignée du coin droit de la barre.`,
-        docEn: `Length of track ${k + 1}'s fade out. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the handle at the bar's right corner takes over.` },
-    ])).flat(),
+        docEn: `Length of track ${k + 1}'s fade out. This setting stops acting on this track as soon as a clip is laid on it in the timeline; the handle at the bar's right corner takes over.` }),
+      ]),
+    ],
     async executer(ctx) {
       const sons: Record<number, AudioBuffer> = {};
       const pistes: { piste: number; duree: number }[] = [];

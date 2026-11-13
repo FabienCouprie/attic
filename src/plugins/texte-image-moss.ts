@@ -21,9 +21,8 @@
 // de langue servi par Ollama la rédige avant le dessin, et la sortie « Mise en page » rend le JSON
 // remis au modèle. La méthode et ses mesures sont dans `moss-mise-en-page.ts`. Le réglage s'ouvre sur
 // « Aucune », ce qui garde le composant tel qu'il était pour qui n'a pas Ollama.
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
-import type { ParametreDef } from "../core";
 import { resoudreGraine } from "../core/hasard";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -46,12 +45,12 @@ const COTE_DEFAUT = 320;
 const ETAPES_DEFAUT = 30;
 
 /** Un côté de l'image : le modèle veut un multiple de seize, la glissière avance par soixante-quatre. */
-const cote = (nom: string, nomEn: string, doc: string, docEn: string): ParametreDef => ({
+const cote = <N extends string>(nom: N, nomEn: string, doc: string, docEn: string) => reglagePartage({
   nom, nomEn, type: "curseur" as const, plage: [256, 1536], pas: 64, defaut: COTE_DEFAUT, unite: "px", doc, docEn,
 });
 
 export const fiches = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "texte-image-moss", nom: "Texte → image (MOSS)", nomEn: "Text to image (MOSS)",
     univers: "Entrées", famille: "Image",
     resume: "Tire une image d'une description ou d'une mise en page en JSON, avec MOSS-Image.",

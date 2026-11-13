@@ -13,9 +13,8 @@
 // LE CALCUL EST DANS `audio/fm-operateurs.ts`, qui porte en tête la contrainte d'ordre des
 // indices et la raison pour laquelle un niveau n'a pas le même sens des deux côtés.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
-import type { ParametreDef } from "../core";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { FREQUENCE_ECH, versBuffer } from "./instruments-communs";
@@ -31,6 +30,13 @@ const DEFAUTS_NIVEAU = [100, 45, 30, 70, 40, 25];
 const DEFAUTS_DECLIN = [1.5, 1, 0.7, 0.5, 0.4, 0.3];
 
 /**
+ * Les numéros des opérateurs, un littéral chacun : c'est ce qui fait vérifier les dix-huit noms
+ * qu'on en tire, à la déclaration comme à la lecture. Calculé depuis le rang, `Rapport ${k + 1}`
+ * valait `string`. `satisfies` tient leur nombre égal à celui du calcul.
+ */
+const NUMEROS = [1, 2, 3, 4, 5, 6] as const satisfies { length: typeof OPERATEURS };
+
+/**
  * Les trois réglages d'un opérateur, engendrés plutôt que recopiés six fois.
  *
  * ILS SONT RANGÉS PAR OPÉRATEUR ET NON PAR NATURE, parce que l'inspecteur suit l'ordre de
@@ -39,30 +45,25 @@ const DEFAUTS_DECLIN = [1.5, 1, 0.7, 0.5, 0.4, 0.3];
  * fiche d'un paramètre n'ayant pas de champ de groupe, l'ordre est le seul rangement
  * disponible, et en déclarer un que personne ne lit n'aurait rien rangé.
  */
-function reglagesDesOperateurs(): ParametreDef[] {
-  const out: ParametreDef[] = [];
-  for (let k = 0; k < OPERATEURS; k++) {
-    const n = k + 1;
-    out.push(
-      { nom: `Rapport ${n}`, nomEn: `Ratio ${n}`, type: "curseur", plage: [0.1, 16], pas: 0.1,
+function reglagesDesOperateurs() {
+  return NUMEROS.flatMap((n, k) => [
+      reglagePartage({ nom: `Rapport ${n}`, nomEn: `Ratio ${n}`, type: "curseur", plage: [0.1, 16], pas: 0.1,
         defaut: DEFAUTS_RAPPORT[k],
         doc: `Rapport entre la fréquence de l'opérateur ${n} et celle de la note. Un rapport entier donne un spectre harmonique, un rapport non entier une cloche ou un métal.`,
-        docEn: `Ratio between the frequency of operator ${n} and that of the note. A whole ratio gives a harmonic spectrum, a fractional one a bell or a metal.` },
-      { nom: `Niveau ${n}`, nomEn: `Level ${n}`, type: "curseur", plage: [0, 100], pas: 1,
+        docEn: `Ratio between the frequency of operator ${n} and that of the note. A whole ratio gives a harmonic spectrum, a fractional one a bell or a metal.` }),
+      reglagePartage({ nom: `Niveau ${n}`, nomEn: `Level ${n}`, type: "curseur", plage: [0, 100], pas: 1,
         defaut: DEFAUTS_NIVEAU[k], unite: "%",
         doc: `Niveau de l'opérateur ${n}. S'il est porteur dans le branchement choisi, c'est une amplitude ; s'il module, c'est un indice de modulation, et il enrichit alors celui qu'il module. À zéro il est muet, ce qui coupe aussi la pile au-dessus de lui : son rapport et son déclin restent alors sans effet.`,
-        docEn: `Level of operator ${n}. If it is a carrier in the chosen routing, this is an amplitude; if it modulates, it is a modulation index, and it then enriches the one it modulates. At zero it is silent, which also cuts the stack above it: its ratio and its decay then have no effect.` },
-      { nom: `Déclin ${n}`, nomEn: `Decay ${n}`, type: "curseur", plage: [0.05, 10], pas: 0.05,
+        docEn: `Level of operator ${n}. If it is a carrier in the chosen routing, this is an amplitude; if it modulates, it is a modulation index, and it then enriches the one it modulates. At zero it is silent, which also cuts the stack above it: its ratio and its decay then have no effect.` }),
+      reglagePartage({ nom: `Déclin ${n}`, nomEn: `Decay ${n}`, type: "curseur", plage: [0.05, 10], pas: 0.05,
         defaut: DEFAUTS_DECLIN[k], unite: "s",
         doc: `Temps de décroissance de l'opérateur ${n}. Donner aux modulateurs un déclin plus court qu'à la porteuse fait un son qui s'éclaircit en s'éteignant, ce qui est le comportement d'une corde frappée.`,
-        docEn: `Decay time of operator ${n}. Giving the modulators a shorter decay than the carrier makes a sound that clears as it dies away, which is how a struck string behaves.` },
-    );
-  }
-  return out;
+        docEn: `Decay time of operator ${n}. Giving the modulators a shorter decay than the carrier makes a sound that clears as it dies away, which is how a struck string behaves.` }),
+  ]);
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "fm-six-operateurs", nom: "FM à six opérateurs", nomEn: "Six-Operator FM",
     univers: "Entrées", famille: "Synthétiseurs",
     resume: "Six opérateurs et huit branchements : c'est le branchement qui fait le timbre.",
@@ -96,10 +97,10 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const algorithme = ctx.paramTexte("Branchement", "deux-piles");
       const frequence = ctx.paramNombre("Fréquence", 220);
-      const operateurs = Array.from({ length: OPERATEURS }, (_, k) => ({
-        rapport: ctx.paramNombre(`Rapport ${k + 1}`, DEFAUTS_RAPPORT[k]),
-        niveau: ctx.paramNombre(`Niveau ${k + 1}`, DEFAUTS_NIVEAU[k]) / 100,
-        declin: ctx.paramNombre(`Déclin ${k + 1}`, DEFAUTS_DECLIN[k]),
+      const operateurs = NUMEROS.map((n, k) => ({
+        rapport: ctx.paramNombre(`Rapport ${n}`, DEFAUTS_RAPPORT[k]),
+        niveau: ctx.paramNombre(`Niveau ${n}`, DEFAUTS_NIVEAU[k]) / 100,
+        declin: ctx.paramNombre(`Déclin ${n}`, DEFAUTS_DECLIN[k]),
       }));
       const signal = synthetiserFm({
         frequence,
