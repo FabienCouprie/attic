@@ -33,7 +33,7 @@ const TYPES_PORT: Record<string, string> = {
 };
 const TYPES_PARAM: Record<string, string> = {
   nombre: "number", curseur: "slider", choix: "choice", texte: "text", dossier: "folder",
-  sf2instrument: "SoundFont preset", couleurs: "colour list",
+  sf2instrument: "SoundFont preset", couleurs: "colour list", case: "checkbox",
 };
 
 /** Texte sûr dans une cellule de tableau Markdown : barres obliques inverses d'abord, puis barres verticales, chevrons et retours à la ligne. */
@@ -103,6 +103,8 @@ export function defautParam(p: Param): string {
 export function valeursParam(p: Param): string {
   const type = p.type ?? "nombre";
   if (type === "choix") return (p.optionsEn ?? p.options ?? []).join(" / ");
+  // Une case se lit par ses deux états, et non comme un curseur de 0 à 1 au pas de 1.
+  if (type === "case") return "0 / 1";
   // UNE BORNE HAUTE QUI N'EST PAS FINIE SE DIT EN TOUTES LETTRES : le réglage n'a pas de plafond,
   // et « Infinity » dans un tableau se lirait comme une coquille.
   if (p.plage) {
@@ -170,7 +172,7 @@ export function genererCatalogueMarkdown(fiches: FicheAudio[]): string {
   l.push("| control | a numeric control value |");
   l.push("| file | a file of another kind |", "");
   l.push("An input marked **required** must be connected for the component to run. "
-    + "**Parameter types**: *number* and *slider* take a value within the given range; *choice* one of the listed options; *text* free text; *folder* a directory path; "
+    + "**Parameter types**: *number* and *slider* take a value within the given range; *choice* one of the listed options; *checkbox* 0 unchecked or 1 checked; *text* free text; *folder* a directory path; "
     + "*SoundFont preset* an instrument of the loaded SoundFont, or *follow MIDI* to keep the instruments written in the MIDI file. "
     + "Internal parameters that the application sets by itself — such as the path of a file picked from the inspector — are not listed.", "");
 

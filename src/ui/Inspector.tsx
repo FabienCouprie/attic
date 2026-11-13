@@ -401,9 +401,9 @@ export function Inspector({ noeud, def, onChangerParametre, onChargerFichier, on
           ) : genreDomaine(p.type) ? (
             // UN GENRE DÉCLARÉ PAR LE DOMAINE, et l'inspecteur n'a pas à savoir lequel. Il portait
             // ici une branche nommant `"sf2instrument"` et le composant qui le rend : du domaine
-            // audio dans le shell générique.
+            // audio dans le shell générique. La case à cocher du cœur passe aussi par là.
             genreDomaine(p.type)!.rendre({
-              valeur: params[p.nom], defaut: defautP,
+              valeur: params[p.nom], defaut: defautP, libelle: nomP(p),
               onChanger: (v) => onChangerParametre(p.nom, v),
             })
           ) : p.type === "texte" ? (

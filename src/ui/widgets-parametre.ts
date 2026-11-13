@@ -14,14 +14,22 @@
 // OÙ LE DOMAINE DÉCLARE LES SIENS : à la racine de composition, `src/composition.ts`. C'est le seul
 // endroit qui connaît les deux côtés, et le même qui dépose le registre de fiches et les liens de la
 // barre d'outils.
+//
+// UN GENRE DU CŒUR Y EST INSCRIT D'AVANCE : la case à cocher, `case`. Elle n'importe que React et
+// appartient donc au cœur, mais l'inspecteur, en dette de taille à son plafond, ne peut pas prendre
+// une branche de plus ; elle passe par ce registre, déclarée par le shell. `ui/SaisieCase.tsx` dit
+// le reste.
 
 import type { ReactNode } from "react";
+import { GENRE_CASE } from "./SaisieCase";
 
 /** Ce qu'un composant de saisie reçoit : la valeur courante, et de quoi la changer. */
 export interface ProprietesWidget {
   valeur: unknown;
   /** Le défaut déclaré par le paramètre, quand aucune valeur n'a été saisie. */
   defaut: unknown;
+  /** Le nom du réglage dans la langue de l'interface, pour un composant qui n'a pas de texte. */
+  libelle?: string;
   onChanger: (valeur: string | number) => void;
 }
 
@@ -39,7 +47,7 @@ export interface GenreDomaine {
   numerique?: boolean;
 }
 
-let genres: Readonly<Record<string, GenreDomaine>> = {};
+let genres: Readonly<Record<string, GenreDomaine>> = { case: GENRE_CASE };
 
 /** Le domaine déclare ses genres de paramètre. Appelé une fois, avant le premier rendu. */
 export function declarerGenresParametre(declares: Record<string, GenreDomaine>): void {
