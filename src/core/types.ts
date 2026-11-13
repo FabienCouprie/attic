@@ -196,9 +196,15 @@ export interface PortDef {
  * `couleurs` EN FAIT PARTIE, ET CE N'EST PAS UNE EXCEPTION : une liste de couleurs se saisit par un
  * composant qui n'importe que React. N'importe quel domaine peut en vouloir une, comme il peut
  * vouloir un champ de texte ou un chemin de fichier.
+ *
+ * `case` EST UNE CASE À COCHER, ET SA VALEUR EST UN NOMBRE : 0 décochée, 1 cochée. Un booléen
+ * n'aurait pas de place dans `parametres`, qui ne range que des nombres et des textes, et un nombre
+ * s'y relit, se compare au défaut et se remet à zéro par les mêmes chemins qu'un curseur. Une fiche
+ * la déclare avec `defaut: 0` quand l'option est nouvelle : un graphe enregistré sans elle la relit
+ * décochée, donc tel qu'il était.
  */
 export type GenreParametreGenerique =
-  | "choix" | "curseur" | "texte" | "fichier" | "dossier" | "nombre" | "couleurs";
+  | "choix" | "curseur" | "texte" | "fichier" | "dossier" | "nombre" | "couleurs" | "case";
 
 /**
  * Le genre d'un paramètre : l'un de ceux du cœur, ou un genre propre au domaine.

@@ -283,6 +283,11 @@ export interface OptionsGenerateur {
   exposant?: number;
   graine?: number;
   cadence?: number;
+  /**
+   * Retourne la courbe autour de l'axe horizontal tracé à un demi : chaque valeur v devient 1 − v.
+   * Absent : la courbe telle que la forme la trace, au bit près.
+   */
+  inverser?: boolean;
 }
 
 // ── Les lois de probabilité, tracées comme des courbes ──────────────────────────
@@ -467,8 +472,28 @@ function tracerLoi(n: number, loi: Loi): Float32Array {
  * La suite logistique est là pour une raison précise : sept nœuds d'Attic l'ont chacun
  * réimplémentée dans leur coin. Une source unique branchée sur n'importe quel effet fait le même
  * travail, et sur les cent dix-huit plutôt que sur sept.
+ *
+ * LE RETOURNEMENT SE FAIT SELON LES VALEURS, ET NON SELON LE TEMPS : décidé par Fabien le
+ * 2026-11-13, sur le relevé des deux. Ils ne coïncident que pour la rampe, la sigmoïde centrée et le
+ * carré à nombre entier de cycles. Selon le temps, aux réglages par défaut, la gaussienne centrée
+ * bougeait de moins d'un millième, le sinus et le triangle de moins d'un centième : l'option aurait
+ * paru inerte sur trois formes.
+ * Selon les valeurs, elle change toute courbe qui ne vaut pas un demi partout.
+ *
+ * IL S'APPLIQUE EN DERNIER, sur la courbe entière, et ne touche à rien quand il n'est pas demandé :
+ * un graphe enregistré avant l'option rend la même courbe au bit près.
  */
 export function engendrer(o: OptionsGenerateur): Courbe {
+  const courbe = tracer(o);
+  if (o.inverser) {
+    const v = courbe.valeurs;
+    for (let i = 0; i < v.length; i++) v[i] = 1 - v[i];
+  }
+  return courbe;
+}
+
+/** La courbe que la forme trace, avant tout retournement. */
+function tracer(o: OptionsGenerateur): Courbe {
   const cadence = o.cadence ?? CADENCE;
   const n = Math.max(1, Math.round(o.dureeSec * cadence));
   // Une loi se trace d'un bloc, et non valeur par valeur : son sommet n'est connu qu'une fois
