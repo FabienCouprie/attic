@@ -3,6 +3,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, it, expect, vi } from "vitest";
 import { writeMidi } from "midi-file";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { bufferVersWavBlob } from "../audio/io";
 import { valeurCanoniqueChoix } from "../i18n";
 import { ctxDEssai } from "../core/contexte-essai";

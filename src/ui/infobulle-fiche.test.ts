@@ -7,7 +7,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { contenuInfobulle, positionInfobulle } from "./infobulle-fiche";
-import { toutesLesFiches } from "../plugins";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 import type { FicheAudio } from "../audio/types-domaine";
 import type { FormePort } from "../core/typesFlux";
 

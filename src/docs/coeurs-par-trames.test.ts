@@ -7,7 +7,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { toutesLesFiches } from "../plugins";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 import { appelsDe, coeursParTrames, fonctionsDuFichier, fonctionsParTrames } from "./coeurs-par-trames";
 
 const RACINE = resolve(__dirname, "../..");

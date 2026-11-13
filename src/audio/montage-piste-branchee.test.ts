@@ -52,7 +52,7 @@ describe("le projet de Fabien, tel qu'il est enregistré", () => {
 describe("l'exécuteur du montage, nourri des données de ce projet", () => {
   // Un son constant par piste, assez court pour que la piste 3, de 18,56 à 19,56 s, sonne seule.
   async function lancer(data: Record<string, unknown>) {
-    const { toutesLesFiches } = await import("../plugins");
+    const { toutesLesFiches } = await import("../plugins/catalogue-pret");
     await import("./adaptateur");
     const fiche = (toutesLesFiches as { id: string; executer: (ctx: unknown) => Promise<{ valeurs: unknown[]; message?: string }> }[])
       .find((f) => f.id === "montage")!;

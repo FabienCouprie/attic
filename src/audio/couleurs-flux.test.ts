@@ -12,6 +12,7 @@
 // une couleur de plus sans autoriser le retour du défaut.
 import { describe, expect, it } from "vitest";
 import { registre } from "./adaptateur";
+import "../plugins/catalogue-pret";
 
 /** Un composant sRGB, linéarisé. */
 const lineaire = (c: number): number => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));

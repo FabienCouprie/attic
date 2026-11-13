@@ -5,6 +5,7 @@ import { publierFrequenceDeTravail } from "../audio/frequence-de-travail";
 import { describe, it, expect } from "vitest";
 import "node-web-audio-api/polyfill.js";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = registre.trouverDef("glissando-risset")!;

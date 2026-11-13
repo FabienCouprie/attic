@@ -27,8 +27,8 @@ describe("la racine de composition", () => {
       .toBeGreaterThan(3);
     expect(imports[0], [
       "`./composition` doit être le PREMIER import de main.tsx.",
-      "Les imports sont évalués avant le corps du module, et `ui/App.tsx` réclame le registre",
-      "dès son chargement : déposé plus tard, il arrive trop tard.",
+      "Les imports sont évalués avant le corps du module : déposés plus tard, le registre, les",
+      "vues et les services arriveraient après les modules qui les réclament.",
     ].join("\n")).toBe("./composition");
   });
 

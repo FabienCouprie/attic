@@ -12,7 +12,7 @@
 // produire en silence le jour où deux nœuds se retrouvent avec le même résumé.
 import { describe, expect, it } from "vitest";
 import { questionsCatalogue, type FicheQuiz } from "./catalogue";
-import { toutesLesFiches } from "../plugins";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 import { choixLangue } from "./types";
 
 const fiche = (id: string, nom: string, resume: string, univers: string, famille: string): FicheQuiz =>

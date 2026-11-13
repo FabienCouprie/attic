@@ -16,7 +16,7 @@
 // défaut, et exige qu'elle se déclare en erreur. À vide, aucune ne peut avoir travaillé : celle qui
 // annoncerait une réussite mentirait forcément.
 import { describe, expect, it } from "vitest";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 import { estResultatEnErreur } from "../core/execution";
 import { ctxDEssai } from "../core/contexte-essai";
 

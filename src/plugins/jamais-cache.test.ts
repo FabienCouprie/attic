@@ -14,7 +14,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 /** Toutes les sources de composants, hors cas de test. */
 function sources(dossier = join("src", "plugins")): string[] {

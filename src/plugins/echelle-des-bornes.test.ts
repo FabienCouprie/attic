@@ -19,7 +19,7 @@ import { describe, expect, it } from "vitest";
 import { join } from "node:path";
 import { estUniteMultiplicative } from "../audio/courbe";
 import { appelsDeReglage } from "../docs/appels-de-reglage";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 describe("l'échelle des bornes d'un réglage modulé", () => {
   it("UNE BORNE EN UNITÉ MULTIPLICATIVE LUE PAR `reglageModule` DEMANDE SON ÉCHELLE", () => {

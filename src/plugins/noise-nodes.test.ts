@@ -2,6 +2,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { validerGraphe } from "../core/validation";
 import { resoudreEntree } from "../core/graphe";
 import { calculerProfilBruit, reduireBruit } from "../audio/effets-bruit";

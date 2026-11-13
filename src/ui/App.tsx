@@ -10,8 +10,6 @@ import "@xyflow/react/dist/style.css";
 
 import { trouverMeta, estFrontiere, type AreteG, type NoeudG } from "../core";
 
-import "../audio/adaptateur";
-
 const tousLesPlugins = () => registreUI().tousLesPlugins();
 import { useI18n, defautParametre, defautCanoniqueChoix } from "../i18n";
 
@@ -56,42 +54,14 @@ import "./atelier.css";
 import "./theme-violet.css";
 import "./clavier.css";
 
-// Forcer l'enregistrement des plugins
-import "../audio/adaptateur";
-
-import { chargerMetasLocaux } from "./metasLocaux";
 import { useFenetresPartagees } from "./hooks/useFenetresPartagees";
-import { installerMetasExemples } from "../plugins/meta-exemples";
-import { chargerNodesInstalles } from "../core";
 // LE BAC SE POSE EN S'IMPORTANT : sans lui, un nœud installé refuse de s'exécuter, et c'est voulu.
 import "./bac-a-sable-noeud";
 import { registreUI } from "./registre-actif";
 import { demarrage, noterFichierPropre, ouvrirNouvelleFenetre } from "./fenetre";
-// Restaure les données de backup si on vient d'une mise à jour (synchrone)
-const api0 = (window as any).api;
-if (api0?.majRestaurerBackupSync) {
-  const backup = api0.majRestaurerBackupSync();
-  if (backup) {
-    console.log("[attic] Restauration backup post-mise-à-jour");
-    if (backup.metas) localStorage.setItem("attic-metas", backup.metas);
-    if (backup.encours) localStorage.setItem("attic-encours", backup.encours);
-    if (backup.lang) localStorage.setItem("attic-lang", backup.lang);
-    if (backup.nodesInstalles) localStorage.setItem("attic-nodes-installes", backup.nodesInstalles);
-  }
-}
-console.log(`[attic] Plugins avant chargerMetasLocaux: ${tousLesPlugins().length}`);
-// Métas dont un sous-nœud référence un plugin introuvable (renommé/supprimé) :
-// non réinjectés dans le catalogue par chargerMetasLocaux (qui les garde en
-// stockage), mais signalés après le premier rendu (cf. useEffect plus bas) —
-// sinon ils disparaissent de la palette sans qu'aucune trace n'explique pourquoi.
-const metasNonRestaures = chargerMetasLocaux();
-installerMetasExemples();
-// Restaure les nodes installés dynamiquement (.zip) avant le premier rendu. Leur CODE, lui, ne
-// s'évalue qu'au premier run, dans le cadre isolé que l'import ci-dessus a posé.
-chargerNodesInstalles();
-
-// Diagnostic : vérifier que les plugins sont bien chargés
-const nbPlugins = tousLesPlugins().length; console.log("[attic] Plugins charg�s:", nbPlugins);
+// LE DÉMARRAGE ATTEND LE CATALOGUE, et ne se fait donc plus au chargement de ce module : voir
+// `demarrage-atelier.ts`, que `main.tsx` appelle avant de peindre.
+import { demarrageAtelier } from "./demarrage-atelier";
 
 // Le type d'un nœud du canevas vit dans `ui/noeud-atelier.ts` ; nodeTypes/edgeTypes dans
 // `reactflowTypes.ts` (hors du cycle HMR d'App.tsx) pour éviter l'avertissement React Flow #002.
@@ -116,6 +86,7 @@ export default function App() {
 
 function Atelier() {
   const { t, lang } = useI18n();
+  const { metasNonRestaures, nbPlugins } = demarrageAtelier();
   // Références stables pour React Flow : évite l'avertissement #002 lors des
   // re-rendus / hot-reload, même si le module importé est ré-évalué.
   const nodeTypes = useMemo(() => nodeTypesImport, []);
@@ -175,7 +146,7 @@ function Atelier() {
 
   // Avertit (une fois, après le premier rendu) si des méta-composants n'ont pas
   // pu être réinjectés dans le catalogue — sinon leur disparition silencieuse
-  // (cf. metasNonRestaures, calculé au chargement du module) passe pour une
+  // (cf. metasNonRestaures, relevé par `demarrerAtelier`) passe pour une
   // perte de données côté sauvegarde alors que la cause est un plugin renommé
   // ou supprimé depuis. Toujours en stockage (metasLocaux.ts) : rien n'est perdu.
   useEffect(() => {

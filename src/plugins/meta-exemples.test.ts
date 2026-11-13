@@ -19,6 +19,7 @@ import "node-web-audio-api/polyfill.js";
 import { beforeEach, describe, expect, it } from "vitest";
 import { enregistrerMeta, supprimerMeta, tousLesMetas, type MetaComposant } from "../core";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { installerMetasExemples } from "./meta-exemples";
 
 const ID = "meta-synth-soustractif";

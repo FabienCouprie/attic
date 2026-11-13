@@ -11,20 +11,26 @@
 //
 // POURQUOI UN MODULE À PART, ET POURQUOI IL DOIT ÊTRE IMPORTÉ EN PREMIER.
 //
-// `ui/App.tsx` fait son démarrage AU CHARGEMENT DU MODULE : il restaure une sauvegarde, relit les
-// méta-composants locaux, installe les métas d'exemple, relit les nodes installés. Tout cela touche
-// au registre. Or les imports d'un module sont évalués avant son corps : si les dépôts étaient
-// écrits dans le corps de `main.tsx`, ils auraient lieu APRÈS l'évaluation de `App.tsx`, et le
-// registre serait réclamé avant d'avoir été déposé. C'est exactement ce qui est arrivé, et
-// l'application s'est arrêtée sur « Registre UI non configuré » avant de peindre une seule fois.
+// `ui/App.tsx` faisait son démarrage AU CHARGEMENT DU MODULE : il restaurait une sauvegarde,
+// relisait les méta-composants locaux, installait les métas d'exemple, relisait les nodes installés.
+// Tout cela touche au registre. Or les imports d'un module sont évalués avant son corps : si les
+// dépôts étaient écrits dans le corps de `main.tsx`, ils auraient lieu APRÈS l'évaluation de
+// `App.tsx`, et le registre serait réclamé avant d'avoir été déposé. C'est exactement ce qui est
+// arrivé, et l'application s'est arrêtée sur « Registre UI non configuré » avant de peindre une
+// seule fois.
 //
 // Les dépôts vivent donc dans un module dont l'IMPORT, placé avant celui de l'application, est ce
 // qui les déclenche. `src/docs/composition.test.ts` tient cet ordre : une contrainte d'ordre écrite
 // dans un commentaire ne survit pas au premier trieur d'imports.
+//
+// DEPUIS LE 2026-11-13, LE DÉMARRAGE ATTEND LE CATALOGUE, qui se charge par catégories (voir
+// `plugins/index.ts`). Il vit dans `ui/demarrage-atelier.ts`, que `main.tsx` appelle une fois
+// `domainePret` tenue. L'ordre des imports reste exigé : le registre, les vues et les services sont
+// déposés avant qu'un module puisse les réclamer, même en dehors du démarrage.
 
 import { createElement } from "react";
 
-import { registre } from "./audio/adaptateur";
+import { chargerLeDomaine, registre } from "./audio/adaptateur";
 import { configurerRegistreUI, type RegistreUI } from "./ui/registre-actif";
 import { FAVORIS_SON } from "./audio/favoris";
 import { configurerFavoris } from "./ui/favoris";
@@ -76,3 +82,7 @@ configurerServicesApercu(APERCU_AUDIO);
 // raison écrite en tête de `ui/services-orchestration.ts` : un domaine qui n'a rien à planifier
 // obtient une exécution en une passe, ce qui est le comportement utile.
 configurerServicesOrchestration(ORCHESTRATION_AUDIO);
+
+// LE CATALOGUE PART D'ICI, le plus tôt possible : ses huit morceaux se chargent pendant que le reste
+// de l'application s'évalue. `main.tsx` attend cette promesse avant de démarrer l'atelier.
+export const domainePret: Promise<void> = chargerLeDomaine();

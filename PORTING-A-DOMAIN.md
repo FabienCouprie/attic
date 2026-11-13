@@ -380,12 +380,19 @@ import { configurerRegistreUI, type RegistreUI } from "./ui/registre-actif";
 
 configurerRegistreUI(registre as unknown as RegistreUI);
 // puis vos vues, vos liens, vos genres de paramètre — ou rien du tout.
+
+// La promesse que `main.tsx` attend avant de démarrer l'atelier et de le peindre.
+// Un domaine dont les fiches sont enregistrées à l'import rend une promesse tenue.
+export const domainePret: Promise<void> = Promise.resolve();
 ```
 
-> **L'ordre des imports est une condition de démarrage.** `ui/App.tsx` fait son
-> démarrage au chargement du module (sauvegarde restaurée, méta-composants
-> relus) et réclame le registre dès cet instant. `./composition` doit donc être
-> le **premier** import de `main.tsx` ; `src/docs/composition.test.ts` le tient.
+> **L'ordre des imports est une condition de démarrage.** Le registre, les vues et
+> les services doivent être déposés avant qu'un module les réclame. `./composition`
+> doit donc être le **premier** import de `main.tsx` ; `src/docs/composition.test.ts`
+> le tient. Le démarrage de l'atelier (sauvegarde restaurée, méta-composants relus),
+> lui, vit dans `ui/demarrage-atelier.ts` et attend `domainePret` : le domaine
+> audio charge son catalogue par catégories, par `import()` (voir
+> `src/plugins/index.ts`), et son adaptateur l'enregistre dans `chargerLeDomaine()`.
 
 Ce qui n'est pas déposé n'existe pas, et le shell le supporte : aucune vue
 déclarée, aucun bouton de favoris, aucun genre de paramètre propre. Rien ne
@@ -543,7 +550,8 @@ Pour une vraie cohabitation, il faudrait namespacer ces deux-là. Les clés
    palette les affiche et qu'une arête se connecte.
 4. Posez le contrat d'échec (§4) **dès le premier plugin**, pas après.
 5. `src/composition.ts` — déposez votre registre sur `ui/registre-actif.ts`, et le
-   reste si vous en avez. **Faites-en le premier import de `main.tsx`** : sans
+   reste si vous en avez, et exportez `domainePret`, la promesse que `main.tsx`
+   attend avant de démarrer. **Faites-en le premier import de `main.tsx`** : sans
    cela l'application meurt sur « Registre UI non configuré » sans peindre une
    seule fois, les imports s'évaluant avant le corps du module.
 6. Répondez aux trois questions du cœur (§6.b) si vos valeurs ne sont pas

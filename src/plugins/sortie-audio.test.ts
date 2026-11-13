@@ -22,7 +22,7 @@ vi.mock("../audio/midi-sequence", async (importOriginal) => {
   return { ...vrai, rendreSequence: (...args: Parameters<typeof vrai.rendreSequence>) => { rendus.appels++; return vrai.rendreSequence(...args); } };
 });
 
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 import { avecSortieAudio, SANS_SORTIE_AUDIO } from "./sortie-audio";
 import type { Sequence } from "../audio/sequence";
 import { ctxDEssai } from "../core/contexte-essai";

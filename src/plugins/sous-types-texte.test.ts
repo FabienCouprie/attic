@@ -17,7 +17,7 @@ import { describe, expect, it } from "vitest";
 
 import { registre } from "../audio/adaptateur";
 import { CONTENUS_TEXTE, contenusTexteCompatibles } from "../audio/sous-types-texte";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 /** Tous les ports texte du catalogue, avec leur fiche et leur sens. */
 function portsTexte() {

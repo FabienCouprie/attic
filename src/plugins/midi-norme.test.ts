@@ -22,7 +22,7 @@ import { describe, expect, it } from "vitest";
 import { parseMidi, writeMidi } from "midi-file";
 import { registre } from "../audio/adaptateur";
 import { analyserMidi } from "../audio/midi";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 import { defautCanoniqueChoix, valeurCanoniqueChoix } from "../i18n";
 
 const SR = 44100;

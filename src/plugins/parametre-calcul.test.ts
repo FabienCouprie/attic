@@ -27,6 +27,7 @@ import { describe, expect, it } from "vitest";
 
 import { CALCULS_RETIRES, IDS_CALCUL, IDS_CALCUL_DML } from "./parametre-calcul";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import "../composition";
 import { valeurCanoniqueChoix } from "../i18n";
 import type { ParametreDef } from "../core/types";

@@ -5,6 +5,7 @@
 // « Progression » et « Grille d'accords », antérieurs au nœud de conversion.
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { normaliserRomains } from "../audio/theorie-romains";
 import { Progression, Chord } from "tonal";
 import { ctxDEssai } from "../core/contexte-essai";

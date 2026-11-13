@@ -21,7 +21,7 @@
 // sérielles, l'harmonie négative, les voicings et le Tonnetz rendaient tous de l'audio et du
 // MIDI en restant rangés dans Théorie.
 import { describe, expect, it } from "vitest";
-import { toutesLesFiches } from "../plugins";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 
 interface Port { type?: string }
 interface Fiche {

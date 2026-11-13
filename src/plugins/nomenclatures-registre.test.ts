@@ -28,7 +28,7 @@
 // vienne l'inscrire. Le nombre déclaré est donc la mesure de ce qui reste à unifier, et il se lit
 // ici sans rien relancer.
 import { describe, expect, it } from "vitest";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 import { gammeDe } from "../audio/gammes";
 import { gammeParId as gammeMondeDe } from "../audio/gammes-monde";
 import { qualiteDe } from "../audio/qualites-accords";

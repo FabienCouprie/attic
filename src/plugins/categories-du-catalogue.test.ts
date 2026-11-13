@@ -94,25 +94,29 @@ function fichesImportees(f: string, sf: ts.SourceFile): string[] {
   return vers;
 }
 
-/** Les fichiers de `categories/` que ce fichier désigne, par import statique ou par `import()`. */
-function categoriesDesignees(f: string, sf: ts.SourceFile): string[] {
-  const vers: string[] = [];
-  const voir = (spec: string) => {
+/** Les modules que ce fichier désigne, et si c'est par un import STATIQUE ou par `import()`. */
+function designations(f: string, sf: ts.SourceFile): { cible: string; statique: boolean }[] {
+  const vers: { cible: string; statique: boolean }[] = [];
+  const voir = (spec: string, statique: boolean) => {
     const c = cible(f, spec);
-    if (c && dirname(c) === CATEGORIES) vers.push(c);
+    if (c) vers.push({ cible: c, statique });
   };
   const visiter = (n: ts.Node) => {
     if ((ts.isImportDeclaration(n) || ts.isExportDeclaration(n)) && n.moduleSpecifier && ts.isStringLiteral(n.moduleSpecifier)) {
-      voir(n.moduleSpecifier.text);
+      voir(n.moduleSpecifier.text, true);
     } else if (ts.isCallExpression(n) && n.expression.kind === ts.SyntaxKind.ImportKeyword
       && n.arguments[0] && ts.isStringLiteral(n.arguments[0])) {
-      voir(n.arguments[0].text);
+      voir(n.arguments[0].text, false);
     }
     ts.forEachChild(n, visiter);
   };
   visiter(sf);
   return vers;
 }
+
+/** Les fichiers de `categories/` que ce fichier désigne, par import statique ou par `import()`. */
+const categoriesDesignees = (f: string, sf: ts.SourceFile) =>
+  designations(f, sf).filter((d) => dirname(d.cible) === CATEGORIES).map((d) => d.cible);
 
 /** Les catégories que ce fichier verse dans les siennes, ou qu'il charge par `import()`. */
 function categoriesChargees(f: string, sf: ts.SourceFile): string[] {
@@ -196,6 +200,27 @@ describe("les catégories du catalogue", () => {
     expect(autres.map((f) => relative(SRC, f).replace(/\\/g, "/")), [
       "Ces modules chargent une catégorie du catalogue sans passer par `plugins/index.ts`.",
       "Le catalogue est le seul endroit où l'ordre des catégories est écrit.",
+    ].join("\n")).toEqual([]);
+  });
+
+  // UN IMPORT STATIQUE D'UNE CATÉGORIE ANNULE LA COUPE EN SILENCE. Le build la remet alors dans le
+  // morceau de son importeur, et ne le dit que par un avertissement, `INEFFECTIVE_DYNAMIC_IMPORT`,
+  // perdu parmi les autres : l'application marche, et le catalogue est de nouveau d'un bloc.
+  it("LE CATALOGUE CHARGE SES CATÉGORIES PAR import(), ET PAR LÀ SEULEMENT", () => {
+    const statiques = designations(INDEX, lire(INDEX))
+      .filter((d) => d.statique && dirname(d.cible) === CATEGORIES).map((d) => nomCourt(d.cible));
+    expect(statiques, "`plugins/index.ts` importe statiquement ces catégories : elles ne sont plus chargées à part.")
+      .toEqual([]);
+  });
+
+  // SON `await` AU NIVEAU DU MODULE BLOQUERAIT TOUT CE QUI L'IMPORTE, et une catégorie qui
+  // réimporterait l'importeur attendrait sa propre fin : voir l'en-tête de `catalogue-pret.ts`.
+  it("LE CATALOGUE PRÊT NE SERT QU'AUX TESTS : aucun module de l'application ne l'importe", () => {
+    const PRET = join(PLUGINS, "catalogue-pret.ts");
+    const fautifs = modulesDeSrc().filter((f) => f !== PRET && designations(f, lire(f)).some((d) => d.cible === PRET));
+    expect(fautifs.map((f) => relative(SRC, f).replace(/\\/g, "/")), [
+      "Ces modules de l'application importent `plugins/catalogue-pret.ts`, que seuls les tests lisent.",
+      "L'application attend le catalogue une fois, dans `main.tsx`, par `domainePret`.",
     ].join("\n")).toEqual([]);
   });
 });

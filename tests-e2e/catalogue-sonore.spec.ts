@@ -115,10 +115,10 @@ test.describe("catalogue", () => {
     await page.waitForSelector(".attic-app", { timeout: 15000 });
     const fiches = await page.evaluate(async () => {
       const idx = await import("/src/plugins/index.ts") as unknown as {
-        toutesLesFiches: { id: string; nom: string; famille?: string; univers?: string;
-          sorties?: { type: string }[] }[];
+        chargerToutesLesFiches: () => Promise<{ id: string; nom: string; famille?: string; univers?: string;
+          sorties?: { type: string }[] }[]>;
       };
-      return idx.toutesLesFiches
+      return (await idx.chargerToutesLesFiches())
         .filter((f) => (f.sorties ?? []).some((s) => s.type === "audio"))
         .map((f) => ({ id: f.id, nom: f.nom, famille: f.famille ?? null, univers: f.univers ?? null }))
         .sort((a, b) => a.id.localeCompare(b.id));

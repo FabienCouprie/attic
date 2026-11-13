@@ -12,7 +12,7 @@
 // mais s'il offre une onde, il l'offre sous son identifiant canonique et jamais sous un alias.
 import { describe, expect, it } from "vitest";
 
-import { toutesLesFiches } from "../plugins/index";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "./timbres";
 
 describe("la table des formes d'onde et son lecteur", () => {

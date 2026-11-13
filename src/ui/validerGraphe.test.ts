@@ -7,6 +7,7 @@ import { validerGraphe } from "../core/validation";
 // dépose. Un test qui exerce un module du shell doit donc en déposer un, et c'est un progrès : la
 // dépendance au domaine, qui était cachée dans un import, est maintenant écrite dans le test.
 import { registre } from "../audio/adaptateur";
+import "../plugins/catalogue-pret";
 import { configurerRegistreUI, type RegistreUI } from "./registre-actif";
 
 configurerRegistreUI(registre as unknown as RegistreUI);

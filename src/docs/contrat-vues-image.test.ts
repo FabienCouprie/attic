@@ -21,7 +21,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { ReactFlowProvider } from "@xyflow/react";
 
-import { toutesLesFiches } from "../plugins";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 // Le shell demande son registre au lieu de l'importer : ce test exerce `vues-domaine/vues.tsx`, il
 // doit donc en déposer un, comme le fait la racine de composition.
 import { registre } from "../audio/adaptateur";

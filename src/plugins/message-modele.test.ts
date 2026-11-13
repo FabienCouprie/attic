@@ -10,7 +10,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 import { annoncerModele, manqueAuNoeud, texteAvecModele } from "./message-modele";
 import type { EtatModeles, ModeleEtat } from "../ui/etat-modeles";
 

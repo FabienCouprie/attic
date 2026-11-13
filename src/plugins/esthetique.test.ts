@@ -2,6 +2,7 @@
 import "node-web-audio-api/polyfill.js";
 import { afterEach, describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { ctxDEssai } from "../core/contexte-essai";
 
 const fiche = (id: string) => registre.trouverDef(id)!;

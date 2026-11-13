@@ -23,7 +23,7 @@ import { join, resolve } from "node:path";
 import ts from "typescript";
 import type { ParametreDef } from "../core";
 import { fiche } from "./fiche";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 const DOSSIER = resolve(__dirname);
 

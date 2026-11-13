@@ -18,7 +18,7 @@
 // MÊME FAMILLE QUE LE GARDE DES RÉGLAGES EN DOUBLE, dans `guidage-rendu.test.ts` : le registre ne
 // porte pas deux choses sous un même nom.
 import { describe, expect, it } from "vitest";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 /** Les valeurs qui apparaissent plus d'une fois, avec leur nombre. */
 function doublons(valeurs: string[]): string[] {

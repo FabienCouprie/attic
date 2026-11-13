@@ -25,7 +25,7 @@ import { join } from "node:path";
 
 import { apresCopie, apresEffacement, champsAReporter, CANAUX_DECLARES, urlsARevoquer, urlsDUnResultat, urlsLachees } from "../core/cycle-de-vie";
 import { CHAMPS_GARDES_AU_REGLAGE, CLASSES } from "../core/classes-de-champs";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 import "../audio/adaptateur";
 
 const fiches = toutesLesFiches;

@@ -8,6 +8,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { composantsNommes, nomsDeDictee, vocabulaireDeDictee } from "./prompt-graphe";
+import "./catalogue-pret";
 
 describe("le vocabulaire tiré du catalogue", () => {
   it("porte les noms du registre, en minuscules et SANS perdre leurs accents", async () => {

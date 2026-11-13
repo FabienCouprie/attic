@@ -76,7 +76,7 @@ describe("les percussions que le placement ne connaissait pas", () => {
     // LA FICHE SE CHERCHE DANS LE REGISTRE ENTIER, et non dans le fichier qui la portait : elle a
     // changé de fichier au découpage des générateurs, et ce test s'est cassé pour cette seule
     // raison. Passer par la liste complète le rend insensible à un regroupement futur.
-    const { toutesLesFiches } = await import("../plugins");
+    const { toutesLesFiches } = await import("../plugins/catalogue-pret");
     const euclidien = toutesLesFiches.find((f) => f.id === "rythme-euclidien")!;
     const offertes = new Set<number>([
       ...PERCUSSIONS_CHOIX.map((p) => p.note),

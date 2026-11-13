@@ -20,7 +20,7 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 const CHEMIN = join(process.cwd(), "src", "plugins", "ordre-du-catalogue.txt");
 const ecrire = process.env.ECRIRE_CATALOGUE === "1";

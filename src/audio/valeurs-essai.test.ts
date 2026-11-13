@@ -12,6 +12,7 @@
 import { describe, expect, it } from "vitest";
 
 import { registre } from "./adaptateur";
+import "../plugins/catalogue-pret";
 import { estObjet } from "./multicanal";
 import { estSequence } from "./sequence";
 import {

@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import { PATRONS, optionsPatrons } from "./patrons-rythme";
 import { PATRONS_RYTHME } from "../audio/generation-patrons";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 
 describe("liste des patrons", () => {
   it("ne contient que des patrons qui existent, et les contient tous", () => {

@@ -2,6 +2,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { lireMorceau } from "../audio/abc";
 import { ctxDEssai } from "../core/contexte-essai";
 

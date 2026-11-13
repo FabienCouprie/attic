@@ -19,7 +19,7 @@
 // contrôle passe au vert en n'éprouvant plus personne.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
-import { toutesLesFiches } from ".";
+import { toutesLesFiches } from "./catalogue-pret";
 import type { FicheAudio } from "../audio/types-domaine";
 import { ctxDEssai } from "../core/contexte-essai";
 

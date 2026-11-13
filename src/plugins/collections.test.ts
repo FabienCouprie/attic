@@ -1,6 +1,7 @@
 // plugins/collections.test.ts — Vérifications des nœuds Collections.
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { ctxDEssai } from "../core/contexte-essai";
 
 describe("collections plugin", () => {

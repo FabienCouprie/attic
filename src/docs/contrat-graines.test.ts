@@ -26,7 +26,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 
-import { toutesLesFiches } from "../plugins";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 import "../audio/adaptateur";
 import { GRAINE_MAX, hasardDuNoeud, resoudreGraine } from "../core/hasard";
 

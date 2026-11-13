@@ -21,7 +21,7 @@ import { describe, expect, it } from "vitest";
 
 import "node-web-audio-api/polyfill.js";
 import { COPIES_MAX, FICHES_BOUCLE_PAR_PASSE } from "../core/boucle-graphe";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 import "../audio/adaptateur";
 import { aplatirGraphe } from "../core/meta";
 import type { AreteG, MetaComposant, NoeudG } from "../core/meta";
