@@ -176,8 +176,10 @@ Add the `FicheAudio` object, wrapped in `fiche({...})`, in the appropriate **fam
 (by domain/theme): `entrees.ts`, `effets.ts`, `generateurs.ts`, `montage.ts`,
 `analyse.ts`, `sorties.ts`, `sortie-conversion.ts`… Each file ends with
 `… as FicheAudio[]).map(avecDoc);` → your sheet is registered
-automatically. (New file? import it in
-[`src/plugins/index.ts`](src/plugins/index.ts).)
+automatically. (New file? spread its `fiches` into the file of
+[`src/plugins/categories/`](src/plugins/categories/) it belongs with, once;
+[`src/plugins/index.ts`](src/plugins/index.ts) says how the catalogue is cut. Then
+`npm run docs:components` rewrites the order reference, `src/plugins/ordre-du-catalogue.txt`.)
 
 ### 2. Register
 Nothing more if you add to an existing file: the `enregistrer(avecDoc(def))`
