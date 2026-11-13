@@ -136,9 +136,10 @@ renamed in its sheet, silently fell back on the call's default. A closure that r
 through a variable types it `(nom: NomDeReglage<typeof ctx>) => ctx.paramTexte(nom, "")`, and a
 fixed list of names is written `as const`. A parameter the sheet replaced, and still reads for old
 projects, is named in `anciensReglages`. A sheet whose names cannot be inferred, because a function
-builds its list or the list mixes shared parameters with its own, is refused by `fiche`: it goes
-through `ficheSansNomsVerifies`, which reads any name unchecked, and is listed in
-[`plugins/fiche.test.ts`](src/plugins/fiche.test.ts), a list that only shrinks.
+builds its list or it takes a shared parameter annotated `ParametreDef`, is refused by `fiche`, and
+there is no way around it. Declare the shared parameter with `reglagePartage`, give a factory its
+name as a generic parameter (`<N extends string>(nom: N)`), and take numbered names from a literal
+tuple (`[1, 2, 3] as const`).
 
 **Read inputs / parameters:**
 | Call | Returns |

@@ -6,9 +6,8 @@
 // `plugins/fiche.ts`, déduit les noms de la fiche et en type l'exécuteur ; ce garde tient le reste.
 //
 // CE QUE LE COMPILATEUR NE PEUT PAS DIRE, ET QUE CE GARDE DIT :
-//   · une fiche écrite sans `fiche()` échappe à la vérification, sans erreur nulle part ;
-//   · une fiche passée par `ficheSansNomsVerifies` lit tout nom, et la liste de ces fiches, vidée
-//     par la pièce 2, doit le rester ;
+//   · une fiche écrite sans `fiche()` échappe à la vérification, sans erreur nulle part, et c'est
+//     aussi vrai d'une fiche passée par une autre fonction ;
 //   · un ancien réglage qui serait encore vivant, ou hérité par un réglage vivant, ne serait jamais
 //     lu sous son nom ;
 //   · une aide qui lit un réglage sous un contexte aux noms libres ne vérifie rien, et la liste de
@@ -23,20 +22,10 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import ts from "typescript";
 import type { ParametreDef } from "../core";
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import { toutesLesFiches } from "./index";
 
 const DOSSIER = resolve(__dirname);
-
-/**
- * LES FICHES DONT LES NOMS NE SE DÉDUISENT PAS, relevées le 2026-11-11 quand ce garde est né. Elles
- * étaient 134, et la pièce 2 du plan les a toutes libérées, famille par famille, entre le 2026-11-12
- * et le 2026-11-13 : chaque réglage partagé ou construit garde désormais son nom.
- *
- * ELLE EST VIDE, ET ELLE LE RESTE. Une fiche neuve n'y entre pas : elle écrit ses réglages sur place,
- * ou les reprend d'une liste qui garde ses noms (`reglagePartage`).
- */
-const SANS_NOMS_VERIFIES: Record<string, string[]> = {};
 
 const nomDePropriete = (p: ts.ObjectLiteralElementLike) =>
   p.name && (ts.isIdentifier(p.name) || ts.isStringLiteral(p.name)) ? p.name.text : null;
@@ -109,7 +98,7 @@ function aidesNonVerifiees(): string[] {
             dansExecuteur = true;
             const appel = p.parent?.parent;
             dansFiche = !!appel && ts.isCallExpression(appel) && ts.isIdentifier(appel.expression)
-              && ["fiche", "ficheSansNomsVerifies"].includes(appel.expression.text);
+              && appel.expression.text === "fiche";
             break;
           }
         }
@@ -127,10 +116,15 @@ function aidesNonVerifiees(): string[] {
   return [...trouvees].sort();
 }
 
-/** Les fiches de chaque fichier de greffons, rangées par la fonction qui les enveloppe. */
+/**
+ * Les fiches de chaque fichier de greffons : celles que `fiche()` enveloppe, et les autres.
+ *
+ * UNE FICHE PASSÉE PAR UNE AUTRE FONCTION EST NUE. `ficheSansNomsVerifies`, qui laissait lire tout
+ * nom, a été retirée le 2026-11-13 quand sa liste s'est vidée ; une enveloppe qui la remplacerait
+ * tomberait ici, sous son propre nom.
+ */
 function fichesEcrites() {
   const nues: string[] = [];
-  const sansNoms: Record<string, string[]> = {};
   let verifiees = 0;
   for (const nom of readdirSync(DOSSIER).sort()) {
     if (!nom.endsWith(".ts") || nom.includes(".test.") || nom === "fiche.ts") continue;
@@ -141,14 +135,13 @@ function fichesEcrites() {
         const p = n.parent;
         const par = ts.isCallExpression(p) && ts.isIdentifier(p.expression) ? p.expression.text : null;
         if (par === "fiche") verifiees++;
-        else if (par === "ficheSansNomsVerifies") (sansNoms[nom] ??= []).push(id);
-        else nues.push(`${nom} : ${id}`);
+        else nues.push(`${nom} : ${id}${par ? ` (par ${par})` : ""}`);
       }
       ts.forEachChild(n, visiter);
     };
     visiter(sf);
   }
-  return { nues, sansNoms, verifiees };
+  return { nues, verifiees };
 }
 
 const ECRITES = fichesEcrites();
@@ -158,7 +151,8 @@ describe("une fiche ne lit que les réglages qu'elle déclare", () => {
     // 334 vérifiées et 134 sans noms vérifiés le 2026-11-11 ; 392 et 76 le 2026-11-12, puis 402 et 76
     // quand les dix fiches à identifiant constant sont passées par fiche(), 416 et 62 avec le
     // réglage « Calcul », 431 et 47 avec les réglages de rendu, 450 et 28 avec la tonalité, et 478
-    // et 0 avec les dernières familles, sur 511 fiches.
+    // et 0 avec les dernières familles, sur 511 fiches. La liste vide, `ficheSansNomsVerifies` a été
+    // retirée le 2026-11-13.
     expect(ECRITES.verifiees).toBeGreaterThanOrEqual(300);
   });
 
@@ -166,20 +160,9 @@ describe("une fiche ne lit que les réglages qu'elle déclare", () => {
     expect(ECRITES.nues, [
       "Enveloppez la fiche dans fiche({...}), de plugins/fiche.ts : sans lui, ses noms de réglage",
       "s'élargissent à string, et une faute de frappe dans une lecture retombe sans un mot sur le défaut.",
+      "Si fiche() refuse la liste, ses noms ne se déduisent pas : écrivez-les sur place, ou déclarez le",
+      "réglage partagé par reglagePartage.",
     ].join("\n")).toEqual([]);
-  });
-
-  it("LES FICHES SANS NOMS VÉRIFIÉS SONT CELLES DE LA LISTE, et la liste ne fait que rétrécir", () => {
-    const attendues = Object.entries(SANS_NOMS_VERIFIES).flatMap(([f, ids]) => ids.map((id) => `${f} : ${id}`));
-    const trouvees = Object.entries(ECRITES.sansNoms).flatMap(([f, ids]) => ids.map((id) => `${f} : ${id}`));
-    expect({
-      enTrop: trouvees.filter((x) => !attendues.includes(x)),
-      sortiesDeLaListe: attendues.filter((x) => !trouvees.includes(x)),
-    }, [
-      "enTrop : une fiche de plus lit ses réglages sans vérification. Écrivez ses réglages sur place,",
-      "ou typez la liste partagée, pour que fiche() en déduise les noms.",
-      "sortiesDeLaListe : la fiche passe désormais par fiche(), ou n'existe plus ; retirez-la de la liste.",
-    ].join("\n")).toEqual({ enTrop: [], sortiesDeLaListe: [] });
   });
 
   it("LES AIDES QUI LISENT SOUS DES NOMS LIBRES SONT CELLES DE LA LISTE, et la liste ne fait que rétrécir", () => {
@@ -243,13 +226,8 @@ describe("une fiche ne lit que les réglages qu'elle déclare", () => {
       parametres: partages,
       async executer() { return { valeurs: [] }; },
     });
-    const libre = ficheSansNomsVerifies({
-      id: "temoin-libre", nom: "Témoin", univers: "Essai", famille: "Essai", resume: "Témoin.",
-      entrees: [], sorties: [], parametres: partages,
-      async executer(ctx) { ctx.paramNombre("Gian", 1); return { valeurs: [] }; },
-    });
-    // À l'exécution, les deux fonctions rendent la fiche telle quelle.
-    expect([temoin.id, sansReglage.id, refusee.id, libre.id])
-      .toEqual(["temoin-des-noms", "temoin-sans-reglage", "temoin-noms-elargis", "temoin-libre"]);
+    // À l'exécution, fiche() rend la fiche telle quelle.
+    expect([temoin.id, sansReglage.id, refusee.id])
+      .toEqual(["temoin-des-noms", "temoin-sans-reglage", "temoin-noms-elargis"]);
   });
 });
