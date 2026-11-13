@@ -5,7 +5,7 @@
 // dans `effets-aides.ts`.
 
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -266,7 +266,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "temperament", nom: "Tempérament", nomEn: "Temperament",
     univers: "Traitement", famille: "Effets",
     resume: "Rejoue un MIDI dans un tempérament historique ou en intonation juste, au lieu du tempérament égal.",

@@ -4,7 +4,7 @@
 // declarent presque toutes la meme, ce qui ne decoupe rien.
 
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { genererBoiteRythmes, notesVersFichierMidi, rendreSequence, genererRythmeCantor, genererGrilleCantor, grilleBoiteRythmes, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE } from "../audio";
@@ -70,7 +70,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "l-systeme", nom: "L-système", nomEn: "L-system", univers: "Entrées", famille: "Génération",
     resume: "Engendre une mélodie par une grammaire qui se réécrit (Lindenmayer).",
     resumeEn: "Generates a melody from a self-rewriting grammar (Lindenmayer).",

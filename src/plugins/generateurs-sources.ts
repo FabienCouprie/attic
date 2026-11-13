@@ -5,7 +5,7 @@
 
 
 import type { DesigneAccordage } from "./formes-des-canaux";
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { decoderFichier, rendreAvecEchantillon, genererBruit, genererAudioFormule, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE, type NoteEvenement } from "../audio";
@@ -173,7 +173,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "sampler-personnalise", nom: "Sampler personnalisé", nomEn: "Custom Sampler", univers: "Entrées", famille: "Génération",
     resume: "Joue un échantillon audio comme un instrument mélodique.",
     resumeEn: "Plays an audio sample as a melodic instrument.",

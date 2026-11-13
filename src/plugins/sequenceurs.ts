@@ -1,6 +1,6 @@
 // plugins/sequenceurs.ts — Séquenceurs (motifs édités à la grille).
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -71,7 +71,7 @@ const MOTIF_ACCORDS_DEFAUT = [
 ].join("|");
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "sequenceur-melodique", nom: "Séquenceur mélodique", nomEn: "Melodic Sequencer",
     univers: "Entrées", famille: "Génération",
     resume: "Programme une mélodie sur une grille piano-roll pas-à-pas (synthèse).",
@@ -136,7 +136,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [audioFinal, midiFinal], message: traduire("msg.var_0_pas_var_1_mesure_s_var_2_bpm_var_3_note_s_var_4_var_5", nbPas, mesures, tempo, noteCount, noteBas, noteHaut) };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "sequenceur-accords", nom: "Séquenceur d'accords", nomEn: "Chord Sequencer",
     univers: "Entrées", famille: "Génération",
     resume: "Programme une progression d'accords sur une grille pas-à-pas.",

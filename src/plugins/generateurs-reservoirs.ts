@@ -4,7 +4,7 @@
 // declarent presque toutes la meme, ce qui ne decoupe rien.
 
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
@@ -34,7 +34,7 @@ const GAMMES_RESERVOIR_SANS_CHROMATIQUE = gammesParIds([
  */
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "reservoir-musical", nom: "Réservoir neuronal", nomEn: "Neural Reservoir",
     univers: "Entrées", famille: "Génération",
     resume: "Génère une mélodie émergente par réseau de neurones aléatoires (inspiré d'Allendia/EVY). Sortie audio + sortie MIDI.",
@@ -143,7 +143,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [buf, midiFile], message: traduire("msg.var_0_neurones_var_1_notes_graine_var_2_var_3_mes", config.taille, nbNotes, graineUtilisee, config.mesures) };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "multi-reservoirs", nom: "Multi-réservoirs", nomEn: "Multi-reservoir",
     univers: "Entrées", famille: "Génération",
     resume: "Plusieurs réservoirs neuronaux en réseau (mélodie, basse, harmonie, rythme), émergence polyphonique.",

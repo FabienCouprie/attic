@@ -1,6 +1,6 @@
 // plugins/entrees.ts — Nœuds d'entrée
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -123,7 +123,7 @@ const entrees: FicheAudio[] = [
       return { valeurs: [buffer, midiFinal] };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "generateur-musical", nom: "Générateur musical", nomEn: "Music Generator", univers: "Entrées", famille: "Génération",
     resume: "Génère une composition multi-pistes à partir d'un script descriptif. Sortie audio + trois sorties MIDI (une par instrument).",
     resumeEn: "Generates a multi-track composition from a descriptive script. Audio output + three MIDI outputs (one per instrument).",

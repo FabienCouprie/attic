@@ -39,24 +39,13 @@ const DOSSIER = resolve(__dirname);
  * retrouve des noms déduits en sort ; une fiche neuve n'y entre pas, elle écrit ses réglages.
  */
 const SANS_NOMS_VERIFIES: Record<string, string[]> = {
-  "automate-cellulaire.ts": ["automate-cellulaire"],
-  "color-looper.ts": ["color-looper"],
   "continuation-spectrale.ts": ["continuation-spectrale-ar", "continuation-spectrale-lstm"],
   "csound-partition.ts": ["partition-csound"],
   "csound.ts": [
     "csound", "csound-instrument", "csound-effet", "csound-instruments-physiques", "csound-spectral",
   ],
-  "dessin-sonore.ts": ["dessin-sonore"],
-  "effets-midi.ts": ["temperament"],
   "egaliseur-parametrique.ts": ["egaliseur-parametrique"],
-  "entrees.ts": ["generateur-musical"],
   "fm-operateurs.ts": ["fm-six-operateurs"],
-  "generateurs-echantillons.ts": ["boite-groove"],
-  "generateurs-fractals.ts": ["generateur-fractal", "mappeur-mandelbrot", "arpege-koch"],
-  "generateurs-reservoirs.ts": ["reservoir-musical", "multi-reservoirs"],
-  "generateurs-rythme.ts": ["l-systeme"],
-  "generateurs-sources.ts": ["sampler-personnalise"],
-  "generateurs.ts": ["generateur-accords", "melodie-aleatoire"],
   "glissando-de-gamme.ts": ["glissando-de-gamme"],
   "glissando-harmonique.ts": ["glissando-harmonique"],
   "maquette.ts": ["maquette"],
@@ -65,13 +54,10 @@ const SANS_NOMS_VERIFIES: Record<string, string[]> = {
   "montage-video.ts": ["montage-video"],
   "multicanal.ts": ["spatialiseur", "objet-sonore"],
   "objets-sonores.ts": ["montage"],
-  "palette-harmonique.ts": ["palette-harmonique"],
-  "sequenceurs.ts": ["sequenceur-melodique", "sequenceur-accords"],
   "solveur-contraintes.ts": ["solveur-contraintes"],
   "spectral-wishart.ts": ["tracage-spectral", "flou-spectral", "gel-spectral", "glissando-interieur"],
   "spectrogramme-image.ts": ["son-spectrogramme", "spectrogramme-image", "image-spectrogramme"],
   "texte-image-moss.ts": ["texte-image-moss"],
-  "theorie-avancee.ts": ["serie-infinie"],
 };
 
 const nomDePropriete = (p: ts.ObjectLiteralElementLike) =>
@@ -188,7 +174,8 @@ describe("une fiche ne lit que les réglages qu'elle déclare", () => {
   it("le garde lit les fiches des greffons, sans quoi il ne dirait rien", () => {
     // 334 vérifiées et 134 sans noms vérifiés le 2026-11-11 ; 392 et 76 le 2026-11-12, puis 402 et 76
     // quand les dix fiches à identifiant constant sont passées par fiche(), 416 et 62 avec le
-    // réglage « Calcul », et 431 et 47 avec les réglages de rendu, sur 511 fiches.
+    // réglage « Calcul », 431 et 47 avec les réglages de rendu, et 450 et 28 avec la tonalité, sur
+    // 511 fiches.
     expect(ECRITES.verifiees).toBeGreaterThanOrEqual(300);
   });
 

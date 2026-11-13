@@ -3,7 +3,7 @@
 // choisit le degré de la gamme, la luminosité l'octave, la saturation la vélocité,
 // et la position horizontale le moment de lecture.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererPaletteHarmonique, GAMMES_ACCORDS, type CouleurExtraite } from "../audio";
 import { LIBELLES_HERITES_GAMMES } from "../audio/gammes";
@@ -16,7 +16,7 @@ import { PARAMETRE_CLE } from "../audio/cles";
 const formatCouleur = (c: CouleurExtraite) => `rgb(${c.r},${c.g},${c.b})`;
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "palette-harmonique",
     nom: "Palette harmonique",
     nomEn: "Harmonic Palette",
