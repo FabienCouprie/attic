@@ -11,8 +11,8 @@
 // à trois entrées de modulation nommées est donc un outil d'écriture de l'espace, et l'inspecteur y
 // montre chaque trajectoire comme sa plage, dans ses degrés.
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
-import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
+import { fiche, lecteurDe, reglagePartage, type ContexteQuiDeclare } from "./fiche";
+import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
@@ -66,37 +66,47 @@ const PORTS_TRAJECTOIRE = [
 ];
 
 const PARAMETRES_TRAJECTOIRE = [
-  { nom: "Azimut", nomEn: "Azimuth", type: "curseur" as const, plage: [-180, 180] as [number, number], pas: 1, defaut: 0, unite: "°",
+  reglagePartage({ nom: "Azimut", nomEn: "Azimuth", type: "curseur" as const, plage: [-180, 180] as [number, number], pas: 1, defaut: 0, unite: "°",
     doc: "La direction dans le plan horizontal, en degrés : zéro devant, positif vers la gauche, cent quatre-vingts derrière. C'est la convention de l'ambisonie et de l'UIT, tenue partout dans cette famille pour qu'un panoramique ne tourne jamais à l'envers d'un décodeur.",
-    docEn: "The direction in the horizontal plane, in degrees: zero in front, positive to the left, one hundred and eighty behind. It is the convention of ambisonics and of the ITU, held throughout this family so that a panner never turns the opposite way from a decoder." },
-  { nom: "Élévation", nomEn: "Elevation", type: "curseur" as const, plage: [-90, 90] as [number, number], pas: 1, defaut: 0, unite: "°",
+    docEn: "The direction in the horizontal plane, in degrees: zero in front, positive to the left, one hundred and eighty behind. It is the convention of ambisonics and of the ITU, held throughout this family so that a panner never turns the opposite way from a decoder." }),
+  reglagePartage({ nom: "Élévation", nomEn: "Elevation", type: "curseur" as const, plage: [-90, 90] as [number, number], pas: 1, defaut: 0, unite: "°",
     doc: "La hauteur, en degrés : zéro à l'horizon, quatre-vingt-dix au zénith. Une disposition sans haut-parleurs en hauteur la ramène à l'horizon ; le 7.1.4 et l'ambisonie la rendent.",
-    docEn: "The height, in degrees: zero at the horizon, ninety at the zenith. A layout without height speakers brings it back to the horizon; 7.1.4 and ambisonics render it." },
-  { nom: "Distance", nomEn: "Distance", type: "curseur" as const, plage: [1, 10] as [number, number], pas: 0.1, defaut: 1,
+    docEn: "The height, in degrees: zero at the horizon, ninety at the zenith. A layout without height speakers brings it back to the horizon; 7.1.4 and ambisonics render it." }),
+  reglagePartage({ nom: "Distance", nomEn: "Distance", type: "curseur" as const, plage: [1, 10] as [number, number], pas: 0.1, defaut: 1,
     doc: "La distance relative : un pour la référence, deux pour deux fois plus loin, ce qui divise l'amplitude par deux. En deçà de la référence le son ne se renforce plus, une source infiniment proche ne doit pas devenir infiniment forte.",
-    docEn: "The relative distance: one for the reference, two for twice as far, which halves the amplitude. Closer than the reference the sound stops growing, an infinitely near source must not become infinitely loud." },
-  { nom: "Azimut min", nomEn: "Azimuth min", modulationDe: "Azimut", type: "curseur" as const, plage: [-180, 180] as [number, number], pas: 1, defaut: -180, unite: "°",
+    docEn: "The relative distance: one for the reference, two for twice as far, which halves the amplitude. Closer than the reference the sound stops growing, an infinitely near source must not become infinitely loud." }),
+  reglagePartage({ nom: "Azimut min", nomEn: "Azimuth min", modulationDe: "Azimut", type: "curseur" as const, plage: [-180, 180] as [number, number], pas: 1, defaut: -180, unite: "°",
     doc: "L'azimut que vaut le zéro d'une courbe branchée. De −180 à 180, une rampe fait faire un tour complet à la source.",
-    docEn: "The azimuth a connected curve's zero means. From -180 to 180, a ramp takes the source through one full turn." },
-  { nom: "Azimut max", nomEn: "Azimuth max", modulationDe: "Azimut", type: "curseur" as const, plage: [-180, 180] as [number, number], pas: 1, defaut: 180, unite: "°",
-    doc: "L'azimut que vaut le un de la courbe.", docEn: "The azimuth the curve's one means." },
-  { nom: "Élévation min", nomEn: "Elevation min", modulationDe: "Élévation", type: "curseur" as const, plage: [-90, 90] as [number, number], pas: 1, defaut: 0, unite: "°",
-    doc: "L'élévation que vaut le zéro d'une courbe branchée.", docEn: "The elevation a connected curve's zero means." },
-  { nom: "Élévation max", nomEn: "Elevation max", modulationDe: "Élévation", type: "curseur" as const, plage: [-90, 90] as [number, number], pas: 1, defaut: 60, unite: "°",
-    doc: "L'élévation que vaut le un de la courbe.", docEn: "The elevation the curve's one means." },
-  { nom: "Distance min", nomEn: "Distance min", modulationDe: "Distance", type: "curseur" as const, plage: [1, 10] as [number, number], pas: 0.1, defaut: 1,
-    doc: "La distance que vaut le zéro d'une courbe branchée.", docEn: "The distance a connected curve's zero means." },
-  { nom: "Distance max", nomEn: "Distance max", modulationDe: "Distance", type: "curseur" as const, plage: [1, 10] as [number, number], pas: 0.1, defaut: 4,
+    docEn: "The azimuth a connected curve's zero means. From -180 to 180, a ramp takes the source through one full turn." }),
+  reglagePartage({ nom: "Azimut max", nomEn: "Azimuth max", modulationDe: "Azimut", type: "curseur" as const, plage: [-180, 180] as [number, number], pas: 1, defaut: 180, unite: "°",
+    doc: "L'azimut que vaut le un de la courbe.", docEn: "The azimuth the curve's one means." }),
+  reglagePartage({ nom: "Élévation min", nomEn: "Elevation min", modulationDe: "Élévation", type: "curseur" as const, plage: [-90, 90] as [number, number], pas: 1, defaut: 0, unite: "°",
+    doc: "L'élévation que vaut le zéro d'une courbe branchée.", docEn: "The elevation a connected curve's zero means." }),
+  reglagePartage({ nom: "Élévation max", nomEn: "Elevation max", modulationDe: "Élévation", type: "curseur" as const, plage: [-90, 90] as [number, number], pas: 1, defaut: 60, unite: "°",
+    doc: "L'élévation que vaut le un de la courbe.", docEn: "The elevation the curve's one means." }),
+  reglagePartage({ nom: "Distance min", nomEn: "Distance min", modulationDe: "Distance", type: "curseur" as const, plage: [1, 10] as [number, number], pas: 0.1, defaut: 1,
+    doc: "La distance que vaut le zéro d'une courbe branchée.", docEn: "The distance a connected curve's zero means." }),
+  reglagePartage({ nom: "Distance max", nomEn: "Distance max", modulationDe: "Distance", type: "curseur" as const, plage: [1, 10] as [number, number], pas: 0.1, defaut: 4,
     doc: "La distance que vaut le un de la courbe. Une courbe qui monte éloigne la source, et l'amplitude suit en 1/r.",
-    docEn: "The distance the curve's one means. A rising curve moves the source away, and the amplitude follows 1/r." },
+    docEn: "The distance the curve's one means. A rising curve moves the source away, and the amplitude follows 1/r." }),
 ];
 
-/** La trajectoire d'un nœud : chaque composante est une courbe branchée, ou le réglage constant. */
-function trajectoireDe(ctx: ContexteAudio, n: number, premierPort: number): Trajectoire {
-  const piste = (port: number, nom: string, defaut: number, min: number, max: number): Float32Array | number => {
+type NomDeTrajectoire = (typeof PARAMETRES_TRAJECTOIRE)[number]["nom"];
+
+/**
+ * La trajectoire d'un nœud : chaque composante est une courbe branchée, ou le réglage constant.
+ *
+ * LA FICHE DÉCLARE LES NEUF RÉGLAGES DE TRAJECTOIRE, et le compilateur l'exige. Les bornes se
+ * nomment en gabarit, « Azimut min », et le gabarit est vérifié comme un nom écrit en clair.
+ */
+function trajectoireDe<N extends string>(
+  ctx: ContexteQuiDeclare<N, NomDeTrajectoire>, n: number, premierPort: number,
+): Trajectoire {
+  const lu = lecteurDe<NomDeTrajectoire>(ctx);
+  const piste = (port: number, nom: "Azimut" | "Élévation" | "Distance", defaut: number, min: number, max: number): Float32Array | number => {
     const c = ctx.entree(port);
-    if (!estCourbe(c)) return ctx.paramNombre(nom, defaut);
-    return valeursParametre(c, n, 0, { min: ctx.paramNombre(`${nom} min`, min), max: ctx.paramNombre(`${nom} max`, max) });
+    if (!estCourbe(c)) return lu.paramNombre(nom, defaut);
+    return valeursParametre(c, n, 0, { min: lu.paramNombre(`${nom} min`, min), max: lu.paramNombre(`${nom} max`, max) });
   };
   return {
     azimut: piste(premierPort, "Azimut", 0, -180, 180),
@@ -112,7 +122,7 @@ const resumeTrajectoire = (t: Trajectoire): string => {
 };
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "spatialiseur", nomDicte: "placer dans l'espace", nom: "Spatialiseur", nomEn: "Spatialiser", univers: UNIVERS, famille: FAMILLE,
     resume: "Place un son sur une trajectoire (azimut, élévation, distance) dans une disposition au choix : anneau de concert, 5.1 à 7.1.4, ou champ ambisonique.",
     resumeEn: "Places a sound on a trajectory (azimuth, elevation, distance) in a layout of your choice: concert ring, 5.1 to 7.1.4, or ambisonic field.",
@@ -240,7 +250,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [rendu], message: `${en ? d.en : d.fr} → ${en ? "binaural" : "binaural"}` };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "objet-sonore", nom: "Objet sonore", nomEn: "Sound Object", univers: UNIVERS, famille: FAMILLE,
     resume: "Attache à un son sa trajectoire, sans choisir de salle : la disposition ne sera décidée qu'au rendu, pour tous les objets à la fois.",
     resumeEn: "Attaches its trajectory to a sound without choosing a room: the layout will only be decided at render time, for all objects at once.",

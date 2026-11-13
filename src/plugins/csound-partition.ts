@@ -7,7 +7,7 @@
 // La logique est dans `audio/csound-partition.ts`, testée : les quatre conventions de hauteur y sont
 // éprouvées contre les valeurs de Csound lui-même (`cpspch(8.00)` = 261,63 Hz, `cpsoct(8.75)` = 440).
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import { parseMidi } from "midi-file";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
@@ -32,7 +32,7 @@ const CHAMPS: { id: ChampP; fr: string; en: string }[] = [
   { id: "rien", fr: "Rien", en: "Nothing" },
 ];
 
-const champ = (nom: string, nomEn: string, defaut: ChampP, doc: string, docEn: string) => ({
+const champ = <N extends string>(nom: N, nomEn: string, defaut: ChampP, doc: string, docEn: string) => ({
   nom, nomEn, type: "choix" as const,
   options: CHAMPS.map((c) => c.fr), optionsEn: CHAMPS.map((c) => c.en),
   optionIds: CHAMPS.map((c) => c.id),
@@ -41,8 +41,16 @@ const champ = (nom: string, nomEn: string, defaut: ChampP, doc: string, docEn: s
   doc, docEn,
 });
 
+/**
+ * Les quatre champs déclarés, de p4 à p7, et le défaut de chacun dans la fiche.
+ *
+ * LE NOM EST ÉCRIT ICI ET NON CALCULÉ : `p${i + 4}` valait `string`, et les deux lectures du champ
+ * échappaient à la vérification de ses noms.
+ */
+const CHAMPS_DECLARES = [["p4", "hauteur"], ["p5", "amplitude"], ["p6", "note"], ["p7", "rien"]] as const;
+
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "partition-csound", nomDicte: "partition programmée", nom: "Partition Csound", nomEn: "Csound Score",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Traduit un MIDI en partition Csound : une note par ligne, avec le choix de la convention de hauteur et des p-fields.",
@@ -116,8 +124,7 @@ export const fiches: FicheAudio[] = ([
         // Le repli de chaque champ est CELUI DE LA FICHE, et non « rien » : le moteur retombe bien
         // sur le défaut déclaré, mais un plugin ne doit pas dépendre de cette politesse — sa valeur
         // de repli est ce qu'il obtient quand rien n'est réglé, et elle doit donc dire la même chose.
-        champs: (["hauteur", "amplitude", "note", "rien"] as ChampP[])
-          .map((defaut, i) => ctx.paramTexte(`p${i + 4}`, defaut) as ChampP),
+        champs: CHAMPS_DECLARES.map(([nom, defaut]) => ctx.paramTexte(nom, defaut) as ChampP),
         constante: ctx.paramNombre("Constante", 0),
         courbe,
         margeFinale: ctx.paramNombre("Marge finale", 0.5),
@@ -126,8 +133,7 @@ export const fiches: FicheAudio[] = ([
       // Un champ « Courbe » demandé sans courbe branchée vaudrait zéro partout, en silence : c'est
       // le genre d'oubli qui fait chercher longtemps du côté de l'orchestre.
       const alertes: string[] = [];
-      if (!courbe && ["hauteur", "amplitude", "note", "rien"]
-        .some((defaut, i) => ctx.paramTexte(`p${i + 4}`, defaut) === "courbe")) {
+      if (!courbe && CHAMPS_DECLARES.some(([nom, defaut]) => ctx.paramTexte(nom, defaut) === "courbe")) {
         alertes.push(traduire("msg.csound.courbeAbsente"));
       }
       return {

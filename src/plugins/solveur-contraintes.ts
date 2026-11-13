@@ -12,7 +12,7 @@
 // LE CALCUL EST DANS `audio/contraintes.ts`, `audio/contraintes-ecrites.ts` et `audio/evolution.ts`,
 // tous éprouvés ; ce fichier n'est que la prise.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -25,10 +25,12 @@ import { GAMMES_CORRECTION, IDS_HERITES_CORRECTION, degresDe } from "../audio/co
 import { nomNote } from "../audio/nom-note";
 
 const en = () => langueCourante() === "en";
-const REGLES = ["Règle 1", "Règle 2", "Règle 3", "Règle 4", "Règle 5", "Règle 6"];
+// LES NOMS DES RÈGLES SONT DES LITTÉRAUX, à la déclaration comme dans la boucle qui les lit : un
+// tableau simple les élargissait à `string`, et la fiche perdait la vérification de tous ses noms.
+const REGLES = ["Règle 1", "Règle 2", "Règle 3", "Règle 4", "Règle 5", "Règle 6"] as const;
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "solveur-contraintes",
     nom: "Chercher sous contraintes", nomEn: "Search under Constraints",
     univers: "Entrées", famille: "Génération",

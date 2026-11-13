@@ -11,41 +11,46 @@
 // LA FRÉQUENCE ET LE Q D'UNE BANDE À ZÉRO DÉCIBEL SONT INERTES, et leur documentation le dit :
 // une bande sans gain n'est pas posée. Ce n'est pas un réglage mort, c'est un réglage en attente
 // de son gain.
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { egaliserParametrique, etagesActifs, type ReglagesEgaliseur } from "../audio/egaliseur-parametrique";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
-/** Les quatre cloches, leur centre à l'ouverture : une par région où l'on corrige le plus souvent. */
-const CLOCHES = [250, 1000, 3000, 8000];
+/**
+ * Les quatre cloches, leur numéro et leur centre à l'ouverture : une par région où l'on corrige le
+ * plus souvent.
+ *
+ * LE NUMÉRO EST UN LITTÉRAL, et c'est ce qui fait vérifier les douze noms qu'on en tire. Calculé
+ * depuis le rang, `Fréquence ${i + 1}` valait `string`, à la déclaration comme à la lecture.
+ */
+const CLOCHES = [
+  { n: 1, centre: 250 }, { n: 2, centre: 1000 }, { n: 3, centre: 3000 }, { n: 4, centre: 8000 },
+] as const;
 
-const frequence = (nom: string, nomEn: string, defaut: number, plage: [number, number], doc: string, docEn: string) =>
+const frequence = <N extends string>(nom: N, nomEn: string, defaut: number, plage: [number, number], doc: string, docEn: string) =>
   ({ nom, nomEn, plage, pas: 1, defaut, unite: "Hz", doc, docEn });
 
-const gain = (nom: string, nomEn: string, doc: string, docEn: string) =>
+const gain = <N extends string>(nom: N, nomEn: string, doc: string, docEn: string) =>
   ({ nom, nomEn, plage: [-18, 18] as [number, number], pas: 0.5, defaut: 0, unite: "dB", doc, docEn });
 
 const SANS_GAIN = "Sans effet tant que le gain de la bande est nul.";
 const SANS_GAIN_EN = "No effect while the band's gain is zero.";
 
-const parametresCloches = CLOCHES.flatMap((centre, i) => {
-  const n = i + 1;
-  return [
-    frequence(`Fréquence ${n}`, `Frequency ${n}`, centre, [20, 20000],
-      `Le centre de la cloche ${n}. ${SANS_GAIN}`, `The centre of bell ${n}. ${SANS_GAIN_EN}`),
-    gain(`Gain ${n}`, `Gain ${n}`,
-      `Ce que la cloche ${n} ajoute ou retire à son centre. À zéro, elle n'est pas posée.`,
-      `What bell ${n} adds or removes at its centre. At zero, it is not applied.`),
-    { nom: `Q ${n}`, nomEn: `Q ${n}`, plage: [0.3, 10] as [number, number], pas: 0.1, defaut: 1, unite: "Q",
-      doc: `La largeur de la cloche ${n} : élevé, elle se resserre sur quelques hertz ; faible, elle s'étend sur plusieurs octaves. ${SANS_GAIN}`,
-      docEn: `The width of bell ${n}: high, it narrows to a few hertz; low, it spreads over several octaves. ${SANS_GAIN_EN}` },
-  ];
-});
+const parametresCloches = CLOCHES.flatMap(({ n, centre }) => [
+  frequence(`Fréquence ${n}`, `Frequency ${n}`, centre, [20, 20000],
+    `Le centre de la cloche ${n}. ${SANS_GAIN}`, `The centre of bell ${n}. ${SANS_GAIN_EN}`),
+  gain(`Gain ${n}`, `Gain ${n}`,
+    `Ce que la cloche ${n} ajoute ou retire à son centre. À zéro, elle n'est pas posée.`,
+    `What bell ${n} adds or removes at its centre. At zero, it is not applied.`),
+  reglagePartage({ nom: `Q ${n}`, nomEn: `Q ${n}`, plage: [0.3, 10] as [number, number], pas: 0.1, defaut: 1, unite: "Q",
+    doc: `La largeur de la cloche ${n} : élevé, elle se resserre sur quelques hertz ; faible, elle s'étend sur plusieurs octaves. ${SANS_GAIN}`,
+    docEn: `The width of bell ${n}: high, it narrows to a few hertz; low, it spreads over several octaves. ${SANS_GAIN_EN}` }),
+]);
 
 export const fiches = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "egaliseur-parametrique", nom: "Égaliseur paramétrique", nomEn: "Parametric Equalizer",
     univers: "Traitement", famille: "Effets",
     resume: "Corrige l'équilibre fréquentiel par un passe-haut, deux plateaux et quatre cloches placés à volonté.",
@@ -113,10 +118,10 @@ export const fiches = ([
         passeHaut: ctx.paramNombre("Passe-haut", 0),
         graveFrequence: ctx.paramNombre("Fréquence grave", 100),
         graveGainDb: ctx.paramNombre("Gain grave", 0),
-        cloches: CLOCHES.map((centre, i) => ({
-          frequence: ctx.paramNombre(`Fréquence ${i + 1}`, centre),
-          gainDb: ctx.paramNombre(`Gain ${i + 1}`, 0),
-          q: ctx.paramNombre(`Q ${i + 1}`, 1),
+        cloches: CLOCHES.map(({ n, centre }) => ({
+          frequence: ctx.paramNombre(`Fréquence ${n}`, centre),
+          gainDb: ctx.paramNombre(`Gain ${n}`, 0),
+          q: ctx.paramNombre(`Q ${n}`, 1),
         })),
         aiguFrequence: ctx.paramNombre("Fréquence aiguë", 10000),
         aiguGainDb: ctx.paramNombre("Gain aigu", 0),

@@ -14,7 +14,7 @@
 // soixante revient à le supprimer, sans qu'il faille un réglage de plus.
 
 import type { AffichageFilm, DesigneMontageVideo } from "./formes-des-canaux";
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { respirer } from "../core/respirer";
 import { langueCourante } from "../i18n";
@@ -28,10 +28,17 @@ import { enMo } from "../core/octets";
 /** Six, comme le visualiseur : au-delà, on ne suit plus ce qu'on a posé. */
 export const PISTES_VIDEO = 6;
 
+/**
+ * Les numéros des pistes, un littéral chacun : c'est ce qui fait vérifier les vingt-quatre noms qu'on
+ * en tire, à la déclaration comme à la lecture. Calculé depuis le rang, `Image ${k + 1}` valait
+ * `string`. `satisfies` tient leur nombre égal à celui des pistes.
+ */
+const NUMEROS = [1, 2, 3, 4, 5, 6] as const satisfies { length: typeof PISTES_VIDEO };
+
 const en = () => langueCourante() === "en";
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "montage-video", nom: "Montage vidéo", nomEn: "Video Montage",
     univers: "Autres", famille: "Vidéo",
     resume: "Pose jusqu'à six sons sur un film, chacun à son image, et rend le film sonorisé en MP4.",
@@ -54,19 +61,19 @@ export const fiches: FicheAudio[] = ([
       { nom: "Gain du film", nomEn: "Film level", type: "curseur", plage: [-60, 12], pas: 0.5, defaut: 0, unite: "dB",
         doc: "Niveau du son d'origine du film, gardé et mélangé aux pistes. À −60 dB, il se tait.",
         docEn: "Level of the film's own sound, kept and mixed with the tracks. At −60 dB it falls silent." },
-      ...Array.from({ length: PISTES_VIDEO }, (_, k) => [
-        { nom: `Image ${k + 1}`, nomEn: `Frame ${k + 1}`, type: "nombre" as const, plage: [0, 2_000_000] as [number, number], pas: 1, defaut: 0, port: k,
-          doc: `Image du film où commence la piste ${k + 1}.`,
-          docEn: `Frame of the film at which track ${k + 1} starts.` },
-        { nom: `Gain ${k + 1}`, nomEn: `Gain ${k + 1}`, type: "curseur" as const, plage: [-60, 12] as [number, number], pas: 0.5, defaut: 0, unite: "dB", port: k,
-          doc: `Niveau de la piste ${k + 1}.`, docEn: `Level of track ${k + 1}.` },
-        { nom: `Fondu entrée ${k + 1}`, nomEn: `Fade in ${k + 1}`, type: "nombre" as const, plage: [0, 60000] as [number, number], pas: 1, defaut: 10, unite: "ms", port: k,
-          doc: `Durée du fondu d'entrée de la piste ${k + 1}.`,
-          docEn: `Length of track ${k + 1}'s fade in.` },
-        { nom: `Fondu sortie ${k + 1}`, nomEn: `Fade out ${k + 1}`, type: "nombre" as const, plage: [0, 60000] as [number, number], pas: 1, defaut: 10, unite: "ms", port: k,
-          doc: `Durée du fondu de sortie de la piste ${k + 1}.`,
-          docEn: `Length of track ${k + 1}'s fade out.` },
-      ]).flat(),
+      ...NUMEROS.flatMap((n, k) => [
+        reglagePartage({ nom: `Image ${n}`, nomEn: `Frame ${n}`, type: "nombre" as const, plage: [0, 2_000_000] as [number, number], pas: 1, defaut: 0, port: k,
+          doc: `Image du film où commence la piste ${n}.`,
+          docEn: `Frame of the film at which track ${n} starts.` }),
+        reglagePartage({ nom: `Gain ${n}`, nomEn: `Gain ${n}`, type: "curseur" as const, plage: [-60, 12] as [number, number], pas: 0.5, defaut: 0, unite: "dB", port: k,
+          doc: `Niveau de la piste ${n}.`, docEn: `Level of track ${n}.` }),
+        reglagePartage({ nom: `Fondu entrée ${n}`, nomEn: `Fade in ${n}`, type: "nombre" as const, plage: [0, 60000] as [number, number], pas: 1, defaut: 10, unite: "ms", port: k,
+          doc: `Durée du fondu d'entrée de la piste ${n}.`,
+          docEn: `Length of track ${n}'s fade in.` }),
+        reglagePartage({ nom: `Fondu sortie ${n}`, nomEn: `Fade out ${n}`, type: "nombre" as const, plage: [0, 60000] as [number, number], pas: 1, defaut: 10, unite: "ms", port: k,
+          doc: `Durée du fondu de sortie de la piste ${n}.`,
+          docEn: `Length of track ${n}'s fade out.` }),
+      ]),
     ],
     async executer(ctx) {
       const chemin = ctx.paramTexte("Chemin", "").trim();
@@ -109,15 +116,15 @@ export const fiches: FicheAudio[] = ([
           fonduEntreeMs: 0, fonduSortieMs: 0,
         });
       }
-      for (let k = 0; k < PISTES_VIDEO; k++) {
+      for (const [k, n] of NUMEROS.entries()) {
         const son = ctx.entree(k);
         if (!(son instanceof AudioBuffer)) continue;
         pistes.push({
           piste: k, son,
-          image: ctx.paramNombre(`Image ${k + 1}`, 0),
-          gainDb: ctx.paramNombre(`Gain ${k + 1}`, 0),
-          fonduEntreeMs: ctx.paramNombre(`Fondu entrée ${k + 1}`, 10),
-          fonduSortieMs: ctx.paramNombre(`Fondu sortie ${k + 1}`, 10),
+          image: ctx.paramNombre(`Image ${n}`, 0),
+          gainDb: ctx.paramNombre(`Gain ${n}`, 0),
+          fonduEntreeMs: ctx.paramNombre(`Fondu entrée ${n}`, 10),
+          fonduSortieMs: ctx.paramNombre(`Fondu sortie ${n}`, 10),
         });
       }
       if (pistes.length === 0) {

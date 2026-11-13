@@ -7,8 +7,8 @@
 //
 // CE QUE LE COMPILATEUR NE PEUT PAS DIRE, ET QUE CE GARDE DIT :
 //   · une fiche écrite sans `fiche()` échappe à la vérification, sans erreur nulle part ;
-//   · une fiche passée par `ficheSansNomsVerifies` lit tout nom, et la liste de ces fiches ne doit
-//     que rétrécir ;
+//   · une fiche passée par `ficheSansNomsVerifies` lit tout nom, et la liste de ces fiches, vidée
+//     par la pièce 2, doit le rester ;
 //   · un ancien réglage qui serait encore vivant, ou hérité par un réglage vivant, ne serait jamais
 //     lu sous son nom ;
 //   · une aide qui lit un réglage sous un contexte aux noms libres ne vérifie rien, et la liste de
@@ -29,36 +29,14 @@ import { toutesLesFiches } from "./index";
 const DOSSIER = resolve(__dirname);
 
 /**
- * LES FICHES DONT LES NOMS NE SE DÉDUISENT PAS ENCORE, relevées le 2026-11-11 quand ce garde est né.
- * Elles étaient 134 ; les trente que les réglages SoundFont partagés élargissaient en sont sorties le
- * 2026-11-12, quand ces réglages ont gardé leur nom par `reglagePartage`, puis vingt-huit le même jour,
- * quand les bornes de `bornesModulation` ont gardé les leurs.
+ * LES FICHES DONT LES NOMS NE SE DÉDUISENT PAS, relevées le 2026-11-11 quand ce garde est né. Elles
+ * étaient 134, et la pièce 2 du plan les a toutes libérées, famille par famille, entre le 2026-11-12
+ * et le 2026-11-13 : chaque réglage partagé ou construit garde désormais son nom.
  *
- * ELLE NE PEUT QUE DÉCROÎTRE. Leur liste de réglages mêle des réglages partagés ou construits à ceux
- * écrits sur place, et leurs noms s'élargissent à `string` : c'est la pièce 2 du plan. Une fiche qui
- * retrouve des noms déduits en sort ; une fiche neuve n'y entre pas, elle écrit ses réglages.
+ * ELLE EST VIDE, ET ELLE LE RESTE. Une fiche neuve n'y entre pas : elle écrit ses réglages sur place,
+ * ou les reprend d'une liste qui garde ses noms (`reglagePartage`).
  */
-const SANS_NOMS_VERIFIES: Record<string, string[]> = {
-  "continuation-spectrale.ts": ["continuation-spectrale-ar", "continuation-spectrale-lstm"],
-  "csound-partition.ts": ["partition-csound"],
-  "csound.ts": [
-    "csound", "csound-instrument", "csound-effet", "csound-instruments-physiques", "csound-spectral",
-  ],
-  "egaliseur-parametrique.ts": ["egaliseur-parametrique"],
-  "fm-operateurs.ts": ["fm-six-operateurs"],
-  "glissando-de-gamme.ts": ["glissando-de-gamme"],
-  "glissando-harmonique.ts": ["glissando-harmonique"],
-  "maquette.ts": ["maquette"],
-  "matrice-parametres.ts": ["matrice-parametres"],
-  "micromontage.ts": ["micromontage"],
-  "montage-video.ts": ["montage-video"],
-  "multicanal.ts": ["spatialiseur", "objet-sonore"],
-  "objets-sonores.ts": ["montage"],
-  "solveur-contraintes.ts": ["solveur-contraintes"],
-  "spectral-wishart.ts": ["tracage-spectral", "flou-spectral", "gel-spectral", "glissando-interieur"],
-  "spectrogramme-image.ts": ["son-spectrogramme", "spectrogramme-image", "image-spectrogramme"],
-  "texte-image-moss.ts": ["texte-image-moss"],
-};
+const SANS_NOMS_VERIFIES: Record<string, string[]> = {};
 
 const nomDePropriete = (p: ts.ObjectLiteralElementLike) =>
   p.name && (ts.isIdentifier(p.name) || ts.isStringLiteral(p.name)) ? p.name.text : null;
@@ -84,25 +62,29 @@ function idDeFiche(n: ts.Node): string | null {
  *
  * ELLE NE PEUT QUE DÉCROÎTRE. Une aide qui prend `ContexteQuiDeclare<N, M>` de `plugins/fiche.ts`
  * fait vérifier ses lectures, et que la fiche appelante déclare tout ce qu'elle lit ; elle sort de la
- * liste. Celles-ci servent des fiches encore sans noms vérifiés, et se typent avec la famille de la
- * pièce 2 qui les libère (décidé par Fabien le 2026-11-12). L'exécuteur de `effet()` lit par
+ * liste. Les treize du relevé se sont typées avec la famille de la pièce 2 qui libérait leurs fiches
+ * (décidé par Fabien le 2026-11-12). Il n'en reste qu'une : l'exécuteur de `effet()` lit par
  * construction les réglages qu'il déclare, `ctx.paramNombre(p.nom, …)`, et y reste à ce titre.
  */
 const AIDES_NON_VERIFIEES: Record<string, string[]> = {
-  "continuation-spectrale.ts": ["executerContinuation"],
   "effets-aides.ts": ["effet (exécuteur de fabrique)"],
-  "multicanal.ts": ["piste"],
-  "spectral-wishart.ts": ["tailleDe"],
-  "spectrogramme-image.ts": ["echelleLue", "estStereo"],
 };
 
-/** Le nom de la fonction qui contient ce nœud, comme une déclaration ou une constante le donne. */
-function fonctionDe(n: ts.Node): string | null {
+/**
+ * Les noms des fonctions qui contiennent ce nœud, de la plus proche à la plus lointaine, comme une
+ * déclaration ou une constante les donne.
+ *
+ * TOUTES, ET NON LA PLUS PROCHE SEULE : une fonction imbriquée dans une aide vérifiée, la `piste` de
+ * `trajectoireDe` dans `multicanal.ts`, ne lit qu'à travers le contexte de cette aide, que le
+ * compilateur vérifie. Elle n'a pas à le redéclarer.
+ */
+function fonctionsDe(n: ts.Node): string[] {
+  const noms: string[] = [];
   for (let p = n.parent; p; p = p.parent) {
-    if ((ts.isFunctionDeclaration(p) || ts.isMethodDeclaration(p)) && p.name && nomDePropriete(p as never) !== "executer") return p.name.getText();
-    if ((ts.isArrowFunction(p) || ts.isFunctionExpression(p)) && ts.isVariableDeclaration(p.parent)) return p.parent.name.getText();
+    if ((ts.isFunctionDeclaration(p) || ts.isMethodDeclaration(p)) && p.name && nomDePropriete(p as never) !== "executer") noms.push(p.name.getText());
+    else if ((ts.isArrowFunction(p) || ts.isFunctionExpression(p)) && ts.isVariableDeclaration(p.parent)) noms.push(p.parent.name.getText());
   }
-  return null;
+  return noms;
 }
 
 /** Les aides qui lisent un réglage hors de l'exécuteur d'une fiche enveloppée, et sans contexte vérifié. */
@@ -113,7 +95,7 @@ function aidesNonVerifiees(): string[] {
     const sf = ts.createSourceFile(nom, readFileSync(join(DOSSIER, nom), "utf8"), ts.ScriptTarget.Latest, true);
     // Les fonctions dont une déclaration, surcharges comprises, prend un contexte vérifié.
     const verifiees = new Set<string>();
-    const lecteurs: { fonction: string; dansExecuteur: boolean }[] = [];
+    const lecteurs: { fonctions: string[]; dansExecuteur: boolean }[] = [];
     const visiter = (n: ts.Node) => {
       if ((ts.isFunctionDeclaration(n) && n.name) || (ts.isVariableDeclaration(n) && n.initializer
         && (ts.isArrowFunction(n.initializer) || ts.isFunctionExpression(n.initializer)))) {
@@ -131,14 +113,15 @@ function aidesNonVerifiees(): string[] {
             break;
           }
         }
-        if (!dansFiche) lecteurs.push({ fonction: fonctionDe(n) ?? "(module)", dansExecuteur });
+        if (!dansFiche) lecteurs.push({ fonctions: fonctionsDe(n), dansExecuteur });
       }
       ts.forEachChild(n, visiter);
     };
     visiter(sf);
     for (const l of lecteurs) {
-      if (verifiees.has(l.fonction)) continue;
-      trouvees.add(`${nom} : ${l.dansExecuteur ? `${l.fonction} (exécuteur de fabrique)` : l.fonction}`);
+      if (l.fonctions.some((f) => verifiees.has(f))) continue;
+      const fonction = l.fonctions[0] ?? "(module)";
+      trouvees.add(`${nom} : ${l.dansExecuteur ? `${fonction} (exécuteur de fabrique)` : fonction}`);
     }
   }
   return [...trouvees].sort();
@@ -174,8 +157,8 @@ describe("une fiche ne lit que les réglages qu'elle déclare", () => {
   it("le garde lit les fiches des greffons, sans quoi il ne dirait rien", () => {
     // 334 vérifiées et 134 sans noms vérifiés le 2026-11-11 ; 392 et 76 le 2026-11-12, puis 402 et 76
     // quand les dix fiches à identifiant constant sont passées par fiche(), 416 et 62 avec le
-    // réglage « Calcul », 431 et 47 avec les réglages de rendu, et 450 et 28 avec la tonalité, sur
-    // 511 fiches.
+    // réglage « Calcul », 431 et 47 avec les réglages de rendu, 450 et 28 avec la tonalité, et 478
+    // et 0 avec les dernières familles, sur 511 fiches.
     expect(ECRITES.verifiees).toBeGreaterThanOrEqual(300);
   });
 

@@ -7,7 +7,7 @@
 // LES INTERVALLES VIENNENT DE LA TABLE COMMUNE, `audio/qualites-accords.ts` : ce composant ne sait
 // pas ce qu'est un accord de treizième, il sait le faire glisser.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { QUALITES, notesDaccord } from "../audio/qualites-accords";
 import { trajetDesVoix, voixDuGlissando } from "../audio/glissando";
@@ -20,30 +20,38 @@ const en = () => langueCourante() === "en";
 
 const RENVERSEMENT_MAX = Math.max(...QUALITES.map((q) => q.intervalles.length)) - 1;
 
-/** Les trois réglages d'un côté, déclarés une fois pour les deux. */
-function cote(suffixeFr: string, suffixeEn: string, octaveDefaut: number) {
+/** Les deux côtés du glissement, tels que les noms de leurs réglages les portent. */
+type Cote = "de départ" | "d'arrivée";
+
+/**
+ * Les quatre réglages d'un côté, déclarés une fois pour les deux.
+ *
+ * LE CÔTÉ EST UN LITTÉRAL, et les noms qu'on en tire, « Accord de départ » et les autres, sont
+ * vérifiés comme des noms écrits en clair, à la déclaration comme à la lecture.
+ */
+function cote<S extends Cote>(suffixeFr: S, suffixeEn: string, octaveDefaut: number) {
   return [
-    { nom: `Accord ${suffixeFr}`, nomEn: `${suffixeEn} chord`, type: "choix" as const,
+    reglagePartage({ nom: `Accord ${suffixeFr}`, nomEn: `${suffixeEn} chord`, type: "choix" as const,
       options: QUALITES.map((q) => q.fr), optionsEn: QUALITES.map((q) => q.en),
       optionIds: QUALITES.map((q) => q.id), defaut: QUALITES[0].fr, defautEn: QUALITES[0].en,
       doc: `La qualité de l'accord ${suffixeFr}. Ses intervalles viennent de la table commune des accords.`,
-      docEn: `The quality of the ${suffixeEn.toLowerCase()} chord. Its intervals come from the common chord table.` },
-    { ...PARAMETRE_TONIQUE, nom: `Fondamentale ${suffixeFr}`, nomEn: `${suffixeEn} root`,
+      docEn: `The quality of the ${suffixeEn.toLowerCase()} chord. Its intervals come from the common chord table.` }),
+    reglagePartage({ ...PARAMETRE_TONIQUE, nom: `Fondamentale ${suffixeFr}`, nomEn: `${suffixeEn} root`,
       doc: `La fondamentale de l'accord ${suffixeFr}.`,
-      docEn: `The root of the ${suffixeEn.toLowerCase()} chord.` },
-    { nom: `Octave ${suffixeFr}`, nomEn: `${suffixeEn} octave`, type: "curseur" as const,
+      docEn: `The root of the ${suffixeEn.toLowerCase()} chord.` }),
+    reglagePartage({ nom: `Octave ${suffixeFr}`, nomEn: `${suffixeEn} octave`, type: "curseur" as const,
       plage: [0, 8] as [number, number], pas: 1, defaut: octaveDefaut,
       doc: `L'octave de cette fondamentale. Quatre place le do central.`,
-      docEn: `That root's octave. Four places middle C.` },
-    { nom: `Renversement ${suffixeFr}`, nomEn: `${suffixeEn} inversion`, type: "curseur" as const,
+      docEn: `That root's octave. Four places middle C.` }),
+    reglagePartage({ nom: `Renversement ${suffixeFr}`, nomEn: `${suffixeEn} inversion`, type: "curseur" as const,
       plage: [0, RENVERSEMENT_MAX] as [number, number], pas: 1, defaut: 0,
       doc: `Monte d'une octave les notes du bas de cet accord. C'est ce qui décide quelle voix part vers quelle voix, donc l'ampleur des glissements.`,
-      docEn: `Moves this chord's bottom notes up an octave. It decides which voice goes to which, hence how wide the glides are.` },
+      docEn: `Moves this chord's bottom notes up an octave. It decides which voice goes to which, hence how wide the glides are.` }),
   ];
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "glissando-harmonique", nomDicte: "glissement harmonique", nom: "Glissando harmonique", nomEn: "Harmonic Glissando",
     univers: "Entrées", famille: "Génération",
     resume: "Fait glisser un accord entier vers un autre, chaque voix rejoignant la sienne sans jamais se poser.",
@@ -124,7 +132,7 @@ The « Journey » output gives, voice by voice, the starting note, the arrival n
         docEn: "The peak level. It accounts for the number of voices and partials." },
     ],
     async executer(ctx) {
-      const agregat = (suffixe: string, octaveDefaut: number) => {
+      const agregat = (suffixe: Cote, octaveDefaut: number) => {
         const qualite = ctx.paramTexte(`Accord ${suffixe}`, QUALITES[0].id);
         const demiTon = parseInt(ctx.paramTexte(`Fondamentale ${suffixe}`, "0"), 10) || 0;
         const octave = Math.round(ctx.paramNombre(`Octave ${suffixe}`, octaveDefaut));

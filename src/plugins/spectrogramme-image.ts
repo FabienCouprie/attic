@@ -13,9 +13,8 @@
 // Les calculs, leurs références et la raison de leurs choix sont dans `audio/mel.ts`,
 // `audio/spectrogramme-mel.ts` et `audio/spectrogramme-pixels.ts`.
 
-import { fiche, ficheSansNomsVerifies } from "./fiche";
-import type { ContexteAudio, FicheAudio } from "../audio/types-domaine";
-import type { ParametreDef } from "../core";
+import { fiche, lecteurDe, reglagePartage, type ContexteQuiDeclare } from "./fiche";
+import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { imageDataDepuisFichier, mixdownMono } from "../audio";
@@ -33,54 +32,68 @@ const en = () => langueCourante() === "en";
 const nb = (v: number, d = 2) => (en() ? v.toFixed(d) : v.toFixed(d).replace(".", ","));
 
 /** Les réglages de l'échelle, déclarés là où on les pose : à l'analyse, et à la lecture d'image. */
-const REGLAGES_ECHELLE: ParametreDef[] = [
-  { nom: "Bandes", nomEn: "Bands", type: "curseur", plage: [64, 1024], pas: 1, defaut: 512, unite: "",
+const REGLAGES_ECHELLE = [
+  reglagePartage({ nom: "Bandes", nomEn: "Bands", type: "curseur", plage: [64, 1024], pas: 1, defaut: 512, unite: "",
     doc: "Le nombre de bandes de mels, donc la hauteur du spectrogramme. Cinq cent douze suit la référence.",
-    docEn: "The number of mel bands, and so the height of the spectrogram. Five hundred and twelve follows the reference." },
-  { nom: "Pas", nomEn: "Step", type: "curseur", plage: [1, 50], pas: 1, defaut: 10, unite: "ms",
+    docEn: "The number of mel bands, and so the height of the spectrogram. Five hundred and twelve follows the reference." }),
+  reglagePartage({ nom: "Pas", nomEn: "Step", type: "curseur", plage: [1, 50], pas: 1, defaut: 10, unite: "ms",
     doc: "L'avance d'une colonne à la suivante. Dix millisecondes donnent cent colonnes par seconde.",
-    docEn: "The advance from one column to the next. Ten milliseconds give a hundred columns per second." },
-  { nom: "Fenêtre", nomEn: "Window", type: "curseur", plage: [10, 500], pas: 1, defaut: 100, unite: "ms",
+    docEn: "The advance from one column to the next. Ten milliseconds give a hundred columns per second." }),
+  reglagePartage({ nom: "Fenêtre", nomEn: "Window", type: "curseur", plage: [10, 500], pas: 1, defaut: 100, unite: "ms",
     doc: "La durée analysée par colonne. Longue, elle sépare les hauteurs voisines et étale les attaques ; courte, elle fait l'inverse.",
-    docEn: "The duration analysed per column. Long, it separates neighbouring pitches and smears attacks; short, it does the opposite." },
-  { nom: "Bourrage", nomEn: "Padding", type: "curseur", plage: [20, 1000], pas: 10, defaut: 400, unite: "ms",
+    docEn: "The duration analysed per column. Long, it separates neighbouring pitches and smears attacks; short, it does the opposite." }),
+  reglagePartage({ nom: "Bourrage", nomEn: "Padding", type: "curseur", plage: [20, 1000], pas: 10, defaut: 400, unite: "ms",
     doc: "La durée de la trame une fois complétée de zéros. Elle n'ajoute pas de résolution, elle affine la grille sur laquelle le spectre est lu, et elle fixe le coût du calcul.",
-    docEn: "The frame duration once padded with zeros. It adds no resolution, it refines the grid the spectrum is read on, and it sets the cost of the computation." },
-  { nom: "Fréquence min", nomEn: "Min frequency", type: "curseur", plage: [0, 2000], pas: 10, defaut: 0, unite: "Hz",
+    docEn: "The frame duration once padded with zeros. It adds no resolution, it refines the grid the spectrum is read on, and it sets the cost of the computation." }),
+  reglagePartage({ nom: "Fréquence min", nomEn: "Min frequency", type: "curseur", plage: [0, 2000], pas: 10, defaut: 0, unite: "Hz",
     doc: "La fréquence de la bande du bas. Zéro suit la référence et consacre le bas du spectrogramme à quelques hertz.",
-    docEn: "The frequency of the bottom band. Zero follows the reference and devotes the bottom of the spectrogram to a few hertz." },
-  { nom: "Fréquence max", nomEn: "Max frequency", type: "curseur", plage: [1000, 22050], pas: 100, defaut: 10000, unite: "Hz",
+    docEn: "The frequency of the bottom band. Zero follows the reference and devotes the bottom of the spectrogram to a few hertz." }),
+  reglagePartage({ nom: "Fréquence max", nomEn: "Max frequency", type: "curseur", plage: [1000, 22050], pas: 100, defaut: 10000, unite: "Hz",
     doc: "La fréquence de la bande du haut. Ce qui est au-dessus n'entre pas dans le spectrogramme et ne revient pas au retour.",
-    docEn: "The frequency of the top band. Anything above does not enter the spectrogram and does not come back on the return trip." },
+    docEn: "The frequency of the top band. Anything above does not enter the spectrogram and does not come back on the return trip." }),
 ];
 
-const PUISSANCE: ParametreDef = {
+const PUISSANCE = reglagePartage({
   nom: "Puissance", nomEn: "Power", type: "curseur", plage: [0.05, 1], pas: 0.05, defaut: 0.25,
   doc: "L'exposant appliqué au module avant l'écriture sur 256 niveaux. Un quart suit la référence et rend visible le bas de la dynamique ; un vaut l'écriture linéaire, où l'image est presque entièrement blanche.",
   docEn: "The exponent applied to the magnitude before writing to 256 levels. A quarter follows the reference and makes the bottom of the dynamic range visible; one is linear writing, where the image is almost entirely white.",
-};
+});
 
-const CANAUX: ParametreDef = {
+const CANAUX = reglagePartage({
   nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"],
   optionIds: ["mono", "stereo"], defaut: "Mono", defautEn: "Mono",
   doc: "Mono analyse un seul canal. Stéréo en garde deux, qui se suivent jusqu'au bout de la chaîne.",
   docEn: "Mono analyses a single channel. Stereo keeps two, which follow each other to the end of the chain.",
-};
+});
 
-/** Les réglages de l'échelle lus sur le nœud, le nombre de bandes compris. */
-function echelleLue(ctx: ContexteAudio, echantillonnage: number, bandes?: number): ParametresMel {
+type ReglageEchelle = (typeof REGLAGES_ECHELLE)[number];
+type NomEchelle = ReglageEchelle["nom"];
+
+/**
+ * Les réglages de l'échelle lus sur le nœud, le nombre de bandes compris.
+ *
+ * « BANDES » N'EST LU QUE SI LE NOMBRE N'EST PAS DONNÉ. « Image → spectrogramme » le tient de la
+ * hauteur de l'image et ne le déclare pas : le compilateur ne l'exige que de l'appel qui ne le donne
+ * pas.
+ */
+function echelleLue<N extends string, B extends number | undefined = undefined>(
+  ctx: ContexteQuiDeclare<N, B extends number ? Exclude<NomEchelle, "Bandes"> : NomEchelle>,
+  echantillonnage: number, bandes?: B,
+): ParametresMel {
+  const lu = lecteurDe<NomEchelle>(ctx);
   return {
     echantillonnage,
-    bandes: bandes ?? Math.round(ctx.paramNombre("Bandes", PARAMETRES_RIFFUSION.bandes)),
-    pasMs: ctx.paramNombre("Pas", PARAMETRES_RIFFUSION.pasMs),
-    fenetreMs: ctx.paramNombre("Fenêtre", PARAMETRES_RIFFUSION.fenetreMs),
-    bourrageMs: ctx.paramNombre("Bourrage", PARAMETRES_RIFFUSION.bourrageMs),
-    fMin: ctx.paramNombre("Fréquence min", PARAMETRES_RIFFUSION.fMin),
-    fMax: ctx.paramNombre("Fréquence max", PARAMETRES_RIFFUSION.fMax),
+    bandes: bandes ?? Math.round(lu.paramNombre("Bandes", PARAMETRES_RIFFUSION.bandes)),
+    pasMs: lu.paramNombre("Pas", PARAMETRES_RIFFUSION.pasMs),
+    fenetreMs: lu.paramNombre("Fenêtre", PARAMETRES_RIFFUSION.fenetreMs),
+    bourrageMs: lu.paramNombre("Bourrage", PARAMETRES_RIFFUSION.bourrageMs),
+    fMin: lu.paramNombre("Fréquence min", PARAMETRES_RIFFUSION.fMin),
+    fMax: lu.paramNombre("Fréquence max", PARAMETRES_RIFFUSION.fMax),
   };
 }
 
-const estStereo = (ctx: ContexteAudio) => ctx.paramTexte("Canaux", "mono") === "stereo";
+const estStereo = <N extends string>(ctx: ContexteQuiDeclare<N, "Canaux">) =>
+  lecteurDe<"Canaux">(ctx).paramTexte("Canaux", "mono") === "stereo";
 const estSpectrogramme = (v: unknown): v is SpectrogrammeMel =>
   !!v && typeof v === "object" && Array.isArray((v as SpectrogrammeMel).canaux)
   && !!(v as SpectrogrammeMel).parametres;
@@ -105,7 +118,7 @@ function fichierDepuisPixels(rgba: Uint8ClampedArray, largeur: number, hauteur: 
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "son-spectrogramme", nomDicte: "son vers image du spectre", nom: "Son → spectrogramme", nomEn: "Sound to spectrogram",
     univers: "Traitement", famille: "Mels",
     resume: "Analyse un son en spectrogramme de mels, au paramétrage de Riffusion.",
@@ -202,7 +215,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "spectrogramme-image", nomDicte: "image du spectre vers dessin", nom: "Spectrogramme → image", nomEn: "Spectrogram to image",
     univers: "Traitement", famille: "Mels",
     resume: "Écrit un spectrogramme de mels en image, à la convention de Riffusion.",
@@ -224,7 +237,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "image-spectrogramme", nomDicte: "dessin vers image du spectre", nom: "Image → spectrogramme", nomEn: "Image to spectrogram",
     univers: "Traitement", famille: "Mels",
     resume: "Relit une image comme un spectrogramme de mels, à la convention de Riffusion.",
@@ -239,7 +252,9 @@ export const fiches: FicheAudio[] = ([
         doc: "La fréquence d'échantillonnage du son que le spectrogramme décrira. Une image ne la porte pas, et c'est elle qui décide à quelle hauteur chaque ligne se retrouve.",
         docEn: "The sample rate of the sound the spectrogram will describe. An image does not carry it, and it decides what pitch each row ends up at." },
       PUISSANCE, CANAUX,
-      ...REGLAGES_ECHELLE.filter((r) => r.nom !== "Bandes"),
+      // Le prédicat retire « Bandes » du type aussi : sans lui, la liste filtrée passait pour la
+      // déclarer, et une lecture de « Bandes » y aurait été acceptée.
+      ...REGLAGES_ECHELLE.filter((r): r is Exclude<ReglageEchelle, { nom: "Bandes" }> => r.nom !== "Bandes"),
     ],
     async executer(ctx) {
       const fichier = ctx.entree(0);

@@ -14,7 +14,7 @@
 // entend un geste là où le tirage ne donne qu'une texture. Les autres grandeurs sont ou bien des
 // rangs, ou bien des lois de tirage, ce que `MODULABLES.md` écarte nommément de la modulation.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { estCourbe, valeurA, valeursParametre } from "../audio/courbe";
 import { bornesModulation, modulationNommee, portModulation, reglageModule } from "./effets-aides";
@@ -44,9 +44,17 @@ const LOIS_ID = ["fixe", "rampe", "tirage"];
 const TRIO_FR = "« Fixe » donne la même valeur à tous les fragments, celle de la première glissière ; « Rampe » traverse l'intervalle des deux glissières dans l'ordre ; « Tirage » le remplit sans ordre.";
 const TRIO_EN = "« Fixed » gives every fragment the same value, that of the first slider; « Ramp » crosses the interval of the two sliders in order; « Draw » fills it without order.";
 
-/** Les trois réglages d'une grandeur : sa valeur, sa seconde borne, sa loi. */
-function trio(
-  nom: string, nomEn: string,
+/** Les sept grandeurs que la partition déploie, telles que les noms de leurs réglages les portent. */
+type Grandeur = "Source" | "Prise" | "Pose" | "Durée" | "Nuance" | "Panoramique" | "Transposition";
+
+/**
+ * Les trois réglages d'une grandeur : sa valeur, sa seconde borne, sa loi.
+ *
+ * LA GRANDEUR EST UN LITTÉRAL, et « Pose, fin » ou « Pose, loi » sont vérifiés comme des noms écrits
+ * en clair, à la déclaration comme à la lecture.
+ */
+function trio<G extends Grandeur>(
+  nom: G, nomEn: string,
   o: {
     plage: [number, number]; pas: number; de: number; a: number; loi: "fixe" | "rampe" | "tirage";
     unite?: string; doc: string; docEn: string;
@@ -55,22 +63,22 @@ function trio(
   const commun = { type: "curseur" as const, plage: o.plage, pas: o.pas, ...(o.unite ? { unite: o.unite } : {}) };
   const rang = LOIS_ID.indexOf(o.loi);
   return [
-    { nom, nomEn, ...commun, defaut: o.de, doc: o.doc, docEn: o.docEn },
-    { nom: `${nom}, fin`, nomEn: `${nomEn}, end`, ...commun, defaut: o.a,
+    reglagePartage({ nom, nomEn, ...commun, defaut: o.de, doc: o.doc, docEn: o.docEn }),
+    reglagePartage({ nom: `${nom}, fin`, nomEn: `${nomEn}, end`, ...commun, defaut: o.a,
       doc: `La seconde borne, pour une rampe ou un tirage. Sans effet sur « Fixe ».`,
-      docEn: `The second bound, for a ramp or a draw. No effect on « Fixed ».` },
+      docEn: `The second bound, for a ramp or a draw. No effect on « Fixed ».` }),
     // LA LOI PAR DÉFAUT N'EST PAS LA MÊME POUR TOUTES LES GRANDEURS, et ce n'est pas un détail : une
     // partition dont tout serait fixe pose ses mille fragments au même instant, et ne rend qu'un
     // seul son additionné mille fois. La pose veut une rampe, la prise et les nuances un tirage.
-    { nom: `${nom}, loi`, nomEn: `${nomEn}, law`, type: "choix" as const,
+    reglagePartage({ nom: `${nom}, loi`, nomEn: `${nomEn}, law`, type: "choix" as const,
       options: LOIS_FR, optionsEn: LOIS_EN, optionIds: LOIS_ID,
       defaut: LOIS_FR[rang], defautEn: LOIS_EN[rang],
-      doc: TRIO_FR, docEn: TRIO_EN },
+      doc: TRIO_FR, docEn: TRIO_EN }),
   ];
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "micromontage", nomDicte: "montage très fin",
     nom: "Micromontage", nomEn: "Micromontage",
     univers: "Traitement", famille: "Montage",
@@ -150,7 +158,7 @@ export const fiches: FicheAudio[] = ([
       const combien = Math.max(1, Math.min(FRAGMENTS_MAX, Math.round(ctx.paramNombre("Fragments", 400))));
       const hasard = tirage(ctx.paramNombre("Graine", 1));
       /** Le champ que décrit le trio d'une grandeur. Le repli suit le défaut de la fiche. */
-      const champ = (nom: string, de: number, a: number, loiParDefaut: string): Champ => {
+      const champ = (nom: Grandeur, de: number, a: number, loiParDefaut: string): Champ => {
         const debut = ctx.paramNombre(nom, de);
         const fin = ctx.paramNombre(`${nom}, fin`, a);
         const loi = ctx.paramTexte(`${nom}, loi`, loiParDefaut);
@@ -160,7 +168,7 @@ export const fiches: FicheAudio[] = ([
       };
       // LES CHAMPS SE DÉPLOIENT DANS UN ORDRE FIXE, et c'est ce qui rend la graine utile : le même
       // générateur les sert l'un après l'autre, donc deux rendus de mêmes réglages sont identiques.
-      const dep = (nom: string, de: number, a: number, loi: string) =>
+      const dep = (nom: Grandeur, de: number, a: number, loi: string) =>
         deployer(champ(nom, de, a, loi), combien, hasard);
       const source = dep("Source", 1, SOURCES, "fixe").map((v) => Math.round(v) - 1);
       const prise = dep("Prise", 0, 1, "tirage");

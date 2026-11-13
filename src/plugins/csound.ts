@@ -10,7 +10,7 @@
 // — les instruments d'un côté, les traitements spectraux de l'autre — réglables sans écrire
 // une ligne de code.
 
-import { ficheSansNomsVerifies } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -104,8 +104,8 @@ function rapport(r: ResultatCsound, en: boolean, remarques: string[] = []): stri
 }
 
 const PARAMETRES_SORTIE = [
-  { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100] as [number, number], pas: 1, defaut: 80, unite: "%",
-    doc: "Volume de sortie, appliqué après la limitation.", docEn: "Output volume, applied after limiting." },
+  reglagePartage({ nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100] as [number, number], pas: 1, defaut: 80, unite: "%",
+    doc: "Volume de sortie, appliqué après la limitation.", docEn: "Output volume, applied after limiting." }),
 ];
 
 /** Applique le volume à un buffer rendu. */
@@ -121,7 +121,7 @@ function auVolume(audio: AudioBuffer, volume: number): AudioBuffer {
 }
 
 export const fiches: FicheAudio[] = ([
-  ficheSansNomsVerifies({
+  fiche({
     id: "csound", nomDicte: "langage sonore", nom: "Csound", nomEn: "Csound",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Exécute un orchestre et une partition Csound, et rend l'audio produit.",
@@ -224,7 +224,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "csound-instrument", nomDicte: "instrument programmé", nom: "Instrument Csound", nomEn: "Csound Instrument",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Joue un MIDI avec un orchestre Csound : chaque note devient un événement de partition.",
@@ -287,7 +287,7 @@ export const fiches: FicheAudio[] = ([
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "csound-effet", nomDicte: "effet programmé", nom: "Effet Csound", nomEn: "Csound Effect",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Traite un ou deux sons par un orchestre Csound.",
@@ -376,7 +376,7 @@ endin`,
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "csound-instruments-physiques", nomDicte: "instruments programmés", nom: "Instruments Csound", nomEn: "Csound Instruments",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Les instruments de Perry Cook tels que Csound les porte : corde frottée, clarinette, flûte, cuivre, corde pincée, formants.",
@@ -443,7 +443,7 @@ endin`,
       };
     },
   }),
-  ficheSansNomsVerifies({
+  fiche({
     id: "csound-spectral", nomDicte: "spectral programmé", nom: "Spectral Csound", nomEn: "Csound Spectral",
     univers: "Autres", famille: "Csound wrapper",
     resume: "Morphing spectral, vocodeur et étirement à phase verrouillée, par les opcodes de flux spectral de Csound.",
