@@ -1,5 +1,5 @@
 // core/execution.test.ts — Protection de la règle « tout-null = échec ».
-// Vérifie que les nœuds déclarant sortieNullePermise (transcripteur MIDI vide,
+// Vérifie que les nœuds déclarant sortieNullePermise (clavier où rien n'a été joué,
 // nœuds-frontière) ne sont PAS marqués en erreur par le moteur.
 //
 // ET LA DÉCISION D'AVANT L'EXÉCUTION, plus bas : son témoin est l'ancien bloc du moteur.

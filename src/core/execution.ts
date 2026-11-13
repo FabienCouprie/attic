@@ -1,7 +1,7 @@
 // core/execution.ts — Logique d'interprétation du résultat d'un plugin.
 // Extraite du hook useExecutionGraphe pour la rendre testable et éviter que la
-// règle « tout-null = échec » ne marque des états légitimes (transcripteur MIDI
-// vide, nœuds-frontière) lorsqu'ils déclarent sortieNullePermise.
+// règle « tout-null = échec » ne marque des états légitimes (clavier où rien n'a
+// été joué, nœuds-frontière) lorsqu'ils déclarent sortieNullePermise.
 //
 // ET CE QU'UNE PASSE FAIT D'UN NŒUD AVANT DE L'EXÉCUTER, sorti d'`ui/hooks/useExecutionGraphe.ts`
 // le 2026-11-11 à l'identique (pièce 1 du plan `work/plan-runtime-execution-2026-11-11.md`, qui sort

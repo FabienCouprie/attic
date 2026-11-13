@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**511 composants**, dont **101** avec une vue propre et **7** sans lecteur générique.
+**510 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -114,7 +114,6 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Tessitures de voix | `tessitures-voix` | VueTessituresVoix | — | 300 × 320 | non | oui | non |
 | Texte → image | `texte-image` | VueRenduImage | — | 320 × 320 | oui | oui | non |
 | Texte → image (MOSS) | `texte-image-moss` | VueRenduImage | — | 320 × 320 | oui | oui | non |
-| Transcripteur MIDI | `transcripteur-midi` | VueTranscription | — | 240 × 118 | non | oui | non |
 | Grille d'accords VexFlow | `vexflow-grille` | VueVexFlow | — | 500 × 200 | oui | oui | oui |
 | Partition MIDI | `vexflow-midi` | VueVexFlow | — | 800 × 200 | oui | oui | oui |
 | Partition VexFlow | `vexflow-partition` | VueVexFlow | — | 500 × 160 | oui | oui | oui |

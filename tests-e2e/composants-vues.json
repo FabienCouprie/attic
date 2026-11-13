@@ -540,12 +540,6 @@
     "entreeRequiseAutre": false
   },
   {
-    "id": "transcripteur-midi",
-    "vue": "VueTranscription",
-    "entreeAudio": true,
-    "entreeRequiseAutre": false
-  },
-  {
     "id": "vexflow-grille",
     "vue": "VueVexFlow",
     "entreeAudio": false,

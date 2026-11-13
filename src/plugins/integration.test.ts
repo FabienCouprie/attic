@@ -188,15 +188,6 @@ describe("chaînes critiques", () => {
     expect(param.optionIds).toEqual(["random", "walk", "up", "down", "arpeggio"]);
   });
 
-  it("Transcripteur MIDI : méthode mono activée par id canonique", async () => {
-    const def = registre.trouverDef("transcripteur-midi")!;
-    const audio = new AudioBuffer({ numberOfChannels: 1, length: 44100, sampleRate: 44100 });
-    const d = audio.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.sin((2 * Math.PI * 440 * i) / 44100);
-    const res = await def.executer(ctx({ Méthode: "mono", "Seuil onset": 5, "Note minimale": 21, "Note maximale": 127, "Tempo du fichier MIDI": 120 }, [audio]) as any);
-    expect(res.valeurs[0]).toBeInstanceOf(File);
-  });
-
   it("Griffin-Lim : reconstruit un signal depuis le spectrogramme de magnitude", async () => {
     const def = registre.trouverDef("griffin-lim")!;
     const audio = new AudioBuffer({ numberOfChannels: 1, length: 22050, sampleRate: 44100 });

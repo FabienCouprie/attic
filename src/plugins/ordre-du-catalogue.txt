@@ -85,7 +85,6 @@ centroide-spectral
 rms-meyda
 zcr-meyda
 rolloff-spectral-meyda
-transcripteur-midi
 detecteur-accords
 sortie-audio
 sortie-midi

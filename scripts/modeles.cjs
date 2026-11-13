@@ -70,15 +70,6 @@ const CONNUS = {
     url: `${BASE_RELEASE}/audiobox-aesthetics.onnx`,
     licence: { nom: "CC-BY 4.0", credit: "Meta Platforms — Audiobox Aesthetics (composants WavLM sous MIT, microsoft/unilm)", rediffusable: true },
   },
-  "basic-pitch.onnx": {
-    id: "basic-pitch", nom: "Transcription polyphonique", nomEn: "Polyphonic transcription",
-    noeuds: ["transcripteur-midi"],
-    // IL N'ÉTAIT NI EMBARQUÉ NI AU MANIFESTE : le nœud allait le chercher chez un tiers par un
-    // `fetch` à chaque première transcription, de sorte qu'il ne marchait qu'en ligne et qu'aucun
-    // inventaire ne le voyait. Le fichier est repris tel quel, son empreinte vérifiée contre celle
-    // que la fiche amont publie, et il passe par le même chemin que les autres.
-    licence: { nom: "Apache-2.0", credit: "Spotify — Basic Pitch (Bittner, Bosch, Rubinstein, Meseguer-Brocal, Ewert, ICASSP 2022) ; fichier repris octet pour octet du paquet amont, réhébergé par daserge", rediffusable: true },
-  },
   "htdemucs_6s.onnx": {
     id: "htdemucs-6s", nom: "Séparation 6 pistes", nomEn: "6-stem separation",
     noeuds: ["separateur-ia"],

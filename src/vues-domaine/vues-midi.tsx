@@ -31,24 +31,6 @@ export function VueUploadMidi({ id, data }: VueProps) {
 // c'est le paramètre « Instrument » du « Lecteur MIDI », que son exécuteur lit. Un second sélecteur
 // mutait de surcroît `data` sans passer par `setNodes`, donc React n'en aurait rien vu.
 
-// ── Téléchargement du MIDI transcrit ──
-export function VueTranscription({ data }: VueProps) {
-  const { t } = useI18n();
-  return (
-    <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
-      {data.midiFichierSortie ? (
-        <a href="#" className="attic-node-fichier-btn" onClick={(e) => {
-          e.preventDefault();
-          const u = URL.createObjectURL(data.midiFichierSortie! as File);
-          const a = document.createElement("a"); a.href = u; a.download = "transcription.mid"; a.click(); URL.revokeObjectURL(u);
-        }}>⬇ MIDI ({(data.midiFichierSortie as unknown as File).size.toLocaleString()} o)</a>
-      ) : (
-        <div className="attic-node-fichier-nom" style={{ opacity: .5 }}>{t("msg.connecter.audio")}</div>
-      )}
-    </div>
-  );
-}
-
 // ── Chargement d'un modèle ONNX ──
 export function VueUploadOnnx({ data }: VueProps) {
   const { t } = useI18n();

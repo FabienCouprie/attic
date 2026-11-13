@@ -85,8 +85,6 @@ const WORKERS = [
   "analyse-worker.ts",
   // Il importe `audio/emotion-mesures.ts` et Meyda, par `audio/descripteurs-valeurs.ts`.
   "emotion-worker.ts",
-  // Il importe `audio/transcription-mesures.ts`, tiré d'`audio/analyse-transcription.ts`.
-  "transcription-worker.ts",
   // Il importe `audio/auto-similarite.ts` et le chromagramme par trame d'`audio/analyse-mesures.ts`.
   "auto-similarite-worker.ts",
   // Il importe `audio/multicanal.ts`, qui n'importe rien.

@@ -75,6 +75,12 @@ const ALIAS: Record<string, string> = {
   // a été supprimé ; les graphes enregistrés qui le portent ouvrent donc le second, qui sait relire
   // leurs motifs binaires (voir `audio/batterie.ts`, `estMotifBinaire`).
   "sequenceur-batterie": "sequenceur-batterie-avance",
+  // « Transcripteur MIDI » faisait le travail de « Transcription MIDI », un son rendu en notes MIDI,
+  // et sa méthode polyphonique transcrivait mal, relevé par Fabien. Il a été supprimé le 2026-11-14 ;
+  // les graphes enregistrés qui le portent ouvrent donc le second. L'entrée audio et la sortie MIDI
+  // y sont au même rang, de sorte que les câbles tiennent. Ses réglages n'y ont pas d'équivalent et
+  // ne sont plus lus : le second prend les siens par défaut.
+  "transcripteur-midi": "transcription-midi",
 };
 
 function resoudre(id: string): string {

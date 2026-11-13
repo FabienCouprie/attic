@@ -3,13 +3,11 @@
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc, avecNomDicte } from "./notices";
-import { classerGenre, notesVersFichierMidi, detecterAccords, accordsVersTexte, appliquerInstrumentMidi, type NoteEvenement } from "../audio";
+import { classerGenre, detecterAccords, accordsVersTexte } from "../audio";
 import { fichesMeyda } from "./analyse-meyda";
 import { langueCourante, traduire } from "../i18n";
 import { annoncerModele } from "./message-modele";
 import { entreeAudio, sansEntree } from "./lire-entree";
-import { lireModeleEmbarque } from "../modele-embarque";
-import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { genererSvgGoniometre, mesurerStereo, pointsGoniometre, verdictStereo } from "../audio/stereo-correlation";
 import { candidatsOctave, fiabiliteTempo, ramenerDansPlage } from "../audio/tempo-octave";
 import { notesVersMusicXML } from "../audio/musicxml";
@@ -26,14 +24,11 @@ import { SIGNATURES } from "../audio/signatures";
 const METRIQUES = [...SIGNATURES];
 import { estSequence } from "../audio/sequence";
 import { arbreDe, voixDe } from "../audio/voix";
-import { estAnnulation } from "../core/annulation";
 import { decrireAnalyse, type AnalyseResultat } from "../audio/analyse";
 import { mesurerAnalyse, type DemandeAnalyse, type MesuresAnalyse } from "../audio/analyse-mesures";
 import { parUneFois } from "./hors-lot";
-import { inferer } from "./onnx-hors-fil";
 import { decrireEmotion, demandeEmotion } from "../audio/emotion";
 import { mesurerEmotion, type DemandeEmotion, type MesuresEmotion } from "../audio/emotion-mesures";
-import { mesurerTranscription, type DemandeTranscription, type MesuresTranscription } from "../audio/transcription-mesures";
 
 /**
  * L'analyse d'ensemble HORS DU FIL : le premier canal part COPIÉ, le tampon reçu appartenant au nœud
@@ -343,79 +338,6 @@ export const fiches: FicheAudio[] = ([
  }),
   // Les quatre descripteurs Meyda, à leur place de toujours : `plugins/analyse-meyda.ts`.
   ...fichesMeyda,
-  fiche({
-    id: "transcripteur-midi", nomDicte: "relevé des notes", nom: "Transcripteur MIDI", nomEn: "MIDI Transcriber", univers: "Traitement", famille: "Conversion",
-    resume: "Transcrit un signal audio en notes MIDI.",
-    resumeEn: "Transcribes an audio signal into MIDI notes.",
-    noticeEn: "Transcribes an audio signal into MIDI notes. FFT mono or Basic Pitch ONNX polyphonic.",
-    entrees: [{ nom: "Audio", type: "audio" }],
-    sorties: [{ nom: "MIDI", type: "midi" }],
-    // « Aucune note détectée » est un résultat valide (le nœud a bien tourné) :
-    // ne pas le convertir en échec via le filet « tout-null ».
-    sortieNullePermise: true,
-    parametres: [
-      { nom: "Méthode", nomEn: "Method", type: "choix", options: ["Monophonique (FFT)","Polyphonique (Basic Pitch ONNX)"], optionsEn: ["Monophonic (FFT)", "Polyphonic (Basic Pitch ONNX)"], optionIds: ["mono", "poly"], defaut: "Monophonique (FFT)", docEn: "Transcription algorithm.", defautEn: "Monophonic (FFT)" },
-      { nom: "Seuil onset", nomEn: "Onset threshold", plage: [1,50], defaut: 10, unite: "%", docEn: "Note attack detection sensitivity." },
-      { nom: "Note minimale", nomEn: "Min note", plage: [21,120], defaut: 36, docEn: "Lowest MIDI note to detect." },
-      { nom: "Note maximale", nomEn: "Max note", plage: [21,127], defaut: 96, docEn: "Highest MIDI note to detect." },
-      { nom: "Tempo du fichier MIDI", nomEn: "MIDI tempo", plage: [40,240], defaut: 120, unite: "BPM", docEn: "Tempo of the generated MIDI file." },
-      PARAMETRE_INSTRUMENT_SF2,
-    ],
-    async executer(ctx) {
-      const audio = ctx.entree(0);
-      if (!(audio instanceof AudioBuffer)) return { valeurs: [null], message: traduire("msg.aucune_entr_e_audio") };
-      const methode = ctx.paramTexte("Méthode", "mono");
-      const seuil = ctx.paramNombre("Seuil onset", 10);
-      const noteMin = ctx.paramNombre("Note minimale", 36);
-      const noteMax = ctx.paramNombre("Note maximale", 96);
-      let tempo = ctx.paramNombre("Tempo du fichier MIDI", 120);
-      // Auto-détection du tempo si le paramètre n'a pas été changé manuellement. HORS DU FIL, avec la
-      // transcription monophonique : les canaux partent copiés. Sans worker, en test, la même mesure.
-      const deviner = tempo === 120, mono = methode !== "poly";
-      const mesures = deviner || mono ? await parUneFois<DemandeTranscription, MesuresTranscription>({
-        canaux: Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c)),
-        sampleRate: audio.sampleRate, seuil, noteMin, noteMax, tempo: deviner, notes: mono,
-      }, {
-        creerWorker: () => new Worker(new URL("../workers/transcription-worker.ts", import.meta.url), { type: "module" }),
-        calcul: mesurerTranscription,
-      }) : null;
-      if (mesures?.analyse) {
-        try {
-          const { tempo: tDetecte } = decrireAnalyse(mesures.analyse);
-          if (tDetecte > 0) tempo = tDetecte;
-        } catch {}
-      }
-      let notes;
-      if (methode === "poly") {
-        try {
-          // LE MODÈLE EST LU ICI, et annoncé avant, comme pour les dix autres nœuds à modèle. Il
-          // se téléchargeait auparavant chez un tiers au fond du calcul, sans que rien ne le dise.
-          await annoncerModele(ctx, "transcripteur-midi", traduire("progress.transcription_pourcent_var_0", 0));
-          const modele = await lireModeleEmbarque("oonx/basic-pitch.onnx");
-          // HORS DU FIL, par le worker d'inférence ONNX, où chaque fenêtre de deux secondes calcule :
-          // dans la page, chacune gelait le fil de 22 à 43 ms. Les canaux partent copiés.
-          if (!modele) throw new Error(traduire("msg.basic_pitch_modele_absent"));
-          notes = await inferer<NoteEvenement[]>({ type: "transcrire-basic-pitch", cle: "basic-pitch", modele, sampleRate: audio.sampleRate, seuil, noteMin, noteMax,
-            canaux: Array.from({ length: audio.numberOfChannels }, (_, c) => audio.getChannelData(c)) }, { surAvancement: (p) => ctx.onProgress(traduire("progress.transcription_pourcent_var_0", p)) });
-        } catch (e: any) {
-          // Une annulation n'est pas un échec de ce composant. Voir `core/annulation.ts`.
-          if (estAnnulation(e)) throw e;
-          // NE PAS retomber silencieusement sur le FFT monophonique : c'est ce
-          // que faisait l'ancien code, si bien qu'un modèle indisponible donnait
-          // un résultat mono (inadapté à un mix) présenté comme polyphonique,
-          // sans le moindre signe pour l'utilisateur.
-          console.error("[transcripteur-midi] Basic Pitch", e);
-          return { valeurs: [null], erreur: true,
-            message: traduire("msg.transcription_poly_indisponible_var_0", e?.message ?? String(e)) };
-        }
-      } else {
-        notes = mesures?.notes ?? [];
-      }
-      if (!notes.length) return { valeurs: [null], message: traduire("msg.aucune_note_d_tect_e") };
-      const fichier = await appliquerInstrumentMidi(notesVersFichierMidi(notes, tempo), ctx.paramNombre("Instrument", 0));
-      return { valeurs: [fichier], message: traduire("msg.midi_var_0_notes_transcrites", notes.length) };
-   },
-  }),
   fiche({
     id: "detecteur-accords", nom: "Détecteur d'accords", nomEn: "Chord Detector", univers: "Visualisation", famille: "Analyse",
     resume: "Détecte la progression d'accords dans le signal audio.",
