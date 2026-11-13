@@ -44,7 +44,7 @@
     "outils:publier": "node scripts/outils-natifs.cjs --publier",
     "outils:verifier": "node scripts/outils-natifs.cjs --verifier",
     "preview": "vite preview",
-    "docs:components": "cross-env ECRIRE_CATALOGUE=1 vitest run src/docs/generer-catalogue.test.ts",
+    "docs:components": "cross-env ECRIRE_CATALOGUE=1 vitest run src/docs/generer-catalogue.test.ts src/plugins/ordre-du-catalogue.test.ts",
     "docs:interface": "cross-env ECRIRE_INVENTAIRE=1 vitest run src/docs/generer-inventaire-ui.test.ts",
     "kit:generer": "cross-env ECRIRE_KIT=1 vitest run src/audio/kit-batterie.test.ts",
     "test": "vitest run",

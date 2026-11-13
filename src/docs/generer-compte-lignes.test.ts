@@ -178,7 +178,6 @@ const DETTE = new Map<string, number>([
   ["src/docs/documentation-graphe.ts", 572],
   ["src/ui/AtelierNode.tsx", 565],
   ["src/audio/cercle-pulsant.test.ts", 522],
-  ["src/plugins/index.ts", 515],
   ["src/audio/sfz.test.ts", 497],
   ["src/core/boucle-graphe.test.ts", 465],
   ["src/vues-domaine/SelecteurMultiZones.tsx", 459],
