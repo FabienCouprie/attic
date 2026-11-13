@@ -8,7 +8,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { toutesLesFiches } from "../plugins";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 import { FAMILLES_EFFETS } from "../plugins/familles-palette";
 import { coeursParTrames } from "./coeurs-par-trames";
 import { CATEGORIES_ECARTEES, ECARTES, ECARTES_REGLAGE, cibles, dejaModulables, familleDe, idsEcartes, recensementEnTexte } from "./modulables";

@@ -7,6 +7,7 @@
 // et retomberait sur un défaut au lieu de l'option réellement voulue.
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { valeurCanoniqueChoix } from "../i18n";
 import { normaliserModeSynthèse } from "./soundfontGlobal";
 import { normaliserTimbre } from "../audio/automate-cellulaire-reglages";

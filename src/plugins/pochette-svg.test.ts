@@ -4,6 +4,7 @@ import { genererPochetteSVG, genererPochetteFile, rasteriserPochettePNG } from "
 import { paletteDepuisPrompt, PALETTES_PRESET } from "./pochette-palettes";
 import { creerAleatoire } from "../core/hasard";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { ctxDEssai } from "../core/contexte-essai";
 
 function ctx(params: Record<string, string | number> = {}) {

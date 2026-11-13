@@ -22,7 +22,7 @@
 // entières. Les tenir demande de nommer les CONTENUS, ce que le dépôt ne sait pas encore faire. Ce
 // garde-ci tient ce qui se mesure sur une seule fiche, et rien de plus.
 import { describe, expect, it } from "vitest";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 /**
  * Les fiches dont l'entrée texte et le réglage texte ne portent pas le même nom À DESSEIN.

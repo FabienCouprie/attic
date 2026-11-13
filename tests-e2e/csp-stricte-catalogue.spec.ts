@@ -88,8 +88,10 @@ test.describe("la politique stricte, sur tout le catalogue", () => {
     expect(temoin, "la politique stricte n'est pas appliquée : le relevé ne vaudrait rien").toBe("EvalError");
 
     const ids = await page.evaluate(async () => {
-      const idx = await import("/src/plugins/index.ts") as unknown as { toutesLesFiches: { id: string }[] };
-      return idx.toutesLesFiches.map((f) => f.id).sort();
+      const idx = await import("/src/plugins/index.ts") as unknown as {
+        chargerToutesLesFiches: () => Promise<{ id: string }[]>;
+      };
+      return (await idx.chargerToutesLesFiches()).map((f) => f.id).sort();
     });
     const choisis = COMPOSANTS.length > 0 ? ids.filter((i) => COMPOSANTS.includes(i)) : ids;
     const aFaire = DEPUIS ? choisis.filter((i) => i >= DEPUIS) : choisis;

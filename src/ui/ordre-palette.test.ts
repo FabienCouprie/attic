@@ -11,7 +11,7 @@
 import { describe, expect, it } from "vitest";
 import { grouperFiches } from "./ordre-palette";
 import { filtrerFiches } from "./recherche-palette";
-import { toutesLesFiches } from "../plugins";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 import { ORDRE_UNIVERS } from "../audio/ordre-catalogue";
 import type { FicheUI } from "./registre-actif";
 

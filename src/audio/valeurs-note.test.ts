@@ -11,6 +11,7 @@
 // paraphrase de l'anglais, c'est le mot de la langue où il s'affiche.
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
+import "../plugins/catalogue-pret";
 import type { ParametreDef } from "../core/types";
 import { LIBELLES_HERITES_VALEURS, VALEURS_NOTE, choixValeurs, valeurNote } from "./valeurs-note";
 

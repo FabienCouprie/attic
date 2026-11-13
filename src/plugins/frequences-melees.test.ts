@@ -22,6 +22,7 @@ import { servicesApercu } from "../ui/services-apercu";
 // trois qui attendaient une liste vide « passaient » pour la mauvaise raison. C est la racine de
 // composition qui installe ces services, comme `composition.test.ts` le tient.
 import "../composition";
+import "./catalogue-pret";
 
 const tampon = (frequence: number) =>
   new AudioBuffer({ numberOfChannels: 1, length: 8, sampleRate: frequence }) as unknown;

@@ -139,8 +139,10 @@ function sourcesRacine(): string[] {
  *
  * LES CINQ DETTES QUI RESTENT, et ce qu'il leur faudrait :
  *
- *   `App.tsx`                    l'adaptateur audio et les métas d'exemple, posés au chargement
- *                                du module (le graphe embarqué est parti le 2026-11-01)
+ *   `demarrage-atelier.ts`       les métas d'exemple, posées au démarrage, sorties d'`App.tsx` le
+ *                                2026-11-13 avec lui : le même couplage, qui a changé de fichier.
+ *                                L'import de l'adaptateur est parti, il ne déclenchait plus rien
+ *                                (le graphe embarqué était parti le 2026-11-01)
  *   `hooks/useSoundFont.ts`      le SoundFont global, sorti d'`App.tsx` le 2026-11-01 : le même
  *                                couplage, qui a changé de fichier
  *   `AtelierNode.tsx`            l'écoute multicanal
@@ -197,8 +199,8 @@ const COUPLES_ATTENDUS = [
   "docs/catalogue-markdown.ts",
   "docs/inventaire-ui.ts",
   "docs/modulables.ts",
-  "ui/App.tsx",
   "ui/AtelierNode.tsx",
+  "ui/demarrage-atelier.ts",
   "ui/dictee/useDictee.ts",
   "ui/Inspector.tsx",
   "ui/SelecteurFrequenceDeTravail.tsx",

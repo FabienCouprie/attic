@@ -9,6 +9,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { writeMidi } from "midi-file";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { valeurCanoniqueChoix, defautCanoniqueChoix } from "../i18n";
 import { plafonnerCrete } from "../audio/commun";
 

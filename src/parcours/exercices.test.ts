@@ -16,7 +16,7 @@
 // paraphrase de l'énoncé.
 import { describe, expect, it } from "vitest";
 import { CHAPITRES, EXERCICES } from "./exercices";
-import { toutesLesFiches } from "../plugins";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 import type { Condition, Critere, Exercice } from "./types";
 
 const FICHES = new Map((toutesLesFiches as { id: string }[]).map((f) => [f.id, f as Record<string, unknown>]));

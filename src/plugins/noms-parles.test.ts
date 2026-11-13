@@ -22,6 +22,7 @@ import { describe, expect, it } from "vitest";
 import { estDicible } from "./lexique-vosk";
 import { normaliserPourDictee } from "./prompt-graphe";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import "../composition";
 
 /** Les fiches du catalogue, hors nœuds de service. */

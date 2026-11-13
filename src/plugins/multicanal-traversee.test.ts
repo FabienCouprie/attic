@@ -27,7 +27,7 @@ import "node-web-audio-api/polyfill.js";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { registre } from "../audio/adaptateur";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 import { defautCanoniqueChoix, valeurCanoniqueChoix } from "../i18n";
 import { etiqueter } from "../audio/multicanal";
 

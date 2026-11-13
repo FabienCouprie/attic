@@ -8,6 +8,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { ctxDEssai } from "../core/contexte-essai";
 
 function ctxParams(params: Record<string, string | number>) {

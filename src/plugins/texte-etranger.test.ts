@@ -28,7 +28,7 @@
 // le monde sans rien prouver ; celui-ci est lisible par UN composant et étranger à tous les autres,
 // ce qui est exactement le piège que la campagne a trouvé cinq fois.
 import { describe, expect, it } from "vitest";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 import { estResultatEnErreur } from "../core/execution";
 import { ctxDEssai } from "../core/contexte-essai";
 

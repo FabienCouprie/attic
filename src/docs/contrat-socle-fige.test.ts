@@ -13,11 +13,11 @@
 // en gardant son nom, son icône et sa place dans la palette.
 import { describe, expect, it, vi } from "vitest";
 
-// `registre` VIENT DE L'ADAPTATEUR, dont l'import est aussi ce qui inscrit le socle et le fige :
-// c'est l'effet de bord qu'on veut éprouver. `toutesLesFiches` vient du catalogue, que l'adaptateur
-// ne réexporte pas.
+// `registre` VIENT DE L'ADAPTATEUR, dont `chargerLeDomaine()` inscrit le socle et le fige : c'est
+// ce qu'on veut éprouver. `catalogue-pret` l'attend avant de rendre `toutesLesFiches`, que
+// l'adaptateur ne réexporte pas.
 import { registre } from "../audio/adaptateur";
-import { toutesLesFiches } from "../plugins";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 
 describe("le socle audio", () => {
   it("EST FIGÉ : un composant arrivé après ne peut pas prendre la place d'un natif", () => {

@@ -16,7 +16,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CONTENUS_CONTROLE, contenusControleCompatibles } from "../audio/sous-types-controle";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 /** Le contenu attendu d'apres le NOM du port. « Zone » et « Zones » tombent tous deux sur `zones`. */
 const CONTENU_PAR_NOM: Record<string, string> = {

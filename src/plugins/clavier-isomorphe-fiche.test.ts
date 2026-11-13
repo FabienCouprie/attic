@@ -15,6 +15,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { accordageEgal, type Accordage } from "../audio/accordage";
 import { CASES } from "../audio/clavier-isomorphe";
 import { ctxDEssai } from "../core/contexte-essai";

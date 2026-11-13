@@ -14,7 +14,7 @@ import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 
 import { MODELES_RENDU, paquetsEcartes } from "./chanson-aides";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 import { formaterOctets } from "../ui/etat-modeles";
 import { ctxDEssai } from "../core/contexte-essai";
 

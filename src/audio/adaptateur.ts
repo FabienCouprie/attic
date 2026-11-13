@@ -1,8 +1,9 @@
 // audio/adaptateur.ts — Adaptateur du domaine audio.
 //
-// Crée un registre typé, enregistre les types de flux audio + toutes les fiches
-// de plugins, et configure les modules du cœur qui ont besoin du registre
-// (metastore, nodes-installes, registre-actif).
+// Crée un registre typé, enregistre les types de flux audio, et configure les modules du cœur qui
+// ont besoin du registre (metastore, nodes-installes, registre-actif). Les fiches de plugins, elles,
+// s'enregistrent par `chargerLeDomaine()`, qui les demande au catalogue : il les charge par
+// catégories, et une promesse ne s'attend pas au chargement d'un module (voir `plugins/index.ts`).
 //
 // C'est le SEUL endroit où `enregistrer()` est appelé. Importer un module de
 // plugin n'a plus d'effet de bord — les fiches sont exportées, pas enregistrées.
@@ -12,7 +13,7 @@ import { configurerServicesDomaine } from "../core/services-domaine";
 import { configurerRegistreNodes } from "../core/nodes-installes";
 import { configurerRegistreGestion } from "../plugins/gestion-nodes";
 import { configurerRegistreQuiz } from "../plugins/quiz";
-import { toutesLesFiches } from "../plugins";
+import { chargerToutesLesFiches } from "../plugins";
 import type { ValeurAudio, RuntimeAudio } from "./types-domaine";
 import { frequenceDeTravail, frequenceDuProjet, publierFrequenceDeTravail } from "./frequence-de-travail";
 import { contenusControleCompatibles } from "./sous-types-controle";
@@ -187,18 +188,26 @@ if (typeof window !== "undefined") {
   // il est libre ici à une occurrence près, l'étiquette d'une tablature, qui désigne la même chose.
   registre.enregistrerTypeFlux({ id: "accordage", couleur: "#f2d600", forme: "losange", libelle: "Accordage" });
 
-// Enregistrer toutes les fiches de plugins
-for (const fiche of toutesLesFiches) {
-  registre.enregistrer(fiche);
-}
+let domaine: Promise<void> | null = null;
 
-// ET FIGER CE SOCLE, ICI ET NULLE PART AILLEURS. C'est le seul endroit où `enregistrer()` est
-// appelé pour le domaine ; l'instant qui suit cette boucle est donc exactement celui où « natif »
-// a un sens. Tout ce qui s'inscrira ensuite — un nœud installé depuis un `.zip` partagé, un
-// méta-composant porté par un projet reçu — ne pourra plus prendre la place d'un de ces
-// identifiants. Relevé le 2026-10-25 : `enregistrer` les remplaçait en silence, de sorte qu'un
-// composant reçu pouvait garder le nom, l'icône et la place d'un composant du socle.
-registre.figerLesNatifs();
+/**
+ * Enregistre toutes les fiches de plugins, une fois pour tout le processus, et rend la main quand
+ * le registre est rempli et figé. L'application l'attend avant de se peindre (`main.tsx`) ; les
+ * tests, par `plugins/catalogue-pret.ts`.
+ */
+export function chargerLeDomaine(): Promise<void> {
+  domaine ??= chargerToutesLesFiches().then((fiches) => {
+    for (const fiche of fiches) registre.enregistrer(fiche);
+    // ET FIGER CE SOCLE, ICI ET NULLE PART AILLEURS. C'est le seul endroit où `enregistrer()` est
+    // appelé pour le domaine ; l'instant qui suit cette boucle est donc exactement celui où « natif »
+    // a un sens. Tout ce qui s'inscrira ensuite — un nœud installé depuis un `.zip` partagé, un
+    // méta-composant porté par un projet reçu — ne pourra plus prendre la place d'un de ces
+    // identifiants. Relevé le 2026-10-25 : `enregistrer` les remplaçait en silence, de sorte qu'un
+    // composant reçu pouvait garder le nom, l'icône et la place d'un composant du socle.
+    registre.figerLesNatifs();
+  });
+  return domaine;
+}
 
 // Configurer les modules du cœur avec ce registre.
 //

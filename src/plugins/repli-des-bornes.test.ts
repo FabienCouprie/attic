@@ -21,7 +21,7 @@
 import { appelsDeReglage } from "../docs/appels-de-reglage";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 /** La course déclarée de chaque paire de bornes, par fiche et par réglage borné. */
 function coursesDesBornes(): Map<string, [number, number]> {

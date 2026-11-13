@@ -22,45 +22,44 @@ import { describe, expect, it } from "vitest";
 
 import { decrireCatalogue, decrireComposant } from "./description";
 import { rapportEnTexte, validerGrapheEcrit } from "./assemblage";
-import { toutesLesFiches } from "./index";
-import "../audio/adaptateur";
+import { toutesLesFiches } from "./catalogue-pret";
 
 const CHEMIN_DESCRIPTION = "DESCRIPTION.json";
 
 describe("décrire", () => {
-  it("rend un composant par fiche, et rien que des identifiants", () => {
-    const d = decrireCatalogue();
+  it("rend un composant par fiche, et rien que des identifiants", async () => {
+    const d = await decrireCatalogue();
     expect(d.forme).toBe(1);
     expect(d.composants.length).toBe((toutesLesFiches as any[]).length);
     expect(new Set(d.composants.map((c) => c.id)).size).toBe(d.composants.length);
   });
 
-  it("porte les contenus d'un port, qui disent ce qui se branche", () => {
-    const c = decrireComposant("texte-vers-midi")!;
+  it("porte les contenus d'un port, qui disent ce qui se branche", async () => {
+    const c = (await decrireComposant("texte-vers-midi"))!;
     expect(c.entrees[0]).toMatchObject({ nom: "Notation", type: "texte", contenu: "notation" });
-    const abc = decrireComposant("midi-vers-abc")!;
+    const abc = (await decrireComposant("midi-vers-abc"))!;
     expect(abc.sorties[0]).toMatchObject({ type: "texte", contenu: "abc" });
     // Et le flux qui distingue des contenus les énumère, pour qu'un lecteur sache lesquels existent.
-    const texte = decrireCatalogue().flux.find((f) => f.id === "texte")!;
+    const texte = (await decrireCatalogue()).flux.find((f) => f.id === "texte")!;
     expect(texte.contenus).toEqual(["plan", "notation", "abc", "paroles", "prompt"]);
   });
 
-  it("DONNE LES IDENTIFIANTS D'UN CHOIX, jamais ses libellés traduits", () => {
+  it("DONNE LES IDENTIFIANTS D'UN CHOIX, jamais ses libellés traduits", async () => {
     // C'est la leçon la plus chère du mois : un exécuteur compare un identifiant, et un pilote qui
     // désignerait une option par son libellé français écrirait des graphes qui ne font rien.
-    const banque = decrireComposant("banque-clavier")!;
+    const banque = (await decrireComposant("banque-clavier"))!;
     const compter = banque.reglages.find((r) => r.nom === "Compter en")!;
     expect(compter.options).toEqual(["demi-tons", "degres"]);
   });
 
-  it("borne les réglages numériques, pour qu'une valeur écrite à la main tienne", () => {
-    const iso = decrireComposant("clavier-isomorphe")!;
+  it("borne les réglages numériques, pour qu'une valeur écrite à la main tienne", async () => {
+    const iso = (await decrireComposant("clavier-isomorphe"))!;
     const tonique = iso.reglages.find((r) => r.nom === "Tonique")!;
     expect([tonique.min, tonique.max, tonique.defaut]).toEqual([24, 96, 60]);
   });
 
-  it("n'emporte aucune notice, et reste donc petit devant le catalogue lu", () => {
-    const d = decrireCatalogue();
+  it("n'emporte aucune notice, et reste donc petit devant le catalogue lu", async () => {
+    const d = await decrireCatalogue();
     // LE CHAMP, ET NON LE MOT : « notice » paraît légitimement dans le résumé de quelques
     // composants, et chercher la chaîne faisait tomber ce cas sur une phrase juste.
     const avecNotice = d.composants.filter((c) => "notice" in c || "noticeEn" in c).map((c) => c.id);

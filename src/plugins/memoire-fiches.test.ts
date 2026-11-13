@@ -19,7 +19,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 /** Gestes qui exigent d'avoir tout le signal avant d'écrire le premier échantillon. */
 const INTERDITS: [RegExp, string][] = [

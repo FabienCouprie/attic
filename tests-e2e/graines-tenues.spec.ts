@@ -64,12 +64,12 @@ test.describe("les graines tenues", () => {
     // sans que rien ne le dise, et un composant semé de plus arriverait hors de ce garde.
     const fiches = await page.evaluate(async () => {
       const idx = await import("/src/plugins/index.ts") as unknown as {
-        toutesLesFiches: {
+        chargerToutesLesFiches: () => Promise<{
           id: string; nom: string;
           parametres?: { nom: string; graine?: true; plage?: [number, number] }[];
-        }[];
+        }[]>;
       };
-      return idx.toutesLesFiches
+      return (await idx.chargerToutesLesFiches())
         .map((f) => {
           const p = (f.parametres ?? []).find((q) => q.graine === true);
           return p ? { id: f.id, nom: f.nom, reglage: p.nom, plage: p.plage ?? null } : null;

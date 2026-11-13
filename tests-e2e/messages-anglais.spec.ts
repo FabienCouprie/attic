@@ -111,9 +111,9 @@ test.describe("messages en anglais", () => {
 
     const fiches = await page.evaluate(async () => {
       const idx = await import("/src/plugins/index.ts") as unknown as {
-        toutesLesFiches: { id: string; entrees?: { type: string }[]; sorties?: { type: string }[] }[];
+        chargerToutesLesFiches: () => Promise<{ id: string; entrees?: { type: string }[]; sorties?: { type: string }[] }[]>;
       };
-      return idx.toutesLesFiches.map((f) => ({
+      return (await idx.chargerToutesLesFiches()).map((f) => ({
         id: f.id,
         entrees: (f.entrees ?? []).length,
         entreeAudio: (f.entrees ?? []).some((p) => p.type === "audio"),

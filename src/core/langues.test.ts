@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync, statSync } from "fs";
 import { join, resolve } from "path";
 
-import { toutesLesFiches } from "../plugins/index";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 import {
   LANGUES, LANGUE_AUTO, LIBELLES_HERITES_LANGUES, choixLangues, codeLangue, langue, libelleLangue,
 } from "./langues";

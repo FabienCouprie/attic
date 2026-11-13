@@ -165,7 +165,7 @@ export async function mesurerComposant(
     const idx = await import("/src/plugins/index.ts");
     // La canonisation du moteur réel, importée plutôt que réécrite : une seconde version dériverait.
     const { defautCanoniqueChoix } = await import("/src/i18n.tsx");
-    const fiche = (idx as any).toutesLesFiches.find((f: any) => f.id === id);
+    const fiche = (await (idx as any).chargerToutesLesFiches()).find((f: any) => f.id === id);
     if (!fiche) {
       return { version: {}, ms: 0, gelMs: null, messages: 0, message: null, empreintes: [],
         descripteurs: null, wavs: [], ecartsType: [], erreur: `fiche « ${id} » absente du registre` };

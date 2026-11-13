@@ -11,7 +11,7 @@
 // cette forme sur TOUS les composants, et non sur celui-là.
 import { describe, expect, it } from "vitest";
 import { guidageDe, PARAMETRES_RENDU } from "./chanson-aides";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 describe("guidageDe", () => {
   // Un faux contexte réduit au seul lecteur que l'aide emploie : l'aide exige un contexte de fiche

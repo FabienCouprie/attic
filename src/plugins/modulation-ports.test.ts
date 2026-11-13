@@ -11,7 +11,7 @@
 // celle du port et celle des bornes — désignent bien le même paramètre.
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 const portsDeModulation = () =>
   toutesLesFiches.flatMap((f: any) =>

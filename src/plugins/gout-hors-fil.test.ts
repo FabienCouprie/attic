@@ -16,6 +16,7 @@
 import "node-web-audio-api/polyfill.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { defautCanoniqueChoix } from "../i18n";
 
 type Calcul = (x: Float32Array, o: { sampleRate: number }) => unknown;

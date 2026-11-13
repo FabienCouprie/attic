@@ -33,6 +33,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { registre } from "../audio/adaptateur";
+import "../plugins/catalogue-pret";
 import { tousLesMetas } from "../core";
 import { installerMetasExemples } from "../plugins/meta-exemples";
 

@@ -15,7 +15,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 
 import { ctxDEssai } from "../core/contexte-essai";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 import { PROGRESSIONS_GENRE, genererDepuisScript, normaliserGenre } from "../audio/generation";
 
 /** La progression personnalisée n'est pas un genre : elle dit « lis le champ d'à côté ». */

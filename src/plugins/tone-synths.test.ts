@@ -4,7 +4,7 @@ import { describe, it, expect } from "vitest";
 // LA FICHE SE CHERCHE DANS LE REGISTRE ENTIER, et non dans le fichier qui la portait : « drum-synth »
 // a changé de fichier au découpage, et ce test s'est cassé pour cette seule raison. Passer par la
 // liste complète le rend insensible à un regroupement futur.
-import { toutesLesFiches as fiches } from "./index";
+import { toutesLesFiches as fiches } from "./catalogue-pret";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { ctxDEssai } from "../core/contexte-essai";
 

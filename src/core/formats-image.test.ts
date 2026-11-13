@@ -7,7 +7,7 @@
 // « PNG ». Un même projet gardait ainsi deux valeurs pour le même format.
 import { describe, expect, it } from "vitest";
 
-import { toutesLesFiches } from "../plugins/index";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 import { FORMATS_IMAGE, LIBELLES_HERITES_FORMATS, choixFormats, formatImage } from "./formats-image";
 
 describe("la table des formats d'image", () => {

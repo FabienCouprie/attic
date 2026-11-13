@@ -13,7 +13,7 @@
 // elles ne disent pas ce qui se branche. Le résumé d'un composant, lui, est court et il y est. Qui
 // veut la notice la lit dans `COMPONENTS.md`, qui est engendré du même registre.
 import { registre } from "../audio/adaptateur";
-import { toutesLesFiches } from "./index";
+import { chargerToutesLesFiches } from "./index";
 import { CONTENUS_TEXTE } from "../audio/sous-types-texte";
 
 /** Un port, tel qu'un assembleur a besoin de le connaître. */
@@ -103,9 +103,12 @@ const decrireReglage = (p: any): ReglageDecrit => ({
   ...(options(p) ? { options: options(p) } : {}),
 });
 
-/** Le catalogue entier, lu sur le registre vivant. */
-export function decrireCatalogue(): Description {
-  const composants = (toutesLesFiches as any[])
+/**
+ * Le catalogue entier, lu sur le registre vivant. ASYNCHRONE depuis que le catalogue se charge par
+ * catégories (voir `plugins/index.ts`).
+ */
+export async function decrireCatalogue(): Promise<Description> {
+  const composants = ((await chargerToutesLesFiches()) as any[])
     .map((f): ComposantDecrit => ({
       id: f.id, nom: f.nom,
       ...(f.nomEn && f.nomEn !== f.nom ? { nomEn: f.nomEn } : {}),
@@ -132,6 +135,6 @@ export function decrireCatalogue(): Description {
 }
 
 /** Un seul composant, pour qui sait déjà lequel il cherche. */
-export function decrireComposant(id: string): ComposantDecrit | undefined {
-  return decrireCatalogue().composants.find((c) => c.id === id);
+export async function decrireComposant(id: string): Promise<ComposantDecrit | undefined> {
+  return (await decrireCatalogue()).composants.find((c) => c.id === id);
 }

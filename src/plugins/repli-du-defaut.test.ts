@@ -28,7 +28,7 @@
 import { describe, expect, it } from "vitest";
 import { join } from "node:path";
 import { appelsDeParamNombre } from "../docs/appels-de-reglage";
-import { toutesLesFiches } from "./index";
+import { toutesLesFiches } from "./catalogue-pret";
 
 describe("le repli d'un réglage absent du nœud", () => {
   it("TOUT RÉGLAGE NUMÉRIQUE DÉCLARE UN DÉFAUT NUMÉRIQUE, sans quoi le repli n'existe pas", () => {

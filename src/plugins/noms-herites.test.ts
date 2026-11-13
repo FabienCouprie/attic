@@ -21,6 +21,7 @@
 import { describe, expect, it } from "vitest";
 
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import "../composition";
 
 const fiches = () => registre.tousLesPlugins()

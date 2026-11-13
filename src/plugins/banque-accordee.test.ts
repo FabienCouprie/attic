@@ -17,6 +17,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { accordageEgal } from "../audio/accordage";
 import { construireBanque, type Banque } from "../audio/clavier-banque";
 import { ctxDEssai } from "../core/contexte-essai";

@@ -12,6 +12,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { analyserMidi } from "../audio/midi";
 import { parseMidi } from "midi-file";
 import { CANAL_PERCUSSION, NOTES_PERCUSSION_GM, velociteMidiDepuisNuance } from "../audio/batterie-midi";

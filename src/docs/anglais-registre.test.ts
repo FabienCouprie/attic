@@ -19,7 +19,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, it, expect } from "vitest";
 import { defautParam, valeursParam, uniteEn } from "./catalogue-markdown";
-import { toutesLesFiches } from "../plugins";
+import { toutesLesFiches } from "../plugins/catalogue-pret";
 import { CLES_CONNUES, traduireDans } from "../i18n";
 import { TABLES_PAR_UNIVERS } from "../plugins/familles-palette";
 import type { FicheAudio } from "../audio/types-domaine";

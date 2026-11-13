@@ -15,6 +15,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import "./adaptateur";
+import "../plugins/catalogue-pret";
 import { servicesDomaine } from "../core/services-domaine";
 
 function tampon(canaux: number, longueur: number): AudioBuffer {

@@ -13,6 +13,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
+import "./catalogue-pret";
 import { constante } from "../audio/courbe";
 import { francais, virguleDecimale } from "../docs/detecteur-francais";
 import { ctxDEssai } from "../core/contexte-essai";
