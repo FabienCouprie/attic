@@ -26,7 +26,7 @@
 
 import { parseMidi } from "midi-file";
 import { traduire } from "../i18n";
-import { lireTonalite, type Armure } from "./abc";
+import { lireMetrique, lireTonalite, type Armure } from "./abc";
 import { tonaliteDepuisChroma } from "./accords";
 
 // ── Lecture du MIDI ─────────────────────────────────────────────────────
@@ -164,7 +164,7 @@ type Evenement = { debut: number; fin: number; hauteurs: number[] };
 type Morceau = { debut: number; duree: number; hauteurs: number[]; lie: boolean };
 
 export type OptionsMidiVersAbc = {
-  /** « fichier » ou « n/d ». */
+  /** « fichier », « n/d », ou le symbole d'un champ M: (« C », « C| »), écrit tel quel. */
   metrique: string;
   /** « auto » ou un champ K: (« G », « Am », « Ddor »…). */
   tonalite: string;
@@ -211,12 +211,18 @@ export function midiVersAbc(octets: Uint8Array, o: OptionsMidiVersAbc): Resultat
   if (batterie.length > 0) avertissements.add(traduire("msg.midi_abc.ecriture.batterie_var_0", batterie.length));
   if (lu.temposDistincts > 1) avertissements.add(traduire("msg.midi_abc.ecriture.tempos"));
 
-  // Métrique.
+  // Métrique. LA DEMANDÉE SE LIT PAR LE LECTEUR DES PARTITIONS, `lireMetrique`, et s'écrit comme il
+  // l'a lue. Une expression rationnelle en « n/d » ne connaissait pas « C » ni « C| » : la métrique
+  // retombait sans rien dire sur celle du fichier, et le champ M: écrit était « 4/4 » ou « 2/2 ».
+  // « Reprise ABC » et « Édition ABC par LLM », qui relisent ce qu'ils écrivent et comparent sa
+  // métrique à celle de l'original, refusaient alors tout air en `M:C` ou `M:C|`.
   let metrique = lu.metrique ?? { numerateur: 4, denominateur: 4 };
+  let texteMetrique: string | null = null;
   if (o.metrique !== "fichier") {
-    const m = /^(\d+)\/(\d+)$/.exec(o.metrique);
-    if (m) metrique = { numerateur: parseInt(m[1], 10), denominateur: parseInt(m[2], 10) };
+    const m = lireMetrique(o.metrique);
+    if (m) { metrique = { numerateur: m.numerateur, denominateur: m.denominateur }; texteMetrique = m.texte; }
   }
+  texteMetrique ??= `${metrique.numerateur}/${metrique.denominateur}`;
 
   // Grille : exacte si possible, sinon celle demandée (1/16 par défaut).
   const exacte = grilleExacte(notes, lu.ppq);
@@ -417,7 +423,7 @@ export function midiVersAbc(octets: Uint8Array, o: OptionsMidiVersAbc): Resultat
     `T:${titre}`,
     "% Converti depuis MIDI par Attic",
     ...voix.map((v, k) => `% voix ${k + 1} : canal ${v.canal + 1}, programme ${lu.programmes.get(v.canal) ?? 0}`),
-    `M:${metrique.numerateur}/${metrique.denominateur}`,
+    `M:${texteMetrique}`,
     "L:1/8",
     `Q:1/4=${Number.isInteger(Math.round(tempo * 100) / 100) ? Math.round(tempo) : (Math.round(tempo * 100) / 100)}`,
     `K:${cle}`,
@@ -431,7 +437,7 @@ export function midiVersAbc(octets: Uint8Array, o: OptionsMidiVersAbc): Resultat
     cle,
     tonaliteNom: armure.nom,
     tonaliteAuto,
-    metrique: `${metrique.numerateur}/${metrique.denominateur}`,
+    metrique: texteMetrique,
     subdivisions: s,
     grilleExacte: exacte !== null && o.grille === "auto",
     notesDeplacees: deplacees,
