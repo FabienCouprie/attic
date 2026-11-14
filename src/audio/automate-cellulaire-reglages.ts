@@ -10,6 +10,7 @@
 // un appel direct depuis un test porte ce qu'on a tapé. Ces fonctions sont donc idempotentes sur la
 // forme canonique et tolérantes sur les autres.
 import type { Mapping, ModeVoix, Topologie } from "./automate-cellulaire";
+import { gammeDe } from "./gammes";
 
 export function normaliserTopologie(v: string): Topologie {
   const s = v.toLowerCase().replace(/\s+/g, " ");
@@ -66,6 +67,11 @@ export function normaliserCle(v: string): string {
 // idempotente pour ce cas, et gère aussi les valeurs brutes des anciens
 // projets ou des appels directs, ex. les tests).
 export function normaliserGamme(v: string): string {
+  // UN IDENTIFIANT DE LA TABLE COMMUNE SE GARDE TEL QUEL, alias compris. La table ci-dessous ne
+  // connaissait que les onze gammes d'avant elle, et les quatorze autres offertes au réglage
+  // retombaient en silence sur la pentatonique majeure. Elle reste pour les anciens libellés.
+  const connue = gammeDe(v);
+  if (connue) return connue.id;
   const map: Record<string, string> = {
     Majeur: "majeur", Major: "majeur", majeur: "majeur",
     "Mineur naturel": "mineur", "Natural minor": "mineur", mineur: "mineur",

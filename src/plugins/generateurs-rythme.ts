@@ -7,7 +7,7 @@
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
-import { genererBoiteRythmes, notesVersFichierMidi, rendreSequence, genererRythmeCantor, genererGrilleCantor, grilleBoiteRythmes, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE } from "../audio";
+import { genererBoiteRythmes, notesVersFichierMidi, rendreSequence, genererRythmeCantor, genererGrilleCantor, grilleBoiteRythmes, signatureJouee, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE } from "../audio";
 import { CANAL_PERCUSSION, choixPercussion, frappesDePistesBooleennes, notesDepuisFrappes } from "../audio/batterie-midi";
 import { rendreBatterieMidi } from "../audio/tone-synths";
 import { motifEnTexte, motifEuclidien, nomTraditionnel, notesEuclidiennes } from "../audio/euclidien";
@@ -50,19 +50,22 @@ export const fiches: FicheAudio[] = ([
       const niveauKick = ctx.paramNombre("Kick", 80);
       const niveauSnare = ctx.paramNombre("Caisse claire", 70);
       const niveauCharley = ctx.paramNombre("Charley", 60);
+      // LE PATRON SE JOUE DANS SA MÉTRIQUE : la valse et le boléro, qui ne s'écrivent qu'en 3/4,
+      // retombaient en 4/4 sur le patron de secours (`signatureJouee`).
+      const [temps, unite] = signatureJouee(patron);
       const buffer = await genererBoiteRythmes(tempo, patron, mesures, niveauKick, niveauSnare,
-        niveauCharley, 4, 4, creerAleatoire(ctx.paramNombre("Graine", 42)));
+        niveauCharley, temps, unite, creerAleatoire(ctx.paramNombre("Graine", 42)));
       // LE MÊME PATRON, EN MIDI, pour pouvoir changer les sons dessous — kit SFZ, SoundFont, orchestre
       // Csound. La grille vient de la fonction QUE LE RENDU EMPLOIE, et non d'une seconde lecture du
       // patron : c'est la seule façon d'être sûr que les deux sorties frappent aux mêmes instants.
       // Les niveaux des pistes deviennent des vélocités, un fichier MIDI n'ayant pas de volume.
-      const grille = grilleBoiteRythmes(patron, mesures, 4, 4);
+      const grille = grilleBoiteRythmes(patron, mesures, temps, unite);
       const notesMidi = notesDepuisFrappes(frappesDePistesBooleennes([
         { piste: 0, pas: grille.kick, niveau: niveauKick },
         { piste: 1, pas: grille.snare, niveau: niveauSnare },
         { piste: 2, pas: grille.hat, niveau: niveauCharley },
         { piste: 3, pas: grille.hatOuvert, niveau: niveauCharley },
-      ]), { tempo, pasParMesure: grille.pasMesure, mesures });
+      ]), { tempo, pasParMesure: grille.pasMesure, mesures, tempsParMesure: temps * (4 / unite) });
       const midi = notesMidi.length > 0 ? notesVersFichierMidi(notesMidi, tempo, CANAL_PERCUSSION) : null;
       return {
         valeurs: [buffer, midi],

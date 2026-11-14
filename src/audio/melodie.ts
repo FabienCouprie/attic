@@ -9,6 +9,7 @@ import { formeOndeDepuisTimbre } from "./timbres";
 import { degresDeGamme } from "./gammes";
 import { frequenceDeTravail } from "./frequence-de-travail";
 import { frequenceDeNoteMidi } from "./commun";
+import { demiTonDeCle } from "./cles";
 
 export const NB_RANGEES_MELO = 13; // ~2 octaves de la gamme + 1 note
 
@@ -32,8 +33,8 @@ function noteMidiPourRangee(
   const intervals = intervallesGamme(gamme);
   const degre = r % intervals.length;
   const octDecal = Math.floor(r / intervals.length);
-  const cleIdx = NOTES.indexOf(cle);
-  return (octave + 1) * 12 + (cleIdx >= 0 ? cleIdx : 0) + intervals[degre] + octDecal * 12;
+  // La clé se lit dans la table commune : `NOTES`, en dièses seuls, jouait Mi♭ et Si♭ en do.
+  return (octave + 1) * 12 + (demiTonDeCle(cle) ?? 0) + intervals[degre] + octDecal * 12;
 }
 
 function frequenceNoteMidi(midi: number): number {

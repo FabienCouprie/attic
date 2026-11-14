@@ -8,6 +8,7 @@ import { rgbToHsl, distanceRgb2 } from "./couleurs";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence, type NoteEvenement } from "./midi-sequence";
 import { degresGammeAccords, degreAccordProche } from "./generation";
+import { demiTonDeCle } from "./cles";
 
 export interface CouleurExtraite {
   r: number;
@@ -38,7 +39,8 @@ export interface OptionsPaletteHarmonique {
   hasard?: () => number;
 }
 
-const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+// LA CLÉ SE LIT DANS LA TABLE COMMUNE, `audio/cles.ts` : une table privée en dièses seuls jouait Mi♭
+// et Si♭ en do.
 
 export function extrairePalette(
   pixels: PixelBuffer,
@@ -161,7 +163,7 @@ export function extrairePalette(
 
 function noteDepuisCouleur(couleur: CouleurExtraite, options: OptionsPaletteHarmonique): number {
   const intervals = degresGammeAccords(options.gamme);
-  const cleIdx = Math.max(0, NOTES.indexOf(options.cle));
+  const cleIdx = demiTonDeCle(options.cle) ?? 0;
   const base = (options.octave + 1) * 12 + cleIdx;
   const deg = Math.floor((couleur.h / 360) * intervals.length) % intervals.length;
   const semi = intervals[deg];

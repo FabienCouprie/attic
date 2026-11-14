@@ -15,7 +15,7 @@ import { appliquerEchoPingPong, appliquerEchoInverse, appliquerVoiceChanger, app
 import { decalerFormantsHorsFil } from "./formants-hors-fil";
 
 import { MODULATION_MIX, MODULATION_MIX_NOMMEE, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
-import { choixValeurs } from "../audio/valeurs-note";
+import { choixValeurs, VALEURS_NOTE } from "../audio/valeurs-note";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
@@ -264,16 +264,22 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", type: "curseur", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo utilisé pour synchroniser les intervalles et les segments.", docEn: "Tempo used to synchronize intervals and segments." },
-      { nom: "Intervalle", nomEn: "Interval", type: "choix", ...choixValeurs(["1/1", "1/2", "1/4", "1/8", "1/16", "1/32"]), defaut: "1/4",
-        doc: "Intervalle entre deux captures. 1/4 = une capture par temps, 1/8 = une capture par demi-temps, etc.", docEn: "Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, etc." },
-      // LA LISTE S'ARRÊTE À 1/2, ET POUR UNE RAISON MESURÉE. Le segment est capturé au début de
+      // LES DEUX LISTES SONT LA TABLE DES VALEURS DE NOTE, pointées et triolets compris, depuis que
+      // la durée se lit par `divisionDeRonde` et non par le seul dénominateur (2026-11-14). La plus
+      // courte taille était 1/32, et sous l'intervalle 1/32 aucune taille ne s'entendait. Chacune
+      // écarte la valeur extrême que l'autre ne peut pas servir : l'intervalle le 1/32 de triolet,
+      // sous lequel aucune taille n'est plus courte, la taille la ronde, ci-dessous.
+      { nom: "Intervalle", nomEn: "Interval", type: "choix", ...choixValeurs(VALEURS_NOTE.map((v) => v.id).filter((id) => id !== "1/32t")), defaut: "1/4",
+        doc: "Intervalle entre deux captures. 1/4 = une capture par temps, 1/8 = une capture par demi-temps, 1/8 de triolet = trois par temps ; une pointée dure une fois et demie sa valeur.",
+        docEn: "Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, 1/8 triplet = three per beat; a dotted value lasts one and a half times its value." },
+      // LA LISTE ÉCARTE LA RONDE, ET POUR UNE RAISON MESURÉE. Le segment est capturé au début de
       // l'intervalle et sa répétition est bornée par lui ; dès que la taille atteint l'intervalle,
       // les échantillons écrits sont exactement ceux qu'ils remplacent et la sortie égale l'entrée.
       // Offrir 1/1 ici ajouterait donc une valeur inerte pour tous les intervalles offerts.
       // `audio/effets-temporel.test.ts` tient la mesure, `beat-repeat-taille.test.ts` tient la borne.
-      { nom: "Taille", nomEn: "Size", type: "choix", ...choixValeurs(["1/32", "1/16", "1/8", "1/4", "1/2"]), defaut: "1/16",
-        doc: "Longueur du segment capturé et répété. Elle reste plus courte que l'intervalle : un segment aussi long que lui redonne le son d'origine.",
-        docEn: "Length of the captured and repeated segment. It stays shorter than the interval: a segment as long as the interval gives back the original sound." },
+      { nom: "Taille", nomEn: "Size", type: "choix", ...choixValeurs(VALEURS_NOTE.map((v) => v.id).filter((id) => id !== "1/1")), defaut: "1/16",
+        doc: "Longueur du segment capturé et répété. Une taille au moins aussi longue que l'« Intervalle » redonne le son d'origine : seule une taille plus courte s'entend.",
+        docEn: "Length of the captured and repeated segment. A size at least as long as the « Interval » gives back the original sound: only a shorter size is heard." },
       { nom: "Répétitions", nomEn: "Repeats", type: "curseur", plage: [1, 8], pas: 1, defaut: 4,
         doc: "Nombre de répétitions du segment capturé à chaque intervalle.", docEn: "Number of times the captured segment is repeated at each interval." },
       { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
@@ -289,13 +295,9 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const a = entreeAudio(ctx, 0);
       if (sansEntree(a)) return a;
-      const { beatRepeat } = await import("../audio");
+      const { beatRepeat, divisionDeRonde: parseDiv } = await import("../audio");
       const intervalStr = ctx.paramTexte("Intervalle", "1/4");
       const sizeStr = ctx.paramTexte("Taille", "1/16");
-      const parseDiv = (s: string) => {
-        const parts = s.split("/");
-        return parts.length === 2 ? Math.max(1, Number(parts[1]) || 1) : 1;
-      };
       const mix = reglageModule(ctx, a.length, 1, { reglage: "Mix", rendu: "pourCent" });
       const feedback = reglageModule(ctx, a.length, 2, {
         reglage: "Feedback", defaut: 40, rendu: "pourCent",

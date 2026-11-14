@@ -306,11 +306,15 @@ export const DOMAINES: Domaine[] = [
     // le premier est un mot ANGLAIS dans une liste française. Elles n'en font plus qu'une.
     //
     // LES SIX QUI RESTENT SONT LA TABLE ET SES SOUS-ENSEMBLES, et chacun est la grille de son
-    // composant : la table entière pour la vitesse de l'arpégiateur, six valeurs pour l'intervalle
-    // du « beat repeat », cinq pour sa taille et dans l'autre sens, quatre pour la quantification
-    // d'une partition, trois pour la résolution d'un réservoir.
+    // composant : la table entière pour la vitesse de l'arpégiateur, la table sans le 1/32 de
+    // triolet pour l'intervalle du « beat repeat » et sans la ronde pour sa taille (2026-11-14),
+    // quatre valeurs pour la quantification d'une partition, trois pour la résolution d'un réservoir.
     formesAssumees: 6,
-    pourquoi: "la table entière pour la vitesse de l'arpégiateur, et cinq sous-ensembles, chacun étant la grille de son composant : six valeurs pour l'intervalle du « beat repeat », cinq pour sa taille et dans l'autre sens, quatre pour la quantification d'une partition, trois pour la résolution d'un réservoir",
+    pourquoi: "la table entière pour la vitesse de l'arpégiateur, et cinq sous-ensembles, chacun étant la grille de son composant : la table sans sa valeur extrême pour l'intervalle et pour la taille du « beat repeat », quatre valeurs pour la quantification d'une partition, trois pour la résolution d'un réservoir",
+    coupes: [
+      { ou: "beat-repeat·Intervalle", raison: "sans le 1/32 de triolet : aucune taille offerte n'est plus courte, et sous un intervalle pas plus long que la taille le segment réécrit les échantillons qu'il remplace, la sortie égalant l'entrée" },
+      { ou: "beat-repeat·Taille", raison: "sans la ronde : aucun intervalle offert n'est plus long, et une taille au moins aussi longue que l'intervalle rend l'entrée telle quelle, mesuré par `plugins/beat-repeat-taille.test.ts`" },
+    ],
     remede: "offrir `choixValeurs` de `audio/valeurs-note.ts`",
   },
   {

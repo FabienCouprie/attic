@@ -188,6 +188,21 @@ export function granularFreeze(
   return resultat;
 }
 
+/**
+ * Le diviseur de la ronde pour une valeur de note : 4 pour « 1/4 », 12 pour « 1/8t », 16/3 pour
+ * « 1/8. ». La pointée dure une fois et demie sa valeur, le triolet deux tiers ; une écriture qu'on
+ * ne lit pas vaut une ronde, comme avant.
+ *
+ * SEUL LE DÉNOMINATEUR ÉTAIT LU, et une pointée ou un triolet y valait donc une ronde : c'est ce qui
+ * bornait « beat-repeat » aux valeurs simples, sa taille la plus courte étant 1/32 (2026-11-14).
+ */
+export function divisionDeRonde(valeur: string): number {
+  const m = /^1\/(\d+)(\.|t)?$/.exec(valeur.trim());
+  if (!m) return 1;
+  const d = Math.max(1, Number(m[1]));
+  return m[2] === "." ? d / 1.5 : m[2] === "t" ? d * 1.5 : d;
+}
+
 // Beat repeat / stutter : capture un court segment à intervalles réguliers
 // synchronisés sur le tempo et le répète un nombre de fois avec décroissance.
 // Parfait pour les effets stutter, glitch et répétitions rythmiques.

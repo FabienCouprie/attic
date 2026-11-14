@@ -509,7 +509,7 @@ Renders a chaotic attractor or iterated function system (IFS) as image and sound
 
 *Generates a fractal melody from a repeated motif and scale.*
 
-Builds a piece by recursively applying an interval motif over several depth levels, producing a self-similar structure. Audio output + MIDI output for chaining to other MIDI nodes.
+Builds a piece by recursively applying an interval motif over several depth levels, producing a self-similar structure. Intervals are written in semitones from the tonic, and each unfolded note is placed on the nearest note of the chosen scale. Audio output + MIDI output for chaining to other MIDI nodes.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -3505,8 +3505,8 @@ Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals sync
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Tempo | slider | 120 BPM | 40 – 240 BPM, step 1 | Tempo used to synchronize intervals and segments. |
-| Interval | choice | 1/4 | 1/1 / 1/2 / 1/4 / 1/8 / 1/16 / 1/32 | Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, etc. |
-| Size | choice | 1/16 | 1/32 / 1/16 / 1/8 / 1/4 / 1/2 | Length of the captured and repeated segment. It stays shorter than the interval: a segment as long as the interval gives back the original sound. |
+| Interval | choice | 1/4 | 1/1 / 1/2 / 1/4 dotted / 1/4 / 1/4 triplet / 1/8 dotted / 1/8 / 1/8 triplet / 1/16 dotted / 1/16 / 1/16 triplet / 1/32 | Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, 1/8 triplet = three per beat; a dotted value lasts one and a half times its value. |
+| Size | choice | 1/16 | 1/2 / 1/4 dotted / 1/4 / 1/4 triplet / 1/8 dotted / 1/8 / 1/8 triplet / 1/16 dotted / 1/16 / 1/16 triplet / 1/32 / 1/32 triplet | Length of the captured and repeated segment. A size at least as long as the « Interval » gives back the original sound: only a shorter size is heard. |
 | Repeats | slider | 4 | 1 – 8, step 1 | Number of times the captured segment is repeated at each interval. |
 | Feedback | slider | 40 % | 0 – 95 %, step 1 | Attenuation of each repeat (0% = constant volume, 95% = fast decay). |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |

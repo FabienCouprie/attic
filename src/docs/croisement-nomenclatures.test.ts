@@ -29,7 +29,7 @@ const FIN = String.fromCharCode(10);
 
 /** Les comptes de la dette au relevé du 2026-11-14 : ils ne font que baisser. */
 const PLAFOND_INERTIES = 204;
-const PLAFOND_COINCIDENCES = 86;
+const PLAFOND_COINCIDENCES = 51;
 
 /** Une fiche d'essai : un réglage à nomenclature « Mode » et un réglage numérique « Gain ». */
 function ficheDEssai(): FicheLancable {

@@ -22,6 +22,10 @@ export function normaliserGenre(valeur: string): string | null {
   return Object.keys(PROGRESSIONS_GENRE).find((cle) => cle === nu) ?? null;
 }
 
+// LA PREMIÈRE PROGRESSION D'UN GENRE EST LA SEULE QUE LISENT le générateur musical, le générateur
+// d'accords et la boîte à groove, et elle doit donc lui être propre. Celle d'ambient était celle de
+// pop, et les deux genres rendaient la même musique (passe de croisement, 2026-11-14) : ses deux
+// progressions ont été échangées. `generation-gammes.test.ts` tient les premières toutes distinctes.
 export const PROGRESSIONS_GENRE: Record<string, number[][]> = {
   rock: [[0, 4, 5], [0, 4, 0, 5], [0, 5, 3, 4]],
   pop: [[0, 5, 3, 4], [0, 4, 5, 4], [0, 3, 5, 4]],
@@ -31,7 +35,7 @@ export const PROGRESSIONS_GENRE: Record<string, number[][]> = {
   electro: [[0, 3, 5, 4], [0, 4, 5, 3]],
   hiphop: [[0, 3, 4, 5], [0, 4, 0, 3]],
   reggae: [[0, 4, 5, 4], [0, 5, 0, 4]],
-  ambient: [[0, 5, 3, 4], [0, 3, 5, 0]],
+  ambient: [[0, 3, 5, 0], [0, 5, 3, 4]],
 };
 
 
@@ -47,9 +51,6 @@ const INSTRUMENTS_GM: Record<string, number> = {
 
 // LES DEGRÉS VIENNENT DE LA TABLE COMMUNE, `gammes.ts`. Ils étaient écrits ici à la main, sous un
 // nom que le garde des gammes ne cherchait pas.
-const DEGRES_MAJEUR = degresDeGamme("majeur");
-
-const DEGRES_MINEUR = degresDeGamme("mineur");
 
 // Gammes disponibles pour les nœuds qui construisent des accords ou
 // mappent des couleurs sur une gamme (Générateur d'accords, Groove Box,
@@ -149,8 +150,12 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
   const tempo = Math.max(40, Math.min(240, parseInt(cfg["tempo"] || "120")));
   const cleNom = cfg["cle"] || cfg["key"] || "C";
   const gammeNom = (cfg["gamme"] || cfg["scale"] || "majeur").toLowerCase();
-  const estMineur = gammeNom.includes("min");
-  const gammeCourante = estMineur ? DEGRES_MINEUR : DEGRES_MAJEUR;
+  // LA GAMME SE LIT DANS LA TABLE COMMUNE. Seule la présence de « min » dans son nom était lue :
+  // vingt-cinq gammes y rendaient deux musiques, et « dominant » comme « diminuée » contenant « min »,
+  // la lydienne dominante se jouait en mineur naturel. Un nom que la table ignore, « minor » écrit à
+  // la main dans un script, garde le repli d'avant. Le mode se dit par la tierce de la gamme.
+  const gammeCourante = degresDeGamme(gammeNom, gammeNom.includes("min") ? "mineur" : "majeur");
+  const estMineur = gammeCourante.includes(3) && !gammeCourante.includes(4);
   const decalage = traduireCle(cleNom);
   const tonalite = traduire(estMineur ? "analyse.nom_mineur" : "analyse.nom_majeur", cleNom);
 

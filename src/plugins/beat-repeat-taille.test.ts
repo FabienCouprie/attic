@@ -26,7 +26,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import type { ParametreDef } from "../core/types";
-import { beatRepeat } from "../audio";
+import { beatRepeat, divisionDeRonde } from "../audio";
 
 const SR = 44100;
 const TEMPO = 60; // Un temps par seconde, donc une mesure par quatre secondes.
@@ -38,11 +38,9 @@ const parametre = (nom: string): ParametreDef => {
   return p;
 };
 
-// La même lecture que l'exécuteur : seul le dénominateur compte, et il vaut un à défaut.
-const denominateur = (s: string) => {
-  const parts = s.split("/");
-  return parts.length === 2 ? Math.max(1, Number(parts[1]) || 1) : 1;
-};
+// La même lecture que l'exécuteur, pointées et triolets compris, et sur les identifiants des listes.
+const denominateur = divisionDeRonde;
+const ids = (nom: string) => parametre(nom).optionIds ?? [];
 
 // Une rampe plutôt qu'un continu : la répétition d'un segment constant ne se verrait pas.
 const rampe = (secondes: number): AudioBuffer => {
@@ -68,8 +66,8 @@ const change = (intervalle: string, taille: string, repetitions = 4) => {
 
 describe("la taille du segment de « beat-repeat »", () => {
   it("RESTE SOUS L'INTERVALLE, ce qui est la raison de l'absence de 1/1", () => {
-    const intervalles = (parametre("Intervalle").options ?? []).map(denominateur);
-    const tailles = (parametre("Taille").options ?? []).map(denominateur);
+    const intervalles = ids("Intervalle").map(denominateur);
+    const tailles = ids("Taille").map(denominateur);
     expect(intervalles.length, "le réglage « Intervalle » doit offrir des divisions").toBeGreaterThan(1);
     expect(tailles.length, "le réglage « Taille » doit offrir des divisions").toBeGreaterThan(1);
     // Le plus petit dénominateur est la plus longue durée. Celle de la taille doit rester
@@ -79,14 +77,24 @@ describe("la taille du segment de « beat-repeat »", () => {
   });
 
   it("ET CHAQUE VALEUR OFFERTE S'ENTEND, pour au moins un intervalle offert", () => {
-    const intervalles = parametre("Intervalle").options ?? [];
-    const tailles = parametre("Taille").options ?? [];
+    const intervalles = ids("Intervalle");
+    const tailles = ids("Taille");
     const inertes: string[] = [];
     for (const taille of tailles) {
       const audible = intervalles.some((intervalle) => change(intervalle, taille) > 0.05);
       if (!audible) inertes.push(taille);
     }
     expect(inertes, "ces tailles ne changent le son pour aucun intervalle offert").toEqual([]);
+  });
+
+  it("ET CHAQUE INTERVALLE OFFERT S'ENTEND, pour au moins une taille offerte", () => {
+    // LE DÉFAUT, relevé le 2026-11-14 par la passe de croisement des nomenclatures : la plus courte
+    // taille offerte était 1/32, et sous l'intervalle 1/32 chaque taille rendait donc l'entrée telle
+    // quelle. Le cas symétrique du précédent manquait.
+    const intervalles = ids("Intervalle");
+    const tailles = ids("Taille");
+    const inertes = intervalles.filter((intervalle) => !tailles.some((taille) => change(intervalle, taille) > 0.05));
+    expect(inertes, "ces intervalles ne changent le son pour aucune taille offerte").toEqual([]);
   });
 
   it("y compris le couple de départ, que personne ne règle avant d'écouter", () => {
@@ -99,7 +107,7 @@ describe("la taille du segment de « beat-repeat »", () => {
     // CE CAS DIT POURQUOI LA BORNE EXISTE. Il n'interroge pas la liste, il interroge le calcul sur
     // la valeur que la liste n'offre pas : si elle cessait d'être inerte, la borne cesserait d'être
     // justifiée et les deux cas précédents devraient être réécrits plutôt que subis.
-    for (const intervalle of parametre("Intervalle").options ?? []) {
+    for (const intervalle of ids("Intervalle")) {
       expect(change(intervalle, "1/1"), `1/1 sur ${intervalle}`).toBe(0);
     }
   });

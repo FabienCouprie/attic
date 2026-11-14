@@ -14,7 +14,8 @@ import {
   normaliserModeVoix,
   normaliserMapping,
 } from "./automate-cellulaire-reglages";
-import { degresGammeMelodie } from "./generation-melodie";
+import { degresGammeMelodie, GAMMES_MELODIE_IDS } from "./generation-melodie";
+import { degresDeGamme } from "./gammes";
 
 const defaults = {
   regle: 90,
@@ -229,4 +230,19 @@ describe("automate cellulaire 2D : on entend l'évolution de la grille", () => {
     expect(Math.max(...court.map((n) => n.debut))).toBeLessThan(8 * deuxD.dureeNote);
     expect(Math.max(...long.map((n) => n.debut))).toBeGreaterThan(30 * deuxD.dureeNote);
   });
+});
+
+describe("automate cellulaire : chaque gamme offerte se joue", () => {
+  // LE DÉFAUT, relevé le 2026-11-14 par la passe de croisement : `normaliserGamme` ne connaissait que
+  // les onze gammes d'avant la table commune, et les quatorze autres retombaient en silence sur la
+  // pentatonique majeure. Le cas mesure les notes rendues, pas le nom retenu.
+  for (const id of GAMMES_MELODIE_IDS) {
+    it(`${id} : chaque note rendue appartient à la gamme`, () => {
+      const permises = new Set(degresDeGamme(id));
+      const notes = genererNotesAutomateCellulaire({ ...defaults, gamme: id, largeur: 32, generations: 32 });
+      expect(notes.length).toBeGreaterThan(0);
+      const etrangeres = [...new Set(notes.map((n) => n.note % 12))].filter((c) => !permises.has(c));
+      expect(etrangeres, id).toEqual([]);
+    });
+  }
 });

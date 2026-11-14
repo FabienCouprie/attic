@@ -97,7 +97,7 @@ const COUPES_A_EXAMINER: string[] = [
   "stn-sinus-transitoires-bruit·Fenêtre sinus", "stn-sinus-transitoires-bruit·Fenêtre transitoires",
   "tracage-spectral·Finesse",
   // valeur de note : treize.
-  "beat-repeat·Intervalle", "beat-repeat·Taille", "magenta-continuation·Quantification",
+  "magenta-continuation·Quantification",
   "magenta-generer-melodie·Quantification", "magenta-humaniser-groove·Quantification", "multi-reservoirs·Résolution",
   "reservoir-musical·Résolution", "transcription-midi·Quantification", "transposeur-quantiseur-midi·Quantisation",
   "vexflow-midi·Quantification",

@@ -21,10 +21,23 @@ const MOTIFS_PREDEFINIS: Record<string, number[]> = {
 };
 
 
-function degreVersMidi(degre: number, decalageCle: number, degresGamme: number[], octaveBase: number): number {
-  const octaveDelta = Math.floor(degre / degresGamme.length);
-  const idx = ((degre % degresGamme.length) + degresGamme.length) % degresGamme.length;
-  return octaveBase + decalageCle + degresGamme[idx] + octaveDelta * 12;
+/**
+ * La note de la gamme la plus proche d'un intervalle en demi-tons, depuis la tonique.
+ *
+ * LES MOTIFS SONT ÉCRITS EN DEMI-TONS : « Triade M » vaut 0, 4, 7, et le réglage « Intervalles » se
+ * saisit en demi-tons. Chaque valeur dépliée était pourtant lue comme un RANG de degré : « Triade M »
+ * jouait do, sol, do, et à la profondeur 3 seuls quatre degrés sonnaient, si bien que les vingt-cinq
+ * gammes ne rendaient que quatre musiques (passe de croisement, 2026-11-14). La valeur se pose
+ * désormais sur la note de la gamme la plus proche, la plus grave à égale distance.
+ */
+function poserSurLaGamme(demiTons: number, decalageCle: number, degresGamme: number[], octaveBase: number): number {
+  const octave = Math.floor(demiTons / 12);
+  const classe = demiTons - octave * 12;
+  let pose = degresGamme[0], ecart = Infinity;
+  for (const d of [...degresGamme, degresGamme[0] + 12]) {
+    if (Math.abs(d - classe) < ecart) { ecart = Math.abs(d - classe); pose = d; }
+  }
+  return octaveBase + decalageCle + octave * 12 + pose;
 }
 
 
@@ -86,7 +99,7 @@ export async function genererMusiqueFractale(
   const relache = caractere === "douce" ? 0.15 : 0.04;
 
   for (let i = 0; i < totalNotes; i++) {
-    const midiSnappe = degreVersMidi(
+    const midiSnappe = poserSurLaGamme(
       Math.round(notesMidi[i]),
       decalageCle,
       degres,

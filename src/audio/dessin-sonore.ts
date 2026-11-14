@@ -10,6 +10,7 @@ import { rgbToHsl, distanceRgb2 } from "./couleurs";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence, type NoteEvenement } from "./midi-sequence";
 import { degresGammeAccords, degreAccordProche } from "./generation";
+import { demiTonDeCle } from "./cles";
 
 export interface FormeColoree {
   couleur: CouleurExtraite;
@@ -37,11 +38,12 @@ export interface OptionsDessinSonore {
   hasard?: () => number;
 }
 
-const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+// LA CLÉ SE LIT DANS LA TABLE COMMUNE, `audio/cles.ts` : une table privée en dièses seuls jouait Mi♭
+// et Si♭ en do.
 
 function noteDepuisCouleur(couleur: CouleurExtraite, cle: string, gamme: string, octave: number, portee: number): number {
   const intervals = degresGammeAccords(gamme);
-  const cleIdx = Math.max(0, NOTES.indexOf(cle));
+  const cleIdx = demiTonDeCle(cle) ?? 0;
   const base = (octave + 1) * 12 + cleIdx;
   const deg = Math.floor((couleur.h / 360) * intervals.length) % intervals.length;
   const semi = intervals[deg];
