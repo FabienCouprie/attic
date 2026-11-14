@@ -12,7 +12,7 @@ import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
-import { LIBELLES_HERITES_GAMMES, gammesParIds } from "../audio/gammes";
+import { LIBELLES_HERITES_GAMMES, completer } from "../audio/gammes";
 import { choixValeurs } from "../audio/valeurs-note";
 
 // LES DEUX LISTES VIENNENT DE LA TABLE, DANS L'ORDRE QUI ÉTAIT LE LEUR. Leurs identifiants étaient
@@ -20,10 +20,14 @@ import { choixValeurs } from "../audio/valeurs-note";
 // donc les degrés étaient justes, mais un projet enregistrait une orthographe que le reste du parc
 // n'écrit pas. L'ordre ne bouge pas, puisqu'un projet ancien se résout par la position, et les
 // anciennes valeurs se relisent par `LIBELLES_HERITES_GAMMES`.
-const GAMMES_RESERVOIR = gammesParIds([
+//
+// ELLES SONT LA TABLE ENTIÈRE DES GAMMES TEMPÉRÉES depuis le 2026-11-14, décision de Fabien, l'ordre
+// d'origine d'abord : le réseau tire ses notes d'un ensemble de hauteurs, et rien ne le bornait à
+// six gammes, ni le multi-réservoir à cinq, dont l'absence de la chromatique n'avait pas de raison.
+const GAMMES_RESERVOIR = completer([
   "majeur", "mineur", "pentatonique-majeure", "pentatonique-mineure", "blues", "chromatique",
 ]);
-const GAMMES_RESERVOIR_SANS_CHROMATIQUE = gammesParIds([
+const GAMMES_RESERVOIR_SANS_CHROMATIQUE = completer([
   "majeur", "mineur", "pentatonique-majeure", "pentatonique-mineure", "blues",
 ]);
 

@@ -17,13 +17,16 @@ import {
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
-import { LIBELLES_HERITES_GAMMES, gammesParIds } from "../audio/gammes";
+import { LIBELLES_HERITES_GAMMES, completer } from "../audio/gammes";
 
 // LA LISTE VIENT DE LA TABLE, DANS L'ORDRE QUI ÉTAIT LE SIEN. Ses identifiants étaient
 // « pentatonique majeur » et « pentatonique mineur », sans accord et avec une espace : des ALIAS,
 // donc les degrés étaient justes, mais un projet enregistrait une orthographe que le reste du parc
 // n'écrit pas. L'ordre ne bouge pas, puisqu'un projet ancien se résout par la position.
-const GAMMES_SEQUENCEUR = gammesParIds([
+//
+// ELLE EST LA TABLE ENTIÈRE DES GAMMES TEMPÉRÉES depuis le 2026-11-14, décision de Fabien, l'ordre
+// d'origine d'abord : chaque rangée de la grille est un degré, et rien ne bornait la grille à cinq.
+const GAMMES_SEQUENCEUR = completer([
   "majeur", "mineur", "pentatonique-majeure", "pentatonique-mineure", "blues",
 ]);
 

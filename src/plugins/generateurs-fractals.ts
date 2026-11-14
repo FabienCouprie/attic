@@ -150,9 +150,12 @@ export const fiches: FicheAudio[] = ([
       // SES IDENTIFIANTS ÉTAIENT SES LIBELLÉS FRANÇAIS, quand le reste du parc désigne une qualité
       // par `maj`, `m`, `dim`. Ce sont des alias de la table, donc les intervalles étaient justes ;
       // c'est l'identifiant posé dans le projet qui divergeait, et `optionsHeritees` le relit.
+      // LA SUS2 MANQUAIT, et c'est la seule triade de la table qui manquait (2026-11-14). Le flocon
+      // a trois côtés, posés sur les trois premières notes de l'accord : un accord de quatre sons
+      // perdrait sa septième en silence, et c'est la borne, déclarée au domaine des accords.
       { nom: "Accord", nomEn: "Chord", type: "choix",
-        options: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], optionIds: ["maj","m","aug","dim","sus4"],
-        optionsEn: ["Major","Minor","Augmented","Diminished","Sus4"],
+        options: ["Majeur","Mineur","Augmenté","Diminué","Sus4","Sus2"], optionIds: ["maj","m","aug","dim","sus4","sus2"],
+        optionsEn: ["Major","Minor","Augmented","Diminished","Sus4","Sus2"],
         optionsHeritees: { Majeur: "maj", Mineur: "m", Augmenté: "aug", Diminué: "dim", Sus4: "sus4" },
         defaut: "Majeur", defautEn: "Major",
         doc: "Type de triade formant le triangle de base du flocon.", docEn: "Triad type forming the base triangle of the snowflake." },

@@ -73,47 +73,22 @@ const EXAMINES_ET_ECARTES: { ou: string; raison: string }[] = [
  * d'ici, soit qu'il offre la table entière, soit que sa coupe passe dans `coupes` avec sa raison.
  *
  * CETTE LISTE NE PEUT QUE DÉCROÎTRE : un réglage coupé qui n'y est pas fait tomber la suite, et un
- * réglage qui n'est plus coupé aussi.
+ * réglage qui n'est plus coupé aussi. Le lot 2 tranché, les coupes gardées sont passées dans les
+ * `coupes` de leur domaine avec leur borne : restent celles que Fabien a décidé d'élargir.
  */
 const COUPES_A_EXAMINER: string[] = [
-  // gamme : trente-cinq dans la table, gammes du monde comprises.
-  "accords-vers-notation·Gamme", "arbre-rythmique·Gamme", "arpege-koch·Gamme", "automate-cellulaire·Gamme",
-  "boite-groove·Gamme", "cercle-pulsant·Gamme", "color-looper·Gamme", "correction-hauteur·Gamme",
-  "dessin-sonore·Gamme", "evolution-melodie·Gamme", "gamme-jouee·Gamme", "gammes-monde·Gamme",
-  "generateur-accords·Gamme", "generateur-fractal·Gamme", "generateur-musical·Gamme", "l-systeme·Gamme",
-  "mappeur-mandelbrot·Gamme", "melodie-aleatoire·Gamme", "multi-reservoirs·Gamme", "palette-harmonique·Gamme",
-  "parole-vers-sequence·Gamme", "partition-aleatoire-csound·Gamme", "reservoir-musical·Gamme",
-  "sampler-personnalise·Gamme", "sequenceur-accords·Gamme", "sequenceur-melodique·Gamme", "serie-infinie·Gamme",
-  "solveur-contraintes·Gamme", "tonal-grille·Gamme", "tonal-progression·Gamme", "vexflow-grille·Gamme",
-  "vexflow-partition·Gamme", "zones-vers-midi·Gamme",
-  // accord : trente-trois qualités.
-  "arpege-koch·Accord", "generateur-fractal·Motif",
-  // fenêtre d'analyse : six tailles.
+  // fenêtre d'analyse : six tailles, élargies là où l'algorithme ne dit pas sa borne.
   "analyseur-spectre·Fenêtre", "apparier-reference·Taille de la transformée", "continuation-spectrale-ar·FFT",
   "continuation-spectrale-lstm·FFT", "csound-spectral·Fenêtre", "flou-spectral·Finesse", "gel-spectral·Finesse",
   "glissando-interieur·Finesse", "masquage·Finesse", "morphing-spectral·Fenêtre", "pca-neuronale·FFT",
   "phase-pghi·Fenêtre", "restauration-ecretage·Fenêtre", "rugosite·Finesse", "separation-harmonique-percussive·Fenêtre",
   "sms-sinusoides-bruit·Fenêtre", "spectrogramme-fractal·FFT", "spectrogramme·Fenêtre",
-  "stn-sinus-transitoires-bruit·Fenêtre sinus", "stn-sinus-transitoires-bruit·Fenêtre transitoires",
   "tracage-spectral·Finesse",
   // valeur de note : treize.
-  "magenta-continuation·Quantification",
-  "magenta-generer-melodie·Quantification", "magenta-humaniser-groove·Quantification", "multi-reservoirs·Résolution",
-  "reservoir-musical·Résolution", "transcription-midi·Quantification", "transposeur-quantiseur-midi·Quantisation",
-  "vexflow-midi·Quantification",
-  // format d'image : trois.
-  "attracteur-ifs·Format", "spectrogramme-fractal·Format", "visualisation-songsee·Format",
+  "multi-reservoirs·Résolution", "reservoir-musical·Résolution", "transcription-midi·Quantification",
+  "transposeur-quantiseur-midi·Quantisation", "vexflow-midi·Quantification",
   // moteur de synthèse : trois.
   "automate-cellulaire·Synthèse",
-  // disposition de haut-parleurs : dix.
-  "decodeur-ambisonique·Salle",
-  // langue : quinze, sans « Automatique ».
-  "aligner-texte·Langue", "cloner-voix·Langue", "composer-plan·Langue du chant", "ecrire-chanson·Langue du chant",
-  "nllb-paroles·Langue cible", "planifier-chanson·Langue du chant", "sherpa-asr·Langue", "tts-mms·Langue",
-  "couper-aux-mots·Langue", "generateur-paroles·Langue", "parole-vers-sequence·Langue", "sous-titres-srt·Langue",
-  "vosk-asr·Langue",
-  // patron rythmique : cinquante-cinq.
-  "boite-groove·Style rythmique",
 ];
 
 describe("un concept, des formes déclarées", () => {
@@ -129,6 +104,9 @@ describe("un concept, des formes déclarées", () => {
       }
     }
     expect(COUPES_A_EXAMINER.filter((ou) => !encore.has(ou)), "ces réglages ne sont plus coupés : retirer leur ligne").toEqual([]);
+    // UNE COUPE DÉCLARÉE N'EST PLUS À EXAMINER : elle a sa raison, et la dette ne la garde pas aussi.
+    const declarees = new Set(DOMAINES.flatMap((d) => (d.coupes ?? []).map((c) => c.ou)));
+    expect(COUPES_A_EXAMINER.filter((ou) => declarees.has(ou)), "ces coupes sont déclarées : retirer leur ligne de la dette").toEqual([]);
   });
 
   it("CHAQUE CONCEPT ÉCARTÉ EXISTE ENCORE, sans quoi sa raison ne garde plus rien", () => {

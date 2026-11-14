@@ -263,7 +263,8 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", type: "curseur", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
-        doc: "Tempo utilisé pour synchroniser les intervalles et les segments.", docEn: "Tempo used to synchronize intervals and segments." },
+        doc: "Tempo utilisé pour synchroniser les intervalles et les segments. Sans effet quand la « Taille » est au moins aussi longue que l'« Intervalle » : l'effet rend alors l'entrée telle quelle.",
+        docEn: "Tempo used to synchronize intervals and segments. No effect when the « Size » is at least as long as the « Interval »: the effect then gives back the input unchanged." },
       // LES DEUX LISTES SONT LA TABLE DES VALEURS DE NOTE, pointées et triolets compris, depuis que
       // la durée se lit par `divisionDeRonde` et non par le seul dénominateur (2026-11-14). La plus
       // courte taille était 1/32, et sous l'intervalle 1/32 aucune taille ne s'entendait. Chacune
@@ -281,12 +282,14 @@ export const fiches: FicheAudio[] = ([
         doc: "Longueur du segment capturé et répété. Une taille au moins aussi longue que l'« Intervalle » redonne le son d'origine : seule une taille plus courte s'entend.",
         docEn: "Length of the captured and repeated segment. A size at least as long as the « Interval » gives back the original sound: only a shorter size is heard." },
       { nom: "Répétitions", nomEn: "Repeats", type: "curseur", plage: [1, 8], pas: 1, defaut: 4,
-        doc: "Nombre de répétitions du segment capturé à chaque intervalle.", docEn: "Number of times the captured segment is repeated at each interval." },
+        doc: "Nombre de répétitions du segment capturé à chaque intervalle. Sans effet quand la « Taille » est au moins aussi longue que l'« Intervalle ».",
+        docEn: "Number of times the captured segment is repeated at each interval. No effect when the « Size » is at least as long as the « Interval »." },
       { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
-        doc: "Atténuation de chaque répétition (0% = volume constant, 95% = décroissance rapide).", docEn: "Attenuation of each repeat (0% = constant volume, 95% = fast decay)." },
+        doc: "Atténuation de chaque répétition (0% = volume constant, 95% = décroissance rapide). Sans effet quand la « Taille » est au moins aussi longue que l'« Intervalle ».",
+        docEn: "Attenuation of each repeat (0% = constant volume, 95% = fast decay). No effect when the « Size » is at least as long as the « Interval »." },
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Équilibre signal original / effet.",
-        docEn: "Dry/wet balance." },
+        doc: "Équilibre signal original / effet. Sans effet quand la « Taille » est au moins aussi longue que l'« Intervalle », l'effet rendant alors le signal original.",
+        docEn: "Dry/wet balance. No effect when the « Size » is at least as long as the « Interval », the effect then giving back the original signal." },
       ...bornesModulation(MODULATION_MIX),
       ...bornesModulation({
         ...modulationNommee("Feedback", "Feedback", [0, 95], "%"), defauts: [0, 80],

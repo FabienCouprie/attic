@@ -27,12 +27,18 @@ import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, nor
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 import type { Note } from "../audio/note";
-import { degresDeGamme } from "../audio/gammes";
+import { completer, degresDeGamme } from "../audio/gammes";
 import { PARAMETRE_TONIQUE } from "../audio/cles";
 
 // LES DEGRÉS VIENNENT DE LA TABLE COMMUNE, `audio/gammes.ts`. Une table privée ici redisait
 // ce qu'elle dit, et sept copies du même savoir ne restent pas d'accord : les anciennes
 // orthographes, « pentatonique majeur » sans accord entre autres, y sont des alias.
+
+// LA GAMME DE LA SÉRIE INFINIE OFFRE LA TABLE ENTIÈRE DES GAMMES TEMPÉRÉES depuis le 2026-11-14,
+// décision de Fabien : les quatre d'origine d'abord, sous leurs libellés, puisqu'un projet ancien se
+// résout par la position, et les vingt et une autres après. La lecture par degrés compte des rangs
+// dans n'importe quelle gamme, et rien ne la bornait à quatre.
+const GAMMES_SERIE_AJOUTEES = completer(["majeur", "mineur", "pentatonique-majeure", "chromatique"]).slice(4);
 
 type NoteSimple = Note;
 
@@ -317,12 +323,12 @@ export const fiches: FicheAudio[] = ([
         doc: "En demi-tons, la suite se déploie chromatiquement et sort de toute tonalité : c'est la lecture de Nørgård. En degrés, chaque entier compte un degré de la gamme et le résultat reste tonal, même structure, tout autre caractère.",
         docEn: "In semitones the sequence unfolds chromatically and leaves any key behind: that is Nørgård's reading. In degrees each integer counts a scale step and the result stays tonal, same structure, quite another character." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
-        options: ["Majeure", "Mineure", "Pentatonique", "Chromatique"],
-        optionsEn: ["Major", "Minor", "Pentatonic", "Chromatic"],
+        options: ["Majeure", "Mineure", "Pentatonique", "Chromatique", ...GAMMES_SERIE_AJOUTEES.map((g) => g.fr)],
+        optionsEn: ["Major", "Minor", "Pentatonic", "Chromatic", ...GAMMES_SERIE_AJOUTEES.map((g) => g.en)],
         // LES IDENTIFIANTS SONT CEUX DE `audio/gammes.ts`, et ils ne l'étaient pas : cette liste de
         // quatre était écrite à la main avec des alias, et le plancher de longueur du registre des
         // nomenclatures la laissait passer, puisqu'il ne regardait que les listes de cinq et plus.
-        optionIds: ["majeur", "mineur", "pentatonique-majeure", "chromatique"],
+        optionIds: ["majeur", "mineur", "pentatonique-majeure", "chromatique", ...GAMMES_SERIE_AJOUTEES.map((g) => g.id)],
         optionsHeritees: { majeure: "majeur", mineure: "mineur", pentatonique: "pentatonique-majeure" },
         defaut: "Majeure", defautEn: "Major",
         doc: "La gamme employée en lecture par degrés.", docEn: "The scale used when reading by degrees." },

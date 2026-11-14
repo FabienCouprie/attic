@@ -149,6 +149,9 @@ export interface Domaine {
 const estPuissanceDeDeux = (x: string) =>
   /^\d+$/.test(x) && Number(x) >= 256 && (Number(x) & (Number(x) - 1)) === 0;
 
+/** Une coupe déclarée pour plusieurs réglages qui ont la même borne. */
+const coupesPour = (raison: string, ...ou: string[]): { ou: string; raison: string }[] => ou.map((x) => ({ ou: x, raison }));
+
 export const DOMAINES: Domaine[] = [
   {
     nom: "gamme",
@@ -176,6 +179,27 @@ export const DOMAINES: Domaine[] = [
     formesAssumees: 11,
     pourquoi: "quatre formes portent les MÊMES vingt-cinq gammes dans quatre ordres, que `completer` fige parce qu'un projet se résout par la position ; les autres sont des sous-ensembles bornés, deux gammes pour la notation tonale, dix gammes du monde, et les trente-cinq réunies",
     remede: "offrir la liste de `audio/gammes.ts`, par `completer` pour garder l'ordre d'un composant ancien",
+    // LES COUPES GARDÉES, décision de Fabien du 2026-11-14 sur le relevé du lot 2. Huit réglages qui
+    // n'offraient que quatre à sept gammes ont été élargis aux vingt-cinq tempérées le même jour.
+    coupes: [
+      ...coupesPour(
+        "l'algorithme pose ses notes en demi-tons, en MIDI ou par des degrés tempérés : les dix gammes en cents n'y ont pas de hauteur",
+        "arpege-koch·Gamme", "automate-cellulaire·Gamme", "boite-groove·Gamme", "cercle-pulsant·Gamme",
+        "color-looper·Gamme", "dessin-sonore·Gamme", "gamme-jouee·Gamme", "generateur-accords·Gamme",
+        "generateur-fractal·Gamme", "generateur-musical·Gamme", "l-systeme·Gamme", "mappeur-mandelbrot·Gamme",
+        "melodie-aleatoire·Gamme", "palette-harmonique·Gamme", "parole-vers-sequence·Gamme",
+        "partition-aleatoire-csound·Gamme", "sampler-personnalise·Gamme", "sequenceur-accords·Gamme",
+        "zones-vers-midi·Gamme", "reservoir-musical·Gamme", "multi-reservoirs·Gamme", "sequenceur-melodique·Gamme",
+        "serie-infinie·Gamme", "arbre-rythmique·Gamme", "correction-hauteur·Gamme", "evolution-melodie·Gamme",
+        "solveur-contraintes·Gamme",
+      ),
+      ...coupesPour(
+        "les chiffres romains d'une progression ne se lisent que dans une tonalité majeure ou mineure, et les autres gammes n'ont pas de degrés nommés",
+        "tonal-grille·Gamme", "tonal-progression·Gamme", "vexflow-grille·Gamme", "vexflow-partition·Gamme",
+        "accords-vers-notation·Gamme",
+      ),
+      { ou: "gammes-monde·Gamme", raison: "le nœud des gammes en cents, qui pose chaque degré à sa hauteur exacte ; les gammes tempérées ont leurs propres nœuds" },
+    ],
   },
   {
     nom: "accord",
@@ -189,8 +213,8 @@ export const DOMAINES: Domaine[] = [
     canonique: (id) => qualiteDe(id)?.id,
     anciennesEcritures: [
       // L'ÉCRITURE DE KOCH EST PAYÉE : ses cinq identifiants étaient ses libellés français, et ils
-      // sont désormais ceux du dépôt. Sa FORME reste comptée, parce qu'il n'offre que cinq triades
-      // là où les autres en offrent trente-trois, et ce sous-ensemble est la borne de son flocon.
+      // sont désormais ceux du dépôt. Sa FORME reste comptée, parce qu'il n'offre que les six triades
+      // là où les autres offrent trente-trois qualités, et ce sous-ensemble est la borne de son flocon.
       // CELUI-CI N'ÉTAIT PAS VISIBLE AVANT LA RÉPARATION DU GARDE : sa liste porte deux valeurs
       // hors domaine, « Cantus firmus » et « Personnalisé », ce qui suffisait à la faire
       // disparaître entièrement du relevé.
@@ -199,8 +223,12 @@ export const DOMAINES: Domaine[] = [
     // DE DEUX À QUATRE : deux formes portaient une valeur hors domaine, la sentinelle « roue » et
     // les deux motifs du générateur fractal, ce qui les faisait disparaître entièrement du relevé.
     formesAssumees: 4,
-    pourquoi: "trois sous-ensembles bornés par leur composant, les cinq triades du flocon de Koch, les cinq motifs du générateur fractal dont deux n'en sont pas, et la liste entière précédée de sa sentinelle « roue »",
+    pourquoi: "trois sous-ensembles bornés par leur composant, les six triades du flocon de Koch, les cinq motifs du générateur fractal dont deux n'en sont pas, et la liste entière précédée de sa sentinelle « roue »",
     remede: "offrir la liste de `audio/qualites-accords.ts`",
+    coupes: [
+      { ou: "arpege-koch·Accord", raison: "les six triades seules : le flocon a trois côtés, posés sur les trois premières notes de l'accord, et un accord de quatre sons y perdrait sa septième" },
+      { ou: "generateur-fractal·Motif", raison: "un motif de génération et non une liste d'accords : trois triades et deux motifs qui n'en sont pas, écarté du domaine sur décision de Fabien" },
+    ],
   },
   {
     nom: "clé",
@@ -254,6 +282,10 @@ export const DOMAINES: Domaine[] = [
     formesAssumees: 11,
     pourquoi: "six sous-ensembles, de 256 à 8192, chacun borné par son algorithme et portant sa raison dans la documentation de son propre réglage ; la table ENTIÈRE, que la granulation spectrale offre deux fois parce qu'aucun algorithme ne la borne, le grain lu et le grain écrit s'y choisissant librement ; et trois formes qui ne tiennent qu'aux LIBELLÉS, « Ordinaire (2048) » nommant la taille du MILIEU de sa liste, que nulle table centrale ne peut produire",
     remede: "offrir `choixFenetre` de `audio/fenetres-analyse.ts`, et dire pourquoi un composant en offre une part",
+    coupes: [
+      { ou: "stn-sinus-transitoires-bruit·Fenêtre sinus", raison: "la première passe doit être longue, il faut du temps pour constater qu'une fréquence dure : sous 2048 points, les partielles ne se distinguent plus du reste" },
+      { ou: "stn-sinus-transitoires-bruit·Fenêtre transitoires", raison: "la seconde passe doit être courte, une attaque se dilue dans une fenêtre longue : au-delà de 1024 points, elle rejoindrait la première passe" },
+    ],
   },
   {
     nom: "métrique",
@@ -314,6 +346,10 @@ export const DOMAINES: Domaine[] = [
     coupes: [
       { ou: "beat-repeat·Intervalle", raison: "sans le 1/32 de triolet : aucune taille offerte n'est plus courte, et sous un intervalle pas plus long que la taille le segment réécrit les échantillons qu'il remplace, la sortie égalant l'entrée" },
       { ou: "beat-repeat·Taille", raison: "sans la ronde : aucun intervalle offert n'est plus long, et une taille au moins aussi longue que l'intervalle rend l'entrée telle quelle, mesuré par `plugins/beat-repeat-taille.test.ts`" },
+      ...coupesPour(
+        "Magenta quantifie en pas entiers par noire (`quantizeNoteSequence`) : une ronde, une blanche ou une pointée n'en font pas un nombre entier, et ses modèles ont appris une grille binaire",
+        "magenta-continuation·Quantification", "magenta-generer-melodie·Quantification", "magenta-humaniser-groove·Quantification",
+      ),
     ],
     remede: "offrir `choixValeurs` de `audio/valeurs-note.ts`",
   },
@@ -398,6 +434,10 @@ export const DOMAINES: Domaine[] = [
     formesAssumees: 3,
     pourquoi: "le couple PNG et JPEG, le même couple dans l'ORDRE INVERSE chez un composant dont le défaut est le JPEG, et la liste de trois du générateur de pochette, qui dessine en SVG et peut donc rendre le SVG lui-même",
     remede: "offrir `choixFormats` de `core/formats-image.ts`",
+    coupes: coupesPour(
+      "un rendu en pixels, des points d'un attracteur ou des cases d'un spectrogramme par milliers : le SVG en ferait autant d'éléments, et le nœud ne dessine pas en vecteurs",
+      "attracteur-ifs·Format", "spectrogramme-fractal·Format", "visualisation-songsee·Format",
+    ),
   },
   {
     nom: "percussion",
@@ -424,6 +464,9 @@ export const DOMAINES: Domaine[] = [
     formesAssumees: 2,
     pourquoi: "la liste entière, et le sous-ensemble du décodeur ambisonique, qui filtre `famille !== \"ambisonie\"` parce qu'une « Salle » est la disposition de haut-parleurs vers laquelle on décode : décoder vers un format ambisonique ne décoderait rien",
     remede: "offrir `choixDisposition` de `plugins/multicanal.ts`",
+    coupes: [
+      { ou: "decodeur-ambisonique·Salle", raison: "une salle est la disposition de haut-parleurs vers laquelle on décode : décoder vers un format ambisonique ne décoderait rien" },
+    ],
   },
   {
     nom: "langue",
@@ -447,6 +490,25 @@ export const DOMAINES: Domaine[] = [
     formesAssumees: 7,
     pourquoi: "chaque composant est borné par les langues que SON modèle tient, et chacun l'écrit à côté de sa liste, la paire français et anglais de cinq réglages comprise ; les NOMS, eux, viennent d'une table unique depuis que six d'entre eux les recopiaient",
     remede: "déclarer une table centrale des noms de langue, chaque composant n'offrant que les codes que SON modèle tient",
+    // CHAQUE COUPE EST CELLE DU MODÈLE, que la documentation du réglage dit à l'écran.
+    coupes: [
+      ...coupesPour("les onze langues que le moteur d'alignement connaît, et que la documentation du réglage nomme",
+        "aligner-texte·Langue"),
+      ...coupesPour("les langues que le modèle de clonage de voix prononce ; « Automatique » le laisse décider d'après le texte",
+        "cloner-voix·Langue"),
+      ...coupesPour("les dix langues que le modèle de chant tient le mieux, comme le dit la documentation du réglage",
+        "composer-plan·Langue du chant", "ecrire-chanson·Langue du chant", "planifier-chanson·Langue du chant"),
+      ...coupesPour("un modèle de traduction OPUS-MT de l'anglais par langue, et le nœud en charge dix ; l'anglais est la langue des paroles générées avant traduction",
+        "nllb-paroles·Langue cible"),
+      ...coupesPour("les treize langues du modèle de reconnaissance, un seul modèle multilingue qui n'en connaît pas d'autres",
+        "sherpa-asr·Langue"),
+      ...coupesPour("un modèle de synthèse MMS par langue, et le nœud n'en connaît que ceux de sa table",
+        "tts-mms·Langue"),
+      ...coupesPour("un modèle dédié par langue, et le dépôt n'en fournit que pour le français et l'anglais",
+        "couper-aux-mots·Langue", "vosk-asr·Langue", "sous-titres-srt·Langue", "parole-vers-sequence·Langue"),
+      ...coupesPour("les paroles se tirent de lexiques écrits pour le français et l'anglais, et pour eux seuls",
+        "generateur-paroles·Langue"),
+    ],
   },
   {
     nom: "caractère de timbre",
@@ -485,6 +547,9 @@ export const DOMAINES: Domaine[] = [
     formesAssumees: 3,
     pourquoi: "les trois listes sortent du même `optionsPatrons` : l'une entière, l'autre filtrée sur « 4/4 », une boîte à groove en quatre temps ne pouvant offrir ni valse ni boléro, et la troisième entière, précédée d'« Accords tenus », le seul accompagnement de la reprise ABC qui n'ait pas de rythme",
     remede: "offrir `optionsPatrons` de `audio/patrons-rythme.ts`, avec la métrique qui restreint",
+    coupes: [
+      { ou: "boite-groove·Style rythmique", raison: "la boîte à groove joue en quatre temps, et la valse et le boléro ne s'écrivent qu'en trois" },
+    ],
   },
   {
     nom: "extension d'accord",

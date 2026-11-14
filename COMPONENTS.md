@@ -574,7 +574,7 @@ Generates Per Nørgård's infinity series, discovered in 1959 and the entire mat
 | Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The note the sequence starts from, its first term always being zero. |
 | Octave | number | 4 | 2 – 6, step 1 | Octave of the tonic. |
 | Reading | choice | Semitones | Semitones / Scale degrees | In semitones the sequence unfolds chromatically and leaves any key behind: that is Nørgård's reading. In degrees each integer counts a scale step and the result stays tonal, same structure, quite another character. |
-| Scale | choice | Major | Major / Minor / Pentatonic / Chromatic | The scale used when reading by degrees. |
+| Scale | choice | Major | Major / Minor / Pentatonic / Chromatic / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The scale used when reading by degrees. |
 | Note length | number | 0.25 s | 0.05 – 2 s, step 0.05 | Length of each note of the fast voice. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
@@ -599,7 +599,7 @@ Three voices play three levels of the same Koch snowflake. Each starts from one 
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Reference note (tonic) of the base chord. |
 | Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to quantize the arpeggio notes. |
 | Octave | number | 4 | 1 – 6, step 1 | Base octave of the chord. |
-| Chord | choice | Major | Major / Minor / Augmented / Diminished / Sus4 | Triad type forming the base triangle of the snowflake. |
+| Chord | choice | Major | Major / Minor / Augmented / Diminished / Sus4 / Sus2 | Triad type forming the base triangle of the snowflake. |
 | Depth | number | 3 | 1 – 5, step 1 | Number of subdivisions of the fastest voice; the other two have one and two fewer. Each level multiplies the cycle length by four: 4 sixteenths at 1, 64 at 3, 1024 at 5. |
 | Direction | choice | alternating | alternating / outward / inward | Direction of the Koch peaks on each voice. |
 | Height | number | 9 semitones | 1 – 24 semitones, step 1 | Height of the first peak, in semitones; each following level sets peaks three times smaller. A peak smaller than one scale step is no longer heard: at 9 semitones, three levels stay audible (9, 3 and 1); for depth 4, go up towards 18 or 24. |
@@ -944,7 +944,7 @@ Evolves a population of melodies toward what is asked of them, and returns the b
 | Curve weight | number | 1 | 0 – 20, step 0.5 | What following the received curve weighs. |
 | Span | number | 0 | 0 – 12, step 0.5 | The mean leap aimed at. At zero, the received sequence's is taken up; without it, the objective does not weigh. |
 | Span weight | number | 1 | 0 – 20, step 0.5 | What the aimed span weighs. |
-| Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues | The degrees the pitches are restricted to. |
+| Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The degrees the pitches are restricted to. |
 | Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. |
 | Low | number | 55 | 0 – 127, step 1 | The lowest pitch allowed. |
 | High | number | 79 | 0 – 127, step 1 | The highest pitch allowed. |
@@ -1236,7 +1236,7 @@ Produces a rhythm written by successive divisions, and a series of pitches of th
 | Rests | number | 15 % | 0 – 100 %, step 1 | The share of slots that become a rest. |
 | Ties | number | 0 % | 0 – 100 %, step 1 | The share of notes tied to the one before. |
 | Seed | number | 1 | 0 – 999999, step 1 | Fixes the draw. The same seed gives the same rhythm and the same pitches. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues | The degrees the pitches are restricted to. |
+| Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The degrees the pitches are restricted to. |
 | Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. |
 | Low | number | 55 | 0 – 127, step 1 | The lowest pitch allowed. |
 | High | number | 79 | 0 – 127, step 1 | The highest pitch allowed. |
@@ -1340,7 +1340,7 @@ Searches for a series of pitches satisfying the written rules, and returns the f
 | Rule 4 | text | `complete == 0 or x == first` |  | A fourth rule. An end rule is written with « complete == 0 or » in front. |
 | Rule 5 | text | — |  | A fifth rule. |
 | Rule 6 | text | — |  | A sixth rule. |
-| Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues | The degrees the pitches are restricted to. |
+| Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The degrees the pitches are restricted to. |
 | Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. |
 | Low | number | 55 | 0 – 127, step 1 | The lowest pitch allowed. |
 | High | number | 79 | 0 – 127, step 1 | The highest pitch allowed. |
@@ -1821,7 +1821,7 @@ Puts four neural reservoirs into a network, each with a distinct musical role: m
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
-| Scale | choice | Major | Major / Natural minor / Major pentatonic / Minor pentatonic / Blues | Scale used to map activations to notes. |
+| Scale | choice | Major | Major / Natural minor / Major pentatonic / Minor pentatonic / Blues / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | Scale used to map activations to notes. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
 | Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 | Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth. |
 | Bars | number | 4 | 1 – 64, step 1 | Number of bars to generate. |
@@ -1893,7 +1893,7 @@ Generates emergent melody via random neural networks (Reservoir Computing), insp
 | Memory | number | 30 % | 0 – 100 %, step 1 | Leaking rate. High = long memory, slowly evolving patterns; low = brief reactions. |
 | Spectral radius | number | 90 % | 50 – 150 %, step 1 | Network spectral radius. &lt;100% = stable (converges); >100% = chaotic (diverges). 90% = melodic sweet spot. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
-| Scale | choice | Major | Major / Natural minor / Major pentatonic / Minor pentatonic / Blues / Chromatic | Scale used to map network activations to notes. |
+| Scale | choice | Major | Major / Natural minor / Major pentatonic / Minor pentatonic / Blues / Chromatic / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to map network activations to notes. |
 | Octave | number | 4 | 2 – 6, step 1 | Starting octave (notes can span 2 octaves above). |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
 | Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 | Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth. |
@@ -2011,7 +2011,7 @@ Generates a drum track from a pattern (Rock, Funk, House…), with per-drum volu
 | Pattern | choice | Rock | Rock / Four-on-the-floor / Funk / Hip-hop / Jazz / Reggae / Samba / House / Techno / Drum & Bass / Trap / Disco / Ska / Bossa Nova / Tango / Calypso / Military march / Pop ballad / Pop dance / Pop latin / Pop folk / Pop R&B / Pop punk / Waltz / Bolero / Afrobeat / Rumba / Flamenco / Merengue / Breakbeat / Electro / Detroit techno / Minimal / Dubstep / Moombahton / Dembow / Reggaeton / Cumbia / Bachata / Blues shuffle / Gospel / Metal / Punk / Grunge / Trance / Hardstyle / Lo-fi hip hop / Boom bap / Drill / Trip hop / Amapiano / Salsa / Highlife / Baile funk / Tech house | Preset rhythmic pattern. |
 | Bars | number | 2 | 1 – 8, step 1 | Number of bars to generate. |
 | Kick | number | 80 % | 0 – 100 % | Kick drum volume, from 0 to 100%. |
-| Snare | number | 70 % | 0 – 100 % | Snare volume, from 0 to 100%. |
+| Snare | number | 70 % | 0 – 100 % | Snare volume, from 0 to 100%. No effect under a « Pattern » that has none, such as Techno. |
 | Hi-hat | number | 60 % | 0 – 100 % | Hi-hat volume, from 0 to 100%. |
 | Seed | number | 42 | 0 – 999999, step 1 | Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
@@ -2378,7 +2378,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | Bars | number | 2 | 1 – 8, step 1 | Number of pattern repetitions. |
 | Volume | number | 85 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
-| Scale | choice | Major | Major / Natural minor / Major pentatonic / Minor pentatonic / Blues | Scale used for the available notes in the grid. |
+| Scale | choice | Major | Major / Natural minor / Major pentatonic / Minor pentatonic / Blues / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | Scale used for the available notes in the grid. |
 | Octave | number | 3 | 2 – 6, step 1 | Starting octave (rows span about 2 octaves above). |
 | Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. Sine = pure ; Square = 8-bit/retro ; Sawtooth = rich in harmonics ; Triangle = soft. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
@@ -3504,12 +3504,12 @@ Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals sync
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Tempo | slider | 120 BPM | 40 – 240 BPM, step 1 | Tempo used to synchronize intervals and segments. |
+| Tempo | slider | 120 BPM | 40 – 240 BPM, step 1 | Tempo used to synchronize intervals and segments. No effect when the « Size » is at least as long as the « Interval »: the effect then gives back the input unchanged. |
 | Interval | choice | 1/4 | 1/1 / 1/2 / 1/4 dotted / 1/4 / 1/4 triplet / 1/8 dotted / 1/8 / 1/8 triplet / 1/16 dotted / 1/16 / 1/16 triplet / 1/32 | Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, 1/8 triplet = three per beat; a dotted value lasts one and a half times its value. |
 | Size | choice | 1/16 | 1/2 / 1/4 dotted / 1/4 / 1/4 triplet / 1/8 dotted / 1/8 / 1/8 triplet / 1/16 dotted / 1/16 / 1/16 triplet / 1/32 / 1/32 triplet | Length of the captured and repeated segment. A size at least as long as the « Interval » gives back the original sound: only a shorter size is heard. |
-| Repeats | slider | 4 | 1 – 8, step 1 | Number of times the captured segment is repeated at each interval. |
-| Feedback | slider | 40 % | 0 – 95 %, step 1 | Attenuation of each repeat (0% = constant volume, 95% = fast decay). |
-| Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. |
+| Repeats | slider | 4 | 1 – 8, step 1 | Number of times the captured segment is repeated at each interval. No effect when the « Size » is at least as long as the « Interval ». |
+| Feedback | slider | 40 % | 0 – 95 %, step 1 | Attenuation of each repeat (0% = constant volume, 95% = fast decay). No effect when the « Size » is at least as long as the « Interval ». |
+| Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. No effect when the « Size » is at least as long as the « Interval », the effect then giving back the original signal. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
 | Feedback min | slider | 0 % | 0 – 95 %, step 1 | Value of « Feedback » that a connected curve's zero means. With no curve, this setting does nothing. |
@@ -7252,7 +7252,7 @@ Corrects the tuning of a sound by bringing each note onto the nearest degree of 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Root | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The scale's root. Without effect in chromatic, which contains every note. |
-| Scale | choice | Chromatic | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues | The allowed degrees. The more a scale has, the less the correction moves the notes: chromatic restores tuning, pentatonic imposes a colour and is heard as an effect. |
+| Scale | choice | Chromatic | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The allowed degrees. The more a scale has, the less the correction moves the notes: chromatic restores tuning, pentatonic imposes a colour and is heard as an effect. |
 | Strength | slider | 100 % | 0 – 100 %, step 1 | Share of the deviation corrected. At 100 % the note lands exactly on the degree; at 50 % half the vibrato and the attacks survive, which is almost always what one wants. |
 | Transition | slider | 0 ms | 0 – 200 ms, step 1 | How long the correction takes to settle. At zero the pitch jumps from one degree to the next: that is the 1998 effect, and it is one. Around fifty milliseconds, nothing is heard but tuning restored. |
 | Confidence | slider | 40 % | 10 – 90 %, step 5 | Below this follower confidence, the frame is not corrected. That is what leaves consonants, breaths and drums alone: periods are not glued where there are none. |
