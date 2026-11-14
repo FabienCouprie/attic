@@ -7,7 +7,7 @@ l'interface. Le critère est le RENDU, pas la mention d'`AudioBuffer` : un modul
 que comme récipient fige le fil et devient transposable dès qu'on en extrait un cœur par voie.
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
-- **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
+- **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 94 · fige, transposable après extraction d'un cœur par voie
 - **pur** : 227 · transposable tel quel
 
@@ -200,6 +200,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | klein.ts | recipient | AudioBuffer |
 | koch.ts | recipient | AudioBuffer |
 | lame.ts | pur | — |
+| lancer-fiche.ts | rendu | OfflineAudioContext |
 | lecture-sinc.ts | pur | — |
 | lecture-vive.ts | pur | — |
 | lfo.ts | pur | — |
