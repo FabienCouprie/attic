@@ -19,7 +19,42 @@ export interface InertieInscrite { ou: string; sous: string; valeurs: readonly s
 /** Une coïncidence inscrite : des valeurs d'un réglage qui rendent les mêmes sorties. */
 export interface CoincidenceInscrite { ou: string; valeurs: readonly string[]; raison?: string }
 
-export interface Inscriptions { inerties: readonly InertieInscrite[]; coincidences: readonly CoincidenceInscrite[] }
+/**
+ * La vraie condition d'une inertie : un autre réglage qui prend, ou ne prend pas, certaines valeurs ;
+ * ou le banc lui-même, qui ne sait pas la mesurer.
+ */
+export type ConditionInertie =
+  | { reglage: string; valeurs: readonly string[] }
+  | { reglage: string; sauf: readonly string[] }
+  | { banc: true };
+
+/**
+ * Une inertie déclarée par sa VRAIE CONDITION, et non par le gouverneur sous lequel la passe l'a vue.
+ *
+ * POURQUOI CETTE FORME, ajoutée au lot 3d (décision de Fabien du 2026-11-14). La passe fait varier un
+ * gouverneur à la fois, et relève donc la même inertie sous chacun : la règle personnalisée de
+ * l'automate était inscrite sous la gamme, sous la clé et sous le mode de voix, quand sa seule cause
+ * est la « Règle ». Une déclaration par condition couvre chaque lancer où la condition tient, quel que
+ * soit le gouverneur, et tombe dès que le réglage agit dans un lancer où elle tient.
+ *
+ * « non mesurable au banc » : `{ banc: true }`, pour ce qu'aucune entrée d'essai ne peut faire agir,
+ * un SoundFont absent par exemple. Elle tombe dès que le réglage agit.
+ */
+export interface InertieConditionnee { ou: string; quand: ConditionInertie; raison: string }
+
+export interface Inscriptions {
+  inerties: readonly InertieInscrite[];
+  coincidences: readonly CoincidenceInscrite[];
+  conditionnees?: readonly InertieConditionnee[];
+}
+
+/** La condition tient-elle dans le lancer où `gouverneur` vaut `valeur`, tout le reste à sa base ? */
+export function conditionTient(c: ConditionInertie, r: RapportCroisement, gouverneur: string, valeur: string): boolean {
+  if ("banc" in c) return true;
+  const v = c.reglage === gouverneur ? valeur : r.defauts?.[c.reglage];
+  if (v === undefined) return false;
+  return "valeurs" in c ? c.valeurs.includes(v) : !c.sauf.includes(v);
+}
 
 const cle = (fiche: string, reglage: string) => `${fiche}·${reglage}`;
 const memeEnsemble = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((x) => b.includes(x));
@@ -58,13 +93,23 @@ export function confronter(rapports: readonly RapportCroisement[], inscrites: In
     }
   }
   const couvre = (ins: InertieInscrite, valeur: string) => ins.valeurs === "toutes" || ins.valeurs.includes(valeur);
+  const conditionnees = inscrites.conditionnees ?? [];
   const nonInscrites: string[] = [];
   const perimees: string[] = [];
 
   for (const r of rapports) {
     for (const i of r.inerties) {
-      if (!inscrites.inerties.some((ins) => ins.ou === cle(i.fiche, i.reglage) && ins.sous === i.gouverneur && couvre(ins, i.valeur))) {
-        nonInscrites.push(`inertie : ${cle(i.fiche, i.reglage)} sous ${i.gouverneur} = ${i.valeur}`);
+      const ou = cle(i.fiche, i.reglage);
+      const parGouverneur = inscrites.inerties.some((ins) => ins.ou === ou && ins.sous === i.gouverneur && couvre(ins, i.valeur));
+      const parCondition = conditionnees.some((c) => c.ou === ou && conditionTient(c.quand, r, i.gouverneur, i.valeur));
+      if (!parGouverneur && !parCondition) nonInscrites.push(`inertie : ${ou} sous ${i.gouverneur} = ${i.valeur}`);
+    }
+    // UNE CONDITION DÉMENTIE TOMBE : le réglage a agi dans un lancer où elle tenait.
+    for (const c of conditionnees) {
+      if (c.ou.split("·")[0] !== r.fiche) continue;
+      for (const a of r.agissants ?? []) {
+        if (cle(r.fiche, a.reglage) !== c.ou || !conditionTient(c.quand, r, a.gouverneur, a.valeur)) continue;
+        perimees.push(`inertie conditionnée : ${c.ou} agit sous ${a.gouverneur} = ${a.valeur}, où sa condition tient`);
       }
     }
     for (const c of r.coincidences) {

@@ -110,8 +110,8 @@ const FICHES: FicheAudio[] = [
         defaut: 16,
         unite: "cellules",
         uniteEn: "cells",
-        doc: "Hauteur de la grille en mode 2D. Les rangées s'étagent sur trois octaves : le haut de la grille sonne à l'aigu. Sans effet en 1D.",
-        docEn: "Grid height in 2D mode. The rows are spread over three octaves: the top of the grid sounds high. No effect in 1D.",
+        doc: "Hauteur de la grille en mode 2D. Les rangées s'étagent sur trois octaves : le haut de la grille sonne à l'aigu. Sans effet quand « Topologie » vaut « 1D ».",
+        docEn: "Grid height in 2D mode. The rows are spread over three octaves: the top of the grid sounds high. No effect when « Topology » is « 1D ».",
       },
       {
         nom: "Générations",

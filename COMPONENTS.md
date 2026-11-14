@@ -830,7 +830,7 @@ Generates a musical sequence from a 1D cellular automaton (Wolfram rules 30, 90,
 | Voice mode | choice | Block | Block / Melody / Arpeggiated / Rolled | Block plays all active cells together. Melody picks one per step. Arpeggiated plays them in order. Rolled starts them one after another over the step, and holds them. |
 | Mapping | choice | Pitch | Pitch / Velocity / Duration / Pitch + velocity | What the position of active cells represents. Pitch + velocity combines both. |
 | Width | number | 16 cells | 4 – 64 cells, step 1 | Number of cells per row. |
-| Height | number | 16 cells | 4 – 64 cells, step 1 | Grid height in 2D mode. The rows are spread over three octaves: the top of the grid sounds high. No effect in 1D. |
+| Height | number | 16 cells | 4 – 64 cells, step 1 | Grid height in 2D mode. The rows are spread over three octaves: the top of the grid sounds high. No effect when « Topology » is « 1D ». |
 | Generations | number | 32 steps | 4 – 256 steps, step 1 | Number of generations, hence of steps in the sequence: each generation, in 1D as in 2D, is one step. |
 | Seed | number | 0 | 0 – 999999, step 1 | 0: a fixed pattern in the centre - one cell in 1D; in 2D, a long-lived pattern (the R-pentomino in Conway, the replicator in Highlife). Otherwise, a grid drawn at random from this seed. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Key of the scale used to map cells to notes. |
@@ -2150,7 +2150,7 @@ Travels the Camelot wheel to illustrate harmonic transitions used by DJs. Each s
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 % | Output volume. |
-| Seed | number | 0 | 0 – 999999, step 1 | Seed for the journey; no effect outside the "Random" mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here; any other value replays the same journey. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the journey; no effect when « Journey » is not « Random ». 0 = drawn at random on every run, and shown in the message so it can be copied back here; any other value replays the same journey. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Color Looper
 

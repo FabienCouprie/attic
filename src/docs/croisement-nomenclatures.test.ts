@@ -21,7 +21,9 @@ import type { ParametreDef } from "../core/types";
 import { registre } from "../audio/adaptateur";
 import { croiserFiche, entreesRiches, rienRenduSeul, type RapportCroisement } from "../audio/croisement-reglages";
 import { confronter, releveEnTexte } from "../audio/croisement-registre";
-import { COINCIDENCES_A_EXAMINER, COINCIDENCES_DECLAREES, INERTIES_A_EXAMINER, INERTIES_DECLAREES } from "../audio/croisement-inscriptions";
+import {
+  COINCIDENCES_A_EXAMINER, COINCIDENCES_DECLAREES, INERTIES_A_EXAMINER, INERTIES_CONDITIONNEES, INERTIES_DECLAREES,
+} from "../audio/croisement-inscriptions";
 import type { FicheLancable } from "../audio/lancer-fiche";
 import { reglagesANomenclature } from "../plugins/nomenclatures";
 
@@ -38,8 +40,11 @@ const FIN = String.fromCharCode(10);
  * PUIS SEPT DE PLUS, DE 199 À 206, sous la même règle : les deux graines que le sens aléatoire a
  * fait ajouter aux accords joués et à la gamme jouée sont inertes hors de lui, donc sous chaque valeur
  * des autres gouverneurs, dont aucun n'est la cause. Sous « Sens », elles sont déclarées.
+ *
+ * PUIS DE 206 À 184 AU LOT 3d : vingt-deux inscriptions de douze réglages remplacées par une
+ * déclaration chacun, sous sa vraie condition (`INERTIES_CONDITIONNEES`).
  */
-const PLAFOND_INERTIES = 206;
+const PLAFOND_INERTIES = 184;
 const PLAFOND_COINCIDENCES = 37;
 
 /** Une fiche d'essai : un réglage à nomenclature « Mode » et un réglage numérique « Gain ». */
@@ -150,6 +155,66 @@ describe("la confrontation aux inscriptions", () => {
       .toEqual(["inertie : f·Gain sous Mode agit désormais sous a"]);
     expect(confronter(releve([]), { inerties: [], coincidences: [{ ou: "f·Mode", valeurs: ["a", "b"] }] }).perimees)
       .toEqual(["coïncidence : f·Mode = a, b ne coïncide plus"]);
+  });
+
+  describe("UNE INERTIE DÉCLARÉE PAR SA VRAIE CONDITION", () => {
+    // Le relevé d'un nœud dont « Filtre » vaut « off » à la base : la condition se lit sur le
+    // gouverneur quand c'est lui, sur la base sinon.
+    const avec = (filtre: string, inerties: [string, string, string][], agissants: [string, string, string][] = []) =>
+      releve(inerties).map((r) => ({
+        ...r, defauts: { Mode: "a", Filtre: filtre, Gain: "5" },
+        agissants: agissants.map(([reglage, gouverneur, valeur]) => ({ reglage, gouverneur, valeur })),
+      }));
+    const quandOff = { ou: "f·Gain", quand: { reglage: "Filtre", valeurs: ["off"] }, raison: "" };
+    const horsDeA = { ou: "f·Gain", quand: { reglage: "Mode", sauf: ["a"] }, raison: "" };
+
+    it("couvre l'inertie sous n'importe quel gouverneur, là où la condition tient à la base", () => {
+      expect(confronter(avec("off", [["Gain", "Mode", "b"]]), { inerties: [], coincidences: [], conditionnees: [quandOff] }).nonInscrites).toEqual([]);
+      expect(confronter(avec("on", [["Gain", "Mode", "b"]]), { inerties: [], coincidences: [], conditionnees: [quandOff] }).nonInscrites)
+        .toEqual(["inertie : f·Gain sous Mode = b"]);
+    });
+
+    it("lit la condition sur le gouverneur quand c'est lui qui varie, « sauf » compris", () => {
+      expect(confronter(avec("on", [["Gain", "Mode", "b"]]), { inerties: [], coincidences: [], conditionnees: [horsDeA] }).nonInscrites).toEqual([]);
+      expect(confronter(avec("on", [["Gain", "Mode", "a"]]), { inerties: [], coincidences: [], conditionnees: [horsDeA] }).nonInscrites)
+        .toEqual(["inertie : f·Gain sous Mode = a"]);
+    });
+
+    it("TOMBE DÈS QUE LE RÉGLAGE AGIT LÀ OÙ ELLE TIENT, et non ailleurs", () => {
+      expect(confronter(avec("on", [], [["Gain", "Mode", "c"]]), { inerties: [], coincidences: [], conditionnees: [horsDeA] }).perimees)
+        .toEqual(["inertie conditionnée : f·Gain agit sous Mode = c, où sa condition tient"]);
+      expect(confronter(avec("on", [], [["Gain", "Mode", "a"]]), { inerties: [], coincidences: [], conditionnees: [horsDeA] }).perimees).toEqual([]);
+    });
+
+    it("« non mesurable au banc » couvre tout, et tombe au premier lancer où le réglage agit", () => {
+      const banc = { ou: "f·Gain", quand: { banc: true as const }, raison: "" };
+      expect(confronter(avec("on", [["Gain", "Mode", "a"], ["Gain", "Mode", "b"]]), { inerties: [], coincidences: [], conditionnees: [banc] }).nonInscrites).toEqual([]);
+      expect(confronter(avec("on", [], [["Gain", "Mode", "b"]]), { inerties: [], coincidences: [], conditionnees: [banc] }).perimees).toHaveLength(1);
+    });
+  });
+
+  it("L'INSTRUMENT RELÈVE LES DÉFAUTS ET CE QUI AGIT, de quoi juger une condition", async () => {
+    const r = await croiserFiche(ficheDEssai(), [{ reglage: "Mode", ids: ["a", "b", "c", "d"] }]);
+    expect(r.defauts).toEqual({ Mode: "a", Gain: "5" });
+    expect((r.agissants ?? []).map((a) => `${a.reglage} sous ${a.gouverneur}=${a.valeur}`)).toEqual(["Gain sous Mode=a", "Gain sous Mode=c", "Gain sous Mode=d"]);
+  });
+
+  it("chaque inertie conditionnée porte sa raison, nomme ce qui existe, et sa documentation nomme sa condition", () => {
+    const fautes: string[] = [];
+    for (const c of INERTIES_CONDITIONNEES) {
+      if (c.raison.trim().length < 30) fautes.push(`${c.ou} : raison trop courte`);
+      const [id, nom] = c.ou.split("·");
+      const params = (registre.trouverDef(id)?.parametres ?? []) as (ParametreDef & { doc?: string; docEn?: string })[];
+      const p = params.find((x) => x.nom === nom);
+      if (!p) { fautes.push(`${c.ou} : réglage introuvable`); continue; }
+      if ("banc" in c.quand) continue;
+      const nomCondition = c.quand.reglage;
+      const r = params.find((x) => x.nom === nomCondition);
+      if (!r) { fautes.push(`${c.ou} : la condition nomme « ${nomCondition} », introuvable`); continue; }
+      if (!(p.doc ?? "").includes(r.nom)) fautes.push(`${c.ou} : sa documentation ne nomme pas « ${r.nom} »`);
+      if (!(p.docEn ?? "").includes(r.nomEn ?? r.nom)) fautes.push(`${c.ou} : sa documentation anglaise ne nomme pas « ${r.nomEn ?? r.nom} »`);
+    }
+    expect(fautes).toEqual([]);
   });
 
   it("une fiche que la passe n'a pas lancée n'est pas jugée", () => {
@@ -263,6 +328,7 @@ describe.runIf(process.env.BANC_CROISEMENT === "1")("la passe de croisement sur 
     const { nonInscrites, perimees } = confronter(rapports, {
       inerties: [...INERTIES_DECLAREES, ...INERTIES_A_EXAMINER],
       coincidences: [...COINCIDENCES_DECLAREES, ...COINCIDENCES_A_EXAMINER],
+      conditionnees: INERTIES_CONDITIONNEES,
     });
     expect(nonInscrites, "déclarer l'inertie dans la documentation du réglage et dans `INERTIES_DECLAREES`, ou réparer le nœud").toEqual([]);
     expect(perimees, "ces inscriptions ne sont plus vraies : retirer leur ligne").toEqual([]);

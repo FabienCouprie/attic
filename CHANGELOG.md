@@ -97,6 +97,28 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Changed
 
+- **UNE INERTIE SE DÉCLARE PAR SA VRAIE CONDITION, ET NON PLUS SOUS CHAQUE GOUVERNEUR OÙ LA PASSE LA VOIT : DOUZE RÉGLAGES Y PASSENT, ET LA DETTE DU CROISEMENT PERD VINGT-DEUX LIGNES.** Lot 3d, première part, de la passe de complétude des nœuds à nomenclature, sur la décision de Fabien du 2026-11-14 : une inertie légitime est déclarée par sa vraie condition, un réglage ou un port, nommée dans la documentation en français et en anglais.
+  - **Pourquoi cette forme.** La passe fait varier un gouverneur à la fois, et relevait donc la même inertie sous chacun. La règle personnalisée de l'automate cellulaire était inscrite sous la gamme, sous la clé et sous le mode de voix, quand sa seule cause est la « Règle ». Une inscription par gouverneur n'en disait pas la cause, et chaque gouverneur neuf en ajoutait une.
+  - **`INERTIES_CONDITIONNEES`** (`audio/croisement-inscriptions.ts`) : un réglage, sa condition et sa raison. La condition dit qu'un autre réglage prend certaines valeurs, ou n'en prend pas certaines, ou que le banc ne sait pas la mesurer. Une telle déclaration couvre chaque lancer où la condition tient, sous n'importe quel gouverneur. Elle tombe dès que le réglage agit dans un lancer où elle tient, et la documentation du réglage doit nommer celui de la condition.
+  - **L'instrument relève ce qu'il faut pour en juger** : la valeur de chaque réglage aux réglages de base, un choix sous son identifiant, et chaque réglage vu agir, sous quelle valeur de quel gouverneur. Six cas neufs l'éprouvent. Une déclaration conditionnée couvre une inertie sous un autre gouverneur quand la base satisfait la condition, et pas sinon. Elle lit la condition sur le gouverneur quand c'est lui qui varie, et tombe quand le réglage agit là où elle tient. « Non mesurable au banc » couvre tout et tombe au premier lancer où le réglage agit, et le garde de documentation vise chaque condition. Quatre de ces cas ont été vus rouges sur deux fautes plantées : la confrontation qui ignore les déclarations conditionnées, et une documentation qui ne nomme plus sa condition.
+  - **Douze réglages passent à leur vraie condition** :
+    - la règle personnalisée de l'automate, inerte sauf quand la « Règle » est personnalisée ;
+    - sa hauteur, inerte en 1D ;
+    - son plafond de densité, inerte en mélodie et en arpège ;
+    - son moteur, non mesurable au banc faute de SoundFont ;
+    - l'étalement des accords joués, inerte en plaqué ;
+    - les graines des accords joués, de la gamme jouée, de l'arpégiateur et de la roue de Camelot, inertes hors de l'aléatoire ;
+    - la durée de la grille tonale en arpège, et celle du color looper en arpège comme en roulé ;
+    - la caisse claire de la boîte à rythmes sous le patron Techno.
+  - **Ces douze déclarations remplacent vingt-deux lignes de dette et huit déclarations par gouverneur.** La dette passe de 206 à 184 inerties, et son plafond d'autant. Les sept lignes entrées au lot 3c pour les graines neuves en sortent toutes, et cinq des six entrées pour les inerties vues sous un gouverneur neuf. Reste le swing du séquenceur d'accords, dont la cause n'est pas encore établie.
+  - **La documentation de deux réglages nomme désormais sa condition** : la hauteur de l'automate dit « Topologie », et la graine de la roue de Camelot dit « Parcours ».
+  - **Mesuré, et non encore fait : chaque réglage à choix gouverneur.** Compté sur le registre, la passe porte aujourd'hui sur 173 nœuds et 48 893 lancers. Si chaque réglage à choix gouvernait, elle porterait sur 314 nœuds et 66 988 lancers, 37 % de plus. La passe complète du lot 1 a duré 2 h 01, et celle-ci en prendrait environ 2 h 45. Les 141 nœuds neufs y feraient un relevé à trancher.
+  - **Vérifié** :
+    - `npx tsc -b` est vert, et `npx oxlint` est à 27 avertissements et 0 erreur, comme `master` ;
+    - la passe complète a duré 23 min 4 s, verte du premier coup : 745 fichiers verts et 3 sautés sur 748, soit 10 756 cas verts et 16 sautés ;
+    - la passe de croisement sur les huit nœuds dont les déclarations changent est verte, en 2 min 5 s : les douze déclarations conditionnées couvrent chaque inertie qu'elles remplacent, et aucune n'est démentie ;
+    - rien ne change dans l'application hors des deux documentations : le reste est l'instrument et ses inscriptions, que seuls les tests chargent.
+
 - **LES DIX COUPES DES DEUX DOMAINES NEUFS SONT TRANCHÉES : SEPT SENS ET UNE GRAINE AUX ACCORDS JOUÉS ET À LA GAMME JOUÉE, LE RETOUR-ALLER À L'ARPÈGE SPECTRAL, LE ROULÉ À SIX COMPOSANTS.** Lot 3c, troisième part, de la passe de complétude des nœuds à nomenclature, sur les décisions de Fabien du 2026-11-14, toutes sur la proposition du relevé.
   - **Les accords joués et la gamme jouée offrent sept sens** : le retour-aller, le convergent, le divergent et l'aléatoire s'ajoutent au montant, au descendant et à l'aller-retour. L'ordre de jeu est la seule coupe, déclarée : des notes tirées d'un nom, accord ou gamme, n'ont pas d'ordre joué, et ce serait le montant. Les sept viennent d'une seule fonction, `ordreUneFois` (`audio/sens-arpege.ts`), jouée une fois et non en boucle comme dans l'arpégiateur. Les trois sens d'avant y rendent les mêmes notes, dans le même ordre, ce que leurs cas d'avant tiennent encore.
   - **L'aléatoire tire son ordre d'une « Graine » neuve**, dans chacun des deux composants, au rôle de graine du dépôt. À zéro, elle est tirée au sort et dite dans le message pour pouvoir être recopiée. La même graine rend le même ordre, vérifié dans l'application.

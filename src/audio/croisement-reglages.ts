@@ -184,6 +184,14 @@ export interface RapportCroisement {
   echecs: Echec[];
   /** Les réglages qui n'ont pas de valeur d'essai (texte, fichier), et ne sont donc pas éprouvés. */
   nonEprouves: string[];
+  /**
+   * La valeur de chaque réglage aux réglages de base, un choix sous son identifiant. C'est ce que vaut
+   * un réglage dans chaque lancer où il n'est ni le gouverneur ni le réglage éprouvé, et ce qui permet
+   * de juger une inertie déclarée par sa vraie condition (lot 3d).
+   */
+  defauts?: Record<string, string>;
+  /** Les réglages vus agir, sous quelle valeur de quel gouverneur : ce qui dément une condition. */
+  agissants?: { reglage: string; gouverneur: string; valeur: string }[];
 }
 
 /** Chaque lancer a rendu des sorties toutes vides : le nœud seul ne rend rien (`entreesRiches`). */
@@ -242,8 +250,15 @@ export async function croiserFiche(
   fiche: FicheLancable, gouverneurs: readonly { reglage: string; ids: readonly string[] }[],
   o: { essaisMax?: number; entrees?: unknown[]; secondes?: number } = {},
 ): Promise<RapportCroisement> {
-  const rapport: RapportCroisement = { fiche: fiche.id, lancers: 0, valeurs: {}, inerties: [], coincidences: [], echecs: [], nonEprouves: [] };
+  const rapport: RapportCroisement = {
+    fiche: fiche.id, lancers: 0, valeurs: {}, inerties: [], coincidences: [], echecs: [], nonEprouves: [], defauts: {}, agissants: [],
+  };
   const base = reglagesDeBase(fiche, o.secondes);
+  for (const p of fiche.parametres) {
+    const brut = base[p.nom] ?? (p as { defaut?: string | number }).defaut;
+    if (brut === undefined) continue;
+    rapport.defauts![p.nom] = String(p.type === "choix" ? valeurCanoniqueChoix(p, brut) : brut);
+  }
   const essaisMax = o.essaisMax ?? 2;
   const lancer = async (reglages: Reglages) => {
     rapport.lancers++;
@@ -287,6 +302,7 @@ export async function croiserFiche(
           if (emp !== empV) { agit = true; break; }
         }
         if (!agit && decide) rapport.inerties.push({ fiche: fiche.id, reglage: s.nom, gouverneur: g.reglage, valeur: v, essais });
+        if (agit) rapport.agissants!.push({ reglage: s.nom, gouverneur: g.reglage, valeur: v });
       }
     }
   }
