@@ -23,84 +23,12 @@ import { hauteursAccord, lireTonalite, morceauVersMidi, type MorceauAbc, type No
 import { midiVersAbc } from "./midi-vers-abc";
 import { lireAbcUnique, verifierContraintes, dureesMesures, longueurMesure, type ResultatContraintes } from "./abc-contraintes";
 import { cleDepuisNomTonalite } from "./abc-edition-llm";
+import { carrure, motif, type Role } from "./abc-reprise-motifs";
 
-export const STYLES = ["blocs", "ballade", "pop", "valse", "marche", "bossa"] as const;
-export type Style = (typeof STYLES)[number];
-
-/** Une frappe du motif : décalage et durée en noires dans la mesure, et ce qu'elle joue. */
-type Frappe = { decalage: number; duree: number; role: "accord" | "basse" | "quinte" | "arpege" };
-
-export type Carrure = {
-  /** Longueur de la mesure, en noires. */
-  mesure: number;
-  /** Nombre de temps. */
-  temps: number;
-  /** Longueur d'un temps, en noires. */
-  temps1: number;
-  /** Subdivision du temps : croche, en noires. */
-  sub: number;
-};
-
-export function carrure(m: MorceauAbc): Carrure {
-  const num = m.metrique?.numerateur ?? 4, den = m.metrique?.denominateur ?? 4;
-  const compose = den === 8 && num % 3 === 0 && num > 3;
-  return compose
-    ? { mesure: (4 * num) / den, temps: num / 3, temps1: 1.5, sub: 0.5 }
-    : { mesure: (4 * num) / den, temps: num, temps1: 4 / den, sub: 4 / den / 2 };
-}
-
-/**
- * Le motif d'une mesure pour un style et une carrure. null si le style ne sait
- * pas s'y appliquer — la bossa nova n'existe pas en 3/4 : le nœud le dit, plutôt
- * que de plaquer un motif à quatre temps sur trois.
- */
-export function motif(style: Style, c: Carrure): Frappe[] | null {
-  const frappes: Frappe[] = [];
-  const temps = (k: number) => k * c.temps1;
-  switch (style) {
-    case "blocs":
-      frappes.push({ decalage: 0, duree: c.mesure, role: "accord" }, { decalage: 0, duree: c.mesure, role: "basse" });
-      break;
-    case "ballade": {
-      // Arpège sur chaque subdivision, basse tenue toute la mesure.
-      frappes.push({ decalage: 0, duree: c.mesure, role: "basse" });
-      for (let t = 0; t < c.mesure - 1e-9; t += c.sub) frappes.push({ decalage: t, duree: c.sub, role: "arpege" });
-      break;
-    }
-    case "pop":
-      // Accord sur chaque temps, basse en croches sur la fondamentale.
-      for (let k = 0; k < c.temps; k++) frappes.push({ decalage: temps(k), duree: c.temps1, role: "accord" });
-      for (let t = 0; t < c.mesure - 1e-9; t += c.sub) frappes.push({ decalage: t, duree: c.sub, role: "basse" });
-      break;
-    case "valse":
-      // Basse au premier temps, accord sur les suivants.
-      if (c.temps < 2) return null;
-      frappes.push({ decalage: 0, duree: c.temps1, role: "basse" });
-      for (let k = 1; k < c.temps; k++) frappes.push({ decalage: temps(k), duree: c.temps1, role: "accord" });
-      break;
-    case "marche":
-      // Basse sur les temps impairs, fondamentale puis quinte ; accord sur les pairs.
-      if (c.temps % 2 !== 0) return null;
-      for (let k = 0; k < c.temps; k++) {
-        frappes.push({ decalage: temps(k), duree: c.temps1, role: k % 2 === 0 ? (k % 4 === 0 ? "basse" : "quinte") : "accord" });
-      }
-      break;
-    case "bossa":
-      // Le motif de base à quatre temps : basse fondamentale (noire pointée),
-      // quinte (croche), et de même sur la seconde moitié ; accords syncopés.
-      if (c.temps1 !== 1 || c.temps !== 4) return null;
-      frappes.push(
-        { decalage: 0, duree: 1.5, role: "basse" }, { decalage: 1.5, duree: 0.5, role: "quinte" },
-        { decalage: 2, duree: 1.5, role: "basse" }, { decalage: 3.5, duree: 0.5, role: "quinte" },
-        { decalage: 0, duree: 1, role: "accord" }, { decalage: 1.5, duree: 1, role: "accord" }, { decalage: 3, duree: 0.5, role: "accord" },
-      );
-      break;
-  }
-  return frappes;
-}
+export { ACCORDS_TENUS, STYLES, estStyle, carrure, motif } from "./abc-reprise-motifs";
 
 /** Hauteurs utiles d'un accord chiffré : basse, accord serré sous la mélodie, tons de l'arpège. */
-export function voicing(symbole: string): { basse: number; quinte: number; accord: number[]; arpege: number[] } | null {
+export function voicing(symbole: string): { basse: number; quinte: number; tierce: number; octave: number; accord: number[]; arpege: number[] } | null {
   const h = hauteursAccord(symbole);
   if (!h || h.length === 0) return null;
   // Avec une basse imposée (« D/F# »), hauteursAccord la place en tête.
@@ -117,11 +45,21 @@ export function voicing(symbole: string): { basse: number; quinte: number; accor
   const racine = 48 + (tons[0] % 12);
   const montants = tons.map((t) => { let x = 48 + (t % 12); while (x < racine) x += 12; return x; }).sort((a, b) => a - b);
   const arpege = [...montants, ...montants.map((x) => x + 12)].slice(0, 6);
-  return { basse, quinte, accord, arpege };
+  // La tierce est le second ton de l'accord, posée au-dessus de la basse dans la même octave ;
+  // l'octave double la basse. Les deux servent aux lignes de basse des grilles.
+  const tierce = basse + (((tons[1] ?? tons[0]) % 12) - (basse % 12) + 12) % 12;
+  return { basse, quinte, tierce, octave: basse + 12, accord, arpege };
 }
 
+/** La hauteur que joue une frappe de basse. */
+const hauteurBasse = (v: NonNullable<ReturnType<typeof voicing>>, role: Role): number =>
+  role === "quinte" ? v.quinte : role === "tierce" ? v.tierce : role === "octave" ? v.octave : v.basse;
+
 export type OptionsReprise = {
-  style: Style;
+  /** Un identifiant de `STYLES` : « accords-tenus » ou la clé d'un patron rythmique. */
+  style: string;
+  /** Le nom du style à l'écran, pour le message qui refuse une métrique ; l'identifiant sinon. */
+  nomStyle?: string;
   /** Noires par minute ; 0 = garder le tempo de la partition. */
   tempo: number;
   instrumentMelodie: number;
@@ -162,7 +100,7 @@ export function reprendreAbc(texte: string, o: OptionsReprise): ResultatReprise 
   const durees = dureesMesures(origine);
   if (durees.length > 1 && Math.abs(durees[0] - longueurMesure(origine)) > 1e-6) return echec(traduire("msg.abc.levee_non_geree"));
   const frappes = motif(o.style, c);
-  if (!frappes) return echec(traduire("msg.abc_reprise.style_metrique_var_0_var_1", o.style, origine.metrique?.texte ?? "4/4"));
+  if (!frappes) return echec(traduire("msg.abc_reprise.style_metrique_var_0_var_1", o.nomStyle ?? o.style, origine.metrique?.texte ?? "4/4"));
 
   const fin = Math.max(...origine.voix.map((v) => v.dureeNoires));
   const nbMesures = Math.ceil(fin / c.mesure - 1e-9);
@@ -176,7 +114,7 @@ export function reprendreAbc(texte: string, o: OptionsReprise): ResultatReprise 
       const debutFrappe = k * c.mesure + f.decalage;
       const finFrappe = Math.min(debutFrappe + f.duree, fin);
       if (debutFrappe >= fin - 1e-9) continue;
-      const vel = f.role === "basse" || f.role === "quinte" ? 78 : 62;
+      const vel = f.role === "accord" || f.role === "arpege" ? 62 : 78;
       const ton = f.role === "arpege" ? indexArpege++ : 0;
       // Une frappe se partage entre les accords qui sonnent pendant elle : coupée
       // au changement d'accord, et REJOUÉE sur le nouveau jusqu'à sa fin prévue.
@@ -195,7 +133,7 @@ export function reprendreAbc(texte: string, o: OptionsReprise): ResultatReprise 
           else if (duree > 1e-9) {
             if (f.role === "accord") for (const h of v.accord) accompagnement.push({ midi: h, debut: t, duree, velocite: vel });
             else if (f.role === "arpege") accompagnement.push({ midi: v.arpege[ton % v.arpege.length], debut: t, duree, velocite: vel });
-            else basse.push({ midi: f.role === "quinte" ? v.quinte : v.basse, debut: t, duree, velocite: vel });
+            else basse.push({ midi: hauteurBasse(v, f.role), debut: t, duree, velocite: vel });
           }
         }
         if (finTranche <= t + 1e-9) break;
