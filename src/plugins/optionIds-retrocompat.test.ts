@@ -365,7 +365,16 @@ const CAS: Cas[] = [
   { node: "reverbe-convolution", param: "Type", ancienneValeur: "Cathedral", idAttendu: "Cathédrale" },
   { node: "chopper", param: "Type", ancienneValeur: "Soft", idAttendu: "Fondu" },
   { node: "generateur-bruit", param: "Type", ancienneValeur: "Brownian", idAttendu: "Brownien" },
-  { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "Random", idAttendu: "Aléatoire" },
+  // LES DIRECTIONS DE L'ARPÉGIATEUR ONT PRIS LE VOCABULAIRE DU DÉPÔT le 2026-11-14 : leurs
+  // identifiants étaient leurs libellés français, dont deux mots anglais. Les huit écritures d'alors.
+  { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "Random", idAttendu: "aleatoire" },
+  { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "Aléatoire", idAttendu: "aleatoire" },
+  { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "Montant", idAttendu: "montant" },
+  { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "Up", idAttendu: "montant" },
+  { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "Descendant", idAttendu: "descendant" },
+  { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "Down", idAttendu: "descendant" },
+  { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "UpDown", idAttendu: "aller-retour" },
+  { node: "arpegiateur-midi", param: "Direction", ancienneValeur: "DownUp", idAttendu: "retour-aller" },
   { node: "arpegiateur-midi", param: "Motif", ancienneValeur: "Straight", idAttendu: "Droit" },
   // LES IDENTIFIANTS DU TRÉMOLO ÉTAIENT SES LIBELLÉS FRANÇAIS CAPITALISÉS, « Sinus » et « Carré ».
   // Ils sont canoniques désormais, et les quatre anciens doivent se relire.

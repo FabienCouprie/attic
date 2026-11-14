@@ -1,16 +1,46 @@
-// audio/midi-arpege.ts — L'arpegiateur.
+// audio/midi-arpege.ts — L'arpégiateur.
 //
-// Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
-// de calcul n'a ete retouchee au passage.
+// Il groupe les notes qui commencent ensemble en accords, déroule chaque accord en une suite de
+// hauteurs (direction, octaves, motif), et la rejoue pas à pas tant que l'accord tient.
+//
+// LE PAS SE COMPTE EN NOIRES DU FICHIER, et c'est la réparation du 2026-11-14. Il se calculait par
+// `60 / (divisions * 2)`, « à 120 BPM de référence » : la double croche y valait 7,5 s au lieu de
+// 0,125 s, soixante fois trop lente, et le tempo du fichier n'y entrait pas. Mesuré avant la
+// réparation : un accord tenu une seconde devenait un arpège de vingt et une secondes, à 60 BPM comme
+// à 120. Le fichier rendu garde désormais les changements de tempo et la métrique de l'entrée, et
+// ses notes tombent sur la grille de ses temps.
+//
+// LA DIRECTION S'APPLIQUE À L'ARPÈGE ENTIER, octaves comprises : il se jouait octave par octave, de
+// sorte que « Descendant » sur deux octaves descendait dans chaque octave en montant d'une octave à
+// l'autre. LE MOTIF GLISSE SUR L'ARPÈGE, décision de Fabien du même jour : il ne prenait que les
+// trois premières notes, et « Octaves » n'agissait plus dès qu'un motif était choisi. Sur un accord
+// de trois notes et une octave, les cinq directions d'avant et les motifs rendent les mêmes hauteurs
+// qu'avant.
 
 import { parseMidi, writeMidi } from "midi-file";
 import { resoudreRecouvrements } from "./midi-recouvrement";
 import { analyserMidi } from "./midi";
-import type { NoteEvenement } from "./midi-sequence";
 
-// ─── Arpégiateur MIDI ───
+/**
+ * La longueur d'un pas en noires, pour chaque valeur de note offerte.
+ *
+ * CE NOMBRE EST PROPRE À CE CALCUL, et non à la table commune (`valeurs-note.ts` dit pourquoi) :
+ * ici c'est la noire du fichier qu'on mesure. Les deux écritures du triolet qu'un projet ancien
+ * porte y sont lues aussi.
+ */
+export const NOIRES_PAR_PAS: Record<string, number> = {
+  "1/1": 4, "1/2": 2,
+  "1/4.": 1.5, "1/4": 1, "1/4t": 2 / 3,
+  "1/8.": 0.75, "1/8": 0.5, "1/8t": 1 / 3,
+  "1/16.": 0.375, "1/16": 0.25, "1/16t": 1 / 6,
+  "1/32": 0.125, "1/32t": 1 / 12,
+  "1/8 triplet": 1 / 3, "1/16 triplet": 1 / 6,
+};
 
-/** Melange uniforme (Fisher-Yates), sans modifier le tableau d'origine. */
+/** Les directions, sous les identifiants du dépôt pour le sens d'un arpège. */
+export const DIRECTIONS = ["montant", "descendant", "aller-retour", "retour-aller", "aleatoire", "ordre-de-jeu", "convergent", "divergent"] as const;
+
+/** Mélange uniforme (Fisher-Yates), sans modifier le tableau d'origine. */
 function melangerUniformement(arr: number[], hasard: () => number): number[] {
   const out = arr.slice();
   for (let i = out.length - 1; i > 0; i--) {
@@ -18,6 +48,75 @@ function melangerUniformement(arr: number[], hasard: () => number): number[] {
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
+}
+
+/** L'arpège déroulé d'un accord : ses notes dans l'ordre de la direction, sur toutes les octaves. */
+export function deroulerArpege(jouees: number[], direction: string, octaves: number, hasard: () => number = Math.random): number[] {
+  // Chaque octave rejoue l'accord douze demi-tons plus haut, à la suite de la précédente.
+  const etendre = (notes: number[]) => Array.from({ length: Math.max(1, octaves) }, (_, o) => notes.map((n) => n + 12 * o)).flat();
+  const montant = etendre([...jouees].sort((a, b) => a - b));
+  const descendant = [...montant].reverse();
+  // Des bords vers le milieu : la plus grave, la plus aiguë, la deuxième plus grave…
+  const convergent = montant.map((_, i) => montant[i % 2 === 0 ? i / 2 : montant.length - 1 - (i - 1) / 2]);
+  switch (direction) {
+    case "descendant": return descendant;
+    case "aller-retour": return [...montant, ...descendant.slice(1, -1)];
+    case "retour-aller": return [...descendant, ...montant.slice(1, -1)];
+    // Fisher-Yates, et non `sort(() => hasard() - 0.5)` : un comparateur incohérent ne rend pas une
+    // permutation uniforme, et le défaut était invisible parce qu'un arpège aléatoire a toujours
+    // l'air aléatoire.
+    case "aleatoire": return melangerUniformement(montant, hasard);
+    case "ordre-de-jeu": return etendre(jouees);
+    case "convergent": return convergent;
+    case "divergent": return [...convergent].reverse();
+    default: return montant;
+  }
+}
+
+/**
+ * Le motif posé sur l'arpège déroulé : il se rejoue décalé d'une note à chaque fois, jusqu'au bout.
+ * « 1232 » sur do mi sol do' rend do mi sol mi, puis mi sol do' sol. Un arpège plus court que le
+ * motif n'en garde que les notes qui existent.
+ */
+export function appliquerMotif(arpege: number[], motif: string): number[] {
+  if (!motif || motif === "Droit") return arpege;
+  const rangs = motif.split("").map((c) => parseInt(c, 10) - 1).filter((r) => r >= 0);
+  if (rangs.length === 0) return arpege;
+  const portee = Math.max(...rangs) + 1;
+  if (arpege.length < portee) {
+    const gardees = rangs.filter((r) => r < arpege.length).map((r) => arpege[r]);
+    return gardees.length > 0 ? gardees : arpege;
+  }
+  const out: number[] = [];
+  for (let k = 0; k + portee <= arpege.length; k++) for (const r of rangs) out.push(arpege[k + r]);
+  return out;
+}
+
+type ChangementTempo = { tick: number; usParNoire: number; sec: number };
+
+/** Les changements de tempo d'un fichier, avec l'instant où chacun tombe, comme `analyserMidi` les lit. */
+function carteDesTempos(midi: ReturnType<typeof parseMidi>): { tpm: number; tempos: ChangementTempo[] } {
+  const tpm = midi.header.ticksPerBeat ?? 480;
+  const bruts: { tick: number; us: number }[] = [{ tick: 0, us: 500000 }];
+  for (const piste of midi.tracks) {
+    let tick = 0;
+    for (const e of piste) { tick += e.deltaTime; if (e.type === "setTempo") bruts.push({ tick, us: e.microsecondsPerBeat }); }
+  }
+  bruts.sort((a, b) => a.tick - b.tick);
+  const tempos: ChangementTempo[] = [];
+  let sec = 0;
+  bruts.forEach((b, i) => {
+    if (i > 0) sec += ((b.tick - bruts[i - 1].tick) / tpm) * (bruts[i - 1].us / 1e6);
+    tempos.push({ tick: b.tick, usParNoire: b.us, sec });
+  });
+  return { tpm, tempos };
+}
+
+/** Un instant en secondes, rendu en noires depuis le début du fichier. */
+function secondesEnNoires(c: { tpm: number; tempos: ChangementTempo[] }, s: number): number {
+  let t = c.tempos[0];
+  for (const x of c.tempos) { if (x.sec <= s + 1e-9) t = x; else break; }
+  return t.tick / c.tpm + ((s - t.sec) * 1e6) / t.usParNoire;
 }
 
 export async function arpegerMidi(
@@ -32,148 +131,73 @@ export async function arpegerMidi(
   const bytes = new Uint8Array(await fichier.arrayBuffer());
   const midi = parseMidi(bytes);
   const { notes } = analyserMidi(midi);
-
   if (notes.length === 0) return fichier;
+  const carte = carteDesTempos(midi);
 
-  // Grouper les notes qui sonnent simultanément en "accords".
-  // Deux notes sont dans le même accord si elles commencent dans une fenêtre
-  // de tolérance (30 ms) l'une de l'autre, ou si l'une commence pendant que
-  // l'autre tient encore.
+  // Deux notes sont dans le même accord quand elles commencent à moins de 30 ms l'une de l'autre.
+  // L'ordre d'arrivée des notes est gardé, pour la direction « ordre de jeu ».
   const tol = 0.03;
-  const notesTriees = [...notes].sort((a, b) => a.debut - b.debut);
-  const accords: { temps: number; notes: number[]; velocite: number; duree: number }[] = [];
-
-  for (const n of notesTriees) {
+  const accords: { temps: number; jouees: number[]; velocite: number; fin: number }[] = [];
+  for (const n of [...notes].sort((a, b) => a.debut - b.debut)) {
     const dernier = accords[accords.length - 1];
     if (dernier && Math.abs(n.debut - dernier.temps) < tol) {
-      dernier.notes.push(n.note);
+      dernier.jouees.push(n.note);
       dernier.velocite = Math.max(dernier.velocite, n.velocite);
-      dernier.duree = Math.max(dernier.duree, n.fin - n.debut);
+      dernier.fin = Math.max(dernier.fin, n.fin);
     } else {
-      accords.push({ temps: n.debut, notes: [n.note], velocite: n.velocite, duree: n.fin - n.debut });
+      accords.push({ temps: n.debut, jouees: [n.note], velocite: n.velocite, fin: n.fin });
     }
   }
 
-  // Vitesse : divisions par beat. LE NOMBRE EST PROPRE À CE CALCUL, et non à la valeur de note :
-  // ici c'est un TEMPS qu'on divise, ailleurs une mesure. Les deux écritures du triolet sont lues,
-  // l'identifiant de la table commune et le libellé que ce composant portait avant elle.
-  const vitesses: Record<string, number> = {
-    "1/8": 2, "1/16": 4, "1/32": 8,
-    "1/8t": 3, "1/16t": 6, "1/8 triplet": 3, "1/16 triplet": 6,
-  };
-  const divisions = vitesses[vitesseNom] ?? 4;
-  const dureeStep = 60 / (divisions * 2); // en secondes (à 120 BPM de référence)
+  // Le pas, et la durée de chaque note arpégée, en noires.
+  const pas = NOIRES_PAR_PAS[vitesseNom] ?? NOIRES_PAR_PAS["1/16"];
+  const dureeNote = pas * (dureeNotePct / 100);
 
-  // Durée de chaque note arpégée
-  const dureeNote = dureeStep * (dureeNotePct / 100);
-
-  // Motif : indices dans l'accord trié.
-  // "Montant" = 0,1,2,... ; "Descendant" = N-1,...,1,0 ;
-  // "UpDown" = 0,1,...,N-1,...,1,0 ; "DownUp" = N-1,...,0,...,N-1 ;
-  // "Aléatoire" = ordre random ; "Montant+1" = décale d'une octave
-  function ordreArpege(notes: number[], dir: string, oct: number): number[] {
-    const trie = [...notes].sort((a, b) => a - b);
-    const result: number[] = [];
-    for (let o = 0; o < oct; o++) {
-      const base = o * 12;
-      let sequence: number[];
-      switch (dir) {
-        case "Descendant":
-          sequence = trie.map((n) => n + base).reverse();
-          break;
-        case "UpDown":
-          sequence = [...trie.map((n) => n + base), ...trie.map((n) => n + base).reverse().slice(1, -1)];
-          break;
-        case "DownUp":
-          sequence = [...trie.map((n) => n + base).reverse(), ...trie.map((n) => n + base).slice(1, -1)];
-          break;
-        case "Aléatoire":
-          // Fisher-Yates, et non `sort(() => hasard() - 0.5)` : un comparateur
-          // incoherent ne produit pas une permutation uniforme — selon
-          // l'algorithme de tri du moteur, certains ordres sortent bien plus
-          // souvent que d'autres, et les notes du milieu bougent moins que
-          // celles des bords. Le defaut etait invisible parce qu'un arpege
-          // « aleatoire » a toujours l'air aleatoire.
-          sequence = melangerUniformement(trie, hasard).map((n) => n + base);
-          break;
-        default: // Montant
-          sequence = trie.map((n) => n + base);
-      }
-      result.push(...sequence);
-    }
-    return result;
-  }
-
-  // Motif : pattern répétitif sur l'accord (ex: "1232" = bas, milieu, haut, milieu)
-  function appliquerMotif(ordre: number[], motifStr: string): number[] {
-    if (!motifStr || motifStr === "Droit") return ordre;
-    const indices = motifStr.split("").map((c) => parseInt(c, 10) - 1);
-    const result: number[] = [];
-    for (const idx of indices) {
-      if (idx >= 0 && idx < ordre.length) result.push(ordre[idx]);
-    }
-    return result.length > 0 ? result : ordre;
-  }
-
-  // Construire les notes arpégées
-  const nouvNotes: NoteEvenement[] = [];
+  const lignes: { tick: number; type: string; [key: string]: any }[] = [];
   for (const accord of accords) {
-    const ordre = ordreArpege(accord.notes, direction, octaves);
-    const motifNotes = appliquerMotif(ordre, motif);
-    const nbNotes = motifNotes.length;
-    if (nbNotes === 0) continue;
-
-    // Durée totale de l'arpège = durée de l'accord original
-    const dureeAccord = Math.max(accord.duree, nbNotes * dureeStep);
-    const nbCycles = Math.max(1, Math.floor(dureeAccord / (nbNotes * dureeStep)));
-
+    const suite = appliquerMotif(deroulerArpege(accord.jouees, direction, octaves, hasard), motif);
+    if (suite.length === 0) continue;
+    const debut = secondesEnNoires(carte, accord.temps);
+    // L'arpège dure ce que dure l'accord, en cycles entiers de la suite, et un cycle au moins.
+    const dureeAccord = Math.max(secondesEnNoires(carte, accord.fin) - debut, suite.length * pas);
+    const nbCycles = Math.max(1, Math.floor(dureeAccord / (suite.length * pas) + 1e-9));
+    const velocity = Math.max(1, Math.min(127, Math.round(accord.velocite * 0.9)));
     for (let c = 0; c < nbCycles; c++) {
-      for (let i = 0; i < nbNotes; i++) {
-        const t = accord.temps + (c * nbNotes + i) * dureeStep;
-        const note = Math.max(0, Math.min(127, motifNotes[i]));
-        nouvNotes.push({
-          note,
-          velocite: Math.max(1, Math.min(127, Math.round(accord.velocite * 0.9))),
-          debut: t,
-          fin: t + dureeNote,
-        });
-      }
+      suite.forEach((hauteur, i) => {
+        const t = debut + (c * suite.length + i) * pas;
+        const tickDebut = Math.round(t * carte.tpm);
+        const noteNumber = Math.max(0, Math.min(127, hauteur));
+        lignes.push({ tick: tickDebut, type: "noteOn", channel: 0, noteNumber, velocity });
+        lignes.push({ tick: Math.max(tickDebut + 1, Math.round((t + dureeNote) * carte.tpm)), type: "noteOff", channel: 0, noteNumber, velocity: 0 });
+      });
     }
-  }
-
-  const tpm = 480;
-  const tempo = 120;
-  const microsecParBeat = (60 / tempo) * 1_000_000;
-  function secEnTicks(sec: number): number { return Math.round((sec / 60) * tempo * tpm); }
-
-  const lignes: { tick: number; type: string; [key: string]: any }[] = [
-    { tick: 0, type: "setTempo", microsecondsPerBeat: microsecParBeat },
-    { tick: 0, type: "timeSignature", numerator: 4, denominator: 4 },
-  ];
-
-  for (const n of nouvNotes) {
-    const tickDebut = secEnTicks(n.debut);
-    const tickFin = secEnTicks(n.fin);
-    lignes.push({ tick: tickDebut, type: "noteOn", channel: 0, noteNumber: n.note, velocity: n.velocite });
-    lignes.push({ tick: Math.max(tickDebut + 1, tickFin), type: "noteOff", channel: 0, noteNumber: n.note, velocity: 0 });
   }
 
   // LA DURÉE DE NOTE PEUT DÉPASSER LE PAS DE L'ARPÈGE, et un motif qui revient sur la même hauteur
   // la rejouait alors avant de l'avoir relâchée. Voir `midi-recouvrement.ts`.
   const ordonnees = resoudreRecouvrements(lignes);
+  // Les tempos et la métrique de l'entrée, à leur place : ce sont eux qui donnent aux notes rendues
+  // la grille de leurs temps. Le tempo par défaut ne s'écrit que si l'entrée n'en pose aucun au début.
+  const metas: { tick: number; type: string; [key: string]: any }[] = carte.tempos
+    .filter((_, i) => i > 0 || !carte.tempos.slice(1).some((x) => x.tick === 0))
+    .map((t) => ({ tick: t.tick, type: "setTempo", microsecondsPerBeat: t.usParNoire }));
+  const signature = midi.tracks.flat().find((e) => e.type === "timeSignature");
+  metas.push({
+    tick: 0, type: "timeSignature",
+    numerator: signature?.type === "timeSignature" ? signature.numerator : 4,
+    denominator: signature?.type === "timeSignature" ? signature.denominator : 4,
+  });
   let tickCourant = 0;
   const events: { deltaTime: number; type: string; [key: string]: any }[] = [];
-  for (const l of ordonnees) {
+  for (const l of [...metas, ...ordonnees].sort((a, b) => a.tick - b.tick)) {
     const { tick, ...rest } = l;
     events.push({ deltaTime: tick - tickCourant, ...rest });
     tickCourant = tick;
   }
   events.push({ deltaTime: 0, type: "endOfTrack" });
 
-  const nouvMidi = { header: { format: 1 as const, numTracks: 1, ticksPerBeat: tpm }, tracks: [events] };
+  const nouvMidi = { header: { format: 1 as const, numTracks: 1, ticksPerBeat: carte.tpm }, tracks: [events] };
   const nouvBytes = new Uint8Array(writeMidi(nouvMidi as any));
   const nomBase = fichier.name.replace(/\.mid$/i, "");
   return new File([nouvBytes], `${nomBase}_arp.mid`, { type: "audio/midi" });
 }
-
-

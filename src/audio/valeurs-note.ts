@@ -25,16 +25,29 @@ export interface ValeurNote {
   en: string;
 }
 
-/** Les valeurs de note que le parc emploie, de la plus longue à la plus brève. */
+/**
+ * Les valeurs de note que le parc emploie, rangées par valeur de base de la plus longue à la plus
+ * brève : la pointée, la simple, puis le triolet.
+ *
+ * LES POINTÉES ET DEUX TRIOLETS DE PLUS SONT ENTRÉS LE 2026-11-14, sur décision de Fabien, pour la
+ * vitesse de l'arpégiateur MIDI, qui offre la table entière. La pointée s'écrit d'un point après la
+ * valeur, `1/8.`, comme le triolet s'écrit d'un `t` ; son libellé dit « pointée » en français et
+ * « dotted » en anglais, chacun dans sa langue, comme « de triolet » et « triplet ».
+ */
 export const VALEURS_NOTE: ValeurNote[] = [
   { id: "1/1", fr: "1/1", en: "1/1" },
   { id: "1/2", fr: "1/2", en: "1/2" },
+  { id: "1/4.", fr: "1/4 pointée", en: "1/4 dotted" },
   { id: "1/4", fr: "1/4", en: "1/4" },
+  { id: "1/4t", fr: "1/4 de triolet", en: "1/4 triplet" },
+  { id: "1/8.", fr: "1/8 pointée", en: "1/8 dotted" },
   { id: "1/8", fr: "1/8", en: "1/8" },
-  { id: "1/16", fr: "1/16", en: "1/16" },
-  { id: "1/32", fr: "1/32", en: "1/32" },
   { id: "1/8t", fr: "1/8 de triolet", en: "1/8 triplet" },
+  { id: "1/16.", fr: "1/16 pointée", en: "1/16 dotted" },
+  { id: "1/16", fr: "1/16", en: "1/16" },
   { id: "1/16t", fr: "1/16 de triolet", en: "1/16 triplet" },
+  { id: "1/32", fr: "1/32", en: "1/32" },
+  { id: "1/32t", fr: "1/32 de triolet", en: "1/32 triplet" },
 ];
 
 const PAR_ID = new Map(VALEURS_NOTE.map((v) => [v.id, v]));

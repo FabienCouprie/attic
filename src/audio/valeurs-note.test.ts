@@ -32,6 +32,12 @@ describe("la table des valeurs de note", () => {
     expect(valeurNote("1/16t")!.fr).toBe("1/16 de triolet");
   });
 
+  it("LA POINTÉE AUSSI, entrée avec deux triolets le 2026-11-14", () => {
+    expect(valeurNote("1/8.")!.fr).toBe("1/8 pointée");
+    expect(valeurNote("1/8.")!.en).toBe("1/8 dotted");
+    for (const id of ["1/4.", "1/16.", "1/4t", "1/32t"]) expect(valeurNote(id), id).toBeTruthy();
+  });
+
   it("rend les trois listes dans l'ordre demandé, et non dans le sien", () => {
     const c = choixValeurs(["1/32", "1/16", "1/8"]);
     expect(c.optionIds).toEqual(["1/32", "1/16", "1/8"]);
@@ -63,7 +69,7 @@ describe("le parc entier", () => {
       for (const p of (f.parametres ?? []) as ParametreDef[]) {
         if (p.type !== "choix") continue;
         for (const libelle of p.options ?? []) {
-          if (/triplet/i.test(String(libelle))) fautifs.push(`${f.id}·${p.nom} : « ${libelle} »`);
+          if (/triplet|dotted/i.test(String(libelle))) fautifs.push(`${f.id}·${p.nom} : « ${libelle} »`);
         }
       }
     }
