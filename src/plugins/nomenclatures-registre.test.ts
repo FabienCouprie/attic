@@ -67,8 +67,69 @@ const EXAMINES_ET_ECARTES: { ou: string; raison: string }[] = [
   { ou: "vent-guide-onde·Instrument", raison: "trois modèles physiques de tuyau ; un violon n'a pas de tuyau" },
 ];
 
+/**
+ * LES COUPES À EXAMINER : les réglages qui n'offrent qu'une part de leur table, relevés le
+ * 2026-11-14 au lot 1 de la passe de complétude, et que Fabien tranchera au lot 2. Chacun sortira
+ * d'ici, soit qu'il offre la table entière, soit que sa coupe passe dans `coupes` avec sa raison.
+ *
+ * CETTE LISTE NE PEUT QUE DÉCROÎTRE : un réglage coupé qui n'y est pas fait tomber la suite, et un
+ * réglage qui n'est plus coupé aussi.
+ */
+const COUPES_A_EXAMINER: string[] = [
+  // gamme : trente-cinq dans la table, gammes du monde comprises.
+  "accords-vers-notation·Gamme", "arbre-rythmique·Gamme", "arpege-koch·Gamme", "automate-cellulaire·Gamme",
+  "boite-groove·Gamme", "cercle-pulsant·Gamme", "color-looper·Gamme", "correction-hauteur·Gamme",
+  "dessin-sonore·Gamme", "evolution-melodie·Gamme", "gamme-jouee·Gamme", "gammes-monde·Gamme",
+  "generateur-accords·Gamme", "generateur-fractal·Gamme", "generateur-musical·Gamme", "l-systeme·Gamme",
+  "mappeur-mandelbrot·Gamme", "melodie-aleatoire·Gamme", "multi-reservoirs·Gamme", "palette-harmonique·Gamme",
+  "parole-vers-sequence·Gamme", "partition-aleatoire-csound·Gamme", "reservoir-musical·Gamme",
+  "sampler-personnalise·Gamme", "sequenceur-accords·Gamme", "sequenceur-melodique·Gamme", "serie-infinie·Gamme",
+  "solveur-contraintes·Gamme", "tonal-grille·Gamme", "tonal-progression·Gamme", "vexflow-grille·Gamme",
+  "vexflow-partition·Gamme", "zones-vers-midi·Gamme",
+  // accord : trente-trois qualités.
+  "arpege-koch·Accord", "generateur-fractal·Motif",
+  // fenêtre d'analyse : six tailles.
+  "analyseur-spectre·Fenêtre", "apparier-reference·Taille de la transformée", "continuation-spectrale-ar·FFT",
+  "continuation-spectrale-lstm·FFT", "csound-spectral·Fenêtre", "flou-spectral·Finesse", "gel-spectral·Finesse",
+  "glissando-interieur·Finesse", "masquage·Finesse", "morphing-spectral·Fenêtre", "pca-neuronale·FFT",
+  "phase-pghi·Fenêtre", "restauration-ecretage·Fenêtre", "rugosite·Finesse", "separation-harmonique-percussive·Fenêtre",
+  "sms-sinusoides-bruit·Fenêtre", "spectrogramme-fractal·FFT", "spectrogramme·Fenêtre",
+  "stn-sinus-transitoires-bruit·Fenêtre sinus", "stn-sinus-transitoires-bruit·Fenêtre transitoires",
+  "tracage-spectral·Finesse",
+  // valeur de note : treize.
+  "beat-repeat·Intervalle", "beat-repeat·Taille", "magenta-continuation·Quantification",
+  "magenta-generer-melodie·Quantification", "magenta-humaniser-groove·Quantification", "multi-reservoirs·Résolution",
+  "reservoir-musical·Résolution", "transcription-midi·Quantification", "transposeur-quantiseur-midi·Quantisation",
+  "vexflow-midi·Quantification",
+  // format d'image : trois.
+  "attracteur-ifs·Format", "spectrogramme-fractal·Format", "visualisation-songsee·Format",
+  // moteur de synthèse : trois.
+  "automate-cellulaire·Synthèse",
+  // disposition de haut-parleurs : dix.
+  "decodeur-ambisonique·Salle",
+  // langue : quinze, sans « Automatique ».
+  "aligner-texte·Langue", "cloner-voix·Langue", "composer-plan·Langue du chant", "ecrire-chanson·Langue du chant",
+  "nllb-paroles·Langue cible", "planifier-chanson·Langue du chant", "sherpa-asr·Langue", "tts-mms·Langue",
+  "couper-aux-mots·Langue", "generateur-paroles·Langue", "parole-vers-sequence·Langue", "sous-titres-srt·Langue",
+  "vosk-asr·Langue",
+  // patron rythmique : cinquante-cinq.
+  "boite-groove·Style rythmique",
+];
+
 describe("un concept, des formes déclarées", () => {
   const tous = choix();
+
+  it("LA DETTE DES COUPES DÉCROÎT : un réglage qui n'est plus coupé sort de la liste", () => {
+    const encore = new Set<string>();
+    for (const d of DOMAINES.filter((x) => x.table)) {
+      const taille = new Set(d.table!()).size;
+      const canon = (x: string) => (d.canonique ? (d.canonique(x) ?? x) : x);
+      for (const c of relevesDuDomaine(d, tous)) {
+        if (new Set(c.ids.filter((x) => d.membre(x)).map(canon)).size < taille) encore.add(c.ou);
+      }
+    }
+    expect(COUPES_A_EXAMINER.filter((ou) => !encore.has(ou)), "ces réglages ne sont plus coupés : retirer leur ligne").toEqual([]);
+  });
 
   it("CHAQUE CONCEPT ÉCARTÉ EXISTE ENCORE, sans quoi sa raison ne garde plus rien", () => {
     // Un réglage renommé ou retiré laisserait ici une raison orpheline, qui couvrirait un autre
@@ -172,6 +233,25 @@ describe("un concept, des formes déclarées", () => {
     }
 
     if (d.table) {
+      it(`« ${d.nom} » : une coupe de la table est déclarée, avec la borne de son algorithme`, () => {
+        // LA LISTE EST ENTIÈRE OU SA COUPE EST DÉCLARÉE, décision de Fabien du 2026-11-14. Une coupe
+        // se compte en MEMBRES distincts, sentinelles exclues et écritures ramenées à leur forme
+        // canonique : une liste de clés par demi-tons et une par noms sont entières toutes deux.
+        const taille = new Set(d.table!()).size;
+        const canon = (x: string) => (d.canonique ? (d.canonique(x) ?? x) : x);
+        const coupes = releves.filter((c) => new Set(c.ids.filter((x) => d.membre(x)).map(canon)).size < taille);
+        const declarees = new Set((d.coupes ?? []).map((c) => c.ou));
+        const nonDeclarees = coupes
+          .filter((c) => !declarees.has(c.ou) && !COUPES_A_EXAMINER.includes(c.ou))
+          .map((c) => `${c.ou} : ${new Set(c.ids.filter((x) => d.membre(x))).size} sur ${taille}`);
+        expect(nonDeclarees, `« ${d.nom} » : offrir la table entière, ou déclarer la coupe dans \`coupes\` avec sa raison`).toEqual([]);
+        const sansRaison = (d.coupes ?? []).filter((c) => c.raison.trim().length < 30).map((c) => c.ou);
+        expect(sansRaison, `« ${d.nom} » : une coupe dit la borne de son algorithme`).toEqual([]);
+        // UNE COUPE DÉCLARÉE QUI EST DEVENUE ENTIÈRE SORT DU REGISTRE, comme une dette payée.
+        const entieres = (d.coupes ?? []).filter((x) => !coupes.some((c) => c.ou === x.ou)).map((x) => x.ou);
+        expect(entieres, `« ${d.nom} » : ces réglages offrent désormais la table entière, retirer leur coupe`).toEqual([]);
+      });
+
       it(`« ${d.nom} » : sa table est entière dans son domaine`, () => {
         // LA TABLE EST LA MESURE D'UNE LISTE ENTIÈRE, et la passe de croisement la lit : un
         // identifiant de la table que le domaine ne reconnaîtrait pas ferait passer une liste
@@ -239,8 +319,10 @@ describe("un concept, des formes déclarées", () => {
     // six styles de la reprise ABC, écrits à la main et écartés comme vocabulaire propre, sont
     // devenus les patrons rythmiques, précédés d'« Accords tenus ». Ils ne se voyaient pas ; la forme
     // qu'ils prennent désormais vient de la table, et elle se compte.
+    // PUIS DE QUARANTE-NEUF À CINQUANTE, ET C'EST LA DETTE QU'ON VOIT ENFIN : le domaine des langues
+    // passe au seuil de deux, et la paire français et anglais de cinq réglages entre au compte.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(49);
+      .toBe(50);
   });
 });

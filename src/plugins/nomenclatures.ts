@@ -67,6 +67,14 @@ export interface Domaine {
    */
   table?: () => readonly string[];
   /**
+   * Les réglages qui n'offrent qu'une part de la table, chacun avec la borne de son algorithme.
+   *
+   * DÉCISION DE FABIEN DU 2026-11-14 : un réglage offre la table entière, sauf si son algorithme ne
+   * sait pas jouer une valeur ; la coupe se déclare alors ici, avec sa raison. Une coupe qui n'est
+   * ni ici ni dans la dette du garde fait tomber la suite.
+   */
+  coupes?: { ou: string; raison: string }[];
+  /**
    * Ce qui fait qu'UN identifiant relève du domaine, reconnu par sa FORME et jamais par un nom.
    *
    * CE TEST A REMPLACÉ UN `ids.every(...)`, ET C'EST LA RÉPARATION D'UN AVEUGLEMENT. Un ET sur
@@ -420,6 +428,9 @@ export const DOMAINES: Domaine[] = [
     // LA LISTE EST CELLE DES CODES QUE LE DÉPÔT OFFRE, et non une forme à deux lettres : « do » et
     // « la » sont des notes, « en » et « es » des langues, et rien dans la forme ne les sépare.
     membre: (x) => ["fr", "en", "de", "es", "it", "pt", "ru", "zh", "yue", "ja", "ko", "nl", "ar", "hi", "ro"].includes(x),
+    // DEUX LANGUES SUFFISENT À DIRE UNE LISTE DE LANGUES, depuis le 2026-11-14 : au seuil de trois,
+    // les cinq réglages qui n'offrent que le français et l'anglais échappaient au garde.
+    seuil: 2,
     sentinelles: [
       { valeur: "", raison: "« Automatique » : le moteur reconnaît la langue seul" },
     ],
@@ -427,8 +438,10 @@ export const DOMAINES: Domaine[] = [
     // langues que SON modèle tient, et chacun l'écrit en commentaire. Ce qui ne l'est pas, c'est que
     // les noms de langue soient recopiés dans six tables à la main, où une orthographe peut dériver
     // sans que rien ne le dise.
-    formesAssumees: 6,
-    pourquoi: "chaque composant est borné par les langues que SON modèle tient, et chacun l'écrit à côté de sa liste ; les NOMS, eux, viennent d'une table unique depuis que six d'entre eux les recopiaient",
+    // PUIS DE SIX À SEPT, SANS QUE RIEN N'EMPIRE : la septième est la paire français et anglais de
+    // cinq réglages, que le seuil de trois cachait.
+    formesAssumees: 7,
+    pourquoi: "chaque composant est borné par les langues que SON modèle tient, et chacun l'écrit à côté de sa liste, la paire français et anglais de cinq réglages comprise ; les NOMS, eux, viennent d'une table unique depuis que six d'entre eux les recopiaient",
     remede: "déclarer une table centrale des noms de langue, chaque composant n'offrant que les codes que SON modèle tient",
   },
   {

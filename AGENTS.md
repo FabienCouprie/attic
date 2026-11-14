@@ -6,7 +6,7 @@ Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et vingt-neuf gardes sur lui-même : ils s'emploient, ils
+cela un banc de mesure, une base d'empreintes et trente gardes sur lui-même : ils s'emploient, ils
 ne se réinventent pas.
 
 ---
@@ -167,12 +167,13 @@ se relève donc à l'oreille, et non par un garde.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — vingt-neuf contrats sur le dépôt lui-même : registre des réglages, graines,
+- **`src/docs/*.test.ts`** — trente contrats sur le dépôt lui-même : registre des réglages, graines,
   cœurs par trames, registre anglais, **texte en dur des vues — qu'aucun ne dépende de la langue** —,
   caractères de contrôle, style de documentation, classement
   théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, couverture des
-  empreintes, le serveur des specs de bout en bout, le pilote d'un graphe entier, **la fréquence de
-  travail — qu'aucun composant ne génère à celle de la carte son** —, **le socle figé —
+  empreintes, le serveur des specs de bout en bout, le pilote d'un graphe entier, **le croisement
+  des nomenclatures — sous chaque valeur d'une nomenclature, chaque autre réglage agit encore** —,
+  **la fréquence de travail — qu'aucun composant ne génère à celle de la carte son** —, **le socle figé —
   qu'aucun composant reçu ne prenne la place d'un natif** —, **les clés de réglage des graphes
   livrés — une valeur enregistrée doit encore être lue** —, **les écritures refusées — qu'aucun
   appel à `ecrireFichier` ne jette son résultat, la sanction par racines étant armée** —, **les vues
@@ -444,6 +445,7 @@ jamais vu rouge ne garde rien.
 | Savoir **ce qu'un réglage change**, et non ce qu'il vaut | `COMPOSANT=id REGLAGE=nom VALEURS=a,b,c npm run varier` : un clip par valeur, un tableau par tranches avec la colonne de l'entrée, et le réglage déclaré **inerte** s'il ne bouge ni l'énergie ni la crête |
 | Vérifier qu'**aucun message ne reste en français** dans l'interface anglaise | `ANGLAIS=1 npm run messages-anglais` : chaque fiche lancée sur le banc en anglais, son message et son erreur passés au détecteur du registre — le texte en dur des vues est tenu par `src/docs/vues-anglais.test.ts` |
 | Vérifier qu'une **graine déclarée tient**, sur le son | `npm run graines` : chaque composant à graine lancé deux fois à la même graine, empreintes comparées — le contrat structurel des graines ne regarde pas le son |
+| Savoir si un **réglage reste inerte sous une valeur** d'une nomenclature | `npm run croisement` : chaque nœud à nomenclature lancé sous chaque valeur offerte, chacun de ses autres réglages déplacé, au banc de node, les durées bornées à huit secondes ; le relevé dans `CROISEMENT/croisement.md` et `.json`, borné à quelques nœuds par `CROISEMENT_FICHES=a,b` ; une inertie ou une coïncidence ni déclarée ni dans la dette de `src/audio/croisement-dette.json` le fait tomber |
 | Ce qui a été fait, avec les chiffres | `CHANGELOG.md` |
 
 La documentation la plus dense n'est pas dans ces fichiers mais **en tête des modules** : chaque

@@ -32,7 +32,7 @@ export type Reglages = Record<string, string | number>;
 /** Ce qu'il faut d'une fiche pour la lancer ici. */
 export interface FicheLancable {
   id: string;
-  entrees?: readonly { type: string; sousType?: string }[];
+  entrees?: readonly { nom?: string; type: string; sousType?: string; requis?: boolean }[];
   parametres: readonly ParametreDef[];
   executer: (ctx: never) => Promise<unknown>;
 }

@@ -8,8 +8,8 @@ que comme récipient fige le fil et devient transposable dès qu'on en extrait u
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 94 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 227 · transposable tel quel
+- **récipient** : 95 · fige, transposable après extraction d'un cœur par voie
+- **pur** : 229 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -99,6 +99,9 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | crete-vraie.ts | recipient | AudioBuffer |
 | cribles.ts | pur | — |
 | criteres-schaefferiens.ts | pur | — |
+| croisement-inscriptions.ts | pur | — |
+| croisement-registre.ts | pur | — |
+| croisement-reglages.ts | recipient | AudioBuffer |
 | csound-aleatoire.ts | pur | — |
 | csound-formules.ts | pur | — |
 | csound-opcodes.ts | pur | — |
