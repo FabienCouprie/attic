@@ -77,10 +77,20 @@ const EXAMINES_ET_ECARTES: { ou: string; raison: string }[] = [
  * réglage qui n'est plus coupé aussi. Le lot 2 tranché, les coupes gardées sont passées dans les
  * `coupes` de leur domaine avec leur borne.
  *
- * ELLE EST VIDE DEPUIS LE LOT 3b (2026-11-14) : quatre-vingt-trois coupes relevées, soixante-quatre
- * déclarées avec leur borne, dix-neuf élargies à la table entière. Une coupe neuve se déclare.
+ * ELLE S'EST VIDÉE AU LOT 3b (2026-11-14) : quatre-vingt-trois coupes relevées, soixante-quatre
+ * déclarées avec leur borne, dix-neuf élargies à la table entière.
+ *
+ * ELLE REPREND DIX LIGNES AU LOT 3c, ET CE N'EST PAS UNE DETTE QUI GRANDIT : c'est le champ du garde
+ * qui s'élargit, comme au lot 1. Deux domaines neufs relèvent dix réglages qui n'offrent qu'une part de
+ * leur table, et leur proposition, élargir ou garder avec une borne, attend la décision de Fabien.
  */
-const COUPES_A_EXAMINER: string[] = [];
+const COUPES_A_EXAMINER: string[] = [
+  // sens d'un arpège : les trois sens d'un parcours joué une fois.
+  "accords-joues·Sens", "arpege-spectral·Sens", "gamme-jouee·Sens",
+  // façon de jouer un accord : sans le roulé.
+  "tonal-grille·Mode", "camelot·Mode", "sequenceur-accords·Mode", "palette-harmonique·Mode",
+  "dessin-sonore·Mode", "color-looper·Mode", "automate-cellulaire·Mode voix",
+];
 
 describe("un concept, des formes déclarées", () => {
   const tous = choix();
@@ -293,8 +303,11 @@ describe("un concept, des formes déclarées", () => {
     // PUIS DE CINQUANTE À QUARANTE-SIX, par la passe de complétude (2026-11-14) : les fenêtres
     // élargies à la table entière tombent de onze formes à sept, le moteur de synthèse de deux à une,
     // et la valeur de note monte de six à sept, deux grilles élargies chacune jusqu'à sa propre borne.
+    // PUIS DE QUARANTE-SIX À CINQUANTE, ET C'EST LA DETTE QU'ON VOIT ENFIN (lot 3c) : le sens d'un
+    // arpège et la façon de jouer un accord deviennent des domaines, et leurs coupes entrent au compte,
+    // une forme pour le premier, trois pour la seconde. Leurs orthographes, elles, sont payées.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(46);
+      .toBe(50);
   });
 });

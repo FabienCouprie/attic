@@ -38,6 +38,8 @@ import { MONO_STEREO } from "../audio/mono-stereo";
 import { CLEFS_PORTEE } from "../audio/clefs-portee";
 import { PALETTES_COULEURS } from "../audio/palettes-couleurs";
 import { FORMATS_LISTE } from "../core/formats-liste";
+import { SENS_ARPEGE } from "../audio/sens-arpege";
+import { FACONS_ACCORD } from "../audio/facons-accord";
 
 /**
  * Un réglage à choix, avec les identifiants qu'un projet enregistrera ET les libellés qu'il montre.
@@ -616,6 +618,28 @@ export const DOMAINES: Domaine[] = [
     membre: (x) => (FORMATS_LISTE.ids as string[]).includes(x),
     formesAssumees: 1,
     remede: "étaler `choixFormatListe` de `core/formats-liste.ts`, et joindre par `joindreListe`",
+  },
+  // LES DEUX DOMAINES DE LA SECONDE PART DU LOT 3c : des vocabulaires qui s'écrivaient à plusieurs
+  // façons, et dont les composants lisaient la valeur par un morceau de mot.
+  {
+    nom: "sens d'un arpège",
+    table: () => [...SENS_ARPEGE.ids],
+    membre: (x) => (SENS_ARPEGE.ids as readonly string[]).includes(x),
+    formesAssumees: 2,
+    pourquoi: "la table entière pour l'arpégiateur, et les trois sens d'un parcours joué une fois pour les accords joués, l'arpège spectral et la gamme jouée, dont les cinq autres attendent la décision de Fabien",
+    remede: "étaler `choixSensArpege` de `audio/sens-arpege.ts`, et lire la valeur par `sensDe` ou `sensParmi`",
+  },
+  {
+    nom: "façon de jouer un accord",
+    table: () => [...FACONS_ACCORD.ids],
+    membre: (x) => (FACONS_ACCORD.ids as readonly string[]).includes(x),
+    seuil: 2,
+    sentinelles: [
+      { valeur: "melodie", raison: "« Mélodie » : une note à la fois, et non un accord joué d'une façon ou d'une autre" },
+    ],
+    formesAssumees: 4,
+    pourquoi: "la table entière pour les accords joués ; plaqué et arpégé seuls pour la grille tonale, la roue de Camelot et le séquenceur d'accords, que le roulé attend la décision de Fabien ; les mêmes derrière « Mélodie » pour les trois composants à couleurs, et entre les deux pour l'automate cellulaire, chacun au rang qu'un projet enregistré fige",
+    remede: "étaler `choixFaconAccord` ou `choixFaconOuMelodie` de `audio/facons-accord.ts`, et lire la valeur par `faconDe`",
   },
 ];
 

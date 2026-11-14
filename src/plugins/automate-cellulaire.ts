@@ -14,6 +14,7 @@ import { avecDoc } from "./notices";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
 import { GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio/generation-melodie";
 import { PARAMETRE_CLE } from "../audio/cles";
+import { choixFaconOuMelodie } from "../audio/facons-accord";
 
 const reglesOptions = ["Personnalisée", ...REGLES_1D.map(String)];
 const reglesOptionsEn = ["Custom", ...REGLES_1D.map(String)];
@@ -69,12 +70,13 @@ const FICHES: FicheAudio[] = [
         nom: "Mode voix",
         nomEn: "Voice mode",
         type: "choix",
-        options: ["Polyphonie", "Mélodie", "Arpège"], optionIds: ["Polyphonie","Mélodie","Arpège"],
-        defaut: "Polyphonie",
-        optionsEn: ["Polyphony", "Melody", "Arpeggio"],
-        defautEn: "Polyphony",
-        doc: "Polyphonie joue toutes les cellules actives. Mélodie en choisit une par pas. Arpège les joue dans l'ordre.",
-        docEn: "Polyphony plays all active cells. Melody picks one per step. Arpeggio plays them in order.",
+        // LA FAÇON DE JOUER UN ACCORD, « Mélodie » au rang qu'elle avait : les identifiants étaient
+        // les libellés, « Polyphonie », « Mélodie » et « Arpège », que `optionsHeritees` relit.
+        ...choixFaconOuMelodie(["plaque", "arpege"], 1),
+        defaut: "Plaqué",
+        defautEn: "Block",
+        doc: "Plaqué joue ensemble toutes les cellules actives. Mélodie en choisit une par pas. Arpégé les joue dans l'ordre.",
+        docEn: "Block plays all active cells together. Melody picks one per step. Arpeggiated plays them in order.",
       },
       {
         nom: "Mapping",
@@ -197,8 +199,8 @@ const FICHES: FicheAudio[] = [
         plage: [1, 16],
         pas: 1,
         defaut: 4,
-        doc: "Nombre maximum de notes simultanées en mode polyphonie.",
-        docEn: "Maximum number of simultaneous notes in polyphony mode.",
+        doc: "Nombre maximum de notes simultanées. Sans effet quand « Mode voix » vaut « Mélodie » ou « Arpégé », qui jouent une note par pas.",
+        docEn: "Maximum number of simultaneous notes. Has no effect when « Voice mode » is « Melody » or « Arpeggiated », which play one note per step.",
       },
       {
         nom: "Probabilité mutation",
@@ -229,7 +231,7 @@ const FICHES: FicheAudio[] = [
         regle,
         reglePersonnalisee: ctx.paramNombre("Règle personnalisée", 90),
         topologie: normaliserTopologie(ctx.paramTexte("Topologie", "1D")),
-        modeVoix: normaliserModeVoix(ctx.paramTexte("Mode voix", "Polyphonie")),
+        modeVoix: normaliserModeVoix(ctx.paramTexte("Mode voix", "plaque")),
         mapping: normaliserMapping(ctx.paramTexte("Mapping", "Hauteur")),
         largeur: ctx.paramNombre("Largeur", 16),
         hauteur: ctx.paramNombre("Hauteur", 16),

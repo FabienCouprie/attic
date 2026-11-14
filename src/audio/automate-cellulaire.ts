@@ -221,11 +221,19 @@ function velocitePourDensite(densite: number, max: number, velociteBase: number)
   return Math.max(1, Math.min(127, Math.round(velociteBase * (0.5 + 0.5 * (densite / max)))));
 }
 
+/**
+ * Les notes d'une génération à une dimension.
+ *
+ * LA DENSITÉ SE COMPTE SUR LA LARGEUR DE LA LIGNE, et c'est la réparation du 2026-11-14. Le nombre de
+ * cellules actives était passé à la fois comme densité et comme son maximum : leur rapport valait
+ * toujours un, et en mélodie comme en arpège le mapping par vélocité ou par durée ne changeait rien.
+ */
 function construireNotesDepuisLigne(
   options: OptionsAutomateCellulaire,
   temps: number,
   actives: number[],
   densite: number,
+  largeur: number,
   base: number,
   degres: number[],
   rnd: () => number,
@@ -242,10 +250,10 @@ function construireNotesDepuisLigne(
     const idx = actives[arpegeIndex % actives.length];
     const midi = snapperNote(base + idx, degres);
     const vel = mapping === "Vélocité" || mapping === "Hauteur + vélocité"
-      ? velocitePourDensite(densite, actives.length, options.velocite)
+      ? velocitePourDensite(densite, largeur, options.velocite)
       : options.velocite;
     const duree = mapping === "Durée" || mapping === "Hauteur + vélocité"
-      ? dureeBase * (0.5 + 0.5 * (densite / Math.max(1, actives.length)))
+      ? dureeBase * (0.5 + 0.5 * (densite / Math.max(1, largeur)))
       : dureeBase;
     notes.push({ note: midi, velocite: vel, debut: temps, fin: temps + duree });
     return { notes, arpegeIndex: arpegeIndex + 1 };
@@ -255,10 +263,10 @@ function construireNotesDepuisLigne(
     const idx = actives[Math.floor(rnd() * actives.length)];
     const midi = snapperNote(base + idx, degres);
     const vel = mapping === "Vélocité" || mapping === "Hauteur + vélocité"
-      ? velocitePourDensite(densite, actives.length, options.velocite)
+      ? velocitePourDensite(densite, largeur, options.velocite)
       : options.velocite;
     const duree = mapping === "Durée" || mapping === "Hauteur + vélocité"
-      ? dureeBase * (0.5 + 0.5 * (densite / Math.max(1, actives.length)))
+      ? dureeBase * (0.5 + 0.5 * (densite / Math.max(1, largeur)))
       : dureeBase;
     notes.push({ note: midi, velocite: vel, debut: temps, fin: temps + duree });
     return { notes, arpegeIndex };
@@ -308,6 +316,7 @@ function genererDepuis1D(options: OptionsAutomateCellulaire): NoteEvenement[] {
         t,
         actives,
         actives.length,
+        largeur,
         base,
         degres,
         rnd,

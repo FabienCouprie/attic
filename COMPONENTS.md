@@ -684,7 +684,7 @@ Scans a view of the Mandelbrot set and turns each point into a note. For each po
 | [Bytebeat](#bytebeat) | Computes one byte per sample from an integer formula on the time counter. |
 | [Cellular automaton](#cellular-automaton) | Generates a musical sequence from a 1D or 2D cellular automaton. |
 | [Chord Generator](#chord-generator) | Generates a chord progression. |
-| [Chord Run](#chord-run) | Plays a named chord, struck, arpeggiated or rolled, in the wanted root and inversion. |
+| [Chord Run](#chord-run) | Plays a named chord, block, arpeggiated or rolled, in the wanted root and inversion. |
 | [Custom Sampler](#custom-sampler) | Plays an audio sample as a melodic instrument. |
 | [Evolve a Melody](#evolve-a-melody) | Evolves a population of melodies toward a received sequence's gesture and the wanted span. |
 | [Feature Synthesis](#feature-synthesis) | Builds a sound from the forty measurements that describe it, and shows how close it comes. |
@@ -827,7 +827,7 @@ Generates a musical sequence from a 1D cellular automaton (Wolfram rules 30, 90,
 | Topology | choice | 1D | 1D / 2D Conway / 2D Highlife | 1D: elementary rules 0-255. 2D Conway/Highlife: Game of Life and variants. |
 | Rule | choice | 90 | Custom / 18 / 22 / 26 / 30 / 45 / 54 / 60 / 62 / 73 / 90 / 102 / 105 / 110 / 122 / 126 / 150 / 160 / 184 / 204 / 225 / 232 / 240 / 250 | Classic 1D rule. « Custom » takes the numeric value below. |
 | Custom rule | number | 90 | 0 – 255, step 1 | 1D rule number used when Rule = Custom. Ignored in 2D mode. |
-| Voice mode | choice | Polyphony | Polyphony / Melody / Arpeggio | Polyphony plays all active cells. Melody picks one per step. Arpeggio plays them in order. |
+| Voice mode | choice | Block | Block / Melody / Arpeggiated | Block plays all active cells together. Melody picks one per step. Arpeggiated plays them in order. |
 | Mapping | choice | Pitch | Pitch / Velocity / Duration / Pitch + velocity | What the position of active cells represents. Pitch + velocity combines both. |
 | Width | number | 16 cells | 4 – 64 cells, step 1 | Number of cells per row. |
 | Height | number | 16 cells | 4 – 64 cells, step 1 | Grid height in 2D mode. The rows are spread over three octaves: the top of the grid sounds high. No effect in 1D. |
@@ -839,7 +839,7 @@ Generates a musical sequence from a 1D cellular automaton (Wolfram rules 30, 90,
 | Note duration | number | 0.2 s | 0.05 – 2 s, step 0.05 | Base duration of each step in seconds. |
 | Velocity | number | 100 | 1 – 127, step 1 | Base MIDI velocity of the generated notes (1-127). |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level, from 0 (silence) to 100%. |
-| Max density | number | 4 | 1 – 16, step 1 | Maximum number of simultaneous notes in polyphony mode. |
+| Max density | number | 4 | 1 – 16, step 1 | Maximum number of simultaneous notes. Has no effect when « Voice mode » is « Melody » or « Arpeggiated », which play one note per step. |
 | Mutation probability | number | 0 | 0 – 0.5, step 0.01 | Probability of randomly flipping a cell at each generation. |
 | Synthesis | choice | FM/Oscillators | Auto / FM/Oscillators / SoundFont | Audio engine for rendering. Auto = SoundFont if an SF2 file is loaded, else FM. FM = built-in oscillators. SoundFont = the global SoundFont; if none is loaded, the render falls back to FM and the message says so. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -872,9 +872,9 @@ Generates a chord progression from the key, scale and genre. Each chord is arpeg
 
 `accords-joues` · Inputs → Generation
 
-*Plays a named chord, struck, arpeggiated or rolled, in the wanted root and inversion.*
+*Plays a named chord, block, arpeggiated or rolled, in the wanted root and inversion.*
 
-Returns the notes of a chord as dated notes, from the chosen root. The MIDI output plugs into anything that reads MIDI, a keyboard included. « Chord » gives the intervals. The 33 qualities on offer come from the common table: the triads, the sevenths and sixths, the ninth, eleventh and thirteenth extensions, the altered chords and the suspended ones. One quality holds for the twelve roots, which makes 396 chords. The declared intervals are the ones that get played, not the theoretical stack: the eleventh chord is played without its third, which would clash a semitone against it, and the dominant thirteenth without its eleventh, for the same reason. The minor eleventh keeps both, the minor third not clashing against the eleventh. « Root » is the bottom note of the un-inverted chord. It moves the whole chord and changes nothing about the gaps between its notes. « Octave » is the root's. Four places middle C. « Range » is the number of octaves covered. Each one replays the same notes, twelve semitones higher. « Inversion » moves the bottom notes up an octave, one per requested degree. That is what changes the bass without changing the chord: the same notes are there, laid out differently. An inversion larger than the chord's number of notes is brought back to the last possible one. « Manner » decides what one hears, and the three do not make the same music. • « Struck » starts every note together and stops them together. That is the chord in a single gesture. • « Arpeggiated » starts them one after another, each released when the next starts. The chord never sounds whole: it is heard note by note. • « Rolled » starts them one after another and holds them all to the end. The chord therefore sounds whole from the last onset, and that is the spread form the harp and the piano play. « Direction » decides the order of the notes, and does nothing on a struck chord, whose notes start together. The round trip goes up then back down without replaying its summit, which is reached once. « Closing root » adds the root above the whole chord. It closes an arpeggio that its last note would otherwise leave hanging, and on a struck chord it doubles the bass. On a chord whose extension rises beyond the octave, it is raised by as many octaves as needed to remain the highest note. « Spread » is the share of the duration over which the onsets are laid out. At one, an arpeggio fills the duration exactly; small, a roll becomes a brief gesture followed by the held chord. It does nothing on a struck chord, whose notes all start at the same instant. Being a share and not a time, a chord twice as long keeps the same gait. « Tempo » and « Duration » give the chord's length, the duration being counted in beats. « Dynamics » is the velocity of every note, the same throughout. A note that would fall outside MIDI's hundred and twenty-eight is dropped and not folded: bringing it back into range would make it land in the middle of the chord, where it would change the inversion without being asked. The message states how many notes were dropped. « Synthesis », « Instrument » and « Volume » only affect the audio rendered here. The MIDI output carries the chosen instrument's program, and its notes keep their velocity. The « Notation » output writes the chord as text, one onset per line and simultaneous notes joined by a plus, in the form a text-to-MIDI converter reads back. That format is sequential and cannot say that a note holds through the next one: a rolled chord reads there as the series of its onsets, and it is the MIDI output that keeps its sustain.
+Returns the notes of a chord as dated notes, from the chosen root. The MIDI output plugs into anything that reads MIDI, a keyboard included. « Chord » gives the intervals. The 33 qualities on offer come from the common table: the triads, the sevenths and sixths, the ninth, eleventh and thirteenth extensions, the altered chords and the suspended ones. One quality holds for the twelve roots, which makes 396 chords. The declared intervals are the ones that get played, not the theoretical stack: the eleventh chord is played without its third, which would clash a semitone against it, and the dominant thirteenth without its eleventh, for the same reason. The minor eleventh keeps both, the minor third not clashing against the eleventh. « Root » is the bottom note of the un-inverted chord. It moves the whole chord and changes nothing about the gaps between its notes. « Octave » is the root's. Four places middle C. « Range » is the number of octaves covered. Each one replays the same notes, twelve semitones higher. « Inversion » moves the bottom notes up an octave, one per requested degree. That is what changes the bass without changing the chord: the same notes are there, laid out differently. An inversion larger than the chord's number of notes is brought back to the last possible one. « Manner » decides what one hears, and the three do not make the same music. • « Block » starts every note together and stops them together. That is the chord in a single gesture. • « Arpeggiated » starts them one after another, each released when the next starts. The chord never sounds whole: it is heard note by note. • « Rolled » starts them one after another and holds them all to the end. The chord therefore sounds whole from the last onset, and that is the spread form the harp and the piano play. « Direction » decides the order of the notes, and does nothing on a block chord, whose notes start together. The round trip goes up then back down without replaying its summit, which is reached once. « Closing root » adds the root above the whole chord. It closes an arpeggio that its last note would otherwise leave hanging, and on a block chord it doubles the bass. On a chord whose extension rises beyond the octave, it is raised by as many octaves as needed to remain the highest note. « Spread » is the share of the duration over which the onsets are laid out. At one, an arpeggio fills the duration exactly; small, a roll becomes a brief gesture followed by the held chord. It does nothing on a block chord, whose notes all start at the same instant. Being a share and not a time, a chord twice as long keeps the same gait. « Tempo » and « Duration » give the chord's length, the duration being counted in beats. « Dynamics » is the velocity of every note, the same throughout. A note that would fall outside MIDI's hundred and twenty-eight is dropped and not folded: bringing it back into range would make it land in the middle of the chord, where it would change the inversion without being asked. The message states how many notes were dropped. « Synthesis », « Instrument » and « Volume » only affect the audio rendered here. The MIDI output carries the chosen instrument's program, and its notes keep their velocity. The « Notation » output writes the chord as text, one onset per line and simultaneous notes joined by a plus, in the form a text-to-MIDI converter reads back. That format is sequential and cannot say that a note holds through the next one: a rolled chord reads there as the series of its onsets, and it is the MIDI output that keeps its sustain.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -889,10 +889,10 @@ Returns the notes of a chord as dated notes, from the chosen root. The MIDI outp
 | Octave | slider | 4 | 0 – 8, step 1 | The root's octave. Four places middle C. |
 | Range | slider | 1  octave(s) | 1 – 4  octave(s), step 1 | The number of octaves covered. Each one replays the same notes twelve semitones higher. |
 | Inversion | slider | 0 | 0 – 6, step 1 | Moves the bottom notes up an octave, one per degree. Changes the bass without changing the chord. |
-| Manner | choice | Struck | Struck / Arpeggiated / Rolled | What one hears. The roll starts the notes one after another and holds them all: the chord sounds whole from the last onset. |
-| Direction | choice | Ascending | Ascending / Descending / Round trip | The order of the notes. Has no effect on a struck chord, whose notes start together. |
-| Closing root | choice | No | No / Yes | Adds the root one octave above. It closes an arpeggio, and doubles a struck chord's bass. |
-| Spread | slider | 100 % | 0 – 100 %, step 1 | The share of the duration over which the onsets are laid out. Has no effect on a struck chord, whose notes start at the same instant. |
+| Manner | choice | Block | Block / Arpeggiated / Rolled | What one hears. The roll starts the notes one after another and holds them all: the chord sounds whole from the last onset. |
+| Direction | choice | Ascending | Ascending / Descending / Round trip | The order of the notes. Has no effect when « Manner » is « Block », the notes starting together. |
+| Closing root | choice | No | No / Yes | Adds the root one octave above. It closes an arpeggio, and doubles a block chord's bass. |
+| Spread | slider | 100 % | 0 – 100 %, step 1 | The share of the duration over which the onsets are laid out. Has no effect when « Manner » is « Block », the notes starting at the same instant. |
 | Tempo | slider | 90 BPM | 20 – 300 BPM, step 1 | The speed. With the duration, it gives the chord's length. |
 | Duration | slider | 2  beats | 0.25 – 8  beats, step 0.25 | The chord's length, in beats. |
 | Dynamics | slider | 90 | 1 – 127, step 1 | The velocity of every note, the same throughout. |
@@ -2144,7 +2144,7 @@ Travels the Camelot wheel to illustrate harmonic transitions used by DJs. Each s
 | Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
 | Tempo | number | 120 BPM | 40 – 240 BPM | Journey speed. |
 | Note duration | number | 0.75 | 0.05 – 2, step 0.05 | Duration of each chord as a fraction of a beat (1 = quarter, 0.5 = eighth). |
-| Mode | choice | Block | Block / Arpeggio | Block = chord notes together; Arpeggio = notes played sequentially. |
+| Mode | choice | Block | Block / Arpeggiated | Block = chord notes together; Arpeggiated = notes played sequentially. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | number | 80 % | 0 – 100 % | Output volume. |
@@ -2168,11 +2168,11 @@ Step sequencer where each step is a color. Enter a list of colors (hex or rgb), 
 | Colors | colour list | #e63946,#2a9d8f,#e9c46a,#8e6fce |  | Color palette. Each color = one step of the sequencer. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the scale. |
 | Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used. |
-| Mode | choice | Melody | Melody / Harmony / Arpeggios | Melody = one note per step; Harmony = triad chord per step; Arpeggios = chord notes played in quick succession. |
+| Mode | choice | Melody | Melody / Block / Arpeggiated | Melody = one note per step; Block = triad chord per step; Arpeggiated = chord notes played in quick succession. |
 | Octave | number | 4 | 2 – 6, step 1 | Base octave. |
 | Range | number | 2 | 1 – 3, step 1 | Allowed octave variation from lightness. |
 | Tempo | number | 120 BPM | 40 – 240 BPM | Sequencer speed. |
-| Note duration | number | 0.5 | 0.05 – 2, step 0.05 | Duration of each note as a fraction of a beat (1 = quarter, 0.5 = eighth, 0.25 = sixteenth). |
+| Note duration | number | 0.5 | 0.05 – 2, step 0.05 | Duration of each note as a fraction of a beat (1 = quarter, 0.5 = eighth, 0.25 = sixteenth). Has no effect when « Mode » is « Arpeggiated »: the chord's three notes share the step there. |
 | Bars | number | 2 | 1 – 16, step 1 | Number of repetitions of the color pattern. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -2352,7 +2352,7 @@ Programs a chord progression on a step grid: 21 rows = 7 degrees × 3 rows (tria
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
 | Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Diatonic scale used to build chords on the 7 degrees. |
 | Octave | number | 3 | 2 – 6, step 1 | Octave of the chord roots. |
-| Mode | choice | Harmony | Harmony / Arpeggio | Harmony = chord played as a block ; Arpeggio = notes quickly staggered. |
+| Mode | choice | Block | Block / Arpeggiated | Block = chord played as a block; Arpeggiated = notes quickly staggered. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Pattern | text | `1000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « \| ». Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step. |
@@ -5758,9 +5758,9 @@ Generates a full accompaniment in text-to-MIDI format. Connect its « Notation �
 | Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. |
 | Progression | text | `I V vi IV` |  | Roman numeral progression (uppercase = major chord, lowercase = minor chord). Also accepts a space-separated list of chord symbols (e.g. C Am F G). |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Accompaniment tempo. |
-| Duration | number | 1 beats | 0.25 – 4 beats, step 0.25 | Duration of each chord in beats. |
+| Duration | number | 1 beats | 0.25 – 4 beats, step 0.25 | Duration of each chord in beats. Has no effect when « Mode » is « Arpeggiated », each note lasting an eighth there. |
 | Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
-| Mode | choice | Block | Block / Arpeggio | Block plays all notes at once, Arpeggio plays them as eighth notes. |
+| Mode | choice | Block | Block / Arpeggiated | Block plays all notes at once, Arpeggiated plays them as eighth notes. |
 
 ### Image
 
@@ -6287,7 +6287,7 @@ Turns chords from a MIDI file into arpeggios. Notes starting less than 30 ms apa
 | Pattern | choice | Straight | Straight / 1232 / 12321 / 1321 / 1213 | The pattern laid over the arpeggio. Each digit names a note of the arpeggio, 1 being the first in the direction's order; the pattern is replayed shifted by one note each time, up to the end of the arpeggio, octaves included: 1232 over C, E, G, high C gives C E G E, then E G high C G. Straight: the arpeggio as the direction lays it out. |
 | Speed | choice | 1/16 | 1/1 / 1/2 / 1/4 dotted / 1/4 / 1/4 triplet / 1/8 dotted / 1/8 / 1/8 triplet / 1/16 dotted / 1/16 / 1/16 triplet / 1/32 / 1/32 triplet | The note value of one step, counted on the file's tempo: 1/16 makes four steps per quarter note. A dotted value lasts one and a half times the plain one, a triplet two thirds. The output file keeps the input's tempos and time signature. |
 | Octaves | number | 1 | 1 – 4, step 1 | The number of octaves the arpeggio spans: each octave replays the chord twelve semitones higher, after the previous one. |
-| Seed | number | 0 | 0 – 999999, step 1 | Seed for the note order; no effect outside the « Random » mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the note order; no effect when « Direction » is not « Random ». 0 = drawn at random on every run, and shown in the message so it can be copied back here. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Note length | number | 50 % | 10 – 100 %, step 5 | Length of each arpeggiated note as a percentage of the step time. 100% = legato, 50% = staccato. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
@@ -7913,7 +7913,7 @@ A frequency band a few tenths of an octave wide sweeps the spectrum between two 
 | Width | slider | 0.5 oct | 0.05 – 3 oct, step 0.05 | Width of the band that lets through, in octaves. Narrow, one partial at a time; wide, a group. |
 | Low | slider | 100 Hz | 20 – 10000 Hz, step 1 | Bottom of the sweep. |
 | High | slider | 5000 Hz | 40 – 20000 Hz, step 1 | Top of the sweep. |
-| Direction | choice | Up | Up / Down / Up and down | Upwards, downwards, or both ways. |
+| Direction | choice | Ascending | Ascending / Descending / Round trip | Upwards, downwards, or both ways. |
 | Persistence | slider | 0 s | 0 – 10 s, step 0.05 | Time a partial takes to lose 60 dB after the band has passed. 0: it falls silent as soon as the band moves on. |
 
 #### Spectral Blur
@@ -11059,7 +11059,7 @@ Extracts the dominant colors of an image and turns them into a musical sequence.
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the scale used. |
 | Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to map hues. |
-| Mode | choice | Melody | Melody / Harmony / Arpeggio | Melody = one note per color; Harmony = triad chord per color; Arpeggio = triad chord played one note after another. |
+| Mode | choice | Melody | Melody / Block / Arpeggiated | Melody = one note per color; Block = triad chord per color; Arpeggiated = triad chord played one note after another. |
 | Octave | number | 4 | 2 – 6, step 1 | Base octave of generated notes. |
 | Range | number | 2 | 1 – 3, step 1 | Number of octaves over which lightness can vary notes. |
 | Duration | number | 8 s | 1 – 60 s, step 1 | Total duration of the audio/MIDI sequence. |
@@ -11178,7 +11178,7 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the scale. |
 | Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Blues / Chromatic / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to map hues. |
-| Mode | choice | Melody | Melody / Harmony / Arpeggio | Melody = one note per shape; Harmony = triad chord per shape; Arpeggio = triad chord played one note after another. |
+| Mode | choice | Melody | Melody / Block / Arpeggiated | Melody = one note per shape; Block = triad chord per shape; Arpeggiated = triad chord played one note after another. |
 | Octave | number | 4 | 2 – 6, step 1 | Base octave. |
 | Range | number | 2 | 1 – 3, step 1 | Allowed octave variation from lightness. |
 | Duration | number | 8 s | 1 – 60 s, step 1 | Total duration of the sequence. |

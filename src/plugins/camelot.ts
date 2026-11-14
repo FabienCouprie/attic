@@ -9,6 +9,7 @@ import { hasardDuNoeud } from "../core";
 import { traduire } from "../i18n";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
+import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -47,9 +48,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 2], pas: 0.05, defaut: 0.75,
         doc: "Durée de chaque accord en fraction de temps (1 = temps entier, 0.5 = croche).",
         docEn: "Duration of each chord as a fraction of a beat (1 = quarter, 0.5 = eighth)." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Bloc", "Arpège"], optionsEn: ["Block", "Arpeggio"], optionIds: ["bloc", "arpege"], defaut: "Bloc", defautEn: "Block",
-        doc: "Bloc = notes de l'accord simultanées ; Arpège = notes déclinées.",
-        docEn: "Block = chord notes together; Arpeggio = notes played sequentially." },
+      { nom: "Mode", nomEn: "Mode", type: "choix", ...choixFaconAccord(["plaque", "arpege"]), defaut: "Plaqué", defautEn: "Block",
+        doc: "Plaqué = notes de l'accord simultanées ; Arpégé = notes déclinées.",
+        docEn: "Block = chord notes together; Arpeggiated = notes played sequentially." },
       { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
@@ -63,8 +64,7 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const parcoursBrut = ctx.paramTexte("Parcours", "Complet");
       const parcours: any = ["voisins", "aleatoire"].includes(parcoursBrut.toLowerCase()) ? parcoursBrut.toLowerCase() : "complet";
-      const modeBrut = ctx.paramTexte("Mode", "Bloc");
-      const mode: any = modeBrut.toLowerCase().includes("arp") ? "arpege" : "bloc";
+      const mode: any = faconDe(ctx.paramTexte("Mode", "plaque")) === "arpege" ? "arpege" : "bloc";
       const modeRenduBrut = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const modeRendu = modeRenduBrut === "Automatique" ? (sf2Chargee() ? "SoundFont" : "FM/Oscillateurs") : modeRenduBrut;
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));

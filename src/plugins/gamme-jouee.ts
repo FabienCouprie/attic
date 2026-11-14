@@ -19,6 +19,7 @@ import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { notesVersFichierMidi, rendreMidi, appliquerInstrumentMidi, type NoteEvenement } from "../audio";
 import { GAMMES, parcoursDeGamme, type SensDeParcours } from "../audio/gammes";
+import { SENS_UN_PARCOURS, choixSensArpege, sensParmi } from "../audio/sens-arpege";
 import { CLES, PARAMETRE_TONIQUE, alterationDe } from "../audio/cles";
 import { nomNoteRond, type Alteration } from "../audio/nom-note";
 import { langueCourante } from "../i18n";
@@ -55,7 +56,7 @@ export const fiches: FicheAudio[] = ([
 
 « Étendue » est le nombre d'octaves parcourues. Chacune rejoue les mêmes degrés, douze demi-tons plus haut.
 
-« Sens » décide du chemin. Montante part de la tonique ; descendante fait le chemin exactement à l'envers ; l'aller-retour monte puis redescend sans rejouer son sommet, qui est atteint une fois.
+« Sens » décide du chemin. Montant, il part de la tonique ; descendant, il fait le chemin exactement à l'envers ; l'aller-retour monte puis redescend sans rejouer son sommet, qui est atteint une fois.
 
 « Tonique finale » ferme le parcours sur l'octave de la tonique. Sans elle, une gamme s'arrête sur son dernier degré, ce qui s'entend comme une phrase interrompue. La couper est ce qu'il faut pour enchaîner deux parcours, où elle ferait une note doublée à la jointure.
 
@@ -114,10 +115,10 @@ The « Notation » output writes the run as text, one note per line with its oct
         doc: "Le nombre d'octaves parcourues. Chacune rejoue les mêmes degrés douze demi-tons plus haut.",
         docEn: "The number of octaves covered. Each one replays the same degrees twelve semitones higher." },
       { nom: "Sens", nomEn: "Direction", type: "choix",
-        options: ["Montante", "Descendante", "Aller-retour"],
-        optionsEn: ["Ascending", "Descending", "Round trip"],
-        optionIds: ["montante", "descendante", "aller-retour"],
-        defaut: "Montante", defautEn: "Ascending",
+        // LE SENS D'UN ARPÈGE, SOUS SES IDENTIFIANTS : il s'écrivait au féminin, `montante` et
+        // `descendante`, que `optionsHeritees` relit.
+        ...choixSensArpege(SENS_UN_PARCOURS),
+        defaut: "Montant", defautEn: "Ascending",
         doc: "Le chemin. L'aller-retour monte puis redescend sans rejouer son sommet.",
         docEn: "The path. The round trip goes up then back down without replaying its summit." },
       { nom: "Tonique finale", nomEn: "Closing tonic", type: "choix",
@@ -143,7 +144,7 @@ The « Notation » output writes the run as text, one note per line with its oct
       const demiTon = parseInt(ctx.paramTexte("Clé", "0"), 10) || 0;
       const octave = Math.round(ctx.paramNombre("Octave", 4));
       const octaves = Math.round(ctx.paramNombre("Étendue", 1));
-      const sens = ctx.paramTexte("Sens", "montante") as SensDeParcours;
+      const sens: SensDeParcours = sensParmi(ctx.paramTexte("Sens", "montant"), SENS_UN_PARCOURS, "montant");
       const fermer = ctx.paramTexte("Tonique finale", "oui") !== "non";
       const tempo = ctx.paramNombre("Tempo", 90);
       const velocite = Math.round(ctx.paramNombre("Nuance", 90));

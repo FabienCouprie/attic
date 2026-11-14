@@ -167,6 +167,22 @@ describe("automate-cellulaire", () => {
     expect(res.audio.duration).toBeGreaterThan(0);
   });
 
+  it("EN MÉLODIE ET EN ARPÈGE, LE MAPPING AGIT : la densité se compte sur la largeur de la ligne", () => {
+    // Le nombre de cellules actives était passé à la fois comme densité et comme son maximum : leur
+    // rapport valait toujours un, et la vélocité comme la durée restaient celles d'une ligne pleine.
+    // Relevé par la passe de croisement du 2026-11-14, sous « Mode voix » devenu gouverneur.
+    for (const modeVoix of ["Mélodie", "Arpège"] as const) {
+      const de = (mapping: "Hauteur" | "Vélocité" | "Durée") =>
+        genererNotesAutomateCellulaire({ ...defaults, modeVoix, mapping, graine: 5 });
+      const hauteur = de("Hauteur"), velocite = de("Vélocité"), duree = de("Durée");
+      expect(velocite.map((n) => n.velocite), modeVoix).not.toEqual(hauteur.map((n) => n.velocite));
+      expect(duree.map((n) => n.fin - n.debut), modeVoix).not.toEqual(hauteur.map((n) => n.fin - n.debut));
+      // Une ligne n'est jamais pleine ici : la vélocité baisse sans passer sous la moitié.
+      for (const n of velocite) expect(n.velocite).toBeGreaterThanOrEqual(50);
+      for (const n of velocite) expect(n.velocite).toBeLessThan(100);
+    }
+  });
+
   it("LE REPLI EN FM SE DIT : demandé au SoundFont sans qu'aucun soit chargé, le rendu l'annonce", async () => {
     // Ce passage était muet : le nœud sonnait en FM sous un réglage qui disait SoundFont.
     const petit = { ...defaults, largeur: 8, generations: 8 };

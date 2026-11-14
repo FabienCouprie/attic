@@ -27,8 +27,15 @@ import { reglagesANomenclature } from "../plugins/nomenclatures";
 
 const FIN = String.fromCharCode(10);
 
-/** Les comptes de la dette au relevé du 2026-11-14 : ils ne font que baisser. */
-const PLAFOND_INERTIES = 193;
+/**
+ * Les comptes de la dette au relevé du 2026-11-14 : ils ne font que baisser.
+ *
+ * SAUF UNE FOIS, SUR LA DÉCISION DE FABIEN (lot 3c, 2026-11-14) : six inscriptions y sont entrées, de
+ * 193 à 199. Le sens d'un arpège et la façon de jouer un accord devenus gouverneurs, ils montraient sous
+ * eux des inerties que la dette portait déjà sous d'autres gouverneurs, et dont ils ne sont pas la
+ * cause. Le lot 3d les déclare par leur vraie condition, une fois chacune.
+ */
+const PLAFOND_INERTIES = 199;
 const PLAFOND_COINCIDENCES = 37;
 
 /** Une fiche d'essai : un réglage à nomenclature « Mode » et un réglage numérique « Gain ». */

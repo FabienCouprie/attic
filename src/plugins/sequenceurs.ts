@@ -18,6 +18,7 @@ import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INST
 import { PARAMETRE_CLE } from "../audio/cles";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 import { LIBELLES_HERITES_GAMMES, completer } from "../audio/gammes";
+import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 
 // LA LISTE VIENT DE LA TABLE, DANS L'ORDRE QUI ÉTAIT LE SIEN. Ses identifiants étaient
 // « pentatonique majeur » et « pentatonique mineur », sans accord et avec une espace : des ALIAS,
@@ -166,10 +167,9 @@ export const fiches: FicheAudio[] = ([
         optionsEn: GAMMES_ACCORDS.map((g) => g.en), defautEn: "Major" },
       { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 3,
         doc: "Octave de la fondamentale des accords.", docEn: "Octave of the chord roots." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Harmonie", "Arpège"], defaut: "Harmonie",
-        optionIds: ["harmonie", "arpege"],
-        doc: "Harmonie = accord joué en bloc ; Arpège = notes décalées rapidement.", docEn: "Harmony = chord played as a block ; Arpeggio = notes quickly staggered.",
-        optionsEn: ["Harmony", "Arpeggio"], defautEn: "Harmony" },
+      { nom: "Mode", nomEn: "Mode", type: "choix", ...choixFaconAccord(["plaque", "arpege"]), defaut: "Plaqué",
+        doc: "Plaqué = accord joué en bloc ; Arpégé = notes décalées rapidement.", docEn: "Block = chord played as a block; Arpeggiated = notes quickly staggered.",
+        defautEn: "Block" },
       { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
@@ -187,7 +187,7 @@ export const fiches: FicheAudio[] = ([
       const cle = ctx.paramTexte("Clé", "C");
       const gamme = ctx.paramTexte("Gamme", "majeur");
       const octave = ctx.paramNombre("Octave", 3);
-      const mode = ctx.paramTexte("Mode", "harmonie") as "harmonie" | "arpege";
+      const mode: "harmonie" | "arpege" = faconDe(ctx.paramTexte("Mode", "plaque")) === "arpege" ? "arpege" : "harmonie";
       const modeSynth = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const grille = decoderMotifAccords(ctx.paramTexte("Motif", MOTIF_ACCORDS_DEFAUT), nbPas);

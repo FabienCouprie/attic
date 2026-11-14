@@ -199,8 +199,12 @@ export function completer(historique: readonly string[]): Gamme[] {
   return [...gammesParIds(historique), ...GAMMES.filter((g) => !vus.has(g.id))];
 }
 
-/** Le sens dans lequel une gamme se parcourt. */
-export type SensDeParcours = "montante" | "descendante" | "aller-retour";
+/**
+ * Le sens dans lequel une gamme se parcourt, sous les identifiants du sens d'un arpège
+ * (`audio/sens-arpege.ts`). Il s'écrivait au féminin, `montante` et `descendante`, jusqu'au lot 3c de
+ * la passe de complétude (2026-11-14).
+ */
+export type SensDeParcours = "montant" | "descendant" | "aller-retour";
 
 /**
  * Les notes d'une gamme, une à une, depuis une tonique donnée en numéro de note.
@@ -220,7 +224,7 @@ export function parcoursDeGamme(
   id: string,
   tonique: number,
   octaves = 1,
-  sens: SensDeParcours = "montante",
+  sens: SensDeParcours = "montant",
   toniqueFinale = true,
 ): number[] {
   const degres = degresDeGamme(id);
@@ -229,9 +233,9 @@ export function parcoursDeGamme(
   for (let o = 0; o < tours; o++) for (const d of degres) montante.push(tonique + 12 * o + d);
   if (toniqueFinale) montante.push(tonique + 12 * tours);
   const jouable = (h: number) => h >= 0 && h <= 127;
-  if (sens === "montante") return montante.filter(jouable);
+  if (sens === "montant") return montante.filter(jouable);
   const descendante = [...montante].reverse();
-  if (sens === "descendante") return descendante.filter(jouable);
+  if (sens === "descendant") return descendante.filter(jouable);
   return [...montante, ...descendante.slice(1)].filter(jouable);
 }
 

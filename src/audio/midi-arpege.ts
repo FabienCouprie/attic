@@ -20,6 +20,7 @@
 import { parseMidi, writeMidi } from "midi-file";
 import { resoudreRecouvrements } from "./midi-recouvrement";
 import { analyserMidi } from "./midi";
+import { SENS_ARPEGE } from "./sens-arpege";
 
 /**
  * La longueur d'un pas en noires, pour chaque valeur de note offerte.
@@ -37,8 +38,8 @@ export const NOIRES_PAR_PAS: Record<string, number> = {
   "1/8 triplet": 1 / 3, "1/16 triplet": 1 / 6,
 };
 
-/** Les directions, sous les identifiants du dépôt pour le sens d'un arpège. */
-export const DIRECTIONS = ["montant", "descendant", "aller-retour", "retour-aller", "aleatoire", "ordre-de-jeu", "convergent", "divergent"] as const;
+/** Les directions : la table du sens d'un arpège, que l'arpégiateur offre entière. */
+export const DIRECTIONS = SENS_ARPEGE.ids;
 
 /** Mélange uniforme (Fisher-Yates), sans modifier le tableau d'origine. */
 function melangerUniformement(arr: number[], hasard: () => number): number[] {
