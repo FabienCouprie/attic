@@ -37,7 +37,6 @@ const CLASSEES: Record<string, { appels: number; raison: string }> = {
   "vues-domaine/Songsee.tsx": { appels: 1, raison: "l'image d'un spectre, tenue par la vue et révoquée par elle" },
   "vues-domaine/vues-lecteur.tsx": { appels: 1, raison: "la piste du lecteur de dossier, tenue par la vue et révoquée par elle" },
   "vues-domaine/vues-collections.tsx": { appels: 2, raison: "deux téléchargements, révoqués sur place" },
-  "vues-domaine/vues-midi.tsx": { appels: 1, raison: "un téléchargement, révoqué sur place" },
 };
 
 function sources(dossier: string): string[] {
@@ -80,8 +79,9 @@ describe("les naissances d'URL d'objet dans l'interface", () => {
   it("CHAQUE FICHIER QUI EN CRÉE EST CLASSÉ, AVEC SON COMPTE EXACT : une URL de média passe par le registre", () => {
     const comptes = releve();
     // LE DÉNOMINATEUR : onze fichiers et quatorze appels le 2026-11-10, depuis que le film de la
-    // démonstration naît par le registre. Si le relevé tombe sous la moitié, il ne regarde plus le
-    // bon endroit.
+    // démonstration naît par le registre ; dix et treize le 2026-11-14, le téléchargement de
+    // `vues-midi.tsx` étant parti avec la vue du « Transcripteur MIDI ». Si le relevé tombe sous la
+    // moitié, il ne regarde plus le bon endroit.
     expect(Object.keys(comptes).length, "le relevé ne voit presque plus de fichiers : il regarde ailleurs").toBeGreaterThanOrEqual(6);
     const attendus = Object.fromEntries(Object.entries(CLASSEES).map(([f, c]) => [f, c.appels]));
     expect(comptes, [

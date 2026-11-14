@@ -196,7 +196,7 @@ export const fiches: FicheAudio[] = ([
     // LE NOM DISAIT UN PORT QUE CE NŒUD NE PORTE PAS. Il s'appelait « Parole vers séquence » et sa
     // sortie est de type `midi` : « séquence » est un type de port du dépôt, et le promettre
     // envoyait chercher un branchement qui n'existe pas. Il faut « MIDI → séquence » après, comme
-    // après le transcripteur. L'IDENTIFIANT NE CHANGE PAS, lui : un graphe enregistré le nomme.
+    // après la « Transcription MIDI ». L'IDENTIFIANT NE CHANGE PAS, lui : un graphe enregistré le nomme.
     id: "parole-vers-sequence", nom: "Parole vers MIDI", nomEn: "Speech to MIDI",
     univers: "Traitement", famille: "Conversion",
     resume: "Met une note sur chaque mot dit : la durée du mot, la hauteur de la voix, le niveau en nuance.",

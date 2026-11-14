@@ -54,15 +54,15 @@ const DU_MOTEUR: Record<string, string> = {
  * Les workers d'un composant qui ne rend PAS DE SON, avec la spec qui en tient la sortie.
  *
  * LA BASE D'EMPREINTES EXIGE UNE SORTIE AUDIO, et c'est voulu : un composant qui n'en rend plus est
- * un changement en soi. Le Transcripteur MIDI ne rend qu'un fichier MIDI, et ne peut donc pas y
- * entrer. Sa preuve est faite dans l'application par la spec nommée : le composant rend son fichier
- * par son worker, puis sans worker, dans le fil, et pas un octet ne doit différer. Elle a été vue
- * rouge sur une vélocité changée dans le seul worker. Décidé par Fabien le 2026-11-07, plutôt que
- * d'apprendre au banc l'empreinte d'un fichier MIDI.
+ * un changement en soi. Un composant qui ne rend qu'un fichier, MIDI par exemple, ne peut donc pas
+ * y entrer. Sa preuve est faite dans l'application par la spec nommée : le composant rend son
+ * fichier par son worker, puis sans worker, dans le fil, et pas un octet ne doit différer. Décidé
+ * par Fabien le 2026-11-07, plutôt que d'apprendre au banc l'empreinte d'un fichier MIDI.
+ *
+ * LA LISTE EST VIDE DEPUIS LE 2026-11-14 : son seul inscrit, le worker du « Transcripteur MIDI »,
+ * est parti avec ce composant. La règle reste pour le suivant.
  */
-const SANS_SORTIE_AUDIO: Record<string, string> = {
-  "transcription-worker.ts": "transcription-dans-application.spec.ts",
-};
+const SANS_SORTIE_AUDIO: Record<string, string> = {};
 
 function workersDeCalcul(): string[] {
   return readdirSync(WORKERS)

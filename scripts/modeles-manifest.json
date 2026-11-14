@@ -47,28 +47,6 @@
       ]
     },
     {
-      "id": "basic-pitch",
-      "nom": "Transcription polyphonique",
-      "nomEn": "Polyphonic transcription",
-      "noeuds": [
-        "transcripteur-midi"
-      ],
-      "octets": 230444,
-      "source": {
-        "type": "fichier",
-        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/basic-pitch.onnx",
-        "octets": 230444,
-        "sha256": "2c3c1d144bfa61ad236e92e169c13535c880469a12a047d4e73451f2c059a0ec"
-      },
-      "fichiers": [
-        {
-          "chemin": "oonx/basic-pitch.onnx",
-          "octets": 230444,
-          "sha256": "2c3c1d144bfa61ad236e92e169c13535c880469a12a047d4e73451f2c059a0ec"
-        }
-      ]
-    },
-    {
       "id": "htdemucs-6s",
       "nom": "Séparation 6 pistes",
       "nomEn": "6-stem separation",

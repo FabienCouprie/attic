@@ -43,7 +43,6 @@ export * from "./midi-arpege";
 export * from "./analyse";
 export * from "./analyse-transcription";
 export * from "./analyse-descripteurs";
-export * from "./analyse-polyphonique";
 export * from "./analyse-genre";
 export * from "./batterie";
 export * from "./enveloppe";

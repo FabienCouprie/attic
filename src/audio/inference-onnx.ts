@@ -12,8 +12,6 @@
 import * as ort from "onnxruntime-web";
 import { preparerSession, separerAvecSession, type ResultatSeparation } from "./ia";
 import { debruiterParTrames, GTCRN_BINS } from "./gtcrn";
-import { transcrireBasicPitch } from "./basic-pitch";
-import type { Note } from "./note";
 
 /** Débruiter un signal 16 kHz mono par GTCRN. */
 export interface DemandeGtcrn {
@@ -35,20 +33,8 @@ export interface DemandeMdx {
   canaux: Float32Array[];
 }
 
-/** Transcrire un son en notes par Basic Pitch, pour le Transcripteur MIDI polyphonique. */
-export interface DemandeBasicPitch {
-  type: "transcrire-basic-pitch";
-  cle: string;
-  modele: ArrayBuffer;
-  canaux: Float32Array[];
-  sampleRate: number;
-  seuil: number;
-  noteMin: number;
-  noteMax: number;
-}
-
-export type DemandeOnnx = DemandeGtcrn | DemandeMdx | DemandeBasicPitch;
-export type ResultatOnnx = Float32Array | ResultatSeparation | Note[];
+export type DemandeOnnx = DemandeGtcrn | DemandeMdx;
+export type ResultatOnnx = Float32Array | ResultatSeparation;
 
 /** Formes des trois caches, relevées sur la signature de l'ONNX. */
 const FORMES_CACHE = {
@@ -104,24 +90,7 @@ export async function separerMdx(d: DemandeMdx, avancement: (pct: number) => voi
   return separerAvecSession({ canaux: d.canaux }, session, avancement);
 }
 
-/**
- * LES SESSIONS DE BASIC PITCH SE CRÉENT COMME AVANT, avec le seul fournisseur `wasm` et sans les
- * options de `preparerSession` : le calcul déplacé doit rendre les notes du fil au bit près.
- */
-const sessionsBasicPitch = new Map<string, ort.InferenceSession>();
-
-/** Les notes, par fenêtres de deux secondes ; `avancement` reçoit un pourcentage. */
-export async function transcrireBasicPitchDemande(d: DemandeBasicPitch, avancement: (pct: number) => void): Promise<Note[]> {
-  let session = sessionsBasicPitch.get(d.cle);
-  if (!session) {
-    session = await ort.InferenceSession.create(new Uint8Array(d.modele), { executionProviders: ["wasm"] });
-    sessionsBasicPitch.set(d.cle, session);
-  }
-  return transcrireBasicPitch(ort, session, d.canaux, d.sampleRate, d.seuil, d.noteMin, d.noteMax, avancement);
-}
-
 /** Ce que le worker sert : une demande, une réponse. */
 export function traiterDemandeOnnx(d: DemandeOnnx, avancement: (valeur: number) => void): Promise<ResultatOnnx> {
-  if (d.type === "transcrire-basic-pitch") return transcrireBasicPitchDemande(d, avancement);
   return d.type === "debruiter-gtcrn" ? debruiterGtcrn(d, avancement) : separerMdx(d, avancement);
 }

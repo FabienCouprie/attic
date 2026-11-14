@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **511 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **510 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 246 | [Conversion](#conversion) (24) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (17) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 245 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (17) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -2780,7 +2780,6 @@ After Iannis Xenakis's sieve theory ("Sieves", 1990; the technique appears as ea
 | [Melodic Profile](#melodic-profile) | Gives a sequence the profile of a curve, and also returns the profile it had. |
 | [Merge Voices](#merge-voices) | Merges several sequences into one, each becoming a voice. |
 | [MIDI → Sequence](#midi--sequence) | Reads the notes of a MIDI file and returns them on the sequence flow. |
-| [MIDI Transcriber](#midi-transcriber) | Transcribes an audio signal into MIDI notes. |
 | [MIDI Transcription](#midi-transcription) | Transcribes audio into MIDI notes per instrument, with its tempo and quantization. |
 | [MP3 → WAV](#mp3--wav) | Converts an audio stream to downloadable WAV. |
 | [Quantize](#quantize) | Writes a sequence of arbitrary durations as a measured rhythm. |
@@ -2992,28 +2991,6 @@ Reads the notes of a MIDI file and returns them on a « Sequence » output. A se
 |---|---|---|---|---|
 | Channel | number | -1 | -1 – 15, step 1 | The MIDI channel kept. At minus one, every channel is taken together. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The tempo written into the sequence, used for engraving. The one in the file takes priority. |
-
-#### MIDI Transcriber
-
-`transcripteur-midi` · Processing → Conversion
-
-*Transcribes an audio signal into MIDI notes.*
-
-Transcribes audio into MIDI notes, via monophonic pitch detection (FFT) or polyphonic (Basic Pitch ONNX).
-
-| Port | Name | Type | |
-|---|---|---|---|
-| input | Audio | audio |  |
-| output | MIDI | MIDI |  |
-
-| Parameter | Type | Default | Values | Description |
-|---|---|---|---|---|
-| Method | choice | Monophonic (FFT) | Monophonic (FFT) / Polyphonic (Basic Pitch ONNX) | Transcription algorithm. |
-| Onset threshold | number | 10 % | 1 – 50 % | Note attack detection sensitivity. |
-| Min note | number | 36 | 21 – 120 | Lowest MIDI note to detect. |
-| Max note | number | 96 | 21 – 127 | Highest MIDI note to detect. |
-| MIDI tempo | number | 120 BPM | 40 – 240 BPM | Tempo of the generated MIDI file. |
-| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
 #### MIDI Transcription
 

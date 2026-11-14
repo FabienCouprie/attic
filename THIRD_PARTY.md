@@ -87,6 +87,12 @@ archive as `LICENSE-STABILITY.md`.
 
 ONNX export by lsb (`lsb/stable-audio-3-small-music-onnx`) and bgkb.
 
+#### Note — Basic Pitch (`basic-pitch.onnx`)
+
+> **Depuis le 2026-11-14, ce fichier n'est plus référencé par le manifeste** : le seul nœud qui
+> l'employait, le « Transcripteur MIDI », a été retiré, la « Transcription MIDI » faisant le même
+> travail. L'asset reste publié sur la release `assets` et n'est plus téléchargé par l'application.
+
 #### Note — genre classifier (`model_genre.onnx`)
 
 This file is a HuBERT fine-tune exported to ONNX. Its upstream repository declared no licence and

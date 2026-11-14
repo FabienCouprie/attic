@@ -1,18 +1,16 @@
-// audio/analyse-transcription.ts — Trouver les pics d'un spectre, et en tirer des notes.
+// audio/analyse-transcription.ts — Les libellés de l'analyse : agrégation et type de pièce.
 //
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
+//
+// LA TRANSCRIPTION MONOPHONIQUE QUI DONNAIT SON NOM À CE FICHIER EST PARTIE le 2026-11-14, avec le
+// seul composant qui l'appelait, le « Transcripteur MIDI ». Le nom du fichier est resté.
 
-import type { NoteEvenement } from "./midi-sequence";
 import { traduire } from "../i18n";
 import type { OptionsCentroidSpectral } from "./analyse-descripteurs";
-import { transcrireMonoVoies } from "./transcription-mesures";
 
 // La taille de fenêtre de l'analyse vit dans `descripteurs-valeurs.ts`, que lit le worker.
 export { tailleFenetreAnalyse } from "./descripteurs-valeurs";
-// Les pics du spectre et les notes qu'on en tire vivent dans `transcription-mesures.ts`, que lit le
-// worker du Transcripteur MIDI.
-export { fusionnerNotesRepetees } from "./transcription-mesures";
 
 // Accepte l'id canonique ("moyenne"/"mediane"/"maximum"), l'ancien libellé
 // français ET l'anglais. Le cas « Médiane » était un bug silencieux : son
@@ -49,15 +47,4 @@ export function traduireType(valeur: string): string {
     "incertain": "analyse.incertain",
   };
   return map[valeur] ? traduire(map[valeur]) : valeur;
-}
-
-/** La transcription monophonique d'un tampon : celle de `transcription-mesures.ts`, sur ses canaux. */
-export function transcrireMono(
-  buffer: AudioBuffer,
-  seuilOnset: number,
-  noteMin: number,
-  noteMax: number,
-): NoteEvenement[] {
-  const canaux = Array.from({ length: buffer.numberOfChannels }, (_, c) => buffer.getChannelData(c));
-  return transcrireMonoVoies(canaux, buffer.sampleRate, seuilOnset, noteMin, noteMax);
 }

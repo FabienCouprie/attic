@@ -133,9 +133,10 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   canaux passé au worker : la page le faisait avant d'envoyer, et gelait de 9 à 10 ms (PR 302).
 >   Sa huitième, le « Transcripteur MIDI » hors du fil, est fusionnée (PR 303) : 127 ms de gel
 >   total ramenés à 2 ms en monophonique, et de 96 à 119 ms ramenés à 22-43 ms en polyphonique, où
->   ne reste que Basic Pitch. Son worker est le seul d'un composant que la base d'empreintes ne couvre pas, faute
->   de sortie audio : `tests-e2e/transcription-dans-application.spec.ts` en fait la preuve à sa
->   place. Sa neuvième, la « Matrice d'auto-similarité » hors du fil, est fusionnée (PR 304) : sur
+>   ne reste que Basic Pitch. Son worker était le seul d'un composant que la base d'empreintes ne couvrait pas, faute
+>   de sortie audio : `tests-e2e/transcription-dans-application.spec.ts` en faisait la preuve à sa
+>   place. Le composant a été retiré le 2026-11-14, avec son worker, Basic Pitch et cette spec, la
+>   « Transcription MIDI » faisant le même travail. Sa neuvième, la « Matrice d'auto-similarité » hors du fil, est fusionnée (PR 304) : sur
 >   deux minutes de son, 1 128 ms de gel total ramenés à 10 ms. CE QUI RESTE SE MESURE SUR UN SON
 >   LONG, trois secondes ne suffisant plus à départager. Sa dixième, `multicanal` hors du fil, est
 >   fusionnée (PR 305) : sur deux minutes, le « Rendu d'objets » passe de 872 ms d'un bloc à 35 ms,
@@ -149,8 +150,8 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 >   entier d'un bloc, hormis quatre exceptions déclarées. L'autre moitié, les sondes Python et Julia
 >   au lancement, reste telle quelle, décidé par Fabien le 2026-11-07, comme l'écriture synchrone de
 >   leurs chemins et de leurs scripts : ce sont les quatre exceptions. Basic Pitch, qui gelait la
->   page de 22 à 43 ms dans le Transcripteur polyphonique, calcule dans le worker d'inférence ONNX
->   (PR 309) : 35 ms ramenés à 2 ou 3 sur le son d'essai ; sur deux minutes, ce qui reste est
+>   page de 22 à 43 ms dans le Transcripteur polyphonique, a calculé dans le worker d'inférence ONNX
+>   jusqu'au retrait de ce composant (PR 309) : 35 ms ramenés à 2 ou 3 sur le son d'essai ; sur deux minutes, ce qui reste est
 >   l'envoi de l'entrée au worker, 20 ms pour deux canaux. Reste dans la page l'analyse du genre,
 >   qui ne se mesure pas au banc, son modèle ne se lisant que par le pont d'Electron. Le point 4 du
 >   lot, la borne en octets de `cacheExec`, n'est pas fait, et ne le sera pas sans autre raison :

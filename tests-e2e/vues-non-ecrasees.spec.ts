@@ -56,7 +56,6 @@ const ECARTES: Record<string, string> = {
   "classificateur-genre": "charge un modèle appris",
   "score-esthetique": "charge un modèle appris",
   "comparaison-esthetique": "charge un modèle appris",
-  "transcripteur-midi": "charge un modèle appris",
   "generateur-script-ia": "appelle un service de génération",
   "couleur-suno-ia": "appelle un service externe",
   // Un autre interpréteur installé sur la machine.
