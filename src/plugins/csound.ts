@@ -11,6 +11,7 @@
 // une ligne de code.
 
 import { fiche, reglagePartage } from "./fiche";
+import { canauxDe, choixMonoStereo } from "../audio/mono-stereo";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -147,7 +148,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Quand jouer quoi. « i1 0 1 220 0.5 » joue l'instrument 1 à l'instant 0 pendant 1 seconde, avec 220 et 0,5 comme p4 et p5. Trois sources possibles, par ordre de priorité : un MIDI branché, puis l'entrée Partition, puis ce champ, et le composant dit dans son message laquelle il a prise. Le « e » final est ajouté s'il manque.",
         docEn: "When to play what. « i1 0 1 220 0.5 » plays instrument 1 at time 0 for 1 second, with 220 and 0.5 as p4 and p5. Three possible sources, in order of precedence: a connected MIDI file, then the Score input, then this field, and the node states in its message which one it took. The final « e » is added if missing." },
       { nom: "Canaux", nomEn: "Channels", type: "choix",
-        options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["1", "2"],
+        ...choixMonoStereo(),
         defaut: "Mono", defautEn: "Mono",
         doc: "Nombre de canaux de l'orchestre. En stéréo, employez outs au lieu de out.",
         docEn: "Number of channels in the orchestra. In stereo, use outs instead of out." },
@@ -158,7 +159,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Graine des opcodes aléatoires. Csound est reproductible dès qu'elle est fixée : 0 laisse Csound tirer la sienne et le rendu change à chaque exécution.",
         docEn: "Seed of the random opcodes. Csound is reproducible as soon as it is fixed: 0 lets Csound draw its own and the render changes on every run." },
       { nom: "Canaux d'entrée", nomEn: "Input channels", type: "choix",
-        options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["mono", "stereo"],
+        ...choixMonoStereo(),
         defaut: "Mono", defautEn: "Mono",
         doc: "Nombre de canaux des fichiers d'entrée écrits pour Csound. En mono, « a1 diskin2 \"entree1.wav\", 1 » fonctionne toujours ; en stéréo, diskin2 exige deux sorties (« a1, a2 diskin2 … ») et refuse la note sinon, ce qui donne un rendu muet.",
         docEn: "Number of channels in the input files written for Csound. In mono, « a1 diskin2 \"entree1.wav\", 1 » always works; in stereo, diskin2 requires two outputs (« a1, a2 diskin2 … ») and refuses the note otherwise, which yields a silent render." },
@@ -169,7 +170,7 @@ export const fiches: FicheAudio[] = ([
       const audioEntree = ctx.entree(0);
       const notes = await notesDuMidi(ctx.entree(1));
       const entrees: EntreeFichier[] = audioEntree instanceof AudioBuffer
-        ? [{ nom: "entree1.wav", buffer: audioEntree, stereo: ctx.paramTexte("Canaux d'entrée", "mono") === "stereo" }]
+        ? [{ nom: "entree1.wav", buffer: audioEntree, stereo: canauxDe(ctx.paramTexte("Canaux d'entrée", "mono")) === 2 }]
         : [];
 
       // L'orchestre : l'entrée branchée d'abord, le champ ensuite.
@@ -200,7 +201,7 @@ export const fiches: FicheAudio[] = ([
       const csd = construireCsd({
         orchestre: orchestre.texte,
         partition,
-        nchnls: parseInt(ctx.paramTexte("Canaux", "1"), 10) || 1,
+        nchnls: canauxDe(ctx.paramTexte("Canaux", "mono")),
         ksmps: Math.round(ctx.paramNombre("Taille de bloc", 32)),
         graine: graine > 0 ? graine : undefined,
       });
@@ -244,7 +245,7 @@ export const fiches: FicheAudio[] = ([
         doc: "L'instrument 1 est appelé pour chaque note. La partition lui passe la fréquence en hertz dans p4, l'amplitude de 0 à 1 dans p5, et le numéro de note MIDI dans p6, de sorte qu'on n'ait jamais à convertir soi-même. Ce champ sert si aucune entrée Orchestre n'est branchée ; une entrée branchée le remplace, et le composant le dit.",
         docEn: "Instrument 1 is called for each note. The score passes it the frequency in hertz in p4, the amplitude from 0 to 1 in p5, and the MIDI note number in p6, so that no conversion is ever needed. This field is used when no Orchestra input is connected; a connected input replaces it, and the node says so." },
       { nom: "Canaux", nomEn: "Channels", type: "choix",
-        options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["1", "2"],
+        ...choixMonoStereo(),
         defaut: "Mono", defautEn: "Mono",
         doc: "Nombre de canaux de l'orchestre.", docEn: "Number of channels in the orchestra." },
       { nom: "Taille de bloc", nomEn: "Block size", type: "nombre", plage: [1, 512], pas: 1, defaut: 32,
@@ -272,7 +273,7 @@ export const fiches: FicheAudio[] = ([
         // Un « f0 » tient la partition ouverte jusqu'à l'instant voulu : c'est la façon
         // canonique de laisser les queues de résonance s'éteindre.
         partition: `${partitionDepuisNotes(notes)}\nf0 ${fin.toFixed(3)}\ne`,
-        nchnls: parseInt(ctx.paramTexte("Canaux", "1"), 10) || 1,
+        nchnls: canauxDe(ctx.paramTexte("Canaux", "mono")),
         ksmps: Math.round(ctx.paramNombre("Taille de bloc", 32)),
         graine: graine > 0 ? graine : undefined,
       });
@@ -320,7 +321,7 @@ endin`,
         doc: "L'orchestre de traitement, employé si aucune entrée Orchestre n'est branchée, une entrée branchée le remplace, et le composant le dit. Les sons d'entrée sont écrits dans le système de fichiers de Csound sous les noms « entree1.wav » et « entree2.wav », et se lisent par diskin2 ou soundin ; un son branché que l'orchestre ne nomme pas n'a aucun effet, et le composant vous en avertit. La durée de la partition est réglée sur celle de la plus longue entrée.",
         docEn: "The processing orchestra, used when no Orchestra input is connected, a connected input replaces it, and the node says so. The input sounds are written into Csound's filesystem as « entree1.wav » and « entree2.wav », and read with diskin2 or soundin; a connected sound the orchestra does not name has no effect, and the node warns you. The score's duration is set from the longest input." },
       { nom: "Canaux", nomEn: "Channels", type: "choix",
-        options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["1", "2"],
+        ...choixMonoStereo(),
         defaut: "Mono", defautEn: "Mono",
         doc: "Nombre de canaux de l'orchestre.", docEn: "Number of channels in the orchestra." },
       { nom: "Queue", nomEn: "Tail", type: "nombre", plage: [0, 20], pas: 0.1, defaut: 1, unite: "s",
@@ -332,7 +333,7 @@ endin`,
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1,
         doc: "Graine des opcodes aléatoires.", docEn: "Seed of the random opcodes." },
       { nom: "Canaux d'entrée", nomEn: "Input channels", type: "choix",
-        options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["mono", "stereo"],
+        ...choixMonoStereo(),
         defaut: "Mono", defautEn: "Mono",
         doc: "Nombre de canaux des fichiers d'entrée écrits pour Csound. En mono, « a1 diskin2 \"entree1.wav\", 1 » fonctionne toujours ; en stéréo, diskin2 exige deux sorties (« a1, a2 diskin2 … ») et refuse la note sinon, ce qui donne un rendu muet.",
         docEn: "Number of channels in the input files written for Csound. In mono, « a1 diskin2 \"entree1.wav\", 1 » always works; in stereo, diskin2 requires two outputs (« a1, a2 diskin2 … ») and refuses the note otherwise, which yields a silent render." },
@@ -342,7 +343,7 @@ endin`,
       const en = langueCourante() === "en";
       const a1 = entreeAudio(ctx, 0, { sorties: 2 }), a2 = ctx.entree(1);
       if (sansEntree(a1)) return a1;
-      const stereo = ctx.paramTexte("Canaux d'entrée", "mono") === "stereo";
+      const stereo = canauxDe(ctx.paramTexte("Canaux d'entrée", "mono")) === 2;
       const entrees: EntreeFichier[] = [{ nom: "entree1.wav", buffer: a1, stereo }];
       if (a2 instanceof AudioBuffer) entrees.push({ nom: "entree2.wav", buffer: a2, stereo });
       const duree = Math.max(a1.duration, a2 instanceof AudioBuffer ? a2.duration : 0)
@@ -356,7 +357,7 @@ endin`,
       const csd = construireCsd({
         orchestre: orchestre.texte,
         partition: `i1 0 ${duree.toFixed(3)}\ne`,
-        nchnls: parseInt(ctx.paramTexte("Canaux", "1"), 10) || 1,
+        nchnls: canauxDe(ctx.paramTexte("Canaux", "mono")),
         ksmps: Math.round(ctx.paramNombre("Taille de bloc", 32)),
         graine: graine > 0 ? graine : undefined,
       });

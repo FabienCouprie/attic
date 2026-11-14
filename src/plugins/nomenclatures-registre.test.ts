@@ -45,8 +45,9 @@ import { DOMAINES, choix, relevesDuDomaine } from "./nomenclatures";
  * ou pire, « unifiera » deux vocabulaires qui n'ont en commun qu'une homonymie.
  */
 const EXAMINES_ET_ECARTES: { ou: string; raison: string }[] = [
-  { ou: "generateur-pochette·Palette", raison: "« magma » nomme trois couleurs lues par position ici et six arrêts interpolés dans l'attracteur : deux jeux de couleurs sous un même nom" },
-  { ou: "attracteur-ifs·Palette", raison: "l'autre moitié de la même homonymie, six arrêts le long d'un scalaire de densité" },
+  // L'ATTRACTEUR EN EST SORTI LE 2026-11-14 : sa palette et celle de Songsee sont devenues le domaine
+  // « palette de couleurs ». La pochette reste dehors, et sa raison avec elle.
+  { ou: "generateur-pochette·Palette", raison: "« magma » nomme trois couleurs lues par position ici, et six arrêts interpolés au domaine « palette de couleurs » : deux jeux de couleurs sous un même nom" },
   { ou: "styles-musicaux·Catégorie", raison: "onze genres musicaux ; « Rock » n'est pas une catégorie d'émotion" },
   { ou: "emotions·Catégorie", raison: "huit familles d'émotions ; « Joie » n'est pas un style musical" },
   { ou: "clavier-sfz·Source", raison: "les voies d'approvisionnement propres au nœud, donc ses propres ports" },

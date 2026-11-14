@@ -14,6 +14,7 @@
 // `audio/spectrogramme-mel.ts` et `audio/spectrogramme-pixels.ts`.
 
 import { fiche, lecteurDe, reglagePartage, type ContexteQuiDeclare } from "./fiche";
+import { canauxDe, choixMonoStereo } from "../audio/mono-stereo";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -60,8 +61,7 @@ const PUISSANCE = reglagePartage({
 });
 
 const CANAUX = reglagePartage({
-  nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"],
-  optionIds: ["mono", "stereo"], defaut: "Mono", defautEn: "Mono",
+  nom: "Canaux", nomEn: "Channels", type: "choix", ...choixMonoStereo(), defaut: "Mono", defautEn: "Mono",
   doc: "Mono analyse un seul canal. Stéréo en garde deux, qui se suivent jusqu'au bout de la chaîne.",
   docEn: "Mono analyses a single channel. Stereo keeps two, which follow each other to the end of the chain.",
 });
@@ -93,7 +93,7 @@ function echelleLue<N extends string, B extends number | undefined = undefined>(
 }
 
 const estStereo = <N extends string>(ctx: ContexteQuiDeclare<N, "Canaux">) =>
-  lecteurDe<"Canaux">(ctx).paramTexte("Canaux", "mono") === "stereo";
+  canauxDe(lecteurDe<"Canaux">(ctx).paramTexte("Canaux", "mono")) === 2;
 const estSpectrogramme = (v: unknown): v is SpectrogrammeMel =>
   !!v && typeof v === "object" && Array.isArray((v as SpectrogrammeMel).canaux)
   && !!(v as SpectrogrammeMel).parametres;

@@ -491,7 +491,7 @@ Renders a chaotic attractor or iterated function system (IFS) as image and sound
 | Iterations | number | 200000 pts | 10000 – 1000000 pts, step 1000 | Number of points computed for the image and sonification. |
 | Width | number | 1024 px | 256 – 4096 px, step 1 | Width of the rendered image in pixels. |
 | Height | number | 1024 px | 256 – 4096 px, step 1 | Height of the rendered image in pixels. |
-| Palette | choice | classic | classic / magma / inferno / viridis / gray / claw | Color palette applied to the point density. |
+| Palette | choice | Classic | Classic / Magma / Inferno / Viridis / Gray / Claw | Color palette applied to the point density. |
 | Projection | choice | XY | XY / XZ / YZ / 3D shadow | Projection of the attractor's 3D axes onto the image. |
 | Exposure | number | 1.5 | 0.1 – 5, step 0.1 | Exposure factor to emphasize or attenuate point density. |
 | Gamma | number | 1 | 0.1 – 3, step 0.1 | Gamma correction of the image. |
@@ -9195,7 +9195,7 @@ Generates an audio visualization image using the Songsee engine (spectrogram, me
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Visualization | choice | All | All / spectrogram / mel / chroma / hpss / selfsim / loudness / tempogram / mfcc / flux | Songsee visualization mode. 'All' renders a grid of all 9 modes. |
-| Palette | choice | classic | classic / magma / inferno / viridis / gray / claw | Color palette applied to the spectrogram. |
+| Palette | choice | Classic | Classic / Magma / Inferno / Viridis / Gray / Claw | Color palette applied to the spectrogram. |
 | Width | number | 1920 px | 640 – 3840 px, step 1 | Width of the generated image. |
 | Height | number | 1080 px | 480 – 2160 px, step 1 | Height of the generated image. |
 | Format | choice | JPEG | JPEG / PNG | Output image format. |
@@ -9738,7 +9738,7 @@ Generates a musical staff (SVG) from a MIDI file. Connect a MIDI file (output fr
 | Tempo | number | 0 BPM | 0 – 300 BPM, step 1 | Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file. |
 | Channel | number | -1 -1 = all | -1 – 15 -1 = all, step 1 | MIDI channel to display (-1 for all channels). |
 | Quantization | choice | 1/16 | 1/4 / 1/8 / 1/16 / 1/32 / 1/1 / 1/2 | Quantization grid resolution. The staff writes plain durations only, from the whole note to the thirty-second: no dotted or triplet grid, for want of a duration to write it. |
-| Clef | choice | treble | treble / bass / alto / tenor | Staff clef. |
+| Clef | choice | Treble | Treble / Bass / Alto / Tenor | Staff clef: treble for high voices and instruments, bass for low ones, alto for the viola, tenor for the tenor range. |
 | Width | number | 800 px | 200 – 2000 px, step 10 | SVG width. |
 | Height | number | 200 px | 100 – 800 px, step 10 | SVG height. |
 
@@ -9807,7 +9807,7 @@ Generates a simple score (SVG) from a chord progression. Accepts roman numerals 
 | Progression | text | `I V vi IV` |  | Roman numeral progression or chord symbols (e.g. C Am F G). |
 | Key | text | `C` |  | Progression key. Accepts a bare tonic (« A ») or a full label (« A minor »), as emitted by « Harmonic Analysis », the named mode then wins over « Scale ». |
 | Scale | choice | major | major / minor | Scale the degrees are read in, when the key names no mode. In minor, III, VI and VII drop a semitone. |
-| Clef | choice | treble | treble / bass / alto / tenor | Staff clef. |
+| Clef | choice | Treble | Treble / Bass / Alto / Tenor | Staff clef: treble for high voices and instruments, bass for low ones, alto for the viola, tenor for the tenor range. |
 | Width | number | 500 px | 200 – 1000 px, step 10 | SVG width. |
 | Height | number | 160 px | 100 – 400 px, step 10 | SVG height. |
 
@@ -9828,7 +9828,7 @@ Generates a musical staff (SVG) from a text notation. Format: note/octave/durati
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Notation | text | `C4/q D4/8 E4/8 F4/q G4/q` |  | Notes to display. Format: note/octave/duration (e.g. C4/q, D4/8, F#4/q, C4+E4+G4/q). |
-| Clef | choice | treble | treble / bass / alto / tenor | Staff clef. |
+| Clef | choice | Treble | Treble / Bass / Alto / Tenor | Staff clef: treble for high voices and instruments, bass for low ones, alto for the viola, tenor for the tenor range. |
 | Width | number | 500 px | 200 – 1000 px, step 10 | SVG width. |
 | Height | number | 160 px | 100 – 400 px, step 10 | SVG height. |
 

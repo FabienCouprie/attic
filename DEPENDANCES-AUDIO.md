@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 95 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 229 · transposable tel quel
+- **pur** : 232 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -74,6 +74,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | clavier-banque-lot.ts | pur | — |
 | clavier-banque.ts | recipient | AudioBuffer |
 | clavier-isomorphe.ts | pur | — |
+| clefs-portee.ts | pur | — |
 | cles.ts | pur | — |
 | cloche-risset.ts | recipient | AudioBuffer |
 | color-looper.ts | recipient | AudioBuffer |
@@ -238,6 +239,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | mixage.ts | recipient | AudioBuffer |
 | moebius.ts | recipient | AudioBuffer |
 | mono-grave.ts | pur | — |
+| mono-stereo.ts | pur | — |
 | montage-morceaux.ts | pur | — |
 | morphing-spectral.ts | pur | — |
 | morphologie.ts | pur | — |
@@ -260,6 +262,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | ordre-galerie.ts | pur | — |
 | oscillateur-analogique.ts | pur | — |
 | palette-harmonique.ts | recipient | AudioBuffer |
+| palettes-couleurs.ts | pur | — |
 | paradoxe-triton.ts | pur | — |
 | parfum.ts | pur | — |
 | parole-datee.ts | recipient | AudioBuffer |

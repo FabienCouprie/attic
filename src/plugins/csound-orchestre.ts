@@ -6,6 +6,7 @@
 // un texte, ce qui le laisse lisible, sérialisable et modifiable à la main.
 
 import { fiche } from "./fiche";
+import { canauxDe, choixMonoStereo } from "../audio/mono-stereo";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
@@ -35,7 +36,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Les instruments retenus, par leurs identifiants séparés par des virgules. La liste à cocher du composant écrit ce champ, et l'ordre y décide des numéros : le premier coché devient `instr 1`, le second `instr 2`. Un identifiant inconnu est écarté sans faire échouer le reste, et un doublon est ignoré, deux fois le même instrument donnerait deux numéros au même son.",
         docEn: "The chosen instruments, by their identifiers separated by commas. The node's tick list writes this field, and the order there decides the numbers: the first ticked becomes `instr 1`, the second `instr 2`. An unknown identifier is dropped without failing the rest, and a duplicate is ignored, the same instrument twice would give two numbers to one sound." },
       { nom: "Canaux", nomEn: "Channels", type: "choix",
-        options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["1", "2"],
+        ...choixMonoStereo(),
         defaut: "Mono", defautEn: "Mono",
         doc: "Comment tous les instruments écrivent leur sortie, `out` en mono, `outs` en stéréo. Ce réglage doit être le même que celui du composant Csound : un orchestre stéréo rendu par un composant réglé en mono perd un canal sur deux, et l'inverse rend un silence. Le message du composant rappelle lequel poser.",
         docEn: "How every instrument writes its output, `out` in mono, `outs` in stereo. This must match the Csound node's setting: a stereo orchestra rendered by a node set to mono loses every other channel, and the reverse renders silence. The node's message states which one to set." },
@@ -51,7 +52,7 @@ export const fiches: FicheAudio[] = ([
       if (ids.length === 0) {
         return { valeurs: [null, null], message: traduire("msg.csound.orchestreVide") };
       }
-      const canaux = parseInt(ctx.paramTexte("Canaux", "1"), 10) === 2 ? 2 : 1;
+      const canaux = canauxDe(ctx.paramTexte("Canaux", "mono"));
       const { texte, rapport } = construireOrchestre(ids, {
         canaux,
         base: Math.round(ctx.paramNombre("Premier instrument", 1)),

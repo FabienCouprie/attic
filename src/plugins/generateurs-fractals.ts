@@ -15,6 +15,7 @@ import { PARAMETRE_CLE } from "../audio/cles";
 import { choixFormats, formatImage } from "../core/formats-image";
 import { CARACTERES_CHOIX } from "../audio/timbres";
 import { TAILLES_FENETRE, choixFenetre } from "../audio/fenetres-analyse";
+import { choixPaletteCouleurs } from "../audio/palettes-couleurs";
 
 /**
  * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
@@ -255,7 +256,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Itérations", nomEn: "Iterations", type: "nombre", plage: [10000, 1000000], pas: 1000, defaut: 200000, unite: "pts", doc: "Nombre de points calculés pour l'image et la sonification.", docEn: "Number of points computed for the image and sonification." },
       { nom: "Largeur", nomEn: "Width", type: "nombre", plage: [256, 4096], pas: 1, defaut: 1024, unite: "px", doc: "Largeur de l'image rendue en pixels.", docEn: "Width of the rendered image in pixels." },
       { nom: "Hauteur", nomEn: "Height", type: "nombre", plage: [256, 4096], pas: 1, defaut: 1024, unite: "px", doc: "Hauteur de l'image rendue en pixels.", docEn: "Height of the rendered image in pixels." },
-      { nom: "Palette", nomEn: "Palette", type: "choix", options: ["classic", "magma", "inferno", "viridis", "gray", "claw"], defaut: "classic", optionsEn: ["classic", "magma", "inferno", "viridis", "gray", "claw"], defautEn: "classic", doc: "Palette de couleurs appliquée à la densité de points.", docEn: "Color palette applied to the point density." },
+      { nom: "Palette", nomEn: "Palette", type: "choix", ...choixPaletteCouleurs(), defaut: "Classique", defautEn: "Classic", doc: "Palette de couleurs appliquée à la densité de points.", docEn: "Color palette applied to the point density." },
       { nom: "Projection", nomEn: "Projection", type: "choix", options: ["XY", "XZ", "YZ", "3D shadow"], optionsEn: ["XY", "XZ", "YZ", "3D shadow"], defaut: "XY", defautEn: "XY", doc: "Projection des axes 3D de l'attracteur sur l'image.", docEn: "Projection of the attractor's 3D axes onto the image." },
       { nom: "Exposition", nomEn: "Exposure", type: "nombre", plage: [0.1, 5], pas: 0.1, defaut: 1.5, doc: "Facteur d'exposition pour accentuer ou atténuer la densité de points.", docEn: "Exposure factor to emphasize or attenuate point density." },
       { nom: "Gamma", nomEn: "Gamma", type: "nombre", plage: [0.1, 3], pas: 0.1, defaut: 1, doc: "Correction gamma de l'image.", docEn: "Gamma correction of the image." },

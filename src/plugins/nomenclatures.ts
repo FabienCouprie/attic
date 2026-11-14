@@ -34,6 +34,10 @@ import { CARACTERES_CHOIX, FORMES_ONDE_CHOIX } from "../audio/timbres";
 import { LIBELLES_HERITES_OUI_NON, OUI_NON } from "../core/oui-non";
 import { LANGUES } from "../core/langues";
 import { PARAMETRE_SYNTHESE } from "./soundfontGlobal";
+import { MONO_STEREO } from "../audio/mono-stereo";
+import { CLEFS_PORTEE } from "../audio/clefs-portee";
+import { PALETTES_COULEURS } from "../audio/palettes-couleurs";
+import { FORMATS_LISTE } from "../core/formats-liste";
 
 /**
  * Un réglage à choix, avec les identifiants qu'un projet enregistrera ET les libellés qu'il montre.
@@ -578,6 +582,40 @@ export const DOMAINES: Domaine[] = [
     formesAssumees: 2,
     pourquoi: "les deux formes sont bornées par l'algorithme, et la borne est écrite à côté de chacune : l'un ajoute la septième à CHAQUE accord, l'autre là où le genre la place",
     remede: "déclarer une liste centrale des extensions, et dire pourquoi un composant n'en offre qu'une part",
+  },
+  // LES QUATRE DOMAINES DU LOT 3c (2026-11-14), décidés par Fabien : des vocabulaires que plusieurs
+  // composants écrivaient chacun à la main, et qu'aucun domaine ne gardait. Chacun a désormais sa
+  // table, adoptée par tous ses réglages, sous une seule forme.
+  {
+    nom: "mono ou stéréo",
+    table: () => [...MONO_STEREO.ids],
+    membre: (x) => (MONO_STEREO.ids as string[]).includes(x),
+    // DEUX SUFFISENT : la paire n'a que deux membres. Une disposition de haut-parleurs qui commence par
+    // « stereo » n'en porte qu'un, et n'en relève pas.
+    seuil: 2,
+    formesAssumees: 1,
+    remede: "étaler `choixMonoStereo` de `audio/mono-stereo.ts`, et lire la valeur par `canauxDe`",
+  },
+  {
+    nom: "clé de portée",
+    table: () => [...CLEFS_PORTEE.ids],
+    membre: (x) => CLEFS_PORTEE.ids.includes(x),
+    formesAssumees: 1,
+    remede: "étaler `choixClefPortee` de `audio/clefs-portee.ts`",
+  },
+  {
+    nom: "palette de couleurs",
+    table: () => [...PALETTES_COULEURS.ids],
+    membre: (x) => PALETTES_COULEURS.ids.includes(x),
+    formesAssumees: 1,
+    remede: "étaler `choixPaletteCouleurs` de `audio/palettes-couleurs.ts`",
+  },
+  {
+    nom: "format d'une liste",
+    table: () => [...FORMATS_LISTE.ids],
+    membre: (x) => (FORMATS_LISTE.ids as string[]).includes(x),
+    formesAssumees: 1,
+    remede: "étaler `choixFormatListe` de `core/formats-liste.ts`, et joindre par `joindreListe`",
   },
 ];
 
