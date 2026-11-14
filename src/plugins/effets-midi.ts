@@ -20,18 +20,14 @@ import { apprendre, engendrer, statistiques, tableEnTexte } from "../audio/marko
 import { canalDominant, rendreMotif, PARAMETRES_RENDU_MOTIF, SORTIES_MOTIF } from "./effets-aides";
 import { LIBELLES_HERITES_VALEURS, choixValeurs } from "../audio/valeurs-note";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
+// L'ARPÉGIATEUR A SA FICHE À PART, ce fichier étant au plafond de la norme de taille ; il reste
+// rangé ici, à sa place dans le catalogue.
+import { ARPEGIATEUR_MIDI } from "./arpegiateur-midi";
 
 // LA GRILLE DU TRANSPOSEUR, sans sa sentinelle « Aucune » qui n'est pas une valeur de note : elle
 // dit qu'il n'y a pas de grille. L'ordre est celui qu'elle avait, un projet enregistré s'y
 // résolvant par la position.
 const VALEURS_QUANTIFICATION = ["1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"];
-
-// LES DIRECTIONS DE L'ARPÉGIATEUR, une seule table pour le menu et pour le message : l'identifiant
-// est le libellé français, et le message doit dire le libellé de la langue de l'interface.
-const DIRECTIONS_ARPEGE = {
-  ids: ["Montant", "Descendant", "UpDown", "DownUp", "Aléatoire"],
-  en: ["Up", "Down", "UpDown", "DownUp", "Random"],
-};
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -377,66 +373,7 @@ export const fiches: FicheAudio[] = ([
       return { valeurs: [nouvFichier], message: msgs.length > 0 ? msgs.join(" · ") : traduire("msg.aucune_modification") };
    },
   }),
-  fiche({
-    id: "arpegiateur-midi", nomDicte: "notes en cascade", nom: "Arpégiateur MIDI", nomEn: "MIDI Arpeggiator",
-    univers: "Traitement", famille: "Effets",
-    resume: "Arpège les accords d'un fichier MIDI selon un motif et une direction.",
-    resumeEn: "Arpeggiates chords from a MIDI file according to a pattern and direction.",
-    entrees: [{ nom: "MIDI", type: "midi" }],
-    sorties: [{ nom: "MIDI", type: "midi" }],
-    parametres: [
-      { nom: "Direction", nomEn: "Direction", type: "choix",
-        options: DIRECTIONS_ARPEGE.ids, optionIds: DIRECTIONS_ARPEGE.ids,
-        optionsEn: DIRECTIONS_ARPEGE.en,
-        defaut: "Montant",
-        doc: "Ordre de lecture des notes de l'accord. Up = du grave à l'aigu ; Down = de l'aigu au grave ; UpDown = aller-retour ; Random = ordre aléatoire.",
-        docEn: "Order in which chord notes are played. Up = low to high ; Down = high to low ; UpDown = back and forth ; Random = random order.", defautEn: "Up" },
-      { nom: "Motif", nomEn: "Pattern", type: "choix",
-        options: ["Droit", "1232", "12321", "1321", "1213"], optionIds: ["Droit","1232","12321","1321","1213"],
-        optionsEn: ["Straight", "1232", "12321", "1321", "1213"],
-        defaut: "Droit",
-        doc: "Motif de répétition intra-accord (1=note basse, 2=médium, 3=haute). « Droit » = joue les notes dans l'ordre de la direction.",
-        docEn: "Intra-chord repetition pattern (1=low note, 2=mid, 3=high). « Straight » = plays notes in the direction order.", defautEn: "Straight" },
-      // SES IDENTIFIANTS ÉTAIENT SES LIBELLÉS, dont « 1/8 triplet », un mot anglais dans une liste
-      // française. Les anciennes valeurs se relisent par `LIBELLES_HERITES_VALEURS`.
-      { nom: "Vitesse", nomEn: "Speed", type: "choix",
-        ...choixValeurs(["1/8", "1/16", "1/32", "1/8t", "1/16t"]),
-        optionsHeritees: LIBELLES_HERITES_VALEURS,
-        defaut: "1/16",
-        doc: "Vitesse de l'arpège (division du temps).",
-        docEn: "Arpeggio speed (time division).", defautEn: "1/16" },
-      { nom: "Octaves", nomEn: "Octaves", plage: [1, 4], pas: 1, defaut: 1,
-        doc: "Nombre d'octaves sur lesquelles l'arpège se déploie (chaque octave ajoute +12 demi-tons).",
-        docEn: "Number of octaves the arpeggio spans (each octave adds +12 semitones)." },
-      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0,
-        doc: "Graine de l'ordre des notes, sans effet hors du mode « Aléatoire ». 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici.",
-        docEn: "Seed for the note order; no effect outside the « Random » mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here." },
-      { nom: "Durée note", nomEn: "Note length", plage: [10, 100], pas: 5, defaut: 50, unite: "%",
-        doc: "Durée de chaque note arpégée en pourcentage du pas de temps. 100% = legato, 50% = staccato.",
-        docEn: "Length of each arpeggiated note as a percentage of the step time. 100% = legato, 50% = staccato." },
-      PARAMETRE_INSTRUMENT_SF2,
-    ],
-    async executer(ctx) {
-      const { arpegerMidi } = await import("../audio");
-      const fichier = ctx.entree(0);
-      if (!(fichier instanceof File)) return { valeurs: [null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
-      const direction = ctx.paramTexte("Direction", "Montant");
-      const motif = ctx.paramTexte("Motif", "Droit");
-      const vitesse = ctx.paramTexte("Vitesse", "1/16");
-      const octaves = Math.round(ctx.paramNombre("Octaves", 1));
-      const dureeNote = ctx.paramNombre("Durée note", 50);
-      const { graine, aleatoire: aleatoireArpege } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
-      const nouvFichier = await appliquerInstrumentMidi(
-        await arpegerMidi(fichier, motif, direction, vitesse, octaves, dureeNote, aleatoireArpege),
-        ctx.paramNombre("Instrument", 0),
-      );
-      // LA DIRECTION SE DIT PAR SON LIBELLÉ en anglais : son identifiant est le libellé français, et
-      // le message annonçait « Arpeggio Montant ».
-      const directionDite = langueCourante() === "en"
-        ? (DIRECTIONS_ARPEGE.en[DIRECTIONS_ARPEGE.ids.indexOf(direction)] ?? direction) : direction;
-      return { valeurs: [nouvFichier], message: traduire("msg.var_0_graine_var_1", traduire("msg.arp_ge_var_0_var_1_var_2_oct", directionDite, vitesse, octaves), graine) };
-   },
-  }),
+  ARPEGIATEUR_MIDI,
   fiche({
     id: "jointure-midi", nom: "Jointure MIDI", nomEn: "MIDI Join",
     univers: "Traitement", famille: "Montage",

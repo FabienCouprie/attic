@@ -274,7 +274,9 @@ const DOMAINES: Domaine[] = [
     // `/^1\/\d+$/`, il écartait « 1/8t » et « 1/8 triplet », donc les deux réglages qui les
     // offrent étaient invisibles. Les deux écritures du triolet sont justement la divergence de ce
     // domaine, et un garde qui ne la voit pas ne peut pas la signaler.
-    membre: (x) => /^1\/\d+t?$/.test(x) || /^1\/\d+ triplet$/.test(x),
+    // LA POINTÉE AUSSI, entrée dans la table le 2026-11-14 : sans elle, l'arpégiateur qui offre la
+    // table entière portait trois valeurs hors domaine, et sortait du relevé tout entier.
+    membre: (x) => /^1\/\d+[t.]?$/.test(x) || /^1\/\d+ triplet$/.test(x),
     seuil: 2,
     sentinelles: [
       { valeur: "none", raison: "« Aucune » : pas de grille, les instants restent ceux du jeu" },
@@ -288,11 +290,12 @@ const DOMAINES: Domaine[] = [
     // par leur libellé français, « 1/8 triplet » chez l'une et « 1/8 de triolet » chez l'autre, et
     // le premier est un mot ANGLAIS dans une liste française. Elles n'en font plus qu'une.
     //
-    // LES SIX QUI RESTENT SONT DES SOUS-ENSEMBLES, et chacun est la grille de son composant : six
-    // valeurs pour l'intervalle du « beat repeat », cinq pour sa taille et dans l'autre sens,
-    // quatre pour la quantification d'une partition, trois pour la résolution d'un réservoir.
+    // LES SIX QUI RESTENT SONT LA TABLE ET SES SOUS-ENSEMBLES, et chacun est la grille de son
+    // composant : la table entière pour la vitesse de l'arpégiateur, six valeurs pour l'intervalle
+    // du « beat repeat », cinq pour sa taille et dans l'autre sens, quatre pour la quantification
+    // d'une partition, trois pour la résolution d'un réservoir.
     formesAssumees: 6,
-    pourquoi: "six sous-ensembles, chacun étant la grille de son composant : six valeurs pour l'intervalle du « beat repeat », cinq pour sa taille et dans l'autre sens, quatre pour la quantification d'une partition, trois pour la résolution d'un réservoir",
+    pourquoi: "la table entière pour la vitesse de l'arpégiateur, et cinq sous-ensembles, chacun étant la grille de son composant : six valeurs pour l'intervalle du « beat repeat », cinq pour sa taille et dans l'autre sens, quatre pour la quantification d'une partition, trois pour la résolution d'un réservoir",
     remede: "offrir `choixValeurs` de `audio/valeurs-note.ts`",
   },
   {
