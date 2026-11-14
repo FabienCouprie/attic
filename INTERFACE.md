@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**510 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
+**511 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -431,6 +431,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Rendu d'objets | `rendu-objets` | 240 × 118 |
 | Point d'écoute séquence | `rendu-sequence` | 240 × 140 |
 | Réordonner les objets | `reordonner-objets` | 240 × 140 |
+| Répartiteur de bandes | `repartiteur-bandes` | 240 × 294 |
 | Répartiteur MIDI | `repartiteur-midi` | 240 × 206 |
 | Reprendre une chanson | `reprendre-chanson` | 240 × 162 |
 | Reprise ABC | `reprise-abc` | 240 × 184 |

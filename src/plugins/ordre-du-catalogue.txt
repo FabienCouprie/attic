@@ -45,6 +45,7 @@ profil-bruit
 reponse-filtre
 reverbe-convolution
 egaliseur-parametrique
+repartiteur-bandes
 motif-imposer-rythme
 motif-echo-notes
 motif-eclaircir

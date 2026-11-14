@@ -22,7 +22,7 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
 - **réglages déjà pilotés par une courbe** : 169, sur 70 composants
-- **réglages restant à faire** : 27, sur 5 composants et 8 couples composant / famille
+- **réglages restant à faire** : 35, sur 6 composants et 9 couples composant / famille
 - **dont le cœur travaille par trames** : 2
 - **réglages écartés un par un** : 49, sur 22 composants qui gardent les leurs
 - **composants écartés** : 50, dont 1 famille de la palette écartée en bloc
@@ -35,6 +35,11 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 - Décrire un audio `decrire-audio` : Seuil
 - Limiteur à crête vraie `limiteur-crete-vraie` : Plafond
 
+### frequence · 2
+
+- Égaliseur paramétrique `egaliseur-parametrique` : Fréquence grave, Fréquence 1, Q 1, Fréquence 2, Q 2, Fréquence 3, Q 3, Fréquence 4, Q 4, Fréquence aiguë
+- Répartiteur de bandes `repartiteur-bandes` : Coupure 1, Coupure 2, Coupure 3, Coupure 4, Coupure 5, Coupure 6, Coupure 7, Coupure 8
+
 ### niveau · 2
 
 - Égaliseur paramétrique `egaliseur-parametrique` : Gain grave, Gain 1, Gain 2, Gain 3, Gain 4, Gain aigu
@@ -43,10 +48,6 @@ qu'une fois par trame, non par échantillon. La marque est relevée sur la sourc
 ### espace · 1
 
 - Granulation spectrale `granulation-spectrale` : Position, Dispersion · **⟨trames⟩** granulationSpectraleVoie (appelle granulerSpectre)
-
-### frequence · 1
-
-- Égaliseur paramétrique `egaliseur-parametrique` : Fréquence grave, Fréquence 1, Q 1, Fréquence 2, Q 2, Fréquence 3, Q 3, Fréquence 4, Q 4, Fréquence aiguë
 
 ### temps · 1
 
