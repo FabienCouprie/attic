@@ -625,9 +625,17 @@ export const DOMAINES: Domaine[] = [
     nom: "sens d'un arpège",
     table: () => [...SENS_ARPEGE.ids],
     membre: (x) => (SENS_ARPEGE.ids as readonly string[]).includes(x),
-    formesAssumees: 2,
-    pourquoi: "la table entière pour l'arpégiateur, et les trois sens d'un parcours joué une fois pour les accords joués, l'arpège spectral et la gamme jouée, dont les cinq autres attendent la décision de Fabien",
+    formesAssumees: 3,
+    pourquoi: "la table entière pour l'arpégiateur ; la table sans l'ordre de jeu pour les accords joués et la gamme jouée, dont les notes n'ont pas d'ordre joué ; les quatre sens d'un balayage pour l'arpège spectral",
     remede: "étaler `choixSensArpege` de `audio/sens-arpege.ts`, et lire la valeur par `sensDe` ou `sensParmi`",
+    // TRANCHÉES PAR FABIEN LE 2026-11-14, sur la proposition du relevé du lot 3c.
+    coupes: [
+      ...coupesPour(
+        "des notes tirées d'un nom, accord ou gamme, n'ont pas d'ordre joué : l'ordre de jeu y serait l'ordre montant, que le réglage offre déjà",
+        "accords-joues·Sens", "gamme-jouee·Sens",
+      ),
+      { ou: "arpege-spectral·Sens", raison: "la bande balaie le spectre en continu : l'aléatoire, le convergent, le divergent et l'ordre de jeu sont des ordres entre notes séparées, qu'un balayage n'a pas" },
+    ],
   },
   {
     nom: "façon de jouer un accord",
@@ -638,8 +646,12 @@ export const DOMAINES: Domaine[] = [
       { valeur: "melodie", raison: "« Mélodie » : une note à la fois, et non un accord joué d'une façon ou d'une autre" },
     ],
     formesAssumees: 4,
-    pourquoi: "la table entière pour les accords joués ; plaqué et arpégé seuls pour la grille tonale, la roue de Camelot et le séquenceur d'accords, que le roulé attend la décision de Fabien ; les mêmes derrière « Mélodie » pour les trois composants à couleurs, et entre les deux pour l'automate cellulaire, chacun au rang qu'un projet enregistré fige",
+    pourquoi: "la table entière pour les accords joués, la roue de Camelot et le séquenceur d'accords ; plaqué et arpégé seuls pour la grille tonale, dont la notation n'écrit pas de roulé ; la table derrière « Mélodie » pour les trois composants à couleurs, et avec elle au deuxième rang pour l'automate cellulaire, chacun au rang qu'un projet enregistré fige",
     remede: "étaler `choixFaconAccord` ou `choixFaconOuMelodie` de `audio/facons-accord.ts`, et lire la valeur par `faconDe`",
+    // TRANCHÉE PAR FABIEN LE 2026-11-14 : les six autres ont gagné le roulé.
+    coupes: [
+      { ou: "tonal-grille·Mode", raison: "la notation texte n'écrit qu'un accord entier ou des notes l'une après l'autre, une par ligne : des départs décalés tenus ensemble, ce qu'est un roulé, ne s'y écrivent pas" },
+    ],
   },
 ];
 

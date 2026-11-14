@@ -142,13 +142,25 @@ describe("genererNotesSequenceurAccords", () => {
     expect(maxFin).toBeCloseTo(12 * stepDur + stepDur * 0.9, 5);
   });
 
-  it("décale les notes en mode arpège", () => {
+  it("décale les départs en mode roulé, et tient toutes les notes ensemble", () => {
+    // C'était le mode « arpège » jusqu'au 2026-11-14 : son nom est désormais celui de ce qu'il joue.
     const grille = decoderMotifAccords(MOTIF_I_V_vi_IV, 16);
-    const notes = genererNotesSequenceurAccords(grille, "C", "majeur", "arpege", 120, 16, 0, 1, 3);
+    const notes = genererNotesSequenceurAccords(grille, "C", "majeur", "roule", 120, 16, 0, 1, 3);
     const premieres = notes.filter((n) => n.debut === 0);
     const secondes = notes.filter((n) => n.debut > 0 && n.debut < 0.04);
     expect(premieres.length).toBe(1);
     expect(secondes.length).toBeGreaterThan(0);
+    expect(new Set(notes.filter((n) => n.debut < 0.1).map((n) => n.fin)).size).toBe(1);
+  });
+
+  it("EN MODE ARPÈGE, chaque note est relâchée quand la suivante part, et l'accord couvre le pas", () => {
+    const grille = decoderMotifAccords(MOTIF_I_V_vi_IV, 16);
+    const notes = genererNotesSequenceurAccords(grille, "C", "majeur", "arpege", 120, 16, 0, 1, 3);
+    const stepDur = (60 / 120) * 4 / 16;
+    const premierAccord = notes.filter((n) => n.debut < stepDur * 0.95).sort((a, b) => a.debut - b.debut);
+    expect(premierAccord.length).toBeGreaterThan(1);
+    for (let i = 1; i < premierAccord.length; i++) expect(premierAccord[i].debut).toBeCloseTo(premierAccord[i - 1].fin, 9);
+    expect(premierAccord[premierAccord.length - 1].fin).toBeCloseTo(stepDur * 0.9, 9);
   });
 });
 

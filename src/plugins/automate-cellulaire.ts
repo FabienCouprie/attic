@@ -72,11 +72,11 @@ const FICHES: FicheAudio[] = [
         type: "choix",
         // LA FAÇON DE JOUER UN ACCORD, « Mélodie » au rang qu'elle avait : les identifiants étaient
         // les libellés, « Polyphonie », « Mélodie » et « Arpège », que `optionsHeritees` relit.
-        ...choixFaconOuMelodie(["plaque", "arpege"], 1),
+        ...choixFaconOuMelodie(["plaque", "arpege", "roule"], 1),
         defaut: "Plaqué",
         defautEn: "Block",
-        doc: "Plaqué joue ensemble toutes les cellules actives. Mélodie en choisit une par pas. Arpégé les joue dans l'ordre.",
-        docEn: "Block plays all active cells together. Melody picks one per step. Arpeggiated plays them in order.",
+        doc: "Plaqué joue ensemble toutes les cellules actives. Mélodie en choisit une par pas. Arpégé les joue dans l'ordre. Roulé les fait partir l'une après l'autre sur le pas, et les tient.",
+        docEn: "Block plays all active cells together. Melody picks one per step. Arpeggiated plays them in order. Rolled starts them one after another over the step, and holds them.",
       },
       {
         nom: "Mapping",

@@ -46,7 +46,8 @@ const REGLES_2D: Record<string, { naitre: number[]; survie: number[] }> = {
 };
 
 export type Topologie = "1D" | "2D Conway" | "2D Highlife";
-export type ModeVoix = "Polyphonie" | "Mélodie" | "Arpège";
+/** « Roulé » joue la polyphonie, ses notes parties l'une après l'autre sur le pas et tenues. */
+export type ModeVoix = "Polyphonie" | "Mélodie" | "Arpège" | "Roulé";
 export type Mapping = "Hauteur" | "Vélocité" | "Durée" | "Hauteur + vélocité";
 
 export interface OptionsAutomateCellulaire {
@@ -276,6 +277,8 @@ function construireNotesDepuisLigne(
   const selection = actives.length > densiteMax
     ? actives.filter((_, i) => i % Math.ceil(actives.length / densiteMax) === 0).slice(0, densiteMax)
     : actives;
+  // Roulé : les départs se répartissent sur le pas, et chaque note tient jusqu'à sa fin.
+  const ecart = mode === "Roulé" ? dureeBase / selection.length : 0;
   for (let i = 0; i < selection.length; i++) {
     const x = selection[i];
     const midi = mapping === "Hauteur"
@@ -287,7 +290,8 @@ function construireNotesDepuisLigne(
     const duree = mapping === "Durée" || mapping === "Hauteur + vélocité"
       ? dureeBase * (0.5 + 0.5 * ((selection.length - i) / Math.max(1, selection.length)))
       : dureeBase;
-    notes.push({ note: midi, velocite: vel, debut: temps, fin: temps + duree });
+    const debut = temps + i * ecart;
+    notes.push({ note: midi, velocite: vel, debut, fin: Math.max(temps + duree, debut + ecart) });
   }
   return { notes, arpegeIndex };
 }
@@ -387,13 +391,13 @@ function genererDepuis2D(options: OptionsAutomateCellulaire): NoteEvenement[] {
       const t = g * dureeNote;
       const hauteurs = [...poids.keys()].sort((a, b) => a - b);
       const plusDense = Math.max(...poids.values());
-      const jouer = (note: number) => {
+      const jouer = (note: number, decalage = 0, ecart = 0) => {
         const w = poids.get(note) ?? 1;
         notes.push({
           note,
           velocite: parVelocite ? velocitePourDensite(w, plusDense, options.velocite) : options.velocite,
-          debut: t,
-          fin: t + (parDuree ? dureeNote * (0.5 + 0.5 * (w / plusDense)) : dureeNote),
+          debut: t + decalage,
+          fin: Math.max(t + (parDuree ? dureeNote * (0.5 + 0.5 * (w / plusDense)) : dureeNote), t + decalage + ecart),
         });
       };
       if (mode === "Arpège") { jouer(hauteurs[arpegeIndex % hauteurs.length]); arpegeIndex++; }
@@ -401,7 +405,10 @@ function genererDepuis2D(options: OptionsAutomateCellulaire): NoteEvenement[] {
       else {
         const max = Math.max(1, options.densiteMax || hauteurs.length);
         const pas = Math.ceil(hauteurs.length / max);
-        hauteurs.filter((_, i) => i % pas === 0).slice(0, max).forEach(jouer);
+        const choisies = hauteurs.filter((_, i) => i % pas === 0).slice(0, max);
+        // Roulé : les départs se répartissent sur le pas, et chaque note tient jusqu'à sa fin.
+        const ecart = mode === "Roulé" ? dureeNote / choisies.length : 0;
+        choisies.forEach((note, i) => jouer(note, i * ecart, ecart));
       }
     }
     grille = appliquerRegle2D(grille, regle);

@@ -80,17 +80,12 @@ const EXAMINES_ET_ECARTES: { ou: string; raison: string }[] = [
  * ELLE S'EST VIDÉE AU LOT 3b (2026-11-14) : quatre-vingt-trois coupes relevées, soixante-quatre
  * déclarées avec leur borne, dix-neuf élargies à la table entière.
  *
- * ELLE REPREND DIX LIGNES AU LOT 3c, ET CE N'EST PAS UNE DETTE QUI GRANDIT : c'est le champ du garde
- * qui s'élargit, comme au lot 1. Deux domaines neufs relèvent dix réglages qui n'offrent qu'une part de
- * leur table, et leur proposition, élargir ou garder avec une borne, attend la décision de Fabien.
+ * ELLE A REPRIS DIX LIGNES AU LOT 3c, le champ du garde s'élargissant à deux domaines neufs, et
+ * s'est revidée au même lot sur la décision de Fabien du 2026-11-14 : six réglages ont gagné le roulé,
+ * deux le reste du sens d'un arpège sauf l'ordre de jeu, un le retour-aller ; quatre coupes sont
+ * déclarées avec leur borne.
  */
-const COUPES_A_EXAMINER: string[] = [
-  // sens d'un arpège : les trois sens d'un parcours joué une fois.
-  "accords-joues·Sens", "arpege-spectral·Sens", "gamme-jouee·Sens",
-  // façon de jouer un accord : sans le roulé.
-  "tonal-grille·Mode", "camelot·Mode", "sequenceur-accords·Mode", "palette-harmonique·Mode",
-  "dessin-sonore·Mode", "color-looper·Mode", "automate-cellulaire·Mode voix",
-];
+const COUPES_A_EXAMINER: string[] = [];
 
 describe("un concept, des formes déclarées", () => {
   const tous = choix();
@@ -306,8 +301,11 @@ describe("un concept, des formes déclarées", () => {
     // PUIS DE QUARANTE-SIX À CINQUANTE, ET C'EST LA DETTE QU'ON VOIT ENFIN (lot 3c) : le sens d'un
     // arpège et la façon de jouer un accord deviennent des domaines, et leurs coupes entrent au compte,
     // une forme pour le premier, trois pour la seconde. Leurs orthographes, elles, sont payées.
+    // PUIS DE CINQUANTE À CINQUANTE ET UN, ET LA MONTÉE EST LÉGITIME (lot 3c, décision de Fabien) :
+    // les coupes du sens d'un arpège tranchées, deux composants offrent la table sans l'ordre de jeu
+    // et l'arpège spectral les quatre sens d'un balayage, deux sous-ensembles bornés au lieu d'un.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(50);
+      .toBe(51);
   });
 });

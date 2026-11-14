@@ -4,7 +4,10 @@ import { readdirSync, readFileSync, statSync } from "fs";
 import { join, resolve } from "path";
 import { registre } from "./adaptateur";
 import { valeurCanoniqueChoix } from "../i18n";
-import { LIBELLES_HERITES_SENS, SENS_ARPEGE, SENS_UN_PARCOURS, choixSensArpege, sensDe, sensParmi } from "./sens-arpege";
+import {
+  LIBELLES_HERITES_SENS, SENS_ARPEGE, SENS_D_UN_BALAYAGE, SENS_SANS_ORDRE_DE_JEU, choixSensArpege, ordreUneFois, sensDe, sensParmi,
+} from "./sens-arpege";
+import { creerAleatoire } from "../core/hasard";
 
 const RACINE = resolve(__dirname, "..");
 const MOI = join("audio", "sens-arpege.ts");
@@ -35,8 +38,26 @@ describe("le sens d'un arpège", () => {
     });
     for (const [ecriture, id] of Object.entries(LIBELLES_HERITES_SENS)) expect(sensDe(ecriture), ecriture).toBe(id);
     expect(sensDe("en spirale")).toBeUndefined();
-    expect(sensParmi("retour-aller", SENS_UN_PARCOURS, "montant")).toBe("montant");
-    expect(sensParmi("Descendante", SENS_UN_PARCOURS, "montant")).toBe("descendant");
+    expect(sensParmi("ordre-de-jeu", SENS_SANS_ORDRE_DE_JEU, "montant")).toBe("montant");
+    expect(sensParmi("convergent", SENS_D_UN_BALAYAGE, "montant")).toBe("montant");
+    expect(sensParmi("Descendante", SENS_SANS_ORDRE_DE_JEU, "montant")).toBe("descendant");
+  });
+
+  it("UN PARCOURS JOUÉ UNE FOIS : les trois sens d'avant à la note près, et les quatre neufs", () => {
+    const m = [60, 64, 67, 72];
+    const zero = () => 0;
+    // Les trois d'avant, tels que les accords joués et la gamme jouée les rendaient.
+    expect(ordreUneFois(m, "montant", zero)).toEqual(m);
+    expect(ordreUneFois(m, "descendant", zero)).toEqual([72, 67, 64, 60]);
+    expect(ordreUneFois(m, "aller-retour", zero)).toEqual([60, 64, 67, 72, 67, 64, 60]);
+    // Les quatre neufs.
+    expect(ordreUneFois(m, "retour-aller", zero)).toEqual([72, 67, 64, 60, 64, 67, 72]);
+    expect(ordreUneFois(m, "convergent", zero)).toEqual([60, 72, 64, 67]);
+    expect(ordreUneFois(m, "divergent", zero)).toEqual([67, 64, 72, 60]);
+    const tire = ordreUneFois(m, "aleatoire", creerAleatoire(7));
+    expect([...tire].sort((a, b) => a - b)).toEqual(m);
+    expect(ordreUneFois(m, "aleatoire", creerAleatoire(7))).toEqual(tire);
+    expect(ordreUneFois([...m, 76, 79], "aleatoire", creerAleatoire(8))).not.toEqual([...m, 76, 79]);
   });
 
   it("UN PROJET ANCIEN ROUVRE SUR SON SENS, dans chacun des quatre composants", () => {

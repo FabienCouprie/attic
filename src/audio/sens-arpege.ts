@@ -18,10 +18,11 @@ export const SENS_ARPEGE = {
 export type SensArpege = (typeof SENS_ARPEGE.ids)[number];
 
 /**
- * Les trois sens d'un parcours joué une fois, ce qu'offrent les accords joués, l'arpège spectral et la
- * gamme jouée. Les cinq autres sont relevés au registre des nomenclatures, à trancher.
+ * Les quatre sens d'un balayage continu, ce qu'offre l'arpège spectral : la bande va et vient sur le
+ * spectre, et les ordres sautés, tirés ou joués sont des ordres entre notes séparées, qu'il n'a pas.
+ * Décision de Fabien du 2026-11-14.
  */
-export const SENS_UN_PARCOURS = ["montant", "descendant", "aller-retour"] as const satisfies readonly SensArpege[];
+export const SENS_D_UN_BALAYAGE = ["montant", "descendant", "aller-retour", "retour-aller"] as const satisfies readonly SensArpege[];
 
 /**
  * Les écritures d'avant que ne relisent ni l'identifiant ni le libellé d'aujourd'hui.
@@ -64,6 +65,45 @@ export function sensDe(valeur: unknown): SensArpege | undefined {
   const rang = Math.max(SENS_ARPEGE.fr.indexOf(v), SENS_ARPEGE.en.indexOf(v));
   if (rang >= 0) return SENS_ARPEGE.ids[rang];
   return LIBELLES_HERITES_SENS[v];
+}
+
+/**
+ * Les sens d'un parcours joué une fois sur des notes tirées d'un nom, accord ou gamme : tous, sauf
+ * l'ordre de jeu, que ces notes n'ont pas. Décision de Fabien du 2026-11-14.
+ */
+export const SENS_SANS_ORDRE_DE_JEU = SENS_ARPEGE.ids.filter((s) => s !== "ordre-de-jeu");
+
+/**
+ * Des hauteurs rangées du grave à l'aigu, dans l'ordre d'un sens, jouées une fois.
+ *
+ * JOUÉES UNE FOIS, ET NON EN BOUCLE comme dans l'arpégiateur : l'aller-retour ne rejoue pas son
+ * sommet et finit sur sa note de départ, le retour-aller de même par le bas. C'est ce que les accords
+ * joués et la gamme jouée faisaient déjà pour leurs trois sens, à la note près.
+ *
+ * L'ALÉATOIRE EST UN MÉLANGE DE FISHER-YATES sur le hasard reçu, qui vient de la graine du nœud.
+ * L'ordre de jeu rend le montant : ces notes n'ont pas d'autre ordre.
+ */
+export function ordreUneFois(montant: readonly number[], sens: SensArpege, hasard: () => number): number[] {
+  const m = [...montant];
+  const d = [...m].reverse();
+  // Des bords vers le milieu : la plus grave, la plus aiguë, la deuxième plus grave…
+  const convergent = m.map((_, i) => m[i % 2 === 0 ? i / 2 : m.length - 1 - (i - 1) / 2]);
+  switch (sens) {
+    case "descendant": return d;
+    case "aller-retour": return [...m, ...d.slice(1)];
+    case "retour-aller": return [...d, ...m.slice(1)];
+    case "convergent": return convergent;
+    case "divergent": return [...convergent].reverse();
+    case "aleatoire": {
+      const out = [...m];
+      for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(hasard() * (i + 1));
+        [out[i], out[j]] = [out[j], out[i]];
+      }
+      return out;
+    }
+    default: return m;
+  }
 }
 
 /** Le sens reçu s'il est parmi ceux qu'un composant sait jouer, sinon son défaut. */

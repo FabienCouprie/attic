@@ -73,6 +73,19 @@ describe("arpègement du spectre", () => {
     expect(t800).toBeLessThan(t3200);
   });
 
+  it("LE RETOUR-ALLER PART DU HAUT : l'aigu sonne d'abord, le grave au milieu du cycle, l'aigu revient", () => {
+    // Un cycle en deux secondes. L'aller-retour fait l'inverse, et c'est ce qui les distingue.
+    const x = somme([200, 3200], 2 * SR);
+    const a = analyserPV(x, SR);
+    const rendu = (sens: "aller-retour" | "retour-aller") =>
+      synthetiserPV(a, arpegerSpectre(a, { vitesse: 0.5, largeur: 0.6, bas: 150, haut: 4500, sens, remanence: 0 }));
+    const debut = [0, Math.round(0.25 * SR)] as const, milieuCycle = [Math.round(0.9 * SR), Math.round(1.1 * SR)] as const;
+    const ra = rendu("retour-aller"), ar = rendu("aller-retour");
+    expect(amplitude(ra, 3200, ...debut)).toBeGreaterThan(5 * amplitude(ra, 200, ...debut));
+    expect(amplitude(ra, 200, ...milieuCycle)).toBeGreaterThan(5 * amplitude(ra, 3200, ...milieuCycle));
+    expect(amplitude(ar, 200, ...debut)).toBeGreaterThan(5 * amplitude(ar, 3200, ...debut));
+  });
+
   it("la rémanence laisse sonner un partiel après le passage de la bande", () => {
     const x = somme([200, 3200], 2 * SR);
     const a = analyserPV(x, SR);

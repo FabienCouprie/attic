@@ -13,7 +13,7 @@ export interface OptionsColorLooper {
   gamme: string;
   octave: number;
   portee: number;
-  mode: "melodie" | "harmonie" | "arpeges";
+  mode: "melodie" | "harmonie" | "arpeges" | "roule";
   tempo: number;
   dureeNote: number; // fraction d'un temps
   mesures: number;
@@ -114,11 +114,12 @@ export function genererNotesColorLooper(options: OptionsColorLooper): NoteEvenem
       for (const offset of triade) {
         notes.push({ note: Math.max(0, Math.min(127, root + offset)), velocite, debut, fin });
       }
-    } else if (options.mode === "arpeges") {
+    } else if (options.mode === "arpeges" || options.mode === "roule") {
+      // LE ROULÉ PART COMME L'ARPÈGE, sur tout le pas, et tient chaque note jusqu'au bout du pas.
       const subDur = stepDur / triade.length;
       for (const [i, offset] of triade.entries()) {
         const debutArp = step * stepDur + i * subDur;
-        const finArp = debutArp + subDur;
+        const finArp = options.mode === "roule" ? (step + 1) * stepDur : debutArp + subDur;
         notes.push({ note: Math.max(0, Math.min(127, root + offset)), velocite, debut: debutArp, fin: finArp });
       }
     } else {

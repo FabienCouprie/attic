@@ -28,7 +28,8 @@ export function normaliserTopologie(v: string): Topologie {
 export function normaliserModeVoix(v: string): ModeVoix {
   const facon = faconDe(v);
   if (facon === "arpege") return "Arpège";
-  if (facon === "plaque" || facon === "roule") return "Polyphonie";
+  if (facon === "roule") return "Roulé";
+  if (facon === "plaque") return "Polyphonie";
   const s = v.toLowerCase();
   if (s.includes("arp") || s.includes("arpège") || s.includes("arpegg")) return "Arpège";
   if (s.includes("melodie") || s.includes("mélodie") || s.includes("melody") || s.includes("lead")) return "Mélodie";

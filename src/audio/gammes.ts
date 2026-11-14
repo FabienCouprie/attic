@@ -24,6 +24,8 @@
 // fichier-là dit pourquoi. Les pentatoniques japonaises et les gammes à seconde augmentée, elles,
 // tombent bien sur les douze demi-tons : leur place est ici.
 
+import { ordreUneFois, type SensArpege } from "./sens-arpege";
+
 /** Ce à quoi une gamme sert, pour qu'un composant puisse n'en proposer qu'une part. */
 export type FamilleGamme =
   | "modale" | "pentatonique" | "jazz" | "symetrique" | "exotique" | "chromatique";
@@ -201,10 +203,10 @@ export function completer(historique: readonly string[]): Gamme[] {
 
 /**
  * Le sens dans lequel une gamme se parcourt, sous les identifiants du sens d'un arpège
- * (`audio/sens-arpege.ts`). Il s'écrivait au féminin, `montante` et `descendante`, jusqu'au lot 3c de
- * la passe de complétude (2026-11-14).
+ * (`audio/sens-arpege.ts`), l'ordre de jeu en moins : une gamme n'a pas d'ordre joué. Il s'écrivait au
+ * féminin, `montante` et `descendante`, jusqu'au lot 3c de la passe de complétude (2026-11-14).
  */
-export type SensDeParcours = "montant" | "descendant" | "aller-retour";
+export type SensDeParcours = Exclude<SensArpege, "ordre-de-jeu">;
 
 /**
  * Les notes d'une gamme, une à une, depuis une tonique donnée en numéro de note.
@@ -219,6 +221,9 @@ export type SensDeParcours = "montant" | "descendant" | "aller-retour";
  *
  * CE QUI SORT DES CENT VINGT-HUIT NOTES EST ÉCARTÉ, et non ramené dans l'ambitus : replier une note
  * trop haute la ferait tomber au milieu du parcours, où elle s'entendrait comme une faute.
+ *
+ * LES SEPT SENS VIENNENT DE `ordreUneFois`, que les accords joués emploient aussi ; `hasard` ne sert
+ * qu'à l'aléatoire. Les trois sens d'avant y rendent les mêmes notes, dans le même ordre.
  */
 export function parcoursDeGamme(
   id: string,
@@ -226,6 +231,7 @@ export function parcoursDeGamme(
   octaves = 1,
   sens: SensDeParcours = "montant",
   toniqueFinale = true,
+  hasard: () => number = () => 0,
 ): number[] {
   const degres = degresDeGamme(id);
   const tours = Math.max(1, Math.round(octaves));
@@ -233,10 +239,7 @@ export function parcoursDeGamme(
   for (let o = 0; o < tours; o++) for (const d of degres) montante.push(tonique + 12 * o + d);
   if (toniqueFinale) montante.push(tonique + 12 * tours);
   const jouable = (h: number) => h >= 0 && h <= 127;
-  if (sens === "montant") return montante.filter(jouable);
-  const descendante = [...montante].reverse();
-  if (sens === "descendant") return descendante.filter(jouable);
-  return [...montante, ...descendante.slice(1)].filter(jouable);
+  return ordreUneFois(montante, sens, hasard).filter(jouable);
 }
 
 /**

@@ -34,8 +34,12 @@ const FIN = String.fromCharCode(10);
  * 193 à 199. Le sens d'un arpège et la façon de jouer un accord devenus gouverneurs, ils montraient sous
  * eux des inerties que la dette portait déjà sous d'autres gouverneurs, et dont ils ne sont pas la
  * cause. Le lot 3d les déclare par leur vraie condition, une fois chacune.
+ *
+ * PUIS SEPT DE PLUS, DE 199 À 206, sous la même règle : les deux graines que le sens aléatoire a
+ * fait ajouter aux accords joués et à la gamme jouée sont inertes hors de lui, donc sous chaque valeur
+ * des autres gouverneurs, dont aucun n'est la cause. Sous « Sens », elles sont déclarées.
  */
-const PLAFOND_INERTIES = 199;
+const PLAFOND_INERTIES = 206;
 const PLAFOND_COINCIDENCES = 37;
 
 /** Une fiche d'essai : un réglage à nomenclature « Mode » et un réglage numérique « Gain ». */

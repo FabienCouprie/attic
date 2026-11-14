@@ -15,7 +15,8 @@
 // la même inertie qu'elle portait déjà, vue sous un gouverneur neuf qui n'en est pas la cause, pour le
 // règle personnalisée, la hauteur et le moteur de l'automate cellulaire, le swing du séquenceur
 // d'accords, l'étalement des accords joués et la graine de la roue de Camelot. Le lot 3d les remplace
-// par une déclaration chacune, sous leur vraie condition.
+// par une déclaration chacune, sous leur vraie condition. SEPT AUTRES, sous la même règle : les
+// graines neuves des accords joués et de la gamme jouée, que seul le sens aléatoire fait agir.
 
 import type { CoincidenceInscrite, InertieInscrite } from "./croisement-registre";
 import dette from "./croisement-dette.json";
@@ -53,7 +54,9 @@ export const INERTIES_DECLAREES: InertieInscrite[] = [
   { ou: "sms-sinusoides-bruit·Seuil", sous: "Fenêtre", valeurs: ["512", "1024", "8192"], raison: "le son d'essai n'a pas de partiel à la fois saillant et faible : les pics qui dépassent leur voisinage de la saillie sont tous près du plus fort, et le seuil n'a rien à écarter ; vingt harmoniques de 440 Hz espacés de 4 dB le font agir de 512 à 8192 points ; dit dans sa documentation" },
   // Du lot 3c : le sens d'un arpège et la façon de jouer un accord, devenus gouverneurs.
   { ou: "tonal-grille·Durée", sous: "Mode", valeurs: ["arpege"], raison: "en arpège, chaque note dure une croche, et la durée de l'accord n'a plus rien à régler ; dit dans sa documentation" },
-  { ou: "color-looper·Durée note", sous: "Mode", valeurs: ["arpege"], raison: "en arpège, les trois notes de l'accord se partagent le pas, et la durée d'une note n'a plus rien à régler ; dit dans sa documentation" },
+  { ou: "color-looper·Durée note", sous: "Mode", valeurs: ["arpege", "roule"], raison: "en arpège comme en roulé, les trois notes de l'accord se partagent le pas, et la durée d'une note n'a plus rien à régler ; dit dans sa documentation" },
+  { ou: "accords-joues·Graine", sous: "Sens", valeurs: ["montant", "descendant", "aller-retour", "retour-aller", "convergent", "divergent"], raison: "la graine ne tire que l'ordre aléatoire, et les six autres sens n'ont rien à tirer ; dit dans sa documentation" },
+  { ou: "gamme-jouee·Graine", sous: "Sens", valeurs: ["montant", "descendant", "aller-retour", "retour-aller", "convergent", "divergent"], raison: "la graine ne tire que l'ordre aléatoire, et les six autres sens n'ont rien à tirer ; dit dans sa documentation" },
   { ou: "automate-cellulaire·Densité max", sous: "Mode voix", valeurs: ["melodie", "arpege"], raison: "la mélodie et l'arpège jouent une note par pas, et le plafond des notes simultanées ne borne rien ; dit dans sa documentation" },
   { ou: "accords-joues·Étalement", sous: "Façon", valeurs: ["plaque"], raison: "un accord plaqué fait partir ses notes ensemble, et l'étalement de leurs départs n'a rien à répartir ; dit dans sa documentation" },
   { ou: "arpegiateur-midi·Graine", sous: "Direction", valeurs: ["montant", "descendant", "aller-retour", "retour-aller", "ordre-de-jeu", "convergent", "divergent"], raison: "la graine ne tire que l'ordre aléatoire, et les sept autres directions n'ont rien à tirer ; dit dans sa documentation" },

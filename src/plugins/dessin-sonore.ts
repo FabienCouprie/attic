@@ -42,8 +42,8 @@ export const fiches: FicheAudio[] = ([
         optionsHeritees: LIBELLES_HERITES_GAMMES,
         doc: "Gamme utilisée pour mapper les teintes.",
         docEn: "Scale used to map hues." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", ...choixFaconOuMelodie(["plaque", "arpege"]), defaut: "Mélodie", defautEn: "Melody",
-        doc: "Mélodie = une note par forme ; Plaqué = accord triadique par forme ; Arpégé = accord triadique joué note après note.", docEn: "Melody = one note per shape; Block = triad chord per shape; Arpeggiated = triad chord played one note after another." },
+      { nom: "Mode", nomEn: "Mode", type: "choix", ...choixFaconOuMelodie(["plaque", "arpege", "roule"]), defaut: "Mélodie", defautEn: "Melody",
+        doc: "Mélodie = une note par forme ; Plaqué = accord triadique par forme ; Arpégé = accord triadique joué note après note ; Roulé = la même triade, ses notes parties l'une après l'autre et tenues jusqu'au bout.", docEn: "Melody = one note per shape; Block = triad chord per shape; Arpeggiated = triad chord played one note after another; Rolled = the same triad, its notes started one after another and held to the end." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,
         doc: "Octave de base.", docEn: "Base octave." },
       { nom: "Portée", nomEn: "Range", type: "nombre", plage: [1, 3], pas: 1, defaut: 2,
@@ -73,7 +73,7 @@ export const fiches: FicheAudio[] = ([
       }
 
       const facon = faconDe(ctx.paramTexte("Mode", "melodie"));
-      const mode = facon === "plaque" ? "harmonie" : facon === "arpege" ? "arpege" : "melodie";
+      const mode = facon === "plaque" ? "harmonie" : facon === "arpege" || facon === "roule" ? facon : "melodie";
       const modeRenduBrut = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const modeRendu = modeRenduBrut === "Automatique" ? (sf2Chargee() ? "SoundFont" : "FM/Oscillateurs") : modeRenduBrut;
 

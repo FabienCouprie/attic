@@ -368,8 +368,10 @@ COMPOSANTS=boite-groove,markov-midi npm run graines
 
   Il lance chaque composant à graine fixée **deux fois** et compare ce qu'il entend. La liste vient
   du rôle `graine: true` au **registre**, jamais du libellé, et la valeur est ramenée dans la plage
-  du réglage. Relevé : **89 composants à graine, 59 comparés sur le son, zéro infidèle** ; 88 en
-  14,6 min, et « Texte → image (MOSS) » passé seul le 2026-10-28, rangé sans sortie audio.
+  du réglage. Le registre porte **91 composants à graine** depuis le 2026-11-14, les accords joués et
+  la gamme jouée ayant gagné la leur. Relevé sur les 89 d'avant : 59 comparés sur le son, zéro
+  infidèle ; 88 en 14,6 min, et « Texte → image (MOSS) » passé seul le 2026-10-28, rangé sans sortie
+  audio.
   Un composant sans sortie audio ou qui lève est **distingué** d'une graine infidèle.
 - **Lire ce que les composants disent en anglais**, parce qu'un message composé à l'exécution
   n'est ni dans le registre ni dans le dictionnaire, et que `anglais-registre.test.ts` ne le voit
