@@ -142,6 +142,10 @@ const SURVEILLES: {
   // le banc ne sait pas empreindre ; la seconde est l'aperçu audio, et c'est elle qui est surveillée.
   { id: "banque-clavier", worker: "banque-worker.ts" },
   { id: "separation-harmonique-percussive", worker: "hpss-worker.ts" },
+  // Neuf sorties, une empreinte chacune. Seule la méthode par défaut, Linkwitz-Riley 8, est
+  // surveillée ici : deux entrées pour un même composant s'écraseraient dans la base, et la FFT à
+  // phase nulle est tenue au calcul par `audio/repartiteur-bandes.test.ts`, qui exige le même module.
+  { id: "repartiteur-bandes", worker: "repartiteur-bandes-worker.ts" },
   // Sa sortie n'a pas la longueur de son entrée : le socle rend la voie telle quelle, et c'est le
   // composant qui fabrique son tampon.
   { id: "vitesse-variable", worker: "vitesse-worker.ts" },

@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **510 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **511 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 245 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (17) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 246 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (18) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -5175,6 +5175,7 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | Component | Summary |
 |---|---|
 | [Amplifier](#amplifier) | Amplification/ attenuation of the signal. |
+| [Band Splitter](#band-splitter) | Splits the sound into nine frequency bands and returns each one on its own output. |
 | [Compressor](#compressor) | Feed-forward compressor. |
 | [De-esser](#de-esser) | Dynamic sibilance compression. |
 | [Ducking](#ducking) | One sound steps aside for another: the music backs off under the voice, without the voice being heard. |
@@ -5211,6 +5212,39 @@ Applies a constant gain in decibels to amplify or attenuate the whole signal.
 | Gain | number | 0 dB | -60 – 60 dB | Gain applied when no curve is connected to the Modulation input. |
 | Modulation min | number | -24 dB | -60 – 60 dB | What the curve's zero means. With no curve connected, this setting does nothing. |
 | Modulation max | number | 0 dB | -60 – 60 dB | What the curve's one means. |
+
+#### Band Splitter
+
+`repartiteur-bandes` · Processing → Equalisation and filters
+
+*Splits the sound into nine frequency bands and returns each one on its own output.*
+
+The Band Splitter cuts the received sound into nine frequency bands and returns each one on its own output, from the lowest to the highest. Eight crossover frequencies separate the bands: the first band takes everything below « Crossover 1 », the last everything above « Crossover 8 ». « Method » chooses the filter. Both options give each band the same gain at every frequency, and differ only in phase. • « Linkwitz-Riley 8 » separates the bands at each crossover with an eighth-order Linkwitz-Riley filter, with a slope of 48 dB per octave (S. H. Linkwitz, « Active Crossover Networks for Noncoincident Drivers », Journal of the Audio Engineering Society 24(1), 1976, pp. 2-8). Each band also goes through the all-pass filters of the crossovers above it, which puts all the bands in phase with one another. The sum of the nine outputs then has the input's gain at every frequency, but its phase turns: its waveform is not the input's. The filter is causal; nothing comes out before the instant that excites it. • « Zero-phase FFT » applies that same gain to each band with no phase shift at all, through a finite-response filter centred on the present instant. The sum of the nine outputs gives the input back, sample for sample, to within computational rounding. A band's response extends before the instant that excites it: a sharp attack in a low band is heard there a little before it arrives. « Crossover 1 » to « Crossover 8 » place the eight boundaries, in hertz. By default they lie halfway, in octaves, between the frequencies 32, 64, 125, 250 and 500 Hz, 1, 2, 4 and 8 kHz: each of these nine frequencies comes out through its own band with a loss of at most 1.2 dB, and the two neighbouring bands return it attenuated by at least 24 dB. The crossovers are sorted in increasing order before use, and brought below 45 % of the sample rate. Two equal crossovers leave an almost empty band between them. The outputs « Band 1 » to « Band 9 » each return their band, as long as the input and with as many channels. The message gives the method and the crossovers used.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Band 1 | audio |  |
+| output | Band 2 | audio |  |
+| output | Band 3 | audio |  |
+| output | Band 4 | audio |  |
+| output | Band 5 | audio |  |
+| output | Band 6 | audio |  |
+| output | Band 7 | audio |  |
+| output | Band 8 | audio |  |
+| output | Band 9 | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Method | choice | Linkwitz-Riley 8 | Linkwitz-Riley 8 / Zero-phase FFT | The filter that separates the bands. Both options give each band the same gain. « Linkwitz-Riley 8 » is causal: the sum of the outputs has the input's gain, with a turning phase. « Zero-phase FFT » adds no phase shift: the sum of the outputs gives the input back, and a band's response extends before the instant that excites it. |
+| Crossover 1 | slider | 45 Hz | 20 – 180 Hz, step 1 | Boundary between band 1 and band 2, in hertz. The crossovers are sorted in increasing order before use. |
+| Crossover 2 | slider | 89 Hz | 22 – 356 Hz, step 1 | Boundary between band 2 and band 3, in hertz. The crossovers are sorted in increasing order before use. |
+| Crossover 3 | slider | 177 Hz | 44 – 708 Hz, step 1 | Boundary between band 3 and band 4, in hertz. The crossovers are sorted in increasing order before use. |
+| Crossover 4 | slider | 354 Hz | 89 – 1416 Hz, step 1 | Boundary between band 4 and band 5, in hertz. The crossovers are sorted in increasing order before use. |
+| Crossover 5 | slider | 707 Hz | 177 – 2828 Hz, step 1 | Boundary between band 5 and band 6, in hertz. The crossovers are sorted in increasing order before use. |
+| Crossover 6 | slider | 1414 Hz | 354 – 5656 Hz, step 1 | Boundary between band 6 and band 7, in hertz. The crossovers are sorted in increasing order before use. |
+| Crossover 7 | slider | 2828 Hz | 707 – 11312 Hz, step 1 | Boundary between band 7 and band 8, in hertz. The crossovers are sorted in increasing order before use. |
+| Crossover 8 | slider | 5657 Hz | 1414 – 20000 Hz, step 1 | Boundary between band 8 and band 9, in hertz. The crossovers are sorted in increasing order before use. |
 
 #### Compressor
 
