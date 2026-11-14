@@ -224,7 +224,9 @@ const CAS: Cas[] = [
   { node: "sortie-midi", param: "Synthèse", ancienneValeur: "FM/Oscillateurs", idAttendu: "fm" },
   { node: "sortie-midi", param: "Synthèse", ancienneValeur: "FM/Oscillators", idAttendu: "fm" },
   { node: "sortie-midi", param: "Synthèse", ancienneValeur: "SoundFont", idAttendu: "soundfont" },
-  // Variante sans « Automatique » (PARAMETRE_SYNTHESE_SANS_AUTO).
+  // L'automate cellulaire offrait le moteur sans « Automatique » jusqu'au 2026-11-14 : ses valeurs
+  // d'alors se relisent, et la nouvelle aussi.
+  { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "Automatique", idAttendu: "auto" },
   { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "FM/Oscillateurs", idAttendu: "fm" },
   { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "FM/Oscillators", idAttendu: "fm" },
   { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "SoundFont", idAttendu: "soundfont" },

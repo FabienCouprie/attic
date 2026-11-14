@@ -28,8 +28,8 @@ import { reglagesANomenclature } from "../plugins/nomenclatures";
 const FIN = String.fromCharCode(10);
 
 /** Les comptes de la dette au relevé du 2026-11-14 : ils ne font que baisser. */
-const PLAFOND_INERTIES = 194;
-const PLAFOND_COINCIDENCES = 41;
+const PLAFOND_INERTIES = 193;
+const PLAFOND_COINCIDENCES = 37;
 
 /** Une fiche d'essai : un réglage à nomenclature « Mode » et un réglage numérique « Gain ». */
 function ficheDEssai(): FicheLancable {

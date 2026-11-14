@@ -27,6 +27,11 @@ const UN_TIRAGE = "sans objectif, le nœud rend un seul tirage à graine fixe, q
 const UNE_SUITE = "la suite trouvée à la graine d'essai évite les degrés où ces gammes diffèrent ; une autre graine les sépare";
 const UNE_NOTE = "l'arbre n° 0 du catalogue, le défaut, n'a qu'une note, qui tombe au même rang dans ces gammes";
 
+// LES DÉCLARATIONS DU LOT 3b-2 (2026-11-14), que l'élargissement des fenêtres et des valeurs de note
+// fait naître ou grandir. Chacune remplace une ligne de la dette, devenue fausse quand la liste a
+// gagné des valeurs, et chaque raison d'entrée a été vue se défaire sous une entrée qui donne prise.
+const VUE_SEULE = "la taille ne règle que la vue, qui calcule son propre spectre : le nœud rend son entrée telle quelle";
+
 /** Les inerties légitimes, chacune dite dans la documentation du réglage gouverné. */
 export const INERTIES_DECLAREES: InertieInscrite[] = [
   { ou: "beat-repeat·Feedback", sous: "Intervalle", valeurs: ["1/16", "1/16t", "1/32"], raison: SEGMENT },
@@ -39,6 +44,7 @@ export const INERTIES_DECLAREES: InertieInscrite[] = [
   { ou: "beat-repeat·Tempo", sous: "Taille", valeurs: ["1/2", "1/4.", "1/4"], raison: SEGMENT },
   { ou: "beat-repeat·Taille", sous: "Intervalle", valeurs: ["1/16", "1/16t", "1/32"], raison: "sous ces intervalles, les deux tailles que la passe éprouve, 1/2 et 1/4 pointée, sont plus longues et rendent l'entrée telle quelle ; une taille plus courte s'entend, et sa documentation le dit" },
   { ou: "boite-rythmes·Caisse claire", sous: "Patron", valeurs: ["Techno"], raison: "le patron Techno n'a pas de caisse claire ; dit dans la documentation du réglage" },
+  { ou: "sms-sinusoides-bruit·Seuil", sous: "Fenêtre", valeurs: ["512", "1024", "8192"], raison: "le son d'essai n'a pas de partiel à la fois saillant et faible : les pics qui dépassent leur voisinage de la saillie sont tous près du plus fort, et le seuil n'a rien à écarter ; vingt harmoniques de 440 Hz espacés de 4 dB le font agir de 512 à 8192 points ; dit dans sa documentation" },
 ];
 
 /** Les coïncidences légitimes, chacune avec sa raison. */
@@ -73,6 +79,10 @@ export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
   { ou: "solveur-contraintes·Gamme", valeurs: ["phrygien-dominant", "double-seconde-augmentee"], raison: UNE_SUITE },
   { ou: "arbre-rythmique·Gamme", valeurs: ["chromatique", "mineur", "pentatonique-mineure", "dorien", "phrygien", "mixolydien", "locrien", "alteree", "lydien-dominant", "phrygien-dominant", "bebop-dominant", "ton-entier", "diminuee-demi-ton", "in-sen"], raison: UNE_NOTE },
   { ou: "arbre-rythmique·Gamme", valeurs: ["majeur", "mineur-harmonique", "lydien", "mineur-melodique", "diminuee-ton-demi", "augmentee", "double-seconde-augmentee", "hongroise-mineure"], raison: UNE_NOTE },
+  { ou: "analyseur-spectre·Fenêtre", valeurs: ["256", "512", "1024", "2048", "4096", "8192"], raison: VUE_SEULE },
+  { ou: "spectrogramme·Fenêtre", valeurs: ["256", "512", "1024", "2048", "4096", "8192"], raison: VUE_SEULE },
+  { ou: "restauration-ecretage·Fenêtre", valeurs: ["256", "512", "1024", "2048", "4096", "8192"], raison: "le son d'essai n'est pas écrêté, et la restauration le rend tel quel quelle que soit la fenêtre ; un sinus écrêté à la moitié de sa crête sépare les six tailles" },
+  { ou: "transposeur-quantiseur-midi·Quantisation", valeurs: ["none", "1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t", "1/32t"], raison: "le MIDI d'essai pose ses attaques sur des noires, que toute grille divisant la noire laisse en place comme l'absence de grille ; une grille plus large ou pointée les déplace, et huit notes jouées à côté de la grille séparent les huit valeurs" },
 ];
 
 /** La dette des inerties relevées au lot 1, à trancher. */

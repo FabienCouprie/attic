@@ -148,11 +148,18 @@ const DUREES_VEX: { q: number; v: string }[] = [
   { q: 4, v: "w" },
 ];
 
+/**
+ * Les grilles de la partition, en noires. CE SONT LES DURÉES QU'ELLE SAIT ÉCRIRE, `DUREES_VEX`, et
+ * aucune autre : sans point ni triolet, une attaque posée sur une grille pointée ou de triolet
+ * tomberait entre deux durées écrites, et la partition comblerait l'écart de silences.
+ */
 export const GRILLES_NOTATION: Record<string, number> = {
   "1/4": 1,
   "1/8": 0.5,
   "1/16": 0.25,
   "1/32": 0.125,
+  "1/1": 4,
+  "1/2": 2,
 };
 
 function dureeStandardVex(quarts: number): string {

@@ -10,7 +10,7 @@ import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
-import { choixFenetre } from "../audio/fenetres-analyse";
+import { TAILLES_FENETRE, choixFenetre } from "../audio/fenetres-analyse";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { versDb } from "../audio/decibels";
@@ -38,7 +38,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       {
         nom: "Fenêtre", nomEn: "Window", type: "choix",
-        options: choixFenetre([1024, 2048, 4096, 8192]).options, defaut: "4096",
+        options: choixFenetre(TAILLES_FENETRE).options, defaut: "4096",
         doc: "Taille de la fenêtre FFT (échantillons). Plus grande = meilleure résolution fréquentielle (mais moins de résolution temporelle).",
         // Pas d'optionsEn/defautEn : des tailles de fenêtre ne se traduisent pas.
         // (Ces champs contenaient des formes d'onde — « Sine », « Square »… —
@@ -69,7 +69,7 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       {
         nom: "Fenêtre", nomEn: "Window", type: "choix",
-        options: choixFenetre([512, 1024, 2048, 4096]).options, defaut: "1024",
+        options: choixFenetre(TAILLES_FENETRE).options, defaut: "1024",
         doc: "Taille de la fenêtre FFT (échantillons). Petite = meilleure résolution temporelle ; grande = meilleure résolution fréquentielle (compromis temps/fréquence).",
         // Idem : pas d'optionsEn/defautEn (mêmes formes d'onde copiées-collées).
         docEn: "FFT window size (samples). Small = better time resolution; large = better frequency resolution (time/frequency trade-off).",

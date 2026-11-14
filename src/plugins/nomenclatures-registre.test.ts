@@ -74,22 +74,12 @@ const EXAMINES_ET_ECARTES: { ou: string; raison: string }[] = [
  *
  * CETTE LISTE NE PEUT QUE DÉCROÎTRE : un réglage coupé qui n'y est pas fait tomber la suite, et un
  * réglage qui n'est plus coupé aussi. Le lot 2 tranché, les coupes gardées sont passées dans les
- * `coupes` de leur domaine avec leur borne : restent celles que Fabien a décidé d'élargir.
+ * `coupes` de leur domaine avec leur borne.
+ *
+ * ELLE EST VIDE DEPUIS LE LOT 3b (2026-11-14) : quatre-vingt-trois coupes relevées, soixante-quatre
+ * déclarées avec leur borne, dix-neuf élargies à la table entière. Une coupe neuve se déclare.
  */
-const COUPES_A_EXAMINER: string[] = [
-  // fenêtre d'analyse : six tailles, élargies là où l'algorithme ne dit pas sa borne.
-  "analyseur-spectre·Fenêtre", "apparier-reference·Taille de la transformée", "continuation-spectrale-ar·FFT",
-  "continuation-spectrale-lstm·FFT", "csound-spectral·Fenêtre", "flou-spectral·Finesse", "gel-spectral·Finesse",
-  "glissando-interieur·Finesse", "masquage·Finesse", "morphing-spectral·Fenêtre", "pca-neuronale·FFT",
-  "phase-pghi·Fenêtre", "restauration-ecretage·Fenêtre", "rugosite·Finesse", "separation-harmonique-percussive·Fenêtre",
-  "sms-sinusoides-bruit·Fenêtre", "spectrogramme-fractal·FFT", "spectrogramme·Fenêtre",
-  "tracage-spectral·Finesse",
-  // valeur de note : treize.
-  "multi-reservoirs·Résolution", "reservoir-musical·Résolution", "transcription-midi·Quantification",
-  "transposeur-quantiseur-midi·Quantisation", "vexflow-midi·Quantification",
-  // moteur de synthèse : trois.
-  "automate-cellulaire·Synthèse",
-];
+const COUPES_A_EXAMINER: string[] = [];
 
 describe("un concept, des formes déclarées", () => {
   const tous = choix();
@@ -299,8 +289,11 @@ describe("un concept, des formes déclarées", () => {
     // qu'ils prennent désormais vient de la table, et elle se compte.
     // PUIS DE QUARANTE-NEUF À CINQUANTE, ET C'EST LA DETTE QU'ON VOIT ENFIN : le domaine des langues
     // passe au seuil de deux, et la paire français et anglais de cinq réglages entre au compte.
+    // PUIS DE CINQUANTE À QUARANTE-SIX, par la passe de complétude (2026-11-14) : les fenêtres
+    // élargies à la table entière tombent de onze formes à sept, le moteur de synthèse de deux à une,
+    // et la valeur de note monte de six à sept, deux grilles élargies chacune jusqu'à sa propre borne.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(50);
+      .toBe(46);
   });
 });

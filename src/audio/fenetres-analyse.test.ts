@@ -1,20 +1,12 @@
 // audio/fenetres-analyse.test.ts — Aucune liste de tailles de fenêtre n'est écrite à la main.
 //
-// CE QUE LE RELEVÉ A TROUVÉ, ET CE QU'IL A ÉCARTÉ. Vingt et un réglages du parc offrent une taille
-// de transformée, sous dix formes au registre des nomenclatures. Trois de ces formes ne diffèrent
-// que par les LIBELLÉS, et six sous-ensembles coexistent. En les examinant un par un, aucun n'est
-// une dette :
+// CE QUE LE RELEVÉ A TROUVÉ, ET CE QU'IL A ÉCARTÉ. Vingt-trois réglages du parc offrent une taille
+// de transformée. Depuis la passe de complétude du 2026-11-14, ils offrent la table entière, sauf
+// quatre dont l'algorithme dit la borne, déclarée en coupe au domaine « fenêtre d'analyse » :
 //
-//   LES SOUS-ENSEMBLES PORTENT DÉJÀ LEUR RAISON, dans la documentation de leur propre réglage :
-//   « elle doit être longue, il faut du temps pour constater qu'une fréquence dure » pour la passe
-//   sinusoïdale de la décomposition STN, « elle doit être courte » pour sa passe transitoire,
-//   « 2048 est le compromis de l'article » pour la séparation harmonique, « sans effet sur
-//   l'étirement » pour la transformée de Csound.
-//
-//   LES LIBELLÉS DESCRIPTIFS SONT RELATIFS À LEUR PROPRE LISTE : « Ordinaire (2048) » nomme la
-//   taille du milieu, et le milieu d'une liste n'est pas celui d'une autre. Une table centrale ne
-//   peut donc pas les produire, et les remplacer par le nombre seul retirerait de l'écran ce que
-//   leur documentation dit déjà.
+//   LES LIBELLÉS DESCRIPTIFS, « Ordinaire (2048) », viennent de la table par `choixFenetreNomme`.
+//   Ils étaient relatifs à leur liste, et s'écrivaient trois fois à la main ; les listes devenues
+//   entières, chaque libellé dit ce que sa taille fait voir, le même partout.
 //
 //   L'ABSENCE DE LISTE ANGLAISE sur deux réglages est une décision écrite à côté d'eux : des
 //   tailles de fenêtre ne se traduisent pas.
@@ -24,10 +16,12 @@
 // cherche LA FORME d'une liste de tailles dans la source, et non un nom de constante, de sorte
 // qu'une liste neuve ne puisse pas passer sous un autre nom.
 import { describe, expect, it } from "vitest";
-import { readdirSync, readFileSync, statSync } from "fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import { join, resolve } from "path";
 
-import { TAILLES_FENETRE, choixFenetre } from "./fenetres-analyse";
+import { TAILLES_FENETRE, choixFenetre, choixFenetreNomme } from "./fenetres-analyse";
+import { registre } from "./adaptateur";
+import { valeurCanoniqueChoix } from "../i18n";
 
 const RACINE = resolve(__dirname, "..");
 const MOI = join("audio", "fenetres-analyse.ts");
@@ -45,6 +39,42 @@ describe("la table des tailles de fenêtre", () => {
     // moins que ce que son composant croit offrir, et rien ne le dirait.
     expect(() => choixFenetre([1024, 3000])).toThrow(/3000/);
     expect(() => choixFenetre([128])).toThrow();
+  });
+
+  it("les libellés nommés restent appariés à leur taille, dans l'ordre demandé", () => {
+    const c = choixFenetreNomme([4096, 2048]);
+    expect(c.optionIds).toEqual(["4096", "2048"]);
+    expect(c.options).toEqual(["Fine en fréquence (4096)", "Ordinaire (2048)"]);
+    expect(c.optionsEn).toEqual(["Sharp in frequency (4096)", "Ordinary (2048)"]);
+    expect(() => choixFenetreNomme([3000])).toThrow(/3000/);
+  });
+
+  it("UN PROJET ANCIEN ROUVRE SUR SA TAILLE : chaque libellé d'avant l'élargissement se résout", () => {
+    // Les listes à libellés avaient deux, trois ou quatre tailles ; 256 et 512 y sont entrés AVANT
+    // elles, et « Très fine (8192) » a changé de nom. Un libellé se résout par son rang dans la liste
+    // d'aujourd'hui, appariée, ou par `optionsHeritees` : aucun ne doit glisser sur une autre taille.
+    const avant: [string, string, string][] = [
+      ["Fine en temps (1024)", "Sharp in time (1024)", "1024"],
+      ["Ordinaire (2048)", "Ordinary (2048)", "2048"],
+      ["Fine en fréquence (4096)", "Sharp in frequency (4096)", "4096"],
+      ["Très fine (8192)", "Very sharp (8192)", "8192"],
+    ];
+    const reglages: [string, [string, string, string][]][] = [
+      ["rugosite", avant.slice(0, 3)], ["flou-spectral", avant], ["gel-spectral", avant],
+      ["glissando-interieur", avant], ["tracage-spectral", avant], ["masquage", avant.slice(1, 3)],
+    ];
+    const fautes: string[] = [];
+    for (const [id, anciens] of reglages) {
+      const p = registre.trouverDef(id)?.parametres?.find((x) => x.nom === "Finesse");
+      if (!p) { fautes.push(`${id} : pas de « Finesse »`); continue; }
+      for (const [fr, en, taille] of anciens) {
+        for (const libelle of [fr, en, taille]) {
+          const lu = valeurCanoniqueChoix(p, libelle);
+          if (lu !== taille) fautes.push(`${id} : « ${libelle} » se lit ${String(lu)} au lieu de ${taille}`);
+        }
+      }
+    }
+    expect(fautes).toEqual([]);
   });
 
   it("ne porte que des puissances de deux, croissantes", () => {
@@ -114,10 +144,20 @@ describe("la table des tailles de fenêtre", () => {
     expect(listesDeTailles(`["4096", "1024", "2048"]`)).toEqual([]);
   });
 
+  /**
+   * LES FICHIERS QUI ÉCRIVENT DES TAILLES SANS LES OFFRIR, et pourquoi. Une inscription du croisement
+   * relève les valeurs OBSERVÉES sous lesquelles un réglage coïncide ou reste inerte : la remplacer par
+   * la table la rendrait fausse dès qu'une seule taille s'en sépare. Ce fichier ne déclare aucun
+   * réglage.
+   */
+  const RELEVES = [join("audio", "croisement-inscriptions.ts")];
+
   it("AUCUN AUTRE FICHIER N'ÉCRIT UNE LISTE DE TAILLES", () => {
+    // Un relevé renommé laisserait ici une exemption orpheline, qui couvrirait un autre fichier.
+    expect(RELEVES.filter((r) => !existsSync(join(RACINE, r))), "ce relevé n'existe plus : retirer sa ligne").toEqual([]);
     const fautifs: string[] = [];
     for (const chemin of sources(RACINE)) {
-      if (chemin.endsWith(MOI)) continue;
+      if (chemin.endsWith(MOI) || RELEVES.some((r) => chemin.endsWith(r))) continue;
       for (const ou of listesDeTailles(readFileSync(chemin, "utf8"))) {
         fautifs.push(`${chemin.slice(RACINE.length + 1)} : ${ou}`);
       }

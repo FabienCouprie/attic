@@ -14,6 +14,7 @@ import { analyserResultante } from "../audio/schillinger";
 import { CANAL_PERCUSSION, choixPercussion } from "../audio/batterie-midi";
 import { GAMMES, degresInjouables, ecartAuTempere, frequences, gammeParId, intervalles } from "../audio/gammes-monde";
 import { analyser, modules, TAILLE_TRAME } from "../audio/spectral-wishart";
+import { choixFenetreNomme } from "../audio/fenetres-analyse";
 
 /** La fréquence centrale approximative d'une bande critique, pour nommer ce qu'on montre. */
 function frequenceDeBande(b: number): number {
@@ -48,10 +49,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Un son tonal masque moins qu'un bruit de même énergie : l'oreille le sépare mieux du reste. Les codeurs perceptifs retranchent couramment une dizaine de décibels pour un son tonal contre cinq pour un bruit. « Entre les deux » prend une valeur intermédiaire, ce qu'est une piste réelle la plupart du temps.",
         docEn: "A tonal sound masks less than noise of equal energy: the ear separates it better from the rest. Perceptual coders commonly subtract some ten decibels for a tonal sound against five for noise. « In between » takes a middle value, which is what a real track usually is." },
       { nom: "Finesse", nomEn: "Resolution", type: "choix",
-        options: ["Ordinaire (2048)", "Fine en fréquence (4096)"], optionsEn: ["Ordinary (2048)", "Sharp in frequency (4096)"],
-        optionIds: ["2048", "4096"], defaut: "Ordinaire (2048)", defautEn: "Ordinary (2048)",
-        doc: "Taille de la fenêtre d'analyse. Une fenêtre longue sépare mieux les bandes graves, où elles sont étroites.",
-        docEn: "Analysis window size. A long window separates the low bands better, where they are narrow." },
+        ...choixFenetreNomme([1024, 2048, 4096, 8192]), defaut: "Ordinaire (2048)", defautEn: "Ordinary (2048)",
+        doc: "Taille de la fenêtre d'analyse. Une fenêtre longue sépare mieux les bandes graves, où elles sont étroites. Elle ne descend pas sous 1024 points : à 88,2 ou 96 kHz, une case de la transformée y dépasserait la centaine de hertz des bandes les plus graves, et jusqu'à quatre d'entre elles resteraient vides.",
+        docEn: "Analysis window size. A long window separates the low bands better, where they are narrow. It does not go below 1024 points: at 88.2 or 96 kHz, one transform bin would then exceed the hundred hertz of the lowest bands, and up to four of them would stay empty." },
     ],
     async executer(ctx) {
       const en = langueCourante() === "en";

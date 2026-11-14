@@ -18,16 +18,18 @@ import { TEMPERAMENTS, noteTemperee, tableEcarts, temperament } from "../audio/t
 import { apprendre, engendrer, statistiques, tableEnTexte } from "../audio/markov";
 
 import { canalDominant, rendreMotif, PARAMETRES_RENDU_MOTIF, SORTIES_MOTIF } from "./effets-aides";
-import { LIBELLES_HERITES_VALEURS, choixValeurs } from "../audio/valeurs-note";
+import { LIBELLES_HERITES_VALEURS, VALEURS_NOTE, choixValeurs } from "../audio/valeurs-note";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 // L'ARPÉGIATEUR A SA FICHE À PART, ce fichier étant au plafond de la norme de taille ; il reste
 // rangé ici, à sa place dans le catalogue.
 import { ARPEGIATEUR_MIDI } from "./arpegiateur-midi";
 
 // LA GRILLE DU TRANSPOSEUR, sans sa sentinelle « Aucune » qui n'est pas une valeur de note : elle
-// dit qu'il n'y a pas de grille. L'ordre est celui qu'elle avait, un projet enregistré s'y
-// résolvant par la position.
-const VALEURS_QUANTIFICATION = ["1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"];
+// dit qu'il n'y a pas de grille. Son ordre d'origine d'abord, un projet enregistré s'y résolvant
+// par la position, puis le reste de la table : la grille se compte en divisions du temps, où une
+// fraction s'écrit aussi bien, la pointée comme la ronde.
+const HISTORIQUE_QUANTIFICATION = ["1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"];
+const VALEURS_QUANTIFICATION = [...HISTORIQUE_QUANTIFICATION, ...VALEURS_NOTE.map((v) => v.id).filter((id) => !HISTORIQUE_QUANTIFICATION.includes(id))];
 
 export const fiches: FicheAudio[] = ([
   fiche({

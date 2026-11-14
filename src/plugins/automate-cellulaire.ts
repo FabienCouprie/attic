@@ -5,14 +5,13 @@ import { genererAutomateCellulaire, REGLES_1D } from "../audio/automate-cellulai
 import {
   normaliserCle,
   normaliserGamme,
-  normaliserTimbre,
   normaliserTopologie,
   normaliserModeVoix,
   normaliserMapping,
 } from "../audio/automate-cellulaire-reglages";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE_SANS_AUTO } from "./soundfontGlobal";
+import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
 import { GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS } from "../audio/generation-melodie";
 import { PARAMETRE_CLE } from "../audio/cles";
 
@@ -212,9 +211,11 @@ const FICHES: FicheAudio[] = [
         docEn: "Probability of randomly flipping a cell at each generation.",
       },
       {
-        ...PARAMETRE_SYNTHESE_SANS_AUTO,
-        doc: "Moteur audio pour le rendu : FM/oscillateurs intégrés ou SoundFont global chargé.",
-        docEn: "Audio engine for rendering: built-in FM/oscillators or loaded global SoundFont.",
+        // LE DÉFAUT RESTE FM, qu'il était : un nœud jamais réglé ne change pas de son quand un
+        // SoundFont est chargé.
+        ...PARAMETRE_SYNTHESE, defaut: "FM/Oscillateurs",
+        doc: "Moteur audio pour le rendu. Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = oscillateurs intégrés. SoundFont = le SoundFont global ; s'il n'y en a aucun de chargé, le rendu passe en FM et le message le dit.",
+        docEn: "Audio engine for rendering. Auto = SoundFont if an SF2 file is loaded, else FM. FM = built-in oscillators. SoundFont = the global SoundFont; if none is loaded, the render falls back to FM and the message says so.",
       },
       PARAMETRE_INSTRUMENT_SF2,
     ],
@@ -223,6 +224,7 @@ const FICHES: FicheAudio[] = [
       const regle = regleTexte === "Personnalisée" || regleTexte === "Custom"
         ? ctx.paramNombre("Règle personnalisée", 90)
         : parseInt(regleTexte, 10) || 90;
+      const moteur = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "fm"));
       const res = await genererAutomateCellulaire({
         regle,
         reglePersonnalisee: ctx.paramNombre("Règle personnalisée", 90),
@@ -239,14 +241,15 @@ const FICHES: FicheAudio[] = [
         dureeNote: ctx.paramNombre("Durée note", 0.2),
         velocite: ctx.paramNombre("Vélocité", 100),
         volume: ctx.paramNombre("Volume", 80),
-        timbre: normaliserTimbre(ctx.paramTexte("Synthèse", "FM/Oscillateurs")),
+        timbre: moteur === "SoundFont" || (moteur === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs",
         instrument: ctx.paramNombre("Instrument", 0),
         densiteMax: ctx.paramNombre("Densité max", 4),
         probabilite: ctx.paramNombre("Probabilité mutation", 0),
       });
       return {
         valeurs: [res.audio, res.midi],
-        message: traduire("msg.automate_cellulaire", res.notes.length, res.audio.duration.toFixed(1)),
+        message: traduire("msg.automate_cellulaire", res.notes.length, res.audio.duration.toFixed(1))
+          + (res.repliFm ? ` · ${traduire("msg.sf2.non.charge")}` : ""),
       };
     },
   }),

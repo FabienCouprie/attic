@@ -16,7 +16,7 @@ import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { notesDuMidi } from "../audio/midi";
-import { choixFenetre } from "../audio/fenetres-analyse";
+import { TAILLES_FENETRE, choixFenetre } from "../audio/fenetres-analyse";
 import {
   construireCsd, messagesUtiles, orchestreLit, partitionDepuisNotes, rendreCsd, sourcePartition,
   texteBranche,
@@ -470,10 +470,10 @@ endin`,
         doc: "Transposition, employée par l'étirement seul : elle change la hauteur sans toucher à la durée, ce qui est tout l'intérêt d'un étirement à phase verrouillée.",
         docEn: "Transposition, used by the stretch only: it changes the pitch without touching the duration, which is the whole point of a phase-locked stretch." },
       { nom: "Fenêtre", nomEn: "Window", type: "choix",
-        ...choixFenetre([512, 1024, 2048]),
+        ...choixFenetre(TAILLES_FENETRE),
         defaut: "1024", defautEn: "1024",
         doc: "Taille de la transformée. Grande, la résolution fréquentielle est fine et les transitoires s'étalent ; petite, l'inverse. 1024 est le compromis usuel. Sans effet sur l'étirement (mincer), qui ne passe pas par cette analyse.",
-        docEn: "Transform size. Large gives fine frequency resolution and smeared transients; small the opposite. 1024 is the usual compromise." },
+        docEn: "Transform size. Large gives fine frequency resolution and smeared transients; small the opposite. 1024 is the usual compromise. No effect on the stretch (mincer), which does not go through this analysis." },
       { nom: "Queue", nomEn: "Tail", type: "nombre", plage: [0, 30], pas: 0.5, defaut: 0.5, unite: "s",
         doc: "Temps ajouté à la durée traitée. Indispensable pour l'étirement, qui allonge le son.",
         docEn: "Time added to the processed duration. Essential for the stretch, which lengthens the sound." },

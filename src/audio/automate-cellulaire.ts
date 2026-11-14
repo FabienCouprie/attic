@@ -409,20 +409,29 @@ export function genererNotesAutomateCellulaire(options: OptionsAutomateCellulair
   return genererDepuis2D(options);
 }
 
-export async function genererAutomateCellulaire(options: OptionsAutomateCellulaire): Promise<{ audio: AudioBuffer; midi: File; notes: NoteEvenement[] }> {
+/**
+ * Les notes de l'automate, leur fichier et leur rendu.
+ *
+ * LE REPLI EN FM SE DIT. Demandé au SoundFont sans qu'aucun soit chargé, le rendu passe en FM, et
+ * `repliFm` le rend à l'appelant : ce passage était muet, et le nœud sonnait autrement que son
+ * réglage sans qu'un mot l'annonce.
+ */
+export async function genererAutomateCellulaire(options: OptionsAutomateCellulaire): Promise<{ audio: AudioBuffer; midi: File; notes: NoteEvenement[]; repliFm: boolean }> {
   const notes = genererNotesAutomateCellulaire(options);
   const tempo = notes.length > 0 ? 60 / options.dureeNote : 120;
   const { programme, banque } = decodeInstrument(options.instrument ?? 0);
   const midiFile = notesVersFichierMidi(notes, tempo, 0, banque, programme);
   let audio: AudioBuffer;
+  let repliFm = false;
   try {
     audio = await rendreSequence(notes, options.timbre, options.volume, programme, banque);
   } catch (e) {
     if (options.timbre === "SoundFont") {
       audio = await rendreSequence(notes, "FM/Oscillateurs", options.volume, programme, banque);
+      repliFm = true;
     } else {
       throw e;
     }
   }
-  return { audio, midi: midiFile, notes };
+  return { audio, midi: midiFile, notes, repliFm };
 }

@@ -546,7 +546,7 @@ Generates a spectrogram whose pattern is fractal noise (sum of octaves of pseudo
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Duration | number | 4 s | 0.5 – 30 s, step 0.5 | Total duration of the generated sound and image. |
-| FFT | choice | 2048 | 512 / 1024 / 2048 / 4096 | FFT window size: larger = finer frequency resolution, coarser time resolution. |
+| FFT | choice | 2048 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | FFT window size: larger = finer frequency resolution, coarser time resolution. |
 | Octaves | number | 4 | 1 – 8, step 1 | Number of fractal noise octaves. |
 | Roughness | number | 0.5 | 0 – 1, step 0.05 | Influence of high-frequency noise (0 = smooth, 1 = rough). |
 | Scale | choice | Logarithmic | Logarithmic / Linear | Vertical distribution of frequencies in the image. |
@@ -841,7 +841,7 @@ Generates a musical sequence from a 1D cellular automaton (Wolfram rules 30, 90,
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level, from 0 (silence) to 100%. |
 | Max density | number | 4 | 1 – 16, step 1 | Maximum number of simultaneous notes in polyphony mode. |
 | Mutation probability | number | 0 | 0 – 0.5, step 0.01 | Probability of randomly flipping a cell at each generation. |
-| Synthesis | choice | FM/Oscillators | FM/Oscillators / SoundFont | Audio engine for rendering: built-in FM/oscillators or loaded global SoundFont. |
+| Synthesis | choice | FM/Oscillators | Auto / FM/Oscillators / SoundFont | Audio engine for rendering. Auto = SoundFont if an SF2 file is loaded, else FM. FM = built-in oscillators. SoundFont = the global SoundFont; if none is loaded, the render falls back to FM and the message says so. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
 #### Chord Generator
@@ -1823,7 +1823,7 @@ Puts four neural reservoirs into a network, each with a distinct musical role: m
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note (tonic) of the scale. |
 | Scale | choice | Major | Major / Natural minor / Major pentatonic / Minor pentatonic / Blues / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | Scale used to map activations to notes. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
-| Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 | Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth. |
+| Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 / 1/8 triplet / 1/16 triplet / 1/32 / 1/32 triplet | Time division: quarter (1/4), eighth (1/8), sixteenth (1/16) and thirty-second (1/32) notes, and the triplets of the last three. The network moves by a whole number of steps per beat, which no dotted value, nor the half, the whole or the quarter triplet makes. |
 | Bars | number | 4 | 1 – 64, step 1 | Number of bars to generate. |
 | Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
@@ -1896,7 +1896,7 @@ Generates emergent melody via random neural networks (Reservoir Computing), insp
 | Scale | choice | Major | Major / Natural minor / Major pentatonic / Minor pentatonic / Blues / Chromatic / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | Scale used to map network activations to notes. |
 | Octave | number | 4 | 2 – 6, step 1 | Starting octave (notes can span 2 octaves above). |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
-| Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 | Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth. |
+| Resolution | choice | 1/8 | 1/4 / 1/8 / 1/16 / 1/8 triplet / 1/16 triplet / 1/32 / 1/32 triplet | Time division: quarter (1/4), eighth (1/8), sixteenth (1/16) and thirty-second (1/32) notes, and the triplets of the last three. The network moves by a whole number of steps per beat, which no dotted value, nor the half, the whole or the quarter triplet makes. |
 | Bars | number | 4 | 1 – 64, step 1 | Number of bars to generate. |
 | Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. |
 | Density | number | 70 % | 0 – 100 %, step 1 | Probability of producing a note at each step. High = dense melody; low = sparse melody. |
@@ -3012,7 +3012,7 @@ This component transcribes a recording into MIDI notes, one track per recognized
 |---|---|---|---|---|
 | Instruments | choice | All | All / Piano / Acoustic guitar / Electric guitar / Electric bass / Double bass / Strings / Voice / Flutes / Trumpet / Organ / Synth lead / Synth pad / Drums | The instrument group searched for. At « All », the engine looks for those the track contains, and gives each one a track. |
 | Tempo | number | 0 BPM | 0 – 400 BPM, step 1 | The tempo written in the file. At zero, the one the engine wrote is kept. No note changes instant; the bars, however, follow this number. |
-| Quantization | choice | None | None / 1/4 / 1/8 / 1/16 / 1/32 / 1/8 triplet / 1/16 triplet | The grid the onsets are placed on. Each onset joins the nearest subdivision, which moves it; the report's index says how far the chosen tempo puts them from it. |
+| Quantization | choice | None | None / 1/4 / 1/8 / 1/16 / 1/32 / 1/8 triplet / 1/16 triplet / 1/1 / 1/2 / 1/4 dotted / 1/4 triplet / 1/8 dotted / 1/16 dotted / 1/32 triplet | The grid the onsets are placed on. Each onset joins the nearest subdivision, which moves it; the report's index says how far the chosen tempo puts them from it. |
 | Quantize ends | choice | No | No / Yes | Applies the grid to note ends, which otherwise keep their duration. Without effect when « Quantization » is « None », since there is then no grid. |
 | Compute | choice | Automatic | Automatic / Processor / Vulkan 0 / Vulkan 1 | The compute device. It changes the compute time and not the notes, which are the same from one device to another. « Automatic » lets the engine take what it deems best, which is not always the graphics card: a machine with two cards often exposes the integrated one first, and the two numbers are there to tell them apart. « Processor » runs everywhere, and far more slowly. |
 
@@ -3362,7 +3362,7 @@ Rebuilds the clipped peaks of a saturated sound. After Srdan Kitic, Nancy Bertin
 |---|---|---|---|---|
 | Threshold | choice | Automatic | Automatic / Manual | In automatic mode the threshold is guessed from plateau length: a clipped sound holds consecutive samples at the same value, where an intact sine only grazes its peak one sample at a time. With no plateau, the node says so and returns the sound unchanged. |
 | Manual threshold | slider | 0.5 | 0.05 – 1, step 0.01 | Value above which a sample counts as clipped. Only used in manual mode. |
-| Window | choice | 1024 | 512 / 1024 / 2048 | Frame length. Long, the model has more spectral lines to account for the sound and repairs better; short, it follows a fast-changing sound better. |
+| Window | choice | 1024 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Frame length. Long, the model has more spectral lines to account for the sound and repairs better; short, it follows a fast-changing sound better. |
 | Passes | slider | 60 | 10 – 200, step 5 | Maximum passes per frame. Sparsity loosens by one line per pass: the number of passes is therefore also the number of lines the model will eventually allow itself. Measured at 41 % clipped samples: 3.4 dB gained in ten passes, 11.2 in thirty, 15.3 in sixty. |
 | Max overshoot | slider | 2 | 1.1 – 4, step 0.1 | How many times the threshold a reconstructed sample may reach. This is not in the paper, and is stated as such: when the model no longer explains the sound, its error takes refuge in the free samples, precisely those being reconstructed, and the peak ran up to three times the threshold. The ceiling bounds the damage without changing anything when the method works: on a five-harmonic sound the reconstructed peak stays under 1.5 times the threshold. |
 | Tolerance | slider | 0.01 | 0.001 – 0.3, step 0.001 | Gap below which a frame is deemed explained, and computation stops. This setting matters more than it looks: measured on a sound clipped at 24 %, 0.01 gives 16.8 dB where 0.1 gives only 8.5, stopping early was cutting convergence far too short. |
@@ -6901,7 +6901,7 @@ Brings a sound closer to another taken as a model, on four measured quantities: 
 | Peak | choice | Yes | Yes / No | Align the peak on the reference's, once the rest is applied. The message gives what that alignment cost in level. |
 | Maximum correction | slider | 12 dB | 1 – 24 dB, step 1 | Largest amount applied to a frequency band, in either direction. Low, the correction stays a tint; high, it copies the reference more closely and amplifies the floor accordingly where the processed sound has nothing. The message gives what share of the spectrum hit this bound. |
 | Bands per octave | slider | 3 | 1 – 12, step 1 | How fine the correction is. Three bands follow the general colour; twelve follow the detail, down to the reference's own resonances. |
-| Transform size | choice | 4096 | 512 / 1024 / 2048 / 4096 | Analysis resolution. Large, it tells low frequencies apart; small, it follows fast changes better. |
+| Transform size | choice | 4096 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Analysis resolution. Large, it tells low frequencies apart; small, it follows fast changes better. |
 
 #### Melody over Chords
 
@@ -7192,7 +7192,7 @@ Takes a MIDI file and transforms it: transposition (±24 semitones) and/or rhyth
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Transpose | number | 0 st | -24 – 24 st, step 1 | Transposition in semitones (−24 to +24). 0 = no transposition. |
-| Quantization | choice | 1/16 | None / 1/4 / 1/8 / 1/16 / 1/32 / 1/8 triplet / 1/16 triplet | Quantization grid for note onsets. Snaps notes to the chosen rhythmic grid. |
+| Quantization | choice | 1/16 | None / 1/4 / 1/8 / 1/16 / 1/32 / 1/8 triplet / 1/16 triplet / 1/1 / 1/2 / 1/4 dotted / 1/4 triplet / 1/8 dotted / 1/16 dotted / 1/32 triplet | Quantization grid for note onsets. Snaps notes to the chosen rhythmic grid. |
 | Quantize ends | choice | No | No / Yes | If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes). |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
@@ -7778,7 +7778,7 @@ Splits a sound in two: what sustains and what strikes. After Derry Fitzgerald, �
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Window | choice | 2048 | 1024 / 2048 / 4096 | Transform size. Large separates sustained notes better but smears attacks; small does the opposite. 2048 is the paper's compromise. |
+| Window | choice | 2048 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Transform size. Large separates sustained notes better but smears attacks; small does the opposite. 2048 is the paper's compromise. |
 | Time filter | slider | 17  frames | 3 – 51  frames, step 2 | Length of the median filter along time, which erases what does not last. Long, only very stable sustains survive; short, a brief note also passes for harmonic. |
 | Frequency filter | slider | 17  bins | 3 – 51  bins, step 2 | Length of the median filter along frequency, which erases what is narrow, a partial, and keeps what is wide, the noise of an attack. |
 | Split | choice | Soft | Soft / Hard | Soft shares ambiguous energy between the two outputs, Wiener-fashion. Hard sends each point entirely to one side: cleaner-cut, at the cost of artefacts on material that is frankly neither. In both cases the two outputs, added back together, give back the original sound. |
@@ -7802,7 +7802,7 @@ After Trevor Wishart, « Audible Design » (1994), who calls it « inner glissan
 | Speed | slider | 0.5 oct/s | -4 – 4 oct/s, step 0.1 | Octaves per second. Positive: it rises endlessly. Negative: it falls. At zero the partials stay put and one hears the sound's timbre laid over a stack of octaves. |
 | Octaves | slider | 6 | 3 – 10, step 1 | How many octaves the illusion stacks. Below three the bell is too narrow and one hears partials appear: the illusion breaks. |
 | Smoothing | slider | 20 | 0 – 80, step 1 | Width of the smoothing that separates formants from partials, in components. Too little and the original's partials survive, blurring the glissando. Too much and the envelope flattens: the timbre vanishes and one falls back on the bare illusion. |
-| Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
+| Resolution | choice | Ordinary (2048) | Sharpest in time (256) / Very sharp in time (512) / Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp in frequency (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Proportion that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Proportion that the curve's one means. A value below Modulation min reverses the direction of travel. |
@@ -7840,7 +7840,7 @@ Rebuilds a sound from its spectrogram magnitudes alone, without iterating. After
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Window | choice | 1024 | 512 / 1024 / 2048 / 4096 | Transform size. The window is gaussian rather than the Hann used elsewhere: it is the only one for which the relation between phase and magnitude is exact, and that relation is the whole algorithm. |
+| Window | choice | 1024 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Transform size. The window is gaussian rather than the Hann used elsewhere: it is the only one for which the relation between phase and magnitude is exact, and that relation is the whole algorithm. |
 | Refinement | slider | 10  passes | 0 – 60  passes, step 1 | Griffin-Lim passes applied after PGHI, as the paper recommends: PGHI does not replace iteration, it gives it a starting point that makes sense. Measured on a harmonic sound: PGHI alone gives −18 dB of spectral convergence, ten Griffin-Lim passes alone −6, a hundred passes −21, and PGHI followed by ten passes −26, for a fifth of the hundred passes' computation time. At zero, you hear PGHI on its own. |
 | Tolerance | choice | 10⁻⁶ | 10⁻⁸ / 10⁻⁶ / 10⁻⁴ / 10⁻² | Below this fraction of the strongest magnitude, a point is not integrated and keeps zero phase. This is no detail: integrating across an empty region would propagate noise through the rest of the spectrogram, and that is precisely what the paper avoids by starting from the strongest magnitudes. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of reconstructed sound. At 0 %, the output is the input. |
@@ -7889,10 +7889,10 @@ Separates a sound's partials from the rest of the signal. After Xavier Serra and
 | Transpose | slider | 0  st | -24 – 24  st, step 1 | Transposes the partials only. The residual (breath, bow, attack noise) knows nothing of it and stays where it is: which an ordinary pitch shift does not allow. As soon as it is non-zero, the partials are rebuilt by adding oscillators rather than cut out of the original sound. |
 | Partials gain | slider | 100 % | 0 – 200 %, step 5 | Level of the deterministic part. At zero, only the breath remains, an instrument without a note. |
 | Residual gain | slider | 100 % | 0 – 200 %, step 5 | Level of the stochastic part. At zero, the sound becomes pure additive synthesis, smooth and grainless; beyond a hundred, the instrument gets breathier without detuning by a hundredth of a tone. |
-| Threshold | slider | 60  dB | 20 – 90  dB, step 5 | Decibels below each frame's strongest peak under which a maximum is not considered. Low, only dominant partials are tracked; high, weaker ones too, at the risk of taking noise for a partial. |
+| Threshold | slider | 60  dB | 20 – 90  dB, step 5 | Decibels below each frame's strongest peak under which a maximum is not considered. Low, only dominant partials are tracked; high, weaker ones too, at the risk of taking noise for a partial. It only discards peaks that already exceed their neighbourhood by the « Prominence »: on a sound without faint partials, or whose partials are too close for the « Window », it has nothing to discard and changes nothing. |
 | Prominence | slider | 12  dB | 0 – 30  dB, step 1 | Minimum height of a peak above the median of its neighbourhood. This is what separates a partial from a noise bump, and one is needed: persistence does not suffice, since neighbouring frames share three quarters of their samples. At zero, white noise passes for half harmonic. |
 | Max partials | slider | 60 | 10 – 120, step 5 | Number of peaks kept per frame, strongest first. |
-| Window | choice | 2048 | 1024 / 2048 / 4096 | Transform size. Large separates neighbouring partials better but smears attacks; small does the opposite. |
+| Window | choice | 2048 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Transform size. Large separates neighbouring partials better but smears attacks; small does the opposite. |
 
 #### Spectral Arpeggio
 
@@ -7932,7 +7932,7 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Width | slider | 24 | 1 – 200, step 1 | Number of moments averaged. At 1, nothing changes. How long that is depends on the resolution: at 2048 and 44,100 Hz one moment is 12 ms, so 24 moments spread the sound over roughly three tenths of a second. |
-| Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
+| Resolution | choice | Ordinary (2048) | Sharpest in time (256) / Very sharp in time (512) / Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp in frequency (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
 
 #### Spectral Formula
@@ -7971,7 +7971,7 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Moment | slider | 50 % | 0 – 100 %, step 1 | Where the freeze begins, as a proportion of the duration. What precedes passes through unchanged; from there on, that moment's spectrum is held to the end. |
-| Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
+| Resolution | choice | Ordinary (2048) | Sharpest in time (256) / Very sharp in time (512) / Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp in frequency (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
 
 #### Spectral granulation
@@ -8024,7 +8024,7 @@ Moves the timbre of one sound towards another, by interpolating their spectra. A
 | Morph | slider | 50 % | 0 – 100 %, step 1 | At 0 % sound A; at 100 % sound B; in between, an intermediate timbre. A curve connected to the Modulation input takes this setting's place. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Morph that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | 0 – 100 %, step 1 | Morph that the curve's one means. A ramp from zero to a hundred travels all the way from one sound to the other. |
-| Window | choice | 2048 | 1024 / 2048 / 4096 | Analysis size. Long, it separates partials better and blurs attacks; short, the reverse. Two thousand and forty-eight points are forty-six milliseconds at 44.1 kHz. |
+| Window | choice | 2048 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Analysis size. Long, it separates partials better and blurs attacks; short, the reverse. Two thousand and forty-eight points are forty-six milliseconds at 44.1 kHz. |
 
 #### Spectral Tracing
 
@@ -8042,7 +8042,7 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Components | slider | 12 | 1 – 200, step 1 | Number of components kept at each moment. At 1, the dominant partial alone. Beyond a hundred or so the effect becomes hard to hear on most sounds: there is not much left to throw away. |
-| Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
+| Resolution | choice | Ordinary (2048) | Sharpest in time (256) / Very sharp in time (512) / Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp in frequency (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
 
 #### Wavelets
@@ -9047,7 +9047,7 @@ After Eberhard Zwicker (Journal of the Acoustical Society of America 33, 1961) f
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Masker nature | choice | In between | Tonal / Noisy / In between | A tonal sound masks less than noise of equal energy: the ear separates it better from the rest. Perceptual coders commonly subtract some ten decibels for a tonal sound against five for noise. « In between » takes a middle value, which is what a real track usually is. |
-| Resolution | choice | Ordinary (2048) | Ordinary (2048) / Sharp in frequency (4096) | Analysis window size. A long window separates the low bands better, where they are narrow. |
+| Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp in frequency (8192) | Analysis window size. A long window separates the low bands better, where they are narrow. It does not go below 1024 points: at 88.2 or 96 kHz, one transform bin would then exceed the hundred hertz of the lowest bands, and up to four of them would stay empty. |
 
 #### Morphology
 
@@ -9236,7 +9236,7 @@ Shows how the spectrum evolves over time: horizontal = time, vertical = frequenc
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Window | choice | 1024 | 512 / 1024 / 2048 / 4096 | FFT window size (samples). Small = better time resolution; large = better frequency resolution (time/frequency trade-off). |
+| Window | choice | 1024 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | FFT window size (samples). Small = better time resolution; large = better frequency resolution (time/frequency trade-off). |
 | Scale | choice | Logarithmic | Logarithmic / Linear | Vertical frequency axis scale (log = close to perception). |
 
 #### Spectrum Analyzer
@@ -9254,7 +9254,7 @@ Decomposes the signal into its frequencies (fast Fourier transform) and displays
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Window | choice | 4096 | 1024 / 2048 / 4096 / 8192 | FFT window size (samples). Larger = finer frequency resolution (but coarser time resolution). |
+| Window | choice | 4096 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | FFT window size (samples). Larger = finer frequency resolution (but coarser time resolution). |
 | Scale | choice | Logarithmic | Logarithmic / Linear | Frequency axis scale. Logarithmic = close to pitch perception (even octaves); linear = evenly spaced frequencies. |
 
 #### Track Features
@@ -9441,7 +9441,7 @@ After Reinier Plomp and Willem Levelt, « Tonal Consonance and Critical Bandwidt
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Partials | slider | 10 | 2 – 24, step 1 | How many partials to keep at each moment. Faint partials add measurement noise more than audible roughness. |
-| Resolution | choice | Ordinary (2048) | Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) | Analysis window size. A long window separates neighbouring partials better, hence measures a held chord's roughness better; a short one follows a moving passage better. |
+| Resolution | choice | Ordinary (2048) | Sharpest in time (256) / Very sharp in time (512) / Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp in frequency (8192) | Analysis window size. A long window separates neighbouring partials better, hence measures a held chord's roughness better; a short one follows a moving passage better. |
 
 #### The Taste of a Sound
 
@@ -9737,7 +9737,7 @@ Generates a musical staff (SVG) from a MIDI file. Connect a MIDI file (output fr
 |---|---|---|---|---|
 | Tempo | number | 0 BPM | 0 – 300 BPM, step 1 | Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file. |
 | Channel | number | -1 -1 = all | -1 – 15 -1 = all, step 1 | MIDI channel to display (-1 for all channels). |
-| Quantization | choice | 1/16 | 1/4 / 1/8 / 1/16 / 1/32 | Quantization grid resolution. |
+| Quantization | choice | 1/16 | 1/4 / 1/8 / 1/16 / 1/32 / 1/1 / 1/2 | Quantization grid resolution. The staff writes plain durations only, from the whole note to the thirty-second: no dotted or triplet grid, for want of a duration to write it. |
 | Clef | choice | treble | treble / bass / alto / tenor | Staff clef. |
 | Width | number | 800 px | 200 – 2000 px, step 10 | SVG width. |
 | Height | number | 200 px | 100 – 800 px, step 10 | SVG height. |
@@ -10941,7 +10941,7 @@ Csound's spectral processes. The « pvs » opcodes work on a spectral stream rat
 | Process | choice | Spectral cross (pvscross) | Spectral cross (pvscross) / Spectral vocoder (pvsvoc) / Phase-locked stretch (mincer) | The opcode used. The first three need two sounds and cross them; the stretch needs only one. |
 | Morph | number | 50 % | 0 – 100 %, step 1 | Amount of crossing between the two sounds. For the stretch, this is the time factor: at 25 %, the sound lasts twice as long. |
 | Transpose | number | 0 st | -24 – 24 st, step 1 | Transposition, used by the stretch only: it changes the pitch without touching the duration, which is the whole point of a phase-locked stretch. |
-| Window | choice | 1024 | 512 / 1024 / 2048 | Transform size. Large gives fine frequency resolution and smeared transients; small the opposite. 1024 is the usual compromise. |
+| Window | choice | 1024 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Transform size. Large gives fine frequency resolution and smeared transients; small the opposite. 1024 is the usual compromise. No effect on the stretch (mincer), which does not go through this analysis. |
 | Tail | number | 0.5 s | 0 – 30 s, step 0.5 | Time added to the processed duration. Essential for the stretch, which lengthens the sound. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output volume, applied after limiting. |
 
@@ -11675,7 +11675,7 @@ Extends an audio track by predicting the continuation of its spectrogram. A line
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Generated duration | slider | 5 s | 1 – 60 s, step 1 | Duration of the continuation to generate, in seconds. |
-| FFT | choice | 2048 | 512 / 1024 / 2048 / 4096 | FFT window size. Determines frequency resolution and number of bins. |
+| FFT | choice | 2048 | 256 / 512 / 1024 / 2048 / 4096 | FFT window size. Determines frequency resolution and number of bins. It stops at 4096: the model learns a full matrix from History × bins to bins, and at 8192 points over 32 frames its weights alone would weigh 2.1 GB. |
 | Hop | number | 25 % | 10 – 100 %, step 1 | Hop size between consecutive windows, as a percentage of FFT size. 25% = 75% overlap. |
 | History | number | 4 frames | 1 – 32 frames, step 1 | Number of past frames used to predict the next frame. Larger = more context (but heavier to train). |
 | Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. With « Budget » at 0, the number of epochs is bounded by the size of the computation; with a positive budget, training stops once that time has elapsed. |
@@ -11699,7 +11699,7 @@ Extends an audio track with a small recurrent network (LSTM) trained on the fly 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Generated duration | slider | 5 s | 1 – 60 s, step 1 | Duration of the continuation to generate, in seconds. |
-| FFT | choice | 2048 | 512 / 1024 / 2048 / 4096 | FFT window size. Determines frequency resolution and number of bins. |
+| FFT | choice | 2048 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | FFT window size. Determines frequency resolution and number of bins. |
 | Hop | number | 25 % | 10 – 100 %, step 1 | Hop size between consecutive windows, as a percentage of FFT size. 25% = 75% overlap. |
 | History | number | 4 frames | 1 – 32 frames, step 1 | Number of past frames used to predict the next frame. Larger = more context (but heavier to train). |
 | Epochs | number | 100 | 1 – 1000, step 1 | Maximum number of training epochs. With « Budget » at 0, the number of epochs is bounded by the size of the computation; with a positive budget, training stops once that time has elapsed. |
@@ -11723,7 +11723,7 @@ Neural PCA: trains a non-linear autoencoder on the input track's magnitude spect
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| FFT | choice | 2048 | 512 / 1024 / 2048 / 4096 | FFT window size (power of 2). Determines the number of frequency bins. |
+| FFT | choice | 2048 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | FFT window size (power of 2). Determines the number of frequency bins. |
 | Hop | number | 25 % | 10 – 100 %, step 1 | Hop size between consecutive windows, as a percentage of FFT size. 25% = 75% overlap. |
 | Axes | number | 64 | 1 – 1024, step 1 | Number of axes in the latent space (autoencoder bottleneck). |
 | Layers | number | 2 | 1 – 6, step 1 | Number of hidden layers between input and latent space. Sizes are derived by geometric interpolation. |

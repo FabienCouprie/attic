@@ -265,26 +265,31 @@ export const DOMAINES: Domaine[] = [
     table: () => TAILLES_FENETRE.map(String),
     membre: estPuissanceDeDeux,
     seuil: 2,
-    // DIX FORMES, ET AUCUNE N'EST UNE DETTE : CHACUNE A ÉTÉ EXAMINÉE. Six sous-ensembles, de 256 à
-    // 8192, portent chacun leur raison dans la documentation de leur propre réglage : « elle doit
-    // être longue, il faut du temps pour constater qu'une fréquence dure » contre « elle doit être
-    // courte » pour les deux passes de la décomposition STN, « 2048 est le compromis de l'article »
-    // pour la séparation harmonique, « sans effet sur l'étirement » pour la transformée de Csound.
-    // Trois formes ne diffèrent que par les LIBELLÉS : « Ordinaire (2048) » nomme la taille du
-    // MILIEU de sa propre liste, et le milieu de l'une n'est pas celui de l'autre, de sorte qu'une
-    // table centrale ne peut pas les produire. Et l'absence de liste anglaise sur deux réglages est
-    // une décision écrite à côté d'eux, des tailles de fenêtre ne se traduisant pas.
+    // DE ONZE FORMES À SEPT, LE 2026-11-14. Dix-neuf réglages offraient une part de la table sans
+    // borne écrite, et la passe de complétude les a élargis à la table entière ; la plupart de leurs
+    // formes se sont fondues dans celle de la granulation spectrale, qui l'offrait déjà. Restent la
+    // table entière sous trois formes, qui ne diffèrent que par les LIBELLÉS : le nombre seul ; le
+    // nombre nommé par son effet, « Ordinaire (2048) », que `choixFenetreNomme` produit désormais
+    // une fois au lieu de trois écritures à la main ; et le nombre sans liste anglaise des deux vues
+    // spectrales, des tailles de fenêtre ne se traduisant pas. Et quatre parts, chacune bornée par
+    // son algorithme et déclarée en coupe ci-dessous.
     //
-    // CE QUI RESTAIT EST PAYÉ : les listes elles-mêmes venaient de vingt et une écritures à la
-    // main, et viennent désormais de `audio/fenetres-analyse.ts`. Un garde de SOURCE le tient,
-    // comme pour les signatures et les langues, puisque le registre ne voit pas deux listes
-    // identiques écrites deux fois.
-    formesAssumees: 11,
-    pourquoi: "six sous-ensembles, de 256 à 8192, chacun borné par son algorithme et portant sa raison dans la documentation de son propre réglage ; la table ENTIÈRE, que la granulation spectrale offre deux fois parce qu'aucun algorithme ne la borne, le grain lu et le grain écrit s'y choisissant librement ; et trois formes qui ne tiennent qu'aux LIBELLÉS, « Ordinaire (2048) » nommant la taille du MILIEU de sa liste, que nulle table centrale ne peut produire",
-    remede: "offrir `choixFenetre` de `audio/fenetres-analyse.ts`, et dire pourquoi un composant en offre une part",
+    // DEUX RÉSERVES DU RELEVÉ SE SONT RÉVÉLÉES FAUSSES À LA MESURE : l'image du spectrogramme fractal
+    // à 256 points, qu'on croyait plus large que les 32 767 pixels d'un canevas, quand Chromium et
+    // l'Electron d'Attic en admettent 65 535 ; et la transformée de Csound, qu'une liste blanche
+    // cachée ramenait à 1024, élargie avec le réglage.
+    //
+    // LES LISTES viennent de `audio/fenetres-analyse.ts`, et un garde de SOURCE le tient, comme pour
+    // les signatures et les langues, puisque le registre ne voit pas deux listes identiques écrites
+    // deux fois.
+    formesAssumees: 7,
+    pourquoi: "la table entière sous trois formes qui ne tiennent qu'aux LIBELLÉS, le nombre seul, le nombre nommé par son effet chez la rugosité et les quatre mises en forme de Wishart, et le nombre sans liste anglaise des deux vues spectrales ; et quatre parts, chacune bornée par son algorithme et déclarée en coupe : les deux passes de la décomposition STN, le masquage et la continuation autorégressive",
+    remede: "offrir `choixFenetre` ou `choixFenetreNomme` de `audio/fenetres-analyse.ts`, et déclarer en coupe pourquoi un composant en offre une part",
     coupes: [
       { ou: "stn-sinus-transitoires-bruit·Fenêtre sinus", raison: "la première passe doit être longue, il faut du temps pour constater qu'une fréquence dure : sous 2048 points, les partielles ne se distinguent plus du reste" },
       { ou: "stn-sinus-transitoires-bruit·Fenêtre transitoires", raison: "la seconde passe doit être courte, une attaque se dilue dans une fenêtre longue : au-delà de 1024 points, elle rejoindrait la première passe" },
+      { ou: "masquage·Finesse", raison: "sous 1024 points, une case de la transformée dépasse à 88,2 ou 96 kHz la centaine de hertz des bandes critiques les plus graves, et jusqu'à quatre d'entre elles restent vides ; compté pour chaque fréquence de travail" },
+      { ou: "continuation-spectrale-ar·FFT", raison: "le modèle autorégressif apprend une matrice pleine de Historique × bins vers bins, qui pèse au carré du nombre de bins : à 8192 points et 32 trames, ses seuls poids font 2,1 Go avant les moments d'Adam" },
     ],
   },
   {
@@ -337,13 +342,22 @@ export const DOMAINES: Domaine[] = [
     // par leur libellé français, « 1/8 triplet » chez l'une et « 1/8 de triolet » chez l'autre, et
     // le premier est un mot ANGLAIS dans une liste française. Elles n'en font plus qu'une.
     //
-    // LES SIX QUI RESTENT SONT LA TABLE ET SES SOUS-ENSEMBLES, et chacun est la grille de son
-    // composant : la table entière pour la vitesse de l'arpégiateur, la table sans le 1/32 de
-    // triolet pour l'intervalle du « beat repeat » et sans la ronde pour sa taille (2026-11-14),
-    // quatre valeurs pour la quantification d'une partition, trois pour la résolution d'un réservoir.
-    formesAssumees: 6,
-    pourquoi: "la table entière pour la vitesse de l'arpégiateur, et cinq sous-ensembles, chacun étant la grille de son composant : la table sans sa valeur extrême pour l'intervalle et pour la taille du « beat repeat », quatre valeurs pour la quantification d'une partition, trois pour la résolution d'un réservoir",
+    // PUIS À SEPT, LE 2026-11-14, SANS QUE RIEN N'EMPIRE : la passe de complétude a élargi chaque
+    // grille jusqu'à la borne de son algorithme, et deux grilles qui se ressemblaient ne se
+    // ressemblent plus. Restent la table entière sous DEUX ORDRES, celui de la table pour la vitesse
+    // de l'arpégiateur et l'ordre d'origine d'abord pour les deux grilles de quantification MIDI ; et
+    // cinq parts, chacune la grille de son composant et déclarée en coupe : la table sans sa valeur
+    // extrême pour l'intervalle et pour la taille du « beat repeat », les quatre valeurs binaires de
+    // Magenta, les six durées simples qu'une partition sait écrire, les sept valeurs qui font un
+    // nombre entier de pas par temps pour un réservoir.
+    formesAssumees: 7,
+    pourquoi: "la table entière sous deux ordres, celui de la table pour la vitesse de l'arpégiateur et l'ordre d'origine d'abord pour les deux grilles de quantification MIDI ; et cinq parts, chacune la grille de son composant : la table sans sa valeur extrême pour l'intervalle et pour la taille du « beat repeat », les quatre valeurs binaires de Magenta, les six durées simples d'une partition, les sept valeurs à pas entiers d'un réservoir",
     coupes: [
+      ...coupesPour(
+        "le réseau avance d'un nombre entier de pas par temps et reconnaît le temps par `pas % pasParBeat` : une pointée, la blanche, la ronde ou le triolet de noire en demanderaient une fraction",
+        "reservoir-musical·Résolution", "multi-reservoirs·Résolution",
+      ),
+      { ou: "vexflow-midi·Quantification", raison: "la partition n'écrit que des durées simples, de la ronde à la triple croche, sans point ni triolet : une attaque posée sur une grille pointée ou de triolet tomberait entre deux durées écrites" },
       { ou: "beat-repeat·Intervalle", raison: "sans le 1/32 de triolet : aucune taille offerte n'est plus courte, et sous un intervalle pas plus long que la taille le segment réécrit les échantillons qu'il remplace, la sortie égalant l'entrée" },
       { ou: "beat-repeat·Taille", raison: "sans la ronde : aucun intervalle offert n'est plus long, et une taille au moins aussi longue que l'intervalle rend l'entrée telle quelle, mesuré par `plugins/beat-repeat-taille.test.ts`" },
       ...coupesPour(
@@ -453,9 +467,12 @@ export const DOMAINES: Domaine[] = [
     table: () => [...(PARAMETRE_SYNTHESE.optionIds ?? [])],
     membre: (x) => ["auto", "fm", "soundfont"].includes(x),
     seuil: 2,
-    formesAssumees: 2,
-    pourquoi: "les trois moteurs, et la variante partagée sans « Automatique » pour les composants dont le rendu local est le défaut : choisir automatiquement n'a pas de sens là où aucune banque n'est attendue",
-    remede: "étaler `PARAMETRE_SYNTHESE` de `plugins/soundfontGlobal.ts`, ou sa variante sans « Automatique »",
+    // DE DEUX FORMES À UNE, LE 2026-11-14. La variante sans « Automatique » n'avait qu'un emprunteur,
+    // l'automate cellulaire, et elle cachait un défaut : demandé au SoundFont sans qu'aucun soit
+    // chargé, il passait en FM sans le dire. Il offre désormais les trois moteurs, garde FM pour
+    // défaut, et dit son repli ; la variante est retirée.
+    formesAssumees: 1,
+    remede: "étaler `PARAMETRE_SYNTHESE` de `plugins/soundfontGlobal.ts`, et poser son défaut plutôt que retirer un moteur",
   },
   {
     nom: "disposition de haut-parleurs",

@@ -167,6 +167,15 @@ describe("automate-cellulaire", () => {
     expect(res.audio.duration).toBeGreaterThan(0);
   });
 
+  it("LE REPLI EN FM SE DIT : demandé au SoundFont sans qu'aucun soit chargé, le rendu l'annonce", async () => {
+    // Ce passage était muet : le nœud sonnait en FM sous un réglage qui disait SoundFont.
+    const petit = { ...defaults, largeur: 8, generations: 8 };
+    const auSoundFont = await genererAutomateCellulaire({ ...petit, timbre: "SoundFont" });
+    expect(auSoundFont.repliFm).toBe(true);
+    expect(auSoundFont.audio.duration).toBeGreaterThan(0);
+    expect((await genererAutomateCellulaire({ ...petit, timbre: "FM/Oscillateurs" })).repliFm).toBe(false);
+  });
+
   it("normalise les modes, clés, gammes, topologies et mappings", () => {
     expect(normaliserMode("Polyphonie")).toBe("Polyphonie");
     expect(normaliserMode("Melody")).toBe("Mélodie");

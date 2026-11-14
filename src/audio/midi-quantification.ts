@@ -8,19 +8,37 @@ import { comparerEvenementsMidi } from "./midi-ordre";
 
 // ─── Transposition + quantification MIDI ───
 
-// Grilles de quantification en divisions par beat.
+// Grilles de quantification en divisions par beat. UNE DIVISION PEUT ÊTRE UNE FRACTION : le pas de
+// la grille est `ticksParTemps / divisions`, arrondi, de sorte qu'une ronde fait un quart de
+// division et une croche pointée quatre tiers. Toute valeur de la table des valeurs de note y est.
 const GRILLES: Record<string, number> = {
   "Aucune": 0,
   "None": 0,
   "none": 0,
+  "1/1": 1 / 4,
+  "1/2": 1 / 2,
+  "1/4.": 2 / 3,
   "1/4": 1,
+  "1/4t": 3 / 2,
+  "1/8.": 4 / 3,
   "1/8": 2,
-  "1/16": 4,
-  "1/32": 8,
   "1/8 triplet": 3,
   "1/8t": 3,
+  "1/16.": 8 / 3,
+  "1/16": 4,
   "1/16 triplet": 6,
   "1/16t": 6,
+  "1/32": 8,
+  "1/32t": 12,
+};
+
+/** Les divisions du temps d'une grille, ou zéro s'il n'y en a pas. */
+export const divisionsParTemps = (grilleNom: string): number => GRILLES[grilleNom] ?? 0;
+
+/** Le pas d'une grille en ticks, ou zéro s'il n'y a pas de grille. */
+export const pasDeGrille = (grilleNom: string, ticksParTemps: number): number => {
+  const divisions = divisionsParTemps(grilleNom);
+  return divisions > 0 ? Math.round(ticksParTemps / divisions) : 0;
 };
 
 export async function transposerQuantifierMidi(
@@ -32,8 +50,7 @@ export async function transposerQuantifierMidi(
   const bytes = new Uint8Array(await fichier.arrayBuffer());
   const midi = parseMidi(bytes);
   const tpm = midi.header.ticksPerBeat ?? 480;
-  const divisions = GRILLES[grilleNom] ?? 0;
-  const pasGrille = divisions > 0 ? Math.round(tpm / divisions) : 0;
+  const pasGrille = pasDeGrille(grilleNom, tpm);
 
   for (const piste of midi.tracks) {
     for (const evt of piste) {
