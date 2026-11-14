@@ -439,8 +439,13 @@ const DOMAINES: Domaine[] = [
   {
     nom: "patron rythmique",
     membre: (x) => PATRONS_RYTHME[x] !== undefined,
-    formesAssumees: 2,
-    pourquoi: "les deux listes sortent du même `optionsPatrons`, l'une entière et l'autre filtrée sur « 4/4 » : une boîte à groove en quatre temps ne peut pas offrir une valse ni un boléro, qui comptent en trois",
+    sentinelles: [
+      { valeur: "accords-tenus", raison: "« Accords tenus » de la reprise ABC : aucun rythme, l'accord et la basse tenus jusqu'au changement d'accord" },
+    ],
+    // LA TROISIÈME FORME EST LA LISTE ENTIÈRE PRÉCÉDÉE D'UNE SENTINELLE, et elle vient de la table : la
+    // reprise ABC offrait six styles écrits à la main, sous des libellés qu'aucune table ne portait.
+    formesAssumees: 3,
+    pourquoi: "les trois listes sortent du même `optionsPatrons` : l'une entière, l'autre filtrée sur « 4/4 », une boîte à groove en quatre temps ne pouvant offrir ni valse ni boléro, et la troisième entière, précédée d'« Accords tenus », le seul accompagnement de la reprise ABC qui n'ait pas de rythme",
     remede: "offrir `optionsPatrons` de `audio/patrons-rythme.ts`, avec la métrique qui restreint",
   },
   {
@@ -480,7 +485,6 @@ const EXAMINES_ET_ECARTES: { ou: string; raison: string }[] = [
   { ou: "midi-vers-abc·Grille", raison: "un nombre de subdivisions par temps" },
   { ou: "carte-sonore·Style", raison: "quatre dispositions de carte ; « voronoi » n'est pas un style de pochette" },
   { ou: "generateur-pochette·Style", raison: "douze styles graphiques ; « bauhaus » n'est pas une disposition de carte" },
-  { ou: "reprise-abc·Style", raison: "six motifs d'accompagnement, bornés par la métrique" },
   { ou: "tonal-analyse·Style", raison: "trois idiomes de progression ; « Pop » y est I-V-vi-IV et non un accord par temps" },
   { ou: "spirale-logarithmique·Rapport par tour", raison: "un facteur de FRÉQUENCE : « quinte » et « octave » n'ont pas de sens comme facteurs de distance" },
   { ou: "spirale-spatiale·Rapport par tour", raison: "un facteur de DISTANCE : « quadruple » n'est pas un nom d'intervalle" },
@@ -659,8 +663,12 @@ describe("un concept, des formes déclarées", () => {
     // PUIS DE QUARANTE-SEPT À QUARANTE-HUIT, ET LA MONTÉE EST LÉGITIME : la granulation spectrale
     // offre la table ENTIÈRE des tailles de fenêtre, qu'aucun de ses deux réglages ne borne. Une
     // forme de plus qui vient de la table commune n'est pas une liste écrite à la main.
+    // PUIS DE QUARANTE-HUIT À QUARANTE-NEUF, ET LA MONTÉE EST UNE DETTE QUI ENTRE AU REGISTRE : les
+    // six styles de la reprise ABC, écrits à la main et écartés comme vocabulaire propre, sont
+    // devenus les patrons rythmiques, précédés d'« Accords tenus ». Ils ne se voyaient pas ; la forme
+    // qu'ils prennent désormais vient de la table, et elle se compte.
     const enTrop = DOMAINES.reduce((s, d) => s + d.formesAssumees - 1, 0);
     expect(enTrop, "unifier un domaine fait baisser ce nombre ; en laisser un nouveau le fait monter")
-      .toBe(48);
+      .toBe(49);
   });
 });
