@@ -529,6 +529,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "favs.vcsl": { fr: "VCSL (4000 échantillons CC0)", en: "VCSL (4000 samples CC0)" },
   "favs.philharmonia": { fr: "Philharmonia (orchestre)", en: "Philharmonia (orchestra)" },
   "favs.mutedio": { fr: "Muted.io (instruments CC0)", en: "Muted.io (CC0 instruments)" },
+  "favs.kunstderfuge": { fr: "Kunst der Fuge (MIDI de musique classique)", en: "Kunst der Fuge (classical music MIDI)" },
   "favs.chantcosmos": { fr: "Chants du Cosmos ( Philippe Zarka)", en: "Songs of the Cosmos (Philippe Zarka)" },
   "favs.sounddinoSea": { fr: "SoundDino (animaux marins)", en: "SoundDino (marine animals)" },
   "favs.aquaplan": { fr: "AquaPLAN (sons sous-marins)", en: "AquaPLAN (underwater sounds)" },
