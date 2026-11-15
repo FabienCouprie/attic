@@ -496,8 +496,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Modèle Ollama à utiliser (mode Ollama uniquement). Voir « ollama list ».",
         docEn: "Ollama model to use (Ollama mode only). See « ollama list »." },
       { nom: "Délai max", nomEn: "Timeout", plage: [30, 1800], pas: 30, defaut: 600, unite: "s",
-        doc: "Délai avant abandon (mode Ollama uniquement). Le premier appel à un modèle doit le charger en mémoire.",
-        docEn: "Timeout before aborting (Ollama mode only). The first call to a model must load it into memory." },
+        doc: "Délai avant abandon (mode Ollama uniquement). Le premier appel à un modèle doit le charger en mémoire. Sans effet quand « Méthode » vaut « Mots-clés », qui n'appelle aucun modèle.",
+        docEn: "Timeout before aborting (Ollama mode only). The first call to a model must load it into memory. Has no effect when « Method » is « Keywords », which calls no model." },
     ],
     async executer(ctx) {
       const promptEntree = ctx.entree(0);

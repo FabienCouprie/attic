@@ -52,8 +52,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Dispersion que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe, ce réglage ne sert pas.",
         docEn: "Dispersion that a connected curve's zero means. With no curve, this setting does nothing." },
       { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Dispersion", type: "curseur", plage: [0, 0.99], pas: 0.01, defaut: 0.95,
-        doc: "Dispersion que vaut le un de la courbe. C'est aussi ce qui fixe la longueur de la traîne quand une courbe est branchée : elle se mesure sur la dispersion la plus forte que le rendu atteindra.",
-        docEn: "Dispersion that the curve's one means. It is also what sets the tail length when a curve is connected: the tail is measured on the strongest dispersion the render will reach." },
+        doc: "Dispersion que vaut le un de la courbe. C'est aussi ce qui fixe la longueur de la traîne quand une courbe est branchée : elle se mesure sur la dispersion la plus forte que le rendu atteindra. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Dispersion that the curve's one means. It is also what sets the tail length when a curve is connected: the tail is measured on the strongest dispersion the render will reach. With no curve, this setting does nothing." },
     ],
     async executer(ctx) {
       const entree = entreeAudio(ctx, 0);

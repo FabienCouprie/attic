@@ -3,6 +3,7 @@
 // Bilingue : les noms suivent la langue de l'app (FR/EN). Rangé dans « Autres ».
 
 import { fiche } from "./fiche";
+import { choixFormatListe, joindreListe } from "../core/formats-liste";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
 import { langueCourante, type Langue, traduire } from "../i18n";
@@ -143,13 +144,7 @@ export function construireListeStyles(
   const cat = categorie === "All" ? "Toutes" : categorie;
   const liste = cat && cat !== "Toutes" ? (STYLES[cat] ?? []) : Object.values(STYLES).flat();
   const noms = liste.map((s) => (langue === "en" ? s.en : s.fr));
-  let texte: string;
-  // Compare la forme canonique : accepte l'id ("retour-ligne"/"puces") comme
-  // les anciens libellés FR/EN encore présents dans les projets enregistrés.
-  const fmt = format.trim().toLowerCase();
-  if (fmt === "retour-ligne" || fmt === "retour ligne" || fmt === "newline") texte = noms.join("\n");
-  else if (fmt === "puces" || fmt === "bullets") texte = noms.map((n) => `• ${n}`).join("\n");
-  else texte = noms.join(", ");
+  const texte = joindreListe(noms, format);
   return { texte, total: noms.length };
 }
 
@@ -172,8 +167,7 @@ export const fiches: FicheAudio[] = ([
      },
       {
         nom: "Format", nomEn: "Format", type: "choix",
-        options: ["Virgule", "Retour ligne", "Puces"], optionIds: ["virgule","retour-ligne","puces"],
-        optionsEn: ["Comma", "Newline", "Bullets"],
+        ...choixFormatListe(),
         defaut: "Virgule",
         doc: "Séparateur du texte produit.", docEn: "Separator of the produced text.", defautEn: "Comma",
      },

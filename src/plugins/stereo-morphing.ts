@@ -10,7 +10,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 import { monoGrave } from "../audio/mono-grave";
 import { centroide, morphingSpectral } from "../audio/morphing-spectral";
 import { valeursParametre } from "../audio/courbe";
-import { choixFenetre } from "../audio/fenetres-analyse";
+import { TAILLES_FENETRE, choixFenetre } from "../audio/fenetres-analyse";
 
 const voie = (b: AudioBuffer, c: number) => b.getChannelData(Math.min(c, b.numberOfChannels - 1));
 
@@ -71,10 +71,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Mélange que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.",
         docEn: "Morph that a connected curve's zero means. With no curve, this setting does nothing." },
       { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Mélange", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Mélange que vaut le un de la courbe. Une rampe de zéro à cent traverse entièrement d'un son à l'autre.",
-        docEn: "Morph that the curve's one means. A ramp from zero to a hundred travels all the way from one sound to the other." },
+        doc: "Mélange que vaut le un de la courbe. Une rampe de zéro à cent traverse entièrement d'un son à l'autre. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Morph that the curve's one means. A ramp from zero to a hundred travels all the way from one sound to the other. With no curve, this setting does nothing." },
       { nom: "Fenêtre", nomEn: "Window", type: "choix",
-        ...choixFenetre([1024, 2048, 4096]), defaut: "2048", defautEn: "2048",
+        ...choixFenetre(TAILLES_FENETRE), defaut: "2048", defautEn: "2048",
         doc: "Taille de l'analyse. Longue, elle sépare mieux les partiels et brouille les attaques ; courte, l'inverse. Deux mille quarante-huit points font quarante-six millisecondes à 44,1 kHz.",
         docEn: "Analysis size. Long, it separates partials better and blurs attacks; short, the reverse. Two thousand and forty-eight points are forty-six milliseconds at 44.1 kHz." },
     ],

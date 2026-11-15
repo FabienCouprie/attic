@@ -9,6 +9,7 @@ import { entreeAudio, sansEntree } from "./lire-entree";
 import { Chord, Scale, Note } from "tonal";
 import { estimerTonalite, detecterAccords, accordsVersTexte } from "../audio/accords";
 import { PARAMETRE_CLE } from "../audio/cles";
+import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 import {
   accordsDepuisRomains, accordsInconnus, modeDepuisTonalite, toniqueDepuisTonalite,
   type ModeProgression,
@@ -228,12 +229,12 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo de l'accompagnement.", docEn: "Accompaniment tempo." },
       { nom: "Durée", nomEn: "Duration", plage: [0.25, 4], pas: 0.25, defaut: 1, unite: "t", uniteEn: "beats",
-        doc: "Durée de chaque accord en temps.", docEn: "Duration of each chord in beats." },
+        doc: "Durée de chaque accord en temps. Sans effet quand « Mode » vaut « Arpégé », chaque note y durant une croche.", docEn: "Duration of each chord in beats. Has no effect when « Mode » is « Arpeggiated », each note lasting an eighth there." },
       { nom: "Octave", nomEn: "Octave", plage: [2, 5], pas: 1, defaut: 3,
         doc: "Octave de base des accords.", docEn: "Base octave for chords." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Bloc", "Arpège"], optionsEn: ["Block", "Arpeggio"], optionIds: ["block", "arpeggio"], defaut: "Bloc",
-        doc: "Bloc joue toutes les notes simultanément, Arpège les décline en croches.",
-        docEn: "Block plays all notes at once, Arpeggio plays them as eighth notes.", defautEn: "Block" },
+      { nom: "Mode", nomEn: "Mode", type: "choix", ...choixFaconAccord(["plaque", "arpege"]), defaut: "Plaqué",
+        doc: "Plaqué joue toutes les notes simultanément, Arpégé les décline en croches.",
+        docEn: "Block plays all notes at once, Arpeggiated plays them as eighth notes.", defautEn: "Block" },
     ],
     async executer(ctx) {
       const entree = ctx.entree(0);
@@ -274,7 +275,7 @@ export const fiches: FicheAudio[] = ([
       }
 
       const lignes: string[] = [`TEMPO ${tempo}`];
-      if (mode === "arpeggio") {
+      if (faconDe(mode) === "arpege") {
         const dureeNote = 0.5;
         for (const accord of accords) {
           for (const n of notesAccordAscendantes(accord, octave + 1)) {

@@ -15,6 +15,7 @@ import { degresDeGamme } from "./gammes";
 import { creerAleatoire } from "../core/hasard";
 import { frequenceDeTravail } from "./frequence-de-travail";
 import { frequenceDeNoteMidi } from "./commun";
+import { demiTonDeCle } from "./cles";
 
 export interface ConfigReservoir {
   taille: number;          // nombre de neurones (10-50)
@@ -40,7 +41,8 @@ export interface ConfigReservoir {
 // ce qu'elle dit, et sept copies du même savoir ne restent pas d'accord : les anciennes
 // orthographes, « pentatonique majeur » sans accord entre autres, y sont des alias.
 
-const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+// LA CLÉ SE LIT DANS LA TABLE COMMUNE, `audio/cles.ts`. Une table privée en dièses seuls rendait −1
+// pour les identifiants « Eb » et « Bb » de `PARAMETRE_CLE`, et Mi♭ et Si♭ se jouaient en do.
 
 export interface Reservoir {
   n: number;
@@ -176,8 +178,7 @@ function lectureReservoir(res: Reservoir): number {
 function noteDepuisLecture(lecture: number, moyenne: number, ecartType: number,
                            cle: string, gamme: string, octave: number): number {
   const intervalles = degresDeGamme(gamme, "majeur");
-  const cleIdx = NOTES.indexOf(cle);
-  const baseMidi = (octave + 1) * 12 + (cleIdx >= 0 ? cleIdx : 0);
+  const baseMidi = (octave + 1) * 12 + (demiTonDeCle(cle) ?? 0);
 
   // tanh borne les valeurs extrêmes sans écraser le centre : 2 écarts-types couvrent
   // l'essentiel de la gamme, au-delà on sature plutôt que de dépasser l'ambitus.

@@ -5,7 +5,7 @@
 
 import { comparerEvenementsMidi } from "./midi";
 import { writeMidi } from "midi-file";
-import { completer, degresDeGamme } from "./gammes";
+import { completer, degresDeGamme, degresSansPassage } from "./gammes";
 import { traduire } from "../i18n";
 
 /**
@@ -22,6 +22,10 @@ export function normaliserGenre(valeur: string): string | null {
   return Object.keys(PROGRESSIONS_GENRE).find((cle) => cle === nu) ?? null;
 }
 
+// LA PREMIÈRE PROGRESSION D'UN GENRE EST LA SEULE QUE LISENT le générateur musical, le générateur
+// d'accords et la boîte à groove, et elle doit donc lui être propre. Celle d'ambient était celle de
+// pop, et les deux genres rendaient la même musique (passe de croisement, 2026-11-14) : ses deux
+// progressions ont été échangées. `generation-gammes.test.ts` tient les premières toutes distinctes.
 export const PROGRESSIONS_GENRE: Record<string, number[][]> = {
   rock: [[0, 4, 5], [0, 4, 0, 5], [0, 5, 3, 4]],
   pop: [[0, 5, 3, 4], [0, 4, 5, 4], [0, 3, 5, 4]],
@@ -31,7 +35,7 @@ export const PROGRESSIONS_GENRE: Record<string, number[][]> = {
   electro: [[0, 3, 5, 4], [0, 4, 5, 3]],
   hiphop: [[0, 3, 4, 5], [0, 4, 0, 3]],
   reggae: [[0, 4, 5, 4], [0, 5, 0, 4]],
-  ambient: [[0, 5, 3, 4], [0, 3, 5, 0]],
+  ambient: [[0, 3, 5, 0], [0, 5, 3, 4]],
 };
 
 
@@ -47,9 +51,6 @@ const INSTRUMENTS_GM: Record<string, number> = {
 
 // LES DEGRÉS VIENNENT DE LA TABLE COMMUNE, `gammes.ts`. Ils étaient écrits ici à la main, sous un
 // nom que le garde des gammes ne cherchait pas.
-const DEGRES_MAJEUR = degresDeGamme("majeur");
-
-const DEGRES_MINEUR = degresDeGamme("mineur");
 
 // Gammes disponibles pour les nœuds qui construisent des accords ou
 // mappent des couleurs sur une gamme (Générateur d'accords, Groove Box,
@@ -72,8 +73,19 @@ export const GAMMES_ACCORDS: { id: string; fr: string; en: string; degres: numbe
   "pentatonique-majeure", "pentatonique-mineure", "blues", "chromatique",
 ]);
 
+/** Les degrés d'une gamme, notes de passage comprises : ce qu'une mélodie joue. */
 export function degresGammeAccords(id: string): number[] {
   return degresDeGamme(id, "majeur");
+}
+
+/**
+ * Les degrés sur lesquels un accord se bâtit, fondamentale, tierce, quinte et extension : ceux de la
+ * gamme sans ses notes de passage. Seule la bebop dominante en a une aujourd'hui, et sans elle ses
+ * accords sont ceux du mixolydien. Les sept premiers degrés gardent leur rang, la note de passage
+ * étant la dernière : une progression y désigne les mêmes fondamentales.
+ */
+export function degresDesAccords(id: string): number[] {
+  return degresSansPassage(id, "majeur");
 }
 
 /**
@@ -149,8 +161,15 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
   const tempo = Math.max(40, Math.min(240, parseInt(cfg["tempo"] || "120")));
   const cleNom = cfg["cle"] || cfg["key"] || "C";
   const gammeNom = (cfg["gamme"] || cfg["scale"] || "majeur").toLowerCase();
-  const estMineur = gammeNom.includes("min");
-  const gammeCourante = estMineur ? DEGRES_MINEUR : DEGRES_MAJEUR;
+  // LA GAMME SE LIT DANS LA TABLE COMMUNE. Seule la présence de « min » dans son nom était lue :
+  // vingt-cinq gammes y rendaient deux musiques, et « dominant » comme « diminuée » contenant « min »,
+  // la lydienne dominante se jouait en mineur naturel. Un nom que la table ignore, « minor » écrit à
+  // la main dans un script, garde le repli d'avant. Le mode se dit par la tierce de la gamme.
+  const secoursGamme = gammeNom.includes("min") ? "mineur" : "majeur";
+  const gammeCourante = degresDeGamme(gammeNom, secoursGamme);
+  // Les accords et la basse se bâtissent sans les notes de passage, que la mélodie garde.
+  const gammeAccords = degresSansPassage(gammeNom, secoursGamme);
+  const estMineur = gammeCourante.includes(3) && !gammeCourante.includes(4);
   const decalage = traduireCle(cleNom);
   const tonalite = traduire(estMineur ? "analyse.nom_mineur" : "analyse.nom_majeur", cleNom);
 
@@ -187,7 +206,7 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
     const debAcc = i * dureeAccord;
     const finAcc = debAcc + dureeAccord;
     const degre = progression[i % progression.length];
-    const fonda = 36 + decalage + gammeCourante[degre % gammeCourante.length] + Math.floor(degre / gammeCourante.length) * 12;
+    const fonda = 36 + decalage + gammeAccords[degre % gammeAccords.length] + Math.floor(degre / gammeAccords.length) * 12;
 
     // Accords (piano, notes simultanées)
     const td = secEnTicks(debAcc);
@@ -200,11 +219,11 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
     // générateurs d'accords du catalogue (tierce et quinte cherchées par
     // proximité dans la gamme), pour que le mineur naturel donne bien un VI
     // majeur et le majeur un V majeur.
-    const racineRelative = gammeCourante[degre % gammeCourante.length];
+    const racineRelative = gammeAccords[degre % gammeAccords.length];
     const tirades = [
       0,
-      degreAccordProche(gammeCourante, racineRelative, 4),
-      degreAccordProche(gammeCourante, racineRelative, 7),
+      degreAccordProche(gammeAccords, racineRelative, 4),
+      degreAccordProche(gammeAccords, racineRelative, 7),
     ];
     for (const itv of tirades) {
       pisteAccords.push({ deltaTime: td, type: "noteOn", channel: 0, noteNumber: fonda + itv, velocity: 70 });

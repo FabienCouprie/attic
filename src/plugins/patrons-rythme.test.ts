@@ -4,10 +4,13 @@
 // cinquante-cinq, tirés du même PATRONS_RYTHME : deux listes séparées qui avaient
 // divergé. Elles viennent maintenant d'ici, et ce test tient les deux promesses —
 // rien d'inventé, et rien qui retombe en silence sur un patron de secours.
+import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { PATRONS, optionsPatrons } from "./patrons-rythme";
 import { PATRONS_RYTHME } from "../audio/generation-patrons";
 import { registre } from "../audio/adaptateur";
+import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
+import { lireMidiEnSequence } from "../audio/midi-lecture-sequence";
 
 describe("liste des patrons", () => {
   it("ne contient que des patrons qui existent, et les contient tous", () => {
@@ -52,5 +55,37 @@ describe("nœuds qui s'en servent", () => {
     expect(patron.optionIds!.length).toBeGreaterThan(40);
     expect(patron.optionIds).toContain("Blues shuffle");
     expect(patron.defaut).toBe("Pop dance");
+  });
+});
+
+describe("chaque style se joue à lui-même", () => {
+  // LE DÉFAUT, relevé le 2026-11-14 par la passe de croisement des nomenclatures : dix groupes de
+  // patrons étaient identiques à l'octet, vingt-deux noms pour dix grilles, et la Boîte à rythmes
+  // jouait la Valse et le Bolero sur son patron de secours en 4/4, si bien qu'ils sonnaient pareil.
+  it("deux styles n'ont jamais la même grille dans une même métrique", () => {
+    const vus = new Map<string, string>();
+    const doublons: string[] = [];
+    for (const [nom, p] of Object.entries(PATRONS_RYTHME)) {
+      for (const [signature, grille] of Object.entries(p.positions)) {
+        const cle = `${signature} ${JSON.stringify(grille)}`;
+        if (vus.has(cle)) doublons.push(`${nom} = ${vus.get(cle)}`);
+        else vus.set(cle, nom);
+      }
+    }
+    expect(doublons).toEqual([]);
+  });
+
+  it("la Boîte à rythmes joue la Valse et le Bolero en 3/4, une mesure de trois temps", async () => {
+    const fiche = registre.trouverDef("boite-rythmes") as unknown as FicheLancable;
+    const attaquesDuKick = async (patron: string) => {
+      const r = await lancerFiche(fiche, { Patron: patron, Tempo: 120, Mesures: 2 });
+      const { sequence } = await lireMidiEnSequence(r.valeurs[1] as File);
+      const notes = sequence?.notes ?? [];
+      const kick = Math.min(...notes.map((n) => n.note));
+      return notes.filter((n) => n.note === kick).map((n) => Math.round(n.debut * 100) / 100);
+    };
+    // À 120 à la noire, une mesure de 3/4 dure 1,5 s : la grosse caisse de la valse tombe sur 1.
+    expect(await attaquesDuKick("Valse")).toEqual([0, 1.5]);
+    expect(await attaquesDuKick("Bolero")).not.toEqual(await attaquesDuKick("Valse"));
   });
 });

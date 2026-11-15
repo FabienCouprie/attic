@@ -178,8 +178,11 @@ describe("la boîte à rythmes", () => {
 describe("le rythme de Cantor", () => {
   it("frappe aux mêmes instants dans son audio et dans son MIDI, swing compris", async () => {
     const fiche = registre.trouverDef("rythme-cantor")!;
+    // AU CHARLEY SEUL, pour que chaque frappe se voie : « Tous » mêle désormais grosse caisse et
+    // charley, et la longue retombée d'une grosse caisse masque au détecteur le charley qui la suit,
+    // une frappe sur seize. Les instants viennent de la même grille dans le son et dans le MIDI.
     const res = await fiche.executer(ctxParams({
-      Tempo: 100, Profondeur: 3, Mesures: 1, Swing: 50, Graine: 7, Volume: 90,
+      Tempo: 100, Profondeur: 3, Mesures: 1, Swing: 50, Graine: 7, Volume: 90, Instrument: "hihat",
     }));
     const detectees = attaques(res.valeurs[0] as AudioBuffer);
     const instants = await instantsMidi(res.valeurs[1] as File);
@@ -216,6 +219,18 @@ describe("le rythme de Cantor", () => {
     expect(new Set(notesSeul.map((n) => n.note))).toEqual(new Set([38]));
     // Le même rythme, une autre voix : autant de frappes de part et d'autre.
     expect(notesSeul.length).toBe(notesTous.length);
+  });
+
+  it("« TOUS » N'EST PAS LE CHARLEY À LA PROFONDEUR PAR DÉFAUT : chaque pas garde le niveau où il paraît", async () => {
+    // LE DÉFAUT RELEVÉ PAR LA PASSE DE CROISEMENT (lot 3e, 2026-11-15) : chaque pas gardait le niveau
+    // le plus profond qui le marquait, et tous ceux qui survivent jusqu'au fond y étaient remarqués ; à
+    // la profondeur 3, « Tous » ne frappait que le charley. Le cas d'au-dessus ne passait qu'à 4.
+    const fiche = registre.trouverDef("rythme-cantor")!;
+    for (const Graine of [1, 2, 3]) {
+      const tous = await fiche.executer(ctxParams({ Profondeur: 3, Mesures: 1, Graine }));
+      const notes = analyserMidi(parseMidi(new Uint8Array(await (tous.valeurs[1] as File).arrayBuffer()))).notes;
+      expect(new Set(notes.map((n) => n.note)).size, `graine ${Graine}`).toBeGreaterThan(1);
+    }
   });
 });
 

@@ -10,6 +10,8 @@
 // un appel direct depuis un test porte ce qu'on a tapé. Ces fonctions sont donc idempotentes sur la
 // forme canonique et tolérantes sur les autres.
 import type { Mapping, ModeVoix, Topologie } from "./automate-cellulaire";
+import { gammeDe } from "./gammes";
+import { faconDe } from "./facons-accord";
 
 export function normaliserTopologie(v: string): Topologie {
   const s = v.toLowerCase().replace(/\s+/g, " ");
@@ -18,10 +20,19 @@ export function normaliserTopologie(v: string): Topologie {
   return "1D";
 }
 
+/**
+ * LA FAÇON DE JOUER UN ACCORD D'ABORD (`audio/facons-accord.ts`), dont le réglage pose les
+ * identifiants depuis le lot 3c de la passe de complétude (2026-11-14) : « melodie », sans accent,
+ * ne contient pas « mélodie », et la recherche d'un morceau de mot l'aurait prise pour une polyphonie.
+ */
 export function normaliserModeVoix(v: string): ModeVoix {
+  const facon = faconDe(v);
+  if (facon === "arpege") return "Arpège";
+  if (facon === "roule") return "Roulé";
+  if (facon === "plaque") return "Polyphonie";
   const s = v.toLowerCase();
   if (s.includes("arp") || s.includes("arpège") || s.includes("arpegg")) return "Arpège";
-  if (s.includes("mélodie") || s.includes("melody") || s.includes("lead")) return "Mélodie";
+  if (s.includes("melodie") || s.includes("mélodie") || s.includes("melody") || s.includes("lead")) return "Mélodie";
   return "Polyphonie";
 }
 
@@ -66,6 +77,11 @@ export function normaliserCle(v: string): string {
 // idempotente pour ce cas, et gère aussi les valeurs brutes des anciens
 // projets ou des appels directs, ex. les tests).
 export function normaliserGamme(v: string): string {
+  // UN IDENTIFIANT DE LA TABLE COMMUNE SE GARDE TEL QUEL, alias compris. La table ci-dessous ne
+  // connaissait que les onze gammes d'avant elle, et les quatorze autres offertes au réglage
+  // retombaient en silence sur la pentatonique majeure. Elle reste pour les anciens libellés.
+  const connue = gammeDe(v);
+  if (connue) return connue.id;
   const map: Record<string, string> = {
     Majeur: "majeur", Major: "majeur", majeur: "majeur",
     "Mineur naturel": "mineur", "Natural minor": "mineur", mineur: "mineur",

@@ -21,6 +21,9 @@ import {
   QUALITES, dansLeSens, jouerAccord, notesDaccord, type ModeDeJeu, type SensDArpege,
 } from "../audio/qualites-accords";
 import { nomNoteRond, type Alteration } from "../audio/nom-note";
+import { SENS_SANS_ORDRE_DE_JEU, choixSensArpege, sensParmi } from "../audio/sens-arpege";
+import { hasardDuNoeud } from "../core";
+import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 import { CLES, PARAMETRE_TONIQUE, alterationDe } from "../audio/cles";
 import type { Note } from "../audio/note";
 import { langueCourante } from "../i18n";
@@ -71,7 +74,7 @@ export const fiches: FicheAudio[] = ([
     id: "accords-joues", nom: "Accords joués", nomEn: "Chord Run",
     univers: "Entrées", famille: "Génération",
     resume: "Joue un accord nommé, plaqué, arpégé ou roulé, dans la fondamentale et le renversement voulus.",
-    resumeEn: "Plays a named chord, struck, arpeggiated or rolled, in the wanted root and inversion.",
+    resumeEn: "Plays a named chord, block, arpeggiated or rolled, in the wanted root and inversion.",
     notice: `Rend les notes d'un accord comme des notes datées, depuis la fondamentale choisie. La sortie MIDI se branche sur tout ce qui lit du MIDI, un clavier compris.
 
 « Accord » donne les intervalles. Les ${QUALITES.length} qualités offertes viennent de la table commune : les triades, les septièmes et les sixtes, les extensions de neuvième, onzième et treizième, les accords altérés et les suspendus. Une qualité vaut pour les douze fondamentales, ce qui fait ${QUALITES.length * 12} accords.
@@ -91,7 +94,7 @@ Les intervalles déclarés sont ceux qui se jouent, et non l'empilement théoriq
 • « Arpégé » les fait partir l'une après l'autre, chacune relâchée quand la suivante part. L'accord n'y sonne jamais entier : on l'entend note à note.
 • « Roulé » les fait partir l'une après l'autre et les tient toutes jusqu'à la fin. L'accord sonne donc entier à partir du dernier départ, et c'est la forme décomposée que la harpe et le piano jouent.
 
-« Sens » décide de l'ordre des notes, et n'agit pas sur un accord plaqué, dont les notes partent ensemble. L'aller-retour monte puis redescend sans rejouer son sommet, qui est atteint une fois.
+« Sens » décide de l'ordre des notes, et n'agit pas sur un accord plaqué, dont les notes partent ensemble. L'aller-retour monte puis redescend sans rejouer son sommet, qui est atteint une fois ; le retour-aller fait l'inverse par le bas. Le convergent part des bords vers le milieu, la plus grave, la plus aiguë, puis la deuxième plus grave, et le divergent fait ce chemin à rebours. L'aléatoire tire un ordre que la « Graine » fixe ; elle est affichée dans le message quand elle est tirée au sort.
 
 « Fondamentale finale » ajoute la fondamentale au-dessus de tout l'accord. Elle ferme un arpège, que sa dernière note laisserait autrement en suspens, et sur un accord plaqué elle double la basse. Sur un accord dont une extension monte au-delà de l'octave, elle est montée d'autant d'octaves qu'il faut pour rester la note la plus haute.
 
@@ -121,15 +124,15 @@ The declared intervals are the ones that get played, not the theoretical stack: 
 « Inversion » moves the bottom notes up an octave, one per requested degree. That is what changes the bass without changing the chord: the same notes are there, laid out differently. An inversion larger than the chord's number of notes is brought back to the last possible one.
 
 « Manner » decides what one hears, and the three do not make the same music.
-• « Struck » starts every note together and stops them together. That is the chord in a single gesture.
+• « Block » starts every note together and stops them together. That is the chord in a single gesture.
 • « Arpeggiated » starts them one after another, each released when the next starts. The chord never sounds whole: it is heard note by note.
 • « Rolled » starts them one after another and holds them all to the end. The chord therefore sounds whole from the last onset, and that is the spread form the harp and the piano play.
 
-« Direction » decides the order of the notes, and does nothing on a struck chord, whose notes start together. The round trip goes up then back down without replaying its summit, which is reached once.
+« Direction » decides the order of the notes, and does nothing on a block chord, whose notes start together. The round trip goes up then back down without replaying its summit, which is reached once; the reverse round trip does the opposite from the bottom. Converging goes from the edges to the middle, the lowest, the highest, then the second lowest, and diverging takes that path the other way. Random draws an order that the « Seed » fixes; it is shown in the message when drawn at random.
 
-« Closing root » adds the root above the whole chord. It closes an arpeggio that its last note would otherwise leave hanging, and on a struck chord it doubles the bass. On a chord whose extension rises beyond the octave, it is raised by as many octaves as needed to remain the highest note.
+« Closing root » adds the root above the whole chord. It closes an arpeggio that its last note would otherwise leave hanging, and on a block chord it doubles the bass. On a chord whose extension rises beyond the octave, it is raised by as many octaves as needed to remain the highest note.
 
-« Spread » is the share of the duration over which the onsets are laid out. At one, an arpeggio fills the duration exactly; small, a roll becomes a brief gesture followed by the held chord. It does nothing on a struck chord, whose notes all start at the same instant. Being a share and not a time, a chord twice as long keeps the same gait.
+« Spread » is the share of the duration over which the onsets are laid out. At one, an arpeggio fills the duration exactly; small, a roll becomes a brief gesture followed by the held chord. It does nothing on a block chord, whose notes all start at the same instant. Being a share and not a time, a chord twice as long keeps the same gait.
 
 « Tempo » and « Duration » give the chord's length, the duration being counted in beats.
 
@@ -166,27 +169,26 @@ The « Notation » output writes the chord as text, one onset per line and simul
         doc: "Monte d'une octave les notes du bas, une par degré. Change la basse sans changer l'accord.",
         docEn: "Moves the bottom notes up an octave, one per degree. Changes the bass without changing the chord." },
       { nom: "Façon", nomEn: "Manner", type: "choix",
-        options: ["Plaqué", "Arpégé", "Roulé"],
-        optionsEn: ["Struck", "Arpeggiated", "Rolled"],
-        optionIds: ["plaque", "arpege", "roule"],
-        defaut: "Plaqué", defautEn: "Struck",
+        ...choixFaconAccord(),
+        defaut: "Plaqué", defautEn: "Block",
         doc: "Ce qu'on entend. Le roulé fait partir les notes l'une après l'autre et les tient toutes : l'accord sonne entier à partir du dernier départ.",
         docEn: "What one hears. The roll starts the notes one after another and holds them all: the chord sounds whole from the last onset." },
       { nom: "Sens", nomEn: "Direction", type: "choix",
-        options: ["Montant", "Descendant", "Aller-retour"],
-        optionsEn: ["Ascending", "Descending", "Round trip"],
-        optionIds: ["montant", "descendant", "aller-retour"],
+        ...choixSensArpege(SENS_SANS_ORDRE_DE_JEU),
         defaut: "Montant", defautEn: "Ascending",
-        doc: "L'ordre des notes. Sans effet sur un accord plaqué, dont les notes partent ensemble.",
-        docEn: "The order of the notes. Has no effect on a struck chord, whose notes start together." },
+        doc: "L'ordre des notes. Montant, descendant ; aller-retour et retour-aller, sans rejouer l'extrême où ils tournent ; convergent, des bords vers le milieu, et divergent, à rebours ; aléatoire, tiré par la « Graine ». Sans effet quand « Façon » vaut « Plaqué », les notes partant ensemble.",
+        docEn: "The order of the notes. Ascending, descending; round trip and reverse round trip, without replaying the extreme where they turn; converging, from the edges to the middle, and diverging, the other way; random, drawn by the « Seed ». Has no effect when « Manner » is « Block », the notes starting together." },
+      { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0,
+        doc: "Graine de l'ordre aléatoire, sans effet quand « Sens » ne vaut pas « Aléatoire ». 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici.",
+        docEn: "Seed for the random order; no effect when « Direction » is not « Random ». 0 = drawn at random on every run, and shown in the message so it can be copied back here." },
       { nom: "Fondamentale finale", nomEn: "Closing root", type: "choix",
         ...choixOuiNon("non"),
         defaut: "Non", defautEn: "No",
         doc: "Ajoute la fondamentale une octave au-dessus. Elle ferme un arpège, et double la basse d'un accord plaqué.",
-        docEn: "Adds the root one octave above. It closes an arpeggio, and doubles a struck chord's bass." },
+        docEn: "Adds the root one octave above. It closes an arpeggio, and doubles a block chord's bass." },
       { nom: "Étalement", nomEn: "Spread", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "La part de la durée sur laquelle les départs se répartissent. Sans effet sur un accord plaqué, dont les notes partent au même instant.",
-        docEn: "The share of the duration over which the onsets are laid out. Has no effect on a struck chord, whose notes start at the same instant." },
+        doc: "La part de la durée sur laquelle les départs se répartissent. Sans effet quand « Façon » vaut « Plaqué », les notes partant au même instant.",
+        docEn: "The share of the duration over which the onsets are laid out. Has no effect when « Manner » is « Block », the notes starting at the same instant." },
       { nom: "Tempo", nomEn: "Tempo", type: "curseur", plage: [20, 300], pas: 1, defaut: 90, unite: "BPM",
         doc: "La vitesse. Avec la durée, elle donne la longueur de l'accord.",
         docEn: "The speed. With the duration, it gives the chord's length." },
@@ -210,8 +212,9 @@ The « Notation » output writes the chord as text, one onset per line and simul
       const octave = Math.round(ctx.paramNombre("Octave", 4));
       const octaves = Math.round(ctx.paramNombre("Étendue", 1));
       const renversement = Math.round(ctx.paramNombre("Renversement", 0));
-      const facon = ctx.paramTexte("Façon", "plaque") as ModeDeJeu;
-      const sens = ctx.paramTexte("Sens", "montant") as SensDArpege;
+      const facon: ModeDeJeu = faconDe(ctx.paramTexte("Façon", "plaque")) ?? "plaque";
+      const sens: SensDArpege = sensParmi(ctx.paramTexte("Sens", "montant"), SENS_SANS_ORDRE_DE_JEU, "montant");
+      const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const fermer = ctx.paramTexte("Fondamentale finale", "non") === "oui";
       const etalement = ctx.paramNombre("Étalement", 100) / 100;
       const tempo = ctx.paramNombre("Tempo", 90);
@@ -230,7 +233,7 @@ The « Notation » output writes the chord as text, one onset per line and simul
       const ecartees = notesDaccord(qualite, 0, octaves, renversement, fermer).length - hauteurs.length;
 
       const duree = dureeEnTemps * (60 / Math.max(1, tempo));
-      const notes = jouerAccord(dansLeSens(hauteurs, sens), facon, duree, etalement, velocite);
+      const notes = jouerAccord(dansLeSens(hauteurs, sens, aleatoire), facon, duree, etalement, velocite);
 
       const midiFichier = notesVersFichierMidi(notes, tempo);
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
@@ -254,7 +257,8 @@ The « Notation » output writes the chord as text, one onset per line and simul
         // L'ACCORD S'ÉCRIT DANS LA GRAPHIE DE SA FONDAMENTALE : un mi bémol mineur septième se lit
         // « Eb4+Gb4+Bb4+Db5 » et non en dièses, qui désignent les mêmes touches sans nommer l'accord.
         valeurs: [audio, midiFinal, notation(notes, tempo, alterationDe(demiTon))],
-        message: `${titre} · ${notes.length} notes${renverse} · ${derniere.toFixed(1)} s${hors}`,
+        message: `${titre} · ${notes.length} notes${renverse} · ${derniere.toFixed(1)} s${hors}`
+          + (sens === "aleatoire" ? ` · ${en() ? "seed" : "graine"} ${graine}` : ""),
       };
     },
   }),

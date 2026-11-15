@@ -5,6 +5,7 @@
 
 import { estCourbe, progressionPour, valeurA, valeursParametre } from "./courbe";
 import { cyclesAccumules, formeLfo, frequencesModulees } from "./lfo";
+import { formeOndeDepuisTimbre } from "./timbres";
 
 export function amplitudeVibrato(cents: number, frequence: number, sr: number): number {
   const k = Math.sinh((Math.max(0, cents) * Math.LN2) / 1200);
@@ -94,8 +95,9 @@ export function vibrato(
  * Trémolo : modulation d'amplitude par un LFO.
  *
  * `profondeurs` est déjà rendu échantillon par échantillon (constant sans courbe). La fréquence, elle,
- * a deux chemins : sans courbe, le calcul direct d'origine, recopié tel quel pour ne pas changer un
- * bit ; avec une courbe, la phase intégrée d'`audio/lfo.ts`.
+ * a deux chemins : sans courbe, la phase directe `freq * t`, le sinus gardant son calcul d'origine au
+ * bit près ; avec une courbe, la phase intégrée d'`audio/lfo.ts`. Les deux lisent la forme par
+ * `formeLfo`.
  */
 export function tremolo(
   a: AudioBuffer,
@@ -119,17 +121,17 @@ export function tremolo(
     }
     return resultat;
   }
+  // LA FORME SE RECONNAÎT PAR LA TABLE D'ALIAS de `formeLfo`, comme sur le chemin à courbe. Elle se
+  // comparait ici aux libellés d'autrefois, « Carré », « Square », « Triangle », « Sawtooth » : les
+  // identifiants du réglage étant devenus « square », « triangle », « sawtooth », les quatre formes
+  // jouaient un sinus (passe de croisement, 2026-11-14). Le sinus garde son calcul, au bit près.
+  const sinus = formeOndeDepuisTimbre(forme) === "sine";
   for (let c = 0; c < a.numberOfChannels; c++) {
     const src = a.getChannelData(c);
     const dst = resultat.getChannelData(c);
     for (let i = 0; i < a.length; i++) {
       const t = i / sr;
-      const phase = 2 * Math.PI * freq * t;
-      let lfo: number;
-      if (forme === "Carré" || forme === "Square") lfo = Math.sin(phase) >= 0 ? 1 : -1;
-      else if (forme === "Triangle") lfo = 2 * Math.abs(2 * (freq * t - Math.floor(freq * t + 0.5))) - 1;
-      else if (forme === "Sawtooth") lfo = 2 * (freq * t - Math.floor(freq * t)) - 1;
-      else lfo = Math.sin(phase);
+      const lfo = sinus ? Math.sin(2 * Math.PI * freq * t) : formeLfo(forme, freq * t);
       const gain = 1 - profondeurs[i] * (1 - lfo) / 2;
       dst[i] = src[i] * gain;
     }

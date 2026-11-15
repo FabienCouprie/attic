@@ -202,10 +202,13 @@ export interface Alignement {
  * L'alignement d'une suite d'attaques sur la grille d'un tempo.
  *
  * `divisions` est le nombre de subdivisions par noire : 4 pour des double-croches, 3 pour des
- * croches de triolet. Sans attaque, l'indice vaut 0 et la part 1 : rien a deplacer.
+ * croches de triolet, et une fraction pour une grille plus large qu'une noire, 2/3 pour la noire
+ * pointee. Elle etait arrondie a l'entier, ce qui mesurait une grille pointee contre celle des
+ * noires. Sans attaque, l'indice vaut 0 et la part 1 : rien a deplacer.
  */
 export function mesurerAlignement(attaques: number[], bpm: number, divisions = 4): Alignement {
-  const pas = 60 / tempoValide(bpm) / Math.max(1, Math.round(divisions));
+  const parNoire = Number.isFinite(divisions) && divisions > 0 ? divisions : 1;
+  const pas = 60 / tempoValide(bpm) / parNoire;
   if (attaques.length === 0) return { pas, ecartMoyenMs: 0, indice: 0, partProche: 1, attaques: 0 };
   let somme = 0;
   let proches = 0;

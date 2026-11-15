@@ -100,8 +100,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Effacer le contour propre de la cible avant d'imposer celui du modèle. À « Non », on obtient le produit des deux contours, ce qui est parfois voulu mais n'est pas un transfert.",
         docEn: "Erase the target's own contour before imposing the model's. At « No » one gets the product of the two contours, which is sometimes wanted but is not a transfer." },
       { nom: "Plancher", nomEn: "Floor", type: "curseur", plage: [-80, -20], pas: 1, defaut: -60, unite: "dB",
-        doc: "Niveau sous lequel la cible n'est pas aplatie. Aplatir est une division, et diviser du silence n'amplifierait que du bruit de fond : sous ce seuil, le silence de la cible est tenu pour du silence et non pour un creux à corriger.",
-        docEn: "Level below which the target is not flattened. Flattening is a division, and dividing silence would only amplify background noise: below this threshold the target's silence is taken as silence and not as a dip to correct." },
+        doc: "Niveau sous lequel la cible n'est pas aplatie. Aplatir est une division, et diviser du silence n'amplifierait que du bruit de fond : sous ce seuil, le silence de la cible est tenu pour du silence et non pour un creux à corriger. Sans effet quand « Aplatir » vaut « Non ».",
+        docEn: "Level below which the target is not flattened. Flattening is a division, and dividing silence would only amplify background noise: below this threshold the target's silence is taken as silence and not as a dip to correct. No effect when « Flatten » is « No »." },
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
         doc: "Proportion de contour imposé. À 0 %, la sortie est la cible, inchangée. Une courbe branchée sur l'entrée Modulation donne cette valeur à chaque instant, à la place du curseur.",
         docEn: "Proportion of imposed contour. At 0 %, the output is the target, unchanged. A curve connected to the Modulation input gives this value at each instant, in place of the slider." },
@@ -109,8 +109,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Proportion que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe branchée, ce réglage n'agit pas.",
         docEn: "Proportion that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect." },
       { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Proportion que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
-        docEn: "Proportion that the curve's one means. A value below Modulation min reverses the direction of travel." },
+        doc: "Proportion que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Proportion that the curve's one means. A value below Modulation min reverses the direction of travel. With no curve, this setting does nothing." },
     ],
     async executer(ctx) {
       const cible = entreeAudio(ctx, 0), modele = entreeAudio(ctx, 1);

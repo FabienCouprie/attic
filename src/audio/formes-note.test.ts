@@ -143,7 +143,8 @@ const FORMES_ADMISES = new Set([
   "decay?,duree,note,octaves?,pitchDecay?,release?,sampleRate?,volume",
   "attack?,decay?,duree,harmonicity?,modulationIndex?,note,octaves?,release?,resonance?,sampleRate?,volume",
   "attack?,decay?,duree,harmonicity?,mode,modulationIndex?,note,release?,sampleRate?,sustain?,volume",
-  "attackNoise?,dampening?,duree,note,release?,resonance?,sampleRate?,volume",
+  // La corde pincée porte aussi le hasard du bruit qui la pince (2026-11-15), pour sa graine.
+  "aleatoire?,attackNoise?,dampening?,duree,note,release?,resonance?,sampleRate?,volume",
 ]);
 
 describe("les formes de note", () => {

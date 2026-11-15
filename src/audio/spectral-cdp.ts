@@ -240,7 +240,7 @@ export interface OptionsArpege {
   /** Largeur de la bande qui laisse passer, en octaves. */
   largeur: number;
   bas: number; haut: number;
-  sens: "montant" | "descendant" | "aller-retour";
+  sens: "montant" | "descendant" | "aller-retour" | "retour-aller";
   /** Temps de décroissance de 60 dB d'une case après le passage de la bande, en secondes ; 0 : aucune. */
   remanence: number;
 }
@@ -259,7 +259,11 @@ export function arpegerSpectre(a: AnalysePV, o: OptionsArpege): TramePV[] {
   const tenu = new Float64Array(nb);
   return a.trames.map((tr, t) => {
     const cycle = (t * dt * o.vitesse) % 1;
-    const pos = o.sens === "descendant" ? 1 - cycle : o.sens === "aller-retour" ? 1 - Math.abs(2 * cycle - 1) : cycle;
+    // L'aller-retour monte du bas au haut puis redescend ; le retour-aller part du haut, descend et
+    // remonte : le même triangle, décalé d'un demi-cycle.
+    const pos = o.sens === "descendant" ? 1 - cycle
+      : o.sens === "aller-retour" ? 1 - Math.abs(2 * cycle - 1)
+        : o.sens === "retour-aller" ? Math.abs(2 * cycle - 1) : cycle;
     const centre = lb + pos * (lh - lb);
     const amp = new Float64Array(nb);
     for (let i = 1; i < nb; i++) {

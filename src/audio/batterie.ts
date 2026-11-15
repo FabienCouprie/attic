@@ -241,8 +241,12 @@ export function genererGrilleCantor(
     const taille = fin - debut;
     if (niveau > 0) {
       // Marque les extrémités de l'intervalle comme actives à ce niveau.
-      grille[debut] = Math.max(grille[debut], niveau - 1);
-      grille[Math.max(debut, fin - 1)] = Math.max(grille[Math.max(debut, fin - 1)], niveau - 1);
+      // UN PAS GARDE LE NIVEAU OÙ IL PARAÎT, le premier qui le marque dans ce parcours en profondeur.
+      // Il gardait le plus profond, et chaque pas qui survit jusqu'au fond y était remarqué : à la
+      // profondeur 3, « Tous » ne frappait que le charley (passe de croisement, lot 3e, 2026-11-15).
+      if (grille[debut] < 0) grille[debut] = niveau - 1;
+      const dernier = Math.max(debut, fin - 1);
+      if (grille[dernier] < 0) grille[dernier] = niveau - 1;
     }
     if (niveau === profondeur) return;
 

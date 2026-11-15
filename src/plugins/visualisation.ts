@@ -10,7 +10,7 @@ import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";
-import { choixFenetre } from "../audio/fenetres-analyse";
+import { TAILLES_FENETRE, choixFenetre } from "../audio/fenetres-analyse";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { versDb } from "../audio/decibels";
@@ -38,19 +38,19 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       {
         nom: "Fenêtre", nomEn: "Window", type: "choix",
-        options: choixFenetre([1024, 2048, 4096, 8192]).options, defaut: "4096",
-        doc: "Taille de la fenêtre FFT (échantillons). Plus grande = meilleure résolution fréquentielle (mais moins de résolution temporelle).",
+        options: choixFenetre(TAILLES_FENETRE).options, defaut: "4096",
+        doc: "Taille de la fenêtre FFT (échantillons). Plus grande = meilleure résolution fréquentielle (mais moins de résolution temporelle). Ne règle que l'affichage : le son sort tel qu'il est entré.",
         // Pas d'optionsEn/defautEn : des tailles de fenêtre ne se traduisent pas.
         // (Ces champs contenaient des formes d'onde — « Sine », « Square »… —
         // copiées-collées depuis un paramètre d'oscillateur, ce qui affichait
         // des noms de formes d'onde à la place des tailles en anglais.)
-        docEn: "FFT window size (samples). Larger = finer frequency resolution (but coarser time resolution).",
+        docEn: "FFT window size (samples). Larger = finer frequency resolution (but coarser time resolution). Sets the display only: the sound leaves as it came in.",
      },
       {
         nom: "Échelle", nomEn: "Scale", type: "choix",
         options: ["Logarithmique", "Linéaire"], optionIds: ["log","lineaire"], defaut: "Logarithmique",
-        doc: "Échelle de l'axe des fréquences. Logarithmique = proche de la perception de la hauteur (octaves régulières) ; linéaire = fréquences réparties uniformément.",
-        docEn: "Frequency axis scale. Logarithmic = close to pitch perception (even octaves); linear = evenly spaced frequencies.", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic",
+        doc: "Échelle de l'axe des fréquences. Logarithmique = proche de la perception de la hauteur (octaves régulières) ; linéaire = fréquences réparties uniformément. Ne règle que l'affichage : le son sort tel qu'il est entré.",
+        docEn: "Frequency axis scale. Logarithmic = close to pitch perception (even octaves); linear = evenly spaced frequencies. Sets the display only: the sound leaves as it came in.", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic",
      },
     ],
     async executer(ctx) {
@@ -69,16 +69,16 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       {
         nom: "Fenêtre", nomEn: "Window", type: "choix",
-        options: choixFenetre([512, 1024, 2048, 4096]).options, defaut: "1024",
-        doc: "Taille de la fenêtre FFT (échantillons). Petite = meilleure résolution temporelle ; grande = meilleure résolution fréquentielle (compromis temps/fréquence).",
+        options: choixFenetre(TAILLES_FENETRE).options, defaut: "1024",
+        doc: "Taille de la fenêtre FFT (échantillons). Petite = meilleure résolution temporelle ; grande = meilleure résolution fréquentielle (compromis temps/fréquence). Ne règle que l'affichage : le son sort tel qu'il est entré.",
         // Idem : pas d'optionsEn/defautEn (mêmes formes d'onde copiées-collées).
-        docEn: "FFT window size (samples). Small = better time resolution; large = better frequency resolution (time/frequency trade-off).",
+        docEn: "FFT window size (samples). Small = better time resolution; large = better frequency resolution (time/frequency trade-off). Sets the display only: the sound leaves as it came in.",
      },
       {
         nom: "Échelle", nomEn: "Scale", type: "choix",
         options: ["Logarithmique", "Linéaire"], optionIds: ["log","lineaire"], defaut: "Logarithmique",
-        doc: "Échelle de l'axe vertical des fréquences (log = proche de la perception).",
-        docEn: "Vertical frequency axis scale (log = close to perception).", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic",
+        doc: "Échelle de l'axe vertical des fréquences (log = proche de la perception). Ne règle que l'affichage : le son sort tel qu'il est entré.",
+        docEn: "Vertical frequency axis scale (log = close to perception). Sets the display only: the sound leaves as it came in.", optionsEn: ["Logarithmic", "Linear"], defautEn: "Logarithmic",
      },
     ],
     async executer(ctx) {

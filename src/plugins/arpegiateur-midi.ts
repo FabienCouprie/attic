@@ -17,26 +17,12 @@ import { langueCourante, traduire } from "../i18n";
 import { hasardDuNoeud } from "../core";
 import { appliquerInstrumentMidi } from "../audio";
 import { PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
-import { DIRECTIONS } from "../audio/midi-arpege";
 import { LIBELLES_HERITES_VALEURS, VALEURS_NOTE, choixValeurs, valeurNote } from "../audio/valeurs-note";
+import { SENS_ARPEGE, choixSensArpege } from "../audio/sens-arpege";
 
-/** Les libellés des directions, dans l'ordre de `DIRECTIONS`. */
-export const DIRECTIONS_ARPEGE = {
-  ids: [...DIRECTIONS],
-  fr: ["Montant", "Descendant", "Aller-retour", "Retour-aller", "Aléatoire", "Ordre de jeu", "Convergent", "Divergent"],
-  en: ["Ascending", "Descending", "Round trip", "Reverse round trip", "Random", "As played", "Converging", "Diverging"],
-};
-
-/**
- * Les directions d'avant que ne relisent ni l'identifiant ni le libellé d'aujourd'hui.
- *
- * « Montant », « Descendant » et « Aléatoire » étaient à la fois identifiants et libellés français,
- * et le restent comme libellés : ils se relisent seuls. Restent les deux mots anglais de la liste
- * française et les deux libellés anglais d'alors.
- */
-export const DIRECTIONS_HERITEES: Record<string, string> = {
-  "UpDown": "aller-retour", "DownUp": "retour-aller", "Up": "montant", "Down": "descendant",
-};
+// LES DIRECTIONS SONT LA TABLE DU SENS D'UN ARPÈGE, `audio/sens-arpege.ts`, depuis le lot 3c de la
+// passe de complétude (2026-11-14) : elles y sont entières, avec les écritures d'avant de ce
+// composant, `UpDown`, `DownUp`, `Up` et `Down`.
 
 /** La vitesse : la table entière des valeurs de note. */
 export const VITESSES_ARPEGE = choixValeurs(VALEURS_NOTE.map((v) => v.id));
@@ -50,8 +36,7 @@ export const ARPEGIATEUR_MIDI = fiche({
   sorties: [{ nom: "MIDI", type: "midi" }],
   parametres: [
     { nom: "Direction", nomEn: "Direction", type: "choix",
-      options: DIRECTIONS_ARPEGE.fr, optionsEn: DIRECTIONS_ARPEGE.en, optionIds: DIRECTIONS_ARPEGE.ids,
-      optionsHeritees: DIRECTIONS_HERITEES, defaut: "Montant", defautEn: "Ascending",
+      ...choixSensArpege(), defaut: "Montant", defautEn: "Ascending",
       doc: "L'ordre des notes de l'arpège, déroulé sur toutes les octaves. Montant : du grave à l'aigu. Descendant : de l'aigu au grave. Aller-retour : montant puis descendant, sans rejouer les extrêmes. Retour-aller : descendant puis montant. Aléatoire : un ordre tiré au sort, que la graine fixe. Ordre de jeu : l'ordre où les notes de l'accord sont arrivées. Convergent : des bords vers le milieu, la plus grave, la plus aiguë, puis la deuxième plus grave. Divergent : l'ordre convergent à rebours, du milieu vers les bords.",
       docEn: "The order of the arpeggio's notes, laid out over all the octaves. Ascending: low to high. Descending: high to low. Round trip: ascending then descending, without replaying the extremes. Reverse round trip: descending then ascending. Random: an order drawn at random, fixed by the seed. As played: the order in which the chord's notes arrived. Converging: from the edges to the middle, the lowest, the highest, then the second lowest. Diverging: the converging order reversed, from the middle to the edges." },
     { nom: "Motif", nomEn: "Pattern", type: "choix",
@@ -70,8 +55,8 @@ export const ARPEGIATEUR_MIDI = fiche({
       doc: "Le nombre d'octaves sur lesquelles l'arpège se déploie : chaque octave rejoue l'accord douze demi-tons plus haut, à la suite de la précédente.",
       docEn: "The number of octaves the arpeggio spans: each octave replays the chord twelve semitones higher, after the previous one." },
     { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0,
-      doc: "Graine de l'ordre des notes, sans effet hors du mode « Aléatoire ». 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici.",
-      docEn: "Seed for the note order; no effect outside the « Random » mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here." },
+      doc: "Graine de l'ordre des notes, sans effet quand « Direction » ne vaut pas « Aléatoire ». 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici.",
+      docEn: "Seed for the note order; no effect when « Direction » is not « Random ». 0 = drawn at random on every run, and shown in the message so it can be copied back here." },
     { nom: "Durée note", nomEn: "Note length", plage: [10, 100], pas: 5, defaut: 50, unite: "%",
       doc: "Durée de chaque note arpégée en pourcentage du pas de temps. 100% = legato, 50% = staccato.",
       docEn: "Length of each arpeggiated note as a percentage of the step time. 100% = legato, 50% = staccato." },
@@ -93,8 +78,8 @@ export const ARPEGIATEUR_MIDI = fiche({
     );
     // LA DIRECTION ET LA VITESSE SE DISENT PAR LEUR LIBELLÉ, dans la langue de l'interface.
     const en = langueCourante() === "en";
-    const rang = DIRECTIONS_ARPEGE.ids.indexOf(direction as (typeof DIRECTIONS)[number]);
-    const directionDite = rang < 0 ? direction : (en ? DIRECTIONS_ARPEGE.en : DIRECTIONS_ARPEGE.fr)[rang];
+    const rang = (SENS_ARPEGE.ids as readonly string[]).indexOf(direction);
+    const directionDite = rang < 0 ? direction : (en ? SENS_ARPEGE.en : SENS_ARPEGE.fr)[rang];
     const valeur = valeurNote(vitesse);
     const vitesseDite = valeur ? (en ? valeur.en : valeur.fr) : vitesse;
     return { valeurs: [nouvFichier], message: traduire("msg.var_0_graine_var_1", traduire("msg.arp_ge_var_0_var_1_var_2_oct", directionDite, vitesseDite, octaves), graine) };

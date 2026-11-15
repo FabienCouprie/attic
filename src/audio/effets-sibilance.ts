@@ -185,9 +185,12 @@ export function gateExpandeur(
     } else {
       // Expandeur : sous le seuil, atténuer selon le ratio.
       // gainDb = (seuilDb - envDb) * (1 - ratio) — ratio > 1 = expansion.
+      // LE GAIN ÉTAIT `(1 − 1/ratio)`, POSITIF, et l'expandeur montait ce qu'il devait baisser : la
+      // passe de croisement a vu son « Atténuation » inerte (lot 3e, 2026-11-15), et
+      // `expandeur.test.ts` tient la formule du commentaire.
       const ratioSafe = Math.max(1, valeurA(ratio, i));
       if (envDb < seuil) {
-        const gainDb = (seuil - envDb) * (1 - 1 / ratioSafe);
+        const gainDb = (seuil - envDb) * (1 - ratioSafe);
         // Limiter l'atténuation maximale au plancher
         const gainDbLimite = Math.max(gainDb, -attenuationDb);
         gain = depuisDb(gainDbLimite);

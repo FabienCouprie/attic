@@ -13,7 +13,7 @@ import type { Note } from "../audio/note";
 import type { Sequence } from "../audio/sequence";
 import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
-import { choixFenetre } from "../audio/fenetres-analyse";
+import { TAILLES_FENETRE, choixFenetreNomme } from "../audio/fenetres-analyse";
 import {
   courbeDissonance, creux, partielsDepuisModules, rapportProche, rugositeParTrame,
   timbreEtire, timbreHarmonique, type Partiel,
@@ -65,8 +65,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Combien de partiels retenir. Peu, et la courbe est lisse mais grossière ; beaucoup, et elle se hérisse de creux minuscules dus aux partiels faibles. Entre six et dix convient à la plupart des sons.",
         docEn: "How many partials to keep. Few, and the curve is smooth but coarse; many, and it bristles with tiny dips due to faint partials. Between six and ten suits most sounds." },
       { nom: "Étirement", nomEn: "Stretch", type: "curseur", plage: [1.5, 2.6], pas: 0.05, defaut: 2.1,
-        doc: "Facteur d'étirement de l'octave du timbre, quand « Étiré » est choisi. À 2, le timbre est harmonique et rien ne bouge. À 2,1, l'octave de ce timbre passe à 1249 cents, et tous les autres creux suivent.",
-        docEn: "Octave stretch factor of the timbre, when « Stretched » is chosen. At 2 the timbre is harmonic and nothing moves. At 2.1, that timbre's octave goes to 1249 cents, and every other dip follows." },
+        doc: "Facteur d'étirement de l'octave du timbre, quand « Étiré » est choisi. À 2, le timbre est harmonique et rien ne bouge. À 2,1, l'octave de ce timbre passe à 1249 cents, et tous les autres creux suivent. N'agit que lorsque « Timbre » vaut « Étiré ».",
+        docEn: "Octave stretch factor of the timbre, when « Stretched » is chosen. At 2 the timbre is harmonic and nothing moves. At 2.1, that timbre's octave goes to 1249 cents, and every other dip follows. Acts only when « Timbre » is « Stretched »." },
       { nom: "Étendue", nomEn: "Range", type: "curseur", plage: [600, 2400], pas: 100, defaut: 1300, unite: "cents",
         doc: "Jusqu'où la courbe est calculée. Il faut demander un peu au-delà de l'intervalle qui vous intéresse : les deux bouts d'une courbe ne peuvent pas être détectés comme creux, faute d'un voisin de chaque côté, et une courbe arrêtée pile à 1200 ne rend pas l'octave.",
         docEn: "How far the curve is computed. Ask a little beyond the interval of interest: neither end of a curve can be detected as a dip, having no neighbour on one side, and a curve stopped exactly at 1200 does not return the octave." },
@@ -159,11 +159,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Combien de partiels retenir par instant. Les partiels faibles ajoutent du bruit de mesure plus que de la rugosité entendue.",
         docEn: "How many partials to keep at each moment. Faint partials add measurement noise more than audible roughness." },
       { nom: "Finesse", nomEn: "Resolution", type: "choix",
-        options: ["Fine en temps (1024)", "Ordinaire (2048)", "Fine en fréquence (4096)"],
-        optionsEn: ["Sharp in time (1024)", "Ordinary (2048)", "Sharp in frequency (4096)"],
-        // LES LIBELLÉS RESTENT LES SIENS, et les identifiants viennent de la table : « Ordinaire »
-        // nomme la taille du milieu de CETTE liste, ce qu'une table centrale ne peut pas produire.
-        optionIds: choixFenetre([1024, 2048, 4096]).optionIds,
+        ...choixFenetreNomme(TAILLES_FENETRE),
         defaut: "Ordinaire (2048)", defautEn: "Ordinary (2048)",
         doc: "Taille de la fenêtre d'analyse. Une fenêtre longue sépare mieux les partiels voisins, donc mesure mieux la rugosité d'un accord tenu ; une fenêtre courte suit mieux un passage qui bouge.",
         docEn: "Analysis window size. A long window separates neighbouring partials better, hence measures a held chord's roughness better; a short one follows a moving passage better." },

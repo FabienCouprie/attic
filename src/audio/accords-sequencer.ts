@@ -7,7 +7,7 @@
 import type { NoteEvenement } from "./midi-sequence";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence } from "./midi-sequence";
-import { degresGammeAccords, degreAccordProche, degreSeptiemeProche, traduireCle } from "./generation";
+import { degresDesAccords, degreAccordProche, degreSeptiemeProche, traduireCle } from "./generation";
 import { frequenceDeTravail } from "./frequence-de-travail";
 
 export const NB_DEGRES_ACCORDS = 7;
@@ -93,7 +93,7 @@ function suffixePourExtension(
 
 export function nomAccordPourLigne(r: number, cle: string, gamme: string): string {
   const { degree, extension } = degreeEtExtensionPourLigne(r);
-  const degres = degresGammeAccords(gamme);
+  const degres = degresDesAccords(gamme);
   const cleIdx = NOTES.indexOf(cle) >= 0 ? NOTES.indexOf(cle) : traduireCle(cle);
   const rootPc = (cleIdx + degres[degree % degres.length]) % 12;
   const nomNote = nomNotePourPitchClass(rootPc);
@@ -102,7 +102,7 @@ export function nomAccordPourLigne(r: number, cle: string, gamme: string): strin
 }
 
 function noteFondamentalePourDegre(degre: number, cle: string, gamme: string, octave: number): number {
-  const degres = degresGammeAccords(gamme);
+  const degres = degresDesAccords(gamme);
   const idx = degre % degres.length;
   const octDecal = Math.floor(degre / degres.length);
   const cleIdx = NOTES.indexOf(cle);
@@ -114,7 +114,7 @@ function noteFondamentalePourDegre(degre: number, cle: string, gamme: string, oc
  *
  * @param root fondamentale ABSOLUE, en note MIDI : elle place l'accord.
  * @param racineRelative même fondamentale mais RELATIVE À LA TONIQUE, en
- *        demi-tons — c'est-à-dire une valeur de `degresGammeAccords`. C'est ce
+ *        demi-tons — c'est-à-dire une valeur de `degresDesAccords`. C'est ce
  *        que `degreAccordProche` attend, puisqu'il mesure des distances *dans*
  *        ce tableau.
  *
@@ -133,7 +133,7 @@ function construireVoixAccord(
   gamme: string,
   extension: "aucune" | "septieme" | "sixte",
 ): { note: number; vel: number }[] {
-  const degres = degresGammeAccords(gamme);
+  const degres = degresDesAccords(gamme);
   const racinePc = racineRelative;
   const tierce = degreAccordProche(degres, racinePc, 4);
   const quinte = degreAccordProche(degres, racinePc, 7);
@@ -156,7 +156,7 @@ export function genererNotesSequenceurAccords(
   grille: boolean[][],
   cle: string,
   gamme: string,
-  mode: "harmonie" | "arpege",
+  mode: "harmonie" | "arpege" | "roule",
   tempo: number,
   nbPas: number,
   swing: number,
@@ -179,13 +179,18 @@ export function genererNotesSequenceurAccords(
         // La fondamentale relative à la tonique — la même valeur que
         // `qualiteTriade` emploie pour nommer l'accord, pour que le nom et les
         // notes ne puissent plus diverger.
-        const degres = degresGammeAccords(gamme);
+        const degres = degresDesAccords(gamme);
         const racineRelative = degres[degree % degres.length];
         const voix = construireVoixAccord(root, racineRelative, gamme, extension);
-        const arpOffset = mode === "arpege" ? Math.min(0.025, stepDur * 0.15) : 0;
+        // TROIS FAÇONS, ET « ARPÈGE » ÉTAIT LA TROISIÈME. Jusqu'au 2026-11-14, le mode « arpege »
+        // décalait les départs de 25 ms et tenait toutes les notes : c'est un roulé, et il en porte
+        // désormais le nom. L'arpège, lui, répartit les notes sur le pas, chacune relâchée quand la
+        // suivante part. Décision de Fabien : un projet enregistré en `arpege` joue l'arpège vrai.
+        const tenue = stepDur * 0.9;
+        const decalage = mode === "roule" ? Math.min(0.025, stepDur * 0.15) : mode === "arpege" ? tenue / voix.length : 0;
         for (let i = 0; i < voix.length; i++) {
-          const debut = t + i * arpOffset;
-          const fin = t + stepDur * 0.9;
+          const debut = t + i * decalage;
+          const fin = mode === "arpege" ? debut + decalage : t + tenue;
           notes.push({ note: voix[i].note, velocite: voix[i].vel, debut, fin });
         }
         break; // un seul accord par pas
@@ -200,7 +205,7 @@ export async function rendreSequenceurAccords(
   grille: boolean[][],
   cle: string,
   gamme: string,
-  mode: "harmonie" | "arpege",
+  mode: "harmonie" | "arpege" | "roule",
   tempo: number,
   nbPas: number,
   swing: number,

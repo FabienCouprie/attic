@@ -22,6 +22,8 @@
 // d'autres rendus, mêmes quatre-vingts octets. `pvscross` et `pvsvoc` couvrent le même
 // besoin et fonctionnent, donc il sort de la liste.
 
+import { TAILLES_FENETRE } from "./fenetres-analyse";
+
 export type SorteOpcode = "instrument" | "spectral";
 
 export interface Opcode {
@@ -161,7 +163,7 @@ export interface ReglagesSpectral {
   morphing: number;
   /** Transposition en demi-tons, employée par mincer. */
   transposition: number;
-  /** Taille de la transformée : 512, 1024 ou 2048. */
+  /** Taille de la transformée, une de `TAILLES_FENETRE` ; toute autre se ramène à 1024. */
   fenetre: number;
   /** Durée du son d'entrée, en secondes : mincer doit la parcourir en entier. */
   dureeEntree?: number;
@@ -176,7 +178,9 @@ export interface ReglagesSpectral {
  */
 export function orchestreSpectral(o: Opcode, r: ReglagesSpectral): string {
   const m = Math.max(0, Math.min(1, r.morphing));
-  const n = [512, 1024, 2048].includes(r.fenetre) ? r.fenetre : 1024;
+  // LA LISTE ADMISE EST CELLE QUE LE RÉGLAGE OFFRE. Écrite ici à part, [512, 1024, 2048], elle
+  // ramenait en silence à 1024 toute taille que le réglage aurait gagnée.
+  const n = (TAILLES_FENETRE as readonly number[]).includes(r.fenetre) ? r.fenetre : 1024;
   const saut = n / 4;
   const tete = [
     `  a1 diskin2 "entree1.wav", 1`,

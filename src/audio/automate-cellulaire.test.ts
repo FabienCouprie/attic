@@ -14,7 +14,8 @@ import {
   normaliserModeVoix,
   normaliserMapping,
 } from "./automate-cellulaire-reglages";
-import { degresGammeMelodie } from "./generation-melodie";
+import { degresGammeMelodie, GAMMES_MELODIE_IDS } from "./generation-melodie";
+import { degresDeGamme } from "./gammes";
 
 const defaults = {
   regle: 90,
@@ -166,6 +167,31 @@ describe("automate-cellulaire", () => {
     expect(res.audio.duration).toBeGreaterThan(0);
   });
 
+  it("EN MÉLODIE ET EN ARPÈGE, LE MAPPING AGIT : la densité se compte sur la largeur de la ligne", () => {
+    // Le nombre de cellules actives était passé à la fois comme densité et comme son maximum : leur
+    // rapport valait toujours un, et la vélocité comme la durée restaient celles d'une ligne pleine.
+    // Relevé par la passe de croisement du 2026-11-14, sous « Mode voix » devenu gouverneur.
+    for (const modeVoix of ["Mélodie", "Arpège"] as const) {
+      const de = (mapping: "Hauteur" | "Vélocité" | "Durée") =>
+        genererNotesAutomateCellulaire({ ...defaults, modeVoix, mapping, graine: 5 });
+      const hauteur = de("Hauteur"), velocite = de("Vélocité"), duree = de("Durée");
+      expect(velocite.map((n) => n.velocite), modeVoix).not.toEqual(hauteur.map((n) => n.velocite));
+      expect(duree.map((n) => n.fin - n.debut), modeVoix).not.toEqual(hauteur.map((n) => n.fin - n.debut));
+      // Une ligne n'est jamais pleine ici : la vélocité baisse sans passer sous la moitié.
+      for (const n of velocite) expect(n.velocite).toBeGreaterThanOrEqual(50);
+      for (const n of velocite) expect(n.velocite).toBeLessThan(100);
+    }
+  });
+
+  it("LE REPLI EN FM SE DIT : demandé au SoundFont sans qu'aucun soit chargé, le rendu l'annonce", async () => {
+    // Ce passage était muet : le nœud sonnait en FM sous un réglage qui disait SoundFont.
+    const petit = { ...defaults, largeur: 8, generations: 8 };
+    const auSoundFont = await genererAutomateCellulaire({ ...petit, timbre: "SoundFont" });
+    expect(auSoundFont.repliFm).toBe(true);
+    expect(auSoundFont.audio.duration).toBeGreaterThan(0);
+    expect((await genererAutomateCellulaire({ ...petit, timbre: "FM/Oscillateurs" })).repliFm).toBe(false);
+  });
+
   it("normalise les modes, clés, gammes, topologies et mappings", () => {
     expect(normaliserMode("Polyphonie")).toBe("Polyphonie");
     expect(normaliserMode("Melody")).toBe("Mélodie");
@@ -229,4 +255,19 @@ describe("automate cellulaire 2D : on entend l'évolution de la grille", () => {
     expect(Math.max(...court.map((n) => n.debut))).toBeLessThan(8 * deuxD.dureeNote);
     expect(Math.max(...long.map((n) => n.debut))).toBeGreaterThan(30 * deuxD.dureeNote);
   });
+});
+
+describe("automate cellulaire : chaque gamme offerte se joue", () => {
+  // LE DÉFAUT, relevé le 2026-11-14 par la passe de croisement : `normaliserGamme` ne connaissait que
+  // les onze gammes d'avant la table commune, et les quatorze autres retombaient en silence sur la
+  // pentatonique majeure. Le cas mesure les notes rendues, pas le nom retenu.
+  for (const id of GAMMES_MELODIE_IDS) {
+    it(`${id} : chaque note rendue appartient à la gamme`, () => {
+      const permises = new Set(degresDeGamme(id));
+      const notes = genererNotesAutomateCellulaire({ ...defaults, gamme: id, largeur: 32, generations: 32 });
+      expect(notes.length).toBeGreaterThan(0);
+      const etrangeres = [...new Set(notes.map((n) => n.note % 12))].filter((c) => !permises.has(c));
+      expect(etrangeres, id).toEqual([]);
+    });
+  }
 });

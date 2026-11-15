@@ -14,6 +14,7 @@ import { analyserResultante } from "../audio/schillinger";
 import { CANAL_PERCUSSION, choixPercussion } from "../audio/batterie-midi";
 import { GAMMES, degresInjouables, ecartAuTempere, frequences, gammeParId, intervalles } from "../audio/gammes-monde";
 import { analyser, modules, TAILLE_TRAME } from "../audio/spectral-wishart";
+import { choixFenetreNomme } from "../audio/fenetres-analyse";
 
 /** La fréquence centrale approximative d'une bande critique, pour nommer ce qu'on montre. */
 function frequenceDeBande(b: number): number {
@@ -48,10 +49,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Un son tonal masque moins qu'un bruit de même énergie : l'oreille le sépare mieux du reste. Les codeurs perceptifs retranchent couramment une dizaine de décibels pour un son tonal contre cinq pour un bruit. « Entre les deux » prend une valeur intermédiaire, ce qu'est une piste réelle la plupart du temps.",
         docEn: "A tonal sound masks less than noise of equal energy: the ear separates it better from the rest. Perceptual coders commonly subtract some ten decibels for a tonal sound against five for noise. « In between » takes a middle value, which is what a real track usually is." },
       { nom: "Finesse", nomEn: "Resolution", type: "choix",
-        options: ["Ordinaire (2048)", "Fine en fréquence (4096)"], optionsEn: ["Ordinary (2048)", "Sharp in frequency (4096)"],
-        optionIds: ["2048", "4096"], defaut: "Ordinaire (2048)", defautEn: "Ordinary (2048)",
-        doc: "Taille de la fenêtre d'analyse. Une fenêtre longue sépare mieux les bandes graves, où elles sont étroites.",
-        docEn: "Analysis window size. A long window separates the low bands better, where they are narrow." },
+        ...choixFenetreNomme([1024, 2048, 4096, 8192]), defaut: "Ordinaire (2048)", defautEn: "Ordinary (2048)",
+        doc: "Taille de la fenêtre d'analyse. Une fenêtre longue sépare mieux les bandes graves, où elles sont étroites. Elle ne descend pas sous 1024 points : à 88,2 ou 96 kHz, une case de la transformée y dépasserait la centaine de hertz des bandes les plus graves, et jusqu'à quatre d'entre elles resteraient vides.",
+        docEn: "Analysis window size. A long window separates the low bands better, where they are narrow. It does not go below 1024 points: at 88.2 or 96 kHz, one transform bin would then exceed the hundred hertz of the lowest bands, and up to four of them would stay empty." },
     ],
     async executer(ctx) {
       const en = langueCourante() === "en";
@@ -216,8 +216,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Fréquence du premier degré. En hertz et non en note, parce que ces gammes ne se posent pas sur un clavier.",
         docEn: "Frequency of the first degree. In hertz and not as a note, because these scales do not sit on a keyboard." },
       { nom: "Tolérance", nomEn: "Tolerance", type: "curseur", plage: [1, 50], pas: 1, defaut: 20, unite: "cents",
-        doc: "Écart au demi-ton tempéré au-delà duquel un degré est déclaré injouable sur un clavier. Vingt cents est à peu près ce qu'une oreille exercée entend comme faux.",
-        docEn: "Deviation from the tempered semitone beyond which a degree is declared unplayable on a keyboard. Twenty cents is about what a trained ear hears as out of tune." },
+        doc: "Écart au demi-ton tempéré au-delà duquel un degré est déclaré injouable sur un clavier. Vingt cents est à peu près ce qu'une oreille exercée entend comme faux. Sans effet sur une « Gamme » dont chaque degré tombe sur un demi-ton tempéré, comme le maqam Hijaz : il n'y a alors aucun écart à juger.",
+        docEn: "Deviation from the tempered semitone beyond which a degree is declared unplayable on a keyboard. Twenty cents is about what a trained ear hears as out of tune. Without effect on a « Scale » whose every degree falls on a tempered semitone, such as Maqam Hijaz: there is then no deviation to judge." },
     ],
     async executer(ctx) {
       const en = langueCourante() === "en";

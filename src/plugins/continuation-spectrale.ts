@@ -6,7 +6,27 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { appliquerContinuationSpectrale, type ContinuationSpectraleResultat } from "../audio/continuation-spectrale";
-import { choixFenetre } from "../audio/fenetres-analyse";
+import { TAILLES_FENETRE, choixFenetre } from "../audio/fenetres-analyse";
+
+/** La taille de transformée, et ce qui la borne là où elle l'est. */
+const fft = (tailles: readonly number[], borne = { fr: "", en: "" }) => reglagePartage({
+  nom: "FFT", nomEn: "FFT", type: "choix",
+  ...choixFenetre(tailles),
+  defaut: "2048", defautEn: "2048",
+  doc: `Taille de la fenêtre FFT. Détermine la résolution fréquentielle et le nombre de bins.${borne.fr}`,
+  docEn: `FFT window size. Determines frequency resolution and number of bins.${borne.en}`,
+});
+
+/**
+ * LA TAILLE DE L'AR S'ARRÊTE À 4096, ET C'EST SA SEULE DIFFÉRENCE DE RÉGLAGES. Le modèle autorégressif
+ * apprend une matrice pleine, de Historique × bins vers bins, qui pèse au carré du nombre de bins :
+ * à 8192 points et 32 trames, 4097 × 4097 × 32 poids font 2,1 Go avant les deux moments d'Adam. Le
+ * LSTM passe par ses unités cachées et n'a pas ce carré.
+ */
+const FFT_AR = fft([256, 512, 1024, 2048, 4096], {
+  fr: " Elle s'arrête à 4096 : le modèle apprend une matrice pleine de Historique × bins vers bins, et à 8192 points sur 32 trames ses seuls poids pèseraient 2,1 Go.",
+  en: " It stops at 4096: the model learns a full matrix from History × bins to bins, and at 8192 points over 32 frames its weights alone would weigh 2.1 GB.",
+});
 
 const PARAMETRES_COMMUNS = [
   reglagePartage({
@@ -15,13 +35,7 @@ const PARAMETRES_COMMUNS = [
     doc: "Durée de la prolongation à générer, en secondes.",
     docEn: "Duration of the continuation to generate, in seconds.",
   }),
-  reglagePartage({
-    nom: "FFT", nomEn: "FFT", type: "choix",
-    ...choixFenetre([512, 1024, 2048, 4096]),
-    defaut: "2048", defautEn: "2048",
-    doc: "Taille de la fenêtre FFT. Détermine la résolution fréquentielle et le nombre de bins.",
-    docEn: "FFT window size. Determines frequency resolution and number of bins.",
-  }),
+  fft(TAILLES_FENETRE),
   reglagePartage({
     nom: "Hop", nomEn: "Hop", type: "nombre", plage: [10, 100], pas: 1, defaut: 25, unite: "%",
     doc: "Saut entre deux fenêtres consécutives, en pourcentage de la taille FFT. 25 % = 75 % de recouvrement.",
@@ -128,7 +142,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Extends a track by predicting each spectral frame from previous frames using a linear autoregressive model.",
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
-    parametres: PARAMETRES_COMMUNS,
+    parametres: PARAMETRES_COMMUNS.map((p) => (p.nom === "FFT" ? FFT_AR : p)),
     async executer(ctx) {
       return executerContinuation("ar", ctx);
     },

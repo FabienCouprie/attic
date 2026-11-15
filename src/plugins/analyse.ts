@@ -92,8 +92,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Quantification", nomEn: "Quantization", type: "choix",
         options: ["Double-croche", "Croche", "Noire"], optionsEn: ["Sixteenth", "Eighth", "Quarter"],
         optionIds: ["16", "8", "4"], defaut: "Double-croche", defautEn: "Sixteenth",
-        doc: "Plus petite valeur écrite. Une note jouée entre deux cases est ramenée sur la grille : c'est ce qui rend la partition lisible, et ce qui lui fait perdre le détail de l'interprétation.",
-        docEn: "Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance." },
+        doc: "Plus petite valeur écrite. Une note jouée entre deux cases est ramenée sur la grille : c'est ce qui rend la partition lisible, et ce qui lui fait perdre le détail de l'interprétation. Sans effet sous une « Métrique » en seizièmes, de 5/16 à 15/16 : la grille y descend déjà à la double croche, la valeur la plus fine offerte ici.",
+        docEn: "Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance. No effect under a « Time signature » in sixteenths, from 5/16 to 15/16: the grid there already goes down to the sixteenth, the finest value offered here." },
     ],
     async executer(ctx) {
       const fichier = ctx.entree(0);
@@ -209,9 +209,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Une détection de tempo ne distingue pas 70 BPM d'un 140 BPM compté un temps sur deux : les deux expliquent le signal, et aucune règle ne tranche à tous les coups. Mesuré sur des motifs de boîte à rythmes, la détection brute divise volontiers par deux : 100 ressort à 50, 140 à 70, mais un vrai 75 ressort bien à 75. Replier dans 80 : 160 redresse les deux premiers et double le troisième. Le repli est donc actif par défaut, parce que c'est le cas le plus fréquent quand on veut alimenter un paramètre Tempo, mais rien n'est caché : le rapport donne toujours la valeur brute et les lectures également plausibles. Mettez « Aucune » pour un morceau que vous savez lent.",
         docEn: "Tempo detection cannot tell 70 BPM from a 140 BPM counted every other beat: both explain the signal, and NO rule settles it every time. Measured on drum-machine patterns, raw detection readily halves: 100 comes out as 50, 140 as 70, but a genuine 75 does come out as 75. Folding into 80-160 fixes the first two and doubles the third. Folding is therefore on by default, because that is the common case when feeding a Tempo parameter, but nothing is hidden: the report always gives the raw value and the equally plausible readings. Settings: « None » for a track you know to be slow." },
       { nom: "Plage basse", nomEn: "Range low", type: "nombre", plage: [40, 140], pas: 1, defaut: 80,
-        doc: "Borne basse de la plage de repli.", docEn: "Lower bound of the folding range." },
+        doc: "Borne basse de la plage de repli. Sans effet quand « Correction d'octave » vaut « Aucune ».", docEn: "Lower bound of the folding range. No effect when « Octave correction » is « None »." },
       { nom: "Plage haute", nomEn: "Range high", type: "nombre", plage: [80, 240], pas: 1, defaut: 160,
-        doc: "Borne haute de la plage de repli. La plage doit couvrir au moins une octave (le double de la borne basse) : plus étroite, aucun tempo n'a toujours un double ou une moitié dedans, et le repli est abandonné.", docEn: "Upper bound of the folding range. The range must span at least an octave (twice the lower bound): narrower, no tempo is sure to have its double or half inside, and folding is dropped." },
+        doc: "Borne haute de la plage de repli. La plage doit couvrir au moins une octave (le double de la borne basse) : plus étroite, aucun tempo n'a toujours un double ou une moitié dedans, et le repli est abandonné. Sans effet quand « Correction d'octave » vaut « Aucune ».", docEn: "Upper bound of the folding range. The range must span at least an octave (twice the lower bound): narrower, no tempo is sure to have its double or half inside, and folding is dropped. No effect when « Octave correction » is « None »." },
     ],
     async executer(ctx) {
       const audio = entreeAudio(ctx, 0, { sorties: 3 });
@@ -329,7 +329,7 @@ export const fiches: FicheAudio[] = ([
         }
       }
       ctx.onProgress(traduire("progress.classification"));
-      const genres = await classerGenre(audio, duree, buf);
+      const genres = await classerGenre(audio, duree, buf, mode === "ai");
       if (!genres.length) return { valeurs: [audio, null], message: traduire("msg.classification_non_disponible") };
       const descr = genres[0].description || genres.map((g: any) => `${g.genre} (${Math.round(g.confiance*100)}%)`).join(" · ");
       const source = genres[0].description?.includes("modèle ONNX") ? "ONNX" : traduire("msg.classification.heuristique");

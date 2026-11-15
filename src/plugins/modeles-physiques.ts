@@ -208,7 +208,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Profondeur du trémolo, c'est-à-dire de la modulation d'amplitude que produisent les disques tournants dans les tubes résonateurs d'un vibraphone. Le réglage agit sur tous les instruments.",
         docEn: "Tremolo depth, that is, the amplitude modulation produced by the discs spinning in a vibraphone's resonator tubes. The setting acts on every instrument." },
       { nom: "Fréquence trémolo", nomEn: "Tremolo rate", type: "nombre", plage: [0.5, 12], pas: 0.1, defaut: 5, unite: "Hz",
-        doc: "Vitesse du trémolo. Sans effet tant que Trémolo est à 0.", docEn: "Tremolo speed." },
+        doc: "Vitesse du trémolo. Sans effet tant que Trémolo est à 0. Sans effet tant que « Trémolo » vaut 0.", docEn: "Tremolo speed. No effect while « Tremolo » is at 0." },
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.1, 15], pas: 0.1, defaut: 3, unite: "s",
         doc: "Durée du coup, quand aucun MIDI n'est branché. Le bol tibétain a besoin de plusieurs secondes pour que son battement s'entende.",
         docEn: "Length of the stroke, when no MIDI is connected. The Tibetan bowl needs several seconds for its beating to be heard." },

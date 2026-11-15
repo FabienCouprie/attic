@@ -41,12 +41,12 @@ export const fiches: FicheAudio[] = ([
       { nom: "Plafonner la crête", nomEn: "Cap the peak", type: "choix",
         ...choixOuiNon(),
         defaut: "Oui", defautEn: "Yes",
-        doc: "Réduire le gain si la crête obtenue dépassait le plafond. Le niveau visé n'est alors pas atteint, et le message le dit.",
-        docEn: "Reduce the gain if the resulting peak would exceed the ceiling. The target level is then not reached, and the message says so." },
+        doc: "Réduire le gain si la crête obtenue dépassait le plafond. Le niveau visé n'est alors pas atteint, et le message le dit. Quand « Mesure » vaut « Crête », le son corrigé prend la crête de la référence, et le plafond ne mord que si celle-ci le dépasse.",
+        docEn: "Reduce the gain if the resulting peak would exceed the ceiling. The target level is then not reached, and the message says so. When « Measure » is « Peak », the corrected sound takes the reference's peak, and the ceiling only bites if that peak is above it." },
       { nom: "Plafond", nomEn: "Ceiling", type: "curseur",
         plage: [-12, 0], pas: 0.1, defaut: -1, unite: "dBFS",
-        doc: "Crête maximale tolérée en sortie, quand le plafonnement est actif.",
-        docEn: "Maximum peak tolerated on the output, when capping is active." },
+        doc: "Crête maximale tolérée en sortie. Sans effet quand « Plafonner la crête » vaut « Non ».",
+        docEn: "Maximum peak tolerated on the output. Without effect when « Cap the peak » is « No »." },
     ],
     async executer(ctx) {
       const anglais = en();

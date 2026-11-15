@@ -185,16 +185,16 @@ describe("le parcours d'une gamme", () => {
 
   it("LA TONIQUE FINALE SE COUPE, pour qui enchaîne deux parcours", () => {
     const ferme = parcoursDeGamme("majeur", DO4);
-    const ouvert = parcoursDeGamme("majeur", DO4, 1, "montante", false);
+    const ouvert = parcoursDeGamme("majeur", DO4, 1, "montant", false);
     expect(ouvert).toEqual(ferme.slice(0, -1));
     // Deux parcours ouverts bout à bout ne doublent aucune note à la jointure.
-    expect([...ouvert, ...parcoursDeGamme("majeur", DO4 + 12, 1, "montante", false)])
-      .toEqual(parcoursDeGamme("majeur", DO4, 2, "montante", false));
+    expect([...ouvert, ...parcoursDeGamme("majeur", DO4 + 12, 1, "montant", false)])
+      .toEqual(parcoursDeGamme("majeur", DO4, 2, "montant", false));
   });
 
   it("LA DESCENTE EST LA MONTÉE À L'ENVERS, exactement", () => {
-    expect(parcoursDeGamme("mineur-harmonique", DO4, 2, "descendante"))
-      .toEqual([...parcoursDeGamme("mineur-harmonique", DO4, 2, "montante")].reverse());
+    expect(parcoursDeGamme("mineur-harmonique", DO4, 2, "descendant"))
+      .toEqual([...parcoursDeGamme("mineur-harmonique", DO4, 2, "montant")].reverse());
   });
 
   it("L'ALLER-RETOUR NE REJOUE PAS SON SOMMET", () => {
@@ -208,8 +208,8 @@ describe("le parcours d'une gamme", () => {
 
   it("CHAQUE OCTAVE DEMANDÉE AJOUTE SES DEGRÉS", () => {
     for (const g of GAMMES) {
-      const un = parcoursDeGamme(g.id, 36, 1, "montante", false);
-      const trois = parcoursDeGamme(g.id, 36, 3, "montante", false);
+      const un = parcoursDeGamme(g.id, 36, 1, "montant", false);
+      const trois = parcoursDeGamme(g.id, 36, 3, "montant", false);
       expect(un.length, `${g.id} sur une octave`).toBe(g.degres.length);
       expect(trois.length, `${g.id} sur trois octaves`).toBe(g.degres.length * 3);
     }

@@ -19,6 +19,7 @@ import { parCanal as parCanalHorsFil } from "./hors-fil";
 import { melangerPeignes, peignesVoie, type OptionsPeigneVoie } from "../audio/peigne";
 import { lireIntervalles } from "./concret";
 import { entreeAudio, sansEntree } from "./lire-entree";
+import { SENS_D_UN_BALAYAGE, choixSensArpege, sensParmi } from "../audio/sens-arpege";
 
 const en = () => langueCourante() === "en";
 
@@ -118,9 +119,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Bas du parcours.", docEn: "Bottom of the sweep." },
       { nom: "Haut", nomEn: "High", type: "curseur", plage: [40, 20000], pas: 1, defaut: 5000, unite: "Hz",
         doc: "Haut du parcours.", docEn: "Top of the sweep." },
-      { nom: "Sens", nomEn: "Direction", type: "choix", options: ["Montant", "Descendant", "Aller-retour"], optionsEn: ["Up", "Down", "Up and down"],
-        optionIds: ["montant", "descendant", "aller-retour"], defaut: "Montant", defautEn: "Up",
-        doc: "Vers l'aigu, vers le grave, ou dans les deux sens.", docEn: "Upwards, downwards, or both ways." },
+      { nom: "Sens", nomEn: "Direction", type: "choix", ...choixSensArpege(SENS_D_UN_BALAYAGE), defaut: "Montant", defautEn: "Ascending",
+        doc: "Vers l'aigu, vers le grave, ou dans les deux sens : l'aller-retour part du bas, le retour-aller du haut.", docEn: "Upwards, downwards, or both ways: the round trip starts at the bottom, the reverse round trip at the top." },
       { nom: "Rémanence", nomEn: "Persistence", type: "curseur", plage: [0, 10], pas: 0.05, defaut: 0, unite: "s",
         doc: "Temps qu'un partiel met à perdre 60 dB après le passage de la bande. 0 : il se tait dès qu'elle s'éloigne.",
         docEn: "Time a partial takes to lose 60 dB after the band has passed. 0: it falls silent as soon as the band moves on." },
@@ -131,7 +131,7 @@ export const fiches: FicheAudio[] = ([
       const o = {
         vitesse: ctx.paramNombre("Vitesse", 1), largeur: ctx.paramNombre("Largeur", 0.5),
         bas: ctx.paramNombre("Bas", 100), haut: ctx.paramNombre("Haut", 5000),
-        sens: String(ctx.paramTexte("Sens", "montant")) as "montant" | "descendant" | "aller-retour",
+        sens: sensParmi(ctx.paramTexte("Sens", "montant"), SENS_D_UN_BALAYAGE, "montant"),
         remanence: ctx.paramNombre("Rémanence", 0),
       };
       return { valeurs: [await voiesMisesEnForme(a, { mode: "arpeger", frequence: a.sampleRate, arpege: o }, ctx)] };
@@ -202,7 +202,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondamentale que vaut le zéro d'une courbe branchée ; la course se parcourt en multipliant. Sans courbe, ce réglage ne sert pas.",
         docEn: "Fundamental that a connected curve's zero means; the travel is multiplicative. With no curve, this setting does nothing." },
       { nom: "Fondamentale max", nomEn: "Fundamental max", modulationDe: "Fondamentale", type: "curseur", plage: [20, 2000], pas: 0.5, defaut: 220, unite: "Hz",
-        doc: "Fondamentale que vaut le un de la courbe.", docEn: "Fundamental that the curve's one means." },
+        doc: "Fondamentale que vaut le un de la courbe. Sans courbe, ce réglage ne sert pas.", docEn: "Fundamental that the curve's one means. With no curve, this setting does nothing." },
     ],
     async executer(ctx) {
       const a = entreeAudio(ctx, 0);

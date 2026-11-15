@@ -161,7 +161,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondamentale que vaut le zéro d'une courbe branchée. La course se parcourt en multipliant, comme toute fréquence. Sans courbe, ce réglage ne sert pas.",
         docEn: "Fundamental that a connected curve's zero means. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing." },
       { nom: "Fondamentale max", nomEn: "Fundamental max", modulationDe: "Fondamentale", type: "curseur", plage: [20, 4000], pas: 1, defaut: 440, unite: "Hz",
-        doc: "Fondamentale que vaut le un de la courbe.", docEn: "Fundamental that the curve's one means." },
+        doc: "Fondamentale que vaut le un de la courbe. Sans courbe, ce réglage ne sert pas.", docEn: "Fundamental that the curve's one means. With no curve, this setting does nothing." },
       ...bornesModulation(MODULATION_MIX_NOMMEE),
       ...bornesModulation({
         ...modulationNommee("Résonance", "Resonance", [0.05, 20], "s"), defauts: [0.5, 8],

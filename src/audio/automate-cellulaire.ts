@@ -46,7 +46,8 @@ const REGLES_2D: Record<string, { naitre: number[]; survie: number[] }> = {
 };
 
 export type Topologie = "1D" | "2D Conway" | "2D Highlife";
-export type ModeVoix = "Polyphonie" | "Mélodie" | "Arpège";
+/** « Roulé » joue la polyphonie, ses notes parties l'une après l'autre sur le pas et tenues. */
+export type ModeVoix = "Polyphonie" | "Mélodie" | "Arpège" | "Roulé";
 export type Mapping = "Hauteur" | "Vélocité" | "Durée" | "Hauteur + vélocité";
 
 export interface OptionsAutomateCellulaire {
@@ -221,11 +222,19 @@ function velocitePourDensite(densite: number, max: number, velociteBase: number)
   return Math.max(1, Math.min(127, Math.round(velociteBase * (0.5 + 0.5 * (densite / max)))));
 }
 
+/**
+ * Les notes d'une génération à une dimension.
+ *
+ * LA DENSITÉ SE COMPTE SUR LA LARGEUR DE LA LIGNE, et c'est la réparation du 2026-11-14. Le nombre de
+ * cellules actives était passé à la fois comme densité et comme son maximum : leur rapport valait
+ * toujours un, et en mélodie comme en arpège le mapping par vélocité ou par durée ne changeait rien.
+ */
 function construireNotesDepuisLigne(
   options: OptionsAutomateCellulaire,
   temps: number,
   actives: number[],
   densite: number,
+  largeur: number,
   base: number,
   degres: number[],
   rnd: () => number,
@@ -242,10 +251,10 @@ function construireNotesDepuisLigne(
     const idx = actives[arpegeIndex % actives.length];
     const midi = snapperNote(base + idx, degres);
     const vel = mapping === "Vélocité" || mapping === "Hauteur + vélocité"
-      ? velocitePourDensite(densite, actives.length, options.velocite)
+      ? velocitePourDensite(densite, largeur, options.velocite)
       : options.velocite;
     const duree = mapping === "Durée" || mapping === "Hauteur + vélocité"
-      ? dureeBase * (0.5 + 0.5 * (densite / Math.max(1, actives.length)))
+      ? dureeBase * (0.5 + 0.5 * (densite / Math.max(1, largeur)))
       : dureeBase;
     notes.push({ note: midi, velocite: vel, debut: temps, fin: temps + duree });
     return { notes, arpegeIndex: arpegeIndex + 1 };
@@ -255,10 +264,10 @@ function construireNotesDepuisLigne(
     const idx = actives[Math.floor(rnd() * actives.length)];
     const midi = snapperNote(base + idx, degres);
     const vel = mapping === "Vélocité" || mapping === "Hauteur + vélocité"
-      ? velocitePourDensite(densite, actives.length, options.velocite)
+      ? velocitePourDensite(densite, largeur, options.velocite)
       : options.velocite;
     const duree = mapping === "Durée" || mapping === "Hauteur + vélocité"
-      ? dureeBase * (0.5 + 0.5 * (densite / Math.max(1, actives.length)))
+      ? dureeBase * (0.5 + 0.5 * (densite / Math.max(1, largeur)))
       : dureeBase;
     notes.push({ note: midi, velocite: vel, debut: temps, fin: temps + duree });
     return { notes, arpegeIndex };
@@ -268,6 +277,8 @@ function construireNotesDepuisLigne(
   const selection = actives.length > densiteMax
     ? actives.filter((_, i) => i % Math.ceil(actives.length / densiteMax) === 0).slice(0, densiteMax)
     : actives;
+  // Roulé : les départs se répartissent sur le pas, et chaque note tient jusqu'à sa fin.
+  const ecart = mode === "Roulé" ? dureeBase / selection.length : 0;
   for (let i = 0; i < selection.length; i++) {
     const x = selection[i];
     const midi = mapping === "Hauteur"
@@ -279,7 +290,8 @@ function construireNotesDepuisLigne(
     const duree = mapping === "Durée" || mapping === "Hauteur + vélocité"
       ? dureeBase * (0.5 + 0.5 * ((selection.length - i) / Math.max(1, selection.length)))
       : dureeBase;
-    notes.push({ note: midi, velocite: vel, debut: temps, fin: temps + duree });
+    const debut = temps + i * ecart;
+    notes.push({ note: midi, velocite: vel, debut, fin: Math.max(temps + duree, debut + ecart) });
   }
   return { notes, arpegeIndex };
 }
@@ -308,6 +320,7 @@ function genererDepuis1D(options: OptionsAutomateCellulaire): NoteEvenement[] {
         t,
         actives,
         actives.length,
+        largeur,
         base,
         degres,
         rnd,
@@ -378,13 +391,13 @@ function genererDepuis2D(options: OptionsAutomateCellulaire): NoteEvenement[] {
       const t = g * dureeNote;
       const hauteurs = [...poids.keys()].sort((a, b) => a - b);
       const plusDense = Math.max(...poids.values());
-      const jouer = (note: number) => {
+      const jouer = (note: number, decalage = 0, ecart = 0) => {
         const w = poids.get(note) ?? 1;
         notes.push({
           note,
           velocite: parVelocite ? velocitePourDensite(w, plusDense, options.velocite) : options.velocite,
-          debut: t,
-          fin: t + (parDuree ? dureeNote * (0.5 + 0.5 * (w / plusDense)) : dureeNote),
+          debut: t + decalage,
+          fin: Math.max(t + (parDuree ? dureeNote * (0.5 + 0.5 * (w / plusDense)) : dureeNote), t + decalage + ecart),
         });
       };
       if (mode === "Arpège") { jouer(hauteurs[arpegeIndex % hauteurs.length]); arpegeIndex++; }
@@ -392,7 +405,10 @@ function genererDepuis2D(options: OptionsAutomateCellulaire): NoteEvenement[] {
       else {
         const max = Math.max(1, options.densiteMax || hauteurs.length);
         const pas = Math.ceil(hauteurs.length / max);
-        hauteurs.filter((_, i) => i % pas === 0).slice(0, max).forEach(jouer);
+        const choisies = hauteurs.filter((_, i) => i % pas === 0).slice(0, max);
+        // Roulé : les départs se répartissent sur le pas, et chaque note tient jusqu'à sa fin.
+        const ecart = mode === "Roulé" ? dureeNote / choisies.length : 0;
+        choisies.forEach((note, i) => jouer(note, i * ecart, ecart));
       }
     }
     grille = appliquerRegle2D(grille, regle);
@@ -409,20 +425,29 @@ export function genererNotesAutomateCellulaire(options: OptionsAutomateCellulair
   return genererDepuis2D(options);
 }
 
-export async function genererAutomateCellulaire(options: OptionsAutomateCellulaire): Promise<{ audio: AudioBuffer; midi: File; notes: NoteEvenement[] }> {
+/**
+ * Les notes de l'automate, leur fichier et leur rendu.
+ *
+ * LE REPLI EN FM SE DIT. Demandé au SoundFont sans qu'aucun soit chargé, le rendu passe en FM, et
+ * `repliFm` le rend à l'appelant : ce passage était muet, et le nœud sonnait autrement que son
+ * réglage sans qu'un mot l'annonce.
+ */
+export async function genererAutomateCellulaire(options: OptionsAutomateCellulaire): Promise<{ audio: AudioBuffer; midi: File; notes: NoteEvenement[]; repliFm: boolean }> {
   const notes = genererNotesAutomateCellulaire(options);
   const tempo = notes.length > 0 ? 60 / options.dureeNote : 120;
   const { programme, banque } = decodeInstrument(options.instrument ?? 0);
   const midiFile = notesVersFichierMidi(notes, tempo, 0, banque, programme);
   let audio: AudioBuffer;
+  let repliFm = false;
   try {
     audio = await rendreSequence(notes, options.timbre, options.volume, programme, banque);
   } catch (e) {
     if (options.timbre === "SoundFont") {
       audio = await rendreSequence(notes, "FM/Oscillateurs", options.volume, programme, banque);
+      repliFm = true;
     } else {
       throw e;
     }
   }
-  return { audio, midi: midiFile, notes };
+  return { audio, midi: midiFile, notes, repliFm };
 }

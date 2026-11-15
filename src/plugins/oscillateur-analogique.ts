@@ -78,13 +78,13 @@ export const fiches: FicheAudio[] = ([
         // les harmoniques paires comme les impaires.
         nom: "Largeur", nomEn: "Width",
         plage: [LARGEUR_MIN * 100, LARGEUR_MAX * 100], pas: 1, defaut: 25, unite: "%",
-        doc: "La part du cycle passée en haut, pour « Impulsion ». À cinquante, le créneau est symétrique et ne porte que les harmoniques impaires ; en s'écartant du milieu, les harmoniques paires apparaissent et le son s'amincit, la hauteur ne bougeant pas. Pour « Phase déformée », la même valeur est la position que « Distorsion » donne au genou : à cinquante, le genou est déjà au milieu du cycle et « Distorsion » n'a rien à déplacer. Sur « Dent de scie », ce réglage reste sans effet, une scie n'ayant pas de palier.",
-        docEn: "The share of the cycle spent high, for « Pulse ». At fifty the pulse is symmetrical and carries only odd harmonics; away from the middle, even harmonics appear and the sound thins out, while the pitch stays put. For « Distorted phase », the same value is the position « Distortion » gives the knee: at fifty the knee already sits at the middle of the cycle and « Distortion » has nothing to move. On « Sawtooth » this setting has no effect, a sawtooth having no plateau.",
+        doc: "La part du cycle passée en haut, pour « Impulsion ». À cinquante, le créneau est symétrique et ne porte que les harmoniques impaires ; en s'écartant du milieu, les harmoniques paires apparaissent et le son s'amincit, la hauteur ne bougeant pas. Pour « Phase déformée », la même valeur est la position que « Distorsion » donne au genou : à cinquante, le genou est déjà au milieu du cycle et « Distorsion » n'a rien à déplacer. Sur « Dent de scie », ce réglage reste sans effet, une scie n'ayant pas de palier. « Dent de scie » est une valeur du réglage « Forme ».",
+        docEn: "The share of the cycle spent high, for « Pulse ». At fifty the pulse is symmetrical and carries only odd harmonics; away from the middle, even harmonics appear and the sound thins out, while the pitch stays put. For « Distorted phase », the same value is the position « Distortion » gives the knee: at fifty the knee already sits at the middle of the cycle and « Distortion » has nothing to move. On « Sawtooth » this setting has no effect, a sawtooth having no plateau. « Sawtooth » is a value of the « Waveform » setting.",
       },
       {
         nom: "Modulation de largeur", nomEn: "Width modulation", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
-        doc: "Profondeur du balayage de « Largeur ». À zéro, la largeur reste celle qui est réglée. L'amplitude se borne à ce que les bornes de la largeur laissent de part et d'autre, de sorte qu'à cent le balayage les atteint sans les franchir. Sans effet sur « Dent de scie ».",
-        docEn: "Depth of the sweep applied to « Width ». At zero the width stays as set. The amplitude is limited to what the width bounds leave on either side, so that at a hundred the sweep reaches them without crossing them. No effect on « Sawtooth ».",
+        doc: "Profondeur du balayage de « Largeur ». À zéro, la largeur reste celle qui est réglée. L'amplitude se borne à ce que les bornes de la largeur laissent de part et d'autre, de sorte qu'à cent le balayage les atteint sans les franchir. Sans effet sur « Dent de scie ». « Dent de scie » est une valeur du réglage « Forme ».",
+        docEn: "Depth of the sweep applied to « Width ». At zero the width stays as set. The amplitude is limited to what the width bounds leave on either side, so that at a hundred the sweep reaches them without crossing them. No effect on « Sawtooth ». « Sawtooth » is a value of the « Waveform » setting.",
       },
       {
         nom: "Vitesse de modulation", nomEn: "Modulation rate", plage: [0.05, 20], pas: 0.05, defaut: 0.5, unite: "Hz",
@@ -98,8 +98,8 @@ export const fiches: FicheAudio[] = ([
       },
       {
         nom: "Désaccord", nomEn: "Detune", plage: [0, 50], pas: 1, defaut: 12, unite: "cents",
-        doc: "Écart total entre la voix la plus basse et la plus haute de la pile, réparti autour de la fréquence réglée. Les voix s'éloignent puis se rapprochent, ce qui fait battre le niveau. Sans effet à une seule voix.",
-        docEn: "Total interval between the lowest and the highest voice of the stack, spread around the frequency set. The voices drift apart then together, which makes the level beat. No effect with a single voice.",
+        doc: "Écart total entre la voix la plus basse et la plus haute de la pile, réparti autour de la fréquence réglée. Les voix s'éloignent puis se rapprochent, ce qui fait battre le niveau. Sans effet à une seule voix. C'est le cas quand « Voix » vaut un, le défaut.",
+        docEn: "Total interval between the lowest and the highest voice of the stack, spread around the frequency set. The voices drift apart then together, which makes the level beat. No effect with a single voice. That is the case when « Voices » is one, the default.",
       },
       {
         nom: "Synchronisation", nomEn: "Synchronisation", plage: [1, 8], pas: 1, defaut: 1,
@@ -108,8 +108,8 @@ export const fiches: FicheAudio[] = ([
       },
       {
         nom: "Distorsion", nomEn: "Distortion", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
-        doc: "Déformation de la phase, pour « Phase déformée ». À zéro, le genou est au milieu du cycle et la sortie est une sinusoïde. En montant, le genou rejoint « Largeur » et une moitié de la sinusoïde se comprime dans une portion plus courte du cycle, ce qui fabrique des harmoniques hautes sans changer la période. Ce réglage reste donc sans effet quand « Largeur » est à cinquante, le genou étant déjà au milieu. Sans effet non plus sur les deux autres formes.",
-        docEn: "Bend applied to the phase, for « Distorted phase ». At zero the knee sits at the middle of the cycle and the output is a sine. As it rises, the knee moves to « Width » and one half of the sine is squeezed into a shorter part of the cycle, which makes high harmonics without changing the period. This setting therefore has no effect when « Width » is at fifty, the knee already sitting at the middle. No effect either on the other two waveforms.",
+        doc: "Déformation de la phase, pour « Phase déformée ». À zéro, le genou est au milieu du cycle et la sortie est une sinusoïde. En montant, le genou rejoint « Largeur » et une moitié de la sinusoïde se comprime dans une portion plus courte du cycle, ce qui fabrique des harmoniques hautes sans changer la période. Ce réglage reste donc sans effet quand « Largeur » est à cinquante, le genou étant déjà au milieu. Sans effet non plus sur les deux autres formes. N'agit donc que lorsque « Forme » vaut « Phase déformée ».",
+        docEn: "Bend applied to the phase, for « Distorted phase ». At zero the knee sits at the middle of the cycle and the output is a sine. As it rises, the knee moves to « Width » and one half of the sine is squeezed into a shorter part of the cycle, which makes high harmonics without changing the period. This setting therefore has no effect when « Width » is at fifty, the knee already sitting at the middle. No effect either on the other two waveforms. It therefore acts only when « Waveform » is « Distorted phase ».",
       },
       {
         nom: "Volume", nomEn: "Volume", plage: [0, 100], pas: 1, defaut: 80, unite: "%",

@@ -30,6 +30,7 @@
 
 import { degresDeGamme } from "./gammes";
 import type { Note } from "./note";
+import { ordreUneFois, type SensArpege } from "./sens-arpege";
 
 /** Ce à quoi une qualité sert, pour qu'un composant puisse n'en proposer qu'une part. */
 export type FamilleAccord = "triade" | "septieme" | "extension" | "altere" | "suspendu";
@@ -186,8 +187,11 @@ export function completer(historique: readonly string[]): QualiteAccord[] {
 /** Le motif du cantus firmus, qui est la gamme majeure et non un accord. */
 export const CANTUS_FIRMUS = (): number[] => degresDeGamme("majeur");
 
-/** Le sens dans lequel les notes d'un accord se succèdent, quand elles ne sonnent pas ensemble. */
-export type SensDArpege = "montant" | "descendant" | "aller-retour";
+/**
+ * Le sens dans lequel les notes d'un accord se succèdent, quand elles ne sonnent pas ensemble : celui
+ * de la table du sens d'un arpège, `audio/sens-arpege.ts`, l'ordre de jeu en moins.
+ */
+export type SensDArpege = Exclude<SensArpege, "ordre-de-jeu">;
 
 /** La façon dont un accord se fait entendre. */
 export type ModeDeJeu = "plaque" | "arpege" | "roule";
@@ -233,13 +237,15 @@ export function notesDaccord(
   return notes.filter((n) => n >= 0 && n <= 127).sort((a, b) => a - b);
 }
 
-/** Les notes réordonnées par le sens dans lequel on veut les entendre. */
-export function dansLeSens(notes: readonly number[], sens: SensDArpege): number[] {
-  if (sens === "montant") return [...notes];
-  if (sens === "descendant") return [...notes].reverse();
-  // L'ALLER-RETOUR NE REJOUE PAS SON SOMMET, comme le parcours d'une gamme : la note la plus haute
-  // est atteinte une fois, et la descente repart de la suivante.
-  return [...notes, ...[...notes].reverse().slice(1)];
+/**
+ * Les notes réordonnées par le sens dans lequel on veut les entendre.
+ *
+ * L'ALLER-RETOUR NE REJOUE PAS SON SOMMET, comme le parcours d'une gamme : la note la plus haute est
+ * atteinte une fois, et la descente repart de la suivante. Les sept sens viennent de `ordreUneFois`,
+ * que la gamme jouée emploie aussi ; `hasard` ne sert qu'à l'aléatoire.
+ */
+export function dansLeSens(notes: readonly number[], sens: SensDArpege, hasard: () => number = () => 0): number[] {
+  return ordreUneFois(notes, sens, hasard);
 }
 
 /**

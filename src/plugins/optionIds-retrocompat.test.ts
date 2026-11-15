@@ -224,7 +224,9 @@ const CAS: Cas[] = [
   { node: "sortie-midi", param: "Synthèse", ancienneValeur: "FM/Oscillateurs", idAttendu: "fm" },
   { node: "sortie-midi", param: "Synthèse", ancienneValeur: "FM/Oscillators", idAttendu: "fm" },
   { node: "sortie-midi", param: "Synthèse", ancienneValeur: "SoundFont", idAttendu: "soundfont" },
-  // Variante sans « Automatique » (PARAMETRE_SYNTHESE_SANS_AUTO).
+  // L'automate cellulaire offrait le moteur sans « Automatique » jusqu'au 2026-11-14 : ses valeurs
+  // d'alors se relisent, et la nouvelle aussi.
+  { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "Automatique", idAttendu: "auto" },
   { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "FM/Oscillateurs", idAttendu: "fm" },
   { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "FM/Oscillators", idAttendu: "fm" },
   { node: "automate-cellulaire", param: "Synthèse", ancienneValeur: "SoundFont", idAttendu: "soundfont" },
@@ -273,19 +275,19 @@ const CAS: Cas[] = [
   ]),
 
   // ── Lot 4 ──
-  // « Mode » — les consommateurs testaient déjà par sous-chaîne (.includes("arp"))
-  // donc restaient corrects en anglais ; les ids figent malgré tout l'identité.
+  // « Mode » — les ids sont ceux de la façon de jouer un accord depuis le lot 3c de la passe de
+  // complétude (2026-11-14) : l'harmonie est `plaque`, et l'arpège pluriel de Color Looper `arpege`.
+  // Les consommateurs lisent par `faconDe` et non plus par sous-chaîne.
   ...(["palette-harmonique", "dessin-sonore"] as const).flatMap((node) => [
     { node, param: "Mode", ancienneValeur: "Mélodie", idAttendu: "melodie" },
     { node, param: "Mode", ancienneValeur: "Melody", idAttendu: "melodie" },
-    { node, param: "Mode", ancienneValeur: "Harmonie", idAttendu: "harmonie" },
-    { node, param: "Mode", ancienneValeur: "Harmony", idAttendu: "harmonie" },
+    { node, param: "Mode", ancienneValeur: "Harmonie", idAttendu: "plaque" },
+    { node, param: "Mode", ancienneValeur: "Harmony", idAttendu: "plaque" },
     { node, param: "Mode", ancienneValeur: "Arpège", idAttendu: "arpege" },
     { node, param: "Mode", ancienneValeur: "Arpeggio", idAttendu: "arpege" },
   ]),
-  // Color Looper utilise le pluriel « Arpèges » — id distinct, volontairement.
-  { node: "color-looper", param: "Mode", ancienneValeur: "Arpèges", idAttendu: "arpeges" },
-  { node: "color-looper", param: "Mode", ancienneValeur: "Arpeggios", idAttendu: "arpeges" },
+  { node: "color-looper", param: "Mode", ancienneValeur: "Arpèges", idAttendu: "arpege" },
+  { node: "color-looper", param: "Mode", ancienneValeur: "Arpeggios", idAttendu: "arpege" },
 
   // « Couleur » — c'est ce paramètre qui échouait sur « Couleur 1 inconnue : Blue ».
   { node: "couleur-suno-ia", param: "Couleur 1", ancienneValeur: "Bleu", idAttendu: "bleu" },
@@ -411,7 +413,7 @@ const CAS: Cas[] = [
   { node: "hard-panner", param: "Position", ancienneValeur: "Gauche", idAttendu: "gauche" },
   { node: "hard-panner", param: "Position", ancienneValeur: "Droite", idAttendu: "droite" },
   { node: "automate-cellulaire", param: "Règle", ancienneValeur: "Custom", idAttendu: "Personnalisée" },
-  { node: "automate-cellulaire", param: "Mode voix", ancienneValeur: "Polyphony", idAttendu: "Polyphonie" },
+  { node: "automate-cellulaire", param: "Mode voix", ancienneValeur: "Polyphony", idAttendu: "plaque" },
   { node: "automate-cellulaire", param: "Mapping", ancienneValeur: "Pitch + velocity", idAttendu: "Hauteur + vélocité" },
   { node: "sherpa-asr", param: "Qualité resampling", ancienneValeur: "Standard (linear)", idAttendu: "Standard (linéaire)" },
   { node: "visualisation-songsee", param: "Visualisation", ancienneValeur: "All", idAttendu: "Toutes" },

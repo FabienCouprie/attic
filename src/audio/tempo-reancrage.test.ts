@@ -161,6 +161,16 @@ describe("mesurer l'alignement", () => {
     expect(triolets.pas).toBeCloseTo(60 / 120 / 3, 6);
   });
 
+  it("UNE DIVISION FRACTIONNAIRE SE MESURE TELLE QUELLE : la noire pointée vaut deux tiers", () => {
+    // Arrondie à l'entier, elle mesurait des attaques posées sur la grille pointée contre la grille
+    // des noires, et les annonçait écartées d'un quart de pas.
+    const pointees = [0, 0.75, 1.5, 2.25, 3];
+    const a = mesurerAlignement(pointees, 120, 2 / 3);
+    expect(a.pas).toBeCloseTo(0.75, 9);
+    expect(a.ecartMoyenMs).toBeCloseTo(0, 6);
+    expect(mesurerAlignement(pointees, 120, 1 / 4).pas).toBeCloseTo(2, 9);
+  });
+
   it("ne divise pas par zero sans attaque", () => {
     const a = mesurerAlignement([], 120, 4);
     expect(a.attaques).toBe(0);

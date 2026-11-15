@@ -10,9 +10,9 @@ import { choixFormats, formatImage } from "../core/formats-image";
 import { cheminDansTravail } from "./pont-electron";
 import { arreterLesTravauxAuSignal } from "./arret-des-travaux";
 import { entreeAudio, sansEntree } from "./lire-entree";
+import { choixPaletteCouleurs } from "../audio/palettes-couleurs";
 
 const VIZS = ["spectrogram", "mel", "chroma", "hpss", "selfsim", "loudness", "tempogram", "mfcc", "flux"];
-const PALETTES = ["classic", "magma", "inferno", "viridis", "gray", "claw"];
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -41,8 +41,9 @@ export const fiches: FicheAudio[] = ([
         nom: "Palette",
         nomEn: "Palette",
         type: "choix",
-        options: PALETTES,
-        defaut: "classic",
+        ...choixPaletteCouleurs(),
+        defaut: "Classique",
+        defautEn: "Classic",
         doc: "Palette de couleurs appliquée au spectrogramme.",
         docEn: "Color palette applied to the spectrogram.",
       },
