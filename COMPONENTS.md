@@ -2476,7 +2476,7 @@ Generates an inharmonic metallic sound (hi-hat, bell, cymbal) using Tone.js Meta
 
 *Generates a plucked string note using Karplus-Strong synthesis.*
 
-Generates a plucked string note using Karplus-Strong synthesis with Tone.js PluckSynth. Settings: • the note • attack noise • dampening • resonance • release. The sound is rendered offline.
+Generates a plucked string note using Karplus-Strong synthesis: a short burst of noise excites a loop tuned to the note, where a lowpass makes the treble die out before the bass. Settings: • the note • attack noise • dampening • resonance • release. The sound is rendered offline.
 
 | Port | Name | Type | |
 |---|---|---|---|

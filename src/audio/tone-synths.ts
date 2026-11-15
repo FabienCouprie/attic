@@ -3,6 +3,7 @@
 
 import { creerAleatoire } from "../core/hasard";
 import { plafonnerCrete } from "./commun";
+import { calculerCordePincee } from "./corde-pincee";
 import { Note } from "tonal";
 import { frequenceDeTravail } from "./frequence-de-travail";
 import {
@@ -222,8 +223,15 @@ export interface OptionsPluckSynth {
 }
 
 /**
- * Genere une note de corde pincee par synthese Karplus-Strong avec Tone.PluckSynth.
- * Le rendu est fait en offline pour obtenir un AudioBuffer directement.
+ * Génère une note de corde pincée par synthèse Karplus-Strong, calculée dans `audio/corde-pincee.ts`,
+ * en stéréo, les deux canaux identiques.
+ *
+ * LA BOUCLE N'EST PLUS FAITE DE NŒUDS TONE.JS (2026-11-15) : un retard pris dans une boucle du graphe
+ * Web Audio ne descend pas sous 128 échantillons, et la corde ne jouait pas sa note.
+ *
+ * LE RELÂCHEMENT : la résonance descend à zéro sur « Release », et la descente finit avec le son ;
+ * un relâchement plus long que la durée allonge le son d'autant. Il n'agissait sur rien : il
+ * n'allongeait le tampon que s'il dépassait la durée.
  */
 export async function genererPluckSynth(opts: OptionsPluckSynth): Promise<AudioBuffer> {
   const {
@@ -237,46 +245,23 @@ export async function genererPluckSynth(opts: OptionsPluckSynth): Promise<AudioB
     sampleRate = frequenceDeTravail(),
   } = opts;
 
-  const { Offline, Noise, Delay, BiquadFilter, Gain } = await import("tone");
-
-  const dureeTotale = Math.max(0.1, duree, release + 0.05);
-  const velocity = Math.max(0, Math.min(1, volume / 100));
   const freq = Note.freq(note);
   if (freq === null) throw new Error(`Note invalide : ${note}`);
-  const noiseDur = Math.max(attackNoise / freq, 0.001);
-
-  const toneBuffer = await Offline(
-    () => {
-      const noise = new Noise({ type: "pink" }).start(0).stop(noiseDur);
-      const delay = new Delay(1 / freq);
-      // LE PASSE-BAS DE BUTTERWORTH, SANS BOSSE (2026-11-15) : le Q de Web Audio est en décibels,
-      // et celui de 1 dB que `Filter` pose par défaut monte de près de 2 dB à la coupure. Dans la
-      // boucle, cette bosse portait le gain au-delà de l'unité dès une résonance de 0,85, et la
-      // corde divergeait. À −3,01 dB, la réponse ne dépasse jamais 1 : la boucle ne rend pas plus
-      // que la résonance. `BiquadFilter` et non `Filter`, dont le Q refuse un négatif.
-      const filter = new BiquadFilter({ frequency: dampening, type: "lowpass", Q: -10 * Math.log10(2) });
-      const feedback = new Gain(resonance);
-      // LE RELÂCHEMENT (2026-11-15) : la résonance descend à zéro sur « Release », et la descente
-      // finit avec le tampon. Il n'agissait sur rien : il n'allongeait le tampon que s'il dépassait
-      // la durée. Ce qui reste dans la ligne à retard en sort en une période, puis le silence.
-      const debutRelache = Math.max(0, duree - release);
-      feedback.gain.setValueAtTime(resonance, debutRelache);
-      if (release > 0) feedback.gain.linearRampToValueAtTime(0, debutRelache + release);
-      else feedback.gain.setValueAtTime(0, debutRelache);
-      const outGain = new Gain(velocity).toDestination();
-
-      noise.connect(delay);
-      delay.connect(filter);
-      delay.connect(outGain);
-      filter.connect(feedback);
-      feedback.connect(delay);
-    },
-    dureeTotale,
-    2,
+  const son = calculerCordePincee({
+    frequence: freq,
     sampleRate,
-  );
-
-  return audioBufferDepuisTone(toneBuffer);
+    duree: Math.max(0.1, duree, release + 0.05),
+    bruit: Math.max(attackNoise / freq, 0.001),
+    coupure: dampening,
+    resonance,
+    debutRelache: Math.max(0, duree - release),
+    relache: release,
+    volume: Math.max(0, Math.min(1, volume / 100)),
+  });
+  const tampon = new AudioBuffer({ numberOfChannels: 2, length: son.length, sampleRate });
+  tampon.copyToChannel(son, 0);
+  tampon.copyToChannel(son, 1);
+  return tampon;
 }
 
 export interface OptionsDrumSynth {
