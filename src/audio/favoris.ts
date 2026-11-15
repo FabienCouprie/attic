@@ -31,6 +31,7 @@ export const FAVORIS_SON: readonly Favori[] = [
   { cle: "vcsl", url: "https://versilian-studios.com/vcsl/" },
   { cle: "philharmonia", url: "https://philharmonia.co.uk/resources/sound-samples/" },
   { cle: "mutedio", url: "https://muted.io/" },
+  { cle: "kunstderfuge", url: "https://www.kunstderfuge.com/" },
   { cle: "chantcosmos", url: "https://lesia.obspm.fr/perso/philippe-zarka/Chants.html" },
   { cle: "sounddinoSea", url: "https://sounddino.com/en/effects/fish/" },
   { cle: "aquaplan", url: "https://aquaplan-project.eu/resources/outreach-activities/sound-recordings/" },
