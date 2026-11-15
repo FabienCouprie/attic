@@ -220,6 +220,8 @@ export interface OptionsPluckSynth {
   resonance?: number;
   release?: number;
   sampleRate?: number;
+  /** Le hasard du bruit qui pince la corde ; absent, il est tiré au sort à chaque rendu. */
+  aleatoire?: () => number;
 }
 
 /**
@@ -243,6 +245,7 @@ export async function genererPluckSynth(opts: OptionsPluckSynth): Promise<AudioB
     resonance = 0.7,
     release = 1,
     sampleRate = frequenceDeTravail(),
+    aleatoire,
   } = opts;
 
   const freq = Note.freq(note);
@@ -257,6 +260,7 @@ export async function genererPluckSynth(opts: OptionsPluckSynth): Promise<AudioB
     debutRelache: Math.max(0, duree - release),
     relache: release,
     volume: Math.max(0, Math.min(1, volume / 100)),
+    aleatoire,
   });
   const tampon = new AudioBuffer({ numberOfChannels: 2, length: son.length, sampleRate });
   tampon.copyToChannel(son, 0);

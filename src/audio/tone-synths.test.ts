@@ -233,6 +233,16 @@ describe("genererPluckSynth", () => {
     }
   });
 
+  it("À HASARD ÉGAL, LA CORDE EST LA MÊME ; SANS HASARD DONNÉ, DEUX RENDUS DIFFÈRENT", async () => {
+    const { genererPluckSynth } = await import("./tone-synths");
+    const { creerAleatoire } = await import("../core/hasard");
+    const rendre = (aleatoire?: () => number) => genererPluckSynth({ note: "E3", duree: 0.3, volume: 80, release: 0, sampleRate: 44100, aleatoire })
+      .then((b) => Array.from(b.getChannelData(0)));
+    expect(await rendre(creerAleatoire(9))).toEqual(await rendre(creerAleatoire(9)));
+    expect(await rendre(creerAleatoire(9))).not.toEqual(await rendre(creerAleatoire(10)));
+    expect(await rendre()).not.toEqual(await rendre());
+  });
+
   it("LE RELÂCHEMENT ÉTEINT LA CORDE DANS LA DURÉE DU TAMPON", async () => {
     // LE DÉFAUT (2026-11-15) : le « Release » ne descendait rien ; il n'allongeait le tampon que
     // s'il dépassait la durée. À une résonance de 1, la corde tient : sans relâchement elle sonne

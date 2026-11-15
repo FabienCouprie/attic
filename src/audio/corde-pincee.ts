@@ -35,6 +35,11 @@ export interface ReglagesCorde {
   relache: number;
   /** Le gain de sortie, de 0 à 1. */
   volume: number;
+  /**
+   * Le hasard du bruit qui pince la corde, du générateur commun. Absent, il est tiré au sort, et deux
+   * rendus diffèrent ; une graine le rend à l'identique.
+   */
+  aleatoire?: () => number;
 }
 
 /** Le passe-bas de Butterworth du second ordre, par les formules de Web Audio, normalisé. */
@@ -122,7 +127,7 @@ export function calculerCordePincee(r: ReglagesCorde): Float32Array<ArrayBuffer>
     return Math.max(0, resonance * (1 - (i - debut) / longueurRelache));
   };
 
-  const excitation = bruitRose(Math.max(1, Math.round(r.bruit * sr)), creerAleatoire(resoudreGraine(0)));
+  const excitation = bruitRose(Math.max(1, Math.round(r.bruit * sr)), r.aleatoire ?? creerAleatoire(resoudreGraine(0)));
   const retard = new Float32Array(ligne);
   const sortie = new Float32Array(n);
   let curseur = 0, entreeAvant = 0, passeToutAvant = 0;

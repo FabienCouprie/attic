@@ -8,6 +8,7 @@ import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { langueCourante, traduire } from "../i18n";
+import { hasardDuNoeud } from "../core";
 import { genererModulationSynth, genererPluckSynth, rendreBatterieMidi } from "../audio/tone-synths";
 import { analyserMidi } from "../audio/midi";
 import { parseMidi } from "midi-file";
@@ -253,6 +254,11 @@ export const fiches: FicheAudio[] = ([
         doc: "Temps de descente de la résonance à zéro, qui finit avec le son : elle commence à « Durée » moins ce temps, et un temps plus long que la « Durée » allonge le son. Sans effet quand la corde s'est déjà tue, ce que fait vite une « Resonance » basse.",
         docEn: "Time for the resonance to ramp down to zero, ending with the sound: it starts at « Duration » minus this time, and a time longer than the « Duration » lengthens the sound. No effect when the string has already died out, which a low « Resonance » makes quick.",
       },
+      {
+        nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 0,
+        doc: "Graine du bruit qui pince la corde. 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici. Toute autre valeur rejoue exactement la même corde, échantillon par échantillon.",
+        docEn: "Seed for the noise that plucks the string. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same string, sample for sample.",
+      },
     ],
     async executer(ctx) {
       const note = ctx.paramTexte("Note", "C4");
@@ -262,6 +268,7 @@ export const fiches: FicheAudio[] = ([
       const dampening = ctx.paramNombre("Dampening", 4000);
       const resonance = ctx.paramNombre("Resonance", 0.7);
       const release = ctx.paramNombre("Release", 1);
+      const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       try {
         const buffer = await genererPluckSynth({
           note,
@@ -272,10 +279,11 @@ export const fiches: FicheAudio[] = ([
           resonance,
           release,
           sampleRate: frequenceDeTravail(),
+          aleatoire,
         });
         return {
           valeurs: [buffer],
-          message: traduire("msg.pluck_var_0_var_1_s", note, buffer.duration.toFixed(2)),
+          message: traduire("msg.var_0_graine_var_1", traduire("msg.pluck_var_0_var_1_s", note, buffer.duration.toFixed(2)), graine),
         };
       } catch (e: any) {
         return {

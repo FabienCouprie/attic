@@ -2476,7 +2476,7 @@ Generates an inharmonic metallic sound (hi-hat, bell, cymbal) using Tone.js Meta
 
 *Generates a plucked string note using Karplus-Strong synthesis.*
 
-Generates a plucked string note using Karplus-Strong synthesis: a short burst of noise excites a loop tuned to the note, where a lowpass makes the treble die out before the bass. Settings: • the note • attack noise • dampening • resonance • release. The sound is rendered offline.
+Generates a plucked string note using Karplus-Strong synthesis: a short burst of noise excites a loop tuned to the note, where a lowpass makes the treble die out before the bass. Settings: • the note • attack noise • dampening • resonance • release • the seed of the noise, which replays the same string. The sound is rendered offline.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -2491,6 +2491,7 @@ Generates a plucked string note using Karplus-Strong synthesis: a short burst of
 | Dampening | number | 4000 Hz | 100 – 7000 Hz, step 10 | Cutoff frequency of the comb filter's lowpass. |
 | Resonance | number | 0.7 | 0 – 1, step 0.01 | Share of the sound the string keeps on each round trip, hence how long it rings, longer in the bass: it is mostly set between 0.9 and 1, and at 1 only the « Release » silences it. |
 | Release | number | 1 s | 0 – 3 s, step 0.01 | Time for the resonance to ramp down to zero, ending with the sound: it starts at « Duration » minus this time, and a time longer than the « Duration » lengthens the sound. No effect when the string has already died out, which a low « Resonance » makes quick. |
+| Seed | number | 0 | 0 – 999999, step 1 | Seed for the noise that plucks the string. 0 = drawn at random on every run, and shown in the message so it can be copied back here. Any other value replays the exact same string, sample for sample. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Poly Synth
 
