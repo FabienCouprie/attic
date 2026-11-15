@@ -18,7 +18,8 @@ export const PALETTES_PRESET: Record<string, string[]> = {
   cyber: ["#000000", "#0ff", "#f0f"],
   foret: ["#1b4332", "#2d6a4f", "#95d5b2"],
   // SES COULEURS ÉTAIENT CELLES DE « FROID », une à une : les deux palettes rendaient la même pochette
-  // (passe de croisement, lot 3e, 2026-11-15). Un bleu profond, un bleu franc, un turquoise.
+  // (passe de croisement, lot 3e, 2026-11-15). Un bleu profond, un bleu franc, un turquoise, gardés
+  // par Fabien le même jour devant un lagon et un fond de mer sur sable.
   ocean: ["#03045e", "#0077b6", "#90e0ef"],
   magma: ["#1a0505", "#ff4d00", "#ffcc00"],
   givre: ["#e0f7fa", "#80deea", "#00838f"],
