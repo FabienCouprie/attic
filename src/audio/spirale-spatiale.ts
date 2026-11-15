@@ -13,13 +13,17 @@
 //   L'AIR absorbe l'aigu et lui seul, d'autant plus que la distance est grande. Sans cela, un son
 //   dix fois plus loin ne serait qu'un son plus faible, et l'oreille entend la différence : c'est
 //   la part du timbre qui dit la distance quand le niveau ment, par exemple sur un son qu'on a
-//   monté au mixage.
+//   monté au mixage. L'air, lui, compte en MÈTRES et non en rapport : il retire ce que la norme
+//   ISO 9613-1 dit sur les mètres parcourus depuis le départ (`audio/air.ts`). Au même rapport,
+//   partir de plus loin parcourt plus de mètres et ferme davantage l'aigu.
 //
 // L'AZIMUT suit la loi en cosinus, qui garde le niveau perçu constant au passage par le centre :
 // un panoramique linéaire y perdrait trois décibels, et l'on entendrait la rotation pomper.
 //
 // CE MODULE NE PRODUIT PAS DE SON. Il rend la trajectoire, instant par instant ; le rendu
 // appartient au composant.
+
+import { frequenceAMoinsTrois } from "./air";
 
 export const NOMBRE_OR = (1 + Math.sqrt(5)) / 2;
 
@@ -36,7 +40,7 @@ export interface OptionsSpatiale {
   eloigne: boolean;
   /** Distance de départ, en mètres. */
   distanceDebut: number;
-  /** Absorption de l'air, de 0 pour aucune à 1 pour marquée. */
+  /** Absorption de l'air, de 0 pour aucune à 1 pour l'air réel de la norme. */
   absorption: number;
 }
 
@@ -53,8 +57,6 @@ export interface PointSpirale {
   gaucheGain: number;
   /** Le gain du canal droit. */
   droiteGain: number;
-  /** La fréquence de coupure de l'absorption de l'air, en hertz. */
-  coupureHz: number;
 }
 
 const borner = (v: number, bas: number, haut: number) => Math.min(haut, Math.max(bas, v));
@@ -66,11 +68,7 @@ export function rapportValide(rapport: number): number {
 /**
  * Le point de la trajectoire à une part donnée du parcours.
  *
- * L'azimut part du centre et tourne dans le sens direct ; la distance suit la spirale. La coupure
- * de l'air descend géométriquement avec la distance, de vingt kilohertz au plus près à la fraction
- * réglée au plus loin : c'est une approximation, l'absorption réelle dépendant de l'humidité et de
- * la température, et son seul office est de rendre l'éloignement audible autrement que par le
- * niveau.
+ * L'azimut part du centre et tourne dans le sens direct ; la distance suit la spirale.
  */
 export function pointSpirale(o: OptionsSpatiale, part: number): PointSpirale {
   const p = borner(part, 0, 1);
@@ -88,11 +86,25 @@ export function pointSpirale(o: OptionsSpatiale, part: number): PointSpirale {
   const gaucheGain = Math.cos(theta);
   const droiteGain = Math.sin(theta);
 
-  // L'air : la coupure descend d'autant de décades que la distance monte, pondérée par le réglage.
-  const octaves = Math.log2(distance / Math.max(0.05, o.distanceDebut));
-  const coupureHz = borner(20000 * Math.pow(2, -octaves * 1.5 * borner(o.absorption, 0, 1)), 200, 20000);
+  return { part: p, tour, distance, gain, gaucheGain, droiteGain };
+}
 
-  return { part: p, tour, distance, gain, gaucheGain, droiteGain, coupureHz };
+/**
+ * Les mètres d'air que le son a traversés en plus depuis le départ, dosés par l'absorption.
+ *
+ * Le départ est la référence, où la sortie vaut l'entrée : seuls les mètres gagnés en s'éloignant
+ * comptent. EN SE RAPPROCHANT, LE SON N'EN GAGNE AUCUN, et l'air n'a rien à lui retirer ; il
+ * faudrait lui rendre l'aigu que l'air du départ lui avait pris, ce que l'entrée ne dit pas.
+ */
+export function airTraverse(o: OptionsSpatiale, part: number): number {
+  if (!o.eloigne) return 0;
+  const debut = Math.max(0.05, o.distanceDebut);
+  return Math.max(0, pointSpirale(o, part).distance - debut) * borner(o.absorption, 0, 1);
+}
+
+/** La fréquence où l'air traversé retire trois décibels à une part du parcours, en hertz. */
+export function coupureAir(o: OptionsSpatiale, part: number): number {
+  return frequenceAMoinsTrois(airTraverse(o, part));
 }
 
 /**
