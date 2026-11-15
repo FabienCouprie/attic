@@ -10,7 +10,7 @@
 import { describe, expect, it } from "vitest";
 import {
   NOMBRE_OR, RAPPORT_MAX, RAPPORT_MIN,
-  airTraverse, coupureAir, ecartAzimutParTour, pointSpirale, rapportDistanceParTour, rapportValide,
+  airTraverse, coupureAir, distanceLaPlusProche, ecartAzimutParTour, pointSpirale, rapportDistanceParTour, rapportValide,
   type OptionsSpatiale,
 } from "./spirale-spatiale";
 
@@ -85,9 +85,23 @@ describe("la trajectoire", () => {
     expect(airTraverse({ ...loin, distanceDebut: 1 }, 1)).toBeCloseTo(7, 6);
   });
 
-  it("en se rapprochant, le son ne gagne aucun mètre d'air", () => {
-    for (let i = 0; i <= 10; i++) {
-      expect(airTraverse({ ...BASE, distanceDebut: 20, eloigne: false, absorption: 1 }, i / 10)).toBe(0);
+  it("EN SE RAPPROCHANT, L'AIR COMPTE LES MÈTRES QUI RESTENT JUSQU'À L'ARRIVÉE, le point le plus proche", () => {
+    // Trois tours à rapport deux depuis 20 m : l'arrivée est à 2,5 m, le départ en est à 17,5 m.
+    const proche = { ...BASE, distanceDebut: 20, eloigne: false, absorption: 1 };
+    expect(distanceLaPlusProche(proche)).toBeCloseTo(2.5, 9);
+    expect(airTraverse(proche, 0)).toBeCloseTo(17.5, 6);
+    expect(airTraverse(proche, 1)).toBeCloseTo(0, 9);
+    for (let i = 1; i <= 10; i++) expect(airTraverse(proche, i / 10)).toBeLessThan(airTraverse(proche, (i - 1) / 10));
+  });
+
+  it("LE GAIN VAUT UN AU POINT LE PLUS PROCHE ET NE LE DÉPASSE JAMAIS, dans les deux sens", () => {
+    for (const eloigne of [true, false]) {
+      for (const tours of [0.5, 3, 8]) {
+        const o = { ...BASE, eloigne, tours, rapport: 8 };
+        const gains = Array.from({ length: 41 }, (_, i) => pointSpirale(o, i / 40).gain);
+        expect(Math.max(...gains), `${eloigne ? "s'éloigne" : "se rapproche"}, ${tours} tours`).toBeCloseTo(1, 9);
+        expect(gains[eloigne ? 0 : 40]).toBeCloseTo(1, 9);
+      }
     }
   });
 

@@ -7,7 +7,9 @@
 //      pas son attendu avec le code qu'il vérifie.
 //   2. LA DISTANCE DE DÉPART S'ENTEND EN S'ÉLOIGNANT : au même rapport, partir de plus loin parcourt
 //      plus de mètres, et l'air retire davantage.
-//   3. EN SE RAPPROCHANT, ELLE NE CHANGE RIEN, ni l'absorption : le son n'ajoute aucun mètre d'air.
+//   3. EN SE RAPPROCHANT, LE SON ARRIVE AU NIVEAU DE L'ENTRÉE ET NE LE DÉPASSE JAMAIS : la sortie vaut
+//      l'entrée au point le plus proche, et le niveau comme l'air se comptent depuis lui. Le niveau
+//      était compté depuis le départ, et se rapprocher le multipliait : huit fois en trois tours.
 import { describe, expect, it } from "vitest";
 import { fiches } from "./spirale-spatiale";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
@@ -80,15 +82,47 @@ describe("l'air de la spirale spatiale", () => {
     expect(puissanceDb(pres, debut, fin) - puissanceDb(loin, debut, fin)).toBeGreaterThan(4);
   }, 60_000);
 
-  it("EN SE RAPPROCHANT, LA DISTANCE DE DÉPART ET L'ABSORPTION NE CHANGENT RIEN", async () => {
-    const base = { ...REGLAGES, Sens: "rapproche" };
-    const a = await spirale(sinus(8000), { ...base, "Distance de départ": 1 });
-    const b = await spirale(sinus(8000), { ...base, "Distance de départ": 20 });
-    const c = await spirale(sinus(8000), { ...base, "Distance de départ": 20, "Absorption de l'air": 0 });
-    for (const canal of [0, 1]) {
-      expect(b.getChannelData(canal)).toEqual(a.getChannelData(canal));
-      expect(c.getChannelData(canal)).toEqual(a.getChannelData(canal));
+  it("EN SE RAPPROCHANT, LE SON ARRIVE AU NIVEAU DE L'ENTRÉE, SANS JAMAIS LE DÉPASSER", async () => {
+    // Trois tours à rapport deux, sans air : la distance est divisée par huit, et le gain monte de
+    // 1/8 à 1 selon la loi du carré inverse, 2^(3p − 3) à la part p du parcours.
+    const sortie = await spirale(sinus(1000), { Sens: "rapproche", "Absorption de l'air": 0 });
+    const n = sortie.length;
+    let crete = 0;
+    for (const c of [0, 1]) for (const v of sortie.getChannelData(c)) crete = Math.max(crete, Math.abs(v));
+    // La loi en cosinus donne au plus √2 à un canal, sur le côté : c'est le plafond d'une entrée de 0,5.
+    expect(crete).toBeLessThanOrEqual(0.5 * Math.SQRT2 + 1e-6);
+    for (const [debut, fin] of [[0, Math.round(0.1 * SR)], [n - Math.round(0.1 * SR), n]]) {
+      let attendu = 0;
+      for (let i = debut; i < fin; i++) attendu += 2 * 0.125 * Math.pow(2, 2 * (3 * (i / (n - 1)) - 3));
+      const ecart = puissanceDb(sortie, debut, fin) - 10 * Math.log10(attendu / (fin - debut));
+      expect(Math.abs(ecart), `fenêtre ${debut}–${fin} : écart ${ecart.toFixed(2)} dB`).toBeLessThan(0.1);
     }
+  }, 60_000);
+
+  it("EN SE RAPPROCHANT, L'AIR RETIRE CE QUE LA NORME DIT SUR LES MÈTRES QUI RESTENT JUSQU'AU PLUS PRÈS", async () => {
+    // Un tour à rapport quatre depuis 20 m : le plus près est à 5 m, et le départ en est à 15 m d'air.
+    const depart = 20, proche = depart / 4;
+    for (const f of [4000, 8000, 16000]) {
+      const sortie = await spirale(sinus(f), { ...REGLAGES, Sens: "rapproche", "Distance de départ": depart });
+      const n = sortie.length;
+      const debut = Math.round(0.1 * SR), fin = Math.round(0.2 * SR);
+      let attendu = 0;
+      for (let i = debut; i < fin; i++) {
+        const distance = depart * Math.pow(4, -i / (n - 1));
+        const air = Math.pow(10, (-ALPHA_ISO[f] * (distance - proche)) / 20);
+        attendu += 2 * 0.125 * ((proche / distance) * air) ** 2;
+      }
+      const ecart = puissanceDb(sortie, debut, fin) - 10 * Math.log10(attendu / (fin - debut));
+      expect(Math.abs(ecart), `${f} Hz : écart ${ecart.toFixed(2)} dB`).toBeLessThan(0.3);
+    }
+  }, 60_000);
+
+  it("EN SE RAPPROCHANT, LA DISTANCE DE DÉPART S'ENTEND AUSSI : partir de plus loin part plus sourd", async () => {
+    const pres = await spirale(sinus(16000), { ...REGLAGES, Sens: "rapproche", "Distance de départ": 1 });
+    const loin = await spirale(sinus(16000), { ...REGLAGES, Sens: "rapproche", "Distance de départ": 20 });
+    const debut = Math.round(0.1 * SR), fin = Math.round(0.2 * SR);
+    // 0,75 m d'air contre 15 m au départ : 5,2 décibels de plus à 16 kHz.
+    expect(puissanceDb(pres, debut, fin) - puissanceDb(loin, debut, fin)).toBeGreaterThan(4);
   }, 60_000);
 
   it("l'absorption vaut l'air réel par défaut", () => {

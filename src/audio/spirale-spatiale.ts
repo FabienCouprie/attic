@@ -14,8 +14,13 @@
 //   dix fois plus loin ne serait qu'un son plus faible, et l'oreille entend la différence : c'est
 //   la part du timbre qui dit la distance quand le niveau ment, par exemple sur un son qu'on a
 //   monté au mixage. L'air, lui, compte en MÈTRES et non en rapport : il retire ce que la norme
-//   ISO 9613-1 dit sur les mètres parcourus depuis le départ (`audio/air.ts`). Au même rapport,
-//   partir de plus loin parcourt plus de mètres et ferme davantage l'aigu.
+//   ISO 9613-1 dit sur les mètres qui séparent le son du point le plus proche du parcours
+//   (`audio/air.ts`). Au même rapport, partir de plus loin parcourt plus de mètres et ferme
+//   davantage l'aigu.
+//
+// LE POINT LE PLUS PROCHE EST LA RÉFÉRENCE, où la sortie vaut l'entrée : le départ quand le son
+// s'éloigne, l'arrivée quand il se rapproche. Le niveau et l'air se comptent depuis lui, et la
+// sortie ne dépasse donc jamais l'entrée, au panoramique près.
 //
 // L'AZIMUT suit la loi en cosinus, qui garde le niveau perçu constant au passage par le centre :
 // un panoramique linéaire y perdrait trois décibels, et l'on entendrait la rotation pomper.
@@ -51,7 +56,7 @@ export interface PointSpirale {
   tour: number;
   /** La distance, en mètres. */
   distance: number;
-  /** Le gain de la loi du carré inverse, un à la distance de départ. */
+  /** Le gain de la loi du carré inverse, un au point le plus proche du parcours. */
   gain: number;
   /** Le gain du canal gauche, loi en cosinus. */
   gaucheGain: number;
@@ -66,6 +71,19 @@ export function rapportValide(rapport: number): number {
 }
 
 /**
+ * La distance la plus proche de l'auditeur sur tout le parcours : le départ quand le son s'éloigne,
+ * l'arrivée quand il se rapproche.
+ *
+ * C'EST LA RÉFÉRENCE, où la sortie vaut l'entrée, pour le niveau comme pour l'air (2026-11-15). Elle
+ * était au départ : se rapprocher multipliait le niveau, huit fois en trois tours de rapport deux, et
+ * la sortie saturait. Comptée depuis le plus près, elle ne dépasse jamais l'entrée.
+ */
+export function distanceLaPlusProche(o: OptionsSpatiale): number {
+  const debut = Math.max(0.05, o.distanceDebut);
+  return o.eloigne ? debut : debut * Math.pow(rapportValide(o.rapport), -Math.abs(o.tours));
+}
+
+/**
  * Le point de la trajectoire à une part donnée du parcours.
  *
  * L'azimut part du centre et tourne dans le sens direct ; la distance suit la spirale.
@@ -77,7 +95,7 @@ export function pointSpirale(o: OptionsSpatiale, part: number): PointSpirale {
   const exposant = o.eloigne ? tour : -tour;
   const distance = Math.max(0.05, o.distanceDebut) * Math.pow(rapport, exposant);
 
-  const gain = Math.max(0.05, o.distanceDebut) / distance;
+  const gain = distanceLaPlusProche(o) / distance;
 
   const angle = 2 * Math.PI * tour;
   // Loi en cosinus : le couple (gauche, droite) garde une somme de carrés constante.
@@ -90,16 +108,15 @@ export function pointSpirale(o: OptionsSpatiale, part: number): PointSpirale {
 }
 
 /**
- * Les mètres d'air que le son a traversés en plus depuis le départ, dosés par l'absorption.
+ * Les mètres d'air que le son traverse en plus de ceux du point le plus proche, dosés par
+ * l'absorption.
  *
- * Le départ est la référence, où la sortie vaut l'entrée : seuls les mètres gagnés en s'éloignant
- * comptent. EN SE RAPPROCHANT, LE SON N'EN GAGNE AUCUN, et l'air n'a rien à lui retirer ; il
- * faudrait lui rendre l'aigu que l'air du départ lui avait pris, ce que l'entrée ne dit pas.
+ * Le plus proche est la référence, où la sortie vaut l'entrée. En s'éloignant, les mètres croissent
+ * depuis le départ ; en se rapprochant, ils décroissent jusqu'à l'arrivée, et le son part sourd pour
+ * arriver avec le timbre de l'entrée.
  */
 export function airTraverse(o: OptionsSpatiale, part: number): number {
-  if (!o.eloigne) return 0;
-  const debut = Math.max(0.05, o.distanceDebut);
-  return Math.max(0, pointSpirale(o, part).distance - debut) * borner(o.absorption, 0, 1);
+  return Math.max(0, pointSpirale(o, part).distance - distanceLaPlusProche(o)) * borner(o.absorption, 0, 1);
 }
 
 /** La fréquence où l'air traversé retire trois décibels à une part du parcours, en hertz. */
