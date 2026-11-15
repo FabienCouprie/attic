@@ -7,7 +7,7 @@ import { imageDataDepuisFichier } from "./pixeltone";
 import { rgbToHsl, distanceRgb2 } from "./couleurs";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence, type NoteEvenement } from "./midi-sequence";
-import { degresGammeAccords, degreAccordProche } from "./generation";
+import { degresDesAccords, degresGammeAccords, degreAccordProche } from "./generation";
 import { demiTonDeCle } from "./cles";
 
 export interface CouleurExtraite {
@@ -176,7 +176,7 @@ function noteDepuisCouleur(couleur: CouleurExtraite, options: OptionsPaletteHarm
 // (quinte diminuée du Locrien...) et aux gammes qui n'ont pas de degré à
 // exactement 2/4 crans d'écart (pentatoniques, blues, chromatique).
 function triadeGamme(gamme: string): number[] {
-  const intervals = degresGammeAccords(gamme);
+  const intervals = degresDesAccords(gamme);
   return [0, degreAccordProche(intervals, 0, 4), degreAccordProche(intervals, 0, 7)];
 }
 

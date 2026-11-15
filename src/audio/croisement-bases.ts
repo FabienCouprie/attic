@@ -47,7 +47,7 @@ export const BASES_PROPRES: Record<string, { reglages: Reglages; raison: string 
   },
   "sequenceur-accords": {
     reglages: { Motif: MOTIF_ACCORDS },
-    raison: "le motif par défaut n'allume que des pas pairs, que le swing ne décale pas, et aucun accord du VIIe degré, le seul où le majeur et la bebop dominante diffèrent : sa triade, posée sur le pas 7, impair, que huit pas atteignent aussi, fait voir l'un et l'autre",
+    raison: "le motif par défaut n'allume que des pas pairs, que le swing ne décale pas, et aucun accord du VIIe degré : sa triade, posée sur le pas 7, impair, que huit pas atteignent aussi, fait voir le swing et ce degré",
   },
   "color-looper": {
     reglages: { Couleurs: "#d95326,#d9ac26,#acd926,#53d926,#26d953,#26d9ac,#26acd9,#2653d9,#5326d9,#ac26d9,#d926ac,#d92653" },

@@ -39,6 +39,11 @@ export interface Gamme {
   familles: FamilleGamme[];
   /** Les orthographes qu'un projet enregistré peut porter. */
   alias?: string[];
+  /**
+   * Les degrés de passage : ils appartiennent à la mélodie et non à l'harmonie. Un accord bâti sur
+   * la gamme les laisse (`degresSansPassage`), une mélodie les joue.
+   */
+  passage?: number[];
 }
 
 export const GAMMES: Gamme[] = [
@@ -81,9 +86,11 @@ export const GAMMES: Gamme[] = [
   { id: "phrygien-dominant", fr: "Phrygien dominant", en: "Phrygian dominant", degres: [0, 1, 4, 5, 7, 8, 10],
     familles: ["jazz", "modale"] },
   // Le mixolydien avec sa septième majeure de passage : huit degrés, donc une note par croche sur
-  // une mesure à quatre temps, ce qui est sa raison d'être.
+  // une mesure à quatre temps, ce qui est sa raison d'être. LE SI EST DE PASSAGE, ET UN ACCORD NE S'Y
+  // BÂTIT PAS : compté comme note d'accord, il faisait du I un Cmaj7, du iii un Em7 et du V un G7, soit
+  // les accords de do majeur, sur la gamme de l'accord de septième (décision de Fabien, 2026-11-15).
   { id: "bebop-dominant", fr: "Bebop dominante", en: "Bebop dominant", degres: [0, 2, 4, 5, 7, 9, 10, 11],
-    familles: ["jazz"] },
+    familles: ["jazz"], passage: [11] },
 
   // ── Les symétriques ──
   { id: "ton-entier", fr: "Par tons", en: "Whole tone", degres: [0, 2, 4, 6, 8, 10], familles: ["symetrique"] },
@@ -135,6 +142,12 @@ export const gammeDe = (id: string): Gamme | undefined => PAR_ID.get(id);
 /** Les degrés d'un identifiant, ou ceux de `secours` s'il est inconnu. */
 export function degresDeGamme(id: string, secours = "majeur"): number[] {
   return (PAR_ID.get(id) ?? PAR_ID.get(secours))!.degres;
+}
+
+/** Les degrés sur lesquels un accord se bâtit : ceux de la gamme, sans ses degrés de passage. */
+export function degresSansPassage(id: string, secours = "majeur"): number[] {
+  const g = (PAR_ID.get(id) ?? PAR_ID.get(secours))!;
+  return g.passage ? g.degres.filter((d) => !g.passage!.includes(d)) : g.degres;
 }
 
 /** Les gammes d'une ou plusieurs familles, dans l'ordre de la table. */
