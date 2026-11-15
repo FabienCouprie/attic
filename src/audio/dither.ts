@@ -45,8 +45,12 @@ export type BitsEntiers = 16 | 24;
  * L'ÉCHELLE RESTE SYMÉTRIQUE À TOUTE PROFONDEUR, pour la raison donnée plus bas : gagner le dernier
  * code négatif rendrait asymétrique une onde qui ne l'est pas, et ajouterait précisément les
  * harmoniques paires que le dither vient de retirer.
+ *
+ * ELLE PREND TOUTE PROFONDEUR, et non les deux que le projet écrit : le composant « Dither »
+ * (`audio/dither-mise-en-forme.ts`) quantifie de 2 à 24 bits sur cette même grille, de sorte qu'une
+ * sortie à seize bits tombe exactement sur les codes d'un WAV seize bits.
  */
-export const pleineEchelle = (bits: BitsEntiers): number => 2 ** (bits - 1) - 1;
+export const pleineEchelle = (bits: number): number => 2 ** (bits - 1) - 1;
 
 export interface OptionsQuantification {
   /** Ajouter le bruit de dither avant l'arrondi. Défaut : vrai. */
