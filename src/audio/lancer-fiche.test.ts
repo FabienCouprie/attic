@@ -66,6 +66,34 @@ describe("l'empreinte lit tout", () => {
     expect(await empreinteValeurs([a])).not.toBe(await empreinteValeurs([b]));
   });
 
+  it("DEUX SONS QUI NE DIFFÈRENT QUE PAR LE SIGNE OU L'EXPOSANT DE LEURS ÉCHANTILLONS ONT DEUX EMPREINTES", async () => {
+    // LE DÉFAUT QUE CE CAS ARRÊTE, relevé au lot 3d-2 (2026-11-15) : un carré à 440 Hz et un carré à
+    // 261,6 Hz rendaient la même empreinte, et la saisie du générateur de fréquence paraissait inerte
+    // sous la forme carrée. Le condensé multipliait sans replier : un bit ne remontait que vers le
+    // haut, et une différence de signe, le bit de poids fort, ne touchait que le bit de poids fort du
+    // condensé, où un nombre pair de différences s'annulait. Un gain de deux, qui ne change que
+    // l'exposant, y était presque aussi aveugle.
+    // Le carré du générateur de fréquence, échantillon pour échantillon : deux secondes, deux canaux,
+    // un fondu de dix millisecondes aux deux bouts, 80 % de 0,7.
+    const carre = (f: number) => {
+      const sr = 44100, n = 2 * sr;
+      const b = new AudioBuffer({ numberOfChannels: 2, length: n, sampleRate: sr });
+      for (let c = 0; c < 2; c++) {
+        const d = b.getChannelData(c);
+        for (let i = 0; i < n; i++) d[i] = Math.sign(Math.sin(2 * Math.PI * f * (i / sr))) * 0.8 * 0.7 * Math.min(1, i / (sr * 0.01), (n - i) / (sr * 0.01));
+      }
+      return b;
+    };
+    expect(await empreinteValeurs([carre(440)])).not.toBe(await empreinteValeurs([carre(440 * Math.pow(2, -9 / 12))]));
+    const a = sonDEssai(0.5), inverse = sonDEssai(0.5), double = sonDEssai(0.5);
+    for (let c = 0; c < 2; c++) {
+      inverse.getChannelData(c).forEach((x, i, d) => { d[i] = -x; });
+      double.getChannelData(c).forEach((x, i, d) => { d[i] = 2 * x; });
+    }
+    expect(await empreinteValeurs([inverse])).not.toBe(await empreinteValeurs([a]));
+    expect(await empreinteValeurs([double])).not.toBe(await empreinteValeurs([a]));
+  });
+
   it("un fichier se lit par ses octets, un texte par ses caractères", async () => {
     const f = (o: number[]) => new File([new Uint8Array(o)], "x.mid");
     expect(await empreinteValeurs([f([1, 2, 3])])).toBe(await empreinteValeurs([f([1, 2, 3])]));

@@ -80,8 +80,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre d'allers et retours de Griffin-Lim. N'agit que lorsque la phase est cherchée par Griffin-Lim ; PGHI n'itère pas, et une phase nulle n'a rien à chercher.",
         docEn: "Number of Griffin-Lim passes. Only acts when the phase is searched by Griffin-Lim; PGHI does not iterate, and a zero phase has nothing to search." },
       { nom: "Graine", nomEn: "Seed", graine: true, type: "curseur", plage: [0, 999999], pas: 1, defaut: 0,
-        doc: "Fixe le hasard de l'extraction et de la dispersion. Deux exécutions de même graine rendent le même son.",
-        docEn: "Fixes the randomness of extraction and spread. Two runs with the same seed return the same sound." },
+        doc: "Fixe le hasard de l'extraction et de la dispersion. Deux exécutions de même graine rendent le même son. Sans effet quand « Extraction » ne vaut pas « Aléatoire » et que « Dispersion » est à zéro : rien n'est alors tiré.",
+        docEn: "Fixes the randomness of extraction and spread. Two runs with the same seed return the same sound. No effect when « Extraction » is not « Random » and « Spread » is at zero: nothing is then drawn." },
     ],
     async executer(ctx) {
       const en = langueCourante() === "en";

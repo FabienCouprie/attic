@@ -216,8 +216,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Fréquence du premier degré. En hertz et non en note, parce que ces gammes ne se posent pas sur un clavier.",
         docEn: "Frequency of the first degree. In hertz and not as a note, because these scales do not sit on a keyboard." },
       { nom: "Tolérance", nomEn: "Tolerance", type: "curseur", plage: [1, 50], pas: 1, defaut: 20, unite: "cents",
-        doc: "Écart au demi-ton tempéré au-delà duquel un degré est déclaré injouable sur un clavier. Vingt cents est à peu près ce qu'une oreille exercée entend comme faux.",
-        docEn: "Deviation from the tempered semitone beyond which a degree is declared unplayable on a keyboard. Twenty cents is about what a trained ear hears as out of tune." },
+        doc: "Écart au demi-ton tempéré au-delà duquel un degré est déclaré injouable sur un clavier. Vingt cents est à peu près ce qu'une oreille exercée entend comme faux. Sans effet sur une « Gamme » dont chaque degré tombe sur un demi-ton tempéré, comme le maqam Hijaz : il n'y a alors aucun écart à juger.",
+        docEn: "Deviation from the tempered semitone beyond which a degree is declared unplayable on a keyboard. Twenty cents is about what a trained ear hears as out of tune. Without effect on a « Scale » whose every degree falls on a tempered semitone, such as Maqam Hijaz: there is then no deviation to judge." },
     ],
     async executer(ctx) {
       const en = langueCourante() === "en";

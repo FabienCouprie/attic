@@ -92,8 +92,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Quantification", nomEn: "Quantization", type: "choix",
         options: ["Double-croche", "Croche", "Noire"], optionsEn: ["Sixteenth", "Eighth", "Quarter"],
         optionIds: ["16", "8", "4"], defaut: "Double-croche", defautEn: "Sixteenth",
-        doc: "Plus petite valeur écrite. Une note jouée entre deux cases est ramenée sur la grille : c'est ce qui rend la partition lisible, et ce qui lui fait perdre le détail de l'interprétation.",
-        docEn: "Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance." },
+        doc: "Plus petite valeur écrite. Une note jouée entre deux cases est ramenée sur la grille : c'est ce qui rend la partition lisible, et ce qui lui fait perdre le détail de l'interprétation. Sans effet sous une « Métrique » en seizièmes, de 5/16 à 15/16 : la grille y descend déjà à la double croche, la valeur la plus fine offerte ici.",
+        docEn: "Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance. No effect under a « Time signature » in sixteenths, from 5/16 to 15/16: the grid there already goes down to the sixteenth, the finest value offered here." },
     ],
     async executer(ctx) {
       const fichier = ctx.entree(0);

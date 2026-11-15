@@ -26,9 +26,10 @@
 
 import type { ParametreDef } from "../core/types";
 import { valeurCanoniqueChoix } from "../i18n";
-import { empreinteValeurs, entreesDEssai, lancerFiche, sonDEssai, valeursDEssai, type FicheLancable, type Reglages } from "./lancer-fiche";
+import { empreinteValeurs, entreesDEssai, lancerFiche, valeursDEssai, type FicheLancable, type Reglages } from "./lancer-fiche";
 import { notesVersFichierMidi } from "./midi-ecriture";
-import { etiqueter } from "./multicanal";
+import { BASES_PROPRES } from "./croisement-bases";
+import { DEUX_NOTES, ENTREES_PROPRES, notesDesAccords, sonSecond } from "./croisement-entrees";
 
 /**
  * Des entrées assez riches pour qu'un réglage puisse agir : des accords dans le MIDI, des accords
@@ -65,10 +66,7 @@ export function entreesRiches(fiche: FicheLancable, o: { facultatifs?: boolean }
     // donc `sonSecond`.
     if (p.type === "audio") return audios++ === 0 ? communes[i] : sonSecond();
     if (p.type === "cercle") return CERCLE_D_ESSAI;
-    if (p.type === "midi") {
-      const deux = [{ note: 72, velocite: 90, debut: 4, fin: 4.45, canal: 0 }, { note: 74, velocite: 90, debut: 4.5, fin: 4.95, canal: 0 }];
-      return notesVersFichierMidi([...notesDesAccords(), ...deux], 120, 0);
-    }
+    if (p.type === "midi") return notesVersFichierMidi([...notesDesAccords(), ...DEUX_NOTES], 120, 0);
     if (p.type === "texte" && p.sousType === "abc") {
       return `X:1\nT:Essai\nM:4/4\nL:1/8\nQ:1/4=120\nK:G\n"G"GABG DGBG|"C"cBcd "G"efge|"D"dcBA GFGA|"G"BGAF "D"G4|]`;
     }
@@ -87,79 +85,30 @@ const CERCLE_D_ESSAI = {
   sommets: [{ position: 0, valeur: 36 }, { position: 3, valeur: 38 }, { position: 6, valeur: 36 }],
 };
 
-/** Quatre accords d'une seconde : do, fa majeur septième, sol septième, la mineur. */
-const ACCORDS_D_ESSAI = [[60, 64, 67], [65, 69, 72, 76], [67, 71, 74, 77], [57, 60, 64]];
-const notesDesAccords = () =>
-  ACCORDS_D_ESSAI.flatMap((a, k) => a.map((note) => ({ note, velocite: 96, debut: k, fin: k + 0.95, canal: 0 })));
-
-/**
- * Le son d'un port audio après le premier, autre que le son d'essai en chacun de ses traits : plus
- * faible, mono et non large, sur 330 et 1 320 Hz et non 220, avec une frappe par demi-seconde qui
- * lui donne une autre crête.
- */
-function sonSecond(): AudioBuffer {
-  const ref = sonDEssai();
-  const sr = ref.sampleRate;
-  const b = new AudioBuffer({ numberOfChannels: 2, length: ref.length, sampleRate: sr });
-  for (let c = 0; c < 2; c++) {
-    const d = b.getChannelData(c);
-    for (let i = 0; i < d.length; i++) {
-      const t = i / sr;
-      d[i] = 0.1 * Math.sin(2 * Math.PI * 330 * t) + 0.03 * Math.sin(2 * Math.PI * 1320 * t)
-        + 0.25 * Math.exp(-(t % 0.5) / 0.004) * Math.sin(2 * Math.PI * 2000 * t);
-    }
-  }
-  return b;
-}
-
-/** Un champ ambisonique d'ordre un, déclaré comme tel : quatre canaux du son d'essai, pondérés. */
-function champAmbisonique(): AudioBuffer {
-  const son = sonDEssai(1);
-  const b = new AudioBuffer({ numberOfChannels: 4, length: son.length, sampleRate: son.sampleRate });
-  const source = son.getChannelData(0);
-  [1, 0.5, 0.25, 0.7].forEach((gain, c) => b.getChannelData(c).set(source.map((x) => x * gain)));
-  return etiqueter(b, "foa");
-}
-
-/**
- * Les ports d'une fiche que l'entrée commune ne sait pas nourrir, avec la raison.
- *
- * UNE ENTRÉE QUE LE NŒUD REFUSE NE MESURE RIEN : la première passe a vu chaque lancer de ces fiches
- * rendu en erreur, et leurs réglages n'ont donc pas été éprouvés du tout.
- */
-const ENTREES_PROPRES: Record<string, Record<string, { valeur: () => unknown; raison: string }>> = {
-  musicxml: {
-    Arbre: { valeur: () => undefined, raison: "un arbre rythmique s'écrit dans sa syntaxe ; une phrase quelconque n'en est pas un, et le nœud la refusait" },
-  },
-  "decodeur-ambisonique": {
-    Champ: { valeur: champAmbisonique, raison: "le décodeur refuse un son qui n'est pas étiqueté comme un champ ambisonique" },
-  },
-  // Ce que rend « Analyse harmonique », sauf la tonalité, saisie sans mode : un mode nommé l'emporte
-  // sur la « Gamme », que la passe doit pouvoir voir agir.
-  "accords-vers-notation": {
-    Tonalité: { valeur: () => "A", raison: "une tonique seule, sans quoi la Gamme ne servirait pas" },
-    Progression: { valeur: () => "i VI III VII", raison: "le port lit des chiffres romains, et refuse une phrase" },
-    "Accords détectés": { valeur: () => ["0:00 Am (2 s)", "0:02 F (2 s)", "0:04 C (1 s)", "0:05 G (3 s)"].join(String.fromCharCode(10)), raison: "une phrase quelconque n'a aucun accord exploitable" },
-  },
-  "melodie-sur-accords": {
-    Accords: { valeur: () => ({ notes: notesDesAccords(), tempo: 120 }), raison: "la séquence commune n'a que des notes seules, où aucun accord ne se reconnaît" },
-  },
-  // Les voicings lisent la séquence avant le MIDI : les accords d'essai viennent donc du MIDI.
-  "voicings-accords": {
-    Séquence: { valeur: () => undefined, raison: "la séquence passe devant le MIDI, et la commune n'a que des notes seules, qui ne se renversent pas" },
-  },
-};
-
 /**
  * Les valeurs d'essai d'un réglage, une durée bornée à deux fois sa base.
  *
  * LE MÉTRONOME A PRIS UNE HEURE CINQUANTE À LA PREMIÈRE PASSE, sur 3 h 28 en tout : sa « Durée »
  * s'éprouvait à soixante secondes sous chacune des trente métriques. Une durée qui agit se voit
  * aussi bien entre sa base et le double.
+ *
+ * DEUX AUTRES PIÈGES, relevés au lot 3d-2. UN TOUR COMPLET N'A QU'UNE DIRECTION À SES DEUX BORNES :
+ * −180° et 180° sont le même azimut, et le spatialiseur en stéréo rendait les deux au centre comme
+ * son défaut, 0° ; la borne basse cède sa place. UNE BASE PROPRE N'EST PAS UNE VALEUR D'ESSAI :
+ * `valeursDEssai` n'écarte que le défaut déclaré, et un réglage que `BASES_PROPRES` déplace se serait
+ * essayé à sa propre base, et aurait paru inerte ; son défaut déclaré devient sa dernière valeur
+ * d'essai, ce qui en laisse une à un choix de deux valeurs.
  */
-function essaisDe(s: ParametreDef, base: Reglages): (string | number)[] {
-  const essais = valeursDEssai(s);
-  if (!estDuree(s)) return essais;
+export function essaisDe(s: ParametreDef, base: Reglages): (string | number)[] {
+  const pd = s as ParametreDef & { unite?: string; plage?: [number, number]; defaut?: string | number };
+  let essais = valeursDEssai(s);
+  if (pd.unite === "°" && pd.plage && pd.plage[1] - pd.plage[0] === 360) essais = essais.filter((v) => v !== pd.plage![0]);
+  if (!estDuree(s)) {
+    if (!(s.nom in base) || essais.length === 0 || pd.defaut === undefined) return essais;
+    const lu = (v: string | number) => String(s.type === "choix" ? valeurCanoniqueChoix(s, v) : v);
+    const tous = [...essais, s.type === "choix" ? lu(pd.defaut) : pd.defaut];
+    return tous.filter((v, i) => lu(v) !== lu(base[s.nom]) && tous.findIndex((w) => lu(w) === lu(v)) === i);
+  }
   const plafond = Math.max(2 * Number(base[s.nom] ?? 1), 1);
   const bornes = essais.map((v) => Math.min(Number(v), plafond));
   return [...new Set(bornes)].filter((v) => v !== base[s.nom]);
@@ -192,6 +141,8 @@ export interface RapportCroisement {
   defauts?: Record<string, string>;
   /** Les réglages vus agir, sous quelle valeur de quel gouverneur : ce qui dément une condition. */
   agissants?: { reglage: string; gouverneur: string; valeur: string }[];
+  /** Les ports d'entrée que la passe laisse libres : la condition `{ port }` s'y lit. */
+  portsLibres?: string[];
 }
 
 /** Chaque lancer a rendu des sorties toutes vides : le nœud seul ne rend rien (`entreesRiches`). */
@@ -209,7 +160,10 @@ const estDuree = (p: ParametreDef) => {
   return pd.unite === "s" && Array.isArray(pd.plage);
 };
 
-/** Les réglages de base de la passe : les défauts, sauf les durées, bornées à `secondes`. */
+/**
+ * Les réglages de base de la passe : les défauts, sauf les durées, bornées à `secondes`, et les
+ * réglages propres à la fiche (`BASES_PROPRES`), là où ses défauts ne donnent prise à aucun réglage.
+ */
 export function reglagesDeBase(fiche: FicheLancable, secondes = SECONDES_DE_BASE): Reglages {
   const base: Reglages = {};
   for (const p of fiche.parametres) {
@@ -217,7 +171,7 @@ export function reglagesDeBase(fiche: FicheLancable, secondes = SECONDES_DE_BASE
     const pd = p as ParametreDef & { plage: [number, number]; defaut?: number };
     base[p.nom] = Math.min(Number(pd.defaut ?? secondes), Math.max(pd.plage[0], secondes));
   }
-  return base;
+  return { ...base, ...BASES_PROPRES[fiche.id]?.reglages };
 }
 
 /** Un lancer borné dans le temps, rendu en empreinte de ses sorties ou en raison d'échec. */
@@ -259,6 +213,7 @@ export async function croiserFiche(
     if (brut === undefined) continue;
     rapport.defauts![p.nom] = String(p.type === "choix" ? valeurCanoniqueChoix(p, brut) : brut);
   }
+  rapport.portsLibres = (fiche.entrees ?? []).flatMap((e, i) => (o.entrees?.[i] == null ? [e.nom ?? `in:${i}`] : []));
   const essaisMax = o.essaisMax ?? 2;
   const lancer = async (reglages: Reglages) => {
     rapport.lancers++;

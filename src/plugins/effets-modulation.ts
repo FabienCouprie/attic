@@ -94,17 +94,17 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fréquence", nomEn: "Rate", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 5, unite: "Hz",
         doc: "Fréquence de la modulation (vibrations par seconde). Une courbe branchée sur l'entrée Modulation fréquence prend la main : le trémolo qui s'accélère ou se calme.", docEn: "Modulation rate (vibrations per second). A curve connected to the Rate modulation input takes over: the tremolo that speeds up or settles." },
       { nom: "Fréquence min", nomEn: "Rate min", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 1, unite: "Hz",
-        doc: "Fréquence que vaut le zéro d'une courbe branchée sur l'entrée Modulation fréquence. La course se parcourt en multipliant : de 1 à 16 Hz, le milieu de la courbe vaut 4 Hz, et chaque octave dure autant.",
-        docEn: "Rate that a curve's zero means on the Rate modulation input. The travel is multiplicative: from 1 to 16 Hz, the middle of the curve is 4 Hz, and every octave lasts as long." },
+        doc: "Fréquence que vaut le zéro d'une courbe branchée sur l'entrée Modulation fréquence. La course se parcourt en multipliant : de 1 à 16 Hz, le milieu de la courbe vaut 4 Hz, et chaque octave dure autant. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Rate that a curve's zero means on the Rate modulation input. The travel is multiplicative: from 1 to 16 Hz, the middle of the curve is 4 Hz, and every octave lasts as long. With no curve, this setting does nothing." },
       { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.1, 20], pas: 0.1, defaut: 10, unite: "Hz",
-        doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
+        doc: "Fréquence que vaut le un de la courbe. Sans courbe, ce réglage ne sert pas.", docEn: "Rate that the curve's one means. With no curve, this setting does nothing." },
       { nom: "Profondeur", nomEn: "Depth", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Intensité de la modulation (0% = aucun effet, 100% = volume coupé complètement). Une courbe branchée sur l'entrée Modulation prend la main : c'est ainsi qu'on obtient le trémolo dont la profondeur suit une suite logistique, sans qu'il faille un composant séparé pour cela.", docEn: "Modulation depth (0% = no effect, 100% = volume fully cut). A curve connected to the Modulation input takes over: that is how one gets a tremolo whose depth follows a logistic sequence, without needing a separate node for it." },
       { nom: "Modulation min", nomEn: "Modulation min", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 0, unite: "%",
         doc: "Profondeur que vaut le zéro d'une courbe branchée. Sans courbe, ce réglage ne sert pas.",
         docEn: "Depth that a connected curve's zero means. With no curve, this setting does nothing." },
       { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Profondeur que vaut le un de la courbe.", docEn: "Depth that the curve's one means." },
+        doc: "Profondeur que vaut le un de la courbe. Sans courbe, ce réglage ne sert pas.", docEn: "Depth that the curve's one means. With no curve, this setting does nothing." },
       // SES IDENTIFIANTS ÉTAIENT SES LIBELLÉS FRANÇAIS CAPITALISÉS, dont « Sawtooth », qui n'est
       // pas un mot français et qui était pourtant offert en français. Ils sont canoniques
       // désormais, et les anciens restent lus.

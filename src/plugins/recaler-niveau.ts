@@ -45,8 +45,8 @@ export const fiches: FicheAudio[] = ([
         docEn: "Reduce the gain if the resulting peak would exceed the ceiling. The target level is then not reached, and the message says so." },
       { nom: "Plafond", nomEn: "Ceiling", type: "curseur",
         plage: [-12, 0], pas: 0.1, defaut: -1, unite: "dBFS",
-        doc: "Crête maximale tolérée en sortie, quand le plafonnement est actif.",
-        docEn: "Maximum peak tolerated on the output, when capping is active." },
+        doc: "Crête maximale tolérée en sortie. Sans effet quand « Plafonner la crête » vaut « Non ».",
+        docEn: "Maximum peak tolerated on the output. Without effect when « Cap the peak » is « No »." },
     ],
     async executer(ctx) {
       const anglais = en();

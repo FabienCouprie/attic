@@ -82,13 +82,13 @@ The « Circle » output carries the positions and their pitches, with no duratio
         optionsEn: ["One position per degree", "Twelve semitones"],
         optionIds: ["degre", "chromatique"],
         defaut: "Un degré par place", defautEn: "One position per degree",
-        doc: "Ce que vaut un tour. Les douze demi-tons dessinent la forme de la gamme, et ne valent que pour une gamme comptée en demi-tons.",
-        docEn: "What a turn is worth. Twelve semitones draws the shape of the scale, and only holds for a scale counted in semitones." },
+        doc: "Ce que vaut un tour. Les douze demi-tons dessinent la forme de la gamme, et ne valent que pour une gamme comptée en demi-tons. Sans effet quand « Gamme » est comptée en cents, qui revient à un degré par place, ou vaut « Chromatique », dont les douze degrés occupent déjà les douze places.",
+        docEn: "What a turn is worth. Twelve semitones draws the shape of the scale, and only holds for a scale counted in semitones. No effect when « Scale » is counted in cents, which falls back to one position per degree, or is « Chromatic », whose twelve degrees already fill the twelve positions." },
       { nom: "Octave de fermeture", nomEn: "Closing octave", type: "choix",
         ...choixOuiNon("non"),
         defaut: "Non", defautEn: "No",
-        doc: "Garder le degré qui atteint l'octave. À garder pour le gamelan, dont l'octave est étirée.",
-        docEn: "Keep the degree that reaches the octave. Keep it for the gamelan, whose octave is stretched." },
+        doc: "Garder le degré qui atteint l'octave. À garder pour le gamelan, dont l'octave est étirée. Sans effet quand « Gamme » est comptée en demi-tons : aucune n'atteint l'octave.",
+        docEn: "Keep the degree that reaches the octave. Keep it for the gamelan, whose octave is stretched. No effect when « Scale » is counted in semitones: none of them reaches the octave." },
     ],
     async executer(ctx) {
       const id = ctx.paramTexte("Gamme", GAMMES_REUNIES[0].id);

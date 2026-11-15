@@ -19,8 +19,9 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import type { ParametreDef } from "../core/types";
 import { registre } from "../audio/adaptateur";
-import { croiserFiche, entreesRiches, rienRenduSeul, type RapportCroisement } from "../audio/croisement-reglages";
-import { confronter, releveEnTexte } from "../audio/croisement-registre";
+import { croiserFiche, entreesRiches, essaisDe, rienRenduSeul, type RapportCroisement } from "../audio/croisement-reglages";
+import { conditionsDesBornes, conditionsSimples, confronter, releveEnTexte, type ConditionInertie } from "../audio/croisement-registre";
+import { BASES_PROPRES } from "../audio/croisement-bases";
 import {
   COINCIDENCES_A_EXAMINER, COINCIDENCES_DECLAREES, INERTIES_A_EXAMINER, INERTIES_CONDITIONNEES, INERTIES_DECLAREES,
 } from "../audio/croisement-inscriptions";
@@ -43,9 +44,13 @@ const FIN = String.fromCharCode(10);
  *
  * PUIS DE 206 À 184 AU LOT 3d : vingt-deux inscriptions de douze réglages remplacées par une
  * déclaration chacun, sous sa vraie condition (`INERTIES_CONDITIONNEES`).
+ *
+ * PUIS À ZÉRO AU LOT 3d-2 : chaque ligne restante lue dans le code, sondée, et déclarée sous sa
+ * vraie condition, déclarée non mesurable au banc, ou défaite par une entrée qui donne prise. Le
+ * plafond reste, à zéro : une inertie neuve se répare ou se déclare.
  */
-const PLAFOND_INERTIES = 184;
-const PLAFOND_COINCIDENCES = 37;
+const PLAFOND_INERTIES = 0;
+const PLAFOND_COINCIDENCES = 0;
 
 /** Une fiche d'essai : un réglage à nomenclature « Mode » et un réglage numérique « Gain ». */
 function ficheDEssai(): FicheLancable {
@@ -200,21 +205,110 @@ describe("la confrontation aux inscriptions", () => {
   });
 
   it("chaque inertie conditionnée porte sa raison, nomme ce qui existe, et sa documentation nomme sa condition", () => {
+    // LA CASSE NE COMPTE PAS : « sans effet quand la gamme… » nomme la « Gamme » aussi bien. Le relevé
+    // du lot 3d-2 a trouvé six documentations qui disaient leur condition en minuscules.
+    const nomme = (doc: string | undefined, nom: string) => (doc ?? "").toLocaleLowerCase().includes(nom.toLocaleLowerCase());
     const fautes: string[] = [];
     for (const c of INERTIES_CONDITIONNEES) {
       if (c.raison.trim().length < 30) fautes.push(`${c.ou} : raison trop courte`);
       const [id, nom] = c.ou.split("·");
-      const params = (registre.trouverDef(id)?.parametres ?? []) as (ParametreDef & { doc?: string; docEn?: string })[];
+      const fiche = registre.trouverDef(id);
+      const params = (fiche?.parametres ?? []) as (ParametreDef & { doc?: string; docEn?: string })[];
       const p = params.find((x) => x.nom === nom);
       if (!p) { fautes.push(`${c.ou} : réglage introuvable`); continue; }
-      if ("banc" in c.quand) continue;
-      const nomCondition = c.quand.reglage;
-      const r = params.find((x) => x.nom === nomCondition);
-      if (!r) { fautes.push(`${c.ou} : la condition nomme « ${nomCondition} », introuvable`); continue; }
-      if (!(p.doc ?? "").includes(r.nom)) fautes.push(`${c.ou} : sa documentation ne nomme pas « ${r.nom} »`);
-      if (!(p.docEn ?? "").includes(r.nomEn ?? r.nom)) fautes.push(`${c.ou} : sa documentation anglaise ne nomme pas « ${r.nomEn ?? r.nom} »`);
+      for (const s of conditionsSimples(c.quand)) {
+        if ("banc" in s) continue;
+        const cible = "port" in s
+          ? (fiche?.entrees ?? []).find((e) => e.nom === s.port)
+          : params.find((x) => x.nom === s.reglage);
+        const dit = "port" in s ? s.port : s.reglage;
+        if (!cible) { fautes.push(`${c.ou} : la condition nomme « ${dit} », introuvable`); continue; }
+        const nomEn = (cible as { nomEn?: string }).nomEn ?? cible.nom ?? dit;
+        if (!nomme(p.doc, cible.nom ?? dit)) fautes.push(`${c.ou} : sa documentation ne nomme pas « ${cible.nom} »`);
+        if (!nomme(p.docEn, nomEn)) fautes.push(`${c.ou} : sa documentation anglaise ne nomme pas « ${nomEn} »`);
+      }
     }
     expect(fautes).toEqual([]);
+  });
+
+  it("CHAQUE BASE PROPRE NOMME UNE FICHE ET DES RÉGLAGES QUI EXISTENT, avec sa raison", () => {
+    const fautes: string[] = [];
+    for (const [id, { reglages, raison }] of Object.entries(BASES_PROPRES)) {
+      const params = registre.trouverDef(id)?.parametres;
+      if (!params) { fautes.push(`${id} : fiche introuvable`); continue; }
+      if (raison.trim().length < 30) fautes.push(`${id} : raison trop courte`);
+      for (const nom of Object.keys(reglages)) if (!params.some((p) => p.nom === nom)) fautes.push(`${id}·${nom} : réglage introuvable`);
+    }
+    expect(fautes).toEqual([]);
+  });
+
+  it("UNE BORNE DE MODULATION DIT QU'ELLE NE SERT PAS SANS COURBE, sur chaque fiche que la passe croise", () => {
+    // `conditionsDesBornes` les déclare toutes sous leur port libre ; la documentation le dit, comme
+    // pour toute inertie déclarée. Le gabarit de `bornesModulation` le dit pour cent effets à la fois.
+    const fautes: string[] = [];
+    let bornes = 0;
+    for (const id of perimetre().keys()) {
+      const params = (registre.trouverDef(id)?.parametres ?? []) as (ParametreDef & { doc?: string; docEn?: string })[];
+      for (const c of bornesDe(id)) {
+        bornes++;
+        const p = params.find((x) => x.nom === c.ou.split("·")[1]);
+        if (!/sans courbe/i.test(p?.doc ?? "")) fautes.push(`${c.ou} : sa documentation ne dit pas « sans courbe »`);
+        if (!/with no curve/i.test(p?.docEn ?? "")) fautes.push(`${c.ou} : sa documentation anglaise ne dit pas « with no curve »`);
+      }
+    }
+    expect(bornes).toBeGreaterThan(0);
+    expect(fautes).toEqual([]);
+  });
+
+  describe("LES CONDITIONS COMPOSÉES ET LES PORTS", () => {
+    const rapport = releve([["Gain", "Mode", "b"]]).map((r) => ({ ...r, defauts: { Mode: "a", Filtre: "off", Niveau: "0" }, portsLibres: ["Courbe"] }));
+    const couvre = (quand: ConditionInertie) =>
+      confronter(rapport, { inerties: [], coincidences: [], conditionnees: [{ ou: "f·Gain", quand, raison: "" }] }).nonInscrites.length === 0;
+
+    it("« tous » exige chaque condition, « une » en veut une", () => {
+      expect(couvre({ tous: [{ reglage: "Filtre", valeurs: ["off"] }, { reglage: "Niveau", valeurs: ["0"] }] })).toBe(true);
+      expect(couvre({ tous: [{ reglage: "Filtre", valeurs: ["off"] }, { reglage: "Niveau", valeurs: ["1"] }] })).toBe(false);
+      expect(couvre({ une: [{ reglage: "Filtre", valeurs: ["on"] }, { reglage: "Niveau", valeurs: ["0"] }] })).toBe(true);
+      expect(couvre({ une: [{ reglage: "Filtre", valeurs: ["on"] }, { reglage: "Niveau", valeurs: ["1"] }] })).toBe(false);
+    });
+
+    it("un port se lit libre ou branché, tel que la passe l'a laissé", () => {
+      expect(couvre({ port: "Courbe" })).toBe(true);
+      expect(couvre({ port: "Audio" })).toBe(false);
+    });
+  });
+
+  it("UNE BORNE DE MODULATION SE DÉCLARE SOUS SON PORT LIBRE, et le réglage qu'elle module n'est pas une borne", () => {
+    const fiche = {
+      id: "f",
+      parametres: [{ nom: "Mix" }, { nom: "Mix min", modulationDe: "Mix" }, { nom: "Mix max", modulationDe: "Mix" }, { nom: "Orpheline", modulationDe: "Rien" }],
+      entrees: [{ nom: "Audio" }, { nom: "Modulation", module: "Mix" }],
+    };
+    expect(conditionsDesBornes(fiche).map((c) => `${c.ou} ⇐ ${JSON.stringify(c.quand)}`))
+      .toEqual(['f·Mix min ⇐ {"port":"Modulation"}', 'f·Mix max ⇐ {"port":"Modulation"}']);
+    const libre = releve([["Mix min", "Mode", "a"]]).map((r) => ({ ...r, portsLibres: ["Modulation"] }));
+    expect(confronter(libre, { inerties: [], coincidences: [], conditionnees: conditionsDesBornes(fiche) }).nonInscrites).toEqual([]);
+    // Une borne qui agit port libre dément sa déclaration : c'est ce qui la ferait voir.
+    const agit = releve([]).map((r) => ({ ...r, portsLibres: ["Modulation"], agissants: [{ reglage: "Mix max", gouverneur: "Mode", valeur: "a" }] }));
+    expect(confronter(agit, { inerties: [], coincidences: [], conditionnees: conditionsDesBornes(fiche) }).perimees).toHaveLength(1);
+  });
+
+  describe("LES VALEURS D'ESSAI D'UN RÉGLAGE QUE LA PASSE DÉPLACE", () => {
+    const choix = { nom: "Source", type: "choix", options: ["Liste", "Tirage"], optionIds: ["liste", "tirage"], defaut: "Liste" } as ParametreDef;
+    const nombre = { nom: "Numéro", plage: [0, 30], pas: 1, defaut: 0 } as ParametreDef;
+
+    it("UNE BASE PROPRE N'EST PAS ESSAYÉE, et le défaut déclaré l'est à sa place, en dernier", () => {
+      expect(essaisDe(choix, {})).toEqual(["tirage"]);
+      expect(essaisDe(choix, { Source: "tirage" })).toEqual(["liste"]);
+      expect(essaisDe(nombre, {})).toEqual([30, 10, 15]);
+      expect(essaisDe(nombre, { Numéro: 10 })).toEqual([30, 15, 0]);
+    });
+
+    it("UN TOUR COMPLET N'ESSAIE PAS DEUX FOIS LA MÊME DIRECTION", () => {
+      const azimut = { nom: "Azimut", type: "curseur", plage: [-180, 180], pas: 1, defaut: 0, unite: "°" } as ParametreDef;
+      expect(essaisDe(azimut, {})).toEqual([180, -60]);
+      expect(essaisDe({ ...azimut, plage: [-90, 90] } as ParametreDef, {})).toEqual([90, -90, -30]);
+    });
   });
 
   it("une fiche que la passe n'a pas lancée n'est pas jugée", () => {
@@ -283,6 +377,12 @@ export const FICHES_HORS_DU_BANC: Record<string, string> = {
   "pca-neuronale": "l'apprentissage s'arrête sur un budget lu à l'horloge (`Date.now()`) : le nombre d'époques faites dépend de la charge de la machine, et une inertie relevée un jour ne l'est pas le lendemain",
 };
 
+/** Les bornes de modulation d'une fiche, déclarées sous leur port libre (`conditionsDesBornes`). */
+function bornesDe(id: string) {
+  const f = registre.trouverDef(id);
+  return f ? conditionsDesBornes({ id, parametres: f.parametres, entrees: f.entrees }) : [];
+}
+
 /** Le périmètre de la passe : chaque fiche et ses réglages à nomenclature, sans doublon. */
 function perimetre(): Map<string, { reglage: string; ids: string[]; domaines: string[] }[]> {
   const parFiche = new Map<string, { reglage: string; ids: string[]; domaines: string[] }[]>();
@@ -328,7 +428,7 @@ describe.runIf(process.env.BANC_CROISEMENT === "1")("la passe de croisement sur 
     const { nonInscrites, perimees } = confronter(rapports, {
       inerties: [...INERTIES_DECLAREES, ...INERTIES_A_EXAMINER],
       coincidences: [...COINCIDENCES_DECLAREES, ...COINCIDENCES_A_EXAMINER],
-      conditionnees: INERTIES_CONDITIONNEES,
+      conditionnees: [...INERTIES_CONDITIONNEES, ...rapports.flatMap((r) => bornesDe(r.fiche))],
     });
     expect(nonInscrites, "déclarer l'inertie dans la documentation du réglage et dans `INERTIES_DECLAREES`, ou réparer le nœud").toEqual([]);
     expect(perimees, "ces inscriptions ne sont plus vraies : retirer leur ligne").toEqual([]);

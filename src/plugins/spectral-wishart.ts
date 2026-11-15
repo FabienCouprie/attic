@@ -185,8 +185,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Proportion que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe branchée, ce réglage n'agit pas.",
         docEn: "Proportion that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect." },
       { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Proportion que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours.",
-        docEn: "Proportion that the curve's one means. A value below Modulation min reverses the direction of travel." },
+        doc: "Proportion que vaut le un de la courbe. Une valeur inférieure à Modulation min inverse le sens du parcours. Sans courbe, ce réglage ne sert pas.",
+        docEn: "Proportion that the curve's one means. A value below Modulation min reverses the direction of travel. With no curve, this setting does nothing." },
     ],
     async executer(ctx) {
       const e = entreeAudio(ctx, 0);

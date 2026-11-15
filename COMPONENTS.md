@@ -573,8 +573,8 @@ Generates Per Nørgård's infinity series, discovered in 1959 and the entire mat
 | Voices | number | 1 | 1 – 3, step 1 | Superimposes the sequence taken every term, every two and every four. This is not an effect: at stride 4 the sequence comes back identical to itself, so the slow voice is the same melody and the counterpoint holds by itself. It is the procedure of the Second Symphony. |
 | Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The note the sequence starts from, its first term always being zero. |
 | Octave | number | 4 | 2 – 6, step 1 | Octave of the tonic. |
-| Reading | choice | Semitones | Semitones / Scale degrees | In semitones the sequence unfolds chromatically and leaves any key behind: that is Nørgård's reading. In degrees each integer counts a scale step and the result stays tonal, same structure, quite another character. |
-| Scale | choice | Major | Major / Minor / Pentatonic / Chromatic / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The scale used when reading by degrees. |
+| Reading | choice | Semitones | Semitones / Scale degrees | In semitones the sequence unfolds chromatically and leaves any key behind: that is Nørgård's reading. In degrees each integer counts a scale step and the result stays tonal, same structure, quite another character. When « Scale » is « Chromatic », both readings give the same notes, each degree there being a semitone. |
+| Scale | choice | Major | Major / Minor / Pentatonic / Chromatic / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The scale used when reading by degrees. Without effect when « Reading » is « Semitones ». |
 | Note length | number | 0.25 s | 0.05 – 2 s, step 0.05 | Length of each note of the fast voice. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
@@ -805,9 +805,9 @@ Generates a sound by computing one byte per sample, from an integer formula whos
 | Duration | slider | 8 s | 0.1 – 60 s, step 0.1 | The rendered length. A formula often takes several seconds to unfold its structure, the counter having to reach the bit ranks the shifts look at. |
 | Volume | slider | 50 % | 0 – 100 %, step 1 | The output level. The eight-bit folding carries jumps of full amplitude, and the resulting sawtooth is dense. |
 | Rate min | slider | 2000 Hz | 1000 – 48000 Hz, step 100 | Value of « Rate » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Rate max | slider | 24000 Hz | 1000 – 48000 Hz, step 100 | Value of « Rate » that the curve's one means. |
+| Rate max | slider | 24000 Hz | 1000 – 48000 Hz, step 100 | Value of « Rate » that the curve's one means. With no curve, this setting does nothing. |
 | Volume min | slider | 0 % | 0 – 100 %, step 1 | Value of « Volume » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Volume max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. |
+| Volume max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Cellular automaton
 
@@ -941,12 +941,12 @@ Evolves a population of melodies toward what is asked of them, and returns the b
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Notes | number | 12 | 2 – 64, step 1 | The length of the melody, when no received sequence decides it. |
-| Gesture weight | number | 10 | 0 – 20, step 0.5 | What the resemblance to the received sequence's gesture weighs. At zero, it is not followed. |
+| Gesture weight | number | 10 | 0 – 20, step 0.5 | What the resemblance to the received sequence's gesture weighs. At zero, it is not followed. No effect when nothing arrives at the « Sequence » input. |
 | Curve weight | number | 1 | 0 – 20, step 0.5 | What following the received curve weighs. |
 | Span | number | 0 | 0 – 12, step 0.5 | The mean leap aimed at. At zero, the received sequence's is taken up; without it, the objective does not weigh. |
-| Span weight | number | 1 | 0 – 20, step 0.5 | What the aimed span weighs. |
+| Span weight | number | 1 | 0 – 20, step 0.5 | What the aimed span weighs. No effect when « Span » is at zero and nothing arrives at the « Sequence » input: there is then no leap to aim at. |
 | Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The degrees the pitches are restricted to. |
-| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. No effect when « Scale » is « Chromatic », which holds all twelve degrees. |
 | Low | number | 55 | 0 – 127, step 1 | The lowest pitch allowed. |
 | High | number | 79 | 0 – 127, step 1 | The highest pitch allowed. |
 | Population | number | 100 | 10 – 500, step 10 | How many melodies live at each generation. |
@@ -1057,9 +1057,9 @@ Plays an integer sequence by turning each term into a note, and returns the peri
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | slider | 80 % | 0 – 100 %, step 1 | The level of the audio render. The MIDI file does not depend on it. |
 | Tempo min | slider | 40 BPM | 20 – 480 BPM, step 1 | Value of « Tempo » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Tempo max | slider | 240 BPM | 20 – 480 BPM, step 1 | Value of « Tempo » that the curve's one means. |
+| Tempo max | slider | 240 BPM | 20 – 480 BPM, step 1 | Value of « Tempo » that the curve's one means. With no curve, this setting does nothing. |
 | Volume min | slider | 0 % | 0 – 100 %, step 1 | Value of « Volume » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Volume max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. |
+| Volume max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Logarithmic Spiral
 
@@ -1229,16 +1229,16 @@ Produces a rhythm written by successive divisions, and a series of pitches of th
 | Number | number | 0 | 0 – 339, step 1 | The catalogue tree returned. Beyond the last, the count starts again at the first. |
 | Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The drawn tree, in list notation. The drawing writes it here, and a tree from elsewhere can be pasted into it. Used when the source is Drawing. |
 | Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | The measure used. |
-| Measures | number | 1 | 1 – 8, step 1 | How many measures are generated in a row. No effect on the catalogue. |
-| Slots | number | 4 | 1 – 8, step 1 | The number of divisions at the top of each drawn measure. |
-| Depth | number | 1 | 0 – 3, step 1 | The division levels allowed. At zero, no division. |
+| Measures | number | 1 | 1 – 8, step 1 | How many measures are generated in a row. No effect when « Source » is not « Draw ». |
+| Slots | number | 4 | 1 – 8, step 1 | The number of divisions at the top of each drawn measure. No effect when « Source » is not « Draw ». |
+| Depth | number | 1 | 0 – 3, step 1 | The division levels allowed. At zero, no division. No effect when « Source » is not « Draw ». |
 | Divisions | text | `2 3 4` |  | The numbers of parts allowed, separated by spaces. |
-| Density | number | 35 % | 0 – 100 %, step 1 | The chance that a slot divides rather than staying a note. |
-| Rests | number | 15 % | 0 – 100 %, step 1 | The share of slots that become a rest. |
-| Ties | number | 0 % | 0 – 100 %, step 1 | The share of notes tied to the one before. |
+| Density | number | 35 % | 0 – 100 %, step 1 | The chance that a slot divides rather than staying a note. No effect when « Source » is not « Draw ». |
+| Rests | number | 15 % | 0 – 100 %, step 1 | The share of slots that become a rest. No effect when « Source » is not « Draw ». |
+| Ties | number | 0 % | 0 – 100 %, step 1 | The share of notes tied to the one before. No effect when « Source » is not « Draw ». |
 | Seed | number | 1 | 0 – 999999, step 1 | Fixes the draw. The same seed gives the same rhythm and the same pitches. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The degrees the pitches are restricted to. |
-| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. No effect when « Scale » is « Chromatic », which holds all twelve degrees. |
 | Low | number | 55 | 0 – 127, step 1 | The lowest pitch allowed. |
 | High | number | 79 | 0 – 127, step 1 | The highest pitch allowed. |
 | Maximum leap | number | 7 | 0 – 24, step 1 | The maximum interval between two consecutive notes. At zero, no restraint. |
@@ -1343,13 +1343,13 @@ Searches for a series of pitches satisfying the written rules, and returns the f
 | Rule 5 | text | — |  | A fifth rule. |
 | Rule 6 | text | — |  | A sixth rule. |
 | Scale | choice | Major | Chromatic / Major / Natural minor / Harmonic minor / Major pentatonic / Minor pentatonic / Blues / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Melodic minor / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The degrees the pitches are restricted to. |
-| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the scale. No effect when « Scale » is « Chromatic », which holds all twelve degrees. |
 | Low | number | 55 | 0 – 127, step 1 | The lowest pitch allowed. |
 | High | number | 79 | 0 – 127, step 1 | The highest pitch allowed. |
-| When nothing fits | choice | Approach | Nothing / Approach | « Approach » evolves a population with the same rules taken as cost, and returns the series that breaks the fewest. |
+| When nothing fits | choice | Approach | Nothing / Approach | « Approach » evolves a population with the same rules taken as cost, and returns the series that breaks the fewest. No effect when a series keeps every rule. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The length of a note, each being a quarter note. |
 | Seed | number | 1 | 0 – 999999, step 1 | Fixes the draw. The same seed gives the same series. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Budget | number | 200000 | 1000 – 2000000, step 1000 | The number of attempts at most before giving up. |
+| Budget | number | 200000 | 1000 – 2000000, step 1000 | The number of attempts at most before giving up. A search that concludes before it does not depend on it. |
 
 #### Spectral Harmony
 
@@ -1450,7 +1450,7 @@ This node returns pairs of tones a tritone apart, that is half an octave. After 
 | Width | slider | 1 oct | 0.3 – 3 oct, step 0.1 | The spread of the envelope, in octaves. Narrow, the tone comes down to one or two components and regains an octave; wide, they all weigh almost the same. |
 | Length | slider | 0.5 s | 0.1 – 2 s, step 0.05 | The length of one tone. |
 | Gap | slider | 0 s | 0 – 1 s, step 0.05 | The silence between the two tones of a pair. |
-| Pause | slider | 1.5 s | 0 – 4 s, step 0.1 | The silence between two pairs, for « All twelve ». It leaves time to note one's answer. |
+| Pause | slider | 1.5 s | 0 – 4 s, step 0.1 | The silence between two pairs, when « Starting class » is « All twelve ». A single pair has none, and this setting then has no effect. It leaves time to note one's answer. |
 | Volume | slider | 70 % | 0 – 100 %, step 1 | Output level. |
 
 #### VOSIM
@@ -1479,13 +1479,13 @@ Generates a sound whose spectrum carries a formant, with a train of squared-sine
 | Duration | slider | 2 s | 0.1 – 30 s, step 0.1 | The rendered length. |
 | Volume | slider | 80 % | 0 – 100 %, step 1 | The level of the first pulse of each burst. The others follow from it by the decay. |
 | Fundamental min | slider | 55 Hz | 20 – 2000 Hz, step 1 | Value of « Fundamental » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Fundamental max | slider | 880 Hz | 20 – 2000 Hz, step 1 | Value of « Fundamental » that the curve's one means. |
+| Fundamental max | slider | 880 Hz | 20 – 2000 Hz, step 1 | Value of « Fundamental » that the curve's one means. With no curve, this setting does nothing. |
 | Formant min | slider | 300 Hz | 50 – 8000 Hz, step 1 | Value of « Formant » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Formant max | slider | 4000 Hz | 50 – 8000 Hz, step 1 | Value of « Formant » that the curve's one means. |
+| Formant max | slider | 4000 Hz | 50 – 8000 Hz, step 1 | Value of « Formant » that the curve's one means. With no curve, this setting does nothing. |
 | Decay min | slider | 0 % | 0 – 100 %, step 1 | Value of « Decay » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Decay max | slider | 100 % | 0 – 100 %, step 1 | Value of « Decay » that the curve's one means. |
+| Decay max | slider | 100 % | 0 – 100 %, step 1 | Value of « Decay » that the curve's one means. With no curve, this setting does nothing. |
 | Volume min | slider | 0 % | 0 – 100 %, step 1 | Value of « Volume » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Volume max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. |
+| Volume max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Wavetable Oscillator
 
@@ -1514,11 +1514,11 @@ Reads a bank of cycles and scans it. A bank is a series of waveforms arranged in
 | Duration | slider | 1.5 s | 0.2 – 5 s, step 0.1 | Duration of the generated tone. |
 | Volume | slider | 80 % | 0 – 100 %, step 1 | Output level, after the peak has been normalised. Normalisation happens first, on the whole sound: a curve therefore does not move it, it sets what comes out of it. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Volume » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Volume » that the curve's one means. With no curve, this setting does nothing. |
 | Position min | slider | 0 % | 0 – 100 %, step 1 | Value of « Position » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Position max | slider | 100 % | 0 – 100 %, step 1 | Value of « Position » that the curve's one means. |
+| Position max | slider | 100 % | 0 – 100 %, step 1 | Value of « Position » that the curve's one means. With no curve, this setting does nothing. |
 | Frequency min | slider | 110 Hz | 20 – 4000 Hz, step 1 | Value of « Frequency » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Frequency max | slider | 880 Hz | 20 – 4000 Hz, step 1 | Value of « Frequency » that the curve's one means. |
+| Frequency max | slider | 880 Hz | 20 – 4000 Hz, step 1 | Value of « Frequency » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Write a Counterpoint
 
@@ -1785,7 +1785,7 @@ Generates a complete loop: deterministic chord progression (style or custom Roma
 | Tempo | number | 110 BPM | 40 – 240 BPM, step 1 | Speed in beats per minute. |
 | Chord duration | number | 2 beats | 1 – 8 beats, step 1 | Duration of each chord in beats (4 beats = 1 4/4 bar). |
 | Chord count | number | 8 | 2 – 32, step 1 | Total number of chords / loop length. |
-| Extension | choice | None | None / Idiomatic | Adds a diatonic seventh where the genre puts it, rather than on every chord: on the dominant only for pop, rock, classical and reggae; on every chord for jazz and blues, whose idiom it is; on the tonic and subdominant for ambient. The added note also applies to the melodic reservoir when it snaps to the chord. The former « 7th » and « 6th » settings, which coloured every chord, are read as « Idiomatic ». |
+| Extension | choice | None | None / Idiomatic | Adds a diatonic seventh where the genre puts it, rather than on every chord: on the dominant only for pop, rock, classical and reggae; on every chord for jazz and blues, whose idiom it is; on the tonic and subdominant for ambient. The added note also applies to the melodic reservoir when it snaps to the chord. The former « 7th » and « 6th » settings, which coloured every chord, are read as « Idiomatic ». The dominant is recognised by its perfect fifth above the tonic: outside jazz, blues and ambient, a « Scale » whose progression meets no perfect fifth, Locrian, altered, whole tone, diminished whole-half and chromatic, therefore receives no seventh. |
 | Rhythm style | choice | Pop dance | Rock / Four-on-the-floor / Funk / Hip-hop / Jazz / Reggae / Samba / House / Techno / Drum & Bass / Trap / Disco / Ska / Bossa Nova / Tango / Calypso / Military march / Pop ballad / Pop dance / Pop latin / Pop folk / Pop R&B / Pop punk / Afrobeat / Rumba / Flamenco / Merengue / Breakbeat / Electro / Detroit techno / Minimal / Dubstep / Moombahton / Dembow / Reggaeton / Cumbia / Bachata / Blues shuffle / Gospel / Metal / Punk / Grunge / Trance / Hardstyle / Lo-fi hip hop / Boom bap / Drill / Trip hop / Amapiano / Salsa / Highlife / Baile funk / Tech house | Drum pattern applied to the loop, chosen among the Drum Machine's patterns that play in 4/4. |
 | Neurons | number | 15 | 5 – 50, step 1 | Number of neurons in the melodic reservoir. Few = short patterns; many = complex patterns. |
 | Connectivity | number | 30 % | 0 – 100 %, step 1 | Probability of connection between neurons. |
@@ -2257,7 +2257,7 @@ Produces an animation (a circle that pulses, changing size and colour) and the c
 | Hue | slider | 210 ° | 0 – 359 °, step 1 | Starting colour. Zero is red, 120 green, 240 blue. Every thirty degrees moves one position on the Camelot wheel, hence one key. |
 | Hue journey | slider | 150 ° | -720 – 720 °, step 15 | How far the colour turns over the whole duration. At zero the piece stays in one key. At 360 it goes round all twelve, and since neighbouring positions are compatible, each passage is a modulation that holds. |
 | Saturation | slider | 70 % | 0 – 100 %, step 1 | Vividness of the colour, and mode of the piece: below 50 %, the minor ring; above, the major. |
-| Lightness | slider | 55 % | 0 – 100 %, step 1 | Lightness of the colour, and register of the melody: a dark colour drops an octave, a light one rises an octave. |
+| Lightness | slider | 55 % | 0 – 100 %, step 1 | Lightness of the colour, and register of the melody and chords: a dark colour drops an octave, a light one rises an octave. On the sound, acts only when « Mode » is « Melody and chords » or « Chords only »; in Pulse and Rhythm it changes only the picture. |
 | Breathing | slider | 80 % | 0 – 100 %, step 1 | Amplitude of the size variation. At zero the circle keeps its diameter and the melody its degree: only the key still changes. At maximum the circle goes from a dot to a full disc, and the melody covers the whole scale. |
 | Irregularity | slider | 0 % | 0 – 60 %, step 1 | How far each interval between two pulses departs from the set rate, as a share of that rate. At zero, the pulses fall on an exact grid. The departure being relative, a piece that accelerates keeps the same perceived irregularity throughout. |
 | Wander | slider | 25 % | 0 – 100 %, step 1 | Share of position changes where the key leaves the set journey for another move of the wheel: the adjacent position, the same number in the other ring, or seven positions away. These are the three progressions the wheel allows, so the sequence stays one of modulations that hold. At zero, the sequence of keys depends only on « Hue » and « Hue journey », and the seed only affects the radius. Without a hue journey, no position is travelled and this setting has nothing to apply to. |
@@ -2266,13 +2266,13 @@ Produces an animation (a circle that pulses, changing size and colour) and the c
 | Beat length | slider | 120 ms | 10 – 600 ms, step 5 | The time a beat takes to die away. Acts in Pulse mode only. |
 | Percussion | choice | Kick | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The drum voice struck at each audible pulse. Acts in Rhythm mode only. |
 | Scale | choice | From the wheel | From the wheel / Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic | The scale the melody takes its degrees from. From the wheel: saturation picks major or minor. A named scale applies throughout, the position then giving only the tonic. Acts in Melody and chords mode only. |
-| Chord quality | choice | From the wheel | From the wheel / Major / Minor / Diminished / Augmented / Suspended 2nd / Suspended 4th / Dominant 7th / Major 7th / Minor 7th / Half-diminished / Diminished 7th / Minor major 7th / Sixth / Minor sixth / Dominant 7th suspended 4th / Dominant 9th / Major 9th / Minor 9th / Added 9th / Eleventh / Major 9th sharp 11th / Minor 11th / Dominant 13th / Major 13th / Minor 13th / Dominant 7th sharp 9th / Dominant 7th flat 9th / Dominant 7th flat 5th / Dominant 7th sharp 5th / Dominant 7th flat 5th flat 9th / Dominant 7th sharp 5th flat 9th / Dominant 7th flat 5th sharp 9th / Dominant 7th sharp 5th sharp 9th | The quality of the chords laid on each position. From the wheel: the major or minor triad of the ring. A named quality applies throughout, the position then giving only the root. Acts in Melody and chords mode only. |
-| Chords | choice | Held | Held / Struck / None | The tonic triad of each position travelled, an octave below the melody. Held: one chord per key, kept until the next modulation. Struck: the same chord replayed at every audible pulse. A position travelled while the circle is contracted does not sound. |
-| Chord dynamic | slider | 55 % | 0 – 100 %, step 1 | Striking force of the chords. The melody runs from 50 to 120 on the same scale: beyond those values the harmony moves in front of it. |
-| Echoes | choice | Yes | Yes / No | Let a ring open and fade at each audible stroke, over the length of the note. |
-| Size | slider | 600 px | 200 – 1200 px, step 20 | Side of the square image. |
+| Chord quality | choice | From the wheel | From the wheel / Major / Minor / Diminished / Augmented / Suspended 2nd / Suspended 4th / Dominant 7th / Major 7th / Minor 7th / Half-diminished / Diminished 7th / Minor major 7th / Sixth / Minor sixth / Dominant 7th suspended 4th / Dominant 9th / Major 9th / Minor 9th / Added 9th / Eleventh / Major 9th sharp 11th / Minor 11th / Dominant 13th / Major 13th / Minor 13th / Dominant 7th sharp 9th / Dominant 7th flat 9th / Dominant 7th flat 5th / Dominant 7th sharp 5th / Dominant 7th flat 5th flat 9th / Dominant 7th sharp 5th flat 9th / Dominant 7th flat 5th sharp 9th / Dominant 7th sharp 5th sharp 9th | The quality of the chords laid on each position. From the wheel: the major or minor triad of the ring. A named quality applies throughout, the position then giving only the root. Acts only when « Mode » is « Melody and chords » or « Chords only ». |
+| Chords | choice | Held | Held / Struck / None | The tonic triad of each position travelled, an octave below the melody. Held: one chord per key, kept until the next modulation. Struck: the same chord replayed at every audible pulse. A position travelled while the circle is contracted does not sound. Acts only when « Mode » is « Melody and chords » or « Chords only ». |
+| Chord dynamic | slider | 55 % | 0 – 100 %, step 1 | Striking force of the chords. The melody runs from 50 to 120 on the same scale: beyond those values the harmony moves in front of it. Acts only when « Mode » is « Melody and chords » or « Chords only », and « Chords » is not « None ». |
+| Echoes | choice | Yes | Yes / No | Let a ring open and fade at each audible stroke, over the length of the note. Sets only the animation shown in the node: no output depends on it. |
+| Size | slider | 600 px | 200 – 1200 px, step 20 | Side of the square image. Sets only the animation shown in the node: no output depends on it. |
 | Seed | slider | 7 | 0 – 999999, step 1 | Seed for the irregularity of the sizes. The same seed replays the same piece, picture included. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
+| Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. Without effect when « Mode » is « Pulse »: the beat there is a sine computed here. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Volume | slider | 80 % | 0 – 100 %, step 1 | Level of the rendered sound. |
 
@@ -2867,7 +2867,7 @@ Translates Harmonic Analysis output into notation playable by Text → MIDI. « 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Source | choice | Detected chords | Detected chords / Progression | « Detected chords » transcribes the actual harmony with its measured durations. « Progression » expands the suggested roman numerals, which requires the Key input. |
-| Scale | choice | major | major / minor | Scale the degrees are read in, when the Key input names no mode. « Harmonic Analysis » writes « A minor (90%) »: that mode wins, and this setting only applies to a hand-typed tonic. In minor, III, VI and VII drop a semitone. |
+| Scale | choice | major | major / minor | Scale the degrees are read in, when the Key input names no mode. « Harmonic Analysis » writes « A minor (90%) »: that mode wins, and this setting only applies to a hand-typed tonic. In minor, III, VI and VII drop a semitone. No effect when « Source » is « Detected chords », which reads no degrees. |
 | Octave | number | 3 | 1 – 6, step 1 | Octave of the root note of the generated chords. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Tempo written at the top of the notation. Also used to convert the analysis durations from seconds into beats. |
 | Duration per chord | number | 1 beats | 0.25 – 8 beats, step 0.25 | Duration given to each chord when the source provides none (Progression case). |
@@ -3345,7 +3345,7 @@ Detects brief clicks and crackles and replaces them with an interpolation of the
 | Threshold | number | 5 × | 1 – 50 ×, step 1 | Detection sensitivity (multiple of median derivative). Higher = less sensitive (only big clicks). Lower = more sensitive. |
 | Window | number | 5 ms |  | Replacement window width. |
 | Modulation min | slider | 1 × | 1 – 50 ×, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 50 × | 1 – 50 ×, step 1 | Value of « Threshold » that the curve's one means. |
+| Modulation max | slider | 50 × | 1 – 50 ×, step 1 | Value of « Threshold » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Declipper
 
@@ -3363,7 +3363,7 @@ Rebuilds the clipped peaks of a saturated sound. After Srdan Kitic, Nancy Bertin
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Threshold | choice | Automatic | Automatic / Manual | In automatic mode the threshold is guessed from plateau length: a clipped sound holds consecutive samples at the same value, where an intact sine only grazes its peak one sample at a time. With no plateau, the node says so and returns the sound unchanged. |
-| Manual threshold | slider | 0.5 | 0.05 – 1, step 0.01 | Value above which a sample counts as clipped. Only used in manual mode. |
+| Manual threshold | slider | 0.5 | 0.05 – 1, step 0.01 | Value above which a sample counts as clipped. Only used when « Threshold » is « Manual ». |
 | Window | choice | 1024 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Frame length. Long, the model has more spectral lines to account for the sound and repairs better; short, it follows a fast-changing sound better. |
 | Passes | slider | 60 | 10 – 200, step 5 | Maximum passes per frame. Sparsity loosens by one line per pass: the number of passes is therefore also the number of lines the model will eventually allow itself. Measured at 41 % clipped samples: 3.4 dB gained in ten passes, 11.2 in thirty, 15.3 in sixty. |
 | Max overshoot | slider | 2 | 1.1 – 4, step 0.1 | How many times the threshold a reconstructed sample may reach. This is not in the paper, and is stated as such: when the model no longer explains the sound, its error takes refuge in the free samples, precisely those being reconstructed, and the peak ran up to three times the threshold. The ceiling bounds the damage without changing anything when the method works: on a five-harmonic sound the reconstructed peak stays under 1.5 times the threshold. |
@@ -3513,9 +3513,9 @@ Beat Repeat / Stutter: captures a short audio segment at rhythmic intervals sync
 | Feedback | slider | 40 % | 0 – 95 %, step 1 | Attenuation of each repeat (0% = constant volume, 95% = fast decay). No effect when the « Size » is at least as long as the « Interval ». |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Dry/wet balance. No effect when the « Size » is at least as long as the « Interval », the effect then giving back the original signal. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Feedback min | slider | 0 % | 0 – 95 %, step 1 | Value of « Feedback » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Feedback max | slider | 80 % | 0 – 95 %, step 1 | Value of « Feedback » that the curve's one means. |
+| Feedback max | slider | 80 % | 0 – 95 %, step 1 | Value of « Feedback » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Bitcrusher
 
@@ -3538,9 +3538,9 @@ Simulates the low resolution of old D/A converters by reducing the bit depth (qu
 | Rate | number | 22050 Hz | 1000 – 44100 Hz, step 100 | Simulated sample rate. Lower = more broken/aliased sound. |
 | Mix | number | 100 % |  | Dry/wet balance. 100% = effect only. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Rate min | slider | 2000 Hz | 1000 – 44100 Hz, step 100 | Value of « Rate » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Rate max | slider | 22050 Hz | 1000 – 44100 Hz, step 100 | Value of « Rate » that the curve's one means. |
+| Rate max | slider | 22050 Hz | 1000 – 44100 Hz, step 100 | Value of « Rate » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Chopper
 
@@ -3589,9 +3589,9 @@ Layers slightly detuned, modulated copies of the signal to thicken and widen it 
 | Speed | number | 0.8 Hz |  | LFO modulation speed. |
 | Depth | number | 5 ms |  | Detuning depth in ms. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Depth min | slider | 0 ms | 0 – 20 ms, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Depth max | slider | 20 ms | 0 – 20 ms, step 1 | Value of « Depth » that the curve's one means. |
+| Depth max | slider | 20 ms | 0 – 20 ms, step 1 | Value of « Depth » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Distortion
 
@@ -3631,9 +3631,9 @@ Adds presence and brightness via asymmetrical harmonic distortion in the high fr
 | Frequency | number | 3000 Hz | 500 – 10000 Hz, step 100 | High-pass cutoff after distortion. |
 | Mix | number | 30 % | 0 – 100 %, step 1 | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Frequency min | slider | 2000 Hz | 1000 – 10000 Hz, step 1 | Value of « Frequency » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Frequency max | slider | 9000 Hz | 1000 – 10000 Hz, step 1 | Value of « Frequency » that the curve's one means. |
+| Frequency max | slider | 9000 Hz | 1000 – 10000 Hz, step 1 | Value of « Frequency » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Flanger
 
@@ -3656,9 +3656,9 @@ Modulates a short variable delay to produce the characteristic jet-plane sweep. 
 | Speed | number | 0.5 Hz |  | LFO modulation speed. |
 | Depth | number | 3 ms |  | Modulation depth in ms. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Depth min | slider | 0 ms | 0 – 10 ms, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Depth max | slider | 10 ms | 0 – 10 ms, step 1 | Value of « Depth » that the curve's one means. |
+| Depth max | slider | 10 ms | 0 – 10 ms, step 1 | Value of « Depth » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Formant Shift
 
@@ -3703,9 +3703,9 @@ All-pass filter cascade with a LFO-modulated cutoff frequency. Creates moving pe
 | Rate min | slider | 0.1 Hz | 0.05 – 10 Hz, step 0.05 | Rate that a curve's zero means on the Rate modulation input: the swirl that tightens. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
 | Rate max | slider | 4 Hz | 0.05 – 10 Hz, step 0.05 | Rate that the curve's one means. |
 | Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. |
+| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Pitch Follower
 
@@ -3759,13 +3759,13 @@ Four-band distortion. An ordinary distortion crushes the whole spectrum together
 | Mix | number | 100 % | 0 – 100 %, step 1 | Dry/wet balance. 0% returns the original signal untouched. |
 | Output | number | -6 dB | -24 – 12 dB, step 0.5 | Output gain. Saturation raises the level: this brings it back. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Crossover 1 min | slider | 80 Hz | 40 – 800 Hz, step 10 | Value of « Crossover 1 » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Crossover 1 max | slider | 500 Hz | 40 – 800 Hz, step 10 | Value of « Crossover 1 » that the curve's one means. |
+| Crossover 1 max | slider | 500 Hz | 40 – 800 Hz, step 10 | Value of « Crossover 1 » that the curve's one means. With no curve, this setting does nothing. |
 | Crossover 2 min | slider | 400 Hz | 200 – 4000 Hz, step 50 | Value of « Crossover 2 » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Crossover 2 max | slider | 2500 Hz | 200 – 4000 Hz, step 50 | Value of « Crossover 2 » that the curve's one means. |
+| Crossover 2 max | slider | 2500 Hz | 200 – 4000 Hz, step 50 | Value of « Crossover 2 » that the curve's one means. With no curve, this setting does nothing. |
 | Crossover 3 min | slider | 2000 Hz | 1000 – 12000 Hz, step 100 | Value of « Crossover 3 » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Crossover 3 max | slider | 9000 Hz | 1000 – 12000 Hz, step 100 | Value of « Crossover 3 » that the curve's one means. |
+| Crossover 3 max | slider | 9000 Hz | 1000 – 12000 Hz, step 100 | Value of « Crossover 3 » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Ring Modulator
 
@@ -3787,9 +3787,9 @@ Multiplies the signal by a sine wave (carrier), producing sidebands, the sum and
 | Frequency | number | 200 Hz | 1 – 8000 Hz, step 1 | Carrier frequency. Produces sum and difference frequencies (sidebands). |
 | Mix | number | 100 % |  | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Frequency min | slider | 50 Hz | 1 – 8000 Hz, step 1 | Value of « Frequency » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Frequency max | slider | 2000 Hz | 1 – 8000 Hz, step 1 | Value of « Frequency » that the curve's one means. |
+| Frequency max | slider | 2000 Hz | 1 – 8000 Hz, step 1 | Value of « Frequency » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Tape Machine
 
@@ -3833,11 +3833,11 @@ Amplitude modulation: varies the volume periodically. Settings: • the rate (vi
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Rate | slider | 5 Hz | 0.1 – 20 Hz, step 0.1 | Modulation rate (vibrations per second). A curve connected to the Rate modulation input takes over: the tremolo that speeds up or settles. |
-| Rate min | slider | 1 Hz | 0.1 – 20 Hz, step 0.1 | Rate that a curve's zero means on the Rate modulation input. The travel is multiplicative: from 1 to 16 Hz, the middle of the curve is 4 Hz, and every octave lasts as long. |
-| Rate max | slider | 10 Hz | 0.1 – 20 Hz, step 0.1 | Rate that the curve's one means. |
+| Rate min | slider | 1 Hz | 0.1 – 20 Hz, step 0.1 | Rate that a curve's zero means on the Rate modulation input. The travel is multiplicative: from 1 to 16 Hz, the middle of the curve is 4 Hz, and every octave lasts as long. With no curve, this setting does nothing. |
+| Rate max | slider | 10 Hz | 0.1 – 20 Hz, step 0.1 | Rate that the curve's one means. With no curve, this setting does nothing. |
 | Depth | slider | 50 % | 0 – 100 %, step 1 | Modulation depth (0% = no effect, 100% = volume fully cut). A curve connected to the Modulation input takes over: that is how one gets a tremolo whose depth follows a logistic sequence, without needing a separate node for it. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Depth that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Depth that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Depth that the curve's one means. With no curve, this setting does nothing. |
 | Shape | choice | Sine | Sine / Square / Sawtooth / Triangle | LFO waveform shape. |
 
 #### Two-Sound Convolution
@@ -3912,13 +3912,13 @@ Filterbank vocoder. Connect a voice (or any modulator) to the Modulator input an
 | Q | number | 2 | 0.5 – 12, step 0.1 | Bandpass filter quality factor. Higher = narrower bands. |
 | Mix | number | 50 % | 0 – 100 %, step 1 | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Min freq min | slider | 100 Hz | 80 – 1000 Hz, step 10 | Value of « Min freq » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Min freq max | slider | 600 Hz | 80 – 1000 Hz, step 10 | Value of « Min freq » that the curve's one means. |
+| Min freq max | slider | 600 Hz | 80 – 1000 Hz, step 10 | Value of « Min freq » that the curve's one means. With no curve, this setting does nothing. |
 | Max freq min | slider | 3000 Hz | 2000 – 16000 Hz, step 100 | Value of « Max freq » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Max freq max | slider | 12000 Hz | 2000 – 16000 Hz, step 100 | Value of « Max freq » that the curve's one means. |
+| Max freq max | slider | 12000 Hz | 2000 – 16000 Hz, step 100 | Value of « Max freq » that the curve's one means. With no curve, this setting does nothing. |
 | Q min | slider | 1 | 0.5 – 12, step 0.1 | Value of « Q » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Q max | slider | 8 | 0.5 – 12, step 0.1 | Value of « Q » that the curve's one means. |
+| Q max | slider | 8 | 0.5 – 12, step 0.1 | Value of « Q » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Voice Changer
 
@@ -3966,11 +3966,11 @@ Bandpass filter with a LFO-modulated center frequency, the classic wah-wah pedal
 | Rate min | slider | 0.5 Hz | 0.1 – 10 Hz, step 0.1 | Rate that a curve's zero means on the Rate modulation input: the pedal that runs away. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
 | Rate max | slider | 8 Hz | 0.1 – 10 Hz, step 0.1 | Rate that the curve's one means. |
 | Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. |
+| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. With no curve, this setting does nothing. |
 | Resonance min | slider | 1 Q | 0.5 – 20 Q, step 0.5 | Value of « Resonance » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Resonance max | slider | 15 Q | 0.5 – 20 Q, step 0.5 | Value of « Resonance » that the curve's one means. |
+| Resonance max | slider | 15 Q | 0.5 – 20 Q, step 0.5 | Value of « Resonance » that the curve's one means. With no curve, this setting does nothing. |
 
 ### Echo
 
@@ -4099,7 +4099,7 @@ Delays the low end more than the high end, or the other way round, without cutti
 | Feedback | slider | 0 % | 0 – 95 %, step 1 | Feeds the output back into the cascade, giving a series of echoes each more dispersed than the last: the first is still a sound, the tenth a streak. This is the addition of the 2009 paper's DAFx-09 sequel. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
 | Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Max tail | slider | 4 s | 0.5 – 20 s, step 0.5 | Bound on the tail added after the sound. This is not a comfort setting: at high dispersion the theoretical tail reaches tens of seconds, which feedback then repeats, and rendering would become endless. The bound cuts it, and that is what makes extreme settings usable. |
 | Modulation min | slider | 0.2 | 0 – 0.99, step 0.01 | Dispersion that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 0.95 | 0 – 0.99, step 0.01 | Dispersion that the curve's one means. It is also what sets the tail length when a curve is connected: the tail is measured on the strongest dispersion the render will reach. |
@@ -4128,13 +4128,13 @@ Repeats the signal with an independently adjustable left/right delay, creating a
 | Feedback | number | 40 % | 0 – 95 % | Amount of signal fed back. |
 | Mix | number | 35 % |  | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Time L min | slider | 100 ms | 10 – 2000 ms, step 1 | Value of « Time L » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Time L max | slider | 800 ms | 10 – 2000 ms, step 1 | Value of « Time L » that the curve's one means. |
+| Time L max | slider | 800 ms | 10 – 2000 ms, step 1 | Value of « Time L » that the curve's one means. With no curve, this setting does nothing. |
 | Time R min | slider | 100 ms | 10 – 2000 ms, step 1 | Value of « Time R » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Time R max | slider | 800 ms | 10 – 2000 ms, step 1 | Value of « Time R » that the curve's one means. |
+| Time R max | slider | 800 ms | 10 – 2000 ms, step 1 | Value of « Time R » that the curve's one means. With no curve, this setting does nothing. |
 | Feedback min | slider | 0 % | 0 – 95 %, step 1 | Value of « Feedback » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Feedback max | slider | 80 % | 0 – 95 %, step 1 | Value of « Feedback » that the curve's one means. |
+| Feedback max | slider | 80 % | 0 – 95 %, step 1 | Value of « Feedback » that the curve's one means. With no curve, this setting does nothing. |
 
 ### Editing
 
@@ -4299,15 +4299,15 @@ Cuts a grain out of the received sound and lays it again along a physical event 
 | Level | slider | 80 % | 0 – 100 %, step 1 | The output level. Neither the density nor the number of streams affects it, the sum being brought back to the sum of the active windows. |
 | Seed | slider | 1 | 0 – 999999, step 1 | The number of the draws: the drops' jitter, the streams' phase and the cutting place. At equal seed, the same render. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Interval min | slider | 5 ms | 1 – 1000 ms, step 1 | Value of « Interval » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Interval max | slider | 200 ms | 1 – 1000 ms, step 1 | Value of « Interval » that the curve's one means. |
+| Interval max | slider | 200 ms | 1 – 1000 ms, step 1 | Value of « Interval » that the curve's one means. With no curve, this setting does nothing. |
 | Grain size min | slider | 2 ms | 1 – 500 ms, step 1 | Value of « Grain size » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Grain size max | slider | 120 ms | 1 – 500 ms, step 1 | Value of « Grain size » that the curve's one means. |
+| Grain size max | slider | 120 ms | 1 – 500 ms, step 1 | Value of « Grain size » that the curve's one means. With no curve, this setting does nothing. |
 | Cut min | slider | 0 % | 0 – 100 %, step 1 | Value of « Cut » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Cut max | slider | 100 % | 0 – 100 %, step 1 | Value of « Cut » that the curve's one means. |
+| Cut max | slider | 100 % | 0 – 100 %, step 1 | Value of « Cut » that the curve's one means. With no curve, this setting does nothing. |
 | Roughness min | slider | 0 % | 0 – 100 %, step 1 | Value of « Roughness » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Roughness max | slider | 100 % | 0 – 100 %, step 1 | Value of « Roughness » that the curve's one means. |
+| Roughness max | slider | 100 % | 0 – 100 %, step 1 | Value of « Roughness » that the curve's one means. With no curve, this setting does nothing. |
 | Level min | slider | 0 % | 0 – 100 %, step 1 | Value of « Level » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Level max | slider | 100 % | 0 – 100 %, step 1 | Value of « Level » that the curve's one means. |
+| Level max | slider | 100 % | 0 – 100 %, step 1 | Value of « Level » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Effect Blend
 
@@ -4640,7 +4640,7 @@ Assembles a sound from short fragments cut out of the received sources, each wit
 | Seed | slider | 1 | 0 – 999999, step 1 | The number of the draw. At equal seed, the same score. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Level out | slider | 80 % | 0 – 100 %, step 1 | The level of the montage. Density does not affect it: the sum is already brought back to the square root of the mean overlap. |
 | Level out min | slider | 0 % | 0 – 100 %, step 1 | Value of « Level out » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Level out max | slider | 100 % | 0 – 100 %, step 1 | Value of « Level out » that the curve's one means. |
+| Level out max | slider | 100 % | 0 – 100 %, step 1 | Value of « Level out » that the curve's one means. With no curve, this setting does nothing. |
 
 #### MIDI Join
 
@@ -4854,7 +4854,7 @@ This node looks through a background for the moment a sound finds its place, and
 | No earlier than | slider | 0 s | 0 – 600 s, step 0.5 | The instant before which the search does not go. |
 | Level | slider | 100 % | 0 – 200 %, step 1 | The strength of the placed sound. A curve varies it along the placed sound, not along the mix: its start coincides with the sound's, wherever the niche is found. |
 | Level min | slider | 0 % | 0 – 200 %, step 1 | Value of « Level » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Level max | slider | 200 % | 0 – 200 %, step 1 | Value of « Level » that the curve's one means. |
+| Level max | slider | 200 % | 0 – 200 %, step 1 | Value of « Level » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Place sound on zones
 
@@ -5167,10 +5167,10 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 |---|---|---|---|---|
 | Resolution | slider | 10 ms | 1 – 300 ms, step 1 | How finely the contour is followed. It is the only setting that really changes the nature of the result: at 5 milliseconds one transfers almost the waveform, and the model's grain comes with it; at 200, only its large breaths remain, the phrase alone. |
 | Flatten | choice | Yes | Yes / No | Erase the target's own contour before imposing the model's. At « No » one gets the product of the two contours, which is sometimes wanted but is not a transfer. |
-| Floor | slider | -60 dB | -80 – -20 dB, step 1 | Level below which the target is not flattened. Flattening is a division, and dividing silence would only amplify background noise: below this threshold the target's silence is taken as silence and not as a dip to correct. |
+| Floor | slider | -60 dB | -80 – -20 dB, step 1 | Level below which the target is not flattened. Flattening is a division, and dividing silence would only amplify background noise: below this threshold the target's silence is taken as silence and not as a dip to correct. No effect when « Flatten » is « No ». |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of imposed contour. At 0 %, the output is the target, unchanged. A curve connected to the Modulation input gives this value at each instant, in place of the slider. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Proportion that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Proportion that the curve's one means. A value below Modulation min reverses the direction of travel. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Proportion that the curve's one means. A value below Modulation min reverses the direction of travel. With no curve, this setting does nothing. |
 
 ### Equalisation and filters
 
@@ -5274,15 +5274,15 @@ Reduces dynamics by attenuating passages above the threshold, according to the c
 | Release | number | 100 ms | 5 – 1000 ms, step 5 | Compressor release time. |
 | Gain | number | 0 dB | -12 – 24 dB, step 1 | Output makeup gain. |
 | Attack min | slider | 0.5 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Attack max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that the curve's one means. |
+| Attack max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that the curve's one means. With no curve, this setting does nothing. |
 | Release min | slider | 20 ms | 5 – 500 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Release max | slider | 300 ms | 5 – 500 ms, step 1 | Value of « Release » that the curve's one means. |
+| Release max | slider | 300 ms | 5 – 500 ms, step 1 | Value of « Release » that the curve's one means. With no curve, this setting does nothing. |
 | Threshold min | slider | -40 dB | -60 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. With no curve, this setting does nothing. |
 | Ratio min | slider | 1 ∶1 | 1 – 20 ∶1, step 1 | Value of « Ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Ratio » that the curve's one means. |
+| Ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Ratio » that the curve's one means. With no curve, this setting does nothing. |
 | Gain min | slider | 0 dB | 0 – 24 dB, step 1 | Value of « Gain » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Gain max | slider | 12 dB | 0 – 24 dB, step 1 | Value of « Gain » that the curve's one means. |
+| Gain max | slider | 12 dB | 0 – 24 dB, step 1 | Value of « Gain » that the curve's one means. With no curve, this setting does nothing. |
 
 #### De-esser
 
@@ -5312,17 +5312,17 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Attack | number | 1 ms | 0.1 – 50 ms, step 0.1 | Reaction time (short = precise, long = smooth). |
 | Release | number | 50 ms | 5 – 500 ms, step 1 | Recovery time to normal gain. |
 | Modulation min | slider | -60 dB | -60 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 0 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Modulation max | slider | 0 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. With no curve, this setting does nothing. |
 | Width min | slider | 200 Hz | 200 – 6000 Hz, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Width max | slider | 6000 Hz | 200 – 6000 Hz, step 1 | Value of « Width » that the curve's one means. |
+| Width max | slider | 6000 Hz | 200 – 6000 Hz, step 1 | Value of « Width » that the curve's one means. With no curve, this setting does nothing. |
 | Attack min | slider | 0.5 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Attack max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that the curve's one means. |
+| Attack max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack » that the curve's one means. With no curve, this setting does nothing. |
 | Release min | slider | 20 ms | 5 – 500 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Release max | slider | 300 ms | 5 – 500 ms, step 1 | Value of « Release » that the curve's one means. |
+| Release max | slider | 300 ms | 5 – 500 ms, step 1 | Value of « Release » that the curve's one means. With no curve, this setting does nothing. |
 | Frequency min | slider | 4000 Hz | 2000 – 12000 Hz, step 1 | Value of « Frequency » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Frequency max | slider | 10000 Hz | 2000 – 12000 Hz, step 1 | Value of « Frequency » that the curve's one means. |
+| Frequency max | slider | 10000 Hz | 2000 – 12000 Hz, step 1 | Value of « Frequency » that the curve's one means. With no curve, this setting does nothing. |
 | Ratio min | slider | 1 ∶1 | 1 – 10 ∶1, step 1 | Value of « Ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Ratio max | slider | 8 ∶1 | 1 – 10 ∶1, step 1 | Value of « Ratio » that the curve's one means. |
+| Ratio max | slider | 8 ∶1 | 1 – 10 ∶1, step 1 | Value of « Ratio » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Ducking
 
@@ -5350,13 +5350,13 @@ All listen to the signal they treat: they lower a sound when that sound is loud.
 | Release | slider | 0.25 s | 0.01 – 2 s, step 0.01 | Rise time, once the hold has elapsed. It is what makes the effect natural: too short and the music jumps back; too long and it takes a second to return. |
 | Hold | slider | 0.1 s | 0 – 1 s, step 0.01 | How long the attenuation is kept after the trigger has fallen back below the threshold. This is the setting that prevents panting between two words. |
 | Threshold min | slider | -45 dB | -60 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Threshold max | slider | -15 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Threshold max | slider | -15 dB | -60 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. With no curve, this setting does nothing. |
 | Reduction min | slider | 0 dB | 0 – 40 dB, step 1 | Value of « Reduction » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Reduction max | slider | 24 dB | 0 – 40 dB, step 1 | Value of « Reduction » that the curve's one means. |
+| Reduction max | slider | 24 dB | 0 – 40 dB, step 1 | Value of « Reduction » that the curve's one means. With no curve, this setting does nothing. |
 | Attack min | slider | 0.005 s | 0.001 – 0.5 s, step 0.001 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Attack max | slider | 0.2 s | 0.001 – 0.5 s, step 0.001 | Value of « Attack » that the curve's one means. |
+| Attack max | slider | 0.2 s | 0.001 – 0.5 s, step 0.001 | Value of « Attack » that the curve's one means. With no curve, this setting does nothing. |
 | Release min | slider | 0.05 s | 0.01 – 2 s, step 0.01 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Release max | slider | 1 s | 0.01 – 2 s, step 0.01 | Value of « Release » that the curve's one means. |
+| Release max | slider | 1 s | 0.01 – 2 s, step 0.01 | Value of « Release » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Equalizer
 
@@ -5453,13 +5453,13 @@ Two dynamic effects in one node. Gate: cuts the signal when it drops below a thr
 | Release | number | 100 ms | 1 – 1000 ms, step 1 | Recovery time when signal rises above threshold. |
 | Attenuation | number | 40 dB | 0 – 80 dB, step 1 | Maximum floor attenuation. Gate = cut level; Expander = attenuation limit. |
 | Attack min | slider | 0.5 ms | 0.1 – 100 ms, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Attack max | slider | 20 ms | 0.1 – 100 ms, step 1 | Value of « Attack » that the curve's one means. |
+| Attack max | slider | 20 ms | 0.1 – 100 ms, step 1 | Value of « Attack » that the curve's one means. With no curve, this setting does nothing. |
 | Release min | slider | 20 ms | 1 – 1000 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Release max | slider | 300 ms | 1 – 1000 ms, step 1 | Value of « Release » that the curve's one means. |
+| Release max | slider | 300 ms | 1 – 1000 ms, step 1 | Value of « Release » that the curve's one means. With no curve, this setting does nothing. |
 | Threshold min | slider | -60 dB | -80 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Threshold max | slider | -20 dB | -80 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Threshold max | slider | -20 dB | -80 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. With no curve, this setting does nothing. |
 | Ratio min | slider | 1 ∶1 | 1 – 20 ∶1, step 1 | Value of « Ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Ratio » that the curve's one means. |
+| Ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Ratio » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Limiter
 
@@ -5483,11 +5483,11 @@ Peak limiter for mastering: instant attack, adjustable release and output ceilin
 | Release | number | 50 ms | 1 – 1000 ms, step 1 | Time to return to normal gain after a peak. |
 | Ceiling | number | -1 dB | -40 – 0 dB, step 0.5 | Maximum output level. |
 | Modulation min | slider | 10 ms | 1 – 1000 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 200 ms | 1 – 1000 ms, step 1 | Value of « Release » that the curve's one means. |
+| Modulation max | slider | 200 ms | 1 – 1000 ms, step 1 | Value of « Release » that the curve's one means. With no curve, this setting does nothing. |
 | Threshold min | slider | -20 dB | -40 – 0 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Threshold max | slider | -1 dB | -40 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Threshold max | slider | -1 dB | -40 – 0 dB, step 1 | Value of « Threshold » that the curve's one means. With no curve, this setting does nothing. |
 | Ceiling min | slider | -6 dB | -20 – 0 dB, step 1 | Value of « Ceiling » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Ceiling max | slider | -0.3 dB | -20 – 0 dB, step 1 | Value of « Ceiling » that the curve's one means. |
+| Ceiling max | slider | -0.3 dB | -20 – 0 dB, step 1 | Value of « Ceiling » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Match Level
 
@@ -5508,7 +5508,7 @@ Aligns the level of one sound with another. The « Reference » input gives the 
 | Measure | choice | Loudness | Loudness / RMS / Peak | What is aligned. Loudness: the integrated loudness of the BS.1770 standard, which applies K-weighting before counting energy. RMS: the quadratic mean, unweighted. Peak: the largest sample. |
 | Maximum correction | slider | 24 dB | 0 – 48 dB, step 0.5 | Absolute value the gain will not exceed. Without it, a nearly silent sound would ask for forty decibels and return only its amplified noise floor. |
 | Cap the peak | choice | Yes | Yes / No | Reduce the gain if the resulting peak would exceed the ceiling. The target level is then not reached, and the message says so. |
-| Ceiling | slider | -1 dBFS | -12 – 0 dBFS, step 0.1 | Maximum peak tolerated on the output, when capping is active. |
+| Ceiling | slider | -1 dBFS | -12 – 0 dBFS, step 0.1 | Maximum peak tolerated on the output. Without effect when « Cap the peak » is « No ». |
 
 #### Multiband Compressor
 
@@ -5546,25 +5546,25 @@ Compressor split into three bands (low, mid, high). Each band is isolated by a c
 | Low freq | number | 250 Hz | 40 – 1000 Hz, step 10 | Crossover between low and mid bands. |
 | High freq | number | 4000 Hz | 1000 – 12000 Hz, step 100 | Crossover between mid and high bands. |
 | Low threshold min | slider | -40 dB | -60 – 0 dB, step 1 | Value of « Low threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Low threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « Low threshold » that the curve's one means. |
+| Low threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « Low threshold » that the curve's one means. With no curve, this setting does nothing. |
 | Low ratio min | slider | 1 ∶1 | 1 – 20 ∶1, step 1 | Value of « Low ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Low ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Low ratio » that the curve's one means. |
+| Low ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Low ratio » that the curve's one means. With no curve, this setting does nothing. |
 | Mid threshold min | slider | -40 dB | -60 – 0 dB, step 1 | Value of « Mid threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Mid threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « Mid threshold » that the curve's one means. |
+| Mid threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « Mid threshold » that the curve's one means. With no curve, this setting does nothing. |
 | Mid ratio min | slider | 1 ∶1 | 1 – 20 ∶1, step 1 | Value of « Mid ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Mid ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Mid ratio » that the curve's one means. |
+| Mid ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « Mid ratio » that the curve's one means. With no curve, this setting does nothing. |
 | High threshold min | slider | -40 dB | -60 – 0 dB, step 1 | Value of « High threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
-| High threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « High threshold » that the curve's one means. |
+| High threshold max | slider | -10 dB | -60 – 0 dB, step 1 | Value of « High threshold » that the curve's one means. With no curve, this setting does nothing. |
 | High ratio min | slider | 1 ∶1 | 1 – 20 ∶1, step 1 | Value of « High ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
-| High ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « High ratio » that the curve's one means. |
+| High ratio max | slider | 10 ∶1 | 1 – 20 ∶1, step 1 | Value of « High ratio » that the curve's one means. With no curve, this setting does nothing. |
 | Attack min | slider | 1 ms | 0 – 200 ms, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Attack max | slider | 50 ms | 0 – 200 ms, step 1 | Value of « Attack » that the curve's one means. |
+| Attack max | slider | 50 ms | 0 – 200 ms, step 1 | Value of « Attack » that the curve's one means. With no curve, this setting does nothing. |
 | Release min | slider | 20 ms | 5 – 1000 ms, step 1 | Value of « Release » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Release max | slider | 400 ms | 5 – 1000 ms, step 1 | Value of « Release » that the curve's one means. |
+| Release max | slider | 400 ms | 5 – 1000 ms, step 1 | Value of « Release » that the curve's one means. With no curve, this setting does nothing. |
 | Low freq min | slider | 80 Hz | 40 – 1000 Hz, step 1 | Value of « Low freq » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Low freq max | slider | 600 Hz | 40 – 1000 Hz, step 1 | Value of « Low freq » that the curve's one means. |
+| Low freq max | slider | 600 Hz | 40 – 1000 Hz, step 1 | Value of « Low freq » that the curve's one means. With no curve, this setting does nothing. |
 | High freq min | slider | 2000 Hz | 1000 – 12000 Hz, step 1 | Value of « High freq » that a connected curve's zero means. With no curve, this setting does nothing. |
-| High freq max | slider | 8000 Hz | 1000 – 12000 Hz, step 1 | Value of « High freq » that the curve's one means. |
+| High freq max | slider | 8000 Hz | 1000 – 12000 Hz, step 1 | Value of « High freq » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Normalizer
 
@@ -5648,11 +5648,11 @@ This node passes a sound through a bank of tuned resonators. Each resonator keep
 | Fundamental min | slider | 55 Hz | 20 – 4000 Hz, step 1 | Fundamental that a connected curve's zero means. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing. |
 | Fundamental max | slider | 440 Hz | 20 – 4000 Hz, step 1 | Fundamental that the curve's one means. |
 | Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Resonance min | slider | 0.5 s | 0.05 – 20 s, step 0.05 | Value of « Resonance » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Resonance max | slider | 8 s | 0.05 – 20 s, step 0.05 | Value of « Resonance » that the curve's one means. |
+| Resonance max | slider | 8 s | 0.05 – 20 s, step 0.05 | Value of « Resonance » that the curve's one means. With no curve, this setting does nothing. |
 | Brightness min | slider | 0 % | 0 – 100 %, step 1 | Value of « Brightness » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Brightness max | slider | 100 % | 0 – 100 %, step 1 | Value of « Brightness » that the curve's one means. |
+| Brightness max | slider | 100 % | 0 – 100 %, step 1 | Value of « Brightness » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Transient Shaper
 
@@ -5677,11 +5677,11 @@ Independent control of a sound's attack and sustain. Two envelope detectors (fas
 | Attack time | number | 1 ms | 0.1 – 50 ms, step 0.1 | Transient detector reaction time. No effect while Attack and Sustain are both at 0 dB: the node then passes the sound through unchanged. |
 | Sustain time | number | 100 ms | 10 – 500 ms, step 1 | Sustain detector reaction time. No effect while Attack and Sustain are both at 0 dB. |
 | Modulation min | slider | -12 dB | -12 – 12 dB, step 1 | Value of « Attack » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 12 dB | -12 – 12 dB, step 1 | Value of « Attack » that the curve's one means. |
+| Modulation max | slider | 12 dB | -12 – 12 dB, step 1 | Value of « Attack » that the curve's one means. With no curve, this setting does nothing. |
 | Attack time min | slider | 1 ms | 0.1 – 50 ms, step 1 | Value of « Attack time » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Attack time max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack time » that the curve's one means. |
+| Attack time max | slider | 20 ms | 0.1 – 50 ms, step 1 | Value of « Attack time » that the curve's one means. With no curve, this setting does nothing. |
 | Sustain time min | slider | 50 ms | 10 – 500 ms, step 1 | Value of « Sustain time » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Sustain time max | slider | 300 ms | 10 – 500 ms, step 1 | Value of « Sustain time » that the curve's one means. |
+| Sustain time max | slider | 300 ms | 10 – 500 ms, step 1 | Value of « Sustain time » that the curve's one means. With no curve, this setting does nothing. |
 
 #### True-Peak Limiter
 
@@ -5730,9 +5730,9 @@ A comb filter sends the sound round a loop whose length is the period of a note:
 | Fundamental min | slider | 55 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that a connected curve's zero means; the travel is multiplicative. With no curve, this setting does nothing. |
 | Fundamental max | slider | 220 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that the curve's one means. |
 | Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Resonance min | slider | 0.5 s | 0.05 – 20 s, step 0.05 | Value of « Resonance » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Resonance max | slider | 8 s | 0.05 – 20 s, step 0.05 | Value of « Resonance » that the curve's one means. |
+| Resonance max | slider | 8 s | 0.05 – 20 s, step 0.05 | Value of « Resonance » that the curve's one means. With no curve, this setting does nothing. |
 
 ### Generation
 
@@ -5994,15 +5994,15 @@ Turns one sound into a sample bank playable across the 88 keys. The problem, in 
 |---|---|---|---|---|
 | Count in | choice | semitones | semitones / degrees of the tuning | The unit in which « Zone width » counts, and what a key plays. In semitones, each key plays a semitone and zones are wide. In degrees, each key plays a degree of the tuning received on the « Tuning » input, and each key gets its own region with its own detune; the 88 keys then cover 88 degrees, hence fewer octaves as soon as the tuning counts more than twelve per period. With no tuning connected, « degrees of the tuning » has nothing to refer to and the node says so. |
 | Source note | choice | Automatic | Automatic / Manual | In automatic mode the sound's pitch is measured by the pitch follower, no need to declare it, and it will be right. It is also what anchors the zone grid, so that at least one zone plays the sound with no transposition at all. |
-| Manual note | slider | 60 | 21 – 108, step 1 | MIDI note matching the sound's pitch (60 = middle C). Only used in manual mode: useful for an inharmonic sound, whose pitch cannot be measured. |
+| Manual note | slider | 60 | 21 – 108, step 1 | MIDI note matching the sound's pitch (60 = middle C). Only used when « Source note » is « Manual », or in automatic mode when the sound's pitch cannot be measured: useful for an inharmonic sound. |
 | Zone width | slider | 2 | 1 – 6, step 1 | By how much a zone is resampled at most, either side of its root, in the unit given by « Count in ». This is the quality setting: sample-library practice does not exceed two or three semitones, the « minor third rule ». At ±2, eighteen or nineteen samples cover the 88 keys and a note's duration varies by only 12 % within a zone; at ±6, one sample per octave, and the seams are audible. |
 | Transposition | choice | Constant duration | Constant duration / Tape / Attack preserved | How each zone is built. Constant duration: phase vocoder, pitch changes, duration stays, which is what intervals of up to four octaves require. Tape: resampling, like speeding up a tape, duration follows pitch, the « chipmunk » effect one usually wants to avoid, though sometimes it is the point. Attack preserved: the sound is first split into sines, transients and noise, only the first two are transposed, and the transients are put back untouched, the attack neither smears nor turns into a click. |
 | Lowest key | slider | 21 | 21 – 108, step 1 | First key covered. 21 = A0, the lowest of an 88-key piano. |
 | Highest key | slider | 108 | 21 – 108, step 1 | Last key covered. 108 = C8, the highest. |
 | Key tracking | slider | 50 % | 0 – 100 %, step 1 | By how much a note shortens toward the treble. At 100 %, duration halves with every octave up, which is a piano's order of magnitude, a bass string rings for twenty seconds, a treble one for less than one. At 0 %, every key lasts as long, which sounds like a sampler rather than an instrument. |
 | Sustain loop | choice | No | Yes / No | Places in each zone a loop replayed while the key is held. At « No », a held key plays the sample through to its end, then falls silent: the sound keeps its beginning, its substance and its end. At « Yes », it holds as long as the key is down; the join is crossfaded, failing which each turn would leave a click, the wave not returning to the same phase. |
-| Loop start | slider | 50 % | 5 – 90 %, step 1 | Where the loop starts within the sample. After the attack, then: a loop enclosing it would repeat it on every turn. |
-| Loop length | slider | 2 s | 0.05 – 30 s, step 0.05 | Length of the sustain loop, counted from its start. It is given in seconds rather than as a share of the sample: a sustain loop is short by nature, and a thirty second sound looped over half its length is heard starting again instead of holding. The end stays bounded to ninety-five percent of the sample, beyond which the loop would bite into the decay. |
+| Loop start | slider | 50 % | 5 – 90 %, step 1 | Where the loop starts within the sample. After the attack, then: a loop enclosing it would repeat it on every turn. No effect when « Sustain loop » is « No ». |
+| Loop length | slider | 2 s | 0.05 – 30 s, step 0.05 | Length of the sustain loop, counted from its start. It is given in seconds rather than as a share of the sample: a sustain loop is short by nature, and a thirty second sound looped over half its length is heard starting again instead of holding. The end stays bounded to ninety-five percent of the sample, beyond which the loop would bite into the decay. No effect when « Sustain loop » is « No ». |
 
 #### Sung Vowel (FOF)
 
@@ -6311,7 +6311,7 @@ Removes a share of the notes at random, but reproducibly. This is live-coding's 
 |---|---|---|---|---|
 | Amount | number | 30 % | 0 – 100 %, step 1 | Share of events removed. The draw is per event, not per note: a chord leaves whole or stays whole. |
 | Keep beats | choice | Yes | No / Yes | Spares the events that land on a beat. A texture thinned purely at random loses its pulse; one often wants to lighten it without dissolving it. |
-| Beat length | number | 0.5 s | 0.05 – 4 s, step 0.05 | What counts as a beat, in seconds. At 120 BPM, a quarter note is 0.5 s. |
+| Beat length | number | 0.5 s | 0.05 – 4 s, step 0.05 | What counts as a beat, in seconds. At 120 BPM, a quarter note is 0.5 s. Used only when « Keep beats » is « Yes ». |
 | Seed | number | 0 | 0 – 999999, step 1 | 0 = drawn at random on every run, and shown in the message. Any other value replays the exact same thinning. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. The durations themselves are in seconds and do not change. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. No effect on a percussion track, which always goes through the drum synthesis. |
@@ -6397,8 +6397,8 @@ Inverts, spreads and chains the chords received. The notes come from the « Sequ
 | Inversion | number | 0 | 0 – 5, step 1 | How many bottom notes move up an octave. 0 = root position. An inversion equal to the chord's note count leaves it unchanged, rather than pushing it upwards. |
 | Voicing | choice | Close | Close / Open / Drop 2 / Drop 3 / Drop 2 and 4 | How the voices are spread. « Open » raises every other note by an octave. The « drop » voicings lower the second or third voice from the top by an octave: this is the writing of jazz guitar and four-part brass, and it needs at least four notes. |
 | Voice leading | choice | Yes | No / Yes | Finds, for each chord, the register that moves the fewest voices from the previous one. The voicing chosen above is kept as is: the leading only shifts chords by whole octaves. |
-| Lowest note | number | 40 | 21 – 60, step 1 | Lowest note the voice leading allows itself. |
-| Highest note | number | 88 | 60 – 108, step 1 | Highest note the voice leading allows itself. |
+| Lowest note | number | 40 | 21 – 60, step 1 | Lowest note the voice leading allows itself. No effect when « Voice leading » is « No ». |
+| Highest note | number | 88 | 60 – 108, step 1 | Highest note the voice leading allows itself. No effect when « Voice leading » is « No ». |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -6620,7 +6620,7 @@ Displaces the events of a sequence according to a Cantor dust, keeping their num
 | Depth | slider | 3 | 0 – 8, step 1 | The number of recursions. At zero, the whole duration is dust and nothing moves. |
 | Share displaced | slider | 100 % | 0 – 100 %, step 1 | The proportion of the events in the holes that move. At one hundred, none remains in a hole. |
 | Where to place | choice | Nearest | Nearest / At random | Nearest tightens the sequence without undoing it. At random remakes it entirely. |
-| Seed | slider | 7 | 0 – 999999, step 1 | Fixes the draw. The same seed returns the same sequence. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Seed | slider | 7 | 0 – 999999, step 1 | Fixes the draw. The same seed returns the same sequence. No effect when « Where to place » is « Nearest » and « Share displaced » is 0 or 100 %: the draw then decides nothing. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Cantor Dust
 
@@ -6735,9 +6735,9 @@ This node returns the flutter of a sound caught between two parallel reflecting 
 | Damping | slider | 20 % | 0 – 95 %, step 1 | The share of highs the walls absorb at each reflection. The flutter dulls as it dies away. |
 | Mix | slider | 70 % | 0 – 100 %, step 1 | The share of the effect in the output. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Decay min | slider | 0.2 s | 0.05 – 10 s, step 0.05 | Value of « Decay » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Decay max | slider | 4 s | 0.05 – 10 s, step 0.05 | Value of « Decay » that the curve's one means. |
+| Decay max | slider | 4 s | 0.05 – 10 s, step 0.05 | Value of « Decay » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Granular Delay
 
@@ -6771,15 +6771,15 @@ Delays the sound and returns it as grains, each read from the delay line at its 
 | Seed | slider | 1 | 0 – 999999, step 1 | The number of the delay draw. At equal seed, the same render. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Max tail | slider | 3 s | 0 – 10 s, step 0.5 | Bound on what is added after the end of the sound to let the rounds die away. At high feedback the audible rounds run into the dozens, and without this bound the render would lengthen accordingly. |
 | Time min | slider | 0.05 s | 0.01 – 2 s, step 0.01 | Value of « Time » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Time max | slider | 1 s | 0.01 – 2 s, step 0.01 | Value of « Time » that the curve's one means. |
+| Time max | slider | 1 s | 0.01 – 2 s, step 0.01 | Value of « Time » that the curve's one means. With no curve, this setting does nothing. |
 | Scatter min | slider | 0 s | 0 – 1 s, step 0.01 | Value of « Scatter » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Scatter max | slider | 0.5 s | 0 – 1 s, step 0.01 | Value of « Scatter » that the curve's one means. |
+| Scatter max | slider | 0.5 s | 0 – 1 s, step 0.01 | Value of « Scatter » that the curve's one means. With no curve, this setting does nothing. |
 | Transposition min | slider | -12 semitones | -24 – 24 semitones, step 1 | Value of « Transposition » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Transposition max | slider | 12 semitones | -24 – 24 semitones, step 1 | Value of « Transposition » that the curve's one means. |
+| Transposition max | slider | 12 semitones | -24 – 24 semitones, step 1 | Value of « Transposition » that the curve's one means. With no curve, this setting does nothing. |
 | Feedback min | slider | 0 % | 0 – 95 %, step 1 | Value of « Feedback » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Feedback max | slider | 80 % | 0 – 95 %, step 1 | Value of « Feedback » that the curve's one means. |
+| Feedback max | slider | 80 % | 0 – 95 %, step 1 | Value of « Feedback » that the curve's one means. With no curve, this setting does nothing. |
 | Mix min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Mix max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Granular Freeze
 
@@ -6804,11 +6804,11 @@ Extracts a small grain at the chosen position and loops it across the whole dura
 | Position | number | 0 % | 0 – 100 %, step 1 | Position in the file where the grain is extracted. |
 | Mix | number | 50 % | 0 – 100 %, step 1 | Dry/wet balance. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Position min | slider | 0 % | 0 – 100 %, step 1 | Value of « Position » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Position max | slider | 100 % | 0 – 100 %, step 1 | Value of « Position » that the curve's one means. |
+| Position max | slider | 100 % | 0 – 100 %, step 1 | Value of « Position » that the curve's one means. With no curve, this setting does nothing. |
 | Pitch min | slider | -12 st | -24 – 24 st, step 1 | Value of « Pitch » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Pitch max | slider | 12 st | -24 – 24 st, step 1 | Value of « Pitch » that the curve's one means. |
+| Pitch max | slider | 12 st | -24 – 24 st, step 1 | Value of « Pitch » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Haas Effect
 
@@ -6852,11 +6852,11 @@ Modulates lows and highs in opposition. The sound is first split into two bands 
 | Crossover | slider | 800 Hz | 100 – 4000 Hz, step 10 | Frequency that separates the two bands. Low, only the treble sways against the rest; high, it is the bass that stands out. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of treated sound in the output. At zero, the input comes out sample for sample. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. |
+| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. With no curve, this setting does nothing. |
 | Crossover min | slider | 200 Hz | 100 – 4000 Hz, step 10 | Value of « Crossover » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Crossover max | slider | 3000 Hz | 100 – 4000 Hz, step 10 | Value of « Crossover » that the curve's one means. |
+| Crossover max | slider | 3000 Hz | 100 – 4000 Hz, step 10 | Value of « Crossover » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Lucier Room
 
@@ -6901,9 +6901,9 @@ Brings a sound closer to another taken as a model, on four measured quantities: 
 | Spectrum | choice | Yes | Yes / No | Copy the reference's frequency response, with zero phase. |
 | Width | choice | Yes | Yes / No | Copy the reference's stereo width, measured as the side to mid ratio. No effect on a mono input. |
 | Peak | choice | Yes | Yes / No | Align the peak on the reference's, once the rest is applied. The message gives what that alignment cost in level. |
-| Maximum correction | slider | 12 dB | 1 – 24 dB, step 1 | Largest amount applied to a frequency band, in either direction. Low, the correction stays a tint; high, it copies the reference more closely and amplifies the floor accordingly where the processed sound has nothing. The message gives what share of the spectrum hit this bound. |
-| Bands per octave | slider | 3 | 1 – 12, step 1 | How fine the correction is. Three bands follow the general colour; twelve follow the detail, down to the reference's own resonances. |
-| Transform size | choice | 4096 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Analysis resolution. Large, it tells low frequencies apart; small, it follows fast changes better. |
+| Maximum correction | slider | 12 dB | 1 – 24 dB, step 1 | Largest amount applied to a frequency band, in either direction. Low, the correction stays a tint; high, it copies the reference more closely and amplifies the floor accordingly where the processed sound has nothing. The message gives what share of the spectrum hit this bound. No effect when « Spectrum » is « No »: no band is then corrected. |
+| Bands per octave | slider | 3 | 1 – 12, step 1 | How fine the correction is. Three bands follow the general colour; twelve follow the detail, down to the reference's own resonances. No effect when « Spectrum » is « No ». |
+| Transform size | choice | 4096 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Analysis resolution. Large, it tells low frequencies apart; small, it follows fast changes better. It only serves to copy the frequency response: no effect when « Spectrum » is « No ». |
 
 #### Melody over Chords
 
@@ -6932,7 +6932,7 @@ Writes a melody over the received chords, searching for a line that satisfies th
 | Leap answered | slider | 4 semitones | 0 – 12 semitones, step 1 | Beyond this interval, the next note must go the other way. At zero, nothing is required. |
 | Same direction at most | slider | 4 | 0 – 12, step 1 | The number of consecutive steps allowed in the same direction. At zero, no bound. |
 | Seed | slider | 7 | 0 – 999999, step 1 | Fixes the order in which pitches are tried. Two seeds give two equally valid lines. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
-| Budget | slider | 200000 | 1000 – 2000000, step 1000 | The number of assignments tried at most before giving up. A problem with no solution would run forever. |
+| Budget | slider | 200000 | 1000 – 2000000, step 1000 | The number of assignments tried at most before giving up. A problem with no solution would run forever. A search that concludes before it does not depend on it: it takes about ten per chord. |
 
 #### Particles
 
@@ -6991,13 +6991,13 @@ Spins lows and highs on two rotors of different sizes and rates. The sound is sp
 | Width | slider | 100 % | 0 – 100 %, step 1 | Angle between the two microphones around the axis. At a hundred per cent they are opposite and see the rotors pass half a turn apart; at zero they sit at the same place and the two channels coincide. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of treated sound in the output. At zero, the input comes out sample for sample on both channels. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Amplitude depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Amplitude depth » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Amplitude depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Amplitude depth » that the curve's one means. |
+| Amplitude depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Amplitude depth » that the curve's one means. With no curve, this setting does nothing. |
 | Doppler depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Doppler depth » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Doppler depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Doppler depth » that the curve's one means. |
+| Doppler depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Doppler depth » that the curve's one means. With no curve, this setting does nothing. |
 | Crossover min | slider | 300 Hz | 200 – 2000 Hz, step 10 | Value of « Crossover » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Crossover max | slider | 1600 Hz | 200 – 2000 Hz, step 10 | Value of « Crossover » that the curve's one means. |
+| Crossover max | slider | 1600 Hz | 200 – 2000 Hz, step 10 | Value of « Crossover » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Sample Formula
 
@@ -7060,7 +7060,7 @@ Generates a new texture having the statistics of a given sound. After Josh H. Mc
 | Duration | slider | 10 s | 1 – 120 s, step 1 | Duration to generate. It bears no relation to the model's: the statistics are time averages, so five seconds of rain produce two minutes that never repeat. |
 | Bands | choice | 20 | 16 / 20 / 28 | Number of cochlear bands, spaced as the ear hears them, narrow in the bass, wide in the treble. The more there are, the more closely the model's colour is followed, and the longer the computation: the cost of the correlations grows with their square. |
 | Correlations | choice | Yes | Yes / No | Also impose the correlations between bands, not merely each band's distribution. This is the paper's central result: bands taken in isolation do not make a recognisable texture. Measured here on a synthetic rain, the statistical distance to the model falls from 40 % to 31 % when they are imposed. Setting « No » mostly serves to hear the difference. |
-| Iterations | slider | 6 | 1 – 20, step 1 | Rounds of alternating projections between distributions and correlations: imposing one spoils the other, and one alternates until both roughly hold. Beyond about ten, the gain becomes imperceptible and the computation doubles. |
+| Iterations | slider | 6 | 1 – 20, step 1 | Rounds of alternating projections between distributions and correlations: imposing one spoils the other, and one alternates until both roughly hold. Beyond about ten, the gain becomes imperceptible and the computation doubles. Without effect when « Correlations » is « No »: there is then nothing to alternate. |
 | Seed | number | 1 | 0 – 999999, step 1 | Seed of the starting noise. Two seeds give two different textures with the same statistics, which is exactly what two recordings of the same rain are to each other. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Turntable
@@ -7103,7 +7103,7 @@ This node disperses or tightens where a sound comes from. After Jean-François A
 |---|---|---|---|---|
 | Dispersion | slider | 80 % | -100 – 100 %, step 1 | From hyperlocalization when negative to ubiquity when positive. At zero the sound comes out as it went in. A curve may cross zero: the computation then moves from one side to the other sample by sample. |
 | Modulation min | slider | -100 % | -100 – 100 %, step 1 | Value of « Dispersion » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | -100 – 100 %, step 1 | Value of « Dispersion » that the curve's one means. |
+| Modulation max | slider | 100 % | -100 – 100 %, step 1 | Value of « Dispersion » that the curve's one means. With no curve, this setting does nothing. |
 | Stages | slider | 6 | 1 – 16, step 1 | The number of cascaded all-pass sections. The more there are, the more finely the phase scrambles. |
 | Seed | slider | 3 | 0 – 999999, step 1 | The draw of the coefficients. Changing it gives another dispersion of the same character. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
@@ -7132,9 +7132,9 @@ This node carries a sound through cycles of intensity shaped like a wave. After 
 | Opening | slider | 60 % | 0 – 100 %, step 1 | The share of the timbre that follows the intensity. At zero, only the level moves. |
 | Seed | slider | 5 | 0 – 999999, step 1 | The draw of the variation. With no variation, this setting does nothing. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Depth min | slider | 0 % | 0 – 100 %, step 1 | Value of « Depth » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. |
+| Depth max | slider | 100 % | 0 – 100 %, step 1 | Value of « Depth » that the curve's one means. With no curve, this setting does nothing. |
 | Opening min | slider | 0 % | 0 – 100 %, step 1 | Value of « Opening » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Opening max | slider | 100 % | 0 – 100 %, step 1 | Value of « Opening » that the curve's one means. |
+| Opening max | slider | 100 % | 0 – 100 %, step 1 | Value of « Opening » that the curve's one means. With no curve, this setting does nothing. |
 
 ### Pitch
 
@@ -7174,9 +7174,9 @@ Adds up to two pitch-shifted voices under the original signal. Settings: each vo
 | Voice 2 | number | -12 st | -24 – 24 st, step 1 | Interval of second voice in semitones. |
 | Mix 2 | number | 30 % | 0 – 100 %, step 1 | Level of second voice. |
 | Mix 1 min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix 1 » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Mix 1 max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix 1 » that the curve's one means. |
+| Mix 1 max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix 1 » that the curve's one means. With no curve, this setting does nothing. |
 | Mix 2 min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix 2 » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Mix 2 max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix 2 » that the curve's one means. |
+| Mix 2 max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix 2 » that the curve's one means. With no curve, this setting does nothing. |
 
 #### MIDI Transposer/Quantizer
 
@@ -7195,7 +7195,7 @@ Takes a MIDI file and transforms it: transposition (±24 semitones) and/or rhyth
 |---|---|---|---|---|
 | Transpose | number | 0 st | -24 – 24 st, step 1 | Transposition in semitones (−24 to +24). 0 = no transposition. |
 | Quantization | choice | 1/16 | None / 1/4 / 1/8 / 1/16 / 1/32 / 1/8 triplet / 1/16 triplet / 1/1 / 1/2 / 1/4 dotted / 1/4 triplet / 1/8 dotted / 1/16 dotted / 1/32 triplet | Quantization grid for note onsets. Snaps notes to the chosen rhythmic grid. |
-| Quantize ends | choice | No | No / Yes | If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes). |
+| Quantize ends | choice | No | No / Yes | If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes). No effect when « Quantization » is « None ». |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 
 #### Octaver
@@ -7443,13 +7443,13 @@ A reverb whose decay time is set separately for the low and the high end. After 
 | Mix | slider | 35 % | 0 – 100 %, step 1 | Proportion of reverb. At 0 %, the output is the input. The « Impulse response » output does not depend on this setting, it is always returned as reverb alone. |
 | Tail | slider | 0 s | 0 – 15 s, step 0.1 | Duration added after the sound to let the tail die out. At zero the node takes the longer of the two RT60s, a reverb that stopped with the sound would not be one. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Width min | slider | 0 % | 0 – 100 %, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Width max | slider | 100 % | 0 – 100 %, step 1 | Value of « Width » that the curve's one means. |
+| Width max | slider | 100 % | 0 – 100 %, step 1 | Value of « Width » that the curve's one means. With no curve, this setting does nothing. |
 | Tail min | slider | 0.5 s | 0 – 15 s, step 1 | Value of « Tail » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Tail max | slider | 8 s | 0 – 15 s, step 1 | Value of « Tail » that the curve's one means. |
+| Tail max | slider | 8 s | 0 – 15 s, step 1 | Value of « Tail » that the curve's one means. With no curve, this setting does nothing. |
 | High reference min | slider | 2000 Hz | 1000 – 16000 Hz, step 1 | Value of « High reference » that a connected curve's zero means. With no curve, this setting does nothing. |
-| High reference max | slider | 12000 Hz | 1000 – 16000 Hz, step 1 | Value of « High reference » that the curve's one means. |
+| High reference max | slider | 12000 Hz | 1000 – 16000 Hz, step 1 | Value of « High reference » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Fractal Reverb
 
@@ -7499,11 +7499,11 @@ Reverberates a percussive sound and cuts its tail dead, driven by the dry sound.
 | Mix | slider | 60 % | 0 – 100 %, step 1 | Proportion of reverb added. At 0 %, the output is the input. |
 | Seed | slider | 1 | 0 – 999999, step 1 | Seed of the room's response. The same seed replays the same room. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Threshold min | slider | -60 dB | -60 – -10 dB, step 1 | Value of « Threshold » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Threshold max | slider | -20 dB | -60 – -10 dB, step 1 | Value of « Threshold » that the curve's one means. |
+| Threshold max | slider | -20 dB | -60 – -10 dB, step 1 | Value of « Threshold » that the curve's one means. With no curve, this setting does nothing. |
 | Fall min | slider | 0.01 s | 0.002 – 0.3 s, step 0.002 | Value of « Fall » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Fall max | slider | 0.3 s | 0.002 – 0.3 s, step 0.002 | Value of « Fall » that the curve's one means. |
+| Fall max | slider | 0.3 s | 0.002 – 0.3 s, step 0.002 | Value of « Fall » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Progressive Reverb
 
@@ -7547,7 +7547,7 @@ Simulates room acoustics via convolution. Size and decay set the extent and leng
 | Mix | number | 50 % |  | Dry/wet balance. |
 | Seed | number | 42 | 0 – 999999, step 1 | Seed for the impulse-response noise. The default is fixed: a reverb that moves to a different room on every run would be a defect. Changing it gives another room of the same dimensions. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Shimmer
 
@@ -7572,7 +7572,7 @@ A reverb whose tail rises an octave at each pass, receding as it climbs. The eff
 | Mix | slider | 50 % | 0 – 100 %, step 1 | Proportion added to the dry sound. At 0 %, the output is the input. |
 | Seed | slider | 1 | 0 – 999999, step 1 | Seed of the room's response. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Velvet Reverb
 
@@ -7600,7 +7600,7 @@ Late reverberation whose tail takes whatever shape one wants. After Vesa Valimak
 | Mix | slider | 35 % | 0 – 100 %, step 1 | Share of reverberated sound in the output. When a curve drives it, the message gives the modulation bounds rather than a value. |
 | Seed | number | 1 | 0 – 999999, step 1 | Seed of the positions and signs. Two seeds give two rooms of the same dimensions. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 
 ### Spectrum
 
@@ -7807,7 +7807,7 @@ After Trevor Wishart, « Audible Design » (1994), who calls it « inner glissan
 | Resolution | choice | Ordinary (2048) | Sharpest in time (256) / Very sharp in time (512) / Sharp in time (1024) / Ordinary (2048) / Sharp in frequency (4096) / Very sharp in frequency (8192) | Analysis window size, in samples. The choice is a trade-off with no right answer: a short window places moments well and separates neighbouring frequencies badly; a long window does the opposite. At 44,100 Hz, 1024 samples see 23 ms and separate 43 Hz; 8192 see 186 ms and separate 5 Hz. On a voice or a percussion, go short; on a pad or a chord to untangle, go long. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Proportion of processed sound. At 0 %, the output is the input, unchanged. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Proportion that a connected curve's zero means on the Modulation input. With no curve connected, this setting has no effect. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Proportion that the curve's one means. A value below Modulation min reverses the direction of travel. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Proportion that the curve's one means. A value below Modulation min reverses the direction of travel. With no curve, this setting does nothing. |
 
 #### Isolate the Voice
 
@@ -8003,7 +8003,7 @@ This node granulates a sound in the frequency domain. After Stefano Fasciani, «
 | Spectrum shift | slider | 0 % | -100 – 100 %, step 1 | Rotation of each grain's spectral bands, as a share of the half band. What leaves through the treble comes back through the bass, so the energy is kept whole. |
 | Phase | choice | PGHI | PGHI / Griffin-Lim / Zero | How the phase is recovered. PGHI integrates it from the gradient in one pass, Griffin-Lim searches it by passes, and Zero leaves it at zero, which aligns every band and yields an impulsive material. |
 | Passes | slider | 8 | 1 – 32, step 1 | Number of Griffin-Lim passes. Only acts when the phase is searched by Griffin-Lim; PGHI does not iterate, and a zero phase has nothing to search. |
-| Seed | slider | 0 | 0 – 999999, step 1 | Fixes the randomness of extraction and spread. Two runs with the same seed return the same sound. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+| Seed | slider | 0 | 0 – 999999, step 1 | Fixes the randomness of extraction and spread. Two runs with the same seed return the same sound. No effect when « Extraction » is not « Random » and « Spread » is at zero: nothing is then drawn. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Spectral Morphing
 
@@ -8025,7 +8025,7 @@ Moves the timbre of one sound towards another, by interpolating their spectra. A
 |---|---|---|---|---|
 | Morph | slider | 50 % | 0 – 100 %, step 1 | At 0 % sound A; at 100 % sound B; in between, an intermediate timbre. A curve connected to the Modulation input takes this setting's place. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Morph that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Morph that the curve's one means. A ramp from zero to a hundred travels all the way from one sound to the other. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Morph that the curve's one means. A ramp from zero to a hundred travels all the way from one sound to the other. With no curve, this setting does nothing. |
 | Window | choice | 2048 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | Analysis size. Long, it separates partials better and blurs attacks; short, the reverse. Two thousand and forty-eight points are forty-six milliseconds at 44.1 kHz. |
 
 #### Spectral Tracing
@@ -8137,9 +8137,9 @@ This node lays the frequencies of a sound across stereo space: each band comes o
 | Trapping | slider | 0.3 s | 0.01 – 5 s, step 0.01 | Time the lowest band takes to lose 60 dB. The array being constant-Q, high bands ring proportionally less. This setting commands the sharpness of the sorting in the same gesture: short, the sound keeps its grain; long, it turns into held bands. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the sorted sound. At 0%, the input alone. |
 | Modulation min | slider | 0 % | 0 – 100 %, step 1 | Value of « Mix » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. |
+| Modulation max | slider | 100 % | 0 – 100 %, step 1 | Value of « Mix » that the curve's one means. With no curve, this setting does nothing. |
 | Spread min | slider | 0 % | 0 – 100 %, step 1 | Value of « Spread » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Spread max | slider | 100 % | 0 – 100 %, step 1 | Value of « Spread » that the curve's one means. |
+| Spread max | slider | 100 % | 0 – 100 %, step 1 | Value of « Spread » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Ambisonic Rotation
 
@@ -8164,7 +8164,7 @@ After Michael Gerzon, « Periphony: With-Height Sound Reproduction », Journal o
 | Modulation min | slider | 0 ° | -360 – 360 °, step 5 | Rotation that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 360 ° | -360 – 360 °, step 5 | Rotation that the curve's one means. From zero to 360°, a ramp makes the scene turn a full circle. |
 | Decoder width min | slider | 60 ° | 30 – 180 °, step 1 | Value of « Decoder width » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Decoder width max | slider | 150 ° | 30 – 180 °, step 1 | Value of « Decoder width » that the curve's one means. |
+| Decoder width max | slider | 150 ° | 30 – 180 °, step 1 | Value of « Decoder width » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Auto-pan
 
@@ -8380,7 +8380,7 @@ Positions a mono or stereo sound in stereo space. Uses an HRTF PannerNode for re
 | Modulation min | slider | -100 % | -100 – 100 %, step 1 | Position that a connected curve's zero means. With no curve, this setting does nothing. |
 | Modulation max | slider | 100 % | -100 – 100 %, step 1 | Position that the curve's one means. |
 | Width min | slider | 0 % | 0 – 100 %, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Width max | slider | 100 % | 0 – 100 %, step 1 | Value of « Width » that the curve's one means. |
+| Width max | slider | 100 % | 0 – 100 %, step 1 | Value of « Width » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Stereo Width / MS
 
@@ -8401,7 +8401,7 @@ Stereo width and Mid/Side balance control. Decodes the signal into center (Mid =
 | Width | number | 100 % | 0 – 200 %, step 1 | Stereo width. 0% = mono, 100% = original, 200% = widened stereo. |
 | Mid | number | 100 % | 0 – 200 %, step 1 | Mid channel gain. |
 | Modulation min | slider | 0 % | 0 – 200 %, step 1 | Value of « Width » that a connected curve's zero means. With no curve, this setting does nothing. |
-| Modulation max | slider | 200 % | 0 – 200 %, step 1 | Value of « Width » that the curve's one means. |
+| Modulation max | slider | 200 % | 0 – 200 %, step 1 | Value of « Width » that the curve's one means. With no curve, this setting does nothing. |
 
 #### Swap Channels
 
@@ -9239,7 +9239,7 @@ Shows how the spectrum evolves over time: horizontal = time, vertical = frequenc
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Window | choice | 1024 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | FFT window size (samples). Small = better time resolution; large = better frequency resolution (time/frequency trade-off). |
-| Scale | choice | Logarithmic | Logarithmic / Linear | Vertical frequency axis scale (log = close to perception). |
+| Scale | choice | Logarithmic | Logarithmic / Linear | Vertical frequency axis scale (log = close to perception). Sets the display only: the sound leaves as it came in. |
 
 #### Spectrum Analyzer
 
@@ -9257,7 +9257,7 @@ Decomposes the signal into its frequencies (fast Fourier transform) and displays
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Window | choice | 4096 | 256 / 512 / 1024 / 2048 / 4096 / 8192 | FFT window size (samples). Larger = finer frequency resolution (but coarser time resolution). |
-| Scale | choice | Logarithmic | Logarithmic / Linear | Frequency axis scale. Logarithmic = close to pitch perception (even octaves); linear = evenly spaced frequencies. |
+| Scale | choice | Logarithmic | Logarithmic / Linear | Frequency axis scale. Logarithmic = close to pitch perception (even octaves); linear = evenly spaced frequencies. Sets the display only: the sound leaves as it came in. |
 
 #### Track Features
 
@@ -9718,7 +9718,7 @@ Writes a MIDI file in ABC notation, so that a melody produced here (Groove Box, 
 |---|---|---|---|---|
 | Meter | choice | From file | From file / 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | Where to put the bar lines. Note: the nodes all write « 4/4 » into their files, even for a waltz, « From file » therefore almost always gives 4/4. Settings: the real meter by hand; it is not guessed, because a wrongly guessed meter gives an unreadable score without saying so. |
 | Key | text | `Auto` |  | « Auto » infers it from the notes (Krumhansl's method, the same as the harmonic analysis on audio). Reliable on harmony only: measured on the Groove Box, right 24 times out of 24 on the chord part, 4 out of 24 on the melody alone, 0 out of 24 on the bass alone, and the displayed confidence does not reveal the error. A single line is therefore flagged: the key is then imposed by hand, as an ABC K: field (« G », « Am », « Ddor », « Bb »…). It sets the key signature, hence the spelling: F sharp or G flat. |
-| Grid | choice | Automatic | Automatic / Eighths (1/8) / Sixteenths (1/16) / 32nds (1/32) / Eighth triplets / Sixteenth triplets / Sixteenths and triplets | Grid the notes are snapped to. Automatic: the coarsest one on which every note falls exactly, if any, a generated MIDI then does not move by a single tick, otherwise sixteenths. On captured or humanised playing, notes are moved and the message counts them. |
+| Grid | choice | Automatic | Automatic / Eighths (1/8) / Sixteenths (1/16) / 32nds (1/32) / Eighth triplets / Sixteenth triplets / Sixteenths and triplets | Grid the notes are snapped to. Automatic: the coarsest one on which every note falls exactly, if any, a generated MIDI then does not move by a single tick, otherwise sixteenths. On captured or humanised playing, notes are moved and the message counts them. Under a « Meter » in sixteenths, from 5/16 to 15/16, the beat is the sixteenth, and an eighth grid is refined to sixteenths there. |
 | Overlaps | choice | Separate voices (exact) | Separate voices (exact) / Shorten into one line | What to do with a note still sounding when the next one starts. Separate voices: it goes into an extra voice, and the score read back gives exactly the same notes. Shorten: it is cut at the next attack, so a legato melody stays on a single line, more readable, and easier for a language model to edit, but the length of the cut notes is lost. Chords are never cut. The Groove Box melody, whose same-pitch notes overlap, comes out on two voices in the first mode and one in the second. |
 | Title | text | — |  | Title written in the T: field. Empty: the file's track name, if any. |
 
@@ -9765,7 +9765,7 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 | Title | text | `Attic` |  | Title written into the score. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | Tempo used to turn seconds into note values. A wrong tempo does not change the pitches, but gives wrong durations. |
 | Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | Time signature of the score. It decides how bars are cut. A time signature whose unit is shorter than the value asked for in « Quantization » refines the writing grid accordingly, a bar having to fall on a whole number of units. |
-| Quantization | choice | Sixteenth | Sixteenth / Eighth / Quarter | Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance. |
+| Quantization | choice | Sixteenth | Sixteenth / Eighth / Quarter | Smallest value written. A note played between two slots is snapped to the grid: that is what makes the score readable, and what loses the detail of the performance. No effect under a « Time signature » in sixteenths, from 5/16 to 15/16: the grid there already goes down to the sixteenth, the finest value offered here. |
 
 #### VexFlow Chord Chart
 
@@ -10103,10 +10103,10 @@ Plays a note sequence received on its input, and returns a MIDI file of it. The 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Synthesis | choice | FM/Oscillators | Auto / FM/Oscillators / SoundFont | Local synthesis by default: it is the only one that renders a note as a sine wave, hence an aggregate as it was computed. The SoundFont brings each partial the whole spectrum of a sampled instrument. |
-| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
+| Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering. No effect when « Synthesis » is « FM/Oscillators ». Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
 | Timbre | choice | Sine | Sine / Soft / Bright / Percussive | The timbre of each note in local synthesis. « Sine » renders only the pitch asked for; the other three modulate and add partials of their own. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | The level of the rendering. |
-| Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | Written into the MIDI file; no effect on what is heard. |
+| Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | Written into the MIDI file; no effect on what is heard. No effect at all when the received sequence carries its own tempo, which prevails. |
 
 #### Text Output
 
@@ -10738,8 +10738,8 @@ Places the degrees of a scale on a circle, one vertex per sounding degree. The s
 |---|---|---|---|---|
 | Scale | choice | Major | Major / Natural minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Harmonic minor / Melodic minor / Major pentatonic / Minor pentatonic / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen / Chromatic / Maqam Rast / Maqam Bayati / Maqam Hijaz / Maqam Saba / Raga Bhairav / Raga Yaman / Raga Todi / Slendro (gamelan) / Pelog (gamelan) / The twenty-two shrutis | The scale to lay out. The first are counted in semitones, the rest in cents. |
 | Fundamental | choice | C4 · 261.63 Hz | C1 · 32.70 Hz / C#1 · 34.65 Hz / D1 · 36.71 Hz / D#1 · 38.89 Hz / E1 · 41.20 Hz / F1 · 43.65 Hz / F#1 · 46.25 Hz / G1 · 49.00 Hz / G#1 · 51.91 Hz / A1 · 55.00 Hz / A#1 · 58.27 Hz / B1 · 61.74 Hz / C2 · 65.41 Hz / C#2 · 69.30 Hz / D2 · 73.42 Hz / D#2 · 77.78 Hz / E2 · 82.41 Hz / F2 · 87.31 Hz / F#2 · 92.50 Hz / G2 · 98.00 Hz / G#2 · 103.83 Hz / A2 · 110.00 Hz / A#2 · 116.54 Hz / B2 · 123.47 Hz / C3 · 130.81 Hz / C#3 · 138.59 Hz / D3 · 146.83 Hz / D#3 · 155.56 Hz / E3 · 164.81 Hz / F3 · 174.61 Hz / F#3 · 185.00 Hz / G3 · 196.00 Hz / G#3 · 207.65 Hz / A3 · 220.00 Hz / A#3 · 233.08 Hz / B3 · 246.94 Hz / C4 · 261.63 Hz / C#4 · 277.18 Hz / D4 · 293.66 Hz / D#4 · 311.13 Hz / E4 · 329.63 Hz / F4 · 349.23 Hz / F#4 · 369.99 Hz / G4 · 392.00 Hz / G#4 · 415.30 Hz / A4 · 440.00 Hz / A#4 · 466.16 Hz / B4 · 493.88 Hz / C5 · 523.25 Hz / C#5 · 554.37 Hz / D5 · 587.33 Hz / D#5 · 622.25 Hz / E5 · 659.26 Hz / F5 · 698.46 Hz / F#5 · 739.99 Hz / G5 · 783.99 Hz / G#5 · 830.61 Hz / A5 · 880.00 Hz / A#5 · 932.33 Hz / B5 · 987.77 Hz / C6 · 1046.50 Hz | The note of position zero, given with its frequency. Every degree follows from it. |
-| Positions | choice | One position per degree | One position per degree / Twelve semitones | What a turn is worth. Twelve semitones draws the shape of the scale, and only holds for a scale counted in semitones. |
-| Closing octave | choice | No | No / Yes | Keep the degree that reaches the octave. Keep it for the gamelan, whose octave is stretched. |
+| Positions | choice | One position per degree | One position per degree / Twelve semitones | What a turn is worth. Twelve semitones draws the shape of the scale, and only holds for a scale counted in semitones. No effect when « Scale » is counted in cents, which falls back to one position per degree, or is « Chromatic », whose twelve degrees already fill the twelve positions. |
+| Closing octave | choice | No | No / Yes | Keep the degree that reaches the octave. Keep it for the gamelan, whose octave is stretched. No effect when « Scale » is counted in semitones: none of them reaches the octave. |
 
 ### Csound wrapper
 
@@ -10920,7 +10920,7 @@ Translates a MIDI file into a Csound score. All notations converge on MIDI (ABC,
 | p5 | choice | Amplitude (velocity ÷ 127) | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the fifth field carries. Amplitude, that is velocity brought to the range 0 to 1, is the custom, `0dbfs` being 1 here. |
 | p6 | choice | MIDI note number | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the sixth field carries. The note number is handy there even when p4 already carries the pitch: an orchestra uses it to pick a table or a register. |
 | p7 | choice | Nothing | Pitch / Amplitude (velocity ÷ 127) / MIDI velocity (0–127) / MIDI note number / Duration / MIDI channel / Constant / Curve / Nothing | What the seventh field carries. Nothing omits it, and any that would follow. |
-| Constant | number | 0 | -1000 – 1000, step 0.01 | Value of the « Constant » field. Used to pass a fixed setting to the orchestra, a table index, a factor, a stereo position. |
+| Constant | number | 0 | -1000 – 1000, step 0.01 | Value of the « Constant » field. Used to pass a fixed setting to the orchestra, a table index, a factor, a stereo position. Acts only when one of the fields p4, p5, p6 or p7 is « Constant ». |
 | Final margin | number | 0.5 s | 0 – 30 s, step 0.1 | Seconds added after the last note, written as `f0`. Without them, Csound stops at the last note and cuts reverb or resonance tails, which is heard as a click. |
 
 #### Csound Spectral
@@ -11008,8 +11008,8 @@ Draws a Csound score at random. A MIDI file carries only pitch, velocity and dur
 | Highest velocity | slider | 110 | 1 – 127, step 1 | Highest velocity. |
 | Pitch as | choice | cps (hertz) | cps (hertz) / pch (8.09) / oct (8.75) / midi (69) | The convention the pitch is written in, in p4, as in « Csound Score », an orchestra written for one does not work with another, and feeding hertz to an orchestra expecting pch produces neither sound nor error. |
 | Free field | choice | None | None / Uniform / Gaussian | One more p-field, drawn at random for each event and written as p6. This is what a score has that MIDI does not: the orchestra can read whatever it likes there (a stereo position, a modulation index, a bandwidth) and each note gets its own value. No MIDI file can carry that. |
-| Free min | number | 0 | -10000 – 10000, step 0.01 | Lower bound of the free field. |
-| Free max | number | 1 | -10000 – 10000, step 0.01 | Upper bound of the free field. |
+| Free min | number | 0 | -10000 – 10000, step 0.01 | Lower bound of the free field. Without effect when « Free field » is « None ». |
+| Free max | number | 1 | -10000 – 10000, step 0.01 | Upper bound of the free field. Without effect when « Free field » is « None ». |
 | Seed | number | 0 | 0 – 999999, step 1 | Seed of the draw. 0 = drawn at random on each run, and shown in the message so it can be copied back here. Any other value gives exactly the same score again, which is how a draw you like is kept. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 ### Generation
@@ -11514,12 +11514,12 @@ The most compositional family, because it separates what is written from where i
 | Azimuth | slider | 0 ° | -180 – 180 °, step 1 | The direction in the horizontal plane, in degrees: zero in front, positive to the left, one hundred and eighty behind. It is the convention of ambisonics and of the ITU, held throughout this family so that a panner never turns the opposite way from a decoder. |
 | Elevation | slider | 0 ° | -90 – 90 °, step 1 | The height, in degrees: zero at the horizon, ninety at the zenith. A layout without height speakers brings it back to the horizon; 7.1.4 and ambisonics render it. |
 | Distance | slider | 1 | 1 – 10, step 0.1 | The relative distance: one for the reference, two for twice as far, which halves the amplitude. Closer than the reference the sound stops growing, an infinitely near source must not become infinitely loud. |
-| Azimuth min | slider | -180 ° | -180 – 180 °, step 1 | The azimuth a connected curve's zero means. From -180 to 180, a ramp takes the source through one full turn. |
-| Azimuth max | slider | 180 ° | -180 – 180 °, step 1 | The azimuth the curve's one means. |
-| Elevation min | slider | 0 ° | -90 – 90 °, step 1 | The elevation a connected curve's zero means. |
-| Elevation max | slider | 60 ° | -90 – 90 °, step 1 | The elevation the curve's one means. |
-| Distance min | slider | 1 | 1 – 10, step 0.1 | The distance a connected curve's zero means. |
-| Distance max | slider | 4 | 1 – 10, step 0.1 | The distance the curve's one means. A rising curve moves the source away, and the amplitude follows 1/r. |
+| Azimuth min | slider | -180 ° | -180 – 180 °, step 1 | The azimuth a connected curve's zero means. From -180 to 180, a ramp takes the source through one full turn. With no curve, this setting does nothing. |
+| Azimuth max | slider | 180 ° | -180 – 180 °, step 1 | The azimuth the curve's one means. With no curve, this setting does nothing. |
+| Elevation min | slider | 0 ° | -90 – 90 °, step 1 | The elevation a connected curve's zero means. With no curve, this setting does nothing. |
+| Elevation max | slider | 60 ° | -90 – 90 °, step 1 | The elevation the curve's one means. With no curve, this setting does nothing. |
+| Distance min | slider | 1 | 1 – 10, step 0.1 | The distance a connected curve's zero means. With no curve, this setting does nothing. |
+| Distance max | slider | 4 | 1 – 10, step 0.1 | The distance the curve's one means. A rising curve moves the source away, and the amplitude follows 1/r. With no curve, this setting does nothing. |
 
 #### Spatialiser
 
@@ -11543,12 +11543,12 @@ Places a sound source in space, and returns it in the chosen layout. A sound com
 | Azimuth | slider | 0 ° | -180 – 180 °, step 1 | The direction in the horizontal plane, in degrees: zero in front, positive to the left, one hundred and eighty behind. It is the convention of ambisonics and of the ITU, held throughout this family so that a panner never turns the opposite way from a decoder. |
 | Elevation | slider | 0 ° | -90 – 90 °, step 1 | The height, in degrees: zero at the horizon, ninety at the zenith. A layout without height speakers brings it back to the horizon; 7.1.4 and ambisonics render it. |
 | Distance | slider | 1 | 1 – 10, step 0.1 | The relative distance: one for the reference, two for twice as far, which halves the amplitude. Closer than the reference the sound stops growing, an infinitely near source must not become infinitely loud. |
-| Azimuth min | slider | -180 ° | -180 – 180 °, step 1 | The azimuth a connected curve's zero means. From -180 to 180, a ramp takes the source through one full turn. |
-| Azimuth max | slider | 180 ° | -180 – 180 °, step 1 | The azimuth the curve's one means. |
-| Elevation min | slider | 0 ° | -90 – 90 °, step 1 | The elevation a connected curve's zero means. |
-| Elevation max | slider | 60 ° | -90 – 90 °, step 1 | The elevation the curve's one means. |
-| Distance min | slider | 1 | 1 – 10, step 0.1 | The distance a connected curve's zero means. |
-| Distance max | slider | 4 | 1 – 10, step 0.1 | The distance the curve's one means. A rising curve moves the source away, and the amplitude follows 1/r. |
+| Azimuth min | slider | -180 ° | -180 – 180 °, step 1 | The azimuth a connected curve's zero means. From -180 to 180, a ramp takes the source through one full turn. With no curve, this setting does nothing. |
+| Azimuth max | slider | 180 ° | -180 – 180 °, step 1 | The azimuth the curve's one means. With no curve, this setting does nothing. |
+| Elevation min | slider | 0 ° | -90 – 90 °, step 1 | The elevation a connected curve's zero means. With no curve, this setting does nothing. |
+| Elevation max | slider | 60 ° | -90 – 90 °, step 1 | The elevation the curve's one means. With no curve, this setting does nothing. |
+| Distance min | slider | 1 | 1 – 10, step 0.1 | The distance a connected curve's zero means. With no curve, this setting does nothing. |
+| Distance max | slider | 4 | 1 – 10, step 0.1 | The distance the curve's one means. A rising curve moves the source away, and the amplitude follows 1/r. With no curve, this setting does nothing. |
 
 ### Speech to Text
 
@@ -12286,7 +12286,7 @@ Gives the degrees of non-Western musical systems: Arabic maqamat, Indian ragas, 
 |---|---|---|---|---|
 | Scale | choice | Maqam Rast | Maqam Rast / Maqam Bayati / Maqam Hijaz / Maqam Saba / Raga Bhairav / Raga Yaman / Raga Todi / Slendro (gamelan) / Pelog (gamelan) / The twenty-two shrutis | The system to read. Each carries its own note, saying what one should know before using it. |
 | Tonic | slider | 220 Hz | 55 – 880 Hz, step 1 | Frequency of the first degree. In hertz and not as a note, because these scales do not sit on a keyboard. |
-| Tolerance | slider | 20 cents | 1 – 50 cents, step 1 | Deviation from the tempered semitone beyond which a degree is declared unplayable on a keyboard. Twenty cents is about what a trained ear hears as out of tune. |
+| Tolerance | slider | 20 cents | 1 – 50 cents, step 1 | Deviation from the tempered semitone beyond which a degree is declared unplayable on a keyboard. Twenty cents is about what a trained ear hears as out of tune. Without effect on a « Scale » whose every degree falls on a tempered semitone, such as Maqam Hijaz: there is then no deviation to judge. |
 
 ### Video
 

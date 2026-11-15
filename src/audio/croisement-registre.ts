@@ -20,13 +20,26 @@ export interface InertieInscrite { ou: string; sous: string; valeurs: readonly s
 export interface CoincidenceInscrite { ou: string; valeurs: readonly string[]; raison?: string }
 
 /**
- * La vraie condition d'une inertie : un autre réglage qui prend, ou ne prend pas, certaines valeurs ;
- * ou le banc lui-même, qui ne sait pas la mesurer.
+ * Une condition simple : un autre réglage qui prend, ou ne prend pas, certaines valeurs ; un port
+ * d'entrée laissé libre ; ou le banc lui-même, qui ne sait pas la mesurer.
  */
-export type ConditionInertie =
+export type ConditionSimple =
   | { reglage: string; valeurs: readonly string[] }
   | { reglage: string; sauf: readonly string[] }
+  | { port: string }
   | { banc: true };
+
+/**
+ * La vraie condition d'une inertie : une condition simple, ou plusieurs qui doivent toutes tenir
+ * (`tous`), ou dont une suffit (`une`). LE LOT 3d-2 EN A MONTRÉ LE BESOIN : la graine de la
+ * granulation spectrale ne tire rien quand l'extraction n'est pas aléatoire ET que la dispersion est à
+ * zéro, et une condition sur un seul réglage n'aurait dit que la moitié de la vérité.
+ */
+export type ConditionInertie = ConditionSimple | { tous: readonly ConditionSimple[] } | { une: readonly ConditionSimple[] };
+
+/** Les conditions simples d'une condition, pour qui doit les nommer. */
+export const conditionsSimples = (c: ConditionInertie): readonly ConditionSimple[] =>
+  "tous" in c ? c.tous : "une" in c ? c.une : [c];
 
 /**
  * Une inertie déclarée par sa VRAIE CONDITION, et non par le gouverneur sous lequel la passe l'a vue.
@@ -42,6 +55,28 @@ export type ConditionInertie =
  */
 export interface InertieConditionnee { ou: string; quand: ConditionInertie; raison: string }
 
+/** La raison commune des bornes de modulation, déclarées par `conditionsDesBornes`. */
+export const BORNE_SANS_COURBE = "une borne de modulation dit ce que vaut le zéro ou le un d'une courbe branchée sur son port, et ne sert pas sans elle ; dit dans sa documentation";
+
+/**
+ * Les inerties de chaque borne de modulation d'une fiche, sous la vraie condition de toutes : son
+ * port libre.
+ *
+ * UNE RÈGLE ET NON TRENTE LIGNES (lot 3d-2). Une borne (`modulationDe`) ne se lit que sous une courbe
+ * branchée sur le port qui module le même réglage (`module`), et la passe ne branche jamais une
+ * modulation : la dette en portait trente-quatre lignes, sur sept fiches, toutes de cette nature. Le
+ * lien entre une borne et son port est tenu par `plugins/modulation-ports.test.ts`. Une borne qui
+ * agirait port libre ferait tomber sa déclaration, comme toute autre.
+ */
+export function conditionsDesBornes(fiche: {
+  id: string; parametres: readonly { nom: string; modulationDe?: string }[]; entrees?: readonly { nom?: string; module?: string }[];
+}): InertieConditionnee[] {
+  return fiche.parametres.flatMap((p) => {
+    const port = p.modulationDe ? (fiche.entrees ?? []).find((e) => e.module === p.modulationDe)?.nom : undefined;
+    return port ? [{ ou: cle(fiche.id, p.nom), quand: { port }, raison: BORNE_SANS_COURBE }] : [];
+  });
+}
+
 export interface Inscriptions {
   inerties: readonly InertieInscrite[];
   coincidences: readonly CoincidenceInscrite[];
@@ -50,7 +85,10 @@ export interface Inscriptions {
 
 /** La condition tient-elle dans le lancer où `gouverneur` vaut `valeur`, tout le reste à sa base ? */
 export function conditionTient(c: ConditionInertie, r: RapportCroisement, gouverneur: string, valeur: string): boolean {
+  if ("tous" in c) return c.tous.every((x) => conditionTient(x, r, gouverneur, valeur));
+  if ("une" in c) return c.une.some((x) => conditionTient(x, r, gouverneur, valeur));
   if ("banc" in c) return true;
+  if ("port" in c) return (r.portsLibres ?? []).includes(c.port);
   const v = c.reglage === gouverneur ? valeur : r.defauts?.[c.reglage];
   if (v === undefined) return false;
   return "valeurs" in c ? c.valeurs.includes(v) : !c.sauf.includes(v);

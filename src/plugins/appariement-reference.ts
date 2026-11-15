@@ -38,18 +38,18 @@ export const fiches: FicheAudio[] = ([
         doc: "Aligner la crête sur celle de la référence, une fois le reste appliqué. Le message dit ce que cet alignement a coûté au niveau.",
         docEn: "Align the peak on the reference's, once the rest is applied. The message gives what that alignment cost in level." },
       { nom: "Correction maximale", nomEn: "Maximum correction", type: "curseur", plage: [1, 24], pas: 1, defaut: 12, unite: "dB",
-        doc: "Écart maximal appliqué à une bande de fréquence, dans les deux sens. Bas, la correction reste une teinte ; haut, elle recopie la référence de plus près et amplifie d'autant le plancher là où le son traité n'a rien. Le message dit quelle part du spectre a buté contre cette borne.",
-        docEn: "Largest amount applied to a frequency band, in either direction. Low, the correction stays a tint; high, it copies the reference more closely and amplifies the floor accordingly where the processed sound has nothing. The message gives what share of the spectrum hit this bound." },
+        doc: "Écart maximal appliqué à une bande de fréquence, dans les deux sens. Bas, la correction reste une teinte ; haut, elle recopie la référence de plus près et amplifie d'autant le plancher là où le son traité n'a rien. Le message dit quelle part du spectre a buté contre cette borne. Sans effet quand « Spectre » vaut « Non » : aucune bande n'est alors corrigée.",
+        docEn: "Largest amount applied to a frequency band, in either direction. Low, the correction stays a tint; high, it copies the reference more closely and amplifies the floor accordingly where the processed sound has nothing. The message gives what share of the spectrum hit this bound. No effect when « Spectrum » is « No »: no band is then corrected." },
       { nom: "Bandes par octave", nomEn: "Bands per octave", type: "curseur", plage: [1, 12], pas: 1, defaut: 3,
-        doc: "Finesse de la correction. Trois bandes suivent la couleur générale ; douze suivent le détail, jusqu'aux résonances propres à la référence.",
-        docEn: "How fine the correction is. Three bands follow the general colour; twelve follow the detail, down to the reference's own resonances." },
+        doc: "Finesse de la correction. Trois bandes suivent la couleur générale ; douze suivent le détail, jusqu'aux résonances propres à la référence. Sans effet quand « Spectre » vaut « Non ».",
+        docEn: "How fine the correction is. Three bands follow the general colour; twelve follow the detail, down to the reference's own resonances. No effect when « Spectrum » is « No »." },
       // LA FORME EST CELLE QUE LE DÉPÔT EMPLOIE DÉJÀ LE PLUS, et non une écriture de plus du même
       // concept : le garde des nomenclatures compte les formes de « fenêtre d'analyse », et une
       // liste neuve en aurait fait une onzième.
       { nom: "Taille de la transformée", nomEn: "Transform size", type: "choix",
         ...choixFenetre(TAILLES_FENETRE), defaut: "4096", defautEn: "4096",
-        doc: "Résolution de l'analyse. Grande, elle distingue les graves ; petite, elle suit mieux les changements rapides.",
-        docEn: "Analysis resolution. Large, it tells low frequencies apart; small, it follows fast changes better." },
+        doc: "Résolution de l'analyse. Grande, elle distingue les graves ; petite, elle suit mieux les changements rapides. Elle ne sert qu'à recopier la réponse en fréquence : sans effet quand « Spectre » vaut « Non ».",
+        docEn: "Analysis resolution. Large, it tells low frequencies apart; small, it follows fast changes better. It only serves to copy the frequency response: no effect when « Spectrum » is « No »." },
     ],
     async executer(ctx) {
       const audio = entreeAudio(ctx, 0);

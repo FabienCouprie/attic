@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 95 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 234 · transposable tel quel
+- **pur** : 236 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -100,9 +100,11 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | crete-vraie.ts | recipient | AudioBuffer |
 | cribles.ts | pur | — |
 | criteres-schaefferiens.ts | pur | — |
+| croisement-bases.ts | pur | — |
+| croisement-entrees.ts | recipient | AudioBuffer |
 | croisement-inscriptions.ts | pur | — |
 | croisement-registre.ts | pur | — |
-| croisement-reglages.ts | recipient | AudioBuffer |
+| croisement-reglages.ts | pur | — |
 | csound-aleatoire.ts | pur | — |
 | csound-formules.ts | pur | — |
 | csound-opcodes.ts | pur | — |

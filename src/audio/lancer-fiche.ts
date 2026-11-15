@@ -117,15 +117,26 @@ export async function lancerFiche(
   }
 }
 
-/** Un condensé de 52 bits d'une suite d'octets ou de nombres, assez pour dire « rien n'a changé ». */
+/**
+ * Un condensé de 64 bits d'une suite d'octets ou de nombres, assez pour dire « rien n'a changé ».
+ *
+ * CHAQUE PAS REPLIE SES BITS DE POIDS FORT SUR CEUX DE POIDS FAIBLE, et c'est la réparation du lot
+ * 3d-2 (2026-11-15). Une multiplication ne fait monter un bit que vers le haut : sans repli, une
+ * différence de signe, le bit de poids fort d'un échantillon, ne touchait que le bit de poids fort
+ * du condensé, et deux différences s'y annulaient. Un carré à 440 Hz et un carré à 261,6 Hz, qui ne
+ * diffèrent que par le signe de leurs échantillons, rendaient la même empreinte, et la saisie du
+ * générateur de fréquence paraissait inerte sous la forme carrée.
+ */
 function condense(lire: (i: number) => number, n: number): string {
   let h1 = 0x811c9dc5, h2 = 0x01000193;
   for (let i = 0; i < n; i++) {
     const x = lire(i) | 0;
-    h1 = Math.imul(h1 ^ x, 16777619) >>> 0;
-    h2 = Math.imul(h2 ^ (x >>> 3), 2246822519) >>> 0;
+    h1 = Math.imul(h1 ^ x, 16777619);
+    h1 ^= h1 >>> 15;
+    h2 = Math.imul(h2 ^ x, 0x5bd1e995);
+    h2 ^= h2 >>> 13;
   }
-  return `${n}:${h1.toString(36)}${h2.toString(36)}`;
+  return `${n}:${(h1 >>> 0).toString(36)}${(h2 >>> 0).toString(36)}`;
 }
 
 /**

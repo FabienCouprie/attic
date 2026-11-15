@@ -345,9 +345,9 @@ export const fiches: FicheAudio[] = ([
         doc: "Cherche pour chaque accord le registre qui bouge le moins de voix depuis le précédent. La disposition choisie plus haut est gardée telle quelle : la conduite ne déplace les accords que par octaves entières.",
         docEn: "Finds, for each chord, the register that moves the fewest voices from the previous one. The voicing chosen above is kept as is: the leading only shifts chords by whole octaves." },
       { nom: "Grave minimum", nomEn: "Lowest note", type: "nombre", plage: [21, 60], pas: 1, defaut: 40,
-        doc: "Note la plus basse que la conduite des voix s'autorise.", docEn: "Lowest note the voice leading allows itself." },
+        doc: "Note la plus basse que la conduite des voix s'autorise. Sans effet quand « Conduite des voix » vaut « Non ».", docEn: "Lowest note the voice leading allows itself. No effect when « Voice leading » is « No »." },
       { nom: "Aigu maximum", nomEn: "Highest note", type: "nombre", plage: [60, 108], pas: 1, defaut: 88,
-        doc: "Note la plus haute que la conduite des voix s'autorise.", docEn: "Highest note the voice leading allows itself." },
+        doc: "Note la plus haute que la conduite des voix s'autorise. Sans effet quand « Conduite des voix » vaut « Non ».", docEn: "Highest note the voice leading allows itself. No effect when « Voice leading » is « No »." },
       ...PARAMETRES_RENDU,
     ],
     async executer(ctx) {
