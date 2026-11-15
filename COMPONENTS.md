@@ -2489,8 +2489,8 @@ Generates a plucked string note using Karplus-Strong synthesis with Tone.js Pluc
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Attack noise | number | 1 | 0.1 – 20, step 0.1 | Amount of noise at the attack. |
 | Dampening | number | 4000 Hz | 100 – 7000 Hz, step 10 | Cutoff frequency of the comb filter's lowpass. |
-| Resonance | number | 0.7 | 0 – 1, step 0.01 | Resonance / sustain duration. |
-| Release | number | 1 s | 0 – 3 s, step 0.01 | Time for the resonance to ramp down to zero. |
+| Resonance | number | 0.7 | 0 – 1, step 0.01 | Share of the sound the string keeps on each round trip, hence how long it rings, longer in the bass: it is mostly set between 0.9 and 1, and at 1 only the « Release » silences it. |
+| Release | number | 1 s | 0 – 3 s, step 0.01 | Time for the resonance to ramp down to zero, ending with the sound: it starts at « Duration » minus this time, and a time longer than the « Duration » lengthens the sound. No effect when the string has already died out, which a low « Resonance » makes quick. |
 
 #### Poly Synth
 

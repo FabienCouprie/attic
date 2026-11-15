@@ -237,7 +237,7 @@ export async function genererPluckSynth(opts: OptionsPluckSynth): Promise<AudioB
     sampleRate = frequenceDeTravail(),
   } = opts;
 
-  const { Offline, Noise, Delay, Filter, Gain } = await import("tone");
+  const { Offline, Noise, Delay, BiquadFilter, Gain } = await import("tone");
 
   const dureeTotale = Math.max(0.1, duree, release + 0.05);
   const velocity = Math.max(0, Math.min(1, volume / 100));
@@ -249,8 +249,20 @@ export async function genererPluckSynth(opts: OptionsPluckSynth): Promise<AudioB
     () => {
       const noise = new Noise({ type: "pink" }).start(0).stop(noiseDur);
       const delay = new Delay(1 / freq);
-      const filter = new Filter(dampening, "lowpass");
+      // LE PASSE-BAS DE BUTTERWORTH, SANS BOSSE (2026-11-15) : le Q de Web Audio est en décibels,
+      // et celui de 1 dB que `Filter` pose par défaut monte de près de 2 dB à la coupure. Dans la
+      // boucle, cette bosse portait le gain au-delà de l'unité dès une résonance de 0,85, et la
+      // corde divergeait. À −3,01 dB, la réponse ne dépasse jamais 1 : la boucle ne rend pas plus
+      // que la résonance. `BiquadFilter` et non `Filter`, dont le Q refuse un négatif.
+      const filter = new BiquadFilter({ frequency: dampening, type: "lowpass", Q: -10 * Math.log10(2) });
       const feedback = new Gain(resonance);
+      // LE RELÂCHEMENT (2026-11-15) : la résonance descend à zéro sur « Release », et la descente
+      // finit avec le tampon. Il n'agissait sur rien : il n'allongeait le tampon que s'il dépassait
+      // la durée. Ce qui reste dans la ligne à retard en sort en une période, puis le silence.
+      const debutRelache = Math.max(0, duree - release);
+      feedback.gain.setValueAtTime(resonance, debutRelache);
+      if (release > 0) feedback.gain.linearRampToValueAtTime(0, debutRelache + release);
+      else feedback.gain.setValueAtTime(0, debutRelache);
       const outGain = new Gain(velocity).toDestination();
 
       noise.connect(delay);

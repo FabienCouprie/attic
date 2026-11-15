@@ -218,4 +218,30 @@ describe("genererPluckSynth", () => {
     }
   });
 
+  it("LA CORDE NE DIVERGE À AUCUNE RÉSONANCE DE SA PLAGE", async () => {
+    // LE DÉFAUT (2026-11-15) : le passe-bas de la boucle avait le Q par défaut de Tone.js, 1 dB, dont
+    // la bosse à la coupure dépasse l'unité. Dès une « Resonance » de 0,85, bien en deçà de la borne
+    // de 1 que le réglage offre, le gain de la boucle la dépassait et la corde montait jusqu'à NaN.
+    const { genererPluckSynth } = await import("./tone-synths");
+    for (const note of ["A2", "C4", "C6"]) {
+      for (const resonance of [0.85, 0.95, 1]) {
+        const b = await genererPluckSynth({ note, duree: 1, volume: 80, resonance, release: 0, sampleRate: 44100 });
+        let crete = 0;
+        for (const x of b.getChannelData(0)) crete = Math.max(crete, Math.abs(x));
+        expect(crete, `${note} à ${resonance}`).toBeLessThan(1);
+      }
+    }
+  });
+
+  it("LE RELÂCHEMENT ÉTEINT LA CORDE DANS LA DURÉE DU TAMPON", async () => {
+    // LE DÉFAUT (2026-11-15) : le « Release » ne descendait rien ; il n'allongeait le tampon que
+    // s'il dépassait la durée. À une résonance de 1, la corde tient : sans relâchement elle sonne
+    // encore à la fin, et un relâchement d'une seconde doit l'y avoir éteinte.
+    const { genererPluckSynth } = await import("./tone-synths");
+    const rendre = (release: number) => genererPluckSynth({ note: "C4", duree: 2, volume: 80, resonance: 1, release, sampleRate: 44100 });
+    const [sec, long] = [await rendre(0), await rendre(1)];
+    expect(long.duration).toBeCloseTo(2, 2);
+    expect(rmsDeLaFin(sec, 0.2)).toBeGreaterThan(1e-3);
+    expect(rmsDeLaFin(long, 0.2)).toBeLessThan(0.1 * rmsDeLaFin(sec, 0.2));
+  });
 });

@@ -239,8 +239,8 @@ export const fiches: FicheAudio[] = ([
         plage: [0, 1],
         pas: 0.01,
         defaut: 0.7,
-        doc: "Résonance / durée de sustain.",
-        docEn: "Resonance / sustain duration.",
+        doc: "Part du son que la corde garde à chaque aller-retour, donc la durée de sa tenue, plus longue dans le grave : elle se règle surtout entre 0,9 et 1, et à 1 seul le « Release » l'éteint.",
+        docEn: "Share of the sound the string keeps on each round trip, hence how long it rings, longer in the bass: it is mostly set between 0.9 and 1, and at 1 only the « Release » silences it.",
       },
       {
         nom: "Release",
@@ -250,8 +250,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.01,
         defaut: 1,
         unite: "s",
-        doc: "Temps de descente de la résonance à zéro.",
-        docEn: "Time for the resonance to ramp down to zero.",
+        doc: "Temps de descente de la résonance à zéro, qui finit avec le son : elle commence à « Durée » moins ce temps, et un temps plus long que la « Durée » allonge le son. Sans effet quand la corde s'est déjà tue, ce que fait vite une « Resonance » basse.",
+        docEn: "Time for the resonance to ramp down to zero, ending with the sound: it starts at « Duration » minus this time, and a time longer than the « Duration » lengthens the sound. No effect when the string has already died out, which a low « Resonance » makes quick.",
       },
     ],
     async executer(ctx) {
