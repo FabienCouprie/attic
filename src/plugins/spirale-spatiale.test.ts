@@ -39,6 +39,13 @@ async function spirale(entree: AudioBuffer, reglages: Record<string, string | nu
   return r.valeurs[0] as AudioBuffer;
 }
 
+/** La crête des deux canaux. */
+function crete(b: AudioBuffer): number {
+  let c = 0;
+  for (const k of [0, 1]) for (const v of b.getChannelData(k)) c = Math.max(c, Math.abs(v));
+  return c;
+}
+
 /** La puissance des deux canaux sur une fenêtre, en décibels. */
 function puissanceDb(b: AudioBuffer, debut: number, fin: number): number {
   const g = b.getChannelData(0), d = b.getChannelData(1);
@@ -58,14 +65,14 @@ describe("l'air de la spirale spatiale", () => {
         const sr = sortie.sampleRate;
         // Une fenêtre loin des bords : la dernière trame voit le sinus s'arrêter.
         const debut = n - Math.round(0.2 * sr), fin = n - Math.round(0.1 * sr);
-        // L'attendu : le carré inverse, la loi en cosinus (somme des carrés à deux), et l'air de la
-        // norme sur les mètres parcourus à chaque instant.
+        // L'attendu : le carré inverse, la loi en cosinus (somme des carrés à un : les deux canaux
+        // ensemble portent la puissance de l'entrée), et l'air de la norme sur les mètres parcourus.
         const o = { tours: 1, rapport: 4, eloigne: true, distanceDebut: depart, absorption: 1 };
         let attendu = 0;
         for (let i = debut; i < fin; i++) {
           const p = pointSpirale(o, i / (n - 1));
           const air = Math.pow(10, (-ALPHA_ISO[f] * (p.distance - depart)) / 20);
-          attendu += 2 * 0.125 * (p.gain * air) ** 2;
+          attendu += 0.125 * (p.gain * air) ** 2;
         }
         const ecart = puissanceDb(sortie, debut, fin) - 10 * Math.log10(attendu / (fin - debut));
         expect(Math.abs(ecart), `départ ${depart} m, ${f} Hz : écart ${ecart.toFixed(2)} dB`).toBeLessThan(0.3);
@@ -82,18 +89,38 @@ describe("l'air de la spirale spatiale", () => {
     expect(puissanceDb(pres, debut, fin) - puissanceDb(loin, debut, fin)).toBeGreaterThan(4);
   }, 60_000);
 
+  it("AUCUN CANAL NE DÉPASSE L'ENTRÉE, PAS MÊME SUR LE CÔTÉ, DANS LES DEUX SENS", async () => {
+    // LE DÉFAUT (2026-11-15) : la loi en cosinus était multipliée par √2, pour que le centre vaille
+    // l'entrée sur chaque canal ; un canal sur le côté en recevait trois décibels de plus, et une
+    // entrée à pleine échelle saturait. L'unité est désormais sur le côté : un canal seul y vaut
+    // l'entrée, et au centre chacun vaut l'entrée moins trois décibels, la puissance restant la même.
+    for (const Sens of ["eloigne", "rapproche"]) {
+      const sortie = await spirale(sinus(1000), { Sens, "Absorption de l'air": 0 });
+      expect(crete(sortie), Sens).toBeLessThanOrEqual(0.5 + 1e-6);
+      // Un tour d'un quart sur trois mène le son sur le côté droit, à 0,25 tour : le canal y vaut
+      // l'entrée, au gain de la distance près.
+      expect(crete(sortie), Sens).toBeGreaterThan(0.5 * (Sens === "eloigne" ? 0.8 : 0.1));
+    }
+    // Au départ, au centre : chaque canal vaut l'entrée moins trois décibels.
+    const centre = await spirale(sinus(1000), { "Absorption de l'air": 0 });
+    let maxG = 0, maxD = 0;
+    for (let i = 0; i < Math.round(0.002 * SR); i++) {
+      maxG = Math.max(maxG, Math.abs(centre.getChannelData(0)[i]));
+      maxD = Math.max(maxD, Math.abs(centre.getChannelData(1)[i]));
+    }
+    expect(maxG).toBeCloseTo(0.5 / Math.SQRT2, 2);
+    expect(maxD).toBeCloseTo(0.5 / Math.SQRT2, 2);
+  }, 60_000);
+
   it("EN SE RAPPROCHANT, LE SON ARRIVE AU NIVEAU DE L'ENTRÉE, SANS JAMAIS LE DÉPASSER", async () => {
     // Trois tours à rapport deux, sans air : la distance est divisée par huit, et le gain monte de
     // 1/8 à 1 selon la loi du carré inverse, 2^(3p − 3) à la part p du parcours.
     const sortie = await spirale(sinus(1000), { Sens: "rapproche", "Absorption de l'air": 0 });
     const n = sortie.length;
-    let crete = 0;
-    for (const c of [0, 1]) for (const v of sortie.getChannelData(c)) crete = Math.max(crete, Math.abs(v));
-    // La loi en cosinus donne au plus √2 à un canal, sur le côté : c'est le plafond d'une entrée de 0,5.
-    expect(crete).toBeLessThanOrEqual(0.5 * Math.SQRT2 + 1e-6);
+    expect(crete(sortie)).toBeLessThanOrEqual(0.5 + 1e-6);
     for (const [debut, fin] of [[0, Math.round(0.1 * SR)], [n - Math.round(0.1 * SR), n]]) {
       let attendu = 0;
-      for (let i = debut; i < fin; i++) attendu += 2 * 0.125 * Math.pow(2, 2 * (3 * (i / (n - 1)) - 3));
+      for (let i = debut; i < fin; i++) attendu += 0.125 * Math.pow(2, 2 * (3 * (i / (n - 1)) - 3));
       const ecart = puissanceDb(sortie, debut, fin) - 10 * Math.log10(attendu / (fin - debut));
       expect(Math.abs(ecart), `fenêtre ${debut}–${fin} : écart ${ecart.toFixed(2)} dB`).toBeLessThan(0.1);
     }
@@ -110,7 +137,7 @@ describe("l'air de la spirale spatiale", () => {
       for (let i = debut; i < fin; i++) {
         const distance = depart * Math.pow(4, -i / (n - 1));
         const air = Math.pow(10, (-ALPHA_ISO[f] * (distance - proche)) / 20);
-        attendu += 2 * 0.125 * ((proche / distance) * air) ** 2;
+        attendu += 0.125 * ((proche / distance) * air) ** 2;
       }
       const ecart = puissanceDb(sortie, debut, fin) - 10 * Math.log10(attendu / (fin - debut));
       expect(Math.abs(ecart), `${f} Hz : écart ${ecart.toFixed(2)} dB`).toBeLessThan(0.3);

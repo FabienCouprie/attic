@@ -20,7 +20,8 @@
 //
 // LE POINT LE PLUS PROCHE EST LA RÉFÉRENCE, où la sortie vaut l'entrée : le départ quand le son
 // s'éloigne, l'arrivée quand il se rapproche. Le niveau et l'air se comptent depuis lui, et la
-// sortie ne dépasse donc jamais l'entrée, au panoramique près.
+// sortie ne dépasse donc jamais l'entrée ; la loi en cosinus a son unité sur le côté, où un canal
+// seul vaut l'entrée.
 //
 // L'AZIMUT suit la loi en cosinus, qui garde le niveau perçu constant au passage par le centre :
 // un panoramique linéaire y perdrait trois décibels, et l'on entendrait la rotation pomper.
