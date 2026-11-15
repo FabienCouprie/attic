@@ -29,8 +29,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { ...PARAMETRE_CLE, nom: "Tonique", nomEn: "Root",
-        doc: "La tonique de la gamme. Sans effet en chromatique, qui contient toutes les notes.",
-        docEn: "The scale's root. Without effect in chromatic, which contains every note." },
+        doc: "La tonique de la gamme. Sans effet quand « Gamme » vaut « Chromatique », qui contient toutes les notes.",
+        docEn: "The scale's root. Has no effect when « Scale » is « Chromatic », which contains every note." },
       { nom: "Gamme", nomEn: "Scale", type: "choix",
         options: GAMMES_CORRECTION.map((g) => g.fr), optionsEn: GAMMES_CORRECTION.map((g) => g.en),
         optionIds: GAMMES_CORRECTION.map((g) => g.id), optionsHeritees: IDS_HERITES_CORRECTION, defaut: "Chromatique", defautEn: "Chromatic",

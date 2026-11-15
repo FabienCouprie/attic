@@ -1,4 +1,4 @@
-// audio/croisement-reglages.ts — Croiser les réglages d'une fiche avec ses nomenclatures.
+// audio/croisement-reglages.ts — Croiser les réglages d'une fiche avec ses réglages à choix.
 //
 // POURQUOI CE MODULE EXISTE. L'« Octaves » de l'arpégiateur n'agissait plus dès qu'un « Motif » était
 // choisi, et aucun garde ne pouvait le voir : tous font varier UN réglage à partir des défauts, et
@@ -6,7 +6,8 @@
 // ne se voit qu'en faisant varier les deux. C'est le lot 1 de la passe de complétude des nœuds à
 // nomenclature (plan du 2026-11-14).
 //
-// CE QU'IL MESURE, pour chaque réglage à nomenclature N d'une fiche :
+// CE QU'IL MESURE, pour chaque gouverneur N d'une fiche, un réglage à choix (les seuls réglages à
+// nomenclature d'abord, tous les réglages à choix depuis le lot 3e, sur la décision de Fabien) :
 //  1. une passe par valeur offerte de N : les valeurs qui rendent les mêmes sorties qu'une autre
 //     sont des COÏNCIDENCES, et celle qui coïncide avec le défaut est un repli possible ;
 //  2. sous chaque valeur v de N, chaque autre réglage S passe à ses valeurs d'essai : si aucune ne
@@ -30,6 +31,10 @@ import { empreinteValeurs, entreesDEssai, lancerFiche, valeursDEssai, type Fiche
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { BASES_PROPRES } from "./croisement-bases";
 import { DEUX_NOTES, ENTREES_PROPRES, notesDesAccords, sonSecond } from "./croisement-entrees";
+import { ENTREES_DES_CHOIX } from "./croisement-entrees-choix";
+
+/** Les entrées propres d'une fiche, des deux tables. */
+export const entreesPropres = (id: string) => ({ ...ENTREES_PROPRES[id], ...ENTREES_DES_CHOIX[id] });
 
 /**
  * Des entrées assez riches pour qu'un réglage puisse agir : des accords dans le MIDI, des accords
@@ -43,7 +48,7 @@ import { DEUX_NOTES, ENTREES_PROPRES, notesDesAccords, sonSecond } from "./crois
 export function entreesRiches(fiche: FicheLancable, o: { facultatifs?: boolean } = {}): unknown[] {
   const communes = entreesDEssai(fiche);
   const reglages = new Set(fiche.parametres.map((p) => p.nom));
-  const propres = ENTREES_PROPRES[fiche.id] ?? {};
+  const propres = entreesPropres(fiche.id);
   let audios = 0;
   return (fiche.entrees ?? []).map((p, i) => {
     const nom = p.nom ?? "";
@@ -114,7 +119,7 @@ export function essaisDe(s: ParametreDef, base: Reglages): (string | number)[] {
   return [...new Set(bornes)].filter((v) => v !== base[s.nom]);
 }
 
-/** Un réglage inerte sous une valeur d'un réglage à nomenclature. */
+/** Un réglage inerte sous une valeur d'un gouverneur, un réglage à choix. */
 export interface Inertie { fiche: string; reglage: string; gouverneur: string; valeur: string; essais: (string | number)[] }
 
 /** Des valeurs d'un même réglage qui rendent les mêmes sorties. */
@@ -126,7 +131,7 @@ export interface Echec { fiche: string; reglages: Reglages; raison: string }
 export interface RapportCroisement {
   fiche: string;
   lancers: number;
-  /** Les valeurs essayées de chaque réglage à nomenclature, celles qu'il offre. */
+  /** Les valeurs essayées de chaque gouverneur, celles qu'il offre. */
   valeurs: Record<string, string[]>;
   inerties: Inertie[];
   coincidences: Coincidence[];
@@ -194,15 +199,16 @@ async function empreinte(fiche: FicheLancable, reglages: Reglages, entrees?: unk
 }
 
 /**
- * Croise une fiche avec ses réglages à nomenclature.
+ * Croise une fiche avec ses gouverneurs, ses réglages à choix.
  *
- * `gouverneurs` nomme chaque réglage à nomenclature et les identifiants qu'il offre ; `essaisMax`
+ * `gouverneurs` nomme chaque réglage à choix et les identifiants qu'il offre ; `essaisMax`
  * borne le nombre de valeurs d'essai d'un autre réglage sous chaque valeur (deux par défaut : une
  * seule pourrait tomber pile sur une valeur équivalente au défaut, et faire croire à une inertie).
+ * `apresLancer` est attendu après chaque lancer : la passe y rend la mémoire des tampons natifs.
  */
 export async function croiserFiche(
   fiche: FicheLancable, gouverneurs: readonly { reglage: string; ids: readonly string[] }[],
-  o: { essaisMax?: number; entrees?: unknown[]; secondes?: number } = {},
+  o: { essaisMax?: number; entrees?: unknown[]; secondes?: number; apresLancer?: () => Promise<void> } = {},
 ): Promise<RapportCroisement> {
   const rapport: RapportCroisement = {
     fiche: fiche.id, lancers: 0, valeurs: {}, inerties: [], coincidences: [], echecs: [], nonEprouves: [], defauts: {}, agissants: [],
@@ -218,6 +224,7 @@ export async function croiserFiche(
   const lancer = async (reglages: Reglages) => {
     rapport.lancers++;
     const r = await empreinte(fiche, reglages, o.entrees);
+    await o.apresLancer?.();
     if ("echec" in r) rapport.echecs.push({ fiche: fiche.id, reglages, raison: r.echec });
     return "emp" in r ? r.emp : null;
   };

@@ -46,7 +46,7 @@ export function sonSecond(): AudioBuffer {
 }
 
 /** Un son stéréo de `secondes`, échantillon par échantillon. */
-function sonDe(secondes: number, f: (t: number) => number, sr = 48000): AudioBuffer {
+export function sonDe(secondes: number, f: (t: number) => number, sr = 48000): AudioBuffer {
   const b = new AudioBuffer({ numberOfChannels: 2, length: Math.round(secondes * sr), sampleRate: sr });
   for (let c = 0; c < 2; c++) {
     const d = b.getChannelData(c);
@@ -75,7 +75,7 @@ function sonEcrete(plafond: number): AudioBuffer {
 }
 
 /** Un MIDI dont chaque note garde son canal, à 120 à la noire : `notesVersFichierMidi` n'en écrit qu'un. */
-function midiParCanal(notes: readonly { note: number; velocite: number; debut: number; fin: number; canal: number }[]): File {
+export function midiParCanal(notes: readonly { note: number; velocite: number; debut: number; fin: number; canal: number }[]): File {
   const tick = (s: number) => Math.round(s * 2 * 480);
   const lignes: { tick: number; type: string; [k: string]: unknown }[] = [{ tick: 0, type: "setTempo", microsecondsPerBeat: 500_000 }];
   for (const n of notes) {
@@ -188,8 +188,8 @@ export const ENTREES_PROPRES: Record<string, Record<string, { valeur: () => unkn
   },
   "midi-vers-abc": {
     MIDI: {
-      valeur: () => notesVersFichierMidi([...notesDesAccords(), { ...DEUX_NOTES[0], fin: 4.6 }, { ...DEUX_NOTES[1], debut: 4.375 }], 120, 0),
-      raison: "une note qui sonne encore à l'attaque de la suivante, et une attaque sur une double croche à contretemps : le MIDI commun n'a ni l'un ni l'autre",
+      valeur: () => notesVersFichierMidi([...notesDesAccords(), { ...DEUX_NOTES[0], fin: 4.85 }, { ...DEUX_NOTES[1], debut: 4.375 }], 120, 0),
+      raison: "une note qui sonne encore à l'attaque de la suivante, d'assez loin pour que la grille de croches ne l'efface pas, et une attaque sur une double croche à contretemps : le MIDI commun n'a ni l'un ni l'autre",
     },
   },
   "sms-sinusoides-bruit": {

@@ -39,12 +39,12 @@ export const fiches: FicheAudio[] = ([
       {
         nom: "Fenêtre", nomEn: "Window", type: "choix",
         options: choixFenetre(TAILLES_FENETRE).options, defaut: "4096",
-        doc: "Taille de la fenêtre FFT (échantillons). Plus grande = meilleure résolution fréquentielle (mais moins de résolution temporelle).",
+        doc: "Taille de la fenêtre FFT (échantillons). Plus grande = meilleure résolution fréquentielle (mais moins de résolution temporelle). Ne règle que l'affichage : le son sort tel qu'il est entré.",
         // Pas d'optionsEn/defautEn : des tailles de fenêtre ne se traduisent pas.
         // (Ces champs contenaient des formes d'onde — « Sine », « Square »… —
         // copiées-collées depuis un paramètre d'oscillateur, ce qui affichait
         // des noms de formes d'onde à la place des tailles en anglais.)
-        docEn: "FFT window size (samples). Larger = finer frequency resolution (but coarser time resolution).",
+        docEn: "FFT window size (samples). Larger = finer frequency resolution (but coarser time resolution). Sets the display only: the sound leaves as it came in.",
      },
       {
         nom: "Échelle", nomEn: "Scale", type: "choix",
@@ -70,9 +70,9 @@ export const fiches: FicheAudio[] = ([
       {
         nom: "Fenêtre", nomEn: "Window", type: "choix",
         options: choixFenetre(TAILLES_FENETRE).options, defaut: "1024",
-        doc: "Taille de la fenêtre FFT (échantillons). Petite = meilleure résolution temporelle ; grande = meilleure résolution fréquentielle (compromis temps/fréquence).",
+        doc: "Taille de la fenêtre FFT (échantillons). Petite = meilleure résolution temporelle ; grande = meilleure résolution fréquentielle (compromis temps/fréquence). Ne règle que l'affichage : le son sort tel qu'il est entré.",
         // Idem : pas d'optionsEn/defautEn (mêmes formes d'onde copiées-collées).
-        docEn: "FFT window size (samples). Small = better time resolution; large = better frequency resolution (time/frequency trade-off).",
+        docEn: "FFT window size (samples). Small = better time resolution; large = better frequency resolution (time/frequency trade-off). Sets the display only: the sound leaves as it came in.",
      },
       {
         nom: "Échelle", nomEn: "Scale", type: "choix",

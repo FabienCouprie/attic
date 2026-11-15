@@ -140,7 +140,26 @@ describe("genererModulationSynth", () => {
       expect(Math.max(...buffer.getChannelData(1))).toBeGreaterThan(0);
     }
   });
+
+  it("LE RELÂCHEMENT S'ENTEND DANS LA DURÉE DU TAMPON, et la durée reste celle demandée", async () => {
+    // LE DÉFAUT RELEVÉ PAR LA PASSE DE CROISEMENT (lot 3e, 2026-11-15) : la note se relâchait à la
+    // fin du tampon, et le « Release » ne s'entendait jamais tant que la durée dépassait l'enveloppe,
+    // ce qui est le cas aux défauts (1,5 s contre 0,66 s).
+    const { genererModulationSynth } = await import("./tone-synths");
+    const rendre = (release: number) => genererModulationSynth({ note: "C4", duree: 1.5, volume: 80, mode: "FM", release, sampleRate: 44100 });
+    const [sec, long] = [await rendre(0), await rendre(1)];
+    expect(long.duration).toBeCloseTo(1.5, 2);
+    expect(rmsDeLaFin(long, 0.2)).toBeLessThan(0.5 * rmsDeLaFin(sec, 0.2));
+  });
 });
+
+/** Le niveau efficace des `secondes` dernières du canal gauche. */
+function rmsDeLaFin(b: AudioBuffer, secondes: number): number {
+  const d = b.getChannelData(0), n = Math.round(secondes * b.sampleRate);
+  let s = 0;
+  for (let i = d.length - n; i < d.length; i++) s += d[i] * d[i];
+  return Math.sqrt(s / n);
+}
 
 describe("rendreBatterieMidi", () => {
   it("rend une piste rythmique stéréo non silencieuse", async () => {
@@ -198,4 +217,5 @@ describe("genererPluckSynth", () => {
       expect(Number.isFinite(droite[i])).toBe(true);
     }
   });
+
 });

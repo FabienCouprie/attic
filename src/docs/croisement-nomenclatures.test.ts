@@ -1,4 +1,4 @@
-// docs/croisement-nomenclatures.test.ts — Sous chaque valeur d'une nomenclature, chaque autre
+// docs/croisement-nomenclatures.test.ts — Sous chaque valeur d'un réglage à choix, chaque autre
 // réglage agit encore, ou son inertie est déclarée.
 //
 // LE DÉFAUT QUE CE GARDE EXISTE POUR EMPÊCHER, relevé le 2026-11-14 : l'« Octaves » de
@@ -10,8 +10,9 @@
 // DEUX ÉTAGES. Le premier tourne toujours : il éprouve l'instrument sur des fiches dont la réponse
 // est connue, une inertie et une coïncidence plantées, car un instrument qui ne voit pas son propre
 // cas ne prouve rien. Le second est la passe sur le catalogue, longue, lancée par
-// `BANC_CROISEMENT=1` comme `bornes-parametres.test.ts` : chaque fiche qui porte un réglage relevé par
-// un domaine de `plugins/nomenclatures.ts`, sous chaque valeur offerte. `CROISEMENT_FICHES=a,b`
+// `BANC_CROISEMENT=1` comme `bornes-parametres.test.ts` : chaque fiche qui porte un réglage à choix,
+// sous chaque valeur offerte (`perimetre`). Seuls les réglages relevés par un domaine de
+// `plugins/nomenclatures.ts` gouvernaient jusqu'au lot 3e. `CROISEMENT_FICHES=a,b`
 // borne la passe à quelques fiches, et `RAPPORT_CROISEMENT=chemin` y écrit le relevé.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
@@ -22,11 +23,14 @@ import { registre } from "../audio/adaptateur";
 import { croiserFiche, entreesRiches, essaisDe, rienRenduSeul, type RapportCroisement } from "../audio/croisement-reglages";
 import { conditionsDesBornes, conditionsSimples, confronter, releveEnTexte, type ConditionInertie } from "../audio/croisement-registre";
 import { BASES_PROPRES } from "../audio/croisement-bases";
+import { ENTREES_PROPRES } from "../audio/croisement-entrees";
+import { ENTREES_DES_CHOIX } from "../audio/croisement-entrees-choix";
 import {
   COINCIDENCES_A_EXAMINER, COINCIDENCES_DECLAREES, INERTIES_A_EXAMINER, INERTIES_CONDITIONNEES, INERTIES_DECLAREES,
 } from "../audio/croisement-inscriptions";
 import type { FicheLancable } from "../audio/lancer-fiche";
 import { reglagesANomenclature } from "../plugins/nomenclatures";
+import { toutesLesFiches } from "../plugins";
 
 const FIN = String.fromCharCode(10);
 
@@ -52,7 +56,7 @@ const FIN = String.fromCharCode(10);
 const PLAFOND_INERTIES = 0;
 const PLAFOND_COINCIDENCES = 0;
 
-/** Une fiche d'essai : un réglage à nomenclature « Mode » et un réglage numérique « Gain ». */
+/** Une fiche d'essai : un réglage à choix « Mode » et un réglage numérique « Gain ». */
 function ficheDEssai(): FicheLancable {
   return {
     id: "essai-croisement",
@@ -139,6 +143,19 @@ describe("l'instrument de croisement voit ce qu'il doit voir", () => {
     const fiches = new Set(reglagesANomenclature().map((r) => r.fiche));
     expect(fiches.size).toBeGreaterThan(100);
   });
+
+  it("TOUT RÉGLAGE À CHOIX GOUVERNE, nomenclature ou non, et le moteur de synthèse reste hors du banc", () => {
+    // L'ANGLE MORT DU LOT 1 : le « Motif » de l'arpégiateur n'est d'aucun domaine, et son défaut
+    // rétabli à la main laissait la passe verte.
+    const domaines = new Set(reglagesANomenclature().map((r) => `${r.fiche}·${r.reglage}`));
+    expect(domaines.has("arpegiateur-midi·Motif")).toBe(false);
+    expect(perimetre().get("arpegiateur-midi")?.map((g) => g.reglage)).toContain("Motif");
+    const synthese = reglagesANomenclature().filter((r) => HORS_DU_BANC[r.domaine.nom]).map((r) => `${r.fiche}·${r.reglage}`);
+    expect(synthese.length).toBeGreaterThan(0);
+    const gouvernent = [...perimetre()].flatMap(([id, gs]) => gs.map((g) => `${id}·${g.reglage}`));
+    expect(gouvernent.filter((x) => synthese.includes(x))).toEqual([]);
+    expect(perimetre().size).toBeGreaterThan(250);
+  });
 });
 
 describe("la confrontation aux inscriptions", () => {
@@ -205,9 +222,12 @@ describe("la confrontation aux inscriptions", () => {
   });
 
   it("chaque inertie conditionnée porte sa raison, nomme ce qui existe, et sa documentation nomme sa condition", () => {
-    // LA CASSE NE COMPTE PAS : « sans effet quand la gamme… » nomme la « Gamme » aussi bien. Le relevé
-    // du lot 3d-2 a trouvé six documentations qui disaient leur condition en minuscules.
-    const nomme = (doc: string | undefined, nom: string) => (doc ?? "").toLocaleLowerCase().includes(nom.toLocaleLowerCase());
+    // LE NOM SE CITE ENTRE GUILLEMETS, la casse ne comptant pas. Un nom cherché nu passait par
+    // homonymie : « le tempérament est accordé » nommait le réglage « Tempérament » sans rien dire de sa
+    // condition, et douze documentations passaient ainsi au relevé du lot 3e. Les guillemets sont la
+    // façon dont le dépôt cite un réglage dans une documentation.
+    const nomme = (doc: string | undefined, nom: string) =>
+      (doc ?? "").toLocaleLowerCase().replace(/[  ]/g, " ").includes(`« ${nom.toLocaleLowerCase()} »`);
     const fautes: string[] = [];
     for (const c of INERTIES_CONDITIONNEES) {
       if (c.raison.trim().length < 30) fautes.push(`${c.ou} : raison trop courte`);
@@ -240,6 +260,23 @@ describe("la confrontation aux inscriptions", () => {
       for (const nom of Object.keys(reglages)) if (!params.some((p) => p.nom === nom)) fautes.push(`${id}·${nom} : réglage introuvable`);
     }
     expect(fautes).toEqual([]);
+  });
+
+  it("CHAQUE ENTRÉE PROPRE NOMME UNE FICHE ET UN PORT QUI EXISTENT, avec sa raison", () => {
+    // UN PORT MAL NOMMÉ NE NOURRIT RIEN, en silence : `entreesRiches` ne lit l'entrée propre que sous
+    // le nom exact du port, et le port reçoit alors l'entrée commune.
+    const fautes: string[] = [];
+    for (const [id, ports] of Object.entries({ ...ENTREES_PROPRES, ...ENTREES_DES_CHOIX })) {
+      const fiche = registre.trouverDef(id);
+      if (!fiche) { fautes.push(`${id} : fiche introuvable`); continue; }
+      for (const [port, { raison }] of Object.entries(ports)) {
+        if (!(fiche.entrees ?? []).some((e) => e.nom === port)) fautes.push(`${id}·${port} : port introuvable`);
+        if (raison.trim().length < 30) fautes.push(`${id}·${port} : raison trop courte`);
+      }
+    }
+    const deuxFois = Object.keys(ENTREES_PROPRES).filter((id) => id in ENTREES_DES_CHOIX);
+    expect(fautes).toEqual([]);
+    expect(deuxFois, "une fiche n'a ses entrées propres que dans une table").toEqual([]);
   });
 
   it("UNE BORNE DE MODULATION DIT QU'ELLE NE SERT PAS SANS COURBE, sur chaque fiche que la passe croise", () => {
@@ -375,6 +412,9 @@ export const HORS_DU_BANC: Record<string, string> = {
  */
 export const FICHES_HORS_DU_BANC: Record<string, string> = {
   "pca-neuronale": "l'apprentissage s'arrête sur un budget lu à l'horloge (`Date.now()`) : le nombre d'époques faites dépend de la charge de la machine, et une inertie relevée un jour ne l'est pas le lendemain",
+  // LE LOT 3e, sa « Méthode » devenue gouverneur : deux passes de suite ont vu son « Délai max »
+  // inerte puis agissant sous « Ollama ».
+  "prompt-vers-graphe": "en méthode Ollama, le graphe rendu vient d'un serveur extérieur et de son temps de réponse : le délai agit ou non selon que le modèle répond à temps, et deux passes de suite ne disent pas la même chose",
 };
 
 /** Les bornes de modulation d'une fiche, déclarées sous leur port libre (`conditionsDesBornes`). */
@@ -383,22 +423,73 @@ function bornesDe(id: string) {
   return f ? conditionsDesBornes({ id, parametres: f.parametres, entrees: f.entrees }) : [];
 }
 
-/** Le périmètre de la passe : chaque fiche et ses réglages à nomenclature, sans doublon. */
-function perimetre(): Map<string, { reglage: string; ids: string[]; domaines: string[] }[]> {
-  const parFiche = new Map<string, { reglage: string; ids: string[]; domaines: string[] }[]>();
+/** Un gouverneur de la passe : un réglage à choix, ses identifiants, ses domaines s'il en a. */
+interface Gouverneur { reglage: string; ids: string[]; domaines: string[] }
+
+/** Les réglages à choix d'une fiche qui peuvent gouverner : visibles, et d'au moins deux valeurs. */
+const choixDe = (f: { parametres?: readonly ParametreDef[] }) =>
+  (f.parametres ?? []).filter((p) => p.type === "choix" && !(p as { hidden?: boolean }).hidden && (p.optionIds ?? p.options ?? []).length >= 2);
+
+/**
+ * Le périmètre de la passe : chaque fiche et ses gouverneurs, chacun de ses réglages à choix, avec
+ * ses domaines de nomenclature quand il en a.
+ *
+ * TOUT RÉGLAGE À CHOIX GOUVERNE DEPUIS LE LOT 3e, sur la décision de Fabien du 2026-11-14. Seules
+ * les nomenclatures gouvernaient d'abord, et l'angle mort était prouvé au lot 1 : le défaut de
+ * l'arpégiateur rétabli à la main laissait la passe verte, son « Motif » n'étant d'aucun domaine. Le
+ * coût en avait été compté au lot 3d-1 : 314 nœuds au lieu de 173, et 37 % de lancers de plus.
+ *
+ * UN RÉGLAGE DONT CHAQUE DOMAINE EST HORS DU BANC NE GOUVERNE PAS, tout à choix qu'il soit : le
+ * moteur de synthèse (`HORS_DU_BANC`).
+ */
+function perimetre(): Map<string, Gouverneur[]> {
+  const domaines = new Map<string, string[]>();
   for (const r of reglagesANomenclature()) {
-    if (HORS_DU_BANC[r.domaine.nom] || FICHES_HORS_DU_BANC[r.fiche]) continue;
-    const liste = parFiche.get(r.fiche) ?? [];
-    const deja = liste.find((x) => x.reglage === r.reglage);
-    if (deja) deja.domaines.push(r.domaine.nom);
-    else liste.push({ reglage: r.reglage, ids: r.ids, domaines: [r.domaine.nom] });
-    parFiche.set(r.fiche, liste);
+    const cle = `${r.fiche}·${r.reglage}`;
+    domaines.set(cle, [...(domaines.get(cle) ?? []), r.domaine.nom]);
+  }
+  const parFiche = new Map<string, Gouverneur[]>();
+  for (const f of toutesLesFiches as { id: string; parametres?: ParametreDef[] }[]) {
+    if (FICHES_HORS_DU_BANC[f.id]) continue;
+    for (const p of choixDe(f)) {
+      const siens = domaines.get(`${f.id}·${p.nom}`) ?? [];
+      if (siens.length > 0 && siens.every((d) => HORS_DU_BANC[d])) continue;
+      const ids = (p.optionIds ?? p.options ?? []).map(String);
+      parFiche.set(f.id, [...(parFiche.get(f.id) ?? []), { reglage: p.nom, ids, domaines: siens.filter((d) => !HORS_DU_BANC[d]) }]);
+    }
   }
   return parFiche;
 }
 
+/** Au-delà de ce que le processus occupe, la passe rend la mémoire des tampons entre deux lancers. */
+const SEUIL_MEMOIRE = 4 * 1024 ** 3;
+
+/**
+ * Rend la mémoire des tampons audio natifs, quand le processus en occupe plus que `SEUIL_MEMOIRE`.
+ *
+ * LA PASSE EST MONTÉE À CENT SEPT GIGAOCTETS au lot 3e, sur les suites d'entiers : 149 lancers qui
+ * rendent chacun jusqu'à dix-sept minutes de son, environ un mégaoctet par seconde rendue. Le
+ * ramasse-miettes de node ne compte pas la mémoire native des tampons du portage `node-web-audio-api`,
+ * et ne passait donc pas d'un lancer à l'autre : la mémoire ne revenait qu'après la fiche. Ce n'est pas
+ * une fuite de l'application : la sonde du lot 3e a fait six de ces lancers de suite en forçant le
+ * ramasse-miettes, et après chacun le processus est retombé sous 600 Mo, comme après un rendu nu
+ * abandonné. Un navigateur compte cette mémoire, et la rend de lui-même.
+ *
+ * LE RAMASSE-MIETTES DOIT ÊTRE EXPOSÉ (`--execArgv=--expose-gc`, que `npm run croisement` passe), et
+ * la passe refuse de partir sans lui. La boucle doit tourner après lui : c'est là que le portage libère
+ * ses tampons.
+ */
+async function rendreLaMemoire(): Promise<void> {
+  const gc = (globalThis as { gc?: () => void }).gc;
+  if (!gc || process.memoryUsage().rss < SEUIL_MEMOIRE) return;
+  gc();
+  await new Promise((ok) => setTimeout(ok, 0));
+  gc();
+}
+
 describe.runIf(process.env.BANC_CROISEMENT === "1")("la passe de croisement sur le catalogue", () => {
-  it("chaque nœud à nomenclature, sous chaque valeur offerte", async () => {
+  it("chaque nœud à choix, sous chaque valeur offerte", async () => {
+    expect(typeof (globalThis as { gc?: unknown }).gc, "lancer la passe avec --execArgv=--expose-gc, comme `npm run croisement`").toBe("function");
     const filtre = (process.env.CROISEMENT_FICHES ?? "").split(",").map((x) => x.trim()).filter(Boolean);
     const rapports: (RapportCroisement & { domaines: Record<string, string[]>; ms: number; facultatifsBranches?: true })[] = [];
     for (const [id, gouverneurs] of perimetre()) {
@@ -407,19 +498,20 @@ describe.runIf(process.env.BANC_CROISEMENT === "1")("la passe de croisement sur 
       if (!fiche) continue;
       const t0 = performance.now();
       const secondes = process.env.CROISEMENT_SECONDES ? Number(process.env.CROISEMENT_SECONDES) : undefined;
-      let r = await croiserFiche(fiche, gouverneurs, { entrees: entreesRiches(fiche), secondes });
+      const o = { secondes, apresLancer: rendreLaMemoire };
+      let r = await croiserFiche(fiche, gouverneurs, { ...o, entrees: entreesRiches(fiche) });
       // Un nœud qui ne rend rien seul est relancé nourri par ses ports facultatifs (`entreesRiches`).
       const nourri = rienRenduSeul(r);
-      if (nourri) r = await croiserFiche(fiche, gouverneurs, { entrees: entreesRiches(fiche, { facultatifs: true }), secondes });
+      if (nourri) r = await croiserFiche(fiche, gouverneurs, { ...o, entrees: entreesRiches(fiche, { facultatifs: true }) });
       const domaines = Object.fromEntries(gouverneurs.map((g) => [g.reglage, g.domaines]));
       rapports.push({ ...r, domaines, ms: Math.round(performance.now() - t0), ...(nourri ? { facultatifsBranches: true } : {}) });
     }
     if (process.env.RAPPORT_CROISEMENT) {
       mkdirSync(dirname(process.env.RAPPORT_CROISEMENT), { recursive: true });
       writeFileSync(process.env.RAPPORT_CROISEMENT, JSON.stringify(rapports, null, 1));
-      // LE DÉNOMINATEUR ENTIER : les fiches dont chaque réglage à nomenclature est hors du banc.
-      const toutes = new Set(reglagesANomenclature().map((x) => x.fiche));
-      const horsBanc = [...toutes].filter((id) => !perimetre().has(id)).sort();
+      // LE DÉNOMINATEUR ENTIER : les fiches à choix dont chaque réglage à choix est hors du banc.
+      const toutes = (toutesLesFiches as { id: string; parametres?: ParametreDef[] }[]).filter((f) => choixDe(f).length > 0).map((f) => f.id);
+      const horsBanc = toutes.filter((id) => !perimetre().has(id)).sort();
       const pied = `${FIN}## Hors du banc : ${horsBanc.length} fiches${FIN}${FIN}${horsBanc.join(", ")}${FIN}`;
       writeFileSync(process.env.RAPPORT_CROISEMENT.replace(/\.json$/, ".md"), releveEnTexte(rapports) + pied);
     }

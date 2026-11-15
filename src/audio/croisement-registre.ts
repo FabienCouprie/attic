@@ -13,7 +13,7 @@
 
 import type { Coincidence, Inertie, RapportCroisement } from "./croisement-reglages";
 
-/** Une inertie inscrite : un réglage, le réglage à nomenclature qui le gouverne, et sous quelles valeurs. */
+/** Une inertie inscrite : un réglage, le réglage à choix qui le gouverne, et sous quelles valeurs. */
 export interface InertieInscrite { ou: string; sous: string; valeurs: readonly string[] | "toutes"; raison?: string }
 
 /** Une coïncidence inscrite : des valeurs d'un réglage qui rendent les mêmes sorties. */

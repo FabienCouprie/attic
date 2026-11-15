@@ -68,13 +68,13 @@ export const fiches: FicheAudio[] = ([
         optionsEn: ["As written", "Snapped to semitones"],
         optionIds: ["ecrites", "demi-ton"],
         defaut: "Telles qu'écrites", defautEn: "As written",
-        doc: "Ce que le composant fait d'une hauteur qui tombe entre deux touches. « Telles qu'écrites » la joue à sa hauteur exacte : une banque joue par rééchantillonnage, ce qui n'oblige à aucune grille. « Ramenées au demi-ton » l'arrondit au demi-tempéré le plus proche, comme le ferait un clavier. Une séquence dont toutes les hauteurs sont entières sonne pareil dans les deux cas. Le message dit combien de notes ont été déplacées et de combien.",
+        doc: "Ce que le composant fait d'une hauteur qui tombe entre deux touches. « Telles qu'écrites » la joue à sa hauteur exacte : une banque joue par rééchantillonnage, ce qui n'oblige à aucune grille. « Ramenées au demi-ton » l'arrondit au demi-ton tempéré le plus proche, comme le ferait un clavier. Une séquence dont toutes les hauteurs sont entières sonne pareil dans les deux cas. Le message dit combien de notes ont été déplacées et de combien.",
         docEn: "What the node does with a pitch falling between two keys. « As written » plays it at its exact pitch: a bank plays by resampling, which imposes no grid. « Snapped to semitones » rounds it to the nearest equal-tempered semitone, as a keyboard would. A sequence whose pitches are all integers sounds the same either way. The message says how many notes were moved and by how much." },
       // CE RÉGLAGE APPARTIENT À L'ENTRÉE MIDI, et ne paraît donc que lorsqu'elle est branchée : sur
       // la route par séquence, il n'aurait rien à commander.
       { nom: "Canal", nomEn: "Channel", type: "nombre", plage: [-1, 15], pas: 1, defaut: -1, port: 2,
-        doc: "Le canal MIDI retenu quand un fichier arrive sur l'entrée « MIDI ». À moins un, tous les canaux sont pris ensemble ; de zéro à quinze, seules les notes de ce canal sont jouées. C'est ainsi qu'une partition à plusieurs voix se répartit sur plusieurs banques, chaque voix étant écrite sur son canal.",
-        docEn: "The MIDI channel kept when a file arrives on the « MIDI » input. At minus one, all channels are taken together; from zero to fifteen, only that channel's notes are played. This is how a score in several voices is spread over several banks, each voice being written on its own channel." },
+        doc: "Le canal MIDI retenu quand un fichier arrive sur l'entrée « MIDI ». À moins un, tous les canaux sont pris ensemble ; de zéro à quinze, seules les notes de ce canal sont jouées. C'est ainsi qu'une partition à plusieurs voix se répartit sur plusieurs banques, chaque voix étant écrite sur son canal. Sans effet quand une séquence arrive aussi sur l'entrée « Séquence », qui l'emporte.",
+        docEn: "The MIDI channel kept when a file arrives on the « MIDI » input. At minus one, all channels are taken together; from zero to fifteen, only that channel's notes are played. This is how a score in several voices is spread over several banks, each voice being written on its own channel. No effect when a sequence also arrives on the « Sequence » input, which wins." },
     ],
     async executer(ctx) {
       const banque = ctx.entree(1);

@@ -223,8 +223,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Découpage", nomEn: "Grouping", type: "choix",
         options: ["Tout l'extrait", "Accord par accord"], optionsEn: ["Whole excerpt", "Chord by chord"],
         optionIds: ["tout", "accords"], defaut: "Tout l'extrait", defautEn: "Whole excerpt",
-        doc: "« Accord par accord » analyse chaque groupe de notes simultanées séparément, puis relève les formes premières qui revenaient ; c'est ce qui permet de dire que deux passages emploient le même matériau.",
-        docEn: "« Chord by chord » analyses each group of simultaneous notes separately, then lists the prime forms that recurred, which is what allows saying that two passages use the same material." },
+        doc: "« Accord par accord » analyse chaque groupe de notes simultanées séparément, puis relève les formes premières qui revenaient ; c'est ce qui permet de dire que deux passages emploient le même matériau. Ne s'applique qu'aux notes reçues par « Séquence » ou « MIDI » : les « Notes » saisies s'analysent toujours comme un seul ensemble.",
+        docEn: "« Chord by chord » analyses each group of simultaneous notes separately, then lists the prime forms that recurred, which is what allows saying that two passages use the same material. Applies only to notes received on « Sequence » or « MIDI »: the typed « Notes » are always analysed as a single set." },
     ],
     async executer(ctx) {
       const recu = await notesEntrantes(ctx.entree(1), ctx.entree(0));

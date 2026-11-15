@@ -202,7 +202,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Fondamentale que vaut le zéro d'une courbe branchée ; la course se parcourt en multipliant. Sans courbe, ce réglage ne sert pas.",
         docEn: "Fundamental that a connected curve's zero means; the travel is multiplicative. With no curve, this setting does nothing." },
       { nom: "Fondamentale max", nomEn: "Fundamental max", modulationDe: "Fondamentale", type: "curseur", plage: [20, 2000], pas: 0.5, defaut: 220, unite: "Hz",
-        doc: "Fondamentale que vaut le un de la courbe.", docEn: "Fundamental that the curve's one means." },
+        doc: "Fondamentale que vaut le un de la courbe. Sans courbe, ce réglage ne sert pas.", docEn: "Fundamental that the curve's one means. With no curve, this setting does nothing." },
     ],
     async executer(ctx) {
       const a = entreeAudio(ctx, 0);

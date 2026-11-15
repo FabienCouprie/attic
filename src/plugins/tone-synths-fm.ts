@@ -83,8 +83,8 @@ export const fiches: FicheAudio[] = ([
         plage: [0, 100],
         pas: 1,
         defaut: 10,
-        doc: "Profondeur de la modulation (FM uniquement).",
-        docEn: "Modulation depth (FM only).",
+        doc: "Profondeur de la modulation (FM uniquement). Sans effet quand « Mode » vaut « AM ».",
+        docEn: "Modulation depth (FM only). Has no effect when « Mode » is « AM ».",
       },
       {
         nom: "Attack",
@@ -128,8 +128,8 @@ export const fiches: FicheAudio[] = ([
         pas: 0.01,
         defaut: 0.5,
         unite: "s",
-        doc: "Temps de retour au silence après la fin de la note.",
-        docEn: "Envelope release time after the note ends.",
+        doc: "Temps de retour au silence après la fin de la note. Il se prend sur la « Durée » : la note se relâche assez tôt pour s'éteindre avant la fin du son, mais jamais avant d'avoir fini son attaque et sa décroissance.",
+        docEn: "Envelope release time after the note ends. It is taken from the « Duration »: the note is released early enough to fade out before the sound ends, but never before its attack and decay are over.",
       },
     ],
     async executer(ctx) {

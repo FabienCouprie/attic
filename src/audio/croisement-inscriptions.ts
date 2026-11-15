@@ -20,6 +20,7 @@
 
 import { OUI_NON } from "../core/oui-non";
 import type { CoincidenceInscrite, InertieConditionnee, InertieInscrite } from "./croisement-registre";
+import { COINCIDENCES_DES_CHOIX, INERTIES_DES_CHOIX } from "./croisement-choix";
 import dette from "./croisement-dette.json";
 import { SIGNATURES } from "./signatures";
 
@@ -99,7 +100,7 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   ...parMode(["Gamme"], ["melodie"], "seule la mélodie prend ses degrés dans la gamme, et elle ne sonne qu'en « Mélodie et accords »"),
   ...parMode(["Percussion"], ["rythme"], "la voix de batterie n'est frappée qu'en « Rythme »"),
   { ou: "cercle-pulsant·Nuance des accords", quand: { une: [{ reglage: "Mode", sauf: ["melodie", "accords"] }, { reglage: "Accords", valeurs: ["aucun"] }] }, raison: "la force de frappe des accords n'a rien à frapper hors de la mélodie et des accords, ni quand « Accords » vaut « Aucun » ; dit dans sa documentation" },
-  { ou: "cercle-pulsant·Synthèse", quand: { reglage: "Mode", valeurs: ["pulsation"] }, raison: "en « Pulsation », le battement est une sinusoïde calculée par le nœud, qui ne passe par aucun moteur ; dit dans sa documentation" },
+  { ou: "cercle-pulsant·Synthèse", quand: { reglage: "Mode", valeurs: ["pulsation", "rythme"] }, raison: "en « Pulsation », le battement est une sinusoïde calculée par le nœud, et en « Rythme » la batterie a son propre synthétiseur : aucun ne passe par le moteur ; dit dans sa documentation" },
   { ou: "cercle-pulsant·Échos", quand: { banc: true }, raison: VUE_ANIMEE },
   { ou: "cercle-pulsant·Taille", quand: { banc: true }, raison: VUE_ANIMEE },
   { ou: "correction-hauteur·Tonique", quand: { reglage: "Gamme", valeurs: ["chromatique"] }, raison: CHROMATIQUE },
@@ -155,6 +156,8 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   { ou: "spectrogramme-fractal·Format", quand: { banc: true }, raison: SANS_DOM },
   { ou: "boucle-creneau-fin·Plier", quand: { banc: true }, raison: HORS_BOUCLE },
   { ou: "boucle-creneau-fin·Une voix par créneau", quand: { banc: true }, raison: HORS_BOUCLE },
+  // LE LOT 3e (2026-11-15) : tout réglage à choix gouverne, et ce qu'il fait voir est dans son module.
+  ...INERTIES_DES_CHOIX,
 ];
 
 /** Les coïncidences légitimes, chacune avec sa raison. */
@@ -198,6 +201,7 @@ export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
   { ou: "boucle-creneau-fin·Une voix par créneau", valeurs: OUI_NON.ids, raison: HORS_BOUCLE },
   { ou: "midi-vers-abc·Métrique", valeurs: ["fichier", "4/4"], raison: "le MIDI d'essai est écrit par `notesVersFichierMidi`, qui inscrit toujours 4/4 : « Du fichier » y lit 4/4 ; dit dans la documentation du réglage" },
   { ou: "accords-vers-notation·Gamme", valeurs: ["majeur", "mineur"], raison: "sous la source par défaut, « Accords détectés », la gamme ne sert pas : elle ne lit que les chiffres romains d'une progression ; dit dans sa documentation" },
+  ...COINCIDENCES_DES_CHOIX,
 ];
 
 /** La dette des inerties relevées au lot 1, à trancher. */

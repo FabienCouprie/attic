@@ -195,7 +195,12 @@ export async function genererModulationSynth(opts: OptionsModulationSynth): Prom
         envelope: { attack, decay, sustain, release },
       }).toDestination();
       synth.volume.value = 0;
-      synth.triggerAttackRelease(note, duree, 0, velocity);
+      // LA NOTE SE RELÂCHE ASSEZ TÔT POUR QUE LE RELÂCHEMENT S'ENTENDE dans la durée demandée, qui est
+      // celle du tampon. Relâchée à la fin du tampon, elle n'y laissait jamais entendre son « Release »
+      // tant que la durée dépassait l'enveloppe, ce qui est le cas aux défauts : la passe de croisement
+      // l'a vu inerte sous chaque mode (lot 3e, 2026-11-15). Elle ne se relâche jamais avant d'avoir
+      // fini son attaque et sa décroissance.
+      synth.triggerAttackRelease(note, Math.max(attack + decay, duree - release), 0, velocity);
     },
     dureeTotale,
     2,

@@ -53,8 +53,8 @@ const FICHES: FicheAudio[] = [
         defaut: "90",
         optionsEn: reglesOptionsEn,
         defautEn: "90",
-        doc: "Règle 1D classique. « Personnalisée » prend la valeur numérique ci-dessous.",
-        docEn: "Classic 1D rule. « Custom » takes the numeric value below.",
+        doc: "Règle 1D classique. « Personnalisée » prend la valeur numérique ci-dessous. Sans effet quand « Topologie » vaut « 2D Conway » ou « 2D Highlife », qui suivent leur propre règle.",
+        docEn: "Classic 1D rule. « Custom » takes the numeric value below. Has no effect when « Topology » is « 2D Conway » or « 2D Highlife », which follow their own rule.",
       },
       {
         nom: "Règle personnalisée",
@@ -63,8 +63,8 @@ const FICHES: FicheAudio[] = [
         plage: [0, 255],
         pas: 1,
         defaut: 90,
-        doc: "Numéro de règle 1D utilisé quand Règle = Personnalisée. Ignoré en mode 2D.",
-        docEn: "1D rule number used when Rule = Custom. Ignored in 2D mode.",
+        doc: "Numéro de règle 1D utilisé quand « Règle » vaut « Personnalisée ». Ignoré en mode 2D.",
+        docEn: "1D rule number used when « Rule » is « Custom ». Ignored in 2D mode.",
       },
       {
         nom: "Mode voix",
@@ -122,8 +122,8 @@ const FICHES: FicheAudio[] = [
         defaut: 32,
         unite: "pas",
         uniteEn: "steps",
-        doc: "Nombre de générations, et donc de pas de la séquence : chaque génération, en 1D comme en 2D, est un pas.",
-        docEn: "Number of generations, hence of steps in the sequence: each generation, in 1D as in 2D, is one step.",
+        doc: "Nombre de générations, et donc de pas de la séquence : chaque génération, en 1D comme en 2D, est un pas. Une ligne éteinte ne joue plus rien : en « Topologie » 1D et sans « Probabilité mutation », la « Règle » 160, qui ne garde une cellule que si ses deux voisines vivent, éteint la ligne en quelques générations, et les suivantes sont muettes.",
+        docEn: "Number of generations, hence of steps in the sequence: each generation, in 1D as in 2D, is one step. A dead line plays nothing more: in 1D « Topology » and with no « Mutation probability », « Rule » 160, which keeps a cell only when both its neighbours live, kills the line within a few generations, and the following ones are silent.",
       },
       {
         nom: "Graine", graine: true,

@@ -83,7 +83,7 @@
     "catalogue": "playwright test tests-e2e/catalogue-sonore.spec.ts",
     "varier": "playwright test tests-e2e/varier.spec.ts",
     "graines": "playwright test tests-e2e/graines-tenues.spec.ts",
-    "croisement": "cross-env BANC_CROISEMENT=1 RAPPORT_CROISEMENT=CROISEMENT/croisement.json vitest run src/docs/croisement-nomenclatures.test.ts",
+    "croisement": "cross-env BANC_CROISEMENT=1 RAPPORT_CROISEMENT=CROISEMENT/croisement.json vitest run src/docs/croisement-nomenclatures.test.ts --execArgv=--expose-gc",
     "messages-anglais": "playwright test tests-e2e/messages-anglais.spec.ts",
     "racines": "node scripts/racines-du-journal.cjs",
     "test:empreintes-exemples": "playwright test tests-e2e/empreintes-exemples.spec.ts",
