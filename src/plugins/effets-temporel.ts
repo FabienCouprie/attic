@@ -15,7 +15,7 @@ import { appliquerEchoPingPong, appliquerEchoInverse, appliquerVoiceChanger, app
 import { decalerFormantsHorsFil } from "./formants-hors-fil";
 
 import { MODULATION_MIX, MODULATION_MIX_NOMMEE, bornesModulation, modulationNommee, reglageModule, portModulation } from "./effets-aides";
-import { choixValeurs } from "../audio/valeurs-note";
+import { choixValeurs, VALEURS_NOTE } from "../audio/valeurs-note";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
@@ -232,14 +232,14 @@ export const fiches: FicheAudio[] = ([
         doc: "Profondeur que vaut le zéro d'une courbe branchée sur l'entrée Modulation. Sans courbe, ce réglage ne sert pas.",
         docEn: "Depth that a connected curve's zero means on the Modulation input. With no curve, this setting does nothing." },
       { nom: "Modulation max", nomEn: "Modulation max", modulationDe: "Profondeur", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Profondeur que vaut le un de la courbe.", docEn: "Depth that the curve's one means." },
+        doc: "Profondeur que vaut le un de la courbe. Sans courbe, ce réglage ne sert pas.", docEn: "Depth that the curve's one means. With no curve, this setting does nothing." },
       { nom: "Type", nomEn: "Type", type: "choix", options: ["Dur", "Fondu"], optionIds: ["Dur","Fondu"], optionsEn: ["Hard", "Soft"], defaut: "Dur",
         doc: "Dur = coupure nette, Fondu = transition douce.", docEn: "Hard = abrupt cut, Soft = smooth transition.", defautEn: "Hard" },
       { nom: "Fréquence min", nomEn: "Rate min", modulationDe: "Fréquence", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 1, unite: "Hz",
         doc: "Fréquence que vaut le zéro d'une courbe branchée sur l'entrée Modulation fréquence : la coupe qui accélère jusqu'au bégaiement. La course se parcourt en multipliant, comme pour toute fréquence. Sans courbe, ce réglage ne sert pas.",
         docEn: "Rate that a curve's zero means on the Rate modulation input: the chop that accelerates into a stutter. The travel is multiplicative, as for any frequency. With no curve, this setting does nothing." },
       { nom: "Fréquence max", nomEn: "Rate max", modulationDe: "Fréquence", type: "curseur", plage: [0.5, 20], pas: 0.5, defaut: 16, unite: "Hz",
-        doc: "Fréquence que vaut le un de la courbe.", docEn: "Rate that the curve's one means." },
+        doc: "Fréquence que vaut le un de la courbe. Sans courbe, ce réglage ne sert pas.", docEn: "Rate that the curve's one means. With no curve, this setting does nothing." },
     ],
     async executer(ctx) {
       const a = entreeAudio(ctx, 0);
@@ -263,24 +263,33 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio", sousType: "stereo" }],
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", type: "curseur", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
-        doc: "Tempo utilisé pour synchroniser les intervalles et les segments.", docEn: "Tempo used to synchronize intervals and segments." },
-      { nom: "Intervalle", nomEn: "Interval", type: "choix", ...choixValeurs(["1/1", "1/2", "1/4", "1/8", "1/16", "1/32"]), defaut: "1/4",
-        doc: "Intervalle entre deux captures. 1/4 = une capture par temps, 1/8 = une capture par demi-temps, etc.", docEn: "Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, etc." },
-      // LA LISTE S'ARRÊTE À 1/2, ET POUR UNE RAISON MESURÉE. Le segment est capturé au début de
+        doc: "Tempo utilisé pour synchroniser les intervalles et les segments. Sans effet quand la « Taille » est au moins aussi longue que l'« Intervalle » : l'effet rend alors l'entrée telle quelle.",
+        docEn: "Tempo used to synchronize intervals and segments. No effect when the « Size » is at least as long as the « Interval »: the effect then gives back the input unchanged." },
+      // LES DEUX LISTES SONT LA TABLE DES VALEURS DE NOTE, pointées et triolets compris, depuis que
+      // la durée se lit par `divisionDeRonde` et non par le seul dénominateur (2026-11-14). La plus
+      // courte taille était 1/32, et sous l'intervalle 1/32 aucune taille ne s'entendait. Chacune
+      // écarte la valeur extrême que l'autre ne peut pas servir : l'intervalle le 1/32 de triolet,
+      // sous lequel aucune taille n'est plus courte, la taille la ronde, ci-dessous.
+      { nom: "Intervalle", nomEn: "Interval", type: "choix", ...choixValeurs(VALEURS_NOTE.map((v) => v.id).filter((id) => id !== "1/32t")), defaut: "1/4",
+        doc: "Intervalle entre deux captures. 1/4 = une capture par temps, 1/8 = une capture par demi-temps, 1/8 de triolet = trois par temps ; une pointée dure une fois et demie sa valeur.",
+        docEn: "Interval between two captures. 1/4 = one capture per beat, 1/8 = one per half beat, 1/8 triplet = three per beat; a dotted value lasts one and a half times its value." },
+      // LA LISTE ÉCARTE LA RONDE, ET POUR UNE RAISON MESURÉE. Le segment est capturé au début de
       // l'intervalle et sa répétition est bornée par lui ; dès que la taille atteint l'intervalle,
       // les échantillons écrits sont exactement ceux qu'ils remplacent et la sortie égale l'entrée.
       // Offrir 1/1 ici ajouterait donc une valeur inerte pour tous les intervalles offerts.
       // `audio/effets-temporel.test.ts` tient la mesure, `beat-repeat-taille.test.ts` tient la borne.
-      { nom: "Taille", nomEn: "Size", type: "choix", ...choixValeurs(["1/32", "1/16", "1/8", "1/4", "1/2"]), defaut: "1/16",
-        doc: "Longueur du segment capturé et répété. Elle reste plus courte que l'intervalle : un segment aussi long que lui redonne le son d'origine.",
-        docEn: "Length of the captured and repeated segment. It stays shorter than the interval: a segment as long as the interval gives back the original sound." },
+      { nom: "Taille", nomEn: "Size", type: "choix", ...choixValeurs(VALEURS_NOTE.map((v) => v.id).filter((id) => id !== "1/1")), defaut: "1/16",
+        doc: "Longueur du segment capturé et répété. Une taille au moins aussi longue que l'« Intervalle » redonne le son d'origine : seule une taille plus courte s'entend.",
+        docEn: "Length of the captured and repeated segment. A size at least as long as the « Interval » gives back the original sound: only a shorter size is heard." },
       { nom: "Répétitions", nomEn: "Repeats", type: "curseur", plage: [1, 8], pas: 1, defaut: 4,
-        doc: "Nombre de répétitions du segment capturé à chaque intervalle.", docEn: "Number of times the captured segment is repeated at each interval." },
+        doc: "Nombre de répétitions du segment capturé à chaque intervalle. Sans effet quand la « Taille » est au moins aussi longue que l'« Intervalle ».",
+        docEn: "Number of times the captured segment is repeated at each interval. No effect when the « Size » is at least as long as the « Interval »." },
       { nom: "Feedback", nomEn: "Feedback", type: "curseur", plage: [0, 95], pas: 1, defaut: 40, unite: "%",
-        doc: "Atténuation de chaque répétition (0% = volume constant, 95% = décroissance rapide).", docEn: "Attenuation of each repeat (0% = constant volume, 95% = fast decay)." },
+        doc: "Atténuation de chaque répétition (0% = volume constant, 95% = décroissance rapide). Sans effet quand la « Taille » est au moins aussi longue que l'« Intervalle ».",
+        docEn: "Attenuation of each repeat (0% = constant volume, 95% = fast decay). No effect when the « Size » is at least as long as the « Interval »." },
       { nom: "Mix", nomEn: "Mix", type: "curseur", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Équilibre signal original / effet.",
-        docEn: "Dry/wet balance." },
+        doc: "Équilibre signal original / effet. Sans effet quand la « Taille » est au moins aussi longue que l'« Intervalle », l'effet rendant alors le signal original.",
+        docEn: "Dry/wet balance. No effect when the « Size » is at least as long as the « Interval », the effect then giving back the original signal." },
       ...bornesModulation(MODULATION_MIX),
       ...bornesModulation({
         ...modulationNommee("Feedback", "Feedback", [0, 95], "%"), defauts: [0, 80],
@@ -289,13 +298,9 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const a = entreeAudio(ctx, 0);
       if (sansEntree(a)) return a;
-      const { beatRepeat } = await import("../audio");
+      const { beatRepeat, divisionDeRonde: parseDiv } = await import("../audio");
       const intervalStr = ctx.paramTexte("Intervalle", "1/4");
       const sizeStr = ctx.paramTexte("Taille", "1/16");
-      const parseDiv = (s: string) => {
-        const parts = s.split("/");
-        return parts.length === 2 ? Math.max(1, Number(parts[1]) || 1) : 1;
-      };
       const mix = reglageModule(ctx, a.length, 1, { reglage: "Mix", rendu: "pourCent" });
       const feedback = reglageModule(ctx, a.length, 2, {
         reglage: "Feedback", defaut: 40, rendu: "pourCent",
@@ -401,7 +406,7 @@ export const fiches: FicheAudio[] = ([
         defaut: "Random",
         doc: "Ordre de réarrangement : aléatoire, original ou inversé.", docEn: "Rearrangement order: random, original or reversed." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 0,
-        doc: "Graine aléatoire (0 = nouvel ordre à chaque exécution). Même graine = même découpe.", docEn: "Random seed (0 = new order each run). Same seed = same slice order." },
+        doc: "Graine aléatoire (0 = nouvel ordre à chaque exécution). Même graine = même découpe. Sans effet quand « Mode » vaut « Original » ou « Reverse » : seul l'ordre aléatoire est tiré.", docEn: "Random seed (0 = new order each run). Same seed = same slice order. Has no effect when « Mode » is « Original » or « Reverse »: only the random order is drawn." },
     ],
     async executer(ctx) {
       const a = entreeAudio(ctx, 0);
@@ -432,18 +437,18 @@ export const fiches: FicheAudio[] = ([
         defaut: "Aléatoire",
         doc: "Phase de départ pour la reconstruction. Aléatoire = texture créative ; Nulle = impulsion initiale ; Originale = reconstruit le signal original.", docEn: "Starting phase for reconstruction. Random = creative texture; Zero = initial pulse; Original = reconstruct the original signal." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 42,
-        doc: "Graine des phases initiales, sans effet hors du mode « Aléatoire ». Valeur par défaut fixe : une reconstruction qui change à chaque exécution serait un défaut.",
-        docEn: "Seed for the initial phases; no effect outside the « Random » mode. The default is fixed: a reconstruction that changes on every run would be a defect." },
+        doc: "Graine des phases initiales, sans effet hors du mode « Aléatoire ». Valeur par défaut fixe : une reconstruction qui change à chaque exécution serait un défaut. Sans effet quand « Phase initiale » ne vaut pas « Aléatoire ».",
+        docEn: "Seed for the initial phases; no effect outside the « Random » mode. The default is fixed: a reconstruction that changes on every run would be a defect. Has no effect when « Initial phase » is not « Random »." },
       { nom: "FFT", nomEn: "FFT", type: "nombre", plage: [64, 8192], pas: 64, defaut: 2048, unite: "éch.", uniteEn: "samples",
-        doc: "Taille de la FFT (arrondie à la puissance de 2 supérieure).", docEn: "FFT size (rounded up to next power of 2)." },
+        doc: "Taille de la FFT (arrondie à la puissance de 2 supérieure). Sans effet quand « Phase initiale » vaut « Originale », qui rend le son reçu.", docEn: "FFT size (rounded up to next power of 2). Has no effect when « Initial phase » is « Original », which returns the incoming sound." },
       { nom: "Recouvrement", nomEn: "Overlap", type: "choix",
         options: ["50 %", "75 %"],
         optionsEn: ["50 %", "75 %"],
         optionIds: ["50", "75"],
         defaut: "75 %",
-        doc: "Taux de recouvrement entre fenêtres. 75 % donne un résultat plus lisse.", docEn: "Overlap between frames. 75% gives a smoother result." },
+        doc: "Taux de recouvrement entre fenêtres. 75 % donne un résultat plus lisse. Sans effet quand « Phase initiale » vaut « Originale », qui rend le son reçu.", docEn: "Overlap between frames. 75% gives a smoother result. Has no effect when « Initial phase » is « Original », which returns the incoming sound." },
       { nom: "Mix", nomEn: "Mix", type: "nombre", plage: [0, 100], pas: 1, defaut: 100, unite: "%",
-        doc: "Équilibre signal original / effet.", docEn: "Dry/wet balance." },
+        doc: "Équilibre signal original / effet. Sans effet quand « Phase initiale » vaut « Originale », qui rend le son reçu.", docEn: "Dry/wet balance. Has no effect when « Initial phase » is « Original », which returns the incoming sound." },
     ],
     async executer(ctx) {
       const audio = entreeAudio(ctx, 0);

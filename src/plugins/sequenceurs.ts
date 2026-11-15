@@ -17,13 +17,17 @@ import {
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
-import { LIBELLES_HERITES_GAMMES, gammesParIds } from "../audio/gammes";
+import { LIBELLES_HERITES_GAMMES, completer } from "../audio/gammes";
+import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 
 // LA LISTE VIENT DE LA TABLE, DANS L'ORDRE QUI ÉTAIT LE SIEN. Ses identifiants étaient
 // « pentatonique majeur » et « pentatonique mineur », sans accord et avec une espace : des ALIAS,
 // donc les degrés étaient justes, mais un projet enregistrait une orthographe que le reste du parc
 // n'écrit pas. L'ordre ne bouge pas, puisqu'un projet ancien se résout par la position.
-const GAMMES_SEQUENCEUR = gammesParIds([
+//
+// ELLE EST LA TABLE ENTIÈRE DES GAMMES TEMPÉRÉES depuis le 2026-11-14, décision de Fabien, l'ordre
+// d'origine d'abord : chaque rangée de la grille est un degré, et rien ne bornait la grille à cinq.
+const GAMMES_SEQUENCEUR = completer([
   "majeur", "mineur", "pentatonique-majeure", "pentatonique-mineure", "blues",
 ]);
 
@@ -158,15 +162,15 @@ export const fiches: FicheAudio[] = ([
       { nom: "Gamme", nomEn: "Scale", type: "choix",
         options: GAMMES_ACCORDS.map((g) => g.fr), defaut: "majeur",
         optionIds: GAMMES_ACCORDS.map((g) => g.id),
-        doc: "Gamme diatonique utilisée pour construire les accords sur les 7 degrés.",
-        docEn: "Diatonic scale used to build chords on the 7 degrees.",
+        doc: "Gamme diatonique utilisée pour construire les accords sur les 7 degrés. La bebop dominante y bâtit les accords du mixolydien : sa septième majeure est une note de passage, qu'aucun accord ne prend.",
+        docEn: "Diatonic scale used to build chords on the 7 degrees. The bebop dominant builds the mixolydian's chords here: its major seventh is a passing note, which no chord takes.",
         optionsEn: GAMMES_ACCORDS.map((g) => g.en), defautEn: "Major" },
       { nom: "Octave", nomEn: "Octave", plage: [2, 6], pas: 1, defaut: 3,
         doc: "Octave de la fondamentale des accords.", docEn: "Octave of the chord roots." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Harmonie", "Arpège"], defaut: "Harmonie",
-        optionIds: ["harmonie", "arpege"],
-        doc: "Harmonie = accord joué en bloc ; Arpège = notes décalées rapidement.", docEn: "Harmony = chord played as a block ; Arpeggio = notes quickly staggered.",
-        optionsEn: ["Harmony", "Arpeggio"], defautEn: "Harmony" },
+      { nom: "Mode", nomEn: "Mode", type: "choix", ...choixFaconAccord(), defaut: "Plaqué",
+        doc: "Plaqué = accord joué en bloc ; Arpégé = notes réparties sur le pas, chacune relâchée quand la suivante part ; Roulé = départs décalés rapidement, toutes les notes tenues.",
+        docEn: "Block = chord played as a block; Arpeggiated = notes spread over the step, each released when the next starts; Rolled = onsets quickly staggered, all notes held.",
+        defautEn: "Block" },
       { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
@@ -184,7 +188,8 @@ export const fiches: FicheAudio[] = ([
       const cle = ctx.paramTexte("Clé", "C");
       const gamme = ctx.paramTexte("Gamme", "majeur");
       const octave = ctx.paramNombre("Octave", 3);
-      const mode = ctx.paramTexte("Mode", "harmonie") as "harmonie" | "arpege";
+      const facon = faconDe(ctx.paramTexte("Mode", "plaque"));
+      const mode: "harmonie" | "arpege" | "roule" = facon === "arpege" || facon === "roule" ? facon : "harmonie";
       const modeSynth = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const grille = decoderMotifAccords(ctx.paramTexte("Motif", MOTIF_ACCORDS_DEFAUT), nbPas);

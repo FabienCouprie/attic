@@ -116,8 +116,8 @@ When no line satisfies every rule, the « Melody » output is empty and the repo
         doc: "Fixe l'ordre dans lequel les hauteurs sont essayées. Deux graines donnent deux lignes également valides.",
         docEn: "Fixes the order in which pitches are tried. Two seeds give two equally valid lines." },
       { nom: "Budget", nomEn: "Budget", type: "curseur", plage: [1000, 2000000], pas: 1000, defaut: 200000,
-        doc: "Le nombre d'affectations essayées au plus avant de renoncer. Un problème sans solution tournerait sans fin.",
-        docEn: "The number of assignments tried at most before giving up. A problem with no solution would run forever." },
+        doc: "Le nombre d'affectations essayées au plus avant de renoncer. Un problème sans solution tournerait sans fin. Une recherche qui conclut avant lui n'en dépend pas : il en faut une dizaine par accord.",
+        docEn: "The number of assignments tried at most before giving up. A problem with no solution would run forever. A search that concludes before it does not depend on it: it takes about ten per chord." },
     ],
     async executer(ctx) {
       const recue = ctx.entree(0);

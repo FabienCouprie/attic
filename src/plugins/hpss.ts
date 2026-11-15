@@ -11,7 +11,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { separerVoie, type OptionsHpss, type ResultatHpss } from "../audio/hpss";
 import { parCanal } from "./hors-fil";
-import { choixFenetre } from "../audio/fenetres-analyse";
+import { TAILLES_FENETRE, choixFenetre } from "../audio/fenetres-analyse";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
 export const fiches: FicheAudio[] = ([
@@ -31,7 +31,7 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Fenêtre", nomEn: "Window", type: "choix",
-        ...choixFenetre([1024, 2048, 4096]), defaut: "2048", defautEn: "2048",
+        ...choixFenetre(TAILLES_FENETRE), defaut: "2048", defautEn: "2048",
         doc: "Taille de la transformée. Grande, les notes tenues se distinguent mieux mais les attaques s'étalent ; petite, l'inverse. 2048 est le compromis de l'article.",
         docEn: "Transform size. Large separates sustained notes better but smears attacks; small does the opposite. 2048 is the paper's compromise." },
       { nom: "Filtre temporel", nomEn: "Time filter", type: "curseur", plage: [3, 51], pas: 2, defaut: 17,

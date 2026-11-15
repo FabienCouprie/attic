@@ -9,7 +9,8 @@ import { extrairePalette, type CouleurExtraite } from "./palette-harmonique";
 import { rgbToHsl, distanceRgb2 } from "./couleurs";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence, type NoteEvenement } from "./midi-sequence";
-import { degresGammeAccords, degreAccordProche } from "./generation";
+import { degresDesAccords, degresGammeAccords, degreAccordProche } from "./generation";
+import { demiTonDeCle } from "./cles";
 
 export interface FormeColoree {
   couleur: CouleurExtraite;
@@ -23,7 +24,7 @@ export interface FormeColoree {
 export interface OptionsDessinSonore {
   cle: string;
   gamme: string;
-  mode: "melodie" | "harmonie" | "arpege";
+  mode: "melodie" | "harmonie" | "arpege" | "roule";
   octave: number;
   portee: number;
   duree: number;
@@ -37,11 +38,12 @@ export interface OptionsDessinSonore {
   hasard?: () => number;
 }
 
-const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+// LA CLÉ SE LIT DANS LA TABLE COMMUNE, `audio/cles.ts` : une table privée en dièses seuls jouait Mi♭
+// et Si♭ en do.
 
 function noteDepuisCouleur(couleur: CouleurExtraite, cle: string, gamme: string, octave: number, portee: number): number {
   const intervals = degresGammeAccords(gamme);
-  const cleIdx = Math.max(0, NOTES.indexOf(cle));
+  const cleIdx = demiTonDeCle(cle) ?? 0;
   const base = (octave + 1) * 12 + cleIdx;
   const deg = Math.floor((couleur.h / 360) * intervals.length) % intervals.length;
   const semi = intervals[deg];
@@ -54,7 +56,7 @@ function noteDepuisCouleur(couleur: CouleurExtraite, cle: string, gamme: string,
 // (quinte diminuée du Locrien...) et aux gammes qui n'ont pas de degré à
 // exactement 2/4 crans d'écart (pentatoniques, blues, chromatique).
 function triadeGamme(gamme: string): number[] {
-  const intervals = degresGammeAccords(gamme);
+  const intervals = degresDesAccords(gamme);
   return [0, degreAccordProche(intervals, 0, 4), degreAccordProche(intervals, 0, 7)];
 }
 
@@ -177,13 +179,14 @@ export function formesVersNotes(
         const note = Math.max(0, Math.min(127, root + offset));
         notes.push({ note, velocite, debut, fin });
       }
-    } else if (options.mode === "arpege") {
+    } else if (options.mode === "arpege" || options.mode === "roule") {
+      // LE ROULÉ PART COMME L'ARPÈGE ET TIENT CHAQUE NOTE JUSQU'À LA FIN DE L'ACCORD.
       const noteLength = Math.max(0.05, (fin - debut) / triade.length);
       const step = triade.length > 1 ? (fin - debut - noteLength) / (triade.length - 1) : 0;
       for (let i = 0; i < triade.length; i++) {
         const note = Math.max(0, Math.min(127, root + triade[i]));
         const t = debut + i * step;
-        notes.push({ note, velocite, debut: t, fin: t + noteLength });
+        notes.push({ note, velocite, debut: t, fin: options.mode === "roule" ? Math.max(fin, t + noteLength) : t + noteLength });
       }
     } else {
       notes.push({ note: root, velocite, debut, fin });

@@ -6,10 +6,11 @@
 //   3. LE NIVEAU SUIT LA LOI DU CARRÉ INVERSE : doubler la distance coûte six décibels.
 //   4. LE PANORAMIQUE EST EN COSINUS : la somme des carrés des deux gains reste constante, sans
 //      le creux de trois décibels qu'une loi linéaire ferait au centre.
+//   5. L'AIR COMPTE LES MÈTRES GAGNÉS DEPUIS LE DÉPART, et aucun en se rapprochant.
 import { describe, expect, it } from "vitest";
 import {
   NOMBRE_OR, RAPPORT_MAX, RAPPORT_MIN,
-  ecartAzimutParTour, pointSpirale, rapportDistanceParTour, rapportValide,
+  airTraverse, coupureAir, distanceLaPlusProche, ecartAzimutParTour, pointSpirale, rapportDistanceParTour, rapportValide,
   type OptionsSpatiale,
 } from "./spirale-spatiale";
 
@@ -74,19 +75,51 @@ describe("la trajectoire", () => {
     expect(gauche.gaucheGain).toBeGreaterThan(gauche.droiteGain);
   });
 
-  it("l'air ferme l'aigu à mesure que la distance croît, et pas du tout à absorption nulle", () => {
-    const avec = [0, 0.5, 1].map((p) => pointSpirale(BASE, p).coupureHz);
-    expect(avec[1]).toBeLessThan(avec[0]);
-    expect(avec[2]).toBeLessThan(avec[1]);
-    const sans = [0, 0.5, 1].map((p) => pointSpirale({ ...BASE, absorption: 0 }, p).coupureHz);
-    expect(new Set(sans.map((v) => Math.round(v))).size).toBe(1);
+  it("L'AIR COMPTE LES MÈTRES GAGNÉS DEPUIS LE DÉPART, dosés par l'absorption", () => {
+    // Trois tours à rapport deux depuis 20 m : 160 m à l'arrivée, 140 m de gagnés.
+    const loin = { ...BASE, distanceDebut: 20, absorption: 1 };
+    expect(airTraverse(loin, 0)).toBe(0);
+    expect(airTraverse(loin, 1)).toBeCloseTo(140, 6);
+    expect(airTraverse({ ...loin, absorption: 0.5 }, 1)).toBeCloseTo(70, 6);
+    // Au même rapport, partir de plus loin gagne plus de mètres.
+    expect(airTraverse({ ...loin, distanceDebut: 1 }, 1)).toBeCloseTo(7, 6);
   });
 
-  it("la coupure reste dans des bornes audibles", () => {
+  it("EN SE RAPPROCHANT, L'AIR COMPTE LES MÈTRES QUI RESTENT JUSQU'À L'ARRIVÉE, le point le plus proche", () => {
+    // Trois tours à rapport deux depuis 20 m : l'arrivée est à 2,5 m, le départ en est à 17,5 m.
+    const proche = { ...BASE, distanceDebut: 20, eloigne: false, absorption: 1 };
+    expect(distanceLaPlusProche(proche)).toBeCloseTo(2.5, 9);
+    expect(airTraverse(proche, 0)).toBeCloseTo(17.5, 6);
+    expect(airTraverse(proche, 1)).toBeCloseTo(0, 9);
+    for (let i = 1; i <= 10; i++) expect(airTraverse(proche, i / 10)).toBeLessThan(airTraverse(proche, (i - 1) / 10));
+  });
+
+  it("LE GAIN VAUT UN AU POINT LE PLUS PROCHE ET NE LE DÉPASSE JAMAIS, dans les deux sens", () => {
+    for (const eloigne of [true, false]) {
+      for (const tours of [0.5, 3, 8]) {
+        const o = { ...BASE, eloigne, tours, rapport: 8 };
+        const gains = Array.from({ length: 41 }, (_, i) => pointSpirale(o, i / 40).gain);
+        expect(Math.max(...gains), `${eloigne ? "s'éloigne" : "se rapproche"}, ${tours} tours`).toBeCloseTo(1, 9);
+        expect(gains[eloigne ? 0 : 40]).toBeCloseTo(1, 9);
+      }
+    }
+  });
+
+  it("l'air ferme l'aigu à mesure que le son s'éloigne, et pas du tout à absorption nulle", () => {
+    const loin = { ...BASE, distanceDebut: 20 };
+    const avec = [0, 0.5, 1].map((p) => coupureAir(loin, p));
+    expect(avec[0]).toBe(20000);
+    expect(avec[1]).toBeLessThan(avec[0]);
+    expect(avec[2]).toBeLessThan(avec[1]);
+    const sans = [0, 0.5, 1].map((p) => coupureAir({ ...loin, absorption: 0 }, p));
+    expect(sans).toEqual([20000, 20000, 20000]);
+  });
+
+  it("la coupure reste dans la bande audible", () => {
     for (const absorption of [0, 0.5, 1]) {
       for (let i = 0; i <= 20; i++) {
-        const c = pointSpirale({ ...BASE, absorption, tours: 6 }, i / 20).coupureHz;
-        expect(c).toBeGreaterThanOrEqual(200);
+        const c = coupureAir({ ...BASE, distanceDebut: 20, rapport: 8, absorption, tours: 6 }, i / 20);
+        expect(c).toBeGreaterThanOrEqual(20);
         expect(c).toBeLessThanOrEqual(20000);
       }
     }

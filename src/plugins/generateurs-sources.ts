@@ -6,6 +6,7 @@
 
 import type { DesigneAccordage } from "./formes-des-canaux";
 import { fiche } from "./fiche";
+import { canauxDe, choixMonoStereo } from "../audio/mono-stereo";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
 import { decoderFichier, rendreAvecEchantillon, genererBruit, genererAudioFormule, notesVersFichierMidi, rendreSequence, appliquerInstrumentMidi, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE, type NoteEvenement } from "../audio";
@@ -362,14 +363,14 @@ export const fiches: FicheAudio[] = ([
         docEn: "Mathematical expression giving the sample value. Available variables: t (time in s), i (index), c (channel), ch (channel count), sr (sample rate).", defautEn: "sin(t * 2 * pi * 440)" },
       { nom: "Durée", nomEn: "Duration", plage: [0.1, 30], pas: 0.1, defaut: 2, unite: "s",
         doc: "Durée du signal généré.", docEn: "Duration of the generated signal." },
-      { nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["mono", "stereo"], defaut: "Stéréo",
+      { nom: "Canaux", nomEn: "Channels", type: "choix", ...choixMonoStereo(), defaut: "Stéréo",
         doc: "Nombre de canaux de sortie.", docEn: "Number of output channels.", defautEn: "Stereo" },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 30, unite: "%" },
     ],
     async executer(ctx) {
       const formule = ctx.paramTexte("Formule", "sin(t * 2 * pi * 440)");
       const duree = ctx.paramNombre("Durée", 2);
-      const channels = ctx.paramTexte("Canaux", "stereo") === "mono" ? 1 : 2;
+      const channels = canauxDe(ctx.paramTexte("Canaux", "stereo"), 2);
       const volume = ctx.paramNombre("Volume", 30);
       try {
         const buf = genererAudioFormule(formule, duree, frequenceDeTravail(), channels);

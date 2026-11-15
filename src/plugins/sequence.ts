@@ -81,7 +81,9 @@ export const fiches: FicheAudio[] = ([
       // LE SÉLECTEUR SIMPLE, SANS « SUIVRE LE MIDI » : ce nœud ne reçoit pas de fichier MIDI, donc
       // il n'y a aucun changement de programme à suivre. L'option y proposait un comportement sans
       // objet, qui se résolvait silencieusement au programme 0.
-      PARAMETRE_INSTRUMENT_SF2,
+      { ...PARAMETRE_INSTRUMENT_SF2,
+        doc: "Preset du SoundFont global à utiliser pour le rendu. Sans effet quand « Synthèse » vaut « FM/Oscillateurs ». Chargez d'abord un fichier SF2 dans la barre d'outils. Les kits de percussion (banque 128) sont inclus s'ils sont présents.",
+        docEn: "Preset of the loaded global SoundFont to use for rendering. No effect when « Synthesis » is « FM/Oscillators ». Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix",
         options: CARACTERES_CHOIX.fr, optionsEn: CARACTERES_CHOIX.en,
         optionIds: CARACTERES_CHOIX.ids,
@@ -91,8 +93,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Le niveau du rendu.", docEn: "The level of the rendering." },
       { nom: "Tempo", nomEn: "Tempo", plage: [20, 300], pas: 1, defaut: 120, unite: "BPM",
-        doc: "Inscrit dans le fichier MIDI ; sans effet sur ce qu'on entend.",
-        docEn: "Written into the MIDI file; no effect on what is heard." },
+        doc: "Inscrit dans le fichier MIDI ; sans effet sur ce qu'on entend. Sans effet du tout quand la séquence reçue porte son propre tempo, qui l'emporte.",
+        docEn: "Written into the MIDI file; no effect on what is heard. No effect at all when the received sequence carries its own tempo, which prevails." },
     ],
     async executer(ctx) {
       const entree = ctx.entree(0);

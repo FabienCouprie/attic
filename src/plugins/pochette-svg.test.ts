@@ -44,6 +44,20 @@ describe("pochette-svg", () => {
     }
   });
 
+  it("CHAQUE PALETTE PRÉDÉFINIE A SES COULEURS : deux noms ne rendent pas la même pochette", () => {
+    // LE DÉFAUT RELEVÉ PAR LA PASSE DE CROISEMENT (lot 3e, 2026-11-15) : « Océan » était la copie de
+    // « Froid », couleur pour couleur.
+    const vues = new Map<string, string>();
+    const doublons: string[] = [];
+    for (const [nom, couleurs] of Object.entries(PALETTES_PRESET)) {
+      if (nom === "auto") continue;
+      const cle = couleurs.join(",").toLowerCase();
+      if (vues.has(cle)) doublons.push(`${vues.get(cle)} = ${nom}`);
+      vues.set(cle, nom);
+    }
+    expect(doublons).toEqual([]);
+  });
+
   it("accepte tous les styles disponibles", () => {
     const styles = [
       "minimaliste", "geometrique", "vagues", "grain", "concentrique", "bauhaus",

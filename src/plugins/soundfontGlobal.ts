@@ -85,14 +85,9 @@ export const PARAMETRE_SYNTHESE = reglagePartage({
   docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples.",
 });
 
-/** Variante sans « Automatique » (nœuds dont le rendu FM est le défaut). */
-export const PARAMETRE_SYNTHESE_SANS_AUTO = reglagePartage({
-  ...PARAMETRE_SYNTHESE,
-  options: ["FM/Oscillateurs", "SoundFont"],
-  optionsEn: ["FM/Oscillators", "SoundFont"],
-  optionIds: ["fm", "soundfont"],
-  defaut: "FM/Oscillateurs",
-});
+// IL N'Y A PLUS DE VARIANTE SANS « AUTOMATIQUE ». L'automate cellulaire, son seul emprunteur, offre
+// le moteur entier depuis le 2026-11-14 : un nœud dont le rendu FM est le défaut pose
+// `defaut: "FM/Oscillateurs"` sur ce réglage, sans retirer un choix.
 
 // Accepte indifféremment l'id canonique ("auto"/"fm"/"soundfont"), l'ancienne
 // valeur française ou l'anglaise : les projets enregistrés avant l'ajout des

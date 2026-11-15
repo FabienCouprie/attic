@@ -60,7 +60,7 @@ export const fiches: FicheAudio[] = ([
       + "• « F 9 coef. » : la courbe pondérée F à neuf coefficients de R. A. Wannamaker (« Psychoacoustically Optimal Noise Shaping », Journal of the Audio Engineering Society 40(7/8), 1992, p. 611-620). Bruit total +18,4 dB, à −25 dB du bruit plat vers 3 kHz.\n"
       + "Les deux courbes pondérées sont calculées pour 44,1 kHz. À une autre fréquence d'échantillonnage, elles s'étirent avec elle : à 48 kHz, le creux de « E 5 coef. » passe à 4,4 kHz. Au-delà de 5 % d'écart, le message le signale.\n\n"
       + "Un échantillon qui sortirait de la pleine échelle y est ramené. L'erreur renvoyée est prise avant cette borne, de sorte que le filtre reste stable sur un son saturé ; les échantillons bornés sont comptés dans le message.\n\n"
-      + "« Graine » fixe la suite du bruit de dither : une même graine rend les mêmes échantillons. À zéro, une graine est tirée au sort, et le message la donne. Les canaux reçoivent des bruits indépendants.\n\n"
+      + "« Graine » fixe la suite du bruit de dither : une même graine rend les mêmes échantillons. À zéro, une graine est tirée au sort, et le message la donne. Elle est sans effet quand « Dither » vaut « Aucun », rien n'étant tiré. Les canaux reçoivent des bruits indépendants.\n\n"
       + "La sortie « Audio » rend le son quantifié, avec la durée, la fréquence d'échantillonnage et les canaux reçus. Un fichier que l'application écrit en 16 bits reçoit un second dither triangulaire, blanc, d'un quart de LSB carré, qui comble les creux de la mise en forme ; écrit en 24 bits, il reçoit ce second bruit à −144,5 dBFS, et la mise en forme demeure. Le message donne la profondeur, le dither, la mise en forme, la valeur efficace de l'écart entre la sortie et l'entrée en dBFS, hors échantillons bornés, et la graine.",
     noticeEn: "This component reduces the bit depth of a sound. Each sample is brought onto the grid of a depth from 2 to 24 bits, after dither noise is added, and the error made is fed back onto the following samples through a filter that shapes the noise. The returned sound stays in floating point, but each of its values is a code of the chosen depth divided by full scale, that is 2^(b−1) − 1 codes on either side of zero. The LSB is the step between two neighbouring codes.\n\n"
       + "« Bits » sets the depth. At 16 bits, the returned values are exactly the codes of a sixteen-bit WAV file.\n\n"
@@ -77,7 +77,7 @@ export const fiches: FicheAudio[] = ([
       + "• « F 9 coef. »: the nine-coefficient F-weighted curve of R. A. Wannamaker (« Psychoacoustically Optimal Noise Shaping », Journal of the Audio Engineering Society 40(7/8), 1992, pp. 611-620). Total noise +18.4 dB, 25 dB below the flat noise around 3 kHz.\n"
       + "Both weighted curves are designed for 44.1 kHz. At another sample rate they stretch with it: at 48 kHz, the dip of « E 5 coef. » moves to 4.4 kHz. Beyond a 5 % difference, the message says so.\n\n"
       + "A sample that would leave full scale is brought back into it. The error fed back is taken before that bound, so the filter stays stable on a saturated sound; the bounded samples are counted in the message.\n\n"
-      + "« Seed » sets the sequence of the dither noise: the same seed returns the same samples. At zero, a seed is drawn at random, and the message gives it. The channels receive independent noises.\n\n"
+      + "« Seed » sets the sequence of the dither noise: the same seed returns the same samples. At zero, a seed is drawn at random, and the message gives it. It has no effect when « Dither » is « None », nothing being drawn. The channels receive independent noises.\n\n"
       + "The « Audio » output returns the quantized sound, with the received length, sample rate and channels. A file the application writes at 16 bits receives a second white triangular dither of a quarter of an LSB squared, which fills the dips of the shaping; written at 24 bits, it receives that second noise at −144.5 dBFS, and the shaping remains. The message gives the depth, the dither, the shaping, the RMS value of the difference between output and input in dBFS, bounded samples excluded, and the seed.",
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
@@ -92,8 +92,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Le filtre qui renvoie l'erreur sur les échantillons suivants, et reporte le bruit vers l'aigu. « E 5 coef. » et « F 9 coef. » sont des courbes pondérées calculées pour 44,1 kHz ; « Premier ordre » et « Second ordre » chassent le bruit du grave à toute fréquence.",
         docEn: "The filter that feeds the error back onto the following samples, and moves the noise towards the treble. « E 5 coef. » and « F 9 coef. » are weighted curves designed for 44.1 kHz; « First order » and « Second order » drive the noise out of the bass at any rate." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 1,
-        doc: "La graine du bruit de dither. Une même graine rend les mêmes échantillons ; à zéro, une graine est tirée au sort et annoncée.",
-        docEn: "The seed of the dither noise. The same seed returns the same samples; at zero, a seed is drawn at random and announced." },
+        doc: "La graine du bruit de dither. Une même graine rend les mêmes échantillons ; à zéro, une graine est tirée au sort et annoncée. Sans effet quand « Dither » vaut « Aucun » : rien n'est tiré.",
+        docEn: "The seed of the dither noise. The same seed returns the same samples; at zero, a seed is drawn at random and announced. No effect when « Dither » is « None »: nothing is drawn." },
     ],
     async executer(ctx) {
       const entree = entreeAudio(ctx, 0);

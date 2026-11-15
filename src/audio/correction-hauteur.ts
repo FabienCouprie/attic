@@ -29,7 +29,7 @@
 
 import { suivreHauteur } from "./hauteur";
 import type { Courbe } from "./courbe";
-import { degresDeGamme, gammeDe } from "./gammes";
+import { completer, degresDeGamme, gammeDe } from "./gammes";
 import { noteMidiDeFrequence } from "./commun";
 
 export interface OptionsCorrection {
@@ -90,8 +90,13 @@ export const IDS_HERITES_CORRECTION: Record<string, string> = {
  *
  * SES IDENTIFIANTS SONT CEUX DU DÉPÔT. Les siens sont au-dessus, en anciennes écritures ; les
  * DEGRÉS viennent de la table commune, comme avant.
+ *
+ * LA LISTE EST LA TABLE ENTIÈRE DES GAMMES TEMPÉRÉES depuis le 2026-11-14, décision de Fabien : les
+ * sept d'origine d'abord, sous leurs libellés, puisqu'un projet ancien se résout par la position, et
+ * les dix-huit autres après. Les quatre nœuds qui la prennent tirent leurs notes d'un ensemble de
+ * hauteurs, et aucun n'avait de raison de s'arrêter à sept.
  */
-export const GAMMES_CORRECTION: { id: string; fr: string; en: string; degres: number[] }[] = ([
+const HISTORIQUE_CORRECTION = [
   ["chromatique", "Chromatique", "Chromatic"],
   ["majeur", "Majeure", "Major"],
   ["mineur", "Mineure naturelle", "Natural minor"],
@@ -99,7 +104,12 @@ export const GAMMES_CORRECTION: { id: string; fr: string; en: string; degres: nu
   ["pentatonique-majeure", "Pentatonique majeure", "Major pentatonic"],
   ["pentatonique-mineure", "Pentatonique mineure", "Minor pentatonic"],
   ["blues", "Blues", "Blues"],
-] as const).map(([id, fr, en]) => ({ id, fr, en, degres: degresDeGamme(id) }));
+] as const;
+export const GAMMES_CORRECTION: { id: string; fr: string; en: string; degres: number[] }[] = [
+  ...HISTORIQUE_CORRECTION.map(([id, fr, en]) => ({ id: id as string, fr: fr as string, en: en as string, degres: degresDeGamme(id) })),
+  ...completer(HISTORIQUE_CORRECTION.map(([id]) => id)).slice(HISTORIQUE_CORRECTION.length)
+    .map((g) => ({ id: g.id, fr: g.fr, en: g.en, degres: g.degres })),
+];
 
 /**
  * Les degrés d'une gamme transposés sur une tonique, en classes de hauteur.

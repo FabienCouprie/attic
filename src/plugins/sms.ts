@@ -14,7 +14,7 @@ import { avecDoc } from "./notices";
 import { traiterVoie, type OptionsVoieSms, type VoieSms } from "../audio/sms";
 import { parCanal } from "./hors-fil";
 import { entreeAudio, sansEntree } from "./lire-entree";
-import { choixFenetre } from "../audio/fenetres-analyse";
+import { TAILLES_FENETRE, choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -40,8 +40,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Niveau de la partie stochastique. À zéro, le son devient une synthèse additive pure, lisse et sans grain ; au-delà de cent, l'instrument devient plus soufflé sans se désaccorder d'un centième de ton.",
         docEn: "Level of the stochastic part. At zero, the sound becomes pure additive synthesis, smooth and grainless; beyond a hundred, the instrument gets breathier without detuning by a hundredth of a tone." },
       { nom: "Seuil", nomEn: "Threshold", type: "curseur", plage: [20, 90], pas: 5, defaut: 60, unite: " dB",
-        doc: "Décibels sous le plus fort pic de chaque trame en deçà desquels un maximum n'est pas considéré. Bas, seuls les partiels dominants sont suivis ; haut, les plus faibles le sont aussi, au risque de prendre du bruit pour un partiel.",
-        docEn: "Decibels below each frame's strongest peak under which a maximum is not considered. Low, only dominant partials are tracked; high, weaker ones too, at the risk of taking noise for a partial." },
+        doc: "Décibels sous le plus fort pic de chaque trame en deçà desquels un maximum n'est pas considéré. Bas, seuls les partiels dominants sont suivis ; haut, les plus faibles le sont aussi, au risque de prendre du bruit pour un partiel. Il n'écarte que des pics qui dépassent déjà leur voisinage de la « Saillie » : sur un son sans partiel faible, ou dont les partiels sont trop serrés pour la « Fenêtre », il n'a rien à écarter et ne change rien.",
+        docEn: "Decibels below each frame's strongest peak under which a maximum is not considered. Low, only dominant partials are tracked; high, weaker ones too, at the risk of taking noise for a partial. It only discards peaks that already exceed their neighbourhood by the « Prominence »: on a sound without faint partials, or whose partials are too close for the « Window », it has nothing to discard and changes nothing." },
       { nom: "Saillie", nomEn: "Prominence", type: "curseur", plage: [0, 30], pas: 1, defaut: 12, unite: " dB",
         doc: "Hauteur minimale d'un pic au-dessus de la médiane de son voisinage. C'est ce qui sépare un partiel d'une bosse de bruit, et il en faut un : la persistance ne suffit pas, deux trames voisines partageant les trois quarts de leurs échantillons. À zéro, un bruit blanc passe pour à moitié harmonique.",
         docEn: "Minimum height of a peak above the median of its neighbourhood. This is what separates a partial from a noise bump, and one is needed: persistence does not suffice, since neighbouring frames share three quarters of their samples. At zero, white noise passes for half harmonic." },
@@ -49,7 +49,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre de pics gardés par trame, les plus forts d'abord.",
         docEn: "Number of peaks kept per frame, strongest first." },
       { nom: "Fenêtre", nomEn: "Window", type: "choix",
-        ...choixFenetre([1024, 2048, 4096]), defaut: "2048", defautEn: "2048",
+        ...choixFenetre(TAILLES_FENETRE), defaut: "2048", defautEn: "2048",
         doc: "Taille de la transformée. Grande, deux partiels voisins se distinguent mieux mais les attaques s'étalent ; petite, l'inverse.",
         docEn: "Transform size. Large separates neighbouring partials better but smears attacks; small does the opposite." },
     ],

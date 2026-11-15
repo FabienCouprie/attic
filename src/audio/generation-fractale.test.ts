@@ -14,6 +14,8 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { genererMusiqueFractale } from "./generation-fractale";
 import { CARACTERES_CHOIX } from "./timbres";
+import { degresDeGamme } from "./gammes";
+import { GAMMES_MELODIE_IDS } from "./generation-melodie";
 
 // Court, et à profondeur deux : le dépliage est exponentiel, et ce qui est mesuré ici est la forme
 // d'onde d'une note, non la structure du motif.
@@ -83,4 +85,32 @@ describe("le timbre de la musique fractale", () => {
     expect(avec.length, "le dépliage doit produire des notes").toBeGreaterThan(1);
     expect(avec.map((n) => n.note)).toEqual(sans.map((n) => n.note));
   });
+});
+
+describe("le motif, écrit en demi-tons, est posé sur la gamme", () => {
+  // LE DÉFAUT, relevé le 2026-11-14 par la passe de croisement des nomenclatures : chaque valeur
+  // dépliée du motif, écrite en demi-tons, était lue comme un RANG de degré. « Triade M » jouait do,
+  // sol, do, et à la profondeur 3 seuls quatre degrés sonnaient : vingt-cinq gammes, quatre musiques.
+  const notes = async (motif: string, gamme: string, profondeur = 3) =>
+    (await genererMusiqueFractale(motif, "0,3,7,10", profondeur, 2, 120, "C", gamme, "pur")).notes.map((n) => n.note);
+
+  it("« Triade M » en do majeur joue do, mi, sol ; « Triade m » en do mineur, do, mi♭, sol", async () => {
+    expect((await notes("Triade M", "majeur", 1)).map((n) => n % 12)).toEqual([0, 4, 7]);
+    expect((await notes("Triade m", "mineur", 1)).map((n) => n % 12)).toEqual([0, 3, 7]);
+  });
+
+  for (const [a, b] of [["majeur", "dorien"], ["majeur", "lydien"], ["mineur", "mineur-harmonique"],
+    ["phrygien", "phrygien-dominant"], ["locrien", "alteree"]]) {
+    it(`${a} et ${b}, que la passe trouvait identiques, s'entendent autrement`, async () => {
+      expect(await notes("Triade M", a)).not.toEqual(await notes("Triade M", b));
+    });
+  }
+
+  for (const id of GAMMES_MELODIE_IDS) {
+    it(`${id} : chaque note rendue appartient à la gamme`, async () => {
+      const permises = new Set(degresDeGamme(id));
+      const classes = [...new Set((await notes("Triade M", id)).map((n) => n % 12))];
+      expect(classes.filter((c) => !permises.has(c)), id).toEqual([]);
+    });
+  }
 });

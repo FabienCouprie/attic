@@ -86,8 +86,8 @@ After Georg Cantor, « Über unendliche, lineare Punktmannigfaltigkeiten », Mat
         doc: "Au plus proche, la séquence se resserre sans se défaire. Au hasard, elle est refaite entièrement.",
         docEn: "Nearest tightens the sequence without undoing it. At random remakes it entirely." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "curseur", plage: [0, 999999], pas: 1, defaut: 7,
-        doc: "Fixe le tirage. Une même graine rend la même séquence.",
-        docEn: "Fixes the draw. The same seed returns the same sequence." },
+        doc: "Fixe le tirage. Une même graine rend la même séquence. Sans effet quand « Où poser » vaut « Au plus proche » et que « Part déplacée » est à 0 ou à 100 % : le tirage ne décide alors de rien.",
+        docEn: "Fixes the draw. The same seed returns the same sequence. No effect when « Where to place » is « Nearest » and « Share displaced » is 0 or 100 %: the draw then decides nothing." },
     ],
     async executer(ctx) {
       const recue = ctx.entree(0);

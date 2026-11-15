@@ -186,8 +186,8 @@ export function bornesModulation(m: ModulationEffet): BornesDeModulation<string>
     { nom: nomMax, nomEn: nomMaxEn, modulationDe: m.parametre,
       type: "curseur" as const, plage: m.bornes, pas: m.pas ?? 1,
       defaut: m.defauts?.[1] ?? m.bornes[1], unite: m.unite, uniteEn: m.uniteEn,
-      doc: `Valeur de « ${m.parametre} » que vaut le un de la courbe.`,
-      docEn: `Value of « ${en} » that the curve's one means.` },
+      doc: `Valeur de « ${m.parametre} » que vaut le un de la courbe. Sans courbe, ce réglage ne sert pas.`,
+      docEn: `Value of « ${en} » that the curve's one means. With no curve, this setting does nothing.` },
   ];
 }
 

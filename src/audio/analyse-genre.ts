@@ -57,7 +57,11 @@ function softmax(logits: Float32Array): number[] {
 export interface ResultatGenre { genre: string; confiance: number; description?: string }
 
 
-export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 30, modeleBuffer?: ArrayBuffer): Promise<ResultatGenre[]> {
+/**
+ * Classe le genre d'un son. `essayerModele` à faux, en mode heuristique, le modèle n'est pas essayé :
+ * il l'était quand même, et la sortie disait son échec, modèle présent ou non (lot 3e, 2026-11-15).
+ */
+export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 30, modeleBuffer?: ArrayBuffer, essayerModele = true): Promise<ResultatGenre[]> {
   const sr = buffer.sampleRate, nCh = buffer.numberOfChannels;
   const dMax = Math.min(buffer.duration, dureeAnalyse), nb = Math.floor(dMax * sr);
   const mono = new Float64Array(nb);
@@ -279,7 +283,7 @@ export async function classerGenre(buffer: AudioBuffer, dureeAnalyse: number = 3
   // ── Essai ONNX pour les étiquettes de genre ──
   let genresOnnx: { genre: string; score: number }[] | null = null;
   let erreurOnnx = "";
-  if (nb > 0) {
+  if (nb > 0 && essayerModele) {
     try {
       const ort = await import("onnxruntime-web");
       // SANS MODÈLE LOCAL, ON NE CHERCHE PLUS AILLEURS : on le dit et l'on retombe sur

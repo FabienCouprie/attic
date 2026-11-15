@@ -84,8 +84,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Fixe le tirage. La même graine rend le même contrepoint.",
         docEn: "Fixes the draw. The same seed gives the same counterpoint." },
       { nom: "Budget", nomEn: "Budget", plage: [1000, 2000000], pas: 1000, defaut: 200000,
-        doc: "Le nombre d'essais au plus avant de renoncer. Le message dit si la recherche a renoncé ou conclu.",
-        docEn: "The number of attempts at most before giving up. The message says whether the search gave up or concluded." },
+        doc: "Le nombre d'essais au plus avant de renoncer. Le message dit si la recherche a renoncé ou conclu. Sur un cantus court, la recherche conclut bien avant le plus petit budget.",
+        docEn: "The number of attempts at most before giving up. The message says whether the search gave up or concluded. On a short cantus, the search concludes well before the smallest budget." },
     ],
     async executer(ctx) {
       const recue = ctx.entree(0);

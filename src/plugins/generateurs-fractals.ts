@@ -14,7 +14,8 @@ import { avecDoc } from "./notices";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { choixFormats, formatImage } from "../core/formats-image";
 import { CARACTERES_CHOIX } from "../audio/timbres";
-import { choixFenetre } from "../audio/fenetres-analyse";
+import { TAILLES_FENETRE, choixFenetre } from "../audio/fenetres-analyse";
+import { choixPaletteCouleurs } from "../audio/palettes-couleurs";
 
 /**
  * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
@@ -150,9 +151,12 @@ export const fiches: FicheAudio[] = ([
       // SES IDENTIFIANTS ÉTAIENT SES LIBELLÉS FRANÇAIS, quand le reste du parc désigne une qualité
       // par `maj`, `m`, `dim`. Ce sont des alias de la table, donc les intervalles étaient justes ;
       // c'est l'identifiant posé dans le projet qui divergeait, et `optionsHeritees` le relit.
+      // LA SUS2 MANQUAIT, et c'est la seule triade de la table qui manquait (2026-11-14). Le flocon
+      // a trois côtés, posés sur les trois premières notes de l'accord : un accord de quatre sons
+      // perdrait sa septième en silence, et c'est la borne, déclarée au domaine des accords.
       { nom: "Accord", nomEn: "Chord", type: "choix",
-        options: ["Majeur","Mineur","Augmenté","Diminué","Sus4"], optionIds: ["maj","m","aug","dim","sus4"],
-        optionsEn: ["Major","Minor","Augmented","Diminished","Sus4"],
+        options: ["Majeur","Mineur","Augmenté","Diminué","Sus4","Sus2"], optionIds: ["maj","m","aug","dim","sus4","sus2"],
+        optionsEn: ["Major","Minor","Augmented","Diminished","Sus4","Sus2"],
         optionsHeritees: { Majeur: "maj", Mineur: "m", Augmenté: "aug", Diminué: "dim", Sus4: "sus4" },
         defaut: "Majeur", defautEn: "Major",
         doc: "Type de triade formant le triangle de base du flocon.", docEn: "Triad type forming the base triangle of the snowflake." },
@@ -203,7 +207,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Image", type: "image" }, { nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Durée", nomEn: "Duration", type: "nombre", plage: [0.5, 30], pas: 0.5, defaut: 4, unite: "s", doc: "Durée totale du son et de l'image générés.", docEn: "Total duration of the generated sound and image." },
-      { nom: "FFT", nomEn: "FFT", type: "choix", ...choixFenetre([512, 1024, 2048, 4096]), defaut: "2048", defautEn: "2048", doc: "Taille de la fenêtre FFT : plus grand = meilleure résolution fréquentielle, moins bonne temporelle.", docEn: "FFT window size: larger = finer frequency resolution, coarser time resolution." },
+      { nom: "FFT", nomEn: "FFT", type: "choix", ...choixFenetre(TAILLES_FENETRE), defaut: "2048", defautEn: "2048", doc: "Taille de la fenêtre FFT : plus grand = meilleure résolution fréquentielle, moins bonne temporelle.", docEn: "FFT window size: larger = finer frequency resolution, coarser time resolution." },
       { nom: "Octaves", nomEn: "Octaves", type: "nombre", plage: [1, 8], pas: 1, defaut: 4, doc: "Nombre d'octaves de bruit fractal.", docEn: "Number of fractal noise octaves." },
       { nom: "Rugosité", nomEn: "Roughness", type: "nombre", plage: [0, 1], pas: 0.05, defaut: 0.5, doc: "Influence des hautes fréquences du bruit (0 = lisse, 1 = rugueux).", docEn: "Influence of high-frequency noise (0 = smooth, 1 = rough)." },
       { nom: "Échelle", nomEn: "Scale", type: "choix", options: ["Logarithmique", "Linéaire"], optionsEn: ["Logarithmic", "Linear"], optionIds: ["logarithmic", "linear"], defaut: "Logarithmique", defautEn: "Logarithmic", doc: "Distribution verticale des fréquences dans l'image.", docEn: "Vertical distribution of frequencies in the image." },
@@ -252,7 +256,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Itérations", nomEn: "Iterations", type: "nombre", plage: [10000, 1000000], pas: 1000, defaut: 200000, unite: "pts", doc: "Nombre de points calculés pour l'image et la sonification.", docEn: "Number of points computed for the image and sonification." },
       { nom: "Largeur", nomEn: "Width", type: "nombre", plage: [256, 4096], pas: 1, defaut: 1024, unite: "px", doc: "Largeur de l'image rendue en pixels.", docEn: "Width of the rendered image in pixels." },
       { nom: "Hauteur", nomEn: "Height", type: "nombre", plage: [256, 4096], pas: 1, defaut: 1024, unite: "px", doc: "Hauteur de l'image rendue en pixels.", docEn: "Height of the rendered image in pixels." },
-      { nom: "Palette", nomEn: "Palette", type: "choix", options: ["classic", "magma", "inferno", "viridis", "gray", "claw"], defaut: "classic", optionsEn: ["classic", "magma", "inferno", "viridis", "gray", "claw"], defautEn: "classic", doc: "Palette de couleurs appliquée à la densité de points.", docEn: "Color palette applied to the point density." },
+      { nom: "Palette", nomEn: "Palette", type: "choix", ...choixPaletteCouleurs(), defaut: "Classique", defautEn: "Classic", doc: "Palette de couleurs appliquée à la densité de points.", docEn: "Color palette applied to the point density." },
       { nom: "Projection", nomEn: "Projection", type: "choix", options: ["XY", "XZ", "YZ", "3D shadow"], optionsEn: ["XY", "XZ", "YZ", "3D shadow"], defaut: "XY", defautEn: "XY", doc: "Projection des axes 3D de l'attracteur sur l'image.", docEn: "Projection of the attractor's 3D axes onto the image." },
       { nom: "Exposition", nomEn: "Exposure", type: "nombre", plage: [0.1, 5], pas: 0.1, defaut: 1.5, doc: "Facteur d'exposition pour accentuer ou atténuer la densité de points.", docEn: "Exposure factor to emphasize or attenuate point density." },
       { nom: "Gamma", nomEn: "Gamma", type: "nombre", plage: [0.1, 3], pas: 0.1, defaut: 1, doc: "Correction gamma de l'image.", docEn: "Gamma correction of the image." },

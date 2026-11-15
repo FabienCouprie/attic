@@ -7,9 +7,9 @@ l'interface. Le critère est le RENDU, pas la mention d'`AudioBuffer` : un modul
 que comme récipient fige le fil et devient transposable dès qu'on en extrait un cœur par voie.
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
-- **rendu** : 31 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 94 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 228 · transposable tel quel
+- **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
+- **récipient** : 96 · fige, transposable après extraction d'un cœur par voie
+- **pur** : 240 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -24,6 +24,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | accords-sequencer.ts | recipient | AudioBuffer |
 | accords.ts | recipient | AudioBuffer |
 | adaptateur.ts | recipient | AudioBuffer |
+| air.ts | pur | — |
 | algebre-alignement.ts | pur | — |
 | algebre-melanges.ts | pur | — |
 | algebre.ts | pur | — |
@@ -74,6 +75,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | clavier-banque-lot.ts | pur | — |
 | clavier-banque.ts | recipient | AudioBuffer |
 | clavier-isomorphe.ts | pur | — |
+| clefs-portee.ts | pur | — |
 | cles.ts | pur | — |
 | cloche-risset.ts | recipient | AudioBuffer |
 | color-looper.ts | recipient | AudioBuffer |
@@ -89,6 +91,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | contrepoint.ts | pur | — |
 | convertir-frequence.ts | rendu | OfflineAudioContext |
 | convolution.ts | rendu | OfflineAudioContext |
+| corde-pincee.ts | pur | — |
 | correction-hauteur.ts | pur | — |
 | correction-pleurage.ts | pur | — |
 | couleur-rgb.ts | recipient | AudioBuffer |
@@ -99,6 +102,13 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | crete-vraie.ts | recipient | AudioBuffer |
 | cribles.ts | pur | — |
 | criteres-schaefferiens.ts | pur | — |
+| croisement-bases.ts | pur | — |
+| croisement-choix.ts | pur | — |
+| croisement-entrees-choix.ts | recipient | AudioBuffer |
+| croisement-entrees.ts | recipient | AudioBuffer |
+| croisement-inscriptions.ts | pur | — |
+| croisement-registre.ts | pur | — |
+| croisement-reglages.ts | pur | — |
 | csound-aleatoire.ts | pur | — |
 | csound-formules.ts | pur | — |
 | csound-opcodes.ts | pur | — |
@@ -152,6 +162,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | esthetique.ts | pur | — |
 | euclidien.ts | pur | — |
 | evolution.ts | pur | — |
+| facons-accord.ts | pur | — |
 | favoris.ts | pur | — |
 | fdn.ts | pur | — |
 | features-piste.ts | recipient | AudioBuffer |
@@ -201,6 +212,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | klein.ts | recipient | AudioBuffer |
 | koch.ts | recipient | AudioBuffer |
 | lame.ts | pur | — |
+| lancer-fiche.ts | rendu | OfflineAudioContext |
 | lecture-sinc.ts | pur | — |
 | lecture-vive.ts | pur | — |
 | lfo.ts | pur | — |
@@ -235,6 +247,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | mixage.ts | recipient | AudioBuffer |
 | moebius.ts | recipient | AudioBuffer |
 | mono-grave.ts | pur | — |
+| mono-stereo.ts | pur | — |
 | montage-morceaux.ts | pur | — |
 | morphing-spectral.ts | pur | — |
 | morphologie.ts | pur | — |
@@ -257,6 +270,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | ordre-galerie.ts | pur | — |
 | oscillateur-analogique.ts | pur | — |
 | palette-harmonique.ts | recipient | AudioBuffer |
+| palettes-couleurs.ts | pur | — |
 | paradoxe-triton.ts | pur | — |
 | parfum.ts | pur | — |
 | parole-datee.ts | recipient | AudioBuffer |
@@ -298,6 +312,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | rythme-analyse.ts | pur | — |
 | scanning.ts | pur | — |
 | schillinger.ts | pur | — |
+| sens-arpege.ts | pur | — |
 | separation-voix.ts | pur | — |
 | sequence-formes.ts | pur | — |
 | sequence-percussion.ts | recipient | AudioBuffer |

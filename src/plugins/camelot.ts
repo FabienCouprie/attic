@@ -9,6 +9,7 @@ import { hasardDuNoeud } from "../core";
 import { traduire } from "../i18n";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 import { avecDoc } from "./notices";
+import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -47,9 +48,9 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 2], pas: 0.05, defaut: 0.75,
         doc: "Durée de chaque accord en fraction de temps (1 = temps entier, 0.5 = croche).",
         docEn: "Duration of each chord as a fraction of a beat (1 = quarter, 0.5 = eighth)." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Bloc", "Arpège"], optionsEn: ["Block", "Arpeggio"], optionIds: ["bloc", "arpege"], defaut: "Bloc", defautEn: "Block",
-        doc: "Bloc = notes de l'accord simultanées ; Arpège = notes déclinées.",
-        docEn: "Block = chord notes together; Arpeggio = notes played sequentially." },
+      { nom: "Mode", nomEn: "Mode", type: "choix", ...choixFaconAccord(), defaut: "Plaqué", defautEn: "Block",
+        doc: "Plaqué = notes de l'accord simultanées ; Arpégé = notes déclinées ; Roulé = notes déclinées et tenues jusqu'au bout de l'accord.",
+        docEn: "Block = chord notes together; Arpeggiated = notes played sequentially; Rolled = notes played sequentially and held to the chord's end." },
       { ...PARAMETRE_SYNTHESE,
         doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM. FM = synthèse locale. SoundFont = échantillons.",
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
@@ -57,14 +58,14 @@ export const fiches: FicheAudio[] = ([
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
-        doc: "Graine du parcours, sans effet hors du mode « Aléatoire ». 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici ; toute autre valeur rejoue le même parcours.",
-        docEn: "Seed for the journey; no effect outside the \"Random\" mode. 0 = drawn at random on every run, and shown in the message so it can be copied back here; any other value replays the same journey." },
+        doc: "Graine du parcours, sans effet quand « Parcours » ne vaut pas « Aléatoire ». 0 = tirée au sort à chaque exécution, et affichée dans le message pour pouvoir être recopiée ici ; toute autre valeur rejoue le même parcours.",
+        docEn: "Seed for the journey; no effect when « Journey » is not « Random ». 0 = drawn at random on every run, and shown in the message so it can be copied back here; any other value replays the same journey." },
     ],
     async executer(ctx) {
       const parcoursBrut = ctx.paramTexte("Parcours", "Complet");
       const parcours: any = ["voisins", "aleatoire"].includes(parcoursBrut.toLowerCase()) ? parcoursBrut.toLowerCase() : "complet";
-      const modeBrut = ctx.paramTexte("Mode", "Bloc");
-      const mode: any = modeBrut.toLowerCase().includes("arp") ? "arpege" : "bloc";
+      const facon = faconDe(ctx.paramTexte("Mode", "plaque"));
+      const mode = facon === "arpege" || facon === "roule" ? facon : "bloc";
       const modeRenduBrut = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const modeRendu = modeRenduBrut === "Automatique" ? (sf2Chargee() ? "SoundFont" : "FM/Oscillateurs") : modeRenduBrut;
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));

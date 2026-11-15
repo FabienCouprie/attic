@@ -10,6 +10,7 @@ import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INST
 import { avecDoc } from "./notices";
 import { traduire } from "../i18n";
 import { PARAMETRE_CLE } from "../audio/cles";
+import { choixFaconOuMelodie, faconDe } from "../audio/facons-accord";
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -42,8 +43,8 @@ export const fiches: FicheAudio[] = ([
         optionsHeritees: LIBELLES_HERITES_GAMMES,
         doc: "Gamme utilisée.",
         docEn: "Scale used." },
-      { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Mélodie", "Harmonie", "Arpèges"], optionIds: ["melodie","harmonie","arpeges"], optionsEn: ["Melody", "Harmony", "Arpeggios"], defaut: "Mélodie", defautEn: "Melody",
-        doc: "Mélodie = une note par pas ; Harmonie = accord triadique par pas ; Arpèges = notes de l'accord en succession rapide.", docEn: "Melody = one note per step; Harmony = triad chord per step; Arpeggios = chord notes played in quick succession." },
+      { nom: "Mode", nomEn: "Mode", type: "choix", ...choixFaconOuMelodie(["plaque", "arpege", "roule"]), defaut: "Mélodie", defautEn: "Melody",
+        doc: "Mélodie = une note par pas ; Plaqué = accord triadique par pas ; Arpégé = notes de l'accord en succession rapide ; Roulé = les mêmes départs, chaque note tenue jusqu'au bout du pas.", docEn: "Melody = one note per step; Block = triad chord per step; Arpeggiated = chord notes played in quick succession; Rolled = the same onsets, each note held to the end of the step." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [2, 6], pas: 1, defaut: 4,
         doc: "Octave de base.", docEn: "Base octave." },
       { nom: "Portée", nomEn: "Range", type: "nombre", plage: [1, 3], pas: 1, defaut: 2,
@@ -51,7 +52,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 120, unite: "BPM",
         doc: "Vitesse du séquenceur.", docEn: "Sequencer speed." },
       { nom: "Durée note", nomEn: "Note duration", type: "nombre", plage: [0.05, 2], pas: 0.05, defaut: 0.5,
-        doc: "Durée de chaque note en fraction de temps (1 = temps entier, 0.5 = croche, 0.25 = double-croche).", docEn: "Duration of each note as a fraction of a beat (1 = quarter, 0.5 = eighth, 0.25 = sixteenth)." },
+        doc: "Durée de chaque note en fraction de temps (1 = temps entier, 0.5 = croche, 0.25 = double-croche). Sans effet quand « Mode » vaut « Arpégé » ou « Roulé » : les trois notes de l'accord s'y partagent le pas.", docEn: "Duration of each note as a fraction of a beat (1 = quarter, 0.5 = eighth, 0.25 = sixteenth). Has no effect when « Mode » is « Arpeggiated » or « Rolled »: the chord's three notes share the step there." },
       { nom: "Mesures", nomEn: "Bars", type: "nombre", plage: [1, 16], pas: 1, defaut: 2,
         doc: "Nombre de répétitions du motif de couleurs.", docEn: "Number of repetitions of the color pattern." },
       { ...PARAMETRE_SYNTHESE,
@@ -62,8 +63,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Volume de sortie.", docEn: "Output volume." },
     ],
     async executer(ctx) {
-      const modeTexte = ctx.paramTexte("Mode", "Mélodie").toLowerCase();
-      const mode = modeTexte.includes("arp") ? "arpeges" : modeTexte.includes("harm") ? "harmonie" : "melodie";
+      const facon = faconDe(ctx.paramTexte("Mode", "melodie"));
+      const mode = facon === "arpege" ? "arpeges" : facon === "roule" ? "roule" : facon === "plaque" ? "harmonie" : "melodie";
       const modeRenduBrut = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const modeRendu = modeRenduBrut === "Automatique" ? (sf2Chargee() ? "SoundFont" : "FM/Oscillateurs") : modeRenduBrut;
       const { audio, midi, notes } = await genererColorLooper({

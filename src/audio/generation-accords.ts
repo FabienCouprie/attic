@@ -6,7 +6,7 @@
 import { comparerEvenementsMidi } from "./midi";
 import { writeMidi } from "midi-file";
 import { traduire } from "../i18n";
-import { PROGRESSIONS_GENRE, degreAccordProche, degreSeptiemeProche, degresGammeAccords, traduireCle } from "./generation";
+import { PROGRESSIONS_GENRE, degreAccordProche, degreSeptiemeProche, degresDesAccords, traduireCle } from "./generation";
 
 // ─── Générateur d'accords ───
 
@@ -28,7 +28,7 @@ export function genererAccords(
   extension: "aucune" | "septieme" | "sixte" = "aucune",
   libelles: { gamme: string; genre: string } = { gamme: gammeNom, genre: genreNom },
 ): { midiBytes: Uint8Array; description: string } {
-  const gammeCourante = degresGammeAccords(gammeNom);
+  const gammeCourante = degresDesAccords(gammeNom);
   const estMineur = degreAccordProche(gammeCourante, 0, 4) < 4; // tierce mineure depuis la tonique
   const decalage = traduireCle(cleNom);
 

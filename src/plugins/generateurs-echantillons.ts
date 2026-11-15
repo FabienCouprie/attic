@@ -92,8 +92,8 @@ export const fiches: FicheAudio[] = ([
         optionsHeritees: LIBELLES_HERITES_GAMMES,
         defaut: "Majeur",
         defautEn: "Major",
-        doc: "Gamme employée pour construire les accords. Les sept modes, les trois mineures, les deux pentatoniques, le vocabulaire du jazz avec le blues, l'altérée, les deux dominantes et la bebop, les symétriques avec la gamme par tons, les deux diminuées et l'augmentée, les gammes à seconde augmentée et les deux pentatoniques japonaises, et la chromatique.",
-        docEn: "Scale used to build chords. The seven modes, the three minors, the two pentatonics, the jazz vocabulary with blues, altered, the two dominants and bebop, the symmetric ones with whole tone, the two diminished and augmented, the augmented-second scales and the two Japanese pentatonics, and chromatic.",
+        doc: "Gamme employée pour construire les accords. Les sept modes, les trois mineures, les deux pentatoniques, le vocabulaire du jazz avec le blues, l'altérée, les deux dominantes et la bebop, les symétriques avec la gamme par tons, les deux diminuées et l'augmentée, les gammes à seconde augmentée et les deux pentatoniques japonaises, et la chromatique. La bebop dominante y bâtit les accords du mixolydien : sa septième majeure est une note de passage, qu'aucun accord ne prend.",
+        docEn: "Scale used to build chords. The seven modes, the three minors, the two pentatonics, the jazz vocabulary with blues, altered, the two dominants and bebop, the symmetric ones with whole tone, the two diminished and augmented, the augmented-second scales and the two Japanese pentatonics, and chromatic. The bebop dominant builds the mixolydian's chords here: its major seventh is a passing note, which no chord takes.",
       },
       {
         nom: "Genre",
@@ -158,8 +158,8 @@ export const fiches: FicheAudio[] = ([
         optionIds: ["aucune", "idiomatique"],
         defaut: "Aucune",
         defautEn: "None",
-        doc: "Ajoute une septième diatonique là où le genre la place, et non à tous les accords : sur la dominante seule en pop, rock, classique ou reggae ; sur chaque accord en jazz et en blues, dont c'est l'idiome ; sur la tonique et la sous-dominante en ambient. La note ajoutée vaut aussi pour le réservoir mélodique quand il se cale sur l'accord. Les anciens réglages « 7e » et « 6e », qui coloraient tous les accords, sont lus comme « Idiomatique ».",
-        docEn: "Adds a diatonic seventh where the genre puts it, rather than on every chord: on the dominant only for pop, rock, classical and reggae; on every chord for jazz and blues, whose idiom it is; on the tonic and subdominant for ambient. The added note also applies to the melodic reservoir when it snaps to the chord. The former « 7th » and « 6th » settings, which coloured every chord, are read as « Idiomatic »."
+        doc: "Ajoute une septième diatonique là où le genre la place, et non à tous les accords : sur la dominante seule en pop, rock, classique ou reggae ; sur chaque accord en jazz et en blues, dont c'est l'idiome ; sur la tonique et la sous-dominante en ambient. La note ajoutée vaut aussi pour le réservoir mélodique quand il se cale sur l'accord. Les anciens réglages « 7e » et « 6e », qui coloraient tous les accords, sont lus comme « Idiomatique ». La dominante se reconnaît à sa quinte juste au-dessus de la tonique : quand « Genre » n'est ni le jazz, ni le blues, ni l'ambient, une « Gamme » dont la progression ne rencontre aucune quinte juste, la locrienne, l'altérée, la gamme par tons, la diminuée ton, demi-ton et la chromatique, ne reçoit donc aucune septième.",
+        docEn: "Adds a diatonic seventh where the genre puts it, rather than on every chord: on the dominant only for pop, rock, classical and reggae; on every chord for jazz and blues, whose idiom it is; on the tonic and subdominant for ambient. The added note also applies to the melodic reservoir when it snaps to the chord. The former « 7th » and « 6th » settings, which coloured every chord, are read as « Idiomatic ». The dominant is recognised by its perfect fifth above the tonic: when « Genre » is not jazz, blues or ambient, a « Scale » whose progression meets no perfect fifth, Locrian, altered, whole tone, diminished whole-half and chromatic, therefore receives no seventh."
       },
       {
         nom: "Style rythmique",

@@ -10,6 +10,15 @@ describe("le profil primaire", () => {
     expect(profilPrimaire([60, 62, 64, 62, 62])).toEqual([1, 1, -1, 0]);
   });
 
+  it("DES DURÉES ÉGALES SONT PLATES, même quand la soustraction des instants les arrondit", () => {
+    // LE DÉFAUT RELEVÉ PAR LA PASSE DE CROISEMENT (lot 3e, 2026-11-15) : huit notes de 0,45 s, lues par
+    // `fin − debut`, rendaient un profil de bruit d'arrondi, [−1, 0, 0, +1, 0, 0, 0], où aucune
+    // figure ne se répétait ; les occurrences minimales n'avaient alors rien à retenir.
+    const durees = [0.45, 0.95 - 0.5, 1.45 - 1, 1.95 - 1.5, 2.45 - 2, 2.95 - 2.5];
+    expect(new Set(durees).size).toBeGreaterThan(1);
+    expect(profilPrimaire(durees)).toEqual([0, 0, 0, 0, 0]);
+  });
+
   it("EST LE MÊME POUR UNE MÉLODIE TRANSPOSÉE, ce qui est toute la raison d'être du procédé", () => {
     const melodie = [60, 64, 67, 65, 60];
     expect(profilPrimaire(melodie.map((n) => n + 7))).toEqual(profilPrimaire(melodie));

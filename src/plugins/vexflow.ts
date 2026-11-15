@@ -3,7 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { fiche } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
@@ -11,6 +11,14 @@ import { analyserMidi, midiDuFichier } from "../audio/midi";
 import { GRILLES_NOTATION, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
 import { choixValeurs } from "../audio/valeurs-note";
 import { accordsInconnus } from "../audio/theorie-romains";
+import { choixClefPortee } from "../audio/clefs-portee";
+
+/** La clé des trois portées. Ses identifiants sont les noms de VexFlow, ses libellés sont traduits. */
+const CLE_PORTEE = reglagePartage({
+  nom: "Clé", nomEn: "Clef", type: "choix", ...choixClefPortee(), defaut: "Sol", defautEn: "Treble",
+  doc: "Clé de la portée : de sol pour les voix et les instruments aigus, de fa pour les graves, d'ut 3e ligne pour l'alto, d'ut 4e ligne pour le ténor.",
+  docEn: "Staff clef: treble for high voices and instruments, bass for low ones, alto for the viola, tenor for the tenor range.",
+});
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -43,8 +51,7 @@ export const fiches: FicheAudio[] = ([
       { nom: "Notation", nomEn: "Notation", type: "texte", defaut: "C4/q D4/8 E4/8 F4/q G4/q",
         doc: "Notes à afficher. Format : note/octave/durée (ex : C4/q, D4/8, F#4/q, C4+E4+G4/q).",
         docEn: "Notes to display. Format: note/octave/duration (e.g. C4/q, D4/8, F#4/q, C4+E4+G4/q).", defautEn: "C4/q D4/8 E4/8 F4/q G4/q" },
-      { nom: "Clé", nomEn: "Clef", type: "choix", options: ["treble", "bass", "alto", "tenor"], optionsEn: ["treble", "bass", "alto", "tenor"], defaut: "treble",
-        doc: "Clé de la portée.", docEn: "Staff clef.", defautEn: "treble" },
+      CLE_PORTEE,
       { nom: "Largeur", nomEn: "Width", plage: [200, 1000], pas: 10, defaut: 500, unite: "px",
         doc: "Largeur du SVG.", docEn: "SVG width." },
       { nom: "Hauteur", nomEn: "Height", plage: [100, 400], pas: 10, defaut: 160, unite: "px",
@@ -195,8 +202,7 @@ export const fiches: FicheAudio[] = ([
         optionIds: ["majeur", "mineur"], defaut: "majeur", defautEn: "major",
         doc: "Gamme dans laquelle lire les degrés, quand la tonalité ne nomme pas de mode. En mineur, III, VI et VII descendent d'un demi-ton.",
         docEn: "Scale the degrees are read in, when the key names no mode. In minor, III, VI and VII drop a semitone." },
-      { nom: "Clé", nomEn: "Clef", type: "choix", options: ["treble", "bass", "alto", "tenor"], optionsEn: ["treble", "bass", "alto", "tenor"], defaut: "treble",
-        doc: "Clé de la portée.", docEn: "Staff clef.", defautEn: "treble" },
+      CLE_PORTEE,
       { nom: "Largeur", nomEn: "Width", plage: [200, 1000], pas: 10, defaut: 500, unite: "px",
         doc: "Largeur du SVG.", docEn: "SVG width." },
       { nom: "Hauteur", nomEn: "Height", plage: [100, 400], pas: 10, defaut: 160, unite: "px",
@@ -231,10 +237,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Tempo utilisé pour convertir les durées MIDI en notation. 0 = détecter depuis le fichier MIDI.", docEn: "Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file." },
       { nom: "Canal", nomEn: "Channel", type: "nombre", plage: [-1, 15], pas: 1, defaut: -1, unite: "-1 = tous", uniteEn: "-1 = all",
         doc: "Canal MIDI à afficher (-1 pour tous les canaux).", docEn: "MIDI channel to display (-1 for all channels)." },
-      { nom: "Quantification", nomEn: "Quantization", type: "choix", ...choixValeurs(["1/4", "1/8", "1/16", "1/32"]), defaut: "1/16",
-        doc: "Résolution de la grille de quantification.", docEn: "Quantization grid resolution.", defautEn: "1/16" },
-      { nom: "Clé", nomEn: "Clef", type: "choix", options: ["treble", "bass", "alto", "tenor"], optionsEn: ["treble", "bass", "alto", "tenor"], defaut: "treble",
-        doc: "Clé de la portée.", docEn: "Staff clef.", defautEn: "treble" },
+      { nom: "Quantification", nomEn: "Quantization", type: "choix", ...choixValeurs(Object.keys(GRILLES_NOTATION)), defaut: "1/16",
+        doc: "Résolution de la grille de quantification. La portée n'écrit que des durées simples, de la ronde à la triple croche : une grille pointée ou de triolet n'y est pas, faute de durée pour l'écrire.",
+        docEn: "Quantization grid resolution. The staff writes plain durations only, from the whole note to the thirty-second: no dotted or triplet grid, for want of a duration to write it.", defautEn: "1/16" },
+      CLE_PORTEE,
       { nom: "Largeur", nomEn: "Width", plage: [200, 2000], pas: 10, defaut: 800, unite: "px",
         doc: "Largeur du SVG.", docEn: "SVG width." },
       { nom: "Hauteur", nomEn: "Height", plage: [100, 800], pas: 10, defaut: 200, unite: "px",

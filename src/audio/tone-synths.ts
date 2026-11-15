@@ -3,6 +3,7 @@
 
 import { creerAleatoire } from "../core/hasard";
 import { plafonnerCrete } from "./commun";
+import { calculerCordePincee } from "./corde-pincee";
 import { Note } from "tonal";
 import { frequenceDeTravail } from "./frequence-de-travail";
 import {
@@ -195,7 +196,12 @@ export async function genererModulationSynth(opts: OptionsModulationSynth): Prom
         envelope: { attack, decay, sustain, release },
       }).toDestination();
       synth.volume.value = 0;
-      synth.triggerAttackRelease(note, duree, 0, velocity);
+      // LA NOTE SE RELÂCHE ASSEZ TÔT POUR QUE LE RELÂCHEMENT S'ENTENDE dans la durée demandée, qui est
+      // celle du tampon. Relâchée à la fin du tampon, elle n'y laissait jamais entendre son « Release »
+      // tant que la durée dépassait l'enveloppe, ce qui est le cas aux défauts : la passe de croisement
+      // l'a vu inerte sous chaque mode (lot 3e, 2026-11-15). Elle ne se relâche jamais avant d'avoir
+      // fini son attaque et sa décroissance.
+      synth.triggerAttackRelease(note, Math.max(attack + decay, duree - release), 0, velocity);
     },
     dureeTotale,
     2,
@@ -214,11 +220,20 @@ export interface OptionsPluckSynth {
   resonance?: number;
   release?: number;
   sampleRate?: number;
+  /** Le hasard du bruit qui pince la corde ; absent, il est tiré au sort à chaque rendu. */
+  aleatoire?: () => number;
 }
 
 /**
- * Genere une note de corde pincee par synthese Karplus-Strong avec Tone.PluckSynth.
- * Le rendu est fait en offline pour obtenir un AudioBuffer directement.
+ * Génère une note de corde pincée par synthèse Karplus-Strong, calculée dans `audio/corde-pincee.ts`,
+ * en stéréo, les deux canaux identiques.
+ *
+ * LA BOUCLE N'EST PLUS FAITE DE NŒUDS TONE.JS (2026-11-15) : un retard pris dans une boucle du graphe
+ * Web Audio ne descend pas sous 128 échantillons, et la corde ne jouait pas sa note.
+ *
+ * LE RELÂCHEMENT : la résonance descend à zéro sur « Release », et la descente finit avec le son ;
+ * un relâchement plus long que la durée allonge le son d'autant. Il n'agissait sur rien : il
+ * n'allongeait le tampon que s'il dépassait la durée.
  */
 export async function genererPluckSynth(opts: OptionsPluckSynth): Promise<AudioBuffer> {
   const {
@@ -230,36 +245,27 @@ export async function genererPluckSynth(opts: OptionsPluckSynth): Promise<AudioB
     resonance = 0.7,
     release = 1,
     sampleRate = frequenceDeTravail(),
+    aleatoire,
   } = opts;
 
-  const { Offline, Noise, Delay, Filter, Gain } = await import("tone");
-
-  const dureeTotale = Math.max(0.1, duree, release + 0.05);
-  const velocity = Math.max(0, Math.min(1, volume / 100));
   const freq = Note.freq(note);
   if (freq === null) throw new Error(`Note invalide : ${note}`);
-  const noiseDur = Math.max(attackNoise / freq, 0.001);
-
-  const toneBuffer = await Offline(
-    () => {
-      const noise = new Noise({ type: "pink" }).start(0).stop(noiseDur);
-      const delay = new Delay(1 / freq);
-      const filter = new Filter(dampening, "lowpass");
-      const feedback = new Gain(resonance);
-      const outGain = new Gain(velocity).toDestination();
-
-      noise.connect(delay);
-      delay.connect(filter);
-      delay.connect(outGain);
-      filter.connect(feedback);
-      feedback.connect(delay);
-    },
-    dureeTotale,
-    2,
+  const son = calculerCordePincee({
+    frequence: freq,
     sampleRate,
-  );
-
-  return audioBufferDepuisTone(toneBuffer);
+    duree: Math.max(0.1, duree, release + 0.05),
+    bruit: Math.max(attackNoise / freq, 0.001),
+    coupure: dampening,
+    resonance,
+    debutRelache: Math.max(0, duree - release),
+    relache: release,
+    volume: Math.max(0, Math.min(1, volume / 100)),
+    aleatoire,
+  });
+  const tampon = new AudioBuffer({ numberOfChannels: 2, length: son.length, sampleRate });
+  tampon.copyToChannel(son, 0);
+  tampon.copyToChannel(son, 1);
+  return tampon;
 }
 
 export interface OptionsDrumSynth {

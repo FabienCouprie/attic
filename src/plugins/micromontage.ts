@@ -65,8 +65,8 @@ function trio<G extends Grandeur>(
   return [
     reglagePartage({ nom, nomEn, ...commun, defaut: o.de, doc: o.doc, docEn: o.docEn }),
     reglagePartage({ nom: `${nom}, fin`, nomEn: `${nomEn}, end`, ...commun, defaut: o.a,
-      doc: `La seconde borne, pour une rampe ou un tirage. Sans effet sur « Fixe ».`,
-      docEn: `The second bound, for a ramp or a draw. No effect on « Fixed ».` }),
+      doc: `La seconde borne, pour une rampe ou un tirage. Sans effet quand « ${nom}, loi » vaut « Fixe ».`,
+      docEn: `The second bound, for a ramp or a draw. Has no effect when « ${nomEn}, law » is « Fixed ».` }),
     // LA LOI PAR DÉFAUT N'EST PAS LA MÊME POUR TOUTES LES GRANDEURS, et ce n'est pas un détail : une
     // partition dont tout serait fixe pose ses mille fragments au même instant, et ne rend qu'un
     // seul son additionné mille fois. La pose veut une rampe, la prise et les nuances un tirage.
@@ -127,7 +127,7 @@ export const fiches: FicheAudio[] = ([
         docEn: "The offset that a connected curve's zero means. With no curve, this setting does nothing." },
       { nom: "Transposition max", nomEn: "Transposition max", modulationDe: "Transposition",
         type: "curseur", plage: [-24, 24], pas: 0.1, defaut: 12,
-        doc: "L'écart que vaut le un de la courbe.", docEn: "The offset that the curve's one means." },
+        doc: "L'écart que vaut le un de la courbe. Sans courbe, ce réglage ne sert pas.", docEn: "The offset that the curve's one means. With no curve, this setting does nothing." },
       { nom: "Fenêtre", nomEn: "Window", type: "choix",
         options: FENETRES_FR, optionsEn: FENETRES_EN, optionIds: [...FENETRES],
         defaut: "Gaussienne", defautEn: "Gaussian",
@@ -142,14 +142,17 @@ export const fiches: FicheAudio[] = ([
       ...bornesModulation(modulationNommee("Niveau", "Level out", [0, 100], "%")),
     ],
     async executer(ctx) {
+      // CHAQUE SOURCE GARDE LA PLACE DE SON PORT. Tassées, les Sources 1 et 3 branchées faisaient
+      // couper « Source » = 2 dans la troisième, contre la notice ; un trou retombe sur la première
+      // dans `poserFragments` (lot 3e, 2026-11-15, `micromontage-sources.test.ts`).
       const sources: Float32Array[][] = [];
       for (let i = 0; i < SOURCES; i++) {
         const v = ctx.entree(i);
         if (v instanceof AudioBuffer) {
-          sources.push(Array.from({ length: v.numberOfChannels }, (_, c) => v.getChannelData(c)));
+          sources[i] = Array.from({ length: v.numberOfChannels }, (_, c) => v.getChannelData(c));
         }
       }
-      if (sources.length === 0) {
+      if (!sources[0]) {
         return {
           valeurs: [null, null], erreur: true,
           message: en() ? "No sound at the inputs." : "Aucun son à l'entrée.",

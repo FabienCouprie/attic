@@ -7,7 +7,7 @@
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante, traduire } from "../i18n";
-import { genererBoiteRythmes, notesVersFichierMidi, rendreSequence, genererRythmeCantor, genererGrilleCantor, grilleBoiteRythmes, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE } from "../audio";
+import { genererBoiteRythmes, notesVersFichierMidi, rendreSequence, genererRythmeCantor, genererGrilleCantor, grilleBoiteRythmes, signatureJouee, degresGammeMelodie, GAMMES_MELODIE_FR, GAMMES_MELODIE_EN, GAMMES_MELODIE_IDS, DEMI_TONS_CLE } from "../audio";
 import { CANAL_PERCUSSION, choixPercussion, frappesDePistesBooleennes, notesDepuisFrappes } from "../audio/batterie-midi";
 import { rendreBatterieMidi } from "../audio/tone-synths";
 import { motifEnTexte, motifEuclidien, nomTraditionnel, notesEuclidiennes } from "../audio/euclidien";
@@ -37,7 +37,9 @@ export const fiches: FicheAudio[] = ([
       { nom:"Patron", nomEn:"Pattern", type:"choix", ...optionsPatrons(), defaut:"Rock", defautEn: "Rock" },
       { nom:"Mesures", nomEn:"Bars", plage:[1,8], pas:1, defaut:2 },
       { nom:"Kick", nomEn:"Kick", plage:[0,100], defaut:80, unite:"%" },
-      { nom:"Caisse claire", nomEn:"Snare", plage:[0,100], defaut:70, unite:"%" },
+      { nom:"Caisse claire", nomEn:"Snare", plage:[0,100], defaut:70, unite:"%",
+        doc: "Volume de la caisse claire, de 0 à 100 %. Sans effet sous un « Patron » qui n'en a pas, comme Techno.",
+        docEn: "Snare volume, from 0 to 100%. No effect under a « Pattern » that has none, such as Techno." },
       { nom:"Charley", nomEn:"Hi-hat", plage:[0,100], defaut:60, unite:"%" },
       { nom:"Graine", graine: true, nomEn:"Seed", plage:[0, 999999], pas:1, defaut:42,
         doc:"Graine des rafales de bruit (caisse claire, charley). Valeur par défaut fixe : le même patron doit rendre le même fichier à chaque exécution.",
@@ -50,19 +52,22 @@ export const fiches: FicheAudio[] = ([
       const niveauKick = ctx.paramNombre("Kick", 80);
       const niveauSnare = ctx.paramNombre("Caisse claire", 70);
       const niveauCharley = ctx.paramNombre("Charley", 60);
+      // LE PATRON SE JOUE DANS SA MÉTRIQUE : la valse et le boléro, qui ne s'écrivent qu'en 3/4,
+      // retombaient en 4/4 sur le patron de secours (`signatureJouee`).
+      const [temps, unite] = signatureJouee(patron);
       const buffer = await genererBoiteRythmes(tempo, patron, mesures, niveauKick, niveauSnare,
-        niveauCharley, 4, 4, creerAleatoire(ctx.paramNombre("Graine", 42)));
+        niveauCharley, temps, unite, creerAleatoire(ctx.paramNombre("Graine", 42)));
       // LE MÊME PATRON, EN MIDI, pour pouvoir changer les sons dessous — kit SFZ, SoundFont, orchestre
       // Csound. La grille vient de la fonction QUE LE RENDU EMPLOIE, et non d'une seconde lecture du
       // patron : c'est la seule façon d'être sûr que les deux sorties frappent aux mêmes instants.
       // Les niveaux des pistes deviennent des vélocités, un fichier MIDI n'ayant pas de volume.
-      const grille = grilleBoiteRythmes(patron, mesures, 4, 4);
+      const grille = grilleBoiteRythmes(patron, mesures, temps, unite);
       const notesMidi = notesDepuisFrappes(frappesDePistesBooleennes([
         { piste: 0, pas: grille.kick, niveau: niveauKick },
         { piste: 1, pas: grille.snare, niveau: niveauSnare },
         { piste: 2, pas: grille.hat, niveau: niveauCharley },
         { piste: 3, pas: grille.hatOuvert, niveau: niveauCharley },
-      ]), { tempo, pasParMesure: grille.pasMesure, mesures });
+      ]), { tempo, pasParMesure: grille.pasMesure, mesures, tempsParMesure: temps * (4 / unite) });
       const midi = notesMidi.length > 0 ? notesVersFichierMidi(notesMidi, tempo, CANAL_PERCUSSION) : null;
       return {
         valeurs: [buffer, midi],
@@ -95,8 +100,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Gamme", nomEn: "Scale", type: "choix",
         options: GAMMES_MELODIE_FR, optionsEn: GAMMES_MELODIE_EN, optionIds: GAMMES_MELODIE_IDS,
         defaut: "Majeur", defautEn: "Major",
-        doc: "Les degrés que + et − parcourent : le mot ne sort jamais de la gamme.",
-        docEn: "The degrees that + and − walk through: the word never leaves the scale." },
+        doc: "Les degrés que les lettres et les signes + et − parcourent : chaque lettre distincte prend un degré par son rang, et le mot ne sort jamais de la gamme. Sans effet quand « Exemple » vaut « Poussière de Cantor », qui n'a qu'une lettre et ni + ni − : elle ne joue que la tonique.",
+        docEn: "The degrees that the letters and the + and − signs walk through: each distinct letter takes a degree by its rank, and the word never leaves the scale. Has no effect when « Example » is « Cantor dust », which has a single letter and neither + nor −: it plays only the tonic." },
       { nom: "Octave", nomEn: "Octave", type: "nombre", plage: [1, 7], pas: 1, defaut: 4,
         doc: "Octave de la note de départ.", docEn: "Octave of the starting note." },
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 300], pas: 1, defaut: 120, unite: "BPM",
@@ -210,7 +215,7 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", nomEn: "MIDI", type: "midi" }],
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [40, 240], defaut: 120, unite: "BPM", doc: "Vitesse du groove en battements par minute.", docEn: "Groove speed in beats per minute." },
-      { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [1, 6], pas: 1, defaut: 3, doc: "Nombre de niveaux de récursion de la suppression de pas (plus = plus fractal).", docEn: "Number of recursion levels of beat removal (higher = more fractal)." },
+      { nom: "Profondeur", nomEn: "Depth", type: "nombre", plage: [1, 6], pas: 1, defaut: 3, doc: "Nombre de niveaux de récursion de la suppression de pas (plus = plus fractal). Sans effet quand « Subdivision » vaut « 7 » et « Partie retirée » « Centre » : soixante-quatre pas n'en gardent alors que quatre dès le premier niveau.", docEn: "Number of recursion levels of beat removal (higher = more fractal). No effect when « Subdivision » is « 7 » and « Removed part » « Center »: sixty-four steps then keep only four from the first level on." },
       { nom: "Subdivision", nomEn: "Subdivision", type: "choix", options: ["3", "5", "7"], optionsEn: ["3", "5", "7"], defaut: "3", defautEn: "3", doc: "Nombre de segments dans lesquels chaque intervalle est divisé à chaque récursion.", docEn: "Number of segments each interval is divided into at each recursion." },
       { nom: "Partie retirée", nomEn: "Removed part", type: "choix", options: ["Centre", "Gauche", "Droite", "Aléatoire"], optionsEn: ["Center", "Left", "Right", "Random"], optionIds: ["center", "left", "right", "random"], defaut: "Centre", defautEn: "Center", doc: "Partie de l'intervalle retirée à chaque niveau de récursion.", docEn: "Part of the interval removed at each recursion level." },
       { nom: "Instrument", nomEn: "Instrument", type: "choix", options: ["Kick", "Caisse claire", "Charley", "Tous"], optionsEn: ["Kick", "Snare", "Hi-hat", "All"], optionIds: ["kick", "snare", "hihat", "all"], defaut: "Tous", defautEn: "All", doc: "Percussion(s) jouée(s) par les pas survivants.", docEn: "Drum(s) played by the surviving steps." },
@@ -218,8 +223,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Swing", nomEn: "Swing", type: "nombre", plage: [0, 100], defaut: 0, unite: "%", doc: "Décalage des temps impairs pour un feeling swing/shuffle.", docEn: "Offset of odd beats for a swing/shuffle feel." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], defaut: 80, unite: "%", doc: "Volume de sortie du groove.", docEn: "Output volume of the groove." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
-        doc: "Graine du choix de la partie retirée et des rafales de bruit. Sans effet sur la grille hors du mode « Aléatoire », mais elle fixe toujours le bruit. 0 = tirée au sort à chaque exécution, et affichée dans le message.",
-        docEn: "Seed for the removed-part choice and the noise bursts. No effect on the grid outside the « Random » mode, but it always fixes the noise. 0 = drawn at random on every run, and shown in the message." },
+        doc: "Graine du choix de la partie retirée, quand « Partie retirée » vaut « Aléatoire », et des rafales de bruit de la caisse claire et du charley. Sans effet quand « Instrument » vaut « Kick » et que « Partie retirée » ne vaut pas « Aléatoire » : le kick n'a pas de bruit, et la grille n'a rien à tirer. Ni quand « Subdivision » vaut « 7 », « Partie retirée » « Centre » et « Instrument » « Tous » : les quatre pas gardés y sont tous des kicks. 0 = tirée au sort à chaque exécution, et affichée dans le message.",
+        docEn: "Seed for the removed-part choice, when « Removed part » is « Random », and for the noise bursts of the snare and hi-hat. No effect when « Instrument » is « Kick » and « Removed part » is not « Random »: the kick has no noise, and the grid has nothing to draw. Nor when « Subdivision » is « 7 », « Removed part » « Center » and « Instrument » « All »: the four steps kept are all kicks there. 0 = drawn at random on every run, and shown in the message." },
     ],
     async executer(ctx) {
       const partie = ctx.paramTexte("Partie retirée", "center") as any;

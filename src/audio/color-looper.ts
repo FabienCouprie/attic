@@ -4,7 +4,8 @@
 import { rgbToHsl, hexToRgb } from "./couleurs";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence, type NoteEvenement } from "./midi-sequence";
-import { degresGammeAccords, degreAccordProche } from "./generation";
+import { degresDesAccords, degresGammeAccords, degreAccordProche } from "./generation";
+import { demiTonDeCle } from "./cles";
 
 export interface OptionsColorLooper {
   couleurs: string;
@@ -12,7 +13,7 @@ export interface OptionsColorLooper {
   gamme: string;
   octave: number;
   portee: number;
-  mode: "melodie" | "harmonie" | "arpeges";
+  mode: "melodie" | "harmonie" | "arpeges" | "roule";
   tempo: number;
   dureeNote: number; // fraction d'un temps
   mesures: number;
@@ -21,7 +22,8 @@ export interface OptionsColorLooper {
   volume: number;
 }
 
-const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+// LA CLÉ SE LIT DANS LA TABLE COMMUNE, `audio/cles.ts` : une table privée en dièses seuls jouait Mi♭
+// et Si♭ en do.
 
 export function rgbTextToRgb(texte: string): { r: number; g: number; b: number } | null {
   const match = texte.match(/^rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*[\d.]+\s*)?\)$/);
@@ -77,7 +79,7 @@ export function parseCouleurs(texte: string): { r: number; g: number; b: number 
 function noteDepuisCouleur(rgb: { r: number; g: number; b: number }, cle: string, gamme: string, octave: number, portee: number): number {
   const [h, , l] = rgbToHsl(rgb.r, rgb.g, rgb.b);
   const intervals = degresGammeAccords(gamme);
-  const cleIdx = Math.max(0, NOTES.indexOf(cle));
+  const cleIdx = demiTonDeCle(cle) ?? 0;
   const base = (octave + 1) * 12 + cleIdx;
   const deg = Math.floor((h / 360) * intervals.length) % intervals.length;
   const semi = intervals[deg];
@@ -90,7 +92,7 @@ function noteDepuisCouleur(rgb: { r: number; g: number; b: number }, cle: string
 // (quinte diminuée du Locrien...) et aux gammes qui n'ont pas de degré à
 // exactement 2/4 crans d'écart (pentatoniques, blues, chromatique).
 function triadeGamme(gamme: string): number[] {
-  const intervals = degresGammeAccords(gamme);
+  const intervals = degresDesAccords(gamme);
   return [0, degreAccordProche(intervals, 0, 4), degreAccordProche(intervals, 0, 7)];
 }
 
@@ -112,11 +114,12 @@ export function genererNotesColorLooper(options: OptionsColorLooper): NoteEvenem
       for (const offset of triade) {
         notes.push({ note: Math.max(0, Math.min(127, root + offset)), velocite, debut, fin });
       }
-    } else if (options.mode === "arpeges") {
+    } else if (options.mode === "arpeges" || options.mode === "roule") {
+      // LE ROULÉ PART COMME L'ARPÈGE, sur tout le pas, et tient chaque note jusqu'au bout du pas.
       const subDur = stepDur / triade.length;
       for (const [i, offset] of triade.entries()) {
         const debutArp = step * stepDur + i * subDur;
-        const finArp = debutArp + subDur;
+        const finArp = options.mode === "roule" ? (step + 1) * stepDur : debutArp + subDur;
         notes.push({ note: Math.max(0, Math.min(127, root + offset)), velocite, debut: debutArp, fin: finArp });
       }
     } else {

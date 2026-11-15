@@ -4,7 +4,7 @@
 // declarent presque toutes la meme, ce qui ne decoupe rien.
 
 
-import { fiche } from "./fiche";
+import { fiche, reglagePartage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
@@ -12,7 +12,7 @@ import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
-import { LIBELLES_HERITES_GAMMES, gammesParIds } from "../audio/gammes";
+import { LIBELLES_HERITES_GAMMES, completer } from "../audio/gammes";
 import { choixValeurs } from "../audio/valeurs-note";
 
 // LES DEUX LISTES VIENNENT DE LA TABLE, DANS L'ORDRE QUI ÉTAIT LE LEUR. Leurs identifiants étaient
@@ -20,12 +20,31 @@ import { choixValeurs } from "../audio/valeurs-note";
 // donc les degrés étaient justes, mais un projet enregistrait une orthographe que le reste du parc
 // n'écrit pas. L'ordre ne bouge pas, puisqu'un projet ancien se résout par la position, et les
 // anciennes valeurs se relisent par `LIBELLES_HERITES_GAMMES`.
-const GAMMES_RESERVOIR = gammesParIds([
+//
+// ELLES SONT LA TABLE ENTIÈRE DES GAMMES TEMPÉRÉES depuis le 2026-11-14, décision de Fabien, l'ordre
+// d'origine d'abord : le réseau tire ses notes d'un ensemble de hauteurs, et rien ne le bornait à
+// six gammes, ni le multi-réservoir à cinq, dont l'absence de la chromatique n'avait pas de raison.
+const GAMMES_RESERVOIR = completer([
   "majeur", "mineur", "pentatonique-majeure", "pentatonique-mineure", "blues", "chromatique",
 ]);
-const GAMMES_RESERVOIR_SANS_CHROMATIQUE = gammesParIds([
+const GAMMES_RESERVOIR_SANS_CHROMATIQUE = completer([
   "majeur", "mineur", "pentatonique-majeure", "pentatonique-mineure", "blues",
 ]);
+
+// LES RÉSOLUTIONS SONT LES VALEURS QUI FONT UN NOMBRE ENTIER DE PAS PAR TEMPS. Le réseau avance pas à
+// pas et reconnaît le temps par `pas % pasParBeat` : la noire, la croche et la double en font 1, 2 et
+// 4, les triolets de croche et de double 3 et 6, la triple croche 8 et son triolet 12. Une pointée,
+// la blanche, la ronde ou le triolet de noire en demanderaient une fraction : c'est la coupe déclarée
+// au domaine « valeur de note ». Les trois d'origine viennent d'abord, dans leur ordre.
+const PAS_PAR_TEMPS: Record<string, number> = { "1/4": 1, "1/8": 2, "1/16": 4, "1/8t": 3, "1/16t": 6, "1/32": 8, "1/32t": 12 };
+const pasParTemps = (resolution: string): number => PAS_PAR_TEMPS[resolution] ?? 2;
+
+/** La résolution, commune aux deux réservoirs. */
+const RESOLUTION = reglagePartage({
+  nom: "Résolution", nomEn: "Resolution", type: "choix", ...choixValeurs(Object.keys(PAS_PAR_TEMPS)), defaut: "1/8", defautEn: "1/8",
+  doc: "Division du temps : la noire (1/4), la croche (1/8), la double (1/16) et la triple croche (1/32), et les triolets des trois dernières. Le réseau avance d'un nombre entier de pas par temps, ce que ni une pointée, ni la blanche, ni la ronde, ni le triolet de noire ne font.",
+  docEn: "Time division: quarter (1/4), eighth (1/8), sixteenth (1/16) and thirty-second (1/32) notes, and the triplets of the last three. The network moves by a whole number of steps per beat, which no dotted value, nor the half, the whole or the quarter triplet makes.",
+});
 
 /**
  * Convertit une note texte (ex. C4, c#5, Bb3, A4, C4\n) en fréquence.
@@ -68,8 +87,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Octave de départ (les notes peuvent monter sur 2 octaves).", docEn: "Starting octave (notes can span 2 octaves above)." },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
-      { nom: "Résolution", nomEn: "Resolution", type: "choix", ...choixValeurs(["1/4", "1/8", "1/16"]), defaut: "1/8",
-        doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
+      RESOLUTION,
       { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
         doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: FORMES_ONDE_CHOIX.fr, optionIds: FORMES_ONDE_CHOIX.ids, optionsEn: FORMES_ONDE_CHOIX.en, optionsHeritees: LIBELLES_HERITES_FORMES, defaut: "Triangle",
@@ -90,8 +108,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const { genererReservoirMusical, rendreReservoirAudio, rendreSequence, notesVersFichierMidi, appliquerInstrumentMidi } = await import("../audio");
-      const resolution = ctx.paramTexte("Résolution", "1/8");
-      const pasParBeat = resolution === "1/4" ? 1 : resolution === "1/16" ? 4 : 2;
+      const pasParBeat = pasParTemps(ctx.paramTexte("Résolution", "1/8"));
       const config = {
         taille: ctx.paramNombre("Neurones", 15),
         connectivite: ctx.paramNombre("Connectivité", 30) / 100,
@@ -167,8 +184,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Gamme utilisée pour mapper les activations vers des notes.", docEn: "Scale used to map activations to notes." },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Vitesse en battements par minute.", docEn: "Speed in beats per minute." },
-      { nom: "Résolution", nomEn: "Resolution", type: "choix", ...choixValeurs(["1/4", "1/8", "1/16"]), defaut: "1/8",
-        doc: "Division du temps. 1/4 = noires, 1/8 = croches, 1/16 = doubles croches.", docEn: "Time division. 1/4 = quarter, 1/8 = eighth, 1/16 = sixteenth.", defautEn: "1/8" },
+      RESOLUTION,
       { nom: "Mesures", nomEn: "Bars", plage: [1, 64], pas: 1, defaut: 4,
         doc: "Nombre de mesures à générer.", docEn: "Number of bars to generate." },
       { nom: "Timbre", nomEn: "Timbre", type: "choix", options: FORMES_ONDE_CHOIX.fr, optionIds: FORMES_ONDE_CHOIX.ids, optionsEn: FORMES_ONDE_CHOIX.en, optionsHeritees: LIBELLES_HERITES_FORMES, defaut: "Triangle",
@@ -220,8 +236,7 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const { genererMultiReservoir } = await import("../audio");
-      const resolution = ctx.paramTexte("Résolution", "1/8");
-      const pasParBeat = resolution === "1/4" ? 1 : resolution === "1/16" ? 4 : 2;
+      const pasParBeat = pasParTemps(ctx.paramTexte("Résolution", "1/8"));
       const config = {
         cle: ctx.paramTexte("Clé", "C"),
         gamme: ctx.paramTexte("Gamme", "majeur"),

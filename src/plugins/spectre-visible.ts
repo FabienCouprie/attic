@@ -3,6 +3,7 @@
 // de la lumière dans le domaine audible pour produire un drone.
 
 import { fiche } from "./fiche";
+import { canauxDe, choixMonoStereo } from "../audio/mono-stereo";
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererSpectreVisibleAudio, hexToRgb, midiDepuisFrequence, frequenceAudibleDepuisCouleur } from "../audio";
 import { notesVersFichierMidi } from "../audio";
@@ -40,7 +41,7 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée du drone.", docEn: "Duration of the drone." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
-      { nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["mono", "stereo"], defaut: "Stéréo", defautEn: "Stereo",
+      { nom: "Canaux", nomEn: "Channels", type: "choix", ...choixMonoStereo(), defaut: "Stéréo", defautEn: "Stereo",
         doc: "Nombre de canaux de sortie.", docEn: "Number of output channels." },
     ],
     async executer(ctx) {
@@ -54,7 +55,7 @@ export const fiches: FicheAudio[] = ([
         g = parsed.g;
         b = parsed.b;
       }
-      const canaux = ctx.paramTexte("Canaux", "stereo") === "mono" ? 1 : 2;
+      const canaux = canauxDe(ctx.paramTexte("Canaux", "stereo"), 2);
       const octave = ctx.paramNombre("Octave", 3);
       const duree = ctx.paramNombre("Durée", 4);
       const volume = ctx.paramNombre("Volume", 80);

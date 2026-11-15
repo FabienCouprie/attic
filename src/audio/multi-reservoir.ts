@@ -14,6 +14,7 @@ import { formeOndeDepuisTimbre } from "./timbres";
 import { frequenceDeTravail } from "./frequence-de-travail";
 import { traduire } from "../i18n";
 import { frequenceDeNoteMidi } from "./commun";
+import { demiTonDeCle } from "./cles";
 
 export interface ConfigMultiReservoir {
   cle: string;
@@ -107,8 +108,8 @@ export function genererMultiReservoir(config: ConfigMultiReservoir): MultiReserv
   // Si le rythme est trop vide, ajouter une pulsation de secours sur les beats
   const activesRythme = notesRythme.filter((n) => !n.silence);
   if (pasActifs.size < totalPas * 0.2) {
-    const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-    const noteBase = 36 + Math.max(0, NOTES.indexOf(config.cle));
+    // La clé se lit dans la table commune : une table en dièses seuls jouait Mi♭ et Si♭ en do.
+    const noteBase = 36 + (demiTonDeCle(config.cle) ?? 0);
     for (let p = 0; p < totalPas; p += config.pasParBeat) {
       if (!activesRythme.some((n) => Math.floor(n.debut / stepDur + 0.5) === p)) {
         notesRythme.push({ note: noteBase, velocite: 80, debut: p * stepDur, duree: stepDur, silence: false });

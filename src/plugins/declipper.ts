@@ -11,7 +11,7 @@ import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { declipperVoie, type ReglagesDeclipVoie, type ResultatDeclip } from "../audio/declipper";
 import { parCanal } from "./hors-fil";
-import { choixFenetre } from "../audio/fenetres-analyse";
+import { TAILLES_FENETRE, choixFenetre } from "../audio/fenetres-analyse";
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -28,10 +28,10 @@ export const fiches: FicheAudio[] = ([
         doc: "En automatique, le seuil est deviné à la longueur des plateaux : un son écrêté garde des échantillons consécutifs à la même valeur, là où une sinusoïde intacte n'effleure son sommet qu'un échantillon à la fois. Sans plateau, le composant le dit et rend le son tel quel.",
         docEn: "In automatic mode the threshold is guessed from plateau length: a clipped sound holds consecutive samples at the same value, where an intact sine only grazes its peak one sample at a time. With no plateau, the node says so and returns the sound unchanged." },
       { nom: "Seuil manuel", nomEn: "Manual threshold", type: "curseur", plage: [0.05, 1], pas: 0.01, defaut: 0.5,
-        doc: "Valeur au-dessus de laquelle un échantillon est tenu pour écrêté. Ne sert qu'en mode manuel.",
-        docEn: "Value above which a sample counts as clipped. Only used in manual mode." },
+        doc: "Valeur au-dessus de laquelle un échantillon est tenu pour écrêté. Ne sert que quand « Seuil » vaut « Manuel ».",
+        docEn: "Value above which a sample counts as clipped. Only used when « Threshold » is « Manual »." },
       { nom: "Fenêtre", nomEn: "Window", type: "choix",
-        ...choixFenetre([512, 1024, 2048]), defaut: "1024", defautEn: "1024",
+        ...choixFenetre(TAILLES_FENETRE), defaut: "1024", defautEn: "1024",
         doc: "Longueur des trames. Longue, le modèle dispose de plus de raies pour rendre compte du son et répare mieux ; courte, il suit mieux un son qui change vite.",
         docEn: "Frame length. Long, the model has more spectral lines to account for the sound and repairs better; short, it follows a fast-changing sound better." },
       { nom: "Tours", nomEn: "Passes", type: "curseur", plage: [10, 200], pas: 5, defaut: 60,

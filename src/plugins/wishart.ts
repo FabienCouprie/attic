@@ -26,11 +26,11 @@ export const fiches: FicheAudio[] = ([
         doc: "« Répétition » rejoue chaque segment plusieurs fois : la hauteur descend et le son s'allonge d'autant. « Omission » en tait certains sans raccourcir le son. « Inversion » lit chaque segment à l'envers : durée et énergie inchangées, timbre altéré. « Mélange » réordonne les segments par groupes. « Égalisation » ramène tous les segments au même niveau, ce qui aplatit toute dynamique.",
         docEn: "\"Repeat\" plays each segment several times: the pitch drops and the sound lengthens accordingly. \"Omit\" silences some without shortening the sound. \"Reverse\" plays each segment backwards: same duration and energy, altered timbre. \"Shuffle\" reorders segments in groups. \"Level\" brings every segment to the same level, flattening all dynamics." },
       { nom: "Facteur", nomEn: "Factor", type: "nombre", plage: [1, 16], pas: 1, defaut: 2,
-        doc: "Nombre de répétitions, pas d'omission (1 segment gardé sur N), ou taille du groupe mélangé. Sans effet sur Inversion et Égalisation.",
-        docEn: "Number of repeats, omission step (1 segment kept out of N), or shuffled group size. No effect on Reverse and Level." },
+        doc: "Nombre de répétitions, pas d'omission (1 segment gardé sur N), ou taille du groupe mélangé. Sans effet sur Inversion et Égalisation. Il ne sert donc que lorsque « Opération » vaut « Répétition », « Omission » ou « Mélange ».",
+        docEn: "Number of repeats, omission step (1 segment kept out of N), or shuffled group size. No effect on Reverse and Level. It is therefore used only when « Operation » is « Repeat », « Omit » or « Shuffle »." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 1,
-        doc: "Graine du mélange : même graine, même résultat. Sans effet sur les autres opérations.",
-        docEn: "Shuffle seed: same seed, same result. No effect on the other operations." },
+        doc: "Graine du mélange : même graine, même résultat. Sans effet sur les autres opérations. Elle ne sert que lorsque « Opération » vaut « Mélange ».",
+        docEn: "Shuffle seed: same seed, same result. No effect on the other operations. It is used only when « Operation » is « Shuffle »." },
     ],
     async executer(ctx) {
       const a = entreeAudio(ctx, 0);

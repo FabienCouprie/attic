@@ -139,15 +139,20 @@ export function instantDuPas(
   return p % 2 === 1 ? t + (Math.max(0, swing) / 100) * dureePas * 0.6 : t;
 }
 
-/** La durée d'un pas, en secondes, pour un nombre de pas donné par mesure à quatre temps. */
-export const dureeDuPas = (tempo: number, pasParMesure: number): number =>
-  ((60 / Math.max(1, tempo)) * 4) / Math.max(1, pasParMesure);
+/** La durée d'un pas, en secondes, pour un nombre de pas donné par mesure de `temps` temps. */
+export const dureeDuPas = (tempo: number, pasParMesure: number, temps = 4): number =>
+  ((60 / Math.max(1, tempo)) * temps) / Math.max(1, pasParMesure);
 
 export interface OptionsNotes {
   tempo: number;
   /** Pas par mesure — 16 ou 32 pour le séquenceur, 64 pour Cantor. */
   pasParMesure: number;
   mesures: number;
+  /**
+   * Les temps d'une mesure, quatre à défaut. La valse de la boîte à rythmes en a trois : sa mesure de
+   * douze pas durait quatre temps dans le MIDI, et ses frappes y glissaient (2026-11-14).
+   */
+  tempsParMesure?: number;
   swing?: number;
   /** Plafond de la durée d'une note, quand aucune frappe ne la suit. */
   dureeMax?: number;
@@ -168,7 +173,7 @@ export interface Frappe {
  * résultat lisible et les tests comparables.
  */
 export function notesDepuisFrappes(frappes: readonly Frappe[], o: OptionsNotes): NoteEvenement[] {
-  const dureePas = dureeDuPas(o.tempo, o.pasParMesure);
+  const dureePas = dureeDuPas(o.tempo, o.pasParMesure, o.tempsParMesure ?? 4);
   const swing = o.swing ?? 0;
   const plafond = o.dureeMax ?? DUREE_NOTE_MAX;
   const totalPas = Math.max(1, Math.round(o.mesures)) * o.pasParMesure;

@@ -24,6 +24,8 @@
 // fichier-là dit pourquoi. Les pentatoniques japonaises et les gammes à seconde augmentée, elles,
 // tombent bien sur les douze demi-tons : leur place est ici.
 
+import { ordreUneFois, type SensArpege } from "./sens-arpege";
+
 /** Ce à quoi une gamme sert, pour qu'un composant puisse n'en proposer qu'une part. */
 export type FamilleGamme =
   | "modale" | "pentatonique" | "jazz" | "symetrique" | "exotique" | "chromatique";
@@ -37,6 +39,11 @@ export interface Gamme {
   familles: FamilleGamme[];
   /** Les orthographes qu'un projet enregistré peut porter. */
   alias?: string[];
+  /**
+   * Les degrés de passage : ils appartiennent à la mélodie et non à l'harmonie. Un accord bâti sur
+   * la gamme les laisse (`degresSansPassage`), une mélodie les joue.
+   */
+  passage?: number[];
 }
 
 export const GAMMES: Gamme[] = [
@@ -79,9 +86,11 @@ export const GAMMES: Gamme[] = [
   { id: "phrygien-dominant", fr: "Phrygien dominant", en: "Phrygian dominant", degres: [0, 1, 4, 5, 7, 8, 10],
     familles: ["jazz", "modale"] },
   // Le mixolydien avec sa septième majeure de passage : huit degrés, donc une note par croche sur
-  // une mesure à quatre temps, ce qui est sa raison d'être.
+  // une mesure à quatre temps, ce qui est sa raison d'être. LE SI EST DE PASSAGE, ET UN ACCORD NE S'Y
+  // BÂTIT PAS : compté comme note d'accord, il faisait du I un Cmaj7, du iii un Em7 et du V un G7, soit
+  // les accords de do majeur, sur la gamme de l'accord de septième (décision de Fabien, 2026-11-15).
   { id: "bebop-dominant", fr: "Bebop dominante", en: "Bebop dominant", degres: [0, 2, 4, 5, 7, 9, 10, 11],
-    familles: ["jazz"] },
+    familles: ["jazz"], passage: [11] },
 
   // ── Les symétriques ──
   { id: "ton-entier", fr: "Par tons", en: "Whole tone", degres: [0, 2, 4, 6, 8, 10], familles: ["symetrique"] },
@@ -133,6 +142,12 @@ export const gammeDe = (id: string): Gamme | undefined => PAR_ID.get(id);
 /** Les degrés d'un identifiant, ou ceux de `secours` s'il est inconnu. */
 export function degresDeGamme(id: string, secours = "majeur"): number[] {
   return (PAR_ID.get(id) ?? PAR_ID.get(secours))!.degres;
+}
+
+/** Les degrés sur lesquels un accord se bâtit : ceux de la gamme, sans ses degrés de passage. */
+export function degresSansPassage(id: string, secours = "majeur"): number[] {
+  const g = (PAR_ID.get(id) ?? PAR_ID.get(secours))!;
+  return g.passage ? g.degres.filter((d) => !g.passage!.includes(d)) : g.degres;
 }
 
 /** Les gammes d'une ou plusieurs familles, dans l'ordre de la table. */
@@ -199,8 +214,12 @@ export function completer(historique: readonly string[]): Gamme[] {
   return [...gammesParIds(historique), ...GAMMES.filter((g) => !vus.has(g.id))];
 }
 
-/** Le sens dans lequel une gamme se parcourt. */
-export type SensDeParcours = "montante" | "descendante" | "aller-retour";
+/**
+ * Le sens dans lequel une gamme se parcourt, sous les identifiants du sens d'un arpège
+ * (`audio/sens-arpege.ts`), l'ordre de jeu en moins : une gamme n'a pas d'ordre joué. Il s'écrivait au
+ * féminin, `montante` et `descendante`, jusqu'au lot 3c de la passe de complétude (2026-11-14).
+ */
+export type SensDeParcours = Exclude<SensArpege, "ordre-de-jeu">;
 
 /**
  * Les notes d'une gamme, une à une, depuis une tonique donnée en numéro de note.
@@ -215,13 +234,17 @@ export type SensDeParcours = "montante" | "descendante" | "aller-retour";
  *
  * CE QUI SORT DES CENT VINGT-HUIT NOTES EST ÉCARTÉ, et non ramené dans l'ambitus : replier une note
  * trop haute la ferait tomber au milieu du parcours, où elle s'entendrait comme une faute.
+ *
+ * LES SEPT SENS VIENNENT DE `ordreUneFois`, que les accords joués emploient aussi ; `hasard` ne sert
+ * qu'à l'aléatoire. Les trois sens d'avant y rendent les mêmes notes, dans le même ordre.
  */
 export function parcoursDeGamme(
   id: string,
   tonique: number,
   octaves = 1,
-  sens: SensDeParcours = "montante",
+  sens: SensDeParcours = "montant",
   toniqueFinale = true,
+  hasard: () => number = () => 0,
 ): number[] {
   const degres = degresDeGamme(id);
   const tours = Math.max(1, Math.round(octaves));
@@ -229,10 +252,7 @@ export function parcoursDeGamme(
   for (let o = 0; o < tours; o++) for (const d of degres) montante.push(tonique + 12 * o + d);
   if (toniqueFinale) montante.push(tonique + 12 * tours);
   const jouable = (h: number) => h >= 0 && h <= 127;
-  if (sens === "montante") return montante.filter(jouable);
-  const descendante = [...montante].reverse();
-  if (sens === "descendante") return descendante.filter(jouable);
-  return [...montante, ...descendante.slice(1)].filter(jouable);
+  return ordreUneFois(montante, sens, hasard).filter(jouable);
 }
 
 /**

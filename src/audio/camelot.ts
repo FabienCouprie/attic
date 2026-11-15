@@ -106,7 +106,8 @@ export interface OptionsCamelot {
   tempo: number;
   dureeNote: number;
   octave: number;
-  mode: "bloc" | "arpege";
+  /** Le roulé part comme l'arpège et tient chaque note jusqu'au bout de l'accord. */
+  mode: "bloc" | "arpege" | "roule";
   modeRendu: "FM/Oscillateurs" | "SoundFont";
   instrument: number;
   volume: number;
@@ -143,7 +144,8 @@ export function genererNotesCamelot(options: OptionsCamelot): { notes: NoteEvene
       const subDur = Math.max(0.02, noteDur / midiNotes.length);
       for (let j = 0; j < midiNotes.length; j++) {
         const d = debut + j * subDur;
-        notes.push({ note: midiNotes[j], velocite, debut: d, fin: d + subDur });
+        const fin = options.mode === "roule" ? Math.max(d + subDur, debut + noteDur) : d + subDur;
+        notes.push({ note: midiNotes[j], velocite, debut: d, fin });
       }
     }
   }

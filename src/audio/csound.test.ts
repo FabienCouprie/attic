@@ -400,6 +400,15 @@ describe("bibliothèque d'opcodes", () => {
     expect(orc).toContain("256");
   });
 
+  it("CHAQUE TAILLE QUE LE RÉGLAGE OFFRE ATTEINT L'ANALYSE, sans repli silencieux sur 1024", () => {
+    // La liste admise était écrite ici à part, [512, 1024, 2048] : le réglage élargi à la table
+    // entière aurait offert 256, 4096 et 8192, que l'orchestre ramenait tous à 1024.
+    for (const n of [256, 512, 1024, 2048, 4096, 8192]) {
+      const orc = orchestreSpectral(opcode("pvscross"), { morphing: 0.5, transposition: 0, fenetre: n });
+      expect(orc, String(n)).toContain(`pvsanal a1, ${n}, ${n / 4}, ${n}, 1`);
+    }
+  });
+
   it("déclare les tables dont chaque opcode a besoin", () => {
     expect(tablesInstrument(opcode("wgbow"))).toContain("f1 0 16384 10 1");
     expect(tablesInstrument(opcode("fof2"))).toContain("f2");

@@ -9,7 +9,7 @@ import { genererReservoirMusical, type ConfigReservoir, type NoteGeneree } from 
 import type { NoteMidi } from "./note";
 import {
   PROGRESSIONS_GENRE,
-  degresGammeAccords,
+  degresDesAccords,
   degreAccordProche,
   degreSeptiemeProche,
   traduireCle,
@@ -289,7 +289,7 @@ function midiCanalUnique(
 }
 
 export function genererGrooveBox(config: ConfigGrooveBox): ResultatGrooveBox {
-  const degres = degresGammeAccords(config.gamme);
+  const degres = degresDesAccords(config.gamme);
   const decalage = traduireCle(config.cle);
   const progression = progressionDepuisConfig(config);
 

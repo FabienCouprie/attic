@@ -18,16 +18,18 @@ import { TEMPERAMENTS, noteTemperee, tableEcarts, temperament } from "../audio/t
 import { apprendre, engendrer, statistiques, tableEnTexte } from "../audio/markov";
 
 import { canalDominant, rendreMotif, PARAMETRES_RENDU_MOTIF, SORTIES_MOTIF } from "./effets-aides";
-import { LIBELLES_HERITES_VALEURS, choixValeurs } from "../audio/valeurs-note";
+import { LIBELLES_HERITES_VALEURS, VALEURS_NOTE, choixValeurs } from "../audio/valeurs-note";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 // L'ARPÉGIATEUR A SA FICHE À PART, ce fichier étant au plafond de la norme de taille ; il reste
 // rangé ici, à sa place dans le catalogue.
 import { ARPEGIATEUR_MIDI } from "./arpegiateur-midi";
 
 // LA GRILLE DU TRANSPOSEUR, sans sa sentinelle « Aucune » qui n'est pas une valeur de note : elle
-// dit qu'il n'y a pas de grille. L'ordre est celui qu'elle avait, un projet enregistré s'y
-// résolvant par la position.
-const VALEURS_QUANTIFICATION = ["1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"];
+// dit qu'il n'y a pas de grille. Son ordre d'origine d'abord, un projet enregistré s'y résolvant
+// par la position, puis le reste de la table : la grille se compte en divisions du temps, où une
+// fraction s'écrit aussi bien, la pointée comme la ronde.
+const HISTORIQUE_QUANTIFICATION = ["1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"];
+const VALEURS_QUANTIFICATION = [...HISTORIQUE_QUANTIFICATION, ...VALEURS_NOTE.map((v) => v.id).filter((id) => !HISTORIQUE_QUANTIFICATION.includes(id))];
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -111,8 +113,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Épargne les événements qui tombent sur un temps. Une trame éclaircie entièrement au hasard perd sa pulsation ; on veut souvent l'alléger sans la dissoudre.",
         docEn: "Spares the events that land on a beat. A texture thinned purely at random loses its pulse; one often wants to lighten it without dissolving it." },
       { nom: "Durée d'un temps", nomEn: "Beat length", type: "nombre", plage: [0.05, 4], pas: 0.05, defaut: 0.5, unite: "s",
-        doc: "Ce qui compte pour un temps, en secondes. À 120 BPM, la noire fait 0,5 s.",
-        docEn: "What counts as a beat, in seconds. At 120 BPM, a quarter note is 0.5 s." },
+        doc: "Ce qui compte pour un temps, en secondes. À 120 BPM, la noire fait 0,5 s. Ne sert que lorsque « Garder les temps » vaut « Oui ».",
+        docEn: "What counts as a beat, in seconds. At 120 BPM, a quarter note is 0.5 s. Used only when « Keep beats » is « Yes »." },
       { nom: "Graine", graine: true, nomEn: "Seed", type: "nombre", plage: [0, 999999], pas: 1, defaut: 0,
         doc: "0 = tirée au sort à chaque exécution, et affichée dans le message. Toute autre valeur rejoue exactement le même éclaircissement.",
         docEn: "0 = drawn at random on every run, and shown in the message. Any other value replays the exact same thinning." },
@@ -153,8 +155,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Rejouer la charnière", nomEn: "Repeat the hinge", type: "choix",
         ...choixOuiNon("non"),
         defaut: "Non", defautEn: "No",
-        doc: "Sort de l'événement du retournement. Do-ré-mi suivi de son rétrograde donne do-ré-mi-mi-ré-do, où le mi est joué deux fois ; le palindrome qu'on écrit en musique est do-ré-mi-ré-do, avec un seul mi au sommet. La répétition marque le retournement, son absence le rend fluide. Sans effet en mode « Rétrograde ».",
-        docEn: "What becomes of the turning event. C-D-E followed by its retrograde gives C-D-E-E-D-C, where the E is played twice; the palindrome one writes in music is C-D-E-D-C, with a single E at the top. Repeating marks the turn, dropping it makes it flow. No effect in « Retrograde » mode." },
+        doc: "Sort de l'événement du retournement. Do-ré-mi suivi de son rétrograde donne do-ré-mi-mi-ré-do, où le mi est joué deux fois ; le palindrome qu'on écrit en musique est do-ré-mi-ré-do, avec un seul mi au sommet. La répétition marque le retournement, son absence le rend fluide. Sans effet en mode « Rétrograde ». Seul « Sens » à « Aller-retour » ou à « Retour-aller » a une charnière.",
+        docEn: "What becomes of the turning event. C-D-E followed by its retrograde gives C-D-E-E-D-C, where the E is played twice; the palindrome one writes in music is C-D-E-D-C, with a single E at the top. Repeating marks the turn, dropping it makes it flow. No effect in « Retrograde » mode. Only « Direction » at « There and back » or « Back and there » has a hinge." },
       ...PARAMETRES_RENDU_MOTIF,
     ],
     async executer(ctx) {
@@ -287,8 +289,8 @@ export const fiches: FicheAudio[] = ([
         doc: "L'accord employé. « Égal » est celui de tous les autres composants ; les autres donnent à chaque tonalité une couleur propre.",
         docEn: "The tuning used. « Equal » is the one every other node uses; the others give each key its own colour." },
       { ...PARAMETRE_TONIQUE,
-        doc: "La note sur laquelle le tempérament est accordé. C'est elle qui sonne pure ; les tonalités éloignées s'écartent d'autant plus.",
-        docEn: "The note the temperament is tuned on. It is the one that sounds pure; distant keys drift the further away." },
+        doc: "La note sur laquelle le tempérament est accordé. C'est elle qui sonne pure ; les tonalités éloignées s'écartent d'autant plus. Sans effet quand « Tempérament » vaut « Égal », dont les douze demi-tons sont identiques.",
+        docEn: "The note the temperament is tuned on. It is the one that sounds pure; distant keys drift the further away. No effect when « Temperament » is « Equal », whose twelve semitones are identical." },
       { ...PARAMETRE_SYNTHESE, doc: "Automatique = SoundFont si un fichier SF2 est chargé, sinon FM.", docEn: "Auto = SoundFont if an SF2 file is loaded, else FM." },
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
@@ -352,8 +354,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Quantifier fins", nomEn: "Quantize ends", type: "choix",
         ...choixOuiNon("non"), optionsHeritees: LIBELLES_HERITES_OUI_NON,
         defaut: "Non",
-        doc: "Si « Oui », les fins de notes sont aussi alignées sur la grille (peut raccourcir/allonger les notes).",
-        docEn: "If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes).", defautEn: "No" },
+        doc: "Si « Oui », les fins de notes sont aussi alignées sur la grille (peut raccourcir/allonger les notes). Sans effet quand « Quantisation » vaut « Aucune ».",
+        docEn: "If « Yes », note ends are also snapped to the grid (may shorten/lengthen notes). No effect when « Quantization » is « None ».", defautEn: "No" },
       PARAMETRE_INSTRUMENT_SF2,
     ],
     async executer(ctx) {

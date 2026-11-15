@@ -2,6 +2,7 @@
 // pixeltone.js. Chaque pixel devient une tranche sonore ; les canaux R, G, B
 // pilotent trois fréquences réglables. Nécessite un environnement navigateur.
 import { fiche } from "./fiche";
+import { canauxDe, choixMonoStereo } from "../audio/mono-stereo";
 import type { FicheAudio } from "../audio/types-domaine";
 import { sonifierImage } from "../audio";
 import { traduire } from "../i18n";
@@ -81,9 +82,7 @@ export const fiches: FicheAudio[] = ([
         nom: "Canaux",
         nomEn: "Channels",
         type: "choix",
-        options: ["Mono", "Stéréo"],
-        optionsEn: ["Mono", "Stereo"],
-        optionIds: ["mono", "stereo"],
+        ...choixMonoStereo(),
         defaut: "Stéréo",
         defautEn: "Stereo",
         doc: "Nombre de canaux de l'audio de sortie.",
@@ -117,7 +116,7 @@ export const fiches: FicheAudio[] = ([
       const bleu = parsePlage(ctx.paramTexte("Bleu (Hz)", "1000,5000"), [1000, 5000]);
 
       const balayage = ctx.paramTexte("Balayage", "Horizontal").toLowerCase() as "horizontal" | "vertical" | "zigzag";
-      const canaux = ctx.paramTexte("Canaux", "stereo") === "mono" ? 1 : 2;
+      const canaux = canauxDe(ctx.paramTexte("Canaux", "stereo"), 2);
 
       try {
         const audio = await sonifierImage(

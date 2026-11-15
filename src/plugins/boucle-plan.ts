@@ -53,13 +53,13 @@ export const fiches: FicheAudio[] = ([
       // le déplieur les lit PAR LEUR NOM, « Tours » et « Graines », et non par l'identifiant du
       // nœud. Les renommer ici ferait une boucle de trois tours sans graines, sans rien dire.
       { nom: "Tours", nomEn: "Passes", type: "nombre", plage: [1, Infinity], pas: 1, defaut: 3,
-        doc: "Nombre de fois où la chaîne comprise entre ce composant et la « Fin de boucle » est jouée. Le plan reçu est le même à chaque tour ; ce qui change d'un tour à l'autre vient du réglage « Graines ».",
-        docEn: "How many times the chain between this node and the « Loop End » is played. The plan received is the same at every pass; what changes from one pass to the next comes from the « Seeds » setting." },
+        doc: "Nombre de fois où la chaîne comprise entre ce composant et la « Fin de boucle » est jouée. Le plan reçu est le même à chaque tour ; ce qui change d'un tour à l'autre vient du réglage « Graines ». Lu par le déplieur, avant l'exécution : hors d'une boucle refermée par une « Fin de boucle », ce réglage n'agit pas.",
+        docEn: "How many times the chain between this node and the « Loop End » is played. The plan received is the same at every pass; what changes from one pass to the next comes from the « Seeds » setting. Read by the unfolder, before the run: outside a loop closed by a « Loop End », this setting has no effect." },
       { nom: "Graines", nomEn: "Seeds", type: "choix",
         options: ["Identiques", "Une par tour"], optionsEn: ["Identical", "One per pass"],
         optionIds: ["Identiques", "Une par tour"], defaut: "Une par tour", defautEn: "One per pass",
-        doc: "Ce que deviennent les réglages « Graine » des composants de la chaîne. « Une par tour » en donne une différente à chaque tour : le plan reste le même et le rendu change, ce qui donne des sections d'un même morceau. « Identiques » donne la même à tous, et les tours se ressemblent.",
-        docEn: "What becomes of the « Seed » settings of the chain's nodes. « One per pass » gives each pass a different one: the plan stays the same and the rendering changes, which yields sections of one piece. « Identical » gives them all the same, and the passes resemble each other." },
+        doc: "Ce que deviennent les réglages « Graine » des composants de la chaîne. « Une par tour » en donne une différente à chaque tour : le plan reste le même et le rendu change, ce qui donne des sections d'un même morceau. « Identiques » donne la même à tous, et les tours se ressemblent. Lu par le déplieur, avant l'exécution : hors d'une boucle refermée par une « Fin de boucle », ce réglage n'agit pas.",
+        docEn: "What becomes of the « Seed » settings of the chain's nodes. « One per pass » gives each pass a different one: the plan stays the same and the rendering changes, which yields sections of one piece. « Identical » gives them all the same, and the passes resemble each other. Read by the unfolder, before the run: outside a loop closed by a « Loop End », this setting has no effect." },
     ],
     async executer(ctx) {
       // CE NŒUD N'EST NORMALEMENT JAMAIS EXÉCUTÉ : le moteur déplie la boucle avant l'exécution et

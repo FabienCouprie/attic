@@ -20,12 +20,20 @@
 // de forme ignore le timbre, le registre et le tempo, qui pèsent lourd dans la perception. Elle dit
 // ce qu'elle mesure, et c'est déjà ce qu'on n'avait pas.
 
+/**
+ * Un écart sous lequel deux valeurs sont égales, quelle que soit la tolérance : un milliardième, de
+ * seconde ou de demi-ton, rien de musical. Une durée lue par `fin − debut` porte l'arrondi de la
+ * soustraction, et huit durées égales rendaient un profil de bruit (passe de croisement, lot 3e).
+ */
+const EGALITE = 1e-9;
+
 /** Monte, descend ou reste : le geste d'une suite, dépouillé de ses valeurs. */
 export function profilPrimaire(valeurs: readonly number[], tolerance = 0): number[] {
   const out: number[] = [];
+  const seuil = Math.max(tolerance, EGALITE);
   for (let i = 1; i < valeurs.length; i++) {
     const d = valeurs[i] - valeurs[i - 1];
-    out.push(Math.abs(d) <= tolerance ? 0 : (d > 0 ? 1 : -1));
+    out.push(Math.abs(d) <= seuil ? 0 : (d > 0 ? 1 : -1));
   }
   return out;
 }

@@ -27,13 +27,13 @@ import { parseMidi, writeMidi } from "midi-file";
 import { analyserMidi } from "../audio/midi";
 import { bpmInitial } from "../audio/midi-ecriture";
 import { mesurerAlignement, reancrerTempo } from "../audio/tempo-reancrage";
-import { transposerQuantifierMidi } from "../audio/midi-quantification";
+import { divisionsParTemps, transposerQuantifierMidi } from "../audio/midi-quantification";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { annoncerModele } from "./message-modele";
 import { messageEchecPont } from "./pont-electron";
-import { valeurNote } from "../audio/valeurs-note";
+import { VALEURS_NOTE, valeurNote } from "../audio/valeurs-note";
 import { LIBELLES_HERITES_OUI_NON, choixOuiNon, estOui } from "../core/oui-non";
 import { parametreCalcul } from "./parametre-calcul";
 import { relayerProgression } from "./progression-pont";
@@ -70,17 +70,17 @@ const INSTRUMENTS = [
  * table des grilles est partagée, et inventer ici une seconde écriture des mêmes valeurs ferait
  * tomber en silence sur « aucune grille ».
  */
-// LES NOMS VIENNENT DE LA TABLE COMMUNE, `audio/valeurs-note.ts` ; LE NOMBRE DE DIVISIONS RESTE
-// ICI, parce qu'il n'est pas une propriété de la valeur mais de ce qu'on divise : cette grille
-// divise un TEMPS, et « Aucune » y vaut quatre, c'est-à-dire la grille la plus fine du moteur.
-const DIVISIONS: Record<string, number> = {
-  none: 4, "1/4": 1, "1/8": 2, "1/16": 4, "1/32": 8, "1/8t": 3, "1/16t": 6,
-};
+// LES NOMS VIENNENT DE LA TABLE COMMUNE, `audio/valeurs-note.ts`, et LE NOMBRE DE DIVISIONS de la
+// quantification qui les applique, `audio/midi-quantification.ts` : les deux divisent un TEMPS, et
+// le rapport mesure l'alignement sur la grille même que la quantification pose. « Aucune » y vaut
+// quatre, c'est-à-dire la grille la plus fine du moteur. L'ordre d'origine d'abord, puis le reste de
+// la table, depuis le 2026-11-14.
+const HISTORIQUE = ["1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"];
 const GRILLES = [
-  { id: "none", fr: "Aucune", en: "None", divisions: DIVISIONS.none },
-  ...["1/4", "1/8", "1/16", "1/32", "1/8t", "1/16t"].map((id) => {
+  { id: "none", fr: "Aucune", en: "None", divisions: 4 },
+  ...[...HISTORIQUE, ...VALEURS_NOTE.map((v) => v.id).filter((id) => !HISTORIQUE.includes(id))].map((id) => {
     const v = valeurNote(id)!;
-    return { id: v.id, fr: v.fr, en: v.en, divisions: DIVISIONS[v.id] };
+    return { id: v.id, fr: v.fr, en: v.en, divisions: divisionsParTemps(v.id) };
   }),
 ];
 

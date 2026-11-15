@@ -3,6 +3,7 @@
 // Chaque canal est mappé sur une plage de fréquences réglable.
 
 import { fiche } from "./fiche";
+import { canauxDe, choixMonoStereo } from "../audio/mono-stereo";
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererCouleurRGBAudio, parsePlage } from "../audio";
 import { avecDoc } from "./notices";
@@ -38,14 +39,14 @@ export const fiches: FicheAudio[] = ([
         doc: "Durée du son généré.", docEn: "Duration of the generated sound." },
       { nom: "Volume", nomEn: "Volume", type: "nombre", plage: [0, 100], defaut: 80, unite: "%",
         doc: "Volume de sortie.", docEn: "Output volume." },
-      { nom: "Canaux", nomEn: "Channels", type: "choix", options: ["Mono", "Stéréo"], optionsEn: ["Mono", "Stereo"], optionIds: ["mono", "stereo"], defaut: "Stéréo", defautEn: "Stereo",
+      { nom: "Canaux", nomEn: "Channels", type: "choix", ...choixMonoStereo(), defaut: "Stéréo", defautEn: "Stereo",
         doc: "Nombre de canaux de l'audio de sortie.", docEn: "Number of output audio channels." },
     ],
     async executer(ctx) {
       const rouge = parsePlage(ctx.paramTexte("Rouge (Hz)", "100,1000"), [100, 1000]);
       const vert = parsePlage(ctx.paramTexte("Vert (Hz)", "500,3000"), [500, 3000]);
       const bleu = parsePlage(ctx.paramTexte("Bleu (Hz)", "1000,5000"), [1000, 5000]);
-      const canaux = ctx.paramTexte("Canaux", "stereo") === "mono" ? 1 : 2;
+      const canaux = canauxDe(ctx.paramTexte("Canaux", "stereo"), 2);
       const audio = genererCouleurRGBAudio({
         r: ctx.paramNombre("Rouge", 128),
         g: ctx.paramNombre("Vert", 128),
