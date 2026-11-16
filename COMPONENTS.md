@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **512 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **513 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 247 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (19) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 248 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -5193,6 +5193,7 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | [Normalizer](#normalizer) | Brings the sound to a target level, by peak or by loudness (LUFS). |
 | [Parametric Equalizer](#parametric-equalizer) | Corrects the frequency balance with a high-pass, two shelves and four bells placed at will. |
 | [Resonators](#resonators) | A bank of tuned resonators that any sound can set ringing: a noise becomes a chord, a scrape a bell. |
+| [TB-303 Filter](#tb-303-filter) | Filters the sound through the diode-ladder low-pass of the Roland TB-303, with its envelope and accent. |
 | [Transient Shaper](#transient-shaper) | Independent attack and sustain control. |
 | [True-Peak Limiter](#true-peak-limiter) | Brings the sound under a true-peak ceiling, seeing the peaks coming. |
 | [Tuned Combs](#tuned-combs) | Comb filters tuned to a note or a chord: the input sound rings like a string, at the note and all its harmonics. |
@@ -5675,6 +5676,35 @@ This node passes a sound through a bank of tuned resonators. Each resonator keep
 | Resonance max | slider | 8 s | 0.05 – 20 s, step 0.05 | Value of « Resonance » that the curve's one means. With no curve, this setting does nothing. |
 | Brightness min | slider | 0 % | 0 – 100 %, step 1 | Value of « Brightness » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Brightness max | slider | 100 % | 0 – 100 %, step 1 | Value of « Brightness » that the curve's one means. With no curve, this setting does nothing. |
+
+#### TB-303 Filter
+
+`filtre-tb303` · Processing → Equalisation and filters
+
+*Filters the sound through the diode-ladder low-pass of the Roland TB-303, with its envelope and accent.*
+
+The TB-303 Filter filters the received sound through the diode-ladder low-pass of the Roland TB-303, and makes its cutoff follow the envelope and the accent that this instrument draws from its notes. The filter is a ladder of four coupled stages. Its bottom capacitor is 0.018 µF and the other three 0.033 µF, as on the instrument's schematic, and each rung of diodes follows a hyperbolic tangent: the filter distorts the sound the more, the higher its level. Its four poles are spread out: the slope steepens gradually above the cutoff and only reaches 24 dB per octave well above it. The resonance is sent back from the output to the input through a 92 Hz high-pass. The computation runs at twice the sample rate. References: T. E. Stinchcombe, « Analysis of the Moog Transistor Ladder and Derivative Filters », 2008, and his analyses of the TB-303 diode ladder; V. Zavalishin, « The Art of VA Filter Design », section « Diode ladder ». « Cutoff » is the frequency where the resonance forms, from 20 Hz to 20 kHz. At zero resonance, the sound is 3 dB down at a frequency 9.5 times lower: for an 800 Hz cutoff, around 84 Hz. « Resonance » sets the share of the output sent back to the input, from 0 to 100 %. At 100 %, the loop gain is 0.943 times the one that would make the ladder alone oscillate: the filter does not oscillate by itself at any cutoff. The resonance hollows out the pass-band, and the level is not compensated: at 100 % and for an 800 Hz cutoff, the sound loses 22 to 24 dB between 100 and 200 Hz, and 15 dB at 30 Hz, below the loop high-pass. « Cutoff modulation » and « Resonance modulation » each receive a curve that replaces the setting of the same name. « Modulation min » and « Modulation max » give the cutoff that the curve's zero and one mean, « Resonance min » and « Resonance max » the resonance. With no curve, these four settings have no effect. The « Notes » input receives a MIDI file, each note of which restarts the cutoff envelope: • the envelope rises in 3 ms, then falls back to one tenth after the « Decay » time, from 200 ms to 2 s; • a note that starts before the previous one ends slides and restarts nothing, so a chord counts only once; • a note whose velocity is at least « Accent velocity » is accented: its decay is 200 ms, and it goes through the accent sweep. Note starts are read from the start of the received sound. « Envelope modulation » sets the travel of the envelope, following the mapping that Open303 (Robin Schmidt) draws from measurements on the instrument. The envelope raises the peak above « Cutoff » and lowers the rest point below it, the more so as the modulation grows, and it does not vanish at 0 %: for a 313.8 Hz cutoff, 0 % puts the rest point at 0.86 times the cutoff and the peak at 1.43 times, 100 % puts them at 0.40 and 9.08 times. « Accent » sets what the accent sweep adds to the cutoff. The sweep follows the instrument's circuit described by R. Whittle (« Devil Fish TB-303 Modifications », 1999): a diode, a 47 kΩ resistor, a 100 kΩ potentiometer that is the second gang of the resonance one, and a 1 µF capacitor. At zero resonance, the cutoff follows the envelope of the accented note, and a single accent at 100 % raises it by two octaves. At high resonance, the capacitor smooths the sweep, which rises less high and later, and keeps its charge from one accent to the next: close accents rise higher than the first. With no MIDI file on « Notes », « Envelope modulation », « Decay », « Accent » and « Accent velocity » have no effect, and the cutoff is that of the setting or of the curve. The « Audio » output returns the filtered sound, with the received length, sample rate and channels. The message gives the number of notes played, accented and slid. The model leaves out the circuit's coupling networks below 16 Hz, the volume that the accent adds on the instrument, and component spread.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| input | Notes | MIDI |  |
+| input | Cutoff modulation | curve |  |
+| input | Resonance modulation | curve |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Cutoff | number | 800 Hz | 20 – 20000 Hz, step 1 | The frequency where the resonance forms. At zero resonance, the sound is 3 dB down at a frequency 9.5 times lower. |
+| Resonance | number | 50 % | 0 – 100 %, step 1 | The share of the output sent back to the input. At 100 %, the filter stays just below oscillation. It hollows out the pass-band, with no level compensation. |
+| Envelope modulation | number | 50 % | 0 – 100 %, step 1 | The travel of the envelope: it raises the peak above the cutoff and lowers the rest point below it, and does not vanish at 0 %. With no MIDI file on the Notes input, this setting has no effect. |
+| Decay | number | 500 ms | 200 – 2000 ms, step 10 | The time the envelope takes to fall back to one tenth after an ordinary note. An accented note falls back in 200 ms. With no MIDI file on the Notes input, this setting has no effect. |
+| Accent | number | 50 % | 0 – 100 %, step 1 | What the accent sweep adds to the cutoff: at 100 % and zero resonance, a single accent raises it by two octaves. With no MIDI file on the Notes input, this setting has no effect. |
+| Accent velocity | number | 100 | 1 – 127, step 1 | The velocity from which a note is accented. With no MIDI file on the Notes input, this setting has no effect. |
+| Modulation min | number | 200 Hz | 20 – 20000 Hz, step 1 | The cutoff that a curve's zero means on the Cutoff modulation input. With no curve, this setting has no effect. |
+| Modulation max | number | 4000 Hz | 20 – 20000 Hz, step 1 | The cutoff that the curve's one means. With no curve, this setting has no effect. |
+| Resonance min | number | 0 % | 0 – 100 %, step 1 | The resonance that a curve's zero means on the Resonance modulation input. With no curve, this setting has no effect. |
+| Resonance max | number | 100 % | 0 – 100 %, step 1 | The resonance that the curve's one means. With no curve, this setting has no effect. |
 
 #### Transient Shaper
 

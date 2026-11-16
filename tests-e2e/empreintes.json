@@ -199,6 +199,12 @@
       ],
       "message": "Linkwitz-Riley 8 · coupures 45, 89, 177, 354, 707, 1414, 2828, 5657 Hz"
     },
+    "filtre-tb303": {
+      "empreintes": [
+        "0.032030553/0.062471732"
+      ],
+      "message": "Sans notes : coupure et résonance seules"
+    },
     "vitesse-variable": {
       "empreintes": [
         "0.269828269/0.540759683"

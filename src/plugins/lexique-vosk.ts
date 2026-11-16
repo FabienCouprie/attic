@@ -74,6 +74,11 @@ const HORS_LEXIQUE_FR: ReadonlySet<string> = new Set([
   // après lui, a vu le moteur jeter « pleurage » : le nom entrait amputé, « correction du »
   // concurrençant les autres corrections. Le composant se dit désormais par son nom parlé.
   "pleurage",
+  // ═══ UN MOT RELEVÉ LE 2026-11-15 PAR LE MÊME GARDE ═══
+  //
+  // « Filtre TB-303 » : le moteur jette « 303 », et le nom entrait amputé en « filtre tb ». « tb »
+  // est gardé par le moteur. Le composant se dit par son nom parlé, « filtre à diodes ».
+  "303",
 ]);
 
 /**
