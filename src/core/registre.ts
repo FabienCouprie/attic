@@ -54,7 +54,14 @@ export interface Registre<TV, TR> {
   ): boolean;
 }
 
-const ALIAS: Record<string, string> = {
+/**
+ * Les anciens identifiants de fiche, et celle que chacun ouvre.
+ *
+ * EXPORTÉE POUR ÊTRE ÉNUMÉRÉE, et par un seul lecteur : le manifeste de compatibilité
+ * (`docs/compatibilite.ts`) dit pour chaque composant les identifiants qui l'ouvrent, et refuse
+ * qu'un alias disparaisse sans être déclaré. `trouverDef` résout un alias, il ne sait pas les lister.
+ */
+export const ALIAS: Readonly<Record<string, string>> = {
   "placer-son-zones": "placer-sons-zones",
   "dererverb": "dereverberation",
   "reverbe-progressive": "reverb-progressive",
