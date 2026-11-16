@@ -89,6 +89,7 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   { ou: "gamme-jouee·Graine", quand: { reglage: "Sens", sauf: ["aleatoire"] }, raison: UNE_GRAINE },
   { ou: "arpegiateur-midi·Graine", quand: { reglage: "Direction", sauf: ["aleatoire"] }, raison: UNE_GRAINE },
   { ou: "camelot·Graine", quand: { reglage: "Parcours", sauf: ["aleatoire"] }, raison: "la graine ne tire que le parcours aléatoire, et le parcours complet comme les voisins n'ont rien à tirer ; dit dans sa documentation" },
+  { ou: "dither·Graine", quand: { reglage: "Dither", valeurs: ["aucun"] }, raison: "la graine ne tire que le bruit de dither, et sans dither rien n'est tiré ; dit dans sa documentation" },
   { ou: "tonal-grille·Durée", quand: { reglage: "Mode", valeurs: ["arpege"] }, raison: "en arpège, chaque note dure une croche, et la durée de l'accord n'a plus rien à régler ; dit dans sa documentation" },
   { ou: "color-looper·Durée note", quand: { reglage: "Mode", valeurs: ["arpege", "roule"] }, raison: "en arpège comme en roulé, les trois notes de l'accord se partagent le pas, et la durée d'une note n'a plus rien à régler ; dit dans sa documentation" },
   { ou: "boite-rythmes·Caisse claire", quand: { reglage: "Patron", valeurs: ["Techno"] }, raison: "le patron Techno n'a pas de caisse claire ; dit dans la documentation du réglage" },

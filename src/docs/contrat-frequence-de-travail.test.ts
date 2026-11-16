@@ -93,6 +93,7 @@ describe("la fréquence de travail", () => {
       "audio/frequence-source.ts": "les listes de fréquences valides d'un en-tête MP3 et AAC",
       "audio/io.ts": "l'encodeur MP3 n'accepte que 32 000, 44 100 et 48 000 : une contrainte de format",
       "audio/clavier-banque.ts": "le repli quand une banque ne dit pas la fréquence de ses zones",
+      "audio/dither-mise-en-forme.ts": "la fréquence pour laquelle deux courbes de mise en forme publiées ont été calculées, une donnée de leurs articles",
       "audio/memoire-audio.ts": "les défauts de deux calculs de poids, que l'appelant renseigne",
       "audio/midi-soundfont.ts": "une ligne de journal, et le repli d'un échantillon SF2 sans taux",
       "plugins/effets.ts": "la PLAGE d'un réglage : la fréquence simulée d'un casseur de bits",
