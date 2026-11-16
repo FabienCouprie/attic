@@ -15,6 +15,7 @@
 // tient pour naissantes, et n'en révoque aucune avant de l'avoir vue posée.
 
 import { creerUrlMedia } from "./urls-medias";
+import { typeImageRelue } from "../core/type-image";
 
 export type NoeudAtelier = any;
 
@@ -41,7 +42,10 @@ async function fichierRelu(data: Record<string, any>, chemin: string, api: any):
   if (data.ficheId === "entree-image" && !data.imageFichier) {
     const res = await api.lireBinaire(chemin);
     if (!res) return null;
-    const type = res.nom?.toLowerCase().endsWith(".png") ? "image/png" : res.nom?.toLowerCase().endsWith(".svg") ? "image/svg+xml" : "image/jpeg";
+    // LE TYPE SE LIT SUR LES OCTETS, l'extension ne sert qu'à défaut : voir `core/type-image.ts`.
+    // Il venait de l'extension seule, et tout ce qui n'était ni `.png` ni `.svg` se disait JPEG.
+    const octets = res.donnees instanceof Uint8Array ? res.donnees : new Uint8Array(res.donnees);
+    const type = typeImageRelue(octets, res.nom);
     return { imageFichier: new File([res.donnees], res.nom, { type }), imageNom: res.nom };
   }
   if (data.ficheId === "explorateur-musique" && !data.audioFichier) {

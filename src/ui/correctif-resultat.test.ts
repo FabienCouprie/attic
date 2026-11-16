@@ -199,6 +199,18 @@ describe("un nœud ordinaire, et son lecteur", () => {
     expect(second!.imageResultatUrl).toBe("blob:faux/1");
     expect(revoquees).toEqual([]);
   });
+
+  it("LE WEBP, LE GIF ET LE BMP ONT UN APERÇU, comme le PNG, le JPEG et le SVG ; un autre type n'en a pas", async () => {
+    // Les trois premiers manquaient : un WebP chargé dans « Entrée image » ne montrait rien.
+    const avecApercu = ["image/png", "image/jpeg", "image/svg+xml", "image/webp", "image/gif", "image/bmp"];
+    const sansApercu = ["image/tiff", "image/avif", "", "audio/midi", "application/pdf"];
+    for (const type of [...avecApercu, ...sansApercu]) {
+      const image = new File(["x"], "i", { type });
+      const patch = await calculerCorrectifResultat(noeud(type || "vide", "son"),
+        etat({ resultats: new Map([[type || "vide", [image]]]) }));
+      expect(patch?.imageResultatFile, type || "(vide)").toBe(avecApercu.includes(type) ? image : undefined);
+    }
+  });
 });
 
 // LE CANAL D'AFFICHAGE REMPLACÉ, point A6 de la revue du 2026-10-31. Cinq exécuteurs cherchaient leur

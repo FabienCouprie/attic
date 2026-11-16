@@ -11,9 +11,10 @@
 // réencodés ni redimensionnés : la pochette relue est l'image reçue. Toute autre image est convertie
 // en PNG avant d'arriver ici, par `plugins/pochette-entree.ts`, qui seul a un canevas.
 //
-// LE TYPE SE LIT SUR LES OCTETS, JAMAIS SUR L'ÉTIQUETTE DU FICHIER. `ui/rechargerFichiers.ts` déclare
-// `image/jpeg` toute image rechargée qui n'est ni PNG ni SVG : un WebP rouvert avec son projet se dit
-// JPEG. Inscrire le type annoncé aurait écrit dans la trame un type que ses octets démentent.
+// LE TYPE SE LIT SUR LES OCTETS, JAMAIS SUR L'ÉTIQUETTE DU FICHIER. Celle d'une image choisie par
+// l'utilisateur vient de son extension, et un PNG nommé `.jpg` s'y dit JPEG ; jusqu'au 2026-11-16,
+// `ui/rechargerFichiers.ts` déclarait en plus `image/jpeg` toute image rechargée qui n'était ni PNG
+// ni SVG. Inscrire le type annoncé aurait écrit dans la trame un type que ses octets démentent.
 //
 // Référence : ID3v2.4.0, structure principale et trames natives, § 4.14, id3.org.
 
