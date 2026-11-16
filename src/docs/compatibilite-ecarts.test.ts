@@ -161,6 +161,17 @@ describe("le manifeste en texte", () => {
     expect(m.composants.a.reglages[0].type).toBe("curseur");
   });
 
+  it("UNE BORNE INFINIE NE S'ÉCRIT PAS, et la fermer reste une rupture une fois relue du fichier", () => {
+    // Le JSON écrit `Infinity` comme `null`, et `1000 < null` est faux : la borne fermée passait.
+    const ouverte = fiche("a");
+    ouverte.parametres[0].plage = [0, Infinity];
+    const m = manifesteDuRegistre([ouverte], {}, new Map());
+    const relu = JSON.parse(manifesteEnTexte(m)) as Manifeste;
+    expect(relu).toEqual(m);
+    expect(ecarts(relu, manifesteDuRegistre([fiche("a")], {}, new Map())))
+      .toEqual(["! a · réglage « Gain » : bornes [0, aucun] → [0, 100]"]);
+  });
+
   it("UN RÉGLAGE PAR LIGNE, pour que le diff d'un défaut changé montre ce réglage-là", () => {
     const lignes = manifesteEnTexte(manifesteDuRegistre([fiche("a")], {}, new Map())).split("\n");
     expect(lignes.filter((l) => l.includes("\"nom\":\"Gain\""))).toHaveLength(1);

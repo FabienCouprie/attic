@@ -766,7 +766,7 @@
     {"nom":"Créneau","type":"sequence"}
    ],
    "reglages": [
-    {"nom":"Créneaux","type":"curseur","defaut":4,"min":1,"max":null},
+    {"nom":"Créneaux","type":"curseur","defaut":4,"min":1},
     {"nom":"Départs","type":"texte","defaut":"0:6"},
     {"nom":"Durées","type":"texte","defaut":"2"},
     {"nom":"Tempo","type":"curseur","defaut":120,"min":20,"max":300,"unite":"BPM"}
@@ -795,7 +795,7 @@
     {"nom":"Audio","type":"audio"}
    ],
    "reglages": [
-    {"nom":"Tours","type":"nombre","defaut":3,"min":1,"max":null},
+    {"nom":"Tours","type":"nombre","defaut":3,"min":1},
     {"nom":"Graines","type":"choix","defaut":"Identiques","choix":["Identiques","Une par tour"]}
    ]
   },
@@ -856,7 +856,7 @@
     {"nom":"Plan","type":"texte","sousType":"plan"}
    ],
    "reglages": [
-    {"nom":"Tours","type":"nombre","defaut":3,"min":1,"max":null},
+    {"nom":"Tours","type":"nombre","defaut":3,"min":1},
     {"nom":"Graines","type":"choix","defaut":"Une par tour","choix":["Identiques","Une par tour"]}
    ]
   },
@@ -1138,7 +1138,7 @@
     {"nom":"Cercle","type":"cercle"}
    ],
    "reglages": [
-    {"nom":"Variations","type":"curseur","defaut":4,"min":1,"max":null}
+    {"nom":"Variations","type":"curseur","defaut":4,"min":1}
    ]
   },
   "cercle-boucle-fin": {

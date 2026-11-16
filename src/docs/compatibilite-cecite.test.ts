@@ -13,13 +13,18 @@
 // garde sur son propre manifeste a payé : vingt-six fausses ruptures, des options héritées de tables
 // partagées qui ne menaient à aucune valeur offerte, et un défaut de choix dont la liste se remplit à
 // l'exécution. Le cas « comparé à lui-même » les aurait toutes montrées.
+//
+// MAIS LE GARDE COMPARE LE REGISTRE AU FICHIER, PAS À LUI-MÊME. Le premier changement venu de
+// master, une entrée ajoutée, a fait lister quatre bornes « [1, null] → [1, null] » : une borne
+// infinie s'écrit `null` en JSON, et le registre la tenait pour `Infinity`. Comparé à lui-même, le
+// manifeste ne voyait rien ; relu de son texte, il voit tout ce que le JSON change.
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 
 import { registre } from "../audio/adaptateur";
 import { ALIAS } from "../core/registre";
 import {
-  manifesteDuRegistre, relecteurDuRegistre,
+  manifesteDuRegistre, manifesteEnTexte, relecteurDuRegistre,
   type ComposantManifeste, type FicheContrat, type Manifeste, type ReglageManifeste,
 } from "./compatibilite";
 import { comparerManifestes, SORTES, type SorteEcart } from "./compatibilite-ecarts";
@@ -155,6 +160,14 @@ describe("le garde des ruptures mesure sa propre cécité", () => {
     const faux = comparerManifestes(courant, courant, relire).map((e) => `${e.composant} · ${e.texte}`);
     expect(faux, ["", `LE GARDE INVENTE ${faux.length} ÉCARTS ENTRE UN MANIFESTE ET LUI-MÊME :`,
       ...faux.slice(0, 30).map((f) => `  ${f}`), ""].join("\n")).toEqual([]);
+  });
+
+  it("RELU DE SON TEXTE, le manifeste est celui du registre, et ne rend aucun écart", () => {
+    const relu = JSON.parse(manifesteEnTexte(courant)) as Manifeste;
+    const faux = comparerManifestes(relu, courant, relire).map((e) => `${e.composant} · ${e.texte}`);
+    expect(faux, ["", `LE FICHIER ÉCRIT PAR LE GARDE NE SE RELIT PAS À L'IDENTIQUE : ${faux.length} ÉCARTS :`,
+      ...faux.slice(0, 30).map((f) => `  ${f}`), ""].join("\n")).toEqual([]);
+    expect(relu, "une valeur du manifeste ne survit pas au JSON").toEqual(courant);
   });
 
   it("CHAQUE SORTE DE RUPTURE A SON CAS, et chaque cas son trait", () => {

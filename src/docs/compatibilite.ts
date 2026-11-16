@@ -139,11 +139,17 @@ function reglage(p: ParametreDef): ReglageManifeste {
   const choix = choixCanoniques(p);
   const defaut = p.defaut === undefined ? undefined
     : type === "choix" ? valeurCanoniqueChoix(p, p.defaut) : p.defaut;
-  const plage = Array.isArray(p.plage) && p.plage.length === 2 ? p.plage : undefined;
+  // UNE BORNE INFINIE NE BORNE RIEN, ET LE JSON NE SAIT PAS L'ÉCRIRE : il rend `null`. Gardée
+  // telle quelle, elle faisait comparer le `null` du fichier à l'`Infinity` du registre, d'où un
+  // faux écart, et une borne passée d'infinie à 1000 se rangeait parmi les élargies, `1000 < null`
+  // étant faux. Absente, elle se lit comme partout ici : rien ne borne ce côté.
+  const plage = Array.isArray(p.plage) && p.plage.length === 2 ? p.plage.map(Number) : [];
+  const [bas, haut] = plage;
   return {
     nom: p.nom, type,
     ...(defaut !== undefined ? { defaut } : {}),
-    ...(plage ? { min: Number(plage[0]), max: Number(plage[1]) } : {}),
+    ...(Number.isFinite(bas) ? { min: bas } : {}),
+    ...(Number.isFinite(haut) ? { max: haut } : {}),
     ...(p.unite ? { unite: p.unite } : {}),
     ...(p.graine ? { graine: true as const } : {}),
     ...(choix ? { choix } : {}),
