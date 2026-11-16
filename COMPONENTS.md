@@ -10018,11 +10018,12 @@ Compares two sources (A and B) by toggling which one is heard, at matched level 
 
 *Final output. Plays the received signal and enables export.*
 
-Final output: plays the received signal, applies the volume and enables export. Also provides the track duration.
+Final output: plays the received signal, applies the volume and enables export of the WAV file. Also provides the track duration. The optional « Cover » input receives an image that the saved file carries as its cover art: an ID3v2.4 tag placed in an « id3 » chunk of the WAV file, whose APIC frame holds the image, declared as front cover. A JPEG or PNG image is written as is, byte for byte. Any other image, SVG, WebP, GIF or BMP, is first converted to PNG at its own size, or at 512 × 512 pixels when it declares none. The WAV format defines no cover art: this chunk follows the usage of tag editors, and a player that does not know it ignores it. With no image on this input, the file carries no « id3 » chunk. The node's message gives the format written and its size in bytes, or the reason the image is left out; an image left out lets the file be written without a cover.
 
 | Port | Name | Type | |
 |---|---|---|---|
 | input | Audio | audio |  |
+| input | Cover | image |  |
 | output | Duration | control (duree) |  |
 
 | Parameter | Type | Default | Values | Description |

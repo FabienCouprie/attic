@@ -23,7 +23,10 @@ const SIGLES = new Set([
   "MIDI", "SF2", "SFZ", "WAV", "BWF", "MP3", "OGG", "FLAC", "AAC", "M4A", "WMA", "PNG", "JPG", "SVG",
   // Conteneurs vidéo : ceux qu'on lit, et ceux qu'on ne lit pas et qu'il faut pouvoir nommer.
   "MOV", "MKV", "M4V", "WMV", "AVI", "ASF",
-  "PDF", "JSON", "CSV", "TXT", "XML", "YAML", "HTML", "CSS", "ZIP", "GIF", "WEBP", "ASCII", "UTF",
+  "PDF", "JSON", "CSV", "TXT", "XML", "YAML", "HTML", "CSS", "ZIP", "GIF", "WEBP", "BMP", "ASCII", "UTF",
+  // APIC : l'identifiant de la trame ID3v2 qui porte l'image de couverture, écrit ainsi dans la
+  // norme. La notice de « Sortie audio » dit où la pochette s'inscrit, et doit pouvoir la nommer.
+  "APIC",
   // Audio, traitement du signal
   "FFT", "IFFT", "STFT", "DSP", "LFO", "ADSR", "RMS", "EQ", "BPF", "LPF", "HPF", "FIR", "IIR",
   "RT60", "FDN", "PGHI", "ZCR", "MFCC", "YIN", "HPSS", "STN", "SNR", "THD", "DC", "AM", "FM",

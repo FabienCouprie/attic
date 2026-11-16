@@ -101,7 +101,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Séquenceur d'accords | `sequenceur-accords` | VueSequenceurAccords | — | 480 × 380 | non | oui | non |
 | Séquenceur de batterie avancé | `sequenceur-batterie-avance` | VueSequenceurBatterieAvance | — | 480 × 360 | non | oui | non |
 | Séquenceur mélodique | `sequenceur-melodique` | VueSequenceurMelodique | — | 460 × 400 | non | oui | non |
-| Sortie audio | `sortie-audio` | — | VueExport | 240 × 118 | non | oui | non |
+| Sortie audio | `sortie-audio` | — | VueExport | 240 × 140 | non | oui | non |
 | Sortie MIDI | `sortie-midi` | — | VueExport | 240 × 162 | non | oui | non |
 | Sortie texte | `sortie-texte` | VueSortieTexte | — | 280 × 250 | non | oui | oui |
 | Entrée texte | `source-texte` | VueSourceTexte | — | 280 × 200 | non | oui | non |

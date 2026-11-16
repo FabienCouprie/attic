@@ -12,6 +12,10 @@
 // renseignements y sont donc écrits en trames standard — titre, logiciel — et le document iXML entier
 // y est recopié dans une trame personnalisée, pour qui voudrait le relire à l'identique.
 //
+// UN WAV PEUT AUSSI PORTER UNE ÉTIQUETTE ID3v2, ET POUR UNE SEULE CHOSE : sa pochette. Le format n'a
+// pas de bloc d'image, et l'étiquette entière va dans un bloc RIFF « id3 ». Elle n'y est écrite que
+// si une image est fournie ; voir `audio/pochette.ts`.
+//
 // AUCUNE DATE DANS L'iXML, ET C'EST TOUJOURS VOULU. Attic tient à ce que deux rendus du même graphe
 // donnent deux fichiers identiques octet pour octet — c'est pourquoi le bruit de dither est à graine
 // fixe. L'identifiant du fichier est donc DÉRIVÉ de son contenu : même son, même identifiant ; son
@@ -28,6 +32,7 @@
 
 import type { ChampsBext } from "./bext";
 import { dispositionDe } from "./multicanal";
+import type { Pochette } from "./pochette";
 
 export interface Provenance {
   /** Le nœud qui a écrit le fichier, tel que l'utilisateur le voit. */
@@ -150,6 +155,21 @@ export function blocIxml(xml: string): Uint8Array {
 }
 
 /**
+ * Le bloc RIFF « id3 » : identifiant, taille, une étiquette ID3v2 entière, octet de bourrage si la
+ * taille est impaire. C'est là qu'un WAV porte sa pochette ; voir l'en-tête d'`audio/pochette.ts`.
+ *
+ * L'identifiant s'écrit en minuscules, suivies d'une espace : c'est la graphie que les éditeurs
+ * d'étiquettes écrivent, et un lecteur compare les quatre octets tels quels.
+ */
+export function blocId3(etiquette: Uint8Array): Uint8Array {
+  const bloc = new Uint8Array(8 + etiquette.length + (etiquette.length % 2));
+  bloc.set([0x69, 0x64, 0x33, 0x20], 0); // « id3 »
+  new DataView(bloc.buffer).setUint32(4, etiquette.length, true);
+  bloc.set(etiquette, 8);
+  return bloc;
+}
+
+/**
  * Tout ce qu'un fichier doit dire de lui-même, calculé d'après le tampon qu'on s'apprête à écrire.
  *
  * Les noms de pistes viennent de la disposition quand le tampon en porte une : les haut-parleurs
@@ -229,6 +249,27 @@ function trameTxxx(description: string, valeur: string): Uint8Array {
   return trame("TXXX", contenu);
 }
 
+/**
+ * Une trame APIC : l'image de couverture, telle que l'ID3v2.4 la décrit au § 4.14.
+ *
+ * Encodage 0 (ISO-8859-1), le type MIME suivi d'un zéro, le type d'image 3 (« couverture, recto »),
+ * une description vide réduite à son zéro final, puis les octets de l'image sans retouche.
+ * L'encodage ne vaut que pour la description, et une description vide n'a rien à encoder : le code 0
+ * est donc celui que tout lecteur de trames connaît.
+ */
+function trameApic(p: Pochette): Uint8Array {
+  const mime = new TextEncoder().encode(p.mime);
+  const contenu = new Uint8Array(1 + mime.length + 1 + 1 + 1 + p.octets.length);
+  let o = 0;
+  contenu[o++] = 0;
+  contenu.set(mime, o); o += mime.length;
+  contenu[o++] = 0;
+  contenu[o++] = 3;
+  contenu[o++] = 0;
+  contenu.set(p.octets, o);
+  return trame("APIC", contenu);
+}
+
 export interface EtiquetteMp3 {
   titre?: string;
   /** Le document iXML à recopier dans une trame TXXX « iXML ». */
@@ -237,6 +278,8 @@ export interface EtiquetteMp3 {
    *  2026-11-01 : un fichier audio ne porte pas de graphe. La trame reste écrite si on la demande,
    *  et les tests de format s'en servent de témoin. */
   graphe?: string;
+  /** L'image de couverture, écrite en trame APIC. */
+  pochette?: Pochette;
 }
 
 /**
@@ -253,7 +296,11 @@ export function etiquetteId3(e: EtiquetteMp3): Uint8Array {
   if (e.titre) trames.push(trameTexte("TIT2", e.titre));
   if (e.ixml) trames.push(trameTxxx("iXML", e.ixml));
   if (e.graphe) trames.push(trameTxxx("ATTIC_GRAPH", e.graphe));
+  if (e.pochette) trames.push(trameApic(e.pochette));
   const taille = trames.reduce((s, t) => s + t.length, 0);
+  // UNE TAILLE D'ÉTIQUETTE TIENT EN VINGT-HUIT BITS, ses quatre octets n'en gardant que sept chacun.
+  // Au-delà, la taille écrite serait tronquée et l'étiquette illisible : on refuse plutôt.
+  if (taille > 0x0fffffff) throw new Error(`étiquette ID3v2 de ${taille} octets, au-delà des 256 Mio que la norme permet`);
   const out = new Uint8Array(10 + taille);
   out.set([0x49, 0x44, 0x33, 0x04, 0x00, 0x00], 0); // « ID3 », version 2.4.0, aucun drapeau
   out.set(synchsafe(taille), 6);

@@ -99,6 +99,16 @@ describe("refaire les aperçus à une autre profondeur", () => {
     expect(recues[0].securiser).toBe(true);
   });
 
+  it("LE CANAL D'AFFICHAGE AUSSI, et c'est la pochette : changer de profondeur ne la perd pas", async () => {
+    const recues = domaineQuiNote();
+    const affichage = { pochette: { mime: "image/png", octets: new Uint8Array([1, 2]) } };
+    poserUnApercu("sortie", 24, { securiser: false, nomPourMetadonnees: "Sortie audio", affichage } as never);
+    await refaireLesApercus(32);
+    expect(recues[0].affichage).toBe(affichage);
+    const rechange = resultatDe("sortie") as { audioResultatRefaisable?: { reecriture: { affichage?: unknown } } };
+    expect(rechange.audioResultatRefaisable!.reecriture.affichage, "la réécriture suivante l'a encore").toBe(affichage);
+  });
+
   it("et une réécriture qui échoue laisse l'aperçu d'avant, jouable", async () => {
     // La profondeur est un confort, pas une correction : perdre un lecteur pour un encodage raté
     // serait échanger un défaut contre un pire.
