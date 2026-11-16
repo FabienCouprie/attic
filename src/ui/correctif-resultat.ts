@@ -45,6 +45,20 @@ function memesChamps(a?: Readonly<Record<string, unknown>>, b?: Readonly<Record<
   return cles.length === Object.keys(b).length && cles.every((k) => Object.is(a[k], b[k]));
 }
 
+/**
+ * Les types d'image dont un nœud montre l'aperçu.
+ *
+ * LE WEBP, LE GIF ET LE BMP Y MANQUAIENT, et Chromium les décode comme les trois autres. Une « Entrée
+ * image » chargée d'un de ces fichiers ne montrait rien. Rechargée avec son projet, elle le montrait,
+ * mais par accident : `ui/rechargerFichiers.ts` la déclarait JPEG. Le type rendu juste le
+ * 2026-11-16, l'aperçu des relus disparaissait aussi ; Fabien a demandé celui des trois formats,
+ * chargés comme relus. LA LISTE RESTE FERMÉE : l'AVIF, que `core/type-image.ts` sait reconnaître,
+ * n'y est pas, son affichage n'ayant pas été mesuré.
+ */
+const TYPES_IMAGE_APERCU: ReadonlySet<string> = new Set([
+  "image/png", "image/jpeg", "image/svg+xml", "image/webp", "image/gif", "image/bmp",
+]);
+
 /** Champs à mettre à jour sur un nœud après le run, ou `null` s'il n'y a rien à changer. */
 export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Promise<Record<string, unknown> | null> {
   const {
@@ -101,7 +115,7 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
   // écrit dans le shell, pour journaliser deux crêtes dans la console.
   const audio = defNode?.sansApercuAudio ? null : servicesApercu().valeurRepresentative(valsSafe);
   const fichier = valsSafe.find((v): v is File => v instanceof File);
-  const imageFile = fichier && (fichier.type === "image/png" || fichier.type === "image/jpeg" || fichier.type === "image/svg+xml") ? fichier : null;
+  const imageFile = fichier && TYPES_IMAGE_APERCU.has(fichier.type) ? fichier : null;
   const midiFile = fichier && fichier.type.includes("midi") ? fichier : null;
   const texte = valsSafe.find((v): v is string => typeof v === "string");
   // Ce qu'une courbe produite donne à dessiner. Combien de points y suffisent, et ce qu'est une
