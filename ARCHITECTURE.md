@@ -263,7 +263,16 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
 
 - [ ] **Passer à une architecture orientée messages / événements** entre UI et moteur pour éviter que ReactFlow et l'exécution partagent le même objet mutable.
 - [ ] **Ajouter des feature flags** pour les changements de runtime afin de pouvoir les désactiver rapidement.
-- [ ] **Créer un manifeste de compatibilité** des plugins (version de contrat, paramètres, entrées/sorties) pour détecter les ruptures automatiquement.
+- [x] **Créer un manifeste de compatibilité** des plugins (version de contrat, paramètres, entrées/sorties) pour détecter les ruptures automatiquement.
+  Fait le 2026-11-16, pour le socle : `COMPATIBILITE.json` est engendré du registre par
+  `npm run docs:compatibilite` et versionné, 513 composants, 2 980 réglages, 1 536 ports, 14 alias,
+  tous en version de contrat 1. `src/docs/compatibilite.test.ts` compare le registre à ce fichier et
+  sépare dix-sept sortes de rupture de treize sortes de changement compatible ; une rupture échoue
+  tant qu'elle n'a ni migration (`nomsHerites`, `optionsHeritees`, `anciensReglages`, `ALIAS`) ni
+  déclaration dans `src/docs/ruptures-declarees.json`, vide à sa naissance. Pas fait : l'ouverture
+  d'un projet ne lit pas encore le manifeste. Un fichier qui noterait la version de chaque nœud
+  permettrait de dire, au chargement, qu'un nœud vient d'un contrat plus récent ou plus ancien ;
+  c'est une suite à décider avec le format de projet, et le chantier de l'export `.attic` y touche.
 
 ---
 
