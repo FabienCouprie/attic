@@ -7561,7 +7561,8 @@
   "sortie-audio": {
    "version": 1,
    "entrees": [
-    {"nom":"Audio","type":"audio"}
+    {"nom":"Audio","type":"audio"},
+    {"nom":"Pochette","type":"image","requis":false}
    ],
    "sorties": [
     {"nom":"Durée","type":"controle","sousType":"duree"}

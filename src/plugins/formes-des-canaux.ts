@@ -23,6 +23,7 @@
 // tendu à `DonneesNoeud`.
 import type { Accordage } from "../audio/accordage";
 import type { AnalyseEsthetique } from "../audio/esthetique";
+import type { Pochette } from "../audio/pochette";
 import type { Sequence } from "../audio/sequence";
 import type { InfosFilm } from "../vues-domaine/MontageVideo";
 import type { ColonneVue } from "../vues-domaine/montage-video-geometrie";
@@ -52,6 +53,12 @@ export type AffichageComparaisonEsthetique = { a?: AnalyseEsthetique; b?: Analys
 
 /** Le MP3 que « Sortie conversion » écrit. */
 export type AffichageMp3 = { mp3Url?: string };
+
+/**
+ * La pochette que « Sortie audio » a préparée, et que son fichier WAV porte. L'écriture de l'aperçu
+ * la relit par `pochetteDe` d'`audio/pochette.ts`, la vue d'export pour le multicanal refait.
+ */
+export type AffichagePochette = { pochette?: Pochette };
 
 /** Le film de la démonstration, et sa taille en octets. */
 export type AffichageDemonstration = { videoUrl?: string; taille?: number };
