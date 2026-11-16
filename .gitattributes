@@ -21,6 +21,7 @@
 *.wav binary
 *.mid binary
 *.zip binary
+*.attic binary
 *.png binary
 *.ico binary
 *.onnx binary

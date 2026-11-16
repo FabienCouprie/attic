@@ -169,8 +169,11 @@ export async function lancerLeNoeudEtAttendre(page: Page, id: string, o: Options
  *
  * LE COMPTE REPART DE ZÉRO À CHAQUE APPEL. Il vit sur `window`, et un second run sur la même page le
  * trouverait déjà à six : le premier relevé rendrait la main, avant que le moindre aperçu ait bougé.
+ *
+ * EXPORTÉ POUR UN PAQUET `.attic` ROUVERT, dont les lecteurs se posent sans que Lancer soit pressé :
+ * la passe de repose les écrit seule. Voir `paquet-attic-dans-application.spec.ts`.
  */
-async function apercusPoses(page: Page): Promise<void> {
+export async function apercusPoses(page: Page): Promise<void> {
   await page.evaluate(() => { (window as unknown as { __stable?: number }).__stable = 0; });
   await page.waitForFunction(() => {
     const n = document.querySelectorAll("[data-id] audio[src]").length;

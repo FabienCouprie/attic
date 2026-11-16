@@ -456,7 +456,7 @@ function Atelier() {
   });
 
   // Export / import du workflow, dans hooks/usePersistance.ts.
-  const { sauvegarder, sauvegarderAuto, exporter, importer, memoriserEncours } = usePersistance({
+  const { sauvegarder, sauvegarderAuto, exporter, exporterAvecDonnees, importer, memoriserEncours } = usePersistance({
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
     sauvegarderContexteCourant, grapheRacineRef, setPile, vueAPoserRef,
     reinitialiserNoeud, supprimerNoeud, lancerRef, cacheExec,
@@ -537,6 +537,7 @@ function Atelier() {
         onChargerSF2={chargerSF2}
         onDetacher={ouvrirNouvelleFenetre}
         onExporter={exporter}
+        onExporterAvecDonnees={exporterAvecDonnees}
         onAjouterCommentaire={ajouterCommentaire}
         onAjouterCadre={ajouterCadre}
         dictee={dictee}

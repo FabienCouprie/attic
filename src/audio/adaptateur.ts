@@ -30,6 +30,7 @@ import { estCourbe } from "./courbe";
 import { estObjet } from "./multicanal";
 import { estCercle } from "./cercle";
 import { estSequence } from "./sequence";
+import { depuisPaquetAudio, versPaquetAudio } from "./paquet-audio";
 
 export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
 
@@ -289,5 +290,10 @@ configurerServicesDomaine({
     for (let c = 0; c < v.canaux.length; c++) b.getChannelData(c).set(v.canaux[c]);
     return b;
   },
+
+  // CE QU'UN PAQUET `.attic` EMPORTE D'UN TAMPON : ses canaux, sa fréquence, et les deux étiquettes
+  // que des tables faibles tiennent à côté de lui. Voir `audio/paquet-audio.ts`.
+  versPaquet: versPaquetAudio,
+  depuisPaquet: depuisPaquetAudio,
 });
 

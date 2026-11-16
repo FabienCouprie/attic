@@ -14,6 +14,8 @@ import { useImportProjet } from "./useImportProjet";
 import { useI18n } from "../../i18n";
 import { decisionSauvegardeAuto, type DecisionSauvegarde } from "../sauvegarde-auto";
 import { ecrireEncours, ecrireEncoursPropre } from "../fenetre";
+import { exporterPaquet } from "../paquet/exporter-paquet";
+import { registreUI } from "../registre-actif";
 
 // Typage volontairement souple (les nœuds portent un `data` à index-signature et
 // le code d'import d'origine manipulait déjà tout en `any`) : le hook est extrait
@@ -165,10 +167,26 @@ export function usePersistance(o: OptionsPersistance) {
 
   const exporter = useCallback(() => sauvegarder(true), [sauvegarder]);
 
+  /**
+   * L'export AVEC LES DONNÉES DU CACHE, en paquet `.attic`, demandé par Fabien le 2026-11-16. Le
+   * projet est celui qu'« Exporter » écrirait ; ce qui s'y ajoute et ce qui en est écarté est dit
+   * dans `ui/paquet/`. Le fichier courant ne change pas.
+   */
+  const exporterAvecDonnees = useCallback(async () => {
+    const { json } = buildExportData();
+    const racine = o.grapheRacineRef.current ?? { nodes: o.nodes, edges: o.edges };
+    const fiches = new Map(racine.nodes.map((n: NoeudAtelier) => [n.id, String(n.data?.ficheId ?? "")]));
+    await exporterPaquet((window as any).api, {
+      json, noeuds: racine.nodes, cache: o.cacheExec.current, currentFilePath: currentFilePathRef.current,
+      jamaisCache: (id) => registreUI().trouverDef(fiches.get(id) ?? "")?.jamaisCache === true,
+      repertoire: o.repertoire, t,
+    });
+  }, [o, buildExportData, t]);
+
   // L'IMPORT D'UN PROJET, du fichier lu au graphe posé et au rapport de ce qui s'est perdu, vit dans
   // `hooks/useImportProjet.ts`. Il est appelé ici, à la place exacte de son ancien bloc : l'ordre des
   // crochets ne change pas.
   const importer = useImportProjet(o, t);
 
-  return { sauvegarder, sauvegarderAuto, exporter, importer, memoriserEncours };
+  return { sauvegarder, sauvegarderAuto, exporter, exporterAvecDonnees, importer, memoriserEncours };
 }

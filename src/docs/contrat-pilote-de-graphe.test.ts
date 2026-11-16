@@ -204,6 +204,11 @@ describe("le pilote de graphe", () => {
     //
     // LE LECTEUR DONT L'APERÇU EST PERDU Y PREND `semerEtLancer` : il sème un métronome et le lance,
     // puis fait perdre à son aperçu ses octets et presse le ▶ ; ses attentes passent par `expect.poll`.
+    //
+    // LE PAQUET `.attic` N'Y SÈME RIEN : il ouvre par le dialogue d'Electron, deux fois, dans deux
+    // applications. Il y prend `relancerEtAttendre`, le relevé des relances et des aperçus, et
+    // `apercusPoses`, exporté pour lui : un paquet rouvert pose ses lecteurs sans que Lancer soit pressé.
+    // Il avait d'abord gardé son attente à lui, et c'est ce cas qui l'a vu.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["boucle-dans-lot-dans-application.spec.ts",
         "boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
@@ -213,7 +218,7 @@ describe("le pilote de graphe", () => {
         "lecteur-apercu-perdu-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "menu-contextuel-dans-application.spec.ts",
         "montage-gains-pistes.spec.ts", "montage-piste-branchee.spec.ts",
-        "profondeur-dans-application.spec.ts", "rendu-image-taille-dans-application.spec.ts",
+        "paquet-attic-dans-application.spec.ts", "profondeur-dans-application.spec.ts", "rendu-image-taille-dans-application.spec.ts",
         "restaurer-dans-application.spec.ts",
         "sorties-extensibles-dans-application.spec.ts", "types-au-port.spec.ts"]);
     const coupables = appelants.filter((f) => {
