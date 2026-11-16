@@ -179,7 +179,8 @@ Add the `FicheAudio` object, wrapped in `fiche({...})`, in the appropriate **fam
 automatically. (New file? spread its `fiches` into the file of
 [`src/plugins/categories/`](src/plugins/categories/) it belongs with, once;
 [`src/plugins/index.ts`](src/plugins/index.ts) says how the catalogue is cut. Then
-`npm run docs:components` rewrites the order reference, `src/plugins/ordre-du-catalogue.txt`.)
+`npm run docs:components` rewrites the order reference, `src/plugins/ordre-du-catalogue.txt`, and
+`npm run docs:compatibilite` adds the node to `COMPATIBILITE.json`.)
 
 ### 2. Register
 Nothing more if you add to an existing file: the `enregistrer(avecDoc(def))`
@@ -225,6 +226,14 @@ The Listening Point needs none of them. Add them only if relevant:
 - **Replace a parameter** — saved projects still carry the old one. If `executer` keeps reading it
   as a fallback, name it in the sheet's `anciensReglages`: the compiler then accepts the read, and
   `plugins/repli-du-defaut.test.ts` knows it is a migration and not a misspelling.
+
+- **Change an existing node's contract** — a saved graph holds ports by rank and settings by name.
+  `npm run docs:compatibilite` rewrites `COMPATIBILITE.json` for a compatible change (a setting
+  added, an optional input added at the end, a setting renamed with its old name in `nomsHerites`).
+  A **break** (a setting or port removed or renamed without migration, a type, default, unit, bound
+  or seed role changed, a choice value no longer recognised) fails `src/docs/compatibilite.test.ts`
+  until it has its migration or a declaration with its reason in `src/docs/ruptures-declarees.json`.
+  A new node only needs the regeneration.
 
 ---
 

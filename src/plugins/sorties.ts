@@ -7,6 +7,7 @@ import { avecDoc } from "./notices";
 import { rendreMidi, appliquerInstrumentMidi } from "../audio";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2_SUIVI, decoderInstrumentSF2 } from "./soundfontGlobal";
 import { entreeAudio, sansEntree } from "./lire-entree";
+import { pochetteDuRun } from "./pochette-entree";
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -16,7 +17,9 @@ export const fiches: FicheAudio[] = ([
     // Ce que ce nœud fait entendre est ce que son bouton enregistre : le fichier porte donc son
     // bloc de métadonnées iXML.
     apercuEstLeFichier: true,
-    entrees: [{ nom: "Audio", type: "audio" }],
+    // LA POCHETTE EST LE SECOND PORT ET ELLE EST FACULTATIVE : un graphe enregistré avant elle n'a de
+    // câble que vers le premier, et sans image le fichier est celui d'avant, octet pour octet.
+    entrees: [{ nom: "Audio", type: "audio" }, { nom: "Pochette", nomEn: "Cover", type: "image", requis: false }],
     sorties: [{ nom: "Durée", nomEn: "Duration", type: "controle", sousType: "duree" }],
     parametres: [
       { nom: "Volume", nomEn: "Volume", plage: [0,100], defaut: 100, unite: "%" },
@@ -25,14 +28,21 @@ export const fiches: FicheAudio[] = ([
       const audio = entreeAudio(ctx, 0, { sorties: 2 });
       if (sansEntree(audio)) return audio;
       const vol = ctx.paramNombre("Volume", 100);
-      if (vol >= 100) return { valeurs: [audio, { debut: 0, duree: audio.duration }] };
-      const buf = new AudioBuffer({ numberOfChannels: audio.numberOfChannels, length: audio.length, sampleRate: audio.sampleRate });
-      const g = vol / 100;
-      for (let c = 0; c < audio.numberOfChannels; c++) {
-        const src = audio.getChannelData(c), dst = buf.getChannelData(c);
-        for (let i = 0; i < audio.length; i++) dst[i] = src[i] * g;
+      let sortie = audio;
+      if (vol < 100) {
+        sortie = new AudioBuffer({ numberOfChannels: audio.numberOfChannels, length: audio.length, sampleRate: audio.sampleRate });
+        const g = vol / 100;
+        for (let c = 0; c < audio.numberOfChannels; c++) {
+          const src = audio.getChannelData(c), dst = sortie.getChannelData(c);
+          for (let i = 0; i < audio.length; i++) dst[i] = src[i] * g;
+        }
       }
-      return { valeurs: [buf, { debut: 0, duree: buf.duration }] };
+      const valeurs = [sortie, { debut: 0, duree: sortie.duration }];
+      // LA POCHETTE PART PAR LE CANAL D'AFFICHAGE, et c'est le fichier qui la porte : l'aperçu de ce
+      // nœud est le fichier qu'il livre, et le shell transmet ce canal à son écriture.
+      const image = ctx.entree(1);
+      if (image == null) return { valeurs };
+      return { valeurs, ...(await pochetteDuRun(image)) };
    },
  }),
   fiche({

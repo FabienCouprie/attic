@@ -6,8 +6,8 @@ Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et trente gardes sur lui-même : ils s'emploient, ils
-ne se réinventent pas.
+cela un banc de mesure, une base d'empreintes et trente-quatre gardes sur lui-même : ils
+s'emploient, ils ne se réinventent pas.
 
 ---
 
@@ -48,9 +48,9 @@ pour empêcher.
 - **Un commit ne contient que ce qui a été demandé.** Un nettoyage repéré en passant se signale, il
   ne se glisse pas dans le diff.
 - Les tables générées (`COMPONENTS.md`, `DEPENDANCES-AUDIO.md`, `INTERFACE.md`,
-  `MODULABLES.md`) et `tests-e2e/empreintes.json` ne peuvent être cohérentes qu'en un point de
-  l'arbre : les régénérer avant de committer, et préférer un commit entier à plusieurs commits dont
-  certains échoueraient à leurs propres gardes.
+  `MODULABLES.md`, `COMPATIBILITE.json`) et `tests-e2e/empreintes.json` ne peuvent être
+  cohérentes qu'en un point de l'arbre : les régénérer avant de committer, et préférer un commit
+  entier à plusieurs commits dont certains échoueraient à leurs propres gardes.
 
 ## 3. Les cinq contrats
 
@@ -167,7 +167,8 @@ se relève donc à l'oreille, et non par un garde.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — trente contrats sur le dépôt lui-même : registre des réglages, graines,
+- **`src/docs/*.test.ts`** — trente-quatre contrats sur le dépôt lui-même : registre des réglages,
+  **le contrat de chaque composant tel qu'un graphe enregistré en dépend**, graines,
   cœurs par trames, registre anglais, **texte en dur des vues — qu'aucun ne dépende de la langue** —,
   caractères de contrôle, style de documentation, classement
   théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, couverture des
@@ -395,8 +396,19 @@ COMPOSANTS=boite-groove,paulstretch npm run messages-anglais
 - **Régénérer les tables** après toute modification qui les concerne :
 
 ```bash
-npm run docs:components && npm run docs:lignes && npm run docs:dependances && npm run docs:interface && npm run docs:modulables
+npm run docs:components && npm run docs:lignes && npm run docs:dependances && npm run docs:interface && npm run docs:modulables && npm run docs:compatibilite
 ```
+
+- **`COMPATIBILITE.json` + `src/docs/compatibilite.test.ts`** — le contrat de chaque composant au
+  dernier commit, tel qu'un graphe enregistré en dépend : ports par rang, réglages par nom, défaut,
+  bornes, unité, graine, valeurs de choix, les quatre migrations (`nomsHerites`, `optionsHeritees`,
+  `anciensReglages`, `ALIAS`) et une version de contrat. Le garde range chaque écart au registre en
+  **compatible**, qui ne demande que `npm run docs:compatibilite`, ou en **rupture** : ce qu'un
+  graphe déjà enregistré perd ou change en s'ouvrant. Une rupture fait échouer la suite tant
+  qu'elle n'a ni sa migration dans le code ni sa déclaration, raison écrite, dans
+  `src/docs/ruptures-declarees.json`, et la régénération refuse alors d'écrire. **Il ne mesure pas
+  le son** : un réglage ajouté est compatible si son défaut rend l'ancien son, et ce sont les
+  empreintes qui le disent.
 
 **Un défaut qui revient se contractualise.** Le corriger ne suffit pas : il doit devenir un test
 permanent, et ce test doit être **prouvé en plantant la faute** qu'il est censé attraper. Un garde

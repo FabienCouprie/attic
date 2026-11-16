@@ -3,7 +3,8 @@ import { reechantillonnerParLeNavigateur } from "./convertir-frequence";
 import { creerQuantificateur } from "./dither";
 import { dispositionDe } from "./multicanal";
 import { blocBext, type ChampsBext } from "./bext";
-import { blocIxml, etiquetteId3 } from "./metadonnees";
+import { blocId3, blocIxml, etiquetteId3 } from "./metadonnees";
+import type { Pochette } from "./pochette";
 import { Mp3Encoder } from "./lame";
 import { frequenceDuFichier } from "./frequence-source";
 
@@ -88,6 +89,11 @@ export interface OptionsWav {
    * trouverait pas derrière des minutes de son.
    */
   bext?: ChampsBext;
+  /**
+   * Une image de couverture, écrite dans un bloc « id3 » après l'iXML. Sans elle, aucun bloc
+   * « id3 » : le fichier est celui qu'on écrivait avant que l'option existe, octet pour octet.
+   */
+  pochette?: Pochette;
 }
 
 /**
@@ -208,7 +214,8 @@ function preparerWav(
   // qui saute correctement le bourrage, celui d'Attic compris, le manquait.
   const bourrage = tailleDonnees % 2;
   const ixml = options.ixml ? blocIxml(options.ixml) : new Uint8Array(0);
-  const tailleTotal = tailleEntete + tailleDonnees + bourrage + ixml.length + grapheChunk.byteLength;
+  const id3 = options.pochette ? blocId3(etiquetteId3({ pochette: options.pochette })) : new Uint8Array(0);
+  const tailleTotal = tailleEntete + tailleDonnees + bourrage + ixml.length + id3.length + grapheChunk.byteLength;
   const arrayBuffer = new ArrayBuffer(tailleTotal);
   const vue = new DataView(arrayBuffer);
 
@@ -301,10 +308,14 @@ function preparerWav(
 
   const finir = (): Blob => {
     offset += bourrage;
-    // Les métadonnées implicites, puis le graphe embarqué.
+    // Les métadonnées implicites, la pochette, puis le graphe embarqué.
     if (ixml.length > 0) {
       new Uint8Array(arrayBuffer).set(ixml, offset);
       offset += ixml.length;
+    }
+    if (id3.length > 0) {
+      new Uint8Array(arrayBuffer).set(id3, offset);
+      offset += id3.length;
     }
     if (grapheChunk.byteLength > 0) {
       const src = new Uint8Array(grapheChunk);

@@ -14,7 +14,8 @@ import type { VueProps } from "../ui/registre-vues";
 import { useGestes } from "../ui/gestes-noeud";
 import { registreUI } from "../ui/registre-actif";
 import { affichageDe } from "./lire-canaux";
-import type { AffichageMp3 } from "../plugins/formes-des-canaux";
+import type { AffichageMp3, AffichagePochette } from "../plugins/formes-des-canaux";
+import { pochetteDe, type Pochette } from "../audio/pochette";
 
 /**
  * Le tampon d'un nœud s'il a plus de deux canaux : son aperçu est alors un repliement, pas le
@@ -79,10 +80,12 @@ export function VueCollections({ id, data, def }: VueProps) {
  * Profondeur et bloc iXML d'un fichier multicanal refait depuis son tampon. C'est là que l'iXML sert
  * le plus : ses pistes y sont nommées d'après la disposition — L, R, C, LFE… ou ACN0 à ACN15.
  */
-function optionsMulticanal(b: AudioBuffer, ficheId: unknown) {
+function optionsMulticanal(b: AudioBuffer, ficheId: unknown, pochette: Pochette | undefined) {
   const bits = lireProfondeurExport();
   const id = String(ficheId ?? "");
-  return { bits, ixml: decrire(b, { noeud: registreUI().trouverDef(id)?.nom ?? id }, bits).ixml };
+  // LA POCHETTE SUIT LE FICHIER REFAIT : l'aperçu replié la portait, et le multicanal enregistré
+  // ne doit pas la perdre parce qu'il repart du tampon.
+  return { bits, ixml: decrire(b, { noeud: registreUI().trouverDef(id)?.nom ?? id }, bits).ixml, ...(pochette ? { pochette } : {}) };
 }
 
 export function VueExport({ data }: VueProps) {
@@ -90,6 +93,7 @@ export function VueExport({ data }: VueProps) {
   const [nomFichierLocal, setNomFichierLocal] = useState(String(data.nomFichier ?? ""));
   const api = (window as { api?: any }).api;
   const mp3Url = affichageDe<AffichageMp3>(data)?.mp3Url;
+  const pochette = pochetteDe(affichageDe<AffichagePochette>(data));
   const nomOu = (defaut: string) => (data.nomFichier as string)?.toString().trim() || defaut;
   return (
     <div className="attic-node-fichier" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
@@ -113,7 +117,7 @@ export function VueExport({ data }: VueProps) {
               // pour ne pas peser six à huit fois une stéréo dans le processus principal ; l'enregistrer
               // tel quel livrerait un repliement à la place du 7.1.4 composé.
               const buf = multi
-                ? await bufferVersWavBlob(multi, undefined, false, optionsMulticanal(multi, data.ficheId)).arrayBuffer()
+                ? await bufferVersWavBlob(multi, undefined, false, optionsMulticanal(multi, data.ficheId, pochette)).arrayBuffer()
                 : await (await fetch(data.ficheId === "convertisseur-audio" && mp3Url ? mp3Url : data.audioResultatUrl!)).arrayBuffer();
               await api.sauvegarderBinaire({
                 defaultPath: nomOu(`sortie.${ext}`),
@@ -124,7 +128,7 @@ export function VueExport({ data }: VueProps) {
           ) : tamponMulticanal(data.audioResultatBuffer) ? (
             <button className="attic-node-fichier-btn" onClick={() => {
               const b = tamponMulticanal(data.audioResultatBuffer)!;
-              const u = URL.createObjectURL(bufferVersWavBlob(b, undefined, false, optionsMulticanal(b, data.ficheId)));
+              const u = URL.createObjectURL(bufferVersWavBlob(b, undefined, false, optionsMulticanal(b, data.ficheId, pochette)));
               const a = document.createElement("a"); a.href = u; a.download = nomOu((data.audioResultatNom as string) || "sortie.wav"); a.click();
               setTimeout(() => URL.revokeObjectURL(u), 1000);
             }}>💾 {t("export.sauvegarder").replace("💾 ", "")}</button>
