@@ -45,6 +45,8 @@ export interface Lancer {
   erreurRendue: boolean;
   /** Le nœud a levé : modèle absent, application de bureau, réseau, ou défaut. */
   levee: string | null;
+  /** Ce que le nœud a rendu par son canal d'affichage, présent seulement s'il en a rendu un. */
+  affichage?: Record<string, unknown>;
 }
 
 /** La graine qui remplace une graine tirée au sort. */
@@ -110,8 +112,11 @@ export async function lancerFiche(
     poserProgression: () => {},
   });
   try {
-    const r = (await fiche.executer(ctx as never)) as { valeurs?: unknown[]; message?: string; erreur?: boolean } | undefined;
-    return { valeurs: r?.valeurs ?? [], message: r?.message ?? "", erreurRendue: r?.erreur === true, levee: null };
+    const r = (await fiche.executer(ctx as never)) as {
+      valeurs?: unknown[]; message?: string; erreur?: boolean; affichage?: Record<string, unknown>;
+    } | undefined;
+    return { valeurs: r?.valeurs ?? [], message: r?.message ?? "", erreurRendue: r?.erreur === true, levee: null,
+      ...(r?.affichage ? { affichage: r.affichage } : {}) };
   } catch (e) {
     return { valeurs: [], message: "", erreurRendue: false, levee: String((e as Error)?.message ?? e).slice(0, 200) };
   }
