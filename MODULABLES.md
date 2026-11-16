@@ -21,7 +21,7 @@ Un composant marqué **⟨trames⟩** a un cœur qui travaille par blocs : une c
 qu'une fois par trame, non par échantillon. La marque est relevée sur la source par
 `coeurs-par-trames.ts` ; elle n'écarte rien d'elle-même, elle dit de regarder avant de proposer.
 
-- **réglages déjà pilotés par une courbe** : 169, sur 70 composants
+- **réglages déjà pilotés par une courbe** : 171, sur 71 composants
 - **réglages restant à faire** : 35, sur 6 composants et 9 couples composant / famille
 - **dont le cœur travaille par trames** : 2
 - **réglages écartés un par un** : 49, sur 22 composants qui gardent les leurs
@@ -224,6 +224,8 @@ Ici la raison ne porte que sur **un réglage** : le composant garde les siens, e
 - `etirement-spectre` : Étirement
 - `exciter` : Fréquence
 - `exciter` : Mix
+- `filtre-tb303` : Coupure
+- `filtre-tb303` : Résonance
 - `flanger` : Mix
 - `flanger` : Profondeur
 - `formule-echantillons` : Volume

@@ -146,6 +146,9 @@ const SURVEILLES: {
   // surveillée ici : deux entrées pour un même composant s'écraseraient dans la base, et la FFT à
   // phase nulle est tenue au calcul par `audio/repartiteur-bandes.test.ts`, qui exige le même module.
   { id: "repartiteur-bandes", worker: "repartiteur-bandes-worker.ts" },
+  // L'échelle à diodes, résolue à chaque échantillon à deux fois la cadence : sortie du fil dès sa
+  // naissance, et surveillée à ses réglages par défaut.
+  { id: "filtre-tb303", worker: "filtre-tb303-worker.ts" },
   // Sa sortie n'a pas la longueur de son entrée : le socle rend la voie telle quelle, et c'est le
   // composant qui fabrique son tampon.
   { id: "vitesse-variable", worker: "vitesse-worker.ts" },

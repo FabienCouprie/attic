@@ -10,6 +10,7 @@ import { fiches as f_entrees } from "../entrees";
 import { fiches as f_effets } from "../effets";
 import { fiches as f_effets_spectral } from "../effets-spectral";
 import { fiches as f_repartiteur_bandes } from "../repartiteur-bandes";
+import { fiches as f_filtre_tb303 } from "../filtre-tb303";
 import { fiches as f_effets_midi } from "../effets-midi";
 import { fiches as f_effets_modulation } from "../effets-modulation";
 import { fiches as f_effets_temporel } from "../effets-temporel";
@@ -29,6 +30,8 @@ export const fiches = [
   ...f_effets_spectral,
   // Le découpage en bandes suit l'égaliseur, dont il reprend les neuf bandes.
   ...f_repartiteur_bandes,
+  // Le filtre de la TB-303 suit les filtres et le découpage en bandes.
+  ...f_filtre_tb303,
   ...f_effets_midi,
   ...f_effets_modulation,
   ...f_effets_temporel,
