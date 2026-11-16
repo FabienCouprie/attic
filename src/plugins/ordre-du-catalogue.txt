@@ -47,6 +47,7 @@ reverbe-convolution
 egaliseur-parametrique
 repartiteur-bandes
 filtre-tb303
+dither
 motif-imposer-rythme
 motif-echo-notes
 motif-eclaircir

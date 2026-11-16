@@ -52,7 +52,7 @@ export const FAMILLES_EFFETS: Record<string, string[]> = {
   // Décider de ce qui passe, et à quel niveau.
   "Égalisation et filtres": [
     "equaliseur", "egaliseur-parametrique", "repartiteur-bandes", "reponse-filtre", "filtre-tb303", "filtrage-spectre", "de-esser", "peignes-accordes", "resonateurs",
-    "compresseur", "compresseur-multibande", "limiteur", "limiteur-crete-vraie", "amplificateur", "normaliseur",
+    "compresseur", "compresseur-multibande", "limiteur", "limiteur-crete-vraie", "dither", "amplificateur", "normaliseur",
     "gate-expandeur", "ducking", "transient-shaper", "recaler-niveau",
   ],
   // Retourner le son, le motif ou le signe — et redistribuer les morceaux.

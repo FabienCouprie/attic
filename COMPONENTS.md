@@ -3,14 +3,14 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **512 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **513 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
 | Category | Components | Families |
 |---|---:|---|
 | [Inputs](#inputs) | 103 | [AI generators](#ai-generators) (11) · [Audio](#audio) (6) · [Control](#control) (1) · [Fractals](#fractals) (7) · [Generation](#generation) (32) · [Image](#image) (4) · [Keyboards](#keyboards) (5) · [Reservoirs and randomness](#reservoirs-and-randomness) (5) · [Rhythms](#rhythms) (7) · [Sensory resonance](#sensory-resonance) (7) · [Sequencers](#sequencers) (2) · [Synthesizers](#synthesizers) (6) · [Text](#text) (2) · [Text to Speech](#text-to-speech) (5) · [Xenakis](#xenakis) (3) |
-| [Processing](#processing) | 247 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (19) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
+| [Processing](#processing) | 248 | [Conversion](#conversion) (23) · [Denoising](#denoising) (8) · [Distortion and modulation](#distortion-and-modulation) (19) · [Echo](#echo) (6) · [Editing](#editing) (39) · [Envelope control](#envelope-control) (2) · [Equalisation and filters](#equalisation-and-filters) (20) · [Generation](#generation-1) (1) · [Image](#image-1) (2) · [Instruments](#instruments) (11) · [Mels](#mels) (6) · [MIDI patterns](#midi-patterns) (4) · [Order and inversions](#order-and-inversions) (11) · [Other effects](#other-effects) (21) · [Pitch](#pitch) (11) · [Reverberation](#reverberation) (8) · [Spectrum](#spectrum) (21) · [Stereo](#stereo) (14) · [Stretching](#stretching) (4) · [Tempo](#tempo) (9) · [Text](#text-1) (1) · [Topology](#topology) (7) |
 | [Visualization](#visualization) | 45 | [Analysis](#analysis) (20) · [Descriptors](#descriptors) (8) · [Detectors](#detectors) (3) · [Image](#image-2) (1) · [Meyda](#meyda) (4) · [Notation](#notation) (9) |
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
@@ -5181,6 +5181,7 @@ After Trevor Wishart, « Audible Design » (1994), and the Composers Desktop Pro
 | [Band Splitter](#band-splitter) | Splits the sound into nine frequency bands and returns each one on its own output. |
 | [Compressor](#compressor) | Feed-forward compressor. |
 | [De-esser](#de-esser) | Dynamic sibilance compression. |
+| [Dither](#dither) | Reduces the sound's bit depth, with dither noise and shaping of that noise. |
 | [Ducking](#ducking) | One sound steps aside for another: the music backs off under the voice, without the voice being heard. |
 | [Equalizer](#equalizer) | 9-band equalizer. |
 | [Filter + Response](#filter--response) | Filters the signal and displays the frequency response curve. |
@@ -5325,6 +5326,26 @@ Dynamically attenuates sibilants (s, ch, sh, t, z) that stand out too much in a 
 | Frequency max | slider | 10000 Hz | 2000 – 12000 Hz, step 1 | Value of « Frequency » that the curve's one means. With no curve, this setting does nothing. |
 | Ratio min | slider | 1 ∶1 | 1 – 10 ∶1, step 1 | Value of « Ratio » that a connected curve's zero means. With no curve, this setting does nothing. |
 | Ratio max | slider | 8 ∶1 | 1 – 10 ∶1, step 1 | Value of « Ratio » that the curve's one means. With no curve, this setting does nothing. |
+
+#### Dither
+
+`dither` · Processing → Equalisation and filters
+
+*Reduces the sound's bit depth, with dither noise and shaping of that noise.*
+
+This component reduces the bit depth of a sound. Each sample is brought onto the grid of a depth from 2 to 24 bits, after dither noise is added, and the error made is fed back onto the following samples through a filter that shapes the noise. The returned sound stays in floating point, but each of its values is a code of the chosen depth divided by full scale, that is 2^(b−1) − 1 codes on either side of zero. The LSB is the step between two neighbouring codes. « Bits » sets the depth. At 16 bits, the returned values are exactly the codes of a sixteen-bit WAV file. « Dither » chooses the noise added before rounding (S. P. Lipshitz, R. A. Wannamaker and J. Vanderkooy, « Quantization and Dither: A Theoretical Survey », Journal of the Audio Engineering Society 40(5), 1992, pp. 355-375): • « None »: rounding alone. The error follows the signal, and a quiet sound turns into a staircase rich in harmonics. • « Rectangular »: uniform noise one LSB peak to peak. The mean of the error no longer depends on the signal; its variance still does, and the hiss varies with it. • « Triangular »: the difference of two uniform noises, with a triangular density over ±1 LSB. Neither the mean nor the variance of the error depends on the signal any more: the error becomes a constant white noise of a quarter of an LSB squared, that is −96.3 dBFS RMS at 16 bits. • « High-pass triangular »: the difference of two successive draws, with the same triangular density, whose spectrum is zero at DC and largest at half the sample rate. « Shaping » chooses the error feedback filter. The output error is the error made at rounding, dither included, passed through the transfer function 1 − Σ hₖ z⁻ᵏ: the noise is removed from the frequencies where the ear is most sensitive and moved towards the treble, at the cost of a stronger total noise. For these five filters, the mean of the noise in decibels over the band does not change (M. A. Gerzon and P. G. Craven, « Optimal Noise Shaping and Dither of Digital Signals », 87th AES Convention, preprint 2822, 1989). • « None »: the noise stays flat. • « First order »: 1 − z⁻¹, total noise +3.0 dB, zero at DC and rising up to half the sample rate. • « Second order »: (1 − z⁻¹)², total noise +7.8 dB. • « E 5 coef. »: the five-coefficient E-weighted curve of S. P. Lipshitz, J. Vanderkooy and R. A. Wannamaker (« Minimally Audible Noise Shaping », Journal of the Audio Engineering Society 39(11), 1991, pp. 836-852). Total noise +12.2 dB, 27 dB below the flat noise around 4 kHz. • « F 9 coef. »: the nine-coefficient F-weighted curve of R. A. Wannamaker (« Psychoacoustically Optimal Noise Shaping », Journal of the Audio Engineering Society 40(7/8), 1992, pp. 611-620). Total noise +18.4 dB, 25 dB below the flat noise around 3 kHz. Both weighted curves are designed for 44.1 kHz. At another sample rate they stretch with it: at 48 kHz, the dip of « E 5 coef. » moves to 4.4 kHz. Beyond a 5 % difference, the message says so. A sample that would leave full scale is brought back into it. The error fed back is taken before that bound, so the filter stays stable on a saturated sound; the bounded samples are counted in the message. « Seed » sets the sequence of the dither noise: the same seed returns the same samples. At zero, a seed is drawn at random, and the message gives it. It has no effect when « Dither » is « None », nothing being drawn. The channels receive independent noises. The « Audio » output returns the quantized sound, with the received length, sample rate and channels. A file the application writes at 16 bits receives a second white triangular dither of a quarter of an LSB squared, which fills the dips of the shaping; written at 24 bits, it receives that second noise at −144.5 dBFS, and the shaping remains. The message gives the depth, the dither, the shaping, the RMS value of the difference between output and input in dBFS, bounded samples excluded, and the seed.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Audio | audio |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Bits | slider | 16 | 2 – 24, step 1 | The target depth. Each returned value is a code of this depth; at 16 bits, those of a sixteen-bit WAV file. |
+| Dither | choice | Triangular | None / Rectangular / Triangular / High-pass triangular | The noise added before rounding. « Triangular » makes the mean and variance of the error independent of the signal; « Rectangular » the mean alone; « None » lets the error follow the signal. « High-pass triangular » tilts that noise towards the treble. |
+| Shaping | choice | E 5 coef. | None / First order / Second order / E 5 coef. / F 9 coef. | The filter that feeds the error back onto the following samples, and moves the noise towards the treble. « E 5 coef. » and « F 9 coef. » are weighted curves designed for 44.1 kHz; « First order » and « Second order » drive the noise out of the bass at any rate. |
+| Seed | slider | 1 | 0 – 999999, step 1 | The seed of the dither noise. The same seed returns the same samples; at zero, a seed is drawn at random and announced. No effect when « Dither » is « None »: nothing is drawn. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Ducking
 
