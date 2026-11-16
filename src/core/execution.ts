@@ -336,6 +336,14 @@ export interface PretsDeLaBoucle<TRuntime> {
    * microtâche que le moteur ne faisait pas.
    */
   quandUnNoeudAFini: (id: string) => Promise<void> | void;
+  /**
+   * Vrai pour une passe qui ne fait que REPOSER ce que le cache tient, sans rien exécuter.
+   *
+   * C'EST CE QUE DEMANDE UN PAQUET `.attic` ROUVERT : ses résultats sont dans le cache, et ils doivent
+   * paraître sans qu'un seul nœud ne tourne. Un nœud que le cache ne couvre pas reste en attente, et
+   * son aval aussi : ce qu'il reçoit manquant, l'empreinte de ses entrées ne correspond plus.
+   */
+  cacheSeulement?: boolean;
 }
 
 /**
@@ -406,6 +414,8 @@ export async function executerLesNoeuds<TRuntime>(
       }
       continue;
     }
+    // UNE PASSE DE REPOSE N'EXÉCUTE RIEN : le nœud n'est ni marqué retraité ni statué.
+    if (p.cacheSeulement) continue;
 
     // Le statut « en cours » n'est posé qu'après le test de cache : un nœud déjà en cache ne doit
     // pas flasher « en cours »/« terminé » — ce flash donnait l'impression que le modèle Qwen

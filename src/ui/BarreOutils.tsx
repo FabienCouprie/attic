@@ -24,6 +24,8 @@ interface Props {
   onRecharger: () => void;
   onResumeAudio: () => Promise<void>;
   onExporter: () => void;
+  /** Exporte le projet avec les données du cache, en paquet `.attic`. */
+  onExporterAvecDonnees: () => void;
   onImporter: (f?: File) => void;
   /** Ouvre un graphe livré avec l'application. Il arrive sans fichier courant, donc non modifiable. */
   onOuvrirExemple: (id?: string) => void;
@@ -81,7 +83,7 @@ const TEINTES_MAJ: Record<string, string | undefined> = {
 };
 
 export function BarreOutils(props: Props) {
-  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onImporter, onOuvrirExemple, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, dictee, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire} = props;
+  const { theme, setTheme, enExecution, repertoire, onChoisirDossier, onLancer, onArreter, onReinitialiser, onRecharger, onResumeAudio, onExporter, onExporterAvecDonnees, onImporter, onOuvrirExemple, onDetacher, onSauvegarder, onAjouterCommentaire, onAjouterCadre, dictee, nbPlugins, sf2Nom, onChargerSF2, currentFilePath, onDetacherFichier, sauvegardeAuto, onBasculerSauvegardeAuto, economieMemoire, onBasculerEconomieMemoire} = props;
   const nomFichier = currentFilePath ? currentFilePath.replace(/\\/g, "/").split("/").pop() : null;
   const refImport = useRef<HTMLInputElement>(null);
   const { t, lang, setLang } = useI18n();
@@ -188,10 +190,14 @@ export function BarreOutils(props: Props) {
         <button className="attic-btn-icon" title={eti("exporter")} aria-label={eti("exporter")} onClick={onExporter}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 2v9M4 7l4 4 4-4M3 14h10"/></svg>
         </button>
+        {/* LA MÊME FLÈCHE, QUI DESCEND DANS UNE BOÎTE : le projet part avec ce qu'il a calculé, rangé. */}
+        <button className="attic-btn-icon" title={eti("exporterAvecDonnees")} aria-label={eti("exporterAvecDonnees")} onClick={onExporterAvecDonnees}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 1.5v6.5M5.5 5.5 8 8l2.5-2.5M2.5 7.5v6h11v-6M6 11h4"/></svg>
+        </button>
         <button className="attic-btn-icon" title={eti("importer")} aria-label={eti("importer")} onClick={() => (window as any).api?.nouvelleFenetre ? onImporter() : refImport.current?.click()}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 14V5m-4 4 4-4 4 4M3 2h10"/></svg>
         </button>
-        <input ref={refImport} type="file" accept=".json" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onImporter(f); e.target.value = ""; }} />
+        <input ref={refImport} type="file" accept=".json,.attic" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onImporter(f); e.target.value = ""; }} />
         {/* Les exemples, à côté des deux flèches : une page cornée, qui n'est ni un envoi ni une
             réception. Ils viennent du paquet et non du disque, et s'ouvrent donc sans fichier
             courant : l'enregistrement en fera une copie dans le dossier de travail. */}

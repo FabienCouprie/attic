@@ -99,6 +99,20 @@ export interface ServicesDomaine {
 
   /** L'inverse : ce qui revient du cadre, rendu au domaine. */
   depuisTransport(valeur: unknown): unknown;
+
+  /**
+   * Une valeur du domaine décrite pour un paquet `.attic`, SANS PERTE, ou `null` si le domaine ne la
+   * reconnaît pas.
+   *
+   * LA FORME est faite d'objets simples, de nombres, de chaînes et de tableaux typés : ce que
+   * `ui/paquet/valeurs-paquet.ts` sait écrire. Elle doit porter tout ce qui fait la valeur, y compris
+   * ce que le domaine tient à côté d'elle, faute de quoi la valeur relue serait une autre. C'est ce
+   * qui la sépare de `versTransport`, qui ne porte que ce qu'un calcul isolé doit recevoir.
+   */
+  versPaquet(valeur: unknown): Record<string, unknown> | null;
+
+  /** L'inverse : la valeur que décrit une forme, ou `null` quand la forme n'est pas du domaine. */
+  depuisPaquet(forme: Record<string, unknown>): unknown;
 }
 
 const NEUTRES: ServicesDomaine = {
@@ -112,6 +126,8 @@ const NEUTRES: ServicesDomaine = {
   // cadre qui recevrait une valeur inclonable le dira lui-même, et c'est au domaine de l'éviter.
   versTransport: (valeur) => ({ ok: true, valeur }),
   depuisTransport: (valeur) => valeur,
+  versPaquet: () => null,
+  depuisPaquet: () => null,
 };
 
 let services: ServicesDomaine = NEUTRES;
