@@ -209,12 +209,17 @@ describe("le pilote de graphe", () => {
     // applications. Il y prend `relancerEtAttendre`, le relevé des relances et des aperçus, et
     // `apercusPoses`, exporté pour lui : un paquet rouvert pose ses lecteurs sans que Lancer soit pressé.
     // Il avait d'abord gardé son attente à lui, et c'est ce cas qui l'a vu.
+    //
+    // LE GRAPHE DE COMPLEXITÉ Y PREND `semer` PUIS `relancerEtAttendre` à chaque étape : bulles
+    // ouvertes, bulles repliées, après « Grouper en outil », puis dans un navigateur neuf où le
+    // projet exporté est rouvert par le bouton d'import.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["boucle-dans-lot-dans-application.spec.ts",
         "boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
         "copier-coller-annotations-dans-application.spec.ts",
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
+        "graphe-complexite-dans-application.spec.ts",
         "lecteur-apercu-perdu-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "menu-contextuel-dans-application.spec.ts",
         "montage-gains-pistes.spec.ts", "montage-piste-branchee.spec.ts",
