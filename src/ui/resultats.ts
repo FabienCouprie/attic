@@ -43,6 +43,27 @@ function prevenir(id: string) {
   for (const f of [...liste]) f();
 }
 
+/** Ce qu'une écriture a changé : le nœud, son résultat d'avant et celui d'après. */
+export type Ecrivain = (id: string, avant: ResultatNoeud, apres: ResultatNoeud) => void;
+const ecrivains = new Set<Ecrivain>();
+
+/**
+ * La sonde du journal de passe : chaque écriture QUI CHANGE QUELQUE CHOSE lui est signalée, dans
+ * l'ordre où elle a lieu, avant que les vues ne soient prévenues. Rend de quoi la retirer.
+ *
+ * ELLE EST INERTE SANS ÉCOUTEUR : une écriture ne paie alors que la lecture d'une taille. Seul
+ * `ui/journal-de-passe.ts` s'y abonne, et seulement quand une spec le demande.
+ */
+export function surEcriture(rappel: Ecrivain): () => void {
+  ecrivains.add(rappel);
+  return () => { ecrivains.delete(rappel); };
+}
+
+function signaler(id: string, avant: ResultatNoeud, apres: ResultatNoeud) {
+  if (ecrivains.size === 0) return;
+  for (const f of [...ecrivains]) f(id, avant, apres);
+}
+
 /**
  * Le résultat d'un nœud, ou le vide par défaut.
  *
@@ -86,7 +107,9 @@ export function poserResultat(id: string, correctif: Record<string, unknown>): v
     if (!(cle in apres) || apres[cle] !== val) { apres[cle] = val; change = true; }
   }
   if (!change) return;
-  resultats.set(id, Object.freeze(apres));
+  const fige = Object.freeze(apres);
+  resultats.set(id, fige);
+  signaler(id, avant, fige);
   prevenir(id);
 }
 
@@ -104,14 +127,15 @@ export function effacerResultats(ids?: Iterable<string>, garder?: ReadonlySet<st
     if (!avant) continue;
     if (!garder || garder.size === 0) {
       resultats.delete(id);
+      signaler(id, avant, RESULTAT_VIDE);
       prevenir(id);
       continue;
     }
     const restant: Record<string, unknown> = {};
     for (const [cle, val] of Object.entries(avant)) if (garder.has(cle)) restant[cle] = val;
     if (Object.keys(restant).length === Object.keys(avant).length) continue;
-    if (Object.keys(restant).length === 0) resultats.delete(id);
-    else resultats.set(id, Object.freeze(restant));
+    if (Object.keys(restant).length === 0) { resultats.delete(id); signaler(id, avant, RESULTAT_VIDE); }
+    else { const fige = Object.freeze(restant); resultats.set(id, fige); signaler(id, avant, fige); }
     prevenir(id);
   }
 }

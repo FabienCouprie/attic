@@ -89,6 +89,7 @@
     "racines": "node scripts/racines-du-journal.cjs",
     "test:empreintes-exemples": "playwright test tests-e2e/empreintes-exemples.spec.ts",
     "test:graphe-complexite": "playwright test tests-e2e/graphe-complexite-dans-application.spec.ts",
+    "test:journal-de-passe": "playwright test tests-e2e/journal-de-passe.spec.ts",
     "test:lexique-dictee": "playwright test tests-e2e/lexique-dictee.spec.ts"
   },
   "build": {

@@ -213,13 +213,19 @@ describe("le pilote de graphe", () => {
     // LE GRAPHE DE COMPLEXITÉ Y PREND `semer` PUIS `relancerEtAttendre` à chaque étape : bulles
     // ouvertes, bulles repliées, après « Grouper en outil », puis dans un navigateur neuf où le
     // projet exporté est rouvert par le bouton d'import.
+    //
+    // LE JOURNAL DE PASSE Y PREND `semerEtLancer`, comme la base du son dont il rejoue les exemples,
+    // `avantDeLancer` pour remettre son journal à zéro au clic, et pour ses gestes `semer`,
+    // `lancerLeNoeudEtAttendre` puis `relancerEtAttendre`, le ↺ entre les deux. Il ne relève que ce
+    // que la passe écrit dans les magasins. Il attend en plus que l'ordonnanceur ne compte plus
+    // aucune passe, par `expect.poll` : le pilote rend la main avant la fin du ménage.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["boucle-dans-lot-dans-application.spec.ts",
         "boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
         "copier-coller-annotations-dans-application.spec.ts",
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
-        "graphe-complexite-dans-application.spec.ts",
+        "graphe-complexite-dans-application.spec.ts", "journal-de-passe.spec.ts",
         "lecteur-apercu-perdu-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "menu-contextuel-dans-application.spec.ts",
         "montage-gains-pistes.spec.ts", "montage-piste-branchee.spec.ts",

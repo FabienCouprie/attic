@@ -52,6 +52,27 @@ function prevenir(id: string) {
   for (const f of [...liste]) f();
 }
 
+/** Ce qu'une écriture a changé : le nœud, son état d'avant et celui d'après. */
+export type Ecrivain = (id: string, avant: EtatNoeud, apres: EtatNoeud) => void;
+const ecrivains = new Set<Ecrivain>();
+
+/**
+ * La sonde du journal de passe : chaque écriture QUI CHANGE QUELQUE CHOSE lui est signalée, dans
+ * l'ordre où elle a lieu, avant que les vues ne soient prévenues. Rend de quoi la retirer.
+ *
+ * ELLE EST INERTE SANS ÉCOUTEUR : une écriture ne paie alors que la lecture d'une taille. Seul
+ * `ui/journal-de-passe.ts` s'y abonne, et seulement quand une spec le demande.
+ */
+export function surEcriture(rappel: Ecrivain): () => void {
+  ecrivains.add(rappel);
+  return () => { ecrivains.delete(rappel); };
+}
+
+function signaler(id: string, avant: EtatNoeud, apres: EtatNoeud) {
+  if (ecrivains.size === 0) return;
+  for (const f of [...ecrivains]) f(id, avant, apres);
+}
+
 /**
  * L'état d'un nœud, ou l'attente par défaut.
  *
@@ -86,7 +107,9 @@ export function poserStatut(id: string, statut: string, progression?: string, pr
   const avant = statutDe(id);
   if (avant.statut === statut && avant.progression === progression
       && avant.progressionDuNoeud === progressionDuNoeud) return;
-  etats.set(id, Object.freeze({ statut, progression, progressionDuNoeud }));
+  const apres = Object.freeze({ statut, progression, progressionDuNoeud });
+  etats.set(id, apres);
+  signaler(id, avant, apres);
   prevenir(id);
 }
 
@@ -103,7 +126,9 @@ export function poserApercu(id: string, fraction: number | undefined): void {
     : Math.round(Math.min(1, Math.max(0, fraction)) * 100) / 100;
   const avant = statutDe(id);
   if (avant.apercu === arrondie) return;
-  etats.set(id, Object.freeze({ ...avant, apercu: arrondie }));
+  const apres = Object.freeze({ ...avant, apercu: arrondie });
+  etats.set(id, apres);
+  signaler(id, avant, apres);
   prevenir(id);
 }
 
@@ -136,8 +161,10 @@ export function reinitialiserStatuts(ids?: Iterable<string>): void {
   if (!ids) proprietaires.clear();
   for (const id of cibles) {
     proprietaires.delete(id);
-    if (!etats.has(id)) continue;
+    const avant = etats.get(id);
+    if (!avant) continue;
     etats.delete(id);
+    signaler(id, avant, ETAT_ATTENTE);
     prevenir(id);
   }
 }

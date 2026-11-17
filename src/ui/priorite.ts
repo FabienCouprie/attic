@@ -21,6 +21,20 @@ function prevenir(id: string | null) {
   for (const f of [...liste]) f();
 }
 
+/** Ce qu'une écriture a changé : le prioritaire d'avant et celui d'après. */
+export type Ecrivain = (avant: string | null, apres: string | null) => void;
+const ecrivains = new Set<Ecrivain>();
+
+/**
+ * La sonde du journal de passe : chaque changement de prioritaire lui est signalé, avant que les
+ * vues ne soient prévenues. Rend de quoi la retirer. Inerte sans écouteur ; seul
+ * `ui/journal-de-passe.ts` s'y abonne, et seulement quand une spec le demande.
+ */
+export function surEcriture(rappel: Ecrivain): () => void {
+  ecrivains.add(rappel);
+  return () => { ecrivains.delete(rappel); };
+}
+
 /** Le nœud prioritaire, ou `null` quand aucun ne l'est. */
 export function noeudPrioritaire(): string | null {
   return prioritaire;
@@ -31,6 +45,7 @@ export function definirPrioritaire(id: string | null): void {
   if (id === prioritaire) return;
   const avant = prioritaire;
   prioritaire = id;
+  if (ecrivains.size > 0) for (const f of [...ecrivains]) f(avant, id);
   prevenir(avant);
   prevenir(id);
 }
