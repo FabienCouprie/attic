@@ -211,6 +211,24 @@ ECRIRE_EMPREINTES_EXEMPLES=1 npm run test:empreintes-exemples
   valeur efficace et cinq sur la crête — une crête est **un seul échantillon sur des millions**,
   donc la statistique la plus fragile du relevé. Les exemples qui attendent un fichier de
   l'utilisateur sont hors de portée, mécaniquement.
+- **`tests-e2e/graphe-complexite-dans-application.spec.ts`** — l'épreuve de la conception du
+  graphe, demandée par Fabien le 2026-11-16 et gardée par sa décision. `exemples/gestion_graphe_complexite.json`
+  emboîte trois boucles par passes (créneau, voix, cercle), replie leurs composants dans une bulle
+  elle-même dans une bulle, et finit sur un point d'écoute. Le spec le mène bulles ouvertes, bulles
+  repliées, après « Grouper en outil », puis rouvert d'un fichier dans un navigateur neuf, et compare
+  chaque fois **le son rendu à un attendu calculé à la main** dans `graphe-complexite-attendu.ts` :
+  la durée à la trame, les hauteurs de vingt-trois segments, les silences, la crête et la valeur
+  efficace. Les empreintes, elles, ne savent que dire si le son a changé ; celle-ci dit s'il est juste.
+
+```bash
+npm run test:graphe-complexite
+```
+
+  **Vu rouge** sur deux fautes plantées : une boucle par cercle qui ne réinjecte plus, un début de
+  boucle par voix qui rend la polyphonie entière. **Ce qu'il tient pour vrai et qui reste une
+  question** : un méta qui enferme son point d'écoute ne montre aucun lecteur sur le canevas, et ne
+  s'entend qu'ouvert, l'écoute sélectionnée. C'est la règle écrite le 2026-09-20, et la ligne qui le
+  dit dans le spec est commentée pour le jour où elle changerait.
 - **`tests-e2e/lexique-dictee.spec.ts`** — le **seul** instrument qui puisse vérifier que le moteur
   vocal sait prononcer la grammaire qu'on lui donne. `plugins/lexique-vosk.ts` tient la liste des
   mots que le modèle français n'a pas, et cette liste est **incomplète par construction** : elle se

@@ -16,6 +16,13 @@
 //   3. LES APERÇUS SE POSENT APRÈS LE STATUT, ET PAS TOUS ENSEMBLE. Une attente fixe d'une seconde
 //      et demie relevait six lecteurs sur `canon-de-proportions` à une passe et huit à la suivante.
 //      On attend que leur nombre CESSE DE BOUGER, ce qui s'arrête tout seul quand il n'y en a aucun.
+//   4. UN RUN DE BOUCLES PAR PASSES N'EST FINI QU'À SA DERNIÈRE PASSE, et les pastilles ne le disent
+//      pas : chaque passe est une exécution entière, et entre deux passes plus rien n'est en cours ni
+//      en attente. Relevé le 2026-11-16 sur `gestion_graphe_complexite`, douze passes en 4,4 s :
+//      onze trous de 40 à 90 ms où toutes les pastilles sont au repos, et le pilote rendait la main
+//      au premier, avec `tourner` encore en cours au relevé. LE BOUTON, LUI, LE DIT : il reste
+//      « Arrêter » de la première passe à la dernière, sans un retour à « Lancer » sur ces onze
+//      trous. On attend donc aussi qu'il ne le dise plus.
 //
 // CE QU'IL NE FAIT PAS : juger. Il rend l'état de chaque nœud et ce que chacun fait entendre ;
 // c'est à l'appelant de décider si cela lui convient.
@@ -132,7 +139,10 @@ export async function relancerEtAttendre(page: Page, o: OptionsPilote = {}): Pro
     if (puces.length === 0) return false;
     const enAttente = [...document.querySelectorAll(".attic-node-statut-puce.attente")]
       .filter((p) => !admis.includes(p.closest("[data-id]")?.getAttribute("data-id") ?? ""));
-    return document.querySelectorAll(".attic-node-statut-puce.en-cours").length === 0 && enAttente.length === 0;
+    // La quatrième correction de l'en-tête : le run entier, et non la passe, tient le bouton.
+    const runEnCours = document.querySelector(".attic-btn-lancer.attic-btn-arreter") !== null;
+    return !runEnCours && document.querySelectorAll(".attic-node-statut-puce.en-cours").length === 0
+      && enAttente.length === 0;
   }, [...(o.attentesAdmises ?? [])], { timeout: o.delaiRunMs ?? DELAI_RUN_MS });
 
   await apercusPoses(page);

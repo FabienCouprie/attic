@@ -324,6 +324,19 @@
         "noeud-2 : Entrée en erreur : noeud-1"
       ]
     },
+    "gestion_graphe_complexite.json": {
+      "lecteurs": {
+        "ecoute": {
+          "rms": 0.14986744134981195,
+          "crete": 0.5038645267486572,
+          "trames": 518175,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 368.36881930461954
+        }
+      },
+      "erreurs": []
+    },
     "groove-etire-et-tourne.json": {
       "lecteurs": {
         "groove": {

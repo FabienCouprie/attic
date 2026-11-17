@@ -204,12 +204,17 @@ describe("le pilote de graphe", () => {
     //
     // LE LECTEUR DONT L'APERÇU EST PERDU Y PREND `semerEtLancer` : il sème un métronome et le lance,
     // puis fait perdre à son aperçu ses octets et presse le ▶ ; ses attentes passent par `expect.poll`.
+    //
+    // LE GRAPHE DE COMPLEXITÉ Y PREND `semer` PUIS `relancerEtAttendre` à chaque étape : bulles
+    // ouvertes, bulles repliées, après « Grouper en outil », puis dans un navigateur neuf où le
+    // projet exporté est rouvert par le bouton d'import.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["boucle-dans-lot-dans-application.spec.ts",
         "boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
         "copier-coller-annotations-dans-application.spec.ts",
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
+        "graphe-complexite-dans-application.spec.ts",
         "lecteur-apercu-perdu-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "menu-contextuel-dans-application.spec.ts",
         "montage-gains-pistes.spec.ts", "montage-piste-branchee.spec.ts",
