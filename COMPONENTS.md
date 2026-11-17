@@ -9925,7 +9925,7 @@ Generates a tablature (SVG) from a string-fret text notation. Format: « string-
 
 *Saves an image to disk and returns its path.*
 
-Saves an image file to the working directory. Connect the 'Image' output of a Songsee node or any other image-producing node. The saved file path is emitted on the 'Path' output. Requires Electron.
+Saves the image received on the « Image » input to the working directory. Requires Electron. The image bytes are written as they are, with no conversion or re-encoding. The format is read from these bytes, and the file extension follows it: .png, .jpg, .webp, .gif, .bmp, .avif or .svg. The « Name » setting gives the file name; an image extension it carries is replaced by the format's own. An image whose format is not recognized is written under the name as entered, unchanged. The « Path » output gives the path of the written file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9934,7 +9934,7 @@ Saves an image file to the working directory. Connect the 'Image' output of a So
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Name | text | `export.png` |  | Output image filename (in the working directory). The extension is adapted to the actual image format. |
+| Name | text | `export.png` |  | Name of the file written to the working directory. An image extension it carries is replaced by the one of the format the image bytes carry: .png, .jpg, .webp, .gif, .bmp, .avif or .svg. An image whose format is not recognized is written under this name, unchanged. |
 
 #### Instrument End
 
