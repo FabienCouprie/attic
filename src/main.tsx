@@ -5,6 +5,9 @@
 // passe en tête. `src/docs/composition.test.ts` le tient, un commentaire ne survivant pas au premier
 // trieur d'imports.
 import "./composition";
+// LE JOURNAL DE PASSE S'ARME AVANT L'APPLICATION, pour relever aussi ce qu'elle écrit en se
+// chargeant. Sans la globale d'une spec, il ne s'abonne à rien. Voir `ui/journal-de-passe.ts`.
+import "./ui/journal-de-passe";
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";

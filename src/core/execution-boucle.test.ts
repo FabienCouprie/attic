@@ -10,6 +10,14 @@
 // fois, le second run sur le cache du premier ; des fiches d'essai qui couvrent chaque branche ; une
 // horloge espionnée ; un seul journal où s'écrivent dans l'ordre les statuts, les ombres, les poses
 // rendues au crochet et la console. Le témoin et le nouveau jouent chacun sur leur propre cache.
+//
+// LA POSE D'UN NŒUD REGARDÉ PREND UN VRAI TOUR DE MACROTÂCHE, comme celle du crochet, qui calcule
+// un correctif et écrit dans le magasin. Elle écrivait son entrée sans rien attendre : retirer
+// l'attente de la pose dans la boucle laissait alors le journal identique, et le témoin vert. Elle
+// écrit maintenant `pose`, respire, puis écrit `pose-fin`, et une attente perdue fait passer
+// l'« en cours » du nœud suivant avant la fin de la pose. Faute plantée le 2026-11-16, l'attente de
+// la pose retirée de la boucle : trois cas sur six tombent, l'égalité au témoin, celle du jeton
+// périmé, et le cas de l'ordre, qui nomme le nœud passé trop tôt.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { creerTablesDePasse, estResultatEnErreur, executerLesNoeuds, type QuestionsDuRetour, type TablesDePasse } from "./execution";
@@ -96,6 +104,13 @@ const GRAPHES: Record<string, { noeuds: NoeudG[]; aretes: AreteG[]; regardes: st
 let horloge = 0;
 let journal: Journal = [];
 
+/** La pose d'un nœud regardé, pour les deux boucles : elle rend la main avant d'avoir fini. */
+async function poserEnRespirant(id: string) {
+  journal.push(["pose", id]);
+  await respirer();
+  journal.push(["pose-fin", id]);
+}
+
 function questions(): QuestionsDuRetour {
   return {
     async porterALaFrequenceDeTravail(v) { return v.map((x) => (x && typeof x === "object" ? { ...(x as object), converti: true } : x)); },
@@ -125,7 +140,7 @@ async function temoin(r: Run) {
   const poserStatutOmbre = (id: string, v: string, s: string) => { journal.push(["ombre", id, v, s]); };
   const aPoser = new Set<string>();
   const estRegarde = (id: string) => r.regardes.includes(id);
-  const poserUnNoeud = async (id: string) => { journal.push(["pose", id]); };
+  const poserUnNoeud = poserEnRespirant;
   type ValeurTransportee = unknown;
   const traitesCeRun = new Set<string>();
   const marquerMetaEnEchec = (idAplati: string, detail?: string) => {
@@ -252,7 +267,7 @@ async function nouveau(r: Run) {
     poserOmbre: (id, v, s) => { journal.push(["ombre", id, v, s]); },
     quandUnNoeudAFini: (id) => {
       aPoser.add(id);
-      if (r.regardes.includes(id)) return (async () => { journal.push(["pose", id]); })();
+      if (r.regardes.includes(id)) return poserEnRespirant(id);
     },
   });
   return aPoser;
@@ -314,7 +329,29 @@ describe("la boucle d'une passe", () => {
     }
     // LE TÉMOIN A TOUT TRAVERSÉ : un relevé qui ne verrait que des nœuds terminés serait égal pour rien.
     expect([...vus].sort()).toEqual(
-      ["error", "heriter", "ombre", "pose", "statut:en_cours", "statut:erreur", "statut:termine"].sort());
+      ["error", "heriter", "ombre", "pose", "pose-fin", "statut:en_cours", "statut:erreur", "statut:termine"].sort());
+  });
+
+  it("LA POSE D'UN NŒUD REGARDÉ EST FINIE AVANT QUE LE SUIVANT NE PASSE « EN COURS »", async () => {
+    // Le nouveau seul : c'est lui que l'attente de `execution.ts` tient. Le premier run, où tout
+    // tourne ; le second sert le cache et n'exécute presque rien.
+    let suivies = 0;
+    for (const nom of Object.keys(GRAPHES)) {
+      const [{ rendu }] = await deuxRuns(nom);
+      const j = rendu.journal;
+      for (const [i, e] of j.entries()) {
+        if (e[0] !== "pose") continue;
+        const fin = j.findIndex((x, k) => k > i && x[0] === "pose-fin" && x[1] === e[1]);
+        const enCours = j.findIndex((x, k) => k > i && x[0] === "statut" && x[2] === "en_cours");
+        expect(fin, `${nom} : la pose de ${String(e[1])} ne finit jamais dans le journal`).toBeGreaterThan(i);
+        if (enCours < 0) continue;
+        suivies++;
+        expect(fin, `${nom} : ${String(j[enCours][1])} passe « en cours » avant la fin de la pose de ${String(e[1])}`)
+          .toBeLessThan(enCours);
+      }
+    }
+    // UN CAS QUI NE TROUVERAIT AUCUNE POSE SUIVIE D'UN NŒUD À EXÉCUTER SERAIT VERT POUR RIEN.
+    expect(suivies).toBeGreaterThan(0);
   });
 
   it("ET SOUS UN JETON PÉRIMÉ, qui n'écrit rien au cache", async () => {
