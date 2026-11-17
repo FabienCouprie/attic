@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**512 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
+**513 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -101,7 +101,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 | Séquenceur d'accords | `sequenceur-accords` | VueSequenceurAccords | — | 480 × 380 | non | oui | non |
 | Séquenceur de batterie avancé | `sequenceur-batterie-avance` | VueSequenceurBatterieAvance | — | 480 × 360 | non | oui | non |
 | Séquenceur mélodique | `sequenceur-melodique` | VueSequenceurMelodique | — | 460 × 400 | non | oui | non |
-| Sortie audio | `sortie-audio` | — | VueExport | 240 × 118 | non | oui | non |
+| Sortie audio | `sortie-audio` | — | VueExport | 240 × 140 | non | oui | non |
 | Sortie MIDI | `sortie-midi` | — | VueExport | 240 × 162 | non | oui | non |
 | Sortie texte | `sortie-texte` | VueSortieTexte | — | 280 × 250 | non | oui | oui |
 | Entrée texte | `source-texte` | VueSourceTexte | — | 280 × 200 | non | oui | non |
@@ -289,6 +289,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Fiche technique | `fiche-technique` | 240 × 140 |
 | Filtrage par un spectre | `filtrage-spectre` | 240 × 140 |
 | Filtre de séquence | `filtre-sequence` | 240 × 162 |
+| Filtre TB-303 | `filtre-tb303` | 240 × 184 |
 | Flanger | `flanger` | 240 × 162 |
 | Flou spectral | `flou-spectral` | 240 × 118 |
 | Flou du spectrogramme | `flou-spectrogramme` | 240 × 118 |

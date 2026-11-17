@@ -8,8 +8,8 @@ que comme récipient fige le fil et devient transposable dès qu'on en extrait u
 Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rendu ayant lieu ailleurs.
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
-- **récipient** : 96 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 240 · transposable tel quel
+- **récipient** : 97 · fige, transposable après extraction d'un cœur par voie
+- **pur** : 245 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -157,6 +157,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | emotion-mesures.ts | pur | — |
 | emotion.ts | recipient | AudioBuffer |
 | empreinte-wav.ts | recipient | AudioBuffer |
+| enveloppe-tb303.ts | pur | — |
 | enveloppe-transfert.ts | pur | — |
 | enveloppe.ts | recipient | AudioBuffer |
 | esthetique.ts | pur | — |
@@ -168,6 +169,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | features-piste.ts | recipient | AudioBuffer |
 | fenetres-analyse.ts | pur | — |
 | fft.ts | pur | — |
+| filtre-tb303.ts | pur | — |
 | fm-operateurs.ts | pur | — |
 | fof.ts | pur | — |
 | fondamentale-manquante.ts | pur | — |
@@ -213,6 +215,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | koch.ts | recipient | AudioBuffer |
 | lame.ts | pur | — |
 | lancer-fiche.ts | rendu | OfflineAudioContext |
+| lecteur-pochette-essai.ts | pur | — |
 | lecture-sinc.ts | pur | — |
 | lecture-vive.ts | pur | — |
 | lfo.ts | pur | — |
@@ -271,6 +274,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | oscillateur-analogique.ts | pur | — |
 | palette-harmonique.ts | recipient | AudioBuffer |
 | palettes-couleurs.ts | pur | — |
+| paquet-audio.ts | recipient | AudioBuffer |
 | paradoxe-triton.ts | pur | — |
 | parfum.ts | pur | — |
 | parole-datee.ts | recipient | AudioBuffer |
@@ -286,6 +290,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | pixeltone.ts | recipient | AudioBuffer |
 | platine.ts | recipient | AudioBuffer |
 | png-essai.ts | pur | — |
+| pochette.ts | pur | — |
 | polyfill-audiobuffer.ts | recipient | AudioBuffer |
 | pulsars.ts | recipient | AudioBuffer |
 | pulsation.ts | pur | — |
@@ -346,6 +351,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | styles-film.ts | pur | — |
 | suites-entieres.ts | pur | — |
 | superforme.ts | pur | — |
+| surechantillonnage-double.ts | pur | — |
 | synthese-features.ts | pur | — |
 | table-onde.ts | pur | — |
 | temperaments.ts | pur | — |

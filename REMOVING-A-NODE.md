@@ -39,11 +39,17 @@ Also delete the view component function itself if it's no longer used by any oth
 If users have saved workflows that reference the old node id, add an alias in `src/core/registre.ts` so the saved graph still loads:
 
 ```ts
-const ALIAS: Record<string, string> = {
+export const ALIAS: Readonly<Record<string, string>> = {
   ...
   "old-node-id": "replacement-node-id",  // or just remove the alias if there's no replacement
 };
 ```
+
+The compatibility guard (`src/docs/compatibilite.test.ts`) holds this step: a node that leaves the
+registry without an alias is a **break**, and so is an alias whose replacement does not take back
+the old node's ports at the same ranks, or its settings under the same names. Each break needs its
+migration or a declaration in `src/docs/ruptures-declarees.json`, with its reason; then
+`npm run docs:compatibilite` rewrites `COMPATIBILITE.json`.
 
 ### 6. Remove unused imports
 

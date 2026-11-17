@@ -143,6 +143,52 @@ describe("un nœud ordinaire, et son lecteur", () => {
     expect(await calculerCorrectifResultat(noeud("b", "autonome"), etat({ resultats: new Map([["b", [son("b")]]]) }))).toBeNull();
   });
 
+  // LA POCHETTE DE « SORTIE AUDIO » ARRIVE PAR LE CANAL D'AFFICHAGE, et à « Volume » 100 % son tampon
+  // est celui de l'amont : sans ce que ces cas tiennent, la brancher après un premier run gardait la
+  // même adresse, et le fichier enregistré sortait sans elle.
+  it("UN AFFICHAGE NEUF SUR UN NŒUD DONT L'APERÇU EST LE FICHIER : même tampon, l'aperçu se refait et le reçoit", async () => {
+    const s = son("a");
+    const affichage = { pochette: { mime: "image/png", octets: new Uint8Array([1]) } };
+    poserResultat("a", { audioResultatUrl: "blob:avant/a", audioResultatBuffer: s,
+      audioResultatRefaisable: { bits: lireProfondeurExport(), reecriture: { securiser: true, nomPourMetadonnees: "Fichier" } } });
+    let recu: unknown;
+    configurerServicesApercu({
+      valeurRepresentative: (vals) => vals.find(estSon), apercuUtile: () => true, apercuCourbe: () => undefined,
+      blobApercu: async (_v, o) => { recu = o.affichage; return new Blob(["x"]); },
+    });
+    const passe = etat({ resultats: new Map([["a", [s]]]), affichageParNoeud: new Map([["a", affichage]]) });
+    const patch = await calculerCorrectifResultat(noeud("a", "fichier"), passe);
+    expect(revoquees).toEqual(["blob:avant/a"]);
+    expect(patch!.audioResultatUrl).toBeUndefined();
+    expect((patch!.audioResultatRefaisable as { reecriture: { affichage?: unknown } }).reecriture.affichage).toBe(affichage);
+    await passe.lecteursAEcrire.get("a")!();
+    expect(recu, "l'écriture reçoit le canal tel que le run l'a rendu").toBe(affichage);
+  });
+
+  it("LE MÊME AFFICHAGE, rendu par le cache dans un autre objet : l'adresse est gardée", async () => {
+    const s = son("a");
+    const pochette = { mime: "image/png", octets: new Uint8Array([1]) };
+    const refaisable = { bits: lireProfondeurExport(), reecriture: { securiser: true, nomPourMetadonnees: "Fichier", affichage: { pochette } } };
+    poserResultat("a", { audioResultatUrl: "blob:avant/a", audioResultatBuffer: s, audioResultatRefaisable: refaisable });
+    const passe = etat({ resultats: new Map([["a", [s]]]), affichageParNoeud: new Map([["a", { pochette }]]) });
+    const patch = await calculerCorrectifResultat(noeud("a", "fichier"), passe);
+    expect(patch!.audioResultatUrl).toBe("blob:avant/a");
+    expect(revoquees).toEqual([]);
+    expect(passe.lecteursAEcrire.size).toBe(0);
+  });
+
+  it("UNE POCHETTE DÉBRANCHÉE refait l'aperçu, et un nœud dont l'aperçu n'est pas le fichier ne transmet rien", async () => {
+    const s = son("a");
+    poserResultat("a", { audioResultatUrl: "blob:avant/a", audioResultatBuffer: s, audioResultatRefaisable: {
+      bits: lireProfondeurExport(), reecriture: { securiser: true, nomPourMetadonnees: "Fichier", affichage: { pochette: {} } } } });
+    const sansPochette = await calculerCorrectifResultat(noeud("a", "fichier"), etat({ resultats: new Map([["a", [s]]]) }));
+    expect(sansPochette!.audioResultatUrl).toBeUndefined();
+    expect(revoquees).toEqual(["blob:avant/a"]);
+    const ordinaire = await calculerCorrectifResultat(noeud("b", "son"),
+      etat({ resultats: new Map([["b", [son("b")]]]), affichageParNoeud: new Map([["b", { pochette: {} }]]) }));
+    expect((ordinaire!.audioResultatRefaisable as { reecriture: object }).reecriture).not.toHaveProperty("affichage");
+  });
+
   it("UNE IMAGE REÇOIT UNE ADRESSE, gardée tant que c'est le même fichier", async () => {
     const image = new File(["x"], "i.png", { type: "image/png" });
     const passe = etat({ resultats: new Map([["a", [image]]]) });
@@ -152,6 +198,18 @@ describe("un nœud ordinaire, et son lecteur", () => {
     const second = await calculerCorrectifResultat(noeud("a", "son"), passe);
     expect(second!.imageResultatUrl).toBe("blob:faux/1");
     expect(revoquees).toEqual([]);
+  });
+
+  it("LE WEBP, LE GIF ET LE BMP ONT UN APERÇU, comme le PNG, le JPEG et le SVG ; un autre type n'en a pas", async () => {
+    // Les trois premiers manquaient : un WebP chargé dans « Entrée image » ne montrait rien.
+    const avecApercu = ["image/png", "image/jpeg", "image/svg+xml", "image/webp", "image/gif", "image/bmp"];
+    const sansApercu = ["image/tiff", "image/avif", "", "audio/midi", "application/pdf"];
+    for (const type of [...avecApercu, ...sansApercu]) {
+      const image = new File(["x"], "i", { type });
+      const patch = await calculerCorrectifResultat(noeud(type || "vide", "son"),
+        etat({ resultats: new Map([[type || "vide", [image]]]) }));
+      expect(patch?.imageResultatFile, type || "(vide)").toBe(avecApercu.includes(type) ? image : undefined);
+    }
   });
 });
 

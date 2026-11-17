@@ -42,6 +42,9 @@ const TOUCHES: Record<string, string> = {
 export const OUTILS: OutilBarre[] = [
   { id: "sauvegarder", famille: "fichier", cle: "barre.sauvegarder", raccourci: "Ctrl+S" },
   { id: "exporter", famille: "fichier", cle: "barre.exporter", raccourci: "Ctrl+Shift+S" },
+  // À côté de l'export, demandé par Fabien le 2026-11-16 : le même projet, avec les données du cache,
+  // en paquet `.attic`. Sans raccourci : Ctrl+Maj+S reste l'export `.json`.
+  { id: "exporterAvecDonnees", famille: "fichier", cle: "barre.exporterAvecDonnees" },
   { id: "importer", famille: "fichier", cle: "barre.importer", raccourci: "Ctrl+O" },
   // À côté des deux flèches, demandé par Fabien : un exemple s'ouvre comme un projet, mais il vient
   // du paquet et non du disque, et c'est ce qui le rend non modifiable.

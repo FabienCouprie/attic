@@ -21,11 +21,12 @@
  *
  * LE NOM POUR LES MÉTADONNÉES NE SE REDÉRIVE PAS D'UN NŒUD : il vient de sa fiche. Le moteur le
  * dépose donc à côté de l'adresse de l'aperçu, et `ui/refaire-apercus.ts` le relit. Refaire sans
- * lui produirait un fichier qui a perdu sa provenance.
+ * lui produirait un fichier qui a perdu sa provenance. L'affichage du run y est déposé pour la même
+ * raison : refaire sans lui produirait un fichier qui a perdu sa pochette.
  */
 export interface ApercuRefaisable {
   bits: OptionsApercu["bits"];
-  reecriture: Pick<OptionsApercu, "securiser" | "nomPourMetadonnees">;
+  reecriture: Pick<OptionsApercu, "securiser" | "nomPourMetadonnees" | "affichage">;
 }
 
 /** Ce qu'il faut pour fabriquer l'aperçu d'une valeur. */
@@ -40,6 +41,16 @@ export interface OptionsApercu {
    * entière, et un aperçu intermédiaire n'est jamais livré.
    */
   nomPourMetadonnees?: string;
+  /**
+   * Ce que le run a rendu par son canal d'affichage, fourni AUX MÊMES CONDITIONS que le nom : quand
+   * l'aperçu est le fichier livré.
+   *
+   * POURQUOI LE SHELL LE TRANSMET SANS LE LIRE. Un fichier livré peut avoir à porter ce que son nœud
+   * a préparé à côté de la valeur : côté audio, la pochette que « Sortie audio » a reçue. Ce que ce
+   * canal contient appartient au domaine, qui l'a écrit par l'exécuteur et le relit ici ; le shell
+   * ne fait que le porter de l'un à l'autre, et ne nomme rien de ce qu'il porte.
+   */
+  affichage?: Readonly<Record<string, unknown>>;
   /** De quoi rendre la main entre deux tranches d'écriture, pour ne pas figer l'interface. */
   souffle: { tour: () => Promise<boolean> };
   /**

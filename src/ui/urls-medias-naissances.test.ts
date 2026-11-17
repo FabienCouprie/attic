@@ -33,6 +33,7 @@ const CLASSEES: Record<string, { appels: number; raison: string }> = {
   "ui/AtelierNode.tsx": { appels: 1, raison: "l'écoute d'un tampon, tenue par la vue et révoquée par elle" },
   "ui/dictee/useDictee.ts": { appels: 1, raison: "le code du module audio de la dictée, et non un média" },
   "ui/ecriture-projet.ts": { appels: 1, raison: "le téléchargement du projet en mode web, révoqué une seconde après le clic" },
+  "ui/paquet/valeurs-paquet.ts": { appels: 1, raison: "l'adresse d'un affichage relue d'un paquet, révoquée par le magasin des résultats comme celle qu'elle remplace" },
   "vues-domaine/PochetteGen.tsx": { appels: 1, raison: "l'aperçu d'une pochette, tenu par la vue et révoqué par elle" },
   "vues-domaine/Songsee.tsx": { appels: 1, raison: "l'image d'un spectre, tenue par la vue et révoquée par elle" },
   "vues-domaine/vues-lecteur.tsx": { appels: 1, raison: "la piste du lecteur de dossier, tenue par la vue et révoquée par elle" },

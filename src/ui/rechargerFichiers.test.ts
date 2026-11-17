@@ -116,17 +116,24 @@ describe("rechargerFichiersPersistes : ce que chaque fiche retrouve", () => {
     expect(adresses).toEqual([]);
   });
 
-  it("UNE ENTRÉE IMAGE prend son type de l'extension : PNG, SVG, et JPEG pour le reste", async () => {
-    disque["C:/i/a.PNG"] = { nom: "a.PNG", donnees: octets("p") };
-    disque["C:/i/b.svg"] = { nom: "b.svg", donnees: octets("s") };
-    disque["C:/i/c.webp"] = { nom: "c.webp", donnees: octets("w") };
-    const rendus = await recharger([
-      noeud("1", "entree-image", { parametres: { Chemin: "C:/i/a.PNG" } }),
-      noeud("2", "entree-image", { parametres: { Chemin: "C:/i/b.svg" } }),
-      noeud("3", "entree-image", { parametres: { Chemin: "C:/i/c.webp" } }),
-    ]);
-    expect(rendus.map((n) => n.data.imageFichier.type)).toEqual(["image/png", "image/svg+xml", "image/jpeg"]);
-    expect(rendus.map((n) => n.data.imageNom)).toEqual(["a.PNG", "b.svg", "c.webp"]);
+  it("UNE ENTRÉE IMAGE prend son type de ses octets, et de l'extension à défaut ; un WebP ne se dit plus JPEG", async () => {
+    // Elle le prenait de l'extension seule, et tout ce qui n'était ni `.png` ni `.svg` se disait
+    // `image/jpeg` : ce cas le fixait, avec un `.webp` attendu en JPEG.
+    const fichiers: [string, Uint8Array, string][] = [
+      ["a.PNG", new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), "image/png"],
+      ["b.svg", octets("<svg xmlns=\"http://www.w3.org/2000/svg\"/>"), "image/svg+xml"],
+      ["c.webp", octets("RIFF\x1a\x00\x00\x00WEBPVP8L"), "image/webp"],
+      ["d.gif", octets("GIF89a"), "image/gif"],
+      ["e.jpg", new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), "image/png"],
+      ["f.jpeg", octets("illisible"), "image/jpeg"],
+      ["g.tiff", octets("illisible"), ""],
+    ];
+    for (const [nom, donnees] of fichiers) disque[`C:/i/${nom}`] = { nom, donnees };
+    const rendus = await recharger(fichiers.map(([nom], i) =>
+      noeud(String(i), "entree-image", { parametres: { Chemin: `C:/i/${nom}` } })));
+    expect(rendus.map((n) => n.data.imageFichier.type)).toEqual(fichiers.map(([, , type]) => type));
+    expect(rendus.map((n) => n.data.imageNom)).toEqual(fichiers.map(([nom]) => nom));
+    expect(await contenu(rendus[5].data.imageFichier), "les octets ne sont pas touchés").toBe("illisible");
     expect(adresses).toEqual([]);
   });
 

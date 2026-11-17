@@ -61,6 +61,30 @@ const trouverDef = (id: string) => registreUI().trouverDef(id);
 export interface PerimetreCible {
   /** Vrai pour une relance automatique après réglage. Faux ou absent pour un run ciblé demandé. */
   versLAval?: boolean;
+  /**
+   * Vrai pour la passe qui repose ce que le cache tient, sans rien exécuter : celle d'un paquet
+   * `.attic` qu'on vient d'ouvrir. Elle ne passe ni par le lot ni par les boucles par passes, qui
+   * vident le cache de leur aval, et ne se fond avec aucune autre demande.
+   */
+  cacheSeulement?: boolean;
+  /** Les nœuds que la passe de repose attend dans l'atelier : l'import vient de les poser. */
+  attendre?: readonly string[];
+}
+
+/**
+ * Attend que l'atelier montre les nœuds qu'un import vient de poser, au plus deux secondes.
+ *
+ * `setNodes` ne se voit dans `noeudsRef` qu'après le rendu qui suit, et une passe partie avant
+ * reposerait le nouveau cache sur l'ancien graphe.
+ */
+async function attendreLesNoeuds(noeudsRef: MutableRefObject<any[]>, ids: readonly string[]): Promise<boolean> {
+  const fin = performance.now() + 2000;
+  while (performance.now() < fin) {
+    const presents = new Set(noeudsRef.current.map((n) => n.id));
+    if (ids.every((id) => presents.has(id))) return true;
+    await new Promise((r) => setTimeout(r, 16));
+  }
+  return false;
 }
 
 export interface OptionsExecution {
@@ -324,6 +348,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
       lireCache: (id) => cacheExec.current.get(id),
       ecrireCache: (id, entree) => cacheExec.current.set(id, entree),
       sauts, questions: () => servicesApercu(), poser: definirStatut, poserOmbre: poserStatutOmbre, t,
+      cacheSeulement: perimetre?.cacheSeulement === true,
       // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER : il rejoint ce qui
       // est à poser, et il est posé aussitôt s'il est regardé.
       quandUnNoeudAFini: (nodeId) => {
@@ -403,7 +428,20 @@ export function useExecutionGraphe(o: OptionsExecution) {
    * ET IL N'Y A PAS DE SECOND MÉCANISME. Le garde qui vivait dans `lancerUnePasse` a été retiré :
    * deux verrous dont l'un jette la demande en silence valent moins qu'un seul qui la garde.
    */
-  const lancer = useCallback((p?: string, perimetre?: PerimetreCible) => ordonnanceur.demander((j) => lancerLeLot(p, perimetre, j), fusionDeLot(p, perimetre, lancerLeLot)), [ordonnanceur, lancerLeLot]);
+  const lancer = useCallback((p?: string, perimetre?: PerimetreCible) => {
+    // LA REPOSE D'UN PAQUET VA DROIT À UNE PASSE, sans fusion : fondue à un ▶ global, elle lui
+    // donnerait son « cache seulement », et le run demandé n'exécuterait rien.
+    if (perimetre?.cacheSeulement) {
+      return ordonnanceur.demander(async (j) => {
+        if (!(await attendreLesNoeuds(noeudsRef, perimetre.attendre ?? []))) {
+          console.warn("[lancer] repose du cache abandonnée : les nœuds importés ne sont pas dans l'atelier");
+          return;
+        }
+        return lancerUnePasse(undefined, { cacheSeulement: true }, j);
+      });
+    }
+    return ordonnanceur.demander((j) => lancerLeLot(p, perimetre, j), fusionDeLot(p, perimetre, lancerLeLot));
+  }, [ordonnanceur, lancerLeLot, lancerUnePasse]);
 
   return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout };
 }

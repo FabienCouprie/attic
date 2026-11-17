@@ -18,6 +18,7 @@ import { apercuUtileAudio } from "../audio/memoire-audio";
 import { departDe, heriterDepart } from "../audio/depart-bwf";
 import { heriterDisposition } from "../audio/multicanal";
 import { tamponPourApercu } from "../audio/multicanal-ecoute";
+import { pochetteDe } from "../audio/pochette";
 import type { ServicesApercu } from "../ui/services-apercu";
 import { parUneFois } from "./hors-lot";
 
@@ -109,8 +110,12 @@ export const APERCU_AUDIO: ServicesApercu = {
       ...description.bext,
       referenceTemps: depart !== undefined ? Math.round(depart * ecrit.sampleRate) : 0,
     };
+    // LA POCHETTE VIENT DU CANAL D'AFFICHAGE DU NŒUD, que le shell porte jusqu'ici sans le lire. Elle
+    // n'est donc là que pour un nœud dont l'aperçu est le fichier : un aperçu intermédiaire ne la
+    // reçoit jamais. Sans elle, le fichier est celui d'avant, octet pour octet.
+    const pochette = description ? pochetteDe(o.affichage) : undefined;
     return bufferVersWavBlobRespirant(
-      ecrit, undefined, o.securiser, { bits: o.bits, ixml: description?.ixml, bext },
+      ecrit, undefined, o.securiser, { bits: o.bits, ixml: description?.ixml, bext, ...(pochette ? { pochette } : {}) },
       o.souffle, o.onAvance);
   },
 

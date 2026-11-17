@@ -31,6 +31,34 @@ import type { EtatDePasse } from "./etat-de-passe";
 export const valeursLourdes = (valeurs: readonly unknown[] | undefined): boolean =>
   (valeurs ?? []).some((v) => v != null && !servicesApercu().apercuUtile(v, { regarde: false, economie: true }));
 
+/**
+ * Deux canaux d'affichage portent-ils les mêmes valeurs, champ par champ ?
+ *
+ * PAR CHAMP ET NON PAR OBJET : un nœud sauté rend l'affichage de son entrée de cache, et rien ne
+ * promet que ce soit le même objet que celui que le correctif d'avant a vu. Ses valeurs, elles, le
+ * sont. Deux absences sont égales, de sorte qu'un nœud qui n'en rend aucun garde son adresse.
+ */
+function memesChamps(a?: Readonly<Record<string, unknown>>, b?: Readonly<Record<string, unknown>>): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const cles = Object.keys(a);
+  return cles.length === Object.keys(b).length && cles.every((k) => Object.is(a[k], b[k]));
+}
+
+/**
+ * Les types d'image dont un nœud montre l'aperçu.
+ *
+ * LE WEBP, LE GIF ET LE BMP Y MANQUAIENT, et Chromium les décode comme les trois autres. Une « Entrée
+ * image » chargée d'un de ces fichiers ne montrait rien. Rechargée avec son projet, elle le montrait,
+ * mais par accident : `ui/rechargerFichiers.ts` la déclarait JPEG. Le type rendu juste le
+ * 2026-11-16, l'aperçu des relus disparaissait aussi ; Fabien a demandé celui des trois formats,
+ * chargés comme relus. LA LISTE RESTE FERMÉE : l'AVIF, que `core/type-image.ts` sait reconnaître,
+ * n'y est pas, son affichage n'ayant pas été mesuré.
+ */
+const TYPES_IMAGE_APERCU: ReadonlySet<string> = new Set([
+  "image/png", "image/jpeg", "image/svg+xml", "image/webp", "image/gif", "image/bmp",
+]);
+
 /** Champs à mettre à jour sur un nœud après le run, ou `null` s'il n'y a rien à changer. */
 export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Promise<Record<string, unknown> | null> {
   const {
@@ -87,7 +115,7 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
   // écrit dans le shell, pour journaliser deux crêtes dans la console.
   const audio = defNode?.sansApercuAudio ? null : servicesApercu().valeurRepresentative(valsSafe);
   const fichier = valsSafe.find((v): v is File => v instanceof File);
-  const imageFile = fichier && (fichier.type === "image/png" || fichier.type === "image/jpeg" || fichier.type === "image/svg+xml") ? fichier : null;
+  const imageFile = fichier && TYPES_IMAGE_APERCU.has(fichier.type) ? fichier : null;
   const midiFile = fichier && fichier.type.includes("midi") ? fichier : null;
   const texte = valsSafe.find((v): v is string => typeof v === "string");
   // Ce qu'une courbe produite donne à dessiner. Combien de points y suffisent, et ce qu'est une
@@ -132,6 +160,9 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
     imageResultatUrl?: string; imageResultatFile?: File;
   };
   const bitsVoulus = lireProfondeurExport();
+  // CE QUE LE FICHIER LIVRÉ DOIT PORTER EN PLUS DU SON, et seul un nœud dont l'aperçu est le
+  // fichier en a : la pochette de « Sortie audio » arrive par là. Le shell ne la nomme pas.
+  const affichageDuFichier = defNode?.apercuEstLeFichier ? affichageParNoeud.get(n.id) : undefined;
   let url: string | undefined, refaisable: ApercuRefaisable | undefined;
   if (audio && garderApercu) {
     // LA PROFONDEUR ENTRE DANS LA CONDITION DE RÉUTILISATION, et c'est un défaut mesuré :
@@ -141,8 +172,12 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
     // relançant. Voir `ui/refaire-apercus.ts`, qui porte le relevé.
     // ET UNE ADRESSE DONT LE LECTEUR A PERDU LES OCTETS N'EST PLUS RÉEMPLOYÉE : sans cela, relancer
     // un nœud venu du cache rendait le même lecteur grisé. Voir `ui/refaire-apercus.ts`.
+    // ET CE QUE LE FICHIER PORTE EN PLUS DU SON Y ENTRE AUSSI. À « Volume » 100 %, « Sortie audio »
+    // rend le tampon de l'amont lui-même : brancher une pochette après un premier run laissait le
+    // même objet, donc la même adresse, et le fichier enregistré sortait sans elle.
     if (audio === dejaLa.audioResultatBuffer && dejaLa.audioResultatUrl
-      && dejaLa.audioResultatRefaisable?.bits === bitsVoulus && !apercuPerdu(dejaLa.audioResultatUrl)) {
+      && dejaLa.audioResultatRefaisable?.bits === bitsVoulus && !apercuPerdu(dejaLa.audioResultatUrl)
+      && memesChamps(dejaLa.audioResultatRefaisable?.reecriture.affichage, affichageDuFichier)) {
       // L'ADRESSE EST GARDÉE, DONC SON COMPAGNON AUSSI. Le correctif rendu plus bas pose TOUS
       // les champs, si bien que l'omettre ici l'effacerait : l'aperçu deviendrait
       // irréécrivable, et le sélecteur de profondeur inopérant sur ce nœud-là seulement.
@@ -168,7 +203,8 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
       // pour les métadonnées ne se redérive pas d'un nœud. `ui/refaire-apercus.ts` le relit
       // pour refaire l'aperçu à une autre profondeur sans rejouer le nœud.
       refaisable = { bits: bitsVoulus, reecriture: { securiser,
-        nomPourMetadonnees: def?.apercuEstLeFichier ? (def.nom ?? ficheId) : undefined } };
+        nomPourMetadonnees: def?.apercuEstLeFichier ? (def.nom ?? ficheId) : undefined,
+        ...(affichageDuFichier ? { affichage: affichageDuFichier } : {}) } };
       lecteursAEcrire.set(n.id, async () => {
         const blob = await servicesApercu().blobApercu(aEcouter, {
           ...refaisable!.reecriture, bits: bitsVoulus, souffle,

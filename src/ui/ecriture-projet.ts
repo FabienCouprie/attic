@@ -98,9 +98,14 @@ export const DELAI_AVANT_REVOCATION_MS = 1000;
  * projet au navigateur jusqu'à la fermeture.
  */
 export function telechargerProjet(json: string, defaultName: string | undefined): void {
-  const blob = new Blob([json], { type: "application/json" });
+  telechargerContenu(json, defaultName || "attic.json", "application/json");
+}
+
+/** Le téléchargement du mode web, pour un projet comme pour un paquet `.attic`. */
+export function telechargerContenu(contenu: BlobPart, nom: string, type: string): void {
+  const blob = new Blob([contenu], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href = url;
-  a.download = defaultName || "attic.json"; a.click();
+  a.download = nom; a.click();
   setTimeout(() => URL.revokeObjectURL(url), DELAI_AVANT_REVOCATION_MS);
 }
