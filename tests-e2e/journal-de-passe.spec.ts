@@ -224,6 +224,10 @@ async function passeFinie(page: Page): Promise<void> {
   { timeout: 180_000, intervals: [100, 250, 500] }).toBe(0);
 }
 
+/** Les écritures d'exécuteur que la passe a relevées sur l'instantané du graphe, depuis le chargement. */
+const ecrituresRelevees = (page: Page): Promise<string[]> => page.evaluate(() =>
+  (window as unknown as { __attic_ecritures_instantane__?: string[] }).__attic_ecritures_instantane__ ?? []);
+
 /**
  * Attend que le SoundFont soit chargé, avant le premier geste.
  *
@@ -372,16 +376,22 @@ test.describe("le journal d'une passe", () => {
     expect(existsSync(CHEMIN), `${CHEMIN} est absent : établissez-le avec ECRIRE_JOURNAUX_DE_PASSE=1`).toBe(true);
     const ecarts: string[] = [];
     const neufs: string[] = [];
+    const releves: string[] = [];
     for (const f of exemples) {
       for (const s of SCENARIOS) {
         const cle = cleDe(f, s);
         const ref = base.exemples[f]?.[s];
         if (!ref) { if (!base.variables[cle]) neufs.push(cle); continue; }
-        const e = ecartEntre(ref, await jouer(page, f, s), cle);
+        const vu = await jouer(page, f, s);
+        releves.push(...(await ecrituresRelevees(page)).map((x) => `${cle} · ${x}`));
+        const e = ecartEntre(ref, vu, cle);
         if (e) ecarts.push(e);
         console.log(`${cle.padEnd(52)} ${e ? "ÉCART" : `identique · ${ref.length} écriture(s)`}`);
       }
     }
+    // CE QU'UN EXÉCUTEUR ÉCRIT SUR L'INSTANTANÉ DU GRAPHE SE DIT À CHAQUE PASSE, et ne la fait pas
+    // tomber : relevée d'abord, décision 3 du plan des messages. Voir `core/instantane-de-graphe.ts`.
+    console.log(`écritures sur l'instantané : ${releves.length}${releves.length ? `\n  ${releves.join("\n  ")}` : ""}`);
     // UN TROU DÉCIDÉ DOIT ÊTRE UN TROU VISIBLE : ce qui est déclaré variable le dit à chaque passe.
     for (const [cle, raison] of Object.entries(base.variables).filter(([x]) => exemples.some((f) => x.startsWith(`${f} · `)))) {
       console.log(`${cle.padEnd(52)} NON SURVEILLÉ · suite variable · ${raison.slice(0, 100)}`);

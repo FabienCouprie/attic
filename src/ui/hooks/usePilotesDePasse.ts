@@ -16,7 +16,9 @@
 import { useCallback } from "react";
 import type { MutableRefObject } from "react";
 
-import { ancetres, aplatirGraphe, descendants, estSubstitution, trouverMeta, type AreteG, type NoeudG } from "../../core";
+import { ancetres, aplatirGraphe, descendants, estSubstitution, type AreteG, type NoeudG } from "../../core";
+import { metaDeLInstantane } from "../../core/instantane-de-graphe";
+import type { InstantaneDeGraphe } from "../../core/protocole-moteur";
 import type { Sequence } from "../../audio/sequence";
 import { planifierLot, publierLot } from "../../plugins/lotGlobal";
 // LES BORNES SONT DÉCLARÉES AVEC LE COMPTEUR, ET NON ICI. Recopiées des deux côtés, elles auraient
@@ -30,14 +32,17 @@ export type LancerUnePasse = (noeudPrioritaireId?: string, perimetre?: Perimetre
 
 export interface OptionsPilotesDePasse {
   lancerUnePasse: LancerUnePasse;
-  noeudsRef: MutableRefObject<any[]>;
-  aretesRef: MutableRefObject<any[]>;
+  /**
+   * Le graphe, copié à l'instant de la question : les pilotes la posent là où ils lisaient le
+   * tableau vivant, et chaque passe pose la sienne en partant. Voir `core/instantane-de-graphe.ts`.
+   */
+  graphe: () => InstantaneDeGraphe;
   cacheExec: MutableRefObject<Map<string, any>>;
   /** Levé par « Arrêter » : le lot s'arrête au fichier en cours, et non à la seule passe. */
   arretLotRef: MutableRefObject<boolean>;
 }
 
-export function usePilotesDePasse({ lancerUnePasse, noeudsRef, aretesRef, cacheExec, arretLotRef }: OptionsPilotesDePasse) {
+export function usePilotesDePasse({ lancerUnePasse, graphe, cacheExec, arretLotRef }: OptionsPilotesDePasse) {
   /**
    * La boucle sur une VALEUR : le graphe entier, rejoué une fois par morceau de ce qui circule.
    *
@@ -77,8 +82,9 @@ export function usePilotesDePasse({ lancerUnePasse, noeudsRef, aretesRef, cacheE
     // SANS MÉTA, RIEN NE CHANGE : l'aplatissement rend alors les mêmes nœuds sous les mêmes
     // identifiants. Les arêtes de substitution sont écartées comme le fait l'exécution, de sorte que
     // le plan porte sur le graphe qui va tourner et non sur celui qu'une bulle repliée donne à voir.
-    const aretesReelles = (aretesRef.current as unknown as AreteG[]).filter((a) => !estSubstitution(a));
-    const aplati = aplatirGraphe(noeudsRef.current as unknown as NoeudG[], aretesReelles, trouverMeta);
+    const instantane = graphe();
+    const aretesReelles = (instantane.aretes as AreteG[]).filter((a) => !estSubstitution(a));
+    const aplati = aplatirGraphe(instantane.noeuds as NoeudG[], aretesReelles, metaDeLInstantane(instantane));
     const aretesG = () => aplati.aretes;
     const plan = planifierBoucles(
       aplati.noeuds,
@@ -134,7 +140,7 @@ export function usePilotesDePasse({ lancerUnePasse, noeudsRef, aretesRef, cacheE
     } finally {
       publierBoucles([]);
     }
-  }, [lancerUnePasse]);
+  }, [lancerUnePasse, graphe]);
 
   /**
    * Le traitement par lot : le graphe entier, rejoué une fois par fichier.
@@ -163,11 +169,13 @@ export function usePilotesDePasse({ lancerUnePasse, noeudsRef, aretesRef, cacheE
     const api = (window as any).api;
     const orch = servicesOrchestration();
     const dossiers = new Map<string, readonly unknown[]>();
-    for (const d of orch.dossiersALire(noeudsRef.current)) {
+    // DEUX QUESTIONS, ET NON UNE : le lot lisait le graphe avant de lire ses dossiers, puis de nouveau
+    // après, et un nœud ajouté pendant la lecture comptait pour le plan. Chaque instant garde la sienne.
+    for (const d of orch.dossiersALire(graphe().noeuds as NoeudG[])) {
       if (dossiers.has(d)) continue;
       dossiers.set(d, api?.lireDossier ? orch.fichiersUtiles(await api.lireDossier(d)) : []);
     }
-    const plan = planifierLot(noeudsRef.current, (d) => (dossiers.get(d) ?? []) as never);
+    const plan = planifierLot(graphe().noeuds as NoeudG[], (d) => (dossiers.get(d) ?? []) as never);
 
     // Le cas courant est celui-ci, et il ne doit rien coûter : pas de lot, une passe, rien de plus.
     if (!plan) {
@@ -188,7 +196,7 @@ export function usePilotesDePasse({ lancerUnePasse, noeudsRef, aretesRef, cacheE
         // passe à l'autre — le nœud n'a ni entrée ni paramètre qui change —, et le cache les
         // sauterait donc tous, le lot rendant trente fois le premier fichier.
         cacheExec.current.delete(plan.debutId);
-        for (const id of descendants(plan.debutId, aretesRef.current as unknown as AreteG[])) {
+        for (const id of descendants(plan.debutId, graphe().aretes as AreteG[])) {
           cacheExec.current.delete(id);
         }
         // CHAQUE FICHIER PASSE PAR LE PILOTE DES BOUCLES, ET NON PAR UNE PASSE NUE — relevé par
@@ -203,7 +211,7 @@ export function usePilotesDePasse({ lancerUnePasse, noeudsRef, aretesRef, cacheE
     } finally {
       publierLot(null);
     }
-  }, [lancerBoucleValeur]);
+  }, [lancerBoucleValeur, graphe]);
 
   return { lancerLeLot };
 }

@@ -86,6 +86,14 @@ export interface Mesure {
   erreur: string | null;
   /** Les valeurs rendues qui ne correspondent pas au type de leur port. Voir `core/types-au-port.ts`. */
   ecartsType: { rang: number; port: string; attendu: string; recu: string }[];
+  /**
+   * Vrai quand l'exécuteur a écrit sur `ctx.noeud.data`, au premier niveau ou dessous.
+   *
+   * LE CONTRAT DE NŒUD L'INTERDIT, et la passe de l'application le relève par un sceau
+   * (`core/instantane-de-graphe.ts`). Le banc construit son propre nœud et le relève de la même
+   * façon : le texte de `data` avant l'exécuteur, comparé à celui d'après.
+   */
+  ecritSurData: boolean;
 }
 
 /**
@@ -168,7 +176,7 @@ export async function mesurerComposant(
     const fiche = (idx as any).toutesLesFiches.find((f: any) => f.id === id);
     if (!fiche) {
       return { version: {}, ms: 0, gelMs: null, messages: 0, message: null, empreintes: [],
-        descripteurs: null, wavs: [], ecartsType: [], erreur: `fiche « ${id} » absente du registre` };
+        descripteurs: null, wavs: [], ecartsType: [], erreur: `fiche « ${id} » absente du registre`, ecritSurData: false };
     }
 
     const source = String(fiche.executer);
@@ -311,11 +319,13 @@ export async function mesurerComposant(
     const debut = performance.now();
     let resultat: any = null;
     let erreur: string | null = null;
+    const dataAvant = JSON.stringify(ctx.noeud.data);
     try {
       resultat = await fiche.executer(ctx);
     } catch (e) {
       erreur = String((e as Error)?.message ?? e).slice(0, 120);
     }
+    const ecritSurData = JSON.stringify(ctx.noeud.data) !== dataAvant;
     // ═══ CE QUE LE COMPOSANT REND EST-IL DU TYPE QU'IL PROMET ? ═══
     //
     // Point 6 d'une revue du dépôt. LE BANC EST LE SITE À PLUS HAUTE VALEUR pour cette question : le
@@ -470,7 +480,7 @@ export async function mesurerComposant(
       gelMs: instants.length === 0 ? null : Math.round(plusLong),
       messages: instants.length,
       message: resultat && typeof resultat.message === "string" ? resultat.message : null,
-      empreintes, descripteurs, wavs, erreur, ecartsType,
+      empreintes, descripteurs, wavs, erreur, ecartsType, ecritSurData,
     };
   }, [ficheId, options.marqueurs ?? [], options.parametres ?? {}, FREQUENCE, DUREE_SEC,
       options.entreesAudio ?? [0], options.descripteurs ?? false, options.wav ?? false,

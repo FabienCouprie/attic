@@ -27,6 +27,8 @@ import { definirPrioritaire, noeudPrioritaire } from "../priorite";
 import { sautsDeBoucles } from "../../core/saut-de-boucle";
 import { creerResolveurDeGraines } from "../../core/graines-de-passe";
 import { preparerLaPasse } from "../../core/preparation-passe";
+import { metaDeLInstantane, prendreInstantane, scellerLInstantane, signalerLesEcritures } from "../../core/instantane-de-graphe";
+import { copierPourHistorique } from "../historique";
 
 import { servicesOrchestration } from "../services-orchestration";
 // CE QUE LE SHELL DEMANDE AU DOMAINE SUR LES VALEURS PRODUITES. Six fonctions audio étaient
@@ -112,6 +114,14 @@ export function useExecutionGraphe(o: OptionsExecution) {
     setNodes, setEnExecution, repertoire,
     onGrapheGenere, onNodeInstalle,
   } = o;
+
+  // ── LA QUESTION `graphe()` : le graphe qu'une passe lira, copié à l'instant où on la pose ──
+  // La passe et les deux pilotes la posent là où ils lisaient le tableau vivant, et pas ailleurs.
+  // Voir `core/instantane-de-graphe.ts`. Les références sont stables : la question l'est aussi.
+  const graphe = useCallback(() => prendreInstantane({
+    noeuds: noeudsRef.current as unknown as NoeudG[], aretes: aretesRef.current as unknown as AreteG[],
+    trouverMeta, copier: copierPourHistorique,
+  }), [noeudsRef, aretesRef]);
 
   // Annulation d'un run en cours : un seul AbortController pour tout `lancer()`
   // (le moteur exécute les nœuds en séquence dans une seule boucle — pas de
@@ -216,6 +226,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     }
     const controller = new AbortController();
     abortControllerRef.current = controller;
+    let ecrituresDeLaPasse: (() => string[]) | null = null;
     try {
     console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.size}`);
     // LES ARÊTES DE SUBSTITUTION NE CALCULENT PAS. Replier une bulle cache les arêtes qui la
@@ -227,12 +238,16 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // Aplatir, déplier, ordonner, cibler, valider, relever les cycles : le plan rend ce que le
     // moteur posait en chemin, statuts, avertissements et trace, dans l'ordre où il les posait,
     // et c'est ici qu'ils s'appliquent. Le graphe à documenter est publié avant tout, comme avant.
+    // LE GRAPHE DE LA PASSE EST CELUI DE CET INSTANT, COPIÉ, ses métas compris, et chaque `data` y
+    // est scellé : ce qu'un exécuteur y écrirait se relève à la fin de la passe.
+    const instantane = graphe();
+    ecrituresDeLaPasse = scellerLInstantane(instantane);
     const plan = preparerLaPasse({
-      noeuds: noeudsRef.current as unknown as NoeudG[],
-      aretes: aretesRef.current as unknown as AreteG[],
+      noeuds: instantane.noeuds as NoeudG[],
+      aretes: instantane.aretes as AreteG[],
       prioriteDemandee: noeudPrioritaireId ?? noeudPrioritaire(),
       versLAval: perimetre?.versLAval === true,
-      trouverMeta, trouverDef, fluxCompatibles: registreUI().fluxCompatibles, t,
+      trouverMeta: metaDeLInstantane(instantane), trouverDef, fluxCompatibles: registreUI().fluxCompatibles, t,
     });
     const {
       aretesReelles, plat, deplie, nds, aretesG, tousNoeudsG, boites,
@@ -385,6 +400,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     } catch (e: any) {
       console.error("lancer error", e);
     } finally {
+      if (ecrituresDeLaPasse) signalerLesEcritures(ecrituresDeLaPasse(), "passe");
       if (abortControllerRef.current === controller) abortControllerRef.current = null;
       // Le nœud qui tournait à l'instant de l'arrêt garde le statut « en cours » : la
       // boucle sort par un `break` sans jamais statuer sur lui. Une réinitialisation
@@ -415,7 +431,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
   }, [repertoire, t]);
 
   // ── Les deux pilotes de passes, le lot et les boucles par passes, dans usePilotesDePasse.ts ──
-  const { lancerLeLot } = usePilotesDePasse({ lancerUnePasse, noeudsRef, aretesRef, cacheExec, arretLotRef });
+  const { lancerLeLot } = usePilotesDePasse({ lancerUnePasse, graphe, cacheExec, arretLotRef });
 
   /**
    * LA SEULE PORTE D'ENTRÉE, et elle passe par l'ordonnanceur.
