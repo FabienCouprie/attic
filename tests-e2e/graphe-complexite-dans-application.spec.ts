@@ -271,7 +271,9 @@ test("trois boucles emboîtées, deux bulles, un méta : le son calculé, à cha
       const ditesNeuve = alertes(neuve);
       await neuve.goto(devUrl);
       await neuve.waitForSelector(".attic-app", { timeout: 15000 });
-      await neuve.setInputFiles('input[type="file"][accept=".json"]', chemin);
+      // `accept` CONTIENT « .json », il ne l'égale plus : l'import prend aussi les paquets `.attic`
+      // depuis la PR 370. Un sélecteur exact a fait attendre ce cas trente minutes, son délai entier.
+      await neuve.setInputFiles('input[type="file"][accept*=".json"]', chemin, { timeout: 15000 });
       await expect.poll(async () => (await etatDesNoeuds(neuve)).map((e) => e.id), "le méta est rouvert")
         .toEqual([meta]);
       await relancerEtAttendre(neuve, PILOTE);
