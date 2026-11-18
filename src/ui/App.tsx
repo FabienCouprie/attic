@@ -35,7 +35,7 @@ import { tailleDefaut } from "./tailles-noeuds";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
-import { creerCacheDuMoteur, type CacheDuMoteur } from "./moteur/cache";
+import { creerMoteurDuCache, type MoteurDuCache } from "./moteur/commandes";
 import { useCopierColler } from "./hooks/useCopierColler";
 import { resultatDe } from "./resultats";
 import { definirPrioritaire } from "./priorite";
@@ -161,7 +161,10 @@ function Atelier() {
     }
   }, []);
   const lancerRef = useRef<any>(null);
-  const cacheExec = useRef<CacheDuMoteur>(creerCacheDuMoteur());
+  // LE CACHE EST AU MOTEUR, et l'interface ne lui parle que par commandes : `envoyer`. Seul le moteur,
+  // `useExecutionGraphe`, reçoit l'objet entier. Voir `ui/moteur/commandes.ts`.
+  const moteurDuCache = useRef<MoteurDuCache>(creerMoteurDuCache());
+  const envoyer = moteurDuCache.current.envoyer;
   const callbacksNoeudRef = useRef<(() => Record<string, (...args: any[]) => any>) | null>(null);
 
   // LE FICHIER EST À LA FENÊTRE : une fenêtre neuve n'en a pas. Voir `ui/fenetre.ts`.
@@ -190,11 +193,11 @@ function Atelier() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Le SoundFont global, dans hooks/useSoundFont.ts ──
-  const { sf2Nom: sf2NomState, chargerSF2 } = useSoundFont({ repertoire, cacheExec, enExecution });
+  const { sf2Nom: sf2NomState, chargerSF2 } = useSoundFont({ repertoire, envoyer, enExecution });
   // ── Historique, Ctrl+Z et Ctrl+Y, vidage du canevas et fichier détaché, dans hooks/useHistorique.ts ;
   // et le balayage des URL de médias qu'il tient avec le canevas, dans hooks/useUrlsMedias.ts ──
   const { pushHistorique, undo, redo, fermerOnglet, detacherFichier } = useHistorique({
-    noeudsRef, aretesRef, grapheRacineRef, cacheExec,
+    noeudsRef, aretesRef, grapheRacineRef, envoyer,
     setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath, nodes,
   });
 
@@ -230,7 +233,7 @@ function Atelier() {
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
   const poserGrapheEngendre = usePoseGrapheEngendre({ noeudsRef, setNodes, setEdges, lang });
   const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout } = useExecutionGraphe({
-    noeudsRef, aretesRef, enExecRef, audioCtxRef, cacheExec, economieMemoireRef,
+    noeudsRef, aretesRef, enExecRef, audioCtxRef, moteurDuCache: moteurDuCache.current, economieMemoireRef,
     pileMetaRef: pileRef,
     edges, setNodes, setEnExecution, repertoire,
     // La pose d'un graphe demandé par un composant, dans hooks/usePoseGrapheEngendre.ts.
@@ -243,7 +246,7 @@ function Atelier() {
 
   // ── Relance après un réglage, dans hooks/useRelanceApresReglage.ts ──
   const { perimerEtRelancer, changerReglage } = useRelanceApresReglage({
-    noeudsRef, lancerRef, cacheExec, reinitialiserPourReglage, setNodes,
+    noeudsRef, lancerRef, envoyer, reinitialiserPourReglage, setNodes,
   });
 
   // La démonstration filmée : le scénario joué dans la vraie interface (cf. ui/demo/).
@@ -287,7 +290,7 @@ function Atelier() {
   const { supprimerMetaDuCatalogue } = useFenetresPartagees({
     noeudsRef, grapheRacineRef, pileRef, setNodes, setPluginsVersion, pushHistorique, supprimerNoeud, t, lang });
 
-  const { chargerMedia, changerEnregistrement, chargerIR } = useChargementMedias({ cacheExec, setNodes, reinitialiserNoeud });
+  const { chargerMedia, changerEnregistrement, chargerIR } = useChargementMedias({ envoyer, setNodes, reinitialiserNoeud });
 
   // LES GESTES OFFERTS À CHAQUE NŒUD, par le contexte de `ui/gestes-noeud.ts` et par lui seul : ils
   // étaient recopiés dans le `data` de chaque nœud en quatorze endroits, et ne le sont plus nulle part.
@@ -317,7 +320,7 @@ function Atelier() {
     // zone dans son WAV, alors que le sélecteur n'en montrait plus aucune.
     // L'oubli du cache reste nécessaire pour le nœud lui-même :
     // `zonesSelectionnees` ne figure pas dans `empreinteParametres`.
-    onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.oublier([nid]); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); reinitialiserAval(nid); },
+    onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { envoyer({ genre: "oublier", ids: [nid] }); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); reinitialiserAval(nid); },
     // UN GESTE SUR UNE LIGNE DE TEMPS PASSE PAR LA MÊME PORTE QU'UN RÉGLAGE, et c'est la correction
     // du 2026-10-26. La vue écrivait son découpage par un `setNodes` nu : rien ne purgeait le cache,
     // rien ne périmait l'aval, rien ne relançait. Le morceau déplacé n'était donc entendu qu'au
@@ -326,7 +329,7 @@ function Atelier() {
     // que RIEN ne fonctionnait. Relevé par Fabien, trois fois dans cette famille.
     onChangerDecoupe: (nid: string, decoupe: Record<string, unknown>) => { setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, ...decoupe } } : n)); perimerEtRelancer(nid); },
     onChargerIR: chargerIR,
-  }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, supprimerNoeud, pushHistorique, cacheExec, lancerRef, perimerEtRelancer,
+  }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, supprimerNoeud, pushHistorique, envoyer, lancerRef, perimerEtRelancer,
     chargerMedia, changerEnregistrement, chargerIR]);
   callbacksNoeudRef.current = callbacksNoeud;
   // LES MÊMES GESTES, FOURNIS PAR UN CONTEXTE dont la valeur ne change jamais : chaque appel lit la
@@ -382,7 +385,7 @@ function Atelier() {
   // ── Méta-composants (§3.8) : grouper / dégrouper + navigation ──
   // Dans hooks/useMetaComposants.ts ; la logique pure vit dans core/meta.ts.
   const { grouper, degrouper, renommer, sauvegarderContexteCourant, ouvrirMeta, remonterA } = useMetaComposants({
-    noeudsRef, aretesRef, pileRef, grapheRacineRef, cacheExec,
+    noeudsRef, aretesRef, pileRef, grapheRacineRef, envoyer,
     setNodes, setEdges, setPile, setSel,
   });
 
@@ -460,7 +463,7 @@ function Atelier() {
   const { sauvegarder, sauvegarderAuto, exporter, exporterAvecDonnees, importer, memoriserEncours } = usePersistance({
     nodes, edges, setNodes, setEdges, rfInstance, repertoire,
     sauvegarderContexteCourant, grapheRacineRef, setPile, vueAPoserRef,
-    reinitialiserNoeud, supprimerNoeud, lancerRef, cacheExec,
+    reinitialiserNoeud, supprimerNoeud, lancerRef, envoyer,
     currentFilePath, setCurrentFilePath,
   });
 
@@ -591,7 +594,7 @@ function Atelier() {
         <MenuContextuel etat={menu} onFermer={fermerMenu} />
       </div>
       <InspecteurDuCanevas
-        nodes={nodes} edges={edges} sel={sel} setSel={setSel} setNodes={setNodes} cacheExec={cacheExec}
+        nodes={nodes} edges={edges} sel={sel} setSel={setSel} setNodes={setNodes} envoyer={envoyer}
         changerReglage={changerReglage} pushHistorique={pushHistorique}
         supprimerNoeud={supprimerNoeud} reinitialiserNoeud={reinitialiserNoeud}
       />

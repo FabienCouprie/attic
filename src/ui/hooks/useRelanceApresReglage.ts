@@ -15,7 +15,7 @@
 // que la dernière valeur d'une rafale.
 import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
-import type { CacheDuMoteur } from "../moteur/cache";
+import type { EnvoiDuCache } from "../moteur/commandes";
 
 import { reglagesApresChangement } from "../../core/reglages-lies";
 import { trouverDef } from "../ports-canevas";
@@ -30,13 +30,13 @@ type Noeud = { id: string; data: { ficheId: string; parametres: Record<string, n
 export interface OptionsRelanceApresReglage {
   noeudsRef: MutableRefObject<readonly Noeud[]>;
   lancerRef: MutableRefObject<any>;
-  cacheExec: MutableRefObject<CacheDuMoteur>;
+  envoyer: EnvoiDuCache;
   reinitialiserPourReglage: (nid: string) => void;
   setNodes: Dispatch<SetStateAction<any[]>>;
 }
 
 export function useRelanceApresReglage({
-  noeudsRef, lancerRef, cacheExec, reinitialiserPourReglage, setNodes,
+  noeudsRef, lancerRef, envoyer, reinitialiserPourReglage, setNodes,
 }: OptionsRelanceApresReglage) {
   const minuteursRelance = useRef(new Map<string, number>());
   const relancerApresReglage = useCallback((nid: string) => {
@@ -73,10 +73,10 @@ export function useRelanceApresReglage({
    * se séparer — c'est écrit juste au-dessus, et je venais de le refaire.
    */
   const perimerEtRelancer = useCallback((nid: string) => {
-    cacheExec.current.oublier([nid]);
+    envoyer({ genre: "regler", id: nid });
     reinitialiserPourReglage(nid);
     relancerApresReglage(nid);
-  }, [cacheExec, reinitialiserPourReglage, relancerApresReglage]);
+  }, [envoyer, reinitialiserPourReglage, relancerApresReglage]);
 
   /**
    * CHANGER UN RÉGLAGE, ET IL N'Y A QU'UNE FAÇON DE LE FAIRE.

@@ -10,20 +10,19 @@
 // chargement qui aboutirait pendant celui-là viderait tout de suite, comme avant. C'est dit plutôt
 // que caché : suivre aussi les runs ciblés demanderait l'ordonnanceur, qui vit dans le moteur.
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { MutableRefObject } from "react";
-import type { CacheDuMoteur } from "../moteur/cache";
+import type { EnvoiDuCache } from "../moteur/commandes";
 
 import { autoChargerSF2, chargerSF2Globale, sf2Nom } from "../../plugins/soundfontGlobal";
 import { decisionDeVidage } from "../soundfont-cache";
 
 export interface OptionsSoundFont {
   repertoire: string;
-  cacheExec: MutableRefObject<CacheDuMoteur>;
+  envoyer: EnvoiDuCache;
   /** Vrai pendant un run global : un vidage qui tomberait là attend la fin. */
   enExecution: boolean;
 }
 
-export function useSoundFont({ repertoire, cacheExec, enExecution }: OptionsSoundFont) {
+export function useSoundFont({ repertoire, envoyer, enExecution }: OptionsSoundFont) {
   const [nom, setNom] = useState<string>(sf2Nom());
   const nomConnuRef = useRef(nom);
   const enExecutionRef = useRef(enExecution);
@@ -35,17 +34,17 @@ export function useSoundFont({ repertoire, cacheExec, enExecution }: OptionsSoun
     const decision = decisionDeVidage({ nomAvant: nomConnuRef.current, nomApres, enExecution: enExecutionRef.current });
     nomConnuRef.current = nomApres;
     setNom(nomApres);
-    if (decision === "maintenant") cacheExec.current.vider();
+    if (decision === "maintenant") envoyer({ genre: "oublier", ids: "tout" });
     else if (decision === "a-la-fin-du-run") vidageEnAttenteRef.current = true;
-  }, [cacheExec]);
+  }, [envoyer]);
 
   // LE VIDAGE DIFFÉRÉ PART QUAND LE RUN FINIT, et pas avant : c'est ce qui empêche la passe suivante
   // d'un lot de rejouer ce que la passe d'avant venait de calculer.
   useEffect(() => {
     if (enExecution || !vidageEnAttenteRef.current) return;
     vidageEnAttenteRef.current = false;
-    cacheExec.current.vider();
-  }, [enExecution, cacheExec]);
+    envoyer({ genre: "oublier", ids: "tout" });
+  }, [enExecution, envoyer]);
 
   // Auto-load SF2 au démarrage
   useEffect(() => {

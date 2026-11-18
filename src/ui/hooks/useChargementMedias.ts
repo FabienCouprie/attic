@@ -15,8 +15,8 @@
 // changement passé par l'inspecteur réinitialisait, lui. Les zones et les fichiers chargés survivent
 // à la cascade (CHAMPS_UTILISATEUR).
 import { useCallback } from "react";
-import type { Dispatch, MutableRefObject, SetStateAction } from "react";
-import type { CacheDuMoteur } from "../moteur/cache";
+import type { Dispatch, SetStateAction } from "react";
+import type { EnvoiDuCache } from "../moteur/commandes";
 
 import { creerUrlMedia } from "../urls-medias";
 
@@ -24,14 +24,14 @@ import { creerUrlMedia } from "../urls-medias";
 export type SorteDeMedia = "audio" | "midi" | "image" | "svg" | "pdf";
 
 export interface OptionsChargementMedias {
-  cacheExec: MutableRefObject<CacheDuMoteur>;
+  envoyer: EnvoiDuCache;
   setNodes: Dispatch<SetStateAction<any[]>>;
   reinitialiserNoeud: (nid: string) => void;
 }
 
-export function useChargementMedias({ cacheExec, setNodes, reinitialiserNoeud }: OptionsChargementMedias) {
+export function useChargementMedias({ envoyer, setNodes, reinitialiserNoeud }: OptionsChargementMedias) {
   const chargerMedia = useCallback((nid: string, sorte: SorteDeMedia, fichier: File) => {
-    cacheExec.current.oublier([nid]);
+    envoyer({ genre: "oublier", ids: [nid] });
     const api = (window as any).api;
     const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
     // L'URL se crée HORS du réducteur : React le rejoue deux fois en mode strict, et une des
@@ -44,23 +44,23 @@ export function useChargementMedias({ cacheExec, setNodes, reinitialiserNoeud }:
       ? { ...n, data: { ...n.data, ...media, parametres: { ...n.data.parametres, Chemin: chemin } } }
       : n));
     reinitialiserNoeud(nid);
-  }, [cacheExec, setNodes, reinitialiserNoeud]);
+  }, [envoyer, setNodes, reinitialiserNoeud]);
 
   /** Une prise au micro : un blob, et son URL écoutable. Pas de chemin disque, elle n'en a pas. */
   const changerEnregistrement = useCallback((nid: string, blob: Blob) => {
-    cacheExec.current.oublier([nid]);
+    envoyer({ genre: "oublier", ids: [nid] });
     // Par le registre, comme le son chargé : la prise qu'elle remplace part d'elle-même.
     const url = creerUrlMedia(blob);
     setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n));
     reinitialiserNoeud(nid);
-  }, [cacheExec, setNodes, reinitialiserNoeud]);
+  }, [envoyer, setNodes, reinitialiserNoeud]);
 
   /** La réponse impulsionnelle d'une réverbération : un fichier sans paramètre « Chemin ». */
   const chargerIR = useCallback((nid: string, fichier: File) => {
-    cacheExec.current.oublier([nid]);
+    envoyer({ genre: "oublier", ids: [nid] });
     setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n));
     reinitialiserNoeud(nid);
-  }, [cacheExec, setNodes, reinitialiserNoeud]);
+  }, [envoyer, setNodes, reinitialiserNoeud]);
 
   return { chargerMedia, changerEnregistrement, chargerIR };
 }

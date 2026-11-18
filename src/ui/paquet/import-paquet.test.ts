@@ -1,16 +1,17 @@
 // ui/paquet/import-paquet.test.ts — Un paquet abîmé n'écrase pas le projet ouvert ; un paquet sain rend
 // son cache, ses médias, et demande la passe de repose.
 //
-// L'ATELIER EST REMPLACÉ PAR DES TÉMOINS : chaque setter note qu'on l'a appelé, le cache est une table
-// qui porte déjà l'entrée d'un graphe ouvert, et la vue, la pile et le graphe racine sont des
-// références qu'on relit après. Un paquet refusé ne doit avoir touché à AUCUN d'eux.
+// L'ATELIER EST REMPLACÉ PAR DES TÉMOINS : chaque setter note qu'on l'a appelé, le cache est celui d'un
+// moteur qui porte déjà l'entrée d'un graphe ouvert, lu par ses commandes comme l'interface le lit, et
+// la vue, la pile et le graphe racine sont des références qu'on relit après. Un paquet refusé ne doit
+// avoir touché à AUCUN d'eux.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { configurerRegistreMeta, creerRegistre } from "../../core";
 import { configurerServicesDomaine, oublierServicesDomaine } from "../../core/services-domaine";
 import { depuisPaquetAudio, versPaquetAudio } from "../../audio/paquet-audio";
 import { configurerRegistreUI } from "../registre-actif";
 import { importerProjet, type OptionsImportProjet } from "../hooks/useImportProjet";
-import { creerCacheDuMoteur, type CacheDuMoteur } from "../moteur/cache";
+import { creerMoteurDuCache } from "../moteur/commandes";
 import { ecrirePaquet } from "./ecrire-paquet";
 import { lireRepertoire } from "./zip";
 import { VERSION_APPLICATION } from "./format-paquet";
@@ -30,11 +31,14 @@ function temoins() {
     setNodes: vi.fn(note("setNodes")), setEdges: vi.fn(note("setEdges")), setPile: vi.fn(note("setPile")),
     setCurrentFilePath: vi.fn(note("setCurrentFilePath")), rfInstance: null, repertoire: "",
     grapheRacineRef: { current: racine }, vueAPoserRef: { current: vue },
-    cacheExec: { current: ((c: CacheDuMoteur) => { c.ecrire("ancien", { valeurs: [1] } as never); return c; })(creerCacheDuMoteur()) },
+    envoyer: ((m) => { m.envoyer({ genre: "importerCache", entrees: [["ancien", { valeurs: [1] } as never]] }); return m.envoyer; })(creerMoteurDuCache()),
     lancerRef: { current: lancer },
   } as unknown as OptionsImportProjet;
   return { o, appels, vue, racine, lancer };
 }
+
+/** Les nœuds que le cache tient, lus comme l'interface les lit : par la commande `exporterCache`. */
+const cles = (o: OptionsImportProjet) => o.envoyer({ genre: "exporterCache" }).map(([id]) => id);
 
 const alertes: string[] = [];
 const t = (cle: string) => (cle === "persistance.paquetRefuse" ? "REFUS:{raison}" : cle === "paquet.refus.application" ? "ATTIC {v} > {n}" : cle);
@@ -93,7 +97,7 @@ describe("un paquet abîmé n'écrase pas le projet ouvert", () => {
       alertes.length = 0;
       await importerProjet(o, t, new File([octets as BlobPart], "projet.attic"));
       expect(appels, cas).toEqual([]);
-      expect([...o.cacheExec.current.entrees().keys()], cas).toEqual(["ancien"]);
+      expect(cles(o), cas).toEqual(["ancien"]);
       expect(o.vueAPoserRef.current, cas).toBe(vue);
       expect(o.grapheRacineRef.current, cas).toBe(racine);
       expect(lancer, cas).not.toHaveBeenCalled();
@@ -105,7 +109,7 @@ describe("un paquet abîmé n'écrase pas le projet ouvert", () => {
     const { o, appels, vue, racine, lancer } = temoins();
     await importerProjet(o, t, new File([await paquetSain("99.0.0") as BlobPart], "projet.attic"));
     expect(appels).toEqual([]);
-    expect([...o.cacheExec.current.entrees().keys()]).toEqual(["ancien"]);
+    expect(cles(o)).toEqual(["ancien"]);
     expect([o.vueAPoserRef.current, o.grapheRacineRef.current]).toEqual([vue, racine]);
     expect(lancer).not.toHaveBeenCalled();
     expect(alertes).toEqual([`REFUS:ATTIC 99.0.0 > ${VERSION_APPLICATION}`]);
@@ -125,8 +129,8 @@ describe("un paquet sain s'ouvre avec son cache", () => {
     expect(noeuds[0].data.audioFichier).toBeInstanceOf(File);
     expect(String(noeuds[0].data.audioUrl)).toMatch(/^blob:/);
     expect(noeuds[1].data.audioFichier).toBeUndefined();
-    expect([...o.cacheExec.current.entrees().keys()], "l'ancien graphe est oublié, le paquet le remplace").toEqual(["a"]);
-    expect((o.cacheExec.current.lire("a") as { valeurs: unknown[] }).valeurs[0]).toBeInstanceOf(AudioBuffer);
+    expect(cles(o), "l'ancien graphe est oublié, le paquet le remplace").toEqual(["a"]);
+    expect((new Map(o.envoyer({ genre: "exporterCache" })).get("a") as { valeurs: unknown[] }).valeurs[0]).toBeInstanceOf(AudioBuffer);
     expect(lancer).toHaveBeenCalledWith(undefined, { cacheSeulement: true, attendre: ["a", "b"] });
   });
 
@@ -137,7 +141,7 @@ describe("un paquet sain s'ouvre avec son cache", () => {
     const memeVersion = alertes.splice(0);
     const { o, lancer } = temoins();
     await importerProjet(o, t, new File([await paquetSain("0.0.1") as BlobPart], "projet.attic"));
-    expect([...o.cacheExec.current.entrees().keys()]).toEqual(["a"]);
+    expect(cles(o)).toEqual(["a"]);
     expect(lancer).toHaveBeenCalledWith(undefined, { cacheSeulement: true, attendre: ["a", "b"] });
     expect(alertes).toEqual(memeVersion);
   });
@@ -145,7 +149,7 @@ describe("un paquet sain s'ouvre avec son cache", () => {
   it("LE CONTENU DÉCIDE ET NON L'EXTENSION : un paquet nommé .json reste un paquet", async () => {
     const { o, lancer } = temoins();
     await importerProjet(o, t, new File([await paquetSain() as BlobPart], "projet.json"));
-    expect(o.cacheExec.current.entrees().has("a")).toBe(true);
+    expect(cles(o).includes("a")).toBe(true);
     expect(lancer).toHaveBeenCalledTimes(1);
   });
 });
@@ -157,7 +161,7 @@ describe("un .json s'ouvre comme avant", () => {
     await importerProjet(o, t, new File([PROJET], "projet.attic"));
     expect(appels.slice(0, 2)).toEqual(["setCurrentFilePath", "setPile"]);
     expect(o.setCurrentFilePath).toHaveBeenCalledWith("C:/p/projet.attic");
-    expect(o.cacheExec.current.taille()).toBe(0);
+    expect(cles(o).length).toBe(0);
     expect(lancer).not.toHaveBeenCalled();
   });
 

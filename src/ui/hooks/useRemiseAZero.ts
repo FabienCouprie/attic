@@ -12,20 +12,20 @@ import { descendants, type NoeudG } from "../../core";
 import { CHAMPS_GARDES_AU_REGLAGE, CLASSES } from "../../core/classes-de-champs";
 import { aRemettreAZero, avecLeursBulles } from "../../core/conteneurs";
 import { apresEffacement, urlsARevoquer } from "../../core/cycle-de-vie";
-import type { CacheDuMoteur } from "../moteur/cache";
+import type { EnvoiDuCache } from "../moteur/commandes";
 import { effacerResultats, resultatDe } from "../resultats";
 import { reinitialiserStatuts } from "../statuts";
 
 export interface OptionsRemiseAZero {
   noeudsRef: MutableRefObject<any[]>;
   aretesRef: MutableRefObject<any[]>;
-  cacheExec: MutableRefObject<CacheDuMoteur>;
+  envoyer: EnvoiDuCache;
   setNodes: Dispatch<SetStateAction<any[]>>;
   /** Annule le run en cours s'il y en a un : c'est le moteur qui sait s'il tourne. */
   annulerLeRunEnCours: () => void;
 }
 
-export function useRemiseAZero({ noeudsRef, aretesRef, cacheExec, setNodes, annulerLeRunEnCours }: OptionsRemiseAZero) {
+export function useRemiseAZero({ noeudsRef, aretesRef, envoyer, setNodes, annulerLeRunEnCours }: OptionsRemiseAZero) {
   // ── Réinitialiser un ensemble de nœuds ──
   //
   // `garder` nomme les champs de résultat à laisser en place, et n'est employé que par le changement
@@ -75,8 +75,8 @@ export function useRemiseAZero({ noeudsRef, aretesRef, cacheExec, setNodes, annu
     // LE CACHE D'UN MÉTA EST CELUI DE SES NŒUDS APLATIS, rangés sous `monMeta::…`, à toute
     // profondeur. N'effacer que l'identifiant visible laissait le run suivant reprendre tout son
     // contenu du cache : mesuré, ses quatre nœuds internes repris et seule l'aval refaite. La règle
-    // vit dans `ui/moteur/cache.ts`.
-    cacheExec.current.oublierAvecMetas(ids);
+    // vit dans `ui/moteur/cache.ts`, et la commande la fait appliquer : `ui/moteur/commandes.ts`.
+    envoyer({ genre: "remettreAZero", ids: [...ids] });
   }, [setNodes]);
 
   // ── Les deux réinitialisations ──
