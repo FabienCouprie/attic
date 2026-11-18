@@ -5,7 +5,7 @@
 // que l'orchestrer avec l'état React (nœuds/arêtes/pile de navigation).
 import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
-import type { CacheDuMoteur } from "../moteur/cache";
+import type { EnvoiDuCache } from "../moteur/commandes";
 import type { Edge } from "@xyflow/react";
 import {
   creerMeta, enregistrerMeta, trouverMeta, indexPort,
@@ -27,7 +27,7 @@ export interface OptionsMeta {
   aretesRef: MutableRefObject<any[]>;
   pileRef: MutableRefObject<{ metaId: string; nom: string }[]>;
   grapheRacineRef: MutableRefObject<GrapheRacine>;
-  cacheExec: MutableRefObject<CacheDuMoteur>;
+  envoyer: EnvoiDuCache;
   setNodes: Dispatch<SetStateAction<any[]>>;
   setEdges: Dispatch<SetStateAction<Edge[]>>;
   setPile: Dispatch<SetStateAction<{ metaId: string; nom: string }[]>>;
@@ -59,7 +59,7 @@ export function useMetaComposants(o: OptionsMeta) {
     const noeudUI = { ...noeudMeta, data: { ...noeudMeta.data } };
     o.setNodes([...externes, noeudUI]);
     o.setEdges(nouvellesAretes as unknown as Edge[]);
-    o.cacheExec.current.vider();
+    o.envoyer({ genre: "oublier", ids: "tout" });
     o.setSel(null);
   }, [o, t]);
 
@@ -96,7 +96,7 @@ export function useMetaComposants(o: OptionsMeta) {
     for (const se of meta.sousAretes) nouvellesA.push({ ...se, id: prefixe + se.id, source: prefixe + se.source, target: prefixe + se.target });
     o.setNodes(nouveaux as unknown as any[]);
     o.setEdges(nouvellesA as unknown as Edge[]);
-    o.cacheExec.current.vider();
+    o.envoyer({ genre: "oublier", ids: "tout" });
     o.setSel(null);
   }, [o, t]);
 
@@ -132,7 +132,7 @@ export function useMetaComposants(o: OptionsMeta) {
     const inner = tous.map((sn) => ({ ...sn, type: "atelier", position: sn.position ?? { x: 0, y: 0 }, data: { ...sn.data } }));
     o.setNodes(inner as unknown as any[]);
     o.setEdges([...meta.sousAretes, ...fr.aretes].map((a) => ({ ...a })) as unknown as Edge[]);
-    o.cacheExec.current.vider();
+    o.envoyer({ genre: "oublier", ids: "tout" });
     o.setSel(null);
   }, [o]);
 
@@ -160,7 +160,7 @@ export function useMetaComposants(o: OptionsMeta) {
         o.setNodes(g.nodes.map((n: any) =>
           trouverMeta(n.data?.ficheId) ? { ...n, data: { ...n.data } } : n) as unknown as any[]);
         o.setEdges(g.edges as unknown as Edge[]);
-        o.cacheExec.current.vider();
+        o.envoyer({ genre: "oublier", ids: "tout" });
         o.setSel(null);
       }
     } else {

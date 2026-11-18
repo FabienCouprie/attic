@@ -304,13 +304,14 @@ describe("les deux canaux déclarés ne viennent que de l'exécuteur ou du cache
   it("UNE REMISE À ZÉRO PURGE L'ENTRÉE DE CACHE, sans quoi le cache survivrait au résultat", () => {
     // LA REMISE À ZÉRO VIT DANS `useRemiseAZero.ts` depuis le 2026-11-02 (sortie 2 du plan du moteur) :
     // c'est là que ce cas lit la purge. Depuis la pièce P3a du plan des messages, le cache est un
-    // objet du moteur (`ui/moteur/cache.ts`), et la purge passe par ses gestes d'oubli.
+    // objet du moteur (`ui/moteur/cache.ts`) ; depuis la pièce P3b, l'interface ne le tient plus et la
+    // purge part en commande `remettreAZero` (`ui/moteur/commandes.ts`).
     const moteur = readFileSync(join("src", "ui", "hooks", "useRemiseAZero.ts"), "utf8");
     const debut = moteur.indexOf("const reinitialiserIds");
     expect(debut, "`reinitialiserIds` a disparu de la remise à zéro").toBeGreaterThan(-1);
     const corps = moteur.slice(debut, moteur.indexOf("const reinitialiser", debut + 30));
     expect(corps, "la remise à zéro doit supprimer l'entrée de cache des nœuds visés")
-      .toMatch(/cacheExec\.current\.oublier(AvecMetas)?\(/);
+      .toMatch(/envoyer\(\{ genre: "remettreAZero", ids:/);
   });
 
   it("ET SUPPRIMER UN NŒUD AUSSI, en passant par la remise à zéro", () => {

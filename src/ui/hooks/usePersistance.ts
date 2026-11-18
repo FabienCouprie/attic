@@ -6,7 +6,7 @@
 // `hooks/useJournalDeSession.ts`, et l'import dans `hooks/useImportProjet.ts`.
 import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
-import type { CacheDuMoteur } from "../moteur/cache";
+import type { EnvoiDuCache } from "../moteur/commandes";
 import type { Edge, Viewport } from "@xyflow/react";
 import { projetAEcrire } from "../projet-a-ecrire";
 import { ecrireParLePont, telechargerProjet } from "../ecriture-projet";
@@ -39,7 +39,7 @@ export interface OptionsPersistance {
   reinitialiserNoeud: (id: string) => void;
   supprimerNoeud: (ids: string | string[]) => void;
   lancerRef: MutableRefObject<any>;
-  cacheExec: MutableRefObject<CacheDuMoteur>;
+  envoyer: EnvoiDuCache;
   currentFilePath: string | null;
   setCurrentFilePath: (path: string | null) => void;
 }
@@ -178,7 +178,7 @@ export function usePersistance(o: OptionsPersistance) {
     const racine = o.grapheRacineRef.current ?? { nodes: o.nodes, edges: o.edges };
     const fiches = new Map(racine.nodes.map((n: NoeudAtelier) => [n.id, String(n.data?.ficheId ?? "")]));
     await exporterPaquet((window as any).api, {
-      json, noeuds: racine.nodes, cache: o.cacheExec.current.entrees(), currentFilePath: currentFilePathRef.current,
+      json, noeuds: racine.nodes, cache: new Map(o.envoyer({ genre: "exporterCache" })), currentFilePath: currentFilePathRef.current,
       jamaisCache: (id) => registreUI().trouverDef(fiches.get(id) ?? "")?.jamaisCache === true,
       repertoire: o.repertoire, t,
     });

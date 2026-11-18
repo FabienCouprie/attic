@@ -5,7 +5,8 @@
 // `get`, `set`, `delete` et `clear` chacun à sa façon : la remise à zéro y effaçait les internes d'un
 // méta par une règle écrite à la main, `cle.split("::")[0]`, que personne d'autre ne connaissait. La
 // frontière entre l'interface et le moteur ne peut pas passer au milieu d'une `Map` que tout le monde
-// écrit. Cet objet nomme les gestes ; la pièce suivante les fera passer par des commandes.
+// écrit. Cet objet nomme les gestes ; depuis la pièce P3b, l'interface ne le tient plus et lui envoie
+// des commandes (`ui/moteur/commandes.ts`), et seul le moteur l'appelle : `docs/frontiere-moteur.test.ts`.
 //
 // MÊMES OPÉRATIONS, DANS LE MÊME ORDRE. Chaque méthode fait ce que faisait l'appel qu'elle remplace :
 // `oublier` efface les identifiants dans l'ordre où on les lui donne, comme les `delete` d'une boucle,

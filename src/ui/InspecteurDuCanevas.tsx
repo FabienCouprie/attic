@@ -4,8 +4,8 @@
 // Sorti d'`App.tsx` le 2026-11-01, à l'identique : mêmes calculs, mêmes gestionnaires. L'inspecteur
 // lui-même (`Inspector.tsx`) reste générique ; ce qui demande de connaître le domaine ou le graphe
 // est calculé ici.
-import type { Dispatch, MutableRefObject, SetStateAction } from "react";
-import type { CacheDuMoteur } from "./moteur/cache";
+import type { Dispatch, SetStateAction } from "react";
+import type { EnvoiDuCache } from "./moteur/commandes";
 import type { Edge } from "@xyflow/react";
 
 import { useGestes } from "./gestes-noeud";
@@ -20,7 +20,7 @@ export interface PropsInspecteurDuCanevas {
   sel: NoeudAtelier | null;
   setSel: Dispatch<SetStateAction<NoeudAtelier | null>>;
   setNodes: Dispatch<SetStateAction<NoeudAtelier[]>>;
-  cacheExec: MutableRefObject<CacheDuMoteur>;
+  envoyer: EnvoiDuCache;
   changerReglage: (nid: string, nom: string, val: number | string) => Record<string, number | string> | null;
   pushHistorique: () => void;
   supprimerNoeud: (id: string) => void;
@@ -28,7 +28,7 @@ export interface PropsInspecteurDuCanevas {
 }
 
 export function InspecteurDuCanevas({
-  nodes, edges, sel, setSel, setNodes, cacheExec, changerReglage, pushHistorique, supprimerNoeud, reinitialiserNoeud,
+  nodes, edges, sel, setSel, setNodes, envoyer, changerReglage, pushHistorique, supprimerNoeud, reinitialiserNoeud,
 }: PropsInspecteurDuCanevas) {
   const gestes = useGestes();
   return (
@@ -84,7 +84,7 @@ export function InspecteurDuCanevas({
           // sans toucher aucun paramètre rejoue le résultat de la prise
           // précédente (empreinteParametres/empreinteEntrees ne voient pas
           // midiFichier, qui n'est pas dans `parametres`).
-          cacheExec.current.oublier([id]);
+          envoyer({ genre: "oublier", ids: [id] });
           setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n));
         }}
       />

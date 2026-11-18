@@ -6,7 +6,7 @@
 // plugins et la remontée des résultats dans l'état React.
 import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
-import type { CacheDuMoteur } from "../moteur/cache";
+import type { MoteurDuCache } from "../moteur/commandes";
 import type { Edge } from "@xyflow/react";
 import {
   estCacheParBulle,
@@ -95,7 +95,8 @@ export interface OptionsExecution {
   aretesRef: MutableRefObject<any[]>;
   enExecRef: MutableRefObject<boolean>;
   audioCtxRef: MutableRefObject<AudioContext | null>;
-  cacheExec: MutableRefObject<CacheDuMoteur>;
+  /** Le cache et ses commandes : la passe et ses pilotes tiennent le cache, la remise à zéro lui envoie les siennes. */
+  moteurDuCache: MoteurDuCache;
   /** La bascule « économiser la mémoire » de la barre d'outils. Absente : active, le défaut sûr. */
   economieMemoireRef?: MutableRefObject<boolean>;
   /** Pile de navigation des méta-composants : non vide, on regarde le dedans d'un méta. */
@@ -111,10 +112,13 @@ export interface OptionsExecution {
 export function useExecutionGraphe(o: OptionsExecution) {
   const { t } = useI18n();
   const {
-    noeudsRef, aretesRef, enExecRef, audioCtxRef, cacheExec, economieMemoireRef, pileMetaRef,
+    noeudsRef, aretesRef, enExecRef, audioCtxRef, moteurDuCache, economieMemoireRef, pileMetaRef,
     setNodes, setEnExecution, repertoire,
     onGrapheGenere, onNodeInstalle,
   } = o;
+  // LE MOTEUR TIENT LE CACHE : la passe le lit et l'écrit, ses pilotes et le ménage en lâchent des
+  // entrées. Le reste de l'interface ne lui envoie que des commandes. Voir `ui/moteur/commandes.ts`.
+  const { cache } = moteurDuCache;
 
   // ── LA QUESTION `graphe()` : le graphe qu'une passe lira, copié à l'instant où on la pose ──
   // La passe et les deux pilotes la posent là où ils lisaient le tableau vivant, et pas ailleurs.
@@ -202,7 +206,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     if (ordonnanceur.enCours()) abortControllerRef.current?.abort();
   }, [ordonnanceur]);
   const { reinitialiserNoeud, reinitialiserPourReglage, reinitialiserAval, reinitialiserTout } = useRemiseAZero({
-    noeudsRef, aretesRef, cacheExec, setNodes, annulerLeRunEnCours,
+    noeudsRef, aretesRef, envoyer: moteurDuCache.envoyer, setNodes, annulerLeRunEnCours,
   });
 
   const lancerUnePasse = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun) => {
@@ -229,7 +233,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     abortControllerRef.current = controller;
     let ecrituresDeLaPasse: (() => string[]) | null = null;
     try {
-    console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.taille()}`);
+    console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cache.taille()}`);
     // LES ARÊTES DE SUBSTITUTION NE CALCULENT PAS. Replier une bulle cache les arêtes qui la
     // traversent et en dessine des substituts vers ses poignées : ce sont des objets d'affichage, et
     // les vraies arêtes sont toujours là. Les laisser entrer ici changerait l'empreinte des entrées
@@ -265,7 +269,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const tables = creerTablesDePasse();
     const { resultats, messages, affichageParNoeud, designeParNoeud, demandesParNoeud, ecartsParNoeud, tempsParVisible } = tables;
     // UNE BOUCLE INCHANGÉE NE SE RECALCULE PAS, son corps eût-il été lâché. Voir `core/saut-de-boucle.ts`.
-    const sauts = sautsDeBoucles(deplie.depliees, { noeuds: deplie.noeuds, aretes: aretesG, resultats, cache: cacheExec.current.entrees(), toursDesCopies: deplie.toursDesCopies,
+    const sauts = sautsDeBoucles(deplie.depliees, { noeuds: deplie.noeuds, aretes: aretesG, resultats, cache: cache.entrees(), toursDesCopies: deplie.toursDesCopies,
       reglages: JSON.stringify(servicesDomaine().reglagesDeProjet()), jamaisCache: (id) => trouverDef(deplie.noeuds.find((n) => n.id === id)?.data.ficheId as string)?.jamaisCache === true });
 
     // ── Les graines, résolues au CENTRE, dans core/graines-de-passe.ts ──
@@ -361,8 +365,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
       runtime: ctx, repertoireTravail: repertoire, signal: controller.signal, jeton, trouverDef,
       trouverPlugin: (f) => registreUI().trouverPlugin(f), typeFlux: (t) => registreUI().typeFlux(t),
       canoniser: valeurCanoniqueChoix, graineDuNoeud,
-      lireCache: (id) => cacheExec.current.lire(id),
-      ecrireCache: (id, entree) => cacheExec.current.ecrire(id, entree),
+      lireCache: (id) => cache.lire(id),
+      ecrireCache: (id, entree) => cache.ecrire(id, entree),
       sauts, questions: () => servicesApercu(), poser: definirStatut, poserOmbre: poserStatutOmbre, t,
       cacheSeulement: perimetre?.cacheSeulement === true,
       // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER : il rejoint ce qui
@@ -392,7 +396,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     // les champs autonomes et le statut des conteneurs ; puis chaque lecteur promis, un par un.
     const noeudsVisibles = () => noeudsRef.current;
     await menageApresPasse(passe, {
-      noeudsVisibles, nds, cache: cacheExec.current, deplie, expansions: plat.expansions, grainesTirees,
+      noeudsVisibles, nds, cache, deplie, expansions: plat.expansions, grainesTirees,
       tempsParVisible, ecartsParNoeud, demandesParNoeud, ordonnees, idsDecoratifs, boites,
       dejaPoses, aPoser, poserCeQuiEstPret, definirStatut, setNodes, onGrapheGenere, onNodeInstalle,
     });
@@ -432,7 +436,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
   }, [repertoire, t]);
 
   // ── Les deux pilotes de passes, le lot et les boucles par passes, dans usePilotesDePasse.ts ──
-  const { lancerLeLot } = usePilotesDePasse({ lancerUnePasse, graphe, cacheExec, arretLotRef });
+  const { lancerLeLot } = usePilotesDePasse({ lancerUnePasse, graphe, cache, arretLotRef });
 
   /**
    * LA SEULE PORTE D'ENTRÉE, et elle passe par l'ordonnanceur.

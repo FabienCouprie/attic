@@ -38,12 +38,12 @@ export interface OptionsPilotesDePasse {
    * tableau vivant, et chaque passe pose la sienne en partant. Voir `core/instantane-de-graphe.ts`.
    */
   graphe: () => InstantaneDeGraphe;
-  cacheExec: MutableRefObject<CacheDuMoteur>;
+  cache: CacheDuMoteur;
   /** Levé par « Arrêter » : le lot s'arrête au fichier en cours, et non à la seule passe. */
   arretLotRef: MutableRefObject<boolean>;
 }
 
-export function usePilotesDePasse({ lancerUnePasse, graphe, cacheExec, arretLotRef }: OptionsPilotesDePasse) {
+export function usePilotesDePasse({ lancerUnePasse, graphe, cache, arretLotRef }: OptionsPilotesDePasse) {
   /**
    * La boucle sur une VALEUR : le graphe entier, rejoué une fois par morceau de ce qui circule.
    *
@@ -113,7 +113,7 @@ export function usePilotesDePasse({ lancerUnePasse, graphe, cacheExec, arretLotR
           for (const id of ancetres(finId, aretesG())) aRejouer.add(id);
         }
       }
-      cacheExec.current.oublier(aRejouer);
+      cache.oublier(aRejouer);
     };
 
     try {
@@ -196,8 +196,8 @@ export function usePilotesDePasse({ lancerUnePasse, graphe, cacheExec, arretLotR
         // Le début de boucle et tout son aval doivent rejouer : leur empreinte n'a pas bougé d'une
         // passe à l'autre — le nœud n'a ni entrée ni paramètre qui change —, et le cache les
         // sauterait donc tous, le lot rendant trente fois le premier fichier.
-        cacheExec.current.oublier([plan.debutId]);
-        cacheExec.current.oublier(descendants(plan.debutId, graphe().aretes as AreteG[]));
+        cache.oublier([plan.debutId]);
+        cache.oublier(descendants(plan.debutId, graphe().aretes as AreteG[]));
         // CHAQUE FICHIER PASSE PAR LE PILOTE DES BOUCLES, ET NON PAR UNE PASSE NUE — relevé par
         // Fabien. Cette ligne appelait `lancerUnePasse` directement, si bien qu'une boucle par voix,
         // par créneau ou par cercle posée dans un graphe mené par lot n'était jamais PLANIFIÉE : le

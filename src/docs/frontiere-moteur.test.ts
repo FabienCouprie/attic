@@ -1,0 +1,115 @@
+// src/docs/frontiere-moteur.test.ts — L'interface ne tient pas le cache du moteur : elle lui envoie des
+// commandes.
+//
+// POURQUOI CE TEST. Pièces P3a et P3b du plan de l'architecture par messages entre l'interface et le
+// moteur. Le cache était une `Map` tenue par `App.tsx` dans une référence de React, et prêtée à treize
+// fichiers de l'interface qui l'écrivaient chacun à sa façon. Il est maintenant un objet du moteur
+// (`ui/moteur/cache.ts`), et l'interface ne lui parle que par les commandes du protocole
+// (`ui/moteur/commandes.ts`). Rien, dans le compilateur, n'empêcherait d'y revenir : une `Map` de plus
+// dans une référence, ou un import de l'objet, et tout redevient comme avant sans un rouge.
+//
+// IL CHERCHE UNE FORME, ET NON UN NOM. Un garde qui chercherait `cacheExec` laisserait passer la même
+// table sous un autre nom ; celui-ci compte les références de React qui tiennent une `Map`, quel que
+// soit leur nom, et les imports du module du cache, quel que soit ce qu'ils en tirent, types compris.
+//
+// LE MOTEUR N'A PAS ENCORE TOUT DÉMÉNAGÉ. La pièce P5 mettra sous `ui/moteur/` les pilotes de passes
+// et le ménage ; d'ici là, la liste ci-dessous nomme les fichiers du moteur qui vivent encore ailleurs,
+// et le test exige que chacun importe encore le cache : une liste qui ne servirait plus se voit.
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { dirname, join, relative, resolve, sep } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const SRC = resolve(__dirname, "..");
+const UI = join(SRC, "ui");
+const MOTEUR = join(UI, "moteur");
+const MODULE_DU_CACHE = join(MOTEUR, "cache");
+
+/** Tous les fichiers TypeScript d'un sous-arbre, tests compris : un test qui tiendrait le cache compte aussi. */
+function fichiers(dossier: string): string[] {
+  const out: string[] = [];
+  const parcourir = (d: string) => {
+    for (const nom of readdirSync(d)) {
+      const chemin = join(d, nom);
+      if (statSync(chemin).isDirectory()) parcourir(chemin);
+      else if (/\.tsx?$/.test(nom)) out.push(chemin);
+    }
+  };
+  parcourir(dossier);
+  return out.sort();
+}
+
+/** Le chemin d'un fichier depuis `src/`, en barres obliques. */
+const nomDe = (chemin: string) => relative(SRC, chemin).split(sep).join("/");
+const estDuMoteur = (chemin: string) => chemin.startsWith(MOTEUR + sep);
+
+/**
+ * UNE RÉFÉRENCE DE REACT QUI TIENT UNE TABLE : la forme que le cache avait, sous ses trois écritures.
+ * `useRef<Map<…>>(…)` et `useRef(new Map…)` la créent, `MutableRefObject<Map<…>>` la prête. Une
+ * `ReadonlyMap` compte aussi.
+ */
+const TABLE_DANS_UNE_REFERENCE = /\b(?:useRef|MutableRefObject|RefObject)\s*(?:<\s*(?:Readonly)?Map\s*<|\(\s*new\s+Map\b)/g;
+
+/**
+ * CE QUI N'EST PAS UN CACHE, mesuré le 2026-11-18 : deux tables, chacune tenue par le composant qui
+ * s'en sert et prêtée à personne. Le compte est épinglé par fichier : une table de plus, même là,
+ * fait tomber le test.
+ */
+const TABLES_QUI_NE_SONT_PAS_LE_CACHE: Record<string, number> = {
+  // Les notes que le clavier de l'inspecteur tient enfoncées, rangées par numéro MIDI.
+  "ui/Inspector.tsx": 1,
+  // Les minuteurs de la relance après un réglage, un par nœud réglé : ils restent à l'interface.
+  "ui/hooks/useRelanceApresReglage.ts": 1,
+};
+
+/** Les fichiers du moteur qui ne sont pas encore sous `ui/moteur/` : ils y iront à la pièce P5. */
+const MOTEUR_HORS_DE_SON_DOSSIER = [
+  "ui/hooks/usePilotesDePasse.ts",
+  "ui/menage-apres-passe.test.ts",
+  "ui/menage-apres-passe.ts",
+];
+
+/** Les modules qu'un fichier importe, sous toutes leurs formes : `from`, effet de bord, `import()`. */
+function importsDe(texte: string): string[] {
+  const motif = /(?:\bfrom\s*|\bimport\s*\(\s*|^\s*import\s+)["']([^"']+)["']/gm;
+  return [...texte.matchAll(motif)].map((m) => m[1]);
+}
+
+/** Vrai si ce fichier importe le module du cache. */
+function importeLeCache(chemin: string): boolean {
+  return importsDe(readFileSync(chemin, "utf8"))
+    .filter((cible) => cible.startsWith("."))
+    .some((cible) => resolve(dirname(chemin), cible).replace(/\.tsx?$/, "") === MODULE_DU_CACHE);
+}
+
+describe("la frontière du cache du moteur", () => {
+  it("AUCUNE RÉFÉRENCE DE REACT NE TIENT UNE TABLE DANS L'INTERFACE, hors des deux qui ne sont pas le cache", () => {
+    const comptes: Record<string, number> = {};
+    for (const f of fichiers(UI)) {
+      if (estDuMoteur(f)) continue;
+      const n = readFileSync(f, "utf8").match(TABLE_DANS_UNE_REFERENCE)?.length ?? 0;
+      if (n) comptes[nomDe(f)] = n;
+    }
+    expect(comptes, "une table dans une référence de React : le cache se parle par `ui/moteur/commandes.ts`").toEqual(TABLES_QUI_NE_SONT_PAS_LE_CACHE);
+  });
+
+  it("SEUL LE MOTEUR IMPORTE LE MODULE DU CACHE, et chacun de ceux qu'on nomme l'importe encore", () => {
+    const importeurs = fichiers(SRC).filter(importeLeCache);
+    const horsDuMoteur = importeurs.filter((f) => !estDuMoteur(f)).map(nomDe);
+    expect(horsDuMoteur, "hors du moteur, on envoie des commandes : `ui/moteur/commandes.ts`").toEqual(MOTEUR_HORS_DE_SON_DOSSIER);
+  });
+
+  it("le motif voit les trois écritures d'une table dans une référence, et pas une table seule", () => {
+    const vus = (s: string) => s.match(TABLE_DANS_UNE_REFERENCE)?.length ?? 0;
+    expect(vus("const c = useRef<Map<string, any>>(new Map());")).toBe(1);
+    expect(vus("const c = useRef(new Map<string, number>());")).toBe(1);
+    expect(vus("cache: MutableRefObject<ReadonlyMap<string, X>>;")).toBe(1);
+    expect(vus("const m = new Map<string, number>(); const r = useRef<number>(0);")).toBe(0);
+  });
+
+  it("l'import se voit sous ses formes, type et import dynamique compris", () => {
+    expect(importsDe(`import type { CacheDuMoteur } from "../moteur/cache";`)).toEqual(["../moteur/cache"]);
+    expect(importsDe(`import "./moteur/cache";`)).toEqual(["./moteur/cache"]);
+    expect(importsDe(`const m = await import("../moteur/cache");`)).toEqual(["../moteur/cache"]);
+    expect(importsDe(`export { creerCacheDuMoteur } from "./cache";`)).toEqual(["./cache"]);
+  });
+});
