@@ -21,6 +21,7 @@
 // témoins, et vérifie qu'un paquet abîmé n'appelle aucun d'eux.
 import { useCallback } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
+import type { CacheDuMoteur } from "../moteur/cache";
 import type { Edge, Viewport } from "@xyflow/react";
 import {
   enregistrerMeta,
@@ -52,7 +53,7 @@ export interface OptionsImportProjet {
   setPile: (p: { metaId: string; nom: string; nomEn?: string }[]) => void;
   /** Où l'import dépose la vue du fichier, pour le recadrage que sa remise à zéro de la pile déclenche. */
   vueAPoserRef: MutableRefObject<Viewport | null>;
-  cacheExec: MutableRefObject<Map<string, any>>;
+  cacheExec: MutableRefObject<CacheDuMoteur>;
   setCurrentFilePath: (path: string | null) => void;
   /** Le lancement du moteur, pour la passe qui repose le cache d'un paquet. */
   lancerRef?: MutableRefObject<any>;
@@ -176,7 +177,7 @@ export async function importerProjet(
   const aretesValides = filtrerAretesInvalides(importedNodes, json.edges || [], perte.aretes);
   o.setNodes(importedNodes);
   o.setEdges(aretesValides);
-  o.cacheExec.current.clear();
+  o.cacheExec.current.vider();
   // LE GRAPHE D'AVANT EST ABANDONNÉ, DONC SES RÉSULTATS AUSSI. Les résultats et les statuts
   // vivent hors du tableau des nœuds ; les laisser en place donnerait au graphe importé, dont
   // les identifiants repartent de « noeud-1 », ce que le précédent avait produit. La pile et le
@@ -185,7 +186,7 @@ export async function importerProjet(
   oublierNoeuds(idsDe(importedNodes));
   // LE CACHE DU PAQUET ARRIVE APRÈS L'OUBLI, sous les identifiants qu'il portait à l'export : ceux
   // du fichier, que l'import garde. Le moteur le lit comme celui d'un run précédent.
-  if (paquet) for (const [id, entree] of paquet.cache) o.cacheExec.current.set(id, entree);
+  if (paquet) for (const [id, entree] of paquet.cache) o.cacheExec.current.ecrire(id, entree);
   if (json.viewport && o.rfInstance && !ouverture.cadrer) o.rfInstance.setViewport(json.viewport);
 
   // LE RAPPORT PARAÎT APRÈS QUE LE GRAPHE EST POSÉ, et non avant : ce qui s'est ouvert est à

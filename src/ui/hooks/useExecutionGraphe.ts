@@ -6,6 +6,7 @@
 // plugins et la remontée des résultats dans l'état React.
 import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
+import type { CacheDuMoteur } from "../moteur/cache";
 import type { Edge } from "@xyflow/react";
 import {
   estCacheParBulle,
@@ -94,7 +95,7 @@ export interface OptionsExecution {
   aretesRef: MutableRefObject<any[]>;
   enExecRef: MutableRefObject<boolean>;
   audioCtxRef: MutableRefObject<AudioContext | null>;
-  cacheExec: MutableRefObject<Map<string, any>>;
+  cacheExec: MutableRefObject<CacheDuMoteur>;
   /** La bascule « économiser la mémoire » de la barre d'outils. Absente : active, le défaut sûr. */
   economieMemoireRef?: MutableRefObject<boolean>;
   /** Pile de navigation des méta-composants : non vide, on regarde le dedans d'un méta. */
@@ -228,7 +229,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     abortControllerRef.current = controller;
     let ecrituresDeLaPasse: (() => string[]) | null = null;
     try {
-    console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.size}`);
+    console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cacheExec.current.taille()}`);
     // LES ARÊTES DE SUBSTITUTION NE CALCULENT PAS. Replier une bulle cache les arêtes qui la
     // traversent et en dessine des substituts vers ses poignées : ce sont des objets d'affichage, et
     // les vraies arêtes sont toujours là. Les laisser entrer ici changerait l'empreinte des entrées
@@ -264,7 +265,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     const tables = creerTablesDePasse();
     const { resultats, messages, affichageParNoeud, designeParNoeud, demandesParNoeud, ecartsParNoeud, tempsParVisible } = tables;
     // UNE BOUCLE INCHANGÉE NE SE RECALCULE PAS, son corps eût-il été lâché. Voir `core/saut-de-boucle.ts`.
-    const sauts = sautsDeBoucles(deplie.depliees, { noeuds: deplie.noeuds, aretes: aretesG, resultats, cache: cacheExec.current, toursDesCopies: deplie.toursDesCopies,
+    const sauts = sautsDeBoucles(deplie.depliees, { noeuds: deplie.noeuds, aretes: aretesG, resultats, cache: cacheExec.current.entrees(), toursDesCopies: deplie.toursDesCopies,
       reglages: JSON.stringify(servicesDomaine().reglagesDeProjet()), jamaisCache: (id) => trouverDef(deplie.noeuds.find((n) => n.id === id)?.data.ficheId as string)?.jamaisCache === true });
 
     // ── Les graines, résolues au CENTRE, dans core/graines-de-passe.ts ──
@@ -360,8 +361,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
       runtime: ctx, repertoireTravail: repertoire, signal: controller.signal, jeton, trouverDef,
       trouverPlugin: (f) => registreUI().trouverPlugin(f), typeFlux: (t) => registreUI().typeFlux(t),
       canoniser: valeurCanoniqueChoix, graineDuNoeud,
-      lireCache: (id) => cacheExec.current.get(id),
-      ecrireCache: (id, entree) => cacheExec.current.set(id, entree),
+      lireCache: (id) => cacheExec.current.lire(id),
+      ecrireCache: (id, entree) => cacheExec.current.ecrire(id, entree),
       sauts, questions: () => servicesApercu(), poser: definirStatut, poserOmbre: poserStatutOmbre, t,
       cacheSeulement: perimetre?.cacheSeulement === true,
       // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER : il rejoint ce qui

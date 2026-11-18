@@ -16,6 +16,7 @@
 // à la cascade (CHAMPS_UTILISATEUR).
 import { useCallback } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
+import type { CacheDuMoteur } from "../moteur/cache";
 
 import { creerUrlMedia } from "../urls-medias";
 
@@ -23,14 +24,14 @@ import { creerUrlMedia } from "../urls-medias";
 export type SorteDeMedia = "audio" | "midi" | "image" | "svg" | "pdf";
 
 export interface OptionsChargementMedias {
-  cacheExec: MutableRefObject<Map<string, any>>;
+  cacheExec: MutableRefObject<CacheDuMoteur>;
   setNodes: Dispatch<SetStateAction<any[]>>;
   reinitialiserNoeud: (nid: string) => void;
 }
 
 export function useChargementMedias({ cacheExec, setNodes, reinitialiserNoeud }: OptionsChargementMedias) {
   const chargerMedia = useCallback((nid: string, sorte: SorteDeMedia, fichier: File) => {
-    cacheExec.current.delete(nid);
+    cacheExec.current.oublier([nid]);
     const api = (window as any).api;
     const chemin = api?.cheminFichier ? api.cheminFichier(fichier) : "";
     // L'URL se crée HORS du réducteur : React le rejoue deux fois en mode strict, et une des
@@ -47,7 +48,7 @@ export function useChargementMedias({ cacheExec, setNodes, reinitialiserNoeud }:
 
   /** Une prise au micro : un blob, et son URL écoutable. Pas de chemin disque, elle n'en a pas. */
   const changerEnregistrement = useCallback((nid: string, blob: Blob) => {
-    cacheExec.current.delete(nid);
+    cacheExec.current.oublier([nid]);
     // Par le registre, comme le son chargé : la prise qu'elle remplace part d'elle-même.
     const url = creerUrlMedia(blob);
     setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, enregistrementBlob: blob, enregistrementUrl: url } } : n));
@@ -56,7 +57,7 @@ export function useChargementMedias({ cacheExec, setNodes, reinitialiserNoeud }:
 
   /** La réponse impulsionnelle d'une réverbération : un fichier sans paramètre « Chemin ». */
   const chargerIR = useCallback((nid: string, fichier: File) => {
-    cacheExec.current.delete(nid);
+    cacheExec.current.oublier([nid]);
     setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, irFichier: fichier, irNom: fichier.name } } : n));
     reinitialiserNoeud(nid);
   }, [cacheExec, setNodes, reinitialiserNoeud]);

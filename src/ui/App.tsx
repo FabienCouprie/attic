@@ -35,6 +35,7 @@ import { tailleDefaut } from "./tailles-noeuds";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
+import { creerCacheDuMoteur, type CacheDuMoteur } from "./moteur/cache";
 import { useCopierColler } from "./hooks/useCopierColler";
 import { resultatDe } from "./resultats";
 import { definirPrioritaire } from "./priorite";
@@ -160,7 +161,7 @@ function Atelier() {
     }
   }, []);
   const lancerRef = useRef<any>(null);
-  const cacheExec = useRef<Map<string, any>>(new Map());
+  const cacheExec = useRef<CacheDuMoteur>(creerCacheDuMoteur());
   const callbacksNoeudRef = useRef<(() => Record<string, (...args: any[]) => any>) | null>(null);
 
   // LE FICHIER EST À LA FENÊTRE : une fenêtre neuve n'en a pas. Voir `ui/fenetre.ts`.
@@ -314,9 +315,9 @@ function Atelier() {
     // après les autres en regardant l'onde. Son aval, lui, est bien périmé : un
     // « Masque de zones » restait affiché « Terminé » avec le trou de l'ancienne
     // zone dans son WAV, alors que le sélecteur n'en montrait plus aucune.
-    // Le `cacheExec.delete` reste nécessaire pour le nœud lui-même :
+    // L'oubli du cache reste nécessaire pour le nœud lui-même :
     // `zonesSelectionnees` ne figure pas dans `empreinteParametres`.
-    onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.delete(nid); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); reinitialiserAval(nid); },
+    onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { cacheExec.current.oublier([nid]); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); reinitialiserAval(nid); },
     // UN GESTE SUR UNE LIGNE DE TEMPS PASSE PAR LA MÊME PORTE QU'UN RÉGLAGE, et c'est la correction
     // du 2026-10-26. La vue écrivait son découpage par un `setNodes` nu : rien ne purgeait le cache,
     // rien ne périmait l'aval, rien ne relançait. Le morceau déplacé n'était donc entendu qu'au

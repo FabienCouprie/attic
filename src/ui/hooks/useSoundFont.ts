@@ -11,13 +11,14 @@
 // que caché : suivre aussi les runs ciblés demanderait l'ordonnanceur, qui vit dans le moteur.
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
+import type { CacheDuMoteur } from "../moteur/cache";
 
 import { autoChargerSF2, chargerSF2Globale, sf2Nom } from "../../plugins/soundfontGlobal";
 import { decisionDeVidage } from "../soundfont-cache";
 
 export interface OptionsSoundFont {
   repertoire: string;
-  cacheExec: MutableRefObject<Map<string, any>>;
+  cacheExec: MutableRefObject<CacheDuMoteur>;
   /** Vrai pendant un run global : un vidage qui tomberait là attend la fin. */
   enExecution: boolean;
 }
@@ -34,7 +35,7 @@ export function useSoundFont({ repertoire, cacheExec, enExecution }: OptionsSoun
     const decision = decisionDeVidage({ nomAvant: nomConnuRef.current, nomApres, enExecution: enExecutionRef.current });
     nomConnuRef.current = nomApres;
     setNom(nomApres);
-    if (decision === "maintenant") cacheExec.current.clear();
+    if (decision === "maintenant") cacheExec.current.vider();
     else if (decision === "a-la-fin-du-run") vidageEnAttenteRef.current = true;
   }, [cacheExec]);
 
@@ -43,7 +44,7 @@ export function useSoundFont({ repertoire, cacheExec, enExecution }: OptionsSoun
   useEffect(() => {
     if (enExecution || !vidageEnAttenteRef.current) return;
     vidageEnAttenteRef.current = false;
-    cacheExec.current.clear();
+    cacheExec.current.vider();
   }, [enExecution, cacheExec]);
 
   // Auto-load SF2 au démarrage

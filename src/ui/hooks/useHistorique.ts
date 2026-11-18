@@ -12,6 +12,7 @@
 // résultats des nœuds abandonnés oubliés ; ils ne diffèrent que par la pile qu'ils vident.
 import { useCallback, useRef } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
+import type { CacheDuMoteur } from "../moteur/cache";
 import type { Edge } from "@xyflow/react";
 
 import {
@@ -29,7 +30,7 @@ export interface OptionsHistorique {
   noeudsRef: MutableRefObject<any[]>;
   aretesRef: MutableRefObject<Edge[]>;
   grapheRacineRef: MutableRefObject<GrapheRacine>;
-  cacheExec: MutableRefObject<Map<string, any>>;
+  cacheExec: MutableRefObject<CacheDuMoteur>;
   setNodes: Dispatch<SetStateAction<any[]>>;
   setEdges: Dispatch<SetStateAction<Edge[]>>;
   setPile: Dispatch<SetStateAction<Niveau[]>>;
@@ -87,7 +88,7 @@ export function useHistorique({
       setCurrentFilePath(prev.contexte.cheminFichier);
     }
     setSel(null);
-    cacheExec.current.clear();
+    cacheExec.current.vider();
     // CE QUE L'ANNULATION ABANDONNE S'OUBLIE AUSSI. Les résultats et les statuts vivent hors du
     // tableau des nœuds, et remettre un graphe d'avant les laissait en place : un nœud du graphe
     // annulé gardait son entrée, qu'un nœud neuf portant le même identifiant retrouvait ensuite.
@@ -129,7 +130,7 @@ export function useHistorique({
     pushHistorique({ pile, racine: grapheRacineRef.current, cheminFichier: currentFilePath });
     setNodes([]);
     setEdges([]);
-    cacheExec.current.clear();
+    cacheExec.current.vider();
     setSel(null);
     setPile([]);
     grapheRacineRef.current = null;

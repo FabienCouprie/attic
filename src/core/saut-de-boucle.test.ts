@@ -156,10 +156,10 @@ describe("les sauts d'un run", () => {
 describe("le corps lâché en fin de run", () => {
   it("se lâche sous l'économie de mémoire, et reste sans elle", () => {
     const avec = new Map<string, unknown>([["d#0::tr", 1], ["f", 2]]);
-    lacherLeCorps(["d#0::tr"], avec, true);
+    lacherLeCorps(["d#0::tr"], (id) => avec.delete(id), true);
     expect([...avec.keys()]).toEqual(["f"]);
     const sans = new Map<string, unknown>([["d#0::tr", 1], ["f", 2]]);
-    lacherLeCorps(["d#0::tr"], sans, false);
+    lacherLeCorps(["d#0::tr"], (id) => sans.delete(id), false);
     expect([...sans.keys()]).toEqual(["d#0::tr", "f"]);
   });
 });
