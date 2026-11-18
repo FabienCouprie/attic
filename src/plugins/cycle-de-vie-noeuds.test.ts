@@ -266,7 +266,9 @@ describe("les deux canaux déclarés ne viennent que de l'exécuteur ou du cache
   it("LE CÂBLAGE SUIT : le moteur range les canaux au cache, les en ressort, et passe par la règle", () => {
     // Le banc ci-dessus éprouve la règle, pas son câblage. Ces trois lectures gardent les trois
     // endroits du moteur où le défaut se tenait.
-    const moteur = readFileSync(join("src", "ui", "hooks", "useExecutionGraphe.ts"), "utf8");
+    // LA PASSE A QUITTÉ LE CROCHET À LA PIÈCE P5A (`ui/moteur/passe.ts`) : les deux se lisent.
+    const moteur = readFileSync(join("src", "ui", "hooks", "useExecutionGraphe.ts"), "utf8")
+      + readFileSync(join("src", "ui", "moteur", "passe.ts"), "utf8");
     // L'ENTRÉE DE CACHE S'ÉCRIT DANS LE CŒUR depuis le 2026-11-11 (`core/execution.ts`, pièce 2 du
     // plan du runtime), par l'écriture que le crochet lui prête : c'est là qu'on la cherche.
     const retour = readFileSync(join("src", "core", "execution.ts"), "utf8");
@@ -278,10 +280,10 @@ describe("les deux canaux déclarés ne viennent que de l'exécuteur ou du cache
       .toMatch(/entreeCache\.affichage\)\s*affichageParNoeud\.set/);
     expect(retour, "et les en ressortir aussi pour le désigné")
       .toMatch(/entreeCache\.designe\)\s*designeParNoeud\.set/);
-    // LE REPORT EST FAIT PAR LE MÉNAGE D'APRÈS PASSE depuis le 2026-11-02 (`ui/menage-apres-passe.ts`,
+    // LE REPORT EST FAIT PAR LE MÉNAGE D'APRÈS PASSE depuis le 2026-11-02 (`ui/moteur/menage-apres-passe.ts`,
     // sortie 7 du plan du moteur) : c'est là qu'on le cherche, et le balayage à la main reste
     // interdit des deux côtés, pour qu'il ne revienne pas par le moteur.
-    const menage = readFileSync(join("src", "ui", "menage-apres-passe.ts"), "utf8");
+    const menage = readFileSync(join("src", "ui", "moteur", "menage-apres-passe.ts"), "utf8");
     expect(menage, "le report doit passer par `champsAReporter`, et non relire `Object.keys` sur place")
       .toMatch(/champsAReporter\(/);
     // Et la boucle de report ne doit plus balayer les clés elle-même : c'est cette boucle-là qui

@@ -22,10 +22,12 @@
 // modules importés : ceux qui posent n'importent aucun module qui tient ou nomme les tables d'une
 // passe, et le moteur n'importe aucun des trois magasins.
 //
-// LE MOTEUR N'A PAS ENCORE TOUT DÉMÉNAGÉ. La pièce P5 mettra sous `ui/moteur/` les pilotes de passes
-// et le ménage ; d'ici là, la liste ci-dessous nomme les fichiers du moteur qui vivent encore ailleurs,
-// et le test exige que chacun importe encore le cache : une liste qui ne servirait plus se voit.
-import { readFileSync, readdirSync, statSync } from "node:fs";
+// ET LE MOTEUR EST DANS SON DOSSIER, SANS REACT, depuis la pièce P5a : l'ordonnanceur, les pilotes de
+// passes, la passe, son ménage et ses tables sont sous `ui/moteur/`. Le garde suit les imports
+// TRANSITIFS, types compris, et non les seuls imports directs : `ui/statuts.ts` et `ui/resultats.ts`
+// importent `react`, et un module du moteur qui importerait un fichier qui les importe passerait un
+// contrôle des imports directs. Rien du dossier n'atteint React, React Flow ni les trois magasins.
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -71,12 +73,6 @@ const TABLES_QUI_NE_SONT_PAS_LE_CACHE: Record<string, number> = {
   "ui/hooks/useRelanceApresReglage.ts": 1,
 };
 
-/** Les fichiers du moteur qui ne sont pas encore sous `ui/moteur/` : ils y iront à la pièce P5. */
-const MOTEUR_HORS_DE_SON_DOSSIER = [
-  "ui/hooks/usePilotesDePasse.ts",
-  "ui/menage-apres-passe.test.ts",
-  "ui/menage-apres-passe.ts",
-];
 
 /** Les quatre poses des magasins d'une passe : les importer, c'est écrire ce que l'interface montre. */
 const POSES = ["poserStatut", "poserStatutOmbre", "poserResultat", "poserApercu"];
@@ -95,19 +91,60 @@ const QUI_POSE = [
 ];
 
 /**
- * LES MODULES QUI TIENNENT OU NOMMENT LES TABLES D'UNE PASSE : la boucle qui les remplit, le choix qui
- * les lit, leur type, et le ménage. Le dossier du moteur s'y ajoute. Celui qui pose n'en importe
- * aucun, types compris : il reçoit ce qui est choisi.
+ * LES MODULES QUI TIENNENT OU NOMMENT LES TABLES D'UNE PASSE : la boucle qui les remplit et le choix
+ * qui les lit, au cœur. Le dossier du moteur s'y ajoute, où sont leur type et le ménage. Celui qui
+ * pose n'en importe aucun, types compris : il reçoit ce qui est choisi.
  */
 const TABLES_DU_MOTEUR = [
   join(SRC, "core", "execution"),
   join(SRC, "core", "rendu-du-visible"),
-  join(UI, "etat-de-passe"),
-  join(UI, "menage-apres-passe"),
 ];
 
-/** Les trois magasins de l'interface : le moteur n'en importe aucun, ni pour écrire ni pour lire. */
+/** Les trois magasins de l'interface : le moteur n'en atteint aucun, ni pour écrire ni pour lire. */
 const LES_TROIS_MAGASINS = [join(UI, "statuts"), join(UI, "resultats"), join(UI, "priorite")];
+
+/** Les modules de React et de React Flow, sous-chemins compris : `react/jsx-runtime` en est un. */
+const DE_REACT = /^(?:react|react-dom)(?:\/|$)|^@xyflow\//;
+
+/** Le texte sans ses commentaires : un import cité pour raconter une fuite n'en est pas une. */
+const sansCommentaires = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/[^\n]*$/gm, "");
+
+/** Le fichier qu'un chemin relatif désigne, extension ou index compris, ou rien. */
+function resoudre(depuis: string, cible: string): string | undefined {
+  const base = resolve(dirname(depuis), cible);
+  return [base, `${base}.ts`, `${base}.tsx`, join(base, "index.ts"), join(base, "index.tsx")]
+    .find((c) => existsSync(c) && statSync(c).isFile());
+}
+
+/**
+ * Tout ce que ces fichiers atteignent par leurs imports, de proche en proche, types compris.
+ *
+ * Chaque fichier atteint garde celui qui l'a fait atteindre, et chaque module nu le premier fichier
+ * qui l'importe : un rouge dit la chaîne entière, et non le seul dernier maillon.
+ */
+function atteints(entrees: readonly string[]) {
+  const parents = new Map<string, string | undefined>(entrees.map((e) => [e, undefined]));
+  const externes = new Map<string, string>();
+  const aVoir = [...entrees];
+  for (let f = aVoir.shift(); f !== undefined; f = aVoir.shift()) {
+    for (const cible of importsDe(sansCommentaires(readFileSync(f, "utf8")))) {
+      if (!cible.startsWith(".")) { if (!externes.has(cible)) externes.set(cible, f); continue; }
+      const r = resoudre(f, cible);
+      if (r && !parents.has(r)) { parents.set(r, f); aVoir.push(r); }
+    }
+  }
+  const chaine = (f: string) => {
+    const c: string[] = [];
+    for (let x: string | undefined = f; x; x = parents.get(x)) c.unshift(nomDe(x));
+    return c.join(" → ");
+  };
+  /** Ce qui, de ce qu'on a atteint, est React, React Flow ou l'un des trois magasins, avec sa chaîne. */
+  const interdits = [
+    ...[...externes].filter(([m]) => DE_REACT.test(m)).map(([m, f]) => `${m} ← ${chaine(f)}`),
+    ...[...parents.keys()].filter((f) => LES_TROIS_MAGASINS.includes(f.replace(/\.tsx?$/, ""))).map(chaine),
+  ];
+  return { fichiers: [...parents.keys()], interdits };
+}
 
 /** Les modules qu'un fichier importe, chemins relatifs résolus, sans extension. */
 const modulesImportes = (chemin: string) =>
@@ -156,10 +193,12 @@ describe("la frontière du cache du moteur", () => {
     expect(comptes, "une table dans une référence de React : le cache se parle par `ui/moteur/commandes.ts`").toEqual(TABLES_QUI_NE_SONT_PAS_LE_CACHE);
   });
 
-  it("SEUL LE MOTEUR IMPORTE LE MODULE DU CACHE, et chacun de ceux qu'on nomme l'importe encore", () => {
+  it("SEUL LE MOTEUR IMPORTE LE MODULE DU CACHE", () => {
     const importeurs = fichiers(SRC).filter(importeLeCache);
     const horsDuMoteur = importeurs.filter((f) => !estDuMoteur(f)).map(nomDe);
-    expect(horsDuMoteur, "hors du moteur, on envoie des commandes : `ui/moteur/commandes.ts`").toEqual(MOTEUR_HORS_DE_SON_DOSSIER);
+    // UN RELEVÉ QUI NE VERRAIT AUCUN IMPORTEUR SERAIT VERT POUR RIEN : la passe et le ménage en sont.
+    expect(importeurs.filter(estDuMoteur).length).toBeGreaterThanOrEqual(3);
+    expect(horsDuMoteur, "hors du moteur, on envoie des commandes : `ui/moteur/commandes.ts`").toEqual([]);
   });
 
   it("SEUL LE RÉCEPTEUR ET CE QU'IL APPELLE POSENT DANS LES MAGASINS : le moteur leur dit des événements", () => {
@@ -178,19 +217,25 @@ describe("la frontière du cache du moteur", () => {
     expect(lus, "le choix des valeurs est au cœur, `core/rendu-du-visible.ts`, et arrive par les événements").toEqual({});
   });
 
-  it("LE MOTEUR N'IMPORTE AUCUN DES TROIS MAGASINS : il dit ce qu'il a fait, le récepteur l'écrit", () => {
-    const moteur = [
-      ...fichiers(MOTEUR),
-      ...MOTEUR_HORS_DE_SON_DOSSIER.map((f) => join(SRC, f)),
-    ].filter((f) => !/\.test\.tsx?$/.test(f));
-    const lus: Record<string, string[]> = {};
-    for (const f of moteur) {
-      const vus = modulesImportes(f).filter((m) => LES_TROIS_MAGASINS.includes(m));
-      if (vus.length) lus[nomDe(f)] = vus.map(nomDe);
+  it("RIEN DU DOSSIER DU MOTEUR N'ATTEINT REACT, REACT FLOW NI LES TROIS MAGASINS, de proche en proche", () => {
+    const moteur = fichiers(MOTEUR).filter((f) => !/\.test\.tsx?$/.test(f));
+    const { fichiers: vus, interdits } = atteints(moteur);
+    // UN RELEVÉ QUI NE VERRAIT RIEN SERAIT VERT POUR RIEN : le moteur compte sept modules, la passe
+    // et l'ordonnanceur compris, et il atteint le cœur bien au-delà.
+    for (const f of ["passe", "pilotes", "ordonnanceur-runs", "menage-apres-passe"]) {
+      expect(moteur.map(nomDe), `ui/moteur/${f}.ts doit être relevé`).toContain(`ui/moteur/${f}.ts`);
     }
-    // UN RELEVÉ QUI NE VERRAIT AUCUN FICHIER SERAIT VERT POUR RIEN.
-    expect(moteur.length).toBeGreaterThanOrEqual(4);
-    expect(lus, "le moteur émet : `ui/recepteur-moteur.ts` pose et lit les magasins").toEqual({});
+    expect(vus.length).toBeGreaterThan(moteur.length * 3);
+    expect(interdits, "le moteur dit ce qu'il fait : `ui/recepteur-moteur.ts` pose, et le pont est à React").toEqual([]);
+  });
+
+  it("le relevé transitif voit React derrière un intermédiaire, et le magasin qui y mène", () => {
+    // `ui/oubli-noeuds.ts` n'importe pas React ; il importe le magasin des résultats, qui l'importe.
+    const texte = readFileSync(join(UI, "oubli-noeuds.ts"), "utf8");
+    expect(importsDe(sansCommentaires(texte)).some((m) => DE_REACT.test(m)), "le témoin doit rester indirect").toBe(false);
+    const { interdits } = atteints([join(UI, "oubli-noeuds.ts")]);
+    expect(interdits).toContain("react ← ui/oubli-noeuds.ts → ui/resultats.ts");
+    expect(interdits).toContain("ui/oubli-noeuds.ts → ui/resultats.ts");
   });
 
   it("le motif des poses voit le nom, l'alias, le bloc et l'import dynamique, et laisse le type et l'effacement", () => {

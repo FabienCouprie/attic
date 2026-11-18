@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { calculerCorrectifResultat, type PretsDeLAffichage } from "./correctif-resultat";
 import { choisirLeRendu } from "../core/rendu-du-visible";
-import type { EtatDePasse } from "./etat-de-passe";
+import type { TablesDuRendu } from "../core/rendu-du-visible";
 import { effacerResultats, poserResultat } from "./resultats";
 import { configurerServicesApercu, oublierServicesApercu } from "./services-apercu";
 import { lireProfondeurExport } from "./profondeur-export";
@@ -37,8 +37,8 @@ const FICHES: Record<string, Record<string, unknown>> = {
   autonome: { id: "autonome", affichageAutonome: true, entrees: [], sorties: [{ nom: "Audio", type: "audio" }] },
   fichier: { id: "fichier", nom: "Fichier", apercuEstLeFichier: true, sortieHorsPlagePossible: true, entrees: [], sorties: [{ nom: "Audio", type: "audio" }] },
 };
-/** Les tables du moteur et les prêts de l'affichage, ensemble : ce que lisait le correctif d'avant. */
-type Passe = EtatDePasse & PretsDeLAffichage;
+/** Les tables que le choix lit et les prêts de l'affichage, ensemble : ce que lisait le correctif d'avant. */
+type Passe = TablesDuRendu & { messages: Map<string, string> } & PretsDeLAffichage;
 const trouverDef = ((id: string) => FICHES[id]) as unknown as Passe["trouverDef"];
 
 const noeud = (id: string, ficheId: string, data: Record<string, unknown> = {}): NoeudG =>

@@ -1,4 +1,4 @@
-// ui/menage-apres-passe.ts — Ce que le moteur fait une fois le dernier nœud calculé.
+// ui/moteur/menage-apres-passe.ts — Ce que le moteur fait une fois le dernier nœud calculé.
 //
 // SORTI DU MOTEUR D'EXÉCUTION, sortie 7 du plan de simplification de `useExecutionGraphe.ts`, et
 // COUPÉ EN DEUX par la pièce P4b du plan de l'architecture par messages. Ce module est la moitié du
@@ -14,19 +14,19 @@
 //
 // L'ORDRE COMPTE : la cause d'une boucle et la graine tirée doivent être dans les messages AVANT que
 // les rendus de la pose finale ne soient choisis, puisque ceux-ci les lisent.
-import { estCacheParBulle, type NoeudG } from "../core";
-import { COPIES_MAX, type ResultatDepliage } from "../core/boucle-graphe";
-import type { Conteneurs } from "../core/conteneurs";
-import { champsAReporter } from "../core/cycle-de-vie";
-import { resultatRetenu } from "../core/memoire";
-import type { EvenementDuMoteur, Generation, RenduDuVisible } from "../core/protocole-moteur";
-import { choisirLeRendu } from "../core/rendu-du-visible";
-import { lacherLeCorps } from "../core/saut-de-boucle";
-import type { GraineTiree } from "../core/graines-de-passe";
-import type { DemandeAuMoteur } from "../core/types";
-import { valeursLourdes } from "./correctif-resultat";
+import { estCacheParBulle, type NoeudG } from "../../core";
+import { COPIES_MAX, type ResultatDepliage } from "../../core/boucle-graphe";
+import type { Conteneurs } from "../../core/conteneurs";
+import { champsAReporter } from "../../core/cycle-de-vie";
+import { resultatRetenu } from "../../core/memoire";
+import type { EvenementDuMoteur, Generation, RenduDuVisible } from "../../core/protocole-moteur";
+import { choisirLeRendu } from "../../core/rendu-du-visible";
+import { lacherLeCorps } from "../../core/saut-de-boucle";
+import type { GraineTiree } from "../../core/graines-de-passe";
+import type { DemandeAuMoteur } from "../../core/types";
+import { valeursLourdes } from "../services-apercu";
 import type { EtatDePasse } from "./etat-de-passe";
-import type { CacheDuMoteur } from "./moteur/cache";
+import type { CacheDuMoteur } from "./cache";
 
 /** Les événements que le ménage dit au récepteur. */
 export type EvenementDuMenage = Extract<EvenementDuMoteur<unknown>, { genre: "demande" | "bilan" }>;
@@ -59,7 +59,7 @@ export interface ApresLaPasse {
 }
 
 export async function menageApresPasse(passe: EtatDePasse, a: ApresLaPasse): Promise<void> {
-  const { messages, tousNoeudsG, ordreFiltre, economieMemoireRef, t } = passe;
+  const { messages, tousNoeudsG, ordreFiltre, t } = passe;
   const {
     noeudsVisibles, nds, cache, deplie, expansions, grainesTirees, tempsParVisible, ecartsParNoeud,
     demandesParNoeud, ordonnees, idsDecoratifs, boites, generation, emettre,
@@ -92,7 +92,7 @@ export async function menageApresPasse(passe: EtatDePasse, a: ApresLaPasse): Pro
   // suivant qui refera la bulle. On paie le recalcul une fois par exécution, pas deux.
   // Voir `resultatRetenu` dans `core/memoire.ts` pour l'échange consenti, et son seuil : sous lui,
   // un membre se garde, et « Développer » ne refait rien.
-  const economie = economieMemoireRef?.current ?? true;
+  const economie = passe.economieMemoire();
   for (const n of noeudsVisibles()) {
     const garde = resultatRetenu({
       cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),

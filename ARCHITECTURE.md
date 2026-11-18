@@ -231,7 +231,7 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   Relu le 2026-11-06 : le lot 2 a mis dans le cœur la préparation de la passe
   (`core/preparation-passe.ts`), les graines (`core/graines-de-passe.ts`) et le contexte passé à
   l'exécuteur (`core/contexte-de-passe.ts`) ; le correctif de résultat et le ménage d'après passe
-  sont sortis côté interface (`src/ui/correctif-resultat.ts`, `src/ui/menage-apres-passe.ts`).
+  sont sortis côté interface (`src/ui/correctif-resultat.ts`, `src/ui/moteur/menage-apres-passe.ts`).
   `src/core/` compte 38 fichiers de test. La boucle nœud par nœud reste dans `lancerUnePasse`,
   fermeture React de 482 lignes ; elle n'appelle plus `setNodes` elle-même, elle le prête au
   ménage d'après passe.

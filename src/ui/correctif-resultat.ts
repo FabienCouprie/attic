@@ -23,7 +23,7 @@ import type { RenduDuVisible } from "../core/protocole-moteur";
 import type { Respiration } from "../core/respirer";
 import { poserApercu, poserStatut } from "./statuts";
 import { resultatDe } from "./resultats";
-import { servicesApercu, type ApercuRefaisable } from "./services-apercu";
+import { servicesApercu, valeursLourdes, type ApercuRefaisable } from "./services-apercu";
 import { lireProfondeurExport } from "./profondeur-export";
 import { apercuPerdu } from "./refaire-apercus";
 import type { RegistreUI } from "./registre-actif";
@@ -51,17 +51,6 @@ export interface PretsDeLAffichage {
   pileMetaRef?: Lecture<{ metaId: string; nom: string }[]>;
   t: (cle: string) => string;
 }
-
-/**
- * Ces valeurs atteignent-elles le seuil où un membre de bulle repliée les lâche ? Voir `resultatRetenu`.
- *
- * C'EST LA QUESTION DES APERÇUS, POSÉE POUR UN INTERMÉDIAIRE ET SANS LA BASCULE : une valeur dont le
- * domaine ne garderait pas l'aperçu d'un nœud non regardé est lourde. Le seuil reste donc écrit une
- * seule fois, dans le domaine ; la bascule, elle, est lue par `resultatRetenu`. Une seule sortie
- * lourde suffit : l'entrée de cache les retient toutes.
- */
-export const valeursLourdes = (valeurs: readonly unknown[] | undefined): boolean =>
-  (valeurs ?? []).some((v) => v != null && !servicesApercu().apercuUtile(v, { regarde: false, economie: true }));
 
 /**
  * Deux canaux d'affichage portent-ils les mêmes valeurs, champ par champ ?

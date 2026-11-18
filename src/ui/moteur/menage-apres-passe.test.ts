@@ -1,4 +1,4 @@
-// ui/menage-apres-passe.test.ts — Ce que le moteur fait après le dernier nœud, éprouvé hors du moteur.
+// ui/moteur/menage-apres-passe.test.ts — Ce que le moteur fait après le dernier nœud, éprouvé hors du moteur.
 //
 // CE QUE CES CAS GARDENT. Ces étapes vivaient au bout de `lancerUnePasse`, et rien ne les éprouvait
 // qu'à travers l'application : un conteneur déclaré terminé à tort, une graine absente du message,
@@ -14,9 +14,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { menageApresPasse, type ApresLaPasse, type EvenementDuMenage } from "./menage-apres-passe";
 import type { EtatDePasse } from "./etat-de-passe";
-import { creerCacheDuMoteur } from "./moteur/cache";
-import { configurerServicesApercu, oublierServicesApercu } from "./services-apercu";
-import type { NoeudG } from "../core";
+import { creerCacheDuMoteur } from "./cache";
+import { configurerServicesApercu, oublierServicesApercu } from "../services-apercu";
+import type { NoeudG } from "../../core";
 
 /** Un son d'essai, que le domaine d'essai dit lourd ou non. */
 const son = (lourd: boolean) => ({ tampon: "x", lourd });
@@ -33,7 +33,7 @@ function etat(partiel: Partial<EtatDePasse> = {}): EtatDePasse {
   return {
     resultats: new Map(), messages: new Map(), affichageParNoeud: new Map(), designeParNoeud: new Map(),
     tousNoeudsG: [], aretesReelles: [], ordreFiltre: [], noeudsPlats: [],
-    estMetaEnScope: () => true, trouverDef: () => undefined, t: (cle) => cle,
+    estMetaEnScope: () => true, trouverDef: () => undefined, economieMemoire: () => true, t: (cle) => cle,
     ...partiel,
   };
 }
@@ -90,7 +90,7 @@ describe("le cache, lâché à la fin du run", () => {
     expect([...cache.entrees().keys()]).toEqual(["fin"]);
 
     const garde = cacheDe([["deb#2::echo", { valeurs: [son(false)] }]]);
-    await menageApresPasse(etat({ economieMemoireRef: { current: false } }), apres({ cache: garde, deplie: { origines: copies(), problemes: [] } }).a);
+    await menageApresPasse(etat({ economieMemoire: () => false }), apres({ cache: garde, deplie: { origines: copies(), problemes: [] } }).a);
     expect([...garde.entrees().keys()]).toEqual(["deb#2::echo"]);
   });
 });

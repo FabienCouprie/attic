@@ -110,7 +110,7 @@ export function scellerLInstantane(instantane: InstantaneDeGraphe): () => string
 /**
  * La globale où s'accumulent les écritures relevées, pour qu'une épreuve la lise.
  *
- * LE PRÉCÉDENT EST `__attic_runs_simultanes__` de `ui/ordonnanceur-runs.ts`. Elle ne coûte rien tant
+ * LE PRÉCÉDENT EST `__attic_runs_simultanes__` de `ui/moteur/ordonnanceur-runs.ts`. Elle ne coûte rien tant
  * qu'aucun exécuteur n'écrit, et elle est bornée : un exécuteur qui écrirait à chaque passe ne la
  * ferait pas grossir sans fin.
  */

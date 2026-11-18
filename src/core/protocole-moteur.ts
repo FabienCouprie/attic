@@ -10,8 +10,8 @@
 //     `EvenementDuMoteur` ;
 //   — des QUESTIONS, que le moteur pose à l'interface, synchrones et en lecture seule :
 //     `QuestionsAuShell`. Elles gardent ce que le moteur lit EN DIRECT par choix, au moment où il le
-//     lit aujourd'hui (voir l'en-tête de `ui/etat-de-passe.ts`) ; en faire des commandes poussées
-//     changerait ce moment.
+//     lit aujourd'hui (voir l'en-tête de `ui/moteur/etat-de-passe.ts`) ; en faire des commandes
+//     poussées changerait ce moment.
 //
 // LE DISCRIMINANT EST `genre`, comme dans `DecisionDuNoeud` de `core/execution.ts`. Les charges
 // réemploient les types du cœur, statuts, entrée de cache, demande au moteur et canaux d'un
@@ -41,7 +41,7 @@ import type { AreteG, MetaComposant, NoeudG } from "./meta";
 import type { StatutAPoser } from "./preparation-passe";
 import type { DemandeAuMoteur } from "./types";
 
-/** Le numéro de la passe dont vient un événement : celui de son jeton. Voir `ui/ordonnanceur-runs.ts`. */
+/** Le numéro de la passe dont vient un événement : celui de son jeton. Voir `ui/moteur/ordonnanceur-runs.ts`. */
 export type Generation = NonNullable<PretsDuRetour["jeton"]>["generation"];
 
 /**
@@ -154,7 +154,11 @@ export interface RenduDuVisible<TValeur> {
 
 /** Ce que le moteur dit à l'interface. Chaque événement porte la génération de sa passe. */
 export type EvenementDuMoteur<TValeur> =
-  /** La préparation est faite : l'ordre réellement exécuté, et les statuts qu'elle pose, dans l'ordre. */
+  /**
+   * La préparation est faite : l'ordre réellement exécuté, les statuts qu'elle pose, dans l'ordre, et
+   * les nœuds visibles de la passe. Ceux-ci sont ceux de l'instantané, copiés au départ : le récepteur y
+   * lit qui est membre d'une bulle repliée, pour l'affichage et pour dire qui est regardé.
+   */
   | {
     genre: "passeCommencee";
     generation: Generation;
@@ -162,6 +166,7 @@ export type EvenementDuMoteur<TValeur> =
     cible?: string;
     ordre: readonly string[];
     statuts: readonly StatutAPoser[];
+    noeuds: readonly NoeudG[];
   }
   /** Le statut d'un nœud visible. `progressionDuNoeud` dit que la progression vient de l'exécuteur. */
   | ({ genre: "statut"; generation: Generation; progressionDuNoeud: boolean } & StatutAPoser)

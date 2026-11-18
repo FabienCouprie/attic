@@ -1,4 +1,4 @@
-// ui/ordonnanceur-runs.ts — Une exécution à la fois, et un jeton qui dit si la mienne est périmée.
+// ui/moteur/ordonnanceur-runs.ts — Une exécution à la fois, et un jeton qui dit si la mienne est périmée.
 //
 // ═══ POURQUOI CE MODULE, ET C'EST UN RELEVÉ DE REVUE ═══
 //
@@ -35,8 +35,10 @@
 // IL NE DÉCIDE PAS DE LA POLITIQUE. Qu'un clic sur le ▶ d'un nœud ATTENDE la fin du run en cours, ou
 // qu'il l'INTERROMPE pour passer devant, est une question d'usage et non de mécanique : les deux sont
 // ici, et l'appelant choisit.
-
-import { useRef } from "react";
+//
+// IL EST DANS LE DOSSIER DU MOTEUR, SANS REACT, depuis la pièce P5a du plan de l'architecture par
+// messages. Il était créé par un crochet, `useOrdonnanceurDeRuns` ; `creerOrdonnanceurDuMoteur` le crée
+// avec les réglages du moteur, et c'est le pont qui le tient, une fois pour la vie du composant.
 
 /** Ce qu'une exécution sait d'elle-même. */
 export interface JetonDeRun {
@@ -287,9 +289,9 @@ export interface PorteeDeLot {
 /**
  * La fusion des demandes du moteur : même nœud visé, et l'aval dès que l'une des deux le demande.
  *
- * ELLE VIT ICI ET NON CHEZ L'APPELANT, pour la raison qui vaut déjà pour `useOrdonnanceurDeRuns` :
- * `ui/hooks/useExecutionGraphe.ts` est en dette de taille, et ce qu'on ajoute à un fichier trop gros
- * va ailleurs. L'appelant n'en écrit toujours qu'une ligne.
+ * ELLE VIT ICI ET NON CHEZ L'APPELANT, pour la raison qui vaut déjà pour la construction de
+ * l'ordonnanceur : le module qui possède la mécanique en possède les règles, et l'appelant n'en écrit
+ * toujours qu'une ligne.
  *
  * LES AUTRES CHAMPS D'UNE PORTÉE SUIVENT LA PLUS RÉCENTE, faute de règle qui vaille pour eux ;
  * `versLAval` est le seul dont l'union a un sens, et c'est le seul qui existe aujourd'hui.
@@ -315,14 +317,14 @@ export function fusionDeLot<T>(
 }
 
 /**
- * L'ordonnanceur du moteur, créé une fois pour la vie du composant.
+ * Les réglages de l'ordonnanceur du moteur.
  *
- * ═══ POURQUOI SA CONSTRUCTION VIT ICI, ET NON CHEZ L'APPELANT ═══
+ * ═══ POURQUOI ILS VIVENT ICI, ET NON CHEZ L'APPELANT ═══
  *
- * `ui/hooks/useExecutionGraphe.ts` est l'un des quinze fichiers EN DETTE de la norme de taille, et
- * la règle du dépôt est sans ambiguïté : « ce qu'on ajoute à un fichier trop gros va ailleurs. »
- * Huit lignes de construction y auraient été huit lignes de plus dans le fichier qui doit maigrir.
- * Ici, elles sont dans le module qui possède la mécanique, et l'appelant n'en écrit qu'une.
+ * `ui/hooks/useExecutionGraphe.ts` était l'un des quinze fichiers EN DETTE de la norme de taille, et
+ * la règle du dépôt est sans ambiguïté : « ce qu'on ajoute à un fichier trop gros va ailleurs. » Ils
+ * sont dans le module qui possède la mécanique, et l'appelant n'en écrit qu'une ligne :
+ * `creerOrdonnanceurDuMoteur()`.
  *
  * LA POLITIQUE EST « ATTENDRE », ET C'EST LA DÉCISION À REVOIR EN PREMIER si l'usage le démentait :
  * un run demandé pendant qu'un autre tourne prend son tour, et le travail engagé va à son terme.
@@ -351,8 +353,10 @@ export function fusionDeLot<T>(
  */
 export const REGLAGES_DU_MOTEUR: Reglages = { politique: "attendre", enAttenteMax: 4 };
 
-export function useOrdonnanceurDeRuns(): Ordonnanceur {
-  const ref = useRef<Ordonnanceur | null>(null);
-  if (!ref.current) ref.current = creerOrdonnanceur(REGLAGES_DU_MOTEUR);
-  return ref.current;
+/**
+ * L'ordonnanceur du moteur, à créer une fois pour la vie du composant : le pont le tient dans une
+ * référence paresseuse, comme le crochet `useOrdonnanceurDeRuns` le faisait avant la pièce P5a.
+ */
+export function creerOrdonnanceurDuMoteur(): Ordonnanceur {
+  return creerOrdonnanceur(REGLAGES_DU_MOTEUR);
 }

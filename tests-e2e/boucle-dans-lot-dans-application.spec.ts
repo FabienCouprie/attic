@@ -8,7 +8,7 @@
 // morceau. Cette ligne du pilote du lot a déjà appelé `lancerUnePasse` DIRECTEMENT, si bien qu'une
 // boucle par voix, par créneau ou par cercle posée dans un graphe mené par lot n'était jamais
 // PLANIFIÉE : chaque fichier menait une seule passe, la boucle ne bouclait pas, et rien ne le
-// disait. Corrigé, relevé par Fabien, et gardé nulle part : `usePilotesDePasse.ts` le dit en tête,
+// disait. Corrigé, relevé par Fabien, et gardé nulle part : `ui/moteur/pilotes.ts` le dit en tête,
 // et `frontiere-domaine.test.ts` en fait la condition de toute généralisation des pilotes.
 //
 // ═══ CE QUE CE CAS REFAIT ═══
