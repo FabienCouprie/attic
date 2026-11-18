@@ -1,78 +1,33 @@
-// ui/hooks/useExecutionGraphe.ts — Exécution du graphe (la boucle `lancer`) +
-// réinitialisation d'un nœud (cascade aval) + statuts.
-// Extrait d'App.tsx à l'identique (comportement inchangé). L'ordonnancement, le
-// cache et la résolution d'entrées reposent sur les fonctions pures testées de
-// core/graphe.ts ; ce hook orchestre l'aplatissement des métas, l'appel des
-// plugins et la remontée des résultats dans l'état React.
-import { useCallback, useRef } from "react";
+// ui/hooks/useExecutionGraphe.ts — Le pont entre l'interface et le moteur : les questions qu'il pose,
+// le récepteur de ce qu'il dit, et les gestes qui le lancent, l'arrêtent et le remettent à zéro.
+//
+// LE MOTEUR EST DANS `ui/moteur/`, SANS REACT, depuis la pièce P5a du plan de l'architecture par
+// messages : l'ordonnanceur, les deux pilotes de passes, la passe et son ménage. Ce crochet ne fait
+// plus que les relier à l'interface. Il leur prête ce qu'elle tient : le graphe et le nœud visible,
+// lus par des questions au moment où le moteur les lit, le contexte audio, la langue et le dossier de
+// travail ; et il leur donne un récepteur par passe, qui pose ce qu'ils disent dans les magasins.
+//
+// `t` ET `repertoire` SONT LIÉS AU MOMENT DE LA DEMANDE. La passe est recréée quand l'un des deux
+// change, et les pilotes avec elle, comme les `useCallback` d'avant ; une demande mise en file garde
+// la passe de l'instant où elle a été faite.
+import { useCallback, useMemo, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
 import type { MoteurDuCache } from "../moteur/commandes";
 import type { Edge } from "@xyflow/react";
-import {
-  estCacheParBulle,
-  trouverMeta,
-  type NoeudG, type AreteG,
-} from "../../core";
-
-// CE QUE LE SHELL TRANSPORTE SANS LE REGARDER. Le moteur d exécution déclarait ses valeurs
-// `TypeValeur`, c est-à-dire l union du domaine audio : le chemin d exécution de TOUS les domaines
-// était typé contre un seul. Il n en lit aucune ; il les prend d un nœud et les donne au suivant.
-// Depuis la pièce 3 du plan du runtime, c'est la boucle du cœur qui les transporte, en `unknown`.
-import { creerTablesDePasse, executerLesNoeuds } from "../../core/execution";
-import { Respiration, respirer } from "../../core/respirer";
-import { noeudRegarde } from "../../core/memoire";
-import { servicesDomaine } from "../../core/services-domaine";
-import { reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
-import { creerRecepteurDeLaPasse, poserLesStatutsDeLaPreparation } from "../recepteur-moteur";
-import { definirPrioritaire, noeudPrioritaire } from "../priorite";
-import { sautsDeBoucles } from "../../core/saut-de-boucle";
-import { creerResolveurDeGraines } from "../../core/graines-de-passe";
-import { preparerLaPasse } from "../../core/preparation-passe";
-import { metaDeLInstantane, prendreInstantane, scellerLInstantane, signalerLesEcritures } from "../../core/instantane-de-graphe";
+import { trouverMeta, type NoeudG, type AreteG } from "../../core";
+import { prendreInstantane } from "../../core/instantane-de-graphe";
 import { copierPourHistorique } from "../historique";
-
-import { servicesOrchestration } from "../services-orchestration";
-// CE QUE LE SHELL DEMANDE AU DOMAINE SUR LES VALEURS PRODUITES. Six fonctions audio étaient
-// importées ici, sur le chemin d'exécution de tous les domaines, et `AudioBuffer` nommé à trois
-// endroits. Les questions sont désormais posées, et le domaine y répond (cf. ui/services-apercu.ts).
-import { servicesApercu } from "../services-apercu";
+import { noeudPrioritaire } from "../priorite";
+import { creerRecepteurDeLaPasse } from "../recepteur-moteur";
 import { useRemiseAZero } from "./useRemiseAZero";
-// CE QUE LE MAGASIN REÇOIT POUR UN NŒUD est choisi au cœur, `core/rendu-du-visible.ts`, sur les
-// tables de la passe que `EtatDePasse` nomme une fois, et affiché par `ui/correctif-resultat.ts`.
-import type { EtatDePasse } from "../etat-de-passe";
-import type { PretsDeLAffichage } from "../correctif-resultat";
-// CE QUE LE MOTEUR FAIT UNE FOIS LE DERNIER NŒUD CALCULÉ est dans `ui/menage-apres-passe.ts`.
-import { menageApresPasse } from "../menage-apres-passe";
-import { fusionDeLot, useOrdonnanceurDeRuns, type JetonDeRun } from "../ordonnanceur-runs";
-// LES DEUX PILOTES DE PASSES SONT DANS `usePilotesDePasse.ts`, le lot et les boucles par passes :
-// ils rejouent `lancerUnePasse` sans rien connaître du moteur.
-import { usePilotesDePasse } from "./usePilotesDePasse";
+import { creerLancerUnePasse, type PerimetreCible } from "../moteur/passe";
+import { creerPilotesDePasse } from "../moteur/pilotes";
+import { creerOrdonnanceurDuMoteur, fusionDeLot, type Ordonnanceur } from "../moteur/ordonnanceur-runs";
 
 import { useI18n, valeurCanoniqueChoix } from "../../i18n";
 import { registreUI } from "../registre-actif";
 
 const trouverDef = (id: string) => registreUI().trouverDef(id);
-
-/**
- * Ce qu'un run CIBLÉ embrasse, au-delà du nœud visé et de son amont.
- *
- * DEUX APPELANTS, DEUX INTENTIONS. Cliquer le ▶ d'un nœud veut dire « calcule jusqu'ici » : l'aval
- * n'a pas été demandé, et le faire tourner coûterait ce qu'on n'a pas demandé. Une relance
- * automatique après réglage, elle, n'a pas été demandée du tout : elle répare l'effacement qu'un
- * réglage vient de causer, et doit donc refaire tout ce qui a été effacé, aval compris.
- */
-export interface PerimetreCible {
-  /** Vrai pour une relance automatique après réglage. Faux ou absent pour un run ciblé demandé. */
-  versLAval?: boolean;
-  /**
-   * Vrai pour la passe qui repose ce que le cache tient, sans rien exécuter : celle d'un paquet
-   * `.attic` qu'on vient d'ouvrir. Elle ne passe ni par le lot ni par les boucles par passes, qui
-   * vident le cache de leur aval, et ne se fond avec aucune autre demande.
-   */
-  cacheSeulement?: boolean;
-  /** Les nœuds que la passe de repose attend dans l'atelier : l'import vient de les poser. */
-  attendre?: readonly string[];
-}
 
 /**
  * Attend que l'atelier montre les nœuds qu'un import vient de poser, au plus deux secondes.
@@ -146,13 +101,17 @@ export function useExecutionGraphe(o: OptionsExecution) {
   //
   // LA SÉRIALISATION FERME LES TROIS PREMIERS PAR CONSTRUCTION : il n'y a jamais deux contrôleurs,
   // jamais deux runs à compter. Le jeton ferme le quatrième, pour la queue asynchrone d'un composant
-  // qui ne consulte pas son signal. Voir `ui/ordonnanceur-runs.ts`.
+  // qui ne consulte pas son signal. Voir `ui/moteur/ordonnanceur-runs.ts`.
   //
   // ET `enCoursRef` A DISPARU AVEC LUI. Ce booléen existait parce qu'`enExecRef` ne suit que les
   // runs GLOBAUX : il fallait savoir qu'un run ciblé tournait pour l'annuler. L'ordonnanceur le sait
   // mieux — il compte ce qui tourne au lieu de le déclarer —, et deux sources de vérité sur « est-ce
   // que ça tourne » sont exactement ce que ce point de revue reprochait.
-  const ordonnanceur = useOrdonnanceurDeRuns();
+  //
+  // IL EST CRÉÉ UNE FOIS, par une référence paresseuse : un ordonnanceur par composant.
+  const ordonnanceurRef = useRef<Ordonnanceur | null>(null);
+  if (!ordonnanceurRef.current) ordonnanceurRef.current = creerOrdonnanceurDuMoteur();
+  const ordonnanceur = ordonnanceurRef.current;
 
   /**
    * Arrêter l'exécution en cours, sans rien effacer.
@@ -189,9 +148,6 @@ export function useExecutionGraphe(o: OptionsExecution) {
     return audioCtxRef.current;
   }
 
-  // LES STATUTS NE SE POSENT PLUS ICI : la boucle les dit au récepteur de la passe, qui les pose dans
-  // leur magasin. Voir `ui/recepteur-moteur.ts`.
-
   // ── Les remises à zéro, dans useRemiseAZero.ts : le bouton, le réglage, l'aval seul, tout ──
   // Un reset pendant un run en cours signale l'annulation : c'est le moteur qui sait s'il tourne.
   const annulerLeRunEnCours = useCallback(() => {
@@ -201,204 +157,33 @@ export function useExecutionGraphe(o: OptionsExecution) {
     noeudsRef, aretesRef, envoyer: moteurDuCache.envoyer, setNodes, annulerLeRunEnCours,
   });
 
-  const lancerUnePasse = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun) => {
-    // ═══ LE GARDE ANTI-CHEVAUCHEMENT A QUITTÉ CET ENDROIT ═══
-    //
-    // Il s'écrivait `if (!noeudPrioritaireId && enExecRef.current) return;` et il avait DEUX
-    // défauts, relevés par une revue du dépôt. Il ne couvrait que le run global, de sorte que le
-    // bouton ▶ d'un nœud lançait un second run sans aucune condition — deux runs sur le même
-    // `cacheExec`. Et quand il mordait, il ABANDONNAIT LA DEMANDE SANS UN MOT : ouvrir un exemple
-    // pendant un run, ce que `App.tsx` fait tout seul par un `setTimeout`, ne le lançait pas.
-    //
-    // La sérialisation est tenue par l'ordonnanceur, en amont de `lancer`, qui met la demande en
-    // file au lieu de la jeter. Le laisser ici en plus ferait un second mécanisme capable d'avaler
-    // une demande en silence, ce qui est précisément le défaut qu'on vient de retirer.
-    if (noeudsRef.current.length === 0) return;
-    const estGlobal = !noeudPrioritaireId;
-    if (estGlobal) {
-      // Mise à jour immédiate de la ref pour bloquer les doubles-clics / re-lancements
-      // avant que React ne déclenche le useEffect qui synchronise enExecRef.
-      enExecRef.current = true;
-      setEnExecution(true);
-    }
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    let ecrituresDeLaPasse: (() => string[]) | null = null;
-    try {
-    console.log(`[lancer] priorite=${noeudPrioritaireId} estGlobal=${estGlobal} nodes=${noeudsRef.current.length} cacheSize=${cache.taille()}`);
-    // LES ARÊTES DE SUBSTITUTION NE CALCULENT PAS. Replier une bulle cache les arêtes qui la
-    // traversent et en dessine des substituts vers ses poignées : ce sont des objets d'affichage, et
-    // les vraies arêtes sont toujours là. Les laisser entrer ici changerait l'empreinte des entrées
-    // d'un nœud, donc invaliderait son résultat au moindre repli — or ne RIEN invalider est la
-    // propriété qui justifie de replier plutôt que d'extraire. Voir `core/bulles.ts`.
-    // ── LA PRÉPARATION EST DANS LE CŒUR, `core/preparation-passe.ts`, PURE ──
-    // Aplatir, déplier, ordonner, cibler, valider, relever les cycles : le plan rend ce que le
-    // moteur posait en chemin, statuts, avertissements et trace, dans l'ordre où il les posait,
-    // et c'est ici qu'ils s'appliquent. Le graphe à documenter est publié avant tout, comme avant.
-    // LE GRAPHE DE LA PASSE EST CELUI DE CET INSTANT, COPIÉ, ses métas compris, et chaque `data` y
-    // est scellé : ce qu'un exécuteur y écrirait se relève à la fin de la passe.
-    const instantane = graphe();
-    ecrituresDeLaPasse = scellerLInstantane(instantane);
-    const plan = preparerLaPasse({
-      noeuds: instantane.noeuds as NoeudG[],
-      aretes: instantane.aretes as AreteG[],
-      prioriteDemandee: noeudPrioritaireId ?? noeudPrioritaire(),
-      versLAval: perimetre?.versLAval === true,
-      trouverMeta: metaDeLInstantane(instantane), trouverDef, fluxCompatibles: registreUI().fluxCompatibles, t,
-    });
-    const {
-      aretesReelles, plat, deplie, nds, aretesG, tousNoeudsG, boites,
-      ordreFiltre, idsDecoratifs, ordonnees, estMetaEnScope,
-    } = plan;
-    servicesOrchestration().publierGraphe(plan.aDocumenter);
-    for (const a of plan.avertissements) console.warn(a);
-    poserLesStatutsDeLaPreparation(plan.statuts);
-    console.log(plan.traceOrdre);
+  // ── LA PASSE, `ui/moteur/passe.ts`, et son récepteur, `ui/recepteur-moteur.ts` ──
+  // Recréée quand la langue ou le dossier de travail changent : ce sont les deux dépendances de la
+  // fermeture d'avant, et le reste de ce qu'elle prête est fait de références stables.
+  const lancerUnePasse = useMemo(() => creerLancerUnePasse({
+    graphe,
+    priorite: noeudPrioritaire,
+    noeudVisible: (id) => noeudsRef.current.find((x) => x.id === id),
+    economieMemoire: () => economieMemoireRef?.current ?? true,
+    noeudsVisibles: () => noeudsRef.current,
+    recepteur: () => creerRecepteurDeLaPasse({
+      affichage: { trouverDef, lecteursAEcrire: new Map(), aretesRef, economieMemoireRef, pileMetaRef, t },
+      noeudsVisibles: () => noeudsRef.current,
+      setNodes,
+      // Mise à jour immédiate de la référence pour bloquer les doubles clics, avant que React ne
+      // déclenche l'effet qui la synchronise sur l'état.
+      enExecution: (tourne) => { enExecRef.current = tourne; setEnExecution(tourne); },
+      onGrapheGenere, onNodeInstalle,
+    }),
+    cache, audio: obtenirAudio, canoniser: valeurCanoniqueChoix, repertoire, t,
+    controleur: abortControllerRef,
+  }), [repertoire, t]);
 
-    const ctx = await obtenirAudio();
-    // LES TABLES DE LA PASSE, créées avant la boucle : les deux premières sont publiées avant elle, et
-    // le ménage lit les autres après. Voir `TablesDePasse` dans `core/execution.ts`.
-    const tables = creerTablesDePasse();
-    const { resultats, messages, affichageParNoeud, designeParNoeud, demandesParNoeud, ecartsParNoeud, tempsParVisible } = tables;
-    // UNE BOUCLE INCHANGÉE NE SE RECALCULE PAS, son corps eût-il été lâché. Voir `core/saut-de-boucle.ts`.
-    const sauts = sautsDeBoucles(deplie.depliees, { noeuds: deplie.noeuds, aretes: aretesG, resultats, cache: cache.entrees(), toursDesCopies: deplie.toursDesCopies,
-      reglages: JSON.stringify(servicesDomaine().reglagesDeProjet()), jamaisCache: (id) => trouverDef(deplie.noeuds.find((n) => n.id === id)?.data.ficheId as string)?.jamaisCache === true });
-
-    // ── Les graines, résolues au CENTRE, dans core/graines-de-passe.ts ──
-    // Une par nœud et par réglage, partagée par les copies d'une boucle, rendue à qui l'a tirée.
-    const { graineDuNoeud, grainesTirees } = creerResolveurDeGraines({
-      toursDesCopies: deplie.toursDesCopies, origines: deplie.origines, expansions: plat.expansions,
-    });
-    // Les tables VIVANTES du run, pour les nœuds qui passent en dernier (cf. grapheGlobal.ts).
-    servicesOrchestration().publierExecution({ ordre: ordreFiltre, noeuds: nds, aretes: aretesG, resultats, messages, expansions: plat.expansions });
-
-    // LA PRÉPARATION EST LE PLUS GROS GEL DU LANCEMENT. Valider le graphe, l'aplatir, déplier les
-    // boucles et les instruments, le publier, calculer l'ordre topologique : tout cela est
-    // synchrone, et mesuré à 286 ms sur un graphe de cinq nœuds qui ne font rien. Pendant ce
-    // temps, le clic sur « Lancer » n'a encore produit aucun retour à l'écran — l'application
-    // paraît n'avoir rien entendu. Une image ici, et le lancement se voit.
-    await respirer();
-    if (controller.signal.aborted) return;
-
-    // ── LES RÉSULTATS SE POSENT NŒUD PAR NŒUD, DÈS QU'IL A FINI ─────────────────────
-    //
-    // LE DÉFAUT, RELEVÉ PAR FABIEN : « les lecteurs apparaissent longtemps après que les nœuds
-    // soient notés comme terminés dans les workflows longs ». Un nœud passe « Terminé » dès que SON
-    // calcul finit, dans la boucle ci-dessous ; mais les correctifs étaient collectés puis posés en
-    // un seul `setNodes` APRÈS toute la boucle. Plus un nœud était tôt dans la chaîne, plus il
-    // restait longtemps terminé sans message, sans lecteur et sans bouton. Mesuré sur une chaîne de
-    // quatre nœuds : le premier était terminé à 180 ms et ne montrait rien jusqu'à 4 180 ms, soit
-    // quatre secondes de vide, et le deuxième 3,6 s. Sur un graphe de plusieurs minutes, c'est le
-    // run entier.
-    //
-    // ET POSER PAR `setNodes` AURAIT COÛTÉ LE TEMPS DU RUN. Chaque appel fait repasser React Flow
-    // sur TOUS les nœuds, à 7 ms par nœud présent : poser par paquets de deux cents millisecondes
-    // bornait la latence, mais sur douze nœuds de trois cents millisecondes chacun — donc un paquet
-    // par nœud — le run passait de 3 678 ms à 4 434, soit **+20,6 %**, mesuré, les deux
-    // distributions ne se recouvrant pas. C'est la question qu'a posée Fabien, et la réponse était
-    // oui.
-    //
-    // D'OÙ LE MAGASIN. Un résultat ne vit plus dans `node.data` : il va dans `ui/resultats.ts`, où
-    // seul le composant concerné s'y abonne. La pose est alors gratuite, et les deux coûts tombent
-    // ensemble — il n'y a plus à choisir entre la latence et le temps de run. C'est la même mesure
-    // qui avait fait sortir les statuts du tableau des nœuds ; voir `ui/statuts.ts`.
-    const souffle = new Respiration();
-    /**
-     * Les lecteurs restant à écrire, par nœud, remplis par `calculerCorrectifResultat`.
-     *
-     * LA BOUCLE NE LES ÉCRIT PAS : elle les écrivait avant de poser quoi que ce soit, et un nœud
-     * terminé restait sans rien pendant la somme des encodages. Ils s'écrivent à la fin, un par un,
-     * chacun posé dès qu'il est prêt.
-     */
-    const lecteursAEcrire = new Map<string, () => Promise<string | undefined>>();
-    // DEUX OBJETS, ET NON UN : les tables du moteur, que lit son ménage, et ce que l'affichage du
-    // récepteur lit, sans une table. Voir `ui/etat-de-passe.ts` et `ui/correctif-resultat.ts`.
-    const passe: EtatDePasse = {
-      resultats, messages, affichageParNoeud, designeParNoeud, tousNoeudsG, aretesReelles, ordreFiltre,
-      noeudsPlats: plat.noeuds, estMetaEnScope, trouverDef, economieMemoireRef, t,
-    };
-    const affichage: PretsDeLAffichage = {
-      tousNoeudsG, trouverDef, lecteursAEcrire, souffle, aretesRef, economieMemoireRef, pileMetaRef, t,
-    };
-    /**
-     * Ce nœud-ci est-il celui qu'on REGARDE : sélectionné, ou terminal.
-     *
-     * C'EST LA MÊME NOTION QUE POUR LA GARDE DES DIX MINUTES, et c'est voulu : le nœud qu'on
-     * regarde est celui dont l'aperçu mérite d'être construit, et celui dont le résultat mérite
-     * d'être montré sans attendre. Un seul endroit décide de ce qu'« être regardé » veut dire.
-     */
-    const estRegarde = (id: string) => noeudRegarde({
-      id,
-      selectionne: !!noeudsRef.current.find((x) => x.id === id)?.selected,
-      aretes: aretesRef.current,
-      dansUnMeta: (pileMetaRef?.current?.length ?? 0) > 0,
-      cacheParBulle: estCacheParBulle(tousNoeudsG, id),
-    });
-    // ── LE RÉCEPTEUR DE LA PASSE, `ui/recepteur-moteur.ts` : ce que le moteur dit, posé dans les magasins ──
-    const noeudsVisibles = () => noeudsRef.current;
-    const recepteur = creerRecepteurDeLaPasse({ affichage, noeudsVisibles, estRegarde, setNodes, onGrapheGenere, onNodeInstalle });
-    // ── LA BOUCLE NŒUD PAR NŒUD EST DANS LE CŒUR, `executerLesNoeuds` de `core/execution.ts` ──
-    // Décider, appliquer la décision, exécuter, ranger le retour, avec ses trois points d'annulation.
-    // Le crochet lui prête ce qu'il tient : le runtime, le contrôleur, le jeton, le registre, le cache,
-    // les sauts de boucle et les questions du domaine. Ce qu'elle dit part au récepteur, par `emettre`.
-    await executerLesNoeuds<AudioContext>(plan, tables, {
-      runtime: ctx, repertoireTravail: repertoire, signal: controller.signal, jeton, trouverDef,
-      trouverPlugin: (f) => registreUI().trouverPlugin(f), typeFlux: (t) => registreUI().typeFlux(t),
-      canoniser: valeurCanoniqueChoix, graineDuNoeud,
-      lireCache: (id) => cache.lire(id),
-      ecrireCache: (id, entree) => cache.ecrire(id, entree),
-      sauts, questions: () => servicesApercu(), t,
-      cacheSeulement: perimetre?.cacheSeulement === true,
-      emettre: recepteur.recevoir,
-      noeudVisible: (id) => noeudsRef.current.find((x) => x.id === id),
-    });
-
-    // LE MÉNAGE D'APRÈS PASSE, dans `ui/menage-apres-passe.ts` : le cache lâché, les causes de boucle
-    // et les graines dans les messages, puis le bilan, que le récepteur pose dans cet ordre : la pose
-    // finale, les temps et les écarts, les demandes, les champs autonomes et le statut des conteneurs.
-    // Puis chaque lecteur promis, un par un.
-    await menageApresPasse(passe, {
-      noeudsVisibles, nds, cache, deplie, expansions: plat.expansions, grainesTirees,
-      tempsParVisible, ecartsParNoeud, demandesParNoeud, ordonnees, idsDecoratifs, boites,
-      generation: jeton?.generation ?? 0, emettre: recepteur.recevoir,
-    });
-    await recepteur.ecrireLesLecteurs(controller.signal);
-
-    } catch (e: any) {
-      console.error("lancer error", e);
-    } finally {
-      if (ecrituresDeLaPasse) signalerLesEcritures(ecrituresDeLaPasse(), "passe");
-      if (abortControllerRef.current === controller) abortControllerRef.current = null;
-      // Le nœud qui tournait à l'instant de l'arrêt garde le statut « en cours » : la
-      // boucle sort par un `break` sans jamais statuer sur lui. Une réinitialisation
-      // remettait tout à « attente », mais un arrêt simple ne touche à rien — le nœud
-      // resterait donc à tourner à l'écran, indéfiniment, sans que rien ne tourne.
-      if (controller.signal.aborted) {
-        for (const id of statutsPoses()) {
-          if (statutDeNoeud(id).statut === "en_cours") reinitialiserStatuts([id]);
-        }
-      }
-      // Seul le run global a positionné le spinner/flag ; une exécution ciblée
-      // (nœud prioritaire) ne doit PAS effacer l'état d'un run global encore en cours.
-      //
-      // La ref est remise à faux ICI, et pas seulement par l'effet qui la synchronise sur
-      // l'état React : `lancer` la lit pour refuser un second run, et le début de cette
-      // fonction la met à vrai de la même façon, sans attendre React. Sans cette ligne,
-      // relancer aussitôt après la fin d'un run — ce qu'on fait naturellement après avoir
-      // cliqué sur « Arrêter » — tombait dans le garde-fou anti-double-clic et ne faisait
-      // rien du tout. Un test de bout en bout l'a pris sur le fait : après un arrêt, la
-      // barre d'espace laissait les quatorze nœuds « en attente ».
-      if (estGlobal) { enExecRef.current = false; setEnExecution(false); }
-      // Lire la valeur LIVE (pas la closure, périmée quand onDefinirPrioritaire vient
-      // de la fixer) pour toujours effacer la priorité après le run — sinon le run
-      // global suivant reste filtré sur l'ancien nœud prioritaire. Le magasin d'`ui/priorite.ts`
-      // la tient vive, et ne prévient que le nœud qui la perd.
-      if (noeudPrioritaire()) definirPrioritaire(null);
-    }
-  }, [repertoire, t]);
-
-  // ── Les deux pilotes de passes, le lot et les boucles par passes, dans usePilotesDePasse.ts ──
-  const { lancerLeLot } = usePilotesDePasse({ lancerUnePasse, graphe, cache, arretLotRef });
+  // ── Les deux pilotes de passes, le lot et les boucles par passes, dans `ui/moteur/pilotes.ts` ──
+  const { lancerLeLot } = useMemo(
+    () => creerPilotesDePasse({ lancerUnePasse, graphe, cache, arretDuLot: arretLotRef }),
+    [lancerUnePasse, graphe, cache],
+  );
 
   /**
    * LA SEULE PORTE D'ENTRÉE, et elle passe par l'ordonnanceur.

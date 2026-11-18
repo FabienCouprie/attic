@@ -172,3 +172,18 @@ export const servicesApercu = (): ServicesApercu => services;
 export function oublierServicesApercu(): void {
   services = NEUTRES;
 }
+
+/**
+ * Ces valeurs atteignent-elles le seuil où un membre de bulle repliée les lâche ? Voir `resultatRetenu`.
+ *
+ * C'EST LA QUESTION DES APERÇUS, POSÉE POUR UN INTERMÉDIAIRE ET SANS LA BASCULE : une valeur dont le
+ * domaine ne garderait pas l'aperçu d'un nœud non regardé est lourde. Le seuil reste donc écrit une
+ * seule fois, dans le domaine ; la bascule, elle, est lue par `resultatRetenu`. Une seule sortie
+ * lourde suffit : l'entrée de cache les retient toutes.
+ *
+ * ELLE VIT ICI, AVEC LA QUESTION QU'ELLE POSE, et non dans l'affichage : le moteur la pose en lâchant
+ * son cache (`ui/moteur/menage-apres-passe.ts`), le correctif en choisissant ce qu'il garde, et le
+ * moteur n'importe rien de ce qui pose dans les magasins.
+ */
+export const valeursLourdes = (valeurs: readonly unknown[] | undefined): boolean =>
+  (valeurs ?? []).some((v) => v != null && !servicesApercu().apercuUtile(v, { regarde: false, economie: true }));

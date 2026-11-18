@@ -3,7 +3,7 @@
 // ═══ POURQUOI CE CAS EXISTE ═══
 //
 // Point 3 de la revue critique du 2026-10-25 : « Deux runs peuvent se chevaucher. Seul le run global
-// est verrouillé. » Les cas unitaires de `src/ui/ordonnanceur-runs.test.ts` éprouvent la mécanique ;
+// est verrouillé. » Les cas unitaires de `src/ui/moteur/ordonnanceur-runs.test.ts` éprouvent la mécanique ;
 // aucun ne dit qu'elle est BRANCHÉE. Le chevauchement se produisait par un geste précis, et c'est ce
 // geste qu'il faut refaire : un run global en vol, puis un clic sur le ▶ d'un nœud — un bouton qui
 // n'avait aucune condition.
@@ -91,7 +91,7 @@ test.describe("les exécutions du moteur", () => {
       "",
       "Le moteur n'expose pas sa crête de runs simultanés.",
       "",
-      "`ui/ordonnanceur-runs.ts` la publie sur `window.__attic_runs_crete__` quand il tourne dans",
+      "`ui/moteur/ordonnanceur-runs.ts` la publie sur `window.__attic_runs_crete__` quand il tourne dans",
       "un navigateur. Sans elle, ce cas ne mesure rien.",
       "",
     ].join("\n")).toBeGreaterThan(0);
@@ -103,7 +103,7 @@ test.describe("les exécutions du moteur", () => {
       "`AbortController` survit, et le premier run qui finit déclare que rien ne tourne.",
       "",
       "Le geste qui le déclenche est celui de ce cas : un run global en vol, puis le ▶ d'un nœud —",
-      "dont le bouton n'avait aucune condition. La sérialisation vit dans `ui/ordonnanceur-runs.ts`,",
+      "dont le bouton n'avait aucune condition. La sérialisation vit dans `ui/moteur/ordonnanceur-runs.ts`,",
       "et `lancer` doit être la SEULE porte d'entrée du moteur.",
       "",
     ].join("\n")).toBe(1);

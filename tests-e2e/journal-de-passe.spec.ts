@@ -216,7 +216,7 @@ async function choisirLaCible(page: Page, graphe: string): Promise<string> {
  * Mesuré à l'établissement du 2026-11-17, sur `une-chanson-prete-a-diffuser`, une machine chargée :
  * une passe sur trois a écrit la marque du ↺ suivant avant le `tempsExecution` de `planifier`, et le
  * scénario s'est déclaré variable. `__attic_runs_simultanes__` ne revient à zéro qu'au bout de la
- * tâche, ménage et lecteurs compris (`ui/ordonnanceur-runs.ts`).
+ * tâche, ménage et lecteurs compris (`ui/moteur/ordonnanceur-runs.ts`).
  */
 async function passeFinie(page: Page): Promise<void> {
   await expect.poll(() => page.evaluate(() =>

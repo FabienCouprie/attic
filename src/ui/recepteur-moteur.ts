@@ -16,19 +16,26 @@
 //
 // UN RÉCEPTEUR PAR PASSE. Ce qu'une passe a posé, ce qui lui reste à poser et les demandes qu'elle a
 // reçues sont à elle : le bilan les lit. Les passes se suivent, l'ordonnanceur n'en fait jamais
-// tourner deux. La pièce P5 donnera le récepteur au moteur à sa construction.
+// tourner deux. La pièce P5b donnera le récepteur au moteur à sa construction.
+//
+// ET LA PASSE LUI DIT QU'ELLE COMMENCE ET QU'ELLE FINIT, depuis la pièce P5a, qui a mis la passe dans
+// le dossier du moteur, sans React. Ce qu'elle écrivait elle-même au début et dans son `finally` est
+// ici : le drapeau « le moteur tourne » d'une passe globale, les statuts de la préparation, la
+// remise des « en cours » après un arrêt et l'effacement de la priorité. Le récepteur dit aussi qui
+// est regardé, sur les nœuds de la passe que `passeCommencee` lui donne.
 import type { Dispatch, SetStateAction } from "react";
+import { estCacheParBulle } from "../core";
 import { statutDuContenu } from "../core/conteneurs";
-import type { StatutAPoser } from "../core/preparation-passe";
+import { noeudRegarde } from "../core/memoire";
 import type { EvenementDuMoteur, RenduDuVisible } from "../core/protocole-moteur";
+import { Respiration } from "../core/respirer";
 import type { DemandeAuMoteur } from "../core/types";
 import { calculerCorrectifResultat, type PretsDeLAffichage } from "./correctif-resultat";
+import { definirPrioritaire, noeudPrioritaire } from "./priorite";
 import { poserResultat } from "./resultats";
-import { poserApercu, poserStatut, poserStatutOmbre, statutDe } from "./statuts";
+import { poserApercu, poserStatut, poserStatutOmbre, reinitialiserStatuts, statutDe, statutsPoses } from "./statuts";
 
-/** Les événements qu'une passe dit au récepteur : ceux de sa boucle, puis ceux de son ménage. */
-export type EvenementDeLaPasse = Extract<EvenementDuMoteur<unknown>, { genre: "statut" | "statutOmbre" | "noeudFini" | "demande" | "bilan" }>;
-type Bilan = Extract<EvenementDeLaPasse, { genre: "bilan" }>;
+type Bilan = Extract<EvenementDuMoteur<unknown>, { genre: "bilan" }>;
 
 // `progressionDuNoeud` distingue ce que le NŒUD dit de son avancement (son `onProgress`) de ce que
 // le MOTEUR pose — « Étape i/total », qui est sa position dans le lot. L'anneau de progression ne
@@ -41,33 +48,55 @@ const definirStatut = (nodeId: string, statut: string, progression?: string, pro
   poserStatut(nodeId, statut, progression, progressionDuNoeud);
 };
 
-/** Les statuts que la préparation pose, dans l'ordre où elle les rend : ce que portera `passeCommencee`. */
-export function poserLesStatutsDeLaPreparation(statuts: readonly StatutAPoser[]): void {
-  for (const s of statuts) definirStatut(s.id, s.statut, s.progression);
-}
-
 export interface PretsDuRecepteur {
-  /** Ce que l'affichage d'un rendu lit : le graphe de la passe, ses lecteurs promis, trois références vivantes. */
-  affichage: PretsDeLAffichage;
+  /**
+   * Ce que l'affichage d'un rendu lit, hors de ce que la passe donne en commençant : ses lecteurs
+   * promis et trois références vivantes. Les nœuds de la passe arrivent avec `passeCommencee`.
+   */
+  affichage: Omit<PretsDeLAffichage, "tousNoeudsG" | "souffle">;
   /** Les nœuds visibles, lus au moment de la pose : un nœud ajouté pendant la passe y est vu. */
   noeudsVisibles: () => readonly any[];
-  /** Ce nœud est-il celui qu'on regarde : sélectionné ou terminal. Lu au moment où il finit. */
-  estRegarde: (id: string) => boolean;
   /** Le report des champs autonomes sur l'état des nœuds. */
   setNodes: Dispatch<SetStateAction<any[]>>;
+  /** Dire que le moteur tourne, ou ne tourne plus. Seule une passe globale le dit. */
+  enExecution: (tourne: boolean) => void;
   onGrapheGenere?: (nodeId: string, spec: { nodes: { ficheId: string; label: string }[]; edges: { source: number; target: number }[] }) => void;
   onNodeInstalle?: () => void;
+  /** La respiration de l'écriture des lecteurs, neuve à chaque passe. Un essai la donne sans délai. */
+  respiration?: () => Respiration;
 }
 
 export interface RecepteurDeLaPasse {
   /** Ce que le moteur appelle. Ne rend une promesse que pour la pose d'un nœud regardé, et pour le bilan. */
-  recevoir: (evenement: EvenementDeLaPasse) => Promise<void> | void;
+  recevoir: (evenement: EvenementDuMoteur<unknown>) => Promise<void> | void;
   /** Les lecteurs promis, écrits un par un une fois le bilan posé. */
   ecrireLesLecteurs: (signal: AbortSignal) => Promise<void>;
 }
 
 export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse {
-  const { affichage, noeudsVisibles, estRegarde } = p;
+  const { noeudsVisibles } = p;
+  const respiration = p.respiration ?? (() => new Respiration());
+  /**
+   * Ce que l'affichage lit pendant la passe. LES NŒUDS DE LA PASSE ET SA RESPIRATION ARRIVENT AVEC
+   * `passeCommencee` : la respiration part alors, une fois la préparation faite. Elle partait juste
+   * avant la boucle, quelques millisecondes plus tard ; elle ne sert qu'à l'écriture des lecteurs.
+   */
+  let affichage: PretsDeLAffichage = { ...p.affichage, tousNoeudsG: [], souffle: respiration() };
+  /**
+   * Ce nœud-ci est-il celui qu'on REGARDE : sélectionné, ou terminal.
+   *
+   * C'EST LA MÊME NOTION QUE POUR LA GARDE DES DIX MINUTES, et c'est voulu : le nœud qu'on
+   * regarde est celui dont l'aperçu mérite d'être construit, et celui dont le résultat mérite
+   * d'être montré sans attendre. Un seul endroit décide de ce qu'« être regardé » veut dire. Il se lit
+   * au moment où le nœud finit : un câble tiré pendant un run long compte.
+   */
+  const estRegarde = (id: string) => noeudRegarde({
+    id,
+    selectionne: !!noeudsVisibles().find((x) => x.id === id)?.selected,
+    aretes: affichage.aretesRef.current,
+    dansUnMeta: (affichage.pileMetaRef?.current?.length ?? 0) > 0,
+    cacheParBulle: estCacheParBulle(affichage.tousNoeudsG, id),
+  });
   const aPoser = new Set<string>();
   /**
    * Pose dans le magasin le correctif d'un nœud, d'après ce qu'il a rendu.
@@ -94,7 +123,7 @@ export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse
 
   const appliquerLeBilan = async (b: Bilan) => {
     // CE QUI A EMPÊCHÉ UNE BOUCLE DE SE DÉPLIER SE DIT SUR LE NŒUD, avant la pose : le moteur a mis la
-    // raison dans son message, et le nœud passe en erreur. Voir `ui/menage-apres-passe.ts`.
+    // raison dans son message, et le nœud passe en erreur. Voir `ui/moteur/menage-apres-passe.ts`.
     for (const [visible, dit] of b.problemesDeBoucle) definirStatut(visible, "erreur", dit);
 
     // LA POSE FINALE, QUI NE LAISSE PERSONNE DE CÔTÉ. Les nœuds ordinaires ont déjà été posés par
@@ -164,8 +193,42 @@ export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse
     }
   };
 
-  const recevoir = (e: EvenementDeLaPasse): Promise<void> | void => {
+  const recevoir = (e: EvenementDuMoteur<unknown>): Promise<void> | void => {
     switch (e.genre) {
+      case "passeCommencee":
+        affichage = { ...p.affichage, tousNoeudsG: e.noeuds, souffle: respiration() };
+        // SEULE UNE PASSE GLOBALE DIT QUE LE MOTEUR TOURNE : une passe ciblée ne doit pas effacer l'état
+        // d'une passe globale encore en cours. La référence est mise à vrai avec l'état, sans attendre
+        // React, pour bloquer les doubles clics.
+        if (!e.cible) p.enExecution(true);
+        // LES STATUTS DE LA PRÉPARATION, dans l'ordre où elle les rend.
+        for (const s of e.statuts) definirStatut(s.id, s.statut, s.progression);
+        return;
+      case "passeTerminee":
+        // Le nœud qui tournait à l'instant de l'arrêt garde le statut « en cours » : la
+        // boucle sort par un `break` sans jamais statuer sur lui. Une réinitialisation
+        // remettait tout à « attente », mais un arrêt simple ne touche à rien — le nœud
+        // resterait donc à tourner à l'écran, indéfiniment, sans que rien ne tourne.
+        if (e.raison === "arret") {
+          for (const id of statutsPoses()) {
+            if (statutDe(id).statut === "en_cours") reinitialiserStatuts([id]);
+          }
+        }
+        // Seul le run global a positionné le drapeau ; une exécution ciblée (nœud prioritaire) ne
+        // doit PAS effacer l'état d'un run global encore en cours.
+        //
+        // La référence est remise à faux ICI, et pas seulement par l'effet qui la synchronise sur
+        // l'état React : `lancer` la lit pour refuser un second run, et le début de la passe la met à
+        // vrai de la même façon, sans attendre React. Sans cela, relancer aussitôt après la fin d'un
+        // run — ce qu'on fait naturellement après avoir cliqué sur « Arrêter » — tombait dans le
+        // garde-fou anti-double-clic et ne faisait rien du tout. Un test de bout en bout l'a pris sur
+        // le fait : après un arrêt, la barre d'espace laissait les quatorze nœuds « en attente ».
+        if (!e.cible) p.enExecution(false);
+        // Lire la valeur LIVE pour toujours effacer la priorité après le run — sinon le run global
+        // suivant reste filtré sur l'ancien nœud prioritaire. Le magasin d'`ui/priorite.ts` la tient
+        // vive, et ne prévient que le nœud qui la perd.
+        if (noeudPrioritaire()) definirPrioritaire(null);
+        return;
       case "statut":
         definirStatut(e.id, e.statut, e.progression, e.progressionDuNoeud);
         return;

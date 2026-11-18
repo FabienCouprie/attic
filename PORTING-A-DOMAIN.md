@@ -409,7 +409,7 @@ Il tient aussi quatre faits :
 - aucun fichier du shell n'importe la déclaration des vues du domaine.
 
 **Les couplages qui restent portent chacun leur raison dans le test**, et le seul
-qui ne soit pas mécanique est `ui/hooks/useExecutionGraphe.ts` : ses deux pilotes
+qui ne soit pas mécanique est `ui/moteur/pilotes.ts` : ses deux pilotes
 de passes ne sont pas des fonctions sur des valeurs mais des **fonctionnalités
 que le moteur pilote**. Les sortir demande de reprendre sa structure de boucle.
 

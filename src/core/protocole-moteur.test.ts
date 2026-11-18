@@ -69,6 +69,10 @@ const EVENEMENTS = {
   passeCommencee: {
     genre: "passeCommencee", generation: 7, cible: "noeud-3", ordre: ["noeud-1", "meta-1::filtre", "noeud-3"],
     statuts: [{ id: "meta-1", statut: "en_cours", progression: "boucle dépliée" }],
+    noeuds: [{
+      id: "noeud-1", type: "atelier", position: { x: 10, y: 20 }, width: 180, height: 90, selected: true,
+      data: { ficheId: "lecteur", parametres: { gain: 0.5 }, fichier: poignee(3) },
+    }],
   },
   statut: { genre: "statut", generation: 7, id: "noeud-1", statut: "en_cours", progression: "Étape 1/3", progressionDuNoeud: false },
   statutOmbre: { genre: "statutOmbre", generation: 7, id: "debut#2::echo", visible: "echo", statut: "termine" },

@@ -151,7 +151,7 @@ export interface PretsDuRetour {
   ecrireCache: (id: string, entree: EntreeDeCache) => void;
   /** Pour une fin de boucle, l'empreinte de sa boucle entière. Voir `core/saut-de-boucle.ts`. */
   empreinteBoucle: (id: string) => string | undefined;
-  /** Le jeton du run : périmé, il interdit d'écrire dans le cache. Voir `ui/ordonnanceur-runs.ts`. */
+  /** Le jeton du run : périmé, il interdit d'écrire dans le cache. Voir `ui/moteur/ordonnanceur-runs.ts`. */
   jeton?: { readonly generation: number; perime(): boolean };
   trouverDef: (ficheId: string) => PluginDef<unknown, unknown> | undefined;
   typeFlux: (id: string) => TypeVerifiable | undefined;
@@ -385,7 +385,7 @@ export async function executerLesNoeuds<TRuntime>(
   const traitesCeRun = new Set<string>();
   // CHAQUE ÉVÉNEMENT PORTE LA GÉNÉRATION DE SA PASSE, celle de son jeton. Une passe sans jeton, un
   // essai qui appelle la boucle sans passer par l'ordonnanceur, porte la génération 0 : celle d'avant
-  // le premier run, que l'ordonnanceur ne donne jamais (`ui/ordonnanceur-runs.ts`).
+  // le premier run, que l'ordonnanceur ne donne jamais (`ui/moteur/ordonnanceur-runs.ts`).
   const generation = p.jeton?.generation ?? 0;
   const { poserStatut, marquerMetaEnEchec } = creerPoseDesStatuts({
     expansions: plat.expansions, t,

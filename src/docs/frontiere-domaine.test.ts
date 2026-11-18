@@ -145,13 +145,14 @@ function sourcesRacine(): string[] {
  *                                couplage, qui a changé de fichier
  *   `AtelierNode.tsx`            l'écoute multicanal
  *   `Inspector.tsx`              les courbes
- *   `hooks/usePilotesDePasse.ts` les deux PILOTES de passes : le lot et les boucles de séquences.
+ *   `moteur/pilotes.ts`          les deux PILOTES de passes : le lot et les boucles de séquences.
  *                                Pas des fonctions sur des valeurs : des fonctionnalités que le
  *                                moteur pilote. Les généraliser demande de reprendre leur structure
  *                                de boucle, donc une décision de conception — et d'abord un test
  *                                qui mène une boucle par voix DANS un lot, emboîtement qu'aucun
  *                                n'éprouve aujourd'hui. Sortis d'`useExecutionGraphe.ts` le
- *                                2026-11-01 : le même couplage, qui a changé de fichier.
+ *                                2026-11-01, puis mis sous `ui/moteur/` sans React par la pièce P5a
+ *                                du plan des messages : le même couplage, qui a changé de fichier.
  *   `ordre-palette.ts`           l'ordre des univers du catalogue
  *
  * ET TROIS GÉNÉRATEURS DE TABLES, qui n'étaient pas dans la liste parce que ce test ne balayait pas
@@ -202,7 +203,7 @@ const COUPLES_ATTENDUS = [
   "ui/dictee/useDictee.ts",
   "ui/Inspector.tsx",
   "ui/SelecteurFrequenceDeTravail.tsx",
-  "ui/hooks/usePilotesDePasse.ts",
+  "ui/moteur/pilotes.ts",
   "ui/hooks/useSoundFont.ts",
   "ui/ordre-palette.ts",
 ];

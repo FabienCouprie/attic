@@ -7,7 +7,11 @@
 //   - `noeudFini` met le nœud parmi ce qui est à poser, et ne rend une promesse que s'il est regardé :
 //     la boucle n'attend qu'alors. Ce qui est posé est ce que le rendu de l'événement dit, sans une
 //     table du moteur ;
-//   - les statuts de la préparation se posent dans l'ordre où elle les rend ;
+//   - `passeCommencee` dit que le moteur tourne pour une passe globale seulement, pose les statuts de
+//     la préparation dans l'ordre où elle les rend, et donne les nœuds de la passe : un membre de
+//     bulle repliée n'est pas regardé, même sélectionné ;
+//   - `passeTerminee` remet à zéro les « en cours » d'un arrêt, dit que le moteur ne tourne plus
+//     pour une passe globale, et efface la priorité ;
 //   - le bilan se pose dans l'ordre du ménage d'avant la coupe : les causes de boucle, la pose finale
 //     de ce qui n'est pas posé ou dont le message a changé, les temps et les écarts, les demandes
 //     gardées, les champs autonomes, puis le statut des conteneurs, lu sur toutes les passes ;
@@ -18,19 +22,28 @@
 // s'écrit, et doit rester identique.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { creerRecepteurDeLaPasse, poserLesStatutsDeLaPreparation, type EvenementDeLaPasse, type PretsDuRecepteur } from "./recepteur-moteur";
-import type { PretsDeLAffichage } from "./correctif-resultat";
+import { creerRecepteurDeLaPasse, type PretsDuRecepteur } from "./recepteur-moteur";
+import type { EvenementDuMoteur } from "../core/protocole-moteur";
+import { definirPrioritaire, noeudPrioritaire } from "./priorite";
 import { effacerResultats, resultatDe, surEcriture as surResultats } from "./resultats";
 import { oublierServicesApercu } from "./services-apercu";
 import { poserStatut, reinitialiserStatuts, statutDe, statutsPoses, surEcriture } from "./statuts";
 import { Respiration } from "../core/respirer";
 
-type Bilan = Extract<EvenementDeLaPasse, { genre: "bilan" }>;
+type Bilan = Extract<EvenementDuMoteur<unknown>, { genre: "bilan" }>;
+type Commencee = Extract<EvenementDuMoteur<unknown>, { genre: "passeCommencee" }>;
 
-/** Ce que l'affichage lit, sans un lecteur ni une arête : de quoi poser un texte. */
-const affichage = (partiel: Partial<PretsDeLAffichage> = {}): PretsDeLAffichage => ({
-  tousNoeudsG: [], trouverDef: (() => undefined) as never, lecteursAEcrire: new Map(), souffle: new Respiration(0),
-  aretesRef: { current: [] }, t: (cle) => cle, ...partiel,
+/**
+ * Ce que l'affichage lit, sans un lecteur ni une arête : de quoi poser un texte. UN MÉTA EST OUVERT,
+ * pour que seul un nœud sélectionné soit regardé : sans cela, tout nœud sans arête sortante le serait.
+ */
+const affichage = (partiel: Partial<PretsDuRecepteur["affichage"]> = {}): PretsDuRecepteur["affichage"] => ({
+  trouverDef: (() => undefined) as never, lecteursAEcrire: new Map(),
+  aretesRef: { current: [] }, pileMetaRef: { current: [{ metaId: "m", nom: "m" }] }, t: (cle) => cle, ...partiel,
+});
+/** Une passe qui commence, sur ces nœuds, sans statut. */
+const commencee = (partiel: Partial<Commencee> = {}): Commencee => ({
+  genre: "passeCommencee", generation: 1, ordre: [], statuts: [], noeuds: [], ...partiel,
 });
 /** Un nœud visible d'essai. */
 const visible = (id: string) => ({ id, data: { ficheId: "texte" } });
@@ -40,14 +53,20 @@ const bilan = (partiel: Partial<Bilan> = {}): Bilan => ({
   champsAutonomes: [], conteneurs: [], ...partiel,
 });
 
-/** Un récepteur d'essai, et le journal des écritures des deux magasins, dans l'ordre. */
+/**
+ * Un récepteur d'essai, et le journal de ce qu'il écrit hors des magasins, dans l'ordre. LES NŒUDS
+ * REGARDÉS SONT SÉLECTIONNÉS dans les nœuds visibles que le cas donne : c'est ce que le récepteur lit.
+ */
 function recepteur(regardes: readonly string[], partiel: Partial<PretsDuRecepteur> = {}) {
   let etatDesNoeuds: any[] = [];
   const journal: string[] = [];
+  const visibles = partiel.noeudsVisibles ?? (() => []);
   const r = creerRecepteurDeLaPasse({
-    affichage: affichage(), noeudsVisibles: () => [], estRegarde: (id) => regardes.includes(id),
+    affichage: affichage(), respiration: () => new Respiration(0),
     setNodes: (f) => { etatDesNoeuds = typeof f === "function" ? f(etatDesNoeuds) : f; journal.push("setNodes"); },
+    enExecution: (tourne) => { journal.push(`enExecution ${tourne}`); },
     ...partiel,
+    noeudsVisibles: () => visibles().map((n) => regardes.includes(n.id) ? { ...n, selected: true } : n),
   });
   return { r, journal, etatDesNoeuds: (n?: any[]) => { if (n) etatDesNoeuds = n; return etatDesNoeuds; } };
 }
@@ -66,8 +85,57 @@ async function releverPendant(faire: () => Promise<void> | void): Promise<string
   return ecrits;
 }
 
-beforeEach(() => { reinitialiserStatuts(); effacerResultats(); oublierServicesApercu(); });
-afterEach(() => { reinitialiserStatuts(); effacerResultats(); });
+beforeEach(() => { reinitialiserStatuts(); effacerResultats(); oublierServicesApercu(); definirPrioritaire(null); });
+afterEach(() => { reinitialiserStatuts(); effacerResultats(); definirPrioritaire(null); });
+
+describe("le début et la fin d'une passe", () => {
+  it("UNE PASSE GLOBALE DIT QUE LE MOTEUR TOURNE, PUIS POSE LES STATUTS DE LA PRÉPARATION dans l'ordre où elle les rend", () => {
+    const { r, journal } = recepteur([]);
+    const ecrits: string[] = [];
+    const lacher = surEcriture((id, _avant, apres) => { ecrits.push(`${id}:${apres.statut}`); journal.push(`statut ${id}`); });
+    try {
+      const statuts = [{ id: "b", statut: "attente", progression: "boucle" }, { id: "a", statut: "erreur" }, { id: "m", statut: "en_cours" }];
+      expect(r.recevoir(commencee({ statuts }))).toBeUndefined();
+    } finally { lacher(); }
+    expect(ecrits).toEqual(["b:attente", "a:erreur", "m:en_cours"]);
+    expect(statutDe("b").progression).toBe("boucle");
+    expect(journal).toEqual(["enExecution true", "statut b", "statut a", "statut m"]);
+  });
+
+  it("UNE PASSE CIBLÉE NE DIT RIEN DU MOTEUR, ni en commençant ni en finissant", () => {
+    const { r, journal } = recepteur([]);
+    r.recevoir(commencee({ cible: "c" }));
+    r.recevoir({ genre: "passeTerminee", generation: 1, cible: "c", raison: "fin" });
+    expect(journal).toEqual([]);
+  });
+
+  it("LA FIN D'UNE PASSE EFFACE LA PRIORITÉ, et seul un arrêt remet à zéro ce qui restait « en cours »", () => {
+    const fin = recepteur([]);
+    poserStatut("x", "en_cours"); poserStatut("y", "termine"); definirPrioritaire("x");
+    fin.r.recevoir({ genre: "passeTerminee", generation: 1, raison: "fin" });
+    expect(statutDe("x").statut).toBe("en_cours");
+    expect(noeudPrioritaire()).toBeNull();
+    expect(fin.journal).toEqual(["enExecution false"]);
+
+    const tombee = recepteur([]);
+    tombee.r.recevoir({ genre: "passeTerminee", generation: 2, raison: "erreur" });
+    expect(statutDe("x").statut).toBe("en_cours");
+
+    const arret = recepteur([]);
+    arret.r.recevoir({ genre: "passeTerminee", generation: 3, raison: "arret" });
+    expect(statutsPoses()).toEqual(["y"]);
+  });
+
+  it("LES NŒUDS DE LA PASSE DISENT QUI EST DANS UNE BULLE REPLIÉE : celui-là n'est pas regardé, même sélectionné", async () => {
+    const membre = { id: "m", data: { ficheId: "texte", bulle: "B" } };
+    const { r } = recepteur(["m"], { noeudsVisibles: () => [membre] });
+    const avant = r.recevoir({ genre: "noeudFini", generation: 1, id: "m", rendu: { valeurs: ["avant"] } });
+    expect(avant).toBeInstanceOf(Promise);
+    await avant;
+    r.recevoir(commencee({ noeuds: [{ id: "B", data: { ficheId: "bulle::B" } }, membre] }));
+    expect(r.recevoir({ genre: "noeudFini", generation: 1, id: "m", rendu: { valeurs: ["après"] } })).toBeUndefined();
+  });
+});
 
 describe("le récepteur des événements de la boucle", () => {
   it("POSE UN STATUT TEL QU'IL ARRIVE, et une ombre sous son identifiant, que la remise à zéro du visible emporte", () => {
@@ -91,14 +159,6 @@ describe("le récepteur des événements de la boucle", () => {
     expect(resultatDe("a").scriptGenere).toBeUndefined();
   });
 
-  it("LES STATUTS DE LA PRÉPARATION SE POSENT DANS L'ORDRE où elle les rend", () => {
-    const ecrits: string[] = [];
-    const lacher = surEcriture((id, _avant, apres) => { ecrits.push(`${id}:${apres.statut}`); });
-    try {
-      poserLesStatutsDeLaPreparation([{ id: "b", statut: "attente", progression: "boucle" }, { id: "a", statut: "erreur" }, { id: "m", statut: "en_cours" }]);
-    } finally { lacher(); }
-    expect(ecrits).toEqual(["b:attente", "a:erreur", "m:en_cours"]);
-  });
 });
 
 describe("le bilan de la passe, posé dans l'ordre du ménage", () => {
@@ -200,6 +260,7 @@ describe("les lecteurs, écrits après que tout est posé", () => {
       affichage: affichage({ lecteursAEcrire }),
       noeudsVisibles: () => [{ id: "a", data: { ficheId: "echo" } }, { id: "b", data: { ficheId: "gain" } }],
     });
+    r.recevoir(commencee());
     const erreur = console.error;
     console.error = () => {};
     try {

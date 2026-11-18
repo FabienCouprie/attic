@@ -1,8 +1,11 @@
-// ui/hooks/usePilotesDePasse.ts — Les deux pilotes de passes : le lot, qui rejoue le graphe une fois
-// par fichier, et la boucle sur une valeur, qui le rejoue une fois par morceau de ce qui circule.
+// ui/moteur/pilotes.ts — Les deux pilotes de passes : le lot, qui rejoue le graphe une fois par
+// fichier, et la boucle sur une valeur, qui le rejoue une fois par morceau de ce qui circule.
 //
 // Sortis d'`useExecutionGraphe.ts` le 2026-11-01, à l'identique (sortie 1 du plan
-// `work/plan-useExecutionGraphe-2026-11-01.md`). Ils ne connaissent ni la topologie, ni les
+// `work/plan-useExecutionGraphe-2026-11-01.md`), dans un crochet, `usePilotesDePasse`. La pièce P5a du
+// plan de l'architecture par messages les a mis dans le dossier du moteur, sans React : deux fonctions
+// créées ensemble, que le pont recrée quand la passe qu'elles rejouent change, comme les deux
+// `useCallback` d'avant le faisaient. Ils ne connaissent ni la topologie, ni les
 // résultats, ni rien du moteur : ils rejouent `lancerUnePasse`, qui reste une exécution entière avec
 // ses statuts, son cache, son annulation et son `AbortController`. C'est le seul endroit du shell qui
 // importe `plugins/lotGlobal` et `plugins/boucleSequencesGlobal`, et c'est un choix écrit : les
@@ -12,10 +15,8 @@
 //
 // LES TROIS RÉPÉTITIONS S'EMBOÎTENT DANS L'ORDRE OÙ ELLES SE LISENT : le lot dehors, les boucles par
 // passes dedans, et l'exécution du graphe au fond. Le drapeau d'arrêt du lot reste au moteur, qui le
-// lève dans `arreter` ; il est reçu ici par sa référence.
-import { useCallback } from "react";
-import type { MutableRefObject } from "react";
-import type { CacheDuMoteur } from "../moteur/cache";
+// lève dans `arreter` ; il est reçu ici par son emplacement.
+import type { CacheDuMoteur } from "./cache";
 
 import { ancetres, aplatirGraphe, descendants, estSubstitution, type AreteG, type NoeudG } from "../../core";
 import { metaDeLInstantane } from "../../core/instantane-de-graphe";
@@ -25,11 +26,9 @@ import { planifierLot, publierLot } from "../../plugins/lotGlobal";
 // LES BORNES SONT DÉCLARÉES AVEC LE COMPTEUR, ET NON ICI. Recopiées des deux côtés, elles auraient
 // dérivé à la première qu'on aurait changée, et le test ne garderait plus que la copie du module.
 import { avancerBoucles, planifierBoucles, publierBoucles, PASSES_MAX_TOTAL } from "../../plugins/boucleSequencesGlobal";
-import type { JetonDeRun } from "../ordonnanceur-runs";
+import type { JetonDeRun } from "./ordonnanceur-runs";
 import { servicesOrchestration } from "../services-orchestration";
-import type { PerimetreCible } from "./useExecutionGraphe";
-
-export type LancerUnePasse = (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun) => Promise<void>;
+import type { Emplacement, LancerUnePasse, PerimetreCible } from "./passe";
 
 export interface OptionsPilotesDePasse {
   lancerUnePasse: LancerUnePasse;
@@ -40,10 +39,15 @@ export interface OptionsPilotesDePasse {
   graphe: () => InstantaneDeGraphe;
   cache: CacheDuMoteur;
   /** Levé par « Arrêter » : le lot s'arrête au fichier en cours, et non à la seule passe. */
-  arretLotRef: MutableRefObject<boolean>;
+  arretDuLot: Emplacement<boolean>;
 }
 
-export function usePilotesDePasse({ lancerUnePasse, graphe, cache, arretLotRef }: OptionsPilotesDePasse) {
+/** Ce que les pilotes rendent : le lot, qui mène les boucles par passes, qui mènent la passe. */
+export interface PilotesDePasse {
+  lancerLeLot: LancerUnePasse;
+}
+
+export function creerPilotesDePasse({ lancerUnePasse, graphe, cache, arretDuLot }: OptionsPilotesDePasse): PilotesDePasse {
   /**
    * La boucle sur une VALEUR : le graphe entier, rejoué une fois par morceau de ce qui circule.
    *
@@ -64,7 +68,7 @@ export function usePilotesDePasse({ lancerUnePasse, graphe, cache, arretLotRef }
    * contenu d'un méta-composant soit vu, et il se paie une fois par exécution, non une fois par
    * passe.
    */
-  const lancerBoucleValeur = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun) => {
+  const lancerBoucleValeur = async (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun): Promise<void> => {
     // LE PLAN SE FAIT SUR LE GRAPHE APLATI, ET NON SUR CELUI QU'ON VOIT — relevé par Fabien, qui
     // demandait si les changements faits sur les boucles valaient aussi pour les autres.
     //
@@ -133,7 +137,7 @@ export function usePilotesDePasse({ lancerUnePasse, graphe, cache, arretLotRef }
       // ce dépôt ne l'atteint.
       let faites = 1;
       while (avancerBoucles(etats)) {
-        if (arretLotRef.current || faites >= PASSES_MAX_TOTAL) break;
+        if (arretDuLot.current || faites >= PASSES_MAX_TOTAL) break;
         oublierLeCorps(0);
         await lancerUnePasse(noeudPrioritaireId, perimetre, jeton);
         faites++;
@@ -141,7 +145,7 @@ export function usePilotesDePasse({ lancerUnePasse, graphe, cache, arretLotRef }
     } finally {
       publierBoucles([]);
     }
-  }, [lancerUnePasse, graphe]);
+  };
 
   /**
    * Le traitement par lot : le graphe entier, rejoué une fois par fichier.
@@ -161,8 +165,8 @@ export function usePilotesDePasse({ lancerUnePasse, graphe, cache, arretLotRef }
    * revenir en arrière aurait demandé de casser le cache, les statuts et l'annulation — ce que
    * `core/boucle-graphe.ts` disait déjà, et qui reste vrai.
    */
-  const lancerLeLot = useCallback(async (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun) => {
-    arretLotRef.current = false;
+  const lancerLeLot = async (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun): Promise<void> => {
+    arretDuLot.current = false;
     // La lecture du dossier est asynchrone, la planification ne l'est pas : on lit d'abord, puis
     // `planifierLot` — pure et testée — décide de tout le reste.
     // QUELS DOSSIERS LIRE EST UNE QUESTION DE DOMAINE, et le moteur ne la tranche plus : il tenait
@@ -191,7 +195,7 @@ export function usePilotesDePasse({ lancerUnePasse, graphe, cache, arretLotRef }
     const nomsEcrits: string[] = [];
     try {
       for (let index = 0; index < plan.passes; index++) {
-        if (arretLotRef.current) break;
+        if (arretDuLot.current) break;
         publierLot({ debutId: plan.debutId, index, fichiers: plan.fichiers, journal, nomsEcrits });
         // Le début de boucle et tout son aval doivent rejouer : leur empreinte n'a pas bougé d'une
         // passe à l'autre — le nœud n'a ni entrée ni paramètre qui change —, et le cache les
@@ -210,7 +214,7 @@ export function usePilotesDePasse({ lancerUnePasse, graphe, cache, arretLotRef }
     } finally {
       publierLot(null);
     }
-  }, [lancerBoucleValeur, graphe]);
+  };
 
   return { lancerLeLot };
 }

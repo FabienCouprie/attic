@@ -1,4 +1,4 @@
-// ui/ordonnanceur-runs.test.ts — Deux exécutions ne se chevauchent plus.
+// ui/moteur/ordonnanceur-runs.test.ts — Deux exécutions ne se chevauchent plus.
 //
 // ═══ CE QUE CES CAS TIENNENT ═══
 //
@@ -354,8 +354,12 @@ describe("l'ordonnanceur d'exécutions", () => {
 //
 // `useExecutionGraphe.ts` est un fichier en dette de la norme de taille : ce garde vit ici, et non
 // dans un contrat de `src/docs/`, pour ne rien ajouter là où rien ne doit s'ajouter.
+//
+// LA PASSE A QUITTÉ LE CROCHET À LA PIÈCE P5A, pour `ui/moteur/passe.ts` : les interdits se lisent
+// dans les deux, la porte d'entrée dans le crochet, qui la rend au shell.
 describe("le moteur d'exécution", () => {
-  const SOURCE = readFileSync(join(__dirname, "hooks", "useExecutionGraphe.ts"), "utf8");
+  const SOURCE = readFileSync(join(__dirname, "..", "hooks", "useExecutionGraphe.ts"), "utf8");
+  const PASSE = readFileSync(join(__dirname, "passe.ts"), "utf8");
 
   /**
    * La source SANS SES COMMENTAIRES, et c'est une faute déjà payée.
@@ -365,7 +369,7 @@ describe("le moteur d'exécution", () => {
    * piège que le commentaire d'`accessSync` dans `electron/dossier-travail.test.ts`, et que
    * l'homonyme qui survivait dans l'expression surveillée.
    */
-  const CODE = SOURCE.split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
+  const CODE = [SOURCE, PASSE].join("\n").split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
 
   it("N'EXPOSE QU'UNE PORTE, et elle passe par l'ordonnanceur", () => {
     const rendu = SOURCE.slice(SOURCE.lastIndexOf("return { lancer"));
@@ -398,7 +402,7 @@ describe("le moteur d'exécution", () => {
     // lui-même, sa seule écriture étant celle qu'il prête. La première version de ce cas, restée sur
     // le crochet, est tombée sur la ligne du prêt, qui n'a pas à porter le jeton.
     const sansCommentaires = (s: string) => s.split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
-    const COEUR = sansCommentaires(readFileSync(join(__dirname, "..", "core", "execution.ts"), "utf8"));
+    const COEUR = sansCommentaires(readFileSync(join(__dirname, "..", "..", "core", "execution.ts"), "utf8"));
     const appels = COEUR.match(/[^\n]*ecrireCache\([^\n]*/g) ?? [];
     expect(appels.length, "l'écriture du cache a disparu du cœur ou changé de forme").toBeGreaterThan(0);
     for (const a of appels) expect(a, "elle doit être gardée par le jeton de génération").toContain("perime()");
