@@ -22,7 +22,7 @@
 // s'écrit, et doit rester identique.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { creerRecepteurDeLaPasse, type PretsDuRecepteur } from "./recepteur-moteur";
+import { creerRecepteurDuMoteur, type LiaisonDuRecepteur, type PretsDuRecepteur } from "./recepteur-moteur";
 import type { EvenementDuMoteur } from "../core/protocole-moteur";
 import { definirPrioritaire, noeudPrioritaire } from "./priorite";
 import { effacerResultats, resultatDe, surEcriture as surResultats } from "./resultats";
@@ -37,9 +37,9 @@ type Commencee = Extract<EvenementDuMoteur<unknown>, { genre: "passeCommencee" }
  * Ce que l'affichage lit, sans un lecteur ni une arête : de quoi poser un texte. UN MÉTA EST OUVERT,
  * pour que seul un nœud sélectionné soit regardé : sans cela, tout nœud sans arête sortante le serait.
  */
-const affichage = (partiel: Partial<PretsDuRecepteur["affichage"]> = {}): PretsDuRecepteur["affichage"] => ({
-  trouverDef: (() => undefined) as never, lecteursAEcrire: new Map(),
-  aretesRef: { current: [] }, pileMetaRef: { current: [{ metaId: "m", nom: "m" }] }, t: (cle) => cle, ...partiel,
+const affichage = (): PretsDuRecepteur["affichage"] => ({
+  trouverDef: (() => undefined) as never,
+  aretesRef: { current: [] }, pileMetaRef: { current: [{ metaId: "m", nom: "m" }] },
 });
 /** Une passe qui commence, sur ces nœuds, sans statut. */
 const commencee = (partiel: Partial<Commencee> = {}): Commencee => ({
@@ -56,16 +56,19 @@ const bilan = (partiel: Partial<Bilan> = {}): Bilan => ({
 /**
  * Un récepteur d'essai, et le journal de ce qu'il écrit hors des magasins, dans l'ordre. LES NŒUDS
  * REGARDÉS SONT SÉLECTIONNÉS dans les nœuds visibles que le cas donne : c'est ce que le récepteur lit.
+ * Les rappels de l'atelier passent par la liaison, que le cas donne ou non.
  */
-function recepteur(regardes: readonly string[], partiel: Partial<PretsDuRecepteur> = {}) {
+function recepteur(regardes: readonly string[], partiel: Partial<PretsDuRecepteur> & Omit<LiaisonDuRecepteur, "t"> = {}) {
   let etatDesNoeuds: any[] = [];
   const journal: string[] = [];
-  const visibles = partiel.noeudsVisibles ?? (() => []);
-  const r = creerRecepteurDeLaPasse({
+  const { onGrapheGenere, onNodeInstalle, ...prets } = partiel;
+  const visibles = prets.noeudsVisibles ?? (() => []);
+  const r = creerRecepteurDuMoteur({
     affichage: affichage(), respiration: () => new Respiration(0),
     setNodes: (f) => { etatDesNoeuds = typeof f === "function" ? f(etatDesNoeuds) : f; journal.push("setNodes"); },
     enExecution: (tourne) => { journal.push(`enExecution ${tourne}`); },
-    ...partiel,
+    liaison: () => ({ t: (cle) => cle, onGrapheGenere, onNodeInstalle }),
+    ...prets,
     noeudsVisibles: () => visibles().map((n) => regardes.includes(n.id) ? { ...n, selected: true } : n),
   });
   return { r, journal, etatDesNoeuds: (n?: any[]) => { if (n) etatDesNoeuds = n; return etatDesNoeuds; } };
@@ -251,20 +254,20 @@ describe("le bilan de la passe, posé dans l'ordre du ménage", () => {
   });
 });
 
-describe("les lecteurs, écrits après que tout est posé", () => {
+describe("les lecteurs, écrits après que tout est posé, dans la promesse du bilan", () => {
   it("CHACUN EST POSÉ DÈS QU'IL EST PRÊT, et un lecteur qui échoue n'emporte pas les suivants", async () => {
     const lecteursAEcrire = new Map<string, () => Promise<string | undefined>>([
       ["a", async () => "blob:a"], ["casse", async () => { throw new Error("encodage"); }], ["b", async () => "blob:b"],
     ]);
     const { r } = recepteur([], {
-      affichage: affichage({ lecteursAEcrire }),
+      lecteurs: () => lecteursAEcrire,
       noeudsVisibles: () => [{ id: "a", data: { ficheId: "echo" } }, { id: "b", data: { ficheId: "gain" } }],
     });
     r.recevoir(commencee());
     const erreur = console.error;
     console.error = () => {};
     try {
-      await r.ecrireLesLecteurs(new AbortController().signal);
+      await r.recevoir(bilan());
     } finally { console.error = erreur; }
     expect(resultatDe("a")).toMatchObject({ audioResultatUrl: "blob:a", audioResultatNom: "echo.wav" });
     expect(resultatDe("b")).toMatchObject({ audioResultatUrl: "blob:b", audioResultatNom: "gain.wav" });
@@ -273,14 +276,23 @@ describe("les lecteurs, écrits après que tout est posé", () => {
     expect(statutDe("casse").apercu).toBeUndefined();
   });
 
-  it("UNE ANNULATION ARRÊTE L'ÉCRITURE avant le lecteur suivant", async () => {
-    const arret = new AbortController();
+  it("UNE PASSE ARRÊTÉE N'ÉCRIT PAS LE LECTEUR SUIVANT, et la passe d'après repart d'un état neuf", async () => {
     const ecrits: string[] = [];
+    let arreter = () => {};
     const lecteursAEcrire = new Map<string, () => Promise<string | undefined>>([
-      ["a", async () => { ecrits.push("a"); arret.abort(); return "blob:a"; }],
+      ["a", async () => { ecrits.push("a"); arreter(); return "blob:a"; }],
       ["b", async () => { ecrits.push("b"); return "blob:b"; }],
     ]);
-    await recepteur([], { affichage: affichage({ lecteursAEcrire }) }).r.ecrireLesLecteurs(arret.signal);
+    const { r } = recepteur([], { lecteurs: () => lecteursAEcrire });
+    arreter = () => { r.recevoir({ genre: "passeArretee", generation: 1 }); };
+    r.recevoir(commencee());
+    await r.recevoir(bilan());
     expect(ecrits).toEqual(["a"]);
+
+    // LA PASSE SUIVANTE N'EST PAS ARRÊTÉE : `passeCommencee` remet l'état à neuf.
+    arreter = () => {};
+    r.recevoir(commencee({ generation: 2 }));
+    await r.recevoir(bilan({ generation: 2 }));
+    expect(ecrits).toEqual(["a", "a", "b"]);
   });
 });

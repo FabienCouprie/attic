@@ -14,20 +14,22 @@
 // correctif qu'il appelle et de la réparation des aperçus, rien n'importe une pose des magasins, et
 // aucun des trois n'importe les tables du moteur.
 //
-// UN RÉCEPTEUR PAR PASSE. Ce qu'une passe a posé, ce qui lui reste à poser et les demandes qu'elle a
-// reçues sont à elle : le bilan les lit. Les passes se suivent, l'ordonnanceur n'en fait jamais
-// tourner deux. La pièce P5b donnera le récepteur au moteur à sa construction.
-//
 // ET LA PASSE LUI DIT QU'ELLE COMMENCE ET QU'ELLE FINIT, depuis la pièce P5a, qui a mis la passe dans
 // le dossier du moteur, sans React. Ce qu'elle écrivait elle-même au début et dans son `finally` est
 // ici : le drapeau « le moteur tourne » d'une passe globale, les statuts de la préparation, la
 // remise des « en cours » après un arrêt et l'effacement de la priorité. Le récepteur dit aussi qui
 // est regardé, sur les nœuds de la passe que `passeCommencee` lui donne.
+//
+// UN RÉCEPTEUR POUR LA VIE DU MOTEUR, UN ÉTAT PAR PASSE, depuis la pièce P5b. Le pont le construit une
+// fois et le donne au moteur à sa construction. Ce qu'une passe a posé, ce qui lui reste à poser, les
+// demandes qu'elle a reçues, ses lecteurs promis et sa respiration sont à elle, et `passeCommencee`
+// les remet à neuf : les passes se suivent, l'ordonnanceur n'en fait jamais tourner deux. Le bilan
+// posé, le récepteur écrit les lecteurs, et `passeArretee` interrompt cette écriture.
 import type { Dispatch, SetStateAction } from "react";
 import { estCacheParBulle } from "../core";
 import { statutDuContenu } from "../core/conteneurs";
 import { noeudRegarde } from "../core/memoire";
-import type { EvenementDuMoteur, RenduDuVisible } from "../core/protocole-moteur";
+import type { EvenementDuMoteur, RecepteurDuMoteur, RenduDuVisible } from "../core/protocole-moteur";
 import { Respiration } from "../core/respirer";
 import type { DemandeAuMoteur } from "../core/types";
 import { calculerCorrectifResultat, type PretsDeLAffichage } from "./correctif-resultat";
@@ -48,40 +50,87 @@ const definirStatut = (nodeId: string, statut: string, progression?: string, pro
   poserStatut(nodeId, statut, progression, progressionDuNoeud);
 };
 
+/** Ce que le pont lie au rendu, lu au début de chaque passe : la langue et les deux rappels de l'atelier. */
+export interface LiaisonDuRecepteur {
+  t: (cle: string) => string;
+  onGrapheGenere?: (nodeId: string, spec: { nodes: { ficheId: string; label: string }[]; edges: { source: number; target: number }[] }) => void;
+  onNodeInstalle?: () => void;
+}
+
+/** Les lecteurs qu'une passe promet, par nœud. */
+type Lecteurs = PretsDeLAffichage["lecteursAEcrire"];
+
 export interface PretsDuRecepteur {
   /**
-   * Ce que l'affichage d'un rendu lit, hors de ce que la passe donne en commençant : ses lecteurs
-   * promis et trois références vivantes. Les nœuds de la passe arrivent avec `passeCommencee`.
+   * Ce que l'affichage d'un rendu lit, hors de ce que chaque passe a en propre : le registre et trois
+   * références vivantes. Les nœuds de la passe arrivent avec `passeCommencee`, la langue avec la liaison.
    */
-  affichage: Omit<PretsDeLAffichage, "tousNoeudsG" | "souffle">;
+  affichage: Omit<PretsDeLAffichage, "tousNoeudsG" | "souffle" | "lecteursAEcrire" | "t">;
   /** Les nœuds visibles, lus au moment de la pose : un nœud ajouté pendant la passe y est vu. */
   noeudsVisibles: () => readonly any[];
   /** Le report des champs autonomes sur l'état des nœuds. */
   setNodes: Dispatch<SetStateAction<any[]>>;
   /** Dire que le moteur tourne, ou ne tourne plus. Seule une passe globale le dit. */
   enExecution: (tourne: boolean) => void;
-  onGrapheGenere?: (nodeId: string, spec: { nodes: { ficheId: string; label: string }[]; edges: { source: number; target: number }[] }) => void;
-  onNodeInstalle?: () => void;
+  /**
+   * La langue et les rappels de l'atelier, que le pont tient à jour à chaque rendu. LUS AU DÉBUT DE LA
+   * PASSE, et gardés jusqu'à sa fin : une passe ne change pas de langue en route.
+   */
+  liaison: () => LiaisonDuRecepteur;
   /** La respiration de l'écriture des lecteurs, neuve à chaque passe. Un essai la donne sans délai. */
   respiration?: () => Respiration;
+  /** La table des lecteurs promis, neuve à chaque passe. Un essai y met les siens. */
+  lecteurs?: () => Lecteurs;
 }
 
-export interface RecepteurDeLaPasse {
-  /** Ce que le moteur appelle. Ne rend une promesse que pour la pose d'un nœud regardé, et pour le bilan. */
-  recevoir: (evenement: EvenementDuMoteur<unknown>) => Promise<void> | void;
-  /** Les lecteurs promis, écrits un par un une fois le bilan posé. */
-  ecrireLesLecteurs: (signal: AbortSignal) => Promise<void>;
+export interface RecepteurDuShell {
+  /**
+   * Ce que le moteur appelle, pour toutes ses passes. Ne rend une promesse que pour la pose d'un nœud
+   * regardé, et pour le bilan, qui comprend l'écriture des lecteurs.
+   */
+  recevoir: RecepteurDuMoteur<unknown>;
 }
 
-export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse {
+/** Ce qui est à une passe, et que `passeCommencee` remet à neuf. */
+interface EtatDeLaPasse {
+  /** Ce que l'affichage lit pendant la passe : ses nœuds, ses lecteurs promis, sa respiration, sa langue. */
+  affichage: PretsDeLAffichage;
+  liaison: LiaisonDuRecepteur;
+  aPoser: Set<string>;
+  /**
+   * Ce qui a été posé pendant la boucle. UN IDENTIFIANT QUI N'EST PAS CELUI D'UN NŒUD VISIBLE EST
+   * SAUTÉ, et c'est voulu : la boucle tourne sur le graphe APLATI, où un membre de méta s'appelle
+   * « outil1::cd ». Son méta, lui, agrège les résultats de ses internes et ne peut donc être posé
+   * qu'à la fin ; c'est la pose forcée, après la boucle, qui s'en charge.
+   */
+  dejaPoses: Set<string>;
+  /**
+   * LES DEMANDES ATTENDENT LE BILAN. Le moteur les dit à son ménage, avant le bilan ; elles partent
+   * vers l'atelier après la pose finale, les temps et les écarts, là où le ménage les transmettait.
+   */
+  demandes: Map<string, DemandeAuMoteur>;
+  /** La passe a été arrêtée : l'écriture des lecteurs s'arrête avant le suivant. */
+  arretee: boolean;
+}
+
+export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
   const { noeudsVisibles } = p;
   const respiration = p.respiration ?? (() => new Respiration());
+  const lecteurs = p.lecteurs ?? ((): Lecteurs => new Map());
   /**
-   * Ce que l'affichage lit pendant la passe. LES NŒUDS DE LA PASSE ET SA RESPIRATION ARRIVENT AVEC
-   * `passeCommencee` : la respiration part alors, une fois la préparation faite. Elle partait juste
-   * avant la boucle, quelques millisecondes plus tard ; elle ne sert qu'à l'écriture des lecteurs.
+   * L'état d'une passe neuve. LES NŒUDS DE LA PASSE ET SA RESPIRATION ARRIVENT AVEC `passeCommencee` :
+   * la respiration part alors, une fois la préparation faite. Elle partait juste avant la boucle,
+   * quelques millisecondes plus tard ; elle ne sert qu'à l'écriture des lecteurs.
    */
-  let affichage: PretsDeLAffichage = { ...p.affichage, tousNoeudsG: [], souffle: respiration() };
+  const neuve = (tousNoeudsG: PretsDeLAffichage["tousNoeudsG"]): EtatDeLaPasse => {
+    // COPIÉE, ET NON PRÊTÉE : le pont la récrit à chaque rendu, et la passe garde la sienne.
+    const liaison = { ...p.liaison() };
+    return {
+      affichage: { ...p.affichage, tousNoeudsG, lecteursAEcrire: lecteurs(), souffle: respiration(), t: liaison.t },
+      liaison, aPoser: new Set(), dejaPoses: new Set(), demandes: new Map(), arretee: false,
+    };
+  };
+  let passe = neuve([]);
   /**
    * Ce nœud-ci est-il celui qu'on REGARDE : sélectionné, ou terminal.
    *
@@ -93,35 +142,22 @@ export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse
   const estRegarde = (id: string) => noeudRegarde({
     id,
     selectionne: !!noeudsVisibles().find((x) => x.id === id)?.selected,
-    aretes: affichage.aretesRef.current,
-    dansUnMeta: (affichage.pileMetaRef?.current?.length ?? 0) > 0,
-    cacheParBulle: estCacheParBulle(affichage.tousNoeudsG, id),
+    aretes: passe.affichage.aretesRef.current,
+    dansUnMeta: (passe.affichage.pileMetaRef?.current?.length ?? 0) > 0,
+    cacheParBulle: estCacheParBulle(passe.affichage.tousNoeudsG, id),
   });
-  const aPoser = new Set<string>();
-  /**
-   * Pose dans le magasin le correctif d'un nœud, d'après ce qu'il a rendu.
-   *
-   * UN IDENTIFIANT QUI N'EST PAS CELUI D'UN NŒUD VISIBLE EST SAUTÉ, et c'est voulu : la boucle
-   * tourne sur le graphe APLATI, où un membre de méta s'appelle « outil1::cd ». Son méta, lui,
-   * agrège les résultats de ses internes et ne peut donc être posé qu'à la fin ; c'est la pose
-   * forcée, après la boucle, qui s'en charge.
-   */
-  const dejaPoses = new Set<string>();
-  const poserUnNoeud = async (id: string, rendu: RenduDuVisible<unknown> | undefined) => {
-    aPoser.delete(id);
+  /** Pose dans le magasin le correctif d'un nœud, d'après ce qu'il a rendu. */
+  const poserUnNoeud = async (ici: EtatDeLaPasse, id: string, rendu: RenduDuVisible<unknown> | undefined) => {
+    ici.aPoser.delete(id);
     const n = noeudsVisibles().find((x) => x.id === id);
     if (!n) return;
-    const patch = await calculerCorrectifResultat(n, rendu, affichage);
+    const patch = await calculerCorrectifResultat(n, rendu, ici.affichage);
     if (patch) poserResultat(id, patch);
-    dejaPoses.add(id);
+    ici.dejaPoses.add(id);
   };
-  /**
-   * LES DEMANDES ATTENDENT LE BILAN. Le moteur les dit à son ménage, avant le bilan ; elles partent
-   * vers l'atelier après la pose finale, les temps et les écarts, là où le ménage les transmettait.
-   */
-  const demandes = new Map<string, DemandeAuMoteur>();
 
-  const appliquerLeBilan = async (b: Bilan) => {
+  const appliquerLeBilan = async (ici: EtatDeLaPasse, b: Bilan) => {
+    const { aPoser, dejaPoses, demandes, liaison, affichage } = ici;
     // CE QUI A EMPÊCHÉ UNE BOUCLE DE SE DÉPLIER SE DIT SUR LE NŒUD, avant la pose : le moteur a mis la
     // raison dans son message, et le nœud passe en erreur. Voir `ui/moteur/menage-apres-passe.ts`.
     for (const [visible, dit] of b.problemesDeBoucle) definirStatut(visible, "erreur", dit);
@@ -146,7 +182,7 @@ export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse
       if (!dejaPoses.has(n.id) || reprendre.has(n.id)) aPoser.add(n.id);
     }
     const rendus = new Map(b.rendus);
-    for (const id of [...aPoser]) await poserUnNoeud(id, rendus.get(id));
+    for (const id of [...aPoser]) await poserUnNoeud(ici, id, rendus.get(id));
 
     // LE TEMPS D'EXÉCUTION ET L'ÉCART DE NIVEAU VONT DANS LE MAGASIN comme le reste du résultat :
     // ce sont deux comptes rendus du run, cumulés par nœud VISIBLE, méta compris. Le magasin ne
@@ -158,11 +194,11 @@ export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse
     // LES DEMANDES SE LISENT DANS LE RETOUR DU RUN, et rien n'est à effacer ensuite : elles ne se
     // sont jamais posées sur un nœud. Le composant rend sa demande au lieu de l'écrire.
     for (const [nodeId, demande] of demandes) {
-      if (p.onGrapheGenere && demande.grapheACreer?.nodes && demande.grapheACreer?.edges) {
-        p.onGrapheGenere(nodeId, { nodes: demande.grapheACreer.nodes, edges: demande.grapheACreer.edges });
+      if (liaison.onGrapheGenere && demande.grapheACreer?.nodes && demande.grapheACreer?.edges) {
+        liaison.onGrapheGenere(nodeId, { nodes: demande.grapheACreer.nodes, edges: demande.grapheACreer.edges });
       }
     }
-    if (p.onNodeInstalle && [...demandes.values()].some((d) => d.paletteARelire)) p.onNodeInstalle();
+    if (liaison.onNodeInstalle && [...demandes.values()].some((d) => d.paletteARelire)) liaison.onNodeInstalle();
 
     // LES CHAMPS AUTONOMES, préfixés `_`, qu'un composant à `affichageAutonome: true` a écrits sur le
     // nœud de la passe : sans ce report, personne ne les verrait. Un nœud dont aucun champ ne change
@@ -196,7 +232,7 @@ export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse
   const recevoir = (e: EvenementDuMoteur<unknown>): Promise<void> | void => {
     switch (e.genre) {
       case "passeCommencee":
-        affichage = { ...p.affichage, tousNoeudsG: e.noeuds, souffle: respiration() };
+        passe = neuve(e.noeuds);
         // SEULE UNE PASSE GLOBALE DIT QUE LE MOTEUR TOURNE : une passe ciblée ne doit pas effacer l'état
         // d'une passe globale encore en cours. La référence est mise à vrai avec l'état, sans attendre
         // React, pour bloquer les doubles clics.
@@ -229,6 +265,9 @@ export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse
         // vive, et ne prévient que le nœud qui la perd.
         if (noeudPrioritaire()) definirPrioritaire(null);
         return;
+      case "passeArretee":
+        passe.arretee = true;
+        return;
       case "statut":
         definirStatut(e.id, e.statut, e.progression, e.progressionDuNoeud);
         return;
@@ -238,7 +277,7 @@ export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse
       case "noeudFini":
         // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER : il rejoint ce qui
         // est à poser, et il est posé aussitôt s'il est regardé.
-        aPoser.add(e.id);
+        passe.aPoser.add(e.id);
         // SEUL LE NŒUD QU'ON REGARDE EST POSÉ PENDANT LE RUN, et les autres à la fin.
         //
         // POURQUOI CE PARTAGE, ET CE QU'IL COÛTE. Montrer un résultat coûte le rendu de ce résultat :
@@ -253,14 +292,20 @@ export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse
         // voit sans attendre ce que l'on avait sous les yeux. Relevé par Fabien : « les lecteurs
         // apparaissent longtemps après que les nœuds soient notés comme terminés dans les workflows
         // longs ». La promesse n'est rendue, et attendue, que pour le nœud regardé.
-        if (estRegarde(e.id)) return poserUnNoeud(e.id, e.rendu);
+        if (estRegarde(e.id)) return poserUnNoeud(passe, e.id, e.rendu);
         return;
       case "demande":
-        demandes.set(e.id, e.demande);
+        passe.demandes.set(e.id, e.demande);
         return;
       case "bilan":
-        return appliquerLeBilan(e);
+        return poserLeBilanPuisLesLecteurs(passe, e);
     }
+  };
+
+  /** Le bilan, puis les lecteurs : la promesse du bilan comprend les deux, et le ménage l'attend. */
+  const poserLeBilanPuisLesLecteurs = async (ici: EtatDeLaPasse, b: Bilan) => {
+    await appliquerLeBilan(ici, b);
+    await ecrireLesLecteurs(ici);
   };
 
   /**
@@ -270,11 +315,14 @@ export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse
    * audio, attendre le dernier encodage pour montrer le premier lecteur était la moitié du défaut
    * relevé. Pendant son écriture, le nœud dit où elle en est : il est déjà terminé, son tampon est
    * posé, il s'écoute déjà par le bouton, et c'est le lecteur qui se fabrique.
+   *
+   * UNE PASSE ARRÊTÉE N'ÉCRIT PAS LE SUIVANT : `passeArretee` arrive à l'instant de l'arrêt, là où le
+   * signal de la passe était lu avant chaque lecteur.
    */
-  const ecrireLesLecteurs = async (signal: AbortSignal): Promise<void> => {
-    const { lecteursAEcrire, souffle } = affichage;
+  const ecrireLesLecteurs = async (ici: EtatDeLaPasse): Promise<void> => {
+    const { lecteursAEcrire, souffle } = ici.affichage;
     for (const [id, ecrire] of lecteursAEcrire) {
-      if (signal.aborted) break;
+      if (ici.arretee) break;
       poserApercu(id, 0);
       try {
         const url = await ecrire();
@@ -295,5 +343,5 @@ export function creerRecepteurDeLaPasse(p: PretsDuRecepteur): RecepteurDeLaPasse
     }
   };
 
-  return { recevoir, ecrireLesLecteurs };
+  return { recevoir };
 }

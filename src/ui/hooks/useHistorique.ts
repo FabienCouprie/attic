@@ -12,7 +12,7 @@
 // résultats des nœuds abandonnés oubliés ; ils ne diffèrent que par la pile qu'ils vident.
 import { useCallback, useRef } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
-import type { EnvoiDuCache } from "../moteur/commandes";
+import type { EnvoiDuCache } from "../moteur";
 import type { Edge } from "@xyflow/react";
 
 import {

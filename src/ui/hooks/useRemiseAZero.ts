@@ -4,7 +4,8 @@
 // `work/plan-useExecutionGraphe-2026-11-01.md`). Les règles de ce qui s'efface et de ce qui se garde
 // vivent dans `core/cycle-de-vie.ts` et `core/classes-de-champs.ts` ; la traversée dans
 // `core/graphe.ts` ; les conteneurs dans `core/conteneurs.ts`. Ce crochet ne fait que les relier aux
-// magasins et à l'état de React, et demander au moteur d'annuler le run en cours s'il y en a un.
+// magasins et à l'état de React, et envoyer au moteur la commande qui abat le run en cours s'il y en a
+// un, puis lâche ces nœuds de son cache.
 import { useCallback } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 
@@ -12,7 +13,7 @@ import { descendants, type NoeudG } from "../../core";
 import { CHAMPS_GARDES_AU_REGLAGE, CLASSES } from "../../core/classes-de-champs";
 import { aRemettreAZero, avecLeursBulles } from "../../core/conteneurs";
 import { apresEffacement, urlsARevoquer } from "../../core/cycle-de-vie";
-import type { EnvoiDuCache } from "../moteur/commandes";
+import type { EnvoiDuCache } from "../moteur";
 import { effacerResultats, resultatDe } from "../resultats";
 import { reinitialiserStatuts } from "../statuts";
 
@@ -21,11 +22,9 @@ export interface OptionsRemiseAZero {
   aretesRef: MutableRefObject<any[]>;
   envoyer: EnvoiDuCache;
   setNodes: Dispatch<SetStateAction<any[]>>;
-  /** Annule le run en cours s'il y en a un : c'est le moteur qui sait s'il tourne. */
-  annulerLeRunEnCours: () => void;
 }
 
-export function useRemiseAZero({ noeudsRef, aretesRef, envoyer, setNodes, annulerLeRunEnCours }: OptionsRemiseAZero) {
+export function useRemiseAZero({ noeudsRef, aretesRef, envoyer, setNodes }: OptionsRemiseAZero) {
   // ── Réinitialiser un ensemble de nœuds ──
   //
   // `garder` nomme les champs de résultat à laisser en place, et n'est employé que par le changement
@@ -37,7 +36,14 @@ export function useRemiseAZero({ noeudsRef, aretesRef, envoyer, setNodes, annule
     // en cours de calcul (ex. extraction de features piste par piste sur une
     // grosse collection) continue en arrière-plan et écrase l'état qu'on vient
     // de réinitialiser dès son prochain onProgress ou sa fin d'exécution.
-    annulerLeRunEnCours();
+    //
+    // C'EST LA COMMANDE `remettreAZero` QUI L'ABAT, depuis la pièce P5b, et elle lâche du même coup ces
+    // nœuds du cache, et les internes de leurs métas par la règle du `::` (`ui/moteur/cache.ts`).
+    // L'annulation était un appel à part, ici, et la purge venait en dernier : le moteur les fait
+    // ensemble, avant que rien ne soit effacé. Rien ne lit le cache entre les deux, l'ensemble étant
+    // synchrone. Un méta dont on n'effaçait que l'identifiant visible voyait le run suivant reprendre
+    // tout son contenu du cache : mesuré, ses quatre nœuds internes repris et seule l'aval refaite.
+    envoyer({ genre: "remettreAZero", ids: [...ids] });
     // Les révocations AVANT `setNodes`, et non dans son updater : celui-ci doit
     // être pur. Double-invoqué par StrictMode, il révoquait deux fois — sans
     // conséquence ici, la révocation étant idempotente — mais c'est le même motif
@@ -72,11 +78,6 @@ export function useRemiseAZero({ noeudsRef, aretesRef, envoyer, setNodes, annule
       }
       return { ...n, data: etat as typeof n.data };
     }));
-    // LE CACHE D'UN MÉTA EST CELUI DE SES NŒUDS APLATIS, rangés sous `monMeta::…`, à toute
-    // profondeur. N'effacer que l'identifiant visible laissait le run suivant reprendre tout son
-    // contenu du cache : mesuré, ses quatre nœuds internes repris et seule l'aval refaite. La règle
-    // vit dans `ui/moteur/cache.ts`, et la commande la fait appliquer : `ui/moteur/commandes.ts`.
-    envoyer({ genre: "remettreAZero", ids: [...ids] });
   }, [setNodes]);
 
   // ── Les deux réinitialisations ──

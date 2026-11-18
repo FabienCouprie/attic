@@ -7,10 +7,11 @@
 //
 // CE QUI DOIT ÊTRE TENU, et c'est ce que la passe dit au récepteur, qui écrit pour elle :
 //   - elle commence une fois la préparation faite, avec l'ordre, les statuts et les nœuds de la passe,
-//     et finit après les lecteurs, en `fin` ;
+//     et finit après son bilan, en `fin` : l'écriture des lecteurs est au récepteur, dans le bilan ;
 //   - une passe ciblée porte sa cible au début comme à la fin, et c'est à elle seule que le récepteur
 //     sait qu'elle ne doit rien dire du moteur ;
-//   - une passe arrêtée finit en `arret`, sans bilan ; une passe tombée finit en `erreur` ;
+//   - une passe arrêtée le dit à l'instant, `passeArretee`, et finit en `arret`, sans bilan ; une passe
+//     tombée finit en `erreur` ;
 //   - un graphe vide ne dit rien, comme le moteur rendait la main avant de rien poser ;
 //   - chaque événement porte la génération du jeton.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -54,10 +55,7 @@ function passe(partiel: Partial<PretsDeLaPasse> & { surEvenement?: (e: Evenement
   const lancer = creerLancerUnePasse({
     graphe: () => GRAPHE, priorite: () => null, noeudVisible: (id) => GRAPHE.noeuds.find((n) => n.id === id),
     economieMemoire: () => true, noeudsVisibles: () => GRAPHE.noeuds,
-    recepteur: () => ({
-      recevoir: (e) => { dits.push(e); partiel.surEvenement?.(e, controleur); },
-      ecrireLesLecteurs: async (signal) => { dits.push({ genre: "lecteurs", arrete: signal.aborted } as never); },
-    }),
+    recevoir: (e) => { dits.push(e); partiel.surEvenement?.(e, controleur); },
     cache: creerCacheDuMoteur(), audio: async () => null as never, canoniser: (_p, v) => v,
     repertoire: "", t: (cle) => cle, controleur,
     ...partiel,
@@ -75,12 +73,12 @@ beforeEach(() => {
 afterEach(() => { oublierServicesApercu(); oublierServicesOrchestration(); });
 
 describe("une passe du moteur, dite au récepteur", () => {
-  it("ELLE COMMENCE UNE FOIS PRÉPARÉE, dit sa boucle et son bilan, fait écrire les lecteurs, PUIS FINIT", async () => {
+  it("ELLE COMMENCE UNE FOIS PRÉPARÉE, dit sa boucle et son bilan, PUIS FINIT", async () => {
     const p = passe();
     await p.lancer(undefined, undefined, jeton(4));
     const genres = p.genres();
     expect(genres[0]).toBe("passeCommencee");
-    expect(genres.slice(-3)).toEqual(["bilan", "lecteurs", "passeTerminee"]);
+    expect(genres.slice(-2)).toEqual(["bilan", "passeTerminee"]);
     expect(genres.filter((g) => g === "noeudFini")).toHaveLength(2);
     const debut = p.dits[0] as Extract<EvenementDuMoteur<unknown>, { genre: "passeCommencee" }>;
     expect(debut.ordre).toEqual(["a", "b"]);
@@ -91,7 +89,7 @@ describe("une passe du moteur, dite au récepteur", () => {
     expect(new Map(bilan.rendus).get("b")?.valeurs).toEqual([6]);
     expect(p.dits.at(-1)).toEqual({ genre: "passeTerminee", generation: 4, raison: "fin" });
     // Chaque événement porte la génération du jeton.
-    expect(p.dits.filter((e) => e.genre !== ("lecteurs" as never)).every((e) => (e as { generation: number }).generation === 4)).toBe(true);
+    expect(p.dits.every((e) => e.generation === 4)).toBe(true);
     expect(p.controleur.current).toBeNull();
   });
 
@@ -102,10 +100,11 @@ describe("une passe du moteur, dite au récepteur", () => {
     expect(p.dits.at(-1)).toEqual({ genre: "passeTerminee", generation: 1, cible: "b", raison: "fin" });
   });
 
-  it("UNE PASSE ARRÊTÉE FINIT EN `arret`, sans bilan ni lecteurs", async () => {
+  it("UNE PASSE ARRÊTÉE LE DIT À L'INSTANT, et finit en `arret`, sans bilan", async () => {
     const p = passe({ surEvenement: (e, c) => { if (e.genre === "passeCommencee") c.current?.abort(); } });
     await p.lancer(undefined, undefined, jeton(2));
-    expect(p.genres()).toEqual(["passeCommencee", "passeTerminee"]);
+    expect(p.genres()).toEqual(["passeCommencee", "passeArretee", "passeTerminee"]);
+    expect(p.dits[1]).toEqual({ genre: "passeArretee", generation: 2 });
     expect(p.dits.at(-1)).toMatchObject({ raison: "arret" });
   });
 

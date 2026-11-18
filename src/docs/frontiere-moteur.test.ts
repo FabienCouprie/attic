@@ -27,6 +27,10 @@
 // TRANSITIFS, types compris, et non les seuls imports directs : `ui/statuts.ts` et `ui/resultats.ts`
 // importent `react`, et un module du moteur qui importerait un fichier qui les importe passerait un
 // contrôle des imports directs. Rien du dossier n'atteint React, React Flow ni les trois magasins.
+//
+// ET L'INTERFACE N'EN IMPORTE QUE L'INDEX, depuis la pièce P5b : le pont construit le moteur, et le
+// reste lui envoie des commandes. Ni le cache, ni la passe, ni l'ordonnanceur ne s'importent hors du
+// dossier, pas même pour un type.
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -227,6 +231,26 @@ describe("la frontière du cache du moteur", () => {
     }
     expect(vus.length).toBeGreaterThan(moteur.length * 3);
     expect(interdits, "le moteur dit ce qu'il fait : `ui/recepteur-moteur.ts` pose, et le pont est à React").toEqual([]);
+  });
+
+  it("HORS DU DOSSIER DU MOTEUR, ON N'IMPORTE QUE SON INDEX, types compris", () => {
+    // PIÈCE P5B : le pont construit le moteur, et le reste de l'interface lui envoie des commandes. Ce
+    // que l'interface en connaît est dans `ui/moteur/index.ts`, et rien d'autre du dossier : ni le
+    // cache, ni la passe, ni l'ordonnanceur.
+    const INDEX = join(MOTEUR, "index");
+    const importes = new Map<string, string[]>();
+    let versLIndex = 0;
+    for (const f of fichiers(SRC)) {
+      if (estDuMoteur(f)) continue;
+      for (const m of modulesImportes(f)) {
+        if (m === INDEX || m === MOTEUR) { versLIndex++; continue; }
+        if (m.startsWith(MOTEUR + sep)) importes.set(nomDe(f), [...(importes.get(nomDe(f)) ?? []), nomDe(m)]);
+      }
+    }
+    // UN RELEVÉ QUI NE VERRAIT AUCUN IMPORT DU MOTEUR SERAIT VERT POUR RIEN : le pont et ceux qui envoient
+    // des commandes passent par l'index.
+    expect(versLIndex).toBeGreaterThanOrEqual(10);
+    expect(Object.fromEntries(importes), "on importe `ui/moteur`, son index, et rien d'autre du dossier").toEqual({});
   });
 
   it("le relevé transitif voit React derrière un intermédiaire, et le magasin qui y mène", () => {

@@ -5,7 +5,7 @@
 // lui-même (`Inspector.tsx`) reste générique ; ce qui demande de connaître le domaine ou le graphe
 // est calculé ici.
 import type { Dispatch, SetStateAction } from "react";
-import type { EnvoiDuCache } from "./moteur/commandes";
+import type { EnvoiDuCache } from "./moteur";
 import type { Edge } from "@xyflow/react";
 
 import { useGestes } from "./gestes-noeud";

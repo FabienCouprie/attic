@@ -10,7 +10,7 @@
 // chargement qui aboutirait pendant celui-là viderait tout de suite, comme avant. C'est dit plutôt
 // que caché : suivre aussi les runs ciblés demanderait l'ordonnanceur, qui vit dans le moteur.
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { EnvoiDuCache } from "../moteur/commandes";
+import type { EnvoiDuCache } from "../moteur";
 
 import { autoChargerSF2, chargerSF2Globale, sf2Nom } from "../../plugins/soundfontGlobal";
 import { decisionDeVidage } from "../soundfont-cache";

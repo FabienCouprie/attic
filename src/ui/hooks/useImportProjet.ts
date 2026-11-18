@@ -21,7 +21,7 @@
 // témoins, et vérifie qu'un paquet abîmé n'appelle aucun d'eux.
 import { useCallback } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
-import type { EnvoiDuCache } from "../moteur/commandes";
+import type { EnvoiDuCache } from "../moteur";
 import type { Edge, Viewport } from "@xyflow/react";
 import {
   enregistrerMeta,

@@ -1,215 +1,152 @@
-// ui/hooks/useExecutionGraphe.ts — Le pont entre l'interface et le moteur : les questions qu'il pose,
-// le récepteur de ce qu'il dit, et les gestes qui le lancent, l'arrêtent et le remettent à zéro.
+// ui/hooks/useExecutionGraphe.ts — Le pont entre l'interface et le moteur : le moteur construit une
+// fois avec ses questions et son récepteur, et les gestes qui lui envoient des commandes.
 //
 // LE MOTEUR EST DANS `ui/moteur/`, SANS REACT, depuis la pièce P5a du plan de l'architecture par
-// messages : l'ordonnanceur, les deux pilotes de passes, la passe et son ménage. Ce crochet ne fait
-// plus que les relier à l'interface. Il leur prête ce qu'elle tient : le graphe et le nœud visible,
-// lus par des questions au moment où le moteur les lit, le contexte audio, la langue et le dossier de
-// travail ; et il leur donne un récepteur par passe, qui pose ce qu'ils disent dans les magasins.
+// messages : l'ordonnanceur, les deux pilotes de passes, la passe et son ménage. Depuis la pièce P5b,
+// il est construit une seule fois, et ce module en est le pont, en deux crochets :
 //
-// `t` ET `repertoire` SONT LIÉS AU MOMENT DE LA DEMANDE. La passe est recréée quand l'un des deux
-// change, et les pilotes avec elle, comme les `useCallback` d'avant ; une demande mise en file garde
-// la passe de l'instant où elle a été faite.
-import { useCallback, useMemo, useRef } from "react";
+//   — `useMoteur` le construit, par une référence paresseuse, avec les questions qu'il pose à
+//     l'interface et le récepteur qui pose ce qu'il dit (`ui/recepteur-moteur.ts`). Ils lui sont
+//     donnés à la construction, jamais par un effet : `StrictMode` doublerait chaque événement.
+//     `App.tsx` l'appelle là où il créait le cache, avant les crochets qui envoient des commandes ;
+//   — `useExecutionGraphe` tient la liaison à jour et rend les gestes : lancer, arrêter, remettre à
+//     zéro. Chacun est une commande du protocole, envoyée de façon synchrone.
+//
+// LA LIAISON, c'est ce qui change d'un rendu à l'autre : la langue, le dossier de travail, et les deux
+// rappels de l'atelier. Elle est récrite à chaque rendu, comme `pileRef` ou `lancerRef` dans
+// `App.tsx`. Le moteur en lit la langue et le dossier quand `lancer` est envoyé, et les garde pour la
+// passe ; le récepteur en lit la langue et les rappels au début de chaque passe.
+//
+// L'INTERFACE N'IMPORTE QUE L'INDEX DU DOSSIER DU MOTEUR, et `docs/frontiere-moteur.test.ts` le tient.
+import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
-import type { MoteurDuCache } from "../moteur/commandes";
-import type { Edge } from "@xyflow/react";
 import { trouverMeta, type NoeudG, type AreteG } from "../../core";
 import { prendreInstantane } from "../../core/instantane-de-graphe";
+import type { EnvoiAuMoteur } from "../../core/protocole-moteur";
 import { copierPourHistorique } from "../historique";
 import { noeudPrioritaire } from "../priorite";
-import { creerRecepteurDeLaPasse } from "../recepteur-moteur";
+import { creerRecepteurDuMoteur, type LiaisonDuRecepteur } from "../recepteur-moteur";
 import { useRemiseAZero } from "./useRemiseAZero";
-import { creerLancerUnePasse, type PerimetreCible } from "../moteur/passe";
-import { creerPilotesDePasse } from "../moteur/pilotes";
-import { creerOrdonnanceurDuMoteur, fusionDeLot, type Ordonnanceur } from "../moteur/ordonnanceur-runs";
+import { creerMoteur, type PerimetreCible } from "../moteur";
 
 import { useI18n, valeurCanoniqueChoix } from "../../i18n";
 import { registreUI } from "../registre-actif";
 
 const trouverDef = (id: string) => registreUI().trouverDef(id);
 
-/**
- * Attend que l'atelier montre les nœuds qu'un import vient de poser, au plus deux secondes.
- *
- * `setNodes` ne se voit dans `noeudsRef` qu'après le rendu qui suit, et une passe partie avant
- * reposerait le nouveau cache sur l'ancien graphe.
- */
-async function attendreLesNoeuds(noeudsRef: MutableRefObject<any[]>, ids: readonly string[]): Promise<boolean> {
-  const fin = performance.now() + 2000;
-  while (performance.now() < fin) {
-    const presents = new Set(noeudsRef.current.map((n) => n.id));
-    if (ids.every((id) => presents.has(id))) return true;
-    await new Promise((r) => setTimeout(r, 16));
-  }
-  return false;
+/** Ce que le pont lie au rendu : la langue, le dossier de travail, et les deux rappels de l'atelier. */
+export interface Liaison extends LiaisonDuRecepteur {
+  repertoire: string;
 }
 
-export interface OptionsExecution {
+/** Le moteur vu de l'interface : ses commandes, et la liaison que le pont tient à jour. */
+export interface Pont {
+  envoyer: EnvoiAuMoteur;
+  liaison: Liaison;
+}
+
+/** Ce que l'interface tient et que le moteur ou son récepteur lisent : des références vivantes et deux setters. */
+export interface OptionsDuMoteur {
   noeudsRef: MutableRefObject<any[]>;
   aretesRef: MutableRefObject<any[]>;
   enExecRef: MutableRefObject<boolean>;
+  setEnExecution: (b: boolean) => void;
   audioCtxRef: MutableRefObject<AudioContext | null>;
-  /** Le cache et ses commandes : la passe et ses pilotes tiennent le cache, la remise à zéro lui envoie les siennes. */
-  moteurDuCache: MoteurDuCache;
   /** La bascule « économiser la mémoire » de la barre d'outils. Absente : active, le défaut sûr. */
   economieMemoireRef?: MutableRefObject<boolean>;
   /** Pile de navigation des méta-composants : non vide, on regarde le dedans d'un méta. */
   pileMetaRef?: MutableRefObject<{ metaId: string; nom: string }[]>;
-  edges: Edge[];
   setNodes: Dispatch<SetStateAction<any[]>>;
-  setEnExecution: (b: boolean) => void;
-  repertoire: string;
-  onGrapheGenere?: (nodeId: string, spec: { nodes: { ficheId: string; label: string }[]; edges: { source: number; target: number }[] }) => void;
-  onNodeInstalle?: () => void;
 }
 
-export function useExecutionGraphe(o: OptionsExecution) {
-  const { t } = useI18n();
-  const {
-    noeudsRef, aretesRef, enExecRef, audioCtxRef, moteurDuCache, economieMemoireRef, pileMetaRef,
-    setNodes, setEnExecution, repertoire,
-    onGrapheGenere, onNodeInstalle,
-  } = o;
-  // LE MOTEUR TIENT LE CACHE : la passe le lit et l'écrit, ses pilotes et le ménage en lâchent des
-  // entrées. Le reste de l'interface ne lui envoie que des commandes. Voir `ui/moteur/commandes.ts`.
-  const { cache } = moteurDuCache;
-
-  // ── LA QUESTION `graphe()` : le graphe qu'une passe lira, copié à l'instant où on la pose ──
-  // La passe et les deux pilotes la posent là où ils lisaient le tableau vivant, et pas ailleurs.
-  // Voir `core/instantane-de-graphe.ts`. Les références sont stables : la question l'est aussi.
-  const graphe = useCallback(() => prendreInstantane({
-    noeuds: noeudsRef.current as unknown as NoeudG[], aretes: aretesRef.current as unknown as AreteG[],
-    trouverMeta, copier: copierPourHistorique,
-  }), [noeudsRef, aretesRef]);
-
-  // Annulation d'un run en cours : un seul AbortController pour tout `lancer()`
-  // (le moteur exécute les nœuds en séquence dans une seule boucle — pas de
-  // granularité par nœud). Savoir qu'une exécution tourne — y compris un run
-  // CIBLÉ, qu'`enExecRef` ne suit pas — est désormais l'affaire de
-  // l'ordonnanceur, qui le compte au lieu de le déclarer.
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  // ═══ UNE EXÉCUTION À LA FOIS, ET C'EST L'ORDONNANCEUR QUI LE TIENT ═══
-  //
-  // RELEVÉ PAR UNE REVUE DU DÉPÔT, point 3 : « Deux runs peuvent se chevaucher. Seul le run global
-  // est verrouillé. » Vérifié sur les quatre affirmations : le garde ne couvrait que le run global,
-  // de sorte que le bouton ▶ d'un nœud en lançait un second sans condition ; `abortControllerRef`
-  // était écrasé, donc « Arrêter » n'arrêtait plus que le dernier ; un drapeau booléen `enCoursRef`
-  // était remis à faux par le premier run qui finissait ; et les deux écrivaient dans le même
-  // `cacheExec`.
-  //
-  // LA SÉRIALISATION FERME LES TROIS PREMIERS PAR CONSTRUCTION : il n'y a jamais deux contrôleurs,
-  // jamais deux runs à compter. Le jeton ferme le quatrième, pour la queue asynchrone d'un composant
-  // qui ne consulte pas son signal. Voir `ui/moteur/ordonnanceur-runs.ts`.
-  //
-  // ET `enCoursRef` A DISPARU AVEC LUI. Ce booléen existait parce qu'`enExecRef` ne suit que les
-  // runs GLOBAUX : il fallait savoir qu'un run ciblé tournait pour l'annuler. L'ordonnanceur le sait
-  // mieux — il compte ce qui tourne au lieu de le déclarer —, et deux sources de vérité sur « est-ce
-  // que ça tourne » sont exactement ce que ce point de revue reprochait.
-  //
-  // IL EST CRÉÉ UNE FOIS, par une référence paresseuse : un ordonnanceur par composant.
-  const ordonnanceurRef = useRef<Ordonnanceur | null>(null);
-  if (!ordonnanceurRef.current) ordonnanceurRef.current = creerOrdonnanceurDuMoteur();
-  const ordonnanceur = ordonnanceurRef.current;
-
-  /**
-   * Arrêter l'exécution en cours, sans rien effacer.
-   *
-   * Le moteur savait déjà s'annuler — `reinitialiser*` s'en sert —, mais rien ne
-   * l'exposait : une fois lancé, un graphe allait jusqu'au bout, et le seul recours
-   * devant un nœud long était de fermer l'application. Ce que le bouton « Arrêter »
-   * appelle. Les résultats déjà calculés restent en place : arrêter n'est pas
-   * réinitialiser.
-   *
-   * L'arrêt est demandé, pas immédiat : le nœud en cours reçoit `signal` et s'arrête
-   * quand il le consulte ; la boucle, elle, n'enchaîne plus le suivant. Renvoie `false`
-   * si rien ne tournait.
-   */
-  // Arrêter pendant un lot doit arrêter LE LOT, et non la seule passe en cours. Sans ce drapeau,
-  // l'annulation coupait le fichier courant et l'enveloppe enchaînait aussitôt sur le suivant :
-  // le bouton « Arrêter » paraissait alors ne rien faire sur un lot de trente fichiers.
-  const arretLotRef = useRef(false);
-
-  const arreter = useCallback(() => {
-    arretLotRef.current = true;
-    // LA FILE SE VIDE AUSSI, et c'est le second défaut qu'« Arrêter » portait : une demande en
-    // attente aurait démarré juste après l'arrêt, et le bouton aurait paru ne rien faire.
-    const ecartees = ordonnanceur.viderLaFile() > 0;
-    if (ordonnanceur.enCours()) { abortControllerRef.current?.abort(); return true; }
-    return ecartees;
-  }, [ordonnanceur]);
-
-  async function obtenirAudio() {
+/** Construit le moteur, ses questions et son récepteur. Une fois par composant : voir `useMoteur`. */
+function construireLePont(o: OptionsDuMoteur): Pont {
+  const { noeudsRef, aretesRef, enExecRef, setEnExecution, audioCtxRef, economieMemoireRef, pileMetaRef, setNodes } = o;
+  const liaison: Liaison = { t: (cle) => cle, repertoire: "" };
+  const recepteur = creerRecepteurDuMoteur({
+    affichage: { trouverDef, aretesRef, economieMemoireRef, pileMetaRef },
+    noeudsVisibles: () => noeudsRef.current,
+    setNodes,
+    // Mise à jour immédiate de la référence pour bloquer les doubles clics, avant que React ne
+    // déclenche l'effet qui la synchronise sur l'état.
+    enExecution: (tourne) => { enExecRef.current = tourne; setEnExecution(tourne); },
+    liaison: () => liaison,
+  });
+  const obtenirAudio = async () => {
     if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
     if (audioCtxRef.current.state === "suspended") {
       try { await audioCtxRef.current.resume(); } catch { /* ignore */ }
     }
     return audioCtxRef.current;
-  }
+  };
+  const moteur = creerMoteur({
+    questions: {
+      // LE GRAPHE QU'UNE PASSE LIRA, copié à l'instant où on la pose. Voir `core/instantane-de-graphe.ts`.
+      graphe: () => prendreInstantane({
+        noeuds: noeudsRef.current as unknown as NoeudG[], aretes: aretesRef.current as unknown as AreteG[],
+        trouverMeta, copier: copierPourHistorique,
+      }),
+      priorite: noeudPrioritaire,
+      noeudVisible: (id) => noeudsRef.current.find((x) => x.id === id),
+      noeudsVisibles: () => noeudsRef.current,
+      economieMemoire: () => economieMemoireRef?.current ?? true,
+      demande: () => ({ t: liaison.t, repertoire: liaison.repertoire }),
+    },
+    recepteur: recepteur.recevoir,
+    audio: obtenirAudio,
+    canoniser: valeurCanoniqueChoix,
+  });
+  return { envoyer: moteur.envoyer, liaison };
+}
+
+/**
+ * Le moteur de ce composant, construit au premier rendu et gardé pour sa vie, comme l'ordonnanceur
+ * l'était. Ses commandes sont prêtes dès le rendu : les crochets qui le suivent peuvent les recevoir.
+ */
+export function useMoteur(o: OptionsDuMoteur): Pont {
+  const ref = useRef<Pont | null>(null);
+  if (!ref.current) ref.current = construireLePont(o);
+  return ref.current;
+}
+
+export interface OptionsExecution {
+  pont: Pont;
+  noeudsRef: MutableRefObject<any[]>;
+  aretesRef: MutableRefObject<any[]>;
+  setNodes: Dispatch<SetStateAction<any[]>>;
+  repertoire: string;
+  onGrapheGenere?: LiaisonDuRecepteur["onGrapheGenere"];
+  onNodeInstalle?: () => void;
+}
+
+export function useExecutionGraphe(o: OptionsExecution) {
+  const { t } = useI18n();
+  const { pont, noeudsRef, aretesRef, setNodes, repertoire, onGrapheGenere, onNodeInstalle } = o;
+  // LA LIAISON EST CELLE DE CE RENDU : une demande envoyée ensuite la lira.
+  Object.assign(pont.liaison, { t, repertoire, onGrapheGenere, onNodeInstalle });
+  const { envoyer } = pont;
 
   // ── Les remises à zéro, dans useRemiseAZero.ts : le bouton, le réglage, l'aval seul, tout ──
-  // Un reset pendant un run en cours signale l'annulation : c'est le moteur qui sait s'il tourne.
-  const annulerLeRunEnCours = useCallback(() => {
-    if (ordonnanceur.enCours()) abortControllerRef.current?.abort();
-  }, [ordonnanceur]);
+  // Leur commande abat la passe en cours : c'est le moteur qui sait s'il tourne.
   const { reinitialiserNoeud, reinitialiserPourReglage, reinitialiserAval, reinitialiserTout } = useRemiseAZero({
-    noeudsRef, aretesRef, envoyer: moteurDuCache.envoyer, setNodes, annulerLeRunEnCours,
+    noeudsRef, aretesRef, envoyer, setNodes,
   });
 
-  // ── LA PASSE, `ui/moteur/passe.ts`, et son récepteur, `ui/recepteur-moteur.ts` ──
-  // Recréée quand la langue ou le dossier de travail changent : ce sont les deux dépendances de la
-  // fermeture d'avant, et le reste de ce qu'elle prête est fait de références stables.
-  const lancerUnePasse = useMemo(() => creerLancerUnePasse({
-    graphe,
-    priorite: noeudPrioritaire,
-    noeudVisible: (id) => noeudsRef.current.find((x) => x.id === id),
-    economieMemoire: () => economieMemoireRef?.current ?? true,
-    noeudsVisibles: () => noeudsRef.current,
-    recepteur: () => creerRecepteurDeLaPasse({
-      affichage: { trouverDef, lecteursAEcrire: new Map(), aretesRef, economieMemoireRef, pileMetaRef, t },
-      noeudsVisibles: () => noeudsRef.current,
-      setNodes,
-      // Mise à jour immédiate de la référence pour bloquer les doubles clics, avant que React ne
-      // déclenche l'effet qui la synchronise sur l'état.
-      enExecution: (tourne) => { enExecRef.current = tourne; setEnExecution(tourne); },
-      onGrapheGenere, onNodeInstalle,
-    }),
-    cache, audio: obtenirAudio, canoniser: valeurCanoniqueChoix, repertoire, t,
-    controleur: abortControllerRef,
-  }), [repertoire, t]);
-
-  // ── Les deux pilotes de passes, le lot et les boucles par passes, dans `ui/moteur/pilotes.ts` ──
-  const { lancerLeLot } = useMemo(
-    () => creerPilotesDePasse({ lancerUnePasse, graphe, cache, arretDuLot: arretLotRef }),
-    [lancerUnePasse, graphe, cache],
-  );
+  /**
+   * LA SEULE PORTE D'ENTRÉE, et elle passe par l'ordonnanceur du moteur.
+   *
+   * Une demande faite pendant qu'une exécution tourne ATTEND SON TOUR au lieu de tourner en même
+   * temps, ou d'être jetée sans un mot ; deux demandes de même cible se fondent ; « Arrêter » vide la
+   * file. Le périmètre voyage tel que l'appelant l'a donné, champ pour champ. Voir `ui/moteur/moteur.ts`.
+   */
+  const lancer = useCallback((p?: string, perimetre?: PerimetreCible) =>
+    envoyer({ genre: "lancer", ...(p !== undefined ? { cible: p } : {}), ...perimetre }), [envoyer]);
 
   /**
-   * LA SEULE PORTE D'ENTRÉE, et elle passe par l'ordonnanceur.
-   *
-   * CE QUI CHANGE POUR L'APPELANT : rien, sauf qu'une demande faite pendant qu'une exécution tourne
-   * ATTEND SON TOUR au lieu de tourner en même temps — ou d'être jetée sans un mot, ce qui était le
-   * cas du run global. Le ▶ d'un nœud cliqué pendant un run n'ouvre donc plus un second run sur le
-   * même cache ; il se met en file, et « Arrêter » vide cette file.
-   *
-   * ET IL N'Y A PAS DE SECOND MÉCANISME. Le garde qui vivait dans `lancerUnePasse` a été retiré :
-   * deux verrous dont l'un jette la demande en silence valent moins qu'un seul qui la garde.
+   * Arrêter l'exécution en cours, sans rien effacer : arrêter n'est pas réinitialiser. Le lot s'arrête
+   * au fichier en cours, la file se vide, et la passe en cours reçoit son signal.
    */
-  const lancer = useCallback((p?: string, perimetre?: PerimetreCible) => {
-    // LA REPOSE D'UN PAQUET VA DROIT À UNE PASSE, sans fusion : fondue à un ▶ global, elle lui
-    // donnerait son « cache seulement », et le run demandé n'exécuterait rien.
-    if (perimetre?.cacheSeulement) {
-      return ordonnanceur.demander(async (j) => {
-        if (!(await attendreLesNoeuds(noeudsRef, perimetre.attendre ?? []))) {
-          console.warn("[lancer] repose du cache abandonnée : les nœuds importés ne sont pas dans l'atelier");
-          return;
-        }
-        return lancerUnePasse(undefined, { cacheSeulement: true }, j);
-      });
-    }
-    return ordonnanceur.demander((j) => lancerLeLot(p, perimetre, j), fusionDeLot(p, perimetre, lancerLeLot));
-  }, [ordonnanceur, lancerLeLot, lancerUnePasse]);
+  const arreter = useCallback(() => envoyer({ genre: "arreter" }), [envoyer]);
 
   return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout };
 }

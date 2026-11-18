@@ -38,7 +38,8 @@
 //
 // IL EST DANS LE DOSSIER DU MOTEUR, SANS REACT, depuis la pièce P5a du plan de l'architecture par
 // messages. Il était créé par un crochet, `useOrdonnanceurDeRuns` ; `creerOrdonnanceurDuMoteur` le crée
-// avec les réglages du moteur, et c'est le pont qui le tient, une fois pour la vie du composant.
+// avec les réglages du moteur, et c'est le moteur qui le tient depuis la pièce P5b (`moteur.ts`),
+// construit une fois pour la vie du composant.
 
 /** Ce qu'une exécution sait d'elle-même. */
 export interface JetonDeRun {
@@ -354,8 +355,9 @@ export function fusionDeLot<T>(
 export const REGLAGES_DU_MOTEUR: Reglages = { politique: "attendre", enAttenteMax: 4 };
 
 /**
- * L'ordonnanceur du moteur, à créer une fois pour la vie du composant : le pont le tient dans une
- * référence paresseuse, comme le crochet `useOrdonnanceurDeRuns` le faisait avant la pièce P5a.
+ * L'ordonnanceur du moteur, à créer une fois pour la vie du composant : le moteur le crée à sa
+ * construction, et le pont construit le moteur dans une référence paresseuse, comme le crochet
+ * `useOrdonnanceurDeRuns` le faisait avant la pièce P5a.
  */
 export function creerOrdonnanceurDuMoteur(): Ordonnanceur {
   return creerOrdonnanceur(REGLAGES_DU_MOTEUR);
