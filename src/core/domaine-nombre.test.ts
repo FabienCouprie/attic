@@ -144,7 +144,7 @@ async function executerGraphe(
     typeFlux: (id) => registre.typeFlux(id), canoniser: (_p, v) => v, graineDuNoeud: (_id, _nom, brut) => brut,
     lireCache: (id) => cache.get(id), ecrireCache: (id, e) => cache.set(id, e), sauts,
     questions: () => QUESTIONS_NEUTRES, t: (cle) => cle,
-    emettre: () => {},
+    emettre: () => {}, noeudVisible: () => undefined,
   });
   return tables.resultats;
 }

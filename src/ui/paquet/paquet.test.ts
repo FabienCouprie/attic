@@ -55,7 +55,10 @@ async function run(cache: Map<string, EntreeDeCache>, cacheSeulement = false) {
   const tourne: string[] = [];
   const tables = creerTablesDePasse();
   await executerLesNoeuds<null>(
-    { ordreFiltre: NOEUDS.map((n) => n.id), nds: NOEUDS, aretesG: ARETES, noeudsEnErreur: new Set(), plat: { expansions: new Map() } },
+    {
+      ordreFiltre: NOEUDS.map((n) => n.id), nds: NOEUDS, aretesG: ARETES, noeudsEnErreur: new Set(),
+      plat: { expansions: new Map(), noeuds: NOEUDS }, tousNoeudsG: NOEUDS, aretesReelles: ARETES, estMetaEnScope: () => false,
+    },
     tables,
     {
       runtime: null, repertoireTravail: "", signal: new AbortController().signal,
@@ -65,6 +68,7 @@ async function run(cache: Map<string, EntreeDeCache>, cacheSeulement = false) {
       sauts: { copieSautee: () => false, finReprise: () => false, empreintePour: () => undefined },
       questions: () => NEUTRES, t: (cle) => cle, cacheSeulement,
       emettre: (e) => { if (e.genre === "noeudFini") tourne.push(e.id); },
+      noeudVisible: () => undefined,
     },
   );
   return { tourne, tables };

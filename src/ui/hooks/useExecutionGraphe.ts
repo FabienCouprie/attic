@@ -37,11 +37,12 @@ import { servicesOrchestration } from "../services-orchestration";
 // endroits. Les questions sont désormais posées, et le domaine y répond (cf. ui/services-apercu.ts).
 import { servicesApercu } from "../services-apercu";
 import { useRemiseAZero } from "./useRemiseAZero";
-// CE QUE LE MAGASIN REÇOIT POUR UN NŒUD est calculé dans `ui/correctif-resultat.ts`, sur les tables
-// de la passe que `EtatDePasse` nomme une fois ; voir ces deux fichiers.
+// CE QUE LE MAGASIN REÇOIT POUR UN NŒUD est choisi au cœur, `core/rendu-du-visible.ts`, sur les
+// tables de la passe que `EtatDePasse` nomme une fois, et affiché par `ui/correctif-resultat.ts`.
 import type { EtatDePasse } from "../etat-de-passe";
+import type { PretsDeLAffichage } from "../correctif-resultat";
 // CE QUE LE MOTEUR FAIT UNE FOIS LE DERNIER NŒUD CALCULÉ est dans `ui/menage-apres-passe.ts`.
-import { ecrireLesLecteurs, menageApresPasse } from "../menage-apres-passe";
+import { menageApresPasse } from "../menage-apres-passe";
 import { fusionDeLot, useOrdonnanceurDeRuns, type JetonDeRun } from "../ordonnanceur-runs";
 // LES DEUX PILOTES DE PASSES SONT DANS `usePilotesDePasse.ts`, le lot et les boucles par passes :
 // ils rejouent `lancerUnePasse` sans rien connaître du moteur.
@@ -310,10 +311,14 @@ export function useExecutionGraphe(o: OptionsExecution) {
      * chacun posé dès qu'il est prêt.
      */
     const lecteursAEcrire = new Map<string, () => Promise<string | undefined>>();
+    // DEUX OBJETS, ET NON UN : les tables du moteur, que lit son ménage, et ce que l'affichage du
+    // récepteur lit, sans une table. Voir `ui/etat-de-passe.ts` et `ui/correctif-resultat.ts`.
     const passe: EtatDePasse = {
       resultats, messages, affichageParNoeud, designeParNoeud, tousNoeudsG, aretesReelles, ordreFiltre,
-      noeudsPlats: plat.noeuds, estMetaEnScope, trouverDef, lecteursAEcrire, souffle,
-      aretesRef, economieMemoireRef, pileMetaRef, t,
+      noeudsPlats: plat.noeuds, estMetaEnScope, trouverDef, economieMemoireRef, t,
+    };
+    const affichage: PretsDeLAffichage = {
+      tousNoeudsG, trouverDef, lecteursAEcrire, souffle, aretesRef, economieMemoireRef, pileMetaRef, t,
     };
     /**
      * Ce nœud-ci est-il celui qu'on REGARDE : sélectionné, ou terminal.
@@ -329,9 +334,9 @@ export function useExecutionGraphe(o: OptionsExecution) {
       dansUnMeta: (pileMetaRef?.current?.length ?? 0) > 0,
       cacheParBulle: estCacheParBulle(tousNoeudsG, id),
     });
-    // ── LE RÉCEPTEUR DE LA PASSE, `ui/recepteur-moteur.ts` : ce que la boucle dit, posé dans les magasins ──
+    // ── LE RÉCEPTEUR DE LA PASSE, `ui/recepteur-moteur.ts` : ce que le moteur dit, posé dans les magasins ──
     const noeudsVisibles = () => noeudsRef.current;
-    const recepteur = creerRecepteurDeLaPasse({ passe, noeudsVisibles, estRegarde });
+    const recepteur = creerRecepteurDeLaPasse({ affichage, noeudsVisibles, estRegarde, setNodes, onGrapheGenere, onNodeInstalle });
     // ── LA BOUCLE NŒUD PAR NŒUD EST DANS LE CŒUR, `executerLesNoeuds` de `core/execution.ts` ──
     // Décider, appliquer la décision, exécuter, ranger le retour, avec ses trois points d'annulation.
     // Le crochet lui prête ce qu'il tient : le runtime, le contrôleur, le jeton, le registre, le cache,
@@ -345,20 +350,19 @@ export function useExecutionGraphe(o: OptionsExecution) {
       sauts, questions: () => servicesApercu(), t,
       cacheSeulement: perimetre?.cacheSeulement === true,
       emettre: recepteur.recevoir,
+      noeudVisible: (id) => noeudsRef.current.find((x) => x.id === id),
     });
 
-    // LE MÉNAGE D'APRÈS PASSE ET LES LECTEURS, dans `ui/menage-apres-passe.ts`, dans cet ordre : le
-    // cache lâché, les causes de boucle et les graines dans les messages, la pose finale, les demandes,
-    // les champs autonomes et le statut des conteneurs ; puis chaque lecteur promis, un par un.
+    // LE MÉNAGE D'APRÈS PASSE, dans `ui/menage-apres-passe.ts` : le cache lâché, les causes de boucle
+    // et les graines dans les messages, puis le bilan, que le récepteur pose dans cet ordre : la pose
+    // finale, les temps et les écarts, les demandes, les champs autonomes et le statut des conteneurs.
+    // Puis chaque lecteur promis, un par un.
     await menageApresPasse(passe, {
       noeudsVisibles, nds, cache, deplie, expansions: plat.expansions, grainesTirees,
       tempsParVisible, ecartsParNoeud, demandesParNoeud, ordonnees, idsDecoratifs, boites,
-      dejaPoses: recepteur.dejaPoses, aPoser: recepteur.aPoser, poserCeQuiEstPret: recepteur.poserCeQuiEstPret,
-      definirStatut: recepteur.definirStatut, poserResultat: recepteur.poserResultat, setNodes, onGrapheGenere, onNodeInstalle,
+      generation: jeton?.generation ?? 0, emettre: recepteur.recevoir,
     });
-    await ecrireLesLecteurs(passe, {
-      signal: controller.signal, noeudsVisibles, poserResultat: recepteur.poserResultat, poserApercu: recepteur.poserApercu,
-    });
+    await recepteur.ecrireLesLecteurs(controller.signal);
 
     } catch (e: any) {
       console.error("lancer error", e);

@@ -35,7 +35,6 @@
 //
 // LES GARDES SONT DANS `protocole-moteur.test.ts` : une table d'exemplaires par genre, que le
 // compilateur exige entière, et chaque exemplaire passé au clonage structuré.
-import type { ResultatDepliage } from "./boucle-graphe";
 import type { EntreeDeCache } from "./cache-execution";
 import type { PretsDuRetour, RetourDeNoeud } from "./execution";
 import type { AreteG, MetaComposant, NoeudG } from "./meta";
@@ -169,25 +168,43 @@ export type EvenementDuMoteur<TValeur> =
   /** L'état d'un nœud invisible, copie de boucle ou nœud interne, rattaché au nœud visible qu'il sert. */
   | { genre: "statutOmbre"; generation: Generation; id: string; visible: string; statut: StatutAPoser["statut"] }
   /**
-   * Ce nœud vient de tourner, en succès comme en erreur. `rendu` manque quand l'identifiant n'est pas
-   * celui d'un nœud visible : un nœud interne de méta, une copie de boucle. Le récepteur rend la
-   * promesse de la pose pour un nœud regardé, et la boucle l'attend.
+   * Ce nœud vient de tourner, en succès comme en erreur. `rendu` manque quand il n'y a rien à
+   * montrer : l'identifiant n'est pas celui d'un nœud visible, un nœud interne de méta ou une copie
+   * de boucle, ou le nœud n'a rendu ni valeur ni message. Le récepteur rend la promesse de la pose
+   * pour un nœud regardé, et la boucle l'attend.
    */
   | { genre: "noeudFini"; generation: Generation; id: string; rendu?: RenduDuVisible<TValeur> }
-  /** Ce que la passe a compté une fois sa boucle finie, par nœud visible. */
+  /**
+   * Ce que la passe a compté et choisi une fois sa boucle finie, que le récepteur pose dans cet
+   * ordre : les causes de boucle, la pose finale, les temps et les écarts, les demandes qu'il a
+   * gardées, les champs autonomes, puis les conteneurs. Il rend la promesse de tout cela, et le
+   * ménage l'attend.
+   *
+   * LES MESSAGES Y SONT DÉJÀ COMPLÉTÉS : le moteur a ajouté la graine tirée et la cause d'une boucle
+   * avant de choisir les rendus, qui les portent.
+   */
   | {
     genre: "bilan";
     generation: Generation;
+    /** Ce qui a empêché une boucle de se déplier, dit sous l'identifiant du nœud visible qui le porte, dans l'ordre de la passe. */
+    problemesDeBoucle: ParNoeud<string>;
+    /** Les nœuds visibles dont le message a été complété après la boucle : la pose finale les reprend, même déjà posés. */
+    messagesCompletes: readonly string[];
+    /** Ce que chaque nœud visible montre à la fin de la passe. Un nœud qui n'a rien à montrer n'y est pas. */
+    rendus: ParNoeud<RenduDuVisible<TValeur>>;
     /** Le temps de calcul, en millisecondes, cumulé sur le nœud visible, méta compris. */
     temps: ParNoeud<number>;
     /** De combien chaque nœud a changé le niveau de ce qu'il a reçu, mesuré par le domaine. */
     ecarts: ParNoeud<number>;
-    /** Les messages complétés après la boucle : la graine tirée, la cause d'une boucle non dépliée. */
-    messages: ParNoeud<string>;
-    /** Ce qui a empêché une boucle de se déplier, sous l'identifiant du nœud qui le dit. */
-    problemesDeBoucle: readonly ResultatDepliage["problemes"][number][];
+    /** Les champs préfixés `_` qu'un composant à affichage autonome a posés sur son nœud : le récepteur les reporte sur l'état. */
+    champsAutonomes: ParNoeud<Readonly<Record<string, unknown>>>;
+    /** Chaque conteneur dont un membre a tourné, et ceux de ses membres qui s'exécutent : son statut se lit sur ceux de toutes les passes. */
+    conteneurs: ParNoeud<readonly string[]>;
   }
-  /** Ce qu'un composant a demandé au moteur, par son troisième canal. Voir `moteur` dans `core/types.ts`. */
+  /**
+   * Ce qu'un composant a demandé au moteur, par son troisième canal. Voir `moteur` dans `core/types.ts`.
+   * Le moteur le dit avant le bilan, et le récepteur le transmet à l'atelier après la pose finale.
+   */
   | { genre: "demande"; generation: Generation; id: string; demande: DemandeAuMoteur }
   /** La passe est finie, arrêtée ou tombée. */
   | {

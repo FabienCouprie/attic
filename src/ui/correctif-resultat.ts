@@ -2,23 +2,55 @@
 //
 // SORTI DU MOTEUR D'EXÉCUTION, sortie 6 du plan de simplification de `useExecutionGraphe.ts`, et
 // SHELL ET NON CŒUR : cette fonction crée des adresses d'objet, lit le magasin des résultats et pose
-// un statut. Elle vivait en fermeture dans `lancerUnePasse`, où elle lisait seize tables ; elles lui
-// arrivent par `EtatDePasse`, et le corps est celui du moteur, ligne pour ligne.
+// un statut. Elle vivait en fermeture dans `lancerUnePasse`, et le corps est celui du moteur, ligne
+// pour ligne.
 //
-// CE QU'ELLE DÉCIDE, en trois branches que les commentaires du corps détaillent : un méta montre ce
-// que ses internes ont rendu sur ses sorties exposées, et passe en erreur s'ils n'ont rien rendu ;
-// une bulle montre la seule sortie qui la représente ; un nœud montre ce qu'il a produit, avec un
-// lecteur PROMIS plutôt qu'écrit, une adresse réutilisée tant que le tampon et la profondeur sont
-// les mêmes, et rien de lourd quand une bulle repliée le cache.
-import { estBulle, estCacheParBulle, sortieDeBulle, trouverMeta } from "../core";
+// ELLE NE CHOISIT PLUS LES VALEURS, depuis la pièce P4b du plan de l'architecture par messages. Ce
+// que le nœud visible montre, les sorties exposées d'un méta, la seule sortie d'une bulle, l'échec
+// d'une branche, se lit dans les tables de la passe, et c'est le cœur qui le choisit
+// (`core/rendu-du-visible.ts`) ; le moteur le dit au récepteur dans ses événements, et il arrive ici
+// tout choisi. Ce module ne reçoit aucune table du moteur, et `docs/frontiere-moteur.test.ts` le
+// tient : il ne lit que le graphe de la passe, ses lecteurs promis et trois références vivantes.
+//
+// CE QU'ELLE DÉCIDE, c'est l'affichage : un lecteur PROMIS plutôt qu'écrit, une adresse réutilisée
+// tant que le tampon et la profondeur sont les mêmes, rien de lourd quand une bulle repliée le cache,
+// et l'erreur d'un méta dont la branche n'a rien rendu.
+import type { Edge } from "@xyflow/react";
+import { estCacheParBulle, trouverMeta, type NoeudG } from "../core";
 import { urlsLachees } from "../core/cycle-de-vie";
 import { noeudRegarde, resultatRetenu } from "../core/memoire";
+import type { RenduDuVisible } from "../core/protocole-moteur";
+import type { Respiration } from "../core/respirer";
 import { poserApercu, poserStatut } from "./statuts";
 import { resultatDe } from "./resultats";
 import { servicesApercu, type ApercuRefaisable } from "./services-apercu";
 import { lireProfondeurExport } from "./profondeur-export";
 import { apercuPerdu } from "./refaire-apercus";
-import type { EtatDePasse } from "./etat-de-passe";
+import type { RegistreUI } from "./registre-actif";
+
+/** Une référence lue au moment de la pose, comme le moteur la lisait. */
+export interface Lecture<T> { readonly current: T }
+
+/**
+ * Ce que l'affichage d'un rendu lit, et rien de plus : aucune table du moteur n'y est.
+ *
+ * LES TROIS RÉFÉRENCES SONT PASSÉES TELLES QUELLES, et non leur valeur du moment. Le moteur lisait
+ * `aretesRef.current` au moment de POSER un nœud, pas au début de la passe ; un câble tiré pendant
+ * un run long compte donc pour dire si un nœud est regardé. Donner la valeur figerait ce que le
+ * moteur lisait vivant. Même raison pour l'économie de mémoire et la pile des métas ouverts.
+ */
+export interface PretsDeLAffichage {
+  /** Les nœuds visibles de la passe, bulles comprises : un membre de bulle repliée ne retient rien. */
+  tousNoeudsG: readonly NoeudG[];
+  trouverDef: RegistreUI["trouverDef"];
+  /** Les lecteurs promis, écrits après que tout est posé. */
+  lecteursAEcrire: Map<string, () => Promise<string | undefined>>;
+  souffle: Respiration;
+  aretesRef: Lecture<Edge[]>;
+  economieMemoireRef?: Lecture<boolean>;
+  pileMetaRef?: Lecture<{ metaId: string; nom: string }[]>;
+  t: (cle: string) => string;
+}
 
 /**
  * Ces valeurs atteignent-elles le seuil où un membre de bulle repliée les lâche ? Voir `resultatRetenu`.
@@ -59,36 +91,21 @@ const TYPES_IMAGE_APERCU: ReadonlySet<string> = new Set([
   "image/png", "image/jpeg", "image/svg+xml", "image/webp", "image/gif", "image/bmp",
 ]);
 
-/** Champs à mettre à jour sur un nœud après le run, ou `null` s'il n'y a rien à changer. */
-export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Promise<Record<string, unknown> | null> {
-  const {
-    resultats, messages, affichageParNoeud, designeParNoeud, tousNoeudsG, aretesReelles, ordreFiltre,
-    noeudsPlats, estMetaEnScope, trouverDef, lecteursAEcrire, souffle, aretesRef, economieMemoireRef, pileMetaRef, t,
-  } = passe;
+/**
+ * Champs à mettre à jour sur un nœud après le run, ou `null` s'il n'y a rien à changer.
+ *
+ * LE RENDU ARRIVE TOUT CHOISI, par `noeudFini` ou par le bilan de la passe, et il manque quand le
+ * nœud n'a rien à montrer : un méta hors du périmètre, ni valeur ni message. Voir
+ * `core/rendu-du-visible.ts`. LA FONCTION RESTE ASYNCHRONE, sans rien attendre en elle-même : la pose
+ * l'attend, et un tour de moins changerait ce que la boucle voit entre deux nœuds.
+ */
+export async function calculerCorrectifResultat(
+  n: any, rendu: RenduDuVisible<unknown> | undefined, prets: PretsDeLAffichage,
+): Promise<Record<string, unknown> | null> {
+  const { tousNoeudsG, trouverDef, lecteursAEcrire, souffle, aretesRef, economieMemoireRef, pileMetaRef, t } = prets;
+  if (!rendu) return null;
   const meta = trouverMeta(n.data.ficheId as string);
-  // Méta hors du périmètre du run (branche non exécutée) : ne pas y toucher —
-  // il garde son statut précédent au lieu de passer « en cours »/« erreur ».
-  if (meta && !estMetaEnScope(n.id)) return null;
-  // Pour un méta-nœud, on récupère les résultats de ses nœuds internes
-  // aplatis (préfixés par l'id du méta-nœud) via ses ports de sortie exposés.
-  // UNE BULLE MONTRE LE RÉSULTAT DE CE QUI EN SORT. Elle ne calcule rien, mais elle expose les
-  // sorties de tous ses membres : donner la liste entière à l'aperçu lui ferait jouer la
-  // première venue, c'est-à-dire le plus souvent le DÉBUT de la chaîne repliée. On ne lui donne
-  // donc que la sortie qui représente la bulle, et rien si aucune ne la représente à elle seule.
-  // Aucun préfixe d'identifiant ici, contrairement au méta-nœud : replier ne renomme personne.
-  const sortie = estBulle(n.data.ficheId as string)
-    ? sortieDeBulle(tousNoeudsG, aretesReelles, n.id, trouverDef)
-    : null;
-  const vals = meta
-    ? meta.sorties.map((_, i) => {
-        const m = meta.mapSorties[i];
-        return resultats.get(`${n.id}::${m.noeudInterne}`)?.[m.portIndex] ?? null;
-      })
-    : estBulle(n.data.ficheId as string)
-      ? (sortie ? [resultats.get(sortie.noeudInterne)?.[sortie.portIndex] ?? null] : [])
-      : resultats.get(n.id);
   const defNode = trouverDef(n.data.ficheId as string);
-  if ((!vals || vals.length === 0) && !messages.has(n.id)) return null;
   // Le nœud pilote son propre affichage depuis `data` : ne rien écraser.
   //
   // SAUF LES DEUX CANAUX DÉCLARÉS ET SON MESSAGE. « Autonome » veut dire que le moteur ne lui
@@ -99,13 +116,13 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
   // pouvait pas s'afficher. Les canaux passent donc, et rien d'autre.
   if (defNode?.affichageAutonome) {
     const canaux = {
-      audioResultatMessage: messages.get(n.id) ?? undefined,
-      _affichage: affichageParNoeud.get(n.id) ?? undefined,
-      _designe: designeParNoeud.get(n.id) ?? undefined,
+      audioResultatMessage: rendu.message ?? undefined,
+      _affichage: rendu.affichage ?? undefined,
+      _designe: rendu.designe ?? undefined,
     };
     return canaux._affichage || canaux._designe || canaux.audioResultatMessage ? lacherAffichage(n.id, canaux) : null;
   }
-  const valsSafe = vals ?? [];
+  const valsSafe = rendu.valeurs;
   // LA SORTIE QUI REPRÉSENTE CE QUE LE NŒUD A PRODUIT, et c'est le domaine qui la désigne.
   // Les nœuds dont les sorties sont des pairs — les six pistes d'un séparateur — le disent par
   // `sansApercuAudio`, et l'on ne demande alors rien.
@@ -162,7 +179,7 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
   const bitsVoulus = lireProfondeurExport();
   // CE QUE LE FICHIER LIVRÉ DOIT PORTER EN PLUS DU SON, et seul un nœud dont l'aperçu est le
   // fichier en a : la pochette de « Sortie audio » arrive par là. Le shell ne la nomme pas.
-  const affichageDuFichier = defNode?.apercuEstLeFichier ? affichageParNoeud.get(n.id) : undefined;
+  const affichageDuFichier = defNode?.apercuEstLeFichier ? rendu.affichage : undefined;
   let url: string | undefined, refaisable: ApercuRefaisable | undefined;
   if (audio && garderApercu) {
     // LA PROFONDEUR ENTRE DANS LA CONDITION DE RÉUTILISATION, et c'est un défaut mesuré :
@@ -228,33 +245,17 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
   } else if (dejaLa.imageResultatUrl) {
     URL.revokeObjectURL(dejaLa.imageResultatUrl);
   }
-  // Pour un méta-nœud : ne marquer "terminé" que si un résultat a été produit
-  if (meta) {
-    const aResultat = valsSafe.some((v) => v != null);
-    if (meta.sorties.length > 0 && !aResultat && !messages.has(n.id)) {
-      // Le run est terminé et le méta n'a rien produit sur ses sorties : sa
-      // chaîne interne a échoué. Marquer « erreur » — surtout PAS le laisser
-      // « en_cours » (le run est fini, la branche ne tourne plus). Corrige le
-      // méta figé « en cours » quand une branche parallèle n'aboutit pas alors
-      // que l'aval (mixeur) est « terminé ».
-      // On identifie en plus le premier nœud interne (ordre topo) resté sans
-      // résultat — la cause de l'échec, souvent une entrée manquante (fichier
-      // audio non sérialisé à la sauvegarde) — pour l'afficher sans ouvrir le méta.
-      const prefixe = `${n.id}::`;
-      let fautif = "";
-      for (const fid of ordreFiltre) {
-        if (!fid.startsWith(prefixe)) continue;
-        const r = resultats.get(fid);
-        if (!r || r.every((v) => v == null)) {
-          fautif = ((noeudsPlats.find((pn) => pn.id === fid)?.data as { ficheId?: string })?.ficheId) ?? "";
-          break;
-        }
-      }
-      poserStatut(n.id, "erreur");
-      return { audioResultatMessage: fautif
-          ? t("execution.brancheEchecSansResultat").replace("{fautif}", fautif)
-          : t("execution.brancheEchecAucunResultat") };
-    }
+  // Pour un méta-nœud : ne marquer "terminé" que si un résultat a été produit. Le cœur a vu que sa
+  // chaîne interne n'a rien rendu, et nommé le premier interne resté vide ; marquer « erreur » —
+  // surtout PAS le laisser « en_cours » (le run est fini, la branche ne tourne plus). Corrige le
+  // méta figé « en cours » quand une branche parallèle n'aboutit pas alors que l'aval (mixeur) est
+  // « terminé ». Le fautif est affiché pour qu'on le voie sans ouvrir le méta.
+  if (rendu.brancheEnEchec) {
+    const { fautif } = rendu.brancheEnEchec;
+    poserStatut(n.id, "erreur");
+    return { audioResultatMessage: fautif
+        ? t("execution.brancheEchecSansResultat").replace("{fautif}", fautif)
+        : t("execution.brancheEchecAucunResultat") };
   }
   // Un méta-composant n'est pas exécuté lui-même : ce sont ses nœuds internes qui tournent. Il ne
   // se déclare pas terminé ici, sur une sortie produite : c'est après le run, d'après TOUT son
@@ -264,7 +265,7 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
     audioResultatNom: url ? `${n.data.ficheId}.wav` : undefined,
     audioResultatBuffer: membreReplie ? undefined : (audio ?? undefined),
     audioResultatRefaisable: refaisable,
-    audioResultatMessage: messages.get(n.id) ?? (meta && audio ? t("execution.termine") : undefined),
+    audioResultatMessage: rendu.message ?? (meta && audio ? t("execution.termine") : undefined),
     scriptGenere: texte ?? undefined,
     apercuCourbe,
     midiFichierSortie: midiFile ?? undefined,
@@ -273,8 +274,8 @@ export async function calculerCorrectifResultat(n: any, passe: EtatDePasse): Pro
     // LE CANAL DÉCLARÉ, posé sous deux clés réservées. Le `?? undefined` compte : un composant
     // qui ne rend plus rien à montrer doit effacer ce qu'il montrait au run précédent, sinon
     // l'écran décrirait une exécution qui n'a plus lieu.
-    _affichage: affichageParNoeud.get(n.id) ?? undefined,
-    _designe: designeParNoeud.get(n.id) ?? undefined,
+    _affichage: rendu.affichage ?? undefined,
+    _designe: rendu.designe ?? undefined,
   });
 }
 

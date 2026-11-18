@@ -23,6 +23,12 @@
 // journal se reconstruit depuis eux ; le témoin garde ses trois prêts d'avant. L'égalité des deux
 // journaux est donc celle que le plan demande : un événement pour un appel, dans le même ordre, et
 // la pose d'un nœud regardé attendue au même endroit.
+//
+// ET DEPUIS LA PIÈCE P4B, `noeudFini` PORTE CE QUE LE NŒUD VISIBLE MONTRE, choisi au cœur. La pose
+// du témoin relève ce que la pose d'avant lisait dans les tables pour un nœud visible : ses valeurs,
+// son message et ses deux canaux, ou rien s'il n'avait ni valeur ni message ; celle du nouveau relève
+// le rendu de l'événement. L'égalité des journaux dit que le rendu est celui que la pose choisissait,
+// au même instant.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -149,7 +155,15 @@ async function temoin(r: Run) {
   const poserStatutOmbre = (id: string, v: string, s: string) => { journal.push(["ombre", id, v, s]); };
   const aPoser = new Set<string>();
   const estRegarde = (id: string) => r.regardes.includes(id);
-  const poserUnNoeud = poserEnRespirant;
+  // CE QUE LA POSE D'AVANT LISAIT dans les tables pour un nœud visible, au moment où elle le posait.
+  // Un nœud ordinaire : les nœuds qui finissent dans la boucle ne sont jamais des métas ni des bulles.
+  const poserUnNoeud = (id: string) => {
+    const vals = resultats.get(id);
+    if (plan.tousNoeudsG.some((x) => x.id === id) && ((vals && vals.length > 0) || messages.has(id))) {
+      journal.push(["rendu", id, vals ?? [], messages.get(id), affichageParNoeud.get(id), designeParNoeud.get(id)]);
+    }
+    return poserEnRespirant(id);
+  };
   type ValeurTransportee = unknown;
   const traitesCeRun = new Set<string>();
   const marquerMetaEnEchec = (idAplati: string, detail?: string) => {
@@ -281,9 +295,12 @@ async function nouveau(r: Run) {
       else if (e.genre === "statutOmbre") journal.push(["ombre", e.id, e.visible, e.statut]);
       else {
         aPoser.add(e.id);
-        if (r.regardes.includes(e.id)) return poserEnRespirant(e.id);
+        if (!r.regardes.includes(e.id)) return;
+        if (e.rendu) journal.push(["rendu", e.id, e.rendu.valeurs, e.rendu.message, e.rendu.affichage, e.rendu.designe]);
+        return poserEnRespirant(e.id);
       }
     },
+    noeudVisible: (id) => r.plan.tousNoeudsG.find((x) => x.id === id),
   });
   return aPoser;
 }
@@ -344,7 +361,29 @@ describe("la boucle d'une passe", () => {
     }
     // LE TÉMOIN A TOUT TRAVERSÉ : un relevé qui ne verrait que des nœuds terminés serait égal pour rien.
     expect([...vus].sort()).toEqual(
-      ["error", "heriter", "ombre", "pose", "pose-fin", "statut:en_cours", "statut:erreur", "statut:termine"].sort());
+      ["error", "heriter", "ombre", "pose", "pose-fin", "rendu", "statut:en_cours", "statut:erreur", "statut:termine"].sort());
+  });
+
+  it("`noeudFini` PORTE CE QUE LE NŒUD VISIBLE MONTRE, et rien pour un interne de méta ou une copie de boucle", async () => {
+    let internes = 0, visibles = 0;
+    for (const nom of ["une boucle de trois tours", "un méta dont un interne échoue"]) {
+      const { tables } = await jouer(nom, nouveau, new Map());
+      const resultats = new Map(tables.resultats as [string, unknown[]][]);
+      for (const e of evenements) {
+        if (e.genre !== "noeudFini") continue;
+        if (GRAPHES[nom].noeuds.some((x) => x.id === e.id)) {
+          visibles++;
+          // LE MÊME TABLEAU, ET NON UNE COPIE : une valeur lourde passe par référence.
+          expect(e.rendu?.valeurs, `${nom} : ${e.id}`).toBe(resultats.get(e.id));
+        } else {
+          internes++;
+          expect(e.rendu, `${nom} : ${e.id}`).toBeUndefined();
+        }
+      }
+    }
+    // LES DEUX SORTES SONT TRAVERSÉES : un relevé qui n'en verrait qu'une serait vert pour rien.
+    expect(internes).toBeGreaterThan(0);
+    expect(visibles).toBeGreaterThan(0);
   });
 
   it("LA POSE D'UN NŒUD REGARDÉ EST FINIE AVANT QUE LE SUIVANT NE PASSE « EN COURS »", async () => {

@@ -2,19 +2,20 @@
 //
 // CE QUE CES CAS GARDENT. Ces étapes vivaient au bout de `lancerUnePasse`, et rien ne les éprouvait
 // qu'à travers l'application : un conteneur déclaré terminé à tort, une graine absente du message,
-// un tampon resté accroché au cache, un lecteur qui emporte le run. Sorties du moteur avec leurs
-// tables nommées, elles se jouent ici sur un magasin d'essai et un domaine d'essai. L'ORDRE EST
-// ÉPROUVÉ AUSSI : la cause d'une boucle et la graine tirée doivent être dans les messages AVANT la
-// pose finale, qui les lit.
+// un tampon resté accroché au cache. Sorties du moteur avec leurs tables nommées, elles se jouent ici
+// sur un domaine d'essai.
+//
+// DEPUIS LA PIÈCE P4B, LE MÉNAGE EST LA MOITIÉ DU MOTEUR : il lâche le cache, complète les messages et
+// dit ce que la passe a compté et choisi, par des `demande` puis un `bilan`. Ce qui s'en écrit dans
+// les magasins, c'est le récepteur qui le pose, et `ui/recepteur-moteur.test.ts` le tient. L'ORDRE
+// EST ÉPROUVÉ AUSSI : la cause d'une boucle et la graine tirée doivent être dans les messages AVANT
+// que les rendus de la pose finale ne soient choisis.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { ecrireLesLecteurs, menageApresPasse, type ApresLaPasse } from "./menage-apres-passe";
+import { menageApresPasse, type ApresLaPasse, type EvenementDuMenage } from "./menage-apres-passe";
 import type { EtatDePasse } from "./etat-de-passe";
 import { creerCacheDuMoteur } from "./moteur/cache";
-import { effacerResultats, poserResultat, resultatDe } from "./resultats";
 import { configurerServicesApercu, oublierServicesApercu } from "./services-apercu";
-import { poserApercu, poserStatut, reinitialiserStatuts, statutDe } from "./statuts";
-import { Respiration } from "../core/respirer";
 import type { NoeudG } from "../core";
 
 /** Un son d'essai, que le domaine d'essai dit lourd ou non. */
@@ -25,41 +26,39 @@ const cacheDe = (paires: [string, unknown][]) => {
   for (const [id, e] of paires) c.ecrire(id, e as never);
   return c;
 };
+/** Un nœud visible d'essai : le choix des valeurs lit sa fiche. */
+const visible = (id: string, ficheId = "son"): NoeudG => ({ id, data: { ficheId } });
 
 function etat(partiel: Partial<EtatDePasse> = {}): EtatDePasse {
   return {
     resultats: new Map(), messages: new Map(), affichageParNoeud: new Map(), designeParNoeud: new Map(),
     tousNoeudsG: [], aretesReelles: [], ordreFiltre: [], noeudsPlats: [],
-    estMetaEnScope: () => true, trouverDef: (() => undefined) as never, lecteursAEcrire: new Map(),
-    souffle: new Respiration(0), aretesRef: { current: [] }, t: (cle) => cle,
+    estMetaEnScope: () => true, trouverDef: () => undefined, t: (cle) => cle,
     ...partiel,
   };
 }
 
-/** Le journal de ce que le ménage a fait, dans l'ordre, et les tables d'après passe qui y écrivent. */
+/** Ce que le ménage dit, dans l'ordre, et les tables d'après passe qu'il lit. */
 function apres(partiel: Partial<ApresLaPasse> = {}) {
-  const journal: string[] = [];
-  const posesFinales: string[][] = [];
-  const statuts: [string, string, string | undefined][] = [];
-  let noeudsEtat: any[] = [];
+  const dits: EvenementDuMenage[] = [];
   const a: ApresLaPasse = {
     noeudsVisibles: () => [],
     nds: [], cache: creerCacheDuMoteur(), deplie: { origines: new Map(), problemes: [] }, expansions: new Map(),
     grainesTirees: new Map(), tempsParVisible: new Map(), ecartsParNoeud: new Map(), demandesParNoeud: new Map(),
     ordonnees: [], idsDecoratifs: new Set(), boites: { ids: [], contenu: () => [] },
-    dejaPoses: new Set(), aPoser: new Set(),
-    poserCeQuiEstPret: async () => { posesFinales.push([...a.aPoser].sort()); journal.push("pose"); a.aPoser.clear(); },
-    definirStatut: (id, s, p) => { statuts.push([id, s, p]); poserStatut(id, s, p); journal.push(`statut ${id} ${s}`); },
-    poserResultat,
-    setNodes: (f) => { noeudsEtat = typeof f === "function" ? f(noeudsEtat) : f; journal.push("setNodes"); },
+    generation: 5, emettre: (e) => { dits.push(e); },
     ...partiel,
   };
-  return { a, journal, posesFinales, statuts, etatDesNoeuds: (n?: any[]) => { if (n) noeudsEtat = n; return noeudsEtat; } };
+  /** Le bilan, qui doit être le dernier mot du ménage. */
+  const bilan = () => {
+    const b = dits.at(-1);
+    if (b?.genre !== "bilan") throw new Error("le ménage n'a pas fini par son bilan");
+    return b;
+  };
+  return { a, dits, bilan };
 }
 
 beforeEach(() => {
-  effacerResultats();
-  reinitialiserStatuts();
   oublierServicesApercu();
   configurerServicesApercu({
     // Un son lourd n'a d'aperçu utile que regardé ou hors économie : la règle du domaine, réduite.
@@ -96,26 +95,25 @@ describe("le cache, lâché à la fin du run", () => {
   });
 });
 
-describe("les messages complétés, puis la pose finale", () => {
-  it("LA CAUSE D'UNE BOUCLE NON DÉPLIÉE SE DIT SUR LE NŒUD VISIBLE, avant la pose, qui la reprend", async () => {
+describe("les messages complétés, puis les rendus de la pose finale", () => {
+  it("LA CAUSE D'UNE BOUCLE NON DÉPLIÉE SE DIT SOUS LE NŒUD VISIBLE, et son rendu la porte", async () => {
     const passe = etat();
-    const { a, journal, posesFinales } = apres({
+    const { a, bilan } = apres({
       deplie: { origines: new Map(), problemes: [{ noeudId: "m::deb", code: "debut-sans-fin" }] },
       expansions: new Map([["m::deb", "m"]]),
-      noeudsVisibles: () => [{ id: "m" }],
-      dejaPoses: new Set(["m"]),
+      noeudsVisibles: () => [visible("m")],
     });
     await menageApresPasse(passe, a);
     expect(passe.messages.get("m")).toBe("boucle.probleme.debut-sans-fin");
-    expect(statutDe("m").statut).toBe("erreur");
-    // Déjà posé, il repasse quand même : son message a changé après la boucle.
-    expect(posesFinales).toEqual([["m"]]);
-    expect(journal.indexOf("statut m erreur")).toBeLessThan(journal.indexOf("pose"));
+    expect(bilan().problemesDeBoucle).toEqual([["m", "boucle.probleme.debut-sans-fin"]]);
+    // Déjà posé ou non, il repasse : son message a changé après la boucle.
+    expect(bilan().messagesCompletes).toEqual(["m"]);
+    expect(bilan().rendus).toEqual([["m", { valeurs: [], message: "boucle.probleme.debut-sans-fin" }]]);
   });
 
-  it("LA GRAINE TIRÉE S'AJOUTE AU MESSAGE, sauf si le nombre y est déjà", async () => {
+  it("LA GRAINE TIRÉE S'AJOUTE AU MESSAGE, sauf si le nombre y est déjà, et tout nœud qui en a tiré une repasse", async () => {
     const passe = etat({ messages: new Map([["a", "joué"], ["b", "graine 42 retenue"]]) });
-    const { a } = apres({
+    const { a, bilan } = apres({
       grainesTirees: new Map([
         ["a", [{ nom: "Graine", valeur: 7 }]], ["b", [{ nom: "Graine", valeur: 42 }]], ["c", [{ nom: "Hasard", valeur: 3 }]],
       ]),
@@ -124,124 +122,94 @@ describe("les messages complétés, puis la pose finale", () => {
     expect(passe.messages.get("a")).toBe("joué · graine 7");
     expect(passe.messages.get("b")).toBe("graine 42 retenue");
     expect(passe.messages.get("c")).toBe("hasard 3");
+    expect(bilan().messagesCompletes).toEqual(["a", "b", "c"]);
   });
 
-  it("LA POSE FINALE NE REPREND QUE CE QUI N'EST PAS POSÉ, et ce dont le message a changé", async () => {
-    const { a, posesFinales } = apres({
-      noeudsVisibles: () => [{ id: "pose" }, { id: "neuf" }, { id: "graine" }],
-      dejaPoses: new Set(["pose", "graine"]),
-      grainesTirees: new Map([["graine", [{ nom: "Graine", valeur: 1 }]]]),
+  it("LES RENDUS SONT CHOISIS UNE FOIS LES MESSAGES COMPLÉTÉS, et un nœud sans rien à montrer n'en a pas", async () => {
+    const valeur = { tampon: "a" };
+    const passe = etat({ resultats: new Map([["a", [valeur]]]), messages: new Map([["a", "joué"]]) });
+    const { a, bilan } = apres({
+      noeudsVisibles: () => [visible("a"), visible("vide")],
+      grainesTirees: new Map([["a", [{ nom: "Graine", valeur: 7 }]]]),
+    });
+    await menageApresPasse(passe, a);
+    expect(bilan().rendus).toEqual([["a", { valeurs: [valeur], message: "joué · graine 7" }]]);
+    // Les valeurs passent par référence, telles que la boucle les a rangées.
+    expect(bilan().rendus[0][1].valeurs[0]).toBe(valeur);
+  });
+
+  it("LE TEMPS ET L'ÉCART DE NIVEAU PARTENT DANS LE BILAN, par nœud visible et dans l'ordre de leurs tables", async () => {
+    const { a, bilan } = apres({
+      tempsParVisible: new Map([["b", 4], ["a", 12]]), ecartsParNoeud: new Map([["a", -3]]),
     });
     await menageApresPasse(etat(), a);
-    expect(posesFinales).toEqual([["graine", "neuf"]]);
-  });
-
-  it("LE TEMPS ET L'ÉCART DE NIVEAU VONT DANS LE MAGASIN, par nœud visible", async () => {
-    const { a } = apres({ tempsParVisible: new Map([["a", 12]]), ecartsParNoeud: new Map([["a", -3]]) });
-    await menageApresPasse(etat(), a);
-    expect(resultatDe("a")).toMatchObject({ tempsExecution: 12, ecartNiveau: -3 });
+    expect(bilan().temps).toEqual([["b", 4], ["a", 12]]);
+    expect(bilan().ecarts).toEqual([["a", -3]]);
   });
 });
 
 describe("ce qui part vers l'atelier", () => {
-  it("UNE DEMANDE DE GRAPHE PART AU SHELL, une palette à relire aussi, une seule fois", async () => {
-    const graphes: string[] = [];
-    let relectures = 0;
+  it("CHAQUE DEMANDE EST DITE AVANT LE BILAN, dans l'ordre où les composants l'ont rendue", async () => {
     const spec = { nodes: [{ ficheId: "gain", label: "Gain" }], edges: [] };
-    const { a } = apres({
-      demandesParNoeud: new Map<string, any>([["g", { grapheACreer: spec }], ["p1", { paletteARelire: true }], ["p2", { paletteARelire: true }]]),
-      onGrapheGenere: (id, s) => graphes.push(`${id}:${s.nodes.length}`),
-      onNodeInstalle: () => { relectures++; },
+    const { a, dits } = apres({
+      demandesParNoeud: new Map<string, any>([["g", { grapheACreer: spec }], ["p1", { paletteARelire: true }]]),
     });
     await menageApresPasse(etat(), a);
-    expect(graphes).toEqual(["g:1"]);
-    expect(relectures).toBe(1);
+    expect(dits.map((e) => (e.genre === "demande" ? `demande ${e.id}` : e.genre))).toEqual(["demande g", "demande p1", "bilan"]);
+    expect(dits[0]).toMatchObject({ demande: { grapheACreer: spec } });
   });
 
-  it("LES CHAMPS AUTONOMES SONT REPORTÉS SUR L'ÉTAT, et un nœud inchangé garde son objet", async () => {
-    const { a, journal, etatDesNoeuds } = apres({
+  it("LES CHAMPS AUTONOMES PARTENT DANS LE BILAN, et les deux canaux déclarés n'y sont pas", async () => {
+    const { a, bilan } = apres({
       nds: [
         { id: "carte", data: { ficheId: "carte", _carteHtmlUrl: "blob:c", _affichage: { x: 1 } } },
         { id: "pareil", data: { ficheId: "x", _carteSonore: "s" } },
         { id: "rien", data: { ficheId: "y" } },
       ],
     });
-    const pareil = { id: "pareil", data: { ficheId: "x", _carteSonore: "s" } };
-    const rien = { id: "rien", data: { ficheId: "y" } };
-    etatDesNoeuds([{ id: "carte", data: { ficheId: "carte" } }, pareil, rien]);
     await menageApresPasse(etat(), a);
-    const apresCoup = etatDesNoeuds();
-    expect(apresCoup[0].data._carteHtmlUrl).toBe("blob:c");
     // Les canaux déclarés ne passent pas par ici : ils viennent du retour de l'exécuteur ou du cache.
-    expect(apresCoup[0].data._affichage).toBeUndefined();
-    expect(apresCoup[1]).toBe(pareil);
-    expect(apresCoup[2]).toBe(rien);
-    expect(journal.filter((j) => j === "setNodes")).toHaveLength(1);
-  });
+    expect(bilan().champsAutonomes).toEqual([["carte", { _carteHtmlUrl: "blob:c" }], ["pareil", { _carteSonore: "s" }]]);
 
-  it("ET RIEN N'EST POSÉ SUR L'ÉTAT quand aucun nœud n'a de champ autonome", async () => {
-    const { a, journal } = apres({ nds: [{ id: "a", data: { ficheId: "x" } }] });
-    await menageApresPasse(etat(), a);
-    expect(journal).not.toContain("setNodes");
+    const sans = apres({ nds: [{ id: "a", data: { ficheId: "x" } }] });
+    await menageApresPasse(etat(), sans.a);
+    expect(sans.bilan().champsAutonomes).toEqual([]);
   });
 });
 
-describe("le statut final d'un conteneur, d'après tout son contenu", () => {
+describe("les conteneurs que la passe a touchés", () => {
   const boites = { ids: ["b"], contenu: (_c: string, ids: readonly string[]) => ids.filter((id) => id.startsWith("m")) };
 
-  it("TERMINÉ SI TOUS ONT FINI, EN ATTENTE AVEC LE COMPTE SINON, et les décoratifs ne comptent pas", async () => {
-    poserStatut("m1", "termine"); poserStatut("m2", "termine");
-    const { a, statuts } = apres({ boites, ordonnees: ["m1", "m2", "m3"], idsDecoratifs: new Set(["m3"]) });
+  it("UN CONTENEUR DONT UN MEMBRE A TOURNÉ EST DIT AVEC SES MEMBRES EXÉCUTABLES, les décoratifs en moins", async () => {
+    const { a, bilan } = apres({ boites, ordonnees: ["m1", "m2", "m3"], idsDecoratifs: new Set(["m3"]) });
     await menageApresPasse(etat({ ordreFiltre: ["m1"] }), a);
-    expect(statuts.at(-1)).toEqual(["b", "termine", undefined]);
-
-    reinitialiserStatuts(); poserStatut("m1", "termine");
-    const deux = apres({ boites, ordonnees: ["m1", "m2"] });
-    await menageApresPasse(etat({ ordreFiltre: ["m1"] }), deux.a);
-    expect(deux.statuts.at(-1)).toEqual(["b", "attente", "conteneur.partiel"]);
+    expect(bilan().conteneurs).toEqual([["b", ["m1", "m2"]]]);
   });
 
-  it("UN CONTENEUR HORS DU RUN, OU DÉJÀ EN ERREUR, N'EST PAS TOUCHÉ", async () => {
-    const horsDuRun = apres({ boites, ordonnees: ["m1"] });
-    await menageApresPasse(etat({ ordreFiltre: ["z"] }), horsDuRun.a);
-    expect(horsDuRun.statuts).toEqual([]);
-
-    poserStatut("b", "erreur");
-    const enErreur = apres({ boites, ordonnees: ["m1"] });
-    await menageApresPasse(etat({ ordreFiltre: ["m1"] }), enErreur.a);
-    expect(enErreur.statuts).toEqual([]);
+  it("UN CONTENEUR HORS DU RUN N'Y EST PAS", async () => {
+    const { a, bilan } = apres({ boites, ordonnees: ["m1"] });
+    await menageApresPasse(etat({ ordreFiltre: ["z"] }), a);
+    expect(bilan().conteneurs).toEqual([]);
   });
 });
 
-describe("les lecteurs, écrits après que tout est posé", () => {
-  it("CHACUN EST POSÉ DÈS QU'IL EST PRÊT, et un lecteur qui échoue n'emporte pas les suivants", async () => {
-    const lecteursAEcrire = new Map<string, () => Promise<string | undefined>>([
-      ["a", async () => "blob:a"], ["casse", async () => { throw new Error("encodage"); }], ["b", async () => "blob:b"],
-    ]);
-    const erreur = console.error;
-    console.error = () => {};
-    try {
-      await ecrireLesLecteurs(etat({ lecteursAEcrire }), {
-        signal: new AbortController().signal,
-        noeudsVisibles: () => [{ id: "a", data: { ficheId: "echo" } }, { id: "b", data: { ficheId: "gain" } }],
-        poserResultat, poserApercu,
-      });
-    } finally { console.error = erreur; }
-    expect(resultatDe("a")).toMatchObject({ audioResultatUrl: "blob:a", audioResultatNom: "echo.wav" });
-    expect(resultatDe("b")).toMatchObject({ audioResultatUrl: "blob:b", audioResultatNom: "gain.wav" });
-    expect(resultatDe("casse").audioResultatUrl).toBeUndefined();
-    // L'avancement de l'écriture est effacé, même après l'échec.
-    expect(statutDe("casse").apercu).toBeUndefined();
+describe("ce que le ménage dit, et quand il a fini", () => {
+  it("CHAQUE ÉVÉNEMENT PORTE LA GÉNÉRATION DE SA PASSE", async () => {
+    const { a, dits } = apres({ demandesParNoeud: new Map<string, any>([["p", { paletteARelire: true }]]) });
+    await menageApresPasse(etat(), a);
+    expect(dits.map((e) => e.generation)).toEqual([5, 5]);
   });
 
-  it("UNE ANNULATION ARRÊTE L'ÉCRITURE avant le lecteur suivant", async () => {
-    const arret = new AbortController();
-    const ecrits: string[] = [];
-    const lecteursAEcrire = new Map<string, () => Promise<string | undefined>>([
-      ["a", async () => { ecrits.push("a"); arret.abort(); return "blob:a"; }],
-      ["b", async () => { ecrits.push("b"); return "blob:b"; }],
-    ]);
-    await ecrireLesLecteurs(etat({ lecteursAEcrire }), { signal: arret.signal, noeudsVisibles: () => [], poserResultat, poserApercu });
-    expect(ecrits).toEqual(["a"]);
+  it("LE MÉNAGE ATTEND LA POSE DU BILAN : il ne rend la main qu'une fois le récepteur fini", async () => {
+    let finir!: () => void;
+    const pose = new Promise<void>((r) => { finir = r; });
+    const { a } = apres({ emettre: (e) => (e.genre === "bilan" ? pose : undefined) });
+    let fini = false;
+    const menage = menageApresPasse(etat(), a).then(() => { fini = true; });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(fini).toBe(false);
+    finir();
+    await menage;
+    expect(fini).toBe(true);
   });
 });
