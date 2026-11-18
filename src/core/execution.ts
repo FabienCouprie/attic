@@ -26,7 +26,8 @@ import { empreinteEntrees, empreinteParametres, empreinteSorties, empreinteValeu
 import type { AreteG, NoeudG } from "./meta";
 import { respirer } from "./respirer";
 import { servicesDomaine } from "./services-domaine";
-import { creerPoseDesStatuts, type PoseDesStatuts, type PretsDesStatuts } from "./statuts-de-passe";
+import type { EvenementDuMoteur } from "./protocole-moteur";
+import { creerPoseDesStatuts, type PoseDesStatuts } from "./statuts-de-passe";
 import { signalerEcartsDeType, type TypeVerifiable } from "./types-au-port";
 
 export function estResultatEnErreur<TV, TR>(
@@ -307,6 +308,14 @@ export interface PlanDeLaBoucle {
   plat: { expansions: Map<string, string> };
 }
 
+/**
+ * Ce que la boucle dit à l'interface, en événements du protocole (`core/protocole-moteur.ts`) : le
+ * statut d'un nœud visible, l'état d'un nœud invisible rattaché au visible qu'il sert, et la fin d'un
+ * nœud qui vient de tourner. `noeudFini` ne porte pas encore ce que le nœud visible a rendu : le choix
+ * des valeurs passera au cœur à la pièce P4b, et le récepteur lit jusque-là les tables de la passe.
+ */
+export type EvenementDeLaBoucle = Extract<EvenementDuMoteur<unknown>, { genre: "statut" | "statutOmbre" | "noeudFini" }>;
+
 /** Ce que le crochet prête à la boucle. */
 export interface PretsDeLaBoucle<TRuntime> {
   runtime: TRuntime;
@@ -324,18 +333,20 @@ export interface PretsDeLaBoucle<TRuntime> {
   /** Les sauts de boucle du run, construits par le crochet avant sa première respiration. */
   sauts: EntreesDeDecision<EntreeDeCache>["sauts"] & { empreintePour(id: string): string | undefined };
   questions: PretsDuRetour["questions"];
-  poser: PretsDesStatuts["poser"];
-  poserOmbre: PretsDesStatuts["poserOmbre"];
   t: (cle: string) => string;
   /**
-   * Ce nœud vient de tourner, en succès comme en erreur : le crochet le met parmi ce qui est à poser,
-   * et le pose aussitôt s'il est regardé.
+   * Dire un événement de la boucle au récepteur de l'interface, `ui/recepteur-moteur.ts`.
    *
-   * IL NE REND UNE PROMESSE QUE S'IL Y A À ATTENDRE, et la boucle n'attend qu'alors. Le moteur
-   * n'attendait que la pose d'un nœud regardé ; attendre à chaque nœud ajouterait un tour de
-   * microtâche que le moteur ne faisait pas.
+   * C'EST LE SEUL CHEMIN DE LA BOUCLE VERS LES MAGASINS. Il remplace les trois prêts d'avant, la pose
+   * d'un statut, celle d'une ombre et `quandUnNoeudAFini`, un événement pour un appel, dans le même
+   * ordre. L'envoi est SYNCHRONE, sans `queueMicrotask` ni `MessageChannel` : un tour de microtâche de
+   * plus changerait ce qu'on voit.
+   *
+   * IL NE REND UNE PROMESSE QUE S'IL Y A À ATTENDRE, et la boucle n'attend qu'alors : après
+   * `noeudFini`, la pose d'un nœud regardé. Le moteur n'attendait que celle-là ; attendre à chaque
+   * événement ajouterait un tour que le moteur ne faisait pas.
    */
-  quandUnNoeudAFini: (id: string) => Promise<void> | void;
+  emettre: (evenement: EvenementDeLaBoucle) => Promise<void> | void;
   /**
    * Vrai pour une passe qui ne fait que REPOSER ce que le cache tient, sans rien exécuter.
    *
@@ -362,8 +373,16 @@ export async function executerLesNoeuds<TRuntime>(
   const { resultats, messages, affichageParNoeud, designeParNoeud, tempsParVisible } = tables;
   const { signal, sauts, trouverDef, t } = p;
   const traitesCeRun = new Set<string>();
+  // CHAQUE ÉVÉNEMENT PORTE LA GÉNÉRATION DE SA PASSE, celle de son jeton. Une passe sans jeton, un
+  // essai qui appelle la boucle sans passer par l'ordonnanceur, porte la génération 0 : celle d'avant
+  // le premier run, que l'ordonnanceur ne donne jamais (`ui/ordonnanceur-runs.ts`).
+  const generation = p.jeton?.generation ?? 0;
   const { poserStatut, marquerMetaEnEchec } = creerPoseDesStatuts({
-    expansions: plat.expansions, poser: p.poser, poserOmbre: p.poserOmbre, t,
+    expansions: plat.expansions, t,
+    poser: (id, statut, progression, progressionDuNoeud = false) => {
+      p.emettre({ genre: "statut", generation, id, statut, progression, progressionDuNoeud });
+    },
+    poserOmbre: (id, visible, statut) => { p.emettre({ genre: "statutOmbre", generation, id, visible, statut }); },
   });
   const retour: PretsDuRetour = {
     ...tables, aretes: aretesG, expansions: plat.expansions, noeudsEnErreur,
@@ -467,7 +486,7 @@ export async function executerLesNoeuds<TRuntime>(
     // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER. En erreur comme en
     // succès : un message d'erreur est un résultat, et l'attendre jusqu'au bout de la boucle
     // laissait un nœud rouge sans sa raison.
-    const pose = p.quandUnNoeudAFini(nodeId);
+    const pose = p.emettre({ genre: "noeudFini", generation, id: nodeId });
     if (pose) await pose;
   }
 }

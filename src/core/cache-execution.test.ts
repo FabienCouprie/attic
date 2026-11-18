@@ -79,8 +79,8 @@ async function quiTourne(
         typeFlux: () => undefined, canoniser: (_p, v) => v, graineDuNoeud: (_id, _nom, brut) => brut,
         lireCache: (id) => cache.get(id), ecrireCache: (id, e) => cache.set(id, e),
         sauts: { copieSautee: () => false, finReprise: () => false, empreintePour: () => undefined },
-        questions: () => NEUTRES, poser: () => {}, poserOmbre: () => {}, t: (cle) => cle,
-        quandUnNoeudAFini: (id) => { tourne.push(id); },
+        questions: () => NEUTRES, t: (cle) => cle,
+        emettre: (e) => { if (e.genre === "noeudFini") tourne.push(e.id); },
       },
     );
     return tourne;

@@ -18,9 +18,16 @@
 // l'« en cours » du nœud suivant avant la fin de la pose. Faute plantée le 2026-11-16, l'attente de
 // la pose retirée de la boucle : trois cas sur six tombent, l'égalité au témoin, celle du jeton
 // périmé, et le cas de l'ordre, qui nomme le nœud passé trop tôt.
+//
+// DEPUIS LA PIÈCE P4A, LA NOUVELLE BOUCLE NE DIT PLUS QUE DES ÉVÉNEMENTS, par `emettre`, et son
+// journal se reconstruit depuis eux ; le témoin garde ses trois prêts d'avant. L'égalité des deux
+// journaux est donc celle que le plan demande : un événement pour un appel, dans le même ordre, et
+// la pose d'un nœud regardé attendue au même endroit.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { creerTablesDePasse, estResultatEnErreur, executerLesNoeuds, type QuestionsDuRetour, type TablesDePasse } from "./execution";
+import {
+  creerTablesDePasse, estResultatEnErreur, executerLesNoeuds, type EvenementDeLaBoucle, type QuestionsDuRetour, type TablesDePasse,
+} from "./execution";
 import { peutReutiliserLeCache, sourceRetraitee } from "./cache-execution";
 import { contexteDePasse } from "./contexte-de-passe";
 import { FICHE_DEBUT, FICHE_FIN } from "./boucle-graphe";
@@ -103,6 +110,8 @@ const GRAPHES: Record<string, { noeuds: NoeudG[]; aretes: AreteG[]; regardes: st
 
 let horloge = 0;
 let journal: Journal = [];
+/** Les événements que la nouvelle boucle a dits pendant la dernière passe jouée. */
+let evenements: EvenementDeLaBoucle[] = [];
 
 /** La pose d'un nœud regardé, pour les deux boucles : elle rend la main avant d'avoir fini. */
 async function poserEnRespirant(id: string) {
@@ -263,11 +272,17 @@ async function nouveau(r: Run) {
     trouverPlugin, typeFlux, canoniser: (_p, v) => v, graineDuNoeud: r.graineDuNoeud,
     lireCache: (id) => r.cache.get(id) as never, ecrireCache: (id, e) => r.cache.set(id, e),
     sauts: r.sauts, questions, t,
-    poser: (id, s, pr, pn = false) => { journal.push(["statut", id, s, pr, pn]); },
-    poserOmbre: (id, v, s) => { journal.push(["ombre", id, v, s]); },
-    quandUnNoeudAFini: (id) => {
-      aPoser.add(id);
-      if (r.regardes.includes(id)) return poserEnRespirant(id);
+    // LE JOURNAL SE RECONSTRUIT DEPUIS LES ÉVÉNEMENTS : la boucle ne reçoit plus qu'`emettre`, et le
+    // témoin garde ses trois prêts d'avant. L'égalité des deux journaux dit qu'un événement fait ce
+    // que faisait l'appel qu'il remplace, dans le même ordre et avec la même attente.
+    emettre: (e) => {
+      evenements.push(e);
+      if (e.genre === "statut") journal.push(["statut", e.id, e.statut, e.progression, e.progressionDuNoeud]);
+      else if (e.genre === "statutOmbre") journal.push(["ombre", e.id, e.visible, e.statut]);
+      else {
+        aPoser.add(e.id);
+        if (r.regardes.includes(e.id)) return poserEnRespirant(e.id);
+      }
     },
   });
   return aPoser;
@@ -290,7 +305,7 @@ async function jouer(nom: string, boucle: typeof temoin, cache: Map<string, unkn
   const { graineDuNoeud } = creerResolveurDeGraines({ toursDesCopies: deplie.toursDesCopies, origines: deplie.origines, expansions: plan.plat.expansions });
   const controller = new AbortController();
   controleurCourant = controller;
-  horloge = 1000; journal = [];
+  horloge = 1000; journal = []; evenements = [];
   const aPoser = await boucle({ plan, tables, cache, jeton, sauts, graineDuNoeud, controller, regardes: g.regardes });
   return {
     journal, aPoser: [...aPoser], enErreur: [...plan.noeudsEnErreur], cache: [...cache],
@@ -359,6 +374,17 @@ describe("la boucle d'une passe", () => {
       expect(rendu).toEqual(attendu);
       expect(rendu.cache).toEqual([]);
     }
+  });
+
+  it("CHAQUE ÉVÉNEMENT PORTE LA GÉNÉRATION DE SA PASSE, celle du jeton, et 0 sans jeton", async () => {
+    // LA BOUCLE DE TROIS TOURS DIT LES TROIS GENRES : ses copies ont une ombre. Un relevé qui n'en
+    // verrait qu'un serait vert pour rien.
+    await jouer("une boucle de trois tours", nouveau, new Map(), { generation: 7, perime: () => false });
+    expect(new Set(evenements.map((e) => e.genre))).toEqual(new Set(["statut", "statutOmbre", "noeudFini"]));
+    expect(evenements.filter((e) => e.generation !== 7)).toEqual([]);
+    await jouer("une boucle de trois tours", nouveau, new Map());
+    expect(evenements.length).toBeGreaterThan(0);
+    expect(evenements.filter((e) => e.generation !== 0)).toEqual([]);
   });
 
   it("LE SECOND RUN SERT LE CACHE SANS CLIGNOTER, et ne rend au crochet que ce qui a tourné", async () => {

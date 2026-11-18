@@ -12,6 +12,11 @@
 // table sous un autre nom ; celui-ci compte les références de React qui tiennent une `Map`, quel que
 // soit leur nom, et les imports du module du cache, quel que soit ce qu'ils en tirent, types compris.
 //
+// ET SEUL LE RÉCEPTEUR POSE DANS LES MAGASINS, depuis la pièce P4a. La boucle d'une passe recevait la
+// pose des statuts et `quandUnNoeudAFini`, et le ménage importait `poserResultat` : ils disent
+// maintenant des événements, ou reçoivent leurs écritures du récepteur (`ui/recepteur-moteur.ts`).
+// Le garde relève qui importe une pose des magasins, sous son nom, son alias ou en bloc.
+//
 // LE MOTEUR N'A PAS ENCORE TOUT DÉMÉNAGÉ. La pièce P5 mettra sous `ui/moteur/` les pilotes de passes
 // et le ménage ; d'ici là, la liste ci-dessous nomme les fichiers du moteur qui vivent encore ailleurs,
 // et le test exige que chacun importe encore le cache : une liste qui ne servirait plus se voit.
@@ -68,6 +73,39 @@ const MOTEUR_HORS_DE_SON_DOSSIER = [
   "ui/menage-apres-passe.ts",
 ];
 
+/** Les quatre poses des magasins d'une passe : les importer, c'est écrire ce que l'interface montre. */
+const POSES = ["poserStatut", "poserStatutOmbre", "poserResultat", "poserApercu"];
+const MAGASINS = [join(UI, "statuts"), join(UI, "resultats")];
+
+/**
+ * CEUX QUI POSENT, mesuré le 2026-11-18 après la pièce P4a : le récepteur, le correctif qu'il appelle
+ * pour la pose d'un nœud, et la réparation des aperçus, qu'un geste demande hors de toute passe. La
+ * remise à zéro efface et ne pose pas : elle n'importe que `reinitialiserStatuts` et
+ * `effacerResultats`. Le moteur, sa boucle, son ménage et ses pilotes, ne pose plus rien lui-même.
+ */
+const QUI_POSE = [
+  "ui/correctif-resultat.ts",
+  "ui/recepteur-moteur.ts",
+  "ui/refaire-apercus.ts",
+];
+
+/** Les poses qu'un fichier importe des magasins : par leur nom, en bloc par `* as`, ou par `import()`. */
+const posesImportees = (chemin: string) => posesDans(readFileSync(chemin, "utf8"), chemin);
+
+/** Les poses que ce texte importe, lu comme s'il était ce fichier : c'est de lui que partent les chemins. */
+function posesDans(texte: string, chemin: string): string[] {
+  const versUnMagasin = (cible: string) =>
+    cible.startsWith(".") && MAGASINS.includes(resolve(dirname(chemin), cible).replace(/\.tsx?$/, ""));
+  const vues: string[] = [];
+  for (const m of texte.matchAll(/^[ \t]*(?:import|export)[ \t]+(type[ \t]+)?([^;]*?)\s*from\s*["']([^"']+)["']/gm)) {
+    if (m[1] || !versUnMagasin(m[3])) continue;
+    if (/\*\s*as\s/.test(m[2])) vues.push("*");
+    for (const nom of POSES) if (new RegExp(String.raw`\b${nom}\b`).test(m[2])) vues.push(nom);
+  }
+  for (const m of texte.matchAll(/\bimport\s*\(\s*["']([^"']+)["']\s*\)/g)) if (versUnMagasin(m[1])) vues.push("import()");
+  return vues;
+}
+
 /** Les modules qu'un fichier importe, sous toutes leurs formes : `from`, effet de bord, `import()`. */
 function importsDe(texte: string): string[] {
   const motif = /(?:\bfrom\s*|\bimport\s*\(\s*|^\s*import\s+)["']([^"']+)["']/gm;
@@ -96,6 +134,24 @@ describe("la frontière du cache du moteur", () => {
     const importeurs = fichiers(SRC).filter(importeLeCache);
     const horsDuMoteur = importeurs.filter((f) => !estDuMoteur(f)).map(nomDe);
     expect(horsDuMoteur, "hors du moteur, on envoie des commandes : `ui/moteur/commandes.ts`").toEqual(MOTEUR_HORS_DE_SON_DOSSIER);
+  });
+
+  it("SEUL LE RÉCEPTEUR ET CE QU'IL APPELLE POSENT DANS LES MAGASINS : le moteur leur dit des événements", () => {
+    const poseurs = fichiers(SRC)
+      .filter((f) => !/\.test\.tsx?$/.test(f) && posesImportees(f).length > 0)
+      .map(nomDe);
+    expect(poseurs, "hors du récepteur, on émet : `ui/recepteur-moteur.ts`").toEqual(QUI_POSE);
+  });
+
+  it("le motif des poses voit le nom, l'alias, le bloc et l'import dynamique, et laisse le type et l'effacement", () => {
+    const vues = (texte: string) => posesDans(texte, join(UI, "essai.ts"));
+    expect(vues(`import { poserStatut as poser, statutDe } from "./statuts";`)).toEqual(["poserStatut"]);
+    expect(vues(`import {\n  effacerResultats,\n  poserResultat,\n} from "./resultats";`)).toEqual(["poserResultat"]);
+    expect(vues(`import * as magasin from "./statuts";`)).toEqual(["*"]);
+    expect(vues(`const m = await import("./resultats");`)).toEqual(["import()"]);
+    expect(vues(`import type { poserApercu } from "./statuts";`)).toEqual([]);
+    expect(vues(`import { reinitialiserStatuts, poserStatutOmbre } from "./statuts";`)).toEqual(["poserStatutOmbre"]);
+    expect(vues(`import { poserStatut } from "../core/statuts-de-passe";`)).toEqual([]);
   });
 
   it("le motif voit les trois écritures d'une table dans une référence, et pas une table seule", () => {

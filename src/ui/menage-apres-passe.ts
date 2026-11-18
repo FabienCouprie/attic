@@ -25,8 +25,7 @@ import type { DemandeAuMoteur } from "../core/types";
 import { valeursLourdes } from "./correctif-resultat";
 import type { EtatDePasse } from "./etat-de-passe";
 import type { CacheDuMoteur } from "./moteur/cache";
-import { poserResultat } from "./resultats";
-import { poserApercu, statutDe as statutDeNoeud } from "./statuts";
+import { statutDe as statutDeNoeud } from "./statuts";
 
 /**
  * Ce que le ménage lit en plus des tables communes : ce que la passe a compté et décidé.
@@ -53,7 +52,13 @@ export interface ApresLaPasse {
   dejaPoses: Set<string>;
   aPoser: Set<string>;
   poserCeQuiEstPret: () => Promise<void>;
+  /**
+   * CE QUE LE MÉNAGE ÉCRIT ENCORE DANS LES MAGASINS, le récepteur le lui prête, et il est seul à les
+   * importer (`ui/recepteur-moteur.ts`) : le statut des conteneurs et des boucles, les temps et les
+   * écarts. La pièce P4b en fera des événements.
+   */
   definirStatut: (nodeId: string, statut: string, progression?: string) => void;
+  poserResultat: (id: string, correctif: Record<string, unknown>) => void;
   setNodes: Dispatch<SetStateAction<any[]>>;
   onGrapheGenere?: (nodeId: string, spec: { nodes: { ficheId: string; label: string }[]; edges: { source: number; target: number }[] }) => void;
   onNodeInstalle?: () => void;
@@ -64,7 +69,7 @@ export async function menageApresPasse(passe: EtatDePasse, a: ApresLaPasse): Pro
   const {
     noeudsVisibles, nds, cache, deplie, expansions, grainesTirees, tempsParVisible, ecartsParNoeud,
     demandesParNoeud, ordonnees, idsDecoratifs, boites, dejaPoses, aPoser, poserCeQuiEstPret,
-    definirStatut, setNodes, onGrapheGenere, onNodeInstalle,
+    definirStatut, poserResultat, setNodes, onGrapheGenere, onNodeInstalle,
   } = a;
   // ── Mettre à jour les URL audio ──
   //
@@ -234,7 +239,12 @@ export async function menageApresPasse(passe: EtatDePasse, a: ApresLaPasse): Pro
  * posé, il s'écoute déjà par le bouton, et c'est le lecteur qui se fabrique.
  */
 export async function ecrireLesLecteurs(
-  passe: EtatDePasse, { signal, noeudsVisibles }: { signal: AbortSignal; noeudsVisibles: () => any[] },
+  passe: EtatDePasse, { signal, noeudsVisibles, poserResultat, poserApercu }: {
+    signal: AbortSignal; noeudsVisibles: () => any[];
+    /** Les deux écritures du lecteur, prêtées par le récepteur comme celles du ménage. */
+    poserResultat: (id: string, correctif: Record<string, unknown>) => void;
+    poserApercu: (id: string, fraction: number | undefined) => void;
+  },
 ): Promise<void> {
   const { lecteursAEcrire, souffle } = passe;
   for (const [id, ecrire] of lecteursAEcrire) {

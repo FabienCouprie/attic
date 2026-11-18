@@ -11,9 +11,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ecrireLesLecteurs, menageApresPasse, type ApresLaPasse } from "./menage-apres-passe";
 import type { EtatDePasse } from "./etat-de-passe";
 import { creerCacheDuMoteur } from "./moteur/cache";
-import { effacerResultats, resultatDe } from "./resultats";
+import { effacerResultats, poserResultat, resultatDe } from "./resultats";
 import { configurerServicesApercu, oublierServicesApercu } from "./services-apercu";
-import { poserStatut, reinitialiserStatuts, statutDe } from "./statuts";
+import { poserApercu, poserStatut, reinitialiserStatuts, statutDe } from "./statuts";
 import { Respiration } from "../core/respirer";
 import type { NoeudG } from "../core";
 
@@ -50,6 +50,7 @@ function apres(partiel: Partial<ApresLaPasse> = {}) {
     dejaPoses: new Set(), aPoser: new Set(),
     poserCeQuiEstPret: async () => { posesFinales.push([...a.aPoser].sort()); journal.push("pose"); a.aPoser.clear(); },
     definirStatut: (id, s, p) => { statuts.push([id, s, p]); poserStatut(id, s, p); journal.push(`statut ${id} ${s}`); },
+    poserResultat,
     setNodes: (f) => { noeudsEtat = typeof f === "function" ? f(noeudsEtat) : f; journal.push("setNodes"); },
     ...partiel,
   };
@@ -223,6 +224,7 @@ describe("les lecteurs, écrits après que tout est posé", () => {
       await ecrireLesLecteurs(etat({ lecteursAEcrire }), {
         signal: new AbortController().signal,
         noeudsVisibles: () => [{ id: "a", data: { ficheId: "echo" } }, { id: "b", data: { ficheId: "gain" } }],
+        poserResultat, poserApercu,
       });
     } finally { console.error = erreur; }
     expect(resultatDe("a")).toMatchObject({ audioResultatUrl: "blob:a", audioResultatNom: "echo.wav" });
@@ -239,7 +241,7 @@ describe("les lecteurs, écrits après que tout est posé", () => {
       ["a", async () => { ecrits.push("a"); arret.abort(); return "blob:a"; }],
       ["b", async () => { ecrits.push("b"); return "blob:b"; }],
     ]);
-    await ecrireLesLecteurs(etat({ lecteursAEcrire }), { signal: arret.signal, noeudsVisibles: () => [] });
+    await ecrireLesLecteurs(etat({ lecteursAEcrire }), { signal: arret.signal, noeudsVisibles: () => [], poserResultat, poserApercu });
     expect(ecrits).toEqual(["a"]);
   });
 });

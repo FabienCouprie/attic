@@ -22,8 +22,8 @@ import { creerTablesDePasse, executerLesNoeuds } from "../../core/execution";
 import { Respiration, respirer } from "../../core/respirer";
 import { noeudRegarde } from "../../core/memoire";
 import { servicesDomaine } from "../../core/services-domaine";
-import { poserStatut as poserStatutNoeud, poserStatutOmbre, reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
-import { poserResultat } from "../resultats";
+import { reinitialiserStatuts, statutDe as statutDeNoeud, statutsPoses } from "../statuts";
+import { creerRecepteurDeLaPasse, poserLesStatutsDeLaPreparation } from "../recepteur-moteur";
 import { definirPrioritaire, noeudPrioritaire } from "../priorite";
 import { sautsDeBoucles } from "../../core/saut-de-boucle";
 import { creerResolveurDeGraines } from "../../core/graines-de-passe";
@@ -39,7 +39,6 @@ import { servicesApercu } from "../services-apercu";
 import { useRemiseAZero } from "./useRemiseAZero";
 // CE QUE LE MAGASIN REÇOIT POUR UN NŒUD est calculé dans `ui/correctif-resultat.ts`, sur les tables
 // de la passe que `EtatDePasse` nomme une fois ; voir ces deux fichiers.
-import { calculerCorrectifResultat } from "../correctif-resultat";
 import type { EtatDePasse } from "../etat-de-passe";
 // CE QUE LE MOTEUR FAIT UNE FOIS LE DERNIER NŒUD CALCULÉ est dans `ui/menage-apres-passe.ts`.
 import { ecrireLesLecteurs, menageApresPasse } from "../menage-apres-passe";
@@ -189,16 +188,8 @@ export function useExecutionGraphe(o: OptionsExecution) {
     return audioCtxRef.current;
   }
 
-  // `progressionDuNoeud` distingue ce que le NŒUD dit de son avancement (son `onProgress`) de ce que
-  // le MOTEUR pose — « Étape i/total », qui est sa position dans le lot. L'anneau de progression ne
-  // lit que le premier : sans cette distinction, il prenait « Étape 1/1 » pour 100 %.
-  // L'ÉTAT VA DANS SON MAGASIN, PAS DANS LE TABLEAU DES NŒUDS. Le faire passer par `setNodes`
-  // obligeait React Flow à repasser sur les N nœuds à chaque changement — 7 ms par nœud présent,
-  // deux fois par nœud exécuté, soit un gel en N² : 0,6 s sur cinq nœuds, 4,9 s sur vingt. Le
-  // magasin ne prévient que le composant concerné. Voir `ui/statuts.ts`.
-  const definirStatut = (nodeId: string, statut: string, progression?: string, progressionDuNoeud = false) => {
-    poserStatutNoeud(nodeId, statut, progression, progressionDuNoeud);
-  };
+  // LES STATUTS NE SE POSENT PLUS ICI : la boucle les dit au récepteur de la passe, qui les pose dans
+  // leur magasin. Voir `ui/recepteur-moteur.ts`.
 
   // ── Les remises à zéro, dans useRemiseAZero.ts : le bouton, le réglage, l'aval seul, tout ──
   // Un reset pendant un run en cours signale l'annulation : c'est le moteur qui sait s'il tourne.
@@ -260,7 +251,7 @@ export function useExecutionGraphe(o: OptionsExecution) {
     } = plan;
     servicesOrchestration().publierGraphe(plan.aDocumenter);
     for (const a of plan.avertissements) console.warn(a);
-    for (const s of plan.statuts) definirStatut(s.id, s.statut, s.progression);
+    poserLesStatutsDeLaPreparation(plan.statuts);
     console.log(plan.traceOrdre);
 
     const ctx = await obtenirAudio();
@@ -319,30 +310,11 @@ export function useExecutionGraphe(o: OptionsExecution) {
      * chacun posé dès qu'il est prêt.
      */
     const lecteursAEcrire = new Map<string, () => Promise<string | undefined>>();
-    const aPoser = new Set<string>();
-    /**
-     * Pose dans le magasin les correctifs des nœuds en attente.
-     *
-     * UN IDENTIFIANT QUI N'EST PAS CELUI D'UN NŒUD VISIBLE EST SAUTÉ, et c'est voulu : la boucle
-     * tourne sur le graphe APLATI, où un membre de méta s'appelle « outil1::cd ». Son méta, lui,
-     * agrège les résultats de ses internes et ne peut donc être posé qu'à la fin ; c'est la pose
-     * forcée, après la boucle, qui s'en charge.
-     */
-    const dejaPoses = new Set<string>();
     const passe: EtatDePasse = {
       resultats, messages, affichageParNoeud, designeParNoeud, tousNoeudsG, aretesReelles, ordreFiltre,
       noeudsPlats: plat.noeuds, estMetaEnScope, trouverDef, lecteursAEcrire, souffle,
       aretesRef, economieMemoireRef, pileMetaRef, t,
     };
-    const poserUnNoeud = async (id: string) => {
-      aPoser.delete(id);
-      const n = noeudsRef.current.find((x) => x.id === id);
-      if (!n) return;
-      const patch = await calculerCorrectifResultat(n, passe);
-      if (patch) poserResultat(id, patch);
-      dejaPoses.add(id);
-    };
-    const poserCeQuiEstPret = async () => { for (const id of [...aPoser]) await poserUnNoeud(id); };
     /**
      * Ce nœud-ci est-il celui qu'on REGARDE : sélectionné, ou terminal.
      *
@@ -357,50 +329,36 @@ export function useExecutionGraphe(o: OptionsExecution) {
       dansUnMeta: (pileMetaRef?.current?.length ?? 0) > 0,
       cacheParBulle: estCacheParBulle(tousNoeudsG, id),
     });
+    // ── LE RÉCEPTEUR DE LA PASSE, `ui/recepteur-moteur.ts` : ce que la boucle dit, posé dans les magasins ──
+    const noeudsVisibles = () => noeudsRef.current;
+    const recepteur = creerRecepteurDeLaPasse({ passe, noeudsVisibles, estRegarde });
     // ── LA BOUCLE NŒUD PAR NŒUD EST DANS LE CŒUR, `executerLesNoeuds` de `core/execution.ts` ──
     // Décider, appliquer la décision, exécuter, ranger le retour, avec ses trois points d'annulation.
     // Le crochet lui prête ce qu'il tient : le runtime, le contrôleur, le jeton, le registre, le cache,
-    // les sauts de boucle, les questions du domaine, la pose des statuts et celle des résultats.
+    // les sauts de boucle et les questions du domaine. Ce qu'elle dit part au récepteur, par `emettre`.
     await executerLesNoeuds<AudioContext>(plan, tables, {
       runtime: ctx, repertoireTravail: repertoire, signal: controller.signal, jeton, trouverDef,
       trouverPlugin: (f) => registreUI().trouverPlugin(f), typeFlux: (t) => registreUI().typeFlux(t),
       canoniser: valeurCanoniqueChoix, graineDuNoeud,
       lireCache: (id) => cache.lire(id),
       ecrireCache: (id, entree) => cache.ecrire(id, entree),
-      sauts, questions: () => servicesApercu(), poser: definirStatut, poserOmbre: poserStatutOmbre, t,
+      sauts, questions: () => servicesApercu(), t,
       cacheSeulement: perimetre?.cacheSeulement === true,
-      // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER : il rejoint ce qui
-      // est à poser, et il est posé aussitôt s'il est regardé.
-      quandUnNoeudAFini: (nodeId) => {
-        aPoser.add(nodeId);
-        // SEUL LE NŒUD QU'ON REGARDE EST POSÉ PENDANT LE RUN, et les autres à la fin.
-        //
-        // POURQUOI CE PARTAGE, ET CE QU'IL COÛTE. Montrer un résultat coûte le rendu de ce résultat :
-        // mesuré en A/B alterné sur douze nœuds, poser chacun pendant le run portait le run de 4 103
-        // à 4 920 ms, soit +20 %. Ce n'est pas une inefficacité à corriger — `setNodes`, le double
-        // calcul du correctif, le souffle et le parcours du tampon par l'indicateur de niveau ont été
-        // éliminés tour à tour, et le coût est resté. C'est le prix du dessin, que l'ancien moteur ne
-        // payait pas parce qu'il dessinait tout après le dernier nœud.
-        //
-        // ON NE LE PAIE DONC QUE POUR CE QU'ON REGARDE. Le nœud sélectionné ou terminal est posé
-        // aussitôt, les autres à la fin de la boucle : le coût tombe de N nœuds à un ou deux, et l'on
-        // voit sans attendre ce que l'on avait sous les yeux. Relevé par Fabien : « les lecteurs
-        // apparaissent longtemps après que les nœuds soient notés comme terminés dans les workflows
-        // longs ». La promesse n'est rendue, et attendue, que pour le nœud regardé.
-        if (estRegarde(nodeId)) return poserUnNoeud(nodeId);
-      },
+      emettre: recepteur.recevoir,
     });
 
     // LE MÉNAGE D'APRÈS PASSE ET LES LECTEURS, dans `ui/menage-apres-passe.ts`, dans cet ordre : le
     // cache lâché, les causes de boucle et les graines dans les messages, la pose finale, les demandes,
     // les champs autonomes et le statut des conteneurs ; puis chaque lecteur promis, un par un.
-    const noeudsVisibles = () => noeudsRef.current;
     await menageApresPasse(passe, {
       noeudsVisibles, nds, cache, deplie, expansions: plat.expansions, grainesTirees,
       tempsParVisible, ecartsParNoeud, demandesParNoeud, ordonnees, idsDecoratifs, boites,
-      dejaPoses, aPoser, poserCeQuiEstPret, definirStatut, setNodes, onGrapheGenere, onNodeInstalle,
+      dejaPoses: recepteur.dejaPoses, aPoser: recepteur.aPoser, poserCeQuiEstPret: recepteur.poserCeQuiEstPret,
+      definirStatut: recepteur.definirStatut, poserResultat: recepteur.poserResultat, setNodes, onGrapheGenere, onNodeInstalle,
     });
-    await ecrireLesLecteurs(passe, { signal: controller.signal, noeudsVisibles });
+    await ecrireLesLecteurs(passe, {
+      signal: controller.signal, noeudsVisibles, poserResultat: recepteur.poserResultat, poserApercu: recepteur.poserApercu,
+    });
 
     } catch (e: any) {
       console.error("lancer error", e);

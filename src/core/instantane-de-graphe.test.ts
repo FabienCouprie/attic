@@ -83,8 +83,8 @@ async function jouerSur(instantane: InstantaneDeGraphe): Promise<Map<string, unk
     trouverPlugin: (f) => FICHES[f]?.executer as FonctionPlugin<unknown, null> | undefined,
     typeFlux: () => undefined, canoniser: (_p, v) => v, graineDuNoeud: (_id, _nom, brut) => brut,
     lireCache: (id) => cache.get(id), ecrireCache: (id, e) => cache.set(id, e), sauts,
-    questions: () => QUESTIONS_NEUTRES, poser: () => {}, poserOmbre: () => {}, t: (cle) => cle,
-    quandUnNoeudAFini: () => {},
+    questions: () => QUESTIONS_NEUTRES, t: (cle) => cle,
+    emettre: () => {},
   });
   return tables.resultats;
 }
