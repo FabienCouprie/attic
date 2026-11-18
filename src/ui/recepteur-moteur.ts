@@ -30,6 +30,7 @@ import { estCacheParBulle } from "../core";
 import { statutDuContenu } from "../core/conteneurs";
 import { noeudRegarde } from "../core/memoire";
 import type { EvenementDuMoteur, RecepteurDuMoteur, RenduDuVisible } from "../core/protocole-moteur";
+import { creerRemises } from "../core/remises";
 import { Respiration } from "../core/respirer";
 import type { DemandeAuMoteur } from "../core/types";
 import { calculerCorrectifResultat, type PretsDeLAffichage } from "./correctif-resultat";
@@ -111,6 +112,8 @@ interface EtatDeLaPasse {
   demandes: Map<string, DemandeAuMoteur>;
   /** La passe a été arrêtée : l'écriture des lecteurs s'arrête avant le suivant. */
   arretee: boolean;
+  /** Le numéro des remises à zéro au départ de la passe : ce qui est noté après est périmé pour elle. */
+  depart: number;
 }
 
 export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
@@ -122,15 +125,23 @@ export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
    * la respiration part alors, une fois la préparation faite. Elle partait juste avant la boucle,
    * quelques millisecondes plus tard ; elle ne sert qu'à l'écriture des lecteurs.
    */
-  const neuve = (tousNoeudsG: PretsDeLAffichage["tousNoeudsG"]): EtatDeLaPasse => {
+  const neuve = (tousNoeudsG: PretsDeLAffichage["tousNoeudsG"], depart: number): EtatDeLaPasse => {
     // COPIÉE, ET NON PRÊTÉE : le pont la récrit à chaque rendu, et la passe garde la sienne.
     const liaison = { ...p.liaison() };
     return {
       affichage: { ...p.affichage, tousNoeudsG, lecteursAEcrire: lecteurs(), souffle: respiration(), t: liaison.t },
-      liaison, aPoser: new Set(), dejaPoses: new Set(), demandes: new Map(), arretee: false,
+      liaison, aPoser: new Set(), dejaPoses: new Set(), demandes: new Map(), arretee: false, depart,
     };
   };
-  let passe = neuve([]);
+  let passe = neuve([], 0);
+  /**
+   * CE QUI A ÉTÉ REMIS À ZÉRO OU ABANDONNÉ, et à quel numéro : le moteur le dit par `perimes`, depuis
+   * la pièce P6. Ce qu'une passe partie avant dit encore de ces nœuds, ou des internes de leurs métas,
+   * est écarté : le bilan d'une passe abattue reposait ce qu'un ↺ venait d'effacer (D1), et une passe
+   * dont le graphe venait d'être abandonné écrivait sur le graphe importé (D2). Voir `core/remises.ts`.
+   */
+  const remises = creerRemises();
+  const perime = (id: string) => remises.depuis(id, passe.depart);
   /**
    * Ce nœud-ci est-il celui qu'on REGARDE : sélectionné, ou terminal.
    *
@@ -150,9 +161,10 @@ export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
   const poserUnNoeud = async (ici: EtatDeLaPasse, id: string, rendu: RenduDuVisible<unknown> | undefined) => {
     ici.aPoser.delete(id);
     const n = noeudsVisibles().find((x) => x.id === id);
-    if (!n) return;
+    if (!n || perime(id)) return;
     const patch = await calculerCorrectifResultat(n, rendu, ici.affichage);
-    if (patch) poserResultat(id, patch);
+    // LE CORRECTIF SE CALCULE EN ATTENDANT : un ↺ a pu passer entre-temps.
+    if (patch && !perime(id)) poserResultat(id, patch);
     ici.dejaPoses.add(id);
   };
 
@@ -160,7 +172,7 @@ export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
     const { aPoser, dejaPoses, demandes, liaison, affichage } = ici;
     // CE QUI A EMPÊCHÉ UNE BOUCLE DE SE DÉPLIER SE DIT SUR LE NŒUD, avant la pose : le moteur a mis la
     // raison dans son message, et le nœud passe en erreur. Voir `ui/moteur/menage-apres-passe.ts`.
-    for (const [visible, dit] of b.problemesDeBoucle) definirStatut(visible, "erreur", dit);
+    for (const [visible, dit] of b.problemesDeBoucle) if (!perime(visible)) definirStatut(visible, "erreur", dit);
 
     // LA POSE FINALE, QUI NE LAISSE PERSONNE DE CÔTÉ. Les nœuds ordinaires ont déjà été posés par
     // paquets pendant la boucle ; celle-ci reprend TOUT LE MONDE, et c'est elle qui sert :
@@ -188,22 +200,23 @@ export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
     // ce sont deux comptes rendus du run, cumulés par nœud VISIBLE, méta compris. Le magasin ne
     // prévient pas quand la valeur ne change pas, ce que les deux `setNodes` d'avant faisaient à la
     // main en comparant le champ.
-    for (const [id, temps] of b.temps) poserResultat(id, { tempsExecution: temps });
-    for (const [id, e] of b.ecarts) poserResultat(id, { ecartNiveau: e });
+    for (const [id, temps] of b.temps) if (!perime(id)) poserResultat(id, { tempsExecution: temps });
+    for (const [id, e] of b.ecarts) if (!perime(id)) poserResultat(id, { ecartNiveau: e });
 
     // LES DEMANDES SE LISENT DANS LE RETOUR DU RUN, et rien n'est à effacer ensuite : elles ne se
     // sont jamais posées sur un nœud. Le composant rend sa demande au lieu de l'écrire.
     for (const [nodeId, demande] of demandes) {
+      if (perime(nodeId)) continue;
       if (liaison.onGrapheGenere && demande.grapheACreer?.nodes && demande.grapheACreer?.edges) {
         liaison.onGrapheGenere(nodeId, { nodes: demande.grapheACreer.nodes, edges: demande.grapheACreer.edges });
       }
     }
-    if (liaison.onNodeInstalle && [...demandes.values()].some((d) => d.paletteARelire)) liaison.onNodeInstalle();
+    if (liaison.onNodeInstalle && [...demandes].some(([id, d]) => d.paletteARelire && !perime(id))) liaison.onNodeInstalle();
 
     // LES CHAMPS AUTONOMES, préfixés `_`, qu'un composant à `affichageAutonome: true` a écrits sur le
     // nœud de la passe : sans ce report, personne ne les verrait. Un nœud dont aucun champ ne change
     // garde son objet. Les deux canaux déclarés ne passent pas par ici : ils viennent du rendu.
-    const champsAutonomesParNoeud = new Map(b.champsAutonomes);
+    const champsAutonomesParNoeud = new Map(b.champsAutonomes.filter(([id]) => !perime(id)));
     if (champsAutonomesParNoeud.size > 0) {
       p.setNodes((nds2) =>
         nds2.map((n) => {
@@ -222,7 +235,7 @@ export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
     // les passes. L'erreur qu'un méta s'est vu poser, sorties vides, reste la sienne. La laisser
     // « en cours » après le run ferait croire à un calcul qui n'en finit pas.
     for (const [c, contenu] of b.conteneurs) {
-      if (statutDe(c).statut === "erreur") continue;
+      if (perime(c) || statutDe(c).statut === "erreur") continue;
       const s = statutDuContenu(contenu.map((id) => statutDe(id).statut));
       const partiel = affichage.t("conteneur.partiel").replace("{n}", String(s.faits)).replace("{total}", String(s.total));
       definirStatut(c, s.statut, s.statut === "attente" ? partiel : undefined);
@@ -232,7 +245,7 @@ export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
   const recevoir = (e: EvenementDuMoteur<unknown>): Promise<void> | void => {
     switch (e.genre) {
       case "passeCommencee":
-        passe = neuve(e.noeuds);
+        passe = neuve(e.noeuds, e.numero);
         // SEULE UNE PASSE GLOBALE DIT QUE LE MOTEUR TOURNE : une passe ciblée ne doit pas effacer l'état
         // d'une passe globale encore en cours. La référence est mise à vrai avec l'état, sans attendre
         // React, pour bloquer les doubles clics.
@@ -245,10 +258,12 @@ export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
         // boucle sort par un `break` sans jamais statuer sur lui. Une réinitialisation
         // remettait tout à « attente », mais un arrêt simple ne touche à rien — le nœud
         // resterait donc à tourner à l'écran, indéfiniment, sans que rien ne tourne.
-        if (e.raison === "arret") {
-          for (const id of statutsPoses()) {
-            if (statutDe(id).statut === "en_cours") reinitialiserStatuts([id]);
-          }
+        //
+        // ET DE MÊME D'UN NŒUD PÉRIMÉ, depuis la pièce P6 : la passe dont le graphe a été abandonné
+        // continue, mais ce qu'elle dit de lui est écarté, son « terminé » compris. Il garderait
+        // l'« en cours » posé avant l'abandon.
+        for (const id of statutsPoses()) {
+          if ((e.raison === "arret" || perime(id)) && statutDe(id).statut === "en_cours") reinitialiserStatuts([id]);
         }
         // Seul le run global a positionné le drapeau ; une exécution ciblée (nœud prioritaire) ne
         // doit PAS effacer l'état d'un run global encore en cours.
@@ -268,13 +283,21 @@ export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
       case "passeArretee":
         passe.arretee = true;
         return;
+      case "perimes":
+        // CES NŒUDS VIENNENT D'ÊTRE REMIS À ZÉRO, OU LEUR GRAPHE ABANDONNÉ, et les internes de leurs
+        // métas avec eux : ce que la passe partie avant en dira encore est écarté.
+        remises.noter(e.numero, e.ids, true);
+        return;
       case "statut":
+        if (perime(e.id)) return;
         definirStatut(e.id, e.statut, e.progression, e.progressionDuNoeud);
         return;
       case "statutOmbre":
+        if (perime(e.id) || perime(e.visible)) return;
         poserStatutOmbre(e.id, e.visible, e.statut);
         return;
       case "noeudFini":
+        if (perime(e.id)) return;
         // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER : il rejoint ce qui
         // est à poser, et il est posé aussitôt s'il est regardé.
         passe.aPoser.add(e.id);
@@ -295,6 +318,7 @@ export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
         if (estRegarde(e.id)) return poserUnNoeud(passe, e.id, e.rendu);
         return;
       case "demande":
+        if (perime(e.id)) return;
         passe.demandes.set(e.id, e.demande);
         return;
       case "bilan":
@@ -323,10 +347,13 @@ export function creerRecepteurDuMoteur(p: PretsDuRecepteur): RecepteurDuShell {
     const { lecteursAEcrire, souffle } = ici.affichage;
     for (const [id, ecrire] of lecteursAEcrire) {
       if (ici.arretee) break;
+      // UN NŒUD PÉRIMÉ N'A PAS SON LECTEUR : on l'a remis à zéro, ou son graphe a été abandonné.
+      if (perime(id)) continue;
       poserApercu(id, 0);
       try {
         const url = await ecrire();
-        if (url) {
+        if (url && perime(id)) URL.revokeObjectURL(url);
+        else if (url) {
           const ficheId = noeudsVisibles().find((n) => n.id === id)?.data.ficheId;
           poserResultat(id, { audioResultatUrl: url, audioResultatNom: `${ficheId}.wav` });
         }

@@ -17,7 +17,14 @@
 //   — `remettreAZero` abat la passe en cours, puis lâche ses nœuds du cache : l'annulation était un
 //     appel à part, que la remise à zéro faisait avant d'effacer ;
 //   — `oublier`, `regler`, `exporterCache` et `importerCache` vont au cache, comme depuis P3b.
+//
+// ET LE MOTEUR NUMÉROTE CHAQUE REMISE À ZÉRO ET CHAQUE OUBLI, depuis la pièce P6 (`core/remises.ts`).
+// Une passe retient le numéro de son départ. Elle n'écrit plus au cache un nœud oublié depuis : elle
+// calcule sur un graphe d'avant. Et le récepteur apprend, par `perimes`, ce qui a été remis à zéro
+// ou abandonné, pour écarter ce que la passe en dirait encore. Un oubli simple, celui du SoundFont ou
+// de l'ouverture d'un méta, ne lui dit rien : ce qui est montré reste.
 import type { CommandeAuMoteur, EnvoiAuMoteur, QuestionsAuShell, RecepteurDuMoteur, ReponsesDuMoteur } from "../../core/protocole-moteur";
+import { creerRemises } from "../../core/remises";
 import { creerMoteurDuCache } from "./commandes";
 import { creerOrdonnanceurDuMoteur, fusionDeLot } from "./ordonnanceur-runs";
 import { creerLancerUnePasse, type Emplacement, type PerimetreCible, type PretsDeLaPasse } from "./passe";
@@ -76,6 +83,19 @@ export function creerMoteur(p: PretsDuMoteur): Moteur {
   /** Abat la passe en cours s'il y en a une, sans toucher à la file ni au lot. */
   const abattre = () => { if (ordonnanceur.enCours()) controleur.current?.abort(); };
 
+  /** Le numéro de la dernière remise à zéro ou du dernier oubli, et ce que chacun a touché. */
+  let numero = 0;
+  const oublis = creerRemises();
+  /**
+   * Note un geste qui périme ce qu'une passe partie avant dirait de ces nœuds. Le récepteur ne
+   * l'apprend que si ce qui est montré en dépend : une remise à zéro, ou un graphe abandonné.
+   */
+  const noter = (ids: readonly string[] | "tout", avecLeurContenu: boolean, direAuRecepteur: boolean) => {
+    numero += 1;
+    oublis.noter(numero, ids, avecLeurContenu);
+    if (direAuRecepteur) p.recepteur({ genre: "perimes", generation: ordonnanceur.generation(), numero, ids });
+  };
+
   const lancer = (c: Extract<CommandeAuMoteur, { genre: "lancer" }>): Promise<void> => {
     // LA DEMANDE LIE SA LANGUE ET SON DOSSIER MAINTENANT, et la passe les garde jusqu'au bout.
     const { t, repertoire } = q.demande();
@@ -83,6 +103,7 @@ export function creerMoteur(p: PretsDuMoteur): Moteur {
       graphe: () => q.graphe(), priorite: () => q.priorite(), noeudVisible: (id) => q.noeudVisible(id),
       noeudsVisibles: () => q.noeudsVisibles(), economieMemoire: () => q.economieMemoire(),
       recevoir: p.recepteur, cache, audio: p.audio, canoniser: p.canoniser, repertoire, t, controleur,
+      numero: () => numero, oublieDepuis: (id, depart) => oublis.depuis(id, depart),
     });
     const { lancerLeLot } = creerPilotesDePasse({ lancerUnePasse, graphe: () => q.graphe(), cache, arretDuLot });
     // LE PÉRIMÈTRE EST CELUI QUE L'APPELANT A DONNÉ, champ pour champ, et rien s'il n'en a donné aucun :
@@ -121,10 +142,13 @@ export function creerMoteur(p: PretsDuMoteur): Moteur {
     lancer,
     arreter,
     // UNE REMISE À ZÉRO PENDANT UNE PASSE L'ABAT D'ABORD : sans cela, le nœud en cours de calcul
-    // continuerait en arrière-plan et écraserait l'état qu'on vient d'effacer dès sa fin.
-    remettreAZero: (c) => { abattre(); envoyerAuCache(c); },
-    regler: (c) => envoyerAuCache(c),
-    oublier: (c) => envoyerAuCache(c),
+    // continuerait en arrière-plan et écraserait l'état qu'on vient d'effacer dès sa fin. PUIS ELLE
+    // LE DIT AU RÉCEPTEUR : le bilan de la passe abattue reposait ce qu'on venait d'effacer (D1).
+    remettreAZero: (c) => { abattre(); noter(c.ids, true, true); envoyerAuCache(c); },
+    regler: (c) => { noter([c.id], false, false); envoyerAuCache(c); },
+    // UN GRAPHE ABANDONNÉ SE DIT AU RÉCEPTEUR, et la passe qui tourne sur lui continue sans plus rien
+    // écrire, ni au cache ni à l'écran (D2). La décision d'arrêter la passe est à part.
+    oublier: (c) => { noter(c.ids, false, c.grapheAbandonne === true); envoyerAuCache(c); },
     exporterCache: (c) => envoyerAuCache(c),
     importerCache: (c) => envoyerAuCache(c),
   };

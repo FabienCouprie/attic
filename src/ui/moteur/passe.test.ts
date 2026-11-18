@@ -57,7 +57,7 @@ function passe(partiel: Partial<PretsDeLaPasse> & { surEvenement?: (e: Evenement
     economieMemoire: () => true, noeudsVisibles: () => GRAPHE.noeuds,
     recevoir: (e) => { dits.push(e); partiel.surEvenement?.(e, controleur); },
     cache: creerCacheDuMoteur(), audio: async () => null as never, canoniser: (_p, v) => v,
-    repertoire: "", t: (cle) => cle, controleur,
+    repertoire: "", t: (cle) => cle, controleur, numero: () => 0, oublieDepuis: () => false,
     ...partiel,
   });
   return { lancer, dits, controleur, genres: () => dits.map((e) => e.genre as string) };

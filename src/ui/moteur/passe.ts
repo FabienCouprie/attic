@@ -85,6 +85,10 @@ export interface PretsDeLaPasse extends Pick<QuestionsAuShell, "graphe" | "prior
   t: (cle: string) => string;
   /** Le contrôleur de la passe en cours, que l'arrêt et la remise à zéro abattent. */
   controleur: Emplacement<AbortController | null>;
+  /** Le numéro des remises à zéro et des oublis du moteur, à l'instant de la question. Voir `core/remises.ts`. */
+  numero: () => number;
+  /** Ce nœud a-t-il été remis à zéro ou oublié depuis ce numéro ? */
+  oublieDepuis: (id: string, depart: number) => boolean;
 }
 
 export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
@@ -102,6 +106,9 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
     // file au lieu de la jeter. Le laisser ici en plus ferait un second mécanisme capable d'avaler
     // une demande en silence, ce qui est précisément le défaut qu'on vient de retirer.
     const generation = jeton?.generation ?? 0;
+    // LE NUMÉRO DU DÉPART, pris avec l'instantané du graphe, dans le même tour : ce qui est remis à
+    // zéro ou oublié ensuite est périmé pour cette passe. Voir `core/remises.ts`.
+    const depart = p.numero();
     const cible = noeudPrioritaireId ? { cible: noeudPrioritaireId } : {};
     const controller = new AbortController();
     p.controleur.current = controller;
@@ -144,7 +151,7 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
       for (const a of plan.avertissements) console.warn(a);
       // LA PASSE COMMENCE : le récepteur montre que le moteur tourne, pour une passe globale, et pose
       // les statuts de la préparation, dans l'ordre.
-      p.recevoir({ genre: "passeCommencee", generation, ...cible, ordre: ordreFiltre, statuts: plan.statuts, noeuds: tousNoeudsG });
+      p.recevoir({ genre: "passeCommencee", generation, ...cible, ordre: ordreFiltre, statuts: plan.statuts, noeuds: tousNoeudsG, numero: depart });
       console.log(plan.traceOrdre);
 
       const ctx = await p.audio();
@@ -190,7 +197,9 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
         trouverPlugin: (f) => registreUI().trouverPlugin(f), typeFlux: (x) => registreUI().typeFlux(x),
         canoniser: p.canoniser, graineDuNoeud,
         lireCache: (id) => cache.lire(id),
-        ecrireCache: (id, entree) => cache.ecrire(id, entree),
+        // UN NŒUD OUBLIÉ DEPUIS LE DÉPART N'EST PAS RÉÉCRIT AU CACHE : il a été calculé sur un graphe
+        // d'avant, et l'oubli voulait que le suivant le refasse.
+        ecrireCache: (id, entree) => { if (!p.oublieDepuis(id, depart)) cache.ecrire(id, entree); },
         sauts, questions: () => servicesApercu(), t,
         cacheSeulement: perimetre?.cacheSeulement === true,
         emettre: p.recevoir,
