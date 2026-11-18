@@ -24,6 +24,7 @@ import type { GraineTiree } from "../core/graines-de-passe";
 import type { DemandeAuMoteur } from "../core/types";
 import { valeursLourdes } from "./correctif-resultat";
 import type { EtatDePasse } from "./etat-de-passe";
+import type { CacheDuMoteur } from "./moteur/cache";
 import { poserResultat } from "./resultats";
 import { poserApercu, statutDe as statutDeNoeud } from "./statuts";
 
@@ -38,7 +39,7 @@ export interface ApresLaPasse {
   noeudsVisibles: () => any[];
   /** Le graphe aplati et déplié : ses nœuds portent les champs qu'un composant autonome a écrits. */
   nds: NoeudG[];
-  cache: Map<string, any>;
+  cache: CacheDuMoteur;
   deplie: Pick<ResultatDepliage, "origines" | "problemes">;
   expansions: Map<string, string>;
   grainesTirees: Map<string, GraineTiree[]>;
@@ -98,9 +99,9 @@ export async function menageApresPasse(passe: EtatDePasse, a: ApresLaPasse): Pro
     const garde = resultatRetenu({
       cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
       economie,
-      lourd: valeursLourdes(cache.get(n.id)?.valeurs),
+      lourd: valeursLourdes(cache.lire(n.id)?.valeurs),
     });
-    if (!garde) cache.delete(n.id);
+    if (!garde) cache.oublier([n.id]);
   }
   // ET LE CORPS D'UNE BOUCLE DÉPLIÉE, QUE LA BOUCLE CI-DESSUS NE POUVAIT PAS VOIR. Les copies
   // portent des identifiants engendrés — « deb#3::echo » — et ne figurent pas parmi les nœuds
@@ -109,7 +110,7 @@ export async function menageApresPasse(passe: EtatDePasse, a: ApresLaPasse): Pro
   // premier tour pesant 5,1 Mo et le huitième 28,6, la chaîne allongeant son signal à chaque
   // passage. Ce que la FIN de boucle rend reste en cache, elle : c'est l'échafaudage qu'on lâche,
   // pas l'ouvrage. Voir `resultatRetenu` pour le prix consenti.
-  lacherLeCorps(deplie.origines.keys(), cache, economie);
+  lacherLeCorps(deplie.origines.keys(), (id) => cache.oublier([id]), economie);
 
   // CE QUI A EMPÊCHÉ UNE BOUCLE DE SE DÉPLIER SE DIT SUR LE NŒUD, et non dans la seule console.
   //

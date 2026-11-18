@@ -5,6 +5,7 @@
 // lui-même (`Inspector.tsx`) reste générique ; ce qui demande de connaître le domaine ou le graphe
 // est calculé ici.
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
+import type { CacheDuMoteur } from "./moteur/cache";
 import type { Edge } from "@xyflow/react";
 
 import { useGestes } from "./gestes-noeud";
@@ -19,7 +20,7 @@ export interface PropsInspecteurDuCanevas {
   sel: NoeudAtelier | null;
   setSel: Dispatch<SetStateAction<NoeudAtelier | null>>;
   setNodes: Dispatch<SetStateAction<NoeudAtelier[]>>;
-  cacheExec: MutableRefObject<Map<string, any>>;
+  cacheExec: MutableRefObject<CacheDuMoteur>;
   changerReglage: (nid: string, nom: string, val: number | string) => Record<string, number | string> | null;
   pushHistorique: () => void;
   supprimerNoeud: (id: string) => void;
@@ -83,7 +84,7 @@ export function InspecteurDuCanevas({
           // sans toucher aucun paramètre rejoue le résultat de la prise
           // précédente (empreinteParametres/empreinteEntrees ne voient pas
           // midiFichier, qui n'est pas dans `parametres`).
-          cacheExec.current.delete(id);
+          cacheExec.current.oublier([id]);
           setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n));
         }}
       />

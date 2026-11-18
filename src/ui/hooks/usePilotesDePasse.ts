@@ -15,6 +15,7 @@
 // lève dans `arreter` ; il est reçu ici par sa référence.
 import { useCallback } from "react";
 import type { MutableRefObject } from "react";
+import type { CacheDuMoteur } from "../moteur/cache";
 
 import { ancetres, aplatirGraphe, descendants, estSubstitution, type AreteG, type NoeudG } from "../../core";
 import { metaDeLInstantane } from "../../core/instantane-de-graphe";
@@ -37,7 +38,7 @@ export interface OptionsPilotesDePasse {
    * tableau vivant, et chaque passe pose la sienne en partant. Voir `core/instantane-de-graphe.ts`.
    */
   graphe: () => InstantaneDeGraphe;
-  cacheExec: MutableRefObject<Map<string, any>>;
+  cacheExec: MutableRefObject<CacheDuMoteur>;
   /** Levé par « Arrêter » : le lot s'arrête au fichier en cours, et non à la seule passe. */
   arretLotRef: MutableRefObject<boolean>;
 }
@@ -112,7 +113,7 @@ export function usePilotesDePasse({ lancerUnePasse, graphe, cacheExec, arretLotR
           for (const id of ancetres(finId, aretesG())) aRejouer.add(id);
         }
       }
-      for (const id of aRejouer) cacheExec.current.delete(id);
+      cacheExec.current.oublier(aRejouer);
     };
 
     try {
@@ -195,10 +196,8 @@ export function usePilotesDePasse({ lancerUnePasse, graphe, cacheExec, arretLotR
         // Le début de boucle et tout son aval doivent rejouer : leur empreinte n'a pas bougé d'une
         // passe à l'autre — le nœud n'a ni entrée ni paramètre qui change —, et le cache les
         // sauterait donc tous, le lot rendant trente fois le premier fichier.
-        cacheExec.current.delete(plan.debutId);
-        for (const id of descendants(plan.debutId, graphe().aretes as AreteG[])) {
-          cacheExec.current.delete(id);
-        }
+        cacheExec.current.oublier([plan.debutId]);
+        cacheExec.current.oublier(descendants(plan.debutId, graphe().aretes as AreteG[]));
         // CHAQUE FICHIER PASSE PAR LE PILOTE DES BOUCLES, ET NON PAR UNE PASSE NUE — relevé par
         // Fabien. Cette ligne appelait `lancerUnePasse` directement, si bien qu'une boucle par voix,
         // par créneau ou par cercle posée dans un graphe mené par lot n'était jamais PLANIFIÉE : le

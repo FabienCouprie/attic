@@ -15,6 +15,7 @@
 // que la dernière valeur d'une rafale.
 import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
+import type { CacheDuMoteur } from "../moteur/cache";
 
 import { reglagesApresChangement } from "../../core/reglages-lies";
 import { trouverDef } from "../ports-canevas";
@@ -29,7 +30,7 @@ type Noeud = { id: string; data: { ficheId: string; parametres: Record<string, n
 export interface OptionsRelanceApresReglage {
   noeudsRef: MutableRefObject<readonly Noeud[]>;
   lancerRef: MutableRefObject<any>;
-  cacheExec: MutableRefObject<Map<string, any>>;
+  cacheExec: MutableRefObject<CacheDuMoteur>;
   reinitialiserPourReglage: (nid: string) => void;
   setNodes: Dispatch<SetStateAction<any[]>>;
 }
@@ -72,7 +73,7 @@ export function useRelanceApresReglage({
    * se séparer — c'est écrit juste au-dessus, et je venais de le refaire.
    */
   const perimerEtRelancer = useCallback((nid: string) => {
-    cacheExec.current.delete(nid);
+    cacheExec.current.oublier([nid]);
     reinitialiserPourReglage(nid);
     relancerApresReglage(nid);
   }, [cacheExec, reinitialiserPourReglage, relancerApresReglage]);

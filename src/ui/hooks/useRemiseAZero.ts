@@ -12,13 +12,14 @@ import { descendants, type NoeudG } from "../../core";
 import { CHAMPS_GARDES_AU_REGLAGE, CLASSES } from "../../core/classes-de-champs";
 import { aRemettreAZero, avecLeursBulles } from "../../core/conteneurs";
 import { apresEffacement, urlsARevoquer } from "../../core/cycle-de-vie";
+import type { CacheDuMoteur } from "../moteur/cache";
 import { effacerResultats, resultatDe } from "../resultats";
 import { reinitialiserStatuts } from "../statuts";
 
 export interface OptionsRemiseAZero {
   noeudsRef: MutableRefObject<any[]>;
   aretesRef: MutableRefObject<any[]>;
-  cacheExec: MutableRefObject<Map<string, any>>;
+  cacheExec: MutableRefObject<CacheDuMoteur>;
   setNodes: Dispatch<SetStateAction<any[]>>;
   /** Annule le run en cours s'il y en a un : c'est le moteur qui sait s'il tourne. */
   annulerLeRunEnCours: () => void;
@@ -73,10 +74,9 @@ export function useRemiseAZero({ noeudsRef, aretesRef, cacheExec, setNodes, annu
     }));
     // LE CACHE D'UN MÉTA EST CELUI DE SES NŒUDS APLATIS, rangés sous `monMeta::…`, à toute
     // profondeur. N'effacer que l'identifiant visible laissait le run suivant reprendre tout son
-    // contenu du cache : mesuré, ses quatre nœuds internes repris et seule l'aval refaite.
-    for (const cle of [...cacheExec.current.keys()]) {
-      if (ids.has(cle.split("::")[0])) cacheExec.current.delete(cle);
-    }
+    // contenu du cache : mesuré, ses quatre nœuds internes repris et seule l'aval refaite. La règle
+    // vit dans `ui/moteur/cache.ts`.
+    cacheExec.current.oublierAvecMetas(ids);
   }, [setNodes]);
 
   // ── Les deux réinitialisations ──

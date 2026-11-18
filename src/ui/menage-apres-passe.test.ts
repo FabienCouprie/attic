@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { ecrireLesLecteurs, menageApresPasse, type ApresLaPasse } from "./menage-apres-passe";
 import type { EtatDePasse } from "./etat-de-passe";
+import { creerCacheDuMoteur } from "./moteur/cache";
 import { effacerResultats, resultatDe } from "./resultats";
 import { configurerServicesApercu, oublierServicesApercu } from "./services-apercu";
 import { poserStatut, reinitialiserStatuts, statutDe } from "./statuts";
@@ -18,6 +19,12 @@ import type { NoeudG } from "../core";
 
 /** Un son d'essai, que le domaine d'essai dit lourd ou non. */
 const son = (lourd: boolean) => ({ tampon: "x", lourd });
+/** Un cache du moteur rempli de ces entrées, dans cet ordre. */
+const cacheDe = (paires: [string, unknown][]) => {
+  const c = creerCacheDuMoteur();
+  for (const [id, e] of paires) c.ecrire(id, e as never);
+  return c;
+};
 
 function etat(partiel: Partial<EtatDePasse> = {}): EtatDePasse {
   return {
@@ -37,7 +44,7 @@ function apres(partiel: Partial<ApresLaPasse> = {}) {
   let noeudsEtat: any[] = [];
   const a: ApresLaPasse = {
     noeudsVisibles: () => [],
-    nds: [], cache: new Map(), deplie: { origines: new Map(), problemes: [] }, expansions: new Map(),
+    nds: [], cache: creerCacheDuMoteur(), deplie: { origines: new Map(), problemes: [] }, expansions: new Map(),
     grainesTirees: new Map(), tempsParVisible: new Map(), ecartsParNoeud: new Map(), demandesParNoeud: new Map(),
     ordonnees: [], idsDecoratifs: new Set(), boites: { ids: [], contenu: () => [] },
     dejaPoses: new Set(), aPoser: new Set(),
@@ -68,23 +75,23 @@ describe("le cache, lâché à la fin du run", () => {
       { id: "leger", data: { ficheId: "son", bulle: "b" } },
       { id: "dehors", data: { ficheId: "son" } },
     ];
-    const cache = new Map<string, any>([
+    const cache = cacheDe([
       ["lourd", { valeurs: [son(true)] }], ["leger", { valeurs: [son(false)] }], ["dehors", { valeurs: [son(true)] }],
     ]);
     const { a } = apres({ cache, noeudsVisibles: () => tousNoeudsG });
     await menageApresPasse(etat({ tousNoeudsG }), a);
-    expect([...cache.keys()].sort()).toEqual(["dehors", "leger"]);
+    expect([...cache.entrees().keys()].sort()).toEqual(["dehors", "leger"]);
   });
 
   it("LE CORPS D'UNE BOUCLE DÉPLIÉE EST LÂCHÉ, sauf hors économie de mémoire", async () => {
     const copies = () => new Map([["deb#2::echo", "echo"]]);
-    const cache = new Map<string, any>([["deb#2::echo", { valeurs: [son(false)] }], ["fin", { valeurs: [son(false)] }]]);
+    const cache = cacheDe([["deb#2::echo", { valeurs: [son(false)] }], ["fin", { valeurs: [son(false)] }]]);
     await menageApresPasse(etat(), apres({ cache, deplie: { origines: copies(), problemes: [] } }).a);
-    expect([...cache.keys()]).toEqual(["fin"]);
+    expect([...cache.entrees().keys()]).toEqual(["fin"]);
 
-    const garde = new Map<string, any>([["deb#2::echo", { valeurs: [son(false)] }]]);
+    const garde = cacheDe([["deb#2::echo", { valeurs: [son(false)] }]]);
     await menageApresPasse(etat({ economieMemoireRef: { current: false } }), apres({ cache: garde, deplie: { origines: copies(), problemes: [] } }).a);
-    expect([...garde.keys()]).toEqual(["deb#2::echo"]);
+    expect([...garde.entrees().keys()]).toEqual(["deb#2::echo"]);
   });
 });
 

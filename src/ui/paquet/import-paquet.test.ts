@@ -10,6 +10,7 @@ import { configurerServicesDomaine, oublierServicesDomaine } from "../../core/se
 import { depuisPaquetAudio, versPaquetAudio } from "../../audio/paquet-audio";
 import { configurerRegistreUI } from "../registre-actif";
 import { importerProjet, type OptionsImportProjet } from "../hooks/useImportProjet";
+import { creerCacheDuMoteur, type CacheDuMoteur } from "../moteur/cache";
 import { ecrirePaquet } from "./ecrire-paquet";
 import { lireRepertoire } from "./zip";
 import { VERSION_APPLICATION } from "./format-paquet";
@@ -29,7 +30,8 @@ function temoins() {
     setNodes: vi.fn(note("setNodes")), setEdges: vi.fn(note("setEdges")), setPile: vi.fn(note("setPile")),
     setCurrentFilePath: vi.fn(note("setCurrentFilePath")), rfInstance: null, repertoire: "",
     grapheRacineRef: { current: racine }, vueAPoserRef: { current: vue },
-    cacheExec: { current: new Map<string, unknown>([["ancien", { valeurs: [1] }]]) }, lancerRef: { current: lancer },
+    cacheExec: { current: ((c: CacheDuMoteur) => { c.ecrire("ancien", { valeurs: [1] } as never); return c; })(creerCacheDuMoteur()) },
+    lancerRef: { current: lancer },
   } as unknown as OptionsImportProjet;
   return { o, appels, vue, racine, lancer };
 }
@@ -91,7 +93,7 @@ describe("un paquet abîmé n'écrase pas le projet ouvert", () => {
       alertes.length = 0;
       await importerProjet(o, t, new File([octets as BlobPart], "projet.attic"));
       expect(appels, cas).toEqual([]);
-      expect([...o.cacheExec.current.keys()], cas).toEqual(["ancien"]);
+      expect([...o.cacheExec.current.entrees().keys()], cas).toEqual(["ancien"]);
       expect(o.vueAPoserRef.current, cas).toBe(vue);
       expect(o.grapheRacineRef.current, cas).toBe(racine);
       expect(lancer, cas).not.toHaveBeenCalled();
@@ -103,7 +105,7 @@ describe("un paquet abîmé n'écrase pas le projet ouvert", () => {
     const { o, appels, vue, racine, lancer } = temoins();
     await importerProjet(o, t, new File([await paquetSain("99.0.0") as BlobPart], "projet.attic"));
     expect(appels).toEqual([]);
-    expect([...o.cacheExec.current.keys()]).toEqual(["ancien"]);
+    expect([...o.cacheExec.current.entrees().keys()]).toEqual(["ancien"]);
     expect([o.vueAPoserRef.current, o.grapheRacineRef.current]).toEqual([vue, racine]);
     expect(lancer).not.toHaveBeenCalled();
     expect(alertes).toEqual([`REFUS:ATTIC 99.0.0 > ${VERSION_APPLICATION}`]);
@@ -123,8 +125,8 @@ describe("un paquet sain s'ouvre avec son cache", () => {
     expect(noeuds[0].data.audioFichier).toBeInstanceOf(File);
     expect(String(noeuds[0].data.audioUrl)).toMatch(/^blob:/);
     expect(noeuds[1].data.audioFichier).toBeUndefined();
-    expect([...o.cacheExec.current.keys()], "l'ancien graphe est oublié, le paquet le remplace").toEqual(["a"]);
-    expect((o.cacheExec.current.get("a") as { valeurs: unknown[] }).valeurs[0]).toBeInstanceOf(AudioBuffer);
+    expect([...o.cacheExec.current.entrees().keys()], "l'ancien graphe est oublié, le paquet le remplace").toEqual(["a"]);
+    expect((o.cacheExec.current.lire("a") as { valeurs: unknown[] }).valeurs[0]).toBeInstanceOf(AudioBuffer);
     expect(lancer).toHaveBeenCalledWith(undefined, { cacheSeulement: true, attendre: ["a", "b"] });
   });
 
@@ -135,7 +137,7 @@ describe("un paquet sain s'ouvre avec son cache", () => {
     const memeVersion = alertes.splice(0);
     const { o, lancer } = temoins();
     await importerProjet(o, t, new File([await paquetSain("0.0.1") as BlobPart], "projet.attic"));
-    expect([...o.cacheExec.current.keys()]).toEqual(["a"]);
+    expect([...o.cacheExec.current.entrees().keys()]).toEqual(["a"]);
     expect(lancer).toHaveBeenCalledWith(undefined, { cacheSeulement: true, attendre: ["a", "b"] });
     expect(alertes).toEqual(memeVersion);
   });
@@ -143,7 +145,7 @@ describe("un paquet sain s'ouvre avec son cache", () => {
   it("LE CONTENU DÉCIDE ET NON L'EXTENSION : un paquet nommé .json reste un paquet", async () => {
     const { o, lancer } = temoins();
     await importerProjet(o, t, new File([await paquetSain() as BlobPart], "projet.json"));
-    expect(o.cacheExec.current.has("a")).toBe(true);
+    expect(o.cacheExec.current.entrees().has("a")).toBe(true);
     expect(lancer).toHaveBeenCalledTimes(1);
   });
 });
@@ -155,7 +157,7 @@ describe("un .json s'ouvre comme avant", () => {
     await importerProjet(o, t, new File([PROJET], "projet.attic"));
     expect(appels.slice(0, 2)).toEqual(["setCurrentFilePath", "setPile"]);
     expect(o.setCurrentFilePath).toHaveBeenCalledWith("C:/p/projet.attic");
-    expect(o.cacheExec.current.size).toBe(0);
+    expect(o.cacheExec.current.taille()).toBe(0);
     expect(lancer).not.toHaveBeenCalled();
   });
 

@@ -149,8 +149,11 @@ export function sautsDeBoucles(depliees: readonly BoucleDepliee[], m: MoteurDuRu
  *
  * VENU DE `ui/hooks/useExecutionGraphe.ts`, qui est en dette de taille et ne peut pas grossir : ce
  * que ce lot y ajoute y est payé par ce qu'il en retire.
+ *
+ * IL REÇOIT LE GESTE D'OUBLI, ET NON LE CACHE : le cache est un objet du moteur
+ * (`ui/moteur/cache.ts`), que le cœur ne connaît pas.
  */
-export function lacherLeCorps(copies: Iterable<string>, cache: Map<string, unknown>, economie: boolean): void {
+export function lacherLeCorps(copies: Iterable<string>, oublier: (id: string) => void, economie: boolean): void {
   if (resultatRetenu({ cacheParBulle: false, corpsDeBoucle: true, economie })) return;
-  for (const c of copies) cache.delete(c);
+  for (const c of copies) oublier(c);
 }
