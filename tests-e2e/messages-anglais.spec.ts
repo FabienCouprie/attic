@@ -59,6 +59,8 @@ interface Passe {
   message: string | null;
   erreur: string | null;
   delaiDepasse: boolean;
+  /** L'exécuteur a écrit sur `ctx.noeud.data`, ce que le contrat de nœud interdit. Voir `banc-mesure.ts`. */
+  ecritSurData: boolean;
 }
 
 /**
@@ -137,6 +139,7 @@ test.describe("messages en anglais", () => {
         passes.push({
           id: f.id, classe, rangs,
           message: m?.message ?? null, erreur: m?.erreur ?? null, delaiDepasse: !m,
+          ecritSurData: m?.ecritSurData === true,
         });
       }
       if ((i + 1) % 25 === 0 || i + 1 === aFaire.length) console.log(`${i + 1}/${aFaire.length} · dernier : ${f.id}`);
@@ -163,12 +166,16 @@ test.describe("messages en anglais", () => {
         muettes: dans.filter((p) => !p.message && !p.erreur && !p.delaiDepasse).length,
       };
     });
-    writeFileSync("MESSAGES-ANGLAIS.json", `${JSON.stringify({ parClasse, fautifs, passes }, null, 2)}\n`, "utf8");
+    // CE QU'UN EXÉCUTEUR ÉCRIT SUR SON NŒUD SE RELÈVE AU PASSAGE, puisque ce balayage passe toutes les
+    // fiches au banc. Relevé et non refusé : c'est la décision prise pour l'instantané du graphe.
+    const ecrivent = [...new Set(passes.filter((p) => p.ecritSurData).map((p) => p.id))].sort();
+    writeFileSync("MESSAGES-ANGLAIS.json", `${JSON.stringify({ parClasse, fautifs, ecrivent, passes }, null, 2)}\n`, "utf8");
     console.log([
       "",
       ...parClasse.map((c) => `${c.classe.padEnd(24)} : ${c.fiches} fiches, ${c.passes} passes · ${c.avecMessage} messages · ${c.enErreur} erreurs · ${c.delaiDepasse} délais · ${c.muettes} muettes`),
       `en français              : ${fautifs.length}`,
       ...fautifs.map((l) => `  ${l.slice(0, 160)}`),
+      `écrivent sur leur nœud   : ${ecrivent.length}${ecrivent.length ? ` · ${ecrivent.join(", ")}` : ""}`,
       "",
     ].join("\n"));
 
