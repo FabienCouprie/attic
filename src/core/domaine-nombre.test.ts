@@ -143,8 +143,8 @@ async function executerGraphe(
     trouverPlugin: (id) => registre.trouverPlugin(id) as unknown as FonctionPlugin<unknown, TRuntime> | undefined,
     typeFlux: (id) => registre.typeFlux(id), canoniser: (_p, v) => v, graineDuNoeud: (_id, _nom, brut) => brut,
     lireCache: (id) => cache.get(id), ecrireCache: (id, e) => cache.set(id, e), sauts,
-    questions: () => QUESTIONS_NEUTRES, poser: () => {}, poserOmbre: () => {}, t: (cle) => cle,
-    quandUnNoeudAFini: () => {},
+    questions: () => QUESTIONS_NEUTRES, t: (cle) => cle,
+    emettre: () => {},
   });
   return tables.resultats;
 }
