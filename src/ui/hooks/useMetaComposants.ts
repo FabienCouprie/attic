@@ -5,7 +5,7 @@
 // que l'orchestrer avec l'état React (nœuds/arêtes/pile de navigation).
 import { useCallback, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
-import type { EnvoiDuCache } from "../moteur/commandes";
+import type { EnvoiDuCache } from "../moteur";
 import type { Edge } from "@xyflow/react";
 import {
   creerMeta, enregistrerMeta, trouverMeta, indexPort,

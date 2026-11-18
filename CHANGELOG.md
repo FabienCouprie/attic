@@ -6,6 +6,36 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE MOTEUR EST CONSTRUIT UNE FOIS, ET L'INTERFACE LUI ENVOIE DES COMMANDES : ELLE N'IMPORTE DE SON DOSSIER QUE L'INDEX.** Pièce P5b du plan de l'architecture par messages entre l'interface et le moteur, demandée par Fabien le 2026-11-18 : « Oui, P5b ». Elle clôt P5. Le comportement ne change pas, aux instants de liaison près, et c'est mesuré.
+  - **Le moteur**, `ui/moteur/moteur.ts`, tient le cache, l'ordonnanceur, le contrôleur de la passe en cours et l'arrêt du lot. Les sept commandes passent par `envoyer`.
+    - `lancer` pose la question `demande()` à l'envoi, et crée la passe et ses pilotes avec la langue et le dossier qu'elle rend.
+    - `arreter` lève l'arrêt du lot, vide la file et abat la passe.
+    - `remettreAZero` abat la passe en cours avant de lâcher le cache. Jusque-là, l'annulation était un appel à part.
+  - **Le pont**, `ui/hooks/useExecutionGraphe.ts`, a deux crochets. `useMoteur` construit le moteur par une référence paresseuse, avec ses questions et son récepteur, là où `App.tsx` créait le cache. `useExecutionGraphe` récrit la liaison à chaque rendu et envoie les commandes.
+  - **Le récepteur** sert toute la vie du moteur, avec un état par passe que `passeCommencee` remet à neuf. Il écrit les lecteurs dans la promesse du bilan, comme avant.
+  - **Le protocole** gagne `passeArretee`, qui interrompt l'écriture des lecteurs : le récepteur lisait jusqu'ici le signal de la passe, hors protocole. Les questions deviennent celles que le moteur pose : `noeudsVisibles` et `demande` entrent, `estRegarde` et `dansUnMeta` sortent, puisque le récepteur en décide.
+  - **L'index** `ui/moteur/index.ts` est la seule porte du dossier. `docs/frontiere-moteur.test.ts` le tient, types compris, par un cas neuf.
+  - **Les écarts**, sans effet visible :
+    - la langue et le dossier d'une demande sont lus à l'envoi, dans la liaison du dernier rendu, et non dans le rendu qui avait fabriqué le `lancer` de l'appelant. Seule la dictée garde un `lancer` 80 ms ;
+    - la langue du récepteur et les deux rappels de l'atelier sont lus au début de la passe. Ils ne diffèrent que si la langue change pendant qu'une demande attend ;
+    - `lancer` et `arreter` sont stables, et `arreter` ne rend plus le booléen que personne ne lisait ;
+    - la remise à zéro abat la passe et lâche le cache ensemble, au début de son geste, dans un même bloc synchrone.
+  - **Le moteur a son test**, `ui/moteur/moteur.test.ts`, 4 cas : la demande garde le dossier de son envoi et attend la précédente ; l'arrêt se dit à l'instant et vide la file ; la remise à zéro abat la passe et lâche le cache ; sans passe en cours, rien n'est dit.
+  - **Les fautes plantées, vues rouges puis remises**, 8 :
+    - le garde tombe sur un module du dossier importé hors de l'index, et sur un type de la passe importé par le pont ;
+    - le test du moteur tombe sur une remise à zéro qui n'abat plus la passe, un arrêt qui garde la file, et une passe qui ne dit pas son arrêt ;
+    - le test du récepteur tombe sur `passeArretee` ignoré, l'état d'une passe gardé par la suivante, et les lecteurs hors du bilan.
+  - **Les épreuves dans l'application** :
+    - le journal de passe rend ses 30 scénarios identiques en 6,7 min, 0 écriture sur l'instantané ;
+    - les boucles, le lot et la sérialisation sont verts (14 cas) ;
+    - dans Electron, le paquet `.attic` (1), les deux fenêtres (6) et la persistance (2) passent ;
+    - les 15 empreintes d'exemples sont identiques, et `executer` affiche « 1 passed » sur deux graphes.
+  - **L'ordre de vérification** :
+    - `npx tsc -b` est vert ;
+    - `npx oxlint` donne 27 avertissements et 0 erreur ;
+    - la passe complète est verte en 24 min 42 s : 11 120 cas, 17 sautés.
+
+    `App.tsx` passe de 400 à 399 lignes de code, et le pont de 110 à 92.
 - **LE MOTEUR PASSE DANS SON DOSSIER, SANS REACT : LA PASSE DIT QU'ELLE COMMENCE ET QU'ELLE FINIT, ET LE GARDE SUIT LES IMPORTS DE PROCHE EN PROCHE.** Pièce P5a du plan de l'architecture par messages entre l'interface et le moteur, demandée par Fabien le 2026-11-18 : « P5 ». P5 est coupée en deux, comme P3 et P4 : P5a déplace le moteur sans toucher aux instants de liaison, et P5b fera le pont. Aucun comportement ne change, à un minutage près, et c'est mesuré.
   - **La passe**, `ui/moteur/passe.ts`, sortie de `useExecutionGraphe` : préparer, la boucle, le ménage, les lecteurs. Elle écrivait elle-même, au début et dans son `finally`, dans l'état de React et dans deux magasins. Elle dit maintenant au récepteur `passeCommencee`, une fois la préparation faite, avec l'ordre, les statuts et les nœuds visibles de la passe, puis `passeTerminee` dans son `finally`, avec sa raison : `fin`, `arret` ou `erreur`. Les questions du protocole sont posées au même instant qu'avant.
   - **Le dossier du moteur** reçoit l'ordonnanceur, les deux pilotes de passes (`ui/moteur/pilotes.ts`), le ménage et ses tables. Ce sont des fonctions sans React, que le pont recrée quand `t` ou le dossier de travail changent, comme les `useCallback` d'avant. `valeursLourdes` rejoint `ui/services-apercu.ts`, et la bascule d'économie de mémoire devient une question.

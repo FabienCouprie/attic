@@ -97,6 +97,7 @@ const EVENEMENTS = {
     genre: "demande", generation: 7, id: "noeud-2",
     demande: { grapheACreer: { nodes: [{ ficheId: "echo", label: "Écho" }], edges: [{ source: 0, target: 0 }] }, paletteARelire: true },
   },
+  passeArretee: { genre: "passeArretee", generation: 7 },
   passeTerminee: { genre: "passeTerminee", generation: 7, cible: "noeud-3", raison: "arret" },
 } satisfies ParGenre<EvenementDuMoteur<Poignee>>;
 
@@ -116,7 +117,8 @@ describe("le protocole entre l'interface et le moteur", () => {
 
   it("LES TABLES PORTENT UN EXEMPLAIRE PAR GENRE, chacun sous sa clé", () => {
     expect(Object.keys(COMMANDES)).toHaveLength(7);
-    expect(Object.keys(EVENEMENTS)).toHaveLength(7);
+    // HUIT DEPUIS LA PIÈCE P5B, qui ajoute `passeArretee` : le récepteur lisait le signal de la passe.
+    expect(Object.keys(EVENEMENTS)).toHaveLength(8);
     for (const [cle, message] of [...Object.entries(COMMANDES), ...Object.entries(EVENEMENTS)]) {
       expect(message.genre).toBe(cle);
     }

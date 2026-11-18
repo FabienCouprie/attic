@@ -9,12 +9,14 @@
 //   — `passeCommencee` une fois la préparation faite, avec les statuts qu'elle pose et les nœuds
 //     visibles de la passe ; c'est à cet instant que le récepteur montre que le moteur tourne ;
 //   — les événements de la boucle et du ménage, comme depuis les pièces P4a et P4b ;
+//   — `passeArretee` à l'instant où son contrôleur est abattu, depuis la pièce P5b : le récepteur
+//     lisait ce signal avant chaque lecteur ;
 //   — `passeTerminee` dans le `finally`, avec sa raison : la fin, l'arrêt ou l'erreur.
 //
 // LES QUESTIONS DU PROTOCOLE SONT POSÉES AU MÊME INSTANT QU'AVANT : le graphe au départ, la priorité
 // à la préparation, le nœud visible à la pose, la bascule d'économie au ménage. `t` et `repertoire`
-// sont liés au moment de la demande : le pont recrée cette fonction quand ils changent, comme le
-// `useCallback` d'avant, dont ils étaient les deux dépendances.
+// sont liés au moment de la demande : le moteur crée cette fonction à chaque `lancer`, avec ce que
+// `demande()` répond à cet instant. Voir `ui/moteur/moteur.ts`.
 //
 // `docs/frontiere-moteur.test.ts` tient que rien du dossier du moteur n'atteint React, React Flow ni
 // les trois magasins, par les imports transitifs.
@@ -64,30 +66,21 @@ export type LancerUnePasse = (noeudPrioritaireId?: string, perimetre?: Perimetre
 export interface Emplacement<T> { current: T }
 
 /**
- * Le récepteur d'une passe : ce qu'elle lui dit, et les lecteurs qu'elle lui fait écrire une fois le
- * bilan posé. Il est à l'interface ; le moteur n'en connaît que cette forme.
+ * Ce que le moteur prête à une passe : les questions du protocole qu'elle pose, chacune à l'instant
+ * où elle la lisait, le récepteur, le cache, et ce que la demande a lié.
  */
-export interface RecepteurDeLaPasse {
+export interface PretsDeLaPasse extends Pick<QuestionsAuShell, "graphe" | "priorite" | "noeudVisible" | "noeudsVisibles" | "economieMemoire"> {
+  /**
+   * Le récepteur, à qui la passe dit tout : son début, sa boucle, son ménage, son arrêt et sa fin.
+   * L'écriture des lecteurs est à lui, une fois le bilan posé, et `passeArretee` l'interrompt.
+   */
   recevoir: RecepteurDuMoteur<unknown>;
-  ecrireLesLecteurs: (signal: AbortSignal) => Promise<void>;
-}
-
-/** Ce que le pont prête à la passe. */
-export interface PretsDeLaPasse {
-  /** Les questions du protocole que la passe pose, chacune à l'instant où elle la lisait. */
-  graphe: QuestionsAuShell["graphe"];
-  priorite: QuestionsAuShell["priorite"];
-  noeudVisible: QuestionsAuShell["noeudVisible"];
-  economieMemoire: QuestionsAuShell["economieMemoire"];
-  /** Les nœuds visibles, que le ménage lit au moment du ménage : un nœud ajouté pendant la passe y est vu. */
-  noeudsVisibles: () => readonly any[];
-  /** Un récepteur neuf, un par passe. */
-  recepteur: () => RecepteurDeLaPasse;
   cache: CacheDuMoteur;
   /** Le contexte audio, créé à la première passe et réveillé à chacune. */
   audio: () => Promise<AudioContext>;
   /** La forme canonique d'un choix, que la langue de l'interface ne doit pas changer. */
   canoniser: PretsDeLaBoucle<AudioContext>["canoniser"];
+  /** Liés à l'instant de la demande : la réponse de `demande()` quand `lancer` a été envoyé. */
   repertoire: string;
   t: (cle: string) => string;
   /** Le contrôleur de la passe en cours, que l'arrêt et la remise à zéro abattent. */
@@ -112,7 +105,9 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
     const cible = noeudPrioritaireId ? { cible: noeudPrioritaireId } : {};
     const controller = new AbortController();
     p.controleur.current = controller;
-    const recepteur = p.recepteur();
+    // L'ARRÊT SE DIT À L'INSTANT OÙ IL A LIEU : le récepteur lisait le signal de la passe avant chaque
+    // lecteur, il reçoit maintenant un événement, synchrone comme l'abandon du contrôleur.
+    controller.signal.addEventListener("abort", () => { p.recevoir({ genre: "passeArretee", generation }); }, { once: true });
     let ecrituresDeLaPasse: (() => string[]) | null = null;
     // UN GRAPHE VIDE NE FAIT RIEN, pas même dire qu'il commence ou qu'il finit : le moteur rendait la
     // main avant de rien poser. Le graphe se lit dans le `try`, où une exception est relevée.
@@ -149,7 +144,7 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
       for (const a of plan.avertissements) console.warn(a);
       // LA PASSE COMMENCE : le récepteur montre que le moteur tourne, pour une passe globale, et pose
       // les statuts de la préparation, dans l'ordre.
-      recepteur.recevoir({ genre: "passeCommencee", generation, ...cible, ordre: ordreFiltre, statuts: plan.statuts, noeuds: tousNoeudsG });
+      p.recevoir({ genre: "passeCommencee", generation, ...cible, ordre: ordreFiltre, statuts: plan.statuts, noeuds: tousNoeudsG });
       console.log(plan.traceOrdre);
 
       const ctx = await p.audio();
@@ -198,20 +193,19 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
         ecrireCache: (id, entree) => cache.ecrire(id, entree),
         sauts, questions: () => servicesApercu(), t,
         cacheSeulement: perimetre?.cacheSeulement === true,
-        emettre: recepteur.recevoir,
+        emettre: p.recevoir,
         noeudVisible: p.noeudVisible,
       });
 
       // LE MÉNAGE D'APRÈS PASSE, dans `menage-apres-passe.ts` : le cache lâché, les causes de boucle et
       // les graines dans les messages, puis le bilan, que le récepteur pose dans cet ordre : la pose
       // finale, les temps et les écarts, les demandes, les champs autonomes et le statut des
-      // conteneurs. Puis chaque lecteur promis, un par un.
+      // conteneurs. Puis chaque lecteur promis, un par un : la promesse du bilan les comprend.
       await menageApresPasse(passe, {
         noeudsVisibles: p.noeudsVisibles, nds, cache, deplie, expansions: plat.expansions, grainesTirees,
         tempsParVisible, ecartsParNoeud, demandesParNoeud, ordonnees, idsDecoratifs, boites,
-        generation, emettre: recepteur.recevoir,
+        generation, emettre: p.recevoir,
       });
-      await recepteur.ecrireLesLecteurs(controller.signal);
     } catch (e: any) {
       tombee = true;
       console.error("lancer error", e);
@@ -222,7 +216,7 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
       // cours » d'un arrêt, le drapeau d'une passe globale, la priorité. Voir `ui/recepteur-moteur.ts`.
       if (!vide) {
         const raison = controller.signal.aborted ? "arret" : tombee ? "erreur" : "fin";
-        recepteur.recevoir({ genre: "passeTerminee", generation, ...cible, raison });
+        p.recevoir({ genre: "passeTerminee", generation, ...cible, raison });
       }
     }
   };

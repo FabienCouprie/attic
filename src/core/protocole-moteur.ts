@@ -211,6 +211,12 @@ export type EvenementDuMoteur<TValeur> =
    * Le moteur le dit avant le bilan, et le récepteur le transmet à l'atelier après la pose finale.
    */
   | { genre: "demande"; generation: Generation; id: string; demande: DemandeAuMoteur }
+  /**
+   * La passe en cours vient d'être arrêtée, par « Arrêter » ou par une remise à zéro. Dit à l'instant
+   * même : ce que le récepteur fait encore pour elle, l'écriture des lecteurs, s'arrête au suivant. La
+   * passe finit ensuite, en `passeTerminee` de raison `arret`.
+   */
+  | { genre: "passeArretee"; generation: Generation }
   /** La passe est finie, arrêtée ou tombée. */
   | {
     genre: "passeTerminee";
@@ -248,21 +254,28 @@ export interface InstantaneDeGraphe {
 /**
  * Ce que le moteur lit de l'interface, au moment où il le lit. Synchrone, en lecture seule.
  *
- * CHAQUE QUESTION GARDE UN INSTANT DE LECTURE QUI EXISTE AUJOURD'HUI : un câble tiré pendant un run
- * long compte pour dire si un nœud est regardé, et un nœud ajouté pendant la passe est vu par la pose
- * finale.
+ * CHAQUE QUESTION GARDE UN INSTANT DE LECTURE QUI EXISTE AUJOURD'HUI : un nœud ajouté pendant la passe
+ * est vu par la pose finale, et une demande mise en file garde la langue et le dossier de l'instant où
+ * elle a été faite.
+ *
+ * DEUX QUESTIONS DU PLAN N'EN SONT PLUS, depuis la pièce P5b : dire si un nœud est regardé, et si un méta
+ * est ouvert. C'est le récepteur qui en décide, pour poser un nœud aussitôt ou à la fin ; le moteur ne
+ * les pose jamais.
  */
 export interface QuestionsAuShell {
   /** Le graphe à exécuter, lu au départ de chaque passe, et pour un lot avant chacune des siennes. */
   graphe(): InstantaneDeGraphe;
   /** Le nœud prioritaire posé sur le canevas, lu à la préparation. */
   priorite(): string | null;
-  /** Ce nœud est-il celui qu'on regarde : sélectionné ou terminal, dans une bulle ou non. */
-  estRegarde(id: string): boolean;
   /** Le nœud visible de cet identifiant au moment de la pose, ou rien s'il n'en est pas un. */
   noeudVisible(id: string): Readonly<NoeudG> | undefined;
-  /** La bascule d'économie de mémoire. */
+  /** Les nœuds visibles du canevas, lus par le ménage, et par la repose d'un paquet qui attend les siens. */
+  noeudsVisibles(): readonly Readonly<NoeudG>[];
+  /** La bascule d'économie de mémoire, lue au ménage. */
   economieMemoire(): boolean;
-  /** Un méta est-il ouvert dans le canevas. */
-  dansUnMeta(): boolean;
+  /**
+   * Ce qu'une demande lie à l'instant où elle est envoyée : la langue des messages et le dossier de
+   * travail. Le moteur la pose dans `lancer`, et la passe garde ses réponses jusqu'au bout.
+   */
+  demande(): { t: (cle: string) => string; repertoire: string };
 }

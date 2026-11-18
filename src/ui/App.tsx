@@ -34,8 +34,7 @@ import type { NoeudAtelier } from "./noeud-atelier";
 import { tailleDefaut } from "./tailles-noeuds";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
-import { useExecutionGraphe } from "./hooks/useExecutionGraphe";
-import { creerMoteurDuCache, type MoteurDuCache } from "./moteur/commandes";
+import { useExecutionGraphe, useMoteur } from "./hooks/useExecutionGraphe";
 import { useCopierColler } from "./hooks/useCopierColler";
 import { resultatDe } from "./resultats";
 import { definirPrioritaire } from "./priorite";
@@ -161,10 +160,12 @@ function Atelier() {
     }
   }, []);
   const lancerRef = useRef<any>(null);
-  // LE CACHE EST AU MOTEUR, et l'interface ne lui parle que par commandes : `envoyer`. Seul le moteur,
-  // `useExecutionGraphe`, reçoit l'objet entier. Voir `ui/moteur/commandes.ts`.
-  const moteurDuCache = useRef<MoteurDuCache>(creerMoteurDuCache());
-  const envoyer = moteurDuCache.current.envoyer;
+  // LE MOTEUR EST CONSTRUIT UNE FOIS PAR LE PONT, avec ses questions et son récepteur, et l'interface ne
+  // lui parle que par commandes : `envoyer`. Voir `ui/hooks/useExecutionGraphe.ts` et `ui/moteur/`.
+  const pont = useMoteur({
+    noeudsRef, aretesRef, enExecRef, setEnExecution, audioCtxRef, economieMemoireRef, pileMetaRef: pileRef, setNodes,
+  });
+  const envoyer = pont.envoyer;
   const callbacksNoeudRef = useRef<(() => Record<string, (...args: any[]) => any>) | null>(null);
 
   // LE FICHIER EST À LA FENÊTRE : une fenêtre neuve n'en a pas. Voir `ui/fenetre.ts`.
@@ -233,9 +234,7 @@ function Atelier() {
   // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
   const poserGrapheEngendre = usePoseGrapheEngendre({ noeudsRef, setNodes, setEdges, lang });
   const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout } = useExecutionGraphe({
-    noeudsRef, aretesRef, enExecRef, audioCtxRef, moteurDuCache: moteurDuCache.current, economieMemoireRef,
-    pileMetaRef: pileRef,
-    edges, setNodes, setEnExecution, repertoire,
+    pont, noeudsRef, aretesRef, setNodes, repertoire,
     // La pose d'un graphe demandé par un composant, dans hooks/usePoseGrapheEngendre.ts.
     onGrapheGenere: poserGrapheEngendre,
     onNodeInstalle: () => {

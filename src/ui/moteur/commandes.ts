@@ -6,16 +6,16 @@
 // l'objet : elle envoie une commande du protocole (`core/protocole-moteur.ts`), et c'est ce module
 // qui l'applique au cache. Le moteur lui-même, la passe, ses pilotes et le ménage, garde l'objet.
 //
-// CINQ GENRES SUR LES SEPT DES COMMANDES, ceux qui touchent au cache. `lancer` et `arreter` restent
-// des appels de fonction jusqu'à ce que le moteur tienne l'ordonnanceur (pièce P5).
+// CINQ GENRES SUR LES SEPT DES COMMANDES, ceux qui touchent au cache. `lancer` et `arreter` sont au
+// moteur depuis la pièce P5b, qui tient l'ordonnanceur et passe ici ce qui touche au cache
+// (`moteur.ts`).
 //
 //   — `oublier` lâche des entrées, ou toutes : les médias, les zones, le SoundFont, Ctrl+Z, l'import,
 //     les métas et l'inspecteur ;
 //   — `regler` lâche l'entrée du nœud dont un réglage vient de changer. Sa remise à zéro, l'aval puis
 //     lui-même, part ensuite en deux `remettreAZero` : c'est l'ordre d'avant ;
 //   — `remettreAZero` lâche ces nœuds et les internes de leurs métas, par la règle du `::`. LA PASSE
-//     EN COURS N'EST PAS ANNULÉE ICI : la remise à zéro l'annule avant d'effacer, comme avant, et
-//     l'annulation rejoindra la commande quand le moteur tiendra l'ordonnanceur. `garder` ne sert
+//     EN COURS N'EST PAS ABATTUE ICI, mais par le moteur, juste avant (`moteur.ts`). `garder` ne sert
 //     qu'aux résultats montrés, que l'interface efface elle-même : le cache n'en a pas l'usage ;
 //   — `exporterCache` rend les entrées À L'INSTANT DE LA DEMANDE, en paires, ce qu'un paquet `.attic`
 //     emporte ;
@@ -56,7 +56,7 @@ const APPLIQUER: { [G in CommandeDuCache["genre"]]: (cache: CacheDuMoteur, c: Ex
 };
 
 /**
- * Un cache neuf et la façon de lui parler. Un par fenêtre, tenu par `App.tsx`.
+ * Un cache neuf et la façon de lui parler. Un par fenêtre, tenu par le moteur (`moteur.ts`).
  *
  * LA CONVERSION NE DIT RIEN QUE LA TABLE NE GARANTISSE : chaque entrée y est typée par son genre, sa
  * commande et sa réponse. Ce que le compilateur ne sait pas suivre, c'est que `c.genre` choisit

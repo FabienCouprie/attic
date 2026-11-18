@@ -360,6 +360,8 @@ describe("l'ordonnanceur d'exécutions", () => {
 describe("le moteur d'exécution", () => {
   const SOURCE = readFileSync(join(__dirname, "..", "hooks", "useExecutionGraphe.ts"), "utf8");
   const PASSE = readFileSync(join(__dirname, "passe.ts"), "utf8");
+  // LE MOTEUR TIENT L'ORDONNANCEUR DEPUIS LA PIÈCE P5B, et le crochet lui envoie la commande `lancer`.
+  const MOTEUR = readFileSync(join(__dirname, "moteur.ts"), "utf8");
 
   /**
    * La source SANS SES COMMENTAIRES, et c'est une faute déjà payée.
@@ -369,14 +371,17 @@ describe("le moteur d'exécution", () => {
    * piège que le commentaire d'`accessSync` dans `electron/dossier-travail.test.ts`, et que
    * l'homonyme qui survivait dans l'expression surveillée.
    */
-  const CODE = [SOURCE, PASSE].join("\n").split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
+  const CODE = [SOURCE, PASSE, MOTEUR].join("\n").split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
 
   it("N'EXPOSE QU'UNE PORTE, et elle passe par l'ordonnanceur", () => {
     const rendu = SOURCE.slice(SOURCE.lastIndexOf("return { lancer"));
     expect(rendu, "le hook doit rendre `lancer` et `arreter`").toContain("arreter");
-    // La définition de `lancer` rendu au shell : elle doit déléguer.
+    // La définition de `lancer` rendu au shell : elle envoie la commande au moteur.
     const def = SOURCE.match(/const lancer = useCallback\([^;]*/)?.[0] ?? "";
-    expect(def, "`lancer` doit passer par `ordonnanceur.demander`").toContain("ordonnanceur.demander");
+    expect(def, "`lancer` doit envoyer la commande `lancer`").toMatch(/envoyer\(\{ genre: "lancer"/);
+    // Et la commande, dans le moteur, passe par l'ordonnanceur, sur ses deux chemins.
+    const commande = MOTEUR.slice(MOTEUR.indexOf("const lancer = "), MOTEUR.indexOf("const arreter = "));
+    expect(commande.match(/return ordonnanceur\.demander\(/g) ?? [], "chaque chemin de `lancer` passe par `ordonnanceur.demander`").toHaveLength(2);
   });
 
   it("et le garde qui jetait une demande en silence a bien disparu", () => {

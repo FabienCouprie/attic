@@ -4,8 +4,8 @@
 // Sortis d'`useExecutionGraphe.ts` le 2026-11-01, à l'identique (sortie 1 du plan
 // `work/plan-useExecutionGraphe-2026-11-01.md`), dans un crochet, `usePilotesDePasse`. La pièce P5a du
 // plan de l'architecture par messages les a mis dans le dossier du moteur, sans React : deux fonctions
-// créées ensemble, que le pont recrée quand la passe qu'elles rejouent change, comme les deux
-// `useCallback` d'avant le faisaient. Ils ne connaissent ni la topologie, ni les
+// créées ensemble, avec la passe qu'elles rejouent, par le moteur à chaque demande (`moteur.ts`, pièce
+// P5b). Ils ne connaissent ni la topologie, ni les
 // résultats, ni rien du moteur : ils rejouent `lancerUnePasse`, qui reste une exécution entière avec
 // ses statuts, son cache, son annulation et son `AbortController`. C'est le seul endroit du shell qui
 // importe `plugins/lotGlobal` et `plugins/boucleSequencesGlobal`, et c'est un choix écrit : les

@@ -1,0 +1,135 @@
+// ui/moteur/moteur.ts — Le moteur, construit une fois, et la seule façon de lui parler : `envoyer`.
+//
+// POURQUOI. Pièce P5b du plan de l'architecture par messages entre l'interface et le moteur. Le pont,
+// `ui/hooks/useExecutionGraphe.ts`, tenait l'ordonnanceur, le contrôleur de la passe en cours et le
+// drapeau d'arrêt du lot, et recréait la passe et ses pilotes à chaque rendu où la langue ou le
+// dossier de travail changeaient. Tout cela est ici, sans React. Le moteur est construit une fois,
+// par une référence paresseuse du pont, et il reçoit à sa construction ses questions et son
+// récepteur, jamais par un effet : `StrictMode` doublerait chaque événement.
+//
+// LES SEPT COMMANDES DU PROTOCOLE PASSENT PAR `envoyer`, de façon synchrone :
+//
+//   — `lancer` pose la question `demande()` à l'instant où il est envoyé, et crée la passe et ses
+//     pilotes avec ses réponses : une demande mise en file garde la langue et le dossier de cet
+//     instant, comme la fermeture d'avant. Puis il passe par l'ordonnanceur, et rend la promesse de la
+//     passe. La repose d'un paquet attend que l'atelier montre ses nœuds, et ne se fond avec rien ;
+//   — `arreter` lève l'arrêt du lot, vide la file et abat la passe en cours ;
+//   — `remettreAZero` abat la passe en cours, puis lâche ses nœuds du cache : l'annulation était un
+//     appel à part, que la remise à zéro faisait avant d'effacer ;
+//   — `oublier`, `regler`, `exporterCache` et `importerCache` vont au cache, comme depuis P3b.
+import type { CommandeAuMoteur, EnvoiAuMoteur, QuestionsAuShell, RecepteurDuMoteur, ReponsesDuMoteur } from "../../core/protocole-moteur";
+import { creerMoteurDuCache } from "./commandes";
+import { creerOrdonnanceurDuMoteur, fusionDeLot } from "./ordonnanceur-runs";
+import { creerLancerUnePasse, type Emplacement, type PerimetreCible, type PretsDeLaPasse } from "./passe";
+import { creerPilotesDePasse } from "./pilotes";
+
+/** Ce que le pont donne au moteur, une fois, à sa construction. */
+export interface PretsDuMoteur {
+  questions: QuestionsAuShell;
+  /** Le récepteur, à qui chaque passe dit tout ce qu'elle fait. */
+  recepteur: RecepteurDuMoteur<unknown>;
+  /** Le contexte audio, créé à la première passe et réveillé à chacune. */
+  audio: PretsDeLaPasse["audio"];
+  /** La forme canonique d'un choix, que la langue de l'interface ne doit pas changer. */
+  canoniser: PretsDeLaPasse["canoniser"];
+}
+
+export interface Moteur {
+  /** Envoyer une commande du protocole. Elle a fait son effet quand l'envoi rend la main. */
+  envoyer: EnvoiAuMoteur;
+}
+
+/**
+ * Attend que l'atelier montre les nœuds qu'un import vient de poser, au plus deux secondes.
+ *
+ * `setNodes` ne se voit dans les nœuds visibles qu'après le rendu qui suit, et une passe partie avant
+ * reposerait le nouveau cache sur l'ancien graphe.
+ */
+async function attendreLesNoeuds(noeudsVisibles: () => readonly { id: string }[], ids: readonly string[]): Promise<boolean> {
+  const fin = performance.now() + 2000;
+  while (performance.now() < fin) {
+    const presents = new Set(noeudsVisibles().map((n) => n.id));
+    if (ids.every((id) => presents.has(id))) return true;
+    await new Promise((r) => setTimeout(r, 16));
+  }
+  return false;
+}
+
+export function creerMoteur(p: PretsDuMoteur): Moteur {
+  const { questions: q } = p;
+  const { envoyer: envoyerAuCache, cache } = creerMoteurDuCache();
+  // ═══ UNE EXÉCUTION À LA FOIS, ET C'EST L'ORDONNANCEUR QUI LE TIENT ═══ Voir `ordonnanceur-runs.ts`.
+  const ordonnanceur = creerOrdonnanceurDuMoteur();
+  /**
+   * Le contrôleur de la passe en cours : un seul pour tout `lancer`, le moteur exécutant les nœuds en
+   * séquence dans une seule boucle. Savoir qu'une exécution tourne, ciblée comprise, est l'affaire de
+   * l'ordonnanceur, qui le compte au lieu de le déclarer.
+   */
+  const controleur: Emplacement<AbortController | null> = { current: null };
+  /**
+   * ARRÊTER PENDANT UN LOT DOIT ARRÊTER LE LOT, et non la seule passe en cours. Sans ce drapeau,
+   * l'annulation coupait le fichier courant et l'enveloppe enchaînait aussitôt sur le suivant : le
+   * bouton « Arrêter » paraissait alors ne rien faire sur un lot de trente fichiers.
+   */
+  const arretDuLot: Emplacement<boolean> = { current: false };
+
+  /** Abat la passe en cours s'il y en a une, sans toucher à la file ni au lot. */
+  const abattre = () => { if (ordonnanceur.enCours()) controleur.current?.abort(); };
+
+  const lancer = (c: Extract<CommandeAuMoteur, { genre: "lancer" }>): Promise<void> => {
+    // LA DEMANDE LIE SA LANGUE ET SON DOSSIER MAINTENANT, et la passe les garde jusqu'au bout.
+    const { t, repertoire } = q.demande();
+    const lancerUnePasse = creerLancerUnePasse({
+      graphe: () => q.graphe(), priorite: () => q.priorite(), noeudVisible: (id) => q.noeudVisible(id),
+      noeudsVisibles: () => q.noeudsVisibles(), economieMemoire: () => q.economieMemoire(),
+      recevoir: p.recepteur, cache, audio: p.audio, canoniser: p.canoniser, repertoire, t, controleur,
+    });
+    const { lancerLeLot } = creerPilotesDePasse({ lancerUnePasse, graphe: () => q.graphe(), cache, arretDuLot });
+    // LE PÉRIMÈTRE EST CELUI QUE L'APPELANT A DONNÉ, champ pour champ, et rien s'il n'en a donné aucun :
+    // la fusion de deux demandes distingue l'absence d'un périmètre vide.
+    const { genre: _genre, cible, ...reste } = c;
+    const perimetre: PerimetreCible | undefined = Object.keys(reste).length > 0 ? reste : undefined;
+    // LA REPOSE D'UN PAQUET VA DROIT À UNE PASSE, sans fusion : fondue à un ▶ global, elle lui
+    // donnerait son « cache seulement », et le run demandé n'exécuterait rien.
+    if (perimetre?.cacheSeulement) {
+      return ordonnanceur.demander(async (j) => {
+        if (!(await attendreLesNoeuds(() => q.noeudsVisibles(), perimetre.attendre ?? []))) {
+          console.warn("[lancer] repose du cache abandonnée : les nœuds importés ne sont pas dans l'atelier");
+          return;
+        }
+        return lancerUnePasse(undefined, { cacheSeulement: true }, j);
+      }) as Promise<void>;
+    }
+    return ordonnanceur.demander((j) => lancerLeLot(cible, perimetre, j), fusionDeLot(cible, perimetre, lancerLeLot)) as Promise<void>;
+  };
+
+  /**
+   * Arrêter l'exécution en cours, sans rien effacer : les résultats déjà calculés restent en place.
+   *
+   * L'arrêt est demandé, pas immédiat : le nœud en cours reçoit son signal et s'arrête quand il le
+   * consulte ; la boucle, elle, n'enchaîne plus le suivant. LA FILE SE VIDE AUSSI : une demande en
+   * attente aurait démarré juste après l'arrêt, et le bouton aurait paru ne rien faire.
+   */
+  const arreter = () => {
+    arretDuLot.current = true;
+    ordonnanceur.viderLaFile();
+    abattre();
+  };
+
+  /** Ce que fait chaque genre. Le compilateur l'exige entière, et chaque réponse du type du protocole. */
+  const APPLIQUER: { [G in CommandeAuMoteur["genre"]]: (c: Extract<CommandeAuMoteur, { genre: G }>) => ReponsesDuMoteur[G] } = {
+    lancer,
+    arreter,
+    // UNE REMISE À ZÉRO PENDANT UNE PASSE L'ABAT D'ABORD : sans cela, le nœud en cours de calcul
+    // continuerait en arrière-plan et écraserait l'état qu'on vient d'effacer dès sa fin.
+    remettreAZero: (c) => { abattre(); envoyerAuCache(c); },
+    regler: (c) => envoyerAuCache(c),
+    oublier: (c) => envoyerAuCache(c),
+    exporterCache: (c) => envoyerAuCache(c),
+    importerCache: (c) => envoyerAuCache(c),
+  };
+  // LA CONVERSION NE DIT RIEN QUE LA TABLE NE GARANTISSE : `c.genre` choisit l'entrée de la même
+  // commande, ce que le compilateur ne sait pas suivre.
+  const envoyer: EnvoiAuMoteur = (c) => (APPLIQUER[c.genre] as (c: CommandeAuMoteur) => never)(c);
+  return { envoyer };
+}

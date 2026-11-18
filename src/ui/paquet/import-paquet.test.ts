@@ -11,7 +11,7 @@ import { configurerServicesDomaine, oublierServicesDomaine } from "../../core/se
 import { depuisPaquetAudio, versPaquetAudio } from "../../audio/paquet-audio";
 import { configurerRegistreUI } from "../registre-actif";
 import { importerProjet, type OptionsImportProjet } from "../hooks/useImportProjet";
-import { creerMoteurDuCache } from "../moteur/commandes";
+import { creerMoteurDuCache } from "../moteur";
 import { ecrirePaquet } from "./ecrire-paquet";
 import { lireRepertoire } from "./zip";
 import { VERSION_APPLICATION } from "./format-paquet";

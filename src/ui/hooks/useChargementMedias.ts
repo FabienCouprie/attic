@@ -16,7 +16,7 @@
 // à la cascade (CHAMPS_UTILISATEUR).
 import { useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { EnvoiDuCache } from "../moteur/commandes";
+import type { EnvoiDuCache } from "../moteur";
 
 import { creerUrlMedia } from "../urls-medias";
 

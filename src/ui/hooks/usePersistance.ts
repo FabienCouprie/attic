@@ -6,7 +6,7 @@
 // `hooks/useJournalDeSession.ts`, et l'import dans `hooks/useImportProjet.ts`.
 import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction, MutableRefObject } from "react";
-import type { EnvoiDuCache } from "../moteur/commandes";
+import type { EnvoiDuCache } from "../moteur";
 import type { Edge, Viewport } from "@xyflow/react";
 import { projetAEcrire } from "../projet-a-ecrire";
 import { ecrireParLePont, telechargerProjet } from "../ecriture-projet";

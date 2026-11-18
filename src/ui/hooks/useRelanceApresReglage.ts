@@ -15,7 +15,7 @@
 // que la dernière valeur d'une rafale.
 import { useCallback, useEffect, useRef } from "react";
 import type { Dispatch, MutableRefObject, SetStateAction } from "react";
-import type { EnvoiDuCache } from "../moteur/commandes";
+import type { EnvoiDuCache } from "../moteur";
 
 import { reglagesApresChangement } from "../../core/reglages-lies";
 import { trouverDef } from "../ports-canevas";
