@@ -6,6 +6,53 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE CHOIX DES VALEURS PASSE AU CŒUR, ET LE MÉNAGE D'APRÈS PASSE EST COUPÉ EN DEUX : LE RÉCEPTEUR NE LIT PLUS AUCUNE TABLE DU MOTEUR.** Pièce P4b du plan de l'architecture par messages entre l'interface et le moteur, demandée par Fabien le 2026-11-18 : « la suite ». Aucun comportement ne change, et c'est mesuré.
+  - **Le choix des valeurs**, `core/rendu-du-visible.ts`. Le correctif d'affichage choisissait lui-même, dans les tables de la passe, ce que montre le nœud visible : les sorties exposées d'un méta, la seule sortie d'une bulle, l'échec d'une branche avec le premier interne resté vide. Ce choix est au cœur, et son corps est celui du correctif, ligne pour ligne. `noeudFini` porte le rendu pendant la boucle, choisi au même instant que la pose d'un nœud regardé le faisait, et le `bilan` celui de la pose finale. La boucle reçoit pour cela la question `noeudVisible` du protocole.
+  - **Le correctif ne garde que l'affichage** (`ui/correctif-resultat.ts`) : les adresses, le lecteur promis, les révocations et l'erreur d'un méta. Il reçoit `PretsDeLAffichage`, sans une table du moteur ; `EtatDePasse` ne nomme plus que ce que lit le ménage.
+  - **Le ménage ne garde que ce qu'il calcule** (`ui/menage-apres-passe.ts`) : le cache lâché, puis les messages complétés, la cause d'une boucle et la graine tirée. Il dit ensuite une `demande` pour chaque demande d'un composant, puis le `bilan`, qu'il attend. Il n'importe plus aucun magasin.
+  - **Le récepteur pose le bilan dans l'ordre du ménage d'avant** (`ui/recepteur-moteur.ts`) :
+    1. les causes de boucle ;
+    2. la pose finale, de ce qui n'est pas posé et de ce dont le message a changé ;
+    3. les temps et les écarts ;
+    4. les demandes, qu'il a gardées jusque-là ;
+    5. les champs autonomes, reportés sur l'état ;
+    6. le statut des conteneurs, lu sur les statuts de toutes les passes.
+
+    Il écrit les lecteurs ensuite. Plus rien ne lui est emprunté.
+  - **Le `bilan` du protocole de P1 change de forme**, pour porter ce que le récepteur pose sans lire les tables :
+    - les causes de boucle arrivent sous le nœud visible, avec leur texte ;
+    - `messages` devient la liste des nœuds à reposer, et les `rendus` ;
+    - il porte en plus `champsAutonomes` et `conteneurs`.
+
+    Le moteur choisit le rendu de chaque nœud visible à la fin de la passe, et non seulement de ceux qui seront posés : il ne sait pas ce que le récepteur a posé, et le choix ne coûte que des lectures. Une exception dans ce choix, qui ne peut venir que d'une faute de programmation, arrêterait le ménage avant les causes de boucle, et non plus après.
+  - **Le garde de la frontière**, `docs/frontiere-moteur.test.ts`, gagne 2 cas, qui lisent les modules importés : ceux qui posent dans les magasins n'importent aucun module qui tient ou nomme les tables d'une passe, ni rien de `ui/moteur/` ; et le moteur n'importe aucun des trois magasins.
+  - **Le témoin de la boucle** relève le rendu de chaque nœud regardé : ce que la pose d'avant lisait dans les tables, contre ce que porte `noeudFini`. Il reste égal sur les cinq graphes et leurs deux runs. Un cas neuf exige le même tableau de valeurs pour un nœud visible, et aucun rendu pour un interne de méta ou une copie de boucle.
+
+    Les autres tests :
+    - le choix a son test, `core/rendu-du-visible.test.ts`, 7 cas ;
+    - les 22 cas du correctif jouent le choix puis l'affichage enchaînés, sans changer ;
+    - ceux du ménage et du récepteur se sont partagé les étapes, et le récepteur compte 12 cas.
+  - **Les fautes plantées, vues rouges puis remises** :
+    - les tables du moteur importées par le récepteur, le choix importé par le correctif, un magasin lu par le ménage et `poserResultat` importé dans le ménage font tomber le garde ;
+    - `noeudFini` sans son rendu fait tomber 3 cas du témoin ;
+    - le message absent du rendu fait tomber 6 cas, dans le témoin, le choix et le correctif ;
+    - les rendus choisis sans les messages complétés, et les graines oubliées de ce qui repasse, font tomber le test du ménage ;
+    - la pose finale sans le rendu du bilan, les causes de boucle non posées et les demandes perdues font tomber le test du récepteur.
+  - **Rien ne change, mesuré**, sur la base de P4a :
+    - le journal de passe, qui relève dans l'application l'ordre de toutes les écritures des trois magasins, rend ses 30 scénarios identiques en 6,7 min, avec 0 écriture sur l'instantané ;
+    - les specs des boucles et du lot sont vertes : `boucle-dans-lot-dans-application` (1 cas), `boucle-reprise-dans-application` (1), `boucle-collection` (5), `lot-verif` (5) et `graphe-complexite-dans-application` (1) ;
+    - `paquet-attic-dans-application`, dans Electron sur deux profils jetables et l'application construite : 1 cas vert en 19,1 s ;
+    - `npm run test:empreintes-exemples` rend les 15 exemples identiques en 3,2 min ;
+    - `executer` affiche « 1 passed » sur `canon-de-proportions` et sur `un-synthe-et-sa-bulle-d-effets`.
+  - **Vérifié** dans l'arbre de la session, sur `master` 7f25a813, après la fusion de la PR 380 :
+    - `npx tsc -b` est vert ;
+    - `npx oxlint` donne 27 avertissements et 0 erreur, aucun dans les fichiers touchés ;
+    - la passe complète est verte en 23 min 9 s : 780 fichiers verts et 3 sautés sur 783, soit 11 105 cas verts et 17 sautés, sans un rouge ;
+    - les tables versionnées, régénérées par les six commandes d'`AGENTS.md`, sont inchangées.
+
+    En lignes de code, `core/execution.ts` en compte 270, le récepteur 115, le correctif 140, le ménage 86 et le choix 64, tous dans la norme.
+  - **Pas fait.** `passeCommencee` et `passeTerminee` ne sont pas encore émis : les statuts de la préparation et le `finally` restent des appels. La pièce P5 donnera le récepteur au moteur à sa construction et lira la frontière par imports transitifs. Le ménage importe encore `valeursLourdes` du module d'affichage.
+
 - **LA BOUCLE D'UNE PASSE DIT DES ÉVÉNEMENTS, ET UN RÉCEPTEUR UNIQUE LES POSE DANS LES MAGASINS.** Pièce P4a du plan de l'architecture par messages entre l'interface et le moteur, demandée par Fabien le 2026-11-18 : « P4a ». Aucun comportement ne change, et c'est mesuré.
   - **Un seul prêt, `emettre`.** La boucle (`core/execution.ts`) recevait trois fonctions qui écrivaient dans les magasins : la pose d'un statut, celle d'une ombre et `quandUnNoeudAFini`. Elle dit maintenant des événements du protocole de P1, `statut`, `statutOmbre` et `noeudFini`, un événement pour un appel et dans le même ordre, chacun marqué de la génération de son jeton, ou 0 pour une passe sans jeton. L'envoi est synchrone. `emettre` ne rend une promesse que pour la pose d'un nœud regardé, et la boucle n'attend qu'alors, comme avant.
   - **Le récepteur**, `ui/recepteur-moteur.ts`, un par passe. Il applique les trois événements et tient la pose des correctifs : ce qui est à poser, ce qui est posé, et la pose aussitôt d'un nœud regardé. Ce code et ses commentaires mesurés ont quitté `useExecutionGraphe` sans changer. Il pose aussi les statuts de la préparation, et prête au ménage d'après passe et aux lecteurs ce qu'ils écrivent encore eux-mêmes : statuts des conteneurs et des boucles, temps, écarts, lecteurs. Le ménage n'importe plus `poserResultat` ni `poserApercu`, et `useExecutionGraphe` plus aucune pose.

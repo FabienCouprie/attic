@@ -1,31 +1,35 @@
 // ui/menage-apres-passe.ts — Ce que le moteur fait une fois le dernier nœud calculé.
 //
-// SORTI DU MOTEUR D'EXÉCUTION, sortie 7 du plan de simplification de `useExecutionGraphe.ts`. Deux
-// fonctions, appelées par le moteur après la boucle, dans cet ordre et sur les mêmes tables :
+// SORTI DU MOTEUR D'EXÉCUTION, sortie 7 du plan de simplification de `useExecutionGraphe.ts`, et
+// COUPÉ EN DEUX par la pièce P4b du plan de l'architecture par messages. Ce module est la moitié du
+// moteur : il lâche ce qui ne doit pas rester en cache, complète les messages, la cause d'une boucle
+// qui ne s'est pas dépliée et la graine tirée, puis dit au récepteur ce que la passe a compté et
+// choisi, par deux événements du protocole : une `demande` pour chaque demande d'un composant, et le
+// `bilan`. L'autre moitié, celle qui écrit, est au récepteur (`ui/recepteur-moteur.ts`) : la pose
+// finale, les temps et les écarts, les demandes transmises à l'atelier, les champs autonomes reportés
+// sur l'état et le statut des conteneurs, dans cet ordre, et les lecteurs après.
 //
-//   — `menageApresPasse` lâche ce qui ne doit pas rester en cache, dit sur le nœud ce qui a empêché
-//     une boucle de se déplier, rend la graine tirée dans le message, pose tout ce qui ne l'a pas
-//     été, range les temps et les écarts, transmet les demandes au shell, reporte les champs
-//     autonomes et donne aux conteneurs le statut de tout leur contenu ;
-//   — `ecrireLesLecteurs` écrit chaque lecteur promis, un par un, en rendant la main entre deux.
+// IL N'ÉCRIT NI NE LIT LES MAGASINS, et `docs/frontiere-moteur.test.ts` le tient. Il écrit le cache
+// et les messages de la passe, qui sont au moteur.
 //
-// SHELL ET NON CŒUR : la première pose des statuts et des résultats, appelle `setNodes` et deux
-// rappels de l'atelier ; la seconde crée des adresses d'objet. Le corps est celui du moteur, ligne
-// pour ligne, et l'ordre des étapes aussi : la cause d'une boucle et la graine tirée doivent être
-// dans les messages AVANT la pose finale, qui les lit.
-import type { Dispatch, SetStateAction } from "react";
+// L'ORDRE COMPTE : la cause d'une boucle et la graine tirée doivent être dans les messages AVANT que
+// les rendus de la pose finale ne soient choisis, puisque ceux-ci les lisent.
 import { estCacheParBulle, type NoeudG } from "../core";
 import { COPIES_MAX, type ResultatDepliage } from "../core/boucle-graphe";
-import { statutDuContenu, type Conteneurs } from "../core/conteneurs";
+import type { Conteneurs } from "../core/conteneurs";
 import { champsAReporter } from "../core/cycle-de-vie";
 import { resultatRetenu } from "../core/memoire";
+import type { EvenementDuMoteur, Generation, RenduDuVisible } from "../core/protocole-moteur";
+import { choisirLeRendu } from "../core/rendu-du-visible";
 import { lacherLeCorps } from "../core/saut-de-boucle";
 import type { GraineTiree } from "../core/graines-de-passe";
 import type { DemandeAuMoteur } from "../core/types";
 import { valeursLourdes } from "./correctif-resultat";
 import type { EtatDePasse } from "./etat-de-passe";
 import type { CacheDuMoteur } from "./moteur/cache";
-import { statutDe as statutDeNoeud } from "./statuts";
+
+/** Les événements que le ménage dit au récepteur. */
+export type EvenementDuMenage = Extract<EvenementDuMoteur<unknown>, { genre: "demande" | "bilan" }>;
 
 /**
  * Ce que le ménage lit en plus des tables communes : ce que la passe a compté et décidé.
@@ -35,7 +39,7 @@ import { statutDe as statutDeNoeud } from "./statuts";
  * être vu comme il l'était.
  */
 export interface ApresLaPasse {
-  noeudsVisibles: () => any[];
+  noeudsVisibles: () => readonly any[];
   /** Le graphe aplati et déplié : ses nœuds portent les champs qu'un composant autonome a écrits. */
   nds: NoeudG[];
   cache: CacheDuMoteur;
@@ -48,32 +52,21 @@ export interface ApresLaPasse {
   ordonnees: string[];
   idsDecoratifs: Set<string>;
   boites: Conteneurs;
-  /** La pose des correctifs, que le moteur tient : ce qui est déjà posé, et ce qui attend. */
-  dejaPoses: Set<string>;
-  aPoser: Set<string>;
-  poserCeQuiEstPret: () => Promise<void>;
-  /**
-   * CE QUE LE MÉNAGE ÉCRIT ENCORE DANS LES MAGASINS, le récepteur le lui prête, et il est seul à les
-   * importer (`ui/recepteur-moteur.ts`) : le statut des conteneurs et des boucles, les temps et les
-   * écarts. La pièce P4b en fera des événements.
-   */
-  definirStatut: (nodeId: string, statut: string, progression?: string) => void;
-  poserResultat: (id: string, correctif: Record<string, unknown>) => void;
-  setNodes: Dispatch<SetStateAction<any[]>>;
-  onGrapheGenere?: (nodeId: string, spec: { nodes: { ficheId: string; label: string }[]; edges: { source: number; target: number }[] }) => void;
-  onNodeInstalle?: () => void;
+  /** La génération de la passe, que porte chaque événement : celle de son jeton, ou 0. */
+  generation: Generation;
+  /** Dire un événement au récepteur. Le bilan rend la promesse de tout ce qu'il pose, et le ménage l'attend. */
+  emettre: (evenement: EvenementDuMenage) => Promise<void> | void;
 }
 
 export async function menageApresPasse(passe: EtatDePasse, a: ApresLaPasse): Promise<void> {
   const { messages, tousNoeudsG, ordreFiltre, economieMemoireRef, t } = passe;
   const {
     noeudsVisibles, nds, cache, deplie, expansions, grainesTirees, tempsParVisible, ecartsParNoeud,
-    demandesParNoeud, ordonnees, idsDecoratifs, boites, dejaPoses, aPoser, poserCeQuiEstPret,
-    definirStatut, poserResultat, setNodes, onGrapheGenere, onNodeInstalle,
+    demandesParNoeud, ordonnees, idsDecoratifs, boites, generation, emettre,
   } = a;
   // ── Mettre à jour les URL audio ──
   //
-  // Le calcul se fait ICI, avant `setNodes`, et l'updater ne fait plus
+  // Le calcul se fait au récepteur, avant `setNodes`, et l'updater ne fait plus
   // qu'appliquer le résultat. La raison n'est pas cosmétique : un updater de
   // `setNodes` doit être PUR, et celui-ci appelait `URL.createObjectURL` et
   // `URL.revokeObjectURL`. React double-invoque les updaters en développement
@@ -122,13 +115,15 @@ export async function menageApresPasse(passe: EtatDePasse, a: ApresLaPasse): Pro
   // Un début de boucle non déplié s'exécute lui-même et rend « reliez ce composant à une fin de
   // boucle » — vrai d'un seul des six cas, et trompeur pour les cinq autres : relevé par Fabien
   // sur deux boucles emboîtées, où les deux débuts accusaient un câblage pourtant correct. Le
-  // moteur, lui, connaît la raison exacte. Il la pose ICI, avant que les correctifs ne soient
-  // calculés, faute de quoi le message de l'exécuteur resterait celui qu'on lit.
+  // moteur, lui, connaît la raison exacte. Il la range ICI, avant que les rendus ne soient choisis,
+  // faute de quoi le message de l'exécuteur resterait celui qu'on lit ; le récepteur pose le nœud
+  // en erreur, avant la pose finale.
+  const problemesDeBoucle: [string, string][] = [];
   for (const p of deplie.problemes) {
     const visible = expansions.get(p.noeudId) ?? p.noeudId;
     const dit = t(`boucle.probleme.${p.code}`).replace("{max}", String(COPIES_MAX));
     messages.set(visible, dit);
-    definirStatut(visible, "erreur", dit);
+    problemesDeBoucle.push([visible, dit]);
   }
 
   // LA GRAINE TIRÉE SE REND, faute de quoi un rendu qu'on voudrait garder resterait introuvable :
@@ -148,123 +143,59 @@ export async function menageApresPasse(passe: EtatDePasse, a: ApresLaPasse): Pro
     messages.set(visible, dit ? `${dit} · ${bout}` : bout);
   }
 
-  // LA POSE FINALE, QUI NE LAISSE PERSONNE DE CÔTÉ. Les nœuds ordinaires ont déjà été posés par
-  // paquets pendant la boucle ; celle-ci reprend TOUT LE MONDE, et c'est elle qui sert :
-  //
-  //   — les métas et les bulles, qui agrègent les résultats de leurs internes et ne pouvaient
-  //     donc pas être posés plus tôt ;
-  //   — les messages complétés APRÈS la boucle, la graine tirée et la cause d'une boucle non
-  //     dépliée, qui sont rangés sous l'identifiant VISIBLE et non sous celui d'une copie. Un
-  //     nœud posé tôt a donc pu montrer son message sans son tirage de graine pendant un instant,
-  //     et cette pose-ci le corrige.
-  //
-  // ET ELLE NE REFAIT PAS LE TRAVAIL DÉJÀ FAIT. Reprendre tout le monde recalculait le correctif
-  // de chaque nœud une seconde fois, et ce n'est pas gratuit : mesuré sur douze nœuds, **540 ms**,
-  // soit quarante-cinq par nœud. Seuls repassent ici ceux qui n'ont pas encore été posés, et ceux
-  // dont le message a été complété après la boucle — la graine tirée et la cause d'une boucle non
-  // dépliée, rangées sous l'identifiant visible.
-  const aRepasser = new Set<string>([...grainesTirees.keys()]);
-  for (const p of deplie.problemes) aRepasser.add(expansions.get(p.noeudId) ?? p.noeudId);
-  for (const n of noeudsVisibles()) {
-    if (!dejaPoses.has(n.id) || aRepasser.has(n.id)) aPoser.add(n.id);
-  }
-  await poserCeQuiEstPret();
+  // CE QUE LA POSE FINALE REPRENDRA, MÊME DÉJÀ POSÉ : les nœuds dont le message a été complété après
+  // la boucle, la graine tirée et la cause d'une boucle non dépliée. Tout nœud qui a tiré une graine
+  // y est, que son message ait changé ou non.
+  const messagesCompletes = new Set<string>([...grainesTirees.keys()]);
+  for (const p of deplie.problemes) messagesCompletes.add(expansions.get(p.noeudId) ?? p.noeudId);
 
-  // LE TEMPS D'EXÉCUTION ET L'ÉCART DE NIVEAU VONT DANS LE MAGASIN comme le reste du résultat :
-  // ce sont deux comptes rendus du run, cumulés par nœud VISIBLE, méta compris. Le magasin ne
-  // prévient pas quand la valeur ne change pas, ce que les deux `setNodes` d'avant faisaient à la
-  // main en comparant le champ.
-  for (const [id, temps] of tempsParVisible) poserResultat(id, { tempsExecution: temps });
-  for (const [id, e] of ecartsParNoeud) poserResultat(id, { ecartNiveau: e });
+  // CE QUE CHAQUE NŒUD VISIBLE MONTRE, CHOISI MAINTENANT, une fois les messages complétés : c'est ce
+  // que la pose finale lisait. Le choix ne coûte que des lectures, et le récepteur ne pose que ce
+  // qui n'a pas été posé ou dont le message a changé.
+  const rendus: [string, RenduDuVisible<unknown>][] = [];
+  for (const n of noeudsVisibles()) {
+    const rendu = choisirLeRendu(n, passe);
+    if (rendu) rendus.push([n.id, rendu]);
+  }
 
   // LES DEMANDES SE LISENT DANS LE RETOUR DU RUN, et rien n'est à effacer ensuite : elles ne se
   // sont jamais posées sur un nœud. Un long commentaire disait ici qu'un champ muté par un plugin
   // restait invisible tant qu'on lisait l'état React au lieu de l'instantané du run ; la question
-  // ne se pose plus, puisque le composant rend sa demande au lieu de l'écrire.
-  for (const [nodeId, demande] of demandesParNoeud) {
-    if (onGrapheGenere && demande.grapheACreer?.nodes && demande.grapheACreer?.edges) {
-      onGrapheGenere(nodeId, { nodes: demande.grapheACreer.nodes, edges: demande.grapheACreer.edges });
-    }
-  }
-  if (onNodeInstalle && [...demandesParNoeud.values()].some((d) => d.paletteARelire)) onNodeInstalle();
+  // ne se pose plus, puisque le composant rend sa demande au lieu de l'écrire. Le récepteur les garde
+  // jusqu'au bilan, et les transmet à l'atelier après la pose finale.
+  for (const [id, demande] of demandesParNoeud) emettre({ genre: "demande", generation, id, demande });
 
   // Fusion générique des champs "autonomes" (préfixés `_`, ex. `_carteHtmlUrl`,
   // `_carteSonore`) qu'un plugin à `affichageAutonome: true` écrit sur
   // `ctx.noeud.data` pendant son exécution. `ctx.noeud` pointe vers l'entrée
   // de `nds` (l'instantané local aplati de ce run), pas vers l'état React réel
   // — une mutation faite là ne serait donc jamais vue par personne sans cette
-  // passe. Les demandes au moteur, elles, ne passent plus par là du tout : elles
-  // arrivent dans le retour de l'exécuteur et ne touchent jamais un nœud.
+  // passe, que le récepteur applique. Les demandes au moteur, elles, ne passent
+  // plus par là du tout : elles arrivent dans le retour de l'exécuteur et ne
+  // touchent jamais un nœud.
   //
   // LES DEUX CANAUX DÉCLARÉS NE PASSENT PAS PAR ICI, et c'est `core/cycle-de-vie.ts` qui le
   // tient : ils viennent du retour de l'exécuteur, ou du cache, jamais de l'instantané.
-  const champsAutonomesParNoeud = new Map<string, Record<string, unknown>>();
+  const champsAutonomes: [string, Record<string, unknown>][] = [];
   for (const n of nds) {
     const d = n.data as any;
     if (!d) continue;
     const champs = champsAReporter(d as Record<string, unknown>);
-    if (champs) champsAutonomesParNoeud.set(n.id, champs);
-  }
-  if (champsAutonomesParNoeud.size > 0) {
-    setNodes((nds2) =>
-      nds2.map((n) => {
-        const champs = champsAutonomesParNoeud.get(n.id);
-        if (!champs) return n;
-        const change = Object.keys(champs).some((cle) => (n.data as any)[cle] !== champs[cle]);
-        return change ? { ...n, data: { ...n.data, ...champs } } : n;
-      })
-    );
+    if (champs) champsAutonomes.push([n.id, champs]);
   }
 
-  // LE STATUT FINAL D'UN CONTENEUR EST CELUI DE TOUT SON CONTENU : en erreur si l'un a échoué,
-  // terminé si tous ont fini, en attente sinon, et il dit alors combien. Il était pris sur les seuls
-  // nœuds DE CE RUN : un ▶ posé en aval d'une branche déclarait terminée une bulle dont six membres
-  // sur huit n'avaient jamais tourné. L'erreur qu'un méta s'est vu poser, sorties vides, reste la
-  // sienne. La laisser « en cours » après le run ferait croire à un calcul qui n'en finit pas.
+  // LES CONTENEURS QUE LA PASSE A TOUCHÉS, et ceux de leurs membres qui s'exécutent. Un conteneur
+  // dont rien n'a tourné dans ce run n'y est pas ; les décoratifs ne comptent pas. Son statut, lui,
+  // se lit au récepteur, sur les statuts de toutes les passes.
   const executables = ordonnees.filter((id) => !idsDecoratifs.has(id));
+  const conteneurs: [string, string[]][] = [];
   for (const c of boites.ids) {
-    if (boites.contenu(c, ordreFiltre).length === 0 || statutDeNoeud(c).statut === "erreur") continue;
-    const b = statutDuContenu(boites.contenu(c, executables).map((id) => statutDeNoeud(id).statut));
-    const partiel = t("conteneur.partiel").replace("{n}", String(b.faits)).replace("{total}", String(b.total));
-    definirStatut(c, b.statut, b.statut === "attente" ? partiel : undefined);
+    if (boites.contenu(c, ordreFiltre).length === 0) continue;
+    conteneurs.push([c, boites.contenu(c, executables)]);
   }
-}
 
-/**
- * Les lecteurs, écrits après que tout est posé.
- *
- * CHACUN PARAÎT DÈS QU'IL EST PRÊT, et non tous ensemble à la fin : sur une chaîne de sept nœuds
- * audio, attendre le dernier encodage pour montrer le premier lecteur était la moitié du défaut
- * relevé. Pendant son écriture, le nœud dit où elle en est : il est déjà terminé, son tampon est
- * posé, il s'écoute déjà par le bouton, et c'est le lecteur qui se fabrique.
- */
-export async function ecrireLesLecteurs(
-  passe: EtatDePasse, { signal, noeudsVisibles, poserResultat, poserApercu }: {
-    signal: AbortSignal; noeudsVisibles: () => any[];
-    /** Les deux écritures du lecteur, prêtées par le récepteur comme celles du ménage. */
-    poserResultat: (id: string, correctif: Record<string, unknown>) => void;
-    poserApercu: (id: string, fraction: number | undefined) => void;
-  },
-): Promise<void> {
-  const { lecteursAEcrire, souffle } = passe;
-  for (const [id, ecrire] of lecteursAEcrire) {
-    if (signal.aborted) break;
-    poserApercu(id, 0);
-    try {
-      const url = await ecrire();
-      if (url) {
-        const ficheId = noeudsVisibles().find((n) => n.id === id)?.data.ficheId;
-        poserResultat(id, { audioResultatUrl: url, audioResultatNom: `${ficheId}.wav` });
-      }
-    } catch (e) {
-      // UN LECTEUR QUI NE S'ÉCRIT PAS N'EMPORTE PAS LE RUN, et c'est le second intérêt de l'avoir
-      // sorti d'ici : le résultat est déjà posé, le tampon est là, et le bouton « Écouter » reste
-      // la voie d'écoute. Avant, cette exception remontait avant tout `setNodes`, et le nœud
-      // perdait jusqu'à son message.
-      console.error("[apercu] écriture du lecteur impossible", id, e);
-    } finally {
-      poserApercu(id, undefined);
-    }
-    await souffle.tour();
-  }
+  await emettre({
+    genre: "bilan", generation, problemesDeBoucle, messagesCompletes: [...messagesCompletes], rendus,
+    temps: [...tempsParVisible], ecarts: [...ecartsParNoeud], champsAutonomes, conteneurs,
+  });
 }

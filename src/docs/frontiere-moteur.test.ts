@@ -14,8 +14,13 @@
 //
 // ET SEUL LE RÉCEPTEUR POSE DANS LES MAGASINS, depuis la pièce P4a. La boucle d'une passe recevait la
 // pose des statuts et `quandUnNoeudAFini`, et le ménage importait `poserResultat` : ils disent
-// maintenant des événements, ou reçoivent leurs écritures du récepteur (`ui/recepteur-moteur.ts`).
-// Le garde relève qui importe une pose des magasins, sous son nom, son alias ou en bloc.
+// maintenant des événements au récepteur (`ui/recepteur-moteur.ts`). Le garde relève qui importe une
+// pose des magasins, sous son nom, son alias ou en bloc.
+//
+// ET LE RÉCEPTEUR NE LIT PAS LES TABLES DU MOTEUR, depuis la pièce P4b : ce que le nœud visible
+// montre est choisi au cœur et lui arrive dans les événements. Le garde relève les deux sens, par les
+// modules importés : ceux qui posent n'importent aucun module qui tient ou nomme les tables d'une
+// passe, et le moteur n'importe aucun des trois magasins.
 //
 // LE MOTEUR N'A PAS ENCORE TOUT DÉMÉNAGÉ. La pièce P5 mettra sous `ui/moteur/` les pilotes de passes
 // et le ménage ; d'ici là, la liste ci-dessous nomme les fichiers du moteur qui vivent encore ailleurs,
@@ -89,6 +94,27 @@ const QUI_POSE = [
   "ui/refaire-apercus.ts",
 ];
 
+/**
+ * LES MODULES QUI TIENNENT OU NOMMENT LES TABLES D'UNE PASSE : la boucle qui les remplit, le choix qui
+ * les lit, leur type, et le ménage. Le dossier du moteur s'y ajoute. Celui qui pose n'en importe
+ * aucun, types compris : il reçoit ce qui est choisi.
+ */
+const TABLES_DU_MOTEUR = [
+  join(SRC, "core", "execution"),
+  join(SRC, "core", "rendu-du-visible"),
+  join(UI, "etat-de-passe"),
+  join(UI, "menage-apres-passe"),
+];
+
+/** Les trois magasins de l'interface : le moteur n'en importe aucun, ni pour écrire ni pour lire. */
+const LES_TROIS_MAGASINS = [join(UI, "statuts"), join(UI, "resultats"), join(UI, "priorite")];
+
+/** Les modules qu'un fichier importe, chemins relatifs résolus, sans extension. */
+const modulesImportes = (chemin: string) =>
+  importsDe(readFileSync(chemin, "utf8"))
+    .filter((cible) => cible.startsWith("."))
+    .map((cible) => resolve(dirname(chemin), cible).replace(/\.tsx?$/, ""));
+
 /** Les poses qu'un fichier importe des magasins : par leur nom, en bloc par `* as`, ou par `import()`. */
 const posesImportees = (chemin: string) => posesDans(readFileSync(chemin, "utf8"), chemin);
 
@@ -141,6 +167,30 @@ describe("la frontière du cache du moteur", () => {
       .filter((f) => !/\.test\.tsx?$/.test(f) && posesImportees(f).length > 0)
       .map(nomDe);
     expect(poseurs, "hors du récepteur, on émet : `ui/recepteur-moteur.ts`").toEqual(QUI_POSE);
+  });
+
+  it("CEUX QUI POSENT NE LISENT PAS LES TABLES DU MOTEUR : ce que le nœud visible montre leur est dit", () => {
+    const lus: Record<string, string[]> = {};
+    for (const f of QUI_POSE) {
+      const vus = modulesImportes(join(SRC, f)).filter((m) => TABLES_DU_MOTEUR.includes(m) || m.startsWith(MOTEUR + sep));
+      if (vus.length) lus[f] = vus.map(nomDe);
+    }
+    expect(lus, "le choix des valeurs est au cœur, `core/rendu-du-visible.ts`, et arrive par les événements").toEqual({});
+  });
+
+  it("LE MOTEUR N'IMPORTE AUCUN DES TROIS MAGASINS : il dit ce qu'il a fait, le récepteur l'écrit", () => {
+    const moteur = [
+      ...fichiers(MOTEUR),
+      ...MOTEUR_HORS_DE_SON_DOSSIER.map((f) => join(SRC, f)),
+    ].filter((f) => !/\.test\.tsx?$/.test(f));
+    const lus: Record<string, string[]> = {};
+    for (const f of moteur) {
+      const vus = modulesImportes(f).filter((m) => LES_TROIS_MAGASINS.includes(m));
+      if (vus.length) lus[nomDe(f)] = vus.map(nomDe);
+    }
+    // UN RELEVÉ QUI NE VERRAIT AUCUN FICHIER SERAIT VERT POUR RIEN.
+    expect(moteur.length).toBeGreaterThanOrEqual(4);
+    expect(lus, "le moteur émet : `ui/recepteur-moteur.ts` pose et lit les magasins").toEqual({});
   });
 
   it("le motif des poses voit le nom, l'alias, le bloc et l'import dynamique, et laisse le type et l'effacement", () => {

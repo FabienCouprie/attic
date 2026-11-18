@@ -81,8 +81,13 @@ const EVENEMENTS = {
   },
   bilan: {
     genre: "bilan", generation: 7,
-    temps: [["noeud-1", 12.5], ["meta-1", 30]], ecarts: [["noeud-1", -3.2]], messages: [["noeud-3", "graine 4242"]],
-    problemesDeBoucle: [{ noeudId: "debut", code: "boucle-vide" }],
+    problemesDeBoucle: [["debut", "Cette boucle est vide."]], messagesCompletes: ["noeud-3", "debut"],
+    rendus: [["noeud-3", {
+      valeurs: [poignee(4)], message: "graine 4242",
+      affichage: { film: poignee(5) }, designe: { source: poignee(4) }, brancheEnEchec: { fautif: "filtre" },
+    }]],
+    temps: [["noeud-1", 12.5], ["meta-1", 30]], ecarts: [["noeud-1", -3.2]],
+    champsAutonomes: [["carte", { _carteHtmlUrl: "blob:carte/1" }]], conteneurs: [["meta-1", ["meta-1::filtre"]]],
   },
   demande: {
     genre: "demande", generation: 7, id: "noeud-2",

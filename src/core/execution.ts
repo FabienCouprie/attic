@@ -26,7 +26,8 @@ import { empreinteEntrees, empreinteParametres, empreinteSorties, empreinteValeu
 import type { AreteG, NoeudG } from "./meta";
 import { respirer } from "./respirer";
 import { servicesDomaine } from "./services-domaine";
-import type { EvenementDuMoteur } from "./protocole-moteur";
+import type { EvenementDuMoteur, QuestionsAuShell } from "./protocole-moteur";
+import { choisirLeRendu, type TablesDuRendu } from "./rendu-du-visible";
 import { creerPoseDesStatuts, type PoseDesStatuts } from "./statuts-de-passe";
 import { signalerEcartsDeType, type TypeVerifiable } from "./types-au-port";
 
@@ -305,14 +306,17 @@ export interface PlanDeLaBoucle {
   aretesG: AreteG[];
   /** Les nœuds en erreur à la préparation ; la boucle y ajoute ceux qui échouent. */
   noeudsEnErreur: Set<string>;
-  plat: { expansions: Map<string, string> };
+  plat: { expansions: Map<string, string>; noeuds: NoeudG[] };
+  /** Ce que le choix des valeurs d'un nœud visible lit en plus des tables. Voir `core/rendu-du-visible.ts`. */
+  tousNoeudsG: NoeudG[];
+  aretesReelles: AreteG[];
+  estMetaEnScope: (id: string) => boolean;
 }
 
 /**
  * Ce que la boucle dit à l'interface, en événements du protocole (`core/protocole-moteur.ts`) : le
  * statut d'un nœud visible, l'état d'un nœud invisible rattaché au visible qu'il sert, et la fin d'un
- * nœud qui vient de tourner. `noeudFini` ne porte pas encore ce que le nœud visible a rendu : le choix
- * des valeurs passera au cœur à la pièce P4b, et le récepteur lit jusque-là les tables de la passe.
+ * nœud qui vient de tourner, avec ce que le nœud visible montre, choisi au cœur depuis la pièce P4b.
  */
 export type EvenementDeLaBoucle = Extract<EvenementDuMoteur<unknown>, { genre: "statut" | "statutOmbre" | "noeudFini" }>;
 
@@ -347,6 +351,12 @@ export interface PretsDeLaBoucle<TRuntime> {
    * événement ajouterait un tour que le moteur ne faisait pas.
    */
   emettre: (evenement: EvenementDeLaBoucle) => Promise<void> | void;
+  /**
+   * Le nœud visible de cet identifiant, lu au moment où il finit, ou rien : un nœud interne de méta,
+   * une copie de boucle, un nœud retiré pendant la passe. C'est sur lui que se choisit ce que
+   * `noeudFini` porte, comme la pose le choisissait sur le nœud vivant.
+   */
+  noeudVisible: QuestionsAuShell["noeudVisible"];
   /**
    * Vrai pour une passe qui ne fait que REPOSER ce que le cache tient, sans rien exécuter.
    *
@@ -384,6 +394,11 @@ export async function executerLesNoeuds<TRuntime>(
     },
     poserOmbre: (id, visible, statut) => { p.emettre({ genre: "statutOmbre", generation, id, visible, statut }); },
   });
+  // CE QUE LE CHOIX DES VALEURS LIT : les tables que la boucle remplit, et le graphe de la passe.
+  const tablesDuRendu: TablesDuRendu = {
+    resultats, messages, affichageParNoeud, designeParNoeud, tousNoeudsG: plan.tousNoeudsG,
+    aretesReelles: plan.aretesReelles, ordreFiltre, noeudsPlats: plat.noeuds, estMetaEnScope: plan.estMetaEnScope, trouverDef,
+  };
   const retour: PretsDuRetour = {
     ...tables, aretes: aretesG, expansions: plat.expansions, noeudsEnErreur,
     ecrireCache: p.ecrireCache, empreinteBoucle: (id) => sauts.empreintePour(id), jeton: p.jeton, trouverDef,
@@ -486,7 +501,11 @@ export async function executerLesNoeuds<TRuntime>(
     // CE NŒUD-CI A FINI, ET C'EST MAINTENANT QU'IL A QUELQUE CHOSE À MONTRER. En erreur comme en
     // succès : un message d'erreur est un résultat, et l'attendre jusqu'au bout de la boucle
     // laissait un nœud rouge sans sa raison.
-    const pose = p.emettre({ genre: "noeudFini", generation, id: nodeId });
+    // CE QU'IL MONTRE EST CHOISI ICI, au cœur, et voyage avec lui : le récepteur ne lit pas les tables
+    // de la passe. Le choix se fait au même instant que la pose d'un nœud regardé le faisait.
+    const visible = p.noeudVisible(nodeId);
+    const rendu = visible ? choisirLeRendu(visible, tablesDuRendu) : undefined;
+    const pose = p.emettre({ genre: "noeudFini", generation, id: nodeId, ...(rendu ? { rendu } : {}) });
     if (pose) await pose;
   }
 }

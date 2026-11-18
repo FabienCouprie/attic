@@ -71,7 +71,10 @@ async function quiTourne(
   const run = async () => {
     const tourne: string[] = [];
     await executerLesNoeuds<null>(
-      { ordreFiltre: [...ordre], nds, aretesG, noeudsEnErreur: new Set(), plat: { expansions: new Map() } },
+      {
+        ordreFiltre: [...ordre], nds, aretesG, noeudsEnErreur: new Set(), plat: { expansions: new Map(), noeuds: nds },
+        tousNoeudsG: nds, aretesReelles: aretesG, estMetaEnScope: () => false,
+      },
       creerTablesDePasse(),
       {
         runtime: null, repertoireTravail: "", signal: new AbortController().signal,
@@ -81,6 +84,7 @@ async function quiTourne(
         sauts: { copieSautee: () => false, finReprise: () => false, empreintePour: () => undefined },
         questions: () => NEUTRES, t: (cle) => cle,
         emettre: (e) => { if (e.genre === "noeudFini") tourne.push(e.id); },
+        noeudVisible: () => undefined,
       },
     );
     return tourne;

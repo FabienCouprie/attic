@@ -5,9 +5,15 @@
 // révoquée trop tôt ou un méta figé « en cours » se voyaient à l'écran, jamais au banc. Sortie du
 // moteur avec ses tables nommées, elle se joue ici sur un magasin d'essai, un domaine d'essai et des
 // adresses d'objet remplacées, sur les cas que ses propres commentaires énumèrent.
+//
+// LES CAS JOUENT LE CHOIX PUIS L'AFFICHAGE, depuis la pièce P4b qui les a séparés : le cœur choisit ce
+// que le nœud visible montre (`core/rendu-du-visible.ts`), et ce module l'affiche. Les deux enchaînés
+// rendent ce que rendait le correctif d'avant, et ces cas, écrits avant la coupe, le tiennent tels
+// quels.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { calculerCorrectifResultat } from "./correctif-resultat";
+import { calculerCorrectifResultat, type PretsDeLAffichage } from "./correctif-resultat";
+import { choisirLeRendu } from "../core/rendu-du-visible";
 import type { EtatDePasse } from "./etat-de-passe";
 import { effacerResultats, poserResultat } from "./resultats";
 import { configurerServicesApercu, oublierServicesApercu } from "./services-apercu";
@@ -31,13 +37,18 @@ const FICHES: Record<string, Record<string, unknown>> = {
   autonome: { id: "autonome", affichageAutonome: true, entrees: [], sorties: [{ nom: "Audio", type: "audio" }] },
   fichier: { id: "fichier", nom: "Fichier", apercuEstLeFichier: true, sortieHorsPlagePossible: true, entrees: [], sorties: [{ nom: "Audio", type: "audio" }] },
 };
-const trouverDef = ((id: string) => FICHES[id]) as unknown as EtatDePasse["trouverDef"];
+/** Les tables du moteur et les prêts de l'affichage, ensemble : ce que lisait le correctif d'avant. */
+type Passe = EtatDePasse & PretsDeLAffichage;
+const trouverDef = ((id: string) => FICHES[id]) as unknown as Passe["trouverDef"];
 
 const noeud = (id: string, ficheId: string, data: Record<string, unknown> = {}): NoeudG =>
   ({ id, selected: true, data: { ficheId, ...data } });
 
+/** Le correctif d'un nœud : ce que le cœur choisit pour lui, puis ce que l'affichage en fait. */
+const correctif = (n: NoeudG, passe: Passe) => calculerCorrectifResultat(n, choisirLeRendu(n, passe), passe);
+
 /** Les tables d'une passe, vides sauf ce que le cas pose. */
-function etat(partiel: Partial<EtatDePasse> = {}): EtatDePasse {
+function etat(partiel: Partial<Passe> = {}): Passe {
   return {
     resultats: new Map(), messages: new Map(), affichageParNoeud: new Map(), designeParNoeud: new Map(),
     tousNoeudsG: [], aretesReelles: [], ordreFiltre: [], noeudsPlats: [],
@@ -70,7 +81,7 @@ describe("un nœud ordinaire, et son lecteur", () => {
   it("LE TAMPON PART TOUT DE SUITE, LE LECTEUR EST PROMIS : rien n'est écrit avant la pose", async () => {
     const s = son("a");
     const passe = etat({ resultats: new Map([["a", [s]]]) });
-    const patch = await calculerCorrectifResultat(noeud("a", "son"), passe);
+    const patch = await correctif(noeud("a", "son"), passe);
     expect(patch).toMatchObject({ audioResultatBuffer: s, audioResultatUrl: undefined, audioResultatNom: undefined });
     expect((patch!.audioResultatRefaisable as { bits: number }).bits).toBe(lireProfondeurExport());
     expect(adresses, "aucune adresse avant que le lecteur ne s'écrive").toEqual([]);
@@ -83,7 +94,7 @@ describe("un nœud ordinaire, et son lecteur", () => {
     const refaisable = { bits: lireProfondeurExport(), reecriture: { securiser: false } };
     poserResultat("a", { audioResultatUrl: "blob:avant/a", audioResultatBuffer: s, audioResultatRefaisable: refaisable });
     const passe = etat({ resultats: new Map([["a", [s]]]) });
-    const patch = await calculerCorrectifResultat(noeud("a", "son"), passe);
+    const patch = await correctif(noeud("a", "son"), passe);
     expect(patch).toMatchObject({ audioResultatUrl: "blob:avant/a", audioResultatNom: "son.wav" });
     expect(patch!.audioResultatRefaisable).toBe(refaisable);
     expect(revoquees).toEqual([]);
@@ -100,7 +111,7 @@ describe("un nœud ordinaire, et son lecteur", () => {
     expect(await reparerApercu("a", "blob:perdue/a"), "sans tampon, rien à réécrire").toBe(false);
     poserResultat("a", { audioResultatBuffer: s, audioResultatRefaisable: refaisable });
     const passe = etat({ resultats: new Map([["a", [s]]]) });
-    const patch = await calculerCorrectifResultat(noeud("a", "son"), passe);
+    const patch = await correctif(noeud("a", "son"), passe);
     expect(patch!.audioResultatUrl, "l'adresse perdue ne doit pas revenir à l'écran").toBeUndefined();
     expect(revoquees).toEqual(["blob:perdue/a"]);
     expect(passe.lecteursAEcrire.has("a"), "le lecteur doit se réécrire depuis le tampon").toBe(true);
@@ -110,7 +121,7 @@ describe("un nœud ordinaire, et son lecteur", () => {
     const s = son("a");
     poserResultat("a", { audioResultatUrl: "blob:avant/a", audioResultatBuffer: s, audioResultatRefaisable: { bits: 16, reecriture: { securiser: false } } });
     const passe = etat({ resultats: new Map([["a", [s]]]) });
-    const patch = await calculerCorrectifResultat(noeud("a", "fichier"), passe);
+    const patch = await correctif(noeud("a", "fichier"), passe);
     expect(revoquees).toEqual(["blob:avant/a"]);
     expect(patch!.audioResultatUrl).toBeUndefined();
     // Ce qu'il faudrait pour le réécrire est déposé à côté, d'après la fiche.
@@ -123,24 +134,24 @@ describe("un nœud ordinaire, et son lecteur", () => {
   it("AUTRE TAMPON : l'ancienne adresse est révoquée, même sans nouveau son à écouter", async () => {
     poserResultat("a", { audioResultatUrl: "blob:avant/a", audioResultatBuffer: son("vieux") });
     const passe = etat({ resultats: new Map([["a", ["un texte"]]]) });
-    const patch = await calculerCorrectifResultat(noeud("a", "son"), passe);
+    const patch = await correctif(noeud("a", "son"), passe);
     expect(revoquees).toEqual(["blob:avant/a"]);
     expect(patch).toMatchObject({ audioResultatUrl: undefined, audioResultatBuffer: undefined, scriptGenere: "un texte" });
   });
 
   it("RIEN À CHANGER sans valeur ni message ; un message seul passe", async () => {
-    expect(await calculerCorrectifResultat(noeud("a", "son"), etat())).toBeNull();
-    const patch = await calculerCorrectifResultat(noeud("a", "son"), etat({ messages: new Map([["a", "dit"]]) }));
+    expect(await correctif(noeud("a", "son"), etat())).toBeNull();
+    const patch = await correctif(noeud("a", "son"), etat({ messages: new Map([["a", "dit"]]) }));
     expect(patch).toMatchObject({ audioResultatMessage: "dit", audioResultatBuffer: undefined });
   });
 
   it("UN COMPOSANT AUTONOME NE REÇOIT QUE SES CANAUX ET SON MESSAGE, jamais un lecteur", async () => {
     const passe = etat({ resultats: new Map([["a", [son("a")]]]), affichageParNoeud: new Map([["a", { htmlPath: "x" }]]) });
-    const patch = await calculerCorrectifResultat(noeud("a", "autonome"), passe);
+    const patch = await correctif(noeud("a", "autonome"), passe);
     expect(patch).toEqual({ audioResultatMessage: undefined, _affichage: { htmlPath: "x" }, _designe: undefined });
     expect(passe.lecteursAEcrire.size).toBe(0);
     // Et rien quand il n'a rien désigné : ses données ne sont pas écrasées.
-    expect(await calculerCorrectifResultat(noeud("b", "autonome"), etat({ resultats: new Map([["b", [son("b")]]]) }))).toBeNull();
+    expect(await correctif(noeud("b", "autonome"), etat({ resultats: new Map([["b", [son("b")]]]) }))).toBeNull();
   });
 
   // LA POCHETTE DE « SORTIE AUDIO » ARRIVE PAR LE CANAL D'AFFICHAGE, et à « Volume » 100 % son tampon
@@ -157,7 +168,7 @@ describe("un nœud ordinaire, et son lecteur", () => {
       blobApercu: async (_v, o) => { recu = o.affichage; return new Blob(["x"]); },
     });
     const passe = etat({ resultats: new Map([["a", [s]]]), affichageParNoeud: new Map([["a", affichage]]) });
-    const patch = await calculerCorrectifResultat(noeud("a", "fichier"), passe);
+    const patch = await correctif(noeud("a", "fichier"), passe);
     expect(revoquees).toEqual(["blob:avant/a"]);
     expect(patch!.audioResultatUrl).toBeUndefined();
     expect((patch!.audioResultatRefaisable as { reecriture: { affichage?: unknown } }).reecriture.affichage).toBe(affichage);
@@ -171,7 +182,7 @@ describe("un nœud ordinaire, et son lecteur", () => {
     const refaisable = { bits: lireProfondeurExport(), reecriture: { securiser: true, nomPourMetadonnees: "Fichier", affichage: { pochette } } };
     poserResultat("a", { audioResultatUrl: "blob:avant/a", audioResultatBuffer: s, audioResultatRefaisable: refaisable });
     const passe = etat({ resultats: new Map([["a", [s]]]), affichageParNoeud: new Map([["a", { pochette }]]) });
-    const patch = await calculerCorrectifResultat(noeud("a", "fichier"), passe);
+    const patch = await correctif(noeud("a", "fichier"), passe);
     expect(patch!.audioResultatUrl).toBe("blob:avant/a");
     expect(revoquees).toEqual([]);
     expect(passe.lecteursAEcrire.size).toBe(0);
@@ -181,10 +192,10 @@ describe("un nœud ordinaire, et son lecteur", () => {
     const s = son("a");
     poserResultat("a", { audioResultatUrl: "blob:avant/a", audioResultatBuffer: s, audioResultatRefaisable: {
       bits: lireProfondeurExport(), reecriture: { securiser: true, nomPourMetadonnees: "Fichier", affichage: { pochette: {} } } } });
-    const sansPochette = await calculerCorrectifResultat(noeud("a", "fichier"), etat({ resultats: new Map([["a", [s]]]) }));
+    const sansPochette = await correctif(noeud("a", "fichier"), etat({ resultats: new Map([["a", [s]]]) }));
     expect(sansPochette!.audioResultatUrl).toBeUndefined();
     expect(revoquees).toEqual(["blob:avant/a"]);
-    const ordinaire = await calculerCorrectifResultat(noeud("b", "son"),
+    const ordinaire = await correctif(noeud("b", "son"),
       etat({ resultats: new Map([["b", [son("b")]]]), affichageParNoeud: new Map([["b", { pochette: {} }]]) }));
     expect((ordinaire!.audioResultatRefaisable as { reecriture: object }).reecriture).not.toHaveProperty("affichage");
   });
@@ -192,10 +203,10 @@ describe("un nœud ordinaire, et son lecteur", () => {
   it("UNE IMAGE REÇOIT UNE ADRESSE, gardée tant que c'est le même fichier", async () => {
     const image = new File(["x"], "i.png", { type: "image/png" });
     const passe = etat({ resultats: new Map([["a", [image]]]) });
-    const premier = await calculerCorrectifResultat(noeud("a", "son"), passe);
+    const premier = await correctif(noeud("a", "son"), passe);
     expect(premier).toMatchObject({ imageResultatUrl: "blob:faux/1", imageResultatFile: image });
     poserResultat("a", premier!);
-    const second = await calculerCorrectifResultat(noeud("a", "son"), passe);
+    const second = await correctif(noeud("a", "son"), passe);
     expect(second!.imageResultatUrl).toBe("blob:faux/1");
     expect(revoquees).toEqual([]);
   });
@@ -206,7 +217,7 @@ describe("un nœud ordinaire, et son lecteur", () => {
     const sansApercu = ["image/tiff", "image/avif", "", "audio/midi", "application/pdf"];
     for (const type of [...avecApercu, ...sansApercu]) {
       const image = new File(["x"], "i", { type });
-      const patch = await calculerCorrectifResultat(noeud(type || "vide", "son"),
+      const patch = await correctif(noeud(type || "vide", "son"),
         etat({ resultats: new Map([[type || "vide", [image]]]) }));
       expect(patch?.imageResultatFile, type || "(vide)").toBe(avecApercu.includes(type) ? image : undefined);
     }
@@ -225,7 +236,7 @@ describe("le canal d'affichage, quand un run le remplace", () => {
 
   it("LE FILM QUE L'ANCIEN MONTRAIT EST RÉVOQUÉ, et celui du nouveau reste", async () => {
     poserResultat("a", { _affichage: { url: "blob:film/1", nom: "a.mp4" } });
-    const patch = await calculerCorrectifResultat(noeud("a", "son"), passeAvec({ url: "blob:film/2", nom: "a.mp4" }));
+    const patch = await correctif(noeud("a", "son"), passeAvec({ url: "blob:film/2", nom: "a.mp4" }));
     expect(patch!._affichage).toEqual({ url: "blob:film/2", nom: "a.mp4" });
     expect(revoquees).toEqual(["blob:film/1"]);
   });
@@ -233,26 +244,26 @@ describe("le canal d'affichage, quand un run le remplace", () => {
   it("UN NŒUD SAUTÉ REND LE MÊME AFFICHAGE, depuis son cache : rien ne part", async () => {
     const affichage = { url: "blob:film/1" };
     poserResultat("a", { _affichage: affichage });
-    await calculerCorrectifResultat(noeud("a", "son"), passeAvec({ ...affichage }));
+    await correctif(noeud("a", "son"), passeAvec({ ...affichage }));
     expect(revoquees).toEqual([]);
   });
 
   it("UN RUN QUI NE MONTRE PLUS RIEN efface l'affichage, donc révoque son film", async () => {
     poserResultat("a", { _affichage: { url: "blob:film/1" } });
-    const patch = await calculerCorrectifResultat(noeud("a", "son"), passeAvec());
+    const patch = await correctif(noeud("a", "son"), passeAvec());
     expect(patch!._affichage).toBeUndefined();
     expect(revoquees).toEqual(["blob:film/1"]);
   });
 
   it("UN COMPOSANT À AFFICHAGE AUTONOME suit la même règle", async () => {
     poserResultat("a", { _affichage: { url: "blob:carte/1" } });
-    await calculerCorrectifResultat(noeud("a", "autonome"), passeAvec({ url: "blob:carte/2" }));
+    await correctif(noeud("a", "autonome"), passeAvec({ url: "blob:carte/2" }));
     expect(revoquees).toEqual(["blob:carte/1"]);
   });
 
   it("CE QUE LE NŒUD A DÉSIGNÉ N'EST PAS À LUI : `designe` remplacé ne révoque rien", async () => {
     poserResultat("a", { _designe: { url: "blob:recu/1" } });
-    await calculerCorrectifResultat(noeud("a", "son"), passeAvec(undefined, { url: "blob:recu/2" }));
+    await correctif(noeud("a", "son"), passeAvec(undefined, { url: "blob:recu/2" }));
     expect(revoquees).toEqual([]);
   });
 });
@@ -268,7 +279,7 @@ describe("une bulle, et ses membres", () => {
   it("UNE BULLE MONTRE LA SORTIE QUI LA REPRÉSENTE, celle d'un membre qui en sort", async () => {
     const s = son("m");
     const passe = etat({ tousNoeudsG: bulle(true), aretesReelles: aretes, resultats: new Map([["m", [s]]]) });
-    const patch = await calculerCorrectifResultat(noeud("b", "bulle::b"), passe);
+    const patch = await correctif(noeud("b", "bulle::b"), passe);
     expect(patch!.audioResultatBuffer).toBe(s);
     expect(patch!.audioResultatNom).toBeUndefined();
   });
@@ -276,13 +287,13 @@ describe("une bulle, et ses membres", () => {
   it("UN MEMBRE DE BULLE REPLIÉE LOURD NE RETIENT RIEN : ni tampon, ni lecteur ; léger, il garde les deux", async () => {
     const lourd = son("m", true);
     const replie = etat({ tousNoeudsG: bulle(false), aretesReelles: aretes, resultats: new Map([["m", [lourd]]]) });
-    const patch = await calculerCorrectifResultat(noeud("m", "son", { bulle: "b" }), replie);
+    const patch = await correctif(noeud("m", "son", { bulle: "b" }), replie);
     expect(patch!.audioResultatBuffer).toBeUndefined();
     expect(replie.lecteursAEcrire.size).toBe(0);
 
     const leger = son("m");
     const sousLeSeuil = etat({ tousNoeudsG: bulle(false), aretesReelles: aretes, resultats: new Map([["m", [leger]]]) });
-    const patch2 = await calculerCorrectifResultat(noeud("m", "son", { bulle: "b" }), sousLeSeuil);
+    const patch2 = await correctif(noeud("m", "son", { bulle: "b" }), sousLeSeuil);
     expect(patch2!.audioResultatBuffer).toBe(leger);
     // Et son lecteur avec : « Développer » le montre aussitôt, sans rien recalculer.
     expect(sousLeSeuil.lecteursAEcrire.has("m")).toBe(true);
@@ -301,13 +312,13 @@ describe("un méta, d'après ce que ses internes ont rendu", () => {
 
   it("HORS DU PÉRIMÈTRE DU RUN, il n'est pas touché", async () => {
     const passe = etat({ estMetaEnScope: () => false, resultats: new Map([["x::cd", [son("cd")]]]) });
-    expect(await calculerCorrectifResultat(noeud("x", "meta-essai"), passe)).toBeNull();
+    expect(await correctif(noeud("x", "meta-essai"), passe)).toBeNull();
   });
 
   it("IL MONTRE CE QUE SON INTERNE A RENDU SUR LA SORTIE EXPOSÉE, et dit terminé", async () => {
     const s = son("cd");
     const passe = etat({ resultats: new Map([["x::cd", [s]]]) });
-    const patch = await calculerCorrectifResultat(noeud("x", "meta-essai"), passe);
+    const patch = await correctif(noeud("x", "meta-essai"), passe);
     expect(patch).toMatchObject({ audioResultatBuffer: s, audioResultatMessage: "execution.termine" });
   });
 
@@ -317,12 +328,12 @@ describe("un méta, d'après ce que ses internes ont rendu", () => {
       resultats: new Map([["x::ab", [null]]]),
       noeudsPlats: [noeud("x::ab", "gain"), noeud("x::cd", "son")],
     });
-    const patch = await calculerCorrectifResultat(noeud("x", "meta-essai"), passe);
+    const patch = await correctif(noeud("x", "meta-essai"), passe);
     expect(patch).toEqual({ audioResultatMessage: "execution.brancheEchecSansResultat" });
     expect(statutDe("x").statut).toBe("erreur");
     // Et sans fautif identifiable, l'autre message.
     const sansOrdre = etat({ resultats: new Map([["x::cd", [null]]]) });
-    const patch2 = await calculerCorrectifResultat(noeud("y", "meta-essai"), sansOrdre);
+    const patch2 = await correctif(noeud("y", "meta-essai"), sansOrdre);
     expect(patch2).toEqual({ audioResultatMessage: "execution.brancheEchecAucunResultat" });
   });
 });
