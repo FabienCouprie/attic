@@ -298,48 +298,62 @@ describe("les accords d'un dialogue", () => {
 // L'en-tête du module annonçait `ATTIC_RACINES` ALORS QUE RIEN NE LA LISAIT. Une source annoncée et
 // absente est pire qu'une source absente : elle fait croire la porte ouverte quand il faudra la
 // franchir. Ces cas existent pour que l'annonce et le code ne puissent plus diverger.
-describe("ATTIC_RACINES", () => {
+//
+// DEPUIS LA PIÈCE C4 DU FICHIER DE CONFIGURATION, la variable est lue par `configuration.cjs`, avec la
+// clé `racines` de `config.json` qu'elle emporte. Ces cas passent donc par la vraie lecture, comme
+// `main.cjs` : l'environnement, la configuration, puis la déclaration.
+const { lireConfiguration, SCHEMA } = require("./configuration.cjs");
+const PLATEFORME = win ? "win32" : "linux";
+const racinesLues = (env: Record<string, string>, texte = "") =>
+  lireConfiguration({ plateforme: PLATEFORME, env, texte, schema: SCHEMA }).valeurs.racines;
+
+describe("ATTIC_RACINES et la clé « racines »", () => {
   it("déclare des racines, séparées comme un PATH", () => {
-    const avant = process.env.ATTIC_RACINES;
     try {
       cap.oublierLesRacines();
-      process.env.ATTIC_RACINES = [R, AILLEURS].join(delimiter);
-      expect(cap.declarerRacinesDeLEnvironnement().length).toBe(2);
+      expect(cap.declarerRacinesDuProprietaire(racinesLues({ ATTIC_RACINES: [R, AILLEURS].join(delimiter) })).length).toBe(2);
       expect(cap.sousUneRacine(`${R}/x.wav`)).toBe(true);
       expect(cap.sousUneRacine(`${AILLEURS}/x.wav`)).toBe(true);
     } finally {
-      if (avant === undefined) delete process.env.ATTIC_RACINES; else process.env.ATTIC_RACINES = avant;
       cap.oublierLesRacines();
     }
   });
 
-  it("et sans elle, aucune racine n'apparaît", () => {
-    const avant = process.env.ATTIC_RACINES;
+  it("et la clé du fichier aussi, que la variable emporte", () => {
     try {
-      delete process.env.ATTIC_RACINES;
       cap.oublierLesRacines();
-      expect(cap.declarerRacinesDeLEnvironnement().length).toBe(0);
+      const fichier = JSON.stringify({ racines: [R] });
+      expect(cap.declarerRacinesDuProprietaire(racinesLues({}, fichier)).length).toBe(1);
+      expect(cap.sousUneRacine(`${R}/x.wav`)).toBe(true);
+      cap.oublierLesRacines();
+      cap.declarerRacinesDuProprietaire(racinesLues({ ATTIC_RACINES: AILLEURS }, fichier));
+      expect([cap.sousUneRacine(`${R}/x.wav`), cap.sousUneRacine(`${AILLEURS}/x.wav`)]).toEqual([false, true]);
     } finally {
-      if (avant !== undefined) process.env.ATTIC_RACINES = avant;
+      cap.oublierLesRacines();
     }
+  });
+
+  it("et sans elles, aucune racine n'apparaît ; une racine relative n'en fait aucune", () => {
+    cap.oublierLesRacines();
+    expect(cap.declarerRacinesDuProprietaire(racinesLues({})).length).toBe(0);
+    // RELATIVE, ELLE SE RÉSOUDRAIT CONTRE LE DOSSIER COURANT DU LANCEMENT : la lecture la refuse, et
+    // le défaut, aucune racine, s'applique.
+    expect(cap.declarerRacinesDuProprietaire(racinesLues({ ATTIC_RACINES: "relatif" })).length).toBe(0);
+    expect(cap.racinesConnues()).toEqual([]);
   });
 
   it("et elle N'EST PAS PERSISTÉE : la retirer la retire vraiment", () => {
     // La recopier dans les accords la rendrait permanente après qu'on l'a enlevée, ce qui est le
     // contraire de ce qu'une variable d'environnement promet.
     const { base, fichier } = bac2();
-    const avant = process.env.ATTIC_RACINES;
     try {
       cap.oublierLesRacines();
       cap.memoriserLesAccords(fichier);
-      process.env.ATTIC_RACINES = join(base, "par-env");
-      cap.declarerRacinesDeLEnvironnement();
-      delete process.env.ATTIC_RACINES;
+      cap.declarerRacinesDuProprietaire(racinesLues({ ATTIC_RACINES: join(base, "par-env") }));
       cap.oublierLesRacines();
       cap.memoriserLesAccords(fichier);
       expect(cap.sousUneRacine(join(base, "par-env", "x"))).toBe(false);
     } finally {
-      if (avant !== undefined) process.env.ATTIC_RACINES = avant;
       cap.oublierLesRacines();
       rmSync(base, { recursive: true, force: true });
     }

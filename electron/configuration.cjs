@@ -88,6 +88,30 @@ const SCHEMA = Object.freeze({
    * renommage de `dossier-ressources.cjs` s'y applique, sans copie entre disques.
    */
   dossierModeles: Object.freeze({ type: "chemin", defaut: dossierModelesDeLaMachine }),
+  /**
+   * LES VARIABLES D'ENVIRONNEMENT ABSORBÉES (pièce C4). Chacune garde sa variable, qui l'emporte sur
+   * le fichier ; le fichier les rend écrivables sans lanceur ni shell.
+   *
+   * `racines` : des dossiers où le pont peut lire et écrire, en plus de ceux qu'il accorde lui-même
+   * (`electron/capacites-chemins.cjs`). Absolus : une racine relative se résoudrait contre le dossier
+   * courant du lancement. Un lien posé dedans ne mène pas au dehors, réparé avant cette pièce.
+   *
+   * `python` et `julia` : l'interprète à employer. LE FICHIER N'EN DONNE QUE LE DÉFAUT, la proposition
+   * du plan : le chemin choisi dans l'interface (« Choisir l'exécutable ») l'emporte, et sans les deux
+   * l'application cherche elle-même. `config.propose.json` montre celui qu'elle a trouvé.
+   *
+   * `ollama` : l'adresse du serveur, que le processus principal interroge pour le nœud.
+   */
+  racines: Object.freeze({ type: "chemins", defaut: Object.freeze([]), env: "ATTIC_RACINES" }),
+  python: Object.freeze({ type: "chemin", defaut: null, env: "ATTIC_PYTHON" }),
+  julia: Object.freeze({ type: "chemin", defaut: null, env: "ATTIC_JULIA" }),
+  ollama: Object.freeze({ type: "adresse", defaut: "http://127.0.0.1:11434", env: "ATTIC_OLLAMA_URL" }),
+  /**
+   * LE SENS D'« AUTOMATIQUE » DANS LE RÉGLAGE « CALCUL » DES NŒUDS (pièce C5). Fabien a choisi le
+   * 2026-11-19 qu'elle règle ce sens, et non le défaut des nœuds posés : aucun graphe ne change, et
+   * un choix explicite dans un nœud l'emporte. Voir `electron/calcul-automatique.cjs`.
+   */
+  calcul: Object.freeze({ type: "choix", valeurs: Object.freeze(["auto", "processeur", "carte"]), defaut: "auto" }),
 });
 
 /**
@@ -208,6 +232,16 @@ const TYPES = Object.freeze({
     if (!Array.isArray(liste)) return { code: "type" };
     const chemins = liste.map((x) => cheminDe(x, systeme, home));
     return chemins.every((c) => c) ? { valeur: Object.freeze(chemins) } : { code: "chemin" };
+  },
+  // UNE ADRESSE DE SERVEUR, en `http:` ou `https:` seulement (pièce C4, Ollama). Rendue sans la barre
+  // finale, pour qu'on puisse y coller `/api/chat` : `http://hote:11434/` et `http://hote:11434`
+  // désignent le même serveur.
+  adresse(v) {
+    if (typeof v !== "string") return { code: "type" };
+    let u;
+    try { u = new URL(v.trim()); } catch { return { code: "adresse" }; }
+    if (u.protocol !== "http:" && u.protocol !== "https:") return { code: "adresse" };
+    return { valeur: `${u.origin}${u.pathname}`.replace(/\/+$/, "") };
   },
 });
 
@@ -345,6 +379,7 @@ const PHRASES = Object.freeze({
   bornes: (p) => `« ${p.cle} » est hors de ses bornes${p.detail ? ` (variable ${p.detail})` : ""}, le défaut s'applique`,
   choix: (p) => `« ${p.cle} » n'est pas une valeur permise${p.detail ? ` (variable ${p.detail})` : ""}, le défaut s'applique`,
   chemin: (p) => `« ${p.cle} » n'est pas un chemin absolu${p.detail ? ` (variable ${p.detail})` : ""}, le défaut s'applique`,
+  adresse: (p) => `« ${p.cle} » n'est pas une adresse http ou https${p.detail ? ` (variable ${p.detail})` : ""}, le défaut s'applique`,
   schema: (p) => `« ${p.cle} » a un type inconnu du schéma`,
   illisible: (p) => `le fichier est illisible (${p.detail}) ; les défauts s'appliquent`,
   mode: (p) => `le fichier est inscriptible par le groupe ou par tous (mode ${p.detail}) : il n'est pas appliqué`,

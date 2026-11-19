@@ -24,6 +24,7 @@ const os = require("os");
 
 const { resoudreRessource } = require("./chemins-ressources.cjs");
 const { lancerTravail } = require("./travaux.cjs");
+const { calculDuPont } = require("./calcul-automatique.cjs");
 
 /** Les quatre fichiers, sous la racine `sdcpp`, chacun résolu pour lui-même. */
 const FICHIERS = {
@@ -97,7 +98,9 @@ async function genererMoss(options = {}, surAvancement, contexte) {
       fs.writeFileSync(negatif, String(options.negatif), "utf8");
     }
     const sortie = path.join(travail, "image.png");
-    const args = argumentsMoss({ ...options, modele: cheminsModele(contexte), prompt, negatif, sortie });
+    // « AUTOMATIQUE » PREND LE SENS DE `config.json` (pièce C5) : voir `calcul-automatique.cjs`.
+    const calcul = calculDuPont(options.calcul);
+    const args = argumentsMoss({ ...options, calcul, modele: cheminsModele(contexte), prompt, negatif, sortie });
     const relayer = (ligne) => {
       const e = etapeDeLigne(ligne);
       if (e && surAvancement) surAvancement(`${e.faite}/${e.total}`);

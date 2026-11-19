@@ -38,7 +38,11 @@ const { fenetreDe } = require("./fenetres.cjs");
  * @param dialog                pour la question d'autorisation d'un script ;
  * @param showOpenDialogSuivi   le dialogue d'ouverture de `main.cjs`, qui accorde la racine choisie.
  */
-function installerIpcScripts({ ipcMain, app, BrowserWindow, dialog, showOpenDialogSuivi }) {
+// `interpretes` : la clé `python` et la clé `julia` de `config.json`, ou leurs variables `ATTIC_PYTHON` et
+// `ATTIC_JULIA` qui l'emportent, lues par `electron/configuration.cjs` (pièce C4). Elles ne donnent
+// que le DÉFAUT : le chemin choisi dans l'interface passe avant elles. Rend une fonction qui dit les
+// interprètes trouvés, pour le fichier proposé.
+function installerIpcScripts({ ipcMain, app, BrowserWindow, dialog, showOpenDialogSuivi, interpretes = {} }) {
   /**
    * Le script peut-il s'exécuter ? Oui s'il est déjà autorisé ; sinon, la personne le lit et décide.
    *
@@ -80,8 +84,8 @@ function installerIpcScripts({ ipcMain, app, BrowserWindow, dialog, showOpenDial
   });
 
   // ─── Détection de l'exécuteur Python (centralisée) ───
-  // Cherche dans l'ordre : paramètre utilisateur (localStorage), variable d'env ATTIC_PYTHON,
-  // chemins connus Windows, puis python/python3/py dans le PATH.
+  // Cherche dans l'ordre : le chemin choisi dans l'interface, la clé `python` de `config.json` (ou
+  // `ATTIC_PYTHON` qui l'emporte), les chemins connus Windows, puis python/python3/py dans le PATH.
   let CHEMIN_PYTHON = null;
 
   function chercherPythonEnregistre() {
@@ -100,9 +104,9 @@ function installerIpcScripts({ ipcMain, app, BrowserWindow, dialog, showOpenDial
     const sauvegarde = chercherPythonEnregistre();
     if (sauvegarde) { CHEMIN_PYTHON = sauvegarde; return; }
 
-    // 2. Variable d'environnement
-    if (process.env.ATTIC_PYTHON && fs.existsSync(process.env.ATTIC_PYTHON)) {
-      CHEMIN_PYTHON = process.env.ATTIC_PYTHON;
+    // 2. La configuration : la clé `python`, ou `ATTIC_PYTHON` qui l'emporte
+    if (interpretes.python && fs.existsSync(interpretes.python)) {
+      CHEMIN_PYTHON = interpretes.python;
       return;
     }
 
@@ -162,8 +166,9 @@ function installerIpcScripts({ ipcMain, app, BrowserWindow, dialog, showOpenDial
     const sauvegarde = chercherJuliaEnregistre();
     if (sauvegarde) { CHEMIN_JULIA = sauvegarde; return; }
 
-    if (process.env.ATTIC_JULIA && fs.existsSync(process.env.ATTIC_JULIA)) {
-      CHEMIN_JULIA = process.env.ATTIC_JULIA;
+    // La configuration : la clé `julia`, ou `ATTIC_JULIA` qui l'emporte
+    if (interpretes.julia && fs.existsSync(interpretes.julia)) {
+      CHEMIN_JULIA = interpretes.julia;
       return;
     }
 
@@ -237,7 +242,7 @@ function installerIpcScripts({ ipcMain, app, BrowserWindow, dialog, showOpenDial
   // options: { code: string, inputs: { path: string, key: string }[], outputPath: string, timeout: number }
   ipcMain.handle("python:executer", async (event, options) => {
     if (!CHEMIN_PYTHON) {
-      return { ok: false, erreur: "Python n'est pas installé ou introuvable. Définissez la variable d'environnement ATTIC_PYTHON ou installez Python." };
+      return { ok: false, erreur: "Python n'est pas installé ou introuvable. Choisissez l'exécutable dans le nœud, donnez son chemin par la clé python de config.json ou la variable d'environnement ATTIC_PYTHON, ou installez Python." };
     }
     if (!(await autorisationDuScript(event, "python", options?.code))) return SCRIPT_REFUSE;
     try {
@@ -317,7 +322,7 @@ function installerIpcScripts({ ipcMain, app, BrowserWindow, dialog, showOpenDial
 
   ipcMain.handle("julia:executer", async (event, options) => {
     if (!CHEMIN_JULIA) {
-      return { ok: false, erreur: "Julia n'est pas installé ou introuvable. Définissez la variable d'environnement ATTIC_JULIA ou installez Julia." };
+      return { ok: false, erreur: "Julia n'est pas installé ou introuvable. Choisissez l'exécutable dans le nœud, donnez son chemin par la clé julia de config.json ou la variable d'environnement ATTIC_JULIA, ou installez Julia." };
     }
     if (!(await autorisationDuScript(event, "julia", options?.code))) return SCRIPT_REFUSE;
     try {
@@ -361,6 +366,11 @@ function installerIpcScripts({ ipcMain, app, BrowserWindow, dialog, showOpenDial
       return { ok: false, erreur: String(err?.message || err) };
     }
   });
+
+  // LES INTERPRÈTES EN USAGE, pour `config.propose.json` : le plan veut qu'un défaut de chemin soit
+  // celui que l'application emploie sur la machine. Lus à l'appel, le choix fait dans l'interface
+  // pouvant les changer.
+  return () => ({ python: CHEMIN_PYTHON, julia: CHEMIN_JULIA });
 }
 
 module.exports = { installerIpcScripts };

@@ -22,7 +22,8 @@
 //   · LES DOSSIERS DE L'APPLICATION, `userData` et LE DOSSIER DE TRAVAIL : ils sont a elle. Le
 //     dossier de travail par defaut est choisi par le processus principal dans une liste de
 //     candidats qu'il calcule lui-meme ; le rendu ne fait que le lui demander.
-//   · ET CE QUE LE PROPRIETAIRE DECLARE, s'il le veut, par `ATTIC_RACINES`.
+//   · ET CE QUE LE PROPRIETAIRE DECLARE, s'il le veut : la cle `racines` de `config.json`, ou
+//     `ATTIC_RACINES` qui l'emporte.
 //
 // LE DOSSIER TEMPORAIRE N'EN EST PAS, et c'est delibere : aucune destination relevee n'y mene, et
 // il est partage avec toutes les autres applications de la machine.
@@ -241,18 +242,20 @@ function ecrireLesAccords() {
 }
 
 /**
- * Les racines que le proprietaire declare lui-meme par `ATTIC_RACINES`, separees comme un PATH.
+ * Les racines que le proprietaire declare lui-meme : la cle `racines` de `config.json`, ou
+ * `ATTIC_RACINES` qui l'emporte, separee comme un PATH (piece C4 du fichier de configuration).
  *
- * ELLE N'EST PAS PERSISTEE : une variable d'environnement est deja une declaration explicite, et
- * la recopier dans les accords la rendrait permanente apres l'avoir retiree.
+ * LA LISTE VIENT DE `electron/configuration.cjs`, qui lit les deux, et non plus de l'environnement
+ * lu ici : une seule lecture, une seule regle (des chemins absolus, sans quoi une racine se
+ * resoudrait contre le dossier courant du lancement).
+ *
+ * ELLES NE SONT PAS PERSISTEES : le fichier et la variable sont deja des declarations explicites, et
+ * les recopier dans les accords les rendrait permanentes apres les avoir retirees.
  */
-function declarerRacinesDeLEnvironnement() {
-  const brut = process.env.ATTIC_RACINES;
-  if (!brut) return [];
+function declarerRacinesDuProprietaire(liste) {
   const prises = [];
-  for (const part of String(brut).split(path.delimiter)) {
-    const p = part.trim();
-    if (!p) continue;
+  for (const p of Array.isArray(liste) ? liste : []) {
+    if (typeof p !== "string" || !p.trim()) continue;
     declarerRacine(p);
     const c = comparable(p);
     if (c !== null) prises.push(c);
@@ -316,6 +319,6 @@ function oublierLesRacines() {
 
 module.exports = {
   comparable, declarerRacine, declarerRacineDuFichier, racinesConnues,
-  accorderRacine, accorderRacineDuFichier, memoriserLesAccords, declarerRacinesDeLEnvironnement,
+  accorderRacine, accorderRacineDuFichier, memoriserLesAccords, declarerRacinesDuProprietaire,
   sousUneRacine, racinesStrictes, verdictRacine, oublierLesRacines, ACCORDS_GARDES,
 };
