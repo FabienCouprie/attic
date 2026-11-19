@@ -23,14 +23,29 @@ Le graphe nodal d'Attic est composé de trois couches qui partagent trop d'état
 2. **Couplage via des chaînes de caractères localisées** — ✅ *résolu en v2.2.2, voir feuille de route ci-dessous.*  
    Plusieurs plugins (ex. `Masque de zones`, `Boucle`, `Porte`) comparent la valeur d'un paramètre `choix` avec la chaîne française affichée (`"Conserver les zones"`). Si l'UI est en anglais, si on renomme un label, ou si la valeur stockée vient d'une ancienne sauvegarde, le plugin interprète mal l'action. La langue d'affichage ne devrait jamais être une clé de logique métier.
 
-3. **Hooks globaux avec des effets de bord larges** — *atténué par le lot 2, puis sorti des crochets pour l'exécution et le cache par l'architecture par messages (relu le 2026-11-19).*  
-   Relu le 2026-11-19 : la passe n'est plus une fermeture React. Elle est dans `ui/moteur/passe.ts`,
-   sans React, et le moteur de `ui/moteur/moteur.ts` tient le cache, l'ordonnanceur, le contrôleur
-   de la passe en cours et l'arrêt du lot ; l'interface ne lui parle que par les commandes de
+3. **Hooks globaux avec des effets de bord larges** — ✅ *résolu le 2026-11-19, par la PR 404 et le garde des indices du moteur (relu le même jour).*  
+   La passe n'est plus une fermeture React. Elle est dans `ui/moteur/passe.ts`, sans React, et le
+   moteur de `ui/moteur/moteur.ts` tient le cache, l'ordonnanceur, le contrôleur de la passe en
+   cours et l'arrêt du lot ; l'interface ne lui parle que par les commandes de
    `core/protocole-moteur.ts`, et `docs/frontiere-moteur.test.ts` tient la frontière.
-   `useExecutionGraphe.ts` n'est plus que le pont, 92 lignes de code pour 153 en tout, et `App.tsx`
-   compte 399 lignes de code pour 605. Le diagnostic réclamait un garde-fou par famille de nœud :
-   `IMPACT.md` dit, zone par zone, quels gardes tiennent aujourd'hui ce qu'une modification touche.
+   `useExecutionGraphe.ts` n'est plus que le pont et ne rend que `lancer` et `arreter`, 85 lignes de
+   code pour 148 en tout. `App.tsx` compte 397 lignes de code pour 592, et n'écrit plus aucune règle
+   du cycle d'un nœud depuis la PR 404 : la suppression laisse la remise à zéro révoquer les URL, et
+   le geste des zones est `changerZones` dans `ui/hooks/useRemiseAZero.ts`. Le cas « CHAQUE
+   TRANSITION N'A QU'UNE IMPLÉMENTATION » de `plugins/cycle-de-vie-noeuds.test.ts` refuse qu'il y
+   revienne.
+   Le garde-fou par famille existe, et la famille qu'il compte est celle que le moteur voit. Ni le
+   moteur ni la remise à zéro ne lisent la famille d'une fiche : une faute de cache ou de reset ne
+   frappe un nœud et n'en épargne un autre que par les indices qu'il déclare, rassemblés dans
+   `IndicesMoteur` (`core/types.ts`). `docs/indices-moteur.test.ts` exige pour chacun une vraie fiche
+   dans un exemple que jouent le journal de passe et la base du son, ou une raison écrite, et
+   `exemples/ce-que-le-moteur-lit-sur-un-noeud.json` porte ceux qu'aucun exemple ne portait. Mesuré
+   par une faute plantée par indice : trois sont joués, et leur faute fait tomber au moins un des
+   deux gardes (`jamaisCache`, `sansApercuAudio`, `sortieNullePermise`) ; quatre ne sont pas
+   éprouvés, `memoire` faute de lecteur, et `relanceAutomatique`, `apercuEstLeFichier` et
+   `sortieHorsPlagePossible` parce que leur faute laisse les deux gardes verts ; deux sont hors de
+   portée, `affichageAutonome` et `executerEnDernier`. La table du garde dit pourquoi, indice par
+   indice. `IMPACT.md` dit, zone par zone, quels gardes tiennent ce qu'une modification touche.
    Le diagnostic d'origine suit.  
    `App.tsx` et `useExecutionGraphe.ts` concentrent la création des nœuds, la suppression, la réinitialisation, l'exécution, le cache, la gestion des URLs blob, etc. Une modification dans la logique de reset ou de cache peut se propager à l'ensemble des 200+ nœuds, car il n'y a pas de garde-fou par famille de nœud. (`App.tsx` était passé de 437 à 1013 lignes depuis l'extraction de hooks documentée dans `APP-BREAKDOWN.md`, et à 1449 le 2026-10-31 ; `useExecutionGraphe.ts` était à 1777, dont une seule fermeture, `lancerUnePasse`, de 1166 lignes. Relu le 2026-11-06, après le lot 2 : `App.tsx` compte 393 lignes de code pour 575 en tout, `useExecutionGraphe.ts` 289 pour 681, et `lancerUnePasse` 482 lignes, de la ligne 180 à la ligne 661. La passe reste une seule fermeture React.)
 
@@ -250,7 +265,8 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   Relu le 2026-11-19 : l'architecture par messages a vidé le crochet à son tour (voir le long
   terme). La passe est dans `ui/moteur/passe.ts`, le moteur dans `ui/moteur/moteur.ts`, et
   `useExecutionGraphe.ts` n'est plus que le pont, 92 lignes de code ; `core/execution.ts` en compte
-  270, et `src/core/` 47 fichiers de test.
+  270, et `src/core/` 47 fichiers de test. La PR 404 en a sorti les remises à zéro le même jour :
+  il ne rend plus que `lancer` et `arreter`, en 85 lignes de code.
   L'historique qui suit est celui des relevés d'avant.
   Partiellement fait : `src/core/execution.ts` existe et teste
   `estResultatEnErreur` (la règle « tout-null = échec », testée), mais c'est
@@ -297,7 +313,8 @@ Attic devrait être organisé en trois couches avec des interfaces explicites :
   Relu le 2026-11-06 : `App.tsx` 393 lignes de code et 575 en tout, `useExecutionGraphe.ts` 289 et
   681 ; ni l'un ni l'autre n'est revenu dans la dette.
   Relu le 2026-11-19 : `App.tsx` 399 et 605, `useExecutionGraphe.ts` 92 et 153, le moteur et la
-  passe étant passés dans `ui/moteur/`.
+  passe étant passés dans `ui/moteur/`. Après la PR 404, le même jour : `App.tsx` 397 et 592,
+  `useExecutionGraphe.ts` 85 et 148.
 
 ### Long terme
 

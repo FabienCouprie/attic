@@ -1,0 +1,185 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": {
+        "x": 1180,
+        "y": -40
+      },
+      "width": 520,
+      "height": 640,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "CE QUE LE MOTEUR LIT SUR UN NŒUD\n\nUn composant peut dire au moteur comment le traiter. Ce graphe en montre deux cas, sur de vrais composants.\n\n« Quiz » ne se reprend jamais du cache. Son thème « Catalogue » interroge sur les composants installés, que ni ses réglages ni ses entrées ne disent : le moteur le refait donc à chaque exécution. Il est ici sur « Notions », et il est refait quand même, la règle tenant au composant et non au réglage. Lancez deux fois : les autres nœuds reviennent du cache, « Quiz » se calcule à nouveau. Son questionnaire passe par « Modifier le texte », où il se corrige à la main, puis par « Sortie texte ».\n\n« Séparateur canaux » n'a pas de lecteur : ses sorties sont des pairs, et aucune ne représente à elle seule ce qu'il rend. « Générateur audio mathématique » joue 220 Hz à gauche et 330 Hz à droite, par la variable c de sa formule, qui vaut le numéro du canal en partant de zéro. Chaque canal s'écoute sur sa « Sortie audio ».",
+        "nomEn": "WHAT THE ENGINE READS ON A NODE\n\nA node can tell the engine how to handle it. This graph shows two such cases, on real nodes.\n\n« Quiz » is never taken from the cache. Its « Catalog » theme asks about the installed nodes, which neither its settings nor its inputs say: the engine therefore runs it again on every run. It is set to « Concepts » here, and it is still run again, since the rule belongs to the node and not to the setting. Run twice: the other nodes come back from the cache, « Quiz » is computed again. Its questionnaire goes through « Edit Text », where it can be corrected by hand, then to « Text Output ».\n\n« Channel Splitter » has no player: its outputs are peers, and none of them alone represents what it returns. « Mathematical Audio Generator » plays 220 Hz on the left and 330 Hz on the right, through the variable c of its formula, which is the channel number counted from zero. Each channel is heard on its own « Audio output »."
+      }
+    },
+    {
+      "id": "quiz",
+      "type": "atelier",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "quiz",
+        "parametres": {
+          "Thème": "Notions",
+          "Niveau": "Tous",
+          "Questions": 5,
+          "Graine": 7,
+          "Réponses": ""
+        }
+      }
+    },
+    {
+      "id": "texte",
+      "type": "atelier",
+      "position": {
+        "x": 520,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "modifier-texte",
+        "parametres": {
+          "Texte": ""
+        }
+      }
+    },
+    {
+      "id": "lecture",
+      "type": "atelier",
+      "position": {
+        "x": 860,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "sortie-texte",
+        "parametres": {}
+      }
+    },
+    {
+      "id": "son",
+      "type": "atelier",
+      "position": {
+        "x": 0,
+        "y": 520
+      },
+      "data": {
+        "ficheId": "generateur-audio-mathematique",
+        "parametres": {
+          "Formule": "0.4 * sin(2 * pi * (220 + 110 * c) * t)",
+          "Durée": 2,
+          "Canaux": "Stéréo",
+          "Volume": 100
+        }
+      }
+    },
+    {
+      "id": "canaux",
+      "type": "atelier",
+      "position": {
+        "x": 520,
+        "y": 520
+      },
+      "data": {
+        "ficheId": "separateur-canaux",
+        "parametres": {}
+      }
+    },
+    {
+      "id": "gauche",
+      "type": "atelier",
+      "position": {
+        "x": 860,
+        "y": 400
+      },
+      "data": {
+        "ficheId": "sortie-audio",
+        "parametres": {}
+      }
+    },
+    {
+      "id": "droite",
+      "type": "atelier",
+      "position": {
+        "x": 860,
+        "y": 720
+      },
+      "data": {
+        "ficheId": "sortie-audio",
+        "parametres": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-quiz-texte",
+      "source": "quiz",
+      "target": "texte",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#36a2eb",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-texte-lecture",
+      "source": "texte",
+      "target": "lecture",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#36a2eb",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-son-canaux",
+      "source": "son",
+      "target": "canaux",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-canaux-gauche",
+      "source": "canaux",
+      "target": "gauche",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-canaux-droite",
+      "source": "canaux",
+      "target": "droite",
+      "sourceHandle": "out:1",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    }
+  ],
+  "metas": [],
+  "viewport": {
+    "x": 40,
+    "y": 100,
+    "zoom": 0.55
+  }
+}
