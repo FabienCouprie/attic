@@ -136,7 +136,10 @@ test.describe("le rétablissement", () => {
     });
     await page.goto(devUrl);
     await page.waitForSelector(".attic-app", { timeout: 20000 });
-    await page.locator('input[type=file][accept=".json"]').setInputFiles({
+    // `accept` CONTIENT « .json », il ne l'égale plus : l'import prend aussi les paquets `.attic`
+    // depuis la PR 370, et le sélecteur exact attendait son délai sans rien trouver. Seule l'entrée
+    // d'import de la barre d'outils contient « .json ».
+    await page.locator('input[type=file][accept*=".json"]').setInputFiles({
       name: "essai.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(GRAPHE)),
     });
     await expect.poll(() => ids(page), { timeout: 15000 }).toEqual(["a", "b", "c"]);

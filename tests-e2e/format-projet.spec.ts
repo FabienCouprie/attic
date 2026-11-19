@@ -70,7 +70,10 @@ test.describe("le format de projet", () => {
 
       // L'ENTRÉE EST CACHÉE, et c'est normal : la barre d'outils la déclenche par son bouton.
       // `setInputFiles` la remplit comme un choix de fichier réel, ce qui déclenche `onImporter`.
-      await page.setInputFiles('input[type="file"][accept=".json"]', fichier);
+      // `accept` CONTIENT « .json », il ne l'égale plus : l'import prend aussi les paquets `.attic`
+      // depuis la PR 370, et le sélecteur exact attendait son délai sans rien trouver. Seule
+      // l'entrée d'import de la barre d'outils contient « .json » ; les deux cas suivants aussi.
+      await page.setInputFiles('input[type="file"][accept*=".json"]', fichier);
       await page.waitForTimeout(3000);
 
       const rapport = messages.join("\n");
@@ -99,7 +102,7 @@ test.describe("le format de projet", () => {
       page.on("dialog", async (d) => { messages.push(d.message()); await d.accept(); });
       await page.goto(devUrl, { waitUntil: "domcontentloaded" });
       await page.waitForSelector(".react-flow", { timeout: 60_000 });
-      await page.setInputFiles('input[type="file"][accept=".json"]', fichier);
+      await page.setInputFiles('input[type="file"][accept*=".json"]', fichier);
       await page.waitForTimeout(3000);
       console.log(`messages sur un projet sain : ${messages.length}`);
       expect(messages.join("\n")).toBe("");
@@ -118,7 +121,7 @@ test.describe("le format de projet", () => {
       const fichier = join(bac, "depart.json");
       writeFileSync(fichier, JSON.stringify(PROJET_SAIN, null, 2), "utf8");
       page.on("dialog", async (d) => { await d.accept(); });
-      await page.setInputFiles('input[type="file"][accept=".json"]', fichier);
+      await page.setInputFiles('input[type="file"][accept*=".json"]', fichier);
       await page.waitForTimeout(2000);
 
       // EN MODE WEB, ENREGISTRER DÉCLENCHE UN TÉLÉCHARGEMENT — c'est écrit dans le hook. On le

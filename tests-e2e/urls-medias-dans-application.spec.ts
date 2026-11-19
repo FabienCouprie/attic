@@ -337,7 +337,10 @@ test.describe("les autres naissances d'URL de médias", () => {
     await page.addInitScript(FAUX_PONT, PONT);
     await ouvrir(page, []);
     const avant = (await nees(page)).length;
-    await page.locator('input[type=file][accept=".json"]').setInputFiles({
+    // `accept` CONTIENT « .json », il ne l'égale plus : l'import prend aussi les paquets `.attic`
+    // depuis la PR 370, et le sélecteur exact attendait son délai sans rien trouver. Seule l'entrée
+    // d'import de la barre d'outils contient « .json ».
+    await page.locator('input[type=file][accept*=".json"]').setInputFiles({
       name: "projet.json", mimeType: "application/json",
       buffer: Buffer.from(JSON.stringify({ nodes: [{ ...entree("a", 0), data: { ficheId: "entree-audio", parametres: { Chemin: "C:/sons/essai.wav" } } }], edges: [] })),
     });

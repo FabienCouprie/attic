@@ -1268,6 +1268,17 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **QUATRE SPECS DE BOUT EN BOUT RETROUVENT L'ENTRÉE D'IMPORT : ELLES LA CHERCHAIENT PAR `accept=".json"`, ET LA BARRE D'OUTILS PORTE `accept=".json,.attic"` DEPUIS LA PR 370.** Relevé le 2026-11-17 par l'épreuve de la conception du graphe (PR 375), puis le 2026-11-19 par la pièce P6 de l'architecture par messages (PR 384), qui a relancé ces specs pour éprouver l'import et Ctrl+Z.
+  - **Le défaut.** Un sélecteur d'attribut `[accept=".json"]` exige l'égalité. `setInputFiles` attendait donc une entrée qui n'existait plus, jusqu'au délai du cas, et les quatre specs tombaient aussi sur `master`.
+  - **La correction**, sept sélecteurs dans `format-projet` (3), `montage-piste-branchee`, `retablir-dans-application` et `urls-medias-dans-application` : `accept*=".json"`, qui demande que la liste contienne `.json`. C'est la forme que `graphe-complexite-dans-application.spec.ts` emploie déjà. Elle survit à une extension ajoutée et reste univoque : des onze entrées de fichier de `src/` qui portent un `accept`, seule celle de l'import, dans `ui/BarreOutils.tsx`, contient `.json`. Un commentaire le dit à la première occurrence de chaque spec.
+  - **Les specs, lancées chacune seule** : `retablir-dans-application` 4 passed (18,7 s), `urls-medias-dans-application` 10 passed (53,1 s), `format-projet` 3 passed (17,2 s), `montage-piste-branchee` 2 passed (38,2 s).
+  - **La faute plantée** : l'ancien sélecteur remis dans le premier cas de `format-projet`, le cas tombe au bout de 180 s sur `waiting for locator('input[type="file"][accept=".json"]')`. Rétabli, la spec rend 3 passed (16,5 s).
+  - **L'ordre de vérification** :
+    - `npx tsc -b` est vert ;
+    - `npx oxlint` donne 27 avertissements et 0 erreur, aucun dans ces fichiers ;
+    - la passe complète est verte en 23 min 56 s : 785 fichiers dont 3 sautés, 11 120 cas verts, 17 sautés.
+
+    Rien ne change hors de `tests-e2e/` : aucune table générée n'est concernée.
 - **UNE PASSE NE RÉÉCRIT PLUS CE QU'ON VIENT D'EFFACER, NI SUR UN GRAPHE QU'ON VIENT D'ABANDONNER.** Pièce P6 du plan de l'architecture par messages entre l'interface et le moteur, demandée par Fabien le 2026-11-18 : « Oui, P6 ». Il a aussi choisi de distinguer l'abandon du graphe de l'oubli simple. C'est la seule pièce du plan qui change un comportement.
   - **Les deux défauts ont été vus rouges dans l'application avant d'être corrigés**, par `tests-e2e/evenements-perimes-dans-application.spec.ts`. Les gestes y sont joués pendant le run de `un-synthe-et-sa-bulle-d-effets`, le journal de passe armé :
     - **D1** : après le ↺ du synthé, le bilan de la passe abattue faisait 7 écritures sur les nœuds qu'on venait d'effacer, résultats, temps et écarts compris ;
