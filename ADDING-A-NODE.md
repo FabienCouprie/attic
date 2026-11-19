@@ -84,7 +84,7 @@ executes in the graph.
 | `parametres` | ✅ (array, possibly empty) | Settings exposed in the inspector. See below. |
 | `anciensReglages` | optional | Parameters the sheet no longer declares and that `executer` still reads, for projects saved before they were replaced. They are never shown. |
 | `executer` | ✅ | The computation function. See the contract below. |
-| `etiquettes` | optional | Keywords. **Nothing reads them today**: the palette search (`src/ui/recherche-palette.ts`) looks at the names, summaries, family and notice. |
+| `etiquettes` | optional | Search keywords, read by the palette search (`src/ui/recherche-palette.ts`) besides the names, summaries, family and notice: the name of a device or a use that the notice does not need to say (`"leslie"`, `"dx7"`). `src/ui/recherche-palette.test.ts` checks that every declared keyword finds its node. |
 | engine hints | optional | `jamaisCache`, `sortieNullePermise`, `entreesExtensibles`, `sortiesExtensibles` and the others of the "Indices pour le moteur" block of `PluginDef`, each documented there. |
 
 ### Ports (`PortDef`)
