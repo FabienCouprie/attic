@@ -466,6 +466,7 @@ jamais vu rouge ne garde rien.
 | En retirer un | `REMOVING-A-NODE.md` |
 | Réutiliser le cœur pour un autre domaine | `PORTING-A-DOMAIN.md` |
 | Comprendre les couches et leurs frontières | `ARCHITECTURE.md`, `APP-BREAKDOWN.md` |
+| Savoir ce qu'une modification touche, quels gardes la tiennent et quelles épreuves relancer | `IMPACT.md` |
 | Savoir ce que fait chaque composant | `COMPONENTS.md` (généré) |
 | Savoir ce qu'un module audio peut quitter le fil | `DEPENDANCES-AUDIO.md` (généré) |
 | Savoir quel composant une table partagée touche | `INTERFACE.md` (généré) |
