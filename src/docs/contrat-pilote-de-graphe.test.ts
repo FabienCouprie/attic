@@ -222,10 +222,15 @@ describe("le pilote de graphe", () => {
     // `lancerLeNoeudEtAttendre` puis `relancerEtAttendre`, le ↺ entre les deux. Il ne relève que ce
     // que la passe écrit dans les magasins. Il attend en plus que l'ordonnanceur ne compte plus
     // aucune passe, par `expect.poll` : le pilote rend la main avant la fin du ménage.
+    //
+    // LES COPIES REMISES À ZÉRO Y PRENNENT `semerEtLancer`, puis `relancerEtAttendre` après chaque ↺,
+    // et relisent ce que la fin fait entendre par `apercusEnWav` : le son seul dit si les copies d'une
+    // boucle ou d'un instrument ont été refaites.
     expect(appelants.sort(), "les appelants déclarés du pilote")
       .toEqual(["boucle-dans-lot-dans-application.spec.ts",
         "boucle-reprise-dans-application.spec.ts", "conteneurs-dans-application.spec.ts",
         "copier-coller-annotations-dans-application.spec.ts",
+        "copies-remises-a-zero-dans-application.spec.ts",
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
         "graphe-complexite-dans-application.spec.ts", "journal-de-passe.spec.ts",

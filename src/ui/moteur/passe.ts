@@ -87,8 +87,8 @@ export interface PretsDeLaPasse extends Pick<QuestionsAuShell, "graphe" | "prior
   controleur: Emplacement<AbortController | null>;
   /** Le numéro des remises à zéro et des oublis du moteur, à l'instant de la question. Voir `core/remises.ts`. */
   numero: () => number;
-  /** Ce nœud a-t-il été remis à zéro ou oublié depuis ce numéro ? */
-  oublieDepuis: (id: string, depart: number) => boolean;
+  /** Ce nœud a-t-il été remis à zéro ou oublié depuis ce numéro, lui ou le nœud visible qu'il sert ? */
+  oublieDepuis: (id: string, depart: number, visible?: string) => boolean;
 }
 
 export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
@@ -149,6 +149,9 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
       } = plan;
       servicesOrchestration().publierGraphe(plan.aDocumenter);
       for (const a of plan.avertissements) console.warn(a);
+      // CE QUE LA PASSE EXÉCUTE, RATTACHÉ AU NŒUD QU'ON VOIT avant qu'elle n'écrive rien : les internes
+      // d'un méta, les copies d'une boucle et d'un instrument. Une remise à zéro les purge avec lui.
+      cache.rattacher(plat.expansions);
       // LA PASSE COMMENCE : le récepteur montre que le moteur tourne, pour une passe globale, et pose
       // les statuts de la préparation, dans l'ordre.
       p.recevoir({ genre: "passeCommencee", generation, ...cible, ordre: ordreFiltre, statuts: plan.statuts, noeuds: tousNoeudsG, numero: depart });
@@ -198,8 +201,8 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
         canoniser: p.canoniser, graineDuNoeud,
         lireCache: (id) => cache.lire(id),
         // UN NŒUD OUBLIÉ DEPUIS LE DÉPART N'EST PAS RÉÉCRIT AU CACHE : il a été calculé sur un graphe
-        // d'avant, et l'oubli voulait que le suivant le refasse.
-        ecrireCache: (id, entree) => { if (!p.oublieDepuis(id, depart)) cache.ecrire(id, entree); },
+        // d'avant, et l'oubli voulait que le suivant le refasse. Une copie l'est par son nœud visible.
+        ecrireCache: (id, entree) => { if (!p.oublieDepuis(id, depart, plat.expansions.get(id))) cache.ecrire(id, entree); },
         sauts, questions: () => servicesApercu(), t,
         cacheSeulement: perimetre?.cacheSeulement === true,
         emettre: p.recevoir,

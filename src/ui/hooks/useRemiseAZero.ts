@@ -38,7 +38,7 @@ export function useRemiseAZero({ noeudsRef, aretesRef, envoyer, setNodes }: Opti
     // de réinitialiser dès son prochain onProgress ou sa fin d'exécution.
     //
     // C'EST LA COMMANDE `remettreAZero` QUI L'ABAT, depuis la pièce P5b, et elle lâche du même coup ces
-    // nœuds du cache, et les internes de leurs métas par la règle du `::` (`ui/moteur/cache.ts`).
+    // nœuds du cache, les internes de leurs métas et leurs copies de boucle ou d'instrument (`ui/moteur/cache.ts`).
     // L'annulation était un appel à part, ici, et la purge venait en dernier : le moteur les fait
     // ensemble, avant que rien ne soit effacé. Rien ne lit le cache entre les deux, l'ensemble étant
     // synchrone. Un méta dont on n'effaçait que l'identifiant visible voyait le run suivant reprendre

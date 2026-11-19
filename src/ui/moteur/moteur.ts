@@ -103,7 +103,7 @@ export function creerMoteur(p: PretsDuMoteur): Moteur {
       graphe: () => q.graphe(), priorite: () => q.priorite(), noeudVisible: (id) => q.noeudVisible(id),
       noeudsVisibles: () => q.noeudsVisibles(), economieMemoire: () => q.economieMemoire(),
       recevoir: p.recepteur, cache, audio: p.audio, canoniser: p.canoniser, repertoire, t, controleur,
-      numero: () => numero, oublieDepuis: (id, depart) => oublis.depuis(id, depart),
+      numero: () => numero, oublieDepuis: (id, depart, visible) => oublis.depuis(id, depart, visible),
     });
     const { lancerLeLot } = creerPilotesDePasse({ lancerUnePasse, graphe: () => q.graphe(), cache, arretDuLot });
     // LE PÉRIMÈTRE EST CELUI QUE L'APPELANT A DONNÉ, champ pour champ, et rien s'il n'en a donné aucun :

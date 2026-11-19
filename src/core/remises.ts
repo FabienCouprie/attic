@@ -14,6 +14,12 @@
 // LA RÈGLE DU `::` EST CELLE DU CACHE (`ui/moteur/cache.ts`) : remettre un méta à zéro remet aussi les
 // nœuds de son contenu, rangés sous `monMeta::…` à toute profondeur. Un oubli simple ne touche que
 // les identifiants qu'il nomme, comme `oublier` dans le cache.
+//
+// ET LE CONTENU D'UN NŒUD VISIBLE COMPREND SES COPIES, depuis le 2026-11-19. Une copie de boucle ou
+// d'instrument s'appelle `debut#k::corps` ou `fin@k::noeud` : son préfixe n'est pas le nœud qu'on
+// remet à zéro, et la règle du `::` la laissait écrire au cache après le ↺ de son corps, dans la
+// conversion de fréquence qui suit son exécuteur. L'appelant donne donc le nœud visible qu'elle sert,
+// tiré de la table que la passe a dressée, et une remise à zéro de ce nœud la périme.
 
 export interface Remises {
   /**
@@ -21,8 +27,11 @@ export interface Remises {
    * Un numéro plus petit qu'une note déjà prise ne l'efface pas.
    */
   noter(numero: number, ids: readonly string[] | "tout", avecLeurContenu: boolean): void;
-  /** Ce nœud a-t-il été noté après ce numéro, lui, tous, ou un méta qui le contient ? */
-  depuis(id: string, numero: number): boolean;
+  /**
+   * Ce nœud a-t-il été noté après ce numéro : lui, tous, un méta qui le contient, ou le nœud visible
+   * qu'il sert, noté avec son contenu ?
+   */
+  depuis(id: string, numero: number, visible?: string): boolean;
 }
 
 export function creerRemises(): Remises {
@@ -39,9 +48,12 @@ export function creerRemises(): Remises {
         notes.set(id, n);
       }
     },
-    depuis(id, numero) {
+    depuis(id, numero, visible) {
       if (tout > numero) return true;
       if ((notes.get(id)?.lui ?? Number.NEGATIVE_INFINITY) > numero) return true;
+      // LE NŒUD VISIBLE QU'IL SERT, remis à zéro avec son contenu : c'est ce qui atteint une copie.
+      if (visible !== undefined && visible !== id
+        && (notes.get(visible)?.contenu ?? Number.NEGATIVE_INFINITY) > numero) return true;
       // LES MÉTAS QUI LE CONTIENNENT : chaque préfixe qui finit avant un `::`.
       for (let i = id.indexOf("::"); i >= 0; i = id.indexOf("::", i + 2)) {
         if ((notes.get(id.slice(0, i))?.contenu ?? Number.NEGATIVE_INFINITY) > numero) return true;

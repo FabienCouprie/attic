@@ -4,6 +4,9 @@
 //   - `oublierAvecMetas` efface un nœud et les internes de ses métas, à toute profondeur, et rien
 //     d'autre : ni un nœud au nom voisin, ni l'interne d'un autre méta. C'est la règle que la remise à
 //     zéro écrivait à la main, et la seule de ce fichier qui ne soit pas un appel de `Map` renommé.
+//   - et les copies qu'une passe a rattachées au nœud visible : `debut#k::corps` part avec `corps`,
+//     `fin@k::noeud` avec `noeud`, et un nœud rattaché à un autre reste. `vider` oublie les
+//     rattachements.
 //   - `oublier` efface dans l'ordre donné, et un identifiant absent ne lève rien.
 //   - `entrees` est le cache lui-même, vu en lecture : une écriture faite après s'y voit.
 import { describe, expect, it } from "vitest";
@@ -19,6 +22,24 @@ describe("le cache du moteur", () => {
     for (const id of ["outil", "outil::cd", "outil::sous::ab", "outil2", "outil2::cd", "autre"]) c.ecrire(id, entree(id));
     c.oublierAvecMetas(new Set(["outil"]));
     expect([...c.entrees().keys()]).toEqual(["outil2", "outil2::cd", "autre"]);
+  });
+
+  it("OUBLIE LES COPIES QU'UNE PASSE A RATTACHÉES AU NŒUD, que la règle du `::` ne voit pas", () => {
+    const c = creerCacheDuMoteur();
+    const copies = ["debut#0::corps", "debut#1::corps", "fin@0::note", "fin@0::filtre", "m::debut#0::m::x"];
+    for (const id of ["source", ...copies, "fin"]) c.ecrire(id, entree(id));
+    c.rattacher(new Map([
+      ["debut#0::corps", "corps"], ["debut#1::corps", "corps"], ["fin@0::note", "note"],
+      ["fin@0::filtre", "filtre"], ["m::debut#0::m::x", "m"], ["source", "source"],
+    ]));
+    // LE ↺ DU CORPS ET DU FILTRE, avec leur aval : la fin.
+    c.oublierAvecMetas(new Set(["corps", "filtre", "fin"]));
+    expect([...c.entrees().keys()]).toEqual(["source", "fin@0::note", "m::debut#0::m::x"]);
+    // SANS RATTACHEMENT, la règle du `::` seule : c'est l'aveuglement d'avant.
+    c.vider();
+    for (const id of copies) c.ecrire(id, entree(id));
+    c.oublierAvecMetas(new Set(["corps"]));
+    expect([...c.entrees().keys()]).toEqual(copies);
   });
 
   it("OUBLIE DANS L'ORDRE DONNÉ, sans lever sur un absent, et se vide", () => {
