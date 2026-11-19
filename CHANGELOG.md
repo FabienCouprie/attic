@@ -6,6 +6,40 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **`IMPACT.md` DIT LES CHEMINS CRITIQUES : POUR TREIZE ZONES OÙ UNE MODIFICATION PORTE AU-DELÀ DE SON FICHIER, OÙ ELLE VIT, CE QU'ELLE TOUCHE, LES GARDES QUI LA TIENNENT ET LES ÉPREUVES À RELANCER ; ET LES QUATRE GUIDES DISENT CE QUE FAIT LE CODE D'AUJOURD'HUI.** Demandé par Fabien le 2026-11-19 : « Documenter les chemins critiques : il n'y a toujours pas de IMPACT.md », et « Mettre à jour les documentations de : ADDING-A-NODE.md, ARCHITECTURE.md, PORTING-A-DOMAIN.md, REMOVING-A-NODE.md ». Aucun code ne change.
+  - **La demande d'origine** est la case du court terme d'`ARCHITECTURE.md`, posée le 2026-07-30 : « Documenter les chemins critiques dans un `IMPACT.md` ou ce fichier ». Le même fichier en donne le sens, sans le développer : son diagnostic, « pourquoi une modification en casse une autre », et sa dernière règle, « quelle donnée utilisateur ou quel autre plugin pourrait être affecté ? et d'un test qui couvre ce chemin ». `IMPACT.md` répond à cette question, zone par zone : le contrat d'un composant, ce qu'un nœud porte, la passe, le cache et les remises à zéro, les conteneurs, la langue, les frontières, les modules audio partagés, l'habillage, les graines, l'oreille, le projet sur le disque, le pont Electron. Il rattache aussi à leurs gardes les quatre scénarios de la vision cible. Il nomme les gardes et les tables générées sans recopier leurs comptes, et dit ce que la CI lance : la suite unitaire, `npm run test:electron` et `npm run test:empreintes`, et aucune autre épreuve de `tests-e2e/`.
+  - **Relevé avant d'écrire.** Chaque chemin, nom et commande cité dans les cinq fichiers a été passé à un script hors du dépôt, qui cherche le chemin sur le disque, le nom dans les sources et la commande dans `package.json`. Ce qu'il signale encore est relatif à un dossier nommé dans la même phrase, un motif (`electron/ipc-*.cjs`), un dossier construit (`dist/`), un fichier ignoré (`public/sf2/FluidR3_GM.sf2`) ou un plan `work/` non versionné, cité comme tel.
+  - **`ARCHITECTURE.md`**, relu contre `master` 42f13986 :
+    - le point 1 du diagnostic est résolu dans sa forme depuis le chantier `DonneesNoeud` (PR 339 à 346), et la case du point 5 dit les noms de réglage vérifiés (PR 347 à 355), les sorties contrôlées à l'exécution et non au build, et les `any` recomptés : 228 par le motif écrit, dont 34 `catch (e: any)` ;
+    - le point 3 et le runtime disent le moteur passé dans `ui/moteur/` et `useExecutionGraphe.ts` réduit au pont, 92 lignes de code ;
+    - la case de l'architecture par messages est cochée, ses dix pièces et ce qu'elles laissent ouvert écrits ;
+    - le reste est remis à jour : `main.cjs` à 13 canaux sur 72, `ipc-moteurs.cjs` fusionné (PR 320), la dette de taille à douze fichiers, `integration.test.ts` à 18 cas, 88 composants surveillés, 47 fichiers de test dans `src/core/`, et le manifeste qu'aucun fichier hors de `src/docs/` ne lit.
+  - **`PORTING-A-DOMAIN.md`**, 26 écarts corrigés, chacun vérifié dans le code :
+    - `domaine-nombre.test.ts` emploie la vraie boucle depuis le 2026-11-11, et non plus une réplique ;
+    - l'adaptateur d'exemple fige le socle et transtype son registre, comme `audio/adaptateur.ts` ;
+    - le contexte prend `TNom`, `sortieBranchee` et `signal`, et le retour ses trois canaux ;
+    - `ctx.entrees()` rend une valeur par câble, et non par port ;
+    - le cache compte quatre empreintes ;
+    - les services du domaine sont dix, et non quatre ;
+    - le cœur donne aussi la boucle d'exécution, que son index ne réexporte pas.
+    - Trois pièges de portage y sont écrits, que le guide ne disait pas : `ui/App.tsx` importe encore l'adaptateur audio, qui réécrit la configuration d'un autre domaine ; la table `ALIAS` est partagée par tous les registres ; et le runtime n'est pas déposable, le moteur créant un `AudioContext`.
+  - **`ADDING-A-NODE.md`** :
+    - `tailleDefaut()` est dans `ui/tailles-noeuds.ts`, les types de flux dans `audio/adaptateur.ts`, le retour d'un exécuteur passe par ses trois canaux et `ValeurAudio` remplace `TypeValeur` ;
+    - les genres de réglage `case`, `couleurs`, `curseur` et `nombre`, et les champs `optionIds`, `requis`, `sousType` et `module`, sont écrits ;
+    - un nœud neuf demande ses tables régénérées et ses comptes mis à jour, ce que le guide taisait sous « That's it » ;
+    - le modèle à copier passe le registre anglais, avec `defautEn`, un message sans français en dur et une notice selon le contrat.
+  - **`REMOVING-A-NODE.md`** suit ce qu'a touché le dernier retrait réel, le Transcripteur MIDI (`a1155d3d`, 37 fichiers). Il ajoute les exemples livrés, les familles de la palette, les empreintes, les clés mortes, les tables du croisement, la régénération et les comptes. Retirer un alias existant y est une rupture, et un import inutilisé une erreur et non un avertissement.
+  - **`AGENTS.md`** gagne la ligne qui mène à `IMPACT.md`, dans « Où lire le reste ».
+  - **Ce qui reste en question, à Fabien** :
+    - la forme d'`IMPACT.md`, lue dans `ARCHITECTURE.md` faute d'une définition développée ;
+    - `etiquettes`, que des fiches déclarent et que rien ne lit, la recherche de la palette ne la regardant pas ;
+    - la table `ALIAS` au niveau du module et le runtime non déposable, deux décisions de conception ;
+    - le statut du point 3 du diagnostic ;
+    - un garde qui tiendrait les chemins de ces guides, qu'aucun garde ne lit aujourd'hui : le garde de style lit les notices, non les guides ;
+    - la notice de « Point d'écoute », citée telle quelle, dont la première phrase n'a pas pour sujet le composant.
+  - **Relevé en passant, non corrigé** : l'en-tête de `tests-e2e/pilote-graphe.ts` annonce trois corrections et en numérote quatre, et `AGENTS.md` dit trois ; l'en-tête de `src/docs/frontiere-domaine.test.ts` annonce cinq dettes et en liste six ; le message de `ui/registre-actif.ts` renvoie au §6.a pour l'ordre des imports, qui est au §6 ; et le commentaire d'`entrees` dans `core/types.ts` dit `null` pour une entrée non connectée, qui n'y figure pas. Les deux comptes datés du 2026-10-25 au §6.a et au §6.c du guide de portage n'ont pas été recomptés par la méthode du garde.
+  - **Vérifié** dans l'arbre de la session, après `npm ci --ignore-scripts` : `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, comme `master` ; passe complète en 31 min 36 s, 792 fichiers verts et 3 sautés sur 796, soit 11 202 cas verts et 21 sautés, et 1 fichier tombé sans une assertion rouge : `plugins/multicanal-traversee.test.ts`, « Hook timed out in 1800000ms » sur son `beforeAll`, pendant qu'une passe complète d'une autre session tournait dans `E:\attic-verif-pilote`. Relancé seul, alors que cette autre passe tournait encore, il passe : 4 cas verts en 21 min 40 s. Aucun garde ne lit ces guides, le changement ne pouvait donc pas le toucher ; la passe le confirme.
+
 - **LE MODE HORS LIGNE STRICT : AVEC `"horsLigne": true`, RIEN NE SORT DE LA MACHINE, NI DE L'INTERFACE NI DU PROCESSUS PRINCIPAL, ET CHAQUE SORTIE COUPÉE EST NOMMÉE.** Pièce C7 du plan du fichier de configuration du 2026-11-19, la dernière.
   - **La clé** `horsLigne`, ou `ATTIC_HORS_LIGNE` (`1`, `true`, `oui`) qui l'emporte. `electron/hors-ligne.cjs` dit ce qui est local : `localhost`, `127.0.0.1`, `[::1]`, en HTTP comme en WebSocket, et ce qui ne quitte pas l'application (`file:`, `data:`, `blob:`, ses deux protocoles). Le tri est celui du banc, `HORS_LIGNE=1`.
   - **Le plan ne nommait que les requêtes du navigateur ; le processus principal sort aussi par lui-même**, et un mode « strict » qui le laisserait sortir mentirait. Quatre sorties sont donc coupées : les requêtes de la session (page, workers, cadres), par `onBeforeRequest`, armé seulement quand le mode l'est ; les téléchargements de modèles, par `http` et `https` de Node, refusés avant toute connexion et à chaque redirection ; Ollama, quand son adresse vise une autre machine ; la recherche de mise à jour, que `main.cjs` n'installe pas. Un lien de documentation ouvert dans le navigateur du système n'est pas concerné.
