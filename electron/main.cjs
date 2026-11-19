@@ -88,6 +88,7 @@ const { SCHEMA: SCHEMA_RESSOURCE, servir: servirRessource } = require("./ressour
 const { chargerConfiguration, cheminDe, formulerProbleme, proposition } = require("./configuration.cjs");
 const { poserCalculAutomatique, calculAutomatique } = require("./calcul-automatique.cjs");
 const { appliquerAffichage } = require("./affichage-linux.cjs");
+const { poserHorsLigne, armerHorsLigne } = require("./hors-ligne.cjs");
 
 // ═══ LE FICHIER DE CONFIGURATION, LU UNE FOIS, AVANT QUE L'APPLICATION NE SOIT PRÊTE ═══
 //
@@ -119,6 +120,10 @@ poserCalculAutomatique(CONFIGURATION.valeurs.calcul, CONFIGURATION.systeme);
 for (const option of appliquerAffichage(app.commandLine, CONFIGURATION.valeurs.affichage, CONFIGURATION.systeme)) {
   console.log(`[attic] affichage : ${option} posé par config.json`);
 }
+// LE MODE HORS LIGNE STRICT (pièce C7), posé avant tout module qui sort : les téléchargements et
+// Ollama le consultent à chaque appel ; la session est coupée quand l'application est prête.
+poserHorsLigne(CONFIGURATION.valeurs.horsLigne);
+if (CONFIGURATION.valeurs.horsLigne) console.log("[attic] hors ligne strict : rien ne sortira de la machine, et chaque sortie coupée sera nommée");
 if (CONFIGURATION.valeurs.calcul !== "auto") {
   const c = calculAutomatique();
   console.log(`[attic] calcul : « Automatique » vaut « ${c.pont || "le choix du moteur"} » pour les moteurs du pont et « ${c.directML} » pour DirectML`
@@ -207,7 +212,9 @@ console.log(`[attic] main.cjs loaded from ${__dirname} — DEV=${DEV}`);
 // En mode dev, autoUpdater ne fonctionne pas (pas d'app packagée).
 // On l'importe conditionnellement pour éviter les erreurs.
 let autoUpdater = null;
-if (!DEV) {
+// HORS LIGNE STRICT (pièce C7), la mise à jour n'est pas installée : sa recherche sort de la machine
+// par le processus principal, et `maj:verifier` répond alors « indisponible ».
+if (!DEV && !CONFIGURATION.valeurs.horsLigne) {
   try {
     autoUpdater = require("electron-updater").autoUpdater;
   } catch {}
@@ -589,6 +596,9 @@ app.whenReady().then(() => {
 
   // Configuration globale de la session (une seule fois, indépendamment du nombre
   // de fenêtres) pour éviter les handlers en double et les CSP multiples.
+  // HORS LIGNE STRICT (pièce C7) : toute requête de la session qui ne vise pas la machine est coupée
+  // et nommée. Rien n'est armé sinon. Voir `electron/hors-ligne.cjs`.
+  armerHorsLigne(session.defaultSession);
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     const headers = details.responseHeaders || {};
     // Retirer une CSP existante pour éviter les doublons

@@ -118,6 +118,11 @@ const SCHEMA = Object.freeze({
    * d'une construction Linux : voir `electron/affichage-linux.cjs`.
    */
   affichage: Object.freeze({ type: "choix", valeurs: Object.freeze(["auto", "x11", "wayland"]), defaut: "auto", systemes: Object.freeze(["linux"]) }),
+  /**
+   * LE MODE HORS LIGNE STRICT (pièce C7) : rien ne sort de la machine, ni du navigateur ni du
+   * processus principal, et chaque sortie coupée est nommée. Voir `electron/hors-ligne.cjs`.
+   */
+  horsLigne: Object.freeze({ type: "booleen", defaut: false, env: "ATTIC_HORS_LIGNE" }),
 });
 
 /**

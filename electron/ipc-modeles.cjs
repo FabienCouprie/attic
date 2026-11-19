@@ -32,6 +32,7 @@ const fs = require("fs");
 const path = require("path");
 const https = require("https");
 const http = require("http");
+const { refusHorsLigne } = require("./hors-ligne.cjs");
 const { URL: UrlModele } = require("url");
 const { annulerLesTravaux, travauxEnCours } = require("./travaux.cjs");
 const { HOTES_TELECHARGEMENT, hoteDeTelechargementAutorise } = require("./hotes-telechargement.cjs");
@@ -60,6 +61,9 @@ function installerIpcModeles({ ipcMain, contexteRessources, dossierRessourcesUti
       // LA VERIFICATION EST ICI ET NON CHEZ L'APPELANT, donc CHAQUE REDIRECTION y repasse : une
       // liste qui ne regarderait que la premiere adresse se contournerait par un hote autorise qui
       // renvoie ailleurs, ce qui est la forme la plus courante du detournement.
+      // HORS LIGNE STRICT (pièce C7) : refusé avant toute connexion, à chaque redirection.
+      const refus = refusHorsLigne(url, "téléchargement");
+      if (refus) return resolve({ erreur: refus });
       if (!hoteDeTelechargementAutorise(url)) {
         console.error(`[attic] telecharger:url REFUSE: ${url.protocol}//${url.hostname}`);
         return resolve({ erreur: `hote refuse : ${url.hostname} (seuls ${HOTES_TELECHARGEMENT.join(", ")} sont servis, en HTTPS)` });
