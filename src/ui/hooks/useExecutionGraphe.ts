@@ -9,8 +9,9 @@
 //     l'interface et le récepteur qui pose ce qu'il dit (`ui/recepteur-moteur.ts`). Ils lui sont
 //     donnés à la construction, jamais par un effet : `StrictMode` doublerait chaque événement.
 //     `App.tsx` l'appelle là où il créait le cache, avant les crochets qui envoient des commandes ;
-//   — `useExecutionGraphe` tient la liaison à jour et rend les gestes : lancer, arrêter, remettre à
-//     zéro. Chacun est une commande du protocole, envoyée de façon synchrone.
+//   — `useExecutionGraphe` tient la liaison à jour et rend les deux gestes du moteur : lancer et
+//     arrêter. Chacun est une commande du protocole, envoyée de façon synchrone. Les remises à zéro
+//     vivent dans `useRemiseAZero.ts`, que `App.tsx` appelle lui-même.
 //
 // LA LIAISON, c'est ce qui change d'un rendu à l'autre : la langue, le dossier de travail, et les deux
 // rappels de l'atelier. Elle est récrite à chaque rendu, comme `pileRef` ou `lancerRef` dans
@@ -26,7 +27,6 @@ import type { EnvoiAuMoteur } from "../../core/protocole-moteur";
 import { copierPourHistorique } from "../historique";
 import { noeudPrioritaire } from "../priorite";
 import { creerRecepteurDuMoteur, type LiaisonDuRecepteur } from "../recepteur-moteur";
-import { useRemiseAZero } from "./useRemiseAZero";
 import { creerMoteur, type PerimetreCible } from "../moteur";
 
 import { useI18n, valeurCanoniqueChoix } from "../../i18n";
@@ -111,9 +111,6 @@ export function useMoteur(o: OptionsDuMoteur): Pont {
 
 export interface OptionsExecution {
   pont: Pont;
-  noeudsRef: MutableRefObject<any[]>;
-  aretesRef: MutableRefObject<any[]>;
-  setNodes: Dispatch<SetStateAction<any[]>>;
   repertoire: string;
   onGrapheGenere?: LiaisonDuRecepteur["onGrapheGenere"];
   onNodeInstalle?: () => void;
@@ -121,16 +118,14 @@ export interface OptionsExecution {
 
 export function useExecutionGraphe(o: OptionsExecution) {
   const { t } = useI18n();
-  const { pont, noeudsRef, aretesRef, setNodes, repertoire, onGrapheGenere, onNodeInstalle } = o;
+  const { pont, repertoire, onGrapheGenere, onNodeInstalle } = o;
   // LA LIAISON EST CELLE DE CE RENDU : une demande envoyée ensuite la lira.
   Object.assign(pont.liaison, { t, repertoire, onGrapheGenere, onNodeInstalle });
   const { envoyer } = pont;
 
-  // ── Les remises à zéro, dans useRemiseAZero.ts : le bouton, le réglage, l'aval seul, tout ──
-  // Leur commande abat la passe en cours : c'est le moteur qui sait s'il tourne.
-  const { reinitialiserNoeud, reinitialiserPourReglage, reinitialiserAval, reinitialiserTout } = useRemiseAZero({
-    noeudsRef, aretesRef, envoyer, setNodes,
-  });
+  // LES REMISES À ZÉRO NE PASSENT PLUS PAR CE PONT : `App.tsx` appelle `useRemiseAZero.ts` lui-même,
+  // depuis le 2026-11-19. Le point 3 du diagnostic d'`ARCHITECTURE.md` reprochait à ce crochet de
+  // concentrer l'exécution et la réinitialisation ; il ne rend plus que les deux commandes du moteur.
 
   /**
    * LA SEULE PORTE D'ENTRÉE, et elle passe par l'ordonnanceur du moteur.
@@ -148,5 +143,5 @@ export function useExecutionGraphe(o: OptionsExecution) {
    */
   const arreter = useCallback(() => envoyer({ genre: "arreter" }), [envoyer]);
 
-  return { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout };
+  return { lancer, arreter };
 }
