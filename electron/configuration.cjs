@@ -49,6 +49,7 @@
 "use strict";
 
 const path = require("path");
+const { dossierRessourcesVoulu } = require("./dossier-ressources.cjs");
 
 /**
  * Les clés que le fichier peut porter.
@@ -80,7 +81,26 @@ const SCHEMA = Object.freeze({
    * l'historique, et l'alerte de l'indicateur de mémoire.
    */
   budgetMemoireGio: Object.freeze({ type: "nombre", defaut: budgetDeLaMachine, min: 2, max: 4096 }),
+  /**
+   * LE DOSSIER DES MODÈLES TÉLÉCHARGÉS (pièce C3). Le défaut est CELUI QUE L'APPLICATION SERT
+   * AUJOURD'HUI, calculé par `dossierRessourcesVoulu` : `userData\ressources` sous Windows,
+   * `$XDG_DATA_HOME/attic/ressources` sous Linux. Écrit, il le remplace, et la migration par
+   * renommage de `dossier-ressources.cjs` s'y applique, sans copie entre disques.
+   */
+  dossierModeles: Object.freeze({ type: "chemin", defaut: dossierModelesDeLaMachine }),
 });
+
+/**
+ * Le dossier des modèles que l'application sert sur cette machine, ou `null` sans `userData`.
+ *
+ * `dossierRessourcesVoulu` parle le `path` de l'hôte pour Windows : sous une CI Linux, il rendrait
+ * `C:\…\attic/ressources`. Le chemin est donc normalisé par le module de son système.
+ */
+function dossierModelesDeLaMachine({ systeme, userData, home, env } = {}) {
+  if (!systeme || !userData) return null;
+  const voulu = dossierRessourcesVoulu({ plateforme: systeme === "windows" ? "win32" : "linux", userData, home, env: env ?? {} });
+  return (systeme === "windows" ? path.win32 : path.posix).normalize(voulu);
+}
 
 /** Un gibioctet. */
 const GIO = 1024 ** 3;
