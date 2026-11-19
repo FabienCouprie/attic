@@ -60,7 +60,7 @@ const COMMANDES = {
   arreter: { genre: "arreter" },
   remettreAZero: { genre: "remettreAZero", ids: ["noeud-1", "noeud-2"], garder: ["_designe"] },
   regler: { genre: "regler", id: "noeud-2" },
-  oublier: { genre: "oublier", ids: ["noeud-1", "meta-1::filtre"] },
+  oublier: { genre: "oublier", ids: ["noeud-1", "meta-1::filtre"], grapheAbandonne: true },
   exporterCache: { genre: "exporterCache" },
   importerCache: { genre: "importerCache", entrees: [["noeud-1", ENTREE], ["meta-1::filtre", ENTREE]] },
 } satisfies ParGenre<CommandeAuMoteur>;
@@ -73,6 +73,7 @@ const EVENEMENTS = {
       id: "noeud-1", type: "atelier", position: { x: 10, y: 20 }, width: 180, height: 90, selected: true,
       data: { ficheId: "lecteur", parametres: { gain: 0.5 }, fichier: poignee(3) },
     }],
+    numero: 11,
   },
   statut: { genre: "statut", generation: 7, id: "noeud-1", statut: "en_cours", progression: "Étape 1/3", progressionDuNoeud: false },
   statutOmbre: { genre: "statutOmbre", generation: 7, id: "debut#2::echo", visible: "echo", statut: "termine" },
@@ -98,6 +99,7 @@ const EVENEMENTS = {
     demande: { grapheACreer: { nodes: [{ ficheId: "echo", label: "Écho" }], edges: [{ source: 0, target: 0 }] }, paletteARelire: true },
   },
   passeArretee: { genre: "passeArretee", generation: 7 },
+  perimes: { genre: "perimes", generation: 7, numero: 12, ids: ["noeud-1", "meta-1"] },
   passeTerminee: { genre: "passeTerminee", generation: 7, cible: "noeud-3", raison: "arret" },
 } satisfies ParGenre<EvenementDuMoteur<Poignee>>;
 
@@ -118,7 +120,8 @@ describe("le protocole entre l'interface et le moteur", () => {
   it("LES TABLES PORTENT UN EXEMPLAIRE PAR GENRE, chacun sous sa clé", () => {
     expect(Object.keys(COMMANDES)).toHaveLength(7);
     // HUIT DEPUIS LA PIÈCE P5B, qui ajoute `passeArretee` : le récepteur lisait le signal de la passe.
-    expect(Object.keys(EVENEMENTS)).toHaveLength(8);
+    // NEUF DEPUIS LA PIÈCE P6, qui ajoute `perimes` : ce qu'une passe dit d'un nœud remis à zéro.
+    expect(Object.keys(EVENEMENTS)).toHaveLength(9);
     for (const [cle, message] of [...Object.entries(COMMANDES), ...Object.entries(EVENEMENTS)]) {
       expect(message.genre).toBe(cle);
     }

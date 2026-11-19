@@ -1279,7 +1279,29 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
     - la passe complète est verte en 23 min 56 s : 785 fichiers dont 3 sautés, 11 120 cas verts, 17 sautés.
 
     Rien ne change hors de `tests-e2e/` : aucune table générée n'est concernée.
+- **UNE PASSE NE RÉÉCRIT PLUS CE QU'ON VIENT D'EFFACER, NI SUR UN GRAPHE QU'ON VIENT D'ABANDONNER.** Pièce P6 du plan de l'architecture par messages entre l'interface et le moteur, demandée par Fabien le 2026-11-18 : « Oui, P6 ». Il a aussi choisi de distinguer l'abandon du graphe de l'oubli simple. C'est la seule pièce du plan qui change un comportement.
+  - **Les deux défauts ont été vus rouges dans l'application avant d'être corrigés**, par `tests-e2e/evenements-perimes-dans-application.spec.ts`. Les gestes y sont joués pendant le run de `un-synthe-et-sa-bulle-d-effets`, le journal de passe armé :
+    - **D1** : après le ↺ du synthé, le bilan de la passe abattue faisait 7 écritures sur les nœuds qu'on venait d'effacer, résultats, temps et écarts compris ;
+    - **D2** : après l'import du même graphe, la passe d'avant faisait 74 écritures sur le graphe importé.
 
+    Après la pièce, les deux specs comptent 0 écriture.
+  - **`core/remises.ts`** tient ce qui a été remis à zéro ou oublié, et à quel numéro, avec la règle du `::` du cache. Le bilan pose des écarts sous `synth::noeud-2`.
+  - **Le moteur numérote** chaque remise à zéro et chaque oubli, par un compteur propre et non par le jeton, qui couvre tout un lot. Une passe garde le numéro de son départ, que `passeCommencee` porte, et ne réécrit plus au cache un nœud oublié depuis. `remettreAZero` le dit au récepteur par l'événement neuf `perimes`, et `oublier` aussi quand son champ neuf `grapheAbandonne` est vrai.
+  - **Le récepteur écarte** ce qu'une passe partie avant dit encore de ces nœuds et de leur contenu : statuts, ombres, poses, temps, écarts, demandes, champs autonomes, conteneurs, lecteurs. À la fin d'une passe, un nœud périmé resté « en cours » est remis à zéro.
+  - **L'import, Ctrl+Z et la fermeture de l'onglet abandonnent le graphe.** Le SoundFont et l'ouverture d'un méta n'abandonnent rien : leur oubli protège le cache, et ce qui est montré reste.
+  - **Ce qui ne change pas** :
+    - une passe arrêtée garde ce qu'elle a calculé pour les autres nœuds ;
+    - une remise à zéro arrête la passe et non le lot ;
+    - l'import et Ctrl+Z n'arrêtent pas la passe, ce qui reste la décision 5 du plan.
+  - **Les fautes plantées, vues rouges puis remises** : 9, dont le filtre du récepteur retiré, qui fait tomber 2 cas unitaires et les deux specs dans l'application.
+  - **Les tests neufs** : le registre a 4 cas, le moteur 2 de plus, le récepteur 3 de plus.
+  - **Les épreuves dans l'application** :
+    - le journal de passe rend ses 30 scénarios identiques en 7,0 min ;
+    - les boucles, le lot, la sérialisation, le fichier détaché et le dégroupage de méta sont verts ;
+    - dans Electron, le paquet, les deux fenêtres et la persistance passent ;
+    - les 15 empreintes d'exemples sont identiques.
+  - **Trois specs tombent pour une raison qui existe aussi sur `master`** : `retablir-dans-application`, `urls-medias-dans-application` et `format-projet`. Elles cherchent l'import par `accept=".json"`, que l'export `.attic` a changé en `.json,.attic`. Avec ce seul sélecteur corrigé le temps de l'épreuve, elles passent sur cette pièce : 4, 10 et 3 cas.
+  - **L'ordre de vérification** : `npx tsc -b` est vert ; `npx oxlint` donne 27 avertissements et 0 erreur ; la passe complète est verte en 22 min 3 s, 11 130 cas et 17 sautés.
 - **« EXPORT IMAGE » ÉCRIT LES OCTETS REÇUS SOUS L'EXTENSION DE LEUR FORMAT, LU SUR CES OCTETS : UN WEBP, UN GIF, UN BMP OU UN SVG NE SORT PLUS EN `.png`.** Relevé le 2026-11-16 par l'épreuve de l'entrée suivante, et laissé dehors par elle. La doc du réglage « Nom » promettait « L'extension est adaptée au format réel de l'image ».
   - **Le défaut.** `extensionParMime` de `plugins/image-export.ts` rendait `png` pour tout ce qui n'était ni `image/png` ni `image/jpeg`, et lisait le format sur `File.type`, une étiquette, et non sur les octets. `nomAvecExtension` ne retirait du nom saisi que `.png`, `.jpg` et `.jpeg`.
   - **La règle, choisie par Fabien le 2026-11-16** entre deux : garder le format d'origine avec sa vraie extension, ou convertir en PNG par un canevas ce qui n'est ni PNG ni JPEG. Il a pris la première, et d'attendre la fusion de la PR 371 pour lire le format par `typeImageDesOctets` de `core/type-image.ts`. Les octets partent donc tels quels, et l'extension suit leur signature : `.png`, `.jpg`, `.webp`, `.gif`, `.bmp`, `.avif`, `.svg`. L'extension d'image que porte le nom saisi est remplacée, quelle qu'elle soit (`pochette.webp` pour un GIF donne `pochette.gif`) ; une autre extension reste dans le nom (`prise.v2` donne `prise.v2.png`). Un format sans signature connue est écrit sous le nom saisi, inchangé. **L'AVIF reçoit `.avif`** parce que `typeImageDesOctets` le reconnaît ; il n'est éprouvé que par un en-tête dans les cas, pas dans l'application, le canevas de Chromium ne sachant pas en écrire.
