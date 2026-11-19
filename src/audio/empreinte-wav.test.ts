@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest";
 
 import { calculerCentroidSpectralMeyda } from "./analyse-descripteurs";
 import { bufferVersWavBlob } from "./io";
-import { empreinteWav, lireWav, niveauxParTranche, tamponDepuisWav } from "./empreinte-wav";
+import { blocsWav, empreinteWav, lireWav, niveauxParTranche, tamponDepuisWav } from "./empreinte-wav";
 
 const SR = 48000;
 
@@ -143,6 +143,32 @@ describe("relire un WAV ecrit par le depot", () => {
   it("UN FICHIER QUI N'EST PAS UN WAV se refuse au lieu de rendre un chiffre", async () => {
     const faux = new TextEncoder().encode("ceci n'est pas un fichier audio du tout").buffer;
     expect(() => lireWav(faux)).toThrow(/RIFF/);
+  });
+});
+
+// LES MORCEAUX D'UN WAV : ce qu'il porte en plus du son. La base du son des exemples les compare,
+// pour voir les métadonnées d'un aperçu livré (`apercuEstLeFichier`), que ni le niveau ni la
+// longueur ne disent. Un parcours qui s'arrêterait aux données perdrait `iXML`, écrit après elles.
+describe("les morceaux d'un WAV", () => {
+  it("LES MÉTADONNÉES D'UN FICHIER LIVRÉ SE VOIENT, `bext` avant les données et `iXML` après", async () => {
+    const b = sinus(440, 0.25);
+    const intermediaire = blocsWav(await bufferVersWavBlob(b, undefined, false, { bits: 32 }).arrayBuffer());
+    const livre = blocsWav(await bufferVersWavBlob(b, undefined, false,
+      { bits: 32, bext: {}, ixml: "<BWFXML></BWFXML>" }).arrayBuffer());
+    expect(intermediaire).toEqual(["fmt", "fact", "data"]);
+    expect(livre).toEqual(["fmt", "bext", "fact", "data", "iXML"]);
+  });
+
+  it("un entier n'a pas de `fact`, et le graphe embarqué vient en dernier", async () => {
+    const b = sinus(440, 0.25);
+    const avecGraphe = blocsWav(await bufferVersWavBlob(b, JSON.stringify({ nodes: [], edges: [] }), false,
+      { bits: 24 }).arrayBuffer());
+    expect(avecGraphe).toEqual(["fmt", "data", "LIST"]);
+  });
+
+  it("un fichier qui n'est pas un WAV se refuse", () => {
+    const faux = new TextEncoder().encode("ceci n'est pas un fichier audio du tout").buffer;
+    expect(() => blocsWav(faux)).toThrow(/RIFF/);
   });
 });
 

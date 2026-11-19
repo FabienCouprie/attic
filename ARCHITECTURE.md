@@ -40,12 +40,12 @@ Le graphe nodal d'Attic est composé de trois couches qui partagent trop d'état
    `IndicesMoteur` (`core/types.ts`). `docs/indices-moteur.test.ts` exige pour chacun une vraie fiche
    dans un exemple que jouent le journal de passe et la base du son, ou une raison écrite, et
    `exemples/ce-que-le-moteur-lit-sur-un-noeud.json` porte ceux qu'aucun exemple ne portait. Mesuré
-   par une faute plantée par indice : trois sont joués, et leur faute fait tomber au moins un des
-   deux gardes (`jamaisCache`, `sansApercuAudio`, `sortieNullePermise`) ; quatre ne sont pas
-   éprouvés, `memoire` faute de lecteur, et `relanceAutomatique`, `apercuEstLeFichier` et
-   `sortieHorsPlagePossible` parce que leur faute laisse les deux gardes verts ; deux sont hors de
-   portée, `affichageAutonome` et `executerEnDernier`. La table du garde dit pourquoi, indice par
-   indice. `IMPACT.md` dit, zone par zone, quels gardes tiennent ce qu'une modification touche.
+   par une faute plantée par indice : quatre sont joués, et leur faute fait tomber au moins un des
+   deux gardes (`jamaisCache`, `sansApercuAudio`, `sortieNullePermise`, et `apercuEstLeFichier` depuis
+   que la base du son relève les morceaux de chaque WAV, le 2026-11-20) ; trois ne sont pas
+   éprouvés, `memoire` faute de lecteur, et `relanceAutomatique` et `sortieHorsPlagePossible` parce
+   que leur faute laisse les deux gardes verts ; deux sont hors de portée, `affichageAutonome` et
+   `executerEnDernier`. La table du garde dit pourquoi, indice par indice. `IMPACT.md` dit, zone par zone, quels gardes tiennent ce qu'une modification touche.
    Le diagnostic d'origine suit.  
    `App.tsx` et `useExecutionGraphe.ts` concentrent la création des nœuds, la suppression, la réinitialisation, l'exécution, le cache, la gestion des URLs blob, etc. Une modification dans la logique de reset ou de cache peut se propager à l'ensemble des 200+ nœuds, car il n'y a pas de garde-fou par famille de nœud. (`App.tsx` était passé de 437 à 1013 lignes depuis l'extraction de hooks documentée dans `APP-BREAKDOWN.md`, et à 1449 le 2026-10-31 ; `useExecutionGraphe.ts` était à 1777, dont une seule fermeture, `lancerUnePasse`, de 1166 lignes. Relu le 2026-11-06, après le lot 2 : `App.tsx` compte 393 lignes de code pour 575 en tout, `useExecutionGraphe.ts` 289 pour 681, et `lancerUnePasse` 482 lignes, de la ligne 180 à la ligne 661. La passe reste une seule fermeture React.)
 

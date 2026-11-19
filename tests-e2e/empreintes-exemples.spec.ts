@@ -104,6 +104,15 @@ interface MesureLecteur {
   rms: number; crete: number; trames: number; canaux: number; taux: number;
   /** Le centroïde spectral, en hertz : l'axe qui suit la hauteur. */
   centroide: number;
+  /**
+   * Les morceaux du WAV, dans l'ordre : ce que l'aperçu porte en plus du son.
+   *
+   * ILS SE COMPARENT À L'IDENTIQUE, comme la longueur, et c'est le seul axe qui voie les métadonnées.
+   * L'aperçu d'un nœud dont l'aperçu est le fichier livré (`apercuEstLeFichier`) porte `bext` et
+   * `iXML`, un aperçu intermédiaire non. L'indice ignoré par le moteur, la base restait verte : le son
+   * est le même. Le contenu de ces blocs porte une date et ne se compare pas ; leur présence, si.
+   */
+  blocs: string[];
 }
 type Empreinte = { lecteurs: Record<string, MesureLecteur>; erreurs: string[] };
 
@@ -159,6 +168,13 @@ const horsDePortee = tous.filter((f) => {
 });
 const exemples = tous.filter((f) => !horsDePortee.includes(f) && !SON_NON_REPRODUCTIBLE[f]);
 
+/**
+ * Les morceaux d'un relevé, en une ligne. UNE RÉFÉRENCE SANS EUX NE PASSE PAS POUR VIDE : elle dit
+ * qu'ils n'ont pas été relevés, ce qui ne se compare à rien et fait donc tomber la comparaison.
+ */
+const blocsDe = (m: MesureLecteur): string =>
+  Array.isArray(m.blocs) ? `[${m.blocs.join(", ")}]` : "(morceaux non relevés)";
+
 const relatif = (a: number, b: number): number => {
   const m = Math.max(Math.abs(a), Math.abs(b));
   return m > 0 ? Math.abs(a - b) / m : 0;
@@ -177,7 +193,7 @@ function ecartsEntre(avant: Empreinte, apres: Empreinte, quoi: string, facteur =
   const out: string[] = [];
   const dire = (m?: MesureLecteur) => m
     ? `${m.rms.toFixed(6)}/${m.crete.toFixed(6)} · ${m.centroide.toFixed(1)} Hz`
-      + ` · ${m.trames} trames · ${m.canaux}ch · ${m.taux} Hz`
+      + ` · ${m.trames} trames · ${m.canaux}ch · ${m.taux} Hz · ${blocsDe(m)}`
     : "(aucun aperçu)";
   for (const id of new Set([...Object.keys(avant.lecteurs), ...Object.keys(apres.lecteurs)])) {
     const a = avant.lecteurs[id], b = apres.lecteurs[id];
@@ -187,7 +203,8 @@ function ecartsEntre(avant: Empreinte, apres: Empreinte, quoi: string, facteur =
     // chose à deux cents hertz qu'à cinq mille, et c'est en hauteur qu'on l'entend.
     const dCentroide = a.centroide > 0 && b.centroide > 0
       ? Math.abs(12 * Math.log2(b.centroide / a.centroide)) : 0;
-    const forme = a.trames !== b.trames || a.canaux !== b.canaux || a.taux !== b.taux;
+    const forme = a.trames !== b.trames || a.canaux !== b.canaux || a.taux !== b.taux
+      || blocsDe(a) !== blocsDe(b);
     if (forme || dRms > TOLERANCE * facteur || dCrete > TOLERANCE_CRETE * facteur
       || dCentroide > TOLERANCE_CENTROIDE_DEMI_TONS * facteur) {
       out.push(`${quoi} · ${id}  (${(dRms * 100).toFixed(3)} % d'efficace,`
@@ -219,7 +236,8 @@ async function jouer(page: import("@playwright/test").Page, fichier: string): Pr
   await semerEtLancer(page, devUrl, graphe, { profondeurExport: 32 });
 
   const lecteurs = await page.evaluate(async () => {
-    const { lireWav, tamponDepuisWav } = await import("/src/audio/empreinte-wav.ts") as unknown as {
+    const { blocsWav, lireWav, tamponDepuisWav } = await import("/src/audio/empreinte-wav.ts") as unknown as {
+      blocsWav: (o: ArrayBuffer) => string[];
       lireWav: (o: ArrayBuffer) => { rms: number; crete: number; trames: number; canaux: number; taux: number };
       tamponDepuisWav: (o: ArrayBuffer) => AudioBuffer;
     };
@@ -235,9 +253,11 @@ async function jouer(page: import("@playwright/test").Page, fichier: string): Pr
         const octets = await (await fetch(a.src)).arrayBuffer();
         const m = lireWav(octets);
         const centroide = calculerCentroidSpectralMeyda(tamponDepuisWav(octets)).valeur;
-        lecteurs[id] = { rms: m.rms, crete: m.crete, trames: m.trames, canaux: m.canaux, taux: m.taux, centroide };
+        lecteurs[id] = {
+          rms: m.rms, crete: m.crete, trames: m.trames, canaux: m.canaux, taux: m.taux, centroide, blocs: blocsWav(octets),
+        };
       } catch {
-        lecteurs[id] = { rms: -1, crete: -1, trames: -1, canaux: -1, taux: -1, centroide: -1 };
+        lecteurs[id] = { rms: -1, crete: -1, trames: -1, canaux: -1, taux: -1, centroide: -1, blocs: [] };
       }
     }
     return lecteurs;

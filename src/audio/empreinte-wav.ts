@@ -97,6 +97,33 @@ export function lireWav(octets: ArrayBuffer): MesureWav {
   };
 }
 
+/**
+ * Les morceaux du fichier, dans l'ordre et données comprises : ce qu'un WAV porte en plus du son.
+ *
+ * POURQUOI LA BASE DU SON EN A BESOIN. L'aperçu d'un nœud dont l'aperçu est le fichier livré
+ * (`apercuEstLeFichier`) porte des métadonnées, `bext` avant les données et `iXML` après ; un aperçu
+ * intermédiaire n'en porte pas. Ni le niveau ni la longueur ne le disent : l'indice ignoré laissait
+ * la base verte, mesuré le 2026-11-19 (`docs/indices-moteur.test.ts`). Le contenu de ces blocs porte
+ * une date, mais leur présence ne change pas d'une passe à l'autre, et c'est elle qu'on compare.
+ *
+ * LE PARCOURS NE S'ARRÊTE PAS AUX DONNÉES, à la différence de `morceauxDuWav` : `iXML`, la pochette et
+ * le graphe embarqué viennent après elles. Un WAV tronqué rend les morceaux lus jusqu'à la coupure.
+ */
+export function blocsWav(octets: ArrayBuffer): string[] {
+  const dv = new DataView(octets);
+  if (octets.byteLength < 12 || quatre(dv, 0) !== "RIFF" || quatre(dv, 8) !== "WAVE") {
+    throw new Error("ce n'est pas un WAV : en-tête RIFF/WAVE absent");
+  }
+  const blocs: string[] = [];
+  let o = 12;
+  while (o + 8 <= octets.byteLength) {
+    blocs.push(quatre(dv, o).trimEnd());
+    const taille = dv.getUint32(o + 4, true);
+    o += 8 + taille + (taille % 2);
+  }
+  return blocs;
+}
+
 /** Un niveau par tranche de temps : l'instant où elle commence, et son niveau en dBFS. */
 export interface Tranche {
   secondes: number;

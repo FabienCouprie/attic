@@ -95,11 +95,13 @@ const INDICES = {
       + "les fiches : les deux gardes restent verts sur `canon-de-proportions`.",
   },
   apercuEstLeFichier: {
-    nonEprouve: `« Sortie audio » le porte dans \`deux-sons-deux-roles\`, dans ${EPREUVE} et dans d'autres `
-      + "exemples surveillés, mais ce qu'il commande, les métadonnées et la pochette du WAV livré, ne se "
-      + "lit pas dans ce que les gardes comparent : la base du son mesure le son, et le journal décrit "
-      + "l'aperçu à refaire par ses seules clés. Mesuré le 2026-11-19, l'indice ignoré par le correctif de "
-      + "résultat : les deux gardes restent verts sur ces deux exemples.",
+    joue: `« Sortie audio » dans \`deux-sons-deux-roles\`, dans ${EPREUVE} et dans d'autres exemples `
+      + "surveillés : son aperçu est le fichier livré, et porte donc `bext` et `iXML`. La base du son relève "
+      + "les morceaux de chaque WAV (`blocsWav` de `audio/empreinte-wav.ts`) depuis le 2026-11-20. Mesuré "
+      + "le même jour, l'indice ignoré par le correctif de résultat : la base du son tombe sur ces deux "
+      + "exemples, chaque « Sortie audio » perdant ses deux blocs, son niveau inchangé. Le journal reste "
+      + "vert : il décrit l'aperçu à refaire par ses seules clés. Avant ce relevé, les deux gardes "
+      + "restaient verts.",
   },
   sortieHorsPlagePossible: {
     nonEprouve: `« Générateur audio mathématique » le porte dans ${EPREUVE}, mais les porteuses que le `
