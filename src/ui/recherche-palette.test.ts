@@ -3,6 +3,7 @@
 // par lesquels on cherche un traitement dont on ignore le nom.
 import { describe, it, expect } from "vitest";
 import type { FicheAudio } from "../audio/types-domaine";
+import { toutesLesFiches } from "../plugins";
 import { filtrerFiches } from "./recherche-palette";
 
 function fiche(p: Partial<FicheAudio> & { id: string }): FicheAudio {
@@ -71,5 +72,37 @@ describe("filtrerFiches", () => {
 
   it("supporte une fiche sans notice", () => {
     expect(() => filtrerFiches(CATALOGUE, "battement", SANS_TRADUCTION)).not.toThrow();
+  });
+
+  it("TROUVE PAR UNE ÉTIQUETTE, qui ne figure dans aucun autre champ", () => {
+    const tramage = fiche({ id: "tramage", nom: "Tramage", resume: "Réduit la profondeur", etiquettes: ["TPDF", "mastering"] });
+    const avec = [...CATALOGUE, tramage];
+    expect(filtrerFiches(avec, "tpdf", SANS_TRADUCTION).map((p) => p.id)).toEqual(["tramage"]);
+    expect(filtrerFiches(avec, "master", SANS_TRADUCTION).map((p) => p.id)).toEqual(["tramage"]);
+  });
+});
+
+// LES ÉTIQUETTES DU CATALOGUE N'ÉTAIENT LUES PAR PERSONNE. Des fiches les déclaraient, le guide
+// d'ajout les présentait comme des mots de recherche, et la recherche ne les regardait pas. Décidé
+// par Fabien le 2026-11-19 : « la recherche lit ». Ce cas tient la décision sur le vrai catalogue.
+describe("les étiquettes du catalogue", () => {
+  const avecEtiquettes = toutesLesFiches.filter((f) => (f.etiquettes ?? []).length > 0);
+
+  it("il y en a, sans quoi ce cas ne regarderait rien", () => {
+    expect(avecEtiquettes.length).toBeGreaterThan(0);
+  });
+
+  it("CHAQUE ÉTIQUETTE DÉCLARÉE TROUVE SA FICHE", () => {
+    const perdues = avecEtiquettes.flatMap((f) => (f.etiquettes ?? [])
+      .filter((e) => !filtrerFiches(toutesLesFiches, e, SANS_TRADUCTION).some((p) => p.id === f.id))
+      .map((e) => `${f.id} · « ${e} »`));
+    expect(perdues, "étiquettes que la recherche ne voit pas").toEqual([]);
+  });
+
+  it("ET CERTAINES NE SE TROUVENT QUE PAR ELLES, sans quoi le cas précédent passerait sans les lire", () => {
+    const sansEtiquettes = toutesLesFiches.map((f) => ({ ...f, etiquettes: undefined }));
+    const seulesParEtiquette = avecEtiquettes.flatMap((f) => (f.etiquettes ?? [])
+      .filter((e) => !filtrerFiches(sansEtiquettes, e, SANS_TRADUCTION).some((p) => p.id === f.id)));
+    expect(seulesParEtiquette.length).toBeGreaterThan(0);
   });
 });

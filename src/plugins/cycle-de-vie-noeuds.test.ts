@@ -208,6 +208,16 @@ describe("les transitions d'un nœud, sur toutes les fiches", () => {
     expect(appels(app, /reinitialiserPourReglage\(/g), "et aucun hors du crochet").toBe(0);
     expect(appels(app, /changerReglage\(/g), "un seul point d'entrée, appelé par le nœud et l'inspecteur")
       .toBeLessThanOrEqual(3);
+    // `App.tsx` N'ÉCRIT AUCUNE RÈGLE DU CYCLE D'UN NŒUD, depuis le 2026-11-19. Le point 3 du diagnostic
+    // d'`ARCHITECTURE.md` lui reprochait d'en concentrer : la suppression y révoquait elle-même les URL
+    // de résultats, par une seconde règle qui ne voyait que le premier niveau, et le geste des zones y
+    // oubliait le nœud et remettait son aval à zéro en ligne. Les deux passent par `useRemiseAZero.ts`.
+    // Les formes sont cherchées, et non un nom de variable : une révocation, une remise à zéro de
+    // l'aval, une commande du moteur qui oublie ou remet à zéro.
+    expect(appels(app, /\brevokeObjectURL\s*\(/g), "aucune révocation d'URL écrite dans App.tsx").toBe(0);
+    expect(appels(app, /\breinitialiserAval\s*\(/g), "aucune remise à zéro de l'aval écrite dans App.tsx").toBe(0);
+    expect(appels(app, /genre\s*:\s*["'](?:oublier|remettreAZero)["']/g),
+      "aucune commande d'oubli ou de remise à zéro écrite dans App.tsx").toBe(0);
   });
 });
 

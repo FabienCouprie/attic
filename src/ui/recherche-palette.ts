@@ -7,10 +7,15 @@ import type { FicheUI } from "./registre-actif";
 // contiennent seules les termes par lesquels on cherche réellement un
 // traitement qu'on ne sait pas nommer — « battement », « irrationnel »,
 // « illusion » ne figurent dans aucun nom ni aucun résumé.
+//
+// ET ELLE COUVRE LES ÉTIQUETTES, que des fiches déclaraient sans que rien ne les lise : « leslie »,
+// « dx7 », « TPDF » ne trouvaient pas leur composant. Décidé par Fabien le 2026-11-19 : « la
+// recherche lit ». Une étiquette dit le nom sous lequel on cherche un traitement, souvent celui d'un
+// appareil ou d'un usage, que la notice n'a pas à employer.
 
 /** Champs d'une fiche balayés par la recherche, du plus au moins spécifique. */
 function champs(p: FicheUI, familleTraduite: string): (string | undefined)[] {
-  return [p.nom, p.resume, p.famille, p.nomEn, p.resumeEn, familleTraduite, p.notice, p.noticeEn];
+  return [p.nom, p.resume, p.famille, p.nomEn, p.resumeEn, familleTraduite, p.notice, p.noticeEn, ...(p.etiquettes ?? [])];
 }
 
 /**

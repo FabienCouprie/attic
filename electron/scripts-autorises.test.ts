@@ -7,8 +7,8 @@
 //
 // CES CAS TIENNENT LA LISTE ET LE BRANCHEMENT. La boite native elle-meme ne se clique pas sous Node ;
 // ce qui peut se tromper ici est ce qu'elle laisse passer sans etre posee.
-import { describe, expect, it, beforeEach } from "vitest";
-import { mkdtempSync, readFileSync, readdirSync, writeFileSync, existsSync } from "fs";
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { mkdtempSync, readFileSync, readdirSync, writeFileSync, existsSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { createHash } from "crypto";
@@ -16,10 +16,23 @@ import { createHash } from "crypto";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const S = require("./scripts-autorises.cjs");
 
+let dossier = "";
 let fichier = "";
 beforeEach(() => {
-  fichier = join(mkdtempSync(join(tmpdir(), "attic-scripts-")), "scripts-autorises.json");
+  dossier = mkdtempSync(join(tmpdir(), "attic-scripts-"));
+  fichier = join(dossier, "scripts-autorises.json");
   S.memoriserLesScripts(fichier);
+});
+// CHAQUE CAS EFFACE LE DOSSIER QU'IL A RECU, meme quand il tombe : `afterEach` court apres un echec.
+// Releve le 2026-11-19 : sans lui, chaque passage laissait douze dossiers `attic-scripts-*` dans le
+// dossier temporaire du systeme, 3 602 sur la machine de developpement depuis le 27 octobre.
+// La liste est d'abord detachee du fichier, car `ecrire()` recree son dossier par `mkdirSync`. Et le
+// chemin efface est celui que `mkdtempSync` a rendu, jamais un `dirname` de `fichier` : si la creation
+// a leve au premier cas, `fichier` vaut "" et son dossier serait le dossier courant.
+afterEach(() => {
+  S.memoriserLesScripts(null);
+  if (dossier) rmSync(dossier, { recursive: true, force: true });
+  dossier = "";
 });
 
 describe("la liste des scripts autorises", () => {

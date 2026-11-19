@@ -208,44 +208,9 @@ async function choisirLaCible(page: Page, graphe: string): Promise<string> {
   throw new Error("aucun nœud de ce graphe ne montre son ▶ dans la fenêtre");
 }
 
-/**
- * Attend que l'ordonnanceur ne compte plus aucune passe : le ménage et les lecteurs sont écrits.
- *
- * LE PILOTE REND LA MAIN PLUS TÔT, et c'est juste pour lui : il attend que les statuts soient posés
- * et que les lecteurs cessent de bouger trois secondes. Le ménage, lui, pose encore les temps après.
- * Mesuré à l'établissement du 2026-11-17, sur `une-chanson-prete-a-diffuser`, une machine chargée :
- * une passe sur trois a écrit la marque du ↺ suivant avant le `tempsExecution` de `planifier`, et le
- * scénario s'est déclaré variable. `__attic_runs_simultanes__` ne revient à zéro qu'au bout de la
- * tâche, ménage et lecteurs compris (`ui/moteur/ordonnanceur-runs.ts`).
- */
-async function passeFinie(page: Page): Promise<void> {
-  await expect.poll(() => page.evaluate(() =>
-    (window as unknown as { __attic_runs_simultanes__?: number }).__attic_runs_simultanes__ ?? 0),
-  { timeout: 180_000, intervals: [100, 250, 500] }).toBe(0);
-}
-
 /** Les écritures d'exécuteur que la passe a relevées sur l'instantané du graphe, depuis le chargement. */
 const ecrituresRelevees = (page: Page): Promise<string[]> => page.evaluate(() =>
   (window as unknown as { __attic_ecritures_instantane__?: string[] }).__attic_ecritures_instantane__ ?? []);
-
-/**
- * Attend que le SoundFont soit chargé, avant le premier geste.
- *
- * IL SE CHARGE EN FOND AU DÉMARRAGE, CENT QUARANTE-HUIT MÉGAOCTETS, ET SON ARRIVÉE VIDE LE CACHE
- * (`ui/hooks/useSoundFont.ts`). Le pilote n'attend que deux secondes et demie après le
- * rechargement. Relevé le 2026-11-17 en comparant pendant une passe complète de vitest : arrivé
- * après le ▶, il a vidé le cache, et Lancer a recalculé `forme` sur `cercle-des-gammes` et
- * `pulsion` sur `compositeur-sur-une-pulsion` au lieu de les servir ; arrivé pendant Lancer, il a
- * laissé le MIDI se rendre sans lui, et l'écart de niveau de `mix` a valu 30,791 dB au lieu de
- * 15,361. `__attic_sf2__` est posé, puis le cache vidé, sans entrée-sortie entre les deux : quand
- * la page le montre, le vidage a eu lieu.
- */
-async function soundFontCharge(page: Page): Promise<void> {
-  await expect.poll(() => page.evaluate(() => !!(window as unknown as { __attic_sf2__?: unknown }).__attic_sf2__), {
-    message: "le SoundFont ne se charge pas : sans `public/sf2/FluidR3_GM.sf2`, les exemples MIDI rendent un autre son",
-    timeout: 180_000, intervals: [100, 250, 500],
-  }).toBe(true);
-}
 
 /**
  * Presse le ↺ d'un nœud, par un `click` remis au bouton lui-même.
@@ -260,27 +225,29 @@ async function remettreAZero(page: Page, id: string): Promise<void> {
   await page.locator(`[data-id="${id}"] .attic-node-btn-reset`).dispatchEvent("click", undefined, { timeout: 15000 });
 }
 
-/** Joue un scénario d'un exemple par le pilote, et rend la suite des écritures, marques comprises. */
+/**
+ * Joue un scénario d'un exemple par le pilote, et rend la suite des écritures, marques comprises.
+ *
+ * LE SOUNDFONT ET LA FIN DU MÉNAGE SONT ATTENDUS PAR LE PILOTE, cinquième et sixième corrections de
+ * son en-tête. Ce garde les attendait d'abord pour son compte, et la base du son, qui emploie le même
+ * pilote, restait exposée au même défaut.
+ */
 async function jouer(page: Page, fichier: string, scenario: Scenario): Promise<Ligne[]> {
   const graphe = readFileSync(join(RACINE, "exemples", fichier), "utf8");
   if (scenario === "lancer") {
     await semerEtLancer(page, devUrl, graphe, {
       profondeurExport: 32,
-      avantDeLancer: async (p) => { await soundFontCharge(p); await marquer(p, "Lancer", true); },
+      avantDeLancer: (p) => marquer(p, "Lancer", true),
     });
-    await passeFinie(page);
   } else {
     await semer(page, devUrl, graphe, { profondeurExport: 32 });
-    await soundFontCharge(page);
     const cible = await choisirLaCible(page, graphe);
     await marquer(page, `▶ ${cible}`, true);
     await lancerLeNoeudEtAttendre(page, cible);
-    await passeFinie(page);
     await marquer(page, `↺ ${cible}`);
     await remettreAZero(page, cible);
     await marquer(page, "Lancer");
     await relancerEtAttendre(page);
-    await passeFinie(page);
     // LE SECOND ↺ EFFACE UN AVAL CALCULÉ. Le premier ne trouvait que la cible : son ▶ n'avait rien
     // calculé de ce qui la suit.
     await marquer(page, `↺ ${cible}`);

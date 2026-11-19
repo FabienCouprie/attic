@@ -226,8 +226,9 @@ describe("le pilote de graphe", () => {
     // LE JOURNAL DE PASSE Y PREND `semerEtLancer`, comme la base du son dont il rejoue les exemples,
     // `avantDeLancer` pour remettre son journal à zéro au clic, et pour ses gestes `semer`,
     // `lancerLeNoeudEtAttendre` puis `relancerEtAttendre`, le ↺ entre les deux. Il ne relève que ce
-    // que la passe écrit dans les magasins. Il attend en plus que l'ordonnanceur ne compte plus
-    // aucune passe, par `expect.poll` : le pilote rend la main avant la fin du ménage.
+    // que la passe écrit dans les magasins. Il attendait d'abord pour son compte le SoundFont et la
+    // fin du ménage d'après passe, par `expect.poll` : ce sont devenues la cinquième et la sixième
+    // correction du pilote, parce que la base du son restait exposée au même défaut.
     //
     // LES COPIES REMISES À ZÉRO Y PRENNENT `semerEtLancer`, puis `relancerEtAttendre` après chaque ↺,
     // et relisent ce que la fin fait entendre par `apercusEnWav` : le son seul dit si les copies d'une
