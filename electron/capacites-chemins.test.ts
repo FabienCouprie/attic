@@ -8,7 +8,7 @@
 // LA PRIMITIVE EST DONC « ce chemin est-il sous une racine declaree ». Elle est la piece critique :
 // un contournement ici rend tout le reste decoratif. Trois en sont connus, et chacun a son cas.
 import { describe, expect, it } from "vitest";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 
@@ -468,5 +468,80 @@ describe("les sites qui frappent une racine, dans le processus principal", () =>
       expect(corps, `${canal} ne doit pas pouvoir frapper une racine`)
         .not.toMatch(/\b(?:declarer|accorder)Racine/);
     }
+  });
+});
+
+// ── LES LIENS ET LES JONCTIONS, SUR UN VRAI DISQUE ──
+//
+// Decision de Fabien du 2026-11-19 (« Reparer d'abord »), avant d'ouvrir les racines a `config.json`.
+// Ces cas posent de vrais liens dans un dossier jetable : une JONCTION sous Windows, qui se pose sans
+// aucun droit, et un lien symbolique de dossier sous Linux. Un lien vers un FICHIER demande sous
+// Windows un droit que la machine n'accorde pas toujours : son cas se saute alors, et le dit.
+describe("une racine suit les liens avant de comparer", () => {
+  const LIEN_DOSSIER = win ? "junction" : "dir";
+
+  /** Une racine et un dossier hors d'elle, jetables, et la racine declaree seule. */
+  function terrain() {
+    cap.oublierLesRacines();
+    const base = mkdtempSync(join(tmpdir(), "attic-racine-liens-"));
+    const racine = join(base, "racine");
+    const dehors = join(base, "dehors");
+    mkdirSync(racine);
+    mkdirSync(dehors);
+    cap.declarerRacine(racine);
+    return { base, racine, dehors, effacer: () => { cap.oublierLesRacines(); rmSync(base, { recursive: true, force: true }); } };
+  }
+
+  it("UN LIEN POSÉ DANS UNE RACINE VERS LE DEHORS N'Y EST PAS : ni lui, ni ce qu'il contient, ni ce qu'on y créerait", () => {
+    const t = terrain();
+    try {
+      symlinkSync(t.dehors, join(t.racine, "lien"), LIEN_DOSSIER);
+      writeFileSync(join(t.dehors, "secret.txt"), "x");
+      expect(cap.sousUneRacine(join(t.racine, "lien"))).toBe(false);
+      expect(cap.sousUneRacine(join(t.racine, "lien", "secret.txt")), "lire au dehors").toBe(false);
+      expect(cap.sousUneRacine(join(t.racine, "lien", "neuf", "f.txt")), "créer au dehors").toBe(false);
+      expect(cap.verdictRacine(join(t.racine, "lien", "secret.txt")).ok).toBe(false);
+      // CE QUI EST VRAIMENT DEDANS LE RESTE, qu'il existe ou non encore.
+      expect(cap.sousUneRacine(join(t.racine, "vrai.txt"))).toBe(true);
+      expect(cap.sousUneRacine(join(t.racine, "neuf", "sous", "f.txt"))).toBe(true);
+    } finally { t.effacer(); }
+  });
+
+  it("UN LIEN QUI MÈNE DANS LA RACINE Y EST, et une racine qui est un lien vaut pour ce qu'elle désigne", () => {
+    const t = terrain();
+    try {
+      mkdirSync(join(t.racine, "a"));
+      symlinkSync(join(t.racine, "a"), join(t.racine, "raccourci"), LIEN_DOSSIER);
+      expect(cap.sousUneRacine(join(t.racine, "raccourci", "f.txt"))).toBe(true);
+      cap.oublierLesRacines();
+      symlinkSync(t.dehors, join(t.base, "porte"), LIEN_DOSSIER);
+      cap.declarerRacine(join(t.base, "porte"));
+      expect(cap.sousUneRacine(join(t.base, "porte", "f.txt")), "par le lien").toBe(true);
+      expect(cap.sousUneRacine(join(t.dehors, "f.txt")), "par ce qu'il désigne").toBe(true);
+      expect(cap.sousUneRacine(join(t.racine, "f.txt")), "mais pas son voisin").toBe(false);
+    } finally { t.effacer(); }
+  });
+
+  it("UN LIEN PENDANT EST REFUSÉ : écrire à travers lui créerait sa cible au dehors", () => {
+    const t = terrain();
+    try {
+      symlinkSync(join(t.dehors, "absent"), join(t.racine, "pendant"), LIEN_DOSSIER);
+      expect(cap.comparable(join(t.racine, "pendant"))).toBeNull();
+      expect(cap.sousUneRacine(join(t.racine, "pendant"))).toBe(false);
+      expect(cap.sousUneRacine(join(t.racine, "pendant", "f.txt"))).toBe(false);
+    } finally { t.effacer(); }
+  });
+
+  it("UN LIEN VERS UN FICHIER DU DEHORS N'Y EST PAS NON PLUS", (ctx) => {
+    const t = terrain();
+    try {
+      writeFileSync(join(t.dehors, "cible.txt"), "x");
+      try { symlinkSync(join(t.dehors, "cible.txt"), join(t.racine, "fichier-lie"), "file"); }
+      catch (e) {
+        if ((e as NodeJS.ErrnoException).code === "EPERM") { ctx.skip(); return; }
+        throw e;
+      }
+      expect(cap.sousUneRacine(join(t.racine, "fichier-lie"))).toBe(false);
+    } finally { t.effacer(); }
   });
 });
