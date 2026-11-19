@@ -45,7 +45,11 @@ export const NOM_DONNEES = "donnees.json";
 export const nomDesOctets = (k: number): string => `donnees/${String(k).padStart(6, "0")}.bin`;
 
 /**
- * Ce qu'un paquet porte au plus, décompressé et en tout : 1 Gio.
+ * Ce qu'un paquet porte au plus, décompressé et en tout : 1 Gio PAR DÉFAUT.
+ *
+ * LA CLÉ `plafondPaquetMio` DE `config.json` LE RÈGLE, de 256 à 2000 Mio (pièce C1, 2026-11-19) :
+ * l'export et l'import le lisent par `ui/paquet/plafond-du-paquet.ts`. Cette constante reste le
+ * défaut, celui du schéma, et ce qui vaut hors d'Electron.
  *
  * C'EST LE PLAFOND CONTRE UNE BOMBE ZIP, et l'écriture le respecte aussi : un paquet qu'Attic écrit
  * doit se relire. L'export garde deux copies des données en mémoire le temps de les écrire (les

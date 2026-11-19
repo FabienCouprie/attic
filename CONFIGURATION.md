@@ -58,10 +58,32 @@ le dit. Aucun canal de l'interface ne peut écrire le fichier.
 
 ## Les clés
 
-Aucune clé à ce jour : le socle est posé (pièce C0), et chaque pièce suivante ajoute la sienne ici.
+Chaque pièce du plan ajoute la sienne ici ; le socle (pièce C0) n'en portait aucune.
 
 | Clé | Type | Défaut sous Windows | Défaut sous Linux | Variable | Lue par |
 |---|---|---|---|---|---|
+| `plafondPaquetMio` | nombre, de 256 à 2000 | 1024 | 1024 | — | l'export et l'import d'un paquet `.attic` |
+
+### `plafondPaquetMio`, le plafond d'un paquet `.attic`
+
+Ce qu'un paquet porte au plus, **décompressé et en tout**, en Mio (1 Mio = 1 048 576 octets). Il
+borne l'écriture comme la lecture : à l'export, un résultat qui ferait dépasser le plafond est
+laissé hors du paquet, et l'alerte le nomme ; à l'ouverture, un paquet qui déclare davantage est
+refusé avant qu'un octet ne soit décompressé, et le message dit les deux nombres. C'est la garde
+contre une archive piégée qui se décompresserait sans fin.
+
+**Un paquet écrit sous un plafond haut ne s'ouvre que sous un plafond aussi haut.** Le donner à une
+autre machine, c'est lui demander le même réglage.
+
+**Pourquoi 2000 Mio au plus, et non 4 Gio.** Relevé le 2026-11-19 dans Electron 43, sous Windows :
+l'interface ne sait pas réserver d'un seul tenant plus de 2 145 386 496 octets (2 Gio moins 2 Mio),
+et l'archive y existe d'un seul tenant, à l'export comme à l'ouverture. 2000 Mio laissent la place
+des en-têtes de l'archive. La borne n'a pas été relevée sous Linux.
+
+**Ce que cela coûte en mémoire.** L'export garde deux copies des données le temps d'écrire, et
+l'archive traverse le pont entre l'interface et le processus principal. Relevé pour une archive de
+1,95 Gio : environ 6,4 Go de pointe dans chacun des deux processus, et 10,6 Go dans l'interface après
+l'ouverture. Sur une machine de 16 Go, rester sous 1024 Mio est prudent.
 
 ## Ce qui n'y sera jamais
 

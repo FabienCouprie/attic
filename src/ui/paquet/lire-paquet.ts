@@ -83,7 +83,12 @@ export async function lirePaquet(octets: Uint8Array, o: OptionsLecture): Promise
   const repertoire = lireRepertoire(octets);
   const m = repertoire.get(NOM_MANIFESTE);
   if (!m) throw new RefusPaquet("manifeste", "paquet.json absent");
-  const { application, entrees } = manifesteValide(lireJson(await extraire(octets, m, PLAFOND_MANIFESTE), "manifeste"));
+  // UN MANIFESTE AU-DELÀ DE SES 16 MIO EST UN MANIFESTE ILLISIBLE, et non un paquet trop gros : le
+  // refus `plafond` dit le plafond du paquet, que la configuration règle, et ce n'est pas lui qui joue.
+  const brut = await extraire(octets, m, PLAFOND_MANIFESTE).catch((e: unknown) => {
+    throw e instanceof RefusPaquet && e.code === "plafond" ? new RefusPaquet("manifeste", e.detail) : e;
+  });
+  const { application, entrees } = manifesteValide(lireJson(brut, "manifeste"));
   // UN PAQUET D'UN ATTIC PLUS RÉCENT EST REFUSÉ AVANT D'ÊTRE LU : il peut porter des fiches, des
   // réglages ou des valeurs que celui-ci ne connaît pas. Le détail est sa version, que le message dit.
   const ordre = application === o.application ? 0 : comparerVersions(application, o.application);
@@ -101,7 +106,7 @@ export async function lirePaquet(octets: Uint8Array, o: OptionsLecture): Promise
     total += e.octets;
     lues.set(e.nom, r);
   }
-  if (total > plafond) throw new RefusPaquet("plafond", `${total} octets déclarés, pour un plafond de ${plafond}`);
+  if (total > plafond) throw new RefusPaquet("plafond", `${total} octets déclarés, pour un plafond de ${plafond}`, { declare: total, plafond });
   const contenus = new Map<string, Uint8Array>();
   for (const e of entrees) {
     const c = await extraire(octets, lues.get(e.nom)!, e.octets);

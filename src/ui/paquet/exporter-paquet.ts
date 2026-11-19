@@ -7,8 +7,11 @@
 // CE QUI N'A PAS ÉTÉ EMPORTÉ SE DIT, une fois, après l'écriture : la liste des nœuds écartés et leur
 // raison. Un résultat qui manque au paquet ne se voit qu'à la réouverture, où son nœud se recalcule,
 // et la personne qui exporte ne serait plus là pour l'apprendre.
+//
+// LE PLAFOND EST CELUI DE LA CONFIGURATION, `plafondPaquetMio` (pièce C1), lu au moment d'écrire.
 import { ecrirePaquet, type PaquetEcrit } from "./ecrire-paquet";
-import { EXTENSION_PAQUET, VERSION_APPLICATION, type Ecarte } from "./format-paquet";
+import { EXTENSION_PAQUET, PLAFOND_PAQUET, VERSION_APPLICATION, type Ecarte } from "./format-paquet";
+import { mioDuPlafond, plafondDuPaquet } from "./plafond-du-paquet";
 import { telechargerContenu } from "../ecriture-projet";
 
 /** Ce que l'export lit de l'atelier. */
@@ -30,12 +33,16 @@ export function nomDuPaquet(currentFilePath: string | null, aujourdhui = new Dat
   return `${base || `attic-${aujourdhui.toISOString().slice(0, 10)}`}.${EXTENSION_PAQUET}`;
 }
 
-/** Les écarts, groupés par raison traduite, pour l'alerte : « un chemin de fichier : n3, n7 ». */
-export function ecartsLisibles(ecartes: readonly Ecarte[], t: (cle: string) => string): string {
+/**
+ * Les écarts, groupés par raison traduite, pour l'alerte : « un chemin de fichier : n3, n7 ».
+ *
+ * `plafond` est celui de l'écriture, en octets : la raison `plafond` le dit en Mio.
+ */
+export function ecartsLisibles(ecartes: readonly Ecarte[], t: (cle: string) => string, plafond = PLAFOND_PAQUET): string {
   const parRaison = new Map<string, string[]>();
   for (const e of ecartes) {
     const qui = [e.id, e.champ, e.detail].filter(Boolean).join(" · ");
-    const raison = t(`paquet.ecart.${e.code}`);
+    const raison = t(`paquet.ecart.${e.code}`).replace("{plafond}", mioDuPlafond(plafond));
     parRaison.set(raison, [...(parRaison.get(raison) ?? []), qui]);
   }
   return [...parRaison].map(([raison, ids]) => `${raison} : ${ids.join(", ")}`).join("\n");
@@ -49,9 +56,10 @@ export function ecartsLisibles(ecartes: readonly Ecarte[], t: (cle: string) => s
  */
 export async function exporterPaquet(api: any, d: DemandeExportPaquet): Promise<{ chemin: string | null; paquet: PaquetEcrit } | null> {
   let paquet: PaquetEcrit;
+  const plafond = await plafondDuPaquet();
   try {
     paquet = await ecrirePaquet({
-      projet: d.json, cache: d.cache, noeuds: d.noeuds, jamaisCache: d.jamaisCache, application: VERSION_APPLICATION,
+      projet: d.json, cache: d.cache, noeuds: d.noeuds, jamaisCache: d.jamaisCache, application: VERSION_APPLICATION, plafond,
     });
   } catch (e) {
     console.error("[attic] Paquet non écrit", e);
@@ -74,7 +82,7 @@ export async function exporterPaquet(api: any, d: DemandeExportPaquet): Promise<
   }
   console.log(`[attic] Paquet exporté : ${paquet.cache.length} résultat(s), ${paquet.medias} média(s), ${paquet.octets.length} octets, ${paquet.ecartes.length} écart(s)`);
   if (paquet.ecartes.length && typeof alert !== "undefined") {
-    alert(`${d.t("paquet.ecartes").replace("{nb}", String(paquet.ecartes.length))}\n\n${ecartsLisibles(paquet.ecartes, d.t)}`);
+    alert(`${d.t("paquet.ecartes").replace("{nb}", String(paquet.ecartes.length))}\n\n${ecartsLisibles(paquet.ecartes, d.t, plafond)}`);
   }
   return { chemin, paquet };
 }
