@@ -101,26 +101,68 @@ const ACCORDS_GARDES = 64;
 let fichierDesAccords = null;
 
 /**
- * Un chemin comparable : separateurs normalises, `..` resolus, casse abaissee sous Windows.
+ * Un chemin comparable : `..` resolus, liens suivis, separateurs normalises, casse abaissee sous
+ * Windows. `null` s'il ne se resout pas : il n'est alors sous aucune racine.
  *
- * LES TROIS SONT NECESSAIRES, et chacune ferme un contournement.
+ * LES QUATRE SONT NECESSAIRES, et chacune ferme un contournement.
  *
  *   · `path.resolve` resout les `..`, sans quoi `C:/permis/../interdit/x` passerait pour etre sous
  *     `C:/permis`. C'est le contournement le plus connu qui soit.
+ *   · Les liens et les jonctions se suivent, sans quoi `C:/permis/lien/x` passerait pour etre sous
+ *     `C:/permis` quand `lien` mene a `C:/interdit` : voir `resoudreLesLiens`.
  *   · Les separateurs se normalisent, sans quoi `C:\permis` et `C:/permis` seraient deux racines.
  *   · Et la casse s'abaisse SOUS WINDOWS SEULEMENT : `C:\Permis` et `c:\permis` y designent le meme
  *     dossier, alors que sous Linux ce sont deux dossiers differents. Abaisser partout rendrait la
  *     regle plus permissive qu'elle ne doit l'etre la ou elle ne le doit pas.
  */
 function comparable(chemin) {
-  const resolu = path.resolve(String(chemin ?? "")).replace(/\\/g, "/");
+  const reel = resoudreLesLiens(path.resolve(String(chemin ?? "")));
+  if (reel === null) return null;
+  const resolu = reel.replace(/\\/g, "/");
   return process.platform === "win32" ? resolu.toLowerCase() : resolu;
+}
+
+/**
+ * Le chemin tel que le disque le resout : chaque lien symbolique et chaque jonction suivis jusqu'a
+ * ce qu'ils designent. `null` s'il ne se resout pas.
+ *
+ * POURQUOI, ET C'EST LA DECISION DE FABIEN DU 2026-11-19 (« Reparer d'abord »), avant d'ouvrir les
+ * racines a `config.json`. `path.resolve` ne lit pas le disque : un lien pose DANS une racine, vers
+ * un dossier qui n'en est pas une, passait pour etre dedans, et `fs` le suivait. Sous Linux comme
+ * sous Windows, ou une jonction se pose sans aucun droit. Le chemin ET la racine sont donc compares
+ * apres resolution : une racine qui est elle-meme un lien vaut pour ce qu'elle designe.
+ *
+ * UN CHEMIN QUI N'EXISTE PAS ENCORE — un fichier a ecrire, des dossiers a creer — se resout par son
+ * plus proche parent existant, et la suite y est rattachee telle quelle : rien d'inexistant ne peut
+ * etre un lien.
+ *
+ * UN LIEN PENDANT EST REFUSE, et c'est le piege de la regle precedente. Un lien dont la cible
+ * n'existe pas ne se resout pas, et le traiter comme un nom inexistant le rattacherait a son dossier ;
+ * or ecrire a travers lui CREE sa cible, au dehors. `lstat` le distingue d'un nom absent : il voit le
+ * lien sans le suivre. Une boucle de liens, ou un parent illisible, est refuse de meme.
+ */
+function resoudreLesLiens(absolu) {
+  const suite = [];
+  let tete = absolu;
+  for (;;) {
+    try {
+      const reel = fs.realpathSync.native(tete);
+      return suite.length ? path.join(reel, ...suite.reverse()) : reel;
+    } catch {
+      if (fs.lstatSync(tete, { throwIfNoEntry: false })) return null;
+      const parent = path.dirname(tete);
+      if (parent === tete) return absolu;
+      suite.push(path.basename(tete));
+      tete = parent;
+    }
+  }
 }
 
 /** Declare une racine. Le dossier d'un fichier, ou le dossier lui-meme. */
 function declarerRacine(chemin) {
   if (!chemin) return;
-  racines.add(comparable(chemin));
+  const c = comparable(chemin);
+  if (c !== null) racines.add(c);
 }
 
 /** Declare le DOSSIER du chemin donne : ce qu'un dialogue de sauvegarde rend est un fichier. */
@@ -141,6 +183,7 @@ function accorderRacine(chemin) {
   if (!chemin) return;
   declarerRacine(chemin);
   const c = comparable(chemin);
+  if (c === null) return;
   // RETIRER AVANT D'AJOUTER remet l'accord en fin de file : sans cela, un dossier employe chaque
   // jour tomberait sous le plafond avant un dossier ouvert une seule fois.
   accordees.delete(c);
@@ -180,6 +223,7 @@ function memoriserLesAccords(fichier) {
   // declarer mille racines d'un coup.
   for (const r of lues.slice(-ACCORDS_GARDES)) {
     const c = comparable(r);
+    if (c === null) continue;
     racines.add(c);
     accordees.add(c);
   }
@@ -210,7 +254,8 @@ function declarerRacinesDeLEnvironnement() {
     const p = part.trim();
     if (!p) continue;
     declarerRacine(p);
-    prises.push(comparable(p));
+    const c = comparable(p);
+    if (c !== null) prises.push(c);
   }
   return prises;
 }
@@ -229,6 +274,7 @@ function racinesConnues() {
  */
 function sousUneRacine(chemin) {
   const c = comparable(chemin);
+  if (c === null) return false;
   for (const r of racines) {
     if (c === r) return true;
     if (c.startsWith(r.endsWith("/") ? r : `${r}/`)) return true;
