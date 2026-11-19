@@ -103,10 +103,8 @@ export const fiches: FicheAudio[] = ([
         onProgress: (f) => ctx.onProgress?.(`${Math.round(f * 100)} %`),
       });
       const fichier = new File([video], "demonstration.webm", { type: "video/webm" });
-      // LE FILM PRÉCÉDENT SE RÉVOQUE AVANT D'EN FAIRE UN AUTRE, sans quoi un blob reste en mémoire à
-      // chaque exécution. Il se relit dans le canal déclaré, là où le run précédent l'a laissé.
-      const avant = (ctx.noeud.data as { _affichage?: { videoUrl?: string } })._affichage?.videoUrl;
-      if (typeof avant === "string") URL.revokeObjectURL(avant);
+      // LE FILM PRÉCÉDENT SE RÉVOQUE QUAND CELUI-CI LE REMPLACE À L'ÉCRAN, par `lacherAffichage` de
+      // `ui/correctif-resultat.ts` : les données du nœud ne le portent jamais.
       const duree = (Math.round(plan.duree * 10) / 10).toLocaleString(anglais ? "en-US" : "fr-FR");
       return {
         valeurs: [fichier],

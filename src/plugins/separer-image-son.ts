@@ -63,10 +63,8 @@ export const fiches: FicheAudio[] = ([
       ctx.onProgress?.(en() ? "decoding the sound" : "décodage du son");
       const son = await sonDuFilm(video, respirer);
 
-      // LE FILM PRÉCÉDENT SE RÉVOQUE AVANT D'EN FAIRE UN AUTRE, et il se relit dans le canal déclaré,
-      // là où le run précédent l'a laissé.
-      const avant = (ctx.noeud.data as { _affichage?: { url?: string } })._affichage?.url;
-      if (typeof avant === "string") URL.revokeObjectURL(avant);
+      // LE FILM PRÉCÉDENT SE RÉVOQUE QUAND CELUI-CI LE REMPLACE À L'ÉCRAN, par `lacherAffichage` de
+      // `ui/correctif-resultat.ts` : les données du nœud ne le portent jamais.
       const nomSource = (entree as File).name ?? "";
       const nomMuet = `${(nomSource || "film").replace(/\.[^.]+$/, "")}-muet.mp4`;
       const affichage: AffichageFilm = { url: URL.createObjectURL(blob), nom: nomMuet, octets: blob.size };

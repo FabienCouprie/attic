@@ -20,7 +20,7 @@
 // qui n'emploierait pas ces fonctions lui échapperait. C'est exactement le défaut du 2026-09-28, où
 // le même geste avait deux implémentations ; le dernier cas de ce fichier garde cette porte-là.
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { apresCopie, apresEffacement, champsAReporter, CANAUX_DECLARES, urlsARevoquer, urlsDUnResultat, urlsLachees } from "../core/cycle-de-vie";
@@ -253,6 +253,20 @@ describe("les deux canaux déclarés ne viennent que de l'exécuteur ou du cache
 
   it("un nœud sans aucun champ autonome ne fait rien reporter", () => {
     expect(champsAReporter({ parametres: {}, _affichage: { x: 1 } })).toBeNull();
+  });
+
+  // ET UN EXÉCUTEUR NE LES RELIT PAS DANS `ctx.noeud.data`, où ils ne sont jamais : le run y trouve
+  // l'instantané du graphe, et ce que le run d'avant a montré vit dans `ui/resultats.ts`. Relevé le
+  // 2026-11-16 : cinq exécuteurs de film y cherchaient leur film précédent pour le révoquer, et ne
+  // le trouvaient jamais ; c'est `lacherAffichage` de `ui/correctif-resultat.ts` qui révoque. Une
+  // lecture morte fait croire qu'une révocation a lieu là où elle n'a pas lieu.
+  it("AUCUN EXÉCUTEUR NE RELIT UN CANAL DÉCLARÉ DANS LES DONNÉES DE SON NŒUD", () => {
+    const code = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, " ").split("\n").map((l) => l.replace(/\/\/.*$/, "")).join("\n");
+    const lectures = readdirSync("src/plugins")
+      .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"))
+      .flatMap((f) => [...code(readFileSync(join("src", "plugins", f), "utf8")).matchAll(/noeud\.data\b[^;]*?\._(affichage|designe)\b/g)]
+        .map((m) => `${f} : _${m[1]}`));
+    expect(lectures, "un canal déclaré se lit dans le magasin des résultats, jamais sur le nœud").toEqual([]);
   });
 
   it("les deux canaux déclarés sont bien ceux que le moteur efface à la remise à zéro", () => {

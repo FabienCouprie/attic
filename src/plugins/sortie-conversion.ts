@@ -35,12 +35,8 @@ export const fiches: FicheAudio[] = ([
       try {
         const qualite = ctx.paramNombre("Qualité", 192);
         const blob = await bufferVersMp3Blob(a, qualite, undefined, decrire(a, { noeud: "WAV → MP3" }));
-        // LE MP3 PRÉCÉDENT SE RÉVOQUE, et il se relit dans le canal déclaré où le run d'avant l'a
-        // laissé. Ce fichier était le dernier champ d'affichage d'un composant à passer par un nom
-        // convenu : il figurait même dans la signature universelle des exécuteurs, faute d'endroit
-        // où le mettre. C'est la cicatrice que le canal efface.
-        const avant = (ctx.noeud.data as { _affichage?: { mp3Url?: string } })._affichage?.mp3Url;
-        if (typeof avant === "string") URL.revokeObjectURL(avant);
+        // LE MP3 PRÉCÉDENT SE RÉVOQUE QUAND CELUI-CI LE REMPLACE À L'ÉCRAN, par `lacherAffichage` de
+        // `ui/correctif-resultat.ts`, ou à la remise à zéro : les données du nœud ne le portent jamais.
         mp3Url = URL.createObjectURL(blob);
       } catch (e: any) {
         // L'audio passe quand même : la suite du graphe n'a pas à tomber avec l'encodeur. Mais l'échec
