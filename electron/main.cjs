@@ -144,19 +144,24 @@ const CHEMIN_SAUVEGARDE_MAJ = () => path.join(app.getPath("userData"), "attic-ba
  * SOUS LINUX, CE N'EST PLUS `userData` (`~/.config/attic`) mais `~/.local/share/attic` : voir
  * `electron/dossier-ressources.cjs`. Le premier appel, au démarrage, y renomme l'ancien dossier ;
  * le résultat est retenu, si bien qu'un renommage refusé laisse servir l'ancien jusqu'au bout.
+ *
+ * LA CLÉ `dossierModeles` DE `config.json` LE CHOISIT (pièce C3) ; son défaut est ce même calcul. Un
+ * dossier écrit sur un autre disque ne reçoit pas l'ancien par renommage (EXDEV), et rien n'est
+ * recopié : l'ancien sert encore, et le journal dit de le déplacer à la main.
  */
 let dossierRessourcesRetenu = null;
 const dossierRessourcesUtilisateur = () => {
   if (dossierRessourcesRetenu) return dossierRessourcesRetenu;
   const ancien = path.join(app.getPath("userData"), "ressources");
-  const voulu = dossierRessourcesVoulu({
+  const voulu = CONFIGURATION.valeurs.dossierModeles ?? dossierRessourcesVoulu({
     plateforme: process.platform, userData: app.getPath("userData"),
     home: app.getPath("home"), env: process.env,
   });
   const migration = migrerRessources(ancien, voulu);
   if (migration.action !== "aucune") {
     console.log(`[attic] ressources : ${migration.action} ${ancien} → ${migration.dossier}`
-      + (migration.erreur ? ` (${migration.erreur})` : ""));
+      + (migration.erreur ? ` (${migration.erreur})` : "")
+      + (migration.action === "conserve" ? ` ; pour servir ${voulu}, y déplacer ce dossier à la main` : ""));
   }
   dossierRessourcesRetenu = migration.dossier;
   return dossierRessourcesRetenu;
