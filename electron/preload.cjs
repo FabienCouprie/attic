@@ -221,6 +221,10 @@ contextBridge.exposeInMainWorld("api", {
   majRestaurerBackupSync: () => ipcRenderer.sendSync("maj:restaurer-backup-sync"),
   majBackupDemande: (callback) => ipcRenderer.on("maj:backup-demande", () => callback()),
 
+  // La configuration lue au démarrage, en lecture seule : aucun canal ne l'écrit. Voir
+  // `electron/configuration.cjs` et `src/ui/configuration.ts`.
+  configuration: () => ipcRenderer.invoke("configuration:lire"),
+
   // Fermeture de la fenêtre : le processus principal l'interrompt, demande la sauvegarde
   // du projet — ce que le renderer ne peut pas faire depuis `beforeunload`, l'écriture
   // passant par IPC — puis ferme dès que `fermeturePrete` lui répond.
