@@ -43,7 +43,7 @@ async function lancerAvec(config: string | null): Promise<{ recue: Recue; profil
     return { recue, profil, propose: existsSync(cheminPropose) ? readFileSync(cheminPropose, "utf8") : null };
   } finally {
     await app?.close();
-    effacerProfil(profil);
+    await effacerProfil(profil);
   }
 }
 
