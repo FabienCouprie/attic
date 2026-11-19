@@ -99,8 +99,20 @@ export type CommandeAuMoteur =
   | { genre: "remettreAZero"; ids: readonly string[]; garder?: readonly string[] }
   /** Un réglage de ce nœud vient de changer : sa purge et sa remise à zéro. La relance reste à l'interface. */
   | { genre: "regler"; id: string }
-  /** Lâcher des entrées de cache, sans toucher à ce qui est montré. S'applique aussitôt, jamais mis en file. */
-  | { genre: "oublier"; ids: readonly string[] | "tout" }
+  /**
+   * Lâcher des entrées de cache, sans toucher à ce qui est montré. S'applique aussitôt, jamais mis en
+   * file. La passe en cours n'écrira plus ces nœuds au cache : elle calcule sur un graphe d'avant.
+   */
+  | {
+    genre: "oublier";
+    ids: readonly string[] | "tout";
+    /**
+     * Vrai quand l'interface abandonne le graphe lui-même, à l'import, par Ctrl+Z ou en fermant
+     * l'onglet : ce que la passe en cours dirait encore de ces nœuds est périmé, et le récepteur
+     * l'écarte. Le SoundFont et l'ouverture d'un méta ne l'abandonnent pas.
+     */
+    grapheAbandonne?: boolean;
+  }
   /** Rendre ce que le cache tient : ce qu'un paquet `.attic` emporte. */
   | { genre: "exporterCache" }
   /** Ranger des entrées dans le cache, celles d'un paquet relu ; une entrée remplace celle du même nœud. */
@@ -167,6 +179,8 @@ export type EvenementDuMoteur<TValeur> =
     ordre: readonly string[];
     statuts: readonly StatutAPoser[];
     noeuds: readonly NoeudG[];
+    /** Le numéro des remises à zéro et des oublis au départ de la passe, quand son graphe a été lu. Voir `perimes`. */
+    numero: number;
   }
   /** Le statut d'un nœud visible. `progressionDuNoeud` dit que la progression vient de l'exécuteur. */
   | ({ genre: "statut"; generation: Generation; progressionDuNoeud: boolean } & StatutAPoser)
@@ -217,6 +231,15 @@ export type EvenementDuMoteur<TValeur> =
    * passe finit ensuite, en `passeTerminee` de raison `arret`.
    */
   | { genre: "passeArretee"; generation: Generation }
+  /**
+   * Ces nœuds viennent d'être remis à zéro, ou leur graphe abandonné. Ce qu'une passe partie avant
+   * `numero` dira encore d'eux, ou des internes de leurs métas, est périmé : le récepteur l'écarte.
+   *
+   * LE NUMÉRO EST UN COMPTEUR DU MOTEUR, ET NON LE JETON D'UNE PASSE : un même jeton couvre toutes les
+   * passes d'un lot, et une remise à zéro arrête la passe en cours sans arrêter le lot. La génération
+   * est celle de la passe en cours, ou de la dernière.
+   */
+  | { genre: "perimes"; generation: Generation; numero: number; ids: readonly string[] | "tout" }
   /** La passe est finie, arrêtée ou tombée. */
   | {
     genre: "passeTerminee";

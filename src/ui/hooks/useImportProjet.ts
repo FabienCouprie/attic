@@ -177,7 +177,9 @@ export async function importerProjet(
   const aretesValides = filtrerAretesInvalides(importedNodes, json.edges || [], perte.aretes);
   o.setNodes(importedNodes);
   o.setEdges(aretesValides);
-  o.envoyer({ genre: "oublier", ids: "tout" });
+  // LE GRAPHE D'AVANT EST ABANDONNÉ AVEC SA PASSE, s'il en tourne une : ce qu'elle dira encore est
+  // écarté, et rien ne s'écrit sur le graphe importé. Voir `perimes`.
+  o.envoyer({ genre: "oublier", ids: "tout", grapheAbandonne: true });
   // LE GRAPHE D'AVANT EST ABANDONNÉ, DONC SES RÉSULTATS AUSSI. Les résultats et les statuts
   // vivent hors du tableau des nœuds ; les laisser en place donnerait au graphe importé, dont
   // les identifiants repartent de « noeud-1 », ce que le précédent avait produit. La pile et le

@@ -88,7 +88,8 @@ export function useHistorique({
       setCurrentFilePath(prev.contexte.cheminFichier);
     }
     setSel(null);
-    envoyer({ genre: "oublier", ids: "tout" });
+    // LE GRAPHE QUI TOURNE EST ABANDONNÉ : ce que sa passe dira encore est écarté. Voir `perimes`.
+    envoyer({ genre: "oublier", ids: "tout", grapheAbandonne: true });
     // CE QUE L'ANNULATION ABANDONNE S'OUBLIE AUSSI. Les résultats et les statuts vivent hors du
     // tableau des nœuds, et remettre un graphe d'avant les laissait en place : un nœud du graphe
     // annulé gardait son entrée, qu'un nœud neuf portant le même identifiant retrouvait ensuite.
@@ -130,7 +131,7 @@ export function useHistorique({
     pushHistorique({ pile, racine: grapheRacineRef.current, cheminFichier: currentFilePath });
     setNodes([]);
     setEdges([]);
-    envoyer({ genre: "oublier", ids: "tout" });
+    envoyer({ genre: "oublier", ids: "tout", grapheAbandonne: true });
     setSel(null);
     setPile([]);
     grapheRacineRef.current = null;

@@ -43,7 +43,7 @@ const affichage = (): PretsDuRecepteur["affichage"] => ({
 });
 /** Une passe qui commence, sur ces nœuds, sans statut. */
 const commencee = (partiel: Partial<Commencee> = {}): Commencee => ({
-  genre: "passeCommencee", generation: 1, ordre: [], statuts: [], noeuds: [], ...partiel,
+  genre: "passeCommencee", generation: 1, ordre: [], statuts: [], noeuds: [], numero: 0, ...partiel,
 });
 /** Un nœud visible d'essai. */
 const visible = (id: string) => ({ id, data: { ficheId: "texte" } });
@@ -251,6 +251,48 @@ describe("le bilan de la passe, posé dans l'ordre du ménage", () => {
     const ecrits = await releverPendant(() => recepteur([]).r.recevoir(bilan({ conteneurs: [["b", ["m1"]]] })));
     expect(ecrits).toEqual([]);
     expect(statutDe("b").progression).toBe("le sien");
+  });
+});
+
+describe("ce qui est périmé est écarté (pièce P6)", () => {
+  it("UNE REMISE À ZÉRO ÉCARTE CE QUE LA PASSE DIT ENCORE DE CES NŒUDS, de leur contenu, et d'eux seuls", async () => {
+    const { r } = recepteur([], { noeudsVisibles: () => [visible("m"), visible("b")] });
+    r.recevoir(commencee({ numero: 3 }));
+    r.recevoir({ genre: "perimes", generation: 1, numero: 4, ids: ["m"] });
+    const ecrits = await releverPendant(async () => {
+      r.recevoir({ genre: "statut", generation: 1, id: "m", statut: "termine", progressionDuNoeud: false });
+      r.recevoir({ genre: "statutOmbre", generation: 1, id: "m::x", visible: "m", statut: "termine" });
+      r.recevoir({ genre: "statut", generation: 1, id: "b", statut: "termine", progressionDuNoeud: false });
+      await r.recevoir(bilan({
+        rendus: [["m", { valeurs: ["m"] }], ["b", { valeurs: ["b"] }]],
+        temps: [["m", 5], ["b", 6]], ecarts: [["m::x", -1], ["b", -2]],
+      }));
+    });
+    expect(ecrits).toEqual(["statut b termine", "resultat b scriptGenere", "resultat b tempsExecution", "resultat b ecartNiveau"]);
+  });
+
+  it("UNE PASSE PARTIE APRÈS LA REMISE N'EST PAS ÉCARTÉE", () => {
+    const { r } = recepteur([]);
+    r.recevoir({ genre: "perimes", generation: 1, numero: 4, ids: ["m"] });
+    r.recevoir(commencee({ numero: 4 }));
+    r.recevoir({ genre: "statut", generation: 2, id: "m", statut: "termine", progressionDuNoeud: false });
+    expect(statutDe("m").statut).toBe("termine");
+  });
+
+  it("UN GRAPHE ABANDONNÉ ÉCARTE TOUT, lecteurs compris, et ne laisse personne « en cours »", async () => {
+    const ecrits: string[] = [];
+    const lecteursAEcrire = new Map<string, () => Promise<string | undefined>>([["a", async () => { ecrits.push("a"); return "blob:a"; }]]);
+    const { r } = recepteur([], { lecteurs: () => lecteursAEcrire, noeudsVisibles: () => [visible("a")] });
+    r.recevoir(commencee());
+    r.recevoir({ genre: "statut", generation: 1, id: "a", statut: "en_cours", progressionDuNoeud: false });
+    r.recevoir({ genre: "perimes", generation: 1, numero: 1, ids: "tout" });
+    r.recevoir({ genre: "statut", generation: 1, id: "a", statut: "termine", progressionDuNoeud: false });
+    expect(statutDe("a").statut).toBe("en_cours");
+    await r.recevoir(bilan({ rendus: [["a", { valeurs: ["a"] }]] }));
+    expect(ecrits).toEqual([]);
+    expect(resultatDe("a").scriptGenere).toBeUndefined();
+    r.recevoir({ genre: "passeTerminee", generation: 1, raison: "fin" });
+    expect(statutsPoses()).toEqual([]);
   });
 });
 

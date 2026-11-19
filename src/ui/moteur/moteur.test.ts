@@ -120,16 +120,42 @@ describe("le moteur et ses commandes", () => {
     const encore = m.envoyer({ genre: "lancer" });
     await souffler();
     m.envoyer({ genre: "remettreAZero", ids: ["a"] });
-    expect(m.genres().at(-1)).toBe("passeArretee");
+    // L'ARRÊT, PUIS CE QUI EST PÉRIMÉ : le récepteur écartera ce que la passe abattue dira encore de `a`.
+    expect(m.genres().slice(-2)).toEqual(["passeArretee", "perimes"]);
     expect(m.envoyer({ genre: "exporterCache" })).toEqual([]);
     await encore;
     expect(m.dits.at(-1)).toMatchObject({ genre: "passeTerminee", raison: "arret" });
   });
 
-  it("SANS PASSE EN COURS, ARRÊTER ET REMETTRE À ZÉRO NE DISENT RIEN", () => {
+  it("SANS PASSE EN COURS, ARRÊTER NE DIT RIEN, ET REMETTRE À ZÉRO NE DIT QUE CE QUI EST PÉRIMÉ", () => {
     const m = moteur();
     m.envoyer({ genre: "arreter" });
     m.envoyer({ genre: "remettreAZero", ids: ["a"] });
-    expect(m.dits).toEqual([]);
+    expect(m.dits).toEqual([{ genre: "perimes", generation: 0, numero: 1, ids: ["a"] }]);
+  });
+});
+
+describe("les remises à zéro et les oublis, numérotés (pièce P6)", () => {
+  it("UN OUBLI PENDANT LA PASSE L'EMPÊCHE D'ÉCRIRE CE NŒUD AU CACHE, sans rien dire au récepteur", async () => {
+    const m = moteur();
+    const passe = m.envoyer({ genre: "lancer" });
+    await souffler();
+    m.envoyer({ genre: "oublier", ids: ["a"] });
+    expect(m.genres()).not.toContain("perimes");
+    ouvrir();
+    await passe;
+    // `a` a fini après l'oubli, sur le graphe d'avant : le cache ne le tient pas, l'écran le montre.
+    expect(m.envoyer({ genre: "exporterCache" })).toEqual([]);
+    expect(m.montres()).toEqual(["premier"]);
+  });
+
+  it("UN GRAPHE ABANDONNÉ SE DIT AU RÉCEPTEUR, et la passe suivante part après lui", async () => {
+    const m = moteur();
+    m.envoyer({ genre: "oublier", ids: "tout", grapheAbandonne: true });
+    expect(m.dits).toEqual([{ genre: "perimes", generation: 0, numero: 1, ids: "tout" }]);
+    ouvrir();
+    await m.envoyer({ genre: "lancer" });
+    expect(m.dits.find((e) => e.genre === "passeCommencee")).toMatchObject({ numero: 1 });
+    expect(m.envoyer({ genre: "exporterCache" }).map(([id]) => id)).toEqual(["a"]);
   });
 });
