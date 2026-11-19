@@ -125,5 +125,30 @@ export function useRemiseAZero({ noeudsRef, aretesRef, envoyer, setNodes }: Opti
     reinitialiserIds(ids);
   }, [reinitialiserIds]);
 
-  return { reinitialiserNoeud, reinitialiserPourReglage, reinitialiserAval, reinitialiserTout };
+  /**
+   * Les zones choisies sur un nœud ont changé : son AVAL SEUL est remis à zéro, et c'est la seule
+   * cascade qui le soit.
+   *
+   * Le nœud garde son résultat : sa sortie audio est l'entrée transmise telle quelle, que les zones ne
+   * changent pas, et l'effacer ferait disparaître sa forme d'onde et son lecteur à chaque zone
+   * ajoutée, alors qu'on les pose justement les unes après les autres en regardant l'onde. Son aval,
+   * lui, est bien périmé : un « Masque de zones » restait affiché « Terminé » avec le trou de
+   * l'ancienne zone dans son WAV, alors que le sélecteur n'en montrait plus aucune.
+   *
+   * LE GESTE ÉTAIT ÉCRIT DANS `App.tsx`, en ligne, jusqu'au 2026-11-19 : l'oubli du cache, l'écriture
+   * des zones et la remise à zéro de l'aval, hors de ce crochet. Le point 3 du diagnostic
+   * d'`ARCHITECTURE.md` le reprochait, et `plugins/cycle-de-vie-noeuds.test.ts` refuse désormais
+   * qu'`App.tsx` remette lui-même un aval à zéro.
+   *
+   * L'OUBLI DU NŒUD DANS LE CACHE N'EST PLUS CE QUI LE FAIT RECALCULER : depuis la PR 390, les zones
+   * entrent dans l'empreinte de ses réglages (`core/graphe.ts`), et la clé change avec elles. Il reste
+   * pour lâcher tout de suite les tampons d'un résultat qui ne servira plus.
+   */
+  const changerZones = useCallback((nodeId: string, zones: { debut: number; duree: number }[]) => {
+    envoyer({ genre: "oublier", ids: [nodeId] });
+    setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n));
+    reinitialiserAval(nodeId);
+  }, [envoyer, setNodes, reinitialiserAval]);
+
+  return { reinitialiserNoeud, reinitialiserPourReglage, reinitialiserAval, reinitialiserTout, changerZones };
 }

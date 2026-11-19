@@ -35,8 +35,8 @@ import { tailleDefaut } from "./tailles-noeuds";
 import { usePersistance } from "./hooks/usePersistance";
 import { useMetaComposants } from "./hooks/useMetaComposants";
 import { useExecutionGraphe, useMoteur } from "./hooks/useExecutionGraphe";
+import { useRemiseAZero } from "./hooks/useRemiseAZero";
 import { useCopierColler } from "./hooks/useCopierColler";
-import { resultatDe } from "./resultats";
 import { definirPrioritaire } from "./priorite";
 import { FournisseurDeGestes, useGestesStables } from "./gestes-noeud";
 import { categorieNoeud, COULEURS_CATEGORIE } from "./AtelierNode";
@@ -229,12 +229,10 @@ function Atelier() {
   // ── Chargement automatique de l'en-cours sauvegardé, dans hooks/useEnCours.ts ──
   useEnCours({ pluginsVersion, rfInstance, setNodes, setEdges });
 
-  // ── Exécution du graphe, dans hooks/useExecutionGraphe.ts ──
-  // La boucle `lancer` + la réinitialisation en cascade + les statuts. La logique
-  // pure d'ordonnancement/cache vit dans core/graphe.ts (testée).
+  // ── Exécution du graphe, dans hooks/useExecutionGraphe.ts : lancer et arrêter ──
   const poserGrapheEngendre = usePoseGrapheEngendre({ noeudsRef, setNodes, setEdges, lang });
-  const { lancer, arreter, reinitialiserNoeud, reinitialiserAval, reinitialiserPourReglage, reinitialiserTout } = useExecutionGraphe({
-    pont, noeudsRef, aretesRef, setNodes, repertoire,
+  const { lancer, arreter } = useExecutionGraphe({
+    pont, repertoire,
     // La pose d'un graphe demandé par un composant, dans hooks/usePoseGrapheEngendre.ts.
     onGrapheGenere: poserGrapheEngendre,
     onNodeInstalle: () => {
@@ -242,6 +240,12 @@ function Atelier() {
     },
   });
   lancerRef.current = lancer;
+
+  // ── Remises à zéro et geste des zones, dans hooks/useRemiseAZero.ts ──
+  // Les règles de ce qui s'efface vivent dans core/cycle-de-vie.ts ; ce fichier n'en écrit aucune.
+  const { reinitialiserNoeud, reinitialiserPourReglage, reinitialiserTout, changerZones } = useRemiseAZero({
+    noeudsRef, aretesRef, envoyer, setNodes,
+  });
 
   // ── Relance après un réglage, dans hooks/useRelanceApresReglage.ts ──
   const { perimerEtRelancer, changerReglage } = useRelanceApresReglage({
@@ -253,25 +257,16 @@ function Atelier() {
     noeudsRef, aretesRef, setNodes, setEdges, rfInstanceRef, setSel, lancerRef, audioCtxRef, resumeAudio,
   });
 
-  // ── Suppression d'un nœud : nettoyage des URLs de résultat, du cache et cascade aval ──
+  // ── Suppression d'un nœud : sa remise à zéro et celle de son aval, puis son retrait du graphe ──
   const supprimerNoeud = useCallback((ids: string | string[], opts: { filterNodes?: boolean } = {}) => {
     const idArr = Array.isArray(ids) ? ids : [ids];
     if (idArr.length === 0) return;
-    // Révoquer les object URLs de résultats générés par le nœud (pas les fichiers
-    // d'entrée audioUrl/enregistrementUrl, conservés pour que l'undo reste fonctionnel).
-    for (const id of idArr) {
-      // CE QU'IL Y A À RÉVOQUER EST DANS LE MAGASIN DES RÉSULTATS, et non dans les données du nœud :
-      // un résultat n'y vit plus. La valeur dit d'elle-même si elle est à révoquer. Quatre noms
-      // étaient un jour énumérés ici, la même divergence que celle relevée dans la remise à zéro :
-      // les films du montage vidéo, de l'extrait, du muet et de la démonstration sont eux aussi des
-      // `createObjectURL`, et supprimer un de ces nœuds laissait son film en mémoire. Les fichiers
-      // d'entrée, eux, ne sont pas des résultats et restent intacts, ce qui garde l'annulation
-      // utilisable. Voir `ui/resultats.ts`.
-      for (const v of Object.values(resultatDe(id))) {
-        if (typeof v === "string" && v.startsWith("blob:")) URL.revokeObjectURL(v);
-      }
-    }
-    // Réinitialiser les nœuds en aval et vider leurs entrées du cache d'exécution.
+    // LA REMISE À ZÉRO RÉVOQUE LES URL DES RÉSULTATS, par la seule règle du cœur (`urlsARevoquer` de
+    // `core/cycle-de-vie.ts`), premier niveau et canaux compris. Ce fichier en avait une seconde, qui
+    // ne voyait que le premier niveau. Mesuré le 2026-11-19 avant de la retirer, par la touche Suppr,
+    // le chemin où React Flow retire lui-même le nœud : l'URL du MP3, posée dans le canal
+    // `affichage`, était déjà révoquée, ce que cette boucle ne pouvait pas faire. Les fichiers
+    // d'entrée ne sont pas des résultats et restent intacts, ce qui garde l'annulation utilisable.
     for (const id of idArr) {
       reinitialiserNoeud(id);
     }
@@ -310,16 +305,8 @@ function Atelier() {
     onChangerParametre: (nid: string, nom: string, val: number | string) => {
       changerReglage(nid, nom, val);
     },
-    // Cascade sur l'AVAL SEUL, et c'est la seule à l'être. Le nœud garde son
-    // résultat : sa sortie audio est l'entrée transmise telle quelle, que les
-    // zones ne changent pas — et l'effacer ferait disparaître sa forme d'onde et
-    // son lecteur à chaque zone ajoutée, alors qu'on les pose justement les unes
-    // après les autres en regardant l'onde. Son aval, lui, est bien périmé : un
-    // « Masque de zones » restait affiché « Terminé » avec le trou de l'ancienne
-    // zone dans son WAV, alors que le sélecteur n'en montrait plus aucune.
-    // L'oubli du cache reste nécessaire pour le nœud lui-même :
-    // `zonesSelectionnees` ne figure pas dans `empreinteParametres`.
-    onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => { envoyer({ genre: "oublier", ids: [nid] }); setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, zonesSelectionnees: zones } } : n)); reinitialiserAval(nid); },
+    // Cascade sur l'AVAL SEUL : voir `changerZones` dans hooks/useRemiseAZero.ts.
+    onChangerZones: (nid: string, zones: { debut: number; duree: number }[]) => changerZones(nid, zones),
     // UN GESTE SUR UNE LIGNE DE TEMPS PASSE PAR LA MÊME PORTE QU'UN RÉGLAGE, et c'est la correction
     // du 2026-10-26. La vue écrivait son découpage par un `setNodes` nu : rien ne purgeait le cache,
     // rien ne périmait l'aval, rien ne relançait. Le morceau déplacé n'était donc entendu qu'au
@@ -328,7 +315,7 @@ function Atelier() {
     // que RIEN ne fonctionnait. Relevé par Fabien, trois fois dans cette famille.
     onChangerDecoupe: (nid: string, decoupe: Record<string, unknown>) => { setNodes((nds2) => nds2.map((n) => n.id === nid ? { ...n, data: { ...n.data, ...decoupe } } : n)); perimerEtRelancer(nid); },
     onChargerIR: chargerIR,
-  }), [setNodes, setEdges, reinitialiserNoeud, reinitialiserAval, supprimerNoeud, pushHistorique, envoyer, lancerRef, perimerEtRelancer,
+  }), [setNodes, setEdges, reinitialiserNoeud, changerZones, supprimerNoeud, pushHistorique, lancerRef, perimerEtRelancer,
     chargerMedia, changerEnregistrement, chargerIR]);
   callbacksNoeudRef.current = callbacksNoeud;
   // LES MÊMES GESTES, FOURNIS PAR UN CONTEXTE dont la valeur ne change jamais : chaque appel lit la
