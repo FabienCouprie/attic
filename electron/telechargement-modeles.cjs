@@ -29,6 +29,7 @@ const fs = require("fs");
 const http = require("http");
 const https = require("https");
 const path = require("path");
+const { refusHorsLigne } = require("./hors-ligne.cjs");
 
 /** Un fichier est présent s'il existe et fait exactement la taille annoncée. */
 function fichierPresent(f, { existe, taille }) {
@@ -135,6 +136,9 @@ function telechargerFichier(url, destination, o = {}) {
 
     let cible;
     try { cible = new URL(url); } catch { return resolve({ ok: false, erreur: `URL invalide : ${url}` }); }
+    // HORS LIGNE STRICT (pièce C7) : refusé avant toute connexion, redirections comprises.
+    const refus = refusHorsLigne(cible, "téléchargement");
+    if (refus) return resolve({ ok: false, erreur: refus });
     const mod = cible.protocol === "https:" ? https : http;
     const temporaire = `${destination}.partiel`;
     fs.mkdirSync(path.dirname(destination), { recursive: true });

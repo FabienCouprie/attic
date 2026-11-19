@@ -34,6 +34,7 @@ const { generate: genererSdxsImage } = require("./sdxs-image.cjs");
 const { noterTranche: noterTrancheEsthetique, FICHIER_MODELE: MODELE_ESTHETIQUE } = require("./esthetique.cjs");
 const { genererSongsee } = require("./songsee.cjs");
 const { inventaire: inventaireModeles } = require("./telechargement-modeles.cjs");
+const { refusHorsLigne } = require("./hors-ligne.cjs");
 
 /**
  * Installe les vingt canaux des moteurs.
@@ -200,6 +201,9 @@ function installerIpcMoteurs({
     return s;
   }
   ipcMain.handle("ollama:generer", async (_event, options) => {
+    // HORS LIGNE STRICT (pièce C7) : un serveur Ollama sur une autre machine n'est pas joint.
+    const refus = refusHorsLigne(OLLAMA_BASE, "Ollama");
+    if (refus) return { erreur: refus };
     try {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), options?.timeout || 120000);
@@ -260,6 +264,8 @@ function installerIpcMoteurs({
     }
   });
   ipcMain.handle("ollama:modeles", async () => {
+    const refus = refusHorsLigne(OLLAMA_BASE, "Ollama");
+    if (refus) return { erreur: refus };
     try {
       const r = await fetch(`${OLLAMA_BASE}/api/tags`);
       if (!r.ok) return { erreur: `Ollama HTTP ${r.status}` };

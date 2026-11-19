@@ -71,6 +71,7 @@ Chaque pièce du plan ajoute la sienne ici ; le socle (pièce C0) n'en portait a
 | `ollama` | adresse `http` ou `https` | `http://127.0.0.1:11434` | `http://127.0.0.1:11434` | `ATTIC_OLLAMA_URL` | le nœud Ollama |
 | `calcul` | `auto`, `processeur` ou `carte` | `auto` | `auto` | — | le sens d'« Automatique » dans le réglage « Calcul » des nœuds |
 | `affichage` | `auto`, `x11` ou `wayland`, dans la section `linux` | sans objet | `auto` | — | le démarrage, sous Linux ; **non vérifié** |
+| `horsLigne` | `true` ou `false` | `false` | `false` | `ATTIC_HORS_LIGNE` (`1`, `true`, `oui`) | le navigateur, les téléchargements, Ollama, la mise à jour |
 
 ### `plafondPaquetMio`, le plafond d'un paquet `.attic`
 
@@ -196,6 +197,21 @@ Une option `--ozone-platform` déjà donnée au lanceur l'emporte.
 **Non vérifié** : aucune construction Linux n'existe encore, et que Chromium entende l'option posée
 par l'application, si tôt soit-elle posée, reste à éprouver. Si le journal la dit posée et que
 l'affichage ne change pas, la passer au lanceur : `attic --ozone-platform=x11`.
+
+### `horsLigne`, rien ne sort de la machine
+
+`"horsLigne": true` coupe tout ce qui viserait une autre machine que celle-ci, et le nomme dans le
+journal du processus principal, une fois par adresse :
+
+- **les requêtes de l'interface**, celles de la page, de ses workers et de ses cadres ;
+- **les téléchargements de modèles**, refusés avant toute connexion, avec un message qui dit la clé ;
+- **Ollama**, si son adresse vise une autre machine ; à `127.0.0.1`, il répond toujours ;
+- **la recherche de mise à jour**, qui répond alors « indisponible ».
+
+Ce qui reste permis : la machine elle-même (`localhost`, `127.0.0.1`, `[::1]`) et ce qui ne quitte
+pas l'application (ses fichiers, `data:`, `blob:`). Un nœud dont le modèle n'est pas encore sur le
+disque échoue au lieu de le tirer. Un lien de documentation ouvert dans le navigateur du système
+n'est pas concerné : il quitte l'application.
 
 ## Ce qui n'y sera jamais
 
