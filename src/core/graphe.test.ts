@@ -185,6 +185,15 @@ describe("logique de graphe (filet de sécurité du moteur)", () => {
       .not.toBe(empreinteParametres({ audioFichier: { name: "b.wav" } }));
   });
 
+  it("LES ZONES CHOISIES À LA MAIN ENTRENT DANS LA CLÉ, et la clé d'un nœud sans zones ne change pas", () => {
+    const une = [{ debut: 0.1, duree: 0.2 }];
+    const deux = [...une, { debut: 0.5, duree: 0.2 }];
+    expect(empreinteParametres({ parametres: {}, zonesSelectionnees: une }))
+      .not.toBe(empreinteParametres({ parametres: {}, zonesSelectionnees: deux }));
+    // LA CLÉ D'AVANT, À LA LETTRE : celle que portent les paquets `.attic` déjà écrits.
+    expect(empreinteParametres({ parametres: { g: 5 } })).toBe('{"p":{"g":5},"s":null,"m":null,"f":null}');
+  });
+
   it("place un mélangeur terminal après ses branches parallèles", () => {
     const ordre = ordreTopologique(
       ["tts", "autre", "mix"],

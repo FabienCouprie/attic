@@ -202,6 +202,9 @@ describe("le pilote de graphe", () => {
     // gestes : elle retire une barre au clavier, tire un câble à la souris, et relance après chacun
     // pour mesurer ce que la ligne de temps dessine et ce que le montage fait entendre.
     //
+    // LES ZONES DANS UNE BOUCLE Y PRENNENT `semerEtLancer` deux fois, puis `relancerEtAttendre` après le
+    // retrait d'une zone, et relisent ce que la fin fait entendre par `apercusEnWav`.
+    //
     // LE LECTEUR DONT L'APERÇU EST PERDU Y PREND `semerEtLancer` : il sème un métronome et le lance,
     // puis fait perdre à son aperçu ses octets et presse le ▶ ; ses attentes passent par `expect.poll`.
     //
@@ -231,7 +234,8 @@ describe("le pilote de graphe", () => {
         "montage-gains-pistes.spec.ts", "montage-piste-branchee.spec.ts",
         "paquet-attic-dans-application.spec.ts", "profondeur-dans-application.spec.ts", "rendu-image-taille-dans-application.spec.ts",
         "restaurer-dans-application.spec.ts",
-        "sorties-extensibles-dans-application.spec.ts", "types-au-port.spec.ts"]);
+        "sorties-extensibles-dans-application.spec.ts", "types-au-port.spec.ts",
+        "zones-dans-une-boucle-dans-application.spec.ts"]);
     const coupables = appelants.filter((f) => {
       const code = codeSeul(source(resolve(DOSSIER, f)));
       return code.includes("statut-puce") || code.includes("waitForFunction");
