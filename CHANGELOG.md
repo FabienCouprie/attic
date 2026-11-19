@@ -1268,6 +1268,18 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **QUATRE SPECS DE BOUT EN BOUT RETROUVENT L'ENTRÉE D'IMPORT : ELLES LA CHERCHAIENT PAR `accept=".json"`, ET LA BARRE D'OUTILS PORTE `accept=".json,.attic"` DEPUIS LA PR 370.** Relevé le 2026-11-17 par l'épreuve de la conception du graphe (PR 375), puis le 2026-11-19 par la pièce P6 de l'architecture par messages (PR 384), qui a relancé ces specs pour éprouver l'import et Ctrl+Z.
+  - **Le défaut.** Un sélecteur d'attribut `[accept=".json"]` exige l'égalité. `setInputFiles` attendait donc une entrée qui n'existait plus, jusqu'au délai du cas, et les quatre specs tombaient aussi sur `master`.
+  - **La correction**, sept sélecteurs dans `format-projet` (3), `montage-piste-branchee`, `retablir-dans-application` et `urls-medias-dans-application` : `accept*=".json"`, qui demande que la liste contienne `.json`. C'est la forme que `graphe-complexite-dans-application.spec.ts` emploie déjà. Elle survit à une extension ajoutée et reste univoque : des onze entrées de fichier de `src/` qui portent un `accept`, seule celle de l'import, dans `ui/BarreOutils.tsx`, contient `.json`. Un commentaire le dit à la première occurrence de chaque spec.
+  - **Les specs, lancées chacune seule** : `retablir-dans-application` 4 passed (18,7 s), `urls-medias-dans-application` 10 passed (53,1 s), `format-projet` 3 passed (17,2 s), `montage-piste-branchee` 2 passed (38,2 s).
+  - **La faute plantée** : l'ancien sélecteur remis dans le premier cas de `format-projet`, le cas tombe au bout de 180 s sur `waiting for locator('input[type="file"][accept=".json"]')`. Rétabli, la spec rend 3 passed (16,5 s).
+  - **L'ordre de vérification** :
+    - `npx tsc -b` est vert ;
+    - `npx oxlint` donne 27 avertissements et 0 erreur, aucun dans ces fichiers ;
+    - la passe complète est verte en 23 min 56 s : 785 fichiers dont 3 sautés, 11 120 cas verts, 17 sautés.
+
+    Rien ne change hors de `tests-e2e/` : aucune table générée n'est concernée.
+
 - **« EXPORT IMAGE » ÉCRIT LES OCTETS REÇUS SOUS L'EXTENSION DE LEUR FORMAT, LU SUR CES OCTETS : UN WEBP, UN GIF, UN BMP OU UN SVG NE SORT PLUS EN `.png`.** Relevé le 2026-11-16 par l'épreuve de l'entrée suivante, et laissé dehors par elle. La doc du réglage « Nom » promettait « L'extension est adaptée au format réel de l'image ».
   - **Le défaut.** `extensionParMime` de `plugins/image-export.ts` rendait `png` pour tout ce qui n'était ni `image/png` ni `image/jpeg`, et lisait le format sur `File.type`, une étiquette, et non sur les octets. `nomAvecExtension` ne retirait du nom saisi que `.png`, `.jpg` et `.jpeg`.
   - **La règle, choisie par Fabien le 2026-11-16** entre deux : garder le format d'origine avec sa vraie extension, ou convertir en PNG par un canevas ce qui n'est ni PNG ni JPEG. Il a pris la première, et d'attendre la fusion de la PR 371 pour lire le format par `typeImageDesOctets` de `core/type-image.ts`. Les octets partent donc tels quels, et l'extension suit leur signature : `.png`, `.jpg`, `.webp`, `.gif`, `.bmp`, `.avif`, `.svg`. L'extension d'image que porte le nom saisi est remplacée, quelle qu'elle soit (`pochette.webp` pour un GIF donne `pochette.gif`) ; une autre extension reste dans le nom (`prise.v2` donne `prise.v2.png`). Un format sans signature connue est écrit sous le nom saisi, inchangé. **L'AVIF reçoit `.avif`** parce que `typeImageDesOctets` le reconnaît ; il n'est éprouvé que par un en-tête dans les cas, pas dans l'application, le canevas de Chromium ne sachant pas en écrire.

@@ -122,9 +122,13 @@ test.describe("une piste branchée du montage", () => {
     // reprise ne recopie que les champs déclarés et laisse donc la liste en route ; l'import recopie
     // tout `data`, si bien que la liste arrive jusqu'au nœud, à la vue et à l'exécuteur. Semé par
     // l'en-cours, ce cas restait vert sur un exécuteur qui relisait la liste.
+    //
+    // `accept` CONTIENT « .json », il ne l'égale plus : l'import prend aussi les paquets `.attic`
+    // depuis la PR 370, et le sélecteur exact attendait son délai sans rien trouver. Seule l'entrée
+    // d'import de la barre d'outils contient « .json ».
     page.on("dialog", (d) => { void d.accept(); });
     await semer(page, devUrl, GRAPHE, { profondeurExport: 32 });
-    await page.setInputFiles('input[type="file"][accept=".json"]',
+    await page.setInputFiles('input[type="file"][accept*=".json"]',
       { name: "projet-avec-piste-videe.json", mimeType: "application/json", buffer: Buffer.from(GRAPHE, "utf8") });
     await page.waitForTimeout(2500);
     await relancerEtAttendre(page, { profondeurExport: 32 });
