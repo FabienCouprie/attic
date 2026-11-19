@@ -25,8 +25,11 @@ composants surveillés (`tests-e2e/empreintes.json`).
 
 - une épreuve qui ouvre Electron sur `dist/` **s'ignore sans build**, et le dit par un « skipped » :
   `npm run build` d'abord, puis lire « passed », jamais le seul code de sortie ;
-- les exemples qui jouent du MIDI s'écartent de la base du son quand `public/sf2/FluidR3_GM.sf2`
-  manque. Git l'ignore, et un arbre séparé installé par `npm ci --ignore-scripts` ne l'a donc pas ;
+- une épreuve qui sème un graphe attend qu'un SoundFont soit chargé, et sur un profil neuf c'est
+  en général `public/sf2/FluidR3_GM.sf2` qui le pose : sans lui, `semer` échoue au bout de
+  `DELAI_SOUNDFONT_MS` en le disant, et les références de la base du son et du journal de passe ont
+  été mesurées avec lui. Git l'ignore, et un arbre séparé installé par `npm ci --ignore-scripts` ne
+  l'a donc pas ;
 - un graphe se pilote par `tests-e2e/pilote-graphe.ts`, et une spec neuve qui sème un graphe se
   déclare parmi ses appelants (`src/docs/contrat-pilote-de-graphe.test.ts`).
 

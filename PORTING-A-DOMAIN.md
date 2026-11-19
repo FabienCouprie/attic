@@ -399,7 +399,7 @@ Ce qui se reprend est leur **forme**, et elle vaut d'être copiée :
   cents naissait de la rencontre de deux chemins dont chacun, pris seul, était
   juste. Si vous n'en reprenez qu'un, reprenez celui-là.
 - **Le pilotage d'un graphe se met en commun** (`tests-e2e/pilote-graphe.ts`) :
-  semer, lancer, savoir quand c'est fini, relire les aperçus. Quatre corrections y
+  semer, lancer, savoir quand c'est fini, relire les aperçus. Six corrections y
   sont écrites en tête, chacune payée d'une mesure fausse, et
   `src/docs/contrat-pilote-de-graphe.test.ts` tient la liste de ses appelants. Un
   second exemplaire les aurait perdues une à une.
