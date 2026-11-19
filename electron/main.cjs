@@ -84,6 +84,38 @@ const { resoudreRessource } = require("./chemins-ressources.cjs");
 const { dossierRessourcesVoulu, migrerRessources } = require("./dossier-ressources.cjs");
 const { SCHEMA: SCHEMA_MEDIA, cheminDepuisUrl, typeMedia, analyserPlage } = require("./plage-media.cjs");
 const { SCHEMA: SCHEMA_RESSOURCE, servir: servirRessource } = require("./ressource-locale.cjs");
+const { chargerConfiguration, formulerProbleme, proposition } = require("./configuration.cjs");
+
+// ═══ LE FICHIER DE CONFIGURATION, LU UNE FOIS, AVANT QUE L'APPLICATION NE SOIT PRÊTE ═══
+//
+// AVANT `app.whenReady()`, et il le faut : une option de démarrage de Chromium ne se pose qu'avant.
+// `userData` répond déjà, `--user-data-dir` compris ; l'épreuve `configuration-dans-electron.spec.ts`
+// le vérifie. Un fichier faux ne bloque rien : ses problèmes vont au journal, les défauts s'appliquent.
+// L'interface en reçoit une copie par `configuration:lire`, et aucun canal ne l'écrit. Voir
+// `electron/configuration.cjs` et `CONFIGURATION.md`.
+//
+// ET `config.propose.json` EST RÉÉCRIT, quand il change, avec les valeurs en vigueur sur cette
+// machine : les chemins y sont ceux que l'installeur a posés (`process.resourcesPath`) et ceux que
+// le système impose. Décision de Fabien du 2026-11-19. Un échec d'écriture se dit et ne bloque rien.
+const DOSSIER_CONFIGURATION = app.getPath("userData");
+const CONFIGURATION = chargerConfiguration({
+  chemin: path.join(DOSSIER_CONFIGURATION, "config.json"),
+  plateforme: process.platform, env: process.env, home: app.getPath("home"),
+  userData: DOSSIER_CONFIGURATION, ressources: process.resourcesPath,
+  lire: (c) => fs.readFileSync(c, "utf8"), statut: (c) => fs.statSync(c),
+});
+for (const p of CONFIGURATION.problemes) console.warn(`[attic] configuration (${CONFIGURATION.chemin}) : ${formulerProbleme(p)}`);
+try {
+  const propose = `${JSON.stringify(proposition({ valeurs: CONFIGURATION.valeurs, plateforme: process.platform }), null, 2)}\n`;
+  const cheminPropose = path.join(DOSSIER_CONFIGURATION, "config.propose.json");
+  if (!fs.existsSync(cheminPropose) || fs.readFileSync(cheminPropose, "utf8") !== propose) {
+    fs.mkdirSync(DOSSIER_CONFIGURATION, { recursive: true });
+    fs.writeFileSync(cheminPropose, propose);
+  }
+} catch (e) {
+  console.warn(`[attic] configuration : config.propose.json n'a pas pu être écrit (${e?.code ?? e})`);
+}
+ipcMain.handle("configuration:lire", () => CONFIGURATION);
 
 // Racine des nœuds installés. Fonction et non constante : `app.getPath` ne
 // répond qu'une fois Electron prêt.
