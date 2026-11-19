@@ -200,9 +200,16 @@ export function empreinteParametres(data: Record<string, unknown>): string {
   // LES MORCEAUX DU MONTAGE ENTRENT DANS LA CLÉ, au même titre que les notes enregistrées d'un
   // clavier : ils sont posés à la main et décident de ce que le composant rend. Sans eux, couper ou
   // déplacer un morceau n'aurait relancé personne, et l'on aurait entendu le montage d'avant.
+  //
+  // ET LES ZONES CHOISIES À LA MAIN AUSSI, depuis le 2026-11-19, pour la même raison. Sans elles, les
+  // copies d'un « Sélecteur multi-zones » posé dans le corps d'une boucle rendaient les anciennes
+  // zones depuis le cache : seul le nœud visible était oublié. Mesuré par
+  // `tests-e2e/zones-dans-une-boucle-dans-application.spec.ts`. LA CLÉ NE LES PORTE QUE SI LE NŒUD EN
+  // A : celle de tous les autres nœuds, et celle des paquets `.attic` déjà écrits, ne change pas.
   return JSON.stringify({
     p: data.parametres ?? {}, s: data.sequenceNotes ?? null, m: data.morceaux ?? null,
     f: f ? f.name : null,
+    ...(data.zonesSelectionnees !== undefined ? { z: data.zonesSelectionnees } : {}),
   });
 }
 
