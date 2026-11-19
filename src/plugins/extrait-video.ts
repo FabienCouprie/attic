@@ -101,9 +101,8 @@ export const fiches: FicheAudio[] = ([
         dureeReelle = relu.dureeSec;
       } catch { /* la durée réelle reste inconnue, le reste du message vaut toujours */ }
 
-      // LE FILM PRÉCÉDENT SE RÉVOQUE AVANT D'EN FAIRE UN AUTRE, et il se relit dans le canal déclaré.
-      const avant = (ctx.noeud.data as { _affichage?: { url?: string } })._affichage?.url;
-      if (typeof avant === "string") URL.revokeObjectURL(avant);
+      // LE FILM PRÉCÉDENT SE RÉVOQUE QUAND CELUI-CI LE REMPLACE À L'ÉCRAN, par `lacherAffichage` de
+      // `ui/correctif-resultat.ts` : les données du nœud ne le portent jamais.
       const nomSource = chemin.replace(/^.*[\\/]/, "");
       const nomExtrait = `${(nomSource || "film").replace(/\.[^.]+$/, "")}-extrait.mp4`;
       // LA CADENCE ET LA DURÉE SONT CELLES DU FILM REÇU, donc `designe` : un réglage de bornes ne

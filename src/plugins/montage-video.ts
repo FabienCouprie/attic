@@ -142,10 +142,8 @@ export const fiches: FicheAudio[] = ([
         onProgress: (f) => ctx.onProgress?.(`${Math.round(f * 100)} %`),
       });
 
-      // LE FILM PRÉCÉDENT SE RÉVOQUE AVANT D'EN FAIRE UN AUTRE, et il se relit dans le canal
-      // déclaré, là où le run précédent l'a laissé.
-      const avant = (ctx.noeud.data as { _affichage?: { url?: string } })._affichage?.url;
-      if (typeof avant === "string") URL.revokeObjectURL(avant);
+      // LE FILM PRÉCÉDENT SE RÉVOQUE QUAND CELUI-CI LE REMPLACE À L'ÉCRAN, par `lacherAffichage` de
+      // `ui/correctif-resultat.ts` : les données du nœud ne le portent jamais.
       const nomSource = chemin.replace(/^.*[\\/]/, "");
       const nom = (nomSource || "montage").replace(/\.[^.]+$/, "");
       const fichier = new File([blob], `${nom}-sonorise.mp4`, { type: "video/mp4" });
