@@ -7,7 +7,7 @@
 // Les réponses sont ici, et la racine de composition les dépose dans `ui/services-orchestration.ts`.
 
 import { fichiersAudio, FICHE_LOT_DEBUT } from "./lotGlobal";
-import { publierGrapheCourant, publierExecutionCourante } from "./grapheGlobal";
+import { lacherExecutionCourante, lacherGrapheCourant, publierGrapheCourant, publierExecutionCourante } from "./grapheGlobal";
 import type { ServicesOrchestration } from "../ui/services-orchestration";
 
 /** Le paramètre où un début de boucle collection porte son dossier. */
@@ -15,7 +15,9 @@ const PARAMETRE_DOSSIER = "Dossier";
 
 export const ORCHESTRATION_AUDIO: ServicesOrchestration = {
   publierGraphe: (graphe) => { publierGrapheCourant(graphe as never); },
+  lacherGraphe: () => { lacherGrapheCourant(); },
   publierExecution: (execution) => { publierExecutionCourante(execution as never); },
+  lacherExecution: () => { lacherExecutionCourante(); },
 
   // LES DÉBUTS DE BOUCLE COLLECTION DISENT LEUR DOSSIER, et c'est tout ce que le moteur a besoin de
   // savoir : une liste de chemins à faire lire. Quel composant les porte, et sous quel paramètre,

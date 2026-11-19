@@ -13,6 +13,7 @@
 // SANS LE CLONEUR, L'ÉPREUVE S'IGNORE EN LE DISANT. Deux modèles sont nécessaires — celui qui parle
 // et celui qui écoute — et aucun n'est présent en intégration continue.
 import { test, expect, _electron as electron, type ElectronApplication } from "@playwright/test";
+import { garderLExecution } from "./execution-gardee";
 import { existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -69,6 +70,7 @@ test.describe("dater les mots, de bout en bout", () => {
       await page.waitForSelector(".attic-app", { timeout: 60000 });
       const noeud = page.locator('[data-id="dat"]');
       await noeud.waitFor({ timeout: 60000 });
+      await garderLExecution(page);
       await page.getByRole("button", { name: /Lancer/ }).click();
 
       // LE CHIFFRE EST EXIGÉ DEVANT LE MOT, et ce n'est pas une coquetterie : « Mots » est aussi le

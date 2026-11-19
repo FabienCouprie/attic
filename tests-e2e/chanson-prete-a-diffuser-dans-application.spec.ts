@@ -12,6 +12,7 @@
 //
 // Elle se saute sans build, sans le moteur ou sans les modèles d'ACE-Step.
 import { test, expect, _electron as electron, type Page } from "@playwright/test";
+import { garderLExecution } from "./execution-gardee";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -72,6 +73,7 @@ test.describe("« Une chanson prête à diffuser », de bout en bout", () => {
       await page.reload();
       await page.waitForSelector(".attic-app", { timeout: 60000 });
       await page.locator('[data-id="mesure"]').waitFor({ timeout: 60000 });
+      await garderLExecution(page);
       const debut = Date.now();
       await page.getByRole("button", { name: /Lancer/ }).click();
       await expect(page.locator('[data-id="mesure"] .attic-node-message')).toContainText("LUFS", { timeout: 840000 });

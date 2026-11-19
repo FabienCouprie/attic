@@ -14,6 +14,7 @@
 // est donc tenue là où elle peut tomber — dans `src/plugins/restaurer-compresse.test.ts`, sur le
 // refus que le pont oppose à une autre cadence.
 import { test, expect, _electron as electron, type ElectronApplication, type Page } from "@playwright/test";
+import { garderLExecution } from "./execution-gardee";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { fileURLToPath } from "url";
@@ -98,6 +99,7 @@ test.describe("restaurer un son compressé, de bout en bout", () => {
       await page.waitForSelector(".attic-app", { timeout: 60000 });
       const noeud = page.locator('[data-id="res"]');
       await noeud.waitFor({ timeout: 60000 });
+      await garderLExecution(page);
       await page.getByRole("button", { name: /Lancer/ }).click();
       await expect(noeud).toContainText(/\d+\s*%/, { timeout: 240000 });
 
@@ -168,6 +170,7 @@ test.describe("restaurer un son compressé, de bout en bout", () => {
             await p.locator('[data-id="src"] .attic-node-fichier input[type=file]')
               .setInputFiles(chemin, { timeout: 15000 });
             await p.waitForTimeout(1000);
+            await garderLExecution(p);
           },
         });
         const secondes = (Date.now() - debut) / 1000;

@@ -15,6 +15,7 @@
 // métronome n'importe pas — sa qualité se mesure au banc, sur de vraies voix, et le relevé est
 // écrit en tête de `src/plugins/convertir-voix.ts`.
 import { test, expect, _electron as electron, type ElectronApplication } from "@playwright/test";
+import { garderLExecution } from "./execution-gardee";
 import { existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -57,6 +58,7 @@ test.describe("convertir une voix, de bout en bout", () => {
       await page.waitForSelector(".attic-app", { timeout: 60000 });
       const noeud = page.locator('[data-id="cnv"]');
       await noeud.waitFor({ timeout: 60000 });
+      await garderLExecution(page);
       await page.getByRole("button", { name: /Lancer/ }).click();
       await expect(noeud).toContainText(/[\d.,]+\s*s/, { timeout: 360000 });
 

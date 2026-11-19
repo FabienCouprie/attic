@@ -34,8 +34,17 @@ export interface ServicesOrchestration {
    */
   publierGraphe(graphe: unknown): void;
 
+  /** La passe est finie, arrêtée ou tombée : le graphe publié ne doit plus la retenir. */
+  lacherGraphe(): void;
+
   /** L'exécution en cours — ordre, nœuds, arêtes, résultats —, posée pour les nœuds qui la lisent. */
   publierExecution(execution: unknown): void;
+
+  /**
+   * La passe est finie, arrêtée ou tombée : l'exécution publiée ne doit plus retenir ses tables ni son
+   * graphe jusqu'à la passe suivante.
+   */
+  lacherExecution(): void;
 
   /**
    * Les dossiers dont le contenu doit être lu AVANT de planifier quoi que ce soit.
@@ -52,7 +61,9 @@ export interface ServicesOrchestration {
 
 const NEUTRES: ServicesOrchestration = {
   publierGraphe: () => {},
+  lacherGraphe: () => {},
   publierExecution: () => {},
+  lacherExecution: () => {},
   dossiersALire: () => [],
   fichiersUtiles: () => [],
 };
