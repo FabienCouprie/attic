@@ -1279,7 +1279,7 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
     - l'écriture au cache sans le nœud visible : la copie `debut#0::corps` s'écrit après le ↺ ;
     - `depuis` qui ignore le nœud visible ;
     - la purge qui ignore les rattachements.
-  - **Ce qui reste** : un oubli simple ne touche pas les copies, ce qui est la règle. Le seul geste qui oublie un nœud sans le remettre à zéro, l'enregistrement MIDI de l'inspecteur, laisserait donc ses copies à un nœud MIDI posé dans le corps d'une boucle.
+  - **Ce qui reste** : un oubli simple ne touche pas les copies, ce qui est la règle. Un geste qui oublie un nœud sans le remettre à zéro lui-même laisse donc ses copies en cache. C'est le cas du changement de zones, quand le « Sélecteur multi-zones » est dans le corps d'une boucle : ses zones n'entrent pas dans l'empreinte des réglages. Lu dans le code, pas éprouvé ici. La « Capture MIDI » n'est pas concernée : sans entrée, elle n'est jamais copiée.
   - **Les épreuves dans l'application** : les specs de boucle, de lot et de P6 sont vertes, la spec neuve comprise, et l'épreuve du graphe complexe passe à ses quatre étapes.
   - **L'ordre de vérification** :
     - `npx tsc -b` est vert ;
