@@ -44,8 +44,9 @@ const LINUX = {
 const codes = (r: { problemes: { code: string; cle?: string }[] }) => r.problemes.map((p) => (p.cle ? `${p.code}:${p.cle}` : p.code));
 
 describe("le fichier de configuration, sous Windows et sous Linux", () => {
-  it("LE SOCLE NE PORTE AUCUNE CLÉ : la pièce C0 ne change aucun comportement", () => {
-    expect(Object.keys(SCHEMA)).toEqual([]);
+  it("LE SCHÉMA PORTE LES CLÉS DES PIÈCES LIVRÉES, et seulement elles", () => {
+    // C0 n'en portait aucune ; C1 ajoute le plafond du paquet.
+    expect(Object.keys(SCHEMA)).toEqual(["plafondPaquetMio"]);
   });
 
   it("UN FICHIER ABSENT OU VIDE REND LES DÉFAUTS, sans problème", () => {

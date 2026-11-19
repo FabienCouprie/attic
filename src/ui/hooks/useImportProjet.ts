@@ -37,6 +37,7 @@ import { idsDe, oublierNoeuds } from "../oubli-noeuds";
 import { avecLesMedias, lireLeFichierAOuvrir } from "../paquet/ouvrir-paquet";
 import { lirePaquet, type PaquetLu } from "../paquet/lire-paquet";
 import { VERSION_APPLICATION } from "../paquet/format-paquet";
+import { mioDeclares, mioDuPlafond, plafondDuPaquet } from "../paquet/plafond-du-paquet";
 import { RefusPaquet } from "../paquet/zip";
 
 // Le même typage souple que `usePersistance`, d'où ce code vient : il manipulait déjà tout en `any`.
@@ -64,11 +65,18 @@ export interface OptionsImportProjet {
  *
  * UN PAQUET D'UN ATTIC PLUS RÉCENT DIT LES DEUX VERSIONS : la sienne, qui est le détail du refus, et
  * celle qui le lit. C'est ce qui dit à quelle version se mettre à jour.
+ *
+ * UN PAQUET TROP GROS DIT CE QU'IL DÉCLARE ET LE PLAFOND EN VIGUEUR, en Mio : le plafond se règle
+ * (`plafondPaquetMio`, pièce C1), et le message dit de combien il faudrait le monter.
  */
 function raisonDuRefus(e: unknown, t: (cle: string) => string): string {
   if (!(e instanceof RefusPaquet)) return t("paquet.refus.inattendu");
   const raison = t(`paquet.refus.${e.code}`);
-  return e.code === "application" ? raison.replace("{v}", e.detail).replace("{n}", VERSION_APPLICATION) : raison;
+  if (e.code === "application") return raison.replace("{v}", e.detail).replace("{n}", VERSION_APPLICATION);
+  if (e.code === "plafond" && e.chiffres) {
+    return raison.replace("{declare}", mioDeclares(e.chiffres.declare)).replace("{plafond}", mioDuPlafond(e.chiffres.plafond));
+  }
+  return raison;
 }
 
 /** Ce que le rapport de chargement dit d'un paquet, en plus des pertes d'un projet. */
@@ -93,7 +101,7 @@ export async function importerProjet(
   let paquet: PaquetLu | null = null;
   if ("octets" in lu) {
     try {
-      paquet = await lirePaquet(lu.octets, { application: VERSION_APPLICATION });
+      paquet = await lirePaquet(lu.octets, { application: VERSION_APPLICATION, plafond: await plafondDuPaquet() });
     } catch (e) {
       console.error("[attic] Import : paquet refusé, le projet ouvert est gardé", e);
       if (typeof alert !== "undefined") alert(t("persistance.paquetRefuse").replace("{raison}", raisonDuRefus(e, t)));

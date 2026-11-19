@@ -32,7 +32,12 @@ const DICO: Record<string, Record<Langue, string>> = {
   "paquet.refus.methode": { fr: "une entrée est compressée par une méthode inconnue.", en: "an entry is compressed with an unknown method." },
   "paquet.refus.taille": { fr: "une entrée ne fait pas la taille qu'elle déclare.", en: "an entry is not the size it declares." },
   "paquet.refus.crc": { fr: "une entrée est abîmée : son contrôle CRC ne correspond pas.", en: "an entry is damaged: its CRC check does not match." },
-  "paquet.refus.plafond": { fr: "il dépasse le plafond d'un paquet, 1 Gio une fois décompressé.", en: "it exceeds the package limit, 1 GiB once decompressed." },
+  // LE PLAFOND SE RÈGLE depuis la pièce C1 du fichier de configuration (2026-11-19) : le message dit
+  // les deux nombres, et la clé qui le règle.
+  "paquet.refus.plafond": {
+    fr: "il déclare {declare} Mio une fois décompressé, au-delà du plafond de {plafond} Mio. Ce plafond se règle par la clé plafondPaquetMio de config.json.",
+    en: "it declares {declare} MiB once decompressed, beyond the limit of {plafond} MiB. The limit is set by the plafondPaquetMio key of config.json.",
+  },
   "paquet.refus.manifeste": { fr: "son manifeste, paquet.json, est absent ou illisible.", en: "its manifest, paquet.json, is missing or unreadable." },
   "paquet.refus.version": { fr: "il a été écrit dans un format de paquet plus récent que celui que cette version d'Attic sait lire.", en: "it was written in a newer package format than this version of Attic can read." },
   "paquet.refus.application": { fr: "il a été écrit par Attic {v}, plus récent que celui-ci, Attic {n}. Il s'ouvrira après une mise à jour d'Attic.", en: "it was written by Attic {v}, newer than this one, Attic {n}. It will open after Attic is updated." },
@@ -50,7 +55,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "paquet.ecart.adresse": { fr: "une adresse d'objet illisible", en: "an unreadable object address" },
   "paquet.ecart.cycle": { fr: "une structure qui se contient elle-même", en: "a structure that contains itself" },
   "paquet.ecart.type": { fr: "une valeur qui ne s'écrit pas", en: "a value that cannot be written" },
-  "paquet.ecart.plafond": { fr: "le plafond du paquet, 1 Gio", en: "the package limit, 1 GiB" },
+  "paquet.ecart.plafond": { fr: "le plafond du paquet, {plafond} Mio (clé plafondPaquetMio de config.json)", en: "the package limit, {plafond} MiB (plafondPaquetMio key of config.json)" },
   "paquet.ecart.echec": { fr: "un échec à la lecture", en: "a failure while reading" },
   // LE RAPPORT DE CHARGEMENT. Ces pertes ne laissaient qu'un `console.warn`, que personne ne lit —
   // et sous Windows la console du processus principal d'Electron n'apparaît même pas.

@@ -53,12 +53,24 @@ const path = require("path");
 /**
  * Les clés que le fichier peut porter.
  *
- * VIDE À LA PIÈCE C0, et c'est voulu : le socle ne change aucun comportement. Une clé s'écrit
- * `{ type, defaut, ...bornes, systemes?, env? }`, où `type` est l'un de `TYPES`, `systemes` les
- * systèmes où elle a un sens (`windows`, `linux`), et `env` la variable d'environnement qui l'emporte
- * sur le fichier. `defaut` est une valeur, ou une fonction du contexte pour un chemin : voir l'en-tête.
+ * Une clé s'écrit `{ type, defaut, ...bornes, systemes?, env? }`, où `type` est l'un de `TYPES`,
+ * `systemes` les systèmes où elle a un sens (`windows`, `linux`), et `env` la variable d'environnement
+ * qui l'emporte sur le fichier. `defaut` est une valeur, ou une fonction du contexte pour un chemin :
+ * voir l'en-tête. Chaque clé a sa ligne dans `CONFIGURATION.md` et un lecteur dans le code.
  */
-const SCHEMA = Object.freeze({});
+const SCHEMA = Object.freeze({
+  /**
+   * LE PLAFOND D'UN PAQUET `.attic`, décompressé, à l'écriture comme à la lecture (pièce C1). Le
+   * défaut est l'ancien `PLAFOND_PAQUET` de `src/ui/paquet/format-paquet.ts`, 1 Gio.
+   *
+   * LA BORNE HAUTE EST MESURÉE, et non choisie. Le plan proposait 3,5 Gio, sous les 4 Gio d'un zip
+   * sans zip64. Relevé le 2026-11-19 dans Electron 43 sous Windows : le rendu n'alloue pas d'un
+   * seul tenant plus de 2 145 386 496 octets (2 Gio moins 2 Mio), et l'archive y existe d'un seul
+   * tenant à l'export comme à l'import. Avec les en-têtes du zip, 2000 Mio laissent 40 Mo de marge ;
+   * 1,95 Gio a passé le pont dans les deux sens. Le coût en est dit dans `CONFIGURATION.md`.
+   */
+  plafondPaquetMio: Object.freeze({ type: "nombre", defaut: 1024, min: 256, max: 2000 }),
+});
 
 /** Le nom de section de chaque plateforme de Node qu'Attic sert. */
 const SYSTEMES = Object.freeze({ win32: "windows", linux: "linux" });

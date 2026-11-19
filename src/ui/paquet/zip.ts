@@ -27,14 +27,23 @@ export type CodeRefus =
   | "tronque" | "chemin" | "doublon" | "chiffre" | "zip64" | "methode" | "taille" | "crc" | "plafond"
   | "manifeste" | "version" | "application" | "absente" | "empreinte" | "projet" | "donnees";
 
+/** Ce qu'un refus de taille dit en nombres : ce qui est déclaré, et le plafond qu'il dépasse, en octets. */
+export interface ChiffresDuRefus {
+  declare: number;
+  plafond: number;
+}
+
 export class RefusPaquet extends Error {
   readonly code: CodeRefus;
   readonly detail: string;
-  constructor(code: CodeRefus, detail = "") {
+  /** Pour un refus `plafond` : les deux nombres, que le message dit (le plafond se règle, pièce C1). */
+  readonly chiffres?: ChiffresDuRefus;
+  constructor(code: CodeRefus, detail = "", chiffres?: ChiffresDuRefus) {
     super(detail ? `${code} : ${detail}` : code);
     this.name = "RefusPaquet";
     this.code = code;
     this.detail = detail;
+    this.chiffres = chiffres;
   }
 }
 
@@ -243,7 +252,7 @@ export function lireRepertoire(octets: Uint8Array): Map<string, EntreeLue> {
  * plafond que l'appelant tient pour cette entrée-là.
  */
 export async function extraire(octets: Uint8Array, e: EntreeLue, plafond: number): Promise<Uint8Array> {
-  if (e.taille > plafond) throw new RefusPaquet("plafond", `${e.nom} déclare ${e.taille} octets`);
+  if (e.taille > plafond) throw new RefusPaquet("plafond", `${e.nom} déclare ${e.taille} octets`, { declare: e.taille, plafond });
   const brut = octets.subarray(e.debut, e.debut + e.tailleCompressee);
   let sortie: Uint8Array;
   if (e.methode === 0) {
