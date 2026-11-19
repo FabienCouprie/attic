@@ -44,10 +44,13 @@ const { inventaire: inventaireModeles } = require("./telechargement-modeles.cjs"
  * @param sondesModeles          les sondes de l'inventaire, rendues par `ipc-modeles.cjs` ;
  * @param telechargerModeles     la file des téléchargements, rendue par `ipc-modeles.cjs` ;
  * @param telechargementEnCours  ce qui dit si un téléchargement tourne, rendu par `ipc-modeles.cjs`.
+ * @param ollama                 l'adresse du serveur Ollama : la clé `ollama` de `config.json`, ou
+ *                               `ATTIC_OLLAMA_URL` qui l'emporte (pièce C4) ; lue par `configuration.cjs`.
  */
 function installerIpcMoteurs({
   ipcMain, contexteRessources,
   lireManifesteModeles, sondesModeles, telechargerModeles, telechargementEnCours,
+  ollama = "http://127.0.0.1:11434",
 }) {
   // --- IPC : séparation Demucs en natif (onnxruntime-node) ---
   // onnxruntime-web (WASM) ne peut pas charger ce modèle de 166 Mo ; on l'exécute
@@ -187,11 +190,13 @@ function installerIpcMoteurs({
   // --- IPC : Ollama (LLM local) ---
   // Proxy vers le serveur Ollama local (port 11434) depuis le main process : évite
   // la CSP et le CORS du renderer. fetch global (Node 18+ via Electron).
-  const OLLAMA_BASE = process.env.ATTIC_OLLAMA_URL || "http://127.0.0.1:11434";
+  // L'ADRESSE VIENT DE LA CONFIGURATION, variable comprise (pièce C4). Le message d'échec la nomme :
+  // il disait « :11434 » quelle que fût l'adresse, relevé en préparant la pièce.
+  const OLLAMA_BASE = ollama;
   function erreurOllama(e) {
     const s = String(e?.cause?.code || e?.message || e);
     if (e?.name === "AbortError") return "Délai dépassé — le premier appel doit charger le modèle en mémoire (plusieurs minutes pour un gros modèle). Augmentez « Délai max » sur le nœud.";
-    if (/ECONNREFUSED|ENOTFOUND|fetch failed/i.test(s)) return "Serveur Ollama injoignable sur :11434 (lancez « ollama serve »).";
+    if (/ECONNREFUSED|ENOTFOUND|fetch failed/i.test(s)) return `Serveur Ollama injoignable sur ${OLLAMA_BASE} (lancez « ollama serve », ou réglez la clé ollama de config.json).`;
     return s;
   }
   ipcMain.handle("ollama:generer", async (_event, options) => {

@@ -48,8 +48,41 @@ const codes = (r: { problemes: { code: string; cle?: string }[] }) => r.probleme
 
 describe("le fichier de configuration, sous Windows et sous Linux", () => {
   it("LE SCHÉMA PORTE LES CLÉS DES PIÈCES LIVRÉES, et seulement elles", () => {
-    // C0 n'en portait aucune ; C1 ajoute le plafond du paquet, C2 le budget mémoire, C3 le dossier des modèles.
-    expect(Object.keys(SCHEMA)).toEqual(["plafondPaquetMio", "budgetMemoireGio", "dossierModeles"]);
+    // C0 n'en portait aucune ; C1 ajoute le plafond du paquet, C2 le budget mémoire, C3 le dossier des
+    // modèles, C4 les variables d'environnement absorbées.
+    expect(Object.keys(SCHEMA)).toEqual(["plafondPaquetMio", "budgetMemoireGio", "dossierModeles", "racines", "python", "julia", "ollama"]);
+  });
+
+  it("LES VARIABLES D'ENVIRONNEMENT ABSORBÉES GARDENT LEUR NOM ET L'EMPORTENT SUR LE FICHIER", () => {
+    const vu = (machine: Record<string, unknown>, texte: string, env: Record<string, string> = {}) =>
+      lireConfiguration({ ...machine, texte, env, schema: SCHEMA });
+    // SANS RIEN : aucune racine, l'interprète cherché par l'application, l'adresse d'Ollama d'avant.
+    expect(vu(WINDOWS, "").valeurs).toMatchObject({ racines: [], python: null, julia: null, ollama: "http://127.0.0.1:11434" });
+    // LE FICHIER, dans la section de son système.
+    const fichier = JSON.stringify({
+      ollama: "http://serveur:11434/",
+      windows: { racines: ["E:/sons"], python: "C:/Python313/python.exe" },
+      linux: { racines: ["~/sons"], julia: "/opt/julia/bin/julia" },
+    });
+    expect(vu(WINDOWS, fichier).valeurs).toMatchObject({ racines: ["E:\\sons"], python: "C:\\Python313\\python.exe", ollama: "http://serveur:11434" });
+    expect(vu(LINUX, fichier).valeurs).toMatchObject({ racines: ["/home/f/sons"], julia: "/opt/julia/bin/julia", python: null });
+    // LES VARIABLES L'EMPORTENT, chacune sous son nom d'avant.
+    const env = { ATTIC_RACINES: "F:\\a;G:/b", ATTIC_PYTHON: "D:\\py\\python.exe", ATTIC_JULIA: "D:\\jl\\julia.exe", ATTIC_OLLAMA_URL: "https://ia.local:8443" };
+    const w = vu(WINDOWS, fichier, env);
+    expect(w.valeurs).toMatchObject({ racines: ["F:\\a", "G:\\b"], python: "D:\\py\\python.exe", julia: "D:\\jl\\julia.exe", ollama: "https://ia.local:8443" });
+    expect(w.sources).toMatchObject({ racines: "environnement", python: "environnement", julia: "environnement", ollama: "environnement" });
+    expect(vu(LINUX, "", { ATTIC_RACINES: "/srv/a:/srv/b" }).valeurs.racines).toEqual(["/srv/a", "/srv/b"]);
+  });
+
+  it("UNE ADRESSE EST EN HTTP OU HTTPS, sans quoi l'adresse d'avant s'applique et le journal le dit", () => {
+    const vu = (ollama: unknown) => lireConfiguration({ ...WINDOWS, texte: JSON.stringify({ ollama }), schema: SCHEMA });
+    for (const faux of ["file:///etc/passwd", "127.0.0.1:11434", "javascript:alert(1)", ""]) {
+      expect(codes(vu(faux)), faux).toEqual(["adresse:ollama"]);
+      expect(vu(faux).valeurs.ollama).toBe("http://127.0.0.1:11434");
+    }
+    expect(codes(vu(11434))).toEqual(["type:ollama"]);
+    expect(formulerProbleme({ code: "adresse", cle: "ollama" })).toMatch(/n'est pas une adresse http ou https/);
+    expect(codes(lireConfiguration({ ...WINDOWS, env: { ATTIC_OLLAMA_URL: "ftp://x" }, schema: SCHEMA }))).toEqual(["adresse:ollama"]);
   });
 
   it("LE DOSSIER DES MODÈLES PAR DÉFAUT EST CELUI QUE L'APPLICATION SERT, et un dossier écrit le remplace", () => {

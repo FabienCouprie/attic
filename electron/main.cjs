@@ -69,7 +69,7 @@ if (process.env.ATTIC_JOURNAL_CHEMINS === "1") {
 }
 const {
   declarerRacine, racinesConnues,
-  accorderRacine, accorderRacineDuFichier, memoriserLesAccords, declarerRacinesDeLEnvironnement, racinesStrictes,
+  accorderRacine, accorderRacineDuFichier, memoriserLesAccords, declarerRacinesDuProprietaire, racinesStrictes,
 } = require("./capacites-chemins.cjs");
 const { extraireEntrees, dossierNode } = require("./extraire-node-zip.cjs");
 const { installerIpcMaj } = require("./ipc-maj.cjs");
@@ -85,7 +85,7 @@ const { resoudreRessource } = require("./chemins-ressources.cjs");
 const { dossierRessourcesVoulu, migrerRessources } = require("./dossier-ressources.cjs");
 const { SCHEMA: SCHEMA_MEDIA, cheminDepuisUrl, typeMedia, analyserPlage } = require("./plage-media.cjs");
 const { SCHEMA: SCHEMA_RESSOURCE, servir: servirRessource } = require("./ressource-locale.cjs");
-const { chargerConfiguration, formulerProbleme, proposition } = require("./configuration.cjs");
+const { chargerConfiguration, cheminDe, formulerProbleme, proposition } = require("./configuration.cjs");
 
 // ═══ LE FICHIER DE CONFIGURATION, LU UNE FOIS, AVANT QUE L'APPLICATION NE SOIT PRÊTE ═══
 //
@@ -109,15 +109,26 @@ const CONFIGURATION = chargerConfiguration({
   lire: (c) => fs.readFileSync(c, "utf8"), statut: (c) => fs.statSync(c),
 });
 for (const p of CONFIGURATION.problemes) console.warn(`[attic] configuration (${CONFIGURATION.chemin}) : ${formulerProbleme(p)}`);
-try {
-  const propose = `${JSON.stringify(proposition({ valeurs: CONFIGURATION.valeurs, plateforme: process.platform }), null, 2)}\n`;
-  const cheminPropose = path.join(DOSSIER_CONFIGURATION, "config.propose.json");
-  if (!fs.existsSync(cheminPropose) || fs.readFileSync(cheminPropose, "utf8") !== propose) {
-    fs.mkdirSync(DOSSIER_CONFIGURATION, { recursive: true });
-    fs.writeFileSync(cheminPropose, propose);
+/**
+ * Écrit `config.propose.json`, s'il change. `enUsage` porte ce que l'application n'apprend qu'en
+ * cherchant, après la lecture : l'interprète Python ou Julia réellement trouvé (pièce C4). Seul un
+ * chemin absolu y entre, pour que le fichier se relise sans un problème ; « py -3 » n'en est pas un.
+ */
+function ecrireLaProposition(enUsage = {}) {
+  try {
+    const systeme = process.platform === "win32" ? "windows" : "linux";
+    const absolus = Object.fromEntries(Object.entries(enUsage)
+      .filter(([, v]) => typeof v === "string" && cheminDe(v, systeme, app.getPath("home"))));
+    const valeurs = { ...CONFIGURATION.valeurs, ...absolus };
+    const propose = `${JSON.stringify(proposition({ valeurs, plateforme: process.platform }), null, 2)}\n`;
+    const cheminPropose = path.join(DOSSIER_CONFIGURATION, "config.propose.json");
+    if (!fs.existsSync(cheminPropose) || fs.readFileSync(cheminPropose, "utf8") !== propose) {
+      fs.mkdirSync(DOSSIER_CONFIGURATION, { recursive: true });
+      fs.writeFileSync(cheminPropose, propose);
+    }
+  } catch (e) {
+    console.warn(`[attic] configuration : config.propose.json n'a pas pu être écrit (${e?.code ?? e})`);
   }
-} catch (e) {
-  console.warn(`[attic] configuration : config.propose.json n'a pas pu être écrit (${e?.code ?? e})`);
 }
 ipcMain.handle("configuration:lire", () => CONFIGURATION);
 
@@ -338,6 +349,7 @@ const {
 installerIpcMoteurs({
   ipcMain, contexteRessources,
   lireManifesteModeles, sondesModeles, telechargerModeles, telechargementEnCours,
+  ollama: CONFIGURATION.valeurs.ollama,
 });
 
 ipcMain.handle("app:quitter", () => app.quit());
@@ -498,7 +510,12 @@ ipcMain.handle("node:selectionner-zip", async (event) => {
 // Ils vivent dans `ipc-scripts.cjs` depuis le 2026-11-08, avec la détection des deux interprètes.
 // L'appel reste ici, à la place des canaux qu'il remplace, pour qu'ils s'enregistrent dans le même
 // ordre qu'avant.
-installerIpcScripts({ ipcMain, app, BrowserWindow, dialog, showOpenDialogSuivi });
+const interpretesEnUsage = installerIpcScripts({
+  ipcMain, app, BrowserWindow, dialog, showOpenDialogSuivi,
+  interpretes: { python: CONFIGURATION.valeurs.python, julia: CONFIGURATION.valeurs.julia },
+});
+// LE FICHIER PROPOSÉ S'ÉCRIT ICI, une fois les interprètes cherchés : il montre ceux qu'on a trouvés.
+ecrireLaProposition(interpretesEnUsage());
 
 // ─── Auto-updater : configuration + IPC ───
 // Les mises à jour vivent dans `ipc-maj.cjs` depuis le 2026-11-07. L'appel reste ici, à la place
@@ -534,7 +551,8 @@ app.whenReady().then(() => {
   //   · le dossier de travail, calculé ci-dessus dans une liste de candidats que le rendu ne nomme pas ;
   //   · `userData`, qui est à l'application ;
   //   · les accords relus, que des dialogues ont fait naître dans des sessions antérieures ;
-  //   · `ATTIC_RACINES`, si le propriétaire en déclare.
+  //   · la clé `racines` de `config.json`, ou `ATTIC_RACINES` qui l'emporte, si le propriétaire en
+  //     déclare (pièce C4 du fichier de configuration).
   //
   // ET LE DOSSIER TEMPORAIRE N'EN EST PAS, quoi qu'il serait commode de le croire : AUCUNE des
   // destinations relevées n'y mène, et il est partagé avec toutes les autres applications de la
@@ -549,9 +567,9 @@ app.whenReady().then(() => {
   // LES SCRIPTS AUTORISÉS SE RELISENT AVEC LES ACCORDS, et pour la même raison : la personne les a
   // accordés dans une session antérieure. Voir `electron/scripts-autorises.cjs`.
   memoriserLesScripts(path.join(app.getPath("userData"), "scripts-autorises.json"));
-  const deLEnv = declarerRacinesDeLEnvironnement();
+  const duProprietaire = declarerRacinesDuProprietaire(CONFIGURATION.valeurs.racines);
   console.log(`[attic] racines du pont : ${racinesConnues().length}`
-    + ` (${accords.length} accordée(s) relue(s), ${deLEnv.length} par ATTIC_RACINES)`
+    + ` (${accords.length} accordée(s) relue(s), ${duProprietaire.length} par ${CONFIGURATION.sources.racines === "environnement" ? "ATTIC_RACINES" : "config.json"})`
     + (racinesStrictes() ? " · SANCTION ARMÉE" : " · sanction éteinte, hors racine est inscrit et passe"));
 
   // Configuration globale de la session (une seule fois, indépendamment du nombre

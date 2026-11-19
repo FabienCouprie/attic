@@ -65,6 +65,10 @@ Chaque pièce du plan ajoute la sienne ici ; le socle (pièce C0) n'en portait a
 | `plafondPaquetMio` | nombre, de 256 à 2000 | 1024 | 1024 | — | l'export et l'import d'un paquet `.attic` |
 | `budgetMemoireGio` | nombre, de 2 à 4096 | la mémoire de la machine | la mémoire de la machine, ou la limite de son groupe de contrôle si elle est plus basse | — | le seuil des aperçus, l'historique, l'indicateur de mémoire |
 | `dossierModeles` | chemin | `%APPDATA%\attic\ressources` | `$XDG_DATA_HOME/attic/ressources`, soit `~/.local/share/attic/ressources` | — | le téléchargement et la lecture des modèles |
+| `racines` | liste de chemins | aucune | aucune | `ATTIC_RACINES` | le pont des fichiers |
+| `python` | chemin | celui que l'application trouve | celui que l'application trouve | `ATTIC_PYTHON` | les nœuds Python, après le choix fait dans le nœud |
+| `julia` | chemin | celui que l'application trouve | celui que l'application trouve | `ATTIC_JULIA` | les nœuds Julia, après le choix fait dans le nœud |
+| `ollama` | adresse `http` ou `https` | `http://127.0.0.1:11434` | `http://127.0.0.1:11434` | `ATTIC_OLLAMA_URL` | le nœud Ollama |
 
 ### `plafondPaquetMio`, le plafond d'un paquet `.attic`
 
@@ -136,6 +140,26 @@ n'existe pas encore : instantané sur le même disque. **Rien n'est jamais recop
 l'autre** : recopier des dizaines de gigaoctets sans l'avoir demandé figerait l'application. L'ancien
 dossier sert alors encore, et le journal (`[attic] ressources : conserve …`) dit de le déplacer à la
 main. Si le nouveau dossier existe déjà, il sert, et l'ancien reste où il est.
+
+### `racines`, `python`, `julia`, `ollama` : les variables d'environnement d'avant
+
+Ces quatre réglages ne se faisaient que par une variable d'environnement, qu'on ne pose pas sans un
+lanceur ou un shell. **Chaque variable garde son nom et l'emporte sur le fichier** ; le fichier les
+rend écrivables à la main.
+
+- **`racines`**, ou `ATTIC_RACINES` : des dossiers où l'application peut lire et écrire pour un
+  nœud, en plus de ceux qu'elle s'accorde elle-même (son profil, le dossier de travail, et tout
+  dossier choisi dans un dialogue). Des chemins absolus : une racine relative est refusée, et toute
+  la liste avec elle. Ils ne sont pas retenus d'un lancement à l'autre : retirés du fichier, ils
+  cessent d'en être. **Un lien ou une jonction posé dans une racine ne mène pas au dehors** : le
+  chemin est comparé à ce qu'il désigne.
+- **`python`** et **`julia`**, ou `ATTIC_PYTHON` et `ATTIC_JULIA` : l'interprète des nœuds de
+  script. **Le fichier n'en donne que le défaut** : l'exécutable choisi dans le nœud passe avant lui,
+  et sans les deux l'application cherche elle-même, aux emplacements connus puis dans le `PATH`.
+  `config.propose.json` montre celui qu'elle a trouvé, s'il a un chemin absolu.
+- **`ollama`**, ou `ATTIC_OLLAMA_URL` : l'adresse du serveur Ollama, en `http` ou `https`, que le
+  processus principal interroge pour le nœud. Hors de l'application de bureau, dans le serveur de
+  développement, le nœud appelle encore `http://127.0.0.1:11434` : il n'y a pas de fichier à lire.
 
 ## Ce qui n'y sera jamais
 
