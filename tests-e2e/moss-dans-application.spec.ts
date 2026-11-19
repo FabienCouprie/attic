@@ -17,6 +17,7 @@
 // IL NE JUGE PAS L'IMAGE, et ses huit étapes en 512 × 512 ne sont pas faites pour la juger : c'est
 // le chemin qu'il tient. Il se saute sans le moteur, sans les quatre fichiers ou sans build.
 import { test, expect, _electron as electron, type ElectronApplication } from "@playwright/test";
+import { garderLExecution } from "./execution-gardee";
 import { existsSync, writeFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -72,6 +73,7 @@ test.describe("MOSS-Image, de bout en bout", () => {
           for (const m of (noeud.textContent ?? "").matchAll(motif)) vues.add(m[1]);
         }).observe(noeud, { subtree: true, childList: true, characterData: true });
       }, ETAPES);
+      await garderLExecution(page);
       const debut = Date.now();
       await page.getByRole("button", { name: /Lancer/ }).click();
       await expect(page.locator('[data-id="moss"]')).toContainText(/Graine 42|Seed 42/, { timeout: 840000 });
@@ -134,6 +136,7 @@ test.describe("MOSS-Image, de bout en bout", () => {
       await page.reload();
       await page.waitForSelector(".attic-app", { timeout: 60000 });
       await page.locator('[data-id="moss"]').waitFor({ timeout: 60000 });
+      await garderLExecution(page);
       const debut = Date.now();
       await page.getByRole("button", { name: /Lancer/ }).click();
       await expect(page.locator('[data-id="moss"]')).toContainText(/Graine 42|Seed 42/, { timeout: 840000 });

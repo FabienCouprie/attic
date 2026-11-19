@@ -8,6 +8,7 @@
 //
 // Un port différent de celui de Fabien (5175), dont le serveur ne doit pas être touché.
 import { test, expect } from "@playwright/test";
+import { garderLExecution } from "./execution-gardee";
 import { serveurDeVerification } from "./serveur-de-developpement";
 
 const devUrl = serveurDeVerification(5220);
@@ -60,6 +61,7 @@ test.describe("les signatures du métronome dans l'application", () => {
 
     // LE MÊME PASSAGE SERT POUR LE SON, et c'est voulu : le serveur de développement ne survit pas
     // toujours à deux visites, et la liste offerte et ce qui est joué sont le même sujet.
+    await garderLExecution(page);
     await page.click(".attic-btn-lancer");
     const noeud = page.locator('.react-flow__node[data-id="metro"]');
     await expect(noeud).toContainText(/\d+\s*clics/, { timeout: 60000 });

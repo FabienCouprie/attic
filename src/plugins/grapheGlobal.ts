@@ -54,6 +54,12 @@ export function grapheCourant(): GrapheSansConteneurs | null {
 //
 // Ce sont les identifiants du graphe APLATI (copies de boucle, nœuds internes des méta-nœuds) ;
 // `expansions` ramène chacun au nœud visible dont il vient.
+//
+// ET LA PASSE FINIE LES LÂCHE, depuis le 2026-11-19. Elles restaient publiées jusqu'à la passe
+// suivante, et tenaient donc chaque tampon de la passe, copies de boucle comprises, que l'économie de
+// mémoire venait de lâcher du cache, et l'instantané du graphe avec ses médias. Dans l'application, seule
+// « Démonstration » les lit, pendant sa passe. Les épreuves de bout en bout qui relisent les tampons
+// rendus après le run l'arment avant de lancer, par `__attic_garder_execution__ = true`.
 
 export interface ExecutionCourante {
   /** Ordre d'exécution du run, identifiants aplatis. */
@@ -68,10 +74,20 @@ export interface ExecutionCourante {
   expansions: Map<string, string>;
 }
 
-type GlobalExecution = typeof globalThis & { __attic_execution__?: ExecutionCourante | null };
+type GlobalExecution = typeof globalThis & {
+  __attic_execution__?: ExecutionCourante | null;
+  /** Posé par une épreuve qui relit les tampons rendus après le run. Jamais par l'application. */
+  __attic_garder_execution__?: boolean;
+};
 
 export function publierExecutionCourante(execution: ExecutionCourante | null): void {
   (globalThis as GlobalExecution).__attic_execution__ = execution;
+}
+
+/** La passe est finie : son exécution n'est plus publiée, sauf pour une épreuve qui l'a demandé. */
+export function lacherExecutionCourante(): void {
+  if ((globalThis as GlobalExecution).__attic_garder_execution__ === true) return;
+  publierExecutionCourante(null);
 }
 
 /** L'exécution en cours, ou `null` hors exécution. */

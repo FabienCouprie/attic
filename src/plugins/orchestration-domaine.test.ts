@@ -49,6 +49,21 @@ describe("ce que le domaine pose et répond autour d'un run", () => {
     expect(executionCourante()).toBe(execution);
   });
 
+  it("LA PASSE FINIE LÂCHE L'EXÉCUTION, sauf pour une épreuve qui a demandé à la relire", () => {
+    configurerServicesOrchestration(ORCHESTRATION_AUDIO);
+    const execution = { ordre: ["a"], noeuds: [], aretes: [], resultats: new Map(), messages: new Map() };
+    servicesOrchestration().publierExecution(execution);
+    servicesOrchestration().lacherExecution();
+    expect(executionCourante(), "ses tables tiendraient chaque tampon jusqu'à la passe suivante").toBeNull();
+    const g = globalThis as { __attic_garder_execution__?: boolean };
+    g.__attic_garder_execution__ = true;
+    try {
+      servicesOrchestration().publierExecution(execution);
+      servicesOrchestration().lacherExecution();
+      expect(executionCourante(), "l'épreuve qui l'a demandé la relit après le run").toBe(execution);
+    } finally { delete g.__attic_garder_execution__; }
+  });
+
   it("LES DOSSIERS À LIRE SONT CEUX QUE LES DÉBUTS DE BOUCLE PORTENT, sans doublon", () => {
     configurerServicesOrchestration(ORCHESTRATION_AUDIO);
     const dossiers = servicesOrchestration().dossiersALire([

@@ -14,6 +14,7 @@
 // LE SON VIENT D'UN MÉTRONOME, comme dans `convertir-voix-dans-application.spec.ts` : « Entrée
 // audio » réclamerait un dialogue système que rien ne pilote ici. La qualité se mesure au banc.
 import { test, expect, _electron as electron } from "@playwright/test";
+import { garderLExecution } from "./execution-gardee";
 import { existsSync, mkdtempSync } from "fs";
 import { tmpdir } from "os";
 import { fileURLToPath } from "url";
@@ -62,6 +63,7 @@ test.describe("les inférences ONNX de la page, dans l'application", () => {
       await page.reload();
       await page.waitForSelector(".attic-app", { timeout: 60000 });
       await page.locator('[data-id="sep"]').waitFor({ timeout: 60000 });
+      await garderLExecution(page);
       await page.getByRole("button", { name: /Lancer|Run/ }).click();
 
       // LA FIN SE LIT DANS LES RÉSULTATS DU MOTEUR, les deux nœuds y ayant chacun une entrée.

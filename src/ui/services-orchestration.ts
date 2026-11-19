@@ -38,6 +38,12 @@ export interface ServicesOrchestration {
   publierExecution(execution: unknown): void;
 
   /**
+   * La passe est finie, arrêtée ou tombée : l'exécution publiée ne doit plus retenir ses tables ni son
+   * graphe jusqu'à la passe suivante.
+   */
+  lacherExecution(): void;
+
+  /**
    * Les dossiers dont le contenu doit être lu AVANT de planifier quoi que ce soit.
    *
    * La lecture d'un dossier est asynchrone, la planification ne l'est pas : le moteur lit d'abord,
@@ -53,6 +59,7 @@ export interface ServicesOrchestration {
 const NEUTRES: ServicesOrchestration = {
   publierGraphe: () => {},
   publierExecution: () => {},
+  lacherExecution: () => {},
   dossiersALire: () => [],
   fichiersUtiles: () => [],
 };

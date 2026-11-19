@@ -20,7 +20,7 @@ import { creerRegistre, type NoeudG, type AreteG, type PluginDef } from "../../c
 import type { EvenementDuMoteur, InstantaneDeGraphe } from "../../core/protocole-moteur";
 import { configurerRegistreUI, type RegistreUI } from "../registre-actif";
 import { oublierServicesApercu } from "../services-apercu";
-import { oublierServicesOrchestration } from "../services-orchestration";
+import { configurerServicesOrchestration, oublierServicesOrchestration } from "../services-orchestration";
 import { creerCacheDuMoteur } from "./cache";
 import { creerLancerUnePasse, type Emplacement, type PretsDeLaPasse } from "./passe";
 
@@ -116,6 +116,22 @@ describe("une passe du moteur, dite au récepteur", () => {
       await p.lancer();
       expect(p.dits).toEqual([{ genre: "passeTerminee", generation: 0, raison: "erreur" }]);
     } finally { console.error = erreur; }
+  });
+
+  it("ELLE LÂCHE SON EXÉCUTION PUBLIÉE EN FINISSANT, arrêtée ou tombée comprise", async () => {
+    // L'EXÉCUTION PUBLIÉE TENAIT CHAQUE TAMPON DE LA PASSE jusqu'à la suivante : voir `plugins/grapheGlobal.ts`.
+    const vus: string[] = [];
+    configurerServicesOrchestration({ publierExecution: () => { vus.push("publiee"); }, lacherExecution: () => { vus.push("lachee"); } });
+    await passe().lancer(undefined, undefined, jeton(1));
+    expect(vus, "une passe finie").toEqual(["publiee", "lachee"]);
+    vus.length = 0;
+    await passe({ surEvenement: (e, c) => { if (e.genre === "passeCommencee") c.current?.abort(); } }).lancer();
+    expect(vus, "une passe arrêtée").toEqual(["publiee", "lachee"]);
+    vus.length = 0;
+    const erreur = console.error;
+    console.error = () => {};
+    try { await passe({ graphe: () => { throw new Error("graphe illisible"); } }).lancer(); } finally { console.error = erreur; }
+    expect(vus, "une passe tombée avant de rien publier").toEqual(["lachee"]);
   });
 
   it("UN GRAPHE VIDE NE DIT RIEN, et ne laisse pas de contrôleur", async () => {
