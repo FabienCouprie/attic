@@ -21,6 +21,7 @@ import {
 } from "../historique";
 import { idsDe, oublierNoeuds } from "../oubli-noeuds";
 import { urlsDUnFige } from "../urls-medias";
+import { budgetCourant } from "../budget-memoire";
 import { useBalayageDesUrls, useRacineDesUrls } from "./useUrlsMedias";
 
 type Niveau = { metaId: string; nom: string; nomEn?: string };
@@ -47,7 +48,6 @@ export function useHistorique({
   setNodes, setEdges, setPile, setSel, setCurrentFilePath, pile, currentFilePath, nodes,
 }: OptionsHistorique) {
   const pilesRef = useRef<PilesHistorique<any, any>>(pilesVides());
-  const MAX_HISTORIQUE = 50;
   // LES DEUX PILES TIENNENT LES URL DE MÉDIAS DE LEURS INSTANTANÉS : Ctrl+Z et Ctrl+Y doivent rendre
   // des lecteurs qui jouent. Une entrée sortie au-delà du plafond, ou effacée par une action neuve,
   // lâche les siennes. Un instantané ne change plus après sa prise : ses adresses se relèvent une
@@ -68,8 +68,10 @@ export function useHistorique({
   // Instantané avant une action annulable. `contexte` n'est passé que par les actions qui
   // changent aussi la navigation dans les méta-composants ou le fichier ouvert — vider le
   // canevas. La copie garde les fichiers chargés par référence (voir ui/historique.ts).
+  // LA PROFONDEUR SUIT LE BUDGET MÉMOIRE (pièce C2) : 50 sur une machine courante, chaque état tenant
+  // les adresses de ses médias. Lue à chaque action, elle vaut dès que la configuration est reçue.
   const pushHistorique = useCallback((contexte?: ContexteHistorique<any, any>) => {
-    noterAction(pilesRef.current, instantane(noeudsRef.current, aretesRef.current, contexte), MAX_HISTORIQUE);
+    noterAction(pilesRef.current, instantane(noeudsRef.current, aretesRef.current, contexte), budgetCourant().profondeurHistorique);
   }, []);
 
   /** L'état à l'écran, que la pile d'en face rendra. */

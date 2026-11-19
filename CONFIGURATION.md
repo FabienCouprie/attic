@@ -63,6 +63,7 @@ Chaque pièce du plan ajoute la sienne ici ; le socle (pièce C0) n'en portait a
 | Clé | Type | Défaut sous Windows | Défaut sous Linux | Variable | Lue par |
 |---|---|---|---|---|---|
 | `plafondPaquetMio` | nombre, de 256 à 2000 | 1024 | 1024 | — | l'export et l'import d'un paquet `.attic` |
+| `budgetMemoireGio` | nombre, de 2 à 4096 | la mémoire de la machine | la mémoire de la machine, ou la limite de son groupe de contrôle si elle est plus basse | — | le seuil des aperçus, l'historique, l'indicateur de mémoire |
 
 ### `plafondPaquetMio`, le plafond d'un paquet `.attic`
 
@@ -84,6 +85,36 @@ des en-têtes de l'archive. La borne n'a pas été relevée sous Linux.
 l'archive traverse le pont entre l'interface et le processus principal. Relevé pour une archive de
 1,95 Gio : environ 6,4 Go de pointe dans chacun des deux processus, et 10,6 Go dans l'interface après
 l'ouverture. Sur une machine de 16 Go, rester sous 1024 Mio est prudent.
+
+### `budgetMemoireGio`, le budget mémoire
+
+Ce que la personne accorde à Attic sur cette machine, en Gio (1 Gio = 1 073 741 824 octets). **Par
+défaut, la mémoire vive de la machine**, au dixième de Gio inférieur ; sous Linux, la limite du
+groupe de contrôle (un conteneur, une session bornée par `systemd`) quand elle est plus basse.
+`config.propose.json` montre la valeur lue sur la machine.
+
+**Il ne borne pas la mémoire.** Le tas JavaScript reste à 4 Gio, et rien ne peut forcer Chromium à
+rendre ce que ses processus tiennent. Il règle ce qu'Attic choisit de garder, en proportion d'une
+machine de 16 Gio, pour laquelle les réglages d'avant ont été posés :
+
+| | 16 Gio sous Windows | 16 Gio sous Linux | 64 Gio sous Windows |
+|---|---|---|---|
+| Seuil des aperçus, quand l'économie de mémoire est active | 10 min | 8 min | 40 min |
+| États que Ctrl+Z peut défaire | 50 | 38 | 200 |
+| L'indicateur de mémoire alerte au-delà de | 12,8 Gio | 9,6 Gio | 51,2 Gio |
+
+- **Le seuil des aperçus** : au-delà, un nœud qu'on ne regarde pas ne garde plus l'aperçu qu'on
+  écoute sous lui ; il le refait quand on le demande. Et le même seuil décide ce que l'économie de
+  mémoire lâche du cache à la fin d'une passe : un résultat plus long que lui se recalcule au run
+  suivant. Arrondi à la minute, de 2 min à 1 h.
+- **La profondeur de l'historique** : chaque état garde les fichiers de ses nœuds. De 10 à 200.
+- **L'alerte** : l'indicateur de la barre d'outils passe en rouge, et son infobulle le dit. Elle
+  n'arrête rien.
+- **La part utile est de 80 % du budget sous Windows, 60 % sous Linux** : un dépassement y fait
+  tuer le processus par le noyau, quand Windows écrit sur son fichier d'échange.
+
+**Pour retrouver exactement les réglages d'avant sur une machine mieux pourvue**, écrire
+`"budgetMemoireGio": 16` sous Windows.
 
 ## Ce qui n'y sera jamais
 
