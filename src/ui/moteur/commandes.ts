@@ -14,7 +14,8 @@
 //     les métas et l'inspecteur ;
 //   — `regler` lâche l'entrée du nœud dont un réglage vient de changer. Sa remise à zéro, l'aval puis
 //     lui-même, part ensuite en deux `remettreAZero` : c'est l'ordre d'avant ;
-//   — `remettreAZero` lâche ces nœuds et les internes de leurs métas, par la règle du `::`. LA PASSE
+//   — `remettreAZero` lâche ces nœuds et les internes de leurs métas, par la règle du `::`, avec les
+//     copies que les passes leur ont rattachées (`cache.ts`). LA PASSE
 //     EN COURS N'EST PAS ABATTUE ICI, mais par le moteur, juste avant (`moteur.ts`). `garder` ne sert
 //     qu'aux résultats montrés, que l'interface efface elle-même : le cache n'en a pas l'usage ;
 //   — `exporterCache` rend les entrées À L'INSTANT DE LA DEMANDE, en paires, ce qu'un paquet `.attic`

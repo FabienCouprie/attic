@@ -1268,6 +1268,23 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **UNE REMISE À ZÉRO ATTEINT LES COPIES D'UNE BOUCLE ET D'UN INSTRUMENT : LE LANCER SUIVANT LES REFAIT AU LIEU DE LES RESSERVIR DU CACHE.** Relevé le 2026-11-16 par le plan de l'architecture par messages, qui l'a rangé hors de ses pièces (§1.4).
+  - **Le défaut.** Une copie de boucle est rangée au cache sous `debut#k::corps`, une copie d'instrument sous `fin@k::noeud`. La remise à zéro purgeait par la règle des métas, qui coupe la clé au premier `::` : elle n'y voyait que `debut#k` ou `fin@k`. Un ↺ sur le corps, sur le début de la boucle ou sur la note de l'instrument laissait les copies en cache, et le Lancer suivant les resservait sans les calculer. La même règle, dans `depuis` de `core/remises.ts`, laissait une copie dont l'exécuteur avait rendu avant le ↺ s'écrire au cache pendant la conversion de fréquence qui suit.
+  - **Vu rouge dans l'application** par `tests-e2e/copies-remises-a-zero-dans-application.spec.ts`, neuve, dont le corps est un « Dither » à 4 bits et graine tirée. Sur `master`, le ↺ du corps rendait le son d'avant, octet pour octet. La boucle s'y mène sans l'économie de mémoire, qui lâche sinon le corps à chaque fin de passe ; l'instrument au défaut, ses copies n'étant jamais lâchées. Le témoin inverse, le ↺ de la fin seule, garde le son.
+  - **La règle.** Chaque passe rattache au cache ce qu'elle exécute au nœud visible qu'il sert, par la table `expansions` de sa préparation (`rattacher` dans `ui/moteur/cache.ts`). La remise à zéro purge, en plus de la règle du `::`, ce qui est rattaché à un nœud remis à zéro. `depuis` reçoit ce nœud visible, et une copie est périmée par sa remise à zéro avec son contenu. Un oubli simple ne touche toujours que les identifiants qu'il nomme. Les instruments suivent la même règle : c'est le même défaut, et les exclure aurait demandé du code.
+  - **Après** : la spec rend 2 passed. Le ↺ du corps, du début ou de la note tire une graine neuve et change le son ; le ↺ de la fin garde la graine et le son.
+  - **Les tests neufs** : `ui/moteur/copies-du-moteur.test.ts`, 2 cas sur le moteur entier et une vraie boucle dépliée, et un cas de plus dans `cache.test.ts` et dans `remises.test.ts`.
+  - **Les fautes plantées, vues rouges puis remises**, 4 :
+    - la passe qui ne rattache plus : le premier cas du moteur et les quatre gestes de la spec tombent, le témoin reste vert ;
+    - l'écriture au cache sans le nœud visible : la copie `debut#0::corps` s'écrit après le ↺ ;
+    - `depuis` qui ignore le nœud visible ;
+    - la purge qui ignore les rattachements.
+  - **Ce qui reste** : un oubli simple ne touche pas les copies, ce qui est la règle. Le seul geste qui oublie un nœud sans le remettre à zéro, l'enregistrement MIDI de l'inspecteur, laisserait donc ses copies à un nœud MIDI posé dans le corps d'une boucle.
+  - **Les épreuves dans l'application** : les specs de boucle, de lot et de P6 sont vertes, la spec neuve comprise, et l'épreuve du graphe complexe passe à ses quatre étapes.
+  - **L'ordre de vérification** :
+    - `npx tsc -b` est vert ;
+    - `npx oxlint` donne 27 avertissements et 0 erreur, aucun dans ces fichiers ;
+    - la passe complète est verte en 23 min 39 s, 784 fichiers dont 3 sautés, 11 137 cas verts et 17 sautés, sur cette correction réunie aux deux autres du même §1.4 (`__attic_execution__` lâché, lectures mortes de `_affichage`). Sur cette correction seule : les dossiers `ui/moteur` et `core` et les deux gardes touchés, 56 fichiers et 652 cas verts.
 - **QUATRE SPECS DE BOUT EN BOUT RETROUVENT L'ENTRÉE D'IMPORT : ELLES LA CHERCHAIENT PAR `accept=".json"`, ET LA BARRE D'OUTILS PORTE `accept=".json,.attic"` DEPUIS LA PR 370.** Relevé le 2026-11-17 par l'épreuve de la conception du graphe (PR 375), puis le 2026-11-19 par la pièce P6 de l'architecture par messages (PR 384), qui a relancé ces specs pour éprouver l'import et Ctrl+Z.
   - **Le défaut.** Un sélecteur d'attribut `[accept=".json"]` exige l'égalité. `setInputFiles` attendait donc une entrée qui n'existait plus, jusqu'au délai du cas, et les quatre specs tombaient aussi sur `master`.
   - **La correction**, sept sélecteurs dans `format-projet` (3), `montage-piste-branchee`, `retablir-dans-application` et `urls-medias-dans-application` : `accept*=".json"`, qui demande que la liste contienne `.json`. C'est la forme que `graphe-complexite-dans-application.spec.ts` emploie déjà. Elle survit à une extension ajoutée et reste univoque : des onze entrées de fichier de `src/` qui portent un `accept`, seule celle de l'import, dans `ui/BarreOutils.tsx`, contient `.json`. Un commentaire le dit à la première occurrence de chaque spec.
