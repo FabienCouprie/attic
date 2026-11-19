@@ -28,16 +28,21 @@
 //      à la fin du run si elle tombe pendant l'un d'eux (`ui/hooks/useSoundFont.ts`) : les deux
 //      secondes et demie d'après le rechargement ne l'attendaient pas. Relevé le 2026-11-17 par le
 //      journal de passe, pendant une passe complète de vitest : arrivé après le ▶ d'un nœud, il a
-//      vidé le cache, et Lancer a recalculé `forme`
-//      sur `cercle-des-gammes` et `pulsion` sur `compositeur-sur-une-pulsion` au lieu de les servir ;
+//      vidé le cache, et Lancer a recalculé `forme` sur `cercle-des-gammes` et `pulsion` sur
+//      `compositeur-sur-une-pulsion` au lieu de les servir ;
 //      arrivé pendant Lancer, il a laissé le MIDI se rendre sans lui, et l'écart de niveau de `mix`
 //      a valu 30,791 dB au lieu de 15,361 sur ce second exemple.
 //      RETARDÉ DE HUIT SECONDES dans `useSoundFont.ts`, le 2026-11-17, il fait tomber la base du son
 //      sur cet exemple sans cette correction : `accords`, `ampli` et `mix` s'écartent de 82 à 84 %
 //      d'efficace, `mix` passant de 0,093028 à 0,512742. Avec elle, l'exemple reste identique.
-//      On attend donc `__attic_sf2__` : il est posé, puis le cache vidé, sans entrée-sortie entre
-//      les deux, et quand la page le montre, le vidage a eu lieu. SANS `public/sf2/FluidR3_GM.sf2`
-//      RIEN N'ARRIVE, et `semer` échoue en le disant plutôt que de laisser mesurer un autre son.
+//      On attend donc `__attic_sf2__`, quel que soit le SoundFont qui l'a posé : il est posé, puis
+//      le cache vidé, sans entrée-sortie entre les deux, et quand la page le montre, le vidage a eu
+//      lieu. L'APPLICATION N'EXIGE PAS FLUIDR3 : elle prend aussi celui qu'on charge par la barre,
+//      le dernier retenu sous `attic-sf2-nom`, ou, sous Electron, un `.sf2` du dossier de travail.
+//      CE SONT LES RÉFÉRENCES QUI L'EXIGENT : celles de la base du son et du journal de passe ont
+//      été mesurées avec `FluidR3_GM.sf2`. Et une spec qui sème sur un profil neuf n'en trouve en
+//      général pas d'autre, `attic-sf2-nom` y étant vide : sans `public/sf2/FluidR3_GM.sf2`, rien
+//      n'arrive, et `semer` échoue en le disant plutôt que de laisser mesurer un autre son.
 //   6. UNE PASSE EST FINIE QUAND L'ORDONNANCEUR NE LA COMPTE PLUS. Les pastilles au repos disent que
 //      les nœuds sont statués, non que le ménage d'après passe a fini d'écrire : il fait encore la
 //      pose finale, qui écrit les temps et les résultats des nœuds qu'on ne regarde pas, puis les
@@ -163,10 +168,12 @@ export async function semer(
   await page.waitForFunction(() => !!(window as unknown as { __attic_sf2__?: unknown }).__attic_sf2__,
     undefined, { timeout: DELAI_SOUNDFONT_MS, polling: 100 })
     .catch((e: unknown) => {
-      throw new Error(`le SoundFont ne s'est pas chargé en ${DELAI_SOUNDFONT_MS / 1000} s : sans `
-        + "`public/sf2/FluidR3_GM.sf2`, les exemples MIDI rendent un autre son, et son arrivée "
-        + "tardive viderait le cache en pleine mesure. Ou bien `plugins/soundfontGlobal.ts` ne le pose "
-        + `plus sous \`__attic_sf2__\`. ${e instanceof Error ? e.message : String(e)}`);
+      throw new Error(`aucun SoundFont ne s'est chargé en ${DELAI_SOUNDFONT_MS / 1000} s. L'application `
+        + "n'exige pas FluidR3, mais un profil neuf n'en retient aucun autre (`attic-sf2-nom` y est vide), "
+        + "et les références de la base du son et du journal de passe ont été mesurées avec "
+        + "`public/sf2/FluidR3_GM.sf2` : posez-le. Sans lui, les exemples MIDI rendent un autre son, et "
+        + "un SoundFont arrivé tard viderait le cache en pleine mesure. Ou bien `plugins/soundfontGlobal.ts` "
+        + `ne le pose plus sous \`__attic_sf2__\`. ${e instanceof Error ? e.message : String(e)}`);
     });
 }
 
