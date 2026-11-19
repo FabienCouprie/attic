@@ -86,6 +86,11 @@ export function InspecteurDuCanevas({
           // midiFichier, qui n'est pas dans `parametres`).
           envoyer({ genre: "oublier", ids: [id] });
           setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, midiFichier: fichier, midiNom: fichier.name } } : n));
+          // PUIS LE NŒUD ET SON AVAL REPARTENT EN ATTENTE, dans l'ordre de la prise au micro : sans
+          // cela, ils montraient le résultat de la prise précédente jusqu'au Lancer suivant. MESURÉ par
+          // `tests-e2e/prise-midi-dans-application.spec.ts`. Le geste du nœud, `chargerMedia`, ne
+          // convient pas : il poserait un réglage « Chemin » que cette fiche ne déclare pas.
+          reinitialiserNoeud(id);
         }}
       />
     </PanneauInspecteur>
