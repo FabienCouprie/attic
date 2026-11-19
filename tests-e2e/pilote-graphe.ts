@@ -49,8 +49,9 @@
 //      lecteurs. Le ▶ d'un nœud n'a pas de bouton qui le dise. Relevé à l'établissement du journal
 //      de passe le 2026-11-17, sur `une-chanson-prete-a-diffuser`, une machine chargée : une passe
 //      sur trois a écrit le geste suivant avant le `tempsExecution` de `planifier`. UN RETARD DE SIX
-//      SECONDES PLANTÉ avant le ménage, dans `useExecutionGraphe.ts`, fait tomber le journal de
-//      passe, ses deux attentes à lui retirées, sur cet exemple sans cette correction : le ↺ s'écrit
+//      SECONDES PLANTÉ avant `menageApresPasse`, dans `ui/moteur/passe.ts` le 2026-11-19 comme dans
+//      `useExecutionGraphe.ts` avant le moteur par messages, fait tomber le journal de passe, ses
+//      deux attentes à lui retirées, sur cet exemple sans cette correction : le ↺ s'écrit
 //      au rang 5 de `gestes`, avant le message de `planifier` que le ménage pose. `lancer` y reste
 //      identique, le bouton tenant le run global jusqu'au bout. Avec elle, les deux scénarios
 //      restent identiques. On attend donc que `__attic_runs_simultanes__` revienne à zéro
