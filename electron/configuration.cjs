@@ -112,6 +112,12 @@ const SCHEMA = Object.freeze({
    * un choix explicite dans un nœud l'emporte. Voir `electron/calcul-automatique.cjs`.
    */
   calcul: Object.freeze({ type: "choix", valeurs: Object.freeze(["auto", "processeur", "carte"]), defaut: "auto" }),
+  /**
+   * SOUS LINUX, X11 OU WAYLAND (pièce C6) : `auto` laisse Electron choisir. Propre à Linux : écrite
+   * hors de la section `linux`, ou lue sous Windows, elle est nommée et ignorée. NON VÉRIFIÉE, faute
+   * d'une construction Linux : voir `electron/affichage-linux.cjs`.
+   */
+  affichage: Object.freeze({ type: "choix", valeurs: Object.freeze(["auto", "x11", "wayland"]), defaut: "auto", systemes: Object.freeze(["linux"]) }),
 });
 
 /**

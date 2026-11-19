@@ -87,6 +87,7 @@ const { SCHEMA: SCHEMA_MEDIA, cheminDepuisUrl, typeMedia, analyserPlage } = requ
 const { SCHEMA: SCHEMA_RESSOURCE, servir: servirRessource } = require("./ressource-locale.cjs");
 const { chargerConfiguration, cheminDe, formulerProbleme, proposition } = require("./configuration.cjs");
 const { poserCalculAutomatique, calculAutomatique } = require("./calcul-automatique.cjs");
+const { appliquerAffichage } = require("./affichage-linux.cjs");
 
 // ═══ LE FICHIER DE CONFIGURATION, LU UNE FOIS, AVANT QUE L'APPLICATION NE SOIT PRÊTE ═══
 //
@@ -113,6 +114,11 @@ for (const p of CONFIGURATION.problemes) console.warn(`[attic] configuration (${
 // LE SENS D'« AUTOMATIQUE » DANS LE RÉGLAGE « CALCUL » DES NŒUDS (pièce C5), posé avant tout moteur.
 // Changé, il se dit ; sous Linux, « carte » est sans effet pour DirectML, et cela se dit aussi.
 poserCalculAutomatique(CONFIGURATION.valeurs.calcul, CONFIGURATION.systeme);
+// SOUS LINUX, X11 OU WAYLAND (pièce C6), avant que l'application soit prête. NON VÉRIFIÉ, faute
+// d'une construction Linux : voir `electron/affichage-linux.cjs`.
+for (const option of appliquerAffichage(app.commandLine, CONFIGURATION.valeurs.affichage, CONFIGURATION.systeme)) {
+  console.log(`[attic] affichage : ${option} posé par config.json`);
+}
 if (CONFIGURATION.valeurs.calcul !== "auto") {
   const c = calculAutomatique();
   console.log(`[attic] calcul : « Automatique » vaut « ${c.pont || "le choix du moteur"} » pour les moteurs du pont et « ${c.directML} » pour DirectML`

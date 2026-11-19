@@ -70,6 +70,7 @@ Chaque pièce du plan ajoute la sienne ici ; le socle (pièce C0) n'en portait a
 | `julia` | chemin | celui que l'application trouve | celui que l'application trouve | `ATTIC_JULIA` | les nœuds Julia, après le choix fait dans le nœud |
 | `ollama` | adresse `http` ou `https` | `http://127.0.0.1:11434` | `http://127.0.0.1:11434` | `ATTIC_OLLAMA_URL` | le nœud Ollama |
 | `calcul` | `auto`, `processeur` ou `carte` | `auto` | `auto` | — | le sens d'« Automatique » dans le réglage « Calcul » des nœuds |
+| `affichage` | `auto`, `x11` ou `wayland`, dans la section `linux` | sans objet | `auto` | — | le démarrage, sous Linux ; **non vérifié** |
 
 ### `plafondPaquetMio`, le plafond d'un paquet `.attic`
 
@@ -178,6 +179,23 @@ Un choix explicite dans un nœud l'emporte toujours.
 machine : sur une machine à deux circuits, `Vulkan0` est souvent le circuit intégré. Pour imposer une
 carte précise, la choisir par son numéro dans le nœud. Le journal du processus principal dit ce que
 vaut « Automatique » quand la clé le change.
+
+### `affichage`, X11 ou Wayland sous Linux
+
+Electron choisit lui-même entre X11 et Wayland. L'interface n'a jamais été vue sous Wayland ; en cas
+de défaut d'affichage, `x11` est le repli (`BUILD-LINUX.md` §10.5). La clé ne vaut que dans la
+section `linux` :
+
+```json
+{ "linux": { "affichage": "x11" } }
+```
+
+`auto` ne pose rien. `x11` et `wayland` posent `--ozone-platform` au démarrage, et le journal le dit.
+Une option `--ozone-platform` déjà donnée au lanceur l'emporte.
+
+**Non vérifié** : aucune construction Linux n'existe encore, et que Chromium entende l'option posée
+par l'application, si tôt soit-elle posée, reste à éprouver. Si le journal la dit posée et que
+l'affichage ne change pas, la passer au lanceur : `attic --ozone-platform=x11`.
 
 ## Ce qui n'y sera jamais
 
