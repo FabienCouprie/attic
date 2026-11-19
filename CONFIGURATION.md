@@ -64,6 +64,7 @@ Chaque pièce du plan ajoute la sienne ici ; le socle (pièce C0) n'en portait a
 |---|---|---|---|---|---|
 | `plafondPaquetMio` | nombre, de 256 à 2000 | 1024 | 1024 | — | l'export et l'import d'un paquet `.attic` |
 | `budgetMemoireGio` | nombre, de 2 à 4096 | la mémoire de la machine | la mémoire de la machine, ou la limite de son groupe de contrôle si elle est plus basse | — | le seuil des aperçus, l'historique, l'indicateur de mémoire |
+| `dossierModeles` | chemin | `%APPDATA%\attic\ressources` | `$XDG_DATA_HOME/attic/ressources`, soit `~/.local/share/attic/ressources` | — | le téléchargement et la lecture des modèles |
 
 ### `plafondPaquetMio`, le plafond d'un paquet `.attic`
 
@@ -115,6 +116,26 @@ machine de 16 Gio, pour laquelle les réglages d'avant ont été posés :
 
 **Pour retrouver exactement les réglages d'avant sur une machine mieux pourvue**, écrire
 `"budgetMemoireGio": 16` sous Windows.
+
+### `dossierModeles`, le dossier des modèles téléchargés
+
+Où descendent les modèles que le gestionnaire télécharge, et où les nœuds les cherchent avant ceux
+que l'installeur a livrés. Ils pèsent des dizaines de gigaoctets. **Le défaut est le dossier que
+l'application sert déjà** : sous Windows, dans le profil itinérant (`%APPDATA%`), qu'un domaine
+d'entreprise peut recopier d'une machine à l'autre ; sous Linux, le dossier des données de la
+convention XDG. `config.propose.json` montre celui de la machine.
+
+Un chemin s'écrit de préférence dans la section du système, puisqu'il n'est valable que sur lui :
+
+```json
+{ "windows": { "dossierModeles": "E:/modeles" }, "linux": { "dossierModeles": "~/modeles" } }
+```
+
+**Changer de dossier déplace l'ancien par un renommage, une fois, au lancement**, quand le nouveau
+n'existe pas encore : instantané sur le même disque. **Rien n'est jamais recopié d'un disque à
+l'autre** : recopier des dizaines de gigaoctets sans l'avoir demandé figerait l'application. L'ancien
+dossier sert alors encore, et le journal (`[attic] ressources : conserve …`) dit de le déplacer à la
+main. Si le nouveau dossier existe déjà, il sert, et l'ancien reste où il est.
 
 ## Ce qui n'y sera jamais
 

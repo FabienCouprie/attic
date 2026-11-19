@@ -21,6 +21,7 @@ const require_ = createRequire(import.meta.url);
 const {
   SCHEMA, BUDGET_REFERENCE_GIO, budgetDeLaMachine, lireConfiguration, chargerConfiguration, fichierAppliquable, formulerProbleme, proposition,
 } = require_("./configuration.cjs");
+const { dossierRessourcesVoulu } = require_("./dossier-ressources.cjs");
 
 /**
  * Un schéma d'essai : un exemple de chaque type, une variable d'environnement, une clé propre à
@@ -47,8 +48,26 @@ const codes = (r: { problemes: { code: string; cle?: string }[] }) => r.probleme
 
 describe("le fichier de configuration, sous Windows et sous Linux", () => {
   it("LE SCHÉMA PORTE LES CLÉS DES PIÈCES LIVRÉES, et seulement elles", () => {
-    // C0 n'en portait aucune ; C1 ajoute le plafond du paquet, C2 le budget mémoire.
-    expect(Object.keys(SCHEMA)).toEqual(["plafondPaquetMio", "budgetMemoireGio"]);
+    // C0 n'en portait aucune ; C1 ajoute le plafond du paquet, C2 le budget mémoire, C3 le dossier des modèles.
+    expect(Object.keys(SCHEMA)).toEqual(["plafondPaquetMio", "budgetMemoireGio", "dossierModeles"]);
+  });
+
+  it("LE DOSSIER DES MODÈLES PAR DÉFAUT EST CELUI QUE L'APPLICATION SERT, et un dossier écrit le remplace", () => {
+    const vu = (machine: Record<string, unknown>, texte = "") => lireConfiguration({ ...machine, texte, schema: SCHEMA });
+    // LE MÊME CALCUL QUE `main.cjs` FAISAIT SEUL : `userData\ressources`, `$XDG_DATA_HOME/attic/ressources`.
+    expect(vu(WINDOWS).valeurs.dossierModeles).toBe("C:\\Users\\f\\AppData\\Roaming\\attic\\ressources");
+    expect(vu(WINDOWS).valeurs.dossierModeles).toBe(win32.normalize(dossierRessourcesVoulu({ plateforme: "win32", userData: WINDOWS.userData, home: WINDOWS.home })));
+    expect(vu(LINUX).valeurs.dossierModeles).toBe("/home/f/.local/share/attic/ressources");
+    expect(vu({ ...LINUX, env: { XDG_DATA_HOME: "/data/f" } }).valeurs.dossierModeles).toBe("/data/f/attic/ressources");
+    expect(vu({ ...LINUX, env: { XDG_DATA_HOME: "relatif" } }).valeurs.dossierModeles, "XDG relatif ignoré").toBe("/home/f/.local/share/attic/ressources");
+    // ÉCRIT DANS SA SECTION, il l'emporte ; une barre oblique Windows est acceptée, un chemin relatif refusé.
+    expect(vu(WINDOWS, JSON.stringify({ windows: { dossierModeles: "E:/modeles" } })).valeurs.dossierModeles).toBe("E:\\modeles");
+    expect(vu(LINUX, JSON.stringify({ linux: { dossierModeles: "~/modeles" } })).valeurs.dossierModeles).toBe("/home/f/modeles");
+    const relatif = vu(WINDOWS, JSON.stringify({ dossierModeles: "modeles" }));
+    expect(codes(relatif)).toEqual(["chemin:dossierModeles"]);
+    expect(relatif.valeurs.dossierModeles).toBe("C:\\Users\\f\\AppData\\Roaming\\attic\\ressources");
+    // SANS `userData` (un contexte incomplet), aucun défaut, et le fichier proposé ne l'écrit pas.
+    expect(lireConfiguration({ plateforme: "win32", schema: SCHEMA }).valeurs.dossierModeles).toBeNull();
   });
 
   it("LE BUDGET PAR DÉFAUT EST LA MÉMOIRE DE LA MACHINE, et sous Linux la limite de son groupe de contrôle si elle est plus basse", () => {
