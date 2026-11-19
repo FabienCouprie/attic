@@ -34,6 +34,9 @@ export interface ServicesOrchestration {
    */
   publierGraphe(graphe: unknown): void;
 
+  /** La passe est finie, arrêtée ou tombée : le graphe publié ne doit plus la retenir. */
+  lacherGraphe(): void;
+
   /** L'exécution en cours — ordre, nœuds, arêtes, résultats —, posée pour les nœuds qui la lisent. */
   publierExecution(execution: unknown): void;
 
@@ -58,6 +61,7 @@ export interface ServicesOrchestration {
 
 const NEUTRES: ServicesOrchestration = {
   publierGraphe: () => {},
+  lacherGraphe: () => {},
   publierExecution: () => {},
   lacherExecution: () => {},
   dossiersALire: () => [],

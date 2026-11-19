@@ -118,20 +118,24 @@ describe("une passe du moteur, dite au récepteur", () => {
     } finally { console.error = erreur; }
   });
 
-  it("ELLE LÂCHE SON EXÉCUTION PUBLIÉE EN FINISSANT, arrêtée ou tombée comprise", async () => {
-    // L'EXÉCUTION PUBLIÉE TENAIT CHAQUE TAMPON DE LA PASSE jusqu'à la suivante : voir `plugins/grapheGlobal.ts`.
+  it("ELLE LÂCHE SON EXÉCUTION ET SON GRAPHE PUBLIÉS EN FINISSANT, arrêtée ou tombée comprise", async () => {
+    // L'EXÉCUTION PUBLIÉE TENAIT CHAQUE TAMPON DE LA PASSE jusqu'à la suivante, et le graphe publié ses
+    // médias : voir `plugins/grapheGlobal.ts`.
     const vus: string[] = [];
-    configurerServicesOrchestration({ publierExecution: () => { vus.push("publiee"); }, lacherExecution: () => { vus.push("lachee"); } });
+    configurerServicesOrchestration({
+      publierGraphe: () => { vus.push("graphe"); }, lacherGraphe: () => { vus.push("graphe lache"); },
+      publierExecution: () => { vus.push("publiee"); }, lacherExecution: () => { vus.push("lachee"); },
+    });
     await passe().lancer(undefined, undefined, jeton(1));
-    expect(vus, "une passe finie").toEqual(["publiee", "lachee"]);
+    expect(vus, "une passe finie").toEqual(["graphe", "publiee", "lachee", "graphe lache"]);
     vus.length = 0;
     await passe({ surEvenement: (e, c) => { if (e.genre === "passeCommencee") c.current?.abort(); } }).lancer();
-    expect(vus, "une passe arrêtée").toEqual(["publiee", "lachee"]);
+    expect(vus, "une passe arrêtée").toEqual(["graphe", "publiee", "lachee", "graphe lache"]);
     vus.length = 0;
     const erreur = console.error;
     console.error = () => {};
     try { await passe({ graphe: () => { throw new Error("graphe illisible"); } }).lancer(); } finally { console.error = erreur; }
-    expect(vus, "une passe tombée avant de rien publier").toEqual(["lachee"]);
+    expect(vus, "une passe tombée avant de rien publier").toEqual(["lachee", "graphe lache"]);
   });
 
   it("UN GRAPHE VIDE NE DIT RIEN, et ne laisse pas de contrôleur", async () => {

@@ -13,7 +13,9 @@
 // ambiant du domaine, posé par l'interface, lu par les nœuds qui le veulent.
 //
 // CE QU'IL FAUT SAVOIR DE SES LIMITES, puisqu'un global en a toujours :
-//  - il est écrit au lancement d'un run, avant l'exécution du premier nœud ;
+//  - il est écrit au lancement d'un run, avant l'exécution du premier nœud, et effacé à sa fin :
+//    il retenait sinon le graphe de la passe, ses médias compris, jusqu'à la suivante, pour un seul
+//    lecteur, « Documentation », qui le lit pendant sa passe ;
 //  - c'est le graphe SANS SES CONTENEURS, leur contenu à leur place, et les boucles non déroulées :
 //    on documente ce qui calcule, jamais un conteneur, et personne ne reconnaîtrait son graphe dans
 //    ses copies de boucle numérotées. Les deux formes du graphe et leur opposition sont décrites
@@ -38,6 +40,11 @@ const g = globalThis as GlobalAttic;
 /** Posé par le moteur au lancement. `null` efface — utile dans un test. */
 export function publierGrapheCourant(graphe: GrapheSansConteneurs | null): void {
   g.__attic_graphe__ = graphe;
+}
+
+/** La passe est finie : son graphe n'est plus publié. */
+export function lacherGrapheCourant(): void {
+  publierGrapheCourant(null);
 }
 
 /** Le graphe en cours, ou `null` hors exécution. */

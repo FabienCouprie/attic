@@ -219,8 +219,10 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
       tombee = true;
       console.error("lancer error", e);
     } finally {
-      // LES TABLES PUBLIÉES SONT LÂCHÉES : elles tenaient chaque tampon de la passe jusqu'à la suivante.
+      // LES TABLES ET LE GRAPHE PUBLIÉS SONT LÂCHÉS : ils tenaient chaque tampon de la passe, et son
+      // graphe avec ses médias, jusqu'à la suivante.
       servicesOrchestration().lacherExecution();
+      servicesOrchestration().lacherGraphe();
       if (ecrituresDeLaPasse) signalerLesEcritures(ecrituresDeLaPasse(), "passe");
       if (p.controleur.current === controller) p.controleur.current = null;
       // LA PASSE EST FINIE, ARRÊTÉE OU TOMBÉE, et le récepteur range ce qu'elle laisse : les « en
