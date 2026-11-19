@@ -106,6 +106,12 @@ const SCHEMA = Object.freeze({
   python: Object.freeze({ type: "chemin", defaut: null, env: "ATTIC_PYTHON" }),
   julia: Object.freeze({ type: "chemin", defaut: null, env: "ATTIC_JULIA" }),
   ollama: Object.freeze({ type: "adresse", defaut: "http://127.0.0.1:11434", env: "ATTIC_OLLAMA_URL" }),
+  /**
+   * LE SENS D'« AUTOMATIQUE » DANS LE RÉGLAGE « CALCUL » DES NŒUDS (pièce C5). Fabien a choisi le
+   * 2026-11-19 qu'elle règle ce sens, et non le défaut des nœuds posés : aucun graphe ne change, et
+   * un choix explicite dans un nœud l'emporte. Voir `electron/calcul-automatique.cjs`.
+   */
+  calcul: Object.freeze({ type: "choix", valeurs: Object.freeze(["auto", "processeur", "carte"]), defaut: "auto" }),
 });
 
 /**

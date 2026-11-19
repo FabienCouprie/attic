@@ -18,11 +18,18 @@ const os = require("os");
 
 const { resoudreRessource } = require("./chemins-ressources.cjs");
 const { lancerTravail } = require("./travaux.cjs");
+const { calculDuPont } = require("./calcul-automatique.cjs");
 
 const MODELE = "muscriptor-small-f32.gguf";
 
-/** Le nom du dos et l'index de carte, depuis l'identifiant de réglage du nœud. */
-function dosEtCarte(calcul) {
+/**
+ * Le nom du dos et l'index de carte, depuis l'identifiant de réglage du nœud.
+ *
+ * « AUTOMATIQUE », LA CHAÎNE VIDE, PREND LE SENS QUE `config.json` LUI DONNE (pièce C5) : le moteur
+ * choisit, ou le processeur. Voir `electron/calcul-automatique.cjs`.
+ */
+function dosEtCarte(reglage) {
+  const calcul = calculDuPont(reglage);
   if (!calcul) return { backend: "best" };
   const m = /^([A-Za-z]+)(\d*)$/.exec(calcul);
   if (!m) return { backend: "best" };

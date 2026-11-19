@@ -49,8 +49,8 @@ const codes = (r: { problemes: { code: string; cle?: string }[] }) => r.probleme
 describe("le fichier de configuration, sous Windows et sous Linux", () => {
   it("LE SCHÉMA PORTE LES CLÉS DES PIÈCES LIVRÉES, et seulement elles", () => {
     // C0 n'en portait aucune ; C1 ajoute le plafond du paquet, C2 le budget mémoire, C3 le dossier des
-    // modèles, C4 les variables d'environnement absorbées.
-    expect(Object.keys(SCHEMA)).toEqual(["plafondPaquetMio", "budgetMemoireGio", "dossierModeles", "racines", "python", "julia", "ollama"]);
+    // modèles, C4 les variables d'environnement absorbées, C5 le sens d'« Automatique ».
+    expect(Object.keys(SCHEMA)).toEqual(["plafondPaquetMio", "budgetMemoireGio", "dossierModeles", "racines", "python", "julia", "ollama", "calcul"]);
   });
 
   it("LES VARIABLES D'ENVIRONNEMENT ABSORBÉES GARDENT LEUR NOM ET L'EMPORTENT SUR LE FICHIER", () => {

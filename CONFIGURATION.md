@@ -69,6 +69,7 @@ Chaque pièce du plan ajoute la sienne ici ; le socle (pièce C0) n'en portait a
 | `python` | chemin | celui que l'application trouve | celui que l'application trouve | `ATTIC_PYTHON` | les nœuds Python, après le choix fait dans le nœud |
 | `julia` | chemin | celui que l'application trouve | celui que l'application trouve | `ATTIC_JULIA` | les nœuds Julia, après le choix fait dans le nœud |
 | `ollama` | adresse `http` ou `https` | `http://127.0.0.1:11434` | `http://127.0.0.1:11434` | `ATTIC_OLLAMA_URL` | le nœud Ollama |
+| `calcul` | `auto`, `processeur` ou `carte` | `auto` | `auto` | — | le sens d'« Automatique » dans le réglage « Calcul » des nœuds |
 
 ### `plafondPaquetMio`, le plafond d'un paquet `.attic`
 
@@ -160,6 +161,23 @@ rend écrivables à la main.
 - **`ollama`**, ou `ATTIC_OLLAMA_URL` : l'adresse du serveur Ollama, en `http` ou `https`, que le
   processus principal interroge pour le nœud. Hors de l'application de bureau, dans le serveur de
   développement, le nœud appelle encore `http://127.0.0.1:11434` : il n'y a pas de fichier à lire.
+
+### `calcul`, ce que veut dire « Automatique »
+
+Les nœuds à modèle ont un réglage « Calcul », dont la valeur par défaut est « Automatique ». **La clé
+ne change aucun nœud ni aucun graphe** : elle dit ce que « Automatique » veut dire sur cette machine.
+Un choix explicite dans un nœud l'emporte toujours.
+
+| | Moteurs du pont (audio.cpp, acestep.cpp, stable-diffusion.cpp) | Moteurs DirectML (Bruitage IA, image SDXS) |
+|---|---|---|
+| auto | le moteur choisit | la carte, puis le processeur si elle refuse le modèle |
+| processeur | le processeur | le processeur |
+| carte | le moteur choisit | la carte, sans repli ; **sans effet sous Linux**, où DirectML n'existe pas |
+
+**« carte » laisse les moteurs du pont choisir**, parce que le numéro d'une carte dépend de la
+machine : sur une machine à deux circuits, `Vulkan0` est souvent le circuit intégré. Pour imposer une
+carte précise, la choisir par son numéro dans le nœud. Le journal du processus principal dit ce que
+vaut « Automatique » quand la clé le change.
 
 ## Ce qui n'y sera jamais
 

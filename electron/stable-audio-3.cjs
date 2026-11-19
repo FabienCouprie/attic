@@ -5,6 +5,7 @@
 const ort = require("onnxruntime-node");
 const fs = require("fs");
 const path = require("path");
+const { fournisseurDirectML } = require("./calcul-automatique.cjs");
 
 const SAMPLE_RATE = 44100;
 const LATENT_CHANNELS = 256;
@@ -124,7 +125,8 @@ const FOURNISSEURS = {
   processeur: ["cpu"],
 };
 
-const fournisseursPour = (calcul) => FOURNISSEURS[calcul] ?? FOURNISSEURS.auto;
+// « AUTOMATIQUE » PREND LE SENS DE `config.json` (pièce C5) : voir `calcul-automatique.cjs`.
+const fournisseursPour = (calcul) => FOURNISSEURS[fournisseurDirectML(calcul)] ?? FOURNISSEURS.auto;
 
 async function loadSessions(modelDir, calcul) {
   const onnxDir = path.join(modelDir, "onnx");

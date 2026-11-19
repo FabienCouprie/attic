@@ -24,6 +24,7 @@ const { resoudreRessource } = require("./chemins-ressources.cjs");
 // la table des sept tâches du moteur et le calcul des plages, sans avoir besoin du binaire.
 const { appliquerTache, requetePlanification } = require("./acestep-plan.cjs");
 const { lancerTravail } = require("./travaux.cjs");
+const { calculDuPont } = require("./calcul-automatique.cjs");
 
 function cheminBinaire(quoi, contexte) {
   const nom = EXECUTABLES[quoi] + (process.platform === "win32" ? ".exe" : "");
@@ -147,9 +148,11 @@ async function planifier(options = {}, surAvancement, contexte) {
     const requete = path.join(travail, "requete.json");
     ecrireJson(requete, requetePlanification(options));
     const args = ["--models", dossierModeles(contexte), "--request", requete];
-    if (options.peripherique) args.push("--device", options.peripherique);
+    // « AUTOMATIQUE » PREND LE SENS DE `config.json` (pièce C5) : voir `calcul-automatique.cjs`.
+    const peripherique = calculDuPont(options.peripherique);
+    if (peripherique) args.push("--device", peripherique);
     const { code, journal } = await lancerAvecRepli(
-      cheminBinaire("planifier", contexte), args, options.peripherique, surAvancement);
+      cheminBinaire("planifier", contexte), args, peripherique, surAvancement);
     const plan = path.join(travail, "requete0.json");
     if (code !== 0 || !fs.existsSync(plan)) return { ok: false, journal };
     return { ok: true, plan: fs.readFileSync(plan, "utf8"), journal };
@@ -195,12 +198,13 @@ async function rendre(options = {}, surAvancement, contexte) {
     ecrireJson(requete, prepare.plan);
 
     const args = ["--models", modeles, "--request", requete];
-    if (options.peripherique) args.push("--device", options.peripherique);
+    const peripherique = calculDuPont(options.peripherique);
+    if (peripherique) args.push("--device", peripherique);
     if (options.tuile) args.push("--vae-chunk", String(options.tuile));
     if (options.recouvrement) args.push("--vae-overlap", String(options.recouvrement));
     args.push(...drapeauxAudio(options, travail));
     const { code, journal } = await lancerAvecRepli(
-      cheminBinaire("rendre", contexte), args, options.peripherique, surAvancement);
+      cheminBinaire("rendre", contexte), args, peripherique, surAvancement);
     const audio = sortieAudio(travail);
     if (code !== 0 || !audio) return { ok: false, journal };
     return { ok: true, donnees: fs.readFileSync(audio), nom: path.basename(audio), journal };

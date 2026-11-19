@@ -86,6 +86,7 @@ const { dossierRessourcesVoulu, migrerRessources } = require("./dossier-ressourc
 const { SCHEMA: SCHEMA_MEDIA, cheminDepuisUrl, typeMedia, analyserPlage } = require("./plage-media.cjs");
 const { SCHEMA: SCHEMA_RESSOURCE, servir: servirRessource } = require("./ressource-locale.cjs");
 const { chargerConfiguration, cheminDe, formulerProbleme, proposition } = require("./configuration.cjs");
+const { poserCalculAutomatique, calculAutomatique } = require("./calcul-automatique.cjs");
 
 // ═══ LE FICHIER DE CONFIGURATION, LU UNE FOIS, AVANT QUE L'APPLICATION NE SOIT PRÊTE ═══
 //
@@ -109,6 +110,14 @@ const CONFIGURATION = chargerConfiguration({
   lire: (c) => fs.readFileSync(c, "utf8"), statut: (c) => fs.statSync(c),
 });
 for (const p of CONFIGURATION.problemes) console.warn(`[attic] configuration (${CONFIGURATION.chemin}) : ${formulerProbleme(p)}`);
+// LE SENS D'« AUTOMATIQUE » DANS LE RÉGLAGE « CALCUL » DES NŒUDS (pièce C5), posé avant tout moteur.
+// Changé, il se dit ; sous Linux, « carte » est sans effet pour DirectML, et cela se dit aussi.
+poserCalculAutomatique(CONFIGURATION.valeurs.calcul, CONFIGURATION.systeme);
+if (CONFIGURATION.valeurs.calcul !== "auto") {
+  const c = calculAutomatique();
+  console.log(`[attic] calcul : « Automatique » vaut « ${c.pont || "le choix du moteur"} » pour les moteurs du pont et « ${c.directML} » pour DirectML`
+    + (c.preference === "carte" && c.systeme !== "windows" ? " (DirectML n'existe pas sous Linux : « carte » y est sans effet)" : ""));
+}
 /**
  * Écrit `config.propose.json`, s'il change. `enUsage` porte ce que l'application n'apprend qu'en
  * cherchant, après la lecture : l'interprète Python ou Julia réellement trouvé (pièce C4). Seul un

@@ -9,6 +9,7 @@ const ort = require("onnxruntime-node");
 const { Tokenizer } = require("@huggingface/tokenizers");
 const fs = require("fs");
 const path = require("path");
+const { fournisseurDirectML } = require("./calcul-automatique.cjs");
 
 const LATENT_SIZE = 64; // 512 / 8 (facteur de sous-échantillonnage VAE)
 const IMAGE_SIZE = 512;
@@ -69,7 +70,8 @@ const FOURNISSEURS = {
   processeur: ["cpu"],
 };
 
-const fournisseursPour = (calcul) => FOURNISSEURS[calcul] ?? FOURNISSEURS.auto;
+// « AUTOMATIQUE » PREND LE SENS DE `config.json` (pièce C5) : voir `calcul-automatique.cjs`.
+const fournisseursPour = (calcul) => FOURNISSEURS[fournisseurDirectML(calcul)] ?? FOURNISSEURS.auto;
 
 async function loadSessions(modelDir, calcul) {
   const onnxDir = path.join(modelDir, "onnx");
