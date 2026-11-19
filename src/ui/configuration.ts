@@ -23,6 +23,8 @@ export interface ConfigurationRecue {
   /** Le fichier lu : `absent`, `lu`, `illisible`, `refuse`, ou `sans-pont` hors d'Electron. */
   fichier: string;
   chemin?: string;
+  /** `windows` ou `linux`, tel que le processus principal l'a lu ; absent hors d'Electron. */
+  systeme?: string;
   valeurs: Readonly<Record<string, unknown>>;
   /** D'où vient chaque valeur : `defaut`, `fichier` ou `environnement`. */
   sources: Readonly<Record<string, string>>;

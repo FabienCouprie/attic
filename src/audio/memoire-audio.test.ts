@@ -9,7 +9,7 @@
 // bulle repliee garde, ce qu'une boucle depliee retient. Rien qui suppose un son.
 import { describe, it, expect } from "vitest";
 import {
-  apercuUtileDuree, DUREE_LONGUE_S, octetsApercu, octetsTampon,
+  apercuUtileDuree, DUREE_LONGUE_S, octetsApercu, octetsTampon, seuilDesApercusS,
 } from "./memoire-audio";
 // Le fait de graphe vient du cœur ; ce qu'il coûte en octets est ici. La direction est la bonne.
 import { noeudRegarde } from "../core/memoire";
@@ -80,6 +80,25 @@ describe("garder ou non l'aperçu écoutable", () => {
     // 4,8 en vingt-quatre. Porter l'écriture à vingt-quatre le rend plus nécessaire, pas moins.
     expect(Mo(evites * octetsApercu(3600, 2, 44100, 16))).toBe(3175);
     expect(Mo(evites * octetsApercu(3600))).toBe(4763);
+  });
+});
+
+// ── LE SEUIL À L'ÉCHELLE DE LA MACHINE (pièce C2 du fichier de configuration) ──
+describe("le seuil suit le budget mémoire", () => {
+  it("SUR LA MACHINE DE RÉFÉRENCE, LE SEUIL D'AVANT, et sans facteur lisible aussi", () => {
+    for (const f of [1, undefined, 0, -2, Number.NaN, Number.POSITIVE_INFINITY]) expect(seuilDesApercusS(f), String(f)).toBe(DUREE_LONGUE_S);
+  });
+
+  it("À L'ÉCHELLE, ARRONDI À LA MINUTE, ENTRE DEUX MINUTES ET UNE HEURE", () => {
+    // 3,98 : le facteur de 63,7 Gio sous Windows, la machine de Fabien.
+    expect([3.98, 0.75, 0.125, 10].map(seuilDesApercusS)).toEqual([2400, 480, 120, 3600]);
+  });
+
+  it("UN INTERMÉDIAIRE DE VINGT MINUTES GARDE SON APERÇU SOUS UN BUDGET QUATRE FOIS PLUS GRAND, ET NON SOUS LE DÉFAUT", () => {
+    expect(apercuUtileDuree({ dureeS: 1200, regarde: false })).toBe(false);
+    expect(apercuUtileDuree({ dureeS: 1200, regarde: false, facteurMemoire: 4 })).toBe(true);
+    expect(apercuUtileDuree({ dureeS: 1200, regarde: false, facteurMemoire: 4, economie: true })).toBe(true);
+    expect(apercuUtileDuree({ dureeS: 300, regarde: false, facteurMemoire: 0.25 }), "sous un budget quatre fois plus petit, cinq minutes sont longues").toBe(false);
   });
 });
 

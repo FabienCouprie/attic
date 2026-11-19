@@ -70,7 +70,40 @@ const SCHEMA = Object.freeze({
    * 1,95 Gio a passé le pont dans les deux sens. Le coût en est dit dans `CONFIGURATION.md`.
    */
   plafondPaquetMio: Object.freeze({ type: "nombre", defaut: 1024, min: 256, max: 2000 }),
+  /**
+   * LE BUDGET MÉMOIRE, en Gio : ce que la personne accorde à Attic sur cette machine (pièce C2). Le
+   * défaut est LU SUR LA MACHINE, comme le plan le proposait : sa mémoire vive, et sous Linux la
+   * limite de son groupe de contrôle si elle est plus basse. Voir `budgetDeLaMachine`.
+   *
+   * IL NE BORNE PAS LA MÉMOIRE : le tas JavaScript reste à 4 Gio sur les deux systèmes. Il règle ce
+   * qu'Attic choisit de garder (`src/ui/budget-memoire.ts`) : le seuil des aperçus, la profondeur de
+   * l'historique, et l'alerte de l'indicateur de mémoire.
+   */
+  budgetMemoireGio: Object.freeze({ type: "nombre", defaut: budgetDeLaMachine, min: 2, max: 4096 }),
 });
+
+/** Un gibioctet. */
+const GIO = 1024 ** 3;
+
+/** La mémoire d'une « machine courante » : celle pour laquelle les seuils d'avant C2 ont été posés. */
+const BUDGET_REFERENCE_GIO = 16;
+
+/**
+ * Ce que la machine offre, en Gio arrondis au dixième inférieur, dans les bornes de la clé.
+ *
+ * `memoire` est `{ totale, contrainte }` en octets : `os.totalmem()` et `process.constrainedMemory()`.
+ * SOUS LINUX, LA PLUS BASSE DES DEUX : un conteneur ou une session bornée par `systemd` voit toute la
+ * mémoire de la machine dans `totalmem`, et le noyau le tue à sa propre limite. `constrainedMemory`
+ * rend 0 sans contrainte, et parfois un nombre immense : seule une limite plus basse compte. Sous
+ * Windows, la machine. Sans mesure (un test, un contexte incomplet), la machine de référence.
+ */
+function budgetDeLaMachine({ systeme, memoire } = {}) {
+  const totale = Number(memoire?.totale) || 0;
+  const contrainte = Number(memoire?.contrainte) || 0;
+  const octets = systeme === "linux" && contrainte > 0 && (totale === 0 || contrainte < totale) ? contrainte : totale;
+  if (!(octets > 0)) return BUDGET_REFERENCE_GIO;
+  return Math.min(4096, Math.max(2, Math.floor((octets / GIO) * 10) / 10));
+}
 
 /** Le nom de section de chaque plateforme de Node qu'Attic sert. */
 const SYSTEMES = Object.freeze({ win32: "windows", linux: "linux" });
@@ -172,13 +205,14 @@ function verifier(d, v, contexte) {
  * `fichier` ou `environnement`. `texte` peut être vide ou absent : ce sont alors les défauts, et
  * l'environnement.
  */
-function lireConfiguration({ texte = "", plateforme, env = {}, home = "", userData = "", ressources = "", schema = SCHEMA } = {}) {
+function lireConfiguration({ texte = "", plateforme, env = {}, home = "", userData = "", ressources = "", memoire = null, schema = SCHEMA } = {}) {
   const systeme = systemeDe(plateforme);
   const valeurs = {};
   const sources = {};
   const problemes = [];
-  // LE DÉFAUT D'UN CHEMIN EST CELUI DE CETTE MACHINE, calculé depuis ce que l'installeur a posé.
-  const contexte = Object.freeze({ systeme, home, userData, ressources, env });
+  // LE DÉFAUT D'UN CHEMIN EST CELUI DE CETTE MACHINE, calculé depuis ce que l'installeur a posé ;
+  // celui du budget, depuis la mémoire qu'elle offre (`memoire`, `{ totale, contrainte }` en octets).
+  const contexte = Object.freeze({ systeme, home, userData, ressources, env, memoire });
   for (const [cle, d] of Object.entries(schema)) {
     valeurs[cle] = typeof d.defaut === "function" ? d.defaut(contexte) : d.defaut;
     sources[cle] = "defaut";
@@ -233,31 +267,34 @@ function fichierAppliquable({ plateforme, mode }) {
 /**
  * Lit le fichier et rend sa configuration. N'échoue jamais : un fichier absent, illisible ou refusé
  * rend les défauts et l'environnement, et dit pourquoi.
+ *
+ * `systeme` y est, `windows` ou `linux` : l'interface en a besoin pour la marge du budget mémoire,
+ * plus large sous Linux (pièce C2), et ne doit pas le deviner.
  */
-function chargerConfiguration({ chemin, plateforme, env = {}, home = "", userData = "", ressources = "", lire, statut, schema = SCHEMA }) {
-  const commun = { plateforme, env, home, userData, ressources, schema };
+function chargerConfiguration({ chemin, plateforme, env = {}, home = "", userData = "", ressources = "", memoire = null, lire, statut, schema = SCHEMA }) {
+  const commun = { plateforme, env, home, userData, ressources, memoire, schema };
   let info;
   try {
     info = statut(chemin);
   } catch (e) {
     const absent = e?.code === "ENOENT";
     const base = lireConfiguration(commun);
-    return { chemin, fichier: absent ? "absent" : "illisible", ...base,
+    return { chemin, systeme: systemeDe(plateforme), fichier:absent ? "absent" : "illisible", ...base,
       problemes: absent ? base.problemes : Object.freeze([{ code: "illisible", detail: String(e?.code ?? e) }, ...base.problemes]) };
   }
   if (!fichierAppliquable({ plateforme, mode: info?.mode })) {
     const base = lireConfiguration(commun);
     const mode = (info.mode & 0o777).toString(8).padStart(3, "0");
-    return { chemin, fichier: "refuse", ...base, problemes: Object.freeze([{ code: "mode", detail: mode }, ...base.problemes]) };
+    return { chemin, systeme: systemeDe(plateforme), fichier:"refuse", ...base, problemes: Object.freeze([{ code: "mode", detail: mode }, ...base.problemes]) };
   }
   let texte;
   try {
     texte = lire(chemin);
   } catch (e) {
     const base = lireConfiguration(commun);
-    return { chemin, fichier: "illisible", ...base, problemes: Object.freeze([{ code: "illisible", detail: String(e?.code ?? e) }, ...base.problemes]) };
+    return { chemin, systeme: systemeDe(plateforme), fichier:"illisible", ...base, problemes: Object.freeze([{ code: "illisible", detail: String(e?.code ?? e) }, ...base.problemes]) };
   }
-  return { chemin, fichier: "lu", ...lireConfiguration({ ...commun, texte }) };
+  return { chemin, systeme: systemeDe(plateforme), fichier: "lu", ...lireConfiguration({ ...commun, texte }) };
 }
 
 /**
@@ -298,4 +335,4 @@ function formulerProbleme(p) {
   return (PHRASES[p.code] ?? ((q) => `problème ${q.code}`))(p);
 }
 
-module.exports = { SCHEMA, TYPES, lireConfiguration, chargerConfiguration, fichierAppliquable, formulerProbleme, cheminDe, proposition };
+module.exports = { SCHEMA, TYPES, BUDGET_REFERENCE_GIO, budgetDeLaMachine, lireConfiguration, chargerConfiguration, fichierAppliquable, formulerProbleme, cheminDe, proposition };

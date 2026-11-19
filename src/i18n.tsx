@@ -193,6 +193,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "barre.recharger": { fr: "Recharger la fenêtre — le graphe est gardé, la mémoire libérée", en: "Reload the window — the graph is kept, memory is freed" },
   "barre.recharger.confirmer": { fr: "Une exécution est en cours : recharger l'arrêtera. Le graphe est gardé, les résultats seront à relancer. Recharger quand même ?", en: "A run is in progress: reloading will stop it. The graph is kept, results will need to be run again. Reload anyway?" },
   "barre.memoire.titre": { fr: "Mémoire occupée par l'application, tous processus confondus", en: "Memory used by the application, across all processes" },
+  "barre.memoire.alerte": { fr: "Au-delà de {part} % du budget mémoire, {budget} Gio (clé budgetMemoireGio de config.json).", en: "Beyond {part}% of the memory budget, {budget} GiB (budgetMemoireGio key of config.json)." },
   "barre.lancer": { fr: "Lancer l'exécution", en: "Run the graph" },
   "barre.arreter": { fr: "Arrêter l'exécution", en: "Stop the run" },
   "touche.maj": { fr: "Maj", en: "Shift" },

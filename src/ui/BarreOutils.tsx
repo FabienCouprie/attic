@@ -8,7 +8,7 @@ import { BoutonModeles } from "./BoutonModeles";
 import { apparenceMaj } from "./apparence-maj";
 import { EXEMPLES, nomDeLExemple } from "./exemples";
 import { demarrerLaFriction } from "./friction-pointeur";
-import { PERIODE_MESURE_MS, agregerMetriques, detailParProcessus, formaterMo, type MesureMemoire } from "./memoire-vive";
+import { PERIODE_MESURE_MS, agregerMetriques, apparenceMemoire, formaterMo, type MesureMemoire } from "./memoire-vive";
 import { SelecteurProfondeurExport } from "./SelecteurProfondeurExport";
 import { SelecteurFrequenceDeTravail } from "./SelecteurFrequenceDeTravail";
 import { instantaneAvantMiseAJour } from "./sauvegarde-avant-maj";
@@ -439,9 +439,10 @@ export function BarreOutils(props: Props) {
       </button>
       {/* La mémoire de l'application, à droite de la réinitialisation : c'est là qu'on la
           regarde, juste avant de relancer. L'infobulle détaille par processus, parce que le
-          gros du chiffre ne vient pas toujours de celui qui calcule (cf. ui/memoire-vive.ts). */}
+          gros du chiffre ne vient pas toujours de celui qui calcule (cf. ui/memoire-vive.ts).
+          Au-delà du budget mémoire de `config.json`, il passe en rouge et le dit (pièce C2). */}
       {memoire && (
-        <span className="attic-memoire" title={`${t("barre.memoire.titre")}\n${detailParProcessus(memoire)}`}>
+        <span {...apparenceMemoire(memoire, t)}>
           {formaterMo(memoire.total)}
         </span>
       )}

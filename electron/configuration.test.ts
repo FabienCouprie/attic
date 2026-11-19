@@ -18,7 +18,9 @@ import { createRequire } from "node:module";
 import { posix, win32 } from "node:path";
 
 const require_ = createRequire(import.meta.url);
-const { SCHEMA, lireConfiguration, chargerConfiguration, fichierAppliquable, formulerProbleme, proposition } = require_("./configuration.cjs");
+const {
+  SCHEMA, BUDGET_REFERENCE_GIO, budgetDeLaMachine, lireConfiguration, chargerConfiguration, fichierAppliquable, formulerProbleme, proposition,
+} = require_("./configuration.cjs");
 
 /**
  * Un schéma d'essai : un exemple de chaque type, une variable d'environnement, une clé propre à
@@ -45,8 +47,29 @@ const codes = (r: { problemes: { code: string; cle?: string }[] }) => r.probleme
 
 describe("le fichier de configuration, sous Windows et sous Linux", () => {
   it("LE SCHÉMA PORTE LES CLÉS DES PIÈCES LIVRÉES, et seulement elles", () => {
-    // C0 n'en portait aucune ; C1 ajoute le plafond du paquet.
-    expect(Object.keys(SCHEMA)).toEqual(["plafondPaquetMio"]);
+    // C0 n'en portait aucune ; C1 ajoute le plafond du paquet, C2 le budget mémoire.
+    expect(Object.keys(SCHEMA)).toEqual(["plafondPaquetMio", "budgetMemoireGio"]);
+  });
+
+  it("LE BUDGET PAR DÉFAUT EST LA MÉMOIRE DE LA MACHINE, et sous Linux la limite de son groupe de contrôle si elle est plus basse", () => {
+    const Gio = 1024 ** 3;
+    // Relevé le 2026-11-19 sur la machine de Fabien : 63,79 Gio, `constrainedMemory` à 0.
+    const machine = { totale: 63.79 * Gio, contrainte: 0 };
+    expect(budgetDeLaMachine({ systeme: "windows", memoire: machine })).toBe(63.7);
+    expect(budgetDeLaMachine({ systeme: "linux", memoire: machine }), "sans contrainte, la machine").toBe(63.7);
+    expect(budgetDeLaMachine({ systeme: "linux", memoire: { ...machine, contrainte: 8 * Gio } }), "un conteneur de 8 Gio").toBe(8);
+    expect(budgetDeLaMachine({ systeme: "linux", memoire: { ...machine, contrainte: 2 ** 62 } }), "une limite immense ne compte pas").toBe(63.7);
+    expect(budgetDeLaMachine({ systeme: "windows", memoire: { ...machine, contrainte: 8 * Gio } }), "sous Windows, la contrainte n'est pas lue").toBe(63.7);
+    expect(budgetDeLaMachine({ systeme: "windows", memoire: { totale: 1 * Gio } }), "dans ses bornes").toBe(2);
+    expect(budgetDeLaMachine({ systeme: "windows" }), "sans mesure, la machine de référence").toBe(BUDGET_REFERENCE_GIO);
+    // PAR LE CHARGEMENT, comme `main.cjs` l'appelle : le défaut, puis le fichier qui l'emporte.
+    const charge = (lire: () => string) => chargerConfiguration({
+      chemin: "C:\\Users\\f\\AppData\\Roaming\\attic\\config.json", plateforme: "win32", memoire: machine,
+      statut: () => ({ mode: 0o100644 }), lire,
+    });
+    expect(charge(() => "{}")).toMatchObject({ systeme: "windows", valeurs: { budgetMemoireGio: 63.7 }, sources: { budgetMemoireGio: "defaut" } });
+    expect(charge(() => JSON.stringify({ budgetMemoireGio: 16 }))).toMatchObject({ valeurs: { budgetMemoireGio: 16 }, sources: { budgetMemoireGio: "fichier" } });
+    expect(codes(charge(() => JSON.stringify({ budgetMemoireGio: 1 }))), "sous 2 Gio, le défaut").toEqual(["bornes:budgetMemoireGio"]);
   });
 
   it("UN FICHIER ABSENT OU VIDE REND LES DÉFAUTS, sans problème", () => {

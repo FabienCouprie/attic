@@ -23,7 +23,7 @@ import type { RenduDuVisible } from "../core/protocole-moteur";
 import type { Respiration } from "../core/respirer";
 import { poserApercu, poserStatut } from "./statuts";
 import { resultatDe } from "./resultats";
-import { servicesApercu, valeursLourdes, type ApercuRefaisable } from "./services-apercu";
+import { facteurMemoireCourant, servicesApercu, valeursLourdes, type ApercuRefaisable } from "./services-apercu";
 import { lireProfondeurExport } from "./profondeur-export";
 import { apercuPerdu } from "./refaire-apercus";
 import type { RegistreUI } from "./registre-actif";
@@ -152,6 +152,7 @@ export async function calculerCorrectifResultat(
       cacheParBulle: estCacheParBulle(tousNoeudsG, n.id),
     }),
     economie: economieMemoireRef?.current ?? true,
+    facteurMemoire: facteurMemoireCourant(),
   }));
   // LE LECTEUR NE S'ÉCRIT PLUS ICI, IL SE PROMET. Son encodage dure 2,3 s pour cinq minutes de
   // son et 46 s pour une heure, mesuré, et il avait lieu AVANT que le résultat soit posé. Le

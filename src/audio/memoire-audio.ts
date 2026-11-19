@@ -39,6 +39,19 @@
  */
 export const DUREE_LONGUE_S = 600;
 
+/**
+ * Le seuil sur CETTE machine : `DUREE_LONGUE_S` à l'échelle de sa mémoire (pièce C2, 2026-11-19).
+ *
+ * `facteur` est le budget utile rapporté à celui de la machine courante que l'en-tête suppose
+ * (`ui/budget-memoire.ts`) : 1 la rend telle quelle, 4 la quadruple. Arrondi à la minute, entre deux
+ * minutes et une heure : sous deux minutes, l'économie priverait d'écoute des pistes qui ne pèsent
+ * rien ; au-delà d'une heure, un seul nœud retient déjà plus de 2 Go.
+ */
+export function seuilDesApercusS(facteur = 1): number {
+  if (!(facteur > 0) || !Number.isFinite(facteur)) return DUREE_LONGUE_S;
+  return Math.min(3600, Math.max(120, Math.round((DUREE_LONGUE_S * facteur) / 60) * 60));
+}
+
 /** Octets d'un `AudioBuffer` : des flottants 32 bits, hors du tas JavaScript. */
 export function octetsTampon(dureeS: number, canaux = 2, frequence = 44100): number {
   return Math.round(dureeS * frequence * canaux * 4);
@@ -75,11 +88,13 @@ export function octetsApercu(dureeS: number, canaux = 2, frequence = 44100, bits
  *
  * LA RÈGLE PORTE SUR UNE DURÉE, et c'est pourquoi elle s'énonce à part : lire cette durée dans un
  * tampon est l'adaptation, non la règle. Les deux se testent donc séparément.
+ *
+ * `facteurMemoire` met le seuil à l'échelle de la machine : voir `seuilDesApercusS`.
  */
 export function apercuUtileDuree(
-  { dureeS, regarde, economie = true }: { dureeS: number; regarde: boolean; economie?: boolean },
+  { dureeS, regarde, economie = true, facteurMemoire = 1 }: { dureeS: number; regarde: boolean; economie?: boolean; facteurMemoire?: number },
 ): boolean {
-  return !economie || dureeS < DUREE_LONGUE_S || regarde;
+  return !economie || dureeS < seuilDesApercusS(facteurMemoire) || regarde;
 }
 
 /**
@@ -93,7 +108,7 @@ export function apercuUtileDuree(
  */
 export function apercuUtileAudio(
   valeur: unknown,
-  o: { regarde: boolean; economie?: boolean },
+  o: { regarde: boolean; economie?: boolean; facteurMemoire?: number },
 ): boolean {
   const dureeS = typeof AudioBuffer !== "undefined" && valeur instanceof AudioBuffer ? valeur.duration : 0;
   return apercuUtileDuree({ ...o, dureeS });

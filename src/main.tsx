@@ -14,6 +14,7 @@ import { createRoot } from "react-dom/client";
 import { I18nProvider } from "./i18n";
 import { ErreurBoundary } from "./ui/ErreurBoundary";
 import App from "./ui/App";
+import { chargerLeBudget } from "./ui/budget-memoire";
 
 import { enMo } from "./core/octets";
 // Demande le stockage persistant : empêche l'éviction (sous pression disque) du
@@ -34,6 +35,10 @@ if (navigator.storage?.persist) {
     })
     .catch(() => { /* API indisponible : on ignore, le cache reste best-effort */ });
 }
+
+// LE BUDGET MÉMOIRE DE `config.json` (pièce C2), demandé une fois : jusqu'à sa réponse, les seuils
+// d'avant valent. Il n'échoue pas : sans pont, aucun budget. Voir `ui/budget-memoire.ts`.
+void chargerLeBudget();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode><I18nProvider><ErreurBoundary><App /></ErreurBoundary></I18nProvider></StrictMode>

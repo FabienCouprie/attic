@@ -82,9 +82,11 @@ export interface ServicesApercu {
    * domaine : la question est donc entière.
    *
    * `regarde` et `economie` sont des faits du shell — ce nœud est-il sélectionné ou terminal, la
-   * bascule d'économie de mémoire est-elle active — et c'est lui qui les fournit.
+   * bascule d'économie de mémoire est-elle active — et c'est lui qui les fournit. `facteurMemoire`
+   * aussi : ce que le budget de `config.json` accorde, rapporté à une machine courante
+   * (`ui/budget-memoire.ts`) ; le domaine décide de ce qu'il en fait.
    */
-  apercuUtile(valeur: unknown, o: { regarde: boolean; economie: boolean }): boolean;
+  apercuUtile(valeur: unknown, o: { regarde: boolean; economie: boolean; facteurMemoire?: number }): boolean;
 
   /** Un aperçu écoutable et enregistrable de cette valeur. */
   blobApercu(valeur: unknown, o: OptionsApercu): Promise<Blob | null>;
@@ -186,4 +188,17 @@ export function oublierServicesApercu(): void {
  * moteur n'importe rien de ce qui pose dans les magasins.
  */
 export const valeursLourdes = (valeurs: readonly unknown[] | undefined): boolean =>
-  (valeurs ?? []).some((v) => v != null && !servicesApercu().apercuUtile(v, { regarde: false, economie: true }));
+  (valeurs ?? []).some((v) => v != null && !servicesApercu().apercuUtile(v, { regarde: false, economie: true, facteurMemoire }));
+
+// LE FACTEUR DU BUDGET MÉMOIRE (pièce C2), que chaque question `apercuUtile` du shell transmet au
+// domaine. IL VIT ICI ET NON DANS `ui/budget-memoire.ts` : le moteur pose cette question en lâchant
+// son cache, et ce module n'importe rien ; le budget le pose une fois la configuration reçue.
+let facteurMemoire = 1;
+
+/** Le facteur en vigueur : 1 tant que la configuration n'est pas reçue, et hors d'Electron. */
+export const facteurMemoireCourant = (): number => facteurMemoire;
+
+/** Pose le facteur du budget ; un facteur illisible vaut 1. */
+export function poserFacteurMemoire(f: number): void {
+  facteurMemoire = f > 0 && Number.isFinite(f) ? f : 1;
+}

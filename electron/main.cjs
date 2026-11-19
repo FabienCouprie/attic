@@ -32,6 +32,7 @@ async function showOpenDialogSuivi(...args) {
   return r;
 }
 const fs = require("fs");
+const os = require("os");
 const { Readable } = require("stream");
 const { armerJournal, inscrireCanal } = require("./chemin-sur.cjs");
 const { avecProprietaire } = require("./travaux.cjs");
@@ -102,6 +103,9 @@ const CONFIGURATION = chargerConfiguration({
   chemin: path.join(DOSSIER_CONFIGURATION, "config.json"),
   plateforme: process.platform, env: process.env, home: app.getPath("home"),
   userData: DOSSIER_CONFIGURATION, ressources: process.resourcesPath,
+  // LA MÉMOIRE DE LA MACHINE, pour le défaut du budget (pièce C2) : `constrainedMemory` dit sous Linux
+  // la limite d'un groupe de contrôle, et rend 0 sans contrainte.
+  memoire: { totale: os.totalmem(), contrainte: typeof process.constrainedMemory === "function" ? process.constrainedMemory() : 0 },
   lire: (c) => fs.readFileSync(c, "utf8"), statut: (c) => fs.statSync(c),
 });
 for (const p of CONFIGURATION.problemes) console.warn(`[attic] configuration (${CONFIGURATION.chemin}) : ${formulerProbleme(p)}`);

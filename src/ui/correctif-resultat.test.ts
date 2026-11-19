@@ -16,7 +16,7 @@ import { calculerCorrectifResultat, type PretsDeLAffichage } from "./correctif-r
 import { choisirLeRendu } from "../core/rendu-du-visible";
 import type { TablesDuRendu } from "../core/rendu-du-visible";
 import { effacerResultats, poserResultat } from "./resultats";
-import { configurerServicesApercu, oublierServicesApercu } from "./services-apercu";
+import { configurerServicesApercu, oublierServicesApercu, poserFacteurMemoire } from "./services-apercu";
 import { lireProfondeurExport } from "./profondeur-export";
 import { reparerApercu } from "./refaire-apercus";
 import { reinitialiserStatuts, statutDe } from "./statuts";
@@ -335,5 +335,23 @@ describe("un méta, d'après ce que ses internes ont rendu", () => {
     const sansOrdre = etat({ resultats: new Map([["x::cd", [null]]]) });
     const patch2 = await correctif(noeud("y", "meta-essai"), sansOrdre);
     expect(patch2).toEqual({ audioResultatMessage: "execution.brancheEchecAucunResultat" });
+  });
+});
+
+describe("le budget mémoire de config.json", () => {
+  afterEach(() => { poserFacteurMemoire(1); });
+
+  it("LA QUESTION DE L'APERÇU PORTE LE FACTEUR DU BUDGET : le domaine décide avec lui (pièce C2)", async () => {
+    // LE DOMAINE TÉMOIN DOIT RECONNAÎTRE LE SON : sans `valeurRepresentative`, le correctif ne voit pas
+    // de son, et seule la question du moteur arrive. Relevé en plantant la faute, d'abord restée verte.
+    const recus: unknown[] = [];
+    configurerServicesApercu({
+      valeurRepresentative: (vals) => vals.find(estSon), blobApercu: async () => new Blob(["x"]), apercuCourbe: () => undefined,
+      apercuUtile: (_v, o) => { recus.push(o); return true; },
+    });
+    poserFacteurMemoire(3);
+    await correctif(noeud("a", "son"), etat({ resultats: new Map([["a", [son("a", true)]]]) }));
+    expect(recus, "la question du moteur, puis celle de l'aperçu").toHaveLength(2);
+    for (const o of recus) expect(o).toMatchObject({ facteurMemoire: 3 });
   });
 });
