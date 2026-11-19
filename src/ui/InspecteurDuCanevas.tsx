@@ -61,6 +61,12 @@ export function InspecteurDuCanevas({
         onChargerFichier={(key, fichier) => {
           if (!sel) return;
           setNodes((nds) => nds.map((n) => n.id === sel.id ? { ...n, data: { ...n.data, [key]: fichier, audioNom: fichier.name } } : n));
+          // PUIS LE NŒUD ET SON AVAL REPARTENT EN ATTENTE, ce qui lâche aussi leur cache. Sans cela, le
+          // nœud montrait le son de l'ancien échantillon jusqu'au Lancer suivant, et un échantillon
+          // rechargé sous le même nom gardait son entrée de cache, l'empreinte ne retenant que le nom.
+          // MESURÉ par `tests-e2e/inspecteur-echantillon-dans-application.spec.ts`. `chargerMedia` ne convient pas :
+          // il poserait un réglage « Chemin » que le « Sampler MIDI » ne déclare pas.
+          reinitialiserNoeud(sel.id);
         }}
         onSupprimer={() => {
           if (sel) {

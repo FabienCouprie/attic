@@ -195,6 +195,9 @@ describe("le pilote de graphe", () => {
     // LE COPIER-COLLER DES NOTES ET DES CADRES N'Y PREND QUE `semer` : il ne lance rien, il sème un
     // graphe puis le travaille au clavier.
     //
+    // L'ÉCHANTILLON DE L'INSPECTEUR Y PREND `semer` deux fois, `relancerEtAttendre`, `etatDesNoeuds` et
+    // `apercusEnWav` : il charge deux échantillons de même nom et compare au son calculé de zéro.
+    //
     // LE MENU DU CLIC DROIT N'Y PREND QUE `semer` lui aussi : il sème un graphe, puis y tire un cadre
     // de sélection et clique du bouton droit.
     //
@@ -233,7 +236,8 @@ describe("le pilote de graphe", () => {
         "copies-remises-a-zero-dans-application.spec.ts",
         "empreintes-exemples.spec.ts", "executer.spec.ts",
         "frequence-de-travail-dans-application.spec.ts", "gel-de-conversion-dans-application.spec.ts",
-        "graphe-complexite-dans-application.spec.ts", "journal-de-passe.spec.ts",
+        "graphe-complexite-dans-application.spec.ts", "inspecteur-echantillon-dans-application.spec.ts",
+        "journal-de-passe.spec.ts",
         "lecteur-apercu-perdu-dans-application.spec.ts",
         "melange-frequences-dans-application.spec.ts", "menu-contextuel-dans-application.spec.ts",
         "montage-gains-pistes.spec.ts", "montage-piste-branchee.spec.ts",
