@@ -27,7 +27,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { registre } from "../audio/adaptateur";
-import { ALIAS } from "../core/registre";
+import { ALIAS } from "../audio/alias";
 import { toutesLesFiches } from "../plugins";
 import {
   homonymesDuContrat, manifesteDuRegistre, manifesteEnTexte, relecteurDuRegistre,
@@ -75,7 +75,7 @@ function rapportDesRuptures(liste: Ecart[]): string {
     "  · un réglage renommé : l'ancien nom dans `nomsHerites` du nouveau ;",
     "  · une valeur de choix retirée : `optionsHeritees`, de l'ancienne valeur vers l'identifiant qui la remplace ;",
     "  · un réglage retiré que l'exécuteur relit encore : `anciensReglages` de la fiche ;",
-    "  · un composant retiré : la table `ALIAS` de `src/core/registre.ts`.",
+    "  · un composant retiré : la table `ALIAS` de `src/audio/alias.ts`.",
     "",
     "SECONDE SORTIE : déclarer la rupture dans `src/docs/ruptures-declarees.json`, raison écrite, puis",
     "« npm run docs:compatibilite ». La version de contrat du composant monte d'un cran.",

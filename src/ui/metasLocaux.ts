@@ -128,7 +128,7 @@ export interface MetaNonRestaure { nom: string; manquants: string[] }
 // restauré que si chacun de ses sous-nœuds référence un plugin connu (ou un autre
 // méta persisté — cas des métas imbriqués). Sinon il est ignoré, MAIS GARDÉ SOUS SA CLÉ, au cas
 // où le plugin reviendrait — ex. le renommage d'un plugin, à réparer via l'ALIAS de
-// core/registreUI().ts plutôt qu'en resignalant sans cesse le même méta comme perdu. Renvoie les
+// audio/alias.ts plutôt qu'en resignalant sans cesse le même méta comme perdu. Renvoie les
 // métas non restaurés (tableau vide si tout va bien), pour que l'appelant puisse prévenir
 // l'utilisateur au lieu de laisser des méta-composants disparaître du catalogue sans explication.
 export function chargerMetasLocaux(s: Stockage | undefined = stockageLocal()): MetaNonRestaure[] {

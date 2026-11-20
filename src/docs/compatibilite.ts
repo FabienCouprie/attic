@@ -165,7 +165,7 @@ export type VersionsDeclarees = ReadonlyMap<string, number>;
 /**
  * Le manifeste du registre, à la version que le journal lui donne.
  *
- * `alias` est la table de `core/registre.ts`. Un alias dont la cible n'est pas inscrite n'est
+ * `alias` est la table du domaine, `audio/alias.ts`. Un alias dont la cible n'est pas inscrite n'est
  * rangé nulle part : `homonymesDuContrat` le refuse, et le manifeste ne doit pas l'inventer.
  */
 export function manifesteDuRegistre(

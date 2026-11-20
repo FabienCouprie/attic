@@ -1,11 +1,13 @@
 // core/registre.ts — Registre de plugins ET de types de flux, instancié et typé par domaine.
 //
-// `creerRegistre<TV, TR>()` retourne un registre cloisonné contenant :
+// `creerRegistre<TV, TR>({ alias })` retourne un registre cloisonné contenant :
 //  - les fiches de plugins (Map par id)
 //  - les types de flux (Map par id)
+//  - les anciens identifiants de fiche de son domaine, reçus à sa création
 //
 // Deux registres sont étanches : un type de flux "nombre" dans le domaine
-// nombre n'écrase pas un type "nombre" dans un autre domaine.
+// nombre n'écrase pas un type "nombre" dans un autre domaine, et un alias de
+// l'un ne détourne pas une fiche de l'autre.
 import type { PluginDef, FonctionPlugin } from "./types";
 import type { FormePort, TypeFlux } from "./typesFlux";
 import { valider } from "./validation";
@@ -54,57 +56,60 @@ export interface Registre<TV, TR> {
   ): boolean;
 }
 
-/**
- * Les anciens identifiants de fiche, et celle que chacun ouvre.
- *
- * EXPORTÉE POUR ÊTRE ÉNUMÉRÉE, et par un seul lecteur : le manifeste de compatibilité
- * (`docs/compatibilite.ts`) dit pour chaque composant les identifiants qui l'ouvrent, et refuse
- * qu'un alias disparaisse sans être déclaré. `trouverDef` résout un alias, il ne sait pas les lister.
- */
-export const ALIAS: Readonly<Record<string, string>> = {
-  "placer-son-zones": "placer-sons-zones",
-  "dererverb": "dereverberation",
-  "reverbe-progressive": "reverb-progressive",
-  "melangeur-audio": "melangeur",
-  "boite-a-rythmes": "boite-rythmes",
-  "variateur-vitesse": "changement-tempo",
-  "filtre": "reponse-filtre",
-  "boucle": "simple-boucle",
-  "fusionneur": "melangeur",
-  "entree-micro": "enregistreur-audio",
-  "reservoir-midi": "reservoir-musical",
-  // « Fin de boucle » est devenue « Fin de boucle A » quand B et C sont arrivées. Son
-  // identifiant n'a pas bougé — les graphes enregistrés le portent —, mais qui écrit un
-  // graphe à la main attend le suffixe du nom.
-  "boucle-graphe-fin-a": "boucle-graphe-fin",
-  // « Séquenceur de batterie » était un sous-ensemble strict de « Séquenceur de batterie avancé » :
-  // mêmes cinq pistes, dans le même ordre, sans la vélocité ni les trois pistes supplémentaires. Il
-  // a été supprimé ; les graphes enregistrés qui le portent ouvrent donc le second, qui sait relire
-  // leurs motifs binaires (voir `audio/batterie.ts`, `estMotifBinaire`).
-  "sequenceur-batterie": "sequenceur-batterie-avance",
-  // « Transcripteur MIDI » faisait le travail de « Transcription MIDI », un son rendu en notes MIDI,
-  // et sa méthode polyphonique transcrivait mal, relevé par Fabien. Il a été supprimé le 2026-11-14 ;
-  // les graphes enregistrés qui le portent ouvrent donc le second. L'entrée audio et la sortie MIDI
-  // y sont au même rang, de sorte que les câbles tiennent. Ses réglages n'y ont pas d'équivalent et
-  // ne sont plus lus : le second prend les siens par défaut.
-  "transcripteur-midi": "transcription-midi",
-};
-
-function resoudre(id: string): string {
-  return ALIAS[id] ?? id;
+/** Ce qu'un domaine remet à son registre en le créant. */
+export interface OptionsDuRegistre {
+  /**
+   * Les anciens identifiants de fiche du domaine, et celle que chacun ouvre. Pour l'audio,
+   * `audio/alias.ts`.
+   *
+   * PROPRES AU REGISTRE, ET NON AU MODULE, et c'est le contrat de départ : le cœur ne nomme aucun
+   * composant d'un domaine. La table vivait ici, en constante du module, si bien que le cœur portait
+   * quatorze identifiants audio et que TOUT registre les résolvait : une fiche d'un autre domaine
+   * nommée `filtre` y était introuvable, `trouverDef` cherchant `reponse-filtre`. Relevé par la
+   * relecture de `PORTING-A-DOMAIN.md` (PR 403), passé au registre sur décision de Fabien le
+   * 2026-11-20.
+   */
+  alias?: Readonly<Record<string, string>>;
 }
 
-export function creerRegistre<TV, TR>(): Registre<TV, TR> {
+export function creerRegistre<TV, TR>(options: OptionsDuRegistre = {}): Registre<TV, TR> {
+  const alias = options.alias ?? {};
   const plugins: PluginDef<TV, TR>[] = [];
   const parId = new Map<string, PluginDef<TV, TR>>();
   /** Les identifiants du socle, figés une fois le domaine inscrit. Voir `figerLesNatifs`. */
   const natifs = new Set<string>();
   const typesFlux = new Map<string, TypeFlux>();
 
+  /**
+   * Ce que cet identifiant ouvre : la fiche que l'alias désigne, ou lui-même.
+   *
+   * UNE CLÉ PROPRE À LA TABLE, ET NON UNE CLÉ HÉRITÉE. `alias[id]` lu tel quel rendait, pour
+   * `constructor` ou `toString`, une fonction d'`Object.prototype` : la recherche manquait alors une
+   * fiche de ce nom, et le refus de `enregistrer` l'aurait refusée.
+   */
+  function aliasDe(id: string): string | undefined {
+    return Object.prototype.hasOwnProperty.call(alias, id) ? alias[id] : undefined;
+  }
+
+  function resoudre(id: string): string {
+    return aliasDe(id) ?? id;
+  }
+
   function enregistrer(def: PluginDef<TV, TR>): void {
     const { erreurs, avertissements } = valider(def, { typeFlux: (id: string) => typesFlux.get(id), fluxCompatibles });
     if (erreurs.length) {
       console.error(`[attic] Plugin « ${def.id || "?"} » invalide : ${erreurs.join(" ; ")} — non enregistré.`);
+      return;
+    }
+    // UN IDENTIFIANT QUI EST UN ALIAS NE S'INSCRIT PAS. `trouverDef` résout l'alias avant de chercher,
+    // si bien qu'une fiche de ce nom serait inscrite et jamais trouvée : un nœud installé nommé
+    // `filtre` paraissait dans la palette sous son nom, puis, posé, s'affichait et s'exécutait en
+    // « Réponse de filtre », sans que rien le dise. Le refus le dit, et nomme la fiche qui l'ouvre.
+    const cible = aliasDe(def.id);
+    if (cible !== undefined) {
+      console.error(`[attic] Plugin « ${def.id} » : cet identifiant est un ancien identifiant de « ${cible} », `
+        + `et les graphes qui le portent ouvrent « ${cible} ». Une fiche de ce nom ne serait jamais trouvée : `
+        + "choisissez-en un autre — non enregistré.");
       return;
     }
     const existant = parId.get(def.id);

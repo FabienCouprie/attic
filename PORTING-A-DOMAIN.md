@@ -126,6 +126,9 @@ import { configurerRegistreMeta, configurerRegistreNodes } from "../core";
 import { toutesLesFiches } from "../plugins-image";
 import type { ValeurImage, RuntimeImage } from "./types-domaine";
 
+// Un domaine neuf n'a pas d'ancien identifiant. Le jour où il renomme une fiche,
+// il remet la table à son registre : `creerRegistre<…>({ alias: ALIAS })`, comme
+// `audio/adaptateur.ts` avec `audio/alias.ts`. Le cœur n'en porte aucune.
 export const registre = creerRegistre<ValeurImage, RuntimeImage>();
 
 // 1) Les types de flux du domaine : id, couleur du port, libellé.
@@ -611,7 +614,7 @@ Ce qui suit n'empêche **pas** de réutiliser le framework pour un autre domaine
 seulement de faire tourner **deux domaines différents dans la même fenêtre**, ce
 qui n'est pas un cas d'usage actuel.
 
-**Deux obstacles sont tombés**, et cette section les annonçait encore :
+**Trois obstacles sont tombés**, et cette section les annonçait encore :
 
 - `TypeValeur` ne figure plus dans `core/types.ts`. L'union des valeurs d'un
   domaine est déclarée **par ce domaine** — pour l'audio, `ValeurAudio` dans
@@ -619,18 +622,21 @@ qui n'est pas un cas d'usage actuel.
 - `core/metastore.ts` et `core/nodes-installes.ts` n'épinglent plus
   `PluginDef<TypeValeur, AudioContext>` : ils tiennent des
   `PluginDef<unknown, unknown>`. **Il n'y a donc plus rien à y substituer.**
+- La table des anciens identifiants n'est plus une constante de
+  `core/registre.ts`, que tout registre résolvait. Chaque domaine remet la sienne
+  à son registre, `creerRegistre({ alias })` ; pour l'audio, `audio/alias.ts`.
+  Une fiche d'un autre domaine nommée `filtre` se trouve donc sous son nom, et
+  `enregistrer` refuse un identifiant qui est un alias de son registre, en
+  nommant la fiche qui l'ouvre : inscrite, elle ne serait jamais trouvée.
 
-**Trois restent :**
+**Deux restent :**
 
 | Élément | Conséquence |
 |---|---|
 | `DEFS_CACHE` (`ui/AtelierNode.tsx`) | cache de fiches partagé par tout le processus, indexé sur l'identifiant de fiche |
 | Clés `attic-node-installe:<id>` (`core/nodes-installes.ts`) | `localStorage` non namespacé — deux domaines se reliraient les nœuds l'un de l'autre |
-| `ALIAS` (`core/registre.ts`) | une table du module, et non du registre : tout registre résout les anciens identifiants audio, si bien qu'une fiche d'un autre domaine nommée `filtre` ou `boucle` serait introuvable, `trouverDef` cherchant `reponse-filtre` ou `simple-boucle` |
 
-Le troisième mord dès un seul domaine : un identifiant homonyme d'un alias audio
-est perdu, cohabitation ou non. Pour une vraie cohabitation, il faudrait
-namespacer les trois. Les clés
+Pour une vraie cohabitation, il faudrait namespacer ces deux-là. Les clés
 `attic-meta:<id>` ne sont pas dans cette liste : elles appartiennent au shell
 (`ui/metasLocaux.ts`), le cœur ne persistant rien lui-même.
 
@@ -639,7 +645,7 @@ namespacer les trois. Les clés
 ## 8. Marche à suivre, condensée
 
 1. `src/<domaine>/types-domaine.ts` — `TValeur`, `TRuntime` et les alias.
-2. `src/<domaine>/adaptateur.ts` — `creerRegistre`, types de flux, fiches, `figerLesNatifs`, injection.
+2. `src/<domaine>/adaptateur.ts` — `creerRegistre` (avec ses alias, s'il en a), types de flux, fiches, `figerLesNatifs`, injection.
 3. Un premier plugin source (sans entrée) + un plugin de sortie. Vérifiez que la
    palette les affiche et qu'une arête se connecte.
 4. Posez le contrat d'échec (§4) **dès le premier plugin**, pas après.

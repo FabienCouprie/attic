@@ -51,7 +51,7 @@ lists that name it: `tests-e2e/vues-non-ecrasees.spec.ts`, `src/ui/urls-medias-n
 
 ### 6. Add an alias (for backward compatibility)
 
-If users have saved workflows that reference the old node id, add an alias in `src/core/registre.ts` so the saved graph still loads:
+If users have saved workflows that reference the old node id, add an alias in `src/audio/alias.ts` so the saved graph still loads. The audio adapter hands this table to its registry (`creerRegistre({ alias: ALIAS })`); the core holds none:
 
 ```ts
 export const ALIAS: Readonly<Record<string, string>> = {

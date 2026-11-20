@@ -279,7 +279,8 @@ The Listening Point needs none of them. Add them only if relevant:
 
 - **Rename an existing node** — never change a published `id` outright. Add
   `ancien-id → nouvel-id` in the `ALIAS` table of
-  [`src/core/registre.ts`](src/core/registre.ts): saved graphs always reload.
+  [`src/audio/alias.ts`](src/audio/alias.ts): saved graphs always reload. An id in that table can
+  no longer be registered: `enregistrer` refuses it, since `trouverDef` would open the alias target.
 
 - **Replace a parameter** — saved projects still carry the old one. If `executer` keeps reading it
   as a fallback, name it in the sheet's `anciensReglages`: the compiler then accepts the read, and
