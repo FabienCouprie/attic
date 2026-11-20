@@ -39,7 +39,7 @@ composants surveillés (`tests-e2e/empreintes.json`).
 
 - **Où** : chaque fiche de `src/plugins/`, ses ports, ses réglages et leurs valeurs de choix ; les
   migrations `nomsHerites`, `optionsHeritees` et `anciensReglages` sur la fiche, et `ALIAS` dans
-  `src/core/registre.ts`.
+  `src/audio/alias.ts`, que l'adaptateur remet au registre.
 - **Ce qu'une modification touche** : tout graphe déjà enregistré qui emploie le composant, ceux de
   la personne comme ceux de `exemples/` et les méta-composants. Une arête tient un port **par son
   rang**, une valeur de réglage tient **par le nom** du réglage : renommer, retirer ou déplacer l'un

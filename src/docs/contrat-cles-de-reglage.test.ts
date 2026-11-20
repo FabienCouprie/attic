@@ -22,8 +22,9 @@
 //
 // ═══ ET IL RÉSOUT LES ALIAS, PARCE QUE LE MOTEUR LES RÉSOUT ═══
 //
-// `core/registre.ts` fait correspondre treize anciens identifiants à des fiches actuelles, dont six
-// qui FUSIONNENT des composants différents (`fusionneur` → `melangeur`). Un garde qui lirait
+// Le registre audio, par la table `audio/alias.ts` qu'il reçoit, fait correspondre treize anciens
+// identifiants à des fiches actuelles, dont six qui FUSIONNENT des composants différents
+// (`fusionneur` → `melangeur`). Un garde qui lirait
 // `toutesLesFiches` par identifiant littéral tiendrait ces nœuds pour inconnus et les écarterait —
 // c'est-à-dire qu'il serait aveugle là où le risque est le plus grand, un alias étant précisément un
 // endroit où les réglages des deux fiches peuvent ne pas se correspondre.
@@ -201,7 +202,7 @@ describe("les clés de réglage des graphes livrés", () => {
       "",
       "À l'ouverture, un tel nœud ne trouve ni ports ni réglages : ses câbles sont écartés par",
       "`filtrerAretesInvalides` et son travail est perdu. Trois endroits peuvent le connaître :",
-      "la table `ALIAS` de `core/registre.ts` si la fiche a été renommée, le tableau `metas` du",
+      "la table `ALIAS` de `audio/alias.ts` si la fiche a été renommée, le tableau `metas` du",
       "fichier lui-même, ou `plugins/meta-exemples.ts` pour un méta embarqué.",
       "",
       ...inconnues.map((o) => `  ${o}`),

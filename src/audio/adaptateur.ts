@@ -31,8 +31,11 @@ import { estObjet } from "./multicanal";
 import { estCercle } from "./cercle";
 import { estSequence } from "./sequence";
 import { depuisPaquetAudio, versPaquetAudio } from "./paquet-audio";
+import { ALIAS } from "./alias";
 
-export const registre = creerRegistre<ValeurAudio, RuntimeAudio>();
+// LES ANCIENS IDENTIFIANTS DU DOMAINE SONT REMIS AU REGISTRE, et non lus par le cœur dans une table à
+// lui : voir `audio/alias.ts`, et `OptionsDuRegistre` de `core/registre.ts`.
+export const registre = creerRegistre<ValeurAudio, RuntimeAudio>({ alias: ALIAS });
 
 // LE REGISTRE EST JOIGNABLE DEPUIS LA PAGE, pour les épreuves de bout en bout et pour elles seules.
 // C'est ce qui permet à `tests-e2e/types-au-port.spec.ts` de DÉSARMER un prédicat et de vérifier que
