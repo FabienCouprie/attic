@@ -146,6 +146,10 @@ composants surveillés (`tests-e2e/empreintes.json`).
   `tests-e2e/conteneurs-dans-application.spec.ts`, `tests-e2e/boucle-dans-lot-dans-application.spec.ts`,
   `tests-e2e/boucle-reprise-dans-application.spec.ts`, `tests-e2e/boucle-collection.spec.ts`,
   `tests-e2e/lot-verif.spec.ts` et `tests-e2e/zones-dans-une-boucle-dans-application.spec.ts`.
+  Pour le dépliage d'une boucle de graphe et celui de l'instrument (`src/core/instrument-graphe.ts`),
+  `EXEMPLE=un-echo-en-boucle-et-un-instrument` sur `npm run test:empreintes-exemples` et sur
+  `npm run test:journal-de-passe` : c'est le seul exemple surveillé qui les porte, et les deux gardes
+  y ont vu rouge des tours qui ne se chaînent plus et une note qui n'est plus posée dans ses copies.
 
 ## 6. Les valeurs de choix et la langue
 

@@ -65,6 +65,8 @@
 // c'est à l'appelant de décider si cela lui convient.
 import type { Page } from "@playwright/test";
 
+import { estDebutDeBoucle } from "../src/core/boucle-graphe";
+
 /** Au-delà, on considère que le graphe ne finira pas : un graphe bloqué ne bloque pas la passe. */
 export const DELAI_RUN_MS = 180_000;
 
@@ -131,6 +133,24 @@ export interface OptionsPilote {
    * attendait jusqu'à son délai un nœud qui ne quittera jamais l'attente.
    */
   attentesAdmises?: readonly string[];
+}
+
+/**
+ * Les débuts de boucle de graphe d'un graphe, qu'un run laisse « en attente » : de quoi remplir
+ * `attentesAdmises` pour un verbe qui mène N'IMPORTE QUEL graphe sans savoir s'il en porte.
+ *
+ * POURQUOI CETTE FONCTION, relevé le 2026-11-20. `executer`, la base du son et le journal de passe
+ * ne passaient pas `attentesAdmises` : semé par eux, un graphe à boucle attendait jusqu'au délai du
+ * run un début qui ne quittera jamais l'attente. Aucun exemple livré n'en portait, et rien ne le
+ * disait.
+ *
+ * LA RÈGLE EST CELLE DU DÉPLIAGE, `estDebutDeBoucle` : un second exemplaire de la liste des débuts
+ * vieillirait sans que rien ne le dise. Les sous-nœuds des métas ne sont pas lus : aucun exemple
+ * livré n'en a besoin, et ce que montre un méta qui enferme un début n'a pas été relevé.
+ */
+export function debutsDeBoucle(grapheJson: string): string[] {
+  const g = JSON.parse(grapheJson) as { nodes?: { id: string; data?: { ficheId?: string } }[] };
+  return (g.nodes ?? []).filter((n) => estDebutDeBoucle(n.data?.ficheId)).map((n) => n.id);
 }
 
 /**

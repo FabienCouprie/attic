@@ -28,7 +28,7 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 
-import { apercusEnWav, etatDesNoeuds, semerEtLancer } from "./pilote-graphe";
+import { apercusEnWav, debutsDeBoucle, etatDesNoeuds, semerEtLancer } from "./pilote-graphe";
 import { serveurDeVerification } from "./serveur-de-developpement";
 import { lireWav } from "../src/audio/empreinte-wav";
 
@@ -125,7 +125,7 @@ test.describe("executer", () => {
     // l'application : le contexte est neuf à chaque cas et meurt avec lui. Le travail en cours de
     // Fabien n'est pas touché.
     const debut = Date.now();
-    await semerEtLancer(page, devUrl, json);
+    await semerEtLancer(page, devUrl, json, { attentesAdmises: debutsDeBoucle(json) });
     const secondes = (Date.now() - debut) / 1000;
 
     const etats = await etatDesNoeuds(page);

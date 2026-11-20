@@ -1,0 +1,223 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": {
+        "x": 1300,
+        "y": -40
+      },
+      "width": 520,
+      "height": 640,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UN ÉCHO EN BOUCLE ET UN INSTRUMENT REJOUÉ\n\nDeux façons de répéter une chaîne de composants. Dans les deux cas, le graphe exécuté n'est pas celui qu'on voit : avant de lancer, le moteur recopie ce qui est branché entre le début et la fin, et l'état de chaque copie remonte au nœud visible dont elle vient.\n\nEn haut, une boucle. « Début de boucle » fait trois tours, et chaque tour part du résultat du précédent : le son repasse par « Amplificateur », à −6 dB. « Fin de boucle A » met les trois tours bout à bout. On entend trois répétitions, chacune 6 dB plus faible que la précédente, comme un écho. Le début de boucle reste en attente : il n'est pas exécuté, c'est la chaîne recopiée qui tourne à sa place, et il dit combien de tours il a fait faire.\n\nEn bas, un instrument. Ce qui est branché entre « Note d'instrument » et « Fin d'instrument » est rejoué une fois par note, la note étant posée dans chaque copie : ici les notes MIDI 54, 67 et 72, d'après la largeur de zone et les deux bornes de « Fin d'instrument ». Rien n'est transposé : chaque note est calculée à sa hauteur, par la même dent de scie et le même passe-bas à 800 Hz. « Fin d'instrument » range les trois rendus en une banque et les joue l'un après l'autre dans son aperçu.",
+        "nomEn": "A LOOPED ECHO AND A REPLAYED INSTRUMENT\n\nTwo ways to repeat a chain of nodes. In both cases, the graph that runs is not the one on screen: before running, the engine copies what is connected between the start and the end, and the state of each copy goes up to the visible node it comes from.\n\nAt the top, a loop. « Loop Start » makes three passes, and each pass starts from the result of the previous one: the sound goes again through « Amplifier », at −6 dB. « Loop End A » puts the three passes end to end. Three repetitions are heard, each 6 dB quieter than the one before, like an echo. The loop start stays waiting: it is not run, the copied chain runs in its place, and it tells how many passes it had made.\n\nAt the bottom, an instrument. What is connected between « Instrument Note » and « Instrument End » is replayed once per note, the note being set in each copy: here MIDI notes 54, 67 and 72, from the zone width and the two bounds of « Instrument End ». Nothing is transposed: each note is computed at its own pitch, through the same sawtooth and the same 800 Hz lowpass. « Instrument End » gathers the three renders into a bank and plays them one after the other in its preview."
+      }
+    },
+    {
+      "id": "source",
+      "type": "atelier",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "oscillateur",
+        "parametres": {
+          "Forme": "Dent de scie",
+          "Fréquence": 220,
+          "Durée": 0.5,
+          "Volume": 60
+        }
+      }
+    },
+    {
+      "id": "fin",
+      "type": "atelier",
+      "position": {
+        "x": 780,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "boucle-graphe-fin",
+        "parametres": {
+          "Fondu": 10
+        }
+      }
+    },
+    {
+      "id": "debut",
+      "type": "atelier",
+      "position": {
+        "x": 260,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "boucle-graphe-debut",
+        "parametres": {
+          "Tours": 3,
+          "Graines": "Identiques"
+        }
+      }
+    },
+    {
+      "id": "attenuer",
+      "type": "atelier",
+      "position": {
+        "x": 520,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "amplificateur",
+        "parametres": {
+          "Gain": -6
+        }
+      }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": {
+        "x": 1040,
+        "y": 0
+      },
+      "data": {
+        "ficheId": "sortie-audio",
+        "parametres": {}
+      }
+    },
+    {
+      "id": "touche",
+      "type": "atelier",
+      "position": {
+        "x": 0,
+        "y": 520
+      },
+      "data": {
+        "ficheId": "frontiere-note",
+        "parametres": {
+          "Note": 60,
+          "Forme": "Dent de scie",
+          "Durée": 0.4,
+          "Volume": 40,
+          "Vélocité": 100
+        }
+      }
+    },
+    {
+      "id": "timbre",
+      "type": "atelier",
+      "position": {
+        "x": 400,
+        "y": 520
+      },
+      "data": {
+        "ficheId": "reponse-filtre",
+        "parametres": {
+          "Type": "Passe-bas",
+          "Fréquence de coupure": 800
+        }
+      }
+    },
+    {
+      "id": "banque",
+      "type": "atelier",
+      "position": {
+        "x": 800,
+        "y": 520
+      },
+      "data": {
+        "ficheId": "instrument-fin",
+        "parametres": {
+          "Largeur de zone": 6,
+          "Note basse": 48,
+          "Note haute": 72,
+          "Boucle de maintien": "Non",
+          "Début de boucle": 50
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-source-debut",
+      "source": "source",
+      "target": "debut",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-debut-attenuer",
+      "source": "debut",
+      "target": "attenuer",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-attenuer-fin",
+      "source": "attenuer",
+      "target": "fin",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-fin-ecoute",
+      "source": "fin",
+      "target": "ecoute",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-touche-timbre",
+      "source": "touche",
+      "target": "timbre",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    },
+    {
+      "id": "e-timbre-banque",
+      "source": "timbre",
+      "target": "banque",
+      "sourceHandle": "out:0",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee",
+      "style": {
+        "stroke": "#2a9d8f",
+        "strokeWidth": 2.5
+      }
+    }
+  ],
+  "metas": [],
+  "viewport": {
+    "x": 40,
+    "y": 100,
+    "zoom": 0.55
+  }
+}
