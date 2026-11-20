@@ -494,6 +494,19 @@ sur le type `"audio"` pour un port exposé qu'il ne résout pas, et
 `core/execution.ts` nomme la fréquence de travail dans les questions qu'il pose
 au domaine (`porterALaFrequenceDeTravail`, `frequencesMelees`).
 
+**Les identifiants de fiche ont leur garde à part**, `src/docs/frontiere-identifiants.test.ts`,
+né le 2026-11-20 quand la table `ALIAS` a quitté le cœur : aucun des deux cas ci-dessus
+ne pouvait la voir, une table de chaînes n'important rien et ne contenant aucun des mots
+énumérés. Il lit les chaînes du code de `src/core/` par l'arbre syntaxique, et refuse
+celle qui vaut l'identifiant d'une fiche du catalogue ou un de ses anciens identifiants.
+**Seize y restent, en quatre fichiers, épinglées comme dettes** avec leur raison :
+les nœuds-frontière des méta-composants (`core/meta.ts`), les bouts des boucles
+(`core/boucle-graphe.ts`), l'instrument rejoué touche par touche
+(`core/instrument-graphe.ts`) et la liaison des réglages de « Courbe »
+(`core/reglages-lies.ts`). La liste refuse de grandir, et une dette payée doit en
+sortir. Un second domaine qui voudrait des boucles ou des méta-composants devrait
+donc, aujourd'hui, déclarer des fiches sous ces identifiants-là.
+
 **Le runtime n'est pas encore déposable.** Le moteur du shell crée un
 `AudioContext` et le passe à tout exécuteur, `executerLesNoeuds<AudioContext>`
 dans `ui/moteur/passe.ts`, l'`AudioContext` étant construit par
@@ -674,6 +687,7 @@ nu quelque part. Cherchez-le.
 ## Voir aussi
 
 - `src/docs/frontiere-domaine.test.ts` — **la source de vérité** : ce qui reste couplé, et les quatre cécités dont ce garde s'est relevé
+- `src/docs/frontiere-identifiants.test.ts` — les identifiants de fiche que le cœur nomme encore, et la raison de chacun
 - `src/composition.ts` — la racine de composition du domaine audio, le seul fichier qui connaît les deux côtés
 - `src/core/domaine-nombre.test.ts` — un second domaine complet du côté du cœur : registre, types de flux, 4 plugins, graphe, validation, et la vraie boucle d'exécution
 - `IMPACT.md` — pour chaque zone du dépôt, ce qu'une modification y touche, les gardes qui la tiennent et les épreuves à relancer

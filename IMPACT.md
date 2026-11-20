@@ -174,7 +174,8 @@ composants surveillés (`tests-e2e/empreintes.json`).
   et toute la suite tant qu'aucun garde ne le cherche.
 - **Ce qui le tient** : `src/docs/frontiere-domaine.test.ts` (le cœur n'importe ni ne nomme rien du
   domaine, tout ce qu'il importe se résout dans `src/core/`, les poteaux n'importent rien du domaine,
-  et aucun exécuteur neuf ne lit l'interface), `src/docs/composition.test.ts` (la racine de
+  et aucun exécuteur neuf ne lit l'interface), `src/docs/frontiere-identifiants.test.ts` (aucune
+  chaîne neuve du cœur ne vaut un identifiant de fiche, seize dettes épinglées), `src/docs/composition.test.ts` (la racine de
   composition est le premier import de `src/main.tsx`), `src/core/cloisonnement.test.ts` et
   `src/core/domaine-nombre.test.ts` (un second domaine, par le vrai moteur).
 

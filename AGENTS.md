@@ -6,7 +6,7 @@ Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et trente-sept gardes sur lui-même : ils
+cela un banc de mesure, une base d'empreintes et trente-huit gardes sur lui-même : ils
 s'emploient, ils ne se réinventent pas.
 
 ---
@@ -167,11 +167,12 @@ se relève donc à l'oreille, et non par un garde.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — trente-sept contrats sur le dépôt lui-même : registre des réglages,
+- **`src/docs/*.test.ts`** — trente-huit contrats sur le dépôt lui-même : registre des réglages,
   **le contrat de chaque composant tel qu'un graphe enregistré en dépend**, graines,
   cœurs par trames, registre anglais, **texte en dur des vues — qu'aucun ne dépende de la langue** —,
   caractères de contrôle, style de documentation, classement
-  théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, frontière du cache
+  théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, **les identifiants
+  de fiche — qu'aucune chaîne neuve du cœur n'en nomme un, seize dettes épinglées** —, frontière du cache
   du moteur, couverture des
   empreintes, le serveur des specs de bout en bout, le pilote d'un graphe entier, **le croisement
   des nomenclatures — sous chaque valeur d'une nomenclature, chaque autre réglage agit encore** —,
