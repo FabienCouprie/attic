@@ -58,7 +58,7 @@ describe("un nœud ordinaire", () => {
 
 describe("un méta, d'après ce que ses internes ont rendu", () => {
   beforeEach(() => {
-    configurerRegistre({ enregistrer: () => {}, desenregistrer: () => {} } as never);
+    configurerRegistre({ enregistrer: () => ({ inscrite: true }), desenregistrer: () => {} } as never);
     enregistrerMeta({
       id: "meta-essai", nom: "Essai", entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "Reste", type: "audio" }],
       mapEntrees: [], mapSorties: [{ noeudInterne: "cd", portIndex: 1 }, { noeudInterne: "ef", portIndex: 0 }],

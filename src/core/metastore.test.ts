@@ -14,10 +14,13 @@ import {
   configurerRegistre, decrireMeta, enregistrerMeta, estMeta, supprimerMeta, trouverMeta,
 } from "./metastore";
 
-/** Un registre de fortune : on ne veut ici que la fiche telle qu'elle y est déposée. */
+/**
+ * Un registre de fortune : on ne veut ici que la fiche telle qu'elle y est déposée. Il accepte tout ;
+ * ce qu'un refus change se mesure sur le vrai registre, dans `metastore-refus.test.ts`.
+ */
 const deposees = new Map<string, Record<string, unknown>>();
 configurerRegistre({
-  enregistrer: (def: any) => { deposees.set(def.id, def); },
+  enregistrer: (def: any) => { deposees.set(def.id, def); return { inscrite: true }; },
   desenregistrer: (id: string) => { deposees.delete(id); },
 } as never);
 

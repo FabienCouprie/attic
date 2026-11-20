@@ -21,14 +21,46 @@ interface DepsTypesFlux {
   fluxCompatibles: (sourceId: string, cibleId: string) => boolean;
 }
 
-export function valider<TV, TR>(def: PluginDef<TV, TR>, deps: DepsTypesFlux): { erreurs: string[]; avertissements: string[] } {
-  const erreurs: string[] = [];
+/**
+ * Une faute qui fait refuser une fiche, dite par sa forme et non par une phrase.
+ *
+ * POURQUOI UNE FORME. Les erreurs de `valider` étaient des phrases françaises, et c'était tout : la
+ * console les lisait, et l'interface ne pouvait que les compter. Un `.zip` refusé pour son manifeste
+ * disait donc « 1 erreur(s), détaillées dans la console », console que personne ne lit dans
+ * l'application construite. Le cœur ne traduit pas ; il dit ce qui manque, et la couche qui parle à
+ * la personne le compose dans sa langue.
+ */
+export type FauteDeFiche =
+  | { code: "id-manquant" }
+  | { code: "nom-manquant" }
+  | { code: "resume-manquant" }
+  | { code: "executer-manquant" }
+  | { code: "port-sans-type"; port: string }
+  | { code: "type-inconnu"; port: string; type: string }
+  | { code: "parametre-hors-empreinte"; parametre: string };
+
+/** La phrase française d'une faute : celle que la console écrivait déjà, à l'identique. */
+export function fauteEnFrancais(f: FauteDeFiche): string {
+  switch (f.code) {
+    case "id-manquant": return "id manquant";
+    case "nom-manquant": return "nom manquant";
+    case "resume-manquant": return "résumé manquant";
+    case "executer-manquant": return "fonction executer manquante";
+    case "port-sans-type": return `port « ${f.port} » sans type déclaré`;
+    case "type-inconnu": return `port « ${f.port} » : type « ${f.type} » non enregistré dans typesFlux`;
+    case "parametre-hors-empreinte": return `paramètre « ${f.parametre} » non capturé par empreinteParametres (cache incohérent)`;
+  }
+}
+
+export function valider<TV, TR>(def: PluginDef<TV, TR>, deps: DepsTypesFlux):
+  { erreurs: string[]; avertissements: string[]; fautes: FauteDeFiche[] } {
+  const fautes: FauteDeFiche[] = [];
   const avertissements: string[] = [];
 
-  if (!def.id) erreurs.push("id manquant");
-  if (!def.nom) erreurs.push("nom manquant");
-  if (!def.resume) erreurs.push("résumé manquant");
-  if (typeof def.executer !== "function") erreurs.push("fonction executer manquante");
+  if (!def.id) fautes.push({ code: "id-manquant" });
+  if (!def.nom) fautes.push({ code: "nom-manquant" });
+  if (!def.resume) fautes.push({ code: "resume-manquant" });
+  if (typeof def.executer !== "function") fautes.push({ code: "executer-manquant" });
   if (!def.notice) avertissements.push("notice absente");
   for (const p of def.parametres ?? []) {
     if (!p.doc && !p.docEn) avertissements.push(`paramètre « ${p.nom} » sans documentation`);
@@ -36,9 +68,9 @@ export function valider<TV, TR>(def: PluginDef<TV, TR>, deps: DepsTypesFlux): { 
 
   for (const port of [...(def.entrees ?? []), ...(def.sorties ?? [])]) {
     if (!port.type) {
-      erreurs.push(`port « ${port.nom} » sans type déclaré`);
+      fautes.push({ code: "port-sans-type", port: port.nom });
     } else if (!deps.typeFlux(port.type)) {
-      erreurs.push(`port « ${port.nom} » : type « ${port.type} » non enregistré dans typesFlux`);
+      fautes.push({ code: "type-inconnu", port: port.nom, type: port.type });
     }
   }
 
@@ -55,12 +87,12 @@ export function valider<TV, TR>(def: PluginDef<TV, TR>, deps: DepsTypesFlux): { 
       else mutant.parametres[p.nom] = JSON.stringify(p.defaut) + "_x";
       const hashMutant = empreinteParametres(mutant);
       if (hashBase === hashMutant) {
-        erreurs.push(`paramètre « ${p.nom} » non capturé par empreinteParametres (cache incohérent)`);
+        fautes.push({ code: "parametre-hors-empreinte", parametre: p.nom });
       }
     }
   }
 
-  return { erreurs, avertissements };
+  return { erreurs: fautes.map(fauteEnFrancais), avertissements, fautes };
 }
 
 export interface ResultatValidationGraphe {

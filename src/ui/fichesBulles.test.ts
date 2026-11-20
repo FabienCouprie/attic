@@ -1,5 +1,5 @@
 // ui/fichesBulles.test.ts — La fiche d'une bulle se dessine, mais ne se choisit pas.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   creerRegistre, estBulle, ficheDeBulle,
@@ -102,5 +102,18 @@ describe("la synchronisation des fiches de bulle", () => {
     const r = registrePret();
     synchroniserFichesBulles(GRAPHE, ARETES, r);
     for (const e of r.trouverDef(ficheDeBulle("b1"))!.entrees) expect(e.requis).toBe(false);
+  });
+
+  it("UNE FICHE QUE LE REGISTRE REFUSE NE SE DIT PAS INSCRITE", () => {
+    // LE CAS EST FABRIQUÉ, et il le faut : une fiche de bulle porte un identifiant préfixé, un nom et
+    // un résumé calculés, des ports pris à des fiches inscrites, et aucun graphe réel ne la fait
+    // refuser. Un natif figé sous son identifiant suffit à éprouver que la liste lit le rendu.
+    const r = registrePret();
+    r.enregistrer(def(ficheDeBulle("b1"), 0, 0));
+    r.figerLesNatifs();
+    const cri = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { inscrites } = synchroniserFichesBulles(GRAPHE, ARETES, r);
+    cri.mockRestore();
+    expect(inscrites, "la fiche refusée n'est pas dans la liste rendue").toEqual([]);
   });
 });

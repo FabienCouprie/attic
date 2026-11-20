@@ -103,8 +103,9 @@ export function synchroniserFichesBulles(
       // Jamais appelé : une bulle est décorative, l'exécuteur l'écarte de son ordre de calcul.
       executer: async () => ({ valeurs: ports.sorties.map(() => null), message: "" }),
     };
-    registre.enregistrer(def);
-    inscrites.push(ficheId);
+    // NE SE DIT INSCRITE QUE CE QUE LE REGISTRE A INSCRIT : la liste rendue servait de preuve de la
+    // synchronisation, et portait aussi les fiches refusées. Le refus est dit à la console.
+    if (registre.enregistrer(def).inscrite) inscrites.push(ficheId);
   }
 
   const retirees: string[] = [];

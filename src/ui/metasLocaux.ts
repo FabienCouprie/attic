@@ -145,7 +145,16 @@ export function chargerMetasLocaux(s: Stockage | undefined = stockageLocal()): M
     const nonRestaures: MetaNonRestaure[] = [];
     for (const m of liste) {
       const manquants = fichesManquantes(m, idsPersistes);
-      if (manquants.length === 0) { sansReecrire(() => enregistrerMeta(m as MetaComposant)); continue; }
+      if (manquants.length === 0) {
+        // UN MÉTA QUE LE REGISTRE REFUSE N'EST PAS CHARGÉ, ET SA CLÉ RESTE, comme celle d'un méta
+        // dont un bloc manque : il a pu être persisté avant que `enregistrerMeta` ne lise le refus.
+        let inscription: ReturnType<typeof enregistrerMeta> | undefined;
+        sansReecrire(() => { inscription = enregistrerMeta(m as MetaComposant); });
+        if (inscription && !inscription.inscrite) {
+          console.warn(`[attic] Méta « ${m.id} » non restauré : le registre le refuse (${inscription.raison}).`);
+        }
+        continue;
+      }
       console.warn(`[attic] Méta « ${m.id} » non restauré : sous-nœud(s) inconnu(s) : ${manquants.join(", ")}`);
       nonRestaures.push({ nom: m.nom, manquants });
     }
@@ -193,6 +202,9 @@ export function appliquerMetaDistant(cle: string | null, valeur: string | null,
     console.warn(`[attic] Méta « ${id} » venu d'une autre fenêtre, non repris : fiche(s) inconnue(s) ${manquants.join(", ")}`);
     return { id, action: "ignore" };
   }
-  sansReecrire(() => enregistrerMeta(m as MetaComposant));
+  let inscription: ReturnType<typeof enregistrerMeta> | undefined;
+  sansReecrire(() => { inscription = enregistrerMeta(m as MetaComposant); });
+  // REFUSÉ, LE CATALOGUE D'ICI N'A PAS CHANGÉ.
+  if (inscription && !inscription.inscrite) return { id, action: "ignore" };
   return { id, action: "enregistre" };
 }

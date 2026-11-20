@@ -29,6 +29,7 @@ import {
   type MetaComposant, type PerteAuChargement,
 } from "../../core";
 import { servicesDomaine } from "../../core/services-domaine";
+import { messageMetasRefuses, type RefusDuRegistre } from "../../refus-du-registre";
 import { registreUI } from "../registre-actif";
 import { pertesDesNoeuds, traduireNomsHerites } from "../pertes-chargement";
 import { rechargerFichiersPersistes } from "../rechargerFichiers";
@@ -133,10 +134,16 @@ export async function importerProjet(
   }
   // Ré-enregistrer les méta-composants AVANT de reconstruire les nœuds. Un méta
   // défaillant ne doit pas interrompre tout l'import (les autres + les nœuds passent).
+  // UN MÉTA QUE LE REGISTRE REFUSE SE DIT : il n'est pas chargé, et le catalogue ne le montrera pas.
+  const metasRefuses: { id: string; refus: RefusDuRegistre }[] = [];
   for (const m of (json.metas || [])) {
-    try { enregistrerMeta(m as MetaComposant); }
-    catch (e) { console.error(`[attic] Import : méta « ${(m as any)?.id} » non enregistré`, e); }
+    try {
+      const inscription = enregistrerMeta(m as MetaComposant);
+      if (!inscription.inscrite) metasRefuses.push({ id: String((m as any)?.id), refus: inscription });
+    } catch (e) { console.error(`[attic] Import : méta « ${(m as any)?.id} » non enregistré`, e); }
   }
+  const refusDits = messageMetasRefuses(metasRefuses);
+  if (refusDits && typeof alert !== "undefined") alert(refusDits);
   // On repart à la racine (fin d'une éventuelle navigation dans un méta).
   // LA VUE DU FICHIER EST DÉPOSÉE AVANT : cette remise à zéro déclenche le recadrage d'`App.tsx`,
   // qui écrasait la vue posée plus bas. Il la pose désormais au lieu de cadrer ; sans vue, ou pour
