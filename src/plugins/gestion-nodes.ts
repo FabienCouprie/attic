@@ -8,13 +8,32 @@ import type { ValeurAudio, RuntimeAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import type { FicheAudio } from "../audio/types-domaine";
 import { avecDoc } from "./notices";
-import { installerNode } from "../core";
+import { installerNode, type InstallationDuNode } from "../core";
 
 // Injection : l'adaptateur configure le registre au démarrage.
 // Ce plugin est un outil d'administration (export/import .zip) qui accède
 // au registre — ce n'est pas un plugin de traitement.
 let registre: Registre<ValeurAudio, RuntimeAudio> | null = null;
 export function configurerRegistreGestion(r: Registre<ValeurAudio, RuntimeAudio>): void { registre = r; }
+
+/**
+ * Ce que la personne lit quand le registre refuse le nœud reçu, dans sa langue.
+ *
+ * LE REFUS SE DIT ICI, et nulle part ailleurs à l'écran : le registre l'écrit à la console, que
+ * personne ne lit dans l'application construite. LES ERREURS D'UN MANIFESTE INVALIDE NE SONT QU'EN
+ * FRANÇAIS, `core/validation.ts` les composant ainsi : les deux langues en disent le nombre, et le
+ * détail reste à la console. Les montrer en français seulement, l'anglais n'en donnant que le nombre,
+ * est refusé par `i18n.test.ts` et `docs/anglais-registre.test.ts` : mêmes marqueurs dans les deux
+ * langues, et aucun argument jeté.
+ */
+function messageDuRefus(id: string, refus: Exclude<InstallationDuNode, { inscrite: true }>): string {
+  switch (refus.raison) {
+    case "natif": return traduire("msg.import_refuse_natif", id);
+    case "alias": return traduire("msg.import_refuse_alias", id, refus.cible);
+    case "invalide": return traduire("msg.import_refuse_invalide", id, refus.erreurs.length);
+    case "sans-registre": return traduire("msg.import_refuse_sans_registre", id);
+  }
+}
 
 // Récupère les 5 derniers plugins au moment de l'appel (pas au chargement du module)
 function getPluginsRecents(): string[] {
@@ -195,7 +214,7 @@ export const fiches: FicheAudio[] = ([
 
         // Installer le node
         ctx.onProgress(traduire("progress.installation_du_node"));
-        installerNode({
+        const installation = installerNode({
           manifest: res.manifest,
           executerCode: res.executerCode,
           notice: res.notice,
@@ -203,6 +222,11 @@ export const fiches: FicheAudio[] = ([
           noticeTextEn: res.notice?.en,
           consenti: new Date().toISOString(),
         });
+        // UN NŒUD QUE LE REGISTRE REFUSE N'EST PAS INSTALLÉ, et ce message l'annonçait « installé ».
+        // Rien n'entre au catalogue : la palette n'a pas à se relire.
+        if (!installation.inscrite) {
+          return { valeurs: [], erreur: true, message: messageDuRefus(res.manifest.id, installation) };
+        }
 
         // LA PALETTE SE RELIT PAR LE CANAL DU MOTEUR, et rien ne reste sur le nœud.
         return { valeurs: [], moteur: { paletteARelire: true }, message: traduire("msg.node_var_0_install_var_1_var_2_var_3_var_4_d_pendance_s_var_", res.manifest.id, res.manifest.nom, res.manifest.univers, res.manifest.famille, res.dependencies?.length || 0, (res.dependencies || []).join(", ") || "aucune") };

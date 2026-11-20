@@ -1,5 +1,5 @@
 export { creerRegistre } from "./registre";
-export type { Registre } from "./registre";
+export type { Inscription, Registre } from "./registre";
 export { aplatirGraphe, creerMeta, indexPort, metasEmployes, nettoyerNoeud,
   frontieresPourEdition, redériverMeta, estFrontiere, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE } from "./meta";
 export type { MetaComposant, NoeudG, AreteG, DefPorts, PortInterne } from "./meta";
@@ -15,6 +15,7 @@ export { trouverMeta, tousLesMetas, estMeta, decrireMeta, enregistrerMeta, suppr
 export { ordreDeLecture, ordreTopologique, placerEnDernier, ancetres, descendants, perimetreCible, empreinteEntrees, empreinteParametres, empreinteSorties, empreinteValeur, empreinteValeursEntrantes, fermeraitUnCycle, noeudsEnCycle, resoudreEntree, valeursEntrantes } from "./graphe";
 export type { TypeFlux } from "./typesFlux";
 export { chargerNodesInstalles, installerNode, configurerRegistreNodes, appliquerNodeInstalleDistant, listeDesNodesInstallesStockes } from "./nodes-installes";
+export type { InstallationDuNode } from "./nodes-installes";
 // CE QUE LE CŒUR DEMANDE AU DOMAINE sur ses propres valeurs : empreinte, nom de type, types non
 // sérialisables, globales prêtées aux nodes installés. Neutre tant qu'aucun adaptateur n'a répondu.
 export { configurerServicesDomaine, oublierServicesDomaine, servicesDomaine } from "./services-domaine";

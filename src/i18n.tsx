@@ -1213,6 +1213,22 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
     en: "Import refused: « Execution » is set to « Refuse ». Set « Execution » to « Authorise » to grant the component the right to run; its name, ports and code fingerprint will be shown before installing.",
   },
   "msg.chec_import_var_0": { fr: "✗ Échec import : {__VAR_0__}", en: "Import failure: {__VAR_0__}" },
+  "msg.import_refuse_natif": {
+    fr: "✗ Composant « {__VAR_0__} » non installé : cet identifiant est celui d'un composant natif, qui ne se remplace pas. Changer l'identifiant dans manifest.json, puis réimporter.",
+    en: "✗ Node \"{__VAR_0__}\" not installed: this identifier belongs to a built-in component, which cannot be replaced. Change the identifier in manifest.json, then re-import.",
+  },
+  "msg.import_refuse_alias": {
+    fr: "✗ Composant « {__VAR_0__} » non installé : cet identifiant est un ancien identifiant de « {__VAR_1__} », et les graphes qui le portent ouvrent « {__VAR_1__} ». Changer l'identifiant dans manifest.json, puis réimporter.",
+    en: "✗ Node \"{__VAR_0__}\" not installed: this identifier is a former identifier of \"{__VAR_1__}\", and graphs that carry it open \"{__VAR_1__}\". Change the identifier in manifest.json, then re-import.",
+  },
+  "msg.import_refuse_invalide": {
+    fr: "✗ Composant « {__VAR_0__} » non installé : son manifeste est invalide ({__VAR_1__} erreur(s), détaillées dans la console). Corriger manifest.json, puis réimporter.",
+    en: "✗ Node \"{__VAR_0__}\" not installed: its manifest is invalid ({__VAR_1__} error(s), listed in the console). Fix manifest.json, then re-import.",
+  },
+  "msg.import_refuse_sans_registre": {
+    fr: "✗ Composant « {__VAR_0__} » non installé : le registre des composants n'est pas configuré.",
+    en: "✗ Node \"{__VAR_0__}\" not installed: the component registry is not configured.",
+  },
   "msg.node_var_0_install_var_1_var_2_var_3_var_4_d_pendance_s_var_": { fr: "✓ Composant « {__VAR_0__} » installé\n{__VAR_1__} · {__VAR_2__}/{__VAR_3__}\n📦 {__VAR_4__} dépendance(s) : {__VAR_5__}", en: "✓ Node \"{__VAR_0__}\" installed\n{__VAR_1__} · {__VAR_2__}/{__VAR_3__}\n📦 {__VAR_4__} dependency(s): {__VAR_5__}" },
   "msg.var_0_instruments_var_1": { fr: "{__VAR_0__} instruments{__VAR_1__}", en: "{__VAR_0__} instruments{__VAR_1__}" },
   "msg.julia_non_trouv_cliquez_sur_configurer_dans_le_node": { fr: "Julia non trouvé. Cliquez sur ⚙ Configurer dans le composant.", en: "Julia not found. Click on ⚙ Configure in the node." },
