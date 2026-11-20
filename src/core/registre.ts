@@ -12,8 +12,28 @@ import type { PluginDef, FonctionPlugin } from "./types";
 import type { FormePort, TypeFlux } from "./typesFlux";
 import { valider } from "./validation";
 
+/**
+ * Ce que `enregistrer` rend : la fiche est inscrite, ou la raison pour laquelle elle ne l'est pas.
+ *
+ * POURQUOI UN RÉSULTAT, ET NON PLUS `void`. Le refus n'était dit qu'à la console, que personne ne lit
+ * dans l'application construite, et l'appelant n'en savait rien : `installerNode` écrivait « ✓ »,
+ * gardait le nœud en stockage, et le Gestionnaire de nodes annonçait « installé » d'un nœud que le
+ * registre venait de refuser. Observé dans l'application le 2026-11-20 sous l'identifiant `filtre`.
+ *
+ * LA RAISON VOYAGE AVEC LE REFUS, ET NON UN BOOLÉEN. L'appelant doit pouvoir dire à la personne quoi
+ * changer, et seul le registre sait si l'identifiant est un natif figé ou un alias, la table des
+ * alias et l'ensemble des natifs lui étant propres. Relire `tousLesInscrits` après coup aurait dit
+ * qu'il y a eu refus, jamais pourquoi, et aurait tenu la règle en deux endroits qui peuvent diverger.
+ */
+export type Inscription =
+  | { inscrite: true }
+  | { inscrite: false; raison: "invalide"; erreurs: string[] }
+  | { inscrite: false; raison: "alias"; cible: string }
+  | { inscrite: false; raison: "natif" };
+
 export interface Registre<TV, TR> {
-  enregistrer(def: PluginDef<TV, TR>): void;
+  /** Inscrit la fiche, ou la refuse et le dit à la console. Le refus se lit dans ce qui est rendu. */
+  enregistrer(def: PluginDef<TV, TR>): Inscription;
   /**
    * Fige ce qui est inscrit à cet instant : plus rien ne pourra en remplacer un identifiant.
    *
@@ -95,11 +115,11 @@ export function creerRegistre<TV, TR>(options: OptionsDuRegistre = {}): Registre
     return aliasDe(id) ?? id;
   }
 
-  function enregistrer(def: PluginDef<TV, TR>): void {
+  function enregistrer(def: PluginDef<TV, TR>): Inscription {
     const { erreurs, avertissements } = valider(def, { typeFlux: (id: string) => typesFlux.get(id), fluxCompatibles });
     if (erreurs.length) {
       console.error(`[attic] Plugin « ${def.id || "?"} » invalide : ${erreurs.join(" ; ")} — non enregistré.`);
-      return;
+      return { inscrite: false, raison: "invalide", erreurs };
     }
     // UN IDENTIFIANT QUI EST UN ALIAS NE S'INSCRIT PAS. `trouverDef` résout l'alias avant de chercher,
     // si bien qu'une fiche de ce nom serait inscrite et jamais trouvée : un nœud installé nommé
@@ -110,7 +130,7 @@ export function creerRegistre<TV, TR>(options: OptionsDuRegistre = {}): Registre
       console.error(`[attic] Plugin « ${def.id} » : cet identifiant est un ancien identifiant de « ${cible} », `
         + `et les graphes qui le portent ouvrent « ${cible} ». Une fiche de ce nom ne serait jamais trouvée : `
         + "choisissez-en un autre — non enregistré.");
-      return;
+      return { inscrite: false, raison: "alias", cible };
     }
     const existant = parId.get(def.id);
     if (existant) {
@@ -119,18 +139,19 @@ export function creerRegistre<TV, TR>(options: OptionsDuRegistre = {}): Registre
       // du socle : son nom, son icône, sa place dans la palette, et un autre code derrière.
       if (natifs.has(def.id)) {
         console.error(`[attic] Plugin « ${def.id} » : un composant natif ne se remplace pas — non enregistré.`);
-        return;
+        return { inscrite: false, raison: "natif" };
       }
       const idx = plugins.indexOf(existant);
       if (idx >= 0) plugins[idx] = def;
       parId.set(def.id, def);
-      return;
+      return { inscrite: true };
     }
     if ((import.meta as any).env?.DEV && avertissements.length) {
       console.warn(`[attic] Plugin « ${def.id} » — documentation incomplète : ${avertissements.join(" ; ")}`);
     }
     plugins.push(def);
     parId.set(def.id, def);
+    return { inscrite: true };
   }
 
   function trouverPlugin(id: string): FonctionPlugin<TV, TR> | undefined {
