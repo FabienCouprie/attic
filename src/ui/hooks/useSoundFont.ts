@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { EnvoiDuCache } from "../moteur";
 
-import { autoChargerSF2, chargerSF2Globale, sf2Nom } from "../../plugins/soundfontGlobal";
+import { autoChargerSF2, chargerSF2Globale, retenirChoixSF2, sf2Nom } from "../../plugins/soundfontGlobal";
 import { decisionDeVidage } from "../soundfont-cache";
 
 export interface OptionsSoundFont {
@@ -57,7 +57,9 @@ export function useSoundFont({ repertoire, envoyer, enExecution }: OptionsSoundF
   const chargerSF2 = useCallback(async (f: File) => {
     try {
       await chargerSF2Globale(await f.arrayBuffer(), f.name);
-      localStorage.setItem("attic-sf2-nom", f.name);
+      // Le chemin, sous Electron, est ce qui fait retrouver le fichier au démarrage suivant, où qu'il soit.
+      const api = (window as any).api;
+      retenirChoixSF2(f.name, api?.cheminFichier ? api.cheminFichier(f) || "" : "");
       accueillir(f.name);
     } catch (e: any) {
       console.error("[attic] Échec chargement SF2 :", e);

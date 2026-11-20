@@ -1380,6 +1380,23 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **LE SOUNDFONT QUE L'UTILISATEUR A CHOISI REVIENT AU DÉMARRAGE, AU LIEU DE FLUIDR3, ET IL EST RETROUVÉ OÙ QU'IL SOIT SUR LE DISQUE.** Demandé par Fabien le 2026-11-19 : « l'utilisateur doit pouvoir utiliser un autre soundfont s'il le souhaite ».
+  - **Le défaut.** `autoChargerSF2` (`plugins/soundfontGlobal.ts`) cherchait d'abord la banque livrée, FluidR3, que l'installeur porte toujours (`resources/sf2/`). Un utilisateur qui avait chargé un autre SoundFont par la barre d'outils retrouvait donc FluidR3 à chaque démarrage. Et seul le nom du fichier était retenu : un fichier pris hors du dossier `sf2/` n'était jamais retrouvé, même sans FluidR3. L'ordre datait de la v2.3.3.
+  - **La règle.** Au démarrage, Attic cherche dans cet ordre, écrit par `sourcesDuDemarrage` :
+    1. le fichier choisi, par son chemin, que la barre retient désormais sous `attic-sf2-chemin` grâce à `api.cheminFichier` ;
+    2. le fichier choisi, par son nom, dans le dossier `sf2/`, comme avant ;
+    3. la banque livrée ;
+    4. le répertoire de travail.
+
+    Un fichier choisi qui a disparu laisse la banque livrée. Un nouveau choix sans chemin, hors d'Electron, efface l'ancien chemin : celui-ci passerait sinon devant lui.
+  - **Les cas**, dans `plugins/soundfontGlobal.test.ts`, sont six. La faute plantée, l'ordre d'avant remis, en fait tomber quatre. La seconde, l'ancien chemin gardé après un choix sans chemin, en fait tomber un.
+  - **Dans Electron**, sur l'application construite et un profil jetable, deux démarrages encadrent le chargement d'un second SoundFont, `Autre banque.sf2`, pris hors du dossier `sf2/`. Le premier démarrage charge `FluidR3_GM.sf2`. Le choix retient le nom et le chemin complet. Le second démarrage charge `Autre banque.sf2`. Avec l'ordre d'avant remis et l'application reconstruite, le second démarrage rend `FluidR3_GM.sf2`.
+  - **Vu en route, non corrigé** : chaque démarrage charge la banque deux fois, deux lignes `SF2 global chargé` dans la console, sur l'ordre d'avant comme sur celui-ci. La cause n'a pas été cherchée.
+  - **L'ordre de vérification** :
+    - `npx tsc -b` est vert ;
+    - `npx oxlint` donne 27 avertissements et 0 erreur, aucun dans ces fichiers ;
+    - la passe complète, reposée sur `master` `381eff09`, rend 792 fichiers verts et 3 sautés, 11 200 cas verts et 21 sautés, en 30 min 19 s. Un seul fichier tombe : `multicanal-traversee`, sur le délai de sa préparation et sans aucune assertion rouge, pendant qu'une autre session faisait sa passe complète. Relancé seul, il passe : 4 cas en 21 min 30 s.
+
 - **LA RECHERCHE DE LA PALETTE LIT LES ÉTIQUETTES DES FICHES : « LESLIE », « DX7 » OU « TPDF » TROUVENT ENFIN LEUR COMPOSANT.** Relevé par la relecture d'`ADDING-A-NODE.md` le 2026-11-19 : le guide présentait `etiquettes` comme des mots de recherche, dix fiches en déclarent, et rien ne les lisait. Tranché par Fabien le même jour : « la recherche lit ».
   - **Le relevé** : 10 fiches portent 80 étiquettes, et 22 ne trouvaient pas leur fiche, n'étant ni dans son nom, ni dans son résumé, ni dans sa famille, ni dans sa notice. Parmi elles « leslie » et « cabine » pour le « Haut-parleur rotatif », « dx7 » pour « FM à six opérateurs », « TPDF » et « mise en forme du bruit » pour « Dither », « acid » pour le « Filtre TB-303 », « supersaw » et « vco » pour l'« Oscillateur analogique ».
   - **La réparation** : `champs` de `ui/recherche-palette.ts` ajoute les étiquettes aux huit champs qu'il balayait. Une ligne.
@@ -1441,6 +1458,7 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
     - `npx tsc -b` est vert ;
     - `npx oxlint` donne 27 avertissements et 0 erreur, aucun dans ces fichiers ;
     - la passe complète est verte en 23 min 39 s, 784 fichiers dont 3 sautés, 11 137 cas verts et 17 sautés, sur cette correction réunie aux deux autres du même §1.4 (`__attic_execution__` lâché, lectures mortes de `_affichage`). Sur cette correction seule : les dossiers `ui/moteur` et `core` et les deux gardes touchés, 56 fichiers et 652 cas verts.
+
 - **QUATRE SPECS DE BOUT EN BOUT RETROUVENT L'ENTRÉE D'IMPORT : ELLES LA CHERCHAIENT PAR `accept=".json"`, ET LA BARRE D'OUTILS PORTE `accept=".json,.attic"` DEPUIS LA PR 370.** Relevé le 2026-11-17 par l'épreuve de la conception du graphe (PR 375), puis le 2026-11-19 par la pièce P6 de l'architecture par messages (PR 384), qui a relancé ces specs pour éprouver l'import et Ctrl+Z.
   - **Le défaut.** Un sélecteur d'attribut `[accept=".json"]` exige l'égalité. `setInputFiles` attendait donc une entrée qui n'existait plus, jusqu'au délai du cas, et les quatre specs tombaient aussi sur `master`.
   - **La correction**, sept sélecteurs dans `format-projet` (3), `montage-piste-branchee`, `retablir-dans-application` et `urls-medias-dans-application` : `accept*=".json"`, qui demande que la liste contienne `.json`. C'est la forme que `graphe-complexite-dans-application.spec.ts` emploie déjà. Elle survit à une extension ajoutée et reste univoque : des onze entrées de fichier de `src/` qui portent un `accept`, seule celle de l'import, dans `ui/BarreOutils.tsx`, contient `.json`. Un commentaire le dit à la première occurrence de chaque spec.
