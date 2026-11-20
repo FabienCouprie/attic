@@ -99,7 +99,12 @@ composants surveillés (`tests-e2e/empreintes.json`).
   - `src/core/rendu-du-visible.test.ts`, `src/core/protocole-moteur.test.ts`,
     `src/ui/recepteur-moteur.test.ts` et les tests de `src/ui/moteur/` ;
   - `src/docs/frontiere-moteur.test.ts` : rien du dossier du moteur n'atteint React, React Flow ni les
-    trois magasins, et l'interface n'importe de ce dossier que son index.
+    trois magasins, et l'interface n'importe de ce dossier que son index ;
+  - `src/docs/indices-moteur.test.ts` : chaque indice d'`IndicesMoteur` (`src/core/types.ts`), ce que
+    la passe, le cache, le correctif et la relance lisent sur une fiche, est porté par une vraie fiche
+    d'un exemple que jouent les deux épreuves ci-dessous, ou déclaré non éprouvé ou hors de portée
+    avec sa raison. `exemples/ce-que-le-moteur-lit-sur-un-noeud.json` porte ceux qu'aucun autre
+    exemple ne portait.
 - **À relancer** : `npm run test:journal-de-passe`, qui relève dans l'application l'ordre de toutes
   les écritures d'une passe dans les trois magasins, Lancer, ▶ et ↺ compris ;
   `npm run test:empreintes-exemples` ; `npm run test:graphe-complexite` ; et
@@ -118,8 +123,12 @@ composants surveillés (`tests-e2e/empreintes.json`).
 - **Ce qui le tient** : `src/core/cache-execution.test.ts` (la règle et son exception),
   `src/ui/moteur/cache.test.ts`, `src/ui/moteur/commandes.test.ts`, le cas de la clé de cache de
   `src/core/instantane-de-graphe.test.ts`, et `src/ui/paquet/format-v1.test.ts`, qui fige le format 1
-  du paquet par un témoin versionné.
-- **À relancer** : `npx playwright test tests-e2e/evenements-perimes-dans-application.spec.ts` ;
+  du paquet par un témoin versionné. Ces cas éprouvent `jamaisCache` sur des fiches fabriquées ;
+  `src/docs/indices-moteur.test.ts` tient qu'une vraie fiche le porte dans un exemple que le journal
+  de passe joue.
+- **À relancer** : `npm run test:journal-de-passe`, dont le scénario des gestes refait Lancer après
+  un ↺ et voit donc un nœud repris du cache qui aurait dû tourner ;
+  `npx playwright test tests-e2e/evenements-perimes-dans-application.spec.ts` ;
   `npx playwright test tests-e2e/paquet-attic-dans-application.spec.ts` après `npm run build`.
 
 ## 5. Méta-composants, bulles et boucles

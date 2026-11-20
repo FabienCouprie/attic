@@ -6,7 +6,7 @@ Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
 sans avoir été relevé est traité comme une faute, pas comme une approximation. Le dépôt porte pour
-cela un banc de mesure, une base d'empreintes et trente-six gardes sur lui-même : ils
+cela un banc de mesure, une base d'empreintes et trente-sept gardes sur lui-même : ils
 s'emploient, ils ne se réinventent pas.
 
 ---
@@ -167,7 +167,7 @@ se relève donc à l'oreille, et non par un garde.
 
 Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
 
-- **`src/docs/*.test.ts`** — trente-six contrats sur le dépôt lui-même : registre des réglages,
+- **`src/docs/*.test.ts`** — trente-sept contrats sur le dépôt lui-même : registre des réglages,
   **le contrat de chaque composant tel qu'un graphe enregistré en dépend**, graines,
   cœurs par trames, registre anglais, **texte en dur des vues — qu'aucun ne dépende de la langue** —,
   caractères de contrôle, style de documentation, classement
@@ -182,7 +182,8 @@ Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
   d'image — qu'aucun composant qui rend une image ne la cache à son nœud** —, **les options lues —
   qu'aucun champ du type des options d'un module audio ne reste sans lecteur** —, **le fichier de
   configuration — qu'aucune de ses clés ne reste sans lecteur ni sans sa ligne dans `CONFIGURATION.md`** —,
-  le classement des écarts d'une famille comparée, et la fraîcheur des tables générées. **La norme de taille y est contraignante** :
+  **les indices du moteur — que chacun soit porté par une vraie fiche d'un exemple que jouent le journal
+  de passe et la base du son, ou déclaré non éprouvé ou hors de portée avec sa raison** —, le classement des écarts d'une famille comparée, et la fraîcheur des tables générées. **La norme de taille y est contraignante** :
   aucun fichier neuf ne dépasse quatre cents lignes de code, les quinze qui la dépassaient déjà ne
   grossissent plus, et celui qui redescend dans la norme sort de la dette. Elle ne peut que
   décroître, et la liste est dans `src/docs/generer-compte-lignes.test.ts`.

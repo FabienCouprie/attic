@@ -84,6 +84,35 @@
       },
       "erreurs": []
     },
+    "ce-que-le-moteur-lit-sur-un-noeud.json": {
+      "lecteurs": {
+        "son": {
+          "rms": 0.2828427123692375,
+          "crete": 0.3999998867511749,
+          "trames": 88200,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 275.02362794605494
+        },
+        "gauche": {
+          "rms": 0.2828427121705757,
+          "crete": 0.3999998867511749,
+          "trames": 88200,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 219.67664534358678
+        },
+        "droite": {
+          "rms": 0.28284271256794585,
+          "crete": 0.39999908208847046,
+          "trames": 88200,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 329.7520913126164
+        }
+      },
+      "erreurs": []
+    },
     "cercle-des-gammes.json": {
       "lecteurs": {
         "ecoute": {

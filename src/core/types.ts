@@ -340,62 +340,22 @@ export interface ParametreDef {
   graine?: true;
 }
 
-// PAS de paramètre par défaut : un domaine DOIT expliciter son type de valeur et
-// son runtime. C'est ce qui empêche un nouveau domaine de se lier silencieusement
-// à l'union d'un autre — celle de l'audio est `ValeurAudio`, dans
-// `audio/types-domaine.ts`, et le cœur ne la nomme nulle part.
-export interface PluginDef<TValeur, TRuntime> {
-  id: string;
-  nom: string;
-  nomEn?: string;
-  /**
-   * Le nom sous lequel ce composant se DIT, quand le sien ne se prononce pas.
-   *
-   * ═══ POURQUOI UN SECOND NOM, ET POURQUOI IL NE PEUT PAS SE DÉDUIRE ═══
-   *
-   * Le moteur de reconnaissance a un lexique fermé, et 142 des 504 composants portent un mot qu'il
-   * n'a pas : un sigle, une marque, un terme technique. Leur nom n'est pas refusé par la grammaire,
-   * il y est AMPUTÉ du mot manquant, et le reste concurrence un vrai nom — « réverbération à »
-   * contre « réverbération ». Ils sont donc écartés de la dictée, et deviennent indicibles.
-   *
-   * ET L'AMPUTATION NE PEUT PAS SERVIR D'ALIAS, c'est mesuré : « Réverbération à convolution (IR) »
-   * donnerait « réverbération à ir », « Arpégiateur MIDI » et « Transposeur/Quantiseur MIDI »
-   * donneraient tous deux « midi », et « Centroïde spectral » et « Rolloff spectral » tous deux
-   * « spectral ». Un nom parlé est une décision de nomenclature, pas un calcul.
-   *
-   * IL NE S'AJOUTE PAS AU NOM, IL LE REMPLACE quand celui-ci ne se dit pas. La grammaire se paie :
-   * porter la liste de 472 à 864 entrées fait passer la reconnaissance de 1,8 à 5,0 secondes.
-   */
-  nomDicte?: string;
-  nomDicteEn?: string;
-  univers: string;
-  famille: string;
-  resume: string;
-  resumeEn?: string;
-  notice?: string;
-  noticeEn?: string;
-  entrees: PortDef[];
-  sorties: PortDef[];
-  parametres: ParametreDef[];
-  /**
-   * Les réglages que cette fiche ne déclare plus et que son exécuteur lit encore, pour les projets
-   * enregistrés avant qu'ils disparaissent.
-   *
-   * UNE LECTURE DE MIGRATION EST UN FAIT DÉCLARÉ, et non l'absence d'une déclaration. Lire un nom
-   * que `parametres` ne porte pas retombe sur le défaut de l'appel ; c'est voulu pour un réglage
-   * remplacé (le « Fondu » unique du masque de zones, devenu deux fondus), et c'est une faute
-   * partout ailleurs. Nommé ici, le réglage entre dans les noms que l'exécuteur peut lire, sans
-   * paraître dans l'inspecteur ni dans aucune liste de réglages.
-   */
-  anciensReglages?: readonly string[];
-  executer: FonctionPlugin<TValeur, TRuntime>;
-  etiquettes?: string[];
-
-  // ── Indices pour le moteur ──
-  // Agnostiques du domaine : ils décrivent un COMPORTEMENT du nœud, pas son
-  // identité. Ils existent pour que le moteur n'ait jamais à tester un id de
-  // plugin en dur (cf. PORTING-A-DOMAIN.md : « sans modifier `src/core/` »).
-
+/**
+ * Les indices qu'une fiche donne au moteur : sa passe, son cache, son ménage, son récepteur, le
+ * correctif de ses résultats et la relance après un réglage les lisent. Un seul n'a pas encore de
+ * lecteur, `memoire`, qui annonce un travail par blocs à venir ; la table du garde le dit.
+ *
+ * Agnostiques du domaine : ils décrivent un COMPORTEMENT du nœud, pas son identité. Ils existent pour
+ * que le moteur n'ait jamais à tester un id de plugin en dur (cf. PORTING-A-DOMAIN.md : « sans
+ * modifier `src/core/` »).
+ *
+ * ILS SONT À PART POUR QU'UN GARDE LES TIENNE TOUS. Ni le moteur ni la remise à zéro ne lisent
+ * l'univers ou la famille d'une fiche : une faute de cache ou de reset ne frappe différemment qu'un
+ * nœud qui porte l'un de ces indices. `docs/indices-moteur.test.ts` exige, pour chacun, une vraie
+ * fiche qui le porte dans un exemple que jouent le journal de passe et la base du son, ou une raison
+ * écrite. Sa table est typée sur cette interface : un indice ajouté ici sans y entrer ne compile pas.
+ */
+export interface IndicesMoteur {
   // Ne jamais réutiliser un résultat mis en cache. Pour les nœuds à effet de
   // bord dont le résultat dépend d'un état externe (disque, réseau) que les
   // empreintes de paramètres et d'entrées ne capturent pas. Défaut : false.
@@ -416,17 +376,6 @@ export interface PluginDef<TValeur, TRuntime> {
   // est bel et bien le son traité. Défaut : false.
   sansApercuAudio?: boolean;
 
-  // HORS CATALOGUE : cette fiche existe pour qu'un nœud se dessine et se câble, jamais pour être
-  // choisie. `trouverDef` la rend, `tousLesPlugins` ne la rend pas.
-  //
-  // POURQUOI UNE PROPRIÉTÉ ET NON DES FILTRES. Ce qui énumère le registre est la palette, mais aussi
-  // le quiz, le vocabulaire de génération de graphe, la documentation et le gestionnaire de nodes.
-  // Filtrer à chacun de ces endroits, c'est autant d'occasions d'en oublier un, et un oubli ne se
-  // voit pas : une fiche qui n'a rien à faire là passe pour un composant. Le fait se déclare donc une
-  // fois, et un seul endroit l'honore. C'est le cas des bulles, dont la fiche est dérivée des membres
-  // et n'existe que dans le projet qui les porte. Défaut : false.
-  horsCatalogue?: boolean;
-
   // Ce que le nœud exige de la mémoire PENDANT son calcul (cf. core/memoire.ts).
   // « totale » : il ne peut pas commencer avant d'avoir le signal entier — un
   // étirement lit la fin pour écrire le début. « flux » : il avance échantillon
@@ -440,18 +389,6 @@ export interface PluginDef<TValeur, TRuntime> {
   // filet du moteur traite « tout-null sur un nœud à sorties » comme un échec
   // (cf. FonctionPlugin). Défaut : false.
   sortieNullePermise?: boolean;
-
-  // Les entrées de ce nœud s'affichent À LA DEMANDE : la fiche les déclare toutes, et chaque nœud
-  // n'en dessine que ce qu'il utilise, avec deux boutons pour s'allonger et se raccourcir. Le
-  // moteur, lui, les voit toutes — c'est un fait d'affichage (cf. ui/ports-extensibles.ts).
-  entreesExtensibles?: { min: number; defaut: number };
-
-  // Les SORTIES de ce nœud s'affichent de même, et pour la même raison. Un séparateur de canaux
-  // déclare les seize que la plus grande disposition de ce dépôt compte ; un stéréo n'en emploie
-  // deux. Sans cela le nœud naîtrait haut de quatre cent quarante-huit pixels pour en montrer
-  // quatorze vides. Même règle du bas : le compte ne descend jamais sous la dernière sortie
-  // branchée, un câble ne devant pas disparaître parce qu'on a raccourci le nœud.
-  sortiesExtensibles?: { min: number; defaut: number };
 
   // Le nœud passe après tous les autres nœuds du run, et un run lancé depuis lui porte sur le
   // graphe entier. Pour un nœud qui rend compte du travail de tout le graphe (cf.
@@ -500,4 +437,84 @@ export interface PluginDef<TValeur, TRuntime> {
   // LE RECADRAGE LUI-MÊME APPARTIENT AU DOMAINE. Le cœur ne dit que le fait ; ce qu'est une plage
   // valide et comment on y ramène une valeur, c'est au domaine de le savoir. Défaut : false.
   sortieHorsPlagePossible?: boolean;
+}
+
+// PAS de paramètre par défaut : un domaine DOIT expliciter son type de valeur et
+// son runtime. C'est ce qui empêche un nouveau domaine de se lier silencieusement
+// à l'union d'un autre — celle de l'audio est `ValeurAudio`, dans
+// `audio/types-domaine.ts`, et le cœur ne la nomme nulle part.
+export interface PluginDef<TValeur, TRuntime> extends IndicesMoteur {
+  id: string;
+  nom: string;
+  nomEn?: string;
+  /**
+   * Le nom sous lequel ce composant se DIT, quand le sien ne se prononce pas.
+   *
+   * ═══ POURQUOI UN SECOND NOM, ET POURQUOI IL NE PEUT PAS SE DÉDUIRE ═══
+   *
+   * Le moteur de reconnaissance a un lexique fermé, et 142 des 504 composants portent un mot qu'il
+   * n'a pas : un sigle, une marque, un terme technique. Leur nom n'est pas refusé par la grammaire,
+   * il y est AMPUTÉ du mot manquant, et le reste concurrence un vrai nom — « réverbération à »
+   * contre « réverbération ». Ils sont donc écartés de la dictée, et deviennent indicibles.
+   *
+   * ET L'AMPUTATION NE PEUT PAS SERVIR D'ALIAS, c'est mesuré : « Réverbération à convolution (IR) »
+   * donnerait « réverbération à ir », « Arpégiateur MIDI » et « Transposeur/Quantiseur MIDI »
+   * donneraient tous deux « midi », et « Centroïde spectral » et « Rolloff spectral » tous deux
+   * « spectral ». Un nom parlé est une décision de nomenclature, pas un calcul.
+   *
+   * IL NE S'AJOUTE PAS AU NOM, IL LE REMPLACE quand celui-ci ne se dit pas. La grammaire se paie :
+   * porter la liste de 472 à 864 entrées fait passer la reconnaissance de 1,8 à 5,0 secondes.
+   */
+  nomDicte?: string;
+  nomDicteEn?: string;
+  univers: string;
+  famille: string;
+  resume: string;
+  resumeEn?: string;
+  notice?: string;
+  noticeEn?: string;
+  entrees: PortDef[];
+  sorties: PortDef[];
+  parametres: ParametreDef[];
+  /**
+   * Les réglages que cette fiche ne déclare plus et que son exécuteur lit encore, pour les projets
+   * enregistrés avant qu'ils disparaissent.
+   *
+   * UNE LECTURE DE MIGRATION EST UN FAIT DÉCLARÉ, et non l'absence d'une déclaration. Lire un nom
+   * que `parametres` ne porte pas retombe sur le défaut de l'appel ; c'est voulu pour un réglage
+   * remplacé (le « Fondu » unique du masque de zones, devenu deux fondus), et c'est une faute
+   * partout ailleurs. Nommé ici, le réglage entre dans les noms que l'exécuteur peut lire, sans
+   * paraître dans l'inspecteur ni dans aucune liste de réglages.
+   */
+  anciensReglages?: readonly string[];
+  executer: FonctionPlugin<TValeur, TRuntime>;
+  etiquettes?: string[];
+
+  // ── Faits d'affichage et de registre ──
+  // Comme les indices du moteur, ils décrivent un comportement et non une identité ; mais le moteur
+  // ne les lit pas. Un indice que lit le moteur, sa passe, son cache ou sa remise à zéro se déclare
+  // dans `IndicesMoteur`, plus haut, et non ici : c'est là que son garde le voit.
+
+  // HORS CATALOGUE : cette fiche existe pour qu'un nœud se dessine et se câble, jamais pour être
+  // choisie. `trouverDef` la rend, `tousLesPlugins` ne la rend pas.
+  //
+  // POURQUOI UNE PROPRIÉTÉ ET NON DES FILTRES. Ce qui énumère le registre est la palette, mais aussi
+  // le quiz, le vocabulaire de génération de graphe, la documentation et le gestionnaire de nodes.
+  // Filtrer à chacun de ces endroits, c'est autant d'occasions d'en oublier un, et un oubli ne se
+  // voit pas : une fiche qui n'a rien à faire là passe pour un composant. Le fait se déclare donc une
+  // fois, et un seul endroit l'honore. C'est le cas des bulles, dont la fiche est dérivée des membres
+  // et n'existe que dans le projet qui les porte. Défaut : false.
+  horsCatalogue?: boolean;
+
+  // Les entrées de ce nœud s'affichent À LA DEMANDE : la fiche les déclare toutes, et chaque nœud
+  // n'en dessine que ce qu'il utilise, avec deux boutons pour s'allonger et se raccourcir. Le
+  // moteur, lui, les voit toutes — c'est un fait d'affichage (cf. ui/ports-extensibles.ts).
+  entreesExtensibles?: { min: number; defaut: number };
+
+  // Les SORTIES de ce nœud s'affichent de même, et pour la même raison. Un séparateur de canaux
+  // déclare les seize que la plus grande disposition de ce dépôt compte ; un stéréo n'en emploie
+  // deux. Sans cela le nœud naîtrait haut de quatre cent quarante-huit pixels pour en montrer
+  // quatorze vides. Même règle du bas : le compte ne descend jamais sous la dernière sortie
+  // branchée, un câble ne devant pas disparaître parce qu'on a raccourci le nœud.
+  sortiesExtensibles?: { min: number; defaut: number };
 }
