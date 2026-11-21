@@ -10,7 +10,6 @@ import {
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence, type NoteEvenement } from "./midi-sequence";
 import { degresGammeMelodie } from "./generation-melodie";
-import { noteDeLaGammeLaPlusProche } from "./gammes";
 import { creerAleatoire } from "../core/hasard";
 
 const REGLES_1D_NOMS: Record<number, string> = {
@@ -80,13 +79,6 @@ function decodeInstrument(valeur: number): { programme: number; banque: number }
   return { programme, banque };
 }
 
-/**
- * Une hauteur posée sur la gamme. `base` porte la tonique, la clé comprise : chaque appelant part
- * d'elle, et c'est sur elle que la gamme se pose (`noteDeLaGammeLaPlusProche`).
- */
-function snapperNote(midi: number, degres: number[], base: number): number {
-  return Math.max(0, Math.min(127, noteDeLaGammeLaPlusProche(midi, degres, base)));
-}
 
 function randomSeed(seed: number): () => number {
   return creerAleatoire(seed);
@@ -205,10 +197,17 @@ function muterGrille(grille: number[][], probabilite: number, rnd: () => number)
   return grille.map((ligne) => ligne.map((c) => (rnd() < probabilite ? 1 - c : c)));
 }
 
+/**
+ * La note d'une colonne : sa position sur la ligne donne son DEGRÉ, sur deux octaves de la gamme.
+ *
+ * L'ÉTENDUE SE COMPTE EN DEGRÉS, décision de Fabien du 2026-11-21. Elle se comptait en demi-tons, puis
+ * se ramenait sur la gamme : treize demi-tons sous une gamme à sept degrés, neuf sous une
+ * pentatonique, quand ce commentaire promettait déjà deux octaves de la gamme. `base` porte la tonique.
+ */
 function indexMidiPourX(x: number, base: number, degres: number[], largeur: number): number {
-  // Étaler les positions sur 2 octaves de la gamme pour plus de variété.
-  const echelle = Math.floor((x / Math.max(1, largeur - 1)) * (degres.length * 2 - 1));
-  return snapperNote(base + echelle, degres, base);
+  const n = degres.length;
+  const k = Math.min(2 * n - 1, Math.floor((x / Math.max(1, largeur - 1)) * (2 * n - 1)));
+  return Math.max(0, Math.min(127, base + degres[k % n] + 12 * Math.floor(k / n)));
 }
 
 function velocitePourDensite(densite: number, max: number, velociteBase: number): number {
@@ -243,7 +242,7 @@ function construireNotesDepuisLigne(
 
   if (mode === "Arpège") {
     const idx = actives[arpegeIndex % actives.length];
-    const midi = snapperNote(base + idx, degres, base);
+    const midi = indexMidiPourX(idx, base, degres, largeur);
     const vel = mapping === "Vélocité" || mapping === "Hauteur + vélocité"
       ? velocitePourDensite(densite, largeur, options.velocite)
       : options.velocite;
@@ -256,7 +255,7 @@ function construireNotesDepuisLigne(
 
   if (mode === "Mélodie") {
     const idx = actives[Math.floor(rnd() * actives.length)];
-    const midi = snapperNote(base + idx, degres, base);
+    const midi = indexMidiPourX(idx, base, degres, largeur);
     const vel = mapping === "Vélocité" || mapping === "Hauteur + vélocité"
       ? velocitePourDensite(densite, largeur, options.velocite)
       : options.velocite;
