@@ -46,14 +46,18 @@ function raisonDuMetaRefuse(id: string, refus: RefusDuRegistre): string {
 }
 
 /**
- * Le message qui dit les méta-composants d'un projet ouvert que le registre a refusés, ou `null`.
+ * Le message qui dit les méta-composants que le registre a refusés, ou `null`.
  *
  * UN MÉTA REFUSÉ N'EST PAS CHARGÉ, et la personne doit savoir pourquoi le catalogue ne le montre
  * pas : sous l'identifiant d'un natif ou d'un alias, les nœuds du graphe qui le portent ouvrent la
  * fiche existante et non ce méta.
+ *
+ * DEUX PROVENANCES : un projet qu'on ouvre (`fichier`), ou les métas gardés par l'application, au
+ * démarrage (`stockage`). Le second dit aussi ce que devient leur clé : voir `ui/metasLocaux.ts`.
  */
-export function messageMetasRefuses(refuses: { id: string; refus: RefusDuRegistre }[]): string | null {
+export function messageMetasRefuses(refuses: { id: string; refus: RefusDuRegistre }[],
+  provenance: "fichier" | "stockage" = "fichier"): string | null {
   if (refuses.length === 0) return null;
-  return traduire("persistance.metasRefuses", refuses.length,
-    enumerer(refuses.map((r) => raisonDuMetaRefuse(r.id, r.refus))));
+  return traduire(provenance === "fichier" ? "persistance.metasRefuses" : "persistance.metasGardesRefuses",
+    refuses.length, enumerer(refuses.map((r) => raisonDuMetaRefuse(r.id, r.refus))));
 }

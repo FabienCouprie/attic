@@ -109,11 +109,14 @@ test.describe("les consentements, dans l'application qui tourne", () => {
       type Pont = {
         importerNodeZip: (s: string) => Promise<Record<string, unknown>>;
         deplierNodeZip: (j: unknown) => Promise<Record<string, unknown>>;
+        oublierNodeZip: (j: unknown) => Promise<Record<string, unknown>>;
       };
       const installer = () => page.evaluate(async (p) =>
         (globalThis as unknown as { api: Pont }).api.importerNodeZip(p), cheminZip);
       const deplier = (jeton: unknown) => page.evaluate(async (j) =>
         (globalThis as unknown as { api: Pont }).api.deplierNodeZip(j), jeton);
+      const oublier = (jeton: unknown) => page.evaluate(async (j) =>
+        (globalThis as unknown as { api: Pont }).api.oublierNodeZip(j), jeton);
       const dossierDuNoeud = join(maison, ".attic", "nodes", "attic-essai-consent");
 
       const annule = await installer();
@@ -144,6 +147,13 @@ test.describe("les consentements, dans l'application qui tourne", () => {
       expect(existsSync(join(dossierDuNoeud, "executer.js")), "le dépliage n'a rien écrit").toBe(true);
       const encore2 = await deplier(installe.jeton);
       expect(encore2.ok, "un jeton a servi deux fois").toBe(false);
+
+      // ── 7. L'archive que le registre refuse s'oublie : son jeton ne déplie plus rien ──
+      const refusee = await installer();
+      expect(refusee.ok, `le second import a échoué : ${String(refusee.erreur ?? "")}`).toBe(true);
+      expect((await oublier(refusee.jeton)).ok, "l'archive confirmée n'était pas gardée").toBe(true);
+      expect((await deplier(refusee.jeton)).ok, "une archive oubliée s'est dépliée").toBe(false);
+      expect((await oublier(refusee.jeton)).ok, "une archive s'est oubliée deux fois").toBe(false);
     } finally {
       await app.close();
     }

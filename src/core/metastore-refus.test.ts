@@ -99,5 +99,9 @@ describe("un méta que le registre refuse", () => {
     renommerMeta("meta-b", "");
     expect(notifies, "le méta au nom vide n'est pas persisté").toEqual([]);
     expect(r.trouverDef("meta-b")?.nom, "le catalogue garde le nom d'avant").toBe("Mon outil");
+    // LA TABLE AUSSI. `renommerMeta` écrivait le nom dans l'objet de la table avant de demander au
+    // registre : refusé, le catalogue gardait l'ancien nom et la table le nom vide, que le prochain
+    // projet sauvegardé aurait écrit (`ui/projet-a-ecrire.ts` lit `tousLesMetas`).
+    expect(trouverMeta("meta-b")?.nom, "la table garde le nom d'avant").toBe("Mon outil");
   });
 });

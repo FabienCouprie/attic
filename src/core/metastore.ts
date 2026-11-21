@@ -83,7 +83,8 @@ export function decrireMeta(id: string, description: string): void {
  * ne protégeait que la palette. Refusé, le méta n'entre plus dans la table et n'est plus notifié.
  *
  * UN MÉTA DÉJÀ INSCRIT DONT LA NOUVELLE VERSION EST REFUSÉE reste celui que la table tient, et le
- * stockage garde l'ancienne version : un renommage en nom vide, refusé, ne s'écrit plus.
+ * stockage garde l'ancienne version : un renommage en nom vide, refusé, ne s'écrit plus. Cela ne
+ * tient que si la nouvelle version est un autre objet que celui de la table : voir `renommerMeta`.
  */
 export function enregistrerMeta(meta: MetaComposant): InscriptionInjectee {
   const def: PluginDef<unknown, unknown> = {
@@ -127,12 +128,18 @@ export function supprimerMeta(id: string): void {
   notifier(id);
 }
 
-// Renomme un méta-composant (met à jour le nom + la fiche du catalogue).
+/**
+ * Renomme un méta-composant : la fiche du catalogue et la table prennent le nouveau nom.
+ *
+ * LE NOM VA À UNE COPIE, et non à l'objet de la table. Écrit dans celui-ci avant que le registre ne
+ * réponde, il y restait sur un refus : le catalogue gardait l'ancien nom, la table le nouveau, et le
+ * prochain projet sauvegardé écrivait celui que le registre avait refusé. Accepté, la copie remplace
+ * l'objet dans la table.
+ */
 export function renommerMeta(id: string, nouveauNom: string): void {
   const meta = metas.get(id);
   if (!meta) return;
-  meta.nom = nouveauNom;
-  enregistrerMeta(meta); // re-enregistre avec le nouveau nom (met à jour la fiche)
+  enregistrerMeta({ ...meta, nom: nouveauNom });
 }
 
 function notifier(id: string): void {

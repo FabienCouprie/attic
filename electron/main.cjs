@@ -517,6 +517,11 @@ ipcMain.handle("node:deplier-zip", async (_event, jeton) => {
   }
 });
 
+// --- IPC : Oublier l'archive confirmée d'un node que le registre a refusé ---
+// Sans cet appel, elle restait en mémoire, le fichier entier, jusqu'à ce que quatre imports
+// suivants la chassent. Rend `ok: false` pour un jeton inconnu ou déjà servi, sans autre effet.
+ipcMain.handle("node:oublier-zip", async (_event, jeton) => ({ ok: zipsConfirmes.oublier(jeton) }));
+
 // --- IPC : Obtenir le chemin des assets d'un node installé ---
 ipcMain.handle("node:chemin-assets", async (_event, nodeId) => {
   // En lecture seule, donc le moins exposé des trois — mais il passe par le

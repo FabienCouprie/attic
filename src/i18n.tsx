@@ -1231,6 +1231,10 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
     fr: "Ce fichier porte {__VAR_0__} méta-composant(s) que le registre refuse, et qui n'ont pas été chargés : {__VAR_1__}.",
     en: "This file carries {__VAR_0__} meta-component(s) that the registry refuses, and that were not loaded: {__VAR_1__}.",
   },
+  "persistance.metasGardesRefuses": {
+    fr: "Cette application gardait {__VAR_0__} méta-composant(s) que le registre refuse, et qui n'ont pas été chargés : {__VAR_1__}. Ceux qui portent l'identifiant d'un composant natif ou un ancien identifiant ne s'inscriront jamais, et sont retirés du stockage ; les autres y restent.",
+    en: "This application kept {__VAR_0__} meta-component(s) that the registry refuses, and that were not loaded: {__VAR_1__}. Those that carry the identifier of a built-in component or a former identifier will never register, and are removed from storage; the others remain there.",
+  },
   "persistance.metaRefuse.natif": { fr: "« {__VAR_0__} », identifiant d'un composant natif, que les nœuds de ce nom ouvrent", en: "\"{__VAR_0__}\", identifier of a built-in component, which nodes of that name open" },
   "persistance.metaRefuse.alias": { fr: "« {__VAR_0__} », ancien identifiant de « {__VAR_1__} », que les nœuds de ce nom ouvrent", en: "\"{__VAR_0__}\", former identifier of \"{__VAR_1__}\", which nodes of that name open" },
   "persistance.metaRefuse.invalide": { fr: "« {__VAR_0__} », fiche invalide ({__VAR_1__})", en: "\"{__VAR_0__}\", invalid definition ({__VAR_1__})" },
