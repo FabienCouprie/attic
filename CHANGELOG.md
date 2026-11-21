@@ -6,6 +6,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **ZONES VERS MIDI ET LA PAROLE VERS MIDI CHERCHENT LE DEGRÉ SUR LA HAUTEUR EXACTE, PUIS L'ARRONDISSENT.** Décision de Fabien du 2026-11-21, défaut F du contrôle des gammes.
+  - **Ce qui se passait.** Les deux nœuds arrondissaient la hauteur au demi-ton, puis cherchaient le degré le plus proche, qui à égale distance est celui du dessous. Mesuré par `notesDesZones`, en do majeur : 61,1, 61,3 et 61,45 donnaient do au lieu de ré, puis 63,3 ré au lieu de mi, 66,3 fa au lieu de sol, 68,3 sol au lieu de la, 70,3 la au lieu de si. Chaque ton entier de la gamme cédait le quart de sa place au degré le plus éloigné. Les deux notices promettaient déjà le degré le plus proche : elles ne changent pas.
+  - **Ce qui change** : `degrePlusProche` reçoit la hauteur exacte, et l'arrondi vient après (`audio/zones-vers-midi.ts`, `plugins/parole-vers-sequence.ts`).
+  - **Les gardes** : `audio/zones-vers-midi.test.ts`, sept hauteurs en do majeur, et `plugins/parole-vers-sequence.test.ts`, un mot à 61,3. **Vus rouges** sur le code d'avant, 60 au lieu de 62, verts après.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les deux fichiers et `docs/gammes-tenues.test.ts`, 140 cas.
+
 - **LA PASSE PROFONDE DU BANC DES GAMMES : LES DOUZE CLÉS, LES RÉGLAGES CROISÉS, ET LE SON COMPARÉ À SON MIDI.** Chantier du contrôle des gammes, demandée par Fabien le 2026-11-21.
   - **`docs/gammes-passe-profonde.test.ts`**, sous `npm run controle-gammes-profond` (`BANC_GAMMES_PROFOND=1`), bornée par `GAMMES_FICHES=a,b` et `GAMMES_GRAINES=1,2,3`. Elle écrit son relevé dans `GAMMES/profonde.md` et `GAMMES/profonde.json` après chaque nœud, et ne fait tomber aucun cas : ce qu'elle trouve se juge, puis se répare ou se déclare.
   - **Les douze clés** : chaque réglage éprouvé par le garde rapide, sous chaque gamme offerte, à trois graines, sous chaque tonique de do à si, et la transposition de chaque clé à sa voisine d'un demi-ton, si et do compris (`audio/gamme-banc-releve.ts`).
