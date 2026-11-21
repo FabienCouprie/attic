@@ -40,6 +40,8 @@ const creneauEnSequence = (debut: number, duree: number, tempo: number): Sequenc
 export const fiches: FicheAudio[] = ([
   fiche({
     id: FICHE_CRENEAU_DEBUT,
+    // Le dépliage d'une boucle de graphe refuse de recopier ce nœud : voir `IndicesMoteur`.
+    boucleParPasses: true,
     nom: "Début de boucle par créneau", nomEn: "Slot Loop Start",
     univers: "Traitement", famille: "Montage",
     resume: "Ouvre une boucle : ce qui suit est calculé une fois par créneau, et connaît la place qu'il occupera.",
@@ -93,6 +95,7 @@ export const fiches: FicheAudio[] = ([
   }),
   fiche({
     id: FICHE_CRENEAU_FIN,
+    boucleParPasses: true,
     nom: "Fin de boucle par créneau", nomEn: "Slot Loop End",
     univers: "Traitement", famille: "Montage",
     resume: "Referme une boucle par créneau : chaque passe est pliée à son créneau, puis toutes sont réunies.",

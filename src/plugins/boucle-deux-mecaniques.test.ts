@@ -12,15 +12,15 @@
 // 10 notes » ; la même, posée dans un ventre, n'annonce rien, le graphe aboutit et aucun
 // avertissement ne paraît. Un résultat faux et muet est le pire des deux.
 //
-// POURQUOI LE CAS EST ICI ET NON DANS LE CŒUR. `core/boucle-graphe.ts` refuse ce câblage, et il
-// nomme pour cela les identifiants de fiches concernés — ce qu'il fait déjà pour ses propres bouts.
-// Mais le cœur n'importe rien des fiches, et ne peut donc pas vérifier que sa liste est complète.
-// C'est ce cas-ci qui l'y oblige : une septième boucle par passes ajoutée demain échouera ici tant
-// que le garde ne la connaîtra pas.
+// POURQUOI LE CAS EST ICI ET NON DANS LE CŒUR. `core/boucle-graphe.ts` refuse ce câblage, et il lit
+// pour cela le rôle `boucleParPasses` sur la fiche, depuis la pièce P2 du 2026-11-21 ; il tenait
+// avant une liste des six identifiants, égale à celle du pilote. Le cœur n'importe rien des fiches,
+// et ne peut donc pas vérifier qu'elles déclarent toutes ce rôle. C'est ce cas-ci qui l'y oblige :
+// une septième boucle par passes qui l'oublierait demain échouera ici.
 import { describe, expect, it } from "vitest";
 
 import "node-web-audio-api/polyfill.js";
-import { COPIES_MAX, FICHES_BOUCLE_PAR_PASSE } from "../core/boucle-graphe";
+import { COPIES_MAX } from "../core/boucle-graphe";
 import { toutesLesFiches } from "./index";
 import "../audio/adaptateur";
 import { aplatirGraphe } from "../core/meta";
@@ -31,9 +31,10 @@ import {
 } from "./boucleSequencesGlobal";
 
 describe("le garde du dépliage connaît toutes les boucles par passes", () => {
-  it("SA LISTE EST EXACTEMENT CELLE DES FICHES, débuts et fins", () => {
+  it("LES FICHES QUE LE PILOTE MÈNE PAR PASSES DÉCLARENT CE RÔLE, et elles seules", () => {
     const declarees = [...FICHES_BOUCLE_DEBUT, ...FICHES_BOUCLE_FIN].sort();
-    expect([...FICHES_BOUCLE_PAR_PASSE].sort()).toEqual(declarees);
+    const portent = toutesLesFiches.filter((f) => f.boucleParPasses === true).map((f) => f.id).sort();
+    expect(portent).toEqual(declarees);
   });
 
   it("ET IL Y EN A BIEN À CONNAÎTRE, le compte étant écrit", () => {

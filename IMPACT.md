@@ -137,12 +137,15 @@ composants surveillés (`tests-e2e/empreintes.json`).
   `src/core/fiches-du-coeur.ts` (les deux nœuds-frontière d'un méta et le type de leur port, que
   tout domaine inclut), `src/core/metastore.ts`, `src/core/bulles.ts`, `src/core/conteneurs.ts` (ce qu'une bulle ou un
   méta contient et ce que son statut en dit), `src/core/boucle-graphe.ts` (une boucle de graphe
-  dépliée en chaîne), et les pilotes des boucles par passes et du lot dans `src/ui/moteur/pilotes.ts`.
+  dépliée en chaîne, le rôle de chaque nœud lu sur sa fiche : `debutDeBoucle`, `finDeBoucle`,
+  `boucleParPasses`), et les pilotes des boucles par passes et du lot dans `src/ui/moteur/pilotes.ts`.
 - **Ce qu'une modification touche** : tout graphe qui emboîte ; un défaut n'y apparaît souvent qu'à
   la rencontre de deux conteneurs, jamais sur un composant seul.
 - **Ce qui le tient** : `src/core/meta.test.ts`, `src/core/fiches-du-coeur.test.ts` (un domaine de
   nombres édite un méta sans écrire de fiche-frontière), `src/core/bulles.test.ts`,
-  `src/core/conteneurs.test.ts`, `src/core/boucle-graphe.test.ts`, `src/core/saut-de-boucle.test.ts`.
+  `src/core/conteneurs.test.ts`, `src/core/boucle-graphe.test.ts`, `src/core/saut-de-boucle.test.ts`,
+  `src/core/boucle-role.test.ts` et `src/plugins/boucle-role.test.ts` (le rôle déclaré, et la fin
+  posée sous un ancien identifiant), et `src/docs/indices-moteur.test.ts` pour les trois indices.
 - **À relancer** : `npm run test:graphe-complexite`, trois boucles emboîtées, une bulle dans une
   bulle et un méta, dont le son est comparé à un attendu calculé à la main ; et les specs
   `tests-e2e/conteneurs-dans-application.spec.ts`, `tests-e2e/boucle-dans-lot-dans-application.spec.ts`,
@@ -181,7 +184,7 @@ composants surveillés (`tests-e2e/empreintes.json`).
 - **Ce qui le tient** : `src/docs/frontiere-domaine.test.ts` (le cœur n'importe ni ne nomme rien du
   domaine, tout ce qu'il importe se résout dans `src/core/`, les poteaux n'importent rien du domaine,
   et aucun exécuteur neuf ne lit l'interface), `src/docs/frontiere-identifiants.test.ts` (aucune
-  chaîne neuve du cœur ne vaut un identifiant de fiche, quatorze dettes épinglées), `src/docs/composition.test.ts` (la racine de
+  chaîne neuve du cœur ne vaut un identifiant de fiche, trois dettes épinglées), `src/docs/composition.test.ts` (la racine de
   composition est le premier import de `src/main.tsx`), `src/core/cloisonnement.test.ts` et
   `src/core/domaine-nombre.test.ts` (un second domaine, par le vrai moteur).
 

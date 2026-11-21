@@ -90,20 +90,12 @@ const IDENTIFIANTS = new Set<string>([
  * doit en sortir. Chacune porte sa raison, et la sortie est la même pour toutes : la fiche dit son
  * rôle et le cœur le lit, ou le domaine remet la liste au cœur, comme `audio/alias.ts` au registre.
  *
- * QUATORZE CHAÎNES ET TROIS FICHIERS DEPUIS LE 2026-11-21. Les deux de `core/meta.ts` sont sorties
- * par l'autre porte : les fiches-frontière sont entrées dans le cœur (`core/fiches-du-coeur.ts`).
+ * TROIS CHAÎNES ET DEUX FICHIERS DEPUIS LE 2026-11-21. Les deux de `core/meta.ts` sont sorties par
+ * l'autre porte : les fiches-frontière sont entrées dans le cœur (`core/fiches-du-coeur.ts`). Les
+ * onze de `core/boucle-graphe.ts` par la première : la fiche déclare `debutDeBoucle`, `finDeBoucle`
+ * ou `boucleParPasses`, et le dépliage le lit par `trouverDef`.
  */
 const DETTES: Readonly<Record<string, { chaines: readonly string[]; raison: string }>> = {
-  "core/boucle-graphe.ts": {
-    chaines: [
-      "boucle-graphe-debut", "boucle-plan-debut", "boucle-graphe-fin", "boucle-graphe-fin-b", "boucle-graphe-fin-c",
-      "boucle-voix-debut", "boucle-voix-fin", "boucle-creneau-debut", "boucle-creneau-fin",
-      "cercle-boucle-debut", "cercle-boucle-fin",
-    ],
-    raison: "le dépliage reconnaît ses bouts par identifiant, décision écrite dans le module (« le cœur ne "
-      + "lit pas les fiches, il nomme les identifiants ») ; les boucles par voix, par créneau et sur un "
-      + "cercle sont du métier musical",
-  },
   "core/instrument-graphe.ts": {
     chaines: ["frontiere-note", "instrument-fin"],
     raison: "un instrument rejoué touche par touche, de La0 à Do8, est une notion audio logée dans le cœur",

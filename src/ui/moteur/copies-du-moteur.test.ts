@@ -15,7 +15,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { creerRegistre, type AreteG, type NoeudG, type PluginDef } from "../../core";
-import { FICHE_DEBUT, FICHE_FIN } from "../../core/boucle-graphe";
+import { FICHE_DEBUT, FICHE_FIN } from "../../core/boucles-essai";
 import type { InstantaneDeGraphe } from "../../core/protocole-moteur";
 import { configurerRegistreUI, type RegistreUI } from "../registre-actif";
 import { configurerServicesApercu, oublierServicesApercu } from "../services-apercu";
@@ -30,10 +30,10 @@ const fiche = (id: string, entrees: number, executer: PluginDef<unknown, null>["
   parametres, executer,
 });
 registre.enregistrer(fiche("essai:source", 0, async () => ({ valeurs: ["source"] })));
-registre.enregistrer(fiche(FICHE_DEBUT, 1, async () => ({ valeurs: [null] }),
-  [{ nom: "Tours", type: "curseur", defaut: 2, plage: [1, 8], doc: "Les tours" }]));
+registre.enregistrer({ ...fiche(FICHE_DEBUT, 1, async () => ({ valeurs: [null] }),
+  [{ nom: "Tours", type: "curseur", defaut: 2, plage: [1, 8], doc: "Les tours" }]), debutDeBoucle: "reboucle" });
 registre.enregistrer(fiche("essai:corps", 1, async () => ({ valeurs: ["corps"] })));
-registre.enregistrer(fiche(FICHE_FIN, 1, async (ctx) => ({ valeurs: [(ctx.entrees() as unknown[]).join("+")] })));
+registre.enregistrer({ ...fiche(FICHE_FIN, 1, async (ctx) => ({ valeurs: [(ctx.entrees() as unknown[]).join("+")] })), finDeBoucle: true });
 
 const noeud = (id: string, ficheId: string, parametres: Record<string, unknown> = {}): NoeudG => ({ id, data: { ficheId, parametres } });
 const arete = (source: string, target: string) => ({ id: `${source}-${target}`, source, target, sourceHandle: "out:0", targetHandle: "in:0" }) as AreteG;

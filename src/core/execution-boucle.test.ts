@@ -36,7 +36,7 @@ import {
 } from "./execution";
 import { peutReutiliserLeCache, sourceRetraitee } from "./cache-execution";
 import { contexteDePasse } from "./contexte-de-passe";
-import { FICHE_DEBUT, FICHE_FIN } from "./boucle-graphe";
+import { FICHE_DEBUT, FICHE_FIN } from "./boucles-essai";
 import { empreinteEntrees, empreinteParametres, empreinteSorties, empreinteValeursEntrantes, valeursEntrantes } from "./graphe";
 import type { AreteG, MetaComposant, NoeudG } from "./meta";
 import { preparerLaPasse, type PlanDePasse } from "./preparation-passe";
@@ -75,8 +75,8 @@ const FICHES: Record<string, Fiche> = {
     return { valeurs: [son("tard")] };
   } },
   sortie: { entrees: [audio("Audio")], sorties: [], executer: async () => ({ valeurs: [] }) },
-  [FICHE_DEBUT]: { entrees: [audio("Audio")], sorties: [audio("Audio")], executer: async (ctx) => ({ valeurs: [ctx.entree(0)] }) },
-  [FICHE_FIN]: { entrees: [audio("Audio")], sorties: [audio("Audio")], executer: async (ctx) => ({ valeurs: [ctx.entree(0)] }) },
+  [FICHE_DEBUT]: { debutDeBoucle: "reboucle", entrees: [audio("Audio")], sorties: [audio("Audio")], executer: async (ctx) => ({ valeurs: [ctx.entree(0)] }) },
+  [FICHE_FIN]: { finDeBoucle: true, entrees: [audio("Audio")], sorties: [audio("Audio")], executer: async (ctx) => ({ valeurs: [ctx.entree(0)] }) },
 };
 const trouverDef = (f: string) => FICHES[f] as PluginDef<unknown, unknown> | undefined;
 const trouverPlugin = (f: string) => FICHES[f]?.executer as FonctionPlugin<unknown, unknown> | undefined;

@@ -44,6 +44,8 @@ const VARIATIONS_MIN = 1;
 export const fiches: FicheAudio[] = ([
   fiche({
     id: FICHE_CERCLE_DEBUT,
+    // Le dépliage d'une boucle de graphe refuse de recopier ce nœud : voir `IndicesMoteur`.
+    boucleParPasses: true,
     nom: "Début de boucle par cercle", nomEn: "Circle Loop Start",
     univers: "Autres", famille: "Circle",
     resume: "Ouvre une boucle de variation : chaque passe reçoit le cercle que la précédente a produit.",
@@ -90,6 +92,7 @@ export const fiches: FicheAudio[] = ([
   }),
   fiche({
     id: FICHE_CERCLE_FIN,
+    boucleParPasses: true,
     nom: "Fin de boucle par cercle", nomEn: "Circle Loop End",
     univers: "Autres", famille: "Circle",
     resume: "Referme une boucle de variation et rend la suite des cercles produits, un par tour.",

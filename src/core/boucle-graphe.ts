@@ -5,7 +5,7 @@
 // que d'apprendre au moteur à revenir en arrière — ce qui demanderait de casser le cache,
 // les statuts et l'annulation —, on déplie : les nœuds entre le début et la fin de boucle
 // sont recopiés n fois, chaque copie recevant le résultat de la précédente — sauf si le début de
-// boucle redonne au contraire son entrée à chaque tour, ce que `reboucleSurLeTourPrecedent` tranche.
+// boucle redonne au contraire son entrée à chaque tour, ce que le rôle déclaré par sa fiche tranche.
 //
 // C'est exactement la sémantique demandée. Si la chaîne interne transpose d'un demi-ton,
 // la deuxième copie transpose le résultat déjà transposé : au deuxième tour, deux
@@ -17,93 +17,44 @@
 // nœuds visibles.
 import { ancetres, descendants } from "./graphe";
 import type { AreteG, NoeudG } from "./meta";
-
-export const FICHE_DEBUT = "boucle-graphe-debut";
-
-/**
- * Le début d'une boucle qui fait tourner un PLAN, et non un son.
- *
- * POURQUOI UN SECOND DÉBUT PLUTÔT QU'UN PORT DE PLUS SUR CELUI-CI. Le type d'un port n'est pas
- * réglable : un début qui porterait l'audio ET le texte aurait quatre ports dont deux toujours
- * vides, et le graphe ne dirait plus ce qui circule. Deux débuts, deux lectures évidentes.
- *
- * ET LE DÉROULÉ N'EST PAS LE MÊME, ce qu'une première version de ce nœud avait manqué. La boucle
- * audio REBOUCLE : le tour k part du résultat du tour k−1, de sorte qu'une chaîne qui transpose d'un
- * demi-ton en monte de n au n-ième tour. Un plan ne se compose pas ainsi — ce qu'on en veut est n
- * sections tirées du MÊME descriptif, à graine changeante. Chaque tour repart donc de l'entrée du
- * début, comme le fait déjà toute source extérieure au ventre.
- *
- * MESURÉ DANS L'APPLICATION, et c'est ce qui a corrigé la première version : branché sur le
- * rebouclage, le deuxième tour recevait l'audio du premier sur une entrée texte, et la fin de boucle
- * annonçait « Entrée en erreur : d#1::tm » quand le premier tour, lui, était vert.
- */
-export const FICHE_DEBUT_PLAN = "boucle-plan-debut";
-
-export const FICHES_DEBUT: readonly string[] = [FICHE_DEBUT, FICHE_DEBUT_PLAN];
-
-const DEBUTS = new Set(FICHES_DEBUT);
-
-/** Ce nœud ouvre-t-il une boucle de graphe, quel que soit ce qu'elle fait circuler ? */
-export const estDebutDeBoucle = (ficheId: string | undefined): boolean => DEBUTS.has(ficheId ?? "");
+import type { IndicesMoteur } from "./types";
 
 /**
- * Les débuts qui REBOUCLENT sur le tour précédent, par opposition à ceux qui redonnent leur entrée.
+ * Ce que le dépliage lit d'une fiche : son rôle dans une boucle, tel qu'elle le déclare.
  *
- * C'EST LA SEULE CHOSE QUI SÉPARE LES DEUX SORTES DE DÉBUT, et elle ne pouvait pas être un réglage
- * du nœud audio : ce qu'un plan demande n'est pas une variante du rebouclage, c'en est le contraire,
- * et un graphe doit dire depuis le canevas lequel des deux déroulés il décrit. C'est aussi pourquoi
- * la liste est ici, dans le dépliage, et non dans la fiche : le moteur nomme les identifiants dont
- * il dépend, il ne lit pas les fiches.
+ * LE CŒUR LIT LE RÔLE SUR LA FICHE, IL NE NOMME PLUS LES IDENTIFIANTS, depuis la pièce P2 du plan des
+ * identifiants, le 2026-11-21. Ce module tenait la liste des débuts, des fins, de ceux qui rebouclent
+ * et des boucles par passes, en identifiants audio, au motif que « le moteur nomme les identifiants
+ * dont il dépend, il ne lit pas les fiches ». La préparation qui l'appelle lisait pourtant déjà
+ * `executerEnDernier` sur la fiche, et la liste avait deux défauts. Un second domaine ne pouvait avoir
+ * de boucle qu'en empruntant ces noms. Et une fin posée sous l'ancien identifiant
+ * `boucle-graphe-fin-a`, que le registre ouvre bien, ne refermait rien : MESURÉ par `preparerLaPasse`
+ * sur le vrai registre, zéro boucle dépliée et `debut-sans-fin`, contre trois tours sous
+ * l'identifiant canonique. Le rôle passe désormais par `trouverDef`, alias compris, et le dépliage
+ * reste une fonction pure : il reçoit une fonction, non le registre.
+ *
+ * DEUX SORTES DE DÉBUT, ET UNE SEULE CHOSE LES SÉPARE : « reboucle » part du résultat du tour
+ * précédent, « repete » repart de l'entrée du début. Ce n'est pas un réglage, parce qu'un plan ne
+ * demande pas une variante du rebouclage mais son contraire, et qu'un graphe doit dire depuis le
+ * canevas lequel des deux déroulés il décrit. MESURÉ DANS L'APPLICATION quand la boucle sur un plan
+ * est née : branchée sur le rebouclage, son deuxième tour recevait l'audio du premier sur une entrée
+ * texte, et la fin annonçait « Entrée en erreur : d#1::tm ».
+ *
+ * TROIS FINS, ET UN SEUL RÔLE. Ce qui les sépare n'est pas la façon de répéter la chaîne, qui est
+ * identique, mais ce que chacune fait des n résultats une fois qu'ils sont là : le dépliage n'a pas à
+ * les distinguer.
  */
-const REBOUCLENT = new Set<string>([FICHE_DEBUT]);
+export type RoleDeBoucle = Pick<IndicesMoteur, "debutDeBoucle" | "finDeBoucle" | "boucleParPasses">;
 
-/** Les tours partent-ils du résultat du précédent, ou tous de l'entrée du début ? */
-export const reboucleSurLeTourPrecedent = (ficheId: string | undefined): boolean =>
-  REBOUCLENT.has(ficheId ?? "");
-
-// Trois fins de boucle, et UN SEUL dépliage. Ce qui les sépare n'est pas la façon de
-// répéter la chaîne — elle est identique — mais ce que chacune fait des n résultats une
-// fois qu'ils sont là : A les met bout à bout, B ne garde que le dernier, C les empile.
-// Le dépliage n'a donc pas à les distinguer : il lui suffit de savoir qu'un nœud referme
-// une boucle, d'où l'ensemble plutôt que la comparaison à une constante.
-//
-// L'identifiant de A reste `boucle-graphe-fin`, sans suffixe : les graphes déjà enregistrés
-// le portent, et un renommage d'identifiant les casserait. Un alias `boucle-graphe-fin-a`
-// est déclaré dans le registre pour qui l'écrirait de la façon attendue.
-export const FICHE_FIN = "boucle-graphe-fin";
-export const FICHE_FIN_B = "boucle-graphe-fin-b";
-export const FICHE_FIN_C = "boucle-graphe-fin-c";
-
-export const FICHES_FIN: readonly string[] = [FICHE_FIN, FICHE_FIN_B, FICHE_FIN_C];
-
-const FINS = new Set(FICHES_FIN);
+/** Le rôle de la fiche qu'un nœud porte, par son identifiant ; `undefined` pour une fiche inconnue. */
+export type LireRoleDeBoucle = (ficheId: string) => RoleDeBoucle | undefined;
 
 /**
- * Les fiches qui mènent une boucle PAR PASSES, et non par dépliage.
- *
- * POURQUOI LE DÉPLIAGE A BESOIN DE LES CONNAÎTRE. Attic répète de deux façons, et elles ne se
- * mélangent pas. Celle-ci RECOPIE la chaîne avant l'exécution, sous des identifiants engendrés.
- * L'autre rejoue le graphe entier une fois par morceau, et apparie un nœud à sa boucle PAR SON
- * IDENTIFIANT. Une boucle par passes tombée dans le ventre d'une boucle de graphe est donc recopiée
- * en nœuds que le pilote ne reconnaît plus : la découverte n'a jamais lieu, la boucle reste à zéro
- * morceau, et le graphe aboutit sans avoir bouclé. MESURÉ : seule, une boucle par voix annonce
- * « voix 1/1 · 10 notes » ; la même, posée dans un ventre, n'annonce rien et rien ne prévient.
- *
- * LE CŒUR NE LIT PAS LES FICHES, il nomme les identifiants — ce que ce module fait déjà pour ses
- * propres bouts. Un cas permanent, du côté des fiches, tient cette liste égale à celle que
- * `boucleSequencesGlobal.ts` déclare : une septième boucle par passes ajoutée demain fera échouer ce
- * cas-là tant que ce garde-ci ne la connaît pas.
+ * Les réglages qu'un début de boucle déclare et que le dépliage lit. Les fiches du domaine prennent
+ * leur nom ici : c'est le cœur qui définit ce qu'un début de boucle doit porter.
  */
-export const FICHES_BOUCLE_PAR_PASSE: readonly string[] = [
-  "boucle-voix-debut", "boucle-voix-fin",
-  "boucle-creneau-debut", "boucle-creneau-fin",
-  "cercle-boucle-debut", "cercle-boucle-fin",
-];
-
-const PAR_PASSE = new Set(FICHES_BOUCLE_PAR_PASSE);
-
-/** Ce nœud referme-t-il une boucle, quelle que soit sa façon de rassembler les tours ? */
-export const estFinDeBoucle = (ficheId: string | undefined): boolean => FINS.has(ficheId ?? "");
+export const REGLAGE_TOURS = "Tours";
+export const REGLAGE_GRAINES = "Graines";
 
 /**
  * Un tour au moins, et AUCUN PLAFOND — décidé par Fabien : « je n'aime pas l'idée des boucles
@@ -216,18 +167,21 @@ export interface ResultatDepliage {
 export const GRAINES_PAR_TOUR = "Une par tour";
 
 const nombreDeTours = (n: NoeudG): number => {
-  const brut = Number((n.data.parametres as Record<string, unknown> | undefined)?.["Tours"] ?? 3);
+  const brut = Number((n.data.parametres as Record<string, unknown> | undefined)?.[REGLAGE_TOURS] ?? 3);
   if (!Number.isFinite(brut)) return 3;
   return Math.max(TOURS_MIN, Math.round(brut));
 };
 
 /**
- * Déplie toutes les boucles d'un graphe.
+ * Déplie toutes les boucles d'un graphe, le rôle de chaque nœud lu sur sa fiche par `roleDe`.
  *
  * Les graphes sans nœud de boucle ressortent inchangés — c'est le cas courant, et il ne
  * doit rien coûter.
  */
-export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepliage {
+export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[], roleDe: LireRoleDeBoucle): ResultatDepliage {
+  const role = (ficheId: string | undefined) => (ficheId === undefined ? undefined : roleDe(ficheId));
+  const estDebutDeBoucle = (ficheId: string | undefined) => role(ficheId)?.debutDeBoucle !== undefined;
+  const estFinDeBoucle = (ficheId: string | undefined) => role(ficheId)?.finDeBoucle === true;
   const fins = noeuds.filter((n) => estFinDeBoucle(n.data.ficheId));
   const debuts = noeuds.filter((n) => estDebutDeBoucle(n.data.ficheId));
   if (fins.length === 0 && debuts.length === 0) {
@@ -299,10 +253,12 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
 
     // UNE BOUCLE PAR PASSES DANS LE VENTRE EST REFUSÉE, PLUTÔT QUE RECOPIÉE EN SILENCE. Elle
     // s'apparie par identifiant, et le dépliage lui en donnerait un autre : les copies ne
-    // boucleraient pas, le graphe aboutirait tout de même, et l'on ne verrait rien. En refusant, la
-    // boucle par passes garde son identifiant et tourne normalement, et le début de boucle de graphe
-    // DIT pourquoi il ne s'est pas déplié. C'est la fiche qui porte ce rôle, jamais son nom.
-    const parPasse = interieur.filter((id) => PAR_PASSE.has(courantN.find((n) => n.id === id)?.data.ficheId ?? ""));
+    // boucleraient pas, le graphe aboutirait tout de même, et l'on ne verrait rien. MESURÉ : seule,
+    // une boucle par voix annonce « voix 1/1 · 10 notes » ; la même, posée dans un ventre, n'annonçait
+    // rien. En refusant, la boucle par passes garde son identifiant et tourne normalement, et le début
+    // de boucle de graphe DIT pourquoi il ne s'est pas déplié. C'est la fiche qui porte ce rôle,
+    // `boucleParPasses`, jamais son nom.
+    const parPasse = interieur.filter((id) => role(courantN.find((n) => n.id === id)?.data.ficheId)?.boucleParPasses === true);
     if (parPasse.length > 0) { problemes.push({ noeudId: debutId, code: "boucle-par-passe-dedans" }); continue; }
 
     if (interieur.length === 0) { problemes.push({ noeudId: debutId, code: "boucle-vide" }); continue; }
@@ -332,7 +288,8 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
       (a) => dedans.has(a.source) && !dedans.has(a.target) && a.target !== fin.id).length;
     depliees.push({ debutId, finId: fin.id, copies: [], tours, entreesDuDehors, sortiesVersDehors });
     const avant = new Set(origines.keys());
-    const { noeuds: nn, aretes: ne } = deplierUne(courantN, courantE, debut, fin, interieur, origines);
+    const reboucle = role(debut.data.ficheId)?.debutDeBoucle === "reboucle";
+    const { noeuds: nn, aretes: ne } = deplierUne(courantN, courantE, debut, fin, interieur, origines, reboucle);
     courantN = nn;
     courantE = ne;
 
@@ -353,7 +310,7 @@ export function deplierBoucles(noeuds: NoeudG[], aretes: AreteG[]): ResultatDepl
     // copies. Multiplier par `tours` est la numération à bases mêlées : elle est injective par
     // construction, et le nombre obtenu reste inférieur au PRODUIT des tours, donc à `COPIES_MAX`.
     const demandeDesGraines = String(
-      (debut.data.parametres as Record<string, unknown> | undefined)?.["Graines"] ?? "",
+      (debut.data.parametres as Record<string, unknown> | undefined)?.[REGLAGE_GRAINES] ?? "",
     ) === GRAINES_PAR_TOUR;
     const marque = new RegExp(`^${debutId.replace(/[.*+?^${}()|[\]\\#]/g, "\\$&")}#(\\d+)::(.+)$`);
     for (const id of origines.keys()) {
@@ -393,6 +350,7 @@ function deplierUne(
   fin: NoeudG,
   interieur: string[],
   origines: Map<string, string>,
+  reboucle: boolean,
 ): { noeuds: NoeudG[]; aretes: AreteG[] } {
   const tours = nombreDeTours(debut);
   const dedans = new Set(interieur);
@@ -433,7 +391,7 @@ function deplierUne(
       // résultat du tour précédent — c'est elle qui compose, un demi-ton par tour devenant n
       // demi-tons au n-ième —, et une boucle qui ne reboucle pas leur redonne la même entrée, ce
       // qui rend n tours INDÉPENDANTS du même descriptif.
-      const reprises = k === 0 || !reboucleSurLeTourPrecedent(debut.data.ficheId)
+      const reprises = k === 0 || !reboucle
         ? entreesDuDebut.map((e) => ({ ref: e.id, source: e.source, sourceHandle: e.sourceHandle }))
         : versLaFin.map((r) => ({ ref: r.id, source: idCopie(k - 1, r.source), sourceHandle: r.sourceHandle }));
       for (const s of reprises) {

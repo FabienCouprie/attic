@@ -28,7 +28,8 @@ import {
   peutReutiliserLeCache, sourceRetraitee, type EmpreintesDuRun, type EntreeDeCache, type LienDeGraphe,
 } from "./cache-execution";
 import { empreinteValeur, ordreTopologique } from "./graphe";
-import { deplierBoucles, FICHE_DEBUT, FICHE_FIN } from "./boucle-graphe";
+import { deplierBoucles } from "./boucle-graphe";
+import { FICHE_DEBUT, FICHE_FIN, rolesDEssai } from "./boucles-essai";
 import { creerTablesDePasse, executerLesNoeuds, type QuestionsDuRetour } from "./execution";
 import type { AreteG, NoeudG } from "./meta";
 import type { ContexteExecution, FonctionPlugin, PluginDef } from "./types";
@@ -303,7 +304,7 @@ describe("le cache d'une boucle dépliée", () => {
 
   /** Le graphe tel que le MOTEUR le parcourt : déplié, dans son ordre topologique. */
   function deplie(tours: number) {
-    const r = deplierBoucles(noeudsDeLaBoucle(tours), aretesDeLaBoucle);
+    const r = deplierBoucles(noeudsDeLaBoucle(tours), aretesDeLaBoucle, rolesDEssai);
     expect(r.problemes, "le graphe d'essai doit être câblé correctement").toEqual([]);
     const liens = r.aretes.map((a) => ({ source: a.source, target: a.target }));
     return { ordre: ordreTopologique(r.noeuds.map((n) => n.id), r.aretes), liens, ids: r.noeuds.map((n) => n.id) };
@@ -392,7 +393,7 @@ describe("le cache d'une boucle dépliée", () => {
       { id: "4", source: "src", target: "debB" }, { id: "5", source: "debB", target: "dansB" },
       { id: "6", source: "dansB", target: "finB" },
     ] as AreteG[];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.problemes).toEqual([]);
     const liens = r.aretes.map((a) => ({ source: a.source, target: a.target }));
     const ordre = ordreTopologique(r.noeuds.map((n) => n.id), r.aretes);

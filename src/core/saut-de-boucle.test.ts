@@ -4,7 +4,8 @@
 // suivants sont les raisons de NE PAS sauter, une par une : sauter à tort servirait un son périmé en
 // silence, ce qui est pire que de recalculer.
 import { describe, expect, it } from "vitest";
-import { FICHE_DEBUT, FICHE_FIN, deplierBoucles } from "./boucle-graphe";
+import { deplierBoucles } from "./boucle-graphe";
+import { FICHE_DEBUT, FICHE_FIN, rolesDEssai } from "./boucles-essai";
 import { empreinteEntrees, empreinteParametres, empreinteSorties } from "./graphe";
 import type { AreteG, NoeudG } from "./meta";
 import {
@@ -29,7 +30,7 @@ function monter(o: { sortieDuCorps?: boolean; valeur?: unknown; transposition?: 
     a("e1", "src", "d"), a("e2", "d", "tr"), a("e3", "tr", "f"), a("e4", "f", "ec"),
     ...(o.sortieDuCorps ? [a("e5", "tr", "vu")] : []),
   ];
-  const r = deplierBoucles(noeuds, aretes);
+  const r = deplierBoucles(noeuds, aretes, rolesDEssai);
   const cache = new Map<string, CacheDeFin>();
   const jamais = new Set<string>();
   const m: MoteurDuRun = {
@@ -63,7 +64,7 @@ describe("le dépliage dit la fin et le corps de chaque boucle", () => {
     const r = deplierBoucles(
       [n("s", "x"), n("D", FICHE_DEBUT, { Tours: 2 }), n("d", FICHE_DEBUT, { Tours: 2 }), n("t", "y"),
         n("f", FICHE_FIN), n("F", FICHE_FIN)],
-      [a("1", "s", "D"), a("2", "D", "d"), a("3", "d", "t"), a("4", "t", "f"), a("5", "f", "F")],
+      [a("1", "s", "D"), a("2", "D", "d"), a("3", "d", "t"), a("4", "t", "f"), a("5", "f", "F")], rolesDEssai
     );
     const interieure = r.depliees.find((d) => d.debutId === "d")!;
     const exterieure = r.depliees.find((d) => d.debutId === "D")!;

@@ -11,7 +11,7 @@
 //
 // LA PRÉPARATION EST LE PLUS GROS GEL DU LANCEMENT, mesuré à 286 ms sur un graphe de cinq nœuds
 // qui ne font rien ; c'est pour cela que le moteur respire juste après. Elle ne change pas ici.
-import { deplierBoucles } from "./boucle-graphe";
+import { deplierBoucles, type RoleDeBoucle } from "./boucle-graphe";
 import { conteneurs, type Conteneurs } from "./conteneurs";
 import { grapheSansConteneurs, type GrapheSansConteneurs } from "./formes-graphe";
 import { noeudsEnCycle, ordreTopologique, perimetreCible, placerEnDernier } from "./graphe";
@@ -21,8 +21,11 @@ import { aplatirGraphe, type AreteG, type MetaComposant, type NoeudG } from "./m
 import { validerGraphe } from "./validation";
 
 type DefPourValidation = NonNullable<ReturnType<Parameters<typeof validerGraphe>[2]>>;
-/** Ce que le moteur sait d'une fiche, et dont la préparation a besoin : ses ports, et si elle passe en dernier. */
-export type FicheDePreparation = (DefPourValidation & { executerEnDernier?: boolean }) | undefined;
+/**
+ * Ce que le moteur sait d'une fiche, et dont la préparation a besoin : ses ports, si elle passe en
+ * dernier, et son rôle dans une boucle de graphe, que le dépliage lit.
+ */
+export type FicheDePreparation = (DefPourValidation & { executerEnDernier?: boolean } & RoleDeBoucle) | undefined;
 
 export interface EntreesDePreparation {
   /** Les nœuds VISIBLES du canevas. */
@@ -114,8 +117,9 @@ export function preparerLaPasse({
   // que des graphes acycliques. Les nœuds compris entre « Début de boucle » et « Fin de
   // boucle » sont recopiés autant de fois qu'il y a de tours, chaque copie recevant le
   // résultat de la précédente — c'est ainsi que les effets s'accumulent d'un tour à
-  // l'autre. Voir `core/boucle-graphe.ts`, testé.
-  const deplie = deplierBoucles(plat.noeuds, plat.aretes);
+  // l'autre. Voir `core/boucle-graphe.ts`, testé. LE RÔLE DE CHAQUE NŒUD SE LIT SUR SA FICHE, par le
+  // `trouverDef` qu'on prête à la préparation : un ancien identifiant y ouvre la fiche qu'il désigne.
+  const deplie = deplierBoucles(plat.noeuds, plat.aretes, (ficheId) => trouverDef(ficheId));
   for (const [copie, origine] of deplie.origines) {
     plat.expansions.set(copie, plat.expansions.get(origine) ?? origine);
   }

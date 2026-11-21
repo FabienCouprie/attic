@@ -12,7 +12,7 @@ import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { valeursParametre } from "../audio/courbe";
 import { enveloppeDeZones } from "../audio/dosage";
-import { creerAleatoire } from "../core";
+import { creerAleatoire, GRAINES_PAR_TOUR, REGLAGE_GRAINES, REGLAGE_TOURS } from "../core";
 // LE DÉBUT DE BOUCLE SUR UN PLAN EST GREFFÉ ICI, ET NON AU BARIL : `plugins/index.ts` est en dette
 // de taille et ne grossit plus. Sa place est auprès des trois autres bouts de boucle.
 import { fiches as fichesBouclePlan } from "./boucle-plan";
@@ -316,6 +316,8 @@ export const fiches: FicheAudio[] = ([
     id: "boucle-graphe-debut", nom: "Début de boucle", nomEn: "Loop Start", univers: "Traitement", famille: "Montage",
     resume: "Marque le début d'une boucle de graphe : ce qui suit est rejoué N fois, chaque tour partant du résultat du précédent.",
     resumeEn: "Marks the start of a graph loop: what follows is replayed N times, each pass starting from the previous result.",
+    // LE DÉPLIAGE LIT CE RÔLE, et les deux réglages ci-dessous sous les noms que le cœur leur donne.
+    debutDeBoucle: "reboucle",
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
@@ -323,15 +325,15 @@ export const fiches: FicheAudio[] = ([
       // grandeur bornée porte une glissière ; celle-ci n'a pas de borne haute, donc pas de
       // glissière. Ce qui coûte n'est pas le nombre de tours mais le nombre de copies, et le moteur
       // le borne pour toutes les boucles à la fois, en REFUSANT et en le disant.
-      { nom: "Tours", nomEn: "Passes", type: "nombre", plage: [1, Infinity], pas: 1, defaut: 3,
+      { nom: REGLAGE_TOURS, nomEn: "Passes", type: "nombre", plage: [1, Infinity], pas: 1, defaut: 3,
         doc: "Nombre de fois où la chaîne comprise entre ce composant et la « Fin de boucle » (A, B ou C) est jouée. Les effets s'accumulent : si la chaîne transpose d'un demi-ton, le deuxième tour part d'un signal déjà transposé et monte donc de deux demi-tons. Le nombre est libre ; ce qui l'arrête est le nombre total de copies que le dépliage fabrique, boucles emboîtées comprises, et le composant dit alors ce qui aurait été nécessaire. Lancé sans « Fin de boucle » en aval, le composant laisse passer le son, et ce réglage ne sert pas.",
         docEn: "How many times the chain between this node and the « Loop End » (A, B or C) is played. Effects accumulate: if the chain transposes by a semitone, the second pass starts from an already transposed signal and therefore rises by two semitones. The number is free; what stops it is the total number of copies the unrolling builds, nested loops included, and the node then states what would have been needed. Run with no « Loop End » downstream, the node lets the sound through, and this setting does nothing." },
       // CE RÉGLAGE N'EST PAS UNE GRAINE, et ne porte donc pas le rôle : c'est un CHOIX qui dit ce
       // que les graines de la chaîne deviennent. Lui donner le rôle ferait résoudre son libellé
       // comme un nombre.
-      { nom: "Graines", nomEn: "Seeds", type: "choix",
-        options: ["Identiques", "Une par tour"], optionsEn: ["Identical", "One per pass"],
-        optionIds: ["Identiques", "Une par tour"], defaut: "Identiques", defautEn: "Identical",
+      { nom: REGLAGE_GRAINES, nomEn: "Seeds", type: "choix",
+        options: ["Identiques", GRAINES_PAR_TOUR], optionsEn: ["Identical", "One per pass"],
+        optionIds: ["Identiques", GRAINES_PAR_TOUR], defaut: "Identiques", defautEn: "Identical",
         doc: "Ce que deviennent les réglages « Graine » des composants de la chaîne. « Identiques » donne à tous les tours la même graine, qu'elle soit posée ou tirée : chaque tour applique donc le même tirage. « Une par tour » la dérive du numéro du tour : les tours diffèrent, et la même graine avec le même nombre de tours rend toujours la même suite. Dans les deux cas, une graine tirée est rendue dans le message, et la reposer rejoue la boucle entière.",
         docEn: "What becomes of the « Seed » settings of the chain's nodes. « Identical » gives every pass the same seed, whether it was set or drawn: every pass therefore applies the same draw. « One per pass » derives it from the pass number: the passes differ, and the same seed with the same pass count always returns the same series. Either way, a drawn seed is given back in the message, and putting it back replays the whole loop." },
     ],
@@ -350,10 +352,11 @@ export const fiches: FicheAudio[] = ([
     // variante voulue, et non en réglant un paramètre « Mode » sur un nœud unique — un
     // paramètre qu'il faudrait ouvrir pour savoir ce que la boucle produit, alors que le nom
     // du nœud le dit depuis le graphe. L'identifiant de A reste `boucle-graphe-fin` : les
-    // graphes enregistrés le portent (voir l'alias dans core/registre.ts).
+    // graphes enregistrés le portent. L'alias `boucle-graphe-fin-a` est dans `audio/alias.ts`, et il
+    // referme aussi la boucle depuis que le dépliage lit ce rôle par `trouverDef`.
     id: "boucle-graphe-fin", nom: "Fin de boucle A", nomEn: "Loop End A", univers: "Traitement", famille: "Montage",
     resume: "Referme une boucle de graphe et met bout à bout les résultats de tous les tours.",
-    resumeEn: "Closes a graph loop and puts every pass's result end to end.",
+    resumeEn: "Closes a graph loop and puts every pass's result end to end.", finDeBoucle: true,
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
@@ -377,7 +380,7 @@ export const fiches: FicheAudio[] = ([
   fiche({
     id: "boucle-graphe-fin-b", nom: "Fin de boucle B", nomEn: "Loop End B", univers: "Traitement", famille: "Montage",
     resume: "Referme une boucle de graphe et ne garde que le résultat du dernier tour.",
-    resumeEn: "Closes a graph loop and keeps only the last pass's result.",
+    resumeEn: "Closes a graph loop and keeps only the last pass's result.", finDeBoucle: true,
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [],
@@ -397,7 +400,7 @@ export const fiches: FicheAudio[] = ([
   fiche({
     id: "boucle-graphe-fin-c", nom: "Fin de boucle C", nomEn: "Loop End C", univers: "Traitement", famille: "Montage",
     resume: "Referme une boucle de graphe et empile les tours l'un sur l'autre, comme le mélangeur.",
-    resumeEn: "Closes a graph loop and stacks the passes on top of one another, like the mixer.",
+    resumeEn: "Closes a graph loop and stacks the passes on top of one another, like the mixer.", finDeBoucle: true,
     entrees: [{ nom: "Audio", type: "audio" }],
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [

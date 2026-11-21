@@ -7,6 +7,8 @@ export type { MetaComposant, NoeudG, AreteG, DefPorts, PortInterne } from "./met
 // CE QUE LE CŒUR FOURNIT À TOUT DOMAINE : les deux nœuds-frontière d'un méta et le type de leur port.
 export { fichesDuCoeur, typesFluxDuCoeur, TYPE_FRONTIERE } from "./fiches-du-coeur";
 export { grapheSansConteneurs } from "./formes-graphe";
+// CE QU'UN DÉBUT DE BOUCLE DOIT PORTER pour que le dépliage le lise : voir `core/boucle-graphe.ts`.
+export { GRAINES_PAR_TOUR, REGLAGE_GRAINES, REGLAGE_TOURS } from "./boucle-graphe";
 export {
   PREFIXE_FICHE_BULLE, PREFIXE_SUBSTITUTION, ancetresBulle, appliquerRepli, bulleCachante, bulleDe,
   bullesVides, estBulle, estCacheParBulle, estRepliee, estSubstitution, ficheDeBulle,

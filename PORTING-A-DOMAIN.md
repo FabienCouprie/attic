@@ -365,6 +365,15 @@ pour éditer l'intérieur, `redériverMeta` répercute une modification.
 lignes : l'inclusion des deux nœuds-frontière que le cœur fournit, et celle de leur
 type de flux, décrites au §6.a.
 
+**Boucles de graphe** — `deplierBoucles` (`core/boucle-graphe.ts`) recopie, avant
+l'exécution, la chaîne comprise entre un début et une fin de boucle. Il ne connaît
+aucun identifiant : il lit sur la fiche les indices d'`IndicesMoteur` `debutDeBoucle`
+(`"reboucle"` ou `"repete"`), `finDeBoucle` et `boucleParPasses`, par le `trouverDef`
+que reçoit `preparerLaPasse`, alias compris. Un début de boucle déclare les réglages
+`REGLAGE_TOURS` et `REGLAGE_GRAINES`, que le cœur exporte. Votre domaine a donc des
+boucles en déclarant deux fiches ainsi ; `src/core/boucle-role.test.ts` en pose sur des
+identifiants d'essai.
+
 **Import de nœuds** — `installerNode` / `chargerNodesInstalles` : des nœuds
 livrés en `.zip` et installés à chaud.
 
@@ -501,12 +510,13 @@ ne pouvait la voir, une table de chaînes n'important rien et ne contenant aucun
 énumérés. Il lit les chaînes du code de `src/core/` par l'arbre syntaxique, et refuse
 celle qui vaut l'identifiant d'une fiche du catalogue ou un de ses anciens identifiants.
 Les fiches que le cœur déclare lui-même n'en sont pas, et un cas tient qu'elles ne portent
-que des types de flux du cœur. **Quatorze y restent, en trois fichiers, épinglées comme
-dettes** avec leur raison : les bouts des boucles (`core/boucle-graphe.ts`), l'instrument
-rejoué touche par touche (`core/instrument-graphe.ts`) et la liaison des réglages de
-« Courbe » (`core/reglages-lies.ts`). La liste refuse de grandir, et une dette payée doit
-en sortir. Un second domaine qui voudrait des boucles devrait donc, aujourd'hui, déclarer
-des fiches sous ces identifiants-là.
+que des types de flux du cœur. **Trois y restent, en deux fichiers, épinglées comme
+dettes** avec leur raison : l'instrument rejoué touche par touche
+(`core/instrument-graphe.ts`) et la liaison des réglages de « Courbe »
+(`core/reglages-lies.ts`). Les deux des nœuds-frontière et les onze des bouts des boucles
+en sont sorties le 2026-11-21 : les premiers par leurs fiches, que le cœur déclare, les
+seconds parce que le dépliage lit le rôle sur la fiche. La liste refuse de grandir, et une
+dette payée doit en sortir.
 
 **Les nœuds-frontière des méta-composants sont fournis par le cœur** depuis le 2026-11-21 :
 `core/fiches-du-coeur.ts` déclare leurs deux fiches, `fichesDuCoeur()`, et le type de leur

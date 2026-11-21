@@ -65,8 +65,6 @@
 // c'est à l'appelant de décider si cela lui convient.
 import type { Page } from "@playwright/test";
 
-import { estDebutDeBoucle } from "../src/core/boucle-graphe";
-
 /** Au-delà, on considère que le graphe ne finira pas : un graphe bloqué ne bloque pas la passe. */
 export const DELAI_RUN_MS = 180_000;
 
@@ -133,10 +131,18 @@ export interface OptionsPilote {
    * attendait jusqu'à son délai un nœud qui ne quittera jamais l'attente.
    */
   attentesAdmises?: readonly string[];
+  /**
+   * Ajoute à `attentesAdmises` les débuts de boucle de graphe du graphe semé, par `debutsDeBoucle`.
+   *
+   * POUR LES VERBES QUI MÈNENT N'IMPORTE QUEL GRAPHE sans savoir s'il en porte : `executer`, la base
+   * du son et le journal de passe. Le rôle se lit dans la page, et il faut donc le serveur de
+   * développement : une spec qui mène une application construite ne passe pas cette option.
+   */
+  admettreLesDebutsDeBoucle?: boolean;
 }
 
 /**
- * Les débuts de boucle de graphe d'un graphe, qu'un run laisse « en attente » : de quoi remplir
+ * Les débuts de boucle de graphe d'un graphe semé, qu'un run laisse « en attente » : de quoi remplir
  * `attentesAdmises` pour un verbe qui mène N'IMPORTE QUEL graphe sans savoir s'il en porte.
  *
  * POURQUOI CETTE FONCTION, relevé le 2026-11-20. `executer`, la base du son et le journal de passe
@@ -144,13 +150,21 @@ export interface OptionsPilote {
  * run un début qui ne quittera jamais l'attente. Aucun exemple livré n'en portait, et rien ne le
  * disait.
  *
- * LA RÈGLE EST CELLE DU DÉPLIAGE, `estDebutDeBoucle` : un second exemplaire de la liste des débuts
- * vieillirait sans que rien ne le dise. Les sous-nœuds des métas ne sont pas lus : aucun exemple
- * livré n'en a besoin, et ce que montre un méta qui enferme un début n'a pas été relevé.
+ * LA RÈGLE EST CELLE DU DÉPLIAGE : le rôle `debutDeBoucle` que la fiche déclare, lu sur le registre
+ * que l'application a monté, alias compris. Depuis la pièce P2 du 2026-11-21, le cœur ne nomme plus
+ * les identifiants des débuts, et un second exemplaire de leur liste vieillirait sans que rien ne le
+ * dise. La page doit donc servir `/src`, ce que fait le serveur de développement et non une
+ * application construite : là, l'import lève. Les sous-nœuds des métas ne sont pas lus : aucun
+ * exemple livré n'en a besoin, et ce que montre un méta qui enferme un début n'a pas été relevé.
  */
-export function debutsDeBoucle(grapheJson: string): string[] {
+export async function debutsDeBoucle(page: Page, grapheJson: string): Promise<string[]> {
   const g = JSON.parse(grapheJson) as { nodes?: { id: string; data?: { ficheId?: string } }[] };
-  return (g.nodes ?? []).filter((n) => estDebutDeBoucle(n.data?.ficheId)).map((n) => n.id);
+  const noeuds = (g.nodes ?? []).map((n) => ({ id: n.id, ficheId: n.data?.ficheId ?? "" }));
+  return page.evaluate(async (ns) => {
+    const { registreUI } = await import("/src/ui/registre-actif.ts") as
+      { registreUI: () => { trouverDef(id: string): { debutDeBoucle?: string } | undefined } };
+    return ns.filter((n) => registreUI().trouverDef(n.ficheId)?.debutDeBoucle !== undefined).map((n) => n.id);
+  }, noeuds);
 }
 
 /**
@@ -160,8 +174,11 @@ export async function semerEtLancer(
   page: Page, url: string, grapheJson: string, o: OptionsPilote = {},
 ): Promise<void> {
   await semer(page, url, grapheJson, o);
+  const attentesAdmises = o.admettreLesDebutsDeBoucle
+    ? [...(o.attentesAdmises ?? []), ...await debutsDeBoucle(page, grapheJson)]
+    : o.attentesAdmises;
   if (o.avantDeLancer) await o.avantDeLancer(page);
-  await relancerEtAttendre(page, o);
+  await relancerEtAttendre(page, { ...o, attentesAdmises });
 }
 
 /**
