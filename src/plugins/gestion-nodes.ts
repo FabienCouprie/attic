@@ -226,6 +226,9 @@ export const fiches: FicheAudio[] = ([
         // pas les fichiers du même nœud qui tourne. Voir `electron/zips-confirmes.cjs`.
         const examen = examinerNode(node);
         if (!examen.inscrite) {
+          // L'ARCHIVE REFUSÉE NE RESTE PAS EN MÉMOIRE : le processus principal la tenait entière, jusqu'à
+          // ce que quatre imports suivants la chassent.
+          await api.oublierNodeZip?.(res.jeton);
           return { valeurs: [], erreur: true, message: messageDuRefus(res.manifest.id, examen) };
         }
         const depli = await api.deplierNodeZip(res.jeton);

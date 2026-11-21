@@ -44,4 +44,18 @@ describe("le message des méta-composants refusés", () => {
     expect(m, "le point-virgule anglais n'est pas précédé d'une espace").not.toMatch(/ ;/);
     expect(francais(m), m).toBe(false);
   });
+
+  it("AU DÉMARRAGE, LES MÉTAS GARDÉS ICI : la même liste, et ce que devient leur clé, dans les deux langues", () => {
+    localStorage.setItem("attic-lang", "fr");
+    const fr = messageMetasRefuses(REFUSES as never, "stockage")!;
+    expect(fr).toMatch(/^Cette application gardait 3 méta-composant\(s\) que le registre refuse/);
+    expect(fr).toContain("« filtre », ancien identifiant de « reponse-filtre »");
+    expect(fr).toContain("sont retirés du stockage ; les autres y restent.");
+
+    localStorage.setItem("attic-lang", "en");
+    const en = messageMetasRefuses(REFUSES as never, "stockage")!;
+    expect(en).toMatch(/^This application kept 3 meta-component\(s\) that the registry refuses/);
+    expect(en).toContain("are removed from storage; the others remain there.");
+    expect(francais(en), en).toBe(false);
+  });
 });

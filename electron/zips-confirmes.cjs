@@ -15,6 +15,11 @@
 //
 // UN JETON NE SERT QU'UNE FOIS, et seuls les derniers restent : une archive confirmée puis refusée
 // par le registre n'est jamais redemandée, et rien ne doit s'accumuler.
+//
+// UNE ARCHIVE REFUSÉE EST OUBLIÉE AUSSITÔT. La fenêtre le demande (`node:oublier-zip`) dès que le
+// registre a dit non : `adm-zip` tient le fichier entier en mémoire, et une archive refusée y restait
+// jusqu'à ce que quatre imports suivants la chassent. La capacité ne couvre plus que les archives
+// dont la fenêtre n'a jamais rien dit.
 const { randomUUID } = require("crypto");
 
 /** Le nombre d'archives confirmées que l'on garde à la fois. */
@@ -41,7 +46,12 @@ function creerZipsConfirmes(capacite = CAPACITE) {
     return e;
   }
 
-  return { retenir, reprendre, taille: () => enAttente.size };
+  /** Oublie l'archive de ce jeton sans la rendre, et dit si elle était gardée. */
+  function oublier(jeton) {
+    return reprendre(jeton) !== null;
+  }
+
+  return { retenir, reprendre, oublier, taille: () => enAttente.size };
 }
 
 module.exports = { creerZipsConfirmes, CAPACITE };

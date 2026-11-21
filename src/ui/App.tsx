@@ -59,7 +59,7 @@ import "./clavier.css";
 // Forcer l'enregistrement des plugins
 import "../audio/adaptateur";
 
-import { chargerMetasLocaux } from "./metasLocaux";
+import { chargerMetasLocaux, messagesDesMetasNonRestaures } from "./metasLocaux";
 import { useFenetresPartagees } from "./hooks/useFenetresPartagees";
 import { installerMetasExemples } from "../plugins/meta-exemples";
 import { chargerNodesInstalles } from "../core";
@@ -183,15 +183,11 @@ function Atelier() {
   // (cf. metasNonRestaures, calculé au chargement du module) passe pour une
   // perte de données côté sauvegarde alors que la cause est un plugin renommé
   // ou supprimé depuis. Toujours en stockage (metasLocaux.ts) : rien n'est perdu.
+  // Un méta que le registre refuse est dit de même, dans un second message : `ui/metasLocaux.ts`.
   useEffect(() => {
-    if (metasNonRestaures.length === 0) return;
-    const detail = metasNonRestaures
-      .map((m) => `• ${m.nom} (${m.manquants.join(", ")})`)
-      .join("\n");
-    if (typeof alert !== "undefined") {
-      alert(t("persistance.metasNonRestaures").replace("{nb}", String(metasNonRestaures.length)) + "\n\n" + detail);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (typeof alert === "undefined") return;
+    for (const message of messagesDesMetasNonRestaures(metasNonRestaures)) alert(message);
+  }, []);
 
   // ── Le SoundFont global, dans hooks/useSoundFont.ts ──
   const { sf2Nom: sf2NomState, chargerSF2 } = useSoundFont({ repertoire, envoyer, enExecution });

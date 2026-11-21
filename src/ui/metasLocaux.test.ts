@@ -127,7 +127,7 @@ describe("une clé par méta", () => {
     const s = new Memoire();
     s.setItem(PREFIXE_META + "m1", JSON.stringify(serialiserMeta(meta({ id: "m1", sousNoeuds: [{ id: "a", data: { ficheId: "disparue" } }] }))));
     const non = chargerMetasLocaux(s);
-    expect(non.map((x) => x.manquants)).toEqual([["disparue"]]);
+    expect(non.map((x) => "manquants" in x && x.manquants)).toEqual([["disparue"]]);
     expect(s.getItem(PREFIXE_META + "m1")).not.toBeNull();
   });
 
