@@ -89,34 +89,9 @@ export function degresDesAccords(id: string): number[] {
   return degresSansPassage(id, "majeur");
 }
 
-/**
- * Décalage en demi-tons (1-12, ascendant) depuis une fondamentale jusqu'à la
- * note de la gamme la plus proche d'un intervalle cible (4 = tierce majeure,
- * 7 = quinte juste). Généralise la construction d'accords tertiaires à des
- * gammes de longueur quelconque : sur une gamme heptatonique cela retombe
- * exactement sur le 3e/5e degré habituel ; sur une gamme pentatonique
- * (qui n'a pas de degré à exactement 2 crans d'écart) cela choisit la note
- * de la gamme la plus proche de la tierce/quinte visée.
- *
- * C'EST LA RÈGLE QUI RENDAIT LE v DU MINEUR EN SUS4, et elle n'a plus d'appelant parmi les générateurs
- * d'accords, qui bâtissent un degré sur deux depuis le 2026-11-21 (`triades-gamme.ts`). Elle reste
- * pour la triade des trois nœuds à couleurs, que le lot suivant passe à la même règle.
- */
-export function degreAccordProche(degresGamme: number[], racinePc: number, cibleSemitons: number): number {
-  let meilleur = cibleSemitons;
-  let meilleurEcart = Infinity;
-  for (const pc of degresGamme) {
-    let dist = (((pc - racinePc) % 12) + 12) % 12;
-    if (dist === 0) dist = 12;
-    const ecart = Math.abs(dist - cibleSemitons);
-    if (ecart < meilleurEcart) {
-      meilleurEcart = ecart;
-      meilleur = dist;
-    }
-  }
-  return meilleur;
-}
-
+// LA TIERCE ET LA QUINTE D'UN ACCORD se bâtissent dans `triades-gamme.ts`, un degré sur deux dans la
+// gamme. `degreAccordProche`, qui cherchait la note la plus proche de quatre et de sept demi-tons, a
+// disparu avec ses sept appelants le 2026-11-21 : c'est elle qui rendait le v du mineur en sus4.
 
 export function traduireCle(nom: string): number {
   const clef: Record<string, number> = {

@@ -17,9 +17,13 @@ import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import type { FicheLancable } from "../audio/lancer-fiche";
 import { apparier } from "../audio/gamme-banc-lancer";
-import type { PortDeSortie } from "../audio/gamme-banc-hauteurs";
+import type { HauteurRendue, PortDeSortie } from "../audio/gamme-banc-hauteurs";
 import { releverUneGamme } from "../audio/gamme-banc-releve";
-import { degresAttendus as degresDe, degresDesAccordsAttendus as degresDesAccords } from "../audio/gamme-banc-proprietes";
+import {
+  accordsSurLesDegres, degresAttendus as degresDe, degresDesAccordsAttendus as degresDesAccords, horsDeLaGamme,
+} from "../audio/gamme-banc-proprietes";
+import { couleursVersNotes, type CouleurExtraite } from "../audio/palette-harmonique";
+import { formesVersNotes } from "../audio/dessin-sonore";
 import { reglagesANomenclature } from "../plugins/nomenclatures";
 
 /** Les nœuds qui bâtissent des accords sur les degrés de leur gamme, et les rendent en MIDI. */
@@ -28,15 +32,51 @@ const NOEUDS = ["generateur-musical", "boite-groove", "sequenceur-accords"];
 const paires = apparier(reglagesANomenclature()).paires;
 
 describe("les accords bâtis sur les degrés de la gamme", () => {
-  for (const id of NOEUDS) {
+  // LE COLOR LOOPER JOUE SES ACCORDS EN « PLAQUÉ », et non sous son défaut, « Mélodie », qui
+  // cachait sa triade parallèle : la triade de la tonique posée sur chaque degré.
+  const AUTRES: Record<string, Record<string, string>> = { "color-looper": { Mode: "plaque" } };
+  for (const id of [...NOEUDS, "color-looper"]) {
     const paire = paires.find((p) => p.fiche === id)!;
     const fiche = registre.trouverDef(id) as unknown as FicheLancable & { sorties: PortDeSortie[] };
     it.each(paire.ids)(`${id} sous « %s » : chaque accord est la triade de la gamme, et aucune note n'en sort`, async (gamme) => {
-      const r = await releverUneGamme(fiche, paire, gamme, { ports: fiche.sorties, graines: [1], toniques: [3], degresDe, degresDesAccords });
+      const r = await releverUneGamme(fiche, paire, gamme, {
+        ports: fiche.sorties, graines: [1], toniques: [3], degresDe, degresDesAccords, ...(AUTRES[id] ? { autres: AUTRES[id] } : {}),
+      });
       expect(r.echecs).toEqual([]);
       expect(r.sorties.some((s) => s.accords > 0), "le nœud a rendu des accords").toBe(true);
       expect(r.sorties.flatMap((s) => s.accordsFautifs)).toEqual([]);
       expect(r.sorties.flatMap((s) => s.exemplesHors)).toEqual([]);
+    });
+  }
+});
+
+/**
+ * LA PALETTE HARMONIQUE ET LE DESSIN SONORE lisent une image par le DOM, que le banc ne sait pas
+ * lancer hors du navigateur ; leur calcul des notes est pur, et c'est lui qui bâtit l'accord. Vingt-
+ * quatre couleurs font le tour du cercle des teintes, chacune à sa place sur l'axe du temps : chaque
+ * degré y prend un accord.
+ */
+const couleurs = (): CouleurExtraite[] =>
+  Array.from({ length: 24 }, (_, k) => ({ r: 0, g: 0, b: 0, h: k * 15, s: 80, l: 50, x: k * 10, y: 5, count: 100 }));
+const OPTIONS = { cle: "Eb", mode: "harmonie" as const, octave: 4, portee: 1, duree: 12, nbCouleurs: 24,
+  modeRendu: "FM/Oscillateurs" as const, instrument: 0, volume: 0.8, tempo: 120 };
+
+describe("les accords des deux nœuds à image, par leur calcul pur", () => {
+  const rendus: [string, (gamme: string) => HauteurRendue[]][] = [
+    ["palette-harmonique", (gamme) => couleursVersNotes(couleurs(), { ...OPTIONS, gamme, ordre: "horizontal" })],
+    ["dessin-sonore", (gamme) => formesVersNotes(
+      couleurs().map((couleur) => ({ couleur, x: couleur.x, y: couleur.y, area: 100, largeur: 10, hauteur: 10 })),
+      { ...OPTIONS, gamme, tailleMin: 0 },
+    )],
+  ];
+  for (const [id, rendre] of rendus) {
+    const paire = paires.find((p) => p.fiche === id)!;
+    it.each(paire.ids)(`${id} sous « %s » : chaque accord est la triade de la gamme`, (gamme) => {
+      const notes = rendre(gamme);
+      const a = accordsSurLesDegres(notes, degresDesAccords(gamme)!, 3);
+      expect(a.accords).toBe(24);
+      expect(a.fautifs).toEqual([]);
+      expect(horsDeLaGamme(notes, degresDe(gamme)!, 3)).toEqual([]);
     });
   }
 });

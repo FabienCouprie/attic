@@ -44,3 +44,7 @@ export const quinteDuDegre = (degres: readonly number[], racinePc: number) => ec
 export const sixteDuDegre = (degres: readonly number[], racinePc: number) => ecartDansLaGamme(degres, racinePc, 5);
 /** La septième d'un degré : six degrés plus haut. */
 export const septiemeDuDegre = (degres: readonly number[], racinePc: number) => ecartDansLaGamme(degres, racinePc, 6);
+
+/** La triade d'un degré, en demi-tons au-dessus de sa fondamentale : 0, sa tierce et sa quinte. */
+export const triadeDuDegre = (degres: readonly number[], racinePc: number): number[] =>
+  [0, tierceDuDegre(degres, racinePc), quinteDuDegre(degres, racinePc)];
