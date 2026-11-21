@@ -25,6 +25,12 @@
 // `.claude/worktrees/`, l'arbre d'une autre session, passe alors pour un dossier étranger. Vu en
 // plantant cette lecture-là : le cas de la session voisine tombe dans le test.
 //
+// LES CHEMINS SE COMPARENT SOUS LEUR FORME RÉELLE. git rend le chemin que le système lui donne,
+// noms courts dépliés et jonctions suivies, et la commande se lit depuis le dossier tel que la
+// charge l'écrit. Sur la PR 416, la CI Windows a refusé trois arbres légitimes : son `TEMP` vaut
+// `C:\Users\RUNNER~1\…`, un nom court 8.3, et git rendait `runneradmin`. Chaque côté passe donc par
+// `realpathSync.native`, sur son plus long ancêtre qui existe, l'arbre à ouvrir n'existant pas encore.
+//
 // L'EXCEPTION CONNUE. Le 2026-11-08, `npm ci` a échoué en EBUSY dans un arbre de session : le
 // processus Node de l'application Claude tenait `node_modules/electron/dist/resources/default_app.asar`,
 // et rien ne le libère tant qu'elle tourne. La vérification se fait alors dans un arbre détaché hors
@@ -47,7 +53,7 @@
 // interne sort en 0 : un garde-fou qui casse la session ne garde plus rien.
 
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import chemins from "node:path";
 import { fileURLToPath } from "node:url";
@@ -199,6 +205,25 @@ export function sous(racine, cible) {
   return rel === "" || (rel !== ".." && !rel.startsWith(".." + P.sep) && !P.isAbsolute(rel));
 }
 
+/**
+ * La forme réelle d'un chemin, celle que git rend : son plus long ancêtre qui existe, lu par le
+ * système (noms courts 8.3 dépliés, jonctions et liens suivis), puis le reste tel qu'écrit.
+ */
+export function canonique(chemin) {
+  const ecrit = P.resolve(chemin);
+  const reste = [];
+  for (let tete = ecrit; ; ) {
+    try {
+      return P.join(realpathSync.native(tete), ...reste);
+    } catch {
+      const parent = P.dirname(tete);
+      if (parent === tete) return ecrit;
+      reste.unshift(P.basename(tete));
+      tete = parent;
+    }
+  }
+}
+
 /** Le dossier des arbres de session du dépôt, lu sous son checkout principal. */
 export function dossierDesArbres(depart) {
   let principal = depart;
@@ -216,7 +241,7 @@ export function dossierDesArbres(depart) {
 /** `cible` est-il dans le bac à sable de cette session : `<temporaire>/…/<session>/scratchpad/…` ? */
 export function dansLeBac(cible, session) {
   if (!session) return false;
-  const rel = P.relative(tmpdir(), cible);
+  const rel = P.relative(canonique(tmpdir()), canonique(cible));
   if (rel === "" || rel === ".." || rel.startsWith(".." + P.sep) || P.isAbsolute(rel)) return false;
   const egal = (a, b) => (WINDOWS ? a.toLowerCase() === b.toLowerCase() : a === b);
   const segments = rel.split(P.sep);
@@ -260,7 +285,8 @@ export function juger(commande, depart, session) {
   const ouverts = arbresOuverts(commande, depart);
   if (ouverts.length === 0) return null;
   const arbres = dossierDesArbres(depart);
-  const refus = ouverts.filter(({ cible }) => cible === null || !(sous(arbres, cible) || dansLeBac(cible, session)));
+  const reels = canonique(arbres);
+  const refus = ouverts.filter(({ cible }) => cible === null || !(sous(reels, canonique(cible)) || dansLeBac(cible, session)));
   return refus.length === 0 ? null : { refus, arbres };
 }
 

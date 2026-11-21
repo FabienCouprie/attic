@@ -15,7 +15,7 @@
 // leçon du contrat de retouche, dont le test a été faux deux fois pour un saut de ligne écrit au
 // shell.
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -29,6 +29,8 @@ let bac = "";
 let depot = "";
 let arbreDeLaSession = "";
 let dehors = "";
+let lien = "";
+let lienTemporaire = "";
 
 beforeAll(() => {
   bac = realpathSync(mkdtempSync(join(tmpdir(), "attic-arbre-")));
@@ -49,9 +51,17 @@ beforeAll(() => {
   git("init", "-q", "--initial-branch=master");
   git("commit", "-q", "--allow-empty", "-m", "racine", "--no-gpg-sign");
   git("worktree", "add", "-q", "--detach", arbreDeLaSession);
+  // UN AUTRE CHEMIN VERS LE MÊME DÉPÔT : une jonction sous Windows, un lien ailleurs.
+  lien = join(bac, "lien-vers-attic");
+  symlinkSync(depot, lien, "junction");
+  // UN AUTRE CHEMIN VERS LE DOSSIER TEMPORAIRE, sous lequel vit le bac à sable.
+  lienTemporaire = join(bac, "lien-vers-le-temporaire");
+  symlinkSync(tmpdir(), lienTemporaire, "junction");
 });
 
 afterAll(() => {
+  // Les jonctions se retirent d'abord, seules, pour qu'aucun retrait ne les suive jusqu'à leur cible.
+  for (const j of [lien, lienTemporaire]) try { unlinkSync(j); } catch { /* absente */ }
   try { rmSync(bac, { recursive: true, force: true }); } catch { /* le temporaire reste, sans conséquence */ }
 });
 
@@ -145,6 +155,22 @@ describe("ce que le contrat laisse passer", () => {
     expect(juger("cd .. && git worktree add session-c", { cwd: arbreDeLaSession }).code).toBe(0);
     // Une ligne continuée : le chemin est sur la ligne suivante, et le `\` n'en est pas un.
     expect(juger("git worktree add \\\n  ../session-d", { cwd: arbreDeLaSession }).code).toBe(0);
+  });
+
+  // UN DOSSIER DE DÉPART ÉCRIT PAR UN AUTRE CHEMIN QUE CELUI QUE GIT REND. git rend le chemin réel,
+  // et la commande se lit depuis le dossier tel que la charge l'écrit. Sur le runner Windows de la
+  // CI, `TEMP` vaut `C:\Users\RUNNER~1\…`, un nom court 8.3, quand git rend `runneradmin` : trois
+  // cas de ce fichier y sont tombés sur la PR 416, et aucun chez moi, où le temporaire n'a pas de
+  // nom court. Une jonction fait le même écart sur toute machine.
+  it("un dossier de départ écrit par une jonction : git rend le chemin réel, la charge l'autre", () => {
+    expect(juger("git worktree add .claude/worktrees/session-b", { cwd: lien }).code).toBe(0);
+    expect(juger("git worktree add ../session-b", { cwd: join(lien, ".claude", "worktrees", "session-a") }).code).toBe(0);
+    refuse(juger("git worktree add ../attic-p2-instantane", { cwd: lien }), "le voisin du checkout, par la jonction");
+    // Le bac à sable, quand le dossier temporaire du contrat est donné par la jonction et la commande
+    // écrite sous le chemin réel. Le cas inverse, le bac écrit par la jonction, passerait par chance :
+    // la jonction vit sous le temporaire, et `…/<session>/scratchpad` s'y lit encore.
+    const parLaJonction = { TEMP: lienTemporaire, TMP: lienTemporaire, TMPDIR: lienTemporaire };
+    expect(juger(`git worktree add ${join(BAC_A_SABLE, "x")}`, { env: parLaJonction }).code).toBe(0);
   });
 
   it("un arbre dans le bac à sable de la session, écrit en clair ou par une variable", () => {
