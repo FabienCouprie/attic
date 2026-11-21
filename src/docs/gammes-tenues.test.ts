@@ -16,7 +16,7 @@ import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
 import { apparier, type ReglageDeGamme } from "../audio/gamme-banc-lancer";
 import type { PortDeSortie } from "../audio/gamme-banc-hauteurs";
 import { releveEnMarkdown, releverUneGamme, type ReleveDeGamme } from "../audio/gamme-banc-releve";
-import { degresEnDemiTons } from "../audio/gammes-reunies";
+import { degresAttendus } from "../audio/gamme-banc-proprietes";
 import { PARAMETRE_CLE, demiTonDeCle } from "../audio/cles";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { reglagesANomenclature } from "../plugins/nomenclatures";
@@ -26,7 +26,7 @@ type FicheDuBanc = FicheLancable & { sorties?: readonly PortDeSortie[] };
 const fiche = (id: string) => registre.trouverDef(id) as unknown as FicheDuBanc | undefined;
 
 /** Les degrés d'une gamme dans une octave, l'octave de fermeture d'une gamme en cents écartée. */
-const degresDe = (id: string) => degresEnDemiTons(id)?.filter((d) => d < 12 - 0.01);
+const degresDe = degresAttendus;
 
 /** La notation texte, lue par le nœud qui la lit dans un graphe. */
 async function lireNotation(texte: string): Promise<unknown> {

@@ -59,6 +59,13 @@ export interface OptionsReleve {
   ports: readonly PortDeSortie[];
   graines: readonly number[];
   degresDe: (gamme: string) => readonly number[] | undefined;
+  /**
+   * Les degrés sur lesquels un accord se bâtit, sans les degrés de passage : la bebop dominante bâtit
+   * ses accords sur ses sept degrés de mixolydien. Par défaut, ceux de `degresDe`.
+   */
+  degresDesAccords?: (gamme: string) => readonly number[] | undefined;
+  /** Les toniques des lancers, en demi-tons ; mi bémol et mi par défaut, mi bémol seul pour un garde. */
+  toniques?: readonly number[];
   lireNotation?: (texte: string) => Promise<unknown>;
   /**
    * Ce qu'il faut lire à la place des sorties, pour un nœud qui ne rend que du son : le MIDI qu'il a
@@ -84,7 +91,8 @@ export async function releverUneGamme(fiche: FicheLancable, paire: ReglageDeGamm
   const degres = o.degresDe(gamme);
   const base = { fiche: fiche.id, reglage: paire.gamme, gamme, lancers: 0, ms: 0, sorties: [], nonLues: [] };
   if (!degres) return { ...base, degres: 0, echecs: [`« ${gamme} » n'est pas une gamme de la table`], tonique: null, toniqueInferee: false };
-  const toniques = paire.tonique ? [3, 4] : [undefined];
+  const toniques = paire.tonique ? [...(o.toniques ?? [3, 4])] : [undefined];
+  const degresAccords = o.degresDesAccords?.(gamme) ?? degres;
   const echecs = new Set<string>();
   const nonLues = new Set<string>();
   // Les sorties lues, par graine et par tonique, rangées par sortie.
@@ -129,7 +137,7 @@ export async function releverUneGamme(fiche: FicheLancable, paire: ReglageDeGamm
     const fautifs: string[] = [];
     const nommes = new Map<string, number>();
     for (const [k, s] of m) {
-      const a = accordsSurLesDegres(s.hauteurs, degres, tdl(k));
+      const a = accordsSurLesDegres(s.hauteurs, degresAccords, tdl(k));
       accords += a.accords;
       for (const [n, c] of a.nommes) nommes.set(n, (nommes.get(n) ?? 0) + c);
       for (const f of a.fautifs) if (fautifs.length < 5) fautifs.push(`${nomNote(f.fondamentale, tdl(k))} ${f.joue} au lieu de ${f.attendu} (${f.debut.toFixed(2)} s)`);

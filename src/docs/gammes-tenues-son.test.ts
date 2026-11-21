@@ -17,8 +17,8 @@ import { apparier } from "../audio/gamme-banc-lancer";
 import { releveEnMarkdown, releverUneGamme, type ReleveDeGamme } from "../audio/gamme-banc-releve";
 import type { HauteurRendue } from "../audio/gamme-banc-hauteurs";
 import { hauteursParFenetres, picsDuSpectre } from "../audio/gamme-banc-son";
-import { degresEnDemiTons } from "../audio/gammes-reunies";
 import { reglagesANomenclature } from "../plugins/nomenclatures";
+import { degresAttendus as degresDe, degresDesAccordsAttendus as degresDesAccords } from "../audio/gamme-banc-proprietes";
 
 const capte = vi.hoisted(() => ({ midi: null as Uint8Array<ArrayBuffer> | null }));
 
@@ -34,7 +34,6 @@ vi.mock("../audio", async (original) => {
   };
 });
 
-const degresDe = (id: string) => degresEnDemiTons(id)?.filter((d) => d < 12 - 0.01);
 const GRAINES = (process.env.GAMMES_GRAINES ?? "1,42,4242").split(",").map(Number);
 const paires = apparier(reglagesANomenclature()).paires;
 
@@ -69,6 +68,20 @@ describe("l'autocontrôle des instruments du son", () => {
     const lues = hauteursParFenetres(son, attendues.map((_, i) => [i * 0.25, (i + 1) * 0.25] as [number, number])).map((h) => h.note);
     expect(lues).toHaveLength(attendues.length);
     lues.forEach((n, i) => expect(Math.abs(n - attendues[i]), `note ${i}`).toBeLessThan(0.05));
+  });
+});
+
+describe("les accords du Générateur d'accords, captés avant sa synthèse", () => {
+  const paire = paires.find((p) => p.fiche === "generateur-accords")!;
+  const f = registre.trouverDef("generateur-accords") as unknown as FicheLancable;
+  it.each(paire.ids)("sous « %s », chaque accord est la triade de la gamme", async (g) => {
+    const r = await releverUneGamme(f, paire, g, {
+      ports: [{ nom: "MIDI capté avant le rendu", type: "midi" }], graines: [1], toniques: [3], degresDe, degresDesAccords,
+      capture: () => { const m: Uint8Array<ArrayBuffer> | null = capte.midi; capte.midi = null; return [m ? new File([m], "accords.mid") : null]; },
+    });
+    expect(r.echecs).toEqual([]);
+    expect(r.sorties.some((s) => s.accords > 0), "le nœud a rendu des accords").toBe(true);
+    expect(r.sorties.flatMap((s) => s.accordsFautifs)).toEqual([]);
   });
 });
 

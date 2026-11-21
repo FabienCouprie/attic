@@ -12,10 +12,25 @@
 //      diminuées reviennent sur elles-mêmes à trois demi-tons, et un nœud qui perdrait la clé y passerait
 //      en mi bémol contre do ; aucune gamme ne revient sur elle-même à un demi-ton ;
 //  P4, accords sur les degrés : un accord plaqué vaut la triade de la gamme sur sa fondamentale,
-//      degrés k, k+2 et k+4, septième k+6 admise. Elle ne se juge que sur une gamme à sept degrés ;
-//      sur les autres, la règle reste à décider, et les accords sont seulement nommés.
+//      un degré sur deux, k, k+2 et k+4, sixte k+5 et septième k+6 admises. C'EST LA RÈGLE DE
+//      FABIEN, décidée le 2026-11-21 sur le relevé : sur les quatorze gammes à sept degrés,
+//      l'altérée comprise, et sur toutes les autres longueurs.
 
 import type { HauteurRendue, SortieLue } from "./gamme-banc-hauteurs";
+import { gammeDe } from "./gammes";
+import { degresEnDemiTons } from "./gammes-reunies";
+
+/**
+ * Les degrés attendus d'une gamme dans une octave, en demi-tons ou en cents, l'octave de fermeture
+ * d'une gamme en cents écartée ; `undefined` pour un identifiant que la table ne connaît pas.
+ */
+export const degresAttendus = (id: string): number[] | undefined => degresEnDemiTons(id)?.filter((d) => d < 12 - 0.01);
+
+/** Les degrés sur lesquels un accord se bâtit : ceux de la gamme, sans ses degrés de passage. */
+export const degresDesAccordsAttendus = (id: string): number[] | undefined => {
+  const g = gammeDe(id);
+  return g ? g.degres.filter((d) => !(g.passage ?? []).includes(d)) : degresAttendus(id);
+};
 
 /**
  * La tolérance d'appartenance, en demi-tons : un cent pour une hauteur écrite, MIDI, séquence ou
@@ -130,12 +145,11 @@ export function accordsSurLesDegres(h: readonly HauteurRendue[], degres: readonl
     const racine = classe(grave, tonique);
     const joue = nomAccord(classes.map((c) => c - racine));
     nommes.set(joue, (nommes.get(joue) ?? 0) + 1);
-    if (degres.length !== 7) continue;
+    const n = degres.length;
     const k = degres.findIndex((d) => Math.abs(d - racine) <= UN_CENT);
     if (k < 0) { fautifs.push({ debut: g[0].debut, fondamentale: grave, joue, attendu: "fondamentale hors de la gamme" }); continue; }
-    const triade = [0, 2, 4].map((p) => degres[(k + p) % 7]);
-    const septieme = degres[(k + 6) % 7];
-    const permises = new Set([...triade, septieme]);
+    const triade = [0, 2, 4].map((p) => degres[(k + p) % n]);
+    const permises = new Set([...triade, degres[(k + 5) % n], degres[(k + 6) % n]]);
     const tient = triade.every((d) => classes.includes(d)) && classes.every((c) => permises.has(c));
     if (!tient) fautifs.push({ debut: g[0].debut, fondamentale: grave, joue, attendu: nomAccord(triade.map((d) => d - racine)) });
   }
