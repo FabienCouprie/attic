@@ -56,6 +56,59 @@ export function hauteursParFenetres(
   return rendues;
 }
 
+/** Trames de l'explication des partiels : 4 096 points, un pas de moitié, deux fois plus de points à la FFT. */
+const TRAME = 4096;
+/** Les harmoniques cherchés pour chaque note : au-delà, leur peigne couvre l'axe et explique tout. */
+const HARMONIQUES = 12;
+
+/**
+ * La part de l'énergie des partiels d'un son qu'expliquent les harmoniques des notes qui sonnent.
+ *
+ * LE TIMBRE NE LA TROMPE PAS, contrairement à un chroma : la FM d'origine du rendu des séquences, au
+ * rapport 2 et à l'indice 3, met près de neuf dixièmes de son énergie sur l'harmonique 5, la tierce
+ * majeure deux octaves plus haut, et moins d'un centième sur la fondamentale (J2 + J3 contre J0 + J1,
+ * en fonctions de Bessel de 3) : son chroma dit la tierce là où le MIDI dit la tonique. Un harmonique
+ * reste un multiple entier de la fondamentale, quel que soit son poids.
+ *
+ * Sur chaque trame, les pics du spectre au-dessus d'un vingtième du plus fort ; un pic est expliqué
+ * quand il tombe à moins de 6 Hz ou de 15 cents d'un harmonique, jusqu'au douzième, d'une note dont
+ * la durée touche la trame. `decalage` décale ces notes de quelques demi-tons : c'est le témoin, la
+ * part qu'un son qui ne jouerait pas son MIDI atteindrait par le seul hasard des coïncidences. Une
+ * trame sans note ne compte pas : une queue de relâchement n'y a rien à expliquer.
+ */
+export function partExpliquee(buf: AudioBuffer, notes: readonly HauteurRendue[], decalage = 0): number {
+  const x = mono(buf), sr = buf.sampleRate, taille = 2 * TRAME, hz = sr / taille;
+  const fenetre = Float64Array.from({ length: TRAME }, (_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (TRAME - 1)));
+  const freqs = notes.map((n) => ({ f: 440 * 2 ** ((n.note + decalage - 69) / 12), debut: n.debut, fin: n.fin }));
+  let explique = 0, total = 0;
+  for (let i0 = 0; i0 + TRAME <= x.length; i0 += TRAME / 2) {
+    const t0 = i0 / sr, t1 = (i0 + TRAME) / sr;
+    const sonnent = freqs.filter((n) => n.debut < t1 && n.fin > t0);
+    if (!sonnent.length) continue;
+    const re = new Float64Array(taille), im = new Float64Array(taille);
+    for (let i = 0; i < TRAME; i++) re[i] = x[i0 + i] * fenetre[i];
+    fft(re, im, false);
+    const mod = new Float64Array(taille / 2);
+    let max = 0;
+    for (let k = 0; k < mod.length; k++) { mod[k] = Math.hypot(re[k], im[k]); max = Math.max(max, mod[k]); }
+    if (max === 0) continue;
+    for (let k = 2; k < mod.length - 1; k++) {
+      const f = k * hz;
+      if (f < 40 || f > 8000 || mod[k] < max / 20 || mod[k] < mod[k - 1] || mod[k] < mod[k + 1]) continue;
+      const [g, c, d] = [Math.log(mod[k - 1] + 1e-12), Math.log(mod[k]), Math.log(mod[k + 1] + 1e-12)];
+      const ecart = (0.5 * (g - d)) / (g - 2 * c + d);
+      const fPic = (k + (Number.isFinite(ecart) ? ecart : 0)) * hz, energie = mod[k] ** 2;
+      total += energie;
+      const tombe = sonnent.some((n) => {
+        const h = Math.round(fPic / n.f);
+        return h >= 1 && h <= HARMONIQUES && Math.abs(fPic - h * n.f) < Math.max(6, h * n.f * (2 ** (15 / 1200) - 1));
+      });
+      if (tombe) explique += energie;
+    }
+  }
+  return total > 0 ? explique / total : NaN;
+}
+
 /**
  * Les hauteurs d'une gamme tenue entre `a` et `b`, lues dans les pics du spectre.
  *

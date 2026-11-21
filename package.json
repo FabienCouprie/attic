@@ -86,6 +86,7 @@
     "graines": "playwright test tests-e2e/graines-tenues.spec.ts",
     "croisement": "cross-env BANC_CROISEMENT=1 RAPPORT_CROISEMENT=CROISEMENT/croisement.json vitest run src/docs/croisement-nomenclatures.test.ts --execArgv=--expose-gc",
     "controle-gammes": "cross-env BANC_GAMMES=1 vitest run src/docs/gammes-tenues.test.ts src/docs/gammes-tenues-son.test.ts --execArgv=--expose-gc",
+    "controle-gammes-profond": "cross-env BANC_GAMMES_PROFOND=1 vitest run src/docs/gammes-passe-profonde.test.ts --execArgv=--expose-gc",
     "messages-anglais": "playwright test tests-e2e/messages-anglais.spec.ts",
     "racines": "node scripts/racines-du-journal.cjs",
     "test:empreintes-exemples": "playwright test tests-e2e/empreintes-exemples.spec.ts",

@@ -9,7 +9,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 
 - **rendu** : 32 · ne peut pas aller dans un worker, mais ne fige pas
 - **récipient** : 98 · fige, transposable après extraction d'un cœur par voie
-- **pur** : 252 · transposable tel quel
+- **pur** : 253 · transposable tel quel
 
 | module | classe | marqueur |
 | --- | --- | --- |
@@ -179,6 +179,7 @@ Un module de classe « rendu », lui, n'est ni transposable ni gênant, son rend
 | frequence-de-travail.ts | pur | — |
 | frequence-source.ts | rendu | OfflineAudioContext |
 | gamme-banc-hauteurs.ts | pur | — |
+| gamme-banc-inscriptions.ts | pur | — |
 | gamme-banc-lancer.ts | pur | — |
 | gamme-banc-proprietes.ts | pur | — |
 | gamme-banc-releve.ts | pur | — |

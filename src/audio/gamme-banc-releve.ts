@@ -91,7 +91,7 @@ export async function releverUneGamme(fiche: FicheLancable, paire: ReglageDeGamm
   const degres = o.degresDe(gamme);
   const base = { fiche: fiche.id, reglage: paire.gamme, gamme, lancers: 0, ms: 0, sorties: [], nonLues: [] };
   if (!degres) return { ...base, degres: 0, echecs: [`« ${gamme} » n'est pas une gamme de la table`], tonique: null, toniqueInferee: false };
-  const toniques = paire.tonique ? [...(o.toniques ?? [3, 4])] : [undefined];
+  const toniques: (number | undefined)[] = paire.tonique ? [...(o.toniques ?? [3, 4])] : [undefined];
   const degresAccords = o.degresDesAccords?.(gamme) ?? degres;
   const echecs = new Set<string>();
   const nonLues = new Set<string>();
@@ -116,21 +116,28 @@ export async function releverUneGamme(fiche: FicheLancable, paire: ReglageDeGamm
   }
   const toutes = [...lues.values()].flatMap((m) => [...m.values()].flatMap((s) => s.hauteurs));
   const inferee = !paire.tonique;
-  const tonique = paire.tonique ? 3 : toutes.length ? toniqueInferee(toutes, degres) : null;
+  // LA PREMIÈRE TONIQUE PORTE LA COUVERTURE ; la transposition se juge entre chaque tonique et celle
+  // d'un demi-ton plus haut, quand les deux sont lancées : mi bémol et mi au garde, les douze à la passe
+  // profonde, où si et do se comparent aussi, la classe montant d'un demi-ton par-dessus l'octave.
+  const premiere = typeof toniques[0] === "number" ? toniques[0] : 3;
+  const tonique = paire.tonique ? premiere : toutes.length ? toniqueInferee(toutes, degres) : null;
   const sorties: ReleveDeSortie[] = [];
   for (const [cle, m] of lues) {
     const tdl = (k: string) => (paire.tonique ? Number(k.split("|")[1]) : tonique ?? 0);
     const tol = o.tolerance ?? UN_CENT;
     const hors = [...m.entries()].flatMap(([k, s]) => horsDeLaGamme(s.hauteurs, degres, tdl(k), tol).map((h) => ({ h, t: tdl(k) })));
-    const enMiBemol = [...m.entries()].filter(([k]) => !paire.tonique || k.endsWith("|3")).flatMap(([, s]) => s.hauteurs);
-    const cv = couverture(enMiBemol, degres, tonique ?? 0, tol);
+    const enLaPremiere = [...m.entries()].filter(([k]) => !paire.tonique || k.endsWith(`|${premiere}`)).flatMap(([, s]) => s.hauteurs);
+    const cv = couverture(enLaPremiere, degres, tonique ?? 0, tol);
     let p3: string | null = null;
     if (paire.tonique && !o.sansTransposition) {
       for (const graine of o.graines) {
-        const bas = m.get(`${graine}|3`), haut = m.get(`${graine}|4`);
-        if (!bas || !haut) { p3 = p3 ?? `graine ${graine} : la sortie manque sous une des deux clés`; continue; }
-        const t = transposition(bas, haut, 1, tol);
-        if (t.raison) { p3 = p3 ?? `graine ${graine} : ${t.raison}`; }
+        for (const t of toniques) {
+          if (t === undefined || !toniques.includes((t + 1) % 12)) continue;
+          const bas = m.get(`${graine}|${t}`), haut = m.get(`${graine}|${(t + 1) % 12}`);
+          if (!bas || !haut) { p3 = p3 ?? `graine ${graine}, de ${t} à ${t + 1} : la sortie manque sous une des deux clés`; continue; }
+          const r = transposition(bas, haut, 1, tol);
+          if (r.raison) { p3 = p3 ?? `graine ${graine}, de ${t} à ${(t + 1) % 12} : ${r.raison}`; }
+        }
       }
     }
     let accords = 0;
