@@ -88,6 +88,32 @@ describe("les accords du Générateur d'accords, captés avant sa synthèse", ()
   });
 });
 
+/**
+ * LA CORRECTION DE HAUTEUR RAMÈNE CHAQUE NOTE SUR LA GAMME, quelle que soit la gamme. Sous les gammes à
+ * grands intervalles, une note entre deux degrés éloignés dépassait l'« Écart max » par défaut, un
+ * demi-ton, et restait trente cents trop haut : dix gammes au relevé du 2026-11-21. L'écart protège des
+ * erreurs d'octave du suiveur ; Fabien a décidé le même jour qu'il ne descend jamais sous la moitié du
+ * plus grand intervalle de la gamme. L'entrée d'essai est celle du banc de croisement : les douze
+ * demi-tons de do à si, trente cents trop haut, un par quart de seconde.
+ */
+describe("la correction de hauteur ramène chaque note sur la gamme", () => {
+  const paire = paires.find((p) => p.fiche === "correction-hauteur")!;
+  const f = registre.trouverDef("correction-hauteur") as unknown as FicheLancable;
+  const quarts = Array.from({ length: 12 }, (_, i) => [i * 0.25, (i + 1) * 0.25] as [number, number]);
+  it.each(paire.ids)("sous « %s », aucune note ne ressort hors de la gamme", async (g) => {
+    const r = await releverUneGamme(f, paire, g, {
+      ports: [{ nom: "Hauteurs suivies dans le son", type: "sequence" }], graines: [1], toniques: [3], degresDe, tolerance: TOLERANCE_DU_SON,
+      sansTransposition: "la correction ramène une entrée qui ne bouge pas",
+      // L'entrée tient de do 4 à si 4, trente cents trop haut, et une correction la déplace de moins de
+      // deux demi-tons : la bande cherchée se borne de 200 à 700 Hz.
+      capture: (v) => [enSequence(hauteursParFenetres(v[0] as AudioBuffer, quarts, { fMin: 200, fMax: 700 }))],
+    });
+    expect(r.echecs).toEqual([]);
+    expect(r.sorties[0]?.notes, "les douze notes de l'entrée ont été suivies").toBe(12);
+    expect(r.sorties.flatMap((s) => s.exemplesHors)).toEqual([]);
+  });
+});
+
 describe.runIf(process.env.BANC_GAMMES === "1")("le relevé des nœuds qui ne rendent que du son", () => {
   it("relève le Générateur d'accords par le MIDI qu'il remet à sa synthèse", async () => {
     const paire = paires.find((p) => p.fiche === "generateur-accords")!;

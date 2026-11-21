@@ -34,10 +34,15 @@ const mediane = (xs: number[]) => {
  *
  * SEUL LE CŒUR DE LA FENÊTRE COMPTE, ses soixante pour cent du milieu : l'attaque et la sortie d'une
  * note y glissent d'une hauteur à l'autre. Une fenêtre sans trame voisée ne rend rien.
+ *
+ * LA BANDE CHERCHÉE SE BORNE QUAND ON CONNAÎT L'ENTRÉE : le coût du suivi croît avec la plus grave des
+ * hauteurs cherchées, et de 60 à 2000 Hz un garde de vingt-cinq gammes prenait 75 s.
  */
-export function hauteursParFenetres(buf: AudioBuffer, fenetres: readonly [number, number][]): HauteurRendue[] {
+export function hauteursParFenetres(
+  buf: AudioBuffer, fenetres: readonly [number, number][], bande: { fMin?: number; fMax?: number } = {},
+): HauteurRendue[] {
   const cadence = 100;
-  const suivi = suivreHauteur(mono(buf), buf.sampleRate, { cadence, centsParPas: 5, fMin: 60, fMax: 2000 });
+  const suivi = suivreHauteur(mono(buf), buf.sampleRate, { cadence, centsParPas: 5, fMin: bande.fMin ?? 60, fMax: bande.fMax ?? 2000 });
   const rendues: HauteurRendue[] = [];
   for (const [a, b] of fenetres) {
     const marge = (b - a) * 0.2;

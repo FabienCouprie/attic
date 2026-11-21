@@ -7310,7 +7310,7 @@ Corrects the tuning of a sound by bringing each note onto the nearest degree of 
 | Strength | slider | 100 % | 0 – 100 %, step 1 | Share of the deviation corrected. At 100 % the note lands exactly on the degree; at 50 % half the vibrato and the attacks survive, which is almost always what one wants. |
 | Transition | slider | 0 ms | 0 – 200 ms, step 1 | How long the correction takes to settle. At zero the pitch jumps from one degree to the next: that is the 1998 effect, and it is one. Around fifty milliseconds, nothing is heard but tuning restored. |
 | Confidence | slider | 40 % | 10 – 90 %, step 5 | Below this follower confidence, the frame is not corrected. That is what leaves consonants, breaths and drums alone: periods are not glued where there are none. |
-| Max deviation | slider | 1 semitones | 0.2 – 2 semitones, step 0.1 | Beyond this deviation the frame is not corrected: a follower makes octave errors on rich sounds, and correcting one would move the note by a whole octave. |
+| Max deviation | slider | 1 semitones | 0.2 – 2 semitones, step 0.1 | Beyond this deviation the frame is not corrected: a follower makes octave errors on rich sounds, and correcting one would move the note by a whole octave. The deviation never falls below half the widest interval of the scale, so that every note reaches its degree: one and a half semitones on a pentatonic, two on the hirajoshi. |
 
 #### Pitch Glissando
 

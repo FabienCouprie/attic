@@ -6,7 +6,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import {
-  corrigerHauteur, courbeDeCorrection, degresDe, GAMMES_CORRECTION, IDS_HERITES_CORRECTION,
+  corrigerHauteur, courbeDeCorrection, degresDe, demiPlusGrandIntervalle, GAMMES_CORRECTION, IDS_HERITES_CORRECTION,
   type OptionsCorrection, type ResultatCorrection,
 } from "../audio/correction-hauteur";
 import { parCanal } from "./hors-fil";
@@ -46,8 +46,8 @@ export const fiches: FicheAudio[] = ([
         doc: "En deçà de cette confiance du suiveur, la trame n'est pas corrigée. C'est ce qui laisse les consonnes, les souffles et les percussions tranquilles : on ne recolle pas des périodes là où il n'y en a pas.",
         docEn: "Below this follower confidence, the frame is not corrected. That is what leaves consonants, breaths and drums alone: periods are not glued where there are none." },
       { nom: "Écart max", nomEn: "Max deviation", type: "curseur", plage: [0.2, 2], pas: 0.1, defaut: 1, unite: "demi-tons", uniteEn: "semitones",
-        doc: "Au-delà de cet écart, la trame n'est pas corrigée : un suiveur se trompe d'octave sur les sons riches, et corriger une erreur d'octave déplacerait la note d'une octave entière.",
-        docEn: "Beyond this deviation the frame is not corrected: a follower makes octave errors on rich sounds, and correcting one would move the note by a whole octave." },
+        doc: "Au-delà de cet écart, la trame n'est pas corrigée : un suiveur se trompe d'octave sur les sons riches, et corriger une erreur d'octave déplacerait la note d'une octave entière. L'écart ne descend jamais sous la moitié du plus grand intervalle de la gamme, pour que toute note rejoigne son degré : un demi-ton et demi sur une pentatonique, deux sur la hirajōshi.",
+        docEn: "Beyond this deviation the frame is not corrected: a follower makes octave errors on rich sounds, and correcting one would move the note by a whole octave. The deviation never falls below half the widest interval of the scale, so that every note reaches its degree: one and a half semitones on a pentatonic, two on the hirajoshi." },
     ],
     async executer(ctx) {
       const e = entreeAudio(ctx, 0, { sorties: 2 });
@@ -55,9 +55,12 @@ export const fiches: FicheAudio[] = ([
       // `demiTonDeCle` ACCEPTE TOUTE ORTHOGRAPHE, dont les identifiants en minuscules au bémol
       // typographique que ce composant employait et que rien d'autre ne connaissait.
       const tonique = demiTonDeCle(ctx.paramTexte("Tonique", "C")) ?? 0;
-      const ecartMax = ctx.paramNombre("Écart max", 1);
+      const degres = degresDe(ctx.paramTexte("Gamme", "chromatique"), tonique);
+      // L'ÉCART NE DESCEND JAMAIS SOUS LA MOITIÉ DU PLUS GRAND INTERVALLE DE LA GAMME, pour que toute
+      // note rejoigne son degré (`demiPlusGrandIntervalle`). La courbe de correction prend le même.
+      const ecartMax = Math.max(ctx.paramNombre("Écart max", 1), demiPlusGrandIntervalle(degres));
       const o = {
-        degres: degresDe(ctx.paramTexte("Gamme", "chromatique"), tonique),
+        degres,
         force: ctx.paramNombre("Force", 100) / 100,
         transitionMs: ctx.paramNombre("Transition", 0),
         seuilConfiance: ctx.paramNombre("Confiance", 40) / 100,
