@@ -58,6 +58,7 @@ contextBridge.exposeInMainWorld("api", {
   exporterNodeZip: (options) => ipcRenderer.invoke("node:exporter-zip", options),
   importerNodeZip: (zipPath) => ipcRenderer.invoke("node:importer-zip", zipPath),
   deplierNodeZip: (jeton) => ipcRenderer.invoke("node:deplier-zip", jeton),
+  oublierNodeZip: (jeton) => ipcRenderer.invoke("node:oublier-zip", jeton),
   sauvegarderNodeZip: (options) => ipcRenderer.invoke("node:sauvegarder-zip", options),
   cheminAssetsNode: (nodeId) => ipcRenderer.invoke("node:chemin-assets", nodeId),
   supprimerNode: (nodeId) => ipcRenderer.invoke("node:supprimer", nodeId),

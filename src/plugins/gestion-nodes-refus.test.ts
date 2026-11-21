@@ -40,10 +40,13 @@ function registreDuDomaine() {
  *
  * IL EST EN DEUX TEMPS, comme celui de `electron/main.cjs` : `importerNodeZip` lit et fait confirmer
  * sans rien écrire, `deplierNodeZip` déplie l'archive du jeton. Les jetons dépliés sont comptés : un
- * dépliage est une écriture sur le disque, et c'est elle que le registre doit précéder.
+ * dépliage est une écriture sur le disque, et c'est elle que le registre doit précéder. Les jetons
+ * oubliés aussi, dans `oublis` : une archive refusée ne doit pas rester tenue en mémoire.
  */
+let oublis: unknown[] = [];
 function pontQuiRend(id: string, sortie = "texte", depli: Record<string, unknown> = { ok: true }) {
   const depliages: unknown[] = [];
+  oublis = [];
   (window as unknown as { api: unknown }).api = {
     selectionnerNodeZip: async () => "C:/essai/recu.zip",
     importerNodeZip: async () => ({
@@ -57,6 +60,7 @@ function pontQuiRend(id: string, sortie = "texte", depli: Record<string, unknown
       jeton: `jeton-${id}`,
     }),
     deplierNodeZip: async (jeton: unknown) => { depliages.push(jeton); return depli; },
+    oublierNodeZip: async (jeton: unknown) => { oublis.push(jeton); return { ok: true }; },
   };
   return depliages;
 }
@@ -99,6 +103,7 @@ describe("l'import d'un nœud que le registre refuse", () => {
         expect(rendu.erreur, "un import refusé est une erreur du nœud").toBe(true);
         expect(rendu.moteur, "rien n'est entré au catalogue").toBeUndefined();
         expect(depliages, "et rien n'est déplié sur le disque").toEqual([]);
+        expect(oublis, "l'archive refusée est oubliée par son jeton").toEqual([`jeton-${id}`]);
         if (langue === "en") expect(francais(rendu.message), rendu.message).toBe(false);
       });
     }
@@ -121,6 +126,7 @@ describe("l'import d'un nœud que le registre refuse", () => {
     expect(en.message).not.toMatch(/console/);
     expect(francais(en.message), en.message).toBe(false);
     expect(depliages, "un manifeste refusé ne déplie rien : il n'écrase pas les fichiers d'un nœud qui tourne").toEqual([]);
+    expect(oublis, "et son archive est oubliée, aux deux imports").toEqual(["jeton-mon-noeud", "jeton-mon-noeud"]);
   });
 
   it("ET UN NŒUD ACCEPTÉ S'ANNONCE TOUJOURS INSTALLÉ, palette relue, après le dépliage de SON archive", async () => {
@@ -131,6 +137,7 @@ describe("l'import d'un nœud que le registre refuse", () => {
     expect(rendu.erreur).toBeUndefined();
     expect(rendu.moteur).toEqual({ paletteARelire: true });
     expect(depliages, "l'archive confirmée est dépliée une fois, par son jeton").toEqual(["jeton-mon-noeud"]);
+    expect(oublis, "une archive acceptée n'est pas oubliée : le dépliage l'a reprise").toEqual([]);
   });
 
   it("UN DÉPLIAGE QUI ÉCHOUE N'INSTALLE RIEN : ni annonce, ni catalogue, ni stockage", async () => {

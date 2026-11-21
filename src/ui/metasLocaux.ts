@@ -13,6 +13,8 @@
 // part. Sous sa propre clé, chaque méta ne s'écrit que lorsqu'il change, et l'autre fenêtre en
 // reçoit l'événement `storage` : `appliquerMetaDistant` le verse dans son registre.
 import { tousLesMetas, trouverMeta, enregistrerMeta, supprimerMeta, type MetaComposant } from "../core";
+import { traduire } from "../i18n";
+import { messageMetasRefuses, type RefusDuRegistre } from "../refus-du-registre";
 import { registreUI } from "./registre-actif";
 
 /** L'ancienne clé, qui tenait la bibliothèque entière. Lue une fois au démarrage, pour migrer. */
@@ -120,9 +122,11 @@ function fichesManquantes(m: any, idsConnus: Set<string>): string[] {
   return [...new Set(manquants.map(String))];
 }
 
-// Un méta non restauré (sous-nœud référençant un plugin introuvable) — de quoi
-// afficher un avertissement compréhensible plutôt que de le perdre en silence.
-export interface MetaNonRestaure { nom: string; manquants: string[] }
+// Un méta non restauré — de quoi afficher un avertissement compréhensible plutôt que de le perdre
+// en silence : un sous-nœud référence un plugin introuvable, ou le registre refuse sa fiche.
+export type MetaNonRestaure =
+  | { nom: string; manquants: string[] }
+  | { nom: string; id: string; refus: RefusDuRegistre };
 
 // Recharge les métas persistés et les ré-enregistre. GARDE : un méta n'est
 // restauré que si chacun de ses sous-nœuds référence un plugin connu (ou un autre
@@ -131,6 +135,13 @@ export interface MetaNonRestaure { nom: string; manquants: string[] }
 // audio/alias.ts plutôt qu'en resignalant sans cesse le même méta comme perdu. Renvoie les
 // métas non restaurés (tableau vide si tout va bien), pour que l'appelant puisse prévenir
 // l'utilisateur au lieu de laisser des méta-composants disparaître du catalogue sans explication.
+//
+// UN MÉTA QUE LE REGISTRE REFUSE est dit de même. Refusé pour son identifiant, celui d'un natif ou
+// un ancien identifiant, il sort du stockage, comme un nœud installé dans ce cas
+// (`core/nodes-installes.ts`) : il ne s'inscrira jamais, et sa clé ne servirait qu'à redire le même
+// refus à chaque démarrage. Les métas que l'application crée portent un identifiant `meta-…`, que
+// ne porte aucun natif ni aucun ancien identifiant : celui-là est venu d'un fichier reçu. Refusé
+// pour sa fiche, il garde sa clé, comme un méta dont un bloc manque : il peut redevenir valide.
 export function chargerMetasLocaux(s: Stockage | undefined = stockageLocal()): MetaNonRestaure[] {
   if (!s) return [];
   try {
@@ -146,12 +157,16 @@ export function chargerMetasLocaux(s: Stockage | undefined = stockageLocal()): M
     for (const m of liste) {
       const manquants = fichesManquantes(m, idsPersistes);
       if (manquants.length === 0) {
-        // UN MÉTA QUE LE REGISTRE REFUSE N'EST PAS CHARGÉ, ET SA CLÉ RESTE, comme celle d'un méta
-        // dont un bloc manque : il a pu être persisté avant que `enregistrerMeta` ne lise le refus.
+        // UN MÉTA QUE LE REGISTRE REFUSE N'EST PAS CHARGÉ : il a pu être persisté avant que
+        // `enregistrerMeta` ne lise le refus. Voir plus haut ce que devient sa clé.
         let inscription: ReturnType<typeof enregistrerMeta> | undefined;
         sansReecrire(() => { inscription = enregistrerMeta(m as MetaComposant); });
         if (inscription && !inscription.inscrite) {
-          console.warn(`[attic] Méta « ${m.id} » non restauré : le registre le refuse (${inscription.raison}).`);
+          const pourToujours = inscription.raison === "natif" || inscription.raison === "alias";
+          if (pourToujours) s.removeItem(PREFIXE_META + m.id);
+          console.warn(`[attic] Méta « ${m.id} » non restauré : le registre le refuse (${inscription.raison})`
+            + (pourToujours ? ", et il est retiré du stockage." : "."));
+          nonRestaures.push({ nom: m.nom, id: m.id, refus: inscription });
         }
         continue;
       }
@@ -160,6 +175,26 @@ export function chargerMetasLocaux(s: Stockage | undefined = stockageLocal()): M
     }
     return nonRestaures;
   } catch { return []; }
+}
+
+/**
+ * Ce que la personne lit au démarrage des métas non restaurés : un message par cause, ou aucun.
+ *
+ * DEUX CAUSES, DEUX MESSAGES. Un méta dont un bloc manque reviendra avec ce bloc ; un méta que le
+ * registre refuse ne revient pas de lui-même, et le message dit pourquoi, comme à l'ouverture d'un
+ * projet (`refus-du-registre.ts`).
+ */
+export function messagesDesMetasNonRestaures(liste: MetaNonRestaure[]): string[] {
+  const sansBloc = liste.flatMap((m) => ("manquants" in m ? [m] : []));
+  const refuses = liste.flatMap((m) => ("refus" in m ? [m] : []));
+  const messages: string[] = [];
+  if (sansBloc.length) {
+    messages.push(traduire("persistance.metasNonRestaures").replace("{nb}", String(sansBloc.length))
+      + "\n\n" + sansBloc.map((m) => `• ${m.nom} (${m.manquants.join(", ")})`).join("\n"));
+  }
+  const refusDits = messageMetasRefuses(refuses, "stockage");
+  if (refusDits) messages.push(refusDits);
+  return messages;
 }
 
 /** Ce qu'une écriture venue d'une autre fenêtre a fait ici. */

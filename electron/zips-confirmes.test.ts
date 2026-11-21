@@ -36,7 +36,19 @@ describe("les archives confirmées", () => {
     expect(z.reprendre(a)?.id).toBe("a");
   });
 
-  it("RIEN NE S'ACCUMULE : une archive confirmée puis refusée par le registre finit oubliée", () => {
+  it("UNE ARCHIVE REFUSÉE PAR LE REGISTRE S'OUBLIE AUSSITÔT, et ne se déplie plus", () => {
+    const z = creerZipsConfirmes();
+    const jeton = z.retenir({ nom: "refusee.zip" }, "reverberation");
+    const autre = z.retenir({ nom: "autre.zip" }, "autre");
+    expect(z.oublier(jeton), "elle était gardée").toBe(true);
+    expect(z.taille(), "elle ne tient plus la mémoire").toBe(1);
+    expect(z.reprendre(jeton), "et son jeton ne déplie plus rien").toBeNull();
+    expect(z.oublier(jeton), "l'oublier deux fois ne fait rien").toBe(false);
+    expect(z.oublier("inventé"), "ni oublier un jeton inventé").toBe(false);
+    expect(z.reprendre(autre)?.id, "l'autre archive n'est pas touchée").toBe("autre");
+  });
+
+  it("RIEN NE S'ACCUMULE : une archive dont la fenêtre n'a jamais rien dit finit oubliée", () => {
     const z = creerZipsConfirmes();
     const premier = z.retenir({}, "premier");
     for (let i = 0; i < CAPACITE; i++) z.retenir({}, `n${i}`);
