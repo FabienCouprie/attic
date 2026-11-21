@@ -361,8 +361,9 @@ types reliés sont compatibles.
 garde anti-boucle), `frontieresPourEdition` synthétise les nœuds ▸entrée/sortie◂
 pour éditer l'intérieur, `redériverMeta` répercute une modification.
 `enregistrerMeta` / `supprimerMeta` / `surChangementMetas` gèrent le catalogue.
-**Tout cela est agnostique du domaine** — vos métanodes fonctionneront sans une
-ligne de code supplémentaire.
+**Tout cela est agnostique du domaine.** Vos métanodes fonctionneront avec deux
+lignes : l'inclusion des deux nœuds-frontière que le cœur fournit, et celle de leur
+type de flux, décrites au §6.a.
 
 **Import de nœuds** — `installerNode` / `chargerNodesInstalles` : des nœuds
 livrés en `.zip` et installés à chaud.
@@ -499,13 +500,27 @@ né le 2026-11-20 quand la table `ALIAS` a quitté le cœur : aucun des deux cas
 ne pouvait la voir, une table de chaînes n'important rien et ne contenant aucun des mots
 énumérés. Il lit les chaînes du code de `src/core/` par l'arbre syntaxique, et refuse
 celle qui vaut l'identifiant d'une fiche du catalogue ou un de ses anciens identifiants.
-**Seize y restent, en quatre fichiers, épinglées comme dettes** avec leur raison :
-les nœuds-frontière des méta-composants (`core/meta.ts`), les bouts des boucles
-(`core/boucle-graphe.ts`), l'instrument rejoué touche par touche
-(`core/instrument-graphe.ts`) et la liaison des réglages de « Courbe »
-(`core/reglages-lies.ts`). La liste refuse de grandir, et une dette payée doit en
-sortir. Un second domaine qui voudrait des boucles ou des méta-composants devrait
-donc, aujourd'hui, déclarer des fiches sous ces identifiants-là.
+Les fiches que le cœur déclare lui-même n'en sont pas, et un cas tient qu'elles ne portent
+que des types de flux du cœur. **Quatorze y restent, en trois fichiers, épinglées comme
+dettes** avec leur raison : les bouts des boucles (`core/boucle-graphe.ts`), l'instrument
+rejoué touche par touche (`core/instrument-graphe.ts`) et la liaison des réglages de
+« Courbe » (`core/reglages-lies.ts`). La liste refuse de grandir, et une dette payée doit
+en sortir. Un second domaine qui voudrait des boucles devrait donc, aujourd'hui, déclarer
+des fiches sous ces identifiants-là.
+
+**Les nœuds-frontière des méta-composants sont fournis par le cœur** depuis le 2026-11-21 :
+`core/fiches-du-coeur.ts` déclare leurs deux fiches, `fichesDuCoeur()`, et le type de leur
+port, `typesFluxDuCoeur()`. Votre domaine les inclut en deux lignes, la première dans son
+catalogue, la seconde dans son registre :
+
+```ts
+const fiches = [...mesFiches, ...fichesDuCoeur<MaValeur, MonRuntime>()];
+for (const t of typesFluxDuCoeur()) registre.enregistrerTypeFlux(t);
+```
+
+Les deux vont ensemble : le registre refuse une fiche dont un port porte un type qu'il n'a
+pas. Votre type de valeur doit admettre `null`, que la frontière d'entrée rend.
+`src/core/fiches-du-coeur.test.ts` le fait pour un domaine de nombres.
 
 **Le runtime n'est pas encore déposable.** Le moteur du shell crée un
 `AudioContext` et le passe à tout exécuteur, `executerLesNoeuds<AudioContext>`

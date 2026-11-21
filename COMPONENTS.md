@@ -10494,7 +10494,7 @@ Simple player with no input or output. Playback takes a music folder, a track, t
 
 *Exposed input point of a meta-component.*
 
-Inside a meta-component, connect this block to an inner node's input: it creates an exposed input on the meta. Type is inherited from the connected port.
+This block marks an exposed input inside a meta-component. Connected to an inner node's input, it adds to the meta an input of that port's type. Its « Input » output carries what the meta receives on that input.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -10508,7 +10508,7 @@ Inside a meta-component, connect this block to an inner node's input: it creates
 
 *Exposed output point of a meta-component.*
 
-Inside a meta-component, connect an inner node's output to this block: it creates an exposed output on the meta. Type is inherited from the connected port.
+This block marks an exposed output inside a meta-component. Connected to an inner node's output, it adds to the meta an output of that port's type. Its « Output » input receives what the meta returns on that output.
 
 | Port | Name | Type | |
 |---|---|---|---|
