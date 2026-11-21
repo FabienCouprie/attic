@@ -364,6 +364,15 @@ pour éditer l'intérieur, `redériverMeta` répercute une modification.
 **Tout cela est agnostique du domaine** — vos métanodes fonctionneront sans une
 ligne de code supplémentaire.
 
+**Boucles de graphe** — `deplierBoucles` (`core/boucle-graphe.ts`) recopie, avant
+l'exécution, la chaîne comprise entre un début et une fin de boucle. Il ne connaît
+aucun identifiant : il lit sur la fiche les indices d'`IndicesMoteur` `debutDeBoucle`
+(`"reboucle"` ou `"repete"`), `finDeBoucle` et `boucleParPasses`, par le `trouverDef`
+que reçoit `preparerLaPasse`, alias compris. Un début de boucle déclare les réglages
+`REGLAGE_TOURS` et `REGLAGE_GRAINES`, que le cœur exporte. Votre domaine a donc des
+boucles en déclarant deux fiches ainsi ; `src/core/boucle-role.test.ts` en pose sur des
+identifiants d'essai.
+
 **Import de nœuds** — `installerNode` / `chargerNodesInstalles` : des nœuds
 livrés en `.zip` et installés à chaud.
 
@@ -499,13 +508,13 @@ né le 2026-11-20 quand la table `ALIAS` a quitté le cœur : aucun des deux cas
 ne pouvait la voir, une table de chaînes n'important rien et ne contenant aucun des mots
 énumérés. Il lit les chaînes du code de `src/core/` par l'arbre syntaxique, et refuse
 celle qui vaut l'identifiant d'une fiche du catalogue ou un de ses anciens identifiants.
-**Seize y restent, en quatre fichiers, épinglées comme dettes** avec leur raison :
-les nœuds-frontière des méta-composants (`core/meta.ts`), les bouts des boucles
-(`core/boucle-graphe.ts`), l'instrument rejoué touche par touche
-(`core/instrument-graphe.ts`) et la liaison des réglages de « Courbe »
-(`core/reglages-lies.ts`). La liste refuse de grandir, et une dette payée doit en
-sortir. Un second domaine qui voudrait des boucles ou des méta-composants devrait
-donc, aujourd'hui, déclarer des fiches sous ces identifiants-là.
+**Cinq y restent, en trois fichiers, épinglées comme dettes** avec leur raison :
+les nœuds-frontière des méta-composants (`core/meta.ts`), l'instrument rejoué touche
+par touche (`core/instrument-graphe.ts`) et la liaison des réglages de « Courbe »
+(`core/reglages-lies.ts`). Les onze des bouts des boucles en sont sorties le 2026-11-21 :
+le dépliage lit le rôle sur la fiche. La liste refuse de grandir, et une dette payée doit
+en sortir. Un second domaine qui voudrait des méta-composants devrait donc, aujourd'hui,
+déclarer des fiches sous ces identifiants-là.
 
 **Le runtime n'est pas encore déposable.** Le moteur du shell crée un
 `AudioContext` et le passe à tout exécuteur, `executerLesNoeuds<AudioContext>`

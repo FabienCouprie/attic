@@ -5,10 +5,8 @@
 // qui comptent — les effets s'ACCUMULENT d'un tour à l'autre, et la fin de boucle reçoit
 // les n résultats DANS L'ORDRE — ainsi que les cas où l'utilisateur se trompe de câblage.
 import { describe, expect, it } from "vitest";
-import {
-  COPIES_MAX, FICHES_BOUCLE_PAR_PASSE, FICHES_FIN, FICHE_DEBUT, FICHE_FIN, FICHE_FIN_B, FICHE_FIN_C,
-  GRAINES_PAR_TOUR, deplierBoucles, estFinDeBoucle,
-} from "./boucle-graphe";
+import { COPIES_MAX, GRAINES_PAR_TOUR, deplierBoucles } from "./boucle-graphe";
+import { FICHES_BOUCLE_PAR_PASSE, FICHE_DEBUT, FICHE_FIN, FICHE_FIN_B, FICHE_FIN_C, rolesDEssai } from "./boucles-essai";
 import type { AreteG, NoeudG } from "./meta";
 
 const n = (id: string, ficheId: string, parametres: Record<string, unknown> = {}): NoeudG =>
@@ -32,7 +30,7 @@ function grapheSimple(tours: number) {
 describe("graphe sans boucle", () => {
   it("ressort exactement tel quel", () => {
     const g = { noeuds: [n("a1", "x"), n("b1", "y")], aretes: [a("e", "a1", "b1")] };
-    const r = deplierBoucles(g.noeuds, g.aretes);
+    const r = deplierBoucles(g.noeuds, g.aretes, rolesDEssai);
     expect(r.noeuds).toBe(g.noeuds);
     expect(r.aretes).toBe(g.aretes);
     expect(r.problemes).toEqual([]);
@@ -42,7 +40,7 @@ describe("graphe sans boucle", () => {
 describe("dépliage", () => {
   it("recopie le contenu autant de fois qu'il y a de tours", () => {
     const g = grapheSimple(3);
-    const r = deplierBoucles(g.noeuds, g.aretes);
+    const r = deplierBoucles(g.noeuds, g.aretes, rolesDEssai);
     const copies = r.noeuds.filter((x) => x.data.ficheId === "transposition");
     expect(copies.length).toBe(3);
     // Le début de boucle disparaît, la fin reste : c'est elle qui rend le résultat.
@@ -53,7 +51,7 @@ describe("dépliage", () => {
   it("CHAÎNE les tours : chaque copie reçoit le résultat de la précédente", () => {
     // C'est toute la demande : si la chaîne monte d'un demi-ton, le deuxième tour part
     // d'un signal déjà transposé, et monte donc de deux demi-tons au total.
-    const r = deplierBoucles(...Object.values(grapheSimple(3)) as [NoeudG[], AreteG[]]);
+    const r = deplierBoucles(...Object.values(grapheSimple(3)) as [NoeudG[], AreteG[]], rolesDEssai);
     const copies = r.noeuds.filter((x) => x.data.ficheId === "transposition").map((x) => x.id);
     const entree = (id: string) => r.aretes.filter((x) => x.target === id).map((x) => x.source);
     expect(entree(copies[0])).toEqual(["src"]);
@@ -62,14 +60,14 @@ describe("dépliage", () => {
   });
 
   it("livre les n résultats à la fin de boucle, DANS L'ORDRE des tours", () => {
-    const r = deplierBoucles(...Object.values(grapheSimple(4)) as [NoeudG[], AreteG[]]);
+    const r = deplierBoucles(...Object.values(grapheSimple(4)) as [NoeudG[], AreteG[]], rolesDEssai);
     const copies = r.noeuds.filter((x) => x.data.ficheId === "transposition").map((x) => x.id);
     const versFin = r.aretes.filter((x) => x.target === "f").map((x) => x.source);
     expect(versFin).toEqual(copies);
   });
 
   it("n'invente rien quand il n'y a qu'un tour", () => {
-    const r = deplierBoucles(...Object.values(grapheSimple(1)) as [NoeudG[], AreteG[]]);
+    const r = deplierBoucles(...Object.values(grapheSimple(1)) as [NoeudG[], AreteG[]], rolesDEssai);
     expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(1);
     expect(r.aretes.filter((x) => x.target === "f").length).toBe(1);
   });
@@ -79,32 +77,32 @@ describe("dépliage", () => {
     // « 9999 » devenait trente-deux sans un mot : l'utilisateur obtenait autre chose que ce qu'il
     // avait écrit. C'est le plafond des COPIES qui tient le coût désormais, et lui REFUSE en le
     // disant, ce qui est la seule façon honnête de ne pas faire ce qu'on demande.
-    const r = deplierBoucles(...Object.values(grapheSimple(9999)) as [NoeudG[], AreteG[]]);
+    const r = deplierBoucles(...Object.values(grapheSimple(9999)) as [NoeudG[], AreteG[]], rolesDEssai);
     expect(r.problemes).toEqual([{ noeudId: "d", code: "trop-de-copies" }]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(1);
   });
 
   it("MAIS UN GRAND NOMBRE QUI TIENT DANS LE PLAFOND EST DÉPLIÉ, tel qu'il est écrit", () => {
     // Trois cents tours d'un ventre d'un seul nœud : trois cents copies, sous les mille vingt-quatre.
-    const r = deplierBoucles(...Object.values(grapheSimple(300)) as [NoeudG[], AreteG[]]);
+    const r = deplierBoucles(...Object.values(grapheSimple(300)) as [NoeudG[], AreteG[]], rolesDEssai);
     expect(r.problemes).toEqual([]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(300);
   });
 
   it("et un tour au moins, un réglage à zéro n'ayant pas de sens", () => {
-    const r0 = deplierBoucles(...Object.values(grapheSimple(0)) as [NoeudG[], AreteG[]]);
+    const r0 = deplierBoucles(...Object.values(grapheSimple(0)) as [NoeudG[], AreteG[]], rolesDEssai);
     expect(r0.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(1);
   });
 
   it("garde trois tours par défaut quand le paramètre manque", () => {
     const g = grapheSimple(3);
     const sansParam = g.noeuds.map((x) => (x.id === "d" ? n("d", FICHE_DEBUT) : x));
-    const r = deplierBoucles(sansParam, g.aretes);
+    const r = deplierBoucles(sansParam, g.aretes, rolesDEssai);
     expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(3);
   });
 
   it("rattache chaque copie à son nœud d'origine, pour que les statuts s'affichent", () => {
-    const r = deplierBoucles(...Object.values(grapheSimple(2)) as [NoeudG[], AreteG[]]);
+    const r = deplierBoucles(...Object.values(grapheSimple(2)) as [NoeudG[], AreteG[]], rolesDEssai);
     const copies = r.noeuds.filter((x) => x.data.ficheId === "transposition");
     for (const c of copies) expect(r.origines.get(c.id)).toBe("tr");
   });
@@ -112,7 +110,7 @@ describe("dépliage", () => {
   it("recopie une chaîne de plusieurs nœuds en gardant son câblage interne", () => {
     const noeuds = [n("src", "gen"), n("d", FICHE_DEBUT, { Tours: 2 }), n("m1", "x"), n("m2", "y"), n("f", FICHE_FIN)];
     const aretes = [a("e1", "src", "d"), a("e2", "d", "m1"), a("e3", "m1", "m2"), a("e4", "m2", "f")];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     const x = r.noeuds.filter((c) => c.data.ficheId === "x").map((c) => c.id);
     const y = r.noeuds.filter((c) => c.data.ficheId === "y").map((c) => c.id);
     expect(x.length).toBe(2);
@@ -127,19 +125,19 @@ describe("dépliage", () => {
     // boucle : il doit arriver à CHAQUE tour, sans quoi les tours ne se ressemblent pas.
     const noeuds = [n("src", "gen"), n("cfg", "reglage"), n("d", FICHE_DEBUT, { Tours: 3 }), n("m", "x"), n("f", FICHE_FIN)];
     const aretes = [a("e1", "src", "d"), a("e2", "d", "m"), a("e3", "cfg", "m", 0, 1), a("e4", "m", "f")];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.aretes.filter((e) => e.source === "cfg").length).toBe(3);
   });
 
   it("ne laisse sortir qu'une fois ce qui quitte la boucle par ailleurs", () => {
     const noeuds = [n("src", "gen"), n("d", FICHE_DEBUT, { Tours: 3 }), n("m", "x"), n("f", FICHE_FIN), n("obs", "sortie")];
     const aretes = [a("e1", "src", "d"), a("e2", "d", "m"), a("e3", "m", "f"), a("e4", "m", "obs")];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.aretes.filter((e) => e.target === "obs").length).toBe(1);
   });
 
   it("ne laisse aucun cycle derrière lui — c'est la raison d'être du dépliage", () => {
-    const r = deplierBoucles(...Object.values(grapheSimple(4)) as [NoeudG[], AreteG[]]);
+    const r = deplierBoucles(...Object.values(grapheSimple(4)) as [NoeudG[], AreteG[]], rolesDEssai);
     // Un parcours en profondeur qui repasserait sur un nœud signalerait un cycle.
     const sortants = new Map<string, string[]>();
     for (const e of r.aretes) sortants.set(e.source, [...(sortants.get(e.source) ?? []), e.target]);
@@ -159,17 +157,17 @@ describe("dépliage", () => {
 
 describe("câblages fautifs", () => {
   it("signale une fin sans début", () => {
-    const r = deplierBoucles([n("src", "gen"), n("f", FICHE_FIN)], [a("e", "src", "f")]);
+    const r = deplierBoucles([n("src", "gen"), n("f", FICHE_FIN)], [a("e", "src", "f")], rolesDEssai);
     expect(r.problemes).toEqual([{ noeudId: "f", code: "fin-sans-debut" }]);
   });
 
   it("signale un début sans fin", () => {
-    const r = deplierBoucles([n("src", "gen"), n("d", FICHE_DEBUT), n("m", "x")], [a("e1", "src", "d"), a("e2", "d", "m")]);
+    const r = deplierBoucles([n("src", "gen"), n("d", FICHE_DEBUT), n("m", "x")], [a("e1", "src", "d"), a("e2", "d", "m")], rolesDEssai);
     expect(r.problemes).toEqual([{ noeudId: "d", code: "debut-sans-fin" }]);
   });
 
   it("signale une boucle vide plutôt que de répéter le néant", () => {
-    const r = deplierBoucles([n("d", FICHE_DEBUT), n("f", FICHE_FIN)], [a("e", "d", "f")]);
+    const r = deplierBoucles([n("d", FICHE_DEBUT), n("f", FICHE_FIN)], [a("e", "d", "f")], rolesDEssai);
     expect(r.problemes).toEqual([{ noeudId: "d", code: "boucle-vide" }]);
   });
 
@@ -183,7 +181,7 @@ describe("câblages fautifs", () => {
     const aretes = [
       a("e1", "s", "d1"), a("e2", "s", "d2"), a("e3", "d1", "m"), a("e4", "d2", "m"), a("e5", "m", "f"),
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.problemes).toContainEqual({ noeudId: "f", code: "debuts-multiples" });
     expect(r.depliees).toEqual([]);
   });
@@ -197,7 +195,7 @@ describe("câblages fautifs", () => {
       a("a1", "s1", "d1"), a("a2", "d1", "m1"), a("a3", "m1", "f1"),
       a("b1", "s2", "d2"), a("b2", "d2", "m2"), a("b3", "m2", "f2"),
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.problemes).toEqual([]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "x").length).toBe(2);
     expect(r.noeuds.filter((x) => x.data.ficheId === "y").length).toBe(3);
@@ -212,11 +210,11 @@ describe("les trois fins de boucle", () => {
     it(`déplie une boucle refermée par la variante ${nomVariante} comme par A`, () => {
       const avecA = deplierBoucles(
         [n("src", "gen"), n("d", FICHE_DEBUT, { Tours: 3 }), n("m", "x"), n("f", FICHE_FIN)],
-        [a("e1", "src", "d"), a("e2", "d", "m"), a("e3", "m", "f")],
+        [a("e1", "src", "d"), a("e2", "d", "m"), a("e3", "m", "f")], rolesDEssai
       );
       const avecVariante = deplierBoucles(
         [n("src", "gen"), n("d", FICHE_DEBUT, { Tours: 3 }), n("m", "x"), n("f", fiche)],
-        [a("e1", "src", "d"), a("e2", "d", "m"), a("e3", "m", "f")],
+        [a("e1", "src", "d"), a("e2", "d", "m"), a("e3", "m", "f")], rolesDEssai
       );
       expect(avecVariante.problemes).toEqual([]);
       // Les trois tours sont bien recopiés, et les trois résultats arrivent sur la fin.
@@ -230,7 +228,7 @@ describe("les trois fins de boucle", () => {
   it("chaîne les tours vers B comme vers A : le dernier tour part bien du précédent", () => {
     const r = deplierBoucles(
       [n("src", "gen"), n("d", FICHE_DEBUT, { Tours: 3 }), n("m", "x"), n("f", FICHE_FIN_B)],
-      [a("e1", "src", "d"), a("e2", "d", "m"), a("e3", "m", "f")],
+      [a("e1", "src", "d"), a("e2", "d", "m"), a("e3", "m", "f")], rolesDEssai
     );
     // La copie du tour 2 est alimentée par celle du tour 1, et par rien d'autre.
     const versDernier = r.aretes.filter((x) => x.target === "d#2::m");
@@ -246,7 +244,7 @@ describe("les trois fins de boucle", () => {
     const aretes = [
       a("e0", "s", "d1"), a("e1", "d1", "d2"), a("e2", "d2", "m"), a("e3", "m", "f2"), a("e4", "f2", "f1"),
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.problemes).toEqual([]);
     expect(r.depliees).toEqual([depliee("d2", 3), depliee("d1", 2)]);
     // Les deux fins restent, avec leur variante : c'est chacune qui dit ce qu'elle fait de ses tours.
@@ -255,15 +253,8 @@ describe("les trois fins de boucle", () => {
   });
 
   it("signale une variante sans début, plutôt que de la laisser passer pour un montage", () => {
-    const r = deplierBoucles([n("src", "gen"), n("f", FICHE_FIN_C)], [a("e", "src", "f")]);
+    const r = deplierBoucles([n("src", "gen"), n("f", FICHE_FIN_C)], [a("e", "src", "f")], rolesDEssai);
     expect(r.problemes).toEqual([{ noeudId: "f", code: "fin-sans-debut" }]);
-  });
-
-  it("reconnaît une fin de boucle quelle que soit sa variante, et rien d'autre", () => {
-    for (const fiche of FICHES_FIN) expect(estFinDeBoucle(fiche)).toBe(true);
-    expect(FICHES_FIN).toContain(FICHE_FIN); // l'identifiant historique de A reste une fin
-    expect(estFinDeBoucle("simple-boucle")).toBe(false);
-    expect(estFinDeBoucle(undefined)).toBe(false);
   });
 });
 
@@ -294,7 +285,7 @@ describe("boucles imbriquées", () => {
 
   it("LE COMPTE EST LE PRODUIT DES DEUX, et non leur somme", () => {
     const g = imbriquees(2, 3);
-    const r = deplierBoucles(g.noeuds, g.aretes);
+    const r = deplierBoucles(g.noeuds, g.aretes, rolesDEssai);
     expect(r.problemes).toEqual([]);
     // Le ventre de l'intérieure est recopié trois fois, et tout cela deux fois par l'extérieure.
     expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(2 * 3);
@@ -302,8 +293,8 @@ describe("boucles imbriquées", () => {
 
   it("ET LA FIN INTÉRIEURE SE RECOPIE À CHAQUE TOUR DU DEHORS, chacun ayant son propre résultat", () => {
     const g = imbriquees(2, 3);
-    const r = deplierBoucles(g.noeuds, g.aretes);
-    const fins = r.noeuds.filter((x) => estFinDeBoucle(x.data.ficheId));
+    const r = deplierBoucles(g.noeuds, g.aretes, rolesDEssai);
+    const fins = r.noeuds.filter((x) => rolesDEssai(x.data.ficheId)?.finDeBoucle === true);
     // Deux copies de la fin intérieure, plus la fin extérieure qui reste seule.
     expect(fins.length).toBe(3);
     expect(fins.filter((x) => x.id.includes("::f2")).length).toBe(2);
@@ -312,7 +303,7 @@ describe("boucles imbriquées", () => {
 
   it("LES IDENTIFIANTS DISENT L'EMBOÎTEMENT, du dehors vers le dedans", () => {
     const g = imbriquees(2, 3);
-    const r = deplierBoucles(g.noeuds, g.aretes);
+    const r = deplierBoucles(g.noeuds, g.aretes, rolesDEssai);
     const ids = r.noeuds.map((x) => x.id).filter((i) => i.endsWith("::m")).sort();
     expect(ids).toEqual([
       "d1#0::d2#0::m", "d1#0::d2#1::m", "d1#0::d2#2::m",
@@ -322,13 +313,13 @@ describe("boucles imbriquées", () => {
 
   it("LES DEUX SONT NOMMÉES, LA PLUS INTÉRIEURE D'ABORD", () => {
     const g = imbriquees(2, 3);
-    expect(deplierBoucles(g.noeuds, g.aretes).depliees)
+    expect(deplierBoucles(g.noeuds, g.aretes, rolesDEssai).depliees)
       .toEqual([depliee("d2", 3), depliee("d1", 2)]);
   });
 
   it("ET LES TOURS DU DEHORS S'ENCHAÎNENT : chacun part du résultat du précédent", () => {
     const g = imbriquees(2, 3);
-    const r = deplierBoucles(g.noeuds, g.aretes);
+    const r = deplierBoucles(g.noeuds, g.aretes, rolesDEssai);
     // Le premier tour du dehors part de la source ; le second, de ce que le premier a déposé.
     const versPremier = r.aretes.filter((x) => x.target === "d1#0::d2#0::m");
     expect(versPremier.map((x) => x.source)).toEqual(["s"]);
@@ -341,7 +332,7 @@ describe("boucles imbriquées", () => {
     // câbles, et non sur l'ordre où les nœuds se trouvent.
     const g = imbriquees(2, 3);
     const inverse = { ...g, noeuds: [...g.noeuds].reverse() };
-    const r = deplierBoucles(inverse.noeuds, inverse.aretes);
+    const r = deplierBoucles(inverse.noeuds, inverse.aretes, rolesDEssai);
     expect(r.problemes).toEqual([]);
     expect(r.depliees).toEqual([depliee("d2", 3), depliee("d1", 2)]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(6);
@@ -358,7 +349,7 @@ describe("boucles imbriquées", () => {
       a("e0", "s", "d1"), a("e1", "d1", "d2"), a("e2", "d2", "d3"), a("e3", "d3", "m"),
       a("e4", "m", "f3"), a("e5", "f3", "f2"), a("e6", "f2", "f1"),
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.problemes).toEqual([]);
     expect(r.depliees.map((d) => d.debutId)).toEqual(["d3", "d2", "d1"]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(8);
@@ -377,7 +368,7 @@ describe("boucles imbriquées", () => {
       a("e0", "s", "d1"), a("e1", "d1", "d2"), a("e2", "d2", "m1"), a("e3", "m1", "m2"),
       a("e4", "m2", "m3"), a("e5", "m3", "m4"), a("e6", "m4", "f2"), a("e7", "f2", "f1"),
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.problemes).toContainEqual({ noeudId: "d1", code: "trop-de-copies" });
     // L'INTÉRIEURE A TOUT DE MÊME ÉTÉ DÉPLIÉE : elle tient dans le plafond, et refuser tout le
     // graphe pour une extérieure trop large priverait de ce qui marche.
@@ -393,7 +384,7 @@ describe("boucles imbriquées", () => {
     const aretes = [
       a("e0", "s", "d1"), a("e1", "d1", "d2"), a("e2", "d2", "m"), a("e3", "m", "f2"), a("e4", "f2", "f1"),
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.problemes).toEqual([]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "x").length).toBe(16 * 16);
     expect(16 * 16).toBeLessThanOrEqual(COPIES_MAX);
@@ -407,14 +398,14 @@ describe("ce que le dépliage rend de ce qu'il a fait", () => {
   // convention de nommage est ce qu'on ne veut pas : le dépliage le SAIT, il le rend.
   it("IL NOMME LA BOUCLE DÉPLIÉE ET SON NOMBRE DE TOURS", () => {
     const g = grapheSimple(7);
-    expect(deplierBoucles(g.noeuds, g.aretes).depliees).toEqual([depliee("d", 7)]);
+    expect(deplierBoucles(g.noeuds, g.aretes, rolesDEssai).depliees).toEqual([depliee("d", 7)]);
   });
 
   it("ET IL REND LE NOMBRE VRAIMENT EMPLOYÉ, non celui qu'on a écrit", () => {
     // Un réglage à virgule ou en dessous d'un tour est ramené à ce qui tourne vraiment, et c'est ce
     // nombre-là que le nœud annonce, sans quoi il mentirait sur ce qui s'est passé.
     const g = grapheSimple(4.6);
-    const r = deplierBoucles(g.noeuds, g.aretes);
+    const r = deplierBoucles(g.noeuds, g.aretes, rolesDEssai);
     expect(r.depliees).toEqual([depliee("d", 5)]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(5);
   });
@@ -429,18 +420,18 @@ describe("ce que le dépliage rend de ce qu'il a fait", () => {
       a("a1", "src", "d1"), a("a2", "d1", "t1"), a("a3", "t1", "f1"),
       a("a4", "f1", "d2"), a("a5", "d2", "t2"), a("a6", "t2", "f2"),
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.depliees).toEqual([depliee("d1", 3), depliee("d2", 5)]);
   });
 
   it("UNE BOUCLE QUI NE SE DÉPLIE PAS N'EST PAS NOMMÉE : elle a un problème, et c'est lui qu'on dit", () => {
-    const r = deplierBoucles([n("src", "gen"), n("d", FICHE_DEBUT)], [a("e", "src", "d")]);
+    const r = deplierBoucles([n("src", "gen"), n("d", FICHE_DEBUT)], [a("e", "src", "d")], rolesDEssai);
     expect(r.depliees).toEqual([]);
     expect(r.problemes).toEqual([{ noeudId: "d", code: "debut-sans-fin" }]);
   });
 
   it("et un graphe sans la moindre boucle n'en nomme aucune", () => {
-    expect(deplierBoucles([n("a1", "x")], []).depliees).toEqual([]);
+    expect(deplierBoucles([n("a1", "x")], [], rolesDEssai).depliees).toEqual([]);
   });
 
   it("IL COMPTE CE QUI TRAVERSE LE VENTRE, dont le sens ne se devine pas", () => {
@@ -456,13 +447,13 @@ describe("ce que le dépliage rend de ce qu'il a fait", () => {
       a("e3", "reglage", "m"),   // du dehors vers le ventre
       a("e4", "m", "dehors"),    // du ventre vers le dehors, ailleurs que par la fin
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.depliees).toEqual([depliee("d", 3, 1, 1)]);
   });
 
   it("et une boucle que rien ne traverse le dit par des zéros", () => {
     const g = grapheSimple(4);
-    expect(deplierBoucles(g.noeuds, g.aretes).depliees).toEqual([depliee("d", 4, 0, 0)]);
+    expect(deplierBoucles(g.noeuds, g.aretes, rolesDEssai).depliees).toEqual([depliee("d", 4, 0, 0)]);
   });
 });
 
@@ -480,13 +471,13 @@ describe("les graines qui varient d'un tour à l'autre", () => {
   };
 
   it("SANS L'OPTION, AUCUN TOUR N'EST MARQUÉ : le comportement d'avant, à la lettre", () => {
-    expect(deplierBoucles(...Object.values(avecOption()) as [never, never]).toursDesCopies.size).toBe(0);
-    expect(deplierBoucles(...Object.values(avecOption("Identiques")) as [never, never]).toursDesCopies.size).toBe(0);
+    expect(deplierBoucles(...Object.values(avecOption()) as [never, never], rolesDEssai).toursDesCopies.size).toBe(0);
+    expect(deplierBoucles(...Object.values(avecOption("Identiques")) as [never, never], rolesDEssai).toursDesCopies.size).toBe(0);
   });
 
   it("AVEC L'OPTION, CHAQUE COPIE PORTE SON TOUR", () => {
     const g = avecOption(GRAINES_PAR_TOUR);
-    const r = deplierBoucles(g.noeuds, g.aretes);
+    const r = deplierBoucles(g.noeuds, g.aretes, rolesDEssai);
     expect([...r.toursDesCopies.entries()].sort())
       .toEqual([["d#0::m", 0], ["d#1::m", 1], ["d#2::m", 2]]);
   });
@@ -502,7 +493,7 @@ describe("les graines qui varient d'un tour à l'autre", () => {
       a("e0", "s", "d1"), a("e1", "d1", "d2"), a("e2", "d2", "m"),
       a("e3", "m", "f2"), a("e4", "f2", "f1"),
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     const tours = [...r.toursDesCopies.entries()].filter(([id]) => id.endsWith("::m")).sort();
     expect(tours.length).toBe(4);
     // Quatre copies, quatre valeurs distinctes : aucune ne se confond avec une autre.
@@ -520,7 +511,7 @@ describe("les graines qui varient d'un tour à l'autre", () => {
       a("e0", "s", "d1"), a("e1", "d1", "d2"), a("e2", "d2", "m"),
       a("e3", "m", "f2"), a("e4", "f2", "f1"),
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     const tours = [...r.toursDesCopies.entries()].filter(([id]) => id.endsWith("::m")).sort();
     // Les deux tours du dedans restent distingués, et le tour du dehors ne les sépare pas davantage.
     expect(tours.map(([, v]) => v)).toEqual([0, 1, 0, 1]);
@@ -543,7 +534,7 @@ describe("une boucle menée par PASSES dans le ventre", () => {
 
   it.each([...FICHES_BOUCLE_PAR_PASSE])("« %s » DANS LE VENTRE REFUSE LE DÉPLIAGE", (fiche) => {
     const g = ventre(fiche);
-    const r = deplierBoucles(g.noeuds, g.aretes);
+    const r = deplierBoucles(g.noeuds, g.aretes, rolesDEssai);
     expect(r.problemes).toEqual([{ noeudId: "d", code: "boucle-par-passe-dedans" }]);
     // ET RIEN N'EST DÉPLIÉ : c'est le refus qui rend l'autre boucle à elle-même. Ses nœuds gardent
     // leur identifiant, donc son pilote les reconnaît et elle tourne.
@@ -558,12 +549,12 @@ describe("une boucle menée par PASSES dans le ventre", () => {
     const noeuds = [
       n("src", "generateur-frequence"), n("d", FICHE_DEBUT, { Tours: 3 }),
       n("tr", "transposition"), n("f", FICHE_FIN),
-      n("p", "boucle-creneau-debut"), n("q", "boucle-creneau-fin"),
+      n("p", FICHES_BOUCLE_PAR_PASSE[0]), n("q", FICHES_BOUCLE_PAR_PASSE[1]),
     ];
     const aretes = [
       a("e1", "src", "d"), a("e2", "d", "tr"), a("e3", "tr", "f"), a("e4", "p", "q"),
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.problemes).toEqual([]);
     expect(r.depliees).toEqual([depliee("d", 3)]);
   });
@@ -575,13 +566,13 @@ describe("une boucle menée par PASSES dans le ventre", () => {
     const noeuds = [
       n("src", "generateur-frequence"),
       n("d1", FICHE_DEBUT, { Tours: 2 }), n("d2", FICHE_DEBUT, { Tours: 2 }),
-      n("p", "cercle-boucle-debut"), n("f2", FICHE_FIN), n("f1", FICHE_FIN),
+      n("p", FICHES_BOUCLE_PAR_PASSE[0]), n("f2", FICHE_FIN), n("f1", FICHE_FIN),
     ];
     const aretes = [
       a("e0", "src", "d1"), a("e1", "d1", "d2"), a("e2", "d2", "p"),
       a("e3", "p", "f2"), a("e4", "f2", "f1"),
     ];
-    const r = deplierBoucles(noeuds, aretes);
+    const r = deplierBoucles(noeuds, aretes, rolesDEssai);
     expect(r.problemes[0]).toEqual({ noeudId: "d2", code: "boucle-par-passe-dedans" });
     expect(r.origines.size).toBe(0);
     expect(r.depliees).toEqual([]);

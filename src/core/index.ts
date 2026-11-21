@@ -5,6 +5,8 @@ export { aplatirGraphe, creerMeta, indexPort, metasEmployes, nettoyerNoeud,
   frontieresPourEdition, redériverMeta, estFrontiere, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE } from "./meta";
 export type { MetaComposant, NoeudG, AreteG, DefPorts, PortInterne } from "./meta";
 export { grapheSansConteneurs } from "./formes-graphe";
+// CE QU'UN DÉBUT DE BOUCLE DOIT PORTER pour que le dépliage le lise : voir `core/boucle-graphe.ts`.
+export { GRAINES_PAR_TOUR, REGLAGE_GRAINES, REGLAGE_TOURS } from "./boucle-graphe";
 export {
   PREFIXE_FICHE_BULLE, PREFIXE_SUBSTITUTION, ancetresBulle, appliquerRepli, bulleCachante, bulleDe,
   bullesVides, estBulle, estCacheParBulle, estRepliee, estSubstitution, ficheDeBulle,

@@ -18,8 +18,8 @@
 // second début ne suffisait pas : le dépliage CHAÎNE les tours, chacun partant du résultat du
 // précédent, et c'est la bonne sémantique pour un son — une chaîne qui transpose d'un demi-ton en
 // monte de n au n-ième tour. Un plan ne se compose pas : on veut n sections du MÊME descriptif. Les
-// tours de cette boucle-ci repartent donc tous de l'entrée du début, et `boucle-graphe.ts` porte la
-// liste de ceux qui rebouclent.
+// tours de cette boucle-ci repartent donc tous de l'entrée du début : la fiche le déclare,
+// `debutDeBoucle: "repete"`, et `core/boucle-graphe.ts` le lit.
 //
 // MESURÉ DANS L'APPLICATION : branché sur le rebouclage, le deuxième tour recevait l'audio du
 // premier sur une entrée texte, et la fin de boucle annonçait « Entrée en erreur » là où le premier
@@ -29,11 +29,13 @@ import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
+import { GRAINES_PAR_TOUR, REGLAGE_GRAINES, REGLAGE_TOURS } from "../core";
 
 export const fiches: FicheAudio[] = ([
   fiche({
     id: "boucle-plan-debut", nom: "Début de boucle sur un plan", nomEn: "Plan Loop Start",
     univers: "Entrées", famille: "Génération",
+    debutDeBoucle: "repete",
     resume: "Marque le début d'une boucle de graphe qui fait tourner un plan : ce qui suit est rejoué N fois, avec une graine par tour.",
     resumeEn: "Marks the start of a graph loop carrying a plan: what follows is replayed N times, with one seed per pass.",
     notice: "Ce composant ouvre une boucle de graphe sur un texte, et le plan d'une chanson en est l'usage. La chaîne comprise entre lui et une « Fin de boucle » est jouée autant de fois que « Tours » le demande, et le plan reçu traverse chaque tour sans être modifié.\n\n"
@@ -51,13 +53,13 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       // LES DEUX RÉGLAGES SONT CEUX DU DÉBUT DE BOUCLE SUR L'AUDIO, à la lettre près de leurs noms :
       // le déplieur les lit PAR LEUR NOM, « Tours » et « Graines », et non par l'identifiant du
-      // nœud. Les renommer ici ferait une boucle de trois tours sans graines, sans rien dire.
-      { nom: "Tours", nomEn: "Passes", type: "nombre", plage: [1, Infinity], pas: 1, defaut: 3,
+      // nœud. Leurs noms viennent donc du cœur, qui les définit, et ne peuvent plus diverger.
+      { nom: REGLAGE_TOURS, nomEn: "Passes", type: "nombre", plage: [1, Infinity], pas: 1, defaut: 3,
         doc: "Nombre de fois où la chaîne comprise entre ce composant et la « Fin de boucle » est jouée. Le plan reçu est le même à chaque tour ; ce qui change d'un tour à l'autre vient du réglage « Graines ». Lu par le déplieur, avant l'exécution : hors d'une boucle refermée par une « Fin de boucle », ce réglage n'agit pas.",
         docEn: "How many times the chain between this node and the « Loop End » is played. The plan received is the same at every pass; what changes from one pass to the next comes from the « Seeds » setting. Read by the unfolder, before the run: outside a loop closed by a « Loop End », this setting has no effect." },
-      { nom: "Graines", nomEn: "Seeds", type: "choix",
-        options: ["Identiques", "Une par tour"], optionsEn: ["Identical", "One per pass"],
-        optionIds: ["Identiques", "Une par tour"], defaut: "Une par tour", defautEn: "One per pass",
+      { nom: REGLAGE_GRAINES, nomEn: "Seeds", type: "choix",
+        options: ["Identiques", GRAINES_PAR_TOUR], optionsEn: ["Identical", "One per pass"],
+        optionIds: ["Identiques", GRAINES_PAR_TOUR], defaut: GRAINES_PAR_TOUR, defautEn: "One per pass",
         doc: "Ce que deviennent les réglages « Graine » des composants de la chaîne. « Une par tour » en donne une différente à chaque tour : le plan reste le même et le rendu change, ce qui donne des sections d'un même morceau. « Identiques » donne la même à tous, et les tours se ressemblent. Lu par le déplieur, avant l'exécution : hors d'une boucle refermée par une « Fin de boucle », ce réglage n'agit pas.",
         docEn: "What becomes of the « Seed » settings of the chain's nodes. « One per pass » gives each pass a different one: the plan stays the same and the rendering changes, which yields sections of one piece. « Identical » gives them all the same, and the passes resemble each other. Read by the unfolder, before the run: outside a loop closed by a « Loop End », this setting has no effect." },
     ],

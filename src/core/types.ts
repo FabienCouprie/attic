@@ -437,6 +437,29 @@ export interface IndicesMoteur {
   // LE RECADRAGE LUI-MÊME APPARTIENT AU DOMAINE. Le cœur ne dit que le fait ; ce qu'est une plage
   // valide et comment on y ramène une valeur, c'est au domaine de le savoir. Défaut : false.
   sortieHorsPlagePossible?: boolean;
+
+  // CE NŒUD OUVRE UNE BOUCLE DE GRAPHE, et dit comment ses tours s'enchaînent. Avec « reboucle »,
+  // chaque tour part du résultat du précédent : une chaîne qui transpose d'un demi-ton en monte de n
+  // au n-ième tour. Avec « repete », chaque tour repart de ce qui entre dans le début : n tours
+  // indépendants du même descriptif. Le dépliage (`core/boucle-graphe.ts`) le lit, retire ce nœud du
+  // graphe exécuté et recopie la chaîne jusqu'à la fin ; il lit aussi les réglages `REGLAGE_TOURS` et
+  // `REGLAGE_GRAINES` de ce module, que le nœud doit donc déclarer.
+  //
+  // POURQUOI UNE PROPRIÉTÉ ET NON UNE LISTE D'IDENTIFIANTS. Le dépliage nommait les débuts et les fins
+  // par leurs identifiants audio : un second domaine ne pouvait avoir de boucle qu'en empruntant ces
+  // noms, et un nœud enregistré sous un ancien identifiant, que le registre ouvre pourtant, ne
+  // refermait rien. Le rôle se lit sur la fiche par `trouverDef`, alias compris. Défaut : aucun rôle.
+  debutDeBoucle?: "reboucle" | "repete";
+
+  // CE NŒUD REFERME UNE BOUCLE DE GRAPHE : le dépliage y dépose le résultat de chaque tour, dans
+  // l'ordre, et le nœud en fait ce que sa fiche annonce. Défaut : false.
+  finDeBoucle?: boolean;
+
+  // CE NŒUD MÈNE UNE BOUCLE PAR PASSES, qui rejoue le graphe entier une fois par morceau et apparie
+  // ses nœuds par leur identifiant. Le dépliage refuse d'en recopier un dans le ventre d'une boucle de
+  // graphe : ses copies, sous des identifiants engendrés, ne boucleraient plus, et le graphe
+  // aboutirait sans rien dire. Défaut : false.
+  boucleParPasses?: boolean;
 }
 
 // PAS de paramètre par défaut : un domaine DOIT expliciter son type de valeur et

@@ -8,7 +8,8 @@
 // le run global, le run ciblé qui n'embrasse que l'amont, la relance qui embrasse l'aval.
 import { describe, expect, it } from "vitest";
 
-import { deplierBoucles, FICHE_DEBUT, FICHE_FIN } from "./boucle-graphe";
+import { deplierBoucles } from "./boucle-graphe";
+import { FICHE_DEBUT, FICHE_FIN, rolesDEssai } from "./boucles-essai";
 import { estBulle, estSubstitution } from "./bulles";
 import { conteneurs } from "./conteneurs";
 import { grapheSansConteneurs } from "./formes-graphe";
@@ -24,8 +25,8 @@ const FICHES: Record<string, FicheDePreparation> = {
   fx: { entrees: [audio("Audio")], sorties: [audio("Audio")] },
   out: { entrees: [audio("Audio")], sorties: [], executerEnDernier: true },
   comment: { entrees: [], sorties: [] },
-  [FICHE_DEBUT]: { entrees: [audio("Audio")], sorties: [audio("Audio")] },
-  [FICHE_FIN]: { entrees: [audio("Audio")], sorties: [audio("Audio")] },
+  [FICHE_DEBUT]: { entrees: [audio("Audio")], sorties: [audio("Audio")], debutDeBoucle: "reboucle" },
+  [FICHE_FIN]: { entrees: [audio("Audio")], sorties: [audio("Audio")], finDeBoucle: true },
   [FICHE_NOTE]: { entrees: [], sorties: [audio("Audio")] },
   [FICHE_INSTRUMENT_FIN]: { entrees: [audio("Audio")], sorties: [audio("Audio")] },
 } as Record<string, FicheDePreparation>;
@@ -66,7 +67,7 @@ function ancienPlan({ noeuds, aretes, prioriteDemandee, versLAval }: Pick<Entree
   for (const p of instruments.problemes) avertissements.push(`[attic] Instrument de graphe : ${p.code} sur ${p.noeudId}`);
   plat.noeuds = instruments.noeuds;
   plat.aretes = instruments.aretes;
-  const deplie = deplierBoucles(plat.noeuds, plat.aretes);
+  const deplie = deplierBoucles(plat.noeuds, plat.aretes, rolesDEssai);
   for (const [copie, origine] of deplie.origines) plat.expansions.set(copie, plat.expansions.get(origine) ?? origine);
   for (const p of deplie.problemes) avertissements.push(`[attic] Boucle de graphe : ${p.code} sur ${p.noeudId}`);
   for (const d of deplie.depliees) {

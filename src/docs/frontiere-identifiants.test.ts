@@ -76,22 +76,15 @@ const IDENTIFIANTS = new Set<string>([...toutesLesFiches.map((f) => f.id), ...Ob
  * fichiers. Il ne les arbitre pas, il les COMPTE : la liste refuse de grandir, et une dette payée
  * doit en sortir. Chacune porte sa raison, et la sortie est la même pour toutes : la fiche dit son
  * rôle et le cœur le lit, ou le domaine remet la liste au cœur, comme `audio/alias.ts` au registre.
+ *
+ * LES ONZE DE `core/boucle-graphe.ts` SONT SORTIES LE 2026-11-21, par la première porte : la fiche
+ * déclare `debutDeBoucle`, `finDeBoucle` ou `boucleParPasses`, et le dépliage le lit par `trouverDef`.
  */
 const DETTES: Readonly<Record<string, { chaines: readonly string[]; raison: string }>> = {
   "core/meta.ts": {
     chaines: ["__entree-frontiere", "__sortie-frontiere"],
     raison: "les nœuds-frontière d'un méta-composant sont un mécanisme du cœur, mais leurs fiches, "
       + "qui les dessinent et portent leurs ports, sont déclarées par le domaine",
-  },
-  "core/boucle-graphe.ts": {
-    chaines: [
-      "boucle-graphe-debut", "boucle-plan-debut", "boucle-graphe-fin", "boucle-graphe-fin-b", "boucle-graphe-fin-c",
-      "boucle-voix-debut", "boucle-voix-fin", "boucle-creneau-debut", "boucle-creneau-fin",
-      "cercle-boucle-debut", "cercle-boucle-fin",
-    ],
-    raison: "le dépliage reconnaît ses bouts par identifiant, décision écrite dans le module (« le cœur ne "
-      + "lit pas les fiches, il nomme les identifiants ») ; les boucles par voix, par créneau et sur un "
-      + "cercle sont du métier musical",
   },
   "core/instrument-graphe.ts": {
     chaines: ["frontiere-note", "instrument-fin"],

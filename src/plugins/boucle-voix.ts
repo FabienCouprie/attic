@@ -27,6 +27,8 @@ const en = () => langueCourante() === "en";
 export const fiches: FicheAudio[] = ([
   fiche({
     id: FICHE_BOUCLE_DEBUT,
+    // Le dépliage d'une boucle de graphe refuse de recopier ce nœud : voir `IndicesMoteur`.
+    boucleParPasses: true,
     nom: "Début de boucle par voix", nomEn: "Voice Loop Start",
     univers: "Traitement", famille: "Conversion",
     resume: "Ouvre une boucle : le graphe est exécuté une fois par voix, et ce composant rend la voix de la passe en cours.",
@@ -71,6 +73,7 @@ export const fiches: FicheAudio[] = ([
   }),
   fiche({
     id: FICHE_BOUCLE_FIN,
+    boucleParPasses: true,
     nom: "Fin de boucle par voix", nomEn: "Voice Loop End",
     univers: "Traitement", famille: "Conversion",
     resume: "Referme une boucle par voix et réunit ce que chaque passe a produit.",

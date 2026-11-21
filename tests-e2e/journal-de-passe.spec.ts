@@ -236,15 +236,15 @@ async function remettreAZero(page: Page, id: string): Promise<void> {
  */
 async function jouer(page: Page, fichier: string, scenario: Scenario): Promise<Ligne[]> {
   const graphe = readFileSync(join(RACINE, "exemples", fichier), "utf8");
-  const attentesAdmises = debutsDeBoucle(graphe);
   if (scenario === "lancer") {
     await semerEtLancer(page, devUrl, graphe, {
       profondeurExport: 32,
       avantDeLancer: (p) => marquer(p, "Lancer", true),
-      attentesAdmises,
+      admettreLesDebutsDeBoucle: true,
     });
   } else {
     await semer(page, devUrl, graphe, { profondeurExport: 32 });
+    const attentesAdmises = await debutsDeBoucle(page, graphe);
     const cible = await choisirLaCible(page, graphe);
     await marquer(page, `▶ ${cible}`, true);
     await lancerLeNoeudEtAttendre(page, cible);

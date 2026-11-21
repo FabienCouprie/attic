@@ -12,10 +12,8 @@
 // faute. C'est pourquoi les cas qui suivent MÊLENT les deux sortes de début, dans les deux sens
 // d'emboîtement, plutôt que d'essayer la neuve toute seule.
 import { describe, expect, it } from "vitest";
-import {
-  FICHES_DEBUT, FICHE_DEBUT, FICHE_DEBUT_PLAN, FICHE_FIN,
-  GRAINES_PAR_TOUR, deplierBoucles, estDebutDeBoucle, reboucleSurLeTourPrecedent,
-} from "./boucle-graphe";
+import { GRAINES_PAR_TOUR, deplierBoucles } from "./boucle-graphe";
+import { FICHES_DEBUT, FICHE_DEBUT, FICHE_DEBUT_PLAN, FICHE_FIN, rolesDEssai } from "./boucles-essai";
 import type { AreteG, NoeudG } from "./meta";
 
 const n = (id: string, ficheId: string, parametres: Record<string, unknown> = {}): NoeudG =>
@@ -28,7 +26,7 @@ describe("le début de boucle sur un plan", () => {
     const r = deplierBoucles(
       [n("plan", "planifier-chanson"), n("d", FICHE_DEBUT_PLAN, { Tours: 4 }),
         n("rendu", "rendre-chanson"), n("f", FICHE_FIN)],
-      [a("e0", "plan", "d"), a("e1", "d", "rendu"), a("e2", "rendu", "f")],
+      [a("e0", "plan", "d"), a("e1", "d", "rendu"), a("e2", "rendu", "f")], rolesDEssai
     );
     expect(r.problemes).toEqual([]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "rendre-chanson").length).toBe(4);
@@ -43,13 +41,13 @@ describe("le début de boucle sur un plan", () => {
     // son entrée TEXTE l'audio rendu par le premier, et la fin de boucle annonçait « Entrée en
     // erreur » quand le premier tour, lui, était vert.
     //
-    // DÉFAUT REPLANTÉ en remettant `FICHE_DEBUT_PLAN` dans l'ensemble des débuts qui rebouclent :
-    // ce cas tombe, et lui seul — les cas de chaînage de `boucle-graphe.test.ts` tiennent l'autre
-    // sens, et c'est pourquoi la liste des rebouclants est nommée des deux côtés.
+    // DÉFAUT REPLANTÉ en déclarant « reboucle » sur ce début : ce cas tombe, et lui seul. Les cas de
+    // chaînage de `boucle-graphe.test.ts` tiennent l'autre sens, et `plugins/boucle-role.test.ts`
+    // tient que la vraie fiche du début sur un plan déclare bien « repete ».
     const r = deplierBoucles(
       [n("plan", "planifier-chanson"), n("d", FICHE_DEBUT_PLAN, { Tours: 3 }),
         n("rendu", "rendre-chanson"), n("f", FICHE_FIN)],
-      [a("e0", "plan", "d"), a("e1", "d", "rendu"), a("e2", "rendu", "f")],
+      [a("e0", "plan", "d"), a("e1", "d", "rendu"), a("e2", "rendu", "f")], rolesDEssai
     );
     expect(r.problemes).toEqual([]);
     const copies = r.noeuds.filter((x) => x.data.ficheId === "rendre-chanson").map((x) => x.id);
@@ -57,8 +55,6 @@ describe("le début de boucle sur un plan", () => {
     for (const id of copies) {
       expect(r.aretes.filter((x) => x.target === id).map((x) => x.source), id).toEqual(["plan"]);
     }
-    expect(reboucleSurLeTourPrecedent(FICHE_DEBUT_PLAN)).toBe(false);
-    expect(reboucleSurLeTourPrecedent(FICHE_DEBUT), "la boucle audio doit continuer de composer").toBe(true);
   });
 
   it("ET SES GRAINES VARIENT PAR TOUR, ce qui est la raison d'être de ce composant", () => {
@@ -67,7 +63,7 @@ describe("le début de boucle sur un plan", () => {
     const r = deplierBoucles(
       [n("d", FICHE_DEBUT_PLAN, { Tours: 3, Graines: GRAINES_PAR_TOUR }),
         n("rendu", "rendre-chanson"), n("f", FICHE_FIN)],
-      [a("e1", "d", "rendu"), a("e2", "rendu", "f")],
+      [a("e1", "d", "rendu"), a("e2", "rendu", "f")], rolesDEssai
     );
     expect(r.problemes).toEqual([]);
     const tours = r.noeuds
@@ -81,7 +77,7 @@ describe("le début de boucle sur un plan", () => {
     const r = deplierBoucles(
       [n("d", FICHE_DEBUT_PLAN, { Tours: 3, Graines: "Identiques" }),
         n("rendu", "rendre-chanson"), n("f", FICHE_FIN)],
-      [a("e1", "d", "rendu"), a("e2", "rendu", "f")],
+      [a("e1", "d", "rendu"), a("e2", "rendu", "f")], rolesDEssai
     );
     expect(r.toursDesCopies.size).toBe(0);
   });
@@ -93,7 +89,7 @@ describe("le début de boucle sur un plan", () => {
       [n("s", "gen"), n("d1", FICHE_DEBUT, { Tours: 2 }), n("d2", FICHE_DEBUT_PLAN, { Tours: 3 }),
         n("rendu", "rendre-chanson"), n("f2", FICHE_FIN), n("f1", FICHE_FIN)],
       [a("e0", "s", "d1"), a("e1", "d1", "d2"), a("e2", "d2", "rendu"),
-        a("e3", "rendu", "f2"), a("e4", "f2", "f1")],
+        a("e3", "rendu", "f2"), a("e4", "f2", "f1")], rolesDEssai
     );
     expect(r.problemes).toEqual([]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "rendre-chanson").length).toBe(2 * 3);
@@ -105,21 +101,25 @@ describe("le début de boucle sur un plan", () => {
         n("rendu", "rendre-chanson"), n("d2", FICHE_DEBUT, { Tours: 3 }), n("t", "transposition"),
         n("f2", FICHE_FIN), n("f1", FICHE_FIN)],
       [a("e0", "plan", "d1"), a("e1", "d1", "rendu"), a("e2", "rendu", "d2"), a("e3", "d2", "t"),
-        a("e4", "t", "f2"), a("e5", "f2", "f1")],
+        a("e4", "t", "f2"), a("e5", "f2", "f1")], rolesDEssai
     );
     expect(r.problemes).toEqual([]);
     expect(r.noeuds.filter((x) => x.data.ficheId === "transposition").length).toBe(2 * 3);
     expect(r.noeuds.filter((x) => x.data.ficheId === "rendre-chanson").length).toBe(2);
   });
 
-  it("LES DEUX SORTES DE DÉBUT SONT DÉCLARÉES ENSEMBLE, et le moteur les reconnaît toutes deux", () => {
+  it("LES DEUX SORTES DE DÉBUT OUVRENT UNE BOUCLE, et une fiche sans rôle n'en ouvre aucune", () => {
     // LE GARDE QUI TIENT LA RÉPARATION. Le moteur comparait à une constante ; un second début
     // ajouté sans toucher à cette comparaison aurait laissé la boucle non dépliée, et le nœud
-    // aurait annoncé qu'il laisse passer le plan au lieu de boucler. Défaut replanté en remettant
-    // la comparaison : quatre des cas ci-dessus tombent.
-    expect([...FICHES_DEBUT]).toEqual([FICHE_DEBUT, FICHE_DEBUT_PLAN]);
-    for (const id of FICHES_DEBUT) expect(estDebutDeBoucle(id), id).toBe(true);
-    expect(estDebutDeBoucle(FICHE_FIN)).toBe(false);
-    expect(estDebutDeBoucle(undefined)).toBe(false);
+    // aurait annoncé qu'il laisse passer le plan au lieu de boucler. Depuis la pièce P2, c'est le
+    // rôle déclaré qui ouvre une boucle, quel que soit l'identifiant.
+    for (const id of FICHES_DEBUT) {
+      const r = deplierBoucles([n("s", "x"), n("d", id, { Tours: 2 }), n("m", "y"), n("f", FICHE_FIN)],
+        [a("e0", "s", "d"), a("e1", "d", "m"), a("e2", "m", "f")], rolesDEssai);
+      expect(r.depliees.map((x) => x.debutId), id).toEqual(["d"]);
+    }
+    const sansRole = deplierBoucles([n("s", "x"), n("d", "sans-role"), n("m", "y"), n("f", FICHE_FIN)],
+      [a("e0", "s", "d"), a("e1", "d", "m"), a("e2", "m", "f")], rolesDEssai);
+    expect(sansRole.problemes).toEqual([{ noeudId: "f", code: "fin-sans-debut" }]);
   });
 });

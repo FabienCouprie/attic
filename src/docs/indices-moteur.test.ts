@@ -108,6 +108,24 @@ const INDICES = {
       + "sortir de la plage, « Python Processor » et « Julia Processor », demandent Electron. Mesuré le "
       + "2026-11-19, le recadrage ôté : les deux gardes restent verts sur cet exemple.",
   },
+  debutDeBoucle: {
+    joue: "« Début de boucle » dans `un-echo-en-boucle-et-un-instrument`, trois tours d'un amplificateur. "
+      + "Mesuré le 2026-11-21, l'indice ignoré par `deplierBoucles` (`core/boucle-graphe.ts`) : la boucle "
+      + "ne se déplie plus, la base du son tombe sur `fin` et `ecoute` à 33,7 % d'efficace avec la fin en "
+      + "erreur, et le journal sur ses deux scénarios dès le premier rang.",
+  },
+  finDeBoucle: {
+    joue: "« Fin de boucle A » dans `un-echo-en-boucle-et-un-instrument`. Mesuré le 2026-11-21, l'indice "
+      + "ignoré par `deplierBoucles` : le début n'a plus de fin, la base du son tombe sur `fin` et `ecoute` "
+      + "à 33,7 % d'efficace, et le journal sur ses deux scénarios dès le premier rang.",
+  },
+  boucleParPasses: {
+    nonEprouve: "Les boucles par voix, par créneau et sur un cercle le portent dans `gestion_graphe_complexite`, "
+      + "mais ce qu'il commande, le refus d'en recopier une dans le ventre d'une boucle de graphe, n'y est "
+      + "jamais atteint : cet exemple n'a pas de boucle de graphe, et un exemple livré ne peut pas porter "
+      + "le câblage refusé. Mesuré le 2026-11-21, le refus ôté : les deux gardes restent verts sur cet "
+      + "exemple. `core/boucle-graphe.test.ts` et `plugins/boucle-deux-mecaniques.test.ts` le tiennent.",
+  },
 } satisfies Record<keyof IndicesMoteur, Declaration>;
 
 type Indice = keyof typeof INDICES;
