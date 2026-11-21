@@ -9,8 +9,9 @@ import { extrairePalette, type CouleurExtraite } from "./palette-harmonique";
 import { rgbToHsl, distanceRgb2 } from "./couleurs";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence, type NoteEvenement } from "./midi-sequence";
-import { degresDesAccords, degresGammeAccords, degreAccordProche } from "./generation";
+import { degresDesAccords, degresGammeAccords } from "./generation";
 import { demiTonDeCle } from "./cles";
+import { triadeDuDegre } from "./triades-gamme";
 
 export interface FormeColoree {
   couleur: CouleurExtraite;
@@ -41,24 +42,26 @@ export interface OptionsDessinSonore {
 // LA CLÉ SE LIT DANS LA TABLE COMMUNE, `audio/cles.ts` : une table privée en dièses seuls jouait Mi♭
 // et Si♭ en do.
 
-function noteDepuisCouleur(couleur: CouleurExtraite, cle: string, gamme: string, octave: number, portee: number): number {
-  const intervals = degresGammeAccords(gamme);
+/**
+ * La note d'une couleur, et l'écart de son degré à la tonique. En accords, la teinte choisit parmi les
+ * degrés d'accord : un accord ne se bâtit pas sur la note de passage de la bebop dominante.
+ */
+function noteDepuisCouleur(
+  couleur: CouleurExtraite, cle: string, gamme: string, octave: number, portee: number, enAccord: boolean,
+): { note: number; semi: number } {
+  const intervals = enAccord ? degresDesAccords(gamme) : degresGammeAccords(gamme);
   const cleIdx = demiTonDeCle(cle) ?? 0;
   const base = (octave + 1) * 12 + cleIdx;
   const deg = Math.floor((couleur.h / 360) * intervals.length) % intervals.length;
   const semi = intervals[deg];
   const octOffset = Math.min(portee - 1, Math.floor(couleur.l * portee));
-  return Math.max(0, Math.min(127, base + semi + octOffset * 12));
+  return { note: Math.max(0, Math.min(127, base + semi + octOffset * 12)), semi };
 }
 
-// Tierce et quinte les plus proches dans la gamme choisie (au lieu d'une
-// triade majeure/mineure figée) : généralise correctement aux modes
-// (quinte diminuée du Locrien...) et aux gammes qui n'ont pas de degré à
-// exactement 2/4 crans d'écart (pentatoniques, blues, chromatique).
-function triadeGamme(gamme: string): number[] {
-  const intervals = degresDesAccords(gamme);
-  return [0, degreAccordProche(intervals, 0, 4), degreAccordProche(intervals, 0, 7)];
-}
+// LA TRIADE SE BÂTIT SUR LE DEGRÉ DE CHAQUE FORME, un degré sur deux dans la gamme
+// (`triades-gamme.ts`). Elle se calculait une seule fois, sur la tonique, puis se posait sur chaque
+// fondamentale : la triade de la tonique transportée, hors de la gamme sur presque chaque degré,
+// relevé par le banc des gammes le 2026-11-21.
 
 export function detecterFormesColorees(
   pixels: PixelBuffer, nbCouleurs: number, tailleMin: number,
@@ -161,7 +164,8 @@ export function formesVersNotes(
   if (formes.length === 0) return notes;
   const maxArea = Math.max(...formes.map((f) => f.area));
   const dureeNote = Math.min(options.duree, options.duree / Math.max(1, formes.length));
-  const triade = triadeGamme(options.gamme);
+  const enAccord = options.mode !== "melodie";
+  const degresAccords = degresDesAccords(options.gamme);
 
   const xs = formes.map((f) => f.x);
   const minX = Math.min(...xs);
@@ -169,7 +173,8 @@ export function formesVersNotes(
   const span = maxX - minX;
 
   for (const f of formes) {
-    const root = noteDepuisCouleur(f.couleur, options.cle, options.gamme, options.octave, options.portee);
+    const { note: root, semi } = noteDepuisCouleur(f.couleur, options.cle, options.gamme, options.octave, options.portee, enAccord);
+    const triade = enAccord ? triadeDuDegre(degresAccords, semi) : [0];
     const velocite = Math.max(40, Math.min(120, Math.round(40 + (f.area / maxArea) * 80 + f.couleur.s * 20)));
     const ratio = span > 0 ? (f.x - minX) / span : 0;
     const debut = ratio * (options.duree - dureeNote);

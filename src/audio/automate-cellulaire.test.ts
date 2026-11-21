@@ -77,7 +77,11 @@ describe("automate-cellulaire", () => {
     expect(notes.length).toBeLessThanOrEqual(defaults.generations);
   });
 
-  it("respecte la gamme demandée", () => {
+  it("respecte la gamme demandée, posée sur la clé", () => {
+    // CE CAS TENAIT LE DÉFAUT POUR JUSTE jusqu'au 2026-11-21 : en la, il comparait la classe absolue de
+    // chaque note aux degrés comptés depuis la tonique, et validait donc des notes posées sur la gamme
+    // de do. Le banc des gammes l'a relevé ; les classes se comptent maintenant depuis la, neuf
+    // demi-tons au-dessus de do.
     const notes = genererNotesAutomateCellulaire({
       ...defaults,
       regle: 110,
@@ -89,8 +93,9 @@ describe("automate-cellulaire", () => {
       gamme: "Pentatonique mineure",
     });
     const gamme = degresGammeMelodie(normaliserGamme("Pentatonique mineure"));
+    expect(notes.length).toBeGreaterThan(0);
     for (const n of notes) {
-      const pc = ((n.note % 12) + 12) % 12;
+      const pc = (((n.note - 9) % 12) + 12) % 12;
       expect(gamme).toContain(pc);
     }
   });
@@ -268,6 +273,26 @@ describe("automate cellulaire : chaque gamme offerte se joue", () => {
       expect(notes.length).toBeGreaterThan(0);
       const etrangeres = [...new Set(notes.map((n) => n.note % 12))].filter((c) => !permises.has(c));
       expect(etrangeres, id).toEqual([]);
+    });
+  }
+});
+
+describe("automate cellulaire : les colonnes s'étalent sur deux octaves de la gamme", () => {
+  // LE DÉFAUT, relevé le 2026-11-21 au contrôle des gammes : le code promettait « 2 octaves de la
+  // gamme », et la notice qu'une colonne donne le degré, mais l'étendue se comptait en demi-tons, puis
+  // se ramenait sur la gamme : treize demi-tons sous une gamme à sept degrés, neuf sous une
+  // pentatonique. Fabien a décidé le même jour de la compter en degrés. La règle 255 allume chaque
+  // cellule, et chaque colonne joue : il faut entendre deux fois chaque degré, de la tonique au dernier
+  // degré de l'octave d'au-dessus.
+  for (const id of GAMMES_MELODIE_IDS) {
+    it(`${id} : deux octaves de la gamme, en polyphonie comme en arpège`, () => {
+      const d = degresDeGamme(id);
+      for (const modeVoix of ["Polyphonie", "Arpège"] as const) {
+        const notes = genererNotesAutomateCellulaire({ ...defaults, regle: 255, modeVoix, gamme: id, largeur: 32, generations: 40, densiteMax: 64 });
+        const hauteurs = [...new Set(notes.map((n) => n.note))].sort((a, b) => a - b);
+        expect(hauteurs.length, `${modeVoix} : deux fois chaque degré`).toBe(2 * d.length);
+        expect(hauteurs[hauteurs.length - 1] - hauteurs[0], `${modeVoix} : de la tonique au dernier degré de l'octave d'au-dessus`).toBe(12 + d[d.length - 1]);
+      }
     });
   }
 });

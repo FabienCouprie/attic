@@ -124,9 +124,21 @@ describe("trois niveaux du même flocon", () => {
     }
   });
 
-  it("snapperNote ramène sur la gamme", () => {
+  it("snapperNote ramène sur la gamme, la plus grave à égale distance", () => {
     const majeur = [0, 2, 4, 5, 7, 9, 11];
-    expect([60, 61, 62, 63, 64].map((m) => snapperNote(m, majeur))).toEqual([60, 60, 62, 62, 64]);
+    expect([60, 61, 62, 63, 64].map((m) => snapperNote(m, majeur, 60))).toEqual([60, 60, 62, 62, 64]);
+  });
+
+  it("snapperNote pose la gamme sur la tonique : en ré majeur, fa n'est pas une note de la gamme", () => {
+    // Le défaut relevé par le banc des gammes le 2026-11-21 : la classe absolue était comparée aux
+    // degrés comptés depuis la tonique, et ré majeur se jouait sur les notes de do.
+    const majeur = [0, 2, 4, 5, 7, 9, 11];
+    expect([62, 64, 65, 66, 69].map((m) => snapperNote(m, majeur, 62))).toEqual([62, 64, 64, 66, 69]);
+  });
+
+  it("snapperNote garde l'octave quand la saisie franchit la tonique", () => {
+    // Un si ramené au do montait au do du dessus ; il retombait au do de l'octave grave.
+    expect(snapperNote(71, [0, 2, 4, 7, 9], 60)).toBe(72);
   });
 });
 

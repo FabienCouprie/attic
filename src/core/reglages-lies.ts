@@ -42,11 +42,13 @@ export function reglagesApresChangement(
     const lie = p.defautSelon;
     if (!lie || lie.reglage !== nom) continue;
     // Une clé se lit sur l'objet déclaré lui-même : `constructor` ou `toString` ne sont pas des valeurs.
-    const naturelle = (v: unknown): number =>
-      (Object.hasOwn(lie.valeurs, String(v)) ? lie.valeurs[String(v)] : Number(p.defaut));
+    // Le défaut garde son type : un nombre pour un réglage chiffré, un texte pour une progression.
+    const defaut = typeof p.defaut === "string" ? p.defaut : Number(p.defaut);
+    const naturelle = (v: unknown): number | string =>
+      (Object.hasOwn(lie.valeurs, String(v)) ? lie.valeurs[String(v)] : defaut);
     const actuelle = parametres[p.nom];
     // Une valeur choisie n'est pas touchée : on ne remplace que le défaut naturel de l'ancienne valeur.
-    if (typeof actuelle === "number" && actuelle !== naturelle(parametres[nom])) continue;
+    if (actuelle !== undefined && actuelle !== naturelle(parametres[nom])) continue;
     suite[p.nom] = naturelle(valeur);
   }
   return suite;

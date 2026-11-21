@@ -7,6 +7,7 @@ import { comparerEvenementsMidi } from "./midi";
 import { writeMidi } from "midi-file";
 import { completer, degresDeGamme, degresSansPassage } from "./gammes";
 import { traduire } from "../i18n";
+import { quinteDuDegre, tierceDuDegre } from "./triades-gamme";
 
 /**
  * Le genre canonique d'une valeur enregistrée, ou `null` si elle ne nomme aucun genre connu.
@@ -88,51 +89,9 @@ export function degresDesAccords(id: string): number[] {
   return degresSansPassage(id, "majeur");
 }
 
-/**
- * Décalage en demi-tons (1-12, ascendant) depuis une fondamentale jusqu'à la
- * note de la gamme la plus proche d'un intervalle cible (4 = tierce majeure,
- * 7 = quinte juste). Généralise la construction d'accords tertiaires à des
- * gammes de longueur quelconque : sur une gamme heptatonique cela retombe
- * exactement sur le 3e/5e degré habituel ; sur une gamme pentatonique
- * (qui n'a pas de degré à exactement 2 crans d'écart) cela choisit la note
- * de la gamme la plus proche de la tierce/quinte visée.
- */
-export function degreAccordProche(degresGamme: number[], racinePc: number, cibleSemitons: number): number {
-  let meilleur = cibleSemitons;
-  let meilleurEcart = Infinity;
-  for (const pc of degresGamme) {
-    let dist = (((pc - racinePc) % 12) + 12) % 12;
-    if (dist === 0) dist = 12;
-    const ecart = Math.abs(dist - cibleSemitons);
-    if (ecart < meilleurEcart) {
-      meilleurEcart = ecart;
-      meilleur = dist;
-    }
-  }
-  return meilleur;
-}
-
-/**
- * Septième diatonique la plus proche (7e mineure = 10 demi-tons, 7e
- * majeure = 11 demi-tons). Contrairement à la tierce/quinte, une cible
- * unique ne suffit pas : à équidistance d'une cible à 10 demi-tons, une 6e
- * (9 demi-tons) et une 7e majeure (11 demi-tons) sont à égale distance, et
- * degreAccordProche choisirait arbitrairement la première trouvée dans le
- * tableau — donnant par exemple une 6te au lieu de la 7e majeure attendue
- * sur une gamme majeure. On cherche donc séparément la note la plus proche
- * de chaque qualité (mineure/majeure) et on retient celle dont l'écart
- * réel est le plus petit — ce qui retombe exactement sur la 7e diatonique
- * usuelle pour chacun des 7 modes heptatoniques (majeure sur Majeur/Lydien/
- * Mixolydien, mineure sur Mineur naturel/Dorien/Phrygien/Locrien).
- */
-export function degreSeptiemeProche(degresGamme: number[], racinePc: number): number {
-  const viaMineure = degreAccordProche(degresGamme, racinePc, 10);
-  const viaMajeure = degreAccordProche(degresGamme, racinePc, 11);
-  const ecartMineure = Math.abs(viaMineure - 10);
-  const ecartMajeure = Math.abs(viaMajeure - 11);
-  return ecartMajeure <= ecartMineure ? viaMajeure : viaMineure;
-}
-
+// LA TIERCE ET LA QUINTE D'UN ACCORD se bâtissent dans `triades-gamme.ts`, un degré sur deux dans la
+// gamme. `degreAccordProche`, qui cherchait la note la plus proche de quatre et de sept demi-tons, a
+// disparu avec ses sept appelants le 2026-11-21 : c'est elle qui rendait le v du mineur en sus4.
 
 export function traduireCle(nom: string): number {
   const clef: Record<string, number> = {
@@ -215,15 +174,15 @@ export async function genererDepuisScript(script: string): Promise<{ midiBytes: 
     // [0, 3, 7] — une triade mineure pour tous les degrés et dans les deux
     // modes : en do majeur, le IV sortait F–A♭–C et le V G–B♭–D, soit trois
     // hauteurs étrangères à la gamme (D♯, G♯, A♯) sur la piste d'accords, dans
-    // la configuration par défaut du nœud. Même mécanique que les autres
-    // générateurs d'accords du catalogue (tierce et quinte cherchées par
-    // proximité dans la gamme), pour que le mineur naturel donne bien un VI
-    // majeur et le majeur un V majeur.
+    // la configuration par défaut du nœud. Même règle que les autres générateurs
+    // d'accords du catalogue : un degré sur deux dans la gamme
+    // (`audio/triades-gamme.ts`), pour que le mineur naturel donne un VI majeur
+    // et un v mineur, et le majeur un V majeur.
     const racineRelative = gammeAccords[degre % gammeAccords.length];
     const tirades = [
       0,
-      degreAccordProche(gammeAccords, racineRelative, 4),
-      degreAccordProche(gammeAccords, racineRelative, 7),
+      tierceDuDegre(gammeAccords, racineRelative),
+      quinteDuDegre(gammeAccords, racineRelative),
     ];
     for (const itv of tirades) {
       pisteAccords.push({ deltaTime: td, type: "noteOn", channel: 0, noteNumber: fonda + itv, velocity: 70 });

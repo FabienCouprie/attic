@@ -10,10 +10,9 @@ import type { NoteMidi } from "./note";
 import {
   PROGRESSIONS_GENRE,
   degresDesAccords,
-  degreAccordProche,
-  degreSeptiemeProche,
   traduireCle,
 } from "./generation";
+import { quinteDuDegre, septiemeDuDegre, tierceDuDegre } from "./triades-gamme";
 import { PATRONS_RYTHME, type Patron } from "./generation-patrons";
 
 export interface ConfigGrooveBox {
@@ -79,11 +78,12 @@ function progressionDepuisConfig(config: ConfigGrooveBox): number[] {
   return progressions[0];
 }
 
-// Tierce et quinte trouvées par proximité (degreAccordProche) plutôt que par
-// décalage d'index fixe (+2/+4 degrés) : sur une gamme heptatonique cela
-// retombe sur le 3e/5e degré habituel, et cela reste correct sur une gamme
-// pentatonique (5 degrés) où +2/+4 degrés ne correspond plus à une tierce/
-// quinte réelle. Extension optionnelle (7e ou 6e) en 4e note.
+// Tierce et quinte bâties un degré sur deux dans la gamme (`triades-gamme.ts`),
+// la règle de Fabien du 2026-11-21. Elles se cherchaient comme la note la plus
+// proche de quatre et de sept demi-tons, ce qui rendait le v du mineur, du dorien
+// et du mixolydien en sus4. Sur une gamme pentatonique, un degré sur deux ne donne
+// plus une tierce et une quinte classiques, et c'est voulu : aucune note ne sort
+// de la gamme. Extension optionnelle (7e) en 4e note.
 /**
  * La couleur ajoutée à un accord, SELON LE GENRE ET LE DEGRÉ — ou rien.
  *
@@ -100,7 +100,7 @@ function progressionDepuisConfig(config: ConfigGrooveBox): number[] {
  *   les autres    septième sur la dominante seule, la seule que pop, rock, classique ou
  *                 reggae emploient couramment.
  *
- * La QUALITÉ de la note ajoutée n'est pas décidée ici : `degreSeptiemeProche` prend la
+ * La QUALITÉ de la note ajoutée n'est pas décidée ici : `septiemeDuDegre` prend la
  * septième diatonique, donc mineure sur la dominante — un vrai accord de septième de
  * dominante — et majeure sur la tonique en majeur.
  */
@@ -120,13 +120,13 @@ function notesAccord(
 ): number[] {
   const racinePc = degres[degre % degres.length];
   const root = 36 + decalage + racinePc + Math.floor(degre / degres.length) * 12;
-  const third = root + degreAccordProche(degres, racinePc, 4);
-  const fifth = root + degreAccordProche(degres, racinePc, 7);
+  const third = root + tierceDuDegre(degres, racinePc);
+  const fifth = root + quinteDuDegre(degres, racinePc);
   const notes = [root, third, fifth];
   // « septieme » et « sixte » viennent de projets enregistrés avant : ils demandaient la
   // couleur partout, on la place désormais là où elle se justifie.
   const couleur = extension === "aucune" ? undefined : extensionIdiomatique(genre, racinePc);
-  if (couleur === "septieme") notes.push(root + degreSeptiemeProche(degres, racinePc));
+  if (couleur === "septieme") notes.push(root + septiemeDuDegre(degres, racinePc));
   return notes;
 }
 

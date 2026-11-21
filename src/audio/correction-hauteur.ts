@@ -126,6 +126,23 @@ export function degresDe(idGamme: string, tonique: number): number[] {
 
 
 /**
+ * La moitié du plus grand intervalle entre deux degrés voisins d'une gamme, octave repliée : la
+ * distance qu'une note doit pouvoir franchir pour rejoindre le degré le plus proche.
+ *
+ * C'EST LE PLANCHER DE L'« ÉCART MAX », décision de Fabien du 2026-11-21. L'écart protège des erreurs
+ * d'octave du suiveur ; à un demi-ton, son défaut, une note entre deux degrés éloignés restait non
+ * corrigée sous les gammes à grands intervalles, trente cents trop haut à l'essai, sous dix gammes. Un
+ * plancher d'un ou deux demi-tons laisse une erreur d'octave, douze demi-tons, bien au-delà.
+ */
+export function demiPlusGrandIntervalle(degres: readonly number[]): number {
+  const s = [...new Set(degres.map((d) => ((d % 12) + 12) % 12))].sort((a, b) => a - b);
+  if (s.length < 2) return 6;
+  let max = 12 - s[s.length - 1] + s[0];
+  for (let i = 1; i < s.length; i++) max = Math.max(max, s[i] - s[i - 1]);
+  return max / 2;
+}
+
+/**
  * Le degré permis le plus proche d'une note MIDI, toutes octaves confondues.
  *
  * Rendu en note MIDI et non en classe : c'est l'écart qui nous intéresse, et il doit rester petit.

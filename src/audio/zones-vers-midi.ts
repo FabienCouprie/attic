@@ -107,7 +107,11 @@ export function notesDesZones(
     let note = borneNote(r.noteFixe);
     if (r.source === "courbe") {
       const v = hauteur ? hauteurDeZone(hauteur, z.debut, z.duree) : null;
-      if (v === null) sansHauteur++;
+      // LA NOTE DE REPLI D'UNE ZONE SANS HAUTEUR SE RAMÈNE SUR LA GAMME, décision de Fabien du
+      // 2026-11-21 : au milieu d'une mélodie tirée de la courbe, la « Note fixe » sortait telle quelle,
+      // un do 4 hors de la gamme sous 23 gammes en mi. En source « Note fixe », elle reste libre, elle
+      // peut y être une percussion du canal 9.
+      if (v === null) { sansHauteur++; note = borneNote(degrePlusProche(note, r.degres)); }
       else note = borneNote(degrePlusProche(borneNote(r.noteMin + v * (r.noteMax - r.noteMin)), r.degres));
     }
     const parLaSonie = r.velocite === "sonie" && typeof z.sonie === "number" && Number.isFinite(z.sonie);

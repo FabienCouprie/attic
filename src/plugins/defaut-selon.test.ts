@@ -23,11 +23,14 @@ describe("les réglages dont le défaut dépend d'un autre", () => {
       const ici = `${fiche.id} · « ${reglage.nom} »`;
       if (!voisin) return [`${ici} : le réglage « ${lie.reglage} » n'existe pas sur la fiche`];
       if (!voisin.optionIds?.length) return [`${ici} : « ${lie.reglage} » n'a pas d'optionIds`];
-      if (typeof reglage.defaut !== "number") return [`${ici} : son défaut n'est pas un nombre`];
+      // UN DÉFAUT EST UN NOMBRE OU UN TEXTE, et chaque valeur liée a son type : un texte depuis le
+      // 2026-11-21, la progression d'une grille d'accords qui suit sa gamme.
+      if (typeof reglage.defaut !== "number" && typeof reglage.defaut !== "string") return [`${ici} : son défaut n'est ni un nombre ni un texte`];
       const [bas, haut] = reglage.plage ?? [-Infinity, Infinity];
       return Object.entries(lie.valeurs).flatMap(([cle, v]) => [
         ...(voisin.optionIds!.includes(cle) ? [] : [`${ici} : « ${cle} » n'est pas un optionId de « ${lie.reglage} »`]),
-        ...(v >= bas && v <= haut ? [] : [`${ici} : ${v} pour « ${cle} » sort de la plage [${bas}, ${haut}]`]),
+        ...(typeof v === typeof reglage.defaut ? [] : [`${ici} : ${v} pour « ${cle} » n'est pas du type de son défaut`]),
+        ...(typeof v !== "number" || (v >= bas && v <= haut) ? [] : [`${ici} : ${v} pour « ${cle} » sort de la plage [${bas}, ${haut}]`]),
       ]);
     });
     expect(fautes, ["", "UNE LIAISON DE RÉGLAGES NOMME CE QUE SA FICHE NE PORTE PAS :", ...fautes, ""].join("\n")).toEqual([]);

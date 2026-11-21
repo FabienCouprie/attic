@@ -116,6 +116,8 @@ it.skipIf(ecrire)("AGENTS.md annonce le nombre réel de composants, et de gardes
     25: "vingt-cinq", 26: "vingt-six", 27: "vingt-sept", 28: "vingt-huit", 29: "vingt-neuf",
     30: "trente", 31: "trente et un", 32: "trente-deux", 33: "trente-trois", 34: "trente-quatre",
     35: "trente-cinq", 36: "trente-six", 37: "trente-sept", 38: "trente-huit", 39: "trente-neuf",
+    40: "quarante", 41: "quarante et un", 42: "quarante-deux", 43: "quarante-trois", 44: "quarante-quatre",
+    45: "quarante-cinq", 46: "quarante-six", 47: "quarante-sept", 48: "quarante-huit", 49: "quarante-neuf",
   };
   const attendu = EN_LETTRES[combien];
   expect(attendu, `le compte de ${combien} gardes n'a pas son écriture en lettres dans ce cas`).toBeDefined();

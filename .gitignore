@@ -272,6 +272,11 @@ EXECUTION/
 
 CROISEMENT/
 
+# Le releve de « npm run controle-gammes » : chaque noeud a gamme sous chaque gamme offerte, en mi
+# bemol et en mi, et ce qu'il rend hors de la gamme. Il se refait d'une commande.
+
+GAMMES/
+
 # Le catalogue sonore des 367 composants, rendu par « npm run catalogue » : plusieurs centaines de
 # megaoctets qui se refont d'une commande. Le son de reference, lui, EST versionne (tests-e2e), sans
 # quoi deux catalogues ne porteraient pas sur la meme matiere.

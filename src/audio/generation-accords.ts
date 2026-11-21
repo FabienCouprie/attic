@@ -6,7 +6,8 @@
 import { comparerEvenementsMidi } from "./midi";
 import { writeMidi } from "midi-file";
 import { traduire } from "../i18n";
-import { PROGRESSIONS_GENRE, degreAccordProche, degreSeptiemeProche, degresDesAccords, traduireCle } from "./generation";
+import { PROGRESSIONS_GENRE, degresDesAccords, traduireCle } from "./generation";
+import { quinteDuDegre, septiemeDuDegre, sixteDuDegre, tierceDuDegre } from "./triades-gamme";
 
 // ─── Générateur d'accords ───
 
@@ -29,7 +30,7 @@ export function genererAccords(
   libelles: { gamme: string; genre: string } = { gamme: gammeNom, genre: genreNom },
 ): { midiBytes: Uint8Array; description: string } {
   const gammeCourante = degresDesAccords(gammeNom);
-  const estMineur = degreAccordProche(gammeCourante, 0, 4) < 4; // tierce mineure depuis la tonique
+  const estMineur = tierceDuDegre(gammeCourante, 0) < 4; // tierce mineure sur la tonique
   const decalage = traduireCle(cleNom);
 
   let progression: number[];
@@ -59,15 +60,15 @@ export function genererAccords(
     const degre = progression[i % progression.length];
     const racinePc = gammeCourante[degre % gammeCourante.length];
     const fonda = 36 + decalage + racinePc + Math.floor(degre / gammeCourante.length) * 12;
-    const tierce = degreAccordProche(gammeCourante, racinePc, 4);
-    const quinte = degreAccordProche(gammeCourante, racinePc, 7);
+    const tierce = tierceDuDegre(gammeCourante, racinePc);
+    const quinte = quinteDuDegre(gammeCourante, racinePc);
     const td = secEnTicks(deb);
     const tf = secEnTicks(fin);
 
     // Voicing aéré sur 3 octaves — son plus riche et moins agressif. Tierce
-    // et quinte suivent la gamme choisie (degreAccordProche) au lieu d'un
-    // intervalle fixe, pour que les modes (dorien, locrien…) et les gammes
-    // pentatoniques sonnent avec leur couleur propre.
+    // et quinte suivent la gamme choisie, un degré sur deux (`triades-gamme.ts`),
+    // au lieu d'un intervalle fixe, pour que les modes (dorien, locrien…) et les
+    // gammes pentatoniques sonnent avec leur couleur propre.
     const voixAccord = [
       { note: fonda - 12, vel: 90 },        // basse octave -1
       { note: fonda + quinte, vel: 65 },     // quinte médium
@@ -78,9 +79,9 @@ export function genererAccords(
     // Extension optionnelle (7e ou 6e), diatonique à la gamme choisie —
     // ajoutée dans le même registre aigu que la tierce/quinte.
     if (extension === "septieme") {
-      voixAccord.push({ note: fonda + 12 + degreSeptiemeProche(gammeCourante, racinePc), vel: 50 });
+      voixAccord.push({ note: fonda + 12 + septiemeDuDegre(gammeCourante, racinePc), vel: 50 });
     } else if (extension === "sixte") {
-      voixAccord.push({ note: fonda + 12 + degreAccordProche(gammeCourante, racinePc, 9), vel: 50 });
+      voixAccord.push({ note: fonda + 12 + sixteDuDegre(gammeCourante, racinePc), vel: 50 });
     }
 
     for (let vi = 0; vi < voixAccord.length; vi++) {
@@ -91,11 +92,15 @@ export function genererAccords(
       pisteAccords.push({ deltaTime: Math.max(tArp + 1, tf), type: "noteOff", channel: 0, noteNumber: v.note, velocity: 0 });
     }
 
-    // Pad tenu — deux notes espacées
+    // Pad tenu — deux notes espacées : la fondamentale, et la quinte de la gamme sur ce degré, une
+    // octave plus haut. Elle était une quinte juste fixe, dix-neuf demi-tons, hors de la gamme partout
+    // où la quinte du degré ne l'est pas : le I du locrien, le vii° du majeur, sous 17 gammes au
+    // relevé du banc des gammes du 2026-11-21.
+    const quintePad = fonda + 12 + quinte;
     pistePad.push({ deltaTime: td, type: "noteOn", channel: 1, noteNumber: fonda, velocity: 40 });
     pistePad.push({ deltaTime: Math.max(td + 1, tf), type: "noteOff", channel: 1, noteNumber: fonda, velocity: 0 });
-    pistePad.push({ deltaTime: td, type: "noteOn", channel: 1, noteNumber: fonda + 19, velocity: 35 });
-    pistePad.push({ deltaTime: Math.max(td + 1, tf), type: "noteOff", channel: 1, noteNumber: fonda + 19, velocity: 0 });
+    pistePad.push({ deltaTime: td, type: "noteOn", channel: 1, noteNumber: quintePad, velocity: 35 });
+    pistePad.push({ deltaTime: Math.max(td + 1, tf), type: "noteOff", channel: 1, noteNumber: quintePad, velocity: 0 });
   }
 
   function trierPiste(events: any[]): any[] {

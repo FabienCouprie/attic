@@ -5,6 +5,7 @@ import { notesVersFichierMidi, appliquerInstrumentMidi } from "./midi-ecriture";
 import { rendreSequence } from "./midi-sequence";
 import { DEMI_TONS_CLE } from "./commun";
 import { degresGammeMelodie } from "./generation-melodie";
+import { noteDeLaGammeLaPlusProche } from "./gammes";
 import { caractereOuSinus } from "./timbres";
 import { intervallesDaccord } from "./qualites-accords";
 
@@ -50,19 +51,12 @@ export const PROFONDEUR_MAX = 5;
 // identifiants du dépôt, les quatre autres accords seraient devenus majeurs sans que rien ne le
 // dise. `intervallesDaccord` lit l'identifiant comme l'ancien nom français, qui en est l'alias.
 
-export function snapperNote(midi: number, degresGamme: number[]): number {
-  const pc = ((Math.round(midi) % 12) + 12) % 12;
-  let closest = degresGamme[0];
-  let minDist = Infinity;
-  for (const deg of degresGamme) {
-    const d = Math.min(Math.abs(deg - pc), 12 - Math.abs(deg - pc));
-    if (d < minDist) {
-      minDist = d;
-      closest = deg;
-    }
-  }
-  const octave = Math.floor((midi - closest) / 12);
-  return Math.max(0, Math.min(127, octave * 12 + closest));
+/**
+ * Une hauteur posée sur la gamme, la gamme posée sur `tonique` (`noteDeLaGammeLaPlusProche`), dans la
+ * plage MIDI.
+ */
+export function snapperNote(midi: number, degresGamme: number[], tonique: number): number {
+  return Math.max(0, Math.min(127, noteDeLaGammeLaPlusProche(midi, degresGamme, tonique)));
 }
 
 /**
@@ -133,12 +127,12 @@ export function genererNotesKoch(options: OptionsArpegeKoch) {
     if (direction === "intérieure") dir = -1;
     else if (direction === "alternée") dir = idx % 2 === 0 ? 1 : -1;
     const niveau = Math.max(0, profondeur - idx);
-    const motif = subdiviserKoch(start, end, niveau, dir, hauteur).map((h) => snapperNote(h, degresGamme));
+    const motif = subdiviserKoch(start, end, niveau, dir, hauteur).map((h) => snapperNote(h, degresGamme, fondamentale));
     const pas = cycle / motif.length;
     // Les hauteurs de la voix sur tous les cycles, puis la note d'arrivée qui clôt le dernier.
     const suite: number[] = [];
     for (let r = 0; r < repetitions; r++) suite.push(...motif);
-    suite.push(snapperNote(end, degresGamme));
+    suite.push(snapperNote(end, degresGamme, fondamentale));
     let k = 0;
     while (k < suite.length) {
       let n = 1;

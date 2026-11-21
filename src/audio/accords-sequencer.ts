@@ -7,7 +7,8 @@
 import type { NoteEvenement } from "./midi-sequence";
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence } from "./midi-sequence";
-import { degresDesAccords, degreAccordProche, degreSeptiemeProche, traduireCle } from "./generation";
+import { degresDesAccords, traduireCle } from "./generation";
+import { quinteDuDegre, septiemeDuDegre, sixteDuDegre, tierceDuDegre } from "./triades-gamme";
 import { frequenceDeTravail } from "./frequence-de-travail";
 
 export const NB_DEGRES_ACCORDS = 7;
@@ -43,24 +44,33 @@ export function nomNotePourPitchClass(pc: number): string {
   return NOTES[((pc % 12) + 12) % 12];
 }
 
+/**
+ * Le suffixe de l'accord bâti sur un degré, celui qu'on joue.
+ *
+ * LE NOM SUIT L'ACCORD JOUÉ, et c'est ce qui manquait. Avec la tierce cherchée au plus proche, le v
+ * du mineur se jouait sol, do, ré, et la grille affichait « G ». Bâti un degré sur deux, l'accord
+ * d'une gamme qui n'a pas sept degrés n'est plus forcément une triade classique : do, mi, la sur la
+ * pentatonique majeure, do, ré, mi sur la chromatique. Un tel accord porte alors ses intervalles entre
+ * parenthèses, « (4,9) », plutôt qu'un nom qu'il ne joue pas.
+ */
 export function qualiteTriade(degres: number[], degre: number): string {
   const racinePc = degres[degre % degres.length];
-  const tierce = degreAccordProche(degres, racinePc, 4);
-  const quinte = degreAccordProche(degres, racinePc, 7);
+  const tierce = tierceDuDegre(degres, racinePc);
+  const quinte = quinteDuDegre(degres, racinePc);
   if (tierce === 4 && quinte === 7) return "";
   if (tierce === 3 && quinte === 6) return "dim";
   if (tierce === 3 && quinte === 7) return "m";
   if (tierce === 4 && quinte === 8) return "aug";
-  if (tierce === 3) return "m";
-  if (tierce === 4) return "";
-  return "";
+  if (tierce === 2 && quinte === 7) return "sus2";
+  if (tierce === 5 && quinte === 7) return "sus4";
+  return `(${tierce},${quinte})`;
 }
 
 export function qualiteSeptieme(degres: number[], degre: number): string {
   const racinePc = degres[degre % degres.length];
-  const tierce = degreAccordProche(degres, racinePc, 4);
-  const quinte = degreAccordProche(degres, racinePc, 7);
-  const septieme = degreSeptiemeProche(degres, racinePc);
+  const tierce = tierceDuDegre(degres, racinePc);
+  const quinte = quinteDuDegre(degres, racinePc);
+  const septieme = septiemeDuDegre(degres, racinePc);
   if (tierce === 4 && quinte === 7 && septieme === 11) return "maj7";
   if (tierce === 4 && quinte === 7 && septieme === 10) return "7";
   if (tierce === 3 && quinte === 7 && septieme === 10) return "m7";
@@ -69,7 +79,7 @@ export function qualiteSeptieme(degres: number[], degre: number): string {
   if (tierce === 3 && quinte === 6 && septieme === 9) return "dim7";
   if (tierce === 4 && quinte === 8 && septieme === 10) return "aug7";
   if (tierce === 4 && quinte === 8 && septieme === 11) return "maj7#5";
-  return "7";
+  return `(${tierce},${quinte},${septieme})`;
 }
 
 export function qualiteSixte(degres: number[], degre: number): string {
@@ -115,11 +125,11 @@ function noteFondamentalePourDegre(degre: number, cle: string, gamme: string, oc
  * @param root fondamentale ABSOLUE, en note MIDI : elle place l'accord.
  * @param racineRelative même fondamentale mais RELATIVE À LA TONIQUE, en
  *        demi-tons — c'est-à-dire une valeur de `degresDesAccords`. C'est ce
- *        que `degreAccordProche` attend, puisqu'il mesure des distances *dans*
- *        ce tableau.
+ *        que `tierceDuDegre` et les siennes attendent, puisqu'elles comptent les
+ *        degrés *dans* ce tableau.
  *
  * Les deux étaient confondues : la fonction faisait `root % 12`, une classe de
- * hauteur absolue, et la passait à `degreAccordProche`. Les deux ne coïncident
+ * hauteur absolue, et la passait à la recherche de tierce. Les deux ne coïncident
  * qu'en do, la tonique valant alors 0 — d'où un défaut invisible dans la clé par
  * défaut et faux dans les onze autres. En la mineur, l'accord de tonique sortait
  * **A–C–D♯**, un accord diminué, et en mi mineur **E–G♯–C**, un augmenté, alors
@@ -135,8 +145,8 @@ function construireVoixAccord(
 ): { note: number; vel: number }[] {
   const degres = degresDesAccords(gamme);
   const racinePc = racineRelative;
-  const tierce = degreAccordProche(degres, racinePc, 4);
-  const quinte = degreAccordProche(degres, racinePc, 7);
+  const tierce = tierceDuDegre(degres, racinePc);
+  const quinte = quinteDuDegre(degres, racinePc);
   const voix: { note: number; vel: number }[] = [
     { note: root - 12, vel: 90 },        // basse
     { note: root + quinte, vel: 65 },    // quinte médium
@@ -145,9 +155,9 @@ function construireVoixAccord(
     { note: root + 24, vel: 50 },         // octave haute
   ];
   if (extension === "septieme") {
-    voix.push({ note: root + 12 + degreSeptiemeProche(degres, racinePc), vel: 50 });
+    voix.push({ note: root + 12 + septiemeDuDegre(degres, racinePc), vel: 50 });
   } else if (extension === "sixte") {
-    voix.push({ note: root + 12 + degreAccordProche(degres, racinePc, 9), vel: 50 });
+    voix.push({ note: root + 12 + sixteDuDegre(degres, racinePc), vel: 50 });
   }
   return voix;
 }

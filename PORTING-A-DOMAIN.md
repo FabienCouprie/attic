@@ -520,8 +520,10 @@ avec sa raison, et le garde la refuse tant qu'elle n'y est pas.
 **Un réglage dont le défaut dépend d'un autre** le déclare, `defautSelon` sur `ParametreDef` :
 le réglage nommé, et le défaut pour certaines de ses valeurs, par leurs `optionIds`. Quand ce
 réglage change, `core/reglages-lies.ts` pose le défaut de la nouvelle valeur sur un réglage resté
-au défaut de l'ancienne, et ne réécrit jamais une valeur choisie. La « Fréquence » de « Courbe »
-compte ainsi des pas pour une suite et des cycles pour un oscillateur.
+au défaut de l'ancienne, et ne réécrit jamais une valeur choisie. Le défaut est un nombre ou un
+texte, et chaque valeur liée est de son type. La « Fréquence » de « Courbe » compte ainsi des pas
+pour une suite et des cycles pour un oscillateur, et la « Progression » d'une grille d'accords a un
+défaut écrit pour le majeur et un autre pour le mineur.
 
 **Les dépliages du domaine** passent par une couture, `DepliageDuDomaine` dans
 `core/preparation-passe.ts` : une transformation du graphe que la préparation de chaque passe

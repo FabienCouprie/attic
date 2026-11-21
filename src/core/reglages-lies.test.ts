@@ -68,3 +68,26 @@ describe("la règle des réglages liés, lue sur la fiche", () => {
     expect(apres).not.toBe(avant);
   });
 });
+
+/** Une fiche d'essai à défaut texte : « Suite » vaut « I V » par défaut, et « i VI » quand « Mode » vaut `m`. */
+const TEXTE: FicheDeReglages = {
+  parametres: [
+    { nom: "Mode", defaut: "M" },
+    { nom: "Suite", defaut: "I V", defautSelon: { reglage: "Mode", valeurs: { m: "i VI" } } },
+  ],
+};
+
+describe("la règle des réglages liés, pour un défaut texte", () => {
+  it("UN TEXTE RESTÉ AU DÉFAUT prend celui de la nouvelle valeur, et y revient", () => {
+    expect(reglagesApresChangement(TEXTE, { Mode: "M", Suite: "I V" }, "Mode", "m").Suite).toBe("i VI");
+    expect(reglagesApresChangement(TEXTE, { Mode: "m", Suite: "i VI" }, "Mode", "M").Suite).toBe("I V");
+  });
+
+  it("UN TEXTE CHOISI N'EST JAMAIS RÉÉCRIT : la règle ne regardait que les nombres, et l'aurait remplacé", () => {
+    expect(reglagesApresChangement(TEXTE, { Mode: "M", Suite: "ii V I" }, "Mode", "m").Suite).toBe("ii V I");
+  });
+
+  it("UN TEXTE ABSENT prend le défaut de la nouvelle valeur", () => {
+    expect(reglagesApresChangement(TEXTE, { Mode: "M" }, "Mode", "m").Suite).toBe("i VI");
+  });
+});
