@@ -6,8 +6,13 @@
 // ±0,1. Résultat mesuré : 4 hauteurs en tout et 88 % de notes déjà répétées, si bien que
 // le paramètre « Répétition » paraissait sans effet. Rien ne le signalait.
 import { describe, expect, it } from "vitest";
+import { parseMidi } from "midi-file";
 import { creerReservoir, genererReservoirMusical, rayonSpectral, type ConfigReservoir } from "./reservoir";
 import { creerAleatoire } from "../core/hasard";
+import { lancerFiche } from "./lancer-fiche";
+import { degresDeGamme } from "./gammes";
+import { demiTonDeCle } from "./cles";
+import { fiches } from "../plugins/generateurs-reservoirs";
 
 const BASE: ConfigReservoir = {
   taille: 15, connectivite: 0.3, leaking: 0.3, gain: 1.5, spectre: 0.9,
@@ -100,5 +105,44 @@ describe("mélodie produite", () => {
     expect(r.graineUtilisee).toBeGreaterThan(0);
     expect(genererReservoirMusical({ ...BASE, graine: r.graineUtilisee }).notes.map((n) => n.note))
       .toEqual(r.notes.map((n) => n.note));
+  });
+});
+
+/** Les hauteurs d'un fichier MIDI de sortie, dans l'ordre du fichier. */
+async function hauteursJouees(f: unknown): Promise<number[]> {
+  if (!(f instanceof File)) return [];
+  const midi = parseMidi(new Uint8Array(await f.arrayBuffer()));
+  return midi.tracks.flat().flatMap((e) => (e.type === "noteOn" && e.velocity > 0 ? [e.noteNumber] : []));
+}
+
+/**
+ * LA GAMME SE TIENT PAR LE CHEMIN DU NŒUD, et non par le générateur seul.
+ *
+ * Relevé le 2026-11-21 : Fabien entendait des progressions semblables d'une gamme à l'autre, et aucun
+ * cas ne tenait la gamme, ceux d'au-dessus n'employant que le majeur. Elle agissait : à graine égale,
+ * elle reprojette la même suite de degrés, ce qui garde le rythme et le contour. Ce cas passe par
+ * `executer`, avec l'identifiant que l'inspecteur écrit, sous la clé de mi bémol, et lit la sortie
+ * MIDI. Vu rouge sur deux fautes plantées : la fiche qui lit mal le réglage, la gamme retombant au
+ * majeur, et le générateur qui rend le majeur pour le locrien.
+ *
+ * LA COUVERTURE NE TIENT PAS À LA CHANCE D'UNE GRAINE : sur ces trois graines, la classe la plus rare
+ * revient au moins six fois sous une gamme à sept degrés, quatre sous une gamme à huit, trois sous
+ * la chromatique.
+ */
+describe("la gamme, par le chemin du nœud", () => {
+  const fiche = fiches.find((f) => f.id === "reservoir-musical")!;
+  const gammes = fiche.parametres.find((p) => p.nom === "Gamme")!.optionIds!;
+  const tonique = demiTonDeCle("Eb")!;
+
+  it.each(gammes)("sous « %s », chaque note rendue est de la gamme, et chaque degré se fait entendre", async (gamme) => {
+    const rendues = new Set<number>();
+    for (const graine of [1, 42, 4242]) {
+      const r = await lancerFiche(fiche, { Gamme: gamme, Graine: graine, "Clé": "Eb" });
+      expect(r.levee).toBeNull();
+      for (const n of await hauteursJouees(r.valeurs[1])) rendues.add((((n - tonique) % 12) + 12) % 12);
+    }
+    const attendues = degresDeGamme(gamme);
+    expect([...rendues].filter((c) => !attendues.includes(c)), "hors de la gamme").toEqual([]);
+    expect([...rendues].sort((a, b) => a - b)).toEqual(attendues);
   });
 });
