@@ -129,7 +129,7 @@ it.skipIf(ecrire)("AGENTS.md annonce le nombre réel de composants, et de gardes
   for (const quoi of ["gardes", "contrats"]) {
     const trouves = [...texte.matchAll(new RegExp(`([\\wÀ-ÿ-]+) ${quoi} `, "g"))].map((m) => m[1]);
     expect(trouves.length, `AGENTS.md : aucun compte de ${quoi} trouvé`).toBeGreaterThan(0);
-    // Seuls les comptes écrits en lettres de nombre comptent : « quatre contrats » est un autre
+    // Seuls les comptes écrits en lettres de nombre comptent : « six contrats » est un autre
     // sujet, celui des scripts de contrat, et il a son propre compte.
     const comptes = [...texte.matchAll(new RegExp(`\\b(${ECRITURES.join("|")}) ${quoi} `, "g"))]
       .map((m) => m[1]);
