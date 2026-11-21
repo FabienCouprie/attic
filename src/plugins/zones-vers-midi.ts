@@ -38,8 +38,9 @@ export const fiches = ([
       + "aucune hauteur.\n\n"
       + "« Note min » et « Note max » disent ce que valent le zéro et le un de la courbe reçue. "
       + "L'échelle entre les deux est en demi-tons.\n\n"
-      + "« Clé » et « Gamme » donnent les degrés permis pour la hauteur lue sur la courbe. La note du "
-      + "réglage « Note fixe » n'y est pas soumise.\n\n"
+      + "« Clé » et « Gamme » donnent les degrés permis pour la hauteur lue sur la courbe, et pour la "
+      + "note d'une zone où la courbe ne donne aucune hauteur : celle du réglage « Note fixe », posée "
+      + "sur le degré le plus proche. En source « Note fixe », la note n'est pas soumise à la gamme.\n\n"
       + "« Vélocité » décide de la nuance. « Par le niveau » la prend sur le niveau que la zone porte, "
       + "de 1 à moins soixante décibels jusqu'à 127 à pleine échelle. « Fixe » pose partout la valeur "
       + "du réglage « Vélocité fixe », qui sert aussi aux zones sans niveau.\n\n"
@@ -57,8 +58,9 @@ export const fiches = ([
       + "pitch.\n\n"
       + "« Lowest note » and « Highest note » say what the curve's zero and one are worth. The scale "
       + "between the two is in semitones.\n\n"
-      + "« Key » and « Scale » give the allowed degrees for the pitch read on the curve. The note of the "
-      + "« Fixed note » setting is not subject to them.\n\n"
+      + "« Key » and « Scale » give the allowed degrees for the pitch read on the curve, and for the "
+      + "note of a zone where the curve gives no pitch: that of the « Fixed note » setting, put on the "
+      + "nearest degree. With the « Fixed note » source, the note is not subject to the scale.\n\n"
       + "« Velocity » decides the dynamic. « From level » takes it from the level the zone carries, from "
       + "1 at minus sixty decibels up to 127 at full scale. « Fixed » puts the value of the « Fixed "
       + "velocity » setting everywhere, which also serves the zones without a level.\n\n"
@@ -84,8 +86,8 @@ export const fiches = ([
         doc: "D'où vient la note de chaque zone. « Courbe de hauteur » la lit sur l'entrée « Hauteur », au long de la zone. « Note fixe » pose partout la même note.",
         docEn: "Where each zone's note comes from. « Pitch curve » reads it on the « Pitch » input, along the zone. « Fixed note » puts the same note everywhere." },
       { nom: "Note fixe", nomEn: "Fixed note", type: "nombre", plage: [0, 127], pas: 1, defaut: 60,
-        doc: "La note posée quand la source est « Note fixe ». Elle sert aussi aux zones où la courbe ne donne aucune hauteur. Do central à 60, et 38 est la caisse claire du canal 9.",
-        docEn: "The note put when the source is « Fixed note ». It also serves the zones where the curve gives no pitch. Middle C at 60, and 38 is the snare drum of channel 9." },
+        doc: "La note posée quand la source est « Note fixe », telle quelle. Elle sert aussi aux zones où la courbe ne donne aucune hauteur, posée alors sur le degré le plus proche de la gamme. Do central à 60, et 38 est la caisse claire du canal 9.",
+        docEn: "The note put when the source is « Fixed note », as it is. It also serves the zones where the curve gives no pitch, then put on the nearest degree of the scale. Middle C at 60, and 38 is the snare drum of channel 9." },
       { nom: "Note min", nomEn: "Lowest note", type: "nombre", plage: [0, 127], pas: 1, defaut: 33,
         doc: "La note que vaut le zéro de la courbe reçue. Sans effet quand la source est « Note fixe ». La source est celle du réglage « Source de hauteur ».",
         docEn: "The note the received curve's zero is worth. Without effect when the source is « Fixed note ». The source is that of the « Pitch source » setting." },

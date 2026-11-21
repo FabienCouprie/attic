@@ -155,6 +155,34 @@ describe("la clé et la gamme tenues par ce que le nœud rend", () => {
   }
 });
 
+/**
+ * LA GAMME TENUE PAR UN NŒUD QUI SUIT UNE ENTRÉE : la clé n'y transpose rien, puisque l'entrée ne bouge
+ * pas, et seule l'appartenance se juge.
+ *
+ * Zones vers MIDI, ses hauteurs prises d'une courbe, rendait la « Note fixe » d'une zone sans hauteur
+ * telle quelle, hors de la gamme : un do 4 sous 23 gammes en mi, au relevé du 2026-11-21. Sa notice
+ * l'écrivait ainsi, la note fixe pouvant être une percussion du canal 9 ; Fabien a décidé le même jour
+ * qu'en source « Courbe de hauteur » cette note de repli se ramène sur la gamme, la source « Note
+ * fixe » restant libre.
+ */
+const GAMME_TENUE_SUR_ENTREE = ["zones-vers-midi"];
+
+describe("la gamme tenue par un nœud qui suit une entrée", () => {
+  for (const id of GAMME_TENUE_SUR_ENTREE) {
+    const p = paires.find((x) => x.fiche === id)!;
+    const f = fiche(id)!;
+    it.each(p.ids)(`${id} sous « %s » : chaque note est de la gamme sur sa tonique`, async (gamme) => {
+      const r = await releverUneGamme(f, p, gamme, {
+        ports: f.sorties ?? [], graines: [1], degresDe, lireNotation,
+        sansTransposition: "le nœud suit une entrée qui ne bouge pas : sous une autre clé, il rend d'autres degrés",
+      });
+      expect(r.echecs).toEqual([]);
+      expect(r.sorties.reduce((a, s) => a + s.notes, 0), "le nœud a rendu des notes").toBeGreaterThan(0);
+      expect(r.sorties.flatMap((s) => s.exemplesHors)).toEqual([]);
+    });
+  }
+});
+
 const GRAINES = (process.env.GAMMES_GRAINES ?? "1,42,4242").split(",").map(Number);
 const BORNE = process.env.GAMMES_FICHES?.split(",").filter(Boolean);
 /** Des réglages posés en plus, en JSON : `{"Mode":"plaque"}` fait jouer le Color Looper en accords. */
