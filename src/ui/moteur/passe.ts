@@ -141,7 +141,8 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
         aretes: instantane.aretes as AreteG[],
         prioriteDemandee: noeudPrioritaireId ?? p.priorite(),
         versLAval: perimetre?.versLAval === true,
-        trouverMeta: metaDeLInstantane(instantane), trouverDef, fluxCompatibles: registreUI().fluxCompatibles, t,
+        trouverMeta: metaDeLInstantane(instantane), trouverDef, fluxCompatibles: registreUI().fluxCompatibles,
+        depliagesDuDomaine: servicesOrchestration().depliages(), t,
       });
       const {
         aretesReelles, plat, deplie, nds, aretesG, tousNoeudsG, boites,

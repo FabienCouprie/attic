@@ -1,4 +1,8 @@
-// core/instrument-graphe.test.ts — Un instrument déplié doit rejouer la MÊME recette à chaque note.
+// audio/instrument-depliage.test.ts — Un instrument déplié doit rejouer la MÊME recette à chaque note.
+//
+// Déplacé de `core/instrument-graphe.test.ts` avec son module le 2026-11-21, ses attendus intacts.
+// Le passage de ce dépliage par la préparation d'une passe est éprouvé dans
+// `plugins/instrument-depliage-passe.test.ts`.
 //
 // Deux promesses à tenir, et elles sont différentes de celles d'une boucle. La première : les copies
 // sont INDÉPENDANTES — un instrument ne chaîne pas ses notes, contrairement à une boucle où chaque
@@ -8,8 +12,8 @@ import { describe, expect, it } from "vitest";
 import {
   FICHE_FIN, FICHE_NOTE, NOTE_MAX, NOTE_MIN, ZONES_MAX,
   apparierRendus, deplierInstruments, racinesInstrument,
-} from "./instrument-graphe";
-import type { AreteG, NoeudG } from "./meta";
+} from "./instrument-depliage";
+import type { AreteG, NoeudG } from "../core/meta";
 
 const n = (id: string, ficheId: string, parametres: Record<string, unknown> = {}): NoeudG =>
   ({ id, position: { x: 0, y: 0 }, data: { ficheId, parametres } });

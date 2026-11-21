@@ -4,8 +4,13 @@
 // LE TÉMOIN EST L'ANCIEN BLOC, recopié tel quel depuis `useExecutionGraphe.ts`, ses effets de bord
 // captés dans des listes : `definirStatut` et `console.warn` y écrivaient, `console.log` y traçait
 // l'ordre. Trois graphes, ceux que la préparation sait déplier : une chaîne avec un décoratif, un
-// orphelin et un dernier ; une boucle de graphe à deux tours ; un instrument. Et trois demandes :
-// le run global, le run ciblé qui n'embrasse que l'amont, la relance qui embrasse l'aval.
+// orphelin et un dernier ; une boucle de graphe à deux tours ; un dépliage du domaine. Et trois
+// demandes : le run global, le run ciblé qui n'embrasse que l'amont, la relance qui embrasse l'aval.
+//
+// LE DÉPLIAGE DU DOMAINE EST UN DÉPLIAGE D'ESSAI depuis le 2026-11-21. C'était l'instrument, que le
+// cœur dépliait lui-même ; il est passé dans le domaine (`audio/instrument-depliage.ts`), et le cœur
+// n'en garde que la couture. Le témoin appelle le dépliage d'essai à l'endroit où il appelait
+// l'instrument.
 import { describe, expect, it } from "vitest";
 
 import { deplierBoucles } from "./boucle-graphe";
@@ -14,10 +19,40 @@ import { estBulle, estSubstitution } from "./bulles";
 import { conteneurs } from "./conteneurs";
 import { grapheSansConteneurs } from "./formes-graphe";
 import { noeudsEnCycle, ordreTopologique, perimetreCible, placerEnDernier } from "./graphe";
-import { deplierInstruments, FICHE_FIN as FICHE_INSTRUMENT_FIN, FICHE_NOTE } from "./instrument-graphe";
 import { aplatirGraphe, type AreteG, type NoeudG } from "./meta";
-import { preparerLaPasse, type EntreesDePreparation, type FicheDePreparation } from "./preparation-passe";
+import {
+  preparerLaPasse, type DepliageDuDomaine, type EntreesDePreparation, type FicheDePreparation,
+} from "./preparation-passe";
 import { validerGraphe } from "./validation";
+
+const FICHE_DOUBLE = "essai:double";
+const FICHE_REFUS = "essai:refus";
+
+/**
+ * Le dépliage d'essai : chaque nœud « double » est recopié deux fois, ses arêtes avec lui, et chaque
+ * nœud « refus » est signalé. Assez pour que des copies, leurs origines et un problème traversent la
+ * couture.
+ */
+const DOUBLER: DepliageDuDomaine = {
+  libelle: "Essai",
+  deplier: (noeuds, aretes) => {
+    const doubles = new Set(noeuds.filter((x) => x.data.ficheId === FICHE_DOUBLE).map((x) => x.id));
+    const problemes = noeuds.filter((x) => x.data.ficheId === FICHE_REFUS).map((x) => ({ noeudId: x.id, code: "refus" }));
+    const copie = (k: number, id: string) => (doubles.has(id) ? `${id}@${k}::${id}` : id);
+    const origines = new Map<string, string>();
+    const touche = (e: AreteG) => doubles.has(e.source) || doubles.has(e.target);
+    return {
+      noeuds: noeuds.flatMap((x) => (doubles.has(x.id)
+        ? [0, 1].map((k) => { origines.set(copie(k, x.id), x.id); return { ...x, id: copie(k, x.id) }; })
+        : [x])),
+      aretes: aretes.flatMap((e) => (touche(e)
+        ? [0, 1].map((k) => ({ ...e, id: `${e.id}@${k}`, source: copie(k, e.source), target: copie(k, e.target) }))
+        : [e])),
+      origines, problemes,
+    };
+  },
+};
+const depliagesDuDomaine = [DOUBLER];
 
 const audio = (nom: string) => ({ nom, type: "audio" });
 const FICHES: Record<string, FicheDePreparation> = {
@@ -27,8 +62,8 @@ const FICHES: Record<string, FicheDePreparation> = {
   comment: { entrees: [], sorties: [] },
   [FICHE_DEBUT]: { entrees: [audio("Audio")], sorties: [audio("Audio")], debutDeBoucle: "reboucle" },
   [FICHE_FIN]: { entrees: [audio("Audio")], sorties: [audio("Audio")], finDeBoucle: true },
-  [FICHE_NOTE]: { entrees: [], sorties: [audio("Audio")] },
-  [FICHE_INSTRUMENT_FIN]: { entrees: [audio("Audio")], sorties: [audio("Audio")] },
+  [FICHE_DOUBLE]: { entrees: [audio("Audio")], sorties: [audio("Audio")] },
+  [FICHE_REFUS]: { entrees: [], sorties: [] },
 } as Record<string, FicheDePreparation>;
 const trouverDef = (id: string) => FICHES[id];
 const trouverMeta = () => undefined;
@@ -48,9 +83,9 @@ const BOUCLE = {
   noeuds: [n("src", "src"), n("debut", FICHE_DEBUT, { Tours: 2 }), n("fx", "fx"), n("fin", FICHE_FIN), n("out", "out")],
   aretes: [a("src", "debut"), a("debut", "fx"), a("fx", "fin"), a("fin", "out")],
 };
-const INSTRUMENT = {
-  noeuds: [n("note", FICHE_NOTE), n("fx", "fx"), n("ifin", FICHE_INSTRUMENT_FIN), n("out", "out")],
-  aretes: [a("note", "fx"), a("fx", "ifin"), a("ifin", "out")],
+const DEPLIAGE = {
+  noeuds: [n("src", "src"), n("fx", FICHE_DOUBLE), n("out", "out"), n("refus", FICHE_REFUS)],
+  aretes: [a("src", "fx"), a("fx", "out")],
 };
 
 /** L'ancien bloc du moteur, à l'identique, ses effets de bord captés. */
@@ -62,9 +97,9 @@ function ancienPlan({ noeuds, aretes, prioriteDemandee, versLAval }: Pick<Entree
   const plat = aplatirGraphe(noeuds, aretesReelles, trouverMeta);
   const aDocumenter = grapheSansConteneurs(noeuds, aretesReelles, trouverMeta, estBulle);
   for (const id of aDocumenter.conteneursRetires) avertissements.push(`[attic] Documentation : conteneur non dépliable retiré (${id})`);
-  const instruments = deplierInstruments(plat.noeuds, plat.aretes);
+  const instruments = DOUBLER.deplier(plat.noeuds, plat.aretes);
   for (const [copie, origine] of instruments.origines) plat.expansions.set(copie, plat.expansions.get(origine) ?? origine);
-  for (const p of instruments.problemes) avertissements.push(`[attic] Instrument de graphe : ${p.code} sur ${p.noeudId}`);
+  for (const p of instruments.problemes) avertissements.push(`[attic] Essai : ${p.code} sur ${p.noeudId}`);
   plat.noeuds = instruments.noeuds;
   plat.aretes = instruments.aretes;
   const deplie = deplierBoucles(plat.noeuds, plat.aretes, rolesDEssai);
@@ -129,17 +164,17 @@ const comparable = (p: ReturnType<typeof preparerLaPasse>) => ({
 });
 
 describe("la préparation d'une passe, pure, contre l'ancien bloc du moteur", () => {
-  for (const [nom, graphe] of Object.entries({ CHAINE, BOUCLE, INSTRUMENT })) {
+  for (const [nom, graphe] of Object.entries({ CHAINE, BOUCLE, DEPLIAGE })) {
     for (const demande of DEMANDES) {
       it(`${nom.toLowerCase()} · priorité ${demande.prioriteDemandee ?? "aucune"}${demande.versLAval ? " vers l'aval" : ""}`, () => {
-        const entrees = { ...graphe, ...demande, trouverMeta, trouverDef, fluxCompatibles, t };
+        const entrees = { ...graphe, ...demande, trouverMeta, trouverDef, fluxCompatibles, depliagesDuDomaine, t };
         expect(comparable(preparerLaPasse(entrees))).toEqual(ancienPlan(entrees));
       });
     }
   }
 
   it("dit ce qu'elle décide : l'orphelin en erreur, le décoratif écarté, le dernier en dernier", () => {
-    const p = preparerLaPasse({ ...CHAINE, prioriteDemandee: null, versLAval: false, trouverMeta, trouverDef, fluxCompatibles, t });
+    const p = preparerLaPasse({ ...CHAINE, prioriteDemandee: null, versLAval: false, trouverMeta, trouverDef, fluxCompatibles, depliagesDuDomaine, t });
     expect(p.noeudsEnErreur.has("seul")).toBe(true);
     expect(p.idsDecoratifs.has("note")).toBe(true);
     expect(p.ordreFiltre.at(-1)).toBe("out");
@@ -148,16 +183,47 @@ describe("la préparation d'une passe, pure, contre l'ancien bloc du moteur", ()
   });
 
   it("un run ciblé sur le dernier devient un run global, et vers l'aval embrasse l'aval", () => {
-    const base = { ...CHAINE, trouverMeta, trouverDef, fluxCompatibles, t };
+    const base = { ...CHAINE, trouverMeta, trouverDef, fluxCompatibles, depliagesDuDomaine, t };
     expect(preparerLaPasse({ ...base, prioriteDemandee: "out", versLAval: false }).ancPriorite).toBeNull();
     expect([...preparerLaPasse({ ...base, prioriteDemandee: "fx", versLAval: false }).ancPriorite!]).toEqual(["fx", "src"]);
     expect([...preparerLaPasse({ ...base, prioriteDemandee: "fx", versLAval: true }).ancPriorite!].sort()).toEqual(["fx", "out", "src"]);
   });
 
   it("une boucle à deux tours est dépliée, et son début le dit", () => {
-    const p = preparerLaPasse({ ...BOUCLE, prioriteDemandee: null, versLAval: false, trouverMeta, trouverDef, fluxCompatibles, t });
+    const p = preparerLaPasse({ ...BOUCLE, prioriteDemandee: null, versLAval: false, trouverMeta, trouverDef, fluxCompatibles, depliagesDuDomaine, t });
     expect(p.deplie.depliees.map((d) => d.tours)).toEqual([2]);
     expect(p.statuts[0]).toEqual({ id: "debut", statut: "attente", progression: "<boucle.depliee>" });
     expect(p.nds.filter((x) => p.deplie.origines.get(x.id) === "fx")).toHaveLength(2);
+  });
+});
+
+describe("la couture des dépliages du domaine", () => {
+  const entrees = (graphe: typeof BOUCLE, depliages: readonly DepliageDuDomaine[]) => ({
+    ...graphe, prioriteDemandee: null, versLAval: false, trouverMeta, trouverDef, fluxCompatibles, depliagesDuDomaine: depliages, t,
+  });
+
+  it("CE QUE LE DÉPLIAGE RECOPIE REMONTE AU NŒUD VISIBLE, et ce qu'il refuse s'écrit sous son libellé", () => {
+    const p = preparerLaPasse(entrees(DEPLIAGE, [DOUBLER]));
+    expect(p.nds.map((x) => x.id).filter((id) => id.startsWith("fx@"))).toEqual(["fx@0::fx", "fx@1::fx"]);
+    expect(p.plat.expansions.get("fx@1::fx")).toBe("fx");
+    expect(p.avertissements).toContain("[attic] Essai : refus sur refus");
+  });
+
+  it("SANS DÉPLIAGE, LE GRAPHE PASSE TEL QUEL : un domaine qui n'en déclare aucun n'a rien à écrire", () => {
+    const p = preparerLaPasse(entrees(DEPLIAGE, []));
+    expect(p.nds.map((x) => x.id)).toEqual(["src", "fx", "out", "refus"]);
+    expect(p.avertissements).toEqual([]);
+  });
+
+  it("IL PASSE AVANT LES BOUCLES : une boucle qui contient un nœud recopié recopie ses deux copies à chaque tour", () => {
+    const graphe = {
+      noeuds: BOUCLE.noeuds.map((x) => (x.id === "fx" ? n("fx", FICHE_DOUBLE) : x)),
+      aretes: BOUCLE.aretes,
+    };
+    const p = preparerLaPasse(entrees(graphe, [DOUBLER]));
+    // Après les boucles, le dépliage aurait recopié les copies d'un tour : `debut#0::fx@0::debut#0::fx`.
+    expect(p.nds.map((x) => x.id).filter((id) => id.includes("fx")).sort())
+      .toEqual(["debut#0::fx@0::fx", "debut#0::fx@1::fx", "debut#1::fx@0::fx", "debut#1::fx@1::fx"]);
+    expect(p.plat.expansions.get("debut#1::fx@0::fx")).toBe("fx");
   });
 });

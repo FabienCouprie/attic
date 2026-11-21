@@ -440,7 +440,7 @@ défaut** et n'important rien du domaine :
 | `ui/favoris.ts` | les liens que la barre d'outils propose |
 | `ui/widgets-parametre.ts` | ses genres de paramètre, avec leur saisie |
 | `ui/services-apercu.ts` | ce qu'une valeur produite donne à voir et à entendre |
-| `ui/services-orchestration.ts` | ce que le moteur pose et demande autour d'un run |
+| `ui/services-orchestration.ts` | ce que le moteur pose et demande autour d'un run, et les dépliages du graphe qu'il applique avant les boucles |
 
 > **`FicheUI` est `Omit<PluginDef<unknown, unknown>, "executer">`, et le `Omit`
 > n'est pas cosmétique.** Le shell **lit** une fiche — son nom, ses ports, ses
@@ -510,13 +510,20 @@ ne pouvait la voir, une table de chaînes n'important rien et ne contenant aucun
 énumérés. Il lit les chaînes du code de `src/core/` par l'arbre syntaxique, et refuse
 celle qui vaut l'identifiant d'une fiche du catalogue ou un de ses anciens identifiants.
 Les fiches que le cœur déclare lui-même n'en sont pas, et un cas tient qu'elles ne portent
-que des types de flux du cœur. **Trois y restent, en deux fichiers, épinglées comme
-dettes** avec leur raison : l'instrument rejoué touche par touche
-(`core/instrument-graphe.ts`) et la liaison des réglages de « Courbe »
-(`core/reglages-lies.ts`). Les deux des nœuds-frontière et les onze des bouts des boucles
-en sont sorties le 2026-11-21 : les premiers par leurs fiches, que le cœur déclare, les
-seconds parce que le dépliage lit le rôle sur la fiche. La liste refuse de grandir, et une
-dette payée doit en sortir.
+que des types de flux du cœur. **Une y reste, épinglée comme dette** avec sa raison : la
+liaison des réglages de « Courbe » (`core/reglages-lies.ts`). Les deux des nœuds-frontière,
+les onze des bouts des boucles et les deux de l'instrument en sont sorties le 2026-11-21 :
+les premiers par leurs fiches, que le cœur déclare, les seconds parce que le dépliage lit le
+rôle sur la fiche, les derniers parce que l'instrument a quitté le cœur. La liste refuse de
+grandir, et une dette payée doit en sortir.
+
+**Les dépliages du domaine** passent par une couture, `DepliageDuDomaine` dans
+`core/preparation-passe.ts` : une transformation du graphe que la préparation de chaque passe
+applique après l'aplatissement des métas et avant les boucles, ses copies remontant au nœud
+visible par `origines`. L'audio y recopie la chaîne d'un instrument une fois par note du
+clavier (`audio/instrument-depliage.ts`). Votre domaine les déclare dans ses services
+d'orchestration, `depliages()` de `ui/services-orchestration.ts` ; sans déclaration, la liste
+est vide et le graphe passe tel quel.
 
 **Les nœuds-frontière des méta-composants sont fournis par le cœur** depuis le 2026-11-21 :
 `core/fiches-du-coeur.ts` déclare leurs deux fiches, `fichesDuCoeur()`, et le type de leur

@@ -1,4 +1,10 @@
-// core/instrument-graphe.ts — Faire d'un sous-graphe un instrument, rejoué touche par touche.
+// audio/instrument-depliage.ts — Faire d'un sous-graphe un instrument, rejoué touche par touche.
+//
+// DANS LE DOMAINE DEPUIS LE 2026-11-21, à l'identique : il vivait dans `core/instrument-graphe.ts`,
+// où le cœur nommait ses deux fiches. Un instrument de 88 touches, ses bornes MIDI et la note
+// injectée ne sont rien de générique. Le cœur offre la couture, `DepliageDuDomaine` dans
+// `core/preparation-passe.ts` ; `plugins/orchestration-domaine.ts` y passe ce dépliage, et le moteur
+// le remet à la préparation de chaque passe.
 //
 // L'AUTRE FAÇON D'ÉTALER UN SON SUR 88 TOUCHES. « Étaler sur le clavier » prend un son enregistré et
 // le TRANSPOSE vers chaque zone : c'est ce que font les échantillonneurs, et cela porte leurs
@@ -10,15 +16,15 @@
 // COMMENT. Le moteur d'Attic exécute un graphe acyclique, chaque nœud une fois. Pour rejouer une
 // chaîne à dix-huit hauteurs, on la RECOPIE dix-huit fois avant l'exécution, en injectant dans
 // chaque copie la note qu'elle doit rendre. C'est le même procédé que le dépliage des boucles
-// (`boucle-graphe.ts`) et que l'aplatissement des méta-composants : le graphe exécuté n'est pas
+// (`core/boucle-graphe.ts`) et que l'aplatissement des méta-composants : le graphe exécuté n'est pas
 // celui qu'on voit, et cela reste sans conséquence puisque les statuts remontent aux nœuds visibles.
 //
 // CE QUI DIFFÈRE D'UNE BOUCLE. Une boucle CHAÎNE ses copies — chaque tour part du résultat du
 // précédent. Un instrument ne chaîne rien : les copies sont indépendantes, et ce qui les distingue
 // est la note injectée dans leur nœud « Note ». Ce nœud est donc recopié lui aussi, ce que le début
 // de boucle n'était pas.
-import { ancetres, descendants } from "./graphe";
-import type { AreteG, NoeudG } from "./meta";
+import { ancetres, descendants } from "../core/graphe";
+import type { AreteG, NoeudG } from "../core/meta";
 
 export const FICHE_NOTE = "frontiere-note";
 export const FICHE_FIN = "instrument-fin";

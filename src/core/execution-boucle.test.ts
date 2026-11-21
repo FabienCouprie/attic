@@ -310,7 +310,7 @@ async function jouer(nom: string, boucle: typeof temoin, cache: Map<string, unkn
   const g = GRAPHES[nom];
   const plan = preparerLaPasse({
     noeuds: g.noeuds, aretes: g.aretes, prioriteDemandee: null, versLAval: false,
-    trouverMeta, trouverDef, fluxCompatibles: (s, c) => s === c, t,
+    trouverMeta, trouverDef, fluxCompatibles: (s, c) => s === c, depliagesDuDomaine: [], t,
   });
   const tables = creerTablesDePasse();
   const { deplie } = plan;

@@ -94,12 +94,12 @@ const IDENTIFIANTS = new Set<string>([
  * l'autre porte : les fiches-frontière sont entrées dans le cœur (`core/fiches-du-coeur.ts`). Les
  * onze de `core/boucle-graphe.ts` par la première : la fiche déclare `debutDeBoucle`, `finDeBoucle`
  * ou `boucleParPasses`, et le dépliage le lit par `trouverDef`.
+ *
+ * UNE CHAÎNE ET UN FICHIER DEPUIS LA PIÈCE P3, le même jour. Les deux de `core/instrument-graphe.ts`
+ * sont sorties par la troisième porte : la chose a quitté le cœur. Le dépliage de l'instrument vit
+ * dans `audio/instrument-depliage.ts`, et le cœur n'en garde que la couture, `DepliageDuDomaine`.
  */
 const DETTES: Readonly<Record<string, { chaines: readonly string[]; raison: string }>> = {
-  "core/instrument-graphe.ts": {
-    chaines: ["frontiere-note", "instrument-fin"],
-    raison: "un instrument rejoué touche par touche, de La0 à Do8, est une notion audio logée dans le cœur",
-  },
   "core/reglages-lies.ts": {
     chaines: ["generateur-courbe"],
     raison: "la liaison « Forme » → « Fréquence » est la règle d'un seul composant du domaine, « Courbe »",
