@@ -6,6 +6,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **MÉLODIE SUR ACCORDS POSE LA GAMME D'UN GROUPE SANS NOM SUR SA BASSE, MAJEURE OU MINEURE SELON SA TIERCE.** Décision de Fabien du 2026-11-21, défaut E du contrôle des gammes.
+  - **Ce qui se passait.** Un groupe de moins de trois hauteurs ne nomme aucun accord, et la place recevait alors la gamme majeure de do, quelle que soit la basse ; le commentaire du code promettait pourtant « la gamme majeure sur la basse entendue ». Mesuré par `executer`, sur la seule tierce mi–sol# : la ligne jouait fa, mi et do, contre le sol# entendu. Le rapport affichait « sans nom, majeur ».
+  - **Ce qui change** (`gammeDuGroupeSansNom`, `audio/melodie-sur-accords.ts`) : la gamme majeure posée sur la note la plus grave du groupe, ou la mineure si le groupe porte une tierce mineure au-dessus d'elle ; sans tierce, la majeure. Les sons du groupe s'y ajoutent, un triton ou une seconde mineure n'étant dans aucune des deux. Le rapport dit la gamme et sa note : « Majeur sur E3 », « Mineur naturel sur E3 ». La notice le dit, en français et en anglais ; `COMPONENTS.md` régénéré.
+  - **Mesuré après, par `executer`** : sur mi–sol#, ré#, fa# et sol#, en mi majeur ; sur mi–sol, fa#, mi et do, en mi mineur.
+  - **Le garde**, `audio/melodie-sur-accords.test.ts` : quatre groupes sans nom, la tierce majeure, la tierce mineure, la quinte seule et le triton, chacun avec ses classes attendues. **Vu rouge** sur le code d'avant, do majeur au lieu de mi majeur, vert après.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; le fichier du nœud, le style de la documentation, les caractères de contrôle et le compte des lignes, 49 cas.
+
 - **ZONES VERS MIDI ET LA PAROLE VERS MIDI CHERCHENT LE DEGRÉ SUR LA HAUTEUR EXACTE, PUIS L'ARRONDISSENT.** Décision de Fabien du 2026-11-21, défaut F du contrôle des gammes.
   - **Ce qui se passait.** Les deux nœuds arrondissaient la hauteur au demi-ton, puis cherchaient le degré le plus proche, qui à égale distance est celui du dessous. Mesuré par `notesDesZones`, en do majeur : 61,1, 61,3 et 61,45 donnaient do au lieu de ré, puis 63,3 ré au lieu de mi, 66,3 fa au lieu de sol, 68,3 sol au lieu de la, 70,3 la au lieu de si. Chaque ton entier de la gamme cédait le quart de sa place au degré le plus éloigné. Les deux notices promettaient déjà le degré le plus proche : elles ne changent pas.
   - **Ce qui change** : `degrePlusProche` reçoit la hauteur exacte, et l'arrondi vient après (`audio/zones-vers-midi.ts`, `plugins/parole-vers-sequence.ts`).
