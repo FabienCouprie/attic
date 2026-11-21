@@ -187,49 +187,93 @@ async function chargerSF2ParNom(nom: string): Promise<StructureSF2 | null> {
   return null;
 }
 
-async function chargerSF2Defaut(): Promise<StructureSF2 | null> {
-  for (const nom of NOMS_SF2_DEFAUT) {
-    const charge = await chargerSF2ParNom(nom);
-    if (charge) return charge;
+/** Le SoundFont retenu par son seul nom, cherché dans `public/sf2/` (dev) ou `resources/sf2/` (Electron). */
+async function chargerSF2ParNomRetenu(dernierNom: string): Promise<StructureSF2 | null> {
+  const api = (window as any).api;
+  if (api?.lireBinaire) {
+    try {
+      const res = await api.lireBinaire(`./sf2/${encodeURIComponent(dernierNom)}`);
+      if (res?.donnees) {
+        const donnees = res.donnees;
+        if (donnees.length >= 1024) {
+          const riff = String.fromCharCode(donnees[0], donnees[1], donnees[2], donnees[3]);
+          const sfbk = String.fromCharCode(donnees[8], donnees[9], donnees[10], donnees[11]);
+          if (riff === "RIFF" && sfbk === "sfbk") {
+            return await chargerSF2Globale(donnees, res.nom || dernierNom);
+          }
+        }
+      }
+    } catch {}
   }
+  try {
+    const charge = await chargerSF2DepuisUrl(`./sf2/${encodeURIComponent(dernierNom)}`);
+    if (charge) return charge;
+  } catch {}
   return null;
+}
+
+/** Les deux clés sous lesquelles le choix de l'utilisateur survit au redémarrage. */
+const CLE_NOM_CHOISI = "attic-sf2-nom";
+const CLE_CHEMIN_CHOISI = "attic-sf2-chemin";
+
+/**
+ * Retient le SoundFont que l'utilisateur vient de charger par la barre d'outils.
+ *
+ * Le chemin n'existe que sous Electron. SANS LUI, L'ANCIEN CHEMIN EST EFFACÉ : il passerait sinon
+ * devant le fichier qu'on vient de choisir, au démarrage suivant.
+ */
+export function retenirChoixSF2(nom: string, chemin: string): void {
+  localStorage.setItem(CLE_NOM_CHOISI, nom);
+  if (chemin) localStorage.setItem(CLE_CHEMIN_CHOISI, chemin);
+  else localStorage.removeItem(CLE_CHEMIN_CHOISI);
+}
+
+/** Un endroit où chercher un SoundFont au démarrage. */
+export type SourceSF2 =
+  | { genre: "chemin"; chemin: string }
+  | { genre: "nom"; nom: string }
+  | { genre: "livre"; nom: string };
+
+/**
+ * L'ordre du démarrage : le fichier choisi, par son chemin puis par son nom, et la banque livrée
+ * ensuite. Le répertoire de travail vient en dernier, à part, parce qu'il faut d'abord le lister.
+ *
+ * LE CHOIX DE L'UTILISATEUR PASSE AVANT LA BANQUE LIVRÉE depuis le 2026-11-19, à la demande de
+ * Fabien : « l'utilisateur doit pouvoir utiliser un autre soundfont s'il le souhaite ». Avant, FluidR3
+ * était cherché en premier, et l'installeur le porte toujours (`resources/sf2/`) : un utilisateur
+ * qui avait chargé un autre SoundFont retrouvait FluidR3 à chaque démarrage. Et seul le nom du
+ * fichier était retenu, si bien qu'un fichier pris hors du dossier `sf2/` n'était jamais retrouvé,
+ * même sans FluidR3.
+ */
+export function sourcesDuDemarrage(choix: { nom: string | null; chemin: string | null }): SourceSF2[] {
+  const sources: SourceSF2[] = [];
+  if (choix.chemin) sources.push({ genre: "chemin", chemin: choix.chemin });
+  if (choix.nom) sources.push({ genre: "nom", nom: choix.nom });
+  for (const nom of NOMS_SF2_DEFAUT) sources.push({ genre: "livre", nom });
+  return sources;
+}
+
+async function chargerSource(source: SourceSF2): Promise<StructureSF2 | null> {
+  if (source.genre === "livre") return chargerSF2ParNom(source.nom);
+  if (source.genre === "nom") return chargerSF2ParNomRetenu(source.nom);
+  // Un chemin absolu, que `fichier:lire-binaire` rend tel quel : le fichier là où l'utilisateur l'a pris.
+  const api = (window as any).api;
+  if (!api?.lireBinaire) return null;
+  return chargerSF2DepuisChemin(source.chemin, api.lireBinaire.bind(api));
 }
 
 export async function autoChargerSF2(repertoireTravail?: string): Promise<StructureSF2 | null> {
   const existant = sf2Chargee();
   if (existant) return existant;
 
-  // 1. SoundFont embarqué par défaut (FluidR3) — prioritaire.
-  const chargeDefaut = await chargerSF2Defaut();
-  if (chargeDefaut) return chargeDefaut;
-
-  const dernierNom = localStorage.getItem("attic-sf2-nom");
-
-  // 2. Dossier public/sf2/ (dev) ou resources/sf2/ (Electron) — autre fichier.
-  if (dernierNom) {
-    const api = (window as any).api;
-    if (api?.lireBinaire) {
-      try {
-        const res = await api.lireBinaire(`./sf2/${encodeURIComponent(dernierNom)}`);
-        if (res?.donnees) {
-          const donnees = res.donnees;
-          if (donnees.length >= 1024) {
-            const riff = String.fromCharCode(donnees[0], donnees[1], donnees[2], donnees[3]);
-            const sfbk = String.fromCharCode(donnees[8], donnees[9], donnees[10], donnees[11]);
-            if (riff === "RIFF" && sfbk === "sfbk") {
-              return await chargerSF2Globale(donnees, res.nom || dernierNom);
-            }
-          }
-        }
-      } catch {}
-    }
-    try {
-      const charge = await chargerSF2DepuisUrl(`./sf2/${encodeURIComponent(dernierNom)}`);
-      if (charge) return charge;
-    } catch {}
+  // 1. Le choix de l'utilisateur, puis la banque livrée (FluidR3).
+  const choix = { nom: localStorage.getItem(CLE_NOM_CHOISI), chemin: localStorage.getItem(CLE_CHEMIN_CHOISI) };
+  for (const source of sourcesDuDemarrage(choix)) {
+    const charge = await chargerSource(source);
+    if (charge) return charge;
   }
 
-  // 3. Scanner le répertoire de travail (Electron)
+  // 2. Scanner le répertoire de travail (Electron)
   if (repertoireTravail && (window as any).api) {
     try {
       const fichiers = await (window as any).api.lireDossier(repertoireTravail);

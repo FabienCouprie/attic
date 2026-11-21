@@ -29,7 +29,7 @@
 // donner des capacités à l'IPC. Ce lot ne le remplace pas ; il retire seulement l'exécution
 // automatique, qui n'avait demandé l'avis de personne.
 
-import type { Registre } from "./registre";
+import type { InscriptionInjectee, Registre } from "./registre";
 import { servicesDomaine } from "./services-domaine";
 import type { PluginDef, PortDef, ParametreDef } from "./types";
 
@@ -149,15 +149,42 @@ function nodesStockes(s: Storage): NodeInstalle[] {
   return tous;
 }
 
-// Charger depuis localStorage
+/**
+ * Les refus qu'aucune version future du nœud ne lèvera : ils tiennent à son identifiant, non à son code.
+ *
+ * Un natif figé ne se remplace jamais, et un alias ouvre toujours sa fiche d'arrivée. Un manifeste
+ * invalide peut redevenir valide, si le type de flux qui lui manque revient ou si une migration le
+ * répare ; et un registre absent ne dit rien du nœud.
+ */
+const refusPourToujours = (r: InstallationDuNode) => !r.inscrite && (r.raison === "natif" || r.raison === "alias");
+
+/**
+ * Charge depuis localStorage, et rend le nombre de nœuds que le registre a inscrits.
+ *
+ * UN NŒUD REFUSÉ POUR SON IDENTIFIANT EST RETIRÉ DU STOCKAGE. Il a pu être gardé avant que
+ * l'installation ne lise le refus, ou sous un identifiant devenu alias depuis, et il ne s'inscrira
+ * plus jamais : sa clé ne servait qu'à redire le même refus à chaque démarrage. L'interface n'offre
+ * aucun moyen de désinstaller un nœud (le pont porte `supprimerNode`, que rien n'appelle) : personne
+ * d'autre ne l'aurait retirée. CE QUI EST
+ * RETIRÉ EST LA COPIE DU STOCKAGE, ET ELLE SEULE : l'import l'avait dépliée dans `~/.attic/nodes/<id>/`
+ * avant de l'y écrire, et ces fichiers restent.
+ *
+ * UN NŒUD REFUSÉ POUR SON MANIFESTE, ou faute de registre, garde sa clé : il peut redevenir valide.
+ */
 export function chargerNodesInstalles(): number {
   try {
     migrerLaListe(localStorage);
     let n = 0;
     for (const node of nodesStockes(localStorage)) {
-      nodesInstalles.set(node.manifest.id, node);
-      enregistrerNodeDynamique(node);
-      n++;
+      const installation = enregistrerNodeDynamique(node);
+      if (installation.inscrite) {
+        nodesInstalles.set(node.manifest.id, node);
+        n++;
+      } else if (refusPourToujours(installation)) {
+        localStorage.removeItem(PREFIXE_NODE_INSTALLE + node.manifest.id);
+        console.warn(`[attic] Node « ${node.manifest.id} » retiré du stockage : son identifiant est refusé `
+          + `(${installation.raison}), et il ne s'inscrira jamais. Ses fichiers restent dans ~/.attic/nodes/.`);
+      }
     }
     return n;
   } catch { return 0; }
@@ -187,8 +214,9 @@ export function appliquerNodeInstalleDistant(cle: string | null, valeur: string 
   let node: unknown;
   try { node = JSON.parse(valeur); } catch { return false; }
   if (!estNodeInstalle(node) || node.manifest.id !== id) return false;
+  // REFUSÉ, LE CATALOGUE D'ICI N'A PAS CHANGÉ : la fiche d'avant, s'il y en avait une, est restée.
+  if (!enregistrerNodeDynamique(node).inscrite) return false;
   nodesInstalles.set(id, node);
-  enregistrerNodeDynamique(node);
   return true;
 }
 
@@ -273,11 +301,13 @@ function executeurParesseux(node: NodeInstalle): (ctx: unknown) => unknown {
   };
 }
 
-// Enregistrer un node installé comme plugin dynamique
-function enregistrerNodeDynamique(node: NodeInstalle): void {
+/** Ce que rend l'installation : ce que le registre a dit de la fiche, ou l'absence de registre. */
+export type InstallationDuNode = InscriptionInjectee;
+
+/** La fiche d'un node installé, telle que le registre l'examine et l'inscrit. */
+function ficheDuNode(node: NodeInstalle): PluginDef<unknown, unknown> {
   const m = node.manifest;
-  console.log(`[attic] Déclaration du node « ${m.id} »…`);
-  const def: PluginDef<unknown, unknown> = {
+  return {
     id: m.id,
     nom: m.nom,
     nomEn: m.nomEn,
@@ -293,14 +323,43 @@ function enregistrerNodeDynamique(node: NodeInstalle): void {
     // L'EXÉCUTEUR EST PARESSEUX : la fiche se déclare sans que le code soit lu.
     executer: executeurParesseux(node) as PluginDef<unknown, unknown>["executer"],
   };
-
-  if (!registre) { console.error("[attic] nodes-installes : registre non configuré"); return; }
-  registre.enregistrer(def);
-  console.log(`[attic] Node « ${m.id} » enregistré dans le registre ✓`);
 }
 
-// Installer un nouveau node
-export function installerNode(node: NodeInstalle): boolean {
+// Enregistrer un node installé comme plugin dynamique, et rendre ce que le registre en a dit.
+function enregistrerNodeDynamique(node: NodeInstalle): InstallationDuNode {
+  console.log(`[attic] Déclaration du node « ${node.manifest.id} »…`);
+  if (!registre) {
+    console.error("[attic] nodes-installes : registre non configuré");
+    return { inscrite: false, raison: "sans-registre" };
+  }
+  // LE « ✓ » NE S'ÉCRIT QUE SUR CE QUE LE REGISTRE A INSCRIT. Il s'écrivait après tout appel, et
+  // annonçait donc inscrit un nœud que la ligne d'avant, dans la console, disait refusé.
+  const inscription = registre.enregistrer(ficheDuNode(node));
+  if (inscription.inscrite) console.log(`[attic] Node « ${node.manifest.id} » enregistré dans le registre ✓`);
+  return inscription;
+}
+
+/**
+ * Ce que le registre ferait de ce node, sans rien inscrire ni rien garder.
+ *
+ * L'IMPORT D'UN `.zip` L'APPELLE AVANT DE DÉPLIER L'ARCHIVE : un nœud refusé ne doit rien laisser sur
+ * le disque, et un manifeste invalide ne doit pas écraser les fichiers du même nœud qui tourne.
+ */
+export function examinerNode(node: NodeInstalle): InstallationDuNode {
+  if (!registre) return { inscrite: false, raison: "sans-registre" };
+  return registre.examiner(ficheDuNode(node));
+}
+
+/**
+ * Installe un nouveau node, et rend ce que le registre en a dit.
+ *
+ * LE REGISTRE DÉCIDE D'ABORD, ET RIEN N'EST GARDÉ AVANT. Le nœud entrait dans la mémoire et dans le
+ * stockage quoi que le registre ait répondu : refusé sous un identifiant natif ou un alias, il était
+ * gardé sous sa clé, et le refus revenait à chaque démarrage. Refusé parce que son manifeste est
+ * invalide, il écrasait en stockage la version du même nœud qui tournait, le registre ayant gardé
+ * celle-ci. L'appelant lit le refus dans le rendu et le dit à la personne.
+ */
+export function installerNode(node: NodeInstalle): InstallationDuNode {
   // Vérifier les dépendances (informationnel — ne bloque pas)
   if (node.manifest.dependencies) {
     for (const dep of node.manifest.dependencies) {
@@ -310,8 +369,9 @@ export function installerNode(node: NodeInstalle): boolean {
       } catch { console.warn(`[attic] Node « ${node.manifest.id} » : dépendance manquante "${dep}" — le node peut ne pas fonctionner.`); }
     }
   }
+  const installation = enregistrerNodeDynamique(node);
+  if (!installation.inscrite) return installation;
   nodesInstalles.set(node.manifest.id, node);
-  enregistrerNodeDynamique(node);
   sauvegarder(node.manifest.id);
-  return true;
+  return installation;
 }

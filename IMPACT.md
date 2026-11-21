@@ -39,7 +39,7 @@ composants surveillés (`tests-e2e/empreintes.json`).
 
 - **Où** : chaque fiche de `src/plugins/`, ses ports, ses réglages et leurs valeurs de choix ; les
   migrations `nomsHerites`, `optionsHeritees` et `anciensReglages` sur la fiche, et `ALIAS` dans
-  `src/core/registre.ts`.
+  `src/audio/alias.ts`, que l'adaptateur remet au registre.
 - **Ce qu'une modification touche** : tout graphe déjà enregistré qui emploie le composant, ceux de
   la personne comme ceux de `exemples/` et les méta-composants. Une arête tient un port **par son
   rang**, une valeur de réglage tient **par le nom** du réglage : renommer, retirer ou déplacer l'un
@@ -134,18 +134,24 @@ composants surveillés (`tests-e2e/empreintes.json`).
 ## 5. Méta-composants, bulles et boucles
 
 - **Où** : `src/core/meta.ts` (construire un méta, aplatir le graphe avant exécution),
-  `src/core/metastore.ts`, `src/core/bulles.ts`, `src/core/conteneurs.ts` (ce qu'une bulle ou un
+  `src/core/fiches-du-coeur.ts` (les deux nœuds-frontière d'un méta et le type de leur port, que
+  tout domaine inclut), `src/core/metastore.ts`, `src/core/bulles.ts`, `src/core/conteneurs.ts` (ce qu'une bulle ou un
   méta contient et ce que son statut en dit), `src/core/boucle-graphe.ts` (une boucle de graphe
   dépliée en chaîne), et les pilotes des boucles par passes et du lot dans `src/ui/moteur/pilotes.ts`.
 - **Ce qu'une modification touche** : tout graphe qui emboîte ; un défaut n'y apparaît souvent qu'à
   la rencontre de deux conteneurs, jamais sur un composant seul.
-- **Ce qui le tient** : `src/core/meta.test.ts`, `src/core/bulles.test.ts`,
+- **Ce qui le tient** : `src/core/meta.test.ts`, `src/core/fiches-du-coeur.test.ts` (un domaine de
+  nombres édite un méta sans écrire de fiche-frontière), `src/core/bulles.test.ts`,
   `src/core/conteneurs.test.ts`, `src/core/boucle-graphe.test.ts`, `src/core/saut-de-boucle.test.ts`.
 - **À relancer** : `npm run test:graphe-complexite`, trois boucles emboîtées, une bulle dans une
   bulle et un méta, dont le son est comparé à un attendu calculé à la main ; et les specs
   `tests-e2e/conteneurs-dans-application.spec.ts`, `tests-e2e/boucle-dans-lot-dans-application.spec.ts`,
   `tests-e2e/boucle-reprise-dans-application.spec.ts`, `tests-e2e/boucle-collection.spec.ts`,
   `tests-e2e/lot-verif.spec.ts` et `tests-e2e/zones-dans-une-boucle-dans-application.spec.ts`.
+  Pour le dépliage d'une boucle de graphe et celui de l'instrument (`src/core/instrument-graphe.ts`),
+  `EXEMPLE=un-echo-en-boucle-et-un-instrument` sur `npm run test:empreintes-exemples` et sur
+  `npm run test:journal-de-passe` : c'est le seul exemple surveillé qui les porte, et les deux gardes
+  y ont vu rouge des tours qui ne se chaînent plus et une note qui n'est plus posée dans ses copies.
 
 ## 6. Les valeurs de choix et la langue
 
@@ -174,7 +180,8 @@ composants surveillés (`tests-e2e/empreintes.json`).
   et toute la suite tant qu'aucun garde ne le cherche.
 - **Ce qui le tient** : `src/docs/frontiere-domaine.test.ts` (le cœur n'importe ni ne nomme rien du
   domaine, tout ce qu'il importe se résout dans `src/core/`, les poteaux n'importent rien du domaine,
-  et aucun exécuteur neuf ne lit l'interface), `src/docs/composition.test.ts` (la racine de
+  et aucun exécuteur neuf ne lit l'interface), `src/docs/frontiere-identifiants.test.ts` (aucune
+  chaîne neuve du cœur ne vaut un identifiant de fiche, quatorze dettes épinglées), `src/docs/composition.test.ts` (la racine de
   composition est le premier import de `src/main.tsx`), `src/core/cloisonnement.test.ts` et
   `src/core/domaine-nombre.test.ts` (un second domaine, par le vrai moteur).
 

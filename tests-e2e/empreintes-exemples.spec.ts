@@ -43,7 +43,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 
-import { etatDesNoeuds, semerEtLancer } from "./pilote-graphe";
+import { debutsDeBoucle, etatDesNoeuds, semerEtLancer } from "./pilote-graphe";
 import { serveurDeVerification } from "./serveur-de-developpement";
 
 const devUrl = serveurDeVerification(5240);
@@ -233,7 +233,7 @@ function ecartsEntre(avant: Empreinte, apres: Empreinte, quoi: string, facteur =
  */
 async function jouer(page: import("@playwright/test").Page, fichier: string): Promise<Empreinte> {
   const graphe = readFileSync(join(RACINE, "exemples", fichier), "utf8");
-  await semerEtLancer(page, devUrl, graphe, { profondeurExport: 32 });
+  await semerEtLancer(page, devUrl, graphe, { profondeurExport: 32, attentesAdmises: debutsDeBoucle(graphe) });
 
   const lecteurs = await page.evaluate(async () => {
     const { blocsWav, lireWav, tamponDepuisWav } = await import("/src/audio/empreinte-wav.ts") as unknown as {

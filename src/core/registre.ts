@@ -1,17 +1,57 @@
 // core/registre.ts — Registre de plugins ET de types de flux, instancié et typé par domaine.
 //
-// `creerRegistre<TV, TR>()` retourne un registre cloisonné contenant :
+// `creerRegistre<TV, TR>({ alias })` retourne un registre cloisonné contenant :
 //  - les fiches de plugins (Map par id)
 //  - les types de flux (Map par id)
+//  - les anciens identifiants de fiche de son domaine, reçus à sa création
 //
 // Deux registres sont étanches : un type de flux "nombre" dans le domaine
-// nombre n'écrase pas un type "nombre" dans un autre domaine.
+// nombre n'écrase pas un type "nombre" dans un autre domaine, et un alias de
+// l'un ne détourne pas une fiche de l'autre.
 import type { PluginDef, FonctionPlugin } from "./types";
 import type { FormePort, TypeFlux } from "./typesFlux";
-import { valider } from "./validation";
+import { valider, type FauteDeFiche } from "./validation";
+
+/**
+ * Ce que `enregistrer` rend : la fiche est inscrite, ou la raison pour laquelle elle ne l'est pas.
+ *
+ * POURQUOI UN RÉSULTAT, ET NON PLUS `void`. Le refus n'était dit qu'à la console, que personne ne lit
+ * dans l'application construite, et l'appelant n'en savait rien : `installerNode` écrivait « ✓ »,
+ * gardait le nœud en stockage, et le Gestionnaire de nodes annonçait « installé » d'un nœud que le
+ * registre venait de refuser. Observé dans l'application le 2026-11-20 sous l'identifiant `filtre`.
+ *
+ * LA RAISON VOYAGE AVEC LE REFUS, ET NON UN BOOLÉEN. L'appelant doit pouvoir dire à la personne quoi
+ * changer, et seul le registre sait si l'identifiant est un natif figé ou un alias, la table des
+ * alias et l'ensemble des natifs lui étant propres. Relire `tousLesInscrits` après coup aurait dit
+ * qu'il y a eu refus, jamais pourquoi, et aurait tenu la règle en deux endroits qui peuvent diverger.
+ *
+ * UNE FICHE INVALIDE PORTE SES FAUTES PAR LEUR FORME, et non en phrases : la couche qui parle à la
+ * personne les compose dans sa langue. Voir `FauteDeFiche`.
+ */
+export type Inscription =
+  | { inscrite: true }
+  | { inscrite: false; raison: "invalide"; fautes: FauteDeFiche[] }
+  | { inscrite: false; raison: "alias"; cible: string }
+  | { inscrite: false; raison: "natif" };
+
+/**
+ * Ce que rend un module qui reçoit son registre par injection : l'inscription, ou l'absence de
+ * registre. `core/nodes-installes.ts` et `core/metastore.ts` le rendent tous deux.
+ */
+export type InscriptionInjectee = Inscription | { inscrite: false; raison: "sans-registre" };
 
 export interface Registre<TV, TR> {
-  enregistrer(def: PluginDef<TV, TR>): void;
+  /** Inscrit la fiche, ou la refuse et le dit à la console. Le refus se lit dans ce qui est rendu. */
+  enregistrer(def: PluginDef<TV, TR>): Inscription;
+  /**
+   * Ce qu'`enregistrer` ferait de la fiche, sans rien inscrire ni rien écrire à la console.
+   *
+   * POUR DÉCIDER AVANT D'AGIR AILLEURS. L'import d'un `.zip` dépliait l'archive sur le disque, puis
+   * apprenait du registre que le nœud était refusé : le dossier restait, et un manifeste invalide
+   * écrasait les fichiers de la version du même nœud qui tournait. Il examine désormais d'abord.
+   * La règle est la même fonction que celle d'`enregistrer` : les deux ne peuvent pas diverger.
+   */
+  examiner(def: PluginDef<TV, TR>): Inscription;
   /**
    * Fige ce qui est inscrit à cet instant : plus rien ne pourra en remplacer un identifiant.
    *
@@ -54,78 +94,99 @@ export interface Registre<TV, TR> {
   ): boolean;
 }
 
-/**
- * Les anciens identifiants de fiche, et celle que chacun ouvre.
- *
- * EXPORTÉE POUR ÊTRE ÉNUMÉRÉE, et par un seul lecteur : le manifeste de compatibilité
- * (`docs/compatibilite.ts`) dit pour chaque composant les identifiants qui l'ouvrent, et refuse
- * qu'un alias disparaisse sans être déclaré. `trouverDef` résout un alias, il ne sait pas les lister.
- */
-export const ALIAS: Readonly<Record<string, string>> = {
-  "placer-son-zones": "placer-sons-zones",
-  "dererverb": "dereverberation",
-  "reverbe-progressive": "reverb-progressive",
-  "melangeur-audio": "melangeur",
-  "boite-a-rythmes": "boite-rythmes",
-  "variateur-vitesse": "changement-tempo",
-  "filtre": "reponse-filtre",
-  "boucle": "simple-boucle",
-  "fusionneur": "melangeur",
-  "entree-micro": "enregistreur-audio",
-  "reservoir-midi": "reservoir-musical",
-  // « Fin de boucle » est devenue « Fin de boucle A » quand B et C sont arrivées. Son
-  // identifiant n'a pas bougé — les graphes enregistrés le portent —, mais qui écrit un
-  // graphe à la main attend le suffixe du nom.
-  "boucle-graphe-fin-a": "boucle-graphe-fin",
-  // « Séquenceur de batterie » était un sous-ensemble strict de « Séquenceur de batterie avancé » :
-  // mêmes cinq pistes, dans le même ordre, sans la vélocité ni les trois pistes supplémentaires. Il
-  // a été supprimé ; les graphes enregistrés qui le portent ouvrent donc le second, qui sait relire
-  // leurs motifs binaires (voir `audio/batterie.ts`, `estMotifBinaire`).
-  "sequenceur-batterie": "sequenceur-batterie-avance",
-  // « Transcripteur MIDI » faisait le travail de « Transcription MIDI », un son rendu en notes MIDI,
-  // et sa méthode polyphonique transcrivait mal, relevé par Fabien. Il a été supprimé le 2026-11-14 ;
-  // les graphes enregistrés qui le portent ouvrent donc le second. L'entrée audio et la sortie MIDI
-  // y sont au même rang, de sorte que les câbles tiennent. Ses réglages n'y ont pas d'équivalent et
-  // ne sont plus lus : le second prend les siens par défaut.
-  "transcripteur-midi": "transcription-midi",
-};
-
-function resoudre(id: string): string {
-  return ALIAS[id] ?? id;
+/** Ce qu'un domaine remet à son registre en le créant. */
+export interface OptionsDuRegistre {
+  /**
+   * Les anciens identifiants de fiche du domaine, et celle que chacun ouvre. Pour l'audio,
+   * `audio/alias.ts`.
+   *
+   * PROPRES AU REGISTRE, ET NON AU MODULE, et c'est le contrat de départ : le cœur ne nomme aucun
+   * composant d'un domaine. La table vivait ici, en constante du module, si bien que le cœur portait
+   * quatorze identifiants audio et que TOUT registre les résolvait : une fiche d'un autre domaine
+   * nommée `filtre` y était introuvable, `trouverDef` cherchant `reponse-filtre`. Relevé par la
+   * relecture de `PORTING-A-DOMAIN.md` (PR 403), passé au registre sur décision de Fabien le
+   * 2026-11-20.
+   */
+  alias?: Readonly<Record<string, string>>;
 }
 
-export function creerRegistre<TV, TR>(): Registre<TV, TR> {
+export function creerRegistre<TV, TR>(options: OptionsDuRegistre = {}): Registre<TV, TR> {
+  const alias = options.alias ?? {};
   const plugins: PluginDef<TV, TR>[] = [];
   const parId = new Map<string, PluginDef<TV, TR>>();
   /** Les identifiants du socle, figés une fois le domaine inscrit. Voir `figerLesNatifs`. */
   const natifs = new Set<string>();
   const typesFlux = new Map<string, TypeFlux>();
 
-  function enregistrer(def: PluginDef<TV, TR>): void {
-    const { erreurs, avertissements } = valider(def, { typeFlux: (id: string) => typesFlux.get(id), fluxCompatibles });
-    if (erreurs.length) {
-      console.error(`[attic] Plugin « ${def.id || "?"} » invalide : ${erreurs.join(" ; ")} — non enregistré.`);
-      return;
+  /**
+   * Ce que cet identifiant ouvre : la fiche que l'alias désigne, ou lui-même.
+   *
+   * UNE CLÉ PROPRE À LA TABLE, ET NON UNE CLÉ HÉRITÉE. `alias[id]` lu tel quel rendait, pour
+   * `constructor` ou `toString`, une fonction d'`Object.prototype` : la recherche manquait alors une
+   * fiche de ce nom, et le refus de `enregistrer` l'aurait refusée.
+   */
+  function aliasDe(id: string): string | undefined {
+    return Object.prototype.hasOwnProperty.call(alias, id) ? alias[id] : undefined;
+  }
+
+  function resoudre(id: string): string {
+    return aliasDe(id) ?? id;
+  }
+
+  /**
+   * Ce que le registre ferait de la fiche, et la phrase qui dit un refus. Lue par `enregistrer` et par
+   * `examiner`, et par eux seuls : la règle n'est écrite qu'ici.
+   */
+  function juger(def: PluginDef<TV, TR>): { verdict: Inscription; cri?: string; avertissements: string[] } {
+    const { erreurs, avertissements, fautes } = valider(def, { typeFlux: (id: string) => typesFlux.get(id), fluxCompatibles });
+    if (fautes.length) {
+      return { avertissements, verdict: { inscrite: false, raison: "invalide", fautes },
+        cri: `[attic] Plugin « ${def.id || "?"} » invalide : ${erreurs.join(" ; ")} — non enregistré.` };
+    }
+    // UN IDENTIFIANT QUI EST UN ALIAS NE S'INSCRIT PAS. `trouverDef` résout l'alias avant de chercher,
+    // si bien qu'une fiche de ce nom serait inscrite et jamais trouvée : un nœud installé nommé
+    // `filtre` paraissait dans la palette sous son nom, puis, posé, s'affichait et s'exécutait en
+    // « Réponse de filtre », sans que rien le dise. Le refus le dit, et nomme la fiche qui l'ouvre.
+    const cible = aliasDe(def.id);
+    if (cible !== undefined) {
+      return { avertissements, verdict: { inscrite: false, raison: "alias", cible },
+        cri: `[attic] Plugin « ${def.id} » : cet identifiant est un ancien identifiant de « ${cible} », `
+          + `et les graphes qui le portent ouvrent « ${cible} ». Une fiche de ce nom ne serait jamais trouvée : `
+          + "choisissez-en un autre — non enregistré." };
+    }
+    // UN IDENTIFIANT NATIF NE SE REMPLACE PAS. Sans ce refus, un nœud installé depuis un `.zip`
+    // partagé — ou un méta-composant porté par un projet reçu — prenait la place d'un composant
+    // du socle : son nom, son icône, sa place dans la palette, et un autre code derrière.
+    if (parId.has(def.id) && natifs.has(def.id)) {
+      return { avertissements, verdict: { inscrite: false, raison: "natif" },
+        cri: `[attic] Plugin « ${def.id} » : un composant natif ne se remplace pas — non enregistré.` };
+    }
+    return { avertissements, verdict: { inscrite: true } };
+  }
+
+  function examiner(def: PluginDef<TV, TR>): Inscription {
+    return juger(def).verdict;
+  }
+
+  function enregistrer(def: PluginDef<TV, TR>): Inscription {
+    const { verdict, cri, avertissements } = juger(def);
+    if (!verdict.inscrite) {
+      console.error(cri);
+      return verdict;
     }
     const existant = parId.get(def.id);
     if (existant) {
-      // UN IDENTIFIANT NATIF NE SE REMPLACE PAS. Sans ce refus, un nœud installé depuis un `.zip`
-      // partagé — ou un méta-composant porté par un projet reçu — prenait la place d'un composant
-      // du socle : son nom, son icône, sa place dans la palette, et un autre code derrière.
-      if (natifs.has(def.id)) {
-        console.error(`[attic] Plugin « ${def.id} » : un composant natif ne se remplace pas — non enregistré.`);
-        return;
-      }
       const idx = plugins.indexOf(existant);
       if (idx >= 0) plugins[idx] = def;
       parId.set(def.id, def);
-      return;
+      return { inscrite: true };
     }
     if ((import.meta as any).env?.DEV && avertissements.length) {
       console.warn(`[attic] Plugin « ${def.id} » — documentation incomplète : ${avertissements.join(" ; ")}`);
     }
     plugins.push(def);
     parId.set(def.id, def);
+    return { inscrite: true };
   }
 
   function trouverPlugin(id: string): FonctionPlugin<TV, TR> | undefined {
@@ -209,6 +270,6 @@ export function creerRegistre<TV, TR>(): Registre<TV, TR> {
     for (const id of parId.keys()) natifs.add(id);
   }
 
-  return { enregistrer, figerLesNatifs, trouverDef, trouverPlugin, tousLesPlugins, tousLesInscrits, desenregistrer,
+  return { enregistrer, examiner, figerLesNatifs, trouverDef, trouverPlugin, tousLesPlugins, tousLesInscrits, desenregistrer,
     enregistrerTypeFlux, typeFlux, tousTypesFlux, couleurFlux, formeFlux, fluxCompatibles };
 }

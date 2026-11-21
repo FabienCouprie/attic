@@ -22,7 +22,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 
 import { registre } from "../audio/adaptateur";
-import { ALIAS } from "../core/registre";
+import { ALIAS } from "../audio/alias";
 import {
   manifesteDuRegistre, manifesteEnTexte, relecteurDuRegistre,
   type ComposantManifeste, type FicheContrat, type Manifeste, type ReglageManifeste,

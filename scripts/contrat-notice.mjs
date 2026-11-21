@@ -86,7 +86,10 @@ function main() {
   try {
     // `stdio` écarte la sortie d'erreur de git : ses avertissements de fins de ligne se
     // mêleraient au contrat et le rendraient illisible.
-    diff = execFileSync("git", ["diff", "-U0", "--", "src/plugins", "src/docs"],
+    //
+    // `src/core` DEPUIS LE 2026-11-21 : les deux nœuds-frontière d'un méta y ont leurs fiches et leurs
+    // notices (`core/fiches-du-coeur.ts`), et une notice qu'on modifie là échappait au rappel.
+    diff = execFileSync("git", ["diff", "-U0", "--", "src/plugins", "src/docs", "src/core"],
       { cwd: racine, encoding: "utf8", maxBuffer: 64 * 1024 * 1024,
         stdio: ["ignore", "pipe", "ignore"] });
   } catch {

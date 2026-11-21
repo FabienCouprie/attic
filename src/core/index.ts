@@ -1,8 +1,11 @@
 export { creerRegistre } from "./registre";
-export type { Registre } from "./registre";
+export type { Inscription, InscriptionInjectee, Registre } from "./registre";
+export type { FauteDeFiche } from "./validation";
 export { aplatirGraphe, creerMeta, indexPort, metasEmployes, nettoyerNoeud,
   frontieresPourEdition, redériverMeta, estFrontiere, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE } from "./meta";
 export type { MetaComposant, NoeudG, AreteG, DefPorts, PortInterne } from "./meta";
+// CE QUE LE CŒUR FOURNIT À TOUT DOMAINE : les deux nœuds-frontière d'un méta et le type de leur port.
+export { fichesDuCoeur, typesFluxDuCoeur, TYPE_FRONTIERE } from "./fiches-du-coeur";
 export { grapheSansConteneurs } from "./formes-graphe";
 export {
   PREFIXE_FICHE_BULLE, PREFIXE_SUBSTITUTION, ancetresBulle, appliquerRepli, bulleCachante, bulleDe,
@@ -14,7 +17,8 @@ export type { GrapheVisible, GrapheSansConteneurs } from "./formes-graphe";
 export { trouverMeta, tousLesMetas, estMeta, decrireMeta, enregistrerMeta, supprimerMeta, renommerMeta, surChangementMetas, configurerRegistre as configurerRegistreMeta } from "./metastore";
 export { ordreDeLecture, ordreTopologique, placerEnDernier, ancetres, descendants, perimetreCible, empreinteEntrees, empreinteParametres, empreinteSorties, empreinteValeur, empreinteValeursEntrantes, fermeraitUnCycle, noeudsEnCycle, resoudreEntree, valeursEntrantes } from "./graphe";
 export type { TypeFlux } from "./typesFlux";
-export { chargerNodesInstalles, installerNode, configurerRegistreNodes, appliquerNodeInstalleDistant, listeDesNodesInstallesStockes } from "./nodes-installes";
+export { chargerNodesInstalles, examinerNode, installerNode, configurerRegistreNodes, appliquerNodeInstalleDistant, listeDesNodesInstallesStockes } from "./nodes-installes";
+export type { InstallationDuNode } from "./nodes-installes";
 // CE QUE LE CŒUR DEMANDE AU DOMAINE sur ses propres valeurs : empreinte, nom de type, types non
 // sérialisables, globales prêtées aux nodes installés. Neutre tant qu'aucun adaptateur n'a répondu.
 export { configurerServicesDomaine, oublierServicesDomaine, servicesDomaine } from "./services-domaine";

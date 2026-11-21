@@ -13,7 +13,10 @@ const fake = (id: string, over: Partial<PluginDef<any, any>> = {}): PluginDef<an
 
 describe("registre", () => {
   it("résout un ancien id via l'alias vers le plugin actuel", () => {
-    const r = creerRegistre<any, any>();
+    // LA TABLE EST REMISE AU REGISTRE : le cœur n'en porte plus. Voir `core/registre-alias.test.ts`.
+    const r = creerRegistre<any, any>({
+      alias: { "dererverb": "dereverberation", "placer-son-zones": "placer-sons-zones" },
+    });
     r.enregistrer(fake("dereverberation"));
     expect(r.trouverDef("dereverberation")?.id).toBe("dereverberation");
     expect(r.trouverDef("dererverb")?.id).toBe("dereverberation"); // alias

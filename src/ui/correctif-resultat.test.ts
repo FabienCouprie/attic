@@ -302,7 +302,7 @@ describe("une bulle, et ses membres", () => {
 
 describe("un méta, d'après ce que ses internes ont rendu", () => {
   beforeEach(() => {
-    configurerRegistreMeta({ enregistrer: () => {}, desenregistrer: () => {} } as never);
+    configurerRegistreMeta({ enregistrer: () => ({ inscrite: true }), desenregistrer: () => {} } as never);
     enregistrerMeta({
       id: "meta-essai", nom: "Essai", entrees: [], sorties: [{ nom: "Audio", type: "audio" }],
       mapEntrees: [], mapSorties: [{ noeudInterne: "cd", portIndex: 0 }], sousNoeuds: [], sousAretes: [],

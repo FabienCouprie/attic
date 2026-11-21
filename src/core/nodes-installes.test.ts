@@ -39,11 +39,14 @@ const noeud = (id: string, consenti?: string) => ({
   consenti,
 });
 
-/** Un registre d'essai, reduit a ce que ce module lui demande. */
+/**
+ * Un registre d'essai, reduit a ce que ce module lui demande. Il accepte tout : ce qu'un refus
+ * change a l'installation se mesure sur le vrai registre, dans `nodes-installes-refus.test.ts`.
+ */
 function registreDEssai() {
   const defs = new Map<string, PluginDef<unknown, unknown>>();
   configurerRegistreNodes({
-    enregistrer: (d: PluginDef<unknown, unknown>) => { defs.set(d.id, d); },
+    enregistrer: (d: PluginDef<unknown, unknown>) => { defs.set(d.id, d); return { inscrite: true }; },
     tousLesPlugins: () => [...defs.values()],
     desenregistrer: (id: string) => { defs.delete(id); },
     enregistrerTypeFlux: () => {},

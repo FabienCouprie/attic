@@ -730,6 +730,65 @@
         "stretch : Entrée en erreur : cri"
       ]
     },
+    "un-echo-en-boucle-et-un-instrument.json": {
+      "lecteurs": {
+        "source": {
+          "rms": 0.10391802370864914,
+          "crete": 0.2123924195766449,
+          "trames": 22050,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 4232.409278039098,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "fin": {
+          "rms": 0.034552556272776924,
+          "crete": 0.10644835978746414,
+          "trames": 65268,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 4231.273113835342,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "ecoute": {
+          "rms": 0.034552556272776924,
+          "crete": 0.10644835978746414,
+          "trames": 65268,
+          "canaux": 1,
+          "taux": 44100,
+          "centroide": 4231.273113835342,
+          "blocs": [
+            "fmt",
+            "bext",
+            "fact",
+            "data",
+            "iXML"
+          ]
+        },
+        "banque": {
+          "rms": 0.132902423890178,
+          "crete": 0.30468323826789856,
+          "trames": 50716,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 847.0961873031964,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        }
+      },
+      "erreurs": []
+    },
     "un-son-projete-en-microtonal.json": {
       "lecteurs": {
         "cloche": {

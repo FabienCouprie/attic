@@ -4,7 +4,7 @@
 // aplati (cf. core/meta.ts), donc son `executer` n'est jamais réellement appelé.
 import type { MetaComposant } from "./meta";
 import type { PluginDef } from "./types";
-import type { Registre } from "./registre";
+import type { InscriptionInjectee, Registre } from "./registre";
 
 // DI : l'adaptateur de domaine configure le registre au démarrage.
 let registre: Registre<unknown, unknown> | null = null;
@@ -70,8 +70,22 @@ export function decrireMeta(id: string, description: string): void {
   enregistrerMeta(meta);
 }
 
-export function enregistrerMeta(meta: MetaComposant): void {
-  metas.set(meta.id, meta);
+/**
+ * Inscrit un méta-composant au catalogue, et rend ce que le registre en a dit.
+ *
+ * ═══ LE REGISTRE DÉCIDE D'ABORD, ET C'ÉTAIT UN DÉTOURNEMENT DU SOCLE ═══
+ *
+ * Le méta entrait dans cette table AVANT que le registre ne réponde, et l'écouteur le persistait
+ * quoi qu'il ait répondu. Or c'est cette table, et non le registre, que lit l'aplatissement :
+ * `aplatirGraphe` déplie tout nœud dont `trouverMeta` connaît la fiche. Un projet reçu portant un
+ * méta sous l'identifiant d'un natif figé faisait donc refuser la fiche par le registre, puis
+ * déplier ce méta à la place du natif, dans chaque graphe et à chaque démarrage : le gel des natifs
+ * ne protégeait que la palette. Refusé, le méta n'entre plus dans la table et n'est plus notifié.
+ *
+ * UN MÉTA DÉJÀ INSCRIT DONT LA NOUVELLE VERSION EST REFUSÉE reste celui que la table tient, et le
+ * stockage garde l'ancienne version : un renommage en nom vide, refusé, ne s'écrit plus.
+ */
+export function enregistrerMeta(meta: MetaComposant): InscriptionInjectee {
   const def: PluginDef<unknown, unknown> = {
     id: meta.id,
     nom: meta.nom,
@@ -95,9 +109,15 @@ export function enregistrerMeta(meta: MetaComposant): void {
     // Jamais appelé (le méta est aplati avant exécution) ; renvoie des sorties nulles par sûreté.
     executer: async () => ({ valeurs: meta.sorties.map(() => null), message: "Méta-composant (aplati à l'exécution)." }),
   };
-  if (!registre) { console.error("[attic] metastore : registre non configuré"); return; }
-  registre.enregistrer(def); // remplacement en place si le méta est mis à jour
+  if (!registre) {
+    console.error("[attic] metastore : registre non configuré");
+    return { inscrite: false, raison: "sans-registre" };
+  }
+  const inscription = registre.enregistrer(def); // remplacement en place si le méta est mis à jour
+  if (!inscription.inscrite) return inscription;
+  metas.set(meta.id, meta);
   notifier(meta.id);
+  return inscription;
 }
 
 // Retire un méta du registre (catalogue) et notifie (→ persistance mise à jour).
