@@ -234,7 +234,9 @@ DEV_URL=http://localhost:5175 ECRIRE_EMPREINTES=1 npx playwright test tests-e2e/
   précédente surveille des composants **isolés** nourris d'un son d'essai, celle-ci surveille ce
   qu'on **entend** en ouvrant un exemple et en pressant Lancer : un défaut né de la rencontre de
   deux composants n'est visible que d'ici. C'est ce qui manquait le jour où « Étaler sur le
-  clavier » a rendu cent trente cents de faux avec tous les nœuds au vert.
+  clavier » a rendu cent trente cents de faux avec tous les nœuds au vert. Chaque relevé porte aussi
+  les morceaux du WAV, comparés à l'identique : c'est par eux que se voient les métadonnées d'un
+  fichier livré, que le son ne dit pas.
 
 ```bash
 npm run test:empreintes-exemples
