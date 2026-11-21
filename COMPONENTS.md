@@ -5810,7 +5810,7 @@ Generates a full accompaniment in text-to-MIDI format. Connect its « Notation �
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the grid. The mode is set in « Scale »; the Progression input wins over the setting when it names a key. |
 | Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. |
-| Progression | text | `I V vi IV` |  | Roman numeral progression (uppercase = major chord, lowercase = minor chord). Also accepts a space-separated list of chord symbols (e.g. C Am F G). |
+| Progression | text | `I V vi IV` |  | Roman numeral progression (uppercase = major chord, lowercase = minor chord). Also accepts a space-separated list of chord symbols (e.g. C Am F G). When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Accompaniment tempo. |
 | Duration | number | 1 beats | 0.25 – 4 beats, step 0.25 | Duration of each chord in beats. Has no effect when « Mode » is « Arpeggiated », each note lasting an eighth there. |
 | Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
@@ -12228,7 +12228,7 @@ Generates a chord progression from a key and roman numerals. Example: C + I V vi
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the progression. The mode is set in « Scale »; the Key input wins over the setting when it names one (« A minor »). |
 | Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. Case only decides the chord quality. |
-| Progression | text | `I V vi IV` |  | Roman numeral progression (e.g. I V vi IV, ii V I). Uppercase = major, lowercase = minor; an explicit accidental (bIII, #IV) is kept as written. |
+| Progression | text | `I V vi IV` |  | Roman numeral progression (e.g. I V vi IV, ii V I). Uppercase = major, lowercase = minor; an explicit accidental (bIII, #IV) is kept as written. When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten. |
 
 #### Rhythm Analysis
 

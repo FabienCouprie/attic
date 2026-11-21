@@ -74,7 +74,9 @@ describe("l'autocontrôle des instruments du son", () => {
 describe("les accords du Générateur d'accords, captés avant sa synthèse", () => {
   const paire = paires.find((p) => p.fiche === "generateur-accords")!;
   const f = registre.trouverDef("generateur-accords") as unknown as FicheLancable;
-  it.each(paire.ids)("sous « %s », chaque accord est la triade de la gamme", async (g) => {
+  // LA NAPPE AUSSI : elle posait une quinte juste fixe au-dessus de chaque fondamentale, hors de la
+  // gamme partout où la quinte du degré ne l'est pas, sous 17 gammes au relevé du 2026-11-21.
+  it.each(paire.ids)("sous « %s », chaque accord est la triade de la gamme, et la nappe n'en sort pas", async (g) => {
     const r = await releverUneGamme(f, paire, g, {
       ports: [{ nom: "MIDI capté avant le rendu", type: "midi" }], graines: [1], toniques: [3], degresDe, degresDesAccords,
       capture: () => { const m: Uint8Array<ArrayBuffer> | null = capte.midi; capte.midi = null; return [m ? new File([m], "accords.mid") : null]; },
@@ -82,6 +84,7 @@ describe("les accords du Générateur d'accords, captés avant sa synthèse", ()
     expect(r.echecs).toEqual([]);
     expect(r.sorties.some((s) => s.accords > 0), "le nœud a rendu des accords").toBe(true);
     expect(r.sorties.flatMap((s) => s.accordsFautifs)).toEqual([]);
+    expect(r.sorties.flatMap((s) => s.exemplesHors)).toEqual([]);
   });
 });
 

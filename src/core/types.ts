@@ -306,9 +306,13 @@ export interface ParametreDef {
    * LA RÈGLE : quand `reglage` change, une valeur restée au défaut naturel de l'ancienne valeur prend
    * celui de la nouvelle, et une valeur choisie n'est jamais réécrite. `valeurs` donne ce défaut pour
    * certaines valeurs du réglage nommé, ses `optionIds` ; toute autre valeur garde `defaut`.
-   * `plugins/defaut-selon.test.ts` tient que chaque clé est un `optionId` de ce réglage.
+   * `plugins/defaut-selon.test.ts` tient que chaque clé est un `optionId` de ce réglage, et que chaque
+   * valeur est du type du défaut.
+   *
+   * UN TEXTE AUSSI, depuis le 2026-11-21 : la progression en chiffres romains d'une grille d'accords a
+   * un défaut écrit pour le majeur, « I V vi IV », et un autre pour le mineur, décision de Fabien.
    */
-  defautSelon?: { reglage: string; valeurs: Readonly<Record<string, number>> };
+  defautSelon?: { reglage: string; valeurs: Readonly<Record<string, number | string>> };
   /**
    * Le rang de l'entrée à laquelle ce réglage appartient. Il n'est affiché que si elle est branchée :
    * un nœud à huit pistes porte trente-deux réglages, dont ceux des pistes vides ne servent à rien.

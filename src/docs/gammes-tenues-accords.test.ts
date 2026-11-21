@@ -24,6 +24,7 @@ import {
 } from "../audio/gamme-banc-proprietes";
 import { couleursVersNotes, type CouleurExtraite } from "../audio/palette-harmonique";
 import { formesVersNotes } from "../audio/dessin-sonore";
+import { reglagesApresChangement } from "../core/reglages-lies";
 import { reglagesANomenclature } from "../plugins/nomenclatures";
 
 /** Les nœuds qui bâtissent des accords sur les degrés de leur gamme, et les rendent en MIDI. */
@@ -41,6 +42,33 @@ describe("les accords bâtis sur les degrés de la gamme", () => {
     it.each(paire.ids)(`${id} sous « %s » : chaque accord est la triade de la gamme, et aucune note n'en sort`, async (gamme) => {
       const r = await releverUneGamme(fiche, paire, gamme, {
         ports: fiche.sorties, graines: [1], toniques: [3], degresDe, degresDesAccords, ...(AUTRES[id] ? { autres: AUTRES[id] } : {}),
+      });
+      expect(r.echecs).toEqual([]);
+      expect(r.sorties.some((s) => s.accords > 0), "le nœud a rendu des accords").toBe(true);
+      expect(r.sorties.flatMap((s) => s.accordsFautifs)).toEqual([]);
+      expect(r.sorties.flatMap((s) => s.exemplesHors)).toEqual([]);
+    });
+  }
+});
+
+/**
+ * LA PROGRESSION PAR DÉFAUT DES CHIFFRES ROMAINS SUIT LA GAMME, décision de Fabien du 2026-11-21.
+ *
+ * La Progression et la Grille d'accords lisent la casse comme leur notice le dit, une majuscule pour
+ * un accord majeur. Leur progression par défaut, « I V vi IV », est écrite pour le majeur : passées en
+ * mineur, elles jouaient mi bémol majeur sur le i de mi bémol mineur. La convention reste ; c'est la
+ * progression par défaut qui suit la gamme. Le cas suit le chemin de l'inspecteur : le nœud est créé
+ * en majeur, puis passé dans la gamme, par la règle des réglages liés (`core/reglages-lies.ts`).
+ */
+describe("la progression par défaut des chiffres romains suit la gamme", () => {
+  for (const id of ["tonal-progression", "tonal-grille"]) {
+    const paire = paires.find((p) => p.fiche === id)!;
+    const fiche = registre.trouverDef(id) as unknown as FicheLancable & { sorties: PortDeSortie[] };
+    it.each(paire.ids)(`${id}, créé puis passé en « %s » : sa progression par défaut est de la gamme`, async (gamme) => {
+      const creation = { Gamme: "majeur", Progression: String(fiche.parametres.find((p) => p.nom === "Progression")!.defaut) };
+      const apres = reglagesApresChangement(fiche, creation, "Gamme", gamme);
+      const r = await releverUneGamme(fiche, paire, gamme, {
+        ports: fiche.sorties, graines: [1], toniques: [3], degresDe, degresDesAccords, autres: { Progression: apres.Progression },
       });
       expect(r.echecs).toEqual([]);
       expect(r.sorties.some((s) => s.accords > 0), "le nœud a rendu des accords").toBe(true);

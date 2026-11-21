@@ -92,11 +92,15 @@ export function genererAccords(
       pisteAccords.push({ deltaTime: Math.max(tArp + 1, tf), type: "noteOff", channel: 0, noteNumber: v.note, velocity: 0 });
     }
 
-    // Pad tenu — deux notes espacées
+    // Pad tenu — deux notes espacées : la fondamentale, et la quinte de la gamme sur ce degré, une
+    // octave plus haut. Elle était une quinte juste fixe, dix-neuf demi-tons, hors de la gamme partout
+    // où la quinte du degré ne l'est pas : le I du locrien, le vii° du majeur, sous 17 gammes au
+    // relevé du banc des gammes du 2026-11-21.
+    const quintePad = fonda + 12 + quinte;
     pistePad.push({ deltaTime: td, type: "noteOn", channel: 1, noteNumber: fonda, velocity: 40 });
     pistePad.push({ deltaTime: Math.max(td + 1, tf), type: "noteOff", channel: 1, noteNumber: fonda, velocity: 0 });
-    pistePad.push({ deltaTime: td, type: "noteOn", channel: 1, noteNumber: fonda + 19, velocity: 35 });
-    pistePad.push({ deltaTime: Math.max(td + 1, tf), type: "noteOff", channel: 1, noteNumber: fonda + 19, velocity: 0 });
+    pistePad.push({ deltaTime: td, type: "noteOn", channel: 1, noteNumber: quintePad, velocity: 35 });
+    pistePad.push({ deltaTime: Math.max(td + 1, tf), type: "noteOff", channel: 1, noteNumber: quintePad, velocity: 0 });
   }
 
   function trierPiste(events: any[]): any[] {
