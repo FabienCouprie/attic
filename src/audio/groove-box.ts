@@ -266,8 +266,10 @@ function midiCanalUnique(
   const tpm = 480;
   const microsecParBeat = (60 / config.tempo) * 1_000_000;
   const notesCanal = notes.filter((n) => n.canal === canal);
-  const debutMin = notesCanal.length > 0 ? Math.min(...notesCanal.map((n) => n.debut)) : 0;
-  const secEnTicks = (sec: number) => Math.max(0, Math.round(((sec - debutMin) / 60) * config.tempo * tpm));
+  // CHAQUE PARTIE GARDE LE TEMPS DE LA PIÈCE, et non celui de sa première note. Elle se recalait sur
+  // la sienne : une mélodie qui commence par un silence sortait en avance sur le son du nœud, et sur
+  // les trois autres parties une fois réunies (2026-11-21, `midi-silence-de-tete.test.ts`).
+  const secEnTicks = (sec: number) => Math.max(0, Math.round((sec / 60) * config.tempo * tpm));
 
   const pisteTempo: any[] = [
     { deltaTime: 0, type: "setTempo", microsecondsPerBeat: microsecParBeat },
@@ -330,8 +332,9 @@ export function genererGrooveBox(config: ConfigGrooveBox): ResultatGrooveBox {
   // Construction du MIDI multi-pistes (combinaison + 4 pistes séparées)
   const tpm = 480;
   const microsecParBeat = (60 / config.tempo) * 1_000_000;
-  const debutMin = notes.length > 0 ? Math.min(...notes.map((n) => n.debut)) : 0;
-  const secEnTicks = (sec: number) => Math.max(0, Math.round(((sec - debutMin) / 60) * config.tempo * tpm));
+  // LE MIDI COMBINÉ GARDE LE TEMPS DE SES NOTES, comme chaque partie : il se recalait sur la toute
+  // première, ce qui ne changeait rien tant que les accords partent de zéro, et l'aurait fait sinon.
+  const secEnTicks = (sec: number) => Math.max(0, Math.round((sec / 60) * config.tempo * tpm));
 
   const pisteAccords: any[] = [
     { deltaTime: 0, type: "setTempo", microsecondsPerBeat: microsecParBeat },

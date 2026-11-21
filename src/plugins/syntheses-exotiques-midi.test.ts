@@ -13,9 +13,10 @@
 // ne le disait.
 //
 // DEUX DE MES CAS ÉTAIENT FAUX AVANT D'ÊTRE JUSTES, et les deux raisons sont écrites sur place :
-// `notesVersFichierMidi` RECALE la séquence sur sa première note, de sorte qu'une note isolée
-// commençant tard est écrite au tick zéro ; et c'est donc l'écart ENTRE deux notes qui mesure leur
-// placement, non le silence devant une seule.
+// `notesVersFichierMidi` recalait alors la séquence sur sa première note, de sorte qu'une note
+// isolée commençant tard était écrite au tick zéro ; et c'est donc l'écart ENTRE deux notes qui
+// mesure leur placement, non le silence devant une seule. L'écriture garde le silence de tête depuis
+// le 2026-11-21 ; les cas, qui commencent tous à zéro, tiennent sous les deux.
 import { describe, expect, it } from "vitest";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { fiches } from "./syntheses-exotiques";
@@ -118,9 +119,10 @@ describe("LA BRANCHE MIDI DES TROIS SYNTHÈSES, qui est la moitié de chacune", 
     // ne vérifiait OÙ une note atterrit, alors que c'est tout ce qu'une séquence demande.
     //
     // ET MA PREMIÈRE VERSION DE CE CAS ÉTAIT FAUSSE, non le code : elle posait UNE note tardive et
-    // attendait un silence devant elle. Or `notesVersFichierMidi` recale la séquence sur sa
-    // première note — une note seule commençant à un demi-seconde est écrite au tick zéro. Il faut
-    // donc DEUX notes, et c'est l'écart entre elles qui se mesure.
+    // attendait un silence devant elle. Or `notesVersFichierMidi` recalait alors la séquence sur sa
+    // première note : une note seule commençant à une demi-seconde était écrite au tick zéro. D'où
+    // DEUX notes, et c'est l'écart entre elles qui se mesure ; il tient aussi depuis que l'écriture
+    // garde le silence de tête (2026-11-21).
     const deux = sequence([
       { note: 45, velocite: 100, debut: 0, fin: 0.15 },
       { note: 57, velocite: 100, debut: 0.6, fin: 0.8 },

@@ -30,10 +30,11 @@
 // dernière note, le vent trois dixièmes. Dans les trois cas « Durée » est alors ignorée, et un
 // réglage ignoré se vérifie.
 //
-// `notesVersFichierMidi` RECALE LA SÉQUENCE SUR SA PREMIÈRE NOTE, de sorte qu'une note isolée
-// commençant tard est écrite au tick zéro : c'est donc l'écart ENTRE deux notes qui mesure leur
-// placement, jamais le silence devant une seule. La remarque vient de la batterie sœur des synthèses
-// exotiques, où elle a coûté deux cas faux avant d'être juste.
+// LE PLACEMENT D'UNE NOTE SE MESURE PAR L'ÉCART ENTRE DEUX NOTES. `notesVersFichierMidi` a recalé
+// toute séquence sur sa première note jusqu'au 2026-11-21, de sorte qu'une note isolée commençant
+// tard était écrite au tick zéro ; il garde depuis le silence de tête, et les cas de ce fichier, qui
+// commencent tous à zéro, tiennent sous les deux écritures. La remarque vient de la batterie sœur des
+// synthèses exotiques, où le recalage a coûté deux cas faux avant d'être juste.
 //
 // Les mesures, les pièges écartés et les trois défauts relevés sont dans la batterie sœur,
 // `modeles-physiques.test.ts`, qui tient la branche sans séquence.

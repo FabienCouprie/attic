@@ -1,13 +1,25 @@
 // audio/midi-ecriture.ts — Ecrire un fichier MIDI, et lui poser ses instruments.
 //
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
-// de calcul n'a ete retouchee au passage.
+// de calcul n'a ete retouchee au passage ; le recalage sur la premiere note l'a ete depuis, le
+// 2026-11-21, et `notesVersFichierMidi` dit pourquoi.
 
 import { parseMidi, writeMidi } from "midi-file";
 import { comparerEvenementsMidi } from "./midi-ordre";
 import { sansRecouvrementDeHauteur } from "./recouvrement-hauteur";
 import type { NoteEvenement } from "./midi-sequence";
 
+/**
+ * Des notes écrites en fichier MIDI, chacune à son instant.
+ *
+ * LE FICHIER GARDE LE TEMPS DE SES NOTES, SILENCE DE TÊTE COMPRIS. Chaque instant se retranchait du
+ * début de la première note, depuis le commit initial : une pièce qui commence par un silence le
+ * perdait, sa première note tombait au tick zéro, et le MIDI jouait en avance sur le son que le même
+ * nœud rend à côté de lui. Relevé le 2026-11-21 en mi bémol majeur, à la graine 1 : « Mélodie
+ * aléatoire » à 100 BPM sonnait 0,60 s après son MIDI, le réservoir musical 0,25 s. Le garde est
+ * `midi-silence-de-tete.test.ts`. Un appelant qui veut un fichier qui commence à sa première note le
+ * dit lui-même, par `recalerSurPremiereNote`.
+ */
 export function notesVersFichierMidi(
   notes: NoteEvenement[],
   tempoBpm: number,
@@ -16,10 +28,9 @@ export function notesVersFichierMidi(
   programme?: number,
 ): File {
   const tpm = 480;
-  const debutMin = notes.length > 0 ? Math.min(...notes.map((n) => n.debut)) : 0;
   const microsecParBeat = (60 / tempoBpm) * 1_000_000;
 
-  function secEnTicks(sec: number): number { return Math.round(((sec - debutMin) / 60) * tempoBpm * tpm); }
+  function secEnTicks(sec: number): number { return Math.round((sec / 60) * tempoBpm * tpm); }
 
   const lignes: { tick: number; type: string; [key: string]: any }[] = [
     { tick: 0, type: "setTempo", microsecondsPerBeat: microsecParBeat },
@@ -37,9 +48,14 @@ export function notesVersFichierMidi(
   // `noteOn` et le premier `noteOff` éteint tout. Le rendu résout la même chose, de la même façon,
   // pour que le fichier sonne comme ce qu'on entend. Voir `recouvrement-hauteur.ts`.
   for (const n of sansRecouvrementDeHauteur(notes)) {
-    const tickDebut = secEnTicks(n.debut);
+    // UN INSTANT NÉGATIF NE S'ÉCRIT PAS, et le rendu ne joue d'une telle note que la part qui suit
+    // zéro. Le fichier fait de même : la note est rognée à zéro, et ne se tait que si elle finit
+    // avant. Tant que tout se recalait sur la première note, aucun instant n'était négatif, et cette
+    // ligne-ci, qui taisait la note, ne servait jamais.
+    const tickBrut = secEnTicks(n.debut);
     const tickFin = secEnTicks(n.fin);
-    if (tickDebut < 0) continue;
+    if (tickBrut < 0 && tickFin <= 0) continue;
+    const tickDebut = Math.max(0, tickBrut);
     // LE NUMÉRO DE NOTE EST UN OCTET, ET IL S'ARRONDIT ICI. Une hauteur peut ne pas tomber sur un
     // demi-ton, la conversion en fréquence étant continue ; le format MIDI, lui, ne sait pas porter
     // de cents. L'écriture tronquait : 69,5 partait en 69, soit jusqu'à quatre-vingt-dix-neuf cents
@@ -64,6 +80,19 @@ export function notesVersFichierMidi(
   const midi = { header: { format: 1 as const, numTracks: 1, ticksPerBeat: tpm }, tracks: [events] };
   const bytes = new Uint8Array(writeMidi(midi as any));
   return new File([bytes], "transcription.mid", { type: "audio/midi" });
+}
+
+/**
+ * Les mêmes notes, avancées pour que la première commence à zéro.
+ *
+ * C'EST UN CHOIX DE L'APPELANT, ET IL SE DIT À L'APPEL. L'écriture garde le temps des notes ; celui
+ * qui sait que le temps d'avant la première note n'est pas de la musique, l'attente entre la
+ * pression du bouton et la première touche d'une prise par exemple, le retire ici.
+ */
+export function recalerSurPremiereNote<N extends Pick<NoteEvenement, "debut" | "fin">>(notes: N[]): N[] {
+  if (notes.length === 0) return notes;
+  const depart = Math.min(...notes.map((n) => n.debut));
+  return notes.map((n) => ({ ...n, debut: n.debut - depart, fin: n.fin - depart }));
 }
 
 
