@@ -150,6 +150,30 @@ export function degresSansPassage(id: string, secours = "majeur"): number[] {
   return g.passage ? g.degres.filter((d) => !g.passage!.includes(d)) : g.degres;
 }
 
+/**
+ * La note de la gamme la plus proche d'une hauteur, la gamme posée sur sa tonique ; la plus grave à
+ * égale distance.
+ *
+ * `degres` sont les degrés triés depuis la tonique, `tonique` une note MIDI de la tonique, à
+ * n'importe quelle octave. LA GAMME SE POSE SUR LA TONIQUE AVANT LA SAISIE, et c'est le défaut que
+ * cette fonction répare, relevé par le banc des gammes le 2026-11-21 : l'Automate cellulaire et
+ * l'Arpège de Koch comparaient la classe absolue d'une note, comptée depuis do, à des degrés comptés
+ * depuis la tonique. En ré majeur, ré, fa dièse, la devenait ré, fa, la ; sous 24 gammes sur 25, la
+ * clé était perdue. Ils rendaient aussi l'octave d'en dessous quand la saisie franchissait la
+ * tonique : un si ramené au do retombait à l'octave grave.
+ */
+export function noteDeLaGammeLaPlusProche(midi: number, degres: readonly number[], tonique: number): number {
+  const relative = midi - tonique;
+  const octave = Math.floor(relative / 12);
+  const classe = relative - octave * 12;
+  let pose = degres[0], ecart = Infinity;
+  for (const d of [...degres, degres[0] + 12]) {
+    const e = Math.abs(d - classe);
+    if (e < ecart - 1e-9) { ecart = e; pose = d; }
+  }
+  return tonique + octave * 12 + pose;
+}
+
 /** Les gammes d'une ou plusieurs familles, dans l'ordre de la table. */
 export function gammesDe(...familles: FamilleGamme[]): Gamme[] {
   return GAMMES.filter((g) => g.familles.some((f) => familles.includes(f)));

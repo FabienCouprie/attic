@@ -10,6 +10,7 @@ import {
 import { notesVersFichierMidi } from "./midi-ecriture";
 import { rendreSequence, type NoteEvenement } from "./midi-sequence";
 import { degresGammeMelodie } from "./generation-melodie";
+import { noteDeLaGammeLaPlusProche } from "./gammes";
 import { creerAleatoire } from "../core/hasard";
 
 const REGLES_1D_NOMS: Record<number, string> = {
@@ -79,19 +80,12 @@ function decodeInstrument(valeur: number): { programme: number; banque: number }
   return { programme, banque };
 }
 
-function snapperNote(midi: number, degres: number[]): number {
-  const pc = ((Math.round(midi) % 12) + 12) % 12;
-  let closest = degres[0];
-  let minDist = Infinity;
-  for (const deg of degres) {
-    const d = Math.min(Math.abs(deg - pc), 12 - Math.abs(deg - pc));
-    if (d < minDist) {
-      minDist = d;
-      closest = deg;
-    }
-  }
-  const octave = Math.floor((midi - closest) / 12);
-  return Math.max(0, Math.min(127, octave * 12 + closest));
+/**
+ * Une hauteur posée sur la gamme. `base` porte la tonique, la clé comprise : chaque appelant part
+ * d'elle, et c'est sur elle que la gamme se pose (`noteDeLaGammeLaPlusProche`).
+ */
+function snapperNote(midi: number, degres: number[], base: number): number {
+  return Math.max(0, Math.min(127, noteDeLaGammeLaPlusProche(midi, degres, base)));
 }
 
 function randomSeed(seed: number): () => number {
@@ -214,7 +208,7 @@ function muterGrille(grille: number[][], probabilite: number, rnd: () => number)
 function indexMidiPourX(x: number, base: number, degres: number[], largeur: number): number {
   // Étaler les positions sur 2 octaves de la gamme pour plus de variété.
   const echelle = Math.floor((x / Math.max(1, largeur - 1)) * (degres.length * 2 - 1));
-  return snapperNote(base + echelle, degres);
+  return snapperNote(base + echelle, degres, base);
 }
 
 function velocitePourDensite(densite: number, max: number, velociteBase: number): number {
@@ -249,7 +243,7 @@ function construireNotesDepuisLigne(
 
   if (mode === "Arpège") {
     const idx = actives[arpegeIndex % actives.length];
-    const midi = snapperNote(base + idx, degres);
+    const midi = snapperNote(base + idx, degres, base);
     const vel = mapping === "Vélocité" || mapping === "Hauteur + vélocité"
       ? velocitePourDensite(densite, largeur, options.velocite)
       : options.velocite;
@@ -262,7 +256,7 @@ function construireNotesDepuisLigne(
 
   if (mode === "Mélodie") {
     const idx = actives[Math.floor(rnd() * actives.length)];
-    const midi = snapperNote(base + idx, degres);
+    const midi = snapperNote(base + idx, degres, base);
     const vel = mapping === "Vélocité" || mapping === "Hauteur + vélocité"
       ? velocitePourDensite(densite, largeur, options.velocite)
       : options.velocite;

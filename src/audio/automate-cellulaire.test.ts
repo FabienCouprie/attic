@@ -77,7 +77,11 @@ describe("automate-cellulaire", () => {
     expect(notes.length).toBeLessThanOrEqual(defaults.generations);
   });
 
-  it("respecte la gamme demandée", () => {
+  it("respecte la gamme demandée, posée sur la clé", () => {
+    // CE CAS TENAIT LE DÉFAUT POUR JUSTE jusqu'au 2026-11-21 : en la, il comparait la classe absolue de
+    // chaque note aux degrés comptés depuis la tonique, et validait donc des notes posées sur la gamme
+    // de do. Le banc des gammes l'a relevé ; les classes se comptent maintenant depuis la, neuf
+    // demi-tons au-dessus de do.
     const notes = genererNotesAutomateCellulaire({
       ...defaults,
       regle: 110,
@@ -89,8 +93,9 @@ describe("automate-cellulaire", () => {
       gamme: "Pentatonique mineure",
     });
     const gamme = degresGammeMelodie(normaliserGamme("Pentatonique mineure"));
+    expect(notes.length).toBeGreaterThan(0);
     for (const n of notes) {
-      const pc = ((n.note % 12) + 12) % 12;
+      const pc = (((n.note - 9) % 12) + 12) % 12;
       expect(gamme).toContain(pc);
     }
   });

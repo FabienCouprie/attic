@@ -130,6 +130,31 @@ describe("l'autocontrôle du banc des gammes", () => {
   });
 });
 
+/**
+ * LA CLÉ ET LA GAMME, TENUES PAR CE QUE LE NŒUD REND, sous chaque gamme offerte, en mi bémol et en mi.
+ *
+ * L'Arpège de Koch et l'Automate cellulaire posaient leurs notes sur la gamme de do quelle que soit
+ * la clé : leur saisie comparait la classe absolue d'une note à des degrés comptés depuis la tonique.
+ * Relevé par le banc des gammes le 2026-11-21, hors de la gamme sous 24 gammes sur 25, et un test de
+ * l'automate tenait le défaut pour juste. Chaque note doit être un degré de la gamme posée sur la
+ * tonique, et la clé montée d'un demi-ton doit tout monter d'un demi-ton.
+ */
+const CLE_TENUE = ["automate-cellulaire", "arpege-koch"];
+
+describe("la clé et la gamme tenues par ce que le nœud rend", () => {
+  for (const id of CLE_TENUE) {
+    const p = paires.find((x) => x.fiche === id)!;
+    const f = fiche(id)!;
+    it.each(p.ids)(`${id} sous « %s » : chaque note est de la gamme sur sa tonique, et la clé transpose`, async (gamme) => {
+      const r = await releverUneGamme(f, p, gamme, { ports: f.sorties ?? [], graines: [1], degresDe, lireNotation });
+      expect(r.echecs).toEqual([]);
+      expect(r.sorties.reduce((a, s) => a + s.notes, 0), "le nœud a rendu des notes").toBeGreaterThan(0);
+      expect(r.sorties.flatMap((s) => s.exemplesHors)).toEqual([]);
+      expect(r.sorties.map((s) => s.transposition).filter(Boolean)).toEqual([]);
+    });
+  }
+});
+
 const GRAINES = (process.env.GAMMES_GRAINES ?? "1,42,4242").split(",").map(Number);
 const BORNE = process.env.GAMMES_FICHES?.split(",").filter(Boolean);
 /** Des réglages posés en plus, en JSON : `{"Mode":"plaque"}` fait jouer le Color Looper en accords. */
