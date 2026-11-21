@@ -31,6 +31,7 @@
 // MOINS que la ligne de journal qu'il remplace, laquelle interpolait quatre empreintes en chaîne de
 // caractères pour chaque nœud de chaque run, et que personne ne lisait. Un drapeau aurait donc coûté
 // plus cher à porter que la vérification à faire.
+import { TYPE_FRONTIERE } from "./fiches-du-coeur";
 
 /** Ce qu'il faut savoir d'un port pour vérifier ce qui en sort. */
 export interface PortVerifiable {
@@ -93,7 +94,7 @@ export function ecartsDeType(
   const ecarts: EcartDeType[] = [];
   for (let i = 0; i < sorties.length; i++) {
     const port = sorties[i];
-    if (!port || port.type === "frontiere") continue;
+    if (!port || port.type === TYPE_FRONTIERE) continue;
     const v = valeurs[i];
     if (v === null || v === undefined) continue;
     const predicat = typeDe(port.type)?.estDuType;

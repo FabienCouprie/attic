@@ -4,6 +4,8 @@ export type { FauteDeFiche } from "./validation";
 export { aplatirGraphe, creerMeta, indexPort, metasEmployes, nettoyerNoeud,
   frontieresPourEdition, redériverMeta, estFrontiere, ID_ENTREE_FRONTIERE, ID_SORTIE_FRONTIERE } from "./meta";
 export type { MetaComposant, NoeudG, AreteG, DefPorts, PortInterne } from "./meta";
+// CE QUE LE CŒUR FOURNIT À TOUT DOMAINE : les deux nœuds-frontière d'un méta et le type de leur port.
+export { fichesDuCoeur, typesFluxDuCoeur, TYPE_FRONTIERE } from "./fiches-du-coeur";
 export { grapheSansConteneurs } from "./formes-graphe";
 export {
   PREFIXE_FICHE_BULLE, PREFIXE_SUBSTITUTION, ancetresBulle, appliquerRepli, bulleCachante, bulleDe,
