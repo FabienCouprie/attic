@@ -114,6 +114,35 @@ describe("la correction de hauteur ramène chaque note sur la gamme", () => {
   });
 });
 
+/**
+ * LE GLISSANDO TIENT SES DEUX GAMMES, celle de départ dans sa tenue initiale et celle d'arrivée dans sa
+ * tenue finale, lues dans les pics du spectre, la richesse à un pour des sinus purs. Chaque pic est un
+ * degré de la gamme, à dix cents près, et chaque degré se fait entendre : chaque gamme tenue est
+ * exactement elle-même, dit sa notice.
+ *
+ * LE SHRUTI À VINGT-DEUX DEGRÉS EST HORS DE PORTÉE DE L'INSTRUMENT : en une seconde de son, deux
+ * degrés à vingt-deux cents l'un de l'autre ne se séparent pas dans le grave, et les pics se confondent.
+ */
+const LIMITE_DE_RESOLUTION = "shruti22";
+const TENUES: Record<string, [number, number]> = { "Gamme de départ": [0.2, 1.3], "Gamme d'arrivée": [3.7, 4.8] };
+
+describe("le glissando tient ses deux gammes", () => {
+  const fg = registre.trouverDef("glissando-de-gamme") as unknown as FicheLancable;
+  for (const p of paires.filter((x) => x.fiche === "glissando-de-gamme")) {
+    const [a, b] = TENUES[p.gamme];
+    it.each(p.ids.filter((g) => g !== LIMITE_DE_RESOLUTION))(`${p.gamme} « %s » : chaque degré sonne, et rien d'autre`, async (g) => {
+      const r = await releverUneGamme(fg, p, g, {
+        ports: [{ nom: "Hauteurs lues dans le spectre", type: "sequence" }], graines: [1], toniques: [3], degresDe, tolerance: TOLERANCE_DU_SON,
+        autres: { Richesse: 1, "Tenue initiale": 1.5, Glissement: 2, "Tenue finale": 1.5 },
+        capture: (v) => [enSequence(picsDuSpectre(v[0] as AudioBuffer, a, b).map((h, i) => ({ ...h, debut: i, fin: i + 1 })))],
+      });
+      expect(r.echecs).toEqual([]);
+      expect(r.sorties.flatMap((s) => s.exemplesHors)).toEqual([]);
+      expect(r.sorties[0]?.manquants, "degrés jamais entendus").toEqual([]);
+    });
+  }
+});
+
 describe.runIf(process.env.BANC_GAMMES === "1")("le relevé des nœuds qui ne rendent que du son", () => {
   it("relève le Générateur d'accords par le MIDI qu'il remet à sa synthèse", async () => {
     const paire = paires.find((p) => p.fiche === "generateur-accords")!;
