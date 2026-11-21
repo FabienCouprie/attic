@@ -172,7 +172,7 @@ Ceux-là ne dépendent d'aucun harnais : `npx vitest run` les heurte tous.
   cœurs par trames, registre anglais, **texte en dur des vues — qu'aucun ne dépende de la langue** —,
   caractères de contrôle, style de documentation, classement
   théorique, contrat de graphe, générateur commun du hasard, frontière du domaine, **les identifiants
-  de fiche — qu'aucune chaîne neuve du cœur n'en nomme un, cinq dettes épinglées** —, frontière du cache
+  de fiche — qu'aucune chaîne neuve du cœur n'en nomme un, trois dettes épinglées** —, frontière du cache
   du moteur, couverture des
   empreintes, le serveur des specs de bout en bout, le pilote d'un graphe entier, **le croisement
   des nomenclatures — sous chaque valeur d'une nomenclature, chaque autre réglage agit encore** —,

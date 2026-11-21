@@ -6,7 +6,7 @@
 //
 // C'est le SEUL endroit où `enregistrer()` est appelé. Importer un module de
 // plugin n'a plus d'effet de bord — les fiches sont exportées, pas enregistrées.
-import { creerRegistre, ecartsDeType, type Registre } from "../core";
+import { creerRegistre, ecartsDeType, typesFluxDuCoeur, type Registre } from "../core";
 import { configurerRegistre as configurerRegistreMeta } from "../core/metastore";
 import { configurerServicesDomaine } from "../core/services-domaine";
 import { configurerRegistreNodes } from "../core/nodes-installes";
@@ -55,11 +55,9 @@ if (typeof window !== "undefined") {
 // Types de flux du domaine audio (dans le registre, pas dans un global)
   registre.enregistrerTypeFlux({ id: "audio", couleur: "#2a9d8f", libelle: "Audio",
     estDuType: (v) => typeof AudioBuffer !== "undefined" && v instanceof AudioBuffer });
-  // GRIS NEUTRE, PARCE QU'UN NŒUD-FRONTIÈRE N'A PAS DE TYPE À LUI. Il marque, à l'intérieur d'un
-  // méta-composant, l'endroit où un port sera exposé ; ce port prend le type du port interne auquel
-  // la frontière se relie. Ses deux blocs étaient déclarés « audio », si bien qu'ils s'affichaient
-  // en vert quoi qu'on y branche : on croyait y lire un type, et c'était toujours le même.
-  registre.enregistrerTypeFlux({ id: "frontiere", couleur: "#8a8f98", libelle: "Port exposé" });
+  // LE TYPE DU PORT D'UN NŒUD-FRONTIÈRE, que le cœur déclare avec les deux fiches que le catalogue
+  // inclut : voir `core/fiches-du-coeur.ts`. Sans lui, le registre refuserait ces deux fiches.
+  for (const t of typesFluxDuCoeur()) registre.enregistrerTypeFlux(t);
   registre.enregistrerTypeFlux({ id: "midi", couleur: "#e9a13b", libelle: "MIDI" });
   // LE CONTRÔLE PORTE DES CONTENUS LUI AUSSI, et pour la même raison que le texte : ses vingt-six
   // ports transportent une durée, des zones, un tempo ou un profil de bruit, et brancher un tempo

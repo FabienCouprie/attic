@@ -20,6 +20,13 @@
 // CE QU'IL NE VOIT PAS, et il vaut mieux le savoir : un identifiant fabriqué par morceaux
 // (`"reponse-" + "filtre"`, ou un gabarit à trous), et les méta-composants embarqués, qui ne sont
 // pas des fiches du catalogue mais des graphes que `plugins/meta-exemples.ts` installe au démarrage.
+//
+// LES FICHES QUE LE CŒUR DÉCLARE LUI-MÊME NE SONT PAS DES IDENTIFIANTS DU DOMAINE, depuis la pièce P1
+// du 2026-11-21 : les deux nœuds-frontière d'un méta, que `core/fiches-du-coeur.ts` fournit et que
+// le catalogue audio inclut. Leur identifiant est au cœur, avec sa fiche. Pour qu'une fiche du
+// domaine ne s'y cache pas afin d'échapper à ce garde, un cas tient la forme de ce qu'il accepte : une
+// fiche du cœur ne porte que des ports de types que le cœur déclare, et aucune fiche audio n'est faite
+// ainsi.
 import "node-web-audio-api/polyfill.js";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
@@ -27,6 +34,7 @@ import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
 import { ALIAS } from "../audio/alias";
+import { fichesDuCoeur, typesFluxDuCoeur } from "../core/fiches-du-coeur";
 import { toutesLesFiches } from "../plugins";
 
 const RACINE = resolve(__dirname, "..");
@@ -68,8 +76,13 @@ function chainesDuCode(nom: string, source: string): string[] {
   return out;
 }
 
-/** Les identifiants du domaine : chaque fiche du catalogue, et chaque ancien identifiant qui en ouvre une. */
-const IDENTIFIANTS = new Set<string>([...toutesLesFiches.map((f) => f.id), ...Object.keys(ALIAS)]);
+/** Les fiches que le cœur déclare lui-même : leur identifiant est au cœur, avec elles. */
+const DU_COEUR = new Set(fichesDuCoeur().map((f) => f.id));
+
+/** Les identifiants du domaine : chaque fiche du catalogue que le cœur ne déclare pas, et chaque ancien identifiant. */
+const IDENTIFIANTS = new Set<string>([
+  ...toutesLesFiches.map((f) => f.id).filter((id) => !DU_COEUR.has(id)), ...Object.keys(ALIAS),
+]);
 
 /**
  * LES DETTES DU JOUR, RELEVÉES PAR CE GARDE À SA NAISSANCE, LE 2026-11-20 : seize chaînes, quatre
@@ -77,15 +90,12 @@ const IDENTIFIANTS = new Set<string>([...toutesLesFiches.map((f) => f.id), ...Ob
  * doit en sortir. Chacune porte sa raison, et la sortie est la même pour toutes : la fiche dit son
  * rôle et le cœur le lit, ou le domaine remet la liste au cœur, comme `audio/alias.ts` au registre.
  *
- * LES ONZE DE `core/boucle-graphe.ts` SONT SORTIES LE 2026-11-21, par la première porte : la fiche
- * déclare `debutDeBoucle`, `finDeBoucle` ou `boucleParPasses`, et le dépliage le lit par `trouverDef`.
+ * TROIS CHAÎNES ET DEUX FICHIERS DEPUIS LE 2026-11-21. Les deux de `core/meta.ts` sont sorties par
+ * l'autre porte : les fiches-frontière sont entrées dans le cœur (`core/fiches-du-coeur.ts`). Les
+ * onze de `core/boucle-graphe.ts` par la première : la fiche déclare `debutDeBoucle`, `finDeBoucle`
+ * ou `boucleParPasses`, et le dépliage le lit par `trouverDef`.
  */
 const DETTES: Readonly<Record<string, { chaines: readonly string[]; raison: string }>> = {
-  "core/meta.ts": {
-    chaines: ["__entree-frontiere", "__sortie-frontiere"],
-    raison: "les nœuds-frontière d'un méta-composant sont un mécanisme du cœur, mais leurs fiches, "
-      + "qui les dessinent et portent leurs ports, sont déclarées par le domaine",
-  },
   "core/instrument-graphe.ts": {
     chaines: ["frontiere-note", "instrument-fin"],
     raison: "un instrument rejoué touche par touche, de La0 à Do8, est une notion audio logée dans le cœur",
@@ -160,6 +170,25 @@ describe("le cœur ne nomme aucun composant du domaine", () => {
       "",
       "CES DETTES SONT PAYÉES : le cœur ne nomme plus ces chaînes. Retirez-les de `DETTES`.",
       ...payees,
+      "",
+    ].join("\n")).toEqual([]);
+  });
+
+  it("UNE FICHE DU CŒUR NE PORTE QUE DES TYPES DU CŒUR, sans quoi une fiche du domaine s'y cacherait", () => {
+    // L'INSTRUMENT DIT CE QU'IL A LU : sans fiche du cœur, ce cas passerait sans rien tenir.
+    const fiches = fichesDuCoeur();
+    expect(fiches.length, "le cœur doit déclarer des fiches : les deux nœuds-frontière le 2026-11-21").toBeGreaterThan(0);
+    const types = new Set(typesFluxDuCoeur().map((t) => t.id));
+    const etrangers = fiches.flatMap((f) => [...f.entrees, ...f.sorties]
+      .filter((p) => !types.has(p.type))
+      .map((p) => `  ${f.id} · port « ${p.nom} » de type « ${p.type} »`));
+    expect(etrangers, [
+      "",
+      "UNE FICHE DU CŒUR PORTE UN TYPE QUE LE CŒUR NE DÉCLARE PAS :",
+      ...etrangers,
+      "",
+      "Le cœur ne déclare que les fiches de ses propres mécanismes. Une fiche qui porte un type du",
+      "domaine appartient au domaine, et ce garde la compterait alors parmi ses identifiants.",
       "",
     ].join("\n")).toEqual([]);
   });

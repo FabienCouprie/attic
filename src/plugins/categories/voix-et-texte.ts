@@ -4,7 +4,8 @@
 // texte et les modèles de langue.
 //
 // UNE TRANCHE DE L'ORDRE DU CATALOGUE, ET NON UN THÈME PUR : voir `plugins/index.ts`.
-import type { FicheAudio } from "../../audio/types-domaine";
+import type { FicheAudio, RuntimeAudio, ValeurAudio } from "../../audio/types-domaine";
+import { fichesDuCoeur } from "../../core";
 
 import { fiches as f_visualisation } from "../visualisation";
 import { fiches as f_sequenceurs } from "../sequenceurs";
@@ -40,7 +41,6 @@ import { fiches as f_galerie_exposition } from "../galerie-exposition";
 import { fiches as f_gestion_nodes } from "../gestion-nodes";
 import { fiches as f_python_processor } from "../python-processor";
 import { fiches as f_julia_processor } from "../julia-processor";
-import { fiches as f_frontiere } from "../frontiere";
 import { fiches as f_couleur_suno_ia } from "../couleur-suno-ia";
 import { fiches as f_ollama } from "../ollama";
 
@@ -79,7 +79,9 @@ export const fiches = [
   ...f_gestion_nodes,
   ...f_python_processor,
   ...f_julia_processor,
-  ...f_frontiere,
+  // LES NŒUDS-FRONTIÈRE D'UN MÉTA, que le cœur déclare et que ce catalogue inclut, à leur place
+  // d'avant dans l'ordre : voir `core/fiches-du-coeur.ts`.
+  ...fichesDuCoeur<ValeurAudio, RuntimeAudio>(),
   ...f_couleur_suno_ia,
   ...f_ollama,
 ] as FicheAudio[];
