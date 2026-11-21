@@ -28,7 +28,8 @@ import type { PortDeSortie } from "../audio/gamme-banc-hauteurs";
 import { releverUneGamme, type ReleveDeGamme } from "../audio/gamme-banc-releve";
 import { degresAttendus as degresDe } from "../audio/gamme-banc-proprietes";
 import {
-  APPARTENANCE_DECLAREE, GAMMES_DE_TRANSPOSITION, HORS_DE_PORTEE, SANS_TRANSPOSITION, TENUS_AILLEURS, cleDeReglage, reglagesLies,
+  ACCORDS_SUR_LES_DEGRES, APPARTENANCE_DECLAREE, GAMME_SANS_EFFET, GAMMES_DE_TRANSPOSITION, HORS_DE_PORTEE,
+  SANS_TRANSPOSITION, TENUS_AILLEURS, cleDeReglage, reglagesLies,
 } from "../audio/gamme-banc-inscriptions";
 import { reglagesANomenclature } from "../plugins/nomenclatures";
 
@@ -56,6 +57,13 @@ describe("l'inventaire du garde des gammes", () => {
       }
     }
     for (const ou of Object.keys(HORS_DE_PORTEE)) expect(TENUS_AILLEURS[ou], ou).toBeUndefined();
+    for (const id of ACCORDS_SUR_LES_DEGRES) expect(paires.some((p) => p.fiche === id), `« ${id} » n'a pas de réglage de gamme`).toBe(true);
+    for (const [ou, { reglage, valeurs, raison }] of Object.entries(GAMME_SANS_EFFET)) {
+      expect(connus.has(ou), `« ${ou} » n'est pas un réglage de gamme du registre`).toBe(true);
+      expect(raison.length, `la raison de « ${ou} » doit dire pourquoi`).toBeGreaterThanOrEqual(30);
+      const ids = fiche(ou.split("·")[0])?.parametres.find((x) => x.nom === reglage)?.optionIds ?? [];
+      for (const v of valeurs) expect(ids, `« ${ou} » : « ${reglage} » n'offre pas « ${v} »`).toContain(v);
+    }
   });
 });
 

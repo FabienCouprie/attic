@@ -81,6 +81,11 @@ export interface OptionsReleve {
   sansTransposition?: string;
   /** Des réglages posés en plus, pour que la gamme se lise : la richesse à un pour des sinus purs. */
   autres?: Reglages;
+  /**
+   * Le nœud ne bâtit pas d'accords sur les degrés, et P4 est sans objet : les notes qui sonnent ensemble
+   * y sont des voix qui se rencontrent, les trois niveaux d'un flocon ou les cellules d'un automate.
+   */
+  sansAccords?: boolean;
 }
 
 const cleDe = (s: SortieLue) => (s.canal === undefined ? s.port : `${s.port}, canal ${s.canal + 1}`);
@@ -143,7 +148,7 @@ export async function releverUneGamme(fiche: FicheLancable, paire: ReglageDeGamm
     let accords = 0;
     const fautifs: string[] = [];
     const nommes = new Map<string, number>();
-    for (const [k, s] of m) {
+    for (const [k, s] of o.sansAccords ? [] : m) {
       const a = accordsSurLesDegres(s.hauteurs, degresAccords, tdl(k));
       accords += a.accords;
       for (const [n, c] of a.nommes) nommes.set(n, (nommes.get(n) ?? 0) + c);
