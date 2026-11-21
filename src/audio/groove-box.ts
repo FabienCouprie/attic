@@ -13,6 +13,7 @@ import {
   traduireCle,
 } from "./generation";
 import { quinteDuDegre, septiemeDuDegre, tierceDuDegre } from "./triades-gamme";
+import { lireProgressionRomaine, romainDuDegre, type DegreLu } from "./romains-degres";
 import { PATRONS_RYTHME, type Patron } from "./generation-patrons";
 
 export interface ConfigGrooveBox {
@@ -58,24 +59,27 @@ export interface ResultatGrooveBox {
    * fiche ; ce module-ci ne connaît pas la langue de l'interface.
    */
   progressionTexte: string;
+  /** Les chiffres de la progression personnalisée qui ne se jouent pas, que le message nomme. */
+  chiffresAlteres: string[];
+  chiffresInconnus: string[];
   graineUtilisee: number;
 }
 
-const ROMAIN_VERS_DEGRE: Record<string, number> = {
-  I: 0, II: 1, III: 2, IV: 3, V: 4, VI: 5, VII: 6,
-  i: 0, ii: 1, iii: 2, iv: 3, v: 4, vi: 5, vii: 6,
-};
-
-function progressionDepuisConfig(config: ConfigGrooveBox): number[] {
+/**
+ * La progression jouée, et les chiffres refusés.
+ *
+ * UNE PROGRESSION PERSONNALISÉE SE LIT EN DEGRÉS (`romains-degres.ts`), décision de Fabien du
+ * 2026-11-21 : « V7 », « vii° » et « bVII » étaient jetés sans un mot, et « V7-bVII » devenait le I.
+ * Le 7 demande la septième de la gamme ; un chiffre refusé ne se joue pas ; s'il n'en reste aucun,
+ * le I seul, comme avant.
+ */
+function progressionDepuisConfig(config: ConfigGrooveBox): { degres: DegreLu[]; alteres: string[]; inconnus: string[] } {
   if (config.genre === "custom" || config.genre === "personnalisé") {
-    const parsed = config.progression
-      .split("-")
-      .map((r) => ROMAIN_VERS_DEGRE[r.trim()])
-      .filter((n) => n !== undefined);
-    return parsed.length > 0 ? parsed : [0];
+    const lu = lireProgressionRomaine(config.progression);
+    return { ...lu, degres: lu.degres.length > 0 ? lu.degres : [{ degre: 0, septieme: false }] };
   }
   const progressions = PROGRESSIONS_GENRE[config.genre] || PROGRESSIONS_GENRE["pop"];
-  return progressions[0];
+  return { degres: progressions[0].map((degre) => ({ degre, septieme: false })), alteres: [], inconnus: [] };
 }
 
 // Tierce et quinte bâties un degré sur deux dans la gamme (`triades-gamme.ts`),
@@ -117,6 +121,7 @@ function notesAccord(
   degres: number[],
   extension: ConfigGrooveBox["extension"] = "aucune",
   genre = "pop",
+  septiemeEcrite = false,
 ): number[] {
   const racinePc = degres[degre % degres.length];
   const root = 36 + decalage + racinePc + Math.floor(degre / degres.length) * 12;
@@ -126,12 +131,13 @@ function notesAccord(
   // « septieme » et « sixte » viennent de projets enregistrés avant : ils demandaient la
   // couleur partout, on la place désormais là où elle se justifie.
   const couleur = extension === "aucune" ? undefined : extensionIdiomatique(genre, racinePc);
-  if (couleur === "septieme") notes.push(root + septiemeDuDegre(degres, racinePc));
+  // Un « 7 » écrit dans la progression demande la septième, quel que soit le genre.
+  if (couleur === "septieme" || septiemeEcrite) notes.push(root + septiemeDuDegre(degres, racinePc));
   return notes;
 }
 
 function genererNotesAccordsEtBasse(
-  progression: number[],
+  progression: readonly DegreLu[],
   config: ConfigGrooveBox,
   degres: number[],
   decalage: number,
@@ -143,8 +149,8 @@ function genererNotesAccordsEtBasse(
   for (let i = 0; i < config.nbAccords; i++) {
     const deb = i * dureeSecAccord;
     const fin = deb + dureeSecAccord;
-    const deg = progression[i % progression.length];
-    const [root, third, fifth, extension] = notesAccord(deg, decalage, degres, config.extension, config.genre);
+    const { degre: deg, septieme } = progression[i % progression.length];
+    const [root, third, fifth, extension] = notesAccord(deg, decalage, degres, config.extension, config.genre, septieme);
 
     // Accord (canal 0)
     // Vélocités baissées d'environ 2 dB (75 → 60) pour dégager la mélodie : trois notes
@@ -164,7 +170,7 @@ function genererNotesAccordsEtBasse(
 
 function quantifierReservoirSurAccord(
   noteReservoir: NoteGeneree,
-  progression: number[],
+  progression: readonly DegreLu[],
   config: ConfigGrooveBox,
   degres: number[],
   decalage: number,
@@ -175,8 +181,8 @@ function quantifierReservoirSurAccord(
     Math.max(0, Math.floor(noteReservoir.debut / dureeSecAccord)),
     config.nbAccords - 1,
   );
-  const deg = progression[idxChord % progression.length];
-  const chordTones = notesAccord(deg, decalage, degres, config.extension, config.genre);
+  const { degre: deg, septieme } = progression[idxChord % progression.length];
+  const chordTones = notesAccord(deg, decalage, degres, config.extension, config.genre, septieme);
 
   // Trouve la hauteur de l'accord la plus proche de la note du réservoir
   let nearest = chordTones[0];
@@ -293,7 +299,7 @@ function midiCanalUnique(
 export function genererGrooveBox(config: ConfigGrooveBox): ResultatGrooveBox {
   const degres = degresDesAccords(config.gamme);
   const decalage = traduireCle(config.cle);
-  const progression = progressionDepuisConfig(config);
+  const { degres: progression, alteres: chiffresAlteres, inconnus: chiffresInconnus } = progressionDepuisConfig(config);
 
   const notes: NoteGroove[] = genererNotesAccordsEtBasse(progression, config, degres, decalage);
 
@@ -382,7 +388,7 @@ export function genererGrooveBox(config: ConfigGrooveBox): ResultatGrooveBox {
     { deltaTime: 0, type: "programChange", channel: 9, programNumber: 0 },
   ]);
 
-  const progressionTexte = progression.map((d) => ["I", "II", "III", "IV", "V", "VI", "VII"][d % 7]).join("–");
+  const progressionTexte = progression.map(romainDuDegre).join("–");
 
-  return { midiBytes, midiAccords, midiBasse, midiMelodie, midiBatterie, notes, progressionTexte, graineUtilisee };
+  return { midiBytes, midiAccords, midiBasse, midiMelodie, midiBatterie, notes, progressionTexte, chiffresAlteres, chiffresInconnus, graineUtilisee };
 }

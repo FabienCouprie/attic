@@ -1777,6 +1777,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.hard_panner.centre": { fr: "Centre", en: "Center" },
   "msg.fichier.taille": { fr: "{__VAR_0__} · {__VAR_1__} o", en: "{__VAR_0__} · {__VAR_1__} B" },
   "msg.generateur_accords.titre": { fr: "── Progression d'accords ──", en: "── Chord progression ──" },
+  "msg.romains.alteres": { fr: "Chiffres altérés, hors de la gamme, non joués : {__VAR_0__}", en: "Altered numerals, outside the scale, not played: {__VAR_0__}" },
+  "msg.romains.inconnus": { fr: "Chiffres non lus, non joués : {__VAR_0__}", en: "Unread numerals, not played: {__VAR_0__}" },
   "msg.generateur_accords.duree": { fr: "{__VAR_0__} accords × {__VAR_1__}t · {__VAR_2__}s", en: "{__VAR_0__} chords × {__VAR_1__} beats · {__VAR_2__}s" },
   "msg.script_musical.titre": { fr: "── Script musical ──", en: "── Music script ──" },
   "msg.script_musical.genre": { fr: "Genre : {__VAR_0__}  ·  {__VAR_1__} BPM  ·  {__VAR_2__}  ·  {__VAR_3__}s", en: "Genre: {__VAR_0__}  ·  {__VAR_1__} BPM  ·  {__VAR_2__}  ·  {__VAR_3__}s" },

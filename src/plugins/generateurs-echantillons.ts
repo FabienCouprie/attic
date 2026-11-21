@@ -113,8 +113,8 @@ export const fiches: FicheAudio[] = ([
         type: "texte",
         defaut: "I-V-vi-IV",
         defautEn: "I-V-vi-IV",
-        doc: "Progression personnalisée en chiffres romains (ex. I-V-vi-IV, ii-V-I). Utilisée seulement si Genre = personnalisé.",
-        docEn: "Custom progression in Roman numerals (e.g. I-V-vi-IV, ii-V-I). Used only when Genre = Custom.",
+        doc: "Progression personnalisée en chiffres romains (ex. I-V-vi-IV, ii-V7-I), utilisée seulement si « Genre » vaut « personnalisé ». Chaque chiffre désigne un degré, et la gamme donne la qualité de son accord ; un 7 ajoute la septième de la gamme. Un chiffre altéré (bVII, #IV) sort de la gamme et n'est pas joué, comme un chiffre non lu ; le message les nomme.",
+        docEn: "Custom progression in Roman numerals (e.g. I-V-vi-IV, ii-V7-I), used only when « Genre » is « Custom ». Each numeral designates a degree, and the scale gives the quality of its chord; a 7 adds the scale's seventh. An altered numeral (bVII, #IV) lies outside the scale and is not played, like an unread numeral; the message names them.",
       },
       {
         nom: "Tempo",
@@ -360,7 +360,7 @@ export const fiches: FicheAudio[] = ([
         graine: ctx.paramNombre("Graine", 0),
       };
       ctx.onProgress(traduire("progress.g_n_ration_groove_box"));
-      const { midiBytes, midiAccords, midiBasse, midiMelodie, midiBatterie, progressionTexte, graineUtilisee } = genererGrooveBox(config);
+      const { midiBytes, midiAccords, midiBasse, midiMelodie, midiBatterie, progressionTexte, chiffresAlteres, chiffresInconnus, graineUtilisee } = genererGrooveBox(config);
       const volume = ctx.paramNombre("Volume", 80);
       const volumeBatterie = ctx.paramNombre("Volume batterie", 100);
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
@@ -511,8 +511,13 @@ export const fiches: FicheAudio[] = ([
       const styleDit = anglais ? (PATRONS.find((p) => p.id === config.styleRythme)?.en ?? config.styleRythme) : config.styleRythme;
       return {
         valeurs: [master, fichierBatterie, fichierAccords, fichierBasse, fichierMelodie],
-        message: traduire("msg.groove_box.resultat", config.cle, gammeDite, progressionTexte, config.tempo,
-          config.neurones, styleDit, graineUtilisee),
+        // LES CHIFFRES REFUSÉS SE NOMMENT : une progression personnalisée qui perd un « bVII » doit le
+        // dire, décision de Fabien du 2026-11-21.
+        message: [
+          traduire("msg.groove_box.resultat", config.cle, gammeDite, progressionTexte, config.tempo, config.neurones, styleDit, graineUtilisee),
+          ...(chiffresAlteres.length ? [traduire("msg.romains.alteres", chiffresAlteres.join(", "))] : []),
+          ...(chiffresInconnus.length ? [traduire("msg.romains.inconnus", chiffresInconnus.join(", "))] : []),
+        ].join("\n"),
       };
     },
   }),
