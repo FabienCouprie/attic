@@ -21,6 +21,21 @@ import {
 } from "../audio/courbe";
 import { enveloppe, genererSvgCourbe, mesurerCourbe } from "../audio/courbe-trace";
 
+/**
+ * Le nombre de pas par seconde qui rend une suite lisible : la « Fréquence » d'une courbe à pas,
+ * quand elle n'a pas été choisie. Elle vivait dans `core/reglages-lies.ts` jusqu'au 2026-11-21.
+ *
+ * DEUX, ET NON HUIT. Le premier essai posait huit pas par seconde, ce qui corrigeait bien le défaut
+ * de départ, cinq paliers sur dix secondes, mais en créait un autre : quatre-vingts marches tracées
+ * sur deux cents pixels donnent deux pixels et demi chacune, et l'aperçu devient une palissade où
+ * aucune structure ne se lit. À deux pas par seconde, la suite compte vingt paliers sur dix
+ * secondes, et sa signature se voit : des valeurs groupées dans le haut, coupées de chutes brusques
+ * vers le bas, ce qui est la forme de la suite logistique au voisinage de r = 3,9.
+ */
+export const FREQUENCE_PAS_PAR_SECONDE = 2;
+/** Un demi cycle par seconde : la « Fréquence » d'un oscillateur lent, défaut des formes périodiques. */
+export const FREQUENCE_CYCLES_PAR_SECONDE = 0.5;
+
 export const fiches: FicheAudio[] = ([
   fiche({
     id: "suiveur-caracteristique", nom: "Suiveur de caractéristique", nomEn: "Feature Follower",
@@ -99,7 +114,11 @@ export const fiches: FicheAudio[] = ([
       { nom: "Durée", nomEn: "Duration", type: "curseur", plage: [0.5, 120], pas: 0.5, defaut: 10, unite: "s",
         doc: "Durée de la courbe. Elle n'a pas à valoir celle du son : l'effet l'étire pour la couvrir, si bien qu'une rampe reste une rampe quelle que soit la longueur du son.",
         docEn: "Length of the curve. It need not match the sound's: the effect stretches it to cover it, so a ramp stays a ramp whatever the sound's length." },
-      { nom: "Fréquence", nomEn: "Frequency", type: "curseur", plage: [0.01, 20], pas: 0.01, defaut: 0.5, unite: "Hz",
+      // LES FORMES À PAS ONT LEUR CADENCE : la logistique et la marche aléatoire comptent des pas, et
+      // changer de forme pose celle qui convient, sans jamais réécrire une valeur choisie. Voir
+      // `core/reglages-lies.ts`, qui lit cette déclaration.
+      { nom: "Fréquence", nomEn: "Frequency", type: "curseur", plage: [0.01, 20], pas: 0.01, defaut: FREQUENCE_CYCLES_PAR_SECONDE, unite: "Hz",
+        defautSelon: { reglage: "Forme", valeurs: { logistique: FREQUENCE_PAS_PAR_SECONDE, aleatoire: FREQUENCE_PAS_PAR_SECONDE } },
         doc: "Cycles par seconde, pour les formes périodiques ; pour la logistique et l'aléatoire, nombre de pas par seconde. Changer de forme pose la cadence qui convient à la nouvelle : un demi cycle par seconde pour les formes périodiques, deux pas par seconde pour la logistique et l'aléatoire. Une valeur réglée à la main est conservée quand la forme change. Au-delà de quatre pas par seconde, les paliers deviennent trop étroits pour se distinguer dans le tracé. Sans effet quand « Forme » vaut « Rampe », « Logistique », une loi de probabilité ou un logarithme, que la courbe parcourt une seule fois sur la durée.",
         docEn: "Cycles per second for the periodic shapes; for the logistic and random ones, steps per second. Changing shape sets the rate that suits the new one: half a cycle per second for the periodic shapes, two steps per second for the logistic and random ones. A value set by hand is kept when the shape changes. Beyond four steps per second the plateaus become too narrow to tell apart in the trace. Has no effect when « Shape » is « Ramp », « Logistic », a probability law or a logarithm, which the curve traverses once over the duration." },
       { nom: "Centre", nomEn: "Centre", type: "curseur", plage: [0, 100], pas: 1, defaut: 50, unite: "%",

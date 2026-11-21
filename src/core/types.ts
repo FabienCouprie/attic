@@ -295,6 +295,21 @@ export interface ParametreDef {
    */
   modulationDe?: string;
   /**
+   * Le défaut de ce réglage dépend de la valeur d'un AUTRE réglage de la même fiche.
+   *
+   * POURQUOI LE DÉCLARER. Un réglage peut avoir deux sens selon un autre : la « Fréquence » d'une
+   * courbe compte des cycles pour un oscillateur et des pas pour une suite. Un seul défaut ne sert
+   * pas les deux, et la création d'un nœud recopie les défauts dans ses données : il faut agir quand
+   * le réglage nommé change. `core/reglages-lies.ts` lit cette déclaration, et le cœur n'a ainsi à
+   * connaître aucun composant.
+   *
+   * LA RÈGLE : quand `reglage` change, une valeur restée au défaut naturel de l'ancienne valeur prend
+   * celui de la nouvelle, et une valeur choisie n'est jamais réécrite. `valeurs` donne ce défaut pour
+   * certaines valeurs du réglage nommé, ses `optionIds` ; toute autre valeur garde `defaut`.
+   * `plugins/defaut-selon.test.ts` tient que chaque clé est un `optionId` de ce réglage.
+   */
+  defautSelon?: { reglage: string; valeurs: Readonly<Record<string, number>> };
+  /**
    * Le rang de l'entrée à laquelle ce réglage appartient. Il n'est affiché que si elle est branchée :
    * un nœud à huit pistes porte trente-deux réglages, dont ceux des pistes vides ne servent à rien.
    */
