@@ -708,5 +708,5 @@ nu quelque part. Cherchez-le.
 - `IMPACT.md` — pour chaque zone du dépôt, ce qu'une modification y touche, les gardes qui la tiennent et les épreuves à relancer
 - `src/core/cloisonnement.test.ts` — la preuve que deux domaines n'interfèrent pas
 - `ADDING-A-NODE.md` — ajouter un nœud dans le domaine audio existant
-- `AGENTS.md` — l'ordre de vérification, les règles de commit et les cinq contrats du dépôt
+- `AGENTS.md` — l'ordre de vérification, les règles de commit et les six contrats du dépôt
 - `ARCHITECTURE.md` — la feuille de route architecture : le diagnostic d'origine et ce qui en a été fait

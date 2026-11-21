@@ -8,6 +8,11 @@
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/contrat-heredoc.mjs\"",
             "timeout": 20
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/contrat-arbre.mjs\"",
+            "timeout": 20
           }
         ]
       }

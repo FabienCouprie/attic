@@ -52,7 +52,7 @@ pour empêcher.
   cohérentes qu'en un point de l'arbre : les régénérer avant de committer, et préférer un commit
   entier à plusieurs commits dont certains échoueraient à leurs propres gardes.
 
-## 3. Les cinq contrats
+## 3. Les six contrats
 
 Ils sont vérifiés automatiquement sous Claude Code, par les hooks déclarés dans
 `.claude/settings.json`. **Un autre harnais ne les déclenchera pas : ils s'appliquent quand même.**
@@ -132,6 +132,37 @@ git fetch origin && git rev-list --merges --parents HEAD..origin/master
 `git cherry-pick`, pousser cette branche et ouvrir une pull request pour elle. La même condition
 couvre la règle voisine : **une branche neuve après chaque fusion**, un commit ajouté sur une
 branche déjà fusionnée n'étant dans aucune pull request.
+
+### `scripts/contrat-arbre.mjs` — où une session a le droit de travailler
+
+**Une session n'ouvre d'arbre git ni ne travaille hors de ses propres dossiers**, sauf exception
+justifiée et déclarée. Ses dossiers sont le dossier des arbres de session du dépôt,
+`.claude/worktrees/` sous le checkout principal, et son bac à sable, le dossier temporaire propre à
+la session. Hors d'eux, l'application demande à Fabien d'approuver chaque écriture et chaque
+commande, et **ce coût ne se voit pas du côté de la session**. Une pièce neuve se fait dans l'arbre
+de la session, sur une branche neuve tirée de `origin/master` ; une épreuve jetable va dans le bac à
+sable.
+
+« Hors de `E:\attic` », quand un plan le demande, veut dire hors du checkout principal que plusieurs
+sessions partagent, et non hors des dossiers de session : un arbre sous `.claude/worktrees/` est
+l'un et l'autre. C'est la lecture contraire qui a fait naître ce contrat, le 2026-11-17.
+
+**Est refusé** : `git worktree add` vers un chemin hors de ces deux dossiers, lu comme git le lirait,
+après les `cd` et les `-C` de la ligne, en forme Git Bash `/e/…` comme en `E:\…` ; et tout chemin
+que le script ne sait pas lire, une substitution ou une variable inconnue.
+
+**L'exception** se dit d'abord à Fabien, puis se déclare sur la commande même, par un commentaire
+que Bash et PowerShell ignorent tous deux :
+
+```bash
+git worktree add --detach <chemin> <commit>  # exception-arbre: <raison>
+```
+
+La seule connue : `npm ci` en EBUSY dans un arbre de session, l'application Claude tenant l'`asar`
+de `node_modules/electron`. La vérification se fait alors dans un arbre détaché, ailleurs.
+
+**Ce qu'il ne voit pas** : `git clone` vers un dossier étranger, `git worktree move`, et toute
+écriture faite hors de la session par un autre chemin. La règle les couvre quand même.
 
 ## 4. La règle de sécurité pour l'oreille
 
