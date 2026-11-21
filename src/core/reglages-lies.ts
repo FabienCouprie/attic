@@ -15,68 +15,39 @@
 // l'utilisateur a choisi n'est JAMAIS réécrit. Seule une valeur restée au défaut naturel de
 // l'ancienne forme prend le défaut naturel de la nouvelle. Qui a mis 3 Hz garde 3 Hz.
 //
-// POURQUOI ICI, ET NON DANS L'INTERFACE. Un changement de réglage est appliqué à DEUX endroits dans
-// `App.tsx`. Une règle écrite dans l'interface y serait donc dupliquée, et une correction sur l'un
-// des deux ne profiterait pas à l'autre : c'est exactement la modification incomplète qu'on cherche
-// à rendre impossible. Elle est donc pure, testable, et appelée par les deux.
+// LA RÈGLE EST ICI, SON CONTENU SUR LA FICHE, depuis le 2026-11-21. Le cœur tenait la liaison
+// elle-même : l'identifiant de « Courbe », ses deux réglages et ses deux formes à pas. C'était une
+// règle d'un seul composant du domaine, écrite dans le cœur. Le réglage la déclare maintenant,
+// `defautSelon` (`core/types.ts`), et ce module la lit sur la fiche qu'on lui passe. Son seul
+// appelant est `ui/hooks/useRelanceApresReglage.ts`, par où passe tout changement de réglage.
+import type { ParametreDef } from "./types";
+
+/** Ce que la règle lit d'une fiche : ses réglages, leur défaut et ce que chacun déclare dépendre d'un autre. */
+export type FicheDeReglages = { parametres: readonly Pick<ParametreDef, "nom" | "defaut" | "defautSelon">[] } | undefined;
 
 /**
- * Le nombre de pas par seconde qui rend une suite lisible.
- *
- * DEUX, ET NON HUIT. Le premier essai posait huit pas par seconde, ce qui corrigeait bien le défaut
- * de départ, cinq paliers sur dix secondes, mais en créait un autre : quatre-vingts marches tracées
- * sur deux cents pixels donnent deux pixels et demi chacune, et l'aperçu devient une palissade où
- * aucune structure ne se lit. À deux pas par seconde, la suite compte vingt paliers sur dix
- * secondes, et sa signature se voit : des valeurs groupées dans le haut, coupées de chutes brusques
- * vers le bas, ce qui est la forme de la suite logistique au voisinage de r = 3,9.
- */
-export const FREQUENCE_PAS_PAR_SECONDE = 2;
-export const FREQUENCE_CYCLES_PAR_SECONDE = 0.5;
-
-/** Les formes du composant « Courbe » dont la fréquence compte des PAS et non des cycles. */
-const FORMES_A_PAS = new Set(["logistique", "aleatoire"]);
-
-const frequenceNaturelle = (forme: unknown): number =>
-  FORMES_A_PAS.has(String(forme)) ? FREQUENCE_PAS_PAR_SECONDE : FREQUENCE_CYCLES_PAR_SECONDE;
-
-/** Une liaison : changer `declencheur` sur `ficheId` ajuste `ajuste`. */
-interface Liaison {
-  ficheId: string;
-  declencheur: string;
-  ajuste: string;
-  /** La valeur naturelle de `ajuste` pour une valeur donnée du déclencheur. */
-  naturelle: (valeurDeclencheur: unknown) => number;
-}
-
-const LIAISONS: Liaison[] = [
-  {
-    ficheId: "generateur-courbe",
-    declencheur: "Forme",
-    ajuste: "Fréquence",
-    naturelle: frequenceNaturelle,
-  },
-];
-
-/**
- * Les réglages après un changement, liaisons appliquées.
+ * Les réglages après un changement, liaisons de la fiche appliquées.
  *
  * Rend un objet NEUF, jamais celui reçu. Sans liaison qui s'applique, il ne contient que le
  * changement demandé.
  */
 export function reglagesApresChangement(
-  ficheId: string,
+  fiche: FicheDeReglages,
   parametres: Readonly<Record<string, number | string>>,
   nom: string,
   valeur: number | string,
 ): Record<string, number | string> {
   const suite: Record<string, number | string> = { ...parametres, [nom]: valeur };
-  for (const l of LIAISONS) {
-    if (l.ficheId !== ficheId || l.declencheur !== nom) continue;
-    const avant = parametres[l.declencheur];
-    const actuelle = parametres[l.ajuste];
-    // Une valeur choisie n'est pas touchée : on ne remplace que le défaut naturel de l'ancienne forme.
-    if (typeof actuelle === "number" && actuelle !== l.naturelle(avant)) continue;
-    suite[l.ajuste] = l.naturelle(valeur);
+  for (const p of fiche?.parametres ?? []) {
+    const lie = p.defautSelon;
+    if (!lie || lie.reglage !== nom) continue;
+    // Une clé se lit sur l'objet déclaré lui-même : `constructor` ou `toString` ne sont pas des valeurs.
+    const naturelle = (v: unknown): number =>
+      (Object.hasOwn(lie.valeurs, String(v)) ? lie.valeurs[String(v)] : Number(p.defaut));
+    const actuelle = parametres[p.nom];
+    // Une valeur choisie n'est pas touchée : on ne remplace que le défaut naturel de l'ancienne valeur.
+    if (typeof actuelle === "number" && actuelle !== naturelle(parametres[nom])) continue;
+    suite[p.nom] = naturelle(valeur);
   }
   return suite;
 }

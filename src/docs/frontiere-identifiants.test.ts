@@ -98,13 +98,13 @@ const IDENTIFIANTS = new Set<string>([
  * UNE CHAÎNE ET UN FICHIER DEPUIS LA PIÈCE P3, le même jour. Les deux de `core/instrument-graphe.ts`
  * sont sorties par la troisième porte : la chose a quitté le cœur. Le dépliage de l'instrument vit
  * dans `audio/instrument-depliage.ts`, et le cœur n'en garde que la couture, `DepliageDuDomaine`.
+ *
+ * AUCUNE DEPUIS LA PIÈCE P4, le même jour. La dernière, `generateur-courbe` dans
+ * `core/reglages-lies.ts`, est sortie par la première porte : le réglage « Fréquence » déclare
+ * `defautSelon`, et la règle le lit sur la fiche. La table reste, vide : une dette neuve devrait y
+ * entrer avec sa raison, et le cas suivant la refuserait tant qu'elle n'y est pas.
  */
-const DETTES: Readonly<Record<string, { chaines: readonly string[]; raison: string }>> = {
-  "core/reglages-lies.ts": {
-    chaines: ["generateur-courbe"],
-    raison: "la liaison « Forme » → « Fréquence » est la règle d'un seul composant du domaine, « Courbe »",
-  },
-};
+const DETTES: Readonly<Record<string, { chaines: readonly string[]; raison: string }>> = {};
 
 /** Ce que le cœur nomme aujourd'hui, fichier par fichier : chaque chaîne qui vaut un identifiant du domaine. */
 function relever(): { fichiers: number; chaines: number; nommes: Map<string, Set<string>> } {

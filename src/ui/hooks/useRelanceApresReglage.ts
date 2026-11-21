@@ -94,7 +94,8 @@ export function useRelanceApresReglage({
   const changerReglage = useCallback((nid: string, nom: string, val: number | string) => {
     const noeud = noeudsRef.current.find((n) => n.id === nid);
     if (!noeud) return null;
-    const suite = reglagesApresChangement(String(noeud.data.ficheId), noeud.data.parametres, nom, val);
+    // LA LIAISON SE LIT SUR LA FICHE : un réglage peut déclarer que son défaut dépend d'un autre.
+    const suite = reglagesApresChangement(trouverDef(String(noeud.data.ficheId)), noeud.data.parametres, nom, val);
     setNodes((nds) => nds.map((n) => (n.id === nid ? { ...n, data: { ...n.data, parametres: suite } } : n)));
     perimerEtRelancer(nid);
     return suite;

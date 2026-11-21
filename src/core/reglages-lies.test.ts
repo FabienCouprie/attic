@@ -1,93 +1,70 @@
 // core/reglages-lies.test.ts — La liaison ajuste ce qui n'a pas été choisi, et rien d'autre.
 //
+// SUR UNE DÉCLARATION D'ESSAI depuis le 2026-11-21. Le cœur tenait la liaison de « Courbe » ; la fiche
+// la déclare maintenant (`defautSelon`), et ce test éprouve la règle seule, sur une fiche aux noms
+// neutres. Les neuf cas d'avant sont rejoués sur la vraie fiche dans `plugins/courbe-reglages-lies.test.ts`.
+//
 // CE QUI EST TENU :
-//   1. PASSER À LA LOGISTIQUE PORTE LA FRÉQUENCE À LA CADENCE DES PAS. À 0,5, la suite ne donnait
-//      que cinq paliers sur dix secondes, et se lisait comme un escalier arbitraire.
-//   5. LA CADENCE NATURELLE SE JUGE AU NOMBRE DE PALIERS, et la fourchette est tenue ici : c'est la
-//      seule façon d'éprouver une lisibilité, et elle a déjà servi à refuser une première valeur.
+//   1. PASSER À UNE VALEUR DÉCLARÉE PORTE LE DÉFAUT QU'ELLE DÉCLARE, et rien d'autre ne bouge.
 //   2. UNE VALEUR CHOISIE N'EST JAMAIS RÉÉCRITE. C'est la seule condition qui rend la liaison
 //      acceptable : qui a mis 3 Hz garde 3 Hz en changeant de forme.
-//   3. LE RETOUR À UN OSCILLATEUR REVIENT À 0,5, symétriquement.
-//   4. AUCUN AUTRE COMPOSANT, ET AUCUN AUTRE RÉGLAGE, n'est touché.
+//   3. LE RETOUR À UNE VALEUR NON DÉCLARÉE REVIENT AU DÉFAUT du réglage, symétriquement.
+//   4. AUCUNE AUTRE FICHE, ET AUCUN AUTRE RÉGLAGE, n'est touché.
 import { describe, expect, it } from "vitest";
 
-import { engendrer } from "../audio/courbe";
+import { reglagesApresChangement, type FicheDeReglages } from "./reglages-lies";
 
-import {
-  FREQUENCE_CYCLES_PAR_SECONDE, FREQUENCE_PAS_PAR_SECONDE, reglagesApresChangement,
-} from "./reglages-lies";
+/** Une fiche d'essai : « Vitesse » vaut 1 par défaut, et 4 quand « Mode » vaut `b` ou `c`. */
+const ESSAI: FicheDeReglages = {
+  parametres: [
+    { nom: "Mode", defaut: "a" },
+    { nom: "Vitesse", defaut: 1, defautSelon: { reglage: "Mode", valeurs: { b: 4, c: 4 } } },
+    { nom: "Autre", defaut: 7 },
+  ],
+};
+/** La même fiche sans déclaration : les mêmes noms, et aucune liaison. */
+const MUETTE: FicheDeReglages = { parametres: [{ nom: "Mode", defaut: "a" }, { nom: "Vitesse", defaut: 1 }] };
 
-const COURBE = "generateur-courbe";
-
-describe("la liaison forme / fréquence du composant Courbe", () => {
-  it("PASSER À LA LOGISTIQUE porte la fréquence aux pas par seconde", () => {
-    const avant = { Forme: "sinus", "Fréquence": FREQUENCE_CYCLES_PAR_SECONDE, Chaos: 3.9 };
-    const apres = reglagesApresChangement(COURBE, avant, "Forme", "logistique");
-    expect(apres.Forme).toBe("logistique");
-    expect(apres["Fréquence"]).toBe(FREQUENCE_PAS_PAR_SECONDE);
-    expect(apres.Chaos, "les autres réglages ne bougent pas").toBe(3.9);
-  });
-
-  it("la marche aléatoire suit la même règle : elle compte aussi des pas", () => {
-    const apres = reglagesApresChangement(
-      COURBE, { Forme: "sinus", "Fréquence": FREQUENCE_CYCLES_PAR_SECONDE }, "Forme", "aleatoire");
-    expect(apres["Fréquence"]).toBe(FREQUENCE_PAS_PAR_SECONDE);
+describe("la règle des réglages liés, lue sur la fiche", () => {
+  it("PASSER À UNE VALEUR DÉCLARÉE porte le défaut qu'elle déclare, et rien d'autre ne bouge", () => {
+    const apres = reglagesApresChangement(ESSAI, { Mode: "a", Vitesse: 1, Autre: 7 }, "Mode", "b");
+    expect(apres).toEqual({ Mode: "b", Vitesse: 4, Autre: 7 });
   });
 
   it("UNE VALEUR CHOISIE N'EST JAMAIS RÉÉCRITE", () => {
-    const avant = { Forme: "sinus", "Fréquence": 3 };
-    const apres = reglagesApresChangement(COURBE, avant, "Forme", "logistique");
-    expect(apres["Fréquence"], "qui a mis 3 Hz garde 3 Hz").toBe(3);
+    expect(reglagesApresChangement(ESSAI, { Mode: "a", Vitesse: 3 }, "Mode", "b").Vitesse).toBe(3);
+    expect(reglagesApresChangement(ESSAI, { Mode: "b", Vitesse: 3 }, "Mode", "a").Vitesse).toBe(3);
   });
 
-  it("LE RETOUR À UN OSCILLATEUR revient à des cycles par seconde", () => {
-    const avant = { Forme: "logistique", "Fréquence": FREQUENCE_PAS_PAR_SECONDE };
-    const apres = reglagesApresChangement(COURBE, avant, "Forme", "triangle");
-    expect(apres["Fréquence"]).toBe(FREQUENCE_CYCLES_PAR_SECONDE);
+  it("LE RETOUR À UNE VALEUR NON DÉCLARÉE revient au défaut du réglage", () => {
+    expect(reglagesApresChangement(ESSAI, { Mode: "c", Vitesse: 4 }, "Mode", "a").Vitesse).toBe(1);
   });
 
-  it("passer d'une forme à pas à une autre ne change rien", () => {
-    const avant = { Forme: "logistique", "Fréquence": FREQUENCE_PAS_PAR_SECONDE };
-    expect(reglagesApresChangement(COURBE, avant, "Forme", "aleatoire")["Fréquence"])
-      .toBe(FREQUENCE_PAS_PAR_SECONDE);
+  it("passer d'une valeur déclarée à une autre de même défaut ne change rien", () => {
+    expect(reglagesApresChangement(ESSAI, { Mode: "b", Vitesse: 4 }, "Mode", "c").Vitesse).toBe(4);
+  });
+
+  it("UN RÉGLAGE ABSENT prend le défaut naturel de la nouvelle valeur", () => {
+    expect(reglagesApresChangement(ESSAI, { Mode: "a" }, "Mode", "b").Vitesse).toBe(4);
   });
 
   it("changer un AUTRE réglage ne déclenche rien", () => {
-    const avant = { Forme: "logistique", "Fréquence": FREQUENCE_CYCLES_PAR_SECONDE };
-    const apres = reglagesApresChangement(COURBE, avant, "Chaos", 3.5);
-    expect(apres["Fréquence"], "seule la forme déclenche").toBe(FREQUENCE_CYCLES_PAR_SECONDE);
-    expect(apres.Chaos).toBe(3.5);
+    expect(reglagesApresChangement(ESSAI, { Mode: "b", Vitesse: 1 }, "Autre", 2)).toEqual({ Mode: "b", Vitesse: 1, Autre: 2 });
   });
 
-  it("UN AUTRE COMPOSANT n'est pas concerné, même avec les mêmes noms de réglages", () => {
-    const avant = { Forme: "sinus", "Fréquence": FREQUENCE_CYCLES_PAR_SECONDE };
-    const apres = reglagesApresChangement("oscillateur", avant, "Forme", "logistique");
-    expect(apres["Fréquence"]).toBe(FREQUENCE_CYCLES_PAR_SECONDE);
+  it("UNE FICHE QUI NE DÉCLARE RIEN n'est pas concernée, même avec les mêmes noms, ni une fiche absente", () => {
+    expect(reglagesApresChangement(MUETTE, { Mode: "a", Vitesse: 1 }, "Mode", "b")).toEqual({ Mode: "b", Vitesse: 1 });
+    expect(reglagesApresChangement(undefined, { Mode: "a", Vitesse: 1 }, "Mode", "b")).toEqual({ Mode: "b", Vitesse: 1 });
   });
 
-  // LA CADENCE NATURELLE SE JUGE AU NOMBRE DE PALIERS, et non au chiffre lui-même. Trop peu, la
-  // suite ressemble à un escalier arbitraire : à un demi pas par seconde, elle n'en comptait que
-  // cinq sur dix secondes. Trop, le tracé devient une palissade : à huit, quatre-vingts paliers sur
-  // deux cents pixels donnent deux pixels et demi chacun. Ce test tient la fourchette entre les deux.
-  it("À LA CADENCE NATURELLE, la suite compte assez de paliers pour se lire, et pas trop", () => {
-    const courbe = engendrer({
-      dureeSec: 10, forme: "logistique", frequence: FREQUENCE_PAS_PAR_SECONDE,
-      r: 3.9, graine: 1, cadence: 200,
-    });
-    let paliers = 0;
-    let precedent: number | null = null;
-    for (const v of courbe.valeurs) {
-      const arrondi = Math.round(v * 1e6) / 1e6;
-      if (arrondi !== precedent) { paliers++; precedent = arrondi; }
-    }
-    expect(paliers, "trop peu : la suite se lit comme un escalier arbitraire").toBeGreaterThanOrEqual(15);
-    expect(paliers, "trop : le tracé devient une palissade").toBeLessThanOrEqual(45);
+  it("UNE CLÉ DU PROTOTYPE N'EST PAS UNE VALEUR DÉCLARÉE : `constructor` garde le défaut", () => {
+    expect(reglagesApresChangement(ESSAI, { Mode: "b", Vitesse: 4 }, "Mode", "constructor").Vitesse).toBe(1);
   });
 
   it("l'objet reçu n'est jamais modifié", () => {
-    const avant = Object.freeze({ Forme: "sinus", "Fréquence": FREQUENCE_CYCLES_PAR_SECONDE });
-    const apres = reglagesApresChangement(COURBE, avant, "Forme", "logistique");
-    expect(avant["Fréquence"]).toBe(FREQUENCE_CYCLES_PAR_SECONDE);
+    const avant = Object.freeze({ Mode: "a", Vitesse: 1 });
+    const apres = reglagesApresChangement(ESSAI, avant, "Mode", "b");
+    expect(avant.Vitesse).toBe(1);
     expect(apres).not.toBe(avant);
   });
 });
