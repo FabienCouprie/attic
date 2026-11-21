@@ -3,7 +3,7 @@
 // DEUX NŒUDS, ET LE MOTEUR FAIT LE RESTE. « Note d'instrument » est la FRONTIÈRE : elle porte la note
 // que l'on joue, et tout ce qui est branché entre elle et « Fin d'instrument » est la recette.
 // Avant l'exécution, le moteur recopie cette recette une fois par note du clavier et injecte la note
-// dans chaque copie — voir `core/instrument-graphe.ts`, testé. Rien n'est transposé : chaque note est
+// dans chaque copie — voir `audio/instrument-depliage.ts`, testé. Rien n'est transposé : chaque note est
 // CALCULÉE à sa hauteur, ce qui est la différence entre un synthétiseur et un échantillonneur.
 //
 // POURQUOI TROIS SORTIES SUR LA NOTE. Une recette peut prendre la note de trois façons, et aucune ne
@@ -18,7 +18,7 @@ import { writeMidi } from "midi-file";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { NOTE_MAX, NOTE_MIN, apparierRendus, racinesInstrument } from "../core/instrument-graphe";
+import { NOTE_MAX, NOTE_MIN, apparierRendus, racinesInstrument } from "../audio/instrument-depliage";
 import { creerAleatoire } from "../core/hasard";
 import { banqueDepuisRendus, rendreNotes, type Banque } from "../audio/clavier-banque";
 import { LIBELLES_HERITES_FORMES, formeOndeDepuisTimbre } from "../audio/timbres";

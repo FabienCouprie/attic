@@ -19,9 +19,10 @@
 // compilateur. Les construire passe par les fabriques d'ici, nulle part ailleurs.
 //
 // NI L'UNE NI L'AUTRE N'EST LA FORME EXÉCUTÉE. Le moteur va plus loin : il recopie les nœuds d'une
-// boucle une fois par tour et ceux d'un instrument une fois par note. Personne ne reconnaîtrait son
+// boucle une fois par tour, et ce que le domaine lui demande de recopier, les nœuds d'un instrument
+// une fois par note par exemple. Personne ne reconnaîtrait son
 // graphe dans ces copies numérotées, et c'est pourquoi la documentation s'arrête au dépliage des
-// conteneurs. Voir `core/boucle-graphe.ts` et `core/instrument-graphe.ts`.
+// conteneurs. Voir `core/boucle-graphe.ts`, et `DepliageDuDomaine` dans `core/preparation-passe.ts`.
 
 import { aplatirGraphe, type AreteG, type MetaComposant, type NoeudG } from "./meta";
 

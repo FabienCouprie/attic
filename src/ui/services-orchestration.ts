@@ -23,9 +23,20 @@
 // CE QUE CELA DONNE POUR UN AUTRE DOMAINE. Il déclare ce qu'il veut de ce poteau ; les deux pilotes,
 // n'ayant rien à planifier, rendent « pas de plan » et le moteur exécute le graphe en UNE passe.
 // C'est le comportement utile, et il ne demande rien à personne.
+//
+// ET LES DÉPLIAGES DU DOMAINE, depuis le 2026-11-21 : les transformations que la préparation d'une
+// passe applique avant les boucles. L'instrument rejoué touche par touche en est une ; il vivait dans
+// le cœur, qui nommait ses deux fiches.
+import type { DepliageDuDomaine } from "../core/preparation-passe";
 
 /** Ce que le moteur pose et demande autour d'un run. */
 export interface ServicesOrchestration {
+  /**
+   * Les transformations du graphe que la préparation de chaque passe applique, dans l'ordre, après
+   * l'aplatissement des métas et avant les boucles. Voir `DepliageDuDomaine`.
+   */
+  depliages(): readonly DepliageDuDomaine[];
+
   /**
    * Le graphe qui va calculer, posé avant l'exécution du premier nœud.
    *
@@ -60,6 +71,7 @@ export interface ServicesOrchestration {
 }
 
 const NEUTRES: ServicesOrchestration = {
+  depliages: () => [],
   publierGraphe: () => {},
   lacherGraphe: () => {},
   publierExecution: () => {},

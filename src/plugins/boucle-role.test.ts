@@ -42,7 +42,7 @@ describe("une fin posée sous son ancien identifiant", () => {
     noeuds: [n("s", "oscillateur"), n("d", "boucle-graphe-debut", { Tours: 3 }), n("t", "amplificateur"), n("f", fin)],
     aretes: [a("e1", "s", "d"), a("e2", "d", "t"), a("e3", "t", "f")],
     prioriteDemandee: null, versLAval: false, trouverMeta: () => undefined,
-    trouverDef: (id) => registre.trouverDef(id), fluxCompatibles: registre.fluxCompatibles, t: (c) => c,
+    trouverDef: (id) => registre.trouverDef(id), fluxCompatibles: registre.fluxCompatibles, depliagesDuDomaine: [], t: (c) => c,
   });
 
   it("LE REGISTRE L'OUVRE SUR « FIN DE BOUCLE A »", () => {

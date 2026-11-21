@@ -70,7 +70,7 @@ const meta = (id: string, interne: NoeudG): MetaComposant => ({
 async function jouerSur(instantane: InstantaneDeGraphe): Promise<Map<string, unknown[]>> {
   const plan = preparerLaPasse({
     noeuds: instantane.noeuds as NoeudG[], aretes: instantane.aretes as AreteG[], prioriteDemandee: null, versLAval: false,
-    trouverMeta: metaDeLInstantane(instantane), trouverDef, fluxCompatibles: (s, c) => s === c, t: (cle) => cle,
+    trouverMeta: metaDeLInstantane(instantane), trouverDef, fluxCompatibles: (s, c) => s === c, depliagesDuDomaine: [], t: (cle) => cle,
   });
   const tables = creerTablesDePasse();
   const cache = new Map();

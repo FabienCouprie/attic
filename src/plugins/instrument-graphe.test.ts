@@ -1,6 +1,6 @@
 // plugins/instrument-graphe.test.ts — Ce que la fin d'instrument DIT quand tout ne va pas bien.
 //
-// Le dépliage est éprouvé dans `core/instrument-graphe.test.ts`, l'appariement des rendus aussi. Ce
+// Le dépliage est éprouvé dans `audio/instrument-depliage.test.ts`, l'appariement des rendus aussi. Ce
 // qui se joue ici est le MESSAGE, et ce n'est pas cosmétique : « des copies ont échoué, 1 rendu sur
 // 18 » envoie chercher un défaut dans la chaîne, alors que le même symptôme vient le plus souvent
 // d'un câblage — pas de « Note d'instrument » en amont, donc aucun dépliage. Les deux causes
@@ -8,7 +8,7 @@
 import { describe, expect, it } from "vitest";
 import { ctxDEssai } from "../core/contexte-essai";
 import { fiches } from "./instrument-graphe";
-import { racinesInstrument } from "../core/instrument-graphe";
+import { racinesInstrument } from "../audio/instrument-depliage";
 import type { Banque } from "../audio/clavier-banque";
 
 const fin = fiches.find((f) => f.id === "instrument-fin")!;

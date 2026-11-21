@@ -138,6 +138,28 @@ describe("une passe du moteur, dite au récepteur", () => {
     expect(vus, "une passe tombée avant de rien publier").toEqual(["lachee", "graphe lache"]);
   });
 
+  it("ELLE REMET À LA PRÉPARATION LES DÉPLIAGES QUE LE DOMAINE DÉCLARE, et exécute ce qu'ils rendent", async () => {
+    // L'INSTRUMENT DE L'AUDIO PASSE PAR LÀ depuis qu'il a quitté le cœur, le 2026-11-21 : voir
+    // `plugins/orchestration-domaine.ts`. Un moteur qui ne les remettrait pas jouerait la chaîne une
+    // seule fois, sans un mot.
+    const vus: string[][] = [];
+    configurerServicesOrchestration({
+      depliages: () => [{
+        libelle: "Essai",
+        deplier: (noeuds, aretes) => {
+          vus.push(noeuds.map((n) => n.id));
+          const copie = { id: "b-c", source: "b", target: "c", sourceHandle: "out:0", targetHandle: "in:0" } as AreteG;
+          return { noeuds: [...noeuds, noeud("c", "essai:double")], aretes: [...aretes, copie], origines: new Map([["c", "b"]]), problemes: [] };
+        },
+      }],
+    });
+    const p = passe();
+    await p.lancer(undefined, undefined, jeton(1));
+    expect(vus, "le dépliage reçoit le graphe de la passe, une fois").toEqual([["a", "b"]]);
+    const debut = p.dits[0] as Extract<EvenementDuMoteur<unknown>, { genre: "passeCommencee" }>;
+    expect(debut.ordre).toEqual(["a", "b", "c"]);
+  });
+
   it("UN GRAPHE VIDE NE DIT RIEN, et ne laisse pas de contrôleur", async () => {
     const p = passe({ graphe: () => ({ noeuds: [], aretes: [], metas: [] }) });
     await p.lancer();

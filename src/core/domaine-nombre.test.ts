@@ -128,7 +128,7 @@ async function executerGraphe(
   const trouverDef = (id: string) => registre.trouverDef(id) as unknown as PluginDef<unknown, unknown> | undefined;
   const plan = preparerLaPasse({
     noeuds, aretes, prioriteDemandee: null, versLAval: false,
-    trouverMeta: () => undefined, trouverDef, fluxCompatibles: registre.fluxCompatibles, t: (cle) => cle,
+    trouverMeta: () => undefined, trouverDef, fluxCompatibles: registre.fluxCompatibles, depliagesDuDomaine: [], t: (cle) => cle,
   });
   const tables = creerTablesDePasse();
   const cache = new Map<string, EntreeDeCache>();

@@ -2,7 +2,7 @@
 //
 // Sorti d'`ui/hooks/useExecutionGraphe.ts` le 2026-11-02, à l'identique (sortie 5 du plan
 // `work/plan-useExecutionGraphe-2026-11-01.md`). Aplatir les métas, publier le graphe à documenter,
-// déplier les instruments puis les boucles, nommer les conteneurs, choisir la priorité et le
+// appliquer les dépliages du domaine puis déplier les boucles, nommer les conteneurs, choisir la priorité et le
 // périmètre, ordonner, valider, relever les cycles, écarter les décoratifs : rien de tout cela ne
 // touche React ni un magasin. Ce que le moteur POSAIT en chemin — des statuts, des avertissements,
 // une trace — est rendu en listes, dans l'ordre où il les posait, et c'est lui qui les applique.
@@ -15,7 +15,6 @@ import { deplierBoucles, type RoleDeBoucle } from "./boucle-graphe";
 import { conteneurs, type Conteneurs } from "./conteneurs";
 import { grapheSansConteneurs, type GrapheSansConteneurs } from "./formes-graphe";
 import { noeudsEnCycle, ordreTopologique, perimetreCible, placerEnDernier } from "./graphe";
-import { deplierInstruments } from "./instrument-graphe";
 import { estBulle, estSubstitution } from "./bulles";
 import { aplatirGraphe, type AreteG, type MetaComposant, type NoeudG } from "./meta";
 import { validerGraphe } from "./validation";
@@ -26,6 +25,32 @@ type DefPourValidation = NonNullable<ReturnType<Parameters<typeof validerGraphe>
  * dernier, et son rôle dans une boucle de graphe, que le dépliage lit.
  */
 export type FicheDePreparation = (DefPourValidation & { executerEnDernier?: boolean } & RoleDeBoucle) | undefined;
+
+/**
+ * Une transformation du graphe que le domaine fournit, appliquée après l'aplatissement des métas et
+ * avant le dépliage des boucles.
+ *
+ * POURQUOI UNE COUTURE ET NON UN MÉCANISME DU CŒUR. Un domaine peut vouloir qu'un sous-graphe soit
+ * recopié avant d'exécuter, chaque copie réglée autrement : l'audio rejoue ainsi une recette à chaque
+ * hauteur d'un clavier (`audio/instrument-depliage.ts`). Ce que l'on recopie, et ce que chaque copie
+ * reçoit, ne regarde que lui ; le cœur sait seulement où la transformation passe, et ce qu'il fait de
+ * ce qu'elle rend. Les copies remontent au nœud d'origine par `origines`, comme celles d'une boucle.
+ *
+ * AVANT LES BOUCLES, pour qu'une chaîne recopiée puisse en contenir une : chaque copie en porte alors
+ * une, et le dépliage des boucles les traite comme autant de boucles indépendantes.
+ */
+export interface DepliageDuDomaine {
+  /** Le nom sous lequel ses problèmes s'écrivent dans la console : « [attic] <libellé> : <code> sur <nœud> ». */
+  libelle: string;
+  /** Rend le graphe transformé. Un graphe qu'elle ne concerne pas doit ressortir inchangé. */
+  deplier: (noeuds: NoeudG[], aretes: AreteG[]) => {
+    noeuds: NoeudG[];
+    aretes: AreteG[];
+    /** Copie → nœud d'origine, pour que les statuts et le cache remontent au nœud visible. */
+    origines: ReadonlyMap<string, string>;
+    problemes: readonly { noeudId: string; code: string }[];
+  };
+}
 
 export interface EntreesDePreparation {
   /** Les nœuds VISIBLES du canevas. */
@@ -39,6 +64,12 @@ export interface EntreesDePreparation {
   trouverMeta: (ficheId: string) => MetaComposant | undefined;
   trouverDef: (ficheId: string) => FicheDePreparation;
   fluxCompatibles: (sourceId: string, cibleId: string, sousTypeSource?: string, sousTypeCible?: string) => boolean;
+  /**
+   * Les transformations du domaine, appliquées dans l'ordre. OBLIGATOIRE, et vide pour un domaine qui
+   * n'en a pas : un appelant qui l'oublierait ferait tourner un graphe que le domaine voulait recopié,
+   * sans un mot.
+   */
+  depliagesDuDomaine: readonly DepliageDuDomaine[];
   /** La traduction, pour les statuts qui parlent : `boucle.depliee`, `erreur.cycle`. */
   t: (cle: string) => string;
 }
@@ -70,7 +101,7 @@ export interface PlanDePasse {
 }
 
 export function preparerLaPasse({
-  noeuds, aretes, prioriteDemandee, versLAval, trouverMeta, trouverDef, fluxCompatibles, t,
+  noeuds, aretes, prioriteDemandee, versLAval, trouverMeta, trouverDef, fluxCompatibles, depliagesDuDomaine, t,
 }: EntreesDePreparation): PlanDePasse {
   const statuts: StatutAPoser[] = [];
   const avertissements: string[] = [];
@@ -96,22 +127,21 @@ export function preparerLaPasse({
   for (const id of aDocumenter.conteneursRetires) {
     avertissements.push(`[attic] Documentation : conteneur non dépliable retiré (${id})`);
   }
-  // Puis DÉPLIE les instruments : tout ce qui est branché entre « Note d'instrument » et
-  // « Fin d'instrument » est recopié une fois PAR NOTE du clavier, la note étant injectée dans
-  // chaque copie. C'est ainsi qu'une recette devient un instrument : rien n'est transposé, chaque
-  // note est calculée à sa hauteur. Avant le dépliage des boucles, de sorte qu'une chaîne
-  // d'instrument puisse elle-même contenir une boucle — chaque copie en porte alors une, et le
-  // dépliage suivant les traite comme autant de boucles indépendantes.
-  // Voir `core/instrument-graphe.ts`, testé.
-  const instruments = deplierInstruments(plat.noeuds, plat.aretes);
-  for (const [copie, origine] of instruments.origines) {
-    plat.expansions.set(copie, plat.expansions.get(origine) ?? origine);
+  // Puis APPLIQUE LES DÉPLIAGES DU DOMAINE, dans l'ordre où il les donne : l'audio y recopie la
+  // chaîne d'un instrument une fois par note du clavier. Avant le dépliage des boucles, de sorte
+  // qu'une chaîne recopiée puisse elle-même contenir une boucle — chaque copie en porte alors une, et
+  // le dépliage suivant les traite comme autant de boucles indépendantes. Voir `DepliageDuDomaine`.
+  for (const depliage of depliagesDuDomaine) {
+    const r = depliage.deplier(plat.noeuds, plat.aretes);
+    for (const [copie, origine] of r.origines) {
+      plat.expansions.set(copie, plat.expansions.get(origine) ?? origine);
+    }
+    for (const p of r.problemes) {
+      avertissements.push(`[attic] ${depliage.libelle} : ${p.code} sur ${p.noeudId}`);
+    }
+    plat.noeuds = r.noeuds;
+    plat.aretes = r.aretes;
   }
-  for (const p of instruments.problemes) {
-    avertissements.push(`[attic] Instrument de graphe : ${p.code} sur ${p.noeudId}`);
-  }
-  plat.noeuds = instruments.noeuds;
-  plat.aretes = instruments.aretes;
 
   // Puis DÉPLIE les boucles de graphe : une boucle est un cycle, et le moteur n'exécute
   // que des graphes acycliques. Les nœuds compris entre « Début de boucle » et « Fin de

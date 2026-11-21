@@ -151,7 +151,9 @@ composants surveillés (`tests-e2e/empreintes.json`).
   `tests-e2e/conteneurs-dans-application.spec.ts`, `tests-e2e/boucle-dans-lot-dans-application.spec.ts`,
   `tests-e2e/boucle-reprise-dans-application.spec.ts`, `tests-e2e/boucle-collection.spec.ts`,
   `tests-e2e/lot-verif.spec.ts` et `tests-e2e/zones-dans-une-boucle-dans-application.spec.ts`.
-  Pour le dépliage d'une boucle de graphe et celui de l'instrument (`src/core/instrument-graphe.ts`),
+  Pour le dépliage d'une boucle de graphe et celui de l'instrument (`src/audio/instrument-depliage.ts`,
+  que la préparation reçoit du domaine par `DepliageDuDomaine` ; ses cas sont dans
+  `src/audio/instrument-depliage.test.ts` et `src/plugins/instrument-depliage-passe.test.ts`),
   `EXEMPLE=un-echo-en-boucle-et-un-instrument` sur `npm run test:empreintes-exemples` et sur
   `npm run test:journal-de-passe` : c'est le seul exemple surveillé qui les porte, et les deux gardes
   y ont vu rouge des tours qui ne se chaînent plus et une note qui n'est plus posée dans ses copies.
@@ -184,7 +186,7 @@ composants surveillés (`tests-e2e/empreintes.json`).
 - **Ce qui le tient** : `src/docs/frontiere-domaine.test.ts` (le cœur n'importe ni ne nomme rien du
   domaine, tout ce qu'il importe se résout dans `src/core/`, les poteaux n'importent rien du domaine,
   et aucun exécuteur neuf ne lit l'interface), `src/docs/frontiere-identifiants.test.ts` (aucune
-  chaîne neuve du cœur ne vaut un identifiant de fiche, trois dettes épinglées), `src/docs/composition.test.ts` (la racine de
+  chaîne neuve du cœur ne vaut un identifiant de fiche, une dette épinglée), `src/docs/composition.test.ts` (la racine de
   composition est le premier import de `src/main.tsx`), `src/core/cloisonnement.test.ts` et
   `src/core/domaine-nombre.test.ts` (un second domaine, par le vrai moteur).
 

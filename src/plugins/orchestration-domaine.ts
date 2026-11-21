@@ -8,12 +8,25 @@
 
 import { fichiersAudio, FICHE_LOT_DEBUT } from "./lotGlobal";
 import { lacherExecutionCourante, lacherGrapheCourant, publierGrapheCourant, publierExecutionCourante } from "./grapheGlobal";
+import { deplierInstruments } from "../audio/instrument-depliage";
+import type { DepliageDuDomaine } from "../core/preparation-passe";
 import type { ServicesOrchestration } from "../ui/services-orchestration";
 
 /** Le paramètre où un début de boucle collection porte son dossier. */
 const PARAMETRE_DOSSIER = "Dossier";
 
+/**
+ * L'INSTRUMENT REJOUÉ TOUCHE PAR TOUCHE : la chaîne entre « Note d'instrument » et « Fin
+ * d'instrument », recopiée une fois par note du clavier. Le libellé est celui sous lequel la console
+ * écrivait ses problèmes quand le cœur le dépliait lui-même. Voir `audio/instrument-depliage.ts`.
+ */
+const DEPLIAGES_AUDIO: readonly DepliageDuDomaine[] = [
+  { libelle: "Instrument de graphe", deplier: deplierInstruments },
+];
+
 export const ORCHESTRATION_AUDIO: ServicesOrchestration = {
+  depliages: () => DEPLIAGES_AUDIO,
+
   publierGraphe: (graphe) => { publierGrapheCourant(graphe as never); },
   lacherGraphe: () => { lacherGrapheCourant(); },
   publierExecution: (execution) => { publierExecutionCourante(execution as never); },
