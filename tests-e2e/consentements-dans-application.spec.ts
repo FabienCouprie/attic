@@ -8,6 +8,10 @@
 // dit que le gestionnaire POSE la question, ni qu'un refus ARRÊTE vraiment. Entre eux il y a le
 // pont, un canal et un gestionnaire, et c'est là qu'une boîte oubliée passerait inaperçue.
 //
+// L'IMPORT D'UN COMPOSANT SE FAIT EN DEUX TEMPS depuis le 2026-11-20 : `importerNodeZip` montre et
+// fait confirmer sans rien écrire, et `deplierNodeZip` déplie l'archive confirmée, par son jeton, une
+// fois que le registre de la fenêtre a accepté le nœud. Voir `electron/zips-confirmes.cjs`.
+//
 // UNE BOÎTE NATIVE NE SE CLIQUE PAS. On remplace donc `dialog.showMessageBox` dans le processus
 // principal par un témoin qui note ce qu'on lui montre et rend la réponse choisie par le cas. C'est
 // le même objet que `main.cjs` appelle : la substitution se voit du gestionnaire.
@@ -102,13 +106,19 @@ test.describe("les consentements, dans l'application qui tourne", () => {
       zip.addFile("executer.js", Buffer.from(code));
       const cheminZip = join(maison, "essai.zip");
       zip.writeZip(cheminZip);
+      type Pont = {
+        importerNodeZip: (s: string) => Promise<Record<string, unknown>>;
+        deplierNodeZip: (j: unknown) => Promise<Record<string, unknown>>;
+      };
       const installer = () => page.evaluate(async (p) =>
-        (globalThis as unknown as { api: { importerNodeZip: (s: string) => Promise<Record<string, unknown>> } }).api.importerNodeZip(p),
-      cheminZip);
+        (globalThis as unknown as { api: Pont }).api.importerNodeZip(p), cheminZip);
+      const deplier = (jeton: unknown) => page.evaluate(async (j) =>
+        (globalThis as unknown as { api: Pont }).api.deplierNodeZip(j), jeton);
       const dossierDuNoeud = join(maison, ".attic", "nodes", "attic-essai-consent");
 
       const annule = await installer();
       expect(annule.annule, "l'import refusé n'a pas été annulé").toBe(true);
+      expect(annule.jeton, "un import refusé a rendu de quoi déplier").toBeUndefined();
       expect(existsSync(dossierDuNoeud), "un import refusé a déplié l'archive").toBe(false);
       vues = await boites();
       expect(vues).toHaveLength(3);
@@ -117,11 +127,23 @@ test.describe("les consentements, dans l'application qui tourne", () => {
       expect(/Réglages : Gain|Settings: Gain/.test(vues[2].detail), "la boîte ne nomme pas les réglages").toBe(true);
       expect(vues[2].detail).toContain(createHash("sha256").update(code, "utf8").digest("hex"));
 
+      // ── 5. L'import accepté ne déplie rien : le registre, dans la fenêtre, décide d'abord ──
       await repondre(0);
       const installe = await installer();
       expect(installe.ok, `l'import accepté a échoué : ${String(installe.erreur ?? "")}`).toBe(true);
       expect(installe.empreinte).toBe(createHash("sha256").update(code, "utf8").digest("hex"));
-      expect(existsSync(dossierDuNoeud), "l'import accepté n'a rien déplié").toBe(true);
+      expect(installe.executerCode, "le code se lit dans l'archive confirmée, sans la déplier").toBe(code);
+      expect(existsSync(dossierDuNoeud), "l'import a déplié l'archive avant que le registre ne décide").toBe(false);
+
+      // ── 6. Un jeton inventé ne déplie rien ; le bon déplie, une seule fois ──
+      const invente = await deplier("00000000-0000-0000-0000-000000000000");
+      expect(invente.ok, "un jeton inventé a déplié une archive").toBe(false);
+      expect(existsSync(dossierDuNoeud)).toBe(false);
+      const deplie = await deplier(installe.jeton);
+      expect(deplie.ok, `le dépliage a échoué : ${String(deplie.erreur ?? "")}`).toBe(true);
+      expect(existsSync(join(dossierDuNoeud, "executer.js")), "le dépliage n'a rien écrit").toBe(true);
+      const encore2 = await deplier(installe.jeton);
+      expect(encore2.ok, "un jeton a servi deux fois").toBe(false);
     } finally {
       await app.close();
     }

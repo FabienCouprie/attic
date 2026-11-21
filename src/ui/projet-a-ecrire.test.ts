@@ -188,7 +188,11 @@ describe("ce qu'un projet écrit", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-11-08T12:00:00.000Z"));
-    configurerRegistreMeta(creerRegistre<unknown, unknown>());
+    // LE REGISTRE CONNAÎT LE TYPE DE LEURS PORTS. Sans lui, il refuse ces métas comme invalides, et
+    // le cas ne tenait que parce qu'`enregistrerMeta` ignorait ce refus.
+    const r = creerRegistre<unknown, unknown>();
+    r.enregistrerTypeFlux({ id: "audio", couleur: "#888", libelle: "Audio" });
+    configurerRegistreMeta(r);
     // Un méta employé qui en emploie un autre, et un méta que rien n'emploie.
     enregistrerMeta(meta("meta-dedans", "oscillateur"));
     enregistrerMeta(meta("meta-dehors", "meta-dedans"));

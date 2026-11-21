@@ -65,7 +65,7 @@ class Memoire {
 
 describe("une clé par méta", () => {
   const FICHES = new Set(["gain", "filtre"]);
-  configurerRegistreMeta({ enregistrer: () => {}, desenregistrer: () => {} } as never);
+  configurerRegistreMeta({ enregistrer: () => ({ inscrite: true }), desenregistrer: () => {} } as never);
   configurerRegistreUI({ trouverDef: (id: string) => (FICHES.has(id) || !!trouverMeta(id)) ? ({ id } as never) : undefined } as never);
 
   beforeEach(() => { for (const m of tousLesMetas()) supprimerMeta(m.id); });
@@ -143,7 +143,7 @@ describe("une clé par méta", () => {
 
 describe("ce qu'une autre fenêtre écrit", () => {
   const FICHES = new Set(["gain"]);
-  configurerRegistreMeta({ enregistrer: () => {}, desenregistrer: () => {} } as never);
+  configurerRegistreMeta({ enregistrer: () => ({ inscrite: true }), desenregistrer: () => {} } as never);
   configurerRegistreUI({ trouverDef: (id: string) => (FICHES.has(id) || !!trouverMeta(id)) ? ({ id } as never) : undefined } as never);
   const jamais = () => false;
 

@@ -134,7 +134,7 @@ export function installerMetasExemples(): void {
       }
       continue;
     }
-    enregistrerMeta(meta);
-    console.log(`[attic] Méta exemple « ${meta.nom} » installé`);
+    // « INSTALLÉ » NE SE DIT QUE DE CE QUE LE REGISTRE A INSCRIT ; le refus, lui, est dit par le registre.
+    if (enregistrerMeta(meta).inscrite) console.log(`[attic] Méta exemple « ${meta.nom} » installé`);
   }
 }

@@ -72,6 +72,7 @@ const {
   accorderRacine, accorderRacineDuFichier, memoriserLesAccords, declarerRacinesDuProprietaire, racinesStrictes,
 } = require("./capacites-chemins.cjs");
 const { extraireEntrees, dossierNode } = require("./extraire-node-zip.cjs");
+const { creerZipsConfirmes } = require("./zips-confirmes.cjs");
 const { installerIpcMaj } = require("./ipc-maj.cjs");
 const { installerIpcScripts } = require("./ipc-scripts.cjs");
 const { installerIpcFichiers } = require("./ipc-fichiers.cjs");
@@ -421,8 +422,15 @@ ipcMain.handle("node:exporter-zip", async (_event, { manifest, executerCode, not
   }
 });
 
-// --- IPC : Importer un node depuis un .zip ---
-// Décompresse dans ~/.attic/nodes/{id}/ et renvoie le contenu des fichiers
+// --- IPC : Importer un node depuis un .zip, en deux temps ---
+// `node:importer-zip` lit l'archive, la fait confirmer et rend son contenu SANS RIEN ÉCRIRE ; la
+// fenêtre demande au registre, puis `node:deplier-zip` déplie l'archive confirmée dans
+// ~/.attic/nodes/{id}/. Voir `electron/zips-confirmes.cjs` pour la raison.
+const zipsConfirmes = creerZipsConfirmes();
+
+/** Lit un fichier texte de l'archive, ou `null` s'il n'y est pas. */
+const texteDuZip = (zip, nom) => { const e = zip.getEntry(nom); return e ? e.getData().toString("utf-8") : null; };
+
 ipcMain.handle("node:importer-zip", async (event, zipPath) => {
   try {
     const AdmZip = require("adm-zip");
@@ -431,6 +439,11 @@ ipcMain.handle("node:importer-zip", async (event, zipPath) => {
     if (!manifestEntry) return { ok: false, erreur: "manifest.json introuvable dans le zip." };
     const manifest = JSON.parse(manifestEntry.getData().toString("utf-8"));
     if (!manifest.id || !manifest.nom) return { ok: false, erreur: "manifest.json invalide (id/nom manquant)." };
+    // L'IDENTIFIANT EST VALIDÉ AVANT LA BOÎTE : il sert plus loin à construire un chemin, et un
+    // identifiant qui ne pourra pas se déplier ne doit pas être confirmé pour rien.
+    if (!dossierNode(RACINE_NODES(), manifest.id)) {
+      return { ok: false, erreur: `manifest.json invalide : identifiant « ${manifest.id} » refusé.` };
+    }
 
     // ON MONTRE CE QUI VA S'INSTALLER, AVANT D'EXTRAIRE UNE SEULE ENTRÉE. Le réglage « Exécution »
     // du Gestionnaire disait l'intention ; rien ne nommait le composant qu'on autorisait. La
@@ -447,13 +460,41 @@ ipcMain.handle("node:importer-zip", async (event, zipPath) => {
     const { response } = fenetre ? await dialog.showMessageBox(fenetre, options) : await dialog.showMessageBox(options);
     if (response !== 0) return { ok: false, annule: true, erreur: "Installation annulée." };
 
+    // RIEN N'EST DÉPLIÉ ICI : le registre n'a pas encore parlé. Le contenu se lit dans l'archive en
+    // mémoire, celle-là même que la boîte a résumée, et elle est gardée pour `node:deplier-zip`.
+    const notice = texteDuZip(zip, "notice.json");
+    const dependances = texteDuZip(zip, "dependencies.json");
+    return {
+      ok: true,
+      manifest,
+      empreinte: resume.empreinte,
+      executerCode: texteDuZip(zip, "executer.js") || "",
+      notice: notice ? JSON.parse(notice) : null,
+      dependencies: dependances ? JSON.parse(dependances).dependencies : [],
+      jeton: zipsConfirmes.retenir(zip, manifest.id),
+    };
+  } catch (err) {
+    console.error(`[attic] node:importer-zip ECHEC: ${err?.message || err}`);
+    return { ok: false, erreur: String(err?.message || err) };
+  }
+});
+
+// --- IPC : Déplier l'archive qu'un `node:importer-zip` a fait confirmer ---
+// La fenêtre ne l'appelle qu'une fois le node accepté par le registre. Un jeton inconnu, ou déjà
+// servi, ne déplie rien : sans lui, le rendu pourrait faire écrire une archive que personne n'a vue.
+ipcMain.handle("node:deplier-zip", async (_event, jeton) => {
+  try {
+    const confirme = zipsConfirmes.reprendre(jeton);
+    if (!confirme) return { ok: false, erreur: "Aucune archive confirmée ne correspond à cette demande." };
+    const { zip, id } = confirme;
+
     // Répertoire d'installation. `manifest.id` vient du .zip, donc de
     // l'extérieur, et sert à construire un chemin : il est validé avant, sans
     // quoi « ../../x » sortirait de l'arborescence des nœuds — et la protection
     // Zip Slip plus bas, qui se mesure par rapport à CE dossier, validerait
     // alors tout ce qu'on y écrit.
-    const nodesDir = dossierNode(RACINE_NODES(), manifest.id);
-    if (!nodesDir) return { ok: false, erreur: `manifest.json invalide : identifiant « ${manifest.id} » refusé.` };
+    const nodesDir = dossierNode(RACINE_NODES(), id);
+    if (!nodesDir) return { ok: false, erreur: `manifest.json invalide : identifiant « ${id} » refusé.` };
     if (!fs.existsSync(nodesDir)) fs.mkdirSync(nodesDir, { recursive: true });
 
     // Extraire tous les fichiers. La boucle vit dans extraire-node-zip.cjs :
@@ -461,26 +502,17 @@ ipcMain.handle("node:importer-zip", async (event, zipPath) => {
     // le try/catch de ce gestionnaire masquait en un simple { ok: false } —
     // l'import de nœud n'a donc jamais fonctionné dans l'application packagée.
     // La sortir de main.cjs la rend testable, elle et sa protection Zip Slip.
-    const { fichiers, ignorees } = extraireEntrees(zip.getEntries(), nodesDir);
+    const { ignorees } = extraireEntrees(zip.getEntries(), nodesDir);
     for (const nom of ignorees) {
-      console.warn(`[attic] node:importer-zip entrée ignorée (zip slip): ${nom}`);
+      console.warn(`[attic] node:deplier-zip entrée ignorée (zip slip): ${nom}`);
     }
 
     // Chemin des assets
     const assetsPath = path.join(nodesDir, "assets");
     const hasAssets = fs.existsSync(assetsPath) && fs.readdirSync(assetsPath).length > 0;
-
-    return {
-      ok: true,
-      manifest,
-      empreinte: resume.empreinte,
-      executerCode: fichiers["executer.js"] || "",
-      notice: fichiers["notice.json"] ? JSON.parse(fichiers["notice.json"]) : null,
-      dependencies: fichiers["dependencies.json"] ? JSON.parse(fichiers["dependencies.json"]).dependencies : [],
-      assetsDir: hasAssets ? assetsPath : null,
-    };
+    return { ok: true, assetsDir: hasAssets ? assetsPath : null };
   } catch (err) {
-    console.error(`[attic] node:importer-zip ECHEC: ${err?.message || err}`);
+    console.error(`[attic] node:deplier-zip ECHEC: ${err?.message || err}`);
     return { ok: false, erreur: String(err?.message || err) };
   }
 });

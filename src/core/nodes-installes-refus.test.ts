@@ -19,7 +19,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  PREFIXE_NODE_INSTALLE, appliquerNodeInstalleDistant, chargerNodesInstalles, configurerRegistreNodes, installerNode,
+  PREFIXE_NODE_INSTALLE, appliquerNodeInstalleDistant, chargerNodesInstalles, configurerRegistreNodes, examinerNode,
+  installerNode,
 } from "./nodes-installes";
 import { creerRegistre } from "./registre";
 
@@ -90,7 +91,19 @@ describe("un nœud que le registre refuse", () => {
     const rendu = installerNode(recu("le-mien", "type-inconnu"));
     expect(rendu.inscrite).toBe(false);
     expect(rendu.inscrite === false && rendu.raison).toBe("invalide");
+    // LA FAUTE VOYAGE PAR SA FORME, pour que l'interface la dise dans la langue de la personne.
+    expect(rendu.inscrite === false && rendu.raison === "invalide" && rendu.fautes)
+      .toEqual([{ code: "type-inconnu", port: "Texte", type: "type-inconnu" }]);
     expect(localStorage.getItem(PREFIXE_NODE_INSTALLE + "le-mien"), "la version refusée n'écrase pas celle qui tourne").toBe(gardee);
+  });
+
+  it("EXAMINER DIT CE QU'INSTALLER FERAIT, SANS RIEN INSCRIRE NI GARDER : l'import décide avant de déplier", () => {
+    const r = registreDuDomaine();
+    for (const { id, attendu } of REFUS) expect(examinerNode(recu(id)), id).toEqual(attendu);
+    expect(examinerNode(recu("pas-encore"))).toEqual({ inscrite: true });
+    expect(r.trouverDef("pas-encore"), "rien n'est inscrit").toBeUndefined();
+    expect(localStorage.getItem(PREFIXE_NODE_INSTALLE + "pas-encore"), "ni gardé").toBeNull();
+    expect(vi.mocked(console.error), "ni crié : seul `enregistrer` dit un refus à la console").not.toHaveBeenCalled();
   });
 
   it("ET UN NŒUD ACCEPTÉ S'INSTALLE TOUJOURS : inscrit, annoncé et gardé", () => {
@@ -102,12 +115,25 @@ describe("un nœud que le registre refuse", () => {
     expect(r.trouverDef("mon-noeud")?.nom).toBe("reçu mon-noeud");
   });
 
-  it("AU DÉMARRAGE, un refusé gardé autrefois n'est pas compté ; sa clé reste, rien n'efface un fichier de la personne", () => {
+  it("AU DÉMARRAGE, un refusé pour son identifiant, gardé autrefois, n'est pas compté et sort du stockage", () => {
+    // IL NE S'INSCRIRA JAMAIS, et sa clé ne servait qu'à redire le même refus à chaque démarrage :
+    // l'application n'offre aucun moyen de désinstaller un nœud, personne d'autre ne l'aurait retirée.
     registreDuDomaine();
     for (const { id } of REFUS) localStorage.setItem(PREFIXE_NODE_INSTALLE + id, JSON.stringify(recu(id)));
     expect(chargerNodesInstalles(), "aucun des deux n'est inscrit").toBe(0);
     expect(annonces()).toEqual([]);
-    for (const { id } of REFUS) expect(localStorage.getItem(PREFIXE_NODE_INSTALLE + id)).not.toBeNull();
+    for (const { id } of REFUS) {
+      expect(localStorage.getItem(PREFIXE_NODE_INSTALLE + id), `la clé de « ${id} » ne revient plus`).toBeNull();
+      expect(vi.mocked(console.warn).mock.calls.map((c) => String(c[0])).some((m) => m.includes(`« ${id} » retiré du stockage`)),
+        "et le retrait se dit").toBe(true);
+    }
+  });
+
+  it("AU DÉMARRAGE, un refusé pour son manifeste garde sa clé : il peut redevenir valide", () => {
+    registreDuDomaine();
+    localStorage.setItem(PREFIXE_NODE_INSTALLE + "le-sien", JSON.stringify(recu("le-sien", "type-inconnu")));
+    expect(chargerNodesInstalles()).toBe(0);
+    expect(localStorage.getItem(PREFIXE_NODE_INSTALLE + "le-sien")).not.toBeNull();
   });
 
   it("CE QU'UNE AUTRE FENÊTRE ÉCRIT SOUS UN IDENTIFIANT REFUSÉ NE CHANGE PAS LE CATALOGUE D'ICI", () => {
