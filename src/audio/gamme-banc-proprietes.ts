@@ -130,8 +130,11 @@ const FENETRE_ACCORD = 0.06;
  */
 export function accordsSurLesDegres(h: readonly HauteurRendue[], degres: readonly number[], tonique: number): { accords: number; fautifs: AccordFautif[]; nommes: Map<string, number> } {
   const groupes: HauteurRendue[][] = [];
+  // UNE NOTE REJOINT UN ACCORD QUI SONNE ENCORE : partie dans la fenêtre de sa première note, et avant
+  // que celle-ci s'éteigne. Sans la seconde condition, la dernière voix d'un accord roulé et la basse de
+  // l'accord suivant, à 50 ms d'écart, faisaient un groupe, et P4 prenait la quinte pour fondamentale.
   for (const x of h) {
-    const g = groupes.find((y) => Math.abs(y[0].debut - x.debut) <= FENETRE_ACCORD);
+    const g = groupes.find((y) => Math.abs(y[0].debut - x.debut) <= FENETRE_ACCORD && x.debut < y[0].fin);
     if (g) g.push(x); else groupes.push([x]);
   }
   const fautifs: AccordFautif[] = [];
