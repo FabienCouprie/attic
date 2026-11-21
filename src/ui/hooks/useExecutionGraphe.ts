@@ -29,7 +29,8 @@ import { noeudPrioritaire } from "../priorite";
 import { creerRecepteurDuMoteur, type LiaisonDuRecepteur } from "../recepteur-moteur";
 import { creerMoteur, type PerimetreCible } from "../moteur";
 
-import { direValeursInconnues, useI18n, valeurCanoniqueChoix } from "../../i18n";
+import { useI18n, valeurCanoniqueChoix } from "../../i18n";
+import { direValeursInconnues } from "../../audio/valeurs-inconnues";
 import { registreUI } from "../registre-actif";
 
 const trouverDef = (id: string) => registreUI().trouverDef(id);

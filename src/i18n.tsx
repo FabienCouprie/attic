@@ -1898,23 +1898,6 @@ export function uniteParametre(p: Pick<ParametreDef, "unite" | "uniteEn">, lang:
 }
 
 /**
- * La ligne qui dit, dans la langue de l'interface, chaque valeur de choix qu'un nœud a lue sans
- * qu'aucune option ne la reconnaisse, et le défaut déclaré qui l'a remplacée. Le moteur l'ajoute au
- * message du nœud (`annoterValeursInconnues`, `core/contexte-de-passe.ts`).
- */
-export function direValeursInconnues(
-  inconnues: readonly { parametre: Pick<ParametreDef, "nom" | "nomEn" | "options" | "optionsEn" | "optionIds">; valeur: string; repli: string | number }[],
-): string {
-  const en = langueCourante() === "en";
-  return inconnues.map(({ parametre: p, valeur, repli }) => {
-    const ids = p.optionIds?.length ? p.optionIds : p.options ?? [];
-    const rang = ids.indexOf(String(repli));
-    const libelle = (rang >= 0 ? (en ? p.optionsEn?.[rang] : p.options?.[rang]) : undefined) ?? String(repli);
-    return traduire("msg.choix.inconnu", en ? p.nomEn ?? p.nom : p.nom, valeur, libelle);
-  }).join("\n");
-}
-
-/**
  * Retourne la valeur canonique (id stable) d'un paramètre de type "choix".
  * Accepte indifféremment l'id canonique, la valeur française ou la valeur anglaise,
  * ce qui garantit la compatibilité avec les anciens projets.
