@@ -9,6 +9,7 @@
 import type { FicheLancable, Reglages } from "./lancer-fiche";
 import type { ReglageDeGamme } from "./gamme-banc-lancer";
 import { reglagesApresChangement } from "../core/reglages-lies";
+import { INERTIES_CONDITIONNEES } from "./croisement-inscriptions";
 
 /** Les réglages qu'aucun lancer du banc ne sait rendre lisibles, et pourquoi. */
 export const HORS_DE_PORTEE: Record<string, string> = {
@@ -44,6 +45,45 @@ export const SANS_TRANSPOSITION: Record<string, string> = {
 export const APPARTENANCE_DECLAREE: Record<string, string> = {
   "accords-vers-notation·Gamme": "sous sa source par défaut, « Accords détectés », il écrit les accords d'une entrée fixe, que la gamme ne gouverne pas",
 };
+
+/**
+ * Les valeurs d'un autre réglage sous lesquelles la gamme est sans effet, que la notice dit, et que
+ * le banc des croisements ne voit pas parce qu'il ne fait varier qu'un réglage à la fois depuis les
+ * défauts. La passe profonde ne les croise pas : une note hors de la gamme y est la promesse tenue.
+ */
+export const GAMME_SANS_EFFET: Record<string, { reglage: string; valeurs: string[]; raison: string }> = {
+  "zones-vers-midi·Gamme": {
+    reglage: "Source de hauteur", valeurs: ["fixe"],
+    raison: "sa documentation : « Sans effet quand « Source de hauteur » vaut « Note fixe » » ; la note du réglage y est posée telle quelle",
+  },
+};
+
+/**
+ * Pourquoi la gamme d'un réglage est sans effet quand `reglage` vaut `valeur`, s'il est déclaré : par
+ * `GAMME_SANS_EFFET`, ou par une inertie conditionnée du banc des croisements.
+ */
+export function gammeSansEffet(p: ReglageDeGamme, reglage: string, valeur: string): string | undefined {
+  const ici = GAMME_SANS_EFFET[cleDeReglage(p)];
+  if (ici && ici.reglage === reglage && ici.valeurs.includes(valeur)) return ici.raison;
+  for (const i of INERTIES_CONDITIONNEES) {
+    if (i.ou !== cleDeReglage(p) || "une" in i.quand || "tous" in i.quand || !("reglage" in i.quand)) continue;
+    const q = i.quand;
+    if (q.reglage !== reglage) continue;
+    if ("valeurs" in q ? q.valeurs.includes(valeur) : !q.sauf.includes(valeur)) return i.raison;
+  }
+  return undefined;
+}
+
+/**
+ * Les nœuds qui bâtissent des accords sur les degrés de leur gamme, et que P4 juge à la passe profonde.
+ * Ailleurs, les notes que P4 grouperait ne sont pas des accords bâtis sur un degré : les trois voix du
+ * flocon de Koch, qui jouent ses trois niveaux à trois vitesses ; les cellules vivantes d'un automate ;
+ * une mélodie fractale assez rapide, sous le cantus firmus, pour que trois de ses notes tombent dans
+ * la même fenêtre d'attaque. Une triade de la gamme n'y est promise nulle part.
+ */
+export const ACCORDS_SUR_LES_DEGRES = new Set([
+  "generateur-musical", "boite-groove", "sequenceur-accords", "color-looper", "tonal-progression", "tonal-grille",
+]);
 
 /** Les six gammes de P3 au garde rapide : deux symétries, deux gammes à sept degrés, deux pentatoniques ou presque. */
 export const GAMMES_DE_TRANSPOSITION = ["majeur", "mineur-harmonique", "pentatonique-mineure", "ton-entier", "diminuee-demi-ton", "blues"];
