@@ -9,11 +9,16 @@
 // tairait ses sorties non lues laisserait croire qu'il les a vérifiées.
 
 import { notesDuMidi } from "./midi";
+import type { Note } from "./note";
 import { estSequence } from "./sequence";
 import { hauteursAccord } from "./abc";
 
-/** Une hauteur rendue : en demi-tons, fractions comprises, temps en secondes ou en rang. */
-export interface HauteurRendue { note: number; debut: number; fin: number }
+/**
+ * Une hauteur rendue : en demi-tons, fractions comprises, temps en secondes ou en rang. Une VUE sur la
+ * note canonique, sa hauteur et sa place sans sa nuance : `audio/formes-note.test.ts` veut une seule
+ * déclaration par forme.
+ */
+export type HauteurRendue = Pick<Note, "note" | "debut" | "fin">;
 
 /** Une sortie lue : un port, un canal MIDI s'il y en a, et ses hauteurs dans l'ordre du temps. */
 export interface SortieLue {
