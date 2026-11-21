@@ -37,8 +37,10 @@
 //
 // LES EXEMPLES SONT CEUX QUE SURVEILLE LA BASE DU SON, lus dans `empreintes-exemples.json` : ceux
 // qui attendent un fichier de l'utilisateur ou dont le son varie en sont déjà sortis. Ce qu'ils ne
-// contiennent pas, ce garde ne le voit pas : aucun ne porte de boucle, et le lot demande un dossier
-// de fichiers.
+// contiennent pas, ce garde ne le voit pas. Les boucles par passes sont dans `gestion_graphe_complexite`,
+// la boucle de graphe et l'instrument dans `un-echo-en-boucle-et-un-instrument`, depuis le 2026-11-20 ;
+// aucun ne porte la boucle sur un plan, et le lot demande un dossier de fichiers. Un début de boucle
+// reste « en attente » : `debutsDeBoucle` du pilote le dit à chaque run.
 //
 //   npm run test:journal-de-passe
 //   EXEMPLE=canon-de-proportions npm run test:journal-de-passe
@@ -52,7 +54,7 @@ import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
 
 import type { EntreeDuJournal } from "../src/ui/journal-de-passe";
-import { lancerLeNoeudEtAttendre, relancerEtAttendre, semer, semerEtLancer } from "./pilote-graphe";
+import { debutsDeBoucle, lancerLeNoeudEtAttendre, relancerEtAttendre, semer, semerEtLancer } from "./pilote-graphe";
 import { serveurDeVerification } from "./serveur-de-developpement";
 
 const devUrl = serveurDeVerification(5284);
@@ -234,10 +236,12 @@ async function remettreAZero(page: Page, id: string): Promise<void> {
  */
 async function jouer(page: Page, fichier: string, scenario: Scenario): Promise<Ligne[]> {
   const graphe = readFileSync(join(RACINE, "exemples", fichier), "utf8");
+  const attentesAdmises = debutsDeBoucle(graphe);
   if (scenario === "lancer") {
     await semerEtLancer(page, devUrl, graphe, {
       profondeurExport: 32,
       avantDeLancer: (p) => marquer(p, "Lancer", true),
+      attentesAdmises,
     });
   } else {
     await semer(page, devUrl, graphe, { profondeurExport: 32 });
@@ -247,7 +251,7 @@ async function jouer(page: Page, fichier: string, scenario: Scenario): Promise<L
     await marquer(page, `↺ ${cible}`);
     await remettreAZero(page, cible);
     await marquer(page, "Lancer");
-    await relancerEtAttendre(page);
+    await relancerEtAttendre(page, { attentesAdmises });
     // LE SECOND ↺ EFFACE UN AVAL CALCULÉ. Le premier ne trouvait que la cible : son ▶ n'avait rien
     // calculé de ce qui la suit.
     await marquer(page, `↺ ${cible}`);
