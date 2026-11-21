@@ -133,9 +133,13 @@ const RETARDS = Array.from({ length: 41 }, (_, i) => Math.round((i * 0.05 - 0.5)
 
 /**
  * Le retard du son sur son MIDI, quand il y en a un : celui sous lequel le MIDI explique le mieux le
- * son, s'il en explique cinq points de plus qu'à l'heure et s'il dépasse un dixième de seconde. En
- * deçà, c'est le relâchement d'une note qui sonne encore après sa fin, et que tout retard explique un
- * peu.
+ * son, s'il en explique cinq points de plus qu'à l'heure et s'il dépasse un dixième de seconde.
+ *
+ * UN RELÂCHEMENT N'EST PAS UN RETARD. Une note qui sonne encore après sa fin MIDI s'explique un peu
+ * mieux sous un MIDI retardé, qui couvre sa queue en perdant son attaque. Le retard ne compte donc que
+ * si les mêmes notes, ALLONGÉES de la même durée sans être déplacées, n'expliquent pas mieux le son :
+ * la Groove Box s'expliquait à 97 % retardée de 0,20 s, et à 99,6 % allongée d'autant. Un vrai retard,
+ * lui, s'explique autant décalé qu'allongé, la note d'avant couvrant le temps de la suivante.
  */
 export function retardDuSon(trames: readonly TrameDePics[], notes: readonly HauteurRendue[]): { retard: number; part: number } | null {
   const aLHeure = partExpliquee(trames, notes);
@@ -144,7 +148,10 @@ export function retardDuSon(trames: readonly TrameDePics[], notes: readonly Haut
     const part = partExpliquee(trames, notes, { retard });
     if (part > meilleur.part) meilleur = { retard, part };
   }
-  return Math.abs(meilleur.retard) >= 0.1 && meilleur.part - aLHeure >= 0.05 ? meilleur : null;
+  if (Math.abs(meilleur.retard) < 0.1 || meilleur.part - aLHeure < 0.05) return null;
+  const r = meilleur.retard;
+  const allongees = notes.map((n) => (r > 0 ? { ...n, fin: n.fin + r } : { ...n, debut: n.debut + r }));
+  return partExpliquee(trames, allongees) > meilleur.part + 0.01 ? null : meilleur;
 }
 
 /**
