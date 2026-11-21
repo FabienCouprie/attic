@@ -785,8 +785,11 @@ function CaptureMidiInspecteur({ noeud, onEnregistrerMidi, onChangerParametre }:
     setEnRegistrant(false);
     const notes = notesCaptureesRef.current;
     if (notes.length === 0) return;
-    const { notesVersFichierMidi } = await import("../audio");
-    const fichier = notesVersFichierMidi(notes, 120, 0);
+    // LA PRISE COMMENCE À LA PREMIÈRE TOUCHE, et non à la pression du bouton : l'attente entre les
+    // deux n'est pas de la musique. L'écriture garde désormais le temps des notes (2026-11-21) ; ce
+    // recalage, qu'elle faisait pour tous, se dit donc ici, le seul appelant qui le veuille.
+    const { notesVersFichierMidi, recalerSurPremiereNote } = await import("../audio");
+    const fichier = notesVersFichierMidi(recalerSurPremiereNote(notes), 120, 0);
     onEnregistrerMidi?.(noeud.id, fichier);
   };
 
