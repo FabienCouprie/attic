@@ -15,6 +15,26 @@ import type { ContexteExecution, ParametreDef } from "./types";
 /** Ce que le moteur sait d'une fiche, et dont les deux lecteurs de réglage ont besoin. */
 export type FicheLue = { parametres: readonly ParametreDef[] } | undefined;
 
+/** Une valeur de choix qu'aucune option du réglage ne reconnaît, et le défaut déclaré qui la remplace. */
+export interface ValeurInconnue { parametre: ParametreDef; valeur: string; repli: string | number }
+
+/**
+ * Le retour d'un nœud, son message augmenté de ce que `dire` écrit des valeurs inconnues lues.
+ *
+ * LE MOTEUR LE DIT, ET NON CHAQUE NŒUD, décision de Fabien du 2026-11-21, défaut H du contrôle des
+ * gammes : une gamme que la table ignore faisait jouer le majeur sans un mot, et la Gamme jouée
+ * annonçait « Do dorienne-inconnue » en jouant do majeur. Le texte vient de qui monte la passe, le
+ * cœur ne connaissant pas la langue de l'interface.
+ */
+export function annoterValeursInconnues<R>(
+  res: R, inconnues: readonly ValeurInconnue[], dire: ((i: readonly ValeurInconnue[]) => string) | undefined,
+): R {
+  if (!inconnues.length || !dire || !res || typeof res !== "object") return res;
+  const ligne = dire(inconnues);
+  const message = (res as { message?: unknown }).message;
+  return { ...res, message: typeof message === "string" && message ? `${message}\n${ligne}` : ligne };
+}
+
 export interface OptionsContexteDePasse<TValeur, TRuntime> {
   noeud: { id: string; data: Record<string, unknown> };
   aretes: AreteG[];
@@ -33,8 +53,11 @@ export interface OptionsContexteDePasse<TValeur, TRuntime> {
 
 export function contexteDePasse<TValeur, TRuntime>({
   noeud, aretes, resultats, runtime, repertoireTravail, trouverDef, canoniser, graineDuNoeud, signal, poserProgression,
-}: OptionsContexteDePasse<TValeur, TRuntime>): { ctx: ContexteExecution<TValeur, TRuntime>; aConsulteSesSorties: () => boolean } {
+}: OptionsContexteDePasse<TValeur, TRuntime>): {
+  ctx: ContexteExecution<TValeur, TRuntime>; aConsulteSesSorties: () => boolean; valeursInconnues: () => readonly ValeurInconnue[];
+} {
   const nodeId = noeud.id;
+  const inconnues: ValeurInconnue[] = [];
   // CE NŒUD A-T-IL DEMANDÉ SI SES SORTIES ÉTAIENT BRANCHÉES ? La réponse se constate pendant son
   // run, et décide si son câblage aval entre dans sa clé de cache. Déclaré par contexte : c'est une
   // propriété de CE nœud, et la porter au-delà les mélangerait.
@@ -94,7 +117,20 @@ export function contexteDePasse<TValeur, TRuntime>({
       const def = trouverDef(noeud.data.ficheId as string);
       const pDef = def?.parametres.find((p) => p.nom === nom);
       if (typeof p === "string" && pDef) {
-        return String(canoniser(pDef, p));
+        const c = canoniser(pDef, p);
+        // UNE VALEUR QU'AUCUNE OPTION NE RECONNAÎT DEVIENT LE DÉFAUT DÉCLARÉ, ET LE NŒUD LE DIT, décision
+        // de Fabien du 2026-11-21 : elle passait telle quelle, et chaque composant retombait en
+        // silence sur son propre repli, le majeur ici, la chromatique là. Le défaut est celui que
+        // l'inspecteur montre ; le message se compose à la fin du nœud (`annoterValeursInconnues`).
+        // Connue sous l'une de ses trois formes : l'identifiant, le libellé français, l'anglais. La
+        // canonisation rend l'une d'elles, et laisse une valeur inconnue telle quelle.
+        const connues = pDef.type === "choix" ? [...(pDef.optionIds ?? []), ...(pDef.options ?? []), ...(pDef.optionsEn ?? [])] : [];
+        if (connues.length && !connues.map(String).includes(String(c))) {
+          const repli = canoniser(pDef, pDef.defaut as string | number);
+          if (!inconnues.some((x) => x.parametre.nom === nom)) inconnues.push({ parametre: pDef, valeur: p, repli });
+          return String(repli);
+        }
+        return String(c);
       }
       // Repli sur le défaut DÉCLARÉ PAR LA FICHE (`defaut`, français),
       // jamais `defautEn` : la forme canonique d'un « choix » est celle
@@ -115,5 +151,5 @@ export function contexteDePasse<TValeur, TRuntime>({
     onProgress: (msg: string) => { if (signal.aborted) throw new ErreurAnnulation(); poserProgression(msg); },
     signal,
   };
-  return { ctx, aConsulteSesSorties: () => aConsulteSesSorties };
+  return { ctx, aConsulteSesSorties: () => aConsulteSesSorties, valeursInconnues: () => inconnues };
 }

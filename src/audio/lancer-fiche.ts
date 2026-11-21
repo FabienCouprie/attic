@@ -20,10 +20,10 @@
 // échantillon sur 97 ; celle-ci les lit tous, ainsi que les octets de chaque fichier. Elle sert à
 // dire qu'un réglage n'a RIEN changé, et un échantillonnage peut taire un changement réel.
 
-import { contexteDePasse } from "../core/contexte-de-passe";
+import { annoterValeursInconnues, contexteDePasse } from "../core/contexte-de-passe";
 import { creerAleatoire } from "../core/hasard";
 import type { ParametreDef } from "../core/types";
-import { valeurCanoniqueChoix } from "../i18n";
+import { direValeursInconnues, valeurCanoniqueChoix } from "../i18n";
 import { valeurDEssai } from "./valeurs-essai";
 import { frequenceDeTravail } from "./frequence-de-travail";
 
@@ -99,7 +99,7 @@ export async function lancerFiche(
   const aretes = entrees.flatMap((v, i) => (v == null ? [] : [{
     id: `e${i}`, source: "amont", target: "essai", sourceHandle: `out:${i}`, targetHandle: `in:${i}`,
   }]));
-  const { ctx } = contexteDePasse<unknown, unknown>({
+  const { ctx, valeursInconnues } = contexteDePasse<unknown, unknown>({
     noeud: { id: "essai", data: { ficheId: fiche.id, parametres: { ...reglages } } },
     aretes,
     resultats: new Map([["amont", entrees]]),
@@ -112,9 +112,10 @@ export async function lancerFiche(
     poserProgression: () => {},
   });
   try {
-    const r = (await fiche.executer(ctx as never)) as {
+    // LE MESSAGE EST CELUI QUE LE MOTEUR POSERAIT, valeurs de choix inconnues comprises.
+    const r = annoterValeursInconnues((await fiche.executer(ctx as never)) as {
       valeurs?: unknown[]; message?: string; erreur?: boolean; affichage?: Record<string, unknown>;
-    } | undefined;
+    } | undefined, valeursInconnues(), direValeursInconnues);
     return { valeurs: r?.valeurs ?? [], message: r?.message ?? "", erreurRendue: r?.erreur === true, levee: null,
       ...(r?.affichage ? { affichage: r.affichage } : {}) };
   } catch (e) {

@@ -29,7 +29,7 @@ import { noeudPrioritaire } from "../priorite";
 import { creerRecepteurDuMoteur, type LiaisonDuRecepteur } from "../recepteur-moteur";
 import { creerMoteur, type PerimetreCible } from "../moteur";
 
-import { useI18n, valeurCanoniqueChoix } from "../../i18n";
+import { direValeursInconnues, useI18n, valeurCanoniqueChoix } from "../../i18n";
 import { registreUI } from "../registre-actif";
 
 const trouverDef = (id: string) => registreUI().trouverDef(id);
@@ -95,6 +95,7 @@ function construireLePont(o: OptionsDuMoteur): Pont {
     recepteur: recepteur.recevoir,
     audio: obtenirAudio,
     canoniser: valeurCanoniqueChoix,
+    direValeursInconnues,
   });
   return { envoyer: moteur.envoyer, liaison };
 }

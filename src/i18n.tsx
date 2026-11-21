@@ -1779,6 +1779,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.generateur_accords.titre": { fr: "── Progression d'accords ──", en: "── Chord progression ──" },
   "msg.romains.alteres": { fr: "Chiffres altérés, hors de la gamme, non joués : {__VAR_0__}", en: "Altered numerals, outside the scale, not played: {__VAR_0__}" },
   "msg.romains.inconnus": { fr: "Chiffres non lus, non joués : {__VAR_0__}", en: "Unread numerals, not played: {__VAR_0__}" },
+  "msg.choix.inconnu": { fr: "« {__VAR_0__} » : « {__VAR_1__} » n'est aucune de ses options ; son défaut, « {__VAR_2__} », est employé à la place.", en: "« {__VAR_0__} »: « {__VAR_1__} » is none of its options; its default, « {__VAR_2__} », is used instead." },
   "msg.generateur_accords.duree": { fr: "{__VAR_0__} accords × {__VAR_1__}t · {__VAR_2__}s", en: "{__VAR_0__} chords × {__VAR_1__} beats · {__VAR_2__}s" },
   "msg.script_musical.titre": { fr: "── Script musical ──", en: "── Music script ──" },
   "msg.script_musical.genre": { fr: "Genre : {__VAR_0__}  ·  {__VAR_1__} BPM  ·  {__VAR_2__}  ·  {__VAR_3__}s", en: "Genre: {__VAR_0__}  ·  {__VAR_1__} BPM  ·  {__VAR_2__}  ·  {__VAR_3__}s" },
@@ -1894,6 +1895,23 @@ export function defautParametre(p: Pick<ParametreDef, "defaut" | "defautEn">, la
  */
 export function uniteParametre(p: Pick<ParametreDef, "unite" | "uniteEn">, lang: Langue): string | undefined {
   return lang === "en" && p.uniteEn !== undefined ? p.uniteEn : p.unite;
+}
+
+/**
+ * La ligne qui dit, dans la langue de l'interface, chaque valeur de choix qu'un nœud a lue sans
+ * qu'aucune option ne la reconnaisse, et le défaut déclaré qui l'a remplacée. Le moteur l'ajoute au
+ * message du nœud (`annoterValeursInconnues`, `core/contexte-de-passe.ts`).
+ */
+export function direValeursInconnues(
+  inconnues: readonly { parametre: Pick<ParametreDef, "nom" | "nomEn" | "options" | "optionsEn" | "optionIds">; valeur: string; repli: string | number }[],
+): string {
+  const en = langueCourante() === "en";
+  return inconnues.map(({ parametre: p, valeur, repli }) => {
+    const ids = p.optionIds?.length ? p.optionIds : p.options ?? [];
+    const rang = ids.indexOf(String(repli));
+    const libelle = (rang >= 0 ? (en ? p.optionsEn?.[rang] : p.options?.[rang]) : undefined) ?? String(repli);
+    return traduire("msg.choix.inconnu", en ? p.nomEn ?? p.nom : p.nom, valeur, libelle);
+  }).join("\n");
 }
 
 /**

@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ErreurAnnulation } from "./annulation";
-import { contexteDePasse } from "./contexte-de-passe";
+import { annoterValeursInconnues, contexteDePasse } from "./contexte-de-passe";
 import { resoudreEntree, valeursEntrantes } from "./graphe";
 import type { AreteG } from "./meta";
 import type { ParametreDef } from "./types";
@@ -86,6 +86,21 @@ describe("le contexte d'une passe", () => {
   it("canonise un choix reçu par son identifiant", () => {
     const n = neuf(noeud({ Couleur: "rouge" }), new AbortController().signal, []);
     expect(n.ctx.paramTexte("Couleur", "?")).toBe("Rouge");
+    expect(n.valeursInconnues()).toEqual([]);
+  });
+
+  it("UNE VALEUR QU'AUCUNE OPTION NE RECONNAÎT DEVIENT LE DÉFAUT DÉCLARÉ, ET SE RETIENT POUR LE MESSAGE", () => {
+    // Décision de Fabien du 2026-11-21, défaut H du contrôle des gammes : la valeur passait telle
+    // quelle, et chaque nœud retombait en silence sur son propre repli.
+    const n = neuf(noeud({ Couleur: "vert", Mode: "libre" }), new AbortController().signal, []);
+    expect(n.ctx.paramTexte("Couleur", "?")).toBe("Bleu");
+    expect(n.ctx.paramTexte("Couleur", "?")).toBe("Bleu");
+    // Un texte libre n'est pas un choix : il passe tel quel.
+    expect(n.ctx.paramTexte("Mode", "?")).toBe("libre");
+    expect(n.valeursInconnues().map((x) => [x.parametre.nom, x.valeur, x.repli])).toEqual([["Couleur", "vert", "Bleu"]]);
+    const dire = (i: readonly { valeur: string }[]) => `inconnues : ${i.map((x) => x.valeur).join(", ")}`;
+    expect(annoterValeursInconnues({ message: "fait" }, n.valeursInconnues(), dire).message).toBe("fait\ninconnues : vert");
+    expect(annoterValeursInconnues({ valeurs: [] }, n.valeursInconnues(), dire)).toEqual({ valeurs: [], message: "inconnues : vert" });
   });
 
   it("RETIENT QU'ON A POSÉ LA QUESTION DES SORTIES, et répond par les arêtes", () => {

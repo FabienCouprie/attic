@@ -23,8 +23,8 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
-import { apparier } from "../audio/gamme-banc-lancer";
-import type { PortDeSortie } from "../audio/gamme-banc-hauteurs";
+import { apparier, lancerSousGamme } from "../audio/gamme-banc-lancer";
+import { lireSorties, type PortDeSortie } from "../audio/gamme-banc-hauteurs";
 import { releverUneGamme, type ReleveDeGamme } from "../audio/gamme-banc-releve";
 import { degresAttendus as degresDe } from "../audio/gamme-banc-proprietes";
 import {
@@ -32,6 +32,7 @@ import {
   SANS_TRANSPOSITION, TENUS_AILLEURS, cleDeReglage, reglagesLies,
 } from "../audio/gamme-banc-inscriptions";
 import { reglagesANomenclature } from "../plugins/nomenclatures";
+import { valeurCanoniqueChoix } from "../i18n";
 
 type FicheDuBanc = FicheLancable & { sorties?: readonly PortDeSortie[] };
 const fiche = (id: string) => registre.trouverDef(id) as unknown as FicheDuBanc | undefined;
@@ -65,6 +66,30 @@ describe("l'inventaire du garde des gammes", () => {
       for (const v of valeurs) expect(ids, `« ${ou} » : « ${reglage} » n'offre pas « ${v} »`).toContain(v);
     }
   });
+});
+
+describe("une gamme que la table ignore", () => {
+  // DÉFAUT H DU CONTRÔLE DES GAMMES, décision de Fabien du 2026-11-21 : chaque nœud retombait en
+  // silence sur son propre repli, le majeur ici, la chromatique là, et la Gamme jouée annonçait
+  // « Do dorienne-inconnue » en jouant do majeur. Le moteur la remplace par le défaut déclaré, et le
+  // message le dit.
+  const INCONNUE = "gamme-que-la-table-ignore";
+  const eprouves = paires.filter((p) => !HORS_DE_PORTEE[cle(p)] && !TENUS_AILLEURS[cle(p)]);
+  it.each(eprouves.map((p) => [cle(p), p] as const))("%s : rend ce que rend son défaut, et le message la nomme", async (_c, p) => {
+    const f = fiche(p.fiche)!;
+    // LES ENTRÉES DU BANC, par `lancerSousGamme` : un texte d'essai arrêtait la Progression avant
+    // qu'elle lise sa gamme, et rien ne s'annonçait.
+    const sous = async (gamme: string) => {
+      const l = (await lancerSousGamme(f, p, gamme, { graine: 1 })).lancer;
+      return { message: l?.message ?? "", hauteurs: (await lireSorties(f.sorties ?? [], l?.valeurs ?? [], lireNotation)).lues.map((s) => s.hauteurs) };
+    };
+    const pDef = f.parametres.find((x) => x.nom === p.gamme)!;
+    const inconnue = await sous(INCONNUE);
+    const defaut = await sous(String(valeurCanoniqueChoix(pDef, pDef.defaut as string)));
+    expect(inconnue.message).toContain(INCONNUE);
+    expect(inconnue.message).toContain(p.gamme);
+    expect(inconnue.hauteurs).toEqual(defaut.hauteurs);
+  }, 60_000);
 });
 
 describe("chaque réglage de gamme, tenu par ce que son nœud rend", () => {

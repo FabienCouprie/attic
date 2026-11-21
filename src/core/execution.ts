@@ -21,7 +21,7 @@ import type { DemandeAuMoteur, FonctionPlugin, PluginDef } from "./types";
 import {
   peutReutiliserLeCache, sourceRetraitee, type CachePrecedent, type EmpreintesDuRun, type EntreeDeCache,
 } from "./cache-execution";
-import { contexteDePasse, type OptionsContexteDePasse } from "./contexte-de-passe";
+import { annoterValeursInconnues, contexteDePasse, type OptionsContexteDePasse, type ValeurInconnue } from "./contexte-de-passe";
 import { empreinteEntrees, empreinteParametres, empreinteSorties, empreinteValeursEntrantes, valeursEntrantes } from "./graphe";
 import type { AreteG, NoeudG } from "./meta";
 import { respirer } from "./respirer";
@@ -331,6 +331,8 @@ export interface PretsDeLaBoucle<TRuntime> {
   typeFlux: PretsDuRetour["typeFlux"];
   canoniser: OptionsContexteDePasse<unknown, TRuntime>["canoniser"];
   graineDuNoeud: OptionsContexteDePasse<unknown, TRuntime>["graineDuNoeud"];
+  /** La ligne qui dit les valeurs de choix inconnues qu'un nœud a lues, dans la langue de l'interface. */
+  direValeursInconnues?: (inconnues: readonly ValeurInconnue[]) => string;
   /** L'entrée de cache d'un nœud, lue au moment de décider. */
   lireCache: (id: string) => EntreeDeCache | undefined;
   ecrireCache: PretsDuRetour["ecrireCache"];
@@ -478,7 +480,7 @@ export async function executerLesNoeuds<TRuntime>(
     // CE QUE LE NŒUD REÇOIT EST CONSTRUIT DANS `core/contexte-de-passe.ts` : ses entrées, ses
     // réglages lus comme le contrat le dit, la question des sorties, retenue pour la clé de cache,
     // et un `onProgress` qui lève après annulation.
-    const { ctx: contexteDuNoeud, aConsulteSesSorties } = contexteDePasse<unknown, TRuntime>({
+    const { ctx: contexteDuNoeud, aConsulteSesSorties, valeursInconnues } = contexteDePasse<unknown, TRuntime>({
       noeud: node, aretes: aretesG, resultats, runtime: p.runtime, repertoireTravail: p.repertoireTravail,
       trouverDef, canoniser: p.canoniser, graineDuNoeud: p.graineDuNoeud, signal,
       poserProgression: (msg) => poserStatut(nodeId, "en_cours", msg, true),
@@ -486,7 +488,8 @@ export async function executerLesNoeuds<TRuntime>(
     // Le `try` couvre l'exécuteur ET son retour : ce qui lève dans l'un ou l'autre est l'échec du nœud.
     const quiATourne = { id: nodeId, noeud: node, empreintes: decision.empreintes, aConsulteSesSorties, debut: start };
     try {
-      const res = await fn(contexteDuNoeud);
+      // UNE VALEUR DE CHOIX INCONNUE SE DIT dans le message du nœud, défaut H du contrôle des gammes.
+      const res = annoterValeursInconnues(await fn(contexteDuNoeud), valeursInconnues(), p.direValeursInconnues);
       // Le nœud a été réinitialisé pendant que sa promesse était en vol (le plugin a ignoré
       // `signal`, ou a fini pile au moment de l'annulation) : ne pas écraser l'état déjà remis à
       // « attente » par le reset avec un résultat ou un statut périmé.
