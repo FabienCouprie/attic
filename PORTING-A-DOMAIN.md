@@ -510,12 +510,18 @@ ne pouvait la voir, une table de chaînes n'important rien et ne contenant aucun
 énumérés. Il lit les chaînes du code de `src/core/` par l'arbre syntaxique, et refuse
 celle qui vaut l'identifiant d'une fiche du catalogue ou un de ses anciens identifiants.
 Les fiches que le cœur déclare lui-même n'en sont pas, et un cas tient qu'elles ne portent
-que des types de flux du cœur. **Une y reste, épinglée comme dette** avec sa raison : la
-liaison des réglages de « Courbe » (`core/reglages-lies.ts`). Les deux des nœuds-frontière,
-les onze des bouts des boucles et les deux de l'instrument en sont sorties le 2026-11-21 :
-les premiers par leurs fiches, que le cœur déclare, les seconds parce que le dépliage lit le
-rôle sur la fiche, les derniers parce que l'instrument a quitté le cœur. La liste refuse de
-grandir, et une dette payée doit en sortir.
+que des types de flux du cœur. **Il n'en reste aucune depuis le 2026-11-21** : les seize
+chaînes que le garde avait relevées à sa naissance sont sorties en un jour. Les deux des
+nœuds-frontière par leurs fiches, que le cœur déclare ; les onze des bouts des boucles et
+celle de « Courbe » parce que le cœur lit ce que la fiche déclare ; les deux de l'instrument
+parce qu'il a quitté le cœur. La table des dettes reste, vide : une dette neuve y entrerait
+avec sa raison, et le garde la refuse tant qu'elle n'y est pas.
+
+**Un réglage dont le défaut dépend d'un autre** le déclare, `defautSelon` sur `ParametreDef` :
+le réglage nommé, et le défaut pour certaines de ses valeurs, par leurs `optionIds`. Quand ce
+réglage change, `core/reglages-lies.ts` pose le défaut de la nouvelle valeur sur un réglage resté
+au défaut de l'ancienne, et ne réécrit jamais une valeur choisie. La « Fréquence » de « Courbe »
+compte ainsi des pas pour une suite et des cycles pour un oscillateur.
 
 **Les dépliages du domaine** passent par une couture, `DepliageDuDomaine` dans
 `core/preparation-passe.ts` : une transformation du graphe que la préparation de chaque passe
