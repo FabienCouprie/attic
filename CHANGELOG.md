@@ -6,6 +6,24 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **L'ORCHESTRE CSOUND REFUSE UN INSTRUMENT QU'IL NE CONNAÎT PAS, EN LE NOMMANT, ET PARLE LA LANGUE DE L'INTERFACE.** Revue des notations en texte, onzième format, 2026-11-22, troisième lot. Pendant le relevé, Csound a rendu dans le navigateur les huit formules et les onze instruments de l'Orchestre, en mono et en stéréo : tous compilent et sonnent.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un identifiant inconnu était écarté et seulement compté, « 1 identifiant(s) inconnu(s) écarté(s) », et l'orchestre se construisait sans lui ;
+    - un doublon était compté comme un inconnu ;
+    - une liste vide partait sans le drapeau d'erreur ;
+    - dans l'interface anglaise, le message disait « stéréo », et l'orchestre écrivait ses commentaires en français.
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Refuse it, named » :
+    - un identifiant inconnu fait refuser l'orchestre. Le message le nomme, avec la liste des identifiants ;
+    - un doublon est toujours ignoré, et le message dit « doublon ignoré » en le nommant ;
+    - une liste vide est refusée en erreur ;
+    - le message et les commentaires de l'orchestre suivent la langue de l'interface.
+
+    La documentation du réglage « Instruments » le dit.
+  - **Deux tests tenaient le contraire**, réécrits avec leur raison : dans `audio/csound-orchestre.test.ts`, « chaise » était écarté ; dans `plugins/csound-orchestre.test.ts`, « trompette » était compté.
+  - **Le garde** : `plugins/orchestre-ecrit.test.ts`, 6 cas.
+    - Vu rouge sur le code d'avant : 5 cas.
+    - Vu rouge aussi sur un identifiant inconnu de nouveau écarté, planté.
+
 - **UNE PARTITION ÉCRITE POUR CSOUND GARDE CHAQUE VALEUR À SON P-FIELD, ET N'ÉCRIT RIEN QUE CSOUND LIRAIT AUTREMENT.** Revue des notations en texte, onzième format, 2026-11-22, deuxième lot : la Matrice de paramètres et la Partition Csound. Csound lui-même a relu ces partitions dans le navigateur pendant le relevé.
   - **Ce qui se passait**, mesuré par `executer` :
     - un champ vide de la Matrice entre deux champs remplis sautait sa place : p4 « 0.3 », p5 vide et p6 « 7 » écrivaient « 0.3 7 », que Csound lit p4 = 0,3 et p5 = 7. La notice promettait le contraire ;
