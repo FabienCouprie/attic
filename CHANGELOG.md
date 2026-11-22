@@ -2284,6 +2284,19 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **« DITHER » SE DIT À LA DICTÉE : « ARRONDI AVEC BRUIT ».** Relevé le 2026-11-22 par la session du chantier de l'harmonisation : le garde du lexique vocal jetait « dither ». Le nom parlé a été choisi par Fabien le même jour, parmi trois noms proposés.
+  - **Ce qui se passait.** « Dither » est entré au catalogue le 2026-11-15 (PR 366). Le modèle vocal français n'a pas le mot « dither », et c'est le seul mot du nom : le composant ne pouvait pas se dire. Lancé sur les fichiers de `master`, `npm run test:lexique-dictee` tombe, et le moteur jette un seul mot, `["dither"]`.
+  - **Ce qui change.** « dither » rejoint `HORS_LEXIQUE_FR` dans `plugins/lexique-vosk.ts`, et la fiche porte le nom parlé « arrondi avec bruit », qui dit le geste du composant : un bruit ajouté avant l'arrondi. La notice ne change pas, elle ne nomme pas la dictée.
+  - **Le choix du nom.** Les trois candidats ont été vérifiés mot à mot contre la table des symboles de `graph/Gr.fst` du modèle `vosk-model-small-fr-0.22`. L'instrument a d'abord été éprouvé sur des cas connus : il rend absents les six mots déjà relevés (« dither », « pleurage », « convolution », « 303 », « granulaire », « trémolo ») et présents tous les mots des noms parlés en place qui ont été sondés.
+    - « arrondi », « avec » et « bruit » y sont, et aucun autre nom du catalogue ne commence par « arrondi ».
+    - Écartés : « réduction de profondeur », trop proche de « Réduction de bruit » ; « quantification avec bruit », trop proche de « Quantifier » ; tout nom en « bits », le Bitcrusher se disant « réducteur de bits ».
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, aucun dans les fichiers touchés ;
+    - `plugins/noms-parles.test.ts` et `plugins/lexique-vosk.test.ts`, 11 cas verts. **Vu rouge** avec « dither » au lexique et sans nom parlé : « 1 composants qu'aucun nom ne permet de dire, contre 0 inscrits », le Dither seul nommé ;
+    - `src/docs/compatibilite.test.ts` et `src/docs/catalogue-markdown.test.ts`, 16 cas verts et une écriture sautée. Aucune table générée ne porte les noms parlés ;
+    - `npm run test:lexique-dictee`, le modèle français lié dans l'arbre par lien physique : « 1 passed » en 1,7 min, « mots jetés par le moteur : aucun », la ligne de dégel du modèle vue.
+  - **Non vérifié** : la reconnaissance de « arrondi avec bruit » dite au micro, le garde ne vérifiant que la grammaire. Non lancée : la passe complète de vitest, la machine étant partagée.
+
 - **LE MESSAGE DE « REMPLISSAGE DE TROU » COMPTE LES TROUS DANS LE TEMPS, ET NON EN MOYENNE PAR CANAL.** Relevé le 2026-11-22 en contrôlant l'option « Silences détectés », réparé sur l'ordre de Fabien : « réparer ».
   - **Ce qui se passait.** `plugins/inpainting.ts` divisait par le nombre de canaux le compte et la durée que chaque canal avait bouchés. Les silences se détectant voie par voie, dix millisecondes rebouchées sur un seul canal de deux s'annonçaient « 1 trou(s) bouché(s) · 5 ms reconstruits », et deux trous à deux endroits, un par canal, « 1 trou ».
   - **Ce qui change.** Chaque canal rend la liste des trous qu'il a bouchés et de ceux qu'il a laissés (`faits` et `laisses` de `ResultatInpainting`), et le message compte leur réunion dans le temps, `reunirTrous` d'`audio/inpainting.ts` : deux trous qui se recouvrent ou se touchent n'en font qu'un. Le son rendu ne change pas.
