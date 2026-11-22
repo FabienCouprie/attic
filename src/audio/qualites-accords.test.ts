@@ -283,12 +283,22 @@ describe("le sens et la façon de jouer", () => {
   });
 
   it("ROULÉ : LES NOTES PARTENT L'UNE APRÈS L'AUTRE ET SONT TENUES", () => {
-    const joue = jouerAccord(TROIS, "roule", 2, 0.1);
-    expect(joue.map((n) => n.debut)).toEqual([0, 0.1, 0.2]);
+    // CHAQUE VOIX A SA PART DE L'ÉTALEMENT, comme dans l'arpège, décision de Fabien du 2026-11-22 :
+    // ce cas attendait des départs à 0, 0,1 et 0,2 pour un étalement de 0,2 s, la dernière voix partant
+    // au bout de l'étalement ; à 100 %, elle partait donc à la fin de l'accord, et durait zéro.
+    const joue = jouerAccord(TROIS, "roule", 2, 0.75);
+    expect(joue.map((n) => n.debut)).toEqual([0, 0.5, 1]);
     expect(joue.every((n) => n.fin === 2)).toBe(true);
     // L'accord sonne donc entier à partir du dernier départ, ce que l'arpège ne fait jamais.
-    const ensemble = joue.filter((n) => n.debut <= 0.2 && n.fin > 0.2).length;
+    const ensemble = joue.filter((n) => n.debut <= 1 && n.fin > 1).length;
     expect(ensemble).toBe(3);
+  });
+
+  it("À ÉTALEMENT PLEIN, LE ROULÉ SONNE ENTIER PENDANT LA DERNIÈRE PART", () => {
+    // Le défaut de l'étalement est 100 %, et la notice promet que l'accord sonne entier à partir du
+    // dernier départ : la dernière voix partait à la fin, et l'accord ne sonnait jamais entier.
+    const joue = jouerAccord(TROIS, "roule", 3, 1);
+    expect(joue.map((n) => [n.debut, n.fin])).toEqual([[0, 3], [1, 3], [2, 3]]);
   });
 
   it("L'ÉTALEMENT EST UNE PART DE LA DURÉE, donc l'allure ne dépend pas de la longueur", () => {
