@@ -1838,6 +1838,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.cantor.resultat": { fr: "{__VAR_0__} s · grille Cantor · graine {__VAR_1__}", en: "{__VAR_0__} s · Cantor grid · seed {__VAR_1__}" },
   "msg.melangeur_logistique.resultat": { fr: "Mélangeur logistique · {__VAR_0__} s", en: "Logistic Mixer · {__VAR_0__} s" },
   "msg.musicxml.resultat": { fr: "{__VAR_0__} notes · {__VAR_1__} mesures", en: "{__VAR_0__} notes · {__VAR_1__} bars" },
+  "msg.musicxml.cle.fa": { fr: "clé de fa", en: "bass clef" },
+  "msg.musicxml.cle.sol": { fr: "clé de sol", en: "treble clef" },
   "msg.pca_neuronale.resultat": { fr: "PCA neuronale · {__VAR_0__} trames · {__VAR_1__} bins · perte {__VAR_2__} (base {__VAR_3__})", en: "Neural PCA · {__VAR_0__} frames · {__VAR_1__} bins · loss {__VAR_2__} (base {__VAR_3__})" },
   "msg.pca_neuronale.annulation": { fr: "arrêté par annulation", en: "stopped by cancellation" },
   "msg.pca_neuronale.budget": { fr: "arrêté par budget temps", en: "stopped by time budget" },
