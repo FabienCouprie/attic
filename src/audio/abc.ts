@@ -8,7 +8,8 @@
 //
 // CE QUI EST LU. En-tête : X: T: M: L: Q: K: V:. Corps : notes, altérations
 // (^ _ = et leurs doubles), octaves (' ,), durées (2, /2, /, 3/2…), silences
-// (z x Z X), accords [CEG], liaisons de prolongation (-), rythmes pointés (> <),
+// (z x Z X), accords [CEG], liaisons de prolongation (-), d'un accord entier ou
+// d'une seule de ses notes ([CE]- et [C-E]), rythmes pointés (> <),
 // n-olets ((3 et (p:q:r), barres, reprises (|: :| ::) et fins alternatives
 // ([1 [2 |1 :|2), accords chiffrés ("Am"), nuances (!p! !f!…), champs en ligne
 // ([K:] [M:] [L:] [V:]), plusieurs voix, plusieurs morceaux dans un fichier.
@@ -161,7 +162,8 @@ export function lireTempo(valeur: string, unite: Frac): number | null {
 
 // ── Jetons ───────────────────────────────────────────────────────────────
 
-type JetonNote = { t: "note"; hauteurs: number[]; duree: Frac; lie: boolean; velocite: number };
+/** `liees` : les hauteurs que la note suivante prolonge, toutes après « - », une seule pour « [C-E] ». */
+type JetonNote = { t: "note"; hauteurs: number[]; duree: Frac; liees: number[]; velocite: number };
 /** `ligne` : une vraie barre de mesure (« | », « :| »…), et non un simple début de fin alternative « [1 ». */
 type JetonBarre = { t: "barre"; debutReprise: boolean; finReprise: boolean; volta: number | null; ligne: boolean };
 type JetonAccord = { t: "accord"; symbole: string };
@@ -258,6 +260,15 @@ function qParDefaut(p: number, m: Metrique | null): number {
   return ({ 2: 3, 3: 2, 4: 3, 6: 2, 8: 3 } as Record<number, number>)[p] ?? (compose ? 3 : 2);
 }
 
+/**
+ * Une durée nulle, « C0 », « C/0 », ou une unité « L:1/0 », ferait une note qu'on n'entend pas, ou une
+ * note sans fin : elle est une faute, que nomme `fragment`.
+ */
+function nonNulle<D extends { duree: Frac }>(d: D, faute: Signaler, fragment: string): D {
+  if (!(d.duree.n > 0 && d.duree.d > 0)) faute("duree", fragment);
+  return d;
+}
+
 /** Lit une durée à partir de `i` : « 2 », « /2 », « / », « // », « 3/2 ». */
 function lireDuree(s: string, i: number): { duree: Frac; i: number } {
   let j = i, num = "";
@@ -318,7 +329,13 @@ function pousserNote(v: EtatVoix, hauteurs: number[], duree: Frac) {
     if (--v.tuplet.reste <= 0) v.tuplet = null;
   }
   if (v.facteurSuivant) { d = fMul(d, v.facteurSuivant); v.facteurSuivant = null; }
-  v.jetons.push({ t: "note", hauteurs, duree: d, lie: false, velocite: v.velocite });
+  v.jetons.push({ t: "note", hauteurs, duree: d, liees: [], velocite: v.velocite });
+}
+
+/** Lie des hauteurs de la note `n` à la suivante ; `fragment` est ce que nomme la faute si elle ne vient pas. */
+function lier(v: EtatVoix, n: JetonNote, hauteurs: number[], faute: Signaler, fragment: string) {
+  n.liees = [...new Set([...n.liees, ...hauteurs])];
+  v.liee = { hauteurs: n.liees, orpheline: () => faute("liaison", fragment) };
 }
 
 function derniereNote(v: EtatVoix): JetonNote | null {
@@ -333,11 +350,7 @@ function derniereNote(v: EtatVoix): JetonNote | null {
 function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, changerVoix: (id: string) => EtatVoix, surTempo: (valeur: string, v: EtatVoix) => void, faute: Signaler): EtatVoix {
   const s = ligne.replace(/%.*$/, "").replace(/\\\s*$/, "");
   let i = 0, debutNote = 0;
-  // Une durée nulle, « C0 » ou « C/0 », ferait une note qu'on n'entend pas, ou une note sans fin.
-  const nulle = (d: { duree: Frac; i: number }, depart: number) => {
-    if (!(d.duree.n > 0 && d.duree.d > 0)) faute("duree", s.slice(depart, d.i));
-    return d;
-  };
+  const nulle = (d: { duree: Frac; i: number }, depart: number) => nonNulle(d, faute, s.slice(depart, d.i));
   while (i < s.length) {
     const c = s[i];
 
@@ -389,11 +402,7 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
     // Prolongation.
     if (c === "-") {
       const n = derniereNote(v);
-      if (n) {
-        n.lie = true;
-        const fragment = s.slice(debutNote, i + 1);
-        v.liee = { hauteurs: n.hauteurs, orpheline: () => faute("liaison", fragment) };
-      }
+      if (n) lier(v, n, n.hauteurs, faute, s.slice(debutNote, i + 1));
       i++;
       continue;
     }
@@ -431,7 +440,7 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
       // Accord de notes.
       debutNote = i;
       let j = i + 1;
-      const hauteurs: number[] = [];
+      const hauteurs: number[] = [], liees: number[] = [];
       let dureeInterne: Frac | null = null;
       while (j < s.length && s[j] !== "]") {
         if (/[\s.~!]/.test(s[j])) { j++; continue; }
@@ -441,12 +450,14 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
         const d = nulle(lireDuree(s, h.i), j);
         if (dureeInterne === null) dureeInterne = d.duree;
         j = d.i;
-        if (s[j] === "-") j++;
+        // « [C-E] » : la liaison ne vaut que pour la note qu'elle suit.
+        if (s[j] === "-") { liees.push(h.midi); j++; }
       }
       // Sans « ] », la suite de la ligne serait lue comme un seul accord.
       if (j >= s.length) faute("accord", s.slice(i));
       const exterieure = nulle(lireDuree(s, j + 1), i);
       if (hauteurs.length > 0) pousserNote(v, hauteurs, fMul(fMul(v.unite, dureeInterne ?? frac(1)), exterieure.duree));
+      if (liees.length > 0) lier(v, derniereNote(v)!, liees, faute, s.slice(i, exterieure.i));
       i = exterieure.i;
       continue;
     }
@@ -480,7 +491,7 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
       const d = nulle(lireDuree(s, i + 1), i);
       tenirLiaison(v, []);
       const mesure = v.metrique ? frac(v.metrique.numerateur, v.metrique.denominateur) : frac(1);
-      v.jetons.push({ t: "note", hauteurs: [], duree: fMul(mesure, frac(d.duree.n, d.duree.d)), lie: false, velocite: v.velocite });
+      v.jetons.push({ t: "note", hauteurs: [], duree: fMul(mesure, frac(d.duree.n, d.duree.d)), liees: [], velocite: v.velocite });
       i = d.i;
       continue;
     }
@@ -501,12 +512,8 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
   return v;
 }
 
-/** Lit L:. Une unité nulle, « L:0 » ou « L:1/0 », rendrait chaque note muette ou sans fin. */
-function lireUnite(valeur: string, faute: Signaler): Frac {
-  const d = lireDuree(valeur.trim(), 0).duree;
-  if (!(d.n > 0 && d.d > 0)) faute("duree", `L:${valeur.trim()}`);
-  return d;
-}
+/** Lit L:, que « L:0 » ou « L:1/0 » ferait nul. */
+const lireUnite = (valeur: string, faute: Signaler) => nonNulle(lireDuree(valeur.trim(), 0), faute, `L:${valeur.trim()}`).duree;
 
 function appliquerChamp(
   cle: string, valeur: string, v: EtatVoix, avert: (m: string) => void,
@@ -588,11 +595,11 @@ function derouler(v: EtatVoix, avert: (m: string) => void): { notes: NoteAbc[]; 
       const ouverte = ouvertes.get(h);
       if (ouverte && Math.abs(ouverte.debut + ouverte.duree - debut) < 1e-9) {
         ouverte.duree += duree;
-        if (!jeton.lie) ouvertes.delete(h);
+        if (!jeton.liees.includes(h)) ouvertes.delete(h);
       } else {
         const n = { midi: h, debut, duree, velocite: jeton.velocite };
         notes.push(n);
-        if (jeton.lie) ouvertes.set(h, n); else ouvertes.delete(h);
+        if (jeton.liees.includes(h)) ouvertes.set(h, n); else ouvertes.delete(h);
       }
     }
     t = fAdd(t, jeton.duree);

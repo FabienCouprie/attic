@@ -83,6 +83,7 @@ describe("UNE FAUTE QUI FERAIT JOUER FAUX REFUSE LE MORCEAU, et le message la no
     ["une liaison entre deux hauteurs", T("K:C\nC-D E F|"), "C-"],
     ["une liaison vers un silence", T("K:C\nC2- z2 |"), "C2-"],
     ["une liaison d'accord dont une hauteur s'arrête", T("K:C\n[CE]2-[CG]2 |"), "[CE]2-"],
+    ["une liaison dans l'accord que ne suit pas la même hauteur", T("K:C\n[C-E]2 [DG]2 |"), "[C-E]2"],
     ["une liaison qui finit le morceau", T("K:C\nC2 D2-|"), "D2-"],
     ["un n-olet inachevé à la fin du morceau", T("K:C\n(3CD|"), "(3"],
     ["un n-olet coupé par un autre", T("K:C\n(3CD(3EFG A|"), "(3"],
@@ -113,6 +114,13 @@ describe("CE QUE LA NORME PERMET N'EST PAS REFUSÉ", () => {
   it.each([
     ["une liaison à travers la barre", T("K:C\nC2-|C2 D2|"), [[60, 0, 4], [62, 4, 6]]],
     ["une liaison vers un accord qui garde la hauteur", T("K:C\nC2-[CE]2 |"), [[60, 0, 4], [64, 2, 4]]],
+    // Décision de Fabien du 2026-11-22 : la liaison d'une seule note d'un accord se lit. Elle était
+    // ignorée, le do refrappé au lieu d'être tenu.
+    ["une liaison sur une seule note d'un accord", T("K:C\n[C-E]2 [CG]2 |"), [[60, 0, 4], [64, 0, 2], [67, 2, 4]]],
+    ["deux liaisons dans un accord, la troisième note non liée", T("K:C\n[C-E-G]2 [CEB]2 |"),
+      [[60, 0, 4], [64, 0, 4], [67, 0, 2], [71, 2, 4]]],
+    ["une liaison dans l'accord vers une note seule", T("K:C\n[C-E]2 C2 |"), [[60, 0, 4], [64, 0, 2]]],
+    ["une liaison dans l'accord à travers la barre", T("K:C\n[C-E]2|[CG]2 |"), [[60, 0, 4], [64, 0, 2], [67, 2, 4]]],
     ["une liaison vers la première fin, que la seconde ne prolonge pas", T("K:C\n|: C2- |1 C2 :|2 D2 |]"),
       [[60, 0, 4], [60, 4, 6], [62, 6, 8]]],
     ["une liaison qui garde l'altération écrite à nouveau", T("K:C\n^F2-|^F2 G2|"), [[66, 0, 4], [67, 4, 6]]],

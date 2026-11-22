@@ -6,6 +6,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA LIAISON D'UNE SEULE NOTE D'UN ACCORD ABC EST LUE.** Revue des notations en texte, deuxième format, décision de Fabien du 2026-11-22 : « Read the tie ».
+  - **Ce qui se passait.** Le lecteur sautait le « - » écrit dans un accord : « [C-E]2 [CG]2 » refrappait le do au lieu de le tenir. La norme ABC 2.1 admet les liaisons « into, out of and between chords » (§4.11).
+  - **Ce qui change** (`audio/abc.ts`) : chaque note porte les hauteurs qu'elle lie, toutes après « - », une seule pour « [C-E] », et la note suivante ne prolonge que celles-là. La règle des liaisons vaut pour elles : une hauteur liée dans l'accord que la note suivante ne porte pas fait refuser le morceau, et le message nomme l'accord.
+  - **Le garde**, `plugins/abc-vers-midi-norme.test.ts`, par `executer` : quatre écritures lues, une note liée dans l'accord, deux sur trois, vers une note seule, à travers la barre ; et un refus, « [C-E]2 [DG]2 ». **Vus rouges** sur le code d'avant, les cinq cas en échec.
+  - **La place** : les deux vérifications de la durée nulle, dans le corps et dans L:, n'en font plus qu'une (`nonNulle`) ; `audio/abc.ts` pèse 570 lignes de code, et son plafond y descend.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement neuf ; les fichiers ABC, la gravure Verovio et les gardes du dépôt touchés, 19 fichiers et 342 cas verts. **Non vérifié dans l'application.**
+
 - **UN MORCEAU ABC QUI JOUERAIT AUTRE CHOSE QUE CE QUI EST ÉCRIT EST REFUSÉ, ET LE MESSAGE NOMME LA FAUTE, SA LIGNE ET LE FRAGMENT.** Revue des notations en texte, deuxième format, décision de Fabien du 2026-11-22.
   - **Ce qui se passait.** Quatre fautes passaient sans un mot, mesurées par `executer` : « C/0 », une durée divisée par zéro, donnait des notes de durée nulle ; « [CEG D E », un accord jamais refermé, un accord brouillé et une note de durée nulle ; « C-D », une liaison entre deux hauteurs, était ignorée ; « (3CD », un triolet à deux notes, jouait deux notes à 2/3 de temps.
   - **Et une cinquième, de la même nature, trouvée en mesurant** : « L:1/0 » ou « L:0 », dans l'en-tête ou en ligne, rendait chaque note sans durée ou sans fin, sans un mot.
@@ -13,7 +20,7 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - **Ce qui reste un avertissement** : ce que le lecteur saute sans changer ce qu'on entend, les notes d'ornement, les directives %%MIDI, une tonalité ou un caractère inconnus.
   - **Ce qui reste permis**, la norme ABC 2.1 (§4.11) ne liant que deux notes de même hauteur : une liaison à travers la barre, vers un accord qui garde la hauteur, ou vers une première fin que la seconde ne prolonge pas ; un n-olet à travers la barre ou la fin de ligne. La norme est muette sur une altération que la liaison porterait à travers la barre : « ^F2-|F2 » est refusé, « ^F2-|^F2 » joué, et l'écriture MIDI → ABC d'Attic écrit déjà la seconde.
   - **Le garde**, `plugins/abc-vers-midi-norme.test.ts`, tout par `executer` : la table de 27 cas de la norme, notes attendues en hauteur, départ et fin ; quatorze refus nommés ; quatre avertissements qui laissent jouer ; six écritures permises. **Vu rouge** sur le code d'avant, les cinq premiers refus en échec, et l'unité nulle relevée sans faute ni avertissement ; puis sur deux fautes plantées dans l'arbre de session, une liaison exigeant des hauteurs identiques, un n-olet coupé à chaque fin de ligne, un cas tombé pour chacune.
-  - **Relevé sans être réparé, à décider** : la liaison d'une seule note d'un accord, « [C-E]2 [CG]2 », est ignorée, le do refrappé au lieu d'être tenu.
+  - **Relevé en mesurant** : la liaison d'une seule note d'un accord, « [C-E]2 [CG]2 », était ignorée, le do refrappé au lieu d'être tenu ; réparé, entrée précédente.
   - **La place** : `audio/abc.ts` était à son plafond de dette, 589 lignes de code ; l'écriture MIDI en est sortie telle quelle dans `audio/abc-midi.ts`, qu'il réexporte, dans un commit à part. Le plafond est abaissé à 572, ce qu'il pèse avec les fautes.
   - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement neuf dans les fichiers touchés ; `src/core`, `src/ui`, `src/docs`, les gardes de traduction et les quatorze fichiers ABC, 191 fichiers et 2 578 cas verts, en 91 s ; puis, l'unité nulle ajoutée, les fichiers ABC et les gardes du dépôt touchés, 18 fichiers et 333 cas. **Non vérifié dans l'application** : le serveur de développement n'a pas été relancé.
 
