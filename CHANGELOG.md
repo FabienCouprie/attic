@@ -6,6 +6,26 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE CRIBLE DE XENAKIS LIT LA NOTATION D'ARIZA, ET UN FRAGMENT QUI NE SE LIT PAS FAIT REFUSER LE CRIBLE EN LE NOMMANT.** Revue des notations en texte, dixième format, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer`, les degrés retenus lus dans le son :
+    - un fragment mal formé était jeté : « 5@0 pouet 7@2 » jouait « 5@0 7@2 », et la documentation le défendait ;
+    - « & » était jeté et « | » n'était qu'un séparateur : « 3@0 & 4@0 » jouait une réunion, et « 3@0|4@1 » une intersection sous l'« Opération » du même nom ;
+    - « -5@0 » était refusé comme vide, et les parenthèses ne se lisaient pas ;
+    - le message écrivait toujours l'union, « 3@0 ∪ 4@0 », même en intersection.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Read them » et « Refuse it, named » :
+    - l'expression lit la notation de Christopher Ariza, « The Xenakis Sieve as Object » (Computer Music Journal, 2005), celle de `music21.sieve` : « | » ou « ∪ » pour la réunion, « & » ou « ∩ » pour l'intersection, « - » ou « − » en préfixe pour le complément, des parenthèses pour grouper. Le complément se lit avant l'intersection, qui se lit avant la réunion. Comme chez Ariza, « 3@0-4@0 » est refusé, et la différence s'écrit « 3@0 & -4@0 » ;
+    - « Opération » combine toujours une liste sans opérateur, « 5@0 7@2 11@3 » ;
+    - un fragment mal formé, un module nul, un opérateur sans classe, un opérateur manquant ou une parenthèse sans paire font refuser le crible, et le message nomme ce qui ne se lit pas ;
+    - le message écrit l'expression appliquée, « 2@0 ∩ −6@0 » pour une différence, et elle se relit telle quelle.
+
+    « ^ », la différence symétrique d'Ariza, n'est pas lue : elle est refusée et nommée comme tout signe hors de ceux-là.
+
+    Les documentations de « Crible » et d'« Opération » le disent.
+  - **Un test tenait le contraire** : dans `audio/cribles.test.ts`, « 3@0 pouet 4@ @2 0@1 4@1 » gardait ses deux classes valides. Le fragment est maintenant refusé et nommé.
+  - **Le garde** : `plugins/crible-notation.test.ts`, 23 cas, dont chaque expression relue depuis le message.
+    - Vu rouge sur le code d'avant : 21 cas.
+    - Vu rouge aussi sur deux fautes plantées : « & » lu comme une réunion, et un fragment de nouveau jeté.
+
 - **UN CERCLE SANS ZÉRO NI UN EST REFUSÉ, ET LA TRESSE NE LIT QUE DES CROISEMENTS DÉCIMAUX.** Revue des notations en texte, dixième format, 2026-11-22, deuxième lot : le Cercle rythmique, le Cercle mélodique et la Tresse.
   - **Ce qui se passait**, mesuré par `executer` :
     - un motif de cercle qui ne portait ni 0 ni 1, « x..x..x. » ou le texte vide, devenait le motif par défaut sans un mot, dans les deux cercles ;

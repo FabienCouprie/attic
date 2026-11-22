@@ -6,7 +6,7 @@
 import { describe, it, expect } from "vitest";
 import {
   appliquerCrible, periodeCrible, criblesVersNotes, criblesVersRythme,
-  CRIBLE_GAMME_MAJEURE, parserCrible, ecrireCrible,
+  CRIBLE_GAMME_MAJEURE, lireCrible, ecrireCrible,
 } from "./cribles";
 
 describe("periodeCrible", () => {
@@ -105,37 +105,44 @@ describe("conversions", () => {
   });
 });
 
-describe("parserCrible", () => {
-  it("lit la notation de Xenakis", () => {
-    expect(parserCrible("3@0 4@1")).toEqual([{ module: 3, residu: 0 }, { module: 4, residu: 1 }]);
+describe("lireCrible", () => {
+  const lu = (texte: string, operation: "union" | "intersection" | "difference" = "union") => lireCrible(texte, operation);
+  const a = { classe: { module: 3, residu: 0 } }, b = { classe: { module: 4, residu: 1 } };
+
+  it("lit la notation de Xenakis, une liste que l'opération combine", () => {
+    expect(lu("3@0 4@1")).toEqual({ expression: { ou: [a, b] } });
+    expect(lu("3@0 4@1", "intersection")).toEqual({ expression: { et: [a, b] } });
   });
 
-  it("accepte virgules, points-virgules et symbole d'union", () => {
-    const attendu = [{ module: 3, residu: 0 }, { module: 4, residu: 1 }];
-    for (const forme of ["3@0, 4@1", "3@0;4@1", "3@0 ∪ 4@1", "3@0|4@1"]) {
-      expect(parserCrible(forme), forme).toEqual(attendu);
-    }
+  it("accepte virgules et points-virgules entre les classes d'une liste", () => {
+    for (const forme of ["3@0, 4@1", "3@0;4@1"]) expect(lu(forme), forme).toEqual({ expression: { ou: [a, b] } });
+  });
+
+  it("lit « ∪ » et « | » comme la réunion, quelle que soit l'opération", () => {
+    for (const forme of ["3@0 ∪ 4@1", "3@0|4@1"]) expect(lu(forme, "intersection"), forme).toEqual({ expression: { ou: [a, b] } });
   });
 
   it("accepte un résidu négatif", () => {
-    expect(parserCrible("5@-2")).toEqual([{ module: 5, residu: -2 }]);
+    expect(lu("5@-2")).toEqual({ expression: { classe: { module: 5, residu: -2 } } });
   });
 
-  it("ignore les fragments invalides sans vider le crible", () => {
-    // On saisit ces expressions à la main, souvent en tâtonnant : une frappe
-    // hésitante ne doit pas faire disparaître les classes déjà correctes.
-    expect(parserCrible("3@0 pouet 4@ @2 0@1 4@1")).toEqual([
-      { module: 3, residu: 0 }, { module: 4, residu: 1 },
-    ]);
+  it("refuse un fragment invalide, et le nomme", () => {
+    // Ce test tenait le contraire : « 3@0 pouet 4@ @2 0@1 4@1 » gardait ses deux classes valides. Mais le
+    // crible joué n'était plus celui qu'on avait écrit, sans un mot. Décision de Fabien du 2026-11-22,
+    // « Refuse it, named », revue des notations en texte.
+    expect(lu("3@0 pouet 4@ @2 0@1 4@1")).toEqual({ refus: { genre: "fragment", texte: "pouet" } });
+    expect(lu("3@0 4@ 4@1")).toEqual({ refus: { genre: "fragment", texte: "4@" } });
   });
 
-  it("rend une liste vide sur une expression vide", () => {
-    expect(parserCrible("")).toEqual([]);
-    expect(parserCrible("   ")).toEqual([]);
+  it("refuse une expression vide", () => {
+    expect(lu("")).toEqual({ refus: { genre: "vide", texte: "" } });
+    expect(lu("   ")).toEqual({ refus: { genre: "vide", texte: "" } });
   });
 
-  it("ecrireCrible est la réciproque de parserCrible", () => {
-    const texte = "3@0 ∪ 4@1 ∪ 5@-2";
-    expect(ecrireCrible(parserCrible(texte))).toBe(texte);
+  it("ecrireCrible est la réciproque de lireCrible", () => {
+    for (const texte of ["3@0 ∪ 4@1 ∪ 5@-2", "3@0 ∪ (4@1 ∩ 5@2)", "−(2@0 ∪ 3@0) ∩ 5@1"]) {
+      const l = lu(texte);
+      expect("expression" in l && ecrireCrible(l.expression), texte).toBe(texte);
+    }
   });
 });

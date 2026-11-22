@@ -22,14 +22,14 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Crible", nomEn: "Sieve", type: "texte", defaut: "5@0 7@2 11@3", defautEn: "5@0 7@2 11@3",
-        doc: "Classes résiduelles, sous la forme « module@résidu », séparées par des espaces. Des modules premiers entre eux donnent la période la plus longue : 5@0 7@2 11@3 ne se répète qu'au bout de 385 degrés. Les fragments mal formés sont ignorés plutôt que de vider le crible.",
-        docEn: "Residual classes as \"modulus@residue\", separated by spaces. Coprime moduli give the longest period: 5@0 7@2 11@3 only repeats after 385 degrees. Malformed fragments are ignored rather than emptying the sieve." },
+        doc: "Classes résiduelles, sous la forme « module@résidu », séparées par des espaces et combinées par « Opération ». Des modules premiers entre eux donnent la période la plus longue : 5@0 7@2 11@3 ne se répète qu'au bout de 385 degrés. L'expression combine aussi ses classes elle-même, dans la notation de Christopher Ariza : « | » pour la réunion, « & » pour l'intersection, « - » devant une classe ou une parenthèse pour le complément, pris sur les degrés examinés, et des parenthèses pour grouper. Le complément se lit d'abord, puis l'intersection, puis la réunion. Ainsi 3@0 & -4@0 retient les multiples de 3 qui ne sont pas multiples de 4, et 3@0-4@0 est refusé. Une expression qui porte ces signes ne suit plus « Opération ». Un fragment qui ne se lit pas fait refuser le crible, et le message le nomme. Le message écrit l'expression appliquée, ∪ pour la réunion, ∩ pour l'intersection et − pour le complément, et elle se relit telle quelle.",
+        docEn: "Residual classes as \"modulus@residue\", separated by spaces and combined by \"Operation\". Coprime moduli give the longest period: 5@0 7@2 11@3 only repeats after 385 degrees. The expression can also combine its classes itself, in Christopher Ariza's notation: \"|\" for union, \"&\" for intersection, \"-\" before a class or a parenthesis for the complement, taken over the degrees examined, and parentheses to group. The complement is read first, then intersection, then union. Thus 3@0 & -4@0 keeps the multiples of 3 that are not multiples of 4, and 3@0-4@0 is refused. An expression carrying these signs no longer follows \"Operation\". A fragment that cannot be read makes the sieve refused, and the message names it. The message writes the expression applied, ∪ for union, ∩ for intersection and − for the complement, and it reads back as it is." },
       { nom: "Opération", nomEn: "Operation", type: "choix",
         options: ["Réunion", "Intersection", "Différence"], optionsEn: ["Union", "Intersection", "Difference"],
         optionIds: ["union", "intersection", "difference"],
         defaut: "union", defautEn: "union",
-        doc: "« Réunion » garde ce qu'au moins une classe retient ; c'est l'opération qui crée l'irrégularité. « Intersection » ne garde que ce que toutes retiennent, donc très peu. « Différence » garde ce que la première classe retient et qu'aucune autre ne reprend : la seule façon de creuser des trous dans une grille régulière.",
-        docEn: "\"Union\" keeps what at least one class holds, the operation that creates irregularity. \"Intersection\" keeps only what all of them hold, hence very little. \"Difference\" keeps what the first class holds and no other does: the only way to punch holes in a regular grid." },
+        doc: "« Réunion » garde ce qu'au moins une classe retient ; c'est l'opération qui crée l'irrégularité. « Intersection » ne garde que ce que toutes retiennent, donc très peu. « Différence » garde ce que la première classe retient et qu'aucune autre ne reprend : la seule façon de creuser des trous dans une grille régulière. L'opération combine les classes d'un « Crible » écrit en liste ; une expression qui porte « | », « & », un complément ou des parenthèses se combine elle-même.",
+        docEn: "\"Union\" keeps what at least one class holds, the operation that creates irregularity. \"Intersection\" keeps only what all of them hold, hence very little. \"Difference\" keeps what the first class holds and no other does: the only way to punch holes in a regular grid. The operation combines the classes of a \"Sieve\" written as a list; an expression carrying \"|\", \"&\", a complement or parentheses combines itself." },
       { nom: "Lecture", nomEn: "Reading", type: "choix",
         options: ["Hauteurs", "Rythme", "Hauteurs et rythme"], optionsEn: ["Pitches", "Rhythm", "Pitches and rhythm"],
         optionIds: ["hauteurs", "rythme", "les-deux"],
@@ -50,17 +50,20 @@ export const fiches: FicheAudio[] = ([
         docEn: "Share of the subdivision actually sounding. Low, notes stand apart; high, they run together." },
     ],
     async executer(ctx) {
-      const { parserCrible, appliquerCrible, periodeCrible, ecrireCrible } = await import("../audio/cribles");
-      const classes = parserCrible(ctx.paramTexte("Crible", "5@0 7@2 11@3"));
-      if (!classes.length) {
-        return { valeurs: [null], erreur: true, message: traduire("msg.crible_vide") };
+      const { lireCrible, retenirCrible, periodeCrible, ecrireCrible, classesDe } = await import("../audio/cribles");
+      const choix = ctx.paramTexte("Opération", "union");
+      // « Opération » combine une liste de classes ; une expression qui porte ses opérateurs se combine elle-même.
+      const lu = lireCrible(ctx.paramTexte("Crible", "5@0 7@2 11@3"), choix === "intersection" || choix === "difference" ? choix : "union");
+      if ("refus" in lu) {
+        const { genre, texte } = lu.refus;
+        const cle = {
+          vide: "msg.crible_vide", fragment: "msg.crible.fragment_var_0", classe_manquante: "msg.crible.classe_manquante_var_0",
+          operateur_manquant: "msg.crible.operateur_manquant_var_0", parenthese: "msg.crible.parenthese_var_0",
+        }[genre];
+        return { valeurs: [null], erreur: true, message: traduire(cle, texte) };
       }
       const etendue = ctx.paramNombre("Étendue", 96);
-      const retenus = appliquerCrible({
-        classes,
-        operation: ctx.paramTexte("Opération", "union") as any,
-        etendue,
-      });
+      const retenus = retenirCrible(lu.expression, etendue);
       if (!retenus.length) {
         return { valeurs: [null], erreur: true, message: traduire("msg.crible_sans_resultat") };
       }
@@ -103,7 +106,7 @@ export const fiches: FicheAudio[] = ([
       return {
         valeurs: [out],
         message: traduire("msg.crible_var_0_var_1_var_2",
-          ecrireCrible(classes), retenus.length, periodeCrible(classes)),
+          ecrireCrible(lu.expression), retenus.length, periodeCrible(classesDe(lu.expression))),
       };
     },
   }),
