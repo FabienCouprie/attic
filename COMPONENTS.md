@@ -9848,7 +9848,7 @@ Generates a chord chart (SVG) from a list of chord symbols or a roman numeral pr
 
 *Displays a simple score from a chord progression.*
 
-Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G). Chords are displayed as block chords on the staff. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
+Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G). Chords are displayed as block chords on the staff, a quarter note each, in 4/4 bars, and each accidental is drawn when it changes what is in force in the bar, naturals included. A symbol no chord recognizes is refused, and the message names it. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9871,7 +9871,7 @@ Generates a simple score (SVG) from a chord progression. Accepts roman numerals 
 
 *Displays a musical staff from a text notation.*
 
-Generates a musical staff (SVG) from a text notation. Format: note/octave/duration, e.g. « C4/q D4/8 E4/8 F4/q G4/q ». Durations are w, h, q, 8, 16, 32. Chords use +: « C4+E4+G4/q ». The staff is shown in the node. The « SVG » output returns the engraved staff as text, and the « SVG file » output returns the same staff as a file.
+Generates a musical staff (SVG) from a text notation. Format: note/octave/duration, e.g. « C4/q D4/8 E4/8 F4/q G4/q ». Durations are w, h, q, 8, 16, 32, followed by one to three dots for a dotted duration: « C4/q. ». Chords use +: « C4+E4+G4/q ». A rest is written « B4/q/r ». A note without an accidental is natural. The staff is cut into 4/4 bars: a note crossing the bar line is split there and tied, and the last bar ends with rests placed on the beats. Each accidental is drawn when it changes what is in force in the bar, naturals included, and the bar line clears them. A duration, note or form the notation does not know is refused, and the message names the token: nothing is engraved. The staff is shown in the node. The « SVG » output returns the engraved staff as text, and the « SVG file » output returns the same staff as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|

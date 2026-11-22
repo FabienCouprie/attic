@@ -8,10 +8,20 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { analyserMidi, midiDuFichier } from "../audio/midi";
-import { GRILLES_NOTATION, accordsPourPartition, genererGrille, genererPartition, genererPortee, genererTab, jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
+import {
+  GRILLES_NOTATION, accordsDeProgression, accordsPourPartition, genererGrille, genererPartition, genererTab, graverNotation,
+  jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore,
+} from "./vexflow-notation";
+import type { FauteGravure } from "../audio/notation-vexflow";
 import { choixValeurs } from "../audio/valeurs-note";
 import { accordsInconnus } from "../audio/theorie-romains";
 import { choixClefPortee } from "../audio/clefs-portee";
+
+/** Le refus d'une notation fautive : chaque jeton nommé avec sa raison, les huit premiers. */
+function direFautesGravure(fautes: readonly FauteGravure[]): string {
+  const liste = fautes.slice(0, 8).map((f) => traduire(`msg.vexflow.faute.${f.raison}`, f.jeton));
+  return traduire("msg.vexflow.notation_refusee_var_0", liste.join(" · ") + (fautes.length > 8 ? " · …" : ""));
+}
 
 /** La clé des trois portées. Ses identifiants sont les noms de VexFlow, ses libellés sont traduits. */
 const CLE_PORTEE = reglagePartage({
@@ -74,7 +84,11 @@ export const fiches: FicheAudio[] = ([
       const clef = ctx.paramTexte("Clé", "treble");
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);
-      const svg = genererPortee(notation, clef, w, h);
+      // UNE DURÉE OU UNE NOTE QUE LA NOTATION NE CONNAÎT PAS EST REFUSÉE EN LA NOMMANT, décision de
+      // Fabien du 2026-11-22. Mesuré avant : « C4/q. » perdait son point, « C4/8t » devenait une noire,
+      // et « H4/q » finissait en « Aucune note valide », sans dire laquelle.
+      const { svg, fautes } = graverNotation(notation, clef, w, h);
+      if (fautes.length > 0) return { valeurs: [null, null], erreur: true, message: direFautesGravure(fautes) };
       if (!svg) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_note_valide") };
       // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
       // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
@@ -216,7 +230,15 @@ export const fiches: FicheAudio[] = ([
       const clef = ctx.paramTexte("Clé", "treble");
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);
-      const svg = genererPartition(progression, tonic, ctx.paramTexte("Gamme", "majeur"), clef, w, h);
+      // UN SYMBOLE QU'AUCUN ACCORD NE RECONNAÎT EST REFUSÉ EN LE NOMMANT, comme sur la grille. Mesuré
+      // avant : « C Zorglub G C » finissait en « Aucune progression valide », sans dire lequel.
+      const accords = accordsDeProgression(progression, tonic, ctx.paramTexte("Gamme", "majeur"));
+      const inconnus = accordsInconnus(accords);
+      if (inconnus.length > 0) {
+        return { valeurs: [null, null], erreur: true,
+          message: traduire("msg.accords_inconnus_var_0", inconnus.slice(0, 3).join(" ")) };
+      }
+      const svg = genererPartition(accords, clef, w, h);
       if (!svg) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_progression_valide") };
       // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
       // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
@@ -273,7 +295,7 @@ export const fiches: FicheAudio[] = ([
       const clef = ctx.paramTexte("Clé", "treble");
       const w = ctx.paramNombre("Largeur", 800);
       const h = ctx.paramNombre("Hauteur", 200);
-      const svg = genererPortee(notation, clef, w, h);
+      const { svg } = graverNotation(notation, clef, w, h);
       if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
       const svgFile = new File([svg], "partition.svg", { type: "image/svg+xml" });
       return { valeurs: [svgFile], message: svg };

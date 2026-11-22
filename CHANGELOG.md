@@ -6,6 +6,16 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA PORTÉE VEXFLOW SE LIT COMME ELLE EST ÉCRITE : LES POINTS, LES MESURES, LES BÉCARRES, ET LES FAUTES NOMMÉES.** Revue des notations en texte, troisième format, décisions de Fabien du 2026-11-22 : « Read dots, refuse the rest » et « Cut into bars ».
+  - **Ce qui se passait**, mesuré par `executer`, en relisant ce que VexFlow dessine :
+    - une durée hors des six devenait une noire, sans un mot : « C4/q. » perdait son point, « C4/h.. » devenait une noire, « C4/8t », « C4/x » et « D4/3 » aussi ;
+    - tout tenait dans une seule mesure de N noires, sans barre : deux rondes en 8/4, seize noires en 16/4 ;
+    - une note naturelle après la même note altérée se gravait sans bécarre, et se lisait donc altérée, sur la portée (« F#4 F4 », « Bb4 B4 »), la partition (« E C », le sol du do majeur lu dièse) et la partition MIDI (do, do dièse, do) ;
+    - « H4/q », « C/q » et « Zorglub » finissaient en « Aucune note valide » ou « Aucune progression valide », sans nommer le jeton.
+  - **Ce qui change** (`audio/notation-vexflow.ts`, module neuf) : la notation est lue jeton par jeton, et une durée, une note ou une forme inconnue est refusée, le message nommant le jeton ; les points se lisent, jusqu'à trois. La portée se coupe en mesures de 4/4 : une note qui franchit la barre y est coupée et liée, la dernière mesure se finit par des silences posés sur les temps, un soupir puis une demi-pause après une noire. Chaque altération se dessine quand elle change ce qui est en vigueur dans la mesure, bécarre compris ; la barre efface tout ; la suite d'une note liée ne redessine rien. La Portée, la Partition et la Partition MIDI passent par là. La Partition refuse un symbole inconnu en le nommant, comme la Grille. Les notices le disent, en français et en anglais.
+  - **Le garde**, `plugins/vexflow-gravure.test.ts`, tout par `executer` : il relit le dessin comme un musicien, altérations portées dans la mesure, effacées à la barre, liaisons prolongeant la note, et compare la lecture à ce qui était écrit, en hauteur, attaque et durée. Seize écritures de la portée, le remplissage d'une mesure, huit refus nommés, quatre partitions, deux partitions MIDI. **Vu rouge** sur le code d'avant, 25 cas sur 31 ; puis sur deux fautes plantées dans l'arbre de session, sans bécarre et sans barre, sept cas tombés pour chacune.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests VexFlow et les gardes du dépôt touchés, 16 fichiers et 586 cas verts. **Non vérifié dans l'application.**
+
 - **LA GAMME JOUÉE ET LES ACCORDS JOUÉS ÉCRIVENT LA VÉLOCITÉ DANS LEUR SORTIE « NOTATION ».** Revue des notations en texte, décision de Fabien du 2026-11-22.
   - **Ce qui se passait.** Leur notation n'écrivait pas la vélocité, que le format sait porter : relue par Texte → MIDI, elle rendait la vélocité par défaut, 80. Mesuré à la nuance 90 : 90 jouée, 80 relue, sous chacun des 175 lancers de la Gamme jouée et des 198 des Accords joués.
   - **Ce qui change** : chaque ligne porte sa vélocité, et les notes d'un même départ partagent la leur. Les deux notices le disent, en français et en anglais ; `COMPONENTS.md` régénéré.

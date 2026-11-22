@@ -5,6 +5,10 @@
 
 import { Chord } from "tonal";
 import { accordsDepuisRomains, modeDepuisTonalite, toniqueDepuisTonalite } from "../audio/theorie-romains";
+import {
+  barreDeDuree, easyScoreDe, jetonsDe, lireHauteur, lireNotationVexflow, mettreEnMesures,
+  type ElementGrave, type Evenement, type FauteGravure, type Hauteur,
+} from "../audio/notation-vexflow";
 import { Renderer, Factory, TabStave, TabNote, Voice, Formatter } from "vexflow";
 
 /**
@@ -30,42 +34,9 @@ function dureeVex(d: string): string {
   return DUREES[d] ?? "q";
 }
 
-function noteEasyScore(note: string): string {
-  // "C4" / "F#3" / "Bb5" → format VexFlow EasyScore (doit être majuscule).
-  // Accords : "C4+E4+G4" ou "(C4 E4 G4)" → "(C4 E4 G4)".
-  const n = note.trim();
-  const notes = n.includes("+")
-    ? n.split("+")
-    : n.startsWith("(") && n.endsWith(")")
-    ? n.slice(1, -1).split(/\s+/)
-    : [n];
-  const normalise = (s: string) => {
-    const m = /^([A-Ga-g])([#b]?)(-?\d+)$/.exec(s.trim());
-    return m ? `${m[1].toUpperCase()}${m[2]}${m[3]}` : s.trim();
-  };
-  if (notes.length > 1) {
-    return `(${notes.map(normalise).join(" ")})`;
-  }
-  return normalise(notes[0]);
-}
-
-/**
- * L'indice de la barre qui sépare les notes de leur durée, ou −1 quand le jeton n'en porte pas.
- *
- * LA RECHERCHE IGNORE CE QUI EST ENTRE PARENTHÈSES, un accord s'écrivant « (C4 E4 G4)/q ». Elle est
- * partagée parce que deux lecteurs du même jeton ne doivent pas se répondre différemment : celui qui
- * l'analyse, et celui qui dit si le texte est bien dans cette notation.
- */
-function barreDeDuree(token: string): number {
-  let profondeur = 0;
-  for (let i = 0; i < token.length; i++) {
-    const c = token[i];
-    if (c === "(") profondeur++;
-    else if (c === ")") profondeur--;
-    else if (c === "/" && profondeur === 0) return i;
-  }
-  return -1;
-}
+// `barreDeDuree` VIVAIT ICI et habite `audio/notation-vexflow.ts`, avec le lecteur de la notation :
+// deux lecteurs du même jeton ne doivent pas se répondre différemment, celui qui l'analyse, et celui
+// qui dit si le texte est bien dans cette notation.
 
 /**
  * Les jetons qui NE PORTENT PAS LEUR DURÉE, et qui disent donc que ce texte n'est pas cette notation.
@@ -79,7 +50,7 @@ function barreDeDuree(token: string): number {
  * lequel il est.
  */
 export function jetonsSansDuree(texte: string): string[] {
-  return tokenizeNotation(texte).filter((t) => barreDeDuree(t) === -1);
+  return jetonsDe(texte).filter((t) => barreDeDuree(t) === -1);
 }
 
 /**
@@ -105,16 +76,6 @@ export function jetonsSansCordeFret(texte: string): string[] {
 // `accordsInconnus` VIVAIT ICI et habite désormais `audio/theorie-romains.ts` : trois composants de
 // théorie posaient la même question, et deux lecteurs d'un même symbole ne doivent pas se répondre
 // différemment. La gravure l'importe de là plutôt que d'en garder une copie.
-
-function parseTokenNote(token: string): { notes: string; duree: string; rest: boolean } {
-  // Découpe un token de la forme "note/duree" ou "note/duree/r".
-  const barre = barreDeDuree(token);
-  if (barre === -1) return { notes: token, duree: "q", rest: false };
-  const notes = token.slice(0, barre);
-  const reste = token.slice(barre + 1).split("/");
-  const duree = reste[0] || "q";
-  return { notes, duree, rest: reste[1] === "r" };
-}
 
 function creerRenderer(width: number, height: number): { renderer: InstanceType<typeof Renderer>; div: HTMLDivElement } {
   const div = document.createElement("div");
@@ -244,83 +205,38 @@ export function midiVersNotationEasyScore(
   return parts.join(" ");
 }
 
-function tokenizeNotation(texte: string): string[] {
-  // Découpe par espace sans couper à l'intérieur des parenthèses d'un accord.
-  const tokens: string[] = [];
-  let courant = "";
-  let profondeur = 0;
-  for (const c of texte.trim()) {
-    if (c === "(") profondeur++;
-    else if (c === ")") profondeur--;
-    if (/\s/.test(c) && profondeur === 0) {
-      if (courant) {
-        tokens.push(courant);
-        courant = "";
-      }
-    } else {
-      courant += c;
-    }
-  }
-  if (courant) tokens.push(courant);
-  return tokens;
-}
-
-function notationEasyScore(texte: string): { notes: string; totalQuarts: number } {
-  // Convertit notre format "C4/q D4/8 C4+E4+G4/q" en format EasyScore "C4/q, D4/8, (C4 E4 G4)/q"
-  // Les silences utilisent la notation EasyScore "B4/q/r".
-  const tokens = tokenizeNotation(texte);
-  let totalQuarts = 0;
-  const parts: string[] = tokens.map((tok) => {
-    const { notes: son, duree: dur, rest } = parseTokenNote(tok);
-    const duree = dureeVex(dur);
-    totalQuarts += dureeEnQuarts(duree);
-    const notes = noteEasyScore(son);
-    if (rest) return `${notes}/${duree}/r`;
-    return `${notes}/${duree}`;
-  });
-  // Complète la mesure (jusqu'au prochain multiple de 4) avec des silences
-  let reste = 4 - (totalQuarts % 4 || 4);
-  const eps = 0.001;
-  if (reste > eps && reste < 4 - eps) {
-    for (const { q, v } of DUREES_VEX.slice().reverse()) {
-      while (reste > eps) {
-        const max = Math.max(q, eps);
-        if (reste + eps < max) break;
-        parts.push(`B4/${v}/r`);
-        totalQuarts += q;
-        reste -= q;
-        if (reste <= eps) break;
-      }
-    }
-  }
-  return { notes: parts.join(", "), totalQuarts };
-}
-
-export function genererPortee(notation: string, clef: string, largeur: number, hauteur: number): string {
+/**
+ * Grave des mesures sur une portée : une barre entre deux mesures, une liaison entre deux éléments
+ * liés, et seules les altérations que la mise en mesures dit de dessiner.
+ *
+ * LE RENDU EST ENVELOPPÉ, ET LE RETRAIT DU DIV GARANTI. VexFlow lève sur ce qu'il refuse, et cette
+ * erreur remontait telle quelle jusqu'au statut du nœud, « [RuntimeError] IncompleteVoice », qui ne
+ * dit ni ce qui était attendu, ni quoi brancher. La notation est lue avant d'arriver ici, et ses
+ * fautes nommées ; ce qui lève encore vaut une portée vide, et la cause reste dans la console.
+ */
+export function genererPortee(mesures: ElementGrave[][], clef: string, largeur: number, hauteur: number): string {
   const { div } = creerRenderer(largeur, hauteur);
   div.id = "vex-" + Math.random().toString(36).slice(2);
   document.body.appendChild(div);
-  // LE RENDU EST ENVELOPPÉ, ET LE RETRAIT DU DIV GARANTI.
-  //
-  // VexFlow LÈVE lorsqu'une voix n'emplit pas sa mesure, et cette erreur remontait telle quelle
-  // jusqu'au statut du nœud : « [RuntimeError] IncompleteVoice: Voice does not have enough notes »,
-  // qui ne dit ni ce qui était attendu, ni quoi brancher. Une notation que la bibliothèque refuse
-  // vaut une notation vide : la fiche sait déjà dire ce refus-là, dans les deux langues. La cause,
-  // elle, reste lisible dans la console — c'est là qu'elle a été trouvée.
-  //
-  // ET LE `finally` FERME UNE FUITE au passage, sur les mêmes lignes : la sortie anticipée d'une
-  // notation vide laissait le div dans le document, et la levée aussi.
   try {
     const vf = new Factory({ renderer: { elementId: div.id, width: largeur, height: hauteur } });
     const score = vf.EasyScore();
-    const { notes: notesStr, totalQuarts } = notationEasyScore(notation);
-    if (!notesStr) return "";
-    const beats = Math.max(4, Math.ceil(totalQuarts / 4) * 4);
-    score.set({ time: `${beats}/4` });
-    const system = vf.System();
-    system.addStave({
-      voices: [score.voice(score.notes(notesStr, { stem: "up" }))],
-    }).addClef(clef).addTimeSignature(`${beats}/4`);
+    const elements = mesures.flat();
+    if (elements.length === 0) return "";
+    const notes = elements.map((e) => score.notes(easyScoreDe(e), { stem: "up" })[0]);
+    const tickables: Parameters<InstanceType<typeof Voice>["addTickables"]>[0] = [];
+    let i = 0;
+    mesures.forEach((m, k) => {
+      if (k > 0) tickables.push(vf.BarNote());
+      for (let j = 0; j < m.length; j++) tickables.push(notes[i++]);
+    });
+    const voix = vf.Voice({ time: `${mesures.length * 4}/4` }).addTickables(tickables);
+    elements.forEach((e, k) => {
+      if (!e.lie || !notes[k + 1]) return;
+      const indices = e.hauteurs.map((_, j) => j);
+      vf.StaveTie({ from: notes[k], to: notes[k + 1], first_indices: indices, last_indices: indices });
+    });
+    vf.System().addStave({ voices: [voix] }).addClef(clef).addTimeSignature("4/4");
     vf.draw();
     return extraireSvgRendu(div);
   } catch (e) {
@@ -329,6 +245,13 @@ export function genererPortee(notation: string, clef: string, largeur: number, h
   } finally {
     div.remove();
   }
+}
+
+/** Lit une notation et la grave en mesures ; une notation fautive rend ses fautes, et rien de gravé. */
+export function graverNotation(notation: string, clef: string, largeur: number, hauteur: number): { svg: string; fautes: FauteGravure[] } {
+  const { evenements, fautes } = lireNotationVexflow(notation);
+  if (fautes.length > 0 || evenements.length === 0) return { svg: "", fautes };
+  return { svg: genererPortee(mettreEnMesures(evenements), clef, largeur, hauteur), fautes };
 }
 
 export function genererTab(tabText: string, accordage: string, largeur: number, hauteur: number): string {
@@ -381,7 +304,8 @@ export function genererGrille(accords: string[], mesuresParLigne: number, largeu
   return svg;
 }
 
-export function genererPartition(progression: string, tonic: string, gamme: string, clef: string, largeur: number, hauteur: number): string {
+/** Les accords d'une progression écrite, en chiffres romains ou en symboles. */
+export function accordsDeProgression(progression: string, tonic: string, gamme: string): string[] {
   const tokens = progression.split(/\s+/).filter(Boolean);
   const romains = /^[IViv]+$/.test(tokens[0] ?? "");
   // `accordsPourPartition` et non Tonal brut : appelé directement, il rendait un
@@ -389,11 +313,15 @@ export function genererPartition(progression: string, tonic: string, gamme: stri
   // les degrés d'un mode mineur sur la gamme majeure. La partition imprimait
   // donc d'autres accords que ceux joués par les nœuds audio, qui passent tous
   // par la fonction partagée.
-  const accords = romains ? accordsPourPartition(tonic, gamme, tokens) : tokens;
-  const notation = accords.map((a) => {
-    const notes = Chord.get(a).notes.map((n) => noteEasyScore(`${n}4`)).join("+");
-    return `${notes}/q`;
-  }).join(" ");
-  return genererPortee(notation, clef, largeur, hauteur);
+  return romains ? accordsPourPartition(tonic, gamme, tokens) : tokens;
+}
+
+/** Grave des accords reconnus, une noire chacun, leurs notes posées à l'octave 4. */
+export function genererPartition(accords: string[], clef: string, largeur: number, hauteur: number): string {
+  const evenements: Evenement[] = accords.map((a, k) => ({
+    debut: k, longueur: 1, silence: false,
+    hauteurs: Chord.get(a).notes.map((n) => lireHauteur(`${n}4`)).filter((h): h is Hauteur => h !== null),
+  }));
+  return genererPortee(mettreEnMesures(evenements), clef, largeur, hauteur);
 }
 
