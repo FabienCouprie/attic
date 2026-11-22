@@ -23,6 +23,7 @@ import {
 } from "../audio/auto-similarite";
 import { parUneFois } from "./hors-lot";
 import { notesDuMidi } from "../audio/midi";
+import { hauteurOuRefus } from "../audio/noms-de-notes";
 import { Note as NoteTonal } from "tonal";
 import { accordDuSymbole } from "../audio/symboles-accords";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
@@ -200,12 +201,12 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Voix grave", nomEn: "Lower voice", type: "texte", defaut: "C4 D4 E4 F4 E4 D4 C4",
         defautEn: "C4 D4 E4 F4 E4 D4 C4",
-        doc: "Le cantus firmus, une note par temps. Un MIDI branché en entrée l'emporte : ses notes sont réparties en deux voix par leur hauteur.",
-        docEn: "The cantus firmus, one note per beat. A MIDI file on the input wins: its notes are split into two voices by pitch." },
+        doc: "Le cantus firmus, une note par temps. Un MIDI branché en entrée l'emporte : ses notes sont réparties en deux voix par leur hauteur. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "The cantus firmus, one note per beat. A MIDI file on the input wins: its notes are split into two voices by pitch. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Voix aiguë", nomEn: "Upper voice", type: "texte", defaut: "G4 F4 G4 A4 G4 B4 C5",
         defautEn: "G4 F4 G4 A4 G4 B4 C5",
-        doc: "Le contrepoint, une note par temps, autant de notes que la voix grave. La valeur par défaut est un exercice juste : le composant ne doit rien y trouver.",
-        docEn: "The counterpoint, one note per beat, as many notes as the lower voice. The default is a correct exercise: the node should find nothing in it." },
+        doc: "Le contrepoint, une note par temps, autant de notes que la voix grave. La valeur par défaut est un exercice juste : le composant ne doit rien y trouver. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "The counterpoint, one note per beat, as many notes as the lower voice. The default is a correct exercise: the node should find nothing in it. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Unissons intérieurs", nomEn: "Inner unisons", type: "choix",
         options: ["Interdits", "Permis"], optionsEn: ["Forbidden", "Allowed"],
         optionIds: ["interdits", "permis"], defaut: "Interdits", defautEn: "Forbidden",
@@ -213,15 +214,17 @@ export const fiches: FicheAudio[] = ([
         docEn: "Fux forbids the unison anywhere but at the start and the end, because the two voices merge there and only one line is heard." },
     ],
     async executer(ctx) {
-      const lire = (texte: string): number[] => {
-        const base: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
-        return texte.split(/[\s,]+/).filter(Boolean).map((mot) => {
-          const m = /^([a-gA-G])([#b]?)(-?\d+)?$/.exec(mot.trim());
-          if (!m) return NaN;
-          const alteration = m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0;
-          const octave = m[3] === undefined ? 4 : parseInt(m[3], 10);
-          return base[m[1].toLowerCase()] + alteration + (octave + 1) * 12;
-        }).filter((n) => Number.isFinite(n));
+      // LE SEUL LECTEUR DES NOMS DE NOTES, revue des notations en texte du 2026-11-22. Un nom illisible
+      // était jeté, et l'exercice jugé sur une voix amputée, « C4 X4 E4 F4 » sur trois notes contre
+      // quatre ; un nom sans octave prenait l'octave 4. Décision de Fabien : il est refusé, et nommé.
+      const lire = (texte: string): { hauteurs: number[] } | { refus: string } => {
+        const hauteurs: number[] = [];
+        for (const mot of texte.split(/[\s,]+/).filter(Boolean)) {
+          const lue = hauteurOuRefus(mot);
+          if ("refus" in lue) return lue;
+          hauteurs.push(lue.midi);
+        }
+        return { hauteurs };
       };
       let basse: number[], haute: number[];
       const entree = await notesDuMidi(ctx.entree(0));
@@ -236,8 +239,12 @@ export const fiches: FicheAudio[] = ([
         basse = instants.map((i) => Math.min(...parInstant.get(i)!));
         haute = instants.map((i) => Math.max(...parInstant.get(i)!));
       } else {
-        basse = lire(ctx.paramTexte("Voix grave", "C4 D4 E4 F4 E4 D4 C4"));
-        haute = lire(ctx.paramTexte("Voix aiguë", "G4 F4 G4 A4 G4 B4 C5"));
+        const grave = lire(ctx.paramTexte("Voix grave", "C4 D4 E4 F4 E4 D4 C4"));
+        if ("refus" in grave) return { valeurs: [null], erreur: true, message: grave.refus };
+        const aigue = lire(ctx.paramTexte("Voix aiguë", "G4 F4 G4 A4 G4 B4 C5"));
+        if ("refus" in aigue) return { valeurs: [null], erreur: true, message: aigue.refus };
+        basse = grave.hauteurs;
+        haute = aigue.hauteurs;
       }
       if (basse.length === 0 || haute.length === 0) {
         return { valeurs: [null], message: traduire("msg.contrepoint.vide") };

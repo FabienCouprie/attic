@@ -27,6 +27,7 @@ import {
   OPCODES, opcodeDe, orchestreInstrument, orchestreSpectral, tablesInstrument, tablesSpectral,
 } from "../audio/csound-opcodes";
 import { frequenceDeNoteMidi } from "../audio/commun";
+import { hauteurOuRefus } from "../audio/noms-de-notes";
 
 const INSTRUMENTS = OPCODES.filter((o) => o.sorte === "instrument");
 const SPECTRAUX = OPCODES.filter((o) => o.sorte === "spectral");
@@ -395,7 +396,7 @@ endin`,
         doc: "L'opcode employé. La corde frottée : son modèle de Helmholtz est ici débogué depuis trente ans. Chaque instrument emploie les trois réglages suivants à sa façon, et la notice le détaille.",
         docEn: "The opcode used. The bowed string: its Helmholtz model has been debugged here for thirty years. Each instrument uses the three settings below in its own way, detailed in the notice." },
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "A3", defautEn: "A3",
-        doc: "Note jouée quand aucun MIDI n'est branché.", docEn: "Note played when no MIDI is connected." },
+        doc: "Note jouée quand aucun MIDI n'est branché. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.", docEn: "Note played when no MIDI is connected. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Pression", nomEn: "Pressure", type: "nombre", plage: [0, 100], pas: 1, defaut: 40, unite: "%",
         doc: "Pression d'archet, raideur d'anche, souffle ou tension des lèvres selon l'instrument.",
         docEn: "Bow pressure, reed stiffness, breath or lip tension depending on the instrument." },
@@ -425,12 +426,12 @@ endin`,
       if (notes && notes.length > 0) {
         partition = `${tablesInstrument(o)}\n${partitionDepuisNotes(notes)}\nf0 ${(Math.max(...notes.map((n) => n.fin)) + 0.3).toFixed(3)}\ne`;
       } else {
-        const base: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
-        const m = /^([a-gA-G])([#b]?)(-?\d+)?$/.exec(ctx.paramTexte("Note", "A3").trim());
-        const midi = m
-          ? base[m[1].toLowerCase()] + (m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0)
-            + ((m[3] === undefined ? 3 : parseInt(m[3], 10)) + 1) * 12
-          : 57;
+        // PAR LE SEUL LECTEUR DES NOMS DE NOTES, revue des notations en texte du 2026-11-22 : ce nœud
+        // avait sa propre expression, qui ne lisait ni « C##3 » ni « C♯3 » ni « Do3 », et retombait en
+        // silence sur la 3 ; une note illisible ou sans octave est désormais refusée en la nommant.
+        const note = hauteurOuRefus(ctx.paramTexte("Note", "A3"));
+        if ("refus" in note) return { valeurs: [null, null], erreur: true, message: note.refus };
+        const midi = note.midi;
         const duree = ctx.paramNombre("Durée", 2);
         partition = `${tablesInstrument(o)}\ni1 0 ${duree.toFixed(3)} ${(frequenceDeNoteMidi(midi)).toFixed(3)} 0.6 ${midi}\ne`;
       }

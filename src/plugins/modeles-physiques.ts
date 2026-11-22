@@ -17,9 +17,10 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { hasardDuNoeud } from "../core";
 import {
-  FREQUENCE_ECH, frequenceDe, lireNote, melanger, versBuffer,
+  FREQUENCE_ECH, frequenceDe, melanger, versBuffer,
 } from "./instruments-communs";
 import { notesDuMidi } from "../audio/midi";
+import { hauteurOuRefus } from "../audio/noms-de-notes";
 import { SECOUEURS, secoueur, secoussesRegulieres, synthetiserSecoueur, type Secousse } from "../audio/phisem";
 import { synthetiserVent, type Vent } from "../audio/guides-onde";
 import { BARRES, barre, synthetiserBarre } from "../audio/barre-modale";
@@ -99,8 +100,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Le modèle. La clarinette a un tuyau fermé à un bout, ce qui ne laisse vivre que les harmoniques impairs : les pairs pèsent 0,4 % des impairs, d'où sa couleur creuse. La flûte est presque sinusoïdale. Le cuivre s'éclaircit quand on souffle fort, parce que l'onde se raidit en se propageant.",
         docEn: "The model. The clarinet's bore is closed at one end, which lets only odd harmonics live: the even ones weigh 0.4 % of the odd, hence its hollow colour. The flute is nearly sinusoidal. The brass brightens when blown hard, because the wave steepens as it travels." },
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "A3", defautEn: "A3",
-        doc: "Note jouée quand aucun MIDI n'est branché (ex. A3, C4, F#5). Un MIDI l'emporte, et la ligne est jouée note à note.",
-        docEn: "Note played when no MIDI is connected (e.g. A3, C4, F#5). A MIDI file wins, and the line is played note by note." },
+        doc: "Note jouée quand aucun MIDI n'est branché (ex. A3, C4, F#5). Un MIDI l'emporte, et la ligne est jouée note à note. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Note played when no MIDI is connected (e.g. A3, C4, F#5). A MIDI file wins, and the line is played note by note. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Pression", nomEn: "Breath", type: "nombre", plage: [0, 100], pas: 1, defaut: 80, unite: "%",
         doc: "Pression de souffle. Le réglage couvre la plage où le modèle choisi est juste : il commence à 65 % de pression réelle sur la clarinette, qui ne s'établit pas en dessous, et à 85 % sur la flûte, qui n'y tient pas sa hauteur. Ces deux instruments parlent donc à tout réglage, et la pression y agit sur le timbre : la clarinette s'assombrit quand elle monte. Le cuivre garde l'échelle entière, et c'est le seul à refuser de parler, sous 20 % ; le composant ne rend alors aucun son, et son message le signale. Son timbre s'ouvre franchement quand la pression monte.",
         docEn: "Breath pressure. The setting spans the range where the chosen model is accurate: it starts at 65 % of real pressure on the clarinet, which does not start below that, and at 85 % on the flute, which does not hold its pitch there. Those two therefore speak at every setting, and pressure acts on their timbre: the clarinet darkens as it rises. The brass keeps the full scale and is the only one that refuses to speak, below 20 %; the node then produces no sound, and its message says so. Its timbre opens up markedly as pressure rises." },
@@ -134,8 +135,10 @@ export const fiches: FicheAudio[] = ([
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes || notes.length === 0) {
         const duree = ctx.paramNombre("Durée", 2);
+        const note = hauteurOuRefus(ctx.paramTexte("Note", "A3"));
+        if ("refus" in note) return { valeurs: [null], erreur: true, message: note.refus };
         const { signal, parle } = synthetiserVent({
-          ...commun, frequence: frequenceDe(lireNote(ctx.paramTexte("Note", "A3"))), duree,
+          ...commun, frequence: frequenceDe(note.midi), duree,
         }, aleatoire);
         return {
           // CE QUI NE PARLE PAS NE S'ENTEND PAS. Le modèle produit bien du bruit de souffle sous le
@@ -196,8 +199,8 @@ export const fiches: FicheAudio[] = ([
         doc: "L'instrument, c'est-à-dire ses rapports modaux. Une barre libre vibre sur 1 / 2,756 / 5,404 / 8,933, des rapports non entiers, d'où sa couleur métallique. Creuser une arche sous une barre de marimba ramène son deuxième mode à 4 et son troisième à 10 : elle devient harmonique, donc musicale. La cloche tubulaire, elle, sonne sur 2 / 3 / 4,16 / 5,43, si bien que la note entendue n'existe pas dans le son.",
         docEn: "The instrument, that is, its modal ratios. A free bar vibrates on 1 / 2.756 / 5.404 / 8.933, non-integer ratios, hence its metallic colour. Carving an arch under a marimba bar brings its second mode to 4 and its third to 10: it becomes harmonic, hence musical. The tubular bell rings on 2 / 3 / 4.16 / 5.43, so the note one hears is not in the sound at all." },
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "C4", defautEn: "C4",
-        doc: "Note frappée quand aucun MIDI n'est branché. Un MIDI l'emporte, et chaque note devient un coup de maillet dont la vélocité règle la dureté.",
-        docEn: "Note struck when no MIDI is connected. A MIDI file wins, and each note becomes a mallet stroke whose velocity sets the hardness." },
+        doc: "Note frappée quand aucun MIDI n'est branché. Un MIDI l'emporte, et chaque note devient un coup de maillet dont la vélocité règle la dureté. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Note struck when no MIDI is connected. A MIDI file wins, and each note becomes a mallet stroke whose velocity sets the hardness. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Dureté du maillet", nomEn: "Mallet hardness", type: "nombre", plage: [0, 100], pas: 1, defaut: 50, unite: "%",
         doc: "Un maillet dur donne une impulsion courte, donc riche en aigus, et réveille les modes hauts ; un maillet mou ne réveille que le premier. C'est le réglage qui change le plus le timbre, et pour une raison physique et non par courbe de réglage.",
         docEn: "A hard mallet gives a short impulse, hence rich in highs, and wakes the upper modes; a soft one wakes only the first. It is the setting that changes the timbre most, and for a physical reason rather than by a tuning curve." },
@@ -227,8 +230,10 @@ export const fiches: FicheAudio[] = ([
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes || notes.length === 0) {
         const duree = ctx.paramNombre("Durée", 3);
+        const note = hauteurOuRefus(ctx.paramTexte("Note", "C4"));
+        if ("refus" in note) return { valeurs: [null], erreur: true, message: note.refus };
         const signal = synthetiserBarre({
-          ...commun, frequence: frequenceDe(lireNote(ctx.paramTexte("Note", "C4"), 60)), duree,
+          ...commun, frequence: frequenceDe(note.midi), duree,
         });
         return {
           valeurs: [versBuffer(signal, ctx.paramNombre("Volume", 80))],

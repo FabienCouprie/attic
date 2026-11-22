@@ -10,6 +10,7 @@ import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import { traduire } from "../i18n";
 import { genererMembraneSynth, genererMetalSynth, genererPolySynth } from "../audio/tone-synths";
 import { avecDoc } from "./notices";
+import { hauteurOuRefus, nomAnglais } from "../audio/noms-de-notes";
 import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 
 
@@ -30,8 +31,8 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Note",
         type: "texte",
         defaut: "C2",
-        doc: "Note de base du kick (ex. C2, A1). Plus la note est grave, plus le kick est gros.",
-        docEn: "Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick.", defautEn: "C2",
+        doc: "Note de base du kick (ex. C2, A1). Plus la note est grave, plus le kick est gros. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C2",
       },
       {
         nom: "Durée",
@@ -101,7 +102,9 @@ export const fiches: FicheAudio[] = ([
       },
     ],
     async executer(ctx) {
-      const note = ctx.paramTexte("Note", "C2");
+      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C2"));
+      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
+      const note = nomAnglais(lue.nom);
       const duree = ctx.paramNombre("Durée", 1.5);
       const volume = ctx.paramNombre("Volume", 80);
       const pitchDecay = ctx.paramNombre("Pitch decay", 0.05);
@@ -148,8 +151,8 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Note",
         type: "texte",
         defaut: "C5",
-        doc: "Note de base (ex. C5, G5). Une note aiguë donne un hi-hat ; une note plus grave sonne comme une cloche.",
-        docEn: "Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell.", defautEn: "C5",
+        doc: "Note de base (ex. C5, G5). Une note aiguë donne un hi-hat ; une note plus grave sonne comme une cloche. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C5",
       },
       {
         nom: "Durée",
@@ -250,7 +253,9 @@ export const fiches: FicheAudio[] = ([
       },
     ],
     async executer(ctx) {
-      const note = ctx.paramTexte("Note", "C5");
+      const lue = hauteurOuRefus(ctx.paramTexte("Note", "C5"));
+      if ("refus" in lue) return { valeurs: [null], erreur: true, message: lue.refus };
+      const note = nomAnglais(lue.nom);
       const duree = ctx.paramNombre("Durée", 2);
       const volume = ctx.paramNombre("Volume", 80);
       const harmonicity = ctx.paramNombre("Harmonicity", 5.1);
@@ -303,8 +308,8 @@ export const fiches: FicheAudio[] = ([
         nomEn: "Notes",
         type: "texte",
         defaut: "C4,E4,G4",
-        doc: "Notes de l'accord, séparées par des virgules (ex. C4,E4,G4).",
-        docEn: "Chord notes, comma-separated (e.g. C4,E4,G4).", defautEn: "C4,E4,G4",
+        doc: "Notes de l'accord, séparées par des virgules (ex. C4,E4,G4). Chaque note porte son octave, en lettres ou en noms français : Do4,Mi4,Sol4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Chord notes, comma-separated (e.g. C4,E4,G4). Each note carries its octave, in letters or French names: Do4,Mi4,Sol4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C4,E4,G4",
       },
       {
         nom: "Durée par note",
@@ -391,7 +396,12 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const notesBrutes = ctx.paramTexte("Notes", "C4,E4,G4");
-      const notes = notesBrutes.split(",").map((n: string) => n.trim()).filter(Boolean);
+      const lues = notesBrutes.split(",").map((n: string) => n.trim()).filter(Boolean).map(hauteurOuRefus);
+      // UNE NOTE ILLISIBLE, OU SANS OCTAVE, EST REFUSÉE, ET NOMMÉE : la bibliothèque rendait son erreur
+      // brute. La première fautive suffit à le dire.
+      const fautive = lues.find((l) => "refus" in l);
+      if (fautive && "refus" in fautive) return { valeurs: [null], erreur: true, message: fautive.refus };
+      const notes = lues.flatMap((l) => ("nom" in l ? [nomAnglais(l.nom)] : []));
       // UN ACCORD VIDE N'EST PAS UN SUCCÈS. Sans ce refus, un champ laissé vide rendait un tampon
       // entièrement silencieux et l'annonçait comme un rendu abouti — « Accord  — 1.55s », avec un
       // nom d'accord vide entre deux espaces. Les autres façons de se tromper, note illisible ou

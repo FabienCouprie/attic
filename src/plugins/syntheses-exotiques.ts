@@ -16,9 +16,10 @@ import { compile } from "mathjs";
 import { fft } from "../audio/fft";
 import { estCourbe, valeursParametre } from "../audio/courbe";
 import {
-  FREQUENCE_ECH, frequenceDe, lireNote, melanger, versBuffer,
+  FREQUENCE_ECH, frequenceDe, melanger, versBuffer,
 } from "./instruments-communs";
 import { notesDuMidi } from "../audio/midi";
+import { hauteurOuRefus } from "../audio/noms-de-notes";
 import { synthetiserScanning } from "../audio/scanning";
 import { synthetiserTerrain, type Orbite, type Terrain } from "../audio/terrain-onde";
 import { VOYELLES, laVoyelle, synthetiserFof } from "../audio/fof";
@@ -40,8 +41,8 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Audio", type: "audio" }],
     parametres: [
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "A2", defautEn: "A2",
-        doc: "Note lue quand aucun MIDI n'est branché. La hauteur ne dépend que de la vitesse de balayage, jamais de la mécanique.",
-        docEn: "Note read when no MIDI is connected. The pitch depends only on the scanning speed, never on the mechanics." },
+        doc: "Note lue quand aucun MIDI n'est branché. La hauteur ne dépend que de la vitesse de balayage, jamais de la mécanique. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Note read when no MIDI is connected. The pitch depends only on the scanning speed, never on the mechanics. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Masses", nomEn: "Masses", type: "nombre", plage: [4, 256], pas: 1, defaut: 64,
         doc: "Nombre de masses de la chaîne, donc de points de la table d'onde. Peu de masses donnent une forme anguleuse et un son riche ; beaucoup, une forme douce.",
         docEn: "Number of masses in the chain, hence of points in the wavetable. Few masses give an angular shape and a rich sound; many give a smooth one." },
@@ -94,8 +95,10 @@ export const fiches: FicheAudio[] = ([
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes || notes.length === 0) {
         const duree = ctx.paramNombre("Durée", 4);
+        const note = hauteurOuRefus(ctx.paramTexte("Note", "A2"));
+        if ("refus" in note) return { valeurs: [null], erreur: true, message: note.refus };
         const { signal, pas } = synthetiserScanning({
-          ...commun, frequence: frequenceDe(lireNote(ctx.paramTexte("Note", "A2"), 45)), duree,
+          ...commun, frequence: frequenceDe(note.midi), duree,
         }, aleatoire);
         return {
           valeurs: [versBuffer(signal, ctx.paramNombre("Volume", 80))],
@@ -147,8 +150,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Le chemin suivi sur le terrain. Un Lissajous de rapports entiers boucle en plusieurs tours et donne une forme d'onde plus longue ; la spirale fait dériver le rayon, donc le timbre.",
         docEn: "The path followed on the terrain. A Lissajous with integer ratios closes after several turns and gives a longer waveform; the spiral drifts the radius, hence the timbre." },
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "A2", defautEn: "A2",
-        doc: "Note jouée quand aucun MIDI n'est branché : c'est le nombre de tours d'orbite par seconde.",
-        docEn: "Note played when no MIDI is connected: it is the number of orbit turns per second." },
+        doc: "Note jouée quand aucun MIDI n'est branché : c'est le nombre de tours d'orbite par seconde. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Note played when no MIDI is connected: it is the number of orbit turns per second. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Rayon", nomEn: "Radius", type: "nombre", plage: [0, 300], pas: 1, defaut: 80, unite: "%",
         doc: "Taille de l'orbite : c'est LE réglage de timbre. Une petite orbite reste dans une zone plate et donne un son pauvre, une grande explore le relief et donne un son riche, sans changer la note.",
         docEn: "Size of the orbit: this is the timbre control. A small orbit stays in a flat area and gives a poor sound, a large one explores the relief and gives a rich one, without changing the note." },
@@ -199,8 +202,10 @@ export const fiches: FicheAudio[] = ([
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes || notes.length === 0) {
         const duree = ctx.paramNombre("Durée", 3);
+        const note = hauteurOuRefus(ctx.paramTexte("Note", "A2"));
+        if ("refus" in note) return { valeurs: [null], erreur: true, message: note.refus };
         const r = synthetiserTerrain({
-          ...commun, frequence: frequenceDe(lireNote(ctx.paramTexte("Note", "A2"), 45)), duree,
+          ...commun, frequence: frequenceDe(note.midi), duree,
         }, evaluer);
         return {
           valeurs: [versBuffer(r.signal, ctx.paramNombre("Volume", 80))],
@@ -241,8 +246,8 @@ export const fiches: FicheAudio[] = ([
         doc: "La voyelle, c'est-à-dire la position de ses trois premiers formants. Le A a un premier formant haut et un deuxième bas (730 et 1090 Hz), le I l'inverse (270 et 2290) : c'est le contraste le plus net de la table.",
         docEn: "The vowel, that is, the position of its first three formants. A has a high first formant and a low second (730 and 1090 Hz), I the opposite (270 and 2290): the sharpest contrast in the table." },
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "A2", defautEn: "A2",
-        doc: "Hauteur chantée quand aucun MIDI n'est branché. Les formants ne bougent pas avec elle ; c'est toute la différence avec un échantillon transposé, qui emporte ses formants et donne une voix de dessin animé.",
-        docEn: "Sung pitch when no MIDI is connected. The formants do not move with it, the whole difference from a transposed sample, which carries its formants along and gives a cartoon voice." },
+        doc: "Hauteur chantée quand aucun MIDI n'est branché. Les formants ne bougent pas avec elle ; c'est toute la différence avec un échantillon transposé, qui emporte ses formants et donne une voix de dessin animé. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Sung pitch when no MIDI is connected. The formants do not move with it, the whole difference from a transposed sample, which carries its formants along and gives a cartoon voice. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named." },
       { nom: "Attaque", nomEn: "Attack", type: "nombre", plage: [0.5, 20], pas: 0.5, defaut: 3, unite: "ms",
         doc: "Durée de montée des bouffées formantiques. Courte, elle étale les formants vers les aigus et durcit la voix ; longue, elle l'adoucit.",
         docEn: "Rise time of the formant bursts. Short, it spreads the formants towards the highs and hardens the voice; long, it softens it." },
@@ -292,8 +297,10 @@ export const fiches: FicheAudio[] = ([
       const notes = await notesDuMidi(ctx.entree(0));
       if (!notes || notes.length === 0) {
         const duree = ctx.paramNombre("Durée", 3);
+        const note = hauteurOuRefus(ctx.paramTexte("Note", "A2"));
+        if ("refus" in note) return { valeurs: [null], erreur: true, message: note.refus };
         const { signal, bouffees } = synthetiserFof({
-          ...commun, frequence: frequenceDe(lireNote(ctx.paramTexte("Note", "A2"), 45)), duree,
+          ...commun, frequence: frequenceDe(note.midi), duree,
         }, aleatoire);
         return {
           valeurs: [versBuffer(signal, ctx.paramNombre("Volume", 80))],

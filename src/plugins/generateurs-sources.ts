@@ -19,7 +19,8 @@ import { creerAleatoire, hasardDuNoeud } from "../core";
  * Accepte les altérations #/♯ et b/♭, ignore la casse et les espaces blancs.
  * Retourne null si la note est invalide.
  */
-import { noteVersFrequence } from "./generateurs-aides";
+import { hauteurOuRefus } from "../audio/noms-de-notes";
+import { frequenceDeNoteMidi } from "../audio/commun";
 import { accordageEgal, decrireAccordage, degrePlusProche, type Accordage } from "../audio/accordage";
 import { rendreNotes, type Banque } from "../audio/clavier-banque";
 import { deposerBanque } from "../audio/banques-vives";
@@ -290,8 +291,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Fréquence en Hertz (utilisé si « Saisie » = Fréquence). 440 = La3 de référence.",
         docEn: "Frequency in Hertz (used when « Input » = Frequency). 440 = reference A4." },
       { nom: "Note", nomEn: "Note", type: "texte", defaut: "A4",
-        doc: "Note musicale (utilisé si « Saisie » = Note). Format : lettre + altération + octave, ex. C4, F#5, Bb3.",
-        docEn: "Musical note (used when « Input » = Note). Format: letter + accidental + octave, e.g. A4, C#5, Bb3.", defautEn: "A4" },
+        doc: "Note musicale (utilisé si « Saisie » = Note). Format : lettre ou nom français, altération, octave, ex. C4, F#5, Sib3, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
+        docEn: "Musical note (used when « Input » = Note). Format: letter or French name, accidental, octave, e.g. A4, C#5, Sib3, Ré4. An unreadable note, or one without an octave, is refused and named.", defautEn: "A4" },
       { nom: "Forme", nomEn: "Waveform", type: "choix", options: FORMES_ONDE_CHOIX.fr, optionsEn: FORMES_ONDE_CHOIX.en, optionIds: FORMES_ONDE_CHOIX.ids, optionsHeritees: LIBELLES_HERITES_FORMES, defaut: "Sinus",
         doc: "Forme d'onde. Sinus = pur, une seule fréquence ; Carré = harmoniques impaires ; Dent de scie = toutes les harmoniques ; Triangle = harmoniques impaires douces.",
         docEn: "Waveform. Sine = pure, a single frequency; Square = odd harmonics; Sawtooth = all harmonics; Triangle = soft odd harmonics.", defautEn: "Sine" },
@@ -304,10 +305,12 @@ export const fiches: FicheAudio[] = ([
       const enModeNote = saisie === "note" || saisie.startsWith("note");
       let freq: number;
       if (enModeNote) {
-        const noteStr = ctx.paramTexte("Note", "A4");
-        const parsed = noteVersFrequence(noteStr);
-        if (parsed == null) return { valeurs: [null], message: traduire("msg.note_invalide_var_0_format_a4_c_5_bb3", noteStr) };
-        freq = parsed;
+        // PAR LE SEUL LECTEUR DES NOMS DE NOTES, et le refus porte le drapeau d'erreur, revue des
+        // notations en texte du 2026-11-22 : « C##3 » et « Do3 » étaient refusés, et le nœud restait
+        // vert, sans son et sans erreur.
+        const note = hauteurOuRefus(ctx.paramTexte("Note", "A4"));
+        if ("refus" in note) return { valeurs: [null], erreur: true, message: note.refus };
+        freq = frequenceDeNoteMidi(note.midi);
       } else {
         freq = ctx.paramNombre("Fréquence", 440);
       }

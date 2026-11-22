@@ -6,6 +6,28 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN NOM DE NOTE SE LIT DE LA MÊME FAÇON PARTOUT : E#4 EST UN FA, Do4 UN DO, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, septième format, décisions de Fabien du 2026-11-22 : « Read them everywhere », « Refuse it, named ».
+  - **Ce qui se passait**, mesuré par `executer`, et pour les synthétiseurs dans le son rendu : sept lecteurs, chacun avec sa table, son octave par défaut et sa façon d'échouer.
+    - `lireNote` faisait sonner « E#4 », « Fb4 » et « Cb4 » la 4, « B#3 » la 3, et remplaçait « C##4 », « C♯4 » ou « Do4 » par la note par défaut, sans un mot. C'était le lecteur du Vent à guide d'onde, de la Barre modale, de la Synthèse par balayage, du Terrain d'onde et de la Voyelle chantée ; l'expression des Instruments programmés Csound faisait de même.
+    - Les Classes de hauteurs jetaient « Fb », « B# », « do# » et « C♯ » : « C Fb G B# » rendait {0, 5}. Le Contrepoint d'espèces jetait « X4 », et jugeait trois notes contre quatre.
+    - Le Transposer rendait une sortie vide sans erreur ; les synthétiseurs Tone.js, l'erreur brute de la bibliothèque ; le Générateur de fréquence refusait en vert.
+    - Sans octave, les uns prenaient l'octave 3, le Contrepoint l'octave 4, d'autres refusaient.
+  - **Ce qui change** : `audio/noms-de-notes.ts`, module neuf, est le seul lecteur.
+    - Il lit les lettres de A à G et les noms de Do à Si, les altérations #, ##, b, bb, ♯ et ♭, l'octave de -1 à 9. E#4 est un fa, Cb4 un si de l'octave du dessous.
+    - Là où une hauteur est attendue, une note sans octave est refusée, et le message demande l'octave ; les nœuds qui lisent des classes, le Transposer compris, la lisent toujours.
+    - Les dix-sept nœuds passent par lui. `lireNote`, `noteVersFrequence` et la table de `lireSuite` disparaissent, avec la clé de traduction qui n'avait plus de lecteur.
+    - Les documentations des réglages et la notice du Générateur de fréquence le disent.
+  - **Des tests tenaient le contraire, et le commit le dit** : `plugins/modeles-physiques.test.ts` exigeait qu'une note illisible retombe sur la note de la fiche ; `plugins/tone-synths-generateurs.test.ts`, que le refus porte l'erreur de Tone.js ; `plugins/symboles-accords.test.ts` prenait « Do Mi Sol » pour illisible. Écrits avec leurs nœuds, ils décrivaient le comportement d'alors, et non une décision.
+  - **Le garde**, `plugins/noms-de-notes.test.ts`, tout par `executer` :
+    - quatorze orthographes jouées par six synthétiseurs, la hauteur mesurée dans le son par la période qui s'y répète le mieux, et l'octave vérifiée à part ;
+    - la Membrane, le Métal et le Polyphonique sonnent le nom français comme l'anglais, échantillon pour échantillon ;
+    - quatre noms refusés, et nommés, par onze nœuds ;
+    - le Transposer, l'Accord, les Classes de hauteurs, la Série dodécaphonique et le Contrepoint.
+
+    **Vu rouge** sur le code d'avant, 124 cas sur 152 ; puis sur deux fautes plantées, le dièse ignoré, 24 cas tombés, et l'octave comptée une fois de trop, 56 cas tombés.
+  - **Vu en passant, non réparé** : la Série dodécaphonique, les Classes de hauteurs et le Contrepoint d'espèces annoncent une suite vide sans le drapeau d'erreur.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests des nœuds convertis, de Tonal, des symboles, des romains, de VexFlow, des parcours et du cœur qui les lancent, 47 fichiers et 1579 cas verts ; les gardes du dépôt touchés, 14 fichiers et 90 cas verts. **Non vérifié dans l'application.**
+
 - **UNE SEULE RÈGLE DIT SI UN TEXTE EST EN CHIFFRES ROMAINS : LE PREMIER JETON DÉCIDE, POUR TOUS LES NŒUDS.** Revue des notations en texte, sixième format, 2026-11-22.
   - **Ce qui se passait**, mesuré par `executer` : trois règles répondaient. La Grille d'accords regardait le préfixe du premier jeton, « Accords → Notation » s'il y en avait un, les graveurs VexFlow s'ils en étaient tous. Sur un texte mêlé, chacun nommait autre chose :
     - « I C V » nommait « C » ici, « I V » là ;
