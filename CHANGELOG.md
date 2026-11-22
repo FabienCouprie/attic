@@ -6,6 +6,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA PARTITION GRAVÉE NE GARDE PLUS L'ARMURE DE LA PRÉCÉDENTE.** Revue des notations en texte, deuxième format, décision de Fabien du 2026-11-22.
+  - **Ce qui se passait.** Verovio garde l'armure d'une partition ABC à la suivante, dans son module WebAssembly, en 6.3.0 comme en 6.4.1, éprouvée le même jour dans un dossier d'essai. Le nœud chargeait un seul toolkit pour toute la vie de l'application. Mesuré par `executer` : après un air en do bémol ou en do dièse, l'air en do se gravait avec huit altérations, une par note, au lieu d'aucune ; après un air en sol ou en fa, avec une de trop. Un air seulement altéré, sans armure, ne déclenchait rien. Ni un toolkit neuf sur le même module, ni `resetOptions`, ni un MEI chargé entre deux airs ne réparaient la fuite.
+  - **Ce qui change** (`plugins/verovio.ts`) : chaque gravure crée son module et son toolkit, et le détruit après (`destroy`) ; seuls les deux imports se gardent. Sans `destroy`, chaque module retenait environ 16 Mo, de 374 Mo après une gravure à 1 680 Mo après 81 ; avec lui, la mémoire reste stable, 349 Mo puis 335 Mo. Une gravure coûte 113 ms.
+  - **Le garde**, `plugins/partition-verovio.test.ts`, le premier de ce nœud : l'air en do, gravé après un air en sol, en fa, en do bémol ou en do dièse, est celui qu'on grave seul, sans altération, les identifiants que Verovio tire à chaque chargement mis à part. **Vu rouge** sur le code d'avant, une altération de trop dès le premier cas, vert après.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement ; le garde et `audio/verovio.test.ts`, 14 cas.
+
 - **LES CINQ NŒUDS QUI DÉPENDENT D'UNE GAMME SANS RÉGLAGE DE GAMME ONT LEUR GARDE**, demandé par Fabien le 2026-11-22. L'inventaire du registre ne les voit pas, n'ayant pas de réglage « Gamme » ; les mesurer complète les 41 nœuds du contrôle des gammes.
   - **Mesurés justes par `executer`**, et tenus dans `docs/gammes-tenues-tous.test.ts` :
     - la Gamme, sous les douze toniques et les sept modes : 84 sur 84, les degrés du mode sur la tonique, sept lettres distinctes ;

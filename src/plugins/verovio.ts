@@ -22,9 +22,17 @@ const en = () => langueCourante() === "en";
 
 const EXEMPLE = "X:1\nT:Gamme\nM:4/4\nL:1/4\nK:C\nC D E F | G A B c |";
 
-let boite: Promise<any> | null = null;
+let boite: Promise<{ creerModule: () => Promise<any>; VerovioToolkit: new (m: any) => any }> | null = null;
 
-/** Le moteur, chargé une fois pour toutes. */
+/**
+ * Un moteur neuf pour chaque gravure ; seuls les deux imports se gardent.
+ *
+ * UN MODULE NEUF, ET NON UN TOOLKIT GARDÉ, revue des notations en texte, décision de Fabien du
+ * 2026-11-22. Verovio garde l'armure d'une partition ABC à la suivante, dans son module WebAssembly, en
+ * 6.3.0 comme en 6.4.1 : le moteur se chargeait une fois pour toutes, et après un air en do bémol,
+ * l'air en do se gravait avec huit altérations, une par note. Ni un toolkit neuf sur le même module, ni
+ * `resetOptions`, ni un MEI chargé entre deux airs ne réparaient la fuite. Un module coûte 103 ms.
+ */
 async function outil(): Promise<any> {
   if (!boite) {
     boite = (async () => {
@@ -32,11 +40,11 @@ async function outil(): Promise<any> {
         import("verovio/wasm").then((m: any) => m.default ?? m),
         import("verovio/esm") as Promise<any>,
       ]);
-      const module = await creerModule();
-      return new VerovioToolkit(module);
+      return { creerModule, VerovioToolkit };
     })().catch((e) => { boite = null; throw e; });
   }
-  return boite;
+  const { creerModule, VerovioToolkit } = await boite;
+  return new VerovioToolkit(await creerModule());
 }
 
 export const fiches: FicheAudio[] = ([
@@ -99,8 +107,9 @@ export const fiches: FicheAudio[] = ([
           ? "Notation not recognised: expected ABC (X:, K:), MusicXML, MEI or Humdrum."
           : "Notation non reconnue : attendu ABC (X:, K:), MusicXML, MEI ou Humdrum." };
       }
+      let tk: any = null;
       try {
-        const tk = await outil();
+        tk = await outil();
         tk.setOptions({
           ...optionsGravure({
             largeur: ctx.paramNombre("Largeur", 1800),
@@ -130,6 +139,8 @@ export const fiches: FicheAudio[] = ([
         return { valeurs: [svg, new File([svg], "gravure.svg", { type: "image/svg+xml" })], message };
       } catch (e: any) {
         return { valeurs: [null, null], erreur: true, message: e?.message ?? String(e) };
+      } finally {
+        tk?.destroy?.();
       }
     },
   }),
