@@ -54,6 +54,7 @@ import { EXEMPLES, fichierDExemple } from "./exemples";
 import { nodeTypes as nodeTypesImport, edgeTypes as edgeTypesImport } from "./reactflowTypes";
 import "./atelier.css";
 import "./theme-violet.css";
+import "./theme-plan.css";
 import "./clavier.css";
 
 // Forcer l'enregistrement des plugins
