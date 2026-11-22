@@ -8,11 +8,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 - **CSOUND RELIT CE QUE LES NŒUDS ÉCRIVENT, PAR UN SPEC PERMANENT.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, septième lot.
   - **Ce qui manquait** : les gardes unitaires du onzième format vérifient le texte écrit, et rien ne vérifiait ce que Csound en lit ; la sonde qui l'avait fait pendant la revue avait été supprimée.
-  - **Ce qui change** : `tests-e2e/csound-relit.spec.ts`, sur un serveur de vérification au port 5231, charge les modules de l'application dans la page et passe tout par `executer` :
+  - **Ce qui change** : `tests-e2e/csound-relit.spec.ts`, sur un serveur de vérification au port 5253, que seul il emploie, charge les modules de l'application dans la page et passe tout par `executer` :
     - chaque formule de « Formules Csound » sonne par le nœud « Csound », sans erreur, plus d'une seconde, et sous les 0,95 du limiteur ;
     - les partitions de « Partition Csound », « Matrice de paramètres », « Partition aléatoire Csound » et la partition d'essai d'« Orchestre Csound » sont relues par un orchestre qui imprime ses p-fields par `prints` : Csound lit chaque note, et chaque champ tel que le texte l'écrit, à 10⁻⁴ près.
   - Décision de Fabien : « Add the spec ». Il ne tourne pas en CI, qui ne lance que les empreintes ; il se lance à la demande, en dix secondes une fois le serveur prêt.
-  - Vu vert sur le code, et rouge sur une instruction de tempo « t 0 120 » glissée en tête de la partition écrite, plantée : le spec tombe, « Csound a lu 6 notes sur 3 ». Une première faute plantée, « t 0 60 », restait verte, et c'est juste : 60 est le tempo par défaut de Csound.
+  - Vu vert sur le code, six passes sur six, et rouge sur une instruction de tempo « t 0 120 » glissée en tête de la partition écrite, plantée : « note 1, p3 : écrit 0.5, lu 0.25 », deux passes sur deux. Une première faute plantée, « t 0 60 », restait verte, et c'est juste : 60 est le tempo par défaut de Csound.
+  - **Trouvé en mesurant, et laissé hors du spec** : sur le premier rendu d'une page neuve, les messages de Csound sont arrivés une fois en double, chaque ligne deux fois, une passe sur trois. Un rendu à blanc ouvre la mesure. La sonde a écarté un écouteur oublié d'un rendu à l'autre : trois rendus successifs rendent chacun leurs seules lignes. La cause n'est pas cherchée.
+  - Le premier port, 5231, était déjà celui de `verovio.spec.ts`, et `src/docs/contrat-serveur-de-specs.test.ts` a fait tomber la CI ; le spec a pris le 5253.
 
 - **LES FORMULES CSOUND ÉCRIVENT LEURS COMMENTAIRES DANS LA LANGUE DE L'INTERFACE.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, sixième lot.
   - **Ce qui se passait** : « Formules Csound » écrivait l'orchestre et la partition avec leurs commentaires en français, interface anglaise comprise, « ; Le même la, avec un indice de plus en plus fort… », et l'en-tête « sortie mono ». Les orchestres d'exemple des autres nœuds Csound avaient déjà leur version anglaise.

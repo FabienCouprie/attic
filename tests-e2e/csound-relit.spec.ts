@@ -16,7 +16,7 @@
 import { test, expect } from "@playwright/test";
 import { serveurDeVerification } from "./serveur-de-developpement";
 
-const devUrl = serveurDeVerification(5231);
+const devUrl = serveurDeVerification(5253);
 
 /** Les modules du dépôt, chargés dans la page par leur adresse, comme l'application les charge. */
 const MODULES = {
@@ -85,6 +85,11 @@ test.describe("Csound relit ce que les nœuds écrivent", () => {
         "orchestre-csound": (await lancerFiche(F("orchestre-csound"), {}, { entrees: [] })).valeurs[1],
       };
       const sortie: Record<string, { ecrits: number[][]; lus: number[][]; erreur: string | null }> = {};
+      // UN PREMIER RENDU À BLANC. Sur le premier rendu d'une page neuve, les messages de Csound sont
+      // arrivés une fois en double, mesuré le 2026-11-22 : une passe sur trois lisait six notes pour
+      // trois écrites, chaque ligne deux fois, les mêmes valeurs. Ce n'est pas l'affaire des
+      // écrivains que ce spec éprouve ; le rendu à blanc le met hors de la mesure.
+      await rendreCsd(construireCsd({ orchestre: "instr 1\n  out oscili:a(0.01, 440)\nendin", partition: "i1 0 0.1\ne" }));
       for (const [id, texte] of Object.entries(partitions)) {
         // Les instructions « i » telles qu'écrites, commentaires ôtés.
         const ecrits = String(texte ?? "").split("\n").map((l) => l.replace(/;.*$/, "").trim())
