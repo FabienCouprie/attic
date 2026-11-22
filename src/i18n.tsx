@@ -234,6 +234,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "arbre.note.division": { fr: "Une division ne sonne pas : elle n'a pas d'état", en: "A division does not sound: it has no state" },
   "arbre.silence.division": { fr: "Silence ; la division sera défaite", en: "Rest; the division will be undone" },
   "arbre.liee.division": { fr: "Liée à la précédente ; la division sera défaite", en: "Tied to the previous one; the division will be undone" },
+  "arbre.liee.sans_note": { fr: "Aucune note devant : une liaison prolonge la note qui la précède", en: "No note before: a tie extends the note that precedes it" },
   "arbre.ajouter": { fr: "Ajouter une branche après", en: "Add a branch after" },
   "arbre.retirer": { fr: "Retirer cette branche", en: "Remove this branch" },
   "cercle.plus": { fr: "Une place de plus", en: "One more position" },

@@ -21,7 +21,7 @@ import { useReactFlow } from "@xyflow/react";
 
 import {
   ajouterApres, changerPoids, disposerArbre, diviser, etatDe, fusionner,
-  mettreEtat, retirer, type Case, type Chemin,
+  mettreEtat, peutEtreLiee, retirer, type Case, type Chemin,
 } from "../audio/arbre-disposition";
 import { derouler, ecrireArbre, lireArbre, type Mesure } from "../audio/arbre-rythmique";
 import { useI18n } from "../i18n";
@@ -141,8 +141,11 @@ export function ArbreRythmiqueVue({ id, data }: VueProps) {
             <button className={etat === "silence" ? "arbre-etat-actif" : ""}
               title={t(etat === null ? "arbre.silence.division" : "arbre.silence")}
               onClick={() => agir((m, c) => mettreEtat(m, c, "silence"), noeudChoisi.chemin)}>𝄽</button>
+            {/* La liaison ne se propose que derrière ce qui sonne : la première feuille, ou celle qui
+                suit un silence, n'ont rien à prolonger. */}
             <button className={etat === "liee" ? "arbre-etat-actif" : ""}
-              title={t(etat === null ? "arbre.liee.division" : "arbre.liee")}
+              disabled={!peutEtreLiee(mesures, noeudChoisi.chemin)}
+              title={t(!peutEtreLiee(mesures, noeudChoisi.chemin) ? "arbre.liee.sans_note" : etat === null ? "arbre.liee.division" : "arbre.liee")}
               onClick={() => agir((m, c) => mettreEtat(m, c, "liee"), noeudChoisi.chemin)}>⌣</button>
             <button title={t("arbre.ajouter")} onClick={() => agir(ajouterApres, noeudChoisi.chemin)}>＋▸</button>
             <button title={t("arbre.retirer")} onClick={() => agir(retirer, noeudChoisi.chemin)}>✕</button>
@@ -273,6 +276,8 @@ export function ArbreRythmiqueVue({ id, data }: VueProps) {
           <button className={etatMenu === "silence" ? "arbre-etat-actif" : ""}
             onClick={() => agir((m, c) => mettreEtat(m, c, "silence"), menu.chemin)}>{t("arbre.silence")}</button>
           <button className={etatMenu === "liee" ? "arbre-etat-actif" : ""}
+            disabled={!peutEtreLiee(mesures, menu.chemin)}
+            title={peutEtreLiee(mesures, menu.chemin) ? undefined : t("arbre.liee.sans_note")}
             onClick={() => agir((m, c) => mettreEtat(m, c, "liee"), menu.chemin)}>{t("arbre.liee")}</button>
           <button className="arbre-menu-coupure" onClick={() => agir(ajouterApres, menu.chemin)}>{t("arbre.ajouter")}</button>
           <button onClick={() => agir(retirer, menu.chemin)}>{t("arbre.retirer")}</button>

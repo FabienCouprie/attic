@@ -8,6 +8,8 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
+import { ecrireArbre, lireArbre } from "../audio/arbre-rythmique";
+import { mettreEtat, peutEtreLiee } from "../audio/arbre-disposition";
 
 const F = (id: string) => registre.trouverDef(id) as unknown as FicheLancable;
 /** Lance un nœud sans rien sur ses entrées : seul ce qui est écrit dans ses réglages compte. */
@@ -104,5 +106,26 @@ describe("le motif d'un Cercle rythmique ou mélodique", () => {
     const r = await cercle(id, "https://exemple.org/?tempo=120#1001");
     expect(r.erreurRendue, r.message).toBe(false);
     expect((r.valeurs[0] as { positions: number }).positions).toBe(4);
+  });
+});
+
+describe("l'éditeur de dessin des arbres ne propose pas une liaison sans note devant elle", () => {
+  // Il liait la première feuille, « (4/4 (1.0 1 1 1)) », que le lecteur refuse ensuite : « une
+  // liaison sans note devant elle ne prolonge rien ». Décision de Fabien : « Forbid it in the editor ».
+  const arbre = () => lireArbre("(4/4 (1 -1 (1 (1 1)) 1)) (4/4 (1 1 1 1))");
+
+  it("la première feuille, et celle qui suit un silence, ne se lient pas", () => {
+    expect(peutEtreLiee(arbre(), [0, 0])).toBe(false);
+    expect(peutEtreLiee(arbre(), [0, 2, 0])).toBe(false);
+  });
+
+  it("une feuille derrière une note se lie, à travers la barre comprise", () => {
+    expect(peutEtreLiee(arbre(), [0, 2, 1])).toBe(true);
+    expect(peutEtreLiee(arbre(), [1, 0])).toBe(true);
+  });
+
+  it("l'éditeur laisse l'arbre tel quel quand la liaison n'a pas de note devant elle", () => {
+    expect(ecrireArbre(mettreEtat(arbre(), [0, 0], "liee"))).toBe(ecrireArbre(arbre()));
+    expect(ecrireArbre(mettreEtat(arbre(), [1, 0], "liee"))).not.toBe(ecrireArbre(arbre()));
   });
 });
