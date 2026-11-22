@@ -36,7 +36,10 @@ export function lireMotTresse(texte: string, brins: number): { mot: Croisement[]
   if (jetons.length === 0) return { erreur: "vide" };
   const mot: Croisement[] = [];
   for (const j of jetons) {
-    const v = Number(j.replace("−", "-"));
+    // UN CROISEMENT S'ÉCRIT EN ENTIER DÉCIMAL. `Number` lisait aussi « 0x1 » en hexadécimal, revue des
+    // notations en texte, 2026-11-22.
+    const ecrit = j.replace("−", "-");
+    const v = /^[+-]?\d+$/.test(ecrit) ? Number(ecrit) : NaN;
     if (!Number.isInteger(v) || v === 0 || Math.abs(v) > brins - 1) return { erreur: j };
     mot.push({ place: Math.abs(v) - 1, dessus: v > 0 });
   }
