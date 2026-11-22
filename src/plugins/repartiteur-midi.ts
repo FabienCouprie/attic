@@ -15,33 +15,17 @@
 import { fiche } from "./fiche";
 import { parseMidi } from "midi-file";
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { filtrerCanauxMidi } from "../audio/midi-montage";
 import {
-  CANAL_BATTERIE_HUMAIN, analyserListeCanaux, compterNotes, filtrerPistesMidi, inventaireMidi,
+  CANAL_BATTERIE_HUMAIN, analyserListeCanaux, analyserListeNumeros, compterNotes, filtrerPistesMidi, inventaireMidi,
   listeCanauxHumaine, repartirCanaux,
 } from "../audio/repartition-midi";
 
 /** Les quatre sorties nommées, plus le reste : cinq au total. */
 const NB_PARTIES = 4;
 
-/** Une liste de numéros de pistes écrite à la main : mêmes règles que les canaux, sans la borne 16. */
-function analyserListePistes(texte: string): number[] {
-  const vus = new Set<number>();
-  for (const morceau of String(texte ?? "").split(/[,;\s]+/)) {
-    if (!morceau) continue;
-    const plage = /^(\d+)\s*[-–]\s*(\d+)$/.exec(morceau);
-    if (plage) {
-      const a = Number(plage[1]), b = Number(plage[2]);
-      for (let p = Math.min(a, b); p <= Math.max(a, b); p++) if (p >= 1) vus.add(p);
-      continue;
-    }
-    const n = Number(morceau);
-    if (Number.isInteger(n) && n >= 1) vus.add(n);
-  }
-  return [...vus].sort((a, b) => a - b);
-}
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -65,8 +49,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Automatique : le composant regarde ce que le fichier contient et répartit seul, le canal 10, que le General MIDI réserve aux percussions, part toujours sur la sortie Batterie, et les autres canaux remplissent les parties dans l'ordre de leur numéro. Par canaux : vous écrivez les canaux de chaque partie ci-dessous. Par pistes : les mêmes cases désignent alors des numéros de pistes, ce qu'il faut pour les fichiers dont les voix partagent un canal, un logiciel de notation écrit souvent les quatre voix d'un chœur sur le canal 1, séparées par pistes.",
         docEn: "Automatic: the node looks at what the file holds and splits on its own, channel 10, which General MIDI reserves for percussion, always goes to the Drums output, and the other channels fill the parts in channel order. By channels: you write each part's channels below. By tracks: the same boxes then mean track numbers, which is what files whose voices share a channel need, a notation program often writes a choir's four voices on channel 1, separated by tracks." },
       { nom: "Partie 1", nomEn: "Part 1", type: "texte", defaut: "1",
-        doc: "Canaux (ou pistes) de la première partie : « 1 », « 1,2 », « 1-3 ». Les canaux se comptent de 1 à 16, comme sur un appareil. Ignoré en mode automatique.",
-        docEn: "Channels (or tracks) of the first part: « 1 », « 1,2 », « 1-3 ». Channels count from 1 to 16, as on a device. Ignored in automatic mode." },
+        doc: "Canaux (ou pistes) de la première partie : « 1 », « 1,2 », « 1-3 ». Les canaux se comptent de 1 à 16, comme sur un appareil. Ignoré en mode automatique. Vide, la partie n'a pas de canal, et ses notes vont au « Reste ». Un canal hors de 1 à 16, une piste nulle ou un jeton illisible, dans celle-ci comme dans les suivantes, fait refuser le composant, et le message le nomme.",
+        docEn: "Channels (or tracks) of the first part: « 1 », « 1,2 », « 1-3 ». Channels count from 1 to 16, as on a device. Ignored in automatic mode. Empty, the part has no channel, and its notes go to « Rest ». A channel outside 1 to 16, a track zero or an unreadable token, in this part as in the following ones, makes the node refused, and the message names it." },
       { nom: "Partie 2", nomEn: "Part 2", type: "texte", defaut: "2",
         doc: "Canaux (ou pistes) de la deuxième partie.", docEn: "Channels (or tracks) of the second part." },
       { nom: "Partie 3", nomEn: "Part 3", type: "texte", defaut: "3",
@@ -78,12 +62,12 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) {
-        return { valeurs: [null, null, null, null, null], message: traduire("msg.branchez_un_source_midi") };
+        return { valeurs: [null, null, null, null, null], erreur: true, message: traduire("msg.branchez_un_source_midi") };
       }
       const bytes = new Uint8Array(await fichier.arrayBuffer());
       const inv = inventaireMidi(parseMidi(bytes));
       if (inv.notesTotal === 0) {
-        return { valeurs: [null, null, null, null, null], message: traduire("msg.aucune_note_dans_le_midi") };
+        return { valeurs: [null, null, null, null, null], erreur: true, message: traduire("msg.aucune_note_dans_le_midi") };
       }
       const mode = ctx.paramTexte("Répartition", "auto");
       const noms = ["Partie 1", "Partie 2", "Partie 3", "Batterie"] as const;
@@ -106,14 +90,25 @@ export const fiches: FicheAudio[] = ([
         const r = repartirCanaux(inv, NB_PARTIES);
         listes = r.parties;
         reste = r.reste;
-      } else if (parPiste) {
-        listes = noms.map((n) => analyserListePistes(ctx.paramTexte(n, "")));
-        const assignees = new Set(listes.flat());
-        reste = inv.pistes.map((p) => p.numero).filter((p) => !assignees.has(p));
       } else {
-        listes = noms.map((n) => analyserListeCanaux(ctx.paramTexte(n, "")));
+        // UN CANAL OU UNE PISTE QUI NE SE LIT PAS EST REFUSÉ, ET NOMMÉ ; une partie vide n'a pas de canal, et
+        // ses notes vont au « Reste ». Revue des notations en texte, passe de complétude, 2026-11-22.
+        const nomsEn = { "Partie 1": "Part 1", "Partie 2": "Part 2", "Partie 3": "Part 3", Batterie: "Drums" } as const;
+        listes = [];
+        for (const n of noms) {
+          const lu = parPiste ? analyserListePistes(ctx.paramTexte(n, "")) : analyserListeCanaux(ctx.paramTexte(n, ""));
+          if ("refus" in lu) {
+            return {
+              valeurs: [null, null, null, null, null], erreur: true,
+              message: traduire(parPiste ? "msg.midi.piste_var_0_var_1" : "msg.midi.canal_var_0_var_1", langueCourante() === "en" ? nomsEn[n] : n, lu.refus),
+            };
+          }
+          listes.push("canaux" in lu ? lu.canaux : lu.numeros);
+        }
         const assignees = new Set(listes.flat());
-        reste = [...inv.parCanal.keys()].filter((c) => !assignees.has(c)).sort((a, b) => a - b);
+        reste = parPiste
+          ? inv.pistes.map((p) => p.numero).filter((p) => !assignees.has(p))
+          : [...inv.parCanal.keys()].filter((c) => !assignees.has(c)).sort((a, b) => a - b);
       }
 
       const sorties = listes.map((l, i) => decouper(l, `p${i + 1}`, parPiste));
@@ -140,5 +135,8 @@ export const fiches: FicheAudio[] = ([
     },
   }),
 ] as FicheAudio[]).map(avecDoc);
+
+/** Une liste de numéros de pistes : les règles des canaux, sans la borne 16. */
+const analyserListePistes = (texte: string) => analyserListeNumeros(texte);
 
 export { analyserListePistes, CANAL_BATTERIE_HUMAIN };
