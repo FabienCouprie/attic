@@ -8,7 +8,7 @@ import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { boucherVoie, type ReglagesTrouVoie, type ResultatInpainting, type Trou } from "../audio/inpainting";
+import { boucherVoie, reunirTrous, type ReglagesTrouVoie, type ResultatInpainting, type Trou } from "../audio/inpainting";
 import { parCanal } from "./hors-fil";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { depuisDb } from "../audio/decibels";
@@ -78,7 +78,6 @@ export const fiches: FicheAudio[] = ([
       }
 
       const sortie = new AudioBuffer({ numberOfChannels: canaux, length, sampleRate });
-      let bouches = 0, echantillons = 0, renonces = 0;
       // HORS DU FIL : les canaux partent COPIÉS, le tampon reçu appartenant au nœud amont, et
       // reviennent transférés. Sans worker, en test, le même calcul tourne dans le fil.
       const reglages: ReglagesTrouVoie = { ...options, automatique, seuil, longueurMin, zones };
@@ -89,19 +88,19 @@ export const fiches: FicheAudio[] = ([
         surProgres: (c, n) => ctx.onProgress?.(traduire("msg.trou.canal", String(c), String(n))),
       });
       for (let c = 0; c < canaux; c++) {
-        const r = resultats[c];
         // `copyToChannel` et non `getChannelData().set` : les tableaux reviennent d'un ouvrier.
-        sortie.copyToChannel(new Float32Array(r.signal), c);
-        bouches += r.bouches;
-        echantillons += r.echantillons;
-        renonces += r.renonces;
+        sortie.copyToChannel(new Float32Array(resultats[c].signal), c);
       }
-      const ms = ((1000 * echantillons) / Math.max(1, sampleRate * canaux)).toFixed(0);
+      // LES TROUS SE COMPTENT DANS LE TEMPS, réunis sur tous les canaux, et non en moyenne par canal :
+      // voir `reunirTrous`. Un trou détecté sur un seul canal de deux s'annonçait à moitié de sa durée.
+      const faits = reunirTrous(resultats.map((r) => r.faits));
+      const laisses = reunirTrous(resultats.map((r) => r.laisses));
+      const ms = ((1000 * faits.reduce((s, t) => s + t.longueur, 0)) / sampleRate).toFixed(0);
       return {
         valeurs: [sortie],
-        message: renonces > 0
-          ? traduire("msg.trou.bouchesEtRenonces", String(Math.round(bouches / canaux)), ms, String(Math.round(renonces / canaux)))
-          : traduire("msg.trou.bouches", String(Math.round(bouches / canaux)), ms),
+        message: laisses.length > 0
+          ? traduire("msg.trou.bouchesEtRenonces", String(faits.length), ms, String(laisses.length))
+          : traduire("msg.trou.bouches", String(faits.length), ms),
       };
     },
   }),

@@ -207,6 +207,34 @@ export interface ResultatInpainting {
   echantillons: number;
   /** Trous laissés tels quels parce que trop longs ou sans contexte. */
   renonces: number;
+  /** Les trous reconstruits, tels qu'ils ont été traités : de quoi les compter sur plusieurs canaux. */
+  faits: Trou[];
+  /** Les trous laissés tels quels. */
+  laisses: Trou[];
+}
+
+/**
+ * Les trous de plusieurs canaux, réunis dans le temps : deux trous qui se recouvrent ou se touchent
+ * n'en font qu'un.
+ *
+ * C'EST CE QUE LE MESSAGE COMPTE, et la moyenne par canal qu'il faisait avant était fausse dès que
+ * les canaux n'avaient pas les mêmes trous. Les silences se détectent voie par voie : dix
+ * millisecondes bouchées sur un seul canal de deux s'annonçaient « cinq », et deux trous à deux
+ * endroits différents, un par canal, s'annonçaient « un ». Un trou est un passage du son, et un
+ * passage bouché sur un canal ou sur tous reste un passage.
+ */
+export function reunirTrous(listes: readonly (readonly Trou[])[]): Trou[] {
+  const tous = listes.flat().filter((t) => t.longueur > 0).sort((a, b) => a.debut - b.debut);
+  const reunis: Trou[] = [];
+  for (const t of tous) {
+    const dernier = reunis[reunis.length - 1];
+    if (dernier && t.debut <= dernier.debut + dernier.longueur) {
+      dernier.longueur = Math.max(dernier.longueur, t.debut + t.longueur - dernier.debut);
+    } else {
+      reunis.push({ debut: t.debut, longueur: t.longueur });
+    }
+  }
+  return reunis;
 }
 
 /**
@@ -223,12 +251,13 @@ export function boucherTrous(
   const trouMax = o.trouMax ?? 20000;
   const iterations = o.iterations ?? 12;
   let bouches = 0, echantillons = 0, renonces = 0;
+  const faits: Trou[] = [], laisses: Trou[] = [];
 
   for (const trou of trous) {
     const debut = Math.max(0, Math.round(trou.debut));
     const longueur = Math.min(Math.round(trou.longueur), x.length - debut);
     if (longueur <= 0) continue;
-    if (longueur > trouMax) { renonces++; continue; }
+    if (longueur > trouMax) { renonces++; laisses.push({ debut, longueur }); continue; }
 
     // L'ordre par défaut suit la règle de l'article : plus le trou est long, plus il faut de
     // mémoire pour le franchir. Le plafond, lui, est une affaire de temps de calcul.
@@ -236,7 +265,7 @@ export function boucherTrous(
     const contexte = Math.max(o.contexte ?? 4 * ordre, 2 * ordre);
     const g0 = Math.max(0, debut - contexte);
     const g1 = Math.min(x.length, debut + longueur + contexte);
-    if (g1 - g0 <= longueur + 2 * ordre) { renonces++; continue; }
+    if (g1 - g0 <= longueur + 2 * ordre) { renonces++; laisses.push({ debut, longueur }); continue; }
 
     const seg = new Float64Array(g1 - g0);
     for (let i = 0; i < seg.length; i++) seg[i] = signal[g0 + i];
@@ -244,8 +273,9 @@ export function boucherTrous(
     for (let i = 0; i < longueur; i++) signal[debut + i] = seg[debut - g0 + i];
     bouches++;
     echantillons += longueur;
+    faits.push({ debut, longueur });
   }
-  return { signal, bouches, echantillons, renonces };
+  return { signal, bouches, echantillons, renonces, faits, laisses };
 }
 
 /**
