@@ -30,13 +30,15 @@
 // rationnels : un triolet vaut exactement 1/3, et l'arrondi n'intervient qu'à
 // l'écriture des ticks MIDI. En flottant, une suite de triolets dériverait.
 //
-// L'ÉCRITURE MIDI VIT DANS `abc-midi.ts`, et ce module la réexporte : ceux qui
-// lisent et écrivent un morceau n'ont qu'un import.
+// L'ÉCRITURE MIDI VIT DANS `abc-midi.ts`, ET LES HAUTEURS DES ACCORDS CHIFFRÉS
+// DANS `abc-accords.ts` : ce module les réexporte, et ceux qui lisent et écrivent
+// un morceau n'ont qu'un import.
 
-import { Chord, Note } from "tonal";
 import { traduire } from "../i18n";
+import { hauteursAccord } from "./abc-accords";
 
 export { morceauVersMidi, type OptionsMidiAbc } from "./abc-midi";
+export { hauteursAccord, normaliserAccord } from "./abc-accords";
 
 // ── Fractions ────────────────────────────────────────────────────────────
 
@@ -605,45 +607,6 @@ function derouler(v: EtatVoix, avert: (m: string) => void): { notes: NoteAbc[]; 
     t = fAdd(t, jeton.duree);
   }
   return { notes, accords, fin: enNoires(t), barres };
-}
-
-/**
- * Écritures courantes que Tonal refuse, ramenées aux siennes. Trouvé en mesurant
- * des retouches par LLM : gemma4:12b écrivait « Bm7(b5) », l'écriture usuelle du
- * semi-diminué, et la lecture échouait — le modèle avait raison, le lecteur tort.
- * Vérifié une par une contre Tonal : les parenthèses d'altération, « m(maj7) »,
- * « ø7 », et « 6/9 », que la barre oblique faisait prendre pour une basse.
- */
-export function normaliserAccord(symbole: string): string {
-  return symbole
-    .replace(/\(([^)]*)\)/g, "$1") // Bm7(b5) → Bm7b5, C(add9) → Cadd9
-    .replace(/m\s*maj7/i, "mMaj7") // Dm(maj7) → DmMaj7
-    .replace(/ø7?/, "m7b5") // Bø, Bø7 → Bm7b5
-    .replace(/6\/9/, "69"); // F6/9 → F69 : ce 9 n'est pas une basse
-}
-
-/** Voicing d'un accord chiffré : fondamentale à l'octave 3, notes montantes, basse sous la fondamentale. */
-export function hauteursAccord(symbole: string): number[] | null {
-  if (/^N\.?C\.?$/i.test(symbole)) return [];
-  const [nom, basse] = normaliserAccord(symbole).split("/");
-  const c = Chord.get(nom.replace(/^([a-g])/, (x) => x.toUpperCase()));
-  if (c.empty || c.notes.length === 0) return null;
-  const hauteurs: number[] = [];
-  let precedente = 47;
-  for (const n of c.notes) {
-    let m = 48 + (Note.chroma(n) ?? 0);
-    while (m <= precedente) m += 12;
-    hauteurs.push(m);
-    precedente = m;
-  }
-  if (basse) {
-    const b = Note.chroma(basse);
-    if (b === undefined || Number.isNaN(b)) return null;
-    let m = 36 + b;
-    while (m >= hauteurs[0]) m -= 12;
-    hauteurs.unshift(m);
-  }
-  return hauteurs;
 }
 
 /** Lit un morceau ABC. */
