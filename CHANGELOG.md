@@ -6,6 +6,23 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA TONALITÉ D'UN PLAN DE CHANSON S'ÉCRIT EN MAJEUR OU EN MINEUR, ET LE L-SYSTÈME REFUSE UNE RÈGLE QU'IL NE LIT PAS.** Revue des notations en texte, passe de complétude, 2026-11-22, deuxième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - « Gm » et « G mixolydian » passaient tels quels dans le plan, quand la documentation et le moteur attendent « G major » ou « A minor » ;
+    - dans le L-système, une règle sans « = », ou dont la gauche n'était pas une seule lettre (« AB=C », « =B »), était jetée sans un mot ;
+    - de deux règles pour la même lettre, la dernière gagnait sans un mot ;
+    - un axiome vide, ou un mot sans note, partait sans le drapeau d'erreur.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Read Gm, refuse modes » et « Refuse it, named » :
+    - « Gm » s'écrit « G minor » et « G » « G major », la forme longue comme l'abrégée. Un autre mode est refusé, et le message le nomme ;
+    - une règle mal formée, ou une seconde règle pour la même lettre, fait refuser le L-système, et le message la nomme ;
+    - un axiome vide ou un mot sans note est refusé en erreur.
+
+    « > » et « < », qui allongent et raccourcissent le pas, se lisent comme avant. Les documentations de « Tonalité », d'« Axiome » et de « Règles » le disent.
+  - **Un test tenait le contraire** : dans `audio/lsysteme.test.ts`, « n'importe quoi » et « AB=C » étaient jetés. Il est réécrit avec sa raison.
+  - **Le garde** : 16 cas de plus dans `plugins/lecteurs-oublies.test.ts`.
+    - Vu rouge sur le code d'avant : les 12 qui changent.
+    - Vu rouge aussi sur un mode de nouveau admis, planté.
+
 - **LE MASQUE DU CERCLE À RETOUCHER NE PORTE QUE DES ZÉROS ET DES UNS, ET LA ROUE DE CAMELOT REFUSE UN CODE QU'ELLE NE LIT PAS.** Revue des notations en texte, passe de complétude, 2026-11-22, premier lot. La passe a relu le registre entier : ces deux nœuds lisent une notation que le recensement n'avait pas listée.
   - **Ce qui se passait**, mesuré par `executer` :
     - dans le masque du Cercle à retoucher, une espace prenait une place, « 1 0 0 1 0 0 1 0 » éteignant la place 3 ;

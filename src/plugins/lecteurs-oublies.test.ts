@@ -58,3 +58,54 @@ describe("LA ROUE DE CAMELOT REFUSE UN CODE QU'ELLE NE LIT PAS", () => {
     expect(r.message).toContain(`« ${depart} »`);
   }, 60_000);
 });
+
+// LA TONALITÉ D'UN PLAN DE CHANSON, que le moteur attend sous la forme « G major » ou « A minor ». « Gm » et
+// « G mixolydian » passaient tels quels dans le plan. Décision de Fabien du 2026-11-22, « Read Gm, refuse
+// modes ».
+describe("LA TONALITÉ DU PLAN S'ÉCRIT EN MAJEUR OU EN MINEUR", () => {
+  const PLAN = (tonalite: string) => lancerFiche(F("composer-plan"), { "Tonalité": tonalite }, { entrees: [null, null, null] });
+  const cle = (v: unknown) => (JSON.parse(String(v)) as { keyscale?: string }).keyscale;
+
+  it.each([
+    ["G major", "G major"], ["A minor", "A minor"], ["F# minor (73%)", "F# minor"],
+    ["Gm", "G minor"], ["G", "G major"], ["Bb maj", "Bb major"], ["D min", "D minor"],
+  ])("lit « %s » comme « %s »", async (tonalite, attendue) => {
+    const r = await PLAN(tonalite);
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(cle(r.valeurs[0])).toBe(attendue);
+  }, 60_000);
+
+  it.each([["G mixolydian", "mixolydian"], ["C dorian", "dorian"]])("refuse « %s », et nomme le mode", async (tonalite, mode) => {
+    const r = await PLAN(tonalite);
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.valeurs).toEqual([null]);
+    expect(r.message).toContain(mode);
+  }, 60_000);
+});
+
+// LES RÈGLES DU L-SYSTÈME, sous « Exemple : Écrit à la main ». Une règle mal formée était jetée sans un mot,
+// deux règles pour la même lettre laissaient gagner la dernière, et un mot sans note partait sans le drapeau
+// d'erreur. Décisions de Fabien du 2026-11-22, « Refuse it, named ».
+describe("LE L-SYSTÈME REFUSE UNE RÈGLE QU'IL NE LIT PAS", () => {
+  const L = (axiome: string, regles: string) =>
+    lancerFiche(F("l-systeme"), { Exemple: "manuel", Axiome: axiome, "Règles": regles, "Itérations": 3 }, { entrees: [] });
+
+  it("lit les règles et les signes de sa documentation", async () => {
+    const r = await L("A", "A=A>B, B=A");
+    expect(r.erreurRendue, r.message).toBe(false);
+    // A → A>B, puis A>B>A, puis A>B>A>A>B : toutes les lettres se réécrivent à la fois, et « > » reste.
+    expect(r.valeurs[2]).toBe("A>B>A>A>B");
+  }, 60_000);
+
+  it.each([["AB=C", "« AB=C »"], ["=B", "« =B »"], ["A-B", "« A-B »"], ["A=AB, A=B", "« A »"]])(
+    "refuse « %s », et nomme %s", async (regles, cite) => {
+      const r = await L("A", regles);
+      expect(r.erreurRendue, r.message).toBe(true);
+      expect(r.message).toContain(cite);
+    }, 60_000);
+
+  it.each([["un axiome vide", "", "A=AB"], ["un mot sans note", "A", "A="]])("refuse en erreur %s", async (_titre, axiome, regles) => {
+    const r = await L(axiome, regles);
+    expect(r.erreurRendue, r.message).toBe(true);
+  }, 60_000);
+});
