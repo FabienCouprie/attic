@@ -62,6 +62,15 @@ describe("le MIDI d'une pièce, une piste par voix", () => {
   });
 });
 
+describe("la tonalité d'une pièce, départagée par la basse finale", () => {
+  it("lit en do un choral de huit noires en do que Krumhansl seul lit en sol", async () => {
+    const { corpusDEssaiParLesRegles } = await import("./choral-corpus-essai");
+    const piece = (await corpusDEssaiParLesRegles(24, 3)).pieces[2].sequence;
+    expect(tonaliteDesNotes(piece, 0)?.tonique).toBe(7);
+    expect(tonaliteDesNotes(piece)).toEqual({ tonique: 0, mode: "majeur", origine: "notes" });
+  });
+});
+
 describe("la tonalité d'une pièce", () => {
   it("lit do majeur et la mineur sur les deux pièces d'essai, et le choral 175 en do majeur", () => {
     const [majeur, mineur] = corpusDEssai().pieces;

@@ -31,6 +31,7 @@ import { hauteursHumdrum, lireDepuisVerovio, type ToolkitPartition } from "./par
 import type { Note } from "./note";
 import { lireAccord, type Mode } from "./choral-regles";
 import { tranchesDuChoral } from "./choral-tranches";
+import { tonaliteDesNotes } from "./corpus-tonalite";
 import { estRefusChoral, REGLES_CHORAL, verifierChoral, type RegleChoral } from "./choral-verifier";
 
 const RACINE = process.env.CORPUS_CHORALS;
@@ -181,6 +182,14 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
         if (a) degres[s.tonalite.mode][a.degre]++;
       }
     }
+    // LA TONALITÉ LUE CONTRE LA TONALITÉ ÉCRITE CHEZ SAPP (`*G:`), sous plusieurs marges de la basse
+    // finale : la lecture que le corpus et sa fabrication emploient, jugée là où la réponse est écrite.
+    const ecrites = sapps.filter((s) => s.tonalite);
+    const MARGES = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 1, 2];
+    const accordTonalite = MARGES.map((m) => ecrites.filter((s) => {
+      const lue = tonaliteDesNotes({ notes: s.notes, tempo: 60 }, m);
+      return lue?.tonique === s.tonalite!.tonique && lue.mode === s.tonalite!.mode;
+    }).length);
     const frequences = (["majeur", "mineur"] as const).map((m) => {
       const total = degres[m].reduce((x: number, y: number) => x + y, 0);
       return `- ${m} : ${total} temps · ${degres[m].map((c: number, d: number) => `${["I", "II", "III", "IV", "V", "VI", "VII"][d]} ${(100 * c / total).toFixed(1)} %`).join(" · ")}`;
@@ -219,6 +228,10 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
       "## Fréquence des degrés chez Bach, sur les temps reconnus",
       "",
       ...frequences,
+      "",
+      `## Tonalité lue contre tonalité écrite chez Sapp, ${ecrites.length} chorals`,
+      "",
+      ...MARGES.map((m, k) => `- marge de la basse finale ${m} : ${accordTonalite[k]} justes`),
       "",
       "| n° DCML | n° Sapp | titre | notes concordantes | notes DCML | notes Sapp | hauteurs différentes | attaques sans jumelle |",
       "|---|---|---|---|---|---|---|---|",

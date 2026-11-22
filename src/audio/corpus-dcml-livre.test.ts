@@ -3,8 +3,12 @@
 // GARDÉ PAR `CORPUS_CHORALS`, comme le relevé dont il prend la liste des écarts :
 //   CORPUS_CHORALS=work/corpus npx vitest run src/audio/corpus-chorals-releve.test.ts
 //   CORPUS_CHORALS=work/corpus npx vitest run src/audio/corpus-dcml-livre.test.ts
-// Il écrit `public/oonx/corpus-chorals-bach-dcml.json`, qui entre ensuite au manifeste des modèles
+// Il écrit `public/oonx/corpus-chorals-bach-dcml-2.json`, qui entre ensuite au manifeste des modèles
 // (`npm run modeles:generer`) et se publie sur la release `assets` (`npm run modeles:publier`).
+//
+// LA SECONDE VERSION, ET LA PREMIÈRE RESTE PUBLIÉE. Celle du 2026-11-22 portait les tonalités de
+// Krumhansl seul, fausses pour un choral sur cinq ; celle-ci les lit avec la basse finale
+// (`corpus-tonalite.ts`). Un asset publié ne se remplace pas : il change de nom.
 //
 // DÉCISIONS DE FABIEN DU 2026-11-22. Les écarts relevés hors des six chorals que Sapp n'apparie pas
 // sûrement prennent la hauteur de Sapp ; chacun est écrit dans le fichier, avant et après. Les six
@@ -22,7 +26,7 @@ import type { PieceDuCorpus } from "./corpus";
 import { NOMS_SATB } from "./tessitures-satb";
 
 const RACINE = process.env.CORPUS_CHORALS;
-const SORTIE = join(process.cwd(), "public", "oonx", "corpus-chorals-bach-dcml.json");
+const SORTIE = join(process.cwd(), "public", "oonx", "corpus-chorals-bach-dcml-2.json");
 
 /**
  * Les six chorals que le relevé du 2026-11-22 n'apparie pas sûrement, sous 80 % de notes

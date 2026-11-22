@@ -89,8 +89,14 @@ const CONNUS = {
   // UN CORPUS ET NON UN MODÈLE, et il entre ici pour la même raison que les modèles : une empreinte,
   // une adresse sur la release `assets`, et le panneau qui le récupère. Engendré par
   // `src/audio/corpus-dcml-livre.test.ts`, gardé par `CORPUS_CHORALS`.
-  "corpus-chorals-bach-dcml.json": {
-    id: "corpus-chorals-bach", nom: "Chorals de Bach (DCML corrigé)", nomEn: "Bach chorales (corrected DCML)",
+  //
+  // LA SECONDE VERSION, `-2`, porte des tonalités relues avec la basse finale : la première,
+  // `corpus-chorals-bach-dcml.json`, reste sur la release, publiée le 2026-11-22 avec celles de
+  // Krumhansl seul, et plus rien ne la lit. Un asset publié ne se remplace pas, il change de nom.
+  "corpus-chorals-bach-dcml-2.json": {
+    // UN IDENTIFIANT NEUF AUSSI : `--generer` reprend l'adresse connue d'un identifiant, et la
+    // seconde version aurait téléchargé la première sous l'empreinte de la seconde.
+    id: "corpus-chorals-bach-2", nom: "Chorals de Bach (DCML corrigé)", nomEn: "Bach chorales (corrected DCML)",
     noeuds: ["lire-corpus"],
     licence: { nom: "CC0-1.0", credit: "Digital and Cognitive Musicology Lab, DCMLab/bach_chorales v2.0, d'après les fichiers Capella d'Ulrich Kaiser ; 489 hauteurs corrigées d'après craigsapp/bach-370-chorales", rediffusable: true,
       note: "Les 361 tables du DCML sont sous CC0 1.0. 489 hauteurs y ont été corrigées par comparaison avec l'encodage Humdrum de Craig Sapp (CC BY-NC-SA 4.0), là où les deux encodages ont une note à la même place dans la même voix ; chaque correction est écrite dans le fichier, avant et après, et aucune note de Sapp n'est ajoutée. DÉCISION DU PROPRIÉTAIRE D'ATTIC, prise le 2026-11-22 : corriger ces hauteurs d'après Sapp, et livrer tels quels, signalés, les six chorals que Sapp n'apparie pas sûrement." },

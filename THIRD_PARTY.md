@@ -142,7 +142,7 @@ release all the same, and this absence is recorded here so that it is not mistak
 
 | File | License | Copyright |
 |---|---|---|
-| `oonx/corpus-chorals-bach-dcml.json` | CC0-1.0, with 489 pitches corrected after a CC BY-NC-SA 4.0 encoding (see note below) | Digital and Cognitive Musicology Lab, `DCMLab/bach_chorales` v2.0, from Ulrich Kaiser's Capella files (« Der vierstimmige Satz », Bärenreiter, 2002); corrections after Craig Sapp, `craigsapp/bach-370-chorales`; mirrored on the `assets` release |
+| `oonx/corpus-chorals-bach-dcml-2.json` | CC0-1.0, with 489 pitches corrected after a CC BY-NC-SA 4.0 encoding (see note below) | Digital and Cognitive Musicology Lab, `DCMLab/bach_chorales` v2.0, from Ulrich Kaiser's Capella files (« Der vierstimmige Satz », Bärenreiter, 2002); corrections after Craig Sapp, `craigsapp/bach-370-chorales`; mirrored on the `assets` release |
 
 **About the Bach chorales corpus.** The 361 notes tables of `DCMLab/bach_chorales` v2.0 are released
 under CC0 1.0. On 2026-11-22 they were compared note by note with Craig Sapp's Humdrum encoding of
