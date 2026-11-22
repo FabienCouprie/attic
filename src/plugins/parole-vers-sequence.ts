@@ -155,8 +155,10 @@ export function sequenceParlee(
   mots.forEach((mot, i) => {
     const hz = hauteurDuMot(mot, suivi);
     if (hz <= 0) { muets.push(mot.word); return; }
-    const brute = Math.round(noteMidiDeFrequence(hz));
-    const surLaGamme = degrePlusProche(brute, reglages.degres);
+    // LE DEGRÉ SE CHERCHE SUR LA HAUTEUR EXACTE, puis elle s'arrondit, décision de Fabien du
+    // 2026-11-21 : arrondie d'abord, une hauteur à 61,3 tombait sur 61, à égale distance du do et du
+    // ré en do majeur, et le degré du dessous l'emportait, à 1,3 demi-ton au lieu de 0,7.
+    const surLaGamme = degrePlusProche(noteMidiDeFrequence(hz), reglages.degres);
     const note = Math.round(surLaGamme + reglages.transposition);
     // Une note hors du clavier MIDI n'a pas de place dans un fichier : la transposition est bornée
     // ici plutôt que rejetée, pour qu'un mot grave et une transposition basse ne perdent pas la

@@ -86,6 +86,17 @@ describe("la gamme", () => {
     expect(notes[0].note).toBe(60);
   });
 
+  it("CHERCHE LE DEGRÉ SUR LA HAUTEUR EXACTE, puis arrondit : 61,3 va au ré, à 0,7 demi-ton, et non au do", () => {
+    // Décision de Fabien du 2026-11-21. Arrondie d'abord, 61,3 tombait sur 61, à égale distance du do
+    // et du ré, et le degré du dessous l'emportait : chaque ton entier de la gamme cédait le quart de
+    // sa place au degré le plus éloigné.
+    const cas: [number, number][] = [[61.3, 62], [63.3, 64], [66.3, 67], [68.3, 69], [70.3, 71], [61.7, 62], [60.4, 60]];
+    for (const [h, attendu] of cas) {
+      const { notes } = notesDesZones([{ debut: 0, duree: 0.01 }], courbe([h / 120]), { ...REGLAGES, degres: DO_MAJEUR });
+      expect(notes[0].note, `${h}`).toBe(attendu);
+    }
+  });
+
   it("ne touche pas à la note fixe", () => {
     const { notes } = notesDesZones([{ debut: 0, duree: 1 }], null,
       { ...REGLAGES, source: "fixe", noteFixe: 61, degres: DO_MAJEUR });

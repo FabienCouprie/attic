@@ -36,6 +36,27 @@ export interface AccordDate {
   debut: number;
   fin: number;
   accord: AccordReconnu | undefined;
+  /** Les hauteurs du groupe, que `accordsDeSequence` rend aussi : un groupe sans nom en tire sa gamme. */
+  hauteurs?: readonly number[];
+}
+
+/**
+ * La gamme d'un groupe que la reconnaissance ne nomme pas : sa fondamentale, son nom, et ses classes.
+ *
+ * DÉCISION DE FABIEN DU 2026-11-21, défaut E du contrôle des gammes : la gamme majeure posée sur la
+ * note la plus grave du groupe, ou la mineure si le groupe porte une tierce mineure au-dessus d'elle ;
+ * sans tierce, la majeure. LES SONS DU GROUPE S'Y AJOUTENT : un triton ou une seconde mineure n'est
+ * dans aucune des deux, et la ligne ne doit pas se heurter à ce qu'on entend. Le repli était do
+ * majeur, quelle que soit la basse : sur la tierce mi–sol#, la ligne jouait fa, mi et do.
+ */
+export function gammeDuGroupeSansNom(hauteurs: readonly number[]): { fondamentale: number; gamme: "majeur" | "mineur"; classes: number[] } {
+  const pc = (n: number) => ((Math.round(n) % 12) + 12) % 12;
+  const basse = Math.min(...hauteurs);
+  const relatives = new Set(hauteurs.map((h) => pc(h - basse)));
+  const gamme = relatives.has(3) ? "mineur" : "majeur";
+  const classes = new Set(degresDeGamme(gamme).map((d) => (d + pc(basse)) % 12));
+  for (const h of hauteurs) classes.add(pc(h));
+  return { fondamentale: pc(basse), gamme, classes: [...classes].sort((a, b) => a - b) };
 }
 
 /** Une place où la mélodie pose une note. */
@@ -98,16 +119,17 @@ export function placesDeLaMelodie(accords: readonly AccordDate[], parAccord: num
  * Les hauteurs candidates à chaque place.
  *
  * UN ACCORD NON RECONNU N'INTERDIT PAS DE JOUER. La reconnaissance se tait en dessous de trois
- * classes, et une suite peut porter un intervalle seul : la place reçoit alors la gamme majeure sur
- * la basse entendue plutôt que rien, faute de quoi la recherche échouerait sur une mesure au lieu de
- * la traverser.
+ * classes, et une suite peut porter un intervalle seul : la place reçoit alors la gamme que
+ * `gammeDuGroupeSansNom` tire de ses sons plutôt que rien, faute de quoi la recherche échouerait sur
+ * une mesure au lieu de la traverser.
  */
 export function domainesDeLaMelodie(
   places: readonly Place[], accords: readonly AccordDate[], o: OptionsMelodie,
 ): number[][] {
   return places.map((p) => {
     const a = accords[p.accord]?.accord;
-    if (!a) return domaineHauteurs(o.grave, o.aigu, degresDeGamme("majeur"));
+    const sons = accords[p.accord]?.hauteurs ?? [];
+    if (!a) return domaineHauteurs(o.grave, o.aigu, sons.length ? gammeDuGroupeSansNom(sons).classes : degresDeGamme("majeur"));
     const gamme = degresDeGamme(gammeDeQualite(a.qualite))
       .map((d) => (d + a.fondamentale) % 12);
     if (!(o.appuis && p.appui)) return domaineHauteurs(o.grave, o.aigu, gamme);

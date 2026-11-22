@@ -8,14 +8,9 @@ import { writeMidi } from "midi-file";
 import { traduire } from "../i18n";
 import { PROGRESSIONS_GENRE, degresDesAccords, traduireCle } from "./generation";
 import { quinteDuDegre, septiemeDuDegre, sixteDuDegre, tierceDuDegre } from "./triades-gamme";
+import { lireProgressionRomaine, romainDuDegre, type DegreLu, type ProgressionRomaine } from "./romains-degres";
 
 // ─── Générateur d'accords ───
-
-
-const ROMAIN_VERS_DEGRE: Record<string, number> = {
-  I: 0, II: 1, III: 2, IV: 3, V: 4, VI: 5, VII: 6,
-  i: 0, ii: 1, iii: 2, iv: 3, v: 4, vi: 5, vii: 6,
-};
 
 
 /**
@@ -33,12 +28,17 @@ export function genererAccords(
   const estMineur = tierceDuDegre(gammeCourante, 0) < 4; // tierce mineure sur la tonique
   const decalage = traduireCle(cleNom);
 
-  let progression: number[];
+  // UNE PROGRESSION PERSONNALISÉE SE LIT EN DEGRÉS (`romains-degres.ts`), décision de Fabien du
+  // 2026-11-21 : « V7 », « vii° » et « bVII » valaient le I, par `?? 0`. Un chiffre refusé ne se joue
+  // pas, et la description le nomme ; s'il n'en reste aucun, le I seul.
+  let progression: DegreLu[];
+  let refus: ProgressionRomaine = { degres: [], alteres: [], inconnus: [] };
   if (genreNom === "custom" || genreNom === "personnalisé") {
-    progression = progressionPerso.split("-").map((r) => ROMAIN_VERS_DEGRE[r.trim()] ?? 0);
+    refus = lireProgressionRomaine(progressionPerso);
+    progression = refus.degres.length ? refus.degres : [{ degre: 0, septieme: false }];
   } else {
     const progressions = PROGRESSIONS_GENRE[genreNom] || PROGRESSIONS_GENRE["pop"];
-    progression = progressions[0];
+    progression = progressions[0].map((degre) => ({ degre, septieme: false }));
   }
 
   const noire = 60 / tempo;
@@ -57,7 +57,7 @@ export function genererAccords(
   for (let i = 0; i < nbAccords; i++) {
     const deb = i * dureeSecAccord;
     const fin = deb + dureeSecAccord;
-    const degre = progression[i % progression.length];
+    const { degre, septieme } = progression[i % progression.length];
     const racinePc = gammeCourante[degre % gammeCourante.length];
     const fonda = 36 + decalage + racinePc + Math.floor(degre / gammeCourante.length) * 12;
     const tierce = tierceDuDegre(gammeCourante, racinePc);
@@ -77,8 +77,9 @@ export function genererAccords(
       { note: fonda + 24, vel: 50 },         // octave haute
     ];
     // Extension optionnelle (7e ou 6e), diatonique à la gamme choisie —
-    // ajoutée dans le même registre aigu que la tierce/quinte.
-    if (extension === "septieme") {
+    // ajoutée dans le même registre aigu que la tierce/quinte. Un « 7 » écrit dans la progression
+    // demande la septième sur son seul accord.
+    if (extension === "septieme" || septieme) {
       voixAccord.push({ note: fonda + 12 + septiemeDuDegre(gammeCourante, racinePc), vel: 50 });
     } else if (extension === "sixte") {
       voixAccord.push({ note: fonda + 12 + sixteDuDegre(gammeCourante, racinePc), vel: 50 });
@@ -129,12 +130,13 @@ export function genererAccords(
   const midi = { header: { format: 1 as const, numTracks: 2, ticksPerBeat: tpm }, tracks: [piste1, piste2] };
   const bytes = new Uint8Array(writeMidi(midi));
 
-  const romain = ["I", "II", "III", "IV", "V", "VI", "VII"];
   const descr = [
     traduire("msg.generateur_accords.titre"),
     `${cleNom} ${libelles.gamme} · ${libelles.genre} · ${tempo} BPM`,
     traduire("msg.generateur_accords.duree", nbAccords, dureeAccord, (nbAccords * dureeSecAccord).toFixed(1)),
-    progression.map((d) => romain[d % 7]).join(" – "),
+    progression.map(romainDuDegre).join(" – "),
+    ...(refus.alteres.length ? [traduire("msg.romains.alteres", refus.alteres.join(", "))] : []),
+    ...(refus.inconnus.length ? [traduire("msg.romains.inconnus", refus.inconnus.join(", "))] : []),
   ].join("\n");
 
   return { midiBytes: bytes, description: descr };

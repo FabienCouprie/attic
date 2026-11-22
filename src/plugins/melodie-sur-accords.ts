@@ -5,7 +5,7 @@
 
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
-import { melodieSurAccords, type OptionsMelodie } from "../audio/melodie-sur-accords";
+import { gammeDuGroupeSansNom, melodieSurAccords, type OptionsMelodie } from "../audio/melodie-sur-accords";
 import { accordsDeSequence, nomDeLaccord } from "../audio/reconnaitre-accord";
 import { gammeDeQualite } from "../audio/accord-gamme";
 import { gammeDe } from "../audio/gammes";
@@ -25,7 +25,7 @@ export const fiches: FicheAudio[] = ([
     resumeEn: "Searches for a melody over a received chord progression, under constraints set one at a time.",
     notice: `Écrit une mélodie sur les accords reçus, en cherchant une ligne qui satisfait les règles posées.
 
-Chaque groupe de notes qui commencent ensemble est lu comme un accord, et sa qualité est nommée parmi celles de la nomenclature. La qualité désigne une gamme, et cette gamme donne les notes disponibles : la mélodie n'en emploie pas d'autres. Un groupe de moins de trois hauteurs distinctes ne nomme aucun accord ; la gamme majeure s'applique alors, ce qui permet de traverser la mesure au lieu d'échouer dessus.
+Chaque groupe de notes qui commencent ensemble est lu comme un accord, et sa qualité est nommée parmi celles de la nomenclature. La qualité désigne une gamme, et cette gamme donne les notes disponibles : la mélodie n'en emploie pas d'autres. Un groupe de moins de trois hauteurs distinctes ne nomme aucun accord ; la gamme majeure posée sur sa note la plus grave s'applique alors, ou la mineure si le groupe porte une tierce mineure au-dessus de cette note, et les sons du groupe y restent disponibles. La recherche traverse ainsi la mesure au lieu d'échouer dessus.
 
 « Notes par accord » divise la durée de chaque accord en autant de places. La première place de chaque accord est un appui.
 
@@ -52,7 +52,7 @@ La sortie « Mélodie » porte la ligne trouvée. La sortie « Rapport » donne 
 Quand aucune ligne ne satisfait toutes les règles, la sortie « Mélodie » est vide et le rapport nomme cette règle ainsi que la place la plus lointaine atteinte : c'est ce qui permet de savoir laquelle relâcher.`,
     noticeEn: `Writes a melody over the received chords, searching for a line that satisfies the rules set.
 
-Each group of notes starting together is read as a chord, and its quality named among those of the nomenclature. The quality designates a scale, and that scale gives the available notes: the melody uses no others. A group of fewer than three distinct pitches names no chord; the major scale then applies, which lets the search cross the bar instead of failing on it.
+Each group of notes starting together is read as a chord, and its quality named among those of the nomenclature. The quality designates a scale, and that scale gives the available notes: the melody uses no others. A group of fewer than three distinct pitches names no chord; the major scale built on its lowest note then applies, or the minor scale if the group carries a minor third above that note, and the group's own pitches stay available. The search thus crosses the bar instead of failing on it.
 
 « Notes per chord » divides each chord's duration into that many positions. The first position of each chord is a strong beat.
 
@@ -159,8 +159,12 @@ When no line satisfies every rule, the « Melody » output is empty and the repo
         anglais ? "Chords recognised" : "Accords reconnus",
         ...accords.map((a, i) => {
           const nom = a.accord ? nomDeLaccord(a.accord, anglais) : (anglais ? "unnamed" : "sans nom");
-          const g = a.accord ? gammeDe(gammeDeQualite(a.accord.qualite)) : undefined;
-          const nomGamme = g ? (anglais ? g.en : g.fr) : (anglais ? "major" : "majeur");
+          // UN GROUPE SANS NOM DIT LA GAMME QU'IL REÇOIT, et sur quelle note : « majeur » seul taisait
+          // laquelle, et c'était do, quelle que soit la basse.
+          const sansNom = !a.accord && a.hauteurs.length ? gammeDuGroupeSansNom(a.hauteurs) : undefined;
+          const g = a.accord ? gammeDe(gammeDeQualite(a.accord.qualite)) : sansNom ? gammeDe(sansNom.gamme) : undefined;
+          const sur = sansNom ? `${anglais ? " on " : " sur "}${nomNote(Math.min(...a.hauteurs))}` : "";
+          const nomGamme = (g ? (anglais ? g.en : g.fr) : (anglais ? "major" : "majeur")) + sur;
           return `  ${String(i + 1).padStart(3)}  ${a.debut.toFixed(2).padStart(7)} s  ${nom.padEnd(14)} ${nomGamme}`;
         }),
         "",

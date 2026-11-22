@@ -119,6 +119,23 @@ describe("le domaine porte déjà la moitié des règles", () => {
     expect(domaines[0].length).toBeGreaterThan(0);
     expect(melodieSurAccords(avecTrou, BASE).notes.length).toBe(places.length);
   });
+
+  it("UN GROUPE SANS NOM PREND LA GAMME DE SA BASSE : la majeure, la mineure s'il porte une tierce mineure, et ses propres sons", () => {
+    // Décision de Fabien du 2026-11-21, défaut E du contrôle des gammes. Le repli était do majeur,
+    // quelle que soit la basse : sur la tierce mi–sol#, la ligne jouait fa, mi et do.
+    const cas: [number[], number[]][] = [
+      [[52, 56], [4, 6, 8, 9, 11, 1, 3]], // mi–sol#, tierce majeure : mi majeur
+      [[52, 55], [4, 6, 7, 9, 11, 0, 2]], // mi–sol, tierce mineure : mi mineur
+      [[50, 57], [2, 4, 6, 7, 9, 11, 1]], // ré–la, une quinte sans tierce : ré majeur
+      [[52, 58], [4, 6, 8, 9, 10, 11, 1, 3]], // mi–la#, un triton : mi majeur, et le la# entendu
+    ];
+    for (const [hauteurs, attendu] of cas) {
+      const groupe = accordsDeSequence(hauteurs.map((note) => ({ note, debut: 0, fin: 1 })));
+      expect(groupe[0].accord, `${hauteurs}`).toBeUndefined();
+      const domaine = domainesDeLaMelodie(placesDeLaMelodie(groupe, 2), groupe, { ...BASE, appuis: false })[0];
+      expect([...new Set(domaine.map(classe))].sort((a, b) => a - b), `${hauteurs}`).toEqual([...attendu].sort((a, b) => a - b));
+    }
+  });
 });
 
 describe("chaque contrainte, éprouvée seule", () => {
