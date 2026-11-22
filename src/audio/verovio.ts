@@ -16,22 +16,37 @@ export type FormatNotation = "abc" | "musicxml" | "mei" | "humdrum";
  * le dire que laisser Verovio rendre une page blanche.
  *
  * ABC se reconnaît à ses champs d'en-tête en tête de ligne (`X:`, `K:`, `M:`) ; MusicXML et MEI
- * sont des documents XML, que distingue leur élément racine — `score-partwise`, `score-timewise`
- * ou `opus` pour l'un, `mei` pour l'autre ; Humdrum à sa première colonne `**kern`.
+ * sont des documents XML, que distingue leur élément racine — `score-partwise` ou `score-timewise`
+ * pour l'un, `mei` pour l'autre ; Humdrum à sa première ligne de données, dont chaque colonne
+ * commence par `**`, comme `**kern`.
+ *
+ * LE HUMDRUM SE RECONNAÎT À SA PREMIÈRE LIGNE, ET NON À « **kern » N'IMPORTE OÙ. Revue des notations
+ * en texte, 2026-11-22 : un ABC titré « T:Etude **kern » était refusé comme Humdrum.
+ *
+ * UN XML QUI N'EST NI MUSICXML NI MEI N'EST RIEN. Il était tenté en MusicXML, et Verovio gravait en
+ * vert une page vide pour un SVG ou pour un opus MusicXML, qui ne fait que citer des partitions.
+ * `racineXml` en donne l'élément, pour que le refus le nomme.
  */
 export function detecterFormat(texte: string): FormatNotation | null {
   const t = texte.trim();
   if (!t) return null;
-  if (/\*\*(kern|recip|mens)/.test(t)) return "humdrum";
+  const donnees = t.split(/\r?\n/).find((l) => l.trim() && !l.startsWith("!"));
+  if (donnees && donnees.split("\t").every((c) => c.startsWith("**"))) return "humdrum";
   if (t.startsWith("<")) {
-    if (/<\s*(score-partwise|score-timewise|opus)\b/i.test(t)) return "musicxml";
-    if (/<\s*mei\b|xmlns\s*=\s*["']http:\/\/www\.music-encoding\.org/i.test(t)) return "mei";
-    // Un XML inconnu : MusicXML est le plus probable des formats que Verovio lit, et son
-    // analyseur le dira mieux que nous s'il se trompe.
-    return "musicxml";
+    const racine = racineXml(t);
+    if (racine === "score-partwise" || racine === "score-timewise") return "musicxml";
+    if (racine === "mei" || /xmlns\s*=\s*["']http:\/\/www\.music-encoding\.org/i.test(t)) return "mei";
+    return null;
   }
   if (/^\s*[A-Za-z]:/m.test(t)) return "abc";
   return null;
+}
+
+/** Le nom de l'élément racine d'un document XML, sans préfixe d'espace de noms ; null s'il n'y en a pas. */
+export function racineXml(texte: string): string | null {
+  const sans = texte.replace(/<\?[\s\S]*?\?>|<!--[\s\S]*?-->|<!DOCTYPE[^>]*>/gi, "");
+  const m = /<\s*([\w.:-]+)/.exec(sans);
+  return m ? m[1].replace(/^.*:/, "") : null;
 }
 
 /** Ce que Verovio attend dans `setOptions` pour `inputFrom`. */

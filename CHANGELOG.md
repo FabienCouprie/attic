@@ -6,6 +6,23 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA PARTITION GRAVÉE REFUSE CE QUE LE LECTEUR ABC REFUSE, ET UN TEXTE QUI N'EST PAS UNE PARTITION.** Revue des notations en texte, quatrième format, 2026-11-22.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - douze des treize fautes que refuse « ABC → MIDI » se gravaient en vert : une durée nulle ou divisée par zéro, un accord jamais refermé, une liaison entre deux hauteurs ou vers un silence, un n-olet inachevé, une unité nulle ;
+    - un silence de durée nulle faisait tomber le graveur sur l'erreur brute « divide by zero » ;
+    - un ABC titré « T:Etude **kern » était refusé comme Humdrum, « **kern » étant cherché partout dans le texte ;
+    - un SVG ou un opus MusicXML, qui ne fait que citer des partitions, se gravaient en vert sur une page vide.
+  - **Ce qui change** :
+    - chaque air d'un texte ABC est lu par `lireMorceau` avant la gravure, et refusé par `refusAbc` avec les mêmes fautes nommées, ligne et fragment ;
+    - le Humdrum se reconnaît à sa première ligne de données ;
+    - un XML dont la racine n'est ni `score-partwise`, ni `score-timewise`, ni `mei` est refusé, et le message nomme cette racine (`racineXml`).
+
+    La notice le dit, en français et en anglais.
+  - **Un test tenait le contraire** : « un XML inconnu est tenté en MusicXML », dans `audio/verovio.test.ts`. Il avait été écrit avec le nœud et ne portait aucune décision.
+  - **Le garde** est `plugins/partition-verovio-norme.test.ts`, 43 cas. Il relit le SVG gravé comme un musicien, par `plugins/partition-lue.ts`, et le compare aux normes ABC 2.1, MusicXML 4.0 et MEI.
+    - Vu rouge sur le code d'avant : les 16 cas du lot.
+    - Vu rouge aussi sur une armure effacée avant la gravure, plantée : les 6 cas d'armure.
+
 - **UNE SEULE RÈGLE DIT SI UN TEXTE EST EN CHIFFRES ROMAINS : LE PREMIER JETON DÉCIDE, POUR TOUS LES NŒUDS.** Revue des notations en texte, sixième format, 2026-11-22.
   - **Ce qui se passait**, mesuré par `executer` : trois règles répondaient. La Grille d'accords regardait le préfixe du premier jeton, « Accords → Notation » s'il y en avait un, les graveurs VexFlow s'ils en étaient tous. Sur un texte mêlé, chacun nommait autre chose :
     - « I C V » nommait « C » ici, « I V » là ;

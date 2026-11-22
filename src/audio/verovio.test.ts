@@ -1,6 +1,6 @@
 // audio/verovio.test.ts — Reconnaître une notation, et les options de gravure.
 import { describe, expect, it } from "vitest";
-import { detecterFormat, entreeVerovio, optionsGravure, pageDemandee } from "./verovio";
+import { detecterFormat, entreeVerovio, optionsGravure, pageDemandee, racineXml } from "./verovio";
 
 describe("detecterFormat", () => {
   it("reconnaît l'ABC à ses champs d'en-tête", () => {
@@ -19,14 +19,28 @@ describe("detecterFormat", () => {
     expect(detecterFormat('<?xml version="1.0"?><mei><music/></mei>')).toBe("mei");
   });
 
-  it("reconnaît le Humdrum à sa première colonne", () => {
+  it("reconnaît le Humdrum à sa première ligne de données, et non à « **kern » n'importe où", () => {
     expect(detecterFormat("**kern\n*M4/4\n4c\n4d\n*-")).toBe("humdrum");
+    expect(detecterFormat("!! un commentaire\n**kern\t**kern\n4c\t4e\n*-\t*-")).toBe("humdrum");
+    // Revue des notations en texte, 2026-11-22 : cet ABC était refusé comme Humdrum.
+    expect(detecterFormat("X:1\nT:Etude **kern\nK:C\nCDEF|")).toBe("abc");
   });
 
-  it("un XML inconnu est tenté en MusicXML ; un texte vide ou quelconque n'est rien", () => {
-    expect(detecterFormat("<partition><note/></partition>")).toBe("musicxml");
+  // CE CAS TENAIT LE CONTRAIRE : « un XML inconnu est tenté en MusicXML ». Écrit avec le nœud, il
+  // décrivait le comportement d'alors, sans décision. Mesuré le 2026-11-22 : Verovio gravait en vert
+  // une page vide pour un SVG ou pour un opus MusicXML. Un XML qui n'est ni MusicXML ni MEI n'est
+  // donc rien, et le nœud le refuse en nommant sa racine.
+  it("un XML qui n'est ni MusicXML ni MEI n'est rien ; un texte vide ou quelconque non plus", () => {
+    expect(detecterFormat("<partition><note/></partition>")).toBeNull();
+    expect(detecterFormat('<?xml version="1.0"?><opus><score/></opus>')).toBeNull();
     expect(detecterFormat("   ")).toBeNull();
     expect(detecterFormat("do ré mi fa sol")).toBeNull();
+  });
+
+  it("la racine d'un document XML, après la déclaration, les commentaires et le DOCTYPE", () => {
+    expect(racineXml('<?xml version="1.0"?>\n<!-- x -->\n<!DOCTYPE score-partwise PUBLIC "x">\n<score-partwise/>')).toBe("score-partwise");
+    expect(racineXml('<svg:svg xmlns:svg="http://www.w3.org/2000/svg"/>')).toBe("svg");
+    expect(racineXml("pas de XML")).toBeNull();
   });
 
   it("le nom du format tel que Verovio l'attend", () => {

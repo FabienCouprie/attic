@@ -1378,6 +1378,8 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   // Les fautes qui feraient jouer autre chose que ce qui est écrit : le morceau est refusé.
   "msg.abc.partition_var_0": { fr: "Partition {__VAR_0__}", en: "{__VAR_0__} score" },
   "msg.abc.refusee_var_0_var_1": { fr: "{__VAR_0__} refusée : {__VAR_1__} faute(s) qui la feraient jouer autrement qu'écrite, rien n'est joué.", en: "{__VAR_0__} refused: {__VAR_1__} fault(s) that would make it play other than written; nothing is played." },
+  "msg.abc.refusee_gravure_var_0_var_1": { fr: "{__VAR_0__} refusée : {__VAR_1__} faute(s) qui la feraient lire autrement qu'écrite, rien n'est gravé.", en: "{__VAR_0__} refused: {__VAR_1__} fault(s) that would make it read other than written; nothing is engraved." },
+  "msg.verovio.xml_inconnu_var_0": { fr: "Document XML de racine « {__VAR_0__} » : ce n'est ni une partition MusicXML (score-partwise, score-timewise) ni un document MEI, rien n'est gravé.", en: "XML document with root « {__VAR_0__} »: neither a MusicXML score (score-partwise, score-timewise) nor an MEI document; nothing is engraved." },
   "msg.abc.faute.duree": { fr: "ligne {__VAR_0__} « {__VAR_1__} » : durée nulle, ou divisée par zéro « {__VAR_2__} »", en: "line {__VAR_0__} « {__VAR_1__} »: zero length, or divided by zero « {__VAR_2__} »" },
   "msg.abc.faute.accord": { fr: "ligne {__VAR_0__} « {__VAR_1__} » : accord jamais refermé par « ] » « {__VAR_2__} »", en: "line {__VAR_0__} « {__VAR_1__} »: chord never closed by « ] » « {__VAR_2__} »" },
   "msg.abc.faute.liaison": { fr: "ligne {__VAR_0__} « {__VAR_1__} » : liaison que ne suit pas la même hauteur « {__VAR_2__} »", en: "line {__VAR_0__} « {__VAR_1__} »: tie not followed by the same pitch « {__VAR_2__} »" },

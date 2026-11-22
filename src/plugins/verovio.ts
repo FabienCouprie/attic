@@ -13,9 +13,11 @@
 
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
-import { langueCourante } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { detecterFormat, entreeVerovio, optionsGravure, pageDemandee, type FormatNotation } from "../audio/verovio";
+import { detecterFormat, entreeVerovio, optionsGravure, pageDemandee, racineXml, type FormatNotation } from "../audio/verovio";
+import { decouperMorceaux, lireMorceau } from "../audio/abc";
+import { refusAbc } from "../audio/abc-fautes";
 import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
@@ -53,8 +55,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Visualisation", famille: "Notation",
     resume: "Grave une notation ABC, MusicXML, MEI ou Humdrum en partition SVG, aux règles d'un éditeur de musique.",
     resumeEn: "Engraves an ABC, MusicXML, MEI or Humdrum notation into an SVG score, to music-publishing rules.",
-    notice: "Ce composant grave une partition à partir d'un texte de notation, et rend une page en SVG.\n\nQuatre notations sont lues : ABC, reconnaissable à ses champs d'en-tête (X:, M:, K:) ; MusicXML, le format d'échange des éditeurs de partition ; MEI, son équivalent savant ; et Humdrum, celui des corpus d'analyse. Le format est reconnu à la forme du texte ; le réglage permet de l'imposer quand la reconnaissance se trompe.\n\nLa gravure suit les règles d'un éditeur : espacement proportionnel à la durée, ligatures, hampes et altérations placées, portées alignées. La largeur de page et l'échelle décident de ce qui tient sur une ligne ; « Déroulé » met toute la pièce sur un seul système, aussi long qu'il faut, pour la lire d'un trait. Le bas de page vide est coupé : une partition de trois mesures ne rend pas une page entière de blanc.\n\nUne pièce longue tient sur plusieurs pages : le réglage « Page » dit laquelle rendre, et le message indique combien il y en a.\n\nLa sortie « SVG » rend la partition gravée en texte, et la sortie « Fichier SVG » la même partition en fichier. La partition s'affiche aussi dans le composant.",
-    noticeEn: "This node engraves a score from a notation text, and returns one page as SVG.\n\nFour notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML, the exchange format of score editors; MEI, its scholarly counterpart; and Humdrum, that of analysis corpora. The format is recognised from the shape of the text; the setting lets you impose it when recognition gets it wrong.\n\nThe engraving follows publishing rules: spacing proportional to duration, beams, stems and accidentals placed, staves aligned. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed, to read it in one go. The empty bottom of the page is cut off: a three-bar score does not return a full page of white.\n\nA long piece spans several pages: the « Page » setting says which one to render, and the message gives their number.\n\nThe « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file. The score is also shown in the node.",
+    notice: "Ce composant grave une partition à partir d'un texte de notation, et rend une page en SVG.\n\nQuatre notations sont lues : ABC, reconnaissable à ses champs d'en-tête (X:, M:, K:) ; MusicXML, le format d'échange des éditeurs de partition ; MEI, son équivalent savant ; et Humdrum, celui des corpus d'analyse. Le format est reconnu à la forme du texte ; le réglage permet de l'imposer quand la reconnaissance se trompe. Un document XML qui n'est ni une partition MusicXML ni un document MEI est refusé, et le message nomme son élément racine.\n\nUne partition ABC est d'abord lue note à note. Une durée nulle, un accord jamais refermé, une liaison entre deux hauteurs ou un n-olet inachevé la font refuser, et le message nomme chaque faute, sa ligne et le fragment.\n\nLa gravure suit les règles d'un éditeur : espacement proportionnel à la durée, ligatures, hampes et altérations placées, portées alignées. La largeur de page et l'échelle décident de ce qui tient sur une ligne ; « Déroulé » met toute la pièce sur un seul système, aussi long qu'il faut, pour la lire d'un trait. Le bas de page vide est coupé : une partition de trois mesures ne rend pas une page entière de blanc.\n\nUne pièce longue tient sur plusieurs pages : le réglage « Page » dit laquelle rendre, et le message indique combien il y en a.\n\nLa sortie « SVG » rend la partition gravée en texte, et la sortie « Fichier SVG » la même partition en fichier. La partition s'affiche aussi dans le composant.",
+    noticeEn: "This node engraves a score from a notation text, and returns one page as SVG.\n\nFour notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML, the exchange format of score editors; MEI, its scholarly counterpart; and Humdrum, that of analysis corpora. The format is recognised from the shape of the text; the setting lets you impose it when recognition gets it wrong. An XML document that is neither a MusicXML score nor an MEI document is refused, and the message names its root element.\n\nAn ABC score is first read note by note. A zero duration, a chord never closed, a tie between two pitches or an unfinished tuplet gets it refused, and the message names each fault, its line and the fragment.\n\nThe engraving follows publishing rules: spacing proportional to duration, beams, stems and accidentals placed, staves aligned. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed, to read it in one go. The empty bottom of the page is cut off: a three-bar score does not return a full page of white.\n\nA long piece spans several pages: the « Page » setting says which one to render, and the message gives their number.\n\nThe « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file. The score is also shown in the node.",
     entrees: [{ nom: "Notation", nomEn: "Notation", type: "texte", sousType: "notation", requis: false }],
     // DEUX SORTIES POUR UN MÊME SVG, ET LE MÊME NOM POUR LES DEUX.
     //
@@ -103,9 +105,22 @@ export const fiches: FicheAudio[] = ([
       const impose = String(ctx.paramTexte("Format", "auto"));
       const format: FormatNotation | null = impose === "auto" ? detecterFormat(texte) : (impose as FormatNotation);
       if (!format) {
-        return { valeurs: [null, null], erreur: true, message: en()
+        const racine = texte.trim().startsWith("<") ? racineXml(texte) : null;
+        return { valeurs: [null, null], erreur: true, message: racine ? traduire("msg.verovio.xml_inconnu_var_0", racine) : en()
           ? "Notation not recognised: expected ABC (X:, K:), MusicXML, MEI or Humdrum."
           : "Notation non reconnue : attendu ABC (X:, K:), MusicXML, MEI ou Humdrum." };
+      }
+      // CE QUE LE LECTEUR ABC D'ATTIC REFUSE, LE GRAVEUR LE REFUSE, avec les mêmes fautes nommées.
+      // Revue des notations en texte, 2026-11-22 : Verovio gravait en vert une durée nulle, un accord
+      // jamais refermé ou une liaison entre deux hauteurs, et tombait sur « divide by zero » pour un
+      // silence de durée nulle. Chaque air du texte est lu, puisque chacun est gravé.
+      if (format === "abc") {
+        const morceaux = decouperMorceaux(texte);
+        for (const [i, air] of morceaux.entries()) {
+          const quoi = traduire("msg.abc.partition_var_0", morceaux.length > 1 ? `ABC ${i + 1}` : "ABC");
+          const refus = refusAbc(lireMorceau(air, i + 1), quoi, "msg.abc.refusee_gravure_var_0_var_1");
+          if (refus) return { valeurs: [null, null], erreur: true, message: refus };
+        }
       }
       let tk: any = null;
       try {
