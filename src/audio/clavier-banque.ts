@@ -100,7 +100,7 @@ export interface Zone extends PlanZone {
   velBasse?: number;
   velHaute?: number;
   /**
-   * De combien la vélocité fait encore varier le NIVEAU, de 0 à 100.
+   * De combien la vélocité fait encore varier le NIVEAU, de −100 à 100, négatif pour un suivi à rebours.
    *
    * `amp_veltrack` du format SFZ. Cent : le niveau suit la vélocité comme avant. Zéro : la vélocité
    * ne choisit que la couche, et le niveau ne bouge plus. C'est ce que règlent les bibliothèques à
@@ -420,11 +420,15 @@ export type NoteJouee = Note;
  * POURQUOI CELA EXISTE : sans ce réglage, une bibliothèque à couches subit un DOUBLE effet — la
  * couche douce est choisie, ET son niveau est encore divisé par trois. Les notes jouées piano
  * disparaissaient.
+ *
+ * NÉGATIF, LE SUIVI JOUE À REBOURS : à −100, « velocity 127 notes silent, and low-velocity notes
+ * loud » (sfzformat.com). C'est la même loi appliquée à la vélocité retournée.
  */
 function gainVelocite(velocite: number, suivi?: number): number {
   const v = Math.min(1, Math.max(0, velocite / 127));
-  const k = Math.min(1, Math.max(0, (suivi ?? 100) / 100));
-  return 1 - k + k * v;
+  const s = Math.min(1, Math.max(-1, (suivi ?? 100) / 100));
+  const k = Math.abs(s);
+  return 1 - k + k * (s < 0 ? 1 - v : v);
 }
 
 /** De quoi jouer une note : la zone, à quelle vitesse la relire, et à quel niveau. */

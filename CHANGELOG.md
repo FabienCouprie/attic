@@ -6,6 +6,25 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN SFZ SE LIT COMME SA RÉFÉRENCE LE DÉFINIT, ET CE QUI EN EST ÉCARTÉ EST NOMMÉ.** Revue des notations en texte, le format SFZ, 2026-11-22, premier lot.
+  - **Ce qui se passait**, mesuré par `executer` sur « Banque SFZ » et « Clavier SFZ » contre sfzformat.com :
+    - une région à `lokey=-1 hikey=-1`, ou `key=-1`, que SFZ 2 réserve à un contrôleur, jouait sur les 128 touches ;
+    - une touche illisible ou hors de 0 à 127 (`lokey=foo`, `lokey=200`, `key=h4`, `key=g#9`) faisait une région de 0 à 127, sans un mot ; `volume=fort`, `tune=abc` prenaient leur défaut, `hivel=200` et `lovel=-5` passaient ;
+    - `lokey=72 hikey=60` était lu 60–72, une supposition que la référence ne fait pas ;
+    - `amp_veltrack=-100` était ramené à 0 : la vélocité 127 sonnait comme la vélocité 20, à 0,283 de RMS, au lieu de se taire ;
+    - une redéfinition de `#define` valait pour tout le fichier : `$K` à 60 puis à 72 donnait deux régions à 72, l'une comptée comme doublon, et le fichier passait pour un kit d'un son ;
+    - un `#include` non suivi et une région sans `sample` étaient rangés dans les données de lecture, et aucun des deux nœuds ne les disait ;
+    - `*sine`, générateur d'ARIA, était compté comme échantillon manquant ;
+    - `octave_offset` et `note_offset` n'étaient que comptés parmi les ignorés, souvent au-delà des trois noms que montre le message.
+  - **Ce qui change** :
+    - une région dont une valeur est illisible ou hors de la plage de la référence, dont `lokey` dépasse `hikey`, dont une touche vaut -1, dont le `sample` est un générateur, ou que le décalage sort du clavier, est écartée ; le message la nomme par son rang, `#2 lokey=foo` ;
+    - `amp_veltrack` va de −100 à 100, et négatif il joue à rebours ;
+    - un `#define` vaut à partir de sa ligne ;
+    - `octave_offset` et `note_offset` décalent les touches et la racine des régions qui suivent, `octave_offset=-1` mettant `c4` à la touche 48 ;
+    - les deux nœuds disent les `#include`, les régions sans `sample` et les régions écartées.
+  - Décision de Fabien pour `lokey` au-dessus de `hikey` : refuser, nommé ; pour les décalages : les appliquer.
+  - Tenu par `plugins/sfz-format.test.ts`, treize cas tirés des pages de sfzformat.com. Onze vus rouges sur le code d'avant, deux tenus déjà (les noms de notes, l'alias `pitch`). Vu rouge aussi sur une touche -1 de nouveau lue comme absente, et sur une redéfinition de nouveau appliquée à tout le fichier, plantées.
+
 - **L'HARMONIE NÉGATIVE DIT CE QUE FAIT SA RÉFLEXION, ET LA SÉRIE À TOUS LES INTERVALLES REVIENT À LA PREMIÈRE AU-DELÀ DE LA DERNIÈRE.** Revue des notations en texte, les tables et les suites, 2026-11-22, troisième lot.
   - **Ce qui se passait**, mesuré par `executer` :
     - la documentation et la notice de « Réflexion » promettaient que « Classes » garde le contour de la ligne. Do ré mi fa sol y devient sol fa mi bémol ré do : la ligne se retourne, comme sous « Miroir vrai » ;

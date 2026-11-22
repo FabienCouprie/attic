@@ -29,6 +29,7 @@
 // complet.
 import type { Banque, Zone } from "./clavier-banque";
 import { depuisDb } from "./decibels";
+import { traduire } from "../i18n";
 
 /** Une région : une zone de clavier et son échantillon, opcodes hérités déjà résolus. */
 export interface RegionSfz {
@@ -47,7 +48,7 @@ export interface RegionSfz {
   volume: number;
   /** Désaccord, en cents (`tune`), transposition entière déjà pliée dans `racine`. */
   accord: number;
-  /** `amp_veltrack` : de combien la vélocité fait encore varier le niveau, de 0 à 100. */
+  /** `amp_veltrack` : de combien la vélocité fait encore varier le niveau, de −100 à 100. */
   suiviVelocite: number;
   /**
    * La région suit-elle la touche jouée ? `pitch_keytrack=0` dit que non.
@@ -115,8 +116,80 @@ const CONNUS = new Set([
   "sample", "lokey", "hikey", "key", "pitch_keycenter", "lovel", "hivel",
   "loop_mode", "loop_start", "loop_end", "loopmode", "loopstart", "loopend",
   "ampeg_release", "volume", "tune", "pitch", "transpose", "default_path", "pitch_keytrack",
-  "amp_veltrack",
+  "amp_veltrack", "octave_offset", "note_offset",
 ]);
+
+/** Une note de région : un nombre, un nom, ou −1, qui dit « aucune touche » en SFZ 2. Rien si illisible. */
+function noteDeRegion(valeur: string): number | null {
+  return valeur.trim() === "-1" ? -1 : noteSfz(valeur);
+}
+
+/** La racine écrite : un nom de note, ou un nombre de −127 à 127 comme le permet la version 1. */
+function centreEcrit(valeur: string): number | null {
+  const v = valeur.trim();
+  if (/^-?\d+$/.test(v)) return Math.abs(Number(v)) <= 127 ? Number(v) : null;
+  return noteSfz(v);
+}
+
+/** Un nombre STRICT : toute la valeur, et non son début, que `parseFloat` lirait dans « 60 bis ». */
+function nombreStrict(valeur: string): number | null {
+  const v = valeur.trim();
+  const n = v === "" ? Number.NaN : Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Les plages que la référence donne aux opcodes numériques lus ici.
+ *
+ * `volume` n'a pas de plafond : sa page dit que la plupart des lecteurs dépassent les 6 dB de la
+ * spécification. `lovel` part de 0, la valeur de la version 1, la version 2 disant 1 ; la vélocité 0
+ * étant un relâchement, les deux lectures sonnent pareil.
+ */
+const PLAGES: Record<string, readonly [number, number, boolean]> = {
+  lovel: [0, 127, true], hivel: [0, 127, true], transpose: [-127, 127, true],
+  volume: [-144.6, Infinity, false], tune: [-Infinity, Infinity, false], pitch: [-Infinity, Infinity, false],
+  pitch_keytrack: [-1200, 1200, false], amp_veltrack: [-100, 100, false], ampeg_release: [0, 100, false],
+  loop_start: [0, Infinity, true], loop_end: [0, Infinity, true], loopstart: [0, Infinity, true], loopend: [0, Infinity, true],
+  octave_offset: [-10, 10, true], note_offset: [-127, 127, true],
+};
+const MODES_BOUCLE = new Set(["no_loop", "one_shot", "loop_continuous", "loop_sustain"]);
+
+/** Le premier opcode que la référence refuse, écrit `clé=valeur`, ou null si tous se lisent. */
+function opcodeFautif(opcodes: Map<string, string>): string | null {
+  for (const [cle, v] of opcodes) {
+    const plage = PLAGES[cle];
+    let lu = true;
+    if (plage) {
+      const n = nombreStrict(v);
+      lu = n !== null && n >= plage[0] && n <= plage[1] && (!plage[2] || Number.isInteger(n));
+    } else if (cle === "loop_mode" || cle === "loopmode") lu = MODES_BOUCLE.has(v.toLowerCase());
+    else if (cle === "lokey" || cle === "hikey" || cle === "key") lu = noteDeRegion(v) !== null;
+    else if (cle === "pitch_keycenter") lu = v.trim().toLowerCase() === "sample" || centreEcrit(v) !== null;
+    if (!lu) return `${cle}=${v}`;
+  }
+  return null;
+}
+
+/** La clé de traduction de chaque problème que le message d'un nœud doit dire. */
+const PROBLEMES_DITS: Record<string, string> = {
+  include: "msg.sfz.pb.include", sansEchantillon: "msg.sfz.pb.sansEchantillon", valeur: "msg.sfz.pb.valeur",
+  bornes: "msg.sfz.pb.bornes", sansTouche: "msg.sfz.pb.sansTouche", generateur: "msg.sfz.pb.generateur",
+  horsClavier: "msg.sfz.pb.horsClavier",
+};
+
+/**
+ * Ce que le message d'un nœud dit des problèmes d'une lecture : un morceau par genre, son compte et
+ * ses deux premiers cas. Sans cela, `problemes` restait dans les données et le nœud se taisait.
+ */
+export function direProblemesSfz(problemes: readonly Probleme[]): string[] {
+  const parCode = new Map<string, string[]>();
+  for (const p of problemes) {
+    if (!PROBLEMES_DITS[p.code]) continue;
+    parCode.set(p.code, [...(parCode.get(p.code) ?? []), p.detail]);
+  }
+  return [...parCode].map(([code, cas]) => traduire(PROBLEMES_DITS[code], String(cas.length),
+    cas.slice(0, 2).join(", ") + (cas.length > 2 ? "…" : "")));
+}
 
 /**
  * Les opcodes d'un bloc, `clé` en minuscules.
@@ -179,20 +252,26 @@ export function analyserSfz(texte: string): Sfz {
     return i >= 0 ? l.slice(0, i) : l;
   });
 
+  // UN `#define` VAUT À PARTIR DE SA LIGNE, et une redéfinition aussi : chaque ligne est substituée
+  // avec les définitions connues à ce point du fichier. Substituer le texte entier après coup donnait
+  // la dernière valeur à toutes les lignes, celles d'avant comprises.
   const defines = new Map<string, string>();
+  const substituer = (ligne: string): string => {
+    let s = ligne;
+    // Les plus longs d'abord : sans quoi `$KEY` mangerait le début de `$KEYRANGE`.
+    for (const [nom, valeur] of [...defines].sort((a, b) => b[0].length - a[0].length)) s = s.split(nom).join(valeur);
+    return s;
+  };
   const gardees: string[] = [];
-  for (const ligne of lignes) {
-    const def = /^\s*#define\s+(\$[A-Za-z0-9_]+)\s+(.+?)\s*$/.exec(ligne);
-    if (def) { defines.set(def[1], def[2]); continue; }
+  for (const brute of lignes) {
+    const def = /^\s*#define\s+(\$[A-Za-z0-9_]+)\s+(.+?)\s*$/.exec(brute);
+    if (def) { defines.set(def[1], substituer(def[2])); continue; }
+    const ligne = substituer(brute);
     const inc = /^\s*#include\s+"?([^"]+)"?\s*$/.exec(ligne);
     if (inc) { problemes.push({ code: "include", detail: inc[1].trim() }); continue; }
     gardees.push(ligne);
   }
-  let corpsEntier = gardees.join("\n");
-  // Les plus longs d'abord : sans quoi `$KEY` mangerait le début de `$KEYRANGE`.
-  for (const [nom, valeur] of [...defines].sort((a, b) => b[0].length - a[0].length)) {
-    corpsEntier = corpsEntier.split(nom).join(valeur);
-  }
+  const corpsEntier = gardees.join("\n");
 
   const regions: RegionSfz[] = [];
   const ignores: string[] = [];
@@ -211,36 +290,66 @@ export function analyserSfz(texte: string): Sfz {
     }
   };
 
+  // `octave_offset` et `note_offset`, posés dans <control>, décalent toutes les touches qui suivent :
+  // avec `octave_offset=-1`, « C4 will be MIDI note 48 instead of MIDI note 60 » (sfzformat.com).
+  let decalage = 0;
+  let rang = 0;
   for (const bloc of decouper(corpsEntier)) {
     const opcodes = analyserOpcodes(bloc.corps);
     noter(opcodes);
     if (bloc.entete === "control") {
       const dp = opcodes.get("default_path");
       if (dp) cheminParDefaut = dp;
+      const fautif = opcodeFautif(new Map([...opcodes].filter(([c]) => c.endsWith("_offset"))));
+      if (fautif) problemes.push({ code: "valeur", detail: `<control> ${fautif}` });
+      else if (opcodes.has("octave_offset") || opcodes.has("note_offset")) {
+        decalage = 12 * nombre(opcodes.get("octave_offset"), 0) + nombre(opcodes.get("note_offset"), 0);
+      }
       continue;
     }
     if (bloc.entete === "global") { global = opcodes; master = new Map(); groupe = new Map(); }
     else if (bloc.entete === "master") { master = opcodes; groupe = new Map(); }
     else if (bloc.entete === "group") { groupe = opcodes; }
     else if (bloc.entete === "region") {
+      rang++;
       const h = new Map([...global, ...master, ...groupe, ...opcodes]);
       const sample = h.get("sample");
-      if (!sample) { problemes.push({ code: "sansEchantillon", detail: `région ${regions.length + 1}` }); continue; }
-      const cle = h.get("key") !== undefined ? noteSfz(h.get("key")!) : null;
-      const lo = h.get("lokey") !== undefined ? noteSfz(h.get("lokey")!) : null;
-      const hi = h.get("hikey") !== undefined ? noteSfz(h.get("hikey")!) : null;
+      if (!sample) { problemes.push({ code: "sansEchantillon", detail: `#${rang}` }); continue; }
+      // UNE VALEUR QUE LA RÉFÉRENCE REFUSE ÉCARTE LA RÉGION, ET LE MESSAGE LA NOMME. Elle prenait
+      // en silence la valeur par défaut : une touche illisible faisait une région de 0 à 127, qui
+      // couvrait tout le clavier.
+      const fautif = opcodeFautif(h);
+      if (fautif) { problemes.push({ code: "valeur", detail: `#${rang} ${fautif}` }); continue; }
+      // `*sine`, `*saw`, `*noise`… sont des générateurs d'ARIA, et non des fichiers : les compter
+      // parmi les échantillons manquants disait une cause fausse.
+      if (sample.startsWith("*")) { problemes.push({ code: "generateur", detail: `#${rang} ${sample}` }); continue; }
+      const cle = h.get("key") !== undefined ? noteDeRegion(h.get("key")!) : null;
+      const lo = h.get("lokey") !== undefined ? noteDeRegion(h.get("lokey")!) : cle;
+      const hi = h.get("hikey") !== undefined ? noteDeRegion(h.get("hikey")!) : cle;
+      // −1 dit « aucune touche » : une région que seul un contrôleur déclenche, et que ce lecteur
+      // ne joue pas. Lue comme une valeur absente, elle jouait sur les 128.
+      if (lo === -1 || hi === -1) { problemes.push({ code: "sansTouche", detail: `#${rang}` }); continue; }
+      // La référence ne dit pas ce que vaut `lokey` au-dessus de `hikey` : échanger les bornes était
+      // une supposition.
+      if (lo !== null && hi !== null && lo > hi) {
+        problemes.push({ code: "bornes", detail: `#${rang} lokey=${lo} hikey=${hi}` });
+        continue;
+      }
+      const basse = (lo ?? 0) + decalage, haute = (hi ?? 127) + decalage;
+      if (haute < 0 || basse > 127) { problemes.push({ code: "horsClavier", detail: `#${rang}` }); continue; }
       // `pitch_keycenter` vaut 60 par défaut dans le format ; `key` le fixe en même temps que les
       // bornes, ce qui est la façon courte d'écrire une région d'une seule touche.
-      const centre = h.get("pitch_keycenter") !== undefined ? noteSfz(h.get("pitch_keycenter")!) : null;
+      const ecrit = h.get("pitch_keycenter");
+      const centre = ecrit !== undefined ? centreEcrit(ecrit) : null;
       // `transpose` décale la hauteur jouée : jouer la touche n sur une région transposée de t
       // revient à jouer n+t, donc à prendre pour racine `centre - t`. C'est la même chose vue de
       // l'autre bout, et cela évite un champ de plus dans la banque.
       const transpose = Math.round(nombre(h.get("transpose"), 0));
       regions.push({
         sample,
-        lokey: lo ?? cle ?? 0,
-        hikey: hi ?? cle ?? 127,
-        racine: (centre ?? cle ?? 60) - transpose,
+        lokey: Math.max(0, basse),
+        hikey: Math.min(127, haute),
+        racine: (centre ?? cle ?? 60) + decalage - transpose,
         loVel: Math.round(nombre(h.get("lovel"), 0)),
         hiVel: Math.round(nombre(h.get("hivel"), 127)),
         modeBoucle: h.get("loop_mode") ?? h.get("loopmode") ?? null,
@@ -252,7 +361,8 @@ export function analyserSfz(texte: string): Sfz {
         accord: nombre(h.get("tune") ?? h.get("pitch"), 0),
         suitLaTouche: nombre(h.get("pitch_keytrack"), 100) !== 0,
         centsParTouche: nombre(h.get("pitch_keytrack"), 100),
-        suiviVelocite: Math.max(0, Math.min(100, nombre(h.get("amp_veltrack"), 100))),
+        // De −100 à 100 : négatif, la vélocité joue À REBOURS, et la ramener à zéro la rendait inerte.
+        suiviVelocite: nombre(h.get("amp_veltrack"), 100),
       });
       const rel = h.get("ampeg_release");
       if (rel !== undefined) relachement = Math.max(relachement ?? 0, nombre(rel, 0));

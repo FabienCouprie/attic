@@ -19,7 +19,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { rendreNotes, type Banque, type NoteJouee } from "../audio/clavier-banque";
-import { chargerSfz, dossierDe } from "../audio/sfz";
+import { chargerSfz, direProblemesSfz, dossierDe } from "../audio/sfz";
 import { deposerBanque } from "../audio/banques-vives";
 
 /**
@@ -105,8 +105,12 @@ export const fiches: FicheAudio[] = ([
           return { valeurs: [null, null, null], message: traduire("msg.sfz.illisible", chemin) };
         }
         const charge = await chargerSfz(texte, dossierDe(chemin), decodeurElectron(api, ctx.runtime));
+        const problemes = direProblemesSfz(charge.sfz.problemes);
         if (charge.banque.zones.length === 0) {
-          return { valeurs: [null, null, null], message: traduire("msg.sfz.aucuneZone", String(charge.manquants.length)) };
+          return {
+            valeurs: [null, null, null],
+            message: [traduire("msg.sfz.aucuneZone", String(charge.manquants.length)), ...problemes].join(" · "),
+          };
         }
         banque = charge.banque;
         // Ce que le fichier contenait ET ce qu'on n'a pas su en tirer : un instrument incomplet doit
@@ -115,6 +119,7 @@ export const fiches: FicheAudio[] = ([
         if (charge.couches > 1) morceaux.push(traduire("msg.sfz.nbCouches", String(charge.couches)));
         if (charge.manquants.length) morceaux.push(traduire("msg.sfz.manquants", String(charge.manquants.length)));
         if (charge.couchesEcartees) morceaux.push(traduire("msg.sfz.couches", String(charge.couchesEcartees)));
+        morceaux.push(...problemes);
         if (charge.sfz.ignores.length) {
           morceaux.push(traduire("msg.sfz.ignores", String(charge.sfz.ignores.length), charge.sfz.ignores.slice(0, 3).join(", ")));
         }
