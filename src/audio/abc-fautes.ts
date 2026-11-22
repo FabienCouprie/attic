@@ -9,11 +9,14 @@
 import { traduire } from "../i18n";
 import type { MorceauAbc } from "./abc";
 
-/** Le refus d'un morceau qui porte des fautes, ou null s'il n'en porte pas. `quoi` nomme la partition. */
-export function refusAbc(m: MorceauAbc, quoi = traduire("msg.abc.partition_var_0", "ABC")): string | null {
+/**
+ * Le refus d'un morceau qui porte des fautes, ou null s'il n'en porte pas. `quoi` nomme la partition ;
+ * `entete` est la clé de la première ligne, qui dit ce qui n'est pas fait : jouer, ou graver.
+ */
+export function refusAbc(m: MorceauAbc, quoi = traduire("msg.abc.partition_var_0", "ABC"), entete = "msg.abc.refusee_var_0_var_1"): string | null {
   if (m.erreurs.length === 0) return null;
   return [
-    traduire("msg.abc.refusee_var_0_var_1", quoi, m.erreurs.length),
+    traduire(entete, quoi, m.erreurs.length),
     ...m.erreurs.slice(0, 8).map((f) => traduire(`msg.abc.faute.${f.raison}`, f.ligne, f.texte, f.fragment)),
     ...(m.erreurs.length > 8 ? ["…"] : []),
   ].join("\n");
