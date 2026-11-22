@@ -19,6 +19,12 @@
 // accords chiffrés que Tonal ne reconnaît pas. Chacun produit un avertissement
 // nommé : une partition mal rendue en silence est pire qu'un refus.
 //
+// CE QUI FERAIT JOUER FAUX EST REFUSÉ. Une durée nulle, un accord jamais
+// refermé, une liaison entre deux hauteurs, un n-olet inachevé : rien ne peut
+// deviner ce que l'auteur voulait. Chacune est relevée dans `erreurs`, avec sa
+// ligne et son fragment, et le morceau qui en porte est refusé par ceux qui le
+// jouent (`abc-fautes.ts`).
+//
 // LE TEMPS EST EXACT. Les durées sont des fractions de ronde, additionnées en
 // rationnels : un triolet vaut exactement 1/3, et l'arrondi n'intervient qu'à
 // l'écriture des ticks MIDI. En flottant, une suite de triolets dériverait.
@@ -170,8 +176,19 @@ type EtatVoix = {
   accBarre: Map<string, number>;
   velocite: number;
   facteurSuivant: Frac | null;
-  tuplet: { reste: number; facteur: Frac } | null;
+  /** `inacheve` dit la faute si le morceau finit, ou si un autre n-olet commence, avant ses notes. */
+  tuplet: { reste: number; facteur: Frac; inacheve: () => void } | null;
+  /** La dernière note liée, jusqu'à la note qui doit la prolonger. */
+  liee: { hauteurs: number[]; orpheline: () => void } | null;
 };
+
+/**
+ * Ce qui ferait jouer autre chose que ce qui est écrit, et que rien ne peut deviner : une durée nulle,
+ * un accord jamais refermé, une liaison entre deux hauteurs, un n-olet inachevé. Le morceau qui en
+ * porte une est refusé par ceux qui le jouent. `ligne` se compte dans le morceau, depuis son X:.
+ */
+export type FauteAbc = { ligne: number; texte: string; raison: "duree" | "accord" | "liaison" | "nolet"; fragment: string };
+type Signaler = (raison: FauteAbc["raison"], fragment: string) => void;
 
 const DEMI_TON: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const NUANCES: Record<string, number> = { pppp: 15, ppp: 25, pp: 40, p: 55, mp: 70, mf: 85, f: 100, ff: 115, fff: 127, ffff: 127 };
@@ -191,6 +208,7 @@ export type MorceauAbc = {
   voix: VoixAbc[];
   accords: AccordAbc[];
   avertissements: string[];
+  erreurs: FauteAbc[];
 };
 
 /**
@@ -277,12 +295,23 @@ function lireHauteur(s: string, i: number, v: EtatVoix): { midi: number; i: numb
 function nouvelleVoix(id: string, g: { unite: Frac; metrique: Metrique | null; armure: Armure }): EtatVoix {
   return {
     id, jetons: [], unite: g.unite, metrique: g.metrique, armure: { ...g.armure, alterations: { ...g.armure.alterations } },
-    accBarre: new Map(), velocite: 80, facteurSuivant: null, tuplet: null,
+    accBarre: new Map(), velocite: 80, facteurSuivant: null, tuplet: null, liee: null,
   };
+}
+
+/**
+ * Une liaison ne joint que deux notes de même hauteur (ABC 2.1 §4.11) : la note qui la suit dans le
+ * texte doit porter chacune des siennes. Lue dans l'ordre écrit, et non dans le jeu, pour qu'une
+ * liaison vers la première fin ne passe pas pour fautive au second passage.
+ */
+function tenirLiaison(v: EtatVoix, hauteurs: number[]) {
+  if (v.liee && !v.liee.hauteurs.every((h) => hauteurs.includes(h))) v.liee.orpheline();
+  v.liee = null;
 }
 
 /** Ajoute une note ou un silence en appliquant n-olet et rythme pointé en attente. */
 function pousserNote(v: EtatVoix, hauteurs: number[], duree: Frac) {
+  tenirLiaison(v, hauteurs);
   let d = duree;
   if (v.tuplet) {
     d = fMul(d, v.tuplet.facteur);
@@ -301,9 +330,14 @@ function derniereNote(v: EtatVoix): JetonNote | null {
   return null;
 }
 
-function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, changerVoix: (id: string) => EtatVoix, surTempo: (valeur: string, v: EtatVoix) => void): EtatVoix {
+function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, changerVoix: (id: string) => EtatVoix, surTempo: (valeur: string, v: EtatVoix) => void, faute: Signaler): EtatVoix {
   const s = ligne.replace(/%.*$/, "").replace(/\\\s*$/, "");
-  let i = 0;
+  let i = 0, debutNote = 0;
+  // Une durée nulle, « C0 » ou « C/0 », ferait une note qu'on n'entend pas, ou une note sans fin.
+  const nulle = (d: { duree: Frac; i: number }, depart: number) => {
+    if (!(d.duree.n > 0 && d.duree.d > 0)) faute("duree", s.slice(depart, d.i));
+    return d;
+  };
   while (i < s.length) {
     const c = s[i];
 
@@ -344,7 +378,8 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
         const p = parseInt(t[1], 10);
         const q = t[2] ? parseInt(t[2], 10) : qParDefaut(p, v.metrique);
         const r = t[3] ? parseInt(t[3], 10) : p;
-        v.tuplet = { reste: r, facteur: frac(q, p) };
+        v.tuplet?.inacheve();
+        v.tuplet = { reste: r, facteur: frac(q, p), inacheve: () => faute("nolet", t[0]) };
         i += t[0].length;
       } else i++;
       continue;
@@ -354,7 +389,11 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
     // Prolongation.
     if (c === "-") {
       const n = derniereNote(v);
-      if (n) n.lie = true;
+      if (n) {
+        n.lie = true;
+        const fragment = s.slice(debutNote, i + 1);
+        v.liee = { hauteurs: n.hauteurs, orpheline: () => faute("liaison", fragment) };
+      }
       i++;
       continue;
     }
@@ -377,7 +416,7 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
     if (c === "[") {
       const champ = /^\[([KMLQVIPrmNRTw]):([^\]]*)\]/.exec(s.slice(i));
       if (champ) {
-        v = appliquerChamp(champ[1], champ[2], v, avert, changerVoix, surTempo);
+        v = appliquerChamp(champ[1], champ[2], v, avert, changerVoix, surTempo, faute);
         i += champ[0].length;
         continue;
       }
@@ -390,6 +429,7 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
       }
       if (s[i + 1] === "|") { i++; continue; } // « [| » : la barre suit
       // Accord de notes.
+      debutNote = i;
       let j = i + 1;
       const hauteurs: number[] = [];
       let dureeInterne: Frac | null = null;
@@ -398,12 +438,14 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
         const h = lireHauteur(s, j, v);
         if (!h) { j++; continue; }
         hauteurs.push(h.midi);
-        const d = lireDuree(s, h.i);
+        const d = nulle(lireDuree(s, h.i), j);
         if (dureeInterne === null) dureeInterne = d.duree;
         j = d.i;
         if (s[j] === "-") j++;
       }
-      const exterieure = lireDuree(s, j + 1);
+      // Sans « ] », la suite de la ligne serait lue comme un seul accord.
+      if (j >= s.length) faute("accord", s.slice(i));
+      const exterieure = nulle(lireDuree(s, j + 1), i);
       if (hauteurs.length > 0) pousserNote(v, hauteurs, fMul(fMul(v.unite, dureeInterne ?? frac(1)), exterieure.duree));
       i = exterieure.i;
       continue;
@@ -429,13 +471,14 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
 
     // Silences.
     if (c === "z" || c === "x") {
-      const d = lireDuree(s, i + 1);
+      const d = nulle(lireDuree(s, i + 1), i);
       pousserNote(v, [], fMul(v.unite, d.duree));
       i = d.i;
       continue;
     }
     if (c === "Z" || c === "X") {
-      const d = lireDuree(s, i + 1);
+      const d = nulle(lireDuree(s, i + 1), i);
+      tenirLiaison(v, []);
       const mesure = v.metrique ? frac(v.metrique.numerateur, v.metrique.denominateur) : frac(1);
       v.jetons.push({ t: "note", hauteurs: [], duree: fMul(mesure, frac(d.duree.n, d.duree.d)), lie: false, velocite: v.velocite });
       i = d.i;
@@ -445,7 +488,8 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
     // Notes.
     const h = lireHauteur(s, i, v);
     if (h) {
-      const d = lireDuree(s, h.i);
+      debutNote = i;
+      const d = nulle(lireDuree(s, h.i), i);
       pousserNote(v, [h.midi], fMul(v.unite, d.duree));
       i = d.i;
       continue;
@@ -457,14 +501,21 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
   return v;
 }
 
+/** Lit L:. Une unité nulle, « L:0 » ou « L:1/0 », rendrait chaque note muette ou sans fin. */
+function lireUnite(valeur: string, faute: Signaler): Frac {
+  const d = lireDuree(valeur.trim(), 0).duree;
+  if (!(d.n > 0 && d.d > 0)) faute("duree", `L:${valeur.trim()}`);
+  return d;
+}
+
 function appliquerChamp(
   cle: string, valeur: string, v: EtatVoix, avert: (m: string) => void,
-  changerVoix: (id: string) => EtatVoix, surTempo: (valeur: string, v: EtatVoix) => void,
+  changerVoix: (id: string) => EtatVoix, surTempo: (valeur: string, v: EtatVoix) => void, faute: Signaler,
 ): EtatVoix {
   switch (cle) {
     case "K": v.armure = lireTonalite(valeur, avert); v.accBarre.clear(); return v;
     case "M": v.metrique = lireMetrique(valeur); return v;
-    case "L": { const d = lireDuree(valeur.trim(), 0); v.unite = d.duree; return v; }
+    case "L": v.unite = lireUnite(valeur, faute); return v;
     case "Q": surTempo(valeur, v); return v;
     case "V": return changerVoix(valeur.trim().split(/\s+/)[0] ?? "1");
     default: return v;
@@ -592,6 +643,7 @@ export function hauteursAccord(symbole: string): number[] | null {
 export function lireMorceau(texte: string, numero = 1): MorceauAbc {
   const avertissements = new Set<string>();
   const avert = (m: string) => avertissements.add(m);
+  const erreurs: FauteAbc[] = [];
   let titre = "", tempo: number | null = null, tempoVu = false;
   let global = { unite: frac(1, 8), metrique: null as Metrique | null, armure: lireTonalite("C", avert) };
   let uniteExplicite = false, enTete = true;
@@ -622,8 +674,9 @@ export function lireMorceau(texte: string, numero = 1): MorceauAbc {
   // n'y signifie rien.
   const formel = /^X:/.test(texte.trimStart());
   let corpsCommence = false;
-  for (const brute of texte.split(/\r?\n/)) {
+  for (const [k, brute] of texte.split(/\r?\n/).entries()) {
     const ligne = brute.trimEnd();
+    const faute: Signaler = (raison, fragment) => erreurs.push({ ligne: k + 1, texte: ligne.trim(), raison, fragment });
     if (!ligne.trim()) {
       if (formel && corpsCommence) break;
       continue;
@@ -640,7 +693,7 @@ export function lireMorceau(texte: string, numero = 1): MorceauAbc {
       if (enTete) {
         if (cle === "T" && !titre) titre = valeur.trim();
         else if (cle === "M") { global.metrique = lireMetrique(valeur); if (!uniteExplicite) global.unite = uniteParDefaut(global.metrique); }
-        else if (cle === "L") { global.unite = lireDuree(valeur.trim(), 0).duree; uniteExplicite = true; }
+        else if (cle === "L") { global.unite = lireUnite(valeur, faute); uniteExplicite = true; }
         else if (cle === "Q") {
           const q = lireTempo(valeur, global.unite);
           if (q === null) avert(traduire("msg.abc.lecture.tempo_var_0", valeur.trim())); else { tempo = q; tempoVu = true; }
@@ -660,7 +713,7 @@ export function lireMorceau(texte: string, numero = 1): MorceauAbc {
         continue;
       }
       if ("KMLQV".includes(cle)) {
-        courante = appliquerChamp(cle, valeur, courante ?? obtenirVoix(voix[0]?.id ?? ""), avert, obtenirVoix, surTempo);
+        courante = appliquerChamp(cle, valeur, courante ?? obtenirVoix(voix[0]?.id ?? ""), avert, obtenirVoix, surTempo, faute);
       }
       continue; // w:, W:, T:… : texte, sans effet sur les notes
     }
@@ -670,9 +723,11 @@ export function lireMorceau(texte: string, numero = 1): MorceauAbc {
       enTete = false;
     }
     if (!courante) courante = voix[0] ?? obtenirVoix("");
-    courante = lireLigneCorps(ligne, courante, avert, obtenirVoix, surTempo);
+    courante = lireLigneCorps(ligne, courante, avert, obtenirVoix, surTempo, faute);
     corpsCommence = true;
   }
+  // Ce qui attend encore sa suite quand le morceau finit ne l'aura jamais.
+  for (const v of voix) { v.tuplet?.inacheve(); v.liee?.orpheline(); }
 
   // Une voix déclarée dans l'en-tête sans jamais recevoir de notes n'existe pas.
   const pleines = voix.filter((v) => v.jetons.some((j) => j.t === "note"));
@@ -702,5 +757,6 @@ export function lireMorceau(texte: string, numero = 1): MorceauAbc {
     voix: deroulees.map(({ v, r }) => ({ id: v.id || "1", notes: r.notes, dureeNoires: r.fin, barres: r.barres })),
     accords,
     avertissements: [...avertissements],
+    erreurs,
   };
 }

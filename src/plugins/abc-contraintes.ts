@@ -10,6 +10,7 @@ import {
   lireAbcUnique, verifierContraintes, lireInvariants, PREREGLAGES, type Invariant, type Qualite,
 } from "../audio/abc-contraintes";
 import { editerAbc, type OperationEdition } from "../audio/abc-edition-llm";
+import { refusAbc } from "../audio/abc-fautes";
 import { ollamaGenerer } from "./ollama";
 
 const CONSIGNE_DEFAUT = "Reharmonize with a different, richer harmonization (seventh chords, relative minors, secondary dominants), consonant with the melody.";
@@ -54,6 +55,9 @@ export const fiches: FicheAudio[] = ([
       const origine = lireAbcUnique(origineTexte), modifie = lireAbcUnique(modifieTexte);
       if (!origine) return { valeurs: [null, null], erreur: true, message: traduire("msg.abc_contraintes.illisible_var_0", traduire("msg.abc_contraintes.origine")) };
       if (!modifie) return { valeurs: [null, null], erreur: true, message: traduire("msg.abc_contraintes.illisible_var_0", traduire("msg.abc_contraintes.modifie")) };
+      const refus = refusAbc(origine, traduire("msg.abc.partition_var_0", traduire("msg.abc_contraintes.origine")))
+        ?? refusAbc(modifie, traduire("msg.abc.partition_var_0", traduire("msg.abc_contraintes.modifie")));
+      if (refus) return { valeurs: [null, null], erreur: true, message: refus };
 
       const controle = ctx.paramTexte("Contrôle", "reharmonisation");
       let invariants: Invariant[];

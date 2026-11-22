@@ -21,6 +21,7 @@
 import { traduire } from "../i18n";
 import { hauteursAccord, lireTonalite, morceauVersMidi, type MorceauAbc, type NoteAbc, type AccordAbc } from "./abc";
 import { midiVersAbc } from "./midi-vers-abc";
+import { refusAbc } from "./abc-fautes";
 import { lireAbcUnique, verifierContraintes, dureesMesures, longueurMesure, type ResultatContraintes } from "./abc-contraintes";
 import { cleDepuisNomTonalite } from "./abc-edition-llm";
 import { carrure, motif, type Role } from "./abc-reprise-motifs";
@@ -92,6 +93,8 @@ export function reprendreAbc(texte: string, o: OptionsReprise): ResultatReprise 
   });
   const origine = lireAbcUnique(texte);
   if (!origine) return echec(traduire("msg.abc.illisible_entree"));
+  const refus = refusAbc(origine);
+  if (refus) return echec(refus);
   if (origine.avertissements.length) return echec(traduire("msg.abc.entree_incomplete_var_0", origine.avertissements.join(" · ")));
   if (origine.accords.length === 0) {
     return echec(traduire("msg.abc_reprise.sans_accords"));
@@ -169,7 +172,7 @@ export function reprendreAbc(texte: string, o: OptionsReprise): ResultatReprise 
     accords: accords.map((a) => ({ debut: a.debut, symbole: a.symbole })),
   });
   const relu = lireAbcUnique(abc);
-  if (!relu) return echec(traduire("msg.abc_reprise.arrangement_illisible"));
+  if (!relu || relu.erreurs.length) return echec(traduire("msg.abc_reprise.arrangement_illisible"));
   const verification = verifierContraintes(origine, relu, ["mesures", "metrique", "tonalite", "melodie", "accords"]);
   return {
     ok: verification.ok, erreur: verification.ok ? null : traduire("msg.abc_reprise.arrangement_non_conforme_var_0", verification.violations.join(" · ")),
