@@ -33,6 +33,8 @@ import { changerTonalite } from "./effets-spectral";
 
 import { degresParPeriode, hauteurDuDegre, type Accordage } from "./accordage";
 import type { Note } from "./note";
+import { versDb } from "./decibels";
+import { nomsEchantillons } from "./sfz-noms";
 /** La0, première touche d'un piano. */
 export const NOTE_LA0 = 21;
 /** Do8, dernière touche. */
@@ -761,9 +763,10 @@ export function versSfz(banque: Banque, o: OptionsSfz): string {
     `ampeg_release=${relachement.toFixed(3)}`,
     "",
   ];
-  for (const zone of banque.zones) {
+  const noms = nomsEchantillons(banque.zones, nomEchantillon);
+  for (const [i, zone] of banque.zones.entries()) {
     lignes.push("<region>");
-    lignes.push(`sample=${o.dossier}/${nomEchantillon(zone)}`);
+    lignes.push(`sample=${o.dossier}/${noms[i]}`);
     lignes.push(`lokey=${zone.basse} hikey=${zone.haute} pitch_keycenter=${zone.racine}`);
     // Les bornes de vélocité ne s'écrivent que si la zone est une couche : un fichier plein de
     // `lovel=0 hivel=127` se lit moins bien, et ces valeurs sont celles du format par défaut.
@@ -787,6 +790,13 @@ export function versSfz(banque: Banque, o: OptionsSfz): string {
     if (zone.accord !== undefined && zone.accord !== 0) {
       lignes.push(`tune=${zone.accord}`);
     }
+    // LE VOLUME ET LE TEMPÉRAMENT S'ÉCRIVENT AUSSI, et ils se perdaient comme se perdait le
+    // désaccord : un SFZ lu avec `volume=-6` ou `pitch_keytrack=63.16`, puis exporté, ressortait au
+    // gain plein et au demi-ton tempéré. Une zone qui ne suit pas la touche, celle d'un kit, s'écrit
+    // `pitch_keytrack=0`, sans quoi un kit à régions larges se relisait en instrument de hauteurs.
+    if (zone.gain !== undefined && zone.gain !== 1) lignes.push(`volume=${Math.max(-144, versDb(zone.gain))}`);
+    if (zone.suitLaTouche === false) lignes.push("pitch_keytrack=0");
+    else if (zone.centsParTouche !== undefined && zone.centsParTouche !== 100) lignes.push(`pitch_keytrack=${zone.centsParTouche}`);
     // `loop_end` est INCLUS dans le format, la fin d'une zone ne l'est pas : une boucle de mille
     // échantillons, de 1000 à 2000 exclu, s'écrit `loop_end=1999`.
     if (zone.boucle) {

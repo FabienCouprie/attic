@@ -879,6 +879,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.courbe.engendree": { fr: "{__VAR_0__} valeurs · {__VAR_1__} s", en: "{__VAR_0__} values · {__VAR_1__} s" },
   "msg.sfz.ecrit": { fr: "{__VAR_0__} écrit · {__VAR_1__} échantillons · {__VAR_2__} Mo", en: "{__VAR_0__} written · {__VAR_1__} samples · {__VAR_2__} MB" },
   "msg.sfz.echec": { fr: "Écriture impossible : {__VAR_0__}", en: "Cannot write: {__VAR_0__}" },
+  "msg.sfz.nomEgal": { fr: "Nom refusé : {__VAR_0__} porte « = », que le format interdit dans le chemin d'un échantillon. Rien n'est écrit.", en: "Name refused: {__VAR_0__} contains « = », which the format forbids in a sample path. Nothing is written." },
   "msg.midi.reparti": { fr: "{__VAR_0__} notes · {__VAR_1__} canal(aux) · {__VAR_2__} piste(s)", en: "{__VAR_0__} notes · {__VAR_1__} channel(s) · {__VAR_2__} track(s)" },
   "msg.midi.reste": { fr: "reste:{__VAR_0__}", en: "rest:{__VAR_0__}" },
   "msg.sfz.sansFichier": { fr: "Aucun fichier : cliquez sur 📂 dans le composant pour désigner un .sfz, ou branchez une banque.", en: "No file: click 📂 in the node to choose a .sfz, or connect a bank." },

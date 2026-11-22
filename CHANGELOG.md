@@ -6,6 +6,18 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **L'EXPORT SFZ GARDE LE VOLUME, LE TEMPÉRAMENT ET LE KIT, ET N'ÉCRIT PLUS UN SON PAR-DESSUS UN AUTRE.** Revue des notations en texte, le format SFZ, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` en exportant par « Export SFZ » et en relisant par « Banque SFZ » :
+    - le gain d'une zone et son tempérament n'étaient pas écrits : une zone à 0,5, soit −6,02 dB, et une zone à 63,16 cents par touche, dix-neuf degrés par octave, se relisaient au gain plein et au demi-ton ;
+    - un kit à régions larges perdait `pitch_keytrack=0` et se relisait en instrument de hauteurs ;
+    - le nom d'un WAV ne dit que la racine et la couche : deux zones à la même racine, sur 0–59 et 60–127, s'écrivaient toutes deux dans `zone-060.wav`, la seconde par-dessus la première, et la région basse jouait le son de la haute ;
+    - un nom de fichier portant `=`, que la référence interdit dans un chemin d'échantillon, s'écrivait quand même ; notre propre lecteur y relisait zéro région.
+  - **Ce qui change** :
+    - `volume`, en décibels, et `pitch_keytrack`, en cents par touche, s'écrivent, et une zone qui ne suit pas la touche s'écrit `pitch_keytrack=0` ;
+    - deux sons à la même racine reçoivent deux noms, `zone-060.wav` et `zone-060-2.wav`, et un son partagé par deux zones ne s'écrit qu'une fois. Les noms viennent d'un seul endroit, `audio/sfz-noms.ts`, que lisent le texte et l'écriture des WAV ;
+    - un nom portant `=` est refusé, nommé, et rien n'est écrit.
+  - Tenu par cinq cas de plus dans `plugins/sfz-format.test.ts`, tous par l'aller-retour entre les deux nœuds. Quatre vus rouges sur le code d'avant ; le cinquième, un son partagé qui reste un seul fichier, sert de témoin. Vu rouge aussi sur `pitch_keytrack=0` de nouveau omis, et sur des noms de nouveau confondus, plantés.
+
 - **`ONE_SHOT` JOUE L'ÉCHANTILLON JUSQU'AU BOUT, ET LA FIN D'UNE BOUCLE SFZ EST INCLUSE.** Revue des notations en texte, le format SFZ, 2026-11-22, deuxième lot.
   - **Ce qui se passait**, mesuré par `executer` contre sfzformat.com :
     - `loop_mode=one_shot`, « from start to end, ignoring note off », était éteint au relâchement. La crash du kit intégré, déclarée `one_shot` et longue de 1,2 s, rendait 0,35 s par « Séquence sur banque » sous une note de 0,1 s, et plus rien après 0,25 s ;

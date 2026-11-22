@@ -252,3 +252,76 @@ describe("les boucles et `one_shot`, selon la référence", () => {
     expect(rms(audio, 0.15, audio.duration)).toBeLessThan(1e-6);
   });
 });
+
+/**
+ * Exporte une banque, puis la relit par « Banque SFZ » : chaque WAV écrit rend le son de la zone
+ * qui l'a fait écrire, dans l'ordre des écritures. C'est l'aller-retour complet, par les deux nœuds.
+ */
+async function allerRetour(banque: Banque, type = "auto") {
+  const ecrit = await exporter(banque);
+  const wavs = ecrit.ordre.filter((c) => c.endsWith(".wav"));
+  const sons = new Map(wavs.map((c, i) => [c, banque.zones[i].audio]));
+  (globalThis as any).window = { api: {
+    lireTexte: vi.fn(async (c: string) => (c === "D:/t/x.sfz" ? ecrit.texte : null)),
+    lireFichierAudio: vi.fn(async (c: string) => ({ url: c })),
+  } };
+  (globalThis as any).fetch = vi.fn(async (url: string) => ({ arrayBuffer: async () => new TextEncoder().encode(url).buffer }));
+  const runtime = { decodeAudioData: vi.fn(async (ab: ArrayBuffer) => sons.get(new TextDecoder().decode(ab)) ?? null) };
+  const r: any = await banqueSfz.executer(ctxDEssai([], { Source: "fichier", "Aperçu": "non", "Type de banque": type },
+    { runtime, ficheId: "banque-sfz", data: { sfzChemin: "D:/t/x.sfz" } }) as any);
+  return { ...ecrit, wavs, relue: r.valeurs[0] as Banque | null };
+}
+
+describe("l'export, relu par le lecteur", () => {
+  const A = sinus(220.5), B = sinus(330.75), C = sinus(441);
+
+  it("GARDE le volume et le tempérament d'une zone : `volume` en décibels, `pitch_keytrack` en cents", async () => {
+    const { texte, relue } = await allerRetour({
+      zones: [{ racine: 60, basse: 0, haute: 64, audio: A, gain: 0.5 }, { racine: 72, basse: 65, haute: 127, audio: B, centsParTouche: 63.16 }],
+      racineSource: 66, largeur: 55, noteBasse: 0, noteHaute: 127,
+    });
+    expect(texte).toMatch(/volume=-6\.02/);
+    expect(texte).toMatch(/pitch_keytrack=63\.16\b/);
+    expect(relue?.zones[0].gain).toBeCloseTo(0.5, 9);
+    expect(relue?.zones[1].centsParTouche).toBe(63.16);
+  });
+
+  it("GARDE un kit : ses zones ne suivent pas la touche, `pitch_keytrack=0`, même larges", async () => {
+    const { texte, relue } = await allerRetour({
+      zones: [{ racine: 36, basse: 30, haute: 40, audio: A, suitLaTouche: false }, { racine: 50, basse: 45, haute: 55, audio: B, suitLaTouche: false }],
+      racineSource: 36, largeur: 6, noteBasse: 30, noteHaute: 55, kit: true,
+    });
+    expect(texte.match(/pitch_keytrack=0\b/g)?.length).toBe(2);
+    expect(relue?.kit).toBe(true);
+    expect(relue?.zones.every((z) => z.suitLaTouche === false)).toBe(true);
+  });
+
+  it("écrit UN FICHIER PAR SON : deux zones à la même racine ne s'écrasent plus", async () => {
+    const { wavs, relue } = await allerRetour({
+      zones: [{ racine: 60, basse: 0, haute: 59, audio: A }, { racine: 60, basse: 60, haute: 127, audio: C, accord: 50 }],
+      racineSource: 60, largeur: 67, noteBasse: 0, noteHaute: 127,
+    });
+    expect(new Set(wavs).size).toBe(2);
+    expect(relue?.zones.find((z) => z.basse === 0)?.audio).toBe(A);
+    expect(relue?.zones.find((z) => z.basse === 60)?.audio).toBe(C);
+  });
+
+  it("mais un même son partagé par deux zones reste un seul fichier", async () => {
+    const { wavs, texte } = await allerRetour({
+      zones: [{ racine: 60, basse: 0, haute: 59, audio: A }, { racine: 60, basse: 60, haute: 127, audio: A, accord: 50 }],
+      racineSource: 60, largeur: 67, noteBasse: 0, noteHaute: 127,
+    });
+    expect(new Set(wavs).size).toBe(1);
+    expect(texte.match(/sample=x\/zone-060\.wav/g)?.length).toBe(2);
+  });
+
+  it("REFUSE un nom qui porte `=`, interdit dans un chemin d'échantillon, et n'écrit rien", async () => {
+    // sfzformat.com/opcodes/sample : « names with blank spaces and other special characters
+    // (excepting the = character) are allowed ».
+    const { ordre, message } = await exporter({
+      zones: [{ racine: 60, basse: 0, haute: 127, audio: A }], racineSource: 60, largeur: 67, noteBasse: 0, noteHaute: 127,
+    }, "a=b.sfz");
+    expect(ordre).toEqual([]);
+    expect(message).toContain("=");
+  });
+});
