@@ -14,8 +14,11 @@
 // E0A4 la tête noire, E262 le dièse… Un glyphe que ce module ne connaît pas est rendu dans
 // `inconnus`, pour qu'une lecture incomplète ne passe pas pour juste.
 
+import { lireNomDeNote } from "../audio/noms-de-notes";
+
 const LETTRES = "CDEFGAB";
-const DEMI = [0, 2, 4, 5, 7, 9, 11];
+/** La classe de chaque lettre naturelle, que porte déjà le lecteur des noms de notes. */
+const DEMI = [...LETTRES].map((l) => lireNomDeNote(l)!.classe);
 const di = (l: string, o: number) => o * 7 + LETTRES.indexOf(l);
 /** La note que porte la ligne où chaque clé est posée. */
 const CLES: Record<string, number> = {
