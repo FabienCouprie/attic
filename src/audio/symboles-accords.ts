@@ -13,7 +13,8 @@
 // et chaque nœud le refuse en le nommant.
 
 import { Chord, Interval, Note } from "tonal";
-import { QUALITES } from "./qualites-accords";
+import { QUALITES, qualiteDe } from "./qualites-accords";
+import { reconnaitreAccord } from "./reconnaitre-accord";
 
 /** « N.C. », « NC » : pas d'accord. Il prend sa place dans le temps, en silence. */
 export const estSansAccord = (symbole: string): boolean => /^N\.?C\.?$/i.test(symbole.trim());
@@ -59,6 +60,48 @@ export function accordDuSymbole(symbole: string): ReturnType<typeof Chord.get> |
   const manquantes = [...classes].filter(([k]) => !gardees.some((x) => Note.chroma(x) === k))
     .map(([, i]) => Note.pitchClass(Note.transpose(c.tonic!, Interval.fromSemitones(i))));
   return { ...c, notes: [...gardees, ...manquantes] };
+}
+
+/**
+ * Les hauteurs de notes écrites, « C E G » ou « E3 C4 G4 », ou null si l'une ne se lit pas. Sans
+ * octave, chaque note se pose au-dessus de la précédente : la première écrite est la basse.
+ */
+function hauteursEcrites(noms: readonly string[]): number[] | null {
+  const hauteurs: number[] = [];
+  for (const nom of noms) {
+    const n = Note.get(nom);
+    if (n.empty) return null;
+    if (n.midi !== null) { hauteurs.push(n.midi); continue; }
+    let m = 60 + n.chroma;
+    while (hauteurs.length && m <= hauteurs[hauteurs.length - 1]) m += 12;
+    hauteurs.push(m);
+  }
+  return hauteurs;
+}
+
+/**
+ * Le symbole que des notes forment, « C », « Bm7b5 », « C/E », relisible par `accordDuSymbole`, ou
+ * null si elles n'en forment aucun.
+ *
+ * DÉCISION DE FABIEN DU 2026-11-22, « A readable symbol ». L'Accord rendait la première lecture de
+ * `Chord.detect` et son nom long : « E G C » devenait « E minor augmented », et « C major » ne se
+ * relisait nulle part. La reconnaissance passe d'abord par la table d'Attic (`reconnaitreAccord`),
+ * où la basse tranche entre deux lectures : un accord exact s'écrit par son symbole, la fondamentale
+ * et la basse dans l'orthographe des notes reçues, et un renversement par barre oblique. Un ensemble
+ * que la table ne nomme pas exactement revient à Tonal, dont le symbole se relit par définition.
+ */
+export function symboleDesNotes(noms: readonly string[]): string | null {
+  const hauteurs = hauteursEcrites(noms);
+  if (!hauteurs) return null;
+  const orthographe = (classe: number) => Note.pitchClass(noms.find((n) => Note.chroma(n) === classe) ?? Note.fromMidi(60 + classe));
+  const r = reconnaitreAccord(hauteurs);
+  const q = r?.exact ? qualiteDe(r.qualite) : undefined;
+  if (r && q) {
+    const symbole = normaliserSymbole(`${orthographe(r.fondamentale)}${q.symbole}`);
+    const basse = ((Math.min(...hauteurs) % 12) + 12) % 12;
+    return basse === r.fondamentale ? symbole : `${symbole}/${orthographe(basse)}`;
+  }
+  return Chord.detect(noms.map((n) => Note.pitchClass(n)))[0] ?? null;
 }
 
 /** Les symboles que le lecteur ne lit pas ; « N.C. » est lu. */

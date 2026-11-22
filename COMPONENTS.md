@@ -12158,7 +12158,7 @@ Outputs a collection of vocal ranges on its « Text » output, grouped by catego
 
 *Detects the chord name from its notes.*
 
-Detects a chord name from a list of notes. Example: C E G → C major. Accepts notes separated by spaces, commas or semicolons.
+Detects the chord a list of notes forms, and returns its symbol on the « Name » output: C E G → C, A C E → Am, B D F A → Bm7b5. The first written note is the bass, or the lowest when the notes carry their octave; an inversion is written as a slash chord, E G C → C/E. Root and bass keep the spelling of the notes received, Bb D F → Bb. The message adds the long name, « C major over E ». The symbol reads back through the Chord Grid and the other chord-symbol readers. Two notes, or an unreadable note, are refused. Accepts notes separated by spaces, commas or semicolons.
 
 | Port | Name | Type | |
 |---|---|---|---|

@@ -73,6 +73,44 @@ describe("CHAQUE QUALITÉ DE LA TABLE D'ATTIC SE RELIT TELLE QU'ELLE EST ÉCRITE
   });
 });
 
+// DÉCISION DE FABIEN DU 2026-11-22, « A readable symbol ». Mesuré avant : « E G C » était nommé
+// « E minor augmented », la première lecture de Tonal, et la sortie portait un nom long, « C major »,
+// qu'aucun lecteur de symboles ne relisait.
+describe("L'ACCORD REND UN SYMBOLE QUE LES LECTEURS RELISENT, les renversements par barre oblique", () => {
+  const nommer = async (notes: string) => lancerFiche(F("tonal-accord"), { Notes: notes }, { entrees: [null] });
+  it.each([
+    ["C E G", "C"], ["A C E", "Am"], ["E G C", "C/E"], ["G C E", "C/G"], ["C E G Bb", "C7"], ["B D F A", "Bm7b5"],
+    ["C Eb Gb A", "Cdim7"], ["C E G#", "Caug"], ["C D G", "Csus2"], ["C F G", "Csus4"], ["C E G A", "C6"],
+    ["F A C E", "Fmaj7"], ["C4 E4 G4", "C"], ["E3 C4 G4", "C/E"], ["D F# A C", "D7"], ["Bb D F", "Bb"], ["Db F Ab", "Db"],
+  ])("« %s » → « %s »", async (notes, symbole) => {
+    const r = await nommer(notes);
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(r.valeurs[0]).toBe(symbole);
+  });
+
+  it("LE NOM LONG RESTE DANS LE MESSAGE", async () => {
+    const r = await nommer("E G C");
+    expect(r.message).toContain("C/E");
+    expect(r.message).toContain("C major over E");
+  });
+
+  it("DEUX NOTES NE FONT PAS UN ACCORD, et une note illisible est refusée", async () => {
+    expect((await nommer("C E")).erreurRendue).toBe(true);
+    expect((await nommer("Do Mi Sol")).erreurRendue).toBe(true);
+  });
+
+  // L'ALLER-RETOUR : chaque qualité de la table, jouée sur do, nommée par l'Accord, puis relue par la
+  // Grille, doit rendre ses notes et sa basse.
+  it.each(QUALITES.map((q) => [q.id, q.intervalles] as const))("la qualité « %s » se nomme et se relit", async (_id, intervalles) => {
+    const notes = intervalles.map((i) => Note.fromMidi(60 + i)).join(" ");
+    const r = await nommer(notes);
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(await parLaGrille(String(r.valeurs[0]))).toEqual({
+      classes: [...new Set(intervalles.map((i) => i % 12))].sort((a, b) => a - b), basse: 0,
+    });
+  });
+});
+
 /** Des accords tenus l'un après l'autre, en sinusoïdes, comme `audio/accords.test.ts` les écrit. */
 function accordsAudio(suite: number[][], dureeS: number): AudioBuffer {
   const SR = 44100, n = Math.round(suite.length * dureeS * SR);

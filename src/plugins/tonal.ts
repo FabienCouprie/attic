@@ -8,7 +8,7 @@ import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { Chord, Scale, Note } from "tonal";
 import { estimerTonalite, detecterAccords, accordsVersTexte } from "../audio/accords";
-import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
+import { accordDuSymbole, estSansAccord, normaliserSymbole, symboleDesNotes } from "../audio/symboles-accords";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 import {
@@ -108,14 +108,15 @@ export const fiches: FicheAudio[] = ([
       if (notes.length === 0) {
         return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_fournie") };
       }
-      const detectes = Chord.detect(notes);
-      if (detectes.length === 0) {
+      // UN SYMBOLE QUE LES LECTEURS RELISENT, décision de Fabien du 2026-11-22 : le renversement par
+      // barre oblique, « C/E », et le nom long dans le message seulement. Voir `symboleDesNotes`.
+      const symbole = symboleDesNotes(notes);
+      if (!symbole) {
         return { valeurs: [null], erreur: true,
           message: traduire("msg.tonal.accord_inconnu_var_0", notes.slice(0, 4).join(" ")) };
       }
-      const symbole = detectes[0];
-      const resultat = Chord.get(symbole).name || symbole;
-      return { valeurs: [resultat], message: resultat };
+      const nom = Chord.get(normaliserSymbole(symbole)).name;
+      return { valeurs: [symbole], message: nom ? `${symbole} · ${nom}` : symbole };
    },
  }),
   fiche({
