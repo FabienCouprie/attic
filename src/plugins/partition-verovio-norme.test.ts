@@ -14,6 +14,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
+import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { lireGravure } from "./partition-lue";
 
 const F = (id: string) => registre.trouverDef(id) as unknown as FicheLancable;
@@ -65,6 +66,30 @@ describe("CE QU'UN MUSICIEN LIT SUR LA PARTITION EST CE QUE DIT LA NORME", () =>
     const lu = lireGravure(String(r.valeurs[0]));
     expect(lu.inconnus).toEqual([]);
     expect(lu.notes).toEqual(attendu);
+  }, 60_000);
+});
+
+// LA DURÉE QUI SUIT LE CROCHET D'UN ACCORD vaut pour chacune de ses notes (ABC 2.1, §4.17). Verovio
+// gravait « [CEG]2 » à l'unité, et c'est la forme qu'écrit « MIDI → ABC » : deux blanches y devenaient
+// deux croches. `abcPourGravure` l'écrit dans chaque note avant la gravure.
+describe("UN ACCORD ABC DONT LA DURÉE SUIT LE CROCHET SE GRAVE À SA DURÉE", () => {
+  it.each([
+    ["accords", T("K:C\n[CEG]2 [C2E2G2] |"), [[60, 0, 2], [64, 0, 2], [67, 0, 2], [60, 2, 4], [64, 2, 4], [67, 2, 4]]],
+    ["accord pointé, puis accord à la croche", T("K:C\n[CE]3/2 [CE]/2 D2 |"), [[60, 0, 1.5], [64, 0, 1.5], [60, 1.5, 2], [64, 1.5, 2], [62, 2, 4]]],
+    ["en L:1/8", T("K:C\n[CE] [DF]3 [EG]4 |", "M:4/4\nL:1/8"), [[60, 0, 0.5], [64, 0, 0.5], [62, 0.5, 2], [65, 0.5, 2], [64, 2, 4], [67, 2, 4]]],
+  ])("%s", async (_titre, abc, attendu) => {
+    const r = await graver(abc);
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(lireGravure(String(r.valeurs[0])).notes).toEqual(attendu);
+  }, 60_000);
+
+  it("par la chaîne MIDI → ABC → Partition gravée, deux accords de blanches restent des blanches", async () => {
+    const notes = [[60, 0, 2], [64, 0, 2], [67, 0, 2], [62, 2, 4], [65, 2, 4], [69, 2, 4]];
+    const midi = notesVersFichierMidi(notes.map(([note, debut, fin]) => ({ note, debut, fin, velocite: 100 })), 60);
+    const abc = await lancerFiche(F("midi-vers-abc"), {}, { entrees: [midi] });
+    expect(String(abc.valeurs[0])).toContain("[CEG]4");
+    const r = await lancerFiche(F("partition-verovio"), {}, { entrees: [String(abc.valeurs[0])] });
+    expect(lireGravure(String(r.valeurs[0])).notes).toEqual(notes);
   }, 60_000);
 });
 

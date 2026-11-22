@@ -6,6 +6,13 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN ACCORD ABC DONT LA DURÉE SUIT LE CROCHET SE GRAVE À SA DURÉE.** Revue des notations en texte, quatrième format, 2026-11-22.
+  - **Ce qui se passait**, mesuré par `executer` et relu sur la gravure : Verovio gravait « [CEG]2 » à l'unité, en noires au lieu de blanches en L:1/4. La norme ABC 2.1 (§4.17) applique pourtant à chaque note la durée qui suit le crochet. C'est la forme qu'écrit « MIDI → ABC » : deux accords de blanches, « [CEG]4 [DFA]4 » en L:1/8, se gravaient en deux croches.
+  - **Ce qui change** : `dureesDansLesAccords` (`audio/abc-gravure.ts`) écrit cette durée dans chaque note avant la gravure, « [C2E2G2] ». Une note qui a déjà sa durée la voit multipliée, « [C2E]2 » valant « [C4E2] ». L'en-tête, les champs, les chaînes, les ornements, les notes d'ornement et les commentaires ne sont pas touchés.
+  - **Le garde** : quatre cas dans `plugins/partition-verovio-norme.test.ts`, dont la chaîne MIDI → ABC → Partition gravée, et `audio/abc-gravure.test.ts`, 11 cas.
+    - Vu rouge sur le code d'avant : les 4 cas.
+    - Vu rouge aussi sur une durée ignorée dès qu'elle porte une barre de fraction, plantée.
+
 - **LA PARTITION GRAVÉE REFUSE CE QUE LE LECTEUR ABC REFUSE, ET UN TEXTE QUI N'EST PAS UNE PARTITION.** Revue des notations en texte, quatrième format, 2026-11-22.
   - **Ce qui se passait**, mesuré par `executer` :
     - douze des treize fautes que refuse « ABC → MIDI » se gravaient en vert : une durée nulle ou divisée par zéro, un accord jamais refermé, une liaison entre deux hauteurs ou vers un silence, un n-olet inachevé, une unité nulle ;

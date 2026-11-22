@@ -18,6 +18,7 @@ import { avecDoc } from "./notices";
 import { detecterFormat, entreeVerovio, optionsGravure, pageDemandee, racineXml, type FormatNotation } from "../audio/verovio";
 import { decouperMorceaux, lireMorceau } from "../audio/abc";
 import { refusAbc } from "../audio/abc-fautes";
+import { abcPourGravure } from "../audio/abc-gravure";
 import { choixOuiNon } from "../core/oui-non";
 
 const en = () => langueCourante() === "en";
@@ -134,7 +135,8 @@ export const fiches: FicheAudio[] = ([
           }),
           inputFrom: entreeVerovio(format),
         });
-        if (!tk.loadData(texte)) {
+        // Un texte ABC est réécrit là où Verovio lit faux une écriture juste (`abcPourGravure`).
+        if (!tk.loadData(format === "abc" ? abcPourGravure(texte) : texte)) {
           return { valeurs: [null, null], erreur: true, message: en()
             ? `${format.toUpperCase()} refused by the engraver: check the notation.`
             : `${format.toUpperCase()} refusé par le graveur : vérifiez la notation.` };
