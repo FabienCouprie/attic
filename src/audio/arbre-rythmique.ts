@@ -94,36 +94,51 @@ export function lireArbre(texte: string): Mesure[] {
   let i = 0;
   // LE REFUS SE DIT DANS LA LANGUE DE L'INTERFACE : trois composants le rendent tel quel en message,
   // et il s'affichait en français dans l'interface anglaise. `cle` est une clé du dictionnaire.
-  const erreur = (cle: string): never => {
-    throw new Error(jetons[i]
-      ? traduire("msg.arbre.position_jeton", traduire(cle), i + 1, jetons.length, jetons[i])
-      : traduire("msg.arbre.position", traduire(cle), i + 1, jetons.length));
+  const erreur = (cle: string, ou = i): never => {
+    throw new Error(jetons[ou]
+      ? traduire("msg.arbre.position_jeton", traduire(cle), ou + 1, jetons.length, jetons[ou])
+      : traduire("msg.arbre.position", traduire(cle), ou + 1, jetons.length));
   };
+  // CE QUI SONNE JUSTE AVANT, dans l'ordre de lecture, à travers les divisions et les barres : une
+  // liaison ne prolonge qu'une note.
+  let precedente: "note" | "silence" | null = null;
 
+  // CE QUE LE MANUEL D'OPENMUSIC NE DÉFINIT PAS EST REFUSÉ, ET NOMMÉ. Revue des notations en texte,
+  // décision de Fabien du 2026-11-22, « Refuse them, named ». Une division ne sonne pas, et ne porte
+  // donc ni signe ni liaison : `(-1 (1 1))` était corrigé en silence, et `(1.0 (1 1))` aussi. Une
+  // liaison derrière un silence prolongeait le silence, une liaison en tête devenait une note, et un
+  // silence lié prolongeait la note d'avant, si bien que le silence écrit sonnait.
   const lireNoeud = (): NoeudRythme => {
     if (jetons[i] === "(") {
       i++;
+      const ou = i;
       const poids = lireNombre();
+      if (poids.valeur < 0) erreur("msg.arbre.division_negative", ou);
+      if (poids.liee) erreur("msg.arbre.division_liee", ou);
       const enfants = lireListe();
       if (jetons[i] !== ")") erreur("msg.arbre.fermante_division");
       i++;
-      // UNE DIVISION NE SONNE PAS, DONC ELLE N'EST NI SILENCE NI LIÉE, et le signe qui le
-      // prétendrait est abandonné ici. Écrit à la main, `(-1 (1 1))` était accepté, DESSINÉ avec
-      // les hachures d'un silence, et joué en deux notes : le déroulement descend dans la division
-      // et jette le signe. Le dessin disait une chose et l'oreille en entendait une autre, ce qui
-      // est le pire des deux mondes. Un arbre tapé à la main mérite d'être pardonné plutôt que
-      // rejeté ; il est donc corrigé, et se réécrit sans le signe, de sorte que ce qui est dessiné
-      // redevienne ce qui est entendu. Relevé par Fabien, qui demandait à quoi sert « Note ».
-      return { valeur: Math.abs(poids.valeur), enfants };
+      return { valeur: poids.valeur, enfants };
     }
+    const ou = i;
     const n = lireNombre();
-    return { valeur: Math.abs(n.valeur), silence: n.valeur < 0, liee: n.liee };
+    const silence = n.valeur < 0;
+    if (n.liee && silence) erreur("msg.arbre.silence_lie", ou);
+    if (n.liee && precedente !== "note") erreur("msg.arbre.liaison_sans_note", ou);
+    if (!n.liee) precedente = silence ? "silence" : "note";
+    return { valeur: Math.abs(n.valeur), silence, liee: n.liee };
   };
 
   const lireNombre = (): { valeur: number; liee: boolean } => {
     const j = jetons[i];
     if (j === undefined) erreur("msg.arbre.nombre");
     if (!/^-?\d+(\.\d+)?$/.test(j)) erreur("msg.arbre.nombre");
+    // UN POIDS NUL NE DURE RIEN, ET LE MANUEL REFUSE « les valeurs entre 0 et 1 ». Revue des notations
+    // en texte, 2026-11-22 : « 0 » rendait une note de durée nulle, et « 0.5 » se lisait comme une
+    // liaison d'un demi-poids.
+    const absolu = Math.abs(Number(j));
+    if (absolu === 0) erreur("msg.arbre.poids_nul");
+    if (absolu < 1) erreur("msg.arbre.poids_fractionnaire");
     i++;
     // LA VIRGULE MARQUE LA LIAISON, et c'est la convention d'origine : « 1.0 » est une durée d'un
     // temps liée à ce qui précède, « 1 » une note neuve. Les deux valent un, seule l'écriture les
@@ -133,10 +148,13 @@ export function lireArbre(texte: string): Mesure[] {
 
   const lireListe = (): NoeudRythme[] => {
     if (jetons[i] !== "(") erreur("msg.arbre.liste");
+    const ouvrante = i;
     i++;
     const out: NoeudRythme[] = [];
     while (i < jetons.length && jetons[i] !== ")") out.push(lireNoeud());
     if (jetons[i] !== ")") erreur("msg.arbre.fermante_liste");
+    // Une liste sans proportion ne divise rien : « (4/4 ()) » rendait quatre temps de rien.
+    if (out.length === 0) erreur("msg.arbre.liste_vide", ouvrante);
     i++;
     return out;
   };
@@ -146,6 +164,9 @@ export function lireArbre(texte: string): Mesure[] {
     i++;
     const m = /^(\d+)\/(\d+)$/.exec(jetons[i] ?? "");
     if (!m) erreur("msg.arbre.metrique");
+    // UNE MÉTRIQUE DONT UN TERME EST NUL NE MESURE RIEN. « 4/0 » se lisait 4/1, seize temps, et « 0/4 »
+    // rendait des notes de durée nulle, sans un mot.
+    if (Number(m![1]) === 0 || Number(m![2]) === 0) erreur("msg.arbre.metrique_nulle");
     i++;
     const contenu = lireListe();
     if (jetons[i] !== ")") erreur("msg.arbre.fermante_mesure");

@@ -6,6 +6,22 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN ARBRE RYTHMIQUE QUE LA NOTATION N'ACCEPTE PAS, OU NE DÉFINIT PAS, EST REFUSÉ EN NOMMANT LE JETON.** Revue des notations en texte, neuvième format, 2026-11-22, premier lot. La référence est le manuel d'OpenMusic.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - « (4/4 (1 0 1 1)) » rendait une note de durée nulle, et « 0.5 », une valeur que le manuel n'accepte pas, se lisait comme une liaison d'un demi-poids ;
+    - une liaison derrière un silence prolongeait le silence, et un silence lié, « -1.0 », prolongeait la note d'avant : **le silence écrit sonnait** ;
+    - une liaison en tête devenait une note, une division négative ou liée perdait son signe ;
+    - « 4/0 » se lisait 4/1, seize temps, « 0/4 » rendait des notes de durée nulle, et « (4/4 ()) » quatre temps de rien.
+  - **Ce qui change** : `lireArbre` refuse tout cela, et le message nomme le jeton et sa position. Pour ce que le manuel ne définit pas, c'est la décision de Fabien du 2026-11-22, « Refuse them, named ». Les documentations des réglages « Arbre » le disent.
+  - **Des tests tenaient le contraire**. Dans `audio/arbre-rythmique.test.ts` :
+    - la division négative ou liée était corrigée, et la liaison en tête lue comme une note ;
+    - « (4/4 ()) » était lu.
+
+    Dans `audio/arbre-disposition.test.ts`, une donnée liait derrière un silence. Ils tiennent maintenant le refus, ou un arbre que la notation définit.
+  - **Le garde** : `plugins/arbres-rythmiques.test.ts`, 19 cas, tout par `executer`. Il relit aussi les 340 arbres du catalogue, cent tirages et l'arbre du Quantifier : aucun n'écrit ce qui est refusé.
+    - Vu rouge sur le code d'avant : les 10 refus.
+    - Vu rouge aussi sur un silence lié de nouveau admis, planté.
+
 - **LES ACCORDS EN CLASSES DE LA DISTANCE DE CONDUITE DE VOIX SE LISENT D'UNE SEULE FAÇON, NOMS DE NOTES COMPRIS.** Revue des notations en texte, huitième format, 2026-11-22, quatrième lot.
   - **Ce qui se passait**, mesuré par `executer` :
     - un jeton illisible était jeté sans un mot ;
