@@ -11,7 +11,7 @@ import {
   rendreSequenceurMelodique, decoderMotifMelodique,
   NB_RANGEES_MELO, nomNotePourRangee,
   rendreSequenceurBatterieAvance, decoderMotifVelocite,
-  rendreSequenceurAccords, decoderMotifAccords,
+  rendreSequenceurAccords, decoderMotifAccords, NB_LIGNES_ACCORDS,
   GAMMES_ACCORDS,
 } from "../audio";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
@@ -26,9 +26,16 @@ import { choixFaconAccord, faconDe } from "../audio/facons-accord";
  * étranger s'y lisait comme un silence. Décision de Fabien du 2026-11-22, « Refuse it, named », revue
  * des notations en texte. Une rangée plus courte ou plus longue que le nombre de pas se complète ou se
  * coupe toujours, au décodage : « Nombre de pas » passe de 16 à 32 sans réécrire le motif.
+ *
+ * UNE RANGÉE DE TROP EST REFUSÉE AUSSI : douze rangées sur les huit voix de la batterie en perdaient
+ * quatre, sans un mot. Décision de Fabien du 2026-11-22, « Refuse it, named ». Une rangée qui manque
+ * reste une rangée vide, ce que la grille écrit d'elle-même.
  */
-function refusDeGrille(motif: string, cases: RegExp, cle: string) {
+function refusDeGrille(motif: string, cases: RegExp, cle: string, nbRangees: number) {
   const rangees = motif.split("|");
+  if (rangees.length > nbRangees) {
+    return { valeurs: [null, null], erreur: true, message: traduire("msg.sequenceur.trop_de_rangees_var_0_var_1", rangees.length, nbRangees) };
+  }
   for (let r = 0; r < rangees.length; r++) {
     const pas = [...rangees[r]];
     const c = pas.findIndex((x) => !cases.test(x));
@@ -51,6 +58,9 @@ const GAMMES_SEQUENCEUR = completer([
 
 // Motif par défaut du séquenceur avancé (16 pas, 8 pistes) : kick temps, snare 2/4,
 // charley fermé en croches, le reste muet.
+/** Les voix de la batterie avancée, une rangée chacune : grosse caisse, caisse claire, charleys, clap, crash, toms. */
+const RANGEES_BATTERIE = 8;
+
 const MOTIF_AVANCE_DEFAUT = [
   "9000000090000000", // Kick
   "0000900000009000", // Snare
@@ -126,8 +136,8 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_MELO_DEFAUT,
-        doc: "Motif encodé (édité par la grille du composant) : 13 rangées (du grave au aigu) de pas séparées par « | », chaque pas 0 ou 1. Un caractère que la grille n'écrit pas, une espace comprise, fait refuser le motif, et le message le nomme. Une rangée plus courte que le nombre de pas se complète de silences, et une plus longue se coupe.",
-        docEn: "Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « | », each step 0 or 1. A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut." },
+        doc: "Motif encodé (édité par la grille du composant) : 13 rangées (du grave au aigu) de pas séparées par « | », chaque pas 0 ou 1. Un caractère que la grille n'écrit pas, une espace comprise, fait refuser le motif, et le message le nomme. Une rangée plus courte que le nombre de pas se complète de silences, et une plus longue se coupe. Un motif qui porte plus de rangées que le séquenceur n'en joue est refusé, et le message dit combien ; une rangée qui manque est muette.",
+        docEn: "Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « | », each step 0 or 1. A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut. A pattern with more rows than the sequencer plays is refused, and the message says how many; a missing row is silent." },
     ],
     async executer(ctx) {
       console.log("[attic] Séquenceur mélodique : exécution démarrée");
@@ -143,7 +153,7 @@ export const fiches: FicheAudio[] = ([
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const motif = ctx.paramTexte("Motif", MOTIF_MELO_DEFAUT);
-      const refus = refusDeGrille(motif, /^[01]$/, "msg.sequenceur.case_binaire_var_0_var_1_var_2");
+      const refus = refusDeGrille(motif, /^[01]$/, "msg.sequenceur.case_binaire_var_0_var_1_var_2", NB_RANGEES_MELO);
       if (refus) return refus;
       const grille = decoderMotifMelodique(motif, NB_RANGEES_MELO, nbPas);
       const { audio, notes } = await rendreSequenceurMelodique(grille, cle, gamme, octave, timbre, tempo, nbPas, swing, mesures, volume);
@@ -197,8 +207,8 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_ACCORDS_DEFAUT,
-        doc: "Motif encodé (édité par la grille du composant) : 21 rangées (7 degrés × triade/7e/6e) de pas séparées par « | », chaque pas 0 ou 1. Cliquez une case pour choisir l'accord (ex. C, Cmaj7, C6) à ce pas. Un caractère que la grille n'écrit pas, une espace comprise, fait refuser le motif, et le message le nomme. Une rangée plus courte que le nombre de pas se complète de silences, et une plus longue se coupe.",
-        docEn: "Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « | », each step 0 or 1. Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step. A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut." },
+        doc: "Motif encodé (édité par la grille du composant) : 21 rangées (7 degrés × triade/7e/6e) de pas séparées par « | », chaque pas 0 ou 1. Cliquez une case pour choisir l'accord (ex. C, Cmaj7, C6) à ce pas. Un caractère que la grille n'écrit pas, une espace comprise, fait refuser le motif, et le message le nomme. Une rangée plus courte que le nombre de pas se complète de silences, et une plus longue se coupe. Un motif qui porte plus de rangées que le séquenceur n'en joue est refusé, et le message dit combien ; une rangée qui manque est muette.",
+        docEn: "Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « | », each step 0 or 1. Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step. A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut. A pattern with more rows than the sequencer plays is refused, and the message says how many; a missing row is silent." },
     ],
     async executer(ctx) {
       const tempo = ctx.paramNombre("Tempo", 120);
@@ -214,7 +224,7 @@ export const fiches: FicheAudio[] = ([
       const modeSynth = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const motif = ctx.paramTexte("Motif", MOTIF_ACCORDS_DEFAUT);
-      const refus = refusDeGrille(motif, /^[01]$/, "msg.sequenceur.case_binaire_var_0_var_1_var_2");
+      const refus = refusDeGrille(motif, /^[01]$/, "msg.sequenceur.case_binaire_var_0_var_1_var_2", NB_LIGNES_ACCORDS);
       if (refus) return refus;
       const grille = decoderMotifAccords(motif, nbPas);
       const useSf2 = modeSynth === "SoundFont" || (modeSynth === "Automatique" && sf2Chargee());
@@ -249,8 +259,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre de répétitions du motif.", docEn: "Number of pattern repetitions." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 90, unite: "%" },
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_AVANCE_DEFAUT,
-        doc: "Motif encodé (édité par la grille) : 8 lignes de pas séparées par « | », chaque pas 0 (silence) ou de 1 à 9 (vélocité). Un caractère que la grille n'écrit pas, une espace comprise, fait refuser le motif, et le message le nomme. Une rangée plus courte que le nombre de pas se complète de silences, et une plus longue se coupe.",
-        docEn: "Encoded pattern (edited via the grid): 8 step rows separated by « | », each step 0 (off) or 1 to 9 (velocity). A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut." },
+        doc: "Motif encodé (édité par la grille) : 8 lignes de pas séparées par « | », chaque pas 0 (silence) ou de 1 à 9 (vélocité). Un caractère que la grille n'écrit pas, une espace comprise, fait refuser le motif, et le message le nomme. Une rangée plus courte que le nombre de pas se complète de silences, et une plus longue se coupe. Un motif qui porte plus de rangées que le séquenceur n'en joue est refusé, et le message dit combien ; une rangée qui manque est muette.",
+        docEn: "Encoded pattern (edited via the grid): 8 step rows separated by « | », each step 0 (off) or 1 to 9 (velocity). A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut. A pattern with more rows than the sequencer plays is refused, and the message says how many; a missing row is silent." },
       { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Graine des rafales de bruit (caisse claire, charley). Valeur par défaut fixe : le même motif doit rendre le même fichier à chaque exécution.",
         docEn: "Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run." },
@@ -262,9 +272,9 @@ export const fiches: FicheAudio[] = ([
       const mesures = ctx.paramNombre("Mesures", 2);
       const volume = ctx.paramNombre("Volume", 90);
       const motif = ctx.paramTexte("Motif", MOTIF_AVANCE_DEFAUT);
-      const refus = refusDeGrille(motif, /^[0-9]$/, "msg.sequenceur.case_velocite_var_0_var_1_var_2");
+      const refus = refusDeGrille(motif, /^[0-9]$/, "msg.sequenceur.case_velocite_var_0_var_1_var_2", RANGEES_BATTERIE);
       if (refus) return refus;
-      const grille = decoderMotifVelocite(motif, 8, nbPas);
+      const grille = decoderMotifVelocite(motif, RANGEES_BATTERIE, nbPas);
       const buf = await rendreSequenceurBatterieAvance(grille, tempo, nbPas, swing, mesures, volume,
         creerAleatoire(ctx.paramNombre("Graine", 42)));
       // LE MÊME RYTHME, EN MIDI : c'est ce qui permet de changer les sons dessous — kit SFZ,

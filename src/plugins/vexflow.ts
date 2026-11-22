@@ -281,7 +281,7 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "SVG", type: "image" }],
     parametres: [
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [0, 300], pas: 1, defaut: 0, unite: "BPM",
-        doc: "Tempo utilisé pour convertir les durées MIDI en notation. 0 = détecter depuis le fichier MIDI.", docEn: "Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file." },
+        doc: "À 0, les durées se lisent en temps du fichier, changements de tempo compris : une noire reste une noire quand le tempo ralentit. Une autre valeur convertit les secondes jouées à ce tempo, pour un fichier joué sans métrique.", docEn: "At 0, durations are read in the file's beats, tempo changes included: a quarter note stays a quarter note when the tempo slows down. Another value converts the played seconds at that tempo, for a file played without a meter." },
       { nom: "Canal", nomEn: "Channel", type: "nombre", plage: [-1, 15], pas: 1, defaut: -1, unite: "-1 = tous", uniteEn: "-1 = all",
         doc: "Canal MIDI à afficher : -1 pour tous les canaux, sauf le 9, celui de la batterie, que le message dit omis. Le 9 choisi par son numéro est gravé.",
         docEn: "MIDI channel to display: -1 for all channels except 9, the drums, which the message says were left out. Channel 9 chosen by its number is engraved." },
@@ -297,20 +297,17 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const fichier = ctx.entree(0);
       if (!(fichier instanceof File)) return { valeurs: [null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
-      const midi = await midiDuFichier(fichier);
+      const brut = await midiDuFichier(fichier);
+      // À 0, LES DURÉES SE LISENT EN TEMPS DU FICHIER, changements de tempo compris : le fichier est
+      // relu à un seul tempo de 120, ce qui rend chaque temps égal à une demi-seconde. Le nœud prenait
+      // le premier tempo et convertissait les secondes : après un passage de 120 à 60, une noire se
+      // gravait en blanche. Revue des notations en texte, 2026-11-22.
       let bpm = ctx.paramNombre("Tempo", 0);
-      if (bpm <= 0) {
-        bpm = 120;
-        for (const piste of midi.tracks) {
-          for (const evt of piste) {
-            if (evt.type === "setTempo") {
-              bpm = Math.round(60 / (evt.microsecondsPerBeat / 1_000_000));
-              break;
-            }
-          }
-          if (bpm !== 120) break;
-        }
-      }
+      const midi = bpm > 0 ? brut : {
+        ...brut,
+        tracks: brut.tracks.map((piste) => piste.map((e) => (e.type === "setTempo" ? { ...e, microsecondsPerBeat: 500_000 } : e))),
+      };
+      if (bpm <= 0) bpm = 120;
       const canal = ctx.paramNombre("Canal", -1);
       const grilleNom = ctx.paramTexte("Quantification", "1/16");
       const grille = GRILLES_NOTATION[grilleNom] ?? 0.25;

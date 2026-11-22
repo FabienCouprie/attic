@@ -6,6 +6,61 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **CSOUND RELIT CE QUE LES NŒUDS ÉCRIVENT, PAR UN SPEC PERMANENT.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, septième lot.
+  - **Ce qui manquait** : les gardes unitaires du onzième format vérifient le texte écrit, et rien ne vérifiait ce que Csound en lit ; la sonde qui l'avait fait pendant la revue avait été supprimée.
+  - **Ce qui change** : `tests-e2e/csound-relit.spec.ts`, sur un serveur de vérification au port 5253, que seul il emploie, charge les modules de l'application dans la page et passe tout par `executer` :
+    - chaque formule de « Formules Csound » sonne par le nœud « Csound », sans erreur, plus d'une seconde, et sous les 0,95 du limiteur ;
+    - les partitions de « Partition Csound », « Matrice de paramètres », « Partition aléatoire Csound » et la partition d'essai d'« Orchestre Csound » sont relues par un orchestre qui imprime ses p-fields par `prints` : Csound lit chaque note, et chaque champ tel que le texte l'écrit, à 10⁻⁴ près.
+  - Décision de Fabien : « Add the spec ». Il ne tourne pas en CI, qui ne lance que les empreintes ; il se lance à la demande, en dix secondes une fois le serveur prêt.
+  - Vu vert sur le code, six passes sur six, et rouge sur une instruction de tempo « t 0 120 » glissée en tête de la partition écrite, plantée : « note 1, p3 : écrit 0.5, lu 0.25 », deux passes sur deux. Une première faute plantée, « t 0 60 », restait verte, et c'est juste : 60 est le tempo par défaut de Csound.
+  - **Trouvé en mesurant, et laissé hors du spec** : sur le premier rendu d'une page neuve, les messages de Csound sont arrivés une fois en double, chaque ligne deux fois, une passe sur trois. Un rendu à blanc ouvre la mesure. La sonde a écarté un écouteur oublié d'un rendu à l'autre : trois rendus successifs rendent chacun leurs seules lignes. La cause n'est pas cherchée.
+  - Le premier port, 5231, était déjà celui de `verovio.spec.ts`, et `src/docs/contrat-serveur-de-specs.test.ts` a fait tomber la CI ; le spec a pris le 5253.
+
+- **LES FORMULES CSOUND ÉCRIVENT LEURS COMMENTAIRES DANS LA LANGUE DE L'INTERFACE.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, sixième lot.
+  - **Ce qui se passait** : « Formules Csound » écrivait l'orchestre et la partition avec leurs commentaires en français, interface anglaise comprise, « ; Le même la, avec un indice de plus en plus fort… », et l'en-tête « sortie mono ». Les orchestres d'exemple des autres nœuds Csound avaient déjà leur version anglaise.
+  - **Ce qui change** : sous l'interface anglaise, les trente-deux commentaires des huit formules, leur en-tête et leurs p-fields s'écrivent en anglais. La table vit dans `audio/csound-formules-en.ts`, ligne pour ligne.
+  - Décision de Fabien : « The interface language ». Le commentaire de tête d'un `.sfz` exporté suivra, avec les points SFZ, quand la #442 sera fusionnée.
+  - Tenu par neuf cas de plus dans `plugins/points-ouverts.test.ts`, un par formule et un témoin français ; les huit vus rouges sur le code d'avant, et rouge aussi sur une traduction retirée, plantée. Une formule neuve sans traduction ferait tomber le cas.
+
+- **L'ÉDITEUR DES ARBRES RYTHMIQUES NE PROPOSE PLUS UNE LIAISON SANS NOTE DEVANT ELLE.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, cinquième lot.
+  - **Ce qui se passait** : l'éditeur de dessin liait la première feuille, ou celle qui suit un silence, et écrivait « (4/4 (1.0 1 1 1)) », que le lecteur refuse ensuite : « une liaison sans note devant elle ne prolonge rien ».
+  - **Ce qui change** : `peutEtreLiee` (`audio/arbre-disposition.ts`) dit si la feuille désignée suit ce qui sonne, à travers la barre comprise ; le bouton ⌣ et l'entrée « Liée » du menu s'éteignent sinon, et leur bulle dit pourquoi. `mettreEtat` laisse l'arbre tel quel devant une telle liaison, et le refus à l'exécution reste en second garde.
+  - Décision de Fabien : « Forbid it in the editor ». Non vérifié dans l'application : la vue n'a été éprouvée que par ses fonctions.
+  - Tenu par trois cas de plus dans `plugins/points-ouverts.test.ts`, vus rouges sur le code d'avant, et rouges aussi sur une liaison de nouveau toujours permise, plantée.
+
+- **LA GRAVURE VEXFLOW LIT EN TEMPS, ÉCRIT SES ACCORDS À L'ÉTAT FONDAMENTAL ET COUPE LA TABLATURE EN MESURES.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, quatrième lot.
+  - **Ce qui se passait**, mesuré par `executer` sur les objets que VexFlow dessine :
+    - « Partition MIDI » convertissait les secondes au premier tempo du fichier : huit noires, le tempo passant de 120 à 60 après la quatrième, se gravaient en quatre noires et quatre blanches ;
+    - « Partition VexFlow » posait toutes les notes à l'octave 4 : en do, V sonnait ré–sol–si et vi do–mi–la, des renversements que le chiffre ne disait pas ;
+    - « Tablature VexFlow » gravait neuf noires sans une barre.
+  - **Ce qui change** :
+    - à « Tempo » 0, les durées se lisent en temps du fichier, changements de tempo compris ; une autre valeur garde la conversion des secondes à ce tempo ;
+    - chaque accord s'empile depuis sa fondamentale, posée à l'octave 4, et un accord à basse écrite commence par sa basse ;
+    - la tablature se coupe en mesures de 4/4 par la même coupe que la portée ; une note qui passe la barre se coupe en deux, la seconde frette entre parenthèses.
+  - Décisions de Fabien : « Root position », « Cut into bars ». Cinq cas de `plugins/vexflow-gravure.test.ts` attendaient les notes à l'octave 4 ; ils attendent l'état fondamental.
+  - Tenu par `plugins/points-ouverts-gravure.test.ts`, sept cas, six vus rouges sur le code d'avant, le septième en témoin ; vus rouges aussi sur les trois réparations retirées, plantées.
+
+- **UN SÉQUENCEUR REFUSE LES RANGÉES QU'IL NE JOUE PAS, ET UN CERCLE NE JETTE PLUS QUE LES SÉPARATEURS.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - douze rangées sur les huit voix de la batterie avancée en perdaient quatre, et trente sur le séquenceur mélodique en perdaient dix-sept, sans un mot ;
+    - un Cercle rythmique ou mélodique écartait tout ce qui n'est ni 0 ni 1 : « 1002 » donnait trois places, et une adresse collée y perdait ses lettres mais gardait ses chiffres, « ?tempo=120 » ajoutant « 10 » au motif.
+  - **Ce qui change** :
+    - un motif qui porte plus de rangées que le séquenceur n'en joue, 8 pour la batterie, 13 pour le mélodique, 21 pour les accords, est refusé en erreur, et le message dit combien il en a ; une rangée qui manque reste muette ;
+    - le motif d'un Cercle écarte ses espaces, tirets, points et barres, et d'une adresse il ne lit que ce qui suit le dernier « # ». Tout autre caractère est refusé et nommé avec son rang. La vue lit le motif de la même façon.
+  - Décisions de Fabien : « Refuse it, named » pour les rangées ; « Clean separators only », puis « Read after the # » pour l'adresse, que la notice promet de lire.
+  - Tenu par douze cas de plus dans `plugins/points-ouverts.test.ts`. Rouges sur le code d'avant : les trois refus de rangées, les deux de « 1002 » et les deux de l'adresse ; les autres sont des témoins. Vu rouge aussi sur le contrôle des rangées retiré et sur l'adresse de nouveau lue entière, plantés.
+
+- **LE CRIBLE LIT « ^ », LA DIFFÉRENCE SYMÉTRIQUE D'ARIZA.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, deuxième lot.
+  - **Ce qui se passait** : « 3@0^4@0 » était refusé comme un signe hors de la notation, alors que `music21.sieve` le lit, et que le relevé du dixième format l'avait oublié.
+  - **Ce qui change** : « ^ », ou « △ », retient ce que l'un des termes retient et pas l'autre ; de 0 à 11, 3@0 ^ 4@0 donne 3, 4, 6, 8 et 9. Il se lie comme en Python : le complément d'abord, puis « & », puis « ^ », puis « | », si bien que 2@0|3@0^4@0&6@0 vaut 2@0 | (3@0 ^ (4@0 & 6@0)). Le message l'écrit « △ », et ce qu'il écrit se relit.
+  - Décision de Fabien : « Read it ». Le cas de `plugins/crible-notation.test.ts` qui tenait le refus de « ^ » prend « % », un signe toujours hors de la notation.
+  - Tenu par quatre cas de plus dans `plugins/points-ouverts.test.ts`, vus rouges sur le code d'avant, et rouges aussi sur « ^ » de nouveau lu comme une réunion, planté.
+
+- **QUATRE NŒUDS QUI REFUSAIENT EN RESTANT VERTS REFUSENT EN ERREUR.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, premier lot.
+  - **Ce qui se passait**, mesuré par `executer` : « Opérations sérielles » sur une série vide, « Classes de hauteurs » sur des notes vides, « Contrepoint (espèces) » sur deux voix vides, et « Renversements et voicings » sans MIDI ou sur un MIDI sans note, disaient leur refus et restaient verts, sans le drapeau d'erreur. Un graphe passait alors sur une sortie vide.
+  - **Ce qui change** : ces cinq refus portent le drapeau d'erreur, comme tous les refus de la revue.
+  - Tenu par `plugins/points-ouverts.test.ts`, quatre cas vus rouges sur le code d'avant, et rouge aussi sur le drapeau de nouveau retiré au Contrepoint, planté.
+
 - **CHAQUE `<CONTROL>` POSE SON `DEFAULT_PATH`, ET L'EN-TÊTE D'UN .SFZ EXPORTÉ SUIT LA LANGUE DE L'INTERFACE.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, neuvième lot.
   - **Ce qui se passait**, mesuré par `executer` :
     - un seul `default_path` valait pour tout le fichier, celui du dernier `<control>` : deux en-têtes, `A/` puis `B/`, envoyaient les régions du premier chercher dans `B/`, et l'échantillon était déclaré manquant. sfzformat.com dit qu'un nouveau `<control>` remet `default_path` à zéro ;

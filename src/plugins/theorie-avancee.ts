@@ -259,7 +259,7 @@ export const fiches: FicheAudio[] = ([
         haute = aigue.hauteurs;
       }
       if (basse.length === 0 || haute.length === 0) {
-        return { valeurs: [null], message: traduire("msg.contrepoint.vide") };
+        return { valeurs: [null], erreur: true, message: traduire("msg.contrepoint.vide") };
       }
       const infractions = verifier(basse, haute, {
         unissonsInterieurs: ctx.paramTexte("Unissons intérieurs", "interdits") === "permis",
