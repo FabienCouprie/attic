@@ -1,35 +1,26 @@
 // plugins/accords-vers-notation.ts — Nœud « Accords → Notation MIDI ».
 //
 // Passerelle entre « Analyse harmonique » et « Texte → MIDI » : le premier
-// décrit l'harmonie pour un lecteur humain (« Cmaj (1.5s) », « I V vi IV »),
+// décrit l'harmonie pour un lecteur humain (« 0:02 Am (1.5s, 90%) », « I V vi IV »),
 // le second attend une notation exécutable (« C4+E4+G4 1.5 »). Sans ce nœud,
 // il fallait retaper la transcription à la main.
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { Chord, Note } from "tonal";
-import { accordsDepuisRomains, modeDepuisTonalite, toniqueDepuisTonalite } from "../audio/theorie-romains";
+import { Note } from "tonal";
+import { accordsDepuisRomains, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite } from "../audio/theorie-romains";
+import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 
-// Les symboles produits par `detecterAccords` (audio/accords.ts) suivent ses
-// propres gabarits, qui ne coïncident pas tous avec ceux de Tonal : « min7b5 »
-// y désigne le demi-diminué, que Tonal nomme « m7b5 ». Vérifié symbole par
-// symbole : les neuf autres gabarits passent tels quels, celui-ci seul échoue
-// et renverrait un accord vide, donc une ligne perdue en silence.
-const ALIAS_SUFFIXE: Record<string, string> = { min7b5: "m7b5" };
-
-function normaliserSymbole(symbole: string): string {
-  const m = /^([A-G][#b]?)(.*)$/.exec(symbole.trim());
-  if (!m) return symbole.trim();
-  const [, racine, suffixe] = m;
-  return racine + (ALIAS_SUFFIXE[suffixe] ?? suffixe);
-}
+// LE SYMBOLE SE LIT PAR LE SEUL LECTEUR DES SYMBOLES (`audio/symboles-accords.ts`), revue des
+// notations en texte du 2026-11-22. Ce nœud avait le sien, qui ne ramenait que « min7b5 » à
+// l'écriture de Tonal : « Bø7 », « Cm(maj7) » ou « B♭ » étaient perdus sans être nommés.
 
 // Notes de l'accord en ordre ascendant à partir de `octave`, pour éviter qu'un
 // renversement ne descende sous la fondamentale.
 function notesAscendantes(symbole: string, octave: number): string[] {
-  const accord = Chord.get(normaliserSymbole(symbole));
-  if (!accord || accord.empty || !accord.notes.length) return [];
+  const accord = accordDuSymbole(symbole);
+  if (!accord) return [];
   const notes: string[] = [];
   let precedent = -Infinity;
   for (const n of accord.notes) {
@@ -51,7 +42,10 @@ function notesAscendantes(symbole: string, octave: number): string[] {
 function parserLigneAccord(ligne: string, dureeDefaut: number): { symbole: string; secondes: number } | null {
   const t = ligne.trim();
   if (!t) return null;
-  const m = /^(?:\d+:\d{2}\s+)?(\S+)\s*(?:\(\s*([\d.,]+)\s*s\s*\))?/.exec(t);
+  // LA CONFIANCE PEUT SUIVRE LA DURÉE, « (2.0s, 100%) » : c'est ce que le détecteur écrit. Elle
+  // empêchait de lire la durée, et chaque accord retombait sur « Durée par accord », sans un mot ;
+  // mesuré le 2026-11-22, revue des notations en texte.
+  const m = /^(?:\d+:\d{2}\s+)?(\S+)\s*(?:\(\s*([\d.,]+)\s*s\s*(?:,[^)]*)?\))?/.exec(t);
   if (!m) return null;
   const secondes = m[2] ? parseFloat(m[2].replace(",", ".")) : dureeDefaut;
   return { symbole: m[1], secondes: Number.isFinite(secondes) && secondes > 0 ? secondes : dureeDefaut };
@@ -104,7 +98,7 @@ export const fiches: FicheAudio[] = ([
 
       const lignes: string[] = [`TEMPO ${tempo}`];
       let nbAccords = 0;
-      let nbIgnores = 0;
+      const inconnus: string[] = [];
 
       if (source === "progression") {
         const progression = ctx.entree(1);
@@ -149,10 +143,15 @@ export const fiches: FicheAudio[] = ([
             message: traduire("msg.accords_notation.pas_des_romains_var_0", jetons.slice(0, 4).join(" ")),
           };
         }
+        // UN CHIFFRE QUI NE SE LIT PAS EST REFUSÉ, NOMMÉ, revue des notations en texte du 2026-11-22.
+        const illisibles = romainsInconnus(jetons);
+        if (illisibles.length > 0) {
+          return { valeurs: [null], erreur: true, message: traduire("msg.tonal.romains_inconnus_var_0", illisibles.slice(0, 4).join(" » « ")) };
+        }
         const symboles = accordsDepuisRomains(tonique, jetons, mode);
         for (const symbole of symboles) {
           const notes = notesAscendantes(symbole, octave);
-          if (!notes.length) { nbIgnores++; continue; }
+          if (!notes.length) { inconnus.push(symbole); continue; }
           lignes.push(`${notes.join("+")} ${dureeDefaut}`);
           nbAccords++;
         }
@@ -167,23 +166,27 @@ export const fiches: FicheAudio[] = ([
         for (const ligne of accords.split(/\r?\n/)) {
           const parsee = parserLigneAccord(ligne, dureeDefaut / tempsParSeconde);
           if (!parsee) continue;
-          const notes = notesAscendantes(parsee.symbole, octave);
-          if (!notes.length) { nbIgnores++; continue; }
           const temps = Math.max(0.05, Math.round(parsee.secondes * tempsParSeconde * 100) / 100);
+          // « N.C. » est un accord silencieux, décision de Fabien du 2026-11-22 : il garde sa durée.
+          if (estSansAccord(parsee.symbole)) { lignes.push(`rest ${temps}`); nbAccords++; continue; }
+          const notes = notesAscendantes(parsee.symbole, octave);
+          if (!notes.length) { inconnus.push(parsee.symbole); continue; }
           lignes.push(`${notes.join("+")} ${temps}`);
           nbAccords++;
         }
       }
 
+      // UN SYMBOLE QUI NE SE LIT PAS REFUSE LA TRANSCRIPTION, ET LE MESSAGE LE NOMME, règle de la revue
+      // des notations en texte du 2026-11-22. Le nœud comptait les lignes ignorées sans les nommer, et
+      // rendait une transcription trouée, plus courte que l'harmonie qu'elle disait transcrire.
+      if (inconnus.length > 0) {
+        return { valeurs: [null], erreur: true,
+          message: traduire("msg.accords_notation.symboles_inconnus_var_0", inconnus.slice(0, 8).join(" » « ")) };
+      }
       if (nbAccords === 0) {
         return { valeurs: [null], message: traduire("msg.accords_notation.aucun_accord") };
       }
-      return {
-        valeurs: [lignes.join("\n")],
-        message: nbIgnores > 0
-          ? traduire("msg.accords_notation.resultat_partiel_var_0_var_1", nbAccords, nbIgnores)
-          : traduire("msg.accords_notation.resultat_var_0", nbAccords),
-      };
+      return { valeurs: [lignes.join("\n")], message: traduire("msg.accords_notation.resultat_var_0", nbAccords) };
     },
   }),
 ] as FicheAudio[]).map(avecDoc);

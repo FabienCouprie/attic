@@ -8,10 +8,11 @@ import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { Chord, Scale, Note } from "tonal";
 import { estimerTonalite, detecterAccords, accordsVersTexte } from "../audio/accords";
+import { accordDuSymbole, estSansAccord, normaliserSymbole, symboleDesNotes } from "../audio/symboles-accords";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 import {
-  accordsDepuisRomains, accordsInconnus, modeDepuisTonalite, toniqueDepuisTonalite,
+  accordsDepuisRomains, accordsInconnus, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite,
   type ModeProgression,
 } from "../audio/theorie-romains";
 
@@ -34,8 +35,9 @@ function parserNotes(texte: string): string[] {
 // Renvoie les notes d'un symbole d'accord Tonal réparties de manière ascendante
 // à partir de l'octave de base (ex. "C3 E3 G3" pour C majeur en octave 3).
 function notesAccordAscendantes(accord: string, octave: number): string[] {
-  const c = Chord.get(accord);
-  if (!c || !c.notes.length) return [];
+  // Par le seul lecteur des symboles, revue des notations en texte du 2026-11-22.
+  const c = accordDuSymbole(accord);
+  if (!c) return [];
   const notes: string[] = [];
   let lastMidi = -Infinity;
   for (const n of c.notes) {
@@ -50,6 +52,8 @@ function notesAccordAscendantes(accord: string, octave: number): string[] {
 
 // Convertit un symbole d'accord en notation texte-vers-midi (ex. "C4+E4+G4+B4 1").
 function accordVersNotation(accord: string, octave: number, duree: number): string {
+  // « N.C. » est un accord silencieux, décision de Fabien du 2026-11-22 : il prend sa place, en silence.
+  if (estSansAccord(accord)) return `rest ${duree}`;
   const notes = notesAccordAscendantes(accord, octave);
   return notes.length ? `${notes.join("+")} ${duree}` : "";
 }
@@ -104,14 +108,15 @@ export const fiches: FicheAudio[] = ([
       if (notes.length === 0) {
         return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_fournie") };
       }
-      const detectes = Chord.detect(notes);
-      if (detectes.length === 0) {
+      // UN SYMBOLE QUE LES LECTEURS RELISENT, décision de Fabien du 2026-11-22 : le renversement par
+      // barre oblique, « C/E », et le nom long dans le message seulement. Voir `symboleDesNotes`.
+      const symbole = symboleDesNotes(notes);
+      if (!symbole) {
         return { valeurs: [null], erreur: true,
           message: traduire("msg.tonal.accord_inconnu_var_0", notes.slice(0, 4).join(" ")) };
       }
-      const symbole = detectes[0];
-      const resultat = Chord.get(symbole).name || symbole;
-      return { valeurs: [resultat], message: resultat };
+      const nom = Chord.get(normaliserSymbole(symbole)).name;
+      return { valeurs: [symbole], message: nom ? `${symbole} · ${nom}` : symbole };
    },
  }),
   fiche({
@@ -209,6 +214,11 @@ export const fiches: FicheAudio[] = ([
       }
       const progTexte = ctx.paramTexte("Progression", "I V vi IV");
       const numerals = progTexte.split(/\s+/).filter((n: string) => n.length > 0);
+      // UN CHIFFRE QUI NE SE LIT PAS EST REFUSÉ, NOMMÉ : « I X V » rendait « C  G », sans un mot.
+      const inconnus = romainsInconnus(numerals);
+      if (inconnus.length > 0) {
+        return { valeurs: [null], erreur: true, message: traduire("msg.tonal.romains_inconnus_var_0", inconnus.slice(0, 4).join(" » « ")) };
+      }
       // `accordsDepuisRomains` : sans lui, « vi » produisait un accord MAJEUR et
       // les degrés III, VI, VII d'un mode mineur gardaient la fondamentale du
       // mode majeur.
@@ -264,6 +274,12 @@ export const fiches: FicheAudio[] = ([
       // donc tester juste le début du jeton (pas son intégralité) suffit à
       // distinguer les deux syntaxes sans rejeter les extensions.
       const romains = /^[b#]?[IViv]/.test(tokens[0] ?? "");
+      // UN CHIFFRE QUI NE SE LIT PAS EST REFUSÉ, NOMMÉ, comme dans la Progression.
+      const romainsIllisibles = romains ? romainsInconnus(tokens) : [];
+      if (romainsIllisibles.length > 0) {
+        return { valeurs: [null, null], erreur: true,
+          message: traduire("msg.tonal.romains_inconnus_var_0", romainsIllisibles.slice(0, 4).join(" » « ")) };
+      }
       const accords = romains
         ? accordsDepuisRomains(tonic, tokens, gammeDemandee(ctx, entree))
         : tokens;
@@ -289,6 +305,8 @@ export const fiches: FicheAudio[] = ([
       if (faconDe(mode) === "arpege") {
         const dureeNote = 0.5;
         for (const accord of accords) {
+          // « N.C. » se tait le temps d'une triade arpégée, trois croches.
+          if (estSansAccord(accord)) { lignes.push(`rest ${3 * dureeNote}`); continue; }
           for (const n of notesAccordAscendantes(accord, octave + 1)) {
             lignes.push(`${n} ${dureeNote}`);
           }

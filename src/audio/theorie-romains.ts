@@ -4,7 +4,8 @@
 // puissent l'importer via "../audio/..." sans créer de dépendance croisée
 // entre fichiers de plugins — même raison que GAMMES_MELODIE_* dans
 // audio/generation.ts.
-import { Chord, Progression, RomanNumeral } from "tonal";
+import { Progression, RomanNumeral } from "tonal";
+import { symbolesInconnus } from "./symboles-accords";
 
 /**
  * Les symboles qu'aucun accord ne reconnaît.
@@ -20,7 +21,9 @@ import { Chord, Progression, RomanNumeral } from "tonal";
  * `{ symbol: "", empty: true }`. Le refus était à un champ de distance.
  */
 export function accordsInconnus(accords: readonly string[]): string[] {
-  return accords.filter((a) => Chord.get(a).empty);
+  // Par le seul lecteur des symboles depuis le 2026-11-22 : « Bø7 », « CΔ7 » et « B♭ » sont lus,
+  // « N.C. » aussi, comme un accord silencieux.
+  return symbolesInconnus(accords);
 }
 
 /**
@@ -53,6 +56,17 @@ export function normaliserRomains(tokens: string[]): string[] {
  */
 export function estProgressionRomaine(tokens: readonly string[]): boolean {
   return tokens.length > 0 && tokens.every((t) => !RomanNumeral.get(t).empty);
+}
+
+/**
+ * Les jetons qui ne sont pas un chiffre romain que Tonal lit : « X », « V/V ».
+ *
+ * `Progression.fromRomanNumerals` rend une chaîne vide pour un tel jeton, et le nœud écrivait « C  G »
+ * pour « I X V » : le X disparaissait, et l'espace double disparaissait à son tour chez le lecteur
+ * suivant. Mesuré le 2026-11-22, revue des notations en texte ; ces jetons sont refusés et nommés.
+ */
+export function romainsInconnus(tokens: readonly string[]): string[] {
+  return tokens.filter((t) => RomanNumeral.get(t).empty);
 }
 
 /** Mode dans lequel les chiffres romains sont lus. */

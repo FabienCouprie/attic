@@ -17,15 +17,21 @@ const PROFIL_MINEUR = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.6
 // Templates d'accords : vecteurs binaires de 12 éléments (classes de hauteur).
 // Index 0 = fondamentale. Chaque template indique quelles notes appartiennent à
 // l'accord (1 = présente, 0 = absente).
-// LES INTERVALLES VIENNENT DE LA TABLE COMMUNE, `qualites-accords.ts`. LES NOMS RESTENT CEUX-CI :
-// ils s'écrivent dans le rapport de détection, et les changer changerait ce que l'utilisateur lit.
-// La table les connaît en alias, de sorte que « min » et « min7b5 » désignent toujours le même
-// accord qu'avant. L'ORDRE NE SE RÉARRANGE PAS non plus : le rang d'un type sert d'index dans la
-// matrice des soixante-douze accords construite plus bas.
+// LES INTERVALLES VIENNENT DE LA TABLE COMMUNE, `qualites-accords.ts`, qui connaît ces noms en alias.
+// L'ORDRE NE SE RÉARRANGE PAS : le rang d'un type sert d'index dans la matrice des soixante-douze
+// accords construite plus bas.
 const NOMS_DETECTES = ["maj", "min", "7", "min7", "maj7", "dim", "aug", "sus2", "sus4", "min7b5"] as const;
 
+// CE QUI S'ÉCRIT EST LE SYMBOLE DE L'USAGE, LE MÊME DANS LES DEUX LANGUES, décision de Fabien du
+// 2026-11-22, revue des notations en texte. Le rapport écrivait « A min », « G 7 » en français et
+// « Amin », « Bmin7b5 » en anglais : « Accords → Notation », qui le relit, prenait les lignes
+// françaises pour des accords majeurs, l'espace coupant le nom. Un symbole d'accord ne se traduit pas.
+const SYMBOLES_DETECTES: Record<(typeof NOMS_DETECTES)[number], string> = {
+  maj: "", min: "m", 7: "7", min7: "m7", maj7: "maj7", dim: "dim", aug: "aug", sus2: "sus2", sus4: "sus4", min7b5: "m7b5",
+};
+
 const TEMPLATES: { nom: string; nomEn: string; intervalles: number[] }[] =
-  NOMS_DETECTES.map((nom) => ({ nom, nomEn: nom, intervalles: intervallesDaccord(nom) }));
+  NOMS_DETECTES.map((nom) => ({ nom: SYMBOLES_DETECTES[nom], nomEn: SYMBOLES_DETECTES[nom], intervalles: intervallesDaccord(nom) }));
 
 // Construit la matrice des templates (72 accords = 12 fondamentales × 10 types).
 const TOUS_TEMPLATES: { fondamentale: number; typeIdx: number; vecteur: Float64Array }[] = [];
@@ -173,7 +179,7 @@ export function detecterAccords(
       resultats.push({
         temps: debutAccord,
         duree: t - debutAccord,
-        nom: `${NOMS_NOTES[accordPrec.root]} ${tpl.nom}`,
+        nom: `${NOMS_NOTES[accordPrec.root]}${tpl.nom}`,
         nomEn: `${NOMS_NOTES[accordPrec.root]}${tpl.nomEn}`,
         confiance: confianceCourante,
       });
@@ -199,7 +205,7 @@ export function detecterAccords(
     resultats.push({
       temps: debutAccord,
       duree: tFin - debutAccord,
-      nom: `${NOMS_NOTES[accordPrec.root]} ${tpl.nom}`,
+      nom: `${NOMS_NOTES[accordPrec.root]}${tpl.nom}`,
       nomEn: `${NOMS_NOTES[accordPrec.root]}${tpl.nomEn}`,
       confiance: confianceCourante,
     });

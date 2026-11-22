@@ -95,10 +95,14 @@ describe("accords-vers-notation", () => {
     expect(res.message).toBeTruthy();
   });
 
-  it("signale les accords ignorés au lieu de les taire", async () => {
+  // CE CAS TENAIT UNE TRANSCRIPTION TROUÉE jusqu'au 2026-11-22 : la ligne « Zzz » était ignorée, et le
+  // message n'en donnait que le nombre. La règle de la revue des notations en texte refuse ce qui ne se
+  // lit pas, en le nommant : une transcription plus courte que l'harmonie qu'elle transcrit est fausse.
+  it("refuse un accord qu'il ne lit pas, et le nomme, au lieu de l'ignorer", async () => {
     const res = await fiche.executer(ctxDe(["Cmaj (1.0s)\nZzz (1.0s)"], { Tempo: 120 }));
-    expect(String(res.valeurs[0]).split("\n")).toHaveLength(2);
-    expect(res.message).toMatch(/1/);
+    expect(res.valeurs[0]).toBeNull();
+    expect(res.erreur).toBe(true);
+    expect(res.message).toContain("« Zzz »");
   });
 });
 

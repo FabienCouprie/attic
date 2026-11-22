@@ -2856,7 +2856,7 @@ Covers an ABC score in another style: melody and chord symbols stay those of the
 
 *Converts Harmonic Analysis output into the notation expected by Text → MIDI.*
 
-Translates Harmonic Analysis output into notation playable by Text → MIDI. « Detected chords » source: transcribes the actual harmony, converting the measured durations (seconds) into beats via Tempo. « Progression » source: expands the suggested roman numerals, which also requires the Key input.
+Translates Harmonic Analysis output into notation playable by Text → MIDI. « Detected chords » source: transcribes the actual harmony, converting the measured durations (seconds) into beats via Tempo. Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ »; « N.C. » becomes a rest of its duration. A symbol that cannot be read refuses the whole transcription, and the message names it. « Progression » source: expands the suggested roman numerals, which also requires the Key input.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -5798,7 +5798,7 @@ A comb filter sends the sound round a loop whose length is the period of a note:
 
 *Generates a full accompaniment in text-to-MIDI format.*
 
-Generates a full accompaniment in text-to-MIDI format. Connect its « Notation » output to the « Text → MIDI » node to get a MIDI/audio file. Accepts a progression in roman numerals (I V vi IV) or chord symbols (C Am F G). Parameters: key, tempo, duration per chord, octave and Block/Arpeggio mode.
+Generates a full accompaniment in text-to-MIDI format. Connect its « Notation » output to the « Text → MIDI » node to get a MIDI/audio file. Accepts a progression in roman numerals (I V vi IV) or chord symbols (C Am F G). Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ », « D/F# »; « N.C. » is a silent chord, silent for the length of a chord, and three eighth notes in arpeggio. Parameters: key, tempo, duration per chord, octave and Block/Arpeggio mode.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8910,10 +8910,10 @@ Chains chords through the neo-Riemannian transformations. Hugo Riemann drew, at 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Starting chord | text | `C` |  | The chord to start from: « C » for C major, « Am » for A minor, « F#m » for F sharp minor. A MIDI file on the input wins, and its first triad is used as the start. |
+| Starting chord | text | `C` |  | The chord to start from, a major or minor triad: « C » or « C major » for C major, « Am » for A minor, « F#m » for F sharp minor, « D/F# » for D major. Another chord, « Cmaj7 », « Cdim », or unreadable text is refused, and the message names it. A MIDI file on the input wins, and its first triad is used as the start. |
 | Mode | choice | Sequence of operations | Sequence of operations / Path to a chord | « Sequence » applies the operations written out. « Path » finds the shortest route to the destination chord: the distance measure proper to Riemann's space, which no tonal distance gives. |
 | Operations | text | `PLRLPR` |  | The operations to apply, in order. P swaps major and minor on the same root, L and R lead to the neighbouring chords. « PLPLPL » walks the hexatonic cycle and returns to the start. |
-| Destination chord | text | `G#m` |  | In « Path » mode, the chord to reach. C major and G sharp minor share no note and are yet three operations apart: the hexatonic pole. |
+| Destination chord | text | `G#m` |  | In « Path » mode, the chord to reach, a major or minor triad written like the starting chord; another chord is refused, and the message names it. C major and G sharp minor share no note and are yet three operations apart: the hexatonic pole. |
 | Chord length | number | 1 s | 0.1 – 4 s, step 0.1 | Length of each chord. |
 | Base note | number | 60 | 36 – 84, step 1 | Pitch the chords are placed around. The voices then follow the shortest path, which is what makes the parsimony audible. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
@@ -9070,7 +9070,7 @@ Sorts the received sound's grain into three species and gives its quantities, wi
 
 *Detects the key of a song and suggests a chord progression.*
 
-Analyses audio and estimates its global key, then suggests a fitting progression (Pop, Jazz, Blues). « Key » output = estimated key with confidence, « Progression » = suggested roman numerals, « Detected chords » = chords detected over time. Connect the « Progression » output to « Chord Grid » to generate an accompaniment.
+Analyses audio and estimates its global key, then suggests a fitting progression (Pop, Jazz, Blues). « Key » output = estimated key with confidence, « Progression » = suggested roman numerals, « Detected chords » = chords detected over time, one line each, « 0:02 Am (2.0s, 100%) », the symbol being the same in both languages. Connect the « Progression » output to « Chord Grid » to generate an accompaniment.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9527,7 +9527,7 @@ This node measures five features of a sound (its register, articulation, speed, 
 
 *Detects the chord progression in the audio signal.*
 
-Analyzes the audio signal and detects the chord progression over time. For each analysis window, a chromagram (12 pitch-class vector) is computed and compared against chord templates (major, minor, 7th, minor 7th, major 7th, diminished, augmented, sus2, sus4, minor 7b5) by correlation. The result is a list of chords with their timestamp and duration. Settings: the analysis window, short (0.2-0.5 s) for fast changes, long (1-2 s) for more stability. The audio signal is passed through unchanged on the Audio output.
+Analyzes the audio signal and detects the chord progression over time. For each analysis window, a chromagram (12 pitch-class vector) is computed and compared against chord templates (major, minor, 7th, minor 7th, major 7th, diminished, augmented, sus2, sus4, minor 7b5) by correlation. The result is a list of chords, one line each: the time, the usual symbol, the same in both languages (C, Am, G7, Am7, Cmaj7, Cdim, Caug, Csus2, Csus4, Bm7b5), the duration and the confidence, « 0:02 Am (2.0s, 100%) ». Settings: the analysis window, short (0.2-0.5 s) for fast changes, long (1-2 s) for more stability. The audio signal is passed through unchanged on the Audio output.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9825,7 +9825,7 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 
 *Displays a chord chart from a list of symbols.*
 
-Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. The text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included; otherwise each token is a chord symbol, and a symbol no chord recognizes is refused, named. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
+Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. The text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included; otherwise each token is a chord symbol, read in its usual spellings (« Bø7 », « CΔ7 », « B♭ »), « N.C. » being written as is in its bar, and a symbol no chord recognizes is refused, named. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9848,7 +9848,7 @@ Generates a chord chart (SVG) from a list of chord symbols or a roman numeral pr
 
 *Displays a simple score from a chord progression.*
 
-Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G): the text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included. Chords are displayed as block chords on the staff, a quarter note each, in 4/4 bars, and each accidental is drawn when it changes what is in force in the bar, naturals included. A symbol no chord recognizes is refused, and the message names it. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
+Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G): the text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included. Chords are displayed as block chords on the staff, a quarter note each, in 4/4 bars, and each accidental is drawn when it changes what is in force in the bar, naturals included. Symbols are read in their usual spellings (« Bø7 », « CΔ7 », « B♭ »); « N.C. » is a quarter rest. A symbol no chord recognizes is refused, and the message names it. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -12158,7 +12158,7 @@ Outputs a collection of vocal ranges on its « Text » output, grouped by catego
 
 *Detects the chord name from its notes.*
 
-Detects a chord name from a list of notes. Example: C E G → C major. Accepts notes separated by spaces, commas or semicolons.
+Detects the chord a list of notes forms, and returns its symbol on the « Name » output: C E G → C, A C E → Am, B D F A → Bm7b5. The first written note is the bass, or the lowest when the notes carry their octave; an inversion is written as a slash chord, E G C → C/E. Root and bass keep the spelling of the notes received, Bb D F → Bb. The message adds the long name, « C major over E ». The symbol reads back through the Chord Grid and the other chord-symbol readers. Two notes, or an unreadable note, are refused. Accepts notes separated by spaces, commas or semicolons.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -12217,7 +12217,7 @@ Analyses a chord or passage as a pitch-class set. When a harmony is no longer to
 
 *Generates a chord progression from a key and roman numerals.*
 
-Generates a chord progression from a key and roman numerals. Example: C + I V vi IV → C G Am F. Roman numerals accept uppercase (major chords) and lowercase (minor chords).
+Generates a chord progression from a key and roman numerals. Example: C + I V vi IV → C G Am F. Roman numerals accept uppercase (major chords) and lowercase (minor chords). A numeral the reading does not know, « X » or the secondary dominant « V/V », is refused, and the message names it: nothing is returned.
 
 | Port | Name | Type | |
 |---|---|---|---|

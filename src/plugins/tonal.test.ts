@@ -42,7 +42,10 @@ describe("nœuds Tonal", () => {
   it("tonal-accord détecte C E G", async () => {
     const f = trouver("tonal-accord")!;
     const res = await f.executer(ctxSimple("C E G") as any);
-    expect(res.valeurs[0]).toBe("C major");
+    // Un symbole relisible sur la sortie, le nom long dans le message : décision de Fabien du
+    // 2026-11-22. La sortie valait « C major », qu'aucun lecteur de symboles ne relisait.
+    expect(res.valeurs[0]).toBe("C");
+    expect(res.message).toContain("C major");
   });
 
   it("tonal-gamme retourne C major", async () => {
@@ -170,7 +173,8 @@ describe("nœuds Tonal", () => {
     const f = trouver("tonal-accord")!;
     const res = await f.executer(ctxSimple("C E G") as any);
     expect(res.erreur).toBeFalsy();
-    expect(res.valeurs[0]).toContain("major");
+    expect(res.valeurs[0]).toBe("C");
+    expect(res.message).toContain("major");
   });
 
   it("LA PROGRESSION REFUSE UNE TONIQUE ILLISIBLE, au lieu de rendre des blancs", async () => {
