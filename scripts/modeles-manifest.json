@@ -91,6 +91,28 @@
       ]
     },
     {
+      "id": "corpus-chorals-bach",
+      "nom": "Chorals de Bach (DCML corrigé)",
+      "nomEn": "Bach chorales (corrected DCML)",
+      "noeuds": [
+        "lire-corpus"
+      ],
+      "octets": 1178975,
+      "source": {
+        "type": "fichier",
+        "url": "https://github.com/FabienCouprie/attic/releases/download/assets/corpus-chorals-bach-dcml.json",
+        "octets": 1178975,
+        "sha256": "e017d8fba810a72f96f75018c42802951065d3d70925df997eec76fac13502a3"
+      },
+      "fichiers": [
+        {
+          "chemin": "oonx/corpus-chorals-bach-dcml.json",
+          "octets": 1178975,
+          "sha256": "e017d8fba810a72f96f75018c42802951065d3d70925df997eec76fac13502a3"
+        }
+      ]
+    },
+    {
       "id": "genre",
       "nom": "Classement par genre",
       "nomEn": "Genre classifier",

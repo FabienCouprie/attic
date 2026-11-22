@@ -88,3 +88,45 @@ describe("les graines d'une passe, résolues au centre", () => {
     expect(r.grainesTirees.size).toBe(0);
   });
 });
+
+describe("les graines d'une boucle à passes qui les demande", () => {
+  /** Les passes d'un run : un résolveur par passe, comme le moteur, et des bases pour tout le run. */
+  const run = (passes: number, brut: number, parPasse: boolean, tirer = tirageCompte()) => {
+    const basesDeGraine = new Map<string, number>();
+    return Array.from({ length: passes }, (_, passe) => {
+      const r = creerResolveurDeGraines({
+        toursDesCopies: new Map(), origines: new Map(), expansions: new Map(), tirer,
+        passes: new Map([["gen", { passe, parPasse }]]), basesPartagees: basesDeGraine,
+      });
+      return { valeur: r.graineDuNoeud("gen", "Graine", brut), tirees: r.grainesTirees.get("gen") };
+    });
+  };
+
+  it("« Une par pièce » : une graine par passe, tirée de la même base, et le même run se rejoue", () => {
+    const a = run(3, 42, true);
+    expect(a.map((x) => x.valeur)).toEqual([0, 1, 2].map((p) => graineDuTour(42, p)));
+    expect(new Set(a.map((x) => x.valeur)).size).toBe(3);
+    expect(run(3, 42, true).map((x) => x.valeur)).toEqual(a.map((x) => x.valeur));
+  });
+
+  it("une graine à zéro est tirée UNE FOIS pour tout le run, et c'est elle que chaque passe rend", () => {
+    const tirer = tirageCompte();
+    const a = run(3, 0, true, tirer);
+    expect(a.map((x) => x.tirees)).toEqual([0, 1, 2].map(() => [{ nom: "Graine", valeur: 1001 }]));
+    expect(a.map((x) => x.valeur)).toEqual([0, 1, 2].map((p) => graineDuTour(1001, p)));
+    // Et reposer la base tirée rejoue le run entier.
+    expect(run(3, 1001, true).map((x) => x.valeur)).toEqual(a.map((x) => x.valeur));
+  });
+
+  it("« Identiques » : la même graine à chaque passe, une graine à zéro comprise", () => {
+    expect(run(3, 42, false).map((x) => x.valeur)).toEqual([42, 42, 42]);
+    expect(run(3, 0, false).map((x) => x.valeur)).toEqual([1001, 1001, 1001]);
+  });
+
+  it("sans boucle qui les demande, rien ne change : chaque passe tire à neuf, comme avant", () => {
+    const tirer = tirageCompte();
+    const valeurs = [0, 1, 2].map(() => creerResolveurDeGraines({ toursDesCopies: new Map(), origines: new Map(), expansions: new Map(), tirer })
+      .graineDuNoeud("gen", "Graine", 0));
+    expect(valeurs).toEqual([1001, 1002, 1003]);
+  });
+});

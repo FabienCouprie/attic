@@ -1949,6 +1949,34 @@
     {"nom":"Graine","type":"curseur","defaut":0,"min":0,"max":999999,"graine":true}
    ]
   },
+  "corpus-fabriquer-debut": {
+   "version": 1,
+   "entrees": [],
+   "sorties": [
+    {"nom":"Rang","type":"texte"}
+   ],
+   "reglages": [
+    {"nom":"Pièces","type":"curseur","defaut":8,"min":1},
+    {"nom":"Graines","type":"choix","defaut":"Une par tour","choix":["Une par tour","Identiques"]}
+   ]
+  },
+  "corpus-fabriquer-fin": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Séquence","type":"sequence"},
+    {"nom":"Rang","type":"texte","requis":false}
+   ],
+   "sorties": [
+    {"nom":"Corpus","type":"corpus"},
+    {"nom":"Journal","type":"texte"}
+   ],
+   "reglages": [
+    {"nom":"Format","type":"choix","defaut":"aucun","choix":["aucun","midi","musicxml"]},
+    {"nom":"Dossier","type":"dossier","defaut":""},
+    {"nom":"Préfixe","type":"texte","defaut":"piece"},
+    {"nom":"Si le fichier existe","type":"choix","defaut":"erreur","choix":["erreur","ecraser"]}
+   ]
+  },
   "correction-hauteur": {
    "version": 1,
    "entrees": [
@@ -4468,6 +4496,20 @@
     {"nom":"Anticipation","type":"curseur","defaut":2,"min":0.5,"max":10,"unite":"ms"},
     {"nom":"Maintien","type":"curseur","defaut":20,"min":0,"max":100,"unite":"ms"},
     {"nom":"Relâchement","type":"curseur","defaut":100,"min":10,"max":1000,"unite":"ms"}
+   ]
+  },
+  "lire-corpus": {
+   "version": 1,
+   "entrees": [],
+   "sorties": [
+    {"nom":"Corpus","type":"corpus"},
+    {"nom":"Rapport","type":"texte"}
+   ],
+   "reglages": [
+    {"nom":"Source","type":"choix","defaut":"chorals-bach","choix":["chorals-bach","dossier"]},
+    {"nom":"Dossier","type":"dossier","defaut":""},
+    {"nom":"Voix","type":"nombre","defaut":4,"min":2,"max":4},
+    {"nom":"Limite","type":"nombre","defaut":0,"min":0,"max":10000}
    ]
   },
   "lire-partition": {

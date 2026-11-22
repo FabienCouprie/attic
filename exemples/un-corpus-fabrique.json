@@ -1,0 +1,62 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": { "x": 40, "y": -380 },
+      "width": 1180,
+      "height": 320,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UN CORPUS DE CHORALS FABRIQUÉ, UNE PIÈCE PAR PASSE\n\n« Fabriquer un corpus (début) » ouvre une boucle de quatre pièces. À chaque passe, « Mélodie aléatoire » invente une mélodie de deux mesures, « MIDI → Séquence » la rend en notes, et « Harmoniser à quatre voix » écrit l'alto, le ténor et la basse dessous. « Fabriquer un corpus (fin) » range chaque choral comme une pièce du corpus.\n\n« Graines » vaut « Une par pièce » : le numéro de la pièce se mêle à la graine de la mélodie, les quatre pièces diffèrent, et la même graine refait le même corpus. Le message de la fin donne une empreinte du corpus entier.\n\nLa sortie audio fait entendre la dernière pièce ; le journal de la fin donne une ligne par pièce.",
+        "nomEn": "A CORPUS OF CHORALES MADE, ONE PIECE PER PASS\n\n« Make a Corpus (Start) » opens a loop of four pieces. At every pass, « Random Melody » invents a two-bar melody, « MIDI → Sequence » turns it into notes, and « Harmonize in Four Parts » writes the alto, tenor and bass under it. « Make a Corpus (End) » stores every chorale as a piece of the corpus.\n\n« Seeds » is « One per piece »: the number of the piece is mixed into the seed of the melody, the four pieces differ, and the same seed makes the same corpus again. The message of the end gives a fingerprint of the whole corpus.\n\nThe audio output plays the last piece; the log of the end gives one line per piece."
+      }
+    },
+    {
+      "id": "debut",
+      "type": "atelier",
+      "position": { "x": 40, "y": 0 },
+      "data": { "ficheId": "corpus-fabriquer-debut", "parametres": { "Pièces": 4, "Graines": "Une par tour" } }
+    },
+    {
+      "id": "melodie",
+      "type": "atelier",
+      "position": { "x": 40, "y": 200 },
+      "data": { "ficheId": "melodie-aleatoire", "parametres": { "Graine": 7, "Mesures": 2, "Tempo": 80 } }
+    },
+    {
+      "id": "notes",
+      "type": "atelier",
+      "position": { "x": 420, "y": 240 },
+      "data": { "ficheId": "midi-vers-sequence", "parametres": {} }
+    },
+    {
+      "id": "harmoniser",
+      "type": "atelier",
+      "position": { "x": 780, "y": 200 },
+      "data": { "ficheId": "harmoniser-choral", "parametres": {} }
+    },
+    {
+      "id": "fin",
+      "type": "atelier",
+      "position": { "x": 1180, "y": 40 },
+      "data": { "ficheId": "corpus-fabriquer-fin", "parametres": { "Format": "aucun" } }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": { "x": 1180, "y": 360 },
+      "data": { "ficheId": "sortie-audio", "parametres": {} }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "debut", "sourceHandle": "out:0", "target": "fin", "targetHandle": "in:1", "type": "arete-personnalisee" },
+    { "id": "e2", "source": "melodie", "sourceHandle": "out:1", "target": "notes", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e3", "source": "notes", "sourceHandle": "out:0", "target": "harmoniser", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e4", "source": "harmoniser", "sourceHandle": "out:0", "target": "fin", "targetHandle": "in:0", "type": "arete-personnalisee" },
+    { "id": "e5", "source": "harmoniser", "sourceHandle": "out:2", "target": "ecoute", "targetHandle": "in:0", "type": "arete-personnalisee" }
+  ],
+  "metas": [],
+  "viewport": { "x": 60, "y": 420, "zoom": 0.6 }
+}

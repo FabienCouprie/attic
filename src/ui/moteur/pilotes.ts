@@ -25,7 +25,9 @@ import type { Sequence } from "../../audio/sequence";
 import { planifierLot, publierLot } from "../../plugins/lotGlobal";
 // LES BORNES SONT DÉCLARÉES AVEC LE COMPTEUR, ET NON ICI. Recopiées des deux côtés, elles auraient
 // dérivé à la première qu'on aurait changée, et le test ne garderait plus que la copie du module.
-import { avancerBoucles, planifierBoucles, publierBoucles, PASSES_MAX_TOTAL } from "../../plugins/boucleSequencesGlobal";
+import { avancerBoucles, grainesDeLaBoucle, planifierBoucles, publierBoucles, PASSES_MAX_TOTAL } from "../../plugins/boucleSequencesGlobal";
+import { GRAINES_PAR_TOUR, REGLAGE_GRAINES } from "../../core/boucle-graphe";
+import type { GrainesDesPasses, PasseDuCorps } from "../../core/graines-de-passe";
 import type { JetonDeRun } from "./ordonnanceur-runs";
 import { servicesOrchestration } from "../services-orchestration";
 import type { Emplacement, LancerUnePasse, PerimetreCible } from "./passe";
@@ -106,18 +108,37 @@ export function creerPilotesDePasse({ lancerUnePasse, graphe, cache, arretDuLot 
       morceaux: [] as Sequence[], recoltes: [] as Sequence[],
     }));
 
-    /** Ce qui doit rejouer : le corps de ces boucles, désigné par ses deux bouts. */
+    /** Le corps d'une boucle, désigné par ses deux bouts : ce qui doit rejouer à chaque passe. */
+    const corpsDe = (k: number): Set<string> => {
+      const corps = new Set<string>([etats[k].debutId]);
+      for (const id of descendants(etats[k].debutId, aretesG())) corps.add(id);
+      for (const finId of etats[k].finsIds) {
+        corps.add(finId);
+        for (const id of ancetres(finId, aretesG())) corps.add(id);
+      }
+      return corps;
+    };
     const oublierLeCorps = (depuis: number) => {
       const aRejouer = new Set<string>();
-      for (let k = depuis; k < etats.length; k++) {
-        aRejouer.add(etats[k].debutId);
-        for (const id of descendants(etats[k].debutId, aretesG())) aRejouer.add(id);
-        for (const finId of etats[k].finsIds) {
-          aRejouer.add(finId);
-          for (const id of ancetres(finId, aretesG())) aRejouer.add(id);
-        }
-      }
+      for (let k = depuis; k < etats.length; k++) for (const id of corpsDe(k)) aRejouer.add(id);
       cache.oublier(aRejouer);
+    };
+
+    // LES GRAINES D'UNE BOUCLE QUI LES DEMANDE, passe par passe, et des bases pour le run ENTIER.
+    // Sans ces bases, chaque passe créait sa table, une graine à zéro se tirait à neuf à chaque
+    // pièce, et le message ne rendait que celle de la dernière : rien ne se rejouait. Une boucle
+    // dans une autre l'emporte sur elle pour les nœuds qu'elles partagent, étant plus loin dans
+    // `etats`. Voir `grainesDeLaBoucle` pour les boucles qui le demandent.
+    const basesDeGraine = new Map<string, number>();
+    const modes = etats.map((e) => grainesDeLaBoucle(aplati.noeuds.find((n) => n.id === e.debutId), REGLAGE_GRAINES, GRAINES_PAR_TOUR));
+    const grainesDesPasses = (): GrainesDesPasses | undefined => {
+      const passes = new Map<string, PasseDuCorps>();
+      for (let k = 0; k < etats.length; k++) {
+        const mode = modes[k];
+        if (!mode) continue;
+        for (const id of corpsDe(k)) passes.set(id, { passe: etats[k].index, parPasse: mode === "par-passe" });
+      }
+      return passes.size > 0 ? { passes, basesDeGraine } : undefined;
     };
 
     try {
@@ -130,7 +151,7 @@ export function creerPilotesDePasse({ lancerUnePasse, graphe, cache, arretDuLot 
       // défauts à trouver. Relevé sur une boucle par créneau relancée deux fois de suite.
       oublierLeCorps(0);
       // La passe de découverte : chaque début y remplit ses morceaux.
-      await lancerUnePasse(noeudPrioritaireId, perimetre, jeton);
+      await lancerUnePasse(noeudPrioritaireId, perimetre, jeton, grainesDesPasses());
 
       // LE COMPTEUR EST DANS `boucleSequencesGlobal.ts`, AVEC SES BORNES ET SES TESTS. Une mécanique
       // dont toute la valeur est de s'arrêter ne peut pas vivre dans un composant, où aucun test de
@@ -139,7 +160,7 @@ export function creerPilotesDePasse({ lancerUnePasse, graphe, cache, arretDuLot 
       while (avancerBoucles(etats)) {
         if (arretDuLot.current || faites >= PASSES_MAX_TOTAL) break;
         oublierLeCorps(0);
-        await lancerUnePasse(noeudPrioritaireId, perimetre, jeton);
+        await lancerUnePasse(noeudPrioritaireId, perimetre, jeton, grainesDesPasses());
         faites++;
       }
     } finally {

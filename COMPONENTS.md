@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **517 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **520 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **517 components** in **7 categories** and **63 families**. Every na
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 93 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Harmonization](#harmonization) (4) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
+| [Other & lab](#other--lab) | 96 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Harmonization](#harmonization) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -11252,6 +11252,9 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 | [Check a Chorale](#check-a-chorale) | Checks a four-voice chorale against the rules of four-part writing, and names every fault at its bar and beat. |
 | [Harmonize (Coconet)](#harmonize-coconet) | Harmonizes a melody in four voices with a network trained on Bach's chorales. |
 | [Harmonize in Four Parts](#harmonize-in-four-parts) | Writes the alto, tenor and bass under a soprano, following the rules of four-part writing. |
+| [Make a Corpus (End)](#make-a-corpus-end) | Closes the loop that makes a corpus: every pass lays one piece in it, written to a file when asked. |
+| [Make a Corpus (Start)](#make-a-corpus-start) | Opens a loop that makes a corpus: what feeds the end is computed once per piece. |
+| [Read a Corpus](#read-a-corpus) | Reads a folder of pieces in parts, or the bundled Bach chorales, and returns them as a corpus. |
 | [Read a Score](#read-a-score) | Reads a MusicXML, MEI, Humdrum or ABC score, or a DCML notes table, and returns a sequence with one voice per staff layer. |
 
 #### Check a Chorale
@@ -11321,6 +11324,65 @@ This component writes the alto, tenor and bass under the received melody, which 
 | Inversions | checkbox | 1 | 0 / 1 | Checked, the bass may carry the third, the fifth or the seventh. Unchecked, it always carries the root. |
 | Temperature | slider | 0 | 0 – 2, step 0.05 | At zero, the cheapest chorale. Above it, every chorale is drawn according to the exponential of minus its cost divided by the temperature. |
 | Seed | slider | 0 | 0 – 999999, step 1 | Fixes the draw when « Temperature » is above zero. At zero, the seed has no effect. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Make a Corpus (End)
+
+`corpus-fabriquer-fin` · Other & lab → Harmonization
+
+*Closes the loop that makes a corpus: every pass lays one piece in it, written to a file when asked.*
+
+This component closes the loop opened by « Make a Corpus (Start) »: at every pass, the received sequence becomes a piece of the corpus, with its voices and its key estimated on its notes. « Format » says whether every piece is also written to a file. « MIDI » writes one track per voice, each on its channel; « MusicXML » writes one part per voice, in bass clef for a voice most of whose notes are below middle C; « None » writes nothing, and the corpus only lives in the graph. Files go to the folder named by « Folder ». « Prefix » begins the name of every file, followed by the number of the piece on at least three digits: piece-001.mid, piece-002.mid. « If the file exists » decides what happens when a file of that name is already in the folder: « Error » leaves the file in place and does not write the piece, « Overwrite » replaces it. The « Rank » input receives the number of the piece returned by the start of the loop; without it, the number is that of the pass. The « Corpus » output returns the pieces made up to the current pass; at the last one, the whole corpus. A stopped run thus keeps what was done. The « Log » output gives one line per piece: its name, its number of notes and voices, its key, and the file written or the reason for the refusal. The message gives, at the last pass, the number of pieces and a fingerprint of the corpus: two corpora with the same fingerprint are the same.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence | required |
+| input | Rank | text |  |
+| output | Corpus | corpus |  |
+| output | Log | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Format | choice | None | None / MIDI / MusicXML | No file, one MIDI track per voice, or one MusicXML part per voice. |
+| Folder | folder | — |  | The folder where files are written. The « … » button opens the system picker. |
+| Prefix | text | `piece` |  | The beginning of the name of every file, before the number of the piece. |
+| If the file exists | choice | Error | Error / Overwrite | « Error » leaves a file of the same name in place and does not write the piece; « Overwrite » replaces it. |
+
+#### Make a Corpus (Start)
+
+`corpus-fabriquer-debut` · Other & lab → Harmonization
+
+*Opens a loop that makes a corpus: what feeds the end is computed once per piece.*
+
+This component opens a loop that makes a corpus: everything that feeds « Make a Corpus (End) » is computed once per piece, generators without input included, and every pass gives one piece. « Pieces » sets their number. « Seeds » says what becomes of the « Seed » settings of the components computed at every pass. « One per piece » mixes the number of the piece into every seed: the pieces differ, and the same seed with the same number of pieces always makes the same corpus again. « Identical » gives the same seed to every piece. Either way, a seed at zero is drawn once for all the pieces, and the message of the component that drew it gives it back: putting it back makes the whole corpus again. The « Rank » output returns the number of the current piece, from one. Connected to the « Rank » input of the end, it links the two ends of the loop. The message gives the number of the piece out of the number asked for.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Rank | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Pieces | number | 8 | 1 – no ceiling, step 1 | How many pieces, hence how many times the chain is computed. The number is free; the message gives the number of the piece out of the number asked for, so that a number the total pass limit does not allow shows up. |
+| Seeds | choice | One per piece | One per piece / Identical | « One per piece » mixes the number of the piece into every seed of the body, « Identical » gives them all the same one. A seed at zero is drawn once for the whole corpus, and putting it back makes it whole again. |
+
+#### Read a Corpus
+
+`lire-corpus` · Other & lab → Harmonization
+
+*Reads a folder of pieces in parts, or the bundled Bach chorales, and returns them as a corpus.*
+
+This component reads pieces in several parts and returns them together, each kept apart from the others, with its voices, the name of its file and its key. « Source » chooses where they come from. « Bach chorales (corrected DCML) » takes the 361 chorales of the Digital and Cognitive Musicology Lab, in four parts but one in five (DCMLab/bach_chorales, version 2.0, public domain), bundled with the application and fetched on first use. 489 of their pitches were corrected after Craig Sapp's encoding; six chorales that this encoding does not surely match are delivered unchecked, and the report names them. « Folder » reads the files of the folder named by the setting of the same name. In a folder, every file is read according to its extension: a MIDI file, .mid or .midi, gives one voice per track that carries notes; MusicXML, .musicxml, .xml or .mxl, MEI, Humdrum, .krn, and ABC give one voice per layer of each staff; a DCML notes table, .tsv, one voice per layer of each staff. Files are read in the alphabetical order of their names. « Voices » is the number of voices a piece must have: a piece with another number is left out, and the report names it with that number. « Limit » stops reading after that many kept pieces; at zero, all are read. The key of every piece is estimated on its notes, by the method of Carol Krumhansl and Mark Schmuckler: the duration of every pitch class is compared with the profiles of the twenty-four keys, and the closest is kept. The « Corpus » output returns the kept pieces. The « Report » output gives the number of pieces read and left out, every piece left out with its reason, and for the Bach chorales the number of corrected pitches and the chorales delivered unchecked.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| output | Corpus | corpus |  |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Source | choice | Bach chorales (corrected DCML) | Bach chorales (corrected DCML) / Folder | The Bach chorales bundled with the application, or the files of the folder named by « Folder ». |
+| Folder | folder | — |  | The folder read when « Source » is « Folder ». The « … » button opens the system picker. |
+| Voices | number | 4 | 2 – 4, step 1 | The number of voices a piece must have to be kept. |
+| Limit | number | 0 | 0 – 10000, step 1 | The number of kept pieces after which reading stops. At zero, all are read. |
 
 #### Read a Score
 

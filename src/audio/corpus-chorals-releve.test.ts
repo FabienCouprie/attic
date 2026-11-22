@@ -47,7 +47,7 @@ const ENTITES: Record<string, string> = { auml: "ä", ouml: "ö", uuml: "ü", Au
 const decoder = (t: string) => t.replace(/&(\w+);/g, (m, e) => ENTITES[e] ?? m);
 const simplifier = (t: string) => decoder(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z]/g, "");
 
-interface Ecart { choral: number; sapp: number; voix: number; noire: number; dcml: number; hauteurSapp: number }
+interface Ecart { choral: string; sapp: number; voix: number; noire: number; dcml: number; hauteurSapp: number }
 
 /** La tonalité qu'un Humdrum déclare (`*G:` sol majeur, `*g:` sol mineur), ou `null`. */
 function tonaliteKern(texte: string): { tonique: number; mode: Mode } | null {
@@ -107,7 +107,11 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
     let orphelines = 0;
     for (const table of tables) {
       const numero = Number(/^(\d+)/.exec(table)?.[1]);
-      const titreDcml = table.replace(/^\d+\s+/, "").replace(/\.notes\.tsv$/, "");
+      // L'IDENTIFIANT ENTIER, ET NON LE SEUL NOMBRE : le DCML a un « 283bis » à côté du 283, et les
+      // écarts des deux tables s'écrivaient sous le même numéro, impossibles à rendre à la leur.
+      // Relevé le 2026-11-22 par le fabricant du corpus livré (`corpus-dcml-livre.test.ts`).
+      const ident = /^(\d+\w*)/.exec(table)?.[1] ?? String(numero);
+      const titreDcml = table.replace(/^\d+\w*\s+/, "").replace(/\.notes\.tsv$/, "");
       const dcml = lireTableDcml(readFileSync(join(notesDcml, table), "utf8"), 60).sequence.notes;
       const classes = sapps.map((s) => ({ s, score: accord(dcml, s.index) })).sort((a, b) => b.score - a.score);
       const { s: sapp, score } = classes[0];
@@ -124,10 +128,10 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
         if (!jumelle) { seules++; continue; }
         comparees++;
         if (jumelle.note === n.note) identiques++;
-        else { differentes++; ecarts.push({ choral: numero, sapp: sapp.numero, voix: n.voix ?? 0, noire: n.debut, dcml: n.note, hauteurSapp: jumelle.note }); }
+        else { differentes++; ecarts.push({ choral: ident, sapp: sapp.numero, voix: n.voix ?? 0, noire: n.debut, dcml: n.note, hauteurSapp: jumelle.note }); }
       }
       orphelines += seules;
-      lignes.push(`| ${numero} | ${sapp.numero}${sapp.numero === numero ? "" : " ←"} | ${titreDcml}${memeTitre ? "" : ` ≠ ${sapp.titre}`} | ${(part * 100).toFixed(1)} % | ${dcml.length} | ${sapp.notes.length} | ${differentes} | ${seules} |`);
+      lignes.push(`| ${ident} | ${sapp.numero}${sapp.numero === numero ? "" : " ←"} | ${titreDcml}${memeTitre ? "" : ` ≠ ${sapp.titre}`} | ${(part * 100).toFixed(1)} % | ${dcml.length} | ${sapp.notes.length} | ${differentes} | ${seules} |`);
     }
 
     // LES TESSITURES DE BACH, voix par voix, sur les hauteurs de Sapp, qui sont justes : l'étendue

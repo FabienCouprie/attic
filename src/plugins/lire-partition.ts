@@ -5,18 +5,15 @@
 // en MEI n'entraient dans aucune chaîne.
 //
 // LE CALCUL EST DANS `audio/partition-lecture.ts` POUR LES PARTITIONS, ET DANS `audio/dcml-tsv.ts`
-// POUR LES TABLES DU DCML ; ce fichier choisit la source, charge le moteur et compose le rapport.
+// POUR LES TABLES DU DCML, et la lecture d'une source est partagée avec « Lire un corpus »
+// (`plugins/partition-source.ts`) ; ce fichier choisit la source et compose le rapport.
 
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
-import { detecterFormat, entreeVerovio, type FormatNotation } from "../audio/verovio";
-import { hauteursHumdrum, lireDepuisVerovio } from "../audio/partition-lecture";
-import { lireTableDcml } from "../audio/dcml-tsv";
 import { nomNote } from "../audio/nom-note";
-import type { Sequence } from "../audio/sequence";
-import { outilVerovio } from "./verovio-outil";
+import { lirePartitionSource, NOMS_FORMAT, octetsLus, type SourcePartition } from "./partition-source";
 
 const en = () => langueCourante() === "en";
 
@@ -40,15 +37,7 @@ const EXTRAIT = `<?xml version="1.0" encoding="UTF-8"?>
 <note><pitch><step>C</step><octave>3</octave></pitch><duration>2</duration><voice>6</voice><type>half</type><staff>2</staff></note>
 </measure></part></score-partwise>`;
 
-/** Une table de notes du DCML : un en-tête tabulé qui nomme l'attaque, la portée et la hauteur. */
-const estTableDcml = (t: string) => {
-  const entete = t.split("\n", 1)[0].split("\t");
-  return entete.includes("midi") && entete.includes("staff") && entete.some((c) => c.startsWith("quarterbeats"));
-};
-
-type Source = { texte: string; zip?: undefined; nom: string } | { texte?: undefined; zip: ArrayBuffer; nom: string };
-
-const NOMS_FORMAT: Record<FormatNotation | "dcml", string> = { abc: "ABC", musicxml: "MusicXML", mei: "MEI", humdrum: "Humdrum", dcml: "DCML" };
+type Source = SourcePartition;
 
 export const fiches: FicheAudio[] = ([
   fiche({
@@ -87,9 +76,10 @@ export const fiches: FicheAudio[] = ([
           return { valeurs: [null, null], erreur: true, message: en() ? "Reading a file requires the desktop application." : "Lire un fichier demande l'application de bureau." };
         }
         if (/\.mxl$/i.test(chemin)) {
-          const octets = await api.lireBinaire(chemin);
-          if (!octets) return { valeurs: [null, null], erreur: true, message: `${en() ? "Unreadable file" : "Fichier illisible"} : ${chemin}` };
-          const vue = octets instanceof Uint8Array ? octets : new Uint8Array(octets);
+          // `lireBinaire` REND `{ donnees, nom }`, ET NON LES OCTETS : lus comme tels, ils donnaient
+          // une archive vide, refusée par Verovio. Relevé en écrivant « Lire un corpus ».
+          const vue = octetsLus(await api.lireBinaire(chemin));
+          if (!vue) return { valeurs: [null, null], erreur: true, message: `${en() ? "Unreadable file" : "Fichier illisible"} : ${chemin}` };
           source = { zip: vue.buffer.slice(vue.byteOffset, vue.byteOffset + vue.byteLength) as ArrayBuffer, nom: chemin };
         } else {
           const texte = await api.lireTexte(chemin);
@@ -99,53 +89,11 @@ export const fiches: FicheAudio[] = ([
       } else {
         source = { texte: ctx.paramTexte("Notation", EXTRAIT), nom: en() ? "Notation setting" : "réglage Notation" };
       }
-      const tempoImpose = ctx.paramNombre("Tempo", 0);
-
-      let sequence: Sequence;
-      let format: FormatNotation | "dcml";
-      const lignes: string[] = [];
-      if (source.texte !== undefined && estTableDcml(source.texte)) {
-        format = "dcml";
-        const lue = lireTableDcml(source.texte, tempoImpose > 0 ? tempoImpose : 100);
-        sequence = lue.sequence;
-        lignes.push(`${en() ? "tied notes joined" : "notes liées jointes"} : ${lue.liees}`);
-        for (const r of lue.refusees.slice(0, 20)) lignes.push(`${en() ? "row" : "ligne"} ${r.ligne} ${en() ? "refused" : "refusée"} : ${r.raison}`);
-        if (lue.refusees.length > 0 && sequence.notes.length === 0) {
-          return { valeurs: [null, lignes.join("\n")], erreur: true, message: lue.refusees[0].raison };
-        }
-      } else {
-        format = source.zip ? "musicxml" : (detecterFormat(source.texte ?? "") as FormatNotation);
-        if (!format) {
-          return { valeurs: [null, null], erreur: true, message: en()
-            ? "Notation not recognised: expected MusicXML, MEI, Humdrum, ABC or a DCML table."
-            : "Notation non reconnue : attendu MusicXML, MEI, Humdrum, ABC ou une table du DCML." };
-        }
-        let tk: any = null;
-        try {
-          tk = await outilVerovio(format === "humdrum");
-          tk.setOptions({ inputFrom: entreeVerovio(format), expandNever: true });
-          const charge = source.zip ? tk.loadZipDataBuffer(source.zip) : tk.loadData(source.texte);
-          if (!charge) {
-            return { valeurs: [null, null], erreur: true, message: en()
-              ? `${NOMS_FORMAT[format]} refused by Verovio: check the notation.`
-              : `${NOMS_FORMAT[format]} refusé par Verovio : vérifiez la notation.` };
-          }
-          // Le Humdrum reprend ses hauteurs dans son texte : l'import de Verovio perd les altérations
-          // que l'armure porte (`hauteursHumdrum`).
-          const ecrites = format === "humdrum" && source.texte ? hauteursHumdrum(source.texte) : undefined;
-          const lue = lireDepuisVerovio(tk, tempoImpose, ecrites);
-          sequence = lue.sequence;
-          lignes.push(`${en() ? "tied notes joined" : "notes liées jointes"} : ${lue.liees}`);
-          if (lue.sansVoix > 0) lignes.push(`${en() ? "notes without staff or layer, left out" : "notes sans portée ni couche, écartées"} : ${lue.sansVoix}`);
-        } catch (e: any) {
-          return { valeurs: [null, null], erreur: true, message: e?.message ?? String(e) };
-        } finally {
-          tk?.destroy?.();
-        }
+      const lue = await lirePartitionSource(source, ctx.paramNombre("Tempo", 0));
+      if (!lue.ok) {
+        return { valeurs: [null, lue.lignes.length ? lue.lignes.join("\n") : null], erreur: true, message: lue.message };
       }
-      if (sequence.notes.length === 0) {
-        return { valeurs: [null, lignes.join("\n")], erreur: true, message: en() ? "No note in the score." : "Aucune note dans la partition." };
-      }
+      const { sequence, format, lignes } = lue;
       const nbVoix = (sequence.voix ?? []).length || 1;
       const parVoix = Array.from({ length: nbVoix }, (_, v) => {
         const siennes = sequence.notes.filter((n) => (n.voix ?? 0) === v);

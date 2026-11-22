@@ -30,6 +30,34 @@ export const FICHE_CRENEAU_DEBUT = "boucle-creneau-debut";
 export const FICHE_CRENEAU_FIN = "boucle-creneau-fin";
 export const FICHE_CERCLE_DEBUT = "cercle-boucle-debut";
 export const FICHE_CERCLE_FIN = "cercle-boucle-fin";
+export const FICHE_CORPUS_DEBUT = "corpus-fabriquer-debut";
+export const FICHE_CORPUS_FIN = "corpus-fabriquer-fin";
+
+/**
+ * Le libellé de l'option « Une par pièce » du réglage `REGLAGE_GRAINES` d'un début de corpus, dont
+ * l'identifiant est `GRAINES_PAR_TOUR` (`core/boucle-graphe.ts`), comme sur les débuts de boucle de
+ * graphe.
+ */
+export const GRAINES_PAR_PIECE = "Une par pièce";
+
+/**
+ * Ce qu'une boucle à passes demande de ses graines, lu sur son nœud de début, ou `null`.
+ *
+ * SEULE LA BOUCLE DE CORPUS LE DEMANDE. Les boucles par voix, par créneau et sur cercles résolvent
+ * leurs graines comme avant, passe par passe, sans base partagée : les changer ferait sonner
+ * autrement des graphes enregistrés. LE RÉGLAGE EST LU BRUT, comme celui d'une boucle de graphe
+ * (`deplierBoucles`) : sa valeur rangée est l'identifiant, et un graphe écrit à la main qui
+ * porterait le libellé est lu de même. Absent, il vaut son défaut, une graine par pièce.
+ */
+export function grainesDeLaBoucle(
+  debut: { data?: { ficheId?: string; parametres?: Record<string, unknown> } } | undefined,
+  reglage: string, parTour: string,
+): "identiques" | "par-passe" | null {
+  if (debut?.data?.ficheId !== FICHE_CORPUS_DEBUT) return null;
+  const brut = debut.data.parametres?.[reglage];
+  if (brut === undefined || brut === parTour || brut === GRAINES_PAR_PIECE || brut === "One per piece") return "par-passe";
+  return "identiques";
+}
 
 /**
  * Les nœuds qui ouvrent une boucle sur une valeur.
@@ -40,7 +68,7 @@ export const FICHE_CERCLE_FIN = "cercle-boucle-fin";
  * s'ajoute ici, et rien d'autre ne bouge.
  */
 export const FICHES_BOUCLE_DEBUT: readonly string[] =
-  [FICHE_BOUCLE_DEBUT, FICHE_CRENEAU_DEBUT, FICHE_CERCLE_DEBUT];
+  [FICHE_BOUCLE_DEBUT, FICHE_CRENEAU_DEBUT, FICHE_CERCLE_DEBUT, FICHE_CORPUS_DEBUT];
 
 export interface BoucleCourante {
   /** Le nœud de début qui commande cette boucle, pour invalider son cache à chaque passe. */
@@ -171,13 +199,14 @@ export interface PlanBoucle {
 }
 
 export const FICHES_BOUCLE_FIN: readonly string[] =
-  [FICHE_BOUCLE_FIN, FICHE_CRENEAU_FIN, FICHE_CERCLE_FIN];
+  [FICHE_BOUCLE_FIN, FICHE_CRENEAU_FIN, FICHE_CERCLE_FIN, FICHE_CORPUS_FIN];
 
 /** Quelle fin referme quel début. Une boucle par créneau ne se referme pas par une fin de voix. */
 const FIN_DE_DEBUT: Record<string, string> = {
   [FICHE_BOUCLE_DEBUT]: FICHE_BOUCLE_FIN,
   [FICHE_CRENEAU_DEBUT]: FICHE_CRENEAU_FIN,
   [FICHE_CERCLE_DEBUT]: FICHE_CERCLE_FIN,
+  [FICHE_CORPUS_DEBUT]: FICHE_CORPUS_FIN,
 };
 
 /**

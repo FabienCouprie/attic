@@ -22,7 +22,7 @@
 // les trois magasins, par les imports transitifs.
 import type { AreteG, NoeudG } from "../../core";
 import { creerTablesDePasse, executerLesNoeuds, type PretsDeLaBoucle } from "../../core/execution";
-import { creerResolveurDeGraines } from "../../core/graines-de-passe";
+import { creerResolveurDeGraines, type GrainesDesPasses } from "../../core/graines-de-passe";
 import { metaDeLInstantane, scellerLInstantane, signalerLesEcritures } from "../../core/instantane-de-graphe";
 import { preparerLaPasse } from "../../core/preparation-passe";
 import type { QuestionsAuShell, RecepteurDuMoteur } from "../../core/protocole-moteur";
@@ -60,7 +60,11 @@ export interface PerimetreCible {
   attendre?: readonly string[];
 }
 
-export type LancerUnePasse = (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun) => Promise<void>;
+/**
+ * Une passe. `graines` vient du pilote d'une boucle à passes qui demande ses graines : le corps de la
+ * boucle, la passe en cours et des bases partagées par tout le run (`core/graines-de-passe.ts`).
+ */
+export type LancerUnePasse = (noeudPrioritaireId?: string, perimetre?: PerimetreCible, jeton?: JetonDeRun, graines?: GrainesDesPasses) => Promise<void>;
 
 /** Une case que le moteur lit et écrit : le contrôleur de la passe en cours, l'arrêt du lot. */
 export interface Emplacement<T> { current: T }
@@ -95,7 +99,7 @@ export interface PretsDeLaPasse extends Pick<QuestionsAuShell, "graphe" | "prior
 
 export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
   const { cache, repertoire, t } = p;
-  return async (noeudPrioritaireId, perimetre, jeton) => {
+  return async (noeudPrioritaireId, perimetre, jeton, graines) => {
     // ═══ LE GARDE ANTI-CHEVAUCHEMENT A QUITTÉ CET ENDROIT ═══
     //
     // Il s'écrivait `if (!noeudPrioritaireId && enExecRef.current) return;` et il avait DEUX
@@ -173,6 +177,7 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
       // Une par nœud et par réglage, partagée par les copies d'une boucle, rendue à qui l'a tirée.
       const { graineDuNoeud, grainesTirees } = creerResolveurDeGraines({
         toursDesCopies: deplie.toursDesCopies, origines: deplie.origines, expansions: plat.expansions,
+        passes: graines?.passes, basesPartagees: graines?.basesDeGraine,
       });
       // Les tables VIVANTES du run, pour les nœuds qui passent en dernier (cf. grapheGlobal.ts).
       servicesOrchestration().publierExecution({ ordre: ordreFiltre, noeuds: nds, aretes: aretesG, resultats, messages, expansions: plat.expansions });

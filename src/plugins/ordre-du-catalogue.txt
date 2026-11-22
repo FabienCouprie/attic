@@ -445,6 +445,9 @@ harmoniser-coconet
 lire-partition
 verifier-choral
 harmoniser-choral
+lire-corpus
+corpus-fabriquer-debut
+corpus-fabriquer-fin
 pure-data
 visualisation-songsee
 export-image

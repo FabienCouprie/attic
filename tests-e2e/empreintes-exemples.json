@@ -750,6 +750,52 @@
       },
       "erreurs": []
     },
+    "un-corpus-fabrique.json": {
+      "lecteurs": {
+        "melodie": {
+          "rms": 0.015764068824267053,
+          "crete": 0.12020153552293777,
+          "trames": 231525,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 2113.4866118387263,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "harmoniser": {
+          "rms": 0.2956238221372602,
+          "crete": 1.1268424987792969,
+          "trames": 231525,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 357.5238856126291,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "ecoute": {
+          "rms": 0.2956238221372602,
+          "crete": 1.1268424987792969,
+          "trames": 231525,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 357.5238856126291,
+          "blocs": [
+            "fmt",
+            "bext",
+            "fact",
+            "data",
+            "iXML"
+          ]
+        }
+      },
+      "erreurs": []
+    },
     "un-cri-etale-sur-le-clavier.json": {
       "lecteurs": {},
       "erreurs": [

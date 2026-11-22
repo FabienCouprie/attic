@@ -89,6 +89,7 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   { ou: "gamme-jouee·Graine", quand: { reglage: "Sens", sauf: ["aleatoire"] }, raison: UNE_GRAINE },
   { ou: "arpegiateur-midi·Graine", quand: { reglage: "Direction", sauf: ["aleatoire"] }, raison: UNE_GRAINE },
   { ou: "harmoniser-choral·Graine", quand: { reglage: "Température", valeurs: ["0"] }, raison: "à température nulle, le choral est celui de moindre coût, trouvé sans tirage ; dit dans sa documentation" },
+  { ou: "corpus-fabriquer-fin·Si le fichier existe", quand: { banc: true }, raison: "non mesurable au banc : le réglage n'agit que sur un fichier écrit, et le banc de node n'a ni dossier ni application de bureau ; tenu par plugins/fabriquer-corpus.test.ts" },
   { ou: "camelot·Graine", quand: { reglage: "Parcours", sauf: ["aleatoire"] }, raison: "la graine ne tire que le parcours aléatoire, et le parcours complet comme les voisins n'ont rien à tirer ; dit dans sa documentation" },
   { ou: "dither·Graine", quand: { reglage: "Dither", valeurs: ["aucun"] }, raison: "la graine ne tire que le bruit de dither, et sans dither rien n'est tiré ; dit dans sa documentation" },
   { ou: "tonal-grille·Durée", quand: { reglage: "Mode", valeurs: ["arpege"] }, raison: "en arpège, chaque note dure une croche, et la durée de l'accord n'a plus rien à régler ; dit dans sa documentation" },
@@ -164,6 +165,9 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
 
 /** Les coïncidences légitimes, chacune avec sa raison. */
 export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
+  { ou: "corpus-fabriquer-debut·Graines", valeurs: ["Une par tour", "Identiques"], raison: "les graines du corps sont réglées par le pilote, pour les nœuds rejoués à chaque passe, et non par ce nœud, que le banc lance seul ; tenu par core/graines-de-passe.test.ts et l'exemple un-corpus-fabrique.json" },
+  { ou: "corpus-fabriquer-fin·Format", valeurs: ["midi", "musicxml"], raison: "sans dossier ni application de bureau, le banc n'écrit aucun fichier, et les deux formats rendent le même corpus ; tenu par plugins/fabriquer-corpus.test.ts" },
+  { ou: "corpus-fabriquer-fin·Si le fichier existe", valeurs: ["erreur", "ecraser"], raison: "le réglage n'agit que sur un fichier écrit, ce que le banc de node ne fait pas ; tenu par plugins/fabriquer-corpus.test.ts" },
   { ou: "beat-repeat·Intervalle", valeurs: ["1/16", "1/16t", "1/32"], raison: "sous la taille par défaut, 1/16, un intervalle qui n'est pas plus long qu'elle rend l'entrée telle quelle" },
   { ou: "beat-repeat·Taille", valeurs: ["1/2", "1/4.", "1/4"], raison: "sous l'intervalle par défaut, 1/4, une taille qui n'est pas plus courte que lui rend l'entrée telle quelle" },
   { ou: "generateur-fractal·Gamme", valeurs: ["majeur", "bebop-dominant"], raison: "le motif par défaut, « Triade M », n'atteint jamais la septième, seul degré où le majeur et la bebop dominante diffèrent" },

@@ -24,6 +24,13 @@ export interface OptionsMusicXML {
   /** Plus petite valeur représentée : 4 = noire, 8 = croche, 16 = double-croche. */
   quantification?: number;
   instrument?: string;
+  /**
+   * Le nombre de mesures au moins. Une partition à plusieurs parties les veut toutes de la même
+   * longueur, et une voix qui se tait avant les autres en écrivait moins.
+   */
+  mesures?: number;
+  /** La clé : de sol par défaut, de fa pour une voix grave. */
+  cle?: "sol" | "fa";
 }
 
 /** Un degré chromatique en nom de note, avec son altération. */
@@ -145,7 +152,7 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
 
   const evenements = evenementsDepuisNotes(notes, tempo, grille);
   const fin = evenements.reduce((m, e) => Math.max(m, e.debut + e.duree), 0);
-  const nbMesures = Math.max(1, Math.ceil(fin / unitesParMesure));
+  const nbMesures = Math.max(1, options.mesures ?? 1, Math.ceil(fin / unitesParMesure));
 
   const lignes: string[] = [];
   lignes.push('<?xml version="1.0" encoding="UTF-8"?>');
@@ -166,7 +173,7 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
       lignes.push(`        <divisions>${divisions}</divisions>`);
       lignes.push('        <key><fifths>0</fifths></key>');
       lignes.push(`        <time><beats>${numerateur}</beats><beat-type>${denominateur}</beat-type></time>`);
-      lignes.push('        <clef><sign>G</sign><line>2</line></clef>');
+      lignes.push(options.cle === "fa" ? '        <clef><sign>F</sign><line>4</line></clef>' : '        <clef><sign>G</sign><line>2</line></clef>');
       lignes.push('      </attributes>');
       lignes.push(`      <direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${Math.round(tempo)}</per-minute></metronome></direction-type><sound tempo="${Math.round(tempo)}"/></direction>`);
     }

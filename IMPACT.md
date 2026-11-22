@@ -146,6 +146,11 @@ composants surveillés (`tests-e2e/empreintes.json`).
   `src/core/conteneurs.test.ts`, `src/core/boucle-graphe.test.ts`, `src/core/saut-de-boucle.test.ts`,
   `src/core/boucle-role.test.ts` et `src/plugins/boucle-role.test.ts` (le rôle déclaré, et la fin
   posée sous un ancien identifiant), et `src/docs/indices-moteur.test.ts` pour les trois indices.
+  Les graines d'une boucle à passes qui les demande, la seule étant celle qui fabrique un corpus
+  (`grainesDeLaBoucle`, `src/plugins/boucleSequencesGlobal.ts`), passent du pilote à la passe et se
+  résolvent dans `src/core/graines-de-passe.ts` : `src/core/graines-de-passe.test.ts` tient la règle,
+  `src/plugins/fabriquer-corpus.test.ts` la paire, et `exemples/un-corpus-fabrique.json` le tout dans
+  l'application, une graine posée refaisant le même corpus à son empreinte près.
 - **À relancer** : `npm run test:graphe-complexite`, trois boucles emboîtées, une bulle dans une
   bulle et un méta, dont le son est comparé à un attendu calculé à la main ; et les specs
   `tests-e2e/conteneurs-dans-application.spec.ts`, `tests-e2e/boucle-dans-lot-dans-application.spec.ts`,
