@@ -6,6 +6,23 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UNE DURÉE SE DESSINE EXACTE DANS LE MUSICXML, EN NOTES LIÉES QUAND IL LE FAUT, ET UNE NOTE LIÉE DE L'ARBRE GARDE SA HAUTEUR.** Revue des notations en texte, douzième format, 2026-11-22, deuxième lot.
+  - **La référence** : dans le référentiel MusicXML 4.0, `<duration>` est la durée voulue et `<type>` la valeur dessinée. `<tie>` lie pour le son et `<tied>` pour la gravure, et une liaison joint deux notes « of the same pitch ».
+  - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure :
+    - depuis un MIDI, une note qui passait la barre était tronquée : un ré de 3 à 5 temps se lisait de 3 à 4. Le code disait « faute de pouvoir la lier » ;
+    - cinq doubles croches se dessinaient en noire, sept en noire pointée, et un silence de cinq doubles croches en soupir. Tout ce qui suivait se lisait décalé ;
+    - depuis un arbre, une liaison par-dessus la barre n'écrivait que sa fin, et le graveur refrappait la note ;
+    - une feuille liée prenait la hauteur suivante, et la liaison joignait deux notes différentes. `derouler`, lui, la fond dans la précédente.
+  - **Ce qui change** :
+    - une note qui passe la barre, ou une durée qu'aucune valeur ne nomme, s'écrit en notes liées, la plus grande valeur d'abord. Un silence s'écrit en silences successifs ;
+    - chaque note porte sa voix, `<voice>`, ce qui prépare les voix du troisième lot ;
+    - la liaison de l'arbre commence sur la dernière note de la mesure, et une feuille liée garde la hauteur de la note qu'elle prolonge.
+
+    La notice le dit, et ne promet plus de tronquer.
+  - **Le garde** : 9 cas de plus dans `plugins/musicxml-grave.test.ts`.
+    - Vu rouge sur le code d'avant : les 9.
+    - Vu rouge aussi sur une liaison de barre de nouveau perdue, plantée.
+
 - **LE MUSICXML DESSINE SES ALTÉRATIONS, QUARTS DE TON COMPRIS, ET LA PARTITION GRAVÉE SE LIT COMME ELLE SONNE.** Revue des notations en texte, douzième format, 2026-11-22, premier lot.
   - **La référence** : le référentiel MusicXML 4.0 du W3C. `<alter>` « represents chromatic alteration » ; `<accidental>` « represents actual notated accidentals ».
   - **Ce qui se passait** : les trois chemins du nœud, depuis un MIDI, depuis un arbre et depuis plusieurs voix, n'écrivaient que `<alter>`. Mesuré par `executer`, gravé par la Partition gravée et relu par `lireGravure` :

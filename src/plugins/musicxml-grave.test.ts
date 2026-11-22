@@ -65,3 +65,37 @@ describe("LES ALTÉRATIONS SE DESSINENT, ET SE LISENT COMME ELLES SONNENT", () =
     expect(r.notes).toEqual(notes);
   }, 60_000);
 });
+
+// LES VALEURS ET LES LIAISONS, deuxième lot. `<duration>` est la durée voulue et `<type>` la valeur dessinée :
+// une note qui passe la barre était tronquée, « faute de pouvoir la lier », et une durée qu'aucune valeur ne
+// nomme se dessinait sous la valeur la plus proche, ce qui décalait la suite. `<tie>` et `<tied>` existent
+// pour cela, l'un pour le son, l'autre pour la gravure. Revue des notations en texte, 2026-11-22.
+describe("UNE DURÉE SE DESSINE EXACTE, EN NOTES LIÉES QUAND IL LE FAUT", () => {
+  it.each([
+    ["une note qui passe la barre", [[60, 0, 3], [62, 3, 5], [64, 5, 8]], "4/4"],
+    ["une note plus longue qu'une mesure", [[60, 0, 6], [62, 6, 8]], "4/4"],
+    ["cinq doubles croches", [[60, 0, 1.25], [62, 1.25, 2], [64, 2, 4]], "4/4"],
+    ["sept doubles croches", [[60, 0, 1.75], [62, 1.75, 2], [64, 2, 4]], "4/4"],
+    ["un silence de cinq doubles croches", [[60, 0, 1], [62, 2.25, 3], [64, 3, 4]], "4/4"],
+    ["une note qui passe la barre en 3/4", [[60, 0, 2], [62, 2, 4], [64, 4, 6]], "3/4"],
+    ["un dièse lié par-dessus la barre, puis redit", [[64, 0, 3], [66, 3, 5], [66, 5, 6], [64, 6, 8]], "4/4"],
+  ] as [string, NoteLue[], string][])("depuis une séquence : %s", async (_titre, notes, metrique) => {
+    const r = await graver([null, sequence(notes), null], { Métrique: metrique });
+    expect(r.x.erreurRendue, r.x.message).toBe(false);
+    expect(r.lu.inconnus).toEqual([]);
+    expect(r.notes).toEqual(notes);
+  }, 60_000);
+
+  it("depuis un arbre : une liaison par-dessus la barre", async () => {
+    const r = await graver([null, null, "(? ((4/4 (1 1 1 1)) (4/4 (1.0 1 1 1))))"]);
+    expect(r.x.erreurRendue, r.x.message).toBe(false);
+    expect(r.notes).toEqual([[60, 0, 1], [60, 1, 2], [60, 2, 3], [60, 3, 5], [60, 5, 6], [60, 6, 7], [60, 7, 8]]);
+  }, 60_000);
+
+  it("depuis un arbre : une note liée garde sa hauteur, et la suivante prend la sienne", async () => {
+    const notes: NoteLue[] = [[60, 0, 2], [62, 2, 3], [64, 3, 4]];
+    const r = await graver([null, sequence(notes), "(4/4 (1 1.0 1 1))"]);
+    expect(r.x.erreurRendue, r.x.message).toBe(false);
+    expect(r.notes).toEqual(notes);
+  }, 60_000);
+});

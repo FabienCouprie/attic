@@ -252,6 +252,7 @@ function unePartie(
 
   const lignes: string[] = [];
   let rang = 0;
+  let derniere = hauteurs.length > 0 ? hauteurs[0] : 60;
   mesures.forEach((m, iMesure) => {
     const feuilles = parMesure[iMesure];
     lignes.push(`    <measure number="${iMesure + 1}">`);
@@ -272,7 +273,17 @@ function unePartie(
 
     // LES HAUTEURS DE LA MESURE D'ABORD, pour que ses signes se décident dans l'ordre du temps : voir
     // `signesDeLaMesure`.
-    const hauteursDeMesure = feuilles.map((f) => (f.silence ? null : hauteurs.length > 0 ? hauteurs[rang++ % hauteurs.length] : 60));
+    // UNE FEUILLE LIÉE PROLONGE LA NOTE D'AVANT, et en garde la hauteur : elle prenait la hauteur suivante,
+    // et la liaison joignait deux notes différentes. `derouler` la fond dans la précédente, et le
+    // référentiel MusicXML lie deux notes « of the same pitch ». Revue des notations en texte, 2026-11-22.
+    const hauteursDeMesure = feuilles.map((f) => {
+      if (f.silence) return null;
+      if (!f.liee) derniere = hauteurs.length > 0 ? hauteurs[rang++ % hauteurs.length] : 60;
+      return derniere;
+    });
+    // LA LIAISON PAR-DESSUS LA BARRE commence sur la dernière note de la mesure : la feuille liée qui ouvre
+    // la mesure suivante n'en écrivait que la fin.
+    const suivanteDe = (i: number) => feuilles[i + 1] ?? parMesure[iMesure + 1]?.[0];
     const tetes = feuilles.map((f, i) => {
       const h = hauteursDeMesure[i];
       return h === null ? null : { ...nomMusicXML(h), liee: f.liee };
@@ -304,7 +315,7 @@ function unePartie(
       // UNE NOTE LIÉE EST ÉCRITE COMME TELLE, et non fondue dans la précédente : la gravure montre
       // la liaison, là où le son n'entend qu'une durée plus longue.
       if (f.liee) lignes.push('        <tie type="stop"/>');
-      if (feuilles[i + 1]?.liee) lignes.push('        <tie type="start"/>');
+      if (suivanteDe(i)?.liee) lignes.push('        <tie type="start"/>');
       lignes.push(`        <type>${nom}</type>`);
       for (let p = 0; p < points; p++) lignes.push('        <dot/>');
       if (signes[i]) lignes.push(`        <accidental>${signes[i]}</accidental>`);
@@ -316,7 +327,7 @@ function unePartie(
       }
       const notations: string[] = [];
       if (f.liee) notations.push('<tied type="stop"/>');
-      if (feuilles[i + 1]?.liee) notations.push('<tied type="start"/>');
+      if (suivanteDe(i)?.liee) notations.push('<tied type="start"/>');
       if (debutGroupe) notations.push(`<tuplet type="start" number="1" bracket="yes"/>`);
       if (finGroupe) notations.push('<tuplet type="stop" number="1"/>');
       if (notations.length > 0) {
