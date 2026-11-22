@@ -1227,7 +1227,7 @@ Produces a rhythm written by successive divisions, and a series of pitches of th
 |---|---|---|---|---|
 | Source | choice | Catalogue | Catalogue / Draw / Drawing | Catalogue runs through the listed trees; Draw generates one at random. |
 | Number | number | 0 | 0 – 339, step 1 | The catalogue tree returned. Beyond the last, the count starts again at the first. No effect when « Source » is not « Catalogue ». |
-| Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The drawn tree, in list notation. The drawing writes it here, and a tree from elsewhere can be pasted into it. Used when the source is Drawing. |
+| Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The drawn tree, in list notation. The drawing writes it here, and a tree from elsewhere can be pasted into it. Used when the source is Drawing. OpenMusic's forms are read too: a voice « (? ((4//4 (1 1 1 1)))) », and a time signature « 4//4 » or « (4 4) ». A zero weight or one between 0 and 1, a tie with no note before it, a tied rest, a negative or tied division, a time signature with a zero term and an empty list are refused, and the message names the token. |
 | Time signature | choice | 4/4 | 2/2 / 3/2 / 4/2 / 1/4 / 2/4 / 3/4 / 4/4 / 5/4 / 6/4 / 7/4 / 3/8 / 4/8 / 5/8 / 6/8 / 7/8 / 8/8 / 9/8 / 10/8 / 11/8 / 12/8 / 13/8 / 14/8 / 15/8 / 5/16 / 7/16 / 9/16 / 11/16 / 12/16 / 13/16 / 15/16 | The measure used. No effect when « Source » is « Drawing »: the drawn tree carries its own time signature. |
 | Measures | number | 1 | 1 – 8, step 1 | How many measures are generated in a row. No effect when « Source » is not « Draw ». |
 | Slots | number | 4 | 1 – 8, step 1 | The number of divisions at the top of each drawn measure. No effect when « Source » is not « Draw ». |
@@ -3080,7 +3080,7 @@ Lays a rhythm written by divisions on a series of pitches, and returns the resul
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The rhythm in list notation, used when the input of the same name is not connected. |
+| Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The rhythm in list notation, used when the input of the same name is not connected. OpenMusic's forms are read too: a voice « (? ((4//4 (1 1 1 1)))) », and a time signature « 4//4 » or « (4 4) ». A zero weight or one between 0 and 1, a tie with no note before it, a tied rest, a negative or tied division, a time signature with a zero term and an empty list are refused, and the message names the token. |
 | Pitches | text | `60 62 64 65 67` |  | The pitches used, read in a loop, when no input supplies them: MIDI numbers from 0 to 127, decimals allowed, or note names with their octave, « C4 », separated by spaces, commas or semicolons. An empty list, or one with an unreadable token, is refused, and the message names it. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The length of a quarter note. |
 | Repeats | number | 1 | 1 – 16, step 1 | How many times the whole tree is played again, end to end. |
@@ -3148,7 +3148,7 @@ Reduces a rhythm tree to its shortest form and returns the notation obtained. A 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Tree | text | `(4/4 (1 (1 (1 1.0)) (1 (-1 -1)) 1))` |  | The list notation, used when the input of the same name is not connected. |
+| Tree | text | `(4/4 (1 (1 (1 1.0)) (1 (-1 -1)) 1))` |  | The list notation, used when the input of the same name is not connected. OpenMusic's forms are read too: a voice « (? ((4//4 (1 1 1 1)))) », and a time signature « 4//4 » or « (4 4) ». A zero weight or one between 0 and 1, a tie with no note before it, a tied rest, a negative or tied division, a time signature with a zero term and an empty list are refused, and the message names the token. |
 
 #### Speech to MIDI
 

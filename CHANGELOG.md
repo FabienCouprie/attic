@@ -6,6 +6,45 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN N-OLET SE RECONNAÎT À LA DURÉE DE SES PARTS, ET NON À LEUR NOMBRE.** Revue des notations en texte, neuvième format, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` ; le son était juste partout :
+    - le déroulé comptait le n-olet au nombre de parts d'une division. « (3/4 (1 1 1)) », trois noires exactes, comptait un groupe irrégulier, et ses notes étaient annotées « n-olet 3 » dans l'Analyse du Rythme sur hauteurs et du Quantifier. « (4/4 (2 1)), un triolet de blanches, n'en comptait aucun ;
+    - le MusicXML gravait « (3/4 (1 1 1)) » en triolet de noires pointées ;
+    - dans un triolet, les deux blanches de « (4/4 ((2 (1 1)) 1)) » perdaient leur modification de temps.
+  - **Ce qui change** : une seule règle, dans `derouler` et dans `feuillesDeMesure` (`audio/musicxml-arbre.ts`). Un groupe est un n-olet quand la durée écrite de son unité n'est pas binaire. Cette durée est allongée du rapport des n-olets qui l'englobent. Une note reste dans le n-olet qui l'englobe, même sous une division binaire.
+  - **Le garde** : 12 cas dans `plugins/arbres-rythmiques.test.ts`, le compte du Rythme sur hauteurs et l'écriture du MusicXML.
+    - Vu rouge sur le code d'avant : 5 cas, dont la note de triolet sans modification de temps, faute antérieure.
+    - Vu rouge aussi sur deux fautes plantées : trois parts recomptées en triolet, et la note de nouveau retirée de son n-olet.
+
+- **UN ARBRE ÉCRIT DANS OPENMUSIC SE COLLE DANS ATTIC.** Revue des notations en texte, neuvième format, décision de Fabien du 2026-11-22 : « Read them ».
+  - **Ce qui se passait** : le module `audio/arbre-rythmique.ts` et la documentation du réglage « Arbre » promettent qu'un arbre venu d'ailleurs s'y colle. Mais les formes que donne le manuel d'OpenMusic étaient toutes refusées : « métrique attendue, de la forme 4/4 ». C'était le cas de la voix « (? ((4//4 (1 1 1 1)))) », comme de la métrique « 4//4 » ou « (4 4) ».
+  - **Ce qui change** :
+    - `lireArbre` lit ces formes, comme « 4/4 » ;
+    - le premier élément d'une voix est « ? » ou le nombre de ses mesures, et un nombre qui ne les compte pas est refusé en le nommant ;
+    - une mesure à métrique en liste, « ((4 4) (1 1 1 1)) », se distingue d'une liste englobante de mesures ;
+    - les écrivains gardent « 4/4 ».
+
+    Les documentations des réglages « Arbre » le disent.
+  - **Le garde** : 9 cas dans `plugins/arbres-rythmiques.test.ts`. Chaque forme d'OpenMusic se déroule exactement comme son équivalent « 4/4 ».
+    - Vu rouge sur le code d'avant : 8 cas. Le neuvième, le nombre de mesures faux, n'était refusé que parce que toute la forme l'était.
+    - Vu rouge aussi sur « n//n » de nouveau illisible, planté.
+
+- **UN ARBRE RYTHMIQUE QUE LA NOTATION N'ACCEPTE PAS, OU NE DÉFINIT PAS, EST REFUSÉ EN NOMMANT LE JETON.** Revue des notations en texte, neuvième format, 2026-11-22, premier lot. La référence est le manuel d'OpenMusic.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - « (4/4 (1 0 1 1)) » rendait une note de durée nulle, et « 0.5 », une valeur que le manuel n'accepte pas, se lisait comme une liaison d'un demi-poids ;
+    - une liaison derrière un silence prolongeait le silence, et un silence lié, « -1.0 », prolongeait la note d'avant : **le silence écrit sonnait** ;
+    - une liaison en tête devenait une note, une division négative ou liée perdait son signe ;
+    - « 4/0 » se lisait 4/1, seize temps, « 0/4 » rendait des notes de durée nulle, et « (4/4 ()) » quatre temps de rien.
+  - **Ce qui change** : `lireArbre` refuse tout cela, et le message nomme le jeton et sa position. Pour ce que le manuel ne définit pas, c'est la décision de Fabien du 2026-11-22, « Refuse them, named ». Les documentations des réglages « Arbre » le disent.
+  - **Des tests tenaient le contraire**. Dans `audio/arbre-rythmique.test.ts` :
+    - la division négative ou liée était corrigée, et la liaison en tête lue comme une note ;
+    - « (4/4 ()) » était lu.
+
+    Dans `audio/arbre-disposition.test.ts`, une donnée liait derrière un silence. Ils tiennent maintenant le refus, ou un arbre que la notation définit.
+  - **Le garde** : `plugins/arbres-rythmiques.test.ts`, 19 cas, tout par `executer`. Il relit aussi les 340 arbres du catalogue, cent tirages et l'arbre du Quantifier : aucun n'écrit ce qui est refusé.
+    - Vu rouge sur le code d'avant : les 10 refus.
+    - Vu rouge aussi sur un silence lié de nouveau admis, planté.
+
 - **LE RÉPARTITEUR MIDI ET LE SSP DE KOENIG REFUSENT CE QUE LEURS LISTES NE PORTENT PAS, EN LE NOMMANT.** Revue des notations en texte, passe de complétude, 2026-11-22, troisième lot.
   - **Ce qui se passait**, mesuré par `executer` :
     - dans le Répartiteur, « 17 », « 0 » et « a » vidaient la partie sans un mot, ses notes passant au « Reste », et « 1-17 » prenait les seize canaux ;
