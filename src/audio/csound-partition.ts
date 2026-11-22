@@ -178,9 +178,14 @@ export function construirePartition(
     comptes.set(numero, (comptes.get(numero) ?? 0) + 1);
     const duree = Math.max(0.001, n.fin - n.debut);
     fin = Math.max(fin, n.fin);
+    // « RIEN » ENTRE DEUX CHAMPS ÉCRITS S'ÉCRIT 0, et n'est omis qu'après le dernier. Un p-field est une
+    // place : « Rien » en p4 faisait lire l'amplitude en p4 et la note en p5. Décision de Fabien du
+    // 2026-11-22, « Write 0 in the gap », revue des notations en texte.
+    const dernier = champs.reduce((k, c, i) => (c !== "rien" ? i : k), -1);
     const valeurs = champs
-      .filter((c) => c !== "rien")
+      .slice(0, dernier + 1)
       .map((c) => {
+        if (c === "rien") return "0";
         const brut = c === "hauteur" ? valeurHauteur(n.note, convention)
           : c === "amplitude" ? Math.min(1, Math.max(0, n.velocite / 127))
           : c === "velocite" ? n.velocite

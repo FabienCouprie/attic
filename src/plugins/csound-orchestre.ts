@@ -33,8 +33,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Instruments", nomEn: "Instruments", type: "texte", defaut: DEFAUT, defautEn: DEFAUT,
-        doc: "Les instruments retenus, par leurs identifiants séparés par des virgules. La liste à cocher du composant écrit ce champ, et l'ordre y décide des numéros : le premier coché devient `instr 1`, le second `instr 2`. Un identifiant inconnu est écarté sans faire échouer le reste, et un doublon est ignoré, deux fois le même instrument donnerait deux numéros au même son.",
-        docEn: "The chosen instruments, by their identifiers separated by commas. The node's tick list writes this field, and the order there decides the numbers: the first ticked becomes `instr 1`, the second `instr 2`. An unknown identifier is dropped without failing the rest, and a duplicate is ignored, the same instrument twice would give two numbers to one sound." },
+        doc: "Les instruments retenus, par leurs identifiants séparés par des virgules. La liste à cocher du composant écrit ce champ, et l'ordre y décide des numéros : le premier coché devient `instr 1`, le second `instr 2`. Un identifiant inconnu fait refuser l'orchestre, et le message le nomme avec la liste des identifiants. Un doublon est ignoré, et le message le dit : deux fois le même instrument donnerait deux numéros au même son.",
+        docEn: "The chosen instruments, by their identifiers separated by commas. The node's tick list writes this field, and the order there decides the numbers: the first ticked becomes `instr 1`, the second `instr 2`. An unknown identifier makes the orchestra refused, and the message names it along with the list of identifiers. A duplicate is ignored, and the message says so: the same instrument twice would give two numbers to one sound." },
       { nom: "Canaux", nomEn: "Channels", type: "choix",
         ...choixMonoStereo(),
         defaut: "Mono", defautEn: "Mono",
@@ -48,26 +48,33 @@ export const fiches: FicheAudio[] = ([
         docEn: "Level applied to every instrument, on top of each one's own gain. Those gains come from measurement: Csound's opcodes share no amplitude convention, for a requested amplitude of 0.6, measured peaks ranged from 0.10 for the modal resonance to 0.95 for the bowed string, which hit the limiter." },
     ],
     async executer(ctx) {
-      const ids = analyserListeInstruments(ctx.paramTexte("Instruments", DEFAUT));
-      if (ids.length === 0) {
-        return { valeurs: [null, null], message: traduire("msg.csound.orchestreVide") };
+      const en = langueCourante() === "en";
+      // UN IDENTIFIANT INCONNU FAIT REFUSER L'ORCHESTRE, et le message le nomme avec ceux qui existent ;
+      // une liste vide est refusée en erreur. Revue des notations en texte, 2026-11-22.
+      const lu = analyserListeInstruments(ctx.paramTexte("Instruments", DEFAUT));
+      if ("inconnu" in lu) {
+        return {
+          valeurs: [null, null], erreur: true,
+          message: traduire("msg.csound.orchestreInconnu_var_0_var_1", lu.inconnu, INSTRUMENTS_ORCHESTRE.map((i) => i.id).join(", ")),
+        };
+      }
+      if (lu.ids.length === 0) {
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.csound.orchestreVide") };
       }
       const canaux = canauxDe(ctx.paramTexte("Canaux", "mono"));
-      const { texte, rapport } = construireOrchestre(ids, {
+      const { texte, rapport } = construireOrchestre(lu.ids, {
         canaux,
         base: Math.round(ctx.paramNombre("Premier instrument", 1)),
         niveau: ctx.paramNombre("Niveau", 100) / 100,
+        en,
       });
-      const demandes = analyserListeInstruments(ctx.paramTexte("Instruments", DEFAUT)).length;
-      const brut = String(ctx.paramTexte("Instruments", DEFAUT)).split(/[,;\s]+/).filter(Boolean).length;
-      const ecartes = Math.max(0, brut - demandes);
       return {
-        valeurs: [texte, rapportOrchestreLisible(rapport, langueCourante() === "en")],
+        valeurs: [texte, rapportOrchestreLisible(rapport, en)],
         message: traduire("msg.csound.orchestreFait",
           String(rapport.instruments.length),
-          canaux === 2 ? "stéréo" : "mono",
+          canaux === 2 ? (en ? "stereo" : "stéréo") : "mono",
           rapport.instruments.map((i) => `i${i.numero} ${i.id}`).join(", "))
-          + (ecartes > 0 ? ` · ${traduire("msg.csound.orchestreEcartes", String(ecartes))}` : ""),
+          + (lu.doublons.length > 0 ? ` · ${traduire("msg.csound.orchestreDoublons_var_0", lu.doublons.join(", "))}` : ""),
       };
     },
   }),
