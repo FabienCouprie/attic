@@ -271,12 +271,18 @@ describe("instrument à vent", () => {
     expect(b.duration).toBeCloseTo(1, 3);
   });
 
-  it("joue la note écrite, et retombe sur le la 3 de la fiche quand elle est illisible", async () => {
+  // UNE NOTE ILLISIBLE EST REFUSÉE, ET NOMMÉE. Ce cas exigeait qu'elle retombe sur le la 3 de la fiche,
+  // sans un mot ; la revue des notations en texte du 2026-11-22 a mesuré que ce repli faisait aussi un
+  // la de « E#4 » ou de « Cb4 », et Fabien a décidé de refuser en nommant.
+  it("joue la note écrite, joue le la 3 de la fiche par défaut, et refuse une note illisible en la nommant", async () => {
     const la = await jouer("vent-guide-onde", { "Durée": 0.8, "Vibrato": 0 });
     expect(bande(la, A3)).toBeGreaterThan(bande(la, C4) * 100);
     const ut = await jouer("vent-guide-onde", { "Durée": 0.8, "Vibrato": 0, "Note": "C4" });
     expect(bande(ut, C4)).toBeGreaterThan(bande(ut, A3) * 100);
-    expect(identiques(la, await jouer("vent-guide-onde", { "Durée": 0.8, "Vibrato": 0, "Note": "zzz" }))).toBe(true);
+    const zzz = await lancer("vent-guide-onde", [null], { "Durée": 0.8, "Vibrato": 0, "Note": "zzz" });
+    expect(zzz.erreur).toBe(true);
+    expect(zzz.valeurs[0]).toBe(null);
+    expect(zzz.message).toContain("« zzz »");
     const aigue = await jouer("vent-guide-onde", { "Durée": 0.8, "Vibrato": 0, "Note": "A4" });
     expect(bande(aigue, A4)).toBeGreaterThan(bande(aigue, A3) * 100);
   });
@@ -379,12 +385,16 @@ describe("barre modale", () => {
     expect(bande(vibra, C4)).toBeGreaterThan(bande(vibra, C4 * 2) * 100);
   });
 
-  it("frappe la note écrite, et retombe sur l'ut 4 de la fiche — pas sur le la 3 du vent", async () => {
+  // Ce cas exigeait qu'une note illisible retombe sur l'ut 4 de la fiche ; elle est refusée et nommée
+  // depuis la revue des notations en texte du 2026-11-22, comme celle du vent ci-dessus.
+  it("frappe la note écrite, frappe l'ut 4 de la fiche par défaut — pas le la 3 du vent —, et refuse une note illisible", async () => {
     const ut4 = await jouer("barre-modale", { "Durée": 1 });
     expect(bande(ut4, C4)).toBeGreaterThan(bande(ut4, C5) * 100);
     const ut5 = await jouer("barre-modale", { "Durée": 1, "Note": "C5" });
     expect(bande(ut5, C5)).toBeGreaterThan(bande(ut5, C4) * 100);
-    expect(identiques(ut4, await jouer("barre-modale", { "Durée": 1, "Note": "zzz" }))).toBe(true);
+    const zzz = await lancer("barre-modale", [null], { "Durée": 1, "Note": "zzz" });
+    expect(zzz.erreur).toBe(true);
+    expect(zzz.message).toContain("« zzz »");
     expect(bande(ut4, C4)).toBeGreaterThan(bande(ut4, A3) * 100);
   });
 

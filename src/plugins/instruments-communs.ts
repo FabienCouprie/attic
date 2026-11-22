@@ -15,18 +15,10 @@ export type NoteJouee = Note;
 
 export const frequenceDe = (note: number): number => frequenceDeNoteMidi(note);
 
-const NOMS_NOTES: Record<string, number> = {
-  c: 0, "c#": 1, db: 1, d: 2, "d#": 3, eb: 3, e: 4, f: 5, "f#": 6, gb: 6,
-  g: 7, "g#": 8, ab: 8, a: 9, "a#": 10, bb: 10, b: 11,
-};
-
-/** Lit « A3 », « C#5 », « Eb2 ». Sans octave, l'octave 3 ; illisible, la note par défaut. */
-export function lireNote(texte: string, defaut = 57): number {
-  const m = /^([a-gA-G][#b]?)(-?\d+)?$/.exec(texte.trim());
-  if (!m) return defaut;
-  const octave = m[2] === undefined ? 3 : parseInt(m[2], 10);
-  return (NOMS_NOTES[m[1].toLowerCase()] ?? 9) + (octave + 1) * 12;
-}
+// `lireNote` VIVAIT ICI, et a disparu le 2026-11-22 avec la revue des notations en texte : sa table
+// n'avait ni E#, ni Fb, ni Cb, ni B#, et `?? 9` en faisait un la ; un nom illisible devenait la note
+// par défaut, sans un mot. Les instruments lisent désormais leur réglage « Note » par le seul lecteur
+// des noms de notes, `hauteurOuRefus` (`audio/noms-de-notes.ts`), qui refuse en nommant.
 
 /** Ajoute un signal mono dans un mélange, à l'instant demandé. */
 export function melanger(cible: Float32Array, source: Float32Array, debut: number): void {
