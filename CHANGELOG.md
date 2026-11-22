@@ -6,6 +6,19 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN ARBRE ÉCRIT DANS OPENMUSIC SE COLLE DANS ATTIC.** Revue des notations en texte, neuvième format, décision de Fabien du 2026-11-22 : « Read them ».
+  - **Ce qui se passait** : le module `audio/arbre-rythmique.ts` et la documentation du réglage « Arbre » promettent qu'un arbre venu d'ailleurs s'y colle. Mais les formes que donne le manuel d'OpenMusic étaient toutes refusées : « métrique attendue, de la forme 4/4 ». C'était le cas de la voix « (? ((4//4 (1 1 1 1)))) », comme de la métrique « 4//4 » ou « (4 4) ».
+  - **Ce qui change** :
+    - `lireArbre` lit ces formes, comme « 4/4 » ;
+    - le premier élément d'une voix est « ? » ou le nombre de ses mesures, et un nombre qui ne les compte pas est refusé en le nommant ;
+    - une mesure à métrique en liste, « ((4 4) (1 1 1 1)) », se distingue d'une liste englobante de mesures ;
+    - les écrivains gardent « 4/4 ».
+
+    Les documentations des réglages « Arbre » le disent.
+  - **Le garde** : 9 cas dans `plugins/arbres-rythmiques.test.ts`. Chaque forme d'OpenMusic se déroule exactement comme son équivalent « 4/4 ».
+    - Vu rouge sur le code d'avant : 8 cas. Le neuvième, le nombre de mesures faux, n'était refusé que parce que toute la forme l'était.
+    - Vu rouge aussi sur « n//n » de nouveau illisible, planté.
+
 - **UN ARBRE RYTHMIQUE QUE LA NOTATION N'ACCEPTE PAS, OU NE DÉFINIT PAS, EST REFUSÉ EN NOMMANT LE JETON.** Revue des notations en texte, neuvième format, 2026-11-22, premier lot. La référence est le manuel d'OpenMusic.
   - **Ce qui se passait**, mesuré par `executer` :
     - « (4/4 (1 0 1 1)) » rendait une note de durée nulle, et « 0.5 », une valeur que le manuel n'accepte pas, se lisait comme une liaison d'un demi-poids ;

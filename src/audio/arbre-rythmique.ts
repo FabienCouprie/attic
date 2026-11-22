@@ -159,30 +159,56 @@ export function lireArbre(texte: string): Mesure[] {
     return out;
   };
 
+  /** Une métrique en liste, « (4 4) », à la position `k` : deux entiers entre parenthèses. */
+  const metriqueEnListe = (k: number) =>
+    jetons[k] === "(" && /^\d+$/.test(jetons[k + 1] ?? "") && /^\d+$/.test(jetons[k + 2] ?? "") && jetons[k + 3] === ")";
+
+  // LA MÉTRIQUE S'ÉCRIT « 4/4 », OU COMME DANS OPENMUSIC, « 4//4 » ou « (4 4) ». Décision de Fabien du
+  // 2026-11-22, « Read them » : le manuel donne « n // n or ( n n ) », et ces arbres étaient refusés.
   const lireMesure = (): Mesure => {
     if (jetons[i] !== "(") erreur("msg.arbre.ouvrante_mesure");
     i++;
-    const m = /^(\d+)\/(\d+)$/.exec(jetons[i] ?? "");
-    if (!m) erreur("msg.arbre.metrique");
+    const ou = i;
+    let termes: [string, string];
+    if (metriqueEnListe(i)) {
+      termes = [jetons[i + 1], jetons[i + 2]];
+      i += 4;
+    } else {
+      const m = /^(\d+)\/\/?(\d+)$/.exec(jetons[i] ?? "");
+      if (!m) erreur("msg.arbre.metrique");
+      termes = [m![1], m![2]];
+      i++;
+    }
     // UNE MÉTRIQUE DONT UN TERME EST NUL NE MESURE RIEN. « 4/0 » se lisait 4/1, seize temps, et « 0/4 »
     // rendait des notes de durée nulle, sans un mot.
-    if (Number(m![1]) === 0 || Number(m![2]) === 0) erreur("msg.arbre.metrique_nulle");
-    i++;
+    if (Number(termes[0]) === 0 || Number(termes[1]) === 0) erreur("msg.arbre.metrique_nulle", ou);
     const contenu = lireListe();
     if (jetons[i] !== ")") erreur("msg.arbre.fermante_mesure");
     i++;
-    return { metrique: [Number(m![1]), Number(m![2])], contenu };
+    return { metrique: [Number(termes[0]), Number(termes[1])], contenu };
   };
 
   if (jetons.length === 0) return [];
   const mesures: Mesure[] = [];
-  // Une liste englobante est reconnue à ceci que son premier élément est lui-même une liste.
-  const englobante = jetons[0] === "(" && jetons[1] === "(";
+  // UNE VOIX D'OPENMUSIC, « (? ((4//4 (1 1 1 1)) …)) » : son premier élément est « ? » ou le nombre de
+  // ses mesures, et la liste de ses mesures suit. Un nombre qui ne compte pas les mesures portées est
+  // refusé : on ne sait plus laquelle des deux choses il fallait dire.
+  const voix = jetons[0] === "(" && (jetons[1] === "?" || /^\d+$/.test(jetons[1] ?? "")) && jetons[2] === "(" && jetons[3] === "(";
+  const annonce = voix ? 1 : -1;
+  if (voix) i = 2;
+  // Une liste englobante est reconnue à ceci que son premier élément est lui-même une mesure, et non
+  // la métrique en liste d'une mesure seule, « ((4 4) (1 1 1 1)) ».
+  const englobante = voix || (jetons[0] === "(" && jetons[1] === "(" && !metriqueEnListe(1));
   if (englobante) i++;
   while (i < jetons.length && jetons[i] === "(") mesures.push(lireMesure());
   if (englobante) {
     if (jetons[i] !== ")") erreur("msg.arbre.fermante_mesures");
     i++;
+  }
+  if (voix) {
+    if (jetons[i] !== ")") erreur("msg.arbre.fermante_voix");
+    i++;
+    if (jetons[annonce] !== "?" && Number(jetons[annonce]) !== mesures.length) erreur("msg.arbre.nombre_mesures", annonce);
   }
   if (i < jetons.length) erreur("msg.arbre.texte_en_trop");
   return mesures;

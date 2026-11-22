@@ -90,3 +90,31 @@ describe("CE QU'ÉCRIT ATTIC SE RELIT : le catalogue, le tirage et le Quantifier
     expect(relues).toEqual(estSequence(sa) ? sa.notes.map((n) => [r3(n.debut), r3(n.fin)]) : null);
   }, 60_000);
 });
+
+// UN ARBRE ÉCRIT DANS OPENMUSIC SE COLLE ICI, comme le promettent le module et la documentation.
+// Décision de Fabien du 2026-11-22, « Read them » : la voix « (? (…)) », et la métrique « n//n » ou
+// « (n n) », que donne le manuel. Elles étaient toutes refusées : « métrique attendue, de la forme 4/4 ».
+describe("LES FORMES D'OPENMUSIC SE LISENT", () => {
+  const UNE = "(4/4 (1 1 1 1))";
+  const DEUX = "((4/4 (1 1 1 1)) (3/4 (1 1 1)))";
+  it.each([
+    ["(? ((4//4 (1 1 1 1))))", UNE],
+    ["(? (((4 4) (1 1 1 1))))", UNE],
+    ["(4//4 (1 1 1 1))", UNE],
+    ["((4 4) (1 1 1 1))", UNE],
+    ["(? ((4//4 (1 1 1 1)) (3//4 (1 1 1))))", DEUX],
+    ["(2 ((4//4 (1 1 1 1)) (3//4 (1 1 1))))", DEUX],
+    ["(((4 4) (1 1 1 1)) ((3 4) (1 1 1)))", DEUX],
+    ["(? (((4 4) (1 (1 (1 1 1)) 1.0 -1))))", "(4/4 (1 (1 (1 1 1)) 1.0 -1))"],
+  ])("« %s » comme « %s »", async (om, attico) => {
+    const [a, b] = [await deroule(om), await deroule(attico)];
+    expect(a.r.erreurRendue, a.r.message).toBe(false);
+    expect(a.notes).toEqual(b.notes);
+  }, 60_000);
+
+  it("une voix qui annonce un autre nombre de mesures que celui qu'elle porte est refusée, et le nombre nommé", async () => {
+    const { r } = await deroule("(3 ((4//4 (1 1 1 1)) (3//4 (1 1 1))))");
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.message).toContain("« 3 »");
+  }, 60_000);
+});

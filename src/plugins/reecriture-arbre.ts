@@ -41,8 +41,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Arbre", nomEn: "Tree", type: "texte", defaut: ARBRE_DEFAUT, defautEn: ARBRE_DEFAUT,
-        doc: "La notation en listes, employée quand l'entrée du même nom n'est pas branchée. Un poids nul ou entre 0 et 1, une liaison sans note devant elle, un silence lié, une division négative ou liée, une métrique dont un terme est nul et une liste vide sont refusés, et le message nomme le jeton.",
-        docEn: "The list notation, used when the input of the same name is not connected. A zero weight or one between 0 and 1, a tie with no note before it, a tied rest, a negative or tied division, a time signature with a zero term and an empty list are refused, and the message names the token." },
+        doc: "La notation en listes, employée quand l'entrée du même nom n'est pas branchée. Les formes d'OpenMusic se lisent aussi : une voix « (? ((4//4 (1 1 1 1)))) », et une métrique « 4//4 » ou « (4 4) ». Un poids nul ou entre 0 et 1, une liaison sans note devant elle, un silence lié, une division négative ou liée, une métrique dont un terme est nul et une liste vide sont refusés, et le message nomme le jeton.",
+        docEn: "The list notation, used when the input of the same name is not connected. OpenMusic's forms are read too: a voice « (? ((4//4 (1 1 1 1)))) », and a time signature « 4//4 » or « (4 4) ». A zero weight or one between 0 and 1, a tie with no note before it, a tied rest, a negative or tied division, a time signature with a zero term and an empty list are refused, and the message names the token." },
     ],
     async executer(ctx) {
       const entree = ctx.entree(0);
