@@ -44,7 +44,7 @@ const ou = (debut: number, tempo: number): string => {
 
 export const fiches: FicheAudio[] = ([
   fiche({
-    id: "harmoniser-coconet",
+    id: "harmoniser-coconet", nomDicte: "harmoniser par le réseau",
     nom: "Harmoniser (Coconet)", nomEn: "Harmonize (Coconet)",
     univers: "Autres", famille: "Harmonisation",
     resume: "Harmonise une mélodie à quatre voix par un réseau entraîné sur les chorals de Bach.",

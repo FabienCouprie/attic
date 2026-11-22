@@ -1880,6 +1880,11 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Fixed
 
+- **« HARMONISER (COCONET) » SE DIT « HARMONISER PAR LE RÉSEAU » : LE MOTEUR VOCAL JETAIT « COCONET ».** Relevé le 2026-11-22 par `tests-e2e/lexique-dictee.spec.ts`, lancé pendant le lot 2b de l'harmonisation, le modèle français lié dans l'arbre de session.
+  - **Ce qui se passait** : le moteur jette « coconet », absent de son lexique, et le nom du lot 1 entrait amputé dans la grammaire en « harmoniser », qui concurrençait « Harmoniser à quatre voix ».
+  - **La réparation** : le mot rejoint `HORS_LEXIQUE_FR` (`plugins/lexique-vosk.ts`), et la fiche reçoit son nom parlé.
+  - **Vérifié** : `plugins/noms-parles.test.ts` et `plugins/lexique-vosk.test.ts` verts, 11 cas ; la dictée ne jette plus que « dither », de la fiche « Dither » de master, hors de ce chantier. Master n'a ce mot ni dans `HORS_LEXIQUE_FR` ni en nom parlé : le garde doit y tomber aussi, ce qui est déduit et non lancé.
+
 - **LE MESSAGE DE « REMPLISSAGE DE TROU » COMPTE LES TROUS DANS LE TEMPS, ET NON EN MOYENNE PAR CANAL.** Relevé le 2026-11-22 en contrôlant l'option « Silences détectés », réparé sur l'ordre de Fabien : « réparer ».
   - **Ce qui se passait.** `plugins/inpainting.ts` divisait par le nombre de canaux le compte et la durée que chaque canal avait bouchés. Les silences se détectant voie par voie, dix millisecondes rebouchées sur un seul canal de deux s'annonçaient « 1 trou(s) bouché(s) · 5 ms reconstruits », et deux trous à deux endroits, un par canal, « 1 trou ».
   - **Ce qui change.** Chaque canal rend la liste des trous qu'il a bouchés et de ceux qu'il a laissés (`faits` et `laisses` de `ResultatInpainting`), et le message compte leur réunion dans le temps, `reunirTrous` d'`audio/inpainting.ts` : deux trous qui se recouvrent ou se touchent n'en font qu'un. Le son rendu ne change pas.

@@ -79,6 +79,12 @@ const HORS_LEXIQUE_FR: ReadonlySet<string> = new Set([
   // « Filtre TB-303 » : le moteur jette « 303 », et le nom entrait amputé en « filtre tb ». « tb »
   // est gardé par le moteur. Le composant se dit par son nom parlé, « filtre à diodes ».
   "303",
+  // ═══ UN MOT RELEVÉ LE 2026-11-22 PAR LE MÊME GARDE ═══
+  //
+  // « Harmoniser (Coconet) » : le moteur jette « coconet », et le nom entrait amputé en
+  // « harmoniser », qui concurrençait « Harmoniser à quatre voix ». Le composant se dit par son nom
+  // parlé, « harmoniser par le réseau ».
+  "coconet",
 ]);
 
 /**
