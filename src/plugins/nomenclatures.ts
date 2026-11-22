@@ -205,6 +205,7 @@ export const DOMAINES: Domaine[] = [
         "accords-vers-notation·Gamme",
       ),
       { ou: "gammes-monde·Gamme", raison: "le nœud des gammes en cents, qui pose chaque degré à sa hauteur exacte ; les gammes tempérées ont leurs propres nœuds" },
+      { ou: "verifier-choral·Gamme", raison: "la sensible, la dominante et la cadence d'un choral ne se lisent que dans une tonalité majeure ou mineure" },
     ],
   },
   {

@@ -181,6 +181,9 @@ export const COINCIDENCES_DECLAREES: CoincidenceInscrite[] = [
   { ou: "analyseur-spectre·Fenêtre", valeurs: ["256", "512", "1024", "2048", "4096", "8192"], raison: VUE_SEULE },
   { ou: "spectrogramme·Fenêtre", valeurs: ["256", "512", "1024", "2048", "4096", "8192"], raison: VUE_SEULE },
   { ou: "arpegiateur-midi·Direction", valeurs: ["montant", "ordre-de-jeu"], raison: "le MIDI d'essai joue les notes de chaque accord du grave à l'aigu, et l'ordre de jeu y est l'ordre montant ; un accord joué sol, do, mi les sépare" },
+  // RELEVÉES À LA NAISSANCE DU NŒUD, le 2026-11-22, sur le choral 175 de Bach, en do majeur.
+  { ou: "verifier-choral·Tonique", valeurs: ["1", "3", "6", "8"], raison: "sous ces toniques, aucun des 31 temps du choral d'essai, en do, ne forme un accord de la tonalité : chaque temps est relevé hors de la tonalité, et le rapport est le même ; un choral dans l'une de ces tonalités les sépare" },
+  { ou: "verifier-choral·Tonique", valeurs: ["4", "11"], raison: "sous mi et sous si, deux temps seulement du choral d'essai se lisent comme un accord, les mêmes, faits de mi et de si sans tierce, I en mi et IV en si ; le rapport ne nomme pas le degré, et il est le même" },
   // LE LOT 3d-2 (2026-11-15) : chacune voulue, ou non mesurable au banc pour la raison de l'inertie
   // déclarée sur le même réglage.
   { ou: "cercle-pulsant·Gamme", valeurs: ["roue", "majeur", "mineur", "dorien", "phrygien", "lydien", "mixolydien", "locrien", "mineur-harmonique", "mineur-melodique", "pentatonique-majeure", "pentatonique-mineure", "blues", "alteree", "lydien-dominant", "phrygien-dominant", "bebop-dominant", "ton-entier", "diminuee-ton-demi", "diminuee-demi-ton", "augmentee", "double-seconde-augmentee", "hongroise-mineure", "hirajoshi", "in-sen", "chromatique"], raison: "en « Pulsation », le mode par défaut, la mélodie ne sonne pas, et la gamme n'a aucun degré à donner" },

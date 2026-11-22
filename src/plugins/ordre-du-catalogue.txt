@@ -443,6 +443,7 @@ magenta-generer-batterie
 magenta-humaniser-groove
 harmoniser-coconet
 lire-partition
+verifier-choral
 pure-data
 visualisation-songsee
 export-image

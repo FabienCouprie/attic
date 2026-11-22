@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**515 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
+**516 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -532,6 +532,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Ubiquité | `ubiquite` | 240 × 140 |
 | Vague | `vague` | 240 × 162 |
 | Instrument à vent | `vent-guide-onde` | 240 × 118 |
+| Vérifier un choral | `verifier-choral` | 240 × 118 |
 | Vibrato | `vibrato` | 240 × 184 |
 | Vitesse MIDI | `vitesse-midi` | 240 × 140 |
 | Vitesse variable | `vitesse-variable` | 240 × 140 |

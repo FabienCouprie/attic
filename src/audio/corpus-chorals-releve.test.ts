@@ -29,6 +29,8 @@ import { join } from "path";
 import { lireTableDcml } from "./dcml-tsv";
 import { hauteursHumdrum, lireDepuisVerovio, type ToolkitPartition } from "./partition-lecture";
 import type { Note } from "./note";
+import type { Mode } from "./choral-regles";
+import { estRefusChoral, REGLES_CHORAL, verifierChoral, type RegleChoral } from "./choral-verifier";
 
 const RACINE = process.env.CORPUS_CHORALS;
 
@@ -45,6 +47,15 @@ const decoder = (t: string) => t.replace(/&(\w+);/g, (m, e) => ENTITES[e] ?? m);
 const simplifier = (t: string) => decoder(t).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z]/g, "");
 
 interface Ecart { choral: number; sapp: number; voix: number; noire: number; dcml: number; hauteurSapp: number }
+
+/** La tonalité qu'un Humdrum déclare (`*G:` sol majeur, `*g:` sol mineur), ou `null`. */
+function tonaliteKern(texte: string): { tonique: number; mode: Mode } | null {
+  const m = /^\*([A-Ga-g])([#-]?):/m.exec(texte);
+  if (!m) return null;
+  const base = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 }[m[1].toLowerCase() as "c"]!;
+  const alteration = m[2] === "#" ? 1 : m[2] === "-" ? -1 : 0;
+  return { tonique: (base + alteration + 12) % 12, mode: m[1] === m[1].toUpperCase() ? "majeur" : "mineur" };
+}
 
 /** Les notes d'une voix, indexées par attaque arrondie au millionième de noire. */
 const parAttaque = (notes: Note[], v: number) => new Map(notes.filter((n) => n.voix === v).map((n) => [Math.round(n.debut * 1e6), n]));
@@ -67,7 +78,7 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
     const { VerovioToolkit } = (await import("verovio/esm")) as unknown as { VerovioToolkit: new (m: unknown) => ToolkitPartition & { setOptions(o: object): void; loadData(t: string): unknown; destroy(): void } };
 
     // Tout Sapp d'abord, une fois : chaque table du DCML se mesure ensuite à chacun de ses chorals.
-    const sapps: { numero: number; titre: string; notes: Note[]; index: Map<number, Note>[] }[] = [];
+    const sapps: { numero: number; titre: string; notes: Note[]; index: Map<number, Note>[]; tonalite: { tonique: number; mode: Mode } | null }[] = [];
     for (const f of readdirSync(kernSapp).filter((x) => /^chor\d+\.krn$/.test(x)).sort()) {
       const texteKern = readFileSync(join(kernSapp, f), "utf8");
       const tk = new VerovioToolkit(await creer());
@@ -80,6 +91,7 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
         numero: Number(/\d+/.exec(f)![0]),
         titre: decoder(/^!!!OTL@@DE:\s*(.+)$/m.exec(texteKern)?.[1] ?? /^!!!OTL[^:]*:\s*(.+)$/m.exec(texteKern)?.[1] ?? ""),
         notes, index: [0, 1, 2, 3].map((v) => parAttaque(notes, v)),
+        tonalite: tonaliteKern(texteKern),
       });
     }
 
@@ -117,6 +129,49 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
       lignes.push(`| ${numero} | ${sapp.numero}${sapp.numero === numero ? "" : " ←"} | ${titreDcml}${memeTitre ? "" : ` ≠ ${sapp.titre}`} | ${(part * 100).toFixed(1)} % | ${dcml.length} | ${sapp.notes.length} | ${differentes} | ${seules} |`);
     }
 
+    // LES TESSITURES DE BACH, voix par voix, sur les hauteurs de Sapp, qui sont justes : l'étendue
+    // entière, et celle qui laisse de côté le centième le plus grave et le centième le plus aigu.
+    const NOMS = ["soprano", "alto", "ténor", "basse"];
+    const tessitures = [0, 1, 2, 3].map((v) => {
+      const h = sapps.flatMap((s) => s.notes.filter((n) => n.voix === v).map((n) => n.note)).sort((a, b) => a - b);
+      const q = (p: number) => h[Math.min(h.length - 1, Math.floor(p * h.length))];
+      return `- ${NOMS[v]} : ${h.length} notes, de ${h[0]} à ${h[h.length - 1]} ; du 1er au 99e centile, de ${q(0.01)} à ${q(0.99)}`;
+    });
+
+    // LE VÉRIFICATEUR SUR BACH : chaque choral de Sapp dans sa tonalité, lue dans son Humdrum. C'est le
+    // cas dont on attend la réponse : Bach enfreint peu les règles de l'usage, et ce qu'il enfreint dit
+    // ce que le vérificateur compte à tort, ou ce que l'usage scolaire ne tient pas de lui.
+    const bilan = new Map<RegleChoral, { erreur: number; avis: number; jugees: number }>(REGLES_CHORAL.map((r) => [r.id, { erreur: 0, avis: 0, jugees: 0 }]));
+    const parChoral: { numero: number; erreurs: number }[] = [];
+    const detailsVerif: string[] = [];
+    const finales: string[] = [];
+    let verifies = 0;
+    for (const s of sapps) {
+      if (!s.tonalite) continue;
+      const v = verifierChoral({ notes: s.notes, tempo: 60 }, { ...s.tonalite, tempo: 60, tempsParMesure: 4 });
+      if (estRefusChoral(v)) continue;
+      verifies++;
+      for (const r of REGLES_CHORAL) bilan.get(r.id)!.jugees += v.jugees[r.id];
+      for (const i of v.infractions) bilan.get(i.regle)![i.gravite]++;
+      parChoral.push({ numero: s.numero, erreurs: v.infractions.filter((i) => i.gravite === "erreur").length });
+      for (const i of v.infractions.filter((x) => x.gravite === "erreur" && (x.regle === "cadence" || x.regle === "septieme-non-resolue"))) {
+        detailsVerif.push(`${s.numero}\t${s.tonalite.tonique}${s.tonalite.mode === "mineur" ? "m" : ""}\t${i.mesure}.${i.temps}\t${i.regle}\t${i.fr}`);
+      }
+      const fin = s.notes.filter((n) => n.debut === Math.max(...s.notes.map((x) => x.debut)));
+      finales.push(`${s.numero}\t${s.tonalite.tonique}${s.tonalite.mode === "mineur" ? "m" : ""}\t${fin.map((n) => `${n.voix}:${n.note}`).join(" ")}`);
+    }
+    writeFileSync(join(RACINE!, "verificateur-details.tsv"), [...detailsVerif, "", "# dernières attaques", ...finales].join("\n") + "\n", "utf8");
+    const sansErreur = parChoral.filter((c) => c.erreurs === 0).length;
+    const verification = [
+      `## Le vérificateur sur les chorals de Sapp, ${verifies} chorals dans leur tonalité`,
+      "",
+      `- chorals sans aucune erreur : ${sansErreur}`,
+      "",
+      "| règle | erreurs | avis | jugées |",
+      "|---|---|---|---|",
+      ...REGLES_CHORAL.map((r) => { const b = bilan.get(r.id)!; return `| ${r.fr} | ${b.erreur} | ${b.avis} | ${b.jugees} |`; }),
+    ];
+
     const parEcart = new Map<number, number>();
     for (const e of ecarts) parEcart.set(e.dcml - e.hauteurSapp, (parEcart.get(e.dcml - e.hauteurSapp) ?? 0) + 1);
     const chorauxTouches = new Set(ecarts.map((e) => e.choral)).size;
@@ -131,6 +186,12 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
       `- tables appariées à un autre numéro que le leur : ${autreNumero}`,
       `- appariements incertains, moins de 80 % des notes concordantes : ${incertaines}`,
       `- titres qui ne concordent pas après appariement : ${titresDiscordants}`,
+      "",
+      "## Tessitures chez Sapp, en MIDI",
+      "",
+      ...tessitures,
+      "",
+      ...verification,
       "",
       "| n° DCML | n° Sapp | titre | notes concordantes | notes DCML | notes Sapp | hauteurs différentes | attaques sans jumelle |",
       "|---|---|---|---|---|---|---|---|",

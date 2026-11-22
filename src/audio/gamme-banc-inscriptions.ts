@@ -30,6 +30,7 @@ export const TENUS_AILLEURS: Record<string, string> = {
   "correction-hauteur·Gamme": "gammes-tenues-son.test.ts, par la hauteur suivie au pYIN dans le son corrigé",
   "glissando-de-gamme·Gamme de départ": "gammes-tenues-son.test.ts, par les pics du spectre de la tenue initiale",
   "glissando-de-gamme·Gamme d'arrivée": "gammes-tenues-son.test.ts, par les pics du spectre de la tenue finale",
+  "verifier-choral·Gamme": "audio/choral-verifier.test.ts, qui plante une sensible doublée sous les douze toniques et les deux modes ; le nœud rend un rapport, que le banc ne lit pas",
 };
 
 /** Les nœuds dont la clé ne peut pas transposer le rendu, par construction, et pourquoi. */

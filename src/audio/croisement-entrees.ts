@@ -14,6 +14,8 @@ import { notesVersFichierMidi } from "./midi-ecriture";
 import { comparerEvenementsMidi } from "./midi-ordre";
 import { etiqueter } from "./multicanal";
 import { sequenceDEssai } from "./valeurs-essai";
+import { lireTableDcml } from "./dcml-tsv";
+import { TABLE_175 } from "./choral-175-dcml";
 
 /** Quatre accords d'une seconde : do, fa majeur septième, sol septième, la mineur. */
 const ACCORDS_D_ESSAI = [[60, 64, 67], [65, 69, 72, 76], [67, 71, 74, 77], [57, 60, 64]];
@@ -196,6 +198,12 @@ export const ENTREES_PROPRES: Record<string, Record<string, { valeur: () => unkn
     Audio: {
       valeur: () => sonDe(1, (t) => Array.from({ length: 15 }, (_, h) => Math.pow(10, -4 * h / 20) * Math.sin(2 * Math.PI * 1500 * (h + 1) * t)).reduce((s, x) => s + x, 0) * 0.15),
       raison: "le son commun n'a que deux ou trois pics par trame : quinze harmoniques de 1 500 Hz, espacés de 4 dB, donnent au plafond de partiels et au seuil de quoi écarter, et restent saillants jusqu'à la fenêtre de 256 points, où ceux de 440 Hz se confondaient et où ceux de 1 000 Hz n'étaient pas dix",
+    },
+  },
+  "verifier-choral": {
+    Séquence: {
+      valeur: () => lireTableDcml(TABLE_175, 60).sequence,
+      raison: "la séquence commune n'a qu'une voix, et le nœud refuse un choral auquel il en manque trois : le choral 175 de Bach a les quatre, et des avis dont la place, la tonalité et le mode changent le rapport",
     },
   },
 };

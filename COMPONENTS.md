@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **515 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **516 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **515 components** in **7 categories** and **63 families**. Every na
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 91 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Harmonization](#harmonization) (2) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
+| [Other & lab](#other--lab) | 92 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Harmonization](#harmonization) (3) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -11249,8 +11249,29 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 
 | Component | Summary |
 |---|---|
+| [Check a Chorale](#check-a-chorale) | Checks a four-voice chorale against the rules of four-part writing, and names every fault at its bar and beat. |
 | [Harmonize (Coconet)](#harmonize-coconet) | Harmonizes a melody in four voices with a network trained on Bach's chorales. |
 | [Read a Score](#read-a-score) | Reads a MusicXML, MEI, Humdrum or ABC score, or a DCML notes table, and returns a sequence with one voice per staff layer. |
+
+#### Check a Chorale
+
+`verifier-choral` · Other & lab → Harmonization
+
+*Checks a four-voice chorale against the rules of four-part writing, and names every fault at its bar and beat.*
+
+This component checks a four-voice chorale, soprano, alto, tenor and bass, against the rules of four-part writing, and names every fault at its bar, its beat and on its voices. The chorale arrives on the « Sequence » input, its first four voices being the soprano, the alto, the tenor and the bass. A chorale missing a voice, or with more than four, is refused, and the message names the voice at issue. The chorale is cut into slices, one at each attack of any voice; motions are judged from one slice to the next, chords on the slices alone that fall on a quarter-note beat. The rules are those of common classroom practice. Errors are: two voices that cross; more than an octave between soprano and alto, or between alto and tenor; parallel fifths and octaves between any two voices, twelfths and unisons included; a leap of more than an octave, and the augmented second of the minor; the leading tone doubled in the dominant chord; the leading tone of the soprano or the bass that does not rise to the tonic; a chord's seventh that the next note of its voice does not take down a step, when the chord changes; a chorale that does not end on the root-position tonic. Advisories are: in minor, the ending on the dominant, the Phrygian cadence of modal chorales; more than a twelfth between tenor and bass; a voice that overlaps the note its neighbour held; fifths and octaves by contrary motion; direct fifths and octaves in the outer voices, the soprano moving by leap; tritone and seventh leaps; an inner leading tone neither resolved nor dropped to the fifth; a beat whose notes form no chord of the key; a chord without a third; a penultimate that is neither the dominant nor the subdominant. The final Picardy third of a minor chorale is admitted. The ranges are those of Johann Sebastian Bach's chorales, in Craig Sapp's encoding: a note outside the range Bach used in its voice is an error, a note outside the range where ninety-eight hundredths of his notes fall is an advisory. « Scale » and « Tonic » give the key. In minor, the dominant and the leading-tone seventh chord are built on the leading tone, the other chords on the natural minor. « Beats per bar » and « Anacrusis » only serve to name the places: the first says how many quarter notes a bar has, the second how many quarter notes come before the first bar line. The sequence's tempo gives the length of a quarter note, 120 when it carries none. The « Report » output gives the number of errors and advisories, then for each rule the number of times it was broken and the number of times it could be judged, then every fault, in time order.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence | required |
+| output | Report | text |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Scale | choice | major | major / minor | The mode of the key. In minor, the dominant and the leading-tone seventh chord take the leading tone. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the key, from which the degrees, the leading tone and the cadence are read. |
+| Beats per bar | number | 4 | 1 – 12, step 1 | The number of quarter notes in a bar. It only serves to name the bar and beat of every fault. |
+| Anacrusis | number | 0 | 0 – 11, step 1 | The number of quarter notes before the first bar line, which form bar zero. It only serves to name the places. |
 
 #### Harmonize (Coconet)
 
