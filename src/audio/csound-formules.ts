@@ -16,6 +16,7 @@
 // LE NIVEAU PASSE PAR UNE VARIABLE GLOBALE, `gkNiveau`, que chaque sortie multiplie. C'est visible
 // dans le texte, donc modifiable par qui le lit, et cela évite d'avoir à réécrire les lignes de
 // sortie au moment de composer.
+import { COMMENTAIRES_EN } from "./csound-formules-en";
 
 export interface ChampFormule {
   /** Le p-field, écrit tel qu'on le lit : « p4 ». */
@@ -301,17 +302,23 @@ export const trouverFormule = (id: string): FormuleCsound | undefined =>
  * `gkNiveau` est déclaré en tête plutôt que multiplié dans chaque ligne de sortie : la formule reste
  * lisible telle qu'elle est écrite, et qui veut changer le niveau n'a qu'une valeur à toucher.
  */
-export function texteFormule(f: FormuleCsound, o: { niveau?: number } = {}): string {
+export function texteFormule(f: FormuleCsound, o: { niveau?: number; en?: boolean } = {}): string {
   const niveau = Math.min(1, Math.max(0, o.niveau ?? 1));
+  const en = o.en === true;
+  const sortie = f.canaux === 2 ? (en ? "stereo output" : "sortie stéréo") : (en ? "mono output" : "sortie mono");
   return [
-    `; ${f.fr} — ${f.canaux === 2 ? "sortie stéréo" : "sortie mono"}`,
-    ...f.champs.map((c) => `; ${c.champ} = ${c.fr}`),
+    `; ${en ? f.en : f.fr} — ${sortie}`,
+    ...f.champs.map((c) => `; ${c.champ} = ${en ? c.en : c.fr}`),
     "",
     `gkNiveau init ${niveau.toFixed(4)}`,
     "",
-    ...f.orchestre,
+    ...dansLaLangue(f.orchestre, en),
   ].join("\n");
 }
+
+/** Les lignes d'une formule, leurs commentaires en anglais quand l'interface l'est. */
+const dansLaLangue = (lignes: readonly string[], en: boolean): string[] =>
+  en ? lignes.map((l) => COMMENTAIRES_EN[l] ?? l) : [...lignes];
 
 /**
  * La partition d'essai de la formule.
@@ -320,7 +327,7 @@ export function texteFormule(f: FormuleCsound, o: { niveau?: number } = {}): str
  * d'une formule à l'autre, et une partition écrite pour la FM ne veut rien dire pour le granulaire.
  * Celle-ci démontre ce que la formule sait faire.
  */
-export function partitionFormule(f: FormuleCsound): string {
+export function partitionFormule(f: FormuleCsound, o: { en?: boolean } = {}): string {
   const derniere = f.partition
     .filter((l) => !l.trim().startsWith(";"))
     .map((l) => {
@@ -328,5 +335,5 @@ export function partitionFormule(f: FormuleCsound): string {
       return Number(p[1] ?? 0) + Number(p[2] ?? 0);
     });
   const fin = derniere.length ? Math.max(...derniere) : 1;
-  return [...f.partition, `f0 ${(fin + 1).toFixed(1)}`, "e"].join("\n");
+  return [...dansLaLangue(f.partition, o.en === true), `f0 ${(fin + 1).toFixed(1)}`, "e"].join("\n");
 }

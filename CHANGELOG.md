@@ -6,6 +6,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LES FORMULES CSOUND ÉCRIVENT LEURS COMMENTAIRES DANS LA LANGUE DE L'INTERFACE.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, sixième lot.
+  - **Ce qui se passait** : « Formules Csound » écrivait l'orchestre et la partition avec leurs commentaires en français, interface anglaise comprise, « ; Le même la, avec un indice de plus en plus fort… », et l'en-tête « sortie mono ». Les orchestres d'exemple des autres nœuds Csound avaient déjà leur version anglaise.
+  - **Ce qui change** : sous l'interface anglaise, les trente-deux commentaires des huit formules, leur en-tête et leurs p-fields s'écrivent en anglais. La table vit dans `audio/csound-formules-en.ts`, ligne pour ligne.
+  - Décision de Fabien : « The interface language ». Le commentaire de tête d'un `.sfz` exporté suivra, avec les points SFZ, quand la #442 sera fusionnée.
+  - Tenu par neuf cas de plus dans `plugins/points-ouverts.test.ts`, un par formule et un témoin français ; les huit vus rouges sur le code d'avant, et rouge aussi sur une traduction retirée, plantée. Une formule neuve sans traduction ferait tomber le cas.
+
 - **L'ÉDITEUR DES ARBRES RYTHMIQUES NE PROPOSE PLUS UNE LIAISON SANS NOTE DEVANT ELLE.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, cinquième lot.
   - **Ce qui se passait** : l'éditeur de dessin liait la première feuille, ou celle qui suit un silence, et écrivait « (4/4 (1.0 1 1 1)) », que le lecteur refuse ensuite : « une liaison sans note devant elle ne prolonge rien ».
   - **Ce qui change** : `peutEtreLiee` (`audio/arbre-disposition.ts`) dit si la feuille désignée suit ce qui sonne, à travers la barre comprise ; le bouton ⌣ et l'entrée « Liée » du menu s'éteignent sinon, et leur bulle dit pourquoi. `mettreEtat` laisse l'arbre tel quel devant une telle liaison, et le refus à l'exécution reste en second garde.

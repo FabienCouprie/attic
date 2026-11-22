@@ -10,6 +10,7 @@ import { registre } from "../audio/adaptateur";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
 import { ecrireArbre, lireArbre } from "../audio/arbre-rythmique";
 import { mettreEtat, peutEtreLiee } from "../audio/arbre-disposition";
+import { FORMULES } from "../audio/csound-formules";
 
 const F = (id: string) => registre.trouverDef(id) as unknown as FicheLancable;
 /** Lance un nœud sans rien sur ses entrées : seul ce qui est écrit dans ses réglages compte. */
@@ -106,6 +107,42 @@ describe("le motif d'un Cercle rythmique ou mélodique", () => {
     const r = await cercle(id, "https://exemple.org/?tempo=120#1001");
     expect(r.erreurRendue, r.message).toBe(false);
     expect((r.valeurs[0] as { positions: number }).positions).toBe(4);
+  });
+});
+
+/** Lance `faire` sous une langue d'interface : `langueCourante` lit `localStorage`, absent sous vitest. */
+async function sousLangue<T>(langue: "fr" | "en", faire: () => Promise<T>): Promise<T> {
+  const avant = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  Object.defineProperty(globalThis, "localStorage", {
+    value: { getItem: (c: string) => (c === "attic-lang" ? langue : null), setItem: () => {} }, configurable: true,
+  });
+  try { return await faire(); } finally {
+    if (avant) Object.defineProperty(globalThis, "localStorage", avant);
+    else delete (globalThis as unknown as Record<string, unknown>).localStorage;
+  }
+}
+
+describe("les commentaires écrits dans un fichier suivent la langue de l'interface", () => {
+  // Décision de Fabien : « The interface language ». Les formules Csound écrivaient leurs commentaires
+  // en français, interface anglaise comprise : « ; Le même la, avec un indice de plus en plus fort… ».
+  const formule = (langue: "fr" | "en", id: string) =>
+    sousLangue(langue, () => lancerFiche(F("formules-csound"), { Formule: id }, { entrees: [] }));
+  const commentaires = (texte: unknown) => String(texte).split("\n").filter((l) => l.trim().startsWith(";"));
+  const FRANCAIS = /[éèêàùçîôœ]|\b(le|la|les|des|une|puis|sortie)\b/i;
+
+  // TOUTES LES FORMULES, une neuve comprise : son commentaire sans traduction ferait tomber ce cas.
+  it.each(FORMULES.map((f) => f.id))(
+    "la formule %s, en anglais : orchestre et partition sans un commentaire français", async (id) => {
+      const r = await formule("en", id);
+      expect(r.erreurRendue, r.message).toBe(false);
+      const lignes = [...commentaires(r.valeurs[0]), ...commentaires(r.valeurs[1])];
+      expect(lignes.length).toBeGreaterThan(0);
+      expect(lignes.filter((l) => FRANCAIS.test(l))).toEqual([]);
+    });
+
+  it("et en français, les commentaires restent français", async () => {
+    const r = await formule("fr", "fm");
+    expect(commentaires(r.valeurs[1]).join(" ")).toContain("Le même la");
   });
 });
 
