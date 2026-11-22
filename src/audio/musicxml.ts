@@ -54,6 +54,44 @@ export function nomMusicXML(noteMidi: number): { pas: string; alter: number; oct
   return { pas: d.pas, alter: d.alter + ecart, octave: Math.floor(n / 12) - 1 };
 }
 
+/** Le signe que MusicXML nomme pour une altération dessinée, de deux demi-tons sous la note à deux au-dessus. */
+const SIGNES: Record<string, string> = {
+  "-2": "flat-flat", "-1.5": "three-quarters-flat", "-1": "flat", "-0.5": "quarter-flat", "0": "natural",
+  "0.5": "quarter-sharp", "1": "sharp", "1.5": "three-quarters-sharp", "2": "double-sharp",
+};
+
+/**
+ * L'altération que l'on dessine : celle du quart de ton le plus proche. Un écart qu'aucun signe ne nomme
+ * prend le signe le plus proche, et `<alter>` garde sa valeur exacte pour le son. Décision de Fabien du
+ * 2026-11-22, « Nearest quarter-tone sign ».
+ */
+const alterationDessinee = (alter: number) => Math.max(-2, Math.min(2, Math.round(alter * 2) / 2)) || 0;
+
+/** Une tête de note dans une mesure, telle que le signe se décide. */
+export interface TeteDeMesure { pas: string; alter: number; octave: number; liee?: boolean }
+
+/**
+ * LES SIGNES D'UNE MESURE, ses têtes données dans l'ordre du temps.
+ *
+ * `<alter>` dit la hauteur et `<accidental>` le signe dessiné, et le référentiel MusicXML 4.0 les sépare :
+ * un graveur qui suit la norme ne dessine que le second. Les écrivains n'écrivaient que le premier, et fa
+ * dièse se gravait fa. La règle est celle de l'usage, la même que suit le lecteur de la gravure : un signe
+ * à la première tête d'une ligne qui change d'altération dans la mesure, valable jusqu'à la barre, et rien
+ * sur la suite d'une note liée, qui garde le signe de son départ sans le donner aux suivantes. L'armure est
+ * celle de do. Revue des notations en texte, 2026-11-22.
+ */
+export function signesDeLaMesure(tetes: readonly TeteDeMesure[]): (string | null)[] {
+  const etat = new Map<string, number>();
+  return tetes.map((t) => {
+    if (t.liee) return null;
+    const vue = alterationDessinee(t.alter);
+    const ligne = `${t.pas}${t.octave}`;
+    if ((etat.get(ligne) ?? 0) === vue) return null;
+    etat.set(ligne, vue);
+    return SIGNES[String(vue)];
+  });
+}
+
 /** Les valeurs de note que MusicXML nomme, de la ronde à la quadruple-croche. */
 const VALEURS: { divisions: number; nom: string; points: number }[] = [
   { divisions: 16, nom: "whole", points: 0 },
@@ -174,6 +212,8 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
     // Ce que la mesure contient, dans l'ordre, silences compris.
     let curseur = debutMesure;
     const dansLaMesure = evenements.filter((e) => e.debut >= debutMesure && e.debut < debutMesure + unitesParMesure);
+    const signes = signesDeLaMesure(dansLaMesure.flatMap((e) => e.notes.map((n) => nomMusicXML(n))));
+    let tete = 0;
     for (const e of dansLaMesure) {
       if (e.debut > curseur) {
         lignes.push(...ecrireSilence(e.debut - curseur, unitesParNoire));
@@ -181,8 +221,8 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
       }
       // Une note ne déborde pas de la mesure : on la tronque, faute de pouvoir la lier.
       const duree = Math.min(e.duree, debutMesure + unitesParMesure - curseur);
-      if (duree <= 0) continue;
-      e.notes.forEach((n, i) => lignes.push(...ecrireNote(n, duree, i > 0, unitesParNoire)));
+      if (duree <= 0) { tete += e.notes.length; continue; }
+      e.notes.forEach((n, i) => lignes.push(...ecrireNote(n, duree, i > 0, unitesParNoire, signes[tete++])));
       curseur += duree;
     }
     if (curseur < debutMesure + unitesParMesure) {
@@ -196,7 +236,7 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
   return lignes.join("\n");
 }
 
-function ecrireNote(noteMidi: number, duree: number, estAccord: boolean, unitesParNoire: number): string[] {
+function ecrireNote(noteMidi: number, duree: number, estAccord: boolean, unitesParNoire: number, signe: string | null): string[] {
   const { pas, alter, octave } = nomMusicXML(noteMidi);
   const { nom, points } = valeurNote(duree, unitesParNoire);
   const out = ["      <note>"];
@@ -209,6 +249,7 @@ function ecrireNote(noteMidi: number, duree: number, estAccord: boolean, unitesP
   out.push(`        <duration>${duree}</duration>`);
   out.push(`        <type>${nom}</type>`);
   for (let i = 0; i < points; i++) out.push("        <dot/>");
+  if (signe) out.push(`        <accidental>${signe}</accidental>`);
   out.push("      </note>");
   return out;
 }

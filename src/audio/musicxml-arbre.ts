@@ -17,7 +17,7 @@
 // et l'on déclare la bonne unité, plutôt que d'arrondir et d'espérer.
 
 import type { Mesure, NoeudRythme } from "./arbre-rythmique";
-import { nomMusicXML } from "./musicxml";
+import { nomMusicXML, signesDeLaMesure, type TeteDeMesure } from "./musicxml";
 
 // ── Rationnels ─────────────────────────────────────────────────────────
 
@@ -270,6 +270,17 @@ function unePartie(
       lignes.push(`      <attributes><time><beats>${m.metrique[0]}</beats><beat-type>${m.metrique[1]}</beat-type></time></attributes>`);
     }
 
+    // LES HAUTEURS DE LA MESURE D'ABORD, pour que ses signes se décident dans l'ordre du temps : voir
+    // `signesDeLaMesure`.
+    const hauteursDeMesure = feuilles.map((f) => (f.silence ? null : hauteurs.length > 0 ? hauteurs[rang++ % hauteurs.length] : 60));
+    const tetes = feuilles.map((f, i) => {
+      const h = hauteursDeMesure[i];
+      return h === null ? null : { ...nomMusicXML(h), liee: f.liee };
+    });
+    const signesTetes = signesDeLaMesure(tetes.filter((t): t is TeteDeMesure & { liee: boolean } => t !== null));
+    let k = 0;
+    const signes = tetes.map((t) => (t ? signesTetes[k++] : null));
+
     feuilles.forEach((f, i) => {
       const duree = Math.round((f.duree.n * divisions) / f.duree.d);
       const { nom, points } = valeurEcrite(f.ecrite);
@@ -282,9 +293,7 @@ function unePartie(
       if (f.silence) {
         lignes.push('        <rest/>');
       } else {
-        const hauteur = hauteurs.length > 0 ? hauteurs[rang % hauteurs.length] : 60;
-        rang++;
-        const { pas, alter, octave } = nomMusicXML(hauteur);
+        const { pas, alter, octave } = nomMusicXML(hauteursDeMesure[i]!);
         lignes.push('        <pitch>');
         lignes.push(`          <step>${pas}</step>`);
         if (alter !== 0) lignes.push(`          <alter>${alter}</alter>`);
@@ -298,6 +307,7 @@ function unePartie(
       if (feuilles[i + 1]?.liee) lignes.push('        <tie type="start"/>');
       lignes.push(`        <type>${nom}</type>`);
       for (let p = 0; p < points; p++) lignes.push('        <dot/>');
+      if (signes[i]) lignes.push(`        <accidental>${signes[i]}</accidental>`);
       if (f.groupe > 0) {
         lignes.push('        <time-modification>');
         lignes.push(`          <actual-notes>${f.reel}</actual-notes>`);

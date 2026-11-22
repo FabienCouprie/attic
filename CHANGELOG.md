@@ -6,6 +6,22 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE MUSICXML DESSINE SES ALTÉRATIONS, QUARTS DE TON COMPRIS, ET LA PARTITION GRAVÉE SE LIT COMME ELLE SONNE.** Revue des notations en texte, douzième format, 2026-11-22, premier lot.
+  - **La référence** : le référentiel MusicXML 4.0 du W3C. `<alter>` « represents chromatic alteration » ; `<accidental>` « represents actual notated accidentals ».
+  - **Ce qui se passait** : les trois chemins du nœud, depuis un MIDI, depuis un arbre et depuis plusieurs voix, n'écrivaient que `<alter>`. Mesuré par `executer`, gravé par la Partition gravée et relu par `lireGravure` :
+    - fa dièse, si bémol et do dièse se lisaient fa, si et do ;
+    - un fa dièse puis un fa se lisaient deux fa ;
+    - un quart de ton au-dessus du do se lisait do.
+  - **Ce qui change** :
+    - `signesDeLaMesure` écrit `<accidental>` selon l'usage. Un signe se pose à la première tête d'une ligne qui change d'altération dans la mesure, et vaut jusqu'à la barre ; un bécarre défait l'altération ; la suite d'une note liée n'en porte pas. Les deux écrivains l'emploient ;
+    - selon la décision de Fabien du 2026-11-22, « Nearest quarter-tone sign », un quart de ton prend son signe. Un autre écart prend celui du quart de ton le plus proche, et `<alter>` garde la valeur exacte pour le son.
+
+    La notice le dit.
+  - **L'instrument de lecture avait un angle mort** : `lireGravure` lisait les quarts de ton de Stein et Zimmermann, que Verovio dessine, comme un bécarre, sans les rendre dans `inconnus`. Il les lit maintenant, et rend tout signe inconnu au lieu de le compter pour rien. Le garde de la Partition gravée reste vert, 82 cas.
+  - **Le garde** : `plugins/musicxml-grave.test.ts`, 8 cas.
+    - Vu rouge sur le code d'avant : les 8.
+    - Vu rouge aussi sur une mesure qui oublie ses signes, plantée.
+
 - **UN N-OLET SE RECONNAÎT À LA DURÉE DE SES PARTS, ET NON À LEUR NOMBRE.** Revue des notations en texte, neuvième format, 2026-11-22, troisième lot.
   - **Ce qui se passait**, mesuré par `executer` ; le son était juste partout :
     - le déroulé comptait le n-olet au nombre de parts d'une division. « (3/4 (1 1 1)) », trois noires exactes, comptait un groupe irrégulier, et ses notes étaient annotées « n-olet 3 » dans l'Analyse du Rythme sur hauteurs et du Quantifier. « (4/4 (2 1)), un triolet de blanches, n'en comptait aucun ;
