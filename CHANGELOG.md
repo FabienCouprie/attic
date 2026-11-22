@@ -6,6 +6,21 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **L'HARMONIE NÉGATIVE DIT CE QUE FAIT SA RÉFLEXION, ET LA SÉRIE À TOUS LES INTERVALLES REVIENT À LA PREMIÈRE AU-DELÀ DE LA DERNIÈRE.** Revue des notations en texte, les tables et les suites, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - la documentation et la notice de « Réflexion » promettaient que « Classes » garde le contour de la ligne. Do ré mi fa sol y devient sol fa mi bémol ré do : la ligne se retourne, comme sous « Miroir vrai » ;
+    - un MIDI absent ou sans note était refusé sans le drapeau d'erreur ;
+    - la série de rang 3856 rendait la 3855, alors que la documentation et le code promettent de revenir à la première, et le message disait « numéro 3856 ».
+
+    La réflexion, elle, est juste : six paires, et ré majeur devient ré mineur en ré.
+  - **Ce qui change** :
+    - selon la décision de Fabien du 2026-11-22, « Correct the doc », la documentation et la notice disent que « Classes » garde chaque note dans son registre, la basse restant la basse, et que la ligne s'y retourne aussi ;
+    - les refus portent le drapeau d'erreur ;
+    - le rang boucle sur les 3856 séries, et le message nomme la série rendue.
+  - **Le garde** : 6 cas de plus dans `plugins/tables-et-suites.test.ts`, qui en compte 22.
+    - Vu rouge sur le code d'avant : les 4 cas qui changent. Les 2 cas de la ligne tiennent ce que la documentation dit maintenant.
+    - Vu rouge aussi sur le rang de nouveau borné à la dernière série, planté.
+
 - **LA TABLE DE LA CHAÎNE DE MARKOV ÉCRIT SES COMPTES, ET DIT QU'ELLE N'EN MONTRE QU'UNE PARTIE.** Revue des notations en texte, les tables et les suites, 2026-11-22, deuxième lot.
   - **Ce qui se passait**, mesuré par `executer` :
     - les pourcentages arrondis ne faisaient pas toujours 100 : trois suites également probables s'écrivaient 33 %, 33 %, 33 % ;

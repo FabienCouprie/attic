@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
+import { notesDuMidi } from "../audio/midi";
 
 const F = (id: string) => registre.trouverDef(id) as unknown as FicheLancable;
 
@@ -83,5 +84,40 @@ describe("LA TABLE DE MARKOV EST EXACTE, ET DIT CE QU'ELLE MONTRE", () => {
     const r = await MARKOV(entree, reglages);
     expect(r.erreurRendue, r.message).toBe(true);
     expect(r.valeurs).toEqual([null, null, null]);
+  }, 60_000);
+});
+
+// L'HARMONIE NÉGATIVE ET LA SÉRIE À TOUS LES INTERVALLES, troisième lot. La réflexion est 2t + 7 − p modulo 12 :
+// une réflexion retourne la ligne. La documentation promettait que « Classes » en garde le contour ; décision de
+// Fabien du 2026-11-22, « Correct the doc », et ces cas tiennent ce que la documentation dit maintenant. Les
+// refus partaient sans le drapeau d'erreur. La série, elle, promettait de revenir à la première au-delà de la
+// dernière, et rendait la dernière.
+describe("L'HARMONIE NÉGATIVE FAIT CE QUE DIT SA DOCUMENTATION, ET LA SÉRIE REVIENT À LA PREMIÈRE", () => {
+  const midi = (hauteurs: number[]) => notesVersFichierMidi(hauteurs.map((note, i) => ({ note, debut: i * 0.5, fin: i * 0.5 + 0.45, velocite: 90 })), 120);
+  const NEGATIVE = (entree: unknown) => lancerFiche(F("harmonie-negative"), { "Réflexion": "registre" }, { entrees: [entree] });
+  const hauteurs = async (v: unknown) => ((await notesDuMidi(v)) ?? []).map((n) => n.note);
+
+  it("« Classes » retourne la ligne : do ré mi fa sol devient sol fa mi bémol ré do", async () => {
+    const r = await NEGATIVE(midi([60, 62, 64, 65, 67]));
+    expect(await hauteurs(r.valeurs[1])).toEqual([67, 65, 63, 62, 60]);
+  }, 60_000);
+
+  it("« Classes » garde chaque note dans son octave : la basse reste la basse", async () => {
+    const r = await NEGATIVE(midi([48, 52, 55]));
+    expect(await hauteurs(r.valeurs[1])).toEqual([55, 51, 48]);
+  }, 60_000);
+
+  it.each([["sans MIDI", null], ["un MIDI sans note", notesVersFichierMidi([], 120)]])("refuse en erreur %s", async (_titre, entree) => {
+    const r = await NEGATIVE(entree);
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.valeurs).toEqual([null, null, null]);
+  }, 60_000);
+
+  const SERIE = (numero: number) => lancerFiche(F("serie-tous-intervalles"), { "Numéro": numero }, { entrees: [] });
+  it.each([[3856, 0], [3857, 1]])("au-delà de la dernière série, le rang %i revient à la série %i, et le message le dit", async (rang, attendu) => {
+    const [r, reference] = [await SERIE(rang), await SERIE(attendu)];
+    expect(r.valeurs[1]).toEqual(reference.valeurs[1]);
+    expect(r.message).toContain(`${attendu}`);
+    expect(r.message).not.toContain(`${rang}`);
   }, 60_000);
 });
