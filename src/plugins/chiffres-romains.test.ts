@@ -76,6 +76,38 @@ const CAS_MINEUR: [string, string[], string][] = [
   ["i6", ["A", "C", "E"], "C"], ["V65", ["E", "G#", "B", "D"], "G#"], ["bVI", ["F", "A", "C"], "F"],
 ];
 
+// DÉCISION DE FABIEN DU 2026-11-22, « iiø7 V7 i ». Mesuré avant : le style Jazz en mineur suggérait
+// « ii V i », lu Bm E Am en la mineur, et le si mineur portait un fa♯ que la gamme n'a pas.
+describe("L'ANALYSE HARMONIQUE NE SUGGÈRE QUE DES ACCORDS DE SA TONALITÉ", () => {
+  /** Trois secondes d'un accord tenu, en sinusoïdes. */
+  function accordTenu(notes: number[]): AudioBuffer {
+    const SR = 44100, n = SR * 3;
+    const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+    const x = new Float32Array(n);
+    for (let i = 0; i < n; i++) for (const m of notes) x[i] += 0.06 * Math.sin(2 * Math.PI * 440 * 2 ** ((m - 69) / 12) * (i / SR));
+    b.copyToChannel(x, 0);
+    return b;
+  }
+  // La gamme de do majeur, et celle de la mineur, harmonique comprise : la sensible sol♯ est de l'usage.
+  const GAMMES = { majeur: C("C", "D", "E", "F", "G", "A", "B"), mineur: C("A", "B", "C", "D", "E", "F", "G", "G#") };
+  it.each([["Pop"], ["Jazz"], ["Blues"]].flatMap(([s]) => [[s, "majeur"], [s, "mineur"]]))("le style %s, en %s", async (style, mode) => {
+    const t = await lancerFiche(F("tonal-analyse"), { Style: style }, { entrees: [accordTenu(mode === "mineur" ? [57, 60, 64] : [60, 64, 67])] });
+    const p = await lancerFiche(F("tonal-progression"), { Progression: String(t.valeurs[1]) }, { entrees: [String(t.valeurs[0])] });
+    expect(p.erreurRendue, p.message).toBe(false);
+    for (const symbole of String(p.valeurs[0]).split(" ")) {
+      const hors = lu(symbole).classes.filter((k) => !GAMMES[mode as "majeur" | "mineur"].includes(k));
+      expect(hors, `« ${symbole} » dans « ${t.valeurs[1]} »`).toEqual([]);
+    }
+  });
+
+  it("le style Jazz suggère la cadence de l'usage, avec ses septièmes", async () => {
+    const majeur = await lancerFiche(F("tonal-analyse"), { Style: "Jazz" }, { entrees: [accordTenu([60, 64, 67])] });
+    const mineur = await lancerFiche(F("tonal-analyse"), { Style: "Jazz" }, { entrees: [accordTenu([57, 60, 64])] });
+    expect(majeur.valeurs[1]).toBe("ii7 V7 Imaj7");
+    expect(mineur.valeurs[1]).toBe("iiø7 V7 i");
+  });
+});
+
 describe("LES CHIFFRES ROMAINS SE LISENT SELON L'USAGE, en do majeur", () => {
   it.each(CAS_MAJEUR)("« %s »", async (romain, notes, basse) => {
     const attendu = { classes: C(...notes), basse: Note.chroma(basse)! };

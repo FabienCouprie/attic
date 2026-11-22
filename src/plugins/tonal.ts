@@ -351,7 +351,9 @@ export const fiches: FicheAudio[] = ([
       const style = ctx.paramTexte("Style", "Pop");
       const mineur = tonalite.type === "minor";
       let prog = progressionSuggest(tonalite.type);
-      if (style === "Jazz") prog = mineur ? "ii V i" : "ii V I";
+      // LA CADENCE DE L'USAGE, AVEC SES SEPTIÈMES, décision de Fabien du 2026-11-22. La suggestion en
+      // mineur était « ii V i », lue Bm E Am en la : le si mineur portait un fa♯ hors de la gamme.
+      if (style === "Jazz") prog = mineur ? "iiø7 V7 i" : "ii7 V7 Imaj7";
       if (style === "Blues") prog = mineur ? "i i i i iv iv i i v iv i v" : "I I I I IV IV I I V IV I V";
       // LA MISE EN TEXTE VIENT DU DOMAINE, et non d'une ligne écrite ici. `accordsVersTexte` est
       // ce que le détecteur d'accords emploie déjà : deux mises en forme de la même donnée avaient

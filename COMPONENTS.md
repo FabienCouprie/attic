@@ -9070,7 +9070,7 @@ Sorts the received sound's grain into three species and gives its quantities, wi
 
 *Detects the key of a song and suggests a chord progression.*
 
-Analyses audio and estimates its global key, then suggests a fitting progression (Pop, Jazz, Blues). « Key » output = estimated key with confidence, « Progression » = suggested roman numerals, « Detected chords » = chords detected over time, one line each, « 0:02 Am (2.0s, 100%) », the symbol being the same in both languages. Connect the « Progression » output to « Chord Grid » to generate an accompaniment.
+Analyses audio and estimates its global key, then suggests a fitting progression (Pop, Jazz, Blues), made of the key's chords: in Jazz, ii7 V7 Imaj7 in major and iiø7 V7 i in minor. « Key » output = estimated key with confidence, « Progression » = suggested roman numerals, « Detected chords » = chords detected over time, one line each, « 0:02 Am (2.0s, 100%) », the symbol being the same in both languages. Connect the « Progression » output to « Chord Grid » to generate an accompaniment.
 
 | Port | Name | Type | |
 |---|---|---|---|

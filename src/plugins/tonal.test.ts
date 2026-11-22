@@ -143,7 +143,9 @@ describe("nœuds Tonal", () => {
       const f = trouver("tonal-analyse")!;
       const ctxJazz = { entree: () => gammeC(0.1), paramTexte: () => "Jazz", paramNombre: () => 0 };
       const resJazz = await f.executer(ctxJazz as any);
-      expect(resJazz.valeurs[1]).toBe("ii V i");
+      // « iiø7 V7 i » depuis le 2026-11-22 (décision de Fabien) : « ii V i » se lisait Bm E Am en la
+      // mineur, et le si mineur portait un fa♯ hors de la gamme.
+      expect(resJazz.valeurs[1]).toBe("iiø7 V7 i");
 
       const ctxBlues = { entree: () => gammeC(0.1), paramTexte: () => "Blues", paramNombre: () => 0 };
       const resBlues = await f.executer(ctxBlues as any);

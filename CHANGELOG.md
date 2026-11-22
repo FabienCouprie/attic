@@ -6,6 +6,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **L'ANALYSE HARMONIQUE NE SUGGÈRE QUE DES ACCORDS DE SA TONALITÉ : EN JAZZ, ii7 V7 Imaj7 ET iiø7 V7 i.** Revue des notations en texte, sixième format, décision de Fabien du 2026-11-22 : « iiø7 V7 i ».
+  - **Ce qui se passait**, mesuré par `executer` : le style Jazz suggérait « ii V i » en mineur, que la Progression lit Bm E Am en la mineur ; le si mineur portait un fa♯ que la gamme n'a pas.
+  - **Ce qui change** (`tonal.ts`) : Jazz suggère « ii7 V7 Imaj7 » en majeur et « iiø7 V7 i » en mineur, la cadence de l'usage. La notice le dit. Le cas de `plugins/tonal.test.ts` qui tenait « ii V i » tient la nouvelle suggestion.
+  - **Le garde**, dans `plugins/chiffres-romains.test.ts` : pour les trois styles et les deux modes, chaque accord suggéré, relu par la Progression, reste dans la gamme de sa tonalité, la mineure harmonique pour le mineur ; et la cadence Jazz est celle de l'usage. **Vu rouge** sur le code d'avant, 2 cas sur 7.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests des romains, de Tonal, des notices, et les gardes du dépôt touchés, 7 fichiers et 95 cas verts. **Non vérifié dans l'application.**
+
 - **LES CHIFFRES ROMAINS SE LISENT SELON L'USAGE : ii7 EST UNE MINEURE SEPTIÈME, vii° EST LA SENSIBLE EN MINEUR, 6, 64, 65, 43, 42 SONT DES RENVERSEMENTS, ET V/V EST LU.** Revue des notations en texte, sixième format, décisions de Fabien du 2026-11-22 : « The leading tone », « Classical inversions », « Read them ».
   - **Ce qui se passait**, mesuré par `executer` en do majeur et en la mineur, par la Progression, la Grille d'accords et « Accords → Notation » :
     - « ii7 » rendait D7, une septième de dominante, au lieu de Dm7, et de même « iii7 » et « vi7 » ; le ii de la cadence ii7 V7 Imaj7 sonnait faux ;
