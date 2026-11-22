@@ -53,22 +53,14 @@ describe("lire la notation en listes", () => {
     expect(() => lireArbre("(4/4 (1 1)) )")).toThrow(/en trop/);
   });
 
-  it("UNE DIVISION N'EST NI SILENCE NI LIÉE, et le signe qui le prétend est abandonné", () => {
-    // Écrit à la main, `(-1 (1 1))` était accepté, dessiné avec les hachures d'un silence, et joué
-    // en deux notes : le déroulement descend dans la division et jette le signe. Le dessin disait
-    // une chose et l'oreille en entendait une autre.
-    const m = lireArbre("(4/4 ((-1 (1 1)) 1 1 1))");
-    expect(!!m[0].contenu[0].silence, "le silence ne survit pas à la division").toBe(false);
-    expect(m[0].contenu[0].enfants).toHaveLength(2);
-    // Et l'arbre se réécrit sans le signe : ce qui est relu est ce qui sonne.
-    expect(ecrireArbre(m)).toBe("(4/4 ((1 (1 1)) 1 1 1))");
-    for (const e of derouler(m, T)) expect(e.silence).toBe(false);
-  });
-
-  it("la même règle vaut pour une liaison portée par une division", () => {
-    const m = lireArbre("(4/4 ((1.0 (1 1)) 1 1 1))");
-    expect(!!m[0].contenu[0].liee).toBe(false);
-    expect(ecrireArbre(m)).toBe("(4/4 ((1 (1 1)) 1 1 1))");
+  // CES DEUX CAS TENAIENT LE CONTRAIRE : une division négative ou liée était corrigée, le signe ôté.
+  // Écrit à la main, `(-1 (1 1))` était accepté, dessiné avec les hachures d'un silence, et joué en
+  // deux notes, et la correction rendait le dessin juste. Décision de Fabien du 2026-11-22, revue des
+  // notations en texte, « Refuse them, named » : le manuel d'OpenMusic ne définit ni l'un ni l'autre,
+  // et l'arbre est refusé en nommant le jeton.
+  it("UNE DIVISION N'EST NI SILENCE NI LIÉE : le signe qui le prétend est refusé, et nommé", () => {
+    expect(() => lireArbre("(4/4 ((-1 (1 1)) 1 1 1))")).toThrow(/division ne peut pas être un silence.*« -1 »/);
+    expect(() => lireArbre("(4/4 ((1.0 (1 1)) 1 1 1))")).toThrow(/division ne peut pas être liée.*« 1\.0 »/);
   });
 
   it("un silence ORDINAIRE, lui, n'est pas touché", () => {
@@ -176,10 +168,13 @@ describe("dérouler un arbre", () => {
     expect(e[1].debut).toBeCloseTo(2, 12);
   });
 
-  it("une liaison en tête devient une note, n'ayant rien à prolonger", () => {
-    const e = derouler(lireArbre("(4/4 (1.0 1 1 1))"), T);
-    expect(e).toHaveLength(4);
-    expect(e[0].duree).toBeCloseTo(1, 12);
+  // CE CAS TENAIT LE CONTRAIRE : la liaison en tête devenait une note. Décision de Fabien du
+  // 2026-11-22, « Refuse them, named » : une liaison sans note devant elle est refusée, en tête comme
+  // derrière un silence, qu'elle prolongeait.
+  it("une liaison sans note devant elle est refusée, en tête comme derrière un silence", () => {
+    expect(() => lireArbre("(4/4 (1.0 1 1 1))")).toThrow(/liaison sans note/);
+    expect(() => lireArbre("(4/4 (-1 1.0 1 1))")).toThrow(/liaison sans note/);
+    expect(() => lireArbre("(4/4 (1 -1.0 1 1))")).toThrow(/silence ne se lie pas/);
   });
 
   it("enchaîne les mesures bout à bout", () => {
@@ -214,9 +209,13 @@ describe("dérouler un arbre", () => {
     expect(new Set(deuxMesures.filter((e) => e.nolet > 0).map((e) => e.groupe)).size).toBe(2);
   });
 
+  // LE TEXTE « (4/4 ()) » EST MAINTENANT REFUSÉ, revue des notations en texte, 2026-11-22 : une liste
+  // sans proportion ne divise rien, et rendait quatre temps de rien. Le déroulé, lui, ne bute toujours
+  // sur rien de ce qu'on lui donne.
   it("ne bute ni sur un arbre vide ni sur une division vide", () => {
     expect(derouler([], T)).toEqual([]);
-    expect(derouler(lireArbre("(4/4 ())"), T)).toEqual([]);
+    expect(derouler([{ metrique: [4, 4], contenu: [] }], T)).toEqual([]);
+    expect(() => lireArbre("(4/4 ())")).toThrow(/liste sans proportion/);
   });
 
   it("ignore un poids nul plutôt que de diviser par zéro", () => {

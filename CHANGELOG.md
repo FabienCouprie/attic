@@ -59,6 +59,45 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - **Ce qui change** : ces cinq refus portent le drapeau d'erreur, comme tous les refus de la revue.
   - Tenu par `plugins/points-ouverts.test.ts`, quatre cas vus rouges sur le code d'avant, et rouge aussi sur le drapeau de nouveau retiré au Contrepoint, planté.
 
+- **UN N-OLET SE RECONNAÎT À LA DURÉE DE SES PARTS, ET NON À LEUR NOMBRE.** Revue des notations en texte, neuvième format, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` ; le son était juste partout :
+    - le déroulé comptait le n-olet au nombre de parts d'une division. « (3/4 (1 1 1)) », trois noires exactes, comptait un groupe irrégulier, et ses notes étaient annotées « n-olet 3 » dans l'Analyse du Rythme sur hauteurs et du Quantifier. « (4/4 (2 1)), un triolet de blanches, n'en comptait aucun ;
+    - le MusicXML gravait « (3/4 (1 1 1)) » en triolet de noires pointées ;
+    - dans un triolet, les deux blanches de « (4/4 ((2 (1 1)) 1)) » perdaient leur modification de temps.
+  - **Ce qui change** : une seule règle, dans `derouler` et dans `feuillesDeMesure` (`audio/musicxml-arbre.ts`). Un groupe est un n-olet quand la durée écrite de son unité n'est pas binaire. Cette durée est allongée du rapport des n-olets qui l'englobent. Une note reste dans le n-olet qui l'englobe, même sous une division binaire.
+  - **Le garde** : 12 cas dans `plugins/arbres-rythmiques.test.ts`, le compte du Rythme sur hauteurs et l'écriture du MusicXML.
+    - Vu rouge sur le code d'avant : 5 cas, dont la note de triolet sans modification de temps, faute antérieure.
+    - Vu rouge aussi sur deux fautes plantées : trois parts recomptées en triolet, et la note de nouveau retirée de son n-olet.
+
+- **UN ARBRE ÉCRIT DANS OPENMUSIC SE COLLE DANS ATTIC.** Revue des notations en texte, neuvième format, décision de Fabien du 2026-11-22 : « Read them ».
+  - **Ce qui se passait** : le module `audio/arbre-rythmique.ts` et la documentation du réglage « Arbre » promettent qu'un arbre venu d'ailleurs s'y colle. Mais les formes que donne le manuel d'OpenMusic étaient toutes refusées : « métrique attendue, de la forme 4/4 ». C'était le cas de la voix « (? ((4//4 (1 1 1 1)))) », comme de la métrique « 4//4 » ou « (4 4) ».
+  - **Ce qui change** :
+    - `lireArbre` lit ces formes, comme « 4/4 » ;
+    - le premier élément d'une voix est « ? » ou le nombre de ses mesures, et un nombre qui ne les compte pas est refusé en le nommant ;
+    - une mesure à métrique en liste, « ((4 4) (1 1 1 1)) », se distingue d'une liste englobante de mesures ;
+    - les écrivains gardent « 4/4 ».
+
+    Les documentations des réglages « Arbre » le disent.
+  - **Le garde** : 9 cas dans `plugins/arbres-rythmiques.test.ts`. Chaque forme d'OpenMusic se déroule exactement comme son équivalent « 4/4 ».
+    - Vu rouge sur le code d'avant : 8 cas. Le neuvième, le nombre de mesures faux, n'était refusé que parce que toute la forme l'était.
+    - Vu rouge aussi sur « n//n » de nouveau illisible, planté.
+
+- **UN ARBRE RYTHMIQUE QUE LA NOTATION N'ACCEPTE PAS, OU NE DÉFINIT PAS, EST REFUSÉ EN NOMMANT LE JETON.** Revue des notations en texte, neuvième format, 2026-11-22, premier lot. La référence est le manuel d'OpenMusic.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - « (4/4 (1 0 1 1)) » rendait une note de durée nulle, et « 0.5 », une valeur que le manuel n'accepte pas, se lisait comme une liaison d'un demi-poids ;
+    - une liaison derrière un silence prolongeait le silence, et un silence lié, « -1.0 », prolongeait la note d'avant : **le silence écrit sonnait** ;
+    - une liaison en tête devenait une note, une division négative ou liée perdait son signe ;
+    - « 4/0 » se lisait 4/1, seize temps, « 0/4 » rendait des notes de durée nulle, et « (4/4 ()) » quatre temps de rien.
+  - **Ce qui change** : `lireArbre` refuse tout cela, et le message nomme le jeton et sa position. Pour ce que le manuel ne définit pas, c'est la décision de Fabien du 2026-11-22, « Refuse them, named ». Les documentations des réglages « Arbre » le disent.
+  - **Des tests tenaient le contraire**. Dans `audio/arbre-rythmique.test.ts` :
+    - la division négative ou liée était corrigée, et la liaison en tête lue comme une note ;
+    - « (4/4 ()) » était lu.
+
+    Dans `audio/arbre-disposition.test.ts`, une donnée liait derrière un silence. Ils tiennent maintenant le refus, ou un arbre que la notation définit.
+  - **Le garde** : `plugins/arbres-rythmiques.test.ts`, 19 cas, tout par `executer`. Il relit aussi les 340 arbres du catalogue, cent tirages et l'arbre du Quantifier : aucun n'écrit ce qui est refusé.
+    - Vu rouge sur le code d'avant : les 10 refus.
+    - Vu rouge aussi sur un silence lié de nouveau admis, planté.
+
 - **LE RÉPARTITEUR MIDI ET LE SSP DE KOENIG REFUSENT CE QUE LEURS LISTES NE PORTENT PAS, EN LE NOMMANT.** Revue des notations en texte, passe de complétude, 2026-11-22, troisième lot.
   - **Ce qui se passait**, mesuré par `executer` :
     - dans le Répartiteur, « 17 », « 0 » et « a » vidaient la partie sans un mot, ses notes passant au « Reste », et « 1-17 » prenait les seize canaux ;
@@ -2297,6 +2336,19 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - **Preuves** : `npx tsc -b` vert, `npx oxlint` 0 erreur et les mêmes 27 avertissements, les tests neufs du dialogue (3) et du client (4) vus rouges sous une faute plantée puis verts. Une première passe complète a trouvé deux tables en retard : `AGENTS.md` annonçait encore 74 composants surveillés, et `DEPENDANCES-AUDIO.md`, régénérée, range désormais `ia.ts` et `inference-onnx.ts` parmi les modules purs. Relancée après elles et après le découpage du MDX (voir « Fixed »), la passe complète rend 708 fichiers et 10 186 tests en 23 min 50 s : 10 172 verts, 14 sautés, aucun rouge. Les soixante-quinze empreintes et l'épreuve dans l'application repassent sur ce code.
 
 ### Fixed
+
+- **« DITHER » SE DIT À LA DICTÉE : « ARRONDI AVEC BRUIT ».** Relevé le 2026-11-22 par la session du chantier de l'harmonisation : le garde du lexique vocal jetait « dither ». Le nom parlé a été choisi par Fabien le même jour, parmi trois noms proposés.
+  - **Ce qui se passait.** « Dither » est entré au catalogue le 2026-11-15 (PR 366). Le modèle vocal français n'a pas le mot « dither », et c'est le seul mot du nom : le composant ne pouvait pas se dire. Lancé sur les fichiers de `master`, `npm run test:lexique-dictee` tombe, et le moteur jette un seul mot, `["dither"]`.
+  - **Ce qui change.** « dither » rejoint `HORS_LEXIQUE_FR` dans `plugins/lexique-vosk.ts`, et la fiche porte le nom parlé « arrondi avec bruit », qui dit le geste du composant : un bruit ajouté avant l'arrondi. La notice ne change pas, elle ne nomme pas la dictée.
+  - **Le choix du nom.** Les trois candidats ont été vérifiés mot à mot contre la table des symboles de `graph/Gr.fst` du modèle `vosk-model-small-fr-0.22`. L'instrument a d'abord été éprouvé sur des cas connus : il rend absents les six mots déjà relevés (« dither », « pleurage », « convolution », « 303 », « granulaire », « trémolo ») et présents tous les mots des noms parlés en place qui ont été sondés.
+    - « arrondi », « avec » et « bruit » y sont, et aucun autre nom du catalogue ne commence par « arrondi ».
+    - Écartés : « réduction de profondeur », trop proche de « Réduction de bruit » ; « quantification avec bruit », trop proche de « Quantifier » ; tout nom en « bits », le Bitcrusher se disant « réducteur de bits ».
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, aucun dans les fichiers touchés ;
+    - `plugins/noms-parles.test.ts` et `plugins/lexique-vosk.test.ts`, 11 cas verts. **Vu rouge** avec « dither » au lexique et sans nom parlé : « 1 composants qu'aucun nom ne permet de dire, contre 0 inscrits », le Dither seul nommé ;
+    - `src/docs/compatibilite.test.ts` et `src/docs/catalogue-markdown.test.ts`, 16 cas verts et une écriture sautée. Aucune table générée ne porte les noms parlés ;
+    - `npm run test:lexique-dictee`, le modèle français lié dans l'arbre par lien physique : « 1 passed » en 1,7 min, « mots jetés par le moteur : aucun », la ligne de dégel du modèle vue.
+  - **Non vérifié** : la reconnaissance de « arrondi avec bruit » dite au micro, le garde ne vérifiant que la grammaire. Non lancée : la passe complète de vitest, la machine étant partagée.
 
 - **LE MESSAGE DE « REMPLISSAGE DE TROU » COMPTE LES TROUS DANS LE TEMPS, ET NON EN MOYENNE PAR CANAL.** Relevé le 2026-11-22 en contrôlant l'option « Silences détectés », réparé sur l'ordre de Fabien : « réparer ».
   - **Ce qui se passait.** `plugins/inpainting.ts` divisait par le nombre de canaux le compte et la durée que chaque canal avait bouchés. Les silences se détectant voie par voie, dix millisecondes rebouchées sur un seul canal de deux s'annonçaient « 1 trou(s) bouché(s) · 5 ms reconstruits », et deux trous à deux endroits, un par canal, « 1 trou ».
