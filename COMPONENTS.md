@@ -3181,7 +3181,7 @@ Puts a note on each word spoken in the audio input. The speech is first transcri
 
 *Converts a text notation (one note/chord per line) into MIDI + audio.*
 
-Renders a simple text notation into a MIDI file and synthesized audio. One line = « note octave duration [velocity] », e.g. « C4 0.5 » or « C4+E4+G4 1 » (chord), « rest 0.5 » for a rest, « Tempo 120 » at the top. Text comes from the input (blue port) or the parameter. Ideal after an AI node (Ollama, GPT-2) prompted to output this format.
+Renders a text notation into a MIDI file and synthesized audio. Each line carries a note, a chord or a rest, then its duration in beats, then its velocity, optional: - « C4 0.5 » plays a C4 for half a beat, at velocity 80; - « C4+E4+G4 1 100 » plays a chord for one beat, at velocity 100; - « rest 0.5 » is a rest of half a beat. A note is written by its letter, its accidental and its octave, middle C being « C4 »: « # » and « b » for a semitone, « ## », « x » and « bb » for two. A MIDI number from 0 to 127 also designates it. A duration is decimal or a fraction, « 0.5 » or « 1/2 »; absent, it is one beat. The velocity goes from 1 to 127. « Tempo 120 » sets the tempo of what follows: at the top, it replaces the « Tempo » setting; further on, it changes it at its instant. An empty line is skipped, and a comment begins with « # » or « // ». A text carrying a faulty line is refused whole: the message names each faulty line, its number and its reason, and nothing is played. The text comes from the « Notation » input, or from the « Notation » setting when the input is not connected.
 
 | Port | Name | Type | |
 |---|---|---|---|

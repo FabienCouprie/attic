@@ -6,6 +6,22 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **TEXTE → MIDI REFUSE UN TEXTE FAUTIF EN NOMMANT CHAQUE LIGNE, ET LIT LES DOUBLES ALTÉRATIONS ET LES FRACTIONS.** Revue des notations en texte, premier format, décisions de Fabien du 2026-11-22.
+  - **Ce qui se passait.** Le lecteur vivait dans la fiche, sans aucun test, et remplaçait ou jetait en silence tout ce qui sortait du cas simple. Mesuré par `executer` :
+    - « BPM 120 » en tête donnait une minute de silence avant la première note ;
+    - « Bbb4 » disparaissait de la septième diminuée « C4+Eb4+Gb4+Bbb4 », et « C##4 », « Cx4 » ou « A9 » de même ;
+    - « H4 » devenait un silence ;
+    - « 1/2 » et « 0 » valaient un temps entier, et « -1 » faisait reculer le temps ;
+    - une vélocité « 0 » ou illisible devenait 80, et « 200 » devenait 127.
+  - **Ce qui change** (`audio/notation-texte.ts`, module neuf, `lireNotationTexte`) :
+    - un texte qui porte une ligne fautive est refusé en entier, et le message nomme chaque ligne, son numéro, son texte et sa raison : note illisible ou hors du clavier, durée illisible, nulle ou négative, vélocité hors de 1 à 127, tempo illisible ou nul, mot en trop ;
+    - les doubles altérations (« ## », « x », « bb ») et les durées en fraction se lisent ;
+    - un commentaire peut suivre les mots d'une ligne.
+  - **La notice le dit**, en français et en anglais. Elle perd au passage « Idéal branché après un composant IA », que le contrat des notices proscrit. `COMPONENTS.md` et `DEPENDANCES-AUDIO.md` régénérés.
+  - **La valeur d'essai de la notation** (`audio/valeurs-essai.ts`) tenait sur une seule ligne, dont l'ancien lecteur ne tirait qu'un do ; elle en compte cinq.
+  - **Le garde**, `plugins/texte-vers-midi.test.ts`, le premier de ce nœud, tout par `executer` : les dix cas du contrat de la notice, les quatre écritures nouvelles, et les douze refus, chacun nommant sa ligne et son mot fautif. **Vu rouge** sur le code d'avant : les dix-sept cas neufs tombaient, les dix du contrat passaient ; vert après.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement ; le garde, les voisins du nœud, `src/docs`, les deux gardes d'i18n et les tests des valeurs d'essai, 57 fichiers et plus de mille cas verts.
+
 - **LA PASSE PROFONDE DU BANC DES GAMMES : LES DOUZE CLÉS, LES RÉGLAGES CROISÉS, ET LE SON COMPARÉ À SON MIDI.** Chantier du contrôle des gammes, demandée par Fabien le 2026-11-21.
   - **`docs/gammes-passe-profonde.test.ts`**, sous `npm run controle-gammes-profond` (`BANC_GAMMES_PROFOND=1`), bornée par `GAMMES_FICHES=a,b` et `GAMMES_GRAINES=1,2,3`. Elle écrit son relevé dans `GAMMES/profonde.md` et `GAMMES/profonde.json` après chaque nœud, et ne fait tomber aucun cas : ce qu'elle trouve se juge, puis se répare ou se déclare.
   - **Les douze clés** : chaque réglage éprouvé par le garde rapide, sous chaque gamme offerte, à trois graines, sous chaque tonique de do à si, et la transposition de chaque clé à sa voisine d'un demi-ton, si et do compris (`audio/gamme-banc-releve.ts`).

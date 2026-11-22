@@ -3,56 +3,25 @@
 // Débloque le workflow « LLM compositeur » : un nœud IA (Ollama, GPT-2…) produit
 // la notation, ce nœud la rend. Marche aussi avec n'importe quelle source texte.
 //
-// Format (documenté dans la notice, à donner tel quel au LLM) :
-//   TEMPO 120           ← optionnel, une fois ; sinon le paramètre Tempo s'applique
-//   C4 0.5              ← note octave  durée-en-temps  [vélocité]
-//   E4 0.5 100
-//   rest 0.5            ← silence
-//   C4+E4+G4 1          ← accord (notes séparées par +)
-// Les lignes vides et celles commençant par # ou // sont ignorées.
+// Le format et son lecteur vivent dans `audio/notation-texte.ts`, que ce nœud emploie : un texte qui
+// porte une ligne fautive y est refusé en entier, et le message nomme chaque ligne (décisions de
+// Fabien du 2026-11-22, revue des notations en texte).
 import { fiche } from "./fiche";
+import { lireNotationTexte, type FauteDeNotation } from "../audio/notation-texte";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { notesVersFichierMidi, rendreMidi, appliquerInstrumentMidi, type NoteEvenement } from "../audio";
+import { notesVersFichierMidi, rendreMidi, appliquerInstrumentMidi } from "../audio";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2, decoderInstrumentSF2 } from "./soundfontGlobal";
 
-const DEMI: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-
-// "C4" / "F#3" / "Bb5" / "60" → numéro MIDI (C4 = 60), ou null si invalide.
-function noteVersMidi(tok: string): number | null {
-  const t = tok.trim();
-  if (/^\d+$/.test(t)) { const n = parseInt(t, 10); return n >= 0 && n <= 127 ? n : null; }
-  const m = /^([A-Ga-g])([#b]?)(-?\d+)$/.exec(t);
-  if (!m) return null;
-  let semi = DEMI[m[1].toUpperCase()];
-  if (m[2] === "#") semi++; else if (m[2] === "b") semi--;
-  const midi = (parseInt(m[3], 10) + 1) * 12 + semi;
-  return midi >= 0 && midi <= 127 ? midi : null;
-}
-
-function parserNotation(texte: string, tempoInitial: number): { notes: NoteEvenement[]; tempo: number } {
-  let tempo = tempoInitial > 0 ? tempoInitial : 120;
-  let t = 0; // curseur temporel en secondes
-  const notes: NoteEvenement[] = [];
-  for (const raw of texte.split(/\r?\n/)) {
-    const ligne = raw.trim();
-    if (!ligne || ligne.startsWith("#") || ligne.startsWith("//")) continue;
-    const parts = ligne.split(/\s+/);
-    if (parts[0].toUpperCase() === "TEMPO") {
-      const v = parseFloat(parts[1]); if (v > 0) tempo = v; continue;
-    }
-    const dureeBeats = parseFloat(parts[1] ?? "1") || 1;
-    const dureeSec = dureeBeats * (60 / tempo);
-    const vel = Math.max(1, Math.min(127, Math.round(parseFloat(parts[2] ?? "80")) || 80));
-    if (/^(rest|r)$/i.test(parts[0])) { t += dureeSec; continue; }
-    for (const p of parts[0].split("+")) {
-      const midi = noteVersMidi(p);
-      if (midi != null) notes.push({ note: midi, velocite: vel, debut: t, fin: t + dureeSec });
-    }
-    t += dureeSec;
-  }
-  return { notes, tempo };
+/** Le message d'un texte refusé : le nombre de lignes fautives, puis chacune, huit au plus. */
+function direLesFautes(fautes: readonly FauteDeNotation[]): string {
+  const lignes = new Set(fautes.map((f) => f.ligne)).size;
+  return [
+    traduire("msg.notation.refusee", lignes),
+    ...fautes.slice(0, 8).map((f) => traduire(`msg.notation.faute.${f.raison}`, f.ligne, f.texte, f.mot)),
+    ...(fautes.length > 8 ? ["…"] : []),
+  ].join("\n");
 }
 
 const EXEMPLE = "Tempo 120\nC4 0.5\nE4 0.5\nG4 0.5\nC5 1\nrest 0.5\nA4+C5+E5 1";
@@ -63,8 +32,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Conversion",
     resume: "Convertit une notation texte (note/accord par ligne) en MIDI + audio.",
     resumeEn: "Converts a text notation (one note/chord per line) into MIDI + audio.",
-    notice: "Rend une notation texte simple en fichier MIDI et en audio synthétisé. Une ligne = « note octave durée [vélocité] », ex. « C4 0.5 » ou « C4+E4+G4 1 » (accord), « rest 0.5 » pour un silence, « Tempo 120 » en tête. Le texte vient de l'entrée (port bleu) ou du paramètre. Idéal branché après un composant IA (Ollama, GPT-2) à qui l'on demande ce format.",
-    noticeEn: "Renders a simple text notation into a MIDI file and synthesized audio. One line = « note octave duration [velocity] », e.g. « C4 0.5 » or « C4+E4+G4 1 » (chord), « rest 0.5 » for a rest, « Tempo 120 » at the top. Text comes from the input (blue port) or the parameter. Ideal after an AI node (Ollama, GPT-2) prompted to output this format.",
+    notice: "Rend une notation texte en fichier MIDI et en audio synthétisé.\n\nChaque ligne porte une note, un accord ou un silence, puis sa durée en temps, puis sa vélocité, facultative :\n- « C4 0.5 » joue un do 4 pendant un demi-temps, à la vélocité 80 ;\n- « C4+E4+G4 1 100 » joue un accord pendant un temps, à la vélocité 100 ;\n- « rest 0.5 » est un silence d'un demi-temps.\n\nUne note s'écrit par sa lettre, son altération et son octave, le do central valant « C4 » : « # » et « b » pour un demi-ton, « ## », « x » et « bb » pour deux. Un numéro MIDI de 0 à 127 la désigne aussi. Une durée est décimale ou en fraction, « 0.5 » ou « 1/2 » ; absente, elle vaut un temps. La vélocité va de 1 à 127.\n\n« Tempo 120 » fixe le tempo de ce qui suit : en tête, il remplace le réglage « Tempo » ; plus loin, il le change à son instant. Une ligne vide est sautée, et un commentaire commence par « # » ou « // ».\n\nUn texte qui porte une ligne fautive est refusé en entier : le message nomme chaque ligne fautive, son numéro et sa raison, et rien n'est joué.\n\nLe texte vient de l'entrée « Notation », ou du réglage « Notation » quand l'entrée n'est pas branchée.",
+    noticeEn: "Renders a text notation into a MIDI file and synthesized audio.\n\nEach line carries a note, a chord or a rest, then its duration in beats, then its velocity, optional:\n- « C4 0.5 » plays a C4 for half a beat, at velocity 80;\n- « C4+E4+G4 1 100 » plays a chord for one beat, at velocity 100;\n- « rest 0.5 » is a rest of half a beat.\n\nA note is written by its letter, its accidental and its octave, middle C being « C4 »: « # » and « b » for a semitone, « ## », « x » and « bb » for two. A MIDI number from 0 to 127 also designates it. A duration is decimal or a fraction, « 0.5 » or « 1/2 »; absent, it is one beat. The velocity goes from 1 to 127.\n\n« Tempo 120 » sets the tempo of what follows: at the top, it replaces the « Tempo » setting; further on, it changes it at its instant. An empty line is skipped, and a comment begins with « # » or « // ».\n\nA text carrying a faulty line is refused whole: the message names each faulty line, its number and its reason, and nothing is played.\n\nThe text comes from the « Notation » input, or from the « Notation » setting when the input is not connected.",
     // LE PORT PORTE LE NOM DE CE QU'IL REÇOIT, et non celui de son type.
     //
     // IL S'APPELAIT « TEXTE » ALORS QUE SON PROPRE RÉGLAGE DE REPLI S'APPELLE « NOTATION » : le nœud
@@ -96,8 +65,10 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const entree = ctx.entree(0);
       const texte = (typeof entree === "string" && entree.trim()) ? entree : ctx.paramTexte("Notation", EXEMPLE);
-      const { notes, tempo } = parserNotation(texte, ctx.paramNombre("Tempo", 120));
+      const { notes, tempos, fautes } = lireNotationTexte(texte, ctx.paramNombre("Tempo", 120));
+      if (fautes.length) return { valeurs: [null, null], erreur: true, message: direLesFautes(fautes) };
       if (notes.length === 0) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_note_reconnue_format_attendu_c4_0_5_par_ligne") };
+      const tempo = tempos[tempos.length - 1].bpm;
       const midiFichier = notesVersFichierMidi(notes, tempo);
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));

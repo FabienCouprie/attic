@@ -85,7 +85,9 @@ export function midiDEssai(): File {
  */
 export function texteDEssai(sousType?: string): string {
   switch (sousType) {
-    case "notation": return "C4 0.5 D4 0.5 E4 0.5 F4 0.5 G4 1.0";
+    // UNE NOTE PAR LIGNE, comme le format le veut : sur une seule ligne, l'ancien lecteur n'en tirait
+    // qu'un do, « D4 » passant pour une vélocité, et le lecteur strict du 2026-11-22 la refuse.
+    case "notation": return "C4 0.5\nD4 0.5\nE4 0.5\nF4 0.5\nG4 1.0";
     case "abc": return "X:1\nT:Essai\nM:4/4\nL:1/4\nK:C\nC D E F | G2 z2 |";
     case "paroles": return "une phrase chantee sur quatre temps\net une seconde pour la suite";
     case "plan": return "intro 4 mesures\ncouplet 8 mesures\nrefrain 8 mesures";
