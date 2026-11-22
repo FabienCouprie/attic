@@ -12,7 +12,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { detecterFormat, entreeVerovio, type FormatNotation } from "../audio/verovio";
-import { lireDepuisVerovio } from "../audio/partition-lecture";
+import { hauteursHumdrum, lireDepuisVerovio } from "../audio/partition-lecture";
 import { lireTableDcml } from "../audio/dcml-tsv";
 import { nomNote } from "../audio/nom-note";
 import type { Sequence } from "../audio/sequence";
@@ -130,7 +130,10 @@ export const fiches: FicheAudio[] = ([
               ? `${NOMS_FORMAT[format]} refused by Verovio: check the notation.`
               : `${NOMS_FORMAT[format]} refusé par Verovio : vérifiez la notation.` };
           }
-          const lue = lireDepuisVerovio(tk, tempoImpose);
+          // Le Humdrum reprend ses hauteurs dans son texte : l'import de Verovio perd les altérations
+          // que l'armure porte (`hauteursHumdrum`).
+          const ecrites = format === "humdrum" && source.texte ? hauteursHumdrum(source.texte) : undefined;
+          const lue = lireDepuisVerovio(tk, tempoImpose, ecrites);
           sequence = lue.sequence;
           lignes.push(`${en() ? "tied notes joined" : "notes liées jointes"} : ${lue.liees}`);
           if (lue.sansVoix > 0) lignes.push(`${en() ? "notes without staff or layer, left out" : "notes sans portée ni couche, écartées"} : ${lue.sansVoix}`);

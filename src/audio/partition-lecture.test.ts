@@ -6,7 +6,7 @@
 // voix est une couche d'une portée, la liaison fait une seule note, et la reprise n'est pas dépliée.
 
 import { describe, expect, it } from "vitest";
-import { lireDepuisVerovio, lireMei, type ToolkitPartition } from "./partition-lecture";
+import { hauteursHumdrum, lireDepuisVerovio, lireMei, type ToolkitPartition } from "./partition-lecture";
 import type { Note } from "./note";
 
 const PIECE = `<?xml version="1.0" encoding="UTF-8"?>
@@ -110,6 +110,28 @@ describe("lireDepuisVerovio", () => {
     const { sequence, tempoLu } = lireDepuisVerovio(tk);
     tk.destroy();
     expect(sequence.tempo).toBe(tempoLu ?? 120);
+  });
+
+  it("garde l'altération qu'un Humdrum écrit sous une armure, que Verovio perd", async () => {
+    // La fin du choral 2 de Sapp, en la majeur : le do dièse du ténor. Relevé le 2026-11-22 : Verovio
+    // seul le rend en do, 60 ; le texte du kern dit 61.
+    const kern = ["**kern\t**kern\t**kern\t**kern", "*k[f#c#g#]\t*k[f#c#g#]\t*k[f#c#g#]\t*k[f#c#g#]", "*A:\t*A:\t*A:\t*A:",
+      "*M4/4\t*M4/4\t*M4/4\t*M4/4", "=1-\t=1-\t=1-\t=1-", "4AA\t4c#\t4e\t4a", "4E\t4B\t4g#\t4b", "==\t==\t==\t==", "*-\t*-\t*-\t*-"].join("\n");
+    const tk = await charger(kern, "verovio/wasm-hum", "humdrum");
+    const seul = lireDepuisVerovio(tk, 60).sequence.notes.filter((n) => n.debut === 0).map((n) => n.note);
+    const juste = lireDepuisVerovio(tk, 60, hauteursHumdrum(kern)).sequence;
+    tk.destroy();
+    expect(seul).toContain(60);
+    expect(voix(juste.notes, 2).map((x) => x[0])).toEqual([61, 59]);
+    expect(voix(juste.notes, 1).map((x) => x[0])).toEqual([64, 68]);
+  });
+
+  it("lit les hauteurs du kern : octaves, altérations, bécarre, accords", () => {
+    const h = hauteursHumdrum(["**kern", "4c", "4cc#", "4CC-", "8BBJ", "4ee-;", "4fn", "4r", ".", "4c e g"].join("\n"));
+    expect([...h.entries()]).toEqual([
+      ["note-L2F1", 60], ["note-L3F1", 73], ["note-L4F1", 35], ["note-L5F1", 47], ["note-L6F1", 75], ["note-L7F1", 65],
+      ["note-L10F1S1", 60], ["note-L10F1S2", 64], ["note-L10F1S3", 67],
+    ]);
   });
 
   it("lit un Humdrum par le module qui le connaît, le soprano en première voix", async () => {

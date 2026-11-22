@@ -27,7 +27,7 @@ import { describe, expect, it } from "vitest";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { lireTableDcml } from "./dcml-tsv";
-import { lireDepuisVerovio, type ToolkitPartition } from "./partition-lecture";
+import { hauteursHumdrum, lireDepuisVerovio, type ToolkitPartition } from "./partition-lecture";
 import type { Note } from "./note";
 
 const RACINE = process.env.CORPUS_CHORALS;
@@ -73,7 +73,8 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
       const tk = new VerovioToolkit(await creer());
       tk.setOptions({ inputFrom: "humdrum", expandNever: true });
       tk.loadData(texteKern);
-      const notes = lireDepuisVerovio(tk, 60).sequence.notes;
+      // Les hauteurs viennent du texte du Humdrum : l'import de Verovio perd les altérations d'armure.
+      const notes = lireDepuisVerovio(tk, 60, hauteursHumdrum(texteKern)).sequence.notes;
       tk.destroy();
       sapps.push({
         numero: Number(/\d+/.exec(f)![0]),

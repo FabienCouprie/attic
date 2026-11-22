@@ -79,6 +79,46 @@ export function lireMei(mei: string): { places: Map<string, PlaceNote>; finsDeLi
   return { places, finsDeLiaison, noms };
 }
 
+/**
+ * Les hauteurs d'un Humdrum `**kern`, lues dans son texte, par l'identifiant que Verovio donne à
+ * chaque note : `note-L<ligne>F<colonne>`, et `S<rang>` pour une note d'accord.
+ *
+ * POURQUOI IL FAUT LES RELIRE, relevé le 2026-11-22 : l'import Humdrum de Verovio 6.3.0 perd les
+ * altérations que l'armure porte. Sur le choral 2 de Sapp, en la majeur, le do dièse final du ténor
+ * (`2.c#;`) ressort en do : le MEI ne porte ni `accid` ni `accid.ges` pour lui, et le MIDI que rend
+ * Verovio lui-même dit 60. Le MusicXML, lui, sort juste, ses `<alter>` devenant des `accid.ges`.
+ * Or en `**kern`, chaque note écrit son altération, quelle que soit l'armure : la hauteur est dans le
+ * texte, et ce module la reprend là.
+ *
+ * LA NOTATION KERN : une minuscule est à l'octave du do central (`c` = 60), chaque lettre répétée
+ * monte d'une octave (`cc` = 72) ; une majuscule est à l'octave d'en dessous (`C` = 48), chaque
+ * lettre répétée descend d'une octave (`CC` = 36) ; `#` monte d'un demi-ton, `-` descend, `n` est
+ * le bécarre ; `r` est un silence et `.` une case vide.
+ */
+export function hauteursHumdrum(texte: string): Map<string, number> {
+  const hauteurs = new Map<string, number>();
+  const BASE: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+  texte.replace(/\r/g, "").split("\n").forEach((ligne, i) => {
+    if (ligne === "" || /^[!*=]/.test(ligne)) return;
+    ligne.split("\t").forEach((champ, j) => {
+      const sous = champ.split(" ");
+      sous.forEach((jeton, k) => {
+        const m = /([a-gA-G])\1*/.exec(jeton);
+        if (!m || jeton.includes("r") || jeton === ".") return;
+        const lettre = m[1];
+        const repetitions = m[0].length;
+        const octave = lettre === lettre.toLowerCase() ? 4 + (repetitions - 1) : 3 - (repetitions - 1);
+        const apres = jeton.slice(m.index + repetitions);
+        const alteration = (apres.match(/^[#\-n]*/)?.[0] ?? "").split("").reduce((s, c) => s + (c === "#" ? 1 : c === "-" ? -1 : 0), 0);
+        const midi = 12 * (octave + 1) + BASE[lettre.toLowerCase()] + alteration;
+        const id = `note-L${i + 1}F${j + 1}${sous.length > 1 ? `S${k + 1}` : ""}`;
+        hauteurs.set(id, midi);
+      });
+    });
+  });
+  return hauteurs;
+}
+
 /** L'identifiant de la note écrite, sans le suffixe qu'une reprise dépliée lui ajoute. */
 const idEcrit = (id: string) => id.replace(/-rend\d+$/, "");
 
@@ -87,8 +127,11 @@ const idEcrit = (id: string) => id.replace(/-rend\d+$/, "");
  *
  * `tempo` décide des secondes ; à zéro ou absent, c'est le tempo écrit dans la partition, et 120 à
  * défaut. Les positions de Verovio sont en noires, donc exactes quelle que soit la valeur choisie.
+ *
+ * `ecrites` DONNE LES HAUTEURS QUE VEROVIO NE SAIT PAS RENDRE, par identifiant de note : c'est le cas
+ * du Humdrum (`hauteursHumdrum`). Une note absente de cette table prend la hauteur de Verovio.
  */
-export function lireDepuisVerovio(tk: ToolkitPartition, tempo?: number): PartitionLue {
+export function lireDepuisVerovio(tk: ToolkitPartition, tempo?: number, ecrites?: ReadonlyMap<string, number>): PartitionLue {
   const { places, finsDeLiaison, noms } = lireMei(tk.getMEI({}));
   const carte = tk.renderToTimemap({});
   const tempoLu = carte.find((e) => typeof e.tempo === "number" && e.tempo > 0)?.tempo;
@@ -100,7 +143,7 @@ export function lireDepuisVerovio(tk: ToolkitPartition, tempo?: number): Partiti
     .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const numero = new Map(cles.map(([p, c], i) => [`${p}/${c}`, i]));
 
-  const hauteurs = new Map<string, number>();
+  const hauteurs = new Map<string, number>(ecrites ?? []);
   const hauteur = (id: string) => {
     if (!hauteurs.has(id)) hauteurs.set(id, tk.getMIDIValuesForElement(id).pitch);
     return hauteurs.get(id)!;

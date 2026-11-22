@@ -32,6 +32,13 @@ describe("Lire une partition", () => {
     expect(String(r.valeurs[1])).toMatch(/^Humdrum/);
   }, 60_000);
 
+  it("garde le fa dièse qu'un Humdrum écrit sous l'armure de sol", async () => {
+    const kern = ["**kern\t**kern\t**kern\t**kern", "*k[f#]\t*k[f#]\t*k[f#]\t*k[f#]", "*G:\t*G:\t*G:\t*G:",
+      "=1-\t=1-\t=1-\t=1-", "4D\t4A\t4d\t4f#", "==\t==\t==\t==", "*-\t*-\t*-\t*-"].join("\n");
+    const r = await lire({}, kern);
+    expect(parVoix(r.valeurs[0] as Sequence)).toEqual([[66], [62], [57], [50]]);
+  }, 60_000);
+
   it("lit une table du DCML à 100 à la noire quand « Tempo » vaut zéro", async () => {
     const table = ["quarterbeats\tduration_qb\tstaff\tvoice\tmidi\ttied", "0\t1.0\t1\t1\t67\t", "1\t1.0\t1\t1\t69\t"].join("\n");
     const r = await lire({}, table);
