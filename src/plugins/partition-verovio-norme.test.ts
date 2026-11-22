@@ -145,6 +145,33 @@ describe("CE QUE LE GRAVEUR NE SAIT PAS DESSINER EST REFUSÉ, et le message nomm
   }, 60_000);
 });
 
+// LE TEMPO SE GRAVE. Décision de Fabien du 2026-11-22, « Engrave the tempo » : « Q:1/4=60 » se gravait
+// en texte vide, et « Q:"Allegro" 1/4=60 » ne gravait que « Allegro ».
+describe("LE TEMPO SE GRAVE, comme le dit Q:", () => {
+  const air = (q: string, entete = "M:4/4\nL:1/4") => `X:1\nT:Essai\n${entete}\n${q}\nK:C\nC D E F |`;
+  it.each([
+    ["une noire", air("Q:1/4=60"), ["\u2669 = 60"]],
+    ["une noire pointée", air("Q:3/8=50", "M:6/8\nL:1/8"), ["\u266A. = 50"]],
+    ["une blanche", air("Q:1/2=80"), ["\u{1D15E} = 80"]],
+    ["un mouvement nommé avant", air("Q:\"Allegro\" 1/4=120"), ["Allegro \u2669 = 120"]],
+    ["un mouvement nommé après", air("Q:1/4=120 \"Allegro\""), ["Allegro \u2669 = 120"]],
+    ["l'ancienne forme, en unités L", air("Q:120", "M:4/4\nL:1/8"), ["\u266A = 120"]],
+    ["un mouvement sans chiffre", air("Q:\"Andante\""), ["Andante"]],
+    ["sans Q:", "X:1\nT:Essai\nM:4/4\nL:1/4\nK:C\nC D E F |", []],
+  ])("%s", async (_titre, abc, attendu) => {
+    const r = await graver(abc);
+    expect(r.erreurRendue, r.message).toBe(false);
+    const lu = lireGravure(String(r.valeurs[0]));
+    expect(lu.tempo).toEqual(attendu);
+    expect(lu.notes).toEqual([[60, 0, 1], [62, 1, 2], [64, 2, 3], [65, 3, 4]].map(([m, a, b]) => [m, a * (abc.includes("L:1/8") ? 0.5 : 1), b * (abc.includes("L:1/8") ? 0.5 : 1)]));
+  }, 60_000);
+
+  it("un tempo en cours de morceau", async () => {
+    const r = await graver("X:1\nT:Essai\nM:4/4\nL:1/4\nQ:1/4=60\nK:C\nC D E F | [Q:1/4=90] G A B c |");
+    expect(lireGravure(String(r.valeurs[0])).tempo).toEqual(["\u2669 = 60", "\u2669 = 90"]);
+  }, 60_000);
+});
+
 describe("CE QUE LE LECTEUR ABC REFUSE, LE GRAVEUR LE REFUSE, avec les mêmes fautes nommées", () => {
   it.each([
     ["une durée divisée par zéro", T("K:C\nC/0 D|")],

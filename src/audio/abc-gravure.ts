@@ -12,7 +12,7 @@
 // pour que le nœud refuse l'air en le nommant.
 
 import { traduire } from "../i18n";
-import { lireMetrique, qParDefaut, type Metrique } from "./abc";
+import { lireMetrique, qParDefaut, uniteParDefaut, type Metrique } from "./abc";
 
 /** Une durée ABC, « 2 », « / », « 3/2 », « // », en fraction de l'unité L. */
 function lireDuree(texte: string): [number, number] {
@@ -66,9 +66,51 @@ export function dureesDansLesAccords(texte: string): string {
   }).join("");
 }
 
+/** Les figures de note, en Unicode : un glyphe SMuFL de la zone privée resterait un carré dans le texte. */
+const FIGURES: Record<string, string> = {
+  "1/1": "\u{1D15D}", "1/2": "\u{1D15E}", "1/4": "♩", "1/8": "♪", "1/16": "\u{1D161}",
+  "3/2": "\u{1D15E}.", "3/4": "♩.", "3/8": "♪.", "3/16": "\u{1D161}.",
+};
+
+/** Le texte d'un tempo comme on le grave, « Allegro ♩ = 120 », ou null si Q: ne donne pas de mouvement. */
+export function texteDeTempo(valeur: string, unite: [number, number]): string | null {
+  const textes = [...valeur.matchAll(/"([^"]*)"/g)].map((m) => m[1].trim()).filter(Boolean);
+  const v = valeur.replace(/"[^"]*"/g, "").trim();
+  const m = /(\d+)\s*\/\s*(\d+)\s*=\s*(\d+(?:\.\d+)?)/.exec(v) ?? /^()()(\d+(?:\.\d+)?)$/.exec(v);
+  if (!m) return null;
+  const [n, d] = m[1] ? [Number(m[1]), Number(m[2])] : unite;
+  const g = pgcd(n, d);
+  const figure = FIGURES[`${n / g}/${d / g}`] ?? `${n / g}/${d / g}`;
+  return [...textes, `${figure} = ${m[3]}`].join(" ");
+}
+
+/**
+ * LE TEMPO SE GRAVE. Décision de Fabien du 2026-11-22, « Engrave the tempo » : Verovio ne dessine un
+ * Q: que par son texte, et « Q:1/4=60 » se gravait en texte vide. Chaque Q:, en tête ou en ligne,
+ * reçoit le texte de son mouvement, « ♩ = 60 », après le sien s'il en a un. L'ancienne forme « Q:120 »
+ * se compte en unités L, comme le lecteur ABC la compte (`lireTempo`).
+ */
+export function tempoGrave(texte: string): string {
+  return decouper(texte).map((air) => {
+    const champ = (c: string) => air.match(new RegExp(`^${c}:(.*)$`, "m"))?.[1].trim();
+    const l = champ("L");
+    const unite: [number, number] = l && /^\d+\/\d+$/.test(l) ? (l.split("/").map(Number) as [number, number])
+      : (() => { const u = uniteParDefaut(lireMetrique(champ("M") ?? "")); return [u.n, u.d] as [number, number]; })();
+    const recrire = (valeur: string) => {
+      const t = texteDeTempo(valeur, unite);
+      return t === null ? null : `"${t}" ${valeur.replace(/"[^"]*"/g, "").trim()}`;
+    };
+    return air.replace(/^Q:(.*)$/gm, (tout, valeur: string) => { const r = recrire(valeur); return r === null ? tout : `Q:${r}`; })
+      .replace(/\[Q:([^\]]*)\]/g, (tout, valeur: string) => { const r = recrire(valeur); return r === null ? tout : `[Q:${r}]`; });
+  }).join("");
+}
+
+/** Le texte coupé avant chaque X:, sans rien perdre : ses morceaux, mis bout à bout, le refont. */
+const decouper = (texte: string) => texte.split(/(?=^X:)/m);
+
 /** Le texte ABC tel que le graveur doit le recevoir. */
 export function abcPourGravure(texte: string): string {
-  return dureesDansLesAccords(texte);
+  return tempoGrave(dureesDansLesAccords(texte));
 }
 
 export type TournureNonGravee = {

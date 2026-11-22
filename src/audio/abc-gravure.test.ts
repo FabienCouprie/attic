@@ -1,6 +1,6 @@
 // audio/abc-gravure.test.ts — Le texte ABC que reçoit le graveur.
 import { describe, expect, it } from "vitest";
-import { dureesDansLesAccords, tournuresNonGravees } from "./abc-gravure";
+import { dureesDansLesAccords, tempoGrave, texteDeTempo, tournuresNonGravees } from "./abc-gravure";
 
 const air = (corps: string) => `X:1\nT:Essai\nM:4/4\nL:1/4\nK:C\n${corps}`;
 const corps = (texte: string) => texte.split("\n").slice(5).join("\n");
@@ -52,6 +52,20 @@ describe("dureesDansLesAccords : la durée qui suit le crochet s'écrit dans cha
     expect(nolets("4/4", "(2CD (3CDE (4CDEF (5:4CDEFG")).toEqual([]);
     expect(nolets("6/8", "(5CDEFG")).toEqual([[5, 3, 4]]);
     expect(nolets("4/4", "(6CDEFGA (8CDEFGAB c")).toEqual([[6, 2, 4], [8, 3, 6]]);
+  });
+
+  it("le texte d'un tempo : la figure réduite, le mouvement nommé d'abord, rien sans chiffre", () => {
+    expect(texteDeTempo("2/8=60", [1, 8])).toBe("♩ = 60");
+    expect(texteDeTempo("3/8=50", [1, 8])).toBe("♪. = 50");
+    expect(texteDeTempo("5/8=50", [1, 8])).toBe("5/8 = 50");
+    expect(texteDeTempo("1/4=88.5 \"Lent\"", [1, 8])).toBe("Lent ♩ = 88.5");
+    expect(texteDeTempo("100", [1, 16])).toBe("\u{1D161} = 100");
+    expect(texteDeTempo("\"Andante\"", [1, 8])).toBeNull();
+  });
+
+  it("chaque Q: d'un texte reçoit son texte, l'unité L de son air comptant pour l'ancienne forme", () => {
+    const texte = "X:1\nL:1/4\nQ:120\nK:C\nC [Q:1/8=90] D\n\nX:2\nM:2/4\nQ:60\nK:C\nC";
+    expect(tempoGrave(texte)).toBe(`X:1\nL:1/4\nQ:"♩ = 120" 120\nK:C\nC [Q:"♪ = 90" 1/8=90] D\n\nX:2\nM:2/4\nQ:"\u{1D161} = 60" 60\nK:C\nC`);
   });
 
   it("lit chaque air d'un texte, et laisse ce qui précède le premier", () => {

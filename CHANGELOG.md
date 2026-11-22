@@ -6,6 +6,18 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA PARTITION GRAVÉE GRAVE LE TEMPO D'UN ABC.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Engrave the tempo ».
+  - **Ce qui se passait**, relu sur la gravure : Verovio ne dessine un tempo que par son texte. « Q:1/4=60 » se gravait en texte vide, et « Q:"Allegro" 1/4=60 » ne gravait que « Allegro ».
+  - **Ce qui change** : `tempoGrave` (`audio/abc-gravure.ts`) donne à chaque Q:, en tête ou en ligne, le texte de son mouvement, par exemple « Allegro ♩ = 120 ».
+    - La figure est écrite en Unicode, ♩, ♪, 𝅗𝅥, avec son point s'il y en a un. Un glyphe SMuFL de la zone privée serait resté un carré dans le texte.
+    - L'ancienne forme « Q:120 » se compte en unités L, comme le lecteur ABC la compte.
+    - Un Q: sans chiffre garde son seul texte.
+
+    La notice le dit, en français et en anglais.
+  - **Le garde** : 9 cas dans `plugins/partition-verovio-norme.test.ts`, dont un tempo en cours de morceau, et 2 dans `audio/abc-gravure.test.ts`.
+    - Vu rouge sur le code d'avant : 7 cas. Un mouvement sans chiffre et l'absence de Q: passaient déjà.
+    - Vu rouge aussi sur une noire pointée privée de son point, plantée.
+
 - **CE QUE LA PARTITION GRAVÉE NE SAIT PAS DESSINER EN ABC EST REFUSÉ, ET NOMMÉ.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Refuse them, named ».
   - **Ce qui se passait**, relu sur la gravure, sous toutes les écritures que la norme ABC 2.1 permet :
     - deux voix se gravaient bout à bout sur une seule portée, qu'elles soient déclarées en tête, en ligne, par %%score ou %%staves. « MIDI → ABC » écrit une seconde voix dès qu'une basse tient sous une mélodie ;
