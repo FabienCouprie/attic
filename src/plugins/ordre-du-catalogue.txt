@@ -442,6 +442,7 @@ magenta-interpoler-midi
 magenta-generer-batterie
 magenta-humaniser-groove
 harmoniser-coconet
+lire-partition
 pure-data
 visualisation-songsee
 export-image

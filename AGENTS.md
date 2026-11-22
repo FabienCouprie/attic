@@ -1,7 +1,7 @@
 # AGENTS.md — travailler sur Attic
 
 Attic est un éditeur nodal pour la musique et le son : Electron, Vite, React 19, TypeScript,
-514 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
+515 composants. Le cœur (`src/core/`) ignore l'audio ; l'audio est un adaptateur branché dessus
 (voir `PORTING-A-DOMAIN.md`). L'interface et les notices sont bilingues français / anglais.
 
 **La règle qui gouverne toutes les autres : ici, une affirmation se mesure.** Un chiffre annoncé
@@ -518,7 +518,7 @@ jamais vu rouge ne garde rien.
 | Choisir **entre des composants** qui couvrent le même besoin | `FAMILLE=nom npm run comparer` : ce qui les sépare et de combien, mesuré sur le même son d'essai — jamais écrit à la main |
 | **Entendre** ce qu'un composant ou une famille produit | `COMPOSANT=id npm run ecouter`, ou `FAMILLE=nom` : des WAV dans `ECOUTE/`, le son d'essai sec avec eux |
 | **Lancer un graphe entier** et entendre ce qu'il rend | `GRAPHE=nom npm run executer` : l'état et le message de chaque nœud, le WAV de chaque aperçu dans `EXECUTION/` — le seul verbe qui voie des composants **câblés ensemble** |
-| **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie des 374 composants qui rendent de l'audio, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
+| **Entendre tout le catalogue** sur un même son | `CATALOGUE=1 npm run catalogue` : un clip par sortie des 375 composants qui rendent de l'audio, bornés à six secondes, dans `CATALOGUE/` avec leur manifeste |
 | Savoir **ce qu'un réglage change**, et non ce qu'il vaut | `COMPOSANT=id REGLAGE=nom VALEURS=a,b,c npm run varier` : un clip par valeur, un tableau par tranches avec la colonne de l'entrée, et le réglage déclaré **inerte** s'il ne bouge ni l'énergie ni la crête |
 | Vérifier qu'**aucun message ne reste en français** dans l'interface anglaise | `ANGLAIS=1 npm run messages-anglais` : chaque fiche lancée sur le banc en anglais, son message et son erreur passés au détecteur du registre — le texte en dur des vues est tenu par `src/docs/vues-anglais.test.ts` |
 | Vérifier qu'une **graine déclarée tient**, sur le son | `npm run graines` : chaque composant à graine lancé deux fois à la même graine, empreintes comparées — le contrat structurel des graines ne regarde pas le son |

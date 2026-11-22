@@ -4450,6 +4450,22 @@
     {"nom":"Relâchement","type":"curseur","defaut":100,"min":10,"max":1000,"unite":"ms"}
    ]
   },
+  "lire-partition": {
+   "version": 1,
+   "entrees": [
+    {"nom":"Notation","type":"texte","sousType":"notation","requis":false}
+   ],
+   "sorties": [
+    {"nom":"Séquence","type":"sequence"},
+    {"nom":"Rapport","type":"texte"},
+    {"nom":"Audio","type":"audio"}
+   ],
+   "reglages": [
+    {"nom":"Chemin","type":"fichier","defaut":""},
+    {"nom":"Notation","type":"texte","defaut":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<score-partwise version=\"3.1\"><part-list><score-part id=\"P1\"><part-name>Voix</part-name></score-part></part-list>\n<part id=\"P1\"><measure number=\"1\"><attributes><divisions>1</divisions><key><fifths>0</fifths></key><time><beats>4</beats><beat-type>4</beat-type></time><staves>2</staves><clef number=\"1\"><sign>G</sign><line>2</line></clef><clef number=\"2\"><sign>F</sign><line>4</line></clef></attributes>\n<note><pitch><step>E</step><octave>5</octave></pitch><duration>1</duration><voice>1</voice><type>quarter</type><staff>1</staff></note>\n<note><pitch><step>D</step><octave>5</octave></pitch><duration>1</duration><voice>1</voice><type>quarter</type><staff>1</staff></note>\n<note><pitch><step>C</step><octave>5</octave></pitch><duration>2</duration><voice>1</voice><type>half</type><staff>1</staff></note>\n<backup><duration>4</duration></backup>\n<note><pitch><step>G</step><octave>4</octave></pitch><duration>1</duration><voice>2</voice><type>quarter</type><staff>1</staff></note>\n<note><pitch><step>G</step><octave>4</octave></pitch><duration>1</duration><voice>2</voice><type>quarter</type><staff>1</staff></note>\n<note><pitch><step>E</step><octave>4</octave></pitch><duration>2</duration><voice>2</voice><type>half</type><staff>1</staff></note>\n<backup><duration>4</duration></backup>\n<note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration><voice>5</voice><type>quarter</type><staff>2</staff></note>\n<note><pitch><step>B</step><octave>3</octave></pitch><duration>1</duration><voice>5</voice><type>quarter</type><staff>2</staff></note>\n<note><pitch><step>G</step><octave>3</octave></pitch><duration>2</duration><voice>5</voice><type>half</type><staff>2</staff></note>\n<backup><duration>4</duration></backup>\n<note><pitch><step>C</step><octave>3</octave></pitch><duration>1</duration><voice>6</voice><type>quarter</type><staff>2</staff></note>\n<note><pitch><step>G</step><octave>2</octave></pitch><duration>1</duration><voice>6</voice><type>quarter</type><staff>2</staff></note>\n<note><pitch><step>C</step><octave>3</octave></pitch><duration>2</duration><voice>6</voice><type>half</type><staff>2</staff></note>\n</measure></part></score-partwise>"},
+    {"nom":"Tempo","type":"nombre","defaut":0,"min":0,"max":300,"unite":"BPM"}
+   ]
+  },
   "magenta-continuation": {
    "version": 1,
    "entrees": [

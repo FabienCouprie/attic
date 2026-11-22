@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **514 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **515 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **514 components** in **7 categories** and **63 families**. Every na
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 90 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Harmonization](#harmonization) (1) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
+| [Other & lab](#other--lab) | 91 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Harmonization](#harmonization) (2) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -11250,6 +11250,7 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 | Component | Summary |
 |---|---|
 | [Harmonize (Coconet)](#harmonize-coconet) | Harmonizes a melody in four voices with a network trained on Bach's chorales. |
+| [Read a Score](#read-a-score) | Reads a MusicXML, MEI, Humdrum or ABC score, or a DCML notes table, and returns a sequence with one voice per staff layer. |
 
 #### Harmonize (Coconet)
 
@@ -11273,6 +11274,27 @@ This component harmonizes a melody in four voices, soprano, alto, tenor and bass
 | Iterations | slider | 96 | 8 – 256, step 1 | The number of passes of the draw. More bring the voices into better agreement, at the cost of a longer computation. |
 | Tie repeated notes | checkbox | 1 | 0 / 1 | Checked, successive cells of the same pitch in a written voice form a single held note. Unchecked, the note is struck again on every quarter note. |
 | Seed | slider | 0 | 0 – 999999, step 1 | Fixes the draws: the same seed gives the same chorale on the same machine. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Read a Score
+
+`lire-partition` · Other & lab → Harmonization
+
+*Reads a MusicXML, MEI, Humdrum or ABC score, or a DCML notes table, and returns a sequence with one voice per staff layer.*
+
+This component reads a written score and returns it as a note sequence, with one voice per layer of each staff. Four notations are read by the Verovio engraving engine: MusicXML, the exchange format of score editors, as text or compressed as .mxl; MEI; Humdrum, the format of analysis corpora, including Bach's chorales encoded by Craig Sapp; and ABC. Added to them are the notes tables of the Digital and Cognitive Musicology Lab, one row per note, which the ms3 library extracts from their scores. The format is recognised from the shape of the text. A voice is a layer of a staff, as the score writes it: on a chorale of two staves with two voices each, the first voice is the soprano, the second the alto, the third the tenor and the fourth the bass. Two voices that cross each keep their own. Tied notes form a single note. Repeats are not unfolded: every bar is read once, as written. The score comes from the « Notation » input when connected, otherwise from the file named by « Path », otherwise from the text of the « Notation » setting. « Path » names a .musicxml, .xml, .mxl, .mei, .krn, .abc or .tsv file. The « … » button opens the system picker. « Tempo » sets the length of a quarter note in seconds. At zero, it is the tempo written in the score, and 120 when it writes none; a DCML table, which carries none, is read at 100. The « Sequence » output returns the notes, each on its voice, the voices named after their staff when the score names it. The « Report » output gives the recognised format, the tempo used, and for each voice its number of notes and its range, then the number of tied notes and the refused rows. The « Audio » output plays the sequence, in local synthesis with a sine timbre. It is computed only when a cable leaves it. To choose the engine, the timbre or the level, connect a listening point.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Notation | text (notation) |  |
+| output | Sequence | sequence |  |
+| output | Report | text |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Path | fichier | — |  | The score file. Empty, the score comes from the « Notation » setting. |
+| Notation | text | `&lt;?xml version="1.0" encoding="UTF-8"?> &lt;score-partwise ve…` |  | The text of the score, when neither the « Notation » input nor « Path » gives it. |
+| Tempo | number | 0 BPM | 0 – 300 BPM, step 1 | Quarter notes per minute. At zero, the tempo written in the score, 120 failing that, and 100 for a DCML table. |
 
 ### Installation
 

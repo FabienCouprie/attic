@@ -17,35 +17,21 @@ import { langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import { detecterFormat, entreeVerovio, optionsGravure, pageDemandee, type FormatNotation } from "../audio/verovio";
 import { choixOuiNon } from "../core/oui-non";
+import { outilVerovio } from "./verovio-outil";
 
 const en = () => langueCourante() === "en";
 
 const EXEMPLE = "X:1\nT:Gamme\nM:4/4\nL:1/4\nK:C\nC D E F | G A B c |";
 
-let boite: Promise<{ creerModule: () => Promise<any>; VerovioToolkit: new (m: any) => any }> | null = null;
-
 /**
- * Un moteur neuf pour chaque gravure ; seuls les deux imports se gardent.
+ * Un moteur neuf pour chaque gravure, par `verovio-outil.ts`, où la raison est écrite.
  *
- * UN MODULE NEUF, ET NON UN TOOLKIT GARDÉ, revue des notations en texte, décision de Fabien du
- * 2026-11-22. Verovio garde l'armure d'une partition ABC à la suivante, dans son module WebAssembly, en
- * 6.3.0 comme en 6.4.1 : le moteur se chargeait une fois pour toutes, et après un air en do bémol,
- * l'air en do se gravait avec huit altérations, une par note. Ni un toolkit neuf sur le même module, ni
- * `resetOptions`, ni un MEI chargé entre deux airs ne réparaient la fuite. Un module coûte 103 ms.
+ * LE MODULE DE BASE, ET C'EST UN DÉFAUT CONNU. Il ne porte pas le lecteur Humdrum : relevé le
+ * 2026-11-22, un choral en `**kern` y est refusé par `loadData`, si bien que l'option « Humdrum » de
+ * ce nœud ne grave rien. La lecture des partitions prend l'autre module ; le passer ici aussi est une
+ * décision à part, que ce fichier attend.
  */
-async function outil(): Promise<any> {
-  if (!boite) {
-    boite = (async () => {
-      const [creerModule, { VerovioToolkit }] = await Promise.all([
-        import("verovio/wasm").then((m: any) => m.default ?? m),
-        import("verovio/esm") as Promise<any>,
-      ]);
-      return { creerModule, VerovioToolkit };
-    })().catch((e) => { boite = null; throw e; });
-  }
-  const { creerModule, VerovioToolkit } = await boite;
-  return new VerovioToolkit(await creerModule());
-}
+const outil = () => outilVerovio(false);
 
 export const fiches: FicheAudio[] = ([
   fiche({
