@@ -9,7 +9,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { Note } from "tonal";
-import { accordsDepuisRomains, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite } from "../audio/theorie-romains";
+import { accordsDepuisRomains, estProgressionRomaine, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite } from "../audio/theorie-romains";
 import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 
 // LE SYMBOLE SE LIT PAR LE SEUL LECTEUR DES SYMBOLES (`audio/symboles-accords.ts`), revue des
@@ -137,7 +137,8 @@ export const fiches: FicheAudio[] = ([
         // Tonal ne sait pas lire comme des degrés. L'échec se manifestait alors
         // par « aucun accord exploitable », qui ne désignait pas la cause. On la
         // nomme, avec la sortie à utiliser à la place.
-        if (!jetons.some((j) => /^[b#]?[IViv]/.test(j))) {
+        // Le premier jeton décide, pour tous les nœuds : `estProgressionRomaine`.
+        if (!estProgressionRomaine(jetons)) {
           return {
             valeurs: [null], erreur: true,
             message: traduire("msg.accords_notation.pas_des_romains_var_0", jetons.slice(0, 4).join(" ")),

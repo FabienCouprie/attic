@@ -12,7 +12,7 @@ import { accordDuSymbole, estSansAccord, normaliserSymbole, symboleDesNotes } fr
 import { PARAMETRE_CLE } from "../audio/cles";
 import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 import {
-  accordsDepuisRomains, accordsInconnus, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite,
+  accordsDepuisRomains, accordsInconnus, estProgressionRomaine, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite,
   type ModeProgression,
 } from "../audio/theorie-romains";
 
@@ -273,7 +273,8 @@ export const fiches: FicheAudio[] = ([
       // symbole d'accord ne commence par I ou V (les notes vont de A à G),
       // donc tester juste le début du jeton (pas son intégralité) suffit à
       // distinguer les deux syntaxes sans rejeter les extensions.
-      const romains = /^[b#]?[IViv]/.test(tokens[0] ?? "");
+      // Le premier jeton décide, pour tous les nœuds : `estProgressionRomaine`.
+      const romains = estProgressionRomaine(tokens);
       // UN CHIFFRE QUI NE SE LIT PAS EST REFUSÉ, NOMMÉ, comme dans la Progression.
       const romainsIllisibles = romains ? romainsInconnus(tokens) : [];
       if (romainsIllisibles.length > 0) {

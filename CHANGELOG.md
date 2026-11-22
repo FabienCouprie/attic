@@ -6,6 +6,15 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UNE SEULE RÈGLE DIT SI UN TEXTE EST EN CHIFFRES ROMAINS : LE PREMIER JETON DÉCIDE, POUR TOUS LES NŒUDS.** Revue des notations en texte, sixième format, 2026-11-22.
+  - **Ce qui se passait**, mesuré par `executer` : trois règles répondaient. La Grille d'accords regardait le préfixe du premier jeton, « Accords → Notation » s'il y en avait un, les graveurs VexFlow s'ils en étaient tous. Sur un texte mêlé, chacun nommait autre chose :
+    - « I C V » nommait « C » ici, « I V » là ;
+    - les graveurs VexFlow refusaient un chiffre illisible comme un symbole vide, « Accord non reconnu : « » » ;
+    - « Accords → Notation » nommait « C » comme un chiffre dans « C V vi », que les autres lisaient comme des symboles.
+  - **Ce qui change** : `estProgressionRomaine` (`audio/theorie-romains.ts`) répond pour tous ; le premier jeton décide, et un chiffre illisible plus loin est nommé. La Grille et « Accords → Notation » perdent leur expression régulière. La Grille et la Partition VexFlow nomment un chiffre illisible par `romainsIllisibles`. Leurs notices le disent.
+  - **Le garde**, dans `plugins/chiffres-romains.test.ts` et `plugins/vexflow-gravure.test.ts` : « I C V » nommé « C » par la Grille, « Accords → Notation » et les deux graveurs VexFlow ; « C V vi » refusé par « Accords → Notation » comme n'étant pas des romains ; une grille VexFlow aux romains renversés et secondaires. **Vu rouge** sur le code d'avant, 2 cas sur 4.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests des romains, de VexFlow, des notices, et les gardes du dépôt touchés, 10 fichiers et 174 cas verts. **Non vérifié dans l'application.**
+
 - **L'ANALYSE HARMONIQUE NE SUGGÈRE QUE DES ACCORDS DE SA TONALITÉ : EN JAZZ, ii7 V7 Imaj7 ET iiø7 V7 i.** Revue des notations en texte, sixième format, décision de Fabien du 2026-11-22 : « iiø7 V7 i ».
   - **Ce qui se passait**, mesuré par `executer` : le style Jazz suggérait « ii V i » en mineur, que la Progression lit Bm E Am en la mineur ; le si mineur portait un fa♯ que la gamme n'a pas.
   - **Ce qui change** (`tonal.ts`) : Jazz suggère « ii7 V7 Imaj7 » en majeur et « iiø7 V7 i » en mineur, la cadence de l'usage. La notice le dit. Le cas de `plugins/tonal.test.ts` qui tenait « ii V i » tient la nouvelle suggestion.

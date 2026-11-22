@@ -9,7 +9,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { analyserMidi, midiDuFichier } from "../audio/midi";
 import {
-  GRILLES_NOTATION, accordsDeProgression, genererGrille, genererPartition, genererPortee, genererTab, graverNotation,
+  GRILLES_NOTATION, accordsDeProgression, genererGrille, genererPartition, genererPortee, genererTab, graverNotation, romainsIllisibles,
   jetonsSansCordeFret, jetonsSansDuree, longueurDeMesure, type Signature,
 } from "./vexflow-notation";
 import { lireTablature, mettreEnMesures, midiVersEvenements, type FauteGravure } from "../audio/notation-vexflow";
@@ -191,6 +191,10 @@ export const fiches: FicheAudio[] = ([
         || ctx.paramTexte("Accords", "C Am F G");
       // Même lecture que la partition : chaque jeton, par `estProgressionRomaine`, et les degrés par
       // `accordsPourPartition`. Voir les commentaires là-bas.
+      const illisibles = romainsIllisibles(texte);
+      if (illisibles.length > 0) {
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.tonal.romains_inconnus_var_0", illisibles.slice(0, 4).join(" » « ")) };
+      }
       const accords = accordsDeProgression(texte, ctx.paramTexte("Tonalité", "C"), ctx.paramTexte("Gamme", "majeur"));
       // UN SYMBOLE QU'AUCUN ACCORD NE RECONNAIT EST REFUSE EN LE NOMMANT. Mesure : nourri du format
       // de « Texte -> MIDI », ce noeud annoncait « Termine » et dessinait quatre-vingts elements sans
@@ -249,6 +253,10 @@ export const fiches: FicheAudio[] = ([
       const h = ctx.paramNombre("Hauteur", 160);
       // UN SYMBOLE QU'AUCUN ACCORD NE RECONNAÎT EST REFUSÉ EN LE NOMMANT, comme sur la grille. Mesuré
       // avant : « C Zorglub G C » finissait en « Aucune progression valide », sans dire lequel.
+      const illisibles = romainsIllisibles(progression);
+      if (illisibles.length > 0) {
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.tonal.romains_inconnus_var_0", illisibles.slice(0, 4).join(" » « ")) };
+      }
       const accords = accordsDeProgression(progression, tonic, ctx.paramTexte("Gamme", "majeur"));
       const inconnus = accordsInconnus(accords);
       if (inconnus.length > 0) {

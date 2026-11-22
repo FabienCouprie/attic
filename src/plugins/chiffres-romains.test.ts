@@ -108,6 +108,28 @@ describe("L'ANALYSE HARMONIQUE NE SUGGÈRE QUE DES ACCORDS DE SA TONALITÉ", () 
   });
 });
 
+// UNE SEULE DÉTECTION, revue des notations en texte du 2026-11-22. Trois règles disaient si un texte
+// est en romains : le préfixe du premier jeton (la Grille), la présence d'un seul (« Accords →
+// Notation »), tous (VexFlow). Elles ne s'écartaient que sur un texte mêlé, et le nommaient chacune
+// à sa façon. LE PREMIER JETON DÉCIDE désormais, pour tous : « I C V » est une progression romaine dont
+// « C » ne se lit pas, « C V vi » une suite de symboles dont « V » et « vi » ne se lisent pas.
+describe("UN TEXTE MÊLÉ SE CLASSE DE LA MÊME FAÇON PARTOUT : le premier jeton décide", () => {
+  it("« I C V » est une progression romaine : la Grille et « Accords → Notation » nomment « C »", async () => {
+    const g = await lancerFiche(F("tonal-grille"), { Progression: "I C V" }, { entrees: [null] });
+    expect(g.erreurRendue).toBe(true);
+    expect(g.message).toContain("« C »");
+    const a = await lancerFiche(F("accords-vers-notation"), { Source: "progression" }, { entrees: ["C", "I C V", null] });
+    expect(a.erreurRendue).toBe(true);
+    expect(a.message).toContain("« C »");
+  });
+
+  it("« C V vi » est une suite de symboles : « Accords → Notation » la refuse comme n'étant pas des romains", async () => {
+    const a = await lancerFiche(F("accords-vers-notation"), { Source: "progression" }, { entrees: ["C", "C V vi", null] });
+    expect(a.erreurRendue).toBe(true);
+    expect(a.message).toContain("« C V vi »");
+  });
+});
+
 describe("LES CHIFFRES ROMAINS SE LISENT SELON L'USAGE, en do majeur", () => {
   it.each(CAS_MAJEUR)("« %s »", async (romain, notes, basse) => {
     const attendu = { classes: C(...notes), basse: Note.chroma(basse)! };

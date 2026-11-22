@@ -49,17 +49,18 @@ export function accordsDepuisRomains(tonique: string, tokens: string[], mode: Mo
 }
 
 /**
- * Vrai quand chaque jeton est un chiffre romain que la lecture sait lire : « V7 », « ii° », « bVII »,
- * « V65 » et « V/V » compris.
+ * Vrai quand le texte est une progression en chiffres romains : son premier jeton en est un, « V7 »,
+ * « ii° », « bVII », « V65 » et « V/V » compris. Les jetons suivants qui ne se lisent pas sont alors
+ * des chiffres illisibles, que `romainsInconnus` nomme.
  *
- * LES GRAVEURS VEXFLOW NE REGARDAIENT QUE LE PREMIER JETON, et n'y voulaient que des I et des V. La
- * Grille d'accords regardait le préfixe du premier jeton, « Accords → Notation » s'il y en avait un :
- * trois réponses à une seule question, que ce prédicat donne désormais à tous, revue des notations
- * en texte du 2026-11-22. Une progression mêlée de romains et de symboles se lit comme des symboles,
- * et ses romains y sont nommés inconnus.
+ * UNE SEULE RÉPONSE, revue des notations en texte du 2026-11-22. Trois règles la donnaient : le
+ * préfixe du premier jeton (la Grille d'accords), la présence d'un seul (« Accords → Notation »),
+ * tous (les graveurs VexFlow). Elles ne s'écartaient que sur un texte mêlé, et le nommaient chacune à
+ * sa façon : « I C V » nommait « C » ici, « I V » là. Le premier jeton décide, comme la Grille le
+ * faisait, parce que c'est lui que l'on écrit en premier, et que la faute est le plus souvent plus loin.
  */
 export function estProgressionRomaine(tokens: readonly string[]): boolean {
-  return tokens.length > 0 && tokens.every(estChiffreRomain);
+  return tokens.length > 0 && estChiffreRomain(tokens[0]);
 }
 
 /**

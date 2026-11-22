@@ -191,6 +191,8 @@ describe("LA GRILLE ÉCRIT CHAQUE ACCORD UNE FOIS, ET LIT LES CHIFFRES ROMAINS J
     // seul lecteur des symboles, et « N.C. » est un accord silencieux, écrit tel quel dans sa mesure.
     ["les écritures usuelles", "Bø7 CΔ7 B♭ Cm(maj7)", "C", "majeur", ["Bm7b5", "Cmaj7", "Bb", "CmMaj7"]],
     ["un accord silencieux", "C N.C. G", "C", "majeur", ["C", "N.C.", "G"]],
+    // Sixième format : la lecture d'Attic, et le premier jeton qui décide.
+    ["des romains renversés et secondaires", "I V65/V V7 I6", "C", "majeur", ["C", "D7/F#", "G7", "C/E"]],
   ])("%s", async (_titre, accords, tonalite, gamme, attendu) => {
     const g = await graver("vexflow-grille", { Accords: accords, "Tonalité": tonalite, Gamme: gamme });
     expect(g.r.erreurRendue, g.r.message.slice(0, 200)).toBe(false);
@@ -212,6 +214,14 @@ describe("LA PARTITION D'ACCORDS SE LIT COMME ELLE EST ÉCRITE", () => {
     expect(g.r.erreurRendue, g.r.message.slice(0, 200)).toBe(false);
     expect(g.notes).toEqual(attendu);
     expect(g.mesures).toEqual(mesures);
+  });
+
+  it("UN CHIFFRE QUI NE SE LIT PAS, DANS UNE PROGRESSION ROMAINE, EST NOMMÉ, et non un symbole vide", async () => {
+    for (const id of ["vexflow-partition", "vexflow-grille"]) {
+      const g = await graver(id, id === "vexflow-grille" ? { Accords: "I C V", "Tonalité": "C" } : { Progression: "I C V", "Tonalité": "C" });
+      expect(g.r.erreurRendue, id).toBe(true);
+      expect(g.r.message, id).toContain("« C »");
+    }
   });
 
   it("UN SYMBOLE INCONNU EST REFUSÉ, ET NOMMÉ", async () => {
