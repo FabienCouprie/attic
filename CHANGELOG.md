@@ -6,6 +6,29 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN MOTIF RYTHMIQUE SE LIT EN CASES OU EN POSITIONS COMME SA DOCUMENTATION LE DIT, ET CE QUI NE SE LIT PAS EST REFUSÉ.** Revue des notations en texte, dixième format, 2026-11-22, premier lot : l'Analyse rythmique et le motif du Canon par pavage.
+  - **Ce qui se passait**, mesuré par `executer`, dans l'Analyse rythmique :
+    - « 0 1 », deux positions, se lisait comme un cycle de deux cases ;
+    - un jeton illisible était jeté et « 0.5 » arrondi ;
+    - « x··x··x· », la forme qu'écrit le Canon, ne se lisait pas. Le texte vide non plus, et les deux recevaient le message d'une série dodécaphonique, sans le drapeau d'erreur.
+
+    Dans le Canon par pavage :
+    - « 0;1;2 » se lisait « 0 », et « 1.5 » se lisait 1 ;
+    - un motif tout illisible lançait la recherche ;
+    - un motif qui ne pave pas partait sans le drapeau d'erreur.
+
+    Dans les deux, une position hors du cycle se repliait : 20 devenait 4 sur seize pas.
+  - **Ce qui change** :
+    - un motif est en cases quand il porte x . - _ ou · sans chiffre de 2 à 9, ou n'est qu'une suite de 0 et de 1 sans espace ;
+    - autrement, ce sont des positions, lues par `lireListe`, au genre neuf « positions ». Une position hors du cycle est refusée et nommée, selon la décision de Fabien du 2026-11-22, « Refuse it, named » ;
+    - un motif vide ou sans frappe est refusé, et un motif qui ne pave pas l'est en erreur. Le Canon cherche toujours un motif quand le sien est vide, comme le dit sa documentation.
+
+    Les documentations des deux réglages le disent.
+  - **Un test tenait le contraire** : dans `plugins/theorie-rythme-voix.test.ts`, un texte vide ne donnait aucune frappe. Il est maintenant refusé.
+  - **Le garde** : `plugins/motifs-rythmiques.test.ts`, 19 cas.
+    - Vu rouge sur le code d'avant : 15 cas.
+    - Vu rouge aussi sur une position hors du cycle de nouveau admise, plantée.
+
 - **LES ACCORDS EN CLASSES DE LA DISTANCE DE CONDUITE DE VOIX SE LISENT D'UNE SEULE FAÇON, NOMS DE NOTES COMPRIS.** Revue des notations en texte, huitième format, 2026-11-22, quatrième lot.
   - **Ce qui se passait**, mesuré par `executer` :
     - un jeton illisible était jeté sans un mot ;

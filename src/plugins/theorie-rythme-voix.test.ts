@@ -10,37 +10,48 @@ import { describe, expect, it } from "vitest";
 import { accordsSuccessifs, lireAccords, lireMotif, motifDepuisNotes } from "./theorie-rythme-voix";
 import { enCases } from "../audio/rythme-analyse";
 
+// `lireMotif` rend le rythme, ou le refus de ce qui ne se lit pas : revue des notations en texte,
+// 2026-11-22, dixième format. Les refus sont tenus par `plugins/motifs-rythmiques.test.ts`.
+const lu = (texte: string, pas: number) => {
+  const r = lireMotif(texte, pas);
+  if ("refus" in r) throw new Error(r.refus);
+  return r.rythme;
+};
+
 describe("lire un motif rythmique", () => {
   it("en cases, la longueur écrite fait le cycle", () => {
-    const r = lireMotif("x..x..x.", 16);
+    const r = lu("x..x..x.", 16);
     expect(r.pas).toBe(8);
     expect(r.positions).toEqual([0, 3, 6]);
   });
 
   it("les espaces dans un motif en cases ne comptent pas comme des cases", () => {
-    expect(enCases(lireMotif("x..x ..x.", 16))).toBe("x..x..x.");
+    expect(enCases(lu("x..x ..x.", 16))).toBe("x..x..x.");
   });
 
   it("en un et zéro aussi", () => {
-    expect(lireMotif("10010010", 16).positions).toEqual([0, 3, 6]);
+    expect(lu("10010010", 16).positions).toEqual([0, 3, 6]);
   });
 
   it("en positions, le cycle vient du réglage", () => {
-    const r = lireMotif("0 3 6 10 12", 16);
+    const r = lu("0 3 6 10 12", 16);
     expect(r.pas).toBe(16);
     expect(r.positions).toEqual([0, 3, 6, 10, 12]);
   });
 
   it("UNE ESPACE EN TÊTE N'AJOUTE PAS DE FRAPPE : `Number(\"\")` vaut zéro, pas NaN", () => {
-    expect(lireMotif("  3 6 9", 12).positions).toEqual([3, 6, 9]);
+    expect(lu("  3 6 9", 12).positions).toEqual([3, 6, 9]);
   });
 
   it("les virgules et points-virgules séparent aussi", () => {
-    expect(lireMotif("0, 3; 6", 8).positions).toEqual([0, 3, 6]);
+    expect(lu("0, 3; 6", 8).positions).toEqual([0, 3, 6]);
   });
 
-  it("un texte vide ne donne aucune frappe", () => {
-    expect(lireMotif("", 16).positions).toEqual([]);
+  // CE CAS TENAIT LE CONTRAIRE : un texte vide ne donnait aucune frappe, et le nœud partait sur le
+  // message d'une série dodécaphonique, sans le drapeau d'erreur. Un motif vide est maintenant refusé,
+  // comme toute liste vide que sa documentation ne définit pas (décision de Fabien, « Refuse it, said »).
+  it("un texte vide est refusé", () => {
+    expect(lireMotif("", 16)).toEqual({ refus: expect.stringMatching(/vide|empty/) });
   });
 });
 

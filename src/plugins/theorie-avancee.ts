@@ -281,8 +281,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Longueur du cycle. Le motif et les entrées doivent le paver exactement : leur produit vaut donc toujours ce nombre.",
         docEn: "Cycle length. The motif and the entries must tile it exactly: their product therefore always equals this number." },
       { nom: "Motif", nomEn: "Motif", type: "texte", defaut: "0 1 2", defautEn: "0 1 2",
-        doc: "Les positions frappées par une voix, en numéros de pulsation. Laissez vide pour que le composant cherche lui-même un motif qui pave.",
-        docEn: "The positions struck by one voice, as pulse numbers. Leave empty for the node to search for a tiling motif itself." },
+        doc: "Les positions frappées par une voix, en numéros de pulsation entiers, de 0 à « Pulsations » moins un, séparés par des espaces, des virgules ou des points-virgules. Vide, le composant cherche lui-même un motif qui pave. Un motif dont un jeton ne se lit pas, ou qui sort du cycle, est refusé, et le message le nomme ; un motif qui ne pave pas est refusé aussi.",
+        docEn: "The positions struck by one voice, as whole pulse numbers, from 0 to « Pulses » minus one, separated by spaces, commas or semicolons. Empty, the node searches for a tiling motif itself. A motif with an unreadable token, or one that leaves the cycle, is refused, and the message names it; a motif that does not tile is refused too." },
       { nom: "Taille cherchée", nomEn: "Searched size", type: "nombre", plage: [2, 12], pas: 1, defaut: 3,
         doc: "Nombre de frappes par voix, quand le motif est laissé vide. Il doit diviser le nombre de pulsations.",
         docEn: "Number of onsets per voice, when the motif is left empty. It must divide the number of pulses." },
@@ -297,16 +297,31 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const n = Math.round(ctx.paramNombre("Pulsations", 12));
+      // LE MOTIF, PAR LE SEUL LECTEUR DES LISTES. Revue des notations en texte, 2026-11-22 : « 0;1;2 »
+      // se lisait « 0 », « 1.5 » se lisait 1, un jeton illisible était jeté, et un motif tout
+      // illisible lançait la recherche comme s'il était vide. Une position hors du cycle se repliait :
+      // décision de Fabien du même jour, « Refuse it, named ». Le vide seul, que la documentation
+      // définit, fait chercher.
+      const reglageMotif = "Motif";
       const texte = ctx.paramTexte("Motif", "0 1 2").trim();
-      let motif = texte.split(/[\s,]+/).filter(Boolean).map((x: string) => parseInt(x, 10))
-        .filter((x: number) => Number.isFinite(x));
-      if (motif.length === 0) {
+      let motif: number[];
+      if (!texte) {
         const trouves = chercherMotifs(n, Math.round(ctx.paramNombre("Taille cherchée", 3)), 1);
-        if (trouves.length === 0) return { valeurs: [null, null, null], message: traduire("msg.canon.introuvable") };
+        if (trouves.length === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.canon.introuvable") };
         motif = trouves[0];
+      } else {
+        const lu = lireListe(texte, "positions", reglageMotif);
+        if ("refus" in lu) return { valeurs: [null, null, null], erreur: true, message: lu.refus };
+        const hors = lu.valeurs.filter((p) => p >= n);
+        if (hors.length) {
+          return { valeurs: [null, null, null], erreur: true, message: traduire("msg.motif.hors_cycle_var_0_var_1_var_2", reglageMotif, hors.slice(0, 3).map((p) => `« ${p} »`).join(", "), n - 1) };
+        }
+        motif = lu.valeurs;
       }
+      // UN MOTIF QUI NE PAVE PAS EST UN REFUS, en erreur : il partait sans le drapeau, et le nœud
+      // s'annonçait vert sans rien rendre.
       const canon = construire(motif, n);
-      if (!canon) return { valeurs: [null, null, null], message: traduire("msg.canon.nePavePas", motif.join(" "), n) };
+      if (!canon) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.canon.nePavePas", motif.join(" "), n) };
       // LES HAUTEURS, PAR LE SEUL LECTEUR DES LISTES. Revue des notations en texte, 2026-11-22 :
       // « 60;64;67;72 » mettait les quatre voix sur do, un jeton illisible décalait les voix, 200
       // s'écrivait dans le fichier MIDI, et une liste vide jouait do. Décision de Fabien du même jour,

@@ -2102,7 +2102,7 @@ Builds a rhythmic tiling canon. An ordinary canon layers a melody over itself, o
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Pulses | number | 12 | 2 – 48, step 1 | Cycle length. The motif and the entries must tile it exactly: their product therefore always equals this number. |
-| Motif | text | `0 1 2` |  | The positions struck by one voice, as pulse numbers. Leave empty for the node to search for a tiling motif itself. |
+| Motif | text | `0 1 2` |  | The positions struck by one voice, as whole pulse numbers, from 0 to « Pulses » minus one, separated by spaces, commas or semicolons. Empty, the node searches for a tiling motif itself. A motif with an unreadable token, or one that leaves the cycle, is refused, and the message names it; a motif that does not tile is refused too. |
 | Searched size | number | 3 | 2 – 12, step 1 | Number of onsets per voice, when the motif is left empty. It must divide the number of pulses. |
 | Step length | number | 0.2 s | 0.05 – 1 s, step 0.05 | Length of one pulse. |
 | Repeats | number | 4 | 1 – 16, step 1 | Number of cycles played. |
@@ -12245,7 +12245,7 @@ Analyses a rhythm by its geometry on the circle. After Godfried Toussaint, « Th
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Pattern | text | `x..x..x...x.x...` |  | The rhythm to analyse, as filled and empty cells, « x..x..x. », or as positions, « 0 3 6 ». The default is the son clave, the most widespread rhythm in the world. A MIDI file on the input wins. |
+| Pattern | text | `x..x..x...x.x...` |  | The rhythm to analyse, as filled and empty cells, « x..x..x. », or as positions, « 0 3 6 ». A filled cell is written x or 1, an empty one . - _ · or 0; numbers separated by spaces are positions, counted from 0 and bounded by « Steps ». The default is the son clave, the most widespread rhythm in the world. A MIDI file on the input wins. An empty pattern, one without onsets, or one with an unreadable token, is refused, and the message names it. |
 | Steps | slider | 16 | 2 – 64, step 1 | Number of cells in the cycle. Used when the pattern is given as positions, and to quantise a MIDI file. A pattern written as cells imposes its own length. |
 | Cycle | slider | 2 s | 0.25 – 16 s, step 0.25 | Length of one turn, to quantise a MIDI file. With no MIDI connected, this setting does nothing. |
 
