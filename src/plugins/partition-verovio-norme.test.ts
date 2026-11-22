@@ -192,6 +192,42 @@ describe("LE HUMDRUM SE GRAVE", () => {
   }, 60_000);
 });
 
+// CHAQUE AIR SE GRAVE, AVEC SON TITRE. Décision de Fabien du 2026-11-22, « Engrave all, titled » : deux
+// airs se gravaient à la suite comme une seule pièce, sans titre, quand ABC → MIDI n'en jouait qu'un.
+describe("CHAQUE AIR D'UN TEXTE SE GRAVE, AVEC SON TITRE", () => {
+  const DEUX = "X:1\nT:Un\nM:4/4\nL:1/4\nK:C\nC D E F |\n\nX:2\nT:Deux\nM:4/4\nL:1/4\nK:G\nF G A B |";
+  const page = (n: number) => lancerFiche(F("partition-verovio"), { Notation: DEUX, Page: n }, { entrees: [null] });
+
+  it("chacun commence sa page, sous son titre, et « Page » les parcourt", async () => {
+    const un = await page(1), deux = await page(2);
+    expect(un.message).toMatch(/air 1 sur 2 · page 1 sur 2|tune 1 of 2 · page 1\/2/);
+    expect(deux.message).toMatch(/air 2 sur 2 · page 2 sur 2|tune 2 of 2 · page 2\/2/);
+    const [a, b] = [lireGravure(String(un.valeurs[0])), lireGravure(String(deux.valeurs[0]))];
+    expect(a.titres).toEqual(["Un"]);
+    expect(a.notes).toEqual([[60, 0, 1], [62, 1, 2], [64, 2, 3], [65, 3, 4]]);
+    expect(b.titres).toEqual(["Deux"]);
+    expect(b.notes).toEqual([[66, 0, 1], [67, 1, 2], [69, 2, 3], [71, 3, 4]]);
+  }, 60_000);
+
+  it("au-delà de la dernière page, c'est la dernière qui est rendue", async () => {
+    const r = await page(9);
+    expect(r.message).toMatch(/air 2 sur 2 · page 2 sur 2|tune 2 of 2 · page 2\/2/);
+    expect(lireGravure(String(r.valeurs[0])).titres).toEqual(["Deux"]);
+  }, 60_000);
+
+  it("un air seul se grave comme avant, sans en-tête", async () => {
+    const r = await graver("X:1\nT:Un\nM:4/4\nL:1/4\nK:C\nC D E F |");
+    expect(r.message).toMatch(/^ABC · page 1 (sur|\/) ?1$/);
+    expect(lireGravure(String(r.valeurs[0])).titres).toEqual([]);
+  }, 60_000);
+
+  it("ce qui entoure l'air, la phrase d'un modèle de langue et ses clôtures, ne se grave pas", async () => {
+    const r = await graver("Voici la partition :\n```abc\nX:1\nT:Un\nM:4/4\nL:1/4\nK:C\nC D E F |\n```\nBonne écoute.");
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(lireGravure(String(r.valeurs[0])).notes).toEqual([[60, 0, 1], [62, 1, 2], [64, 2, 3], [65, 3, 4]]);
+  }, 60_000);
+});
+
 describe("CE QUE LE LECTEUR ABC REFUSE, LE GRAVEUR LE REFUSE, avec les mêmes fautes nommées", () => {
   it.each([
     ["une durée divisée par zéro", T("K:C\nC/0 D|")],

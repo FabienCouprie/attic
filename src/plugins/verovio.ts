@@ -62,8 +62,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Visualisation", famille: "Notation",
     resume: "Grave une notation ABC, MusicXML, MEI ou Humdrum en partition SVG, aux règles d'un éditeur de musique.",
     resumeEn: "Engraves an ABC, MusicXML, MEI or Humdrum notation into an SVG score, to music-publishing rules.",
-    notice: "Ce composant grave une partition à partir d'un texte de notation, et rend une page en SVG.\n\nQuatre notations sont lues : ABC, reconnaissable à ses champs d'en-tête (X:, M:, K:) ; MusicXML, le format d'échange des éditeurs de partition ; MEI, son équivalent savant ; et Humdrum, celui des corpus d'analyse. Le format est reconnu à la forme du texte ; le réglage permet de l'imposer quand la reconnaissance se trompe. Un document XML qui n'est ni une partition MusicXML ni un document MEI est refusé, et le message nomme son élément racine.\n\nUne partition ABC est d'abord lue note à note. Une durée nulle, un accord jamais refermé, une liaison entre deux hauteurs ou un n-olet inachevé la font refuser, et le message nomme chaque faute, sa ligne et le fragment.\n\nCinq tournures ABC ne se gravent pas, et une partition qui en porte une est refusée, le message nommant chacune et sa ligne :\n- plusieurs voix (V:) ;\n- une fin alternative (|1, [2, :|2) ;\n- un changement de tonalité en cours de morceau, [K:G] ou une ligne K: ; un changement de clé seule, [K:clef=bass], se grave ;\n- une liaison dans un accord, [C-E]2 ou [CE]2- ;\n- un n-olet dont le second nombre n'est pas celui que l'usage lit sous son chiffre seul. Ainsi (5, cinq notes dans le temps de deux en mesure simple, est refusé, et (5:4:5, cinq pour quatre, se grave.\n\nUn tempo ABC, Q: en tête ou [Q:] en cours de morceau, se grave au-dessus de sa mesure : « ♩ = 60 », précédé du nom du mouvement s'il en a un, « Allegro ♩ = 120 ».\n\nLa gravure suit les règles d'un éditeur : espacement proportionnel à la durée, ligatures, hampes et altérations placées, portées alignées. La largeur de page et l'échelle décident de ce qui tient sur une ligne ; « Déroulé » met toute la pièce sur un seul système, aussi long qu'il faut, pour la lire d'un trait. Le bas de page vide est coupé : une partition de trois mesures ne rend pas une page entière de blanc.\n\nUne pièce longue tient sur plusieurs pages : le réglage « Page » dit laquelle rendre, et le message indique combien il y en a.\n\nLa sortie « SVG » rend la partition gravée en texte, et la sortie « Fichier SVG » la même partition en fichier. La partition s'affiche aussi dans le composant.",
-    noticeEn: "This node engraves a score from a notation text, and returns one page as SVG.\n\nFour notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML, the exchange format of score editors; MEI, its scholarly counterpart; and Humdrum, that of analysis corpora. The format is recognised from the shape of the text; the setting lets you impose it when recognition gets it wrong. An XML document that is neither a MusicXML score nor an MEI document is refused, and the message names its root element.\n\nAn ABC score is first read note by note. A zero duration, a chord never closed, a tie between two pitches or an unfinished tuplet gets it refused, and the message names each fault, its line and the fragment.\n\nFive ABC constructs are not engraved, and a score that carries one is refused, the message naming each one and its line:\n- several voices (V:);\n- an alternative ending (|1, [2, :|2);\n- a key change within the tune, [K:G] or a K: line; a clef change alone, [K:clef=bass], is engraved;\n- a tie inside a chord, [C-E]2 or [CE]2-;\n- a tuplet whose second number is not the one usage reads under its number alone. So (5, five notes in the time of two in simple time, is refused, and (5:4:5, five in the time of four, is engraved.\n\nAn ABC tempo, Q: in the header or [Q:] within the tune, is engraved above its bar: « ♩ = 60 », preceded by the name of the movement if it has one, « Allegro ♩ = 120 ».\n\nThe engraving follows publishing rules: spacing proportional to duration, beams, stems and accidentals placed, staves aligned. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed, to read it in one go. The empty bottom of the page is cut off: a three-bar score does not return a full page of white.\n\nA long piece spans several pages: the « Page » setting says which one to render, and the message gives their number.\n\nThe « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file. The score is also shown in the node.",
+    notice: "Ce composant grave une partition à partir d'un texte de notation, et rend une page en SVG.\n\nQuatre notations sont lues : ABC, reconnaissable à ses champs d'en-tête (X:, M:, K:) ; MusicXML, le format d'échange des éditeurs de partition ; MEI, son équivalent savant ; et Humdrum, celui des corpus d'analyse. Le format est reconnu à la forme du texte ; le réglage permet de l'imposer quand la reconnaissance se trompe. Un document XML qui n'est ni une partition MusicXML ni un document MEI est refusé, et le message nomme son élément racine.\n\nUne partition ABC est d'abord lue note à note. Une durée nulle, un accord jamais refermé, une liaison entre deux hauteurs ou un n-olet inachevé la font refuser, et le message nomme chaque faute, sa ligne et le fragment.\n\nCinq tournures ABC ne se gravent pas, et une partition qui en porte une est refusée, le message nommant chacune et sa ligne :\n- plusieurs voix (V:) ;\n- une fin alternative (|1, [2, :|2) ;\n- un changement de tonalité en cours de morceau, [K:G] ou une ligne K: ; un changement de clé seule, [K:clef=bass], se grave ;\n- une liaison dans un accord, [C-E]2 ou [CE]2- ;\n- un n-olet dont le second nombre n'est pas celui que l'usage lit sous son chiffre seul. Ainsi (5, cinq notes dans le temps de deux en mesure simple, est refusé, et (5:4:5, cinq pour quatre, se grave.\n\nUn tempo ABC, Q: en tête ou [Q:] en cours de morceau, se grave au-dessus de sa mesure : « ♩ = 60 », précédé du nom du mouvement s'il en a un, « Allegro ♩ = 120 ».\n\nLa gravure suit les règles d'un éditeur : espacement proportionnel à la durée, ligatures, hampes et altérations placées, portées alignées. La largeur de page et l'échelle décident de ce qui tient sur une ligne ; « Déroulé » met toute la pièce sur un seul système, aussi long qu'il faut, pour la lire d'un trait. Le bas de page vide est coupé : une partition de trois mesures ne rend pas une page entière de blanc.\n\nUne pièce longue tient sur plusieurs pages : le réglage « Page » dit laquelle rendre, et le message indique combien il y en a.\n\nUn texte ABC qui porte plusieurs airs, un par champ X:, les grave tous, chacun sous son titre et à partir d'une page neuve. « Page » parcourt alors les pages de tous les airs, et le message dit quel air est rendu.\n\nLa sortie « SVG » rend la partition gravée en texte, et la sortie « Fichier SVG » la même partition en fichier. La partition s'affiche aussi dans le composant.",
+    noticeEn: "This node engraves a score from a notation text, and returns one page as SVG.\n\nFour notations are read: ABC, recognisable by its header fields (X:, M:, K:); MusicXML, the exchange format of score editors; MEI, its scholarly counterpart; and Humdrum, that of analysis corpora. The format is recognised from the shape of the text; the setting lets you impose it when recognition gets it wrong. An XML document that is neither a MusicXML score nor an MEI document is refused, and the message names its root element.\n\nAn ABC score is first read note by note. A zero duration, a chord never closed, a tie between two pitches or an unfinished tuplet gets it refused, and the message names each fault, its line and the fragment.\n\nFive ABC constructs are not engraved, and a score that carries one is refused, the message naming each one and its line:\n- several voices (V:);\n- an alternative ending (|1, [2, :|2);\n- a key change within the tune, [K:G] or a K: line; a clef change alone, [K:clef=bass], is engraved;\n- a tie inside a chord, [C-E]2 or [CE]2-;\n- a tuplet whose second number is not the one usage reads under its number alone. So (5, five notes in the time of two in simple time, is refused, and (5:4:5, five in the time of four, is engraved.\n\nAn ABC tempo, Q: in the header or [Q:] within the tune, is engraved above its bar: « ♩ = 60 », preceded by the name of the movement if it has one, « Allegro ♩ = 120 ».\n\nThe engraving follows publishing rules: spacing proportional to duration, beams, stems and accidentals placed, staves aligned. Page width and scale decide what fits on a line; « Unrolled » puts the whole piece on a single system, as long as needed, to read it in one go. The empty bottom of the page is cut off: a three-bar score does not return a full page of white.\n\nA long piece spans several pages: the « Page » setting says which one to render, and the message gives their number.\n\nAn ABC text carrying several tunes, one per X: field, engraves them all, each under its title and starting on a new page. « Page » then goes through the pages of all the tunes, and the message says which tune is rendered.\n\nThe « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file. The score is also shown in the node.",
     entrees: [{ nom: "Notation", nomEn: "Notation", type: "texte", sousType: "notation", requis: false }],
     // DEUX SORTIES POUR UN MÊME SVG, ET LE MÊME NOM POUR LES DEUX.
     //
@@ -121,53 +121,72 @@ export const fiches: FicheAudio[] = ([
       // Revue des notations en texte, 2026-11-22 : Verovio gravait en vert une durée nulle, un accord
       // jamais refermé ou une liaison entre deux hauteurs, et tombait sur « divide by zero » pour un
       // silence de durée nulle. Chaque air du texte est lu, puisque chacun est gravé.
+      // CHAQUE AIR SE GRAVE SEUL, AVEC SON TITRE, quand le texte en porte plusieurs. Décision de Fabien
+      // du 2026-11-22, « Engrave all, titled » : Verovio les gravait à la suite, et n'écrivait que le
+      // titre du premier. Les airs sont ceux que découpe le lecteur ABC, qui écarte aussi ce qui précède
+      // le premier X: et les clôtures de code d'un modèle de langue. Chacun commence sa page, et
+      // « Page » parcourt les pages de tous.
+      const airs = format === "abc" ? decouperMorceaux(texte) : [texte];
+      if (airs.length === 0) return { valeurs: [null, null], erreur: true, message: traduire("msg.abc.aucun_morceau") };
+      const nomAir = (i: number) => traduire("msg.abc.partition_var_0", airs.length > 1 ? `ABC ${i + 1}` : "ABC");
       if (format === "abc") {
-        const morceaux = decouperMorceaux(texte);
-        for (const [i, air] of morceaux.entries()) {
-          const quoi = traduire("msg.abc.partition_var_0", morceaux.length > 1 ? `ABC ${i + 1}` : "ABC");
+        for (const [i, air] of airs.entries()) {
           // Puis ce que Verovio ne sait pas dessiner du tout. Décision de Fabien du 2026-11-22, « Refuse
           // them, named » : les voix, les fins alternatives, un changement de tonalité, une liaison
           // dans un accord, un n-olet que son chiffre seul ferait mal lire.
-          const refus = refusAbc(lireMorceau(air, i + 1), quoi, "msg.abc.refusee_gravure_var_0_var_1") ?? refusTournures(air, quoi);
+          const refus = refusAbc(lireMorceau(air, i + 1), nomAir(i), "msg.abc.refusee_gravure_var_0_var_1") ?? refusTournures(air, nomAir(i));
           if (refus) return { valeurs: [null, null], erreur: true, message: refus };
         }
       }
-      let tk: any = null;
+      const options = {
+        ...optionsGravure({
+          largeur: ctx.paramNombre("Largeur", 1800),
+          echelle: ctx.paramNombre("Échelle", 40),
+          marge: 50,
+          deroule: String(ctx.paramTexte("Déroulé", "non")) === "oui",
+        }),
+        inputFrom: entreeVerovio(format),
+        ...(airs.length > 1 ? { header: "encoded" } : {}),
+      };
+      const voulue = pageDemandee(ctx.paramNombre("Page", 1), Number.MAX_SAFE_INTEGER);
+      let total = 0, rendu: { svg: unknown; air: number; page: number } | null = null;
       try {
-        tk = await outil(format === "humdrum");
-        tk.setOptions({
-          ...optionsGravure({
-            largeur: ctx.paramNombre("Largeur", 1800),
-            echelle: ctx.paramNombre("Échelle", 40),
-            marge: 50,
-            deroule: String(ctx.paramTexte("Déroulé", "non")) === "oui",
-          }),
-          inputFrom: entreeVerovio(format),
-        });
-        // Un texte ABC est réécrit là où Verovio lit faux une écriture juste (`abcPourGravure`).
-        if (!tk.loadData(format === "abc" ? abcPourGravure(texte) : texte)) {
-          return { valeurs: [null, null], erreur: true, message: en()
-            ? `${format.toUpperCase()} refused by the engraver: check the notation.`
-            : `${format.toUpperCase()} refusé par le graveur : vérifiez la notation.` };
+        for (const [i, air] of airs.entries()) {
+          let tk: any = null;
+          try {
+            tk = await outil(format === "humdrum");
+            tk.setOptions(options);
+            // Un texte ABC est réécrit là où Verovio lit faux une écriture juste (`abcPourGravure`).
+            if (!tk.loadData(format === "abc" ? abcPourGravure(air) : air)) {
+              const quoi = format === "abc" ? nomAir(i) : format.toUpperCase();
+              return { valeurs: [null, null], erreur: true, message: en()
+                ? `${quoi} refused by the engraver: check the notation.`
+                : `${quoi} refusé par le graveur : vérifiez la notation.` };
+            }
+            const pages = tk.getPageCount();
+            // La page voulue, ou la dernière de la dernière pièce quand on demande au-delà.
+            const ici = voulue <= total + pages ? voulue - total : i === airs.length - 1 ? pages : 0;
+            if (!rendu && ici > 0) rendu = { svg: tk.renderToSVG(ici), air: i + 1, page: total + ici };
+            total += pages;
+          } finally {
+            tk?.destroy?.();
+          }
         }
-        const pages = tk.getPageCount();
-        const page = pageDemandee(ctx.paramNombre("Page", 1), pages);
-        const svg = tk.renderToSVG(page);
-        if (typeof svg !== "string" || !svg.includes("<svg")) {
-          return { valeurs: [null, null], erreur: true, message: en() ? "Empty engraving." : "Gravure vide." };
-        }
-        const nom = format === "musicxml" ? "MusicXML" : format.toUpperCase();
-        const message = en()
-          ? `${nom} · page ${page}/${pages}`
-          : `${nom} · page ${page} sur ${pages}`;
-        // Le SVG part sur la SORTIE, et la vue l'y lit : le message reste une ligne lisible sur le
-        // nœud — le format reconnu et la page rendue — au lieu d'être un document entier.
-        return { valeurs: [svg, new File([svg], "gravure.svg", { type: "image/svg+xml" })], message };
       } catch (e: any) {
         return { valeurs: [null, null], erreur: true, message: e?.message ?? String(e) };
-      } finally {
-        tk?.destroy?.();
       }
+      const svg = rendu?.svg;
+      if (!rendu || typeof svg !== "string" || !svg.includes("<svg")) {
+        return { valeurs: [null, null], erreur: true, message: en() ? "Empty engraving." : "Gravure vide." };
+      }
+      const nom = format === "musicxml" ? "MusicXML" : format.toUpperCase();
+      const air = airs.length > 1 ? (en() ? ` · tune ${rendu.air} of ${airs.length}` : ` · air ${rendu.air} sur ${airs.length}`) : "";
+      const message = en()
+        ? `${nom}${air} · page ${rendu.page}/${total}`
+        : `${nom}${air} · page ${rendu.page} sur ${total}`;
+      // Le SVG part sur la SORTIE, et la vue l'y lit : le message reste une ligne lisible sur le
+      // nœud, le format reconnu et la page rendue, au lieu d'être un document entier.
+      return { valeurs: [svg, new File([svg], "gravure.svg", { type: "image/svg+xml" })], message };
     },
   }),
 ] as FicheAudio[]).map(avecDoc);

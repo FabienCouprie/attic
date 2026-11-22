@@ -6,6 +6,18 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **CHAQUE AIR D'UN TEXTE ABC SE GRAVE, SOUS SON TITRE.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Engrave all, titled ».
+  - **Ce qui se passait** : deux airs se gravaient à la suite, comme une seule pièce. Seul le titre du premier aurait pu paraître, et l'en-tête de page était caché. « ABC → MIDI », lui, n'en joue que le premier, et le dit.
+  - **Ce qui change** :
+    - les airs sont ceux que découpe `decouperMorceaux`, le lecteur ABC ;
+    - chacun se grave seul, sous son titre, à partir d'une page neuve ;
+    - « Page » parcourt les pages de tous les airs, et le message dit quel air est rendu : « ABC · air 2 sur 2 · page 2 sur 2 ».
+
+    Un air seul se grave comme avant, sans en-tête. La notice le dit, en français et en anglais.
+  - **Le garde** : 4 cas dans `plugins/partition-verovio-norme.test.ts`.
+    - Vu rouge sur le code d'avant : 2 cas. L'air seul et la phrase d'un modèle de langue autour de l'air passaient déjà, et restent gardés.
+    - Vu rouge aussi sur un en-tête oublié, planté.
+
 - **LA PARTITION GRAVÉE LIT LE HUMDRUM, COMME SA NOTICE LE PROMET.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Load the Humdrum module ».
   - **Ce qui se passait** : le module chargé, `verovio/wasm`, ne connaît pas le Humdrum. Un fichier `**kern` correct était refusé par « HUMDRUM refusé par le graveur : vérifiez la notation », qui accusait le texte.
   - **Ce qui change** : `verovio/wasm-hum`, déjà dans le paquet installé, est importé pour le seul Humdrum ; les autres notations gardent leur module. Mesuré par Vite le 2026-11-22, sur les deux morceaux émis :
