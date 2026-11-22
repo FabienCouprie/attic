@@ -44,7 +44,7 @@ export const fiches: FicheAudio[] = ([
         type: "texte",
         defaut: "C4", defautEn: "C4",
         doc: "Note à jouer (ex. C4, G5). Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
-        docEn: "Note to play (e.g. C4, G5). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named.",
+        docEn: "Note to play (e.g. C4, G5). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.",
       },
       {
         nom: "Durée",
@@ -191,7 +191,7 @@ export const fiches: FicheAudio[] = ([
         type: "texte",
         defaut: "C4",
         doc: "Note de corde pincée (ex. C4, G3). Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
-        docEn: "Plucked string note (e.g. C4, G3). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C4",
+        docEn: "Plucked string note (e.g. C4, G3). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C4",
       },
       {
         nom: "Durée",

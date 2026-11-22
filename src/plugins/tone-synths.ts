@@ -32,7 +32,7 @@ export const fiches: FicheAudio[] = ([
         type: "texte",
         defaut: "C2",
         doc: "Note de base du kick (ex. C2, A1). Plus la note est grave, plus le kick est gros. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
-        docEn: "Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C2",
+        docEn: "Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C2",
       },
       {
         nom: "Durée",
@@ -152,7 +152,7 @@ export const fiches: FicheAudio[] = ([
         type: "texte",
         defaut: "C5",
         doc: "Note de base (ex. C5, G5). Une note aiguë donne un hi-hat ; une note plus grave sonne comme une cloche. Un nom avec son octave, en lettres ou en noms français, avec #, b, ♯ ou ♭ : A3, F#5, Sib2, Ré4. Une note illisible ou sans octave est refusée, et nommée.",
-        docEn: "Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Ré4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C5",
+        docEn: "Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named.", defautEn: "C5",
       },
       {
         nom: "Durée",
