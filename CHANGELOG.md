@@ -6,6 +6,26 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UNE LISTE DE HAUTEURS SE LIT D'UNE SEULE FAÇON, NOMS DE NOTES COMPRIS, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, huitième format, 2026-11-22, premier lot : le Rythme sur hauteurs, le Canon par pavage et le Contrepoint (solveur).
+  - **Ce qui se passait**, mesuré par `executer` :
+    - une espace en tête ou un retour à la ligne final ajoutait un MIDI 0 au Rythme sur hauteurs ;
+    - son réglage jetait « x » et « 200 » sans un mot, alors que son entrée les refusait ;
+    - « 60;64;67;72 » mettait les quatre voix du Canon sur do, un jeton illisible y décalait les voix, 200 s'écrivait dans le fichier MIDI, et une liste vide jouait do ;
+    - le Contrepoint raccourcissait un cantus dont une note ne se lisait pas, et en engendrait un quand aucune ne se lisait ;
+    - « C4 E4 G4 » n'était lu nulle part.
+  - **Ce qui change** : `audio/listes-musicales.ts` est le seul lecteur des listes. Il sépare par espaces, virgules, points-virgules et retours à la ligne, et ignore les espaces en tête et en fin.
+    - Les décisions de Fabien du 2026-11-22 :
+      - « Read them » : les noms de notes se lisent, avec leur octave ;
+      - « Keep it in the sound » : le Canon joue 60,5 dans son son, et son fichier MIDI l'arrondit en le disant ;
+      - « Refuse it, said » : une liste vide que la documentation ne définit pas est refusée.
+    - Un jeton illisible, ou hors de 0 à 127, fait refuser la liste, et le message le nomme. Le Contrepoint engendre toujours son cantus quand le réglage est vide, comme sa documentation le dit.
+
+    Les documentations des trois réglages le disent.
+  - **Un test tenait l'ancien message** : `plugins/arbre-chaine.test.ts` exigeait son exemple, « 60 62 64 65 67 ». Il tient celui du lecteur neuf ; la règle, nommer la forme attendue, ne change pas.
+  - **Le garde** : `plugins/listes-musicales.test.ts`, 21 cas, tout par `executer`, dont la hauteur du Canon mesurée dans le son, et `audio/listes-musicales.test.ts`, 22 cas.
+    - Vu rouge sur le code d'avant : 18 cas.
+    - Vu rouge aussi sur des noms de notes que le lecteur ne lisait plus, plantés.
+
 - **UN NOM DE NOTE SE LIT DE LA MÊME FAÇON PARTOUT : E#4 EST UN FA, Do4 UN DO, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, septième format, décisions de Fabien du 2026-11-22 : « Read them everywhere », « Refuse it, named ».
   - **Ce qui se passait**, mesuré par `executer`, et pour les synthétiseurs dans le son rendu : sept lecteurs, chacun avec sa table, son octave par défaut et sa façon d'échouer.
     - `lireNote` faisait sonner « E#4 », « Fb4 » et « Cb4 » la 4, « B#3 » la 3, et remplaçait « C##4 », « C♯4 » ou « Do4 » par la note par défaut, sans un mot. C'était le lecteur du Vent à guide d'onde, de la Barre modale, de la Synthèse par balayage, du Terrain d'onde et de la Voyelle chantée ; l'expression des Instruments programmés Csound faisait de même.

@@ -24,6 +24,7 @@ import {
 import { parUneFois } from "./hors-lot";
 import { notesDuMidi } from "../audio/midi";
 import { hauteurOuRefus } from "../audio/noms-de-notes";
+import { lireListe } from "../audio/listes-musicales";
 import { Note as NoteTonal } from "tonal";
 import { accordDuSymbole } from "../audio/symboles-accords";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
@@ -290,8 +291,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Répétitions", nomEn: "Repeats", type: "nombre", plage: [1, 16], pas: 1, defaut: 4,
         doc: "Nombre de tours joués.", docEn: "Number of cycles played." },
       { nom: "Hauteurs", nomEn: "Pitches", type: "texte", defaut: "60 64 67 72", defautEn: "60 64 67 72",
-        doc: "Une hauteur MIDI par voix. C'est ce qui rend le pavage audible : à hauteur unique, on n'entendrait qu'une pulsation régulière, ce qu'est justement tout canon par pavage, sans entendre qu'elle est partagée.",
-        docEn: "One MIDI pitch per voice. This is what makes the tiling audible: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared." },
+        doc: "Une hauteur par voix, en numéro MIDI de 0 à 127 ou en nom de note avec son octave, « C4 », « Do4 ». C'est ce qui rend le pavage audible : à hauteur unique, on n'entendrait qu'une pulsation régulière, ce qu'est justement tout canon par pavage, sans entendre qu'elle est partagée. Une hauteur décimale sonne telle quelle ; le fichier MIDI, qui ne porte que des entiers, l'arrondit, et le message le dit. Une liste vide, ou dont un jeton ne se lit pas, est refusée.",
+        docEn: "One pitch per voice, as a MIDI number from 0 to 127 or a note name with its octave, « C4 ». This is what makes the tiling audible: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared. A decimal pitch sounds as written; the MIDI file, which carries whole numbers only, rounds it, and the message says so. An empty list, or one with an unreadable token, is refused." },
       ...PARAMETRES_RENDU,
     ],
     async executer(ctx) {
@@ -306,13 +307,17 @@ export const fiches: FicheAudio[] = ([
       }
       const canon = construire(motif, n);
       if (!canon) return { valeurs: [null, null, null], message: traduire("msg.canon.nePavePas", motif.join(" "), n) };
-      const hauteurs = ctx.paramTexte("Hauteurs", "60 64 67 72").split(/[\s,]+/).filter(Boolean)
-        .map((x: string) => parseInt(x, 10)).filter((x: number) => Number.isFinite(x));
-      const notes = canonEnNotes(
-        canon, ctx.paramNombre("Durée d'un pas", 0.2),
-        hauteurs.length > 0 ? hauteurs : [60], Math.round(ctx.paramNombre("Répétitions", 4)),
-      );
+      // LES HAUTEURS, PAR LE SEUL LECTEUR DES LISTES. Revue des notations en texte, 2026-11-22 :
+      // « 60;64;67;72 » mettait les quatre voix sur do, un jeton illisible décalait les voix, 200
+      // s'écrivait dans le fichier MIDI, et une liste vide jouait do. Décision de Fabien du même jour,
+      // « Keep it in the sound » : une hauteur décimale sonne telle quelle, et le fichier MIDI, qui ne
+      // porte que des entiers, l'arrondit ; le message le dit.
       const en = langueCourante() === "en";
+      const lue = lireListe(ctx.paramTexte("Hauteurs", "60 64 67 72"), "hauteurs", en ? "Pitches" : "Hauteurs");
+      if ("refus" in lue) return { valeurs: [null, null, null], erreur: true, message: lue.refus };
+      const hauteurs = lue.valeurs;
+      const notes = canonEnNotes(canon, ctx.paramNombre("Durée d'un pas", 0.2), hauteurs, Math.round(ctx.paramNombre("Répétitions", 4)));
+      const arrondies = [...new Set(hauteurs.filter((h) => !Number.isInteger(h)))].map((h) => `${h} → ${Math.round(h)}`);
       const grille = [
         `${en ? "Motif" : "Motif"} : ${canon.rythme.join(" ")}`,
         `${en ? "Entries" : "Entrées"} : ${canon.entrees.join(" ")}`,
@@ -326,7 +331,8 @@ export const fiches: FicheAudio[] = ([
       const [audio, midi] = await rendre(ctx, notes);
       return {
         valeurs: [audio, midi, grille],
-        message: traduire("msg.canon.resultat", canon.entrees.length, canon.rythme.length, canon.n),
+        message: traduire("msg.canon.resultat", canon.entrees.length, canon.rythme.length, canon.n)
+          + (arrondies.length ? ` · ${traduire("msg.canon.midi_arrondi_var_0", arrondies.join(", "))}` : ""),
       };
     },
   }),

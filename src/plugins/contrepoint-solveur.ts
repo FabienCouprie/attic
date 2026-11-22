@@ -15,6 +15,7 @@ import { avecDoc } from "./notices";
 import { estSequence, type InfoVoix, type Sequence } from "../audio/sequence";
 import { cantusFirmus, chercherContrepoint } from "../audio/contrepoint-solveur";
 import { nomNote } from "../audio/nom-note";
+import { lireListe } from "../audio/listes-musicales";
 
 const en = () => langueCourante() === "en";
 
@@ -22,19 +23,6 @@ const POSITIONS = [
   { id: "dessus", nom: "Au-dessus", nomEn: "Above" },
   { id: "dessous", nom: "Au-dessous", nomEn: "Below" },
 ];
-
-/**
- * Lit une suite de hauteurs écrite à la main.
- *
- * LE MORCEAU VIDE EST ÉCARTÉ AVANT D'ÊTRE CONVERTI, et c'est ce qui manquait. Découper la chaîne
- * vide rend un tableau d'un seul morceau vide, `Number("")` vaut zéro, et zéro est une hauteur
- * recevable : le réglage vide — qui est son défaut — rendait donc un cantus d'une note à la hauteur
- * zéro. Le nœud prenait cette note pour un cantus écrit, n'engendrait jamais le sien, et se
- * terminait sur « un cantus firmus demande au moins deux notes » quoi qu'on fasse.
- */
-const lireHauteurs = (texte: string): number[] =>
-  texte.split(/[\s,;]+/).filter((m) => m !== "")
-    .map(Number).filter((n) => Number.isFinite(n) && n >= 0 && n <= 127);
 
 /** Les classes de hauteurs employées par une suite : son mode, tel qu'il se donne. */
 const modeDe = (suite: readonly number[]): number[] =>
@@ -56,8 +44,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Cantus firmus", nomEn: "Cantus firmus", type: "texte", defaut: "", defautEn: "",
-        doc: "Les hauteurs du cantus, en numéros MIDI séparés par des espaces. Vide, un cantus est engendré.",
-        docEn: "The cantus pitches, as MIDI numbers separated by spaces. Empty, a cantus is generated." },
+        doc: "Les hauteurs du cantus, en numéros MIDI ou en noms de notes avec leur octave, « C4 », « Do4 », séparés par des espaces. Vide, un cantus est engendré. Un cantus dont une note ne se lit pas, ou sort de 0 à 127, est refusé, et le message la nomme.",
+        docEn: "The cantus pitches, as MIDI numbers or note names with their octave, « C4 », separated by spaces. Empty, a cantus is generated. A cantus with a note that cannot be read, or that falls outside 0 to 127, is refused, and the message names it." },
       { nom: "Notes", nomEn: "Notes", plage: [4, 16], pas: 1, defaut: 10,
         doc: "La longueur du cantus engendré, quand aucun n'est fourni.",
         docEn: "The length of the generated cantus, when none is supplied." },
@@ -89,7 +77,12 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const recue = ctx.entree(0);
-      const ecrit = lireHauteurs(ctx.paramTexte("Cantus firmus", ""));
+      // UN CANTUS ÉCRIT SE LIT EN ENTIER, OU EST REFUSÉ. Revue des notations en texte, 2026-11-22 : un
+      // jeton illisible raccourcissait le cantus, et un cantus tout illisible en faisait engendrer un.
+      // Le vide seul, que la documentation définit, fait engendrer.
+      const lue = lireListe(ctx.paramTexte("Cantus firmus", ""), "hauteurs", "Cantus firmus", { videPermis: true });
+      if ("refus" in lue) return { valeurs: [null, null], erreur: true, message: lue.refus };
+      const ecrit = lue.valeurs;
       const graine = Math.round(ctx.paramNombre("Graine", 1));
       let cantus: number[];
       let provenance: string;

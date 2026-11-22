@@ -1537,7 +1537,7 @@ Searches for a voice that makes a first-species counterpoint, note against note,
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Cantus firmus | text | — |  | The cantus pitches, as MIDI numbers separated by spaces. Empty, a cantus is generated. |
+| Cantus firmus | text | — |  | The cantus pitches, as MIDI numbers or note names with their octave, « C4 », separated by spaces. Empty, a cantus is generated. A cantus with a note that cannot be read, or that falls outside 0 to 127, is refused, and the message names it. |
 | Notes | number | 10 | 4 – 16, step 1 | The length of the generated cantus, when none is supplied. |
 | Position | choice | Above | Above / Below | Places the searched voice above or below the cantus. |
 | Mode | choice | From the cantus | From the cantus / Chromatic | « From the cantus » uses only the degrees the cantus uses, which holds the line in its mode. |
@@ -2106,7 +2106,7 @@ Builds a rhythmic tiling canon. An ordinary canon layers a melody over itself, o
 | Searched size | number | 3 | 2 – 12, step 1 | Number of onsets per voice, when the motif is left empty. It must divide the number of pulses. |
 | Step length | number | 0.2 s | 0.05 – 1 s, step 0.05 | Length of one pulse. |
 | Repeats | number | 4 | 1 – 16, step 1 | Number of cycles played. |
-| Pitches | text | `60 64 67 72` |  | One MIDI pitch per voice. This is what makes the tiling audible: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared. |
+| Pitches | text | `60 64 67 72` |  | One pitch per voice, as a MIDI number from 0 to 127 or a note name with its octave, « C4 ». This is what makes the tiling audible: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared. A decimal pitch sounds as written; the MIDI file, which carries whole numbers only, rounds it, and the message says so. An empty list, or one with an unreadable token, is refused. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -3081,7 +3081,7 @@ Lays a rhythm written by divisions on a series of pitches, and returns the resul
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The rhythm in list notation, used when the input of the same name is not connected. |
-| Pitches | text | `60 62 64 65 67` |  | The MIDI numbers used, read in a loop, when no input supplies them. |
+| Pitches | text | `60 62 64 65 67` |  | The pitches used, read in a loop, when no input supplies them: MIDI numbers from 0 to 127, decimals allowed, or note names with their octave, « C4 », separated by spaces, commas or semicolons. An empty list, or one with an unreadable token, is refused, and the message names it. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The length of a quarter note. |
 | Repeats | number | 1 | 1 – 16, step 1 | How many times the whole tree is played again, end to end. |
 | Velocity | number | 90 | 1 – 127, step 1 | The velocity of the notes. |
