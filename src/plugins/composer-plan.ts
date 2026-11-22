@@ -59,6 +59,22 @@ export function tonaliteNormalisee(brute: string): string {
 }
 
 /**
+ * LA TONALITÉ SOUS LA FORME QUE LE MOTEUR ATTEND, « G major » ou « A minor », ou `null` pour un autre mode.
+ *
+ * « Gm » et « G mixolydian » passaient tels quels dans le plan. La forme courte se lit, « Gm » pour sol mineur
+ * et « G » pour sol majeur ; un autre mode est refusé par l'appelant, qui le nomme. Décision de Fabien du
+ * 2026-11-22, « Read Gm, refuse modes », revue des notations en texte.
+ */
+export function keyscaleDe(tonalite: string): string | null {
+  const m = /^([A-G][#b]?)\s*(.*)$/.exec(tonalite.trim());
+  if (!m) return null;
+  const qualite = m[2].trim();
+  if (qualite === "" || qualite === "M" || /^(major|maj|majeur)$/i.test(qualite)) return `${m[1]} major`;
+  if (qualite === "m" || /^(minor|min|mineur)$/i.test(qualite)) return `${m[1]} minor`;
+  return null;
+}
+
+/**
  * Le plan, tel que `rendre-chanson` le lira.
  *
  * LES CHAMPS VIDES NE S'ÉCRIVENT PAS. Un `lyrics` vide ferait chanter du silence annoncé, et un
@@ -157,8 +173,8 @@ export const fiches = ([
         doc: "Le tempo écrit dans le plan. À zéro, le champ est absent et le moteur décide. L'entrée « Tempo » le remplace quand elle est branchée.",
         docEn: "The tempo written into the plan. At zero, the field is absent and the engine decides. The « Tempo » input replaces it when connected." },
       { nom: "Tonalité", nomEn: "Key", type: "texte", defaut: "C major", defautEn: "C major",
-        doc: "La tonalité, sous la forme « G major » ou « A minor ». Une mention entre parenthèses à la fin, telle qu'un pourcentage de confiance, est retirée avant l'écriture. Vide, le champ est absent du plan. L'entrée « Tonalité » la remplace quand elle est branchée.",
-        docEn: "The key, as « G major » or « A minor ». A mention in parentheses at the end, such as a confidence percentage, is removed before writing. Empty, the field is absent from the plan. The « Key » input replaces it when connected." },
+        doc: "La tonalité, sous la forme « G major » ou « A minor ». Une mention entre parenthèses à la fin, telle qu'un pourcentage de confiance, est retirée avant l'écriture. « Gm » s'écrit « G minor » et « G » « G major » ; un autre mode, « mixolydian » ou « dorian », fait refuser le composant, et le message le nomme. Vide, le champ est absent du plan. L'entrée « Tonalité » la remplace quand elle est branchée.",
+        docEn: "The key, as « G major » or « A minor ». A mention in parentheses at the end, such as a confidence percentage, is removed before writing. « Gm » is written « G minor » and « G » « G major »; any other mode, « mixolydian » or « dorian », makes the node refused, and the message names it. Empty, the field is absent from the plan. The « Key » input replaces it when connected." },
       { nom: "Durée", nomEn: "Length", type: "nombre", plage: [5, 600], pas: 5, defaut: 60, unite: "s",
         doc: "Longueur visée. Ce plan ne portant pas de codes audio, elle est tenue à l'échantillon.",
         docEn: "Target length. As this plan carries no audio codes, it is held to the sample." },
@@ -201,13 +217,18 @@ export const fiches = ([
         return { valeurs: [null], erreur: true,
           message: traduire("msg.tonal.tonique_illisible_var_0", tonalite.slice(0, 40)) };
       }
+      const keyscale = tonalite ? keyscaleDe(tonalite) : "";
+      if (keyscale === null) {
+        return { valeurs: [null], erreur: true,
+          message: traduire("msg.plan.mode_var_0", tonalite.replace(/^[A-G][#b]?\s*/, "").slice(0, 40)) };
+      }
 
       const plan = planDepuis({
         description: texteOu(entreeDescription, ctx.paramTexte("Description", "")),
         paroles: texteOu(entreeParoles, ctx.paramTexte("Paroles", "")),
         tempo: typeof entreeTempo === "number" && entreeTempo > 0
           ? entreeTempo : ctx.paramNombre("Tempo", 120),
-        tonalite: texteOu(entreeTonalite, ctx.paramTexte("Tonalité", "")),
+        tonalite: keyscale,
         dureeSec: ctx.paramNombre("Durée", 60),
         langue: ctx.paramTexte("Langue du chant", "fr"),
         signature: ctx.paramTexte("Signature", "4"),

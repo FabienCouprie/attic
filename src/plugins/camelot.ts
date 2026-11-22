@@ -5,6 +5,7 @@
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { genererCamelot, genererSvgCamelot } from "../audio";
+import { parseCamelot } from "../audio/camelot";
 import { hasardDuNoeud } from "../core";
 import { traduire } from "../i18n";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
@@ -30,8 +31,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Départ", nomEn: "Start", type: "texte", defaut: "4B",
-        doc: "Code de départ sur la roue (ex : 4B, 7A, 12B). Anneau A = mineur, B = majeur.",
-        docEn: "Starting code on the wheel (e.g. 4B, 7A, 12B). Ring A = minor, B = major." },
+        doc: "Code de départ sur la roue (ex : 4B, 7A, 12B). Anneau A = mineur, B = majeur. Un nombre de 1 à 12 suivi de A ou de B, en capitale ou non ; un autre code fait refuser le composant, et le message le nomme.",
+        docEn: "Starting code on the wheel (e.g. 4B, 7A, 12B). Ring A = minor, B = major. A number from 1 to 12 followed by A or B, in capitals or not; any other code makes the node refused, and the message names it." },
       { nom: "Parcours", nomEn: "Journey", type: "choix",
         options: ["Complet", "Voisins", "Aléatoire"],
         optionsEn: ["Full", "Neighbors", "Random"],
@@ -68,9 +69,15 @@ export const fiches: FicheAudio[] = ([
       const mode = facon === "arpege" || facon === "roule" ? facon : "bloc";
       const modeRenduBrut = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const modeRendu = modeRenduBrut === "Automatique" ? (sf2Chargee() ? "SoundFont" : "FM/Oscillateurs") : modeRenduBrut;
+      // UN CODE QUE LA ROUE NE LIT PAS EST REFUSÉ, ET NOMMÉ : il rendait un nœud vert, « 0 accords ». Revue
+      // des notations en texte, passe de complétude, 2026-11-22.
+      const depart = ctx.paramTexte("Départ", "4B");
+      if (!parseCamelot(depart)) {
+        return { valeurs: [null, null, null], erreur: true, message: traduire("msg.camelot.code_var_0", depart) };
+      }
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const { audio, midi, notes, codes, accords } = await genererCamelot({
-        depart: ctx.paramTexte("Départ", "4B"),
+        depart,
         parcours,
         pas: ctx.paramNombre("Pas", 12),
         tempo: ctx.paramNombre("Tempo", 120),
