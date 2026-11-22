@@ -3,7 +3,7 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { accordsDepuisRomains, estProgressionRomaine, modeDepuisTonalite, toniqueDepuisTonalite } from "../audio/theorie-romains";
+import { accordsDepuisRomains, estProgressionRomaine, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite } from "../audio/theorie-romains";
 import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 import {
   barreDeDuree, easyScoreDe, jetonsDe, lireHauteur, lireNotationVexflow, longueurDe, mettreEnMesures,
@@ -199,6 +199,16 @@ export function genererGrille(accords: string[], mesuresParLigne: number, largeu
   const svg = extraireSvgRendu(div);
   div.remove();
   return svg;
+}
+
+/**
+ * Les chiffres d'une progression romaine qui ne se lisent pas, « C » dans « I C V » ; rien pour une
+ * suite de symboles. Sans ce contrôle, le chiffre illisible devenait un accord vide, que le refus des
+ * symboles nommait « », revue des notations en texte du 2026-11-22.
+ */
+export function romainsIllisibles(progression: string): string[] {
+  const tokens = progression.split(/\s+/).filter(Boolean);
+  return estProgressionRomaine(tokens) ? romainsInconnus(tokens) : [];
 }
 
 /** Les accords d'une progression écrite, en chiffres romains ou en symboles. */

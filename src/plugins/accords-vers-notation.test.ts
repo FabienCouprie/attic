@@ -77,10 +77,13 @@ describe("accords-vers-notation", () => {
     expect(lignes[2]).toBe("D3+F3+A3 1");        // iv = Ré mineur (fondamentale à l'octave demandée)
   });
 
-  it("un type explicite sur le chiffre romain est conservé (vi7 reste dominante)", async () => {
+  // CE CAS TENAIT « vi7 reste dominante » jusqu'au 2026-11-22 : il décrivait la lecture de Tonal, qui
+  // y voyait A7. L'usage lit la minuscule comme une tierce mineure, et « vi7 » comme Am7 (revue des
+  // notations en texte, sixième format). Il tient désormais cette lecture.
+  it("la minuscule suivie de 7 est une mineure septième (vi7 = Am7)", async () => {
     const res = await fiche.executer(ctxDe([null, "vi7", "C major"],
       { Source: "progression", Octave: 3 }) as any);
-    expect(String(res.valeurs[0]).split("\n")[1]).toContain("Db4");   // Tonal rend l'altération en bémol
+    expect(String(res.valeurs[0]).split("\n")[1]).toBe("A3+C4+E4+G4 1");
   });
 
   it("refuse la source Progression sans tonalité, plutôt que d'inventer une tonique", async () => {

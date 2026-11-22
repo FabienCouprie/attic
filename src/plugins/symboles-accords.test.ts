@@ -140,7 +140,9 @@ describe("UN ACCORD OU UN CHIFFRE QUI NE SE LIT PAS EST REFUSÉ, ET NOMMÉ", () 
     expect(r.message).toContain("« Zorglub »");
   });
 
-  it.each([["I X V", "X"], ["I V/V V", "V/V"]])("la Progression refuse « %s », et nomme « %s »", async (progression, fautif) => {
+  // « V/V » est lu depuis le sixième format (décision de Fabien du 2026-11-22) ; « V/V/V », une
+  // dominante de dominante de dominante écrite d'un seul jeton, ne l'est pas.
+  it.each([["I X V", "X"], ["I V/V/V V", "V/V/V"]])("la Progression refuse « %s », et nomme « %s »", async (progression, fautif) => {
     const r = await lancerFiche(F("tonal-progression"), { Progression: progression }, { entrees: [null] });
     expect(r.erreurRendue).toBe(true);
     expect(r.message).toContain(`« ${fautif} »`);

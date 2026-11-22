@@ -5,7 +5,7 @@
 // « Progression » et « Grille d'accords », antérieurs au nœud de conversion.
 import { describe, it, expect } from "vitest";
 import { registre } from "../audio/adaptateur";
-import { normaliserRomains } from "../audio/theorie-romains";
+import { accordsDepuisRomains } from "../audio/theorie-romains";
 import { Progression, Chord } from "tonal";
 import { ctxDEssai } from "../core/contexte-essai";
 
@@ -13,19 +13,23 @@ function ctxDe(entree: unknown, params: Record<string, string | number> = {}) {
   return ctxDEssai([entree], params) as any;
 }
 
-describe("normaliserRomains", () => {
-  it("ajoute « m » aux degrés en minuscules sans type explicite", () => {
-    expect(normaliserRomains(["I", "V", "vi", "IV"])).toEqual(["I", "V", "vim", "IV"]);
-    expect(normaliserRomains(["i", "iv", "v"])).toEqual(["im", "ivm", "vm"]);
+// CES CAS TENAIENT `normaliserRomains`, qui ajoutait le « m » d'une minuscule avant Tonal et a
+// disparu le 2026-11-22 avec la lecture d'Attic (`lecture-romains.ts`). Il laissait « vi7 » intact, au
+// motif qu'il portait sa propre qualité, et Tonal y lisait une septième de dominante : le cas qui
+// tenait ce comportement tient désormais la mineure septième, comme l'usage la lit.
+describe("la minuscule dit la qualité, dans la lecture des chiffres", () => {
+  it("les degrés en minuscules sont mineurs", () => {
+    expect(accordsDepuisRomains("C", ["I", "V", "vi", "IV"])).toEqual(["C", "G", "Am", "F"]);
+    expect(accordsDepuisRomains("A", ["i", "iv", "v"])).toEqual(["Am", "Dm", "Em"]);
   });
 
-  it("laisse intacts les degrés portant déjà une qualité", () => {
-    expect(normaliserRomains(["vi7", "IMaj7", "V7"])).toEqual(["vi7", "IMaj7", "V7"]);
+  it("la minuscule suivie de 7 est une mineure septième, et une qualité écrite reste", () => {
+    expect(accordsDepuisRomains("C", ["vi7", "IMaj7", "V7"])).toEqual(["Am7", "CMaj7", "G7"]);
   });
 
   it("produit bien le relatif mineur (le cœur du bug)", () => {
     const avant = Chord.get(Progression.fromRomanNumerals("C", ["vi"])[0]).notes;
-    const apres = Chord.get(Progression.fromRomanNumerals("C", normaliserRomains(["vi"]))[0]).notes;
+    const apres = Chord.get(accordsDepuisRomains("C", ["vi"])[0]).notes;
     expect(avant).toEqual(["A", "C#", "E"]);   // comportement brut de Tonal : MAJEUR
     expect(apres).toEqual(["A", "C", "E"]);    // attendu : La mineur
   });

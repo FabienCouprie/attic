@@ -2,8 +2,9 @@
 //
 // Deux fautes d'harmonie distinctes vivaient ici, et seule la première était
 // corrigée. Tonal lit la CASSE d'un degré mais ne la reporte pas sur la qualité
-// de l'accord — « vi » donnait La majeur — c'est `normaliserRomains`, déjà
-// couvert par plugins/romains-mineurs.test.ts. Il résout aussi TOUS les degrés
+// de l'accord — « vi » donnait La majeur — que corrigeait `normaliserRomains`,
+// remplacé le 2026-11-22 par la lecture d'Attic (`lecture-romains.ts`) et
+// couvert par plugins/romains-mineurs.test.ts. Tonal résout aussi TOUS les degrés
 // sur la gamme MAJEURE : en la mineur, « i VI III VII » rendait Am F♯ C♯ G♯,
 // soit la bonne tonique suivie de trois accords du mode majeur. C'est ce second
 // défaut que ce fichier verrouille.
@@ -30,50 +31,47 @@ describe("les symboles d'accord inconnus", () => {
   });
 });
 import { Chord, Progression } from "tonal";
-import {
-  romainsSelonMode, accordsDepuisRomains, modeDepuisTonalite, normaliserRomains,
-} from "./theorie-romains";
+import { accordsDepuisRomains, modeDepuisTonalite } from "./theorie-romains";
 
 describe("le défaut, tel que Tonal le produisait", () => {
   it("résolvait les degrés d'un mode mineur sur la gamme majeure", () => {
-    // Reproduit l'appel d'origine, pour que la correction reste lisible comme
-    // une correction et non comme une préférence.
-    const brut = Progression.fromRomanNumerals("A", normaliserRomains(["i", "VI", "III", "VII"]));
-    expect(brut).toEqual(["Am", "F#", "C#", "G#"]);
-
-    const corrige = accordsDepuisRomains("A", ["i", "VI", "III", "VII"], "mineur");
-    expect(corrige).toEqual(["Am", "F", "C", "G"]);
+    // Reproduit l'appel d'origine, la minuscule déjà portée en « im », pour que la correction reste
+    // lisible comme une correction et non comme une préférence.
+    expect(Progression.fromRomanNumerals("A", ["im", "VI", "III", "VII"])).toEqual(["Am", "F#", "C#", "G#"]);
+    expect(accordsDepuisRomains("A", ["i", "VI", "III", "VII"], "mineur")).toEqual(["Am", "F", "C", "G"]);
   });
 });
 
-describe("romainsSelonMode", () => {
+// CES CAS TENAIENT `romainsSelonMode`, qui préparait les chiffres pour Tonal et a disparu le
+// 2026-11-22 avec la lecture d'Attic (`lecture-romains.ts`). Ils tiennent les mêmes propriétés,
+// par les accords que la lecture rend.
+describe("le mode mineur, dans la lecture des chiffres", () => {
   it("abaisse III, VI et VII en mineur", () => {
-    expect(romainsSelonMode(["i", "III", "VI", "VII"], "mineur")).toEqual(["i", "bIII", "bVI", "bVII"]);
+    expect(accordsDepuisRomains("A", ["i", "III", "VI", "VII"], "mineur")).toEqual(["Am", "C", "F", "G"]);
   });
 
-  it("laisse I, II, IV et V intacts", () => {
-    // Leur fondamentale est la même dans les deux modes : seule leur qualité
-    // change, et la casse s'en charge.
-    expect(romainsSelonMode(["i", "ii", "iv", "v"], "mineur")).toEqual(["i", "ii", "iv", "v"]);
+  it("laisse I, II, IV et V sur leur fondamentale", () => {
+    // Leur fondamentale est la même dans les deux modes : seule leur qualité change, et la casse
+    // s'en charge.
+    expect(accordsDepuisRomains("A", ["i", "ii", "iv", "v"], "mineur")).toEqual(["Am", "Bm", "Dm", "Em"]);
   });
 
   it("ne touche à rien en majeur", () => {
-    const tokens = ["I", "V", "vi", "IV", "III", "VII"];
-    expect(romainsSelonMode(tokens, "majeur")).toEqual(tokens);
+    expect(accordsDepuisRomains("C", ["I", "V", "vi", "IV", "III", "VII"], "majeur")).toEqual(["C", "G", "Am", "F", "E", "B"]);
   });
 
   it("respecte une altération déjà écrite", () => {
-    // L'utilisateur a dit ce qu'il voulait ; bémoliser une seconde fois
-    // changerait sa demande en un double bémol.
-    expect(romainsSelonMode(["bIII", "#IV", "bVII"], "mineur")).toEqual(["bIII", "#IV", "bVII"]);
+    // L'utilisateur a dit ce qu'il voulait ; bémoliser une seconde fois changerait sa demande en un
+    // double bémol.
+    expect(accordsDepuisRomains("A", ["bIII", "#IV", "bVII"], "mineur")).toEqual(["C", "D#", "G"]);
   });
 
   it("conserve les extensions du degré", () => {
-    expect(romainsSelonMode(["VII7", "VImaj7"], "mineur")).toEqual(["bVII7", "bVImaj7"]);
+    expect(accordsDepuisRomains("A", ["VII7", "VImaj7"], "mineur")).toEqual(["G7", "Fmaj7"]);
   });
 
-  it("laisse passer un jeton qui n'est pas un chiffre romain", () => {
-    expect(romainsSelonMode(["Am", "xyz", ""], "mineur")).toEqual(["Am", "xyz", ""]);
+  it("rend une chaîne vide pour un jeton qui n'est pas un chiffre romain", () => {
+    expect(accordsDepuisRomains("A", ["Am", "xyz", ""], "mineur")).toEqual(["", "", ""]);
   });
 });
 

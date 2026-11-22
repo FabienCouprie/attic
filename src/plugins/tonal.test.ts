@@ -105,7 +105,11 @@ describe("nœuds Tonal", () => {
     expect(notation).toContain("C3+E3+G3+B3 1");
     expect(notation).toContain("F3+A3+C4+Eb4 1");
     expect(notation).toContain("G3+B3+D4+F4 1");
-    expect(res.valeurs[1]).toBe("CMaj7 F7 G7 A7");
+    // « vi7 » est une mineure septième, Am7, comme l'usage le lit : la minuscule dit la tierce mineure.
+    // Ce cas tenait « A7 », la septième de dominante que Tonal y lisait, jusqu'au 2026-11-22 (revue des
+    // notations en texte, sixième format) ; il décrivait la lecture de Tonal, et non une décision.
+    expect(notation).toContain("A3+C4+E4+G4 1");
+    expect(res.valeurs[1]).toBe("CMaj7 F7 G7 Am7");
   });
 
   it("tonal-analyse détecte une tonalité C major", async () => {
@@ -139,7 +143,9 @@ describe("nœuds Tonal", () => {
       const f = trouver("tonal-analyse")!;
       const ctxJazz = { entree: () => gammeC(0.1), paramTexte: () => "Jazz", paramNombre: () => 0 };
       const resJazz = await f.executer(ctxJazz as any);
-      expect(resJazz.valeurs[1]).toBe("ii V i");
+      // « iiø7 V7 i » depuis le 2026-11-22 (décision de Fabien) : « ii V i » se lisait Bm E Am en la
+      // mineur, et le si mineur portait un fa♯ hors de la gamme.
+      expect(resJazz.valeurs[1]).toBe("iiø7 V7 i");
 
       const ctxBlues = { entree: () => gammeC(0.1), paramTexte: () => "Blues", paramNombre: () => 0 };
       const resBlues = await f.executer(ctxBlues as any);
