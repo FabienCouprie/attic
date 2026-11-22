@@ -127,42 +127,40 @@ export function valeurNote(dureeUnites: number, unitesParNoire = 4): { nom: stri
 const echapper = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-interface Evenement {
-  /** Position en unités (double-croches) depuis le début. */
-  debut: number;
-  duree: number;
-  notes: number[];
-}
+/** Une voix : des événements qui se suivent sans se chevaucher, un accord étant un seul événement. Les temps sont en unités. */
+export type Voix = { debut: number; fin: number; notes: number[] }[];
 
 /**
- * Regroupe les notes en événements : celles qui commencent ensemble forment un accord.
+ * LES VOIX D'UNE SUITE DE NOTES, posées sur la grille.
  *
- * La quantification est indispensable — une note jouée à 0,503 s n'a pas de valeur
- * notable — et c'est elle qui décide de ce que la partition dira. Une note plus courte
- * qu'une unité en occupe une quand même : une partition n'a pas de silence de durée nulle.
+ * La quantification est indispensable — une note jouée à 0,503 s n'a pas de valeur notable — et c'est elle
+ * qui décide de ce que la partition dira. Une note plus courte qu'une unité en occupe une quand même : une
+ * partition n'a pas de silence de durée nulle.
+ *
+ * CHAQUE NOTE VA DANS LA PREMIÈRE VOIX LIBRE, les plus aiguës d'abord, pour que la première voix porte le
+ * dessus comme le veut l'usage ; des notes de même attaque et de même fin y forment un accord. Les notes
+ * étaient groupées par attaque : un accord prenait la plus longue de ses durées, et une note qui commençait
+ * pendant une autre était perdue, de sorte qu'une basse ronde sous quatre noires donnait deux notes sur cinq.
+ * Décision de Fabien du 2026-11-22, « Write voices », revue des notations en texte.
  */
-export function evenementsDepuisNotes(
-  notes: NoteXML[],
-  tempo: number,
-  quantification: number,
-): Evenement[] {
+export function voixDepuisNotes(notes: NoteXML[], tempo: number, quantification: number): Voix[] {
   const unitesParNoire = Math.max(1, Math.round(quantification / 4));
   const secondesParUnite = 60 / Math.max(1, tempo) / unitesParNoire;
-  const parDebut = new Map<number, { duree: number; notes: number[] }>();
-  for (const n of notes) {
+  const posees = notes.map((n) => {
     const debut = Math.max(0, Math.round(n.debut / secondesParUnite));
-    const duree = Math.max(1, Math.round((n.fin - n.debut) / secondesParUnite));
-    const e = parDebut.get(debut);
-    if (e) {
-      e.notes.push(n.note);
-      e.duree = Math.max(e.duree, duree);
-    } else {
-      parDebut.set(debut, { duree, notes: [n.note] });
-    }
+    return { note: n.note, debut, fin: debut + Math.max(1, Math.round((n.fin - n.debut) / secondesParUnite)) };
+  }).sort((a, b) => a.debut - b.debut || b.note - a.note);
+  const voix: Voix[] = [];
+  for (const n of posees) {
+    const derniere = (v: Voix) => v[v.length - 1];
+    const accord = voix.find((v) => derniere(v).debut === n.debut && derniere(v).fin === n.fin);
+    if (accord) { if (!derniere(accord).notes.includes(n.note)) derniere(accord).notes.push(n.note); continue; }
+    const libre = voix.find((v) => derniere(v).fin <= n.debut);
+    if (libre) libre.push({ debut: n.debut, fin: n.fin, notes: [n.note] });
+    else voix.push([{ debut: n.debut, fin: n.fin, notes: [n.note] }]);
   }
-  return [...parDebut.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .map(([debut, e]) => ({ debut, duree: e.duree, notes: [...e.notes].sort((x, y) => x - y) }));
+  for (const v of voix) for (const e of v) e.notes.sort((a, b) => a - b);
+  return voix.length > 0 ? voix : [[]];
 }
 
 /** Écrit la partition complète. */
@@ -181,7 +179,7 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
   const divisions = unitesParNoire;
   const unitesParMesure = ((numerateur * 4) / denominateur) * unitesParNoire;
 
-  const voix = voixDepuisEvenements(evenementsDepuisNotes(notes, tempo, grille));
+  const voix = voixDepuisNotes(notes, tempo, grille);
   const fin = voix.flat().reduce((m, e) => Math.max(m, e.fin), 0);
   const nbMesures = Math.max(1, Math.ceil(fin / unitesParMesure));
 
@@ -235,22 +233,6 @@ export function notesVersMusicXML(notes: NoteXML[], options: OptionsMusicXML = {
   lignes.push('  </part>');
   lignes.push('</score-partwise>');
   return lignes.join("\n");
-}
-
-/** Une voix : des événements qui se suivent sans se chevaucher, un accord étant un seul événement. */
-type Voix = { debut: number; fin: number; notes: number[] }[];
-
-/**
- * Une seule voix, comme le nœud l'a toujours écrite : un événement qui commence pendant le précédent est
- * perdu. Les voix viennent au troisième lot de la revue des notations en texte.
- */
-function voixDepuisEvenements(evenements: Evenement[]): Voix[] {
-  const voix: Voix = [];
-  for (const e of evenements) {
-    if (voix.length > 0 && e.debut < voix[voix.length - 1].fin) continue;
-    voix.push({ debut: e.debut, fin: e.debut + e.duree, notes: e.notes });
-  }
-  return [voix];
 }
 
 /** Les valeurs qu'une durée prend une fois écrite, en unités : la plus grande qui tienne, puis le reste. */

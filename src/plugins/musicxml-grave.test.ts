@@ -99,3 +99,32 @@ describe("UNE DURÉE SE DESSINE EXACTE, EN NOTES LIÉES QUAND IL LE FAUT", () =>
     expect(r.notes).toEqual(notes);
   }, 60_000);
 });
+
+// LES VOIX, troisième lot. Une note qui commençait pendant une autre était perdue, et un accord prenait la plus
+// longue de ses durées : une basse ronde sous quatre noires donnait deux notes sur cinq. `<backup>` et
+// `<forward>` sont « required to coordinate multiple voices in one part ». Décision de Fabien du 2026-11-22,
+// « Write voices » : chaque note dans la première voix libre. Le lecteur lit voix après voix, d'où le tri.
+describe("LA POLYPHONIE S'ÉCRIT EN VOIX, ET AUCUNE NOTE NE SE PERD", () => {
+  const trier = (notes: number[][]) => [...notes].sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+
+  it.each([
+    ["une basse ronde sous quatre noires", [[48, 0, 4], [64, 0, 1], [65, 1, 2], [67, 2, 3], [69, 3, 4]]],
+    ["un accord de longueurs inégales", [[60, 0, 4], [64, 0, 1], [67, 1, 4]]],
+    ["une basse liée par-dessus la barre sous une mélodie", [[48, 0, 6], [60, 0, 2], [62, 2, 4], [64, 4, 6], [65, 6, 8]]],
+    ["un fa dièse de la seconde voix, puis un fa de la première", [[66, 0, 4], [69, 0, 1], [65, 1, 2], [67, 2, 4]]],
+  ] as [string, NoteLue[]][])("%s", async (_titre, notes) => {
+    const r = await graver([null, sequence(notes), null]);
+    expect(r.x.erreurRendue, r.x.message).toBe(false);
+    expect(r.lu.inconnus).toEqual([]);
+    expect(trier(r.notes)).toEqual(trier(notes));
+    expect(r.xml).toContain("<backup>");
+  }, 60_000);
+
+  it("un accord de même longueur reste un accord, sur une seule voix", async () => {
+    const notes: NoteLue[] = [[60, 0, 2], [64, 0, 2], [67, 0, 2], [62, 2, 4]];
+    const r = await graver([null, sequence(notes), null]);
+    expect(trier(r.notes)).toEqual(trier(notes));
+    expect(r.xml).toContain("<chord/>");
+    expect(r.xml).not.toContain("<backup>");
+  }, 60_000);
+});

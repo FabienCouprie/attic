@@ -6,6 +6,22 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA POLYPHONIE D'UN MIDI S'ÉCRIT EN VOIX DANS LE MUSICXML, ET AUCUNE NOTE NE SE PERD.** Revue des notations en texte, douzième format, 2026-11-22, troisième lot.
+  - **La référence** : dans le référentiel MusicXML 4.0, `<backup>` et `<forward>` sont « required to coordinate multiple voices in one part ».
+  - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure. Les notes étaient groupées par attaque :
+    - un accord prenait la plus longue de ses durées ;
+    - une note qui commençait pendant une autre était perdue. Une basse ronde sous quatre noires donnait deux notes sur cinq, le mi allongé en ronde, et le message annonçait « 5 notes ».
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Write voices » :
+    - `voixDepuisNotes` pose chaque note dans la première voix libre, les plus aiguës d'abord, pour que la première voix porte le dessus ;
+    - des notes de même attaque et de même fin y forment un accord ;
+    - les voix d'une mesure s'écrivent l'une après l'autre, séparées par `<backup>`. Les altérations s'y décident dans l'ordre du temps, toutes voix confondues, puisqu'elles valent pour la portée.
+
+    La notice le dit.
+  - **Les tests du regroupement** de `audio/musicxml.test.ts` portent sur `voixDepuisNotes`, et tiennent les mêmes quatre règles.
+  - **Le garde** : 5 cas de plus dans `plugins/musicxml-grave.test.ts`.
+    - Vu rouge sur le code d'avant : les 4 cas polyphoniques ; l'accord de même longueur était déjà juste.
+    - Vu rouge aussi sur une note de nouveau perdue au lieu d'ouvrir une voix, plantée.
+
 - **UNE DURÉE SE DESSINE EXACTE DANS LE MUSICXML, EN NOTES LIÉES QUAND IL LE FAUT, ET UNE NOTE LIÉE DE L'ARBRE GARDE SA HAUTEUR.** Revue des notations en texte, douzième format, 2026-11-22, deuxième lot.
   - **La référence** : dans le référentiel MusicXML 4.0, `<duration>` est la durée voulue et `<type>` la valeur dessinée. `<tie>` lie pour le son et `<tied>` pour la gravure, et une liaison joint deux notes « of the same pitch ».
   - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure :
