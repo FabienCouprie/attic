@@ -65,6 +65,17 @@ test.describe("partition gravée", () => {
     expect(r.notes).toBe(3);
   });
 
+  // LE HUMDRUM A SON PROPRE MODULE, de 14 Mo, importé pour lui seul (revue des notations en texte,
+  // décision de Fabien du 2026-11-22). Ce qui ne se voit qu'ici : que le navigateur le charge.
+  test("HUMDRUM : le module qui le lit se charge, et quatre notes se gravent", async ({ page }) => {
+    test.setTimeout(180000);
+    const r = await graver(page, { "Notation": "**kern\n*clefG2\n*M4/4\n4c\n4d\n4e\n4f\n==\n*-" });
+    console.log(JSON.stringify(r));
+    expect(r.erreur).toBe(false);
+    expect(r.texte).toContain("HUMDRUM");
+    expect(r.notes).toBe(4);
+  });
+
   test("UNE NOTATION QUI N'EN EST PAS UNE : le nœud le dit, au lieu d'une page blanche", async ({ page }) => {
     test.setTimeout(180000);
     const r = await graver(page, { "Notation": "do ré mi fa sol" });
