@@ -166,9 +166,16 @@ export function matriceVersPartition(
   const instrument = Math.max(1, Math.round(o.instrument ?? 1));
   const d = Math.max(0, Math.min(6, Math.round(o.decimales ?? 4)));
   const nombre = (x: number) => (Number.isFinite(x) ? x.toFixed(d) : "0");
+  // UN RANG VIDE ENTRE DEUX RANGS ÉCRITS S'ÉCRIT 0. Un p-field est une place : le quatrième nombre de la
+  // ligne est p4, et un champ vide sautait sa place, de sorte que l'orchestre lisait p6 en p5. Décision
+  // de Fabien du 2026-11-22, « Write 0 in the gap », revue des notations en texte.
+  const dernier = Math.max(3, ...m.rangs);
   const lignes = [...(o.entete ?? []).map((l) => `; ${l}`)];
   for (let i = 0; i < m.combien; i++) {
-    const reste = m.lignes[i] ?? [];
+    const reste = Array.from({ length: dernier - 3 }, (_, k) => {
+      const colonne = m.rangs.indexOf(k + 4);
+      return colonne >= 0 ? (m.lignes[i]?.[colonne] ?? 0) : 0;
+    });
     lignes.push(
       `i${instrument} ${nombre(debuts[i] ?? 0)} ${nombre(durees[i] ?? 0)}`
       + (reste.length > 0 ? " " + reste.map(nombre).join(" ") : ""),

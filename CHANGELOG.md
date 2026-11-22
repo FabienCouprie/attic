@@ -6,6 +6,24 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UNE PARTITION ÉCRITE POUR CSOUND GARDE CHAQUE VALEUR À SON P-FIELD, ET N'ÉCRIT RIEN QUE CSOUND LIRAIT AUTREMENT.** Revue des notations en texte, onzième format, 2026-11-22, deuxième lot : la Matrice de paramètres et la Partition Csound. Csound lui-même a relu ces partitions dans le navigateur pendant le relevé.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un champ vide de la Matrice entre deux champs remplis sautait sa place : p4 « 0.3 », p5 vide et p6 « 7 » écrivaient « 0.3 7 », que Csound lit p4 = 0,3 et p5 = 7. La notice promettait le contraire ;
+    - dans la Partition Csound, « Rien » en p4 faisait lire l'amplitude en p4 et la note en p5 ;
+    - « Décimales » à 0 arrondissait 0,4 s à « 0 », que Csound lit comme une initialisation sans son, et le message annonçait 0,40 s ;
+    - une durée négative s'écrivait, que Csound tient comme une note sans fin, et un départ négatif, que le manuel ne définit pas ;
+    - la Partition Csound refusait un MIDI absent ou sans note sans le drapeau d'erreur.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Write 0 in the gap » et « Refuse it, named » :
+    - un champ vide, ou « Rien », entre deux champs écrits s'écrit 0, et n'est omis qu'après le dernier ;
+    - une durée nulle ou négative une fois écrite, et un départ négatif, font refuser la Matrice. Le message nomme l'événement et la valeur telle qu'elle serait écrite ;
+    - les deux refus de la Partition Csound portent le drapeau d'erreur.
+
+    La notice de la Matrice et la documentation de ses champs, et celles de p4 à p7 dans la Partition Csound, le disent.
+  - **Un test tenait le contraire** : dans `audio/csound-partition.test.ts`, « rien » en p6 était sauté, et la durée tombait en p6. Il est réécrit avec sa raison.
+  - **Le garde** : `plugins/partitions-ecrites.test.ts`, 13 cas.
+    - Vu rouge sur le code d'avant : 10 cas.
+    - Vu rouge aussi sur une durée nulle de nouveau admise, plantée.
+
 - **UN CHAMP ÉCRIT À LA MAIN SE LIT DES TROIS FAÇONS QUE DISENT LES NOTICES, ET CE QUI NE SE LIT PAS EST REFUSÉ EN NOMMANT LE RÉGLAGE.** Revue des notations en texte, onzième format, Csound, 2026-11-22, premier lot. Un champ s'écrit d'un nombre, d'une suite ou d'une rampe « de:à » : la structure du class-array d'OMChroma. Un seul lecteur, `lireChamp`, le lit pour sept nœuds :
   - la Matrice de paramètres ;
   - le Début de boucle par créneau ;

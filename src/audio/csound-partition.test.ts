@@ -81,11 +81,14 @@ describe("l'écriture de la partition", () => {
     expect(texte.split("\n")[0]).toBe("i1 0.0000 1.0000 8.09 0.7874 69");
   });
 
-  it("obéit à l'ordre des p-fields demandé, et sait laisser un champ vide", () => {
+  it("obéit à l'ordre des p-fields demandé, et laisse à 0 un champ vide pour que les suivants restent à leur rang", () => {
+    // Ce test tenait le contraire : « rien » en p6 était sauté, et la durée tombait en p6 au lieu de p7.
+    // Un p-field est une place, et l'orchestre l'aurait lue de travers. Décision de Fabien du 2026-11-22,
+    // « Write 0 in the gap », revue des notations en texte.
     const { texte } = construirePartition([note(69, 0, 1, 0, 64)], {
       champs: ["amplitude", "hauteur", "rien", "duree"],
     });
-    expect(texte.split("\n")[0]).toBe("i1 0.0000 1.0000 0.5039 440.000 1.0000");
+    expect(texte.split("\n")[0]).toBe("i1 0.0000 1.0000 0.5039 440.000 0 1.0000");
   });
 
   it("met une constante et une valeur de courbe là où on le demande", () => {
