@@ -41,6 +41,15 @@ describe("detecterFormat", () => {
     expect(racineXml('<?xml version="1.0"?>\n<!-- x -->\n<!DOCTYPE score-partwise PUBLIC "x">\n<score-partwise/>')).toBe("score-partwise");
     expect(racineXml('<svg:svg xmlns:svg="http://www.w3.org/2000/svg"/>')).toBe("svg");
     expect(racineXml("pas de XML")).toBeNull();
+    expect(racineXml('<!DOCTYPE score-partwise [<!ENTITY x "y">]>\n<score-partwise/>')).toBe("score-partwise");
+  });
+
+  // Relevé par CodeQL le 2026-11-22 : le retrait des commentaires par expression régulière laissait un
+  // commentaire jamais refermé derrière lui, et la racine qu'il cachait était lue.
+  it("un commentaire jamais refermé ne laisse lire aucune racine", () => {
+    expect(racineXml("<!-- <score-partwise/>")).toBeNull();
+    expect(racineXml("<?xml version=\"1.0\"")).toBeNull();
+    expect(detecterFormat("<!-- <score-partwise/>")).toBeNull();
   });
 
   it("le nom du format tel que Verovio l'attend", () => {

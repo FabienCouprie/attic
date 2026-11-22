@@ -42,11 +42,28 @@ export function detecterFormat(texte: string): FormatNotation | null {
   return null;
 }
 
-/** Le nom de l'élément racine d'un document XML, sans préfixe d'espace de noms ; null s'il n'y en a pas. */
+/**
+ * Le nom de l'élément racine d'un document XML, sans préfixe d'espace de noms ; null s'il n'y en a pas.
+ *
+ * LU EN AVANÇANT, ET NON EN RETIRANT. La déclaration `<?…?>`, les commentaires `<!--…-->` et le DOCTYPE
+ * sont sautés l'un après l'autre, jusqu'au premier élément. Un retrait par expression régulière,
+ * relevé par CodeQL le 2026-11-22, laissait derrière lui ce qu'il ne savait pas refermer : un
+ * commentaire jamais fermé cachait alors une racine qu'il fallait refuser.
+ */
 export function racineXml(texte: string): string | null {
-  const sans = texte.replace(/<\?[\s\S]*?\?>|<!--[\s\S]*?-->|<!DOCTYPE[^>]*>/gi, "");
-  const m = /<\s*([\w.:-]+)/.exec(sans);
-  return m ? m[1].replace(/^.*:/, "") : null;
+  let i = 0;
+  for (;;) {
+    const debut = texte.indexOf("<", i);
+    if (debut < 0) return null;
+    const fermeture = texte.startsWith("<?", debut) ? "?>" : texte.startsWith("<!--", debut) ? "-->" : texte.startsWith("<!", debut) ? ">" : null;
+    if (fermeture === null) {
+      const m = /^<\s*([\w.:-]+)/.exec(texte.slice(debut));
+      return m ? m[1].replace(/^.*:/, "") : null;
+    }
+    const fin = texte.indexOf(fermeture, debut + 2);
+    if (fin < 0) return null;
+    i = fin + fermeture.length;
+  }
 }
 
 /** Ce que Verovio attend dans `setOptions` pour `inputFrom`. */
