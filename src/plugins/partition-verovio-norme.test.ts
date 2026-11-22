@@ -172,6 +172,26 @@ describe("LE TEMPO SE GRAVE, comme le dit Q:", () => {
   }, 60_000);
 });
 
+// LE HUMDRUM SE LIT. Décision de Fabien du 2026-11-22, « Load the Humdrum module » : le module chargé,
+// `verovio/wasm`, ne le connaît pas, et un fichier `**kern` correct était refusé comme une faute du texte.
+// Les cas suivent la référence de **kern : une hauteur s'écrit absolue, « f » est un fa naturel
+// quelle que soit l'armure, « f# » un fa dièse, « fn » un fa naturel dont le bécarre se dessine.
+describe("LE HUMDRUM SE GRAVE", () => {
+  it.each([
+    ["**kern, une colonne", "**kern\n*clefG2\n*M4/4\n4c\n4d\n4e\n4f\n=\n2g\n2a\n==\n*-",
+      [[60, 0, 1], [62, 1, 2], [64, 2, 3], [65, 3, 4], [67, 4, 6], [69, 6, 8]]],
+    ["**kern, les hauteurs absolues sous une armure", "**kern\n*clefG2\n*k[f#]\n*M4/4\n4f\n4fn\n4f#\n4g\n==\n*-",
+      [[65, 0, 1], [65, 1, 2], [66, 2, 3], [67, 3, 4]]],
+    ["**kern, deux colonnes", "**kern\t**kern\n*clefF4\t*clefG2\n*M4/4\t*M4/4\n1C\t2c\n.\t2d\n==\t==\n*-\t*-",
+      [[48, 0, 4], [60, 0, 2], [62, 2, 4]]],
+  ])("%s", async (_titre, kern, attendu) => {
+    const r = await graver(kern);
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(r.message).toMatch(/^HUMDRUM/);
+    expect(lireGravure(String(r.valeurs[0])).notes).toEqual(attendu);
+  }, 60_000);
+});
+
 describe("CE QUE LE LECTEUR ABC REFUSE, LE GRAVEUR LE REFUSE, avec les mêmes fautes nommées", () => {
   it.each([
     ["une durée divisée par zéro", T("K:C\nC/0 D|")],

@@ -6,6 +6,15 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA PARTITION GRAVÉE LIT LE HUMDRUM, COMME SA NOTICE LE PROMET.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Load the Humdrum module ».
+  - **Ce qui se passait** : le module chargé, `verovio/wasm`, ne connaît pas le Humdrum. Un fichier `**kern` correct était refusé par « HUMDRUM refusé par le graveur : vérifiez la notation », qui accusait le texte.
+  - **Ce qui change** : `verovio/wasm-hum`, déjà dans le paquet installé, est importé pour le seul Humdrum ; les autres notations gardent leur module. Mesuré par Vite le 2026-11-22, sur les deux morceaux émis :
+    - le morceau du Humdrum pèse 14 317 004 octets, et 2 797 312 compressés en LZMA ;
+    - le module habituel pèse 8 207 951 octets, et 1 853 804 compressés.
+
+    L'installeur v5.1.2 pèse 476 829 403 octets, sous un plafond NSIS de 2 147 483 648.
+  - **Le garde** : 3 cas dans `plugins/partition-verovio-norme.test.ts`, d'après la référence de **kern, où une hauteur s'écrit absolue. Vu rouge sur le code d'avant, les 3 cas.
+
 - **LA PARTITION GRAVÉE GRAVE LE TEMPO D'UN ABC.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Engrave the tempo ».
   - **Ce qui se passait**, relu sur la gravure : Verovio ne dessine un tempo que par son texte. « Q:1/4=60 » se gravait en texte vide, et « Q:"Allegro" 1/4=60 » ne gravait que « Allegro ».
   - **Ce qui change** : `tempoGrave` (`audio/abc-gravure.ts`) donne à chaque Q:, en tête ou en ligne, le texte de son mouvement, par exemple « Allegro ♩ = 120 ».

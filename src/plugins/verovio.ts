@@ -3,7 +3,7 @@
 // Verovio est le moteur de gravure du Rism Digital Center, compilé en WebAssembly : il lit une
 // notation en texte — ABC, MusicXML, MEI ou Humdrum — et rend une page en SVG, avec les règles d'un
 // éditeur de musique. Rien à installer, rien à télécharger : le module de 7 Mo est chargé au
-// premier rendu, puis gardé.
+// premier rendu, puis gardé ; celui qui lit aussi le Humdrum, de 14 Mo, au premier Humdrum.
 //
 // POURQUOI UN IMPORT DYNAMIQUE. Ces 7 Mo n'ont pas à peser sur le démarrage de l'application, ni
 // sur les graphes qui ne gravent rien : `import()` en fait un morceau à part, chargé le jour où ce
@@ -25,28 +25,34 @@ const en = () => langueCourante() === "en";
 
 const EXEMPLE = "X:1\nT:Gamme\nM:4/4\nL:1/4\nK:C\nC D E F | G A B c |";
 
-let boite: Promise<{ creerModule: () => Promise<any>; VerovioToolkit: new (m: any) => any }> | null = null;
+type Boite = Promise<{ creerModule: () => Promise<any>; VerovioToolkit: new (m: any) => any }>;
+const boites = new Map<boolean, Boite>();
 
 /**
- * Un moteur neuf pour chaque gravure ; seuls les deux imports se gardent.
+ * Un moteur neuf pour chaque gravure ; seuls les imports se gardent.
  *
  * UN MODULE NEUF, ET NON UN TOOLKIT GARDÉ, revue des notations en texte, décision de Fabien du
  * 2026-11-22. Verovio garde l'armure d'une partition ABC à la suivante, dans son module WebAssembly, en
  * 6.3.0 comme en 6.4.1 : le moteur se chargeait une fois pour toutes, et après un air en do bémol,
  * l'air en do se gravait avec huit altérations, une par note. Ni un toolkit neuf sur le même module, ni
  * `resetOptions`, ni un MEI chargé entre deux airs ne réparaient la fuite. Un module coûte 103 ms.
+ *
+ * LE HUMDRUM A SON PROPRE MODULE, décision de Fabien du même jour, « Load the Humdrum module ».
+ * `verovio/wasm` ne le connaît pas : un fichier `**kern` correct était refusé. `verovio/wasm-hum` le
+ * lit, et n'est importé que pour lui. Mesuré par Vite le 2026-11-22 : son morceau pèse 14 317 004
+ * octets contre 8 207 951, et 2 797 312 octets compressés en LZMA, comme dans l'installeur.
  */
-async function outil(): Promise<any> {
-  if (!boite) {
-    boite = (async () => {
+async function outil(humdrum: boolean): Promise<any> {
+  if (!boites.has(humdrum)) {
+    boites.set(humdrum, (async () => {
       const [creerModule, { VerovioToolkit }] = await Promise.all([
-        import("verovio/wasm").then((m: any) => m.default ?? m),
+        (humdrum ? import("verovio/wasm-hum") : import("verovio/wasm")).then((m: any) => m.default ?? m),
         import("verovio/esm") as Promise<any>,
       ]);
       return { creerModule, VerovioToolkit };
-    })().catch((e) => { boite = null; throw e; });
+    })().catch((e) => { boites.delete(humdrum); throw e; }));
   }
-  const { creerModule, VerovioToolkit } = await boite;
+  const { creerModule, VerovioToolkit } = await boites.get(humdrum)!;
   return new VerovioToolkit(await creerModule());
 }
 
@@ -128,7 +134,7 @@ export const fiches: FicheAudio[] = ([
       }
       let tk: any = null;
       try {
-        tk = await outil();
+        tk = await outil(format === "humdrum");
         tk.setOptions({
           ...optionsGravure({
             largeur: ctx.paramNombre("Largeur", 1800),
