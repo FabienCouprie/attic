@@ -1,6 +1,7 @@
 // plugins/magenta-helpers.ts — Fonctions de calcul des nœuds Magenta.
 // Partagées entre le thread principal (magenta.ts) et le worker Magenta.
-// @magenta/music : Apache 2.0 — déjà listé dans THIRD_PARTY.md.
+// @magenta/music : Apache 2.0, listé dans THIRD_PARTY.md depuis le 2026-11-22 ; il ne l'était pas,
+// quoi qu'en dît cette ligne.
 
 import { creerAleatoire } from "../core";
 import * as sequences from "@magenta/music/esm/core/sequences";

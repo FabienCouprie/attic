@@ -116,7 +116,20 @@ who takes this file does so on the same footing.
 
 | Folder | License | Copyright |
 |---|---|---|
+| `magenta/drums_2bar_nade_9_q2/` | **Not written** (see note below) | Google Magenta — MusicVAE drum model, checkpoint `music_vae/drums_2bar_nade_9_q2` |
+| `magenta/melody_rnn/` | **Not written** (see note below) | Google Magenta — MusicRNN melody model, checkpoint `music_rnn/melody_rnn` |
+| `magenta/mel_2bar_small/` | **Not written** (see note below) | Google Magenta — MusicVAE two-bar melody model, checkpoint `music_vae/mel_2bar_small` |
+| `magenta/groovae_2bar_humanize/` | **Not written** (see note below) | Google Magenta — GrooVAE humanization model, checkpoint `music_vae/groovae_2bar_humanize` |
+| `magenta/piano_genie/` | **Not written** (see note below) | Google Magenta — Piano Genie, checkpoint `piano_genie/model/epiano/stp_iq_auto_contour_dt_166006` |
 | `magenta/coconet_bach/` | **Not written** (see note below) | Google Magenta — Coconet (Cheng-Zhi Anna Huang, Tim Cooijmans, Adam Roberts, Aaron Courville, Douglas Eck, « Counterpoint by Convolution », ISMIR 2017), checkpoint `coconet/bach` from `storage.googleapis.com/magentadata/js/checkpoints`, 553,436 + 42,478 bytes, mirrored on the `assets` release |
+
+**About the five MusicVAE, MusicRNN, GrooVAE and Piano Genie checkpoints.** They come from
+`storage.googleapis.com/magentadata/js/checkpoints`, mirrored on the `assets` release with their
+SHA-256 (`scripts/download-magenta.cjs`). Read at the source on 2026-11-22: magenta-js's checkpoint
+page (`music/checkpoints/README.md`) invites downloading them « to use locally or host yourself »,
+and states no licence; the checkpoint folders hold weights and configuration, with no licence file;
+the magenta-js repository that publishes and loads them is Apache-2.0. The licence of the weights
+themselves is therefore not written, which is what this table says.
 
 **About `coconet_bach`.** No licence is written for this checkpoint. Its folder holds the weights and
 their manifest, with no licence file; it is not listed in magenta-js's checkpoint index
@@ -183,6 +196,9 @@ the language.
 | `vitest` | MIT | Vitest |
 | `typescript` | Apache 2.0 | Microsoft |
 | `tonal` | MIT | danigb |
+| `@magenta/music` | Apache 2.0 | Google — Magenta.js (https://github.com/magenta/magenta-js), the models behind the Magenta nodes and « Harmonize (Coconet) » |
+| `@tensorflow/tfjs` | Apache 2.0 | Copyright 2018 Google LLC — TensorFlow.js, on which `@magenta/music` runs |
+| `verovio` | LGPL-3.0-or-later | Laurent Pugin and others — Verovio (https://www.verovio.org), the engraving and score-reading engine. Its two WebAssembly modules, `verovio-module.mjs` and `verovio-module-hum.mjs`, are used unmodified, loaded at runtime as separate files |
 | `vexflow` | MIT | 0xfe |
 | `jsdom` | MIT | jsdom contributors |
 | `soundtouchjs` | LGPL-2.1 | SoundTouchJS contributors |
