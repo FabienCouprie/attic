@@ -68,6 +68,147 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
     - Vu rouge sur le code d'avant : les 13 refus.
     - Vu rouge aussi sur l'hexadécimal de nouveau admis, planté.
 
+- **UN MOTIF DE SÉQUENCEUR NE PORTE QUE CE QUE SA GRILLE ÉCRIT, ET UN CARACTÈRE QUI N'EN VIENT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, dixième format, 2026-11-22, quatrième lot : le Séquenceur mélodique, le Séquenceur d'accords et le Séquenceur de batterie avancé.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - une espace prenait une case : « 1000 1000 1000 1000 » décalait d'un pas chaque note après la première ;
+    - un caractère que la grille n'écrit jamais se lisait comme un silence : « 2 » dans le séquenceur mélodique, « x » dans celui de batterie, où « x...x...x...x... » ne jouait rien ;
+    - la notice du séquenceur de batterie disait « 16 ou 32 » pas, quand le réglage offre 8, 16 et 32.
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Refuse it, named » :
+    - une case que la grille n'écrit pas, 0 et 1, ou de 0 à 9 pour la batterie, fait refuser le motif, une espace comprise. Le message nomme le caractère, l'espace se montrant « ␣ », sa rangée et son pas ;
+    - une rangée plus courte ou plus longue que le nombre de pas se complète ou se coupe toujours, et un motif de l'ancien séquenceur de batterie, cinq pistes de 0 et de 1, se lit toujours ;
+    - les grilles des trois nœuds lisent le motif comme avant pour le dessiner : le refus se fait à l'exécution.
+
+    Les documentations des trois réglages « Motif » le disent, et la notice du séquenceur de batterie dit 8, 16 ou 32 pas.
+  - **Le garde** : `plugins/grilles-sequenceurs.test.ts`, 11 cas.
+    - Vu rouge sur le code d'avant : les 6 refus.
+    - Vu rouge aussi sur une espace de nouveau admise, plantée.
+
+- **LE CRIBLE DE XENAKIS LIT LA NOTATION D'ARIZA, ET UN FRAGMENT QUI NE SE LIT PAS FAIT REFUSER LE CRIBLE EN LE NOMMANT.** Revue des notations en texte, dixième format, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer`, les degrés retenus lus dans le son :
+    - un fragment mal formé était jeté : « 5@0 pouet 7@2 » jouait « 5@0 7@2 », et la documentation le défendait ;
+    - « & » était jeté et « | » n'était qu'un séparateur : « 3@0 & 4@0 » jouait une réunion, et « 3@0|4@1 » une intersection sous l'« Opération » du même nom ;
+    - « -5@0 » était refusé comme vide, et les parenthèses ne se lisaient pas ;
+    - le message écrivait toujours l'union, « 3@0 ∪ 4@0 », même en intersection.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Read them » et « Refuse it, named » :
+    - l'expression lit la notation de Christopher Ariza, « The Xenakis Sieve as Object » (Computer Music Journal, 2005), celle de `music21.sieve` : « | » ou « ∪ » pour la réunion, « & » ou « ∩ » pour l'intersection, « - » ou « − » en préfixe pour le complément, des parenthèses pour grouper. Le complément se lit avant l'intersection, qui se lit avant la réunion. Comme chez Ariza, « 3@0-4@0 » est refusé, et la différence s'écrit « 3@0 & -4@0 » ;
+    - « Opération » combine toujours une liste sans opérateur, « 5@0 7@2 11@3 » ;
+    - un fragment mal formé, un module nul, un opérateur sans classe, un opérateur manquant ou une parenthèse sans paire font refuser le crible, et le message nomme ce qui ne se lit pas ;
+    - le message écrit l'expression appliquée, « 2@0 ∩ −6@0 » pour une différence, et elle se relit telle quelle.
+
+    « ^ », la différence symétrique d'Ariza, n'est pas lue : elle est refusée et nommée comme tout signe hors de ceux-là.
+
+    Les documentations de « Crible » et d'« Opération » le disent.
+  - **Un test tenait le contraire** : dans `audio/cribles.test.ts`, « 3@0 pouet 4@ @2 0@1 4@1 » gardait ses deux classes valides. Le fragment est maintenant refusé et nommé.
+  - **Le garde** : `plugins/crible-notation.test.ts`, 23 cas, dont chaque expression relue depuis le message.
+    - Vu rouge sur le code d'avant : 21 cas.
+    - Vu rouge aussi sur deux fautes plantées : « & » lu comme une réunion, et un fragment de nouveau jeté.
+
+- **UN CERCLE SANS ZÉRO NI UN EST REFUSÉ, ET LA TRESSE NE LIT QUE DES CROISEMENTS DÉCIMAUX.** Revue des notations en texte, dixième format, 2026-11-22, deuxième lot : le Cercle rythmique, le Cercle mélodique et la Tresse.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un motif de cercle qui ne portait ni 0 ni 1, « x..x..x. » ou le texte vide, devenait le motif par défaut sans un mot, dans les deux cercles ;
+    - la Tresse lisait « 0x1 » comme le croisement 1, en hexadécimal ;
+    - un mot de tresse vide était refusé « près de « vide » », en français même dans l'interface anglaise.
+  - **Ce qui change** :
+    - un motif de cercle qui ne porte ni 0 ni 1 est refusé, en erreur. Ce qui n'est ni 0 ni 1 reste écarté : la notice promet qu'un motif se colle tel quel depuis l'adresse d'un cercle rythmique en ligne, et « https://exemple.org/#1001001000101000 » se lit toujours en seize places ;
+    - un croisement de tresse s'écrit en entier décimal, et un mot vide a son propre message, dans la langue de l'interface.
+
+    Les documentations des trois réglages le disent.
+  - **Le garde** : 5 cas de plus dans `plugins/motifs-rythmiques.test.ts`.
+    - Vu rouge sur le code d'avant : 4 cas.
+    - Vu rouge aussi sur un cercle qui retombe de nouveau sur le motif par défaut, planté.
+
+- **UN MOTIF RYTHMIQUE SE LIT EN CASES OU EN POSITIONS COMME SA DOCUMENTATION LE DIT, ET CE QUI NE SE LIT PAS EST REFUSÉ.** Revue des notations en texte, dixième format, 2026-11-22, premier lot : l'Analyse rythmique et le motif du Canon par pavage.
+  - **Ce qui se passait**, mesuré par `executer`, dans l'Analyse rythmique :
+    - « 0 1 », deux positions, se lisait comme un cycle de deux cases ;
+    - un jeton illisible était jeté et « 0.5 » arrondi ;
+    - « x··x··x· », la forme qu'écrit le Canon, ne se lisait pas. Le texte vide non plus, et les deux recevaient le message d'une série dodécaphonique, sans le drapeau d'erreur.
+
+    Dans le Canon par pavage :
+    - « 0;1;2 » se lisait « 0 », et « 1.5 » se lisait 1 ;
+    - un motif tout illisible lançait la recherche ;
+    - un motif qui ne pave pas partait sans le drapeau d'erreur.
+
+    Dans les deux, une position hors du cycle se repliait : 20 devenait 4 sur seize pas.
+  - **Ce qui change** :
+    - un motif est en cases quand il porte x . - _ ou · sans chiffre de 2 à 9, ou n'est qu'une suite de 0 et de 1 sans espace ;
+    - autrement, ce sont des positions, lues par `lireListe`, au genre neuf « positions ». Une position hors du cycle est refusée et nommée, selon la décision de Fabien du 2026-11-22, « Refuse it, named » ;
+    - un motif vide ou sans frappe est refusé, et un motif qui ne pave pas l'est en erreur. Le Canon cherche toujours un motif quand le sien est vide, comme le dit sa documentation.
+
+    Les documentations des deux réglages le disent.
+  - **Un test tenait le contraire** : dans `plugins/theorie-rythme-voix.test.ts`, un texte vide ne donnait aucune frappe. Il est maintenant refusé.
+  - **Le garde** : `plugins/motifs-rythmiques.test.ts`, 19 cas.
+    - Vu rouge sur le code d'avant : 15 cas.
+    - Vu rouge aussi sur une position hors du cycle de nouveau admise, plantée.
+
+- **LES ACCORDS EN CLASSES DE LA DISTANCE DE CONDUITE DE VOIX SE LISENT D'UNE SEULE FAÇON, NOMS DE NOTES COMPRIS.** Revue des notations en texte, huitième format, 2026-11-22, quatrième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un jeton illisible était jeté sans un mot ;
+    - « 16 » se lisait 4, quand la documentation dit « de 0 à 11 » ;
+    - « C E G | A C E » faisait dire « Il faut au moins deux accords », alors que deux accords étaient écrits ;
+    - ce refus, comme celui d'un réglage vide, partait sans le drapeau d'erreur, et le nœud s'annonçait vert sans rien rendre.
+  - **Ce qui change** :
+    - `lireAccords` lit chaque accord par `lireListe`, et rend ses accords ou son refus. Les décisions de Fabien du 2026-11-22 : les noms de notes se lisent, une classe hors de 0 à 11 est refusée et nommée, un réglage vide est refusé ;
+    - les classes décimales restent lues, une progression microtonale se mesurant telle quelle ;
+    - moins de deux accords est un refus, en erreur.
+
+    La documentation du réglage le dit.
+  - **Le garde** : 9 cas dans `plugins/listes-musicales.test.ts`. Les cas de `plugins/theorie-rythme-voix.test.ts` tiennent les mêmes séparations, lues par `{ accords }`.
+    - Vu rouge sur le code d'avant : 7 cas.
+    - Vu rouge aussi sur une borne des classes portée à 12, plantée.
+
+- **UN RANG EST UN ENTIER, ET UNE LISTE DE RANGS SE LIT D'UNE SEULE FAÇON.** Revue des notations en texte, huitième format, 2026-11-22, troisième lot : l'Accordage en notes et le Crible harmonique.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - l'Accordage lisait « 1.5 » comme les rangs 1 et 5, et « C4 » comme le rang 4 ;
+    - un texte illisible y jouait un tour complet, et le rang 200 rendait un MIDI 260 ;
+    - le Crible employait la borne des intervalles pour ses rangs : le rang 100, une harmonique de 11 kHz sur 110 Hz, était jeté sans un mot ;
+    - le Crible arrondissait aussi le rang 2,5 en 3, jetait un jeton illisible, et rendait du silence pour une liste vide.
+  - **Ce qui change** :
+    - les deux nœuds lisent par `lireListe` ;
+    - l'Accordage prend des entiers de tout signe, joue toujours un tour complet quand « Degrés » est vide, comme sa documentation le dit, et refuse un rang qui tombe hors de 0 à 127 en le nommant ;
+    - le Crible prend des entiers à partir de 1, sans autre borne, et refuse une liste vide.
+
+    `rangsDemandes` (`audio/accordage.ts`) et `lireIntervalles` (`plugins/concret.ts`) disparaissent : ils n'ont plus de lecteur. Les documentations le disent.
+  - **Des tests tenaient le contraire** : dans `audio/accordage.test.ts`, un texte illisible jouait un tour complet, et un moins seul était écarté. Ils avaient été écrits avec `rangsDemandes`, sans décision. Les deux cas sont refusés en les nommant, et le reste de ces tests est tenu par `lireListe`.
+  - **Le garde** : 14 cas dans `plugins/listes-musicales.test.ts`.
+    - Vu rouge sur le code d'avant : 11 cas.
+    - Vu rouge aussi sur des rangs décimaux admis, plantés.
+
+- **UNE LISTE D'INTERVALLES SE LIT D'UNE SEULE FAÇON, BORNÉE À ±96 DEMI-TONS, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, huitième format, 2026-11-22, deuxième lot : les Peignes accordés, les Résonateurs, la Musique fractale.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - la Musique fractale ne coupait sa liste qu'aux virgules, et « 0 3 7 10 » rendait une seule note ;
+    - un jeton illisible était jeté sans un mot dans les trois nœuds, un intervalle au-delà de 96 demi-tons aussi dans les Peignes et les Résonateurs, et une liste vide y jouait l'unisson ;
+    - « 0,200 » faisait écrire à la Musique fractale un MIDI 247, et la troncature par `parseInt` changeait 3,5 en 3.
+  - **Ce qui change** :
+    - les trois nœuds lisent par `lireListe` (`audio/listes-musicales.ts`), selon la décision de Fabien du 2026-11-22, « Refuse them, named » : au-delà de ±96, l'intervalle est refusé et nommé, et la borne est écrite ;
+    - une liste vide est refusée ;
+    - les Résonateurs ne lisent leurs intervalles que pour la structure accord, et la Musique fractale pour le seul motif personnalisé ;
+    - un motif fractal dont le dépliage sort de 0 à 127 est refusé, en disant la plage atteinte.
+
+    Les documentations des trois réglages le disent.
+  - **Le garde** : 25 cas dans `plugins/listes-musicales.test.ts`.
+    - Vu rouge sur le code d'avant : 16 cas.
+    - Vu rouge aussi sur une borne portée à ±200, plantée.
+
+- **UNE LISTE DE HAUTEURS SE LIT D'UNE SEULE FAÇON, NOMS DE NOTES COMPRIS, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, huitième format, 2026-11-22, premier lot : le Rythme sur hauteurs, le Canon par pavage et le Contrepoint (solveur).
+  - **Ce qui se passait**, mesuré par `executer` :
+    - une espace en tête ou un retour à la ligne final ajoutait un MIDI 0 au Rythme sur hauteurs ;
+    - son réglage jetait « x » et « 200 » sans un mot, alors que son entrée les refusait ;
+    - « 60;64;67;72 » mettait les quatre voix du Canon sur do, un jeton illisible y décalait les voix, 200 s'écrivait dans le fichier MIDI, et une liste vide jouait do ;
+    - le Contrepoint raccourcissait un cantus dont une note ne se lisait pas, et en engendrait un quand aucune ne se lisait ;
+    - « C4 E4 G4 » n'était lu nulle part.
+  - **Ce qui change** : `audio/listes-musicales.ts` est le seul lecteur des listes. Il sépare par espaces, virgules, points-virgules et retours à la ligne, et ignore les espaces en tête et en fin.
+    - Les décisions de Fabien du 2026-11-22 :
+      - « Read them » : les noms de notes se lisent, avec leur octave ;
+      - « Keep it in the sound » : le Canon joue 60,5 dans son son, et son fichier MIDI l'arrondit en le disant ;
+      - « Refuse it, said » : une liste vide que la documentation ne définit pas est refusée.
+    - Un jeton illisible, ou hors de 0 à 127, fait refuser la liste, et le message le nomme. Le Contrepoint engendre toujours son cantus quand le réglage est vide, comme sa documentation le dit.
+
+    Les documentations des trois réglages le disent.
+  - **Un test tenait l'ancien message** : `plugins/arbre-chaine.test.ts` exigeait son exemple, « 60 62 64 65 67 ». Il tient celui du lecteur neuf ; la règle, nommer la forme attendue, ne change pas.
+  - **Le garde** : `plugins/listes-musicales.test.ts`, 21 cas, tout par `executer`, dont la hauteur du Canon mesurée dans le son, et `audio/listes-musicales.test.ts`, 22 cas.
+    - Vu rouge sur le code d'avant : 18 cas.
+    - Vu rouge aussi sur des noms de notes que le lecteur ne lisait plus, plantés.
+
 - **CHAQUE AIR D'UN TEXTE ABC SE GRAVE, SOUS SON TITRE.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Engrave all, titled ».
   - **Ce qui se passait** : deux airs se gravaient à la suite, comme une seule pièce. Seul le titre du premier aurait pu paraître, et l'en-tête de page était caché. « ABC → MIDI », lui, n'en joue que le premier, et le dit.
   - **Ce qui change** :

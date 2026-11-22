@@ -14,6 +14,7 @@ import { avecDoc } from "./notices";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { choixFormats, formatImage } from "../core/formats-image";
 import { CARACTERES_CHOIX } from "../audio/timbres";
+import { lireListe } from "../audio/listes-musicales";
 import { TAILLES_FENETRE, choixFenetre } from "../audio/fenetres-analyse";
 import { choixPaletteCouleurs } from "../audio/palettes-couleurs";
 
@@ -31,7 +32,9 @@ export const fiches: FicheAudio[] = ([
     entrees: [], sorties: [{ nom: "Audio", type: "audio" }, { nom: "MIDI", type: "midi" }],
     parametres: [
       { nom:"Motif", nomEn:"Motif", type:"choix", options:["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], optionIds: ["Triade M","Triade m","Arpège 7","Cantus firmus","Personnalisé"], optionsEn:["Major triad","Minor triad","7th arpeggio","Cantus firmus","Custom"], defaut:"Triade M", defautEn: "Major triad" },
-      { nom:"Intervalles", nomEn:"Intervals", type:"texte", defaut:"0,3,7,10", defautEn: "0,3,7,10" },
+      { nom:"Intervalles", nomEn:"Intervals", type:"texte", defaut:"0,3,7,10", defautEn: "0,3,7,10",
+        doc: "Pour le motif « Personnalisé » : les intervalles, en demi-tons de -96 à 96 depuis la tonique, séparés par des espaces, des virgules ou des points-virgules, « 0 3 7 10 ». Une liste vide, ou dont un jeton ne se lit pas, est refusée, et le message le nomme. Un motif dont le dépliage sort de la plage MIDI, 0 à 127, est refusé.",
+        docEn: "For the « Custom » motif: the intervals, in semitones from -96 to 96 above the tonic, separated by spaces, commas or semicolons, « 0 3 7 10 ». An empty list, or one with an unreadable token, is refused, and the message names it. A motif whose unfolding leaves the MIDI range, 0 to 127, is refused." },
       { nom:"Profondeur", nomEn:"Depth", plage:[1,6], pas:1, defaut:3 },
       { nom:"Durée", nomEn:"Duration", plage:[2,60], defaut:8, unite:"s" },
       { nom:"Tempo", nomEn:"Tempo", plage:[40,240], defaut:80, unite:"BPM" },
@@ -48,7 +51,23 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       console.log("[attic] Musique fractale : exécution démarrée");
       const tempo = ctx.paramNombre("Tempo",80);
-      const { audio, notes } = await genererMusiqueFractale(ctx.paramTexte("Motif","Triade M"),ctx.paramTexte("Intervalles","0,3,7,10"),ctx.paramNombre("Profondeur",3),ctx.paramNombre("Durée",8),tempo,ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Timbre","Douce"));
+      // LES INTERVALLES DU MOTIF PERSONNALISÉ, PAR LE SEUL LECTEUR DES LISTES. Revue des notations en
+      // texte, 2026-11-22 : la liste ne se coupait qu'aux virgules, et « 0 3 7 10 » rendait une seule
+      // note ; un jeton illisible était jeté, et « 0,200 » écrivait un MIDI 247.
+      const motif = ctx.paramTexte("Motif","Triade M");
+      let intervalles = ctx.paramTexte("Intervalles","0,3,7,10");
+      if (motif === "Personnalisé") {
+        const lue = lireListe(intervalles, "intervalles", langueCourante() === "en" ? "Intervals" : "Intervalles");
+        if ("refus" in lue) return { valeurs: [null, null], erreur: true, message: lue.refus };
+        intervalles = lue.valeurs.join(",");
+      }
+      const { audio, notes } = await genererMusiqueFractale(motif,intervalles,ctx.paramNombre("Profondeur",3),ctx.paramNombre("Durée",8),tempo,ctx.paramTexte("Clé","Do"),ctx.paramTexte("Gamme","Majeur"),ctx.paramTexte("Timbre","Douce"));
+      // UN MOTIF DÉPLIÉ HORS DE LA PLAGE MIDI EST REFUSÉ : son fichier porterait des hauteurs qu'aucun
+      // lecteur ne joue.
+      const extremes = notes.map((n) => n.note);
+      if (extremes.some((h) => h < 0 || h > 127)) {
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.fractale.hors_plage_var_0_var_1", Math.min(...extremes), Math.max(...extremes)) };
+      }
       const midiFile = notesVersFichierMidi(notes, tempo);
       const volume = ctx.paramNombre("Volume",80);
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));

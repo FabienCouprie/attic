@@ -519,7 +519,7 @@ Builds a piece by recursively applying an interval motif over several depth leve
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Motif | choice | Major triad | Major triad / Minor triad / 7th arpeggio / Cantus firmus / Custom | Base interval motif repeated recursively. |
-| Intervals | text | `0,3,7,10` |  | Intervals of the custom motif, in semitones separated by commas (e.g. 0,3,7,10). |
+| Intervals | text | `0,3,7,10` |  | For the « Custom » motif: the intervals, in semitones from -96 to 96 above the tonic, separated by spaces, commas or semicolons, « 0 3 7 10 ». An empty list, or one with an unreadable token, is refused, and the message names it. A motif whose unfolding leaves the MIDI range, 0 to 127, is refused. |
 | Depth | number | 3 | 1 – 6, step 1 | Number of recursion levels (higher = denser structure). |
 | Duration | number | 8 s | 2 – 60 s | Generated duration, in seconds. |
 | Tempo | number | 80 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
@@ -1537,7 +1537,7 @@ Searches for a voice that makes a first-species counterpoint, note against note,
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Cantus firmus | text | — |  | The cantus pitches, as MIDI numbers separated by spaces. Empty, a cantus is generated. |
+| Cantus firmus | text | — |  | The cantus pitches, as MIDI numbers or note names with their octave, « C4 », separated by spaces. Empty, a cantus is generated. A cantus with a note that cannot be read, or that falls outside 0 to 127, is refused, and the message names it. |
 | Notes | number | 10 | 4 – 16, step 1 | The length of the generated cantus, when none is supplied. |
 | Position | choice | Above | Above / Below | Places the searched voice above or below the cantus. |
 | Mode | choice | From the cantus | From the cantus / Chromatic | « From the cantus » uses only the degrees the cantus uses, which holds the line in its mode. |
@@ -1952,7 +1952,7 @@ Composes a random melody in the chosen key and scale, over the given number of b
 
 *Programs an 8-track drum pattern with per-step velocity, and outputs the rhythm as MIDI so the sounds underneath can be changed.*
 
-Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open hi-hat, clap, crash, low tom, high tom). A clicked cell turns on or off, as in the other sequencers; nuance is on the modifiers, Shift+click raises velocity one step (0 to 9), Alt+click lowers it. A cell turned back on recovers the velocity it had before being cleared, or 6 if it never had one. Higher velocity makes the cell brighter and the sound louder. Sounds are synthesized (drum-machine style), no SoundFont. Settings: • tempo • number of steps (16 or 32) • swing • bars; the audio output loops the pattern. A second output gives the same rhythm as MIDI, on percussion channel 10 and at the General MIDI numbers (36 kick, 38 snare, 42 closed hi-hat…): the same rhythm can thus be played with other sounds. The grid's nuances become velocities there and swing is applied: the groove survives the change of sounds.
+Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open hi-hat, clap, crash, low tom, high tom). A clicked cell turns on or off, as in the other sequencers; nuance is on the modifiers, Shift+click raises velocity one step (0 to 9), Alt+click lowers it. A cell turned back on recovers the velocity it had before being cleared, or 6 if it never had one. Higher velocity makes the cell brighter and the sound louder. Sounds are synthesized (drum-machine style), no SoundFont. Settings: • tempo • number of steps (8, 16 or 32) • swing • bars; the audio output loops the pattern. A second output gives the same rhythm as MIDI, on percussion channel 10 and at the General MIDI numbers (36 kick, 38 snare, 42 closed hi-hat…): the same rhythm can thus be played with other sounds. The grid's nuances become velocities there and swing is applied: the groove survives the change of sounds.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -1966,7 +1966,7 @@ Programs an advanced drum pattern on 8 tracks (kick, snare, closed hi-hat, open 
 | Swing | number | 0 % | 0 – 60 % | Delays off-beats for a shuffle groove. |
 | Bars | number | 2 | 1 – 8, step 1 | Number of pattern repetitions. |
 | Volume | number | 90 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
-| Pattern | text | `9000000090000000\|0000900000009000\|9090909090909090\|000000…` |  | Encoded pattern (edited via the grid): 8 step rows separated by « \| », each step 0 (off) or 1 to 9 (velocity). |
+| Pattern | text | `9000000090000000\|0000900000009000\|9090909090909090\|000000…` |  | Encoded pattern (edited via the grid): 8 step rows separated by « \| », each step 0 (off) or 1 to 9 (velocity). A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut. |
 | Seed | number | 42 | 0 – 999999, step 1 | Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Cantor Rhythm
@@ -2102,11 +2102,11 @@ Builds a rhythmic tiling canon. An ordinary canon layers a melody over itself, o
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Pulses | number | 12 | 2 – 48, step 1 | Cycle length. The motif and the entries must tile it exactly: their product therefore always equals this number. |
-| Motif | text | `0 1 2` |  | The positions struck by one voice, as pulse numbers. Leave empty for the node to search for a tiling motif itself. |
+| Motif | text | `0 1 2` |  | The positions struck by one voice, as whole pulse numbers, from 0 to « Pulses » minus one, separated by spaces, commas or semicolons. Empty, the node searches for a tiling motif itself. A motif with an unreadable token, or one that leaves the cycle, is refused, and the message names it; a motif that does not tile is refused too. |
 | Searched size | number | 3 | 2 – 12, step 1 | Number of onsets per voice, when the motif is left empty. It must divide the number of pulses. |
 | Step length | number | 0.2 s | 0.05 – 1 s, step 0.05 | Length of one pulse. |
 | Repeats | number | 4 | 1 – 16, step 1 | Number of cycles played. |
-| Pitches | text | `60 64 67 72` |  | One MIDI pitch per voice. This is what makes the tiling audible: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared. |
+| Pitches | text | `60 64 67 72` |  | One pitch per voice, as a MIDI number from 0 to 127 or a note name with its octave, « C4 ». This is what makes the tiling audible: on a single pitch one would hear only a steady pulse, which is exactly what every tiling canon is, without hearing that it is shared. A decimal pitch sounds as written; the MIDI file, which carries whole numbers only, rounds it, and the message says so. An empty list, or one with an unreadable token, is refused. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
@@ -2357,7 +2357,7 @@ Programs a chord progression on a step grid: 21 rows = 7 degrees × 3 rows (tria
 | Mode | choice | Block | Block / Arpeggiated / Rolled | Block = chord played as a block; Arpeggiated = notes spread over the step, each released when the next starts; Rolled = onsets quickly staggered, all notes held. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
-| Pattern | text | `1000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « \| ». Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step. |
+| Pattern | text | `1000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « \| », each step 0 or 1. Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step. A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut. |
 
 #### Melodic Sequencer
 
@@ -2385,7 +2385,7 @@ Programs a melody on a step-by-step piano-roll grid: each row is a scale note (h
 | Timbre | choice | Triangle | Sine / Square / Sawtooth / Triangle | Synthesis waveform. Sine = pure ; Square = 8-bit/retro ; Sawtooth = rich in harmonics ; Triangle = soft. |
 | Synthesis | choice | Auto | Auto / FM/Oscillators / SoundFont | Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples. |
 | Instrument | SoundFont preset | program 0 |  | Preset of the loaded global SoundFont to use for rendering (ignored in FM mode). Load an SF2 file from the toolbar first. Drum kits (bank 128) are included if present. |
-| Pattern | text | `0000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « \| ». |
+| Pattern | text | `0000000000000000\|0000000000000000\|0000000000000000\|000000…` |  | Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « \| », each step 0 or 1. A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut. |
 
 ### Synthesizers
 
@@ -2760,8 +2760,8 @@ After Iannis Xenakis's sieve theory ("Sieves", 1990; the technique appears as ea
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Sieve | text | `5@0 7@2 11@3` |  | Residual classes as "modulus@residue", separated by spaces. Coprime moduli give the longest period: 5@0 7@2 11@3 only repeats after 385 degrees. Malformed fragments are ignored rather than emptying the sieve. |
-| Operation | choice | Union | Union / Intersection / Difference | "Union" keeps what at least one class holds, the operation that creates irregularity. "Intersection" keeps only what all of them hold, hence very little. "Difference" keeps what the first class holds and no other does: the only way to punch holes in a regular grid. |
+| Sieve | text | `5@0 7@2 11@3` |  | Residual classes as "modulus@residue", separated by spaces and combined by "Operation". Coprime moduli give the longest period: 5@0 7@2 11@3 only repeats after 385 degrees. The expression can also combine its classes itself, in Christopher Ariza's notation: "\|" for union, "&" for intersection, "-" before a class or a parenthesis for the complement, taken over the degrees examined, and parentheses to group. The complement is read first, then intersection, then union. Thus 3@0 & -4@0 keeps the multiples of 3 that are not multiples of 4, and 3@0-4@0 is refused. An expression carrying these signs no longer follows "Operation". A fragment that cannot be read makes the sieve refused, and the message names it. The message writes the expression applied, ∪ for union, ∩ for intersection and − for the complement, and it reads back as it is. |
+| Operation | choice | Union | Union / Intersection / Difference | "Union" keeps what at least one class holds, the operation that creates irregularity. "Intersection" keeps only what all of them hold, hence very little. "Difference" keeps what the first class holds and no other does: the only way to punch holes in a regular grid. The operation combines the classes of a "Sieve" written as a list; an expression carrying "\|", "&", a complement or parentheses combines itself. |
 | Reading | choice | Pitches and rhythm | Pitches / Rhythm / Pitches and rhythm | Which axis to read the sieve along. "Pitches" plays the kept degrees as evenly spaced notes; "Rhythm" plays a single note at the kept onsets; "Pitches and rhythm" does both, the duality Xenakis claimed. |
 | Span | number | 96 | 8 – 512, step 1 | Number of degrees examined. To hear a long-period sieve you need at least its period, otherwise you only hear a fragment. |
 | Base note | number | 48 | 24 – 96, step 1 | MIDI pitch of degree 0. Each kept degree is one semitone above. |
@@ -3081,7 +3081,7 @@ Lays a rhythm written by divisions on a series of pitches, and returns the resul
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Tree | text | `(4/4 (1 (1 (1 1 1)) 1 1))` |  | The rhythm in list notation, used when the input of the same name is not connected. |
-| Pitches | text | `60 62 64 65 67` |  | The MIDI numbers used, read in a loop, when no input supplies them. |
+| Pitches | text | `60 62 64 65 67` |  | The pitches used, read in a loop, when no input supplies them: MIDI numbers from 0 to 127, decimals allowed, or note names with their octave, « C4 », separated by spaces, commas or semicolons. An empty list, or one with an unreadable token, is refused, and the message names it. |
 | Tempo | number | 120 BPM | 20 – 300 BPM, step 1 | The length of a quarter note. |
 | Repeats | number | 1 | 1 – 16, step 1 | How many times the whole tree is played again, end to end. |
 | Velocity | number | 90 | 1 – 127, step 1 | The velocity of the notes. |
@@ -3214,7 +3214,7 @@ Returns the degrees of the tuning received on its input as notes. Pitches are fr
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Degrees | text | — |  | The degree ranks to play, separated by spaces. A rank may cross the period, and a negative rank descends below the tonic. Empty, one full turn is played in ascending order. |
+| Degrees | text | — |  | The degree ranks to play, as whole numbers separated by spaces. A rank may cross the period, and a negative rank descends below the tonic. Empty, one full turn is played in ascending order. A list with a token that is not a whole number, or a rank that falls outside the MIDI range 0 to 127, is refused, and the message names it. |
 | Duration | slider | 0.5 s | 0.05 – 4 s, step 0.05 | Each note's length. The notes follow one another without overlap, so this length is also the gap between them. |
 | Tonic | slider | 60 | 24 – 96, step 1 | The pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries. |
 
@@ -5663,7 +5663,7 @@ This node passes a sound through a bank of tuned resonators. Each resonator keep
 |---|---|---|---|---|
 | Fundamental | slider | 110 Hz | 20 – 4000 Hz, step 1 | Frequency of the first resonator; the others follow from it through the structure. A resonator that would fall beyond half the sample rate is dropped, not folded back. |
 | Structure | choice | Harmonic | Harmonic / Odd / Bar / Chord | Where the resonators sit above the fundamental. Harmonic: 1, 2, 3...; odd: 1, 3, 5...; bar: the inharmonic modes of a free bar; chord: the intervals written below. |
-| Intervals | text | `0 4 7 11` |  | For the chord structure: the intervals in semitones above the fundamental, separated by spaces or commas. They repeat octave after octave up to the number of resonators. « 0 4 7 11 »: a major seventh chord; « 0 1 6 »: a tense cluster. |
+| Intervals | text | `0 4 7 11` |  | For the chord structure: the intervals in semitones above the fundamental, separated by spaces or commas. They repeat octave after octave up to the number of resonators. « 0 4 7 11 »: a major seventh chord; « 0 1 6 »: a tense cluster. An interval runs from -96 to 96 semitones, decimals allowed. An empty list, or one with a token that cannot be read or falls outside these bounds, is refused, and the message names it. |
 | Count | slider | 12 | 1 – 32, step 1 | Number of resonators. |
 | Resonance | slider | 3 s | 0.05 – 20 s, step 0.05 | Time a resonator takes to lose 60 dB. Short, the sound takes on a colour; long, it fades behind the chord. |
 | Brightness | slider | 50 % | 0 – 100 %, step 1 | Level of the high resonators relative to the low ones. 100%: all at the same level; 0%: the k-th at 1/k², a dark sound. |
@@ -5775,7 +5775,7 @@ A comb filter sends the sound round a loop whose length is the period of a note:
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Fundamental | slider | 110 Hz | 20 – 2000 Hz, step 0.5 | Note of the first comb; the others follow from it through the chord. |
-| Chord | text | `0 7 12` |  | The notes, in semitones above the fundamental, separated by spaces or commas. « 0 »: a single note. |
+| Chord | text | `0 7 12` |  | The notes, in semitones above the fundamental, from -96 to 96, decimals allowed, separated by spaces or commas. « 0 »: a single note. An empty list, or one with a token that cannot be read or falls outside these bounds, is refused, and the message names it. |
 | Resonance | slider | 3 s | 0.05 – 20 s, step 0.05 | Time a comb takes to lose 60 dB. |
 | Damping | slider | 20 % | 0 – 95 %, step 1 | Loss of highs on each trip round the loop. 0: bright, metallic; high: round, muffled. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the resonated sound. At 0%, the input alone. |
@@ -7810,7 +7810,7 @@ The sieve is a harmonic series: the fundamental and its multiples, whose ranks o
 |---|---|---|---|---|
 | Fundamental | slider | 110 Hz | 20 – 2000 Hz, step 0.5 | Fundamental of the harmonic series that forms the sieve. |
 | Ranks | choice | All | All / Odd / Even / Primes / List | The harmonics kept. Primes: 1, 2, 3, 5, 7, 11... List: the ranks written below. |
-| Rank list | text | `1 2 3 5 8 13` |  | For « List »: the ranks kept, separated by spaces or commas. |
+| Rank list | text | `1 2 3 5 8 13` |  | For « List »: the ranks kept, as whole numbers from 1 up, separated by spaces or commas. A rank whose harmonic lies above half the sample rate keeps or removes nothing. An empty list, or one with a token that is not a rank, is refused, and the message names it. |
 | Tolerance | slider | 30 cents | 2 – 200 cents, step 1 | Distance from a harmonic within which a component passes. |
 | Mode | choice | Keep | Keep / Remove | Keep: only the kept harmonics pass. Remove: only they are taken out. |
 | Fundamental min | slider | 55 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that a connected curve's zero means; the travel is multiplicative. With no curve, this setting does nothing. |
@@ -8803,7 +8803,7 @@ Splits the sound into 3 or 4 frequency bands (low, mid, high) and makes them the
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Strands | choice | 3 (low · mid · high) | 3 (low · mid · high) / 4 | Number of bands. Three: cutoffs at 250 Hz and 2.5 kHz. Four: at 180 Hz, 900 Hz and 4.5 kHz. At first, the lowest band is on the left and the highest on the right. |
-| Word | text | `1 -2` |  | The braid's pattern, as crossings separated by spaces. « 1 »: the strand in place 1 goes over the one in place 2; « -1 »: it goes under; « 2 » concerns places 2 and 3. « 1 -2 » is the classic three-strand plait. Places are counted from left to right. |
+| Word | text | `1 -2` |  | The braid's pattern, as crossings separated by spaces. « 1 »: the strand in place 1 goes over the one in place 2; « -1 »: it goes under; « 2 » concerns places 2 and 3. « 1 -2 » is the classic three-strand plait. Places are counted from left to right. A crossing is written as a non-zero decimal integer, between minus and plus the number of strands minus one; an empty word, or one with an unreadable crossing, is refused. |
 | Repeats | number | 3 | 1 – 12, step 1 | Number of times the pattern is played, spread over the sound's length. Strands return to their places after a number of patterns set by the word, 3 for the plait: the message tells you. |
 | Relief | number | 100 % | 0 – 100 %, step 1 | Contrast between the strand going over (+3 dB mid-crossing at 100%) and the one going under (−6 dB). At 0%, bands swap places without it being heard which one passes in front. |
 | Width | number | 90 % | 0 – 100 %, step 1 | Distance of the outermost places from the centre. |
@@ -10702,7 +10702,7 @@ Places the notes of a melody on a circle whose positions are evenly spread, and 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Pattern | text | `101010010100` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. |
+| Pattern | text | `101010010100` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. Anything other than 0 and 1 is set aside; a pattern carrying neither is refused. |
 | Fundamental | choice | C4 · 261.63 Hz | C1 · 32.70 Hz / C#1 · 34.65 Hz / D1 · 36.71 Hz / D#1 · 38.89 Hz / E1 · 41.20 Hz / F1 · 43.65 Hz / F#1 · 46.25 Hz / G1 · 49.00 Hz / G#1 · 51.91 Hz / A1 · 55.00 Hz / A#1 · 58.27 Hz / B1 · 61.74 Hz / C2 · 65.41 Hz / C#2 · 69.30 Hz / D2 · 73.42 Hz / D#2 · 77.78 Hz / E2 · 82.41 Hz / F2 · 87.31 Hz / F#2 · 92.50 Hz / G2 · 98.00 Hz / G#2 · 103.83 Hz / A2 · 110.00 Hz / A#2 · 116.54 Hz / B2 · 123.47 Hz / C3 · 130.81 Hz / C#3 · 138.59 Hz / D3 · 146.83 Hz / D#3 · 155.56 Hz / E3 · 164.81 Hz / F3 · 174.61 Hz / F#3 · 185.00 Hz / G3 · 196.00 Hz / G#3 · 207.65 Hz / A3 · 220.00 Hz / A#3 · 233.08 Hz / B3 · 246.94 Hz / C4 · 261.63 Hz / C#4 · 277.18 Hz / D4 · 293.66 Hz / D#4 · 311.13 Hz / E4 · 329.63 Hz / F4 · 349.23 Hz / F#4 · 369.99 Hz / G4 · 392.00 Hz / G#4 · 415.30 Hz / A4 · 440.00 Hz / A#4 · 466.16 Hz / B4 · 493.88 Hz / C5 · 523.25 Hz / C#5 · 554.37 Hz / D5 · 587.33 Hz / D#5 · 622.25 Hz / E5 · 659.26 Hz / F5 · 698.46 Hz / F#5 · 739.99 Hz / G5 · 783.99 Hz / G#5 · 830.61 Hz / A5 · 880.00 Hz / A#5 · 932.33 Hz / B5 · 987.77 Hz / C6 · 1046.50 Hz | The note of position zero, given with its frequency. Every other one follows from it. |
 | Layout | choice | The circle is the octave | The circle is the octave / Twelve semitones / Chain of fifths | What the positions other than zero are worth. The octave divided by the circle, the tempered semitone, or the chain of just fifths taken in the order of the onsets. |
 
@@ -10755,7 +10755,7 @@ Places the onsets of a rhythm on a circle whose positions are evenly spread, and
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Rhythm | choice | Free | Free / Tresillo / Son / Shiko / Soukous / Rumba / Bossa nova / Gahu / Samba / Fume-fume / Bembé / Steve Reich | A traditional rhythm to lay in one go, or « Free » for the one you write yourself. Clicking a position sets this back to « Free » and keeps what was laid. |
-| Pattern | text | `1001001000101000` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free ». |
+| Pattern | text | `1001001000101000` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free ». Anything other than 0 and 1 is set aside; a pattern carrying neither is refused. |
 | Drum | choice | Kick | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The sound of every onset of the circle. A rhythm circle carries only one; to mix several, place several circles. |
 
 #### Rotate Circle
@@ -12245,7 +12245,7 @@ Analyses a rhythm by its geometry on the circle. After Godfried Toussaint, « Th
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Pattern | text | `x..x..x...x.x...` |  | The rhythm to analyse, as filled and empty cells, « x..x..x. », or as positions, « 0 3 6 ». The default is the son clave, the most widespread rhythm in the world. A MIDI file on the input wins. |
+| Pattern | text | `x..x..x...x.x...` |  | The rhythm to analyse, as filled and empty cells, « x..x..x. », or as positions, « 0 3 6 ». A filled cell is written x or 1, an empty one . - _ · or 0; numbers separated by spaces are positions, counted from 0 and bounded by « Steps ». The default is the son clave, the most widespread rhythm in the world. A MIDI file on the input wins. An empty pattern, one without onsets, or one with an unreadable token, is refused, and the message names it. |
 | Steps | slider | 16 | 2 – 64, step 1 | Number of cells in the cycle. Used when the pattern is given as positions, and to quantise a MIDI file. A pattern written as cells imposes its own length. |
 | Cycle | slider | 2 s | 0.25 – 16 s, step 0.25 | Length of one turn, to quantise a MIDI file. With no MIDI connected, this setting does nothing. |
 
@@ -12320,7 +12320,7 @@ Measures the voice-leading distance between two chords, in semitones. After Dmit
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Chords | text | `0 4 7 \| 9 0 4 \| 5 9 0 \| 7 11 2 \| 0 4 7` |  | The chords, separated by vertical bars, each as pitch classes from 0 to 11. The default is the progression C, A minor, F, G, C. A sequence on the input wins, then a MIDI file. |
+| Chords | text | `0 4 7 \| 9 0 4 \| 5 9 0 \| 7 11 2 \| 0 4 7` |  | The chords, separated by vertical bars, each as pitch classes from 0 to 11, decimals allowed, or as note names, « C E G ». The default is the progression C, A minor, F, G, C. A sequence on the input wins, then a MIDI file. An empty setting, or one with a token that cannot be read or falls outside 0 to 11, is refused, and the message names it. |
 | Tolerance | slider | 0.05 s | 0.01 – 0.5 s, step 0.01 | Gap below which two notes received are taken as simultaneous, hence members of the same chord. With no input connected, this setting does nothing. |
 
 #### World Scales

@@ -117,7 +117,9 @@ describe("rythme-sur-hauteurs : l'entrée Hauteurs", () => {
     expect(res.erreur).toBe(true);
     expect(res.valeurs).toEqual([null, null]);
     expect(res.message, "le jeton fautif doit être nommé").toContain("Tempo");
-    expect(res.message, "et la forme attendue aussi").toContain("60 62 64");
+    // L'EXEMPLE A CHANGÉ, NON LA RÈGLE. Revue des notations en texte, 2026-11-22 : le message est
+    // celui du seul lecteur des listes, dont l'exemple est « 60 64 67 » ; il citait « 60 62 64 65 67 ».
+    expect(res.message, "et la forme attendue aussi").toContain("60 64 67");
   });
 
   it("et nomme aussi une hauteur hors de portée, au lieu de la perdre", async () => {
