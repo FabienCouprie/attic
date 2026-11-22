@@ -15,6 +15,7 @@ import {
 } from "../audio/concret";
 import { parCanal } from "./hors-fil";
 import { entreeAudio, sansEntree } from "./lire-entree";
+import { lireListe } from "../audio/listes-musicales";
 
 const en = () => langueCourante() === "en";
 
@@ -145,8 +146,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Où sont les résonateurs au-dessus de la fondamentale. Harmonique : 1, 2, 3… ; impaire : 1, 3, 5… ; barre : les modes inharmoniques d'une barre libre ; accord : les intervalles écrits ci-dessous.",
         docEn: "Where the resonators sit above the fundamental. Harmonic: 1, 2, 3...; odd: 1, 3, 5...; bar: the inharmonic modes of a free bar; chord: the intervals written below." },
       { nom: "Intervalles", nomEn: "Intervals", type: "texte", defaut: "0 4 7 11", placeholder: "0 4 7 11", placeholderEn: "0 4 7 11",
-        doc: "Pour la structure accord : les intervalles en demi-tons au-dessus de la fondamentale, séparés par des espaces ou des virgules. Ils se répètent d'octave en octave jusqu'au nombre de résonateurs. « 0 4 7 11 » : un accord de septième majeure ; « 0 1 6 » : une grappe tendue.",
-        docEn: "For the chord structure: the intervals in semitones above the fundamental, separated by spaces or commas. They repeat octave after octave up to the number of resonators. « 0 4 7 11 »: a major seventh chord; « 0 1 6 »: a tense cluster." },
+        doc: "Pour la structure accord : les intervalles en demi-tons au-dessus de la fondamentale, séparés par des espaces ou des virgules. Ils se répètent d'octave en octave jusqu'au nombre de résonateurs. « 0 4 7 11 » : un accord de septième majeure ; « 0 1 6 » : une grappe tendue. Un intervalle va de -96 à 96 demi-tons, décimales permises. Une liste vide, ou dont un jeton ne se lit pas ou sort de ces bornes, est refusée, et le message le nomme.",
+        docEn: "For the chord structure: the intervals in semitones above the fundamental, separated by spaces or commas. They repeat octave after octave up to the number of resonators. « 0 4 7 11 »: a major seventh chord; « 0 1 6 »: a tense cluster. An interval runs from -96 to 96 semitones, decimals allowed. An empty list, or one with a token that cannot be read or falls outside these bounds, is refused, and the message names it." },
       { nom: "Nombre", nomEn: "Count", type: "curseur", plage: [1, 32], pas: 1, defaut: 12,
         doc: "Nombre de résonateurs.", docEn: "Number of resonators." },
       { nom: "Résonance", nomEn: "Resonance", type: "curseur", plage: [0.05, 20], pas: 0.05, defaut: 3, unite: "s",
@@ -173,6 +174,13 @@ export const fiches: FicheAudio[] = ([
       const a = entreeAudio(ctx, 0);
       if (sansEntree(a)) return a;
       const structure = String(ctx.paramTexte("Structure", "harmonique")).toLowerCase() as StructureResonateurs;
+      // LES INTERVALLES, POUR LA SEULE STRUCTURE ACCORD, PAR LE SEUL LECTEUR DES LISTES. Revue des
+      // notations en texte, 2026-11-22 : un jeton illisible, ou au-delà de 96 demi-tons, était jeté
+      // sans un mot, et une liste vide jouait l'unisson. Décisions de Fabien : refusé et nommé.
+      const intervalles = structure === "accord"
+        ? lireListe(ctx.paramTexte("Intervalles", "0 4 7 11"), "intervalles", en() ? "Intervals" : "Intervalles")
+        : { valeurs: [0] };
+      if ("refus" in intervalles) return { valeurs: [null], erreur: true, message: intervalles.refus };
       const fondamentale = ctx.paramNombre("Fondamentale", 110);
       // LA COURBE DU T60 SE LIT SUR LA LONGUEUR DE L'ENTRÉE ; au-delà, sa dernière valeur tient, ce
       // qui couvre la queue ajoutée après le son. Ce serait circulaire autrement : la longueur de
@@ -191,7 +199,7 @@ export const fiches: FicheAudio[] = ([
         : null;
       const rapports = rapportsResonateurs(
         ["harmonique", "impaire", "barre", "accord"].includes(structure) ? structure : "harmonique",
-        ctx.paramNombre("Nombre", 12), lireIntervalles(ctx.paramTexte("Intervalles", "0 4 7 11")),
+        ctx.paramNombre("Nombre", 12), intervalles.valeurs,
       );
       const y = resonateurs(a, {
         fondamentale, rapports, t60, fondamentales,

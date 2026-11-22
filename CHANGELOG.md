@@ -6,6 +6,22 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UNE LISTE D'INTERVALLES SE LIT D'UNE SEULE FAÇON, BORNÉE À ±96 DEMI-TONS, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, huitième format, 2026-11-22, deuxième lot : les Peignes accordés, les Résonateurs, la Musique fractale.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - la Musique fractale ne coupait sa liste qu'aux virgules, et « 0 3 7 10 » rendait une seule note ;
+    - un jeton illisible était jeté sans un mot dans les trois nœuds, un intervalle au-delà de 96 demi-tons aussi dans les Peignes et les Résonateurs, et une liste vide y jouait l'unisson ;
+    - « 0,200 » faisait écrire à la Musique fractale un MIDI 247, et la troncature par `parseInt` changeait 3,5 en 3.
+  - **Ce qui change** :
+    - les trois nœuds lisent par `lireListe` (`audio/listes-musicales.ts`), selon la décision de Fabien du 2026-11-22, « Refuse them, named » : au-delà de ±96, l'intervalle est refusé et nommé, et la borne est écrite ;
+    - une liste vide est refusée ;
+    - les Résonateurs ne lisent leurs intervalles que pour la structure accord, et la Musique fractale pour le seul motif personnalisé ;
+    - un motif fractal dont le dépliage sort de 0 à 127 est refusé, en disant la plage atteinte.
+
+    Les documentations des trois réglages le disent.
+  - **Le garde** : 25 cas dans `plugins/listes-musicales.test.ts`.
+    - Vu rouge sur le code d'avant : 16 cas.
+    - Vu rouge aussi sur une borne portée à ±200, plantée.
+
 - **UNE LISTE DE HAUTEURS SE LIT D'UNE SEULE FAÇON, NOMS DE NOTES COMPRIS, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, huitième format, 2026-11-22, premier lot : le Rythme sur hauteurs, le Canon par pavage et le Contrepoint (solveur).
   - **Ce qui se passait**, mesuré par `executer` :
     - une espace en tête ou un retour à la ligne final ajoutait un MIDI 0 au Rythme sur hauteurs ;

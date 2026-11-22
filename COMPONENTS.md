@@ -519,7 +519,7 @@ Builds a piece by recursively applying an interval motif over several depth leve
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Motif | choice | Major triad | Major triad / Minor triad / 7th arpeggio / Cantus firmus / Custom | Base interval motif repeated recursively. |
-| Intervals | text | `0,3,7,10` |  | Intervals of the custom motif, in semitones separated by commas (e.g. 0,3,7,10). |
+| Intervals | text | `0,3,7,10` |  | For the « Custom » motif: the intervals, in semitones from -96 to 96 above the tonic, separated by spaces, commas or semicolons, « 0 3 7 10 ». An empty list, or one with an unreadable token, is refused, and the message names it. A motif whose unfolding leaves the MIDI range, 0 to 127, is refused. |
 | Depth | number | 3 | 1 – 6, step 1 | Number of recursion levels (higher = denser structure). |
 | Duration | number | 8 s | 2 – 60 s | Generated duration, in seconds. |
 | Tempo | number | 80 BPM | 40 – 240 BPM | Speed in beats per minute (BPM). |
@@ -5663,7 +5663,7 @@ This node passes a sound through a bank of tuned resonators. Each resonator keep
 |---|---|---|---|---|
 | Fundamental | slider | 110 Hz | 20 – 4000 Hz, step 1 | Frequency of the first resonator; the others follow from it through the structure. A resonator that would fall beyond half the sample rate is dropped, not folded back. |
 | Structure | choice | Harmonic | Harmonic / Odd / Bar / Chord | Where the resonators sit above the fundamental. Harmonic: 1, 2, 3...; odd: 1, 3, 5...; bar: the inharmonic modes of a free bar; chord: the intervals written below. |
-| Intervals | text | `0 4 7 11` |  | For the chord structure: the intervals in semitones above the fundamental, separated by spaces or commas. They repeat octave after octave up to the number of resonators. « 0 4 7 11 »: a major seventh chord; « 0 1 6 »: a tense cluster. |
+| Intervals | text | `0 4 7 11` |  | For the chord structure: the intervals in semitones above the fundamental, separated by spaces or commas. They repeat octave after octave up to the number of resonators. « 0 4 7 11 »: a major seventh chord; « 0 1 6 »: a tense cluster. An interval runs from -96 to 96 semitones, decimals allowed. An empty list, or one with a token that cannot be read or falls outside these bounds, is refused, and the message names it. |
 | Count | slider | 12 | 1 – 32, step 1 | Number of resonators. |
 | Resonance | slider | 3 s | 0.05 – 20 s, step 0.05 | Time a resonator takes to lose 60 dB. Short, the sound takes on a colour; long, it fades behind the chord. |
 | Brightness | slider | 50 % | 0 – 100 %, step 1 | Level of the high resonators relative to the low ones. 100%: all at the same level; 0%: the k-th at 1/k², a dark sound. |
@@ -5775,7 +5775,7 @@ A comb filter sends the sound round a loop whose length is the period of a note:
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Fundamental | slider | 110 Hz | 20 – 2000 Hz, step 0.5 | Note of the first comb; the others follow from it through the chord. |
-| Chord | text | `0 7 12` |  | The notes, in semitones above the fundamental, separated by spaces or commas. « 0 »: a single note. |
+| Chord | text | `0 7 12` |  | The notes, in semitones above the fundamental, from -96 to 96, decimals allowed, separated by spaces or commas. « 0 »: a single note. An empty list, or one with a token that cannot be read or falls outside these bounds, is refused, and the message names it. |
 | Resonance | slider | 3 s | 0.05 – 20 s, step 0.05 | Time a comb takes to lose 60 dB. |
 | Damping | slider | 20 % | 0 – 95 %, step 1 | Loss of highs on each trip round the loop. 0: bright, metallic; high: round, muffled. |
 | Mix | slider | 100 % | 0 – 100 %, step 1 | Share of the resonated sound. At 0%, the input alone. |

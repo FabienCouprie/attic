@@ -18,6 +18,7 @@ import {
 import { parCanal as parCanalHorsFil } from "./hors-fil";
 import { melangerPeignes, peignesVoie, type OptionsPeigneVoie } from "../audio/peigne";
 import { lireIntervalles } from "./concret";
+import { lireListe } from "../audio/listes-musicales";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { SENS_D_UN_BALAYAGE, choixSensArpege, sensParmi } from "../audio/sens-arpege";
 
@@ -272,8 +273,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Fondamentale", nomEn: "Fundamental", type: "curseur", plage: [20, 2000], pas: 0.5, defaut: 110, unite: "Hz",
         doc: "Note du premier peigne ; les autres s'en déduisent par l'accord.", docEn: "Note of the first comb; the others follow from it through the chord." },
       { nom: "Accord", nomEn: "Chord", type: "texte", defaut: "0 7 12", placeholder: "0 4 7", placeholderEn: "0 4 7",
-        doc: "Les notes, en demi-tons au-dessus de la fondamentale, séparées par des espaces ou des virgules. « 0 » : une seule note.",
-        docEn: "The notes, in semitones above the fundamental, separated by spaces or commas. « 0 »: a single note." },
+        doc: "Les notes, en demi-tons au-dessus de la fondamentale, de -96 à 96, décimales permises, séparées par des espaces ou des virgules. « 0 » : une seule note. Une liste vide, ou dont un jeton ne se lit pas ou sort de ces bornes, est refusée, et le message le nomme.",
+        docEn: "The notes, in semitones above the fundamental, from -96 to 96, decimals allowed, separated by spaces or commas. « 0 »: a single note. An empty list, or one with a token that cannot be read or falls outside these bounds, is refused, and the message names it." },
       { nom: "Résonance", nomEn: "Resonance", type: "curseur", plage: [0.05, 20], pas: 0.05, defaut: 3, unite: "s",
         doc: "Temps qu'il faut à un peigne pour perdre 60 dB.", docEn: "Time a comb takes to lose 60 dB." },
       { nom: "Amortissement", nomEn: "Damping", type: "curseur", plage: [0, 95], pas: 1, defaut: 20, unite: "%",
@@ -303,8 +304,12 @@ export const fiches: FicheAudio[] = ([
         reglage: "Résonance", defaut: 3, rendu: "pourCent",
         noms: ["Résonance min", "Résonance max"], bornes: [0.5, 8],
       });
-      const notes = lireIntervalles(ctx.paramTexte("Accord", "0 7 12"));
-      const frequences = (notes.length ? notes : [0]).map((st) => f0 * Math.pow(2, st / 12));
+      // L'ACCORD, PAR LE SEUL LECTEUR DES LISTES. Revue des notations en texte, 2026-11-22 : un jeton
+      // illisible, ou au-delà de 96 demi-tons, était jeté sans un mot, et un accord vide jouait une
+      // seule note. Décisions de Fabien du même jour : refusé et nommé, la borne écrite.
+      const accord = lireListe(ctx.paramTexte("Accord", "0 7 12"), "intervalles", en() ? "Chord" : "Accord");
+      if ("refus" in accord) return { valeurs: [null], erreur: true, message: accord.refus };
+      const frequences = accord.valeurs.map((st) => f0 * Math.pow(2, st / 12));
       const courbe = ctx.entree(1);
       const n = a.length + Math.round(Math.min(20, Math.max(0.01, valeurMax(t60))) * a.sampleRate);
       const transpositions = estCourbe(courbe)

@@ -1125,6 +1125,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.contrepoint.resultat": { fr: "{__VAR_0__} erreur(s) · {__VAR_1__} avis", en: "{__VAR_0__} error(s) · {__VAR_1__} remarks" },
   "msg.contrepoint.vide": { fr: "Écrivez les deux voix en noms de notes, par exemple « C4 D4 E4 ».", en: "Write both voices as note names, for instance « C4 D4 E4 »." },
   "msg.canon.resultat": { fr: "{__VAR_0__} voix × {__VAR_1__} frappes = {__VAR_2__} pulsations", en: "{__VAR_0__} voices × {__VAR_1__} onsets = {__VAR_2__} pulses" },
+  "msg.fractale.hors_plage_var_0_var_1": { fr: "Le motif déplié va de {__VAR_0__} à {__VAR_1__}, hors de la plage MIDI de 0 à 127 ; rien n'est rendu.", en: "The unfolded motif spans {__VAR_0__} to {__VAR_1__}, outside the MIDI range 0 to 127; nothing is rendered." },
   "msg.canon.midi_arrondi_var_0": { fr: "le son garde la hauteur écrite, le fichier MIDI l'arrondit : {__VAR_0__}", en: "the sound keeps the written pitch, the MIDI file rounds it: {__VAR_0__}" },
   "msg.canon.nePavePas": { fr: "Le motif « {__VAR_0__} » ne pave pas un cycle de {__VAR_1__} : essayez une autre taille, ou laissez le motif vide pour que le composant en cherche un.", en: "The motif « {__VAR_0__} » does not tile a cycle of {__VAR_1__}: try another size, or leave the motif empty for the node to search for one." },
   "msg.canon.introuvable": { fr: "Aucun motif de cette taille ne pave ce cycle.", en: "No motif of that size tiles this cycle." },

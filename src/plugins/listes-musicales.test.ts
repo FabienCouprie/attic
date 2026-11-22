@@ -11,7 +11,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
-import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
+import { entreesDEssai, lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
 import { notesDuMidi } from "../audio/midi";
 import { estSequence } from "../audio/sequence";
 
@@ -124,5 +124,75 @@ describe("UNE LISTE DE HAUTEURS SE LIT D'UNE SEULE FAÇON", () => {
     const r = await CANTUS("");
     expect(r.r.erreurRendue, r.r.message).toBe(false);
     expect(r.r.message).toMatch(/engendré|generated/);
+  }, 60_000);
+});
+
+/** L'empreinte d'un son : deux lancers qui rendent le même son rendent la même empreinte. */
+function empreinte(v: unknown): string {
+  const x = (v as AudioBuffer).getChannelData(0);
+  let h = 0;
+  for (let i = 0; i < x.length; i += 7) h = (h * 31 + Math.round(x[i] * 1e5)) | 0;
+  return `${x.length}:${h}`;
+}
+
+// « Refuse them, named » : au-delà de ±96 demi-tons, l'intervalle est refusé, et la borne est écrite.
+describe("UNE LISTE D'INTERVALLES SE LIT D'UNE SEULE FAÇON", () => {
+  const SON = async (id: string, reglages: Record<string, string | number>) => {
+    const r = await lancerFiche(F(id), reglages, { entrees: entreesDEssai(F(id)) });
+    return { r, son: r.valeurs[0] ? empreinte(r.valeurs[0]) : null };
+  };
+  const NOEUDS: [string, string, Record<string, string>][] = [
+    ["peignes-accordes", "Accord", {}],
+    ["resonateurs", "Intervalles", { Structure: "accord" }],
+  ];
+
+  for (const [id, reglage, base] of NOEUDS) {
+    it.each([[" 0 4 7\n"], ["0;4;7"], ["0, 4, 7"]])(`${id} : « %s » comme « 0 4 7 »`, async (texte) => {
+      const [juste, autre] = [await SON(id, { ...base, [reglage]: "0 4 7" }), await SON(id, { ...base, [reglage]: texte })];
+      expect(autre.r.erreurRendue, autre.r.message).toBe(false);
+      expect(autre.son).toBe(juste.son);
+    }, 60_000);
+
+    it.each([["0 4 x", "« x »"], ["0 4 100", "« 100 »"], ["0 -97", "« -97 »"], ["C4", "« C4 »"], ["", "vide|empty"]])(
+      `${id} refuse « %s »`, async (texte, cite) => {
+        const r = await SON(id, { ...base, [reglage]: texte });
+        expect(r.r.erreurRendue, r.r.message).toBe(true);
+        expect(r.r.message).toMatch(new RegExp(cite));
+        expect(r.son).toBe(null);
+      }, 60_000);
+  }
+
+  it("les Résonateurs ne lisent leurs intervalles que pour la structure accord", async () => {
+    const r = await SON("resonateurs", { Structure: "harmonique", Intervalles: "x" });
+    expect(r.r.erreurRendue, r.r.message).toBe(false);
+  }, 60_000);
+
+  const FRACTALE = async (reglages: Record<string, string | number>) => {
+    const r = await lancerFiche(F("generateur-fractal"), { Motif: "Personnalisé", ...reglages }, { entrees: [] });
+    return { r, notes: await hauteurs(r.valeurs[1]) };
+  };
+  it.each([["0 3 7 10"], ["0;3;7;10"], [" 0, 3, 7, 10 "]])("la Musique fractale : « %s » comme « 0,3,7,10 »", async (texte) => {
+    const [juste, autre] = [await FRACTALE({ Intervalles: "0,3,7,10" }), await FRACTALE({ Intervalles: texte })];
+    expect(autre.r.erreurRendue, autre.r.message).toBe(false);
+    expect(autre.notes).toEqual(juste.notes);
+    expect(juste.notes!.length).toBe(64);
+  }, 60_000);
+
+  it.each([["0,3,x", "« x »"], ["0,200", "« 200 »"], ["", "vide|empty"]])("la Musique fractale refuse « %s »", async (texte, cite) => {
+    const r = await FRACTALE({ Intervalles: texte });
+    expect(r.r.erreurRendue, r.r.message).toBe(true);
+    expect(r.r.message).toMatch(new RegExp(cite));
+  }, 60_000);
+
+  it("la Musique fractale refuse un motif dont le dépliage sort de 0 à 127, en nommant la hauteur atteinte", async () => {
+    const r = await FRACTALE({ Intervalles: "0,48", Profondeur: 3 });
+    expect(r.r.erreurRendue, r.r.message).toBe(true);
+    expect(r.r.message).toMatch(/0 à 127|0 to 127/);
+    expect(r.r.valeurs.every((v) => v === null)).toBe(true);
+  }, 60_000);
+
+  it("la Musique fractale ne lit ses intervalles que pour le motif personnalisé", async () => {
+    const r = await FRACTALE({ Motif: "Triade M", Intervalles: "x" });
+    expect(r.r.erreurRendue, r.r.message).toBe(false);
   }, 60_000);
 });
