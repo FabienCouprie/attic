@@ -48,6 +48,9 @@ const RENVERSEMENT_MAX = Math.max(...QUALITES.map((q) => q.intervalles.length)) 
  * écrite est donc l'écart jusqu'au départ suivant, et celle du dernier départ est sa propre
  * longueur. Un accord roulé s'y lit comme une suite de départs, ce qu'il est ; ce qui se perd est
  * la tenue, et la sortie MIDI, elle, la garde.
+ *
+ * LA VÉLOCITÉ S'ÉCRIT, une par ligne, décision de Fabien du 2026-11-22 : sans elle, la relecture
+ * rendait la vélocité par défaut du format, 80. Les notes d'un même départ partagent la leur.
  */
 function notation(jouees: readonly Note[], tempo: number, alteration: Alteration): string {
   const parDepart = new Map<number, Note[]>();
@@ -64,7 +67,7 @@ function notation(jouees: readonly Note[], tempo: number, alteration: Alteration
     const duree = suivant !== null
       ? (suivant - ms) / 1000
       : Math.max(...groupe.map((n) => n.fin - n.debut));
-    return `${groupe.map((n) => nomNoteRond(n.note, alteration)).join("+")} ${(duree / noire).toFixed(3)}`;
+    return `${groupe.map((n) => nomNoteRond(n.note, alteration)).join("+")} ${(duree / noire).toFixed(3)} ${groupe[0].velocite}`;
   });
   return [`Tempo ${tempo}`, ...lignes].join("\n");
 }
@@ -108,7 +111,7 @@ Une note qui sortirait des cent vingt-huit du MIDI est écartée et non repliée
 
 « Synthèse », « Instrument » et « Volume » ne touchent qu'à l'audio rendu ici. Le MIDI sorti porte le programme de l'instrument choisi, et ses notes gardent leur vélocité.
 
-La sortie « Notation » écrit l'accord en texte, un départ par ligne et les notes simultanées jointes par un plus, dans la forme qu'un convertisseur de texte en MIDI relit. Ce format est séquentiel et ne sait pas dire qu'une note tient pendant la suivante : un accord roulé s'y lit comme la suite de ses départs, et c'est la sortie MIDI qui en garde la tenue.`,
+La sortie « Notation » écrit l'accord en texte, un départ par ligne avec sa durée et sa vélocité, les notes simultanées jointes par un plus, dans la forme qu'un convertisseur de texte en MIDI relit. Ce format est séquentiel et ne sait pas dire qu'une note tient pendant la suivante : un accord roulé s'y lit comme la suite de ses départs, et c'est la sortie MIDI qui en garde la tenue.`,
     noticeEn: `Returns the notes of a chord as dated notes, from the chosen root. The MIDI output plugs into anything that reads MIDI, a keyboard included.
 
 « Chord » gives the intervals. The ${QUALITES.length} qualities on offer come from the common table: the triads, the sevenths and sixths, the ninth, eleventh and thirteenth extensions, the altered chords and the suspended ones. One quality holds for the twelve roots, which makes ${QUALITES.length * 12} chords.
@@ -142,7 +145,7 @@ A note that would fall outside MIDI's hundred and twenty-eight is dropped and no
 
 « Synthesis », « Instrument » and « Volume » only affect the audio rendered here. The MIDI output carries the chosen instrument's program, and its notes keep their velocity.
 
-The « Notation » output writes the chord as text, one onset per line and simultaneous notes joined by a plus, in the form a text-to-MIDI converter reads back. That format is sequential and cannot say that a note holds through the next one: a rolled chord reads there as the series of its onsets, and it is the MIDI output that keeps its sustain.`,
+The « Notation » output writes the chord as text, one onset per line with its duration and its velocity, simultaneous notes joined by a plus, in the form a text-to-MIDI converter reads back. That format is sequential and cannot say that a note holds through the next one: a rolled chord reads there as the series of its onsets, and it is the MIDI output that keeps its sustain.`,
     entrees: [],
     sorties: [
       { nom: "Audio", type: "audio" },

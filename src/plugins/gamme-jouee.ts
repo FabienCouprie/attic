@@ -34,11 +34,15 @@ import { choixOuiNon } from "../core/oui-non";
 const en = () => langueCourante() === "en";
 
 
-/** La notation qu'attend le convertisseur de texte : une note par ligne, octave et durée comprises. */
+/**
+ * La notation qu'attend le convertisseur de texte : une note par ligne, octave, durée et vélocité
+ * comprises. LA VÉLOCITÉ S'ÉCRIT, décision de Fabien du 2026-11-22 : sans elle, la relecture rendait
+ * la vélocité par défaut du format, 80, et la nuance réglée se perdait.
+ */
 function notation(
-  notes: readonly number[], duree: number, tempo: number, alteration: Alteration,
+  notes: readonly number[], duree: number, tempo: number, alteration: Alteration, velocite: number,
 ): string {
-  return [`Tempo ${tempo}`, ...notes.map((n) => `${nomNoteRond(n, alteration)} ${duree}`)].join("\n");
+  return [`Tempo ${tempo}`, ...notes.map((n) => `${nomNoteRond(n, alteration)} ${duree} ${velocite}`)].join("\n");
 }
 
 export const fiches: FicheAudio[] = ([
@@ -69,7 +73,7 @@ Une note qui sortirait des cent vingt-huit du MIDI est écartée et non repliée
 
 « Synthèse », « Instrument » et « Volume » ne touchent qu'à l'audio rendu ici. Le MIDI sorti porte le programme de l'instrument choisi, et ses notes gardent leur vélocité.
 
-La sortie « Notation » écrit le parcours en texte, une note par ligne avec son octave et sa durée, dans la forme qu'un convertisseur de texte en MIDI relit.`,
+La sortie « Notation » écrit le parcours en texte, une note par ligne avec son octave, sa durée et sa vélocité, dans la forme qu'un convertisseur de texte en MIDI relit.`,
     noticeEn: `Returns the degrees of a scale as dated notes, one by one, from the tonic of the chosen key. The MIDI output plugs into anything that reads MIDI, a keyboard included.
 
 « Scale » gives the degrees. The ${GAMMES.length} scales on offer are those of the common table: the seven modes, the three minors, the pentatonics, the jazz vocabulary, the symmetrical scales and the scales with an augmented second.
@@ -92,7 +96,7 @@ A note that would fall outside MIDI's hundred and twenty-eight is dropped and no
 
 « Synthesis », « Instrument » and « Volume » only affect the audio rendered here. The MIDI output carries the chosen instrument's program, and its notes keep their velocity.
 
-The « Notation » output writes the run as text, one note per line with its octave and its duration, in the form a text-to-MIDI converter reads back.`,
+The « Notation » output writes the run as text, one note per line with its octave, its duration and its velocity, in the form a text-to-MIDI converter reads back.`,
     entrees: [],
     sorties: [
       { nom: "Audio", type: "audio" },
@@ -188,7 +192,7 @@ The « Notation » output writes the run as text, one note per line with its oct
       return {
         // LA GAMME S'ÉCRIT DANS LA GRAPHIE DE SA CLÉ : mi bémol majeur se lit « Eb F G Ab Bb C D »
         // et non en dièses, qui désignent les mêmes touches sans nommer les degrés.
-        valeurs: [audio, midiFinal, notation(hauteurs, 1, tempo, alterationDe(demiTon))],
+        valeurs: [audio, midiFinal, notation(hauteurs, 1, tempo, alterationDe(demiTon), velocite)],
         message: `${titre} · ${hauteurs.length} notes · ${(hauteurs.length * duree).toFixed(1)} s${ecart}`
           + (sens === "aleatoire" ? ` · ${en() ? "seed" : "graine"} ${graine}` : ""),
       };

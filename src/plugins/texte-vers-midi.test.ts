@@ -56,6 +56,42 @@ describe("les écritures que la notice nomme depuis le 2026-11-22", () => {
   });
 });
 
+describe("LES SORTIES « NOTATION », RELUES, REDONNENT LE FICHIER MIDI DE LEUR NŒUD, nuance comprise", () => {
+  // Décision de Fabien du 2026-11-22 : la Gamme jouée et les Accords joués n'écrivaient pas la
+  // vélocité, et la nuance se perdait à la relecture, 90 jouée, 80 relue.
+  type F = FicheLancable & { parametres: { nom: string; optionIds?: string[] }[] };
+  const ids = (f: F, nom: string) => f.parametres.find((p) => p.nom === nom)!.optionIds!;
+  const lire = async (v: unknown) => (v instanceof File ? (await notesDuMidi(v)) ?? [] : []);
+  const cle = (n: { note: number; debut: number; fin: number; velocite: number }, tenue: boolean) =>
+    `${n.note}@${n.debut.toFixed(2)}${tenue ? `-${n.fin.toFixed(2)}` : ""}v${n.velocite}`;
+  const relus = async (texte: string) => lire((await lancerFiche(fiche, { Notation: texte }, { entrees: [null] })).valeurs[1]);
+
+  it("la Gamme jouée, sous chaque gamme et chaque sens, à la nuance 70", async () => {
+    const f = registre.trouverDef("gamme-jouee") as unknown as F;
+    const fautes: string[] = [];
+    for (const gamme of ids(f, "Gamme")) for (const sens of ids(f, "Sens")) {
+      const r = await lancerFiche(f, { Gamme: gamme, Sens: sens, Nuance: 70, Graine: 1 }, {});
+      const joue = (await lire(r.valeurs[1])).map((n) => cle(n, true)).sort();
+      const relu = (await relus(String(r.valeurs[2]))).map((n) => cle(n, true)).sort();
+      if (JSON.stringify(joue) !== JSON.stringify(relu)) fautes.push(`${gamme}, ${sens} : ${joue.slice(0, 2).join(" ")} contre ${relu.slice(0, 2).join(" ")}`);
+    }
+    expect(fautes).toEqual([]);
+  }, 120_000);
+
+  it("les Accords joués, sous chaque accord et chaque façon ; en roulé, sans la tenue que le format ne dit pas", async () => {
+    const f = registre.trouverDef("accords-joues") as unknown as F;
+    const fautes: string[] = [];
+    for (const accord of ids(f, "Accord")) for (const facon of ids(f, "Façon")) {
+      const r = await lancerFiche(f, { Accord: accord, "Façon": facon, Nuance: 70, Graine: 1 }, {});
+      const tenue = facon !== "roule";
+      const joue = (await lire(r.valeurs[1])).map((n) => cle(n, tenue)).sort();
+      const relu = (await relus(String(r.valeurs[2]))).map((n) => cle(n, tenue)).sort();
+      if (JSON.stringify(joue) !== JSON.stringify(relu)) fautes.push(`${accord}, ${facon} : ${joue.slice(0, 2).join(" ")} contre ${relu.slice(0, 2).join(" ")}`);
+    }
+    expect(fautes).toEqual([]);
+  }, 120_000);
+});
+
 describe("UN TEMPO EN COURS DE TEXTE S'ÉCRIT DANS LE FICHIER, à son instant", () => {
   it("deux tempos, et chaque note dure son temps en ticks comme en secondes", async () => {
     // Décision de Fabien du 2026-11-22. Le fichier ne portait que le dernier tempo : les secondes

@@ -6,6 +6,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA GAMME JOUÉE ET LES ACCORDS JOUÉS ÉCRIVENT LA VÉLOCITÉ DANS LEUR SORTIE « NOTATION ».** Revue des notations en texte, décision de Fabien du 2026-11-22.
+  - **Ce qui se passait.** Leur notation n'écrivait pas la vélocité, que le format sait porter : relue par Texte → MIDI, elle rendait la vélocité par défaut, 80. Mesuré à la nuance 90 : 90 jouée, 80 relue, sous chacun des 175 lancers de la Gamme jouée et des 198 des Accords joués.
+  - **Ce qui change** : chaque ligne porte sa vélocité, et les notes d'un même départ partagent la leur. Les deux notices le disent, en français et en anglais ; `COMPONENTS.md` régénéré.
+  - **Le garde**, `plugins/texte-vers-midi.test.ts`, l'aller-retour des deux écrivains, à la nuance 70 : la notation relue redonne le fichier MIDI du nœud, note pour note, hauteur, départ, fin et nuance, sous chaque gamme et chaque sens de la Gamme jouée, sous chaque accord et chaque façon des Accords joués. En roulé, la tenue n'est pas jugée, le format étant séquentiel, ce que la notice dit. **Vu rouge** sur le code d'avant, 175 et 99 écarts, vert après.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement ; le garde et ceux des gammes qui relisent ces sorties, 136 cas.
+
 - **LE ROULÉ DES ACCORDS JOUÉS SONNE ENTIER À SON ÉTALEMENT PAR DÉFAUT.** Revue des notations en texte, décision de Fabien du 2026-11-22.
   - **Ce qui se passait.** Dans `jouerAccord` (`audio/qualites-accords.ts`), les départs d'un roulé se répartissaient en N − 1 écarts sur l'étalement. À 100 %, le défaut, la dernière voix partait à la fin de l'accord et durait zéro : la notice promettait que l'accord sonne entier à partir du dernier départ, et il ne sonnait jamais entier. C'est la relecture de sa sortie « Notation » qui l'a montré, la durée nulle s'y écrivant « 0.000 ».
   - **Ce qui change** : chaque voix reçoit une part égale de l'étalement, comme dans l'arpège, et toutes tiennent jusqu'à la fin. À 100 %, l'accord sonne entier pendant sa dernière part. La notice le dit, en français et en anglais ; `COMPONENTS.md` régénéré. Seuls les Accords joués emploient `jouerAccord`, et aucun exemple ni aucune empreinte ne les emploie.
