@@ -19,18 +19,34 @@ import { lireListe } from "../audio/listes-musicales";
 
 interface NoteSimple { note: number; debut: number; fin: number }
 
-/** Lit un motif écrit à la main : « x..x..x. » ou « 1001001 0 » ou « 0 3 6 ». */
-export function lireMotif(texte: string, pasDemandes: number): Rythme {
+/**
+ * Lit un motif écrit à la main, en cases, « x..x..x. », ou en positions, « 0 3 6 », ou son refus.
+ *
+ * LES CASES ET LES POSITIONS SE DISTINGUENT COMME LA DOCUMENTATION LES ÉCRIT. Revue des notations en
+ * texte, 2026-11-22 : « 0 1 », deux positions, se lisait comme un cycle de deux cases. Un motif est en
+ * cases quand il porte une case qui n'est pas un chiffre, x . - _ ou ·, sans chiffre de 2 à 9, qu'une
+ * case n'écrit jamais ; ou quand il n'est qu'une suite de 0 et de 1 sans espace. Autrement, ce sont
+ * des positions, par le seul lecteur des listes. « · » est le silence qu'écrit le Canon par pavage.
+ *
+ * CE QUI NE SE LIT PAS EST REFUSÉ, ET NOMMÉ : un jeton illisible et une position décimale étaient
+ * jetés ou arrondis, et une position hors du cycle se repliait. Décision de Fabien du même jour pour
+ * cette dernière, « Refuse it, named ».
+ */
+export function lireMotif(texte: string, pasDemandes: number, reglage = "Motif"): { rythme: Rythme } | { refus: string } {
   const nettoye = texte.trim();
-  if (/^[\sx.\-_01]+$/i.test(nettoye) && /[x.\-_01]/i.test(nettoye)) {
+  if (!nettoye) return { refus: traduire("msg.liste.vide_var_0_var_1", reglage, traduire("msg.motif.attendu")) };
+  if ((/[xX.\-_·]/.test(nettoye) && !/[2-9]/.test(nettoye)) || /^[01]{2,}$/.test(nettoye)) {
     const cases = nettoye.replace(/\s+/g, "");
-    const positions = [...cases].map((c, i) => (/[x1]/i.test(c) ? i : -1)).filter((i) => i >= 0);
-    if (cases.length > 1) return rythme(positions, cases.length);
+    const inconnues = [...new Set([...cases].filter((c) => !/[xX1.\-_·0]/.test(c)))];
+    if (inconnues.length) return { refus: traduire("msg.motif.cases_illisibles_var_0_var_1", reglage, inconnues.map((c) => `« ${c} »`).join(", ")) };
+    return { rythme: rythme([...cases].map((c, i) => (/[xX1]/.test(c) ? i : -1)).filter((i) => i >= 0), cases.length) };
   }
-  // `Number("")` vaut ZÉRO et non NaN : sans écarter les morceaux vides, une espace en tête
-  // ajouterait une frappe sur le premier temps que personne n'a écrite.
-  const nombres = nettoye.split(/[\s,;]+/).filter((t) => t !== "").map(Number).filter(Number.isFinite);
-  return rythme(nombres, Math.max(1, pasDemandes));
+  const pas = Math.max(1, pasDemandes);
+  const lue = lireListe(nettoye, "positions", reglage);
+  if ("refus" in lue) return lue;
+  const hors = lue.valeurs.filter((p) => p >= pas);
+  if (hors.length) return { refus: traduire("msg.motif.hors_cycle_var_0_var_1_var_2", reglage, hors.slice(0, 3).map((p) => `« ${p} »`).join(", "), pas - 1) };
+  return { rythme: rythme(lue.valeurs, pas) };
 }
 
 /** Quantifie les attaques d'un MIDI sur une grille de `pas` cases. */
@@ -90,8 +106,8 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Analyse", nomEn: "Analysis", type: "texte" }],
     parametres: [
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: "x..x..x...x.x...", defautEn: "x..x..x...x.x...",
-        doc: "Le rythme à analyser, en cases pleines et vides, « x..x..x. », ou en positions, « 0 3 6 ». Le motif par défaut est la clave son, le rythme le plus répandu du monde. Un MIDI branché en entrée l'emporte.",
-        docEn: "The rhythm to analyse, as filled and empty cells, « x..x..x. », or as positions, « 0 3 6 ». The default is the son clave, the most widespread rhythm in the world. A MIDI file on the input wins." },
+        doc: "Le rythme à analyser, en cases pleines et vides, « x..x..x. », ou en positions, « 0 3 6 ». Une case pleine s'écrit x ou 1, une case vide . - _ · ou 0 ; des nombres séparés par des espaces sont des positions, comptées depuis 0 et bornées par « Pas ». Le motif par défaut est la clave son, le rythme le plus répandu du monde. Un MIDI branché en entrée l'emporte. Un motif vide, sans frappe, ou dont un jeton ne se lit pas, est refusé, et le message le nomme.",
+        docEn: "The rhythm to analyse, as filled and empty cells, « x..x..x. », or as positions, « 0 3 6 ». A filled cell is written x or 1, an empty one . - _ · or 0; numbers separated by spaces are positions, counted from 0 and bounded by « Steps ». The default is the son clave, the most widespread rhythm in the world. A MIDI file on the input wins. An empty pattern, one without onsets, or one with an unreadable token, is refused, and the message names it." },
       { nom: "Pas", nomEn: "Steps", type: "curseur", plage: [2, 64], pas: 1, defaut: 16,
         doc: "Nombre de cases du cycle. Sert quand le motif est donné en positions, et pour quantifier un MIDI. Un motif écrit en cases impose sa propre longueur.",
         docEn: "Number of cells in the cycle. Used when the pattern is given as positions, and to quantise a MIDI file. A pattern written as cells imposes its own length." },
@@ -103,10 +119,16 @@ export const fiches: FicheAudio[] = ([
       const en = langueCourante() === "en";
       const pas = Math.round(ctx.paramNombre("Pas", 16));
       const notes = await notesDuMidi(ctx.entree(0));
-      const r = notes && notes.length > 0
-        ? motifDepuisNotes(notes, pas, ctx.paramNombre("Cycle", 2))
-        : lireMotif(ctx.paramTexte("Motif", "x..x..x...x.x..."), pas);
-      if (r.positions.length === 0) return { valeurs: [null], message: traduire("msg.serie.vide") };
+      let r: Rythme;
+      if (notes && notes.length > 0) r = motifDepuisNotes(notes, pas, ctx.paramNombre("Cycle", 2));
+      else {
+        const lu = lireMotif(ctx.paramTexte("Motif", "x..x..x...x.x..."), pas, en ? "Pattern" : "Motif");
+        if ("refus" in lu) return { valeurs: [null], erreur: true, message: lu.refus };
+        r = lu.rythme;
+      }
+      // UN RYTHME SANS FRAPPE EST UN REFUS, et en erreur : le message était celui d'une série
+      // dodécaphonique, sans le drapeau, et le nœud s'annonçait vert sans rien rendre.
+      if (r.positions.length === 0) return { valeurs: [null], erreur: true, message: traduire("msg.motif.sans_frappe_var_0", en ? "Pattern" : "Motif") };
 
       const a = analyserRythme(r, motifEuclidien(r.pas, r.positions.length));
       const oui = en ? "yes" : "oui";

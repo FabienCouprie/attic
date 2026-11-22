@@ -17,7 +17,7 @@ import {
 } from "../audio/cercle";
 import { rendreCercles, type BaseDeTemps } from "../audio/cercle-rendu";
 import { lireMotif, nettoyerMotif } from "../vues-domaine/cercle-disposition";
-import { langueCourante } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 const en = () => langueCourante() === "en";
@@ -100,8 +100,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Un rythme traditionnel à poser d'un coup, ou « Libre » pour celui qu'on écrit soi-même. Cliquer une place remet ce réglage sur « Libre » et garde ce qui était posé.",
         docEn: "A traditional rhythm to lay in one go, or « Free » for the one you write yourself. Clicking a position sets this back to « Free » and keeps what was laid." },
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_DEFAUT, defautEn: MOTIF_DEFAUT,
-        doc: "Une suite de zéros et de uns, un par place du cercle. Sa longueur donne le nombre de places. Le dessin l'écrit à chaque clic, et il se saisit aussi à la main. Il ne sert que lorsque « Rythme » est sur « Libre ».",
-        docEn: "A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free »." },
+        doc: "Une suite de zéros et de uns, un par place du cercle. Sa longueur donne le nombre de places. Le dessin l'écrit à chaque clic, et il se saisit aussi à la main. Il ne sert que lorsque « Rythme » est sur « Libre ». Ce qui n'est ni 0 ni 1 est écarté ; un motif qui n'en porte aucun est refusé.",
+        docEn: "A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free ». Anything other than 0 and 1 is set aside; a pattern carrying neither is refused." },
       { nom: "Percussion", nomEn: "Drum", type: "choix",
         ...choixPercussion(),
         defaut: "Grosse caisse", defautEn: "Kick",
@@ -111,7 +111,11 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const choisi = ctx.paramTexte("Rythme", RYTHME_LIBRE);
       const brut = motifDuRythme(choisi, ctx.paramTexte("Motif", MOTIF_DEFAUT));
-      const motif = nettoyerMotif(brut) || MOTIF_DEFAUT;
+      // UN MOTIF SANS ZÉRO NI UN EST REFUSÉ, au lieu de devenir la clave. Revue des notations en texte,
+      // 2026-11-22. Ce qui n'est ni 0 ni 1 reste écarté : la notice promet qu'un motif se colle tel
+      // quel depuis l'adresse d'un cercle en ligne.
+      const motif = nettoyerMotif(brut);
+      if (!motif) return { valeurs: [null], erreur: true, message: traduire("msg.cercle.sans_place_var_0", en() ? "Pattern" : "Motif") };
       const son = parseInt(ctx.paramTexte("Percussion", "36"), 10) || 36;
       const cercle = cercleRythmique(motif, son);
       const nomme = RYTHMES_CANONIQUES.find((r) => r.id === choisi);
@@ -134,8 +138,8 @@ export const fiches: FicheAudio[] = ([
     sorties: [{ nom: "Cercle", nomEn: "Circle", type: "cercle" }],
     parametres: [
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_MELODIQUE, defautEn: MOTIF_MELODIQUE,
-        doc: "Une suite de zéros et de uns, un par place du cercle. Sa longueur donne le nombre de places.",
-        docEn: "A string of zeros and ones, one per position of the circle. Its length gives the number of positions." },
+        doc: "Une suite de zéros et de uns, un par place du cercle. Sa longueur donne le nombre de places. Ce qui n'est ni 0 ni 1 est écarté ; un motif qui n'en porte aucun est refusé.",
+        docEn: "A string of zeros and ones, one per position of the circle. Its length gives the number of positions. Anything other than 0 and 1 is set aside; a pattern carrying neither is refused." },
       { nom: "Fondamentale", nomEn: "Fundamental", type: "choix",
         options: FONDAMENTALES.map((f) => libelleFondamentale(f, true)),
         optionsEn: FONDAMENTALES.map((f) => libelleFondamentale(f, false)),
@@ -153,7 +157,9 @@ export const fiches: FicheAudio[] = ([
         docEn: "What the positions other than zero are worth. The octave divided by the circle, the tempered semitone, or the chain of just fifths taken in the order of the onsets." },
     ],
     async executer(ctx) {
-      const motif = nettoyerMotif(ctx.paramTexte("Motif", MOTIF_MELODIQUE)) || MOTIF_MELODIQUE;
+      // Un motif sans zéro ni un est refusé, comme celui du cercle rythmique.
+      const motif = nettoyerMotif(ctx.paramTexte("Motif", MOTIF_MELODIQUE));
+      if (!motif) return { valeurs: [null], erreur: true, message: traduire("msg.cercle.sans_place_var_0", en() ? "Pattern" : "Motif") };
       const fondamentale = parseInt(ctx.paramTexte("Fondamentale", "60"), 10) || 60;
       const repartition = ctx.paramTexte("Répartition", "octave") as Repartition;
       const cercle = cercleMelodique(motif, fondamentale, repartition);

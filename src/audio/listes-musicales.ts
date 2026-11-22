@@ -28,9 +28,11 @@ import { lireNomDeNote, midiDuNom } from "./noms-de-notes";
  * - `classes` : classes de hauteurs de 0 à moins de 12, décimales permises, ou noms de notes ;
  * - `intervalles` : demi-tons de −96 à 96, décimales permises ;
  * - `degres` : rangs entiers de tout signe, ceux d'un accordage, qui franchissent la période ;
- * - `rangs` : rangs entiers à partir de 1, ceux des harmoniques.
+ * - `rangs` : rangs entiers à partir de 1, ceux des harmoniques ;
+ * - `positions` : positions entières à partir de 0, celles des frappes d'un cycle, que chaque nœud
+ *   borne par la longueur de son cycle.
  */
-export type GenreDeListe = "hauteurs" | "classes" | "intervalles" | "degres" | "rangs";
+export type GenreDeListe = "hauteurs" | "classes" | "intervalles" | "degres" | "rangs" | "positions";
 
 const DANS: Record<GenreDeListe, (n: number) => boolean> = {
   hauteurs: (n) => n >= 0 && n <= 127,
@@ -38,8 +40,9 @@ const DANS: Record<GenreDeListe, (n: number) => boolean> = {
   intervalles: (n) => n >= -96 && n <= 96,
   degres: () => true,
   rangs: (n) => n >= 1,
+  positions: (n) => n >= 0,
 };
-const ENTIERS = new Set<GenreDeListe>(["degres", "rangs"]);
+const ENTIERS = new Set<GenreDeListe>(["degres", "rangs", "positions"]);
 const NOMBRE = /^[+-]?(\d+(\.\d*)?|\.\d+)$/;
 
 export type ListeLue = { valeurs: number[] } | { refus: string };
