@@ -9825,7 +9825,7 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 
 *Displays a chord chart from a list of symbols.*
 
-Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
+Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. The text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included; otherwise each token is a chord symbol, and a symbol no chord recognizes is refused, named. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9848,7 +9848,7 @@ Generates a chord chart (SVG) from a list of chord symbols or a roman numeral pr
 
 *Displays a simple score from a chord progression.*
 
-Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G). Chords are displayed as block chords on the staff, a quarter note each, in 4/4 bars, and each accidental is drawn when it changes what is in force in the bar, naturals included. A symbol no chord recognizes is refused, and the message names it. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
+Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G): the text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included. Chords are displayed as block chords on the staff, a quarter note each, in 4/4 bars, and each accidental is drawn when it changes what is in force in the bar, naturals included. A symbol no chord recognizes is refused, and the message names it. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|

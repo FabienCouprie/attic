@@ -4,7 +4,7 @@
 // de calcul n'a ete retouchee au passage.
 
 import { Chord } from "tonal";
-import { accordsDepuisRomains, modeDepuisTonalite, toniqueDepuisTonalite } from "../audio/theorie-romains";
+import { accordsDepuisRomains, estProgressionRomaine, modeDepuisTonalite, toniqueDepuisTonalite } from "../audio/theorie-romains";
 import {
   barreDeDuree, easyScoreDe, jetonsDe, lireHauteur, lireNotationVexflow, longueurDe, mettreEnMesures,
   type ElementGrave, type Evenement, type FauteGravure, type Hauteur, type NoteTab,
@@ -283,7 +283,9 @@ export function genererGrille(accords: string[], mesuresParLigne: number, largeu
     vf.Formatter().joinVoices([voice]).format([voice], staveWidth - 20);
     voice.draw(vf.getContext(), stave);
   }
-  vf.draw();
+  // PAS DE `vf.draw()` ICI : chaque portée et chaque voix sont dessinées juste au-dessus, et le
+  // dessin de la fabrique les redessinait. Mesuré le 2026-11-22 : huit textes dans le SVG pour quatre
+  // accords, l'un sur l'autre, invisibles à l'écran mais doublés dans le fichier exporté.
   const svg = extraireSvgRendu(div);
   div.remove();
   return svg;
@@ -292,7 +294,7 @@ export function genererGrille(accords: string[], mesuresParLigne: number, largeu
 /** Les accords d'une progression écrite, en chiffres romains ou en symboles. */
 export function accordsDeProgression(progression: string, tonic: string, gamme: string): string[] {
   const tokens = progression.split(/\s+/).filter(Boolean);
-  const romains = /^[IViv]+$/.test(tokens[0] ?? "");
+  const romains = estProgressionRomaine(tokens);
   // `accordsPourPartition` et non Tonal brut : appelé directement, il rendait un
   // accord MAJEUR pour un degré en minuscules (« vi » → La majeur) et résolvait
   // les degrés d'un mode mineur sur la gamme majeure. La partition imprimait

@@ -6,6 +6,15 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA GRILLE ET LA PARTITION VEXFLOW LISENT LES CHIFFRES ROMAINS JETON PAR JETON, ET LA GRILLE N'ÉCRIT PLUS CHAQUE ACCORD DEUX FOIS.** Revue des notations en texte, troisième format, 2026-11-22.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - les deux graveurs ne regardaient que le premier jeton, et n'y voulaient que des I et des V ; « V7 I », « ii° V i » et « bVII IV I » étaient pris pour des symboles, puis refusés comme inconnus, alors que la lecture des degrés savait les lire au milieu d'une progression ;
+    - la grille dessinait chaque portée et chaque texte deux fois, à la main puis par la fabrique : huit textes dans le SVG pour quatre accords, l'un sur l'autre.
+  - **Ce qui change** : `estProgressionRomaine` (`audio/theorie-romains.ts`) dit qu'une progression est romaine quand chacun de ses jetons est un chiffre que Tonal lit ; la grille et la partition passent toutes deux par `accordsDeProgression`. Une progression mêlée reste lue comme des symboles, ses romains nommés inconnus. Les notices le disent.
+  - **Hors de ce lot** : `tonal.ts` et `accords-vers-notation.ts` ont chacun leur propre détection ; elles se reverront avec le format des chiffres romains.
+  - **Le garde**, dans `plugins/vexflow-gravure.test.ts` : cinq grilles, dont les textes du SVG sont comptés, et une partition qui commence par « V7 ». **Vu rouge** sur le code d'avant, 6 cas sur 6.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests VexFlow, Tonal et des romains, et les gardes du dépôt touchés, 13 fichiers et 154 cas verts. **Non vérifié dans l'application.**
+
 - **LA TABLATURE VEXFLOW SE DESSINE SUR LES CORDES DE SON INSTRUMENT, ET REFUSE CE QU'ELLE NE SAIT PAS ÉCRIRE EN LE NOMMANT.** Revue des notations en texte, troisième format, 2026-11-22, selon la règle « refuser, nommé ».
   - **Ce qui se passait**, mesuré par `executer` :
     - le ukulélé et la basse se dessinaient sur six lignes ;

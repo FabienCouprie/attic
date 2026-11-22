@@ -9,7 +9,7 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { analyserMidi, midiDuFichier } from "../audio/midi";
 import {
-  GRILLES_NOTATION, accordsDeProgression, accordsPourPartition, genererGrille, genererPartition, genererTab, graverNotation,
+  GRILLES_NOTATION, accordsDeProgression, genererGrille, genererPartition, genererTab, graverNotation,
   jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore,
 } from "./vexflow-notation";
 import { lireTablature, type FauteGravure } from "../audio/notation-vexflow";
@@ -180,13 +180,9 @@ export const fiches: FicheAudio[] = ([
       const entree = ctx.entree(0);
       const texte = (typeof entree === "string" && entree.trim())
         || ctx.paramTexte("Accords", "C Am F G");
-      const tokens = texte.split(/\s+/).filter(Boolean);
-      const romains = /^[IViv]+$/.test(tokens[0] ?? "");
-      const tonic = ctx.paramTexte("Tonalité", "C");
-      // Même correction que `genererPartition` : voir le commentaire là-bas.
-      const accords = romains
-        ? accordsPourPartition(tonic, ctx.paramTexte("Gamme", "majeur"), tokens)
-        : tokens;
+      // Même lecture que la partition : chaque jeton, par `estProgressionRomaine`, et les degrés par
+      // `accordsPourPartition`. Voir les commentaires là-bas.
+      const accords = accordsDeProgression(texte, ctx.paramTexte("Tonalité", "C"), ctx.paramTexte("Gamme", "majeur"));
       // UN SYMBOLE QU'AUCUN ACCORD NE RECONNAIT EST REFUSE EN LE NOMMANT. Mesure : nourri du format
       // de « Texte -> MIDI », ce noeud annoncait « Termine » et dessinait quatre-vingts elements sans
       // un seul texte — des mesures vides. Tonal le disait deja par `empty`, que personne ne lisait.
