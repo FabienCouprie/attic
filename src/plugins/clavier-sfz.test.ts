@@ -171,7 +171,8 @@ describe("le nœud Clavier SFZ", () => {
   it("son décodeur rend null sur un fichier illisible, au lieu de faire échouer tout le chargement", async () => {
     const { runtime, api } = installerMonde(["zone-057.wav"]);
     const decoder = decodeurElectron(api, runtime as any);
-    expect(await decoder("E:/s/zone-057.wav")).toBeInstanceOf(AudioBuffer);
+    // Le son vient avec la racine que déclare son fichier, lue pour `pitch_keycenter=sample`.
+    expect(((await decoder("E:/s/zone-057.wav")) as { audio: AudioBuffer }).audio).toBeInstanceOf(AudioBuffer);
     expect(await decoder("E:/s/inconnu.wav")).toBeNull();
   });
 });

@@ -325,3 +325,60 @@ describe("l'export, relu par le lecteur", () => {
     expect(message).toContain("=");
   });
 });
+
+/** Un WAV minimal, avec ou sans bloc `smpl` portant la « MIDI unity note ». */
+function wav(racine: number | null): Uint8Array {
+  const octets = (...parts: Uint8Array[]) => {
+    const r = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+    let i = 0;
+    for (const p of parts) { r.set(p, i); i += p.length; }
+    return r;
+  };
+  const u32 = (n: number) => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n, true); return b; };
+  const texte = (s: string) => new TextEncoder().encode(s);
+  const bloc = (id: string, donnees: Uint8Array) => octets(texte(id), u32(donnees.length), donnees);
+  const fmt = new Uint8Array(16);
+  const f = new DataView(fmt.buffer);
+  f.setUint16(0, 1, true); f.setUint16(2, 1, true); f.setUint32(4, SR, true); f.setUint32(8, SR * 2, true);
+  f.setUint16(12, 2, true); f.setUint16(14, 16, true);
+  const smpl = new Uint8Array(36);
+  if (racine !== null) new DataView(smpl.buffer).setUint32(12, racine, true);
+  const corps = octets(texte("WAVE"), bloc("fmt ", fmt), ...(racine === null ? [] : [bloc("smpl", smpl)]), bloc("data", new Uint8Array(8)));
+  return octets(texte("RIFF"), u32(corps.length), corps);
+}
+
+/** Lit un SFZ dont les WAV portent de vrais octets : `la.wav` déclare la racine 69, `sans.wav` aucune. */
+async function lireAvecWav(texte: string) {
+  const fichiers: Record<string, Uint8Array> = { "D:/b/la.wav": wav(69), "D:/b/sans.wav": wav(null) };
+  (globalThis as any).window = { api: {
+    lireTexte: vi.fn(async (c: string) => (c === "D:/b/i.sfz" ? texte : null)),
+    lireFichierAudio: vi.fn(async (c: string) => ({ url: c })),
+  } };
+  (globalThis as any).fetch = vi.fn(async (url: string) => ({ arrayBuffer: async () => fichiers[url].slice().buffer }));
+  const runtime = { decodeAudioData: vi.fn(async () => sinus(440)) };
+  const r: any = await banqueSfz.executer(ctxDEssai([], { Source: "fichier", "Aperçu": "non", "Type de banque": "hauteurs" },
+    { runtime, ficheId: "banque-sfz", data: { sfzChemin: "D:/b/i.sfz" } }) as any);
+  return { banque: r.valeurs[0] as Banque | null, message: String(r.message) };
+}
+
+describe("`pitch_keycenter=sample`, selon la référence", () => {
+  // sfzformat.com/opcodes/pitch_keycenter : « This causes the SFZ player to look in the sample file
+  // metadata for the keycenter value. If [...] the file metadata does not contain pitch
+  // information, it defaults to MIDI note 0. »
+  it("prend la racine que déclare le WAV, dans son bloc `smpl`", async () => {
+    const { banque, message } = await lireAvecWav("<region> sample=la.wav lokey=60 hikey=80 pitch_keycenter=sample");
+    expect(zones(banque)).toEqual([[60, 80, 69]]);
+    expect(message).not.toMatch(/racine/);
+  });
+
+  it("sans métadonnée, joue depuis la note 0 et le DIT", async () => {
+    const { banque, message } = await lireAvecWav("<region> sample=sans.wav lokey=60 hikey=80 pitch_keycenter=sample");
+    expect(zones(banque)).toEqual([[60, 80, 0]]);
+    expect(message).toContain("sans.wav");
+  });
+
+  it("le décalage de <control> et `transpose` s'ajoutent à la racine du fichier", async () => {
+    const { banque } = await lireAvecWav("<control> octave_offset=-1\n<region> sample=la.wav lokey=60 hikey=80 pitch_keycenter=sample transpose=2");
+    expect(zones(banque)).toEqual([[48, 68, 69 - 12 - 2]]);
+  });
+});

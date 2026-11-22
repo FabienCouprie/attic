@@ -39,6 +39,12 @@ export interface RegionSfz {
   hikey: number;
   /** Note à laquelle l'échantillon est juste (`pitch_keycenter`). */
   racine: number;
+  /**
+   * `pitch_keycenter=sample` : la racine est celle que déclare le fichier de l'échantillon, lue au
+   * chargement, et `racine` ne porte alors que ce qui s'y ajoute, le décalage de <control> moins
+   * `transpose`.
+   */
+  racineDuFichier?: boolean;
   loVel: number;
   hiVel: number;
   modeBoucle: string | null;
@@ -345,11 +351,15 @@ export function analyserSfz(texte: string): Sfz {
       // revient à jouer n+t, donc à prendre pour racine `centre - t`. C'est la même chose vue de
       // l'autre bout, et cela évite un champ de plus dans la banque.
       const transpose = Math.round(nombre(h.get("transpose"), 0));
+      // `pitch_keycenter=sample` l'emporte sur `key` : c'est la lecture de rgc et de Cakewalk, ARIA
+      // gardant `key`, et l'opcode qui le dit est le plus explicite des deux.
+      const duFichier = ecrit !== undefined && ecrit.trim().toLowerCase() === "sample";
       regions.push({
         sample,
         lokey: Math.max(0, basse),
         hikey: Math.min(127, haute),
-        racine: (centre ?? cle ?? 60) + decalage - transpose,
+        racine: (duFichier ? 0 : (centre ?? cle ?? 60)) + decalage - transpose,
+        ...(duFichier ? { racineDuFichier: true } : {}),
         loVel: Math.round(nombre(h.get("lovel"), 0)),
         hiVel: Math.round(nombre(h.get("hivel"), 127)),
         modeBoucle: h.get("loop_mode") ?? h.get("loopmode") ?? null,
@@ -429,7 +439,15 @@ export interface Chargement {
   couchesEcartees: number;
   /** Combien de couches de vélocité distinctes la banque contient. */
   couches: number;
+  /**
+   * Échantillons appelés par `pitch_keycenter=sample` dont le fichier ne déclare pas de racine : la
+   * référence les joue depuis la note 0, et le nœud le dit.
+   */
+  sansRacine: string[];
 }
+
+/** Ce qu'un décodeur rend : le son, avec la racine que son fichier déclare quand il la connaît. */
+export type Decode = AudioBuffer | { audio: AudioBuffer; racine: number | null } | null;
 
 /**
  * Une banque jouable à partir de régions analysées et d'échantillons décodés.
@@ -449,7 +467,7 @@ export interface Chargement {
  */
 export function banqueDepuisSfz(
   sfz: Sfz, audios: Map<string, AudioBuffer>,
-  o: { dossierSfz?: string; mode?: "auto" | "hauteurs" | "kit" } = {},
+  o: { dossierSfz?: string; mode?: "auto" | "hauteurs" | "kit"; racines?: ReadonlyMap<string, number | null> } = {},
 ): Chargement {
   // Le mode décide de deux choses : le repli sur la zone la plus proche, et la transposition. En
   // automatique, le fichier tranche lui-même — voir `estKitSfz`.
@@ -466,7 +484,18 @@ export function banqueDepuisSfz(
   // d'un doublon. Seul un doublon exact est écarté, et compté.
   const parPlage = new Map<string, RegionSfz>();
   let couchesEcartees = 0;
-  for (const r of sfz.regions) {
+  // LA RACINE QUE DÉCLARE LE FICHIER se résout avant le tri des doublons, qui la compare. Sans elle,
+  // la référence dit « defaults to MIDI note 0 », et le nœud le dit.
+  const sansRacine: string[] = [];
+  const resolues = sfz.regions.map((r) => {
+    if (!r.racineDuFichier) return r;
+    const chemin = resoudreChemin(o.dossierSfz ?? "", sfz.cheminParDefaut, r.sample);
+    const lue = o.racines?.get(chemin) ?? o.racines?.get(r.sample) ?? null;
+    const present = audios.has(chemin) || audios.has(r.sample);
+    if (lue === null && present && !sansRacine.includes(r.sample)) sansRacine.push(r.sample);
+    return { ...r, racine: (lue ?? 0) + r.racine };
+  });
+  for (const r of resolues) {
     const cle = `${r.lokey}:${r.hikey}:${r.racine}:${r.loVel}:${r.hiVel}`;
     if (parPlage.has(cle)) { couchesEcartees++; continue; }
     parPlage.set(cle, r);
@@ -551,6 +580,7 @@ export function banqueDepuisSfz(
     manquants,
     couchesEcartees,
     couches,
+    sansRacine,
   };
 }
 
@@ -583,7 +613,7 @@ export function cheminsAChargerSfz(sfz: Sfz, dossierSfz: string): string[] {
  */
 export async function chargerSfz(
   texte: string, dossierSfz: string,
-  decoder: (chemin: string) => Promise<AudioBuffer | null>,
+  decoder: (chemin: string) => Promise<Decode>,
   o: {
     surProgres?: (faits: number, total: number) => void;
     mode?: "auto" | "hauteurs" | "kit";
@@ -592,10 +622,12 @@ export async function chargerSfz(
   const sfz = analyserSfz(texte);
   const chemins = cheminsAChargerSfz(sfz, dossierSfz);
   const audios = new Map<string, AudioBuffer>();
+  const racines = new Map<string, number | null>();
   for (let i = 0; i < chemins.length; i++) {
-    const audio = await decoder(chemins[i]);
-    if (audio) audios.set(chemins[i], audio);
+    const lu = await decoder(chemins[i]);
+    if (lu && "racine" in lu) { audios.set(chemins[i], lu.audio); racines.set(chemins[i], lu.racine); }
+    else if (lu) audios.set(chemins[i], lu);
     o.surProgres?.(i + 1, chemins.length);
   }
-  return { ...banqueDepuisSfz(sfz, audios, { dossierSfz, mode: o.mode }), sfz };
+  return { ...banqueDepuisSfz(sfz, audios, { dossierSfz, mode: o.mode, racines }), sfz };
 }

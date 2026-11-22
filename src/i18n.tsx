@@ -895,6 +895,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.sfz.couches": { fr: "{__VAR_0__} doublon(s) écarté(s)", en: "{__VAR_0__} duplicate(s) dropped" },
   "msg.sfz.nbCouches": { fr: "{__VAR_0__} couches de vélocité", en: "{__VAR_0__} velocity layers" },
   "msg.sfz.ignores": { fr: "{__VAR_0__} opcode(s) ignoré(s) : {__VAR_1__}…", en: "{__VAR_0__} opcode(s) ignored: {__VAR_1__}…" },
+  "msg.sfz.sansRacine": { fr: "{__VAR_0__} échantillon(s) sans note racine dans le fichier, joué(s) depuis la note 0 comme le veut le format : {__VAR_1__}", en: "{__VAR_0__} sample(s) with no root note in the file, played from note 0 as the format requires: {__VAR_1__}" },
   "msg.sfz.pb.include": { fr: "{__VAR_0__} #include non suivi(s) : {__VAR_1__}", en: "{__VAR_0__} #include not followed: {__VAR_1__}" },
   "msg.sfz.pb.sansEchantillon": { fr: "{__VAR_0__} région(s) sans sample écartée(s) : {__VAR_1__}", en: "{__VAR_0__} region(s) with no sample dropped: {__VAR_1__}" },
   "msg.sfz.pb.valeur": { fr: "{__VAR_0__} région(s) écartée(s), valeur illisible ou hors plage : {__VAR_1__}", en: "{__VAR_0__} region(s) dropped, unreadable or out-of-range value: {__VAR_1__}" },

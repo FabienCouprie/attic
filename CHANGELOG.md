@@ -6,6 +6,17 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **`PITCH_KEYCENTER=SAMPLE` PREND LA RACINE QUE DÉCLARE LE WAV.** Revue des notations en texte, le format SFZ, 2026-11-22, quatrième lot.
+  - **Ce qui se passait** : la référence dit de `pitch_keycenter=sample` qu'il « causes the SFZ player to look in the sample file metadata for the keycenter value », et la note 0 sans métadonnée. La valeur ne se lisait pas comme une note, et la région prenait la racine 60, sans un mot, quel que soit le fichier.
+  - **Ce qui change** :
+    - la racine se lit dans le bloc `smpl` du WAV, la « MIDI unity note », sur les octets bruts, avant le décodage qui ne garde que le son (`audio/wav-racine.ts`) ;
+    - un WAV sans ce bloc est joué depuis la note 0, comme le veut la référence, et « Banque SFZ » comme « Clavier SFZ » le disent en nommant le fichier ;
+    - le décalage de <control> et `transpose` s'ajoutent à la racine lue, et elle se résout avant le tri des doublons, qui la compare ;
+    - `pitch_keycenter=sample` l'emporte sur `key`, comme chez rgc et Cakewalk ; ARIA garde `key`.
+  - Le décodeur des deux nœuds rend maintenant le son avec la racine de son fichier : un cas de `plugins/clavier-sfz.test.ts` lit le son dans ce résultat, et non plus le résultat lui-même.
+  - Décision de Fabien : lire la racine du WAV.
+  - Tenu par trois cas de plus dans `plugins/sfz-format.test.ts`, sur de vrais octets de WAV. Les trois vus rouges sur le code d'avant, et deux vus rouges sur une lecture du mauvais champ du bloc `smpl`, plantée.
+
 - **L'EXPORT SFZ GARDE LE VOLUME, LE TEMPÉRAMENT ET LE KIT, ET N'ÉCRIT PLUS UN SON PAR-DESSUS UN AUTRE.** Revue des notations en texte, le format SFZ, 2026-11-22, troisième lot.
   - **Ce qui se passait**, mesuré par `executer` en exportant par « Export SFZ » et en relisant par « Banque SFZ » :
     - le gain d'une zone et son tempérament n'étaient pas écrits : une zone à 0,5, soit −6,02 dB, et une zone à 63,16 cents par touche, dix-neuf degrés par octave, se relisaient au gain plein et au demi-ton ;

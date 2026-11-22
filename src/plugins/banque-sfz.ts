@@ -115,6 +115,9 @@ export const fiches: FicheAudio[] = ([
       if (integre) morceaux.push(traduire("msg.sfz.integre"));
       if (charge.manquants.length) morceaux.push(traduire("msg.sfz.manquants", String(charge.manquants.length)));
       if (charge.couchesEcartees) morceaux.push(traduire("msg.sfz.couches", String(charge.couchesEcartees)));
+      if (charge.sansRacine.length) {
+        morceaux.push(traduire("msg.sfz.sansRacine", String(charge.sansRacine.length), charge.sansRacine.slice(0, 2).join(", ")));
+      }
       morceaux.push(...problemes);
       if (charge.sfz.ignores.length) {
         morceaux.push(traduire("msg.sfz.ignores", String(charge.sfz.ignores.length), charge.sfz.ignores.slice(0, 3).join(", ")));

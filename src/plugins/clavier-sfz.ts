@@ -19,7 +19,8 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { rendreNotes, type Banque, type NoteJouee } from "../audio/clavier-banque";
-import { chargerSfz, direProblemesSfz, dossierDe } from "../audio/sfz";
+import { chargerSfz, direProblemesSfz, dossierDe, type Decode } from "../audio/sfz";
+import { racineDuWav } from "../audio/wav-racine";
 import { deposerBanque } from "../audio/banques-vives";
 
 /**
@@ -31,12 +32,16 @@ import { deposerBanque } from "../audio/banques-vives";
  * échouer tout le chargement pour un WAV égaré.
  */
 export function decodeurElectron(api: any, actx: BaseAudioContext) {
-  return async (chemin: string): Promise<AudioBuffer | null> => {
+  return async (chemin: string): Promise<Decode> => {
     try {
       const lu = await api?.lireFichierAudio?.(chemin);
       if (!lu?.url) return null;
       const reponse = await fetch(lu.url);
-      return await actx.decodeAudioData(await reponse.arrayBuffer());
+      const octets = await reponse.arrayBuffer();
+      // La racine se lit AVANT le décodage, qui détache les octets et ne garde que le son :
+      // `pitch_keycenter=sample` la demande au fichier.
+      const racine = racineDuWav(octets);
+      return { audio: await actx.decodeAudioData(octets), racine };
     } catch {
       return null;
     }
@@ -119,6 +124,9 @@ export const fiches: FicheAudio[] = ([
         if (charge.couches > 1) morceaux.push(traduire("msg.sfz.nbCouches", String(charge.couches)));
         if (charge.manquants.length) morceaux.push(traduire("msg.sfz.manquants", String(charge.manquants.length)));
         if (charge.couchesEcartees) morceaux.push(traduire("msg.sfz.couches", String(charge.couchesEcartees)));
+        if (charge.sansRacine.length) {
+          morceaux.push(traduire("msg.sfz.sansRacine", String(charge.sansRacine.length), charge.sansRacine.slice(0, 2).join(", ")));
+        }
         morceaux.push(...problemes);
         if (charge.sfz.ignores.length) {
           morceaux.push(traduire("msg.sfz.ignores", String(charge.sfz.ignores.length), charge.sfz.ignores.slice(0, 3).join(", ")));
