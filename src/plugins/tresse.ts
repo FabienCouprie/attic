@@ -25,8 +25,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre de bandes. Trois : coupures à 250 Hz et 2,5 kHz. Quatre : à 180 Hz, 900 Hz et 4,5 kHz. Au départ, la bande la plus grave est à gauche et la plus aiguë à droite.",
         docEn: "Number of bands. Three: cutoffs at 250 Hz and 2.5 kHz. Four: at 180 Hz, 900 Hz and 4.5 kHz. At first, the lowest band is on the left and the highest on the right." },
       { nom: "Mot", nomEn: "Word", type: "texte", defaut: "1 -2", defautEn: "1 -2",
-        doc: "Le motif de la tresse, en croisements séparés par des espaces. « 1 » : le brin de la place 1 passe dessus celui de la place 2 ; « -1 » : il passe dessous ; « 2 » concerne les places 2 et 3. « 1 -2 » est la natte classique à trois brins. Les places se comptent de gauche à droite.",
-        docEn: "The braid's pattern, as crossings separated by spaces. « 1 »: the strand in place 1 goes over the one in place 2; « -1 »: it goes under; « 2 » concerns places 2 and 3. « 1 -2 » is the classic three-strand plait. Places are counted from left to right." },
+        doc: "Le motif de la tresse, en croisements séparés par des espaces. « 1 » : le brin de la place 1 passe dessus celui de la place 2 ; « -1 » : il passe dessous ; « 2 » concerne les places 2 et 3. « 1 -2 » est la natte classique à trois brins. Les places se comptent de gauche à droite. Un croisement s'écrit en entier décimal, non nul, entre moins et plus le nombre de brins moins un ; un mot vide, ou dont un croisement ne se lit pas, est refusé.",
+        docEn: "The braid's pattern, as crossings separated by spaces. « 1 »: the strand in place 1 goes over the one in place 2; « -1 »: it goes under; « 2 » concerns places 2 and 3. « 1 -2 » is the classic three-strand plait. Places are counted from left to right. A crossing is written as a non-zero decimal integer, between minus and plus the number of strands minus one; an empty word, or one with an unreadable crossing, is refused." },
       { nom: "Répétitions", nomEn: "Repeats", type: "nombre", plage: [1, 12], pas: 1, defaut: 3,
         doc: "Nombre de fois que le motif est joué, réparti sur la durée du son. Les brins retrouvent leurs places au bout d'un nombre de motifs fixé par le mot, 3 pour la natte : le message l'indique.",
         docEn: "Number of times the pattern is played, spread over the sound's length. Strands return to their places after a number of patterns set by the word, 3 for the plait: the message tells you." },
@@ -42,6 +42,9 @@ export const fiches: FicheAudio[] = ([
       if (sansEntree(buffer)) return buffer;
       const brins = ctx.paramTexte("Brins", "3") === "4" ? 4 : 3;
       const texte = ctx.paramTexte("Mot", "1 -2");
+      // UN MOT VIDE A SON PROPRE MESSAGE, dans la langue de l'interface : il était refusé « près de
+      // « vide » », en français même en anglais. Revue des notations en texte, 2026-11-22.
+      if (!texte.trim()) return { valeurs: [null], erreur: true, message: traduire("msg.tresse.mot_vide_var_0", brins - 1) };
       const lu = lireMotTresse(texte, brins);
       if ("erreur" in lu) {
         return { valeurs: [null], erreur: true, message: traduire("msg.tresse.mot_invalide_var_0_var_1", lu.erreur, brins - 1) };

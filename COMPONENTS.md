@@ -8803,7 +8803,7 @@ Splits the sound into 3 or 4 frequency bands (low, mid, high) and makes them the
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Strands | choice | 3 (low · mid · high) | 3 (low · mid · high) / 4 | Number of bands. Three: cutoffs at 250 Hz and 2.5 kHz. Four: at 180 Hz, 900 Hz and 4.5 kHz. At first, the lowest band is on the left and the highest on the right. |
-| Word | text | `1 -2` |  | The braid's pattern, as crossings separated by spaces. « 1 »: the strand in place 1 goes over the one in place 2; « -1 »: it goes under; « 2 » concerns places 2 and 3. « 1 -2 » is the classic three-strand plait. Places are counted from left to right. |
+| Word | text | `1 -2` |  | The braid's pattern, as crossings separated by spaces. « 1 »: the strand in place 1 goes over the one in place 2; « -1 »: it goes under; « 2 » concerns places 2 and 3. « 1 -2 » is the classic three-strand plait. Places are counted from left to right. A crossing is written as a non-zero decimal integer, between minus and plus the number of strands minus one; an empty word, or one with an unreadable crossing, is refused. |
 | Repeats | number | 3 | 1 – 12, step 1 | Number of times the pattern is played, spread over the sound's length. Strands return to their places after a number of patterns set by the word, 3 for the plait: the message tells you. |
 | Relief | number | 100 % | 0 – 100 %, step 1 | Contrast between the strand going over (+3 dB mid-crossing at 100%) and the one going under (−6 dB). At 0%, bands swap places without it being heard which one passes in front. |
 | Width | number | 90 % | 0 – 100 %, step 1 | Distance of the outermost places from the centre. |
@@ -10702,7 +10702,7 @@ Places the notes of a melody on a circle whose positions are evenly spread, and 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Pattern | text | `101010010100` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. |
+| Pattern | text | `101010010100` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. Anything other than 0 and 1 is set aside; a pattern carrying neither is refused. |
 | Fundamental | choice | C4 · 261.63 Hz | C1 · 32.70 Hz / C#1 · 34.65 Hz / D1 · 36.71 Hz / D#1 · 38.89 Hz / E1 · 41.20 Hz / F1 · 43.65 Hz / F#1 · 46.25 Hz / G1 · 49.00 Hz / G#1 · 51.91 Hz / A1 · 55.00 Hz / A#1 · 58.27 Hz / B1 · 61.74 Hz / C2 · 65.41 Hz / C#2 · 69.30 Hz / D2 · 73.42 Hz / D#2 · 77.78 Hz / E2 · 82.41 Hz / F2 · 87.31 Hz / F#2 · 92.50 Hz / G2 · 98.00 Hz / G#2 · 103.83 Hz / A2 · 110.00 Hz / A#2 · 116.54 Hz / B2 · 123.47 Hz / C3 · 130.81 Hz / C#3 · 138.59 Hz / D3 · 146.83 Hz / D#3 · 155.56 Hz / E3 · 164.81 Hz / F3 · 174.61 Hz / F#3 · 185.00 Hz / G3 · 196.00 Hz / G#3 · 207.65 Hz / A3 · 220.00 Hz / A#3 · 233.08 Hz / B3 · 246.94 Hz / C4 · 261.63 Hz / C#4 · 277.18 Hz / D4 · 293.66 Hz / D#4 · 311.13 Hz / E4 · 329.63 Hz / F4 · 349.23 Hz / F#4 · 369.99 Hz / G4 · 392.00 Hz / G#4 · 415.30 Hz / A4 · 440.00 Hz / A#4 · 466.16 Hz / B4 · 493.88 Hz / C5 · 523.25 Hz / C#5 · 554.37 Hz / D5 · 587.33 Hz / D#5 · 622.25 Hz / E5 · 659.26 Hz / F5 · 698.46 Hz / F#5 · 739.99 Hz / G5 · 783.99 Hz / G#5 · 830.61 Hz / A5 · 880.00 Hz / A#5 · 932.33 Hz / B5 · 987.77 Hz / C6 · 1046.50 Hz | The note of position zero, given with its frequency. Every other one follows from it. |
 | Layout | choice | The circle is the octave | The circle is the octave / Twelve semitones / Chain of fifths | What the positions other than zero are worth. The octave divided by the circle, the tempered semitone, or the chain of just fifths taken in the order of the onsets. |
 
@@ -10755,7 +10755,7 @@ Places the onsets of a rhythm on a circle whose positions are evenly spread, and
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Rhythm | choice | Free | Free / Tresillo / Son / Shiko / Soukous / Rumba / Bossa nova / Gahu / Samba / Fume-fume / Bembé / Steve Reich | A traditional rhythm to lay in one go, or « Free » for the one you write yourself. Clicking a position sets this back to « Free » and keeps what was laid. |
-| Pattern | text | `1001001000101000` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free ». |
+| Pattern | text | `1001001000101000` |  | A string of zeros and ones, one per position of the circle. Its length gives the number of positions. The drawing writes it at every click, and it can also be typed. It serves only while « Rhythm » is on « Free ». Anything other than 0 and 1 is set aside; a pattern carrying neither is refused. |
 | Drum | choice | Kick | Kick / Snare / Clap / Closed hi-hat / Open hi-hat / Crash cymbal / Low floor tom / Low tom / Low-mid tom / Hi-mid tom / High tom / Cowbell / Claves | The sound of every onset of the circle. A rhythm circle carries only one; to mix several, place several circles. |
 
 #### Rotate Circle

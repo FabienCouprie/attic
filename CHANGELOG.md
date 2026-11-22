@@ -6,6 +6,20 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN CERCLE SANS ZÉRO NI UN EST REFUSÉ, ET LA TRESSE NE LIT QUE DES CROISEMENTS DÉCIMAUX.** Revue des notations en texte, dixième format, 2026-11-22, deuxième lot : le Cercle rythmique, le Cercle mélodique et la Tresse.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un motif de cercle qui ne portait ni 0 ni 1, « x..x..x. » ou le texte vide, devenait le motif par défaut sans un mot, dans les deux cercles ;
+    - la Tresse lisait « 0x1 » comme le croisement 1, en hexadécimal ;
+    - un mot de tresse vide était refusé « près de « vide » », en français même dans l'interface anglaise.
+  - **Ce qui change** :
+    - un motif de cercle qui ne porte ni 0 ni 1 est refusé, en erreur. Ce qui n'est ni 0 ni 1 reste écarté : la notice promet qu'un motif se colle tel quel depuis l'adresse d'un cercle rythmique en ligne, et « https://exemple.org/#1001001000101000 » se lit toujours en seize places ;
+    - un croisement de tresse s'écrit en entier décimal, et un mot vide a son propre message, dans la langue de l'interface.
+
+    Les documentations des trois réglages le disent.
+  - **Le garde** : 5 cas de plus dans `plugins/motifs-rythmiques.test.ts`.
+    - Vu rouge sur le code d'avant : 4 cas.
+    - Vu rouge aussi sur un cercle qui retombe de nouveau sur le motif par défaut, planté.
+
 - **UN MOTIF RYTHMIQUE SE LIT EN CASES OU EN POSITIONS COMME SA DOCUMENTATION LE DIT, ET CE QUI NE SE LIT PAS EST REFUSÉ.** Revue des notations en texte, dixième format, 2026-11-22, premier lot : l'Analyse rythmique et le motif du Canon par pavage.
   - **Ce qui se passait**, mesuré par `executer`, dans l'Analyse rythmique :
     - « 0 1 », deux positions, se lisait comme un cycle de deux cases ;

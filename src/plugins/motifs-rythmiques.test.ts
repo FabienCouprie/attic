@@ -9,7 +9,7 @@
 import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
-import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
+import { entreesDEssai, lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
 import { notesDuMidi } from "../audio/midi";
 
 const F = (id: string) => registre.trouverDef(id) as unknown as FicheLancable;
@@ -74,5 +74,48 @@ describe("LE MOTIF DU CANON SE LIT COMME UNE LISTE DE POSITIONS", () => {
   it("un motif vide fait chercher un motif qui pave, comme le dit la documentation", async () => {
     const { r } = await CANON("");
     expect(r.erreurRendue, r.message).toBe(false);
+  }, 60_000);
+});
+
+// LE MOTIF D'UN CERCLE EST UNE SUITE DE ZÉROS ET DE UNS, et il se colle tel quel depuis l'adresse d'un
+// cercle rythmique en ligne, ce que dit sa notice : ce qui n'est ni 0 ni 1 est donc écarté. Mais un
+// texte qui n'en porte aucun devenait le motif par défaut, en silence.
+describe("UN CERCLE SANS ZÉRO NI UN EST REFUSÉ, au lieu de devenir le motif par défaut", () => {
+  const CERCLE = (id: string, motif: string) =>
+    lancerFiche(F(id), id === "cercle-rythmique" ? { Rythme: "libre", Motif: motif } : { Motif: motif }, { entrees: [] });
+  const places = (v: unknown) => (v as { positions: number; sommets: unknown[] } | null);
+
+  it.each([["cercle-rythmique"], ["cercle-melodique"]])("%s refuse « x..x..x. » et le texte vide", async (id) => {
+    for (const motif of ["x..x..x.", ""]) {
+      const r = await CERCLE(id, motif);
+      expect(r.erreurRendue, `${motif} : ${r.message}`).toBe(true);
+      expect(r.valeurs[0]).toBe(null);
+    }
+  }, 60_000);
+
+  it("le cercle rythmique lit toujours un motif espacé, ou collé depuis une adresse", async () => {
+    const espace = await CERCLE("cercle-rythmique", "1 0 0 1");
+    expect(places(espace.valeurs[0])?.positions).toBe(4);
+    const adresse = await CERCLE("cercle-rythmique", "https://exemple.org/#1001001000101000");
+    expect(adresse.erreurRendue, adresse.message).toBe(false);
+    expect(places(adresse.valeurs[0])?.positions).toBe(16);
+    expect(places(adresse.valeurs[0])?.sommets).toHaveLength(5);
+  }, 60_000);
+});
+
+// UN CROISEMENT DE TRESSE EST UN ENTIER NON NUL, écrit en décimal, d'après la présentation d'Artin.
+describe("LA TRESSE REFUSE CE QUI N'EST PAS UN CROISEMENT, et le dit dans la langue de l'interface", () => {
+  const TRESSE = (mot: string) => lancerFiche(F("tresse"), { Mot: mot }, { entrees: entreesDEssai(F("tresse")) });
+
+  it("« 0x1 », un nombre hexadécimal, est refusé et nommé", async () => {
+    const r = await TRESSE("0x1 -2");
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.message).toContain("« 0x1 »");
+  }, 60_000);
+
+  it("un mot vide est refusé par son propre message, et non « près de « vide » »", async () => {
+    const r = await TRESSE("");
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.message).not.toContain("« vide »");
   }, 60_000);
 });
