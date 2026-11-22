@@ -40,7 +40,7 @@ const nombre = (x: number, decimales: number) =>
 
 export const fiches: FicheAudio[] = ([
   fiche({
-    id: "dither", nom: "Dither", nomEn: "Dither",
+    id: "dither", nomDicte: "arrondi avec bruit", nom: "Dither", nomEn: "Dither",
     univers: "Traitement", famille: "Effets",
     resume: "Réduit la profondeur du son, avec un bruit de dither et une mise en forme de ce bruit.",
     resumeEn: "Reduces the sound's bit depth, with dither noise and shaping of that noise.",
