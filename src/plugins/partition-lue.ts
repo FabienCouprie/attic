@@ -25,7 +25,17 @@ const CLES: Record<string, number> = {
   E050: di("G", 4), E07A: di("G", 4), E052: di("G", 3), E053: di("G", 5),
   E062: di("F", 3), E07C: di("F", 3), E05C: di("C", 4), E07B: di("C", 4),
 };
-const ALTERATIONS: Record<string, number> = { E260: -1, E261: 0, E262: 1, E263: 2, E264: -2 };
+// LES QUARTS DE TON SONT CEUX DE STEIN ET ZIMMERMANN, que Verovio dessine pour les valeurs quarter-flat,
+// three-quarters-flat, quarter-sharp et three-quarters-sharp de MusicXML : mesuré le 2026-11-22, douzième
+// format de la revue. Ils se lisaient comme un bécarre, sans même passer dans `inconnus`.
+const ALTERATIONS: Record<string, number> = {
+  E260: -1, E261: 0, E262: 1, E263: 2, E264: -2, E280: -0.5, E281: -1.5, E282: 0.5, E283: 1.5,
+};
+/** L'altération d'un signe dessiné ; un signe inconnu est rendu dans `inconnus`, et ne vaut rien. */
+const alterationDe = (u: Element, inconnus: string[]) => {
+  if (!(glyphe(u) in ALTERATIONS)) inconnus.push(glyphe(u));
+  return ALTERATIONS[glyphe(u)] ?? 0;
+};
 const TETES: Record<string, number> = { E0A0: 8, E0A2: 4, E0A3: 2, E0A4: 1 };
 const CROCHETS: Record<string, number> = { E240: 1, E241: 1, E242: 2, E243: 2, E244: 3, E245: 3, E246: 4, E247: 4 };
 const SILENCES: Record<string, number> = { E4E3: 4, E4E4: 2, E4E5: 1, E4E6: 0.5, E4E7: 0.25, E4E8: 0.125 };
@@ -99,7 +109,7 @@ export function lireGravure(svg: string): PartitionLue {
         const c = classe(e);
         const u = uses(e)[0];
         if (c === "clef" && u) { if (!(glyphe(u) in CLES)) inconnus.push(glyphe(u)); s.cle = { d: CLES[glyphe(u)] ?? NaN, y: pos(u).y }; return; }
-        if (c === "keySig") { s.armure = new Map(uses(e).map((a) => [((degre(pos(a).y) % 7) + 7) % 7, ALTERATIONS[glyphe(a)] ?? 0])); return; }
+        if (c === "keySig") { s.armure = new Map(uses(e).map((a) => [((degre(pos(a).y) % 7) + 7) % 7, alterationDe(a, inconnus)])); return; }
         if (c === "meterSig") { const [n, d] = uses(e).map((g) => Number(glyphe(g)[3])); if (n && d) metrique = (n * 4) / d; return; }
         return c;
       };
@@ -116,7 +126,7 @@ export function lireGravure(svg: string): PartitionLue {
               const u = pos(n.querySelector("g.notehead use")!);
               const d = degre(u.y);
               const a = n.querySelector("g.accid use");
-              if (a) portees.set(d, ALTERATIONS[glyphe(a)] ?? 0);
+              if (a) portees.set(d, alterationDe(a, inconnus));
               const alteration = portees.get(d) ?? s.armure.get(((d % 7) + 7) % 7) ?? 0;
               const lue: Tete = { x: u.x, y: u.y, midi: 12 * (Math.floor(d / 7) + 1) + DEMI[((d % 7) + 7) % 7] + alteration, debut: t, duree, systeme };
               tetes.push(lue); ici.notes.push(lue);

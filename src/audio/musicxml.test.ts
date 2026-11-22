@@ -5,7 +5,7 @@
 // nommées. Ces tests tiennent donc la structure ET l'invariant qui compte — chaque mesure
 // est pleine, ni plus ni moins.
 import { describe, expect, it } from "vitest";
-import { evenementsDepuisNotes, nomMusicXML, notesVersMusicXML, valeurNote } from "./musicxml";
+import { nomMusicXML, notesVersMusicXML, valeurNote, voixDepuisNotes } from "./musicxml";
 
 const noire = (note: number, debut: number, tempo = 120) => ({
   note, debut, fin: debut + 60 / tempo,
@@ -46,26 +46,29 @@ describe("valeurs de note", () => {
   });
 });
 
-describe("regroupement en événements", () => {
-  it("réunit en un accord les notes qui commencent ensemble", () => {
-    const ev = evenementsDepuisNotes([noire(60, 0), noire(64, 0), noire(67, 0)], 120, 16);
-    expect(ev.length).toBe(1);
-    expect(ev[0].notes).toEqual([60, 64, 67]);
+// LES VOIX REMPLACENT LE REGROUPEMENT PAR ATTAQUE, qui donnait à un accord la plus longue de ses durées et
+// perdait une note commencée pendant une autre. Les quatre règles qu'il tenait valent pour elles. Revue des
+// notations en texte, 2026-11-22.
+describe("les voix d'une suite de notes", () => {
+  it("réunit en un accord les notes qui commencent et finissent ensemble", () => {
+    const voix = voixDepuisNotes([noire(60, 0), noire(64, 0), noire(67, 0)], 120, 16);
+    expect(voix).toHaveLength(1);
+    expect(voix[0].map((e) => e.notes)).toEqual([[60, 64, 67]]);
   });
 
   it("garde l'ordre chronologique", () => {
-    const ev = evenementsDepuisNotes([noire(67, 1), noire(60, 0), noire(64, 0.5)], 120, 16);
-    expect(ev.map((e) => e.notes[0])).toEqual([60, 64, 67]);
+    const voix = voixDepuisNotes([noire(67, 1), noire(60, 0), noire(64, 0.5)], 120, 16);
+    expect(voix[0].map((e) => e.notes[0])).toEqual([60, 64, 67]);
   });
 
   it("quantifie : une note jouée à 0,503 s tombe sur la grille", () => {
-    const ev = evenementsDepuisNotes([{ note: 60, debut: 0.503, fin: 1.0 }], 120, 16);
-    expect(ev[0].debut).toBe(4); // une noire à 120 BPM = 4 doubles-croches
+    const voix = voixDepuisNotes([{ note: 60, debut: 0.503, fin: 1.0 }], 120, 16);
+    expect(voix[0][0].debut).toBe(4); // une noire à 120 BPM = 4 doubles-croches
   });
 
   it("ne produit jamais une durée nulle : une partition n'a pas de note sans valeur", () => {
-    const ev = evenementsDepuisNotes([{ note: 60, debut: 0, fin: 0.001 }], 120, 16);
-    expect(ev[0].duree).toBeGreaterThanOrEqual(1);
+    const voix = voixDepuisNotes([{ note: 60, debut: 0, fin: 0.001 }], 120, 16);
+    expect(voix[0][0].fin - voix[0][0].debut).toBeGreaterThanOrEqual(1);
   });
 });
 
