@@ -6,6 +6,24 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **CE QUE LA PARTITION GRAVÉE NE SAIT PAS DESSINER EN ABC EST REFUSÉ, ET NOMMÉ.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Refuse them, named ».
+  - **Ce qui se passait**, relu sur la gravure, sous toutes les écritures que la norme ABC 2.1 permet :
+    - deux voix se gravaient bout à bout sur une seule portée, qu'elles soient déclarées en tête, en ligne, par %%score ou %%staves. « MIDI → ABC » écrit une seconde voix dès qu'une basse tient sous une mélodie ;
+    - une fin alternative, « |1 », « [1 » ou « |[1 », se gravait sans son crochet : un musicien jouait les deux fins ;
+    - « [K:G] » ou une ligne « K:G » en cours de morceau se gravaient comme un changement de clé de sol, sans armure. Le fa suivant se lisait naturel ;
+    - la liaison d'une seule note d'un accord ne se dessinait pas, et « [CE]2- » n'en dessinait qu'une sur deux ;
+    - (5, (6, (7 et (9, que la norme (§4.13) joue dans le temps de deux en mesure simple, se gravaient avec leur seul chiffre, qu'un musicien lit cinq pour quatre, six pour quatre, sept pour quatre et neuf pour huit. Le groupe se lisait deux fois trop long, quatre fois pour (9.
+  - **Ce qui change** : `tournuresNonGravees` (`audio/abc-gravure.ts`) relève ces cinq tournures, et le nœud refuse l'air, le message nommant chacune, sa ligne et le fragment. Ce que le graveur dessine juste reste gravé :
+    - un changement de clé seule, « [K:clef=bass] » ;
+    - une seule voix déclarée ;
+    - (5:4:5, cinq pour quatre ;
+    - (4 en mesure simple, quatre pour trois.
+
+    Le second nombre d'un n-olet est celui du lecteur ABC, `qParDefaut`, désormais exporté. La notice le dit, en français et en anglais.
+  - **Le garde** : 19 cas dans `plugins/partition-verovio-norme.test.ts`, dont la chaîne MIDI → ABC → Partition gravée, et 5 cas dans `audio/abc-gravure.test.ts`.
+    - Vu rouge sur le code d'avant : les 15 refus.
+    - Vu rouge aussi sur des fins alternatives que le relevé ne voyait plus, plantées.
+
 - **UN ACCORD ABC DONT LA DURÉE SUIT LE CROCHET SE GRAVE À SA DURÉE.** Revue des notations en texte, quatrième format, 2026-11-22.
   - **Ce qui se passait**, mesuré par `executer` et relu sur la gravure : Verovio gravait « [CEG]2 » à l'unité, en noires au lieu de blanches en L:1/4. La norme ABC 2.1 (§4.17) applique pourtant à chaque note la durée qui suit le crochet. C'est la forme qu'écrit « MIDI → ABC » : deux accords de blanches, « [CEG]4 [DFA]4 » en L:1/8, se gravaient en deux croches.
   - **Ce qui change** : `dureesDansLesAccords` (`audio/abc-gravure.ts`) écrit cette durée dans chaque note avant la gravure, « [C2E2G2] ». Une note qui a déjà sa durée la voit multipliée, « [C2E]2 » valant « [C4E2] ». L'en-tête, les champs, les chaînes, les ornements, les notes d'ornement et les commentaires ne sont pas touchés.

@@ -93,6 +93,58 @@ describe("UN ACCORD ABC DONT LA DURÉE SUIT LE CROCHET SE GRAVE À SA DURÉE", (
   }, 60_000);
 });
 
+// CE QUE VEROVIO NE SAIT PAS GRAVER EST REFUSÉ, ET NOMMÉ. Décision de Fabien du 2026-11-22, « Refuse
+// them, named ». Relu sur la gravure ce jour-là, sous toutes les écritures que la norme permet : deux
+// voix bout à bout sur une portée, des fins sans crochet, un K: gravé comme une clé, des liaisons
+// d'accord perdues, des n-olets que leur chiffre fait lire deux à quatre fois trop longs.
+describe("CE QUE LE GRAVEUR NE SAIT PAS DESSINER EST REFUSÉ, et le message nomme la tournure et sa ligne", () => {
+  it.each([
+    ["deux voix déclarées", T("V:1\nV:2\nK:C\nV:1\nC D |\nV:2\nE F |"), 7, "V:2"],
+    ["deux voix en ligne", T("K:C\n[V:1] C D |\n[V:2] E F |"), 8, "[V:2]"],
+    ["une fin alternative", T("K:C\n|: C |1 D :|2 E |]"), 7, "|1"],
+    ["une fin alternative entre crochets", T("K:C\n|: C [1 D :|[2 E |]"), 7, "[1"],
+    ["un changement de tonalité en ligne", T("K:C\nF [K:G] F |"), 7, "[K:G]"],
+    ["un changement de tonalité sur sa ligne", T("K:C\nF F |\nK:G\nF F |"), 8, "K:G"],
+    ["la liaison d'une seule note d'un accord", T("K:C\n[C-E]2 [CG]2 |"), 7, "[C-E]2"],
+    ["un accord lié", T("K:C\nz2 [CE]2- | [CE]2 D2 |"), 7, "[CE]2-"],
+    ["un quintolet en mesure simple", T("K:C\n(5CDEFG z3|", "M:4/4\nL:1/8"), 7, "(5"],
+    ["un quintolet au rapport écrit, cinq pour deux", T("K:C\n(5:2:5CDEFG z3|", "M:4/4\nL:1/8"), 7, "(5:2:5"],
+    ["un sextolet", T("K:C\n(6CDEFGA z3|", "M:4/4\nL:1/8"), 7, "(6"],
+    ["un septolet", T("K:C\n(7CDEFGAB z3|", "M:4/4\nL:1/8"), 7, "(7"],
+    ["un nonolet", T("K:C\n(9CDEFGABcd z3|", "M:4/4\nL:1/8"), 7, "(9"],
+    ["un quintolet en mesure composée", T("K:C\n(5CDEFG z3|", "M:6/8\nL:1/8"), 7, "(5"],
+  ])("%s", async (_titre, abc, ligne, fragment) => {
+    const r = await graver(abc);
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.valeurs).toEqual([null, null]);
+    expect(r.message).toMatch(/rien n'est gravé|nothing is engraved/);
+    expect(r.message).toMatch(new RegExp(`(ligne|line) ${ligne} `));
+    expect(r.message).toContain(`« ${fragment} »`);
+  }, 60_000);
+
+  it("par la chaîne MIDI → ABC → Partition gravée, une basse tenue sous la mélodie est refusée, ses voix nommées", async () => {
+    const notes = [[48, 0, 4], [60, 0, 1], [62, 1, 2], [64, 2, 3], [65, 3, 4]];
+    const midi = notesVersFichierMidi(notes.map(([note, debut, fin]) => ({ note, debut, fin, velocite: 100 })), 60);
+    const abc = await lancerFiche(F("midi-vers-abc"), {}, { entrees: [midi] });
+    const r = await lancerFiche(F("partition-verovio"), {}, { entrees: [String(abc.valeurs[0])] });
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.message).toContain("1, 2");
+  }, 60_000);
+
+  it.each([
+    ["un quintolet au rapport de l'usage, cinq pour quatre", T("K:C\n(5:4:5CDEFG z3|", "M:4/4\nL:1/8"),
+      [[60, 0, 0.4], [62, 0.4, 0.8], [64, 0.8, 1.2], [65, 1.2, 1.6], [67, 1.6, 2]]],
+    ["un quadruplet en mesure simple, quatre pour trois", T("K:C\n(4CDEF z|", "M:4/4\nL:1/8"),
+      [[60, 0, 0.375], [62, 0.375, 0.75], [64, 0.75, 1.125], [65, 1.125, 1.5]]],
+    ["une seule voix déclarée", T("V:1\nK:C\nV:1\nC D E F |"), [[60, 0, 1], [62, 1, 2], [64, 2, 3], [65, 3, 4]]],
+    ["un changement de clé seule", T("K:C\nC D [K:clef=bass] C, D, |"), [[48, 2, 3], [50, 3, 4], [60, 0, 1], [62, 1, 2]].sort((a, b) => a[1] - b[1])],
+  ])("ce qu'il sait dessiner reste gravé : %s", async (_titre, abc, attendu) => {
+    const r = await graver(abc);
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(lireGravure(String(r.valeurs[0])).notes).toEqual(attendu);
+  }, 60_000);
+});
+
 describe("CE QUE LE LECTEUR ABC REFUSE, LE GRAVEUR LE REFUSE, avec les mêmes fautes nommées", () => {
   it.each([
     ["une durée divisée par zéro", T("K:C\nC/0 D|")],
