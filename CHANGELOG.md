@@ -6,6 +6,18 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA GRAVURE VEXFLOW LIT EN TEMPS, ÉCRIT SES ACCORDS À L'ÉTAT FONDAMENTAL ET COUPE LA TABLATURE EN MESURES.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, quatrième lot.
+  - **Ce qui se passait**, mesuré par `executer` sur les objets que VexFlow dessine :
+    - « Partition MIDI » convertissait les secondes au premier tempo du fichier : huit noires, le tempo passant de 120 à 60 après la quatrième, se gravaient en quatre noires et quatre blanches ;
+    - « Partition VexFlow » posait toutes les notes à l'octave 4 : en do, V sonnait ré–sol–si et vi do–mi–la, des renversements que le chiffre ne disait pas ;
+    - « Tablature VexFlow » gravait neuf noires sans une barre.
+  - **Ce qui change** :
+    - à « Tempo » 0, les durées se lisent en temps du fichier, changements de tempo compris ; une autre valeur garde la conversion des secondes à ce tempo ;
+    - chaque accord s'empile depuis sa fondamentale, posée à l'octave 4, et un accord à basse écrite commence par sa basse ;
+    - la tablature se coupe en mesures de 4/4 par la même coupe que la portée ; une note qui passe la barre se coupe en deux, la seconde frette entre parenthèses.
+  - Décisions de Fabien : « Root position », « Cut into bars ». Cinq cas de `plugins/vexflow-gravure.test.ts` attendaient les notes à l'octave 4 ; ils attendent l'état fondamental.
+  - Tenu par `plugins/points-ouverts-gravure.test.ts`, sept cas, six vus rouges sur le code d'avant, le septième en témoin ; vus rouges aussi sur les trois réparations retirées, plantées.
+
 - **UN SÉQUENCEUR REFUSE LES RANGÉES QU'IL NE JOUE PAS, ET UN CERCLE NE JETTE PLUS QUE LES SÉPARATEURS.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, troisième lot.
   - **Ce qui se passait**, mesuré par `executer` :
     - douze rangées sur les huit voix de la batterie avancée en perdaient quatre, et trente sur le séquenceur mélodique en perdaient dix-sept, sans un mot ;

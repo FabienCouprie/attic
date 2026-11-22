@@ -201,14 +201,16 @@ describe("LA GRILLE ÉCRIT CHAQUE ACCORD UNE FOIS, ET LIT LES CHIFFRES ROMAINS J
 });
 
 describe("LA PARTITION D'ACCORDS SE LIT COMME ELLE EST ÉCRITE", () => {
+  // CHAQUE ACCORD À L'ÉTAT FONDAMENTAL, depuis l'octave 4 : décision de Fabien du 2026-11-22, « Root
+  // position ». Ces cas posaient toutes les notes à l'octave 4, et sol majeur sonnait ré–sol–si.
   it.each([
     ["le sol naturel après le sol dièse", "E C", N([[64, 68, 71], 0, 1], [[60, 64, 67], 1, 1]), [4]],
-    ["le do naturel après le do dièse", "A C", N([[69, 61, 64], 0, 1], [[60, 64, 67], 1, 1]), [4]],
-    ["des romains qui commencent par une septième", "V7 I", N([[67, 71, 62, 65], 0, 1], [[60, 64, 67], 1, 1]), [4]],
-    ["un accord silencieux prend sa noire", "C N.C. G", N([[60, 64, 67], 0, 1], [[67, 71, 62], 2, 1]), [4]],
-    ["une écriture usuelle", "Bø7 B♭", N([[71, 62, 65, 69], 0, 1], [[70, 62, 65], 1, 1]), [4]],
+    ["le do naturel après le do dièse", "A C", N([[69, 73, 76], 0, 1], [[60, 64, 67], 1, 1]), [4]],
+    ["des romains qui commencent par une septième", "V7 I", N([[67, 71, 74, 77], 0, 1], [[60, 64, 67], 1, 1]), [4]],
+    ["un accord silencieux prend sa noire", "C N.C. G", N([[60, 64, 67], 0, 1], [[67, 71, 74], 2, 1]), [4]],
+    ["une écriture usuelle", "Bø7 B♭", N([[71, 74, 77, 81], 0, 1], [[70, 74, 77], 1, 1]), [4]],
     ["cinq accords, deux mesures", "C F G C F",
-      N([[60, 64, 67], 0, 1], [[65, 69, 60], 1, 1], [[67, 71, 62], 2, 1], [[60, 64, 67], 3, 1], [[65, 69, 60], 4, 1]), [4, 4]],
+      N([[60, 64, 67], 0, 1], [[65, 69, 72], 1, 1], [[67, 71, 74], 2, 1], [[60, 64, 67], 3, 1], [[65, 69, 72], 4, 1]), [4, 4]],
   ])("%s", async (_titre, progression, attendu, mesures) => {
     const g = await graver("vexflow-partition", { Progression: progression, "Tonalité": "C" });
     expect(g.r.erreurRendue, g.r.message.slice(0, 200)).toBe(false);
