@@ -6,6 +6,11 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **QUATRE NŒUDS QUI REFUSAIENT EN RESTANT VERTS REFUSENT EN ERREUR.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, premier lot.
+  - **Ce qui se passait**, mesuré par `executer` : « Opérations sérielles » sur une série vide, « Classes de hauteurs » sur des notes vides, « Contrepoint (espèces) » sur deux voix vides, et « Renversements et voicings » sans MIDI ou sur un MIDI sans note, disaient leur refus et restaient verts, sans le drapeau d'erreur. Un graphe passait alors sur une sortie vide.
+  - **Ce qui change** : ces cinq refus portent le drapeau d'erreur, comme tous les refus de la revue.
+  - Tenu par `plugins/points-ouverts.test.ts`, quatre cas vus rouges sur le code d'avant, et rouge aussi sur le drapeau de nouveau retiré au Contrepoint, planté.
+
 - **LE RÉPARTITEUR MIDI ET LE SSP DE KOENIG REFUSENT CE QUE LEURS LISTES NE PORTENT PAS, EN LE NOMMANT.** Revue des notations en texte, passe de complétude, 2026-11-22, troisième lot.
   - **Ce qui se passait**, mesuré par `executer` :
     - dans le Répartiteur, « 17 », « 0 » et « a » vidaient la partie sans un mot, ses notes passant au « Reste », et « 1-17 » prenait les seize canaux ;
