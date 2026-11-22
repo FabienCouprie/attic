@@ -75,6 +75,81 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
     - Vu rouge sur le code d'avant : 18 cas.
     - Vu rouge aussi sur des noms de notes que le lecteur ne lisait plus, plantés.
 
+- **CHAQUE AIR D'UN TEXTE ABC SE GRAVE, SOUS SON TITRE.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Engrave all, titled ».
+  - **Ce qui se passait** : deux airs se gravaient à la suite, comme une seule pièce. Seul le titre du premier aurait pu paraître, et l'en-tête de page était caché. « ABC → MIDI », lui, n'en joue que le premier, et le dit.
+  - **Ce qui change** :
+    - les airs sont ceux que découpe `decouperMorceaux`, le lecteur ABC ;
+    - chacun se grave seul, sous son titre, à partir d'une page neuve ;
+    - « Page » parcourt les pages de tous les airs, et le message dit quel air est rendu : « ABC · air 2 sur 2 · page 2 sur 2 ».
+
+    Un air seul se grave comme avant, sans en-tête. La notice le dit, en français et en anglais.
+  - **Le garde** : 4 cas dans `plugins/partition-verovio-norme.test.ts`.
+    - Vu rouge sur le code d'avant : 2 cas. L'air seul et la phrase d'un modèle de langue autour de l'air passaient déjà, et restent gardés.
+    - Vu rouge aussi sur un en-tête oublié, planté.
+
+- **LA PARTITION GRAVÉE LIT LE HUMDRUM, COMME SA NOTICE LE PROMET.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Load the Humdrum module ».
+  - **Ce qui se passait** : le module chargé, `verovio/wasm`, ne connaît pas le Humdrum. Un fichier `**kern` correct était refusé par « HUMDRUM refusé par le graveur : vérifiez la notation », qui accusait le texte.
+  - **Ce qui change** : `verovio/wasm-hum`, déjà dans le paquet installé, est importé pour le seul Humdrum ; les autres notations gardent leur module. Mesuré par Vite le 2026-11-22, sur les deux morceaux émis :
+    - le morceau du Humdrum pèse 14 317 004 octets, et 2 797 312 compressés en LZMA ;
+    - le module habituel pèse 8 207 951 octets, et 1 853 804 compressés.
+
+    L'installeur v5.1.2 pèse 476 829 403 octets, sous un plafond NSIS de 2 147 483 648.
+  - **Le garde** : 3 cas dans `plugins/partition-verovio-norme.test.ts`, d'après la référence de **kern, où une hauteur s'écrit absolue. Vu rouge sur le code d'avant, les 3 cas.
+
+- **LA PARTITION GRAVÉE GRAVE LE TEMPO D'UN ABC.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Engrave the tempo ».
+  - **Ce qui se passait**, relu sur la gravure : Verovio ne dessine un tempo que par son texte. « Q:1/4=60 » se gravait en texte vide, et « Q:"Allegro" 1/4=60 » ne gravait que « Allegro ».
+  - **Ce qui change** : `tempoGrave` (`audio/abc-gravure.ts`) donne à chaque Q:, en tête ou en ligne, le texte de son mouvement, par exemple « Allegro ♩ = 120 ».
+    - La figure est écrite en Unicode, ♩, ♪, 𝅗𝅥, avec son point s'il y en a un. Un glyphe SMuFL de la zone privée serait resté un carré dans le texte.
+    - L'ancienne forme « Q:120 » se compte en unités L, comme le lecteur ABC la compte.
+    - Un Q: sans chiffre garde son seul texte.
+
+    La notice le dit, en français et en anglais.
+  - **Le garde** : 9 cas dans `plugins/partition-verovio-norme.test.ts`, dont un tempo en cours de morceau, et 2 dans `audio/abc-gravure.test.ts`.
+    - Vu rouge sur le code d'avant : 7 cas. Un mouvement sans chiffre et l'absence de Q: passaient déjà.
+    - Vu rouge aussi sur une noire pointée privée de son point, plantée.
+
+- **CE QUE LA PARTITION GRAVÉE NE SAIT PAS DESSINER EN ABC EST REFUSÉ, ET NOMMÉ.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Refuse them, named ».
+  - **Ce qui se passait**, relu sur la gravure, sous toutes les écritures que la norme ABC 2.1 permet :
+    - deux voix se gravaient bout à bout sur une seule portée, qu'elles soient déclarées en tête, en ligne, par %%score ou %%staves. « MIDI → ABC » écrit une seconde voix dès qu'une basse tient sous une mélodie ;
+    - une fin alternative, « |1 », « [1 » ou « |[1 », se gravait sans son crochet : un musicien jouait les deux fins ;
+    - « [K:G] » ou une ligne « K:G » en cours de morceau se gravaient comme un changement de clé de sol, sans armure. Le fa suivant se lisait naturel ;
+    - la liaison d'une seule note d'un accord ne se dessinait pas, et « [CE]2- » n'en dessinait qu'une sur deux ;
+    - (5, (6, (7 et (9, que la norme (§4.13) joue dans le temps de deux en mesure simple, se gravaient avec leur seul chiffre, qu'un musicien lit cinq pour quatre, six pour quatre, sept pour quatre et neuf pour huit. Le groupe se lisait deux fois trop long, quatre fois pour (9.
+  - **Ce qui change** : `tournuresNonGravees` (`audio/abc-gravure.ts`) relève ces cinq tournures, et le nœud refuse l'air, le message nommant chacune, sa ligne et le fragment. Ce que le graveur dessine juste reste gravé :
+    - un changement de clé seule, « [K:clef=bass] » ;
+    - une seule voix déclarée ;
+    - (5:4:5, cinq pour quatre ;
+    - (4 en mesure simple, quatre pour trois.
+
+    Le second nombre d'un n-olet est celui du lecteur ABC, `qParDefaut`, désormais exporté. La notice le dit, en français et en anglais.
+  - **Le garde** : 19 cas dans `plugins/partition-verovio-norme.test.ts`, dont la chaîne MIDI → ABC → Partition gravée, et 5 cas dans `audio/abc-gravure.test.ts`.
+    - Vu rouge sur le code d'avant : les 15 refus.
+    - Vu rouge aussi sur des fins alternatives que le relevé ne voyait plus, plantées.
+
+- **UN ACCORD ABC DONT LA DURÉE SUIT LE CROCHET SE GRAVE À SA DURÉE.** Revue des notations en texte, quatrième format, 2026-11-22.
+  - **Ce qui se passait**, mesuré par `executer` et relu sur la gravure : Verovio gravait « [CEG]2 » à l'unité, en noires au lieu de blanches en L:1/4. La norme ABC 2.1 (§4.17) applique pourtant à chaque note la durée qui suit le crochet. C'est la forme qu'écrit « MIDI → ABC » : deux accords de blanches, « [CEG]4 [DFA]4 » en L:1/8, se gravaient en deux croches.
+  - **Ce qui change** : `dureesDansLesAccords` (`audio/abc-gravure.ts`) écrit cette durée dans chaque note avant la gravure, « [C2E2G2] ». Une note qui a déjà sa durée la voit multipliée, « [C2E]2 » valant « [C4E2] ». L'en-tête, les champs, les chaînes, les ornements, les notes d'ornement et les commentaires ne sont pas touchés.
+  - **Le garde** : quatre cas dans `plugins/partition-verovio-norme.test.ts`, dont la chaîne MIDI → ABC → Partition gravée, et `audio/abc-gravure.test.ts`, 11 cas.
+    - Vu rouge sur le code d'avant : les 4 cas.
+    - Vu rouge aussi sur une durée ignorée dès qu'elle porte une barre de fraction, plantée.
+
+- **LA PARTITION GRAVÉE REFUSE CE QUE LE LECTEUR ABC REFUSE, ET UN TEXTE QUI N'EST PAS UNE PARTITION.** Revue des notations en texte, quatrième format, 2026-11-22.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - douze des treize fautes que refuse « ABC → MIDI » se gravaient en vert : une durée nulle ou divisée par zéro, un accord jamais refermé, une liaison entre deux hauteurs ou vers un silence, un n-olet inachevé, une unité nulle ;
+    - un silence de durée nulle faisait tomber le graveur sur l'erreur brute « divide by zero » ;
+    - un ABC titré « T:Etude **kern » était refusé comme Humdrum, « **kern » étant cherché partout dans le texte ;
+    - un SVG ou un opus MusicXML, qui ne fait que citer des partitions, se gravaient en vert sur une page vide.
+  - **Ce qui change** :
+    - chaque air d'un texte ABC est lu par `lireMorceau` avant la gravure, et refusé par `refusAbc` avec les mêmes fautes nommées, ligne et fragment ;
+    - le Humdrum se reconnaît à sa première ligne de données ;
+    - un XML dont la racine n'est ni `score-partwise`, ni `score-timewise`, ni `mei` est refusé, et le message nomme cette racine (`racineXml`).
+
+    La notice le dit, en français et en anglais.
+  - **Un test tenait le contraire** : « un XML inconnu est tenté en MusicXML », dans `audio/verovio.test.ts`. Il avait été écrit avec le nœud et ne portait aucune décision.
+  - **Le garde** est `plugins/partition-verovio-norme.test.ts`, 43 cas. Il relit le SVG gravé comme un musicien, par `plugins/partition-lue.ts`, et le compare aux normes ABC 2.1, MusicXML 4.0 et MEI.
+    - Vu rouge sur le code d'avant : les 16 cas du lot.
+    - Vu rouge aussi sur une armure effacée avant la gravure, plantée : les 6 cas d'armure.
+
 - **UN NOM DE NOTE SE LIT DE LA MÊME FAÇON PARTOUT : E#4 EST UN FA, Do4 UN DO, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, septième format, décisions de Fabien du 2026-11-22 : « Read them everywhere », « Refuse it, named ».
   - **Ce qui se passait**, mesuré par `executer`, et pour les synthétiseurs dans le son rendu : sept lecteurs, chacun avec sa table, son octave par défaut et sa façon d'échouer.
     - `lireNote` faisait sonner « E#4 », « Fb4 » et « Cb4 » la 4, « B#3 » la 3, et remplaçait « C##4 », « C♯4 » ou « Do4 » par la note par défaut, sans un mot. C'était le lecteur du Vent à guide d'onde, de la Barre modale, de la Synthèse par balayage, du Terrain d'onde et de la Voyelle chantée ; l'expression des Instruments programmés Csound faisait de même.
