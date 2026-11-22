@@ -6,6 +6,16 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN SÉQUENCEUR REFUSE LES RANGÉES QU'IL NE JOUE PAS, ET UN CERCLE NE JETTE PLUS QUE LES SÉPARATEURS.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - douze rangées sur les huit voix de la batterie avancée en perdaient quatre, et trente sur le séquenceur mélodique en perdaient dix-sept, sans un mot ;
+    - un Cercle rythmique ou mélodique écartait tout ce qui n'est ni 0 ni 1 : « 1002 » donnait trois places, et une adresse collée y perdait ses lettres mais gardait ses chiffres, « ?tempo=120 » ajoutant « 10 » au motif.
+  - **Ce qui change** :
+    - un motif qui porte plus de rangées que le séquenceur n'en joue, 8 pour la batterie, 13 pour le mélodique, 21 pour les accords, est refusé en erreur, et le message dit combien il en a ; une rangée qui manque reste muette ;
+    - le motif d'un Cercle écarte ses espaces, tirets, points et barres, et d'une adresse il ne lit que ce qui suit le dernier « # ». Tout autre caractère est refusé et nommé avec son rang. La vue lit le motif de la même façon.
+  - Décisions de Fabien : « Refuse it, named » pour les rangées ; « Clean separators only », puis « Read after the # » pour l'adresse, que la notice promet de lire.
+  - Tenu par douze cas de plus dans `plugins/points-ouverts.test.ts`. Rouges sur le code d'avant : les trois refus de rangées, les deux de « 1002 » et les deux de l'adresse ; les autres sont des témoins. Vu rouge aussi sur le contrôle des rangées retiré et sur l'adresse de nouveau lue entière, plantés.
+
 - **LE CRIBLE LIT « ^ », LA DIFFÉRENCE SYMÉTRIQUE D'ARIZA.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, deuxième lot.
   - **Ce qui se passait** : « 3@0^4@0 » était refusé comme un signe hors de la notation, alors que `music21.sieve` le lit, et que le relevé du dixième format l'avait oublié.
   - **Ce qui change** : « ^ », ou « △ », retient ce que l'un des termes retient et pas l'autre ; de 0 à 11, 3@0 ^ 4@0 donne 3, 4, 6, 8 et 9. Il se lie comme en Python : le complément d'abord, puis « & », puis « ^ », puis « | », si bien que 2@0|3@0^4@0&6@0 vaut 2@0 | (3@0 ^ (4@0 & 6@0)). Le message l'écrit « △ », et ce qu'il écrit se relit.

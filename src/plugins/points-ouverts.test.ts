@@ -49,8 +49,60 @@ describe("le crible lit « ^ », la différence symétrique d'Ariza", () => {
     expect(retenus((await cribler("2@0|3@0^4@0&6@0")).message)).toBe(8);
   });
 
-  it("ce que le message écrit se relit tel quel", async () => {
+  it("ce que le message écrit se relit tel quel, différence symétrique comprise", async () => {
     const ecrit = /Crible (.+?) · /.exec((await cribler("3@0^4@0")).message)![1];
     expect(retenus((await cribler(ecrit)).message)).toBe(5);
+  });
+});
+
+describe("les rangées d'un séquenceur", () => {
+  // UNE RANGÉE DE TROP SE JETAIT SANS UN MOT : douze rangées sur les huit voix de la batterie, quatre
+  // perdues. Décision de Fabien : « Refuse it, named ». Une rangée qui manque reste une rangée vide.
+  const rangee = "1000100010001000";
+  it.each([
+    ["sequenceur-batterie-avance", 8, "9000900090009000"],
+    ["sequenceur-melodique", 13, rangee],
+    ["sequenceur-accords", 21, rangee],
+  ])("%s refuse une rangée de plus que ses %i, et le dit", async (id, rangees, ligne) => {
+    const r = await lancerFiche(F(id), { Motif: Array(rangees + 1).fill(ligne).join("|"), Mesures: 1 }, { entrees: [] });
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.message).toContain(String(rangees + 1));
+    expect(r.message).toContain(String(rangees));
+  });
+
+  it.each([["sequenceur-batterie-avance", 8], ["sequenceur-melodique", 13], ["sequenceur-accords", 21]])(
+    "%s joue ses %i rangées, et une seule rangée, sans refus", async (id, rangees) => {
+      for (const n of [rangees, 1]) {
+        const r = await lancerFiche(F(id), { Motif: Array(n).fill("1000000000000000").join("|"), Mesures: 1 }, { entrees: [] });
+        expect(r.erreurRendue, `${n} rangée(s) : ${r.message}`).toBe(false);
+      }
+    });
+});
+
+describe("le motif d'un Cercle rythmique ou mélodique", () => {
+  // La notice promet qu'une adresse collée se lit : ses séparateurs, espaces, tirets, points et barres,
+  // s'écartent. Tout autre caractère faisait une place de moins, sans un mot : « 1002 » donnait trois
+  // places. Décision de Fabien : « Clean separators only ».
+  const cercle = (id: string, motif: string) =>
+    lancerFiche(F(id), { Rythme: "libre", Motif: motif }, { entrees: [] });
+
+  it.each(["cercle-rythmique", "cercle-melodique"])("%s refuse « 1002 », et nomme le 2 et sa place", async (id) => {
+    const r = await cercle(id, "1002");
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.message).toContain("« 2 »");
+    expect(r.message).toContain("4");
+  });
+
+  it.each(["cercle-rythmique", "cercle-melodique"])("%s écarte les séparateurs d'une adresse collée", async (id) => {
+    const r = await cercle(id, "1 0-0.1|0/0");
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect((r.valeurs[0] as { positions: number }).positions).toBe(6);
+  });
+
+  it.each(["cercle-rythmique", "cercle-melodique"])("%s lit l'adresse après son dernier « # », sans ses autres chiffres", async (id) => {
+    // Décision de Fabien : « Read after the # ». Nettoyer l'adresse entière y prenait « 10 » de « 120 ».
+    const r = await cercle(id, "https://exemple.org/?tempo=120#1001");
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect((r.valeurs[0] as { positions: number }).positions).toBe(4);
   });
 });
