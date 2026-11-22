@@ -10,7 +10,7 @@
 // déplacer ET sur ce qu'il ne doit pas toucher, comme pour le SSP de Koenig.
 import { describe, expect, it } from "vitest";
 
-import { deployer, lireChamp } from "./matrice-parametres";
+import { deployer, type Champ } from "./matrice-parametres";
 import {
   FENETRES, compensationDeDensite, fenetre, partition, poserFragments, recouvrementMaximal, tirage,
   type Fragment,
@@ -239,10 +239,11 @@ describe("la partition, et son hasard", () => {
   });
 
   it("LE TIRAGE REMPLIT L'INTERVALLE SANS ORDRE, là où la rampe le traverse dans l'ordre", () => {
-    const rampeChamp = lireChamp("0:1")!;
-    const hasardChamp = lireChamp("0~1")!;
-    expect(rampeChamp.forme).toBe("rampe");
-    expect(hasardChamp.forme).toBe("hasard");
+    // LES CHAMPS SE CONSTRUISENT COMME LE COMPOSANT LES CONSTRUIT, de ses glissières et de sa loi. Ils se
+    // lisaient dans un texte « 0~1 », forme que plus aucun lecteur de texte n'admet : aucun ne tire au
+    // sort. Revue des notations en texte, 2026-11-22.
+    const rampeChamp: Champ = { forme: "rampe", de: 0, a: 1 };
+    const hasardChamp: Champ = { forme: "hasard", de: 0, a: 1 };
     const range = deployer(rampeChamp, 20);
     const tire = deployer(hasardChamp, 20, tirage(7));
     // La rampe est croissante, le tirage ne l'est pas.
@@ -252,7 +253,7 @@ describe("la partition, et son hasard", () => {
   });
 
   it("À GRAINE ÉGALE, LA MÊME PARTITION : sans cela elle ne se travaillerait pas", () => {
-    const champ = lireChamp("0~1")!;
+    const champ: Champ = { forme: "hasard", de: 0, a: 1 };
     expect(deployer(champ, 30, tirage(3))).toEqual(deployer(champ, 30, tirage(3)));
     expect(deployer(champ, 30, tirage(3))).not.toEqual(deployer(champ, 30, tirage(4)));
   });
@@ -260,6 +261,6 @@ describe("la partition, et son hasard", () => {
   it("SANS GÉNÉRATEUR, UN CHAMP DE HASARD NE TIRE RIEN, et rend le milieu", () => {
     // Le garde-fou du changement : un appelant écrit avant cette forme ne peut pas se mettre à
     // rendre du hasard sans l'avoir demandé.
-    expect(deployer(lireChamp("2~6")!, 3)).toEqual([4, 4, 4]);
+    expect(deployer({ forme: "hasard", de: 2, a: 6 }, 3)).toEqual([4, 4, 4]);
   });
 });

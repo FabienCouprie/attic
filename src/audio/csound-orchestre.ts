@@ -201,18 +201,20 @@ export const trouverInstrument = (id: string): InstrumentOrchestre | undefined =
 /**
  * Une liste d'identifiants écrite à la main : « wgbow, foscil ».
  *
- * Les inconnus sont écartés — un identifiant mal tapé ne doit pas faire échouer tout l'orchestre —,
- * et les doublons aussi : deux fois le même instrument donnerait deux `instr` identiques à deux
- * numéros, ce qui marche mais n'apporte rien et brouille le rapport.
+ * UN INCONNU FAIT REFUSER LA LISTE, et le refus le nomme. Il était écarté et seulement compté, si bien
+ * qu'un identifiant mal tapé retirait un instrument de l'orchestre sans dire lequel. Décision de Fabien
+ * du 2026-11-22, « Refuse it, named », revue des notations en texte.
+ *
+ * LES DOUBLONS SONT IGNORÉS, ET RENDUS POUR ÊTRE DITS : deux fois le même instrument donnerait deux
+ * `instr` identiques à deux numéros, ce qui marche mais n'apporte rien et brouille le rapport.
  */
-export function analyserListeInstruments(texte: string): string[] {
-  const vus: string[] = [];
-  for (const morceau of String(texte ?? "").split(/[,;\s]+/)) {
-    const id = morceau.trim();
-    if (!id || vus.includes(id)) continue;
-    if (trouverInstrument(id)) vus.push(id);
+export function analyserListeInstruments(texte: string): { ids: string[]; doublons: string[] } | { inconnu: string } {
+  const ids: string[] = [], doublons: string[] = [];
+  for (const id of String(texte ?? "").split(/[,;\s]+/).filter(Boolean)) {
+    if (!trouverInstrument(id)) return { inconnu: id };
+    if (ids.includes(id)) { if (!doublons.includes(id)) doublons.push(id); } else ids.push(id);
   }
-  return vus;
+  return { ids, doublons };
 }
 
 export interface OptionsOrchestre {
@@ -222,6 +224,8 @@ export interface OptionsOrchestre {
   base?: number;
   /** Niveau global, de 0 à 1. */
   niveau?: number;
+  /** Vrai : les commentaires de l'orchestre sont écrits en anglais, la langue de l'interface. */
+  en?: boolean;
 }
 
 export interface LigneOrchestre {
@@ -270,9 +274,13 @@ export function construireOrchestre(
   for (const inst of choisis) for (const t of inst.tables ?? []) tables.set(t.variable, t);
 
   const lignes: string[] = [];
+  // LES COMMENTAIRES PARLENT LA LANGUE DE L'INTERFACE : ils restaient français en anglais. Revue des
+  // notations en texte, 2026-11-22.
   if (tables.size > 0) {
-    lignes.push("; Tables de fonction, créées par ftgen : Csound attribue les numéros, donc aucune");
-    lignes.push("; collision n'est possible entre instruments.");
+    lignes.push(o.en
+      ? "; Function tables, created by ftgen: Csound assigns the numbers, so no collision"
+      : "; Tables de fonction, créées par ftgen : Csound attribue les numéros, donc aucune");
+    lignes.push(o.en ? "; is possible between instruments." : "; collision n'est possible entre instruments.");
     for (const t of tables.values()) lignes.push(`${t.variable} ftgen 0, 0, ${t.args}`);
     lignes.push("");
   }
@@ -281,7 +289,7 @@ export function construireOrchestre(
   choisis.forEach((inst, i) => {
     const numero = base + i;
     rapport.push({ numero, id: inst.id, nom: inst.fr, note: inst.note });
-    lignes.push(`instr ${numero}  ; ${inst.fr}`);
+    lignes.push(`instr ${numero}  ; ${o.en ? inst.en : inst.fr}`);
     lignes.push(`  ${ENVELOPPE}`);
     for (const l of inst.corps) lignes.push(`  ${l}`);
     const gain = (inst.gain * niveau).toFixed(4);
