@@ -143,7 +143,7 @@ This component writes a song's plan as text: its description, its lyrics, its te
 | Description | text | `a calm acoustic guitar ballad, warm and slow` |  | What is wanted. The « Description » input replaces it when connected. |
 | Lyrics | text | — |  | The sung text, with its section markers in brackets. Empty, the field is absent from the plan and the render is instrumental. |
 | Tempo | number | 120 BPM | 0 – 240 BPM, step 1 | The tempo written into the plan. At zero, the field is absent and the engine decides. The « Tempo » input replaces it when connected. |
-| Key | text | `C major` |  | The key, as « G major » or « A minor ». A mention in parentheses at the end, such as a confidence percentage, is removed before writing. Empty, the field is absent from the plan. The « Key » input replaces it when connected. |
+| Key | text | `C major` |  | The key, as « G major » or « A minor ». A mention in parentheses at the end, such as a confidence percentage, is removed before writing. « Gm » is written « G minor » and « G » « G major »; any other mode, « mixolydian » or « dorian », makes the node refused, and the message names it. Empty, the field is absent from the plan. The « Key » input replaces it when connected. |
 | Length | number | 60 s | 5 – 600 s, step 5 | Target length. As this plan carries no audio codes, it is held to the sample. |
 | Singing language | choice | French | French / English / Spanish / German / Italian / Portuguese / Russian / Japanese / Korean / Chinese | The language the voice sings in. The ten offered are those the model holds best. |
 | Time signature | choice | 4 | 2 / 3 / 4 / 6 | The number of beats per bar, written into the plan. |
@@ -629,8 +629,8 @@ Generates a melody from a self-rewriting grammar. Aristid Lindenmayer, a biologi
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Example | choice | Lindenmayer's algae | Hand-written / Lindenmayer's algae / Koch snowflake / Dragon curve / Plant / Cantor dust | Loads a known grammar instead of the axiom and rules typed below. « Hand-written » takes the rules written in the fields. |
-| Axiom | text | `A` |  | The starting word, rewritten on every pass. |
-| Rules | text | `A=AB, B=A` |  | The replacements, written « A=AB », separated by commas or line breaks. A letter without a rule rewrites to itself. The signs + and − move up and down one scale degree, brackets open and close an ornament, > and &lt; lengthen and shorten the step, a dot is a rest. |
+| Axiom | text | `A` |  | The starting word, rewritten on every pass. Empty, it makes the node refused. |
+| Rules | text | `A=AB, B=A` |  | The replacements, written « A=AB », separated by commas or line breaks. A letter without a rule rewrites to itself. The signs + and − move up and down one scale degree, brackets open and close an ornament, > and &lt; lengthen and shorten the step, a dot is a rest. A rule without « = », or whose left side is not a single letter, and a second rule for the same letter, make the node refused, and the message names them. |
 | Iterations | number | 5 | 0 – 12, step 1 | Number of rewrites. The word grows fast: a rule that doubles its length reaches a thousand in ten passes. |
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Tonic of the scale. |
 | Scale | choice | Major | Major / Natural minor / Harmonic minor / Dorian / Phrygian / Lydian / Mixolydian / Locrian / Major pentatonic / Minor pentatonic / Chromatic / Melodic minor / Blues / Altered / Lydian dominant / Phrygian dominant / Bebop dominant / Whole tone / Diminished whole-half / Diminished half-whole / Augmented / Double harmonic major / Hungarian minor / Hirajoshi / In sen | The degrees that the letters and the + and − signs walk through: each distinct letter takes a degree by its rank, and the word never leaves the scale. Has no effect when « Example » is « Cantor dust », which has a single letter and neither + nor −: it plays only the tonic. |
@@ -1419,8 +1419,8 @@ Synthesises a sound point by point, with no waveform model: two lists of numbers
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Amplitudes | text | `-1, -0.6, -0.2, 0.2, 0.6, 1` |  | The list of amplitudes to draw from, between -1 and 1, separated by commas. It is your material, not a setting: one set is not larger or smaller than another, it is other. Two extreme values give a full, straight sound whose crest falls below 2 dB; many small values and one large give a hollowed sound whose crest exceeds 8 dB. An empty or unreadable entry falls back on the original list. |
-| Durations | text | `5, 9, 17, 33, 65` |  | The list of gaps between two points, in samples. It is the only place pitch comes from, and there is no other: around three samples the sound whistles near 4 kHz; around fifty it sits in the middle register; beyond five hundred you hear reliefs going past rather than sounding. The report measures the treble obtained afterwards, since nothing here lets you predict it in your head. |
+| Amplitudes | text | `-1, -0.6, -0.2, 0.2, 0.6, 1` |  | The list of amplitudes to draw from, between -1 and 1, separated by commas. It is your material, not a setting: one set is not larger or smaller than another, it is other. Two extreme values give a full, straight sound whose crest falls below 2 dB; many small values and one large give a hollowed sound whose crest exceeds 8 dB. An empty list, an unreadable token or an amplitude outside -1 to 1 makes the node refused, and the message names it. |
+| Durations | text | `5, 9, 17, 33, 65` |  | The list of gaps between two points, in samples. It is the only place pitch comes from, and there is no other: around three samples the sound whistles near 4 kHz; around fifty it sits in the middle register; beyond five hundred you hear reliefs going past rather than sounding. The report measures the treble obtained afterwards, since nothing here lets you predict it in your head. A duration is written as a whole number of samples, at least 1; an empty list, an unreadable token or any other duration makes the node refused, and the message names it. |
 | Amplitude principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the amplitude list. Alea draws at random and may repeat. Series exhausts the list before starting over, which forbids any immediate repeat. Sequence follows the written order, never departing from it, and that is the first of the two conditions for a held wave. Group holds each value two to five times in a row, and you then hear steps where alea only makes a sizzle. Tendency drifts the drawing window from one end of the list to the other, applied to amplitudes, it draws a ramp rather than a sound. |
 | Duration principle | choice | Alea | Alea / Series / Sequence / Group / Tendency | How to draw from the duration list. The same vocabulary applied to time: a sequence on the durations lets the gap between two points repeat identically, which is the second condition for a held wave, the first being a sequence on the amplitudes; alea dissolves it; group holds one speed for several points before changing, which makes register steps audible. With a single duration written, this setting has nothing left to reshuffle and the condition is met whatever it is. |
 | Form principle | choice | Series | Alea / Series / Sequence / Group / Tendency | How to order the sections, and this is where Koenig's thesis is verified instead of proclaimed. The same word means the same thing as at the sample scale: a series has each section pass once before any repeats, a group holds the same one several times, a tendency moves from the first towards the last. The report gives the resulting order. |
@@ -2140,7 +2140,7 @@ Travels the Camelot wheel to illustrate harmonic transitions used by DJs. Each s
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Start | text | `4B` |  | Starting code on the wheel (e.g. 4B, 7A, 12B). Ring A = minor, B = major. |
+| Start | text | `4B` |  | Starting code on the wheel (e.g. 4B, 7A, 12B). Ring A = minor, B = major. A number from 1 to 12 followed by A or B, in capitals or not; any other code makes the node refused, and the message names it. |
 | Journey | choice | Full | Full / Neighbors / Random | Full = around the wheel; Neighbors = compatible moves (+1, -1, same number, +7); Random = random walk between neighbors. |
 | Steps | number | 12 | 1 – 24, step 1 | Number of chords generated. |
 | Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
@@ -4699,7 +4699,7 @@ Splits a MIDI file into parts, one per instrument, so that a full arrangement ca
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Split by | choice | Automatic | Automatic / By channels / By tracks | Automatic: the node looks at what the file holds and splits on its own, channel 10, which General MIDI reserves for percussion, always goes to the Drums output, and the other channels fill the parts in channel order. By channels: you write each part's channels below. By tracks: the same boxes then mean track numbers, which is what files whose voices share a channel need, a notation program often writes a choir's four voices on channel 1, separated by tracks. |
-| Part 1 | text | `1` |  | Channels (or tracks) of the first part: « 1 », « 1,2 », « 1-3 ». Channels count from 1 to 16, as on a device. Ignored in automatic mode. |
+| Part 1 | text | `1` |  | Channels (or tracks) of the first part: « 1 », « 1,2 », « 1-3 ». Channels count from 1 to 16, as on a device. Ignored in automatic mode. Empty, the part has no channel, and its notes go to « Rest ». A channel outside 1 to 16, a track zero or an unreadable token, in this part as in the following ones, makes the node refused, and the message names it. |
 | Part 2 | text | `2` |  | Channels (or tracks) of the second part. |
 | Part 3 | text | `3` |  | Channels (or tracks) of the third part. |
 | Drums | text | `10` |  | Channels (or tracks) of the drums. 10 by default, the General MIDI convention. This output needs a different kind of bank (a kit, where a key is a sound and not a pitch) hence its name. |
@@ -10569,7 +10569,7 @@ Shows on the node the circle arriving at its input, and returns it at its output
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Edit | text | — |  | The mask, a string of zeros and ones, one per position. Empty, the received circle passes through as it is. |
+| Edit | text | — |  | The mask, a string of zeros and ones, one per position. Empty, the received circle passes through as it is. Any other character, a space included, makes the node refused, and the message names its position. |
 
 #### Circle Join
 

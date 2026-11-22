@@ -14,7 +14,7 @@
 
 import { fiche, type NomDeReglage } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
-import { langueCourante } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { frequenceDeTravail } from "../audio/frequence-de-travail";
 import {
@@ -45,12 +45,12 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Amplitudes", nomEn: "Amplitudes", type: "texte", defaut: AMPLITUDES_DEFAUT.join(", "),
         placeholder: "-1, -0.6, -0.2, 0.2, 0.6, 1", placeholderEn: "-1, -0.6, -0.2, 0.2, 0.6, 1",
-        doc: "La liste des amplitudes où puiser, entre −1 et 1, séparées par des virgules. C'est votre matériau, et non un réglage : l'ensemble n'est pas plus grand ou plus petit qu'un autre, il est autre. Deux valeurs extrêmes donnent un son plein et droit, dont la crête tombe sous 2 dB ; beaucoup de petites valeurs et une grande donnent un son creusé, dont la crête dépasse 8 dB. Une saisie vide ou illisible retombe sur la liste d'origine.",
-        docEn: "The list of amplitudes to draw from, between -1 and 1, separated by commas. It is your material, not a setting: one set is not larger or smaller than another, it is other. Two extreme values give a full, straight sound whose crest falls below 2 dB; many small values and one large give a hollowed sound whose crest exceeds 8 dB. An empty or unreadable entry falls back on the original list." },
+        doc: "La liste des amplitudes où puiser, entre −1 et 1, séparées par des virgules. C'est votre matériau, et non un réglage : l'ensemble n'est pas plus grand ou plus petit qu'un autre, il est autre. Deux valeurs extrêmes donnent un son plein et droit, dont la crête tombe sous 2 dB ; beaucoup de petites valeurs et une grande donnent un son creusé, dont la crête dépasse 8 dB. Une liste vide, un jeton illisible ou une amplitude hors de −1 à 1 fait refuser le composant, et le message le nomme.",
+        docEn: "The list of amplitudes to draw from, between -1 and 1, separated by commas. It is your material, not a setting: one set is not larger or smaller than another, it is other. Two extreme values give a full, straight sound whose crest falls below 2 dB; many small values and one large give a hollowed sound whose crest exceeds 8 dB. An empty list, an unreadable token or an amplitude outside -1 to 1 makes the node refused, and the message names it." },
       { nom: "Durées", nomEn: "Durations", type: "texte", defaut: TEMPS_DEFAUT.join(", "),
         placeholder: "5, 9, 17, 33, 65", placeholderEn: "5, 9, 17, 33, 65",
-        doc: "La liste des écarts entre deux points, en échantillons. C'est le seul endroit d'où vienne la hauteur, et il n'en existe aucun autre : autour de trois échantillons, le son siffle vers 4 kHz ; autour de cinquante, il se tient dans le médian ; au-delà de cinq cents, on entend des reliefs défiler plutôt que sonner. Le rapport mesure après coup l'aigu obtenu, puisque rien ici ne permet de le prévoir de tête.",
-        docEn: "The list of gaps between two points, in samples. It is the only place pitch comes from, and there is no other: around three samples the sound whistles near 4 kHz; around fifty it sits in the middle register; beyond five hundred you hear reliefs going past rather than sounding. The report measures the treble obtained afterwards, since nothing here lets you predict it in your head." },
+        doc: "La liste des écarts entre deux points, en échantillons. C'est le seul endroit d'où vienne la hauteur, et il n'en existe aucun autre : autour de trois échantillons, le son siffle vers 4 kHz ; autour de cinquante, il se tient dans le médian ; au-delà de cinq cents, on entend des reliefs défiler plutôt que sonner. Le rapport mesure après coup l'aigu obtenu, puisque rien ici ne permet de le prévoir de tête. Une durée s'écrit d'un nombre entier d'échantillons, au moins 1 ; une liste vide, un jeton illisible ou une autre durée fait refuser le composant, et le message le nomme.",
+        docEn: "The list of gaps between two points, in samples. It is the only place pitch comes from, and there is no other: around three samples the sound whistles near 4 kHz; around fifty it sits in the middle register; beyond five hundred you hear reliefs going past rather than sounding. The report measures the treble obtained afterwards, since nothing here lets you predict it in your head. A duration is written as a whole number of samples, at least 1; an empty list, an unreadable token or any other duration makes the node refused, and the message names it." },
       { nom: "Principe des amplitudes", nomEn: "Amplitude principle", ...optionsPrincipe(),
         defaut: "Aléa", defautEn: "Alea",
         doc: "Comment puiser dans la liste des amplitudes. Aléa tire au hasard et peut répéter. Série épuise la liste avant de la reprendre, ce qui interdit toute répétition immédiate. Séquence suit l'ordre écrit, sans s'en écarter, et c'est la première des deux conditions d'une onde tenue. Groupe tient chaque valeur deux à cinq fois de suite, et l'on entend alors des paliers là où l'aléa ne fait entendre qu'un grésillement. Tendance fait dériver la fenêtre de tirage d'un bout à l'autre de la liste, appliquée aux amplitudes, elle dessine une rampe plutôt qu'un son.",
@@ -85,12 +85,20 @@ export const fiches: FicheAudio[] = ([
         const choix = ctx.paramTexte(nom, defaut);
         return EST_PRINCIPE(choix) ? choix : defaut;
       };
-      const amplitudes = lireEnsemble(ctx.paramTexte("Amplitudes", ""), AMPLITUDES_DEFAUT)
-        // Les amplitudes sont ramenées dans le gabarit sans être redistribuées : une valeur écrite
-        // à 3 devient 1, et non l'ensemble divisé par trois, qui changerait tout le reste.
-        .map((v) => Math.max(-1, Math.min(1, v)));
-      const temps = lireEnsemble(ctx.paramTexte("Durées", ""), TEMPS_DEFAUT)
-        .map((v) => Math.max(1, Math.round(v)));
+      // CE QUE LES LISTES NE PORTENT PAS EST REFUSÉ, ET NOMMÉ : une amplitude hors de −1 à 1 était bornée, une
+      // durée arrondie et portée à un échantillon, une liste vide ou illisible remplacée par celle d'origine.
+      // Décision de Fabien du 2026-11-22, « Refuse it, named », revue des notations en texte.
+      const refus = (cle: string, ...args: (string | number)[]) => ({ valeurs: [null, null], erreur: true, message: traduire(cle, ...args) });
+      const lusA = lireEnsemble(ctx.paramTexte("Amplitudes", ""));
+      if ("refus" in lusA) return lusA.refus ? refus("msg.ssp.amplitude_var_0", lusA.refus) : refus("msg.ssp.vide_var_0", "Amplitudes");
+      const amplitudes = lusA.valeurs;
+      const horsGabarit = amplitudes.find((v) => v < -1 || v > 1);
+      if (horsGabarit !== undefined) return refus("msg.ssp.amplitude_var_0", String(horsGabarit));
+      const lusT = lireEnsemble(ctx.paramTexte("Durées", ""));
+      if ("refus" in lusT) return lusT.refus ? refus("msg.ssp.duree_var_0", lusT.refus) : refus("msg.ssp.vide_var_0", en ? "Durations" : "Durées");
+      const temps = lusT.valeurs;
+      const sansDuree = temps.find((v) => !Number.isInteger(v) || v < 1);
+      if (sansDuree !== undefined) return refus("msg.ssp.duree_var_0", String(sansDuree));
 
       // LES DEUX PRINCIPES SONT NOMMÉS À PART : la ligne « Onde » du rapport s'en sert pour dire
       // lequel des deux empêche l'onde de se tenir.

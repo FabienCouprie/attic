@@ -128,25 +128,30 @@ describe("la répartition automatique", () => {
 
 describe("les listes de canaux écrites à la main", () => {
   it("lit les numéros, les plages et les séparateurs, en numérotation humaine", () => {
-    expect(analyserListeCanaux("1")).toEqual([0]);
-    expect(analyserListeCanaux("1,2")).toEqual([0, 1]);
-    expect(analyserListeCanaux("1 3")).toEqual([0, 2]);
-    expect(analyserListeCanaux("1-3")).toEqual([0, 1, 2]);
-    expect(analyserListeCanaux("3-1")).toEqual([0, 1, 2]);
-    expect(analyserListeCanaux("1, 3-5")).toEqual([0, 2, 3, 4]);
-    expect(analyserListeCanaux("10")).toEqual([CANAL_BATTERIE]);
+    expect(analyserListeCanaux("1")).toEqual({ canaux: [0] });
+    expect(analyserListeCanaux("1,2")).toEqual({ canaux: [0, 1] });
+    expect(analyserListeCanaux("1 3")).toEqual({ canaux: [0, 2] });
+    expect(analyserListeCanaux("1-3")).toEqual({ canaux: [0, 1, 2] });
+    expect(analyserListeCanaux("3-1")).toEqual({ canaux: [0, 1, 2] });
+    expect(analyserListeCanaux("1, 3-5")).toEqual({ canaux: [0, 2, 3, 4] });
+    expect(analyserListeCanaux("10")).toEqual({ canaux: [CANAL_BATTERIE] });
+    expect(analyserListeCanaux("")).toEqual({ canaux: [] });
   });
 
-  it("écarte ce qui n'est pas un canal, plutôt que de tout filtrer", () => {
-    expect(analyserListeCanaux("")).toEqual([]);
-    expect(analyserListeCanaux("0")).toEqual([]);        // les canaux commencent à 1
-    expect(analyserListeCanaux("17")).toEqual([]);
-    expect(analyserListeCanaux("bonjour")).toEqual([]);
-    expect(analyserListeCanaux("2,bonjour,4")).toEqual([1, 3]);
+  it("refuse ce qui n'est pas un canal, et le nomme", () => {
+    // Ce test tenait le contraire : « 0 », « 17 » et « bonjour » étaient écartés en silence, la partie restait
+    // muette, et « 1-17 » prenait les seize canaux. Revue des notations en texte, passe de complétude,
+    // 2026-11-22.
+    expect(analyserListeCanaux("0")).toEqual({ refus: "0" });
+    expect(analyserListeCanaux("17")).toEqual({ refus: "17" });
+    expect(analyserListeCanaux("bonjour")).toEqual({ refus: "bonjour" });
+    expect(analyserListeCanaux("2,bonjour,4")).toEqual({ refus: "bonjour" });
+    expect(analyserListeCanaux("1-17")).toEqual({ refus: "1-17" });
   });
 
   it("se relit : la liste rendue est celle qu'on écrirait", () => {
-    expect(listeCanauxHumaine(analyserListeCanaux("1, 3-5"))).toBe("1, 3, 4, 5");
+    const lu = analyserListeCanaux("1, 3-5");
+    expect("canaux" in lu && listeCanauxHumaine(lu.canaux)).toBe("1, 3, 4, 5");
   });
 });
 

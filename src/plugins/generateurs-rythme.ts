@@ -89,10 +89,10 @@ export const fiches: FicheAudio[] = ([
         doc: "Charge une grammaire connue à la place de l'axiome et des règles saisis. « Écrit à la main » prend les règles écrites dans les champs.",
         docEn: "Loads a known grammar instead of the axiom and rules typed below. « Hand-written » takes the rules written in the fields." },
       { nom: "Axiome", nomEn: "Axiom", type: "texte", defaut: "A", defautEn: "A",
-        doc: "Le mot de départ, réécrit à chaque tour.", docEn: "The starting word, rewritten on every pass." },
+        doc: "Le mot de départ, réécrit à chaque tour. Vide, il fait refuser le composant.", docEn: "The starting word, rewritten on every pass. Empty, it makes the node refused." },
       { nom: "Règles", nomEn: "Rules", type: "texte", defaut: "A=AB, B=A", defautEn: "A=AB, B=A",
-        doc: "Les remplacements, sous la forme « A=AB », séparés par des virgules ou des retours à la ligne. Une lettre sans règle se réécrit en elle-même. Les signes + et − montent et descendent d'un degré, les crochets ouvrent et ferment une broderie, > et < allongent et raccourcissent le pas, le point est un silence.",
-        docEn: "The replacements, written « A=AB », separated by commas or line breaks. A letter without a rule rewrites to itself. The signs + and − move up and down one scale degree, brackets open and close an ornament, > and < lengthen and shorten the step, a dot is a rest." },
+        doc: "Les remplacements, sous la forme « A=AB », séparés par des virgules ou des retours à la ligne. Une lettre sans règle se réécrit en elle-même. Les signes + et − montent et descendent d'un degré, les crochets ouvrent et ferment une broderie, > et < allongent et raccourcissent le pas, le point est un silence. Une règle sans « = », ou dont la gauche n'est pas une seule lettre, et une seconde règle pour la même lettre, font refuser le composant, et le message les nomme.",
+        docEn: "The replacements, written « A=AB », separated by commas or line breaks. A letter without a rule rewrites to itself. The signs + and − move up and down one scale degree, brackets open and close an ornament, > and < lengthen and shorten the step, a dot is a rest. A rule without « = », or whose left side is not a single letter, and a second rule for the same letter, make the node refused, and the message names them." },
       { nom: "Itérations", nomEn: "Iterations", type: "nombre", plage: [0, 12], pas: 1, defaut: 5,
         doc: "Nombre de réécritures. Le mot grandit vite : une règle qui double sa longueur atteint le millier en dix tours.",
         docEn: "Number of rewrites. The word grows fast: a rule that doubles its length reaches a thousand in ten passes." },
@@ -115,7 +115,15 @@ export const fiches: FicheAudio[] = ([
       const choix = ctx.paramTexte("Exemple", "algues");
       const exemple = EXEMPLES.find((e) => e.id === choix);
       const axiome = exemple ? exemple.axiome : ctx.paramTexte("Axiome", "A");
-      const regles = lireRegles(exemple ? exemple.regles : ctx.paramTexte("Règles", "A=AB, B=A"));
+      // UNE RÈGLE QUI NE SE LIT PAS, DEUX RÈGLES POUR UNE LETTRE, UN AXIOME VIDE : refusés en erreur, et
+      // nommés. Revue des notations en texte, passe de complétude, 2026-11-22.
+      if (!axiome.trim()) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.lsysteme.axiome_vide") };
+      const lues = lireRegles(exemple ? exemple.regles : ctx.paramTexte("Règles", "A=AB, B=A"));
+      if ("refus" in lues) {
+        const cle = lues.refus.genre === "doublon" ? "msg.lsysteme.doublon_var_0" : "msg.lsysteme.regle_var_0";
+        return { valeurs: [null, null, null], erreur: true, message: traduire(cle, lues.refus.texte) };
+      }
+      const regles = lues.regles;
       const mot = reecrire(axiome, regles, ctx.paramNombre("Itérations", 5));
       const notes = interpreter(mot, {
         degres: degresGammeMelodie(ctx.paramTexte("Gamme", "majeur")),
@@ -125,7 +133,7 @@ export const fiches: FicheAudio[] = ([
         noteMin: 21,
         noteMax: 108,
       });
-      if (notes.length === 0) return { valeurs: [null, null, mot], message: traduire("msg.lsysteme.aucuneNote") };
+      if (notes.length === 0) return { valeurs: [null, null, mot], erreur: true, message: traduire("msg.lsysteme.aucuneNote") };
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const { programme, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));

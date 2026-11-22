@@ -13,7 +13,7 @@ import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { enSuite, type Cercle } from "../audio/cercle";
 import { cercleRetouche, differenceDeRetouche } from "../audio/cercle-retouche";
-import { langueCourante } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 
 const en = () => langueCourante() === "en";
@@ -59,8 +59,8 @@ The message states how many positions were turned off and how many turned on.`,
     parametres: [
       { nom: "Retouche", nomEn: "Edit", type: "texte", defaut: "", defautEn: "",
         placeholder: "101010",
-        doc: "Le masque, une suite de zéros et de uns, un par place. Vide, le cercle reçu passe tel quel.",
-        docEn: "The mask, a string of zeros and ones, one per position. Empty, the received circle passes through as it is." },
+        doc: "Le masque, une suite de zéros et de uns, un par place. Vide, le cercle reçu passe tel quel. Un autre caractère, une espace comprise, fait refuser le composant, et le message nomme sa place.",
+        docEn: "The mask, a string of zeros and ones, one per position. Empty, the received circle passes through as it is. Any other character, a space included, makes the node refused, and the message names its position." },
     ],
     async executer(ctx) {
       const suite: Cercle[] = enSuite(ctx.entree(0));
@@ -69,6 +69,13 @@ The message states how many positions were turned off and how many turned on.`,
           message: en() ? "No circle at the input." : "Aucun cercle à l'entrée." };
       }
       const masque = ctx.paramTexte("Retouche", "");
+      // LE MASQUE NE PORTE QUE DES ZÉROS ET DES UNS : une espace y prenait une place, et un autre caractère
+      // éteignait la sienne. La règle des grilles que la vue écrit, revue des notations en texte, 2026-11-22.
+      const fautive = [...masque].findIndex((c) => c !== "0" && c !== "1");
+      if (fautive >= 0) {
+        const c = [...masque][fautive];
+        return { valeurs: [null], erreur: true, message: traduire("msg.cercle.retouche_var_0_var_1", /\s/.test(c) ? "␣" : c, fautive + 1) };
+      }
       const retouches = suite.map((c) => cercleRetouche(c, masque));
       const { eteintes, allumees } = differenceDeRetouche(suite[0], masque);
 
