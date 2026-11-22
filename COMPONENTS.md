@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **513 components** in **7 categories** and **62 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **514 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **513 components** in **7 categories** and **62 families**. Every na
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 89 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
+| [Other & lab](#other--lab) | 90 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Harmonization](#harmonization) (1) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -11244,6 +11244,35 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 | Volume | number | 80 % | 0 – 100 % | Output volume. |
 | Tempo | number | 120 BPM | 40 – 240 BPM | Tempo of the MIDI file. |
 | Seed | number | 42 | 0 – 999999, step 1 | Seed for the palette extraction (k-means++ initialisation). The default is fixed: the same drawing must yield the same shapes on every run. Changing it may surface other dominant hues. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+### Harmonization
+
+| Component | Summary |
+|---|---|
+| [Harmonize (Coconet)](#harmonize-coconet) | Harmonizes a melody in four voices with a network trained on Bach's chorales. |
+
+#### Harmonize (Coconet)
+
+`harmoniser-coconet` · Other & lab → Harmonization
+
+*Harmonizes a melody in four voices with a network trained on Bach's chorales.*
+
+This component harmonizes a melody in four voices, soprano, alto, tenor and bass, with a convolutional neural network trained on Johann Sebastian Bach's chorales. The model is Coconet (Cheng-Zhi Anna Huang, Tim Cooijmans, Adam Roberts, Aaron Courville and Douglas Eck, « Counterpoint by Convolution », ISMIR 2017). The piece is laid on a grid of one cell per sixteenth note and per voice. The cells to write are drawn several times: at each iteration, a share of them is drawn again, each according to the probability the network gives it knowing all the others. At the first iteration, all of them are; the share then falls from one iteration to the next, down to about one seventh at the last. The melody arrives on the « Sequence » input. Its pitches lie between C2 and A5, that is MIDI 36 to 81, the range of the training corpus: a single note beyond makes the piece refused, and the message names each one with its bar and beat. Starts and ends are brought to the sixteenth note at the sequence's tempo, 120 when it carries none. « Kept voices » decides what remains of the input. « Soprano » keeps the first voice and writes the other three. « All received voices » keeps every voice present among the first four and writes only the missing ones: a bass given under the soprano thus receives its alto and its tenor. A cell where no kept voice sounds stays silent for all. « Temperature » sets the freedom of the draw. At zero, every cell takes the most probable pitch; at one, the draw follows the network's probabilities; beyond, it departs from them. « Iterations » sets the number of passes of the draw. Few iterations leave voices that contradict each other; more bring them into agreement, at the cost of a computation that grows with their number and with the length of the piece. « Tie repeated notes » decides what successive cells of the same pitch in a written voice become. Checked, they form a single held note; unchecked, the note is struck again on every quarter note. « Seed » fixes the draws: the same seed gives the same chorale on the same machine. The « Sequence » output returns the four voices, each one named, the kept voices with their original notes. The « Report » output gives for each voice whether it was kept or written, its number of notes and its range, then the number of notes the grid moved. The « Audio » output plays the sequence, in local synthesis with a sine timbre. It is computed only when a cable leaves it. To choose the engine, the timbre or the level, connect a listening point.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence | required |
+| output | Sequence | sequence |  |
+| output | Report | text |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Kept voices | choice | Soprano | Soprano / All received voices | « Soprano » keeps the first voice received and writes the other three. « All received voices » keeps every voice present among the first four and writes only the missing ones. |
+| Temperature | slider | 0.99 | 0 – 1.5, step 0.01 | The freedom of the draw. At zero, every cell takes the most probable pitch; at one, the draw follows the network's probabilities; beyond, it departs from them. |
+| Iterations | slider | 96 | 8 – 256, step 1 | The number of passes of the draw. More bring the voices into better agreement, at the cost of a longer computation. |
+| Tie repeated notes | checkbox | 1 | 0 / 1 | Checked, successive cells of the same pitch in a written voice form a single held note. Unchecked, the note is struck again on every quarter note. |
+| Seed | slider | 0 | 0 – 999999, step 1 | Fixes the draws: the same seed gives the same chorale on the same machine. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 ### Installation
 

@@ -40,6 +40,7 @@ import {
   humaniserGroove,
   improviser,
 } from "../plugins/magenta-helpers";
+import { harmoniserCoconet } from "../plugins/coconet-helpers";
 
 function postProgress(msg: string) {
   (self as any).postMessage({ type: "progress", msg });
@@ -87,6 +88,11 @@ self.onmessage = async (e: MessageEvent) => {
         result = await improviser(payload.duree, payload.tempo, payload.temperature, payload.mode, payload.seed);
         break;
       }
+      case "coconet": {
+        postProgress("Chargement du modèle Coconet…");
+        result = await harmoniserCoconet(payload, (fait, total) => postProgress(`Coconet · ${fait}/${total}`));
+        break;
+      }
       default:
         throw new Error(`Opération Magenta inconnue : ${type}`);
     }
@@ -102,6 +108,14 @@ self.onmessage = async (e: MessageEvent) => {
       (self as any).postMessage(
         { type: "done", payload: { kind: "audio", sampleRate: result.sampleRate, length: result.length, data } },
         [data.buffer],
+      );
+    } else if (result && typeof result === "object" && result.hauteurs instanceof Int16Array) {
+      // UNE GRILLE DE HAUTEURS, et non un fichier : Coconet rend des cases, que le fil principal
+      // refait en notes à côté des voix reçues, sans repasser par un MIDI qui perdrait les voix.
+      const { hauteurs, arrierePlan } = result;
+      (self as any).postMessage(
+        { type: "done", payload: { kind: "grille", hauteurs, arrierePlan } },
+        [hauteurs.buffer],
       );
     } else if (result && typeof result === "object" && result.data instanceof Float32Array) {
       const { sampleRate, data } = result;

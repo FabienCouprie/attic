@@ -526,6 +526,16 @@ const CONNUS = {
     racine: "magenta", noeuds: ["magenta-improvisation"], archive: true,
     licence: { nom: "Apache-2.0", credit: "Google Magenta — Piano Genie, modèle epiano", rediffusable: true },
   },
+  // COCONET, LE SIXIÈME POINT DE CONTRÔLE, entré le 2026-11-22 pour l'harmonisation à quatre voix.
+  // Sa licence est déclarée « non écrite » parce qu'elle l'est : ni le dossier du point de contrôle
+  // (`magentadata/js/checkpoints/coconet/bach`, sans `config.json` ni fichier de licence), ni la
+  // page des points de contrôle de magenta-js ne la disent. Seul le code est Apache-2.0.
+  "coconet_bach": {
+    id: "magenta-coconet", nom: "Harmonisation de choral (Coconet)", nomEn: "Chorale harmonization (Coconet)",
+    racine: "magenta", noeuds: ["harmoniser-coconet"], archive: true,
+    licence: { nom: "non écrite", credit: "Google Magenta — Coconet (Huang et al., « Counterpoint by Convolution », ISMIR 2017), point de contrôle coconet/bach", rediffusable: true,
+      note: "Aucune licence n'est écrite pour ce point de contrôle : le code de magenta-js est Apache-2.0, les poids ne portent aucune mention, et le corpus d'entraînement (JSB-Chorales-dataset de C. Huang) n'en déclare aucune. DÉCISION DU PROPRIÉTAIRE D'ATTIC, prise le 2026-11-22 : le point de contrôle est rediffusé sur la release `assets`, et cette absence est écrite ici et dans THIRD_PARTY.md." },
+  },
 };
 
 /**

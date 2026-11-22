@@ -399,6 +399,7 @@ const DICO: Record<string, Record<Langue, string>> = {
   "famille.Théorie": { fr: "Théorie", en: "Theory" },
   "famille.Test zone": { fr: "Test zone", en: "Test zone" },
   "famille.Magenta": { fr: "Magenta", en: "Magenta" },
+  "famille.Harmonisation": { fr: "Harmonisation", en: "Harmonization" },
   "famille.Frontière": { fr: "Frontière", en: "Boundary" },
   "famille.Image": { fr: "Image", en: "Image" },
   "famille.Lecture": { fr: "Lecture", en: "Playback" },

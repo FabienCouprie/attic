@@ -53,7 +53,7 @@ const SIGLES = new Set([
   "API", "URL", "URI", "ID", "UI", "IA", "SHA", "IEEE", "ISO", "UTC", "LSB", "MSB", "HZ", "KHZ",
   "DB", "MS", "NSIS", "ENV", "PID", "TCP", "UDP", "HTTP", "HTTPS", "OK", "USB", "HRTF",
   "LPC", "MSE", "NRT", "SSB", "PLL", "LSTM", "GRU", "SIMD", "GTZAN", "NSGT", "CQT", "EMD", "IFS", "ACM", "AES", "ARIMA", "AWB", "BDL", "CCRMA", "CDN", "CLB", "CMU",
-  "DTW", "GMM", "GPT", "GUI", "HSL", "IBM", "ICA", "ICASSP", "IRCAM", "ITU", "JMK", "KSP",
+  "DTW", "GMM", "GPT", "GUI", "HSL", "IBM", "ICA", "ICASSP", "ISMIR", "IRCAM", "ITU", "JMK", "KSP",
   "LRA", "LUFS", "LVA", "MIT", "NLP", "OCR", "RGB", "RRGGBB", "SDK", "SLT", "TAESD", "TASLP",
   "OPUS", "EVY", "PLPLPL", "CPS", "PCH", "OCT", "FOF", "ARGS", "PPCM", "JPEG",
   // SMIL : le langage d'animation du W3C, nom d'une norme et non une insistance.

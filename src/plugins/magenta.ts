@@ -65,7 +65,8 @@ function getWorker(): Worker {
   return worker;
 }
 
-function runMagenta(ctx: ContexteAudio, type: string, payload: any): Promise<any> {
+/** Exportée pour `harmoniser-coconet.ts`, qui partage ce worker et sa file. */
+export function runMagenta(ctx: ContexteAudio, type: string, payload: any): Promise<any> {
   return new Promise((resolve, reject) => {
     pending.push({ resolve, reject, ctx });
     getWorker().postMessage({ type, payload });

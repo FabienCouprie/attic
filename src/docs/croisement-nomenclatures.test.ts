@@ -415,6 +415,8 @@ export const FICHES_HORS_DU_BANC: Record<string, string> = {
   // LE LOT 3e, sa « Méthode » devenue gouverneur : deux passes de suite ont vu son « Délai max »
   // inerte puis agissant sous « Ollama ».
   "prompt-vers-graphe": "en méthode Ollama, le graphe rendu vient d'un serveur extérieur et de son temps de réponse : le délai agit ou non selon que le modèle répond à temps, et deux passes de suite ne disent pas la même chose",
+  // RELEVÉ À SA NAISSANCE, le 2026-11-22 : ses deux lancers tombaient sur « Worker is not defined ».
+  "harmoniser-coconet": "le tirage tourne dans le worker Magenta sur le point de contrôle Coconet, et le banc de node n'a ni Web Worker ni WebGL ; « Voix gardées » est éprouvé sur la grille par `audio/coconet-grille.test.ts`, chaque valeur rendant un masque différent",
 };
 
 /** Les bornes de modulation d'une fiche, déclarées sous leur port libre (`conditionsDesBornes`). */

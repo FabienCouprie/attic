@@ -441,6 +441,7 @@ magenta-generer-melodie
 magenta-interpoler-midi
 magenta-generer-batterie
 magenta-humaniser-groove
+harmoniser-coconet
 pure-data
 visualisation-songsee
 export-image
