@@ -18,7 +18,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { rendreNotes, type Banque } from "../audio/clavier-banque";
-import { chargerSfz, dossierDe } from "../audio/sfz";
+import { chargerSfz, direProblemesSfz, dossierDe } from "../audio/sfz";
 import { CHEMIN_KIT_EMBARQUE } from "../audio/kit-batterie";
 import { decodeurElectron } from "./clavier-sfz";
 import { choixOuiNon } from "../core/oui-non";
@@ -69,8 +69,12 @@ export const fiches: FicheAudio[] = ([
       }
       const mode = ctx.paramTexte("Type de banque", "auto") as "auto" | "hauteurs" | "kit";
       const charge = await chargerSfz(texte, dossierDe(chemin), decodeurElectron(api, ctx.runtime), { mode });
+      const problemes = direProblemesSfz(charge.sfz.problemes);
       if (charge.banque.zones.length === 0) {
-        return { valeurs: [null, null], message: traduire("msg.sfz.aucuneZone", String(charge.manquants.length)) };
+        return {
+          valeurs: [null, null],
+          message: [traduire("msg.sfz.aucuneZone", String(charge.manquants.length)), ...problemes].join(" · "),
+        };
       }
       const banque = charge.banque;
 
@@ -111,6 +115,10 @@ export const fiches: FicheAudio[] = ([
       if (integre) morceaux.push(traduire("msg.sfz.integre"));
       if (charge.manquants.length) morceaux.push(traduire("msg.sfz.manquants", String(charge.manquants.length)));
       if (charge.couchesEcartees) morceaux.push(traduire("msg.sfz.couches", String(charge.couchesEcartees)));
+      if (charge.sansRacine.length) {
+        morceaux.push(traduire("msg.sfz.sansRacine", String(charge.sansRacine.length), charge.sansRacine.slice(0, 2).join(", ")));
+      }
+      morceaux.push(...problemes);
       if (charge.sfz.ignores.length) {
         morceaux.push(traduire("msg.sfz.ignores", String(charge.sfz.ignores.length), charge.sfz.ignores.slice(0, 3).join(", ")));
       }

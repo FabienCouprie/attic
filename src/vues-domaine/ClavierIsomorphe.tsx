@@ -135,6 +135,8 @@ export function ClavierIsomorphe({ id, data, def }: VueProps) {
       source.start();
       return {
         arreter: () => {
+          // `one_shot` ignore le relâchement de la touche : la source s'éteint seule, comme au rendu.
+          if (p.unCoup) return;
           // Un relâchement en douceur, comme sur « Clavier SFZ » : couper net laisserait un clic.
           try {
             const fin = ctx.currentTime + 0.15;

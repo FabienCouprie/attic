@@ -61,6 +61,68 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - **Ce qui change** : ces cinq refus portent le drapeau d'erreur, comme tous les refus de la revue.
   - Tenu par `plugins/points-ouverts.test.ts`, quatre cas vus rouges sur le code d'avant, et rouge aussi sur le drapeau de nouveau retiré au Contrepoint, planté.
 
+- **CHAQUE `<CONTROL>` POSE SON `DEFAULT_PATH`, ET L'EN-TÊTE D'UN .SFZ EXPORTÉ SUIT LA LANGUE DE L'INTERFACE.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, neuvième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un seul `default_path` valait pour tout le fichier, celui du dernier `<control>` : deux en-têtes, `A/` puis `B/`, envoyaient les régions du premier chercher dans `B/`, et l'échantillon était déclaré manquant. sfzformat.com dit qu'un nouveau `<control>` remet `default_path` à zéro ;
+    - l'en-tête d'un `.sfz` exporté s'écrivait en français, interface anglaise comprise.
+  - **Ce qui change** : chaque région garde le `default_path` de son `<control>`, et un `<control>` qui n'en porte pas le remet à zéro ; l'en-tête s'écrit dans la langue de l'interface, depuis `audio/sfz-entete.ts`.
+  - Décision de Fabien : « The interface language » ; `default_path` suit la référence.
+  - Tenu par cinq cas de plus dans `plugins/sfz-format.test.ts`, trois vus rouges sur le code d'avant et deux témoins ; rouges aussi sur un `default_path` de nouveau gardé d'un `<control>` à l'autre et sur l'en-tête de nouveau toujours français, plantés.
+
+- **`PITCH_KEYCENTER=SAMPLE` PREND LA RACINE QUE DÉCLARE LE WAV.** Revue des notations en texte, le format SFZ, 2026-11-22, quatrième lot.
+  - **Ce qui se passait** : la référence dit de `pitch_keycenter=sample` qu'il « causes the SFZ player to look in the sample file metadata for the keycenter value », et la note 0 sans métadonnée. La valeur ne se lisait pas comme une note, et la région prenait la racine 60, sans un mot, quel que soit le fichier.
+  - **Ce qui change** :
+    - la racine se lit dans le bloc `smpl` du WAV, la « MIDI unity note », sur les octets bruts, avant le décodage qui ne garde que le son (`audio/wav-racine.ts`) ;
+    - un WAV sans ce bloc est joué depuis la note 0, comme le veut la référence, et « Banque SFZ » comme « Clavier SFZ » le disent en nommant le fichier ;
+    - le décalage de <control> et `transpose` s'ajoutent à la racine lue, et elle se résout avant le tri des doublons, qui la compare ;
+    - `pitch_keycenter=sample` l'emporte sur `key`, comme chez rgc et Cakewalk ; ARIA garde `key`.
+  - Le décodeur des deux nœuds rend maintenant le son avec la racine de son fichier : un cas de `plugins/clavier-sfz.test.ts` lit le son dans ce résultat, et non plus le résultat lui-même.
+  - Décision de Fabien : lire la racine du WAV.
+  - Tenu par trois cas de plus dans `plugins/sfz-format.test.ts`, sur de vrais octets de WAV. Les trois vus rouges sur le code d'avant, et deux vus rouges sur une lecture du mauvais champ du bloc `smpl`, plantée.
+
+- **L'EXPORT SFZ GARDE LE VOLUME, LE TEMPÉRAMENT ET LE KIT, ET N'ÉCRIT PLUS UN SON PAR-DESSUS UN AUTRE.** Revue des notations en texte, le format SFZ, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` en exportant par « Export SFZ » et en relisant par « Banque SFZ » :
+    - le gain d'une zone et son tempérament n'étaient pas écrits : une zone à 0,5, soit −6,02 dB, et une zone à 63,16 cents par touche, dix-neuf degrés par octave, se relisaient au gain plein et au demi-ton ;
+    - un kit à régions larges perdait `pitch_keytrack=0` et se relisait en instrument de hauteurs ;
+    - le nom d'un WAV ne dit que la racine et la couche : deux zones à la même racine, sur 0–59 et 60–127, s'écrivaient toutes deux dans `zone-060.wav`, la seconde par-dessus la première, et la région basse jouait le son de la haute ;
+    - un nom de fichier portant `=`, que la référence interdit dans un chemin d'échantillon, s'écrivait quand même ; notre propre lecteur y relisait zéro région.
+  - **Ce qui change** :
+    - `volume`, en décibels, et `pitch_keytrack`, en cents par touche, s'écrivent, et une zone qui ne suit pas la touche s'écrit `pitch_keytrack=0` ;
+    - deux sons à la même racine reçoivent deux noms, `zone-060.wav` et `zone-060-2.wav`, et un son partagé par deux zones ne s'écrit qu'une fois. Les noms viennent d'un seul endroit, `audio/sfz-noms.ts`, que lisent le texte et l'écriture des WAV ;
+    - un nom portant `=` est refusé, nommé, et rien n'est écrit.
+  - Tenu par cinq cas de plus dans `plugins/sfz-format.test.ts`, tous par l'aller-retour entre les deux nœuds. Quatre vus rouges sur le code d'avant ; le cinquième, un son partagé qui reste un seul fichier, sert de témoin. Vu rouge aussi sur `pitch_keytrack=0` de nouveau omis, et sur des noms de nouveau confondus, plantés.
+
+- **`ONE_SHOT` JOUE L'ÉCHANTILLON JUSQU'AU BOUT, ET LA FIN D'UNE BOUCLE SFZ EST INCLUSE.** Revue des notations en texte, le format SFZ, 2026-11-22, deuxième lot.
+  - **Ce qui se passait**, mesuré par `executer` contre sfzformat.com :
+    - `loop_mode=one_shot`, « from start to end, ignoring note off », était éteint au relâchement. La crash du kit intégré, déclarée `one_shot` et longue de 1,2 s, rendait 0,35 s par « Séquence sur banque » sous une note de 0,1 s, et plus rien après 0,25 s ;
+    - `loop_end` est inclus dans le format : `loop_start=1000 loop_end=1999` boucle sur mille échantillons. Il était lu comme une fin exclue, 999 par tour, et l'export écrivait `loop_end=2000` pour une boucle de mille, soit 1 001 dans un autre lecteur ;
+    - l'export écrivait `loop_mode=no_loop` pour chaque zone sans boucle, celles d'un kit comprises.
+  - **Ce qui change** :
+    - une zone `one_shot` sonne jusqu'au bout de son échantillon, au rendu comme au jeu en direct des deux claviers, où le relâchement de la touche ne l'arrête plus ;
+    - la crash du kit sonne ses 1,2 s, et le tampon rendu s'allonge pour la contenir ; une zone ordinaire garde son relâchement, et la durée du rendu sans `one_shot` est celle d'avant, au bit près ;
+    - `loop_end` se lit et s'écrit inclus, et une zone `one_shot` s'écrit `loop_mode=one_shot`.
+  - Décision de Fabien : jouer `one_shot` jusqu'au bout, les queues de la batterie s'allongeant dans les graphes qui jouent le kit. Aucune empreinte versionnée ne passe par un nœud SFZ.
+  - Tenu par quatre cas de plus dans `plugins/sfz-format.test.ts`. Trois vus rouges sur le code d'avant ; le quatrième, une zone ordinaire qui se tait après son relâchement, sert de témoin. Vu rouge aussi sur une fin de boucle de nouveau lue exclue, et sur un relâchement de nouveau appliqué à `one_shot`, plantés.
+
+- **UN SFZ SE LIT COMME SA RÉFÉRENCE LE DÉFINIT, ET CE QUI EN EST ÉCARTÉ EST NOMMÉ.** Revue des notations en texte, le format SFZ, 2026-11-22, premier lot.
+  - **Ce qui se passait**, mesuré par `executer` sur « Banque SFZ » et « Clavier SFZ » contre sfzformat.com :
+    - une région à `lokey=-1 hikey=-1`, ou `key=-1`, que SFZ 2 réserve à un contrôleur, jouait sur les 128 touches ;
+    - une touche illisible ou hors de 0 à 127 (`lokey=foo`, `lokey=200`, `key=h4`, `key=g#9`) faisait une région de 0 à 127, sans un mot ; `volume=fort`, `tune=abc` prenaient leur défaut, `hivel=200` et `lovel=-5` passaient ;
+    - `lokey=72 hikey=60` était lu 60–72, une supposition que la référence ne fait pas ;
+    - `amp_veltrack=-100` était ramené à 0 : la vélocité 127 sonnait comme la vélocité 20, à 0,283 de RMS, au lieu de se taire ;
+    - une redéfinition de `#define` valait pour tout le fichier : `$K` à 60 puis à 72 donnait deux régions à 72, l'une comptée comme doublon, et le fichier passait pour un kit d'un son ;
+    - un `#include` non suivi et une région sans `sample` étaient rangés dans les données de lecture, et aucun des deux nœuds ne les disait ;
+    - `*sine`, générateur d'ARIA, était compté comme échantillon manquant ;
+    - `octave_offset` et `note_offset` n'étaient que comptés parmi les ignorés, souvent au-delà des trois noms que montre le message.
+  - **Ce qui change** :
+    - une région dont une valeur est illisible ou hors de la plage de la référence, dont `lokey` dépasse `hikey`, dont une touche vaut -1, dont le `sample` est un générateur, ou que le décalage sort du clavier, est écartée ; le message la nomme par son rang, `#2 lokey=foo` ;
+    - `amp_veltrack` va de −100 à 100, et négatif il joue à rebours ;
+    - un `#define` vaut à partir de sa ligne ;
+    - `octave_offset` et `note_offset` décalent les touches et la racine des régions qui suivent, `octave_offset=-1` mettant `c4` à la touche 48 ;
+    - les deux nœuds disent les `#include`, les régions sans `sample` et les régions écartées.
+  - Décision de Fabien pour `lokey` au-dessus de `hikey` : refuser, nommé ; pour les décalages : les appliquer.
+  - Tenu par `plugins/sfz-format.test.ts`, treize cas tirés des pages de sfzformat.com. Onze vus rouges sur le code d'avant, deux tenus déjà (les noms de notes, l'alias `pitch`). Vu rouge aussi sur une touche -1 de nouveau lue comme absente, et sur une redéfinition de nouveau appliquée à tout le fichier, plantées.
+
 - **LE MUSICXML VENU D'UN MIDI CHOISIT SA CLÉ SUR LE REGISTRE, ET DÉCOUPE SES VALEURS SELON LES TEMPS.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, huitième lot.
   - **Ce qui se passait**, mesuré par `executer` du MIDI au texte MusicXML :
     - le chemin du MIDI écrivait toujours la clé de sol : do 2 à fa 2 se lisaient sur des lignes supplémentaires ; le chemin de l'arbre, lui, choisissait la sienne ;
