@@ -9,7 +9,8 @@
 // CE QUI EST LU. En-tête : X: T: M: L: Q: K: V:. Corps : notes, altérations
 // (^ _ = et leurs doubles), octaves (' ,), durées (2, /2, /, 3/2…), silences
 // (z x Z X), accords [CEG], liaisons de prolongation (-), d'un accord entier ou
-// d'une seule de ses notes ([CE]- et [C-E]), rythmes pointés (> <),
+// d'une seule de ses notes ([CE]- et [C-E]), et qui portent l'altération de la
+// note liée à travers la barre (^F2-|F2 tient le fa dièse), rythmes pointés (> <),
 // n-olets ((3 et (p:q:r), barres, reprises (|: :| ::) et fins alternatives
 // ([1 [2 |1 :|2), accords chiffrés ("Am"), nuances (!p! !f!…), champs en ligne
 // ([K:] [M:] [L:] [V:]), plusieurs voix, plusieurs morceaux dans un fichier.
@@ -183,7 +184,9 @@ type EtatVoix = {
   /** `inacheve` dit la faute si le morceau finit, ou si un autre n-olet commence, avant ses notes. */
   tuplet: { reste: number; facteur: Frac; inacheve: () => void } | null;
   /** La dernière note liée, jusqu'à la note qui doit la prolonger. */
-  liee: { hauteurs: number[]; orpheline: () => void } | null;
+  liee: { hauteurs: number[]; alterations: Map<string, number>; orpheline: () => void } | null;
+  /** Lettre, octave et altération de la dernière note ou du dernier accord lu : ce qu'une liaison porte. */
+  epelees: { midi: number; cle: string; alteration: number }[];
 };
 
 /**
@@ -286,7 +289,7 @@ function lireDuree(s: string, i: number): { duree: Frac; i: number } {
 }
 
 /** Lit une note (altération, lettre, octaves) à partir de `i`. null si ce n'est pas une note. */
-function lireHauteur(s: string, i: number, v: EtatVoix): { midi: number; i: number } | null {
+function lireHauteur(s: string, i: number, v: EtatVoix): { midi: number; i: number; cle: string; alteration: number } | null {
   let j = i, alteration: number | null = null;
   const acc = /^(\^\^|\^|__|_|=)/.exec(s.slice(j));
   if (acc) { alteration = { "^^": 2, "^": 1, "__": -2, "_": -1, "=": 0 }[acc[1]]!; j += acc[1].length; }
@@ -297,18 +300,20 @@ function lireHauteur(s: string, i: number, v: EtatVoix): { midi: number; i: numb
   while (j < s.length && (s[j] === "'" || s[j] === ",")) { octave += s[j] === "'" ? 1 : -1; j++; }
   const L = lettre.toUpperCase();
   // Une altération écrite vaut pour la même lettre à la même octave jusqu'à la
-  // barre ; à défaut, l'armure s'applique.
+  // barre. À défaut, la note qu'une liaison prolonge garde l'altération de la
+  // note liée, à travers la barre et pour elle seule, comme en gravure (décision
+  // de Fabien du 2026-11-22, la norme étant muette) ; puis l'armure s'applique.
   const cleBarre = `${L}${octave}`;
   if (alteration !== null) v.accBarre.set(cleBarre, alteration);
-  const effective = v.accBarre.has(cleBarre) ? v.accBarre.get(cleBarre)! : (v.armure.alterations[L] ?? 0);
+  const effective = v.accBarre.has(cleBarre) ? v.accBarre.get(cleBarre)! : (v.liee?.alterations.get(cleBarre) ?? v.armure.alterations[L] ?? 0);
   const midi = 60 + DEMI_TON[L] + effective + 12 * (octave + v.armure.octave) + v.armure.transposition;
-  return { midi, i: j };
+  return { midi, i: j, cle: cleBarre, alteration: effective };
 }
 
 function nouvelleVoix(id: string, g: { unite: Frac; metrique: Metrique | null; armure: Armure }): EtatVoix {
   return {
     id, jetons: [], unite: g.unite, metrique: g.metrique, armure: { ...g.armure, alterations: { ...g.armure.alterations } },
-    accBarre: new Map(), velocite: 80, facteurSuivant: null, tuplet: null, liee: null,
+    accBarre: new Map(), velocite: 80, facteurSuivant: null, tuplet: null, liee: null, epelees: [],
   };
 }
 
@@ -337,7 +342,8 @@ function pousserNote(v: EtatVoix, hauteurs: number[], duree: Frac) {
 /** Lie des hauteurs de la note `n` à la suivante ; `fragment` est ce que nomme la faute si elle ne vient pas. */
 function lier(v: EtatVoix, n: JetonNote, hauteurs: number[], faute: Signaler, fragment: string) {
   n.liees = [...new Set([...n.liees, ...hauteurs])];
-  v.liee = { hauteurs: n.liees, orpheline: () => faute("liaison", fragment) };
+  const alterations = new Map(v.epelees.filter((e) => n.liees.includes(e.midi)).map((e) => [e.cle, e.alteration]));
+  v.liee = { hauteurs: n.liees, alterations, orpheline: () => faute("liaison", fragment) };
 }
 
 function derniereNote(v: EtatVoix): JetonNote | null {
@@ -441,6 +447,7 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
       if (s[i + 1] === "|") { i++; continue; } // « [| » : la barre suit
       // Accord de notes.
       debutNote = i;
+      v.epelees = [];
       let j = i + 1;
       const hauteurs: number[] = [], liees: number[] = [];
       let dureeInterne: Frac | null = null;
@@ -449,6 +456,7 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
         const h = lireHauteur(s, j, v);
         if (!h) { j++; continue; }
         hauteurs.push(h.midi);
+        v.epelees.push(h);
         const d = nulle(lireDuree(s, h.i), j);
         if (dureeInterne === null) dureeInterne = d.duree;
         j = d.i;
@@ -502,6 +510,7 @@ function lireLigneCorps(ligne: string, v: EtatVoix, avert: (m: string) => void, 
     const h = lireHauteur(s, i, v);
     if (h) {
       debutNote = i;
+      v.epelees = [h];
       const d = nulle(lireDuree(s, h.i), i);
       pousserNote(v, [h.midi], fMul(v.unite, d.duree));
       i = d.i;

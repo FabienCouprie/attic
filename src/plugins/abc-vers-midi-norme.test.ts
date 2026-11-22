@@ -84,6 +84,7 @@ describe("UNE FAUTE QUI FERAIT JOUER FAUX REFUSE LE MORCEAU, et le message la no
     ["une liaison vers un silence", T("K:C\nC2- z2 |"), "C2-"],
     ["une liaison d'accord dont une hauteur s'arrête", T("K:C\n[CE]2-[CG]2 |"), "[CE]2-"],
     ["une liaison dans l'accord que ne suit pas la même hauteur", T("K:C\n[C-E]2 [DG]2 |"), "[C-E]2"],
+    ["une liaison dont la note suivante écrit une autre altération", T("K:C\n^F2-|=F2 G2|"), "^F2-"],
     ["une liaison qui finit le morceau", T("K:C\nC2 D2-|"), "D2-"],
     ["un n-olet inachevé à la fin du morceau", T("K:C\n(3CD|"), "(3"],
     ["un n-olet coupé par un autre", T("K:C\n(3CD(3EFG A|"), "(3"],
@@ -124,6 +125,13 @@ describe("CE QUE LA NORME PERMET N'EST PAS REFUSÉ", () => {
     ["une liaison vers la première fin, que la seconde ne prolonge pas", T("K:C\n|: C2- |1 C2 :|2 D2 |]"),
       [[60, 0, 4], [60, 4, 6], [62, 6, 8]]],
     ["une liaison qui garde l'altération écrite à nouveau", T("K:C\n^F2-|^F2 G2|"), [[66, 0, 4], [67, 4, 6]]],
+    // Décision de Fabien du 2026-11-22 : la liaison porte l'altération de sa note à travers la barre,
+    // pour la seule note liée, comme en gravure. La norme ABC 2.1 est muette sur ce point.
+    ["une liaison porte le dièse à travers la barre", T("K:C\n^F2-|F2 G2|"), [[66, 0, 4], [67, 4, 6]]],
+    ["une liaison porte le bémol à travers la barre", T("K:C\n_B2-|B2 c2|"), [[70, 0, 4], [72, 4, 6]]],
+    ["l'altération portée ne vaut que pour la note liée", T("K:C\n^F2-|F2 F2|"), [[66, 0, 4], [65, 4, 6]]],
+    ["une liaison dans l'accord porte l'altération de sa seule note", T("K:F\n[^F-=B]2|[FB]2 |"),
+      [[66, 0, 4], [71, 0, 2], [70, 2, 4]]],
     ["un n-olet à travers la barre", T("K:C\n(3CD|E F|"), [[60, 0, 0.667], [62, 0.667, 1.333], [64, 1.333, 2], [65, 2, 3]]],
     ["un n-olet coupé par la fin de ligne", T("K:C\n(3CD\nE F|"), [[60, 0, 0.667], [62, 0.667, 1.333], [64, 1.333, 2], [65, 2, 3]]],
   ])("%s", async (_titre, abc, attendu) => {
