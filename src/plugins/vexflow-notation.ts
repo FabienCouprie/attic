@@ -3,8 +3,8 @@
 // Une part de ce qui tenait dans un seul fichier, decoupee selon ses dependances. Aucune ligne
 // de calcul n'a ete retouchee au passage.
 
-import { Chord } from "tonal";
 import { accordsDepuisRomains, estProgressionRomaine, modeDepuisTonalite, toniqueDepuisTonalite } from "../audio/theorie-romains";
+import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 import {
   barreDeDuree, easyScoreDe, jetonsDe, lireHauteur, lireNotationVexflow, longueurDe, mettreEnMesures,
   type ElementGrave, type Evenement, type FauteGravure, type Hauteur, type NoteTab,
@@ -186,7 +186,8 @@ export function genererGrille(accords: string[], mesuresParLigne: number, largeu
     const y = 20 + row * lineHeight;
     const stave = vf.Stave({ x, y, width: staveWidth });
     stave.setContext(vf.getContext()).draw();
-    const sym = Chord.get(accords[i]).symbol ?? accords[i];
+    // Par le seul lecteur des symboles : « Bø7 » s'écrit « Bm7b5 », et « N.C. » s'écrit tel quel.
+    const sym = estSansAccord(accords[i]) ? "N.C." : (accordDuSymbole(accords[i])?.symbol ?? accords[i]);
     const textNote = vf.TextNote({ text: sym, duration: "w" });
     const voice = vf.Voice({ time: "4/4" }).addTickables([textNote]);
     vf.Formatter().joinVoices([voice]).format([voice], staveWidth - 20);
@@ -212,11 +213,12 @@ export function accordsDeProgression(progression: string, tonic: string, gamme: 
   return romains ? accordsPourPartition(tonic, gamme, tokens) : tokens;
 }
 
-/** Grave des accords reconnus, une noire chacun, leurs notes posées à l'octave 4. */
+/** Grave des accords reconnus, une noire chacun, leurs notes posées à l'octave 4 ; « N.C. » est un soupir. */
 export function genererPartition(accords: string[], clef: string, largeur: number, hauteur: number): string {
   const evenements: Evenement[] = accords.map((a, k) => ({
-    debut: k, longueur: 1, silence: false,
-    hauteurs: Chord.get(a).notes.map((n) => lireHauteur(`${n}4`)).filter((h): h is Hauteur => h !== null),
+    debut: k, longueur: 1, silence: estSansAccord(a),
+    hauteurs: estSansAccord(a) ? [{ lettre: "B", alteration: 0, octave: 4 }]
+      : (accordDuSymbole(a)?.notes ?? []).map((n) => lireHauteur(`${n}4`)).filter((h): h is Hauteur => h !== null),
   }));
   return genererPortee(mettreEnMesures(evenements), clef, largeur, hauteur);
 }

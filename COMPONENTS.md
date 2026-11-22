@@ -2856,7 +2856,7 @@ Covers an ABC score in another style: melody and chord symbols stay those of the
 
 *Converts Harmonic Analysis output into the notation expected by Text → MIDI.*
 
-Translates Harmonic Analysis output into notation playable by Text → MIDI. « Detected chords » source: transcribes the actual harmony, converting the measured durations (seconds) into beats via Tempo. « Progression » source: expands the suggested roman numerals, which also requires the Key input.
+Translates Harmonic Analysis output into notation playable by Text → MIDI. « Detected chords » source: transcribes the actual harmony, converting the measured durations (seconds) into beats via Tempo. Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ »; « N.C. » becomes a rest of its duration. « Progression » source: expands the suggested roman numerals, which also requires the Key input.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -5798,7 +5798,7 @@ A comb filter sends the sound round a loop whose length is the period of a note:
 
 *Generates a full accompaniment in text-to-MIDI format.*
 
-Generates a full accompaniment in text-to-MIDI format. Connect its « Notation » output to the « Text → MIDI » node to get a MIDI/audio file. Accepts a progression in roman numerals (I V vi IV) or chord symbols (C Am F G). Parameters: key, tempo, duration per chord, octave and Block/Arpeggio mode.
+Generates a full accompaniment in text-to-MIDI format. Connect its « Notation » output to the « Text → MIDI » node to get a MIDI/audio file. Accepts a progression in roman numerals (I V vi IV) or chord symbols (C Am F G). Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ », « D/F# »; « N.C. » is a silent chord, silent for the length of a chord, and three eighth notes in arpeggio. Parameters: key, tempo, duration per chord, octave and Block/Arpeggio mode.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9825,7 +9825,7 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 
 *Displays a chord chart from a list of symbols.*
 
-Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. The text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included; otherwise each token is a chord symbol, and a symbol no chord recognizes is refused, named. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
+Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. The text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included; otherwise each token is a chord symbol, read in its usual spellings (« Bø7 », « CΔ7 », « B♭ »), « N.C. » being written as is in its bar, and a symbol no chord recognizes is refused, named. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9848,7 +9848,7 @@ Generates a chord chart (SVG) from a list of chord symbols or a roman numeral pr
 
 *Displays a simple score from a chord progression.*
 
-Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G): the text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included. Chords are displayed as block chords on the staff, a quarter note each, in 4/4 bars, and each accidental is drawn when it changes what is in force in the bar, naturals included. A symbol no chord recognizes is refused, and the message names it. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
+Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G): the text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included. Chords are displayed as block chords on the staff, a quarter note each, in 4/4 bars, and each accidental is drawn when it changes what is in force in the bar, naturals included. Symbols are read in their usual spellings (« Bø7 », « CΔ7 », « B♭ »); « N.C. » is a quarter rest. A symbol no chord recognizes is refused, and the message names it. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|

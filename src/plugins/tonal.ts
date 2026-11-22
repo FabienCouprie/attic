@@ -8,6 +8,7 @@ import { avecDoc } from "./notices";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { Chord, Scale, Note } from "tonal";
 import { estimerTonalite, detecterAccords, accordsVersTexte } from "../audio/accords";
+import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 import { PARAMETRE_CLE } from "../audio/cles";
 import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 import {
@@ -34,8 +35,9 @@ function parserNotes(texte: string): string[] {
 // Renvoie les notes d'un symbole d'accord Tonal réparties de manière ascendante
 // à partir de l'octave de base (ex. "C3 E3 G3" pour C majeur en octave 3).
 function notesAccordAscendantes(accord: string, octave: number): string[] {
-  const c = Chord.get(accord);
-  if (!c || !c.notes.length) return [];
+  // Par le seul lecteur des symboles, revue des notations en texte du 2026-11-22.
+  const c = accordDuSymbole(accord);
+  if (!c) return [];
   const notes: string[] = [];
   let lastMidi = -Infinity;
   for (const n of c.notes) {
@@ -50,6 +52,8 @@ function notesAccordAscendantes(accord: string, octave: number): string[] {
 
 // Convertit un symbole d'accord en notation texte-vers-midi (ex. "C4+E4+G4+B4 1").
 function accordVersNotation(accord: string, octave: number, duree: number): string {
+  // « N.C. » est un accord silencieux, décision de Fabien du 2026-11-22 : il prend sa place, en silence.
+  if (estSansAccord(accord)) return `rest ${duree}`;
   const notes = notesAccordAscendantes(accord, octave);
   return notes.length ? `${notes.join("+")} ${duree}` : "";
 }
@@ -289,6 +293,8 @@ export const fiches: FicheAudio[] = ([
       if (faconDe(mode) === "arpege") {
         const dureeNote = 0.5;
         for (const accord of accords) {
+          // « N.C. » se tait le temps d'une triade arpégée, trois croches.
+          if (estSansAccord(accord)) { lignes.push(`rest ${3 * dureeNote}`); continue; }
           for (const n of notesAccordAscendantes(accord, octave + 1)) {
             lignes.push(`${n} ${dureeNote}`);
           }

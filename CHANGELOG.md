@@ -6,6 +6,15 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN SYMBOLE D'ACCORD SE LIT DE LA MÊME FAÇON PARTOUT, DANS SES ÉCRITURES USUELLES, ET « N.C. » EST UN ACCORD SILENCIEUX.** Revue des notations en texte, cinquième format, décisions de Fabien du 2026-11-22 : « Read them » et « A silent chord ».
+  - **Ce qui se passait**, mesuré par `executer` sur cinquante-six symboles de l'usage :
+    - les lecteurs ne se répondaient pas : l'ABC lisait « Cø7 », « Cm7(b5) » et « Cm(maj7) », la Grille les refusait, « Accords → Notation » les perdait sans les nommer ;
+    - « CΔ7 », « Bm7♭5 » et « C7♯9 » n'étaient lus nulle part, alors que la table d'accords d'Attic écrit elle-même « ♭ » et « ♯ » ;
+    - « N.C. » se taisait dans l'ABC, était refusé par la Grille et les graveurs VexFlow, et perdu par « Accords → Notation ».
+  - **Ce qui change** : `audio/symboles-accords.ts`, module neuf, est le seul lecteur des symboles. Il ramène à l'écriture de Tonal les signes « ♭ » et « ♯ », les parenthèses d'altération, « m(maj7) », « ø », « Δ7 », « min7b5 », « 6/9 » et une fondamentale en minuscule. La Grille, « Accords → Notation », l'ABC (`hauteursAccord`, dont `normaliserAccord` devient un autre nom), le contrôle des symboles inconnus, la Grille et la Partition VexFlow passent par lui. « N.C. » prend sa place dans le temps : un silence de la durée d'un accord dans la Grille, trois croches en arpège ; de sa durée mesurée dans « Accords → Notation » ; un soupir dans la Partition ; écrit tel quel dans la Grille VexFlow. Les notices le disent.
+  - **Le garde**, `plugins/symboles-accords.test.ts`, tout par `executer` : onze écritures, chacune lue par la Grille, « Accords → Notation » et l'ABC, qui doivent rendre les classes et la basse de l'usage ; « N.C. » dans la Grille et la transcription ; et, dans `plugins/vexflow-gravure.test.ts`, quatre grilles et partitions. **Vu rouge** sur le code d'avant, 15 cas sur 17 ; puis sur une faute plantée dans l'arbre de session, le « ø » plus ramené, trois cas tombés.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests des symboles, de VexFlow, de Tonal, de l'ABC et de Camelot, et les gardes du dépôt touchés, 23 fichiers et 443 cas verts. **Non vérifié dans l'application.**
+
 - **LA PARTITION MIDI POSE CHAQUE NOTE À SA PROPRE ATTAQUE, AVEC SA LONGUEUR, DANS LA MÉTRIQUE DU FICHIER, ET LAISSE LA BATTERIE.** Revue des notations en texte, troisième format, décisions de Fabien du 2026-11-22 : « Dots and ties », « Cut into bars » et « Leave channel 9 out ».
   - **Ce qui se passait**, mesuré par `executer`, en relisant ce que VexFlow dessine :
     - une durée qui n'était pas simple s'écrivait plus courte, suivie d'un silence : une noire pointée en noire et demi-soupir, une blanche pointée en blanche et soupir, une note de deux rondes en ronde et pause ;

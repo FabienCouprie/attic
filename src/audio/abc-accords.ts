@@ -5,27 +5,23 @@
 // plafond de taille.
 
 import { Chord, Note } from "tonal";
+import { estSansAccord, normaliserSymbole } from "./symboles-accords";
 
 /**
  * Écritures courantes que Tonal refuse, ramenées aux siennes. Trouvé en mesurant
  * des retouches par LLM : gemma4:12b écrivait « Bm7(b5) », l'écriture usuelle du
- * semi-diminué, et la lecture échouait — le modèle avait raison, le lecteur tort.
- * Vérifié une par une contre Tonal : les parenthèses d'altération, « m(maj7) »,
- * « ø7 », et « 6/9 », que la barre oblique faisait prendre pour une basse.
+ * semi-diminué, et la lecture échouait ; le modèle avait raison, le lecteur tort.
+ * C'EST DEPUIS LE 2026-11-22 LE LECTEUR DE TOUS LES NŒUDS, `normaliserSymbole`
+ * (`symboles-accords.ts`), qui lit aussi « Δ7 », « ♭ » et « ♯ » ; ce nom reste,
+ * parce que la comparaison des accords de `abc-contraintes.ts` l'emploie.
  */
-export function normaliserAccord(symbole: string): string {
-  return symbole
-    .replace(/\(([^)]*)\)/g, "$1") // Bm7(b5) → Bm7b5, C(add9) → Cadd9
-    .replace(/m\s*maj7/i, "mMaj7") // Dm(maj7) → DmMaj7
-    .replace(/ø7?/, "m7b5") // Bø, Bø7 → Bm7b5
-    .replace(/6\/9/, "69"); // F6/9 → F69 : ce 9 n'est pas une basse
-}
+export const normaliserAccord = normaliserSymbole;
 
 /** Voicing d'un accord chiffré : fondamentale à l'octave 3, notes montantes, basse sous la fondamentale. */
 export function hauteursAccord(symbole: string): number[] | null {
-  if (/^N\.?C\.?$/i.test(symbole)) return [];
-  const [nom, basse] = normaliserAccord(symbole).split("/");
-  const c = Chord.get(nom.replace(/^([a-g])/, (x) => x.toUpperCase()));
+  if (estSansAccord(symbole)) return [];
+  const [nom, basse] = normaliserSymbole(symbole).split("/");
+  const c = Chord.get(nom);
   if (c.empty || c.notes.length === 0) return null;
   const hauteurs: number[] = [];
   let precedente = 47;

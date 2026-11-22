@@ -4,7 +4,8 @@
 // puissent l'importer via "../audio/..." sans créer de dépendance croisée
 // entre fichiers de plugins — même raison que GAMMES_MELODIE_* dans
 // audio/generation.ts.
-import { Chord, Progression, RomanNumeral } from "tonal";
+import { Progression, RomanNumeral } from "tonal";
+import { symbolesInconnus } from "./symboles-accords";
 
 /**
  * Les symboles qu'aucun accord ne reconnaît.
@@ -20,7 +21,9 @@ import { Chord, Progression, RomanNumeral } from "tonal";
  * `{ symbol: "", empty: true }`. Le refus était à un champ de distance.
  */
 export function accordsInconnus(accords: readonly string[]): string[] {
-  return accords.filter((a) => Chord.get(a).empty);
+  // Par le seul lecteur des symboles depuis le 2026-11-22 : « Bø7 », « CΔ7 » et « B♭ » sont lus,
+  // « N.C. » aussi, comme un accord silencieux.
+  return symbolesInconnus(accords);
 }
 
 /**

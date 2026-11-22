@@ -187,6 +187,10 @@ describe("LA GRILLE ÉCRIT CHAQUE ACCORD UNE FOIS, ET LIT LES CHIFFRES ROMAINS J
     ["des romains qui commencent par une septième", "V7 I", "C", "majeur", ["G7", "C"]],
     ["des romains qui commencent par un bémol", "bVII IV I", "C", "majeur", ["Bb", "F", "C"]],
     ["des romains qui commencent par un diminué", "ii° V i", "A", "mineur", ["B°", "E", "Am"]],
+    // Cinquième format, décisions de Fabien du 2026-11-22 : les écritures usuelles se lisent, par le
+    // seul lecteur des symboles, et « N.C. » est un accord silencieux, écrit tel quel dans sa mesure.
+    ["les écritures usuelles", "Bø7 CΔ7 B♭ Cm(maj7)", "C", "majeur", ["Bm7b5", "Cmaj7", "Bb", "CmMaj7"]],
+    ["un accord silencieux", "C N.C. G", "C", "majeur", ["C", "N.C.", "G"]],
   ])("%s", async (_titre, accords, tonalite, gamme, attendu) => {
     const g = await graver("vexflow-grille", { Accords: accords, "Tonalité": tonalite, Gamme: gamme });
     expect(g.r.erreurRendue, g.r.message.slice(0, 200)).toBe(false);
@@ -199,6 +203,8 @@ describe("LA PARTITION D'ACCORDS SE LIT COMME ELLE EST ÉCRITE", () => {
     ["le sol naturel après le sol dièse", "E C", N([[64, 68, 71], 0, 1], [[60, 64, 67], 1, 1]), [4]],
     ["le do naturel après le do dièse", "A C", N([[69, 61, 64], 0, 1], [[60, 64, 67], 1, 1]), [4]],
     ["des romains qui commencent par une septième", "V7 I", N([[67, 71, 62, 65], 0, 1], [[60, 64, 67], 1, 1]), [4]],
+    ["un accord silencieux prend sa noire", "C N.C. G", N([[60, 64, 67], 0, 1], [[67, 71, 62], 2, 1]), [4]],
+    ["une écriture usuelle", "Bø7 B♭", N([[71, 62, 65, 69], 0, 1], [[70, 62, 65], 1, 1]), [4]],
     ["cinq accords, deux mesures", "C F G C F",
       N([[60, 64, 67], 0, 1], [[65, 69, 60], 1, 1], [[67, 71, 62], 2, 1], [[60, 64, 67], 3, 1], [[65, 69, 60], 4, 1]), [4, 4]],
   ])("%s", async (_titre, progression, attendu, mesures) => {

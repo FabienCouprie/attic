@@ -8,28 +8,19 @@ import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
-import { Chord, Note } from "tonal";
+import { Note } from "tonal";
 import { accordsDepuisRomains, modeDepuisTonalite, toniqueDepuisTonalite } from "../audio/theorie-romains";
+import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 
-// Les symboles produits par `detecterAccords` (audio/accords.ts) suivent ses
-// propres gabarits, qui ne coïncident pas tous avec ceux de Tonal : « min7b5 »
-// y désigne le demi-diminué, que Tonal nomme « m7b5 ». Vérifié symbole par
-// symbole : les neuf autres gabarits passent tels quels, celui-ci seul échoue
-// et renverrait un accord vide, donc une ligne perdue en silence.
-const ALIAS_SUFFIXE: Record<string, string> = { min7b5: "m7b5" };
-
-function normaliserSymbole(symbole: string): string {
-  const m = /^([A-G][#b]?)(.*)$/.exec(symbole.trim());
-  if (!m) return symbole.trim();
-  const [, racine, suffixe] = m;
-  return racine + (ALIAS_SUFFIXE[suffixe] ?? suffixe);
-}
+// LE SYMBOLE SE LIT PAR LE SEUL LECTEUR DES SYMBOLES (`audio/symboles-accords.ts`), revue des
+// notations en texte du 2026-11-22. Ce nœud avait le sien, qui ne ramenait que « min7b5 » à
+// l'écriture de Tonal : « Bø7 », « Cm(maj7) » ou « B♭ » étaient perdus sans être nommés.
 
 // Notes de l'accord en ordre ascendant à partir de `octave`, pour éviter qu'un
 // renversement ne descende sous la fondamentale.
 function notesAscendantes(symbole: string, octave: number): string[] {
-  const accord = Chord.get(normaliserSymbole(symbole));
-  if (!accord || accord.empty || !accord.notes.length) return [];
+  const accord = accordDuSymbole(symbole);
+  if (!accord) return [];
   const notes: string[] = [];
   let precedent = -Infinity;
   for (const n of accord.notes) {
@@ -167,9 +158,11 @@ export const fiches: FicheAudio[] = ([
         for (const ligne of accords.split(/\r?\n/)) {
           const parsee = parserLigneAccord(ligne, dureeDefaut / tempsParSeconde);
           if (!parsee) continue;
+          const temps = Math.max(0.05, Math.round(parsee.secondes * tempsParSeconde * 100) / 100);
+          // « N.C. » est un accord silencieux, décision de Fabien du 2026-11-22 : il garde sa durée.
+          if (estSansAccord(parsee.symbole)) { lignes.push(`rest ${temps}`); nbAccords++; continue; }
           const notes = notesAscendantes(parsee.symbole, octave);
           if (!notes.length) { nbIgnores++; continue; }
-          const temps = Math.max(0.05, Math.round(parsee.secondes * tempsParSeconde * 100) / 100);
           lignes.push(`${notes.join("+")} ${temps}`);
           nbAccords++;
         }
