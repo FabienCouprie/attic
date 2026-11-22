@@ -44,32 +44,41 @@ export function etendre(valeurs: readonly number[], combien: number): number[] {
   return sortie;
 }
 
+/** Ce qu'un champ écrit à la main rend : sa forme, `null` quand il est vide, ou ce qui ne se lit pas. */
+export type LectureChamp = { champ: Champ | null } | { refus: string };
+
+/** La forme lue, ou `null` pour un champ vide comme pour un refus, que l'appelant a déjà traité. */
+export const champDe = (l: LectureChamp): Champ | null => ("champ" in l ? l.champ : null);
+
+/** Un nombre décimal : « 440 », « -0.5 », « .25 », « 1e3 ». Ni hexadécimal, ni « Infinity ». */
+const DECIMAL = /^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?$/;
+
 /**
  * Lit un champ écrit à la main.
  *
- * Rend `null` quand rien n'est lisible, ce qui n'est pas la même chose qu'un champ à zéro : un
- * champ illisible doit être signalé, un champ à zéro est une valeur.
+ * VIDE, IL REND `null`, ce qui n'est pas la même chose qu'un champ à zéro : un champ à zéro est une
+ * valeur.
+ *
+ * CE QUI NE SE LIT PAS EST REFUSÉ, et le refus nomme le jeton en cause. Un jeton illisible était jeté,
+ * un champ illisible pris pour un champ vide, et « 0x10 » se lisait 16. La forme « de~à » rendait le
+ * milieu de son intervalle, aucun des lecteurs de ce champ ne tirant au sort : elle est refusée comme
+ * le reste. Le hasard borné demeure une forme de `Champ`, que le Micromontage construit lui-même.
+ * Décisions de Fabien du 2026-11-22, revue des notations en texte.
  */
-export function lireChamp(texte: string): Champ | null {
+export function lireChamp(texte: string): LectureChamp {
   const t = String(texte ?? "").trim();
-  if (t.length === 0) return null;
-  const rampe = /^(-?[\d.]+)\s*:\s*(-?[\d.]+)$/.exec(t);
-  if (rampe) {
-    const de = Number(rampe[1]), a = Number(rampe[2]);
-    if (Number.isFinite(de) && Number.isFinite(a)) return { forme: "rampe", de, a };
-    return null;
+  if (t.length === 0) return { champ: null };
+  if (t.includes(":")) {
+    const bornes = t.split(":").map((b) => b.trim());
+    if (bornes.length !== 2 || bornes.includes("")) return { refus: t };
+    const fautive = bornes.find((b) => !DECIMAL.test(b));
+    if (fautive !== undefined) return { refus: fautive };
+    return { champ: { forme: "rampe", de: Number(bornes[0]), a: Number(bornes[1]) } };
   }
-  // LE HASARD BORNÉ, ÉCRIT « de~à ». Une rampe traverse un intervalle dans l'ordre ; un nuage le
-  // remplit sans ordre. Les deux se distinguent à la lecture, et il en faut deux : une partition de
-  // mille fragments où tout serait rangé ne serait pas une partition stochastique.
-  const tirage = /^(-?[\d.]+)\s*~\s*(-?[\d.]+)$/.exec(t);
-  if (tirage) {
-    const de = Number(tirage[1]), a = Number(tirage[2]);
-    if (Number.isFinite(de) && Number.isFinite(a)) return { forme: "hasard", de, a };
-    return null;
-  }
-  const valeurs = t.split(/[\s,;]+/).map(Number).filter((n) => Number.isFinite(n));
-  return valeurs.length > 0 ? { forme: "liste", valeurs } : null;
+  const jetons = t.split(/[\s,;]+/).filter(Boolean);
+  const fautif = jetons.find((j) => !DECIMAL.test(j));
+  if (fautif !== undefined) return { refus: fautif };
+  return { champ: { forme: "liste", valeurs: jetons.map(Number) } };
 }
 
 /**

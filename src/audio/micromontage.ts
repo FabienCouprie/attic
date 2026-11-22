@@ -10,7 +10,7 @@
 // LA DIFFICULTÉ EST LE CONTRÔLE, NON LE CALCUL. Poser un fragment est une dizaine de lignes ; en
 // écrire mille à la main est impossible. La partition se donne donc comme une matrice de
 // paramètres, un champ par grandeur, chacun valant pour tous les fragments : un nombre seul, une
-// suite, une rampe « de:à », ou un tirage « de~à ». C'est le `class-array` d'OMChroma, que
+// suite, une rampe, ou un tirage entre deux bornes. C'est le `class-array` d'OMChroma, que
 // `matrice-parametres.ts` porte déjà, et le tirage y a été ajouté pour celui-ci.
 //
 // TOUT EST DÉTERMINISTE À GRAINE ÉGALE. Une partition stochastique qui ne se rejouerait pas à

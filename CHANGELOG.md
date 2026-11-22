@@ -6,6 +6,32 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN CHAMP ÉCRIT À LA MAIN SE LIT DES TROIS FAÇONS QUE DISENT LES NOTICES, ET CE QUI NE SE LIT PAS EST REFUSÉ EN NOMMANT LE RÉGLAGE.** Revue des notations en texte, onzième format, Csound, 2026-11-22, premier lot. Un champ s'écrit d'un nombre, d'une suite ou d'une rampe « de:à » : la structure du class-array d'OMChroma. Un seul lecteur, `lireChamp`, le lit pour sept nœuds :
+  - la Matrice de paramètres ;
+  - le Début de boucle par créneau ;
+  - Tourner, Miroir, Inverser et Permuter le cercle.
+
+  Le recensement n'avait vu que la Matrice.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un jeton illisible était jeté : « 200 abc 300 » écrivait 200 puis 300 ;
+    - un champ illisible était pris pour un champ vide : « x » en Départs mettait tous les départs à zéro, « 1.2.3 » en Durées toutes les durées à 1, et « abc » en « Pas » rendait le défaut ;
+    - « 0x10 » se lisait 16, et « 0x2 » en « Axe » donnait l'axe 2 ;
+    - « 200~2000 », forme qu'aucune notice ne nomme, écrivait 1100 pour chaque événement, aucun de ces nœuds ne tirant au sort.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Refuse it, named » :
+    - un nombre s'écrit en décimal, l'écriture scientifique comprise, comme Csound la lit ;
+    - ce qui ne se lit pas fait refuser le nœud, et le message nomme le réglage et le jeton ;
+    - la forme « de~à » est refusée. Le Micromontage, qui tire au sort, construit ses champs de ses glissières et ne lisait pas ce texte.
+
+    Les notices de la Matrice et de la boucle, et la documentation des quatre transformations, le disent.
+  - **Deux tests tenaient le contraire**, réécrits avec leur raison :
+    - dans `audio/matrice-parametres.test.ts`, « abc » rendait `null` comme un champ vide ;
+    - dans `plugins/cercle-transformations.test.ts`, il rendait le défaut.
+
+    Les tests du tirage, dans `audio/micromontage.test.ts`, construisent leurs champs comme le composant.
+  - **Le garde** : `plugins/champs-ecrits.test.ts`, 18 cas.
+    - Vu rouge sur le code d'avant : les 13 refus.
+    - Vu rouge aussi sur l'hexadécimal de nouveau admis, planté.
+
 - **CHAQUE AIR D'UN TEXTE ABC SE GRAVE, SOUS SON TITRE.** Revue des notations en texte, quatrième format, décision de Fabien du 2026-11-22 : « Engrave all, titled ».
   - **Ce qui se passait** : deux airs se gravaient à la suite, comme une seule pièce. Seul le titre du premier aurait pu paraître, et l'en-tête de page était caché. « ABC → MIDI », lui, n'en joue que le premier, et le dit.
   - **Ce qui change** :

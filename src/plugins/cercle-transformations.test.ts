@@ -39,38 +39,49 @@ function poserBoucle(passes: number, index: number): void {
 
 const places = (c: Cercle) => c.sommets.map((s) => s.position).sort((a, b) => a - b);
 const sons = (c: Cercle) => c.sommets.map((s) => s.valeur);
+/** La quantité lue, ou le refus tel quel, pour que l'attente le compare. */
+const quantite = (texte: string, defaut: number) => {
+  const q = quantiteDeLaPasse(texte, defaut);
+  return "valeur" in q ? q.valeur : q;
+};
 
 describe("la quantité de la passe", () => {
   it("HORS D'UNE BOUCLE, C'EST LA PREMIÈRE VALEUR DU CHAMP", () => {
     publierBoucles([]);
-    expect(quantiteDeLaPasse("0:3", 99)).toBe(0);
-    expect(quantiteDeLaPasse("5", 99)).toBe(5);
-    expect(quantiteDeLaPasse("7 2 9", 99)).toBe(7);
+    expect(quantite("0:3", 99)).toBe(0);
+    expect(quantite("5", 99)).toBe(5);
+    expect(quantite("7 2 9", 99)).toBe(7);
   });
 
-  it("un champ illisible rend le défaut, et non zéro", () => {
+  it("un champ vide rend le défaut, et non zéro", () => {
     publierBoucles([]);
-    expect(quantiteDeLaPasse("", 4)).toBe(4);
-    expect(quantiteDeLaPasse("abc", 4)).toBe(4);
+    expect(quantite("", 4)).toBe(4);
+  });
+
+  it("un champ illisible est refusé, et le refus porte ce qui ne se lit pas", () => {
+    // Ce test tenait le contraire : « abc » rendait le défaut, sans un mot. Décision de Fabien du
+    // 2026-11-22, « Refuse it, named », revue des notations en texte.
+    publierBoucles([]);
+    expect(quantite("abc", 4)).toEqual({ refus: "abc" });
   });
 
   it("UNE RAMPE S'ÉTALE SUR LES PASSES, bornes comprises", () => {
     for (const [passe, attendu] of [[0, 0], [1, 1], [2, 2], [3, 3]] as const) {
       poserBoucle(4, passe);
-      expect(quantiteDeLaPasse("0:3", 99), `passe ${passe}`).toBe(attendu);
+      expect(quantite("0:3", 99), `passe ${passe}`).toBe(attendu);
     }
   });
 
   it("une suite donne ses valeurs puis répète la dernière", () => {
     for (const [passe, attendu] of [[0, 7], [1, 2], [2, 9], [3, 9], [4, 9]] as const) {
       poserBoucle(5, passe);
-      expect(quantiteDeLaPasse("7 2 9", 99), `passe ${passe}`).toBe(attendu);
+      expect(quantite("7 2 9", 99), `passe ${passe}`).toBe(attendu);
     }
   });
 
   it("un rang hors des passes ne sort pas du champ", () => {
     poserBoucle(3, 99);
-    expect(quantiteDeLaPasse("0:2", 99)).toBe(2);
+    expect(quantite("0:2", 99)).toBe(2);
   });
 });
 
