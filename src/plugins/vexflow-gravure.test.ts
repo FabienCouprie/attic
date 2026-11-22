@@ -15,6 +15,7 @@ import { Accidental, BarNote, Dot, Stave, StaveNote, StaveTie, TabNote, TabStave
 import { fiches } from "./vexflow";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
+import { writeMidi } from "midi-file";
 
 type Element = { barre: true } | { barre: false; note: any };
 let dessin: { elements: Element[]; liaisons: any[]; mesures: string[]; tab: string[]; lignes: number[] };
@@ -222,6 +223,55 @@ describe("LA PARTITION MIDI SE LIT COMME LE FICHIER JOUE", () => {
     expect(g.notes).toEqual(N([[60], 0, 1], [[61], 1, 1], [[60], 2, 1], [[62], 3, 1]));
     expect(g.mesures).toEqual([4]);
   });
+  // DÉCISION DE FABIEN DU 2026-11-22, « Dots and ties » : chaque note garde sa longueur, en valeurs
+  // pointées et liées, et chacune est posée à sa propre attaque.
+  it.each([
+    ["une noire pointée", [[60, 0, 0.75], [62, 0.75, 1], [64, 1, 2]], N([[60], 0, 1.5], [[62], 1.5, 0.5], [[64], 2, 2]), [4]],
+    ["une blanche pointée", [[60, 0, 1.5], [62, 1.5, 2]], N([[60], 0, 3], [[62], 3, 1]), [4]],
+    ["une note de deux rondes, liée à travers la barre", [[60, 0, 4], [62, 4, 4.5]], N([[60], 0, 8], [[62], 8, 1]), [4, 4, 4]],
+    ["une syncope", [[60, 0, 0.25], [62, 0.25, 1], [64, 1, 2]], N([[60], 0, 0.5], [[62], 0.5, 1.5], [[64], 2, 2]), [4]],
+    ["un legato s'arrête à l'attaque suivante, qui reste à sa place", [[60, 0, 0.875], [62, 0.5, 1], [64, 1, 1.5]],
+      N([[60], 0, 1], [[62], 1, 1], [[64], 2, 1]), [4]],
+  ] as [string, [number, number, number][], number[][], number[]][])("%s", async (_titre, notes, attendu, mesures) => {
+    const g = await graver("vexflow-midi", {}, midi(notes));
+    expect(g.r.erreurRendue, g.r.message.slice(0, 200)).toBe(false);
+    expect(g.notes).toEqual(attendu);
+    expect(g.mesures).toEqual(mesures);
+  });
+
+  it("LA MÉTRIQUE DU FICHIER EST CELLE DE LA PORTÉE : un fichier en 3/4 se grave en mesures de trois noires", async () => {
+    const pistes = [[
+      { deltaTime: 0, type: "setTempo", microsecondsPerBeat: 500000 },
+      { deltaTime: 0, type: "timeSignature", numerator: 3, denominator: 4, metronome: 24, thirtyseconds: 8 },
+      ...[60, 62, 64, 65, 67, 69].flatMap((note) => [
+        { deltaTime: 0, type: "noteOn", channel: 0, noteNumber: note, velocity: 100 },
+        { deltaTime: 480, type: "noteOff", channel: 0, noteNumber: note, velocity: 0 },
+      ]),
+      { deltaTime: 0, type: "endOfTrack" },
+    ]];
+    const octets = new Uint8Array(writeMidi({ header: { format: 0, numTracks: 1, ticksPerBeat: 480 }, tracks: pistes } as any));
+    const g = await graver("vexflow-midi", {}, new File([octets], "valse.mid", { type: "audio/midi" }));
+    expect(g.signatures).toEqual(["3/4"]);
+    expect(g.mesures).toEqual([3, 3]);
+    expect(g.notes).toEqual(N(...[60, 62, 64, 65, 67, 69].map((h, k) => [[h], k, 1] as [number[], number, number])));
+  });
+
+  it("SOUS « TOUS », LA BATTERIE DU CANAL 9 N'EST PAS GRAVÉE, ET LE MESSAGE LE DIT ; choisie par son numéro, elle l'est", async () => {
+    const melodie = [[60, 0, 0.5], [62, 0.5, 1]].map(([note, debut, fin]) => ({ note, debut, fin, velocite: 100 }));
+    const caisse = [[36, 0, 0.5], [38, 0.5, 1]].map(([note, debut, fin]) => ({ note, debut, fin, velocite: 100 }));
+    const fusion = await import("../audio/midi-ecriture");
+    const fichier = fusion.notesVersFichierMidi(melodie, 120);
+    const batterie = fusion.notesVersFichierMidi(caisse, 120, 9);
+    const tous = await graver("vexflow-midi", {}, batterie);
+    expect(tous.notes).toEqual([]);
+    expect(tous.r.message).toMatch(/Canal 9/);
+    const neuf = await graver("vexflow-midi", { Canal: 9 }, batterie);
+    expect(neuf.notes).toEqual(N([[36], 0, 1], [[38], 1, 1]));
+    const sansBatterie = await graver("vexflow-midi", {}, fichier);
+    expect(sansBatterie.notes).toEqual(N([[60], 0, 1], [[62], 1, 1]));
+    expect(sansBatterie.r.message).not.toMatch(/Canal 9/);
+  });
+
   it("seize noires, quatre mesures", async () => {
     const g = await graver("vexflow-midi", {}, midi(Array.from({ length: 16 }, (_, k) => [60 + (k % 3), k * 0.5, k * 0.5 + 0.5] as [number, number, number])));
     expect(g.mesures).toEqual([4, 4, 4, 4]);

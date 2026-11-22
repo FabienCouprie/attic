@@ -9780,7 +9780,7 @@ Writes a MIDI file in ABC notation, so that a melody produced here (Groove Box, 
 
 *Displays a musical staff from a MIDI file.*
 
-Generates a musical staff (SVG) from a MIDI file. Connect a MIDI file (output from MIDI Transcriber, MIDI Player, etc.). Parameters: Tempo (0 = detected from MIDI), MIDI channel (-1 = all), rhythmic quantization and clef. The SVG output can be saved with the « SVG Export » node.
+Generates a musical staff (SVG) from a MIDI file. Connect a MIDI file (output from MIDI Transcriber, MIDI Player, etc.). Parameters: Tempo (0 = detected from MIDI), MIDI channel (-1 = all), rhythmic quantization and clef. The staff takes the file's time signature, 4/4 if it declares none, and is cut into bars. Each note is placed at its own onset and keeps its length, written in dotted and tied values; a note that overlaps the next onset stops there, the staff having a single voice, and notes starting together form a chord, which lasts as long as the shortest. Each accidental is drawn when it changes what is in force in the bar, naturals included. Under « all », channel 9, the drums, is not engraved, and the message says so; choosing it by its number engraves it. The SVG output can be saved with the « SVG Export » node.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9790,8 +9790,8 @@ Generates a musical staff (SVG) from a MIDI file. Connect a MIDI file (output fr
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Tempo | number | 0 BPM | 0 – 300 BPM, step 1 | Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file. |
-| Channel | number | -1 -1 = all | -1 – 15 -1 = all, step 1 | MIDI channel to display (-1 for all channels). |
-| Quantization | choice | 1/16 | 1/4 / 1/8 / 1/16 / 1/32 / 1/1 / 1/2 | Quantization grid resolution. The staff writes plain durations only, from the whole note to the thirty-second: no dotted or triplet grid, for want of a duration to write it. |
+| Channel | number | -1 -1 = all | -1 – 15 -1 = all, step 1 | MIDI channel to display: -1 for all channels except 9, the drums, which the message says were left out. Channel 9 chosen by its number is engraved. |
+| Quantization | choice | 1/16 | 1/4 / 1/8 / 1/16 / 1/32 / 1/1 / 1/2 | Quantization grid resolution. Each note keeps its length, written in dotted and tied values, from the whole note to the thirty-second; there is no triplet grid, for want of a value to write it. |
 | Clef | choice | Treble | Treble / Bass / Alto / Tenor | Staff clef: treble for high voices and instruments, bass for low ones, alto for the viola, tenor for the tenor range. |
 | Width | number | 800 px | 200 – 2000 px, step 10 | SVG width. |
 | Height | number | 200 px | 100 – 800 px, step 10 | SVG height. |

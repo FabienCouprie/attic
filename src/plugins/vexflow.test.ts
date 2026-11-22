@@ -2,7 +2,8 @@
 // plugins/vexflow.test.ts — Vérification des nœuds de notation VexFlow.
 import { describe, it, expect, beforeAll } from "vitest";
 import { fiches } from "./vexflow";
-import { jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore } from "./vexflow-notation";
+import { jetonsSansCordeFret, jetonsSansDuree } from "./vexflow-notation";
+import { easyScoreDe, mettreEnMesures, midiVersEvenements } from "../audio/notation-vexflow";
 import { accordsInconnus } from "../audio/theorie-romains";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { ctxDEssai } from "../core/contexte-essai";
@@ -183,22 +184,23 @@ describe("nœuds VexFlow", () => {
     expect(jetonsSansDuree("Tempo 90 C4+E4+G4 2.000")).toEqual(["Tempo", "90", "C4+E4+G4", "2.000"]);
   });
 
-  it("midiVersNotationEasyScore convertit une mélodie simple", () => {
-    const notes = notesMelodieSimple();
-    const notation = midiVersNotationEasyScore(notes, 120, 0.25);
-    expect(notation).toContain("C4/q");
-    expect(notation).toContain("D4/q");
-    expect(notation).toContain("E4/q");
+  // L'ÉCRIVAIN `midiVersNotationEasyScore` A ÉTÉ REMPLACÉ le 2026-11-22 par `midiVersEvenements` et
+  // la mise en mesures (revue des notations en texte) ; ces deux cas gardent ce qu'ils tenaient,
+  // jusqu'au jeton que la portée reçoit. La lecture complète de la partition MIDI est dans
+  // `vexflow-gravure.test.ts`.
+  it("midiVersEvenements convertit une mélodie simple", () => {
+    const jetons = mettreEnMesures(midiVersEvenements(notesMelodieSimple(), 120, 0.25)).flat().map(easyScoreDe);
+    expect(jetons.slice(0, 3)).toEqual(["C4/q", "D4/q", "E4/q"]);
   });
 
-  it("midiVersNotationEasyScore regroupe les notes simultanées en accords", () => {
+  it("midiVersEvenements regroupe les notes simultanées en accords", () => {
     const notes = [
       { note: 60, debut: 0, fin: 0.5, velocite: 100 },
       { note: 64, debut: 0, fin: 0.5, velocite: 100 },
       { note: 67, debut: 0, fin: 0.5, velocite: 100 },
     ];
-    const notation = midiVersNotationEasyScore(notes, 120, 0.25);
-    expect(notation).toContain("(C4 E4 G4)/q");
+    const [accord] = mettreEnMesures(midiVersEvenements(notes, 120, 0.25)).flat().map(easyScoreDe);
+    expect(accord).toBe("(C4 E4 G4)/q");
   });
 
   it("vexflow-midi génère un SVG à partir d'un fichier MIDI", async () => {

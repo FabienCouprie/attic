@@ -6,6 +6,17 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA PARTITION MIDI POSE CHAQUE NOTE À SA PROPRE ATTAQUE, AVEC SA LONGUEUR, DANS LA MÉTRIQUE DU FICHIER, ET LAISSE LA BATTERIE.** Revue des notations en texte, troisième format, décisions de Fabien du 2026-11-22 : « Dots and ties », « Cut into bars » et « Leave channel 9 out ».
+  - **Ce qui se passait**, mesuré par `executer`, en relisant ce que VexFlow dessine :
+    - une durée qui n'était pas simple s'écrivait plus courte, suivie d'un silence : une noire pointée en noire et demi-soupir, une blanche pointée en blanche et soupir, une note de deux rondes en ronde et pause ;
+    - chaque note se posait après la fin écrite de la précédente : un do de 1,75 temps écrit en blanche repoussait d'un temps le ré et le mi qui suivaient ;
+    - la métrique du fichier n'était pas lue, et seize noires se gravaient en une mesure de 16/4 ;
+    - sous « -1 = tous », la batterie du canal 9 se gravait en hauteurs, la grosse caisse en do 2 et la charleston en fa dièse 2.
+  - **Ce qui change** : `midiVersEvenements` (`audio/notation-vexflow.ts`) remplace l'ancien écrivain ; chaque note garde son attaque et sa longueur quantifiées, une note qui déborde sur l'attaque suivante s'arrête à elle, et la mise en mesures l'écrit en valeurs pointées et liées. La portée prend la métrique du fichier, 4/4 à défaut. Sous « tous », le canal 9 n'est pas gravé, et une ligne qui suit le SVG le dit, comme celle du moteur pour une valeur de réglage inconnue ; choisi par son numéro, il l'est. La notice et les documentations de « Canal » et « Quantification » le disent.
+  - **Les deux tests qui appelaient l'ancien écrivain** (`plugins/vexflow.test.ts`, `audio/microtons.test.ts`) tiennent la même chose par le nouveau, jusqu'au jeton que la portée reçoit.
+  - **Le garde**, dans `plugins/vexflow-gravure.test.ts` : cinq rythmes, un fichier en 3/4, la batterie sous « tous » et sous « 9 ». **Vu rouge** sur le code du lot précédent, rétabli le temps de la mesure dans l'arbre de session : 7 cas sur 7.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests VexFlow, des microtons, de Tonal, et les gardes du dépôt touchés, 19 fichiers et 657 cas verts. **Non vérifié dans l'application.**
+
 - **LA GRILLE ET LA PARTITION VEXFLOW LISENT LES CHIFFRES ROMAINS JETON PAR JETON, ET LA GRILLE N'ÉCRIT PLUS CHAQUE ACCORD DEUX FOIS.** Revue des notations en texte, troisième format, 2026-11-22.
   - **Ce qui se passait**, mesuré par `executer` :
     - les deux graveurs ne regardaient que le premier jeton, et n'y voulaient que des I et des V ; « V7 I », « ii° V i » et « bVII IV I » étaient pris pour des symboles, puis refusés comme inconnus, alors que la lecture des degrés savait les lire au milieu d'une progression ;

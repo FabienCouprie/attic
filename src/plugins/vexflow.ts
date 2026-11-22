@@ -9,10 +9,19 @@ import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { analyserMidi, midiDuFichier } from "../audio/midi";
 import {
-  GRILLES_NOTATION, accordsDeProgression, genererGrille, genererPartition, genererTab, graverNotation,
-  jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore,
+  GRILLES_NOTATION, accordsDeProgression, genererGrille, genererPartition, genererPortee, genererTab, graverNotation,
+  jetonsSansCordeFret, jetonsSansDuree, longueurDeMesure, type Signature,
 } from "./vexflow-notation";
-import { lireTablature, type FauteGravure } from "../audio/notation-vexflow";
+import { lireTablature, mettreEnMesures, midiVersEvenements, type FauteGravure } from "../audio/notation-vexflow";
+
+/** La première métrique d'un fichier MIDI, 4/4 s'il n'en déclare pas. */
+function signatureDuMidi(pistes: readonly (readonly { type: string; numerator?: number; denominator?: number }[])[]): Signature {
+  for (const piste of pistes) {
+    const s = piste.find((e) => e.type === "timeSignature" && e.numerator && e.denominator);
+    if (s) return { numerateur: s.numerator!, denominateur: s.denominator! };
+  }
+  return { numerateur: 4, denominateur: 4 };
+}
 
 /** Les cordes de chaque accordage de la tablature. */
 const CORDES: Record<string, number> = { "Guitare standard": 6, "Ukulélé": 4, Basse: 4 };
@@ -266,10 +275,11 @@ export const fiches: FicheAudio[] = ([
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [0, 300], pas: 1, defaut: 0, unite: "BPM",
         doc: "Tempo utilisé pour convertir les durées MIDI en notation. 0 = détecter depuis le fichier MIDI.", docEn: "Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file." },
       { nom: "Canal", nomEn: "Channel", type: "nombre", plage: [-1, 15], pas: 1, defaut: -1, unite: "-1 = tous", uniteEn: "-1 = all",
-        doc: "Canal MIDI à afficher (-1 pour tous les canaux).", docEn: "MIDI channel to display (-1 for all channels)." },
+        doc: "Canal MIDI à afficher : -1 pour tous les canaux, sauf le 9, celui de la batterie, que le message dit omis. Le 9 choisi par son numéro est gravé.",
+        docEn: "MIDI channel to display: -1 for all channels except 9, the drums, which the message says were left out. Channel 9 chosen by its number is engraved." },
       { nom: "Quantification", nomEn: "Quantization", type: "choix", ...choixValeurs(Object.keys(GRILLES_NOTATION)), defaut: "1/16",
-        doc: "Résolution de la grille de quantification. La portée n'écrit que des durées simples, de la ronde à la triple croche : une grille pointée ou de triolet n'y est pas, faute de durée pour l'écrire.",
-        docEn: "Quantization grid resolution. The staff writes plain durations only, from the whole note to the thirty-second: no dotted or triplet grid, for want of a duration to write it.", defautEn: "1/16" },
+        doc: "Résolution de la grille de quantification. Chaque note garde sa longueur, écrite en valeurs pointées et liées, de la ronde à la triple croche ; une grille de triolet n'y est pas, faute de valeur pour l'écrire.",
+        docEn: "Quantization grid resolution. Each note keeps its length, written in dotted and tied values, from the whole note to the thirty-second; there is no triplet grid, for want of a value to write it.", defautEn: "1/16" },
       CLE_PORTEE,
       { nom: "Largeur", nomEn: "Width", plage: [200, 2000], pas: 10, defaut: 800, unite: "px",
         doc: "Largeur du SVG.", docEn: "SVG width." },
@@ -297,16 +307,24 @@ export const fiches: FicheAudio[] = ([
       const grilleNom = ctx.paramTexte("Quantification", "1/16");
       const grille = GRILLES_NOTATION[grilleNom] ?? 0.25;
       const { notes } = analyserMidi(midi);
-      const notesFiltrees = canal >= 0 ? notes.filter((n) => n.canal === canal) : notes;
-      const notation = midiVersNotationEasyScore(notesFiltrees, bpm, grille);
-      if (!notation) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
+      // LA BATTERIE N'EST PAS GRAVÉE SOUS « TOUS », décision de Fabien du 2026-11-22 : mesuré avant,
+      // la grosse caisse devenait un do 2 et la charleston un fa dièse 2, en clé de sol. Le canal 9
+      // choisi par son numéro reste gravé : c'est alors une demande.
+      const batterie = canal < 0 ? notes.filter((n) => n.canal === 9).length : 0;
+      const notesFiltrees = canal >= 0 ? notes.filter((n) => n.canal === canal) : notes.filter((n) => n.canal !== 9);
+      const ditBatterie = batterie > 0 ? `\n${traduire("msg.vexflow.batterie_omise_var_0", batterie)}` : "";
+      const evenements = midiVersEvenements(notesFiltrees, bpm, grille);
+      if (evenements.length === 0) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") + ditBatterie };
+      const signature = signatureDuMidi(midi.tracks);
       const clef = ctx.paramTexte("Clé", "treble");
       const w = ctx.paramNombre("Largeur", 800);
       const h = ctx.paramNombre("Hauteur", 200);
-      const { svg } = graverNotation(notation, clef, w, h);
+      const svg = genererPortee(mettreEnMesures(evenements, longueurDeMesure(signature)), clef, w, h, signature);
       if (!svg) return { valeurs: [null], erreur: true, message: traduire("msg.aucune_note_valide") };
       const svgFile = new File([svg], "partition.svg", { type: "image/svg+xml" });
-      return { valeurs: [svgFile], message: svg };
+      // Le message est le SVG, que la vue dessine ; la ligne sur la batterie le suit, comme celle
+      // qu'ajoute le moteur pour une valeur de réglage inconnue.
+      return { valeurs: [svgFile], message: svg + ditBatterie };
     },
   }),
 ] as FicheAudio[]).map(avecDoc);

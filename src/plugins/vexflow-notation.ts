@@ -84,23 +84,10 @@ function extraireSvgRendu(div: HTMLDivElement): string {
   return svgs.map((svg) => svg.outerHTML).join("");
 }
 
-// ── MIDI → notation VexFlow ──
-
-const NOMS_NOTES: string[] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-
-const DUREES_VEX: { q: number; v: string }[] = [
-  { q: 0.125, v: "32" },
-  { q: 0.25, v: "16" },
-  { q: 0.5, v: "8" },
-  { q: 1, v: "q" },
-  { q: 2, v: "h" },
-  { q: 4, v: "w" },
-];
-
 /**
- * Les grilles de la partition, en noires. CE SONT LES DURÉES QU'ELLE SAIT ÉCRIRE, `DUREES_VEX`, et
- * aucune autre : sans point ni triolet, une attaque posée sur une grille pointée ou de triolet
- * tomberait entre deux durées écrites, et la partition comblerait l'écart de silences.
+ * Les grilles de quantification de la partition MIDI, en noires. Sans triolet : une attaque posée
+ * sur une grille de triolet tomberait entre deux valeurs que la portée sait écrire. Les points et
+ * les liaisons, eux, s'écrivent depuis le 2026-11-22.
  */
 export const GRILLES_NOTATION: Record<string, number> = {
   "1/4": 1,
@@ -111,87 +98,9 @@ export const GRILLES_NOTATION: Record<string, number> = {
   "1/2": 2,
 };
 
-function dureeStandardVex(quarts: number): string {
-  const clamped = Math.max(0.125, Math.min(4, quarts));
-  let meilleur = DUREES_VEX[0];
-  let best = Infinity;
-  for (const d of DUREES_VEX) {
-    const diff = Math.abs(clamped - d.q);
-    if (diff < best) {
-      best = diff;
-      meilleur = d;
-    }
-  }
-  return meilleur.v;
-}
-
-/**
- * Le nom VexFlow d'une hauteur, arrondie au demi-ton.
- *
- * LA HAUTEUR EST ARRONDIE, ET IL FAUT QU'ELLE LE SOIT. Une hauteur peut ne pas tomber sur un
- * demi-ton, la conversion en fréquence étant continue. `NOMS_NOTES[note % 12]` cherchait alors une
- * case qui n'existe pas et rendait `undefined` : le jeton devenait « undefined4/q », que le dessin
- * refuse, et la partition disparaissait sans un mot. La notation employée ici n'a pas de signe pour
- * le quart de ton ; l'arrondi est donc sa limite, et non un oubli.
- */
-function noteMidiEnNom(note: number): string {
-  const proche = Math.round(note);
-  const nom = NOMS_NOTES[((proche % 12) + 12) % 12];
-  const octave = Math.floor(proche / 12) - 1;
-  return `${nom}${octave}`;
-}
-
-function quantifier(quarts: number, grille: number): number {
-  return Math.max(0, Math.round(quarts / grille) * grille);
-}
-
-export function midiVersNotationEasyScore(
-  notes: { note: number; debut: number; fin: number; canal?: number }[],
-  bpm: number,
-  grilleQuarts: number,
-): string {
-  if (notes.length === 0) return "";
-  const secEnQuarts = (sec: number) => (sec * bpm) / 60;
-
-  // Rassembler les notes par instant de début quantifié pour former des accords
-  const groupes = new Map<number, { notes: number[]; fin: number }>();
-  for (const n of notes) {
-    const debut = quantifier(secEnQuarts(n.debut), grilleQuarts);
-    const fin = quantifier(secEnQuarts(n.fin), grilleQuarts);
-    if (fin <= debut) continue;
-    const g = groupes.get(debut);
-    if (g) {
-      g.notes.push(n.note);
-      g.fin = Math.min(g.fin, fin); // accord = durée la plus courte
-    } else {
-      groupes.set(debut, { notes: [n.note], fin });
-    }
-  }
-
-  const sorted = Array.from(groupes.entries()).sort((a, b) => a[0] - b[0]);
-  let position = 0;
-  const parts: string[] = [];
-
-  for (const [debut, groupe] of sorted) {
-    if (debut > position) {
-      const reste = quantifier(debut - position, grilleQuarts);
-      if (reste > 0) {
-        const duree = dureeStandardVex(reste);
-        parts.push(`B4/${duree}/r`);
-        position += DUREES_VEX.find((d) => d.v === duree)?.q ?? reste;
-      }
-    }
-    const dureeQuarts = quantifier(groupe.fin - debut, grilleQuarts);
-    if (dureeQuarts <= 0) continue;
-    const duree = dureeStandardVex(dureeQuarts);
-    const noms = Array.from(new Set(groupe.notes)).sort((a, b) => a - b).map(noteMidiEnNom);
-    const token = noms.length > 1 ? `(${noms.join(" ")})/${duree}` : `${noms[0]}/${duree}`;
-    parts.push(token);
-    position = debut + (DUREES_VEX.find((d) => d.v === duree)?.q ?? dureeQuarts);
-  }
-
-  return parts.join(" ");
-}
+/** Une métrique, « 3/4 », « 6/8 » ; la mesure dure `4 × numérateur / dénominateur` noires. */
+export type Signature = { numerateur: number; denominateur: number };
+export const longueurDeMesure = (s: Signature) => (4 * s.numerateur) / s.denominateur;
 
 /**
  * Grave des mesures sur une portée : une barre entre deux mesures, une liaison entre deux éléments
@@ -202,7 +111,7 @@ export function midiVersNotationEasyScore(
  * dit ni ce qui était attendu, ni quoi brancher. La notation est lue avant d'arriver ici, et ses
  * fautes nommées ; ce qui lève encore vaut une portée vide, et la cause reste dans la console.
  */
-export function genererPortee(mesures: ElementGrave[][], clef: string, largeur: number, hauteur: number): string {
+export function genererPortee(mesures: ElementGrave[][], clef: string, largeur: number, hauteur: number, signature: Signature = { numerateur: 4, denominateur: 4 }): string {
   const { div } = creerRenderer(largeur, hauteur);
   div.id = "vex-" + Math.random().toString(36).slice(2);
   document.body.appendChild(div);
@@ -218,13 +127,13 @@ export function genererPortee(mesures: ElementGrave[][], clef: string, largeur: 
       if (k > 0) tickables.push(vf.BarNote());
       for (let j = 0; j < m.length; j++) tickables.push(notes[i++]);
     });
-    const voix = vf.Voice({ time: `${mesures.length * 4}/4` }).addTickables(tickables);
+    const voix = vf.Voice({ time: { num_beats: mesures.length * signature.numerateur, beat_value: signature.denominateur } }).addTickables(tickables);
     elements.forEach((e, k) => {
       if (!e.lie || !notes[k + 1]) return;
       const indices = e.hauteurs.map((_, j) => j);
       vf.StaveTie({ from: notes[k], to: notes[k + 1], first_indices: indices, last_indices: indices });
     });
-    vf.System().addStave({ voices: [voix] }).addClef(clef).addTimeSignature("4/4");
+    vf.System().addStave({ voices: [voix] }).addClef(clef).addTimeSignature(`${signature.numerateur}/${signature.denominateur}`);
     vf.draw();
     return extraireSvgRendu(div);
   } catch (e) {
