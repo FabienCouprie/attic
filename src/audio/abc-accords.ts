@@ -4,8 +4,8 @@
 // la place de l'altération qu'une liaison porte à travers la barre : ce fichier-là était à son
 // plafond de taille.
 
-import { Chord, Note } from "tonal";
-import { estSansAccord, normaliserSymbole } from "./symboles-accords";
+import { Note } from "tonal";
+import { accordDuSymbole, estSansAccord, normaliserSymbole } from "./symboles-accords";
 
 /**
  * Écritures courantes que Tonal refuse, ramenées aux siennes. Trouvé en mesurant
@@ -21,8 +21,9 @@ export const normaliserAccord = normaliserSymbole;
 export function hauteursAccord(symbole: string): number[] | null {
   if (estSansAccord(symbole)) return [];
   const [nom, basse] = normaliserSymbole(symbole).split("/");
-  const c = Chord.get(nom);
-  if (c.empty || c.notes.length === 0) return null;
+  // Par le seul lecteur des symboles, et sa table : « C7b5b9 » sans quinte juste, « Cm13 » avec sa onzième.
+  const c = accordDuSymbole(nom);
+  if (!c) return null;
   const hauteurs: number[] = [];
   let precedente = 47;
   for (const n of c.notes) {

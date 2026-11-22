@@ -12,7 +12,8 @@
 // une basse, et une fondamentale en minuscule. Un symbole que Tonal ne lit toujours pas reste inconnu,
 // et chaque nœud le refuse en le nommant.
 
-import { Chord } from "tonal";
+import { Chord, Interval, Note } from "tonal";
+import { QUALITES } from "./qualites-accords";
 
 /** « N.C. », « NC » : pas d'accord. Il prend sa place dans le temps, en silence. */
 export const estSansAccord = (symbole: string): boolean => /^N\.?C\.?$/i.test(symbole.trim());
@@ -31,11 +32,33 @@ export function normaliserSymbole(symbole: string): string {
     .replace(/6\/9/, "69"); // F6/9 → F69 : ce 9 n'est pas une basse
 }
 
-/** L'accord que le symbole nomme, tel que Tonal le décrit, ou null s'il n'en nomme aucun. « N.C. » n'en nomme aucun. */
+/** Les qualités de la table d'Attic, par leur symbole ramené à l'écriture de Tonal : « m7b5 », « 7b5b9 ». */
+const TABLE = new Map(QUALITES.map((q) => [normaliserSymbole(`C${q.symbole}`).slice(1), q]));
+
+/**
+ * L'accord que le symbole nomme, ou null s'il n'en nomme aucun. « N.C. » n'en nomme aucun.
+ *
+ * LA TABLE D'ATTIC L'EMPORTE SUR TONAL LÀ OÙ ELLES DIFFÈRENT, et elles diffèrent sur trois qualités
+ * sur trente-trois, mesuré le 2026-11-22 : Tonal lit « 7b5b9 » et « 7b5#9 » avec une quinte juste en
+ * plus de la quinte altérée, que l'usage remplace, et « m13 » sans la onzième que la table garde. Un
+ * symbole écrit d'après la table se relisait donc avec une note de trop ou de moins. Les notes de
+ * Tonal sont gardées, dans leur ordre et leur orthographe, quand la table les connaît ; celles qui
+ * manquent s'ajoutent par leur intervalle depuis la fondamentale ; la basse d'un renversement reste.
+ */
 export function accordDuSymbole(symbole: string): ReturnType<typeof Chord.get> | null {
   if (estSansAccord(symbole)) return null;
-  const c = Chord.get(normaliserSymbole(symbole));
-  return c.empty || c.notes.length === 0 ? null : c;
+  const n = normaliserSymbole(symbole);
+  const c = Chord.get(n);
+  if (c.empty || c.notes.length === 0) return null;
+  const m = /^([A-G][#b]*)([^/]*)(?:\/(.+))?$/.exec(n);
+  const q = m ? TABLE.get(m[2]) : undefined;
+  if (!q || !c.tonic) return c;
+  const racine = Note.chroma(c.tonic)!;
+  const classes = new Map(q.intervalles.map((i) => [(racine + i) % 12, i]));
+  const gardees = c.notes.filter((x) => classes.has(Note.chroma(x)!) || x === m![3]);
+  const manquantes = [...classes].filter(([k]) => !gardees.some((x) => Note.chroma(x) === k))
+    .map(([, i]) => Note.pitchClass(Note.transpose(c.tonic!, Interval.fromSemitones(i))));
+  return { ...c, notes: [...gardees, ...manquantes] };
 }
 
 /** Les symboles que le lecteur ne lit pas ; « N.C. » est lu. */

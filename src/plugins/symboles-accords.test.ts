@@ -15,6 +15,7 @@ import { Note } from "tonal";
 import { registre } from "../audio/adaptateur";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
 import { notesDuMidi } from "../audio/midi";
+import { QUALITES } from "../audio/qualites-accords";
 
 const F = (id: string) => registre.trouverDef(id) as unknown as FicheLancable;
 const PC = (m: number) => ((m % 12) + 12) % 12;
@@ -58,6 +59,17 @@ describe("UN SYMBOLE SE LIT DE LA MÊME FAÇON PAR LES TROIS LECTEURS, écriture
     expect(await parLaGrille(symbole), "Grille").toEqual(attendu);
     expect(await parAccordsVersNotation(symbole), "Accords → Notation").toEqual(attendu);
     expect(await parLAbc(symbole), "ABC").toEqual(attendu);
+  });
+});
+
+// LA TABLE D'ACCORDS D'ATTIC ET LE LECTEUR SE RÉPONDENT. Mesuré le 2026-11-22 : sur trente-trois
+// qualités, Tonal en lisait trois autrement que la table, « 7♭5♭9 » et « 7♭5♯9 » avec une quinte juste
+// de trop, et « m13 » sans sa onzième ; un symbole écrit par Attic se relisait faux.
+describe("CHAQUE QUALITÉ DE LA TABLE D'ATTIC SE RELIT TELLE QU'ELLE EST ÉCRITE", () => {
+  it.each(QUALITES.map((q) => [q.id, q.symbole, q.intervalles] as const))("%s, « C%s »", async (_id, symbole, intervalles) => {
+    const attendu = { classes: [...new Set(intervalles.map((i) => i % 12))].sort((a, b) => a - b), basse: 0 };
+    expect(await parLaGrille(`C${symbole}`), "Grille").toEqual(attendu);
+    expect(await parLAbc(`C${symbole}`), "ABC").toEqual(attendu);
   });
 });
 

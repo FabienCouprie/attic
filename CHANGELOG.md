@@ -6,6 +6,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA TABLE D'ACCORDS D'ATTIC ET LE LECTEUR DE SYMBOLES SE RÉPONDENT : « 7♭5♭9 », « 7♭5♯9 » ET « m13 » SE RELISENT TELS QU'ILS SONT ÉCRITS.** Revue des notations en texte, cinquième format, 2026-11-22, trouvé en mesurant l'aller-retour de la table.
+  - **Ce qui se passait** : sur les trente-trois qualités de `qualites-accords.ts`, Tonal en lisait trois autrement que la table. « C7♭5♭9 » et « C7♭5♯9 » prenaient une quinte juste en plus de la quinte altérée, que l'usage remplace et que la table remplace ; « Cm13 » perdait la onzième que la table garde. Un symbole écrit d'après la table se relisait donc avec une note de trop ou de moins, dans la Grille, l'ABC et les graveurs.
+  - **Ce qui change** (`accordDuSymbole`, `audio/symboles-accords.ts`) : la table l'emporte sur Tonal là où elle connaît le symbole. Les notes de Tonal gardent leur ordre et leur orthographe, celles qui manquent s'ajoutent par leur intervalle, et la basse d'un renversement reste. `hauteursAccord`, le lecteur des accords chiffrés de l'ABC, passe désormais par le même lecteur.
+  - **Le garde**, dans `plugins/symboles-accords.test.ts` : chacune des trente-trois qualités, écrite sur do, se relit par la Grille et par l'ABC avec les classes de la table. **Vu rouge** sur le code d'avant, les trois qualités ; puis sur une faute plantée, la table ignorée, les trois cas tombés.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests des symboles, de l'ABC, de VexFlow, de Tonal et de Camelot, et les gardes du dépôt touchés. **Non vérifié dans l'application.**
+
 - **LE DÉTECTEUR D'ACCORDS ET L'ANALYSE HARMONIQUE ÉCRIVENT CE QUE « ACCORDS → NOTATION » RELIT, DANS LES DEUX LANGUES.** Revue des notations en texte, cinquième format, décision de Fabien du 2026-11-22 : « Same symbol, both languages ».
   - **Ce qui se passait**, mesuré par `executer` sur do, la mineur, sol 7 et si demi-diminué, deux secondes chacun, du son synthétisé jusqu'à la notation :
     - en français, le rapport écrivait « A min », « G 7 », « B min7b5 » ; « Accords → Notation », qui ne lit que le premier mot, rendait la majeur, sol majeur et si majeur ;
