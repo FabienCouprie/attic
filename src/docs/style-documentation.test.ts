@@ -71,6 +71,9 @@ const SIGLES = new Set([
   // INA : l'Institut national de l'audiovisuel, dont le Groupe de recherches musicales a publie le
   // « Guide des objets sonores » de Chion. C'est le sigle de l'editeur, dans une reference.
   "INA",
+  // RLP, LPR, LPL : les compositions neo-riemanniennes de N, S et H, que le Tonnetz lit. Ce sont des
+  // suites d'operations, comme PLPLPL, et non des mots.
+  "RLP", "LPR", "LPL",
 ]);
 
 /**

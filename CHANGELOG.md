@@ -6,6 +6,27 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE TONNETZ LIT LES COMPOSÉES N, S ET H, REFUSE CE QUI N'EST PAS UNE OPÉRATION EN LE NOMMANT, ET REND L'ACCORD SEUL QUAND L'ARRIVÉE EST LE DÉPART.** Revue des notations en texte, dernière section du recensement, les tables et les suites, 2026-11-22, premier lot.
+  - **La référence** : les transformations néo-riemanniennes, P, L et R, et leurs composées de la littérature. N, le Nebenverwandt, mène do majeur à fa mineur ; S, le glissement, à do dièse mineur ; H, le pôle hexatonique, à la bémol mineur.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - une lettre qui n'était pas P, L ou R était jetée : « PLX » jouait « PL » ;
+    - « S » et « N » étaient refusés comme illisibles ;
+    - le chemin de do à do répondait « Aucune opération lisible : écrivez P, L et R », alors que rien n'avait été écrit ;
+    - ces refus partaient sans le drapeau d'erreur, et le message disait « 1 opérations ».
+
+    P, L et R, eux, sont justes : « PLRLPR » depuis do donne do, do mineur, la bémol, fa mineur, ré bémol, ré bémol mineur, mi.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Read N, S, H too » et « The chord alone » :
+    - N, S et H se lisent, chacune un seul pas du chemin, et toute autre lettre est refusée et nommée. Les espaces, virgules et tirets séparent ;
+    - une arrivée qui est le départ rend l'accord seul, « 0 opération » ;
+    - les refus portent le drapeau d'erreur, et le nombre d'opérations s'accorde.
+
+    La notice et les documentations de « Mode » et d'« Opérations » le disent.
+  - **Un test tenait le contraire** : dans `audio/tonnetz.test.ts`, « P-X-L » se lisait « PL ». Il est réécrit avec sa raison.
+  - **Le garde de style** compte « RLP », « LPR » et « LPL » parmi les suites d'opérations, comme « PLPLPL ».
+  - **Le garde** : `plugins/tables-et-suites.test.ts`, 10 cas.
+    - Vu rouge sur le code d'avant : 9 cas.
+    - Vu rouge aussi sur une lettre de nouveau jetée, plantée.
+
 - **L'ORCHESTRE CSOUND REFUSE UN INSTRUMENT QU'IL NE CONNAÎT PAS, EN LE NOMMANT, ET PARLE LA LANGUE DE L'INTERFACE.** Revue des notations en texte, onzième format, 2026-11-22, troisième lot. Pendant le relevé, Csound a rendu dans le navigateur les huit formules et les onze instruments de l'Orchestre, en mono et en stéréo : tous compilent et sonnent.
   - **Ce qui se passait**, mesuré par `executer` :
     - un identifiant inconnu était écarté et seulement compté, « 1 identifiant(s) inconnu(s) écarté(s) », et l'orchestre se construisait sans lui ;
