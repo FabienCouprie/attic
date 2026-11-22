@@ -6,8 +6,8 @@
 import { Chord } from "tonal";
 import { accordsDepuisRomains, modeDepuisTonalite, toniqueDepuisTonalite } from "../audio/theorie-romains";
 import {
-  barreDeDuree, easyScoreDe, jetonsDe, lireHauteur, lireNotationVexflow, mettreEnMesures,
-  type ElementGrave, type Evenement, type FauteGravure, type Hauteur,
+  barreDeDuree, easyScoreDe, jetonsDe, lireHauteur, lireNotationVexflow, longueurDe, mettreEnMesures,
+  type ElementGrave, type Evenement, type FauteGravure, type Hauteur, type NoteTab,
 } from "../audio/notation-vexflow";
 import { Renderer, Factory, TabStave, TabNote, Voice, Formatter } from "vexflow";
 
@@ -24,14 +24,6 @@ export function accordsPourPartition(tonalite: string, gammeReglee: string, toke
   const tonique = toniqueDepuisTonalite(tonalite) ?? "C";
   const mode = modeDepuisTonalite(tonalite) ?? (gammeReglee === "mineur" ? "mineur" : "majeur");
   return accordsDepuisRomains(tonique, tokens, mode);
-}
-
-const DUREES: Record<string, string> = {
-  w: "w", h: "h", q: "q", "8": "8", "16": "16", "32": "32",
-};
-
-function dureeVex(d: string): string {
-  return DUREES[d] ?? "q";
 }
 
 // `barreDeDuree` VIVAIT ICI et habite `audio/notation-vexflow.ts`, avec le lecteur de la notation :
@@ -64,7 +56,8 @@ export function jetonsSansDuree(texte: string): string[] {
  * note — valide ou non.
  *
  * LA DURÉE N'EST PAS EXIGÉE ICI, à la différence de la portée : un jeton de tablature sans barre
- * vaut une noire par défaut, et ce défaut-là est documenté dans la notice.
+ * vaut une noire par défaut. La notice ne le disait pas, contrairement à ce que ce commentaire
+ * affirmait ; elle le dit depuis la revue des notations en texte du 2026-11-22.
  */
 export function jetonsSansCordeFret(texte: string): string[] {
   return texte.split(/\s+/).filter(Boolean).filter((tok) => {
@@ -89,11 +82,6 @@ function extraireSvgRendu(div: HTMLDivElement): string {
   // On ne garde que les SVG contenant du contenu, ce qui évite un rectangle blanc vide.
   const svgs = Array.from(div.querySelectorAll("svg")).filter((svg) => svg.childElementCount > 0);
   return svgs.map((svg) => svg.outerHTML).join("");
-}
-
-function dureeEnQuarts(duree: string): number {
-  const map: Record<string, number> = { w: 4, h: 2, q: 1, "8": 0.5, "16": 0.25, "32": 0.125 };
-  return map[duree] ?? 1;
 }
 
 // ── MIDI → notation VexFlow ──
@@ -254,24 +242,21 @@ export function graverNotation(notation: string, clef: string, largeur: number, 
   return { svg: genererPortee(mettreEnMesures(evenements), clef, largeur, hauteur), fautes };
 }
 
-export function genererTab(tabText: string, accordage: string, largeur: number, hauteur: number): string {
+/**
+ * Grave une tablature lue, sur autant de lignes que l'instrument a de cordes : mesuré avant, le
+ * ukulélé et la basse se dessinaient sur six. La voix compte exactement ses temps : sous quatre,
+ * VexFlow levait « IncompleteVoice », et l'erreur brute arrivait au message.
+ */
+export function genererTab(notes: readonly NoteTab[], titre: string, cordes: number, largeur: number, hauteur: number): string {
+  if (notes.length === 0) return "";
   const { renderer, div } = creerRenderer(largeur, hauteur);
   const ctx = renderer.getContext();
-  const stave = new TabStave(10, 20, largeur - 20);
-  stave.setText(accordage, 2);
+  const stave = new TabStave(10, 20, largeur - 20, { num_lines: cordes });
+  stave.setText(titre, 2);
   stave.setContext(ctx).draw();
-  const tabNotes: InstanceType<typeof TabNote>[] = [];
-  let totalQuarts = 0;
-  for (const tok of tabText.split(/\s+/).filter(Boolean)) {
-    const [pos, dur] = tok.split("/");
-    const [corde, fret] = pos.split("-");
-    const duree = dureeVex(dur ?? "q");
-    totalQuarts += dureeEnQuarts(duree);
-    tabNotes.push(new TabNote({ positions: [{ str: parseInt(corde, 10), fret: parseInt(fret, 10) }], duration: duree }));
-  }
-  if (tabNotes.length === 0) return "";
-  const beats = Math.max(4, totalQuarts);
-  const voice = new Voice({ num_beats: beats, beat_value: 4 });
+  const tabNotes = notes.map((n) => new TabNote({ positions: [{ str: n.corde, fret: n.frette }], duration: n.duree, dots: n.points }));
+  const temps = notes.reduce((s, n) => s + longueurDe(n.duree, n.points), 0);
+  const voice = new Voice({ num_beats: temps, beat_value: 4 });
   voice.addTickables(tabNotes);
   new Formatter().joinVoices([voice]).format([voice], largeur - 40);
   voice.draw(ctx, stave);

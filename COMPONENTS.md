@@ -9892,7 +9892,7 @@ Generates a musical staff (SVG) from a text notation. Format: note/octave/durati
 
 *Displays a tablature from a text notation.*
 
-Generates a tablature (SVG) from a string-fret text notation. Format: « string-fret/duration », e.g. « 6-3/q 5-0/q 5-2/q 4-0/q 5-3/q ». The « Tuning » parameter sets the title (guitar, ukulele, bass). The « SVG » output returns the engraved tablature as text, and the « SVG file » output returns the same tablature as a file.
+Generates a tablature (SVG) from a string-fret text notation. Format: « string-fret/duration », e.g. « 6-3/q 5-0/q 5-2/q 4-0/q 5-3/q ». Durations are the staff's, w, h, q, 8, 16, 32, followed by one to three dots; a token without a duration is a quarter note. The « Tuning » parameter sets the title and the number of lines: six for the guitar, four for the ukulele and the bass. A string the instrument does not have, a chord, an unknown duration or an unreadable form is refused, and the message names the token: nothing is engraved. The « SVG » output returns the engraved tablature as text, and the « SVG file » output returns the same tablature as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|

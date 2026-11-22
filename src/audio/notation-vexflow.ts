@@ -182,6 +182,32 @@ export function mettreEnMesures(evenements: readonly Evenement[], longueurMesure
   return rendu;
 }
 
+/** Une note de tablature : la corde, comptée depuis l'aiguë, la frette, et la durée. */
+export type NoteTab = { corde: number; frette: number; duree: Duree; points: number };
+export type FauteTab = { jeton: string; raison: "forme" | "duree" | "corde" };
+const TAB = /^(\d+)-(\d+)(?:\/(.*))?$/;
+
+/**
+ * Lit une tablature « corde-frette/durée ». Un jeton sans durée vaut une noire. Une corde que
+ * l'instrument n'a pas, un accord, une durée hors des six ou une forme illisible sont refusés, chacun
+ * avec son jeton : mesuré avant, « 7-3 » se dessinait sous la portée, « 6-3+5-2 » perdait le 5-2, et
+ * « 6-3/x » devenait une noire.
+ */
+export function lireTablature(texte: string, cordes: number): { notes: NoteTab[]; fautes: FauteTab[] } {
+  const notes: NoteTab[] = [];
+  const fautes: FauteTab[] = [];
+  for (const jeton of texte.split(/\s+/).filter(Boolean)) {
+    const m = TAB.exec(jeton);
+    if (!m) { fautes.push({ jeton, raison: "forme" }); continue; }
+    const d = DUREE.exec(m[3] ?? "q");
+    if (!d) { fautes.push({ jeton, raison: "duree" }); continue; }
+    const corde = Number(m[1]);
+    if (corde < 1 || corde > cordes) { fautes.push({ jeton, raison: "corde" }); continue; }
+    notes.push({ corde, frette: Number(m[2]), duree: d[1] as Duree, points: d[2].length });
+  }
+  return { notes, fautes };
+}
+
 /** Le texte EasyScore d'un élément : seules les altérations à dessiner y figurent. */
 export function easyScoreDe(e: ElementGrave): string {
   const nom = (h: ElementGrave["hauteurs"][number]) => `${h.lettre}${h.signe ?? ""}${h.octave}`;

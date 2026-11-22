@@ -11,13 +11,13 @@
 // DÉCISIONS DE FABIEN DU 2026-11-22 : les points se lisent, toute autre durée hors des six est
 // refusée en la nommant ; la portée se coupe en mesures de 4/4.
 import { beforeAll, describe, expect, it } from "vitest";
-import { Accidental, BarNote, Dot, Stave, StaveNote, StaveTie } from "vexflow";
+import { Accidental, BarNote, Dot, Stave, StaveNote, StaveTie, TabNote, TabStave } from "vexflow";
 import { fiches } from "./vexflow";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
 import { notesVersFichierMidi } from "../audio/midi-ecriture";
 
 type Element = { barre: true } | { barre: false; note: any };
-let dessin: { elements: Element[]; liaisons: any[]; mesures: string[] };
+let dessin: { elements: Element[]; liaisons: any[]; mesures: string[]; tab: string[]; lignes: number[] };
 
 beforeAll(() => {
   (SVGElement.prototype as any).getBBox = () => ({ x: 0, y: 0, width: 10, height: 10 });
@@ -29,6 +29,15 @@ beforeAll(() => {
   StaveTie.prototype.draw = function (this: any) { dessin.liaisons.push(this.getNotes()); return liaison.call(this); };
   const mesure = Stave.prototype.addTimeSignature;
   Stave.prototype.addTimeSignature = function (this: any, t: string, ...r: any[]) { dessin.mesures.push(t); return mesure.call(this, t, ...r); };
+  const tab = TabNote.prototype.draw;
+  // La tablature ne dessine ni hampe ni point : sa durée ne se voit qu'à l'espacement, et c'est donc
+  // la longueur que VexFlow lui donne, en noires, qui se relève.
+  TabNote.prototype.draw = function (this: any) {
+    dessin.tab.push(`${this.positions.map((p: any) => `${p.str}-${p.fret}`).join("+")}/${this.getTicks().value() / 4096}`);
+    return tab.call(this);
+  };
+  const portee = TabStave.prototype.draw;
+  TabStave.prototype.draw = function (this: any) { dessin.lignes.push(this.getNumLines()); return portee.call(this); };
 });
 
 const DEMI: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -78,9 +87,9 @@ function lire() {
 
 const F = (id: string) => fiches.find((f) => f.id === id) as unknown as FicheLancable;
 async function graver(id: string, reglages: Record<string, string | number>, entree: unknown = null) {
-  dessin = { elements: [], liaisons: [], mesures: [] };
+  dessin = { elements: [], liaisons: [], mesures: [], tab: [], lignes: [] };
   const r = await lancerFiche(F(id), reglages, { entrees: [entree] });
-  return { r, ...lire() };
+  return { r, ...lire(), tab: dessin.tab, lignes: dessin.lignes };
 }
 /** Les notes attendues, accords écrits d'un bloc : [[hauteurs], attaque, durée]. */
 const N = (...accords: [number[], number, number][]) =>
@@ -136,6 +145,36 @@ describe("UNE DURÉE OU UNE NOTE QUE LA NOTATION NE CONNAÎT PAS EST REFUSÉE, e
     expect(g.r.erreurRendue).toBe(true);
     expect(g.r.message).toContain(`« ${fautif} »`);
     expect(g.notes).toEqual([]);
+  });
+});
+
+describe("LA TABLATURE SE DESSINE SUR LES CORDES DE SON INSTRUMENT", () => {
+  it.each([
+    ["la guitare, six lignes", "6-3/q 5-0/q 5-2/q 4-0/q 5-3/q", "Guitare standard", 6, ["6-3/1", "5-0/1", "5-2/1", "4-0/1", "5-3/1"]],
+    ["le ukulélé, quatre lignes", "4-0/q 3-0/q 2-0/q 1-0/q", "Ukulélé", 4, ["4-0/1", "3-0/1", "2-0/1", "1-0/1"]],
+    ["la basse, quatre lignes", "4-3/q 3-0/q 2-2/q 1-0/q", "Basse", 4, ["4-3/1", "3-0/1", "2-2/1", "1-0/1"]],
+    ["les points se lisent", "6-3/q. 5-0/8 5-0/h", "Guitare standard", 6, ["6-3/1.5", "5-0/0.5", "5-0/2"]],
+    ["trois temps se dessinent", "6-3/q 5-0/q 4-0/q", "Guitare standard", 6, ["6-3/1", "5-0/1", "4-0/1"]],
+    ["un jeton sans durée vaut une noire, comme la notice le dit", "6-3 5-0 5-0 5-0", "Guitare standard", 6, ["6-3/1", "5-0/1", "5-0/1", "5-0/1"]],
+  ])("%s", async (_titre, tablature, accordage, lignes, attendu) => {
+    const g = await graver("vexflow-tab", { Tablature: tablature, Accordage: accordage });
+    expect(g.r.erreurRendue, g.r.message.slice(0, 200)).toBe(false);
+    expect(g.lignes).toEqual([lignes]);
+    expect(g.tab).toEqual(attendu);
+  });
+
+  it.each([
+    ["une septième corde sur une guitare", "7-3/q 6-0/q 6-0/q 6-0/q", "Guitare standard", "7-3/q"],
+    ["une cinquième corde sur un ukulélé", "5-3/q 4-0/q 4-0/q 4-0/q", "Ukulélé", "5-3/q"],
+    ["la corde zéro", "0-3/q 6-0/q 6-0/q 6-0/q", "Guitare standard", "0-3/q"],
+    ["un accord, que la notation n'écrit pas", "6-3+5-2/q 4-0/q 4-0/q 4-0/q", "Guitare standard", "6-3+5-2/q"],
+    ["une durée inconnue", "6-3/x 5-0/q 5-0/q 5-0/q", "Guitare standard", "6-3/x"],
+  ])("%s est refusé(e), et nommé(e)", async (_titre, tablature, accordage, fautif) => {
+    const g = await graver("vexflow-tab", { Tablature: tablature, Accordage: accordage });
+    expect(g.r.erreurRendue).toBe(true);
+    expect(g.r.message).toContain(`« ${fautif} »`);
+    expect(g.r.message).not.toContain("RuntimeError");
+    expect(g.tab).toEqual([]);
   });
 });
 

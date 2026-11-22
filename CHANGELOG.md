@@ -6,6 +6,17 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA TABLATURE VEXFLOW SE DESSINE SUR LES CORDES DE SON INSTRUMENT, ET REFUSE CE QU'ELLE NE SAIT PAS ÉCRIRE EN LE NOMMANT.** Revue des notations en texte, troisième format, 2026-11-22, selon la règle « refuser, nommé ».
+  - **Ce qui se passait**, mesuré par `executer` :
+    - le ukulélé et la basse se dessinaient sur six lignes ;
+    - une corde que l'instrument n'a pas, la 7 d'une guitare, la 5 d'un ukulélé, la corde 0, se dessinait ;
+    - « 6-3+5-2/q » perdait le 5-2, la frette étant lue par `parseInt("3+5")` ;
+    - une durée inconnue ou pointée devenait une noire ;
+    - une tablature de moins de quatre temps rendait l'erreur brute de VexFlow, « IncompleteVoice ».
+  - **Ce qui change** (`lireTablature`, `audio/notation-vexflow.ts`) : la tablature est lue jeton par jeton, les points comptent, et une corde absente, un accord, une durée inconnue ou une forme illisible sont refusés, le message nommant le jeton. La portée a autant de lignes que l'instrument a de cordes, et la voix compte exactement ses temps. Un jeton sans durée vaut une noire, comme avant ; la notice le dit désormais, et le commentaire du code qui l'affirmait à tort est corrigé.
+  - **Le garde**, dans `plugins/vexflow-gravure.test.ts` : six tablatures relues, lignes, positions et longueurs ; cinq refus nommés, sans « RuntimeError ». **Vu rouge** sur le code d'avant, 9 cas sur 11.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests VexFlow et les gardes du dépôt touchés, 16 fichiers et 597 cas verts. **Non vérifié dans l'application.**
+
 - **LA PORTÉE VEXFLOW SE LIT COMME ELLE EST ÉCRITE : LES POINTS, LES MESURES, LES BÉCARRES, ET LES FAUTES NOMMÉES.** Revue des notations en texte, troisième format, décisions de Fabien du 2026-11-22 : « Read dots, refuse the rest » et « Cut into bars ».
   - **Ce qui se passait**, mesuré par `executer`, en relisant ce que VexFlow dessine :
     - une durée hors des six devenait une noire, sans un mot : « C4/q. » perdait son point, « C4/h.. » devenait une noire, « C4/8t », « C4/x » et « D4/3 » aussi ;

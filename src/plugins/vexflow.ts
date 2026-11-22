@@ -12,7 +12,10 @@ import {
   GRILLES_NOTATION, accordsDeProgression, accordsPourPartition, genererGrille, genererPartition, genererTab, graverNotation,
   jetonsSansCordeFret, jetonsSansDuree, midiVersNotationEasyScore,
 } from "./vexflow-notation";
-import type { FauteGravure } from "../audio/notation-vexflow";
+import { lireTablature, type FauteGravure } from "../audio/notation-vexflow";
+
+/** Les cordes de chaque accordage de la tablature. */
+const CORDES: Record<string, number> = { "Guitare standard": 6, "Ukulélé": 4, Basse: 4 };
 import { choixValeurs } from "../audio/valeurs-note";
 import { accordsInconnus } from "../audio/theorie-romains";
 import { choixClefPortee } from "../audio/clefs-portee";
@@ -129,7 +132,16 @@ export const fiches: FicheAudio[] = ([
       }
       const w = ctx.paramNombre("Largeur", 500);
       const h = ctx.paramNombre("Hauteur", 160);
-      const svg = genererTab(tabText, ctx.paramTexte("Accordage", "Guitare standard"), w, h);
+      // UNE CORDE QUE L'INSTRUMENT N'A PAS, UN ACCORD OU UNE DURÉE INCONNUE SONT REFUSÉS EN LES
+      // NOMMANT, revue des notations en texte du 2026-11-22 : ils se dessinaient faux, sans un mot.
+      const accordage = ctx.paramTexte("Accordage", "Guitare standard");
+      const cordes = CORDES[accordage] ?? 6;
+      const { notes, fautes } = lireTablature(tabText, cordes);
+      if (fautes.length > 0) {
+        const liste = fautes.slice(0, 8).map((f) => traduire(`msg.vexflow.tab.${f.raison}_var_0_var_1`, f.jeton, cordes));
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.vexflow.tablature_refusee_var_0", liste.join(" · ")) };
+      }
+      const svg = genererTab(notes, accordage, cordes, w, h);
       if (!svg) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_note_valide") };
       // Le SVG part AUSSI sur la sortie declaree, pas seulement dans le message.
       // La vue lit le message (VueVexFlow) ; le port, lui, n'emettait rien : la
