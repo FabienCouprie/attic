@@ -61,6 +61,44 @@ describe("UN SYMBOLE SE LIT DE LA MÊME FAÇON PAR LES TROIS LECTEURS, écriture
   });
 });
 
+/** Des accords tenus l'un après l'autre, en sinusoïdes, comme `audio/accords.test.ts` les écrit. */
+function accordsAudio(suite: number[][], dureeS: number): AudioBuffer {
+  const SR = 44100, n = Math.round(suite.length * dureeS * SR);
+  const b = new AudioBuffer({ numberOfChannels: 1, length: n, sampleRate: SR });
+  const x = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const notes = suite[Math.min(suite.length - 1, Math.floor(i / (dureeS * SR)))];
+    for (const m of notes) x[i] += (0.2 / notes.length) * Math.sin(2 * Math.PI * 440 * 2 ** ((m - 69) / 12) * (i / SR));
+  }
+  b.copyToChannel(x, 0);
+  return b;
+}
+
+// DÉCISION DE FABIEN DU 2026-11-22, « Same symbol, both languages ». Mesuré avant : en français, le
+// détecteur écrivait « A min », « G 7 », « B min7b5 », et « Accords → Notation », qui ne lit que le
+// premier mot, en faisait la majeur, sol majeur et si majeur ; dans les deux langues, « (2.0s, 100%) »
+// empêchait de lire la durée, et chaque accord retombait sur un temps.
+describe("LE DÉTECTEUR ÉCRIT CE QUE « ACCORDS → NOTATION » RELIT, dans les deux langues", () => {
+  const suite = [[60, 64, 67], [57, 60, 64], [55, 59, 62, 65], [59, 62, 65, 69]];
+  const attendus = [[0, 4, 7], [0, 4, 9], [2, 5, 7, 11], [2, 5, 9, 11]];
+  it.each([["fr"], ["en"]])("en « %s », du Détecteur d'accords et de l'Analyse harmonique", async (langue) => {
+    (globalThis as any).localStorage = { getItem: () => langue };
+    try {
+      const detecte = await lancerFiche(F("detecteur-accords"), {}, { entrees: [accordsAudio(suite, 2)] });
+      const analyse = await lancerFiche(F("tonal-analyse"), {}, { entrees: [accordsAudio(suite, 2)] });
+      const texte = String(detecte.valeurs[1]);
+      expect(String(analyse.valeurs[2])).toBe(texte);
+      expect(texte.split("\n").map((l) => l.split(" ")[1])).toEqual(["C", "Am", "G7", "Bm7b5"]);
+      const r = await lancerFiche(F("accords-vers-notation"), { Source: "accords", Tempo: 60 }, { entrees: [null, null, texte] });
+      const lignes = String(r.valeurs[0]).split("\n").slice(1);
+      expect(lignes.map((l) => lu(hauteursLigne(l)).classes)).toEqual(attendus);
+      expect(lignes.map((l) => Number(l.split(/\s+/)[1]))).toEqual([2, 2, 2, 2]);
+    } finally {
+      delete (globalThis as any).localStorage;
+    }
+  });
+});
+
 describe("« N.C. » EST UN ACCORD SILENCIEUX, qui prend sa place dans le temps", () => {
   it("la Grille l'écrit en silence, de la durée d'un accord", async () => {
     const r = await lancerFiche(F("tonal-grille"), { Progression: "C N.C. G", Mode: "plaque", "Durée": 2 }, { entrees: [null] });

@@ -9070,7 +9070,7 @@ Sorts the received sound's grain into three species and gives its quantities, wi
 
 *Detects the key of a song and suggests a chord progression.*
 
-Analyses audio and estimates its global key, then suggests a fitting progression (Pop, Jazz, Blues). « Key » output = estimated key with confidence, « Progression » = suggested roman numerals, « Detected chords » = chords detected over time. Connect the « Progression » output to « Chord Grid » to generate an accompaniment.
+Analyses audio and estimates its global key, then suggests a fitting progression (Pop, Jazz, Blues). « Key » output = estimated key with confidence, « Progression » = suggested roman numerals, « Detected chords » = chords detected over time, one line each, « 0:02 Am (2.0s, 100%) », the symbol being the same in both languages. Connect the « Progression » output to « Chord Grid » to generate an accompaniment.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9527,7 +9527,7 @@ This node measures five features of a sound (its register, articulation, speed, 
 
 *Detects the chord progression in the audio signal.*
 
-Analyzes the audio signal and detects the chord progression over time. For each analysis window, a chromagram (12 pitch-class vector) is computed and compared against chord templates (major, minor, 7th, minor 7th, major 7th, diminished, augmented, sus2, sus4, minor 7b5) by correlation. The result is a list of chords with their timestamp and duration. Settings: the analysis window, short (0.2-0.5 s) for fast changes, long (1-2 s) for more stability. The audio signal is passed through unchanged on the Audio output.
+Analyzes the audio signal and detects the chord progression over time. For each analysis window, a chromagram (12 pitch-class vector) is computed and compared against chord templates (major, minor, 7th, minor 7th, major 7th, diminished, augmented, sus2, sus4, minor 7b5) by correlation. The result is a list of chords, one line each: the time, the usual symbol, the same in both languages (C, Am, G7, Am7, Cmaj7, Cdim, Caug, Csus2, Csus4, Bm7b5), the duration and the confidence, « 0:02 Am (2.0s, 100%) ». Settings: the analysis window, short (0.2-0.5 s) for fast changes, long (1-2 s) for more stability. The audio signal is passed through unchanged on the Audio output.
 
 | Port | Name | Type | |
 |---|---|---|---|

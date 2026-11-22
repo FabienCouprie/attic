@@ -1,7 +1,7 @@
 // plugins/accords-vers-notation.ts — Nœud « Accords → Notation MIDI ».
 //
 // Passerelle entre « Analyse harmonique » et « Texte → MIDI » : le premier
-// décrit l'harmonie pour un lecteur humain (« Cmaj (1.5s) », « I V vi IV »),
+// décrit l'harmonie pour un lecteur humain (« 0:02 Am (1.5s, 90%) », « I V vi IV »),
 // le second attend une notation exécutable (« C4+E4+G4 1.5 »). Sans ce nœud,
 // il fallait retaper la transcription à la main.
 import { fiche } from "./fiche";
@@ -42,7 +42,10 @@ function notesAscendantes(symbole: string, octave: number): string[] {
 function parserLigneAccord(ligne: string, dureeDefaut: number): { symbole: string; secondes: number } | null {
   const t = ligne.trim();
   if (!t) return null;
-  const m = /^(?:\d+:\d{2}\s+)?(\S+)\s*(?:\(\s*([\d.,]+)\s*s\s*\))?/.exec(t);
+  // LA CONFIANCE PEUT SUIVRE LA DURÉE, « (2.0s, 100%) » : c'est ce que le détecteur écrit. Elle
+  // empêchait de lire la durée, et chaque accord retombait sur « Durée par accord », sans un mot ;
+  // mesuré le 2026-11-22, revue des notations en texte.
+  const m = /^(?:\d+:\d{2}\s+)?(\S+)\s*(?:\(\s*([\d.,]+)\s*s\s*(?:,[^)]*)?\))?/.exec(t);
   if (!m) return null;
   const secondes = m[2] ? parseFloat(m[2].replace(",", ".")) : dureeDefaut;
   return { symbole: m[1], secondes: Number.isFinite(secondes) && secondes > 0 ? secondes : dureeDefaut };

@@ -6,6 +6,15 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE DÉTECTEUR D'ACCORDS ET L'ANALYSE HARMONIQUE ÉCRIVENT CE QUE « ACCORDS → NOTATION » RELIT, DANS LES DEUX LANGUES.** Revue des notations en texte, cinquième format, décision de Fabien du 2026-11-22 : « Same symbol, both languages ».
+  - **Ce qui se passait**, mesuré par `executer` sur do, la mineur, sol 7 et si demi-diminué, deux secondes chacun, du son synthétisé jusqu'à la notation :
+    - en français, le rapport écrivait « A min », « G 7 », « B min7b5 » ; « Accords → Notation », qui ne lit que le premier mot, rendait la majeur, sol majeur et si majeur ;
+    - dans les deux langues, « (2.0s, 100%) » empêchait de lire la durée, et chaque accord retombait sur un temps au lieu de deux ;
+    - le message annonçait « 4 accord(s) convertis ».
+  - **Ce qui change** (`audio/accords.ts`) : chaque ligne porte le symbole de l'usage, le même dans les deux langues, « 0:02 Am (2.0s, 100%) » : C, Am, G7, Am7, Cmaj7, Cdim, Caug, Csus2, Csus4, Bm7b5. « Accords → Notation » lit la durée suivie de la confiance. Les notices du Détecteur et de l'Analyse disent la forme des lignes. Le test de `audio/accords.test.ts` qui tenait « Cmaj » et « Amin » tient les nouveaux symboles, et que les deux langues écrivent la même chose.
+  - **Le garde**, dans `plugins/symboles-accords.test.ts` : le Détecteur et l'Analyse, en français et en anglais, écrivent le même texte, que « Accords → Notation » relit en quatre accords justes de deux temps. **Vu rouge** sur le code d'avant, 2 cas sur 2.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests des symboles, de la détection, de l'analyse, de Tonal, et les gardes du dépôt touchés, 12 fichiers et 136 cas verts. L'exemple « Une piste devient une chanson » emploie l'Analyse : son texte d'accords change de forme, non ce qu'il joue. **Non vérifié dans l'application.**
+
 - **UN SYMBOLE D'ACCORD SE LIT DE LA MÊME FAÇON PARTOUT, DANS SES ÉCRITURES USUELLES, ET « N.C. » EST UN ACCORD SILENCIEUX.** Revue des notations en texte, cinquième format, décisions de Fabien du 2026-11-22 : « Read them » et « A silent chord ».
   - **Ce qui se passait**, mesuré par `executer` sur cinquante-six symboles de l'usage :
     - les lecteurs ne se répondaient pas : l'ABC lisait « Cø7 », « Cm7(b5) » et « Cm(maj7) », la Grille les refusait, « Accords → Notation » les perdait sans les nommer ;
