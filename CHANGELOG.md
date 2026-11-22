@@ -6,6 +6,18 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **`ONE_SHOT` JOUE L'ÉCHANTILLON JUSQU'AU BOUT, ET LA FIN D'UNE BOUCLE SFZ EST INCLUSE.** Revue des notations en texte, le format SFZ, 2026-11-22, deuxième lot.
+  - **Ce qui se passait**, mesuré par `executer` contre sfzformat.com :
+    - `loop_mode=one_shot`, « from start to end, ignoring note off », était éteint au relâchement. La crash du kit intégré, déclarée `one_shot` et longue de 1,2 s, rendait 0,35 s par « Séquence sur banque » sous une note de 0,1 s, et plus rien après 0,25 s ;
+    - `loop_end` est inclus dans le format : `loop_start=1000 loop_end=1999` boucle sur mille échantillons. Il était lu comme une fin exclue, 999 par tour, et l'export écrivait `loop_end=2000` pour une boucle de mille, soit 1 001 dans un autre lecteur ;
+    - l'export écrivait `loop_mode=no_loop` pour chaque zone sans boucle, celles d'un kit comprises.
+  - **Ce qui change** :
+    - une zone `one_shot` sonne jusqu'au bout de son échantillon, au rendu comme au jeu en direct des deux claviers, où le relâchement de la touche ne l'arrête plus ;
+    - la crash du kit sonne ses 1,2 s, et le tampon rendu s'allonge pour la contenir ; une zone ordinaire garde son relâchement, et la durée du rendu sans `one_shot` est celle d'avant, au bit près ;
+    - `loop_end` se lit et s'écrit inclus, et une zone `one_shot` s'écrit `loop_mode=one_shot`.
+  - Décision de Fabien : jouer `one_shot` jusqu'au bout, les queues de la batterie s'allongeant dans les graphes qui jouent le kit. Aucune empreinte versionnée ne passe par un nœud SFZ.
+  - Tenu par quatre cas de plus dans `plugins/sfz-format.test.ts`. Trois vus rouges sur le code d'avant ; le quatrième, une zone ordinaire qui se tait après son relâchement, sert de témoin. Vu rouge aussi sur une fin de boucle de nouveau lue exclue, et sur un relâchement de nouveau appliqué à `one_shot`, plantés.
+
 - **UN SFZ SE LIT COMME SA RÉFÉRENCE LE DÉFINIT, ET CE QUI EN EST ÉCARTÉ EST NOMMÉ.** Revue des notations en texte, le format SFZ, 2026-11-22, premier lot.
   - **Ce qui se passait**, mesuré par `executer` sur « Banque SFZ » et « Clavier SFZ » contre sfzformat.com :
     - une région à `lokey=-1 hikey=-1`, ou `key=-1`, que SFZ 2 réserve à un contrôleur, jouait sur les 128 touches ;

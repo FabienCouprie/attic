@@ -441,9 +441,11 @@ export interface Chargement {
  * doublons : deux régions couvrant exactement les mêmes touches ET la même vélocité, ce qui, dans une
  * bibliothèque, désigne des variantes tirées au sort (`seq_position`) que nous ne savons pas jouer.
  *
- * UN RENONCEMENT RESTE, dit ici plutôt que caché : `one_shot` et `loop_continuous` sont joués comme
- * `loop_sustain` — notre lecteur éteint la note au relâchement de la touche dans tous les cas. La
- * différence s'entend sur une percussion tenue très court, pas sur un instrument tenu.
+ * `one_shot` JOUE L'ÉCHANTILLON JUSQU'AU BOUT, « ignoring note off » comme le dit sa page. Il était
+ * joué comme `loop_sustain`, éteint au relâchement : la crash du kit intégré, qui dure 1,2 s, se
+ * taisait à 0,25 s sous une note de 0,1 s. Un renoncement reste, dit ici plutôt que caché :
+ * `loop_continuous` est joué comme `loop_sustain`, la boucle s'arrêtant avec le relâchement au lieu
+ * de tourner pendant qu'il s'éteint, ce qui ne s'entend que sur un relâchement long.
  */
 export function banqueDepuisSfz(
   sfz: Sfz, audios: Map<string, AudioBuffer>,
@@ -509,9 +511,13 @@ export function banqueDepuisSfz(
       || (mode === "" && r.boucleDebut !== null && r.boucleFin !== null);
     if (boucleVoulue) {
       const debut = Math.max(0, Math.min(audio.length - 2, r.boucleDebut ?? 0));
-      const fin = Math.max(debut + 32, Math.min(audio.length - 1, r.boucleFin ?? audio.length - 1));
+      // `loop_end` est INCLUS (« the sample specified is played as part of the loop »), la fin d'une
+      // zone ne l'est pas : `loop_end=1999` donne une fin à 2000. Lu tel quel, chaque tour perdait
+      // un échantillon.
+      const fin = Math.max(debut + 32, Math.min(audio.length - 1, r.boucleFin !== null ? r.boucleFin + 1 : audio.length - 1));
       if (fin > debut && fin < audio.length) zone.boucle = { debut, fin };
     }
+    if (mode === "one_shot") zone.unCoup = true;
     zones.push(zone);
   }
 

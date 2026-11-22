@@ -12,11 +12,16 @@ import { describe, expect, it, vi } from "vitest";
 import { ctxDEssai } from "../core/contexte-essai";
 import { fiches as fichesBanque } from "./banque-sfz";
 import { fiches as fichesClavier } from "./clavier-sfz";
-import type { Banque } from "../audio/clavier-banque";
+import { fiches as fichesExport } from "./export-sfz";
+import { fiches as fichesSequence } from "./sequence-sur-banque";
+import { parametresLecture, voixPourNote, type Banque } from "../audio/clavier-banque";
+import { CHEMIN_KIT_EMBARQUE, VOIX_KIT, sfzDuKit } from "../audio/kit-batterie";
 
 const SR = 22050;
 const banqueSfz = fichesBanque.find((f) => f.id === "banque-sfz")!;
 const clavierSfz = fichesClavier.find((f) => f.id === "clavier-sfz")!;
+const exportSfz = fichesExport.find((f) => f.id === "export-sfz")!;
+const sequenceSurBanque = fichesSequence.find((f) => f.id === "sequence-sur-banque")!;
 
 function sinus(freq: number, secondes = 1): AudioBuffer {
   const n = Math.round(secondes * SR);
@@ -174,9 +179,76 @@ describe("le préprocesseur et l'en-tête <control>", () => {
     expect((await lire(`<control> octave_offset=1\n${region}`)).message).not.toMatch(/ignor/);
   });
 
-  it("une région que le décalage sort du clavier est écartée, nommée", async () => {
+  it("une région que le décalage sort du clavier est écartée, nommée (et la suivante décalée)", async () => {
     const { banque, message } = await lire(`<control> octave_offset=-2\n${BONNE}<region> sample=a.wav lokey=0 hikey=10 pitch_keycenter=5`);
     expect(zones(banque)).toEqual([[56, 66, 61]]);
     expect(message).toContain("#2");
+  });
+});
+
+/** Le disque en écriture, pour « Export SFZ » : chaque fichier écrit, dans l'ordre. */
+function mondeEcriture() {
+  const ecrits = new Map<string, Uint8Array>();
+  const ordre: string[] = [];
+  (globalThis as any).window = {
+    api: { ecrireFichier: vi.fn(async (c: string, o: Uint8Array) => { ordre.push(c); ecrits.set(c, o); return c; }) },
+  };
+  return { ecrits, ordre };
+}
+
+/** Exporte une banque par le nœud, et rend le texte SFZ écrit et la liste des écritures. */
+async function exporter(banque: Banque, nom = "x.sfz") {
+  const { ecrits, ordre } = mondeEcriture();
+  const r: any = await exportSfz.executer(ctxDEssai([banque], { Nom: nom }, { ficheId: "export-sfz", repertoireTravail: "D:/t" }) as any);
+  const octets = r.valeurs[0] ? ecrits.get(r.valeurs[0]) : undefined;
+  return { texte: octets ? new TextDecoder().decode(octets) : "", ordre, message: String(r.message) };
+}
+
+describe("les boucles et `one_shot`, selon la référence", () => {
+  it("`loop_end` est INCLUS : `loop_start=1000 loop_end=1999` boucle sur mille échantillons", async () => {
+    // sfzformat.com/opcodes/loop_end : « This is inclusive - the sample specified is played as
+    // part of the loop ». La boucle d'une zone garde, elle, sa fin exclue.
+    const { banque } = await lire("<region> sample=a.wav lokey=50 hikey=70 pitch_keycenter=60 loop_mode=loop_sustain loop_start=1000 loop_end=1999");
+    expect(banque?.zones[0].boucle).toEqual({ debut: 1000, fin: 2000 });
+  });
+
+  it("l'export écrit la fin INCLUSE : une boucle de mille échantillons sort en `loop_end=1999`", async () => {
+    const { texte } = await exporter({
+      zones: [{ racine: 60, basse: 0, haute: 127, audio: sinus(220.5), boucle: { debut: 1000, fin: 2000 } }],
+      racineSource: 60, largeur: 67, noteBasse: 0, noteHaute: 127,
+    });
+    expect(texte).toMatch(/loop_start=1000 loop_end=1999\b/);
+  });
+
+  it("`one_shot` joue l'échantillon JUSQU'AU BOUT : la crash du kit intégré sonne toute sa durée", async () => {
+    // sfzformat.com/opcodes/loop_mode : « sample will play from start to end, ignoring note off ».
+    // Le kit intégré déclare `loop_mode=one_shot` ; sa crash dure 1,2 s.
+    const dossier = CHEMIN_KIT_EMBARQUE.replace(/\/[^/]*$/, "");
+    const sons: Record<string, AudioBuffer> = {};
+    for (const v of VOIX_KIT) sons[v.fichier] = sinus(300, v.duree);
+    const api = {
+      lireTexte: vi.fn(async (c: string) => (c === CHEMIN_KIT_EMBARQUE ? sfzDuKit() : null)),
+      lireFichierAudio: vi.fn(async (c: string) => ({ url: c })),
+    };
+    (globalThis as any).window = { api };
+    (globalThis as any).fetch = vi.fn(async (url: string) => ({ arrayBuffer: async () => new TextEncoder().encode(url).buffer }));
+    const runtime = { decodeAudioData: vi.fn(async (ab: ArrayBuffer) => sons[new TextDecoder().decode(ab).replace(`${dossier}/`, "")]) };
+    const kit: any = await banqueSfz.executer(ctxDEssai([], { Source: "integre", "Aperçu": "non" }, { runtime, ficheId: "banque-sfz" }) as any);
+    const crash = VOIX_KIT.find((v) => v.fichier === "crash.wav")!;
+    const joue: any = await sequenceSurBanque.executer(ctxDEssai(
+      [{ notes: [{ note: crash.note, velocite: 100, debut: 0, fin: 0.1 }], tempo: 120 }, kit.valeurs[0]], {},
+      { ficheId: "sequence-sur-banque" }) as any);
+    const audio = joue.valeurs[0] as AudioBuffer;
+    expect(audio.duration).toBeGreaterThanOrEqual(crash.duree);
+    expect(rms(audio, 0.4, 1.0)).toBeGreaterThan(0.1);
+    // Le jeu en direct reçoit la même consigne : ignorer le relâchement de la touche.
+    expect(parametresLecture(voixPourNote(kit.valeurs[0], crash.note, 100)!).unCoup).toBe(true);
+    // Et l'export le réécrit : relu ailleurs, le kit reste un kit qui sonne jusqu'au bout.
+    expect((await exporter(kit.valeurs[0])).texte).toMatch(/loop_mode=one_shot/);
+  });
+
+  it("une zone ordinaire garde son relâchement : rien ne sonne après la touche et son fondu", async () => {
+    const audio = await jouer("<region> sample=a.wav key=60", [{ note: 60, velocite: 100, debut: 0, fin: 0.1 }]);
+    expect(rms(audio, 0.15, audio.duration)).toBeLessThan(1e-6);
   });
 });
