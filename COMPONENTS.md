@@ -3214,7 +3214,7 @@ Returns the degrees of the tuning received on its input as notes. Pitches are fr
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Degrees | text | — |  | The degree ranks to play, separated by spaces. A rank may cross the period, and a negative rank descends below the tonic. Empty, one full turn is played in ascending order. |
+| Degrees | text | — |  | The degree ranks to play, as whole numbers separated by spaces. A rank may cross the period, and a negative rank descends below the tonic. Empty, one full turn is played in ascending order. A list with a token that is not a whole number, or a rank that falls outside the MIDI range 0 to 127, is refused, and the message names it. |
 | Duration | slider | 0.5 s | 0.05 – 4 s, step 0.05 | Each note's length. The notes follow one another without overlap, so this length is also the gap between them. |
 | Tonic | slider | 60 | 24 – 96, step 1 | The pitch of degree zero, as a MIDI note number, middle C being 60. It replaces the one the tuning carries. |
 
@@ -7810,7 +7810,7 @@ The sieve is a harmonic series: the fundamental and its multiples, whose ranks o
 |---|---|---|---|---|
 | Fundamental | slider | 110 Hz | 20 – 2000 Hz, step 0.5 | Fundamental of the harmonic series that forms the sieve. |
 | Ranks | choice | All | All / Odd / Even / Primes / List | The harmonics kept. Primes: 1, 2, 3, 5, 7, 11... List: the ranks written below. |
-| Rank list | text | `1 2 3 5 8 13` |  | For « List »: the ranks kept, separated by spaces or commas. |
+| Rank list | text | `1 2 3 5 8 13` |  | For « List »: the ranks kept, as whole numbers from 1 up, separated by spaces or commas. A rank whose harmonic lies above half the sample rate keeps or removes nothing. An empty list, or one with a token that is not a rank, is refused, and the message names it. |
 | Tolerance | slider | 30 cents | 2 – 200 cents, step 1 | Distance from a harmonic within which a component passes. |
 | Mode | choice | Keep | Keep / Remove | Keep: only the kept harmonics pass. Remove: only they are taken out. |
 | Fundamental min | slider | 55 Hz | 20 – 2000 Hz, step 0.5 | Fundamental that a connected curve's zero means; the travel is multiplicative. With no curve, this setting does nothing. |

@@ -6,7 +6,7 @@
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
 import {
-  accordageDepuisCents, decrireAccordage, degresParPeriode, hauteurDuDegre, rangsDemandes,
+  accordageDepuisCents, decrireAccordage, degresParPeriode, hauteurDuDegre,
   type Accordage,
 } from "../audio/accordage";
 import type { Note } from "../audio/note";
@@ -20,6 +20,7 @@ import {
 } from "../audio/dissonance";
 import { analyser, modules, TAILLE_TRAME, SAUT } from "../audio/spectral-wishart";
 import { entreeAudio, sansEntree } from "./lire-entree";
+import { lireListe } from "../audio/listes-musicales";
 
 /** Les partiels d'un son : ceux de la trame la plus forte, là où le timbre est le plus net. */
 export function partielsDuSon(
@@ -219,8 +220,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Degrés", nomEn: "Degrees", type: "texte", defaut: "",
-        doc: "Les rangs de degrés à jouer, séparés par des espaces. Un rang peut franchir la période, et un rang négatif descend sous la tonique. Vide, un tour complet est joué dans l'ordre croissant.",
-        docEn: "The degree ranks to play, separated by spaces. A rank may cross the period, and a negative rank descends below the tonic. Empty, one full turn is played in ascending order." },
+        doc: "Les rangs de degrés à jouer, en nombres entiers séparés par des espaces. Un rang peut franchir la période, et un rang négatif descend sous la tonique. Vide, un tour complet est joué dans l'ordre croissant. Une liste dont un jeton n'est pas un entier, ou dont un rang tombe hors de la plage MIDI de 0 à 127, est refusée, et le message le nomme.",
+        docEn: "The degree ranks to play, as whole numbers separated by spaces. A rank may cross the period, and a negative rank descends below the tonic. Empty, one full turn is played in ascending order. A list with a token that is not a whole number, or a rank that falls outside the MIDI range 0 to 127, is refused, and the message names it." },
       { nom: "Durée", nomEn: "Duration", type: "curseur", plage: [0.05, 4], pas: 0.05, defaut: 0.5, unite: "s",
         doc: "La durée de chaque note. Les notes se suivent sans recouvrement, donc cette durée est aussi leur écart.",
         docEn: "Each note's length. The notes follow one another without overlap, so this length is also the gap between them." },
@@ -238,19 +239,21 @@ export const fiches: FicheAudio[] = ([
       // n'importe quelle hauteur, et un producteur n'a pas à deviner où l'on veut l'entendre.
       const accordage: Accordage = { ...recu, reference: ctx.paramNombre("Tonique", 60) };
       const duree = ctx.paramNombre("Durée", 0.5);
-      const rangs = rangsDemandes(ctx.paramTexte("Degrés", ""), degresParPeriode(accordage));
-      if (rangs.length === 0) {
-        return {
-          valeurs: [null, null], erreur: true,
-          message: en
-            ? "« Degrees » holds no readable rank: whole numbers separated by spaces are expected."
-            : "« Degrés » ne porte aucun rang lisible : des nombres séparés par des espaces sont attendus.",
-        };
-      }
+      // LES RANGS, PAR LE SEUL LECTEUR DES LISTES. Revue des notations en texte, 2026-11-22 : « 1.5 » se
+      // lisait comme les rangs 1 et 5, « C4 » comme le rang 4, un texte illisible jouait un tour
+      // complet, et le rang 200 rendait un MIDI 260. Le vide seul, que la documentation définit, joue
+      // le tour complet.
+      const lue = lireListe(ctx.paramTexte("Degrés", ""), "degres", en ? "Degrees" : "Degrés", { videPermis: true });
+      if ("refus" in lue) return { valeurs: [null, null], erreur: true, message: lue.refus };
+      const rangs = lue.valeurs.length ? lue.valeurs : Array.from({ length: degresParPeriode(accordage) }, (_, i) => i);
       const notes: Note[] = rangs.map((rang, i) => ({
         note: hauteurDuDegre(accordage, rang),
         velocite: 100, debut: i * duree, fin: (i + 1) * duree,
       }));
+      const horsPlage = rangs.filter((_, i) => notes[i].note < 0 || notes[i].note > 127);
+      if (horsPlage.length) {
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.accordage.hors_plage_var_0", horsPlage.slice(0, 3).map((r) => `« ${r} »`).join(", ")) };
+      }
       const sequence: Sequence = { notes, tempo: 120, titre: decrireAccordage(accordage, en) };
       const horsTempere = notes.filter((n) => Math.abs(n.note - Math.round(n.note)) > 1e-6).length;
       return {

@@ -19,11 +19,6 @@ import { lireListe } from "../audio/listes-musicales";
 
 const en = () => langueCourante() === "en";
 
-/** « 0 4 7 », « 0, 3, 7, 10 » ou « 0;5;7 » : des demi-tons, dans n'importe quel ordre. */
-export function lireIntervalles(texte: string): number[] {
-  return texte.split(/[\s,;]+/).filter((t) => t !== "").map(Number).filter((v) => Number.isFinite(v) && Math.abs(v) <= 96);
-}
-
 export const fiches: FicheAudio[] = ([
   fiche({
     id: "vitesse-variable", nom: "Vitesse variable", nomEn: "Varispeed",

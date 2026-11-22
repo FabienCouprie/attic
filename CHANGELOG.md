@@ -6,6 +6,23 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN RANG EST UN ENTIER, ET UNE LISTE DE RANGS SE LIT D'UNE SEULE FAÇON.** Revue des notations en texte, huitième format, 2026-11-22, troisième lot : l'Accordage en notes et le Crible harmonique.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - l'Accordage lisait « 1.5 » comme les rangs 1 et 5, et « C4 » comme le rang 4 ;
+    - un texte illisible y jouait un tour complet, et le rang 200 rendait un MIDI 260 ;
+    - le Crible employait la borne des intervalles pour ses rangs : le rang 100, une harmonique de 11 kHz sur 110 Hz, était jeté sans un mot ;
+    - le Crible arrondissait aussi le rang 2,5 en 3, jetait un jeton illisible, et rendait du silence pour une liste vide.
+  - **Ce qui change** :
+    - les deux nœuds lisent par `lireListe` ;
+    - l'Accordage prend des entiers de tout signe, joue toujours un tour complet quand « Degrés » est vide, comme sa documentation le dit, et refuse un rang qui tombe hors de 0 à 127 en le nommant ;
+    - le Crible prend des entiers à partir de 1, sans autre borne, et refuse une liste vide.
+
+    `rangsDemandes` (`audio/accordage.ts`) et `lireIntervalles` (`plugins/concret.ts`) disparaissent : ils n'ont plus de lecteur. Les documentations le disent.
+  - **Des tests tenaient le contraire** : dans `audio/accordage.test.ts`, un texte illisible jouait un tour complet, et un moins seul était écarté. Ils avaient été écrits avec `rangsDemandes`, sans décision. Les deux cas sont refusés en les nommant, et le reste de ces tests est tenu par `lireListe`.
+  - **Le garde** : 14 cas dans `plugins/listes-musicales.test.ts`.
+    - Vu rouge sur le code d'avant : 11 cas.
+    - Vu rouge aussi sur des rangs décimaux admis, plantés.
+
 - **UNE LISTE D'INTERVALLES SE LIT D'UNE SEULE FAÇON, BORNÉE À ±96 DEMI-TONS, ET CE QUI NE SE LIT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, huitième format, 2026-11-22, deuxième lot : les Peignes accordés, les Résonateurs, la Musique fractale.
   - **Ce qui se passait**, mesuré par `executer` :
     - la Musique fractale ne coupait sa liste qu'aux virgules, et « 0 3 7 10 » rendait une seule note ;

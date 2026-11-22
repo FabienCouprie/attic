@@ -8,8 +8,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   CENTS_PAR_OCTAVE, accordageDepuisCents, accordageEgal, decrireAccordage, degrePlusProche,
-  degresParPeriode, hauteurDuDegre, rangsDemandes,
+  degresParPeriode, hauteurDuDegre,
 } from "./accordage";
+import { lireListe } from "./listes-musicales";
 
 describe("le tempérament égal", () => {
   it("À DOUZE DEGRÉS REND LES DEMI-TONS ENTIERS, exactement", () => {
@@ -122,29 +123,18 @@ describe("le degré le plus proche d'une hauteur", () => {
   });
 });
 
+// CES CAS TENAIENT `rangsDemandes`, disparu le 2026-11-22. Revue des notations en texte, huitième
+// format : les rangs se lisent par le seul lecteur des listes, `lireListe(…, "degres")`, et le tour
+// complet d'un réglage vide se décide dans le nœud. Deux cas tenaient le contraire de la règle
+// « refuser, nommé », écrits avec la fonction et sans décision : un texte illisible jouait un tour
+// complet, et un moins seul était écarté. Les deux sont maintenant refusés en les nommant, ce que tient
+// `plugins/listes-musicales.test.ts`.
 describe("les rangs qu'un texte désigne", () => {
-  it("UN TEXTE VIDE DEMANDE UN TOUR COMPLET, dans l'ordre croissant", () => {
-    expect(rangsDemandes("", 5)).toEqual([0, 1, 2, 3, 4]);
-    expect(rangsDemandes("   ", 3)).toEqual([0, 1, 2]);
-    expect(rangsDemandes("rien de lisible", 2)).toEqual([0, 1]);
-  });
-
-  it("lit les rangs quelle que soit la séparation", () => {
-    expect(rangsDemandes("0 4 7", 12)).toEqual([0, 4, 7]);
-    expect(rangsDemandes("0,4,7", 12)).toEqual([0, 4, 7]);
-    expect(rangsDemandes("0\n4\n7", 12)).toEqual([0, 4, 7]);
-  });
-
-  it("LAISSE PASSER LES RANGS HORS DE LA PÉRIODE, qui sont le sens de l'affaire", () => {
+  it("se lisent quelle que soit la séparation, et franchissent la période, qui est le sens de l'affaire", () => {
+    for (const t of ["0 4 7", "0,4,7", "0\n4\n7"]) expect(lireListe(t, "degres", "Degrés")).toEqual({ valeurs: [0, 4, 7] });
     // Le rang 12 d'un accordage à douze degrés est la tonique du tour suivant ; le rang -1 descend.
-    expect(rangsDemandes("0 12 -1", 12)).toEqual([0, 12, -1]);
+    expect(lireListe("0 12 -1", "degres", "Degrés")).toEqual({ valeurs: [0, 12, -1] });
     expect(hauteurDuDegre(accordageEgal(12), 12)).toBe(72);
-  });
-
-  it("écarte le moins seul, qui ne désigne aucun rang", () => {
-    // Sans ce filtre, `Number("-")` rendrait NaN et une note sans hauteur partirait sur la sortie.
-    expect(rangsDemandes("0 - 4", 12)).toEqual([0, 4]);
-    expect(rangsDemandes("-", 12).every(Number.isFinite)).toBe(true);
   });
 });
 

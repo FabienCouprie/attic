@@ -191,8 +191,53 @@ describe("UNE LISTE D'INTERVALLES SE LIT D'UNE SEULE FAÇON", () => {
     expect(r.r.valeurs.every((v) => v === null)).toBe(true);
   }, 60_000);
 
-  it("la Musique fractale ne lit ses intervalles que pour le motif personnalisé", async () => {
+  it("la Musique fractale ne lit ses intervalles que pour le motif personnalisé, sans rien changer à son motif", async () => {
     const r = await FRACTALE({ Motif: "Triade M", Intervalles: "x" });
     expect(r.r.erreurRendue, r.r.message).toBe(false);
   }, 60_000);
+});
+
+// UN RANG EST UN ENTIER. Ceux d'un accordage ont tout signe et franchissent la période ; ceux d'une série
+// harmonique partent de 1, sans autre borne que Nyquist.
+describe("UNE LISTE DE RANGS SE LIT D'UNE SEULE FAÇON", () => {
+  const ACCORDAGE = async (degres: string) => {
+    const r = await lancerFiche(F("accordage-notes"), { "Degrés": degres }, { entrees: entreesDEssai(F("accordage-notes")) });
+    return { r, notes: await hauteurs(r.valeurs[0]) };
+  };
+  it.each([["0, 4; 7"], [" 0 4 7\n"]])("l'Accordage : « %s » comme « 0 4 7 »", async (texte) => {
+    const [juste, autre] = [await ACCORDAGE("0 4 7"), await ACCORDAGE(texte)];
+    expect(autre.r.erreurRendue, autre.r.message).toBe(false);
+    expect(autre.notes).toEqual(juste.notes);
+  }, 60_000);
+
+  it("l'Accordage joue un tour complet quand « Degrés » est vide, comme sa documentation le dit, et franchit la période", async () => {
+    expect((await ACCORDAGE("")).notes).toHaveLength(12);
+    expect((await ACCORDAGE("0 12 -1")).notes).toEqual([60, 72, 59]);
+  }, 60_000);
+
+  it.each([["1.5", "« 1.5 »"], ["C4", "« C4 »"], ["x", "« x »"], ["0 - 4", "« - »"], ["0 200", "« 200 »"]])(
+    "l'Accordage refuse « %s », et nomme %s", async (texte, cite) => {
+      const r = await ACCORDAGE(texte);
+      expect(r.r.erreurRendue, r.r.message).toBe(true);
+      expect(r.r.message).toContain(cite);
+      expect(r.r.valeurs.every((v) => v === null)).toBe(true);
+    }, 60_000);
+
+  const CRIBLE = async (rangs: string, mode = "garder") => {
+    const r = await lancerFiche(F("crible-harmonique"), { Rangs: "liste", "Liste des rangs": rangs, Mode: mode }, { entrees: entreesDEssai(F("crible-harmonique")) });
+    return { r, son: r.valeurs[0] ? empreinte(r.valeurs[0]) : null };
+  };
+  it("le Crible garde un rang au-delà de 96 : le rang 100 de 110 Hz, 11 kHz, est sous Nyquist", async () => {
+    const [sans, avec] = [await CRIBLE("1 2 3"), await CRIBLE("1 2 3 100")];
+    expect(avec.r.erreurRendue, avec.r.message).toBe(false);
+    expect(avec.son).not.toBe(sans.son);
+  }, 60_000);
+
+  it.each([["2.5", "« 2.5 »"], ["0", "« 0 »"], ["x", "« x »"], ["1 2 x", "« x »"], ["", "vide|empty"]])(
+    "le Crible refuse « %s »", async (texte, cite) => {
+      const r = await CRIBLE(texte);
+      expect(r.r.erreurRendue, r.r.message).toBe(true);
+      expect(r.r.message).toMatch(new RegExp(cite));
+      expect(r.son).toBe(null);
+    }, 60_000);
 });

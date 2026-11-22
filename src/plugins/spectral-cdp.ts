@@ -17,7 +17,6 @@ import {
 } from "../audio/spectral-cdp";
 import { parCanal as parCanalHorsFil } from "./hors-fil";
 import { melangerPeignes, peignesVoie, type OptionsPeigneVoie } from "../audio/peigne";
-import { lireIntervalles } from "./concret";
 import { lireListe } from "../audio/listes-musicales";
 import { entreeAudio, sansEntree } from "./lire-entree";
 import { SENS_D_UN_BALAYAGE, choixSensArpege, sensParmi } from "../audio/sens-arpege";
@@ -191,8 +190,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Les harmoniques retenues. Premiers : 1, 2, 3, 5, 7, 11… Liste : les rangs écrits ci-dessous.",
         docEn: "The harmonics kept. Primes: 1, 2, 3, 5, 7, 11... List: the ranks written below." },
       { nom: "Liste des rangs", nomEn: "Rank list", type: "texte", defaut: "1 2 3 5 8 13", placeholder: "1 3 5 7", placeholderEn: "1 3 5 7",
-        doc: "Pour « Liste » : les rangs retenus, séparés par des espaces ou des virgules.",
-        docEn: "For « List »: the ranks kept, separated by spaces or commas." },
+        doc: "Pour « Liste » : les rangs retenus, en nombres entiers à partir de 1, séparés par des espaces ou des virgules. Un rang dont l'harmonique passe la moitié de la fréquence d'échantillonnage ne garde ni ne retire rien. Une liste vide, ou dont un jeton n'est pas un rang, est refusée, et le message le nomme.",
+        docEn: "For « List »: the ranks kept, as whole numbers from 1 up, separated by spaces or commas. A rank whose harmonic lies above half the sample rate keeps or removes nothing. An empty list, or one with a token that is not a rank, is refused, and the message names it." },
       { nom: "Tolérance", nomEn: "Tolerance", type: "curseur", plage: [2, 200], pas: 1, defaut: 30, unite: "cents",
         doc: "Distance à une harmonique en deçà de laquelle une composante passe.", docEn: "Distance from a harmonic within which a component passes." },
       { nom: "Mode", nomEn: "Mode", type: "choix", options: ["Garder", "Retirer"], optionsEn: ["Keep", "Remove"], optionIds: ["garder", "retirer"],
@@ -211,10 +210,15 @@ export const fiches: FicheAudio[] = ([
       const f0 = parTrame(ctx.entree(1), a, ctx.paramNombre("Fondamentale", 110), {
         min: ctx.paramNombre("Fondamentale min", 55), max: ctx.paramNombre("Fondamentale max", 220), ...progressionPour({ unite: "Hz" }),
       });
+      // LA LISTE DES RANGS, PAR LE SEUL LECTEUR DES LISTES. Revue des notations en texte, 2026-11-22 :
+      // la borne des intervalles servait aux rangs, et le rang 100 était jeté sans un mot ; 2,5 devenait
+      // 3, un jeton illisible disparaissait, et une liste vide rendait du silence.
       const choix = String(ctx.paramTexte("Rangs", "tous"));
-      const rangs: Rangs = choix === "liste"
-        ? lireIntervalles(ctx.paramTexte("Liste des rangs", "1 2 3 5 8 13")).map(Math.round).filter((r) => r >= 1)
-        : (choix as Rangs);
+      const liste = choix === "liste"
+        ? lireListe(ctx.paramTexte("Liste des rangs", "1 2 3 5 8 13"), "rangs", en() ? "Rank list" : "Liste des rangs")
+        : null;
+      if (liste && "refus" in liste) return { valeurs: [null], erreur: true, message: liste.refus };
+      const rangs: Rangs = liste ? liste.valeurs : (choix as Rangs);
       const inverse = String(ctx.paramTexte("Mode", "garder")) === "retirer";
       const tol = ctx.paramNombre("Tolérance", 30);
       return { valeurs: [await voiesMisesEnForme(a, {
