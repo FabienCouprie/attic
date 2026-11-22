@@ -260,7 +260,7 @@ export function decouperMorceaux(texte: string): string[] {
 }
 
 /** Défaut de q pour un n-olet (p notes dans le temps de q), ABC 2.1 §4.13. */
-function qParDefaut(p: number, m: Metrique | null): number {
+export function qParDefaut(p: number, m: Metrique | null): number {
   const compose = !!m && m.numerateur % 3 === 0 && m.numerateur > 3;
   return ({ 2: 3, 3: 2, 4: 3, 6: 2, 8: 3 } as Record<number, number>)[p] ?? (compose ? 3 : 2);
 }

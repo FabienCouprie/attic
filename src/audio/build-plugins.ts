@@ -241,6 +241,7 @@ export const audioOptimizeDeps: any = {
     "tone",
     "verovio/esm",
     "verovio/wasm",
+    "verovio/wasm-hum",
     "vexflow",
     "wavesurfer.js",
   ],
