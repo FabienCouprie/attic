@@ -6,6 +6,17 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LES CINQ NŒUDS QUI DÉPENDENT D'UNE GAMME SANS RÉGLAGE DE GAMME ONT LEUR GARDE**, demandé par Fabien le 2026-11-22. L'inventaire du registre ne les voit pas, n'ayant pas de réglage « Gamme » ; les mesurer complète les 41 nœuds du contrôle des gammes.
+  - **Mesurés justes par `executer`**, et tenus dans `docs/gammes-tenues-tous.test.ts` :
+    - la Gamme, sous les douze toniques et les sept modes : 84 sur 84, les degrés du mode sur la tonique, sept lettres distinctes ;
+    - la Roue de Camelot, sur les vingt-quatre départs : chaque pas joue la triade de sa case, d'après une table de la roue écrite dans le garde ;
+    - le contrepoint « Du cantus », sur trois cantus modaux : aucune note hors des degrés du cantus ;
+    - l'harmonie négative, sous les douze toniques et ses deux réflexions : chaque classe devient `2t + 7 − p` ;
+    - l'analyse harmonique, sur quatre cadences synthétisées : do majeur, la mineur, mi bémol majeur et fa dièse mineur trouvés.
+  - **Relevé sans être réparé** : l'analyse écrit « D# major » pour mi bémol majeur, comme les identifiants de clé du dépôt, tous en dièses. La hauteur est juste ; l'orthographe d'une tonalité à bémols ne l'est pas.
+  - **Vus rouges** sur une faute plantée dans chacun des cinq, dans l'arbre de session : la case 8B jouée en ré, l'axe décalé d'un demi-ton, la tonique ignorée, le cantus ignoré, la tonalité mal écrite ; les cinq cas tombent, puis les fautes sont retirées. Le garde coûte 2,5 s.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement ; le fichier du garde, le compte des lignes, les caractères de contrôle et le style, 76 cas.
+
 - **UNE VALEUR DE CHOIX QU'AUCUNE OPTION NE RECONNAÎT DEVIENT LE DÉFAUT DÉCLARÉ DU RÉGLAGE, ET LE MESSAGE DU NŒUD LE DIT.** Décisions de Fabien du 2026-11-21, défaut H du contrôle des gammes : par le moteur, pour tous les réglages à choix.
   - **Ce qui se passait.** Une valeur que ni l'identifiant, ni les libellés, ni les libellés hérités ne reconnaissent passait telle quelle au nœud, et chaque composant retombait en silence sur son propre repli. Mesuré avec une gamme inconnue : la Mélodie aléatoire jouait do majeur, le Générateur musical écrivait « C majeur », la Gamme jouée annonçait « Do dorienne-inconnue » en jouant do majeur ; la correction de hauteur retombait sur la chromatique, sans rien corriger.
   - **Ce qui change.** `paramTexte` (`core/contexte-de-passe.ts`) rend le défaut déclaré, celui que l'inspecteur montre, et retient la valeur ; le moteur ajoute au message du nœud une ligne qui nomme le réglage, la valeur et le défaut employé (`annoterValeursInconnues`, `core/execution.ts`), dans la langue de l'interface (`direValeursInconnues`, `valeurs-inconnues.ts`, à la racine de `src`, passé au moteur par le shell comme `canoniser` ; hors du dictionnaire, que le garde des clés mortes ne lit pas). `lancerFiche` en fait autant, pour que le banc voie ce que l'application montre. Un texte libre n'est pas un choix, et passe tel quel.
