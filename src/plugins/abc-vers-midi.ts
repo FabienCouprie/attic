@@ -7,6 +7,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { decouperMorceaux, lireMorceau, morceauVersMidi } from "../audio/abc";
+import { refusAbc } from "../audio/abc-fautes";
 import { rendreMidiDepuisBytes } from "../audio/midi-montage";
 import { sf2Chargee, normaliserModeSynthèse, PARAMETRE_SYNTHESE, PARAMETRE_INSTRUMENT_SF2 } from "./soundfontGlobal";
 
@@ -68,6 +69,8 @@ export const fiches: FicheAudio[] = ([
       }
       const index = Math.max(1, Math.min(morceaux.length, Math.round(ctx.paramNombre("Morceau", 1))));
       const m = lireMorceau(morceaux[index - 1], index);
+      const refus = refusAbc(m);
+      if (refus) return { valeurs: [null, null, null], erreur: true, message: refus };
       const nbNotes = m.voix.reduce((s, v) => s + v.notes.length, 0);
       if (nbNotes === 0) {
         return { valeurs: [null, null, null], erreur: true, message: traduire("msg.abc.aucune_note_var_0", m.avertissements.join(" · ") || "—") };
