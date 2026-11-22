@@ -1887,10 +1887,20 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.arbre.liste": { fr: "liste attendue", en: "list expected" },
   "msg.arbre.fermante_liste": { fr: "parenthèse fermante attendue à la fin d'une liste", en: "closing parenthesis expected at the end of a list" },
   "msg.arbre.ouvrante_mesure": { fr: "une mesure commence par une parenthèse", en: "a bar starts with a parenthesis" },
-  "msg.arbre.metrique": { fr: "métrique attendue, de la forme 4/4", en: "time signature expected, of the form 4/4" },
+  "msg.arbre.metrique": { fr: "métrique attendue, de la forme 4/4, 4//4 ou (4 4)", en: "time signature expected, of the form 4/4, 4//4 or (4 4)" },
+  "msg.arbre.fermante_voix": { fr: "parenthèse fermante attendue à la fin de la voix", en: "closing parenthesis expected at the end of the voice" },
+  "msg.arbre.nombre_mesures": { fr: "la voix annonce un autre nombre de mesures que celui qu'elle porte", en: "the voice announces another number of bars than it carries" },
   "msg.arbre.fermante_mesure": { fr: "parenthèse fermante attendue à la fin d'une mesure", en: "closing parenthesis expected at the end of a bar" },
   "msg.arbre.fermante_mesures": { fr: "parenthèse fermante attendue à la fin de la liste de mesures", en: "closing parenthesis expected at the end of the list of bars" },
   "msg.arbre.texte_en_trop": { fr: "texte en trop après le dernier arbre", en: "extra text after the last tree" },
+  "msg.arbre.poids_nul": { fr: "un poids nul ne dure rien", en: "a zero weight lasts nothing" },
+  "msg.arbre.poids_fractionnaire": { fr: "une valeur entre 0 et 1 n'est pas une proportion", en: "a value between 0 and 1 is not a proportion" },
+  "msg.arbre.silence_lie": { fr: "un silence ne se lie pas", en: "a rest cannot be tied" },
+  "msg.arbre.liaison_sans_note": { fr: "une liaison sans note devant elle ne prolonge rien", en: "a tie with no note before it prolongs nothing" },
+  "msg.arbre.division_negative": { fr: "une division ne peut pas être un silence", en: "a division cannot be a rest" },
+  "msg.arbre.division_liee": { fr: "une division ne peut pas être liée", en: "a division cannot be tied" },
+  "msg.arbre.metrique_nulle": { fr: "une métrique sans temps ou sans unité ne mesure rien", en: "a time signature with no beats or no unit measures nothing" },
+  "msg.arbre.liste_vide": { fr: "une liste sans proportion ne divise rien", en: "a list with no proportion divides nothing" },
 };
 
 interface I18nContextType {
