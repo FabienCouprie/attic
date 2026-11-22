@@ -1,0 +1,30 @@
+/* theme-plan.css — Ce que le thème plan technique change au-delà de ses couleurs. Ses variables
+   restent dans le bloc `[data-theme="black"]` d'`atelier.css`, que la norme de taille tient en
+   dette ; ce fichier porte les règles propres au thème, comme `theme-violet.css` porte celles du
+   violet. Le plan technique est le thème qui pose `data-theme="black"` sur la racine : chaque règle
+   ici est donc gardée par cet attribut, et le thème violet n'en voit aucune. */
+
+/* UN NOM SOUS LE POINTEUR, ET LE NOM DU NŒUD SÉLECTIONNÉ, PASSENT AU JAUNE, demandé par Fabien le
+   2026-11-22 pour l'orange du violet, « faire la même chose » ici. LES NOMS SEULS, précisé et
+   confirmé pour ce thème par lui le même jour : ceux du catalogue (univers, familles, composants), ceux des entrées des tiroirs de
+   la barre (exemples, favoris, modèles), et le nom d'un nœud tant qu'il est sélectionné. Les
+   icônes, la langue, les sélecteurs de format, le chevron, les compteurs et les poids gardent
+   leur couleur.
+   Aucune variable du thème n'est jaune ; celui-ci est le jaune de la case tonique du réseau
+   isomorphe (`clavier.css`), déjà à l'écran dans ce thème. Contraste calculé sur les cinq fonds où
+   ces noms se posent, de 7,35 pour 1 sur une entrée de tiroir survolée à 11,89 sur le fond d'un
+   nœud, au-dessus des 4,5 exigés d'un texte d'interface. */
+[data-theme="black"] { --titre-vif: #f2d600; }
+
+[data-theme="black"] .palette-univers-titre:hover > span:first-child,
+[data-theme="black"] .palette-famille-titre:hover > span:first-child,
+[data-theme="black"] .palette-composant:hover .palette-composant-nom,
+[data-theme="black"] .attic-favs-drop a:hover,
+[data-theme="black"] .attic-favs-drop button:hover,
+[data-theme="black"] .attic-modeles-ligne:hover:not(.attic-modeles-ligne-inerte) .attic-modeles-nom,
+[data-theme="black"] .attic-node.selected > .attic-node-entete .attic-node-nom {
+  color: var(--titre-vif);
+}
+/* Le chevron partage la balise du nom d'un univers ou d'une famille ; il garde celle de sa ligne. */
+[data-theme="black"] .palette-univers-titre:hover .palette-chevron { color: var(--text-primary); }
+[data-theme="black"] .palette-famille-titre:hover .palette-chevron { color: var(--text-tertiary); }

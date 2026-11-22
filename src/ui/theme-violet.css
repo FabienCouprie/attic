@@ -39,3 +39,27 @@
    sien. */
 :root:not([data-theme]) .inspecteur-range input[type="range"],
 :root:not([data-theme]) .inspecteur-plage-borne input[type="range"] { accent-color: var(--accent); }
+
+/* UN NOM SOUS LE POINTEUR, ET LE NOM DU NŒUD SÉLECTIONNÉ, PASSENT À L'ORANGE, demandé par Fabien le
+   2026-11-22. LES NOMS SEULS, précisé par lui le même jour : « ce sont les noms que je voulais en
+   orange dans le thème violet lorsqu'ils sont survolés par la souris uniquement. Et dans le titre
+   d'un node lorsque ce node est sélectionné uniquement ». Ceux du catalogue, ceux des entrées des
+   tiroirs de la barre, et le nom d'un nœud sélectionné : les mêmes que le jaune du plan technique
+   (`theme-plan.css`). L'orange est celui que la palette porte déjà, celui de l'onde d'une piste ;
+   l'ambre de « Lancer » a été écarté, étant l'action principale du thème. Contraste calculé sur les
+   cinq fonds où ces noms se posent, de 6,88 pour 1 sur une entrée de tiroir survolée à 8,32 sur un
+   univers survolé du catalogue. */
+:root:not([data-theme]) { --titre-vif: var(--onde); }
+
+:root:not([data-theme]) .palette-univers-titre:hover > span:first-child,
+:root:not([data-theme]) .palette-famille-titre:hover > span:first-child,
+:root:not([data-theme]) .palette-composant:hover .palette-composant-nom,
+:root:not([data-theme]) .attic-favs-drop a:hover,
+:root:not([data-theme]) .attic-favs-drop button:hover,
+:root:not([data-theme]) .attic-modeles-ligne:hover:not(.attic-modeles-ligne-inerte) .attic-modeles-nom,
+:root:not([data-theme]) .attic-node.selected > .attic-node-entete .attic-node-nom {
+  color: var(--titre-vif);
+}
+/* Le chevron partage la balise du nom d'un univers ou d'une famille ; il garde celle de sa ligne. */
+:root:not([data-theme]) .palette-univers-titre:hover .palette-chevron { color: var(--text-primary); }
+:root:not([data-theme]) .palette-famille-titre:hover .palette-chevron { color: var(--text-tertiary); }
