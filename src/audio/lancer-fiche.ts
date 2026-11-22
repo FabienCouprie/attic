@@ -24,7 +24,7 @@ import { annoterValeursInconnues, contexteDePasse } from "../core/contexte-de-pa
 import { creerAleatoire } from "../core/hasard";
 import type { ParametreDef } from "../core/types";
 import { valeurCanoniqueChoix } from "../i18n";
-import { direValeursInconnues } from "./valeurs-inconnues";
+import { direValeursInconnues } from "../valeurs-inconnues";
 import { valeurDEssai } from "./valeurs-essai";
 import { frequenceDeTravail } from "./frequence-de-travail";
 

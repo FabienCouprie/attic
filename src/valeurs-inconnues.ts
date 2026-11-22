@@ -1,4 +1,4 @@
-// audio/valeurs-inconnues.ts — La ligne qui dit les valeurs de choix qu'un nœud a lues sans les reconnaître.
+// valeurs-inconnues.ts — La ligne qui dit les valeurs de choix qu'un nœud a lues sans les reconnaître.
 //
 // LE MOTEUR LA POSE, ET NON CHAQUE NŒUD, décision de Fabien du 2026-11-21, défaut H du contrôle des
 // gammes : une valeur qu'aucune option ne reconnaît devient le défaut déclaré du réglage
@@ -7,10 +7,12 @@
 // lancers (`lancer-fiche.ts`) l'emploie aussi, pour montrer ce que l'application montre.
 //
 // ELLE VIT HORS DU DICTIONNAIRE : le garde des clés mortes lit toutes les sources sauf `i18n.tsx`, et
-// une clé employée là seulement passerait pour morte.
+// une clé employée là seulement passerait pour morte. ET HORS DU DOMAINE, à côté du dictionnaire : le
+// shell l'importe, et `docs/frontiere-domaine.test.ts` refuse qu'un fichier du shell charge un module
+// de `audio/`, où elle était d'abord.
 
-import type { ParametreDef } from "../core/types";
-import { langueCourante, traduire } from "../i18n";
+import type { ParametreDef } from "./core/types";
+import { langueCourante, traduire } from "./i18n";
 
 /** Une valeur inconnue, telle que le contexte de passe la retient. */
 type Inconnue = { parametre: Pick<ParametreDef, "nom" | "nomEn" | "options" | "optionsEn" | "optionIds">; valeur: string; repli: string | number };
