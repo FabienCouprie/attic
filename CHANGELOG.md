@@ -68,6 +68,79 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - Décision de Fabien pour `lokey` au-dessus de `hikey` : refuser, nommé ; pour les décalages : les appliquer.
   - Tenu par `plugins/sfz-format.test.ts`, treize cas tirés des pages de sfzformat.com. Onze vus rouges sur le code d'avant, deux tenus déjà (les noms de notes, l'alias `pitch`). Vu rouge aussi sur une touche -1 de nouveau lue comme absente, et sur une redéfinition de nouveau appliquée à tout le fichier, plantées.
 
+- **LE MUSICXML VENU D'UN MIDI CHOISIT SA CLÉ SUR LE REGISTRE, ET DÉCOUPE SES VALEURS SELON LES TEMPS.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, huitième lot.
+  - **Ce qui se passait**, mesuré par `executer` du MIDI au texte MusicXML :
+    - le chemin du MIDI écrivait toujours la clé de sol : do 2 à fa 2 se lisaient sur des lignes supplémentaires ; le chemin de l'arbre, lui, choisissait la sienne ;
+    - une durée composée se découpait la plus grande valeur d'abord, exacte mais aveugle aux temps : une blanche pointée du deuxième temps cachait le troisième, une blanche partie sur la croche du deuxième temps cachait le milieu de la mesure, et en 6/8 une noire passait d'un temps à l'autre.
+  - **Ce qui change** :
+    - une seule règle de clé, `cleDe` dans `audio/musicxml.ts`, sert l'arbre et le MIDI : la clé de fa sous le do central, par la médiane, et le message la nomme ;
+    - `audio/musicxml-temps.ts` découpe selon l'usage qu'Elaine Gould expose dans « Behind Bars » : une mesure à quatre temps montre son milieu, une valeur hors du temps ne passe pas le temps suivant, et deux syncopes sont admises, la blanche du deuxième temps entre deux noires et la noire entre deux croches. Une mesure composée compte ses temps en noires pointées.
+  - Décisions de Fabien : « Choose by register », « Follow the beats ».
+  - Tenu par `plugins/musicxml-temps.test.ts`, dix cas : six vus rouges sur le code d'avant, quatre témoins des syncopes admises et du 3/4. Rouges aussi sur la clé de sol de nouveau imposée et sur le découpage de nouveau aveugle, plantés. La gravure par Verovio, `plugins/musicxml-grave.test.ts`, reste verte.
+
+- **LE MUSICXML PREND LE TEMPO QUE PORTE SON ENTRÉE, ET SES REFUS SONT DES ERREURS.** Revue des notations en texte, douzième format, 2026-11-22, quatrième lot.
+  - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure :
+    - sur le chemin d'une seule portée, une séquence ou un fichier MIDI à 90 se quantifiait au réglage « Tempo », 120 par défaut. Ses noires se lisaient en cinq doubles croches. Le chemin à plusieurs portées prenait, lui, le tempo de la séquence ;
+    - une entrée absente, une séquence vide et un arbre sans mesure donnaient leur message sans le drapeau d'erreur ;
+    - une séquence vide était annoncée « Le fichier MIDI ne contient aucune note ».
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « The input's tempo » :
+    - le tempo d'une séquence, ou celui qu'écrit un fichier MIDI, lu par `lireMidiEnSequence`, l'emporte, et le réglage ne sert qu'à défaut. Le chemin de l'arbre écrit aussi celui de la séquence qui le porte ;
+    - les refus portent le drapeau d'erreur, et une séquence vide dit « Aucune note fournie ».
+
+    La documentation de « Tempo » et la notice le disent.
+  - **Le garde** : 5 cas de plus dans `plugins/musicxml-grave.test.ts`, qui en compte 27.
+    - Vu rouge sur le code d'avant : 4 cas ; la séquence sans tempo prenait déjà le réglage.
+    - Vu rouge aussi sur le réglage qui l'emporte de nouveau, planté.
+
+- **LA POLYPHONIE D'UN MIDI S'ÉCRIT EN VOIX DANS LE MUSICXML, ET AUCUNE NOTE NE SE PERD.** Revue des notations en texte, douzième format, 2026-11-22, troisième lot.
+  - **La référence** : dans le référentiel MusicXML 4.0, `<backup>` et `<forward>` sont « required to coordinate multiple voices in one part ».
+  - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure. Les notes étaient groupées par attaque :
+    - un accord prenait la plus longue de ses durées ;
+    - une note qui commençait pendant une autre était perdue. Une basse ronde sous quatre noires donnait deux notes sur cinq, le mi allongé en ronde, et le message annonçait « 5 notes ».
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Write voices » :
+    - `voixDepuisNotes` pose chaque note dans la première voix libre, les plus aiguës d'abord, pour que la première voix porte le dessus ;
+    - des notes de même attaque et de même fin y forment un accord ;
+    - les voix d'une mesure s'écrivent l'une après l'autre, séparées par `<backup>`. Les altérations s'y décident dans l'ordre du temps, toutes voix confondues, puisqu'elles valent pour la portée.
+
+    La notice le dit.
+  - **Les tests du regroupement** de `audio/musicxml.test.ts` portent sur `voixDepuisNotes`, et tiennent les mêmes quatre règles.
+  - **Le garde** : 5 cas de plus dans `plugins/musicxml-grave.test.ts`.
+    - Vu rouge sur le code d'avant : les 4 cas polyphoniques ; l'accord de même longueur était déjà juste.
+    - Vu rouge aussi sur une note de nouveau perdue au lieu d'ouvrir une voix, plantée.
+
+- **UNE DURÉE SE DESSINE EXACTE DANS LE MUSICXML, EN NOTES LIÉES QUAND IL LE FAUT, ET UNE NOTE LIÉE DE L'ARBRE GARDE SA HAUTEUR.** Revue des notations en texte, douzième format, 2026-11-22, deuxième lot.
+  - **La référence** : dans le référentiel MusicXML 4.0, `<duration>` est la durée voulue et `<type>` la valeur dessinée. `<tie>` lie pour le son et `<tied>` pour la gravure, et une liaison joint deux notes « of the same pitch ».
+  - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure :
+    - depuis un MIDI, une note qui passait la barre était tronquée : un ré de 3 à 5 temps se lisait de 3 à 4. Le code disait « faute de pouvoir la lier » ;
+    - cinq doubles croches se dessinaient en noire, sept en noire pointée, et un silence de cinq doubles croches en soupir. Tout ce qui suivait se lisait décalé ;
+    - depuis un arbre, une liaison par-dessus la barre n'écrivait que sa fin, et le graveur refrappait la note ;
+    - une feuille liée prenait la hauteur suivante, et la liaison joignait deux notes différentes. `derouler`, lui, la fond dans la précédente.
+  - **Ce qui change** :
+    - une note qui passe la barre, ou une durée qu'aucune valeur ne nomme, s'écrit en notes liées, la plus grande valeur d'abord. Un silence s'écrit en silences successifs ;
+    - chaque note porte sa voix, `<voice>`, ce qui prépare les voix du troisième lot ;
+    - la liaison de l'arbre commence sur la dernière note de la mesure, et une feuille liée garde la hauteur de la note qu'elle prolonge.
+
+    La notice le dit, et ne promet plus de tronquer.
+  - **Le garde** : 9 cas de plus dans `plugins/musicxml-grave.test.ts`.
+    - Vu rouge sur le code d'avant : les 9.
+    - Vu rouge aussi sur une liaison de barre de nouveau perdue, plantée.
+
+- **LE MUSICXML DESSINE SES ALTÉRATIONS, QUARTS DE TON COMPRIS, ET LA PARTITION GRAVÉE SE LIT COMME ELLE SONNE.** Revue des notations en texte, douzième format, 2026-11-22, premier lot.
+  - **La référence** : le référentiel MusicXML 4.0 du W3C. `<alter>` « represents chromatic alteration » ; `<accidental>` « represents actual notated accidentals ».
+  - **Ce qui se passait** : les trois chemins du nœud, depuis un MIDI, depuis un arbre et depuis plusieurs voix, n'écrivaient que `<alter>`. Mesuré par `executer`, gravé par la Partition gravée et relu par `lireGravure` :
+    - fa dièse, si bémol et do dièse se lisaient fa, si et do ;
+    - un fa dièse puis un fa se lisaient deux fa ;
+    - un quart de ton au-dessus du do se lisait do.
+  - **Ce qui change** :
+    - `signesDeLaMesure` écrit `<accidental>` selon l'usage. Un signe se pose à la première tête d'une ligne qui change d'altération dans la mesure, et vaut jusqu'à la barre ; un bécarre défait l'altération ; la suite d'une note liée n'en porte pas. Les deux écrivains l'emploient ;
+    - selon la décision de Fabien du 2026-11-22, « Nearest quarter-tone sign », un quart de ton prend son signe. Un autre écart prend celui du quart de ton le plus proche, et `<alter>` garde la valeur exacte pour le son.
+
+    La notice le dit.
+  - **L'instrument de lecture avait un angle mort** : `lireGravure` lisait les quarts de ton de Stein et Zimmermann, que Verovio dessine, comme un bécarre, sans les rendre dans `inconnus`. Il les lit maintenant, et rend tout signe inconnu au lieu de le compter pour rien. Le garde de la Partition gravée reste vert, 82 cas.
+  - **Le garde** : `plugins/musicxml-grave.test.ts`, 8 cas.
+    - Vu rouge sur le code d'avant : les 8.
+    - Vu rouge aussi sur une mesure qui oublie ses signes, plantée.
+
 - **UN N-OLET SE RECONNAÎT À LA DURÉE DE SES PARTS, ET NON À LEUR NOMBRE.** Revue des notations en texte, neuvième format, 2026-11-22, troisième lot.
   - **Ce qui se passait**, mesuré par `executer` ; le son était juste partout :
     - le déroulé comptait le n-olet au nombre de parts d'une division. « (3/4 (1 1 1)) », trois noires exactes, comptait un groupe irrégulier, et ses notes étaient annotées « n-olet 3 » dans l'Analyse du Rythme sur hauteurs et du Quantifier. « (4/4 (2 1)), un triolet de blanches, n'en comptait aucun ;
@@ -2345,6 +2418,19 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - **Preuves** : `npx tsc -b` vert, `npx oxlint` 0 erreur et les mêmes 27 avertissements, les tests neufs du dialogue (3) et du client (4) vus rouges sous une faute plantée puis verts. Une première passe complète a trouvé deux tables en retard : `AGENTS.md` annonçait encore 74 composants surveillés, et `DEPENDANCES-AUDIO.md`, régénérée, range désormais `ia.ts` et `inference-onnx.ts` parmi les modules purs. Relancée après elles et après le découpage du MDX (voir « Fixed »), la passe complète rend 708 fichiers et 10 186 tests en 23 min 50 s : 10 172 verts, 14 sautés, aucun rouge. Les soixante-quinze empreintes et l'épreuve dans l'application repassent sur ce code.
 
 ### Fixed
+
+- **« DITHER » SE DIT À LA DICTÉE : « ARRONDI AVEC BRUIT ».** Relevé le 2026-11-22 par la session du chantier de l'harmonisation : le garde du lexique vocal jetait « dither ». Le nom parlé a été choisi par Fabien le même jour, parmi trois noms proposés.
+  - **Ce qui se passait.** « Dither » est entré au catalogue le 2026-11-15 (PR 366). Le modèle vocal français n'a pas le mot « dither », et c'est le seul mot du nom : le composant ne pouvait pas se dire. Lancé sur les fichiers de `master`, `npm run test:lexique-dictee` tombe, et le moteur jette un seul mot, `["dither"]`.
+  - **Ce qui change.** « dither » rejoint `HORS_LEXIQUE_FR` dans `plugins/lexique-vosk.ts`, et la fiche porte le nom parlé « arrondi avec bruit », qui dit le geste du composant : un bruit ajouté avant l'arrondi. La notice ne change pas, elle ne nomme pas la dictée.
+  - **Le choix du nom.** Les trois candidats ont été vérifiés mot à mot contre la table des symboles de `graph/Gr.fst` du modèle `vosk-model-small-fr-0.22`. L'instrument a d'abord été éprouvé sur des cas connus : il rend absents les six mots déjà relevés (« dither », « pleurage », « convolution », « 303 », « granulaire », « trémolo ») et présents tous les mots des noms parlés en place qui ont été sondés.
+    - « arrondi », « avec » et « bruit » y sont, et aucun autre nom du catalogue ne commence par « arrondi ».
+    - Écartés : « réduction de profondeur », trop proche de « Réduction de bruit » ; « quantification avec bruit », trop proche de « Quantifier » ; tout nom en « bits », le Bitcrusher se disant « réducteur de bits ».
+  - **Vérifié** :
+    - `npx tsc -b` vert ; `npx oxlint` à 27 avertissements et 0 erreur, aucun dans les fichiers touchés ;
+    - `plugins/noms-parles.test.ts` et `plugins/lexique-vosk.test.ts`, 11 cas verts. **Vu rouge** avec « dither » au lexique et sans nom parlé : « 1 composants qu'aucun nom ne permet de dire, contre 0 inscrits », le Dither seul nommé ;
+    - `src/docs/compatibilite.test.ts` et `src/docs/catalogue-markdown.test.ts`, 16 cas verts et une écriture sautée. Aucune table générée ne porte les noms parlés ;
+    - `npm run test:lexique-dictee`, le modèle français lié dans l'arbre par lien physique : « 1 passed » en 1,7 min, « mots jetés par le moteur : aucun », la ligne de dégel du modèle vue.
+  - **Non vérifié** : la reconnaissance de « arrondi avec bruit » dite au micro, le garde ne vérifiant que la grammaire. Non lancée : la passe complète de vitest, la machine étant partagée.
 
 - **LE MESSAGE DE « REMPLISSAGE DE TROU » COMPTE LES TROUS DANS LE TEMPS, ET NON EN MOYENNE PAR CANAL.** Relevé le 2026-11-22 en contrôlant l'option « Silences détectés », réparé sur l'ordre de Fabien : « réparer ».
   - **Ce qui se passait.** `plugins/inpainting.ts` divisait par le nombre de canaux le compte et la durée que chaque canal avait bouchés. Les silences se détectant voie par voie, dix millisecondes rebouchées sur un seul canal de deux s'annonçaient « 1 trou(s) bouché(s) · 5 ms reconstruits », et deux trous à deux endroits, un par canal, « 1 trou ».
