@@ -1374,6 +1374,13 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.abc.lecture.directives_midi": { fr: "directives %%MIDI ignorées", en: "%%MIDI directives ignored" },
   "msg.abc.lecture.k_absent": { fr: "champ K: absent : le corps commence sans tonalité déclarée, lu en do majeur", en: "K: field missing: the body starts with no declared key, read as C major" },
   "msg.abc.lecture.accord_var_0": { fr: "accord chiffré non reconnu : « {__VAR_0__} »", en: "chord symbol not recognized: « {__VAR_0__} »" },
+  // Les fautes qui feraient jouer autre chose que ce qui est écrit : le morceau est refusé.
+  "msg.abc.partition_var_0": { fr: "Partition {__VAR_0__}", en: "{__VAR_0__} score" },
+  "msg.abc.refusee_var_0_var_1": { fr: "{__VAR_0__} refusée : {__VAR_1__} faute(s) qui la feraient jouer autrement qu'écrite, rien n'est joué.", en: "{__VAR_0__} refused: {__VAR_1__} fault(s) that would make it play other than written; nothing is played." },
+  "msg.abc.faute.duree": { fr: "ligne {__VAR_0__} « {__VAR_1__} » : durée nulle, ou divisée par zéro « {__VAR_2__} »", en: "line {__VAR_0__} « {__VAR_1__} »: zero length, or divided by zero « {__VAR_2__} »" },
+  "msg.abc.faute.accord": { fr: "ligne {__VAR_0__} « {__VAR_1__} » : accord jamais refermé par « ] » « {__VAR_2__} »", en: "line {__VAR_0__} « {__VAR_1__} »: chord never closed by « ] » « {__VAR_2__} »" },
+  "msg.abc.faute.liaison": { fr: "ligne {__VAR_0__} « {__VAR_1__} » : liaison que ne suit pas la même hauteur « {__VAR_2__} »", en: "line {__VAR_0__} « {__VAR_1__} »: tie not followed by the same pitch « {__VAR_2__} »" },
+  "msg.abc.faute.nolet": { fr: "ligne {__VAR_0__} « {__VAR_1__} » : n-olet inachevé, moins de notes qu'annoncé « {__VAR_2__} »", en: "line {__VAR_0__} « {__VAR_1__} »: unfinished tuplet, fewer notes than announced « {__VAR_2__} »" },
   // Ce que l'écriture MIDI → ABC n'a pas pu rendre fidèlement.
   "msg.midi_abc.ecriture.batterie_var_0": { fr: "batterie ignorée ({__VAR_0__} notes sur le canal 10)", en: "drums ignored ({__VAR_0__} notes on channel 10)" },
   "msg.midi_abc.ecriture.tempos": { fr: "changements de tempo ignorés : seul le premier est écrit", en: "tempo changes ignored: only the first is written" },

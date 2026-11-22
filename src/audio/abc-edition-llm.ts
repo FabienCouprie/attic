@@ -22,6 +22,7 @@
 
 import { traduire } from "../i18n";
 import { morceauVersMidi, hauteursAccord, lireTonalite, type MorceauAbc, type NoteAbc } from "./abc";
+import { refusAbc } from "./abc-fautes";
 import { midiVersAbc } from "./midi-vers-abc";
 import { nomNoteRond } from "./nom-note";
 import {
@@ -106,6 +107,8 @@ export async function editerAbc(texte: string, o: OptionsEdition, appel: AppelLl
   const vide = (erreur: string): ResultatEdition => ({ ok: false, abc: null, essais: [], verification: null, accordsRetires: false, erreur });
   const origine = lireAbcUnique(texte);
   if (!origine) return vide(traduire("msg.abc.illisible_entree"));
+  const refus = refusAbc(origine);
+  if (refus) return vide(refus);
   if (origine.avertissements.length) return vide(traduire("msg.abc.entree_incomplete_var_0", origine.avertissements.join(" · ")));
 
   const L = longueurMesure(origine);
@@ -223,7 +226,7 @@ export async function editerAbc(texte: string, o: OptionsEdition, appel: AppelLl
 }
 
 function terminer(origine: MorceauAbc, resultat: { abc: string; morceau: MorceauAbc | null }, invariants: Invariant[], essais: Essai[], accordsRetires: boolean): ResultatEdition {
-  if (!resultat.morceau) return { ok: false, abc: null, essais, verification: null, accordsRetires, erreur: traduire("msg.abc_edition.assemblage_illisible") };
+  if (!resultat.morceau || resultat.morceau.erreurs.length) return { ok: false, abc: null, essais, verification: null, accordsRetires, erreur: traduire("msg.abc_edition.assemblage_illisible") };
   // Le texte rendu est EXACTEMENT celui qui vient d'être relu et vérifié.
   const verification = verifierContraintes(origine, resultat.morceau, invariants);
   return {
