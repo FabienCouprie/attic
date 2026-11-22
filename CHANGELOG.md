@@ -108,6 +108,68 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
     - Vu rouge sur le code d'avant : les 10 refus.
     - Vu rouge aussi sur un silence lié de nouveau admis, planté.
 
+- **L'ORCHESTRE CSOUND REFUSE UN INSTRUMENT QU'IL NE CONNAÎT PAS, EN LE NOMMANT, ET PARLE LA LANGUE DE L'INTERFACE.** Revue des notations en texte, onzième format, 2026-11-22, troisième lot. Pendant le relevé, Csound a rendu dans le navigateur les huit formules et les onze instruments de l'Orchestre, en mono et en stéréo : tous compilent et sonnent.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un identifiant inconnu était écarté et seulement compté, « 1 identifiant(s) inconnu(s) écarté(s) », et l'orchestre se construisait sans lui ;
+    - un doublon était compté comme un inconnu ;
+    - une liste vide partait sans le drapeau d'erreur ;
+    - dans l'interface anglaise, le message disait « stéréo », et l'orchestre écrivait ses commentaires en français.
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Refuse it, named » :
+    - un identifiant inconnu fait refuser l'orchestre. Le message le nomme, avec la liste des identifiants ;
+    - un doublon est toujours ignoré, et le message dit « doublon ignoré » en le nommant ;
+    - une liste vide est refusée en erreur ;
+    - le message et les commentaires de l'orchestre suivent la langue de l'interface.
+
+    La documentation du réglage « Instruments » le dit.
+  - **Deux tests tenaient le contraire**, réécrits avec leur raison : dans `audio/csound-orchestre.test.ts`, « chaise » était écarté ; dans `plugins/csound-orchestre.test.ts`, « trompette » était compté.
+  - **Le garde** : `plugins/orchestre-ecrit.test.ts`, 6 cas.
+    - Vu rouge sur le code d'avant : 5 cas.
+    - Vu rouge aussi sur un identifiant inconnu de nouveau écarté, planté.
+
+- **UNE PARTITION ÉCRITE POUR CSOUND GARDE CHAQUE VALEUR À SON P-FIELD, ET N'ÉCRIT RIEN QUE CSOUND LIRAIT AUTREMENT.** Revue des notations en texte, onzième format, 2026-11-22, deuxième lot : la Matrice de paramètres et la Partition Csound. Csound lui-même a relu ces partitions dans le navigateur pendant le relevé.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un champ vide de la Matrice entre deux champs remplis sautait sa place : p4 « 0.3 », p5 vide et p6 « 7 » écrivaient « 0.3 7 », que Csound lit p4 = 0,3 et p5 = 7. La notice promettait le contraire ;
+    - dans la Partition Csound, « Rien » en p4 faisait lire l'amplitude en p4 et la note en p5 ;
+    - « Décimales » à 0 arrondissait 0,4 s à « 0 », que Csound lit comme une initialisation sans son, et le message annonçait 0,40 s ;
+    - une durée négative s'écrivait, que Csound tient comme une note sans fin, et un départ négatif, que le manuel ne définit pas ;
+    - la Partition Csound refusait un MIDI absent ou sans note sans le drapeau d'erreur.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Write 0 in the gap » et « Refuse it, named » :
+    - un champ vide, ou « Rien », entre deux champs écrits s'écrit 0, et n'est omis qu'après le dernier ;
+    - une durée nulle ou négative une fois écrite, et un départ négatif, font refuser la Matrice. Le message nomme l'événement et la valeur telle qu'elle serait écrite ;
+    - les deux refus de la Partition Csound portent le drapeau d'erreur.
+
+    La notice de la Matrice et la documentation de ses champs, et celles de p4 à p7 dans la Partition Csound, le disent.
+  - **Un test tenait le contraire** : dans `audio/csound-partition.test.ts`, « rien » en p6 était sauté, et la durée tombait en p6. Il est réécrit avec sa raison.
+  - **Le garde** : `plugins/partitions-ecrites.test.ts`, 13 cas.
+    - Vu rouge sur le code d'avant : 10 cas.
+    - Vu rouge aussi sur une durée nulle de nouveau admise, plantée.
+
+- **UN CHAMP ÉCRIT À LA MAIN SE LIT DES TROIS FAÇONS QUE DISENT LES NOTICES, ET CE QUI NE SE LIT PAS EST REFUSÉ EN NOMMANT LE RÉGLAGE.** Revue des notations en texte, onzième format, Csound, 2026-11-22, premier lot. Un champ s'écrit d'un nombre, d'une suite ou d'une rampe « de:à » : la structure du class-array d'OMChroma. Un seul lecteur, `lireChamp`, le lit pour sept nœuds :
+  - la Matrice de paramètres ;
+  - le Début de boucle par créneau ;
+  - Tourner, Miroir, Inverser et Permuter le cercle.
+
+  Le recensement n'avait vu que la Matrice.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un jeton illisible était jeté : « 200 abc 300 » écrivait 200 puis 300 ;
+    - un champ illisible était pris pour un champ vide : « x » en Départs mettait tous les départs à zéro, « 1.2.3 » en Durées toutes les durées à 1, et « abc » en « Pas » rendait le défaut ;
+    - « 0x10 » se lisait 16, et « 0x2 » en « Axe » donnait l'axe 2 ;
+    - « 200~2000 », forme qu'aucune notice ne nomme, écrivait 1100 pour chaque événement, aucun de ces nœuds ne tirant au sort.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Refuse it, named » :
+    - un nombre s'écrit en décimal, l'écriture scientifique comprise, comme Csound la lit ;
+    - ce qui ne se lit pas fait refuser le nœud, et le message nomme le réglage et le jeton ;
+    - la forme « de~à » est refusée. Le Micromontage, qui tire au sort, construit ses champs de ses glissières et ne lisait pas ce texte.
+
+    Les notices de la Matrice et de la boucle, et la documentation des quatre transformations, le disent.
+  - **Deux tests tenaient le contraire**, réécrits avec leur raison :
+    - dans `audio/matrice-parametres.test.ts`, « abc » rendait `null` comme un champ vide ;
+    - dans `plugins/cercle-transformations.test.ts`, il rendait le défaut.
+
+    Les tests du tirage, dans `audio/micromontage.test.ts`, construisent leurs champs comme le composant.
+  - **Le garde** : `plugins/champs-ecrits.test.ts`, 18 cas.
+    - Vu rouge sur le code d'avant : les 13 refus.
+    - Vu rouge aussi sur l'hexadécimal de nouveau admis, planté.
+
 - **UN MOTIF DE SÉQUENCEUR NE PORTE QUE CE QUE SA GRILLE ÉCRIT, ET UN CARACTÈRE QUI N'EN VIENT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, dixième format, 2026-11-22, quatrième lot : le Séquenceur mélodique, le Séquenceur d'accords et le Séquenceur de batterie avancé.
   - **Ce qui se passait**, mesuré par `executer` :
     - une espace prenait une case : « 1000 1000 1000 1000 » décalait d'un pas chaque note après la première ;

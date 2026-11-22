@@ -142,19 +142,28 @@ describe("la composition de l'orchestre", () => {
 });
 
 describe("la liste écrite à la main", () => {
+  const sansDoublon = (ids: string[]) => ({ ids, doublons: [] });
+
   it("lit les virgules, les espaces et les points-virgules", () => {
-    expect(analyserListeInstruments("foscil,pluck")).toEqual(["foscil", "pluck"]);
-    expect(analyserListeInstruments("foscil pluck")).toEqual(["foscil", "pluck"]);
-    expect(analyserListeInstruments(" foscil ; pluck ")).toEqual(["foscil", "pluck"]);
+    expect(analyserListeInstruments("foscil,pluck")).toEqual(sansDoublon(["foscil", "pluck"]));
+    expect(analyserListeInstruments("foscil pluck")).toEqual(sansDoublon(["foscil", "pluck"]));
+    expect(analyserListeInstruments(" foscil ; pluck ")).toEqual(sansDoublon(["foscil", "pluck"]));
   });
 
   it("garde l'ORDRE, puisqu'il décide des numéros", () => {
-    expect(analyserListeInstruments("pluck,foscil")).toEqual(["pluck", "foscil"]);
+    expect(analyserListeInstruments("pluck,foscil")).toEqual(sansDoublon(["pluck", "foscil"]));
   });
 
-  it("écarte les inconnus et les doublons", () => {
-    expect(analyserListeInstruments("foscil,chaise,foscil,pluck")).toEqual(["foscil", "pluck"]);
-    expect(analyserListeInstruments("")).toEqual([]);
+  it("ignore les doublons, et les rend pour qu'ils soient dits", () => {
+    expect(analyserListeInstruments("foscil,foscil,pluck")).toEqual({ ids: ["foscil", "pluck"], doublons: ["foscil"] });
+    expect(analyserListeInstruments("")).toEqual(sansDoublon([]));
+  });
+
+  it("refuse un inconnu, et le nomme", () => {
+    // Ce test tenait le contraire : « chaise » était écarté, et l'orchestre se construisait sans dire
+    // quel instrument manquait. Décision de Fabien du 2026-11-22, « Refuse it, named », revue des
+    // notations en texte.
+    expect(analyserListeInstruments("foscil,chaise,foscil,pluck")).toEqual({ inconnu: "chaise" });
   });
 });
 

@@ -19,11 +19,11 @@
 
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
-import { langueCourante } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { dureeSequence, estSequence, type InfoVoix, type Sequence } from "../audio/sequence";
 import { poserMaquette, type Bloc } from "../audio/maquette";
-import { deployer, lireChamp } from "../audio/matrice-parametres";
+import { champDe, deployer, lireChamp } from "../audio/matrice-parametres";
 import { choixOuiNon } from "../core/oui-non";
 import {
   boucleDeLaFin, boucleDuDebut, decouvrirPour, FICHE_CRENEAU_DEBUT, FICHE_CRENEAU_FIN, morceauPour, recolterPour,
@@ -46,8 +46,8 @@ export const fiches: FicheAudio[] = ([
     univers: "Traitement", famille: "Montage",
     resume: "Ouvre une boucle : ce qui suit est calculé une fois par créneau, et connaît la place qu'il occupera.",
     resumeEn: "Opens a loop: what follows is computed once per slot, and knows the place it will occupy.",
-    notice: "Ouvre une boucle sur des créneaux : ce qui est posé entre ce composant et « Fin de boucle par créneau » est calculé une fois par créneau, et rend une séquence que la fin pose à sa place.\n\nCe composant rend une séquence d'une seule note qui couvre le créneau de la passe en cours : son début est celui du créneau et sa durée celle du créneau. C'est par elle que la chaîne apprend où elle sera posée, et une formule sur séquence y lit « debut », « duree », « i » le rang du créneau et « n » leur nombre.\n\n« Créneaux » fixe leur nombre. « Départs » et « Durées » les décrivent, de trois façons : un nombre seul vaut pour tous, une suite de nombres donne les premières valeurs et la dernière se répète, et deux nombres séparés par deux points font une rampe droite du premier au second.\n\n« Tempo » est porté par la séquence rendue, pour que la chaîne en dispose.\n\nLa sortie « Créneau » rend la note qui couvre le créneau en cours. Le message donne le rang du créneau, son instant et sa durée.",
-    noticeEn: "Opens a loop over slots: what is laid between this node and « Slot Loop End » is computed once per slot, and returns a sequence that the end lays in its place.\n\nThis node returns a single-note sequence covering the slot of the current pass: its onset is that of the slot and its length that of the slot. It is by that note that the chain learns where it will be laid, and a formula on sequence reads « debut », « duree », « i » the rank of the slot and « n » their number.\n\n« Slots » sets their number. « Onsets » and « Lengths » describe them, in three ways: a single number holds for all, a series of numbers gives the first values and the last repeats, and two numbers separated by a colon make a straight ramp from the first to the second.\n\n« Tempo » is carried by the returned sequence, so that the chain has it.\n\nThe « Slot » output returns the note covering the current slot. The message gives the rank of the slot, its instant and its length.",
+    notice: "Ouvre une boucle sur des créneaux : ce qui est posé entre ce composant et « Fin de boucle par créneau » est calculé une fois par créneau, et rend une séquence que la fin pose à sa place.\n\nCe composant rend une séquence d'une seule note qui couvre le créneau de la passe en cours : son début est celui du créneau et sa durée celle du créneau. C'est par elle que la chaîne apprend où elle sera posée, et une formule sur séquence y lit « debut », « duree », « i » le rang du créneau et « n » leur nombre.\n\n« Créneaux » fixe leur nombre. « Départs » et « Durées » les décrivent, de trois façons : un nombre seul vaut pour tous, une suite de nombres donne les premières valeurs et la dernière se répète, et deux nombres séparés par deux points font une rampe droite du premier au second. Ce qui ne s'écrit pas ainsi fait refuser le composant, et le message le nomme.\n\n« Tempo » est porté par la séquence rendue, pour que la chaîne en dispose.\n\nLa sortie « Créneau » rend la note qui couvre le créneau en cours. Le message donne le rang du créneau, son instant et sa durée.",
+    noticeEn: "Opens a loop over slots: what is laid between this node and « Slot Loop End » is computed once per slot, and returns a sequence that the end lays in its place.\n\nThis node returns a single-note sequence covering the slot of the current pass: its onset is that of the slot and its length that of the slot. It is by that note that the chain learns where it will be laid, and a formula on sequence reads « debut », « duree », « i » the rank of the slot and « n » their number.\n\n« Slots » sets their number. « Onsets » and « Lengths » describe them, in three ways: a single number holds for all, a series of numbers gives the first values and the last repeats, and two numbers separated by a colon make a straight ramp from the first to the second. What is not written this way makes the node refused, and the message names it.\n\n« Tempo » is carried by the returned sequence, so that the chain has it.\n\nThe « Slot » output returns the note covering the current slot. The message gives the rank of the slot, its instant and its length.",
     entrees: [],
     sorties: [{ nom: "Créneau", nomEn: "Slot", type: "sequence" }],
     parametres: [
@@ -71,8 +71,14 @@ export const fiches: FicheAudio[] = ([
     async executer(ctx) {
       const combien = Math.max(1, Math.round(ctx.paramNombre("Créneaux", 4)));
       const tempo = ctx.paramNombre("Tempo", 120);
-      const depart = lireChamp(ctx.paramTexte("Départs", "0:6"));
-      const duree = lireChamp(ctx.paramTexte("Durées", "2"));
+      const departLu = lireChamp(ctx.paramTexte("Départs", "0:6"));
+      const dureeLue = lireChamp(ctx.paramTexte("Durées", "2"));
+      // CE QUI NE SE LIT PAS EST REFUSÉ, ET LE RÉGLAGE NOMMÉ : un champ illisible tombait sur zéro ou
+      // sur une seconde, sans un mot. Revue des notations en texte, 2026-11-22.
+      for (const [nom, nomEn, lu] of [["Départs", "Onsets", departLu], ["Durées", "Lengths", dureeLue]] as const) {
+        if ("refus" in lu) return { valeurs: [null], erreur: true, message: traduire("msg.champ.illisible_var_0_var_1", en() ? nomEn : nom, lu.refus) };
+      }
+      const depart = champDe(departLu), duree = champDe(dureeLue);
       const debuts = depart ? deployer(depart, combien) : new Array(combien).fill(0);
       const durees = duree ? deployer(duree, combien) : new Array(combien).fill(1);
 
