@@ -232,6 +232,15 @@ describe("une note par mot", () => {
     expect(r.notes[0].note).toBe(57);
   });
 
+  it("CHERCHE LE DEGRÉ SUR LA HAUTEUR EXACTE, puis arrondit : 61,3 va au ré, et non au do", () => {
+    // Décision de Fabien du 2026-11-21. Arrondie d'abord, la hauteur tombait sur 61, à égale distance
+    // du do et du ré, et le degré du dessous l'emportait ; le ré est à 0,7 demi-ton, le do à 1,3.
+    const hz = 440 * 2 ** ((61.3 - 69) / 12);
+    const r = sequenceParlee([mot("x", 0, 0.1)], suivi(tenue(hz, 10)), new Float32Array(1600), 16000,
+      { degres: degresDeGamme("majeur"), transposition: 0 });
+    expect(r.notes[0].note).toBe(62);
+  });
+
   it("la tonique déplace les degrés permis", () => {
     const degres = (tonique: number) => degresDeGamme("majeur").map((d) => (d + tonique) % 12);
     const unMot = [mot("x", 0, 0.1)];

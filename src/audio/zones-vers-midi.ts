@@ -111,8 +111,11 @@ export function notesDesZones(
       // 2026-11-21 : au milieu d'une mélodie tirée de la courbe, la « Note fixe » sortait telle quelle,
       // un do 4 hors de la gamme sous 23 gammes en mi. En source « Note fixe », elle reste libre, elle
       // peut y être une percussion du canal 9.
+      // LE DEGRÉ SE CHERCHE SUR LA HAUTEUR EXACTE, puis elle s'arrondit, décision de Fabien du
+      // 2026-11-21 : arrondie d'abord, 61,3 tombait sur 61, à égale distance du do et du ré en do
+      // majeur, et le degré du dessous l'emportait, à 1,3 demi-ton au lieu de 0,7.
       if (v === null) { sansHauteur++; note = borneNote(degrePlusProche(note, r.degres)); }
-      else note = borneNote(degrePlusProche(borneNote(r.noteMin + v * (r.noteMax - r.noteMin)), r.degres));
+      else note = borneNote(degrePlusProche(r.noteMin + v * (r.noteMax - r.noteMin), r.degres));
     }
     const parLaSonie = r.velocite === "sonie" && typeof z.sonie === "number" && Number.isFinite(z.sonie);
     if (r.velocite === "sonie" && !parLaSonie) sansSonie++;

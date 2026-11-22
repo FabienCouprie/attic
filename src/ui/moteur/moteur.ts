@@ -39,6 +39,8 @@ export interface PretsDuMoteur {
   audio: PretsDeLaPasse["audio"];
   /** La forme canonique d'un choix, que la langue de l'interface ne doit pas changer. */
   canoniser: PretsDeLaPasse["canoniser"];
+  /** La ligne qui dit les valeurs de choix inconnues, que le shell écrit dans la langue de l'interface. */
+  direValeursInconnues?: PretsDeLaPasse["direValeursInconnues"];
 }
 
 export interface Moteur {
@@ -102,7 +104,7 @@ export function creerMoteur(p: PretsDuMoteur): Moteur {
     const lancerUnePasse = creerLancerUnePasse({
       graphe: () => q.graphe(), priorite: () => q.priorite(), noeudVisible: (id) => q.noeudVisible(id),
       noeudsVisibles: () => q.noeudsVisibles(), economieMemoire: () => q.economieMemoire(),
-      recevoir: p.recepteur, cache, audio: p.audio, canoniser: p.canoniser, repertoire, t, controleur,
+      recevoir: p.recepteur, cache, audio: p.audio, canoniser: p.canoniser, direValeursInconnues: p.direValeursInconnues, repertoire, t, controleur,
       numero: () => numero, oublieDepuis: (id, depart, visible) => oublis.depuis(id, depart, visible),
     });
     const { lancerLeLot } = creerPilotesDePasse({ lancerUnePasse, graphe: () => q.graphe(), cache, arretDuLot });

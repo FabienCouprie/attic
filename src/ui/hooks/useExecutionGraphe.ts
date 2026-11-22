@@ -30,6 +30,7 @@ import { creerRecepteurDuMoteur, type LiaisonDuRecepteur } from "../recepteur-mo
 import { creerMoteur, type PerimetreCible } from "../moteur";
 
 import { useI18n, valeurCanoniqueChoix } from "../../i18n";
+import { direValeursInconnues } from "../../valeurs-inconnues";
 import { registreUI } from "../registre-actif";
 
 const trouverDef = (id: string) => registreUI().trouverDef(id);
@@ -95,6 +96,7 @@ function construireLePont(o: OptionsDuMoteur): Pont {
     recepteur: recepteur.recevoir,
     audio: obtenirAudio,
     canoniser: valeurCanoniqueChoix,
+    direValeursInconnues,
   });
   return { envoyer: moteur.envoyer, liaison };
 }

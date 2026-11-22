@@ -80,6 +80,8 @@ export interface PretsDeLaPasse extends Pick<QuestionsAuShell, "graphe" | "prior
   audio: () => Promise<AudioContext>;
   /** La forme canonique d'un choix, que la langue de l'interface ne doit pas changer. */
   canoniser: PretsDeLaBoucle<AudioContext>["canoniser"];
+  /** La ligne qui dit les valeurs de choix inconnues, dans la langue de l'interface. */
+  direValeursInconnues?: PretsDeLaBoucle<AudioContext>["direValeursInconnues"];
   /** Liés à l'instant de la demande : la réponse de `demande()` quand `lancer` a été envoyé. */
   repertoire: string;
   t: (cle: string) => string;
@@ -199,7 +201,7 @@ export function creerLancerUnePasse(p: PretsDeLaPasse): LancerUnePasse {
       await executerLesNoeuds<AudioContext>(plan, tables, {
         runtime: ctx, repertoireTravail: repertoire, signal: controller.signal, jeton, trouverDef,
         trouverPlugin: (f) => registreUI().trouverPlugin(f), typeFlux: (x) => registreUI().typeFlux(x),
-        canoniser: p.canoniser, graineDuNoeud,
+        canoniser: p.canoniser, graineDuNoeud, direValeursInconnues: p.direValeursInconnues,
         lireCache: (id) => cache.lire(id),
         // UN NŒUD OUBLIÉ DEPUIS LE DÉPART N'EST PAS RÉÉCRIT AU CACHE : il a été calculé sur un graphe
         // d'avant, et l'oubli voulait que le suivant le refasse. Une copie l'est par son nœud visible.
