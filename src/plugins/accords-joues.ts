@@ -98,7 +98,7 @@ Les intervalles déclarés sont ceux qui se jouent, et non l'empilement théoriq
 
 « Fondamentale finale » ajoute la fondamentale au-dessus de tout l'accord. Elle ferme un arpège, que sa dernière note laisserait autrement en suspens, et sur un accord plaqué elle double la basse. Sur un accord dont une extension monte au-delà de l'octave, elle est montée d'autant d'octaves qu'il faut pour rester la note la plus haute.
 
-« Étalement » est la part de la durée sur laquelle les départs se répartissent. À un, un arpège remplit exactement la durée ; petit, un roulé devient un geste bref suivi de l'accord tenu. Il n'agit pas sur un accord plaqué, dont les notes partent toutes au même instant. Étant une part et non un temps, un accord deux fois plus long garde la même allure.
+« Étalement » est la part de la durée sur laquelle les départs se répartissent, chaque note en recevant une part égale. À un, un arpège remplit exactement la durée, et un roulé sonne entier pendant sa dernière part ; petit, un roulé devient un geste bref suivi de l'accord tenu. Il n'agit pas sur un accord plaqué, dont les notes partent toutes au même instant. Étant une part et non un temps, un accord deux fois plus long garde la même allure.
 
 « Tempo » et « Durée » donnent la longueur de l'accord, la durée étant comptée en temps.
 
@@ -132,7 +132,7 @@ The declared intervals are the ones that get played, not the theoretical stack: 
 
 « Closing root » adds the root above the whole chord. It closes an arpeggio that its last note would otherwise leave hanging, and on a block chord it doubles the bass. On a chord whose extension rises beyond the octave, it is raised by as many octaves as needed to remain the highest note.
 
-« Spread » is the share of the duration over which the onsets are laid out. At one, an arpeggio fills the duration exactly; small, a roll becomes a brief gesture followed by the held chord. It does nothing on a block chord, whose notes all start at the same instant. Being a share and not a time, a chord twice as long keeps the same gait.
+« Spread » is the share of the duration over which the onsets are laid out, each note receiving an equal part of it. At one, an arpeggio fills the duration exactly, and a roll sounds whole during its last part; small, a roll becomes a brief gesture followed by the held chord. It does nothing on a block chord, whose notes all start at the same instant. Being a share and not a time, a chord twice as long keeps the same gait.
 
 « Tempo » and « Duration » give the chord's length, the duration being counted in beats.
 

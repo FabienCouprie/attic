@@ -6,6 +6,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE ROULÉ DES ACCORDS JOUÉS SONNE ENTIER À SON ÉTALEMENT PAR DÉFAUT.** Revue des notations en texte, décision de Fabien du 2026-11-22.
+  - **Ce qui se passait.** Dans `jouerAccord` (`audio/qualites-accords.ts`), les départs d'un roulé se répartissaient en N − 1 écarts sur l'étalement. À 100 %, le défaut, la dernière voix partait à la fin de l'accord et durait zéro : la notice promettait que l'accord sonne entier à partir du dernier départ, et il ne sonnait jamais entier. C'est la relecture de sa sortie « Notation » qui l'a montré, la durée nulle s'y écrivant « 0.000 ».
+  - **Ce qui change** : chaque voix reçoit une part égale de l'étalement, comme dans l'arpège, et toutes tiennent jusqu'à la fin. À 100 %, l'accord sonne entier pendant sa dernière part. La notice le dit, en français et en anglais ; `COMPONENTS.md` régénéré. Seuls les Accords joués emploient `jouerAccord`, et aucun exemple ni aucune empreinte ne les emploie.
+  - **Le garde**, `audio/qualites-accords.test.ts` : à étalement plein, trois voix partent à 0, 1 et 2 s et tiennent jusqu'à 3 s. Le cas qui attendait des départs à 0, 0,1 et 0,2 s pour un étalement de 0,2 s tenait le défaut : il est réécrit pour la règle décidée. **Vu rouge** sur le code d'avant, vert après.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement ; le fichier des qualités d'accords, 26 cas.
+
 - **TEXTE → MIDI ÉCRIT CHAQUE CHANGEMENT DE TEMPO DANS SON FICHIER MIDI.** Revue des notations en texte, décision de Fabien du 2026-11-22.
   - **Ce qui se passait.** Un « Tempo » en cours de texte changeait bien les secondes, mais le fichier ne portait que le dernier tempo. Sur « Tempo 120 / C4 1 / Tempo 60 / D4 1 », le do, d'un temps à 120 BPM, s'y écrivait comme un demi-temps à 60, et le message annonçait 60 BPM.
   - **Ce qui change** : `notesVersFichierMidi` (`audio/midi-ecriture.ts`) reçoit une carte des tempos, facultative, écrit un `setTempo` à chaque changement, et convertit les instants en ticks segment par segment. Sans carte, le fichier est celui d'avant : c'est le cas des trente-cinq autres appelants. Le message dit les tempos, « 120 → 60 BPM ». Le lecteur MIDI du dépôt (`analyserMidi`) suivait déjà une carte des tempos, si bien que le son rendu depuis le fichier reste juste.
