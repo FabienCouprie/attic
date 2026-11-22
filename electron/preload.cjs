@@ -52,6 +52,8 @@ contextBridge.exposeInMainWorld("api", {
   },
 
   ecrireFichier: (chemin, buffer) => ipcRenderer.invoke("fichier:ecrire", { chemin, buffer }),
+  // Un SVG et son titre imprimés en PDF : rend { pdf }, { refus } ou { echec }, voir `ipc-pdf.cjs`.
+  svgVersPdf: (demande) => ipcRenderer.invoke("pdf:depuis-svg", demande),
   copierFichier: (source, cible) => ipcRenderer.invoke("fichier:copier", { source, cible }),
   ouvrirChemin: (chemin) => ipcRenderer.invoke("fichier:ouvrir-chemin", chemin),
   extrairePochetteMp3: (chemin) => ipcRenderer.invoke("mp3:extraire-pochette", chemin),

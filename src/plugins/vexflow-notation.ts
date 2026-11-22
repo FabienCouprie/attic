@@ -6,8 +6,8 @@
 import { accordsDepuisRomains, estProgressionRomaine, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite } from "../audio/theorie-romains";
 import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 import {
-  barreDeDuree, easyScoreDe, jetonsDe, lireHauteur, lireNotationVexflow, longueurDe, mettreEnMesures,
-  type ElementGrave, type Evenement, type FauteGravure, type Hauteur, type NoteTab,
+  barreDeDuree, easyScoreDe, jetonsDe, lireNotationVexflow, longueurDe, mettreEnMesures,
+  type ElementGrave, type FauteGravure, type NoteTab,
 } from "../audio/notation-vexflow";
 import { Renderer, Factory, TabStave, TabNote, Voice, Formatter } from "vexflow";
 
@@ -84,23 +84,8 @@ function extraireSvgRendu(div: HTMLDivElement): string {
   return svgs.map((svg) => svg.outerHTML).join("");
 }
 
-/**
- * Les grilles de quantification de la partition MIDI, en noires. Sans triolet : une attaque posée
- * sur une grille de triolet tomberait entre deux valeurs que la portée sait écrire. Les points et
- * les liaisons, eux, s'écrivent depuis le 2026-11-22.
- */
-export const GRILLES_NOTATION: Record<string, number> = {
-  "1/4": 1,
-  "1/8": 0.5,
-  "1/16": 0.25,
-  "1/32": 0.125,
-  "1/1": 4,
-  "1/2": 2,
-};
-
-/** Une métrique, « 3/4 », « 6/8 » ; la mesure dure `4 × numérateur / dénominateur` noires. */
+/** Une métrique, « 3/4 », « 6/8 ». */
 export type Signature = { numerateur: number; denominateur: number };
-export const longueurDeMesure = (s: Signature) => (4 * s.numerateur) / s.denominateur;
 
 /**
  * Grave des mesures sur une portée : une barre entre deux mesures, une liaison entre deux éléments
@@ -217,19 +202,9 @@ export function accordsDeProgression(progression: string, tonic: string, gamme: 
   const romains = estProgressionRomaine(tokens);
   // `accordsPourPartition` et non Tonal brut : appelé directement, il rendait un
   // accord MAJEUR pour un degré en minuscules (« vi » → La majeur) et résolvait
-  // les degrés d'un mode mineur sur la gamme majeure. La partition imprimait
+  // les degrés d'un mode mineur sur la gamme majeure. La gravure imprimait
   // donc d'autres accords que ceux joués par les nœuds audio, qui passent tous
   // par la fonction partagée.
   return romains ? accordsPourPartition(tonic, gamme, tokens) : tokens;
-}
-
-/** Grave des accords reconnus, une noire chacun, leurs notes posées à l'octave 4 ; « N.C. » est un soupir. */
-export function genererPartition(accords: string[], clef: string, largeur: number, hauteur: number): string {
-  const evenements: Evenement[] = accords.map((a, k) => ({
-    debut: k, longueur: 1, silence: estSansAccord(a),
-    hauteurs: estSansAccord(a) ? [{ lettre: "B", alteration: 0, octave: 4 }]
-      : (accordDuSymbole(a)?.notes ?? []).map((n) => lireHauteur(`${n}4`)).filter((h): h is Hauteur => h !== null),
-  }));
-  return genererPortee(mettreEnMesures(evenements), clef, largeur, hauteur);
 }
 

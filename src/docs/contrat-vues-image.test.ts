@@ -111,7 +111,9 @@ describe("un composant qui rend une image", () => {
   it("EST TROUVÉ AU REGISTRE, et la sonde reconnaît une image montrée", () => {
     // UN GARDE QUI NE TROUVERAIT PLUS RIEN PASSERAIT AU VERT EN N'ÉPROUVANT RIEN : le compte relevé à
     // l'écriture sert de plancher, et deux réponses connues d'avance éprouvent la sonde elle-même.
-    expect(aImage.length, "la lecture du registre ne trouve plus les sorties image").toBeGreaterThanOrEqual(21);
+    // DE VINGT ET UN À DIX-NEUF le 2026-11-23 : deux graveurs VexFlow, qui rendaient chacun leur SVG
+    // en fichier, ont quitté le catalogue.
+    expect(aImage.length, "la lecture du registre ne trouve plus les sorties image").toBeGreaterThanOrEqual(19);
     expect(vueQuiMontre("rendu-image"), "« Rendu image » montre ce qu'il reçoit").toBe("VueRenduImage");
     expect(vueQuiMontre("vexflow-portee"), "la portée se dessine par son message").toBe("VueVexFlow, par un autre canal");
   });

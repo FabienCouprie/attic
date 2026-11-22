@@ -1,4 +1,23 @@
 {
  "forme": 1,
- "declarations": []
+ "declarations": [
+  {
+   "composant": "vexflow-midi",
+   "version": 2,
+   "date": "2026-11-23",
+   "ruptures": [
+    "composant retiré, sans alias"
+   ],
+   "raison": "Retiré à la demande de Fabien le 2026-11-23, qui n'en a plus l'usage. Un graphe enregistré qui porte la Partition MIDI s'ouvre avec, à sa place, un nœud nommé par son identifiant, sans port, et ses câbles sont ignorés à la restauration. Aucun alias : aucun composant ne reprend au même rang son entrée MIDI et sa sortie SVG en fichier, ni ses réglages Tempo, Canal, Quantification et Clé sous les mêmes noms ; « Partition gravée », qui grave aussi, lit une notation en texte."
+  },
+  {
+   "composant": "vexflow-partition",
+   "version": 2,
+   "date": "2026-11-23",
+   "ruptures": [
+    "composant retiré, sans alias"
+   ],
+   "raison": "Retiré à la demande de Fabien le 2026-11-23, qui n'en a plus l'usage. Un graphe enregistré qui porte la Partition VexFlow s'ouvre avec, à sa place, un nœud nommé par son identifiant, sans port, et ses câbles sont ignorés à la restauration : relevé le 2026-11-23 dans l'application construite, deux câbles sur deux. Aucun alias : la Grille d'accords VexFlow lit la même progression, mais sous un réglage nommé Accords et non Progression, et sans réglage de clé, si bien qu'un alias perdrait les réglages en silence."
+  }
+ ]
 }

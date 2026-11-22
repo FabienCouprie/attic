@@ -70,12 +70,12 @@ export const fiches: FicheAudio[] = ([
     // POURQUOI LA SECONDE. « Export SVG » écrit un FICHIER, et son entrée est donc de type image ;
     // les graveurs ne rendaient qu'une chaîne. Graver une partition et en sauvegarder le SVG était
     // impossible dans un seul graphe : l'application refusait le câble, « connexion illégale :
-    // texte → image ». Seule « Partition MIDI » savait alimenter l'export, son SVG étant déjà un
-    // fichier — c'est son précédent que l'on suit ici.
+    // texte → image ». Un seul graveur savait alors alimenter l'export, celui dont le SVG était déjà
+    // un fichier — c'est son précédent que l'on suit ici.
     //
     // ET DEUX NOMS, PARCE QUE LE DÉPÔT L'EXIGE. Le contrat de réglages refuse l'homonymie de ports
     // sur une même fiche : l'inspecteur annonce un réglage modulable en NOMMANT le port où la
-    // courbe doit aller, et avec deux ports homonymes la phrase ne désigne plus rien. Les quatre
+    // courbe doit aller, et avec deux ports homonymes la phrase ne désigne plus rien. Les trois
     // graveurs de `vexflow.ts` portent la même paire, et le commentaire y est au complet.
     //
     // L'AJOUT EST EN FIN DE LISTE, et il le faut : un graphe enregistré désigne un port par son
