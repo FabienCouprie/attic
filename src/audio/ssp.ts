@@ -130,17 +130,20 @@ export function masqueTendance(taille: number, combien: number, rang: number): [
   return [bas, Math.min(n - 1, bas + largeur - 1)];
 }
 
-/** Lit une liste de nombres écrite à la main, séparés par des virgules ou des espaces. */
-export function lireEnsemble(texte: string, defaut: number[]): number[] {
-  const valeurs = (texte ?? "")
-    .split(/[\s,;]+/)
-    // Les morceaux vides sont écartés AVANT la conversion : `Number("")` vaut zéro, et non « pas un
-    // nombre », si bien qu'une saisie vide rendrait un ensemble d'un seul silence au lieu de
-    // retomber sur le défaut.
-    .filter((m) => m.trim().length > 0)
-    .map((m) => Number(m.replace(",", ".")))
-    .filter((v) => Number.isFinite(v));
-  return valeurs.length > 0 ? valeurs : [...defaut];
+/**
+ * Lit une liste de nombres écrite à la main, séparés par des virgules ou des espaces.
+ *
+ * CE QUI NE SE LIT PAS EST REFUSÉ, ET NOMMÉ, et une liste vide aussi, `refus` valant alors la chaîne vide :
+ * un jeton illisible était jeté, et une saisie vide ou illisible retombait sur la liste d'origine. Décision
+ * de Fabien du 2026-11-22, « Refuse it, named », revue des notations en texte.
+ */
+export function lireEnsemble(texte: string): { valeurs: number[] } | { refus: string } {
+  // Les morceaux vides sont écartés AVANT la conversion : `Number("")` vaut zéro, et non « pas un nombre ».
+  const jetons = (texte ?? "").split(/[\s,;]+/).filter((m) => m.trim().length > 0);
+  if (jetons.length === 0) return { refus: "" };
+  const fautif = jetons.find((m) => !/^[-+−]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(m));
+  if (fautif !== undefined) return { refus: fautif };
+  return { valeurs: jetons.map((m) => Number(m.replace("−", "-"))) };
 }
 
 export const AMPLITUDES_DEFAUT = [-1, -0.6, -0.2, 0.2, 0.6, 1];

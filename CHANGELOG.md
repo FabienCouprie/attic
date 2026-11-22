@@ -6,6 +6,26 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE RÉPARTITEUR MIDI ET LE SSP DE KOENIG REFUSENT CE QUE LEURS LISTES NE PORTENT PAS, EN LE NOMMANT.** Revue des notations en texte, passe de complétude, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - dans le Répartiteur, « 17 », « 0 » et « a » vidaient la partie sans un mot, ses notes passant au « Reste », et « 1-17 » prenait les seize canaux ;
+    - le Répartiteur refusait un MIDI absent ou sans note sans le drapeau d'erreur ;
+    - dans le SSP, un jeton illisible était jeté, une amplitude hors de −1 à 1 était bornée, une durée nulle, négative ou décimale arrondie et portée à un échantillon, et une liste vide remplacée par celle d'origine.
+  - **Ce qui change** :
+    - un canal hors de 1 à 16, une piste nulle ou un jeton illisible fait refuser le Répartiteur, et le message nomme la partie et le jeton. `analyserListeNumeros` lit canaux et pistes ;
+    - selon la décision de Fabien du 2026-11-22, « Allow it, said », une partie vide n'a pas de canal, et ses notes vont au « Reste » ;
+    - selon sa décision « Refuse it, named », contre la documentation qui défendait le repli, le SSP refuse un jeton illisible, une amplitude hors de −1 à 1, une durée qui n'est pas un nombre entier d'au moins un échantillon, et une liste vide ;
+    - les refus portent le drapeau d'erreur.
+
+    Les documentations des parties, d'« Amplitudes » et de « Durées » le disent.
+  - **Trois tests tenaient le contraire**, réécrits avec leur raison :
+    - dans `audio/repartition-midi.test.ts`, « 0 », « 17 » et « bonjour » étaient écartés ;
+    - dans `plugins/repartiteur-midi.test.ts`, la piste « 0 » l'était aussi ;
+    - dans `audio/ssp.test.ts`, une saisie illisible retombait sur l'ensemble d'origine.
+  - **Le garde** : 17 cas de plus dans `plugins/lecteurs-oublies.test.ts`, qui en compte 48.
+    - Vu rouge sur le code d'avant : les 13 refus.
+    - Vu rouge aussi sur un jeton illisible de nouveau admis, planté.
+
 - **LA TONALITÉ D'UN PLAN DE CHANSON S'ÉCRIT EN MAJEUR OU EN MINEUR, ET LE L-SYSTÈME REFUSE UNE RÈGLE QU'IL NE LIT PAS.** Revue des notations en texte, passe de complétude, 2026-11-22, deuxième lot.
   - **Ce qui se passait**, mesuré par `executer` :
     - « Gm » et « G mixolydian » passaient tels quels dans le plan, quand la documentation et le moteur attendent « G major » ou « A minor » ;

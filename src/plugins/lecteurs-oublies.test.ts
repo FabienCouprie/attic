@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
 import type { Cercle } from "../audio/cercle";
+import { fusionnerMidis, notesVersFichierMidi } from "../audio/midi-ecriture";
 
 const F = (id: string) => registre.trouverDef(id) as unknown as FicheLancable;
 
@@ -107,5 +108,63 @@ describe("LE L-SYSTÈME REFUSE UNE RÈGLE QU'IL NE LIT PAS", () => {
   it.each([["un axiome vide", "", "A=AB"], ["un mot sans note", "A", "A="]])("refuse en erreur %s", async (_titre, axiome, regles) => {
     const r = await L(axiome, regles);
     expect(r.erreurRendue, r.message).toBe(true);
+  }, 60_000);
+});
+
+// LES PARTIES DU RÉPARTITEUR MIDI, sous « Répartition : canaux » ou « pistes ». « 17 », « 0 » et « a » vidaient
+// la partie sans un mot, ses notes passant au « Reste ». Une partie vide reste licite : décision de Fabien du
+// 2026-11-22, « Allow it, said ».
+describe("LE RÉPARTITEUR REFUSE UN CANAL QU'IL NE LIT PAS, ET ADMET UNE PARTIE VIDE", () => {
+  const midi = async () => {
+    const parCanal = [0, 1, 2, 9].map((canal) => notesVersFichierMidi([{ note: 60 + canal, debut: 0, fin: 0.4, velocite: 90 }], 120, canal));
+    const octets = await Promise.all(parCanal.map(async (f) => new Uint8Array(await f.arrayBuffer())));
+    return new File([fusionnerMidis(octets) as BlobPart], "quatre.mid", { type: "audio/midi" });
+  };
+  const REPARTIR = async (partie: string, mode = "canaux") =>
+    lancerFiche(F("repartiteur-midi"), { "Répartition": mode, "Partie 1": partie }, { entrees: [await midi()] });
+
+  it.each([["1,2", "1:c1+2·2"], ["1-3", "1:c1+2+3·3"], ["", "1:—"]])("lit « %s »", async (partie, part) => {
+    const r = await REPARTIR(partie);
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(r.message).toContain(part);
+  }, 60_000);
+
+  it.each([["17", "« 17 »"], ["0", "« 0 »"], ["a", "« a »"], ["2,a,4", "« a »"], ["1-17", "« 1-17 »"]])(
+    "refuse « %s » en erreur, et nomme %s", async (partie, cite) => {
+      const r = await REPARTIR(partie);
+      expect(r.erreurRendue, r.message).toBe(true);
+      expect(r.valeurs).toEqual([null, null, null, null, null]);
+      expect(r.message).toContain(cite);
+      expect(r.message).toContain("Partie 1");
+    }, 60_000);
+
+  it("refuse aussi une piste qu'il ne lit pas", async () => {
+    const r = await REPARTIR("x", "pistes");
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.message).toContain("« x »");
+  }, 60_000);
+});
+
+// LES LISTES DU SSP DE KOENIG. Un jeton illisible était jeté, une amplitude bornée, une durée arrondie et portée
+// à un échantillon, une liste vide remplacée par celle d'origine. Décision de Fabien du 2026-11-22, « Refuse it,
+// named », contre la documentation qui défendait le repli.
+describe("LE SSP REFUSE CE QUE SES LISTES NE PORTENT PAS", () => {
+  const SSP = (amplitudes: string, durees: string) =>
+    lancerFiche(F("ssp-koenig"), { Amplitudes: amplitudes, "Durées": durees }, { entrees: [] });
+
+  it("lit deux listes bien écrites", async () => {
+    const r = await SSP("-1, 0.5, 1", "5, 9");
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(String(r.valeurs[1])).toContain("-1, 0.5, 1");
+  }, 60_000);
+
+  it.each([
+    ["-1, x, 1", "5, 9", "« x »"], ["2, -1", "5, 9", "« 2 »"], ["", "5, 9", "Amplitudes"],
+    ["-1, 1", "0, 9", "« 0 »"], ["-1, 1", "-5", "« -5 »"], ["-1, 1", "1.5", "« 1.5 »"], ["-1, 1", "", "Durées"],
+  ])("refuse « %s » et « %s » en erreur, et nomme %s", async (amplitudes, durees, cite) => {
+    const r = await SSP(amplitudes, durees);
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.valeurs).toEqual([null, null]);
+    expect(r.message).toContain(cite);
   }, 60_000);
 });
