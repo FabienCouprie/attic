@@ -6,6 +6,16 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN N-OLET SE RECONNAÎT À LA DURÉE DE SES PARTS, ET NON À LEUR NOMBRE.** Revue des notations en texte, neuvième format, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` ; le son était juste partout :
+    - le déroulé comptait le n-olet au nombre de parts d'une division. « (3/4 (1 1 1)) », trois noires exactes, comptait un groupe irrégulier, et ses notes étaient annotées « n-olet 3 » dans l'Analyse du Rythme sur hauteurs et du Quantifier. « (4/4 (2 1)), un triolet de blanches, n'en comptait aucun ;
+    - le MusicXML gravait « (3/4 (1 1 1)) » en triolet de noires pointées ;
+    - dans un triolet, les deux blanches de « (4/4 ((2 (1 1)) 1)) » perdaient leur modification de temps.
+  - **Ce qui change** : une seule règle, dans `derouler` et dans `feuillesDeMesure` (`audio/musicxml-arbre.ts`). Un groupe est un n-olet quand la durée écrite de son unité n'est pas binaire. Cette durée est allongée du rapport des n-olets qui l'englobent. Une note reste dans le n-olet qui l'englobe, même sous une division binaire.
+  - **Le garde** : 12 cas dans `plugins/arbres-rythmiques.test.ts`, le compte du Rythme sur hauteurs et l'écriture du MusicXML.
+    - Vu rouge sur le code d'avant : 5 cas, dont la note de triolet sans modification de temps, faute antérieure.
+    - Vu rouge aussi sur deux fautes plantées : trois parts recomptées en triolet, et la note de nouveau retirée de son n-olet.
+
 - **UN ARBRE ÉCRIT DANS OPENMUSIC SE COLLE DANS ATTIC.** Revue des notations en texte, neuvième format, décision de Fabien du 2026-11-22 : « Read them ».
   - **Ce qui se passait** : le module `audio/arbre-rythmique.ts` et la documentation du réglage « Arbre » promettent qu'un arbre venu d'ailleurs s'y colle. Mais les formes que donne le manuel d'OpenMusic étaient toutes refusées : « métrique attendue, de la forme 4/4 ». C'était le cas de la voix « (? ((4//4 (1 1 1 1)))) », comme de la métrique « 4//4 » ou « (4 4) ».
   - **Ce qui change** :

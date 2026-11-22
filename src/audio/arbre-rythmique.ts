@@ -234,8 +234,16 @@ export function dureeMesure(metrique: readonly [number, number], tempo: number):
   return (noires * 60) / Math.max(1, tempo);
 }
 
-/** Puissance de deux : une division binaire ne fait pas de n-olet. */
-const estPuissanceDeDeux = (n: number) => n > 0 && (n & (n - 1)) === 0;
+/** Une durée binaire, en rondes : un entier sur une puissance de deux, ce que s'écrit sans n-olet. */
+const estBinaire = (rondes: number) => {
+  // Un tiers, multiplié par 2^24, laisse un tiers après la virgule ; une durée binaire, l'erreur
+  // d'arrondi seule, loin sous le millième.
+  const y = rondes * 2 ** 24;
+  return Math.abs(y - Math.round(y)) < 1e-3;
+};
+
+/** La plus grande puissance de deux qui ne dépasse pas n : le « normal » d'un n-olet. */
+const puissanceDeDeuxSous = (n: number) => { let p = 1; while (p * 2 <= n) p *= 2; return p; };
 
 /**
  * Déroule un arbre en événements datés, en secondes.
@@ -253,9 +261,11 @@ export function derouler(mesures: readonly Mesure[], tempo: number): EvenementRy
   const out: EvenementRythme[] = [];
   const compteur = { groupe: 0 };
   let t = 0;
+  // Une ronde dure 240 / tempo secondes : quatre noires.
+  const ronde = 240 / Math.max(1, tempo);
   mesures.forEach((m, rang) => {
     const duree = dureeMesure(m.metrique, tempo);
-    poser(m.contenu, t, duree, rang, 0, compteur.groupe, compteur, out);
+    poser(m.contenu, t, duree, rang, 0, compteur.groupe, compteur, out, 1, ronde);
     t += duree;
   });
   return out;
@@ -265,19 +275,25 @@ function poser(
   noeuds: readonly NoeudRythme[], debut: number, duree: number,
   mesure: number, noletHerite: number, groupeHerite: number,
   compteur: { groupe: number }, out: EvenementRythme[],
+  rapport: number, ronde: number,
 ): void {
   const somme = noeuds.reduce((s, n) => s + Math.max(0, n.valeur), 0);
   if (somme <= 0) return;
-  // Le n-olet est le NOMBRE DE PARTS de la division, quand il n'est pas une puissance de deux :
-  // trois parts font un triolet, cinq un quintolet, quatre ou huit ne font rien de particulier.
-  const irreguliere = !estPuissanceDeDeux(noeuds.length);
-  const nolet = irreguliere ? noeuds.length : noletHerite;
+  // UNE DIVISION EST UN N-OLET QUAND LA DURÉE ÉCRITE DE SON UNITÉ N'EST PAS BINAIRE. Revue des
+  // notations en texte, 2026-11-22 : le n-olet se comptait au nombre de parts, et « (3/4 (1 1 1)) »,
+  // trois noires exactes, passait pour un triolet, quand « (4/4 (2 1)) », un triolet de blanches,
+  // n'en était pas un. La durée est l'ÉCRITE, celle qu'allonge le rapport des n-olets englobants :
+  // la moitié d'une note de triolet est une croche de triolet, et non un n-olet de plus. Le n-olet
+  // porte la somme des poids, trois pour « (2 1) », comme le MusicXML l'écrit.
+  const irreguliere = !estBinaire(((duree / ronde) * rapport) / somme);
+  const nolet = irreguliere ? Math.round(somme) : noletHerite;
   const groupe = irreguliere ? ++compteur.groupe : groupeHerite;
+  const monRapport = irreguliere ? (rapport * somme) / puissanceDeDeuxSous(somme) : rapport;
   let t = debut;
   for (const n of noeuds) {
     const part = (duree * Math.max(0, n.valeur)) / somme;
     if (n.enfants && n.enfants.length > 0) {
-      poser(n.enfants, t, part, mesure, nolet, groupe, compteur, out);
+      poser(n.enfants, t, part, mesure, nolet, groupe, compteur, out, monRapport, ronde);
     } else if (n.liee && out.length > 0) {
       out[out.length - 1].duree += part;
     } else {

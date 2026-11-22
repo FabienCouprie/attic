@@ -86,7 +86,13 @@ function descendre(
   // LE N-OLET SE COMPTE SUR LA SOMME DES POIDS, ET NON SUR LE NOMBRE DE PARTS. Une division en
   // deux parts de poids 2 et 1 vaut trois unités : c'est un triolet dont une note en prend deux,
   // et compter les parts en ferait un duolet, ce qui n'a pas de sens.
-  const irreguliere = !estPuissanceDeDeux(somme);
+  //
+  // ET IL N'Y A N-OLET QUE SI L'UNITÉ ÉCRITE N'EST PAS BINAIRE. Revue des notations en texte,
+  // 2026-11-22 : « (3/4 (1 1 1)) », trois noires exactes, se gravait en triolet de noires pointées,
+  // la somme 3 n'étant pas une puissance de deux. L'unité écrite est la durée du groupe, allongée du
+  // rapport des n-olets englobants, partagée par la somme des poids.
+  const unite = mul(mul(duree, rapport), rat(1, somme));
+  const irreguliere = !estPuissanceDeDeux(unite.d);
   const monNormal = irreguliere ? puissanceDeDeuxSous(somme) : normal;
   const monReel = irreguliere ? somme : reel;
   const monRapport = irreguliere ? mul(rapport, rat(somme, monNormal)) : rapport;
@@ -103,7 +109,10 @@ function descendre(
         silence: !!n.silence,
         liee: !!n.liee,
         rapport: monRapport,
-        groupe: irreguliere ? monGroupe : 0,
+        // LA NOTE APPARTIENT AU N-OLET QUI L'ENGLOBE, même sous une division binaire. Revue des
+        // notations en texte, 2026-11-22 : les deux blanches de « (4/4 ((2 (1 1)) 1)) » perdaient
+        // leur modification de temps, et se lisaient comme deux blanches ordinaires.
+        groupe: monGroupe,
         reel: monReel,
         normal: monNormal,
       });

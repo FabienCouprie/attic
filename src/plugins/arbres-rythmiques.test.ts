@@ -112,9 +112,45 @@ describe("LES FORMES D'OPENMUSIC SE LISENT", () => {
     expect(a.notes).toEqual(b.notes);
   }, 60_000);
 
-  it("une voix qui annonce un autre nombre de mesures que celui qu'elle porte est refusée, et le nombre nommé", async () => {
+  it("une voix qui annonce un autre nombre de mesures que celui qu'elle porte est refusée, et le nombre nommé, comme toute faute", async () => {
     const { r } = await deroule("(3 ((4//4 (1 1 1 1)) (3//4 (1 1 1))))");
     expect(r.erreurRendue, r.message).toBe(true);
     expect(r.message).toContain("« 3 »");
+  }, 60_000);
+});
+
+// UN GROUPE EST UN N-OLET QUAND LA DURÉE ÉCRITE DE SES PARTS N'EST PAS BINAIRE, points compris : ni au
+// nombre de ses parts, ni à la somme de ses poids seule. Revue des notations en texte, 2026-11-22 :
+// « (3/4 (1 1 1)) », trois noires exactes, comptait un groupe irrégulier et se gravait en triolet de
+// noires pointées, et « (4/4 (2 1)), un triolet de blanches, n'en comptait aucun. Le son était juste.
+describe("UN N-OLET SE RECONNAÎT À LA DURÉE DE SES PARTS", () => {
+  const groupes = (message: string) => Number(/(\d+) (groupes irréguliers|irregular groups)/.exec(message)?.[1]);
+  it.each([
+    ["(3/4 (1 1 1))", 0], ["(3/4 (1 1))", 0], ["(6/8 (1 1))", 0],
+    ["(4/4 (2 1))", 1], ["(4/4 (1 1 1))", 1], ["(4/4 (1 (1 (1 1 1)) 1 1))", 1],
+    ["(4/4 ((2 (1 1)) 1))", 1],
+  ])("le Rythme sur hauteurs : « %s » compte %i groupe(s) irrégulier(s)", async (arbre, attendu) => {
+    const { r } = await deroule(arbre);
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(groupes(r.message)).toBe(attendu);
+  }, 60_000);
+
+  const XML = async (arbre: string) => {
+    const x = await lancerFiche(F("musicxml"), { Tempo: 60 }, { entrees: [null, null, arbre] });
+    const xml = String(x.valeurs[0] ?? "");
+    return {
+      types: [...xml.matchAll(/<type>(\w+)<\/type>/g)].map((m) => m[1]),
+      modifs: [...xml.matchAll(/<actual-notes>(\d+)<\/actual-notes>\s*<normal-notes>(\d+)<\/normal-notes>/g)].map((m) => `${m[1]}:${m[2]}`),
+      points: (xml.match(/<dot\/>/g) ?? []).length,
+    };
+  };
+  it.each([
+    ["(3/4 (1 1 1))", { types: ["quarter", "quarter", "quarter"], modifs: [], points: 0 }],
+    ["(6/8 (1 1))", { types: ["quarter", "quarter"], modifs: [], points: 2 }],
+    ["(4/4 (2 1))", { types: ["whole", "half"], modifs: ["3:2", "3:2"], points: 0 }],
+    ["(4/4 ((2 (1 1)) 1))", { types: ["half", "half", "half"], modifs: ["3:2", "3:2", "3:2"], points: 0 }],
+    ["(4/4 (1 (1 (1 1 1)) 1 1))", { types: ["quarter", "eighth", "eighth", "eighth", "quarter", "quarter"], modifs: ["3:2", "3:2", "3:2"], points: 0 }],
+  ])("le MusicXML écrit « %s »", async (arbre, attendu) => {
+    expect(await XML(arbre)).toEqual(attendu);
   }, 60_000);
 });
