@@ -6,6 +6,22 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LES ACCORDS EN CLASSES DE LA DISTANCE DE CONDUITE DE VOIX SE LISENT D'UNE SEULE FAÇON, NOMS DE NOTES COMPRIS.** Revue des notations en texte, huitième format, 2026-11-22, quatrième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un jeton illisible était jeté sans un mot ;
+    - « 16 » se lisait 4, quand la documentation dit « de 0 à 11 » ;
+    - « C E G | A C E » faisait dire « Il faut au moins deux accords », alors que deux accords étaient écrits ;
+    - ce refus, comme celui d'un réglage vide, partait sans le drapeau d'erreur, et le nœud s'annonçait vert sans rien rendre.
+  - **Ce qui change** :
+    - `lireAccords` lit chaque accord par `lireListe`, et rend ses accords ou son refus. Les décisions de Fabien du 2026-11-22 : les noms de notes se lisent, une classe hors de 0 à 11 est refusée et nommée, un réglage vide est refusé ;
+    - les classes décimales restent lues, une progression microtonale se mesurant telle quelle ;
+    - moins de deux accords est un refus, en erreur.
+
+    La documentation du réglage le dit.
+  - **Le garde** : 9 cas dans `plugins/listes-musicales.test.ts`. Les cas de `plugins/theorie-rythme-voix.test.ts` tiennent les mêmes séparations, lues par `{ accords }`.
+    - Vu rouge sur le code d'avant : 7 cas.
+    - Vu rouge aussi sur une borne des classes portée à 12, plantée.
+
 - **UN RANG EST UN ENTIER, ET UNE LISTE DE RANGS SE LIT D'UNE SEULE FAÇON.** Revue des notations en texte, huitième format, 2026-11-22, troisième lot : l'Accordage en notes et le Crible harmonique.
   - **Ce qui se passait**, mesuré par `executer` :
     - l'Accordage lisait « 1.5 » comme les rangs 1 et 5, et « C4 » comme le rang 4 ;

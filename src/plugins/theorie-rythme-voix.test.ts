@@ -44,28 +44,30 @@ describe("lire un motif rythmique", () => {
   });
 });
 
+// `lireAccords` rend les accords, ou le refus de ce qui ne se lit pas : revue des notations en texte,
+// 2026-11-22, huitième format. Les propriétés tenues ici ne changent pas ; les refus sont tenus par
+// `plugins/listes-musicales.test.ts`.
 describe("lire une suite d'accords", () => {
   it("les barres verticales séparent les accords", () => {
-    expect(lireAccords("0 4 7 | 9 0 4")).toEqual([[0, 4, 7], [9, 0, 4]]);
+    expect(lireAccords("0 4 7 | 9 0 4")).toEqual({ accords: [[0, 4, 7], [9, 0, 4]] });
   });
 
   it("LES ESPACES AUTOUR DES BARRES N'AJOUTENT PAS DE NOTE", () => {
     // Le défaut trouvé dans l'application : « 6 10 1 » était lu [0, 6, 10, 1], donc à quatre
     // notes, donc non appariable à un accord de trois — et la progression rendait zéro.
-    expect(lireAccords("0 4 7 | 6 10 1")).toEqual([[0, 4, 7], [6, 10, 1]]);
-    expect(lireAccords("0 4 7 | 6 10 1").every((a) => a.length === 3)).toBe(true);
+    expect(lireAccords("0 4 7 | 6 10 1")).toEqual({ accords: [[0, 4, 7], [6, 10, 1]] });
   });
 
   it("les retours à la ligne et les points-virgules séparent aussi", () => {
-    expect(lireAccords("0 4 7\n9 0 4;5 9 0")).toEqual([[0, 4, 7], [9, 0, 4], [5, 9, 0]]);
+    expect(lireAccords("0 4 7\n9 0 4;5 9 0")).toEqual({ accords: [[0, 4, 7], [9, 0, 4], [5, 9, 0]] });
   });
 
   it("les accords vides sont écartés, pas rendus vides", () => {
-    expect(lireAccords("0 4 7 ||  | 9 0 4")).toEqual([[0, 4, 7], [9, 0, 4]]);
+    expect(lireAccords("0 4 7 ||  | 9 0 4")).toEqual({ accords: [[0, 4, 7], [9, 0, 4]] });
   });
 
   it("un texte vide ne donne aucun accord", () => {
-    expect(lireAccords("   ")).toEqual([]);
+    expect(lireAccords("   ")).toEqual({ accords: [] });
   });
 });
 

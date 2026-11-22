@@ -12320,7 +12320,7 @@ Measures the voice-leading distance between two chords, in semitones. After Dmit
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Chords | text | `0 4 7 \| 9 0 4 \| 5 9 0 \| 7 11 2 \| 0 4 7` |  | The chords, separated by vertical bars, each as pitch classes from 0 to 11. The default is the progression C, A minor, F, G, C. A sequence on the input wins, then a MIDI file. |
+| Chords | text | `0 4 7 \| 9 0 4 \| 5 9 0 \| 7 11 2 \| 0 4 7` |  | The chords, separated by vertical bars, each as pitch classes from 0 to 11, decimals allowed, or as note names, « C E G ». The default is the progression C, A minor, F, G, C. A sequence on the input wins, then a MIDI file. An empty setting, or one with a token that cannot be read or falls outside 0 to 11, is refused, and the message names it. |
 | Tolerance | slider | 0.05 s | 0.01 – 0.5 s, step 0.01 | Gap below which two notes received are taken as simultaneous, hence members of the same chord. With no input connected, this setting does nothing. |
 
 #### World Scales

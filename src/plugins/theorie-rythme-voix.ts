@@ -15,6 +15,7 @@ import {
 import { motifEuclidien } from "../audio/euclidien";
 import { analyserConduite } from "../audio/conduite-voix";
 import { estSequence } from "../audio/sequence";
+import { lireListe } from "../audio/listes-musicales";
 
 interface NoteSimple { note: number; debut: number; fin: number }
 
@@ -54,15 +55,27 @@ export function accordsSuccessifs(notes: NoteSimple[], tolerance = 0.05): number
   return groupes;
 }
 
-/** Lit une suite d'accords écrite « 0 4 7 | 0 3 7 | 9 0 4 ». */
-export function lireAccords(texte: string): number[][] {
-  // LES MORCEAUX VIDES SONT ÉCARTÉS AVANT LA CONVERSION, parce que `Number("")` vaut zéro. Sans
-  // cela, l'espace qui suit une barre verticale ajoutait un do à chaque accord : « 6 10 1 » était
-  // lu à quatre notes, ne pouvait plus être apparié à un accord de trois, et la progression
-  // rendait zéro demi-ton. Mesuré dans l'application avant correction.
-  return texte.split(/[|\n;]+/)
-    .map((bloc) => bloc.split(/[\s,]+/).filter((t) => t !== "").map(Number).filter(Number.isFinite))
-    .filter((a) => a.length > 0);
+/**
+ * Lit une suite d'accords écrite « 0 4 7 | 0 3 7 | 9 0 4 », chacun par le seul lecteur des listes, ou
+ * son refus. Les accords se séparent par barres verticales, retours à la ligne ou points-virgules.
+ *
+ * LES MORCEAUX VIDES SONT ÉCARTÉS, parce que `Number("")` vaut zéro. Sans cela, l'espace qui suit une
+ * barre verticale ajoutait un do à chaque accord : « 6 10 1 » était lu à quatre notes, ne pouvait plus
+ * être apparié à un accord de trois, et la progression rendait zéro demi-ton. Mesuré dans
+ * l'application avant correction.
+ *
+ * CE QUI NE SE LIT PAS EST REFUSÉ, revue des notations en texte, 2026-11-22 : un jeton illisible
+ * était jeté, « 16 » se lisait 4, et « C E G » ne se lisait pas. Décisions de Fabien du même jour :
+ * les noms de notes se lisent, une classe hors de 0 à 11 est refusée et nommée.
+ */
+export function lireAccords(texte: string, reglage = "Accords"): { accords: number[][] } | { refus: string } {
+  const accords: number[][] = [];
+  for (const bloc of texte.split(/[|\n;]+/).filter((b) => b.trim())) {
+    const lu = lireListe(bloc, "classes", reglage);
+    if ("refus" in lu) return lu;
+    accords.push(lu.valeurs);
+  }
+  return { accords };
 }
 
 export const fiches: FicheAudio[] = ([
@@ -135,8 +148,8 @@ export const fiches: FicheAudio[] = ([
     parametres: [
       { nom: "Accords", nomEn: "Chords", type: "texte", defaut: "0 4 7 | 9 0 4 | 5 9 0 | 7 11 2 | 0 4 7",
         defautEn: "0 4 7 | 9 0 4 | 5 9 0 | 7 11 2 | 0 4 7",
-        doc: "Les accords, séparés par des barres verticales, chacun en classes de hauteurs de 0 à 11. Le défaut est la progression do, la mineur, fa, sol, do. Une séquence branchée en entrée l'emporte, puis un MIDI.",
-        docEn: "The chords, separated by vertical bars, each as pitch classes from 0 to 11. The default is the progression C, A minor, F, G, C. A sequence on the input wins, then a MIDI file." },
+        doc: "Les accords, séparés par des barres verticales, chacun en classes de hauteurs de 0 à 11, décimales permises, ou en noms de notes, « C E G », « Do Mi Sol ». Le défaut est la progression do, la mineur, fa, sol, do. Une séquence branchée en entrée l'emporte, puis un MIDI. Un réglage vide, ou dont un jeton ne se lit pas ou sort de 0 à 11, est refusé, et le message le nomme.",
+        docEn: "The chords, separated by vertical bars, each as pitch classes from 0 to 11, decimals allowed, or as note names, « C E G ». The default is the progression C, A minor, F, G, C. A sequence on the input wins, then a MIDI file. An empty setting, or one with a token that cannot be read or falls outside 0 to 11, is refused, and the message names it." },
       { nom: "Tolérance", nomEn: "Tolerance", type: "curseur", plage: [0.01, 0.5], pas: 0.01, defaut: 0.05, unite: "s",
         doc: "Écart en deçà duquel deux notes reçues sont tenues pour simultanées, donc membres du même accord. Sans entrée branchée, ce réglage ne sert pas.",
         docEn: "Gap below which two notes received are taken as simultaneous, hence members of the same chord. With no input connected, this setting does nothing." },
@@ -154,10 +167,20 @@ export const fiches: FicheAudio[] = ([
       const provenance = estSequence(sequence) && sequence.notes.length > 0
         ? (en ? "sequence input" : "entrée Séquence")
         : notes && notes.length > 0 ? (en ? "MIDI input" : "entrée MIDI") : (en ? "setting" : "réglage");
-      const accords = notes && notes.length > 0
-        ? accordsSuccessifs(notes, ctx.paramNombre("Tolérance", 0.05))
-        : lireAccords(ctx.paramTexte("Accords", "0 4 7 | 9 0 4 | 5 9 0 | 7 11 2 | 0 4 7"));
-      if (accords.length < 2) return { valeurs: [null], message: traduire("msg.conduiteVoix.troisPeu") };
+      let accords: number[][];
+      if (notes && notes.length > 0) accords = accordsSuccessifs(notes, ctx.paramNombre("Tolérance", 0.05));
+      else {
+        const reglage = en ? "Chords" : "Accords";
+        const texte = ctx.paramTexte("Accords", "0 4 7 | 9 0 4 | 5 9 0 | 7 11 2 | 0 4 7");
+        // « Refuse it, said », décision de Fabien du 2026-11-22 : un réglage vide est refusé.
+        if (!texte.trim()) return { valeurs: [null], erreur: true, message: traduire("msg.liste.vide_var_0_var_1", reglage, traduire("msg.liste.attendu.classes")) };
+        const lus = lireAccords(texte, reglage);
+        if ("refus" in lus) return { valeurs: [null], erreur: true, message: lus.refus };
+        accords = lus.accords;
+      }
+      // MOINS DE DEUX ACCORDS NE MESURENT RIEN, et c'est un refus : le message partait sans le drapeau
+      // d'erreur, et le nœud s'annonçait vert sans rien rendre.
+      if (accords.length < 2) return { valeurs: [null], erreur: true, message: traduire("msg.conduiteVoix.troisPeu") };
 
       const a = analyserConduite(accords);
       const nom = (c: number[]) => `[${[...new Set(c.map((n) => ((n % 12) + 12) % 12))].sort((x, y) => x - y).join(" ")}]`;

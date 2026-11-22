@@ -241,3 +241,28 @@ describe("UNE LISTE DE RANGS SE LIT D'UNE SEULE FAÇON", () => {
       expect(r.son).toBe(null);
     }, 60_000);
 });
+
+// UNE CLASSE VA DE 0 À 11, et un nom de note s'y lit (« Read them »). Décision de Fabien du 2026-11-22,
+// « Refuse them, named » : « 16 » n'est plus lu 4, il est refusé.
+describe("UNE LISTE D'ACCORDS EN CLASSES SE LIT D'UNE SEULE FAÇON", () => {
+  const DISTANCE = (accords: string) => lancerFiche(F("distance-conduite-voix"), { Accords: accords }, { entrees: [null, null] });
+  it.each([["C E G | A C E"], ["Do Mi Sol | La Do Mi"], [" 0, 4, 7 | 9 0 4\n"]])("la Distance : « %s » comme « 0 4 7 | 9 0 4 »", async (texte) => {
+    const [juste, autre] = [await DISTANCE("0 4 7 | 9 0 4"), await DISTANCE(texte)];
+    expect(autre.erreurRendue, autre.message).toBe(false);
+    expect(autre.valeurs[0]).toBe(juste.valeurs[0]);
+  }, 60_000);
+
+  it("la Distance garde une classe décimale, une progression microtonale se mesurant telle quelle", async () => {
+    const r = await DISTANCE("0 4 7 | 9 0 4.5");
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(r.message).toMatch(/^2\.5 /);
+  }, 60_000);
+
+  it.each([["0 4 7 | 9 0 4 x", "« x »"], ["0 4 7 | 9 0 16", "« 16 »"], ["0 4 7 | 9 0 12", "« 12 »"], ["", "vide|empty"], ["0 4 7", "deux accords|two chords"]])(
+    "la Distance refuse « %s », en erreur", async (texte, cite) => {
+      const r = await DISTANCE(texte);
+      expect(r.erreurRendue, r.message).toBe(true);
+      expect(r.message).toMatch(new RegExp(cite));
+      expect(r.valeurs[0]).toBe(null);
+    }, 60_000);
+});
