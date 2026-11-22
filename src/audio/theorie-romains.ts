@@ -58,6 +58,17 @@ export function estProgressionRomaine(tokens: readonly string[]): boolean {
   return tokens.length > 0 && tokens.every((t) => !RomanNumeral.get(t).empty);
 }
 
+/**
+ * Les jetons qui ne sont pas un chiffre romain que Tonal lit : « X », « V/V ».
+ *
+ * `Progression.fromRomanNumerals` rend une chaîne vide pour un tel jeton, et le nœud écrivait « C  G »
+ * pour « I X V » : le X disparaissait, et l'espace double disparaissait à son tour chez le lecteur
+ * suivant. Mesuré le 2026-11-22, revue des notations en texte ; ces jetons sont refusés et nommés.
+ */
+export function romainsInconnus(tokens: readonly string[]): string[] {
+  return tokens.filter((t) => RomanNumeral.get(t).empty);
+}
+
 /** Mode dans lequel les chiffres romains sont lus. */
 export type ModeProgression = "majeur" | "mineur";
 

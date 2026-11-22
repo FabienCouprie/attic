@@ -177,9 +177,14 @@ describe("tonnetz : trois transformations qui ne déplacent qu'une voix", () => 
     expect(triadesDuChemin(res.valeurs[2] as string)[0], "le MIDI n'a pas été entendu").toBe("Am");
   });
 
-  it("un accord illisible retombe sur do majeur plutôt que d'échouer", async () => {
+  // CE CAS TENAIT LE CONTRAIRE jusqu'au 2026-11-22 : « un accord illisible retombe sur do majeur
+  // plutôt que d'échouer ». Il décrivait le comportement d'alors, écrit avec la fiche le 2026-10-05,
+  // et non une décision. La revue des notations en texte a mesuré que ce repli taisait « Cmaj7 »,
+  // « Am7 » ou « Cdim » comme « Zz », et sa règle refuse ce qui ne se lit pas, en le nommant.
+  it("un accord illisible est refusé, et nommé, au lieu de retomber sur do majeur", async () => {
     const res = await lancer("tonnetz", [null], { ...BREF, "Accord de départ": "Zz", "Opérations": "P" });
-    expect(triadesDuChemin(res.valeurs[2] as string)[0]).toBe("C");
+    expect(res.erreur).toBe(true);
+    expect(res.message).toContain("« Zz »");
   });
 
   it("sans opération lisible, il le dit au lieu de rendre un silence", async () => {

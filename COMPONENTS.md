@@ -2856,7 +2856,7 @@ Covers an ABC score in another style: melody and chord symbols stay those of the
 
 *Converts Harmonic Analysis output into the notation expected by Text → MIDI.*
 
-Translates Harmonic Analysis output into notation playable by Text → MIDI. « Detected chords » source: transcribes the actual harmony, converting the measured durations (seconds) into beats via Tempo. Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ »; « N.C. » becomes a rest of its duration. « Progression » source: expands the suggested roman numerals, which also requires the Key input.
+Translates Harmonic Analysis output into notation playable by Text → MIDI. « Detected chords » source: transcribes the actual harmony, converting the measured durations (seconds) into beats via Tempo. Symbols are read in their usual spellings, « Bø7 », « Bm7(b5) », « Cm(maj7) », « CΔ7 », « B♭ »; « N.C. » becomes a rest of its duration. A symbol that cannot be read refuses the whole transcription, and the message names it. « Progression » source: expands the suggested roman numerals, which also requires the Key input.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -8910,10 +8910,10 @@ Chains chords through the neo-Riemannian transformations. Hugo Riemann drew, at 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Starting chord | text | `C` |  | The chord to start from: « C » for C major, « Am » for A minor, « F#m » for F sharp minor. A MIDI file on the input wins, and its first triad is used as the start. |
+| Starting chord | text | `C` |  | The chord to start from, a major or minor triad: « C » or « C major » for C major, « Am » for A minor, « F#m » for F sharp minor, « D/F# » for D major. Another chord, « Cmaj7 », « Cdim », or unreadable text is refused, and the message names it. A MIDI file on the input wins, and its first triad is used as the start. |
 | Mode | choice | Sequence of operations | Sequence of operations / Path to a chord | « Sequence » applies the operations written out. « Path » finds the shortest route to the destination chord: the distance measure proper to Riemann's space, which no tonal distance gives. |
 | Operations | text | `PLRLPR` |  | The operations to apply, in order. P swaps major and minor on the same root, L and R lead to the neighbouring chords. « PLPLPL » walks the hexatonic cycle and returns to the start. |
-| Destination chord | text | `G#m` |  | In « Path » mode, the chord to reach. C major and G sharp minor share no note and are yet three operations apart: the hexatonic pole. |
+| Destination chord | text | `G#m` |  | In « Path » mode, the chord to reach, a major or minor triad written like the starting chord; another chord is refused, and the message names it. C major and G sharp minor share no note and are yet three operations apart: the hexatonic pole. |
 | Chord length | number | 1 s | 0.1 – 4 s, step 0.1 | Length of each chord. |
 | Base note | number | 60 | 36 – 84, step 1 | Pitch the chords are placed around. The voices then follow the shortest path, which is what makes the parsimony audible. |
 | Tempo | number | 120 BPM | 40 – 300 BPM, step 1 | Tempo written into the produced MIDI file. |
@@ -12217,7 +12217,7 @@ Analyses a chord or passage as a pitch-class set. When a harmony is no longer to
 
 *Generates a chord progression from a key and roman numerals.*
 
-Generates a chord progression from a key and roman numerals. Example: C + I V vi IV → C G Am F. Roman numerals accept uppercase (major chords) and lowercase (minor chords).
+Generates a chord progression from a key and roman numerals. Example: C + I V vi IV → C G Am F. Roman numerals accept uppercase (major chords) and lowercase (minor chords). A numeral the reading does not know, « X » or the secondary dominant « V/V », is refused, and the message names it: nothing is returned.
 
 | Port | Name | Type | |
 |---|---|---|---|

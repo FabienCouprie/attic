@@ -9,7 +9,7 @@ import type { FicheAudio } from "../audio/types-domaine";
 import { traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { Note } from "tonal";
-import { accordsDepuisRomains, modeDepuisTonalite, toniqueDepuisTonalite } from "../audio/theorie-romains";
+import { accordsDepuisRomains, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite } from "../audio/theorie-romains";
 import { accordDuSymbole, estSansAccord } from "../audio/symboles-accords";
 
 // LE SYMBOLE SE LIT PAR LE SEUL LECTEUR DES SYMBOLES (`audio/symboles-accords.ts`), revue des
@@ -98,7 +98,7 @@ export const fiches: FicheAudio[] = ([
 
       const lignes: string[] = [`TEMPO ${tempo}`];
       let nbAccords = 0;
-      let nbIgnores = 0;
+      const inconnus: string[] = [];
 
       if (source === "progression") {
         const progression = ctx.entree(1);
@@ -143,10 +143,15 @@ export const fiches: FicheAudio[] = ([
             message: traduire("msg.accords_notation.pas_des_romains_var_0", jetons.slice(0, 4).join(" ")),
           };
         }
+        // UN CHIFFRE QUI NE SE LIT PAS EST REFUSÉ, NOMMÉ, revue des notations en texte du 2026-11-22.
+        const illisibles = romainsInconnus(jetons);
+        if (illisibles.length > 0) {
+          return { valeurs: [null], erreur: true, message: traduire("msg.tonal.romains_inconnus_var_0", illisibles.slice(0, 4).join(" » « ")) };
+        }
         const symboles = accordsDepuisRomains(tonique, jetons, mode);
         for (const symbole of symboles) {
           const notes = notesAscendantes(symbole, octave);
-          if (!notes.length) { nbIgnores++; continue; }
+          if (!notes.length) { inconnus.push(symbole); continue; }
           lignes.push(`${notes.join("+")} ${dureeDefaut}`);
           nbAccords++;
         }
@@ -165,21 +170,23 @@ export const fiches: FicheAudio[] = ([
           // « N.C. » est un accord silencieux, décision de Fabien du 2026-11-22 : il garde sa durée.
           if (estSansAccord(parsee.symbole)) { lignes.push(`rest ${temps}`); nbAccords++; continue; }
           const notes = notesAscendantes(parsee.symbole, octave);
-          if (!notes.length) { nbIgnores++; continue; }
+          if (!notes.length) { inconnus.push(parsee.symbole); continue; }
           lignes.push(`${notes.join("+")} ${temps}`);
           nbAccords++;
         }
       }
 
+      // UN SYMBOLE QUI NE SE LIT PAS REFUSE LA TRANSCRIPTION, ET LE MESSAGE LE NOMME, règle de la revue
+      // des notations en texte du 2026-11-22. Le nœud comptait les lignes ignorées sans les nommer, et
+      // rendait une transcription trouée, plus courte que l'harmonie qu'elle disait transcrire.
+      if (inconnus.length > 0) {
+        return { valeurs: [null], erreur: true,
+          message: traduire("msg.accords_notation.symboles_inconnus_var_0", inconnus.slice(0, 8).join(" » « ")) };
+      }
       if (nbAccords === 0) {
         return { valeurs: [null], message: traduire("msg.accords_notation.aucun_accord") };
       }
-      return {
-        valeurs: [lignes.join("\n")],
-        message: nbIgnores > 0
-          ? traduire("msg.accords_notation.resultat_partiel_var_0_var_1", nbAccords, nbIgnores)
-          : traduire("msg.accords_notation.resultat_var_0", nbAccords),
-      };
+      return { valeurs: [lignes.join("\n")], message: traduire("msg.accords_notation.resultat_var_0", nbAccords) };
     },
   }),
 ] as FicheAudio[]).map(avecDoc);

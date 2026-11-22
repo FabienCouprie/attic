@@ -111,6 +111,55 @@ describe("L'ACCORD REND UN SYMBOLE QUE LES LECTEURS RELISENT, les renversements 
   });
 });
 
+// CE QUI NE SE LIT PAS EST REFUSÉ, NOMMÉ, règle de la revue. Mesuré le 2026-11-22 : le Tonnetz partait
+// de do majeur pour « Cmaj7 », « Am7 », « Cdim » ou « H » ; la Progression rendait « C  G » pour
+// « I X V », le X disparu ; « Accords → Notation » comptait les lignes qu'il ignorait sans les nommer.
+describe("UN ACCORD OU UN CHIFFRE QUI NE SE LIT PAS EST REFUSÉ, ET NOMMÉ", () => {
+  const tonnetz = (depart: string, arrivee = "E") =>
+    lancerFiche(F("tonnetz"), { "Accord de départ": depart, Mode: "chemin", "Accord d'arrivée": arrivee }, { entrees: [null] });
+
+  // Des triades AUTRES QUE DO : le défaut du réglage est do majeur, et un cas en do passerait par
+  // chance sur le code qui retombait en silence sur le défaut. Le Tonnetz écrit en dièses ; les deux
+  // orthographes sont équivalentes.
+  it.each([["D", "D"], ["D major", "D"], ["Bb minor", "(Bbm|A#m)"], ["D/F#", "D"], ["G#m", "G#m"]])(
+    "le Tonnetz lit la triade « %s »", async (depart, nom) => {
+      const r = await tonnetz(depart);
+      expect(r.erreurRendue, r.message).toBe(false);
+      expect(String(r.valeurs[2]).split("\n")[0]).toMatch(new RegExp(`^${nom} → E `));
+    });
+
+  it.each([["Cmaj7"], ["Am7"], ["Cdim"], ["H"]])("le Tonnetz refuse « %s », qui n'est pas une triade majeure ou mineure", async (depart) => {
+    const r = await tonnetz(depart);
+    expect(r.erreurRendue).toBe(true);
+    expect(r.message).toContain(`« ${depart} »`);
+  });
+
+  it("le Tonnetz refuse un accord d'arrivée illisible", async () => {
+    const r = await tonnetz("C", "Zorglub");
+    expect(r.erreurRendue).toBe(true);
+    expect(r.message).toContain("« Zorglub »");
+  });
+
+  it.each([["I X V", "X"], ["I V/V V", "V/V"]])("la Progression refuse « %s », et nomme « %s »", async (progression, fautif) => {
+    const r = await lancerFiche(F("tonal-progression"), { Progression: progression }, { entrees: [null] });
+    expect(r.erreurRendue).toBe(true);
+    expect(r.message).toContain(`« ${fautif} »`);
+    const g = await lancerFiche(F("tonal-grille"), { Progression: progression }, { entrees: [null] });
+    expect(g.erreurRendue).toBe(true);
+    expect(g.message).toContain(`« ${fautif} »`);
+  });
+
+  it("« Accords → Notation » refuse une ligne qu'il ne lit pas, et la nomme", async () => {
+    const r = await lancerFiche(F("accords-vers-notation"), { Source: "accords" }, { entrees: [null, null, "C (2.0s)\nZorglub (1.0s)\nG (1.0s)"] });
+    expect(r.erreurRendue).toBe(true);
+    expect(r.valeurs[0]).toBeNull();
+    expect(r.message).toContain("« Zorglub »");
+    const p = await lancerFiche(F("accords-vers-notation"), { Source: "progression" }, { entrees: ["C", "I X V", null] });
+    expect(p.erreurRendue).toBe(true);
+    expect(p.message).toContain("« X »");
+  });
+});
+
 /** Des accords tenus l'un après l'autre, en sinusoïdes, comme `audio/accords.test.ts` les écrit. */
 function accordsAudio(suite: number[][], dureeS: number): AudioBuffer {
   const SR = 44100, n = Math.round(suite.length * dureeS * SR);

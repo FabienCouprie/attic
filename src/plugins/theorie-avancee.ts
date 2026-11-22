@@ -23,6 +23,8 @@ import {
 } from "../audio/auto-similarite";
 import { parUneFois } from "./hors-lot";
 import { notesDuMidi } from "../audio/midi";
+import { Note as NoteTonal } from "tonal";
+import { accordDuSymbole } from "../audio/symboles-accords";
 import { PARAMETRE_INSTRUMENT_SF2, PARAMETRE_SYNTHESE, decoderInstrumentSF2, normaliserModeSynthèse, sf2Chargee } from "./soundfontGlobal";
 import { entreeAudio, sansEntree } from "./lire-entree";
 
@@ -73,17 +75,33 @@ const PARAMETRES_RENDU = [
     doc: "Volume du rendu audio.", docEn: "Output volume." }),
 ];
 
-/** Lit « Do majeur », « Am », « F# mineur »… en triade. */
-function lireTriade(texte: string, defaut: Triade): Triade {
+/**
+ * Lit une triade majeure ou mineure : « C », « Am », « F# mineur », « D major », « Bb minor », ou tout
+ * symbole que le lecteur des symboles lit et qui en est une, « D/F# ». Null pour le reste.
+ *
+ * CE QUI NE SE LIT PAS N'EST PLUS REMPLACÉ PAR LE DÉFAUT, revue des notations en texte du 2026-11-22 :
+ * « Cmaj7 », « Am7 », « Cdim » ou « H » partaient tous de do majeur, sans un mot, et « D major » aussi.
+ * Le Tonnetz ne connaît que les triades majeures et mineures ; le nœud refuse le reste en le nommant.
+ * Le commentaire disait aussi lire « Do majeur » : les noms de notes français n'ont jamais été lus.
+ */
+function lireTriade(texte: string): Triade | null {
   const t = texte.trim().toLowerCase();
-  const m = /^([a-g])([#b]?)\s*(m|min|mineur|minor)?$/.exec(t);
-  if (!m) return defaut;
-  const base: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
-  const alteration = m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0;
-  return {
-    fondamentale: ((base[m[1]] + alteration) % 12 + 12) % 12,
-    type: m[3] ? "mineur" : "majeur",
-  };
+  const m = /^([a-g])([#b]?)\s*(m|min|mineur|minor|maj|major|majeur)?$/.exec(t);
+  if (m) {
+    const base: Record<string, number> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+    const alteration = m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0;
+    return {
+      fondamentale: ((base[m[1]] + alteration) % 12 + 12) % 12,
+      type: m[3] && !m[3].startsWith("maj") ? "mineur" : "majeur",
+    };
+  }
+  const c = accordDuSymbole(texte);
+  if (!c?.tonic) return null;
+  const racine = NoteTonal.chroma(c.tonic)!;
+  const intervalles = [...new Set(c.notes.map((n) => (NoteTonal.chroma(n)! - racine + 12) % 12))].sort((a, b) => a - b).join(",");
+  if (intervalles === "0,4,7") return { fondamentale: racine, type: "majeur" };
+  if (intervalles === "0,3,7") return { fondamentale: racine, type: "mineur" };
+  return null;
 }
 
 export const fiches: FicheAudio[] = ([
@@ -100,8 +118,8 @@ export const fiches: FicheAudio[] = ([
     ],
     parametres: [
       { nom: "Accord de départ", nomEn: "Starting chord", type: "texte", defaut: "C", defautEn: "C",
-        doc: "L'accord d'où l'on part : « C » pour do majeur, « Am » pour la mineur, « F#m » pour fa dièse mineur. Un MIDI branché en entrée l'emporte, et sa première triade sert de départ.",
-        docEn: "The chord to start from: « C » for C major, « Am » for A minor, « F#m » for F sharp minor. A MIDI file on the input wins, and its first triad is used as the start." },
+        doc: "L'accord d'où l'on part, une triade majeure ou mineure : « C » ou « C major » pour do majeur, « Am » pour la mineur, « F#m » pour fa dièse mineur, « D/F# » pour ré majeur. Un autre accord, « Cmaj7 », « Cdim », ou un texte illisible est refusé, et le message le nomme. Un MIDI branché en entrée l'emporte, et sa première triade sert de départ.",
+        docEn: "The chord to start from, a major or minor triad: « C » or « C major » for C major, « Am » for A minor, « F#m » for F sharp minor, « D/F# » for D major. Another chord, « Cmaj7 », « Cdim », or unreadable text is refused, and the message names it. A MIDI file on the input wins, and its first triad is used as the start." },
       { nom: "Mode", nomEn: "Mode", type: "choix",
         options: ["Suite d'opérations", "Chemin vers un accord"],
         optionsEn: ["Sequence of operations", "Path to a chord"],
@@ -112,8 +130,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Les opérations à appliquer, dans l'ordre. P échange majeur et mineur sur la même fondamentale, L et R conduisent vers les accords voisins. « PLPLPL » parcourt le cycle hexatonique et revient au départ.",
         docEn: "The operations to apply, in order. P swaps major and minor on the same root, L and R lead to the neighbouring chords. « PLPLPL » walks the hexatonic cycle and returns to the start." },
       { nom: "Accord d'arrivée", nomEn: "Destination chord", type: "texte", defaut: "G#m", defautEn: "G#m",
-        doc: "En mode « Chemin », l'accord à atteindre. Do majeur et sol dièse mineur n'ont aucune note commune et sont pourtant à trois opérations l'un de l'autre : c'est le pôle hexatonique.",
-        docEn: "In « Path » mode, the chord to reach. C major and G sharp minor share no note and are yet three operations apart: the hexatonic pole." },
+        doc: "En mode « Chemin », l'accord à atteindre, une triade majeure ou mineure écrite comme l'accord de départ ; un autre accord est refusé, et le message le nomme. Do majeur et sol dièse mineur n'ont aucune note commune et sont pourtant à trois opérations l'un de l'autre : c'est le pôle hexatonique.",
+        docEn: "In « Path » mode, the chord to reach, a major or minor triad written like the starting chord; another chord is refused, and the message names it. C major and G sharp minor share no note and are yet three operations apart: the hexatonic pole." },
       { nom: "Durée d'un accord", nomEn: "Chord length", type: "nombre", plage: [0.1, 4], pas: 0.1, defaut: 1, unite: "s",
         doc: "Durée de chaque accord.", docEn: "Length of each chord." },
       { nom: "Note de base", nomEn: "Base note", type: "nombre", plage: [36, 84], pas: 1, defaut: 60,
@@ -123,17 +141,27 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const entree = await notesDuMidi(ctx.entree(0));
-      let depart = lireTriade(ctx.paramTexte("Accord de départ", "C"), { fondamentale: 0, type: "majeur" });
+      const en = langueCourante() === "en";
+      const texteDepart = ctx.paramTexte("Accord de départ", "C");
+      let depart = lireTriade(texteDepart);
       if (entree && entree.length >= 3) {
         const reconnu = reconnaitre(entree.slice(0, 3).map((n) => n.note));
         if (reconnu) depart = reconnu;
       }
+      if (!depart) {
+        return { valeurs: [null, null, null], erreur: true,
+          message: traduire("msg.tonnetz.accord_illisible_var_0_var_1", texteDepart, en ? "Starting chord" : "Accord de départ") };
+      }
       const mode = ctx.paramTexte("Mode", "suite");
       let operations = lireOperations(ctx.paramTexte("Opérations", "PLRLPR"));
       let entete = "";
-      const en = langueCourante() === "en";
       if (mode === "chemin") {
-        const arrivee = lireTriade(ctx.paramTexte("Accord d'arrivée", "G#m"), { fondamentale: 8, type: "mineur" });
+        const texteArrivee = ctx.paramTexte("Accord d'arrivée", "G#m");
+        const arrivee = lireTriade(texteArrivee);
+        if (!arrivee) {
+          return { valeurs: [null, null, null], erreur: true,
+            message: traduire("msg.tonnetz.accord_illisible_var_0_var_1", texteArrivee, en ? "Destination chord" : "Accord d'arrivée") };
+        }
         const chemin = cheminLePlusCourt(depart, arrivee);
         if (!chemin) return { valeurs: [null, null, null], message: traduire("msg.tonnetz.sansChemin") };
         operations = chemin;

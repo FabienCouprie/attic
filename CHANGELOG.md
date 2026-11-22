@@ -6,6 +6,23 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE TONNETZ, LA PROGRESSION, LA GRILLE ET « ACCORDS → NOTATION » REFUSENT CE QU'ILS NE LISENT PAS, ET LE NOMMENT.** Revue des notations en texte, cinquième format, 2026-11-22, selon la règle « refuser, nommé ».
+  - **Ce qui se passait**, mesuré par `executer` :
+    - le Tonnetz partait de do majeur pour « Cmaj7 », « Am7 », « Cdim », « H », et aussi pour « D major », qu'il ne lisait pas, sans un mot ;
+    - la Progression rendait « C  G » pour « I X V » et pour « I V/V V », le chiffre disparu, et l'espace double disparaissant à son tour chez le lecteur suivant ; la Grille disait « Progression invalide » sans nommer le chiffre ;
+    - « Accords → Notation » ignorait une ligne illisible et n'en donnait que le nombre : la transcription était plus courte que l'harmonie qu'elle transcrivait.
+  - **Ce qui change** :
+    - le Tonnetz lit une triade majeure ou mineure écrite par sa lettre, « D major » compris, ou par tout symbole que le lecteur des symboles lit et qui en est une, « D/F# » ; le reste est refusé, le message nommant le texte et le réglage ;
+    - `romainsInconnus` (`audio/theorie-romains.ts`) nomme les chiffres que Tonal ne lit pas, et la Progression, la Grille et la source « Progression » d'« Accords → Notation » les refusent ;
+    - « Accords → Notation » refuse la transcription entière quand un symbole ne se lit pas, et le nomme ; le message d'un résultat partiel disparaît.
+  - **Deux tests tenaient le contraire, et le commit le dit** :
+    - `plugins/theorie-avancee.test.ts`, « un accord illisible retombe sur do majeur plutôt que d'échouer », écrit avec la fiche le 2026-10-05, décrivait le comportement d'alors et non une décision ;
+    - `plugins/accords-vers-notation.test.ts` tenait la transcription trouée.
+
+    Tous deux tiennent désormais le refus nommé. Les documentations des deux accords du Tonnetz et les notices de la Progression et d'« Accords → Notation » disent le refus ; le commentaire de `lireTriade`, qui promettait de lire « Do majeur », est corrigé.
+  - **Le garde**, dans `plugins/symboles-accords.test.ts` : cinq triades lues, en ré pour qu'un repli sur do ne passe pas par chance, cinq refus du Tonnetz, deux progressions refusées par la Progression et la Grille, deux refus d'« Accords → Notation ». **Vu rouge** sur le code d'avant, 10 cas sur 13.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests des symboles, de Tonal, d'« Accords → Notation », de la théorie avancée et de VexFlow, et les gardes du dépôt touchés, 15 fichiers et 314 cas verts. **Non vérifié dans l'application.**
+
 - **L'ACCORD REND UN SYMBOLE QUE LES LECTEURS RELISENT, LES RENVERSEMENTS PAR BARRE OBLIQUE.** Revue des notations en texte, cinquième format, décision de Fabien du 2026-11-22 : « A readable symbol ».
   - **Ce qui se passait**, mesuré par `executer` : le nœud rendait la première lecture de `Chord.detect`, et son nom long. « E G C » devenait « E minor augmented », là où un musicien lit do majeur sur mi ; la sortie « Nom » portait « C major », qu'une Grille refusait, le lisant comme les jetons « C » et « major ».
   - **Ce qui change** (`symboleDesNotes`, `audio/symboles-accords.ts`) : la reconnaissance passe d'abord par la table d'Attic, où la basse tranche entre deux lectures. Un accord exact s'écrit par son symbole : la fondamentale et la basse gardent l'orthographe des notes reçues, et un renversement s'écrit par barre oblique, « C/E ». Un ensemble que la table ne nomme pas exactement revient à Tonal. Le nom long passe dans le message. La notice le dit ; les deux cas de `plugins/tonal.test.ts` qui tenaient « C major » sur la sortie tiennent « C », et le nom dans le message.

@@ -12,7 +12,7 @@ import { accordDuSymbole, estSansAccord, normaliserSymbole, symboleDesNotes } fr
 import { PARAMETRE_CLE } from "../audio/cles";
 import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 import {
-  accordsDepuisRomains, accordsInconnus, modeDepuisTonalite, toniqueDepuisTonalite,
+  accordsDepuisRomains, accordsInconnus, modeDepuisTonalite, romainsInconnus, toniqueDepuisTonalite,
   type ModeProgression,
 } from "../audio/theorie-romains";
 
@@ -214,6 +214,11 @@ export const fiches: FicheAudio[] = ([
       }
       const progTexte = ctx.paramTexte("Progression", "I V vi IV");
       const numerals = progTexte.split(/\s+/).filter((n: string) => n.length > 0);
+      // UN CHIFFRE QUI NE SE LIT PAS EST REFUSÉ, NOMMÉ : « I X V » rendait « C  G », sans un mot.
+      const inconnus = romainsInconnus(numerals);
+      if (inconnus.length > 0) {
+        return { valeurs: [null], erreur: true, message: traduire("msg.tonal.romains_inconnus_var_0", inconnus.slice(0, 4).join(" » « ")) };
+      }
       // `accordsDepuisRomains` : sans lui, « vi » produisait un accord MAJEUR et
       // les degrés III, VI, VII d'un mode mineur gardaient la fondamentale du
       // mode majeur.
@@ -269,6 +274,12 @@ export const fiches: FicheAudio[] = ([
       // donc tester juste le début du jeton (pas son intégralité) suffit à
       // distinguer les deux syntaxes sans rejeter les extensions.
       const romains = /^[b#]?[IViv]/.test(tokens[0] ?? "");
+      // UN CHIFFRE QUI NE SE LIT PAS EST REFUSÉ, NOMMÉ, comme dans la Progression.
+      const romainsIllisibles = romains ? romainsInconnus(tokens) : [];
+      if (romainsIllisibles.length > 0) {
+        return { valeurs: [null, null], erreur: true,
+          message: traduire("msg.tonal.romains_inconnus_var_0", romainsIllisibles.slice(0, 4).join(" » « ")) };
+      }
       const accords = romains
         ? accordsDepuisRomains(tonic, tokens, gammeDemandee(ctx, entree))
         : tokens;
