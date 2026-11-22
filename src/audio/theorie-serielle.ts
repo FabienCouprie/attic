@@ -11,14 +11,13 @@
 // n'importe quelle longueur, et le module dit seulement, en passant, si la suite qu'on lui
 // donne est une VRAIE série — douze classes distinctes.
 
+import { lireNomDeNote } from "./noms-de-notes";
+
 const NOMS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-/** Les noms de notes écrits en clair, dièses et bémols, plus les chiffres 0 à 11. */
-const VALEURS: Record<string, number> = {
-  c: 0, "c#": 1, db: 1, d: 2, "d#": 3, eb: 3, e: 4, f: 5, "f#": 6, gb: 6,
-  g: 7, "g#": 8, ab: 8, a: 9, "a#": 10, bb: 10, b: 11,
-  do: 0, ré: 2, re: 2, mi: 4, fa: 5, sol: 7, la: 9, si: 11,
-};
+// LES NOMS SE LISENT PAR LE SEUL LECTEUR DES NOMS DE NOTES, revue des notations en texte du
+// 2026-11-22 : la table d'ici n'avait ni Fb, ni B#, ni les doubles altérations, ni ♯ et ♭, et « C Fb
+// G B# » rendait {0, 5}.
 
 export const pc = (n: number): number => ((Math.round(n) % 12) + 12) % 12;
 
@@ -28,17 +27,18 @@ export const nomClasse = (n: number): string => NOMS[pc(n)];
  * Lit une suite écrite à la main : « 0 11 3 4 » comme « C B D# E », mélange toléré.
  *
  * Les octaves sont ignorées — on lit des CLASSES de hauteur, et « C4 » comme « C ». Ce
- * qui n'est pas lisible est passé, plutôt que de refuser la suite entière : une faute de
- * frappe dans la onzième note ne doit pas effacer les dix premières.
+ * qui n'est pas lisible est passé ici ; les nœuds qui lisent une suite écrite la refusent
+ * d'abord en nommant le mot illisible, par `refusDeSuite` (`audio/noms-de-notes.ts`), au lieu
+ * de calculer sur une suite amputée sans un mot.
  */
 export function lireSuite(texte: string): number[] {
   const sortie: number[] = [];
   for (const mot of texte.split(/[\s,;]+/).filter((m) => m.length > 0)) {
     // Le « -1 » de C-1, l'octave la plus grave du MIDI, fait partie de l'octave et non du nom.
-    const propre = mot.replace(/-?[0-9]+$/, "").toLowerCase();
     const chiffre = /^-?\d+$/.test(mot) ? parseInt(mot, 10) : null;
+    const nom = chiffre === null ? lireNomDeNote(mot.replace(/-?[0-9]+$/, "")) : null;
     if (chiffre !== null) sortie.push(pc(chiffre));
-    else if (propre in VALEURS) sortie.push(VALEURS[propre]);
+    else if (nom) sortie.push(nom.classe);
   }
   return sortie;
 }

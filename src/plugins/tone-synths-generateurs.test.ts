@@ -226,7 +226,9 @@ describe("membrane synth", () => {
     const r = await lancer("membrane-synth", { "Note": "pas une note", "Durée": 0.2 });
     expect((r as { erreur?: boolean }).erreur).toBe(true);
     expect(r.valeurs.every((v) => v == null)).toBe(true);
-    expect(String(r.message)).toContain("MembraneSynth");
+    // Le message était l'erreur brute de Tone.js, sous « MembraneSynth » ; depuis la revue des
+    // notations en texte du 2026-11-22, la note est lue avant Tone, et le refus la nomme.
+    expect(String(r.message)).toContain("« pas une note »");
   });
 
   it("SUIT LA FRÉQUENCE DE TRAVAIL DU PROJET, ET LA CARTE SON N'A PLUS VOIX AU CHAPITRE", async () => {
@@ -335,7 +337,7 @@ describe("metal synth", () => {
     const r = await lancer("metal-synth", { "Note": "pas une note", "Durée": 0.2 });
     expect((r as { erreur?: boolean }).erreur).toBe(true);
     expect(r.valeurs.every((v) => v == null)).toBe(true);
-    expect(String(r.message)).toContain("MetalSynth");
+    expect(String(r.message), "la note est lue avant Tone, et le refus la nomme").toContain("« pas une note »");
   });
 });
 
@@ -411,7 +413,7 @@ describe("poly synth", () => {
     const note = await lancer("poly-synth", { "Notes": "pas une note", "Durée par note": 0.15 });
     expect((note as { erreur?: boolean }).erreur).toBe(true);
     expect(note.valeurs.every((v) => v == null)).toBe(true);
-    expect(String(note.message)).toContain("PolySynth");
+    expect(String(note.message), "la note est lue avant Tone, et le refus la nomme").toContain("« pas une note »");
     const onde = await lancer("poly-synth", { "Forme d'onde": "pas une onde", "Durée par note": 0.15 });
     expect((onde as { erreur?: boolean }).erreur).toBe(true);
     expect(String(onde.message)).toContain("PolySynth");

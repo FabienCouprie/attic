@@ -983,7 +983,7 @@ Builds a sound from a feature vector: tempo, spectral centroid, chroma, cepstral
 
 *Generates a pure tone at a given frequency (Hz) or note.*
 
-Generates a pure tone at a precise frequency. Two input modes: in Hertz (20-20000 Hz) or as a musical note (format A4, C#5, Bb3). Four waveforms: sine (single frequency, pure), square (odd harmonics, rich), sawtooth (all harmonics, bright) and triangle (soft odd harmonics). A 10 ms fade in/out avoids clicks. Used for ear training, testing filters, tuning an instrument, or as a reference. The waveform and spectrum can be read on an analysis.
+Generates a pure tone at a precise frequency. Two input modes: in Hertz (20-20000 Hz) or as a musical note (format A4, C#5, Bb3, or French names, Sib3, Re4); an unreadable note, or one without an octave, is refused and named. Four waveforms: sine (single frequency, pure), square (odd harmonics, rich), sawtooth (all harmonics, bright) and triangle (soft odd harmonics). A 10 ms fade in/out avoids clicks. Used for ear training, testing filters, tuning an instrument, or as a reference. The waveform and spectrum can be read on an analysis.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -993,7 +993,7 @@ Generates a pure tone at a precise frequency. Two input modes: in Hertz (20-2000
 |---|---|---|---|---|
 | Input | choice | Frequency (Hz) | Frequency (Hz) / Note | Input mode: in Hz (e.g. 440) or as a musical note (e.g. A4, C#5). |
 | Frequency | number | 440 Hz | 20 – 20000 Hz, step 1 | Frequency in Hertz (used when « Input » = Frequency). 440 = reference A4. |
-| Note | text | `A4` |  | Musical note (used when « Input » = Note). Format: letter + accidental + octave, e.g. A4, C#5, Bb3. |
+| Note | text | `A4` |  | Musical note (used when « Input » = Note). Format: letter or French name, accidental, octave, e.g. A4, C#5, Sib3, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Waveform | choice | Sine | Sine / Square / Sawtooth / Triangle | Waveform. Sine = pure, a single frequency; Square = odd harmonics; Sawtooth = all harmonics; Triangle = soft odd harmonics. |
 | Duration | number | 2 s | 0.1 – 30 s, step 0.1 | Duration of the generated signal. |
 | Volume | number | 80 % | 0 – 100 % | Output level, from 0 (silence) to 100%. |
@@ -2413,7 +2413,7 @@ Generates a note using frequency modulation (FM) or amplitude modulation (AM) vi
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Mode | choice | FM | FM / AM | Modulation type: FM (frequency) or AM (amplitude). |
-| Note | text | `C4` |  | Note to play (e.g. C4, G5). |
+| Note | text | `C4` |  | Note to play (e.g. C4, G5). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Duration | number | 1.5 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Harmonicity | number | 3 | 0.1 – 10, step 0.1 | Frequency ratio between carrier and modulator. |
@@ -2437,7 +2437,7 @@ Generates a synthetic kick drum using Tone.js MembraneSynth. The sound is render
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `C2` |  | Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick. |
+| Note | text | `C2` |  | Base note of the kick (e.g. C2, A1). Lower notes produce a bigger kick. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Duration | number | 1.5 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. The sound is extended if the envelope exceeds this value. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Pitch decay | number | 0.05 s | 0.001 – 1 s, step 0.001 | Pitch envelope decay time. |
@@ -2459,7 +2459,7 @@ Generates an inharmonic metallic sound (hi-hat, bell, cymbal) using Tone.js Meta
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `C5` |  | Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell. |
+| Note | text | `C5` |  | Base note (e.g. C5, G5). A high note sounds like a hi-hat; a lower note sounds like a bell. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Duration | number | 2 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Harmonicity | number | 5.1 | 0.1 – 10, step 0.1 | Frequency ratio between modulator and carrier. |
@@ -2484,7 +2484,7 @@ Generates a plucked string note using Karplus-Strong synthesis: a short burst of
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `C4` |  | Plucked string note (e.g. C4, G3). |
+| Note | text | `C4` |  | Plucked string note (e.g. C4, G3). A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Duration | number | 2 s | 0.1 – 5 s, step 0.1 | Total duration of the generated buffer. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Attack noise | number | 1 | 0.1 – 20, step 0.1 | Amount of noise at the attack. |
@@ -2507,7 +2507,7 @@ Generates a polyphonic chord using Tone.js PolySynth. Each voice uses a simple o
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Notes | text | `C4,E4,G4` |  | Chord notes, comma-separated (e.g. C4,E4,G4). |
+| Notes | text | `C4,E4,G4` |  | Chord notes, comma-separated (e.g. C4,E4,G4). Each note carries its octave, in letters or French names: Do4,Mi4,Sol4. An unreadable note, or one without an octave, is refused and named. |
 | Note duration | number | 0.5 s | 0.05 – 5 s, step 0.05 | Duration each note is held before release. |
 | Volume | number | 80 % | 0 – 100 %, step 1 | Output level of the sound. |
 | Waveform | choice | Triangle | Sine / Square / Sawtooth / Triangle | Oscillator waveform. |
@@ -5945,7 +5945,7 @@ Definite-pitched percussion by modal synthesis. A bar does not vibrate like a st
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Instrument | choice | Marimba | Glockenspiel (free bar) / Marimba / Vibraphone / Tubular bell / Tibetan bowl / Wood block | The instrument, that is, its modal ratios. A free bar vibrates on 1 / 2.756 / 5.404 / 8.933, non-integer ratios, hence its metallic colour. Carving an arch under a marimba bar brings its second mode to 4 and its third to 10: it becomes harmonic, hence musical. The tubular bell rings on 2 / 3 / 4.16 / 5.43, so the note one hears is not in the sound at all. |
-| Note | text | `C4` |  | Note struck when no MIDI is connected. A MIDI file wins, and each note becomes a mallet stroke whose velocity sets the hardness. |
+| Note | text | `C4` |  | Note struck when no MIDI is connected. A MIDI file wins, and each note becomes a mallet stroke whose velocity sets the hardness. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Mallet hardness | number | 50 % | 0 – 100 %, step 1 | A hard mallet gives a short impulse, hence rich in highs, and wakes the upper modes; a soft one wakes only the first. It is the setting that changes the timbre most, and for a physical reason rather than by a tuning curve. |
 | Damping | number | 0 % | 0 – 100 %, step 1 | A hand laid on the bar: shortens every resonance at once. |
 | Tremolo | number | 0 % | 0 – 100 %, step 1 | Tremolo depth, that is, the amplitude modulation produced by the discs spinning in a vibraphone's resonator tubes. The setting acts on every instrument. |
@@ -5993,7 +5993,7 @@ Scanned synthesis, after Bill Verplank, Max Mathews and Rob Shaw (CCRMA, 2000). 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `A2` |  | Note read when no MIDI is connected. The pitch depends only on the scanning speed, never on the mechanics. |
+| Note | text | `A2` |  | Note read when no MIDI is connected. The pitch depends only on the scanning speed, never on the mechanics. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Masses | number | 64 | 4 – 256, step 1 | Number of masses in the chain, hence of points in the wavetable. Few masses give an angular shape and a rich sound; many give a smooth one. |
 | Rate | number | 800 /s | 20 – 4000 /s, step 10 | Speed of the mechanical simulation. It does not change the note: it changes how fast the timbre evolves. |
 | Tension | number | 50 % | 0 – 100 %, step 1 | Stiffness of the springs between neighbours: it makes the waves travel along the chain, hence the speed of the shape changes. At zero the shape is frozen and one gets an ordinary wavetable oscillator. |
@@ -6072,7 +6072,7 @@ Sung vowel by formant synthesis. A vowel is not a waveform, it is a configuratio
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Vowel | choice | A (father) | A (father) / E (bed) / I (beet) / O (bought) / U (boot) / AE (bat) / ER (bird) | The vowel, that is, the position of its first three formants. A has a high first formant and a low second (730 and 1090 Hz), I the opposite (270 and 2290): the sharpest contrast in the table. |
-| Note | text | `A2` |  | Sung pitch when no MIDI is connected. The formants do not move with it, the whole difference from a transposed sample, which carries its formants along and gives a cartoon voice. |
+| Note | text | `A2` |  | Sung pitch when no MIDI is connected. The formants do not move with it, the whole difference from a transposed sample, which carries its formants along and gives a cartoon voice. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Attack | number | 3 ms | 0.5 – 20 ms, step 0.5 | Rise time of the formant bursts. Short, it spreads the formants towards the highs and hardens the voice; long, it softens it. |
 | Formant width | number | 100 % | 20 – 400 %, step 5 | Multiplies the bandwidths. Narrowed, the resonances ring and sound artificial; widened, the voice becomes breathy. |
 | Tract size | number | 0 st | -12 – 12 st, step 1 | Shifts all formants together, which amounts to changing the size of the vocal tract: upwards gives a child's voice, downwards a giant's, without touching the sung note. |
@@ -6102,7 +6102,7 @@ Wave terrain synthesis. A wavetable oscillator reads a one-dimensional curve; th
 | Terrain | choice | Classic (Mitsuhashi) | Classic (Mitsuhashi) / Saddle / Sine product / Concentric ripples / Formula | The surface travelled. « Classic » is the one of the whole literature, hollowed along the lines x = ±1 and y = ±1. « Saddle » is symmetric, and therefore sounds an octave above the rotation speed. « Concentric ripples » is constant along a centred circle: it gives nothing unless the orbit's centre is offset, and that is geometry, not a defect. |
 | Formula | text | `sin(4*x) * cos(3*y)` |  | Altitude as a function of x and y, for the « Formula » terrain. The usual functions are available (sin, cos, exp, sqrt, abs…). |
 | Orbit | choice | Circle | Circle / Ellipse / Lissajous / Spiral | The path followed on the terrain. A Lissajous with integer ratios closes after several turns and gives a longer waveform; the spiral drifts the radius, hence the timbre. |
-| Note | text | `A2` |  | Note played when no MIDI is connected: it is the number of orbit turns per second. |
+| Note | text | `A2` |  | Note played when no MIDI is connected: it is the number of orbit turns per second. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Radius | number | 80 % | 0 – 300 %, step 1 | Size of the orbit: this is the timbre control. A small orbit stays in a flat area and gives a poor sound, a large one explores the relief and gives a rich one, without changing the note. |
 | Flattening | number | 50 % | 10 – 100 %, step 1 | Flattening of the ellipse on the y axis. Has no effect when « Orbit » is not « Ellipse ». |
 | X ratio | number | 3 | 1 – 8, step 1 | Lissajous orbit frequency on the x axis. Has no effect when « Orbit » is not « Lissajous ». |
@@ -6129,7 +6129,7 @@ Clarinet, flute or brass by digital waveguide. A wind instrument is not an oscil
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Instrument | choice | Clarinet | Clarinet / Flute / Brass | The model. The clarinet's bore is closed at one end, which lets only odd harmonics live: the even ones weigh 0.4 % of the odd, hence its hollow colour. The flute is nearly sinusoidal. The brass brightens when blown hard, because the wave steepens as it travels. |
-| Note | text | `A3` |  | Note played when no MIDI is connected (e.g. A3, C4, F#5). A MIDI file wins, and the line is played note by note. |
+| Note | text | `A3` |  | Note played when no MIDI is connected (e.g. A3, C4, F#5). A MIDI file wins, and the line is played note by note. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Breath | number | 80 % | 0 – 100 %, step 1 | Breath pressure. The setting spans the range where the chosen model is accurate: it starts at 65 % of real pressure on the clarinet, which does not start below that, and at 85 % on the flute, which does not hold its pitch there. Those two therefore speak at every setting, and pressure acts on their timbre: the clarinet darkens as it rises. The brass keeps the full scale and is the only one that refuses to speak, below 20 %; the node then produces no sound, and its message says so. Its timbre opens up markedly as pressure rises. |
 | Noise | number | 5 % | 0 – 100 %, step 1 | Amount of breath noise mixed into the pressure. A little makes the attack alive; a lot gives the sound of a winded player. |
 | Vibrato | number | 10 % | 0 – 100 %, step 1 | Depth of the breath vibrato. |
@@ -6593,7 +6593,7 @@ Plays a row's four forms and writes its matrix. Twelve-tone writing is a calcula
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Row | text | `G Bb D F# A C E G# B C# D# F` |  | The row, as note names or numbers from 0 to 11, separated by spaces. The default is the row of Berg's Violin Concerto. A MIDI file on the input wins: its pitches are read in order. |
+| Row | text | `G Bb D F# A C E G# B C# D# F` |  | The row, as note names or numbers from 0 to 11, separated by spaces. The default is the row of Berg's Violin Concerto. A MIDI file on the input wins: its pitches are read in order. Names are read as letters or French names, with #, b, ♯ or ♭; an unreadable word is refused and named. |
 | Form | choice | Original | Original / Retrograde / Inversion / Retrograde inversion / All four in turn | The transformation played. « All four in turn » chains the four forms, which makes audible at once what the matrix shows. |
 | Transposition | number | 0 | 0 – 11, step 1 | Transposition level of the played form, in semitones. With the forty-eight combinations of form and level, one has everything a row allows. |
 | Register | choice | Closest | Closest / One octave | « Closest » picks, for each note, the octave nearest the previous one, which makes a line audible; « One octave » stacks everything above the starting note, which makes the order of the classes audible. |
@@ -10921,7 +10921,7 @@ Csound's physical-model instruments, adjustable without writing a line of code. 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Instrument | choice | Bowed string (wgbow) | Bowed string (wgbow) / Clarinet (wgclar) / Flute (wgflute) / Brass (wgbrass) / Plucked string (wgpluck2) / Formants (fof2) | The opcode used. The bowed string: its Helmholtz model has been debugged here for thirty years. Each instrument uses the three settings below in its own way, detailed in the notice. |
-| Note | text | `A3` |  | Note played when no MIDI is connected. |
+| Note | text | `A3` |  | Note played when no MIDI is connected. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Pressure | number | 40 % | 0 – 100 %, step 1 | Bow pressure, reed stiffness, breath or lip tension depending on the instrument. |
 | Position | number | 25 % | 0 – 100 %, step 1 | Bow position, air jet ratio, attack time or formant frequency depending on the instrument. It is the most sensitive control of most of them. |
 | Vibrato | number | 20 % | 0 – 100 %, step 1 | Vibrato depth. No effect on the plucked string and the formants. |
@@ -12167,7 +12167,7 @@ Detects the chord a list of notes forms, and returns its symbol on the « Name �
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Notes | text | `C E G` |  | Chord notes separated by spaces (e.g. C E G, F A C E). |
+| Notes | text | `C E G` |  | Chord notes separated by spaces (e.g. C E G, F A C E). Names are read as letters or French names, with #, b, ♯ or ♭; an unreadable word is refused and named. |
 
 #### Dissonance Curve
 
@@ -12208,7 +12208,7 @@ Analyses a chord or passage as a pitch-class set. When a harmony is no longer to
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Notes | text | `C E G B` |  | The notes to analyse, as names or numbers from 0 to 11. A sequence on the input wins, then a MIDI file. |
+| Notes | text | `C E G B` |  | The notes to analyse, as names or numbers from 0 to 11. A sequence on the input wins, then a MIDI file. Names are read as letters or French names, with #, b, ♯ or ♭; an unreadable word is refused and named. |
 | Grouping | choice | Whole excerpt | Whole excerpt / Chord by chord | « Chord by chord » analyses each group of simultaneous notes separately, then lists the prime forms that recurred, which is what allows saying that two passages use the same material. Applies only to notes received on « Sequence » or « MIDI »: the typed « Notes » are always analysed as a single set. |
 
 #### Progression
@@ -12282,8 +12282,8 @@ Checks a first-species counterpoint. Johann Joseph Fux published in 1725 the « 
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Lower voice | text | `C4 D4 E4 F4 E4 D4 C4` |  | The cantus firmus, one note per beat. A MIDI file on the input wins: its notes are split into two voices by pitch. |
-| Upper voice | text | `G4 F4 G4 A4 G4 B4 C5` |  | The counterpoint, one note per beat, as many notes as the lower voice. The default is a correct exercise: the node should find nothing in it. |
+| Lower voice | text | `C4 D4 E4 F4 E4 D4 C4` |  | The cantus firmus, one note per beat. A MIDI file on the input wins: its notes are split into two voices by pitch. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
+| Upper voice | text | `G4 F4 G4 A4 G4 B4 C5` |  | The counterpoint, one note per beat, as many notes as the lower voice. The default is a correct exercise: the node should find nothing in it. A name with its octave, in letters or French names, with #, b, ♯ or ♭: A3, F#5, Sib2, Re4. An unreadable note, or one without an octave, is refused and named. |
 | Inner unisons | choice | Forbidden | Forbidden / Allowed | Fux forbids the unison anywhere but at the start and the end, because the two voices merge there and only one line is heard. |
 
 #### Transpose
@@ -12301,7 +12301,7 @@ Transposes a note by a given interval. Example: C4 + 2M → D4. Uses Tonal inter
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Note | text | `C4` |  | Note to transpose (e.g. C4, D#3, F#5). |
+| Note | text | `C4` |  | Note to transpose (e.g. C4, D#3, F#5). As letters or French names, with or without an octave; an unreadable name is refused and named. |
 | Interval | choice | 2M | 1P / 2m / 2M / 3m / 3M / 4P / 4A / 5P / 6m / 6M / 7m / 7M / 8P | Transposition interval (2M = whole tone, 3m = minor third, 3M = major third, etc.). |
 
 #### Voice-Leading Distance
