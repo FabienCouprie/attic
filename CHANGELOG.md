@@ -6,6 +6,21 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE MASQUE DU CERCLE À RETOUCHER NE PORTE QUE DES ZÉROS ET DES UNS, ET LA ROUE DE CAMELOT REFUSE UN CODE QU'ELLE NE LIT PAS.** Revue des notations en texte, passe de complétude, 2026-11-22, premier lot. La passe a relu le registre entier : ces deux nœuds lisent une notation que le recensement n'avait pas listée.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - dans le masque du Cercle à retoucher, une espace prenait une place, « 1 0 0 1 0 0 1 0 » éteignant la place 3 ;
+    - un caractère qui n'était ni 0 ni 1 éteignait la sienne : « x..x..x. » éteignait les trois attaques ;
+    - la Roue de Camelot rendait un nœud vert, « 0 accords · 0 notes », sur « 13A », « 0B », « 4C », « b4 » ou un départ vide.
+  - **Ce qui change** :
+    - un caractère du masque qui n'est ni 0 ni 1, une espace comprise, est refusé, et le message nomme sa place. C'est la règle des grilles que la vue écrit, décision de Fabien du 2026-11-22, « Refuse it, named » ;
+    - un masque trop court ou trop long se complète ou se coupe toujours, comme la notice le dit ;
+    - un code de départ qui n'est pas un nombre de 1 à 12 suivi de A ou de B est refusé et nommé, en erreur.
+
+    Les documentations de « Retouche » et de « Départ » le disent.
+  - **Le garde** : `plugins/lecteurs-oublies.test.ts`, 15 cas.
+    - Vu rouge sur le code d'avant : les 8 refus.
+    - Vu rouge aussi sur une espace de nouveau admise dans le masque, plantée.
+
 - **L'ORCHESTRE CSOUND REFUSE UN INSTRUMENT QU'IL NE CONNAÎT PAS, EN LE NOMMANT, ET PARLE LA LANGUE DE L'INTERFACE.** Revue des notations en texte, onzième format, 2026-11-22, troisième lot. Pendant le relevé, Csound a rendu dans le navigateur les huit formules et les onze instruments de l'Orchestre, en mono et en stéréo : tous compilent et sonnent.
   - **Ce qui se passait**, mesuré par `executer` :
     - un identifiant inconnu était écarté et seulement compté, « 1 identifiant(s) inconnu(s) écarté(s) », et l'orchestre se construisait sans lui ;

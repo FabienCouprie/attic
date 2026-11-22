@@ -2140,7 +2140,7 @@ Travels the Camelot wheel to illustrate harmonic transitions used by DJs. Each s
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Start | text | `4B` |  | Starting code on the wheel (e.g. 4B, 7A, 12B). Ring A = minor, B = major. |
+| Start | text | `4B` |  | Starting code on the wheel (e.g. 4B, 7A, 12B). Ring A = minor, B = major. A number from 1 to 12 followed by A or B, in capitals or not; any other code makes the node refused, and the message names it. |
 | Journey | choice | Full | Full / Neighbors / Random | Full = around the wheel; Neighbors = compatible moves (+1, -1, same number, +7); Random = random walk between neighbors. |
 | Steps | number | 12 | 1 – 24, step 1 | Number of chords generated. |
 | Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
@@ -10569,7 +10569,7 @@ Shows on the node the circle arriving at its input, and returns it at its output
 
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
-| Edit | text | — |  | The mask, a string of zeros and ones, one per position. Empty, the received circle passes through as it is. |
+| Edit | text | — |  | The mask, a string of zeros and ones, one per position. Empty, the received circle passes through as it is. Any other character, a space included, makes the node refused, and the message names its position. |
 
 #### Circle Join
 
