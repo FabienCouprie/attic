@@ -108,6 +108,59 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
     - Vu rouge sur le code d'avant : les 10 refus.
     - Vu rouge aussi sur un silence lié de nouveau admis, planté.
 
+- **L'HARMONIE NÉGATIVE DIT CE QUE FAIT SA RÉFLEXION, ET LA SÉRIE À TOUS LES INTERVALLES REVIENT À LA PREMIÈRE AU-DELÀ DE LA DERNIÈRE.** Revue des notations en texte, les tables et les suites, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - la documentation et la notice de « Réflexion » promettaient que « Classes » garde le contour de la ligne. Do ré mi fa sol y devient sol fa mi bémol ré do : la ligne se retourne, comme sous « Miroir vrai » ;
+    - un MIDI absent ou sans note était refusé sans le drapeau d'erreur ;
+    - la série de rang 3856 rendait la 3855, alors que la documentation et le code promettent de revenir à la première, et le message disait « numéro 3856 ».
+
+    La réflexion, elle, est juste : six paires, et ré majeur devient ré mineur en ré.
+  - **Ce qui change** :
+    - selon la décision de Fabien du 2026-11-22, « Correct the doc », la documentation et la notice disent que « Classes » garde chaque note dans son registre, la basse restant la basse, et que la ligne s'y retourne aussi ;
+    - les refus portent le drapeau d'erreur ;
+    - le rang boucle sur les 3856 séries, et le message nomme la série rendue.
+  - **Le garde** : 6 cas de plus dans `plugins/tables-et-suites.test.ts`, qui en compte 22.
+    - Vu rouge sur le code d'avant : les 4 cas qui changent. Les 2 cas de la ligne tiennent ce que la documentation dit maintenant.
+    - Vu rouge aussi sur le rang de nouveau borné à la dernière série, planté.
+
+- **LA TABLE DE LA CHAÎNE DE MARKOV ÉCRIT SES COMPTES, ET DIT QU'ELLE N'EN MONTRE QU'UNE PARTIE.** Revue des notations en texte, les tables et les suites, 2026-11-22, deuxième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - les pourcentages arrondis ne faisaient pas toujours 100 : trois suites également probables s'écrivaient 33 %, 33 %, 33 % ;
+    - la table s'arrêtait à vingt contextes sans le dire, sous un en-tête qui en annonçait trente-neuf ;
+    - un MIDI absent, sans note ou trop court pour l'ordre était refusé sans le drapeau d'erreur.
+
+    Les comptes, eux, sont justes.
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Add the counts » :
+    - chaque pourcentage porte son compte, « D4 67% (2) » ;
+    - une table coupée dit « Les 20 contextes les plus fréquents, sur 39 » ;
+    - les refus portent le drapeau d'erreur.
+
+    La notice le dit.
+  - **Le garde** : 6 cas de plus dans `plugins/tables-et-suites.test.ts`.
+    - Vu rouge sur le code d'avant : les 6.
+    - Vu rouge aussi sur les comptes de nouveau perdus, plantés.
+
+- **LE TONNETZ LIT LES COMPOSÉES N, S ET H, REFUSE CE QUI N'EST PAS UNE OPÉRATION EN LE NOMMANT, ET REND L'ACCORD SEUL QUAND L'ARRIVÉE EST LE DÉPART.** Revue des notations en texte, dernière section du recensement, les tables et les suites, 2026-11-22, premier lot.
+  - **La référence** : les transformations néo-riemanniennes, P, L et R, et leurs composées de la littérature. N, le Nebenverwandt, mène do majeur à fa mineur ; S, le glissement, à do dièse mineur ; H, le pôle hexatonique, à la bémol mineur.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - une lettre qui n'était pas P, L ou R était jetée : « PLX » jouait « PL » ;
+    - « S » et « N » étaient refusés comme illisibles ;
+    - le chemin de do à do répondait « Aucune opération lisible : écrivez P, L et R », alors que rien n'avait été écrit ;
+    - ces refus partaient sans le drapeau d'erreur, et le message disait « 1 opérations ».
+
+    P, L et R, eux, sont justes : « PLRLPR » depuis do donne do, do mineur, la bémol, fa mineur, ré bémol, ré bémol mineur, mi.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Read N, S, H too » et « The chord alone » :
+    - N, S et H se lisent, chacune un seul pas du chemin, et toute autre lettre est refusée et nommée. Les espaces, virgules et tirets séparent ;
+    - une arrivée qui est le départ rend l'accord seul, « 0 opération » ;
+    - les refus portent le drapeau d'erreur, et le nombre d'opérations s'accorde.
+
+    La notice et les documentations de « Mode » et d'« Opérations » le disent.
+  - **Un test tenait le contraire** : dans `audio/tonnetz.test.ts`, « P-X-L » se lisait « PL ». Il est réécrit avec sa raison.
+  - **Le garde de style** compte « RLP », « LPR » et « LPL » parmi les suites d'opérations, comme « PLPLPL ».
+  - **Le garde** : `plugins/tables-et-suites.test.ts`, 10 cas.
+    - Vu rouge sur le code d'avant : 9 cas.
+    - Vu rouge aussi sur une lettre de nouveau jetée, plantée.
+
 - **L'ORCHESTRE CSOUND REFUSE UN INSTRUMENT QU'IL NE CONNAÎT PAS, EN LE NOMMANT, ET PARLE LA LANGUE DE L'INTERFACE.** Revue des notations en texte, onzième format, 2026-11-22, troisième lot. Pendant le relevé, Csound a rendu dans le navigateur les huit formules et les onze instruments de l'Orchestre, en mono et en stéréo : tous compilent et sonnent.
   - **Ce qui se passait**, mesuré par `executer` :
     - un identifiant inconnu était écarté et seulement compté, « 1 identifiant(s) inconnu(s) écarté(s) », et l'orchestre se construisait sans lui ;

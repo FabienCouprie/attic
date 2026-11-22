@@ -13,7 +13,7 @@ import { traduire, langueCourante } from "../i18n";
 import { avecDoc } from "./notices";
 import {
   cheminLePlusCourt, lireOperations, nomTriade, notesDe, parcourir, reconnaitre,
-  voixParcimonieuses, type Triade,
+  voixParcimonieuses, type Operation, type Triade,
 } from "../audio/tonnetz";
 import { bilan, verifier } from "../audio/contrepoint";
 import { canonEnNotes, canonEnTexte, chercherMotifs, construire } from "../audio/canon-pavage";
@@ -126,11 +126,11 @@ export const fiches: FicheAudio[] = ([
         options: ["Suite d'opérations", "Chemin vers un accord"],
         optionsEn: ["Sequence of operations", "Path to a chord"],
         optionIds: ["suite", "chemin"], defaut: "Suite d'opérations", defautEn: "Sequence of operations",
-        doc: "« Suite » applique les opérations qu'on écrit. « Chemin » cherche le plus court trajet vers l'accord d'arrivée : c'est la mesure de distance propre à l'espace de Riemann, et aucune distance tonale ne la donne.",
-        docEn: "« Sequence » applies the operations written out. « Path » finds the shortest route to the destination chord: the distance measure proper to Riemann's space, which no tonal distance gives." },
+        doc: "« Suite » applique les opérations qu'on écrit. « Chemin » cherche le plus court trajet vers l'accord d'arrivée, en P, L et R : c'est la mesure de distance propre à l'espace de Riemann, et aucune distance tonale ne la donne. Une arrivée qui est le départ rend l'accord seul, en zéro opération.",
+        docEn: "« Sequence » applies the operations written out. « Path » finds the shortest route to the destination chord, in P, L and R: the distance measure proper to Riemann's space, which no tonal distance gives. A destination that is the start returns the chord alone, in zero operations." },
       { nom: "Opérations", nomEn: "Operations", type: "texte", defaut: "PLRLPR", defautEn: "PLRLPR",
-        doc: "Les opérations à appliquer, dans l'ordre. P échange majeur et mineur sur la même fondamentale, L et R conduisent vers les accords voisins. « PLPLPL » parcourt le cycle hexatonique et revient au départ.",
-        docEn: "The operations to apply, in order. P swaps major and minor on the same root, L and R lead to the neighbouring chords. « PLPLPL » walks the hexatonic cycle and returns to the start." },
+        doc: "Les opérations à appliquer, dans l'ordre. P échange majeur et mineur sur la même fondamentale, L et R conduisent vers les accords voisins. « PLPLPL » parcourt le cycle hexatonique et revient au départ. Les composées N, S et H valent chacune un pas : N, « RLP », mène do majeur à fa mineur ; S, « LPR », à do dièse mineur ; H, « LPL », à la bémol mineur, et elles déplacent plus d'une voix. Espaces, virgules et tirets séparent ; une autre lettre fait refuser le composant, et le message la nomme.",
+        docEn: "The operations to apply, in order. P swaps major and minor on the same root, L and R lead to the neighbouring chords. « PLPLPL » walks the hexatonic cycle and returns to the start. The compounds N, S and H each count as one step: N, « RLP », leads C major to F minor; S, « LPR », to C sharp minor; H, « LPL », to A flat minor, and they move more than one voice. Spaces, commas and hyphens separate; any other letter makes the node refused, and the message names it." },
       { nom: "Accord d'arrivée", nomEn: "Destination chord", type: "texte", defaut: "G#m", defautEn: "G#m",
         doc: "En mode « Chemin », l'accord à atteindre, une triade majeure ou mineure écrite comme l'accord de départ ; un autre accord est refusé, et le message le nomme. Do majeur et sol dièse mineur n'ont aucune note commune et sont pourtant à trois opérations l'un de l'autre : c'est le pôle hexatonique.",
         docEn: "In « Path » mode, the chord to reach, a major or minor triad written like the starting chord; another chord is refused, and the message names it. C major and G sharp minor share no note and are yet three operations apart: the hexatonic pole." },
@@ -155,7 +155,9 @@ export const fiches: FicheAudio[] = ([
           message: traduire("msg.tonnetz.accord_illisible_var_0_var_1", texteDepart, en ? "Starting chord" : "Accord de départ") };
       }
       const mode = ctx.paramTexte("Mode", "suite");
-      let operations = lireOperations(ctx.paramTexte("Opérations", "PLRLPR"));
+      // LE NOMBRE D'OPÉRATIONS S'ACCORDE : « 1 opérations » s'écrivait, et zéro en est une en français.
+      const compte = (n: number) => `${n} ${en ? (n === 1 ? "operation" : "operations") : (n <= 1 ? "opération" : "opérations")}`;
+      let operations: Operation[] = [];
       let entete = "";
       if (mode === "chemin") {
         const texteArrivee = ctx.paramTexte("Accord d'arrivée", "G#m");
@@ -165,12 +167,21 @@ export const fiches: FicheAudio[] = ([
             message: traduire("msg.tonnetz.accord_illisible_var_0_var_1", texteArrivee, en ? "Destination chord" : "Accord d'arrivée") };
         }
         const chemin = cheminLePlusCourt(depart, arrivee);
-        if (!chemin) return { valeurs: [null, null, null], message: traduire("msg.tonnetz.sansChemin") };
+        if (!chemin) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.tonnetz.sansChemin") };
+        // UNE ARRIVÉE QUI EST LE DÉPART REND L'ACCORD SEUL, en zéro opération : elle répondait « Aucune
+        // opération lisible ». Décision de Fabien du 2026-11-22, « The chord alone ».
         operations = chemin;
-        entete = `${nomTriade(depart)} → ${nomTriade(arrivee)} : ${chemin.length} ${
-          en ? "operations" : "opérations"}`;
+        entete = `${nomTriade(depart)} → ${nomTriade(arrivee)} : ${compte(chemin.length)}`;
+      } else {
+        // CE QUI N'EST PAS UNE OPÉRATION EST REFUSÉ, ET NOMMÉ ; un texte vide l'est aussi. Revue des
+        // notations en texte, 2026-11-22.
+        const lu = lireOperations(ctx.paramTexte("Opérations", "PLRLPR"));
+        if ("refus" in lu) {
+          return { valeurs: [null, null, null], erreur: true, message: traduire("msg.tonnetz.operation_illisible_var_0", lu.refus) };
+        }
+        if (lu.operations.length === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.tonnetz.sansOperation") };
+        operations = lu.operations;
       }
-      if (operations.length === 0) return { valeurs: [null, null, null], message: traduire("msg.tonnetz.sansOperation") };
 
       const suite = parcourir(depart, operations);
       const accords = voixParcimonieuses(suite, Math.round(ctx.paramNombre("Note de base", 60)));
@@ -188,7 +199,7 @@ export const fiches: FicheAudio[] = ([
       const [audio, midi] = await rendre(ctx, notes);
       return {
         valeurs: [audio, midi, [entete, ...lignes].filter(Boolean).join("\n")],
-        message: traduire("msg.tonnetz.resultat", suite.length, operations.join("")),
+        message: traduire("msg.tonnetz.resultat", suite.length, operations.join("") || compte(0)),
       };
     },
   }),
