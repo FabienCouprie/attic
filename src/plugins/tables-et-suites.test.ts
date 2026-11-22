@@ -9,6 +9,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
+import { notesVersFichierMidi } from "../audio/midi-ecriture";
 
 const F = (id: string) => registre.trouverDef(id) as unknown as FicheLancable;
 
@@ -49,5 +50,38 @@ describe("LE TONNETZ LIT SES OPÉRATIONS, ET REFUSE CE QUI N'EN EST PAS", () => 
   it("un chemin d'une opération le dit au singulier", async () => {
     const r = await TONNETZ({ Mode: "chemin", "Accord d'arrivée": "Am" });
     expect(String(r.valeurs[2])).toContain("1 opération\n");
+  }, 60_000);
+});
+
+// LA TABLE DE MARKOV, deuxième lot. Ses pourcentages arrondis ne faisaient pas toujours 100, trois suites
+// également probables s'écrivant 33 %, 33 %, 33 %, et elle s'arrêtait à vingt contextes sans le dire. Décision de
+// Fabien du 2026-11-22, « Add the counts ». Les refus partaient sans le drapeau d'erreur.
+describe("LA TABLE DE MARKOV EST EXACTE, ET DIT CE QU'ELLE MONTRE", () => {
+  const midi = (hauteurs: number[]) => notesVersFichierMidi(hauteurs.map((note, i) => ({ note, debut: i * 0.5, fin: i * 0.5 + 0.45, velocite: 90 })), 120);
+  const MARKOV = (entree: unknown, r: Record<string, string | number> = {}) =>
+    lancerFiche(F("markov-midi"), { Ordre: 1, Graine: 1, ...r }, { entrees: [entree] });
+
+  it.each([
+    ["deux suites inégales", [60, 62, 64, 60, 62, 65, 60, 64], "C4 ⇒ D4 67% (2), E4 33% (1)"],
+    ["trois suites également probables", [60, 62, 60, 64, 60, 65], "C4 ⇒ D4 33% (1), E4 33% (1), F4 33% (1)"],
+  ])("écrit chaque compte avec son pourcentage : %s", async (_titre, hauteurs, ligne) => {
+    const r = await MARKOV(midi(hauteurs));
+    expect(r.erreurRendue, r.message).toBe(false);
+    expect(String(r.valeurs[2]).split("\n")).toContain(ligne);
+  }, 60_000);
+
+  it("dit qu'elle n'écrit que les vingt contextes les plus fréquents, et sur combien", async () => {
+    const r = await MARKOV(midi(Array.from({ length: 40 }, (_, i) => 40 + i)));
+    expect(String(r.valeurs[2])).toContain("Les 20 contextes les plus fréquents, sur 39");
+  }, 60_000);
+
+  it.each([
+    ["sans MIDI", null, {}],
+    ["un MIDI sans note", notesVersFichierMidi([], 120), {}],
+    ["un morceau trop court pour l'ordre", midi([60, 62]), { Ordre: 3 }],
+  ] as [string, unknown, Record<string, number>][])("refuse en erreur %s", async (_titre, entree, reglages) => {
+    const r = await MARKOV(entree, reglages);
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.valeurs).toEqual([null, null, null]);
   }, 60_000);
 });

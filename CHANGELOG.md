@@ -6,6 +6,23 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA TABLE DE LA CHAÎNE DE MARKOV ÉCRIT SES COMPTES, ET DIT QU'ELLE N'EN MONTRE QU'UNE PARTIE.** Revue des notations en texte, les tables et les suites, 2026-11-22, deuxième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - les pourcentages arrondis ne faisaient pas toujours 100 : trois suites également probables s'écrivaient 33 %, 33 %, 33 % ;
+    - la table s'arrêtait à vingt contextes sans le dire, sous un en-tête qui en annonçait trente-neuf ;
+    - un MIDI absent, sans note ou trop court pour l'ordre était refusé sans le drapeau d'erreur.
+
+    Les comptes, eux, sont justes.
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Add the counts » :
+    - chaque pourcentage porte son compte, « D4 67% (2) » ;
+    - une table coupée dit « Les 20 contextes les plus fréquents, sur 39 » ;
+    - les refus portent le drapeau d'erreur.
+
+    La notice le dit.
+  - **Le garde** : 6 cas de plus dans `plugins/tables-et-suites.test.ts`.
+    - Vu rouge sur le code d'avant : les 6.
+    - Vu rouge aussi sur les comptes de nouveau perdus, plantés.
+
 - **LE TONNETZ LIT LES COMPOSÉES N, S ET H, REFUSE CE QUI N'EST PAS UNE OPÉRATION EN LE NOMMANT, ET REND L'ACCORD SEUL QUAND L'ARRIVÉE EST LE DÉPART.** Revue des notations en texte, dernière section du recensement, les tables et les suites, 2026-11-22, premier lot.
   - **La référence** : les transformations néo-riemanniennes, P, L et R, et leurs composées de la littérature. N, le Nebenverwandt, mène do majeur à fa mineur ; S, le glissement, à do dièse mineur ; H, le pôle hexatonique, à la bémol mineur.
   - **Ce qui se passait**, mesuré par `executer` :

@@ -235,25 +235,30 @@ export const fiches: FicheAudio[] = ([
     ],
     async executer(ctx) {
       const fichier = ctx.entree(0);
-      if (!(fichier instanceof File)) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      // LES REFUS SONT DES ERREURS : ils partaient sans le drapeau. Revue des notations en texte, 2026-11-22.
+      if (!(fichier instanceof File)) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       const { notes } = await lireMidi(fichier);
-      if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
+      if (notes.length === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucune_note") };
       const ordre = ctx.paramNombre("Ordre", 2);
       const table = apprendre(
         notes.map((n: any) => ({ note: n.note, velocite: n.velocite ?? 90, debut: n.debut, fin: n.fin })),
         ordre,
       );
-      if (table.size === 0) return { valeurs: [null, null, null], message: traduire("msg.markov.tropCourt") };
+      if (table.size === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.markov.tropCourt") };
       const { graine, aleatoire } = hasardDuNoeud(ctx.paramNombre("Graine", 0));
       const hauteurs = engendrer(table, ordre, ctx.paramNombre("Notes", 64), aleatoire);
       const tempo = ctx.paramNombre("Tempo", 120);
       const pas = (60 / tempo) / 2;
       const engendrees = hauteurs.map((note, i) => ({ note, velocite: 90, debut: i * pas, fin: i * pas + pas * 0.9 }));
       const stats = statistiques(table);
+      // UNE TABLE COUPÉE LE DIT : vingt contextes s'écrivaient sur trente-neuf, sous un en-tête qui en
+      // annonçait trente-neuf. Revue des notations en texte, 2026-11-22.
+      const LIGNES = 20;
       const rapport = [
         traduire("msg.markov.stats", stats.contextes, stats.transitions, Math.round(stats.partSansChoix * 100)),
         "",
-        tableEnTexte(table),
+        ...(table.size > LIGNES ? [traduire("msg.markov.extrait_var_0_var_1", LIGNES, table.size)] : []),
+        tableEnTexte(table, LIGNES),
       ].join("\n");
       // La chaîne n'apprend que des hauteurs : elle ne reprend donc jamais le canal de
       // la source, et sa sortie est mélodique même apprise sur une piste de batterie.

@@ -868,6 +868,7 @@ const DICO_RUNTIME: Record<string, Record<Langue, string>> = {
   "msg.boucle.empile": { fr: "{__VAR_0__} tours empilés · {__VAR_1__} s · crête {__VAR_2__}", en: "{__VAR_0__} passes stacked · {__VAR_1__} s · peak {__VAR_2__}" },
   "msg.lsysteme.aucuneNote": { fr: "Le mot engendré ne contient aucune note : ajoutez une lettre aux règles.", en: "The generated word holds no note: add a letter to the rules." },
   "msg.lsysteme.resultat": { fr: "{__VAR_0__} signes · {__VAR_1__} notes", en: "{__VAR_0__} symbols · {__VAR_1__} notes" },
+  "msg.markov.extrait_var_0_var_1": { fr: "Les {__VAR_0__} contextes les plus fréquents, sur {__VAR_1__} :", en: "The {__VAR_0__} most frequent contexts, out of {__VAR_1__}:" },
   "msg.markov.tropCourt": { fr: "Morceau trop court pour cet ordre : baissez « Ordre ».", en: "Piece too short for this order: lower « Order »." },
   "msg.markov.stats": { fr: "{__VAR_0__} contextes · {__VAR_1__} transitions · {__VAR_2__} % sans choix", en: "{__VAR_0__} contexts · {__VAR_1__} transitions · {__VAR_2__}% with no choice" },
   "msg.markov.resultat": { fr: "{__VAR_0__} notes · {__VAR_1__} contextes appris · graine {__VAR_2__}", en: "{__VAR_0__} notes · {__VAR_1__} contexts learned · seed {__VAR_2__}" },
