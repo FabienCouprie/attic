@@ -302,14 +302,14 @@ export const fiches: FicheAudio[] = ([
         options: ["Classes, registre gardé", "Miroir vrai"],
         optionsEn: ["Classes, register kept", "True mirror"],
         optionIds: ["registre", "miroir"], defaut: "Classes, registre gardé", defautEn: "Classes, register kept",
-        doc: "« Classes » réfléchit chaque note dans son octave : l'harmonie change, la ligne garde son contour ; c'est ce qu'on veut pour substituer un accord. « Miroir vrai » réfléchit tout autour d'un seul axe : les intervalles changent de sens et la mélodie se retourne.",
-        docEn: "« Classes » reflects each note within its octave: the harmony changes, the line keeps its contour; this is what one wants to substitute a chord. « True mirror » reflects everything around a single axis: intervals change direction and the melody turns over." },
+        doc: "« Classes » réfléchit chaque note dans son octave : l'harmonie change, et chaque note garde son registre, la basse restant la basse ; c'est ce qu'on veut pour substituer un accord. La ligne s'y retourne aussi, comme toute réflexion : do ré mi fa sol devient sol fa mi bémol ré do. « Miroir vrai » réfléchit tout autour d'un seul axe : les intervalles changent de sens, la mélodie se retourne, et le grave passe à l'aigu.",
+        docEn: "« Classes » reflects each note within its octave: the harmony changes, and each note keeps its register, the bass staying the bass; this is what one wants to substitute a chord. The line turns over there too, as any reflection does: C D E F G becomes G F E flat D C. « True mirror » reflects everything around a single axis: intervals change direction, the melody turns over, and the low register moves to the high." },
       ...PARAMETRES_RENDU,
     ],
     async executer(ctx) {
       const notes = await notesDuMidi(ctx.entree(0));
-      if (!notes) return { valeurs: [null, null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
-      if (notes.length === 0) return { valeurs: [null, null, null], message: traduire("msg.aucune_note") };
+      if (!notes) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+      if (notes.length === 0) return { valeurs: [null, null, null], erreur: true, message: traduire("msg.aucune_note") };
       const tonique = parseInt(ctx.paramTexte("Tonique", "0"), 10) || 0;
       const mode = ctx.paramTexte("Réflexion", "registre") as ModeReflet;
       const reflete = refleterNotes(notes, tonique, mode);
