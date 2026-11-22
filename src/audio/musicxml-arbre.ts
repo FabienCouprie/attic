@@ -17,7 +17,7 @@
 // et l'on déclare la bonne unité, plutôt que d'arrondir et d'espérer.
 
 import type { Mesure, NoeudRythme } from "./arbre-rythmique";
-import { nomMusicXML, signesDeLaMesure, type TeteDeMesure } from "./musicxml";
+import { cleDe, nomMusicXML, signesDeLaMesure, type TeteDeMesure } from "./musicxml";
 
 // ── Rationnels ─────────────────────────────────────────────────────────
 
@@ -224,23 +224,7 @@ export function voixVersMusicXML(
   return lignes.join("\n");
 }
 
-/**
- * La clé d'une portée, choisie sur les hauteurs qu'elle porte.
- *
- * UNE SEULE CLÉ POUR TOUT NE TIENT PLUS DÈS QU'IL Y A DEUX PORTÉES. Une voix de basse gravée en clé
- * de sol se lit sur quatre lignes supplémentaires sous la portée, ce qu'aucune partition n'écrit.
- * La médiane décide, et non la note la plus grave : une seule note basse dans une ligne aiguë ne
- * doit pas faire changer de clé toute la portée.
- */
-function cleDe(hauteurs: readonly number[]): string {
-  if (hauteurs.length === 0) return "<sign>G</sign><line>2</line>";
-  const triees = [...hauteurs].sort((a, b) => a - b);
-  const mediane = triees[Math.floor(triees.length / 2)];
-  // Le do central vaut 60 ; en dessous, la clé de fa épargne les lignes supplémentaires.
-  return mediane < 60
-    ? "<sign>F</sign><line>4</line>"
-    : "<sign>G</sign><line>2</line>";
-}
+// LA CLÉ D'UNE PORTÉE est `cleDe`, d'`audio/musicxml.ts` : une seule règle pour l'arbre et pour le MIDI.
 
 /** Le corps d'une portée : ses mesures, ses notes, ses n-olets. */
 function unePartie(

@@ -197,7 +197,9 @@ export const fiches: FicheAudio[] = ([
       const nom = `${(ctx.paramTexte("Titre", "Attic") || "attic").replace(/[^\w-]+/g, "-")}.musicxml`;
       const sortie = new File([xml], nom, { type: "application/vnd.recordare.musicxml+xml" });
       const mesures = (xml.match(/<measure /g) ?? []).length;
-      return { valeurs: [xml, sortie], message: traduire("msg.musicxml.resultat", notes.length, mesures) };
+      // La clé choisie sur le registre se dit : une portée en clé de fa ne se devine pas au message.
+      const cle = traduire(xml.includes("<sign>F</sign>") ? "msg.musicxml.cle.fa" : "msg.musicxml.cle.sol");
+      return { valeurs: [xml, sortie], message: `${traduire("msg.musicxml.resultat", notes.length, mesures)} · ${cle}` };
     },
   }),
   fiche({

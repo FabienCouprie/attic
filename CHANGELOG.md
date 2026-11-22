@@ -6,6 +6,16 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE MUSICXML VENU D'UN MIDI CHOISIT SA CLÉ SUR LE REGISTRE, ET DÉCOUPE SES VALEURS SELON LES TEMPS.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, huitième lot.
+  - **Ce qui se passait**, mesuré par `executer` du MIDI au texte MusicXML :
+    - le chemin du MIDI écrivait toujours la clé de sol : do 2 à fa 2 se lisaient sur des lignes supplémentaires ; le chemin de l'arbre, lui, choisissait la sienne ;
+    - une durée composée se découpait la plus grande valeur d'abord, exacte mais aveugle aux temps : une blanche pointée du deuxième temps cachait le troisième, une blanche partie sur la croche du deuxième temps cachait le milieu de la mesure, et en 6/8 une noire passait d'un temps à l'autre.
+  - **Ce qui change** :
+    - une seule règle de clé, `cleDe` dans `audio/musicxml.ts`, sert l'arbre et le MIDI : la clé de fa sous le do central, par la médiane, et le message la nomme ;
+    - `audio/musicxml-temps.ts` découpe selon l'usage qu'Elaine Gould expose dans « Behind Bars » : une mesure à quatre temps montre son milieu, une valeur hors du temps ne passe pas le temps suivant, et deux syncopes sont admises, la blanche du deuxième temps entre deux noires et la noire entre deux croches. Une mesure composée compte ses temps en noires pointées.
+  - Décisions de Fabien : « Choose by register », « Follow the beats ».
+  - Tenu par `plugins/musicxml-temps.test.ts`, dix cas : six vus rouges sur le code d'avant, quatre témoins des syncopes admises et du 3/4. Rouges aussi sur la clé de sol de nouveau imposée et sur le découpage de nouveau aveugle, plantés. La gravure par Verovio, `plugins/musicxml-grave.test.ts`, reste verte.
+
 - **LE MUSICXML PREND LE TEMPO QUE PORTE SON ENTRÉE, ET SES REFUS SONT DES ERREURS.** Revue des notations en texte, douzième format, 2026-11-22, quatrième lot.
   - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure :
     - sur le chemin d'une seule portée, une séquence ou un fichier MIDI à 90 se quantifiait au réglage « Tempo », 120 par défaut. Ses noires se lisaient en cinq doubles croches. Le chemin à plusieurs portées prenait, lui, le tempo de la séquence ;
