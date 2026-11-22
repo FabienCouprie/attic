@@ -29,7 +29,8 @@ import { join } from "path";
 import { lireTableDcml } from "./dcml-tsv";
 import { hauteursHumdrum, lireDepuisVerovio, type ToolkitPartition } from "./partition-lecture";
 import type { Note } from "./note";
-import type { Mode } from "./choral-regles";
+import { lireAccord, type Mode } from "./choral-regles";
+import { tranchesDuChoral } from "./choral-tranches";
 import { estRefusChoral, REGLES_CHORAL, verifierChoral, type RegleChoral } from "./choral-verifier";
 
 const RACINE = process.env.CORPUS_CHORALS;
@@ -162,6 +163,24 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
     }
     writeFileSync(join(RACINE!, "verificateur-details.tsv"), [...detailsVerif, "", "# dernières attaques", ...finales].join("\n") + "\n", "utf8");
     const sansErreur = parChoral.filter((c) => c.erreurs === 0).length;
+
+    // LA FRÉQUENCE DES DEGRÉS CHEZ BACH, sur les temps qui portent au moins trois voix et que
+    // `lireAccord` reconnaît, majeur et mineur à part : la préférence de l'harmoniseur en vient.
+    const degres = { majeur: new Array(7).fill(0), mineur: new Array(7).fill(0) };
+    for (const s of sapps) {
+      if (!s.tonalite) continue;
+      const { tranches } = tranchesDuChoral({ notes: s.notes, tempo: 60 }, 60, 4);
+      for (const t of tranches) {
+        const sonnantes = t.hauteurs.filter((x): x is number => x !== null);
+        if (!t.surLeTemps || sonnantes.length < 3) continue;
+        const a = lireAccord(sonnantes, s.tonalite.tonique, s.tonalite.mode);
+        if (a) degres[s.tonalite.mode][a.degre]++;
+      }
+    }
+    const frequences = (["majeur", "mineur"] as const).map((m) => {
+      const total = degres[m].reduce((x: number, y: number) => x + y, 0);
+      return `- ${m} : ${total} temps · ${degres[m].map((c: number, d: number) => `${["I", "II", "III", "IV", "V", "VI", "VII"][d]} ${(100 * c / total).toFixed(1)} %`).join(" · ")}`;
+    });
     const verification = [
       `## Le vérificateur sur les chorals de Sapp, ${verifies} chorals dans leur tonalité`,
       "",
@@ -192,6 +211,10 @@ describe.skipIf(!RACINE)("les chorals du DCML comparés à ceux de Sapp", () => 
       ...tessitures,
       "",
       ...verification,
+      "",
+      "## Fréquence des degrés chez Bach, sur les temps reconnus",
+      "",
+      ...frequences,
       "",
       "| n° DCML | n° Sapp | titre | notes concordantes | notes DCML | notes Sapp | hauteurs différentes | attaques sans jumelle |",
       "|---|---|---|---|---|---|---|---|",

@@ -88,6 +88,7 @@ export const INERTIES_CONDITIONNEES: InertieConditionnee[] = [
   { ou: "accords-joues·Graine", quand: { reglage: "Sens", sauf: ["aleatoire"] }, raison: UNE_GRAINE },
   { ou: "gamme-jouee·Graine", quand: { reglage: "Sens", sauf: ["aleatoire"] }, raison: UNE_GRAINE },
   { ou: "arpegiateur-midi·Graine", quand: { reglage: "Direction", sauf: ["aleatoire"] }, raison: UNE_GRAINE },
+  { ou: "harmoniser-choral·Graine", quand: { reglage: "Température", valeurs: ["0"] }, raison: "à température nulle, le choral est celui de moindre coût, trouvé sans tirage ; dit dans sa documentation" },
   { ou: "camelot·Graine", quand: { reglage: "Parcours", sauf: ["aleatoire"] }, raison: "la graine ne tire que le parcours aléatoire, et le parcours complet comme les voisins n'ont rien à tirer ; dit dans sa documentation" },
   { ou: "dither·Graine", quand: { reglage: "Dither", valeurs: ["aucun"] }, raison: "la graine ne tire que le bruit de dither, et sans dither rien n'est tiré ; dit dans sa documentation" },
   { ou: "tonal-grille·Durée", quand: { reglage: "Mode", valeurs: ["arpege"] }, raison: "en arpège, chaque note dure une croche, et la durée de l'accord n'a plus rien à régler ; dit dans sa documentation" },

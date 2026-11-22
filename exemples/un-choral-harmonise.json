@@ -1,0 +1,168 @@
+{
+  "nodes": [
+    {
+      "id": "note",
+      "type": "atelier",
+      "position": {
+        "x": 40,
+        "y": -420
+      },
+      "width": 980,
+      "height": 360,
+      "data": {
+        "ficheId": "comment",
+        "parametres": {},
+        "nom": "UN CHORAL DE BACH, ET LE MÊME SOPRANO HARMONISÉ PAR LES RÈGLES\n\n« Lire une partition » lit le choral 175 du corpus du DCML, « Jesus, meine Zuversicht », dans sa table de notes (DCMLab/bach_chorales v2.0, CC0) : les quatre voix de Bach.\n\nEn haut, « Vérifier un choral » juge l'harmonisation de Bach. En bas, « Harmoniser à quatre voix » ne garde que le soprano et écrit l'alto, le ténor et la basse selon les règles de l'écriture à quatre voix ; le second « Vérifier un choral » juge ce qu'il a écrit, selon les mêmes règles.\n\n« MusicXML » et « Partition gravée » montrent le choral écrit, et la sortie audio le fait entendre.",
+        "nomEn": "A BACH CHORALE, AND THE SAME SOPRANO HARMONIZED BY THE RULES\n\n« Read a Score » reads chorale 175 of the DCML corpus, « Jesus, meine Zuversicht », from its notes table (DCMLab/bach_chorales v2.0, CC0): Bach's four voices.\n\nAt the top, « Check a Chorale » judges Bach's harmonization. Below, « Harmonize in Four Parts » keeps only the soprano and writes the alto, tenor and bass following the rules of four-part writing; the second « Check a Chorale » judges what it wrote, against the same rules.\n\n« MusicXML » and « Engraved Score » show the written chorale, and the audio output plays it."
+      }
+    },
+    {
+      "id": "lire",
+      "type": "atelier",
+      "position": {
+        "x": 40,
+        "y": 60
+      },
+      "data": {
+        "ficheId": "lire-partition",
+        "parametres": {
+          "Notation": "quarterbeats_all_endings\tduration_qb\tstaff\tvoice\tmidi\ttied\n0\t1.0\t2\t2\t48\t\n0\t1.0\t2\t1\t60\t\n0\t1.0\t1\t2\t64\t\n0\t1.0\t1\t1\t67\t\n1\t0.5\t2\t2\t48\t\n1\t1.0\t2\t1\t55\t\n1\t0.5\t1\t2\t60\t\n1\t1.0\t1\t1\t64\t\n3/2\t0.5\t2\t2\t47\t\n3/2\t0.5\t1\t2\t62\t\n2\t1.0\t2\t2\t45\t\n2\t1.0\t2\t1\t60\t\n2\t1.0\t1\t2\t64\t\n2\t1.0\t1\t1\t69\t\n3\t1.0\t2\t2\t44\t\n3\t1.0\t2\t1\t59\t\n3\t1.0\t1\t2\t64\t\n3\t1.0\t1\t1\t71\t\n4\t0.5\t2\t2\t45\t\n4\t1.0\t2\t1\t57\t\n4\t1.0\t1\t2\t64\t\n4\t1.0\t1\t1\t72\t\n9/2\t0.5\t2\t2\t47\t\n5\t0.5\t2\t2\t48\t\n5\t1.0\t2\t1\t64\t\n5\t1.0\t1\t2\t69\t1\n5\t1.0\t1\t1\t72\t\n11/2\t0.5\t2\t2\t50\t\n6\t2.0\t2\t2\t52\t\n6\t2.0\t2\t1\t64\t\n6\t1.0\t1\t2\t69\t-1\n6\t2.0\t1\t1\t71\t\n7\t1.0\t1\t2\t68\t\n8\t1.0\t2\t2\t53\t\n8\t1.0\t2\t1\t60\t1\n8\t0.5\t1\t1\t69\t\n8\t1.0\t1\t2\t69\t\n17/2\t0.5\t1\t1\t71\t\n9\t1.0\t2\t2\t52\t\n9\t0.5\t2\t1\t60\t-1\n9\t0.5\t1\t2\t67\t\n9\t1.0\t1\t1\t72\t\n19/2\t0.5\t2\t1\t55\t1\n19/2\t0.5\t1\t2\t64\t\n10\t0.5\t2\t2\t47\t\n10\t0.5\t2\t1\t55\t-1\n10\t1.0\t1\t2\t62\t1\n10\t1.0\t1\t1\t67\t\n21/2\t0.5\t2\t2\t43\t\n21/2\t0.5\t2\t1\t59\t\n11\t1.0\t2\t2\t48\t\n11\t0.5\t2\t1\t55\t\n11\t0.5\t1\t2\t62\t-1\n11\t1.0\t1\t1\t64\t\n23/2\t0.5\t2\t1\t52\t\n23/2\t0.5\t1\t2\t55\t\n12\t0.5\t2\t2\t45\t\n12\t0.5\t2\t1\t57\t\n12\t0.5\t1\t2\t60\t\n12\t1.0\t1\t1\t65\t\n25/2\t0.5\t2\t2\t47\t\n25/2\t0.5\t2\t1\t55\t\n25/2\t0.5\t1\t2\t62\t1\n13\t1.0\t2\t2\t48\t\n13\t1.0\t2\t1\t55\t\n13\t0.5\t1\t2\t62\t-1\n13\t1.0\t1\t1\t64\t\n27/2\t0.5\t1\t2\t60\t\n14\t1.0\t2\t2\t41\t\n14\t1.0\t2\t1\t57\t\n14\t1.0\t1\t2\t60\t\n14\t2.0\t1\t1\t62\t\n15\t1.0\t2\t2\t43\t\n15\t0.5\t2\t1\t55\t\n15\t1.0\t1\t2\t59\t\n31/2\t0.5\t2\t1\t53\t\n16\t4.0\t2\t2\t36\t\n16\t4.0\t2\t1\t52\t\n16\t4.0\t1\t2\t55\t\n16\t4.0\t1\t1\t60\t\n20\t0.5\t2\t2\t48\t\n20\t1.0\t2\t1\t55\t\n20\t1.0\t1\t2\t60\t\n20\t1.0\t1\t1\t64\t\n41/2\t0.5\t2\t2\t36\t\n21\t1.0\t2\t2\t48\t\n21\t1.0\t2\t1\t57\t\n21\t1.0\t1\t2\t62\t1\n21\t1.0\t1\t1\t66\t\n22\t1.0\t2\t2\t47\t\n22\t0.5\t2\t1\t59\t\n22\t0.5\t1\t2\t62\t-1\n22\t1.0\t1\t1\t68\t\n45/2\t0.5\t2\t1\t62\t\n45/2\t0.5\t1\t2\t65\t\n23\t0.5\t2\t2\t48\t\n23\t0.5\t2\t1\t60\t\n23\t0.5\t1\t2\t64\t\n23\t1.0\t1\t1\t69\t\n47/2\t0.5\t2\t2\t53\t\n47/2\t0.5\t2\t1\t57\t\n47/2\t0.5\t1\t2\t60\t\n24\t0.5\t2\t2\t50\t\n24\t1.5\t2\t1\t57\t\n24\t0.5\t1\t2\t65\t\n24\t1.0\t1\t1\t71\t\n49/2\t0.5\t2\t2\t47\t\n49/2\t0.5\t1\t2\t62\t\n25\t1.0\t2\t2\t52\t\n25\t0.5\t1\t2\t59\t\n25\t1.0\t1\t1\t71\t\n51/2\t0.5\t2\t1\t56\t\n51/2\t0.25\t1\t2\t64\t\n103/4\t0.25\t1\t2\t62\t\n26\t2.0\t2\t2\t45\t\n26\t2.0\t2\t1\t57\t\n26\t2.0\t1\t2\t60\t\n26\t2.0\t1\t1\t69\t\n28\t0.5\t2\t2\t55\t\n28\t1.0\t2\t1\t62\t\n28\t1.0\t1\t2\t67\t\n28\t1.0\t1\t1\t71\t\n57/2\t0.5\t2\t2\t53\t\n29\t0.5\t2\t2\t52\t\n29\t1.0\t2\t1\t64\t\n29\t1.0\t1\t2\t67\t\n29\t1.0\t1\t1\t72\t\n59/2\t0.5\t2\t2\t50\t\n30\t0.5\t2\t2\t48\t\n30\t1.0\t2\t1\t62\t\n30\t1.0\t1\t2\t67\t\n30\t1.0\t1\t1\t74\t\n61/2\t0.5\t2\t2\t47\t\n31\t0.5\t2\t2\t48\t\n31\t1.0\t2\t1\t60\t\n31\t1.0\t1\t2\t67\t\n31\t1.0\t1\t1\t76\t\n63/2\t0.5\t2\t2\t50\t\n32\t0.5\t2\t2\t53\t\n32\t1.0\t2\t1\t60\t\n32\t0.5\t1\t2\t69\t\n32\t1.5\t1\t1\t74\t\n65/2\t0.5\t2\t2\t50\t\n65/2\t0.5\t1\t2\t65\t\n33\t1.0\t2\t2\t55\t\n33\t1.0\t2\t1\t59\t\n33\t0.5\t1\t2\t62\t\n67/2\t0.25\t1\t2\t67\t\n67/2\t0.5\t1\t1\t72\t\n135/4\t0.25\t1\t2\t65\t\n34\t2.0\t2\t2\t48\t\n34\t2.0\t2\t1\t55\t\n34\t2.0\t1\t2\t64\t\n34\t2.0\t1\t1\t72\t",
+          "Tempo": 80
+        }
+      }
+    },
+    {
+      "id": "juge-bach",
+      "type": "atelier",
+      "position": {
+        "x": 520,
+        "y": -40
+      },
+      "data": {
+        "ficheId": "verifier-choral",
+        "parametres": {}
+      }
+    },
+    {
+      "id": "harmoniser",
+      "type": "atelier",
+      "position": {
+        "x": 520,
+        "y": 300
+      },
+      "data": {
+        "ficheId": "harmoniser-choral",
+        "parametres": {}
+      }
+    },
+    {
+      "id": "juge-regles",
+      "type": "atelier",
+      "position": {
+        "x": 1000,
+        "y": 160
+      },
+      "data": {
+        "ficheId": "verifier-choral",
+        "parametres": {}
+      }
+    },
+    {
+      "id": "musicxml",
+      "type": "atelier",
+      "position": {
+        "x": 1000,
+        "y": 460
+      },
+      "data": {
+        "ficheId": "musicxml",
+        "parametres": {
+          "Titre": "Jesus, meine Zuversicht",
+          "Tempo": 80
+        }
+      }
+    },
+    {
+      "id": "gravure",
+      "type": "atelier",
+      "position": {
+        "x": 1460,
+        "y": 460
+      },
+      "width": 620,
+      "height": 460,
+      "data": {
+        "ficheId": "partition-verovio",
+        "parametres": {}
+      }
+    },
+    {
+      "id": "ecoute",
+      "type": "atelier",
+      "position": {
+        "x": 1000,
+        "y": 820
+      },
+      "data": {
+        "ficheId": "sortie-audio",
+        "parametres": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "lire",
+      "sourceHandle": "out:0",
+      "target": "juge-bach",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e2",
+      "source": "lire",
+      "sourceHandle": "out:0",
+      "target": "harmoniser",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e3",
+      "source": "harmoniser",
+      "sourceHandle": "out:0",
+      "target": "juge-regles",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e4",
+      "source": "harmoniser",
+      "sourceHandle": "out:0",
+      "target": "musicxml",
+      "targetHandle": "in:1",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e5",
+      "source": "musicxml",
+      "sourceHandle": "out:0",
+      "target": "gravure",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    },
+    {
+      "id": "e6",
+      "source": "harmoniser",
+      "sourceHandle": "out:2",
+      "target": "ecoute",
+      "targetHandle": "in:0",
+      "type": "arete-personnalisee"
+    }
+  ],
+  "metas": [],
+  "viewport": {
+    "x": 60,
+    "y": 480,
+    "zoom": 0.55
+  }
+}

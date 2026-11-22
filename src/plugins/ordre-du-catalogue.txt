@@ -444,6 +444,7 @@ magenta-humaniser-groove
 harmoniser-coconet
 lire-partition
 verifier-choral
+harmoniser-choral
 pure-data
 visualisation-songsee
 export-image

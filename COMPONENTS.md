@@ -3,7 +3,7 @@
 > Generated from the live node registry by `src/docs/catalogue-markdown.ts` — do not edit by hand.  
 > Regenerate with `npm run docs:components`.
 
-Attic ships **516 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
+Attic ships **517 components** in **7 categories** and **63 families**. Every name, summary, description and parameter note below is the English text the application itself displays.
 
 ## Contents
 
@@ -15,7 +15,7 @@ Attic ships **516 components** in **7 categories** and **63 families**. Every na
 | [Outputs](#outputs) | 13 | [Export](#export) (5) · [Monitoring](#monitoring) (8) |
 | [Collections](#collections) | 13 | [Analysis](#analysis-1) (2) · [Conversion](#conversion-1) (5) · [Export](#export-1) (5) · [Playback](#playback) (1) |
 | [Meta-components](#meta-components) | 2 | [Boundary](#boundary) (2) |
-| [Other & lab](#other--lab) | 92 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Harmonization](#harmonization) (3) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
+| [Other & lab](#other--lab) | 93 | [Circle](#circle) (14) · [Csound wrapper](#csound-wrapper) (10) · [Generation](#generation-2) (7) · [Harmonization](#harmonization) (4) · [Installation](#installation) (1) · [Learning](#learning) (2) · [Magenta](#magenta) (7) · [Multichannel](#multichannel) (6) · [Speech to Text](#speech-to-text) (5) · [Test zone](#test-zone) (4) · [Text](#text-2) (16) · [Theory](#theory) (10) · [Video](#video) (7) |
 
 ## How to read this catalog
 
@@ -11251,6 +11251,7 @@ Sonifies the colored shapes of a drawing image (Kandinsky style). The node first
 |---|---|
 | [Check a Chorale](#check-a-chorale) | Checks a four-voice chorale against the rules of four-part writing, and names every fault at its bar and beat. |
 | [Harmonize (Coconet)](#harmonize-coconet) | Harmonizes a melody in four voices with a network trained on Bach's chorales. |
+| [Harmonize in Four Parts](#harmonize-in-four-parts) | Writes the alto, tenor and bass under a soprano, following the rules of four-part writing. |
 | [Read a Score](#read-a-score) | Reads a MusicXML, MEI, Humdrum or ABC score, or a DCML notes table, and returns a sequence with one voice per staff layer. |
 
 #### Check a Chorale
@@ -11295,6 +11296,31 @@ This component harmonizes a melody in four voices, soprano, alto, tenor and bass
 | Iterations | slider | 96 | 8 – 256, step 1 | The number of passes of the draw. More bring the voices into better agreement, at the cost of a longer computation. |
 | Tie repeated notes | checkbox | 1 | 0 / 1 | Checked, successive cells of the same pitch in a written voice form a single held note. Unchecked, the note is struck again on every quarter note. |
 | Seed | slider | 0 | 0 – 999999, step 1 | Fixes the draws: the same seed gives the same chorale on the same machine. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
+
+#### Harmonize in Four Parts
+
+`harmoniser-choral` · Other & lab → Harmonization
+
+*Writes the alto, tenor and bass under a soprano, following the rules of four-part writing.*
+
+This component writes the alto, tenor and bass under the received melody, which becomes the soprano of a four-voice chorale, following the rules of four-part writing. The melody arrives on the « Sequence » input; only its first voice is read, and it comes out as received. The chorale is built on a grid, one column per step where the soprano sounds. For each column, the chords offered are those of the key that contain the soprano note, and the voicings those that keep the rules of a single column: each voice within the range where ninety-eight hundredths of Johann Sebastian Bach's notes fall in his chorales, no crossing, soprano and alto, alto and tenor within an octave, tenor and bass within a twelfth, the chord provided with its root and its third. A soprano note that no chord of the key contains receives a secondary dominant or a chord borrowed from the parallel mode. Every column and every passage from one column to the next has a cost. Costing most are parallel fifths and octaves, leaps of more than an octave and the augmented second, the doubled leading tone, the unresolved seventh, and an ending that is not the root-position tonic; costing less are direct fifths and octaves, overlaps, awkward leaps, the six-four chord, chromatic fallbacks; every semitone a voice travels costs a little. Every degree costs the negative logarithm of its frequency in Bach's chorales, the tonic and the dominant least, the seventh degree most. The cheapest succession of columns is found exactly, by the Viterbi algorithm (1967), on the chain the columns form, after Moray Allan and Christopher Williams, « Harmonising Chorales by Probabilistic Inference », NIPS 2004. « Scale » and « Tonic » give the key. In minor, the dominant and the leading-tone seventh chord are built on the leading tone, the other chords on the natural minor. « Step » sets the grid: one column per quarter note, or per eighth note. A soprano note shorter than a step passes over the chord of the step where it falls. « Sevenths » says which chords may carry their seventh: none, the dominant alone, or every degree. Under « None », a soprano note that only the seventh of a secondary dominant contains, such as B flat in A minor, still receives it: a column is never left without a chord. « Inversions » lets the bass carry the third, the fifth or the seventh; unchecked, the bass always carries the root. « Temperature » sets the choice. At zero, the chorale is the cheapest one. Above it, every possible chorale is drawn with a probability proportional to the exponential of minus its cost divided by the temperature: at low temperature the best dominate, at high temperature all are alike. « Seed » fixes the draw when the temperature is above zero; at zero, it has no effect. A soprano rest silences the other three voices. A note repeated from one column to the next in the alto, tenor or bass is held. A soprano note too low for an alto to sit under it makes the melody refused, and the message names it with its instant. The « Sequence » output returns the chorale, its four voices named. The « Report » output gives the number of columns, the cost of the chorale, the chords chosen in roman numerals, the number of chromatic fallbacks, and the judgement of the chorale against the same rules: its errors and advisories, each at its bar and beat. The « Audio » output plays the sequence, in local synthesis with a sine timbre. It is computed only when a cable leaves it. To choose the engine, the timbre or the level, connect a listening point.
+
+| Port | Name | Type | |
+|---|---|---|---|
+| input | Sequence | sequence | required |
+| output | Sequence | sequence |  |
+| output | Report | text |  |
+| output | Audio | audio |  |
+
+| Parameter | Type | Default | Values | Description |
+|---|---|---|---|---|
+| Scale | choice | major | major / minor | The mode of the key. In minor, the dominant and the leading-tone seventh chord take the leading tone. |
+| Tonic | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | The tonic of the key, from which the degrees, the leading tone and the cadence are read. |
+| Step | choice | quarter note | quarter note / eighth note | One column per quarter note, or per eighth note. A soprano note shorter than a step passes over the chord of the step where it falls. |
+| Sevenths | choice | Dominant | None / Dominant / All | The chords that may carry their seventh: none, the dominant alone, or every degree. Under « None », a note that only the seventh of a secondary dominant contains still receives it. |
+| Inversions | checkbox | 1 | 0 / 1 | Checked, the bass may carry the third, the fifth or the seventh. Unchecked, it always carries the root. |
+| Temperature | slider | 0 | 0 – 2, step 0.05 | At zero, the cheapest chorale. Above it, every chorale is drawn according to the exponential of minus its cost divided by the temperature. |
+| Seed | slider | 0 | 0 – 999999, step 1 | Fixes the draw when « Temperature » is above zero. At zero, the seed has no effect. A seed left at zero or below is drawn at each run, and the message says which one: putting it back here plays the same result again. |
 
 #### Read a Score
 

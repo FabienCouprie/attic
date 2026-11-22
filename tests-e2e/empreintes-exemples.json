@@ -717,6 +717,39 @@
       },
       "erreurs": []
     },
+    "un-choral-harmonise.json": {
+      "lecteurs": {
+        "harmoniser": {
+          "rms": 0.26249752366926415,
+          "crete": 0.7982080578804016,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 261.70108774312854,
+          "blocs": [
+            "fmt",
+            "fact",
+            "data"
+          ]
+        },
+        "ecoute": {
+          "rms": 0.26249752366926415,
+          "crete": 0.7982080578804016,
+          "trames": 1190700,
+          "canaux": 2,
+          "taux": 44100,
+          "centroide": 261.70108774312854,
+          "blocs": [
+            "fmt",
+            "bext",
+            "fact",
+            "data",
+            "iXML"
+          ]
+        }
+      },
+      "erreurs": []
+    },
     "un-cri-etale-sur-le-clavier.json": {
       "lecteurs": {},
       "erreurs": [

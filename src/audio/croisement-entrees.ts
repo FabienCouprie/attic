@@ -200,6 +200,12 @@ export const ENTREES_PROPRES: Record<string, Record<string, { valeur: () => unkn
       raison: "le son commun n'a que deux ou trois pics par trame : quinze harmoniques de 1 500 Hz, espacés de 4 dB, donnent au plafond de partiels et au seuil de quoi écarter, et restent saillants jusqu'à la fenêtre de 256 points, où ceux de 440 Hz se confondaient et où ceux de 1 000 Hz n'étaient pas dix",
     },
   },
+  "harmoniser-choral": {
+    Séquence: {
+      valeur: () => ({ ...lireTableDcml(TABLE_175, 60).sequence, notes: lireTableDcml(TABLE_175, 60).sequence.notes.filter((n) => n.voix === 0) }),
+      raison: "la séquence commune est une gamme de do, sous laquelle loin de do chaque note prend le même repli et les septièmes comme les renversements se confondent : le soprano du choral 175 de Bach a des notes répétées, des cadences et des degrés que chaque réglage départage",
+    },
+  },
   "verifier-choral": {
     Séquence: {
       valeur: () => lireTableDcml(TABLE_175, 60).sequence,

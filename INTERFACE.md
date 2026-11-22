@@ -18,7 +18,7 @@ modification touche sans qu'on l'ait voulu. Une ligne qui change ici est un comp
 - **Lecteur générique** : `non` veut dire qu'une vue de ce composant déclare porter elle-même un
   moyen d'écouter, et que le nœud retire donc le sien.
 
-**516 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
+**517 composants**, dont **100** avec une vue propre et **7** sans lecteur générique.
 
 ## Les composants habillés d'une vue
 
@@ -327,6 +327,7 @@ Ils reçoivent l'habillage ordinaire : le lecteur audio générique, le message,
 | Hard panner | `hard-panner` | 240 × 118 |
 | Harmonie négative | `harmonie-negative` | 240 × 162 |
 | Harmonie spectrale | `harmonie-spectrale` | 240 × 162 |
+| Harmoniser à quatre voix | `harmoniser-choral` | 240 × 162 |
 | Harmoniser (Coconet) | `harmoniser-coconet` | 240 × 162 |
 | Harmonizer / Octaver | `harmonizer` | 240 × 162 |
 | Haut-parleur rotatif | `haut-parleur-rotatif` | 240 × 206 |

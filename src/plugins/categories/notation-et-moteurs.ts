@@ -31,6 +31,7 @@ import { fiches as f_magenta } from "../magenta";
 import { fiches as f_harmoniser_coconet } from "../harmoniser-coconet";
 import { fiches as f_lire_partition } from "../lire-partition";
 import { fiches as f_verifier_choral } from "../verifier-choral";
+import { fiches as f_harmoniser_choral } from "../harmoniser-choral";
 import { fiches as f_pure_data } from "../pure-data";
 import { fiches as f_songsee } from "../songsee";
 
@@ -60,6 +61,7 @@ export const fiches = [
   ...f_harmoniser_coconet,
   ...f_lire_partition,
   ...f_verifier_choral,
+  ...f_harmoniser_choral,
   ...f_pure_data,
   ...f_songsee,
 ] as FicheAudio[];
