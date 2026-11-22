@@ -1,10 +1,10 @@
-// audio/theorie-romains.ts — Normalisation des chiffres romains avant Tonal.
+// audio/theorie-romains.ts — Les chiffres romains et les symboles d'accords, pour les nœuds qui les développent.
 //
 // Placé ici (et non dans un fichier plugins/*) pour que plusieurs plugins
 // puissent l'importer via "../audio/..." sans créer de dépendance croisée
-// entre fichiers de plugins — même raison que GAMMES_MELODIE_* dans
+// entre fichiers de plugins ; même raison que GAMMES_MELODIE_* dans
 // audio/generation.ts.
-import { Progression, RomanNumeral } from "tonal";
+import { estChiffreRomain, lireChiffreRomain } from "./lecture-romains";
 import { symbolesInconnus } from "./symboles-accords";
 
 /**
@@ -26,100 +26,51 @@ export function accordsInconnus(accords: readonly string[]): string[] {
   return symbolesInconnus(accords);
 }
 
-/**
- * Tonal LIT la casse d'un chiffre romain (`RomanNumeral.get("vi").major` vaut
- * bien `false`) mais ne la reporte PAS sur le type d'accord : `chordType` reste
- * vide et `Progression.fromRomanNumerals` construit alors une triade MAJEURE.
- * « vi » en do majeur donnait ainsi La majeur (A C# E) au lieu du relatif
- * mineur (A C E) — une faute d'harmonie silencieuse, puisque aucun message
- * n'est émis et que l'accord produit reste parfaitement valide.
- *
- * On explicite donc le « m » quand le chiffre est en minuscules ET qu'aucun
- * type n'est déjà précisé : « vi7 » ou « vii° » portent leur propre qualité et
- * sont laissés intacts.
- */
-export function normaliserRomains(tokens: string[]): string[] {
-  return tokens.map((t) => {
-    const rn = RomanNumeral.get(t);
-    if (rn.empty || rn.major || rn.chordType) return t;
-    return t + "m";
-  });
-}
-
-/**
- * Vrai quand chaque jeton est un chiffre romain que Tonal lit : « V7 », « ii° », « bVII » compris.
- *
- * LES GRAVEURS VEXFLOW NE REGARDAIENT QUE LE PREMIER JETON, et n'y voulaient que des I et des V : une
- * progression qui commençait par « V7 », « ii° » ou « bVII » était prise pour des symboles d'accords,
- * puis refusée comme inconnue. Mesuré le 2026-11-22, revue des notations en texte. Une progression
- * mêlée de romains et de symboles reste lue comme des symboles, et ses romains sont nommés inconnus.
- */
-export function estProgressionRomaine(tokens: readonly string[]): boolean {
-  return tokens.length > 0 && tokens.every((t) => !RomanNumeral.get(t).empty);
-}
-
-/**
- * Les jetons qui ne sont pas un chiffre romain que Tonal lit : « X », « V/V ».
- *
- * `Progression.fromRomanNumerals` rend une chaîne vide pour un tel jeton, et le nœud écrivait « C  G »
- * pour « I X V » : le X disparaissait, et l'espace double disparaissait à son tour chez le lecteur
- * suivant. Mesuré le 2026-11-22, revue des notations en texte ; ces jetons sont refusés et nommés.
- */
-export function romainsInconnus(tokens: readonly string[]): string[] {
-  return tokens.filter((t) => RomanNumeral.get(t).empty);
-}
-
 /** Mode dans lequel les chiffres romains sont lus. */
 export type ModeProgression = "majeur" | "mineur";
 
 /**
- * Degrés dont la FONDAMENTALE descend d'un demi-ton en mineur naturel.
+ * Accords d'une progression en chiffres romains, lus dans le mode demandé ; un chiffre qui ne se lit
+ * pas rend une chaîne vide, que `romainsInconnus` nomme avant.
  *
- * La gamme de la mineur est A B C D E F G : ses degrés III, VI et VII tombent
- * sur do, fa et sol, là où la mineur MAJEURE donnerait do♯, fa♯ et sol♯. Les
- * quatre autres degrés ont la même fondamentale dans les deux modes — seule leur
- * qualité change, et `normaliserRomains` s'en charge depuis la casse.
+ * Point d'entrée unique des nœuds qui développent des chiffres romains (« Progression », « Grille
+ * d'accords », « Accords → Notation MIDI », la Grille et la Partition VexFlow).
+ *
+ * LA LECTURE EST CELLE D'ATTIC DEPUIS LE 2026-11-22 (`lecture-romains.ts`), revue des notations en
+ * texte. Elle passait par Tonal, que deux fonctions d'ici préparaient : `normaliserRomains`
+ * ajoutait le « m » d'une minuscule, `romainsSelonMode` bémolisait III, VI et VII en mineur. La
+ * première laissait « vi7 » intact, au motif qu'il portait sa propre qualité, et Tonal y lisait une
+ * septième de dominante ; la seconde bémolisait aussi « vii° », l'accord de la sensible. Les deux
+ * corrections qu'elles portaient, la casse qui dit la qualité et la mineure naturelle, vivent dans
+ * la nouvelle lecture.
  */
-const DEGRES_ABAISSES_EN_MINEUR = new Set(["III", "VI", "VII"]);
-
-/**
- * Reporte le mode sur les chiffres romains, en bémolisant les degrés qui le
- * demandent.
- *
- * `Progression.fromRomanNumerals` de Tonal résout TOUJOURS les degrés sur la
- * gamme majeure : la casse décide de la qualité de l'accord, jamais de sa
- * fondamentale. En la mineur, « i VI III VII » rendait donc `Am F# C# G#` — la
- * tonique du bon mode, puis trois accords de la mineur majeure. Le défaut était
- * d'autant plus discret que les accords produits sont valides et que la
- * documentation des paramètres recommandait précisément cette écriture.
- *
- * Un degré portant déjà une altération (`bIII`, `#IV`) est laissé tel quel :
- * l'utilisateur a dit ce qu'il voulait, et le bémoliser une seconde fois
- * changerait sa demande.
- */
-export function romainsSelonMode(tokens: string[], mode: ModeProgression): string[] {
-  if (mode !== "mineur") return tokens;
-  return tokens.map((t) => {
-    const rn = RomanNumeral.get(t);
-    if (rn.empty || rn.acc !== "") return t;
-    return DEGRES_ABAISSES_EN_MINEUR.has(rn.roman.toUpperCase()) ? `b${t}` : t;
-  });
+export function accordsDepuisRomains(tonique: string, tokens: string[], mode: ModeProgression = "majeur"): string[] {
+  return tokens.map((t) => lireChiffreRomain(t, tonique, mode) ?? "");
 }
 
 /**
- * Accords d'une progression en chiffres romains, lus dans le mode demandé.
+ * Vrai quand chaque jeton est un chiffre romain que la lecture sait lire : « V7 », « ii° », « bVII »,
+ * « V65 » et « V/V » compris.
  *
- * Point d'entrée unique des trois nœuds qui développent des chiffres romains
- * (« Progression », « Grille d'accords », « Accords → Notation MIDI ») : ils
- * appelaient chacun Tonal directement, et la correction du mode aurait dû être
- * écrite trois fois.
+ * LES GRAVEURS VEXFLOW NE REGARDAIENT QUE LE PREMIER JETON, et n'y voulaient que des I et des V. La
+ * Grille d'accords regardait le préfixe du premier jeton, « Accords → Notation » s'il y en avait un :
+ * trois réponses à une seule question, que ce prédicat donne désormais à tous, revue des notations
+ * en texte du 2026-11-22. Une progression mêlée de romains et de symboles se lit comme des symboles,
+ * et ses romains y sont nommés inconnus.
  */
-export function accordsDepuisRomains(
-  tonique: string,
-  tokens: string[],
-  mode: ModeProgression = "majeur",
-): string[] {
-  return Progression.fromRomanNumerals(tonique, normaliserRomains(romainsSelonMode(tokens, mode)));
+export function estProgressionRomaine(tokens: readonly string[]): boolean {
+  return tokens.length > 0 && tokens.every(estChiffreRomain);
+}
+
+/**
+ * Les jetons qui ne sont pas un chiffre romain que la lecture sait lire : « X », « V/V/V ».
+ *
+ * La lecture rendait une chaîne vide pour un tel jeton, et le nœud écrivait « C  G » pour « I X V » :
+ * le X disparaissait, et l'espace double disparaissait à son tour chez le lecteur suivant. Mesuré le
+ * 2026-11-22, revue des notations en texte ; ces jetons sont refusés et nommés.
+ */
+export function romainsInconnus(tokens: readonly string[]): string[] {
+  return tokens.filter((t) => !estChiffreRomain(t));
 }
 
 /**

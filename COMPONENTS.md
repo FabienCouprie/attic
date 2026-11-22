@@ -5810,7 +5810,7 @@ Generates a full accompaniment in text-to-MIDI format. Connect its « Notation �
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the grid. The mode is set in « Scale »; the Progression input wins over the setting when it names a key. |
 | Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. |
-| Progression | text | `I V vi IV` |  | Roman numeral progression (uppercase = major chord, lowercase = minor chord). Also accepts a space-separated list of chord symbols (e.g. C Am F G). When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten. |
+| Progression | text | `I V vi IV` |  | Roman numeral progression (uppercase = major chord, lowercase = minor chord; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion; V/V is the dominant of the dominant). Also accepts a space-separated list of chord symbols (e.g. C Am F G). When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten. |
 | Tempo | number | 120 BPM | 40 – 240 BPM, step 1 | Accompaniment tempo. |
 | Duration | number | 1 beats | 0.25 – 4 beats, step 0.25 | Duration of each chord in beats. Has no effect when « Mode » is « Arpeggiated », each note lasting an eighth there. |
 | Octave | number | 3 | 2 – 5, step 1 | Base octave for chords. |
@@ -12217,7 +12217,7 @@ Analyses a chord or passage as a pitch-class set. When a harmony is no longer to
 
 *Generates a chord progression from a key and roman numerals.*
 
-Generates a chord progression from a key and roman numerals. Example: C + I V vi IV → C G Am F. Roman numerals accept uppercase (major chords) and lowercase (minor chords). A numeral the reading does not know, « X » or the secondary dominant « V/V », is refused, and the message names it: nothing is returned.
+Generates a chord progression from a key and roman numerals. Example: C + I V vi IV → C G Am F. Numerals are read the way roman-numeral analysis writes them: - case gives the quality: I major, ii minor; ° diminished, ø half-diminished, + augmented; - inversion figures follow the degree: 6 and 64 for a triad, I6 = C/E; 7, 65, 43 and 42 for a seventh, V65 = G7/B; the seventh of a major chord is dominant, that of a minor chord is minor, ii7 = Dm7; - a chord-symbol suffix may also be written: IVmaj7, V9, Vsus4; the added sixth is written Iadd6; - an accidental, bVII, #iv°, is taken on the major scale; - X/Y is chord X built on degree Y, taken as a tonic: V/V = D, V7/IV = C7, vii°/V = F#°. In minor, III, VI and VII drop a semitone, except the diminished or half-diminished vii, built on the leading tone: vii° = G#° in A. A numeral the reading does not know, « X », is refused, and the message names it: nothing is returned.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -12228,7 +12228,7 @@ Generates a chord progression from a key and roman numerals. Example: C + I V vi
 |---|---|---|---|---|
 | Key | choice | C | C / C# / D / Eb / E / F / F# / G / G# / A / Bb / B | Root note of the progression. The mode is set in « Scale »; the Key input wins over the setting when it names one (« A minor »). |
 | Scale | choice | major | major / minor | Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. Case only decides the chord quality. |
-| Progression | text | `I V vi IV` |  | Roman numeral progression (e.g. I V vi IV, ii V I). Uppercase = major, lowercase = minor; an explicit accidental (bIII, #IV) is kept as written. When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten. |
+| Progression | text | `I V vi IV` |  | Roman numeral progression (e.g. I V vi IV, ii7 V7 Imaj7). Uppercase = major, lowercase = minor; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion (I6 = C/E); V/V is the dominant of the dominant; an explicit accidental (bIII, #IV) is kept as written. When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten. |
 
 #### Rhythm Analysis
 

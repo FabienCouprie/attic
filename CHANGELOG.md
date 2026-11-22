@@ -6,6 +6,24 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LES CHIFFRES ROMAINS SE LISENT SELON L'USAGE : ii7 EST UNE MINEURE SEPTIÈME, vii° EST LA SENSIBLE EN MINEUR, 6, 64, 65, 43, 42 SONT DES RENVERSEMENTS, ET V/V EST LU.** Revue des notations en texte, sixième format, décisions de Fabien du 2026-11-22 : « The leading tone », « Classical inversions », « Read them ».
+  - **Ce qui se passait**, mesuré par `executer` en do majeur et en la mineur, par la Progression, la Grille d'accords et « Accords → Notation » :
+    - « ii7 » rendait D7, une septième de dominante, au lieu de Dm7, et de même « iii7 » et « vi7 » ; le ii de la cadence ii7 V7 Imaj7 sonnait faux ;
+    - en mineur, « vii° » descendait avec VII, G° au lieu de G#° en la, et « vii°7 » G°7 ;
+    - « I6 » rendait la sixte ajoutée C6, « I64 » et « V65 » des symboles illisibles ;
+    - « V/V » et « V7/IV » étaient refusés.
+  - **Ce qui change** : `audio/lecture-romains.ts`, module neuf, est la lecture d'Attic. `accordsDepuisRomains`, `romainsInconnus` et `estProgressionRomaine` (`theorie-romains.ts`) passent par elle, et avec eux la Progression, la Grille, « Accords → Notation » et les graveurs VexFlow.
+    - La casse dit la qualité ; ° diminué, ø demi-diminué, + augmenté.
+    - 6 et 64 renversent une triade ; 7, 65, 43 et 42 une septième, de dominante sur un accord majeur, mineure sur un mineur, diminuée sur un diminué.
+    - Un suffixe de symbole reste permis, maj7, 9, sus4 ; la sixte ajoutée s'écrit add6.
+    - X/Y bâtit X sur le degré Y pris pour tonique.
+    - En mineur, III, VI et VII descendent, sauf le vii diminué, bâti sur la sensible.
+
+    `normaliserRomains` et `romainsSelonMode`, qui préparaient les chiffres pour Tonal, disparaissent. La notice de la Progression et les documentations des deux réglages « Progression » le disent.
+  - **Des tests tenaient le contraire, et le commit le dit** : `plugins/tonal.test.ts` (« vi7 » en A7) et `plugins/accords-vers-notation.test.ts` (« vi7 reste dominante »), écrits avec leurs nœuds en août 2026, décrivaient la lecture de Tonal et non une décision. Ils tiennent Am7. Les cas de `audio/theorie-romains.test.ts` et `plugins/romains-mineurs.test.ts` qui éprouvaient les deux fonctions disparues tiennent les mêmes propriétés par `accordsDepuisRomains`. Dans `plugins/symboles-accords.test.ts`, le refus de « V/V » devient celui de « V/V/V ».
+  - **Le garde**, `plugins/chiffres-romains.test.ts`, tout par `executer` : cinquante-sept chiffres de l'usage, quarante en do majeur, dix-sept en la mineur, chacun lu par la Progression, la Grille et « Accords → Notation », qui doivent rendre les mêmes classes et la même basse. **Vu rouge** sur le code d'avant, 25 cas sur 57 ; puis sur une faute plantée, la sensible abaissée, trois cas tombés.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests des romains, de Tonal, d'« Accords → Notation », de VexFlow, des symboles, des degrés et les gardes des gammes, et les gardes du dépôt touchés, 21 fichiers et 649 cas verts. **Non vérifié dans l'application.**
+
 - **LE TONNETZ, LA PROGRESSION, LA GRILLE ET « ACCORDS → NOTATION » REFUSENT CE QU'ILS NE LISENT PAS, ET LE NOMMENT.** Revue des notations en texte, cinquième format, 2026-11-22, selon la règle « refuser, nommé ».
   - **Ce qui se passait**, mesuré par `executer` :
     - le Tonnetz partait de do majeur pour « Cmaj7 », « Am7 », « Cdim », « H », et aussi pour « D major », qu'il ne lisait pas, sans un mot ;

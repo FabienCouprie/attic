@@ -188,8 +188,8 @@ export const fiches: FicheAudio[] = ([
         docEn: "Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯. Case only decides the chord quality." },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         defautSelon: { reglage: "Gamme", valeurs: { mineur: PROGRESSION_MINEURE } },
-        doc: "Progression en chiffres romains (ex : I V vi IV, ii V I). Majuscules = majeur, minuscules = mineur ; une altération explicite (bIII, #IV) est respectée telle quelle. Quand « Gamme » passe en « mineur », la progression par défaut devient « i VI III VII », écrite pour le mineur ; une progression choisie n'est pas réécrite.",
-        docEn: "Roman numeral progression (e.g. I V vi IV, ii V I). Uppercase = major, lowercase = minor; an explicit accidental (bIII, #IV) is kept as written. When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten.", defautEn: "I V vi IV" },
+        doc: "Progression en chiffres romains (ex : I V vi IV, ii7 V7 Imaj7). Majuscules = majeur, minuscules = mineur ; ° diminué, ø demi-diminué, + augmenté ; 6, 64, 7, 65, 43, 42 disent le renversement (I6 = C/E) ; V/V est la dominante de la dominante ; une altération explicite (bIII, #IV) est respectée telle quelle. Quand « Gamme » passe en « mineur », la progression par défaut devient « i VI III VII », écrite pour le mineur ; une progression choisie n'est pas réécrite.",
+        docEn: "Roman numeral progression (e.g. I V vi IV, ii7 V7 Imaj7). Uppercase = major, lowercase = minor; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion (I6 = C/E); V/V is the dominant of the dominant; an explicit accidental (bIII, #IV) is kept as written. When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten.", defautEn: "I V vi IV" },
     ],
     async executer(ctx) {
       const entree = ctx.entree(0);
@@ -245,8 +245,8 @@ export const fiches: FicheAudio[] = ([
         docEn: "Scale the degrees are read in. In minor, III, VI and VII drop a semitone: « i VI III VII » gives Am F C G in A, not Am F♯ C♯ G♯." },
       { nom: "Progression", nomEn: "Progression", type: "texte", defaut: "I V vi IV",
         defautSelon: { reglage: "Gamme", valeurs: { mineur: PROGRESSION_MINEURE } },
-        doc: "Progression en chiffres romains (majuscules = accord majeur, minuscules = accord mineur). Accepte aussi une liste de symboles séparés par des espaces (ex : C Am F G). Quand « Gamme » passe en « mineur », la progression par défaut devient « i VI III VII », écrite pour le mineur ; une progression choisie n'est pas réécrite.",
-        docEn: "Roman numeral progression (uppercase = major chord, lowercase = minor chord). Also accepts a space-separated list of chord symbols (e.g. C Am F G). When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten.", defautEn: "I V vi IV" },
+        doc: "Progression en chiffres romains (majuscules = accord majeur, minuscules = accord mineur ; ° diminué, ø demi-diminué, + augmenté ; 6, 64, 7, 65, 43, 42 disent le renversement ; V/V est la dominante de la dominante). Accepte aussi une liste de symboles séparés par des espaces (ex : C Am F G). Quand « Gamme » passe en « mineur », la progression par défaut devient « i VI III VII », écrite pour le mineur ; une progression choisie n'est pas réécrite.",
+        docEn: "Roman numeral progression (uppercase = major chord, lowercase = minor chord; ° diminished, ø half-diminished, + augmented; 6, 64, 7, 65, 43, 42 give the inversion; V/V is the dominant of the dominant). Also accepts a space-separated list of chord symbols (e.g. C Am F G). When « Scale » turns to « minor », the default progression becomes « i VI III VII », written for the minor; a chosen progression is not rewritten.", defautEn: "I V vi IV" },
       { nom: "Tempo", nomEn: "Tempo", plage: [40, 240], pas: 1, defaut: 120, unite: "BPM",
         doc: "Tempo de l'accompagnement.", docEn: "Accompaniment tempo." },
       { nom: "Durée", nomEn: "Duration", plage: [0.25, 4], pas: 0.25, defaut: 1, unite: "t", uniteEn: "beats",

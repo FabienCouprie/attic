@@ -105,7 +105,11 @@ describe("nœuds Tonal", () => {
     expect(notation).toContain("C3+E3+G3+B3 1");
     expect(notation).toContain("F3+A3+C4+Eb4 1");
     expect(notation).toContain("G3+B3+D4+F4 1");
-    expect(res.valeurs[1]).toBe("CMaj7 F7 G7 A7");
+    // « vi7 » est une mineure septième, Am7, comme l'usage le lit : la minuscule dit la tierce mineure.
+    // Ce cas tenait « A7 », la septième de dominante que Tonal y lisait, jusqu'au 2026-11-22 (revue des
+    // notations en texte, sixième format) ; il décrivait la lecture de Tonal, et non une décision.
+    expect(notation).toContain("A3+C4+E4+G4 1");
+    expect(res.valeurs[1]).toBe("CMaj7 F7 G7 Am7");
   });
 
   it("tonal-analyse détecte une tonalité C major", async () => {
