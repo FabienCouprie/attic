@@ -6,6 +6,21 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **UN MOTIF DE SÉQUENCEUR NE PORTE QUE CE QUE SA GRILLE ÉCRIT, ET UN CARACTÈRE QUI N'EN VIENT PAS EST REFUSÉ EN LE NOMMANT.** Revue des notations en texte, dixième format, 2026-11-22, quatrième lot : le Séquenceur mélodique, le Séquenceur d'accords et le Séquenceur de batterie avancé.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - une espace prenait une case : « 1000 1000 1000 1000 » décalait d'un pas chaque note après la première ;
+    - un caractère que la grille n'écrit jamais se lisait comme un silence : « 2 » dans le séquenceur mélodique, « x » dans celui de batterie, où « x...x...x...x... » ne jouait rien ;
+    - la notice du séquenceur de batterie disait « 16 ou 32 » pas, quand le réglage offre 8, 16 et 32.
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « Refuse it, named » :
+    - une case que la grille n'écrit pas, 0 et 1, ou de 0 à 9 pour la batterie, fait refuser le motif, une espace comprise. Le message nomme le caractère, l'espace se montrant « ␣ », sa rangée et son pas ;
+    - une rangée plus courte ou plus longue que le nombre de pas se complète ou se coupe toujours, et un motif de l'ancien séquenceur de batterie, cinq pistes de 0 et de 1, se lit toujours ;
+    - les grilles des trois nœuds lisent le motif comme avant pour le dessiner : le refus se fait à l'exécution.
+
+    Les documentations des trois réglages « Motif » le disent, et la notice du séquenceur de batterie dit 8, 16 ou 32 pas.
+  - **Le garde** : `plugins/grilles-sequenceurs.test.ts`, 11 cas.
+    - Vu rouge sur le code d'avant : les 6 refus.
+    - Vu rouge aussi sur une espace de nouveau admise, plantée.
+
 - **LE CRIBLE DE XENAKIS LIT LA NOTATION D'ARIZA, ET UN FRAGMENT QUI NE SE LIT PAS FAIT REFUSER LE CRIBLE EN LE NOMMANT.** Revue des notations en texte, dixième format, 2026-11-22, troisième lot.
   - **Ce qui se passait**, mesuré par `executer`, les degrés retenus lus dans le son :
     - un fragment mal formé était jeté : « 5@0 pouet 7@2 » jouait « 5@0 7@2 », et la documentation le défendait ;

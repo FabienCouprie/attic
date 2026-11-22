@@ -20,6 +20,24 @@ import { FORMES_ONDE_CHOIX, LIBELLES_HERITES_FORMES } from "../audio/timbres";
 import { LIBELLES_HERITES_GAMMES, completer } from "../audio/gammes";
 import { choixFaconAccord, faconDe } from "../audio/facons-accord";
 
+/**
+ * LA PREMIÈRE CASE QUE LA GRILLE N'ÉCRIT PAS, comptée depuis 1. La grille écrit une case par pas et
+ * sépare ses rangées par « | » : une espace y prenait une case et décalait la suite, et un caractère
+ * étranger s'y lisait comme un silence. Décision de Fabien du 2026-11-22, « Refuse it, named », revue
+ * des notations en texte. Une rangée plus courte ou plus longue que le nombre de pas se complète ou se
+ * coupe toujours, au décodage : « Nombre de pas » passe de 16 à 32 sans réécrire le motif.
+ */
+function refusDeGrille(motif: string, cases: RegExp, cle: string) {
+  const rangees = motif.split("|");
+  for (let r = 0; r < rangees.length; r++) {
+    const pas = [...rangees[r]];
+    const c = pas.findIndex((x) => !cases.test(x));
+    // Une espace se montre « ␣ » : écrite telle quelle, elle ne se verrait pas entre ses guillemets.
+    if (c >= 0) return { valeurs: [null, null], erreur: true, message: traduire(cle, /\s/.test(pas[c]) ? "␣" : pas[c], r + 1, c + 1) };
+  }
+  return null;
+}
+
 // LA LISTE VIENT DE LA TABLE, DANS L'ORDRE QUI ÉTAIT LE SIEN. Ses identifiants étaient
 // « pentatonique majeur » et « pentatonique mineur », sans accord et avec une espace : des ALIAS,
 // donc les degrés étaient justes, mais un projet enregistrait une orthographe que le reste du parc
@@ -108,8 +126,8 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_MELO_DEFAUT,
-        doc: "Motif encodé (édité par la grille du composant) : 13 rangées (du grave au aigu) de pas séparées par « | ».",
-        docEn: "Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « | »." },
+        doc: "Motif encodé (édité par la grille du composant) : 13 rangées (du grave au aigu) de pas séparées par « | », chaque pas 0 ou 1. Un caractère que la grille n'écrit pas, une espace comprise, fait refuser le motif, et le message le nomme. Une rangée plus courte que le nombre de pas se complète de silences, et une plus longue se coupe.",
+        docEn: "Encoded pattern (edited via the node grid): 13 rows (low to high pitch) of steps separated by « | », each step 0 or 1. A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut." },
     ],
     async executer(ctx) {
       console.log("[attic] Séquenceur mélodique : exécution démarrée");
@@ -124,7 +142,10 @@ export const fiches: FicheAudio[] = ([
       const timbre = ctx.paramTexte("Timbre", "Triangle");
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
-      const grille = decoderMotifMelodique(ctx.paramTexte("Motif", MOTIF_MELO_DEFAUT), NB_RANGEES_MELO, nbPas);
+      const motif = ctx.paramTexte("Motif", MOTIF_MELO_DEFAUT);
+      const refus = refusDeGrille(motif, /^[01]$/, "msg.sequenceur.case_binaire_var_0_var_1_var_2");
+      if (refus) return refus;
+      const grille = decoderMotifMelodique(motif, NB_RANGEES_MELO, nbPas);
       const { audio, notes } = await rendreSequenceurMelodique(grille, cle, gamme, octave, timbre, tempo, nbPas, swing, mesures, volume);
       const noteCount = grille.reduce((s: number, row: boolean[]) => s + row.filter(Boolean).length, 0);
       const noteBas = nomNotePourRangee(0, cle, gamme, octave);
@@ -176,8 +197,8 @@ export const fiches: FicheAudio[] = ([
         docEn: "Auto = SoundFont if an SF2 file is loaded, else FM. FM = local synthesis. SoundFont = samples." },
       PARAMETRE_INSTRUMENT_SF2,
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_ACCORDS_DEFAUT,
-        doc: "Motif encodé (édité par la grille du composant) : 21 rangées (7 degrés × triade/7e/6e) de pas séparées par « | ». Cliquez une case pour choisir l'accord (ex. C, Cmaj7, C6) à ce pas.",
-        docEn: "Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « | ». Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step." },
+        doc: "Motif encodé (édité par la grille du composant) : 21 rangées (7 degrés × triade/7e/6e) de pas séparées par « | », chaque pas 0 ou 1. Cliquez une case pour choisir l'accord (ex. C, Cmaj7, C6) à ce pas. Un caractère que la grille n'écrit pas, une espace comprise, fait refuser le motif, et le message le nomme. Une rangée plus courte que le nombre de pas se complète de silences, et une plus longue se coupe.",
+        docEn: "Encoded pattern (edited via the node grid): 21 rows (7 degrees × triad/7th/6th) of steps separated by « | », each step 0 or 1. Click a cell to choose the chord (e.g. C, Cmaj7, C6) at that step. A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut." },
     ],
     async executer(ctx) {
       const tempo = ctx.paramNombre("Tempo", 120);
@@ -192,7 +213,10 @@ export const fiches: FicheAudio[] = ([
       const mode: "harmonie" | "arpege" | "roule" = facon === "arpege" || facon === "roule" ? facon : "harmonie";
       const modeSynth = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
-      const grille = decoderMotifAccords(ctx.paramTexte("Motif", MOTIF_ACCORDS_DEFAUT), nbPas);
+      const motif = ctx.paramTexte("Motif", MOTIF_ACCORDS_DEFAUT);
+      const refus = refusDeGrille(motif, /^[01]$/, "msg.sequenceur.case_binaire_var_0_var_1_var_2");
+      if (refus) return refus;
+      const grille = decoderMotifAccords(motif, nbPas);
       const useSf2 = modeSynth === "SoundFont" || (modeSynth === "Automatique" && sf2Chargee());
       const modeAudio = useSf2 ? "SoundFont" : "FM/Oscillateurs";
       console.log(`[attic] Séquenceur d'accords : mode=${modeSynth}, useSf2=${useSf2}, sf2Chargee=${!!sf2Chargee()}, instrument=${instrument}, banque=${banque}, grille=${grille.length}x${grille[0]?.length ?? 0}`);
@@ -225,8 +249,8 @@ export const fiches: FicheAudio[] = ([
         doc: "Nombre de répétitions du motif.", docEn: "Number of pattern repetitions." },
       { nom: "Volume", nomEn: "Volume", plage: [0, 100], defaut: 90, unite: "%" },
       { nom: "Motif", nomEn: "Pattern", type: "texte", defaut: MOTIF_AVANCE_DEFAUT,
-        doc: "Motif encodé (édité par la grille) : 8 lignes de pas séparées par « | », chaque pas 0 (silence) ou de 1 à 9 (vélocité).",
-        docEn: "Encoded pattern (edited via the grid): 8 step rows separated by « | », each step 0 (off) or 1 to 9 (velocity)." },
+        doc: "Motif encodé (édité par la grille) : 8 lignes de pas séparées par « | », chaque pas 0 (silence) ou de 1 à 9 (vélocité). Un caractère que la grille n'écrit pas, une espace comprise, fait refuser le motif, et le message le nomme. Une rangée plus courte que le nombre de pas se complète de silences, et une plus longue se coupe.",
+        docEn: "Encoded pattern (edited via the grid): 8 step rows separated by « | », each step 0 (off) or 1 to 9 (velocity). A character the grid does not write, a space included, makes the pattern refused, and the message names it. A row shorter than the number of steps is filled with rests, and a longer one is cut." },
       { nom: "Graine", graine: true, nomEn: "Seed", plage: [0, 999999], pas: 1, defaut: 42,
         doc: "Graine des rafales de bruit (caisse claire, charley). Valeur par défaut fixe : le même motif doit rendre le même fichier à chaque exécution.",
         docEn: "Seed for the noise bursts (snare, hi-hat). The default is fixed: the same pattern must render the same file on every run." },
@@ -237,7 +261,10 @@ export const fiches: FicheAudio[] = ([
       const swing = ctx.paramNombre("Swing", 0);
       const mesures = ctx.paramNombre("Mesures", 2);
       const volume = ctx.paramNombre("Volume", 90);
-      const grille = decoderMotifVelocite(ctx.paramTexte("Motif", MOTIF_AVANCE_DEFAUT), 8, nbPas);
+      const motif = ctx.paramTexte("Motif", MOTIF_AVANCE_DEFAUT);
+      const refus = refusDeGrille(motif, /^[0-9]$/, "msg.sequenceur.case_velocite_var_0_var_1_var_2");
+      if (refus) return refus;
+      const grille = decoderMotifVelocite(motif, 8, nbPas);
       const buf = await rendreSequenceurBatterieAvance(grille, tempo, nbPas, swing, mesures, volume,
         creerAleatoire(ctx.paramNombre("Graine", 42)));
       // LE MÊME RYTHME, EN MIDI : c'est ce qui permet de changer les sons dessous — kit SFZ,
