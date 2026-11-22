@@ -6,6 +6,47 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LA PARTITION MIDI POSE CHAQUE NOTE À SA PROPRE ATTAQUE, AVEC SA LONGUEUR, DANS LA MÉTRIQUE DU FICHIER, ET LAISSE LA BATTERIE.** Revue des notations en texte, troisième format, décisions de Fabien du 2026-11-22 : « Dots and ties », « Cut into bars » et « Leave channel 9 out ».
+  - **Ce qui se passait**, mesuré par `executer`, en relisant ce que VexFlow dessine :
+    - une durée qui n'était pas simple s'écrivait plus courte, suivie d'un silence : une noire pointée en noire et demi-soupir, une blanche pointée en blanche et soupir, une note de deux rondes en ronde et pause ;
+    - chaque note se posait après la fin écrite de la précédente : un do de 1,75 temps écrit en blanche repoussait d'un temps le ré et le mi qui suivaient ;
+    - la métrique du fichier n'était pas lue, et seize noires se gravaient en une mesure de 16/4 ;
+    - sous « -1 = tous », la batterie du canal 9 se gravait en hauteurs, la grosse caisse en do 2 et la charleston en fa dièse 2.
+  - **Ce qui change** : `midiVersEvenements` (`audio/notation-vexflow.ts`) remplace l'ancien écrivain ; chaque note garde son attaque et sa longueur quantifiées, une note qui déborde sur l'attaque suivante s'arrête à elle, et la mise en mesures l'écrit en valeurs pointées et liées. La portée prend la métrique du fichier, 4/4 à défaut. Sous « tous », le canal 9 n'est pas gravé, et une ligne qui suit le SVG le dit, comme celle du moteur pour une valeur de réglage inconnue ; choisi par son numéro, il l'est. La notice et les documentations de « Canal » et « Quantification » le disent.
+  - **Les deux tests qui appelaient l'ancien écrivain** (`plugins/vexflow.test.ts`, `audio/microtons.test.ts`) tiennent la même chose par le nouveau, jusqu'au jeton que la portée reçoit.
+  - **Le garde**, dans `plugins/vexflow-gravure.test.ts` : cinq rythmes, un fichier en 3/4, la batterie sous « tous » et sous « 9 ». **Vu rouge** sur le code du lot précédent, rétabli le temps de la mesure dans l'arbre de session : 7 cas sur 7.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests VexFlow, des microtons, de Tonal, et les gardes du dépôt touchés, 19 fichiers et 657 cas verts. **Non vérifié dans l'application.**
+
+- **LA GRILLE ET LA PARTITION VEXFLOW LISENT LES CHIFFRES ROMAINS JETON PAR JETON, ET LA GRILLE N'ÉCRIT PLUS CHAQUE ACCORD DEUX FOIS.** Revue des notations en texte, troisième format, 2026-11-22.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - les deux graveurs ne regardaient que le premier jeton, et n'y voulaient que des I et des V ; « V7 I », « ii° V i » et « bVII IV I » étaient pris pour des symboles, puis refusés comme inconnus, alors que la lecture des degrés savait les lire au milieu d'une progression ;
+    - la grille dessinait chaque portée et chaque texte deux fois, à la main puis par la fabrique : huit textes dans le SVG pour quatre accords, l'un sur l'autre.
+  - **Ce qui change** : `estProgressionRomaine` (`audio/theorie-romains.ts`) dit qu'une progression est romaine quand chacun de ses jetons est un chiffre que Tonal lit ; la grille et la partition passent toutes deux par `accordsDeProgression`. Une progression mêlée reste lue comme des symboles, ses romains nommés inconnus. Les notices le disent.
+  - **Hors de ce lot** : `tonal.ts` et `accords-vers-notation.ts` ont chacun leur propre détection ; elles se reverront avec le format des chiffres romains.
+  - **Le garde**, dans `plugins/vexflow-gravure.test.ts` : cinq grilles, dont les textes du SVG sont comptés, et une partition qui commence par « V7 ». **Vu rouge** sur le code d'avant, 6 cas sur 6.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests VexFlow, Tonal et des romains, et les gardes du dépôt touchés, 13 fichiers et 154 cas verts. **Non vérifié dans l'application.**
+
+- **LA TABLATURE VEXFLOW SE DESSINE SUR LES CORDES DE SON INSTRUMENT, ET REFUSE CE QU'ELLE NE SAIT PAS ÉCRIRE EN LE NOMMANT.** Revue des notations en texte, troisième format, 2026-11-22, selon la règle « refuser, nommé ».
+  - **Ce qui se passait**, mesuré par `executer` :
+    - le ukulélé et la basse se dessinaient sur six lignes ;
+    - une corde que l'instrument n'a pas, la 7 d'une guitare, la 5 d'un ukulélé, la corde 0, se dessinait ;
+    - « 6-3+5-2/q » perdait le 5-2, la frette étant lue par `parseInt("3+5")` ;
+    - une durée inconnue ou pointée devenait une noire ;
+    - une tablature de moins de quatre temps rendait l'erreur brute de VexFlow, « IncompleteVoice ».
+  - **Ce qui change** (`lireTablature`, `audio/notation-vexflow.ts`) : la tablature est lue jeton par jeton, les points comptent, et une corde absente, un accord, une durée inconnue ou une forme illisible sont refusés, le message nommant le jeton. La portée a autant de lignes que l'instrument a de cordes, et la voix compte exactement ses temps. Un jeton sans durée vaut une noire, comme avant ; la notice le dit désormais, et le commentaire du code qui l'affirmait à tort est corrigé.
+  - **Le garde**, dans `plugins/vexflow-gravure.test.ts` : six tablatures relues, lignes, positions et longueurs ; cinq refus nommés, sans « RuntimeError ». **Vu rouge** sur le code d'avant, 9 cas sur 11.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests VexFlow et les gardes du dépôt touchés, 16 fichiers et 597 cas verts. **Non vérifié dans l'application.**
+
+- **LA PORTÉE VEXFLOW SE LIT COMME ELLE EST ÉCRITE : LES POINTS, LES MESURES, LES BÉCARRES, ET LES FAUTES NOMMÉES.** Revue des notations en texte, troisième format, décisions de Fabien du 2026-11-22 : « Read dots, refuse the rest » et « Cut into bars ».
+  - **Ce qui se passait**, mesuré par `executer`, en relisant ce que VexFlow dessine :
+    - une durée hors des six devenait une noire, sans un mot : « C4/q. » perdait son point, « C4/h.. » devenait une noire, « C4/8t », « C4/x » et « D4/3 » aussi ;
+    - tout tenait dans une seule mesure de N noires, sans barre : deux rondes en 8/4, seize noires en 16/4 ;
+    - une note naturelle après la même note altérée se gravait sans bécarre, et se lisait donc altérée, sur la portée (« F#4 F4 », « Bb4 B4 »), la partition (« E C », le sol du do majeur lu dièse) et la partition MIDI (do, do dièse, do) ;
+    - « H4/q », « C/q » et « Zorglub » finissaient en « Aucune note valide » ou « Aucune progression valide », sans nommer le jeton.
+  - **Ce qui change** (`audio/notation-vexflow.ts`, module neuf) : la notation est lue jeton par jeton, et une durée, une note ou une forme inconnue est refusée, le message nommant le jeton ; les points se lisent, jusqu'à trois. La portée se coupe en mesures de 4/4 : une note qui franchit la barre y est coupée et liée, la dernière mesure se finit par des silences posés sur les temps, un soupir puis une demi-pause après une noire. Chaque altération se dessine quand elle change ce qui est en vigueur dans la mesure, bécarre compris ; la barre efface tout ; la suite d'une note liée ne redessine rien. La Portée, la Partition et la Partition MIDI passent par là. La Partition refuse un symbole inconnu en le nommant, comme la Grille. Les notices le disent, en français et en anglais.
+  - **Le garde**, `plugins/vexflow-gravure.test.ts`, tout par `executer` : il relit le dessin comme un musicien, altérations portées dans la mesure, effacées à la barre, liaisons prolongeant la note, et compare la lecture à ce qui était écrit, en hauteur, attaque et durée. Seize écritures de la portée, le remplissage d'une mesure, huit refus nommés, quatre partitions, deux partitions MIDI. **Vu rouge** sur le code d'avant, 25 cas sur 31 ; puis sur deux fautes plantées dans l'arbre de session, sans bécarre et sans barre, sept cas tombés pour chacune.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement dans les fichiers touchés ; les tests VexFlow et les gardes du dépôt touchés, 16 fichiers et 586 cas verts. **Non vérifié dans l'application.**
+
 - **UNE LIAISON ABC PORTE L'ALTÉRATION DE SA NOTE À TRAVERS LA BARRE.** Revue des notations en texte, deuxième format, décision de Fabien du 2026-11-22 : « Carry the sharp ».
   - **Ce qui se passait.** « ^F2-|F2 » faisait du second fa un bécarre, la barre effaçant le dièse : la liaison ne prolongeait rien, et depuis l'entrée suivante le morceau était refusé. La norme ABC 2.1 est muette sur ce point ; la gravure tient l'altération sur la note liée.
   - **Ce qui change** (`audio/abc.ts`) : la note qu'une liaison prolonge garde l'altération de la note liée, de même lettre et de même octave, pour elle seule ; la suite de la mesure revient à l'armure. Dans un accord, seule la note liée la porte. Une altération écrite sur la note suivante l'emporte : « ^F2-|=F2 » reste une liaison entre deux hauteurs, refusée.

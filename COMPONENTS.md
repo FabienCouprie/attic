@@ -9780,7 +9780,7 @@ Writes a MIDI file in ABC notation, so that a melody produced here (Groove Box, 
 
 *Displays a musical staff from a MIDI file.*
 
-Generates a musical staff (SVG) from a MIDI file. Connect a MIDI file (output from MIDI Transcriber, MIDI Player, etc.). Parameters: Tempo (0 = detected from MIDI), MIDI channel (-1 = all), rhythmic quantization and clef. The SVG output can be saved with the « SVG Export » node.
+Generates a musical staff (SVG) from a MIDI file. Connect a MIDI file (output from MIDI Transcriber, MIDI Player, etc.). Parameters: Tempo (0 = detected from MIDI), MIDI channel (-1 = all), rhythmic quantization and clef. The staff takes the file's time signature, 4/4 if it declares none, and is cut into bars. Each note is placed at its own onset and keeps its length, written in dotted and tied values; a note that overlaps the next onset stops there, the staff having a single voice, and notes starting together form a chord, which lasts as long as the shortest. Each accidental is drawn when it changes what is in force in the bar, naturals included. Under « all », channel 9, the drums, is not engraved, and the message says so; choosing it by its number engraves it. The SVG output can be saved with the « SVG Export » node.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9790,8 +9790,8 @@ Generates a musical staff (SVG) from a MIDI file. Connect a MIDI file (output fr
 | Parameter | Type | Default | Values | Description |
 |---|---|---|---|---|
 | Tempo | number | 0 BPM | 0 – 300 BPM, step 1 | Tempo used to convert MIDI durations to notation. 0 = detect from MIDI file. |
-| Channel | number | -1 -1 = all | -1 – 15 -1 = all, step 1 | MIDI channel to display (-1 for all channels). |
-| Quantization | choice | 1/16 | 1/4 / 1/8 / 1/16 / 1/32 / 1/1 / 1/2 | Quantization grid resolution. The staff writes plain durations only, from the whole note to the thirty-second: no dotted or triplet grid, for want of a duration to write it. |
+| Channel | number | -1 -1 = all | -1 – 15 -1 = all, step 1 | MIDI channel to display: -1 for all channels except 9, the drums, which the message says were left out. Channel 9 chosen by its number is engraved. |
+| Quantization | choice | 1/16 | 1/4 / 1/8 / 1/16 / 1/32 / 1/1 / 1/2 | Quantization grid resolution. Each note keeps its length, written in dotted and tied values, from the whole note to the thirty-second; there is no triplet grid, for want of a value to write it. |
 | Clef | choice | Treble | Treble / Bass / Alto / Tenor | Staff clef: treble for high voices and instruments, bass for low ones, alto for the viola, tenor for the tenor range. |
 | Width | number | 800 px | 200 – 2000 px, step 10 | SVG width. |
 | Height | number | 200 px | 100 – 800 px, step 10 | SVG height. |
@@ -9825,7 +9825,7 @@ Converts a MIDI file into a MusicXML score, the interchange format read by MuseS
 
 *Displays a chord chart from a list of symbols.*
 
-Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
+Generates a chord chart (SVG) from a list of chord symbols or a roman numeral progression. The text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included; otherwise each token is a chord symbol, and a symbol no chord recognizes is refused, named. Settings: « Measures per line » to control the layout. Connect the « Chords » output of a Tonal node or harmonic analysis. The « SVG » output returns the engraved chart as text, and the « SVG file » output returns the same chart as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9848,7 +9848,7 @@ Generates a chord chart (SVG) from a list of chord symbols or a roman numeral pr
 
 *Displays a simple score from a chord progression.*
 
-Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G). Chords are displayed as block chords on the staff. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
+Generates a simple score (SVG) from a chord progression. Accepts roman numerals (I V vi IV) or chord symbols (C Am F G): the text is read as roman numerals when each of its tokens is one, « V7 », « ii° » and « bVII » included. Chords are displayed as block chords on the staff, a quarter note each, in 4/4 bars, and each accidental is drawn when it changes what is in force in the bar, naturals included. A symbol no chord recognizes is refused, and the message names it. The « SVG » output returns the engraved score as text, and the « SVG file » output returns the same score as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9871,7 +9871,7 @@ Generates a simple score (SVG) from a chord progression. Accepts roman numerals 
 
 *Displays a musical staff from a text notation.*
 
-Generates a musical staff (SVG) from a text notation. Format: note/octave/duration, e.g. « C4/q D4/8 E4/8 F4/q G4/q ». Durations are w, h, q, 8, 16, 32. Chords use +: « C4+E4+G4/q ». The staff is shown in the node. The « SVG » output returns the engraved staff as text, and the « SVG file » output returns the same staff as a file.
+Generates a musical staff (SVG) from a text notation. Format: note/octave/duration, e.g. « C4/q D4/8 E4/8 F4/q G4/q ». Durations are w, h, q, 8, 16, 32, followed by one to three dots for a dotted duration: « C4/q. ». Chords use +: « C4+E4+G4/q ». A rest is written « B4/q/r ». A note without an accidental is natural. The staff is cut into 4/4 bars: a note crossing the bar line is split there and tied, and the last bar ends with rests placed on the beats. Each accidental is drawn when it changes what is in force in the bar, naturals included, and the bar line clears them. A duration, note or form the notation does not know is refused, and the message names the token: nothing is engraved. The staff is shown in the node. The « SVG » output returns the engraved staff as text, and the « SVG file » output returns the same staff as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|
@@ -9892,7 +9892,7 @@ Generates a musical staff (SVG) from a text notation. Format: note/octave/durati
 
 *Displays a tablature from a text notation.*
 
-Generates a tablature (SVG) from a string-fret text notation. Format: « string-fret/duration », e.g. « 6-3/q 5-0/q 5-2/q 4-0/q 5-3/q ». The « Tuning » parameter sets the title (guitar, ukulele, bass). The « SVG » output returns the engraved tablature as text, and the « SVG file » output returns the same tablature as a file.
+Generates a tablature (SVG) from a string-fret text notation. Format: « string-fret/duration », e.g. « 6-3/q 5-0/q 5-2/q 4-0/q 5-3/q ». Durations are the staff's, w, h, q, 8, 16, 32, followed by one to three dots; a token without a duration is a quarter note. The « Tuning » parameter sets the title and the number of lines: six for the guitar, four for the ukulele and the bass. A string the instrument does not have, a chord, an unknown duration or an unreadable form is refused, and the message names the token: nothing is engraved. The « SVG » output returns the engraved tablature as text, and the « SVG file » output returns the same tablature as a file.
 
 | Port | Name | Type | |
 |---|---|---|---|

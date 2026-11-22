@@ -43,6 +43,18 @@ export function normaliserRomains(tokens: string[]): string[] {
   });
 }
 
+/**
+ * Vrai quand chaque jeton est un chiffre romain que Tonal lit : « V7 », « ii° », « bVII » compris.
+ *
+ * LES GRAVEURS VEXFLOW NE REGARDAIENT QUE LE PREMIER JETON, et n'y voulaient que des I et des V : une
+ * progression qui commençait par « V7 », « ii° » ou « bVII » était prise pour des symboles d'accords,
+ * puis refusée comme inconnue. Mesuré le 2026-11-22, revue des notations en texte. Une progression
+ * mêlée de romains et de symboles reste lue comme des symboles, et ses romains sont nommés inconnus.
+ */
+export function estProgressionRomaine(tokens: readonly string[]): boolean {
+  return tokens.length > 0 && tokens.every((t) => !RomanNumeral.get(t).empty);
+}
+
 /** Mode dans lequel les chiffres romains sont lus. */
 export type ModeProgression = "majeur" | "mineur";
 
