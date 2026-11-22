@@ -37,6 +37,40 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
   - **Le garde**, `plugins/partition-verovio.test.ts`, le premier de ce nœud : l'air en do, gravé après un air en sol, en fa, en do bémol ou en do dièse, est celui qu'on grave seul, sans altération, les identifiants que Verovio tire à chaque chargement mis à part. **Vu rouge** sur le code d'avant, une altération de trop dès le premier cas, vert après.
   - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement ; le garde et `audio/verovio.test.ts`, 14 cas.
 
+- **LA GAMME JOUÉE ET LES ACCORDS JOUÉS ÉCRIVENT LA VÉLOCITÉ DANS LEUR SORTIE « NOTATION ».** Revue des notations en texte, décision de Fabien du 2026-11-22.
+  - **Ce qui se passait.** Leur notation n'écrivait pas la vélocité, que le format sait porter : relue par Texte → MIDI, elle rendait la vélocité par défaut, 80. Mesuré à la nuance 90 : 90 jouée, 80 relue, sous chacun des 175 lancers de la Gamme jouée et des 198 des Accords joués.
+  - **Ce qui change** : chaque ligne porte sa vélocité, et les notes d'un même départ partagent la leur. Les deux notices le disent, en français et en anglais ; `COMPONENTS.md` régénéré.
+  - **Le garde**, `plugins/texte-vers-midi.test.ts`, l'aller-retour des deux écrivains, à la nuance 70 : la notation relue redonne le fichier MIDI du nœud, note pour note, hauteur, départ, fin et nuance, sous chaque gamme et chaque sens de la Gamme jouée, sous chaque accord et chaque façon des Accords joués. En roulé, la tenue n'est pas jugée, le format étant séquentiel, ce que la notice dit. **Vu rouge** sur le code d'avant, 175 et 99 écarts, vert après.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement ; le garde et ceux des gammes qui relisent ces sorties, 136 cas.
+
+- **LE ROULÉ DES ACCORDS JOUÉS SONNE ENTIER À SON ÉTALEMENT PAR DÉFAUT.** Revue des notations en texte, décision de Fabien du 2026-11-22.
+  - **Ce qui se passait.** Dans `jouerAccord` (`audio/qualites-accords.ts`), les départs d'un roulé se répartissaient en N − 1 écarts sur l'étalement. À 100 %, le défaut, la dernière voix partait à la fin de l'accord et durait zéro : la notice promettait que l'accord sonne entier à partir du dernier départ, et il ne sonnait jamais entier. C'est la relecture de sa sortie « Notation » qui l'a montré, la durée nulle s'y écrivant « 0.000 ».
+  - **Ce qui change** : chaque voix reçoit une part égale de l'étalement, comme dans l'arpège, et toutes tiennent jusqu'à la fin. À 100 %, l'accord sonne entier pendant sa dernière part. La notice le dit, en français et en anglais ; `COMPONENTS.md` régénéré. Seuls les Accords joués emploient `jouerAccord`, et aucun exemple ni aucune empreinte ne les emploie.
+  - **Le garde**, `audio/qualites-accords.test.ts` : à étalement plein, trois voix partent à 0, 1 et 2 s et tiennent jusqu'à 3 s. Le cas qui attendait des départs à 0, 0,1 et 0,2 s pour un étalement de 0,2 s tenait le défaut : il est réécrit pour la règle décidée. **Vu rouge** sur le code d'avant, vert après.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement ; le fichier des qualités d'accords, 26 cas.
+
+- **TEXTE → MIDI ÉCRIT CHAQUE CHANGEMENT DE TEMPO DANS SON FICHIER MIDI.** Revue des notations en texte, décision de Fabien du 2026-11-22.
+  - **Ce qui se passait.** Un « Tempo » en cours de texte changeait bien les secondes, mais le fichier ne portait que le dernier tempo. Sur « Tempo 120 / C4 1 / Tempo 60 / D4 1 », le do, d'un temps à 120 BPM, s'y écrivait comme un demi-temps à 60, et le message annonçait 60 BPM.
+  - **Ce qui change** : `notesVersFichierMidi` (`audio/midi-ecriture.ts`) reçoit une carte des tempos, facultative, écrit un `setTempo` à chaque changement, et convertit les instants en ticks segment par segment. Sans carte, le fichier est celui d'avant : c'est le cas des trente-cinq autres appelants. Le message dit les tempos, « 120 → 60 BPM ». Le lecteur MIDI du dépôt (`analyserMidi`) suivait déjà une carte des tempos, si bien que le son rendu depuis le fichier reste juste.
+  - **Le garde**, `plugins/texte-vers-midi.test.ts` : deux `setTempo`, au tick 0 et au tick 480, et chaque note dure 480 ticks, un temps, comme ses secondes le disent. **Vu rouge** sur le code d'avant, un seul tempo, vert après.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement ; le garde, celui du silence de tête et les tests MIDI, 122 cas.
+
+- **TEXTE → MIDI REFUSE UN TEXTE FAUTIF EN NOMMANT CHAQUE LIGNE, ET LIT LES DOUBLES ALTÉRATIONS ET LES FRACTIONS.** Revue des notations en texte, premier format, décisions de Fabien du 2026-11-22.
+  - **Ce qui se passait.** Le lecteur vivait dans la fiche, sans aucun test, et remplaçait ou jetait en silence tout ce qui sortait du cas simple. Mesuré par `executer` :
+    - « BPM 120 » en tête donnait une minute de silence avant la première note ;
+    - « Bbb4 » disparaissait de la septième diminuée « C4+Eb4+Gb4+Bbb4 », et « C##4 », « Cx4 » ou « A9 » de même ;
+    - « H4 » devenait un silence ;
+    - « 1/2 » et « 0 » valaient un temps entier, et « -1 » faisait reculer le temps ;
+    - une vélocité « 0 » ou illisible devenait 80, et « 200 » devenait 127.
+  - **Ce qui change** (`audio/notation-texte.ts`, module neuf, `lireNotationTexte`) :
+    - un texte qui porte une ligne fautive est refusé en entier, et le message nomme chaque ligne, son numéro, son texte et sa raison : note illisible ou hors du clavier, durée illisible, nulle ou négative, vélocité hors de 1 à 127, tempo illisible ou nul, mot en trop ;
+    - les doubles altérations (« ## », « x », « bb ») et les durées en fraction se lisent ;
+    - un commentaire peut suivre les mots d'une ligne.
+  - **La notice le dit**, en français et en anglais. Elle perd au passage « Idéal branché après un composant IA », que le contrat des notices proscrit. `COMPONENTS.md` et `DEPENDANCES-AUDIO.md` régénérés.
+  - **La valeur d'essai de la notation** (`audio/valeurs-essai.ts`) tenait sur une seule ligne, dont l'ancien lecteur ne tirait qu'un do ; elle en compte cinq.
+  - **Le garde**, `plugins/texte-vers-midi.test.ts`, le premier de ce nœud, tout par `executer` : les dix cas du contrat de la notice, les quatre écritures nouvelles, et les douze refus, chacun nommant sa ligne et son mot fautif. **Vu rouge** sur le code d'avant : les dix-sept cas neufs tombaient, les dix du contrat passaient ; vert après.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement ; le garde, les voisins du nœud, `src/docs`, les deux gardes d'i18n et les tests des valeurs d'essai, 57 fichiers et plus de mille cas verts.
+
 - **LES CINQ NŒUDS QUI DÉPENDENT D'UNE GAMME SANS RÉGLAGE DE GAMME ONT LEUR GARDE**, demandé par Fabien le 2026-11-22. L'inventaire du registre ne les voit pas, n'ayant pas de réglage « Gamme » ; les mesurer complète les 41 nœuds du contrôle des gammes.
   - **Mesurés justes par `executer`**, et tenus dans `docs/gammes-tenues-tous.test.ts` :
     - la Gamme, sous les douze toniques et les sept modes : 84 sur 84, les degrés du mode sur la tonique, sept lettres distinctes ;

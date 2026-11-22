@@ -280,7 +280,10 @@ export function jouerAccord(
     const pas = empan / n;
     return notes.map((note, i) => ({ note, velocite, debut: i * pas, fin: (i + 1) * pas }));
   }
-  // Roulé : N départs, donc N − 1 écarts, et toutes les notes tiennent jusqu'à la fin.
-  const pas = n > 1 ? empan / (n - 1) : 0;
-  return notes.map((note, i) => ({ note, velocite, debut: i * pas, fin: Math.max(duree, i * pas) }));
+  // Roulé : chaque voix a sa part de l'empan, comme dans l'arpège, et toutes tiennent jusqu'à la fin.
+  // LE DERNIER DÉPART TOMBE AVANT LA FIN, décision de Fabien du 2026-11-22 : les départs se
+  // répartissaient en N − 1 écarts sur l'empan, si bien qu'à l'étalement plein, le défaut, la dernière
+  // voix partait à la fin de l'accord et durait zéro ; l'accord ne sonnait jamais entier.
+  const pas = empan / n;
+  return notes.map((note, i) => ({ note, velocite, debut: i * pas, fin: duree }));
 }
