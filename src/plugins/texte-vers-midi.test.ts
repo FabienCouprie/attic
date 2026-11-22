@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
 import { notesDuMidi } from "../audio/midi";
+import { parseMidi } from "midi-file";
 
 const fiche = registre.trouverDef("texte-vers-midi") as unknown as FicheLancable;
 
@@ -52,6 +53,25 @@ describe("les écritures que la notice nomme depuis le 2026-11-22", () => {
     const { r, notes } = await rendu(texte);
     expect(r.erreurRendue, r.message).toBe(false);
     expect(notes).toEqual(attendu);
+  });
+});
+
+describe("UN TEMPO EN COURS DE TEXTE S'ÉCRIT DANS LE FICHIER, à son instant", () => {
+  it("deux tempos, et chaque note dure son temps en ticks comme en secondes", async () => {
+    // Décision de Fabien du 2026-11-22. Le fichier ne portait que le dernier tempo : les secondes
+    // restaient justes, mais un temps à 120 BPM s'y écrivait comme un demi-temps à 60.
+    const { r, notes } = await rendu("Tempo 120\nC4 1\nTempo 60\nD4 1");
+    expect(notes).toEqual([[60, 0, 0.5, 80], [62, 0.5, 1.5, 80]]);
+    const midi = parseMidi(new Uint8Array(await (r.valeurs[1] as File).arrayBuffer()));
+    const evenements: { tick: number; type: string; microsecondsPerBeat?: number; noteNumber?: number }[] = [];
+    for (const piste of midi.tracks) {
+      let tick = 0;
+      for (const e of piste) { tick += e.deltaTime; evenements.push({ ...(e as object), tick } as never); }
+    }
+    expect(evenements.filter((e) => e.type === "setTempo").map((e) => [e.tick, e.microsecondsPerBeat])).toEqual([[0, 500000], [480, 1000000]]);
+    expect(evenements.filter((e) => e.type === "noteOn").map((e) => [e.noteNumber, e.tick])).toEqual([[60, 0], [62, 480]]);
+    expect(evenements.filter((e) => e.type === "noteOff").map((e) => [e.noteNumber, e.tick])).toEqual([[60, 480], [62, 960]]);
+    expect(r.message).toContain("120 → 60");
   });
 });
 

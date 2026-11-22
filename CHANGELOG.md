@@ -6,6 +6,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **TEXTE → MIDI ÉCRIT CHAQUE CHANGEMENT DE TEMPO DANS SON FICHIER MIDI.** Revue des notations en texte, décision de Fabien du 2026-11-22.
+  - **Ce qui se passait.** Un « Tempo » en cours de texte changeait bien les secondes, mais le fichier ne portait que le dernier tempo. Sur « Tempo 120 / C4 1 / Tempo 60 / D4 1 », le do, d'un temps à 120 BPM, s'y écrivait comme un demi-temps à 60, et le message annonçait 60 BPM.
+  - **Ce qui change** : `notesVersFichierMidi` (`audio/midi-ecriture.ts`) reçoit une carte des tempos, facultative, écrit un `setTempo` à chaque changement, et convertit les instants en ticks segment par segment. Sans carte, le fichier est celui d'avant : c'est le cas des trente-cinq autres appelants. Le message dit les tempos, « 120 → 60 BPM ». Le lecteur MIDI du dépôt (`analyserMidi`) suivait déjà une carte des tempos, si bien que le son rendu depuis le fichier reste juste.
+  - **Le garde**, `plugins/texte-vers-midi.test.ts` : deux `setTempo`, au tick 0 et au tick 480, et chaque note dure 480 ticks, un temps, comme ses secondes le disent. **Vu rouge** sur le code d'avant, un seul tempo, vert après.
+  - **Vérifié** : `npx tsc -b` vert ; `npx oxlint` sans avertissement ; le garde, celui du silence de tête et les tests MIDI, 122 cas.
+
 - **TEXTE → MIDI REFUSE UN TEXTE FAUTIF EN NOMMANT CHAQUE LIGNE, ET LIT LES DOUBLES ALTÉRATIONS ET LES FRACTIONS.** Revue des notations en texte, premier format, décisions de Fabien du 2026-11-22.
   - **Ce qui se passait.** Le lecteur vivait dans la fiche, sans aucun test, et remplaçait ou jetait en silence tout ce qui sortait du cas simple. Mesuré par `executer` :
     - « BPM 120 » en tête donnait une minute de silence avant la première note ;

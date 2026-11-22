@@ -19,6 +19,13 @@ import type { NoteEvenement } from "./midi-sequence";
  * aléatoire » à 100 BPM sonnait 0,60 s après son MIDI, le réservoir musical 0,25 s. Le garde est
  * `midi-silence-de-tete.test.ts`. Un appelant qui veut un fichier qui commence à sa première note le
  * dit lui-même, par `recalerSurPremiereNote`.
+ *
+ * `tempos`, LES CHANGEMENTS DE TEMPO À LEUR INSTANT EN SECONDES, s'écrivent chacun comme un
+ * `setTempo`, et les instants se convertissent en ticks segment par segment : un temps dure alors
+ * un temps, en ticks comme en secondes, de part et d'autre d'un changement. Revue des notations en
+ * texte, décision de Fabien du 2026-11-22 : la notation texte peut changer de tempo en cours de
+ * route, et le fichier n'en portait que le dernier. Sans `tempos`, le fichier est celui d'avant, au
+ * tempo `tempoBpm` seul ; c'est le cas des trente-cinq autres appelants.
  */
 export function notesVersFichierMidi(
   notes: NoteEvenement[],
@@ -26,14 +33,26 @@ export function notesVersFichierMidi(
   canal = 0,
   banque?: number,
   programme?: number,
+  tempos?: readonly { debut: number; bpm: number }[],
 ): File {
   const tpm = 480;
-  const microsecParBeat = (60 / tempoBpm) * 1_000_000;
+  const carte = [...(tempos ?? [])].filter((t) => t.bpm > 0 && t.debut >= 0).sort((a, b) => a.debut - b.debut);
+  if (!carte.length || carte[0].debut > 0) carte.unshift({ debut: 0, bpm: tempoBpm });
 
-  function secEnTicks(sec: number): number { return Math.round((sec / 60) * tempoBpm * tpm); }
+  // Segment par segment : chaque tempo vaut de son instant jusqu'au suivant. Un instant négatif se
+  // convertit au premier tempo, comme avant, et la boucle des notes le rogne à zéro.
+  function secEnTicks(sec: number): number {
+    if (sec <= 0) return Math.round((sec / 60) * carte[0].bpm * tpm);
+    let ticks = 0;
+    for (let i = 0; i < carte.length && sec > carte[i].debut; i++) {
+      const fin = i + 1 < carte.length ? Math.min(sec, carte[i + 1].debut) : sec;
+      ticks += ((fin - carte[i].debut) / 60) * carte[i].bpm * tpm;
+    }
+    return Math.round(ticks);
+  }
 
   const lignes: { tick: number; type: string; [key: string]: any }[] = [
-    { tick: 0, type: "setTempo", microsecondsPerBeat: microsecParBeat },
+    ...carte.map((t) => ({ tick: secEnTicks(t.debut), type: "setTempo", microsecondsPerBeat: (60 / t.bpm) * 1_000_000 })),
     { tick: 0, type: "timeSignature", numerator: 4, denominator: 4, channel: canal },
   ];
 

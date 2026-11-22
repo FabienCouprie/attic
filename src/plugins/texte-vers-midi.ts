@@ -68,14 +68,13 @@ export const fiches: FicheAudio[] = ([
       const { notes, tempos, fautes } = lireNotationTexte(texte, ctx.paramNombre("Tempo", 120));
       if (fautes.length) return { valeurs: [null, null], erreur: true, message: direLesFautes(fautes) };
       if (notes.length === 0) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_note_reconnue_format_attendu_c4_0_5_par_ligne") };
-      const tempo = tempos[tempos.length - 1].bpm;
-      const midiFichier = notesVersFichierMidi(notes, tempo);
+      const midiFichier = notesVersFichierMidi(notes, tempos[0].bpm, 0, undefined, undefined, tempos);
       const mode = normaliserModeSynthèse(ctx.paramTexte("Synthèse", "Automatique"));
       const { programme: instrument, banque } = decoderInstrumentSF2(ctx.paramNombre("Instrument", 0));
       const modeRendu: "FM/Oscillateurs" | "SoundFont" = mode === "SoundFont" || (mode === "Automatique" && sf2Chargee()) ? "SoundFont" : "FM/Oscillateurs";
       const audio = await rendreMidi(midiFichier, modeRendu, ctx.paramNombre("Volume", 80), instrument, banque);
       const midiFinal = await appliquerInstrumentMidi(midiFichier, ctx.paramNombre("Instrument", 0));
-      return { valeurs: [audio, midiFinal], message: traduire("msg.var_0_note_s_var_1_bpm_var_2_s", notes.length, tempo, audio.duration.toFixed(1)) };
+      return { valeurs: [audio, midiFinal], message: traduire("msg.var_0_note_s_var_1_bpm_var_2_s", notes.length, tempos.map((t) => t.bpm).join(" → "), audio.duration.toFixed(1)) };
    },
   }),
 ] as FicheAudio[]).map(avecDoc);
