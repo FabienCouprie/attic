@@ -15,6 +15,7 @@ import "node-web-audio-api/polyfill.js";
 import { describe, expect, it } from "vitest";
 import { registre } from "../audio/adaptateur";
 import { lancerFiche, type FicheLancable } from "../audio/lancer-fiche";
+import { notesVersFichierMidi } from "../audio/midi-ecriture";
 import { lireGravure, type NoteLue } from "./partition-lue";
 
 const F = (id: string) => registre.trouverDef(id) as unknown as FicheLancable;
@@ -126,5 +127,39 @@ describe("LA POLYPHONIE S'ÉCRIT EN VOIX, ET AUCUNE NOTE NE SE PERD", () => {
     expect(trier(r.notes)).toEqual(trier(notes));
     expect(r.xml).toContain("<chord/>");
     expect(r.xml).not.toContain("<backup>");
+  }, 60_000);
+});
+
+// LE TEMPO ET LES REFUS, quatrième lot. Une séquence ou un fichier MIDI porte son tempo, et le réglage le
+// remplaçait : une séquence à 90 se quantifiait à 120, et ses noires se lisaient en valeurs fausses. Décision
+// de Fabien du 2026-11-22, « The input's tempo ». Les refus partaient sans le drapeau d'erreur.
+describe("LE TEMPO DE L'ENTRÉE L'EMPORTE, ET LES REFUS SONT DES ERREURS", () => {
+  const A90: NoteLue[] = [[60, 0, 2 / 3], [62, 2 / 3, 4 / 3], [64, 4 / 3, 8 / 3]];
+  const LU: NoteLue[] = [[60, 0, 1], [62, 1, 2], [64, 2, 4]];
+
+  it("une séquence à 90 se lit à 90, quel que soit « Tempo »", async () => {
+    const r = await graver([null, { ...sequence(A90), tempo: 90 }, null], { Tempo: 120 });
+    expect(r.notes).toEqual(LU);
+  }, 60_000);
+
+  it("un fichier MIDI à 90 se lit à 90, quel que soit « Tempo »", async () => {
+    const midi = notesVersFichierMidi(A90.map(([note, debut, fin]) => ({ note, debut, fin, velocite: 90 })), 90);
+    const r = await graver([midi, null, null], { Tempo: 120 });
+    expect(r.notes).toEqual(LU);
+  }, 60_000);
+
+  it("une séquence sans tempo prend « Tempo »", async () => {
+    const r = await graver([null, { notes: sequence(LU).notes }, null], { Tempo: 60 });
+    expect(r.notes).toEqual(LU);
+  }, 60_000);
+
+  it.each([
+    ["rien en entrée", [null, null, null], /MIDI/],
+    ["une séquence vide", [null, sequence([]), null], /^(?!.*MIDI)/],
+  ] as [string, unknown[], RegExp][])("refuse en erreur %s", async (_titre, entrees, message) => {
+    const r = await lancerFiche(F("musicxml"), {}, { entrees });
+    expect(r.erreurRendue, r.message).toBe(true);
+    expect(r.valeurs).toEqual([null, null]);
+    expect(r.message).toMatch(message);
   }, 60_000);
 });

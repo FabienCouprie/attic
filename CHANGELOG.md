@@ -6,6 +6,20 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE MUSICXML PREND LE TEMPO QUE PORTE SON ENTRÉE, ET SES REFUS SONT DES ERREURS.** Revue des notations en texte, douzième format, 2026-11-22, quatrième lot.
+  - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure :
+    - sur le chemin d'une seule portée, une séquence ou un fichier MIDI à 90 se quantifiait au réglage « Tempo », 120 par défaut. Ses noires se lisaient en cinq doubles croches. Le chemin à plusieurs portées prenait, lui, le tempo de la séquence ;
+    - une entrée absente, une séquence vide et un arbre sans mesure donnaient leur message sans le drapeau d'erreur ;
+    - une séquence vide était annoncée « Le fichier MIDI ne contient aucune note ».
+  - **Ce qui change**, selon la décision de Fabien du 2026-11-22, « The input's tempo » :
+    - le tempo d'une séquence, ou celui qu'écrit un fichier MIDI, lu par `lireMidiEnSequence`, l'emporte, et le réglage ne sert qu'à défaut. Le chemin de l'arbre écrit aussi celui de la séquence qui le porte ;
+    - les refus portent le drapeau d'erreur, et une séquence vide dit « Aucune note fournie ».
+
+    La documentation de « Tempo » et la notice le disent.
+  - **Le garde** : 5 cas de plus dans `plugins/musicxml-grave.test.ts`, qui en compte 27.
+    - Vu rouge sur le code d'avant : 4 cas ; la séquence sans tempo prenait déjà le réglage.
+    - Vu rouge aussi sur le réglage qui l'emporte de nouveau, planté.
+
 - **LA POLYPHONIE D'UN MIDI S'ÉCRIT EN VOIX DANS LE MUSICXML, ET AUCUNE NOTE NE SE PERD.** Revue des notations en texte, douzième format, 2026-11-22, troisième lot.
   - **La référence** : dans le référentiel MusicXML 4.0, `<backup>` et `<forward>` sont « required to coordinate multiple voices in one part ».
   - **Ce qui se passait**, mesuré par `executer`, gravé et relu sur la gravure. Les notes étaient groupées par attaque :

@@ -82,8 +82,8 @@ export const fiches: FicheAudio[] = ([
       { nom: "Titre", nomEn: "Title", type: "texte", defaut: "Attic", defautEn: "Attic",
         doc: "Titre inscrit dans la partition.", docEn: "Title written into the score." },
       { nom: "Tempo", nomEn: "Tempo", type: "nombre", plage: [20, 300], pas: 1, defaut: 120, unite: "BPM",
-        doc: "Tempo servant à convertir les secondes en valeurs de note. Un tempo faux ne change pas les hauteurs, mais donne des durées fausses.",
-        docEn: "Tempo used to turn seconds into note values. A wrong tempo does not change the pitches, but gives wrong durations." },
+        doc: "Tempo servant à convertir les secondes en valeurs de note, quand l'entrée n'en porte pas : le tempo d'une séquence ou d'un fichier MIDI l'emporte. Un tempo faux ne change pas les hauteurs, mais donne des durées fausses.",
+        docEn: "Tempo used to turn seconds into note values, when the input carries none: the tempo of a sequence or of a MIDI file prevails. A wrong tempo does not change the pitches, but gives wrong durations." },
       { nom: "Métrique", nomEn: "Time signature", type: "choix",
         options: [...METRIQUES], optionsEn: [...METRIQUES],
         optionIds: [...METRIQUES], defaut: "4/4", defautEn: "4/4",
@@ -145,11 +145,11 @@ export const fiches: FicheAudio[] = ([
         } catch (err: any) {
           return { valeurs: [null, null], erreur: true, message: String(err?.message ?? err) };
         }
-        if (mesures.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+        if (mesures.length === 0) return { valeurs: [null, null], erreur: true, message: traduire("msg.aucune_note_fournie") };
         const hauteurs = estSequence(recue) ? recue.notes.map((n) => n.note) : [60];
         const xmlArbre = arbreVersMusicXML(mesures, hauteurs, {
           titre: ctx.paramTexte("Titre", "Attic"),
-          tempo: ctx.paramNombre("Tempo", 120),
+          tempo: (estSequence(recue) ? recue.tempo : undefined) ?? ctx.paramNombre("Tempo", 120),
         });
         const nomA = `${(ctx.paramTexte("Titre", "Attic") || "attic").replace(/[^\w-]+/g, "-")}.musicxml`;
         const nolets = [...xmlArbre.matchAll(/<tuplet type="start"/g)].length;
@@ -164,22 +164,32 @@ export const fiches: FicheAudio[] = ([
       }
       // LA SÉQUENCE PASSE D'ABORD, quand elle est branchée : elle porte les cents que l'autre
       // entrée a déjà perdus, et les reprendre depuis le MIDI reviendrait à les jeter deux fois.
+      // LE TEMPO QUE PORTE L'ENTRÉE L'EMPORTE SUR LE RÉGLAGE, qui ne sert qu'à défaut : une séquence à 90 se
+      // quantifiait à 120, et ses noires se lisaient en valeurs fausses. Le chemin à plusieurs portées le
+      // faisait déjà. Décision de Fabien du 2026-11-22, « The input's tempo », revue des notations en texte.
+      const tempoReglage = ctx.paramNombre("Tempo", 120);
       let notes: { note: number; debut: number; fin: number; velocite: number }[];
+      let tempo = tempoReglage;
       if (estSequence(recue)) {
         notes = recue.notes;
+        tempo = recue.tempo ?? tempoReglage;
       } else if (fichier instanceof File) {
-        const { lireMidi } = await import("../audio");
-        notes = (await lireMidi(fichier)).notes;
+        const { lireMidiEnSequence } = await import("../audio/midi-lecture-sequence");
+        const lu = await lireMidiEnSequence(fichier, -1, tempoReglage);
+        notes = lu.sequence?.notes ?? [];
+        tempo = lu.tempo;
       } else {
-        return { valeurs: [null, null], message: traduire("msg.aucun_fichier_midi_en_entr_e") };
+        return { valeurs: [null, null], erreur: true, message: traduire("msg.aucun_fichier_midi_en_entr_e") };
       }
-      if (notes.length === 0) return { valeurs: [null, null], message: traduire("msg.aucune_note") };
+      if (notes.length === 0) {
+        return { valeurs: [null, null], erreur: true, message: traduire(estSequence(recue) ? "msg.aucune_note_fournie" : "msg.aucune_note") };
+      }
       const [num, den] = ctx.paramTexte("Métrique", "4/4").split("/").map((v: string) => parseInt(v, 10));
       const xml = notesVersMusicXML(
         notes.map((n: any) => ({ note: n.note, debut: n.debut, fin: n.fin, velocite: n.velocite })),
         {
           titre: ctx.paramTexte("Titre", "Attic"),
-          tempo: ctx.paramNombre("Tempo", 120),
+          tempo,
           metrique: [num || 4, den || 4],
           quantification: parseInt(ctx.paramTexte("Quantification", "16"), 10) || 16,
         },
