@@ -124,7 +124,13 @@ export function statistiques(table: TableMarkov): StatsMarkov {
 // ce qui garde distinctes deux entrées voisines — sans quoi la table nommerait pareil deux lignes
 // qu'elle compte à part.
 
-/** La table, lisible : les contextes les plus fréquents et leurs suites. */
+/**
+ * La table, lisible : les contextes les plus fréquents et leurs suites.
+ *
+ * CHAQUE POURCENTAGE PORTE SON COMPTE, « D4 67% (2) » : arrondis, trois pourcentages égaux faisaient 99, et la
+ * ligne ne disait plus ce qui avait été entendu. Décision de Fabien du 2026-11-22, « Add the counts », revue
+ * des notations en texte.
+ */
 export function tableEnTexte(table: TableMarkov, maxLignes = 20): string {
   const lignes = [...table.entries()]
     .map(([c, compte]) => {
@@ -132,7 +138,7 @@ export function tableEnTexte(table: TableMarkov, maxLignes = 20): string {
       for (const n of compte.values()) total += n;
       const suites = [...compte.entries()]
         .sort((a, b) => b[1] - a[1])
-        .map(([note, n]) => `${nomNote(note)} ${Math.round((100 * n) / total)}%`)
+        .map(([note, n]) => `${nomNote(note)} ${Math.round((100 * n) / total)}% (${n})`)
         .join(", ");
       // Le nom se demande note par note : passer `nomNote` à `map` lui donnerait l'index de la
       // note pour altération, ce que son second paramètre a rendu possible.

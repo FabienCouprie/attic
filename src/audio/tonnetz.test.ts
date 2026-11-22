@@ -15,6 +15,13 @@ import {
 const DO: Triade = { fondamentale: 0, type: "majeur" };
 const LAm: Triade = { fondamentale: 9, type: "mineur" };
 
+/** Les opérations d'un texte qui se lit ; un refus fait tomber le test qui l'écrit. */
+function ops(texte: string): Operation[] {
+  const lu = lireOperations(texte);
+  if ("refus" in lu) throw new Error(`« ${texte} » refusé sur « ${lu.refus} »`);
+  return lu.operations;
+}
+
 const TOUTES: Triade[] = [];
 for (let f = 0; f < 12; f++) {
   TOUTES.push({ fondamentale: f, type: "majeur" }, { fondamentale: f, type: "mineur" });
@@ -102,21 +109,34 @@ describe("les trois opérations", () => {
 
 describe("parcours", () => {
   it("rend tous les accords traversés, départ compris", () => {
-    const suite = parcourir(DO, lireOperations("P L R"));
+    const suite = parcourir(DO, ops("P L R"));
     expect(suite.length).toBe(4);
     expect(suite.map(nomTriade)).toEqual(["C", "Cm", "G#", "Fm"]);
   });
 
-  it("lit les opérations collées comme espacées, et ignore le reste", () => {
-    expect(lireOperations("PLR")).toEqual(["P", "L", "R"]);
-    expect(lireOperations("p l r")).toEqual(["P", "L", "R"]);
-    expect(lireOperations("P-X-L")).toEqual(["P", "L"]);
-    expect(lireOperations("")).toEqual([]);
+  it("lit les opérations collées comme espacées", () => {
+    expect(ops("PLR")).toEqual(["P", "L", "R"]);
+    expect(ops("p l r")).toEqual(["P", "L", "R"]);
+    expect(ops("P-L, R")).toEqual(["P", "L", "R"]);
+    expect(ops("")).toEqual([]);
+  });
+
+  it("refuse ce qui n'est pas une opération, et le nomme", () => {
+    // Ce test tenait le contraire : « P-X-L » se lisait « PL », le X jeté sans un mot. Décision de Fabien
+    // du 2026-11-22, revue des notations en texte.
+    expect(lireOperations("P-X-L")).toEqual({ refus: "X" });
+  });
+
+  it("lit les composées N, S et H, chacune un seul pas", () => {
+    expect(parcourir(DO, ops("N")).map(nomTriade)).toEqual(["C", "Fm"]);
+    expect(parcourir(DO, ops("S")).map(nomTriade)).toEqual(["C", "C#m"]);
+    expect(parcourir(DO, ops("H")).map(nomTriade)).toEqual(["C", "G#m"]);
+    expect(parcourir(LAm, ops("N")).map(nomTriade)).toEqual(["Am", "E"]);
   });
 
   it("revient au départ après le cycle PLPLPL", () => {
     // P et L alternées engendrent le cycle hexatonique : six accords, puis retour.
-    const suite = parcourir(DO, lireOperations("PLPLPL"));
+    const suite = parcourir(DO, ops("PLPLPL"));
     expect(memeTriade(suite[suite.length - 1], DO)).toBe(true);
     expect(new Set(suite.slice(0, 6).map(nomTriade)).size).toBe(6);
   });
@@ -179,14 +199,14 @@ describe("mise en voix", () => {
   });
 
   it("ne bouge qu'un ou deux demi-tons à chaque pas", () => {
-    const suite = voixParcimonieuses(parcourir(DO, lireOperations("PLRLPR")), 60);
+    const suite = voixParcimonieuses(parcourir(DO, ops("PLRLPR")), 60);
     for (let i = 1; i < suite.length; i++) {
       expect(mouvement(suite[i - 1], suite[i]), `pas ${i}`).toBeLessThanOrEqual(2);
     }
   });
 
   it("ne s'échappe pas du registre sur un long parcours", () => {
-    const suite = voixParcimonieuses(parcourir(DO, lireOperations("RLRLRLRLRLRL")), 60);
+    const suite = voixParcimonieuses(parcourir(DO, ops("RLRLRLRLRLRL")), 60);
     for (const accord of suite) {
       for (const note of accord) {
         expect(note).toBeGreaterThan(40);
