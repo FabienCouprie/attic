@@ -6,6 +6,12 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE CRIBLE LIT « ^ », LA DIFFÉRENCE SYMÉTRIQUE D'ARIZA.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, deuxième lot.
+  - **Ce qui se passait** : « 3@0^4@0 » était refusé comme un signe hors de la notation, alors que `music21.sieve` le lit, et que le relevé du dixième format l'avait oublié.
+  - **Ce qui change** : « ^ », ou « △ », retient ce que l'un des termes retient et pas l'autre ; de 0 à 11, 3@0 ^ 4@0 donne 3, 4, 6, 8 et 9. Il se lie comme en Python : le complément d'abord, puis « & », puis « ^ », puis « | », si bien que 2@0|3@0^4@0&6@0 vaut 2@0 | (3@0 ^ (4@0 & 6@0)). Le message l'écrit « △ », et ce qu'il écrit se relit.
+  - Décision de Fabien : « Read it ». Le cas de `plugins/crible-notation.test.ts` qui tenait le refus de « ^ » prend « % », un signe toujours hors de la notation.
+  - Tenu par quatre cas de plus dans `plugins/points-ouverts.test.ts`, vus rouges sur le code d'avant, et rouges aussi sur « ^ » de nouveau lu comme une réunion, planté.
+
 - **QUATRE NŒUDS QUI REFUSAIENT EN RESTANT VERTS REFUSENT EN ERREUR.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, premier lot.
   - **Ce qui se passait**, mesuré par `executer` : « Opérations sérielles » sur une série vide, « Classes de hauteurs » sur des notes vides, « Contrepoint (espèces) » sur deux voix vides, et « Renversements et voicings » sans MIDI ou sur un MIDI sans note, disaient leur refus et restaient verts, sans le drapeau d'erreur. Un graphe passait alors sur une sortie vide.
   - **Ce qui change** : ces cinq refus portent le drapeau d'erreur, comme tous les refus de la revue.
