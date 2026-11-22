@@ -35,6 +35,7 @@ import { degresParPeriode, hauteurDuDegre, type Accordage } from "./accordage";
 import type { Note } from "./note";
 import { versDb } from "./decibels";
 import { nomsEchantillons } from "./sfz-noms";
+import { enteteSfz } from "./sfz-entete";
 /** La0, première touche d'un piano. */
 export const NOTE_LA0 = 21;
 /** Do8, dernière touche. */
@@ -723,6 +724,8 @@ export interface OptionsSfz {
   relachement?: number;
   /** Nom du son, pour l'en-tête. */
   nom?: string;
+  /** L'en-tête s'écrit en anglais : il suit la langue de l'interface. */
+  en?: boolean;
 }
 
 /**
@@ -754,10 +757,7 @@ export const nomEchantillon = (zone: PlanZone & { velBasse?: number; velHaute?: 
 export function versSfz(banque: Banque, o: OptionsSfz): string {
   const relachement = o.relachement ?? 0.3;
   const lignes: string[] = [
-    `// Banque de clavier exportée par Attic${o.nom ? ` — ${o.nom}` : ""}`,
-    `// ${banque.zones.length} zones de ±${banque.largeur} demi-tons, racine du son : ${banque.racineSource}`
-      + (banque.couches && banque.couches > 1 ? ` — ${banque.couches} couches de vélocité` : ""),
-    `// Touches couvertes : ${banque.noteBasse} à ${banque.noteHaute}`,
+    ...enteteSfz(banque, { nom: o.nom, en: o.en }),
     "",
     "<global>",
     `ampeg_release=${relachement.toFixed(3)}`,

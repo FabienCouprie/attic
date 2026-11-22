@@ -10,7 +10,7 @@
 
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio/io";
 import { cheminDansTravail } from "./pont-electron";
@@ -86,10 +86,12 @@ export const fiches: FicheAudio[] = ([
         octets += bytes.length;
       }
 
+      // L'en-tête du fichier suit la langue de l'interface, décision de Fabien du 2026-11-22.
       const texte = versSfz(banque, {
         dossier,
         relachement: ctx.paramNombre("Relâchement", 300) / 1000,
         nom: dossier,
+        en: langueCourante() === "en",
       });
       const cheminSfz = cibleSfz.chemin;
       const ok = await api.ecrireFichier(cheminSfz, new TextEncoder().encode(texte));

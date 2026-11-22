@@ -6,6 +6,14 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **CHAQUE `<CONTROL>` POSE SON `DEFAULT_PATH`, ET L'EN-TÊTE D'UN .SFZ EXPORTÉ SUIT LA LANGUE DE L'INTERFACE.** Revue des notations en texte, les points laissés ouverts, 2026-11-22, neuvième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - un seul `default_path` valait pour tout le fichier, celui du dernier `<control>` : deux en-têtes, `A/` puis `B/`, envoyaient les régions du premier chercher dans `B/`, et l'échantillon était déclaré manquant. sfzformat.com dit qu'un nouveau `<control>` remet `default_path` à zéro ;
+    - l'en-tête d'un `.sfz` exporté s'écrivait en français, interface anglaise comprise.
+  - **Ce qui change** : chaque région garde le `default_path` de son `<control>`, et un `<control>` qui n'en porte pas le remet à zéro ; l'en-tête s'écrit dans la langue de l'interface, depuis `audio/sfz-entete.ts`.
+  - Décision de Fabien : « The interface language » ; `default_path` suit la référence.
+  - Tenu par cinq cas de plus dans `plugins/sfz-format.test.ts`, trois vus rouges sur le code d'avant et deux témoins ; rouges aussi sur un `default_path` de nouveau gardé d'un `<control>` à l'autre et sur l'en-tête de nouveau toujours français, plantés.
+
 - **`PITCH_KEYCENTER=SAMPLE` PREND LA RACINE QUE DÉCLARE LE WAV.** Revue des notations en texte, le format SFZ, 2026-11-22, quatrième lot.
   - **Ce qui se passait** : la référence dit de `pitch_keycenter=sample` qu'il « causes the SFZ player to look in the sample file metadata for the keycenter value », et la note 0 sans métadonnée. La valeur ne se lisait pas comme une note, et la région prenait la racine 60, sans un mot, quel que soit le fichier.
   - **Ce qui change** :

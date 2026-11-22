@@ -35,6 +35,12 @@ import { traduire } from "../i18n";
 export interface RegionSfz {
   /** Chemin de l'échantillon, tel qu'écrit dans le fichier — non résolu. */
   sample: string;
+  /**
+   * Le `default_path` du <control> sous lequel la région est écrite. « A new control header resets
+   * default_path only » (sfzformat.com) : un seul chemin pour tout le fichier, le dernier, envoyait
+   * les régions d'un premier <control> chercher leurs échantillons ailleurs.
+   */
+  cheminParDefaut: string;
   lokey: number;
   hikey: number;
   /** Note à laquelle l'échantillon est juste (`pitch_keycenter`). */
@@ -304,8 +310,7 @@ export function analyserSfz(texte: string): Sfz {
     const opcodes = analyserOpcodes(bloc.corps);
     noter(opcodes);
     if (bloc.entete === "control") {
-      const dp = opcodes.get("default_path");
-      if (dp) cheminParDefaut = dp;
+      cheminParDefaut = opcodes.get("default_path") ?? "";
       const fautif = opcodeFautif(new Map([...opcodes].filter(([c]) => c.endsWith("_offset"))));
       if (fautif) problemes.push({ code: "valeur", detail: `<control> ${fautif}` });
       else if (opcodes.has("octave_offset") || opcodes.has("note_offset")) {
@@ -355,7 +360,7 @@ export function analyserSfz(texte: string): Sfz {
       // gardant `key`, et l'opcode qui le dit est le plus explicite des deux.
       const duFichier = ecrit !== undefined && ecrit.trim().toLowerCase() === "sample";
       regions.push({
-        sample,
+        sample, cheminParDefaut,
         lokey: Math.max(0, basse),
         hikey: Math.min(127, haute),
         racine: (duFichier ? 0 : (centre ?? cle ?? 60)) + decalage - transpose,
@@ -489,7 +494,7 @@ export function banqueDepuisSfz(
   const sansRacine: string[] = [];
   const resolues = sfz.regions.map((r) => {
     if (!r.racineDuFichier) return r;
-    const chemin = resoudreChemin(o.dossierSfz ?? "", sfz.cheminParDefaut, r.sample);
+    const chemin = resoudreChemin(o.dossierSfz ?? "", r.cheminParDefaut, r.sample);
     const lue = o.racines?.get(chemin) ?? o.racines?.get(r.sample) ?? null;
     const present = audios.has(chemin) || audios.has(r.sample);
     if (lue === null && present && !sansRacine.includes(r.sample)) sansRacine.push(r.sample);
@@ -506,7 +511,7 @@ export function banqueDepuisSfz(
   const ordonnees = [...parPlage.values()].sort((a, b) => a.racine - b.racine || a.hiVel - b.hiVel);
   const zones: Zone[] = [];
   for (const r of ordonnees) {
-    const chemin = resoudreChemin(o.dossierSfz ?? "", sfz.cheminParDefaut, r.sample);
+    const chemin = resoudreChemin(o.dossierSfz ?? "", r.cheminParDefaut, r.sample);
     const audio = audios.get(chemin) ?? audios.get(r.sample);
     if (!audio) {
       if (!dejaManquant.has(chemin)) { dejaManquant.add(chemin); manquants.push(chemin); }
@@ -596,7 +601,7 @@ export function cheminsAChargerSfz(sfz: Sfz, dossierSfz: string): string[] {
   const vus = new Set<string>();
   const liste: string[] = [];
   for (const r of sfz.regions) {
-    const chemin = resoudreChemin(dossierSfz, sfz.cheminParDefaut, r.sample);
+    const chemin = resoudreChemin(dossierSfz, r.cheminParDefaut, r.sample);
     if (vus.has(chemin)) continue;
     vus.add(chemin);
     liste.push(chemin);

@@ -382,3 +382,58 @@ describe("`pitch_keycenter=sample`, selon la référence", () => {
     expect(zones(banque)).toEqual([[48, 68, 69 - 12 - 2]]);
   });
 });
+
+describe("`default_path`, en-tête par en-tête", () => {
+  // sfzformat.com/headers/control : « a new control header resets default_path only and not other
+  // control settings ». Un seul chemin valait pour tout le fichier : le dernier.
+  const AILLEURS = { "A/x.wav": sinus(220.5), "B/y.wav": sinus(330.75), "z.wav": sinus(441) };
+  async function lireAilleurs(texte: string) {
+    const runtime = monde(texte, AILLEURS);
+    const r: any = await banqueSfz.executer(ctxDEssai([], { Source: "fichier", "Aperçu": "non", "Type de banque": "hauteurs" },
+      { runtime, ficheId: "banque-sfz", data: { sfzChemin: "D:/b/i.sfz" } }) as any);
+    return { banque: r.valeurs[0] as Banque | null, message: String(r.message) };
+  }
+
+  it("chaque région cherche dans le `default_path` de son <control>", async () => {
+    const { banque, message } = await lireAilleurs(
+      "<control> default_path=A/\n<region> sample=x.wav key=60\n<control> default_path=B/\n<region> sample=y.wav key=62");
+    expect(zones(banque)).toEqual([[60, 60, 60], [62, 62, 62]]);
+    expect(message).not.toMatch(/manquant/);
+  });
+
+  it("un <control> sans `default_path` le remet à zéro", async () => {
+    const { banque, message } = await lireAilleurs("<control> default_path=A/\n<region> sample=x.wav key=60\n<control>\n<region> sample=z.wav key=64");
+    expect(zones(banque)).toEqual([[60, 60, 60], [64, 64, 64]]);
+    expect(message).not.toMatch(/manquant/);
+  });
+});
+
+describe("l'en-tête d'un .sfz exporté suit la langue de l'interface", () => {
+  // Décision de Fabien : « The interface language ». Il s'écrivait en français, interface anglaise
+  // comprise : « // Banque de clavier exportée… », « Touches couvertes ».
+  async function sousLangue<T>(langue: "fr" | "en", faire: () => Promise<T>): Promise<T> {
+    const avant = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+    Object.defineProperty(globalThis, "localStorage", {
+      value: { getItem: (c: string) => (c === "attic-lang" ? langue : null), setItem: () => {} }, configurable: true,
+    });
+    try { return await faire(); } finally {
+      if (avant) Object.defineProperty(globalThis, "localStorage", avant);
+      else delete (globalThis as unknown as Record<string, unknown>).localStorage;
+    }
+  }
+  const BANQUE: Banque = {
+    zones: [{ racine: 60, basse: 0, haute: 127, audio: sinus(220.5) }], racineSource: 60, largeur: 67, noteBasse: 0, noteHaute: 127,
+  };
+  const commentaires = (texte: string) => texte.split("\n").filter((l) => l.startsWith("//"));
+
+  it("en anglais, aucun commentaire français", async () => {
+    const { texte } = await sousLangue("en", () => exporter(BANQUE));
+    expect(commentaires(texte).length).toBeGreaterThan(0);
+    expect(commentaires(texte).filter((l) => /[éèêàùç]|\b(de|des|zones de|racine|touches)\b/i.test(l))).toEqual([]);
+  });
+
+  it("en français, l'en-tête reste français", async () => {
+    const { texte } = await sousLangue("fr", () => exporter(BANQUE));
+    expect(commentaires(texte).join(" ")).toContain("Touches couvertes");
+  });
+});
