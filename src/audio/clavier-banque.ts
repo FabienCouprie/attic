@@ -33,6 +33,9 @@ import { changerTonalite } from "./effets-spectral";
 
 import { degresParPeriode, hauteurDuDegre, type Accordage } from "./accordage";
 import type { Note } from "./note";
+import { versDb } from "./decibels";
+import { nomsEchantillons } from "./sfz-noms";
+import { enteteSfz } from "./sfz-entete";
 /** La0, première touche d'un piano. */
 export const NOTE_LA0 = 21;
 /** Do8, dernière touche. */
@@ -100,7 +103,7 @@ export interface Zone extends PlanZone {
   velBasse?: number;
   velHaute?: number;
   /**
-   * De combien la vélocité fait encore varier le NIVEAU, de 0 à 100.
+   * De combien la vélocité fait encore varier le NIVEAU, de −100 à 100, négatif pour un suivi à rebours.
    *
    * `amp_veltrack` du format SFZ. Cent : le niveau suit la vélocité comme avant. Zéro : la vélocité
    * ne choisit que la couche, et le niveau ne bouge plus. C'est ce que règlent les bibliothèques à
@@ -108,6 +111,11 @@ export interface Zone extends PlanZone {
    * jouées piano presque inaudibles.
    */
   suiviVelocite?: number;
+  /**
+   * La zone sonne d'un coup, jusqu'au bout de son échantillon, sans tenir compte du relâchement de
+   * la touche : `loop_mode=one_shot` du format SFZ, que déclarent les kits de percussion.
+   */
+  unCoup?: boolean;
 }
 
 export interface Banque {
@@ -420,11 +428,15 @@ export type NoteJouee = Note;
  * POURQUOI CELA EXISTE : sans ce réglage, une bibliothèque à couches subit un DOUBLE effet — la
  * couche douce est choisie, ET son niveau est encore divisé par trois. Les notes jouées piano
  * disparaissaient.
+ *
+ * NÉGATIF, LE SUIVI JOUE À REBOURS : à −100, « velocity 127 notes silent, and low-velocity notes
+ * loud » (sfzformat.com). C'est la même loi appliquée à la vélocité retournée.
  */
 function gainVelocite(velocite: number, suivi?: number): number {
   const v = Math.min(1, Math.max(0, velocite / 127));
-  const k = Math.min(1, Math.max(0, (suivi ?? 100) / 100));
-  return 1 - k + k * v;
+  const s = Math.min(1, Math.max(-1, (suivi ?? 100) / 100));
+  const k = Math.abs(s);
+  return 1 - k + k * (s < 0 ? 1 - v : v);
 }
 
 /** De quoi jouer une note : la zone, à quelle vitesse la relire, et à quel niveau. */
@@ -511,6 +523,8 @@ export interface ParametresLecture {
    *  en échantillons. La conversion oubliée faisait boucler sur les premières millisecondes. */
   boucleDebut: number;
   boucleFin: number;
+  /** La zone joue son échantillon jusqu'au bout : le relâchement de la touche ne l'arrête pas. */
+  unCoup: boolean;
 }
 
 /**
@@ -582,6 +596,7 @@ export function parametresLecture(voix: Voix, fonduBoucle = 0.02): ParametresLec
     boucle: !!b,
     boucleDebut: b ? b.debut / sr : 0,
     boucleFin: b ? b.fin / sr : 0,
+    unCoup: voix.zone.unCoup === true,
   };
 }
 
@@ -611,7 +626,13 @@ export function rendreNotes(
   const volume = Math.min(1, Math.max(0, o.volume ?? 0.8));
   const relachement = Math.max(0, o.relachement ?? 0.05);
   const fonduBoucle = Math.max(0.001, o.fonduBoucle ?? 0.02);
-  const duree = notes.reduce((m, n) => Math.max(m, n.fin), 0) + relachement + 0.1;
+  // Une zone `unCoup` sonne jusqu'au bout de son échantillon, au-delà de la touche : le tampon doit
+  // la contenir. Sans elle, la durée est celle d'avant, au bit près.
+  const finUnCoup = (m: number, n: NoteJouee): number => {
+    const v = n.fin > n.debut ? voixPourNote(banque, n.note, n.velocite, volume, sr) : null;
+    return v?.zone.unCoup ? Math.max(m, n.debut + v.zone.audio.length / v.ratio / sr) : m;
+  };
+  const duree = Math.max(notes.reduce((m, n) => Math.max(m, n.fin), 0) + relachement, notes.reduce(finUnCoup, 0)) + 0.1;
   const longueur = Math.max(1, Math.ceil(duree * sr));
   const sortie = new AudioBuffer({ numberOfChannels: 2, length: longueur, sampleRate: sr });
   const g = sortie.getChannelData(0), d = sortie.getChannelData(1);
@@ -633,7 +654,11 @@ export function rendreNotes(
     const srcG = source.getChannelData(0);
     const srcD = source.numberOfChannels > 1 ? source.getChannelData(1) : srcG;
     const debutEch = Math.max(0, Math.round(n.debut * sr));
-    const finEch = Math.min(longueur, Math.round((n.fin + relachement) * sr));
+    // `one_shot` : « from start to end, ignoring note off ». Ni la fin de la touche ni le
+    // relâchement ne l'arrêtent.
+    const finEch = zone.unCoup
+      ? Math.min(longueur, debutEch + Math.ceil(zone.audio.length / ratio))
+      : Math.min(longueur, Math.round((n.fin + relachement) * sr));
     const finTenue = Math.min(longueur, Math.round(n.fin * sr));
     const fonduEch = Math.max(1, Math.round(relachement * sr));
 
@@ -652,7 +677,7 @@ export function rendreNotes(
       const vd = srcD[k] * (1 - f) + (srcD[k + 1] ?? srcD[k]) * f;
       // Relâchement : la note s'éteint après la fin de la touche.
       let env = 1;
-      if (i >= finTenue) env = Math.max(0, 1 - (i - finTenue) / fonduEch);
+      if (i >= finTenue && !zone.unCoup) env = Math.max(0, 1 - (i - finTenue) / fonduEch);
       g[i] += vg * gain * env;
       d[i] += vd * gain * env;
       pos += ratio;
@@ -699,6 +724,8 @@ export interface OptionsSfz {
   relachement?: number;
   /** Nom du son, pour l'en-tête. */
   nom?: string;
+  /** L'en-tête s'écrit en anglais : il suit la langue de l'interface. */
+  en?: boolean;
 }
 
 /**
@@ -730,18 +757,16 @@ export const nomEchantillon = (zone: PlanZone & { velBasse?: number; velHaute?: 
 export function versSfz(banque: Banque, o: OptionsSfz): string {
   const relachement = o.relachement ?? 0.3;
   const lignes: string[] = [
-    `// Banque de clavier exportée par Attic${o.nom ? ` — ${o.nom}` : ""}`,
-    `// ${banque.zones.length} zones de ±${banque.largeur} demi-tons, racine du son : ${banque.racineSource}`
-      + (banque.couches && banque.couches > 1 ? ` — ${banque.couches} couches de vélocité` : ""),
-    `// Touches couvertes : ${banque.noteBasse} à ${banque.noteHaute}`,
+    ...enteteSfz(banque, { nom: o.nom, en: o.en }),
     "",
     "<global>",
     `ampeg_release=${relachement.toFixed(3)}`,
     "",
   ];
-  for (const zone of banque.zones) {
+  const noms = nomsEchantillons(banque.zones, nomEchantillon);
+  for (const [i, zone] of banque.zones.entries()) {
     lignes.push("<region>");
-    lignes.push(`sample=${o.dossier}/${nomEchantillon(zone)}`);
+    lignes.push(`sample=${o.dossier}/${noms[i]}`);
     lignes.push(`lokey=${zone.basse} hikey=${zone.haute} pitch_keycenter=${zone.racine}`);
     // Les bornes de vélocité ne s'écrivent que si la zone est une couche : un fichier plein de
     // `lovel=0 hivel=127` se lit moins bien, et ces valeurs sont celles du format par défaut.
@@ -765,11 +790,20 @@ export function versSfz(banque: Banque, o: OptionsSfz): string {
     if (zone.accord !== undefined && zone.accord !== 0) {
       lignes.push(`tune=${zone.accord}`);
     }
+    // LE VOLUME ET LE TEMPÉRAMENT S'ÉCRIVENT AUSSI, et ils se perdaient comme se perdait le
+    // désaccord : un SFZ lu avec `volume=-6` ou `pitch_keytrack=63.16`, puis exporté, ressortait au
+    // gain plein et au demi-ton tempéré. Une zone qui ne suit pas la touche, celle d'un kit, s'écrit
+    // `pitch_keytrack=0`, sans quoi un kit à régions larges se relisait en instrument de hauteurs.
+    if (zone.gain !== undefined && zone.gain !== 1) lignes.push(`volume=${Math.max(-144, versDb(zone.gain))}`);
+    if (zone.suitLaTouche === false) lignes.push("pitch_keytrack=0");
+    else if (zone.centsParTouche !== undefined && zone.centsParTouche !== 100) lignes.push(`pitch_keytrack=${zone.centsParTouche}`);
+    // `loop_end` est INCLUS dans le format, la fin d'une zone ne l'est pas : une boucle de mille
+    // échantillons, de 1000 à 2000 exclu, s'écrit `loop_end=1999`.
     if (zone.boucle) {
       lignes.push("loop_mode=loop_sustain");
-      lignes.push(`loop_start=${zone.boucle.debut} loop_end=${zone.boucle.fin}`);
+      lignes.push(`loop_start=${zone.boucle.debut} loop_end=${zone.boucle.fin - 1}`);
     } else {
-      lignes.push("loop_mode=no_loop");
+      lignes.push(zone.unCoup ? "loop_mode=one_shot" : "loop_mode=no_loop");
     }
     lignes.push("");
   }

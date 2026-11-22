@@ -10,11 +10,12 @@
 
 import { fiche } from "./fiche";
 import type { FicheAudio } from "../audio/types-domaine";
-import { traduire } from "../i18n";
+import { langueCourante, traduire } from "../i18n";
 import { avecDoc } from "./notices";
 import { bufferVersWavBlob } from "../audio/io";
 import { cheminDansTravail } from "./pont-electron";
 import { nomEchantillon, versSfz, type Banque } from "../audio/clavier-banque";
+import { nomsEchantillons } from "../audio/sfz-noms";
 
 import { enMo } from "../core/octets";
 /** Retire l'extension d'un nom de fichier, pour en tirer le nom du dossier d'échantillons. */
@@ -48,6 +49,10 @@ export const fiches: FicheAudio[] = ([
       const nom = ctx.paramTexte("Nom", "banque.sfz");
       const nomSfz = /\.sfz$/i.test(nom) ? nom : `${nom}.sfz`;
       const dossier = sansExtension(nomSfz);
+      // Le dossier entre dans chaque `sample=`, où la référence interdit le signe égal : « names with
+      // blank spaces and other special characters (excepting the = character) ». Écrit quand même,
+      // le fichier ne se relisait pas, pas même ici : zéro région.
+      if (dossier.includes("=")) return { valeurs: [null], message: traduire("msg.sfz.nomEgal", nomSfz) };
       // Sans dossier de travail, le chemin serait RELATIF : les fichiers partiraient là où le
       // processus se trouve, et le nœud annoncerait « écrit » sans qu'on puisse les retrouver.
       // Constaté en vérifiant : dix-neuf fichiers écrits quelque part, introuvables sur deux
@@ -61,24 +66,32 @@ export const fiches: FicheAudio[] = ([
 
       // Les échantillons d'abord : si l'un d'eux échoue, le SFZ qu'on écrirait ensuite renverrait
       // vers un fichier absent, et l'échantillonneur se tairait sans dire pourquoi.
+      // LES NOMS SONT CEUX QUE LE TEXTE DÉSIGNERA, un par son : deux zones à la même racine
+      // s'écrivaient l'une par-dessus l'autre. Un son partagé par deux zones ne s'écrit qu'une fois.
       let ecrits = 0, octets = 0;
-      for (const zone of banque.zones) {
+      const noms = nomsEchantillons(banque.zones, nomEchantillon);
+      const dejaEcrits = new Set<string>();
+      for (const [i, zone] of banque.zones.entries()) {
+        if (dejaEcrits.has(noms[i])) continue;
+        dejaEcrits.add(noms[i]);
         const blob = bufferVersWavBlob(zone.audio);
         const bytes = new Uint8Array(await blob.arrayBuffer());
-        const cibleEch = cheminDansTravail(ctx.repertoireTravail, `${dossier}/${nomEchantillon(zone)}`);
+        const cibleEch = cheminDansTravail(ctx.repertoireTravail, `${dossier}/${noms[i]}`);
         if (!cibleEch.ok) return { valeurs: [null], message: cibleEch.message };
         const ok = await api.ecrireFichier(cibleEch.chemin, bytes);
         if (!ok) {
-          return { valeurs: [null], message: traduire("msg.sfz.echec", nomEchantillon(zone)) };
+          return { valeurs: [null], message: traduire("msg.sfz.echec", noms[i]) };
         }
         ecrits++;
         octets += bytes.length;
       }
 
+      // L'en-tête du fichier suit la langue de l'interface, décision de Fabien du 2026-11-22.
       const texte = versSfz(banque, {
         dossier,
         relachement: ctx.paramNombre("Relâchement", 300) / 1000,
         nom: dossier,
+        en: langueCourante() === "en",
       });
       const cheminSfz = cibleSfz.chemin;
       const ok = await api.ecrireFichier(cheminSfz, new TextEncoder().encode(texte));

@@ -29,15 +29,28 @@
 // complet.
 import type { Banque, Zone } from "./clavier-banque";
 import { depuisDb } from "./decibels";
+import { traduire } from "../i18n";
 
 /** Une région : une zone de clavier et son échantillon, opcodes hérités déjà résolus. */
 export interface RegionSfz {
   /** Chemin de l'échantillon, tel qu'écrit dans le fichier — non résolu. */
   sample: string;
+  /**
+   * Le `default_path` du <control> sous lequel la région est écrite. « A new control header resets
+   * default_path only » (sfzformat.com) : un seul chemin pour tout le fichier, le dernier, envoyait
+   * les régions d'un premier <control> chercher leurs échantillons ailleurs.
+   */
+  cheminParDefaut: string;
   lokey: number;
   hikey: number;
   /** Note à laquelle l'échantillon est juste (`pitch_keycenter`). */
   racine: number;
+  /**
+   * `pitch_keycenter=sample` : la racine est celle que déclare le fichier de l'échantillon, lue au
+   * chargement, et `racine` ne porte alors que ce qui s'y ajoute, le décalage de <control> moins
+   * `transpose`.
+   */
+  racineDuFichier?: boolean;
   loVel: number;
   hiVel: number;
   modeBoucle: string | null;
@@ -47,7 +60,7 @@ export interface RegionSfz {
   volume: number;
   /** Désaccord, en cents (`tune`), transposition entière déjà pliée dans `racine`. */
   accord: number;
-  /** `amp_veltrack` : de combien la vélocité fait encore varier le niveau, de 0 à 100. */
+  /** `amp_veltrack` : de combien la vélocité fait encore varier le niveau, de −100 à 100. */
   suiviVelocite: number;
   /**
    * La région suit-elle la touche jouée ? `pitch_keytrack=0` dit que non.
@@ -115,8 +128,80 @@ const CONNUS = new Set([
   "sample", "lokey", "hikey", "key", "pitch_keycenter", "lovel", "hivel",
   "loop_mode", "loop_start", "loop_end", "loopmode", "loopstart", "loopend",
   "ampeg_release", "volume", "tune", "pitch", "transpose", "default_path", "pitch_keytrack",
-  "amp_veltrack",
+  "amp_veltrack", "octave_offset", "note_offset",
 ]);
+
+/** Une note de région : un nombre, un nom, ou −1, qui dit « aucune touche » en SFZ 2. Rien si illisible. */
+function noteDeRegion(valeur: string): number | null {
+  return valeur.trim() === "-1" ? -1 : noteSfz(valeur);
+}
+
+/** La racine écrite : un nom de note, ou un nombre de −127 à 127 comme le permet la version 1. */
+function centreEcrit(valeur: string): number | null {
+  const v = valeur.trim();
+  if (/^-?\d+$/.test(v)) return Math.abs(Number(v)) <= 127 ? Number(v) : null;
+  return noteSfz(v);
+}
+
+/** Un nombre STRICT : toute la valeur, et non son début, que `parseFloat` lirait dans « 60 bis ». */
+function nombreStrict(valeur: string): number | null {
+  const v = valeur.trim();
+  const n = v === "" ? Number.NaN : Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Les plages que la référence donne aux opcodes numériques lus ici.
+ *
+ * `volume` n'a pas de plafond : sa page dit que la plupart des lecteurs dépassent les 6 dB de la
+ * spécification. `lovel` part de 0, la valeur de la version 1, la version 2 disant 1 ; la vélocité 0
+ * étant un relâchement, les deux lectures sonnent pareil.
+ */
+const PLAGES: Record<string, readonly [number, number, boolean]> = {
+  lovel: [0, 127, true], hivel: [0, 127, true], transpose: [-127, 127, true],
+  volume: [-144.6, Infinity, false], tune: [-Infinity, Infinity, false], pitch: [-Infinity, Infinity, false],
+  pitch_keytrack: [-1200, 1200, false], amp_veltrack: [-100, 100, false], ampeg_release: [0, 100, false],
+  loop_start: [0, Infinity, true], loop_end: [0, Infinity, true], loopstart: [0, Infinity, true], loopend: [0, Infinity, true],
+  octave_offset: [-10, 10, true], note_offset: [-127, 127, true],
+};
+const MODES_BOUCLE = new Set(["no_loop", "one_shot", "loop_continuous", "loop_sustain"]);
+
+/** Le premier opcode que la référence refuse, écrit `clé=valeur`, ou null si tous se lisent. */
+function opcodeFautif(opcodes: Map<string, string>): string | null {
+  for (const [cle, v] of opcodes) {
+    const plage = PLAGES[cle];
+    let lu = true;
+    if (plage) {
+      const n = nombreStrict(v);
+      lu = n !== null && n >= plage[0] && n <= plage[1] && (!plage[2] || Number.isInteger(n));
+    } else if (cle === "loop_mode" || cle === "loopmode") lu = MODES_BOUCLE.has(v.toLowerCase());
+    else if (cle === "lokey" || cle === "hikey" || cle === "key") lu = noteDeRegion(v) !== null;
+    else if (cle === "pitch_keycenter") lu = v.trim().toLowerCase() === "sample" || centreEcrit(v) !== null;
+    if (!lu) return `${cle}=${v}`;
+  }
+  return null;
+}
+
+/** La clé de traduction de chaque problème que le message d'un nœud doit dire. */
+const PROBLEMES_DITS: Record<string, string> = {
+  include: "msg.sfz.pb.include", sansEchantillon: "msg.sfz.pb.sansEchantillon", valeur: "msg.sfz.pb.valeur",
+  bornes: "msg.sfz.pb.bornes", sansTouche: "msg.sfz.pb.sansTouche", generateur: "msg.sfz.pb.generateur",
+  horsClavier: "msg.sfz.pb.horsClavier",
+};
+
+/**
+ * Ce que le message d'un nœud dit des problèmes d'une lecture : un morceau par genre, son compte et
+ * ses deux premiers cas. Sans cela, `problemes` restait dans les données et le nœud se taisait.
+ */
+export function direProblemesSfz(problemes: readonly Probleme[]): string[] {
+  const parCode = new Map<string, string[]>();
+  for (const p of problemes) {
+    if (!PROBLEMES_DITS[p.code]) continue;
+    parCode.set(p.code, [...(parCode.get(p.code) ?? []), p.detail]);
+  }
+  return [...parCode].map(([code, cas]) => traduire(PROBLEMES_DITS[code], String(cas.length),
+    cas.slice(0, 2).join(", ") + (cas.length > 2 ? "…" : "")));
+}
 
 /**
  * Les opcodes d'un bloc, `clé` en minuscules.
@@ -179,20 +264,26 @@ export function analyserSfz(texte: string): Sfz {
     return i >= 0 ? l.slice(0, i) : l;
   });
 
+  // UN `#define` VAUT À PARTIR DE SA LIGNE, et une redéfinition aussi : chaque ligne est substituée
+  // avec les définitions connues à ce point du fichier. Substituer le texte entier après coup donnait
+  // la dernière valeur à toutes les lignes, celles d'avant comprises.
   const defines = new Map<string, string>();
+  const substituer = (ligne: string): string => {
+    let s = ligne;
+    // Les plus longs d'abord : sans quoi `$KEY` mangerait le début de `$KEYRANGE`.
+    for (const [nom, valeur] of [...defines].sort((a, b) => b[0].length - a[0].length)) s = s.split(nom).join(valeur);
+    return s;
+  };
   const gardees: string[] = [];
-  for (const ligne of lignes) {
-    const def = /^\s*#define\s+(\$[A-Za-z0-9_]+)\s+(.+?)\s*$/.exec(ligne);
-    if (def) { defines.set(def[1], def[2]); continue; }
+  for (const brute of lignes) {
+    const def = /^\s*#define\s+(\$[A-Za-z0-9_]+)\s+(.+?)\s*$/.exec(brute);
+    if (def) { defines.set(def[1], substituer(def[2])); continue; }
+    const ligne = substituer(brute);
     const inc = /^\s*#include\s+"?([^"]+)"?\s*$/.exec(ligne);
     if (inc) { problemes.push({ code: "include", detail: inc[1].trim() }); continue; }
     gardees.push(ligne);
   }
-  let corpsEntier = gardees.join("\n");
-  // Les plus longs d'abord : sans quoi `$KEY` mangerait le début de `$KEYRANGE`.
-  for (const [nom, valeur] of [...defines].sort((a, b) => b[0].length - a[0].length)) {
-    corpsEntier = corpsEntier.split(nom).join(valeur);
-  }
+  const corpsEntier = gardees.join("\n");
 
   const regions: RegionSfz[] = [];
   const ignores: string[] = [];
@@ -211,36 +302,69 @@ export function analyserSfz(texte: string): Sfz {
     }
   };
 
+  // `octave_offset` et `note_offset`, posés dans <control>, décalent toutes les touches qui suivent :
+  // avec `octave_offset=-1`, « C4 will be MIDI note 48 instead of MIDI note 60 » (sfzformat.com).
+  let decalage = 0;
+  let rang = 0;
   for (const bloc of decouper(corpsEntier)) {
     const opcodes = analyserOpcodes(bloc.corps);
     noter(opcodes);
     if (bloc.entete === "control") {
-      const dp = opcodes.get("default_path");
-      if (dp) cheminParDefaut = dp;
+      cheminParDefaut = opcodes.get("default_path") ?? "";
+      const fautif = opcodeFautif(new Map([...opcodes].filter(([c]) => c.endsWith("_offset"))));
+      if (fautif) problemes.push({ code: "valeur", detail: `<control> ${fautif}` });
+      else if (opcodes.has("octave_offset") || opcodes.has("note_offset")) {
+        decalage = 12 * nombre(opcodes.get("octave_offset"), 0) + nombre(opcodes.get("note_offset"), 0);
+      }
       continue;
     }
     if (bloc.entete === "global") { global = opcodes; master = new Map(); groupe = new Map(); }
     else if (bloc.entete === "master") { master = opcodes; groupe = new Map(); }
     else if (bloc.entete === "group") { groupe = opcodes; }
     else if (bloc.entete === "region") {
+      rang++;
       const h = new Map([...global, ...master, ...groupe, ...opcodes]);
       const sample = h.get("sample");
-      if (!sample) { problemes.push({ code: "sansEchantillon", detail: `région ${regions.length + 1}` }); continue; }
-      const cle = h.get("key") !== undefined ? noteSfz(h.get("key")!) : null;
-      const lo = h.get("lokey") !== undefined ? noteSfz(h.get("lokey")!) : null;
-      const hi = h.get("hikey") !== undefined ? noteSfz(h.get("hikey")!) : null;
+      if (!sample) { problemes.push({ code: "sansEchantillon", detail: `#${rang}` }); continue; }
+      // UNE VALEUR QUE LA RÉFÉRENCE REFUSE ÉCARTE LA RÉGION, ET LE MESSAGE LA NOMME. Elle prenait
+      // en silence la valeur par défaut : une touche illisible faisait une région de 0 à 127, qui
+      // couvrait tout le clavier.
+      const fautif = opcodeFautif(h);
+      if (fautif) { problemes.push({ code: "valeur", detail: `#${rang} ${fautif}` }); continue; }
+      // `*sine`, `*saw`, `*noise`… sont des générateurs d'ARIA, et non des fichiers : les compter
+      // parmi les échantillons manquants disait une cause fausse.
+      if (sample.startsWith("*")) { problemes.push({ code: "generateur", detail: `#${rang} ${sample}` }); continue; }
+      const cle = h.get("key") !== undefined ? noteDeRegion(h.get("key")!) : null;
+      const lo = h.get("lokey") !== undefined ? noteDeRegion(h.get("lokey")!) : cle;
+      const hi = h.get("hikey") !== undefined ? noteDeRegion(h.get("hikey")!) : cle;
+      // −1 dit « aucune touche » : une région que seul un contrôleur déclenche, et que ce lecteur
+      // ne joue pas. Lue comme une valeur absente, elle jouait sur les 128.
+      if (lo === -1 || hi === -1) { problemes.push({ code: "sansTouche", detail: `#${rang}` }); continue; }
+      // La référence ne dit pas ce que vaut `lokey` au-dessus de `hikey` : échanger les bornes était
+      // une supposition.
+      if (lo !== null && hi !== null && lo > hi) {
+        problemes.push({ code: "bornes", detail: `#${rang} lokey=${lo} hikey=${hi}` });
+        continue;
+      }
+      const basse = (lo ?? 0) + decalage, haute = (hi ?? 127) + decalage;
+      if (haute < 0 || basse > 127) { problemes.push({ code: "horsClavier", detail: `#${rang}` }); continue; }
       // `pitch_keycenter` vaut 60 par défaut dans le format ; `key` le fixe en même temps que les
       // bornes, ce qui est la façon courte d'écrire une région d'une seule touche.
-      const centre = h.get("pitch_keycenter") !== undefined ? noteSfz(h.get("pitch_keycenter")!) : null;
+      const ecrit = h.get("pitch_keycenter");
+      const centre = ecrit !== undefined ? centreEcrit(ecrit) : null;
       // `transpose` décale la hauteur jouée : jouer la touche n sur une région transposée de t
       // revient à jouer n+t, donc à prendre pour racine `centre - t`. C'est la même chose vue de
       // l'autre bout, et cela évite un champ de plus dans la banque.
       const transpose = Math.round(nombre(h.get("transpose"), 0));
+      // `pitch_keycenter=sample` l'emporte sur `key` : c'est la lecture de rgc et de Cakewalk, ARIA
+      // gardant `key`, et l'opcode qui le dit est le plus explicite des deux.
+      const duFichier = ecrit !== undefined && ecrit.trim().toLowerCase() === "sample";
       regions.push({
-        sample,
-        lokey: lo ?? cle ?? 0,
-        hikey: hi ?? cle ?? 127,
-        racine: (centre ?? cle ?? 60) - transpose,
+        sample, cheminParDefaut,
+        lokey: Math.max(0, basse),
+        hikey: Math.min(127, haute),
+        racine: (duFichier ? 0 : (centre ?? cle ?? 60)) + decalage - transpose,
+        ...(duFichier ? { racineDuFichier: true } : {}),
         loVel: Math.round(nombre(h.get("lovel"), 0)),
         hiVel: Math.round(nombre(h.get("hivel"), 127)),
         modeBoucle: h.get("loop_mode") ?? h.get("loopmode") ?? null,
@@ -252,7 +376,8 @@ export function analyserSfz(texte: string): Sfz {
         accord: nombre(h.get("tune") ?? h.get("pitch"), 0),
         suitLaTouche: nombre(h.get("pitch_keytrack"), 100) !== 0,
         centsParTouche: nombre(h.get("pitch_keytrack"), 100),
-        suiviVelocite: Math.max(0, Math.min(100, nombre(h.get("amp_veltrack"), 100))),
+        // De −100 à 100 : négatif, la vélocité joue À REBOURS, et la ramener à zéro la rendait inerte.
+        suiviVelocite: nombre(h.get("amp_veltrack"), 100),
       });
       const rel = h.get("ampeg_release");
       if (rel !== undefined) relachement = Math.max(relachement ?? 0, nombre(rel, 0));
@@ -319,7 +444,15 @@ export interface Chargement {
   couchesEcartees: number;
   /** Combien de couches de vélocité distinctes la banque contient. */
   couches: number;
+  /**
+   * Échantillons appelés par `pitch_keycenter=sample` dont le fichier ne déclare pas de racine : la
+   * référence les joue depuis la note 0, et le nœud le dit.
+   */
+  sansRacine: string[];
 }
+
+/** Ce qu'un décodeur rend : le son, avec la racine que son fichier déclare quand il la connaît. */
+export type Decode = AudioBuffer | { audio: AudioBuffer; racine: number | null } | null;
 
 /**
  * Une banque jouable à partir de régions analysées et d'échantillons décodés.
@@ -331,13 +464,15 @@ export interface Chargement {
  * doublons : deux régions couvrant exactement les mêmes touches ET la même vélocité, ce qui, dans une
  * bibliothèque, désigne des variantes tirées au sort (`seq_position`) que nous ne savons pas jouer.
  *
- * UN RENONCEMENT RESTE, dit ici plutôt que caché : `one_shot` et `loop_continuous` sont joués comme
- * `loop_sustain` — notre lecteur éteint la note au relâchement de la touche dans tous les cas. La
- * différence s'entend sur une percussion tenue très court, pas sur un instrument tenu.
+ * `one_shot` JOUE L'ÉCHANTILLON JUSQU'AU BOUT, « ignoring note off » comme le dit sa page. Il était
+ * joué comme `loop_sustain`, éteint au relâchement : la crash du kit intégré, qui dure 1,2 s, se
+ * taisait à 0,25 s sous une note de 0,1 s. Un renoncement reste, dit ici plutôt que caché :
+ * `loop_continuous` est joué comme `loop_sustain`, la boucle s'arrêtant avec le relâchement au lieu
+ * de tourner pendant qu'il s'éteint, ce qui ne s'entend que sur un relâchement long.
  */
 export function banqueDepuisSfz(
   sfz: Sfz, audios: Map<string, AudioBuffer>,
-  o: { dossierSfz?: string; mode?: "auto" | "hauteurs" | "kit" } = {},
+  o: { dossierSfz?: string; mode?: "auto" | "hauteurs" | "kit"; racines?: ReadonlyMap<string, number | null> } = {},
 ): Chargement {
   // Le mode décide de deux choses : le repli sur la zone la plus proche, et la transposition. En
   // automatique, le fichier tranche lui-même — voir `estKitSfz`.
@@ -354,7 +489,18 @@ export function banqueDepuisSfz(
   // d'un doublon. Seul un doublon exact est écarté, et compté.
   const parPlage = new Map<string, RegionSfz>();
   let couchesEcartees = 0;
-  for (const r of sfz.regions) {
+  // LA RACINE QUE DÉCLARE LE FICHIER se résout avant le tri des doublons, qui la compare. Sans elle,
+  // la référence dit « defaults to MIDI note 0 », et le nœud le dit.
+  const sansRacine: string[] = [];
+  const resolues = sfz.regions.map((r) => {
+    if (!r.racineDuFichier) return r;
+    const chemin = resoudreChemin(o.dossierSfz ?? "", r.cheminParDefaut, r.sample);
+    const lue = o.racines?.get(chemin) ?? o.racines?.get(r.sample) ?? null;
+    const present = audios.has(chemin) || audios.has(r.sample);
+    if (lue === null && present && !sansRacine.includes(r.sample)) sansRacine.push(r.sample);
+    return { ...r, racine: (lue ?? 0) + r.racine };
+  });
+  for (const r of resolues) {
     const cle = `${r.lokey}:${r.hikey}:${r.racine}:${r.loVel}:${r.hiVel}`;
     if (parPlage.has(cle)) { couchesEcartees++; continue; }
     parPlage.set(cle, r);
@@ -365,7 +511,7 @@ export function banqueDepuisSfz(
   const ordonnees = [...parPlage.values()].sort((a, b) => a.racine - b.racine || a.hiVel - b.hiVel);
   const zones: Zone[] = [];
   for (const r of ordonnees) {
-    const chemin = resoudreChemin(o.dossierSfz ?? "", sfz.cheminParDefaut, r.sample);
+    const chemin = resoudreChemin(o.dossierSfz ?? "", r.cheminParDefaut, r.sample);
     const audio = audios.get(chemin) ?? audios.get(r.sample);
     if (!audio) {
       if (!dejaManquant.has(chemin)) { dejaManquant.add(chemin); manquants.push(chemin); }
@@ -399,9 +545,13 @@ export function banqueDepuisSfz(
       || (mode === "" && r.boucleDebut !== null && r.boucleFin !== null);
     if (boucleVoulue) {
       const debut = Math.max(0, Math.min(audio.length - 2, r.boucleDebut ?? 0));
-      const fin = Math.max(debut + 32, Math.min(audio.length - 1, r.boucleFin ?? audio.length - 1));
+      // `loop_end` est INCLUS (« the sample specified is played as part of the loop »), la fin d'une
+      // zone ne l'est pas : `loop_end=1999` donne une fin à 2000. Lu tel quel, chaque tour perdait
+      // un échantillon.
+      const fin = Math.max(debut + 32, Math.min(audio.length - 1, r.boucleFin !== null ? r.boucleFin + 1 : audio.length - 1));
       if (fin > debut && fin < audio.length) zone.boucle = { debut, fin };
     }
+    if (mode === "one_shot") zone.unCoup = true;
     zones.push(zone);
   }
 
@@ -435,6 +585,7 @@ export function banqueDepuisSfz(
     manquants,
     couchesEcartees,
     couches,
+    sansRacine,
   };
 }
 
@@ -450,7 +601,7 @@ export function cheminsAChargerSfz(sfz: Sfz, dossierSfz: string): string[] {
   const vus = new Set<string>();
   const liste: string[] = [];
   for (const r of sfz.regions) {
-    const chemin = resoudreChemin(dossierSfz, sfz.cheminParDefaut, r.sample);
+    const chemin = resoudreChemin(dossierSfz, r.cheminParDefaut, r.sample);
     if (vus.has(chemin)) continue;
     vus.add(chemin);
     liste.push(chemin);
@@ -467,7 +618,7 @@ export function cheminsAChargerSfz(sfz: Sfz, dossierSfz: string): string[] {
  */
 export async function chargerSfz(
   texte: string, dossierSfz: string,
-  decoder: (chemin: string) => Promise<AudioBuffer | null>,
+  decoder: (chemin: string) => Promise<Decode>,
   o: {
     surProgres?: (faits: number, total: number) => void;
     mode?: "auto" | "hauteurs" | "kit";
@@ -476,10 +627,12 @@ export async function chargerSfz(
   const sfz = analyserSfz(texte);
   const chemins = cheminsAChargerSfz(sfz, dossierSfz);
   const audios = new Map<string, AudioBuffer>();
+  const racines = new Map<string, number | null>();
   for (let i = 0; i < chemins.length; i++) {
-    const audio = await decoder(chemins[i]);
-    if (audio) audios.set(chemins[i], audio);
+    const lu = await decoder(chemins[i]);
+    if (lu && "racine" in lu) { audios.set(chemins[i], lu.audio); racines.set(chemins[i], lu.racine); }
+    else if (lu) audios.set(chemins[i], lu);
     o.surProgres?.(i + 1, chemins.length);
   }
-  return { ...banqueDepuisSfz(sfz, audios, { dossierSfz, mode: o.mode }), sfz };
+  return { ...banqueDepuisSfz(sfz, audios, { dossierSfz, mode: o.mode, racines }), sfz };
 }
