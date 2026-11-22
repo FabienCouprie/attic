@@ -6,6 +6,58 @@ All notable changes to Attic. Format based on [Keep a Changelog](https://keepach
 
 ### Added
 
+- **LE RÉPARTITEUR MIDI ET LE SSP DE KOENIG REFUSENT CE QUE LEURS LISTES NE PORTENT PAS, EN LE NOMMANT.** Revue des notations en texte, passe de complétude, 2026-11-22, troisième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - dans le Répartiteur, « 17 », « 0 » et « a » vidaient la partie sans un mot, ses notes passant au « Reste », et « 1-17 » prenait les seize canaux ;
+    - le Répartiteur refusait un MIDI absent ou sans note sans le drapeau d'erreur ;
+    - dans le SSP, un jeton illisible était jeté, une amplitude hors de −1 à 1 était bornée, une durée nulle, négative ou décimale arrondie et portée à un échantillon, et une liste vide remplacée par celle d'origine.
+  - **Ce qui change** :
+    - un canal hors de 1 à 16, une piste nulle ou un jeton illisible fait refuser le Répartiteur, et le message nomme la partie et le jeton. `analyserListeNumeros` lit canaux et pistes ;
+    - selon la décision de Fabien du 2026-11-22, « Allow it, said », une partie vide n'a pas de canal, et ses notes vont au « Reste » ;
+    - selon sa décision « Refuse it, named », contre la documentation qui défendait le repli, le SSP refuse un jeton illisible, une amplitude hors de −1 à 1, une durée qui n'est pas un nombre entier d'au moins un échantillon, et une liste vide ;
+    - les refus portent le drapeau d'erreur.
+
+    Les documentations des parties, d'« Amplitudes » et de « Durées » le disent.
+  - **Trois tests tenaient le contraire**, réécrits avec leur raison :
+    - dans `audio/repartition-midi.test.ts`, « 0 », « 17 » et « bonjour » étaient écartés ;
+    - dans `plugins/repartiteur-midi.test.ts`, la piste « 0 » l'était aussi ;
+    - dans `audio/ssp.test.ts`, une saisie illisible retombait sur l'ensemble d'origine.
+  - **Le garde** : 17 cas de plus dans `plugins/lecteurs-oublies.test.ts`, qui en compte 48.
+    - Vu rouge sur le code d'avant : les 13 refus.
+    - Vu rouge aussi sur un jeton illisible de nouveau admis, planté.
+
+- **LA TONALITÉ D'UN PLAN DE CHANSON S'ÉCRIT EN MAJEUR OU EN MINEUR, ET LE L-SYSTÈME REFUSE UNE RÈGLE QU'IL NE LIT PAS.** Revue des notations en texte, passe de complétude, 2026-11-22, deuxième lot.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - « Gm » et « G mixolydian » passaient tels quels dans le plan, quand la documentation et le moteur attendent « G major » ou « A minor » ;
+    - dans le L-système, une règle sans « = », ou dont la gauche n'était pas une seule lettre (« AB=C », « =B »), était jetée sans un mot ;
+    - de deux règles pour la même lettre, la dernière gagnait sans un mot ;
+    - un axiome vide, ou un mot sans note, partait sans le drapeau d'erreur.
+  - **Ce qui change**, selon les décisions de Fabien du 2026-11-22, « Read Gm, refuse modes » et « Refuse it, named » :
+    - « Gm » s'écrit « G minor » et « G » « G major », la forme longue comme l'abrégée. Un autre mode est refusé, et le message le nomme ;
+    - une règle mal formée, ou une seconde règle pour la même lettre, fait refuser le L-système, et le message la nomme ;
+    - un axiome vide ou un mot sans note est refusé en erreur.
+
+    « > » et « < », qui allongent et raccourcissent le pas, se lisent comme avant. Les documentations de « Tonalité », d'« Axiome » et de « Règles » le disent.
+  - **Un test tenait le contraire** : dans `audio/lsysteme.test.ts`, « n'importe quoi » et « AB=C » étaient jetés. Il est réécrit avec sa raison.
+  - **Le garde** : 16 cas de plus dans `plugins/lecteurs-oublies.test.ts`.
+    - Vu rouge sur le code d'avant : les 12 qui changent.
+    - Vu rouge aussi sur un mode de nouveau admis, planté.
+
+- **LE MASQUE DU CERCLE À RETOUCHER NE PORTE QUE DES ZÉROS ET DES UNS, ET LA ROUE DE CAMELOT REFUSE UN CODE QU'ELLE NE LIT PAS.** Revue des notations en texte, passe de complétude, 2026-11-22, premier lot. La passe a relu le registre entier : ces deux nœuds lisent une notation que le recensement n'avait pas listée.
+  - **Ce qui se passait**, mesuré par `executer` :
+    - dans le masque du Cercle à retoucher, une espace prenait une place, « 1 0 0 1 0 0 1 0 » éteignant la place 3 ;
+    - un caractère qui n'était ni 0 ni 1 éteignait la sienne : « x..x..x. » éteignait les trois attaques ;
+    - la Roue de Camelot rendait un nœud vert, « 0 accords · 0 notes », sur « 13A », « 0B », « 4C », « b4 » ou un départ vide.
+  - **Ce qui change** :
+    - un caractère du masque qui n'est ni 0 ni 1, une espace comprise, est refusé, et le message nomme sa place. C'est la règle des grilles que la vue écrit, décision de Fabien du 2026-11-22, « Refuse it, named » ;
+    - un masque trop court ou trop long se complète ou se coupe toujours, comme la notice le dit ;
+    - un code de départ qui n'est pas un nombre de 1 à 12 suivi de A ou de B est refusé et nommé, en erreur.
+
+    Les documentations de « Retouche » et de « Départ » le disent.
+  - **Le garde** : `plugins/lecteurs-oublies.test.ts`, 15 cas.
+    - Vu rouge sur le code d'avant : les 8 refus.
+    - Vu rouge aussi sur une espace de nouveau admise dans le masque, plantée.
+
 - **L'HARMONIE NÉGATIVE DIT CE QUE FAIT SA RÉFLEXION, ET LA SÉRIE À TOUS LES INTERVALLES REVIENT À LA PREMIÈRE AU-DELÀ DE LA DERNIÈRE.** Revue des notations en texte, les tables et les suites, 2026-11-22, troisième lot.
   - **Ce qui se passait**, mesuré par `executer` :
     - la documentation et la notice de « Réflexion » promettaient que « Classes » garde le contour de la ligne. Do ré mi fa sol y devient sol fa mi bémol ré do : la ligne se retourne, comme sous « Miroir vrai » ;
